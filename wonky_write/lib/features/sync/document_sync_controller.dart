@@ -19,6 +19,7 @@ import 'package:wonky_write_core/wonky_write_core.dart'
         documentHash;
 
 import 'connection_keeper.dart';
+import 'sync_persistence.dart';
 import 'sync_transport.dart';
 
 /// The client OT state (Write 03 §3, ot.js).
@@ -96,10 +97,12 @@ sealed class SyncEvent {
   const SyncEvent();
 }
 
-/// The first `Init` arrived; the document is loaded.
+/// The document is loaded: from the first `Init`, or from the local cache
+/// before connecting ([fromCache], stale-while-revalidate).
 class SyncLoaded extends SyncEvent {
-  const SyncLoaded({required this.revision});
+  const SyncLoaded({required this.revision, this.fromCache = false});
   final int revision;
+  final bool fromCache;
 }
 
 /// A (re)connection was established (`Init` received).
@@ -201,8 +204,21 @@ class SyncAccessLost extends SyncEvent {
   final Object error;
 }
 
+/// A chunk of the buffer: local changes composed per [DocumentSyncController
+/// .chunkWindow] (suite 12 §1.2: one op per 2 s of editing while offline).
+class _Chunk {
+  _Chunk(this.id, this.delta, this.kind, this.groupId, this.createdAt);
+
+  final UuidValue id;
+  Delta delta;
+  final DocumentOpKind kind;
+  final String? groupId;
+  final DateTime createdAt;
+}
+
 class _Pending {
-  _Pending(this.id, this.delta, this.kind, this.groupId);
+  _Pending(this.id, this.delta, this.kind, this.groupId, [DateTime? createdAt])
+    : createdAt = createdAt ?? clock.now();
 
   final UuidValue id;
   Delta delta;
@@ -211,6 +227,8 @@ class _Pending {
 
   /// Connection session ids this op was sent on.
   final Set<String> sentOn = {};
+
+  final DateTime createdAt;
 
   /// The op as last sent and its base revision: the server rebases exactly
   /// this (Write 03 §2 step 4), which may differ from transforming it
@@ -288,8 +306,10 @@ typedef _Tagged = ({_Connection conn, DocServerMessage message});
 /// over `document.connect`.
 ///
 /// - Local changes are submitted with [submitLocal]; at most one op is in
-///   flight, later changes are composed into a buffer (also while offline —
-///   the in-memory outbox).
+///   flight, later changes are composed into buffer chunks of at most
+///   [chunkWindow] of editing (also while offline). With a [persistence]
+///   the outbox is durable: it is stored before an op is sent, restored
+///   with [restore] after a reload and resent with the same `clientOpId`.
 /// - Server messages are processed strictly in revision order: remote ops
 ///   and acks that arrive early are held back and the gap is requested with
 ///   `RequestOps`; duplicates are ignored.
@@ -312,8 +332,18 @@ class DocumentSyncController {
     this.pingEvery = const Duration(seconds: 30),
     this.gapRetry = const Duration(seconds: 3),
     this.recentOpsKept = 500,
+    this.persistence,
+    this.chunkWindow = const Duration(seconds: 2),
     UuidV7Generator? ids,
-  }) : _ids = ids ?? UuidV7Generator.instance;
+  }) : _ids = ids ?? UuidV7Generator.instance {
+    persistence?.attach(_capture);
+  }
+
+  /// Durable outbox and server document (null = in memory only).
+  final SyncPersistence? persistence;
+
+  /// Local changes are composed into one buffered op per [chunkWindow].
+  final Duration chunkWindow;
 
   final DocumentSyncTransport transport;
   final SyncDocumentHost host;
@@ -345,10 +375,9 @@ class DocumentSyncController {
 
   // Pending local changes.
   _Pending? _inflight;
-  Delta? _buffer;
-  DocumentOpKind _bufferKind = DocumentOpKind.content;
-  String? _bufferGroup;
+  final List<_Chunk> _chunks = [];
   int _pendingChanges = 0;
+  bool _restored = false;
 
   // Ordering.
   final SplayTreeMap<int, _Ordered> _queue = SplayTreeMap();
@@ -419,16 +448,70 @@ class DocumentSyncController {
 
   SyncOtState get otState => _inflight == null
       ? SyncOtState.synchronized
-      : (_buffer == null
+      : (_chunks.isEmpty
             ? SyncOtState.awaitingAck
             : SyncOtState.awaitingAckWithBuffer);
 
   /// Whether local changes wait for the server.
   bool get hasPendingChanges =>
-      _inflight != null || _buffer != null || _blockedAck != null;
+      _inflight != null || _chunks.isNotEmpty || _blockedAck != null;
+
+  /// Number of buffered chunks (tests: offline composition).
+  @visibleForTesting
+  int get bufferedChunks => _chunks.length;
+
+  /// Whether the document was restored from the local cache.
+  bool get isRestored => _restored;
 
   // ---------------------------------------------------------------------------
   // Lifecycle.
+
+  /// Loads the locally stored state (before [start]): the document renders
+  /// immediately and stays editable offline; [start] then connects with
+  /// `knownRevision` = the stored revision and resubmits the outbox.
+  void restore(SyncLocalState state) {
+    if (_loaded || _disposed) return;
+    _server = DeltaUtils.canonical(state.serverDocument);
+    _revision = state.revision;
+    _meta = state.meta;
+    _role = state.role;
+    _inflight = null;
+    _chunks.clear();
+    for (final r in state.outbox) {
+      if (_inflight == null && _chunks.isEmpty && r.inflight) {
+        // It may have been sent before the reload: never predict its
+        // committed form (Write 03 §3.3), fetch it.
+        _inflight = _Pending(
+          r.clientOpId,
+          r.delta,
+          r.kind,
+          r.groupId,
+          r.createdAt,
+        )..sentOn.add(_restoredMarker);
+      } else {
+        _chunks.add(
+          _Chunk(r.clientOpId, r.delta, r.kind, r.groupId, r.createdAt),
+        );
+      }
+    }
+    _pendingChanges = state.outbox.length;
+    _nextHashAt = hashEvery <= 0
+        ? _far
+        : (_revision ~/ hashEvery + 1) * hashEvery;
+    _loaded = true;
+    _restored = true;
+    final pending = _pendingDelta();
+    host.resetDocument(
+      pending == null ? _server : WonkyOt.apply(_server, pending),
+    );
+    _logEvent('Opened from this device (revision $_revision)');
+    _events.add(SyncLoaded(revision: _revision, fromCache: true));
+    final role = _role;
+    if (role != null) _events.add(SyncRoleChanged(role, initial: true));
+    _updateStatus();
+  }
+
+  static const _restoredMarker = '<restored>';
 
   /// Connects (and keeps reconnecting until [dispose]).
   void start() {
@@ -471,6 +554,11 @@ class DocumentSyncController {
     final c = _conn;
     _conn = null;
     if (c != null) await c.input.close();
+    try {
+      await persistence?.close();
+    } on Object catch (e) {
+      debugPrint('Closing the local document store failed: $e');
+    }
     for (final w in _syncWaiters) {
       if (!w.isCompleted) w.complete();
     }
@@ -491,16 +579,24 @@ class DocumentSyncController {
     if (_disposed || DeltaUtils.isNoop(change)) return;
     _pendingChanges++;
     if (_inflight == null &&
-        _buffer == null &&
+        _chunks.isEmpty &&
         _blockedAck == null &&
         _canSend) {
       _inflight = _Pending(_ids.next(), change, kind, groupId);
+      persistence?.markDirty();
       _sendInflight();
     } else {
-      final b = _buffer;
-      _buffer = b == null ? change : WonkyOt.compose(b, change);
-      if (kind != DocumentOpKind.content) _bufferKind = kind;
-      if (groupId != null) _bufferGroup = groupId;
+      final now = clock.now();
+      final last = _chunks.isEmpty ? null : _chunks.last;
+      if (last != null &&
+          last.kind == kind &&
+          last.groupId == groupId &&
+          now.difference(last.createdAt) < chunkWindow) {
+        last.delta = WonkyOt.compose(last.delta, change);
+      } else {
+        _chunks.add(_Chunk(_ids.next(), change, kind, groupId, now));
+      }
+      persistence?.markDirty();
     }
     _updateStatus();
   }
@@ -546,10 +642,33 @@ class DocumentSyncController {
 
   Delta? _pendingDelta() {
     final i = _inflight?.delta ?? _blockedAckDelta;
-    final b = _buffer;
+    final b = _bufferDelta;
     if (i == null) return b;
     if (b == null) return i;
     return WonkyOt.compose(i, b);
+  }
+
+  /// The buffer chunks composed (null when empty).
+  Delta? get _bufferDelta {
+    if (_chunks.isEmpty) return null;
+    var d = _chunks.first.delta;
+    for (final c in _chunks.skip(1)) {
+      d = WonkyOt.compose(d, c.delta);
+    }
+    return d;
+  }
+
+  /// Transforms the buffer chunks over [change] (a server change applied
+  /// after the in-flight op) and returns [change] expressed past them.
+  Delta _transformChunks(Delta change) {
+    var f = change;
+    for (final c in _chunks) {
+      final cd = c.delta;
+      c.delta = WonkyOt.transform(f, cd, aWinsTies: true);
+      f = WonkyOt.transform(cd, f, aWinsTies: false);
+    }
+    _chunks.removeWhere((c) => DeltaUtils.isNoop(c.delta));
+    return f;
   }
 
   Delta? get _blockedAckDelta => _blockedAck == null ? null : _inflight?.delta;
@@ -561,7 +680,24 @@ class DocumentSyncController {
       (_conn?.initialized ?? false) &&
       !(_conn?.lost ?? true);
 
+  bool _awaitingDurable = false;
+
   void _sendInflight() {
+    final store = persistence;
+    if (store == null) {
+      _sendInflightNow();
+      return;
+    }
+    // The outbox is written before the op leaves the device.
+    if (_awaitingDurable) return;
+    _awaitingDurable = true;
+    store.whenDurable().whenComplete(() {
+      _awaitingDurable = false;
+      if (!_disposed) _sendInflightNow();
+    });
+  }
+
+  void _sendInflightNow() {
     final p = _inflight;
     final conn = _conn;
     if (p == null || conn == null || !_canSend) return;
@@ -582,15 +718,27 @@ class DocumentSyncController {
 
   void _flush() {
     if (_inflight != null || _blocked || !_canSend) return;
-    final b = _buffer;
-    if (b == null) return;
-    _buffer = null;
-    final kind = _bufferKind;
-    final group = _bufferGroup;
-    _bufferKind = DocumentOpKind.content;
-    _bufferGroup = null;
-    if (DeltaUtils.isNoop(b)) return;
-    _inflight = _Pending(_ids.next(), b, kind, group);
+    if (_chunks.isEmpty) return;
+    // The leading chunks of the same kind and group become one op.
+    final first = _chunks.removeAt(0);
+    var delta = first.delta;
+    while (_chunks.isNotEmpty &&
+        _chunks.first.kind == first.kind &&
+        _chunks.first.groupId == first.groupId) {
+      delta = WonkyOt.compose(delta, _chunks.removeAt(0).delta);
+    }
+    persistence?.markDirty();
+    if (DeltaUtils.isNoop(delta)) {
+      _flush();
+      return;
+    }
+    _inflight = _Pending(
+      _ids.next(),
+      delta,
+      first.kind,
+      first.groupId,
+      first.createdAt,
+    );
     _sendInflight();
   }
 
@@ -706,6 +854,7 @@ class DocumentSyncController {
         _onMeta(m);
       case DocRoleChanged():
         _role = m.role;
+        persistence?.markDirty();
         _logEvent('Role changed to ${m.role.name}');
         _events.add(SyncRoleChanged(m.role, initial: false));
         _updateStatus();
@@ -755,13 +904,25 @@ class DocumentSyncController {
           ? _far
           : (_revision ~/ hashEvery + 1) * hashEvery;
       _loaded = true;
+      persistence?.serverReset(_server, _revision);
+      persistence?.markDirty();
       host.resetDocument(_server);
       _events.add(SyncLoaded(revision: _revision));
       _events.add(SyncRoleChanged(m.role, initial: true));
     } else {
       if (roleChanged) _events.add(SyncRoleChanged(m.role, initial: false));
+      persistence?.markDirty();
       final snapshot = m.snapshotJson;
-      if (snapshot != null) {
+      if (m.revision < _revision) {
+        // The local copy is ahead of the server (restored server data):
+        // it belongs to another history, start over from the server's.
+        _logEvent(
+          'The server is at revision ${m.revision}, this device had '
+          '$_revision',
+          isError: true,
+        );
+        unawaited(_resync(ResyncReason.inconsistent));
+      } else if (snapshot != null) {
         unawaited(_catchUp(_decode(snapshot), m.revision));
       } else {
         for (final op in m.ops ?? const <DocumentOpView>[]) {
@@ -936,12 +1097,10 @@ class DocumentSyncController {
       inflight.delta = WonkyOt.transform(r, i, aWinsTies: true);
       forLocal = WonkyOt.transform(i, r, aWinsTies: false);
     }
-    final b = _buffer;
-    if (b != null) {
-      _buffer = WonkyOt.transform(forLocal, b, aWinsTies: true);
-      forLocal = WonkyOt.transform(b, forLocal, aWinsTies: false);
-    }
+    forLocal = _transformChunks(forLocal);
     _revision = e.revision;
+    persistence?.serverOp(e.revision, r);
+    persistence?.markDirty();
     if (!DeltaUtils.isNoop(forLocal)) {
       host.applyRemoteChange(forLocal, e.info(forLocal));
     }
@@ -1055,16 +1214,13 @@ class DocumentSyncController {
     _revision = revision;
     _inflight = null;
     _error = null;
+    persistence?.serverOp(revision, finalDelta);
+    persistence?.markDirty();
     if (!DeltaUtils.equals(finalDelta, inflight.delta)) {
       final mine = WonkyOt.apply(before, inflight.delta);
       final fix = DeltaDiff.diff(mine, _server);
       if (!DeltaUtils.isNoop(fix)) {
-        var forLocal = fix;
-        final b = _buffer;
-        if (b != null) {
-          _buffer = WonkyOt.transform(fix, b, aWinsTies: true);
-          forLocal = WonkyOt.transform(b, fix, aWinsTies: false);
-        }
+        final forLocal = _transformChunks(fix);
         host.applyRemoteChange(
           forLocal,
           RemoteChangeInfo(
@@ -1075,7 +1231,7 @@ class DocumentSyncController {
         );
       }
     }
-    if (_buffer == null) _pendingChanges = 0;
+    if (_chunks.isEmpty) _pendingChanges = 0;
     _flush();
   }
 
@@ -1140,7 +1296,7 @@ class DocumentSyncController {
         }
       }
     }
-    for (final p in [_inflight?.delta, _buffer]) {
+    for (final p in [_inflight?.delta, ..._chunks.map((c) => c.delta)]) {
       if (p == null) continue;
       a = WonkyOt.transformPosition(p, a, pushOnInsert: false);
       h = WonkyOt.transformPosition(p, h, pushOnInsert: false);
@@ -1163,13 +1319,16 @@ class DocumentSyncController {
 
   void _onMeta(DocMetaChanged m) {
     _updateMeta(m.field, m.valueJson);
+    persistence?.markDirty();
     _events.add(SyncMetaChanged(m.field, m.valueJson, authorId: m.authorId));
   }
 
   /// Applies a metadata change made locally (optimistic; the `MetaChanged`
   /// echo confirms it).
-  void applyLocalMeta(String field, String valueJson) =>
-      _updateMeta(field, valueJson);
+  void applyLocalMeta(String field, String valueJson) {
+    _updateMeta(field, valueJson);
+    persistence?.markDirty();
+  }
 
   void _updateMeta(String field, String valueJson) {
     final meta = _meta;
@@ -1265,12 +1424,12 @@ class DocumentSyncController {
     final hadPending = hasPendingChanges;
     final local = host.localDocument;
     _inflight = null;
-    _buffer = null;
-    _bufferKind = DocumentOpKind.content;
-    _bufferGroup = null;
+    _chunks.clear();
     _pendingChanges = 0;
     _server = DeltaUtils.canonical(snapshot);
     _revision = revision;
+    persistence?.serverReset(_server, _revision);
+    persistence?.markDirty();
     _recent.clear();
     _queue.removeWhere((rev, _) => rev <= revision);
     _nextHashAt = hashEvery <= 0
@@ -1295,6 +1454,48 @@ class DocumentSyncController {
     );
     _drain();
     _flush();
+  }
+
+  // ---------------------------------------------------------------------------
+  // Persistence.
+
+  SyncCapture _capture() {
+    final out = <PendingOpRecord>[];
+    final inflight = _inflight;
+    if (inflight != null) {
+      out.add(
+        PendingOpRecord(
+          clientOpId: inflight.id,
+          seq: 0,
+          baseRevision: _revision,
+          delta: inflight.delta,
+          kind: inflight.kind,
+          groupId: inflight.groupId,
+          createdAt: inflight.createdAt,
+          inflight: true,
+        ),
+      );
+    }
+    for (final c in _chunks) {
+      out.add(
+        PendingOpRecord(
+          clientOpId: c.id,
+          seq: out.length,
+          baseRevision: _revision,
+          delta: c.delta,
+          kind: c.kind,
+          groupId: c.groupId,
+          createdAt: c.createdAt,
+        ),
+      );
+    }
+    return SyncCapture(
+      revision: _revision,
+      serverDocument: _server,
+      outbox: out,
+      meta: _meta,
+      role: _role,
+    );
   }
 
   // ---------------------------------------------------------------------------

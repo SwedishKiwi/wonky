@@ -20,6 +20,8 @@ import 'package:serverpod_offline_sync_client/serverpod_offline_sync_client.dart
     as _ipulbpi2;
 import 'package:wonky_client/src/protocol/platform/activity/activity_event_view.dart'
     as _itempttd;
+import 'package:wonky_client/src/protocol/platform/ai/models/assistant_thread_view.dart'
+    as _i2rhb3qx;
 import 'package:wonky_client/src/protocol/platform/comments/comment_thread_view.dart'
     as _i2c85fb0;
 import 'package:wonky_client/src/protocol/platform/drive/drive_item_view.dart'
@@ -44,6 +46,24 @@ import 'package:wonky_sync_models/wonky_sync_models.dart' as _i810rwvy;
 import 'platform/activity/activity_event.dart' as _iatdjl5p;
 import 'platform/activity/activity_event_view.dart' as _isa7sjzq;
 import 'platform/activity/activity_type.dart' as _i50cy468;
+import 'platform/ai/models/ai_apply_mode.dart' as _iyja8k5e;
+import 'platform/ai/models/ai_quality.dart' as _iviyoyk9;
+import 'platform/ai/models/ai_usage.dart' as _i7i53on7;
+import 'platform/ai/models/ai_user_setting.dart' as _imx2nn1q;
+import 'platform/ai/models/assistant_context_hints.dart' as _ic7e83wd;
+import 'platform/ai/models/assistant_event.dart' as _imp4tsxo;
+import 'platform/ai/models/assistant_event_type.dart' as _id6kvqt9;
+import 'platform/ai/models/assistant_message.dart' as _i8cittxq;
+import 'platform/ai/models/assistant_message_view.dart' as _i4rkdm2k;
+import 'platform/ai/models/assistant_status.dart' as _ia2m3j3v;
+import 'platform/ai/models/assistant_thread.dart' as _iaq6rutx;
+import 'platform/ai/models/assistant_thread_detail.dart' as _i4iv0swm;
+import 'platform/ai/models/assistant_thread_view.dart' as _iohdfqf1;
+import 'platform/ai/models/inline_ai_event.dart' as _i8ghcs7p;
+import 'platform/ai/models/inline_ai_event_type.dart' as _i6pcz5z6;
+import 'platform/ai/models/inline_ai_request.dart' as _i4m43iwr;
+import 'platform/ai/models/proofread_event.dart' as _ie0jt2ne;
+import 'platform/ai/models/proofread_issue.dart' as _ivmxemza;
 import 'platform/comments/comment.dart' as _iyixppck;
 import 'platform/comments/comment_anchor_kind.dart' as _iw81twtc;
 import 'platform/comments/comment_event.dart' as _imlsyj2p;
@@ -160,6 +180,24 @@ import 'write/models/write_version_document.dart' as _is9bkd9t;
 export 'platform/activity/activity_event.dart';
 export 'platform/activity/activity_event_view.dart';
 export 'platform/activity/activity_type.dart';
+export 'platform/ai/models/ai_apply_mode.dart';
+export 'platform/ai/models/ai_quality.dart';
+export 'platform/ai/models/ai_usage.dart';
+export 'platform/ai/models/ai_user_setting.dart';
+export 'platform/ai/models/assistant_context_hints.dart';
+export 'platform/ai/models/assistant_event.dart';
+export 'platform/ai/models/assistant_event_type.dart';
+export 'platform/ai/models/assistant_message.dart';
+export 'platform/ai/models/assistant_message_view.dart';
+export 'platform/ai/models/assistant_status.dart';
+export 'platform/ai/models/assistant_thread.dart';
+export 'platform/ai/models/assistant_thread_detail.dart';
+export 'platform/ai/models/assistant_thread_view.dart';
+export 'platform/ai/models/inline_ai_event.dart';
+export 'platform/ai/models/inline_ai_event_type.dart';
+export 'platform/ai/models/inline_ai_request.dart';
+export 'platform/ai/models/proofread_event.dart';
+export 'platform/ai/models/proofread_issue.dart';
 export 'platform/comments/comment.dart';
 export 'platform/comments/comment_anchor_kind.dart';
 export 'platform/comments/comment_event.dart';
@@ -292,6 +330,24 @@ class Protocol extends _isc.SerializationManager
           _isc.getType<_iatdjl5p.ActivityEvent>,
           _isc.getType<_isa7sjzq.ActivityEventView>,
           _isc.getType<_i50cy468.ActivityType>,
+          _isc.getType<_iyja8k5e.AiApplyMode>,
+          _isc.getType<_iviyoyk9.AiQuality>,
+          _isc.getType<_i7i53on7.AiUsage>,
+          _isc.getType<_imx2nn1q.AiUserSetting>,
+          _isc.getType<_ic7e83wd.AssistantContextHints>,
+          _isc.getType<_imp4tsxo.AssistantEvent>,
+          _isc.getType<_id6kvqt9.AssistantEventType>,
+          _isc.getType<_i8cittxq.AssistantMessage>,
+          _isc.getType<_i4rkdm2k.AssistantMessageView>,
+          _isc.getType<_ia2m3j3v.AssistantStatus>,
+          _isc.getType<_iaq6rutx.AssistantThread>,
+          _isc.getType<_i4iv0swm.AssistantThreadDetail>,
+          _isc.getType<_iohdfqf1.AssistantThreadView>,
+          _isc.getType<_i8ghcs7p.InlineAiEvent>,
+          _isc.getType<_i6pcz5z6.InlineAiEventType>,
+          _isc.getType<_i4m43iwr.InlineAiRequest>,
+          _isc.getType<_ie0jt2ne.ProofreadEvent>,
+          _isc.getType<_ivmxemza.ProofreadIssue>,
           _isc.getType<_iyixppck.Comment>,
           _isc.getType<_iw81twtc.CommentAnchorKind>,
           _isc.getType<_imlsyj2p.CommentEvent>,
@@ -434,6 +490,24 @@ class Protocol extends _isc.SerializationManager
           _isc.getType<_iatdjl5p.ActivityEvent?>,
           _isc.getType<_isa7sjzq.ActivityEventView?>,
           _isc.getType<_i50cy468.ActivityType?>,
+          _isc.getType<_iyja8k5e.AiApplyMode?>,
+          _isc.getType<_iviyoyk9.AiQuality?>,
+          _isc.getType<_i7i53on7.AiUsage?>,
+          _isc.getType<_imx2nn1q.AiUserSetting?>,
+          _isc.getType<_ic7e83wd.AssistantContextHints?>,
+          _isc.getType<_imp4tsxo.AssistantEvent?>,
+          _isc.getType<_id6kvqt9.AssistantEventType?>,
+          _isc.getType<_i8cittxq.AssistantMessage?>,
+          _isc.getType<_i4rkdm2k.AssistantMessageView?>,
+          _isc.getType<_ia2m3j3v.AssistantStatus?>,
+          _isc.getType<_iaq6rutx.AssistantThread?>,
+          _isc.getType<_i4iv0swm.AssistantThreadDetail?>,
+          _isc.getType<_iohdfqf1.AssistantThreadView?>,
+          _isc.getType<_i8ghcs7p.InlineAiEvent?>,
+          _isc.getType<_i6pcz5z6.InlineAiEventType?>,
+          _isc.getType<_i4m43iwr.InlineAiRequest?>,
+          _isc.getType<_ie0jt2ne.ProofreadEvent?>,
+          _isc.getType<_ivmxemza.ProofreadIssue?>,
           _isc.getType<_iyixppck.Comment?>,
           _isc.getType<_iw81twtc.CommentAnchorKind?>,
           _isc.getType<_imlsyj2p.CommentEvent?>,
@@ -573,6 +647,9 @@ class Protocol extends _isc.SerializationManager
           _isc.getType<_ick3mhj2.WriteThemeRevisionView?>,
           _isc.getType<_ixbjd26z.WriteThemeView?>,
           _isc.getType<_is9bkd9t.WriteVersionDocument?>,
+          _isc.getType<List<_i4rkdm2k.AssistantMessageView>>,
+          _isc.getType<List<_ivmxemza.ProofreadIssue>>,
+          _isc.getType<List<_ivmxemza.ProofreadIssue>?>,
           _isc.getType<List<int>>,
           _isc.getType<List<_i4xrxro7.CommentView>>,
           _isc.getType<List<_i6y7tspy.UserSummary>>,
@@ -597,6 +674,7 @@ class Protocol extends _isc.SerializationManager
           _isc.getType<List<_issmv319.DocumentOpView>?>,
           _isc.getType<List<_i48sm9f2.ImportWarningView>?>,
           _isc.getType<List<_ii88i7dv.WriteDiffAuthor>>,
+          _isc.getType<List<_i2rhb3qx.AssistantThreadView>>,
           _isc.getType<List<_i2c85fb0.CommentThreadView>>,
           _isc.getType<List<int>>,
           _isc.getType<List<int>?>,
@@ -656,6 +734,60 @@ class Protocol extends _isc.SerializationManager
     }
     if (t == _i50cy468.ActivityType) {
       return _i50cy468.ActivityType.fromJson(data) as T;
+    }
+    if (t == _iyja8k5e.AiApplyMode) {
+      return _iyja8k5e.AiApplyMode.fromJson(data) as T;
+    }
+    if (t == _iviyoyk9.AiQuality) {
+      return _iviyoyk9.AiQuality.fromJson(data) as T;
+    }
+    if (t == _i7i53on7.AiUsage) {
+      return _i7i53on7.AiUsage.fromJson(data) as T;
+    }
+    if (t == _imx2nn1q.AiUserSetting) {
+      return _imx2nn1q.AiUserSetting.fromJson(data) as T;
+    }
+    if (t == _ic7e83wd.AssistantContextHints) {
+      return _ic7e83wd.AssistantContextHints.fromJson(data) as T;
+    }
+    if (t == _imp4tsxo.AssistantEvent) {
+      return _imp4tsxo.AssistantEvent.fromJson(data) as T;
+    }
+    if (t == _id6kvqt9.AssistantEventType) {
+      return _id6kvqt9.AssistantEventType.fromJson(data) as T;
+    }
+    if (t == _i8cittxq.AssistantMessage) {
+      return _i8cittxq.AssistantMessage.fromJson(data) as T;
+    }
+    if (t == _i4rkdm2k.AssistantMessageView) {
+      return _i4rkdm2k.AssistantMessageView.fromJson(data) as T;
+    }
+    if (t == _ia2m3j3v.AssistantStatus) {
+      return _ia2m3j3v.AssistantStatus.fromJson(data) as T;
+    }
+    if (t == _iaq6rutx.AssistantThread) {
+      return _iaq6rutx.AssistantThread.fromJson(data) as T;
+    }
+    if (t == _i4iv0swm.AssistantThreadDetail) {
+      return _i4iv0swm.AssistantThreadDetail.fromJson(data) as T;
+    }
+    if (t == _iohdfqf1.AssistantThreadView) {
+      return _iohdfqf1.AssistantThreadView.fromJson(data) as T;
+    }
+    if (t == _i8ghcs7p.InlineAiEvent) {
+      return _i8ghcs7p.InlineAiEvent.fromJson(data) as T;
+    }
+    if (t == _i6pcz5z6.InlineAiEventType) {
+      return _i6pcz5z6.InlineAiEventType.fromJson(data) as T;
+    }
+    if (t == _i4m43iwr.InlineAiRequest) {
+      return _i4m43iwr.InlineAiRequest.fromJson(data) as T;
+    }
+    if (t == _ie0jt2ne.ProofreadEvent) {
+      return _ie0jt2ne.ProofreadEvent.fromJson(data) as T;
+    }
+    if (t == _ivmxemza.ProofreadIssue) {
+      return _ivmxemza.ProofreadIssue.fromJson(data) as T;
     }
     if (t == _iyixppck.Comment) {
       return _iyixppck.Comment.fromJson(data) as T;
@@ -1084,6 +1216,83 @@ class Protocol extends _isc.SerializationManager
     }
     if (t == _isc.getType<_i50cy468.ActivityType?>()) {
       return (data != null ? _i50cy468.ActivityType.fromJson(data) : null) as T;
+    }
+    if (t == _isc.getType<_iyja8k5e.AiApplyMode?>()) {
+      return (data != null ? _iyja8k5e.AiApplyMode.fromJson(data) : null) as T;
+    }
+    if (t == _isc.getType<_iviyoyk9.AiQuality?>()) {
+      return (data != null ? _iviyoyk9.AiQuality.fromJson(data) : null) as T;
+    }
+    if (t == _isc.getType<_i7i53on7.AiUsage?>()) {
+      return (data != null ? _i7i53on7.AiUsage.fromJson(data) : null) as T;
+    }
+    if (t == _isc.getType<_imx2nn1q.AiUserSetting?>()) {
+      return (data != null ? _imx2nn1q.AiUserSetting.fromJson(data) : null)
+          as T;
+    }
+    if (t == _isc.getType<_ic7e83wd.AssistantContextHints?>()) {
+      return (data != null
+              ? _ic7e83wd.AssistantContextHints.fromJson(data)
+              : null)
+          as T;
+    }
+    if (t == _isc.getType<_imp4tsxo.AssistantEvent?>()) {
+      return (data != null ? _imp4tsxo.AssistantEvent.fromJson(data) : null)
+          as T;
+    }
+    if (t == _isc.getType<_id6kvqt9.AssistantEventType?>()) {
+      return (data != null ? _id6kvqt9.AssistantEventType.fromJson(data) : null)
+          as T;
+    }
+    if (t == _isc.getType<_i8cittxq.AssistantMessage?>()) {
+      return (data != null ? _i8cittxq.AssistantMessage.fromJson(data) : null)
+          as T;
+    }
+    if (t == _isc.getType<_i4rkdm2k.AssistantMessageView?>()) {
+      return (data != null
+              ? _i4rkdm2k.AssistantMessageView.fromJson(data)
+              : null)
+          as T;
+    }
+    if (t == _isc.getType<_ia2m3j3v.AssistantStatus?>()) {
+      return (data != null ? _ia2m3j3v.AssistantStatus.fromJson(data) : null)
+          as T;
+    }
+    if (t == _isc.getType<_iaq6rutx.AssistantThread?>()) {
+      return (data != null ? _iaq6rutx.AssistantThread.fromJson(data) : null)
+          as T;
+    }
+    if (t == _isc.getType<_i4iv0swm.AssistantThreadDetail?>()) {
+      return (data != null
+              ? _i4iv0swm.AssistantThreadDetail.fromJson(data)
+              : null)
+          as T;
+    }
+    if (t == _isc.getType<_iohdfqf1.AssistantThreadView?>()) {
+      return (data != null
+              ? _iohdfqf1.AssistantThreadView.fromJson(data)
+              : null)
+          as T;
+    }
+    if (t == _isc.getType<_i8ghcs7p.InlineAiEvent?>()) {
+      return (data != null ? _i8ghcs7p.InlineAiEvent.fromJson(data) : null)
+          as T;
+    }
+    if (t == _isc.getType<_i6pcz5z6.InlineAiEventType?>()) {
+      return (data != null ? _i6pcz5z6.InlineAiEventType.fromJson(data) : null)
+          as T;
+    }
+    if (t == _isc.getType<_i4m43iwr.InlineAiRequest?>()) {
+      return (data != null ? _i4m43iwr.InlineAiRequest.fromJson(data) : null)
+          as T;
+    }
+    if (t == _isc.getType<_ie0jt2ne.ProofreadEvent?>()) {
+      return (data != null ? _ie0jt2ne.ProofreadEvent.fromJson(data) : null)
+          as T;
+    }
+    if (t == _isc.getType<_ivmxemza.ProofreadIssue?>()) {
+      return (data != null ? _ivmxemza.ProofreadIssue.fromJson(data) : null)
+          as T;
     }
     if (t == _isc.getType<_iyixppck.Comment?>()) {
       return (data != null ? _iyixppck.Comment.fromJson(data) : null) as T;
@@ -1634,6 +1843,26 @@ class Protocol extends _isc.SerializationManager
               : null)
           as T;
     }
+    if (t == List<_i4rkdm2k.AssistantMessageView>) {
+      return (data as List)
+              .map((e) => deserialize<_i4rkdm2k.AssistantMessageView>(e))
+              .toList()
+          as T;
+    }
+    if (t == List<_ivmxemza.ProofreadIssue>) {
+      return (data as List)
+              .map((e) => deserialize<_ivmxemza.ProofreadIssue>(e))
+              .toList()
+          as T;
+    }
+    if (t == _isc.getType<List<_ivmxemza.ProofreadIssue>?>()) {
+      return (data != null
+              ? (data as List)
+                    .map((e) => deserialize<_ivmxemza.ProofreadIssue>(e))
+                    .toList()
+              : null)
+          as T;
+    }
     if (t == List<int>) {
       return (data as List).map((e) => deserialize<int>(e)).toList() as T;
     }
@@ -1783,6 +2012,12 @@ class Protocol extends _isc.SerializationManager
               .toList()
           as T;
     }
+    if (t == List<_i2rhb3qx.AssistantThreadView>) {
+      return (data as List)
+              .map((e) => deserialize<_i2rhb3qx.AssistantThreadView>(e))
+              .toList()
+          as T;
+    }
     if (t == List<_i2c85fb0.CommentThreadView>) {
       return (data as List)
               .map((e) => deserialize<_i2c85fb0.CommentThreadView>(e))
@@ -1882,6 +2117,24 @@ class Protocol extends _isc.SerializationManager
       _iatdjl5p.ActivityEvent => 'ActivityEvent',
       _isa7sjzq.ActivityEventView => 'ActivityEventView',
       _i50cy468.ActivityType => 'ActivityType',
+      _iyja8k5e.AiApplyMode => 'AiApplyMode',
+      _iviyoyk9.AiQuality => 'AiQuality',
+      _i7i53on7.AiUsage => 'AiUsage',
+      _imx2nn1q.AiUserSetting => 'AiUserSetting',
+      _ic7e83wd.AssistantContextHints => 'AssistantContextHints',
+      _imp4tsxo.AssistantEvent => 'AssistantEvent',
+      _id6kvqt9.AssistantEventType => 'AssistantEventType',
+      _i8cittxq.AssistantMessage => 'AssistantMessage',
+      _i4rkdm2k.AssistantMessageView => 'AssistantMessageView',
+      _ia2m3j3v.AssistantStatus => 'AssistantStatus',
+      _iaq6rutx.AssistantThread => 'AssistantThread',
+      _i4iv0swm.AssistantThreadDetail => 'AssistantThreadDetail',
+      _iohdfqf1.AssistantThreadView => 'AssistantThreadView',
+      _i8ghcs7p.InlineAiEvent => 'InlineAiEvent',
+      _i6pcz5z6.InlineAiEventType => 'InlineAiEventType',
+      _i4m43iwr.InlineAiRequest => 'InlineAiRequest',
+      _ie0jt2ne.ProofreadEvent => 'ProofreadEvent',
+      _ivmxemza.ProofreadIssue => 'ProofreadIssue',
       _iyixppck.Comment => 'Comment',
       _iw81twtc.CommentAnchorKind => 'CommentAnchorKind',
       _imlsyj2p.CommentEvent => 'CommentEvent',
@@ -2041,6 +2294,42 @@ class Protocol extends _isc.SerializationManager
         return 'ActivityEventView';
       case _i50cy468.ActivityType():
         return 'ActivityType';
+      case _iyja8k5e.AiApplyMode():
+        return 'AiApplyMode';
+      case _iviyoyk9.AiQuality():
+        return 'AiQuality';
+      case _i7i53on7.AiUsage():
+        return 'AiUsage';
+      case _imx2nn1q.AiUserSetting():
+        return 'AiUserSetting';
+      case _ic7e83wd.AssistantContextHints():
+        return 'AssistantContextHints';
+      case _imp4tsxo.AssistantEvent():
+        return 'AssistantEvent';
+      case _id6kvqt9.AssistantEventType():
+        return 'AssistantEventType';
+      case _i8cittxq.AssistantMessage():
+        return 'AssistantMessage';
+      case _i4rkdm2k.AssistantMessageView():
+        return 'AssistantMessageView';
+      case _ia2m3j3v.AssistantStatus():
+        return 'AssistantStatus';
+      case _iaq6rutx.AssistantThread():
+        return 'AssistantThread';
+      case _i4iv0swm.AssistantThreadDetail():
+        return 'AssistantThreadDetail';
+      case _iohdfqf1.AssistantThreadView():
+        return 'AssistantThreadView';
+      case _i8ghcs7p.InlineAiEvent():
+        return 'InlineAiEvent';
+      case _i6pcz5z6.InlineAiEventType():
+        return 'InlineAiEventType';
+      case _i4m43iwr.InlineAiRequest():
+        return 'InlineAiRequest';
+      case _ie0jt2ne.ProofreadEvent():
+        return 'ProofreadEvent';
+      case _ivmxemza.ProofreadIssue():
+        return 'ProofreadIssue';
       case _iyixppck.Comment():
         return 'Comment';
       case _iw81twtc.CommentAnchorKind():
@@ -2361,6 +2650,60 @@ class Protocol extends _isc.SerializationManager
     }
     if (dataClassName == 'ActivityType') {
       return deserialize<_i50cy468.ActivityType>(data['data']);
+    }
+    if (dataClassName == 'AiApplyMode') {
+      return deserialize<_iyja8k5e.AiApplyMode>(data['data']);
+    }
+    if (dataClassName == 'AiQuality') {
+      return deserialize<_iviyoyk9.AiQuality>(data['data']);
+    }
+    if (dataClassName == 'AiUsage') {
+      return deserialize<_i7i53on7.AiUsage>(data['data']);
+    }
+    if (dataClassName == 'AiUserSetting') {
+      return deserialize<_imx2nn1q.AiUserSetting>(data['data']);
+    }
+    if (dataClassName == 'AssistantContextHints') {
+      return deserialize<_ic7e83wd.AssistantContextHints>(data['data']);
+    }
+    if (dataClassName == 'AssistantEvent') {
+      return deserialize<_imp4tsxo.AssistantEvent>(data['data']);
+    }
+    if (dataClassName == 'AssistantEventType') {
+      return deserialize<_id6kvqt9.AssistantEventType>(data['data']);
+    }
+    if (dataClassName == 'AssistantMessage') {
+      return deserialize<_i8cittxq.AssistantMessage>(data['data']);
+    }
+    if (dataClassName == 'AssistantMessageView') {
+      return deserialize<_i4rkdm2k.AssistantMessageView>(data['data']);
+    }
+    if (dataClassName == 'AssistantStatus') {
+      return deserialize<_ia2m3j3v.AssistantStatus>(data['data']);
+    }
+    if (dataClassName == 'AssistantThread') {
+      return deserialize<_iaq6rutx.AssistantThread>(data['data']);
+    }
+    if (dataClassName == 'AssistantThreadDetail') {
+      return deserialize<_i4iv0swm.AssistantThreadDetail>(data['data']);
+    }
+    if (dataClassName == 'AssistantThreadView') {
+      return deserialize<_iohdfqf1.AssistantThreadView>(data['data']);
+    }
+    if (dataClassName == 'InlineAiEvent') {
+      return deserialize<_i8ghcs7p.InlineAiEvent>(data['data']);
+    }
+    if (dataClassName == 'InlineAiEventType') {
+      return deserialize<_i6pcz5z6.InlineAiEventType>(data['data']);
+    }
+    if (dataClassName == 'InlineAiRequest') {
+      return deserialize<_i4m43iwr.InlineAiRequest>(data['data']);
+    }
+    if (dataClassName == 'ProofreadEvent') {
+      return deserialize<_ie0jt2ne.ProofreadEvent>(data['data']);
+    }
+    if (dataClassName == 'ProofreadIssue') {
+      return deserialize<_ivmxemza.ProofreadIssue>(data['data']);
     }
     if (dataClassName == 'Comment') {
       return deserialize<_iyixppck.Comment>(data['data']);

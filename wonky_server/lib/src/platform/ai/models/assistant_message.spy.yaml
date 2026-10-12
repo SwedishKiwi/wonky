@@ -1,0 +1,23 @@
+### One turn of an assistant thread. `contentJson` keeps the raw API content
+### blocks verbatim (thinking blocks included) for append-only replay.
+class: AssistantMessage
+table: assistant_message
+fields:
+  threadId: int, relation(parent=assistant_thread, onDelete=Cascade)
+  ### user | assistant
+  role: String
+  contentJson: String?, scope=serverOnly
+  ### Rendered text for the UI (user text / assistant Markdown).
+  displayText: String
+  ### JSON list of AssistantToolActivity summaries for the UI.
+  toolCallsJson: String?
+  ### Whether the turn is shown in the panel (tool-result turns are not).
+  visible: bool, default=true
+  ### Whether the turn is replayed to the model (refused turns are not).
+  replay: bool, default=true
+  runId: String?
+  stopReason: String?
+  createdAt: DateTime
+indexes:
+  assistant_message_thread_idx:
+    fields: threadId, id

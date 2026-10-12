@@ -75,7 +75,10 @@ class BuiltinTemplate {
             .replaceAll(RegExp(r'[*_`]'), '')
             .replaceAll(RegExp(r'\s*\|\s*'), '   ')
             .trim();
-        if (line.isEmpty) continue;
+        // Placeholder items without text ("1.", "☐") add nothing.
+        if (line.isEmpty || RegExp(r'^(\d+[.)]|[☐•—-])$').hasMatch(line)) {
+          continue;
+        }
         lines.add(heading ? '# $line' : line);
         if (lines.length >= 14) break;
       }

@@ -1,0 +1,7 @@
+class: AssistantThreadView
+fields:
+  id: int
+  itemUuid: UuidValue?
+  title: String
+  createdAt: DateTime
+  updatedAt: DateTime

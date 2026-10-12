@@ -12,6 +12,7 @@
 
 // ignore_for_file: no_leading_underscores_for_library_prefixes
 import 'dart:async' as _ida;
+import 'dart:convert' as _idc;
 import 'dart:io' as _idi;
 import 'dart:typed_data' as _idt;
 import 'package:serverpod/serverpod.dart' as _is;
@@ -23,6 +24,24 @@ import 'package:serverpod_test/serverpod_test.dart' as _ist;
 import 'package:wonky_server/src/generated/future_calls.dart' as _iwslocjr;
 import 'package:wonky_server/src/generated/platform/activity/activity_event_view.dart'
     as _iiw0494r;
+import 'package:wonky_server/src/generated/platform/ai/models/ai_quality.dart'
+    as _idrzmvpg;
+import 'package:wonky_server/src/generated/platform/ai/models/assistant_context_hints.dart'
+    as _ixc2f7d5;
+import 'package:wonky_server/src/generated/platform/ai/models/assistant_event.dart'
+    as _ibgujsil;
+import 'package:wonky_server/src/generated/platform/ai/models/assistant_status.dart'
+    as _ibfulm5p;
+import 'package:wonky_server/src/generated/platform/ai/models/assistant_thread_detail.dart'
+    as _invizsga;
+import 'package:wonky_server/src/generated/platform/ai/models/assistant_thread_view.dart'
+    as _i1372x0g;
+import 'package:wonky_server/src/generated/platform/ai/models/inline_ai_event.dart'
+    as _iplizi6w;
+import 'package:wonky_server/src/generated/platform/ai/models/inline_ai_request.dart'
+    as _i4c3y8bm;
+import 'package:wonky_server/src/generated/platform/ai/models/proofread_event.dart'
+    as _ib6yu876;
 import 'package:wonky_server/src/generated/platform/comments/comment_anchor_kind.dart'
     as _i384cqmz;
 import 'package:wonky_server/src/generated/platform/comments/comment_event.dart'
@@ -278,6 +297,8 @@ class TestEndpoints {
 
   late final _JwtRefreshEndpoint jwtRefresh;
 
+  late final _AssistantEndpoint assistant;
+
   late final _CommentEndpoint comment;
 
   late final _DriveEndpoint drive;
@@ -329,6 +350,10 @@ class _InternalTestEndpoints extends TestEndpoints
       serializationManager,
     );
     jwtRefresh = _JwtRefreshEndpoint(
+      endpoints,
+      serializationManager,
+    );
+    assistant = _AssistantEndpoint(
       endpoints,
       serializationManager,
     );
@@ -730,6 +755,421 @@ class _JwtRefreshEndpoint {
         await _localUniqueSession.close();
       }
     });
+  }
+}
+
+class _AssistantEndpoint {
+  _AssistantEndpoint(
+    this._endpointDispatch,
+    this._serializationManager,
+  );
+
+  final _is.EndpointDispatch _endpointDispatch;
+
+  final _is.SerializationManager _serializationManager;
+
+  _ida.Future<_ibfulm5p.AssistantStatus> getStatus(
+    _ist.TestSessionBuilder sessionBuilder,
+  ) async {
+    return _ist.callAwaitableFunctionAndHandleExceptions(() async {
+      var _localUniqueSession =
+          (sessionBuilder as _ist.InternalTestSessionBuilder).internalBuild(
+            endpoint: 'assistant',
+            method: 'getStatus',
+          );
+      try {
+        var _localCallContext = await _endpointDispatch.getMethodCallContext(
+          createSessionCallback: (_) => _localUniqueSession,
+          endpointPath: 'assistant',
+          methodName: 'getStatus',
+          parameters: _ist.testObjectToJson({}),
+          serializationManager: _serializationManager,
+        );
+        var _localReturnValue =
+            await (_localCallContext.method.call(
+                  _localUniqueSession,
+                  _localCallContext.arguments,
+                )
+                as _ida.Future<_ibfulm5p.AssistantStatus>);
+        return _localReturnValue;
+      } finally {
+        await _localUniqueSession.close();
+      }
+    });
+  }
+
+  _ida.Future<_ibfulm5p.AssistantStatus> setQuality(
+    _ist.TestSessionBuilder sessionBuilder,
+    _idrzmvpg.AiQuality quality,
+  ) async {
+    return _ist.callAwaitableFunctionAndHandleExceptions(() async {
+      var _localUniqueSession =
+          (sessionBuilder as _ist.InternalTestSessionBuilder).internalBuild(
+            endpoint: 'assistant',
+            method: 'setQuality',
+          );
+      try {
+        var _localCallContext = await _endpointDispatch.getMethodCallContext(
+          createSessionCallback: (_) => _localUniqueSession,
+          endpointPath: 'assistant',
+          methodName: 'setQuality',
+          parameters: _ist.testObjectToJson({'quality': quality}),
+          serializationManager: _serializationManager,
+        );
+        var _localReturnValue =
+            await (_localCallContext.method.call(
+                  _localUniqueSession,
+                  _localCallContext.arguments,
+                )
+                as _ida.Future<_ibfulm5p.AssistantStatus>);
+        return _localReturnValue;
+      } finally {
+        await _localUniqueSession.close();
+      }
+    });
+  }
+
+  _ida.Stream<_ibgujsil.AssistantEvent> chat(
+    _ist.TestSessionBuilder sessionBuilder,
+    int? threadId,
+    _is.UuidValue itemUuid,
+    String message,
+    _ixc2f7d5.AssistantContextHints hints,
+  ) {
+    var _localTestStreamManager =
+        _ist.TestStreamManager<_ibgujsil.AssistantEvent>();
+    _ist.callStreamFunctionAndHandleExceptions(
+      () async {
+        var _localUniqueSession =
+            (sessionBuilder as _ist.InternalTestSessionBuilder).internalBuild(
+              endpoint: 'assistant',
+              method: 'chat',
+            );
+        var _localCallContext = await _endpointDispatch
+            .getMethodStreamCallContext(
+              createSessionCallback: (_) => _localUniqueSession,
+              endpointPath: 'assistant',
+              methodName: 'chat',
+              arguments: {
+                'threadId': threadId,
+                'itemUuid': itemUuid,
+                'message': message,
+                'hints': _idc.jsonDecode(
+                  _is.SerializationManager.encode(hints),
+                ),
+              },
+              requestedInputStreams: [],
+              serializationManager: _serializationManager,
+            );
+        await _localTestStreamManager.callStreamMethod(
+          _localCallContext,
+          _localUniqueSession,
+          {},
+        );
+      },
+      _localTestStreamManager.outputStreamController,
+    );
+    return _localTestStreamManager.outputStreamController.stream;
+  }
+
+  _ida.Future<bool> stop(
+    _ist.TestSessionBuilder sessionBuilder,
+    int? threadId,
+    String? runId,
+  ) async {
+    return _ist.callAwaitableFunctionAndHandleExceptions(() async {
+      var _localUniqueSession =
+          (sessionBuilder as _ist.InternalTestSessionBuilder).internalBuild(
+            endpoint: 'assistant',
+            method: 'stop',
+          );
+      try {
+        var _localCallContext = await _endpointDispatch.getMethodCallContext(
+          createSessionCallback: (_) => _localUniqueSession,
+          endpointPath: 'assistant',
+          methodName: 'stop',
+          parameters: _ist.testObjectToJson({
+            'threadId': threadId,
+            'runId': runId,
+          }),
+          serializationManager: _serializationManager,
+        );
+        var _localReturnValue =
+            await (_localCallContext.method.call(
+                  _localUniqueSession,
+                  _localCallContext.arguments,
+                )
+                as _ida.Future<bool>);
+        return _localReturnValue;
+      } finally {
+        await _localUniqueSession.close();
+      }
+    });
+  }
+
+  _ida.Future<bool> confirm(
+    _ist.TestSessionBuilder sessionBuilder,
+    String runId,
+    String confirmationId,
+    bool allow,
+  ) async {
+    return _ist.callAwaitableFunctionAndHandleExceptions(() async {
+      var _localUniqueSession =
+          (sessionBuilder as _ist.InternalTestSessionBuilder).internalBuild(
+            endpoint: 'assistant',
+            method: 'confirm',
+          );
+      try {
+        var _localCallContext = await _endpointDispatch.getMethodCallContext(
+          createSessionCallback: (_) => _localUniqueSession,
+          endpointPath: 'assistant',
+          methodName: 'confirm',
+          parameters: _ist.testObjectToJson({
+            'runId': runId,
+            'confirmationId': confirmationId,
+            'allow': allow,
+          }),
+          serializationManager: _serializationManager,
+        );
+        var _localReturnValue =
+            await (_localCallContext.method.call(
+                  _localUniqueSession,
+                  _localCallContext.arguments,
+                )
+                as _ida.Future<bool>);
+        return _localReturnValue;
+      } finally {
+        await _localUniqueSession.close();
+      }
+    });
+  }
+
+  _ida.Future<List<_i1372x0g.AssistantThreadView>> listThreads(
+    _ist.TestSessionBuilder sessionBuilder,
+    _is.UuidValue itemUuid,
+  ) async {
+    return _ist.callAwaitableFunctionAndHandleExceptions(() async {
+      var _localUniqueSession =
+          (sessionBuilder as _ist.InternalTestSessionBuilder).internalBuild(
+            endpoint: 'assistant',
+            method: 'listThreads',
+          );
+      try {
+        var _localCallContext = await _endpointDispatch.getMethodCallContext(
+          createSessionCallback: (_) => _localUniqueSession,
+          endpointPath: 'assistant',
+          methodName: 'listThreads',
+          parameters: _ist.testObjectToJson({'itemUuid': itemUuid}),
+          serializationManager: _serializationManager,
+        );
+        var _localReturnValue =
+            await (_localCallContext.method.call(
+                  _localUniqueSession,
+                  _localCallContext.arguments,
+                )
+                as _ida.Future<List<_i1372x0g.AssistantThreadView>>);
+        return _localReturnValue;
+      } finally {
+        await _localUniqueSession.close();
+      }
+    });
+  }
+
+  _ida.Future<_invizsga.AssistantThreadDetail> getThread(
+    _ist.TestSessionBuilder sessionBuilder,
+    int threadId,
+  ) async {
+    return _ist.callAwaitableFunctionAndHandleExceptions(() async {
+      var _localUniqueSession =
+          (sessionBuilder as _ist.InternalTestSessionBuilder).internalBuild(
+            endpoint: 'assistant',
+            method: 'getThread',
+          );
+      try {
+        var _localCallContext = await _endpointDispatch.getMethodCallContext(
+          createSessionCallback: (_) => _localUniqueSession,
+          endpointPath: 'assistant',
+          methodName: 'getThread',
+          parameters: _ist.testObjectToJson({'threadId': threadId}),
+          serializationManager: _serializationManager,
+        );
+        var _localReturnValue =
+            await (_localCallContext.method.call(
+                  _localUniqueSession,
+                  _localCallContext.arguments,
+                )
+                as _ida.Future<_invizsga.AssistantThreadDetail>);
+        return _localReturnValue;
+      } finally {
+        await _localUniqueSession.close();
+      }
+    });
+  }
+
+  _ida.Future<void> deleteThread(
+    _ist.TestSessionBuilder sessionBuilder,
+    int threadId,
+  ) async {
+    return _ist.callAwaitableFunctionAndHandleExceptions(() async {
+      var _localUniqueSession =
+          (sessionBuilder as _ist.InternalTestSessionBuilder).internalBuild(
+            endpoint: 'assistant',
+            method: 'deleteThread',
+          );
+      try {
+        var _localCallContext = await _endpointDispatch.getMethodCallContext(
+          createSessionCallback: (_) => _localUniqueSession,
+          endpointPath: 'assistant',
+          methodName: 'deleteThread',
+          parameters: _ist.testObjectToJson({'threadId': threadId}),
+          serializationManager: _serializationManager,
+        );
+        var _localReturnValue =
+            await (_localCallContext.method.call(
+                  _localUniqueSession,
+                  _localCallContext.arguments,
+                )
+                as _ida.Future<void>);
+        return _localReturnValue;
+      } finally {
+        await _localUniqueSession.close();
+      }
+    });
+  }
+
+  _ida.Future<int> clearHistory(_ist.TestSessionBuilder sessionBuilder) async {
+    return _ist.callAwaitableFunctionAndHandleExceptions(() async {
+      var _localUniqueSession =
+          (sessionBuilder as _ist.InternalTestSessionBuilder).internalBuild(
+            endpoint: 'assistant',
+            method: 'clearHistory',
+          );
+      try {
+        var _localCallContext = await _endpointDispatch.getMethodCallContext(
+          createSessionCallback: (_) => _localUniqueSession,
+          endpointPath: 'assistant',
+          methodName: 'clearHistory',
+          parameters: _ist.testObjectToJson({}),
+          serializationManager: _serializationManager,
+        );
+        var _localReturnValue =
+            await (_localCallContext.method.call(
+                  _localUniqueSession,
+                  _localCallContext.arguments,
+                )
+                as _ida.Future<int>);
+        return _localReturnValue;
+      } finally {
+        await _localUniqueSession.close();
+      }
+    });
+  }
+
+  _ida.Future<void> revertChange(
+    _ist.TestSessionBuilder sessionBuilder,
+    String changeId,
+  ) async {
+    return _ist.callAwaitableFunctionAndHandleExceptions(() async {
+      var _localUniqueSession =
+          (sessionBuilder as _ist.InternalTestSessionBuilder).internalBuild(
+            endpoint: 'assistant',
+            method: 'revertChange',
+          );
+      try {
+        var _localCallContext = await _endpointDispatch.getMethodCallContext(
+          createSessionCallback: (_) => _localUniqueSession,
+          endpointPath: 'assistant',
+          methodName: 'revertChange',
+          parameters: _ist.testObjectToJson({'changeId': changeId}),
+          serializationManager: _serializationManager,
+        );
+        var _localReturnValue =
+            await (_localCallContext.method.call(
+                  _localUniqueSession,
+                  _localCallContext.arguments,
+                )
+                as _ida.Future<void>);
+        return _localReturnValue;
+      } finally {
+        await _localUniqueSession.close();
+      }
+    });
+  }
+
+  _ida.Stream<_iplizi6w.InlineAiEvent> inline(
+    _ist.TestSessionBuilder sessionBuilder,
+    _i4c3y8bm.InlineAiRequest request,
+  ) {
+    var _localTestStreamManager =
+        _ist.TestStreamManager<_iplizi6w.InlineAiEvent>();
+    _ist.callStreamFunctionAndHandleExceptions(
+      () async {
+        var _localUniqueSession =
+            (sessionBuilder as _ist.InternalTestSessionBuilder).internalBuild(
+              endpoint: 'assistant',
+              method: 'inline',
+            );
+        var _localCallContext = await _endpointDispatch
+            .getMethodStreamCallContext(
+              createSessionCallback: (_) => _localUniqueSession,
+              endpointPath: 'assistant',
+              methodName: 'inline',
+              arguments: {
+                'request': _idc.jsonDecode(
+                  _is.SerializationManager.encode(request),
+                ),
+              },
+              requestedInputStreams: [],
+              serializationManager: _serializationManager,
+            );
+        await _localTestStreamManager.callStreamMethod(
+          _localCallContext,
+          _localUniqueSession,
+          {},
+        );
+      },
+      _localTestStreamManager.outputStreamController,
+    );
+    return _localTestStreamManager.outputStreamController.stream;
+  }
+
+  _ida.Stream<_ib6yu876.ProofreadEvent> proofread(
+    _ist.TestSessionBuilder sessionBuilder,
+    _is.UuidValue itemUuid,
+    int? start,
+    int? length,
+  ) {
+    var _localTestStreamManager =
+        _ist.TestStreamManager<_ib6yu876.ProofreadEvent>();
+    _ist.callStreamFunctionAndHandleExceptions(
+      () async {
+        var _localUniqueSession =
+            (sessionBuilder as _ist.InternalTestSessionBuilder).internalBuild(
+              endpoint: 'assistant',
+              method: 'proofread',
+            );
+        var _localCallContext = await _endpointDispatch
+            .getMethodStreamCallContext(
+              createSessionCallback: (_) => _localUniqueSession,
+              endpointPath: 'assistant',
+              methodName: 'proofread',
+              arguments: {
+                'itemUuid': itemUuid,
+                'start': start,
+                'length': length,
+              },
+              requestedInputStreams: [],
+              serializationManager: _serializationManager,
+            );
+        await _localTestStreamManager.callStreamMethod(
+          _localCallContext,
+          _localUniqueSession,
+          {},
+        );
+      },
+      _localTestStreamManager.outputStreamController,
+    );
+    return _localTestStreamManager.outputStreamController.stream;
   }
 }
 

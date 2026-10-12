@@ -316,7 +316,7 @@ Widget _stableEnabled(Key? key, bool enabled, Widget Function(Key key) build) =>
       child: build(ValueKey<(Key?, bool)>((key, enabled))),
     );
 
-/// The key cap of a logical key name ("Backslash" → "\\").
+/// The key cap of a logical key name (`Backslash` → a backslash).
 String keyCapLabel(String key) => switch (key) {
   'Backslash' => r'\',
   'Slash' => '/',

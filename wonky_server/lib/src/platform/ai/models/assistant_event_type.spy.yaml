@@ -1,0 +1,20 @@
+### Kinds of [AssistantEvent]s streamed by `assistant.chat`.
+enum: AssistantEventType
+serialized: byName
+values:
+  ### First event: the thread (created when new) and the run id.
+  - started
+  - textDelta
+  ### A progress note between tool calls (thinking display "updates").
+  - progress
+  - toolStarted
+  - toolFinished
+  ### The destructive guard asks the user (assistant.confirm).
+  - confirmationRequired
+  - usage
+  ### The answer was cut off (max_tokens): the panel offers "Continue".
+  - maxTokens
+  - refusal
+  - error
+  ### Last event of a run.
+  - done

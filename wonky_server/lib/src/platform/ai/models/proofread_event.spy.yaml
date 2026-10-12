@@ -1,0 +1,10 @@
+class: ProofreadEvent
+fields:
+  ### issues | done | refusal | error
+  type: String
+  issues: List<ProofreadIssue>?
+  sectionsDone: int?
+  sectionsTotal: int?
+  revision: int?
+  error: String?
+  errorCode: String?

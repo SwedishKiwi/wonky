@@ -8,7 +8,9 @@ import 'package:wonky_client/wonky_client.dart'
     show FileUrlView, StoredFileKind, StoredFileStatus, UuidValue;
 import 'package:wonky_core/wonky_core.dart' show UuidV7Generator;
 
+import '../document/write_document_session.dart';
 import '../editor/components/editor_services.dart';
+import '../offline/pending_uploads.dart';
 
 /// Picked image bytes.
 @immutable
@@ -117,16 +119,52 @@ class _Url {
 /// polling while another user's upload is pending), uploads picked/pasted
 /// images through the files service with progress placeholders, retries and
 /// cancel.
+///
+/// With the offline store (suite 12 §1.1 `LocalPendingUpload`) the bytes are
+/// stored before uploading: images inserted offline render from the local
+/// bytes (also after a reload) and upload in the background when the server
+/// is reachable.
 class WriteImageServices extends EditorImageServices {
   WriteImageServices({
     required this.files,
     required this.documentUuid,
     UuidV7Generator? ids,
+    this._offlineUploads,
   }) : _ids = ids ?? UuidV7Generator.instance;
 
   final FileRepository files;
+
+  /// The drive item of the document (uploads are attached to it).
   final UuidValue documentUuid;
   final UuidV7Generator _ids;
+  final PendingUploads? Function()? _offlineUploads;
+  StreamSubscription<UuidValue>? _completedSub;
+  PendingUploads? _watched;
+
+  /// The durable upload queue of the signed-in user, if any.
+  PendingUploads? get _queue {
+    final q =
+        _offlineUploads?.call() ??
+        WriteDocumentSession.forItem(documentUuid)?.offline?.uploads;
+    if (q != null && !identical(q, _watched)) {
+      _watched = q;
+      unawaited(_completedSub?.cancel());
+      _completedSub = q.completed.listen(_onQueueCompleted);
+    }
+    return q;
+  }
+
+  void _onQueueCompleted(UuidValue fileUuid) {
+    final src = '$scheme${fileUuid.uuid}';
+    final u = _uploads.remove(src);
+    if (u != null) {
+      u.cancelled = true;
+      u.status.value = null;
+      _updatePending();
+    }
+    _urls.remove(src);
+    _resolving.remove(src);
+  }
 
   final Map<String, _Upload> _uploads = {};
   final Map<String, _Url> _urls = {};
@@ -152,6 +190,21 @@ class WriteImageServices extends EditorImageServices {
   }
 
   Future<void> _run(String src, _Upload u) async {
+    final queue = _queue;
+    if (queue != null && u.attempts == 0) {
+      try {
+        await queue.add(
+          fileUuid: u.fileUuid,
+          itemUuid: documentUuid,
+          bytes: u.image.bytes,
+          mimeType: u.image.mimeType,
+          fileName: u.image.name,
+        );
+      } catch (e) {
+        debugPrint('Storing the image on this device failed: $e');
+      }
+    }
+    queue?.claim(u.fileUuid);
     while (!u.cancelled) {
       u.attempts++;
       u.status.value = ImageUploadStatus(
@@ -173,10 +226,20 @@ class WriteImageServices extends EditorImageServices {
         u.status.value = null;
         _uploads.remove(src);
         _updatePending();
+        unawaited(queue?.complete(u.fileUuid));
         return;
       } catch (e) {
         debugPrint('Image upload failed (attempt ${u.attempts}): $e');
         final retryable = isOfflineError(e);
+        if (retryable && queue != null && queue.contains(u.fileUuid)) {
+          // Stored on this device: the queue uploads it once online.
+          u.status.value = ImageUploadStatus(
+            ImageUploadPhase.uploading,
+            localPreview: MemoryImage(u.image.bytes),
+          );
+          queue.release(u.fileUuid);
+          return;
+        }
         if (!retryable || u.attempts >= 5) {
           u.status.value = ImageUploadStatus(
             ImageUploadPhase.failed,
@@ -225,6 +288,7 @@ class WriteImageServices extends EditorImageServices {
     u.cancelled = true;
     u.status.value = null;
     _updatePending();
+    unawaited(_queue?.cancel(u.fileUuid));
   }
 
   @override
@@ -233,6 +297,17 @@ class WriteImageServices extends EditorImageServices {
     if (!src.startsWith(scheme)) return null;
     final local = _uploads[src];
     if (local != null) return MemoryImage(local.image.bytes);
+    final queue = _queue;
+    UuidValue? fileUuid;
+    try {
+      fileUuid = UuidValue.withValidation(src.substring(scheme.length));
+    } catch (_) {}
+    if (queue != null && fileUuid != null && queue.contains(fileUuid)) {
+      // Inserted on this device and not uploaded yet: the local bytes.
+      return queue.bytesOf(fileUuid).then(
+        (b) => b == null ? null : MemoryImage(b),
+      );
+    }
     final cached = _urls[src];
     final now = clock.now();
     if (cached != null &&
@@ -273,8 +348,10 @@ class WriteImageServices extends EditorImageServices {
   Uint8List? localBytes(String src) => _uploads[src]?.image.bytes;
 
   void dispose() {
+    unawaited(_completedSub?.cancel());
     for (final u in _uploads.values) {
       u.cancelled = true;
+      _watched?.release(u.fileUuid);
     }
     pendingUploads.dispose();
   }

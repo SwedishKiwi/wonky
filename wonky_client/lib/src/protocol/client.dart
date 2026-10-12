@@ -22,6 +22,24 @@ import 'package:serverpod_offline_sync_client/serverpod_offline_sync_client.dart
     as _ipulbpi2;
 import 'package:wonky_client/src/protocol/platform/activity/activity_event_view.dart'
     as _itempttd;
+import 'package:wonky_client/src/protocol/platform/ai/models/ai_quality.dart'
+    as _il8jkded;
+import 'package:wonky_client/src/protocol/platform/ai/models/assistant_context_hints.dart'
+    as _ig0xo5zw;
+import 'package:wonky_client/src/protocol/platform/ai/models/assistant_event.dart'
+    as _ip81vhc1;
+import 'package:wonky_client/src/protocol/platform/ai/models/assistant_status.dart'
+    as _idfnr0x0;
+import 'package:wonky_client/src/protocol/platform/ai/models/assistant_thread_detail.dart'
+    as _irgg4r7f;
+import 'package:wonky_client/src/protocol/platform/ai/models/assistant_thread_view.dart'
+    as _i2rhb3qx;
+import 'package:wonky_client/src/protocol/platform/ai/models/inline_ai_event.dart'
+    as _ivbb4qsj;
+import 'package:wonky_client/src/protocol/platform/ai/models/inline_ai_request.dart'
+    as _i31mo4jy;
+import 'package:wonky_client/src/protocol/platform/ai/models/proofread_event.dart'
+    as _irtrv5vw;
 import 'package:wonky_client/src/protocol/platform/comments/comment_anchor_kind.dart'
     as _i8agtv5a;
 import 'package:wonky_client/src/protocol/platform/comments/comment_event.dart'
@@ -362,6 +380,160 @@ class EndpointJwtRefresh extends _iacc.EndpointRefreshJwtTokens {
         'refreshAccessToken',
         {'refreshToken': refreshToken},
         authenticated: false,
+      );
+}
+
+/// The AI assistant (suite 10 §2, Write 09 §5). Model calls happen here on
+/// the server; the API key never reaches clients.
+/// {@category Endpoint}
+class EndpointAssistant extends _isc.EndpointRef {
+  EndpointAssistant(_isc.EndpointCaller caller) : super(caller);
+
+  @override
+  String get name => 'assistant';
+
+  /// Whether the assistant can be used, the quality setting and today's
+  /// usage.
+  _ida.Future<_idfnr0x0.AssistantStatus> getStatus() =>
+      caller.callServerEndpoint<_idfnr0x0.AssistantStatus>(
+        'assistant',
+        'getStatus',
+        {},
+      );
+
+  /// Settings › AI › Quality.
+  _ida.Future<_idfnr0x0.AssistantStatus> setQuality(
+    _il8jkded.AiQuality quality,
+  ) => caller.callServerEndpoint<_idfnr0x0.AssistantStatus>(
+    'assistant',
+    'setQuality',
+    {'quality': quality},
+  );
+
+  /// Sends a message ([threadId] null = new thread on [itemUuid]) and
+  /// streams the run: `started` (thread + run id), text deltas, progress
+  /// notes, tool activity, confirmations, usage, then `done`.
+  _ida.Stream<_ip81vhc1.AssistantEvent> chat(
+    int? threadId,
+    _isc.UuidValue itemUuid,
+    String message,
+    _ig0xo5zw.AssistantContextHints hints,
+  ) =>
+      caller.callStreamingServerEndpoint<
+        _ida.Stream<_ip81vhc1.AssistantEvent>,
+        _ip81vhc1.AssistantEvent
+      >(
+        'assistant',
+        'chat',
+        {
+          'threadId': threadId,
+          'itemUuid': itemUuid,
+          'message': message,
+          'hints': hints,
+        },
+        {},
+      );
+
+  /// Stops a run ([runId]) or every run of [threadId].
+  _ida.Future<bool> stop(
+    int? threadId,
+    String? runId,
+  ) => caller.callServerEndpoint<bool>(
+    'assistant',
+    'stop',
+    {
+      'threadId': threadId,
+      'runId': runId,
+    },
+  );
+
+  /// Answers a destructive-change confirmation (Allow / Deny).
+  _ida.Future<bool> confirm(
+    String runId,
+    String confirmationId,
+    bool allow,
+  ) => caller.callServerEndpoint<bool>(
+    'assistant',
+    'confirm',
+    {
+      'runId': runId,
+      'confirmationId': confirmationId,
+      'allow': allow,
+    },
+  );
+
+  /// Threads of the user on [itemUuid], newest first.
+  _ida.Future<List<_i2rhb3qx.AssistantThreadView>> listThreads(
+    _isc.UuidValue itemUuid,
+  ) => caller.callServerEndpoint<List<_i2rhb3qx.AssistantThreadView>>(
+    'assistant',
+    'listThreads',
+    {'itemUuid': itemUuid},
+  );
+
+  _ida.Future<_irgg4r7f.AssistantThreadDetail> getThread(int threadId) =>
+      caller.callServerEndpoint<_irgg4r7f.AssistantThreadDetail>(
+        'assistant',
+        'getThread',
+        {'threadId': threadId},
+      );
+
+  _ida.Future<void> deleteThread(int threadId) =>
+      caller.callServerEndpoint<void>(
+        'assistant',
+        'deleteThread',
+        {'threadId': threadId},
+      );
+
+  /// Deletes every conversation of the user; returns how many.
+  _ida.Future<int> clearHistory() => caller.callServerEndpoint<int>(
+    'assistant',
+    'clearHistory',
+    {},
+  );
+
+  /// Reverts an assistant change by its `change_id` (panel Undo fallback).
+  _ida.Future<void> revertChange(String changeId) =>
+      caller.callServerEndpoint<void>(
+        'assistant',
+        'revertChange',
+        {'changeId': changeId},
+      );
+
+  /// Inline AI: rewrite a selection, continue writing, explain, summarize,
+  /// generate an outline (Write 09 §5.3–5.5).
+  _ida.Stream<_ivbb4qsj.InlineAiEvent> inline(
+    _i31mo4jy.InlineAiRequest request,
+  ) =>
+      caller.callStreamingServerEndpoint<
+        _ida.Stream<_ivbb4qsj.InlineAiEvent>,
+        _ivbb4qsj.InlineAiEvent
+      >(
+        'assistant',
+        'inline',
+        {'request': request},
+        {},
+      );
+
+  /// Proofreads the document (or a range): streams validated issues per
+  /// section.
+  _ida.Stream<_irtrv5vw.ProofreadEvent> proofread(
+    _isc.UuidValue itemUuid,
+    int? start,
+    int? length,
+  ) =>
+      caller.callStreamingServerEndpoint<
+        _ida.Stream<_irtrv5vw.ProofreadEvent>,
+        _irtrv5vw.ProofreadEvent
+      >(
+        'assistant',
+        'proofread',
+        {
+          'itemUuid': itemUuid,
+          'start': start,
+          'length': length,
+        },
+        {},
       );
 }
 
@@ -2018,6 +2190,7 @@ class Client extends _isc.ServerpodClientShared {
        ) {
     emailIdp = EndpointEmailIdp(this);
     jwtRefresh = EndpointJwtRefresh(this);
+    assistant = EndpointAssistant(this);
     comment = EndpointComment(this);
     drive = EndpointDrive(this);
     e2eSupport = EndpointE2eSupport(this);
@@ -2043,6 +2216,8 @@ class Client extends _isc.ServerpodClientShared {
   late final EndpointEmailIdp emailIdp;
 
   late final EndpointJwtRefresh jwtRefresh;
+
+  late final EndpointAssistant assistant;
 
   late final EndpointComment comment;
 
@@ -2088,6 +2263,7 @@ class Client extends _isc.ServerpodClientShared {
   Map<String, _isc.EndpointRef> get endpointRefLookup => {
     'emailIdp': emailIdp,
     'jwtRefresh': jwtRefresh,
+    'assistant': assistant,
     'comment': comment,
     'drive': drive,
     'e2eSupport': e2eSupport,

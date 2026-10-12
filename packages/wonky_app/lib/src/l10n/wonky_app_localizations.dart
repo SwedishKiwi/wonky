@@ -2479,6 +2479,72 @@ abstract class WonkyAppLocalizations {
   /// **'Changes waiting to sync'**
   String get offlinePending;
 
+  /// No description provided for @badgeOfflineRecent.
+  ///
+  /// In en, this message translates to:
+  /// **'Available offline (opened recently)'**
+  String get badgeOfflineRecent;
+
+  /// No description provided for @badgeOfflinePending.
+  ///
+  /// In en, this message translates to:
+  /// **'Downloading for offline use…'**
+  String get badgeOfflinePending;
+
+  /// No description provided for @offlineUnavailable.
+  ///
+  /// In en, this message translates to:
+  /// **'This file isn\'t available offline'**
+  String get offlineUnavailable;
+
+  /// No description provided for @offlineDocuments.
+  ///
+  /// In en, this message translates to:
+  /// **'Files on this device'**
+  String get offlineDocuments;
+
+  /// No description provided for @offlineDocumentsValue.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =0{None} =1{1 file} other{{count} files}}'**
+  String offlineDocumentsValue(int count);
+
+  /// No description provided for @offlinePinnedCount.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =0{No files made available offline} =1{1 made available offline} other{{count} made available offline}}'**
+  String offlinePinnedCount(int count);
+
+  /// No description provided for @offlineUploads.
+  ///
+  /// In en, this message translates to:
+  /// **'Images waiting to upload'**
+  String get offlineUploads;
+
+  /// No description provided for @offlineStorageUsed.
+  ///
+  /// In en, this message translates to:
+  /// **'Storage used'**
+  String get offlineStorageUsed;
+
+  /// No description provided for @offlineClearUnsynced.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 change hasn\'t synced yet and will be lost.} other{{count} changes haven\'t synced yet and will be lost.}}'**
+  String offlineClearUnsynced(int count);
+
+  /// No description provided for @offlineSimulate.
+  ///
+  /// In en, this message translates to:
+  /// **'Simulate offline'**
+  String get offlineSimulate;
+
+  /// No description provided for @offlineSimulateHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Disconnects from the server to try offline editing (developer setting).'**
+  String get offlineSimulateHint;
+
   /// No description provided for @ownerAnyone.
   ///
   /// In en, this message translates to:

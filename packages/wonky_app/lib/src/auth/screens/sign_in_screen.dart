@@ -129,8 +129,9 @@ class _SignInScreenState extends State<SignInScreen> {
       services: widget.services,
       title: l.authSignInTitle,
       subtitle: l.authSignInSubtitle,
-      footer: Row(
-        mainAxisAlignment: MainAxisAlignment.center,
+      footer: Wrap(
+        alignment: WrapAlignment.center,
+        crossAxisAlignment: WrapCrossAlignment.center,
         children: [
           Text(l.authNoAccount),
           ShadButton.link(

@@ -12,9 +12,7 @@ committed and verified).
 
 ## Wonky Write — deferred features (in planned order)
 
-1. ☐ **Theme editor UI** (Write 06 §5).
-   - The server `writeTheme` endpoints already support it: create, update with version conflicts, revisions, duplicate and usage.
-   - The core `WriteThemeData`, validator, resolver and contrast checker already exist.
+1. ☑ **Theme editor UI** (Write 06 §10): `/themes/:uuid?doc=` with a live preview (sample or the document, light/dark, pages/pageless, zoom), a catalog-driven inspector for every theme property, contrast warnings with *Fix*, dark derivation and overrides, duplicate/rename/delete/restore, revisions, conflict dialog, *Apply to document* and *Set as my default*; all `write.theme.*` commands, undoable. Still open: hover-outlining of matching blocks in the preview.
 2. ☑ **Import/export formats** (Write 07): DOCX, ODT, RTF and EPUB exporters plus DOCX, ODT and RTF importers in `wonky_write_core`. Exporting and re-importing our own files gives back the same document for all 8 themes, except that RTF brings heading numbers back as text. Server `writeExport.export` covers all 10 formats, with bundled fonts in `web/fonts` and images read from storage; `drive.import` and `convertForInsert` accept HTML, DOCX, ODT and RTF. In the app, File › Download lists every format, and File › Import / Insert from file accept them; the import banner shows on first open. Still open:
    - the server export cache and the isolate pool; large documents still export on the client;
    - SVG images in DOCX/ODT/RTF/EPUB (rendered as placeholders);

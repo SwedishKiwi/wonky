@@ -120,6 +120,21 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
+  for (final width in [760.0, 1024.0]) {
+    for (final dark in [false, true]) {
+      testWidgets('Given a ${width.toInt()} px wide ${dark ? 'dark' : 'light'} '
+          'window when the screen loads then nothing overflows', (
+        tester,
+      ) async {
+        await pumpScreen(tester, size: Size(width, 760), dark: dark);
+
+        expect(tester.takeException(), isNull);
+        await tester.pumpWidget(const SizedBox());
+        await tester.pump(const Duration(seconds: 2));
+      });
+    }
+  }
+
   testWidgets('Given suggesting mode with a suggestion card when the comment '
       'margin shows then the suggesting cue spans the margin too', (
     tester,

@@ -215,6 +215,40 @@ void main() {
     await settleTooltips(tester);
   });
 
+  testWidgets('Given Theme colors when opening a color then a compact picker '
+      'opens and choosing a theme swatch stores a palette reference', (
+    tester,
+  ) async {
+    final mine = repo.seed(name: 'Report');
+    await pumpEditor(tester, mine.uuid);
+    await tester.tap(
+      find.byKey(const ValueKey('write.themeEditor.node.palette')),
+    );
+    await tester.pumpAndSettle();
+
+    final link = find.byKey(
+      const ValueKey('write.themeEditor.palette.linkHover'),
+    );
+    await tester.tap(
+      find.descendant(of: link, matching: find.byType(ShadButton)).first,
+    );
+    await tester.pumpAndSettle();
+
+    final picker = find.byType(WonkyColorPicker);
+    expect(picker, findsOneWidget);
+    expect(tester.getSize(picker).width, lessThan(320));
+    await tester.tap(
+      find.descendant(of: picker, matching: find.bySemanticsLabel('Accent')),
+    );
+    await tester.pumpAndSettle();
+
+    expect(
+      ThemePropertyPath.get(editor().draftJson, 'palette.linkHover'),
+      '@accent',
+    );
+    await settleTooltips(tester);
+  });
+
   testWidgets('Given a narrow window when the editor opens then the panels '
       'become tabs without overflow', (tester) async {
     final mine = repo.seed(name: 'Report');

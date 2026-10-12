@@ -1,0 +1,8 @@
+### "AI quality" user setting (suite 10 §1): Best = Opus high effort,
+### Balanced = Opus medium effort, Fast = Haiku low effort.
+enum: AiQuality
+serialized: byName
+values:
+  - best
+  - balanced
+  - fast

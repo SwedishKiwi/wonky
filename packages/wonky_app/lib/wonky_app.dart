@@ -29,7 +29,9 @@ export 'src/comments/comments_panel.dart';
 export 'src/comments/comments_undo.dart';
 export 'src/config/wonky_app_config.dart';
 export 'src/core/connectivity_service.dart';
+export 'src/core/local_database.dart';
 export 'src/core/local_store.dart';
+export 'src/core/offline_storage.dart';
 export 'src/core/preferences_controller.dart';
 export 'src/core/shell_view_state.dart';
 export 'src/core/stream_supervisor.dart';
@@ -56,6 +58,8 @@ export 'src/menus/menu_resolver.dart';
 export 'src/menus/shell_menus.dart';
 export 'src/presence/presence_session.dart';
 export 'src/routing/misc_pages.dart';
+export 'src/settings/sections/offline_section.dart'
+    show clearLocalData, simulateOfflinePref;
 export 'src/settings/settings_screen.dart' show SettingsGroup, SettingsRow;
 export 'src/sharing/share_dialog.dart';
 export 'src/shell/account_menu.dart';

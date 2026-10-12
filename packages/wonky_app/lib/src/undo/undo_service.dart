@@ -182,6 +182,21 @@ class UndoService extends ChangeNotifier {
     _refresh();
   }
 
+  /// Restores steps persisted by the app itself (Write keeps its undo stack
+  /// with the offline document cache, suite 12 §1.1 `LocalUndoStack`).
+  /// Ignored when the stack already has steps.
+  void restoreSteps(
+    UndoStackKey key, {
+    required List<UndoStep> undo,
+    required List<UndoStep> redo,
+  }) {
+    final s = _stacks.putIfAbsent(key, _Stack.new);
+    if (s.undo.isNotEmpty || s.redo.isNotEmpty) return;
+    s.undo.addAll(undo.length > maxSteps ? undo.sublist(undo.length - maxSteps) : undo);
+    s.redo.addAll(redo);
+    _changed(key);
+  }
+
   /// Makes [key] the active document stack (null = no editor open).
   void setActiveDocument(UndoStackKey? key) {
     _activeDocument = key;

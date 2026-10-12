@@ -21,6 +21,8 @@ import 'package:serverpod_offline_sync_server/serverpod_offline_sync_server.dart
     as _izehhkf5;
 import 'package:wonky_server/src/generated/platform/activity/activity_event_view.dart'
     as _iiw0494r;
+import 'package:wonky_server/src/generated/platform/ai/models/assistant_thread_view.dart'
+    as _i1372x0g;
 import 'package:wonky_server/src/generated/platform/comments/comment_thread_view.dart'
     as _ixzwh8hc;
 import 'package:wonky_server/src/generated/platform/drive/drive_item_view.dart'
@@ -45,6 +47,24 @@ import 'package:wonky_sync_models/wonky_sync_models.dart' as _i810rwvy;
 import 'platform/activity/activity_event.dart' as _iatdjl5p;
 import 'platform/activity/activity_event_view.dart' as _isa7sjzq;
 import 'platform/activity/activity_type.dart' as _i50cy468;
+import 'platform/ai/models/ai_apply_mode.dart' as _iyja8k5e;
+import 'platform/ai/models/ai_quality.dart' as _iviyoyk9;
+import 'platform/ai/models/ai_usage.dart' as _i7i53on7;
+import 'platform/ai/models/ai_user_setting.dart' as _imx2nn1q;
+import 'platform/ai/models/assistant_context_hints.dart' as _ic7e83wd;
+import 'platform/ai/models/assistant_event.dart' as _imp4tsxo;
+import 'platform/ai/models/assistant_event_type.dart' as _id6kvqt9;
+import 'platform/ai/models/assistant_message.dart' as _i8cittxq;
+import 'platform/ai/models/assistant_message_view.dart' as _i4rkdm2k;
+import 'platform/ai/models/assistant_status.dart' as _ia2m3j3v;
+import 'platform/ai/models/assistant_thread.dart' as _iaq6rutx;
+import 'platform/ai/models/assistant_thread_detail.dart' as _i4iv0swm;
+import 'platform/ai/models/assistant_thread_view.dart' as _iohdfqf1;
+import 'platform/ai/models/inline_ai_event.dart' as _i8ghcs7p;
+import 'platform/ai/models/inline_ai_event_type.dart' as _i6pcz5z6;
+import 'platform/ai/models/inline_ai_request.dart' as _i4m43iwr;
+import 'platform/ai/models/proofread_event.dart' as _ie0jt2ne;
+import 'platform/ai/models/proofread_issue.dart' as _ivmxemza;
 import 'platform/comments/comment.dart' as _iyixppck;
 import 'platform/comments/comment_anchor_kind.dart' as _iw81twtc;
 import 'platform/comments/comment_event.dart' as _imlsyj2p;
@@ -179,6 +199,24 @@ import 'write/models/write_version_document.dart' as _is9bkd9t;
 export 'platform/activity/activity_event.dart';
 export 'platform/activity/activity_event_view.dart';
 export 'platform/activity/activity_type.dart';
+export 'platform/ai/models/ai_apply_mode.dart';
+export 'platform/ai/models/ai_quality.dart';
+export 'platform/ai/models/ai_usage.dart';
+export 'platform/ai/models/ai_user_setting.dart';
+export 'platform/ai/models/assistant_context_hints.dart';
+export 'platform/ai/models/assistant_event.dart';
+export 'platform/ai/models/assistant_event_type.dart';
+export 'platform/ai/models/assistant_message.dart';
+export 'platform/ai/models/assistant_message_view.dart';
+export 'platform/ai/models/assistant_status.dart';
+export 'platform/ai/models/assistant_thread.dart';
+export 'platform/ai/models/assistant_thread_detail.dart';
+export 'platform/ai/models/assistant_thread_view.dart';
+export 'platform/ai/models/inline_ai_event.dart';
+export 'platform/ai/models/inline_ai_event_type.dart';
+export 'platform/ai/models/inline_ai_request.dart';
+export 'platform/ai/models/proofread_event.dart';
+export 'platform/ai/models/proofread_issue.dart';
 export 'platform/comments/comment.dart';
 export 'platform/comments/comment_anchor_kind.dart';
 export 'platform/comments/comment_event.dart';
@@ -328,6 +366,24 @@ class Protocol extends _is.DatabaseSerializationManager
           _is.getType<_iatdjl5p.ActivityEvent>,
           _is.getType<_isa7sjzq.ActivityEventView>,
           _is.getType<_i50cy468.ActivityType>,
+          _is.getType<_iyja8k5e.AiApplyMode>,
+          _is.getType<_iviyoyk9.AiQuality>,
+          _is.getType<_i7i53on7.AiUsage>,
+          _is.getType<_imx2nn1q.AiUserSetting>,
+          _is.getType<_ic7e83wd.AssistantContextHints>,
+          _is.getType<_imp4tsxo.AssistantEvent>,
+          _is.getType<_id6kvqt9.AssistantEventType>,
+          _is.getType<_i8cittxq.AssistantMessage>,
+          _is.getType<_i4rkdm2k.AssistantMessageView>,
+          _is.getType<_ia2m3j3v.AssistantStatus>,
+          _is.getType<_iaq6rutx.AssistantThread>,
+          _is.getType<_i4iv0swm.AssistantThreadDetail>,
+          _is.getType<_iohdfqf1.AssistantThreadView>,
+          _is.getType<_i8ghcs7p.InlineAiEvent>,
+          _is.getType<_i6pcz5z6.InlineAiEventType>,
+          _is.getType<_i4m43iwr.InlineAiRequest>,
+          _is.getType<_ie0jt2ne.ProofreadEvent>,
+          _is.getType<_ivmxemza.ProofreadIssue>,
           _is.getType<_iyixppck.Comment>,
           _is.getType<_iw81twtc.CommentAnchorKind>,
           _is.getType<_imlsyj2p.CommentEvent>,
@@ -488,6 +544,24 @@ class Protocol extends _is.DatabaseSerializationManager
           _is.getType<_iatdjl5p.ActivityEvent?>,
           _is.getType<_isa7sjzq.ActivityEventView?>,
           _is.getType<_i50cy468.ActivityType?>,
+          _is.getType<_iyja8k5e.AiApplyMode?>,
+          _is.getType<_iviyoyk9.AiQuality?>,
+          _is.getType<_i7i53on7.AiUsage?>,
+          _is.getType<_imx2nn1q.AiUserSetting?>,
+          _is.getType<_ic7e83wd.AssistantContextHints?>,
+          _is.getType<_imp4tsxo.AssistantEvent?>,
+          _is.getType<_id6kvqt9.AssistantEventType?>,
+          _is.getType<_i8cittxq.AssistantMessage?>,
+          _is.getType<_i4rkdm2k.AssistantMessageView?>,
+          _is.getType<_ia2m3j3v.AssistantStatus?>,
+          _is.getType<_iaq6rutx.AssistantThread?>,
+          _is.getType<_i4iv0swm.AssistantThreadDetail?>,
+          _is.getType<_iohdfqf1.AssistantThreadView?>,
+          _is.getType<_i8ghcs7p.InlineAiEvent?>,
+          _is.getType<_i6pcz5z6.InlineAiEventType?>,
+          _is.getType<_i4m43iwr.InlineAiRequest?>,
+          _is.getType<_ie0jt2ne.ProofreadEvent?>,
+          _is.getType<_ivmxemza.ProofreadIssue?>,
           _is.getType<_iyixppck.Comment?>,
           _is.getType<_iw81twtc.CommentAnchorKind?>,
           _is.getType<_imlsyj2p.CommentEvent?>,
@@ -645,6 +719,9 @@ class Protocol extends _is.DatabaseSerializationManager
           _is.getType<_ick3mhj2.WriteThemeRevisionView?>,
           _is.getType<_ixbjd26z.WriteThemeView?>,
           _is.getType<_is9bkd9t.WriteVersionDocument?>,
+          _is.getType<List<_i4rkdm2k.AssistantMessageView>>,
+          _is.getType<List<_ivmxemza.ProofreadIssue>>,
+          _is.getType<List<_ivmxemza.ProofreadIssue>?>,
           _is.getType<List<int>>,
           _is.getType<List<_i4xrxro7.CommentView>>,
           _is.getType<List<_i6y7tspy.UserSummary>>,
@@ -669,6 +746,7 @@ class Protocol extends _is.DatabaseSerializationManager
           _is.getType<List<_issmv319.DocumentOpView>?>,
           _is.getType<List<_i48sm9f2.ImportWarningView>?>,
           _is.getType<List<_ii88i7dv.WriteDiffAuthor>>,
+          _is.getType<List<_i1372x0g.AssistantThreadView>>,
           _is.getType<List<_ixzwh8hc.CommentThreadView>>,
           _is.getType<List<int>>,
           _is.getType<List<int>?>,
@@ -874,6 +952,375 @@ class Protocol extends _is.DatabaseSerializationManager
             _isp.IndexElementDefinition(
               type: _isp.IndexElementDefinitionType.column,
               definition: 'at',
+            ),
+          ],
+          type: 'btree',
+          isUnique: false,
+          isPrimary: false,
+        ),
+      ],
+      managed: true,
+    ),
+    _isp.TableDefinition(
+      name: 'ai_usage',
+      dartName: 'AiUsage',
+      schema: 'public',
+      module: 'wonky',
+      columns: [
+        _isp.ColumnDefinition(
+          name: 'id',
+          columnType: _isp.ColumnType.bigint,
+          isNullable: false,
+          dartType: 'int?',
+          columnDefault: 'serial',
+        ),
+        _isp.ColumnDefinition(
+          name: 'userId',
+          columnType: _isp.ColumnType.bigint,
+          isNullable: false,
+          dartType: 'int',
+        ),
+        _isp.ColumnDefinition(
+          name: 'model',
+          columnType: _isp.ColumnType.text,
+          isNullable: false,
+          dartType: 'String',
+        ),
+        _isp.ColumnDefinition(
+          name: 'feature',
+          columnType: _isp.ColumnType.text,
+          isNullable: false,
+          dartType: 'String',
+        ),
+        _isp.ColumnDefinition(
+          name: 'inputTokens',
+          columnType: _isp.ColumnType.bigint,
+          isNullable: false,
+          dartType: 'int',
+        ),
+        _isp.ColumnDefinition(
+          name: 'outputTokens',
+          columnType: _isp.ColumnType.bigint,
+          isNullable: false,
+          dartType: 'int',
+        ),
+        _isp.ColumnDefinition(
+          name: 'cacheReadTokens',
+          columnType: _isp.ColumnType.bigint,
+          isNullable: false,
+          dartType: 'int',
+        ),
+        _isp.ColumnDefinition(
+          name: 'cacheWriteTokens',
+          columnType: _isp.ColumnType.bigint,
+          isNullable: false,
+          dartType: 'int',
+        ),
+        _isp.ColumnDefinition(
+          name: 'at',
+          columnType: _isp.ColumnType.timestampWithoutTimeZone,
+          isNullable: false,
+          dartType: 'DateTime',
+        ),
+      ],
+      foreignKeys: [
+        _isp.ForeignKeyDefinition(
+          constraintName: 'ai_usage_fk_0',
+          columns: ['userId'],
+          referenceTable: 'user_profile',
+          referenceTableSchema: 'public',
+          referenceColumns: ['id'],
+          onUpdate: _isp.ForeignKeyAction.noAction,
+          onDelete: _isp.ForeignKeyAction.cascade,
+          matchType: null,
+        ),
+      ],
+      indexes: [
+        _isp.IndexDefinition(
+          indexName: 'ai_usage_user_at_idx',
+          tableSpace: null,
+          elements: [
+            _isp.IndexElementDefinition(
+              type: _isp.IndexElementDefinitionType.column,
+              definition: 'userId',
+            ),
+            _isp.IndexElementDefinition(
+              type: _isp.IndexElementDefinitionType.column,
+              definition: 'at',
+            ),
+          ],
+          type: 'btree',
+          isUnique: false,
+          isPrimary: false,
+        ),
+      ],
+      managed: true,
+    ),
+    _isp.TableDefinition(
+      name: 'ai_user_setting',
+      dartName: 'AiUserSetting',
+      schema: 'public',
+      module: 'wonky',
+      columns: [
+        _isp.ColumnDefinition(
+          name: 'id',
+          columnType: _isp.ColumnType.bigint,
+          isNullable: false,
+          dartType: 'int?',
+          columnDefault: 'serial',
+        ),
+        _isp.ColumnDefinition(
+          name: 'userId',
+          columnType: _isp.ColumnType.bigint,
+          isNullable: false,
+          dartType: 'int',
+        ),
+        _isp.ColumnDefinition(
+          name: 'quality',
+          columnType: _isp.ColumnType.text,
+          isNullable: false,
+          dartType: 'protocol:AiQuality',
+          columnDefault: '\'best\'',
+        ),
+        _isp.ColumnDefinition(
+          name: 'updatedAt',
+          columnType: _isp.ColumnType.timestampWithoutTimeZone,
+          isNullable: false,
+          dartType: 'DateTime',
+        ),
+      ],
+      foreignKeys: [
+        _isp.ForeignKeyDefinition(
+          constraintName: 'ai_user_setting_fk_0',
+          columns: ['userId'],
+          referenceTable: 'user_profile',
+          referenceTableSchema: 'public',
+          referenceColumns: ['id'],
+          onUpdate: _isp.ForeignKeyAction.noAction,
+          onDelete: _isp.ForeignKeyAction.cascade,
+          matchType: null,
+        ),
+      ],
+      indexes: [
+        _isp.IndexDefinition(
+          indexName: 'ai_user_setting_user_idx',
+          tableSpace: null,
+          elements: [
+            _isp.IndexElementDefinition(
+              type: _isp.IndexElementDefinitionType.column,
+              definition: 'userId',
+            ),
+          ],
+          type: 'btree',
+          isUnique: true,
+          isPrimary: false,
+        ),
+      ],
+      managed: true,
+    ),
+    _isp.TableDefinition(
+      name: 'assistant_message',
+      dartName: 'AssistantMessage',
+      schema: 'public',
+      module: 'wonky',
+      columns: [
+        _isp.ColumnDefinition(
+          name: 'id',
+          columnType: _isp.ColumnType.bigint,
+          isNullable: false,
+          dartType: 'int?',
+          columnDefault: 'serial',
+        ),
+        _isp.ColumnDefinition(
+          name: 'threadId',
+          columnType: _isp.ColumnType.bigint,
+          isNullable: false,
+          dartType: 'int',
+        ),
+        _isp.ColumnDefinition(
+          name: 'role',
+          columnType: _isp.ColumnType.text,
+          isNullable: false,
+          dartType: 'String',
+        ),
+        _isp.ColumnDefinition(
+          name: 'contentJson',
+          columnType: _isp.ColumnType.text,
+          isNullable: true,
+          dartType: 'String?',
+        ),
+        _isp.ColumnDefinition(
+          name: 'displayText',
+          columnType: _isp.ColumnType.text,
+          isNullable: false,
+          dartType: 'String',
+        ),
+        _isp.ColumnDefinition(
+          name: 'toolCallsJson',
+          columnType: _isp.ColumnType.text,
+          isNullable: true,
+          dartType: 'String?',
+        ),
+        _isp.ColumnDefinition(
+          name: 'visible',
+          columnType: _isp.ColumnType.boolean,
+          isNullable: false,
+          dartType: 'bool',
+          columnDefault: 'true',
+        ),
+        _isp.ColumnDefinition(
+          name: 'replay',
+          columnType: _isp.ColumnType.boolean,
+          isNullable: false,
+          dartType: 'bool',
+          columnDefault: 'true',
+        ),
+        _isp.ColumnDefinition(
+          name: 'runId',
+          columnType: _isp.ColumnType.text,
+          isNullable: true,
+          dartType: 'String?',
+        ),
+        _isp.ColumnDefinition(
+          name: 'stopReason',
+          columnType: _isp.ColumnType.text,
+          isNullable: true,
+          dartType: 'String?',
+        ),
+        _isp.ColumnDefinition(
+          name: 'createdAt',
+          columnType: _isp.ColumnType.timestampWithoutTimeZone,
+          isNullable: false,
+          dartType: 'DateTime',
+        ),
+      ],
+      foreignKeys: [
+        _isp.ForeignKeyDefinition(
+          constraintName: 'assistant_message_fk_0',
+          columns: ['threadId'],
+          referenceTable: 'assistant_thread',
+          referenceTableSchema: 'public',
+          referenceColumns: ['id'],
+          onUpdate: _isp.ForeignKeyAction.noAction,
+          onDelete: _isp.ForeignKeyAction.cascade,
+          matchType: null,
+        ),
+      ],
+      indexes: [
+        _isp.IndexDefinition(
+          indexName: 'assistant_message_thread_idx',
+          tableSpace: null,
+          elements: [
+            _isp.IndexElementDefinition(
+              type: _isp.IndexElementDefinitionType.column,
+              definition: 'threadId',
+            ),
+            _isp.IndexElementDefinition(
+              type: _isp.IndexElementDefinitionType.column,
+              definition: 'id',
+            ),
+          ],
+          type: 'btree',
+          isUnique: false,
+          isPrimary: false,
+        ),
+      ],
+      managed: true,
+    ),
+    _isp.TableDefinition(
+      name: 'assistant_thread',
+      dartName: 'AssistantThread',
+      schema: 'public',
+      module: 'wonky',
+      columns: [
+        _isp.ColumnDefinition(
+          name: 'id',
+          columnType: _isp.ColumnType.bigint,
+          isNullable: false,
+          dartType: 'int?',
+          columnDefault: 'serial',
+        ),
+        _isp.ColumnDefinition(
+          name: 'userId',
+          columnType: _isp.ColumnType.bigint,
+          isNullable: false,
+          dartType: 'int',
+        ),
+        _isp.ColumnDefinition(
+          name: 'itemId',
+          columnType: _isp.ColumnType.bigint,
+          isNullable: true,
+          dartType: 'int?',
+        ),
+        _isp.ColumnDefinition(
+          name: 'title',
+          columnType: _isp.ColumnType.text,
+          isNullable: false,
+          dartType: 'String',
+        ),
+        _isp.ColumnDefinition(
+          name: 'contextRevision',
+          columnType: _isp.ColumnType.bigint,
+          isNullable: true,
+          dartType: 'int?',
+        ),
+        _isp.ColumnDefinition(
+          name: 'contextMarkdown',
+          columnType: _isp.ColumnType.text,
+          isNullable: true,
+          dartType: 'String?',
+        ),
+        _isp.ColumnDefinition(
+          name: 'createdAt',
+          columnType: _isp.ColumnType.timestampWithoutTimeZone,
+          isNullable: false,
+          dartType: 'DateTime',
+        ),
+        _isp.ColumnDefinition(
+          name: 'updatedAt',
+          columnType: _isp.ColumnType.timestampWithoutTimeZone,
+          isNullable: false,
+          dartType: 'DateTime',
+        ),
+      ],
+      foreignKeys: [
+        _isp.ForeignKeyDefinition(
+          constraintName: 'assistant_thread_fk_0',
+          columns: ['userId'],
+          referenceTable: 'user_profile',
+          referenceTableSchema: 'public',
+          referenceColumns: ['id'],
+          onUpdate: _isp.ForeignKeyAction.noAction,
+          onDelete: _isp.ForeignKeyAction.cascade,
+          matchType: null,
+        ),
+        _isp.ForeignKeyDefinition(
+          constraintName: 'assistant_thread_fk_1',
+          columns: ['itemId'],
+          referenceTable: 'drive_item',
+          referenceTableSchema: 'public',
+          referenceColumns: ['id'],
+          onUpdate: _isp.ForeignKeyAction.noAction,
+          onDelete: _isp.ForeignKeyAction.cascade,
+          matchType: null,
+        ),
+      ],
+      indexes: [
+        _isp.IndexDefinition(
+          indexName: 'assistant_thread_user_item_idx',
+          tableSpace: null,
+          elements: [
+            _isp.IndexElementDefinition(
+              type: _isp.IndexElementDefinitionType.column,
+              definition: 'userId',
+            ),
+            _isp.IndexElementDefinition(
+              type: _isp.IndexElementDefinitionType.column,
+              definition: 'itemId',
+            ),
+            _isp.IndexElementDefinition(
+              type: _isp.IndexElementDefinitionType.column,
+              definition: 'updatedAt',
             ),
           ],
           type: 'btree',
@@ -4366,6 +4813,60 @@ class Protocol extends _is.DatabaseSerializationManager
     if (t == _i50cy468.ActivityType) {
       return _i50cy468.ActivityType.fromJson(data) as T;
     }
+    if (t == _iyja8k5e.AiApplyMode) {
+      return _iyja8k5e.AiApplyMode.fromJson(data) as T;
+    }
+    if (t == _iviyoyk9.AiQuality) {
+      return _iviyoyk9.AiQuality.fromJson(data) as T;
+    }
+    if (t == _i7i53on7.AiUsage) {
+      return _i7i53on7.AiUsage.fromJson(data) as T;
+    }
+    if (t == _imx2nn1q.AiUserSetting) {
+      return _imx2nn1q.AiUserSetting.fromJson(data) as T;
+    }
+    if (t == _ic7e83wd.AssistantContextHints) {
+      return _ic7e83wd.AssistantContextHints.fromJson(data) as T;
+    }
+    if (t == _imp4tsxo.AssistantEvent) {
+      return _imp4tsxo.AssistantEvent.fromJson(data) as T;
+    }
+    if (t == _id6kvqt9.AssistantEventType) {
+      return _id6kvqt9.AssistantEventType.fromJson(data) as T;
+    }
+    if (t == _i8cittxq.AssistantMessage) {
+      return _i8cittxq.AssistantMessage.fromJson(data) as T;
+    }
+    if (t == _i4rkdm2k.AssistantMessageView) {
+      return _i4rkdm2k.AssistantMessageView.fromJson(data) as T;
+    }
+    if (t == _ia2m3j3v.AssistantStatus) {
+      return _ia2m3j3v.AssistantStatus.fromJson(data) as T;
+    }
+    if (t == _iaq6rutx.AssistantThread) {
+      return _iaq6rutx.AssistantThread.fromJson(data) as T;
+    }
+    if (t == _i4iv0swm.AssistantThreadDetail) {
+      return _i4iv0swm.AssistantThreadDetail.fromJson(data) as T;
+    }
+    if (t == _iohdfqf1.AssistantThreadView) {
+      return _iohdfqf1.AssistantThreadView.fromJson(data) as T;
+    }
+    if (t == _i8ghcs7p.InlineAiEvent) {
+      return _i8ghcs7p.InlineAiEvent.fromJson(data) as T;
+    }
+    if (t == _i6pcz5z6.InlineAiEventType) {
+      return _i6pcz5z6.InlineAiEventType.fromJson(data) as T;
+    }
+    if (t == _i4m43iwr.InlineAiRequest) {
+      return _i4m43iwr.InlineAiRequest.fromJson(data) as T;
+    }
+    if (t == _ie0jt2ne.ProofreadEvent) {
+      return _ie0jt2ne.ProofreadEvent.fromJson(data) as T;
+    }
+    if (t == _ivmxemza.ProofreadIssue) {
+      return _ivmxemza.ProofreadIssue.fromJson(data) as T;
+    }
     if (t == _iyixppck.Comment) {
       return _iyixppck.Comment.fromJson(data) as T;
     }
@@ -4847,6 +5348,83 @@ class Protocol extends _is.DatabaseSerializationManager
     }
     if (t == _is.getType<_i50cy468.ActivityType?>()) {
       return (data != null ? _i50cy468.ActivityType.fromJson(data) : null) as T;
+    }
+    if (t == _is.getType<_iyja8k5e.AiApplyMode?>()) {
+      return (data != null ? _iyja8k5e.AiApplyMode.fromJson(data) : null) as T;
+    }
+    if (t == _is.getType<_iviyoyk9.AiQuality?>()) {
+      return (data != null ? _iviyoyk9.AiQuality.fromJson(data) : null) as T;
+    }
+    if (t == _is.getType<_i7i53on7.AiUsage?>()) {
+      return (data != null ? _i7i53on7.AiUsage.fromJson(data) : null) as T;
+    }
+    if (t == _is.getType<_imx2nn1q.AiUserSetting?>()) {
+      return (data != null ? _imx2nn1q.AiUserSetting.fromJson(data) : null)
+          as T;
+    }
+    if (t == _is.getType<_ic7e83wd.AssistantContextHints?>()) {
+      return (data != null
+              ? _ic7e83wd.AssistantContextHints.fromJson(data)
+              : null)
+          as T;
+    }
+    if (t == _is.getType<_imp4tsxo.AssistantEvent?>()) {
+      return (data != null ? _imp4tsxo.AssistantEvent.fromJson(data) : null)
+          as T;
+    }
+    if (t == _is.getType<_id6kvqt9.AssistantEventType?>()) {
+      return (data != null ? _id6kvqt9.AssistantEventType.fromJson(data) : null)
+          as T;
+    }
+    if (t == _is.getType<_i8cittxq.AssistantMessage?>()) {
+      return (data != null ? _i8cittxq.AssistantMessage.fromJson(data) : null)
+          as T;
+    }
+    if (t == _is.getType<_i4rkdm2k.AssistantMessageView?>()) {
+      return (data != null
+              ? _i4rkdm2k.AssistantMessageView.fromJson(data)
+              : null)
+          as T;
+    }
+    if (t == _is.getType<_ia2m3j3v.AssistantStatus?>()) {
+      return (data != null ? _ia2m3j3v.AssistantStatus.fromJson(data) : null)
+          as T;
+    }
+    if (t == _is.getType<_iaq6rutx.AssistantThread?>()) {
+      return (data != null ? _iaq6rutx.AssistantThread.fromJson(data) : null)
+          as T;
+    }
+    if (t == _is.getType<_i4iv0swm.AssistantThreadDetail?>()) {
+      return (data != null
+              ? _i4iv0swm.AssistantThreadDetail.fromJson(data)
+              : null)
+          as T;
+    }
+    if (t == _is.getType<_iohdfqf1.AssistantThreadView?>()) {
+      return (data != null
+              ? _iohdfqf1.AssistantThreadView.fromJson(data)
+              : null)
+          as T;
+    }
+    if (t == _is.getType<_i8ghcs7p.InlineAiEvent?>()) {
+      return (data != null ? _i8ghcs7p.InlineAiEvent.fromJson(data) : null)
+          as T;
+    }
+    if (t == _is.getType<_i6pcz5z6.InlineAiEventType?>()) {
+      return (data != null ? _i6pcz5z6.InlineAiEventType.fromJson(data) : null)
+          as T;
+    }
+    if (t == _is.getType<_i4m43iwr.InlineAiRequest?>()) {
+      return (data != null ? _i4m43iwr.InlineAiRequest.fromJson(data) : null)
+          as T;
+    }
+    if (t == _is.getType<_ie0jt2ne.ProofreadEvent?>()) {
+      return (data != null ? _ie0jt2ne.ProofreadEvent.fromJson(data) : null)
+          as T;
+    }
+    if (t == _is.getType<_ivmxemza.ProofreadIssue?>()) {
+      return (data != null ? _ivmxemza.ProofreadIssue.fromJson(data) : null)
+          as T;
     }
     if (t == _is.getType<_iyixppck.Comment?>()) {
       return (data != null ? _iyixppck.Comment.fromJson(data) : null) as T;
@@ -5476,6 +6054,26 @@ class Protocol extends _is.DatabaseSerializationManager
               : null)
           as T;
     }
+    if (t == List<_i4rkdm2k.AssistantMessageView>) {
+      return (data as List)
+              .map((e) => deserialize<_i4rkdm2k.AssistantMessageView>(e))
+              .toList()
+          as T;
+    }
+    if (t == List<_ivmxemza.ProofreadIssue>) {
+      return (data as List)
+              .map((e) => deserialize<_ivmxemza.ProofreadIssue>(e))
+              .toList()
+          as T;
+    }
+    if (t == _is.getType<List<_ivmxemza.ProofreadIssue>?>()) {
+      return (data != null
+              ? (data as List)
+                    .map((e) => deserialize<_ivmxemza.ProofreadIssue>(e))
+                    .toList()
+              : null)
+          as T;
+    }
     if (t == List<int>) {
       return (data as List).map((e) => deserialize<int>(e)).toList() as T;
     }
@@ -5625,6 +6223,12 @@ class Protocol extends _is.DatabaseSerializationManager
               .toList()
           as T;
     }
+    if (t == List<_i1372x0g.AssistantThreadView>) {
+      return (data as List)
+              .map((e) => deserialize<_i1372x0g.AssistantThreadView>(e))
+              .toList()
+          as T;
+    }
     if (t == List<_ixzwh8hc.CommentThreadView>) {
       return (data as List)
               .map((e) => deserialize<_ixzwh8hc.CommentThreadView>(e))
@@ -5724,6 +6328,24 @@ class Protocol extends _is.DatabaseSerializationManager
       _iatdjl5p.ActivityEvent => 'ActivityEvent',
       _isa7sjzq.ActivityEventView => 'ActivityEventView',
       _i50cy468.ActivityType => 'ActivityType',
+      _iyja8k5e.AiApplyMode => 'AiApplyMode',
+      _iviyoyk9.AiQuality => 'AiQuality',
+      _i7i53on7.AiUsage => 'AiUsage',
+      _imx2nn1q.AiUserSetting => 'AiUserSetting',
+      _ic7e83wd.AssistantContextHints => 'AssistantContextHints',
+      _imp4tsxo.AssistantEvent => 'AssistantEvent',
+      _id6kvqt9.AssistantEventType => 'AssistantEventType',
+      _i8cittxq.AssistantMessage => 'AssistantMessage',
+      _i4rkdm2k.AssistantMessageView => 'AssistantMessageView',
+      _ia2m3j3v.AssistantStatus => 'AssistantStatus',
+      _iaq6rutx.AssistantThread => 'AssistantThread',
+      _i4iv0swm.AssistantThreadDetail => 'AssistantThreadDetail',
+      _iohdfqf1.AssistantThreadView => 'AssistantThreadView',
+      _i8ghcs7p.InlineAiEvent => 'InlineAiEvent',
+      _i6pcz5z6.InlineAiEventType => 'InlineAiEventType',
+      _i4m43iwr.InlineAiRequest => 'InlineAiRequest',
+      _ie0jt2ne.ProofreadEvent => 'ProofreadEvent',
+      _ivmxemza.ProofreadIssue => 'ProofreadIssue',
       _iyixppck.Comment => 'Comment',
       _iw81twtc.CommentAnchorKind => 'CommentAnchorKind',
       _imlsyj2p.CommentEvent => 'CommentEvent',
@@ -5901,6 +6523,42 @@ class Protocol extends _is.DatabaseSerializationManager
         return 'ActivityEventView';
       case _i50cy468.ActivityType():
         return 'ActivityType';
+      case _iyja8k5e.AiApplyMode():
+        return 'AiApplyMode';
+      case _iviyoyk9.AiQuality():
+        return 'AiQuality';
+      case _i7i53on7.AiUsage():
+        return 'AiUsage';
+      case _imx2nn1q.AiUserSetting():
+        return 'AiUserSetting';
+      case _ic7e83wd.AssistantContextHints():
+        return 'AssistantContextHints';
+      case _imp4tsxo.AssistantEvent():
+        return 'AssistantEvent';
+      case _id6kvqt9.AssistantEventType():
+        return 'AssistantEventType';
+      case _i8cittxq.AssistantMessage():
+        return 'AssistantMessage';
+      case _i4rkdm2k.AssistantMessageView():
+        return 'AssistantMessageView';
+      case _ia2m3j3v.AssistantStatus():
+        return 'AssistantStatus';
+      case _iaq6rutx.AssistantThread():
+        return 'AssistantThread';
+      case _i4iv0swm.AssistantThreadDetail():
+        return 'AssistantThreadDetail';
+      case _iohdfqf1.AssistantThreadView():
+        return 'AssistantThreadView';
+      case _i8ghcs7p.InlineAiEvent():
+        return 'InlineAiEvent';
+      case _i6pcz5z6.InlineAiEventType():
+        return 'InlineAiEventType';
+      case _i4m43iwr.InlineAiRequest():
+        return 'InlineAiRequest';
+      case _ie0jt2ne.ProofreadEvent():
+        return 'ProofreadEvent';
+      case _ivmxemza.ProofreadIssue():
+        return 'ProofreadIssue';
       case _iyixppck.Comment():
         return 'Comment';
       case _iw81twtc.CommentAnchorKind():
@@ -6261,6 +6919,60 @@ class Protocol extends _is.DatabaseSerializationManager
     }
     if (dataClassName == 'ActivityType') {
       return deserialize<_i50cy468.ActivityType>(data['data']);
+    }
+    if (dataClassName == 'AiApplyMode') {
+      return deserialize<_iyja8k5e.AiApplyMode>(data['data']);
+    }
+    if (dataClassName == 'AiQuality') {
+      return deserialize<_iviyoyk9.AiQuality>(data['data']);
+    }
+    if (dataClassName == 'AiUsage') {
+      return deserialize<_i7i53on7.AiUsage>(data['data']);
+    }
+    if (dataClassName == 'AiUserSetting') {
+      return deserialize<_imx2nn1q.AiUserSetting>(data['data']);
+    }
+    if (dataClassName == 'AssistantContextHints') {
+      return deserialize<_ic7e83wd.AssistantContextHints>(data['data']);
+    }
+    if (dataClassName == 'AssistantEvent') {
+      return deserialize<_imp4tsxo.AssistantEvent>(data['data']);
+    }
+    if (dataClassName == 'AssistantEventType') {
+      return deserialize<_id6kvqt9.AssistantEventType>(data['data']);
+    }
+    if (dataClassName == 'AssistantMessage') {
+      return deserialize<_i8cittxq.AssistantMessage>(data['data']);
+    }
+    if (dataClassName == 'AssistantMessageView') {
+      return deserialize<_i4rkdm2k.AssistantMessageView>(data['data']);
+    }
+    if (dataClassName == 'AssistantStatus') {
+      return deserialize<_ia2m3j3v.AssistantStatus>(data['data']);
+    }
+    if (dataClassName == 'AssistantThread') {
+      return deserialize<_iaq6rutx.AssistantThread>(data['data']);
+    }
+    if (dataClassName == 'AssistantThreadDetail') {
+      return deserialize<_i4iv0swm.AssistantThreadDetail>(data['data']);
+    }
+    if (dataClassName == 'AssistantThreadView') {
+      return deserialize<_iohdfqf1.AssistantThreadView>(data['data']);
+    }
+    if (dataClassName == 'InlineAiEvent') {
+      return deserialize<_i8ghcs7p.InlineAiEvent>(data['data']);
+    }
+    if (dataClassName == 'InlineAiEventType') {
+      return deserialize<_i6pcz5z6.InlineAiEventType>(data['data']);
+    }
+    if (dataClassName == 'InlineAiRequest') {
+      return deserialize<_i4m43iwr.InlineAiRequest>(data['data']);
+    }
+    if (dataClassName == 'ProofreadEvent') {
+      return deserialize<_ie0jt2ne.ProofreadEvent>(data['data']);
+    }
+    if (dataClassName == 'ProofreadIssue') {
+      return deserialize<_ivmxemza.ProofreadIssue>(data['data']);
     }
     if (dataClassName == 'Comment') {
       return deserialize<_iyixppck.Comment>(data['data']);
@@ -6801,6 +7513,14 @@ class Protocol extends _is.DatabaseSerializationManager
     switch (t) {
       case _iatdjl5p.ActivityEvent:
         return _iatdjl5p.ActivityEvent.t;
+      case _i7i53on7.AiUsage:
+        return _i7i53on7.AiUsage.t;
+      case _imx2nn1q.AiUserSetting:
+        return _imx2nn1q.AiUserSetting.t;
+      case _i8cittxq.AssistantMessage:
+        return _i8cittxq.AssistantMessage.t;
+      case _iaq6rutx.AssistantThread:
+        return _iaq6rutx.AssistantThread.t;
       case _iyixppck.Comment:
         return _iyixppck.Comment.t;
       case _ijog60vm.CommentThread:

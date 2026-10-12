@@ -66,43 +66,46 @@ void main() {
     });
   });
 
-  group('Markdown autoformat with multi-character insertions (Write 04 §7)', () {
-    void insertAtCaret(EditorHarness h, String text) {
-      final caret = h.editor.composer.selection!.extent;
-      h.editor.execute([
-        InsertTextRequest(
-          documentPosition: caret,
-          textToInsert: text,
-          attributions: const {},
-        ),
-      ]);
-    }
+  group(
+    'Markdown autoformat with multi-character insertions (Write 04 §7)',
+    () {
+      void insertAtCaret(EditorHarness h, String text) {
+        final caret = h.editor.composer.selection!.extent;
+        h.editor.execute([
+          InsertTextRequest(
+            documentPosition: caret,
+            textToInsert: text,
+            attributions: const {},
+          ),
+        ]);
+      }
 
-    test('when an IME inserts "## " at once then the paragraph becomes a '
-        'heading', () {
-      h = EditorHarness(Delta()..insert('\n'))..select(0);
-      insertAtCaret(h, '## ');
-      expect(h.delta, Delta()..insert('\n', {'header': 2}));
-    });
+      test('when an IME inserts "## " at once then the paragraph becomes a '
+          'heading', () {
+        h = EditorHarness(Delta()..insert('\n'))..select(0);
+        insertAtCaret(h, '## ');
+        expect(h.delta, Delta()..insert('\n', {'header': 2}));
+      });
 
-    test('when an IME inserts "**bold**" at once then it becomes bold', () {
-      h = EditorHarness(Delta()..insert('a \n'))..select(2);
-      insertAtCaret(h, '**bold**');
-      expect(
-        h.delta,
-        Delta()
-          ..insert('a ')
-          ..insert('bold', {'bold': true})
-          ..insert('\n'),
-      );
-    });
+      test('when an IME inserts "**bold**" at once then it becomes bold', () {
+        h = EditorHarness(Delta()..insert('a \n'))..select(2);
+        insertAtCaret(h, '**bold**');
+        expect(
+          h.delta,
+          Delta()
+            ..insert('a ')
+            ..insert('bold', {'bold': true})
+            ..insert('\n'),
+        );
+      });
 
-    test('when pasting "## " then nothing is converted', () {
-      h = EditorHarness(Delta()..insert('\n'))..select(0);
-      h.controller.applyLocal(Delta()..insert('## '), label: 'Paste');
-      expect(h.plainText, '## \n');
-    });
-  });
+      test('when pasting "## " then nothing is converted', () {
+        h = EditorHarness(Delta()..insert('\n'))..select(0);
+        h.controller.applyLocal(Delta()..insert('## '), label: 'Paste');
+        expect(h.plainText, '## \n');
+      });
+    },
+  );
 
   group('Smart typography (Write 04 §8)', () {
     test(

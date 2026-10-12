@@ -159,6 +159,19 @@ class ThemeEditorScreenState extends State<ThemeEditorScreen>
     } catch (_) {}
   }
 
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    // The preview follows the app theme until a variant is picked
+    // (applied after this frame: listeners must not run during build).
+    final v = ShadTheme.of(context).brightness == Brightness.dark
+        ? ThemeVariant.dark
+        : ThemeVariant.light;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) controller.followAppVariant(v);
+    });
+  }
+
   void _activateStack() {
     if (!mounted) return;
     unawaited(s.undo.openStack(controller.draftStack, persist: false));
@@ -360,7 +373,7 @@ class ThemeEditorScreenState extends State<ThemeEditorScreen>
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             Container(
-              width: wide ? 256 : 224,
+              width: wide ? 256 : 216,
               decoration: BoxDecoration(
                 color: theme.colorScheme.card,
                 border: Border(right: border),
@@ -369,7 +382,7 @@ class ThemeEditorScreenState extends State<ThemeEditorScreen>
             ),
             Expanded(child: _PreviewPane(state: this)),
             Container(
-              width: wide ? 352 : 312,
+              width: wide ? 352 : 328,
               decoration: BoxDecoration(
                 color: theme.colorScheme.card,
                 border: Border(left: border),
@@ -1047,103 +1060,126 @@ class _PreviewPane extends StatelessWidget {
     void run(String id, Map<String, Object?> args) =>
         unawaited(state._invoke(id, args));
     final warnings = c.contrastWarnings;
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        Container(
-          height: 44,
-          padding: const EdgeInsets.symmetric(horizontal: 12),
-          decoration: BoxDecoration(
-            color: cs.background,
-            border: Border(bottom: BorderSide(color: cs.border)),
-          ),
-          child: SingleChildScrollView(
-            scrollDirection: Axis.horizontal,
-            child: Row(
-              children: [
-                Text(
-                  'Preview',
-                  style: theme.textTheme.small.copyWith(
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-                const SizedBox(width: 12),
-                if (c.document != null) ...[
-                  _Segmented(
-                    keyPrefix: 'source',
-                    values: const ['sample', 'document'],
-                    labels: const ['Sample', 'This document'],
-                    value: c.source.name,
-                    onChanged: (v) =>
-                        run('write.theme.setPreviewSource', {'source': v}),
-                  ),
-                  const SizedBox(width: 8),
-                ],
-                _Segmented(
-                  keyPrefix: 'variant',
-                  values: const ['light', 'dark'],
-                  icons: const [LucideIcons.sun, LucideIcons.moon],
-                  labels: const ['Light', 'Dark'],
-                  value: c.variant.name,
-                  onChanged: (v) =>
-                      run('write.theme.setPreviewVariant', {'variant': v}),
-                ),
-                const SizedBox(width: 8),
-                _Segmented(
-                  keyPrefix: 'layout',
-                  values: const ['pageless', 'pages'],
-                  labels: const ['Pageless', 'Pages'],
-                  value: c.layout.name,
-                  onChanged: (v) =>
-                      run('write.theme.setPreviewLayout', {'layout': v}),
-                ),
-                const SizedBox(width: 8),
-                SizedBox(
-                  width: 88,
-                  child: ShadSelect<double>(
-                    key: ValueKey<String>('write.themeEditor.zoom.${c.zoom}'),
-                    initialValue: c.zoom,
-                    minWidth: 88,
-                    selectedOptionBuilder: (context, z) =>
-                        Text('${(z * 100).round()}%'),
-                    onChanged: (z) {
-                      if (z != null) c.setZoom(z);
-                    },
-                    options: [
-                      for (final z in const [0.5, 0.75, 0.9, 1.0, 1.25, 1.5])
-                        ShadOption(
-                          value: z,
-                          child: Text('${(z * 100).round()}%'),
+    return LayoutBuilder(
+      builder: (context, box) {
+        final compact = box.maxWidth < 680;
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Container(
+              height: 44,
+              padding: const EdgeInsets.symmetric(horizontal: 12),
+              decoration: BoxDecoration(
+                color: cs.background,
+                border: Border(bottom: BorderSide(color: cs.border)),
+              ),
+              child: SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
+                child: Row(
+                  children: [
+                    if (!compact) ...[
+                      Text(
+                        'Preview',
+                        style: theme.textTheme.small.copyWith(
+                          fontWeight: FontWeight.w600,
                         ),
+                      ),
+                      const SizedBox(width: 12),
                     ],
-                  ),
+                    if (c.document != null) ...[
+                      _Segmented(
+                        keyPrefix: 'source',
+                        values: const ['sample', 'document'],
+                        labels: compact
+                            ? const ['Sample', 'Document']
+                            : const ['Sample', 'This document'],
+                        value: c.source.name,
+                        onChanged: (v) =>
+                            run('write.theme.setPreviewSource', {'source': v}),
+                      ),
+                      const SizedBox(width: 8),
+                    ],
+                    _Segmented(
+                      keyPrefix: 'variant',
+                      values: const ['light', 'dark'],
+                      icons: const [LucideIcons.sun, LucideIcons.moon],
+                      labels: const ['Light', 'Dark'],
+                      iconsOnly: compact,
+                      value: c.variant.name,
+                      onChanged: (v) =>
+                          run('write.theme.setPreviewVariant', {'variant': v}),
+                    ),
+                    const SizedBox(width: 8),
+                    _Segmented(
+                      keyPrefix: 'layout',
+                      values: const ['pageless', 'pages'],
+                      labels: const ['Pageless', 'Pages'],
+                      icons: const [LucideIcons.panelTop, LucideIcons.fileText],
+                      iconsOnly: compact,
+                      value: c.layout.name,
+                      onChanged: (v) =>
+                          run('write.theme.setPreviewLayout', {'layout': v}),
+                    ),
+                    const SizedBox(width: 8),
+                    SizedBox(
+                      width: 84,
+                      child: ShadSelect<double>(
+                        key: ValueKey<String>(
+                          'write.themeEditor.zoom.${c.zoom}',
+                        ),
+                        initialValue: c.zoom,
+                        minWidth: 84,
+                        selectedOptionBuilder: (context, z) =>
+                            Text('${(z * 100).round()}%'),
+                        onChanged: (z) {
+                          if (z != null) c.setZoom(z);
+                        },
+                        options: [
+                          for (final z in const [
+                            0.5,
+                            0.75,
+                            0.9,
+                            1.0,
+                            1.25,
+                            1.5,
+                          ])
+                            ShadOption(
+                              value: z,
+                              child: Text('${(z * 100).round()}%'),
+                            ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    if (warnings.isNotEmpty)
+                      ShadButton.ghost(
+                        key: const ValueKey<String>(
+                          'write.themeEditor.contrastSummary',
+                        ),
+                        size: ShadButtonSize.sm,
+                        leading: Icon(
+                          LucideIcons.triangleAlert,
+                          size: 14,
+                          color: cs.warning,
+                        ),
+                        onPressed: () =>
+                            c.select(nodeOfPair(warnings.first.pairId)),
+                        child: Text(
+                          compact
+                              ? '${warnings.length}'
+                              : warnings.length == 1
+                              ? '1 contrast warning'
+                              : '${warnings.length} contrast warnings',
+                        ),
+                      ),
+                  ],
                 ),
-                const SizedBox(width: 12),
-                if (warnings.isNotEmpty)
-                  ShadButton.ghost(
-                    key: const ValueKey<String>(
-                      'write.themeEditor.contrastSummary',
-                    ),
-                    size: ShadButtonSize.sm,
-                    leading: Icon(
-                      LucideIcons.triangleAlert,
-                      size: 14,
-                      color: cs.warning,
-                    ),
-                    onPressed: () =>
-                        c.select(nodeOfPair(warnings.first.pairId)),
-                    child: Text(
-                      warnings.length == 1
-                          ? '1 contrast warning'
-                          : '${warnings.length} contrast warnings',
-                    ),
-                  ),
-              ],
+              ),
             ),
-          ),
-        ),
-        Expanded(child: ThemePreview(controller: c)),
-      ],
+            Expanded(child: ThemePreview(controller: c)),
+          ],
+        );
+      },
     );
   }
 }
@@ -1156,8 +1192,10 @@ class _Segmented extends StatelessWidget {
     required this.value,
     required this.onChanged,
     this.icons,
+    this.iconsOnly = false,
   });
 
+  final bool iconsOnly;
   final String keyPrefix;
   final List<String> values;
   final List<String> labels;
@@ -1190,22 +1228,29 @@ class _Segmented extends StatelessWidget {
                 variant: ShadButtonVariant.ghost,
                 size: ShadButtonSize.sm,
                 height: 28,
-                padding: const EdgeInsets.symmetric(horizontal: 10),
+                padding: EdgeInsets.symmetric(horizontal: iconsOnly ? 8 : 10),
                 backgroundColor: values[i] == value ? cs.background : null,
                 hoverBackgroundColor: values[i] == value
                     ? cs.background
                     : cs.background.withValues(alpha: 0.6),
-                leading: icons == null ? null : Icon(icons![i], size: 14),
+                leading: icons == null || iconsOnly
+                    ? null
+                    : Icon(icons![i], size: 14),
                 onPressed: () => onChanged(values[i]),
-                child: Text(
-                  labels[i],
-                  style: theme.textTheme.small.copyWith(
-                    fontSize: 12,
-                    fontWeight: values[i] == value
-                        ? FontWeight.w600
-                        : FontWeight.w400,
-                  ),
-                ),
+                child: iconsOnly && icons != null
+                    ? ShadTooltip(
+                        builder: (_) => Text(labels[i]),
+                        child: Icon(icons![i], size: 15),
+                      )
+                    : Text(
+                        labels[i],
+                        style: theme.textTheme.small.copyWith(
+                          fontSize: 12,
+                          fontWeight: values[i] == value
+                              ? FontWeight.w600
+                              : FontWeight.w400,
+                        ),
+                      ),
               ),
             ),
         ],

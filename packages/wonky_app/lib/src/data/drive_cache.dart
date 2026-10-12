@@ -8,16 +8,41 @@ import '../core/local_store.dart';
 /// Locally cached drive listing for offline browsing (suite 05 §4, 12 §3):
 /// the last 500 items seen plus every item pinned offline, and the item
 /// order of each listing that was shown.
+///
+/// The cache is per user: [bindUser] switches to the signed-in user's data
+/// (stored under `u.<userUuid>.` in the store given to the constructor).
 class DriveCache {
-  DriveCache(this._store, {this.maxItems = 500});
+  DriveCache(this._base, {this.maxItems = 500}) : _store = _base;
 
-  final LocalStore _store;
+  final LocalStore _base;
+  LocalStore _store;
+  String? _user;
   final int maxItems;
   final Map<String, DriveItemView> _items = {};
   final Map<String, DateTime> _seen = {};
   final Map<String, List<String>> _lists = {};
+  final _changes = StreamController<DriveItemView>.broadcast(sync: true);
   Timer? _saveTimer;
   bool _loaded = false;
+
+  /// Items stored or updated (offline availability follows pins).
+  Stream<DriveItemView> get changes => _changes.stream;
+
+  /// The user whose cache is loaded.
+  String? get user => _user;
+
+  /// Switches to [userUuid]'s cache (sign-in) and loads it.
+  Future<void> bindUser(String userUuid) async {
+    if (_user == userUuid) return load();
+    _saveTimer?.cancel();
+    _user = userUuid;
+    _store = _base.scoped('u.$userUuid.');
+    _items.clear();
+    _seen.clear();
+    _lists.clear();
+    _loaded = false;
+    await load();
+  }
 
   Future<void> load() async {
     if (_loaded) return;
@@ -60,6 +85,7 @@ class DriveCache {
       _items[v.uuid.uuid] = v;
       _seen[v.uuid.uuid] = clock.now();
       out.add(v);
+      if (_changes.hasListener) _changes.add(v);
     }
     _trim();
     _scheduleSave();
@@ -87,7 +113,8 @@ class DriveCache {
   void update(UuidValue uuid, DriveItemView Function(DriveItemView) f) {
     final v = _items[uuid.uuid];
     if (v == null) return;
-    _items[uuid.uuid] = f(v);
+    final next = _items[uuid.uuid] = f(v);
+    if (_changes.hasListener) _changes.add(next);
     _scheduleSave();
   }
 
@@ -145,7 +172,10 @@ class DriveCache {
     });
   }
 
-  void dispose() => _saveTimer?.cancel();
+  void dispose() {
+    _saveTimer?.cancel();
+    unawaited(_changes.close());
+  }
 }
 
 /// A drive operation made while offline, replayed in order on reconnect.
@@ -180,17 +210,37 @@ class PendingDriveOp {
   );
 }
 
-/// Persistent FIFO of [PendingDriveOp]s.
+/// Persistent FIFO of [PendingDriveOp]s (per user, see
+/// [DriveCache.bindUser]).
 class PendingDriveOpQueue {
-  PendingDriveOpQueue(this._store);
+  PendingDriveOpQueue(this._base) : _store = _base;
 
-  final LocalStore _store;
+  final LocalStore _base;
+  LocalStore _store;
+  String? _user;
   final List<PendingDriveOp> _ops = [];
   bool _loaded = false;
 
   List<PendingDriveOp> get ops => List.unmodifiable(_ops);
 
   int get length => _ops.length;
+
+  /// Switches to [userUuid]'s queue and loads it.
+  Future<void> bindUser(String userUuid) async {
+    if (_user == userUuid) return load();
+    _user = userUuid;
+    _store = _base.scoped('u.$userUuid.');
+    _ops.clear();
+    _loaded = false;
+    await load();
+  }
+
+  /// Replaces the first operation (e.g. a retry with adjusted arguments).
+  Future<void> replaceFirst(PendingDriveOp op) async {
+    if (_ops.isEmpty) return;
+    _ops[0] = op;
+    await _persist();
+  }
 
   Future<void> load() async {
     if (_loaded) return;

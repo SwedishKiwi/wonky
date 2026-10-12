@@ -1,0 +1,16 @@
+### An assistant conversation of a user, scoped to a file (suite 10 §2).
+class: AssistantThread
+table: assistant_thread
+fields:
+  userId: int, relation(parent=user_profile, onDelete=Cascade)
+  itemId: int?, relation(parent=drive_item, onDelete=Cascade)
+  title: String
+  ### The document revision and Markdown the model last saw (appended as
+  ### "document updated" turns when it changes; never rewritten).
+  contextRevision: int?
+  contextMarkdown: String?, scope=serverOnly
+  createdAt: DateTime
+  updatedAt: DateTime
+indexes:
+  assistant_thread_user_item_idx:
+    fields: userId, itemId, updatedAt

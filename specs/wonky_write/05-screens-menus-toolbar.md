@@ -36,7 +36,7 @@ every control is a `CommandButton`/`CommandMenuItem` bound to a command id (suit
 | **Document editor** | `/d/:uuid` (`?heading=`, `?comment=`, `?suggestion=`, `?version=`) | **this spec §3–§19** | Main screen |
 | Version history | `/d/:uuid/history` | [08](08-comments-suggestions-history.md), suite 07 §5 | Full-screen compare; read-only `SuperReader` |
 | Print / PDF preview | `/d/:uuid/print` | [07](07-import-export-print.md) | Full-screen in-app preview |
-| Theme editor | `/d/:uuid/theme` (full-screen overlay route over the doc) | [06](06-themes.md) | Live preview of the open document |
+| Theme editor | `/themes/:themeUuid?doc=<itemUuid>` (`/themes` opens the last edited theme) | [06](06-themes.md) §10 | Full-screen; live preview of a sample or the open document |
 | Settings › Write | `/settings/write` | suite 04 §4 + §13.3 here | Default theme, page setup, editor prefs |
 | No access / Not found | `/d/:uuid` (state) | suite 03 §2 | *Request access*, *Switch account* |
 | Auth screens | `/signin` … | suite 04 | |
@@ -154,7 +154,7 @@ weight; size clamped 13–22 px), shortcut on the right:
 | Quote | `{quote}` | ⌘⇧. / Ctrl+Shift+. |
 | Code block | `{codeBlock}` | ⌘⌥C / Ctrl+Alt+C |
 | — separator — | | |
-| Customize heading styles… | `write.theme.edit {section: headings}` ([06](06-themes.md)) | — |
+| Customize heading styles… | `write.theme.openEditor {element: headings}` ([06](06-themes.md)) | — |
 
 ### 4.2 Undo history popover
 `ShadPopover` from the Undo button: last 50 steps (label, relative time, source icon for
@@ -327,6 +327,7 @@ Write behaviour noted.
 | Focus mode (check, P2) | `write.view.toggleFocusMode` | — | — | not large-doc mode |
 | Typewriter scrolling (check, P2) | `write.view.toggleTypewriter` | — | — | same |
 | Full screen *(shell)* | `shell.view.toggleFullScreen` | ⌃⌘F | F11 | always |
+| Preview theme ▸ Document theme / *built-in themes* (radio) | `write.theme.previewLocal {themeUuid\|null}` (view state, not saved) | — | — | always |
 | App theme ▸ System / Light / Dark (radio) *(shell)* | `shell.appearance.setTheme {mode}` | — | — | always |
 
 ### 7.4 Insert
@@ -361,7 +362,7 @@ Write behaviour noted.
 | Text ▸ Strikethrough (check) | `write.format.strikethrough` | ⌘⇧X | Ctrl+Shift+X | same |
 | Text ▸ Code (check) | `write.format.inlineCode` | ⌘E | Ctrl+E | same |
 | Paragraph styles ▸ Normal text, Heading 1–6, Quote, Code block (radio, theme-rendered as §4.1) | `write.format.blockType {type}` | ⌘⌥0–6, ⌘⇧., ⌘⌥C | Ctrl+Alt+0–6, Ctrl+Shift+., Ctrl+Alt+C | `editable` |
-| Paragraph styles ▸ Customize styles… | `write.theme.edit {section: blocks}` | — | — | role ≥ editor |
+| Paragraph styles ▸ Customize styles… | `write.theme.openEditor {element: body}` | — | — | role ≥ editor |
 | Bullets & numbering ▸ Bulleted list / Numbered list / Checklist (check) | `write.list.toggle*` | ⌘⇧8/7/9 | Ctrl+Shift+8/7/9 | `editable` |
 | Bullets & numbering ▸ Increase indent / Decrease indent | `write.list.indent` / `outdent` | Tab / ⇧Tab | Tab / Shift+Tab | list/task selected |
 | Bullets & numbering ▸ Mark as done / not done | `write.list.toggleChecked` | ⌘Enter | Ctrl+Enter | `inTask` |
@@ -378,8 +379,11 @@ Write behaviour noted.
 | Image ▸ Alt text… / Replace ▸ / Download | `write.image.editAlt` / `replace` / `download` | — | — | `onImage` |
 | Code block ▸ Language… / Copy code / Exit code block | `write.code.setLanguage` (picker) / `copy` / `exit` | — / — / ⌘Enter | — / — / Ctrl+Enter | `inCode` |
 | ─ | | | | |
-| Theme ▸ Choose theme… | `write.theme.openPicker` | — | — | role ≥ editor (others: view current) |
-| Theme ▸ Customize current theme… | `write.theme.edit` | — | — | role ≥ editor |
+| Theme ▸ *built-in themes* (radio) | `write.theme.apply {themeId}` | — | — | role ≥ editor |
+| Theme ▸ Use my default theme (radio) | `write.theme.useDefault` | — | — | role ≥ editor |
+| Theme ▸ More themes… | `write.theme.openPicker` (grid incl. my themes, *New theme*, *Customize…*) | — | — | always (viewers: read-only grid) |
+| Theme ▸ Customize theme… | `write.theme.openEditor` | — | — | always |
+| Theme ▸ Manage themes… | `write.theme.openManager` | — | — | always |
 | Theme ▸ Save as my default theme | `write.theme.setUserDefault` | — | — | always |
 | What formatting is supported? | `write.help.markdownGuide` (opens help route section) | — | — | always |
 

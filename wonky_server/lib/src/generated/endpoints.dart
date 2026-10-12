@@ -18,6 +18,12 @@ import 'package:serverpod_auth_idp_server/serverpod_auth_idp_server.dart'
 import 'package:serverpod_offline_sync_server/serverpod_offline_sync_server.dart'
     as _izehhkf5;
 import 'package:wonky_server/src/generated/future_calls.dart' as _iwslocjr;
+import 'package:wonky_server/src/generated/platform/ai/models/ai_quality.dart'
+    as _idrzmvpg;
+import 'package:wonky_server/src/generated/platform/ai/models/assistant_context_hints.dart'
+    as _ixc2f7d5;
+import 'package:wonky_server/src/generated/platform/ai/models/inline_ai_request.dart'
+    as _i4c3y8bm;
 import 'package:wonky_server/src/generated/platform/comments/comment_anchor_kind.dart'
     as _i384cqmz;
 import 'package:wonky_server/src/generated/platform/comments/comment_filter.dart'
@@ -54,6 +60,7 @@ import 'package:wonky_server/src/generated/write/models/document_meta_patch.dart
     as _issank2j;
 import '../auth/email_idp_endpoint.dart' as _iuc1hd5t;
 import '../auth/jwt_refresh_endpoint.dart' as _inwq3ztq;
+import '../platform/ai/assistant_endpoint.dart' as _i8k7ge8b;
 import '../platform/comments/comment_endpoint.dart' as _iuwjzuw0;
 import '../platform/drive/drive_endpoint.dart' as _ijanxtjh;
 import '../platform/e2e/e2e_support_endpoint.dart' as _iqj5xom6;
@@ -89,6 +96,12 @@ class Endpoints extends _is.EndpointDispatch {
         ..initialize(
           server,
           'jwtRefresh',
+          null,
+        ),
+      'assistant': _i8k7ge8b.AssistantEndpoint()
+        ..initialize(
+          server,
+          'assistant',
           null,
         ),
       'comment': _iuwjzuw0.CommentEndpoint()
@@ -409,6 +422,278 @@ class Endpoints extends _is.EndpointDispatch {
                         session,
                         refreshToken: params['refreshToken'],
                       ),
+        ),
+      },
+    );
+    connectors['assistant'] = _is.EndpointConnector(
+      name: 'assistant',
+      endpoint: endpoints['assistant']!,
+      methodConnectors: {
+        'getStatus': _is.MethodConnector(
+          name: 'getStatus',
+          params: {},
+          call:
+              (
+                _is.Session session,
+                Map<String, dynamic> params,
+              ) async => (endpoints['assistant'] as _i8k7ge8b.AssistantEndpoint)
+                  .getStatus(session),
+        ),
+        'setQuality': _is.MethodConnector(
+          name: 'setQuality',
+          params: {
+            'quality': _is.ParameterDescription(
+              name: 'quality',
+              type: _is.getType<_idrzmvpg.AiQuality>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _is.Session session,
+                Map<String, dynamic> params,
+              ) async => (endpoints['assistant'] as _i8k7ge8b.AssistantEndpoint)
+                  .setQuality(
+                    session,
+                    params['quality'],
+                  ),
+        ),
+        'stop': _is.MethodConnector(
+          name: 'stop',
+          params: {
+            'threadId': _is.ParameterDescription(
+              name: 'threadId',
+              type: _is.getType<int?>(),
+              nullable: true,
+            ),
+            'runId': _is.ParameterDescription(
+              name: 'runId',
+              type: _is.getType<String?>(),
+              nullable: true,
+            ),
+          },
+          call:
+              (
+                _is.Session session,
+                Map<String, dynamic> params,
+              ) async =>
+                  (endpoints['assistant'] as _i8k7ge8b.AssistantEndpoint).stop(
+                    session,
+                    params['threadId'],
+                    params['runId'],
+                  ),
+        ),
+        'confirm': _is.MethodConnector(
+          name: 'confirm',
+          params: {
+            'runId': _is.ParameterDescription(
+              name: 'runId',
+              type: _is.getType<String>(),
+              nullable: false,
+            ),
+            'confirmationId': _is.ParameterDescription(
+              name: 'confirmationId',
+              type: _is.getType<String>(),
+              nullable: false,
+            ),
+            'allow': _is.ParameterDescription(
+              name: 'allow',
+              type: _is.getType<bool>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _is.Session session,
+                Map<String, dynamic> params,
+              ) async => (endpoints['assistant'] as _i8k7ge8b.AssistantEndpoint)
+                  .confirm(
+                    session,
+                    params['runId'],
+                    params['confirmationId'],
+                    params['allow'],
+                  ),
+        ),
+        'listThreads': _is.MethodConnector(
+          name: 'listThreads',
+          params: {
+            'itemUuid': _is.ParameterDescription(
+              name: 'itemUuid',
+              type: _is.getType<_is.UuidValue>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _is.Session session,
+                Map<String, dynamic> params,
+              ) async => (endpoints['assistant'] as _i8k7ge8b.AssistantEndpoint)
+                  .listThreads(
+                    session,
+                    params['itemUuid'],
+                  ),
+        ),
+        'getThread': _is.MethodConnector(
+          name: 'getThread',
+          params: {
+            'threadId': _is.ParameterDescription(
+              name: 'threadId',
+              type: _is.getType<int>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _is.Session session,
+                Map<String, dynamic> params,
+              ) async => (endpoints['assistant'] as _i8k7ge8b.AssistantEndpoint)
+                  .getThread(
+                    session,
+                    params['threadId'],
+                  ),
+        ),
+        'deleteThread': _is.MethodConnector(
+          name: 'deleteThread',
+          params: {
+            'threadId': _is.ParameterDescription(
+              name: 'threadId',
+              type: _is.getType<int>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _is.Session session,
+                Map<String, dynamic> params,
+              ) async => (endpoints['assistant'] as _i8k7ge8b.AssistantEndpoint)
+                  .deleteThread(
+                    session,
+                    params['threadId'],
+                  ),
+        ),
+        'clearHistory': _is.MethodConnector(
+          name: 'clearHistory',
+          params: {},
+          call:
+              (
+                _is.Session session,
+                Map<String, dynamic> params,
+              ) async => (endpoints['assistant'] as _i8k7ge8b.AssistantEndpoint)
+                  .clearHistory(session),
+        ),
+        'revertChange': _is.MethodConnector(
+          name: 'revertChange',
+          params: {
+            'changeId': _is.ParameterDescription(
+              name: 'changeId',
+              type: _is.getType<String>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _is.Session session,
+                Map<String, dynamic> params,
+              ) async => (endpoints['assistant'] as _i8k7ge8b.AssistantEndpoint)
+                  .revertChange(
+                    session,
+                    params['changeId'],
+                  ),
+        ),
+        'chat': _is.MethodStreamConnector(
+          name: 'chat',
+          params: {
+            'threadId': _is.ParameterDescription(
+              name: 'threadId',
+              type: _is.getType<int?>(),
+              nullable: true,
+            ),
+            'itemUuid': _is.ParameterDescription(
+              name: 'itemUuid',
+              type: _is.getType<_is.UuidValue>(),
+              nullable: false,
+            ),
+            'message': _is.ParameterDescription(
+              name: 'message',
+              type: _is.getType<String>(),
+              nullable: false,
+            ),
+            'hints': _is.ParameterDescription(
+              name: 'hints',
+              type: _is.getType<_ixc2f7d5.AssistantContextHints>(),
+              nullable: false,
+            ),
+          },
+          streamParams: {},
+          returnType: _is.MethodStreamReturnType.streamType,
+          call:
+              (
+                _is.Session session,
+                Map<String, dynamic> params,
+                Map<String, Stream> streamParams,
+              ) => (endpoints['assistant'] as _i8k7ge8b.AssistantEndpoint).chat(
+                session,
+                params['threadId'],
+                params['itemUuid'],
+                params['message'],
+                params['hints'],
+              ),
+        ),
+        'inline': _is.MethodStreamConnector(
+          name: 'inline',
+          params: {
+            'request': _is.ParameterDescription(
+              name: 'request',
+              type: _is.getType<_i4c3y8bm.InlineAiRequest>(),
+              nullable: false,
+            ),
+          },
+          streamParams: {},
+          returnType: _is.MethodStreamReturnType.streamType,
+          call:
+              (
+                _is.Session session,
+                Map<String, dynamic> params,
+                Map<String, Stream> streamParams,
+              ) => (endpoints['assistant'] as _i8k7ge8b.AssistantEndpoint)
+                  .inline(
+                    session,
+                    params['request'],
+                  ),
+        ),
+        'proofread': _is.MethodStreamConnector(
+          name: 'proofread',
+          params: {
+            'itemUuid': _is.ParameterDescription(
+              name: 'itemUuid',
+              type: _is.getType<_is.UuidValue>(),
+              nullable: false,
+            ),
+            'start': _is.ParameterDescription(
+              name: 'start',
+              type: _is.getType<int?>(),
+              nullable: true,
+            ),
+            'length': _is.ParameterDescription(
+              name: 'length',
+              type: _is.getType<int?>(),
+              nullable: true,
+            ),
+          },
+          streamParams: {},
+          returnType: _is.MethodStreamReturnType.streamType,
+          call:
+              (
+                _is.Session session,
+                Map<String, dynamic> params,
+                Map<String, Stream> streamParams,
+              ) => (endpoints['assistant'] as _i8k7ge8b.AssistantEndpoint)
+                  .proofread(
+                    session,
+                    params['itemUuid'],
+                    params['start'],
+                    params['length'],
+                  ),
         ),
       },
     );

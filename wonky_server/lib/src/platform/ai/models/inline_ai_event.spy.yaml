@@ -1,0 +1,8 @@
+class: InlineAiEvent
+fields:
+  type: InlineAiEventType
+  text: String?
+  ### done: the cleaned final Markdown.
+  markdown: String?
+  error: String?
+  errorCode: String?

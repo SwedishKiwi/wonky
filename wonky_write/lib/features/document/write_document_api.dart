@@ -9,6 +9,9 @@ abstract interface class WriteDocumentApi {
   /// The drive item (name, role, `contentRef` = document uuid).
   Future<DriveItemView> getItem(UuidValue itemUuid);
 
+  /// `document.getInfo` (head revision, metadata; offline prefetch).
+  Future<DocumentInfo> getDocumentInfo(UuidValue documentUuid);
+
   /// The sync transport of [documentUuid].
   DocumentSyncTransport transport(UuidValue documentUuid);
 
@@ -53,6 +56,10 @@ class ServerWriteDocumentApi implements WriteDocumentApi {
   @override
   Future<DriveItemView> getItem(UuidValue itemUuid) =>
       _api.guard((c) => c.drive.get(itemUuid));
+
+  @override
+  Future<DocumentInfo> getDocumentInfo(UuidValue documentUuid) =>
+      _api.guard((c) => c.document.getInfo(documentUuid));
 
   @override
   DocumentSyncTransport transport(UuidValue documentUuid) =>

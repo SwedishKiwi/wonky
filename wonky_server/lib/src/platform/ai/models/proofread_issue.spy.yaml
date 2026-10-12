@@ -1,0 +1,12 @@
+### One proofreading finding (Write 09 §5.5), validated against the head.
+class: ProofreadIssue
+fields:
+  id: String
+  quote: String
+  occurrence: int
+  replacement: String
+  ### spelling | grammar | punctuation | style | clarity
+  category: String
+  explanation: String
+  start: int
+  length: int

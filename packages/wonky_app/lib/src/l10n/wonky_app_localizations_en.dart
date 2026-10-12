@@ -1317,6 +1317,66 @@ class WonkyAppLocalizationsEn extends WonkyAppLocalizations {
   String get offlinePending => 'Changes waiting to sync';
 
   @override
+  String get badgeOfflineRecent => 'Available offline (opened recently)';
+
+  @override
+  String get badgeOfflinePending => 'Downloading for offline use…';
+
+  @override
+  String get offlineUnavailable => 'This file isn\'t available offline';
+
+  @override
+  String get offlineDocuments => 'Files on this device';
+
+  @override
+  String offlineDocumentsValue(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count files',
+      one: '1 file',
+      zero: 'None',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String offlinePinnedCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count made available offline',
+      one: '1 made available offline',
+      zero: 'No files made available offline',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get offlineUploads => 'Images waiting to upload';
+
+  @override
+  String get offlineStorageUsed => 'Storage used';
+
+  @override
+  String offlineClearUnsynced(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count changes haven\'t synced yet and will be lost.',
+      one: '1 change hasn\'t synced yet and will be lost.',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get offlineSimulate => 'Simulate offline';
+
+  @override
+  String get offlineSimulateHint =>
+      'Disconnects from the server to try offline editing (developer setting).';
+
+  @override
   String get ownerAnyone => 'Owned by anyone';
 
   @override

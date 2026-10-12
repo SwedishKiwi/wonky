@@ -21,9 +21,14 @@ class Api {
 
   final Client client;
 
+  /// Set by `ConnectivityService.forceOffline` (test hook): every call
+  /// fails with [OfflineException] as if the network were down.
+  static bool simulatedOffline = false;
+
   /// Runs a typed endpoint call, mapping network failures to
   /// [OfflineException].
   Future<T> guard<T>(Future<T> Function(Client c) call) async {
+    if (simulatedOffline) throw const OfflineException('simulated offline');
     try {
       return await call(client);
     } on ServerpodClientNetworkException catch (e) {
@@ -40,6 +45,7 @@ class Api {
     Map<String, dynamic> args = const {},
     bool authenticated = true,
   ]) async {
+    if (simulatedOffline) throw const OfflineException('simulated offline');
     try {
       return await client.callServerEndpoint<T>(
         endpoint,
@@ -60,8 +66,9 @@ class Api {
     String method, [
     Map<String, dynamic> args = const {},
     Map<String, Stream<dynamic>> streams = const {},
-  ]) =>
-      client.callStreamingServerEndpoint<Stream<T>, T>(
+  ]) => simulatedOffline
+      ? Stream<T>.error(const OfflineException('simulated offline'))
+      : client.callStreamingServerEndpoint<Stream<T>, T>(
             endpoint,
             method,
             args,

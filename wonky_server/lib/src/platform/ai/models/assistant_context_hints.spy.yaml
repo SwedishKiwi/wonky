@@ -1,0 +1,18 @@
+### Volatile context of a chat message (Write 09 §5.6).
+class: AssistantContextHints
+fields:
+  ### The client's document stream session (`DocInit.sessionId`): ops of
+  ### the run carry it as `onBehalfOfSessionId` (one undo step there).
+  documentSessionId: String?
+  applyMode: AiApplyMode
+  ### Selection in Delta offsets of [revision] plus its plain text.
+  revision: int?
+  selectionStart: int?
+  selectionLength: int?
+  selectionText: String?
+  ### Heading path of the caret ("Plan › Budget").
+  caretHeadingPath: String?
+  ### Include open comments (quick prompt "Address comments").
+  includeComments: bool, default=false
+  ### The user's local date/time ("2026-10-13 14:05 Europe/Stockholm").
+  localTime: String?

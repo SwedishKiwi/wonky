@@ -1,0 +1,24 @@
+### An inline AI request (Write 09 §5.3–5.5): rewrite a selection, continue
+### writing or a document-level action. Offsets are Delta offsets of
+### [revision].
+class: InlineAiRequest
+fields:
+  itemUuid: UuidValue
+  ### improve, fixGrammar, shorter, longer, tone, translate, custom,
+  ### explain, summarize, continueWriting, summarizeDocument,
+  ### generateOutline.
+  action: String
+  revision: int?
+  start: int?
+  length: int?
+  selectedMarkdown: String?
+  contextBefore: String?
+  contextAfter: String?
+  instruction: String?
+  tone: String?
+  targetLanguage: String?
+  ### short | medium | detailed (summarizeDocument).
+  summaryLength: String?
+  ### Refinement: the previous output to change.
+  previousOutput: String?
+  maxWords: int?

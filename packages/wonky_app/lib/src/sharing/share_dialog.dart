@@ -365,8 +365,11 @@ class _ShareDialogState extends State<ShareDialog> {
           children: [
             Expanded(
               child: Container(
-                padding: const EdgeInsets.all(4),
+                padding: const EdgeInsets.all(2),
+                constraints: const BoxConstraints(minHeight: 36),
                 decoration: BoxDecoration(
+                  // Same fill as a plain field, so chips + input read as one.
+                  color: theme.inputTheme.decoration?.color,
                   border: Border.all(color: theme.colorScheme.input),
                   borderRadius: BorderRadius.circular(8),
                 ),
@@ -417,10 +420,17 @@ class _ShareDialogState extends State<ShareDialog> {
                           controller: _input,
                           focusNode: _inputFocus,
                           autofocus: true,
+                          // The bordered container is the field: no second
+                          // fill or border inside it.
                           decoration: const ShadDecoration(
+                            color: Color(0x00000000),
                             border: ShadBorder.none,
                             focusedBorder: ShadBorder.none,
                             disableSecondaryBorder: true,
+                          ),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 8,
+                            vertical: 4,
                           ),
                           placeholder: Text(l.shareAddPeople),
                           keyboardType: TextInputType.emailAddress,

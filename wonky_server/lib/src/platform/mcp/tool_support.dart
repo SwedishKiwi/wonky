@@ -5,6 +5,7 @@ import 'dart:convert';
 
 import 'package:serverpod/serverpod.dart';
 import 'package:wonky_core/wonky_core.dart' show JsonSchemaViolation;
+import 'package:wonky_write_core/wonky_write_core.dart' show Delta;
 
 import '../common/actor.dart';
 import '../common/models.dart';
@@ -141,6 +142,9 @@ class ToolContext {
     required this.scopes,
     this.tokenId,
     this.clientName,
+    this.groupId,
+    this.onBehalfOfSessionId,
+    this.changeGuard,
   });
 
   final Session session;
@@ -158,10 +162,22 @@ class ToolContext {
   /// presence and the control pill.
   String? clientName;
 
-  /// Display label of the agent ("Claude Code (MCP)").
-  String get agentLabel => clientName == null || clientName!.trim().isEmpty
-      ? 'MCP agent'
-      : '${clientName!.trim()} (MCP)';
+  /// AI assistant runs (Write 09 §5.2): ops of one run share [groupId] and
+  /// name the requesting app session in `RemoteOp.onBehalfOfSessionId`, so
+  /// that session puts them on its own undo stack as one step.
+  String? groupId;
+  String? onBehalfOfSessionId;
+
+  /// Checks a content change before it is submitted (the AI destructive
+  /// guard); throws a [McpToolException] to refuse it.
+  void Function(Delta head, Delta change, String toolName)? changeGuard;
+
+  /// Display label of the agent ("Claude Code (MCP)", "Assistant").
+  String get agentLabel {
+    final name = clientName?.trim() ?? '';
+    if (actor.kind == ActorKind.ai) return name.isEmpty ? 'Assistant' : name;
+    return name.isEmpty ? 'MCP agent' : '$name (MCP)';
+  }
 
   bool hasAnyScope(Set<String> any) =>
       any.isEmpty || any.any((s) => scopes.contains(s));

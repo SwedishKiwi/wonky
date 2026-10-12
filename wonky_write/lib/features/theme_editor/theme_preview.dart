@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:flutter/material.dart' show Theme, ThemeData;
 import 'package:flutter/widgets.dart';
 import 'package:shad/shad.dart';
 import 'package:super_editor/super_editor.dart' show TextNodePosition;
@@ -167,20 +168,27 @@ class _ThemePreviewState extends State<ThemePreview> {
         final theme = const EditorThemeAdapter().adapt(resolved);
         final dark = c.variant == ThemeVariant.dark;
         final pages = c.layout == ThemePreviewLayout.pages;
-        return ShadTheme(
-          data: dark ? WonkyTheme.dark() : WonkyTheme.light(),
-          child: ValueListenableBuilder<int>(
-            valueListenable: WriteFonts.generation,
-            builder: (context, _, _) => ColoredBox(
-              key: const ValueKey<String>('write.themeEditor.preview'),
-              color: pages ? theme.canvasColor : theme.paperColor,
-              child: WonkyEditor(
-                key: const ValueKey<String>('write.themeEditor.previewEditor'),
-                controller: _editor,
-                theme: theme,
-                scrollController: _scroll,
-                documentTitle: 'Theme preview',
-                hint: '',
+        // Task checkboxes are Material widgets: give them the preview's
+        // brightness too, not the app's.
+        return Theme(
+          data: dark ? _darkMaterial : _lightMaterial,
+          child: ShadTheme(
+            data: dark ? WonkyTheme.dark() : WonkyTheme.light(),
+            child: ValueListenableBuilder<int>(
+              valueListenable: WriteFonts.generation,
+              builder: (context, _, _) => ColoredBox(
+                key: const ValueKey<String>('write.themeEditor.preview'),
+                color: pages ? theme.canvasColor : theme.paperColor,
+                child: WonkyEditor(
+                  key: const ValueKey<String>(
+                    'write.themeEditor.previewEditor',
+                  ),
+                  controller: _editor,
+                  theme: theme,
+                  scrollController: _scroll,
+                  documentTitle: 'Theme preview',
+                  hint: '',
+                ),
               ),
             ),
           ),
@@ -188,4 +196,7 @@ class _ThemePreviewState extends State<ThemePreview> {
       },
     );
   }
+
+  static final _lightMaterial = ThemeData(brightness: Brightness.light);
+  static final _darkMaterial = ThemeData(brightness: Brightness.dark);
 }

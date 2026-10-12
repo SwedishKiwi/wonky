@@ -657,6 +657,19 @@ All built-ins ship explicit dark palettes. Key characteristics (full JSON in
   *Discard*, *Cancel*.
 - `< MD` width: element tree and inspector become tabs; preview below.
 
+> Implementation (iteration 1, `wonky_write/lib/features/theme_editor/`): `ThemeEditorRoute`
+> (`/themes` → last edited theme from the user store, else the default), `ThemeEditorScreen`,
+> `ThemeEditorController` (draft, save/conflict, preview state; `ThemeEditorController.active`
+> is the open editor for commands and MCP), `ThemeLibrary` (create/duplicate/rename/delete/
+> restore as `write.theme` shell steps), `ThemeInspector` (catalog-driven: every property of
+> `ThemeCatalog` gets a typed control; labels/groups in `theme_editor_model.dart`),
+> `ThemePreview` (read-only `WonkyEditor`; click-to-select maps the caret's block/inline
+> attributes to the element) and `theme_sample.dart`. Server access goes through
+> `features/themes/theme_repository.dart` (`ThemeRepository`, fakes in tests). Below 880 px
+> the theme list, element tree and inspector become tabs above the preview. The preview
+> follows the app brightness until a variant is picked. Hover-outlining of matching blocks is
+> not implemented yet.
+
 ### 10.2 Layout
 
 ```
@@ -735,8 +748,8 @@ Slider and stepper drags are coalesced into one draft undo step per gesture.
   route is active.
 - **Save** (`Mod+S`): `WriteThemeEndpoint.update(uuid, json, expectedVersion)`. On success the
   draft stack is cleared and a single coarse step "Edit theme ‘X’" (domain `write.theme`, `{uuid,
-  beforeJson, afterJson, versionAfter}`) is pushed onto the stack of the originating document
-  (or the shell stack). Undoing it later saves `beforeJson` if the server version is still
+  beforeJson, afterJson, versionAfter}`) is pushed onto the shell stack (the originating
+  document is not open while the editor route is). Undoing it later saves `beforeJson` if the server version is still
   `versionAfter` — otherwise dropped with the standard toast.
 - **Conflict** (`ThemeConflict`, same theme saved from another window): dialog *Reload theirs*
   (discard draft), *Overwrite* (save with new expectedVersion), *Save as copy*.
@@ -750,6 +763,14 @@ Slider and stepper drags are coalesced into one draft undo step per gesture.
   (from `usage`) next to *Save*.
 - Theme create/rename/delete/duplicate are undoable shell-level steps (domain `write.theme`:
   create ↔ delete, rename before/after, delete ↔ restore).
+- *Apply to document* (`write.theme.applyToDocument`, shown when opened with `?doc=` and the
+  user can edit that document) assigns the theme through `document.updateMeta`; it is a
+  `write.theme` shell step `{op: assigned, target: documentUuid, before, after}`.
+- Saves (here or by anyone) reach open documents live: the catalog entry is replaced and the
+  document's `DocumentThemeController` re-resolves; `MetaChanged(themeVersion)` makes other
+  clients refetch (`WriteThemeCatalog.refresh`, read with `viaDocumentUuid`).
+- The user's default theme is stored as `writeDefaults.defaultThemeId` (older clients wrote
+  `themeUuid`, still read).
 
 ### 10.5 Import / export
 
@@ -788,7 +809,7 @@ Exposed to MCP via `write.get_theme` (`contrast_warnings`).
 
 | Command id | Args | Role | Undoable | Notes |
 |------------|------|------|----------|-------|
-| `write.theme.apply` | `{themeUuid: string\|null}` | Editor | ✓ (`write.meta`) | `null` = *Use my default theme* |
+| `write.theme.apply` | `{themeId: string\|null}` (alias `themeUuid`) | Editor | ✓ (`write.meta`) | `null` = *Use my default theme* |
 | `write.theme.useDefault` | — | Editor | ✓ | Alias for apply(null), menu item |
 | `write.theme.previewLocal` | `{themeUuid\|null}` | Viewer | — | View-only preview; `null` clears |
 | `write.theme.openEditor` | `{themeUuid?, element?}` | Viewer | — | Opens `/themes/:uuid?doc=` |
@@ -799,10 +820,13 @@ Exposed to MCP via `write.get_theme` (`contrast_warnings`).
 | `write.theme.delete` | `{themeUuid}` | owner | ✓ (restore) | Confirm when used by documents |
 | `write.theme.setAsDefault` | `{themeUuid}` | — | — (setting) | Writes `writeDefaults.defaultThemeId` |
 | `write.theme.selectElement` | `{element}` | — | — | Theme editor navigation |
-| `write.theme.setProperty` | `{path: string, value: json\|null, variant?: "light"\|"dark"}` | owner | ✓ (draft) | `path` like `elements.h2.fontSize`, `palette.accent`, `dark.palette.text`; `null` = reset to inherit |
+| `write.theme.setProperty` | `{path: string, value: json\|null, variant?: "light"\|"dark", gesture?: string}` | owner | ✓ (draft) | `path` like `elements.h2.fontSize`, `palette.accent`, `dark.palette.text`; `null` = reset to inherit; steps with the same `gesture` coalesce (drags); `dark.mode = explicit` fills the dark palette with the derived colors |
 | `write.theme.resetElement` | `{element}` | owner | ✓ (draft) | |
 | `write.theme.fixContrast` | `{pairId}` | owner | ✓ (draft) | |
 | `write.theme.revert` | — | owner | — | Discards draft |
+| `write.theme.restore` | `{themeUuid?}` | owner | ✓ (delete) | Undelete a soft-deleted theme |
+| `write.theme.applyToDocument` | — | Editor on `?doc` | ✓ (`write.theme`) | Theme editor *Apply to document* |
+| `write.theme.showRevisions` | — | owner | — | Revision list; *Load* puts a revision into the draft (one draft step) |
 | `write.theme.save` | — | owner | ✓ (coarse step) | `Mod+S` in the theme editor |
 | `write.theme.setPreviewSource` | `{source: "sample"\|"document"}` | — | — | |
 | `write.theme.setPreviewVariant` | `{variant}` | — | — | |

@@ -45,17 +45,51 @@ class CachedDriveRepository extends ChangeNotifier implements DriveRepository {
   /// Number of queued operations.
   int get pendingCount => queue.length;
 
+  /// Loads the signed-in user's cache and queue, then replays the queue.
   Future<void> init() async {
-    await cache.load();
-    await queue.load();
+    final me = currentUser();
+    if (me != null) {
+      await cache.bindUser(me.uuid.uuid);
+      await queue.bindUser(me.uuid.uuid);
+    } else {
+      await cache.load();
+      await queue.load();
+    }
+    notifyListeners();
     if (connectivity.online) unawaited(replay());
   }
+
+  /// Notifies listeners (after the cache or queue were changed directly,
+  /// e.g. Clear local data).
+  void refreshListeners() => notifyListeners();
+
+  /// Whether the creation of [itemUuid] (a document created offline) is
+  /// still queued.
+  bool isPendingCreate(UuidValue itemUuid) => queue.ops.any(
+    (o) =>
+        (o.kind == 'createDocument' || o.kind == 'registerSpreadsheet') &&
+        (o.args['itemUuid'] == itemUuid.uuid ||
+            o.args['spaceUuid'] == itemUuid.uuid),
+  );
+
+  /// The queued creation of [itemUuid], if any.
+  PendingDriveOp? pendingCreate(UuidValue itemUuid) => queue.ops
+      .where(
+        (o) =>
+            o.kind == 'createDocument' && o.args['itemUuid'] == itemUuid.uuid,
+      )
+      .firstOrNull;
 
   void _onConnectivity() {
     if (connectivity.online) unawaited(replay());
   }
 
   Future<T> _read<T>(Future<T> Function() call, T? Function() fallback) async {
+    if (!connectivity.online) {
+      final f = fallback();
+      if (f != null) return f;
+      throw const OfflineException('offline');
+    }
     try {
       final r = await call();
       connectivity.reportSuccess();
@@ -385,7 +419,7 @@ class CachedDriveRepository extends ChangeNotifier implements DriveRepository {
       createdAt: now,
       modifiedAt: now,
       starred: false,
-      pinnedOffline: true,
+      pinnedOffline: false,
       lastOpenedAt: now,
       editorsCanShare: true,
       nonEditorsCanExport: true,
@@ -410,6 +444,19 @@ class CachedDriveRepository extends ChangeNotifier implements DriveRepository {
           if (isOfflineError(e)) {
             connectivity.reportFailure();
             break;
+          }
+          if (op.kind == 'createDocument' && op.args['parentUuid'] != null) {
+            // The folder went away (or became read-only) while offline: the
+            // document still has to exist, so create it in My Drive.
+            await queue.replaceFirst(
+              PendingDriveOp(
+                id: op.id,
+                kind: op.kind,
+                args: {...op.args, 'parentUuid': null},
+                createdAt: op.createdAt,
+              ),
+            );
+            continue;
           }
           // Not retryable (item gone, no permission): drop and tell the user.
           await queue.removeFirst();

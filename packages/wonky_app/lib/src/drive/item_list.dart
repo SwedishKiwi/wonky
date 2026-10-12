@@ -4,6 +4,7 @@ import 'package:shad/shad.dart';
 import 'package:wonky_client/wonky_client.dart';
 import 'package:wonky_ui/wonky_ui.dart';
 
+import '../core/offline_storage.dart';
 import '../data/models_ext.dart';
 import '../l10n/wonky_app_localizations.dart';
 import '../shell/shell_services.dart';
@@ -98,6 +99,11 @@ class _DriveItemsViewState extends State<DriveItemsView> {
 
   void _open(DriveItemView item) {
     if (item.isTrashed) return;
+    if (!s.connectivity.online &&
+        !OfflineStorage.of(s).isAvailableOffline(item)) {
+      s.toasts.show(WonkyAppLocalizations.of(context).offlineUnavailable);
+      return;
+    }
     s.openItem(item);
   }
 
@@ -109,7 +115,7 @@ class _DriveItemsViewState extends State<DriveItemsView> {
   Widget build(BuildContext context) {
     final l = WonkyAppLocalizations.of(context);
     return ListenableBuilder(
-      listenable: c,
+      listenable: Listenable.merge([c, s.connectivity, OfflineStorage.of(s)]),
       builder: (context, _) {
         final items = c.items;
         final body = c.layout == DriveLayout.grid
@@ -480,8 +486,8 @@ class _ItemRow extends StatelessWidget {
     final l = WonkyAppLocalizations.of(context);
     final theme = ShadTheme.of(context);
     final c = theme.colorScheme;
-    final offlineDim =
-        !services.connectivity.online && !item.pinnedOffline && !item.isFolder;
+    final available = OfflineStorage.of(services).isAvailableOffline(item);
+    final offlineDim = !services.connectivity.online && !available;
     final ownerName = item.owner.id == services.me?.id
         ? l.ownerMe
         : item.owner.displayName;
@@ -497,8 +503,8 @@ class _ItemRow extends StatelessWidget {
         selected: selected,
         button: true,
         label: '${describeKind(l, item.kind)} ${item.name}',
-        child: Opacity(
-          opacity: offlineDim ? 0.5 : 1,
+        child: _OfflineDim(
+          dim: offlineDim,
           child: Container(
             height: 44,
             margin: const EdgeInsets.symmetric(horizontal: 8),
@@ -553,17 +559,8 @@ class _ItemRow extends StatelessWidget {
                         const SizedBox(width: 6),
                         Icon(LucideIcons.star, size: 14, color: c.warning),
                       ],
-                      if (item.pinnedOffline) ...[
-                        const SizedBox(width: 6),
-                        ShadTooltip(
-                          builder: (_) => Text(l.badgeOffline),
-                          child: Icon(
-                            LucideIcons.circleCheck,
-                            size: 14,
-                            color: c.success,
-                          ),
-                        ),
-                      ],
+                      if (!item.isFolder && (item.pinnedOffline || available))
+                        _OfflineBadge(item: item, available: available),
                     ],
                   ),
                 ),
@@ -678,75 +675,143 @@ class _ItemCard extends StatelessWidget {
         selected: selected,
         button: true,
         label: '${describeKind(l, item.kind)} ${item.name}',
-        child: Container(
-          decoration: BoxDecoration(
-            color: drop ? c.selection : (selected ? c.sidebarAccent : c.card),
-            borderRadius: BorderRadius.circular(10),
-            border: Border.all(
-              color: focused
-                  ? c.ring
-                  : (hover ? c.ring.withValues(alpha: 0.5) : c.border),
-              width: focused ? 2 : 1,
+        child: _OfflineDim(
+          dim:
+              !services.connectivity.online &&
+              !OfflineStorage.of(services).isAvailableOffline(item),
+          child: Container(
+            decoration: BoxDecoration(
+              color: drop ? c.selection : (selected ? c.sidebarAccent : c.card),
+              borderRadius: BorderRadius.circular(10),
+              border: Border.all(
+                color: focused
+                    ? c.ring
+                    : (hover ? c.ring.withValues(alpha: 0.5) : c.border),
+                width: focused ? 2 : 1,
+              ),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Expanded(
+                  child: Container(
+                    margin: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: c.canvas,
+                      borderRadius: BorderRadius.circular(6),
+                    ),
+                    child: Center(
+                      child: Icon(
+                        kindIcon(item.kind),
+                        size: 40,
+                        color: kindColor(item.kind, c).withValues(alpha: 0.7),
+                      ),
+                    ),
+                  ),
+                ),
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(10, 0, 4, 8),
+                  child: Row(
+                    children: [
+                      Icon(
+                        kindIcon(item.kind),
+                        size: 16,
+                        color: kindColor(item.kind, c),
+                      ),
+                      const SizedBox(width: 6),
+                      Expanded(
+                        child: Text(
+                          item.name,
+                          overflow: TextOverflow.ellipsis,
+                          style: theme.textTheme.small,
+                        ),
+                      ),
+                      if (item.starred)
+                        Icon(LucideIcons.star, size: 12, color: c.warning),
+                      if (!item.isFolder &&
+                          (item.pinnedOffline ||
+                              OfflineStorage.of(
+                                services,
+                              ).isAvailableOffline(item)))
+                        _OfflineBadge(
+                          item: item,
+                          available: OfflineStorage.of(
+                            services,
+                          ).isAvailableOffline(item),
+                        ),
+                      WonkyDropdownMenu(
+                        entries: () =>
+                            itemMenuEntries(context, services, trash: trash),
+                        builder: (context, ctl) => ShadIconButton.ghost(
+                          width: 26,
+                          height: 26,
+                          iconSize: 14,
+                          semanticLabel: l.moreActions,
+                          icon: const Icon(LucideIcons.ellipsisVertical),
+                          onPressed: () {
+                            onMenu();
+                            ctl.toggle();
+                          },
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
             ),
           ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              Expanded(
-                child: Container(
-                  margin: const EdgeInsets.all(8),
-                  decoration: BoxDecoration(
-                    color: c.canvas,
-                    borderRadius: BorderRadius.circular(6),
-                  ),
-                  child: Center(
-                    child: Icon(
-                      kindIcon(item.kind),
-                      size: 40,
-                      color: kindColor(item.kind, c).withValues(alpha: 0.7),
-                    ),
-                  ),
-                ),
-              ),
-              Padding(
-                padding: const EdgeInsets.fromLTRB(10, 0, 4, 8),
-                child: Row(
-                  children: [
-                    Icon(
-                      kindIcon(item.kind),
-                      size: 16,
-                      color: kindColor(item.kind, c),
-                    ),
-                    const SizedBox(width: 6),
-                    Expanded(
-                      child: Text(
-                        item.name,
-                        overflow: TextOverflow.ellipsis,
-                        style: theme.textTheme.small,
-                      ),
-                    ),
-                    if (item.starred)
-                      Icon(LucideIcons.star, size: 12, color: c.warning),
-                    WonkyDropdownMenu(
-                      entries: () =>
-                          itemMenuEntries(context, services, trash: trash),
-                      builder: (context, ctl) => ShadIconButton.ghost(
-                        width: 26,
-                        height: 26,
-                        iconSize: 14,
-                        semanticLabel: l.moreActions,
-                        icon: const Icon(LucideIcons.ellipsisVertical),
-                        onPressed: () {
-                          onMenu();
-                          ctl.toggle();
-                        },
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// Dims an item that cannot be opened offline (suite 05 §4) and explains
+/// why in a tooltip.
+class _OfflineDim extends StatelessWidget {
+  const _OfflineDim({required this.dim, required this.child});
+
+  final bool dim;
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    if (!dim) return child;
+    return ShadTooltip(
+      builder: (_) =>
+          Text(WonkyAppLocalizations.of(context).offlineUnavailable),
+      child: Opacity(opacity: 0.45, child: child),
+    );
+  }
+}
+
+/// "Available offline" badge: a check for files kept on this device,
+/// a download arrow while a pinned file is not downloaded yet.
+class _OfflineBadge extends StatelessWidget {
+  const _OfflineBadge({required this.item, required this.available});
+
+  final DriveItemView item;
+  final bool available;
+
+  @override
+  Widget build(BuildContext context) {
+    final l = WonkyAppLocalizations.of(context);
+    final c = ShadTheme.of(context).colorScheme;
+    return Padding(
+      padding: const EdgeInsets.only(left: 6),
+      child: ShadTooltip(
+        builder: (_) => Text(
+          available
+              ? (item.pinnedOffline ? l.badgeOffline : l.badgeOfflineRecent)
+              : l.badgeOfflinePending,
+        ),
+        child: Icon(
+          available ? LucideIcons.circleCheck : LucideIcons.cloudDownload,
+          key: ValueKey<String>('drive.offlineBadge.${item.uuid.uuid}'),
+          size: 14,
+          color: available
+              ? (item.pinnedOffline ? c.success : c.mutedForeground)
+              : c.mutedForeground,
         ),
       ),
     );

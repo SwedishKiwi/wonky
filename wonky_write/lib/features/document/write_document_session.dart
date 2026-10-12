@@ -33,10 +33,17 @@
 /// | [applyContentChange] | Applies a Delta as an undoable local change (agents, overlay changes) |
 /// | [revealRange] | Scrolls a Delta range into view |
 /// | [saveCopy] | "Save my changes as a copy" after a lost resync |
+/// | [offline], [openedFromCache] | The user's offline store (suite 12 §1); whether the document was rendered from it |
 ///
-/// Undo is not persisted for Write (the controller should return
-/// `persistUndo => false`): entries are only valid against the live
-/// document.
+/// Offline (suite 12 §1.2): with the user's `WriteOffline` store the
+/// document opens from the local copy immediately (stale-while-revalidate)
+/// and then connects; local changes go to the durable outbox before they
+/// are sent; documents created offline open at once and connect after
+/// their queued creation; metadata changes made offline are queued.
+///
+/// Undo is not persisted by the shell for Write (the controller returns
+/// `persistUndo => false`); the session stores its stacks with the offline
+/// copy instead (best effort, restored only onto the identical document).
 library;
 
 import 'dart:async';
@@ -49,13 +56,15 @@ import 'package:wonky_client/wonky_client.dart';
 import 'package:wonky_core/wonky_core.dart' hide ActorKind;
 import 'package:wonky_ui/wonky_ui.dart' show SyncState, SyncStatus;
 import 'package:wonky_write_core/wonky_write_core.dart'
-    show DeltaUtils, MarkdownCodec, PageSetup;
+    show DeltaUtils, MarkdownCodec, PageSetup, documentHash;
 
 import '../collab/remote_presence.dart';
 import '../comments/write_comments.dart';
 import '../editor/applier/delta_applier.dart' show DeltaSelection;
 import '../editor/controller/editor_types.dart';
 import '../editor/controller/write_editor_controller.dart';
+import '../offline/write_local_store.dart' show StoredDocument;
+import '../offline/write_offline.dart';
 import '../suggestions/suggestions_controller.dart';
 import '../sync/connection_keeper.dart';
 import '../sync/document_sync_controller.dart';
@@ -146,7 +155,9 @@ class WriteDocumentSession extends ChangeNotifier {
     WriteDocumentApi? api,
     ConnectionKeeper? keeper,
     UuidV7Generator? ids,
+    Future<WriteOffline?> Function()? offline,
   }) : itemUuid = UuidValue.fromString(itemUuid),
+       _offlineLookup = offline,
        _ids = ids ?? UuidV7Generator.instance,
        api =
            api ??
@@ -203,6 +214,19 @@ class WriteDocumentSession extends ChangeNotifier {
   /// Keeps the document stream connected.
   final ConnectionKeeper keeper;
   final UuidV7Generator _ids;
+  final Future<WriteOffline?> Function()? _offlineLookup;
+
+  WriteOffline? _offline;
+
+  /// The signed-in user's offline store (null when unavailable: the
+  /// session then keeps its outbox in memory only).
+  WriteOffline? get offline => _offline;
+
+  bool _fromCache = false;
+
+  /// Whether the document was rendered from the local copy before the
+  /// server answered.
+  bool get openedFromCache => _fromCache;
 
   /// The editor controller: content, selection, view state (zoom, layout,
   /// find matches, remote cursors, comment highlights).
@@ -311,15 +335,22 @@ class WriteDocumentSession extends ChangeNotifier {
   // ---------------------------------------------------------------------------
   // Opening.
 
-  /// Loads the drive item and connects the document stream.
+  /// Loads the document — from the local copy when there is one, then
+  /// from the server — and connects the document stream.
   Future<void> open() async {
     if (_opened || _disposed) return;
     _opened = true;
     try {
-      final item = await api.getItem(itemUuid);
+      final offline =
+          await (_offlineLookup?.call() ?? WriteOffline.ready(services));
+      if (_disposed) return;
+      _offline = offline;
+      var stored = await _loadStored(offline);
+      if (_disposed) return;
+      final item = stored?.item ?? await _loadItem();
       if (_disposed) return;
       _setItem(item);
-      final doc = item.contentRef;
+      final doc = item.contentRef ?? stored?.documentUuid;
       if (item.kind != DriveItemKind.document || doc == null) {
         throw WonkyException(
           code: WonkyErrorCode.notFound,
@@ -327,6 +358,16 @@ class WriteDocumentSession extends ChangeNotifier {
         );
       }
       _documentUuid = doc;
+      if (offline != null) {
+        await offline.claim(doc);
+        _claimed = true;
+        if (stored == null && offline.isPendingCreate(itemUuid)) {
+          stored = await _prepareCreatedOffline(offline, doc, item);
+        }
+      }
+      if (stored == null && !services.connectivity.online) {
+        throw const OfflineException('not available offline');
+      }
       _preferredMode = await _loadModePref();
       if (_disposed) return;
       final sync = DocumentSyncController(
@@ -335,12 +376,37 @@ class WriteDocumentSession extends ChangeNotifier {
         keeper: keeper,
         key: 'write.document:${doc.uuid}',
         ids: _ids,
+        persistence: offline?.persistenceFor(
+          documentUuid: doc,
+          itemUuid: itemUuid,
+          stored: stored,
+        ),
       );
       _sync = sync;
       _syncSub = sync.events.listen(_onSyncEvent);
       sync.status.addListener(_onStatus);
       presence.attach(sync);
-      sync.start();
+      if (stored != null) {
+        _fromCache = true;
+        sync.restore(stored.state);
+        await _restoreUndo();
+        if (_disposed) return;
+      }
+      if (offline != null) {
+        unawaited(offline.opened(doc, item));
+        services.undo.addListener(_onUndoChanged);
+      }
+      if (offline != null && offline.isPendingCreate(itemUuid)) {
+        // Created offline: connect once the queued creation went through.
+        unawaited(
+          offline.whenCreated(itemUuid).then((_) {
+            if (!_disposed) sync.start();
+          }),
+        );
+      } else {
+        sync.start();
+      }
+      if (stored?.item != null) unawaited(_refreshItem());
       notifyListeners();
     } catch (e) {
       if (_disposed) return;
@@ -348,8 +414,100 @@ class WriteDocumentSession extends ChangeNotifier {
       _phase.value = _isAccessError(e)
           ? WriteSessionPhase.noAccess
           : WriteSessionPhase.failed;
+      if (isOfflineError(e)) _reopenWhenOnline();
       notifyListeners();
     }
+  }
+
+  bool _claimed = false;
+
+  Future<StoredDocument?> _loadStored(WriteOffline? offline) async {
+    if (offline == null) return null;
+    try {
+      return await offline.load(itemUuid);
+    } on Object catch (e) {
+      debugPrint('Reading the local copy failed: $e');
+      return null;
+    }
+  }
+
+  /// The drive item from the server, or — offline — from the drive cache.
+  Future<DriveItemView> _loadItem() async {
+    if (services.connectivity.online) {
+      try {
+        return await api.getItem(itemUuid);
+      } catch (e) {
+        if (!isOfflineError(e)) rethrow;
+      }
+    }
+    final known = services.knownItem(itemUuid);
+    if (known != null) return known;
+    throw const OfflineException('not available offline');
+  }
+
+  /// A document created offline: its local copy starts empty at revision 0
+  /// (the server creates it empty, suite 12 §1.2).
+  Future<StoredDocument?> _prepareCreatedOffline(
+    WriteOffline offline,
+    UuidValue doc,
+    DriveItemView item,
+  ) async {
+    final d = services.drive;
+    final pending = d is CachedDriveRepository
+        ? d.pendingCreate(itemUuid)
+        : null;
+    if (pending != null &&
+        (pending.args['templateUuid'] != null ||
+            ((pending.args['initialMarkdown'] as String?) ?? '').isNotEmpty)) {
+      // Its content comes from the server (template, import).
+      return null;
+    }
+    await offline.prepareLocalDocument(documentUuid: doc, item: item);
+    return offline.load(itemUuid);
+  }
+
+  /// Revalidates the cached drive item (title, role, pin).
+  Future<void> _refreshItem() async {
+    if (!services.connectivity.online) return;
+    try {
+      final item = await api.getItem(itemUuid);
+      if (_disposed) return;
+      _setItem(item);
+      final doc = _documentUuid;
+      if (doc != null) unawaited(_offline?.updateItem(doc, item));
+    } catch (_) {
+      // The stream reports lost access; offline keeps the cached item.
+    }
+  }
+
+  VoidCallback? _onlineListener;
+
+  /// Retries a failed open when the connection comes back.
+  void _reopenWhenOnline() {
+    if (_onlineListener != null) return;
+    void l() {
+      if (!services.connectivity.online || _disposed) return;
+      _stopReopen();
+      unawaited(_reopen());
+    }
+
+    _onlineListener = l;
+    services.connectivity.addListener(l);
+  }
+
+  void _stopReopen() {
+    final l = _onlineListener;
+    if (l != null) services.connectivity.removeListener(l);
+    _onlineListener = null;
+  }
+
+  Future<void> _reopen() async {
+    if (_disposed || _sync != null) return;
+    _opened = false;
+    error = null;
+    _phase.value = WriteSessionPhase.loading;
+    notifyListeners();
+    await open();
   }
 
   static bool _isAccessError(Object e) =>
@@ -532,7 +690,21 @@ class WriteDocumentSession extends ChangeNotifier {
   Future<void> _writeMeta(String field, String valueJson) async {
     final doc = _documentUuid;
     if (doc == null) return;
-    await api.updateMeta(doc, field, valueJson, _ids.next());
+    final clientOpId = _ids.next();
+    final offline = _offline;
+    try {
+      if (!services.connectivity.online) {
+        throw const OfflineException('offline');
+      }
+      if (offline != null && offline.isPendingCreate(itemUuid)) {
+        throw const OfflineException('not created yet');
+      }
+      await api.updateMeta(doc, field, valueJson, clientOpId);
+    } catch (e) {
+      if (!isOfflineError(e) || offline == null) rethrow;
+      // Saved on this device; sent with the same id on reconnect.
+      await offline.queueMeta(doc, field, valueJson, clientOpId);
+    }
     // Optimistic: the `MetaChanged` echo confirms it.
     _sync?.applyLocalMeta(field, valueJson);
     _meta.value = WriteDocumentMeta.fromView(metaView);
@@ -705,7 +877,7 @@ class WriteDocumentSession extends ChangeNotifier {
     if (_disposed) return;
     switch (e) {
       case SyncLoaded():
-        _docRole = roleOf(_sync!.role ?? AccessRole.viewer);
+        _docRole = roleOf(_sync!.role ?? _item?.role ?? AccessRole.viewer);
         _role.value = _docRole!;
         _meta.value = WriteDocumentMeta.fromView(metaView);
         editor.userUuid = userUuid;
@@ -750,8 +922,13 @@ class WriteDocumentSession extends ChangeNotifier {
         _setModeInternally(EditorMode.viewing);
         _phase.value = WriteSessionPhase.noAccess;
         notifyListeners();
-      case SyncConnected() ||
-          SyncDisconnected() ||
+      case SyncConnected():
+        final doc = _documentUuid;
+        final offline = _offline;
+        if (doc != null && offline != null) {
+          unawaited(offline.replayMeta(doc, api));
+        }
+      case SyncDisconnected() ||
           SyncParticipantsChanged() ||
           SyncRemoteCursor():
         break;
@@ -768,31 +945,58 @@ class WriteDocumentSession extends ChangeNotifier {
   void _onResynced(SyncResynced e) {
     final recovery = e.recoveryDocument;
     if (!e.lostLocalChanges) return;
+    final tooOld = e.reason == ResyncReason.rebaseTooOld;
     final reason = switch (e.code) {
       DocRejectCode.tooLarge => 'The document would exceed its maximum size.',
       DocRejectCode.forbiddenForRole =>
         'You no longer have permission to edit.',
+      DocRejectCode.rebaseTooOld =>
+        'Your offline changes are too old to be merged.',
       _ => e.message,
     };
     services.toasts.show(
-      'Some of your changes could not be saved',
+      tooOld
+          ? "Your offline changes couldn't be merged"
+          : 'Some of your changes could not be saved',
       description: reason,
       destructive: true,
-      duration: const Duration(seconds: 12),
-      actionLabel: recovery == null ? null : 'Save them as a copy',
-      onAction: recovery == null ? null : () => saveCopy(recovery),
+      duration: const Duration(seconds: 20),
+      actionLabel: recovery == null
+          ? null
+          : (tooOld
+                ? 'Save my offline changes as a copy'
+                : 'Save them as a copy'),
+      onAction: recovery == null
+          ? null
+          : () => saveCopy(
+              recovery,
+              suffix: tooOld ? 'offline changes' : 'my changes',
+            ),
     );
   }
 
   /// Saves [document] (e.g. unsaved local changes) as a new document next
-  /// to this one ("Save my changes as a copy", suite 12 §1.2).
-  Future<DriveItemView?> saveCopy(Delta document) async {
+  /// to this one ("Save my changes as a copy", suite 12 §1.2). With the
+  /// offline store the copy is created with client ids and its content
+  /// goes through the outbox (works offline, keeps every attribute);
+  /// otherwise it is created from Markdown.
+  Future<DriveItemView?> saveCopy(
+    Delta document, {
+    String suffix = 'my changes',
+  }) async {
     try {
-      final copy = await services.drive.createDocument(
-        parentUuid: _item?.parentUuid,
-        name: '$title (my changes)',
-        initialMarkdown: const MarkdownCodec().exportMarkdown(document),
-      );
+      final offline = _offline;
+      final copy = offline != null
+          ? await offline.createDocument(
+              parentUuid: _item?.parentUuid,
+              name: '$title ($suffix)',
+              content: document,
+            )
+          : await services.drive.createDocument(
+              parentUuid: _item?.parentUuid,
+              name: '$title ($suffix)',
+              initialMarkdown: const MarkdownCodec().exportMarkdown(document),
+            );
       services.toasts.show(
         'Saved a copy',
         description: copy.name,
@@ -821,8 +1025,83 @@ class WriteDocumentSession extends ChangeNotifier {
     return false;
   }
 
-  /// Reconnects now (sync status "Retry").
-  Future<void> retry() async => _sync?.retry();
+  /// Reconnects now (sync status "Retry"); re-opens after a failed open.
+  Future<void> retry() async {
+    if (_sync == null && _phase.value == WriteSessionPhase.failed) {
+      _stopReopen();
+      unawaited(services.connectivity.reconnect());
+      await _reopen();
+      return;
+    }
+    _sync?.retry();
+  }
+
+  // ---------------------------------------------------------------------------
+  // Undo persistence (best effort, suite 12 §1.1 `LocalUndoStack`).
+
+  Timer? _undoSave;
+
+  void _onUndoChanged() {
+    if (!isLoaded || _disposed) return;
+    _undoSave?.cancel();
+    _undoSave = Timer(const Duration(milliseconds: 800), () {
+      unawaited(_saveUndo());
+    });
+  }
+
+  /// The newest steps that can be stored: everything after the last step
+  /// that has an entry without JSON (older steps only make sense together
+  /// with the newer ones).
+  static List<Map<String, Object?>> _storable(List<UndoStep> steps) {
+    final out = <Map<String, Object?>>[];
+    for (final st in steps.reversed) {
+      final j = st.toJson();
+      if (j == null) break;
+      out.insert(0, j);
+    }
+    return out;
+  }
+
+  Future<void> _saveUndo() async {
+    final offline = _offline;
+    final doc = _documentUuid;
+    if (offline == null || doc == null || !isLoaded) return;
+    final undo = services.undo;
+    final stacks = {
+      'undo': _storable(undo.undoStepsOf(undoStackKey)),
+      'redo': _storable(undo.redoStepsOf(undoStackKey)),
+    };
+    await offline.saveUndo(doc, stacks, documentHash(editor.delta));
+  }
+
+  Future<void> _restoreUndo() async {
+    final offline = _offline;
+    final doc = _documentUuid;
+    if (offline == null || doc == null) return;
+    final json = await offline.loadUndo(doc, documentHash(editor.delta));
+    if (json == null || _disposed) return;
+    final decoders = <String, UndoEntryDecoder>{
+      WriteContentUndoEntry.domainName: WriteContentUndoEntry.fromJson,
+      WriteMetaUndoEntry.domainName: WriteMetaUndoEntry.fromJson,
+    };
+    List<UndoStep> decode(Object? list) {
+      final out = <UndoStep>[];
+      if (list is! List) return out;
+      for (final j in list) {
+        if (j is! Map) return const [];
+        final st = UndoStep.fromJson(j.cast<String, Object?>(), decoders);
+        if (st == null) return const [];
+        out.add(st);
+      }
+      return out;
+    }
+
+    services.undo.restoreSteps(
+      undoStackKey,
+      undo: decode(json['undo']),
+      redo: decode(json['redo']),
+    );
+  }
 
   /// Comment anchors for the shell's comments controller.
   CommentAnchorProvider get commentAnchors => comments;
@@ -833,7 +1112,11 @@ class WriteDocumentSession extends ChangeNotifier {
   @override
   void dispose() {
     if (_disposed) return;
+    if (isLoaded) unawaited(_saveUndo());
     _disposed = true;
+    _undoSave?.cancel();
+    _stopReopen();
+    services.undo.removeListener(_onUndoChanged);
     if (_open[itemUuid.uuid] == this) _open.remove(itemUuid.uuid);
     services.currentItem.removeListener(_onCurrentItem);
     editor.removeListener(_onEditorChanged);
@@ -843,7 +1126,13 @@ class WriteDocumentSession extends ChangeNotifier {
     unawaited(_outcomeSub?.cancel());
     _sync?.status.removeListener(_onStatus);
     final sync = _sync;
-    if (sync != null) unawaited(sync.dispose());
+    final offline = _offline;
+    final doc = _documentUuid;
+    Future<void> closing = Future.value();
+    if (sync != null) closing = sync.dispose();
+    if (offline != null && doc != null && _claimed) {
+      unawaited(closing.whenComplete(() => offline.release(doc)));
+    }
     presence.dispose();
     comments.dispose();
     suggestions.dispose();

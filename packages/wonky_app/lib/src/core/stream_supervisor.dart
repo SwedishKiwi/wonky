@@ -120,6 +120,15 @@ class StreamSupervisor {
 
   void _onConnectivity() {
     final online = connectivity.online;
+    if (!online && _wasOnline && connectivity.forcedOffline) {
+      // Simulated network loss: drop every stream (they resume on
+      // reconnect). Real outages end the streams by themselves.
+      for (final entry in _entries.values) {
+        entry.retry?.cancel();
+        unawaited(entry.sub?.cancel());
+        entry.sub = null;
+      }
+    }
     if (online && !_wasOnline) {
       for (final entry in _entries.entries) {
         entry.value.sub?.cancel();

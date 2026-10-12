@@ -1,5 +1,8 @@
+import 'package:flutter/foundation.dart';
+import 'package:serverpod_auth_idp_flutter/serverpod_auth_idp_flutter.dart';
 import 'package:wonky_client/wonky_client.dart';
 
+import '../core/local_store.dart';
 import 'api.dart';
 
 /// The signed-in user's profile, preferences and access tokens (suite 04 §5).
@@ -39,13 +42,45 @@ abstract class UserRepository {
 }
 
 /// [UserRepository] backed by the `user` and `accessToken` endpoints.
+///
+/// The last profile is kept on the device (per auth user) so the app can
+/// start offline with the signed-in user's local data (suite 12).
 class ServerUserRepository implements UserRepository {
-  ServerUserRepository(this.api);
+  ServerUserRepository(this.api, {LocalStore? profileCache})
+    : _cache = profileCache ?? SharedPreferencesStore();
 
   final Api api;
+  final LocalStore _cache;
+
+  String? get _cacheKey {
+    try {
+      final id = api.client.auth.authInfo?.authUserId;
+      return id == null ? null : 'profile.${id.uuid}';
+    } catch (_) {
+      return null;
+    }
+  }
 
   @override
-  Future<UserProfileView> getMe() => api.guard((c) => c.user.getMe());
+  Future<UserProfileView> getMe() async {
+    final key = _cacheKey;
+    try {
+      final me = await api.guard((c) => c.user.getMe());
+      if (key != null) {
+        try {
+          await _cache.write(key, me.toJson());
+        } catch (e) {
+          debugPrint('Caching the profile failed: $e');
+        }
+      }
+      return me;
+    } catch (e) {
+      if (!isOfflineError(e) || key == null) rethrow;
+      final cached = await _cache.read(key);
+      if (cached is! Map) rethrow;
+      return UserProfileView.fromJson(cached.cast<String, dynamic>());
+    }
+  }
 
   @override
   Future<UserProfileView> updateProfile({

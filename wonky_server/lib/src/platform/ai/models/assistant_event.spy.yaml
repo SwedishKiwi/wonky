@@ -1,0 +1,27 @@
+### An event of an assistant run (not a table; streamed to the client).
+class: AssistantEvent
+fields:
+  type: AssistantEventType
+  threadId: int?
+  runId: String?
+  ### textDelta / progress text, or the final display text on done.
+  text: String?
+  toolUseId: String?
+  toolName: String?
+  ### Human summary ("Edited 3 paragraphs").
+  toolSummary: String?
+  ### toolFinished: whether the call failed.
+  toolError: bool?
+  ### change_id of a mutating tool (changes.revert fallback for Undo).
+  changeId: String?
+  ### Applied range in the document after the change (Show).
+  rangeStart: int?
+  rangeLength: int?
+  revision: int?
+  confirmationId: String?
+  error: String?
+  errorCode: String?
+  messageId: int?
+  inputTokens: int?
+  outputTokens: int?
+  cacheReadTokens: int?

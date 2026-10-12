@@ -3,14 +3,14 @@ import 'package:shad/shad.dart';
 import 'package:wonky_client/wonky_client.dart';
 
 import '../../data/api.dart';
-import '../../data/cached_drive_repository.dart';
 import '../../l10n/wonky_app_localizations.dart';
-import '../../shell/dialogs.dart';
 import '../../shell/overlays/shell_overlays.dart';
 import '../../mcp_bridge/developer_settings.dart';
 import '../../shell/shell_services.dart';
 import '../settings_screen.dart';
 import 'package:flutter/foundation.dart';
+
+export 'offline_section.dart';
 
 Widget _switch(String key, bool value, ValueChanged<bool> onChanged) =>
     ShadSwitch(key: ValueKey<String>(key), value: value, onChanged: onChanged);
@@ -257,55 +257,6 @@ class DeveloperSection extends StatelessWidget {
   @override
   Widget build(BuildContext context) =>
       McpDeveloperSettings(services: services);
-}
-
-/// Settings › Offline & storage.
-class OfflineSection extends StatelessWidget {
-  const OfflineSection({super.key, required this.services});
-
-  final ShellServices services;
-
-  @override
-  Widget build(BuildContext context) {
-    final l = WonkyAppLocalizations.of(context);
-    final d = services.drive;
-    return SettingsGroup(
-      title: l.settingsOffline,
-      description: l.settingsOfflineHint,
-      children: [
-        if (d is CachedDriveRepository)
-          ListenableBuilder(
-            listenable: d,
-            builder: (context, _) => SettingsRow(
-              label: l.offlinePending,
-              control: Text('${d.pendingCount}'),
-            ),
-          ),
-        SettingsRow(
-          label: l.offlineClear,
-          description: l.offlineClearHint,
-          control: ShadButton.outline(
-            onPressed: () async {
-              final ok = await confirmDialog(
-                context,
-                title: l.offlineClear,
-                description: l.offlineClearHint,
-                confirmLabel: l.offlineClear,
-                destructive: true,
-              );
-              if (!ok) return;
-              if (d is CachedDriveRepository) {
-                await d.cache.clear();
-                await d.queue.clear();
-              }
-              services.toasts.show(l.offlineCleared);
-            },
-            child: Text(l.offlineClear),
-          ),
-        ),
-      ],
-    );
-  }
 }
 
 /// Settings › About: versions and licenses.

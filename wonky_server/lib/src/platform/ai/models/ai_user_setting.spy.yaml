@@ -1,0 +1,11 @@
+### Per-user AI settings beyond the opt-out (`UserPreferences.aiEnabled`).
+class: AiUserSetting
+table: ai_user_setting
+fields:
+  userId: int, relation(parent=user_profile, onDelete=Cascade)
+  quality: AiQuality, default=best
+  updatedAt: DateTime
+indexes:
+  ai_user_setting_user_idx:
+    fields: userId
+    unique: true

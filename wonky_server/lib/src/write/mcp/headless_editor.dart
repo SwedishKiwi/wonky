@@ -235,6 +235,12 @@ abstract final class HeadlessDocumentEditor {
       };
     }
 
+    // AI destructive guard (Write 09 §5.8) and similar checks.
+    if (mode != HeadlessMode.overlay) {
+      ctx.changeGuard?.call(headDelta, result.change, toolName);
+    }
+
+    final ai = ctx.actor.kind == ActorKind.ai;
     var change = result.change;
     String? suggestionId;
     if (mode == HeadlessMode.suggest) {
@@ -246,7 +252,7 @@ abstract final class HeadlessDocumentEditor {
           userUuid: ctx.actor.authUserId.uuid,
           nowMs: clock.now().millisecondsSinceEpoch,
           suggestionId: suggestionId,
-          via: 'mcp',
+          via: ai ? 'ai' : 'mcp',
         ),
       );
     }
@@ -265,9 +271,12 @@ abstract final class HeadlessDocumentEditor {
         clientOpId: changeId,
         baseRevision: baseRevision,
         deltaJson: jsonEncode(change.toJson()),
-        kind: kind,
+        kind: ai && kind == DocumentOpKind.content
+            ? DocumentOpKind.aiEdit
+            : kind,
         sessionId: agentSession,
-        groupId: changeId.uuid,
+        groupId: ctx.groupId ?? changeId.uuid,
+        onBehalfOfSessionId: ctx.onBehalfOfSessionId,
       );
     } on OpRejection catch (r) {
       throw McpToolException(switch (r.code) {
@@ -598,7 +607,8 @@ abstract final class AgentPresence {
       return existing.sessionId;
     }
     final summary = await UserService.summary(ctx.session, ctx.actor.userId);
-    final sessionId = 'mcp-${const Uuid().v4()}';
+    final sessionId =
+        '${ctx.actor.kind == ActorKind.ai ? 'ai' : 'mcp'}-${const Uuid().v4()}';
     final participant = Participant(
       sessionId: sessionId,
       userId: ctx.actor.userId,
@@ -607,7 +617,7 @@ abstract final class AgentPresence {
       avatarUrl: summary?.avatarUrl,
       colorIndex: UserService.colorIndexFor(ctx.actor.authUserId),
       role: target.role.access,
-      actorKind: ActorKind.mcp,
+      actorKind: ctx.actor.kind,
       state: PresenceState.active,
       joinedAt: nowUtc(),
     );

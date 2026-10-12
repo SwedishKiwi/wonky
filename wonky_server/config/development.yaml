@@ -100,3 +100,13 @@ wonky:
       - http://localhost:8102
     rateLimitPerMinute: 600
     sessionIdleMinutes: 60
+  # The AI assistant (specs/10-ai-assistant.md §1, read by
+  # lib/src/platform/ai/ai_config.dart). The Anthropic API key is the
+  # `anthropicApiKey` entry in config/passwords.yaml; without it the apps show
+  # "AI isn't configured on this server".
+  ai:
+    enabled: true
+    dailyTokenBudget: 2000000
+    maxConcurrentRequests: 2
+    requestTimeoutMinutes: 10
+    maxToolRounds: 30

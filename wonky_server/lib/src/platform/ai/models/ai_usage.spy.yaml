@@ -1,0 +1,16 @@
+### Token usage of one model request (suite 10 §1, daily budgets).
+class: AiUsage
+table: ai_usage
+fields:
+  userId: int, relation(parent=user_profile, onDelete=Cascade)
+  model: String
+  ### chat, rewrite, continue, summarize, outline, explain, proofread.
+  feature: String
+  inputTokens: int
+  outputTokens: int
+  cacheReadTokens: int
+  cacheWriteTokens: int
+  at: DateTime
+indexes:
+  ai_usage_user_at_idx:
+    fields: userId, at

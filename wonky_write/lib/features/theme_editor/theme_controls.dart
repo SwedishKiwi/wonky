@@ -109,7 +109,7 @@ class ThemePropRow extends StatelessWidget {
       padding: const EdgeInsets.symmetric(vertical: 3),
       child: Row(
         children: [
-          SizedBox(width: 108, child: labelWidget),
+          SizedBox(width: 96, child: labelWidget),
           const SizedBox(width: 8),
           Expanded(
             child: Align(alignment: Alignment.centerLeft, child: child),
@@ -240,18 +240,18 @@ class ThemeLengthField extends StatelessWidget {
           step: step,
           fractionDigits: digits,
           dense: true,
-          width: 56,
+          width: 48,
           enabled: enabled,
           onChanged: (v) => onChanged(fmt(v, unit)),
         ),
-        const SizedBox(width: 6),
+        const SizedBox(width: 4),
         SizedBox(
-          width: 64,
+          width: 60,
           child: ShadSelect<LengthUnit>(
             key: ValueKey<String>('unit.${unit.json}'),
             enabled: enabled && units.length > 1,
             initialValue: unit,
-            minWidth: 64,
+            minWidth: 60,
             options: [
               for (final u in units) ShadOption(value: u, child: Text(u.json)),
             ],
@@ -295,7 +295,11 @@ class ThemeColorField extends StatefulWidget {
     this.allowReset = true,
     this.allowTransparent = false,
     this.semanticLabel,
+    this.width,
   });
+
+  /// Fixed button width (aligned columns, e.g. the palette).
+  final double? width;
 
   /// The effective color reference (own or inherited).
   final String? value;
@@ -368,46 +372,52 @@ class _ThemeColorFieldState extends State<ThemeColorField> {
           );
     return ShadPopover(
       controller: _popover,
-      popover: (context) => Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          WonkyColorPicker(
-            value: current,
-            themeColors: swatches,
-            resetLabel: widget.allowReset ? 'Automatic (inherit)' : null,
-            allowAlpha: true,
-            onChanged: (c) {
-              _popover.hide();
-              if (c == null) {
-                widget.onChanged(null);
-                return;
-              }
-              final ref = c.themeRef;
-              widget.onChanged(
-                ref != null && ref.startsWith('@') ? ref : c.hex.toLowerCase(),
-              );
-            },
-          ),
-          if (widget.allowTransparent)
-            Padding(
-              padding: const EdgeInsets.only(top: 4),
-              child: ShadButton.ghost(
-                size: ShadButtonSize.sm,
-                leading: const Icon(LucideIcons.ban, size: 14),
-                onPressed: () {
-                  _popover.hide();
-                  widget.onChanged('transparent');
-                },
-                child: const Text('No color'),
-              ),
+      popover: (context) => IntrinsicWidth(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            WonkyColorPicker(
+              value: current,
+              themeColors: swatches,
+              resetLabel: widget.allowReset ? 'Automatic (inherit)' : null,
+              allowAlpha: true,
+              onChanged: (c) {
+                _popover.hide();
+                if (c == null) {
+                  widget.onChanged(null);
+                  return;
+                }
+                final ref = c.themeRef;
+                widget.onChanged(
+                  ref != null && ref.startsWith('@')
+                      ? ref
+                      : c.hex.toLowerCase(),
+                );
+              },
             ),
-        ],
+            if (widget.allowTransparent)
+              Padding(
+                padding: const EdgeInsets.only(top: 4),
+                child: ShadButton.ghost(
+                  size: ShadButtonSize.sm,
+                  leading: const Icon(LucideIcons.ban, size: 14),
+                  onPressed: () {
+                    _popover.hide();
+                    widget.onChanged('transparent');
+                  },
+                  child: const Text('No color'),
+                ),
+              ),
+          ],
+        ),
       ),
       child: Semantics(
         button: true,
         label: '${widget.semanticLabel ?? 'Color'}: ${_label(widget.value)}',
         child: ShadButton.outline(
+          width: widget.width,
+          mainAxisAlignment: MainAxisAlignment.start,
           size: ShadButtonSize.sm,
           enabled: widget.enabled,
           padding: const EdgeInsets.symmetric(horizontal: 8),
@@ -428,12 +438,15 @@ class _ThemeColorFieldState extends State<ThemeColorField> {
                   )
                 : null,
           ),
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 120),
-            child: Text(
-              _label(widget.value),
-              overflow: TextOverflow.ellipsis,
-              style: theme.textTheme.small.copyWith(fontSize: 12),
+          child: Flexible(
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 120),
+              child: Text(
+                _label(widget.value),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: theme.textTheme.small.copyWith(fontSize: 12),
+              ),
             ),
           ),
         ),

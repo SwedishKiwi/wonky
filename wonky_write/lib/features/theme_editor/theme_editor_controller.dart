@@ -497,8 +497,21 @@ class ThemeEditorController extends ChangeNotifier implements ThemeDraftHost {
     _notify();
   }
 
+  bool _variantChosen = false;
+
+  /// Shows the preview in [v] (`write.theme.setPreviewVariant`); from then
+  /// on the preview no longer follows the app theme.
   void setVariant(ThemeVariant v) {
+    _variantChosen = true;
     if (v == _variant) return;
+    _variant = v;
+    _notify();
+  }
+
+  /// The app theme changed: the preview follows it until a variant was
+  /// chosen explicitly.
+  void followAppVariant(ThemeVariant v) {
+    if (_variantChosen || v == _variant) return;
     _variant = v;
     _notify();
   }

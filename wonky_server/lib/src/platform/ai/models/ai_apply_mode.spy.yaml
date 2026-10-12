@@ -1,0 +1,6 @@
+### How assistant edits land (suite 10 §3): edit directly or as suggestions.
+enum: AiApplyMode
+serialized: byName
+values:
+  - edit
+  - suggest

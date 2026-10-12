@@ -1,0 +1,7 @@
+enum: InlineAiEventType
+serialized: byName
+values:
+  - textDelta
+  - done
+  - refusal
+  - error

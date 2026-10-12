@@ -4,6 +4,8 @@ import 'dart:math';
 import 'package:clock/clock.dart';
 import 'package:flutter/foundation.dart';
 
+import '../data/api.dart';
+
 /// Whether the server is reachable (suite 03 §7): heartbeat every 15 s while
 /// online, reconnect with backoff (1 s → 30 s, jitter) while offline.
 ///
@@ -50,10 +52,14 @@ class ConnectivityService extends ChangeNotifier {
   /// Checks now (the "Retry now" button).
   Future<void> reconnect() => _check();
 
-  /// Simulates being offline (E2E / dev tools).
+  /// Simulates being offline (E2E tests, the UI bridge and the developer
+  /// command `write.offline.simulate`): [online] turns false, supervised
+  /// streams are dropped and every repository call fails like a network
+  /// error ([Api.simulatedOffline]) until called again with false.
   void forceOffline(bool value) {
     if (_forcedOffline == value) return;
     _forcedOffline = value;
+    Api.simulatedOffline = value;
     notifyListeners();
     if (!value) unawaited(_check());
   }
@@ -86,6 +92,7 @@ class ConnectivityService extends ChangeNotifier {
     if (_checking) return;
     _checking = true;
     try {
+      if (_forcedOffline) throw const OfflineException('forced offline');
       await _ping();
       _failures = 0;
       _lastConnectedAt = clock.now();

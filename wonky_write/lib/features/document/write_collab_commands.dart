@@ -3,6 +3,7 @@ import 'package:wonky_app/wonky_app.dart';
 import 'package:wonky_core/wonky_core.dart';
 
 import '../editor/controller/editor_types.dart';
+import '../offline/write_offline.dart';
 import '../suggestions/suggestions_panel.dart';
 import 'write_document_api.dart';
 import 'write_document_session.dart';
@@ -14,7 +15,11 @@ const _nothing = CommandResult.failed('Nothing to do');
 /// presence and history. Shared comment/version actions stay the suite's
 /// `shell.comments.*` / `shell.versions.*`; these add the Write-specific
 /// ones. Register them from `WriteAppConfig.commands`.
+///
+/// Also installs the offline store (suite 12 §1) of the signed-in user when
+/// the shell runs against a server.
 List<Command<CommandArgs>> writeCollabCommands(ShellServices services) {
+  if (services.client != null) WriteOffline.install(services);
   WriteDocumentSession? session(CommandContext ctx) =>
       WriteDocumentSession.of(ctx);
   bool loaded(CommandContext ctx) => session(ctx)?.isLoaded ?? false;
@@ -59,6 +64,28 @@ List<Command<CommandArgs>> writeCollabCommands(ShellServices services) {
   }
 
   return [
+    // ---- Offline (suite 12) ----
+    CallbackCommand(
+      id: 'write.offline.simulate',
+      title: (_) => 'Simulate offline',
+      icon: LucideIcons.cloudOff,
+      category: (_) => 'Developer',
+      argsSchema: const JsonSchema.object(
+        properties: {
+          'offline': JsonSchema.boolean(
+            description: 'true = disconnect, false = reconnect; default: toggle.',
+          ),
+        },
+      ),
+      checked: (_, _) => services.connectivity.forcedOffline,
+      run: (ctx, a) async {
+        final value =
+            a.boolean('offline') ?? !services.connectivity.forcedOffline;
+        services.connectivity.forceOffline(value);
+        await services.prefs.setDevice(simulateOfflinePref, value);
+        return CommandResult.ok({'offline': value});
+      },
+    ),
     // ---- Comments ----
     CallbackCommand(
       id: 'write.comments.addDocumentComment',

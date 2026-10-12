@@ -1,0 +1,10 @@
+### Whether the assistant can be used (suite 10 §1 privacy and limits).
+class: AssistantStatus
+fields:
+  available: bool
+  ### notConfigured | disabled | optedOut | null when available.
+  reason: String?
+  message: String?
+  quality: AiQuality
+  tokensUsedToday: int
+  dailyTokenBudget: int

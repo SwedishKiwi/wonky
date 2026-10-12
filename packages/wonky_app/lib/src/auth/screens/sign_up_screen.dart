@@ -32,6 +32,24 @@ class _SignUpScreenState extends State<SignUpScreen> {
   String? _nameError, _emailError, _passwordError, _termsError, _formError;
 
   @override
+  void initState() {
+    super.initState();
+    // A field's error goes away as soon as the user edits that field.
+    _onEdit(_name, () => _nameError = null);
+    _onEdit(_email, () => _emailError = null);
+    _onEdit(_password, () => _passwordError = null);
+  }
+
+  void _onEdit(TextEditingController c, VoidCallback clear) {
+    var last = c.text;
+    c.addListener(() {
+      if (c.text == last) return;
+      last = c.text;
+      if (mounted) setState(clear);
+    });
+  }
+
+  @override
   void dispose() {
     _name.dispose();
     _email.dispose();
@@ -87,8 +105,9 @@ class _SignUpScreenState extends State<SignUpScreen> {
       services: widget.services,
       title: l.authSignUpTitle,
       subtitle: l.authSignUpSubtitle,
-      footer: Row(
-        mainAxisAlignment: MainAxisAlignment.center,
+      footer: Wrap(
+        alignment: WrapAlignment.center,
+        crossAxisAlignment: WrapCrossAlignment.center,
         children: [
           Text(l.authHaveAccount),
           ShadButton.link(
@@ -151,7 +170,10 @@ class _SignUpScreenState extends State<SignUpScreen> {
                 ShadCheckbox(
                   key: const ValueKey<String>('auth.signUp.terms'),
                   value: _terms,
-                  onChanged: (v) => setState(() => _terms = v),
+                  onChanged: (v) => setState(() {
+                    _terms = v;
+                    if (v) _termsError = null;
+                  }),
                   label: Text(l.authTerms),
                 ),
                 if (_termsError != null)

@@ -9,6 +9,19 @@ emailIdp:
   - hasAccount:
 jwtRefresh:
   - refreshAccessToken:
+assistant:
+  - getStatus:
+  - setQuality:
+  - chat:
+  - stop:
+  - confirm:
+  - listThreads:
+  - getThread:
+  - deleteThread:
+  - clearHistory:
+  - revertChange:
+  - inline:
+  - proofread:
 comment:
   - listThreads:
   - getThread:

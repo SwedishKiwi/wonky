@@ -1,0 +1,9 @@
+class: AssistantMessageView
+fields:
+  id: int
+  role: String
+  displayText: String
+  toolCallsJson: String?
+  runId: String?
+  stopReason: String?
+  createdAt: DateTime

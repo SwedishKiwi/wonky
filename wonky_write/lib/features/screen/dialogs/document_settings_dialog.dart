@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/widgets.dart';
 import 'package:shad/shad.dart';
 import 'package:wonky_app/wonky_app.dart';
@@ -43,6 +45,8 @@ class _DocumentSettingsDialogState extends State<DocumentSettingsDialog> {
   void initState() {
     super.initState();
     d.addListener(_sync);
+    // The grid lists the user's own themes too.
+    unawaited(d.themes.loadMine());
   }
 
   void _sync() {
@@ -168,11 +172,30 @@ class _DocumentSettingsDialogState extends State<DocumentSettingsDialog> {
               ),
             ),
             const SizedBox(height: 8),
-            ShadButton.outline(
-              size: ShadButtonSize.sm,
-              onPressed: () =>
-                  invokeCommand(context, 'write.theme.setUserDefault'),
-              child: const Text('Save as my default theme'),
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: [
+                ShadButton.outline(
+                  size: ShadButtonSize.sm,
+                  onPressed: () =>
+                      invokeCommand(context, 'write.theme.setUserDefault'),
+                  child: const Text('Save as my default theme'),
+                ),
+                ShadButton.ghost(
+                  key: const ValueKey<String>(
+                    'write.dialog.settings.customizeTheme',
+                  ),
+                  size: ShadButtonSize.sm,
+                  leading: const Icon(LucideIcons.paintbrush, size: 14),
+                  onPressed: () {
+                    final services = ShellScope.of(context);
+                    Navigator.of(context).pop();
+                    unawaited(invokeWith(services, 'write.theme.openEditor'));
+                  },
+                  child: const Text('Customize…'),
+                ),
+              ],
             ),
           ],
         );

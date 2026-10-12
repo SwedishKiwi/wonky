@@ -70,6 +70,28 @@ class WriteContentUndoEntry extends UndoEntry {
     );
   }
 
+  /// JSON for the offline undo stack (suite 12 §1.1 `LocalUndoStack`).
+  @override
+  Map<String, Object?> toJson() => {
+    'change': change.toJson(),
+    if (select != null) 'select': select!.toJson(),
+    if (counterSelect != null) 'counterSelect': counterSelect!.toJson(),
+  };
+
+  static WriteContentUndoEntry? fromJson(Map<String, Object?> json) {
+    final c = json['change'];
+    if (c is! List) return null;
+    try {
+      return WriteContentUndoEntry(
+        change: Delta.fromJson(c),
+        select: DeltaSelection.fromJson(json['select']),
+        counterSelect: DeltaSelection.fromJson(json['counterSelect']),
+      );
+    } on Object {
+      return null;
+    }
+  }
+
   @override
   String toString() => 'WriteContentUndoEntry($change)';
 }

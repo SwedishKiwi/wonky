@@ -203,7 +203,11 @@ class _InspectorBody extends StatelessWidget {
         ? ThemeInheritance.of(c.draftJson, qualified)
         : null;
     final effective = raw ?? inherited?.value;
-    final name = label ?? propLabel(key);
+    final name =
+        label ??
+        (key == 'numbering' && node.element == ThemeElement.list
+            ? 'Numbering per level'
+            : propLabel(key));
     void set(Object? v, {String? gesture}) =>
         a.setProperty(path, v, variant: variant, gesture: gesture);
     void reset() => set(null);
@@ -587,6 +591,7 @@ class _InspectorBody extends StatelessWidget {
               enabled: enabled,
               allowReset: k.isCustom,
               allowTransparent: k.role == core.PaletteRole.surface,
+              width: 96,
               semanticLabel: '${paletteLabel(k)} (light)',
               onChanged: (v) => a.setProperty('palette.${k.name}', v),
             ),
@@ -599,6 +604,7 @@ class _InspectorBody extends StatelessWidget {
               enabled: enabled,
               allowReset: !explicit,
               allowTransparent: k.role == core.PaletteRole.surface,
+              width: 96,
               semanticLabel: '${paletteLabel(k)} (dark)',
               onChanged: (v) => a.setProperty(
                 'palette.${k.name}',
@@ -626,14 +632,14 @@ class _InspectorBody extends StatelessWidget {
           children: [
             const Spacer(),
             SizedBox(
-              width: 92,
+              width: 102,
               child: Text(
                 'Light',
                 style: theme.textTheme.muted.copyWith(fontSize: 12),
               ),
             ),
             SizedBox(
-              width: 92,
+              width: 96,
               child: Text(
                 'Dark',
                 style: theme.textTheme.muted.copyWith(fontSize: 12),
