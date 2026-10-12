@@ -28,6 +28,7 @@ import '../data/sharing_repository.dart';
 import '../data/user_repository.dart';
 import '../document/document_controller.dart';
 import '../l10n/wonky_app_localizations.dart';
+import '../mcp_bridge/mcp_bridge_scope.dart';
 import '../routing/router.dart';
 import 'overlays/shell_overlays.dart';
 import 'shell_services.dart';
@@ -270,10 +271,14 @@ class _WonkyShellState extends State<WonkyShell> {
                 child: config.wrap(
                   context,
                   s,
-                  ShellOverlays(
+                  McpBridgeScope(
                     services: s,
-                    ready: _ready,
-                    child: child ?? const SizedBox.shrink(),
+                    appTools: config.mcpUiTools(s),
+                    child: ShellOverlays(
+                      services: s,
+                      ready: _ready,
+                      child: child ?? const SizedBox.shrink(),
+                    ),
                   ),
                 ),
               ),

@@ -449,9 +449,9 @@ class _Header extends StatelessWidget {
       final trash = c.location.isTrash;
       bar = Container(
         key: const ValueKey<String>('drive.selectionBar'),
-        margin: const EdgeInsets.fromLTRB(12, 4, 12, 8),
+        margin: const EdgeInsets.fromLTRB(12, 2, 12, 6),
         padding: const EdgeInsets.symmetric(horizontal: 8),
-        height: 44,
+        height: 40,
         decoration: BoxDecoration(
           color: theme.colorScheme.secondary,
           borderRadius: BorderRadius.circular(22),
@@ -551,6 +551,7 @@ class _Header extends StatelessWidget {
       bar = Padding(
         padding: const EdgeInsets.fromLTRB(20, 4, 12, 8),
         child: SingleChildScrollView(
+          key: const ValueKey<String>('drive.filterBar'),
           scrollDirection: Axis.horizontal,
           child: Row(
             children: [
@@ -622,9 +623,21 @@ class _Header extends StatelessWidget {
     return Column(
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [titleRow, bar],
+      children: [
+        titleRow,
+        // The selection bar replaces the filter bar in place with the same
+        // height, so selecting a row never moves the rows (a double click
+        // must hit the same row twice).
+        SizedBox(
+          key: const ValueKey<String>('drive.headerBar'),
+          height: _barHeight,
+          child: bar,
+        ),
+      ],
     );
   }
+
+  static const double _barHeight = 48;
 }
 
 class _Breadcrumb extends StatelessWidget {

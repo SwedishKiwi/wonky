@@ -585,7 +585,9 @@ likewise on demand. All OFL 1.1. License texts are included in the About › Lic
 > substituted by category (sans → Inter from `shad` on screen / Open Sans in PDFs, serif → EB
 > Garamond, mono → JetBrains Mono) by `WriteFonts` (`features/themes/write_fonts.dart`); Open
 > Sans is the PDF glyph fallback (Latin Extended, Greek, Cyrillic). CJK/Arabic fallbacks and the
-> full curated set are a TODO.
+> full curated set are a TODO. The server has the same TTFs in `wonky_server/web/fonts/`
+> (`FileSystemFontProvider`, `write/export/server_fonts.dart`, same substitution rules), so
+> server-side PDF/HTML/EPUB exports embed the same faces as client exports.
 
 ### 8.2 Weight snapping
 

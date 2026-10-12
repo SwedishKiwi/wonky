@@ -83,6 +83,7 @@ import 'platform/files/file_url_view.dart' as _itzt3x6d;
 import 'platform/files/stored_file.dart' as _im8eh74x;
 import 'platform/files/stored_file_kind.dart' as _i45dmz4a;
 import 'platform/files/stored_file_status.dart' as _ik7q11oy;
+import 'platform/mcp/ui_bridge/ui_bridge_message.dart' as _ichw8k0i;
 import 'platform/meta/feature_flags.dart' as _ivk6eyvx;
 import 'platform/meta/protocol_info.dart' as _ib575x0y;
 import 'platform/meta/server_limits.dart' as _i28el0at;
@@ -198,6 +199,7 @@ export 'platform/files/file_url_view.dart';
 export 'platform/files/stored_file.dart';
 export 'platform/files/stored_file_kind.dart';
 export 'platform/files/stored_file_status.dart';
+export 'platform/mcp/ui_bridge/ui_bridge_message.dart';
 export 'platform/meta/feature_flags.dart';
 export 'platform/meta/protocol_info.dart';
 export 'platform/meta/server_limits.dart';
@@ -329,6 +331,13 @@ class Protocol extends _isc.SerializationManager
           _isc.getType<_im8eh74x.StoredFile>,
           _isc.getType<_i45dmz4a.StoredFileKind>,
           _isc.getType<_ik7q11oy.StoredFileStatus>,
+          _isc.getType<_ichw8k0i.UiBridgeCancel>,
+          _isc.getType<_ichw8k0i.UiBridgeHello>,
+          _isc.getType<_ichw8k0i.UiBridgeStop>,
+          _isc.getType<_ichw8k0i.UiBridgeStatus>,
+          _isc.getType<_ichw8k0i.UiBridgeWelcome>,
+          _isc.getType<_ichw8k0i.UiBridgeResponse>,
+          _isc.getType<_ichw8k0i.UiBridgeRequest>,
           _isc.getType<_ivk6eyvx.FeatureFlags>,
           _isc.getType<_ib575x0y.ProtocolInfo>,
           _isc.getType<_i28el0at.ServerLimits>,
@@ -464,6 +473,13 @@ class Protocol extends _isc.SerializationManager
           _isc.getType<_im8eh74x.StoredFile?>,
           _isc.getType<_i45dmz4a.StoredFileKind?>,
           _isc.getType<_ik7q11oy.StoredFileStatus?>,
+          _isc.getType<_ichw8k0i.UiBridgeCancel?>,
+          _isc.getType<_ichw8k0i.UiBridgeHello?>,
+          _isc.getType<_ichw8k0i.UiBridgeStop?>,
+          _isc.getType<_ichw8k0i.UiBridgeStatus?>,
+          _isc.getType<_ichw8k0i.UiBridgeWelcome?>,
+          _isc.getType<_ichw8k0i.UiBridgeResponse?>,
+          _isc.getType<_ichw8k0i.UiBridgeRequest?>,
           _isc.getType<_ivk6eyvx.FeatureFlags?>,
           _isc.getType<_ib575x0y.ProtocolInfo?>,
           _isc.getType<_i28el0at.ServerLimits?>,
@@ -565,8 +581,8 @@ class Protocol extends _isc.SerializationManager
           _isc.getType<List<_i8mh39wa.DriveItemKind>?>,
           _isc.getType<List<_infxyf98.DriveItemView>>,
           _isc.getType<List<_i48sm9f2.ImportWarningView>>,
-          _isc.getType<List<_izfzk9h3.NotificationView>>,
           _isc.getType<List<String>>,
+          _isc.getType<List<_izfzk9h3.NotificationView>>,
           _isc.getType<List<_iylgyc33.Participant>>,
           _isc.getType<List<String>?>,
           _isc.getType<List<_iead0ok9.PermissionView>>,
@@ -757,6 +773,27 @@ class Protocol extends _isc.SerializationManager
     }
     if (t == _ik7q11oy.StoredFileStatus) {
       return _ik7q11oy.StoredFileStatus.fromJson(data) as T;
+    }
+    if (t == _ichw8k0i.UiBridgeCancel) {
+      return _ichw8k0i.UiBridgeCancel.fromJson(data) as T;
+    }
+    if (t == _ichw8k0i.UiBridgeHello) {
+      return _ichw8k0i.UiBridgeHello.fromJson(data) as T;
+    }
+    if (t == _ichw8k0i.UiBridgeStop) {
+      return _ichw8k0i.UiBridgeStop.fromJson(data) as T;
+    }
+    if (t == _ichw8k0i.UiBridgeStatus) {
+      return _ichw8k0i.UiBridgeStatus.fromJson(data) as T;
+    }
+    if (t == _ichw8k0i.UiBridgeWelcome) {
+      return _ichw8k0i.UiBridgeWelcome.fromJson(data) as T;
+    }
+    if (t == _ichw8k0i.UiBridgeResponse) {
+      return _ichw8k0i.UiBridgeResponse.fromJson(data) as T;
+    }
+    if (t == _ichw8k0i.UiBridgeRequest) {
+      return _ichw8k0i.UiBridgeRequest.fromJson(data) as T;
     }
     if (t == _ivk6eyvx.FeatureFlags) {
       return _ivk6eyvx.FeatureFlags.fromJson(data) as T;
@@ -1191,6 +1228,33 @@ class Protocol extends _isc.SerializationManager
       return (data != null ? _ik7q11oy.StoredFileStatus.fromJson(data) : null)
           as T;
     }
+    if (t == _isc.getType<_ichw8k0i.UiBridgeCancel?>()) {
+      return (data != null ? _ichw8k0i.UiBridgeCancel.fromJson(data) : null)
+          as T;
+    }
+    if (t == _isc.getType<_ichw8k0i.UiBridgeHello?>()) {
+      return (data != null ? _ichw8k0i.UiBridgeHello.fromJson(data) : null)
+          as T;
+    }
+    if (t == _isc.getType<_ichw8k0i.UiBridgeStop?>()) {
+      return (data != null ? _ichw8k0i.UiBridgeStop.fromJson(data) : null) as T;
+    }
+    if (t == _isc.getType<_ichw8k0i.UiBridgeStatus?>()) {
+      return (data != null ? _ichw8k0i.UiBridgeStatus.fromJson(data) : null)
+          as T;
+    }
+    if (t == _isc.getType<_ichw8k0i.UiBridgeWelcome?>()) {
+      return (data != null ? _ichw8k0i.UiBridgeWelcome.fromJson(data) : null)
+          as T;
+    }
+    if (t == _isc.getType<_ichw8k0i.UiBridgeResponse?>()) {
+      return (data != null ? _ichw8k0i.UiBridgeResponse.fromJson(data) : null)
+          as T;
+    }
+    if (t == _isc.getType<_ichw8k0i.UiBridgeRequest?>()) {
+      return (data != null ? _ichw8k0i.UiBridgeRequest.fromJson(data) : null)
+          as T;
+    }
     if (t == _isc.getType<_ivk6eyvx.FeatureFlags?>()) {
       return (data != null ? _ivk6eyvx.FeatureFlags.fromJson(data) : null) as T;
     }
@@ -1618,14 +1682,14 @@ class Protocol extends _isc.SerializationManager
               .toList()
           as T;
     }
+    if (t == List<String>) {
+      return (data as List).map((e) => deserialize<String>(e)).toList() as T;
+    }
     if (t == List<_izfzk9h3.NotificationView>) {
       return (data as List)
               .map((e) => deserialize<_izfzk9h3.NotificationView>(e))
               .toList()
           as T;
-    }
-    if (t == List<String>) {
-      return (data as List).map((e) => deserialize<String>(e)).toList() as T;
     }
     if (t == List<_iylgyc33.Participant>) {
       return (data as List)
@@ -1857,6 +1921,13 @@ class Protocol extends _isc.SerializationManager
       _im8eh74x.StoredFile => 'StoredFile',
       _i45dmz4a.StoredFileKind => 'StoredFileKind',
       _ik7q11oy.StoredFileStatus => 'StoredFileStatus',
+      _ichw8k0i.UiBridgeCancel => 'UiBridgeCancel',
+      _ichw8k0i.UiBridgeHello => 'UiBridgeHello',
+      _ichw8k0i.UiBridgeStop => 'UiBridgeStop',
+      _ichw8k0i.UiBridgeStatus => 'UiBridgeStatus',
+      _ichw8k0i.UiBridgeWelcome => 'UiBridgeWelcome',
+      _ichw8k0i.UiBridgeResponse => 'UiBridgeResponse',
+      _ichw8k0i.UiBridgeRequest => 'UiBridgeRequest',
       _ivk6eyvx.FeatureFlags => 'FeatureFlags',
       _ib575x0y.ProtocolInfo => 'ProtocolInfo',
       _i28el0at.ServerLimits => 'ServerLimits',
@@ -2048,6 +2119,20 @@ class Protocol extends _isc.SerializationManager
         return 'StoredFileKind';
       case _ik7q11oy.StoredFileStatus():
         return 'StoredFileStatus';
+      case _ichw8k0i.UiBridgeCancel():
+        return 'UiBridgeCancel';
+      case _ichw8k0i.UiBridgeHello():
+        return 'UiBridgeHello';
+      case _ichw8k0i.UiBridgeStop():
+        return 'UiBridgeStop';
+      case _ichw8k0i.UiBridgeStatus():
+        return 'UiBridgeStatus';
+      case _ichw8k0i.UiBridgeWelcome():
+        return 'UiBridgeWelcome';
+      case _ichw8k0i.UiBridgeResponse():
+        return 'UiBridgeResponse';
+      case _ichw8k0i.UiBridgeRequest():
+        return 'UiBridgeRequest';
       case _ivk6eyvx.FeatureFlags():
         return 'FeatureFlags';
       case _ib575x0y.ProtocolInfo():
@@ -2393,6 +2478,27 @@ class Protocol extends _isc.SerializationManager
     }
     if (dataClassName == 'StoredFileStatus') {
       return deserialize<_ik7q11oy.StoredFileStatus>(data['data']);
+    }
+    if (dataClassName == 'UiBridgeCancel') {
+      return deserialize<_ichw8k0i.UiBridgeCancel>(data['data']);
+    }
+    if (dataClassName == 'UiBridgeHello') {
+      return deserialize<_ichw8k0i.UiBridgeHello>(data['data']);
+    }
+    if (dataClassName == 'UiBridgeStop') {
+      return deserialize<_ichw8k0i.UiBridgeStop>(data['data']);
+    }
+    if (dataClassName == 'UiBridgeStatus') {
+      return deserialize<_ichw8k0i.UiBridgeStatus>(data['data']);
+    }
+    if (dataClassName == 'UiBridgeWelcome') {
+      return deserialize<_ichw8k0i.UiBridgeWelcome>(data['data']);
+    }
+    if (dataClassName == 'UiBridgeResponse') {
+      return deserialize<_ichw8k0i.UiBridgeResponse>(data['data']);
+    }
+    if (dataClassName == 'UiBridgeRequest') {
+      return deserialize<_ichw8k0i.UiBridgeRequest>(data['data']);
     }
     if (dataClassName == 'FeatureFlags') {
       return deserialize<_ivk6eyvx.FeatureFlags>(data['data']);

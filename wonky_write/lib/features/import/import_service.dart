@@ -1,12 +1,21 @@
+import 'dart:async';
 import 'dart:typed_data';
 
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/widgets.dart';
 import 'package:wonky_app/wonky_app.dart';
-import 'package:wonky_client/wonky_client.dart' show DriveItemView, UuidValue;
+import 'package:wonky_client/wonky_client.dart'
+    show
+        DriveImportOptions,
+        DriveItemKind,
+        DriveItemView,
+        StoredFileKind,
+        UuidValue;
 import 'package:wonky_write_core/wonky_write_core.dart';
 
-/// File types Write imports (Write 07 §3, in-scope: Markdown, text, HTML).
+/// File types Write imports (Write 07 §3): Markdown (and Markdown zips from
+/// our *Markdown with images* export), text, HTML, Word, OpenDocument and
+/// RTF.
 const writeImportExtensions = {
   'md',
   'markdown',
@@ -16,14 +25,44 @@ const writeImportExtensions = {
   'text',
   'html',
   'htm',
+  'xhtml',
+  'docx',
+  'odt',
+  'rtf',
+  'zip',
 };
+
+/// MIME type of an import source by extension (upload metadata).
+String importMimeType(String fileName) {
+  final ext = fileName.contains('.')
+      ? fileName.split('.').last.toLowerCase()
+      : '';
+  return switch (ext) {
+    'md' || 'markdown' || 'mdown' || 'mkd' => 'text/markdown',
+    'txt' || 'text' => 'text/plain',
+    'html' || 'htm' => 'text/html',
+    'xhtml' => 'application/xhtml+xml',
+    'docx' => ExportFormat.docx.mimeType,
+    'odt' => ExportFormat.odt.mimeType,
+    'rtf' => 'application/rtf',
+    'zip' => 'application/zip',
+    _ => 'application/octet-stream',
+  };
+}
+
+/// Uploads an imported image; returns the stored file UUID or `null`.
+typedef ImportImageUploader = Future<String?> Function(ImportedImage image);
 
 /// A converted file, ready to become (or be inserted into) a document.
 class ConvertedImport {
   const ConvertedImport({required this.name, required this.result});
 
-  /// Document name (front matter `title`, first heading or file name).
+  /// Document name (front matter `title`, document title, first heading or
+  /// file name).
   final String name;
+
+  /// The import result; image sources are `wonky-file://` when an uploader
+  /// was given, else `import-image://` (see [ImportResult.images]).
   final ImportResult result;
 
   /// The Markdown of the converted document (for `initialMarkdown`).
@@ -35,11 +74,22 @@ class ConvertedImport {
   List<String> get warnings => [for (final w in result.warnings) w.message];
 }
 
-/// Converts [bytes] of [fileName] with the core importers.
-Future<ConvertedImport> convertImport(String fileName, Uint8List bytes) async {
-  final result = await const WonkyImporters().import(
-    bytes,
-    ImportOptions(fileName: fileName),
+/// Converts [bytes] of [fileName] with the core importers (client limits).
+/// With [uploadImage], embedded images are uploaded and referenced as
+/// `wonky-file://`; images that cannot be uploaded become placeholders.
+/// Without it, images are dropped to placeholders too (an `import-image://`
+/// source never enters a document).
+Future<ConvertedImport> convertImport(
+  String fileName,
+  Uint8List bytes, {
+  ImportImageUploader? uploadImage,
+}) async {
+  final raw = await const WonkyImporters(
+    limits: ImportLimits.client,
+  ).import(bytes, ImportOptions(fileName: fileName));
+  final result = await ImportPostProcessor.process(
+    raw,
+    uploadImage ?? (_) async => null,
   );
   final base = fileName.contains('.')
       ? fileName.substring(0, fileName.lastIndexOf('.'))
@@ -53,7 +103,30 @@ Future<ConvertedImport> convertImport(String fileName, Uint8List bytes) async {
   return ConvertedImport(name: name, result: result);
 }
 
-/// Picks importable files (Markdown, text, HTML).
+/// An uploader storing imported images as files of [itemUuid] (the
+/// document they are inserted into), or of the user.
+ImportImageUploader importImageUploader(
+  ShellServices s, {
+  UuidValue? itemUuid,
+}) => (image) async {
+  if (!s.connectivity.online) return null;
+  final ext = switch (image.mime) {
+    'image/jpeg' => 'jpg',
+    'image/gif' => 'gif',
+    'image/webp' => 'webp',
+    _ => 'png',
+  };
+  final view = await s.repositories.files.upload(
+    fileUuid: s.ids.next(),
+    itemUuid: itemUuid,
+    fileName: '${image.alt.isEmpty ? 'image' : image.alt}.$ext',
+    mimeType: image.mime,
+    bytes: image.bytes,
+  );
+  return view.fileUuid.uuid;
+};
+
+/// Picks importable files.
 Future<List<ImportFile>> pickImportFiles({bool multiple = true}) async {
   final files = multiple
       ? await FilePicker.pickFiles(
@@ -74,7 +147,52 @@ Future<List<ImportFile>> pickImportFiles({bool multiple = true}) async {
   ];
 }
 
-/// Imports Markdown / text / HTML files as new documents on the home screen
+/// Result of importing one file as a new document.
+typedef ImportedDocument = ({DriveItemView item, List<String> warnings});
+
+/// Imports [bytes] as a new document: online through the server pipeline
+/// (`drive.import`: images stored with the document, page setup from the
+/// source, warnings kept for the banner shown when the document opens);
+/// offline (or without a server) converted on the client.
+Future<ImportedDocument> importAsDocument(
+  ShellServices s,
+  String fileName,
+  Uint8List bytes, {
+  UuidValue? parentUuid,
+}) async {
+  final client = s.client;
+  if (client != null && s.connectivity.online) {
+    final upload = await s.repositories.files.upload(
+      fileUuid: s.ids.next(),
+      fileName: fileName,
+      mimeType: importMimeType(fileName),
+      bytes: bytes,
+      kind: StoredFileKind.importSource,
+    );
+    final report = await client.drive.import(
+      upload.fileUuid,
+      DriveItemKind.document,
+      DriveImportOptions(parentUuid: parentUuid),
+    );
+    return (
+      item: report.item,
+      warnings: [for (final w in report.warnings) w.message],
+    );
+  }
+  final converted = await convertImport(
+    fileName,
+    bytes,
+    uploadImage: importImageUploader(s),
+  );
+  final item = await s.drive.createDocument(
+    parentUuid: parentUuid,
+    name: converted.name,
+    initialMarkdown: converted.markdown,
+  );
+  return (item: item, warnings: converted.warnings);
+}
+
+/// Imports Write files as new documents on the home screen
 /// (`shell.file.import`, drag and drop, Write 07 §3.1).
 class WriteImportHandler implements ImportHandler {
   const WriteImportHandler();
@@ -100,21 +218,18 @@ class WriteImportHandler implements ImportHandler {
         continue;
       }
       try {
-        final converted = await convertImport(
+        final r = await importAsDocument(
+          services,
           f.name,
           Uint8List.fromList(f.bytes),
-        );
-        final item = await services.drive.createDocument(
           parentUuid: parentUuid,
-          name: converted.name,
-          initialMarkdown: converted.markdown,
         );
-        created.add(item);
-        if (converted.warnings.isNotEmpty) {
+        created.add(r.item);
+        if (r.warnings.isNotEmpty) {
           problems.add(
-            '${f.name}: ${converted.warnings.length} '
-            '${converted.warnings.length == 1 ? 'thing was' : 'things were'} '
-            'converted or dropped',
+            '${f.name}: ${r.warnings.length} '
+            '${r.warnings.length == 1 ? 'element' : 'elements'} '
+            "couldn't be imported exactly",
           );
         }
       } catch (e) {

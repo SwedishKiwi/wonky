@@ -1,0 +1,15 @@
+### App → server: the result of a [UiBridgeRequest].
+class: UiBridgeResponse
+extends: UiBridgeMessage
+fields:
+  requestId: String
+  ok: bool
+  ### JSON result (structured content) when [ok].
+  resultJson: String?
+  ### Short human-readable summary.
+  text: String?
+  ### Base64 PNG for `ui.screenshot`.
+  imageBase64: String?
+  errorCode: String?
+  errorMessage: String?
+  errorDetailsJson: String?

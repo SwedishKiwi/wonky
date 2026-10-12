@@ -66,6 +66,8 @@ import 'package:wonky_client/src/protocol/platform/files/file_url_view.dart'
     as _i4i1hokq;
 import 'package:wonky_client/src/protocol/platform/files/stored_file_kind.dart'
     as _iaaducpz;
+import 'package:wonky_client/src/protocol/platform/mcp/ui_bridge/ui_bridge_message.dart'
+    as _i1yu9qix;
 import 'package:wonky_client/src/protocol/platform/meta/protocol_info.dart'
     as _ix72qie6;
 import 'package:wonky_client/src/protocol/platform/notifications/notification_event.dart'
@@ -968,6 +970,30 @@ class EndpointFile extends _isc.EndpointRef {
     'getUrls',
     {'fileUuids': fileUuids},
   );
+}
+
+/// The UI bridge stream (suite 09 §6.1): a signed-in app window that allows
+/// MCP control connects here; `ui.*` tool calls are relayed to it as
+/// [UiBridgeRequest]s and answered with [UiBridgeResponse]s.
+/// {@category Endpoint}
+class EndpointUiBridge extends _isc.EndpointRef {
+  EndpointUiBridge(_isc.EndpointCaller caller) : super(caller);
+
+  @override
+  String get name => 'uiBridge';
+
+  _ida.Stream<_i1yu9qix.UiBridgeMessage> connect(
+    _ida.Stream<_i1yu9qix.UiBridgeMessage> fromApp,
+  ) =>
+      caller.callStreamingServerEndpoint<
+        _ida.Stream<_i1yu9qix.UiBridgeMessage>,
+        _i1yu9qix.UiBridgeMessage
+      >(
+        'uiBridge',
+        'connect',
+        {},
+        {'fromApp': fromApp},
+      );
 }
 
 /// Protocol information checked by clients on connect (specs/01 §7).
@@ -1997,6 +2023,7 @@ class Client extends _isc.ServerpodClientShared {
     e2eSupport = EndpointE2eSupport(this);
     feedback = EndpointFeedback(this);
     file = EndpointFile(this);
+    uiBridge = EndpointUiBridge(this);
     meta = EndpointMeta(this);
     notification = EndpointNotification(this);
     presence = EndpointPresence(this);
@@ -2026,6 +2053,8 @@ class Client extends _isc.ServerpodClientShared {
   late final EndpointFeedback feedback;
 
   late final EndpointFile file;
+
+  late final EndpointUiBridge uiBridge;
 
   late final EndpointMeta meta;
 
@@ -2064,6 +2093,7 @@ class Client extends _isc.ServerpodClientShared {
     'e2eSupport': e2eSupport,
     'feedback': feedback,
     'file': file,
+    'uiBridge': uiBridge,
     'meta': meta,
     'notification': notification,
     'presence': presence,

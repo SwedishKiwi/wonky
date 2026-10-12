@@ -332,10 +332,14 @@ class SidebarNavButton extends StatelessWidget {
         ),
         leading: Icon(icon, size: 18),
         onPressed: onPressed,
-        child: Text(
-          label,
-          style: theme.textTheme.small.copyWith(
-            fontWeight: active ? FontWeight.w600 : FontWeight.normal,
+        child: Flexible(
+          child: Text(
+            label,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: theme.textTheme.small.copyWith(
+              fontWeight: active ? FontWeight.w600 : FontWeight.normal,
+            ),
           ),
         ),
       ),

@@ -20,7 +20,12 @@ class EditorThemeAdapter {
   /// The editor theme for [theme] (memoized by content hash + variant).
   EditorTheme adapt(ResolvedWriteTheme theme) {
     final key = '${theme.contentHash}/${theme.variant.name}';
-    return _cache[key] ??= _adapt(theme);
+    final hit = _cache[key];
+    if (hit != null) return hit;
+    // The theme editor adapts a new draft on every change: keep the cache
+    // bounded.
+    if (_cache.length >= 64) _cache.remove(_cache.keys.first);
+    return _cache[key] = _adapt(theme);
   }
 
   /// Every screen font family the theme uses (for [WriteFonts.ensureLoaded]).

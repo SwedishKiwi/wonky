@@ -50,6 +50,38 @@ void main() {
       expect(utf8.decode(a.bytes), contains('<!doctype html'));
     });
 
+    for (final (format, magic) in [
+      (WriteDownloadFormat.docx, 'PK'),
+      (WriteDownloadFormat.odt, 'PK'),
+      (WriteDownloadFormat.epub, 'PK'),
+      (WriteDownloadFormat.rtf, r'{\rtf'),
+    ]) {
+      test(
+        'when exporting ${format.id} then a ${format.format.extension} file is produced',
+        () async {
+          final a = await exporter.export(src, format);
+
+          expect(a.fileName, 'Plan Q3 Q4.${format.format.extension}');
+          expect(a.mimeType, format.format.mimeType);
+          expect(String.fromCharCodes(a.bytes.take(magic.length)), magic);
+        },
+      );
+    }
+
+    test('when exporting DOCX and importing it again then the text and '
+        'formatting survive', () async {
+      final a = await exporter.export(src, WriteDownloadFormat.docx);
+      final r = await const WonkyImporters().import(
+        a.bytes,
+        ImportOptions(fileName: a.fileName),
+      );
+
+      expect(
+        const MarkdownCodec().exportMarkdown(r.delta),
+        const MarkdownCodec().exportMarkdown(src.delta),
+      );
+    });
+
     test('when exporting plain text then formatting is dropped', () async {
       final a = await exporter.export(src, WriteDownloadFormat.txt);
 

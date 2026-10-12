@@ -12,6 +12,7 @@ import 'package:wonky_client/wonky_client.dart' show DriveItemView;
 import 'package:wonky_core/wonky_core.dart';
 import 'package:wonky_ui/wonky_ui.dart';
 
+import '../import/import_warnings_banner.dart';
 import '../../commands/screen_commands.dart';
 import '../comments/comment_margin.dart';
 import '../document/write_document_session.dart';
@@ -215,7 +216,11 @@ class _WriteDocumentScreenState extends State<WriteDocumentScreen> {
           case WriteSessionPhase.loading:
             return const _CanvasLoading();
           case WriteSessionPhase.ready:
-            return _canvas(context, item);
+            return ImportWarningsBanner(
+              services: s,
+              documentUuid: item.contentRef,
+              child: _canvas(context, item),
+            );
         }
       },
     );
@@ -342,31 +347,47 @@ class _WriteDocumentScreenState extends State<WriteDocumentScreen> {
                       ),
                     ),
                   ),
-                  if (suggesting)
-                    Positioned(
-                      left: 0,
-                      right: 0,
-                      top: 0,
-                      height: 2,
-                      child: ColoredBox(
-                        key: const ValueKey<String>(
-                          'write.canvas.suggestingCue',
-                        ),
-                        color: ShadTheme.of(context).colorScheme.success,
-                      ),
-                    ),
                 ],
               );
               return LayoutBuilder(
                 builder: (context, c) => ListenableBuilder(
                   listenable: doc.editor.view,
-                  builder: (context, _) => _withMargin(context, c, stack),
+                  builder: (context, _) => _withCue(
+                    context,
+                    _withMargin(context, c, stack),
+                    suggesting: suggesting,
+                  ),
                 ),
               );
             },
           ),
         );
       },
+    );
+  }
+
+  /// The suggesting-mode cue: a 2 px success-colored line across the whole
+  /// canvas, comment margin included (Write 05 §3).
+  Widget _withCue(
+    BuildContext context,
+    Widget canvas, {
+    required bool suggesting,
+  }) {
+    if (!suggesting) return canvas;
+    return Stack(
+      children: [
+        Positioned.fill(child: canvas),
+        Positioned(
+          left: 0,
+          right: 0,
+          top: 0,
+          height: 2,
+          child: ColoredBox(
+            key: const ValueKey<String>('write.canvas.suggestingCue'),
+            color: ShadTheme.of(context).colorScheme.success,
+          ),
+        ),
+      ],
     );
   }
 

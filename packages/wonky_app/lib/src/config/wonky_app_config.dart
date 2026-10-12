@@ -6,6 +6,7 @@ import 'package:wonky_ui/wonky_ui.dart';
 
 import '../bootstrap/app_urls.dart';
 import '../commands/command.dart';
+import '../mcp_bridge/ui_tool.dart';
 import '../menus/shell_menus.dart';
 import '../shell/shell_services.dart';
 import '../versions/version_renderer.dart';
@@ -127,6 +128,10 @@ abstract class WonkyAppConfig {
   /// Called after sign-in (start sync, …) and before sign-out (stop sync).
   Future<void> onSignedIn(ShellServices services) async {}
   Future<void> onSigningOut(ShellServices services) async {}
+
+  /// App-specific MCP UI-bridge tools (`ui.write.*`, suite 09 §6.2), by
+  /// tool name; the shared `ui.*` tools are built in.
+  Map<String, UiToolHandler> mcpUiTools(ShellServices services) => const {};
 
   /// Settings sections the app adds after the shared ones.
   List<SettingsSectionSpec> settingsSections(ShellServices services) =>

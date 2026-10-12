@@ -18,6 +18,8 @@ Future<void> showThemePicker(
   required ValueListenable<String?> selected,
   required void Function(ThemeOption option) onSelect,
   VoidCallback? onSetDefault,
+  VoidCallback? onCustomize,
+  VoidCallback? onNewTheme,
   bool readOnly = false,
 }) => showShadDialog<void>(
   context: context,
@@ -26,6 +28,8 @@ Future<void> showThemePicker(
     selected: selected,
     onSelect: onSelect,
     onSetDefault: onSetDefault,
+    onCustomize: onCustomize,
+    onNewTheme: onNewTheme,
     readOnly: readOnly,
   ),
 );
@@ -37,6 +41,8 @@ class ThemePickerDialog extends StatelessWidget {
     required this.selected,
     required this.onSelect,
     this.onSetDefault,
+    this.onCustomize,
+    this.onNewTheme,
     this.readOnly = false,
   });
 
@@ -44,6 +50,12 @@ class ThemePickerDialog extends StatelessWidget {
   final ValueListenable<String?> selected;
   final void Function(ThemeOption option) onSelect;
   final VoidCallback? onSetDefault;
+
+  /// Opens the theme editor on the selected theme (closes the dialog).
+  final VoidCallback? onCustomize;
+
+  /// Creates a theme from the selected one and opens it.
+  final VoidCallback? onNewTheme;
   final bool readOnly;
 
   @override
@@ -63,6 +75,26 @@ class ThemePickerDialog extends StatelessWidget {
         maxWidth: (size.width * 0.92).clamp(320, 860),
       ),
       actions: [
+        if (onNewTheme != null)
+          ShadButton.ghost(
+            key: const ValueKey<String>('write.dialog.themePicker.new'),
+            leading: const Icon(LucideIcons.plus, size: 16),
+            onPressed: () {
+              Navigator.of(context).pop();
+              onNewTheme!();
+            },
+            child: const Text('New theme'),
+          ),
+        if (onCustomize != null)
+          ShadButton.outline(
+            key: const ValueKey<String>('write.dialog.themePicker.customize'),
+            leading: const Icon(LucideIcons.paintbrush, size: 16),
+            onPressed: () {
+              Navigator.of(context).pop();
+              onCustomize!();
+            },
+            child: const Text('Customize…'),
+          ),
         if (onSetDefault != null)
           ShadButton.ghost(
             key: const ValueKey<String>('write.dialog.themePicker.default'),
@@ -303,6 +335,50 @@ class _Sample extends StatelessWidget {
               ],
             ),
           ],
+        ),
+      ),
+    );
+  }
+}
+
+/// A tiny theme swatch: light and dark paper halves with the accent color
+/// (theme lists).
+class ThemeSwatchPreview extends StatelessWidget {
+  const ThemeSwatchPreview({super.key, required this.option, this.size = 16});
+
+  final ThemeOption option;
+  final double size;
+
+  @override
+  Widget build(BuildContext context) {
+    final light = ThemeResolver.instance.resolve(
+      option.data,
+      ThemeVariant.light,
+    );
+    final dark = ThemeResolver.instance.resolve(option.data, ThemeVariant.dark);
+    final accent = Color(light.link.color);
+    return ExcludeSemantics(
+      child: Container(
+        width: size,
+        height: size,
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(size / 4),
+          border: Border.all(color: ShadTheme.of(context).colorScheme.border),
+          gradient: LinearGradient(
+            colors: [
+              Color(light.page.paperColor),
+              Color(light.page.paperColor),
+              Color(dark.page.paperColor),
+              Color(dark.page.paperColor),
+            ],
+            stops: const [0, 0.5, 0.5, 1],
+          ),
+        ),
+        alignment: Alignment.center,
+        child: Container(
+          width: size * 0.38,
+          height: size * 0.38,
+          decoration: BoxDecoration(color: accent, shape: BoxShape.circle),
         ),
       ),
     );

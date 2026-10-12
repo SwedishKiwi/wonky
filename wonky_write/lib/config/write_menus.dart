@@ -1,5 +1,6 @@
 import 'package:wonky_app/wonky_app.dart';
 import 'package:wonky_core/wonky_core.dart';
+import 'package:wonky_write_core/wonky_write_core.dart' show BuiltinThemes;
 
 /// Menu ids of the Write menus (stable: used by MCP `ui.get_menu_tree`).
 abstract final class WriteMenuIds {
@@ -274,7 +275,25 @@ MenuSubmenu get formatMenu => MenuSpec.submenu(WriteMenuIds.format, 'Format', [
   ]),
   MenuSpec.separator(),
   MenuSpec.submenu('format.theme', 'Theme', [
-    _c('write.theme.openPicker', label: 'Choose theme…'),
+    for (final b in BuiltinThemes.all)
+      _c(
+        'write.theme.apply',
+        label: b.name,
+        args: {'themeId': b.uuid},
+        menuId: 'format.theme.${b.key}',
+        radio: true,
+      ),
+    _c(
+      'write.theme.useDefault',
+      label: 'Use my default theme',
+      menuId: 'format.theme.useDefault',
+      radio: true,
+    ),
+    MenuSpec.separator(),
+    _c('write.theme.openPicker', label: 'More themes…'),
+    _c('write.theme.openEditor', label: 'Customize theme…'),
+    _c('write.theme.openManager', label: 'Manage themes…'),
+    MenuSpec.separator(),
     _c('write.theme.setUserDefault', label: 'Save as my default theme'),
   ]),
   _c(

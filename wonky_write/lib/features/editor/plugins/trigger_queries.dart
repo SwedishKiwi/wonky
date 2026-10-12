@@ -101,7 +101,11 @@ class TriggerQueryTracker {
     final offset = position.offset;
     final text = node.text.toPlainText();
     final before = text.substring(0, offset);
-    final nodeStart = controller.mirror.startOfNode(node.id);
+    // The selection can name a node the mirror has not seen yet (a node
+    // inserted in the same transaction); the next update catches up.
+    final index = controller.mirror.indexOfNode(node.id);
+    if (index < 0) return null;
+    final nodeStart = controller.mirror.startOfIndex(index);
     for (final (trigger, pattern) in [('/', _slash), ('@', _mention)]) {
       final match = pattern.firstMatch(before);
       if (match == null) continue;

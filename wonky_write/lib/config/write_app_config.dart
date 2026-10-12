@@ -7,12 +7,16 @@ import 'package:wonky_core/wonky_core.dart';
 import 'package:wonky_ui/wonky_ui.dart';
 
 import '../commands/screen_commands.dart';
+import '../commands/theme_commands.dart';
 import '../features/document/write_collab_commands.dart';
 import '../features/history/write_version_renderer.dart';
 import '../features/import/import_service.dart';
 import '../features/print/print_preview_screen.dart';
 import '../features/screen/write_document_screen.dart';
+import '../features/theme_editor/theme_editor_screen.dart';
 import '../features/themes/document_theme.dart';
+import '../features/themes/theme_settings.dart';
+import '../mcp/ui_write_tools.dart';
 import 'write_menus.dart';
 
 /// Brand color of Wonky Write.
@@ -62,6 +66,33 @@ class WriteAppConfig extends WonkyAppConfig {
   @override
   List<RouteBase> routes(ShellServices services) => [
     GoRoute(
+      path: '/themes',
+      pageBuilder: (context, state) => NoTransitionPage(
+        key: state.pageKey,
+        child: ThemeEditorRoute(
+          services: services,
+          themes: themeCatalogFor(services),
+          docItemUuid: state.uri.queryParameters['doc'],
+        ),
+      ),
+    ),
+    GoRoute(
+      path: '/themes/:themeUuid',
+      pageBuilder: (context, state) => NoTransitionPage(
+        key: state.pageKey,
+        child: ThemeEditorRoute(
+          key: ValueKey<String>(
+            'write.themes.${state.pathParameters['themeUuid']}',
+          ),
+          services: services,
+          themes: themeCatalogFor(services),
+          themeUuid: state.pathParameters['themeUuid'],
+          docItemUuid: state.uri.queryParameters['doc'],
+          element: state.uri.queryParameters['element'],
+        ),
+      ),
+    ),
+    GoRoute(
       path: '/d/:uuid/print',
       pageBuilder: (context, state) => NoTransitionPage(
         key: state.pageKey,
@@ -75,9 +106,15 @@ class WriteAppConfig extends WonkyAppConfig {
     ),
   ];
 
+  /// `ui.write.*` MCP UI-bridge tools (Write 09 §3).
+  @override
+  Map<String, UiToolHandler> mcpUiTools(ShellServices services) =>
+      UiWriteToolHandlers.all(services);
+
   @override
   List<Command<CommandArgs>> commands(ShellServices services) => [
     ...writeCommands(services, themeCatalogFor(services)),
+    ...themeCommands(services, themeCatalogFor(services)),
     ...writeCollabCommands(services),
   ];
 
@@ -111,6 +148,19 @@ class WriteAppConfig extends WonkyAppConfig {
 
   @override
   ImportHandler? get importHandler => const WriteImportHandler();
+
+  @override
+  List<SettingsSectionSpec> settingsSections(ShellServices services) => [
+    SettingsSectionSpec(
+      id: 'themes',
+      title: (_) => 'Document themes',
+      icon: LucideIcons.palette,
+      builder: (_) => ThemeSettingsSection(
+        services: services,
+        themes: themeCatalogFor(services),
+      ),
+    ),
+  ];
 }
 
 /// The app logo: a rounded tile in the brand color with a white glyph.

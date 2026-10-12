@@ -283,6 +283,10 @@ class WriteDocumentSession extends ChangeNotifier {
   /// The document's uuid (`DriveItemView.contentRef`), once known.
   UuidValue? get documentUuid => _documentUuid;
 
+  /// Called with `{"themeId", "version", "hash"}` JSON when the document's
+  /// theme was saved (live theme link, Write 06 §5.3).
+  void Function(String valueJson)? onThemeVersion;
+
   /// The undo stack of this document (same key as the screen controller's).
   UndoStackKey get undoStackKey => UndoStackKey(itemUuid.uuid);
 
@@ -720,6 +724,10 @@ class WriteDocumentSession extends ChangeNotifier {
           );
         }
         notifyListeners();
+      case SyncMetaChanged(:final field, :final valueJson)
+          when field == 'themeVersion':
+        // The document's theme was saved (Write 06 §5.3): no metadata change.
+        onThemeVersion?.call(valueJson);
       case SyncMetaChanged(:final field, :final valueJson):
         _meta.value = WriteDocumentMeta.fromView(metaView);
         final doc = _documentUuid;

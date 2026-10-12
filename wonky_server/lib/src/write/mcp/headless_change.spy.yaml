@@ -1,0 +1,32 @@
+### A change made by a headless MCP/AI tool call, kept 24 h for
+### `changes.revert` (Write 09 §1.4 step 5).
+class: HeadlessChange
+table: headless_change
+serverOnly: true
+fields:
+  ### The `change_id` returned by the tool (also the op's clientOpId).
+  changeId: UuidValue
+  ### `content` (a document op) or `meta` (a document metadata field).
+  kind: String
+  itemId: int, relation(parent=drive_item, onDelete=Cascade)
+  documentId: int?
+  ### Revision of the content op.
+  revision: int?
+  ### Inverse of the content op against the document before it.
+  inverseJson: String?
+  ### Metadata field (`pageSetup`, `themeId`, …) and its JSON values.
+  metaField: String?
+  metaBeforeJson: String?
+  metaAfterJson: String?
+  userId: int
+  actorKind: ActorKind
+  label: String?
+  toolName: String
+  createdAt: DateTime
+  revertedAt: DateTime?
+indexes:
+  headless_change_id_idx:
+    fields: changeId
+    unique: true
+  headless_change_created_idx:
+    fields: createdAt

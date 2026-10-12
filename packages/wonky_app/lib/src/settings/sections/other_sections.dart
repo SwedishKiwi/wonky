@@ -1,15 +1,13 @@
-import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
 import 'package:shad/shad.dart';
 import 'package:wonky_client/wonky_client.dart';
-import 'package:wonky_core/wonky_core.dart' hide ActorKind;
 
-import '../../commands/shell_commands/general_commands.dart';
 import '../../data/api.dart';
 import '../../data/cached_drive_repository.dart';
 import '../../l10n/wonky_app_localizations.dart';
 import '../../shell/dialogs.dart';
 import '../../shell/overlays/shell_overlays.dart';
+import '../../mcp_bridge/developer_settings.dart';
 import '../../shell/shell_services.dart';
 import '../settings_screen.dart';
 import 'package:flutter/foundation.dart';
@@ -249,177 +247,16 @@ class AiSection extends StatelessWidget {
   }
 }
 
-/// Settings › Developer / MCP: tokens, connection snippet, UI-bridge toggle.
-class DeveloperSection extends StatefulWidget {
+/// Settings › Developer / MCP: tokens, connection snippet, UI-bridge toggle
+/// (implemented by the MCP bridge, `mcp_bridge/developer_settings.dart`).
+class DeveloperSection extends StatelessWidget {
   const DeveloperSection({super.key, required this.services});
 
   final ShellServices services;
 
   @override
-  State<DeveloperSection> createState() => _DeveloperSectionState();
-}
-
-class _DeveloperSectionState extends State<DeveloperSection> {
-  late Future<List<AccessTokenView>> _tokens = widget
-      .services
-      .repositories
-      .users
-      .listTokens();
-  String? _secret;
-
-  ShellServices get s => widget.services;
-
-  Future<void> _create() async {
-    final l = WonkyAppLocalizations.of(context);
-    final name = await showTextInputDialog(
-      context,
-      title: l.tokenCreate,
-      label: l.tokenName,
-      confirmLabel: l.actionCreate,
-      dialogKey: 'dialog.createToken',
-    );
-    if (name == null) return;
-    try {
-      final t = await s.repositories.users.createToken(
-        name: name,
-        scopes: McpScope.all,
-      );
-      setState(() {
-        _secret = t.secret;
-        _tokens = s.repositories.users.listTokens();
-      });
-    } catch (e) {
-      s.toasts.error(l.errorGeneric, description: errorMessage(e));
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final l = WonkyAppLocalizations.of(context);
-    final theme = ShadTheme.of(context);
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        SettingsGroup(
-          title: l.tokensTitle,
-          description: l.tokensHint,
-          children: [
-            if (_secret != null)
-              ShadAlert(
-                icon: const Icon(LucideIcons.keyRound),
-                title: Text(l.tokenCopyOnce),
-                description: Row(
-                  children: [
-                    Expanded(
-                      child: Text(
-                        _secret!,
-                        style: TextStyle(
-                          fontFamily: 'packages/shad/GeistMono',
-                          color: theme.colorScheme.foreground,
-                        ),
-                      ),
-                    ),
-                    ShadButton.outline(
-                      size: ShadButtonSize.sm,
-                      onPressed: () =>
-                          Clipboard.setData(ClipboardData(text: _secret!)),
-                      child: Text(l.actionCopy),
-                    ),
-                  ],
-                ),
-              ),
-            FutureBuilder<List<AccessTokenView>>(
-              future: _tokens,
-              builder: (context, snap) {
-                final list = snap.data ?? const <AccessTokenView>[];
-                if (snap.connectionState != ConnectionState.done) {
-                  return const ShadSpinner();
-                }
-                if (list.isEmpty) {
-                  return Text(l.tokensEmpty, style: theme.textTheme.muted);
-                }
-                return Column(
-                  children: [
-                    for (final t in list)
-                      Row(
-                        children: [
-                          Expanded(
-                            child: Text(
-                              '${t.name} · ${t.prefix}…${t.revokedAt != null ? ' · ${l.tokenRevoked}' : ''}',
-                            ),
-                          ),
-                          if (t.revokedAt == null)
-                            ShadButton.ghost(
-                              size: ShadButtonSize.sm,
-                              onPressed: () async {
-                                await s.repositories.users.revokeToken(t.id);
-                                setState(
-                                  () => _tokens = s.repositories.users
-                                      .listTokens(),
-                                );
-                              },
-                              child: Text(l.tokenRevoke),
-                            ),
-                        ],
-                      ),
-                  ],
-                );
-              },
-            ),
-            Align(
-              alignment: Alignment.centerLeft,
-              child: ShadButton(
-                onPressed: _create,
-                leading: const Icon(LucideIcons.plus, size: 16),
-                child: Text(l.tokenCreate),
-              ),
-            ),
-          ],
-        ),
-        SettingsGroup(
-          title: l.mcpTitle,
-          description: l.mcpHint,
-          children: [
-            Container(
-              padding: const EdgeInsets.all(10),
-              decoration: BoxDecoration(
-                color: theme.colorScheme.muted,
-                borderRadius: BorderRadius.circular(6),
-              ),
-              child: Text(
-                mcpConnectionJson(s),
-                style: const TextStyle(
-                  fontFamily: 'packages/shad/GeistMono',
-                  fontSize: 12,
-                ),
-              ),
-            ),
-            Align(
-              alignment: Alignment.centerLeft,
-              child: ShadButton.outline(
-                onPressed: () => s.dispatcher.invoke(
-                  'shell.mcp.copyConnectionInfo',
-                  source: InvocationSource.ui,
-                ),
-                child: Text(l.cmdCopyMcpConfig),
-              ),
-            ),
-            ListenableBuilder(
-              listenable: s.mcp,
-              builder: (context, _) => SettingsRow(
-                label: l.mcpAllowControl,
-                control: _switch(
-                  'settings.mcp.bridge',
-                  s.mcp.enabled,
-                  (_) => s.dispatcher.invoke('shell.mcp.toggleUiBridge'),
-                ),
-              ),
-            ),
-          ],
-        ),
-      ],
-    );
-  }
+  Widget build(BuildContext context) =>
+      McpDeveloperSettings(services: services);
 }
 
 /// Settings › Offline & storage.

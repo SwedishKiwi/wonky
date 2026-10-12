@@ -115,6 +115,7 @@ class WriteDocumentController extends DocumentController {
     insights = DocumentInsights(editor);
     find = FindController(editor, commands: commands, reveal: reveal);
     documentTheme = DocumentThemeController(themes);
+    session.onThemeVersion = _onThemeVersion;
     session.addListener(_onSession);
     session.phase.addListener(_onSession);
     session.role.addListener(_onSession);
@@ -224,7 +225,7 @@ class WriteDocumentController extends DocumentController {
 
   void _onSession() {
     final meta = session.meta.value;
-    final userTheme = services.prefs.writeDefaults['themeUuid'] as String?;
+    final userTheme = defaultThemeUuidOf(services.prefs.writeDefaults);
     if (!_metaApplied ||
         !identical(meta, _lastMeta) ||
         userTheme != _lastUserTheme ||
@@ -244,7 +245,25 @@ class WriteDocumentController extends DocumentController {
     notifyListeners();
   }
 
+  /// A save of the document's theme (here or by someone else): refetch it.
+  void _onThemeVersion(String valueJson) {
+    try {
+      final v = jsonDecode(valueJson);
+      if (v is! Map || v['themeId'] is! String) return;
+      unawaited(
+        themes.refresh(
+          v['themeId'] as String,
+          version: (v['version'] as num?)?.toInt(),
+          viaDocumentUuid: session.documentUuid?.uuid,
+        ),
+      );
+    } on FormatException {
+      // Ignore malformed notifications.
+    }
+  }
+
   void _applyMeta() {
+    documentTheme.documentUuid = session.documentUuid?.uuid;
     documentTheme.themeUuid =
         themeUuid ?? _lastUserTheme ?? BuiltinThemes.wonkyDefault.uuid;
     _applyPageGeometry();

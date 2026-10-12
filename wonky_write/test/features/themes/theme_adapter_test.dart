@@ -65,7 +65,9 @@ void main() {
 
     test('when the document references an unknown theme then Wonky Default '
         'is used and the theme is reported missing', () async {
-      final catalog = WriteThemeCatalog(fetch: (_) async => null);
+      final catalog = WriteThemeCatalog(
+        fetch: (_, {viaDocumentUuid}) async => null,
+      );
       final c = DocumentThemeController(catalog);
 
       c.themeUuid = '00000000-0000-7000-8000-00000000ffff';
@@ -75,5 +77,101 @@ void main() {
       expect(c.missing, isTrue);
       c.dispose();
     });
+  });
+
+  group('Given a document using a custom theme', () {
+    ThemeOption option(String uuid, int version, String accent) => ThemeOption(
+      uuid: uuid,
+      name: 'Report',
+      version: version,
+      data: WriteThemeData.fromJson({
+        ...BuiltinThemes.wonkyDefault.json,
+        'name': 'Report',
+        'palette': {
+          ...(BuiltinThemes.wonkyDefault.json['palette'] as Map),
+          'accent': accent,
+        },
+      }),
+    );
+
+    const uuid = '00000000-0000-7000-8000-00000000abcd';
+
+    test(
+      'when the theme is saved then the document shows the new version',
+      () async {
+        var server = option(uuid, 1, '#112233');
+        String? via;
+        final catalog = WriteThemeCatalog(
+          fetch: (u, {viaDocumentUuid}) async {
+            via = viaDocumentUuid;
+            return server;
+          },
+        );
+        final c = DocumentThemeController(catalog)..documentUuid = 'doc-1';
+        c.themeUuid = uuid;
+        await pumpEventQueue();
+        expect(c.option.version, 1);
+        expect(via, 'doc-1');
+
+        server = option(uuid, 2, '#445566');
+        await catalog.refresh(uuid, version: 2);
+
+        expect(c.option.version, 2);
+        expect(
+          c.resolved(ThemeVariant.light).palette[PaletteKey.accent],
+          0xff445566,
+        );
+        c.dispose();
+      },
+    );
+
+    test(
+      'when a refresh names an older version then nothing is fetched',
+      () async {
+        var fetches = 0;
+        final catalog = WriteThemeCatalog(
+          fetch: (u, {viaDocumentUuid}) async {
+            fetches++;
+            return option(uuid, 3, '#000000');
+          },
+        );
+        await catalog.load(uuid);
+
+        await catalog.refresh(uuid, version: 2);
+
+        expect(fetches, 1);
+      },
+    );
+
+    test(
+      'when previewing another theme locally then it shows until cleared',
+      () async {
+        final catalog = WriteThemeCatalog();
+        final c = DocumentThemeController(catalog);
+        c.themeUuid = BuiltinThemes.wonkyDefault.uuid;
+        final serif = BuiltinThemes.byKey('classic-serif')!;
+
+        c.previewUuid = serif.uuid;
+        expect(c.option.uuid, serif.uuid);
+        c.previewUuid = null;
+
+        expect(c.option.uuid, BuiltinThemes.wonkyDefault.uuid);
+        c.dispose();
+      },
+    );
+
+    test(
+      'when a theme is put into the catalog then it is listed in my themes',
+      () {
+        final catalog = WriteThemeCatalog();
+
+        catalog.put(option(uuid, 1, '#112233'));
+        expect(catalog.mine.map((t) => t.uuid), [uuid]);
+        catalog.markDeleted(uuid);
+
+        expect(catalog.mine, isEmpty);
+        expect(catalog.lookup(uuid)?.deleted, isTrue);
+      },
+    );
   });
 }

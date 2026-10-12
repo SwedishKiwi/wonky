@@ -546,6 +546,9 @@ class WonkyParagraphComponentBuilder implements ComponentBuilder {
           painter: _QuoteBarPainter(
             color: theme.quoteBarColor,
             width: theme.quoteBarWidth * zoom,
+            // The stylesheet indents quotes by bar width + 12 px; the bar
+            // sits in that indent, left of the text.
+            gap: 12 * zoom,
           ),
           child: component,
         ),
@@ -572,22 +575,29 @@ class WonkyParagraphComponentBuilder implements ComponentBuilder {
 }
 
 class _QuoteBarPainter extends CustomPainter {
-  _QuoteBarPainter({required this.color, required this.width});
+  _QuoteBarPainter({
+    required this.color,
+    required this.width,
+    required this.gap,
+  });
 
   final Color color;
   final double width;
+  final double gap;
 
   @override
   void paint(Canvas canvas, Size size) {
     canvas.drawRect(
-      Rect.fromLTWH(0, 0, width, size.height),
+      Rect.fromLTWH(-(width + gap), 0, width, size.height),
       Paint()..color = color,
     );
   }
 
   @override
   bool shouldRepaint(_QuoteBarPainter oldDelegate) =>
-      oldDelegate.color != color || oldDelegate.width != width;
+      oldDelegate.color != color ||
+      oldDelegate.width != width ||
+      oldDelegate.gap != gap;
 }
 
 class _CodeBlockChrome extends StatelessWidget {

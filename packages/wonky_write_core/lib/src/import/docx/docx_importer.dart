@@ -9,6 +9,7 @@ import 'package:xml/xml.dart';
 import '../../delta/embeds.dart';
 import '../../delta/links.dart';
 import '../../ir/doc_tree.dart';
+import '../../markdown/inline_reader.dart' show mentionTitlePrefix;
 import '../import_api.dart';
 import '../import_limits.dart';
 import '../import_support.dart';
@@ -83,6 +84,7 @@ final class _ParaCtx {
   final after = <DocBlock>[];
   bool? checkbox;
   String? link;
+  String? mention;
 
   bool get hasText => segs.any(
     (s) => s is _BlockSeg || (s is _RunSeg && s.run.text.trim().isNotEmpty),
@@ -99,7 +101,7 @@ final class _Field {
   String? link;
 }
 
-enum _Kind { paragraph, heading, quote, code, list }
+enum _Kind { paragraph, heading, quote, code, list, rule }
 
 final class _DocxReader {
   _DocxReader(this.pkg, this.options);
@@ -123,11 +125,17 @@ final class _DocxReader {
   var _inNote = false;
   ImportedPageSetup? _pageSetup;
 
+  /// Written by Wonky Write's own exporter: its theme-derived formatting
+  /// (colors, alignment, borders) is presentation only, so no "formatting
+  /// removed" warnings, and its helper paragraphs (TOC) are skipped.
+  var _own = false;
+
   ZipPackage get _zip => pkg.zip;
 
   ImportResult read() {
     _docPart = pkg.mainDocumentPart;
     _part = _docPart;
+    _own = _isOwnDocument();
     _styles = OoxmlStyles.parse(_partXml('styles'));
     _numbering = OoxmlNumbering.parse(_partXml('numbering'));
     _footnotesPart = pkg.relationshipOfKind(_docPart, 'footnotes')?.target;
@@ -169,6 +177,23 @@ final class _DocxReader {
       pageSetup: _pageSetup,
     );
   }
+
+  bool _isOwnDocument() {
+    final rel = pkg.relationshipOfKind('', 'extended-properties');
+    final doc = _zip.xml(rel?.target ?? 'docProps/app.xml');
+    final app = doc?.rootElement.childElements
+        .where((e) => e.name.local == 'Application')
+        .firstOrNull
+        ?.innerText
+        .trim();
+    return app == 'Wonky Write';
+  }
+
+  /// Styles whose formatting is presentation only (written by our exporter:
+  /// table headings, checked tasks, mentions…): their run toggles are not
+  /// content.
+  static bool _presentationStyle(OoxmlStyle? s) =>
+      s != null && s.lowerName.startsWith('wonky ');
 
   XmlDocument? _partXml(String kind) {
     final r = pkg.relationshipOfKind(_docPart, kind);
@@ -232,8 +257,10 @@ final class _DocxReader {
     blockIndex: _blocks.length,
   );
 
-  void _removed(String feature) =>
-      _warnings.formattingRemoved(feature, blockIndex: _blocks.length);
+  void _removed(String feature) {
+    if (_own) return;
+    _warnings.formattingRemoved(feature, blockIndex: _blocks.length);
+  }
 
   // -------------------------------------------------------------------------
   // Block level
@@ -331,6 +358,11 @@ final class _DocxReader {
       return (_Kind.heading, int.parse(hm.group(1)!).clamp(1, 6), null, 0);
     }
     if (name == 'title' || id == 'title') return (_Kind.heading, 1, null, 0);
+    if (name == 'wonky horizontal rule' ||
+        name == 'horizontal rule' ||
+        id == 'horizontalrule') {
+      return (_Kind.rule, 0, null, 0);
+    }
     if (name == 'subtitle' || id == 'subtitle') {
       return (_Kind.heading, 2, null, 0);
     }
@@ -368,25 +400,58 @@ final class _DocxReader {
     final styleId = pPr?.kid(_w, 'pStyle')?.attr(_w, 'val');
     final style = _styles[styleId] ?? _styles.defaultParagraph;
     final sect = pPr?.kid(_w, 'sectPr');
+    final styleName = style?.lowerName ?? '';
+    if (styleName == 'wonky spacer' ||
+        (_own &&
+            (styleName.startsWith('toc ') || styleName == 'toc heading'))) {
+      if (sect != null) _section(sect, last: false);
+      return;
+    }
     if (pPr?.kid(_w, 'pageBreakBefore') != null &&
         OoxmlRunProps.toggle(pPr!.kid(_w, 'pageBreakBefore')!)) {
       _breaksDropped();
     }
     final (kind, level, numId, ilvl) = _kindOf(pPr, style);
+    if (kind == _Kind.rule) {
+      _blocks.add(RuleBlock(options.idGenerator()));
+      if (sect != null) _section(sect, last: false);
+      return;
+    }
     final jc = pPr?.kid(_w, 'jc')?.attr(_w, 'val');
     if (jc == 'center' || jc == 'right' || jc == 'end' || jc == 'both') {
       _removed('alignment');
     }
     final ctx = _ParaCtx(
-      styleToggles: kind == _Kind.paragraph || kind == _Kind.list
+      styleToggles:
+          (kind == _Kind.paragraph || kind == _Kind.list) &&
+              !_presentationStyle(style)
           ? style
           : null,
       style: style,
     );
     _inline(p, ctx);
+    if (_isCaptionOfPreviousImage(styleName, ctx)) {
+      if (sect != null) _section(sect, last: false);
+      return;
+    }
     _emitParagraph(p, pPr, ctx, kind, level, numId, ilvl);
     _blocks.addAll(ctx.after);
     if (sect != null) _section(sect, last: false);
+  }
+
+  /// A `Caption` paragraph repeating the title of the image just before it
+  /// (the title is already imported from `wp:docPr/@title`).
+  bool _isCaptionOfPreviousImage(String styleName, _ParaCtx ctx) {
+    if (styleName != 'caption' || _blocks.isEmpty) return false;
+    final last = _blocks.last;
+    if (last is! ImageBlock || last.title == null) return false;
+    if (ctx.segs.any((s) => s is _BlockSeg)) return false;
+    final text = ctx.segs
+        .whereType<_RunSeg>()
+        .map((s) => s.run.text)
+        .join()
+        .trim();
+    return text == last.title!.trim();
   }
 
   void _emitParagraph(
@@ -464,6 +529,9 @@ final class _DocxReader {
         return;
       case _Kind.code:
         return; // handled above
+      case _Kind.rule:
+        _blocks.add(RuleBlock(options.idGenerator()));
+        return;
       case _Kind.list || _Kind.paragraph:
         break;
     }
@@ -568,9 +636,19 @@ final class _DocxReader {
           _run(e, ctx);
         case 'hyperlink':
           final prev = ctx.link;
+          final prevMention = ctx.mention;
           ctx.link = _hyperlink(e);
+          final tooltip = e.attr(_w, 'tooltip') ?? '';
+          ctx.mention =
+              ctx.link != null &&
+                  LinkPolicy.isMailto(ctx.link!) &&
+                  tooltip.startsWith(mentionTitlePrefix) &&
+                  tooltip.length > mentionTitlePrefix.length
+              ? tooltip.substring(mentionTitlePrefix.length)
+              : null;
           _inline(e, ctx);
           ctx.link = prev;
+          ctx.mention = prevMention;
         case 'fldSimple':
           final prev = ctx.link;
           ctx.link = _fieldLink(e.attr(_w, 'instr') ?? '') ?? prev;
@@ -619,12 +697,15 @@ final class _DocxReader {
 
   void _run(XmlElement r, _ParaCtx ctx) {
     final props = OoxmlRunProps.parse(r.kid(_w, 'rPr'));
-    final cs = _styles[props.style];
+    final charStyle = _styles[props.style];
+    final cs = _presentationStyle(charStyle) ? null : charStyle;
     final toggles = ctx.styleToggles;
     final bold = props.bold ?? cs?.bold ?? toggles?.bold ?? false;
     final italic = props.italic ?? cs?.italic ?? toggles?.italic ?? false;
     final strike = props.strike ?? cs?.strike ?? toggles?.strike ?? false;
-    final font = props.font ?? cs?.font ?? ctx.style?.font;
+    // Our own exports mark inline code with the `CodeChar` style; their
+    // paragraph fonts are theme typography (monospace themes exist).
+    final font = props.font ?? cs?.font ?? (_own ? null : ctx.style?.font);
     final hidden = props.hidden || (cs?.hidden ?? false);
     final link = ctx.link ?? _fieldLinkActive;
     if (!hidden && link == null) {
@@ -640,6 +721,7 @@ final class _DocxReader {
       strike: strike,
       code: MonospaceFonts.isMonospace(font),
       link: ctx.link ?? _fieldLinkActive,
+      mentionUserUuid: ctx.link != null ? ctx.mention : null,
     );
     _runContent(r, ctx, make, hidden: hidden, font: font);
   }
@@ -831,7 +913,7 @@ final class _DocxReader {
     final style = _styles[pPr?.kid(_w, 'pStyle')?.attr(_w, 'val')];
     final heading = _kindOf(pPr, style).$1 == _Kind.heading;
     final ctx = _ParaCtx(
-      styleToggles: heading ? null : style,
+      styleToggles: heading || _presentationStyle(style) ? null : style,
       style: style,
       inCell: true,
     );

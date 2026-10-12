@@ -1,0 +1,3 @@
+### Messages of `uiBridge.connect` in both directions (suite 09 §6.1).
+class: UiBridgeMessage
+sealed: true

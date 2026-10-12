@@ -217,17 +217,21 @@ class _TypeAheadMenuBodyState extends State<_TypeAheadMenuBody> {
       case WonkyMenuCustom(:final builder):
         return builder(context, () => widget.onClose?.call());
       case WonkyMenuSubmenu():
-        return ShadContextMenuItem(
-          key: e.key,
-          enabled: e.enabled,
-          leading: lead(e.icon),
-          trailing: const Icon(LucideIcons.chevronRight, size: 16),
-          items: buildWonkyMenuItems(
-            context,
-            e.children,
-            onClose: widget.onClose,
+        return _stableEnabled(
+          e.key,
+          e.enabled,
+          (key) => ShadContextMenuItem(
+            key: key,
+            enabled: e.enabled,
+            leading: lead(e.icon),
+            trailing: const Icon(LucideIcons.chevronRight, size: 16),
+            items: buildWonkyMenuItems(
+              context,
+              e.children,
+              onClose: widget.onClose,
+            ),
+            child: Text(e.label),
           ),
-          child: Text(e.label),
         );
       case WonkyMenuItem():
         final Widget? leadingWidget = switch (e) {
@@ -255,16 +259,24 @@ class _TypeAheadMenuBodyState extends State<_TypeAheadMenuBody> {
           _ => lead(e.icon),
         };
         final shortcut = e.shortcut;
-        Widget item = ShadContextMenuItem(
-          key: e.key,
-          enabled: e.enabled,
-          destructive: e.destructive,
-          leading: leadingWidget,
-          trailing: shortcut == null || shortcut.isEmpty
-              ? null
-              : ExcludeSemantics(child: ShadKbd.group(shortcut, height: 20)),
-          onPressed: e.onSelected,
-          child: Text(e.label),
+        Widget item = _stableEnabled(
+          e.key,
+          e.enabled,
+          (key) => ShadContextMenuItem(
+            key: key,
+            enabled: e.enabled,
+            destructive: e.destructive,
+            leading: leadingWidget,
+            trailing: shortcut == null || shortcut.isEmpty
+                ? null
+                : ExcludeSemantics(
+                    child: ShadKbd.group([
+                      for (final k in shortcut) keyCapLabel(k),
+                    ], height: 20),
+                  ),
+            onPressed: e.onSelected,
+            child: Text(e.label),
+          ),
         );
         final checked = switch (e) {
           WonkyMenuCheckItem(:final checked) => checked,
@@ -287,3 +299,35 @@ class _TypeAheadMenuBodyState extends State<_TypeAheadMenuBody> {
     }
   }
 }
+
+/// Builds a shad menu item whose element is recreated when [enabled]
+/// changes.
+///
+/// `ShadButton.didUpdateWidget` pushes a changed `enabled` into the item's
+/// shared states controller, which notifies the trailing icon's listener (a
+/// sibling, not a descendant) while the menu is being rebuilt — the
+/// "setState() or markNeedsBuild() called during build" assertion when a
+/// command's enabled state changes while its menu is open. A fresh state
+/// applies the disabled state in a post-frame callback instead. [key] (the
+/// entry's stable key, used by tests and MCP) stays on the outer subtree.
+Widget _stableEnabled(Key? key, bool enabled, Widget Function(Key key) build) =>
+    KeyedSubtree(
+      key: key,
+      child: build(ValueKey<(Key?, bool)>((key, enabled))),
+    );
+
+/// The key cap of a logical key name ("Backslash" → "\\").
+String keyCapLabel(String key) => switch (key) {
+  'Backslash' => r'\',
+  'Slash' => '/',
+  'Equal' => '=',
+  'Minus' => '−',
+  'Period' => '.',
+  'Comma' => ',',
+  'Semicolon' => ';',
+  'Quote' => "'",
+  'BracketLeft' => '[',
+  'BracketRight' => ']',
+  'Backquote' => '`',
+  _ => key,
+};

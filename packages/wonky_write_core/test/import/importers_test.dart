@@ -381,14 +381,15 @@ void main() {
     });
 
     test(
-      'when importing DOCX then it reports that the format is not available',
-      () {
+      'when importing a damaged DOCX then it imports what it can with a warning',
+      () async {
+        final r = await const WonkyImporters().import(
+          DeterministicZip.encode([ZipEntry.text('[Content_Types].xml', '')]),
+          opts(),
+        );
         expect(
-          () => const WonkyImporters().import(
-            DeterministicZip.encode([ZipEntry.text('[Content_Types].xml', '')]),
-            opts(),
-          ),
-          throwsA(isA<ImportFormatException>()),
+          r.warnings.map((w) => w.kind),
+          contains(ImportWarningKind.contentDropped),
         );
       },
     );

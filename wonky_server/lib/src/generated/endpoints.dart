@@ -40,6 +40,8 @@ import 'package:wonky_server/src/generated/platform/feedback/feedback_submission
     as _ira9srbn;
 import 'package:wonky_server/src/generated/platform/files/stored_file_kind.dart'
     as _idhe6v6s;
+import 'package:wonky_server/src/generated/platform/mcp/ui_bridge/ui_bridge_message.dart'
+    as _is78z0de;
 import 'package:wonky_server/src/generated/platform/presence/presence_update.dart'
     as _ipd65of1;
 import 'package:wonky_server/src/generated/platform/sharing/item_sharing_settings.dart'
@@ -57,6 +59,7 @@ import '../platform/drive/drive_endpoint.dart' as _ijanxtjh;
 import '../platform/e2e/e2e_support_endpoint.dart' as _iqj5xom6;
 import '../platform/feedback/feedback_endpoint.dart' as _i70eazm1;
 import '../platform/files/file_endpoint.dart' as _iokth3bn;
+import '../platform/mcp/ui_bridge/ui_bridge_endpoint.dart' as _ipb16bxt;
 import '../platform/meta/meta_endpoint.dart' as _isistrmv;
 import '../platform/notifications/notification_endpoint.dart' as _ia40tpv4;
 import '../platform/presence/presence_endpoint.dart' as _iv7snmpw;
@@ -116,6 +119,12 @@ class Endpoints extends _is.EndpointDispatch {
         ..initialize(
           server,
           'file',
+          null,
+        ),
+      'uiBridge': _ipb16bxt.UiBridgeEndpoint()
+        ..initialize(
+          server,
+          'uiBridge',
           null,
         ),
       'meta': _isistrmv.MetaEndpoint()
@@ -1654,6 +1663,34 @@ class Endpoints extends _is.EndpointDispatch {
                 session,
                 params['fileUuids'],
               ),
+        ),
+      },
+    );
+    connectors['uiBridge'] = _is.EndpointConnector(
+      name: 'uiBridge',
+      endpoint: endpoints['uiBridge']!,
+      methodConnectors: {
+        'connect': _is.MethodStreamConnector(
+          name: 'connect',
+          params: {},
+          streamParams: {
+            'fromApp':
+                _is.StreamParameterDescription<_is78z0de.UiBridgeMessage>(
+                  name: 'fromApp',
+                  nullable: false,
+                ),
+          },
+          returnType: _is.MethodStreamReturnType.streamType,
+          call:
+              (
+                _is.Session session,
+                Map<String, dynamic> params,
+                Map<String, Stream> streamParams,
+              ) =>
+                  (endpoints['uiBridge'] as _ipb16bxt.UiBridgeEndpoint).connect(
+                    session,
+                    streamParams['fromApp']!.cast<_is78z0de.UiBridgeMessage>(),
+                  ),
         ),
       },
     );

@@ -1,0 +1,8 @@
+### App → server: the window's route, open item or focus changed.
+class: UiBridgeStatus
+extends: UiBridgeMessage
+fields:
+  route: String?
+  openItemUuid: String?
+  title: String?
+  focused: bool

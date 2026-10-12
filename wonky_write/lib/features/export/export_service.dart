@@ -11,13 +11,19 @@ import 'package:wonky_write_core/wonky_write_core.dart';
 
 import '../themes/write_fonts.dart';
 
-/// Formats offered under File › Download (Write 07 §9.1, in-scope subset).
+/// Formats offered under File › Download (Write 07 §9.1). All of them are
+/// generated on the client with the shared core exporters (offline too);
+/// [WriteExporter] hands very large documents to the server.
 enum WriteDownloadFormat {
   md('md', 'Markdown (.md)', ExportFormat.markdown),
   mdZip('mdZip', 'Markdown with images (.zip)', ExportFormat.markdownZip),
   pdf('pdf', 'PDF document (.pdf)', ExportFormat.pdf),
   html('html', 'Web page (.html)', ExportFormat.html),
   htmlZip('htmlZip', 'Web page, zipped (.zip)', ExportFormat.htmlZip),
+  docx('docx', 'Microsoft Word (.docx)', ExportFormat.docx),
+  odt('odt', 'OpenDocument text (.odt)', ExportFormat.odt),
+  rtf('rtf', 'Rich Text Format (.rtf)', ExportFormat.rtf),
+  epub('epub', 'EPUB publication (.epub)', ExportFormat.epub),
   txt('txt', 'Plain text (.txt)', ExportFormat.txt);
 
   const WriteDownloadFormat(this.id, this.label, this.format);
@@ -302,6 +308,38 @@ class WriteExporter {
         return const HtmlZipExporter().export(
           input,
           HtmlExportOptions(suggestions: options.suggestions, fileName: name),
+        );
+      case WriteDownloadFormat.docx:
+        return const DocxExporter().export(
+          input,
+          OfficeExportOptions(
+            suggestions: options.suggestions,
+            fileName: name,
+            includeToc: options.includeToc,
+          ),
+        );
+      case WriteDownloadFormat.odt:
+        return const OdtExporter().export(
+          input,
+          OfficeExportOptions(
+            suggestions: options.suggestions,
+            fileName: name,
+            includeToc: options.includeToc,
+          ),
+        );
+      case WriteDownloadFormat.rtf:
+        return const RtfExporter().export(
+          input,
+          RtfExportOptions(suggestions: options.suggestions, fileName: name),
+        );
+      case WriteDownloadFormat.epub:
+        return const EpubExporter().export(
+          input,
+          EpubExportOptions(
+            suggestions: options.suggestions,
+            fileName: name,
+            author: src.authorName,
+          ),
         );
       case WriteDownloadFormat.txt:
         return const TxtExporter().export(

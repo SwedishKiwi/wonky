@@ -62,6 +62,8 @@ file:
   - completeUpload:
   - getUrl:
   - getUrls:
+uiBridge:
+  - connect:
 meta:
   - getInfo:
 notification:

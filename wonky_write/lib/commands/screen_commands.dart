@@ -172,7 +172,8 @@ List<Command<CommandArgs>> fileCommands(ShellServices s) => [
     requiredRole: Role.commenter,
     isUndoable: true,
     needsEditable: true,
-    descriptionText: 'Insert a Markdown, text or HTML file at the cursor',
+    descriptionText:
+        'Insert a Markdown, text, HTML, Word, OpenDocument or RTF file at the cursor',
     run: (ctx, d, a) async {
       final files = await pickImportFiles(multiple: false);
       if (files.isEmpty) return const CommandResult.cancelled();
@@ -181,6 +182,7 @@ List<Command<CommandArgs>> fileCommands(ShellServices s) => [
         final converted = await convertImport(
           f.name,
           Uint8List.fromList(f.bytes),
+          uploadImage: importImageUploader(s, itemUuid: d.itemUuid),
         );
         final change = d.commands.insertFragment(
           converted.result.delta,
@@ -1170,6 +1172,20 @@ List<Command<CommandArgs>> documentCommands(
             source: InvocationSource.ui,
           ),
         ),
+        onCustomize: () => unawaited(
+          s.dispatcher.invoke(
+            'write.theme.openEditor',
+            source: InvocationSource.ui,
+          ),
+        ),
+        onNewTheme: () => unawaited(
+          s.dispatcher.invoke(
+            'write.theme.create',
+            args: {'fromThemeUuid': d.documentTheme.option.uuid},
+            source: InvocationSource.ui,
+            context: c,
+          ),
+        ),
       );
       d.focusEditor();
       return const CommandResult.ok();
@@ -1183,17 +1199,28 @@ List<Command<CommandArgs>> documentCommands(
     isUndoable: true,
     showInPalette: false,
     argsSchema: const JsonSchema.object(
-      properties: {'themeId': JsonSchema.string()},
-      required: ['themeId'],
+      properties: {
+        'themeId': JsonSchema.nullable(JsonSchema.string()),
+        'themeUuid': JsonSchema.nullable(JsonSchema.string()),
+      },
     ),
     enabled: (d, a) => d.canChangeSettings,
-    checked: (d, a) => a.string('themeId') == null
-        ? null
-        : d.documentTheme.option.uuid == a.string('themeId'),
+    checked: (d, a) {
+      final id = a.string('themeId') ?? a.string('themeUuid');
+      return id == null ? null : d.themeUuid == id;
+    },
     run: (ctx, d, a) async {
-      final id = a.requireString('themeId');
-      final option = themes.lookup(id) ?? await themes.load(id);
+      final id = a.string('themeId') ?? a.string('themeUuid');
+      if (id == null) {
+        // `null` = *Use my default theme* (Write 06 §11).
+        await d.setMeta('themeId', null, label: 'Use my default theme');
+        return const CommandResult.ok();
+      }
+      final option =
+          themes.lookup(id) ??
+          await themes.load(id, viaDocumentUuid: d.session.documentUuid?.uuid);
       if (option == null) return const CommandResult.failed('Unknown theme');
+      if (d.themeUuid == option.uuid) return const CommandResult.ok();
       await d.setMeta('themeId', option.uuid, label: 'Change theme');
       return const CommandResult.ok();
     },
@@ -1204,7 +1231,7 @@ List<Command<CommandArgs>> documentCommands(
     categoryName: 'Format',
     run: (ctx, d, a) async {
       final option = d.documentTheme.option;
-      await s.prefs.setWriteDefault('themeUuid', option.uuid);
+      await s.prefs.setWriteDefault(defaultThemeKey, option.uuid);
       s.toasts.show('“${option.name}” is now your default theme');
       return const CommandResult.ok();
     },

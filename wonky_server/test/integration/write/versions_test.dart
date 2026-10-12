@@ -100,6 +100,34 @@ void main() {
 
         expect(DeltaUtils.text(client.document), 'First draft\n');
         expect(versions.map((v) => v.kind), contains(VersionKind.restorePoint));
+        expect(result.restorePoint.name, 'Before restoring "v1"');
+      },
+    );
+
+    test(
+      'when restoring an unnamed version then the restore point has no raw timestamp name',
+      () async {
+        client.edit(Delta()..insert('Draft '));
+        await client.processUntilSynchronized();
+        final session = sessionBuilder.build();
+        await VersionService.captureDue(
+          session,
+          now: DateTime.now().toUtc().add(const Duration(minutes: 6)),
+        );
+        final auto = (await endpoints.version.list(
+          anna.endpointSession,
+          item.uuid,
+          false,
+        )).firstWhere((v) => v.kind == VersionKind.auto);
+
+        final result = await endpoints.version.restore(
+          anna.endpointSession,
+          item.uuid,
+          auto.id,
+        );
+
+        expect(result.restorePoint.kind, VersionKind.restorePoint);
+        expect(result.restorePoint.name, isNull);
       },
     );
 

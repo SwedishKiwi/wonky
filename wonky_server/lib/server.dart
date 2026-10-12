@@ -5,6 +5,7 @@ import 'package:serverpod_cloud_storage/serverpod_cloud_storage.dart';
 
 import 'src/cache_busting.dart';
 import 'src/generated/serverpod.dart';
+import 'src/platform/mcp/mcp_route.dart';
 import 'src/platform/users/email_idp.dart';
 import 'src/platform/versions/version_service.dart';
 import 'src/sheets/versions/sheets_version_provider.dart';
@@ -68,6 +69,8 @@ void _configureWebServer(Serverpod pod) {
   );
   pod.webServer.addRoute(RootRedirectRoute(), '/');
   pod.webServer.addRoute(InviteRoute(), '/invite/:token');
+  // The MCP endpoint (specs/09-mcp.md §1): Streamable HTTP, bearer tokens.
+  pod.webServer.addRoute(McpRoute(), '/mcp');
 
   final fallbackPage = File(
     Uri(path: 'web/pages/build_flutter_app.html').toFilePath(),

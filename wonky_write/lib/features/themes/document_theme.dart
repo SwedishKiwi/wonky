@@ -2,11 +2,11 @@ import 'dart:async';
 
 import 'package:flutter/foundation.dart';
 import 'package:wonky_app/wonky_app.dart' show ShellServices;
-import 'package:wonky_client/wonky_client.dart' show UuidValue, WriteThemeView;
 import 'package:wonky_write_core/wonky_write_core.dart';
 
 import '../editor/styles/editor_theme.dart';
 import 'theme_adapter.dart';
+import 'theme_repository.dart';
 import 'write_fonts.dart';
 
 /// A theme the user can pick (built-in or own).
@@ -18,6 +18,8 @@ class ThemeOption {
     required this.data,
     this.builtinKey,
     this.description,
+    this.version = 1,
+    this.deleted = false,
   });
 
   final String uuid;
@@ -26,7 +28,31 @@ class ThemeOption {
   final String? builtinKey;
   final String? description;
 
+  /// Server version of the theme (live link, Write 06 §5.3).
+  final int version;
+
+  /// Soft-deleted by its owner (still readable through documents).
+  final bool deleted;
+
   bool get isBuiltin => builtinKey != null;
+
+  /// The option of a theme library record (null for invalid JSON).
+  static ThemeOption? fromRecord(ThemeRecord r) {
+    try {
+      return ThemeOption(
+        uuid: r.uuid,
+        name: r.name,
+        description: r.description,
+        data: r.data,
+        builtinKey: r.builtinKey,
+        version: r.version,
+        deleted: r.isDeleted,
+      );
+    } catch (e) {
+      debugPrint('Theme ${r.uuid} is invalid: $e');
+      return null;
+    }
+  }
 }
 
 /// Loads themes: built-ins locally (`BuiltinThemes`, stable UUIDv5 ids) and
@@ -34,8 +60,10 @@ class ThemeOption {
 class WriteThemeCatalog extends ChangeNotifier {
   WriteThemeCatalog({this.fetch, this.fetchMine});
 
-  /// Loads a non-built-in theme by uuid (server).
-  final Future<ThemeOption?> Function(String uuid)? fetch;
+  /// Loads a non-built-in theme by uuid (server); [viaDocumentUuid] grants
+  /// read access to a collaborator's theme used by that document (§5.4).
+  final Future<ThemeOption?> Function(String uuid, {String? viaDocumentUuid})?
+  fetch;
 
   /// Lists the user's own themes (server).
   final Future<List<ThemeOption>> Function()? fetchMine;
@@ -80,15 +108,73 @@ class WriteThemeCatalog extends ChangeNotifier {
     return _custom[uuidOrKey];
   }
 
+  /// Adds or replaces a theme the app saved, created or duplicated, so
+  /// every open document using it updates (Write 06 §5.3).
+  void put(ThemeOption option) {
+    if (option.isBuiltin) return;
+    _custom[option.uuid] = option;
+    final i = _mine.indexWhere((t) => t.uuid == option.uuid);
+    if (option.deleted) {
+      if (i >= 0) _mine = [..._mine]..removeAt(i);
+    } else if (i >= 0) {
+      _mine = [..._mine]..[i] = option;
+    } else {
+      _mine = [..._mine, option]
+        ..sort((a, b) => a.name.toLowerCase().compareTo(b.name.toLowerCase()));
+    }
+    notifyListeners();
+  }
+
+  /// Marks [uuid] deleted (it leaves "My themes" but stays readable).
+  void markDeleted(String uuid) {
+    final t = _custom[uuid];
+    if (t == null) return;
+    put(
+      ThemeOption(
+        uuid: t.uuid,
+        name: t.name,
+        description: t.description,
+        data: t.data,
+        version: t.version,
+        deleted: true,
+      ),
+    );
+  }
+
+  /// Refetches [uuid] when [version] is newer than the cached one (a
+  /// `themeVersion` notification of an open document).
+  Future<void> refresh(
+    String uuid, {
+    int? version,
+    String? viaDocumentUuid,
+  }) async {
+    final known = _custom[uuid];
+    if (lookup(uuid)?.isBuiltin ?? false) return;
+    if (known != null && version != null && known.version >= version) return;
+    final f = fetch;
+    if (f == null) return;
+    try {
+      final t = await f(uuid, viaDocumentUuid: viaDocumentUuid);
+      if (t != null) {
+        _custom[uuid] = t;
+        final i = _mine.indexWhere((m) => m.uuid == uuid);
+        if (i >= 0) _mine = [..._mine]..[i] = t;
+        notifyListeners();
+      }
+    } catch (e) {
+      debugPrint('Refreshing theme $uuid failed: $e');
+    }
+  }
+
   /// Loads [uuid] (server themes); null when unavailable.
-  Future<ThemeOption?> load(String uuid) {
+  Future<ThemeOption?> load(String uuid, {String? viaDocumentUuid}) {
     final known = lookup(uuid);
     if (known != null) return Future.value(known);
     final f = fetch;
     if (f == null) return Future.value(null);
     return _pending.putIfAbsent(uuid, () async {
       try {
-        final t = await f(uuid);
+        final t = await f(uuid, viaDocumentUuid: viaDocumentUuid);
         if (t != null) {
           _custom[uuid] = t;
           notifyListeners();
@@ -109,11 +195,16 @@ class WriteThemeCatalog extends ChangeNotifier {
 class DocumentThemeController extends ChangeNotifier {
   DocumentThemeController(this.catalog) {
     WriteFonts.generation.addListener(_onFonts);
+    catalog.addListener(_onCatalog);
   }
 
   final WriteThemeCatalog catalog;
 
+  /// The document whose theme this is (read access to foreign themes).
+  String? documentUuid;
+
   String? _themeUuid;
+  String? _previewUuid;
   ThemeOption _option = WriteThemeCatalog.builtins.first;
   bool _missing = false;
 
@@ -132,18 +223,46 @@ class DocumentThemeController extends ChangeNotifier {
   set themeUuid(String? uuid) {
     if (uuid == _themeUuid) return;
     _themeUuid = uuid;
+    if (_previewUuid == null) _show(uuid);
+  }
+
+  /// A theme previewed locally (*View › Preview theme*, view state only,
+  /// Write 06 §5.2); null shows the document's theme again.
+  String? get previewUuid => _previewUuid;
+
+  set previewUuid(String? uuid) {
+    if (uuid == _previewUuid) return;
+    _previewUuid = uuid;
+    _show(uuid ?? _themeUuid);
+  }
+
+  String? get _shownUuid => _previewUuid ?? _themeUuid;
+
+  void _show(String? uuid) {
     final known = uuid == null ? null : catalog.lookup(uuid);
     if (known != null || uuid == null) {
+      _missing = false;
       _apply(known ?? WriteThemeCatalog.builtins.first);
       return;
     }
     unawaited(
-      catalog.load(uuid).then((t) {
-        if (_themeUuid != uuid) return;
+      catalog.load(uuid, viaDocumentUuid: documentUuid).then((t) {
+        if (_shownUuid != uuid) return;
         _missing = t == null;
         _apply(t ?? WriteThemeCatalog.builtins.first);
       }),
     );
+  }
+
+  /// A saved theme (here or elsewhere) replaces the cached one.
+  void _onCatalog() {
+    final uuid = _shownUuid;
+    if (uuid == null) return;
+    final t = catalog.lookup(uuid);
+    if (t != null && !identical(t, _option)) {
+      _missing = false;
+      _apply(t);
+    }
   }
 
   void _apply(ThemeOption option) {
@@ -175,6 +294,7 @@ class DocumentThemeController extends ChangeNotifier {
   @override
   void dispose() {
     WriteFonts.generation.removeListener(_onFonts);
+    catalog.removeListener(_onCatalog);
     super.dispose();
   }
 }
@@ -199,37 +319,47 @@ final Expando<WriteThemeCatalog> _catalogs = Expando();
 /// The theme catalog of the app session (built-ins + the server's themes).
 WriteThemeCatalog themeCatalogFor(ShellServices s) =>
     _catalogs[s] ??= WriteThemeCatalog(
-      fetch: (uuid) async {
-        final client = s.client;
-        if (client == null) return null;
-        final v = await client.writeTheme.get(
-          UuidValue.withValidation(uuid),
-          null,
+      fetch: (uuid, {viaDocumentUuid}) async {
+        final repo = themeRepositoryFor(s);
+        if (repo == null) return null;
+        return ThemeOption.fromRecord(
+          await repo.get(uuid, viaDocumentUuid: viaDocumentUuid),
         );
-        return _option(v);
       },
       fetchMine: () async {
-        final client = s.client;
-        if (client == null) return const [];
-        final mine = await client.writeTheme.listMine();
+        final repo = themeRepositoryFor(s);
+        if (repo == null) return const [];
         return [
-          for (final v in mine)
-            if (v.deletedAt == null && !v.isBuiltin) ?_option(v),
+          for (final r in await repo.listMine())
+            if (!r.isDeleted) ?ThemeOption.fromRecord(r),
         ];
       },
     );
 
-ThemeOption? _option(WriteThemeView v) {
-  try {
-    return ThemeOption(
-      uuid: v.uuid.uuid,
-      name: v.name,
-      description: v.description,
-      data: WriteThemeData.fromJsonString(v.json),
-      builtinKey: v.builtinKey,
-    );
-  } catch (e) {
-    debugPrint('Theme ${v.uuid} is invalid: $e');
-    return null;
-  }
+final Expando<ThemeRepository> _repositories = Expando();
+
+/// The theme repository of the app session (null without a server client,
+/// unless a test installed one with [setThemeRepository]).
+ThemeRepository? themeRepositoryFor(ShellServices s) {
+  final r = _repositories[s];
+  if (r != null) return r;
+  final client = s.client;
+  return client == null
+      ? null
+      : _repositories[s] = ServerThemeRepository(client);
 }
+
+/// Installs [repository] for [s] (tests).
+@visibleForTesting
+void setThemeRepository(ShellServices s, ThemeRepository repository) =>
+    _repositories[s] = repository;
+
+/// Key of the user's default theme in `UserPreferences.writeDefaults`
+/// (Write 06 §1). [legacyDefaultThemeKey] was written by older clients.
+const defaultThemeKey = 'defaultThemeId';
+const legacyDefaultThemeKey = 'themeUuid';
+
+/// The user's default theme uuid from [writeDefaults], if set.
+String? defaultThemeUuidOf(Map<String, Object?> writeDefaults) =>
+    (writeDefaults[defaultThemeKey] ?? writeDefaults[legacyDefaultThemeKey])
+        as String?;

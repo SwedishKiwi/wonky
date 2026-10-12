@@ -262,7 +262,14 @@ abstract final class UserService {
           ? profile.timeZone
           : (timeZone.isEmpty ? null : timeZone),
     );
-    await UserProfile.db.updateRow(session, updated);
+    // Only the edited columns: a full-row write from a stale read would
+    // reset `welcomeContentAt` (or `lastSeenAt`, `avatarFileId`) set by a
+    // concurrent request (e.g. the first getMe after sign-up).
+    await UserProfile.db.updateRow(
+      session,
+      updated,
+      columns: (t) => [t.displayName, t.locale, t.timeZone],
+    );
     return me(session, actor);
   }
 

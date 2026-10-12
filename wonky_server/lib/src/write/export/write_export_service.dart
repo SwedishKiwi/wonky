@@ -1,6 +1,5 @@
 import 'dart:async';
 import 'dart:convert';
-import 'dart:io';
 import 'dart:typed_data';
 
 import 'package:serverpod/serverpod.dart';
@@ -14,53 +13,63 @@ import '../../platform/common/json.dart';
 import '../../platform/common/models.dart';
 import '../../platform/common/time.dart';
 import '../../platform/files/file_service.dart';
-import '../content/write_content.dart';
 import '../ot/document_service.dart';
 import '../ot/document_store.dart';
+import '../../platform/users/user_service.dart';
+import 'server_fonts.dart';
+import 'server_images.dart';
+import 'write_import_service.dart';
 
-/// A file produced by a registered exporter.
-class ExportedFile {
-  const ExportedFile({
-    required this.fileName,
-    required this.mimeType,
-    required this.bytes,
-    this.pageCount,
-    this.warnings = const [],
-  });
-
-  final String fileName;
-  final String mimeType;
-  final Uint8List bytes;
-  final int? pageCount;
-  final List<ImportWarningView> warnings;
-}
-
-/// Server-side Write exports (Write 07 §10). Text formats (Markdown, plain
-/// text) are produced here; the paginated/office formats are produced by
-/// the `wonky_write_core` exporters registered in [exporters].
+/// Server-side Write exports (Write 07 §10): every format (md, md_zip, pdf,
+/// html, html_zip, docx, odt, rtf, epub, txt) is produced by the shared
+/// `wonky_write_core` exporters, with the document's theme and page setup,
+/// fonts from `web/fonts` ([FileSystemFontProvider]) and images read from
+/// storage ([ServerImageResolver]), so results equal client-side exports.
 abstract final class WriteExportService {
   static const resultLifetime = Duration(hours: 24);
   static const inlineLimit = 1024 * 1024;
   static const maxConcurrentPerUser = 2;
-  static const maxImageBytes = 10 * 1024 * 1024;
+  static const maxImageBytes = SafeImageFetcher.maxBytes;
+  static const exportTimeout = Duration(seconds: 120);
 
-  /// Additional exporters by MCP format name (`pdf`, `html`, `docx`, …),
-  /// registered when the core exporters are available.
-  static final Map<
-    String,
-    Future<ExportedFile> Function(
-      Session session,
-      Document document,
-      DriveItem item,
-      core.Delta content,
-      Map<String, Object?> options,
-    )
-  >
-  exporters = {};
+  /// Font provider of server exports (tests may replace it).
+  static core.FontProvider fonts = FileSystemFontProvider.instance;
+
+  /// Remote image fetcher (tests may replace it).
+  static Future<Uint8List> Function(String src) fetchRemoteImage =
+      SafeImageFetcher.fetch;
 
   static final Map<int, int> _running = {};
 
-  static const _textFormats = {'md', 'txt'};
+  /// Formats available on the server by MCP name (all of them). Kept for
+  /// callers that probe availability with `containsKey`.
+  static final Map<String, core.ExportFormat> exporters = {
+    for (final f in core.ExportFormat.values) f.mcpName: f,
+  };
+
+  /// Accepted format names: MCP names plus the app's ids and aliases.
+  static core.ExportFormat? formatOf(String name) {
+    final n = name.toLowerCase().trim();
+    return core.ExportFormat.fromMcpName(n) ??
+        switch (n) {
+          'markdown' => core.ExportFormat.markdown,
+          'mdzip' || 'markdown_zip' => core.ExportFormat.markdownZip,
+          'htmlzip' || 'web_zip' => core.ExportFormat.htmlZip,
+          'text' => core.ExportFormat.txt,
+          'word' => core.ExportFormat.docx,
+          _ => null,
+        };
+  }
+
+  /// Options JSON with camelCase keys converted to the exporters'
+  /// snake_case (`includeToc` → `include_toc`).
+  static Map<String, dynamic> normalizeOptions(Map<String, Object?> raw) => {
+    for (final e in raw.entries)
+      e.key.replaceAllMapped(
+        RegExp('[A-Z]'),
+        (m) => '_${m.group(0)!.toLowerCase()}',
+      ): e.value,
+  };
 
   static Future<ExportResultView> export(
     Session session,
@@ -84,11 +93,9 @@ abstract final class WriteExportService {
         role < Role.editor) {
       throw Errors.forbidden('Exporting older versions requires edit access.');
     }
-    final fmt = format.toLowerCase();
-    if (!_textFormats.contains(fmt) && !exporters.containsKey(fmt)) {
-      throw Errors.unavailable(
-        'Export to "$format" is not available on the server.',
-      );
+    final fmt = formatOf(format);
+    if (fmt == null) {
+      throw Errors.invalid('Unknown export format "$format".');
     }
     final running = _running[actor.userId] ?? 0;
     if (running >= maxConcurrentPerUser) {
@@ -96,66 +103,50 @@ abstract final class WriteExportService {
     }
     _running[actor.userId] = running + 1;
     try {
-      onProgress?.call('loading', 0.1);
-      final content = await DocumentStore.contentAt(
+      onProgress?.call('loading', 0.05);
+      final rev = revision ?? doc.headRevision;
+      final content = await DocumentStore.contentAt(session, doc, rev);
+      final options = normalizeOptions(decodeObject(optionsJson));
+      final input = await _input(
         session,
+        actor,
         doc,
-        revision ?? doc.headRevision,
+        item,
+        content,
+        rev,
+        options,
+        onProgress: onProgress,
       );
-      final options = decodeObject(optionsJson);
-      final original = options['suggestions'] == 'original';
-      final view = original
-          ? core.SuggestionViewMode.original
-          : core.SuggestionViewMode.accepted;
-      String fileName;
-      String mimeType;
-      Uint8List bytes;
-      String? inlineText;
-      int? pageCount;
-      final warnings = <ImportWarningView>[];
-      onProgress?.call('packaging', 0.5);
-      switch (fmt) {
-        case 'md':
-          final text = const core.MarkdownCodec().exportMarkdown(
-            content,
-            view: view,
-            frontMatter: options['includeFrontMatter'] == false
-                ? null
-                : doc.frontMatter,
-          );
-          fileName = exportFileName(item.name, 'md');
-          mimeType = 'text/markdown; charset=utf-8';
-          bytes = Uint8List.fromList(utf8.encode(text));
-          inlineText = bytes.length <= inlineLimit ? text : null;
-        case 'txt':
-          final text = core.PlainTextRenderer.render(content, view: view);
-          fileName = exportFileName(item.name, 'txt');
-          mimeType = 'text/plain; charset=utf-8';
-          bytes = Uint8List.fromList(utf8.encode(text));
-          inlineText = bytes.length <= inlineLimit ? text : null;
-        default:
-          final artifact = await exporters[fmt]!(
-            session,
-            doc,
-            item,
-            content,
-            options,
-          );
-          fileName = artifact.fileName;
-          mimeType = artifact.mimeType;
-          bytes = artifact.bytes;
-          pageCount = artifact.pageCount;
-          warnings.addAll(artifact.warnings);
+      final core.ExportArtifact artifact;
+      try {
+        artifact = await _run(
+          session,
+          actor,
+          fmt,
+          input,
+          options,
+        ).timeout(exportTimeout);
+      } on TimeoutException {
+        throw Errors.unavailable(
+          'The export took too long. Try a smaller document or format.',
+        );
+      } on core.ExportCancelledException {
+        throw Errors.unavailable('The export was cancelled.');
       }
-      onProgress?.call('uploading', 0.8);
+      final bytes = artifact.bytes;
+      final text =
+          fmt == core.ExportFormat.markdown || fmt == core.ExportFormat.txt
+          ? utf8.decode(bytes, allowMalformed: true)
+          : null;
+      onProgress?.call('uploading', 0.9);
       final expires = nowUtc().add(resultLifetime);
       final file = await FileService.storeServerFile(
         session,
         ownerId: actor.userId,
         itemId: item.id,
         kind: StoredFileKind.exportResult,
-        fileName: fileName,
-        mimeType: mimeType.split(';').first,
+        fileName: artifact.fileName,
+        mimeType: artifact.mimeType.split(';').first,
         bytes: bytes,
         expiresAt: expires,
       );
@@ -165,22 +156,240 @@ abstract final class WriteExportService {
         item.id!,
         actor,
         ActivityType.exported,
-        summary: {'format': fmt},
+        summary: {'format': fmt.mcpName},
       );
       onProgress?.call('done', 1);
       return ExportResultView(
-        fileName: fileName,
-        mimeType: mimeType,
+        fileName: artifact.fileName,
+        mimeType: artifact.mimeType,
         sizeBytes: bytes.length,
-        pageCount: pageCount,
+        pageCount: artifact.pageCount,
         downloadUrl: url.url!,
         expiresAt: url.expiresAt ?? expires,
-        inlineText: inlineText,
-        warnings: warnings,
+        inlineText: text != null && bytes.length <= inlineLimit ? text : null,
+        warnings: [
+          for (final w in artifact.warnings)
+            ImportWarningView(kind: w.code, message: w.message),
+        ],
       );
     } finally {
       _running[actor.userId] = (_running[actor.userId] ?? 1) - 1;
     }
+  }
+
+  /// Exports [content] of [doc] as [format] without storing the result
+  /// (MCP, tests).
+  static Future<core.ExportArtifact> exportBytes(
+    Session session,
+    Actor actor,
+    Document doc,
+    DriveItem item,
+    core.Delta content,
+    core.ExportFormat format,
+    Map<String, dynamic> options, {
+    int? revision,
+  }) async {
+    final input = await _input(
+      session,
+      actor,
+      doc,
+      item,
+      content,
+      revision ?? doc.headRevision,
+      options,
+    );
+    return _run(session, actor, format, input, options);
+  }
+
+  static Future<core.ExportArtifact> _run(
+    Session session,
+    Actor actor,
+    core.ExportFormat format,
+    core.ExportInput input,
+    Map<String, dynamic> options,
+  ) async {
+    switch (format) {
+      case core.ExportFormat.markdown:
+        final o = core.MarkdownFileExportOptions.fromJson(options);
+        final signed = <String, String>{};
+        if (o.images == core.MarkdownImageMode.signedUrl) {
+          final tree = const core.DocTreeBuilder().fromDelta(input.document);
+          for (final image in tree.images) {
+            final src = image.src;
+            if (!src.startsWith(core.ImageEmbed.wonkyFileScheme) ||
+                signed.containsKey(src)) {
+              continue;
+            }
+            try {
+              final view = await FileService.getUrl(
+                session,
+                actor,
+                UuidValue.withValidation(
+                  src.substring(core.ImageEmbed.wonkyFileScheme.length),
+                ),
+              );
+              if (view.url != null) signed[src] = view.url!;
+            } on Object {
+              // Not readable: keep the wonky-file link.
+            }
+          }
+        }
+        return core.MarkdownFileExporter(
+          signedUrl: (src) => signed[src] ?? src,
+        ).export(input, o);
+      case core.ExportFormat.markdownZip:
+        return const core.MarkdownZipExporter().export(
+          input,
+          core.MarkdownFileExportOptions.fromJson(options),
+        );
+      case core.ExportFormat.pdf:
+        return const core.PdfExporter().export(
+          input,
+          core.PdfExportOptions.fromJson(options),
+        );
+      case core.ExportFormat.html:
+        return const core.HtmlExporter().export(
+          input,
+          core.HtmlExportOptions.fromJson(options),
+        );
+      case core.ExportFormat.htmlZip:
+        return const core.HtmlZipExporter().export(
+          input,
+          core.HtmlExportOptions.fromJson(options),
+        );
+      case core.ExportFormat.docx:
+        return const core.DocxExporter().export(
+          input,
+          core.OfficeExportOptions.fromJson(options),
+        );
+      case core.ExportFormat.odt:
+        return const core.OdtExporter().export(
+          input,
+          core.OfficeExportOptions.fromJson(options),
+        );
+      case core.ExportFormat.rtf:
+        return const core.RtfExporter().export(
+          input,
+          core.RtfExportOptions.fromJson(options),
+        );
+      case core.ExportFormat.epub:
+        return const core.EpubExporter().export(
+          input,
+          core.EpubExportOptions.fromJson(options),
+        );
+      case core.ExportFormat.txt:
+        return const core.TxtExporter().export(
+          input,
+          core.TxtExportOptions.fromJson(options),
+        );
+    }
+  }
+
+  static Future<core.ExportInput> _input(
+    Session session,
+    Actor actor,
+    Document doc,
+    DriveItem item,
+    core.Delta content,
+    int revision,
+    Map<String, dynamic> options, {
+    void Function(String phase, double progress)? onProgress,
+  }) async {
+    final owner = await UserService.summary(session, item.ownerId);
+    final theme = await _theme(session, actor, doc);
+    core.PageSetup setup;
+    try {
+      final json = jsonDecode(doc.pageSetupJson);
+      setup = json is Map<String, dynamic>
+          ? core.PageSetup.fromJson(json)
+          : const core.PageSetup();
+    } on Object {
+      setup = const core.PageSetup();
+    }
+    final web = session.serverpod.config.webServer;
+    final origin = web == null
+        ? ''
+        : Uri(
+            scheme: web.publicScheme,
+            host: web.publicHost,
+            port: web.publicPort,
+          ).origin;
+    return core.ExportInput(
+      document: content,
+      revision: revision,
+      meta: core.DocMeta(
+        documentUuid: doc.uuid.uuid,
+        title: item.name,
+        authorName:
+            core.FrontMatter.field(doc.frontMatter, 'author') ??
+            owner?.displayName,
+        language: doc.language,
+        frontMatter: doc.frontMatter,
+        description: item.description,
+        createdAt: doc.createdAt,
+        modifiedAt: doc.updatedAt,
+      ),
+      theme: theme,
+      variant: options['variant'] == 'dark'
+          ? core.ThemeVariant.dark
+          : core.ThemeVariant.light,
+      pageSetup: setup,
+      images: ServerImageResolver(
+        session,
+        actor,
+        itemId: item.id!,
+        fetchRemote: fetchRemoteImage,
+      ),
+      fonts: fonts,
+      links: origin.isEmpty
+          ? const core.IdentityLinkResolver()
+          : core.DefaultLinkResolver(
+              origin: origin,
+              documentUuid: doc.uuid.uuid,
+            ),
+      locale: options['locale'] as String? ?? 'en-US',
+      now: nowUtc(),
+      progress: onProgress == null
+          ? null
+          : (phase, p) => onProgress(phase.name, 0.1 + p * 0.7),
+    );
+  }
+
+  /// The document's theme: its assigned theme, else the actor's default
+  /// theme, else *Wonky Default*.
+  static Future<core.WriteThemeData> _theme(
+    Session session,
+    Actor actor,
+    Document doc,
+  ) async {
+    Future<core.WriteThemeData?> load(String? uuid) async {
+      if (uuid == null) return null;
+      final builtin = core.BuiltinThemes.byUuid(uuid);
+      if (builtin != null) return builtin.theme;
+      final row = await WriteTheme.db.findFirstRow(
+        session,
+        where: (t) => t.uuid.equals(UuidValue.withValidation(uuid)),
+      );
+      if (row == null) return null;
+      try {
+        return core.WriteThemeData.fromJsonString(row.json);
+      } on Object {
+        return null;
+      }
+    }
+
+    final assigned = await load(doc.themeId?.uuid);
+    if (assigned != null) return assigned;
+    try {
+      final prefs = await UserService.preferences(session, actor);
+      final defaults = decodeObject(prefs.writeDefaults);
+      final id = (defaults['defaultThemeId'] ?? defaults['themeUuid']);
+      final preferred = await load(id is String ? id : null);
+      if (preferred != null) return preferred;
+    } on Object {
+      // Fall through to the built-in default.
+    }
+    return core.BuiltinThemes.wonkyDefault.theme;
   }
 
   static Stream<ExportProgressEvent> exportWithProgress(
@@ -230,7 +439,10 @@ abstract final class WriteExportService {
     return controller.stream;
   }
 
-  /// Converts an uploaded file for *Import into this document*.
+  /// Converts an uploaded file for *Import into this document* (Write 07
+  /// §3.1): any importable format; images are stored as files of the
+  /// target document (`documentUuid` in [optionsJson], Editor+ required)
+  /// or of the caller.
   static Future<ConvertForInsertResult> convertForInsert(
     Session session,
     Actor actor,
@@ -244,34 +456,42 @@ abstract final class WriteExportService {
       uploadId,
       kind: StoredFileKind.importSource,
     );
-    final bytes = await FileService.readBytes(session, file);
-    final text = utf8.decode(
-      bytes.buffer.asUint8List(0, bytes.lengthInBytes),
-      allowMalformed: true,
-    );
-    final fmt = format.toLowerCase();
-    final ({core.Delta delta, List<ImportWarningView> warnings}) result;
-    switch (fmt) {
-      case 'md' || 'markdown':
-        final md = WriteContent.fromMarkdown(text);
-        result = (delta: md.delta, warnings: md.warnings);
-      case 'txt' || 'text':
-        result = WriteContent.fromPlainText(
-          text,
-          softBreaks: decodeObject(optionsJson)['lineBreaks'] == 'soft',
-        );
-      default:
-        throw Errors.unavailable('Converting "$format" is not available.');
+    final options = decodeObject(optionsJson);
+    DriveItem? target;
+    final targetUuid = options['documentUuid'] ?? options['document_uuid'];
+    if (targetUuid is String) {
+      final (_, item, role) = await DocumentService.require(
+        session,
+        actor,
+        UuidValue.withValidation(targetUuid),
+      );
+      if (role < Role.editor) {
+        throw Errors.forbidden('Inserting files requires edit access.');
+      }
+      target = item;
     }
+    final data = await FileService.readBytes(session, file);
+    final converted = await WriteImportService.convert(
+      data.buffer.asUint8List(data.offsetInBytes, data.lengthInBytes),
+      fileName: file.fileName,
+      format: format.isEmpty ? null : format,
+      options: Map<String, dynamic>.from(options),
+    );
+    final (result, _) = await WriteImportService.storeImages(
+      session,
+      actor,
+      converted,
+      itemId: target?.id,
+    );
     await FileService.deleteFile(session, file.fileUuid);
     return ConvertForInsertResult(
       deltaJson: jsonEncode(result.delta.toJson()),
-      warnings: result.warnings,
+      warnings: WriteImportService.warningsOf(result),
     );
   }
 
   /// Proxy for remote images blocked by CORS during client exports
-  /// (SSRF-protected: https only, public addresses, 10 s, 10 MB, images).
+  /// (SSRF-protected, see [SafeImageFetcher]).
   static Future<ByteData> fetchImage(
     Session session,
     Actor actor,
@@ -279,47 +499,7 @@ abstract final class WriteExportService {
     String src,
   ) async {
     await DocumentService.require(session, actor, documentUuid);
-    final uri = Uri.tryParse(src);
-    if (uri == null || uri.scheme != 'https' || uri.host.isEmpty) {
-      throw Errors.invalid('Only https images can be fetched.');
-    }
-    if (uri.hasPort && uri.port != 443) {
-      throw Errors.invalid('Only the default https port is allowed.');
-    }
-    final addresses = await InternetAddress.lookup(uri.host);
-    if (addresses.isEmpty || addresses.any(_isPrivate)) {
-      throw Errors.forbidden('This address cannot be fetched.');
-    }
-    final client = HttpClient()
-      ..connectionTimeout = const Duration(seconds: 10);
-    try {
-      final request = await client
-          .getUrl(uri)
-          .timeout(const Duration(seconds: 10));
-      request.followRedirects = false;
-      final response = await request.close().timeout(
-        const Duration(seconds: 10),
-      );
-      if (response.statusCode != 200) {
-        throw Errors.notFound('Image');
-      }
-      final type = response.headers.contentType?.mimeType ?? '';
-      if (!type.startsWith('image/') || type == 'image/svg+xml') {
-        throw Errors.invalid('The URL is not an image.');
-      }
-      final builder = BytesBuilder(copy: false);
-      await for (final chunk in response.timeout(const Duration(seconds: 10))) {
-        builder.add(chunk);
-        if (builder.length > maxImageBytes) {
-          throw Errors.tooLarge('The image is larger than 10 MB.');
-        }
-      }
-      return ByteData.sublistView(builder.takeBytes());
-    } on TimeoutException {
-      throw Errors.unavailable('The image did not load in time.');
-    } finally {
-      client.close(force: true);
-    }
+    return ByteData.sublistView(await fetchRemoteImage(src));
   }
 
   /// Sanitized file name (no `/\\:*?"<>|`, ≤ 120 chars) with [extension].
@@ -331,22 +511,5 @@ abstract final class WriteExportService {
     if (n.isEmpty) n = 'Untitled';
     if (n.length > 120) n = n.substring(0, 120).trim();
     return '$n.$extension';
-  }
-
-  static bool _isPrivate(InternetAddress a) {
-    if (a.isLoopback || a.isLinkLocal || a.isMulticast) return true;
-    final b = a.rawAddress;
-    if (a.type == InternetAddressType.IPv4) {
-      return b[0] == 10 ||
-          b[0] == 0 ||
-          b[0] == 127 ||
-          (b[0] == 172 && b[1] >= 16 && b[1] <= 31) ||
-          (b[0] == 192 && b[1] == 168) ||
-          (b[0] == 169 && b[1] == 254) ||
-          (b[0] == 100 && b[1] >= 64 && b[1] <= 127);
-    }
-    // IPv6 unique local (fc00::/7) and IPv4-mapped private ranges.
-    if ((b[0] & 0xfe) == 0xfc) return true;
-    return false;
   }
 }

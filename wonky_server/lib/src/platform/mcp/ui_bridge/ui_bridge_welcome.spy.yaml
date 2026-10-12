@@ -1,0 +1,5 @@
+### Server → app after the hello: the session id the window got.
+class: UiBridgeWelcome
+extends: UiBridgeMessage
+fields:
+  sessionId: String

@@ -39,6 +39,42 @@ void main() {
     );
 
     test(
+      'when calling getMe and updateProfile concurrently then the welcome '
+      'content is created once',
+      () async {
+        // The sign-up flow calls getMe and updateProfile at the same time; a
+        // full-row profile write from a stale read used to reset the welcome
+        // claim, so a second getMe created the content again.
+        for (var round = 0; round < 6; round++) {
+          final anna = await TestUsers.create(sessionBuilder, name: 'Anna');
+          await Future.wait([
+            endpoints.user.getMe(anna.endpointSession),
+            for (var i = 0; i < 3; i++) ...[
+              endpoints.user.updateProfile(
+                anna.endpointSession,
+                displayName: 'Anna $i',
+              ),
+              endpoints.user.getMe(anna.endpointSession),
+            ],
+          ]);
+          final page = await endpoints.drive.list(
+            anna.endpointSession,
+            null,
+            DriveListFilter(),
+            DriveSort(),
+            null,
+            50,
+          );
+
+          expect(page.items.map((i) => i.name).toList()..sort(), [
+            'Welcome to Wonky Sheets',
+            'Welcome to Wonky Write',
+          ], reason: 'round $round');
+        }
+      },
+    );
+
+    test(
       'when calling getMe then the welcome spreadsheet is created',
       () async {
         final anna = await TestUsers.create(sessionBuilder, name: 'Anna');

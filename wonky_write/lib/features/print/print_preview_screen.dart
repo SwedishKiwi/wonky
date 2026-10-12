@@ -71,7 +71,7 @@ class _PrintPreviewScreenState extends State<PrintPreviewScreen> {
       final info = await client.document.getInfo(docUuid);
       final snap = await client.document.getSnapshot(docUuid, null);
       final meta = WriteDocumentMeta.fromView(info.meta);
-      final userTheme = s.prefs.writeDefaults['themeUuid'] as String?;
+      final userTheme = defaultThemeUuidOf(s.prefs.writeDefaults);
       final themeId =
           meta.themeUuid ?? userTheme ?? BuiltinThemes.wonkyDefault.uuid;
       final theme =

@@ -345,6 +345,25 @@ class _ItemShell extends StatefulWidget {
 class _ItemShellState extends State<_ItemShell> {
   bool _hover = false;
   bool _drop = false;
+  DateTime? _lastTap;
+
+  /// Selects on the first click right away and opens on the second one.
+  /// (A `GestureDetector.onDoubleTap` delays `onTap` by the double-tap
+  /// timeout and loses the double click when the first click changes the
+  /// layout under the pointer.)
+  void _onTap() {
+    final now = DateTime.now();
+    final last = _lastTap;
+    if (last != null && now.difference(last) <= _doubleClickTimeout) {
+      _lastTap = null;
+      widget.onOpen();
+      return;
+    }
+    _lastTap = now;
+    widget.onTap();
+  }
+
+  static const _doubleClickTimeout = Duration(milliseconds: 500);
 
   @override
   Widget build(BuildContext context) {
@@ -354,8 +373,7 @@ class _ItemShellState extends State<_ItemShell> {
       onExit: (_) => setState(() => _hover = false),
       cursor: SystemMouseCursors.click,
       child: GestureDetector(
-        onTap: widget.onTap,
-        onDoubleTap: widget.onOpen,
+        onTap: _onTap,
         child: widget.builder(context, _hover, _drop),
       ),
     );

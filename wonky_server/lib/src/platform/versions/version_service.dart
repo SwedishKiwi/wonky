@@ -339,12 +339,15 @@ abstract final class VersionService {
       itemUuid,
       versionId,
     );
-    final label = version.name ?? version.createdAt.toIso8601String();
+    // Unnamed versions give an unnamed restore point: clients show it with
+    // its localized time and a "Restore point" label (a server-formatted
+    // timestamp would be neither readable nor localized).
+    final source = version.name;
     final restorePoint = await capture(
       session,
       item,
       kind: VersionKind.restorePoint,
-      name: 'Before restoring "$label"',
+      name: source == null ? null : _restorePointName(source),
       createdById: actor.userId,
     );
     final restored = await providerFor(item).restore(
@@ -365,6 +368,17 @@ abstract final class VersionService {
       revision: restored.revision,
       changeId: restored.changeId,
     );
+  }
+
+  /// `Before restoring "<name>"`, shortened to the version name limit.
+  static String _restorePointName(String source) {
+    const max = 200;
+    const prefix = 'Before restoring "';
+    final room = max - prefix.length - 1;
+    final name = source.length <= room
+        ? source
+        : '${source.substring(0, room - 1)}…';
+    return '$prefix$name"';
   }
 
   // ---------------------------------------------------------------- jobs

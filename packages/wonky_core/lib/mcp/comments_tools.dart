@@ -15,6 +15,9 @@ const _anchor = JsonSchema.object(
     'length': JsonSchema.integer(minimum: 0),
     'sheet': JsonSchema.string(),
     'a1': JsonSchema.string(),
+    'document': JsonSchema.boolean(
+      description: 'true for a comment on the whole document.',
+    ),
   },
 );
 
@@ -161,7 +164,9 @@ abstract final class VersionsTools {
       properties: {
         'uuid': McpSchemas.uuid,
         'version_id': JsonSchema.integer(),
-        'format': JsonSchema.string(enumValues: ['markdown', 'values']),
+        'format': JsonSchema.string(
+          enumValues: ['markdown', 'text', 'delta', 'values'],
+        ),
         'range': JsonSchema.string(),
       },
       required: ['uuid', 'version_id'],

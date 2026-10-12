@@ -10,10 +10,13 @@ import 'package:dart_quill_delta/dart_quill_delta.dart';
 import '../delta/embeds.dart';
 import '../delta/normalizer.dart';
 import '../markdown/markdown_codec.dart';
+import 'docx/docx_importer.dart';
 import 'encoding.dart';
 import 'html/html_importer.dart';
 import 'import_api.dart';
 import 'import_limits.dart';
+import 'odt/odt_importer.dart';
+import 'rtf/rtf_importer.dart';
 import 'txt_importer.dart';
 
 /// A detected import source.
@@ -27,12 +30,8 @@ final class DetectedImport {
   /// A `.zip` containing one Markdown file plus assets.
   final bool markdownZip;
 
-  /// Whether this version can import the format (DOCX/ODT/RTF are not
-  /// enabled yet).
-  bool get isSupported =>
-      format == ImportFormat.markdown ||
-      format == ImportFormat.txt ||
-      format == ImportFormat.html;
+  /// Whether this version can import the format (all formats are).
+  bool get isSupported => ImportFormat.values.contains(format);
 }
 
 /// Detects formats by extension, then by sniffing (07 §3.2 step 2).
@@ -121,10 +120,12 @@ final class WonkyImporters {
         result = await const TxtImporter().import(bytes, options);
       case ImportFormat.html:
         result = await const HtmlImporter().import(bytes, options);
-      case ImportFormat.docx || ImportFormat.odt || ImportFormat.rtf:
-        throw ImportFormatException(
-          '${detected.format.name.toUpperCase()} import is not available yet',
-        );
+      case ImportFormat.docx:
+        result = const DocxImporter().importSync(bytes, options);
+      case ImportFormat.odt:
+        result = const OdtImporter().importSync(bytes, options);
+      case ImportFormat.rtf:
+        result = const RtfImporter().importSync(bytes, options);
     }
     limits.checkResult(result.delta);
     return result;

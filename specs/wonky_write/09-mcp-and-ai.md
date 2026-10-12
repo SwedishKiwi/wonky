@@ -108,6 +108,18 @@ Error codes (`isError: true`, payload `{code, message, details}`):
      through later ops (like undo rebasing) and submits it as a new op.
   6. Emit agent presence (transient cursor + flash, [08](08-comments-suggestions-history.md) §5).
 - **One mutating call = one op = one `change_id`** (atomic); `revision` increases by exactly 1.
+- *Implementation:* `HeadlessDocumentEditor.mutate` catches the `DocumentState` up, builds
+  the change against that head and submits it through `OtService.submit` with
+  `base = head`, the caller's real role (commenter op-shape rules apply) and
+  `clientOpId = change_id`; an op committed concurrently in between is handled by the
+  normal server-side rebase. The inverse comes from the stored `DocumentOp`.
+  `changes.revert` submits the inverse with `base = the change's revision` (the server
+  rebases it through every later op). Metadata tools (`update_page_setup`, `apply_theme`,
+  `set_markdown`'s front matter) record `kind: meta` changes with the previous value.
+- *Not implemented yet:* `write.compare_versions`, `write.get_theme`,
+  `write.create_theme`, `write.update_theme` (theme editor, TODO 1), the regex isolate
+  timeout of `write.search`, server-side pagination for `pages_estimate` (estimated as
+  words / 500). A mutating call that changes nothing returns `change_id: null`.
 - Read tools read head (or `revision` where offered) without locking.
 - Offsets in a result refer to the returned `revision`. If an agent wants to use offsets from an
   earlier read, it should pass `expected_revision`; on mismatch, re-read or switch to quote
@@ -317,12 +329,12 @@ go through commands, so they land on the user's undo stack.
 | `ui.write.select_range` | `{start, length}` | Sets selection, scrolls into view; returns the new selection |
 | `ui.write.select_text` | `{quote, occurrence?}` | Same as `select_range` after resolving the quote (errors as §1.3) |
 | `ui.write.scroll_to` | `{target: {heading} \| {heading_index} \| {offset} \| {comment_thread_uuid} \| {suggestion_id} \| {page}, align: "top"\|"center" = "center"}` | Scrolls; activates the thread/suggestion card if targeted |
-| `ui.write.get_visible_range` | — | `{start, end, first_visible_heading, pages?: {first, last, total}, zoom}` |
+| `ui.write.get_layout_info` | — | `{zoom, layout, paper, page_size_pt, doc_length, headings, heading_at_selection, mode, outline_open}` (replaces the planned `get_visible_range`; the visible Delta range is not exposed yet) |
 | `ui.write.set_view_mode` | `{mode}` | Invokes `write.mode.set` |
 | `ui.write.set_layout_mode` | `{layout: "pages"\|"pageless"}` | Invokes `write.doc.setLayout` (undoable document meta change) |
 | `ui.write.open_theme_editor` | `{theme_uuid?, element?}` | Invokes `write.theme.openEditor` |
 | `ui.write.toggle_outline` | `{open?: bool}` | Invokes `write.view.toggleOutline` |
-| `ui.write.insert_markdown_at_selection` | `{markdown, replace_selection?: bool}` | Invokes `write.edit.insertMarkdown` (one undo step on the user's stack, source `mcp`) |
+| `ui.write.insert_markdown_at_selection` | `{markdown, replace_selection?: bool}` | Builds the change with `DocumentEdits` and applies it as one undoable local change ("Insert Markdown") on the user's stack (suggestion in Suggesting mode) |
 | `ui.write.get_ai_preview` | — | Current inline AI preview state (`{active, range, markdown, status}`) for agents testing AI flows |
 
 All other UI control uses the shared tools (`ui.invoke_command` with any `write.*` command id,

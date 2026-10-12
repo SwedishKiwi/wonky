@@ -1,0 +1,16 @@
+### App → server, first message: registers the window in the hub.
+class: UiBridgeHello
+extends: UiBridgeMessage
+fields:
+  ### `write` or `sheets`.
+  app: String
+  ### e.g. "Chrome on macOS".
+  deviceLabel: String
+  ### `web`, `macos`, `windows`, `linux`.
+  platform: String
+  route: String?
+  openItemUuid: String?
+  title: String?
+  focused: bool
+  ### Ids of the `ui.*` tools this window implements.
+  tools: List<String>

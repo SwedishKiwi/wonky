@@ -36,7 +36,9 @@ void main() {
     expect(tester.takeException(), isNull);
     expect(find.byType(ThemeCard), findsNWidgets(8));
 
-    await tester.tap(find.byKey(const ValueKey('write.theme.card.classic-serif')));
+    await tester.tap(
+      find.byKey(const ValueKey('write.theme.card.classic-serif')),
+    );
     await tester.pump();
 
     expect(picked?.builtinKey, 'classic-serif');

@@ -345,6 +345,13 @@ Last-used options per format are stored in `UserPreferences.writeDefaults.export
 | MCP `drive.export`, AI | Server |
 | Exporting an older `revision` | Server (needs materialization) unless the version is cached locally |
 
+> Implementation note (iteration 1): the app exports every format on the client regardless of
+> size (File › Download lists all ten formats); the server path is used by MCP and is available
+> through `writeExport.export`. File › Import / *Upload file…* go through the server pipeline
+> (`drive.import`, images stored with the new document, import banner on first open) when online
+> and convert on the client when offline; *Insert from file…* converts on the client and uploads
+> embedded images as files of the current document.
+
 Client: desktop runs exporters in `Isolate.run` (fonts/images pre-resolved and passed as bytes);
 web runs on the main isolate in cooperative chunks (`await` a zero-delay future between blocks
 and pages) behind a progress dialog with *Cancel*. Threshold is configurable
@@ -436,8 +443,25 @@ Optional TOC as `<nav class="wonky-toc">`. Validated with the Nu HTML Checker in
 
 ### 5.4 DOCX
 
-> Iteration scope: DOCX/ODT/RTF/EPUB export and DOCX/ODT/RTF import are deferred (TODO). The
-> core contains an untested `DocxImporter` draft that is not exported from the library.
+> Implementation note: the `docx_creator` spike (§5.5) was skipped; `DocxExporter`
+> (`export/docx/`) writes the parts itself and `DocxImporter` (`import/docx/`) reads them with
+> `OoxmlReader`. Conventions that make our own files round-trip exactly (the importer recognizes
+> them; Word and LibreOffice treat them as ordinary styles):
+> - presentation-only styles are named `Wonky …` (`WonkyTableHeading`, `WonkyTaskDone`,
+>   `WonkyMention`, `WonkyFigure`, `WonkyRule` = *Wonky Horizontal Rule*, `WonkySpacer`); the
+>   importer ignores their run toggles, imports `WonkyRule` paragraphs as rules and drops
+>   `WonkySpacer` paragraphs (they carry table spacing and keep adjacent tables apart);
+> - tasks are `ListParagraph` items on a marker-less numbering (`numFmt none`) with a ☐/☒ glyph +
+>   tab, so their indent survives; ordered runs get their own `w:num` (with `startOverride`),
+>   bullets share one; `w:numId`s are contiguous (some readers index `w:num` by position);
+> - mentions are `mailto:` hyperlinks with `w:tooltip="wonky-mention:<uuid>"`;
+> - a `Caption` paragraph right after an image that repeats its `wp:docPr/@title` is not imported
+>   again; heading bookmarks are the anchor ids (sanitized, ≤ 40 chars) so `#slug` links work;
+> - files whose `docProps/app.xml` Application is `Wonky Write` produce no "formatting removed"
+>   warnings, their TOC paragraphs are skipped and paragraph-style fonts never mark text as code
+>   (inline code is `CodeChar`).
+> Block spacing is written explicitly (`before = max(0, before − after(prev))`, Word adds both).
+> Code block language and heading-numbering labels are not stored in DOCX.
 
 Writer: `OoxmlWriter` (archive + xml), or `docx_creator` 1.4.0 if it passes §5.5. Package parts
 (deterministic order):
@@ -507,6 +531,12 @@ header/footer slots using `text:page-number`, `text:page-count`, `text:title`) �
 `table:table-header-rows`) · `Pictures/*` · `settings.xml` (empty). Validated in CI with
 LibreOffice and the ODF Toolkit validator.
 
+> Implementation note: `OdtExporter`/`OdtImporter` (`export/odt/`, `import/odt/`). Heading
+> numbering uses `text:outline-style`; tasks are a marker-less `WonkyTasks` list with ☐/☒ glyph
+> text (checked-task strike/color in the `Task_20_Checked` paragraph style, ignored on import);
+> a `Horizontal_20_Line` paragraph is a rule; headings carry bookmarks named after their anchor
+> ids. Import: TOCs/indexes are dropped with a warning, annotations → `commentsDropped`.
+
 ### 5.7 RTF
 
 Hand-written `RtfWriter`: header `{\rtf1\ansi\ansicpg1252\deff0\uc1`, `\fonttbl` (theme fonts),
@@ -518,6 +548,13 @@ groups with `\chpgn` and `{\field{\*\fldinst NUMPAGES}}`. Text escaping: `\ \{ \
 `\uN?` (signed 16-bit; surrogate pairs as two `\u`), tabs `\tab`, U+2028 `\line`. Images:
 `{\pict\pngblip\picwN\pichN\picwgoalN\pichgoalN <hex>}` (JPEG `\jpegblip`). Tables: `\trowd
 \trgaph108 \trhdr` (header) `\cellxN … \intbl … \cell … \row`. Links: `\field` HYPERLINK.
+
+> Implementation note: `RtfExporter` / `RtfTokenizer` + `RtfImporter`. Round-trip extensions:
+> code block language in an ignorable `{\*\wonkycodelang …}` group; mentions as `HYPERLINK "mailto:…"
+> \o "wonky-mention:<uuid>"`; image alt in `\*\picprop` `wzDescription`; rules in a
+> "Horizontal Line" paragraph style; tasks as a list level with `\levelnfc255` plus ☐/☒ glyph
+> and tab. Every paragraph gets explicit collapsed `\sbN` and `\sa0`. The dark variant is not
+> supported (`variant_unsupported` warning).
 
 ### 5.8 EPUB 3
 
@@ -544,6 +581,12 @@ Cover `auto`: first image in the document if any; else a generated SVG cover pag
 author, theme heading font and accent color). XHTML is well-formed (XML escaping, self-closing
 void elements, `epub:type` on nav). Internal links across chapters are rewritten to
 `chapter-00N.xhtml#anchor`. Validated by **epubcheck** (0 errors, 0 warnings) in CI.
+
+> Implementation note: `EpubExporter` (`export/epub/`). With `chapterSplit: none` (or no split
+> heading) the whole document is `chapter-001`. Theme heading numbering continues across chapter
+> files through an inline `counter-reset` per chapter, and nav/NCX labels carry the numbers.
+> Unknown `#fragment` links point to the first chapter. SVG images become placeholders (as in the
+> other office formats); the light theme is always used.
 
 ### 5.9 Plain text
 
@@ -802,6 +845,15 @@ options), *Cancel*, *Export*. Built with `WonkyDialogSpec`.
 
 - Access: Viewer+; Viewers/Commenters only if `nonEditorsCanExport`. Exporting an old revision
   requires the same role as viewing history (Editor+, per history spec).
+- Implementation note: every format runs through the core exporters with the document's theme
+  (assigned theme → the caller's default theme → *Wonky Default*), page setup and metadata;
+  fonts come from `web/fonts/` (`FileSystemFontProvider`, same TTFs and family substitution as
+  the app's `AssetFontProvider`), images from storage / the SSRF-safe fetcher
+  (`ServerImageResolver`). Option keys are accepted in camelCase or snake_case. The result
+  cache and the isolate pool are not implemented yet (exports run on the server isolate with a
+  120 s timeout). Server imports (`drive.import`, `convertForInsert`) run the core importers in
+  `Isolate.run` (60 s) via `WriteImportService` (`write/export/write_import_service.dart`); the
+  source page geometry becomes the new document's page setup (`ImportedPageSetups`).
 - Output stored as `StoredFile(kind: exportResult, private, expiresAt: +24 h)`; `downloadUrl` is a
   signed URL valid 15 min; cleanup FutureCall hourly. `inlineText` set for `markdown`/`txt` ≤ 1 MB.
 - **Cache**: key `sha256(documentUuid, revision, format, optionsJson, theme contentHash +

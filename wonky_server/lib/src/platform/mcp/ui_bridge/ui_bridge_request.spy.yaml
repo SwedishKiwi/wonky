@@ -1,0 +1,10 @@
+### Server → app: run a `ui.*` tool.
+class: UiBridgeRequest
+extends: UiBridgeMessage
+fields:
+  requestId: String
+  tool: String
+  argsJson: String
+  ### Name of the MCP client (shown in the control pill).
+  agentName: String?
+  timeoutMs: int

@@ -120,6 +120,35 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
+  testWidgets('Given suggesting mode with a suggestion card when the comment '
+      'margin shows then the suggesting cue spans the margin too', (
+    tester,
+  ) async {
+    await pumpScreen(tester);
+    await h.invoke('write.mode.set', {'mode': 'suggesting'});
+    session.editor.applyLocal(
+      Delta()
+        ..retain(5)
+        ..insert('ned'),
+      label: 'Typing',
+    );
+    for (var i = 0; i < 10; i++) {
+      await tester.runAsync(pumpEventQueue);
+      await tester.pump(const Duration(milliseconds: 50));
+    }
+
+    final cue = find.byKey(const ValueKey('write.canvas.suggestingCue'));
+    final margin = find.byKey(const ValueKey('write.commentMargin')).first;
+    expect(cue, findsOneWidget);
+    expect(margin, findsOneWidget);
+    expect(
+      tester.getTopRight(cue).dx,
+      greaterThanOrEqualTo(tester.getTopRight(margin).dx),
+    );
+    await tester.pumpWidget(const SizedBox());
+    await tester.pump(const Duration(seconds: 2));
+  });
+
   testWidgets('Given the screen when toggling the outline then the panel lists '
       'the headings', (tester) async {
     await pumpScreen(tester);

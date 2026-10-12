@@ -48,6 +48,55 @@ Widget _dropdown(List<String> log) => WonkyDropdownMenu(
 );
 
 void main() {
+  testWidgets('Given an open dropdown when an item\'s enabled state changes '
+      'then it updates without a build-phase error', (tester) async {
+    final enabled = ValueNotifier(false);
+    addTearDown(enabled.dispose);
+    final log = <String>[];
+    await pumpWonky(
+      tester,
+      ValueListenableBuilder<bool>(
+        valueListenable: enabled,
+        builder: (context, on, _) => WonkyDropdownMenu(
+          entries: () => [
+            WonkyMenuItem(
+              key: const ValueKey('m.save'),
+              label: 'Save',
+              enabled: on,
+              shortcut: const ['⌘', 'S'],
+              onSelected: () => log.add('save'),
+            ),
+            WonkyMenuSubmenu(
+              label: 'More',
+              enabled: on,
+              children: [WonkyMenuItem(label: 'A', onSelected: () {})],
+            ),
+          ],
+          builder: (context, c) => ShadButton(
+            key: const ValueKey('trigger'),
+            onPressed: c.toggle,
+            child: const Text('Menu'),
+          ),
+        ),
+      ),
+      center: true,
+    );
+    await tester.tap(find.byKey(const ValueKey('trigger')));
+    await tester.pumpAndSettle();
+
+    enabled.value = true;
+    await tester.pumpAndSettle();
+    enabled.value = false;
+    await tester.pumpAndSettle();
+    enabled.value = true;
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const ValueKey('m.save')));
+    await tester.pumpAndSettle();
+
+    expect(tester.takeException(), isNull);
+    expect(log, ['save']);
+  });
+
   for (final b in Brightness.values) {
     testWidgets('Given a dropdown in ${b.name} when opened then entries, '
         'labels and shortcuts render', (tester) async {

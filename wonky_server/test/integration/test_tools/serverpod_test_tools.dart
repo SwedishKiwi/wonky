@@ -67,6 +67,8 @@ import 'package:wonky_server/src/generated/platform/files/file_url_view.dart'
     as _i28n3m1r;
 import 'package:wonky_server/src/generated/platform/files/stored_file_kind.dart'
     as _idhe6v6s;
+import 'package:wonky_server/src/generated/platform/mcp/ui_bridge/ui_bridge_message.dart'
+    as _is78z0de;
 import 'package:wonky_server/src/generated/platform/meta/protocol_info.dart'
     as _ih1cymrz;
 import 'package:wonky_server/src/generated/platform/notifications/notification_event.dart'
@@ -286,6 +288,8 @@ class TestEndpoints {
 
   late final _FileEndpoint file;
 
+  late final _UiBridgeEndpoint uiBridge;
+
   late final _MetaEndpoint meta;
 
   late final _NotificationEndpoint notification;
@@ -345,6 +349,10 @@ class _InternalTestEndpoints extends TestEndpoints
       serializationManager,
     );
     file = _FileEndpoint(
+      endpoints,
+      serializationManager,
+    );
+    uiBridge = _UiBridgeEndpoint(
       endpoints,
       serializationManager,
     );
@@ -2426,6 +2434,50 @@ class _FileEndpoint {
         await _localUniqueSession.close();
       }
     });
+  }
+}
+
+class _UiBridgeEndpoint {
+  _UiBridgeEndpoint(
+    this._endpointDispatch,
+    this._serializationManager,
+  );
+
+  final _is.EndpointDispatch _endpointDispatch;
+
+  final _is.SerializationManager _serializationManager;
+
+  _ida.Stream<_is78z0de.UiBridgeMessage> connect(
+    _ist.TestSessionBuilder sessionBuilder,
+    _ida.Stream<_is78z0de.UiBridgeMessage> fromApp,
+  ) {
+    var _localTestStreamManager =
+        _ist.TestStreamManager<_is78z0de.UiBridgeMessage>();
+    _ist.callStreamFunctionAndHandleExceptions(
+      () async {
+        var _localUniqueSession =
+            (sessionBuilder as _ist.InternalTestSessionBuilder).internalBuild(
+              endpoint: 'uiBridge',
+              method: 'connect',
+            );
+        var _localCallContext = await _endpointDispatch
+            .getMethodStreamCallContext(
+              createSessionCallback: (_) => _localUniqueSession,
+              endpointPath: 'uiBridge',
+              methodName: 'connect',
+              arguments: {},
+              requestedInputStreams: ['fromApp'],
+              serializationManager: _serializationManager,
+            );
+        await _localTestStreamManager.callStreamMethod(
+          _localCallContext,
+          _localUniqueSession,
+          {'fromApp': fromApp},
+        );
+      },
+      _localTestStreamManager.outputStreamController,
+    );
+    return _localTestStreamManager.outputStreamController.stream;
   }
 }
 

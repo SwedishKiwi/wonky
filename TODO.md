@@ -15,10 +15,11 @@ committed and verified).
 1. ☐ **Theme editor UI** (Write 06 §5).
    - The server `writeTheme` endpoints already support it: create, update with version conflicts, revisions, duplicate and usage.
    - The core `WriteThemeData`, validator, resolver and contrast checker already exist.
-2. ☐ **More export formats**: DOCX, ODT, RTF and EPUB (Write 07).
-   - **DOCX import:** a draft exists in `wonky_write_core/lib/src/import/docx/` but is not exported. `WonkyImporters` refuses DOCX, ODT and RTF.
-   - **Server-side PDF/HTML export** needs a file-system `FontProvider`. Today `writeExport.export` supports only md and txt.
-   - **Server-side HTML/DOCX import.**
+2. ☑ **Import/export formats** (Write 07): DOCX, ODT, RTF and EPUB exporters plus DOCX, ODT and RTF importers in `wonky_write_core`. Exporting and re-importing our own files gives back the same document for all 8 themes, except that RTF brings heading numbers back as text. Server `writeExport.export` covers all 10 formats, with bundled fonts in `web/fonts` and images read from storage; `drive.import` and `convertForInsert` accept HTML, DOCX, ODT and RTF. In the app, File › Download lists every format, and File › Import / Insert from file accept them; the import banner shows on first open. Still open:
+   - the server export cache and the isolate pool; large documents still export on the client;
+   - SVG images in DOCX/ODT/RTF/EPUB (rendered as placeholders);
+   - comments in DOCX/ODT exports and embedded DOCX fonts (both P2);
+   - LibreOffice and epubcheck validation in CI.
 3. ☐ **MCP** (suite 09, Write 09):
    - the `/mcp` Streamable HTTP route, `ToolExecutor`, and the `drive.*` / `write.*` / `comments.*` / `versions.*` tools;
    - the UI bridge hub, the client bridge, and the `ui.*` / `ui.write.*` tools;
@@ -59,4 +60,4 @@ committed and verified).
 - Recurring server jobs are re-registered on every server start under fixed identifiers.
 - Search uses no full-text GIN index yet.
 - shad tooltips and popovers swallow Esc; the toolbar works around this with `ToolbarEscapeScope`.
-- PDF export renders non-Latin-1 text only with the bundled TTF fonts.
+- PDF exports (client and server) cover Latin, Greek and Cyrillic with the bundled TTFs; CJK, Arabic and emoji fall back to placeholders until the fallback fonts are added.

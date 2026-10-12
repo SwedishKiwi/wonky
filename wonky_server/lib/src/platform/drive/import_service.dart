@@ -2,28 +2,20 @@ import 'dart:convert';
 
 import 'package:serverpod/serverpod.dart';
 
-import '../../write/content/write_content.dart';
-import '../../write/ot/document_store.dart';
+import '../../write/export/write_import_service.dart';
 import '../common/actor.dart';
 import '../common/errors.dart';
 import '../common/models.dart';
-import '../common/time.dart';
 import '../config/wonky_config.dart';
 import '../files/file_service.dart';
 import 'drive_service.dart';
 import 'templates/builtin_templates.dart';
 
-/// Server-side imports (`drive.import`, Write 07 §3.2, Sheets 11): Markdown
-/// and plain text become documents, CSV/TSV become spreadsheets.
+/// Server-side imports (`drive.import`, Write 07 §3.2, Sheets 11):
+/// Markdown, text, HTML, DOCX, ODT and RTF become documents
+/// ([WriteImportService]), CSV/TSV become spreadsheets.
 abstract final class ImportService {
-  static const documentFormats = {
-    'md',
-    'markdown',
-    'mdown',
-    'mkd',
-    'txt',
-    'text',
-  };
+  static Set<String> get documentFormats => WriteImportService.formats;
   static const spreadsheetFormats = {'csv', 'tsv'};
 
   static String _format(StoredFile file, DriveImportOptions options) {
@@ -75,7 +67,14 @@ abstract final class ImportService {
             'Files of type "$format" cannot be imported as documents.',
           );
         }
-        report = await _document(session, actor, file, format, text, options);
+        report = await WriteImportService.importDocument(
+          session,
+          actor,
+          file,
+          bytes.buffer.asUint8List(bytes.offsetInBytes, bytes.lengthInBytes),
+          format,
+          options,
+        );
       case DriveItemKind.spreadsheet:
         if (!spreadsheetFormats.contains(format)) {
           throw Errors.invalid(
@@ -95,57 +94,6 @@ abstract final class ImportService {
     }
     await FileService.deleteFile(session, file.fileUuid);
     return report;
-  }
-
-  static Future<ImportReportView> _document(
-    Session session,
-    Actor actor,
-    StoredFile file,
-    String format,
-    String text,
-    DriveImportOptions options,
-  ) async {
-    final isText = format == 'txt' || format == 'text';
-    final soft =
-        isText &&
-        (jsonDecode(options.optionsJson ?? '{}') as Map)['lineBreaks'] ==
-            'soft';
-    final converted = isText
-        ? WriteContent.fromPlainText(text, softBreaks: soft)
-        : null;
-    final markdown = isText ? null : WriteContent.fromMarkdown(text);
-    final delta = converted?.delta ?? markdown!.delta;
-    final warnings = converted?.warnings ?? markdown!.warnings;
-    if (text.length > WonkyConfig.current.maxDocumentChars) {
-      throw Errors.tooLarge(
-        'The file is too large to import. Split it into smaller files.',
-      );
-    }
-    final name = options.name ?? markdown?.title ?? _baseName(file.fileName);
-    final view = await DriveService.createDocumentFromContent(
-      session,
-      actor,
-      name: name.length > 255 ? name.substring(0, 255) : name,
-      parentUuid: options.parentUuid,
-      content: delta,
-      frontMatter: markdown?.frontMatter,
-      activitySummary: {'importedFrom': isText ? 'txt' : 'md'},
-    );
-    if (warnings.isNotEmpty) {
-      final doc = await DocumentStore.byUuid(session, view.contentRef!);
-      if (doc != null) {
-        await DocumentImportReport.db.insertRow(
-          session,
-          DocumentImportReport(
-            documentId: doc.id!,
-            userId: actor.userId,
-            warningsJson: jsonEncode([for (final w in warnings) w.toJson()]),
-            createdAt: nowUtc(),
-          ),
-        );
-      }
-    }
-    return ImportReportView(item: view, warnings: warnings);
   }
 
   static Future<ImportReportView> _spreadsheet(

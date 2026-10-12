@@ -1,0 +1,6 @@
+### App → server: the user pressed *Stop* on the MCP control pill; pending
+### and new calls to this window fail for [pauseMs].
+class: UiBridgeStop
+extends: UiBridgeMessage
+fields:
+  pauseMs: int

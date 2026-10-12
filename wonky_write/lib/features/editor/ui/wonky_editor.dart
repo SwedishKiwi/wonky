@@ -396,6 +396,18 @@ class WonkyEditorState extends State<WonkyEditor> {
 
   @override
   Widget build(BuildContext context) {
+    // Task checkboxes and the text-selection widgets need a Material
+    // ancestor; read-only hosts (history, theme preview) have none.
+    if (Material.maybeOf(context) == null) {
+      return Material(
+        type: MaterialType.transparency,
+        child: Builder(builder: _build),
+      );
+    }
+    return _build(context);
+  }
+
+  Widget _build(BuildContext context) {
     final theme = _theme(context);
     final view = controller.view;
     final pages = view.layout == LayoutMode.pages;

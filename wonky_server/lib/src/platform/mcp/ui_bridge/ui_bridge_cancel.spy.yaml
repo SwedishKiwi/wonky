@@ -1,0 +1,5 @@
+### Server → app: the request timed out or the agent went away.
+class: UiBridgeCancel
+extends: UiBridgeMessage
+fields:
+  requestId: String
