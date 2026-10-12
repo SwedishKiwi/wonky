@@ -84,7 +84,7 @@ abstract final class MsWordHtml {
   /// Whether a marker (e.g. `1.`, `a)`, `iv.`) denotes an ordered list.
   static bool isOrderedMarker(String? marker) {
     if (marker == null) return false;
-    final t = marker.replaceAll(' ', ' ').trim();
+    final t = marker.replaceAll('\u00A0', ' ').trim();
     return _ordered.hasMatch(t);
   }
 

@@ -26,13 +26,13 @@ class BlockPrefixConversionReaction extends EditReaction {
   static final _divider = RegExp(r'^(---|—-|\*\*\*|___) $');
 
   @override
-  void react(EditContext editContext, RequestDispatcher requestDispatcher, List<EditEvent> changeList) {
+  void react(EditContext editorContext, RequestDispatcher requestDispatcher, List<EditEvent> changeList) {
     final insertion = TypedText.lastInsertion(changeList);
     if (insertion == null || !insertion.text.toPlainText().endsWith(' ')) {
       return;
     }
-    final document = editContext.document;
-    final composer = editContext.composer;
+    final document = editorContext.document;
+    final composer = editorContext.composer;
     final selection = composer.selection;
     if (selection == null || !selection.isCollapsed || selection.extent.nodeId != insertion.nodeId) {
       return;
@@ -128,6 +128,6 @@ class BlockPrefixConversionReaction extends EditReaction {
   /// Metadata that survives a node type conversion (line-end overlays).
   static Map<String, dynamic> _carriedMetadata(DocumentNode node) {
     final lineAttributes = node.getMetadataValue(WonkyNodeMetadata.lineAttributes);
-    return {if (lineAttributes != null) WonkyNodeMetadata.lineAttributes: lineAttributes};
+    return {WonkyNodeMetadata.lineAttributes: ?lineAttributes};
   }
 }

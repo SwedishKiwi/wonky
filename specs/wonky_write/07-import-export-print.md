@@ -172,7 +172,7 @@ suggesting splitting. Server imports run in `Isolate.run` with a 60 s timeout.
 ### 3.2 Server pipeline
 
 1. Client uploads the file via the files service (upload description → direct cloud-storage
-   upload → `StoredFile(kind: import, expires 24 h)`).
+   upload → `StoredFile(kind: importSource, expires 24 h)`).
 2. `DriveEndpoint.import(uploadId, kind: document, options)` — `options`: `{format?: auto,
    name?, parentUuid?, txt: {lineBreaks}, html: {downloadRemoteImages}, docx: {…}}`. Format is
    detected by extension, then sniffed (ZIP + `[Content_Types].xml` → DOCX; ZIP + `mimetype`
@@ -375,6 +375,13 @@ only).
 
 ### 5.2 PDF (`pdf` 3.13.x)
 
+> Implementation note: `PdfExporter` (`wonky_write_core/lib/src/export/pdf/`) renders with the
+> low-level `pdf` API (`PdfDocument`/`PdfGraphics`) and its own line breaker (`PdfLineBreaker`,
+> glyph metrics + per-character font fallback), so measured lines are exactly the drawn lines;
+> no adapted `pw.RichText` is needed. Missing families fall back to the standard PDF fonts with a
+> `font_fallback` warning. Ids and dates are deterministic (PDF 1.4, document id from
+> uuid/revision/theme hash, dates from `meta.modifiedAt`).
+
 - Built with our **pagination engine** (§7) and a custom page builder (not `pw.MultiPage`, which
   lacks keep-with-next and widow/orphan control): each laid-out page becomes one `pw.Page` whose
   content is a `pw.Stack`/`pw.Column` of placed block slices.
@@ -428,6 +435,9 @@ as `<span class="tok-keyword">`; tasks as disabled checkboxes; images `<figure>`
 Optional TOC as `<nav class="wonky-toc">`. Validated with the Nu HTML Checker in CI.
 
 ### 5.4 DOCX
+
+> Iteration scope: DOCX/ODT/RTF/EPUB export and DOCX/ODT/RTF import are deferred (TODO). The
+> core contains an untested `DocxImporter` draft that is not exported from the library.
 
 Writer: `OoxmlWriter` (archive + xml), or `docx_creator` 1.4.0 if it passes §5.5. Package parts
 (deterministic order):
@@ -784,7 +794,7 @@ options), *Cancel*, *Export*. Built with `WonkyDialogSpec`.
 
 - Access: Viewer+; Viewers/Commenters only if `nonEditorsCanExport`. Exporting an old revision
   requires the same role as viewing history (Editor+, per history spec).
-- Output stored as `StoredFile(kind: export, private, expiresAt: +24 h)`; `downloadUrl` is a
+- Output stored as `StoredFile(kind: exportResult, private, expiresAt: +24 h)`; `downloadUrl` is a
   signed URL valid 15 min; cleanup FutureCall hourly. `inlineText` set for `markdown`/`txt` ≤ 1 MB.
 - **Cache**: key `sha256(documentUuid, revision, format, optionsJson, theme contentHash +
   variant, pageSetupJson, fontsVersion)` → reuse an unexpired StoredFile.

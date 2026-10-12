@@ -113,8 +113,7 @@ abstract final class SharingService {
     final requests = canShare
         ? await AccessRequest.db.find(
             session,
-            where: (t) =>
-                t.itemId.equals(item.id!) & t.handledAt.equals(null),
+            where: (t) => t.itemId.equals(item.id!) & t.handledAt.equals(null),
             orderBy: (t) => t.createdAt,
           )
         : <AccessRequest>[];
@@ -134,7 +133,9 @@ abstract final class SharingService {
       canShare: canShare,
       permissions: permissions,
       link: canShare || link?.role != null
-          ? (link == null ? null : ShareLinkView(token: link.token, role: link.role))
+          ? (link == null
+                ? null
+                : ShareLinkView(token: link.token, role: link.role))
           : null,
       settings: ItemSharingSettings(
         editorsCanShare: item.editorsCanShare,
@@ -164,7 +165,10 @@ abstract final class SharingService {
     DriveItem item,
     OwnershipTransfer t,
   ) async {
-    final users = await UserService.summaries(session, [t.fromUserId, t.toUserId]);
+    final users = await UserService.summaries(session, [
+      t.fromUserId,
+      t.toUserId,
+    ]);
     if (users[t.fromUserId] == null || users[t.toUserId] == null) return null;
     return OwnershipTransferView(
       id: t.id!,
@@ -498,7 +502,9 @@ abstract final class SharingService {
         session,
         transfer.copyWith(handledAt: nowUtc(), accepted: false),
       );
-      throw Errors.conflict('The owner changed since the transfer was offered.');
+      throw Errors.conflict(
+        'The owner changed since the transfer was offered.',
+      );
     }
     await session.db.transaction((tx) async {
       await OwnershipTransfer.db.updateRow(
@@ -561,7 +567,9 @@ abstract final class SharingService {
     AccessRole? role,
   ) async {
     final (item, myRole) = await _requireSharer(session, actor, itemUuid);
-    if (role == AccessRole.owner) throw Errors.invalid('Links cannot own items.');
+    if (role == AccessRole.owner) {
+      throw Errors.invalid('Links cannot own items.');
+    }
     if (role != null && role.role > myRole) throw Errors.forbidden();
     final link = await ShareLink.db.findFirstRow(
       session,
@@ -679,7 +687,9 @@ abstract final class SharingService {
     if (current != null && current >= role.role) {
       throw Errors.invalid('You already have this access.');
     }
-    if (role == AccessRole.owner) throw Errors.invalid('Request editor access.');
+    if (role == AccessRole.owner) {
+      throw Errors.invalid('Request editor access.');
+    }
     final pending = await AccessRequest.db.findFirstRow(
       session,
       where: (t) =>
@@ -802,7 +812,10 @@ abstract final class SharingService {
   }
 
   /// Daily job: removes expired grants and re-mirrors affected spaces.
-  static Future<int> removeExpiredGrants(Session session, {DateTime? now}) async {
+  static Future<int> removeExpiredGrants(
+    Session session, {
+    DateTime? now,
+  }) async {
     final at = now ?? nowUtc();
     final expired = await DriveItemPermission.db.find(
       session,

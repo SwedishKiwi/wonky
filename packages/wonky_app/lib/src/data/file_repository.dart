@@ -34,22 +34,17 @@ class ServerFileRepository implements FileRepository {
     required Uint8List bytes,
     StoredFileKind kind = StoredFileKind.image,
   }) async {
-    final ticket = await api.call<FileUploadTicket>('file', 'createUpload', {
-      'fileUuid': fileUuid,
-      'itemUuid': itemUuid,
-      'fileName': fileName,
-      'mimeType': mimeType,
-      'size': bytes.length,
-      'kind': kind,
-    });
+    final ticket = await api.guard(
+      (c) => c.file.createUpload(fileUuid, itemUuid, fileName, mimeType, bytes.length, kind: kind),
+    );
     if (ticket.status != StoredFileStatus.ready && ticket.uploadDescription != null) {
       final uploader = FileUploader(ticket.uploadDescription!);
       await uploader.uploadByteData(ByteData.sublistView(bytes));
     }
-    return api.call<FileUrlView>('file', 'completeUpload', {'fileUuid': fileUuid});
+    return api.guard((c) => c.file.completeUpload(fileUuid));
   }
 
   @override
   Future<FileUrlView> getUrl(UuidValue fileUuid) =>
-      api.call<FileUrlView>('file', 'getUrl', {'fileUuid': fileUuid});
+      api.guard((c) => c.file.getUrl(fileUuid));
 }

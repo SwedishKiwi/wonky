@@ -80,7 +80,6 @@ void _configureWebServer(Serverpod pod) {
       ),
       '/$app/assets/assets/config.json',
     );
-    pod.webServer.addRoute(SlashRedirectRoute('/$app/'), '/$app');
     final dir = Directory(Uri(path: 'web/$app').toFilePath());
     if (dir.existsSync()) {
       // Built with --wasm: cross-origin isolation headers (specs/13 §3).

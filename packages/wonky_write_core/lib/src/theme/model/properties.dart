@@ -151,13 +151,31 @@ enum LengthKind {
   ),
 
   /// Line widths (borders, thickness, caret): 0–36 pt (em 0–2).
-  stroke({LengthUnit.pt, LengthUnit.px, LengthUnit.em, LengthUnit.mm}, 0, 36, 0, 2),
+  stroke(
+    {LengthUnit.pt, LengthUnit.px, LengthUnit.em, LengthUnit.mm},
+    0,
+    36,
+    0,
+    2,
+  ),
 
   /// Letter spacing: −20–20 pt (em −0.5–1).
-  letterSpacing({LengthUnit.pt, LengthUnit.px, LengthUnit.em}, -20, 20, -0.5, 1),
+  letterSpacing(
+    {LengthUnit.pt, LengthUnit.px, LengthUnit.em},
+    -20,
+    20,
+    -0.5,
+    1,
+  ),
 
   /// Page margins: 0–3 in.
-  margin({LengthUnit.pt, LengthUnit.px, LengthUnit.mm, LengthUnit.inch}, 0, 216, 0, 0),
+  margin(
+    {LengthUnit.pt, LengthUnit.px, LengthUnit.mm, LengthUnit.inch},
+    0,
+    216,
+    0,
+    0,
+  ),
 
   /// Widths relative to the content width (`%` 0–100) or absolute
   /// (0–3000 pt).
@@ -176,7 +194,13 @@ enum LengthKind {
   ),
 
   /// Pageless content width: 200–3000 pt.
-  pageWidth({LengthUnit.pt, LengthUnit.px, LengthUnit.mm, LengthUnit.inch}, 150, 3000, 0, 0);
+  pageWidth(
+    {LengthUnit.pt, LengthUnit.px, LengthUnit.mm, LengthUnit.inch},
+    150,
+    3000,
+    0,
+    0,
+  );
 
   const LengthKind(this.units, this.minPt, this.maxPt, this.minEm, this.maxEm);
 
@@ -503,7 +527,13 @@ final class BorderProp extends PropType {
   const BorderProp();
 
   static const _width = LengthProp(LengthKind.stroke);
-  static const _style = EnumProp(['none', 'solid', 'dashed', 'dotted', 'double']);
+  static const _style = EnumProp([
+    'none',
+    'solid',
+    'dashed',
+    'dotted',
+    'double',
+  ]);
   static const _color = ColorProp();
 
   @override

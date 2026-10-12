@@ -186,7 +186,9 @@ abstract final class WriteHistoryService {
       min: Role.editor,
     );
     final version = await ItemVersion.db.findById(session, versionId);
-    if (version == null || version.itemId != item.id || version.revision == null) {
+    if (version == null ||
+        version.itemId != item.id ||
+        version.revision == null) {
       throw Errors.notFound('Version');
     }
     final content = DeltaUtils.stripOverlays(

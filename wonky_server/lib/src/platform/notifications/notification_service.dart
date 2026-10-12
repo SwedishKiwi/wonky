@@ -249,7 +249,10 @@ abstract final class NotificationService {
           notifications: await _views(session, wanted),
         );
       } on Exception catch (e) {
-        session.log('Digest for ${entry.key} failed: $e', level: LogLevel.warning);
+        session.log(
+          'Digest for ${entry.key} failed: $e',
+          level: LogLevel.warning,
+        );
         continue;
       }
       await UserNotification.db.updateWhere(

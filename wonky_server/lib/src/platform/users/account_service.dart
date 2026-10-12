@@ -114,8 +114,8 @@ abstract final class AccountService {
       // Items of other people inside our folders move to their roots first.
       final others = await DriveItem.db.find(
         session,
-        where: (t) => t.parentId.equals(current.id!) &
-            t.ownerId.notEquals(actor.userId),
+        where: (t) =>
+            t.parentId.equals(current.id!) & t.ownerId.notEquals(actor.userId),
       );
       for (final o in others) {
         await DriveItem.db.updateWhere(
@@ -220,7 +220,8 @@ abstract final class AccountService {
     if (active >= maxTokensPerUser) {
       throw Errors.limit('Revoke unused tokens first.');
     }
-    final secret = tokenPrefix +
+    final secret =
+        tokenPrefix +
         String.fromCharCodes([
           for (var i = 0; i < 40; i++)
             _alphabet.codeUnitAt(_random.nextInt(_alphabet.length)),

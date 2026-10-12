@@ -133,10 +133,9 @@ final class _Resolution {
       return bag;
     }
     if (e == ThemeElement.header || e == ThemeElement.footer) {
-      final hf =
-          (base.page.bag('headerFooter') ?? PropertyBag.empty).merge(
-            theme.page.bag('headerFooter'),
-          );
+      final hf = (base.page.bag('headerFooter') ?? PropertyBag.empty).merge(
+        theme.page.bag('headerFooter'),
+      );
       return hf.merge(base.element(e)).merge(_themeLayer(e));
     }
     return base.element(e).merge(_themeLayer(e));
@@ -182,8 +181,7 @@ final class _Resolution {
     return BorderPt(
       width: pt(spec.width, emBase, 0.75),
       style: spec.style ?? LineStyle.solid,
-      color:
-          color(spec.color) ?? colors[PaletteKey.border] ?? 0xffd0d7de,
+      color: color(spec.color) ?? colors[PaletteKey.border] ?? 0xffd0d7de,
     );
   }
 
@@ -421,7 +419,10 @@ final class _Resolution {
     return ResolvedInlineCode(
       fontFamily: fam,
       sizeRatio: ratio,
-      fontWeight: FontRegistry.snapWeight(fam, bag.integer('fontWeight') ?? 400),
+      fontWeight: FontRegistry.snapWeight(
+        fam,
+        bag.integer('fontWeight') ?? 400,
+      ),
       italic: bag.string('fontStyle') == 'italic',
       letterSpacingEm: ls == null
           ? 0
@@ -593,7 +594,11 @@ final class _Resolution {
     final bag = layered(ThemeElement.image);
     final cap = bag.bag('caption') ?? PropertyBag.empty;
     final capStyle = text(cap, role: FontRole.body, inherit: bodyBag);
-    final align = enumValue(ImageAlign.values, bag.string('align'), ImageAlign.center);
+    final align = enumValue(
+      ImageAlign.values,
+      bag.string('align'),
+      ImageAlign.center,
+    );
     final b = border(bag.border('border'), bodySize);
     return ResolvedImageStyle(
       box: box(
@@ -603,15 +608,26 @@ final class _Resolution {
             ? ThemeAlign.center
             : ThemeAlign.left,
       ),
-      maxWidth: extent(bag.length('maxWidth'), const ResolvedExtent.fraction(1)),
+      maxWidth: extent(
+        bag.length('maxWidth'),
+        const ResolvedExtent.fraction(1),
+      ),
       align: align,
       borderRadius: pt(bag.length('borderRadius'), bodySize),
       border: b != null && b.isVisible ? b : null,
-      shadow: enumValue(ShadowLevel.values, bag.string('shadow'), ShadowLevel.none),
+      shadow: enumValue(
+        ShadowLevel.values,
+        bag.string('shadow'),
+        ShadowLevel.none,
+      ),
       caption: ResolvedCaption(
         show: cap.boolean('show') ?? true,
         style: capStyle,
-        align: enumValue(ThemeAlign.values, cap.string('align'), ThemeAlign.center),
+        align: enumValue(
+          ThemeAlign.values,
+          cap.string('align'),
+          ThemeAlign.center,
+        ),
         gap: pt(cap.length('gap'), capStyle.fontSize),
       ),
     );
@@ -643,7 +659,11 @@ final class _Resolution {
       box: box(bag, style.fontSize),
       width: enumValue(TableWidth.values, bag.string('width'), TableWidth.auto),
       headerBackground: fill(bag.color('headerBackground')),
-      borders: enumValue(TableBorders.values, bag.string('borders'), TableBorders.all),
+      borders: enumValue(
+        TableBorders.values,
+        bag.string('borders'),
+        TableBorders.all,
+      ),
       borderColor:
           color(bag.color('borderColor')) ?? colors[PaletteKey.border] ?? 0,
       borderWidth: pt(bag.length('borderWidth'), style.fontSize, 0.75),
@@ -671,7 +691,9 @@ final class _Resolution {
     const deriver = DarkPaletteDeriver();
     final out = <SyntaxToken, ResolvedTokenStyle>{};
     for (final t in SyntaxToken.values) {
-      final light = (base.syntax(t) ?? PropertyBag.empty).merge(theme.syntax[t]);
+      final light = (base.syntax(t) ?? PropertyBag.empty).merge(
+        theme.syntax[t],
+      );
       final darkBag = _dark ? (theme.dark.syntax?[t]) : null;
       final bag = light.merge(darkBag);
       int c;
@@ -701,7 +723,8 @@ final class _Resolution {
   /// The code block background composited over the paper color.
   int compositeCodeBg() {
     final bag = layered(ThemeElement.codeBlock);
-    final paper = color(base.page.merge(theme.page).color('paperColor')) ??
+    final paper =
+        color(base.page.merge(theme.page).color('paperColor')) ??
         colors[PaletteKey.page] ??
         0xffffffff;
     final bg = fill(bag.color('background'));

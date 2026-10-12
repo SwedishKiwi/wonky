@@ -50,7 +50,10 @@ final class HtmlBodyWriter {
   final HtmlBodyOptions options;
 
   /// Escapes text content.
-  static String escape(String s) => s.replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('>', '&gt;');
+  static String escape(String s) => s
+      .replaceAll('&', '&amp;')
+      .replaceAll('<', '&lt;')
+      .replaceAll('>', '&gt;');
 
   /// Escapes attribute values.
   static String attr(String s) => escape(s).replaceAll('"', '&quot;');
@@ -91,7 +94,9 @@ final class HtmlBodyWriter {
       }
       level = h.level;
       final href = options.anchorHref?.call(h.anchorId) ?? '#${h.anchorId}';
-      b.write('<li><a href="${attr(href)}">${escape(InlineRun.plainText(h.runs).replaceAll(softBreak, ' '))}</a>');
+      b.write(
+        '<li><a href="${attr(href)}">${escape(InlineRun.plainText(h.runs).replaceAll(softBreak, ' '))}</a>',
+      );
     }
     b.write('</li>');
     for (; open > 0; open--) {
@@ -144,7 +149,9 @@ final class HtmlBodyWriter {
         while (stack.length < depth) {
           final level = stack.length + 1;
           final open = level == depth ? (tag, key) : ('ul', 'bullet');
-          b.write('<${open.$1}${open.$2 == 'task' ? ' class="wonky-tasks"' : ''}>\n');
+          b.write(
+            '<${open.$1}${open.$2 == 'task' ? ' class="wonky-tasks"' : ''}>\n',
+          );
           if (level < depth) b.write('<li class="wonky-list-gap">');
           stack.add(open);
         }
@@ -165,15 +172,21 @@ final class HtmlBodyWriter {
       case ParagraphBlock(:final runs):
         return runs.isEmpty ? '<p>$_br</p>' : '<p>${inline(runs)}</p>';
       case HeadingBlock(:final level, :final runs, :final anchorId):
-        return '<h$level id="${attr(anchorId)}">${inline(runs)}</h$level>';
+        return '<h$level id="${attr(anchorId)}">${runs.isEmpty ? _br : inline(runs)}</h$level>';
       case QuoteBlock(:final lines):
         return '<blockquote>${lines.map((l) => l.isEmpty ? '<p>$_br</p>' : '<p>${inline(l)}</p>').join()}</blockquote>';
       case CodeBlock(:final language, :final text):
-        final cls = language.isEmpty ? '' : ' class="language-${attr(language)}"';
-        final label = language.isEmpty ? '' : ' data-language="${attr(language)}"';
-        return '<pre class="wonky-code"$label><code$cls>${highlighted(text, language)}</code></pre>';
+        final cls = language.isEmpty
+            ? ''
+            : ' class="language-${attr(language)}"';
+        final label = language.isEmpty
+            ? ''
+            : ' data-language="${attr(language)}"';
+        return '<pre class="wonky-code"$label><code$cls>${highlighted(text, language)}\n</code></pre>';
       case ImageBlock():
-        final src = options.imageSource == null ? block.src : options.imageSource!(block);
+        final src = options.imageSource == null
+            ? block.src
+            : options.imageSource!(block);
         if (src == null) {
           return '<p class="wonky-image-missing">[Image: ${escape(block.alt)}]</p>';
         }
@@ -223,7 +236,9 @@ final class HtmlBodyWriter {
     var pos = 0;
     for (final s in spans) {
       if (s.start > pos) b.write(escape(text.substring(pos, s.start)));
-      b.write('<span class="tok-${s.token.name}">${escape(text.substring(s.start, s.end))}</span>');
+      b.write(
+        '<span class="tok-${s.token.name}">${escape(text.substring(s.start, s.end))}</span>',
+      );
       pos = s.end;
     }
     if (pos < text.length) b.write(escape(text.substring(pos)));
@@ -238,7 +253,9 @@ final class HtmlBodyWriter {
       final r = runs[i];
       if (r.link != null) {
         var j = i;
-        while (j < runs.length && runs[j].link == r.link && runs[j].mentionUserUuid == r.mentionUserUuid) {
+        while (j < runs.length &&
+            runs[j].link == r.link &&
+            runs[j].mentionUserUuid == r.mentionUserUuid) {
           j++;
         }
         final inner = runs.sublist(i, j).map(_run).join();
@@ -248,13 +265,22 @@ final class HtmlBodyWriter {
             '$inner</a>',
           );
         } else {
-          b.write('<a href="${attr(options.links.resolve(r.link!))}" rel="noopener noreferrer">$inner</a>');
+          b.write(
+            '<a href="${attr(options.links.resolve(r.link!))}" rel="noopener noreferrer">$inner</a>',
+          );
         }
         i = j;
         continue;
       }
       b.write(_run(r));
       i++;
+    }
+    // A trailing line break is invisible in HTML; double it (importers and
+    // browsers drop one).
+    final all = InlineRun.plainText(runs);
+    final lastBreak = all.lastIndexOf(softBreak);
+    if (lastBreak >= 0 && all.substring(lastBreak + 1).trim().isEmpty) {
+      b.write(_br);
     }
     return b.toString();
   }

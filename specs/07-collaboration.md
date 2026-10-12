@@ -114,7 +114,7 @@ Editors+ can delete any thread. Viewers see comments only if the owner allows it
 ## 4. Notifications
 
 ```yaml
-class: Notification
+class: UserNotification     # named so it does not clash with Flutter's Notification
 table: notification
 fields:
   userId: int, relation(parent=user_profile, onDelete=Cascade)

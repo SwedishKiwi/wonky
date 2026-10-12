@@ -304,7 +304,7 @@ class WonkyDeltaParser {
     final end = line.endAttributes;
     final overlays = AttributionMapping.overlaysOf(end);
     final metadata = <String, dynamic>{
-      if (overlays != null) WonkyNodeMetadata.lineAttributes: overlays,
+      WonkyNodeMetadata.lineAttributes: ?overlays,
     };
 
     final list = end?[DeltaKeys.list];
@@ -354,7 +354,7 @@ class WonkyDeltaParser {
       metadata: {
         NodeMetadata.blockType: codeAttribution,
         WonkyNodeMetadata.codeLanguage: language,
-        if (overlays != null) WonkyNodeMetadata.lineAttributes: overlays,
+        WonkyNodeMetadata.lineAttributes: ?overlays,
       },
     );
   }

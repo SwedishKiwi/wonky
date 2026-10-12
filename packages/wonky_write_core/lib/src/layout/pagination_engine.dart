@@ -8,7 +8,12 @@ import 'dart:math' as math;
 /// Insets in points.
 final class EdgeInsetsPt {
   /// Creates insets.
-  const EdgeInsetsPt({this.top = 0, this.right = 0, this.bottom = 0, this.left = 0});
+  const EdgeInsetsPt({
+    this.top = 0,
+    this.right = 0,
+    this.bottom = 0,
+    this.left = 0,
+  });
 
   /// All equal.
   const EdgeInsetsPt.all(double v) : this(top: v, right: v, bottom: v, left: v);
@@ -61,12 +66,14 @@ final class PageGeometry {
   final double footerDistance;
 
   /// Top of the content box.
-  double get contentTop =>
-      headerHeight > 0 ? math.max(margins.top, headerDistance + headerHeight + 6) : margins.top;
+  double get contentTop => headerHeight > 0
+      ? math.max(margins.top, headerDistance + headerHeight + 6)
+      : margins.top;
 
   /// Distance of the content box bottom from the page bottom.
-  double get contentBottom =>
-      footerHeight > 0 ? math.max(margins.bottom, footerDistance + footerHeight + 6) : margins.bottom;
+  double get contentBottom => footerHeight > 0
+      ? math.max(margins.bottom, footerDistance + footerHeight + 6)
+      : margins.bottom;
 
   /// Content box height.
   double get contentHeight => pageHeight - contentTop - contentBottom;
@@ -79,7 +86,11 @@ final class PageGeometry {
 /// splitting rows taller than a page).
 final class RowMetrics {
   /// Creates row metrics.
-  const RowMetrics(this.height, {this.cellLineHeights = const [], this.cellPadding = 0});
+  const RowMetrics(
+    this.height, {
+    this.cellLineHeights = const [],
+    this.cellPadding = 0,
+  });
 
   /// Full row height.
   final double height;
@@ -154,7 +165,9 @@ final class BlockMetrics {
   double get height {
     if (fixedHeight != null) return fixedHeight!;
     if (rows != null) return rows!.fold(0.0, (s, r) => s + r.height);
-    return paddingTop + (lineHeights ?? const [0]).fold(0.0, (s, h) => s + h) + paddingBottom;
+    return paddingTop +
+        (lineHeights ?? const [0]).fold(0.0, (s, h) => s + h) +
+        paddingBottom;
   }
 }
 
@@ -283,13 +296,19 @@ final class PaginationEngine {
 
   /// Paginates [blocks] into pages of [geometry] ([firstPage] for page 0
   /// when it differs, e.g. a different first-page header).
-  PaginationResult paginate(List<BlockMetrics> blocks, PageGeometry geometry, {PageGeometry? firstPage}) {
+  PaginationResult paginate(
+    List<BlockMetrics> blocks,
+    PageGeometry geometry, {
+    PageGeometry? firstPage,
+  }) {
     final pages = <PageLayout>[];
     var page = PageLayout(0);
     pages.add(page);
     var y = 0.0;
     var prevSpaceAfter = 0.0;
-    double capacity() => (page.index == 0 && firstPage != null ? firstPage : geometry).contentHeight;
+    double capacity() =>
+        (page.index == 0 && firstPage != null ? firstPage : geometry)
+            .contentHeight;
     bool pageEmpty() => page.slices.isEmpty;
 
     void newPage() {
@@ -310,16 +329,21 @@ final class PaginationEngine {
         var j = i;
         var prevAfter = 0.0;
         while (j < blocks.length && blocks[j].keepWithNext) {
-          groupHeight += (j == i ? 0 : math.max(prevAfter, blocks[j].spaceBefore)) + blocks[j].height;
+          groupHeight +=
+              (j == i ? 0 : math.max(prevAfter, blocks[j].spaceBefore)) +
+              blocks[j].height;
           prevAfter = blocks[j].spaceAfter;
           j++;
         }
         if (j < blocks.length) {
           final next = blocks[j];
-          groupHeight += math.max(prevAfter, next.spaceBefore) + _minChunk(next);
+          groupHeight +=
+              math.max(prevAfter, next.spaceBefore) + _minChunk(next);
         }
         final remaining = capacity() - y - gap;
-        if (groupHeight > remaining && !pageEmpty() && groupHeight <= capacity()) {
+        if (groupHeight > remaining &&
+            !pageEmpty() &&
+            groupHeight <= capacity()) {
           newPage();
           gap = 0;
         }
@@ -329,14 +353,20 @@ final class PaginationEngine {
         case BlockMetricsKind.rule:
           if (pageEmpty()) {
             // A rule at the top of a page is dropped visually.
-            page.slices.add(PlacedSlice(blockIndex: b.blockIndex, y: 0, height: 0));
+            page.slices.add(
+              PlacedSlice(blockIndex: b.blockIndex, y: 0, height: 0),
+            );
           } else {
             final h = b.height;
             if (gap + h > capacity() - y) {
               newPage();
-              page.slices.add(PlacedSlice(blockIndex: b.blockIndex, y: 0, height: 0));
+              page.slices.add(
+                PlacedSlice(blockIndex: b.blockIndex, y: 0, height: 0),
+              );
             } else {
-              page.slices.add(PlacedSlice(blockIndex: b.blockIndex, y: y + gap, height: h));
+              page.slices.add(
+                PlacedSlice(blockIndex: b.blockIndex, y: y + gap, height: h),
+              );
               y += gap + h;
             }
           }
@@ -353,12 +383,37 @@ final class PaginationEngine {
             newPage();
             gap = 0;
           }
-          page.slices.add(PlacedSlice(blockIndex: b.blockIndex, y: y + gap, height: h, scale: scale));
+          page.slices.add(
+            PlacedSlice(
+              blockIndex: b.blockIndex,
+              y: y + gap,
+              height: h,
+              scale: scale,
+            ),
+          );
           y += gap + h;
         case BlockMetricsKind.table:
-          _placeTable(b, gap, () => y, (v) => y = v, () => page, newPage, capacity, pageEmpty);
+          _placeTable(
+            b,
+            gap,
+            () => y,
+            (v) => y = v,
+            () => page,
+            newPage,
+            capacity,
+            pageEmpty,
+          );
         case BlockMetricsKind.text:
-          _placeText(b, gap, () => y, (v) => y = v, () => page, newPage, capacity, pageEmpty);
+          _placeText(
+            b,
+            gap,
+            () => y,
+            (v) => y = v,
+            () => page,
+            newPage,
+            capacity,
+            pageEmpty,
+          );
       }
       prevSpaceAfter = b.spaceAfter;
     }
@@ -371,8 +426,12 @@ final class PaginationEngine {
 
   double _minChunk(BlockMetrics b) {
     if (b.rows != null && b.rows!.isNotEmpty) {
-      final header = b.rows!.take(b.headerRows).fold(0.0, (s, r) => s + r.height);
-      final first = b.rows!.length > b.headerRows ? b.rows![b.headerRows].height : 0.0;
+      final header = b.rows!
+          .take(b.headerRows)
+          .fold(0.0, (s, r) => s + r.height);
+      final first = b.rows!.length > b.headerRows
+          ? b.rows![b.headerRows].height
+          : 0.0;
       return header + first;
     }
     final lines = b.lineHeights;
@@ -393,7 +452,15 @@ final class PaginationEngine {
     final lines = b.lineHeights ?? [b.height];
     final n = lines.length;
     if (gap + b.height <= capacity() - getY()) {
-      page().slices.add(PlacedSlice(blockIndex: b.blockIndex, y: getY() + gap, height: b.height, lineFrom: 0, lineTo: n));
+      page().slices.add(
+        PlacedSlice(
+          blockIndex: b.blockIndex,
+          y: getY() + gap,
+          height: b.height,
+          lineFrom: 0,
+          lineTo: n,
+        ),
+      );
       setY(getY() + gap + b.height);
       return;
     }
@@ -437,10 +504,13 @@ final class PaginationEngine {
         // On an empty page place at least one line (lines taller than a
         // page cannot be helped); keep widows if possible.
         if (k == 0) k = 1;
-        if (left - k < widows && left > widows && k > left - widows) k = left - widows;
+        if (left - k < widows && left > widows && k > left - widows) {
+          k = left - widows;
+        }
         if (k < 1) k = 1;
       }
-      final sliceH = pad + lines.sublist(from, from + k).fold(0.0, (s, x) => s + x);
+      final sliceH =
+          pad + lines.sublist(from, from + k).fold(0.0, (s, x) => s + x);
       page().slices.add(
         PlacedSlice(
           blockIndex: b.blockIndex,
@@ -474,14 +544,24 @@ final class PaginationEngine {
     final headerH = rows.take(headerCount).fold(0.0, (s, r) => s + r.height);
     if (gap + b.height <= capacity() - getY()) {
       page().slices.add(
-        PlacedSlice(blockIndex: b.blockIndex, y: getY() + gap, height: b.height, rowFrom: 0, rowTo: rows.length),
+        PlacedSlice(
+          blockIndex: b.blockIndex,
+          y: getY() + gap,
+          height: b.height,
+          rowFrom: 0,
+          rowTo: rows.length,
+        ),
       );
       setY(getY() + gap + b.height);
       return;
     }
     // Header + first body row must fit, else start on a new page.
-    final firstBody = rows.length > headerCount ? rows[headerCount].height : 0.0;
-    if (!pageEmpty() && gap + headerH + math.min(firstBody, capacity() - headerH) > capacity() - getY()) {
+    final firstBody = rows.length > headerCount
+        ? rows[headerCount].height
+        : 0.0;
+    if (!pageEmpty() &&
+        gap + headerH + math.min(firstBody, capacity() - headerH) >
+            capacity() - getY()) {
       newPage();
       gap = 0;
     }
@@ -507,11 +587,16 @@ final class PaginationEngine {
         }
         splitHere = ranges;
       }
-      while (pendingSplit == null && r < rows.length && h + rows[r].height <= available) {
+      while (pendingSplit == null &&
+          r < rows.length &&
+          h + rows[r].height <= available) {
         h += rows[r].height;
         r++;
       }
-      if (pendingSplit == null && r < rows.length && r == start && splitHere == null) {
+      if (pendingSplit == null &&
+          r < rows.length &&
+          r == start &&
+          splitHere == null) {
         // A row taller than the remaining space.
         final row = rows[r];
         if (row.height > capacity() - headerH || pageEmpty()) {
@@ -555,13 +640,19 @@ final class PaginationEngine {
 
   /// Splits a row at line boundaries per cell. [ranges] are the remaining
   /// `(from, to)` lines per cell. Returns (height, placed ranges, done).
-  (double, List<(int, int)>, bool) _splitRow(RowMetrics row, List<(int, int)> ranges, double available) {
+  (double, List<(int, int)>, bool) _splitRow(
+    RowMetrics row,
+    List<(int, int)> ranges,
+    double available,
+  ) {
     final placed = <(int, int)>[];
     var maxH = 0.0;
     var done = true;
     for (var c = 0; c < ranges.length; c++) {
       final (from, to) = ranges[c];
-      final lines = c < row.cellLineHeights.length ? row.cellLineHeights[c] : const <double>[];
+      final lines = c < row.cellLineHeights.length
+          ? row.cellLineHeights[c]
+          : const <double>[];
       var h = row.cellPadding;
       var k = from;
       while (k < to && h + lines[k] <= available) {
@@ -581,6 +672,11 @@ final class PaginationEngine {
 
   List<(int, int)> _rest(RowMetrics row, List<(int, int)> placed) => [
     for (var c = 0; c < placed.length; c++)
-      (placed[c].$2, c < row.cellLineHeights.length ? row.cellLineHeights[c].length : placed[c].$2),
+      (
+        placed[c].$2,
+        c < row.cellLineHeights.length
+            ? row.cellLineHeights[c].length
+            : placed[c].$2,
+      ),
   ];
 }

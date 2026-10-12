@@ -35,13 +35,17 @@ class FeedbackEndpoint extends Endpoint {
         platform: cap(f.platform, 64),
         route: f.route == null ? null : cap(f.route!, 500),
         stackTrace: f.stackTrace == null ? null : cap(f.stackTrace!, maxStack),
-        contextJson: f.contextJson == null ? null : cap(f.contextJson!, maxMessage),
+        contextJson: f.contextJson == null
+            ? null
+            : cap(f.contextJson!, maxMessage),
         createdAt: nowUtc(),
       ),
     );
     session.log(
       'Feedback (${f.kind.name}) from ${f.app} ${f.appVersion} on ${f.platform}',
-      level: f.kind == FeedbackKind.errorReport ? LogLevel.warning : LogLevel.info,
+      level: f.kind == FeedbackKind.errorReport
+          ? LogLevel.warning
+          : LogLevel.info,
     );
   }
 }

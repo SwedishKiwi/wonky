@@ -78,7 +78,8 @@ abstract final class SheetsService {
   ) async {
     final record = await ServerChangeRecord.db.findFirstRow(
       session,
-      where: (t) => t.revertChangeId.equals(changeId) | t.changeId.equals(changeId),
+      where: (t) =>
+          t.revertChangeId.equals(changeId) | t.changeId.equals(changeId),
     );
     if (record == null) throw Errors.notFound('Change');
     final item = await _spreadsheet(

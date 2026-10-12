@@ -79,12 +79,16 @@ abstract final class WriteExportService {
     if (role < Role.editor && !item.nonEditorsCanExport) {
       throw Errors.forbidden('The owner has disabled downloads for viewers.');
     }
-    if (revision != null && revision != doc.headRevision && role < Role.editor) {
+    if (revision != null &&
+        revision != doc.headRevision &&
+        role < Role.editor) {
       throw Errors.forbidden('Exporting older versions requires edit access.');
     }
     final fmt = format.toLowerCase();
     if (!_textFormats.contains(fmt) && !exporters.containsKey(fmt)) {
-      throw Errors.unavailable('Export to "$format" is not available on the server.');
+      throw Errors.unavailable(
+        'Export to "$format" is not available on the server.',
+      );
     }
     final running = _running[actor.userId] ?? 0;
     if (running >= maxConcurrentPerUser) {
@@ -286,11 +290,16 @@ abstract final class WriteExportService {
     if (addresses.isEmpty || addresses.any(_isPrivate)) {
       throw Errors.forbidden('This address cannot be fetched.');
     }
-    final client = HttpClient()..connectionTimeout = const Duration(seconds: 10);
+    final client = HttpClient()
+      ..connectionTimeout = const Duration(seconds: 10);
     try {
-      final request = await client.getUrl(uri).timeout(const Duration(seconds: 10));
+      final request = await client
+          .getUrl(uri)
+          .timeout(const Duration(seconds: 10));
       request.followRedirects = false;
-      final response = await request.close().timeout(const Duration(seconds: 10));
+      final response = await request.close().timeout(
+        const Duration(seconds: 10),
+      );
       if (response.statusCode != 200) {
         throw Errors.notFound('Image');
       }

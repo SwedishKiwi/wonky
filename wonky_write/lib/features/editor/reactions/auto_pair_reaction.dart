@@ -26,7 +26,7 @@ class AutoPairReaction extends EditReaction {
   (String, int, String)? _pending;
 
   @override
-  void react(EditContext editContext, RequestDispatcher requestDispatcher, List<EditEvent> changeList) {
+  void react(EditContext editorContext, RequestDispatcher requestDispatcher, List<EditEvent> changeList) {
     final edits = changeList.whereType<DocumentEdit>().map((e) => e.change).toList();
     if (edits.isEmpty) {
       return;
@@ -35,7 +35,7 @@ class AutoPairReaction extends EditReaction {
       _pending = null;
       return;
     }
-    final document = editContext.document;
+    final document = editorContext.document;
 
     // Wrap: a selection was replaced by an opener.
     if (edits.length >= 2) {

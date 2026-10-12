@@ -59,9 +59,11 @@ indexes:
 Sharing tables (`DriveItemPermission`, `ShareLink`) are defined in
 [06-sharing-and-permissions.md](06-sharing-and-permissions.md).
 
-Full-text search uses a Postgres `tsvector` column maintained by a trigger (added through a
-hand-written migration step) over `name`, `description` and an extracted `searchText` field
-updated asynchronously (document plain text; spreadsheet sheet names + first 10k cell values).
+Full-text search uses Postgres `to_tsvector('simple', …)`/prefix `to_tsquery` computed at query
+time (plus `ILIKE` on the name) over `name`, `description` and an extracted `searchText` field
+updated asynchronously (document plain text, throttled; spreadsheet sheet names + first 10k cell
+values), restricted to items the caller can access. A GIN index via a hand-written migration step
+is a later optimization (it must then also be added to `definition.sql`).
 
 ## 2. Endpoints — `DriveEndpoint` (`drive`)
 
@@ -79,8 +81,8 @@ updated asynchronously (document plain text; spreadsheet sheet names + first 10k
 | `setStarred(uuid, starred)` · `setPinnedOffline(uuid, pinned)` | |
 | `trash(uuids)` · `restore(uuids)` · `deletePermanently(uuids)` · `emptyTrash()` | Trash auto-purges after 30 days (FutureCall `drive.purgeTrash`, daily). |
 | `watch()` | **Stream** of `DriveChange` events for items visible to the user (created/renamed/moved/trashed/shared/modified) so lists update live. |
-| `listTemplates(kind)` | Template gallery. |
-| `import(uploadId, kind, options)` | Server-side import pipeline (see each app's import spec) returning the new item. |
+| `listTemplates(kind)` | Template gallery: `TemplateView`s of the built-in templates (compiled into the server, stable UUIDv5 ids `wonky-template:<key>`) plus items published with `setTemplate(uuid, category)`. |
+| `import(uploadId, kind, options: DriveImportOptions)` | Server-side import pipeline (see each app's import spec) returning the new item. |
 | `storageUsage()` | Bytes used by owned items. |
 | `setThumbnail(uuid, uploadedFileUuid)` | Clients render thumbnails (first page / visible grid area, light theme, 400×300 PNG) at most every 10 min while editing and upload them; Editors+ only. |
 

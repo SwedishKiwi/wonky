@@ -35,19 +35,16 @@ class WriteEditorController extends ChangeNotifier {
   WriteEditorController({
     Delta? initialDelta,
     this.documentUuid = '',
-    String userUuid = '',
-    EditorMode mode = EditorMode.editing,
-    WriteEditorPreferences preferences = const WriteEditorPreferences(),
+    this.userUuid = '',
+    this._mode = EditorMode.editing,
+    this._preferences = const WriteEditorPreferences(),
     String Function()? newEmbedId,
     String Function()? newNodeId,
     Clock? clock,
     bool? verifyInvariants,
     this.maxDocumentChars = 2000000,
     DeltaDocumentMapper mapper = const DeltaDocumentMapper(),
-  })  : _userUuid = userUuid,
-        _mode = mode,
-        _preferences = preferences,
-        _clock = clock ?? const Clock(),
+  })  : _clock = clock ?? const Clock(),
         newEmbedId = newEmbedId ?? UuidV7Generator.instance.nextString {
     _pipeline = EditorPipeline(
       initialDelta: initialDelta ?? (Delta()..insert('\n')),
@@ -382,13 +379,8 @@ class WriteEditorController extends ChangeNotifier {
   // ---------------------------------------------------------------------------
   // Modes and preferences.
 
-  String _userUuid;
-
   /// The local user's UUID (suggestion authorship, own mentions).
-  String get userUuid => _userUuid;
-  set userUuid(String value) {
-    _userUuid = value;
-  }
+  String userUuid;
 
   EditorMode _mode;
 
@@ -446,7 +438,7 @@ class WriteEditorController extends ChangeNotifier {
     final rewritten = _rewriter.rewrite(
       before,
       change.delta,
-      SuggestionContext(userUuid: _userUuid, nowMs: now.millisecondsSinceEpoch, suggestionId: id, via: suggestionVia),
+      SuggestionContext(userUuid: userUuid, nowMs: now.millisecondsSinceEpoch, suggestionId: id, via: suggestionVia),
     );
     if (rewritten == change.delta) {
       _emit(change);

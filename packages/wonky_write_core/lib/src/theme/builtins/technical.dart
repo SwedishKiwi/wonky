@@ -90,14 +90,28 @@ final Map<String, Object?> technicalThemeJson = {
     'inlineCode': {'borderRadius': '2px'},
     'blockquote': {
       'bar': {'width': '3px', 'style': 'solid', 'color': '@quoteBar'},
-      'padding': {'top': '6pt', 'right': '8pt', 'bottom': '6pt', 'left': '10pt'},
+      'padding': {
+        'top': '6pt',
+        'right': '8pt',
+        'bottom': '6pt',
+        'left': '10pt',
+      },
     },
-    'list': {'itemSpacing': '0pt', 'indentPerLevel': '16pt', 'spaceAfter': '6pt'},
+    'list': {
+      'itemSpacing': '0pt',
+      'indentPerLevel': '16pt',
+      'spaceAfter': '6pt',
+    },
     'task': {'spaceAfter': '6pt'},
     'table': {
       'fontSizeRatio': 0.95,
       'borders': 'all',
-      'cellPadding': {'top': '3pt', 'right': '6pt', 'bottom': '3pt', 'left': '6pt'},
+      'cellPadding': {
+        'top': '3pt',
+        'right': '6pt',
+        'bottom': '3pt',
+        'left': '6pt',
+      },
     },
     'image': {'borderRadius': '2px'},
   },

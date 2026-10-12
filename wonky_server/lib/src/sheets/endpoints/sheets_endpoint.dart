@@ -12,15 +12,29 @@ class SheetsEndpoint extends Endpoint {
 
   /// Reserves up to [count] (≤ 5) empty spaces for offline creation.
   Future<List<UuidValue>> reserveSpaces(Session session, int count) async =>
-      SpaceService.reserveSpaces(session, await UserService.actorOf(session), count);
+      SpaceService.reserveSpaces(
+        session,
+        await UserService.actorOf(session),
+        count,
+      );
 
   /// Grants membership of the spreadsheet's space (role mirrored from the
   /// ACL) and adds it to the caller's active set.
-  Future<SubscribeResult> subscribe(Session session, UuidValue itemUuid) async =>
-      SpaceService.subscribe(session, await UserService.actorOf(session), itemUuid);
+  Future<SubscribeResult> subscribe(
+    Session session,
+    UuidValue itemUuid,
+  ) async => SpaceService.subscribe(
+    session,
+    await UserService.actorOf(session),
+    itemUuid,
+  );
 
   Future<void> unsubscribe(Session session, UuidValue itemUuid) async =>
-      SpaceService.unsubscribe(session, await UserService.actorOf(session), itemUuid);
+      SpaceService.unsubscribe(
+        session,
+        await UserService.actorOf(session),
+        itemUuid,
+      );
 
   /// Pending-change guard: re-grants spaces with unsynced local changes.
   Future<List<UuidValue>> ensureSubscribed(
@@ -34,16 +48,32 @@ class SheetsEndpoint extends Endpoint {
 
   /// Row counts for download progress.
   Future<SpaceStats> spaceStats(Session session, UuidValue itemUuid) async =>
-      SpaceService.statsFor(session, await UserService.actorOf(session), itemUuid);
+      SpaceService.statsFor(
+        session,
+        await UserService.actorOf(session),
+        itemUuid,
+      );
 
   /// Undo of a server-side change (`sheets.serverChange`).
-  Future<RevertResult> revertChange(Session session, UuidValue changeId) async =>
-      SheetsService.revertChange(session, await UserService.actorOf(session), changeId);
+  Future<RevertResult> revertChange(
+    Session session,
+    UuidValue changeId,
+  ) async => SheetsService.revertChange(
+    session,
+    await UserService.actorOf(session),
+    changeId,
+  );
 
   /// Redo of a reverted server-side change ([changeId] of the original or of
   /// its revert).
-  Future<RevertResult> reapplyChange(Session session, UuidValue changeId) async =>
-      SheetsService.reapplyChange(session, await UserService.actorOf(session), changeId);
+  Future<RevertResult> reapplyChange(
+    Session session,
+    UuidValue changeId,
+  ) async => SheetsService.reapplyChange(
+    session,
+    await UserService.actorOf(session),
+    changeId,
+  );
 
   Future<CellHistoryPage> cellHistory(
     Session session,

@@ -8,3 +8,4 @@ export 'html/html_importer.dart';
 export 'html/html_sources.dart' show HtmlSource, detectHtmlSource;
 export 'import_limits.dart';
 export 'txt_importer.dart';
+export 'wonky_importers.dart';

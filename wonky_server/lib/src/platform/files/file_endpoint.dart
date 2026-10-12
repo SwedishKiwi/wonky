@@ -32,13 +32,25 @@ class FileEndpoint extends Endpoint {
     kind: kind ?? StoredFileKind.image,
   );
 
-  Future<FileUrlView> completeUpload(Session session, UuidValue fileUuid) async =>
-      FileService.completeUpload(session, await UserService.actorOf(session), fileUuid);
+  Future<FileUrlView> completeUpload(
+    Session session,
+    UuidValue fileUuid,
+  ) async => FileService.completeUpload(
+    session,
+    await UserService.actorOf(session),
+    fileUuid,
+  );
 
   /// Status and signed URL (15 min) of a file.
   Future<FileUrlView> getUrl(Session session, UuidValue fileUuid) async =>
       FileService.getUrl(session, await UserService.actorOf(session), fileUuid);
 
-  Future<List<FileUrlView>> getUrls(Session session, List<UuidValue> fileUuids) async =>
-      FileService.getUrls(session, await UserService.actorOf(session), fileUuids);
+  Future<List<FileUrlView>> getUrls(
+    Session session,
+    List<UuidValue> fileUuids,
+  ) async => FileService.getUrls(
+    session,
+    await UserService.actorOf(session),
+    fileUuids,
+  );
 }

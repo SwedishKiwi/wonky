@@ -12,7 +12,8 @@ final class ZipEntry {
   ZipEntry(this.path, this.bytes, {this.store = false});
 
   /// Creates a UTF-8 text entry.
-  ZipEntry.text(this.path, String text, {this.store = false}) : bytes = Uint8List.fromList(utf8.encode(text));
+  ZipEntry.text(this.path, String text, {this.store = false})
+    : bytes = Uint8List.fromList(utf8.encode(text));
 
   /// Path inside the archive (`/`-separated).
   final String path;
@@ -37,19 +38,25 @@ abstract final class DeterministicZip {
     List<String> first = const [],
     bool sort = true,
   }) {
-    final head = [
-      for (final p in first) ...entries.where((e) => e.path == p),
-    ];
+    final head = [for (final p in first) ...entries.where((e) => e.path == p)];
     final rest = entries.where((e) => !first.contains(e.path)).toList();
     if (sort) rest.sort((a, b) => a.path.compareTo(b.path));
     final time = modified ?? defaultTime;
     // Zip has no time zone; use the UTC wall clock so output is identical
     // on every machine.
-    final wall = DateTime(time.toUtc().year, time.toUtc().month, time.toUtc().day, time.toUtc().hour,
-        time.toUtc().minute, time.toUtc().second);
+    final wall = DateTime(
+      time.toUtc().year,
+      time.toUtc().month,
+      time.toUtc().day,
+      time.toUtc().hour,
+      time.toUtc().minute,
+      time.toUtc().second,
+    );
     final archive = Archive();
     for (final e in [...head, ...rest]) {
-      final f = e.store ? ArchiveFile.noCompress(e.path, e.bytes.length, e.bytes) : ArchiveFile.bytes(e.path, e.bytes);
+      final f = e.store
+          ? ArchiveFile.noCompress(e.path, e.bytes.length, e.bytes)
+          : ArchiveFile.bytes(e.path, e.bytes);
       f.lastModTime = wall.millisecondsSinceEpoch ~/ 1000;
       archive.addFile(f);
     }

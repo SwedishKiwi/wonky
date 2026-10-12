@@ -15,8 +15,7 @@ abstract final class CommentCopier {
   ) async {
     final threads = await CommentThread.db.find(
       session,
-      where: (t) =>
-          t.itemId.equals(source.id!) & t.suggestionId.equals(null),
+      where: (t) => t.itemId.equals(source.id!) & t.suggestionId.equals(null),
     );
     return {
       for (final t in threads) t.uuid.uuid: const Uuid().v7(),

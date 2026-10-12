@@ -91,7 +91,11 @@ final class EdgesPt with ResolvedValue {
 /// A concrete border line.
 final class BorderPt with ResolvedValue {
   /// Creates a border.
-  const BorderPt({required this.width, required this.style, required this.color});
+  const BorderPt({
+    required this.width,
+    required this.style,
+    required this.color,
+  });
 
   /// No border.
   static const none = BorderPt(width: 0, style: LineStyle.none, color: 0);
@@ -213,7 +217,8 @@ final class ResolvedTextStyle with ResolvedValue {
   double get lineHeightPt => fontSize * lineHeight;
 
   /// WCAG large text: ≥ 18pt, or ≥ 14pt with weight ≥ 700 (06 §10.6).
-  bool get isLargeText => fontSize >= 18 || (fontSize >= 14 && fontWeight >= 700);
+  bool get isLargeText =>
+      fontSize >= 18 || (fontSize >= 14 && fontWeight >= 700);
 
   /// A copy with the given values replaced.
   ResolvedTextStyle copyWith({
@@ -239,7 +244,8 @@ final class ResolvedTextStyle with ResolvedValue {
   );
 
   /// The font face this style uses.
-  FontFaceKey get faceKey => FontFaceKey(fontFamily, fontWeight, italic: italic);
+  FontFaceKey get faceKey =>
+      FontFaceKey(fontFamily, fontWeight, italic: italic);
 
   @override
   JsonMap toJson() => {
@@ -471,7 +477,11 @@ final class ResolvedInline with ResolvedValue {
 /// Strikethrough delta.
 final class ResolvedStrike with ResolvedValue {
   /// Creates a strike style.
-  const ResolvedStrike({this.color, this.lineColor, required this.lineThickness});
+  const ResolvedStrike({
+    this.color,
+    this.lineColor,
+    required this.lineThickness,
+  });
 
   /// Text color of struck text, or `null` to keep.
   final int? color;
@@ -1393,7 +1403,11 @@ final class ResolvedWriteTheme with ResolvedValue {
     for (final t in syntax.values) {
       if (t.fontWeight != null) {
         faces.add(
-          FontFaceKey(codeBlock.style.fontFamily, t.fontWeight!, italic: t.italic),
+          FontFaceKey(
+            codeBlock.style.fontFamily,
+            t.fontWeight!,
+            italic: t.italic,
+          ),
         );
       } else if (t.italic) {
         faces.add(

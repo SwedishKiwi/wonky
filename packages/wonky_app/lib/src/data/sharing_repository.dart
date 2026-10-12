@@ -17,8 +17,7 @@ abstract class SharingRepository {
 
   Future<SharingInfo> updateRole(
     UuidValue itemUuid, {
-    int? userId,
-    String? invitedEmail,
+    required int userId,
     required AccessRole role,
     DateTime? expiresAt,
   });
@@ -48,11 +47,9 @@ class ServerSharingRepository implements SharingRepository {
   ServerSharingRepository(this.api);
 
   final Api api;
-  static const _e = 'sharing';
 
   @override
-  Future<SharingInfo> getSharing(UuidValue itemUuid) =>
-      api.call<SharingInfo>(_e, 'getSharing', {'itemUuid': itemUuid});
+  Future<SharingInfo> getSharing(UuidValue itemUuid) => api.guard((c) => c.sharing.getSharing(itemUuid));
 
   @override
   Future<SharingInfo> share(
@@ -62,81 +59,47 @@ class ServerSharingRepository implements SharingRepository {
     bool notify = true,
     String? message,
     DateTime? expiresAt,
-  }) => api.call<SharingInfo>(_e, 'share', {
-    'itemUuid': itemUuid,
-    'emails': emails,
-    'role': role,
-    'notify': notify,
-    'message': message,
-    'expiresAt': expiresAt,
-  });
+  }) => api.guard((c) => c.sharing.share(itemUuid, emails, role, notify, message, expiresAt));
 
   @override
   Future<SharingInfo> updateRole(
     UuidValue itemUuid, {
-    int? userId,
-    String? invitedEmail,
+    required int userId,
     required AccessRole role,
     DateTime? expiresAt,
-  }) => api.call<SharingInfo>(_e, 'updateRole', {
-    'itemUuid': itemUuid,
-    'userId': userId,
-    'invitedEmail': invitedEmail,
-    'role': role,
-    'expiresAt': expiresAt,
-  });
+  }) => api.guard((c) => c.sharing.updateRole(itemUuid, userId, role, expiresAt: expiresAt));
 
   @override
   Future<SharingInfo> remove(UuidValue itemUuid, {int? userId, String? invitedEmail}) =>
-      api.call<SharingInfo>(_e, 'remove', {
-        'itemUuid': itemUuid,
-        'userId': userId,
-        'invitedEmail': invitedEmail,
-      });
+      api.guard((c) => c.sharing.remove(itemUuid, userId, invitedEmail: invitedEmail));
 
   @override
   Future<SharingInfo> transferOwnership(UuidValue itemUuid, int newOwnerUserId) =>
-      api.call<SharingInfo>(_e, 'transferOwnership', {
-        'itemUuid': itemUuid,
-        'newOwnerUserId': newOwnerUserId,
-      });
+      api.guard((c) => c.sharing.transferOwnership(itemUuid, newOwnerUserId));
 
   @override
   Future<DriveItemView> respondToOwnershipTransfer(int transferId, bool accept) =>
-      api.call<DriveItemView>(_e, 'respondToOwnershipTransfer', {
-        'transferId': transferId,
-        'accept': accept,
-      });
+      api.guard((c) => c.sharing.respondToOwnershipTransfer(transferId, accept));
 
   @override
   Future<SharingInfo> setLink(UuidValue itemUuid, AccessRole? role) =>
-      api.call<SharingInfo>(_e, 'setLink', {'itemUuid': itemUuid, 'role': role});
+      api.guard((c) => c.sharing.setLink(itemUuid, role));
 
   @override
-  Future<SharingInfo> rotateLink(UuidValue itemUuid) =>
-      api.call<SharingInfo>(_e, 'rotateLink', {'itemUuid': itemUuid});
+  Future<SharingInfo> rotateLink(UuidValue itemUuid) => api.guard((c) => c.sharing.rotateLink(itemUuid));
 
   @override
   Future<SharingInfo> updateSettings(UuidValue itemUuid, ItemSharingSettings settings) =>
-      api.call<SharingInfo>(_e, 'updateSettings', {'itemUuid': itemUuid, 'settings': settings});
+      api.guard((c) => c.sharing.updateSettings(itemUuid, settings));
 
   @override
   Future<void> requestAccess(UuidValue itemUuid, AccessRole role, String? message) =>
-      api.call<void>(_e, 'requestAccess', {
-        'itemUuid': itemUuid,
-        'role': role,
-        'message': message,
-      });
+      api.guard((c) => c.sharing.requestAccess(itemUuid, role, message));
 
   @override
   Future<SharingInfo> handleAccessRequest(int requestId, bool approve, AccessRole? role) =>
-      api.call<SharingInfo>(_e, 'handleAccessRequest', {
-        'requestId': requestId,
-        'approve': approve,
-        'role': role,
-      });
+      api.guard((c) => c.sharing.handleAccessRequest(requestId, approve, role));
 
   @override
-  Future<InviteResolution> resolveInvite(String token) =>
-      api.call<InviteResolution>(_e, 'resolveInvite', {'token': token});
+  Future<InviteResolution> resolveInvite(String token) => api.guard((c) => c.sharing.resolveInvite(token));
 }

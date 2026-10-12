@@ -255,7 +255,9 @@ abstract final class UserService {
       displayName: displayName == null
           ? profile.displayName
           : _cleanDisplayName(displayName),
-      locale: locale == null ? profile.locale : (locale.isEmpty ? null : locale),
+      locale: locale == null
+          ? profile.locale
+          : (locale.isEmpty ? null : locale),
       timeZone: timeZone == null
           ? profile.timeZone
           : (timeZone.isEmpty ? null : timeZone),
@@ -293,7 +295,10 @@ abstract final class UserService {
 
   // ---------------------------------------------------------- preferences
 
-  static Future<UserPreferences> preferences(Session session, Actor actor) async {
+  static Future<UserPreferences> preferences(
+    Session session,
+    Actor actor,
+  ) async {
     final prefs = await UserPreferences.db.findFirstRow(
       session,
       where: (t) => t.userId.equals(actor.userId),

@@ -20,9 +20,9 @@ class WonkyTypingAttributesReaction extends EditReaction {
   DocumentSelection? _previousSelection;
 
   @override
-  void react(EditContext editContext, RequestDispatcher requestDispatcher, List<EditEvent> changeList) {
+  void react(EditContext editorContext, RequestDispatcher requestDispatcher, List<EditEvent> changeList) {
     final lastSelectionChange = changeList.lastWhereOrNull((e) => e is SelectionChangeEvent) as SelectionChangeEvent?;
-    final composer = editContext.find<MutableDocumentComposer>(Editor.composerKey);
+    final composer = editorContext.find<MutableDocumentComposer>(Editor.composerKey);
     if (lastSelectionChange == null) {
       return;
     }
@@ -42,7 +42,7 @@ class WonkyTypingAttributesReaction extends EditReaction {
       return;
     }
 
-    final node = editContext.document.getNodeById(selection.extent.nodeId);
+    final node = editorContext.document.getNodeById(selection.extent.nodeId);
     if (selection.isCollapsed &&
         node is TextNode &&
         node.text.isEmpty &&
@@ -56,7 +56,7 @@ class WonkyTypingAttributesReaction extends EditReaction {
       return;
     }
 
-    composer.preferences.replaceStyles(typingAttributesAt(editContext.document, selection));
+    composer.preferences.replaceStyles(typingAttributesAt(editorContext.document, selection));
   }
 
   /// The typing attributes for a caret at [selection] (empty when expanded).

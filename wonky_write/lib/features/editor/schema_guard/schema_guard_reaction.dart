@@ -27,13 +27,13 @@ class WonkySchemaGuardReaction extends EditReaction {
   };
 
   @override
-  void modifyContent(EditContext editContext, RequestDispatcher requestDispatcher, List<EditEvent> changeList) {
-    _guard(editContext, requestDispatcher, changeList);
+  void modifyContent(EditContext editorContext, RequestDispatcher requestDispatcher, List<EditEvent> changeList) {
+    _guard(editorContext, requestDispatcher, changeList);
   }
 
   @override
-  void react(EditContext editContext, RequestDispatcher requestDispatcher, List<EditEvent> changeList) {
-    _guard(editContext, requestDispatcher, changeList);
+  void react(EditContext editorContext, RequestDispatcher requestDispatcher, List<EditEvent> changeList) {
+    _guard(editorContext, requestDispatcher, changeList);
   }
 
   void _guard(EditContext editContext, RequestDispatcher requestDispatcher, List<EditEvent> changeList) {

@@ -29,7 +29,11 @@ class DocumentEndpoint extends Endpoint {
   }
 
   Future<DocumentInfo> getInfo(Session session, UuidValue documentUuid) async =>
-      DocumentService.getInfo(session, await UserService.actorOf(session), documentUuid);
+      DocumentService.getInfo(
+        session,
+        await UserService.actorOf(session),
+        documentUuid,
+      );
 
   /// Ops in [fromRevision]…[toRevision] (at most 1,000).
   Future<List<DocumentOpView>> getOps(

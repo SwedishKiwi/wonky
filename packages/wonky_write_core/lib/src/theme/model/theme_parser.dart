@@ -93,7 +93,11 @@ ThemeParseResult parseThemeJson(Object? json) {
     }
     _checkPaletteRefs(palette, 'palette', sink, base: null);
   } else if (json['palette'] == null) {
-    sink.error('palette', 'incomplete_palette', 'The light palette is missing.');
+    sink.error(
+      'palette',
+      'incomplete_palette',
+      'The light palette is missing.',
+    );
   }
 
   final elements = _parseElements(json['elements'], 'elements', sink, ctx);
@@ -101,8 +105,8 @@ ThemeParseResult parseThemeJson(Object? json) {
   final page =
       ThemeCatalog.page.parse(json['page'], 'page', ctx(FontRole.body)) ??
       PropertyBag.empty;
-  final syntax = _parseSyntax(json['syntax'], 'syntax', sink, ctx) ??
-      SyntaxPalette.empty;
+  final syntax =
+      _parseSyntax(json['syntax'], 'syntax', sink, ctx) ?? SyntaxPalette.empty;
   final overlays =
       ThemeCatalog.overlays.parse(
         json['overlays'],

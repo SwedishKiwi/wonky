@@ -32,7 +32,8 @@ abstract final class DriveViews {
     Map<int, Role>? roles,
   }) async {
     if (items.isEmpty) return const [];
-    final effective = roles ?? await AccessService.rolesFor(session, userId, items);
+    final effective =
+        roles ?? await AccessService.rolesFor(session, userId, items);
     final visible = [
       for (final item in items)
         if (effective[item.id!] != null) item,
@@ -86,12 +87,13 @@ abstract final class DriveViews {
             name: item.name,
             description: item.description,
             contentRef: item.contentRef,
-            parentUuid: item.parentId == null ? null : parentUuid[item.parentId],
+            parentUuid: item.parentId == null
+                ? null
+                : parentUuid[item.parentId],
             owner: users[item.ownerId]!,
             role: effective[item.id!]!.access,
             shared:
-                shared.contains(item.id) ||
-                linkByItem[item.id!]?.role != null,
+                shared.contains(item.id) || linkByItem[item.id!]?.role != null,
             linkRole: linkByItem[item.id!]?.role,
             thumbnailFileId: item.thumbnailFileId,
             sizeBytes: item.sizeBytes,

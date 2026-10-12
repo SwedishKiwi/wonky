@@ -426,7 +426,9 @@ TableBlock buildTable(
           c < r.length ? RunTools.trim(RunTools.singleLine(r[c])) : const [],
       ],
   ];
-  if (paddedRows.isEmpty) paddedRows.add([for (var c = 0; c < columns; c++) []]);
+  if (paddedRows.isEmpty) {
+    paddedRows.add([for (var c = 0; c < columns; c++) []]);
+  }
   final paddedAlign = [
     for (var c = 0; c < columns; c++) c < align.length ? align[c] : null,
   ];
@@ -448,9 +450,7 @@ TableBlock buildTable(
 ParagraphBlock imagePlaceholder(String alt, {String? detail}) {
   final a = ImportText.inline(alt).trim();
   final d = detail == null ? '' : ' ($detail)';
-  return ParagraphBlock([
-    InlineRun(a.isEmpty ? '[image$d]' : '[image: $a$d]'),
-  ]);
+  return ParagraphBlock([InlineRun(a.isEmpty ? '[image$d]' : '[image: $a$d]')]);
 }
 
 /// Normalizes a BCP-47 language tag (`EN-us` → `en-US`, `en_gb` →

@@ -41,6 +41,8 @@ export 'src/default_editor/debug_visualization.dart';
 export 'src/default_editor/default_document_editor.dart';
 export 'src/default_editor/default_document_editor_reactions.dart';
 export 'src/default_editor/document_caret_overlay.dart';
+// WONKY PATCH SE-5: export the undo/redo keyboard actions so apps can remove them.
+export 'src/undo_redo.dart';
 // WONKY PATCH SE-2, SE-3
 export 'src/default_editor/document_patch.dart';
 export 'src/default_editor/node_change_events.dart';

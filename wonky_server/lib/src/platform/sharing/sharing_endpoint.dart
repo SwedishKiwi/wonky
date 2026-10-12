@@ -10,7 +10,11 @@ class SharingEndpoint extends Endpoint {
   bool get requireLogin => true;
 
   Future<SharingInfo> getSharing(Session session, UuidValue itemUuid) async =>
-      SharingService.getSharing(session, await UserService.actorOf(session), itemUuid);
+      SharingService.getSharing(
+        session,
+        await UserService.actorOf(session),
+        itemUuid,
+      );
 
   Future<SharingInfo> share(
     Session session,
@@ -97,7 +101,11 @@ class SharingEndpoint extends Endpoint {
   );
 
   Future<SharingInfo> rotateLink(Session session, UuidValue itemUuid) async =>
-      SharingService.rotateLink(session, await UserService.actorOf(session), itemUuid);
+      SharingService.rotateLink(
+        session,
+        await UserService.actorOf(session),
+        itemUuid,
+      );
 
   Future<SharingInfo> updateSettings(
     Session session,
@@ -138,5 +146,9 @@ class SharingEndpoint extends Endpoint {
 
   /// Resolves a share link token (`/invite/<token>`).
   Future<InviteResolution> resolveInvite(Session session, String token) async =>
-      SharingService.resolveInvite(session, await UserService.actorOf(session), token);
+      SharingService.resolveInvite(
+        session,
+        await UserService.actorOf(session),
+        token,
+      );
 }

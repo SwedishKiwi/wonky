@@ -66,7 +66,21 @@ enum PageNumberFormat {
   String format(int n) {
     if (this == decimal || n < 1 || n >= 4000) return '$n';
     const values = [1000, 900, 500, 400, 100, 90, 50, 40, 10, 9, 5, 4, 1];
-    const symbols = ['M', 'CM', 'D', 'CD', 'C', 'XC', 'L', 'XL', 'X', 'IX', 'V', 'IV', 'I'];
+    const symbols = [
+      'M',
+      'CM',
+      'D',
+      'CD',
+      'C',
+      'XC',
+      'L',
+      'XL',
+      'X',
+      'IX',
+      'V',
+      'IV',
+      'I',
+    ];
     var rest = n;
     final b = StringBuffer();
     for (var i = 0; i < values.length; i++) {
@@ -110,14 +124,21 @@ abstract final class PageLength {
 
   static String _trim(double v) {
     final s = v.toStringAsFixed(4);
-    return s.contains('.') ? s.replaceAll(RegExp(r'0+$'), '').replaceAll(RegExp(r'\.$'), '') : s;
+    return s.contains('.')
+        ? s.replaceAll(RegExp(r'0+$'), '').replaceAll(RegExp(r'\.$'), '')
+        : s;
   }
 }
 
 /// Margins in points.
 final class PageMargins {
   /// Creates margins.
-  const PageMargins({required this.top, required this.right, required this.bottom, required this.left});
+  const PageMargins({
+    required this.top,
+    required this.right,
+    required this.bottom,
+    required this.left,
+  });
 
   /// All four equal.
   const PageMargins.all(double v) : this(top: v, right: v, bottom: v, left: v);
@@ -146,15 +167,25 @@ final class PageMargins {
   static PageMargins fromJson(Object? json) {
     if (json is String) return PageMargins.all(PageLength.parse(json));
     if (json is Map) {
-      double e(String k) => json[k] is String ? PageLength.parse(json[k] as String) : 72;
-      return PageMargins(top: e('top'), right: e('right'), bottom: e('bottom'), left: e('left'));
+      double e(String k) =>
+          json[k] is String ? PageLength.parse(json[k] as String) : 72;
+      return PageMargins(
+        top: e('top'),
+        right: e('right'),
+        bottom: e('bottom'),
+        left: e('left'),
+      );
     }
     throw const FormatException('Invalid margins');
   }
 
   @override
   bool operator ==(Object other) =>
-      other is PageMargins && other.top == top && other.right == right && other.bottom == bottom && other.left == left;
+      other is PageMargins &&
+      other.top == top &&
+      other.right == right &&
+      other.bottom == bottom &&
+      other.left == left;
 
   @override
   int get hashCode => Object.hash(top, right, bottom, left);
@@ -202,11 +233,17 @@ final class HeaderFooterSpec {
   static HeaderFooterSpec fromJson(Object? json, HeaderFooterSpec fallback) {
     if (json is! Map) return fallback;
     return HeaderFooterSpec(
-      enabled: json['enabled'] is bool ? json['enabled'] as bool : fallback.enabled,
+      enabled: json['enabled'] is bool
+          ? json['enabled'] as bool
+          : fallback.enabled,
       left: json['left'] is String ? json['left'] as String : fallback.left,
-      center: json['center'] is String ? json['center'] as String : fallback.center,
+      center: json['center'] is String
+          ? json['center'] as String
+          : fallback.center,
       right: json['right'] is String ? json['right'] as String : fallback.right,
-      distancePt: json['distance'] is String ? PageLength.parse(json['distance'] as String) : fallback.distancePt,
+      distancePt: json['distance'] is String
+          ? PageLength.parse(json['distance'] as String)
+          : fallback.distancePt,
     );
   }
 }
@@ -234,11 +271,20 @@ final class PageSetup {
   static const version = 1;
 
   /// Locales defaulting to Letter (others: A4).
-  static const letterLocales = {'en-US', 'en-CA', 'es-MX', 'fil-PH', 'es-CL', 'es-CO'};
+  static const letterLocales = {
+    'en-US',
+    'en-CA',
+    'es-MX',
+    'fil-PH',
+    'es-CL',
+    'es-CO',
+  };
 
   /// Defaults for new documents in [locale] (07 §6.1).
   factory PageSetup.defaultsFor(String locale) => PageSetup(
-    paper: letterLocales.contains(locale.replaceAll('_', '-')) ? PaperSize.letter : PaperSize.a4,
+    paper: letterLocales.contains(locale.replaceAll('_', '-'))
+        ? PaperSize.letter
+        : PaperSize.a4,
     header: const HeaderFooterSpec(enabled: true),
   );
 
@@ -293,20 +339,24 @@ final class PageSetup {
     return orientation == PageOrientation.portrait ? h : w;
   }
 
-  (double, double) get _portrait =>
-      paper == PaperSize.custom ? (customWidthPt, customHeightPt) : (paper.widthPt, paper.heightPt);
+  (double, double) get _portrait => paper == PaperSize.custom
+      ? (customWidthPt, customHeightPt)
+      : (paper.widthPt, paper.heightPt);
 
   /// Margins, resolving `theme` with [themeMargins].
   PageMargins marginsOr(PageMargins themeMargins) => margins ?? themeMargins;
 
   /// Header for physical page [index] (0-based).
-  HeaderFooterSpec headerFor(int index) => differentFirstPage && index == 0 ? firstPageHeader : header;
+  HeaderFooterSpec headerFor(int index) =>
+      differentFirstPage && index == 0 ? firstPageHeader : header;
 
   /// Footer for physical page [index] (0-based).
-  HeaderFooterSpec footerFor(int index) => differentFirstPage && index == 0 ? firstPageFooter : footer;
+  HeaderFooterSpec footerFor(int index) =>
+      differentFirstPage && index == 0 ? firstPageFooter : footer;
 
   /// Logical page label of physical page [index].
-  String pageLabel(int index) => pageNumberFormat.format(pageNumberStart + index);
+  String pageLabel(int index) =>
+      pageNumberFormat.format(pageNumberStart + index);
 
   /// JSON (`pageSetupJson`).
   Map<String, dynamic> toJson() => {
@@ -314,13 +364,19 @@ final class PageSetup {
     'layout': layout.name,
     'paper': paper.name,
     if (paper == PaperSize.custom)
-      'customSize': {'width': PageLength.format(customWidthPt), 'height': PageLength.format(customHeightPt)},
+      'customSize': {
+        'width': PageLength.format(customWidthPt),
+        'height': PageLength.format(customHeightPt),
+      },
     'orientation': orientation.name,
     'margins': margins?.toJson() ?? 'theme',
     'header': header.toJson(),
     'footer': footer.toJson(),
     'differentFirstPage': differentFirstPage,
-    'firstPage': {'header': firstPageHeader.toJson(), 'footer': firstPageFooter.toJson()},
+    'firstPage': {
+      'header': firstPageHeader.toJson(),
+      'footer': firstPageFooter.toJson(),
+    },
     'pageNumberStart': pageNumberStart,
     'pageNumberFormat': pageNumberFormat.name,
   };
@@ -336,8 +392,12 @@ final class PageSetup {
     final custom = json['customSize'];
     if (custom is Map) {
       try {
-        if (custom['width'] is String) cw = PageLength.parse(custom['width'] as String);
-        if (custom['height'] is String) ch = PageLength.parse(custom['height'] as String);
+        if (custom['width'] is String) {
+          cw = PageLength.parse(custom['width'] as String);
+        }
+        if (custom['height'] is String) {
+          ch = PageLength.parse(custom['height'] as String);
+        }
       } on FormatException {
         // keep defaults
       }
@@ -359,28 +419,43 @@ final class PageSetup {
       }
     }
 
-    final first = json['firstPage'] is Map ? json['firstPage'] as Map : const <String, dynamic>{};
+    final first = json['firstPage'] is Map
+        ? json['firstPage'] as Map
+        : const <String, dynamic>{};
     return PageSetup(
       layout: e(PageLayoutMode.values, json['layout'], d.layout),
       paper: e(PaperSize.values, json['paper'], d.paper),
       customWidthPt: cw,
       customHeightPt: ch,
-      orientation: e(PageOrientation.values, json['orientation'], d.orientation),
+      orientation: e(
+        PageOrientation.values,
+        json['orientation'],
+        d.orientation,
+      ),
       margins: margins,
       header: hf(json['header'], d.header),
       footer: hf(json['footer'], d.footer),
       differentFirstPage: json['differentFirstPage'] == true,
       firstPageHeader: hf(first['header'], d.firstPageHeader),
       firstPageFooter: hf(first['footer'], d.firstPageFooter),
-      pageNumberStart: json['pageNumberStart'] is int ? json['pageNumberStart'] as int : 1,
-      pageNumberFormat: e(PageNumberFormat.values, json['pageNumberFormat'], d.pageNumberFormat),
+      pageNumberStart: json['pageNumberStart'] is int
+          ? json['pageNumberStart'] as int
+          : 1,
+      pageNumberFormat: e(
+        PageNumberFormat.values,
+        json['pageNumberFormat'],
+        d.pageNumberFormat,
+      ),
     );
   }
 
   /// Applies an RFC 7396 merge [patch] to the JSON form (MCP
   /// `write.update_page_setup`, dialog *Apply*) and returns the result after
   /// [validate] (throws [FormatException] listing the errors).
-  PageSetup applyPatch(Map<String, dynamic> patch, {PageMargins themeMargins = const PageMargins.all(72)}) {
+  PageSetup applyPatch(
+    Map<String, dynamic> patch, {
+    PageMargins themeMargins = const PageMargins.all(72),
+  }) {
     final merged = _merge(toJson(), patch) as Map<String, dynamic>;
     final errors = validateJson(merged, themeMargins: themeMargins);
     if (errors.isNotEmpty) throw FormatException(errors.join('; '));
@@ -389,7 +464,9 @@ final class PageSetup {
 
   static Object? _merge(Object? target, Object? patch) {
     if (patch is! Map) return patch;
-    final result = target is Map ? Map<String, dynamic>.from(target) : <String, dynamic>{};
+    final result = target is Map
+        ? Map<String, dynamic>.from(target)
+        : <String, dynamic>{};
     for (final e in patch.entries) {
       if (e.value == null) {
         result.remove(e.key);
@@ -403,16 +480,23 @@ final class PageSetup {
   /// Validation errors of this setup (`PageSetupValidator`, 07 §6.1):
   /// margins ≥ 0, content box ≥ 2 × 2 in, header/footer distance < the
   /// corresponding margin, custom size 2–48 in.
-  List<String> validate({PageMargins themeMargins = const PageMargins.all(72)}) {
+  List<String> validate({
+    PageMargins themeMargins = const PageMargins.all(72),
+  }) {
     final errors = <String>[];
     if (paper == PaperSize.custom) {
       for (final v in [customWidthPt, customHeightPt]) {
-        if (v < 144 || v > 3456) errors.add('Custom size must be between 2in and 48in');
+        if (v < 144 || v > 3456) {
+          errors.add('Custom size must be between 2in and 48in');
+        }
       }
     }
     final mg = marginsOr(themeMargins);
-    if ([mg.top, mg.right, mg.bottom, mg.left].any((v) => v < 0)) errors.add('Margins must not be negative');
-    if (pageWidthPt - mg.left - mg.right < 144 || pageHeightPt - mg.top - mg.bottom < 144) {
+    if ([mg.top, mg.right, mg.bottom, mg.left].any((v) => v < 0)) {
+      errors.add('Margins must not be negative');
+    }
+    if (pageWidthPt - mg.left - mg.right < 144 ||
+        pageHeightPt - mg.top - mg.bottom < 144) {
       errors.add('The content area must be at least 2in × 2in');
     }
     for (final (spec, margin, name) in [
@@ -421,19 +505,30 @@ final class PageSetup {
       if (differentFirstPage) (firstPageHeader, mg.top, 'First page header'),
       if (differentFirstPage) (firstPageFooter, mg.bottom, 'First page footer'),
     ]) {
-      if (spec.enabled && spec.distancePt >= margin) errors.add('$name distance must be smaller than the margin');
-      if (spec.distancePt < 0) errors.add('$name distance must not be negative');
+      if (spec.enabled && spec.distancePt >= margin) {
+        errors.add('$name distance must be smaller than the margin');
+      }
+      if (spec.distancePt < 0) {
+        errors.add('$name distance must not be negative');
+      }
     }
-    if (pageNumberStart < 0 || pageNumberStart > 100000) errors.add('Page numbers must start between 0 and 100000');
+    if (pageNumberStart < 0 || pageNumberStart > 100000) {
+      errors.add('Page numbers must start between 0 and 100000');
+    }
     return errors;
   }
 
   /// Strict validation of a JSON object (types and values).
-  static List<String> validateJson(Map<String, dynamic> json, {PageMargins themeMargins = const PageMargins.all(72)}) {
+  static List<String> validateJson(
+    Map<String, dynamic> json, {
+    PageMargins themeMargins = const PageMargins.all(72),
+  }) {
     final errors = <String>[];
     void enumCheck(String key, List<Enum> values) {
       final v = json[key];
-      if (v != null && !values.any((e) => e.name == v)) errors.add('Invalid $key "$v"');
+      if (v != null && !values.any((e) => e.name == v)) {
+        errors.add('Invalid $key "$v"');
+      }
     }
 
     enumCheck('layout', PageLayoutMode.values);
@@ -471,20 +566,24 @@ final class PageSetup {
       if (hf is Map) lengthCheck(hf['distance'], '$key distance');
     }
     final start = json['pageNumberStart'];
-    if (start != null && start is! int) errors.add('pageNumberStart must be an integer');
+    if (start != null && start is! int) {
+      errors.add('pageNumberStart must be an integer');
+    }
     if (errors.isNotEmpty) return errors;
     return fromJson(json).validate(themeMargins: themeMargins);
   }
 
   @override
-  bool operator ==(Object other) => other is PageSetup && _eq(toJson(), other.toJson());
+  bool operator ==(Object other) =>
+      other is PageSetup && _eq(toJson(), other.toJson());
 
   @override
   int get hashCode => toJson().toString().hashCode;
 
   static bool _eq(Object? a, Object? b) {
     if (a is Map && b is Map) {
-      return a.length == b.length && a.keys.every((k) => b.containsKey(k) && _eq(a[k], b[k]));
+      return a.length == b.length &&
+          a.keys.every((k) => b.containsKey(k) && _eq(a[k], b[k]));
     }
     return a == b;
   }

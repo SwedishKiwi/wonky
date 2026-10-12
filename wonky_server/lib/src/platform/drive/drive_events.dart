@@ -60,7 +60,12 @@ abstract final class DriveEvents {
         );
         continue;
       }
-      final view = await DriveViews.one(session, actor.userId, item, role: role);
+      final view = await DriveViews.one(
+        session,
+        actor.userId,
+        item,
+        role: role,
+      );
       yield DriveChange(kind: signal.kind, itemUuid: item.uuid, item: view);
     }
   }

@@ -1,6 +1,7 @@
 import 'package:serverpod/serverpod.dart';
 import 'package:serverpod_offline_sync_server/serverpod_offline_sync_server.dart';
-import 'package:wonky_sheets_core/wonky_sheets_core.dart' show CellContent, NumberContent, TextContent;
+import 'package:wonky_sheets_core/wonky_sheets_core.dart'
+    show CellContent, NumberContent, TextContent;
 import 'package:wonky_sync_models/ids.dart';
 
 import '../../platform/common/models.dart';
@@ -34,7 +35,14 @@ abstract final class SpreadsheetFactory {
     final db = syncSessionOf(session);
     final now = nowUtc();
     final seeds = sheets.isEmpty
-        ? const [TemplateSheet(name: 'Sheet1', rows: [], boldRows: {}, frozenRows: 0)]
+        ? const [
+            TemplateSheet(
+              name: 'Sheet1',
+              rows: [],
+              boldRows: {},
+              frozenRows: 0,
+            ),
+          ]
         : sheets;
     final sheetKeys = FractionalIndex.nBetween(null, null, seeds.length);
     final rowKeys = FractionalIndex.nBetween(null, null, defaultRows);
@@ -63,7 +71,8 @@ abstract final class SpreadsheetFactory {
               ? seed.rows.length
               : defaultRows;
           final rowIds = [
-            for (var i = 0; i < rowCount; i++) UuidValue.fromString(ids.newId()),
+            for (var i = 0; i < rowCount; i++)
+              UuidValue.fromString(ids.newId()),
           ];
           final colIds = [
             for (var i = 0; i < defaultColumns; i++)
@@ -125,7 +134,9 @@ abstract final class SpreadsheetFactory {
             for (var c = 0; c < row.length && c < defaultColumns; c++) {
               final input = row[c];
               final bold = seed.boldRows.contains(r) ? true : null;
-              final format = r >= seed.frozenRows ? seed.numberFormats[c] : null;
+              final format = r >= seed.frozenRows
+                  ? seed.numberFormats[c]
+                  : null;
               if ((input == null || input.isEmpty) && bold == null) continue;
               cells.add(
                 Cell(

@@ -14,10 +14,15 @@ import 'zip.dart';
 /// Builds the IR for an export (suggestion view, link resolution happens in
 /// the format writers).
 DocTree exportTree(ExportInput input, ExportOptions options) =>
-    const DocTreeBuilder().fromDelta(input.document, view: options.suggestions, meta: input.meta);
+    const DocTreeBuilder().fromDelta(
+      input.document,
+      view: options.suggestions,
+      meta: input.meta,
+    );
 
 /// `.md` exporter.
-final class MarkdownFileExporter implements DocumentExporter<MarkdownFileExportOptions> {
+final class MarkdownFileExporter
+    implements DocumentExporter<MarkdownFileExportOptions> {
   /// Creates the exporter. [signedUrl] maps `wonky-file://` sources to
   /// signed URLs for `images: signedUrl` (server); without it the stored
   /// source is kept.
@@ -30,13 +35,20 @@ final class MarkdownFileExporter implements DocumentExporter<MarkdownFileExportO
   ExportFormat get format => ExportFormat.markdown;
 
   @override
-  Future<ExportArtifact> export(ExportInput input, MarkdownFileExportOptions options) async {
+  Future<ExportArtifact> export(
+    ExportInput input,
+    MarkdownFileExportOptions options,
+  ) async {
     input.cancel?.throwIfCancelled();
     final tree = exportTree(input, options);
     final warnings = <ExportWarning>[];
-    if (options.images == MarkdownImageMode.signedUrl && tree.images.any((i) => i.src.startsWith('wonky-file://'))) {
+    if (options.images == MarkdownImageMode.signedUrl &&
+        tree.images.any((i) => i.src.startsWith('wonky-file://'))) {
       warnings.add(
-        const ExportWarning('signed_urls_expire', 'Image links are signed URLs that expire after 7 days'),
+        const ExportWarning(
+          'signed_urls_expire',
+          'Image links are signed URLs that expire after 7 days',
+        ),
       );
     }
     final md = MarkdownExporter(
@@ -44,14 +56,19 @@ final class MarkdownFileExporter implements DocumentExporter<MarkdownFileExportO
         frontMatter: options.frontMatter,
         omitImages: options.images == MarkdownImageMode.omit,
         imageSource: (img) => switch (options.images) {
-          MarkdownImageMode.signedUrl when img.src.startsWith('wonky-file://') => signedUrl?.call(img.src) ?? img.src,
+          MarkdownImageMode.signedUrl
+              when img.src.startsWith('wonky-file://') =>
+            signedUrl?.call(img.src) ?? img.src,
           _ => img.src,
         },
         linkRewriter: input.links.resolve,
       ),
     ).export(tree);
     return ExportArtifact(
-      fileName: ExportFileNames.fileName(options.fileName ?? input.meta.title, 'md'),
+      fileName: ExportFileNames.fileName(
+        options.fileName ?? input.meta.title,
+        'md',
+      ),
       mimeType: format.mimeType,
       bytes: Uint8List.fromList(utf8.encode(md)),
       warnings: warnings,
@@ -60,7 +77,8 @@ final class MarkdownFileExporter implements DocumentExporter<MarkdownFileExportO
 }
 
 /// `.zip` exporter: `document.md` + `images/<n>-<slug>.<ext>`.
-final class MarkdownZipExporter implements DocumentExporter<MarkdownFileExportOptions> {
+final class MarkdownZipExporter
+    implements DocumentExporter<MarkdownFileExportOptions> {
   /// Creates the exporter.
   const MarkdownZipExporter();
 
@@ -68,7 +86,10 @@ final class MarkdownZipExporter implements DocumentExporter<MarkdownFileExportOp
   ExportFormat get format => ExportFormat.markdownZip;
 
   @override
-  Future<ExportArtifact> export(ExportInput input, MarkdownFileExportOptions options) async {
+  Future<ExportArtifact> export(
+    ExportInput input,
+    MarkdownFileExportOptions options,
+  ) async {
     final tree = exportTree(input, options);
     final warnings = <ExportWarning>[];
     final entries = <ZipEntry>[];
@@ -79,11 +100,18 @@ final class MarkdownZipExporter implements DocumentExporter<MarkdownFileExportOp
       input.cancel?.throwIfCancelled();
       final resolved = await input.images.resolve(img.src);
       if (resolved == null) {
-        warnings.add(ExportWarning('image_unavailable', 'Image "${img.alt}" could not be loaded'));
+        warnings.add(
+          ExportWarning(
+            'image_unavailable',
+            'Image "${img.alt}" could not be loaded',
+          ),
+        );
         continue;
       }
       n++;
-      final slug = AnchorIdGenerator.slugify(img.alt.isEmpty ? 'image' : img.alt);
+      final slug = AnchorIdGenerator.slugify(
+        img.alt.isEmpty ? 'image' : img.alt,
+      );
       final path = 'images/$n-$slug.${imageExtension(resolved.mime)}';
       paths[img.src] = path;
       entries.add(ZipEntry(path, resolved.bytes, store: true));
@@ -97,9 +125,16 @@ final class MarkdownZipExporter implements DocumentExporter<MarkdownFileExportOp
     ).export(tree);
     entries.add(ZipEntry.text('document.md', md));
     return ExportArtifact(
-      fileName: ExportFileNames.fileName(options.fileName ?? input.meta.title, 'zip'),
+      fileName: ExportFileNames.fileName(
+        options.fileName ?? input.meta.title,
+        'zip',
+      ),
       mimeType: format.mimeType,
-      bytes: DeterministicZip.encode(entries, modified: input.meta.modifiedAt, first: const ['document.md']),
+      bytes: DeterministicZip.encode(
+        entries,
+        modified: input.meta.modifiedAt,
+        first: const ['document.md'],
+      ),
       warnings: warnings,
     );
   }

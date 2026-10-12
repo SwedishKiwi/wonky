@@ -46,7 +46,10 @@ abstract final class ThemeMigrations {
   /// unknown/newer versions.
   static JsonMap migrate(Object? json) {
     if (json is! Map) {
-      throw const ThemeMigrationException('A theme must be a JSON object.', null);
+      throw const ThemeMigrationException(
+        'A theme must be a JSON object.',
+        null,
+      );
     }
     var out = deepCopyJson(json) as JsonMap;
     final raw = out['schemaVersion'] ?? 1;

@@ -83,7 +83,8 @@ JsonMap generateThemeSchemaV1() {
         'type': 'object',
         'additionalProperties': false,
         'properties': {
-          for (final r in FontRole.values) r.name: {r'$ref': r'#/$defs/fontFamily'},
+          for (final r in FontRole.values)
+            r.name: {r'$ref': r'#/$defs/fontFamily'},
         },
       },
       'palette': {r'$ref': r'#/$defs/palette'},

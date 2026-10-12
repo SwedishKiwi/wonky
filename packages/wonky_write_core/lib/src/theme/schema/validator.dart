@@ -35,7 +35,8 @@ final class ThemeValidationResult {
 
   /// MCP `validation_failed` details: `[{path, message, code}]`.
   List<JsonMap> get errorDetails => [
-    for (final e in errors) {'path': e.path, 'message': e.message, 'code': e.code},
+    for (final e in errors)
+      {'path': e.path, 'message': e.message, 'code': e.code},
   ];
 
   /// Warnings as JSON for MCP results.

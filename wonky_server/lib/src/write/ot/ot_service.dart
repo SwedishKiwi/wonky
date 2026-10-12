@@ -82,12 +82,18 @@ abstract final class OtService {
     try {
       incoming = DocumentStore.decodeDelta(deltaJson);
     } on Object {
-      throw OpRejection(DocRejectCode.invalidOp, 'The op is not a valid delta.');
+      throw OpRejection(
+        DocRejectCode.invalidOp,
+        'The op is not a valid delta.',
+      );
     }
     if (incoming.toList().any(
       (o) => (o.length ?? 0) <= 0 && !(o.isInsert && o.data is Map),
     )) {
-      throw OpRejection(DocRejectCode.invalidOp, 'Empty operations are invalid.');
+      throw OpRejection(
+        DocRejectCode.invalidOp,
+        'Empty operations are invalid.',
+      );
     }
 
     final state = await DocumentCache.of(session, document);
@@ -106,7 +112,10 @@ abstract final class OtService {
           lockMode: LockMode.forUpdate,
         );
         if (locked == null) {
-          throw OpRejection(DocRejectCode.invalidOp, 'The document was deleted.');
+          throw OpRejection(
+            DocRejectCode.invalidOp,
+            'The document was deleted.',
+          );
         }
         await state.catchUp(session, locked.headRevision, transaction: tx);
         final head = locked.headRevision;
@@ -135,7 +144,9 @@ abstract final class OtService {
                 'The change is based on a revision that is no longer kept.',
               );
             }
-            since = [for (final o in ops) DocumentStore.decodeDelta(o.deltaJson)];
+            since = [
+              for (final o in ops) DocumentStore.decodeDelta(o.deltaJson),
+            ];
           }
           transformed = WonkyOt.rebaseOnServer(incoming, since);
         }
@@ -168,14 +179,18 @@ abstract final class OtService {
             suggestionTimestamp: now.millisecondsSinceEpoch,
           );
         } on Object catch (e) {
-          throw OpRejection(DocRejectCode.invalidOp, 'The change is invalid: $e');
+          throw OpRejection(
+            DocRejectCode.invalidOp,
+            'The change is invalid: $e',
+          );
         }
         after = normalized.document;
         final validation = WonkyDeltaValidator(
           maxDocumentChars: WonkyConfig.current.maxDocumentChars,
         ).validate(after);
         if (!validation.isValid) {
-          final tooLong = DeltaUtils.documentLength(after) >
+          final tooLong =
+              DeltaUtils.documentLength(after) >
               WonkyConfig.current.maxDocumentChars;
           throw OpRejection(
             tooLong ? DocRejectCode.tooLarge : DocRejectCode.invalidOp,

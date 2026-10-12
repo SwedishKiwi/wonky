@@ -27,5 +27,9 @@ class AccessTokenEndpoint extends Endpoint {
   );
 
   Future<AccessTokenView> revoke(Session session, int id) async =>
-      AccountService.revokeToken(session, await UserService.actorOf(session), id);
+      AccountService.revokeToken(
+        session,
+        await UserService.actorOf(session),
+        id,
+      );
 }

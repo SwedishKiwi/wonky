@@ -1,0 +1,92 @@
+# Patches to super_editor
+
+Every change is marked with `// WONKY PATCH <id>` in the code. Tests of our patches live in
+`test/wonky_patches/` (run with the package's own suite: `flutter test -x golden`).
+
+## SE-1 — Complete Quill serialization
+
+- **Reason**: upstream `toQuillDeltas` threw on `HorizontalRuleNode`/`TableBlockNode`, dropped inline
+  `code`, list/task `indent` and the code-block language, and always treated a final empty
+  paragraph as the document's trailing newline. The Write mapper serializes through
+  `toQuillDeltas` (with its own Wonky `DeltaSerializer`), and tests compare Deltas with
+  `quillDocumentEquivalentTo`.
+- **Changes**:
+  - `toQuillDeltas(omitTrailingEmptyParagraph:)` (default `true` = upstream behavior).
+  - Serializers: `horizontalRuleDeltaSerializer` (`{"divider": true}`, configurable embed builder),
+    `tableDeltaSerializer` (`{"table": {"align": [...], "rows": [[inline Markdown]]}}`),
+    `bitmapImageDeltaSerializer` (data URI); all in `defaultDeltaSerializers`.
+  - Inline `code` → `{"code": true}`; list/task `indent`; `code-block` value from node metadata
+    `codeLanguageMetadataKey` (`"plain"` when unset).
+  - Parsing: code-block language → metadata; list/task `indent`; `HorizontalRuleEmbedBlockDeltaFormat`,
+    `TableEmbedBlockDeltaFormat` in `defaultEmbedBockFormats`.
+- **Files**: `lib/src/infrastructure/serialization/quill/serializing/{serializing,serializers}.dart`,
+  `lib/src/infrastructure/serialization/quill/parsing/{block_formats,parser}.dart`
+- **Tests**: `test/wonky_patches/se1_quill_serialization_test.dart`
+- **Spec**: Write 02 §4, Write 04 §2.2
+- **Upstream**: generally useful; to be proposed upstream (serializer additions are backwards compatible).
+
+## SE-2 — Incremental, composer-free document patches
+
+- **Reason**: collaborators' changes (and undo/AI/MCP changes) must be applied to the live
+  document without going through the composer, without moving the local caret, and without
+  being recorded as local edits or triggering autoformat reactions.
+- **Changes**:
+  - `ApplyDocumentPatchRequest` / `ApplyDocumentPatchCommand` (new file
+    `lib/src/default_editor/document_patch.dart`): ordered node operations (`ReplaceNodePatch`,
+    `InsertNodePatch`, `DeleteNodePatch`, `MoveNodePatch`), optional transformed selection and
+    composing region (reason `contentChange`), optional IME resync, `HistoryBehavior.nonHistorical`,
+    a `DocumentPatchAppliedEvent(tag)` marker event; registered in `defaultRequestHandlers`.
+  - `Editor`: transactions containing a `ReactionSuppressingEvent` (the patch marker, unless
+    `runReactions: true`) notify listeners but skip the reaction pipeline (`core/editor.dart`).
+  - Design note: the Quill-Delta → node mapping stays in the app (`DeltaApplier`), because it
+    depends on the Wonky schema; the library provides the generic primitive.
+- **Files**: `lib/src/default_editor/document_patch.dart`, `lib/src/core/editor.dart`,
+  `lib/src/default_editor/default_document_editor.dart`, `lib/super_editor.dart`
+- **Tests**: `test/wonky_patches/se2_document_patch_test.dart`
+- **Spec**: Write 03 §3, Write 04 §2.2
+- **Upstream**: generally useful (collaborative editing); to be proposed.
+
+## SE-3 — Detailed change events
+
+- **Reason**: block-level changes were reported as bare `NodeChangeEvent`s.
+- **Changes**: new `NodeChangeEvent` subclasses (backwards compatible) in
+  `lib/src/default_editor/node_change_events.dart`: `BlockTypeChangeEvent`,
+  `ListItemTypeChangeEvent`, `IndentChangeEvent`, `TaskCompletionChangeEvent`,
+  `NodeMetadataChangeEvent`, `NodeReplacedEvent`; emitted by `ChangeParagraphBlockTypeCommand`,
+  `ChangeParagraphAlignmentCommand`, paragraph/list/task (un)indent commands,
+  `ChangeListItemTypeCommand`, `ChangeTaskCompletionCommand`, the paragraph ⇄ list/task
+  conversions and `ConvertTextNodeToParagraphCommand`. New `ChangeNodeMetadataRequest`.
+- **Files**: `node_change_events.dart`, `paragraph.dart`, `list_items.dart`, `tasks.dart`, `text.dart`,
+  `default_document_editor.dart`
+- **Tests**: `test/wonky_patches/se3_node_change_events_test.dart`
+- **Spec**: Write 02 §4.4
+- **Upstream**: to be proposed.
+
+## SE-4 — Editable tables (not done)
+
+In-place table cell editing is **not implemented** in this iteration (P1, cut by the scope note).
+Tables are edited through the `write.table.*` commands (embed replacement, one undo step each).
+
+## SE-5 — Fixes found by our tests
+
+1. **List indent limit**: `IndentListItemCommand` stopped at level 6; now `maxListItemIndent = 8`
+   (Write's 9 levels). `list_items.dart`.
+2. **List type change lost indent/metadata**: `ChangeListItemTypeCommand` rebuilt the node from
+   scratch; now copies it. `list_items.dart`.
+3. **IME resync**: `MutableDocumentComposer.requestImeResync()` re-notifies selection listeners
+   (inside a transaction: at its end) so the IME is re-sent text changed around the caret by a
+   patch. `core/document_composer.dart`.
+4. **Typing over a selection**: `InsertCharacterAtCaretCommand` inserted the character at the stale
+   (pre-deletion) extent, i.e. after the deleted range; now uses the selection after deletion.
+   `default_editor/text.dart`.
+5. **Undo/redo keyboard actions exported** (`lib/src/undo_redo.dart`) so apps can remove them from
+   the default keyboard action lists. `lib/super_editor.dart`.
+
+- **Tests**: `test/wonky_patches/se5_fixes_test.dart`, `se3_node_change_events_test.dart`,
+  `se2_document_patch_test.dart`
+- **Upstream**: 1–5 are general fixes; to be filed upstream.
+
+## Infra
+
+- `pubspec.yaml`: `dependency_overrides: attributed_text: {path: ../attributed_text}` so the
+  vendored suite runs against the vendored, patched `attributed_text` (patch AT-1).

@@ -30,7 +30,10 @@ enum ExportFormat {
   htmlZip('zip', 'application/zip'),
 
   /// `.docx`.
-  docx('docx', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'),
+  docx(
+    'docx',
+    'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+  ),
 
   /// `.odt`.
   odt('odt', 'application/vnd.oasis.opendocument.text'),
@@ -62,13 +65,19 @@ enum ExportFormat {
   };
 
   /// Parses an MCP name.
-  static ExportFormat? fromMcpName(String name) => ExportFormat.values.where((f) => f.mcpName == name).firstOrNull;
+  static ExportFormat? fromMcpName(String name) =>
+      ExportFormat.values.where((f) => f.mcpName == name).firstOrNull;
 }
 
 /// An image resolved for export.
 final class ResolvedImage {
   /// Creates an image.
-  const ResolvedImage({required this.bytes, required this.mime, required this.widthPx, required this.heightPx});
+  const ResolvedImage({
+    required this.bytes,
+    required this.mime,
+    required this.widthPx,
+    required this.heightPx,
+  });
 
   /// Encoded bytes (PNG/JPEG after conversion).
   final Uint8List bytes;
@@ -131,8 +140,12 @@ final class DefaultLinkResolver implements LinkResolver {
       if (uuid == documentUuid && frag.isNotEmpty) return frag;
       return '$origin/write/d/$uuid$frag';
     }
-    final sheet = RegExp(r'^wonky://sheet/([0-9A-Za-z-]+)(.*)$').firstMatch(link);
-    if (sheet != null) return '$origin/sheets/s/${sheet.group(1)}${sheet.group(2)}';
+    final sheet = RegExp(
+      r'^wonky://sheet/([0-9A-Za-z-]+)(.*)$',
+    ).firstMatch(link);
+    if (sheet != null) {
+      return '$origin/sheets/s/${sheet.group(1)}${sheet.group(2)}';
+    }
     return link;
   }
 }
@@ -302,7 +315,10 @@ final class ExportArtifact {
 /// Options common to all formats (07 §4.1).
 abstract base class ExportOptions {
   /// Creates options.
-  const ExportOptions({this.suggestions = SuggestionViewMode.accepted, this.fileName});
+  const ExportOptions({
+    this.suggestions = SuggestionViewMode.accepted,
+    this.fileName,
+  });
 
   /// Suggestion view (accepted | original).
   final SuggestionViewMode suggestions;
@@ -311,14 +327,20 @@ abstract base class ExportOptions {
   final String? fileName;
 
   /// Common options from MCP/preferences JSON (snake_case).
-  static ({SuggestionViewMode suggestions, String? fileName}) commonFromJson(Map<String, dynamic> json) => (
-    suggestions: json['suggestions'] == 'original' ? SuggestionViewMode.original : SuggestionViewMode.accepted,
+  static ({SuggestionViewMode suggestions, String? fileName}) commonFromJson(
+    Map<String, dynamic> json,
+  ) => (
+    suggestions: json['suggestions'] == 'original'
+        ? SuggestionViewMode.original
+        : SuggestionViewMode.accepted,
     fileName: json['file_name'] as String?,
   );
 
   /// Common JSON.
   Map<String, dynamic> commonToJson() => {
-    'suggestions': suggestions == SuggestionViewMode.original ? 'original' : 'accepted',
+    'suggestions': suggestions == SuggestionViewMode.original
+        ? 'original'
+        : 'accepted',
     'file_name': ?fileName,
   };
 
@@ -506,7 +528,12 @@ final class HtmlExportOptions extends ExportOptions {
 /// DOCX / ODT options.
 final class OfficeExportOptions extends ExportOptions {
   /// Creates options.
-  const OfficeExportOptions({super.suggestions, super.fileName, this.includeToc = false, this.embedFonts = false});
+  const OfficeExportOptions({
+    super.suggestions,
+    super.fileName,
+    this.includeToc = false,
+    this.embedFonts = false,
+  });
 
   /// Insert a TOC (DOCX: field updated on open).
   final bool includeToc;
@@ -526,7 +553,11 @@ final class OfficeExportOptions extends ExportOptions {
   }
 
   @override
-  Map<String, dynamic> toJson() => {...commonToJson(), 'include_toc': includeToc, 'embed_fonts': embedFonts};
+  Map<String, dynamic> toJson() => {
+    ...commonToJson(),
+    'include_toc': includeToc,
+    'embed_fonts': embedFonts,
+  };
 }
 
 /// RTF options (common only).
@@ -591,8 +622,16 @@ final class EpubExportOptions extends ExportOptions {
     return EpubExportOptions(
       suggestions: c.suggestions,
       fileName: c.fileName,
-      chapterSplit: EpubChapterSplit.values.where((v) => v.name == json['chapter_split']).firstOrNull ?? EpubChapterSplit.h1,
-      cover: cover is String ? cover : (cover is Map && cover['image_file_uuid'] is String ? cover['image_file_uuid'] as String : 'auto'),
+      chapterSplit:
+          EpubChapterSplit.values
+              .where((v) => v.name == json['chapter_split'])
+              .firstOrNull ??
+          EpubChapterSplit.h1,
+      cover: cover is String
+          ? cover
+          : (cover is Map && cover['image_file_uuid'] is String
+                ? cover['image_file_uuid'] as String
+                : 'auto'),
       embedFonts: json['embed_fonts'] != false,
       useThemeColors: json['use_theme_colors'] == true,
       author: json['author'] as String?,
@@ -674,7 +713,10 @@ abstract final class ExportFileNames {
   /// Sanitizes [name] (no `/\:*?"<>|`, ≤ 120 chars, default `Untitled`) and
   /// appends `.ext`.
   static String fileName(String? name, String extension) {
-    var n = (name ?? '').replaceAll(RegExp(r'[/\\:*?"<>|\x00-\x1F]'), ' ').replaceAll(RegExp(r'\s+'), ' ').trim();
+    var n = (name ?? '')
+        .replaceAll(RegExp(r'[/\\:*?"<>|\x00-\x1F]'), ' ')
+        .replaceAll(RegExp(r'\s+'), ' ')
+        .trim();
     if (n.isEmpty) n = 'Untitled';
     if (n.length > 120) n = n.substring(0, 120).trim();
     return '$n.$extension';

@@ -57,9 +57,9 @@ class SmartQuotesReaction extends EditReaction {
   static final _wordCharacter = RegExp(r'[\p{L}\p{N}]', unicode: true);
 
   @override
-  void react(EditContext editContext, RequestDispatcher requestDispatcher, List<EditEvent> changeList) {
-    final double = _TypographyContext.typed(editContext, changeList, '"');
-    final single = double == null ? _TypographyContext.typed(editContext, changeList, "'") : null;
+  void react(EditContext editorContext, RequestDispatcher requestDispatcher, List<EditEvent> changeList) {
+    final double = _TypographyContext.typed(editorContext, changeList, '"');
+    final single = double == null ? _TypographyContext.typed(editorContext, changeList, "'") : null;
     final typed = double ?? single;
     if (typed == null) {
       return;
@@ -85,8 +85,8 @@ class EllipsisReaction extends EditReaction {
   const EllipsisReaction();
 
   @override
-  void react(EditContext editContext, RequestDispatcher requestDispatcher, List<EditEvent> changeList) {
-    final typed = _TypographyContext.typed(editContext, changeList, '.');
+  void react(EditContext editorContext, RequestDispatcher requestDispatcher, List<EditEvent> changeList) {
+    final typed = _TypographyContext.typed(editorContext, changeList, '.');
     if (typed == null) {
       return;
     }
@@ -112,8 +112,8 @@ class EmDashReaction extends EditReaction {
   const EmDashReaction();
 
   @override
-  void react(EditContext editContext, RequestDispatcher requestDispatcher, List<EditEvent> changeList) {
-    final typed = _TypographyContext.typed(editContext, changeList, '-');
+  void react(EditContext editorContext, RequestDispatcher requestDispatcher, List<EditEvent> changeList) {
+    final typed = _TypographyContext.typed(editorContext, changeList, '-');
     if (typed == null) {
       return;
     }

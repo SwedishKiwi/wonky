@@ -79,10 +79,11 @@ abstract final class ServerSheetsWriter {
             final currentJson = current == null
                 ? null
                 : (current.toJson() as Map).cast<String, dynamic>();
-            final sheetId = (change.columnsAfter['sheetId'] ??
-                    change.columnsBefore['sheetId'] ??
-                    currentJson?['sheetId'])
-                ?.toString();
+            final sheetId =
+                (change.columnsAfter['sheetId'] ??
+                        change.columnsBefore['sheetId'] ??
+                        currentJson?['sheetId'])
+                    ?.toString();
             if (sheetId != null) summary.sheets.add(sheetId);
             switch (change.op) {
               case RowOp.insert:
@@ -95,7 +96,9 @@ abstract final class ServerSheetsWriter {
                   final names = json.keys.where((k) => k != 'id').toList();
                   final before = {for (final k in names) k: currentJson[k]};
                   await _update(db, table, currentJson, json, names, tx);
-                  applied.add(RowChange.update(change.table, change.rowId, before, json));
+                  applied.add(
+                    RowChange.update(change.table, change.rowId, before, json),
+                  );
                 } else {
                   await db.db.insertRow(table.fromJson(json), transaction: tx);
                   applied.add(change);
@@ -292,7 +295,9 @@ abstract final class ServerSheetsWriter {
         inverseJson: inlineInverse,
         inverseFileId: inverseFile,
         forwardFileId: forwardFile,
-        cellsAffected: applied.where((c) => c.table == SheetsTables.cell).length,
+        cellsAffected: applied
+            .where((c) => c.table == SheetsTables.cell)
+            .length,
         createdAt: now,
         expiresAt: now.add(lifetime),
       ),
@@ -302,7 +307,9 @@ abstract final class ServerSheetsWriter {
 
   static Future<String> _fileText(Session session, UuidValue fileUuid) async {
     final file = await FileService.byUuid(session, fileUuid);
-    if (file == null) throw Errors.expired('The change can no longer be undone.');
+    if (file == null) {
+      throw Errors.expired('The change can no longer be undone.');
+    }
     final bytes = await FileService.readBytes(session, file);
     return utf8.decode(bytes.buffer.asUint8List(0, bytes.lengthInBytes));
   }
@@ -331,9 +338,11 @@ abstract final class ServerSheetsWriter {
     UuidValue changeId,
   ) async {
     final record = await _requireRecord(session, actor, changeId);
-    if (record.spreadsheetUuid != item.contentRef) throw Errors.notFound('Change');
-    final data = record.inverseJson ??
-        await _fileText(session, record.inverseFileId!);
+    if (record.spreadsheetUuid != item.contentRef) {
+      throw Errors.notFound('Change');
+    }
+    final data =
+        record.inverseJson ?? await _fileText(session, record.inverseFileId!);
     final inverse = _decode(data);
     await SpaceService.ensureWriter(session, actor, item);
     final result = await apply(
@@ -371,7 +380,9 @@ abstract final class ServerSheetsWriter {
     UuidValue changeId,
   ) async {
     final record = await _requireRecord(session, actor, changeId);
-    if (record.spreadsheetUuid != item.contentRef) throw Errors.notFound('Change');
+    if (record.spreadsheetUuid != item.contentRef) {
+      throw Errors.notFound('Change');
+    }
     if (record.forwardFileId == null) {
       throw Errors.expired('The change can no longer be redone.');
     }

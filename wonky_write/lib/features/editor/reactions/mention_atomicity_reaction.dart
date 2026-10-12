@@ -9,19 +9,19 @@ class MentionAtomicityReaction extends EditReaction {
   const MentionAtomicityReaction();
 
   @override
-  void react(EditContext editContext, RequestDispatcher requestDispatcher, List<EditEvent> changeList) {
-    if (_completePartialMentionDeletion(editContext, requestDispatcher, changeList)) {
+  void react(EditContext editorContext, RequestDispatcher requestDispatcher, List<EditEvent> changeList) {
+    if (_completePartialMentionDeletion(editorContext, requestDispatcher, changeList)) {
       return;
     }
     if (!changeList.any((e) => e is SelectionChangeEvent)) {
       return;
     }
-    final composer = editContext.composer;
+    final composer = editorContext.composer;
     final selection = composer.selection;
     if (selection == null) {
       return;
     }
-    final document = editContext.document;
+    final document = editorContext.document;
     final base = snap(document, selection.base);
     final extent = snap(document, selection.extent);
     if (base == selection.base && extent == selection.extent) {

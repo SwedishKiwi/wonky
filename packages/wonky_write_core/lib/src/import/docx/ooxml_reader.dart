@@ -12,7 +12,8 @@ import '../xml_support.dart';
 /// aliased by [XmlElementAccess]).
 abstract final class OoxmlNs {
   /// WordprocessingML main.
-  static const w = 'http://schemas.openxmlformats.org/wordprocessingml/2006/main';
+  static const w =
+      'http://schemas.openxmlformats.org/wordprocessingml/2006/main';
 
   /// Office relationships (`r:id`, `r:embed`).
   static const r =
@@ -69,7 +70,12 @@ abstract final class OoxmlNs {
 /// One relationship of a part.
 final class OoxmlRelationship {
   /// Creates a relationship.
-  const OoxmlRelationship(this.id, this.type, this.target, {this.external = false});
+  const OoxmlRelationship(
+    this.id,
+    this.type,
+    this.target, {
+    this.external = false,
+  });
 
   /// `Id`.
   final String id;
@@ -110,7 +116,9 @@ final class OoxmlPackage {
             ? part.substring(0, part.lastIndexOf('/') + 1)
             : '';
         final name = part.substring(dir.length);
-        final relsPart = part.isEmpty ? '_rels/.rels' : '${dir}_rels/$name.rels';
+        final relsPart = part.isEmpty
+            ? '_rels/.rels'
+            : '${dir}_rels/$name.rels';
         final doc = zip.xml(relsPart);
         final out = <String, OoxmlRelationship>{};
         if (doc == null) return out;
@@ -334,10 +342,7 @@ final class OoxmlStyles {
     final root = doc.rootElement;
     String? lang;
     final defaults = root.kid(w, 'docDefaults');
-    final lng = defaults
-        ?.kid(w, 'rPrDefault')
-        ?.kid(w, 'rPr')
-        ?.kid(w, 'lang');
+    final lng = defaults?.kid(w, 'rPrDefault')?.kid(w, 'rPr')?.kid(w, 'lang');
     lang = lng?.attr(w, 'val');
     for (final s in root.kids(w, 'style')) {
       final id = s.attr(w, 'styleId');
@@ -405,9 +410,7 @@ final class OoxmlStyles {
     // A font inherited only from the default paragraph style does not make
     // text monospace (07 §3.6: "all runs monospace").
     if (chain.isNotEmpty && chain.last.isDefault && chain.last.font == r.font) {
-      final explicit = chain
-          .take(chain.length - 1)
-          .any((c) => c.font != null);
+      final explicit = chain.take(chain.length - 1).any((c) => c.font != null);
       if (!explicit) r.font = null;
     }
     _resolved[id] = r;
@@ -475,9 +478,7 @@ final class OoxmlNumbering {
     }
     for (final n in root.kids(w, 'num')) {
       final id = int.tryParse(n.attr(w, 'numId') ?? '');
-      final abs = int.tryParse(
-        n.kid(w, 'abstractNumId')?.attr(w, 'val') ?? '',
-      );
+      final abs = int.tryParse(n.kid(w, 'abstractNumId')?.attr(w, 'val') ?? '');
       if (id == null || abs == null) continue;
       final overrides = <int, int>{};
       for (final o in n.kids(w, 'lvlOverride')) {

@@ -135,7 +135,8 @@ final class _DocxReader {
     _readNotes(_footnotesPart, 'footnote', _footnotes);
     _readNotes(_endnotesPart, 'endnote', _endnotes);
     final comments = _partXml('comments');
-    if (comments != null && comments.rootElement.kids(_w, 'comment').isNotEmpty) {
+    if (comments != null &&
+        comments.rootElement.kids(_w, 'comment').isNotEmpty) {
       _commentsDropped();
     }
 
@@ -281,7 +282,9 @@ final class _DocxReader {
       final rel = id == null ? null : pkg.relationships(_docPart)[id];
       final x = rel == null ? null : _zip.xml(rel.target);
       if (x != null &&
-          x.rootElement.deep(_w, 't').any((t) => t.innerText.trim().isNotEmpty)) {
+          x.rootElement
+              .deep(_w, 't')
+              .any((t) => t.innerText.trim().isNotEmpty)) {
         _warnings.add(
           ImportWarningKind.headersFootersDropped,
           'Headers and footers were not imported.',
@@ -375,7 +378,9 @@ final class _DocxReader {
       _removed('alignment');
     }
     final ctx = _ParaCtx(
-      styleToggles: kind == _Kind.paragraph || kind == _Kind.list ? style : null,
+      styleToggles: kind == _Kind.paragraph || kind == _Kind.list
+          ? style
+          : null,
       style: style,
     );
     _inline(p, ctx);
@@ -505,10 +510,10 @@ final class _DocxReader {
   static bool? _glyphTask(OoxmlLevel lvl) {
     if (!lvl.isBullet || lvl.text.isEmpty) return null;
     final t = String.fromCharCode(lvl.text.runes.first);
-    if (TaskGlyphs.unchecked.contains(t) || t == '' || t == '') {
+    if (TaskGlyphs.unchecked.contains(t) || t == '\uF0A8' || t == '\uF06F') {
       return false;
     }
-    if (TaskGlyphs.checked.contains(t) || t == '' || t == '') {
+    if (TaskGlyphs.checked.contains(t) || t == '\uF0FE' || t == '\uF0FD') {
       return true;
     }
     return null;
@@ -729,8 +734,7 @@ final class _DocxReader {
         final cb = c.kid(_w, 'ffData')?.kid(_w, 'checkBox');
         if (cb != null && !ctx.hasText && ctx.checkbox == null) {
           final checkedEl = cb.kid(_w, 'checked') ?? cb.kid(_w, 'default');
-          ctx.checkbox =
-              checkedEl != null && OoxmlRunProps.toggle(checkedEl);
+          ctx.checkbox = checkedEl != null && OoxmlRunProps.toggle(checkedEl);
         }
       case 'separate':
         if (_fields.isNotEmpty) {
@@ -905,7 +909,8 @@ final class _DocxReader {
       return;
     }
     final isRule = e.descendantElements.any(
-      (x) => x.attr(OoxmlNs.o, 'hr') == 't' || x.attr(OoxmlNs.o, 'hr') == 'true',
+      (x) =>
+          x.attr(OoxmlNs.o, 'hr') == 't' || x.attr(OoxmlNs.o, 'hr') == 'true',
     );
     if (isRule && !ctx.inCell) {
       ctx.segs.add(_BlockSeg(RuleBlock(options.idGenerator())));
@@ -966,9 +971,7 @@ final class _DocxReader {
           ? null
           : embeddableImage(bytes, mime);
       if (emb == null) {
-        _unresolvedImage(
-          vector: mime == 'image/emf' || mime == 'image/wmf',
-        );
+        _unresolvedImage(vector: mime == 'image/emf' || mime == 'image/wmf');
         block = imagePlaceholder(alt);
       } else {
         final image = _images.add(emb.$1, emb.$2, alt: alt, key: rel.target);
@@ -1047,7 +1050,8 @@ final class _DocxReader {
                 .clamp(1, 64);
         final vMerge = tcPr?.kid(_w, 'vMerge');
         final continuation =
-            vMerge != null && (vMerge.attr(_w, 'val') ?? 'continue') != 'restart';
+            vMerge != null &&
+            (vMerge.attr(_w, 'val') ?? 'continue') != 'restart';
         final col = row.length;
         if (continuation) {
           spanned = true;
@@ -1141,7 +1145,9 @@ final class _DocxReader {
             .map((x) => _unescapeXml(x.group(1)!))
             .join();
         final clean = ImportText.inline(t);
-        _blocks.add(ParagraphBlock(clean.isEmpty ? const [] : [InlineRun(clean)]));
+        _blocks.add(
+          ParagraphBlock(clean.isEmpty ? const [] : [InlineRun(clean)]),
+        );
       }
     }
     _warnings.add(

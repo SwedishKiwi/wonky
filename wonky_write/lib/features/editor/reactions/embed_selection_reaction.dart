@@ -12,9 +12,9 @@ class EmbedSelectionReaction extends EditReaction {
   DocumentSelection? _previous;
 
   @override
-  void react(EditContext editContext, RequestDispatcher requestDispatcher, List<EditEvent> changeList) {
+  void react(EditContext editorContext, RequestDispatcher requestDispatcher, List<EditEvent> changeList) {
     final selectionEvent = changeList.whereType<SelectionChangeEvent>().lastOrNull;
-    final composer = editContext.composer;
+    final composer = editorContext.composer;
     final selection = composer.selection;
     final previous = _previous;
     _previous = selection;
@@ -25,7 +25,7 @@ class EmbedSelectionReaction extends EditReaction {
         changeList.any((e) => e is DocumentEdit)) {
       return;
     }
-    final document = editContext.document;
+    final document = editorContext.document;
     final node = document.getNodeById(selection.extent.nodeId);
     final position = selection.extent.nodePosition;
     if (node is! BlockNode || position is! UpstreamDownstreamNodePosition) {

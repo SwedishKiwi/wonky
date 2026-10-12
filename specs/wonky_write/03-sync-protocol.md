@@ -27,7 +27,11 @@ class DocumentEndpoint extends Endpoint {
 ```
 
 All message classes are Serverpod models with sealed base classes (`DocClientMessage`,
-`DocServerMessage`) so the typed streams can carry variants.
+`DocServerMessage`) so the typed streams can carry variants. The generated classes carry a `Doc`
+prefix to keep the client namespace clean: `DocSubmitOp`, `DocCursorUpdate`, `DocRequestOps`,
+`DocPing`, `DocHashCheck` (client → server) and `DocInit`, `DocAck`, `DocRemoteOp`, `DocRemoteCursor`,
+`DocParticipantJoined`, `DocParticipantLeft`, `DocMetaChanged`, `DocRoleChanged`, `DocOpRejected`
+(`code: DocRejectCode`), `DocPong`, `DocHashResult` (server → client).
 
 ### 1.1 Client → server
 

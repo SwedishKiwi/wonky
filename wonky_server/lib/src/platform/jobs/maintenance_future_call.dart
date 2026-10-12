@@ -15,7 +15,11 @@ import '../versions/version_service.dart';
 /// Scheduled jobs (specs/13 §3). Each job is idempotent; schedules are
 /// registered at server start (`registerMaintenanceJobs`).
 class MaintenanceFutureCall extends FutureCall {
-  Future<void> _run(Session session, String name, Future<int> Function() job) async {
+  Future<void> _run(
+    Session session,
+    String name,
+    Future<int> Function() job,
+  ) async {
     try {
       final count = await job();
       if (count > 0) session.log('$name: $count');
@@ -49,14 +53,46 @@ class MaintenanceFutureCall extends FutureCall {
   /// active-set eviction, expired grants, server change records, deleted
   /// themes and the diff cache.
   Future<void> daily(Session session) async {
-    await _run(session, 'drive.purgeTrash', () => DriveService.purgeExpiredTrash(session));
+    await _run(
+      session,
+      'drive.purgeTrash',
+      () => DriveService.purgeExpiredTrash(session),
+    );
     await _run(session, 'versions.thin', () => VersionService.thin(session));
-    await _run(session, 'write.pruneOps', () => DocumentService.pruneOps(session));
-    await _run(session, 'sheets.pruneChangeLog', () => ChangeLogConsumer.pruneOld(session));
-    await _run(session, 'sheets.evictSpaces', () => SpaceService.evictInactive(session));
-    await _run(session, 'sharing.expiredGrants', () => SharingService.removeExpiredGrants(session));
-    await _run(session, 'sheets.purgeServerChanges', () => ServerSheetsWriter.purgeExpired(session));
-    await _run(session, 'write.purgeDeletedThemes', () => ThemeService.purgeDeleted(session));
-    await _run(session, 'write.purgeDiffCache', () => WriteHistoryService.purgeDiffCache(session));
+    await _run(
+      session,
+      'write.pruneOps',
+      () => DocumentService.pruneOps(session),
+    );
+    await _run(
+      session,
+      'sheets.pruneChangeLog',
+      () => ChangeLogConsumer.pruneOld(session),
+    );
+    await _run(
+      session,
+      'sheets.evictSpaces',
+      () => SpaceService.evictInactive(session),
+    );
+    await _run(
+      session,
+      'sharing.expiredGrants',
+      () => SharingService.removeExpiredGrants(session),
+    );
+    await _run(
+      session,
+      'sheets.purgeServerChanges',
+      () => ServerSheetsWriter.purgeExpired(session),
+    );
+    await _run(
+      session,
+      'write.purgeDeletedThemes',
+      () => ThemeService.purgeDeleted(session),
+    );
+    await _run(
+      session,
+      'write.purgeDiffCache',
+      () => WriteHistoryService.purgeDiffCache(session),
+    );
   }
 }

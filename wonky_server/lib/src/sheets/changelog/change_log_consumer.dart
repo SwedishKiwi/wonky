@@ -195,7 +195,8 @@ abstract final class ChangeLogConsumer {
     );
     final cells = await Cell.db.find(
       db,
-      where: (t) => t.sheetId.inSet({for (final s in sheets) s.id}) &
+      where: (t) =>
+          t.sheetId.inSet({for (final s in sheets) s.id}) &
           t.content.notEquals(null),
       limit: 10000,
     );

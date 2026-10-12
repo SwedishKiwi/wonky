@@ -116,8 +116,16 @@ class DriveEndpoint extends Endpoint {
     timeZone: timeZone ?? 'UTC',
   );
 
-  Future<DriveItemView> rename(Session session, UuidValue uuid, String name) async =>
-      DriveService.rename(session, await UserService.actorOf(session), uuid, name);
+  Future<DriveItemView> rename(
+    Session session,
+    UuidValue uuid,
+    String name,
+  ) async => DriveService.rename(
+    session,
+    await UserService.actorOf(session),
+    uuid,
+    name,
+  );
 
   Future<DriveItemView> updateDescription(
     Session session,
@@ -184,7 +192,11 @@ class DriveEndpoint extends Endpoint {
   /// Records that the caller opened the item (Recent; link visits appear in
   /// Shared with me).
   Future<DriveItemView> markOpened(Session session, UuidValue uuid) async =>
-      DriveService.markOpened(session, await UserService.actorOf(session), uuid);
+      DriveService.markOpened(
+        session,
+        await UserService.actorOf(session),
+        uuid,
+      );
 
   /// "Add shortcut to My Drive" ([parentUuid] null = root).
   Future<DriveItemView> addShortcut(
@@ -199,7 +211,11 @@ class DriveEndpoint extends Endpoint {
   );
 
   Future<void> removeShortcut(Session session, UuidValue uuid) async =>
-      DriveService.removeShortcut(session, await UserService.actorOf(session), uuid);
+      DriveService.removeShortcut(
+        session,
+        await UserService.actorOf(session),
+        uuid,
+      );
 
   Future<void> trash(Session session, List<UuidValue> uuids) async =>
       DriveService.trash(session, await UserService.actorOf(session), uuids);
@@ -207,12 +223,14 @@ class DriveEndpoint extends Endpoint {
   Future<void> restore(Session session, List<UuidValue> uuids) async =>
       DriveService.restore(session, await UserService.actorOf(session), uuids);
 
-  Future<void> deletePermanently(Session session, List<UuidValue> uuids) async =>
-      DriveService.deletePermanently(
-        session,
-        await UserService.actorOf(session),
-        uuids,
-      );
+  Future<void> deletePermanently(
+    Session session,
+    List<UuidValue> uuids,
+  ) async => DriveService.deletePermanently(
+    session,
+    await UserService.actorOf(session),
+    uuids,
+  );
 
   /// Deletes all owned items in the trash; returns how many.
   Future<int> emptyTrash(Session session) async =>

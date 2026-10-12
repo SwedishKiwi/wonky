@@ -68,7 +68,8 @@ abstract final class DocumentGeometry {
   static Rect? caretRect(DocumentLayout layout, DocumentMirror mirror, int offset) {
     final position = mirror.positionAt(offset);
     if (position == null) return null;
-    final caret = layout.getCaretForPosition(position);
-    return Rect.fromLTWH(caret.x, caret.top, 2, caret.bottom - caret.top);
+    final rect = layout.getRectForPosition(position);
+    if (rect == null) return null;
+    return Rect.fromLTWH(rect.left, rect.top, 2, rect.height);
   }
 }

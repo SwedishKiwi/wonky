@@ -12,14 +12,3 @@ class RootRedirectRoute extends Route {
     return Response.found(Uri.parse(target));
   }
 }
-
-/// `/write` and `/sheets` without the trailing slash.
-class SlashRedirectRoute extends Route {
-  SlashRedirectRoute(this.target);
-
-  final String target;
-
-  @override
-  Future<Result> handleCall(Session session, Request request) async =>
-      Response.found(Uri.parse(target));
-}

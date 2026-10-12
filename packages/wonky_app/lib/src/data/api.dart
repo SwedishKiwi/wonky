@@ -21,6 +21,18 @@ class Api {
 
   final Client client;
 
+  /// Runs a typed endpoint call, mapping network failures to
+  /// [OfflineException].
+  Future<T> guard<T>(Future<T> Function(Client c) call) async {
+    try {
+      return await call(client);
+    } on ServerpodClientNetworkException catch (e) {
+      throw OfflineException(e);
+    } on TimeoutException catch (e) {
+      throw OfflineException(e);
+    }
+  }
+
   /// Calls `endpoint.method(args)`.
   Future<T> call<T>(
     String endpoint,

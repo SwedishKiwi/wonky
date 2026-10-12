@@ -1,0 +1,227 @@
+import 'package:flutter/widgets.dart';
+
+import '../commands/write_editor_commands.dart';
+import '../controller/editor_types.dart';
+import '../controller/write_editor_controller.dart';
+import 'trigger_queries.dart';
+
+/// Groups of the slash menu (Write 04 §21.2).
+enum SlashGroup { basic, media, insert }
+
+/// One slash menu item. [run] executes the command (the `/query` text has
+/// already been removed in the same undo step).
+@immutable
+class SlashItem {
+  const SlashItem({
+    required this.id,
+    required this.title,
+    required this.group,
+    required this.commandId,
+    this.aliases = const [],
+    this.shortcut,
+    this.suggestable = true,
+    required this.run,
+  });
+
+  final String id;
+  final String title;
+  final SlashGroup group;
+
+  /// The command this item invokes (for the shortcut label and MCP parity).
+  final String commandId;
+  final List<String> aliases;
+  final String? shortcut;
+
+  /// Whether the item is available in Suggesting mode (no tables).
+  final bool suggestable;
+
+  /// Runs the item. Items that need UI (image upload, link popover) call the
+  /// [SlashHost] callbacks.
+  final void Function(WriteEditorCommands commands, SlashHost host) run;
+}
+
+/// UI the slash menu delegates to the screen.
+@immutable
+class SlashHost {
+  const SlashHost({
+    this.onInsertImage,
+    this.onInsertImageFromUrl,
+    this.onInsertLink,
+    this.onTableInserted,
+    this.onComment,
+    this.onMention,
+  });
+
+  final VoidCallback? onInsertImage;
+  final VoidCallback? onInsertImageFromUrl;
+  final VoidCallback? onInsertLink;
+
+  /// Opens the table editor for a newly inserted table (§18.3).
+  final void Function(String tableId)? onTableInserted;
+  final VoidCallback? onComment;
+  final VoidCallback? onMention;
+}
+
+/// The slash menu items.
+List<SlashItem> defaultSlashItems() => [
+      SlashItem(
+        id: 'text',
+        title: 'Text',
+        group: SlashGroup.basic,
+        commandId: 'write.format.blockType',
+        aliases: const ['p', 'normal', 'paragraph'],
+        run: (c, h) => c.setBlockType(BlockKind.paragraph, toggle: false),
+      ),
+      for (var level = 1; level <= 6; level += 1)
+        SlashItem(
+          id: 'h$level',
+          title: 'Heading $level',
+          group: SlashGroup.basic,
+          commandId: 'write.format.blockType',
+          aliases: ['h$level', if (level == 1) 'title', 'heading'],
+          run: (c, h) => c.setBlockType(BlockKind.values[BlockKind.heading1.index + level - 1], toggle: false),
+        ),
+      SlashItem(
+        id: 'bulleted',
+        title: 'Bulleted list',
+        group: SlashGroup.basic,
+        commandId: 'write.list.toggleBulleted',
+        aliases: const ['ul', 'bullet', '-'],
+        run: (c, h) => c.setBlockType(BlockKind.bulleted, toggle: false),
+      ),
+      SlashItem(
+        id: 'numbered',
+        title: 'Numbered list',
+        group: SlashGroup.basic,
+        commandId: 'write.list.toggleNumbered',
+        aliases: const ['ol', '1.'],
+        run: (c, h) => c.setBlockType(BlockKind.numbered, toggle: false),
+      ),
+      SlashItem(
+        id: 'checklist',
+        title: 'Checklist',
+        group: SlashGroup.basic,
+        commandId: 'write.list.toggleChecklist',
+        aliases: const ['todo', 'task', '[]'],
+        run: (c, h) => c.setBlockType(BlockKind.checklist, toggle: false),
+      ),
+      SlashItem(
+        id: 'quote',
+        title: 'Quote',
+        group: SlashGroup.basic,
+        commandId: 'write.format.blockType',
+        aliases: const ['blockquote', '>'],
+        run: (c, h) => c.setBlockType(BlockKind.quote, toggle: false),
+      ),
+      SlashItem(
+        id: 'code',
+        title: 'Code block',
+        group: SlashGroup.basic,
+        commandId: 'write.format.blockType',
+        aliases: const ['code', 'pre', '```'],
+        run: (c, h) => c.setBlockType(BlockKind.codeBlock, toggle: false),
+      ),
+      SlashItem(
+        id: 'divider',
+        title: 'Divider',
+        group: SlashGroup.basic,
+        commandId: 'write.insert.divider',
+        aliases: const ['hr', '---', 'line'],
+        run: (c, h) => c.insertDivider(),
+      ),
+      SlashItem(
+        id: 'image',
+        title: 'Image',
+        group: SlashGroup.media,
+        commandId: 'write.insert.image',
+        aliases: const ['img', 'picture', 'upload'],
+        run: (c, h) => h.onInsertImage?.call(),
+      ),
+      SlashItem(
+        id: 'imageUrl',
+        title: 'Image from URL',
+        group: SlashGroup.media,
+        commandId: 'write.insert.imageFromUrl',
+        aliases: const ['image url', 'url'],
+        run: (c, h) => h.onInsertImageFromUrl?.call(),
+      ),
+      SlashItem(
+        id: 'table',
+        title: 'Table',
+        group: SlashGroup.media,
+        commandId: 'write.insert.table',
+        aliases: const ['grid'],
+        suggestable: false,
+        run: (c, h) {
+          final id = c.insertTable();
+          if (id != null) h.onTableInserted?.call(id);
+        },
+      ),
+      SlashItem(
+        id: 'link',
+        title: 'Link',
+        group: SlashGroup.insert,
+        commandId: 'write.link.insert',
+        aliases: const ['url', 'href'],
+        run: (c, h) => h.onInsertLink?.call(),
+      ),
+      SlashItem(
+        id: 'mention',
+        title: 'Mention person',
+        group: SlashGroup.insert,
+        commandId: 'write.insert.mention',
+        aliases: const ['@', 'person', 'user'],
+        run: (c, h) {
+          c.insertText('@', label: 'Mention');
+          h.onMention?.call();
+        },
+      ),
+      SlashItem(
+        id: 'comment',
+        title: 'Comment',
+        group: SlashGroup.insert,
+        commandId: 'shell.comments.create',
+        aliases: const ['note'],
+        run: (c, h) => h.onComment?.call(),
+      ),
+    ];
+
+/// Filters and ranks [items] for [query] (prefix match first, then contains,
+/// then group order).
+List<SlashItem> filterSlashItems(List<SlashItem> items, String query, {required EditorMode mode}) {
+  final q = query.toLowerCase();
+  int rank(SlashItem item) {
+    final names = [item.title.toLowerCase(), ...item.aliases.map((a) => a.toLowerCase())];
+    if (q.isEmpty) return 2;
+    if (names.any((n) => n == q)) return 0;
+    if (names.any((n) => n.startsWith(q))) return 1;
+    if (names.any((n) => n.contains(q))) return 3;
+    return -1;
+  }
+
+  final available = items.where((i) => mode != EditorMode.suggesting || i.suggestable).toList();
+  final ranked = [
+    for (final item in available)
+      if (rank(item) >= 0) (rank(item), item),
+  ]..sort((a, b) {
+      final byRank = a.$1.compareTo(b.$1);
+      return byRank != 0 ? byRank : a.$2.group.index.compareTo(b.$2.group.index);
+    });
+  return [for (final (_, item) in ranked) item];
+}
+
+/// Runs a slash [item] for [query]: removes `/query` and runs the command in
+/// one undo step labelled with the item title (§21.3).
+void runSlashItem(
+  WriteEditorController controller,
+  WriteEditorCommands commands,
+  TriggerQueryTracker tracker,
+  TriggerQuery query,
+  SlashItem item,
+  SlashHost host,
+) {
+  controller.group(item.title, () {
+    tracker.removeTriggerText(query);
+    item.run(commands, host);
+  });
+}

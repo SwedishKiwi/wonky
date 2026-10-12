@@ -149,28 +149,26 @@ final class ContrastChecker {
 
   /// Checks [theme] in both variants (light first).
   List<ContrastResult> check(WriteThemeData theme) => [
-    for (final v in ThemeVariant.values) ...checkResolved(resolver.resolve(theme, v)),
+    for (final v in ThemeVariant.values)
+      ...checkResolved(resolver.resolve(theme, v)),
   ];
 
   /// The failing pairs of [theme] in both variants.
-  List<ContrastResult> warnings(WriteThemeData theme) =>
-      [for (final r in check(theme)) if (!r.passes) r];
+  List<ContrastResult> warnings(WriteThemeData theme) => [
+    for (final r in check(theme))
+      if (!r.passes) r,
+  ];
 
   /// MCP `contrast_warnings` for [theme].
-  List<JsonMap> warningsJson(WriteThemeData theme) =>
-      [for (final w in warnings(theme)) w.toJson()];
+  List<JsonMap> warningsJson(WriteThemeData theme) => [
+    for (final w in warnings(theme)) w.toJson(),
+  ];
 
   /// Checks one resolved variant.
   List<ContrastResult> checkResolved(ResolvedWriteTheme t) {
     final paper = t.page.paperColor | 0xff000000;
     final out = <ContrastResult>[];
-    void pair(
-      String id,
-      int fg,
-      int? bg,
-      bool large, {
-      int? under,
-    }) {
+    void pair(String id, int fg, int? bg, bool large, {int? under}) {
       final ground = under == null ? paper : compositeOver(under, paper);
       final b = bg == null ? ground : compositeOver(bg, ground);
       final f = compositeOver(fg, b);
@@ -187,7 +185,12 @@ final class ContrastChecker {
       );
     }
 
-    pair('body', t.body.style.color, t.body.box.background, t.body.style.isLargeText);
+    pair(
+      'body',
+      t.body.style.color,
+      t.body.box.background,
+      t.body.style.isLargeText,
+    );
     for (final h in t.headings) {
       pair('h${h.level}', h.style.color, h.box.background, h.style.isLargeText);
     }
@@ -198,9 +201,19 @@ final class ContrastChecker {
     pair('link', t.link.color, t.body.box.background, t.body.style.isLargeText);
     pair('mention', t.mention.color, t.mention.background, false);
     final inlineLarge = t.body.style.fontSize * t.inlineCode.sizeRatio >= 18;
-    pair('inlineCode', t.inlineCode.color, t.inlineCode.background, inlineLarge);
+    pair(
+      'inlineCode',
+      t.inlineCode.color,
+      t.inlineCode.background,
+      inlineLarge,
+    );
     final code = t.codeBlock;
-    pair('codeBlock', code.style.color, code.box.background, code.style.isLargeText);
+    pair(
+      'codeBlock',
+      code.style.color,
+      code.box.background,
+      code.style.isLargeText,
+    );
     for (final e in t.syntax.entries) {
       pair(
         'syntax.${e.key.name}',
@@ -212,7 +225,12 @@ final class ContrastChecker {
     final q = t.blockquote;
     pair('blockquote', q.style.color, q.box.background, q.style.isLargeText);
     final tb = t.table;
-    pair('tableHeader', tb.headerStyle.color, tb.headerBackground, tb.headerStyle.isLargeText);
+    pair(
+      'tableHeader',
+      tb.headerStyle.color,
+      tb.headerBackground,
+      tb.headerStyle.isLargeText,
+    );
     pair('tableCell', tb.style.color, tb.box.background, tb.style.isLargeText);
     if (tb.zebra) {
       pair('tableZebra', tb.style.color, tb.zebraColor, tb.style.isLargeText);
@@ -241,20 +259,37 @@ final class ContrastChecker {
     }
     return switch (pairId) {
       'body' => (element: ThemeElement.body, key: 'color', token: null),
-      'caption' => (element: ThemeElement.image, key: 'caption.color', token: null),
+      'caption' => (
+        element: ThemeElement.image,
+        key: 'caption.color',
+        token: null,
+      ),
       'header' => (element: ThemeElement.header, key: 'color', token: null),
       'footer' => (element: ThemeElement.footer, key: 'color', token: null),
       'link' => (element: ThemeElement.link, key: 'color', token: null),
       'mention' => (element: ThemeElement.mention, key: 'color', token: null),
-      'inlineCode' => (element: ThemeElement.inlineCode, key: 'color', token: null),
-      'codeBlock' => (element: ThemeElement.codeBlock, key: 'color', token: null),
-      'blockquote' => (element: ThemeElement.blockquote, key: 'color', token: null),
-      'tableHeader' => (element: ThemeElement.table, key: 'headerColor', token: null),
-      'tableCell' || 'tableZebra' => (
-        element: ThemeElement.table,
+      'inlineCode' => (
+        element: ThemeElement.inlineCode,
         key: 'color',
         token: null,
       ),
+      'codeBlock' => (
+        element: ThemeElement.codeBlock,
+        key: 'color',
+        token: null,
+      ),
+      'blockquote' => (
+        element: ThemeElement.blockquote,
+        key: 'color',
+        token: null,
+      ),
+      'tableHeader' => (
+        element: ThemeElement.table,
+        key: 'headerColor',
+        token: null,
+      ),
+      'tableCell' ||
+      'tableZebra' => (element: ThemeElement.table, key: 'color', token: null),
       'taskChecked' => (
         element: ThemeElement.task,
         key: 'checkedText.color',
@@ -278,7 +313,9 @@ final class ContrastChecker {
     if (result.isEmpty || result.first.passes) return null;
     final r = result.first;
     final source = _sourceOf(pairId);
-    final opacity = pairId == 'taskChecked' ? resolved.task.checkedOpacity : 1.0;
+    final opacity = pairId == 'taskChecked'
+        ? resolved.task.checkedOpacity
+        : 1.0;
     final rawFg = _rawForeground(resolved, pairId);
     final fixed = _minimalLightness(rawFg, r.background, r.required, opacity);
     if (fixed == null) return null;
@@ -330,7 +367,10 @@ final class ContrastChecker {
   ) {
     final base = Oklch.fromArgb(fg | 0xff000000);
     bool ok(int c) =>
-        contrastRatio(compositeOver(withOpacity(c, opacity), background), background) >=
+        contrastRatio(
+          compositeOver(withOpacity(c, opacity), background),
+          background,
+        ) >=
         required;
     for (var step = 1; step <= 200; step++) {
       final d = step * 0.005;
@@ -361,7 +401,8 @@ final class ContrastChecker {
     ColorRef? found;
     if (source.token != null) {
       final t = source.token!;
-      found = (dark ? (theme.dark.syntax?[t])?.color('color') : null) ??
+      found =
+          (dark ? (theme.dark.syntax?[t])?.color('color') : null) ??
           theme.syntax[t]?.color('color') ??
           BaseTheme.instance.syntax(t)?.color('color');
       if (found?.kind == ColorRefKind.palette) {

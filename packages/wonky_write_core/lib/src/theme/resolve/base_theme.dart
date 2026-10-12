@@ -318,7 +318,12 @@ const Map<String, Object?> wonkyDefaultElementsJson = {
     'borderWidth': '1px',
     'zebra': false,
     'zebraColor': '@tableStripe',
-    'cellPadding': {'top': '4pt', 'right': '6pt', 'bottom': '4pt', 'left': '6pt'},
+    'cellPadding': {
+      'top': '4pt',
+      'right': '6pt',
+      'bottom': '4pt',
+      'left': '6pt',
+    },
     'fontSizeRatio': 1,
     'spaceBefore': '0pt',
     'spaceAfter': '8pt',

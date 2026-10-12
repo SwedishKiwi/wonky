@@ -127,10 +127,8 @@ final class Oklab {
   /// Converts to 32-bit ARGB (channels clamped).
   int toArgb() {
     final (r, g, bl) = _linear();
-    int ch(double v) => (linearToSrgb(v.clamp(0.0, 1.0)) * 255).round().clamp(
-      0,
-      255,
-    );
+    int ch(double v) =>
+        (linearToSrgb(v.clamp(0.0, 1.0)) * 255).round().clamp(0, 255);
     final al = (alpha.clamp(0.0, 1.0) * 255).round();
     return (al << 24) | (ch(r) << 16) | (ch(g) << 8) | ch(bl);
   }

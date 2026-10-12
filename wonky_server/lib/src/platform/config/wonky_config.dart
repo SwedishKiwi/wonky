@@ -135,7 +135,6 @@ class WonkyConfig {
     );
   }
 
-  static String _snake(String key) => key
-      .replaceAllMapped(RegExp('[A-Z]'), (m) => '_${m[0]}')
-      .toUpperCase();
+  static String _snake(String key) =>
+      key.replaceAllMapped(RegExp('[A-Z]'), (m) => '_${m[0]}').toUpperCase();
 }

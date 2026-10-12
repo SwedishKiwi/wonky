@@ -45,58 +45,43 @@ class ServerUserRepository implements UserRepository {
   final Api api;
 
   @override
-  Future<UserProfileView> getMe() => api.call<UserProfileView>('user', 'getMe');
+  Future<UserProfileView> getMe() => api.guard((c) => c.user.getMe());
 
   @override
-  Future<UserProfileView> updateProfile({
-    String? displayName,
-    String? locale,
-    String? timeZone,
-  }) => api.call<UserProfileView>('user', 'updateProfile', {
-    'displayName': displayName,
-    'locale': locale,
-    'timeZone': timeZone,
-  });
+  Future<UserProfileView> updateProfile({String? displayName, String? locale, String? timeZone}) =>
+      api.guard((c) => c.user.updateProfile(displayName: displayName, locale: locale, timeZone: timeZone));
 
   @override
-  Future<UserProfileView> setAvatar(UuidValue? fileUuid) =>
-      api.call<UserProfileView>('user', 'setAvatar', {'fileUuid': fileUuid});
+  Future<UserProfileView> setAvatar(UuidValue? fileUuid) => api.guard((c) => c.user.setAvatar(fileUuid));
 
   @override
-  Future<UserPreferences> getPreferences() =>
-      api.call<UserPreferences>('user', 'getPreferences');
+  Future<UserPreferences> getPreferences() => api.guard((c) => c.user.getPreferences());
 
   @override
   Future<UserPreferences> updatePreferences(UserPreferencesPatch patch) =>
-      api.call<UserPreferences>('user', 'updatePreferences', {'patch': patch});
+      api.guard((c) => c.user.updatePreferences(patch));
 
   @override
   Future<List<UserSummary>> searchUsers(String query, {int limit = 10}) =>
-      api.call<List<UserSummary>>('user', 'searchUsers', {'query': query, 'limit': limit});
+      api.guard((c) => c.user.searchUsers(query, limit));
 
   @override
   Future<AccountDeletionPreview> deleteAccountPreview() =>
-      api.call<AccountDeletionPreview>('user', 'deleteAccountPreview');
+      api.guard((c) => c.user.accountDeletionPreview());
 
   @override
-  Future<void> deleteAccount(String confirmation) =>
-      api.call<void>('user', 'deleteAccount', {'confirmation': confirmation});
+  Future<void> deleteAccount(String confirmation) => api.guard((c) => c.user.deleteAccount(confirmation));
 
   @override
-  Future<List<AccessTokenView>> listTokens() =>
-      api.call<List<AccessTokenView>>('accessToken', 'list');
+  Future<List<AccessTokenView>> listTokens() => api.guard((c) => c.accessToken.list());
 
   @override
   Future<CreatedAccessToken> createToken({
     required String name,
     required List<String> scopes,
     DateTime? expiresAt,
-  }) => api.call<CreatedAccessToken>('accessToken', 'create', {
-    'name': name,
-    'scopes': scopes,
-    'expiresAt': expiresAt,
-  });
+  }) => api.guard((c) => c.accessToken.create(name, scopes, expiresAt));
 
   @override
-  Future<void> revokeToken(int id) => api.call<void>('accessToken', 'revoke', {'id': id});
+  Future<void> revokeToken(int id) => api.guard((c) => c.accessToken.revoke(id));
 }

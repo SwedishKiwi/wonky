@@ -70,8 +70,8 @@ class SuggestionAttribution implements Attribution {
       't': type.code,
       'by': authorUuid,
       'at': atMs,
-      if (before != null) 'before': before,
-      if (via != null) 'via': via,
+      'before': ?before,
+      'via': ?via,
     });
   }
 

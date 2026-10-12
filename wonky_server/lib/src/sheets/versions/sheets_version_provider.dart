@@ -120,7 +120,8 @@ class SheetsVersionProvider implements VersionProvider {
       if (line.isEmpty) continue;
       final m = jsonDecode(line) as Map;
       final row = (m['row'] as Map).cast<String, dynamic>();
-      result.putIfAbsent(m['tb'] as String, () => {})[row['id'] as String] = row;
+      result.putIfAbsent(m['tb'] as String, () => {})[row['id'] as String] =
+          row;
     }
     return result;
   }
@@ -200,7 +201,8 @@ class SheetsVersionProvider implements VersionProvider {
     final target = decode(bytes.buffer.asUint8List(0, bytes.lengthInBytes));
     final current = await readSpace(session, item.contentRef!);
     final changes = diff(current, target);
-    final label = 'Restore version "${version.name ?? version.createdAt.toIso8601String()}"';
+    final label =
+        'Restore version "${version.name ?? version.createdAt.toIso8601String()}"';
     final (changeId, _) = await ServerSheetsWriter.applyRecorded(
       session,
       actor: actor,

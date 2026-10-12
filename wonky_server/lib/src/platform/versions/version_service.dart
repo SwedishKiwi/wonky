@@ -107,7 +107,8 @@ abstract final class VersionService {
         // Concurrent insert: fall through to update.
       }
     }
-    final current = state ??
+    final current =
+        state ??
         await ItemVersionState.db.findFirstRow(
           session,
           where: (t) => t.itemId.equals(item.id!),
@@ -219,7 +220,12 @@ abstract final class VersionService {
     int versionId, {
     Role min = Role.editor,
   }) async {
-    final (item, _) = await AccessService.require(session, actor, itemUuid, min);
+    final (item, _) = await AccessService.require(
+      session,
+      actor,
+      itemUuid,
+      min,
+    );
     final version = await ItemVersion.db.findById(session, versionId);
     if (version == null || version.itemId != item.id) {
       throw Errors.notFound('Version');
@@ -302,7 +308,9 @@ abstract final class VersionService {
         id: version.id,
         itemId: version.itemId,
         kind: clean == null
-            ? (version.kind == VersionKind.named ? VersionKind.auto : version.kind)
+            ? (version.kind == VersionKind.named
+                  ? VersionKind.auto
+                  : version.kind)
             : VersionKind.named,
         name: clean,
         createdAt: version.createdAt,

@@ -19,8 +19,12 @@ class CachedOp {
 /// last one leaves. The database row lock stays authoritative across
 /// instances, so the state catches up from the op log when it is behind.
 class DocumentState {
-  DocumentState._(this.documentUuid, this.documentId, this.content, this.revision)
-    : overlays = OverlayIndex()..reset(content);
+  DocumentState._(
+    this.documentUuid,
+    this.documentId,
+    this.content,
+    this.revision,
+  ) : overlays = OverlayIndex()..reset(content);
 
   final UuidValue documentUuid;
   final int documentId;
@@ -55,7 +59,9 @@ class DocumentState {
 
   void remember(int revision, Delta delta) {
     recent.add(CachedOp(revision, delta));
-    if (recent.length > maxRecent) recent.removeRange(0, recent.length - maxRecent);
+    if (recent.length > maxRecent) {
+      recent.removeRange(0, recent.length - maxRecent);
+    }
   }
 
   /// Cached ops after [fromRevision] up to the head, or null when not all
@@ -92,7 +98,11 @@ class DocumentState {
         documentId,
         transaction: transaction,
       );
-      content = await DocumentStore.head(session, doc!, transaction: transaction);
+      content = await DocumentStore.head(
+        session,
+        doc!,
+        transaction: transaction,
+      );
       revision = doc.headRevision;
       recent.clear();
       return;
@@ -123,7 +133,12 @@ abstract final class DocumentCache {
     if (loading != null) return loading;
     final future = () async {
       final content = await DocumentStore.head(session, doc);
-      final state = DocumentState._(doc.uuid, doc.id!, content, doc.headRevision);
+      final state = DocumentState._(
+        doc.uuid,
+        doc.id!,
+        content,
+        doc.headRevision,
+      );
       final ops = await DocumentOp.db.find(
         session,
         where: (t) =>

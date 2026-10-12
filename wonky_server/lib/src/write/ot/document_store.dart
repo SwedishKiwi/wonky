@@ -183,8 +183,7 @@ abstract final class DocumentStore {
     }
     final snapshot = await DocumentSnapshot.db.findFirstRow(
       session,
-      where: (t) =>
-          t.documentId.equals(doc.id!) & (t.revision <= revision),
+      where: (t) => t.documentId.equals(doc.id!) & (t.revision <= revision),
       orderBy: (t) => t.revision.desc(),
       transaction: transaction,
     );

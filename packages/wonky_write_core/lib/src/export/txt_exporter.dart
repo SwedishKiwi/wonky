@@ -19,17 +19,31 @@ final class TxtExporter implements DocumentExporter<TxtExportOptions> {
   ExportFormat get format => ExportFormat.txt;
 
   @override
-  Future<ExportArtifact> export(ExportInput input, TxtExportOptions options) async {
-    final text = render(exportTree(input, options), options, links: input.links);
+  Future<ExportArtifact> export(
+    ExportInput input,
+    TxtExportOptions options,
+  ) async {
+    final text = render(
+      exportTree(input, options),
+      options,
+      links: input.links,
+    );
     return ExportArtifact(
-      fileName: ExportFileNames.fileName(options.fileName ?? input.meta.title, 'txt'),
+      fileName: ExportFileNames.fileName(
+        options.fileName ?? input.meta.title,
+        'txt',
+      ),
       mimeType: format.mimeType,
       bytes: Uint8List.fromList(utf8.encode(text)),
     );
   }
 
   /// Renders [tree] as plain text.
-  static String render(DocTree tree, TxtExportOptions options, {LinkResolver links = const IdentityLinkResolver()}) {
+  static String render(
+    DocTree tree,
+    TxtExportOptions options, {
+    LinkResolver links = const IdentityLinkResolver(),
+  }) {
     final blocks = <(String text, bool listLike, bool code)>[];
     String runs(List<InlineRun> rs) => runsText(rs, links);
 
@@ -46,17 +60,42 @@ final class TxtExporter implements DocumentExporter<TxtExportOptions> {
     for (final block in tree.blocks) {
       switch (block) {
         case ParagraphBlock():
-          blocks.add((_wrap(runs(block.runs), options.wrapColumn), false, false));
+          blocks.add((
+            _wrap(runs(block.runs), options.wrapColumn),
+            false,
+            false,
+          ));
         case HeadingBlock(runs: final rs):
           blocks.add((_wrap(runs(rs), options.wrapColumn), false, false));
-        case ListItemBlock(:final kind, :final indent, :final ordinal, runs: final rs):
-          blocks.add((indented(runs(rs), kind == ListKindIr.ordered ? '$ordinal. ' : '- ', indent), true, false));
+        case ListItemBlock(
+          :final kind,
+          :final indent,
+          :final ordinal,
+          runs: final rs,
+        ):
+          blocks.add((
+            indented(
+              runs(rs),
+              kind == ListKindIr.ordered ? '$ordinal. ' : '- ',
+              indent,
+            ),
+            true,
+            false,
+          ));
         case TaskBlock(:final checked, :final indent, runs: final rs):
-          blocks.add((indented(runs(rs), checked ? '[x] ' : '[ ] ', indent), true, false));
+          blocks.add((
+            indented(runs(rs), checked ? '[x] ' : '[ ] ', indent),
+            true,
+            false,
+          ));
         case QuoteBlock(:final lines):
           blocks.add((
             [
-              for (final l in lines) ..._wrap(runs(l), options.wrapColumn == 0 ? 0 : options.wrapColumn - 2).split('\n'),
+              for (final l in lines)
+                ..._wrap(
+                  runs(l),
+                  options.wrapColumn == 0 ? 0 : options.wrapColumn - 2,
+                ).split('\n'),
             ].map((l) => '> $l').join('\n'),
             false,
             false,
@@ -69,7 +108,8 @@ final class TxtExporter implements DocumentExporter<TxtExportOptions> {
           blocks.add(('----', false, false));
         case TableBlock(:final cellMarkdown):
           final cells = [
-            for (final r in cellMarkdown) [for (final c in r) InlineMarkdown.toPlainText(c)],
+            for (final r in cellMarkdown)
+              [for (final c in r) InlineMarkdown.toPlainText(c)],
           ];
           blocks.add((_table(cells, options.tables), false, true));
       }
@@ -90,7 +130,10 @@ final class TxtExporter implements DocumentExporter<TxtExportOptions> {
     for (final r in rs) {
       b.write(r.text.replaceAll(softBreak, '\n'));
       final link = r.link;
-      if (link != null && r.mentionUserUuid == null && !link.startsWith('mailto:') && r.text != link) {
+      if (link != null &&
+          r.mentionUserUuid == null &&
+          !link.startsWith('mailto:') &&
+          r.text != link) {
         b.write(' (${links.resolve(link)})');
       }
     }
@@ -99,7 +142,9 @@ final class TxtExporter implements DocumentExporter<TxtExportOptions> {
 
   static String _table(List<List<String>> rows, TxtTables mode) {
     if (mode == TxtTables.tsv) {
-      return rows.map((r) => r.map((c) => c.replaceAll('\t', ' ')).join('\t')).join('\n');
+      return rows
+          .map((r) => r.map((c) => c.replaceAll('\t', ' ')).join('\t'))
+          .join('\n');
     }
     final cols = rows.fold(0, (m, r) => r.length > m ? r.length : m);
     final widths = List.filled(cols, 0);
@@ -111,8 +156,15 @@ final class TxtExporter implements DocumentExporter<TxtExportOptions> {
     String pad(String s, int w) => s + ' ' * (w - s.runes.length);
     final lines = <String>[];
     for (var i = 0; i < rows.length; i++) {
-      lines.add([for (var c = 0; c < cols; c++) pad(c < rows[i].length ? rows[i][c] : '', widths[c])].join('  ').trimRight());
-      if (i == 0 && rows.length > 1) lines.add([for (final w in widths) '-' * w].join('  '));
+      lines.add(
+        [
+          for (var c = 0; c < cols; c++)
+            pad(c < rows[i].length ? rows[i][c] : '', widths[c]),
+        ].join('  ').trimRight(),
+      );
+      if (i == 0 && rows.length > 1) {
+        lines.add([for (final w in widths) '-' * w].join('  '));
+      }
     }
     return lines.join('\n');
   }

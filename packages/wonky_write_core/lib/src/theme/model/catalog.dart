@@ -117,7 +117,10 @@ abstract final class ThemeCatalog {
     ThemeElement.h5: ObjectProp(_headingProps),
     ThemeElement.h6: ObjectProp(_headingProps),
     ThemeElement.paragraphAfterHeading: ObjectProp(blockProps),
-    ThemeElement.bold: ObjectProp({'fontWeight': WeightProp(), 'color': _color}),
+    ThemeElement.bold: ObjectProp({
+      'fontWeight': WeightProp(),
+      'color': _color,
+    }),
     ThemeElement.italic: ObjectProp({
       'fontStyle': EnumProp(['italic', 'oblique']),
       'color': _color,

@@ -32,6 +32,7 @@ import '../data/user_repository.dart';
 import '../document/document_controller.dart';
 import '../l10n/wonky_app_localizations.dart';
 import '../mcp_bridge/mcp_control.dart';
+import '../menus/shell_menus.dart';
 import '../undo/drive_undo.dart';
 import 'form_dialog.dart';
 import '../undo/undo_service.dart';
@@ -155,6 +156,9 @@ class ShellServices implements ActiveDocumentHost {
 
   /// Select-all on the home screen (set by the drive list).
   VoidCallback? driveSelectAll;
+
+  /// The home screen's search field (`/`).
+  FocusNode? driveSearchFocus;
 
   /// Starts inline title editing in the editor header (File › Rename).
   VoidCallback? startTitleRename;
@@ -338,6 +342,15 @@ class ShellServices implements ActiveDocumentHost {
           );
     return v.uuid;
   }
+
+  /// The app's menubar tree (shared menus extended by the app).
+  MenuRoot menuRoot(BuildContext context) =>
+      config.menus(context, ShellMenus(WonkyAppLocalizations.of(context)));
+
+  /// Menu label paths of every command in the menubar.
+  Map<String, List<String>> menuPaths(BuildContext context) => menuRoot(context).commandPaths(
+    titleOf: (c) => registry.byId(c.commandId)?.title(context) ?? c.commandId,
+  );
 
   /// Records a command in the palette's recent list.
   void noteRecentCommand(String id) {

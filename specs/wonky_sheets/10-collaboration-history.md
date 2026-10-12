@@ -577,7 +577,7 @@ Each row of this table is a test case in the multi-client sync harness
 |---|--------|
 | A-10-1 | `ChangeLog.summaryJson` gains `deleted: {rows: [ids], cols: [ids], sheets: [ids]}` and `revived: {…}` (capped at 1,000 ids each; beyond that `structureOverflow: true` makes the server rescan anchors of affected sheets). |
 | A-10-2 | `CommentThread` (suite table) gains `orphanReasonJson: String?` and `statusBeforeOrphan: CommentStatus?` (applied in suite 07 §2.1). |
-| A-10-3 | Server tables `SheetsVersionState(spreadsheetUuid, lastEditAt, lastVersionAt, editorsSinceLastVersion: List<int>, pendingChangeLogCount)` and `SheetsSnapshotIndex(itemVersionId, sheetsJson, changedRangesJson, authorIds: List<int>, diffFileId?)`. |
+| A-10-3 | Server tables `ItemVersionState` (shared by both apps: `itemId, lastEditAt, dirtySince, lastVersionAt, editorsSinceLastVersion: List<int>, lastRevision`; replaces the proposed `SheetsVersionState`) and `SheetsSnapshotIndex(itemVersionId, sheetsJson, changedRangesJson, authorIds: List<int>, diffFileId?)`. |
 | A-10-4 | Local-only tables `PendingCommentOp(opId, threadUuid, kind, payloadJson, createdAt)` and `LocalConflict(id, spreadsheetId, sheetId, rowId, colId, column, myValue, theirValue, theirUserId, changeLogId, detectedAt, dismissed)`. |
 | A-10-5 | New undo domain `sheets.serverChange` (entry = `{changeId}`); undo → `SheetsEndpoint.revertChange`, redo → `reapplyChange`. Shared with MCP-originated changes surfaced in the UI. |
 | A-10-6 | `PresenceUpdate.hints` / `PresenceEvent.Hints` and `FollowerCount` event (suite 07 protocol extension). |

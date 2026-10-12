@@ -20,8 +20,14 @@ class CommentEndpoint extends Endpoint {
     filter: filter,
   );
 
-  Future<CommentThreadView> getThread(Session session, UuidValue threadUuid) async =>
-      CommentService.getThread(session, await UserService.actorOf(session), threadUuid);
+  Future<CommentThreadView> getThread(
+    Session session,
+    UuidValue threadUuid,
+  ) async => CommentService.getThread(
+    session,
+    await UserService.actorOf(session),
+    threadUuid,
+  );
 
   /// Creates a thread; idempotent on the client-generated [threadUuid].
   Future<CommentThreadView> createThread(
@@ -79,7 +85,11 @@ class CommentEndpoint extends Endpoint {
   );
 
   Future<void> delete(Session session, int commentId) async =>
-      CommentService.delete(session, await UserService.actorOf(session), commentId);
+      CommentService.delete(
+        session,
+        await UserService.actorOf(session),
+        commentId,
+      );
 
   Future<void> deleteThread(Session session, UuidValue threadUuid) async =>
       CommentService.deleteThread(
@@ -88,20 +98,35 @@ class CommentEndpoint extends Endpoint {
         threadUuid,
       );
 
-  Future<CommentThreadView> resolve(Session session, UuidValue threadUuid) async =>
-      CommentService.resolve(session, await UserService.actorOf(session), threadUuid);
+  Future<CommentThreadView> resolve(
+    Session session,
+    UuidValue threadUuid,
+  ) async => CommentService.resolve(
+    session,
+    await UserService.actorOf(session),
+    threadUuid,
+  );
 
-  Future<CommentThreadView> reopen(Session session, UuidValue threadUuid) async =>
-      CommentService.reopen(session, await UserService.actorOf(session), threadUuid);
+  Future<CommentThreadView> reopen(
+    Session session,
+    UuidValue threadUuid,
+  ) async => CommentService.reopen(
+    session,
+    await UserService.actorOf(session),
+    threadUuid,
+  );
 
   /// Toggles the caller's reaction.
-  Future<CommentView> react(Session session, int commentId, String emoji) async =>
-      CommentService.react(
-        session,
-        await UserService.actorOf(session),
-        commentId,
-        emoji,
-      );
+  Future<CommentView> react(
+    Session session,
+    int commentId,
+    String emoji,
+  ) async => CommentService.react(
+    session,
+    await UserService.actorOf(session),
+    commentId,
+    emoji,
+  );
 
   Future<CommentThreadView> updateAnchor(
     Session session,

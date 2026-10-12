@@ -1221,7 +1221,10 @@ class WriteEditorCommands {
   }
 
   /// `write.edit.replaceRange {start, length, text}` (MCP/AI).
-  bool replaceRangeWithText(int start, int length, String text) {
+  bool replaceRangeWithText(int start, int length, String text) => replaceRangeWithTextLabelled(start, length, text);
+
+  /// [replaceRangeWithText] with an undo [label] ("Cut", "Replace"…).
+  bool replaceRangeWithTextLabelled(int start, int length, String text, {String label = 'Replace'}) {
     if (!canEdit) return false;
     final block = controller.mirror.blockAtOffset(start);
     final clean = block.isCode ? text : text.replaceAll('\n', DeltaKeys.softBreak);
@@ -1229,7 +1232,7 @@ class WriteEditorCommands {
       ..retain(start)
       ..delete(length)
       ..insert(clean, block.isCode ? null : _inlineFormattingAt(start));
-    _apply(change..trim(), 'Replace', selectionAfter: DeltaSelection.collapsed(start + clean.length));
+    _apply(change..trim(), label, selectionAfter: DeltaSelection.collapsed(start + clean.length));
     return true;
   }
 }

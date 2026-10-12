@@ -7,9 +7,14 @@ import 'e2e_codes.dart';
 /// verification codes of `@example.test` addresses. Refuses every call
 /// outside the development and test run modes.
 class E2eSupportEndpoint extends Endpoint {
-  void _check(Session session, String email) {
-    final mode = session.serverpod.runMode;
-    if (mode != ServerpodRunMode.development && mode != ServerpodRunMode.test) {
+  void _check(Session session, String email) =>
+      check(session.serverpod.runMode, email);
+
+  /// Throws unless [runMode] is development/test and [email] is an
+  /// `@example.test` address.
+  static void check(String runMode, String email) {
+    if (runMode != ServerpodRunMode.development &&
+        runMode != ServerpodRunMode.test) {
       throw Errors.unavailable('Not available in this environment.');
     }
     if (!E2eCodes.isTestAddress(email)) {

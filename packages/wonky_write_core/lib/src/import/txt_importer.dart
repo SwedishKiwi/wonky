@@ -26,11 +26,7 @@ final class TxtImporter implements DocumentImporter {
   @override
   Future<ImportResult> import(Uint8List bytes, ImportOptions options) async {
     final decoded = ImportTextDecoder.decode(bytes);
-    return importText(
-      decoded.text,
-      options,
-      extraWarnings: [?decoded.warning],
-    );
+    return importText(decoded.text, options, extraWarnings: [?decoded.warning]);
   }
 
   /// Imports already decoded [text] (paste, tests).

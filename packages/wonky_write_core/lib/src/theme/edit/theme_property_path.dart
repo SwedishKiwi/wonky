@@ -58,7 +58,8 @@ abstract final class ThemePropertyPath {
     var i = 0;
     if (p[0] == 'dark') {
       if (p.length == 2 && p[1] == 'mode') return;
-      if (p.length < 2 || !const {'palette', 'elements', 'syntax'}.contains(p[1])) {
+      if (p.length < 2 ||
+          !const {'palette', 'elements', 'syntax'}.contains(p[1])) {
         throw ThemePathException(path, 'Unknown dark section.');
       }
       i = 1;
@@ -69,11 +70,14 @@ abstract final class ThemePropertyPath {
       case 'name' || 'description' || 'basedOn' when i == 0 && rest.isEmpty:
         return;
       case 'fonts' when i == 0:
-        if (rest.length == 1 && const {'body', 'heading', 'mono'}.contains(rest[0])) {
+        if (rest.length == 1 &&
+            const {'body', 'heading', 'mono'}.contains(rest[0])) {
           return;
         }
       case 'palette':
-        if (rest.length == 1 && PaletteKey.fromJsonName(rest[0]) != null) return;
+        if (rest.length == 1 && PaletteKey.fromJsonName(rest[0]) != null) {
+          return;
+        }
       case 'syntax':
         if (rest.isEmpty) {
           if (i == 1) return;
@@ -108,7 +112,8 @@ abstract final class ThemePropertyPath {
       BorderProp() =>
         rest.length == 2 && const {'width', 'style', 'color'}.contains(rest[1]),
       EdgesProp() =>
-        rest.length == 2 && const {'top', 'right', 'bottom', 'left'}.contains(rest[1]),
+        rest.length == 2 &&
+            const {'top', 'right', 'bottom', 'left'}.contains(rest[1]),
       _ => false,
     };
   }

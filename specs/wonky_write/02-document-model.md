@@ -96,12 +96,18 @@ attributes (suggested insertion/deletion of an image, divider or table; comments
    (canonical form, so diffs and hashes are stable).
 2. Embeds are followed by `"\n"` without attributes and preceded by `"\n"` or document start.
 3. `code` inline excludes `bold/italic/strike`.
-4. `indent` only with `list`; max 8; indent n requires a list line with indent ≥ n−1 somewhere
-   above in the same list run (normalized on server: clamp).
-5. Text characters: no control chars except `\n` (line end) and U+2028; tabs allowed only in
-   code blocks (elsewhere converted to spaces).
+4. `indent` only with `list`; max 8; a list line's indent is at most the previous list line's
+   indent + 1 within the same list run (the first item of a run has indent 0) — the same rule
+   as the editor's Tab (04 §13.3); normalized by clamping.
+5. Text characters: no control chars except `\n` (line end) and U+2028; no U+2029 (→ U+2028),
+   U+FFFC (reserved for embeds in addressing text) or unpaired surrogates; tabs allowed only in
+   code blocks (elsewhere converted to 4 spaces).
 6. Max document length: 2,000,000 characters (config `write.maxDocumentChars`).
 7. At most one embed per `id`.
+8. Text of `code-block` lines carries no inline attributes (only `cmt_*`/`sug_*`); U+2028 in a
+   code line becomes a real line end. Code languages match `[A-Za-z0-9_+#.-]{0,32}`.
+9. Links are canonical URLs (schemes http, https, mailto, wonky, tel, ftp; percent-encoded like
+   CommonMark link destinations) so they survive Markdown round trips; others are removed.
 
 `WonkyDeltaValidator` and `WonkyDeltaNormalizer` live in `wonky_write_core` and are used by
 client, server, importers and MCP tools.
@@ -141,8 +147,19 @@ client, server, importers and MCP tools.
 - Comments are dropped; suggestions are exported as *accepted* (default) or *original*
   (option).
 - Line endings `\n`, trailing newline, no trailing spaces except none (hard breaks use `\`).
+- Lossless encodings (implementation, `markdown_exporter.dart`): a soft break with no text after
+  it on the line is written as `<br>`; a line whose content is only k plain soft breaks is
+  written as k+1 `<br>` tags (an empty paragraph/quote line is `<br>`, an empty heading `# <br>`);
+  empty list items are a bare marker at top level and `- <!-- -->` when nested (an empty item
+  cannot interrupt the parent paragraph); leading/trailing whitespace is written as numeric
+  character references; mentions are `[@Name](mailto:email "wonky-mention:<userUuid>")`; when
+  CommonMark delimiter flanking rules cannot express the formatting, `_`-delimiters and finally
+  `<strong>/<em>/<del>` tags are used (the importer maps those tags). Every block is verified by
+  parsing it back.
 - **Round-trip guarantee**: `import(export(D)) == normalize(D)` for any valid delta without
-  `cmt_*`/`sug_*` (property test with random documents).
+  `cmt_*`/`sug_*` (property test with random documents), up to embed ids (not representable in
+  Markdown; the test replays them through `ImportOptions.idGenerator`) and with table cells in
+  canonical inline Markdown (`InlineMarkdown.canonicalCell`).
 
 ## 3. Server data model (`wonky_server/lib/src/write/models/`)
 
@@ -175,7 +192,7 @@ fields:
   authorId: int?
   actorKind: ActorKind                # user, mcp, ai, system
   sessionId: String?                  # editing session (for presence attribution)
-  kind: DocumentOpKind                # content, restore, import, aiEdit
+  kind: DocumentOpKind                # content, restore, imported, aiEdit, system (`import` is reserved in Serverpod)
   baseRevision: int                   # revision the client based the op on (diagnostics)
   deltaJson: String                   # transformed op as applied
   inverseJson: String                 # inverse against the pre-op doc (for revert/history)

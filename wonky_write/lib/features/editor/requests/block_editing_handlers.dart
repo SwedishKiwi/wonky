@@ -271,7 +271,7 @@ class _ConvertToCodeBlockCommand extends EditCommand {
   void execute(EditContext context, CommandExecutor executor) {
     final node = context.document.getNodeById(nodeId) as ParagraphNode;
     executor
-      ..executeCommand(
+      .executeCommand(
         ReplaceNodeCommand(
           existingNodeId: nodeId,
           newNode: ParagraphNode(
@@ -420,7 +420,7 @@ class _ToParagraphCommand extends EditCommand {
         newNode: ParagraphNode(
           id: nodeId,
           text: node.text,
-          metadata: {if (lineAttributes != null) WonkyNodeMetadata.lineAttributes: lineAttributes},
+          metadata: {WonkyNodeMetadata.lineAttributes: ?lineAttributes},
         ),
       ),
     );

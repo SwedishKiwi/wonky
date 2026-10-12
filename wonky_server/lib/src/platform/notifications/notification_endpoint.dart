@@ -29,10 +29,17 @@ class NotificationEndpoint extends Endpoint {
 
   /// Marks notifications read; returns the unread count.
   Future<int> markRead(Session session, List<int> ids) async =>
-      NotificationService.markRead(session, await UserService.actorOf(session), ids);
+      NotificationService.markRead(
+        session,
+        await UserService.actorOf(session),
+        ids,
+      );
 
   Future<int> markAllRead(Session session) async =>
-      NotificationService.markAllRead(session, await UserService.actorOf(session));
+      NotificationService.markAllRead(
+        session,
+        await UserService.actorOf(session),
+      );
 
   /// New notifications and unread count changes.
   Stream<NotificationEvent> watch(Session session) async* {

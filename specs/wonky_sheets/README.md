@@ -20,6 +20,7 @@ Read the [suite specs](../README.md) first — especially
 | 11 | [Import, export & print](11-import-export-print.md) | XLSX/ODS/CSV import & export, PDF/print settings and pagination |
 | 12 | [MCP & AI](12-mcp-and-ai.md) | Headless `sheets.*` tools, `ui.sheets.*` bridge, AI features |
 | 13 | [Implementation plan](13-implementation-plan.md) | Workstreams WS-S1…S19, contracts, dependency graph, risks |
+| — | [Status](STATUS.md) | **Current implementation status** (Sheets is paused; what exists, what's open, how to resume) |
 
 Authority order when specs disagree: suite specs → 02 (data model) → 04 (command ids) → feature
 specs. Fix the disagreement in the same change that finds it.

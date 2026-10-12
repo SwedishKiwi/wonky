@@ -302,7 +302,9 @@ abstract final class CommentService {
 
   static String? _quote(String? text) {
     if (text == null) return null;
-    return text.length > maxQuotedText ? text.substring(0, maxQuotedText) : text;
+    return text.length > maxQuotedText
+        ? text.substring(0, maxQuotedText)
+        : text;
   }
 
   static Future<CommentThreadView> reply(
@@ -447,7 +449,10 @@ abstract final class CommentService {
     if (comment == null || comment.deletedAt != null) {
       throw Errors.notFound('Comment');
     }
-    final thread = (await CommentThread.db.findById(session, comment.threadId))!;
+    final thread = (await CommentThread.db.findById(
+      session,
+      comment.threadId,
+    ))!;
     final (_, item, _) = await _thread(session, actor, thread.uuid);
     if (comment.authorId != actor.userId) {
       throw Errors.forbidden('Only the author can edit a comment.');
@@ -458,7 +463,11 @@ abstract final class CommentService {
         : await _validMentions(session, item, mentions);
     final updated = await Comment.db.updateRow(
       session,
-      comment.copyWith(body: clean, mentions: validMentions, editedAt: nowUtc()),
+      comment.copyWith(
+        body: clean,
+        mentions: validMentions,
+        editedAt: nowUtc(),
+      ),
     );
     final added = validMentions.where((m) => !comment.mentions.contains(m));
     await _notifyMentions(session, actor, item, thread, added.toList(), clean);
@@ -469,10 +478,17 @@ abstract final class CommentService {
 
   /// Soft-deletes a comment ("Comment deleted"). Authors delete their own;
   /// Editors+ any. Deleting the first comment deletes the thread.
-  static Future<void> delete(Session session, Actor actor, int commentId) async {
+  static Future<void> delete(
+    Session session,
+    Actor actor,
+    int commentId,
+  ) async {
     final comment = await Comment.db.findById(session, commentId);
     if (comment == null) throw Errors.notFound('Comment');
-    final thread = (await CommentThread.db.findById(session, comment.threadId))!;
+    final thread = (await CommentThread.db.findById(
+      session,
+      comment.threadId,
+    ))!;
     final (_, item, role) = await _thread(session, actor, thread.uuid);
     if (comment.authorId != actor.userId && !(role >= Role.editor)) {
       throw Errors.forbidden('Only the author can delete this comment.');
@@ -597,7 +613,10 @@ abstract final class CommentService {
     if (comment == null || comment.deletedAt != null) {
       throw Errors.notFound('Comment');
     }
-    final thread = (await CommentThread.db.findById(session, comment.threadId))!;
+    final thread = (await CommentThread.db.findById(
+      session,
+      comment.threadId,
+    ))!;
     final (_, item, _) = await _thread(session, actor, thread.uuid);
     final e = emoji.trim();
     if (e.isEmpty || e.length > 16) throw Errors.invalid('Invalid reaction.');
@@ -797,8 +816,7 @@ abstract final class CommentService {
         actor.userId,
         current,
       );
-      if (role == null ||
-          role == Role.viewer && !current.viewersSeeComments) {
+      if (role == null || role == Role.viewer && !current.viewersSeeComments) {
         throw Errors.forbidden('You no longer have access to these comments.');
       }
       if (signal.kind == CommentEventKind.threadDeleted) {

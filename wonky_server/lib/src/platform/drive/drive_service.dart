@@ -64,7 +64,11 @@ abstract final class DriveService {
       Role.viewer,
     );
     final ancestors = await AccessService.ancestors(session, item);
-    final roles = await AccessService.rolesFor(session, actor.userId, ancestors);
+    final roles = await AccessService.rolesFor(
+      session,
+      actor.userId,
+      ancestors,
+    );
     final visible = <DriveItem>[];
     for (final a in ancestors) {
       if (roles[a.id!] == null) break;
@@ -92,7 +96,9 @@ abstract final class DriveService {
     var candidates = <DriveItem>[];
     Map<int, DriveItemUserState> states = {};
 
-    Future<void> loadStates(Expression<dynamic> Function(DriveItemUserStateTable t) where) async {
+    Future<void> loadStates(
+      Expression<dynamic> Function(DriveItemUserStateTable t) where,
+    ) async {
       final rows = await DriveItemUserState.db.find(
         session,
         where: (t) => t.userId.equals(me) & where(t),
@@ -102,7 +108,8 @@ abstract final class DriveService {
       if (states.isEmpty) return;
       candidates = await DriveItem.db.find(
         session,
-        where: (t) => t.id.inSet(states.keys.toSet()) & t.trashedAt.equals(null),
+        where: (t) =>
+            t.id.inSet(states.keys.toSet()) & t.trashedAt.equals(null),
       );
     }
 
@@ -325,14 +332,14 @@ abstract final class DriveService {
     String? cursor,
     int limit = 50,
   }) async {
-    final terms = RegExp(r'[\p{L}\p{N}]+', unicode: true)
-        .allMatches(query.toLowerCase())
-        .map((m) => m[0]!)
-        .take(8)
-        .toList();
+    final terms = RegExp(
+      r'[\p{L}\p{N}]+',
+      unicode: true,
+    ).allMatches(query.toLowerCase()).map((m) => m[0]!).take(8).toList();
     if (terms.isEmpty) return DriveListPage(items: const []);
     final tsQuery = terms.map((t) => '$t:*').join(' & ');
-    final like = '%${query.trim().replaceAll(r'\', r'\\').replaceAll('%', r'\%').replaceAll('_', r'\_')}%';
+    final like =
+        '%${query.trim().replaceAll(r'\', r'\\').replaceAll('%', r'\%').replaceAll('_', r'\_')}%';
     final offset = int.tryParse(cursor ?? '') ?? 0;
     final pageSize = limit.clamp(1, 200);
     const doc =
@@ -971,7 +978,9 @@ abstract final class DriveService {
       if (t.kind != DriveItemKind.folder) {
         throw Errors.invalid('Items can only be moved into folders.');
       }
-      if (t.trashedAt != null) throw Errors.invalid('The folder is in the trash.');
+      if (t.trashedAt != null) {
+        throw Errors.invalid('The folder is in the trash.');
+      }
       target = t;
     }
     final moved = <DriveItem>[];
@@ -1090,7 +1099,10 @@ abstract final class DriveService {
       case DriveItemKind.folder:
         throw Errors.invalid('Folders cannot be copied.');
       case DriveItemKind.document:
-        final sourceDoc = await DocumentStore.requireByItem(session, source.id!);
+        final sourceDoc = await DocumentStore.requireByItem(
+          session,
+          source.id!,
+        );
         var content = await DocumentStore.head(session, sourceDoc);
         final threadMap = copyComments
             ? await CommentCopier.newThreadUuids(session, source)
@@ -1265,7 +1277,11 @@ abstract final class DriveService {
     if (source.parentId == null) return null;
     final parent = await DriveItem.db.findById(session, source.parentId!);
     if (parent == null) return null;
-    final role = await AccessService.effectiveRole(session, actor.userId, parent);
+    final role = await AccessService.effectiveRole(
+      session,
+      actor.userId,
+      parent,
+    );
     return role != null && role >= Role.editor ? parent.uuid : null;
   }
 
@@ -1423,8 +1439,7 @@ abstract final class DriveService {
     if (!viaLink && item.ownerId != actor.userId) {
       final grant = await DriveItemPermission.db.findFirstRow(
         session,
-        where: (t) =>
-            t.itemId.equals(item.id!) & t.userId.equals(actor.userId),
+        where: (t) => t.itemId.equals(item.id!) & t.userId.equals(actor.userId),
       );
       viaLink = grant == null;
     }
@@ -1578,7 +1593,12 @@ abstract final class DriveService {
       if (parentId != item.parentId) {
         await AccessService.rebuildInherited(session, updated);
       }
-      await ActivityService.log(session, item.id!, actor, ActivityType.restored);
+      await ActivityService.log(
+        session,
+        item.id!,
+        actor,
+        ActivityType.restored,
+      );
       await AclEvents.changed(session, updated, kind: DriveChangeKind.restored);
     }
   }
@@ -1710,7 +1730,11 @@ abstract final class DriveService {
           (kind == null ? Constant.bool(true) : t.kind.equals(kind)),
       limit: 500,
     );
-    final roles = await AccessService.rolesFor(session, actor.userId, published);
+    final roles = await AccessService.rolesFor(
+      session,
+      actor.userId,
+      published,
+    );
     for (final item in published) {
       if (roles[item.id!] == null) continue;
       result.add(

@@ -106,7 +106,11 @@ class DocumentConnection {
     await DocumentBus.post(
       session,
       documentUuid,
-      DocBusMessage(type: 'hello', originSessionId: sessionId, participant: _me),
+      DocBusMessage(
+        type: 'hello',
+        originSessionId: sessionId,
+        participant: _me,
+      ),
     );
     // Over the editor limit: join as a viewer.
     final editors = _participants.values
@@ -350,7 +354,10 @@ class DocumentConnection {
           );
       }
     } on WonkyException catch (e) {
-      session.log('Document message failed: ${e.message}', level: LogLevel.info);
+      session.log(
+        'Document message failed: ${e.message}',
+        level: LogLevel.info,
+      );
     }
   }
 
@@ -372,7 +379,11 @@ class DocumentConnection {
       _send(DocAck(clientOpId: m.clientOpId, revision: committed.revision));
     } on OpRejection catch (r) {
       _send(
-        DocOpRejected(clientOpId: m.clientOpId, code: r.code, message: r.message),
+        DocOpRejected(
+          clientOpId: m.clientOpId,
+          code: r.code,
+          message: r.message,
+        ),
       );
     }
   }

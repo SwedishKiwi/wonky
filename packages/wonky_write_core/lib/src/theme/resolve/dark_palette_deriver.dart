@@ -81,7 +81,10 @@ final class DarkPaletteDeriver {
   int transform(int argb, PaletteRole role) {
     final c = Oklch.fromArgb(argb);
     final out = switch (role) {
-      PaletteRole.surface => c.copyWith(l: 0.16 + (1 - c.l) * 0.14, c: c.c * 0.6),
+      PaletteRole.surface => c.copyWith(
+        l: 0.16 + (1 - c.l) * 0.14,
+        c: c.c * 0.6,
+      ),
       PaletteRole.foreground => c.copyWith(
         l: (1 - c.l * 0.85).clamp(0.55, 0.96),
         c: c.c * 0.8,
@@ -102,7 +105,9 @@ final class DarkPaletteDeriver {
       if (ref == null || ref.kind == ColorRefKind.palette) continue;
       final argb = lightColors[k];
       if (argb == null) continue;
-      dark[k] = ref.kind == ColorRefKind.transparent ? 0 : transform(argb, k.role);
+      dark[k] = ref.kind == ColorRefKind.transparent
+          ? 0
+          : transform(argb, k.role);
     }
     final page = dark[PaletteKey.page];
     final canvasRef = light[PaletteKey.canvas];

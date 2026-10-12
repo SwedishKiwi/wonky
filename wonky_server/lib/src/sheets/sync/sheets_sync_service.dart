@@ -33,7 +33,11 @@ abstract final class SheetsSyncService {
 
   /// Called for every space after each sync round; only reacts when the
   /// space's high-water mark moved.
-  static Future<void> onMerged(Session session, UuidValue space, Hlc hlc) async {
+  static Future<void> onMerged(
+    Session session,
+    UuidValue space,
+    Hlc hlc,
+  ) async {
     final key = space.uuid;
     final last = _lastHlc[key];
     if (last != null && hlc.compareTo(last) <= 0) return;

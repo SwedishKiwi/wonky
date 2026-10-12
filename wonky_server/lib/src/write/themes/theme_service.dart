@@ -3,7 +3,7 @@ import 'dart:convert';
 import 'package:crypto/crypto.dart';
 import 'package:serverpod/serverpod.dart';
 import 'package:wonky_core/wonky_core.dart' show Role;
-import 'package:wonky_write_core/wonky_write_core.dart' show canonicalJsonEncode;
+import 'package:wonky_write_core/wonky_write_core.dart' as core;
 
 import '../../platform/common/actor.dart';
 import '../../platform/common/errors.dart';
@@ -12,7 +12,6 @@ import '../../platform/common/time.dart';
 import '../../platform/sharing/access_service.dart';
 import '../../platform/users/user_service.dart';
 import 'builtin_theme_ids.dart';
-import 'builtin_themes.dart';
 
 /// Write themes (Write 06 §5): built-in themes are global rows upserted at
 /// start; user themes live in the owner's library with optimistic
@@ -31,8 +30,10 @@ abstract final class ThemeService {
   /// new version, so documents using it update on next open.
   static Future<void> upsertBuiltins(Session session) async {
     final now = nowUtc();
-    for (final builtin in BuiltinThemes.all) {
-      final json = canonical(builtin.json);
+    for (final builtin in core.BuiltinThemes.all) {
+      final json = core.canonicalJsonEncode(builtin.json);
+      final description = builtin.theme.description;
+      final schemaVersion = builtin.theme.schemaVersion;
       final hash = contentHash(json);
       final uuid = BuiltinThemeIds.forKey(builtin.key);
       final existing = await WriteTheme.db.findFirstRow(
@@ -47,8 +48,8 @@ abstract final class ThemeService {
             isBuiltin: true,
             builtinKey: builtin.key,
             name: builtin.name,
-            description: builtin.description,
-            schemaVersion: builtin.schemaVersion,
+            description: description,
+            schemaVersion: schemaVersion,
             version: 1,
             json: json,
             contentHash: hash,
@@ -58,13 +59,13 @@ abstract final class ThemeService {
         );
       } else if (existing.contentHash != hash ||
           existing.name != builtin.name ||
-          existing.description != builtin.description) {
+          existing.description != description) {
         await WriteTheme.db.updateRow(
           session,
           existing.copyWith(
             name: builtin.name,
-            description: builtin.description,
-            schemaVersion: builtin.schemaVersion,
+            description: description,
+            schemaVersion: schemaVersion,
             version: existing.version + 1,
             json: json,
             contentHash: hash,
@@ -78,30 +79,23 @@ abstract final class ThemeService {
 
   // -------------------------------------------------------------- helpers
 
-  /// Canonical JSON (sorted keys, no whitespace); validates the basic
-  /// structure of a theme document.
+  /// Validates theme JSON with `WriteThemeValidator` (migrating older
+  /// schema versions; unknown properties are dropped) and returns its
+  /// canonical form (sorted keys, no whitespace).
   static String canonical(String json) {
-    if (json.length > maxJsonLength) throw Errors.tooLarge('The theme is too large.');
-    final Object? value;
-    try {
-      value = jsonDecode(json);
-    } on FormatException {
-      throw Errors.invalid('The theme is not valid JSON.');
+    if (json.length > maxJsonLength) {
+      throw Errors.tooLarge('The theme is too large.');
     }
-    if (value is! Map) throw Errors.invalid('A theme must be a JSON object.');
-    final schema = value['schemaVersion'];
-    if (schema is! int || schema < 1) {
-      throw Errors.invalid('The theme needs a schemaVersion.');
+    final result = const core.WriteThemeValidator().validateString(json);
+    if (result.errors.isNotEmpty || result.theme == null) {
+      final first = result.errors.isEmpty ? null : result.errors.first;
+      throw Errors.invalid(
+        first == null
+            ? 'The theme is not valid.'
+            : 'Invalid theme (${first.path}): ${first.message}',
+      );
     }
-    if (schema > BuiltinThemes.schemaVersion) {
-      throw Errors.invalid('This theme needs a newer version of Wonky Write.');
-    }
-    for (final variant in const ['light', 'dark']) {
-      if (value.containsKey(variant) && value[variant] is! Map) {
-        throw Errors.invalid('"$variant" must be an object.');
-      }
-    }
-    return canonicalJsonEncode(value);
+    return core.canonicalJsonEncode(result.theme!.toJson());
   }
 
   static String contentHash(String json) =>
@@ -196,7 +190,9 @@ abstract final class ThemeService {
     UuidValue uuid,
   ) async {
     final theme = await _byUuid(session, uuid);
-    if (theme.isBuiltin) throw Errors.forbidden('Built-in themes are read-only.');
+    if (theme.isBuiltin) {
+      throw Errors.forbidden('Built-in themes are read-only.');
+    }
     if (theme.ownerId != actor.userId) throw Errors.notFound('Theme');
     return theme;
   }
@@ -208,9 +204,10 @@ abstract final class ThemeService {
       session,
       where: (t) => t.isBuiltin.equals(true),
     );
-    final order = [for (final b in BuiltinThemes.all) b.key];
+    final order = [for (final b in core.BuiltinThemes.all) b.key];
     themes.sort(
-      (a, b) => order.indexOf(a.builtinKey!).compareTo(order.indexOf(b.builtinKey!)),
+      (a, b) =>
+          order.indexOf(a.builtinKey!).compareTo(order.indexOf(b.builtinKey!)),
     );
     return [for (final t in themes) await view(session, t)];
   }
@@ -246,7 +243,9 @@ abstract final class ThemeService {
     final result = <WriteThemeView>[];
     for (final uuid in uuids.toSet().take(100)) {
       try {
-        result.add(await get(session, actor, uuid, viaDocumentUuid: viaDocumentUuid));
+        result.add(
+          await get(session, actor, uuid, viaDocumentUuid: viaDocumentUuid),
+        );
       } on WonkyException {
         // Unreadable themes are left out.
       }
@@ -323,12 +322,13 @@ abstract final class ThemeService {
     }
   }
 
-  static ThemeConflictException _conflict(WriteTheme t) => ThemeConflictException(
-    message: 'The theme was changed elsewhere.',
-    serverJson: t.json,
-    serverVersion: t.version,
-    serverName: t.name,
-  );
+  static ThemeConflictException _conflict(WriteTheme t) =>
+      ThemeConflictException(
+        message: 'The theme was changed elsewhere.',
+        serverJson: t.json,
+        serverVersion: t.version,
+        serverName: t.name,
+      );
 
   static Future<WriteThemeView> update(
     Session session,
@@ -346,7 +346,9 @@ abstract final class ThemeService {
         lockMode: LockMode.forUpdate,
       );
       if (theme == null) throw Errors.notFound('Theme');
-      if (theme.isBuiltin) throw Errors.forbidden('Built-in themes are read-only.');
+      if (theme.isBuiltin) {
+        throw Errors.forbidden('Built-in themes are read-only.');
+      }
       if (theme.ownerId != actor.userId) throw Errors.notFound('Theme');
       if (theme.version != expectedVersion) throw _conflict(theme);
       final updated = await WriteTheme.db.updateRow(
@@ -401,7 +403,12 @@ abstract final class ThemeService {
         updatedAt: nowUtc(),
       ),
     );
-    await _broadcast(session, updated.uuid, updated.version, updated.contentHash);
+    await _broadcast(
+      session,
+      updated.uuid,
+      updated.version,
+      updated.contentHash,
+    );
     return view(session, updated);
   }
 
@@ -413,7 +420,13 @@ abstract final class ThemeService {
     UuidValue? viaDocumentUuid,
   }) async {
     final source = await _readable(session, actor, uuid, viaDocumentUuid);
-    return create(session, actor, name: name, json: source.json, basedOnUuid: null);
+    return create(
+      session,
+      actor,
+      name: name,
+      json: source.json,
+      basedOnUuid: null,
+    );
   }
 
   static Future<WriteThemeView> delete(

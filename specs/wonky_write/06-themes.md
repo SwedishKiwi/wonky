@@ -145,8 +145,8 @@ Every element key below is optional; missing properties **inherit** (§3). Prope
 "punctuation", "builtin", "literal", "meta", "tag", "attribute", "regexp", "addition",
 "deletion" }` → `{ "color": ColorRef, "fontStyle"?: "italic", "fontWeight"?: int }`.
 Unlisted tokens render in `codeText`. Dark syntax: derived (§4) unless `dark.syntax` is given.
-Tokenization uses a pure-Dart highlighter in `wonky_write_core/lib/highlight/` (wrap
-`re_highlight` — evaluate in the M5 spike; fallback `highlight` 0.7.x) so the editor and all
+Tokenization uses a pure-Dart highlighter in `wonky_write_core/lib/highlight/` (wraps
+`highlight` 0.7.x — `re_highlight` was rejected because it depends on Flutter) so the editor and all
 exporters produce identical token spans. Languages: the 40 most common highlight.js grammars
 (list in code); unknown language → no highlighting.
 

@@ -49,7 +49,21 @@ abstract final class ListMarkers {
     return String.fromCharCodes(codes.reversed);
   }
 
-  static const _romanValues = [1000, 900, 500, 400, 100, 90, 50, 40, 10, 9, 5, 4, 1];
+  static const _romanValues = [
+    1000,
+    900,
+    500,
+    400,
+    100,
+    90,
+    50,
+    40,
+    10,
+    9,
+    5,
+    4,
+    1,
+  ];
   static const _romanSymbols = [
     'm',
     'cm',

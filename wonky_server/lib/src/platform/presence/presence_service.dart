@@ -212,7 +212,11 @@ abstract final class PresenceService {
       session.messages.addListener(ch, onBus);
       await session.messages.postMessage(
         ch,
-        PresenceBusMessage(type: 'hello', sessionId: sessionId, participant: me),
+        PresenceBusMessage(
+          type: 'hello',
+          sessionId: sessionId,
+          participant: me,
+        ),
       );
       emit(
         PresenceRoster(

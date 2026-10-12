@@ -16,7 +16,14 @@ import 'templates/builtin_templates.dart';
 /// Server-side imports (`drive.import`, Write 07 §3.2, Sheets 11): Markdown
 /// and plain text become documents, CSV/TSV become spreadsheets.
 abstract final class ImportService {
-  static const documentFormats = {'md', 'markdown', 'mdown', 'mkd', 'txt', 'text'};
+  static const documentFormats = {
+    'md',
+    'markdown',
+    'mdown',
+    'mkd',
+    'txt',
+    'text',
+  };
   static const spreadsheetFormats = {'csv', 'tsv'};
 
   static String _format(StoredFile file, DriveImportOptions options) {
@@ -64,14 +71,25 @@ abstract final class ImportService {
     switch (kind) {
       case DriveItemKind.document:
         if (!documentFormats.contains(format)) {
-          throw Errors.invalid('Files of type "$format" cannot be imported as documents.');
+          throw Errors.invalid(
+            'Files of type "$format" cannot be imported as documents.',
+          );
         }
         report = await _document(session, actor, file, format, text, options);
       case DriveItemKind.spreadsheet:
         if (!spreadsheetFormats.contains(format)) {
-          throw Errors.invalid('Files of type "$format" cannot be imported as spreadsheets.');
+          throw Errors.invalid(
+            'Files of type "$format" cannot be imported as spreadsheets.',
+          );
         }
-        report = await _spreadsheet(session, actor, file, format, text, options);
+        report = await _spreadsheet(
+          session,
+          actor,
+          file,
+          format,
+          text,
+          options,
+        );
       case DriveItemKind.folder:
         throw Errors.invalid('Folders cannot be imported.');
     }
@@ -88,8 +106,10 @@ abstract final class ImportService {
     DriveImportOptions options,
   ) async {
     final isText = format == 'txt' || format == 'text';
-    final soft = isText &&
-        (jsonDecode(options.optionsJson ?? '{}') as Map)['lineBreaks'] == 'soft';
+    final soft =
+        isText &&
+        (jsonDecode(options.optionsJson ?? '{}') as Map)['lineBreaks'] ==
+            'soft';
     final converted = isText
         ? WriteContent.fromPlainText(text, softBreaks: soft)
         : null;
@@ -138,7 +158,8 @@ abstract final class ImportService {
   ) async {
     final opts = (jsonDecode(options.optionsJson ?? '{}') as Map)
         .cast<String, dynamic>();
-    final delimiter = (opts['delimiter'] as String?) ??
+    final delimiter =
+        (opts['delimiter'] as String?) ??
         (format == 'tsv' ? '\t' : _guessDelimiter(text));
     final rows = parseDelimited(text, delimiter);
     final columns = rows.fold(0, (m, r) => r.length > m ? r.length : m);
@@ -198,7 +219,9 @@ abstract final class ImportService {
     for (final c in candidates.keys.toList()) {
       candidates[c] = c.allMatches(firstLine).length;
     }
-    final best = candidates.entries.reduce((a, b) => a.value >= b.value ? a : b);
+    final best = candidates.entries.reduce(
+      (a, b) => a.value >= b.value ? a : b,
+    );
     return best.value == 0 ? ',' : best.key;
   }
 

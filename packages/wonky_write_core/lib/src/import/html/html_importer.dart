@@ -55,11 +55,7 @@ final class HtmlImporter implements DocumentImporter {
       bytes,
       declaredCharset: sniffCharset(bytes),
     );
-    return importHtml(
-      decoded.text,
-      options,
-      extraWarnings: [?decoded.warning],
-    );
+    return importHtml(decoded.text, options, extraWarnings: [?decoded.warning]);
   }
 
   /// Imports a complete HTML document ([html] already decoded). The title
@@ -137,16 +133,21 @@ final class _Fmt {
   final String? mention;
   final _Ws ws;
 
-  _Fmt copyWith({bool? bold, bool? italic, bool? strike, bool? code, _Ws? ws}) =>
-      _Fmt(
-        bold: bold ?? this.bold,
-        italic: italic ?? this.italic,
-        strike: strike ?? this.strike,
-        code: code ?? this.code,
-        link: link,
-        mention: mention,
-        ws: ws ?? this.ws,
-      );
+  _Fmt copyWith({
+    bool? bold,
+    bool? italic,
+    bool? strike,
+    bool? code,
+    _Ws? ws,
+  }) => _Fmt(
+    bold: bold ?? this.bold,
+    italic: italic ?? this.italic,
+    strike: strike ?? this.strike,
+    code: code ?? this.code,
+    link: link,
+    mention: mention,
+    ws: ws ?? this.ws,
+  );
 
   _Fmt withLink(String? link, String? mention) => _Fmt(
     bold: bold,
@@ -444,7 +445,9 @@ final class _HtmlWalker {
       final root = doc.documentElement;
       title = _readHead(doc);
       language = _language(doc);
-      _css = CssClassRules.parse(doc.querySelectorAll('style').map((e) => e.text));
+      _css = CssClassRules.parse(
+        doc.querySelectorAll('style').map((e) => e.text),
+      );
       dom.Element? start;
       if (source == HtmlSource.wonky) {
         start = doc.querySelector('article.wonky-doc');
@@ -967,9 +970,7 @@ final class _HtmlWalker {
   void _figure(dom.Element e, _Fmt fmt) {
     _flush();
     final img = e.querySelector('img');
-    final cap = e.children.firstWhereOrNull(
-      (c) => c.localName == 'figcaption',
-    );
+    final cap = e.children.firstWhereOrNull((c) => c.localName == 'figcaption');
     final prevSkip = _skip;
     if (img != null && cap != null) {
       _pendingCaption = cap.text;
@@ -993,7 +994,6 @@ final class _HtmlWalker {
       return;
     }
     _flush();
-    if (text.isEmpty) return;
     if (_stack.any((c) => c is _ItemCtx || c is _QuoteCtx)) {
       _warnings.add(
         ImportWarningKind.blockFlattened,
@@ -1266,10 +1266,17 @@ final class _HtmlWalker {
         role == 'none' ||
         (cellCount <= 1 && source != HtmlSource.wonky)) {
       // Layout table: keep the content as blocks.
-      if (caption != null) _blockElement(caption, 'caption', fmt, CssDeclarations.empty);
+      if (caption != null) {
+        _blockElement(caption, 'caption', fmt, CssDeclarations.empty);
+      }
       for (final r in rows) {
         for (final c in cells(r)) {
-          _blockElement(c, 'td', _applyFormatting(c, 'td', _decls(c), fmt), _decls(c));
+          _blockElement(
+            c,
+            'td',
+            _applyFormatting(c, 'td', _decls(c), fmt),
+            _decls(c),
+          );
         }
       }
       return;

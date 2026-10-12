@@ -1,0 +1,241 @@
+import 'dart:async';
+
+import 'package:flutter/foundation.dart';
+import 'package:flutter/widgets.dart';
+import 'package:provider/provider.dart';
+import 'package:shad/shad.dart';
+import 'package:wonky_client/wonky_client.dart';
+import 'package:wonky_core/wonky_core.dart' hide ActorKind;
+import 'package:wonky_ui/wonky_ui.dart';
+
+import '../auth/auth_controller.dart';
+import '../auth/auth_repository.dart';
+import '../bootstrap/wonky_client.dart';
+import '../commands/keymap_service.dart';
+import '../commands/shell_commands/general_commands.dart';
+import '../config/wonky_app_config.dart';
+import '../core/connectivity_service.dart';
+import '../core/local_store.dart';
+import '../data/api.dart';
+import '../data/cached_drive_repository.dart';
+import '../data/collab_repositories.dart';
+import '../data/drive_cache.dart';
+import '../data/drive_repository.dart';
+import '../data/file_repository.dart';
+import '../data/sharing_repository.dart';
+import '../data/user_repository.dart';
+import '../document/document_controller.dart';
+import '../l10n/wonky_app_localizations.dart';
+import '../routing/router.dart';
+import 'overlays/shell_overlays.dart';
+import 'shell_services.dart';
+
+/// The shared app shell (suite 03): bootstraps the client, auth, commands,
+/// keymap, undo, routing and overlays, then hosts the app's screens.
+///
+/// ```dart
+/// void main() => WonkyShell.run(WriteAppConfig());
+/// ```
+class WonkyShell extends StatefulWidget {
+  const WonkyShell({super.key, required this.config, this.client, this.services});
+
+  final WonkyAppConfig config;
+
+  /// The initialized client (production). Ignored when [services] is given.
+  final WonkyClient? client;
+
+  /// Pre-built services (tests with fake repositories).
+  final ShellServices? services;
+
+  /// Initializes the client and runs the app.
+  static Future<void> run(WonkyAppConfig config) async {
+    WidgetsFlutterBinding.ensureInitialized();
+    final client = await WonkyClient.initialize();
+    runApp(WonkyShell(config: config, client: client));
+  }
+
+  /// Builds production services on the generated client.
+  static ShellServices createServices(WonkyAppConfig config, WonkyClient wc) {
+    final api = Api(wc.client);
+    final device = SharedPreferencesStore();
+    final connectivity = ConnectivityService(ping: () async => await wc.client.meta.getInfo());
+    late final ShellServices services;
+    final remoteDrive = ServerDriveRepository(api);
+    final cached = CachedDriveRepository(
+      remote: remoteDrive,
+      cache: DriveCache(device.scoped('anon.')),
+      queue: PendingDriveOpQueue(device.scoped('anon.')),
+      connectivity: connectivity,
+      currentUser: () => services.me,
+      onConflict: (op, e) => services.toasts.show(
+        services.l10n?.toastOfflineOpFailed ?? 'A change made offline could not be applied',
+        description: errorMessage(e),
+      ),
+    );
+    services = ShellServices(
+      config: config,
+      auth: AuthController(ServerAuthRepository(wc.client)),
+      repositories: ShellRepositories(
+        drive: cached,
+        users: ServerUserRepository(api),
+        sharing: ServerSharingRepository(api),
+        comments: ServerCommentRepository(api),
+        notifications: ServerNotificationRepository(api),
+        presence: ServerPresenceRepository(api),
+        versions: ServerVersionRepository(api),
+        files: ServerFileRepository(api),
+        meta: ServerMetaRepository(api),
+      ),
+      urls: wc.urls,
+      connectivity: connectivity,
+      deviceStore: device,
+      client: wc.client,
+    );
+    return services;
+  }
+
+  @override
+  State<WonkyShell> createState() => _WonkyShellState();
+}
+
+class _WonkyShellState extends State<WonkyShell> {
+  late final ShellServices s;
+  bool _ready = false;
+  StreamSubscription<UndoOutcome>? _undoSub;
+
+  @override
+  void initState() {
+    super.initState();
+    s = widget.services ?? WonkyShell.createServices(widget.config, widget.client!);
+    s.router = buildShellRouter(s);
+    s.router.routerDelegate.addListener(_onRoute);
+    s.registry.registerAll(allShellCommands(s));
+    s.registry.registerAll(widget.config.commands(s));
+    s.keymap.onOverridesChanged = s.prefs.setKeymapOverrides;
+    s.crossApp.rememberLastApp(widget.config.app);
+    s.auth.onSignedIn = _afterSignIn;
+    s.auth.onSigningOut = _beforeSignOut;
+    s.auth.addListener(_onAuth);
+    unawaited(_init());
+  }
+
+  Future<void> _init() async {
+    await s.prefs.loadLocal();
+    s.keymap.loadOverrides(s.prefs.keymapOverrides);
+    s.mcp.setEnabled(s.prefs.device<bool>('mcp.uiBridge') ?? kDebugMode);
+    s.connectivity.start();
+    unawaited(_loadServerInfo());
+    if (s.auth.isSignedIn) await _afterSignIn(null);
+    if (mounted) setState(() => _ready = true);
+  }
+
+  Future<void> _loadServerInfo() async {
+    try {
+      s.serverInfo.value = await s.repositories.meta.getInfo();
+    } catch (_) {}
+  }
+
+  void _onRoute() {
+    final loc = s.router.routerDelegate.currentConfiguration.uri.toString();
+    s.recordLocation(loc);
+  }
+
+  bool _signedInSetup = false;
+
+  Future<void> _afterSignIn(SignUpDraft? draft) async {
+    if (draft != null && draft.displayName.isNotEmpty) {
+      try {
+        await s.repositories.users.updateProfile(displayName: draft.displayName);
+      } catch (e) {
+        debugPrint('Setting the display name failed: $e');
+      }
+    }
+    try {
+      final me = await s.repositories.users.getMe();
+      s.currentUser.value = me;
+      final user = me.summary.uuid.uuid;
+      s.userStore = s.deviceStore.scoped('user.$user.');
+      final d = s.drive;
+      if (d is CachedDriveRepository) await d.init();
+    } catch (e) {
+      debugPrint('Loading the profile failed: $e');
+    }
+    if (_signedInSetup) return;
+    _signedInSetup = true;
+    await s.prefs.loadRemote();
+    s.keymap.loadOverrides(s.prefs.keymapOverrides);
+    s.supervisor.supervise<DriveChange>(
+      'drive.watch',
+      s.drive.watch,
+      s.emitDriveChange,
+      onConnected: s.refreshDrive,
+    );
+    _undoSub ??= s.undo.outcomes.listen((_) => s.registry.notifyStateChanged());
+    await widget.config.onSignedIn(s);
+  }
+
+  Future<void> _beforeSignOut() async {
+    await widget.config.onSigningOut(s);
+    await s.supervisor.cancelAll();
+    s.undo.clearAll();
+    s.currentUser.value = null;
+    _signedInSetup = false;
+  }
+
+  void _onAuth() {
+    if (s.auth.isSignedIn && s.currentUser.value == null) unawaited(_afterSignIn(null));
+    if (mounted) setState(() {});
+  }
+
+  @override
+  void dispose() {
+    _undoSub?.cancel();
+    s.auth.removeListener(_onAuth);
+    s.router.routerDelegate.removeListener(_onRoute);
+    s.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final config = widget.config;
+    return MultiProvider(
+      providers: [
+        Provider<ShellServices>.value(value: s),
+        ChangeNotifierProvider<AuthController>.value(value: s.auth),
+      ],
+      child: ActiveDocumentHostScope(
+        host: s,
+        child: ListenableBuilder(
+          listenable: s.prefs,
+          builder: (context, _) => ShadApp.router(
+            title: config.appName,
+            debugShowCheckedModeBanner: false,
+            theme: WonkyTheme.light(s.prefs.themeConfig),
+            darkTheme: WonkyTheme.dark(s.prefs.themeConfig),
+            themeMode: s.prefs.themeMode,
+            routerConfig: s.router,
+            supportedLocales: WonkyAppLocalizations.supportedLocales,
+            localizationsDelegates: [
+              WonkyAppLocalizations.delegate,
+              WonkyUiLocalizations.delegate,
+              ...config.localizationsDelegates,
+            ],
+            builder: (context, child) => WonkyThemeScope(
+              data: WonkyThemeExtension(density: s.prefs.wonkyDensity, reduceMotion: s.prefs.reduceMotion),
+              child: KeymapScope(
+                scope: KeyScope.global,
+                keymap: s.keymap,
+                child: config.wrap(
+                  context,
+                  s,
+                  ShellOverlays(services: s, ready: _ready, child: child ?? const SizedBox.shrink()),
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}

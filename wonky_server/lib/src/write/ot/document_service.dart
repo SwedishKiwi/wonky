@@ -196,7 +196,9 @@ abstract final class DocumentService {
       case 'language':
         if (value != null &&
             (value is! String ||
-                !RegExp(r'^[A-Za-z]{2,3}(-[A-Za-z0-9]{2,8})*$').hasMatch(value))) {
+                !RegExp(
+                  r'^[A-Za-z]{2,3}(-[A-Za-z0-9]{2,8})*$',
+                ).hasMatch(value))) {
           throw Errors.invalid('language must be a BCP-47 tag.');
         }
         beforeJson = jsonEncode(doc.language);
@@ -299,8 +301,7 @@ abstract final class DocumentService {
       pruned += await DocumentOp.db
           .deleteWhere(
             session,
-            where: (t) =>
-                t.documentId.equals(doc.id!) & (t.revision <= upTo),
+            where: (t) => t.documentId.equals(doc.id!) & (t.revision <= upTo),
           )
           .then((r) => r.length);
     }

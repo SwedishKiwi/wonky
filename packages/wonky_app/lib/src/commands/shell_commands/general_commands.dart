@@ -1,6 +1,8 @@
 import 'dart:convert';
 
+import 'package:flutter/semantics.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter/widgets.dart';
 import 'package:shad/shad.dart';
 import 'package:wonky_client/wonky_client.dart';
 import 'package:wonky_core/wonky_core.dart' hide ActorKind;
@@ -41,6 +43,7 @@ List<Command<CommandArgs>> generalCommands(ShellServices s) => [
   ...panelCommands(s),
   ...viewCommands(s),
   ...miscCommands(s),
+  shellCommandFocusSearch(s),
 ];
 
 const _desktopOnly = false;
@@ -1192,3 +1195,17 @@ String mcpUrl(ShellServices s) {
   }
   return app.replace(path: '/mcp').toString();
 }
+
+/// `/` focuses the drive search (home screen).
+Command<CommandArgs> shellCommandFocusSearch(ShellServices s) => shellCommand(
+  'shell.drive.focusSearch',
+  title: (l) => l.cmdFocusSearch,
+  icon: LucideIcons.search,
+  bindings: const [KeyBinding('/')],
+  scope: KeyScope.drive,
+  category: (l) => l.categoryDrive,
+  run: (ctx, a) async {
+    s.driveSearchFocus?.requestFocus();
+    return const CommandResult.ok();
+  },
+);

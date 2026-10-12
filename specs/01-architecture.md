@@ -298,7 +298,9 @@ Feature folders are the unit of parallel work: e.g. Write `features/editor`,
 
 ## 6. Configuration
 
-`config/*.yaml` additions: `ai: {enabled, dailyTokenBudgetPerUser}`, `mcp: {enabled, port?,
+`config/*.yaml` additions live in one `wonky:` section (Serverpod ignores unknown keys; read by
+`wonky_server/lib/src/platform/config/wonky_config.dart`, env overrides `WONKY_<SECTION>_<KEY>`):
+`features: {ai, scripting, mcpUiBridge, experimentalCharts}`, `ai: {enabled, dailyTokenBudgetPerUser}`, `mcp: {enabled, port?,
 allowedHosts, allowedOrigins}`, `sheets: {maxCellsPerSpreadsheet, maxActiveSpacesPerUser,
 scriptTimeoutMs, scriptDailyQuotaMs}`, `write: {snapshotEveryNOps, maxDocumentChars}`,
 `webApps: {write: {dir: web/write, path: /write/}, sheets: {dir: web/sheets, path: /sheets/}}`

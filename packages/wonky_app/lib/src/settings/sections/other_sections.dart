@@ -1,0 +1,440 @@
+import 'package:flutter/services.dart';
+import 'package:flutter/widgets.dart';
+import 'package:shad/shad.dart';
+import 'package:wonky_client/wonky_client.dart';
+import 'package:wonky_core/wonky_core.dart' hide ActorKind;
+
+import '../../commands/shell_commands/general_commands.dart';
+import '../../data/api.dart';
+import '../../data/cached_drive_repository.dart';
+import '../../l10n/wonky_app_localizations.dart';
+import '../../shell/dialogs.dart';
+import '../../shell/overlays/shell_overlays.dart';
+import '../../shell/shell_services.dart';
+import '../settings_screen.dart';
+
+Widget _switch(String key, bool value, ValueChanged<bool> onChanged) =>
+    ShadSwitch(key: ValueKey<String>(key), value: value, onChanged: onChanged);
+
+/// Settings › Language & region.
+class LanguageSection extends StatefulWidget {
+  const LanguageSection({super.key, required this.services});
+
+  final ShellServices services;
+
+  @override
+  State<LanguageSection> createState() => _LanguageSectionState();
+}
+
+class _LanguageSectionState extends State<LanguageSection> {
+  late final _tz = TextEditingController(text: widget.services.currentUser.value?.timeZone ?? '');
+
+  @override
+  void dispose() {
+    _tz.dispose();
+    super.dispose();
+  }
+
+  Future<void> _save({String? locale, String? tz}) async {
+    final s = widget.services;
+    final l = WonkyAppLocalizations.of(context);
+    try {
+      s.currentUser.value = await s.repositories.users.updateProfile(locale: locale, timeZone: tz);
+      s.toasts.show(l.settingsSaved);
+    } catch (e) {
+      s.toasts.error(l.errorGeneric, description: errorMessage(e));
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final l = WonkyAppLocalizations.of(context);
+    final me = widget.services.currentUser.value;
+    return SettingsGroup(
+      title: l.settingsLanguage,
+      description: l.settingsLanguageHint,
+      children: [
+        SettingsRow(
+          label: l.settingsUiLanguage,
+          control: ShadSelect<String>(
+            initialValue: me?.locale ?? 'en',
+            options: const [ShadOption(value: 'en', child: Text('English'))],
+            selectedOptionBuilder: (context, v) => const Text('English'),
+            onChanged: (v) => _save(locale: v),
+          ),
+        ),
+        SettingsRow(
+          label: l.settingsTimeZone,
+          description: l.settingsTimeZoneHint,
+          control: SizedBox(
+            width: 220,
+            child: ShadInput(
+              controller: _tz,
+              placeholder: Text(DateTime.now().timeZoneName),
+              onSubmitted: (v) => _save(tz: v.trim().isEmpty ? null : v.trim()),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+/// Settings › Write (defaults stored in `writeDefaults`).
+class WriteDefaultsSection extends StatelessWidget {
+  const WriteDefaultsSection({super.key, required this.services});
+
+  final ShellServices services;
+
+  @override
+  Widget build(BuildContext context) {
+    final l = WonkyAppLocalizations.of(context);
+    final p = services.prefs;
+    return ListenableBuilder(
+      listenable: p,
+      builder: (context, _) {
+        bool v(String k, bool d) => p.writeDefaults[k] as bool? ?? d;
+        return SettingsGroup(
+          title: l.settingsWrite,
+          children: [
+            for (final (k, label, d) in [
+              ('spellcheck', l.writeSpellcheck, true),
+              ('smartQuotes', l.writeSmartQuotes, true),
+              ('autoPairBrackets', l.writeAutoPair, true),
+              ('markdownShortcuts', l.writeMarkdownShortcuts, true),
+              ('pageless', l.writePageless, false),
+            ])
+              SettingsRow(label: label, control: _switch('settings.write.$k', v(k, d), (x) => p.setWriteDefault(k, x))),
+            SettingsRow(
+              label: l.writeExportFormat,
+              control: ShadSelect<String>(
+                initialValue: p.writeDefaults['exportFormat'] as String? ?? 'md',
+                options: const [
+                  ShadOption(value: 'md', child: Text('Markdown (.md)')),
+                  ShadOption(value: 'html', child: Text('HTML (.html)')),
+                  ShadOption(value: 'pdf', child: Text('PDF (.pdf)')),
+                  ShadOption(value: 'txt', child: Text('Plain text (.txt)')),
+                ],
+                selectedOptionBuilder: (context, v) => Text(v),
+                onChanged: (x) => p.setWriteDefault('exportFormat', x),
+              ),
+            ),
+          ],
+        );
+      },
+    );
+  }
+}
+
+/// Settings › Sheets (defaults stored in `sheetsDefaults`).
+class SheetsDefaultsSection extends StatelessWidget {
+  const SheetsDefaultsSection({super.key, required this.services});
+
+  final ShellServices services;
+
+  @override
+  Widget build(BuildContext context) {
+    final l = WonkyAppLocalizations.of(context);
+    final p = services.prefs;
+    return ListenableBuilder(
+      listenable: p,
+      builder: (context, _) {
+        bool v(String k, bool d) => p.sheetsDefaults[k] as bool? ?? d;
+        return SettingsGroup(
+          title: l.settingsSheets,
+          children: [
+            for (final (k, label, d) in [
+              ('formulaAutocomplete', l.sheetsAutocomplete, true),
+              ('formulaHelp', l.sheetsFormulaHelp, true),
+              ('scriptsEnabled', l.sheetsScripts, true),
+            ])
+              SettingsRow(label: label, control: _switch('settings.sheets.$k', v(k, d), (x) => p.setSheetsDefault(k, x))),
+          ],
+        );
+      },
+    );
+  }
+}
+
+/// Settings › Notifications.
+class NotificationsSection extends StatelessWidget {
+  const NotificationsSection({super.key, required this.services});
+
+  final ShellServices services;
+
+  @override
+  Widget build(BuildContext context) {
+    final l = WonkyAppLocalizations.of(context);
+    final p = services.prefs;
+    return ListenableBuilder(
+      listenable: p,
+      builder: (context, _) {
+        String v(String k) => p.notificationSettings[k] as String? ?? 'inApp';
+        Widget choice(String k) => ShadSelect<String>(
+          key: ValueKey<String>('settings.notifications.$k'),
+          initialValue: v(k),
+          options: [
+            ShadOption(value: 'inApp', child: Text(l.notifyInApp)),
+            ShadOption(value: 'email', child: Text(l.notifyEmail)),
+            ShadOption(value: 'off', child: Text(l.notifyOff)),
+          ],
+          selectedOptionBuilder: (context, x) => Text(switch (x) {
+            'email' => l.notifyEmail,
+            'off' => l.notifyOff,
+            _ => l.notifyInApp,
+          }),
+          onChanged: (x) => p.setNotificationSetting(k, x),
+        );
+        return SettingsGroup(
+          title: l.settingsNotifications,
+          children: [
+            SettingsRow(label: l.notifyMentions, control: choice('mentions')),
+            SettingsRow(label: l.notifyReplies, control: choice('replies')),
+            SettingsRow(label: l.notifyShares, control: choice('shares')),
+          ],
+        );
+      },
+    );
+  }
+}
+
+/// Settings › AI.
+class AiSection extends StatelessWidget {
+  const AiSection({super.key, required this.services});
+
+  final ShellServices services;
+
+  @override
+  Widget build(BuildContext context) {
+    final l = WonkyAppLocalizations.of(context);
+    final p = services.prefs;
+    return ListenableBuilder(
+      listenable: p,
+      builder: (context, _) => SettingsGroup(
+        title: l.settingsAi,
+        description: l.settingsAiHint,
+        children: [
+          SettingsRow(label: l.aiEnable, control: _switch('settings.ai.enabled', p.aiEnabled, p.setAiEnabled)),
+        ],
+      ),
+    );
+  }
+}
+
+/// Settings › Developer / MCP: tokens, connection snippet, UI-bridge toggle.
+class DeveloperSection extends StatefulWidget {
+  const DeveloperSection({super.key, required this.services});
+
+  final ShellServices services;
+
+  @override
+  State<DeveloperSection> createState() => _DeveloperSectionState();
+}
+
+class _DeveloperSectionState extends State<DeveloperSection> {
+  late Future<List<AccessTokenView>> _tokens = widget.services.repositories.users.listTokens();
+  String? _secret;
+
+  ShellServices get s => widget.services;
+
+  Future<void> _create() async {
+    final l = WonkyAppLocalizations.of(context);
+    final name = await showTextInputDialog(
+      context,
+      title: l.tokenCreate,
+      label: l.tokenName,
+      confirmLabel: l.actionCreate,
+      dialogKey: 'dialog.createToken',
+    );
+    if (name == null) return;
+    try {
+      final t = await s.repositories.users.createToken(name: name, scopes: McpScope.all);
+      setState(() {
+        _secret = t.secret;
+        _tokens = s.repositories.users.listTokens();
+      });
+    } catch (e) {
+      s.toasts.error(l.errorGeneric, description: errorMessage(e));
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final l = WonkyAppLocalizations.of(context);
+    final theme = ShadTheme.of(context);
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        SettingsGroup(
+          title: l.tokensTitle,
+          description: l.tokensHint,
+          children: [
+            if (_secret != null)
+              ShadAlert(
+                icon: const Icon(LucideIcons.keyRound),
+                title: Text(l.tokenCopyOnce),
+                description: Row(
+                  children: [
+                    Expanded(child: Text(_secret!, style: TextStyle(fontFamily: 'packages/shad/GeistMono', color: theme.colorScheme.foreground))),
+                    ShadButton.outline(
+                      size: ShadButtonSize.sm,
+                      onPressed: () => Clipboard.setData(ClipboardData(text: _secret!)),
+                      child: Text(l.actionCopy),
+                    ),
+                  ],
+                ),
+              ),
+            FutureBuilder<List<AccessTokenView>>(
+              future: _tokens,
+              builder: (context, snap) {
+                final list = snap.data ?? const <AccessTokenView>[];
+                if (snap.connectionState != ConnectionState.done) return const ShadSpinner();
+                if (list.isEmpty) return Text(l.tokensEmpty, style: theme.textTheme.muted);
+                return Column(
+                  children: [
+                    for (final t in list)
+                      Row(
+                        children: [
+                          Expanded(child: Text('${t.name} · ${t.prefix}…${t.revokedAt != null ? ' · ${l.tokenRevoked}' : ''}')),
+                          if (t.revokedAt == null)
+                            ShadButton.ghost(
+                              size: ShadButtonSize.sm,
+                              onPressed: () async {
+                                await s.repositories.users.revokeToken(t.id);
+                                setState(() => _tokens = s.repositories.users.listTokens());
+                              },
+                              child: Text(l.tokenRevoke),
+                            ),
+                        ],
+                      ),
+                  ],
+                );
+              },
+            ),
+            Align(
+              alignment: Alignment.centerLeft,
+              child: ShadButton(onPressed: _create, leading: const Icon(LucideIcons.plus, size: 16), child: Text(l.tokenCreate)),
+            ),
+          ],
+        ),
+        SettingsGroup(
+          title: l.mcpTitle,
+          description: l.mcpHint,
+          children: [
+            Container(
+              padding: const EdgeInsets.all(10),
+              decoration: BoxDecoration(color: theme.colorScheme.muted, borderRadius: BorderRadius.circular(6)),
+              child: Text(mcpConnectionJson(s), style: const TextStyle(fontFamily: 'packages/shad/GeistMono', fontSize: 12)),
+            ),
+            Align(
+              alignment: Alignment.centerLeft,
+              child: ShadButton.outline(
+                onPressed: () => s.dispatcher.invoke('shell.mcp.copyConnectionInfo', source: InvocationSource.ui),
+                child: Text(l.cmdCopyMcpConfig),
+              ),
+            ),
+            ListenableBuilder(
+              listenable: s.mcp,
+              builder: (context, _) => SettingsRow(
+                label: l.mcpAllowControl,
+                control: _switch('settings.mcp.bridge', s.mcp.enabled, (_) => s.dispatcher.invoke('shell.mcp.toggleUiBridge')),
+              ),
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+}
+
+/// Settings › Offline & storage.
+class OfflineSection extends StatelessWidget {
+  const OfflineSection({super.key, required this.services});
+
+  final ShellServices services;
+
+  @override
+  Widget build(BuildContext context) {
+    final l = WonkyAppLocalizations.of(context);
+    final d = services.drive;
+    return SettingsGroup(
+      title: l.settingsOffline,
+      description: l.settingsOfflineHint,
+      children: [
+        if (d is CachedDriveRepository)
+          ListenableBuilder(
+            listenable: d,
+            builder: (context, _) => SettingsRow(label: l.offlinePending, control: Text('${d.pendingCount}')),
+          ),
+        SettingsRow(
+          label: l.offlineClear,
+          description: l.offlineClearHint,
+          control: ShadButton.outline(
+            onPressed: () async {
+              final ok = await confirmDialog(context, title: l.offlineClear, description: l.offlineClearHint, confirmLabel: l.offlineClear, destructive: true);
+              if (!ok) return;
+              if (d is CachedDriveRepository) {
+                await d.cache.clear();
+                await d.queue.clear();
+              }
+              services.toasts.show(l.offlineCleared);
+            },
+            child: Text(l.offlineClear),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+/// Settings › About: versions and licenses.
+class AboutSection extends StatelessWidget {
+  const AboutSection({super.key, required this.services});
+
+  final ShellServices services;
+
+  @override
+  Widget build(BuildContext context) {
+    final l = WonkyAppLocalizations.of(context);
+    return ValueListenableBuilder<ProtocolInfo?>(
+      valueListenable: services.serverInfo,
+      builder: (context, info, _) => SettingsGroup(
+        title: '${services.config.appName} · ${l.wonkyWork}',
+        children: [
+          SettingsRow(label: l.aboutAppVersion, control: const Text(clientVersion)),
+          SettingsRow(label: l.aboutServerVersion, control: Text(info?.serverVersion ?? '—')),
+          SettingsRow(label: l.aboutProtocol, control: Text(info == null ? '—' : '${info.minClientVersion} · ${info.syncTablesHash.substring(0, info.syncTablesHash.length.clamp(0, 8))}')),
+          SettingsRow(label: l.aboutRunMode, control: Text(info?.runMode ?? '—')),
+          Align(
+            alignment: Alignment.centerLeft,
+            child: ShadButton.outline(
+              onPressed: () => showShadDialog<void>(
+                context: context,
+                builder: (context) => ShadDialog(
+                  title: Text(l.aboutLicenses),
+                  child: SizedBox(
+                    width: 520,
+                    height: 400,
+                    child: FutureBuilder<List<LicenseEntry>>(
+                      future: LicenseRegistry.licenses.toList(),
+                      builder: (context, snap) => ListView(
+                        children: [
+                          for (final e in snap.data ?? const <LicenseEntry>[])
+                            Padding(
+                              padding: const EdgeInsets.only(bottom: 8),
+                              child: Text(e.packages.join(', '), style: ShadTheme.of(context).textTheme.small),
+                            ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+              child: Text(l.aboutLicenses),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}

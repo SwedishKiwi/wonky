@@ -53,7 +53,10 @@ class UserEndpoint extends Endpoint {
   );
 
   /// Sets (or with null removes) the avatar.
-  Future<UserProfileView> setAvatar(Session session, UuidValue? fileUuid) async {
+  Future<UserProfileView> setAvatar(
+    Session session,
+    UuidValue? fileUuid,
+  ) async {
     final actor = await UserService.actorOf(session);
     await UserService.setAvatar(session, actor, fileUuid);
     return UserService.me(session, actor);
@@ -91,8 +94,12 @@ class UserEndpoint extends Endpoint {
     return map.values.toList();
   }
 
-  Future<AccountDeletionPreview> accountDeletionPreview(Session session) async =>
-      AccountService.deletionPreview(session, await UserService.actorOf(session));
+  Future<AccountDeletionPreview> accountDeletionPreview(
+    Session session,
+  ) async => AccountService.deletionPreview(
+    session,
+    await UserService.actorOf(session),
+  );
 
   /// Deletes the account; [confirmation] must equal the account email.
   Future<void> deleteAccount(Session session, String confirmation) async =>
