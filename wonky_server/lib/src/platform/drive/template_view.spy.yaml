@@ -1,0 +1,15 @@
+### A template in the gallery (`drive.listTemplates`, specs/05 §3.1).
+class: TemplateView
+fields:
+  ### Built-ins: UUIDv5(url, "wonky-template:<key>"); published items: the item uuid.
+  uuid: UuidValue
+  ### Stable key of built-in templates, e.g. "write.meeting-notes".
+  key: String?
+  kind: DriveItemKind
+  name: String
+  description: String
+  category: TemplateCategory
+  builtin: bool
+  ### Short plain-text preview for the template card.
+  previewText: String
+  thumbnailFileId: UuidValue?

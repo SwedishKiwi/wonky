@@ -1,0 +1,6 @@
+### The owner-only sharing settings (specs/06 §1).
+class: ItemSharingSettings
+fields:
+  editorsCanShare: bool
+  nonEditorsCanExport: bool
+  viewersSeeComments: bool

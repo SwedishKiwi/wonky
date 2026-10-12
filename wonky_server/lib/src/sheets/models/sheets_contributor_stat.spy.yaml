@@ -1,0 +1,6 @@
+class: SheetsContributorStat
+fields:
+  user: UserSummary?
+  actorKind: ActorKind
+  edits: int
+  lastEditAt: DateTime

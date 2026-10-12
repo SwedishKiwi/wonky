@@ -1,0 +1,8 @@
+### Kind of a sheet tab.
+enum: SheetKind
+serialized: byName
+values:
+  ### A regular grid of cells.
+  - grid
+  ### An object sheet holding one chart.
+  - chart

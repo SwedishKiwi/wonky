@@ -1,0 +1,11 @@
+class: NotificationView
+fields:
+  id: int
+  kind: NotificationKind
+  itemUuid: UuidValue?
+  itemName: String?
+  itemKind: DriveItemKind?
+  actor: UserSummary?
+  payload: String
+  createdAt: DateTime
+  readAt: DateTime?

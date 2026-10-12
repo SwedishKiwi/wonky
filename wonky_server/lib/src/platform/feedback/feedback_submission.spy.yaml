@@ -1,0 +1,13 @@
+### Client payload of `feedback.submit` / `feedback.reportError`.
+class: FeedbackSubmission
+fields:
+  kind: FeedbackKind
+  message: String
+  ### write or sheets.
+  app: String
+  appVersion: String
+  platform: String
+  route: String?
+  stackTrace: String?
+  ### Anonymized state, no document content.
+  contextJson: String?

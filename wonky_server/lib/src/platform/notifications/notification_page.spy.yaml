@@ -1,0 +1,5 @@
+class: NotificationPage
+fields:
+  items: List<NotificationView>
+  nextCursor: String?
+  unreadCount: int

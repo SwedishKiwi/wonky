@@ -1,0 +1,11 @@
+class: PermissionView
+fields:
+  ### Null for pending invites.
+  user: UserSummary?
+  invitedEmail: String?
+  role: AccessRole
+  ### The folder the grant comes from (null = direct grant).
+  inheritedFromUuid: UuidValue?
+  inheritedFromName: String?
+  grantedAt: DateTime
+  expiresAt: DateTime?

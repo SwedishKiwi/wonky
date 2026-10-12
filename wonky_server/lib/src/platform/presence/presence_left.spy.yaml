@@ -1,0 +1,4 @@
+class: PresenceLeft
+extends: PresenceEvent
+fields:
+  sessionId: String

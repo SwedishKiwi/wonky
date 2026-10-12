@@ -1,0 +1,6 @@
+### Result of the last script compilation.
+enum: ScriptBuildStatus
+serialized: byName
+values:
+  - ok
+  - errors

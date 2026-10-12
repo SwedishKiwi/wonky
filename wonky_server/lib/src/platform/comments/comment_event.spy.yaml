@@ -1,0 +1,7 @@
+### A live comment change on an item (`comment.watch`).
+class: CommentEvent
+fields:
+  kind: CommentEventKind
+  threadUuid: UuidValue
+  ### The full thread after the change; null for threadDeleted.
+  thread: CommentThreadView?

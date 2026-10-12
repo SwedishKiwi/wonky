@@ -1,0 +1,6 @@
+### Gap fill: the server answers with DocRemoteOp messages.
+class: DocRequestOps
+extends: DocClientMessage
+fields:
+  fromRevision: int
+  toRevision: int

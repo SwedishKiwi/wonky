@@ -1,0 +1,7 @@
+class: PresenceUpdated
+extends: PresenceEvent
+fields:
+  sessionId: String
+  state: PresenceState
+  cursorJson: String?
+  mode: String?

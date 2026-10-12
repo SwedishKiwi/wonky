@@ -1,0 +1,10 @@
+class: FileUrlView
+fields:
+  fileUuid: UuidValue
+  status: StoredFileStatus
+  ### Signed URL (15 min) or public URL; null while pending.
+  url: String?
+  expiresAt: DateTime?
+  fileName: String
+  mimeType: String
+  sizeBytes: int

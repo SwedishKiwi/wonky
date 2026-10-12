@@ -1,0 +1,32 @@
+### A comment thread on a drive item (specs/07 §2.1).
+class: CommentThread
+table: comment_thread
+fields:
+  ### Client-supplied (UUIDv7) so offline creation is idempotent. Write
+  ### suggestion threads use UUIDv5(documentUuid, "sug:" + id).
+  uuid: UuidValue
+  itemId: int, relation(parent=drive_item, onDelete=Cascade)
+  anchorKind: CommentAnchorKind
+  ### App-specific anchor JSON (Write 08 §1.1, Sheets 10 §3.1).
+  anchorJson: String
+  ### Snapshot of the anchored text or value at creation (≤ 500 chars).
+  quotedText: String?
+  status: CommentStatus, default=open
+  createdById: int
+  createdAt: DateTime
+  updatedAt: DateTime?
+  resolvedById: int?
+  resolvedAt: DateTime?
+  assigneeId: int?
+  ### Restored when an orphaned anchor comes back.
+  statusBeforeOrphan: CommentStatus?
+  ### e.g. {"kind":"rowDeleted","rowId":…}.
+  orphanReasonJson: String?
+  ### Write suggestion id when this is a suggestion thread.
+  suggestionId: String?
+indexes:
+  comment_thread_item_idx:
+    fields: itemId, status
+  comment_thread_uuid_idx:
+    fields: uuid
+    unique: true

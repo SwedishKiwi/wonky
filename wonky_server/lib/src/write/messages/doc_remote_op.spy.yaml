@@ -1,0 +1,13 @@
+### Someone else's op, transformed to apply on revision - 1.
+class: DocRemoteOp
+extends: DocServerMessage
+fields:
+  revision: int
+  deltaJson: String
+  authorId: int?
+  authorUuid: UuidValue?
+  authorSessionId: String?
+  actorKind: ActorKind
+  kind: DocumentOpKind
+  onBehalfOfSessionId: String?
+  groupId: String?

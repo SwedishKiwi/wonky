@@ -1,0 +1,6 @@
+### A live notification change (`notification.watch`).
+class: NotificationEvent
+fields:
+  ### The new notification, or null when only the unread count changed.
+  notification: NotificationView?
+  unreadCount: int

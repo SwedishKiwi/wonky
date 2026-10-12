@@ -1,0 +1,8 @@
+### Local selection as Delta offsets at [revision] (throttled 10/s).
+class: DocCursorUpdate
+extends: DocClientMessage
+fields:
+  revision: int
+  anchor: int
+  head: int
+  focused: bool

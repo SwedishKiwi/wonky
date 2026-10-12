@@ -1,0 +1,8 @@
+enum: CommentFilter
+serialized: byName
+values:
+  - all
+  - open
+  - resolved
+  ### Threads assigned to or mentioning the caller.
+  - forYou

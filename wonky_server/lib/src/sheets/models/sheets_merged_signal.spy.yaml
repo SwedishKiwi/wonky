@@ -1,0 +1,6 @@
+### Internal session.messages payload on `sheets:merged:<spaceUuid>`.
+class: SheetsMergedSignal
+serverOnly: true
+fields:
+  spaceUuid: UuidValue
+  hlc: String

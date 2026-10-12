@@ -1,0 +1,7 @@
+class: StorageUsage
+fields:
+  bytesUsed: int
+  documents: int
+  spreadsheets: int
+  folders: int
+  files: int

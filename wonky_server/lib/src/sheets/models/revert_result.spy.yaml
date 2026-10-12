@@ -1,0 +1,6 @@
+class: RevertResult
+fields:
+  ### The record of the revert itself.
+  changeId: UuidValue
+  revertedCells: int
+  skipped: List<RevertSkip>

@@ -1,0 +1,11 @@
+### Write 08 §4.2.
+class: WriteDiffView
+fields:
+  fromRevision: int
+  toRevision: int
+  ### True when authorship is exact (attributed replay).
+  exact: bool
+  ### doc(to) plus tombstones with diff_ins/diff_del/diff_fmt attributes.
+  deltaJson: String
+  authors: List<WriteDiffAuthor>
+  changeCount: int

@@ -1,0 +1,27 @@
+### A file in cloud storage (specs/12 §1.1). The client chooses [fileUuid]
+### so content can reference `wonky-file://<fileUuid>` before upload.
+class: StoredFile
+table: stored_file
+fields:
+  fileUuid: UuidValue
+  ownerId: int?, relation(parent=user_profile, onDelete=SetNull)
+  ### Access follows this item (null = owner only, e.g. avatars, imports).
+  itemId: int?, relation(parent=drive_item, onDelete=Cascade)
+  kind: StoredFileKind
+  storageId: String
+  path: String
+  fileName: String
+  mimeType: String
+  sizeBytes: int
+  status: StoredFileStatus
+  createdAt: DateTime
+  completedAt: DateTime?
+  expiresAt: DateTime?
+indexes:
+  stored_file_uuid_idx:
+    fields: fileUuid
+    unique: true
+  stored_file_item_idx:
+    fields: itemId
+  stored_file_expiry_idx:
+    fields: expiresAt

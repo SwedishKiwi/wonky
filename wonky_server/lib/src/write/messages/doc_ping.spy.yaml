@@ -1,0 +1,4 @@
+class: DocPing
+extends: DocClientMessage
+fields:
+  t: int

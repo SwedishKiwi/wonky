@@ -1,0 +1,6 @@
+### UI density preference.
+enum: UiDensity
+serialized: byName
+values:
+  - comfortable
+  - compact

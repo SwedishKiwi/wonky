@@ -1,0 +1,18 @@
+### Link sharing of an item; one row per item (specs/06 §2.2).
+class: ShareLink
+table: share_link
+fields:
+  itemId: int, relation(parent=drive_item, onDelete=Cascade)
+  ### 22-char random url-safe token.
+  token: String
+  ### Null = link sharing off ("Restricted").
+  role: AccessRole?
+  createdById: int
+  createdAt: DateTime
+indexes:
+  share_link_item_idx:
+    fields: itemId
+    unique: true
+  share_link_token_idx:
+    fields: token
+    unique: true

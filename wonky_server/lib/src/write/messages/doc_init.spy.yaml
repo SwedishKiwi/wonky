@@ -1,0 +1,14 @@
+### First message: a snapshot (client too far behind) or the ops since
+### knownRevision.
+class: DocInit
+extends: DocServerMessage
+fields:
+  revision: int
+  ### Full document delta at [revision] when ops are not sent.
+  snapshotJson: String?
+  ops: List<DocumentOpView>?
+  meta: DocumentMetaView
+  role: AccessRole
+  ### This connection's session id (used by DocRemoteOp.authorSessionId).
+  sessionId: String
+  participants: List<Participant>

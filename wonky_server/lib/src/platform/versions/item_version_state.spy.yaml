@@ -1,0 +1,21 @@
+### Capture-policy state per item (specs/07 §5): written on edits, read by the
+### capture job. Serves both apps (replaces Sheets' SheetsVersionState).
+class: ItemVersionState
+table: item_version_state
+serverOnly: true
+fields:
+  itemId: int, relation(parent=drive_item, onDelete=Cascade)
+  ### Last edit seen.
+  lastEditAt: DateTime
+  ### First edit after the last captured version (null = clean).
+  dirtySince: DateTime?
+  lastVersionAt: DateTime?
+  editorsSinceLastVersion: List<int>
+  ### Write: head revision at the last edit.
+  lastRevision: int?
+indexes:
+  item_version_state_item_idx:
+    fields: itemId
+    unique: true
+  item_version_state_dirty_idx:
+    fields: dirtySince

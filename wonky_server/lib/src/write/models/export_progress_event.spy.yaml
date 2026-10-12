@@ -1,0 +1,9 @@
+class: ExportProgressEvent
+fields:
+  kind: ExportProgressKind
+  ### loading, layout, fonts, images, packaging, uploading.
+  phase: String?
+  progress: double?
+  result: ExportResultView?
+  errorCode: String?
+  message: String?

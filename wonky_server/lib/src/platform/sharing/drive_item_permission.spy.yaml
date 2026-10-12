@@ -1,0 +1,24 @@
+### A role grant on a drive item (specs/06 §2). Grants on folders are
+### materialized on every descendant with [inheritedFromId].
+class: DriveItemPermission
+table: drive_item_permission
+fields:
+  itemId: int, relation(parent=drive_item, onDelete=Cascade)
+  ### Null while the invite is pending (no account yet).
+  userId: int?, relation(parent=user_profile, onDelete=Cascade)
+  invitedEmail: String?
+  role: AccessRole
+  ### The folder item the grant was inherited from (null = direct).
+  inheritedFromId: int?
+  grantedById: int
+  grantedAt: DateTime
+  expiresAt: DateTime?
+indexes:
+  perm_item_user_idx:
+    fields: itemId, userId, inheritedFromId, invitedEmail
+    unique: true
+    nulls_distinct: false
+  perm_user_idx:
+    fields: userId
+  perm_email_idx:
+    fields: invitedEmail

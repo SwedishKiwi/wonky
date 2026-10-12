@@ -1,0 +1,7 @@
+class: WriteThemeRevisionView
+fields:
+  version: int
+  json: String
+  savedBy: UserSummary?
+  actorKind: ActorKind
+  createdAt: DateTime

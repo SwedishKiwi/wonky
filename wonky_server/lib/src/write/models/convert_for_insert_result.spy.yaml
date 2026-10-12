@@ -1,0 +1,4 @@
+class: ConvertForInsertResult
+fields:
+  deltaJson: String
+  warnings: List<ImportWarningView>

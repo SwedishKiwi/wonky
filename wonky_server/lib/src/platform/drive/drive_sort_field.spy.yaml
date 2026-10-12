@@ -1,0 +1,9 @@
+enum: DriveSortField
+serialized: byName
+values:
+  - name
+  - modifiedAt
+  - lastOpenedByMe
+  - lastModifiedByMe
+  - size
+  - createdAt

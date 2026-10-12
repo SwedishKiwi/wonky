@@ -1,0 +1,26 @@
+class: Comment
+table: comment
+fields:
+  threadId: int, relation(parent=comment_thread, onDelete=Cascade)
+  ### Client-supplied id for idempotent replies (optional).
+  uuid: UuidValue?
+  ### Null for system comments.
+  authorId: int?
+  authorKind: ActorKind
+  ### Markdown (inline subset).
+  body: String
+  ### UserProfile ids mentioned in [body].
+  mentions: List<int>
+  ### JSON {emoji: [userId]}.
+  reactions: String, default='{}'
+  createdAt: DateTime
+  editedAt: DateTime?
+  ### Soft delete: shown as "Comment deleted".
+  deletedAt: DateTime?
+  systemEvent: CommentSystemEvent?
+indexes:
+  comment_thread_idx:
+    fields: threadId, createdAt
+  comment_uuid_idx:
+    fields: uuid
+    unique: true

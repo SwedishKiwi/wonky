@@ -1,0 +1,6 @@
+### Internal session.messages payload on `drive:user:<userId>`.
+class: DriveChangeSignal
+serverOnly: true
+fields:
+  kind: DriveChangeKind
+  itemUuid: UuidValue

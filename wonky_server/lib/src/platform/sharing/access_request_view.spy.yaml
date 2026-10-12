@@ -1,0 +1,8 @@
+class: AccessRequestView
+fields:
+  id: int
+  itemUuid: UuidValue
+  requester: UserSummary
+  requestedRole: AccessRole
+  message: String?
+  createdAt: DateTime

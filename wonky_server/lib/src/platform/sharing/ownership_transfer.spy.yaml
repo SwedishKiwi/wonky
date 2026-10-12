@@ -1,0 +1,13 @@
+### A pending ownership transfer; the new owner must accept (specs/06 §4).
+class: OwnershipTransfer
+table: ownership_transfer
+fields:
+  itemId: int, relation(parent=drive_item, onDelete=Cascade)
+  fromUserId: int
+  toUserId: int, relation(parent=user_profile, onDelete=Cascade)
+  createdAt: DateTime
+  handledAt: DateTime?
+  accepted: bool?
+indexes:
+  ownership_transfer_item_idx:
+    fields: itemId, handledAt

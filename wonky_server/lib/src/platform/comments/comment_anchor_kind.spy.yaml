@@ -1,0 +1,11 @@
+enum: CommentAnchorKind
+serialized: byName
+values:
+  ### Write: a text range carrying `cmt_<threadUuid>`.
+  - textRange
+  ### Sheets: one cell.
+  - cell
+  ### Sheets: a range.
+  - range
+  ### The whole item.
+  - document

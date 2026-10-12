@@ -1,0 +1,23 @@
+### A personal access token for MCP (specs/04 §3, 09 §2). Only the SHA-256 of
+### the secret is stored; the secret is shown once.
+class: PersonalAccessToken
+table: personal_access_token
+serverOnly: true
+fields:
+  userId: int, relation(parent=user_profile, onDelete=Cascade)
+  name: String
+  tokenHash: String
+  ### First characters of the secret for display, e.g. "wkpat_ab12".
+  prefix: String
+  ### e.g. ["drive:read", "write:edit", "sheets:edit", "ui:control"].
+  scopes: List<String>
+  expiresAt: DateTime?
+  lastUsedAt: DateTime?
+  createdAt: DateTime
+  revokedAt: DateTime?
+indexes:
+  personal_access_token_user_idx:
+    fields: userId
+  personal_access_token_hash_idx:
+    fields: tokenHash
+    unique: true

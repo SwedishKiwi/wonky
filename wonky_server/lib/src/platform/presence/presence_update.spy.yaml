@@ -1,0 +1,13 @@
+### Client → server presence update (specs/07 §1.1, Sheets 10 §2).
+class: PresenceUpdate
+fields:
+  state: PresenceState
+  ### App-specific cursor JSON (Sheets); Write sends null.
+  cursorJson: String?
+  viewportJson: String?
+  ### editing, suggesting or viewing.
+  mode: String?
+  ### Ephemeral commit hints (Sheets 10 §2.1), each a JSON object.
+  hints: List<String>?
+  ### Session id the sender is following, or null.
+  followingSessionId: String?

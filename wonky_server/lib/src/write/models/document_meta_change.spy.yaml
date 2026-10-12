@@ -1,0 +1,19 @@
+### LWW metadata change (Write 03 §6). The title lives on DriveItem.
+class: DocumentMetaChange
+table: document_meta_change
+fields:
+  documentId: int, relation(parent=document, onDelete=Cascade)
+  ### themeId, pageSetup, language, frontMatter.
+  field: String
+  clientOpId: UuidValue?
+  beforeJson: String
+  afterJson: String
+  authorId: int?
+  actorKind: ActorKind
+  createdAt: DateTime
+indexes:
+  document_meta_change_idx:
+    fields: documentId, createdAt
+  document_meta_change_client_idx:
+    fields: documentId, clientOpId
+    unique: true

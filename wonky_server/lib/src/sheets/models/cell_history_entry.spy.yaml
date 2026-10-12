@@ -1,0 +1,9 @@
+class: CellHistoryEntry
+fields:
+  changeLogId: UuidValue
+  user: UserSummary?
+  actorKind: ActorKind
+  label: String
+  at: DateTime
+  before: String?
+  after: String?

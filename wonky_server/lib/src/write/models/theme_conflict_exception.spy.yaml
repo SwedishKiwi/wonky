@@ -1,0 +1,7 @@
+### `writeTheme.update`/`rename` with a stale expectedVersion.
+exception: ThemeConflictException
+fields:
+  message: String
+  serverJson: String
+  serverVersion: int
+  serverName: String

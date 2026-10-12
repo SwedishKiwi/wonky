@@ -1,0 +1,18 @@
+### Internal session.messages payload on `presence:<itemUuid>`.
+class: PresenceBusMessage
+serverOnly: true
+fields:
+  ### hello, here, update, hints, follow, bye, notice.
+  type: String
+  sessionId: String
+  participant: Participant?
+  state: PresenceState?
+  cursorJson: String?
+  mode: String?
+  hints: List<String>?
+  ### follow: the followed session (null = stopped following).
+  target: String?
+  ### here: the session that said hello.
+  replyTo: String?
+  noticeKind: String?
+  noticePayloadJson: String?

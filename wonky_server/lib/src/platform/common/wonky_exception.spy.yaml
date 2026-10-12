@@ -1,0 +1,7 @@
+### The common error of Wonky endpoints. Never carries document content.
+exception: WonkyException
+fields:
+  code: WonkyErrorCode
+  message: String
+  ### Optional JSON with details for the client (e.g. ids, limits).
+  detailsJson: String?

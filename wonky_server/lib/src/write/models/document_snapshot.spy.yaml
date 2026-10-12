@@ -1,0 +1,13 @@
+class: DocumentSnapshot
+table: document_snapshot
+fields:
+  documentId: int, relation(parent=document, onDelete=Cascade)
+  revision: int
+  ### Full document delta (gzip+base64 when [compressed]).
+  deltaJson: String
+  compressed: bool
+  createdAt: DateTime
+indexes:
+  document_snapshot_idx:
+    fields: documentId, revision
+    unique: true

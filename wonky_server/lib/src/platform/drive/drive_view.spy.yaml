@@ -1,0 +1,15 @@
+### Virtual views of `drive.list` (specs/05 §2).
+enum: DriveView
+serialized: byName
+values:
+  ### Children of a folder (or of the caller's root when folderUuid is null).
+  - folder
+  ### Items owned by others, shared directly, via a folder or opened via link.
+  - sharedWithMe
+  - starred
+  ### Recently opened by the caller.
+  - recent
+  ### Owned items in the trash (only top-level trashed items).
+  - trash
+  ### Items pinned for offline use.
+  - offline

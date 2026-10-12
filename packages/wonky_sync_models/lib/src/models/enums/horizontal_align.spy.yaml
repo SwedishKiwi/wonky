@@ -1,0 +1,7 @@
+### Horizontal cell alignment. Null on a cell means "general".
+enum: HorizontalAlign
+serialized: byName
+values:
+  - left
+  - center
+  - right

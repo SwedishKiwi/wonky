@@ -1,0 +1,6 @@
+enum: DriveItemKind
+serialized: byName
+values:
+  - folder
+  - document
+  - spreadsheet

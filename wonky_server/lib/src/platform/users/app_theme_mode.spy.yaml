@@ -1,0 +1,7 @@
+### App theme preference.
+enum: AppThemeMode
+serialized: byName
+values:
+  - system
+  - light
+  - dark

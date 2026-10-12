@@ -1,0 +1,4 @@
+class: DocPong
+extends: DocServerMessage
+fields:
+  t: int

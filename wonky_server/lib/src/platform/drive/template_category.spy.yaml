@@ -1,0 +1,9 @@
+### Template gallery categories (specs/05 §3.1).
+enum: TemplateCategory
+serialized: byName
+values:
+  - personal
+  - work
+  - education
+  - projectManagement
+  - finance

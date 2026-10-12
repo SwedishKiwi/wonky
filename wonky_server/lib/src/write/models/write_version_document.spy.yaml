@@ -1,0 +1,5 @@
+class: WriteVersionDocument
+fields:
+  revision: int
+  ### Materialized content with comment/suggestion overlays stripped.
+  deltaJson: String

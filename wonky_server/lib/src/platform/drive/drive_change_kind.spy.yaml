@@ -1,0 +1,14 @@
+enum: DriveChangeKind
+serialized: byName
+values:
+  - created
+  ### Name, description, settings or starred/pinned state changed.
+  - updated
+  - moved
+  - modified
+  - trashed
+  - restored
+  ### Deleted forever, or the caller lost access.
+  - removed
+  - shared
+  - unshared

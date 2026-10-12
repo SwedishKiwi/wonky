@@ -1,0 +1,13 @@
+### Import warnings kept 7 days and shown once to the importing user.
+class: DocumentImportReport
+table: document_import_report
+serverOnly: true
+fields:
+  documentId: int, relation(parent=document, onDelete=Cascade)
+  userId: int
+  warningsJson: String
+  createdAt: DateTime
+  seenAt: DateTime?
+indexes:
+  document_import_report_idx:
+    fields: documentId, userId

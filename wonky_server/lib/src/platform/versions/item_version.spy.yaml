@@ -1,0 +1,18 @@
+### A version of a drive item (specs/07 §5).
+class: ItemVersion
+table: item_version
+fields:
+  itemId: int, relation(parent=drive_item, onDelete=Cascade)
+  kind: VersionKind
+  name: String?
+  createdAt: DateTime
+  createdById: int?
+  ### Users who contributed since the previous version.
+  authors: List<int>
+  storageKind: VersionStorage
+  revision: int?
+  snapshotFileId: UuidValue?
+  sizeBytes: int, default=0
+indexes:
+  item_version_item_idx:
+    fields: itemId, createdAt

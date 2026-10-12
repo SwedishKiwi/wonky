@@ -1,0 +1,5 @@
+class: DocAck
+extends: DocServerMessage
+fields:
+  clientOpId: UuidValue
+  revision: int

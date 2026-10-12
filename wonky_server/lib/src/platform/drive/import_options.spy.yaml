@@ -1,0 +1,9 @@
+### Options of `drive.import` (Write 07 §3.2, Sheets 11).
+class: ImportOptions
+fields:
+  ### md, txt, html, csv, tsv; null = detect from extension/content.
+  format: String?
+  name: String?
+  parentUuid: UuidValue?
+  ### Format specific options as JSON (txt.lineBreaks, csv.delimiter, …).
+  optionsJson: String?

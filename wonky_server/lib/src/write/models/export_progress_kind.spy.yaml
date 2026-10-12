@@ -1,0 +1,7 @@
+enum: ExportProgressKind
+serialized: byName
+values:
+  - phase
+  - progress
+  - done
+  - error

@@ -1,0 +1,11 @@
+class: DocumentOpView
+fields:
+  revision: int
+  deltaJson: String
+  clientOpId: UuidValue
+  authorId: int?
+  authorUuid: UuidValue?
+  actorKind: ActorKind
+  kind: DocumentOpKind
+  sessionId: String?
+  createdAt: DateTime

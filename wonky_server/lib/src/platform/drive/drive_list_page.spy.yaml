@@ -1,0 +1,5 @@
+### One page of drive items; pass [nextCursor] to get the next page.
+class: DriveListPage
+fields:
+  items: List<DriveItemView>
+  nextCursor: String?

@@ -1,0 +1,12 @@
+class: DocumentInfo
+fields:
+  documentUuid: UuidValue
+  item: DriveItemView
+  headRevision: int
+  meta: DocumentMetaView
+  charCount: int
+  wordCount: int
+  createdAt: DateTime
+  updatedAt: DateTime
+  ### Warnings of an import made by the caller, shown once (Write 07 §3.2).
+  importWarnings: List<ImportWarningView>?

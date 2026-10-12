@@ -1,0 +1,12 @@
+### Data of the Sheets activity dashboard (Sheets 10 §7).
+class: SheetsActivitySummary
+fields:
+  days: int
+  ### ISO date (yyyy-mm-dd) → user id (0 = others) → edits.
+  editsPerDay: Map<String, Map<int, int>>
+  contributors: List<SheetsContributorStat>
+  ### sheetId → edits.
+  editsPerSheet: Map<String, int>
+  mcpEdits: int
+  aiEdits: int
+  scriptEdits: int

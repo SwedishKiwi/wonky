@@ -1,0 +1,6 @@
+arb-dir: lib/l10n
+template-arb-file: wonky_ui_en.arb
+output-dir: lib/src/l10n
+output-localization-file: wonky_ui_localizations.dart
+output-class: WonkyUiLocalizations
+nullable-getter: false

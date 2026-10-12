@@ -1,0 +1,7 @@
+### A live drive change for the watching user (`drive.watch`).
+class: DriveChange
+fields:
+  kind: DriveChangeKind
+  itemUuid: UuidValue
+  ### The item as the watcher sees it; null for [DriveChangeKind.removed].
+  item: DriveItemView?

@@ -1,0 +1,16 @@
+### An empty space reserved for offline spreadsheet creation (suite 12 §2.2).
+class: SpaceReservation
+table: space_reservation
+serverOnly: true
+fields:
+  userId: int, relation(parent=user_profile, onDelete=Cascade)
+  spaceUuid: UuidValue
+  createdAt: DateTime
+  ### Set when a spreadsheet is registered in the space.
+  usedAt: DateTime?
+indexes:
+  space_reservation_space_idx:
+    fields: spaceUuid
+    unique: true
+  space_reservation_user_idx:
+    fields: userId, usedAt

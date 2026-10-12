@@ -1,0 +1,4 @@
+class: DocumentSnapshotView
+fields:
+  revision: int
+  deltaJson: String

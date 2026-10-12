@@ -9,9 +9,25 @@ environment:
 resolution: workspace
 
 dependencies:
+  clock: ^1.1.3
+  collection: ^1.19.1
+  crypto: ^3.0.7
+  dart_quill_delta: ^9.6.0
   serverpod: 4.1.0-beta.3
   serverpod_auth_idp_server: 4.1.0-beta.3
   serverpod_cloud_storage: 4.1.0-beta.3
+  serverpod_offline_sync: 0.0.9
+  serverpod_offline_sync_server: 0.0.9
+  uuid: ^4.6.0
+  wonky_core:
+    path: ../packages/wonky_core
+  wonky_sheets_core:
+    path: ../packages/wonky_sheets_core
+  wonky_sync_models:
+    path: ../packages/wonky_sync_models
+  wonky_write_core:
+    path: ../packages/wonky_write_core
+  yaml: ^3.1.4
 
 dev_dependencies:
   lints: '>=3.0.0 <7.0.0'
@@ -20,45 +36,48 @@ dev_dependencies:
 
 serverpod:
   scripts:
-    # Build the Flutter web app and copy it to the server's web directory.
+    # Build both Flutter web apps into the server's web directory
+    # (specs/01-architecture.md §2.4): wonky_write → web/write (/write/),
+    # wonky_sheets → web/sheets (/sheets/). Built with --wasm (cross-origin
+    # isolation for OPFS/SharedArrayBuffer, specs/13 §3).
     # Windows uses xcopy since flutter's --output flag doesn't work there.
     # See: https://github.com/flutter/flutter/issues/157886
     # On failure, clean and retry once to clear stale Flutter build caches.
     flutter_build:
       windows: >-
-        (if exist web\app rmdir /S /Q web\app)
-        & cd /D ..\wonky_flutter
-        & set ARGS=web --base-href /
+        (if exist web\write rmdir /S /Q web\write)
+        & (if exist web\sheets rmdir /S /Q web\sheets)
+        & cd /D ..\wonky_write
+        & set ARGS=web --wasm --base-href /write/
         && (call flutter build %ARGS% || (flutter clean && call flutter build %ARGS%))
-        && xcopy /E /I /Y build\web ..\wonky_server\web\app
+        && xcopy /E /I /Y build\web ..\wonky_server\web\write
+        && cd /D ..\wonky_sheets
+        && set ARGS=web --wasm --base-href /sheets/
+        && (call flutter build %ARGS% || (flutter clean && call flutter build %ARGS%))
+        && xcopy /E /I /Y build\web ..\wonky_server\web\sheets
       posix: |
-        rm -rf ../wonky_server/web/app
-        cd ../wonky_flutter
-        set -- web --base-href / --output ../wonky_server/web/app
+        set -e
+        rm -rf ../wonky_server/web/write ../wonky_server/web/sheets
+        cd ../wonky_write
+        set -- web --wasm --base-href /write/ --output ../wonky_server/web/write
+        flutter build "$@" || { flutter clean && flutter build "$@"; }
+        cd ../wonky_sheets
+        set -- web --wasm --base-href /sheets/ --output ../wonky_server/web/sheets
         flutter build "$@" || { flutter clean && flutter build "$@"; }
 
-  # Companion Flutter apps that `serverpod start` can launch (Ctrl+R), keyed
-  # by a display alias. The default device is the web server, opening the
-  # machine's default browser when ready. All non-reserved properties are
-  # forwarded to `flutter run`. For the best IDE debugging experience, use
-  # `chrome` or a native target as the device. See the example below:
-  #
-  # Admin:
-  #   path: ../apps/admin_flutter
-  #   displayName: "Admin app"
-  #   auto_launch: true
-  #   device: chrome
-  #   target: lib/main.dart
-  #   web-hostname: 0.0.0.0
-  #   web-port: 8090
-  #   release: true
-  #   pub: false
-  #   dart-define:
-  #     API_URL=https://admin.example.com
-  #     FLAVOR=production
+  # Both apps are launched by `serverpod start` from their flutter_driver
+  # entry point, on fixed ports so their origins are stable for
+  # `allowedOrigins` and cookie auth (specs/01-architecture.md §2.4–2.5).
   flutter_apps:
-    wonky:
-      path: ../wonky_flutter
-      displayName: "Wonky app"
+    write:
+      path: ../wonky_write
+      displayName: "Wonky Write"
       auto_launch: true
       target: lib/driver.dart
+      web-port: 8101
+    sheets:
+      path: ../wonky_sheets
+      displayName: "Wonky Sheets"
+      auto_launch: true
+      target: lib/driver.dart
+      web-port: 8102

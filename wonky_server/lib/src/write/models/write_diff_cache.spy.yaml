@@ -1,0 +1,13 @@
+class: WriteDiffCache
+table: write_diff_cache
+serverOnly: true
+fields:
+  documentId: int, relation(parent=document, onDelete=Cascade)
+  fromRevision: int
+  toRevision: int
+  json: String
+  createdAt: DateTime
+indexes:
+  write_diff_cache_idx:
+    fields: documentId, fromRevision, toRevision
+    unique: true

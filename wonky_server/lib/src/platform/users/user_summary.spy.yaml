@@ -1,0 +1,13 @@
+### Public information about a user, embedded in views (owners, authors,
+### participants).
+class: UserSummary
+fields:
+  id: int
+  ### The auth user UUID (used by Sheets synced rows and Write `by` attributes).
+  uuid: UuidValue
+  displayName: String
+  email: String
+  avatarUrl: String?
+  avatarColor: String
+  ### Stable presence color index (0–11) derived from the user id.
+  colorIndex: int

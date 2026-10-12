@@ -1,0 +1,25 @@
+### One applied operation (Write 02 §3).
+class: DocumentOp
+table: document_op
+fields:
+  documentId: int, relation(parent=document, onDelete=Cascade)
+  ### Head after applying this op (1-based).
+  revision: int
+  clientOpId: UuidValue
+  authorId: int?
+  actorKind: ActorKind
+  sessionId: String?
+  kind: DocumentOpKind
+  baseRevision: int
+  ### The transformed op as applied.
+  deltaJson: String
+  ### Inverse against the pre-op document.
+  inverseJson: String
+  createdAt: DateTime
+indexes:
+  document_op_rev_idx:
+    fields: documentId, revision
+    unique: true
+  document_op_client_idx:
+    fields: documentId, clientOpId
+    unique: true

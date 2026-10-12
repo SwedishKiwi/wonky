@@ -1,0 +1,4 @@
+class: CellHistoryPage
+fields:
+  entries: List<CellHistoryEntry>
+  nextCursor: String?

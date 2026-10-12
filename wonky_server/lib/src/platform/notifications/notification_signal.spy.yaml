@@ -1,0 +1,5 @@
+### Internal session.messages payload on `notifications:<userId>`.
+class: NotificationSignal
+serverOnly: true
+fields:
+  notificationId: int?

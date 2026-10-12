@@ -1,0 +1,9 @@
+### Kind of an object floating over the grid (Sheets 08).
+enum: EmbeddedObjectKind
+serialized: byName
+values:
+  - chart
+  - image
+  - slicer
+  ### Reserved (P2).
+  - drawing

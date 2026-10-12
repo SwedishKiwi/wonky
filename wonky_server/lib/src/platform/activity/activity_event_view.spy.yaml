@@ -1,0 +1,8 @@
+class: ActivityEventView
+fields:
+  id: int
+  type: ActivityType
+  actor: UserSummary?
+  actorKind: ActorKind
+  summary: String
+  at: DateTime

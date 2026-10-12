@@ -1,0 +1,7 @@
+enum: PresenceState
+serialized: byName
+values:
+  - active
+  - idle
+  - away
+  - offline

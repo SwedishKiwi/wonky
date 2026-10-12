@@ -1,0 +1,5 @@
+enum: AccessRequestOutcome
+serialized: byName
+values:
+  - approved
+  - denied

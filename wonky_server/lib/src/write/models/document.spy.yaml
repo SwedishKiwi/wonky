@@ -1,0 +1,25 @@
+### A Wonky Write document (Write 02 §3). Content lives in the op log.
+class: Document
+table: document
+fields:
+  ### Client may generate (UUIDv7) for offline creation.
+  uuid: UuidValue
+  itemId: int, relation(parent=drive_item, onDelete=Cascade)
+  headRevision: int, default=0
+  latestSnapshotRevision: int, default=0
+  ### WriteTheme.uuid; null = each viewer's default theme.
+  themeId: UuidValue?
+  pageSetupJson: String, default='{}'
+  language: String?
+  frontMatter: String?
+  charCount: int, default=0
+  wordCount: int, default=0
+  createdAt: DateTime
+  updatedAt: DateTime
+indexes:
+  document_uuid_idx:
+    fields: uuid
+    unique: true
+  document_item_idx:
+    fields: itemId
+    unique: true

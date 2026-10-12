@@ -1,0 +1,11 @@
+class: ItemVersionView
+fields:
+  id: int
+  itemUuid: UuidValue
+  kind: VersionKind
+  name: String?
+  createdAt: DateTime
+  authors: List<UserSummary>
+  storageKind: VersionStorage
+  revision: int?
+  sizeBytes: int

@@ -1,0 +1,4 @@
+class: DocParticipantJoined
+extends: DocServerMessage
+fields:
+  participant: Participant

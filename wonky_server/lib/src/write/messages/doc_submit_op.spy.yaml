@@ -1,0 +1,10 @@
+### A local change based on [baseRevision].
+class: DocSubmitOp
+extends: DocClientMessage
+fields:
+  clientOpId: UuidValue
+  baseRevision: int
+  deltaJson: String
+  kind: DocumentOpKind
+  ### Groups ops that form one undo step (AI/MCP edits).
+  groupId: String?

@@ -1,0 +1,3 @@
+### Server → client presence events (sealed).
+class: PresenceEvent
+sealed: true

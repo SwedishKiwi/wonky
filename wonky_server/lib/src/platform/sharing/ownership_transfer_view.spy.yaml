@@ -1,0 +1,8 @@
+class: OwnershipTransferView
+fields:
+  id: int
+  itemUuid: UuidValue
+  itemName: String
+  from: UserSummary
+  to: UserSummary
+  createdAt: DateTime

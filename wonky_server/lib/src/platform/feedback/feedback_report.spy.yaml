@@ -1,0 +1,18 @@
+### "Report a problem" submissions and client error reports.
+class: FeedbackReport
+table: feedback_report
+serverOnly: true
+fields:
+  userId: int?
+  kind: FeedbackKind
+  message: String
+  app: String
+  appVersion: String
+  platform: String
+  route: String?
+  stackTrace: String?
+  contextJson: String?
+  createdAt: DateTime
+indexes:
+  feedback_report_created_idx:
+    fields: createdAt

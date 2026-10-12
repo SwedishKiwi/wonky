@@ -55,3 +55,21 @@ sessionLogs:
 #  executionEnabled: true # Defaults to true
 #  concurrencyLimit: 1 # Defaults to 1, a negative or null value removes the limit
 #  scanInterval: 5000 # Unit in milliseconds, defaults to 5000
+
+# Wonky Work settings (read by `lib/src/platform/config/wonky_config.dart`;
+# specs/01-architecture.md §6). Unknown to Serverpod itself.
+wonky:
+  features:
+    ai: false
+    scripting: false
+    mcpUiBridge: true
+    experimentalCharts: true
+  sheets:
+    maxCellsPerSpreadsheet: 1000000
+    maxActiveSpacesPerUser: 30
+    scriptTimeoutMs: 30000
+    scriptDailyQuotaMs: 5400000
+  write:
+    snapshotEveryNOps: 500
+    maxDocumentChars: 2000000
+  minClientVersion: 1.0.0

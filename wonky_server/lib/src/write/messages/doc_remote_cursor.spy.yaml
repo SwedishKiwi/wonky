@@ -1,0 +1,9 @@
+class: DocRemoteCursor
+extends: DocServerMessage
+fields:
+  sessionId: String
+  userId: int
+  revision: int
+  anchor: int
+  head: int
+  focused: bool

@@ -1,0 +1,93 @@
+/* AUTOMATICALLY GENERATED CODE DO NOT MODIFY */
+/*   To generate run: "serverpod generate"    */
+
+// ignore_for_file: implementation_imports
+// ignore_for_file: library_private_types_in_public_api
+// ignore_for_file: non_constant_identifier_names
+// ignore_for_file: public_member_api_docs
+// ignore_for_file: type_literal_in_constant_pattern
+// ignore_for_file: use_super_parameters
+// ignore_for_file: invalid_use_of_internal_member
+
+// ignore_for_file: no_leading_underscores_for_library_prefixes
+import 'package:serverpod/serverpod.dart' as _is;
+
+abstract class DocumentSnapshotView
+    implements _is.SerializableModel, _is.ProtocolSerialization {
+  DocumentSnapshotView._({
+    required this.revision,
+    required this.deltaJson,
+  });
+
+  factory DocumentSnapshotView({
+    required int revision,
+    required String deltaJson,
+  }) = _DocumentSnapshotViewImpl;
+
+  factory DocumentSnapshotView.fromJson(
+    Map<String, dynamic> jsonSerialization,
+  ) {
+    return DocumentSnapshotView(
+      revision: jsonSerialization['revision'] as int,
+      deltaJson: jsonSerialization['deltaJson'] as String,
+    );
+  }
+
+  int revision;
+
+  String deltaJson;
+
+  /// Returns a shallow copy of this [DocumentSnapshotView]
+  /// with some or all fields replaced by the given arguments.
+  @_is.useResult
+  DocumentSnapshotView copyWith({
+    int? revision,
+    String? deltaJson,
+  });
+  @override
+  Map<String, dynamic> toJson() {
+    return {
+      '__className__': 'DocumentSnapshotView',
+      'revision': revision,
+      'deltaJson': deltaJson,
+    };
+  }
+
+  @override
+  Map<String, dynamic> toJsonForProtocol() {
+    return {
+      '__className__': 'DocumentSnapshotView',
+      'revision': revision,
+      'deltaJson': deltaJson,
+    };
+  }
+
+  @override
+  String toString() {
+    return _is.SerializationManager.encode(this);
+  }
+}
+
+class _DocumentSnapshotViewImpl extends DocumentSnapshotView {
+  _DocumentSnapshotViewImpl({
+    required int revision,
+    required String deltaJson,
+  }) : super._(
+         revision: revision,
+         deltaJson: deltaJson,
+       );
+
+  /// Returns a shallow copy of this [DocumentSnapshotView]
+  /// with some or all fields replaced by the given arguments.
+  @_is.useResult
+  @override
+  DocumentSnapshotView copyWith({
+    int? revision,
+    String? deltaJson,
+  }) {
+    return DocumentSnapshotView(
+      revision: revision ?? this.revision,
+      deltaJson: deltaJson ?? this.deltaJson,
+    );
+  }
+}

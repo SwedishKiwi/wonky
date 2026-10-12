@@ -1,0 +1,7 @@
+enum: VersionStorage
+serialized: byName
+values:
+  ### Write: an op-log revision (with a snapshot at that revision).
+  - writeRevision
+  ### Sheets: a compressed snapshot file in cloud storage.
+  - snapshotFile

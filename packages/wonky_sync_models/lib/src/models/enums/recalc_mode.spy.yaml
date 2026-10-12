@@ -1,0 +1,7 @@
+### When volatile functions recalculate (Sheets 05).
+enum: RecalcMode
+serialized: byName
+values:
+  - onChange
+  - onChangeAndEveryMinute
+  - onChangeAndEveryHour

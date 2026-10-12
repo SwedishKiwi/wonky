@@ -1,0 +1,9 @@
+### Filters of `drive.search`.
+class: DriveSearchFilters
+fields:
+  kinds: List<DriveItemKind>?
+  owner: DriveOwnerFilter, default=anyone
+  modifiedAfter: DateTime?
+  modifiedBefore: DateTime?
+  ### Only items shared with or by the caller.
+  sharedOnly: bool, default=false

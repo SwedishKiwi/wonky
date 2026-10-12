@@ -1,0 +1,7 @@
+### Text wrapping of a cell.
+enum: WrapStrategy
+serialized: byName
+values:
+  - overflow
+  - wrap
+  - clip

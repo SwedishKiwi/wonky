@@ -1,0 +1,8 @@
+enum: CommentEventKind
+serialized: byName
+values:
+  - threadCreated
+  ### Replies, edits, reactions, assignment, anchor changes.
+  - threadUpdated
+  - statusChanged
+  - threadDeleted

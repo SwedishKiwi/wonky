@@ -1,0 +1,30 @@
+### A Write theme (Write 06 §5.1). Built-ins are global rows (ownerId null).
+class: WriteTheme
+table: write_theme
+fields:
+  ### Built-ins use UUIDv5("wonky-theme:<key>").
+  uuid: UuidValue, defaultModel=random_v7
+  ownerId: int?, relation(parent=user_profile, onDelete=Cascade)
+  isBuiltin: bool
+  builtinKey: String?
+  name: String
+  description: String?
+  schemaVersion: int
+  ### 1-based, +1 on every save (optimistic concurrency).
+  version: int
+  ### Canonical WriteThemeData JSON.
+  json: String
+  ### sha256(json).
+  contentHash: String
+  createdAt: DateTime
+  updatedAt: DateTime
+  deletedAt: DateTime?
+indexes:
+  write_theme_uuid_idx:
+    fields: uuid
+    unique: true
+  write_theme_owner_idx:
+    fields: ownerId, deletedAt
+  write_theme_builtin_idx:
+    fields: builtinKey
+    unique: true

@@ -1,0 +1,12 @@
+enum: CommentSystemEvent
+serialized: byName
+values:
+  - resolved
+  - reopened
+  - assigned
+  - orphaned
+  - suggestionAccepted
+  - suggestionRejected
+  - suggestionWithdrawn
+  - suggestionSuperseded
+  - suggestionReopened

@@ -1,0 +1,29 @@
+### A drive item as seen by the calling user.
+class: DriveItemView
+fields:
+  uuid: UuidValue
+  kind: DriveItemKind
+  name: String
+  description: String?
+  contentRef: UuidValue?
+  parentUuid: UuidValue?
+  owner: UserSummary
+  ### The caller's effective role.
+  role: AccessRole
+  ### Shared with anyone besides the owner (people or link).
+  shared: bool
+  linkRole: AccessRole?
+  thumbnailFileId: UuidValue?
+  sizeBytes: int
+  createdAt: DateTime
+  modifiedAt: DateTime
+  modifiedBy: UserSummary?
+  trashedAt: DateTime?
+  templateOf: TemplateCategory?
+  starred: bool
+  pinnedOffline: bool
+  lastOpenedAt: DateTime?
+  lastEditedAt: DateTime?
+  editorsCanShare: bool
+  nonEditorsCanExport: bool
+  viewersSeeComments: bool

@@ -1,0 +1,7 @@
+### Filter of `drive.list`.
+class: DriveListFilter
+fields:
+  view: DriveView, default=folder
+  ### Null = all kinds.
+  kinds: List<DriveItemKind>?
+  owner: DriveOwnerFilter, default=anyone

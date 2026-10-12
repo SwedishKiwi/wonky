@@ -1,0 +1,7 @@
+### Config-driven feature flags (specs/13 §3).
+class: FeatureFlags
+fields:
+  ai: bool
+  scripting: bool
+  mcpUiBridge: bool
+  experimentalCharts: bool

@@ -1,0 +1,14 @@
+enum: ActivityType
+serialized: byName
+values:
+  - created
+  - renamed
+  - moved
+  - edited
+  - commented
+  - shared
+  - unshared
+  - restoredVersion
+  - trashed
+  - restored
+  - exported

@@ -1,0 +1,6 @@
+class: DocumentMetaView
+fields:
+  themeId: UuidValue?
+  pageSetupJson: String
+  language: String?
+  frontMatter: String?

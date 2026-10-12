@@ -1,0 +1,6 @@
+### A system notice for everyone on the item, e.g. "Anna restored a version".
+class: PresenceNotice
+extends: PresenceEvent
+fields:
+  kind: String
+  payloadJson: String

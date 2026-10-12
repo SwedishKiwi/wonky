@@ -1,0 +1,7 @@
+enum: VersionKind
+serialized: byName
+values:
+  - auto
+  - named
+  ### Created automatically before a restore.
+  - restorePoint

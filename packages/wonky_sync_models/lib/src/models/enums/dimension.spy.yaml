@@ -1,0 +1,6 @@
+### Rows or columns.
+enum: Dimension
+serialized: byName
+values:
+  - rows
+  - columns

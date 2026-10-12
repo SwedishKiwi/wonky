@@ -1,0 +1,14 @@
+class: WriteThemeView
+fields:
+  uuid: UuidValue
+  name: String
+  description: String?
+  isBuiltin: bool
+  builtinKey: String?
+  owner: UserSummary?
+  schemaVersion: int
+  version: int
+  contentHash: String
+  json: String
+  updatedAt: DateTime
+  deletedAt: DateTime?

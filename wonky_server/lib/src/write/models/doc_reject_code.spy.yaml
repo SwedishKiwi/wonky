@@ -1,0 +1,13 @@
+enum: DocRejectCode
+serialized: byName
+values:
+  ### The base revision is older than the retained op log.
+  - rebaseTooOld
+  ### The op is malformed, does not apply, or the result violates the schema.
+  - invalidOp
+  ### The op shape is not allowed for the caller's role (Write 03 §5).
+  - forbiddenForRole
+  ### The document would exceed write.maxDocumentChars.
+  - tooLarge
+  ### The base revision is ahead of the server head.
+  - unknownBase

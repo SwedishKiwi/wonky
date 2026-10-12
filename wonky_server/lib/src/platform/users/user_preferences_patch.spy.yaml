@@ -1,0 +1,14 @@
+### Partial update of [UserPreferences]; null fields are left unchanged. JSON
+### fields are merged key by key (a key set to null is removed).
+class: UserPreferencesPatch
+fields:
+  appTheme: AppThemeMode?
+  accentColor: String?
+  clearAccentColor: bool?
+  density: UiDensity?
+  reduceMotion: bool?
+  keymapOverrides: String?
+  writeDefaults: String?
+  sheetsDefaults: String?
+  notificationSettings: String?
+  aiEnabled: bool?

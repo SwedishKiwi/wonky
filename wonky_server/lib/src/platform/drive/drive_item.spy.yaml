@@ -1,0 +1,44 @@
+### A file or folder in Wonky Drive (specs/05 §1, sharing settings 06 §2).
+class: DriveItem
+table: drive_item
+fields:
+  ### Public id used in URLs: /d/<uuid>, /s/<uuid>.
+  uuid: UuidValue, defaultModel=random_v7
+  kind: DriveItemKind
+  name: String
+  ownerId: int, relation(parent=user_profile, onDelete=Restrict)
+  ### Null = the owner's root.
+  parentId: int?, relation(parent=drive_item, onDelete=SetNull)
+  description: String?
+  ### Documents: Document.uuid; spreadsheets: the sync space UUID (= Spreadsheet.id).
+  contentRef: UuidValue?
+  thumbnailFileId: UuidValue?
+  sizeBytes: int, default=0
+  createdAt: DateTime
+  createdById: int
+  ### Last content modification (any user).
+  modifiedAt: DateTime
+  modifiedById: int?
+  trashedAt: DateTime?
+  trashedById: int?
+  ### Non-null = this item is a template in the gallery.
+  templateOf: TemplateCategory?
+  ### Built-in template key (gallery seeding), e.g. "write.meeting-notes".
+  templateKey: String?
+  editorsCanShare: bool, default=true
+  nonEditorsCanExport: bool, default=true
+  viewersSeeComments: bool, default=false
+  ### Extracted plain text for search (document text; sheet names + cells).
+  searchText: String?, scope=serverOnly
+indexes:
+  drive_item_uuid_idx:
+    fields: uuid
+    unique: true
+  drive_item_parent_idx:
+    fields: parentId
+  drive_item_owner_idx:
+    fields: ownerId, trashedAt
+  drive_item_content_idx:
+    fields: contentRef
+  drive_item_template_idx:
+    fields: templateOf

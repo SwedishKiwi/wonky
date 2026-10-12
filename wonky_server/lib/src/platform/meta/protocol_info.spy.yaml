@@ -1,0 +1,11 @@
+### Returned by `meta.getInfo()`; clients check it on connect (specs/01 §7).
+class: ProtocolInfo
+fields:
+  serverVersion: String
+  minClientVersion: String
+  ### Offline-sync schema hash; clients with a different hash must update.
+  syncTablesHash: String
+  runMode: String
+  features: FeatureFlags
+  limits: ServerLimits
+  serverTime: DateTime

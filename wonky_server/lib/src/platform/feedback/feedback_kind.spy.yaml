@@ -1,0 +1,6 @@
+enum: FeedbackKind
+serialized: byName
+values:
+  - problem
+  - idea
+  - errorReport

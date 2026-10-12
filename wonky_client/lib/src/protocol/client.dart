@@ -17,7 +17,8 @@ import 'package:serverpod_auth_core_client/serverpod_auth_core_client.dart'
 import 'package:serverpod_auth_idp_client/serverpod_auth_idp_client.dart'
     as _iaic;
 import 'package:serverpod_client/serverpod_client.dart' as _isc;
-import 'package:wonky_client/src/protocol/greetings/greeting.dart' as _i5712i08;
+import 'package:serverpod_offline_sync_client/serverpod_offline_sync_client.dart'
+    as _ipulbpi2;
 import 'protocol.dart' as _il2as5qe;
 
 /// By extending [EmailIdpBaseEndpoint], the email identity provider endpoints
@@ -245,31 +246,16 @@ class EndpointJwtRefresh extends _iacc.EndpointRefreshJwtTokens {
       );
 }
 
-/// This is an example endpoint that returns a greeting message through
-/// its [hello] method.
-/// {@category Endpoint}
-class EndpointGreeting extends _isc.EndpointRef {
-  EndpointGreeting(_isc.EndpointCaller caller) : super(caller);
-
-  @override
-  String get name => 'greeting';
-
-  /// Returns a personalized greeting message: "Hello {name}".
-  _ida.Future<_i5712i08.Greeting> hello(String name) =>
-      caller.callServerEndpoint<_i5712i08.Greeting>(
-        'greeting',
-        'hello',
-        {'name': name},
-      );
-}
-
 class Modules {
   Modules(Client client) {
     serverpod_auth_idp = _iaic.Caller(client);
+    offline_sync = _ipulbpi2.Caller(client);
     serverpod_auth_core = _iacc.Caller(client);
   }
 
   late final _iaic.Caller serverpod_auth_idp;
+
+  late final _ipulbpi2.Caller offline_sync;
 
   late final _iacc.Caller serverpod_auth_core;
 }
@@ -303,7 +289,6 @@ class Client extends _isc.ServerpodClientShared {
        ) {
     emailIdp = EndpointEmailIdp(this);
     jwtRefresh = EndpointJwtRefresh(this);
-    greeting = EndpointGreeting(this);
     modules = Modules(this);
   }
 
@@ -311,20 +296,18 @@ class Client extends _isc.ServerpodClientShared {
 
   late final EndpointJwtRefresh jwtRefresh;
 
-  late final EndpointGreeting greeting;
-
   late final Modules modules;
 
   @override
   Map<String, _isc.EndpointRef> get endpointRefLookup => {
     'emailIdp': emailIdp,
     'jwtRefresh': jwtRefresh,
-    'greeting': greeting,
   };
 
   @override
   Map<String, _isc.ModuleEndpointCaller> get moduleLookup => {
     'serverpod_auth_idp': modules.serverpod_auth_idp,
+    'offline_sync': modules.offline_sync,
     'serverpod_auth_core': modules.serverpod_auth_core,
   };
 }

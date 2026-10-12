@@ -1,0 +1,14 @@
+enum: StoredFileKind
+serialized: byName
+values:
+  ### Images in documents and over cells.
+  - image
+  - avatar
+  ### Files uploaded for import (expire after 24 h).
+  - importSource
+  ### Export results (expire after 24 h).
+  - exportResult
+  - thumbnail
+  ### Version snapshots (Sheets).
+  - snapshot
+  - scriptBytecode

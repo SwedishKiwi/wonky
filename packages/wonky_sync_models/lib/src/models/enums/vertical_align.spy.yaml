@@ -1,0 +1,7 @@
+### Vertical cell alignment.
+enum: VerticalAlign
+serialized: byName
+values:
+  - top
+  - middle
+  - bottom

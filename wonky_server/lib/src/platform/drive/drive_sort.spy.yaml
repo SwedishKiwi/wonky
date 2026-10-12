@@ -1,0 +1,5 @@
+class: DriveSort
+fields:
+  field: DriveSortField, default=modifiedAt
+  descending: bool, default=true
+  foldersFirst: bool, default=true

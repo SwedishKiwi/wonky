@@ -1,0 +1,10 @@
+### Limits clients pre-check (specs/01 §6, Sheets 01 §3).
+class: ServerLimits
+fields:
+  maxCellsPerSpreadsheet: int
+  maxActiveSpacesPerUser: int
+  maxSheetsPerSpreadsheet: int
+  maxDocumentChars: int
+  maxImageUploadBytes: int
+  maxImportUploadBytes: int
+  scriptTimeoutMs: int

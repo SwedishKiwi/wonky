@@ -1,0 +1,11 @@
+### A personal access token without its secret.
+class: AccessTokenView
+fields:
+  id: int
+  name: String
+  prefix: String
+  scopes: List<String>
+  expiresAt: DateTime?
+  lastUsedAt: DateTime?
+  createdAt: DateTime
+  revokedAt: DateTime?

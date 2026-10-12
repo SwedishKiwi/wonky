@@ -1,0 +1,4 @@
+class: PresenceJoined
+extends: PresenceEvent
+fields:
+  participant: Participant

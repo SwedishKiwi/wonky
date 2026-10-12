@@ -1,0 +1,7 @@
+enum: CommentStatus
+serialized: byName
+values:
+  - open
+  - resolved
+  ### The anchored content was deleted.
+  - orphaned

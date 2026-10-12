@@ -1,0 +1,8 @@
+class: VersionRestoreResult
+fields:
+  ### The restore point captured before restoring.
+  restorePoint: ItemVersionView
+  ### Write: revision of the restore op.
+  revision: int?
+  ### Sheets: the ServerChangeRecord for undo (`sheets.revertChange`).
+  changeId: UuidValue?

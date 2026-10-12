@@ -1,0 +1,7 @@
+### Result of resolving a share link token (`sharing.resolveInvite`).
+class: InviteResolution
+fields:
+  itemUuid: UuidValue
+  kind: DriveItemKind
+  name: String
+  role: AccessRole

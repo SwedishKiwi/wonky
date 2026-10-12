@@ -59,18 +59,32 @@ sessionLogs:
 #  concurrencyLimit: 1 # Defaults to 1, a negative or null value removes the limit
 #  scanInterval: 5000 # Unit in milliseconds, defaults to 5000
 
-# Recommended when serving web clients: keeps auth tokens in httpOnly
-# cookies. Without this, web tokens live in JavaScript-readable storage,
-# where any XSS can steal them. Web clients opt in with
-# `client.cookieAuth = true`. Requires `allowedOrigins`; browsers from
-# origins not in the list lose cross-origin access, including to public
-# endpoints.
-#authCookie:
-#  secure: false # Cookies require https; relax only for http://localhost
-#  #name: serverpod_auth # Defaults to "serverpod_auth"
-#  #refreshName: serverpod_auth_refresh # Defaults to "<name>_refresh"
-#  #domain: example.com # Defaults to host-only; set to share across subdomains
-#  #path: / # Defaults to "/"
-#  #sameSite: lax # Defaults to "lax", options are "strict" or "none"
-#allowedOrigins:
-#  - http://localhost:8082 # The origin serving your Flutter web app
+# Keeps auth tokens in httpOnly cookies shared by /write/ and /sheets/ (and
+# both `flutter run` dev origins; cookies are not port-isolated). Web clients
+# opt in with `client.cookieAuth = true` (specs/01-architecture.md §2.5).
+authCookie:
+  secure: false # Cookies require https; relaxed for http://localhost
+  path: /
+  sameSite: lax
+allowedOrigins:
+  - http://localhost:8082 # The web server serving /write/ and /sheets/
+  - http://localhost:8101 # Wonky Write dev app (`flutter run`)
+  - http://localhost:8102 # Wonky Sheets dev app (`flutter run`)
+
+# Wonky Work settings (read by `lib/src/platform/config/wonky_config.dart`;
+# specs/01-architecture.md §6). Unknown to Serverpod itself.
+wonky:
+  features:
+    ai: true
+    scripting: false
+    mcpUiBridge: true
+    experimentalCharts: true
+  sheets:
+    maxCellsPerSpreadsheet: 1000000
+    maxActiveSpacesPerUser: 30
+    scriptTimeoutMs: 30000
+    scriptDailyQuotaMs: 5400000
+  write:
+    snapshotEveryNOps: 500
+    maxDocumentChars: 2000000
+  minClientVersion: 1.0.0

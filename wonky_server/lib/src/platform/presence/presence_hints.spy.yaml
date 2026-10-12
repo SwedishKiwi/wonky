@@ -1,0 +1,6 @@
+### Ephemeral commit hints relayed from another participant (never echoed).
+class: PresenceHints
+extends: PresenceEvent
+fields:
+  sessionId: String
+  hints: List<String>

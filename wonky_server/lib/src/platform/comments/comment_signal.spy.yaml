@@ -1,0 +1,6 @@
+### Internal session.messages payload on `comments:<itemUuid>`.
+class: CommentSignal
+serverOnly: true
+fields:
+  kind: CommentEventKind
+  threadUuid: UuidValue

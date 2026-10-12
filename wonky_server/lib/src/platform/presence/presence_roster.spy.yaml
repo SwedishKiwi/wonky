@@ -1,0 +1,7 @@
+### Sent first after joining: everyone present, including the caller.
+class: PresenceRoster
+extends: PresenceEvent
+fields:
+  ### The caller's own session id.
+  sessionId: String
+  participants: List<Participant>

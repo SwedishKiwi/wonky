@@ -1,0 +1,14 @@
+### Internal session.messages payload on `doc:<documentUuid>`.
+class: DocBusMessage
+serverOnly: true
+fields:
+  ### op, cursor, joined, left, meta, role, notice.
+  type: String
+  originSessionId: String?
+  op: DocRemoteOp?
+  cursor: DocRemoteCursor?
+  participant: Participant?
+  sessionId: String?
+  meta: DocMetaChanged?
+  ### For role changes: the affected user (null = re-check everyone).
+  userId: int?

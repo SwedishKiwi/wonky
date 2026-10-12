@@ -1,0 +1,16 @@
+class: CommentView
+fields:
+  id: int
+  uuid: UuidValue?
+  threadUuid: UuidValue
+  author: UserSummary?
+  authorKind: ActorKind
+  ### Empty when deleted.
+  body: String
+  mentions: List<UserSummary>
+  ### emoji → user ids.
+  reactions: Map<String, List<int>>
+  createdAt: DateTime
+  editedAt: DateTime?
+  deleted: bool
+  systemEvent: CommentSystemEvent?

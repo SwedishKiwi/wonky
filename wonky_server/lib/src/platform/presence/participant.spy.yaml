@@ -1,0 +1,15 @@
+### A connected session on an item.
+class: Participant
+fields:
+  sessionId: String
+  userId: int
+  userUuid: UuidValue
+  displayName: String
+  avatarUrl: String?
+  colorIndex: int
+  role: AccessRole
+  actorKind: ActorKind
+  state: PresenceState
+  mode: String?
+  cursorJson: String?
+  joinedAt: DateTime

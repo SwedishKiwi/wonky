@@ -1,0 +1,12 @@
+enum: NotificationKind
+serialized: byName
+values:
+  - mention
+  - reply
+  - assigned
+  - shared
+  - accessRequest
+  - suggestion
+  - suggestionDecided
+  - ownershipTransfer
+  - scriptFailure

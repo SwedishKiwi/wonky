@@ -7,7 +7,6 @@ environment:
 workspace:
   - wonky_client
   - wonky_server
-  - wonky_flutter
   - wonky_write
   - wonky_sheets
   - packages/wonky_core
@@ -22,6 +21,12 @@ workspace:
 # Vendored packages (specs/01-architecture.md §2.3). Pub workspaces only honor
 # overrides at the root.
 dependency_overrides:
+  # Vendored super_editor with Wonky patches SE-1…SE-5 (third_party/super_editor/PATCHES.md).
+  super_editor:
+    path: third_party/super_editor
+  # Vendored with patch AT-1 (third_party/attributed_text/PATCHES.md), needed by super_editor.
+  attributed_text:
+    path: third_party/attributed_text
   serverpod_offline_sync:
     path: third_party/serverpod_offline_sync
   flutter_secure_storage: ^10.0.0

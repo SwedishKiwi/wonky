@@ -1,0 +1,10 @@
+### Script trigger kinds (Sheets 09).
+enum: TriggerKind
+serialized: byName
+values:
+  - onOpen
+  - onEdit
+  - onChange
+  - onSelectionChange
+  - timeDriven
+  - installableOnOpen

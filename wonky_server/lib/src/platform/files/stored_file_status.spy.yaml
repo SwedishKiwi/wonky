@@ -1,0 +1,6 @@
+enum: StoredFileStatus
+serialized: byName
+values:
+  - pending
+  - ready
+  - failed

@@ -1,0 +1,28 @@
+### A Wonky Work user. One row per Serverpod auth user (specs/04 §3).
+class: UserProfile
+table: user_profile
+fields:
+  ### The Serverpod auth user. Deleting it deletes the profile.
+  authUser: module:serverpod_auth_core:AuthUser?, relation(onDelete=Cascade)
+  displayName: String
+  ### Lowercased; denormalized for search and mentions.
+  email: String
+  ### StoredFile.fileUuid of the avatar image (public storage).
+  avatarFileId: UuidValue?
+  ### Hex color derived from the user id, used for presence and initials.
+  avatarColor: String
+  ### BCP-47; null follows the browser/OS.
+  locale: String?
+  ### IANA; null follows the device.
+  timeZone: String?
+  createdAt: DateTime
+  lastSeenAt: DateTime?
+  ### When the welcome document and spreadsheet were created (once).
+  welcomeContentAt: DateTime?, scope=serverOnly
+indexes:
+  user_profile_auth_idx:
+    fields: authUserId
+    unique: true
+  user_profile_email_idx:
+    fields: email
+    unique: true

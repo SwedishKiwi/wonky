@@ -1,0 +1,14 @@
+### The last 50 saved versions of a theme.
+class: WriteThemeRevision
+table: write_theme_revision
+fields:
+  themeId: int, relation(parent=write_theme, onDelete=Cascade)
+  version: int
+  json: String
+  savedById: int?
+  actorKind: ActorKind
+  createdAt: DateTime
+indexes:
+  write_theme_rev_idx:
+    fields: themeId, version
+    unique: true

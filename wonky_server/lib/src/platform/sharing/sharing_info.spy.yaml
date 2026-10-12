@@ -1,0 +1,17 @@
+### Everything the share dialog shows (`sharing.getSharing`).
+class: SharingInfo
+fields:
+  itemUuid: UuidValue
+  itemName: String
+  itemKind: DriveItemKind
+  owner: UserSummary
+  myRole: AccessRole
+  ### Whether the caller may add people and change roles.
+  canShare: bool
+  permissions: List<PermissionView>
+  ### Null when the caller may not see the link (viewers/commenters).
+  link: ShareLinkView?
+  settings: ItemSharingSettings
+  ### Only for callers who can share.
+  pendingRequests: List<AccessRequestView>
+  pendingTransfer: OwnershipTransferView?

@@ -1,0 +1,16 @@
+class: CommentThreadView
+fields:
+  uuid: UuidValue
+  itemUuid: UuidValue
+  anchorKind: CommentAnchorKind
+  anchorJson: String
+  quotedText: String?
+  status: CommentStatus
+  createdBy: UserSummary?
+  createdAt: DateTime
+  resolvedBy: UserSummary?
+  resolvedAt: DateTime?
+  assignee: UserSummary?
+  orphanReasonJson: String?
+  suggestionId: String?
+  comments: List<CommentView>

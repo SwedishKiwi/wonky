@@ -1,0 +1,6 @@
+### Integrity check: SHA-256 of the canonical document JSON at [revision].
+class: DocHashCheck
+extends: DocClientMessage
+fields:
+  revision: int
+  sha256: String

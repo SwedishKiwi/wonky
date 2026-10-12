@@ -1,0 +1,4 @@
+class: DocParticipantLeft
+extends: DocServerMessage
+fields:
+  sessionId: String

@@ -1,0 +1,7 @@
+### The signed-in user's own profile (`user.getMe`).
+class: UserProfileView
+fields:
+  summary: UserSummary
+  locale: String?
+  timeZone: String?
+  createdAt: DateTime

@@ -1,0 +1,5 @@
+### Result of creating a token: the secret is returned exactly once.
+class: CreatedAccessToken
+fields:
+  token: AccessTokenView
+  secret: String

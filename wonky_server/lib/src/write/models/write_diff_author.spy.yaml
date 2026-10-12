@@ -1,0 +1,9 @@
+class: WriteDiffAuthor
+fields:
+  userUuid: UuidValue?
+  name: String
+  colorIndex: int
+  actorKind: ActorKind
+  inserted: int
+  deleted: int
+  formatted: int

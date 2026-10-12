@@ -1,0 +1,19 @@
+### The server-managed active set: membership doubles as subscription.
+class: SpaceSubscription
+table: space_subscription
+serverOnly: true
+fields:
+  userId: int, relation(parent=user_profile, onDelete=Cascade)
+  spreadsheetItemId: int, relation(parent=drive_item, onDelete=Cascade)
+  spaceUuid: UuidValue
+  reason: SubscriptionReason
+  lastUsedAt: DateTime
+  pinned: bool, default=false
+  ### When the temporary mcp/script reason expires.
+  reasonExpiresAt: DateTime?
+indexes:
+  space_subscription_user_space_idx:
+    fields: userId, spaceUuid
+    unique: true
+  space_subscription_space_idx:
+    fields: spaceUuid

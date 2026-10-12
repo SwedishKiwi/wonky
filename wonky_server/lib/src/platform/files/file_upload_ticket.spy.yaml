@@ -1,0 +1,7 @@
+### Upload description for a client-side upload (`FileUploader`).
+class: FileUploadTicket
+fields:
+  fileUuid: UuidValue
+  ### Null when the file is already uploaded (idempotent retry).
+  uploadDescription: String?
+  status: StoredFileStatus

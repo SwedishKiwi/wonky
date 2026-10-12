@@ -1,3 +1,32 @@
-/// Wonky Work design system: theme, tokens and custom shad-style widgets.
+/// Wonky Work design system (suite 02): theme, custom tokens and the custom
+/// shad-style widgets. Pure presentation — no Serverpod or feature imports.
 library;
 
+export 'src/keys/key_names.dart';
+export 'src/l10n/wonky_ui_localizations.dart';
+export 'src/theme/wonky_colors.dart';
+export 'src/theme/wonky_theme.dart';
+export 'src/widgets/color_picker/color_picker.dart';
+export 'src/widgets/color_picker/custom_color_panel.dart';
+export 'src/widgets/color_picker/wonky_color.dart';
+export 'src/widgets/empty_state/empty_state.dart';
+export 'src/widgets/font_picker/font_picker.dart';
+export 'src/widgets/menu/dropdown_menu.dart';
+export 'src/widgets/menu/menu_entry.dart';
+export 'src/widgets/menu/menu_items.dart';
+export 'src/widgets/menubar/menubar.dart';
+export 'src/widgets/number_stepper/number_stepper.dart';
+export 'src/widgets/presence/avatar.dart';
+export 'src/widgets/presence/presence_avatar_stack.dart';
+export 'src/widgets/remote_cursor/remote_cursor.dart';
+export 'src/widgets/scroll_area/scroll_area.dart';
+export 'src/widgets/shimmer/loading_shimmer.dart';
+export 'src/widgets/shortcut_recorder/shortcut_recorder.dart';
+export 'src/widgets/split_view/split_view.dart';
+export 'src/widgets/status_bar/status_bar.dart';
+export 'src/widgets/sync_status/sync_status.dart';
+export 'src/widgets/table_size_picker/table_size_picker.dart';
+export 'src/widgets/title_field/document_title_field.dart';
+export 'src/widgets/toolbar/overflow_layout.dart';
+export 'src/widgets/toolbar/toolbar.dart';
+export 'src/widgets/tree_view/tree_view.dart';

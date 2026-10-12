@@ -1,0 +1,7 @@
+### The op was rejected; the client must resync.
+class: DocOpRejected
+extends: DocServerMessage
+fields:
+  clientOpId: UuidValue
+  code: DocRejectCode
+  message: String

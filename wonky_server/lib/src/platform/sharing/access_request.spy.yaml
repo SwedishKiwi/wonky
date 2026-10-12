@@ -1,0 +1,14 @@
+class: AccessRequest
+table: access_request
+fields:
+  itemId: int, relation(parent=drive_item, onDelete=Cascade)
+  requesterId: int, relation(parent=user_profile, onDelete=Cascade)
+  requestedRole: AccessRole
+  message: String?
+  createdAt: DateTime
+  handledAt: DateTime?
+  handledById: int?
+  outcome: AccessRequestOutcome?
+indexes:
+  access_request_item_idx:
+    fields: itemId, handledAt

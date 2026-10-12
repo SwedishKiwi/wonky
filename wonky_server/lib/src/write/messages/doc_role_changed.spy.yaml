@@ -1,0 +1,5 @@
+### The caller's effective role changed; viewers can no longer submit ops.
+class: DocRoleChanged
+extends: DocServerMessage
+fields:
+  role: AccessRole

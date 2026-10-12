@@ -1,0 +1,9 @@
+enum: DocumentOpKind
+serialized: byName
+values:
+  - content
+  - restore
+  - imported
+  - aiEdit
+  ### Server maintenance (normalizer jobs).
+  - system

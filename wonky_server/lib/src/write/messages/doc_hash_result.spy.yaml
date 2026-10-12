@@ -1,0 +1,7 @@
+### Answer to DocHashCheck with the server's hash at that revision.
+class: DocHashResult
+extends: DocServerMessage
+fields:
+  revision: int
+  sha256: String
+  matches: bool

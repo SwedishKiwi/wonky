@@ -1,0 +1,8 @@
+### Theme / page setup / language / front matter / title / theme version changed.
+class: DocMetaChanged
+extends: DocServerMessage
+fields:
+  ### themeId, pageSetup, language, frontMatter, title or themeVersion.
+  field: String
+  valueJson: String
+  authorId: int?

@@ -1,0 +1,8 @@
+### What deleting the account would remove (shown in the confirm dialog).
+class: AccountDeletionPreview
+fields:
+  ownedDocuments: int
+  ownedSpreadsheets: int
+  ownedFolders: int
+  ### Owned items that are shared with other people.
+  sharedOwnedItems: int

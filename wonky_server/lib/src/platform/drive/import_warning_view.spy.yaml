@@ -1,0 +1,6 @@
+### A warning produced by an import (Write 07 §3, Sheets 11).
+class: ImportWarningView
+fields:
+  kind: String
+  message: String
+  line: int?

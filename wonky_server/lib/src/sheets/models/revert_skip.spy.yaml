@@ -1,0 +1,8 @@
+class: RevertSkip
+fields:
+  table: String
+  rowId: UuidValue
+  column: String
+  ### changed_by_other or row_deleted.
+  reason: String
+  byUserUuid: UuidValue?

@@ -1,0 +1,12 @@
+class: ExportResultView
+fields:
+  fileName: String
+  mimeType: String
+  sizeBytes: int
+  pageCount: int?
+  ### Signed URL (15 min).
+  downloadUrl: String
+  expiresAt: DateTime
+  ### Set for md/txt exports up to 1 MB.
+  inlineText: String?
+  warnings: List<ImportWarningView>

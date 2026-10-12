@@ -1,0 +1,21 @@
+### Per-user view state of a drive item (specs/05 §1). A row also makes a
+### link-shared item appear in "Shared with me" after the first open.
+class: DriveItemUserState
+table: drive_item_user_state
+fields:
+  itemId: int, relation(parent=drive_item, onDelete=Cascade)
+  userId: int, relation(parent=user_profile, onDelete=Cascade)
+  starred: bool, default=false
+  lastOpenedAt: DateTime?
+  lastEditedAt: DateTime?
+  pinnedOffline: bool, default=false
+  ### "Add shortcut to My Drive" for shared items.
+  shortcutParentId: int?
+  ### The user opened the item through its share link.
+  viaLink: bool, default=false
+indexes:
+  drive_item_user_state_idx:
+    fields: itemId, userId
+    unique: true
+  drive_item_user_recent_idx:
+    fields: userId, lastOpenedAt

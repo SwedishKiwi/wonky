@@ -1,0 +1,4 @@
+class: ImportReportView
+fields:
+  item: DriveItemView
+  warnings: List<ImportWarningView>

@@ -1,0 +1,24 @@
+### Per-user preferences shared by both apps (specs/04 §3).
+class: UserPreferences
+table: user_preferences
+fields:
+  userId: int, relation(parent=user_profile, onDelete=Cascade)
+  appTheme: AppThemeMode, default=system
+  ### One of the design-system accents; null = default.
+  accentColor: String?
+  density: UiDensity, default=comfortable
+  reduceMotion: bool, default=false
+  ### JSON {commandId: [binding, …]}.
+  keymapOverrides: String, default='{}'
+  ### JSON: defaultThemeId, spellcheck, smartQuotes, …
+  writeDefaults: String, default='{}'
+  ### JSON: default locale, font, formula help, …
+  sheetsDefaults: String, default='{}'
+  ### JSON: {mentions, replies, shares, suggestions: "inApp"|"email"|"off", digest: bool}.
+  notificationSettings: String, default='{}'
+  aiEnabled: bool, default=true
+  updatedAt: DateTime?
+indexes:
+  user_preferences_user_idx:
+    fields: userId
+    unique: true

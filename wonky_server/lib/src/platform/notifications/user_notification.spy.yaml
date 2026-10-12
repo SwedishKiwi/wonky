@@ -1,0 +1,18 @@
+### An in-app notification (specs/07 §4). Named UserNotification so it does
+### not clash with Flutter's `Notification`.
+class: UserNotification
+table: notification
+fields:
+  userId: int, relation(parent=user_profile, onDelete=Cascade)
+  kind: NotificationKind
+  itemId: int?
+  actorId: int?
+  ### JSON payload for rendering (names, quoted text, links).
+  payload: String
+  createdAt: DateTime
+  readAt: DateTime?
+  ### When it was included in an email digest.
+  emailedAt: DateTime?, scope=serverOnly
+indexes:
+  notification_user_idx:
+    fields: userId, createdAt

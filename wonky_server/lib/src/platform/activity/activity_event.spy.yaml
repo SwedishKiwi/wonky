@@ -1,0 +1,15 @@
+### Activity log of an item (specs/05 §5). Edits are aggregated to one event
+### per (user, item) per 10 minutes.
+class: ActivityEvent
+table: activity_event
+fields:
+  itemId: int, relation(parent=drive_item, onDelete=Cascade)
+  actorId: int?
+  actorKind: ActorKind
+  type: ActivityType
+  ### JSON payload for rendering.
+  summary: String
+  at: DateTime
+indexes:
+  activity_item_idx:
+    fields: itemId, at

@@ -1,0 +1,23 @@
+### Cell value history kept after ChangeLog pruning (Sheets 10 §6), latest
+### 100 per cell.
+class: CellHistory
+table: cell_history
+serverOnly: true
+fields:
+  spreadsheetUuid: UuidValue
+  sheetId: UuidValue
+  rowId: UuidValue
+  colId: UuidValue
+  changeLogId: UuidValue
+  userUuid: UuidValue
+  actorKind: ActorKind
+  label: String
+  at: DateTime
+  before: String?
+  after: String?
+indexes:
+  cell_history_cell_idx:
+    fields: spreadsheetUuid, sheetId, rowId, colId, at
+  cell_history_change_idx:
+    fields: changeLogId, rowId, colId
+    unique: true

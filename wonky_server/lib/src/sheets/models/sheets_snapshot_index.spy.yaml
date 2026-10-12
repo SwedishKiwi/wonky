@@ -1,0 +1,14 @@
+### Per Sheets version: sheet list, changed ranges and authors (Sheets 10 §5.1.2).
+class: SheetsSnapshotIndex
+table: sheets_snapshot_index
+serverOnly: true
+fields:
+  itemVersionId: int, relation(parent=item_version, onDelete=Cascade)
+  sheetsJson: String
+  changedRangesJson: String
+  authorIds: List<int>
+  diffFileId: UuidValue?
+indexes:
+  sheets_snapshot_index_version_idx:
+    fields: itemVersionId
+    unique: true

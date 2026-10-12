@@ -1,0 +1,5 @@
+### How many sessions follow the receiving session.
+class: PresenceFollowerCount
+extends: PresenceEvent
+fields:
+  count: int

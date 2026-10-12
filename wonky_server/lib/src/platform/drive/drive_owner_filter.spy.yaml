@@ -1,0 +1,6 @@
+enum: DriveOwnerFilter
+serialized: byName
+values:
+  - anyone
+  - me
+  - notMe

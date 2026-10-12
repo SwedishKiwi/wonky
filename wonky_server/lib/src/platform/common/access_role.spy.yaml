@@ -1,0 +1,9 @@
+### Role of a user on a drive item, ordered (viewer < commenter < editor <
+### owner). Mirrors `Role` in wonky_core (specs/06 §1).
+enum: AccessRole
+serialized: byName
+values:
+  - viewer
+  - commenter
+  - editor
+  - owner

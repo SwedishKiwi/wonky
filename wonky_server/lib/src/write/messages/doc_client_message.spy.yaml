@@ -1,0 +1,3 @@
+### Client → server messages of `document.connect` (Write 03 §1.1).
+class: DocClientMessage
+sealed: true

@@ -1,0 +1,446 @@
+import 'dart:typed_data';
+
+import 'package:serverpod/serverpod.dart';
+import 'package:wonky_core/wonky_core.dart' show Role;
+
+import '../common/actor.dart';
+import '../common/errors.dart';
+import '../common/models.dart';
+import '../common/time.dart';
+import '../config/wonky_config.dart';
+import '../sharing/access_service.dart';
+
+/// Files in cloud storage (suite 12 §1.1, specs/13 §1): upload descriptions
+/// for client uploads with a client-chosen, idempotent [StoredFile.fileUuid],
+/// type and size checks, signed download URLs and server-written files.
+abstract final class FileService {
+  static const signedUrlLifetime = Duration(minutes: 15);
+  static const importLifetime = Duration(hours: 24);
+
+  static const imageMimeTypes = {
+    'image/png',
+    'image/jpeg',
+    'image/gif',
+    'image/webp',
+    'image/bmp',
+  };
+
+  static const importMimeTypes = {
+    'text/markdown',
+    'text/x-markdown',
+    'text/plain',
+    'text/html',
+    'text/csv',
+    'text/tab-separated-values',
+    'application/rtf',
+    'text/rtf',
+    'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+    'application/vnd.oasis.opendocument.text',
+    'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+    'application/vnd.ms-excel',
+    'application/vnd.oasis.opendocument.spreadsheet',
+    'application/octet-stream',
+  };
+
+  static int maxBytes(StoredFileKind kind) => switch (kind) {
+    StoredFileKind.image => WonkyConfig.current.maxImageUploadBytes,
+    StoredFileKind.avatar => 5 * 1024 * 1024,
+    StoredFileKind.thumbnail => 2 * 1024 * 1024,
+    StoredFileKind.importSource => WonkyConfig.current.maxImportUploadBytes,
+    _ => 0,
+  };
+
+  static String _storageFor(StoredFileKind kind) =>
+      kind == StoredFileKind.avatar ? 'public' : 'private';
+
+  static String _safeName(String name) {
+    final base = name.split(RegExp(r'[\\/]')).last.trim();
+    final cleaned = base.replaceAll(RegExp(r'[^A-Za-z0-9._ -]'), '_');
+    final short = cleaned.length > 120
+        ? cleaned.substring(cleaned.length - 120)
+        : cleaned;
+    return short.isEmpty ? 'file' : short;
+  }
+
+  static Future<StoredFile?> byUuid(Session session, UuidValue fileUuid) =>
+      StoredFile.db.findFirstRow(
+        session,
+        where: (t) => t.fileUuid.equals(fileUuid),
+      );
+
+  // --------------------------------------------------------------- upload
+
+  static Future<FileUploadTicket> createUpload(
+    Session session,
+    Actor actor, {
+    required UuidValue fileUuid,
+    UuidValue? itemUuid,
+    required String fileName,
+    required String mimeType,
+    required int size,
+    StoredFileKind kind = StoredFileKind.image,
+  }) async {
+    final mime = mimeType.toLowerCase().split(';').first.trim();
+    switch (kind) {
+      case StoredFileKind.image:
+      case StoredFileKind.avatar:
+      case StoredFileKind.thumbnail:
+        if (!imageMimeTypes.contains(mime)) {
+          throw Errors.invalid('Unsupported image type "$mime".');
+        }
+      case StoredFileKind.importSource:
+        if (!importMimeTypes.contains(mime)) {
+          throw Errors.invalid('Unsupported file type "$mime".');
+        }
+      default:
+        throw Errors.invalid('Files of this kind cannot be uploaded.');
+    }
+    final limit = maxBytes(kind);
+    if (size <= 0) throw Errors.invalid('The file is empty.');
+    if (size > limit) {
+      throw Errors.tooLarge(
+        'The file is too large (max ${limit ~/ (1024 * 1024)} MB).',
+      );
+    }
+    DriveItem? item;
+    if (itemUuid != null) {
+      final (found, _) = await AccessService.require(
+        session,
+        actor,
+        itemUuid,
+        Role.editor,
+      );
+      item = found;
+    } else if (kind == StoredFileKind.image ||
+        kind == StoredFileKind.thumbnail) {
+      throw Errors.invalid('Images and thumbnails belong to an item.');
+    }
+
+    final existing = await byUuid(session, fileUuid);
+    if (existing != null) {
+      if (existing.ownerId != actor.userId) {
+        throw Errors.conflict('This file id is already in use.');
+      }
+      if (existing.status == StoredFileStatus.ready) {
+        return FileUploadTicket(
+          fileUuid: fileUuid,
+          status: StoredFileStatus.ready,
+        );
+      }
+      return FileUploadTicket(
+        fileUuid: fileUuid,
+        uploadDescription: await _description(session, existing),
+        status: existing.status,
+      );
+    }
+    final storageId = _storageFor(kind);
+    final file = await StoredFile.db.insertRow(
+      session,
+      StoredFile(
+        fileUuid: fileUuid,
+        ownerId: actor.userId,
+        itemId: item?.id,
+        kind: kind,
+        storageId: storageId,
+        path: 'files/${kind.name}/${fileUuid.uuid}/${_safeName(fileName)}',
+        fileName: _safeName(fileName),
+        mimeType: mime,
+        sizeBytes: size,
+        status: StoredFileStatus.pending,
+        createdAt: nowUtc(),
+        expiresAt: kind == StoredFileKind.importSource
+            ? nowUtc().add(importLifetime)
+            : null,
+      ),
+    );
+    return FileUploadTicket(
+      fileUuid: fileUuid,
+      uploadDescription: await _description(session, file),
+      status: StoredFileStatus.pending,
+    );
+  }
+
+  static Future<String> _description(Session session, StoredFile file) =>
+      session.storage.createUploadDescription(
+        storageId: file.storageId,
+        path: file.path,
+        options: UploadOptions(
+          maxFileSize: file.sizeBytes,
+          expirationDuration: const Duration(minutes: 30),
+        ),
+      );
+
+  /// Verifies the upload and marks the file ready (idempotent).
+  static Future<FileUrlView> completeUpload(
+    Session session,
+    Actor actor,
+    UuidValue fileUuid,
+  ) async {
+    final file = await byUuid(session, fileUuid);
+    if (file == null || file.ownerId != actor.userId) {
+      throw Errors.notFound('File');
+    }
+    if (file.status == StoredFileStatus.ready) {
+      return _view(session, file);
+    }
+    final verified = await session.storage.verifyUpload(
+      storageId: file.storageId,
+      path: file.path,
+    );
+    if (!verified) {
+      throw Errors.invalid('The upload has not finished yet.');
+    }
+    var status = StoredFileStatus.ready;
+    if (imageMimeTypes.contains(file.mimeType)) {
+      final bytes = await session.storage.retrieveFile(
+        storageId: file.storageId,
+        path: file.path,
+      );
+      if (sniffImage(bytes.buffer.asUint8List(0, bytes.lengthInBytes)) !=
+          file.mimeType) {
+        status = StoredFileStatus.failed;
+        await session.storage.deleteFile(
+          storageId: file.storageId,
+          path: file.path,
+        );
+      }
+    }
+    final updated = await StoredFile.db.updateRow(
+      session,
+      file.copyWith(status: status, completedAt: nowUtc()),
+    );
+    if (status == StoredFileStatus.failed) {
+      throw Errors.invalid('The file content does not match its type.');
+    }
+    return _view(session, updated);
+  }
+
+  /// Detects the image type from magic bytes.
+  static String? sniffImage(Uint8List b) {
+    bool starts(List<int> sig, [int at = 0]) {
+      if (b.length < at + sig.length) return false;
+      for (var i = 0; i < sig.length; i++) {
+        if (b[at + i] != sig[i]) return false;
+      }
+      return true;
+    }
+
+    if (starts([0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A])) {
+      return 'image/png';
+    }
+    if (starts([0xFF, 0xD8, 0xFF])) return 'image/jpeg';
+    if (starts([0x47, 0x49, 0x46, 0x38])) return 'image/gif';
+    if (starts([0x52, 0x49, 0x46, 0x46]) && starts([0x57, 0x45, 0x42, 0x50], 8)) {
+      return 'image/webp';
+    }
+    if (starts([0x42, 0x4D])) return 'image/bmp';
+    return null;
+  }
+
+  // -------------------------------------------------------------- download
+
+  static Future<bool> canRead(
+    Session session,
+    Actor actor,
+    StoredFile file,
+  ) async {
+    if (file.ownerId == actor.userId) return true;
+    if (file.kind == StoredFileKind.avatar) return true;
+    if (file.itemId == null) return false;
+    final item = await DriveItem.db.findById(session, file.itemId!);
+    if (item == null) return false;
+    final role = await AccessService.effectiveRole(session, actor.userId, item);
+    return role != null;
+  }
+
+  static Future<FileUrlView> getUrl(
+    Session session,
+    Actor actor,
+    UuidValue fileUuid,
+  ) async {
+    final file = await byUuid(session, fileUuid);
+    if (file == null || !await canRead(session, actor, file)) {
+      throw Errors.notFound('File');
+    }
+    return _view(session, file);
+  }
+
+  static Future<List<FileUrlView>> getUrls(
+    Session session,
+    Actor actor,
+    List<UuidValue> fileUuids,
+  ) async {
+    final result = <FileUrlView>[];
+    for (final uuid in fileUuids.toSet().take(200)) {
+      final file = await byUuid(session, uuid);
+      if (file == null || !await canRead(session, actor, file)) continue;
+      result.add(await _view(session, file));
+    }
+    return result;
+  }
+
+  static Future<FileUrlView> _view(Session session, StoredFile file) async {
+    String? url;
+    DateTime? expires;
+    if (file.status == StoredFileStatus.ready) {
+      if (file.storageId == 'public') {
+        url = (await session.storage.publicDownloadUrl(
+          storageId: file.storageId,
+          path: file.path,
+        )).toString();
+      } else {
+        expires = nowUtc().add(signedUrlLifetime);
+        url = (await session.storage.temporaryDownloadUrl(
+          storageId: file.storageId,
+          path: file.path,
+          options: TemporaryDownloadUrlOptions(
+            expirationDuration: signedUrlLifetime,
+            downloadFileName: file.fileName,
+            contentType: file.mimeType,
+          ),
+        )).toString();
+      }
+    }
+    return FileUrlView(
+      fileUuid: file.fileUuid,
+      status: file.status,
+      url: url,
+      expiresAt: expires,
+      fileName: file.fileName,
+      mimeType: file.mimeType,
+      sizeBytes: file.sizeBytes,
+    );
+  }
+
+  /// Bytes of a ready file.
+  static Future<ByteData> readBytes(Session session, StoredFile file) =>
+      session.storage.retrieveFile(storageId: file.storageId, path: file.path);
+
+  // ------------------------------------------------------- server writes
+
+  /// Stores bytes written by the server (exports, snapshots, bytecode).
+  static Future<StoredFile> storeServerFile(
+    Session session, {
+    required int? ownerId,
+    int? itemId,
+    required StoredFileKind kind,
+    required String fileName,
+    required String mimeType,
+    required Uint8List bytes,
+    DateTime? expiresAt,
+    UuidValue? fileUuid,
+  }) async {
+    final uuid = fileUuid ?? const Uuid().v7obj();
+    final path = 'files/${kind.name}/${uuid.uuid}/${_safeName(fileName)}';
+    await session.storage.storeFile(
+      storageId: 'private',
+      path: path,
+      byteData: ByteData.sublistView(bytes),
+    );
+    final now = nowUtc();
+    return StoredFile.db.insertRow(
+      session,
+      StoredFile(
+        fileUuid: uuid,
+        ownerId: ownerId,
+        itemId: itemId,
+        kind: kind,
+        storageId: 'private',
+        path: path,
+        fileName: _safeName(fileName),
+        mimeType: mimeType,
+        sizeBytes: bytes.length,
+        status: StoredFileStatus.ready,
+        createdAt: now,
+        completedAt: now,
+        expiresAt: expiresAt,
+      ),
+    );
+  }
+
+  static Future<StoredFile> requireOwnReadyFile(
+    Session session,
+    Actor actor,
+    UuidValue fileUuid, {
+    StoredFileKind? kind,
+  }) async {
+    final file = await byUuid(session, fileUuid);
+    if (file == null ||
+        file.ownerId != actor.userId ||
+        (kind != null && file.kind != kind)) {
+      throw Errors.notFound('File');
+    }
+    if (file.status != StoredFileStatus.ready) {
+      throw Errors.invalid('The upload is not complete.');
+    }
+    return file;
+  }
+
+  static Future<void> attachToItem(
+    Session session,
+    StoredFile file,
+    DriveItem item,
+  ) async {
+    if (file.itemId == item.id) return;
+    await StoredFile.db.updateRow(
+      session,
+      file.copyWith(itemId: item.id),
+      columns: (t) => [t.itemId],
+    );
+  }
+
+  static Future<void> deleteFile(Session session, UuidValue fileUuid) async {
+    final file = await byUuid(session, fileUuid);
+    if (file == null) return;
+    await _deleteStored(session, file);
+  }
+
+  static Future<void> _deleteStored(Session session, StoredFile file) async {
+    try {
+      await session.storage.deleteFile(
+        storageId: file.storageId,
+        path: file.path,
+      );
+    } on Exception catch (e) {
+      session.log(
+        'Could not delete ${file.path}: $e',
+        level: LogLevel.warning,
+      );
+    }
+    await StoredFile.db.deleteRow(session, file);
+  }
+
+  /// Deletes the stored files belonging to [itemIds] (before deleting the
+  /// items, whose rows would cascade without removing the bytes).
+  static Future<void> deleteFilesOfItems(
+    Session session,
+    Set<int> itemIds,
+  ) async {
+    if (itemIds.isEmpty) return;
+    final files = await StoredFile.db.find(
+      session,
+      where: (t) => t.itemId.inSet(itemIds),
+    );
+    for (final f in files) {
+      await _deleteStored(session, f);
+    }
+  }
+
+  /// Hourly job: deletes expired files (imports, exports) and abandoned
+  /// pending uploads older than a day. Returns the count.
+  static Future<int> cleanupExpired(Session session, {DateTime? now}) async {
+    final at = now ?? nowUtc();
+    final expired = await StoredFile.db.find(
+      session,
+      where: (t) =>
+          (t.expiresAt < at) |
+          (t.status.equals(StoredFileStatus.pending) &
+              (t.createdAt < at.subtract(const Duration(days: 1)))),
+      limit: 1000,
+    );
+    for (final f in expired) {
+      await _deleteStored(session, f);
+    }
+    return expired.length;
+  }
+}
