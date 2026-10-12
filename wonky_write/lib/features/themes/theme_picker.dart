@@ -104,32 +104,28 @@ class ThemeGrid extends StatelessWidget {
       builder: (context, _) {
         final options = [...WriteThemeCatalog.builtins, ...catalog.mine];
         final current = selected.value;
-        return LayoutBuilder(
-          builder: (context, c) {
-            final columns = (c.maxWidth / 196).floor().clamp(1, 4);
-            return SingleChildScrollView(
-              child: Wrap(
-                spacing: 12,
-                runSpacing: 12,
-                children: [
-                  for (final o in options)
-                    SizedBox(
-                      width: (c.maxWidth - 12 * (columns - 1)) / columns - 0.5,
-                      child: ThemeCard(
-                        key: ValueKey<String>(
-                          'write.theme.card.${o.builtinKey ?? o.uuid}',
-                        ),
-                        option: o,
-                        selected:
-                            current == o.uuid ||
-                            (current != null && current == o.builtinKey),
-                        onTap: onSelect == null ? null : () => onSelect!(o),
-                      ),
+        // No LayoutBuilder: the dialog measures intrinsic sizes.
+        return SingleChildScrollView(
+          child: Wrap(
+            spacing: 12,
+            runSpacing: 12,
+            children: [
+              for (final o in options)
+                SizedBox(
+                  width: 188,
+                  child: ThemeCard(
+                    key: ValueKey<String>(
+                      'write.theme.card.${o.builtinKey ?? o.uuid}',
                     ),
-                ],
-              ),
-            );
-          },
+                    option: o,
+                    selected:
+                        current == o.uuid ||
+                        (current != null && current == o.builtinKey),
+                    onTap: onSelect == null ? null : () => onSelect!(o),
+                  ),
+                ),
+            ],
+          ),
         );
       },
     );
