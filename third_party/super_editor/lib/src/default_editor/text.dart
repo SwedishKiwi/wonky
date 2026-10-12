@@ -3205,13 +3205,17 @@ class InsertCharacterAtCaretCommand extends EditCommand {
     }
 
     // Insert the character.
-    if (!_isTextEntryNode(document: document, selection: selection)) {
+    // WONKY PATCH SE-5: use the selection *after* deleting an expanded
+    // selection (upstream inserted at the stale extent, i.e. after the deleted
+    // range, when typing over a selection).
+    final caretSelection = composer.selection!;
+    if (!_isTextEntryNode(document: document, selection: caretSelection)) {
       return;
     }
 
     executor.executeCommand(
       InsertTextCommand(
-        documentPosition: selection.extent,
+        documentPosition: caretSelection.extent,
         textToInsert: character,
         attributions: ignoreComposerAttributions ? {} : composer.preferences.currentAttributions,
       ),

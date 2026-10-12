@@ -18,13 +18,28 @@ abstract final class DeltaDiff {
   /// attributes are ignored on both sides, so applying the result to the
   /// original [a] keeps comment anchors and suggestions on unchanged text.
   static Delta diff(Delta a, Delta b, {bool ignoreOverlays = false}) {
-    final left = ignoreOverlays ? DeltaUtils.stripOverlays(a) : DeltaUtils.canonical(a);
-    final right = ignoreOverlays ? DeltaUtils.stripOverlays(b) : DeltaUtils.canonical(b);
+    final left = ignoreOverlays
+        ? DeltaUtils.stripOverlays(a)
+        : DeltaUtils.canonical(a);
+    final right = ignoreOverlays
+        ? DeltaUtils.stripOverlays(b)
+        : DeltaUtils.canonical(b);
     if (left == right) return Delta();
 
-    // Map embeds to private-use characters so equal embeds compare equal.
+    // Map embeds to private-use characters (single code units not used by
+    // either text) so equal embeds compare equal.
+    final used = <int>{};
+    for (final d in [left, right]) {
+      for (final op in d.operations) {
+        final data = op.data;
+        if (data is String) {
+          used.addAll(data.codeUnits.where((u) => u >= 0xE000 && u <= 0xF8FF));
+        }
+      }
+    }
     final embedCodes = <String, int>{};
-    String encode(Delta d) {
+    var nextCode = 0xE000;
+    String? encode(Delta d) {
       final buf = StringBuffer();
       for (final op in d.operations) {
         final data = op.data;
@@ -32,7 +47,14 @@ abstract final class DeltaDiff {
           buf.write(data);
         } else {
           final key = canonicalEmbedKey(data);
-          final code = embedCodes.putIfAbsent(key, () => 0xF0000 + embedCodes.length);
+          var code = embedCodes[key];
+          if (code == null) {
+            while (used.contains(nextCode)) {
+              nextCode++;
+            }
+            if (nextCode > 0xF8FF) return null;
+            code = embedCodes[key] = nextCode++;
+          }
           buf.writeCharCode(code);
         }
       }
@@ -41,6 +63,12 @@ abstract final class DeltaDiff {
 
     final textA = encode(left);
     final textB = encode(right);
+    if (textA == null || textB == null) {
+      // More distinct embeds than placeholders: replace everything.
+      return DeltaUtils.canonical(
+        Delta()..delete(DeltaUtils.documentLength(left)),
+      ).concat(right);
+    }
     final diffs = dmp.diff(textA, textB, timeout: 2.0);
     dmp.DiffMatchPatch().diffCleanupSemantic(diffs);
 
@@ -50,7 +78,7 @@ abstract final class DeltaDiff {
     for (final d in diffs) {
       // Lengths in Delta units: supplementary-plane placeholders are 2 code
       // units in the string but 1 in the Delta.
-      var length = _deltaLength(d.text);
+      var length = d.text.length;
       while (length > 0) {
         switch (d.operation) {
           case dmp.DIFF_INSERT:
@@ -62,31 +90,24 @@ abstract final class DeltaDiff {
             result.delete(op.length!);
             length -= op.length!;
           default:
-            final n = [itA.peekLength(), itB.peekLength(), length].reduce((x, y) => x < y ? x : y);
+            final n = [
+              itA.peekLength(),
+              itB.peekLength(),
+              length,
+            ].reduce((x, y) => x < y ? x : y);
             final opA = itA.next(n);
             final opB = itB.next(n);
-            result.retain(n, Attributes.orNull(Attributes.diff(opA.attributes, opB.attributes)));
+            result.retain(
+              n,
+              Attributes.orNull(
+                Attributes.diff(opA.attributes, opB.attributes),
+              ),
+            );
             length -= n;
         }
       }
     }
     return DeltaUtils.canonical(result);
-  }
-
-  /// Delta length of a diff fragment (supplementary code points count 1).
-  static int _deltaLength(String s) {
-    var n = 0;
-    for (var i = 0; i < s.length; i++) {
-      final u = s.codeUnitAt(i);
-      if (u >= 0xDB80 && u <= 0xDBBF && i + 1 < s.length) {
-        // High surrogate of plane 15/16 (our embed placeholders).
-        n++;
-        i++;
-        continue;
-      }
-      n++;
-    }
-    return n;
   }
 
   /// A stable key for an embed `insert` value (deep, key-order independent).

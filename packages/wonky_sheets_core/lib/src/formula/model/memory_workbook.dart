@@ -186,7 +186,7 @@ final class MemorySheet implements SheetView {
   @override
   final MemoryAxis columns;
 
-  final Map<String, Map<String, CellInput>> _cells = {};
+  final Map<String, Map<String, EngineCellInput>> _cells = {};
   final Map<String, Map<String, String>> _formats = {};
   final Set<String> filterHiddenRows = {};
   final Map<String, double> columnWidths = {};
@@ -203,7 +203,7 @@ final class MemorySheet implements SheetView {
   }
 
   /// Sets (or clears with null) the content at current indices.
-  void setInput(int row, int col, CellInput? input) {
+  void setInput(int row, int col, EngineCellInput? input) {
     final rid = rows.idAt(row);
     final cid = columns.idAt(col);
     if (input == null) {
@@ -240,7 +240,7 @@ final class MemorySheet implements SheetView {
   void structureChanged() => _invalidate();
 
   @override
-  CellInput? inputAt(int row, int col) {
+  EngineCellInput? inputAt(int row, int col) {
     if (row < 0 || col < 0 || row >= rows.length || col >= columns.length) return null;
     final m = _cells[rows.idAt(row)];
     if (m == null) return null;
@@ -248,7 +248,7 @@ final class MemorySheet implements SheetView {
   }
 
   @override
-  void forEachInput(GridRect rect, void Function(int row, int col, CellInput input) visit) {
+  void forEachInput(GridRect rect, void Function(int row, int col, EngineCellInput input) visit) {
     final r2 = rect.bottom < usedRowCount - 1 ? rect.bottom : usedRowCount - 1;
     final c2 = rect.right < usedColumnCount - 1 ? rect.right : usedColumnCount - 1;
     final r1 = rect.top < 0 ? 0 : rect.top;
@@ -264,7 +264,7 @@ final class MemorySheet implements SheetView {
           if (v != null) visit(r, c, v);
         }
       } else {
-        final entries = <(int, CellInput)>[];
+        final entries = <(int, EngineCellInput)>[];
         m.forEach((cid, v) {
           final c = columns.indexOf(cid);
           if (c >= c1 && c <= c2) entries.add((c, v));

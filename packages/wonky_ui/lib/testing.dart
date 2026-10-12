@@ -2,13 +2,13 @@
 /// from `lib/` code.
 library;
 
-import 'package:flutter/material.dart' show ThemeMode;
 import 'package:flutter/widgets.dart';
-import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:shad/shad.dart';
 
+import 'src/preview/wonky_preview_app.dart';
 import 'wonky_ui.dart';
+
+export 'src/preview/wonky_preview_app.dart';
 
 /// Pumps [child] inside a `ShadApp` with the Wonky theme, localizations and
 /// a desktop-sized surface.
@@ -48,47 +48,6 @@ Future<void> pumpWonky(
     ),
   );
   await tester.pump();
-}
-
-/// The app wrapper used by [pumpWonky] (also handy for widget previews).
-class WonkyTestApp extends StatelessWidget {
-  const WonkyTestApp({
-    super.key,
-    required this.child,
-    this.brightness = Brightness.light,
-    this.config = const WonkyThemeConfig(),
-    this.locale = const Locale('en'),
-    this.extraDelegates = const [],
-    this.wrap,
-  });
-
-  final Widget child;
-  final Brightness brightness;
-  final WonkyThemeConfig config;
-  final Locale locale;
-  final List<LocalizationsDelegate<dynamic>> extraDelegates;
-  final TransitionBuilder? wrap;
-
-  @override
-  Widget build(BuildContext context) {
-    return ShadApp(
-      debugShowCheckedModeBanner: false,
-      theme: WonkyTheme.light(config),
-      darkTheme: WonkyTheme.dark(config),
-      themeMode: brightness == Brightness.dark ? ThemeMode.dark : ThemeMode.light,
-      locale: locale,
-      supportedLocales: const [Locale('en')],
-      localizationsDelegates: [
-        WonkyUiLocalizations.delegate,
-        ...extraDelegates,
-        GlobalWidgetsLocalizations.delegate,
-      ],
-      home: WonkyThemeScope(
-        data: WonkyThemeExtension(density: config.density),
-        child: wrap == null ? child : Builder(builder: (c) => wrap!(c, child)),
-      ),
-    );
-  }
 }
 
 /// Lets pending tooltip/hover timers fire so a test ends without pending

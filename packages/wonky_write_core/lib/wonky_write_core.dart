@@ -30,3 +30,17 @@ export 'src/markdown/markdown_codec.dart';
 export 'src/markdown/markdown_exporter.dart';
 export 'src/markdown/markdown_importer.dart'
     show MarkdownImporter, RelativeImageResolver;
+export 'src/delta/delta_diff.dart';
+export 'src/derived/plain_text.dart';
+export 'src/edit/address.dart';
+export 'src/edit/document_edits.dart';
+export 'src/edit/document_reader.dart';
+export 'src/edit/search.dart';
+export 'src/collab/attributed_diff.dart';
+export 'src/collab/overlay_index.dart';
+export 'src/collab/suggestion_ops.dart';
+export 'src/collab/suggestion_rewriter.dart';
+export 'src/collab/op_shape_validator.dart';
+export 'src/layout/header_footer_tokens.dart';
+export 'src/layout/page_setup.dart';
+export 'src/layout/pagination_engine.dart';

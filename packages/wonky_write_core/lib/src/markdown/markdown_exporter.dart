@@ -45,27 +45,37 @@ final class MarkdownExporter {
   final MarkdownExportOptions options;
 
   /// Exports [tree].
-  String export(DocTree tree) {
+  String export(DocTree tree) => exportWithPositions(tree).markdown;
+
+  /// Exports [tree] and reports the Markdown range of every block (same
+  /// order as [DocTree.blocks]; omitted images get an empty range).
+  ({String markdown, List<({int start, int length})> blocks})
+  exportWithPositions(DocTree tree) {
     final b = StringBuffer();
     final fm = tree.meta.frontMatter;
     if (options.frontMatter && fm != null && fm.trim().isNotEmpty) {
       b.write(FrontMatter.wrap(fm));
     }
+    final positions = <({int start, int length})>[];
     DocBlock? prev;
     var first = true;
     final cols = _ListColumns();
     for (final block in tree.blocks) {
-      if (block is ImageBlock && options.omitImages) continue;
+      if (block is ImageBlock && options.omitImages) {
+        positions.add((start: b.length, length: 0));
+        continue;
+      }
       final text = _block(block, isFirst: first, cols: cols);
       if (!first) {
         b.write(_isListLike(prev) && _isListLike(block) ? '\n' : '\n\n');
       }
+      positions.add((start: b.length, length: text.length));
       b.write(text);
       prev = block;
       first = false;
     }
     b.write('\n');
-    return b.toString();
+    return (markdown: b.toString(), blocks: positions);
   }
 
   static bool _isListLike(DocBlock? b) => b is ListItemBlock || b is TaskBlock;

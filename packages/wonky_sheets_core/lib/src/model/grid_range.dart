@@ -180,12 +180,7 @@ final class GridRange {
 /// A range resolved to current indices.
 final class ResolvedRange {
   /// Creates a resolved range.
-  const ResolvedRange(
-    this.sheetId,
-    this.rect, {
-    this.wholeRows = false,
-    this.wholeColumns = false,
-  });
+  const ResolvedRange(this.sheetId, this.rect, {this.wholeRows = false, this.wholeColumns = false});
 
   /// The sheet.
   final String sheetId;

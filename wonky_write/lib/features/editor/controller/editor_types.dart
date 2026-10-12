@@ -4,6 +4,8 @@ import 'package:flutter/foundation.dart';
 import '../applier/delta_applier.dart';
 import '../extractor/change_delta_extractor.dart';
 
+export '../extractor/change_delta_extractor.dart' show LocalChangeKind;
+
 /// Per-user, per-session view mode of the editor (Write 04 §31).
 enum EditorMode {
   /// Direct editing (Editors, Owners).

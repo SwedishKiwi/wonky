@@ -157,13 +157,15 @@ abstract final class SpreadsheetFactory {
   }
 
   /// Encodes template input as stored cell content (en_US input rules:
-  /// numbers, `=` formulas, everything else text).
+  /// numbers, `=` formulas, a leading `'` forces text, everything else
+  /// text).
   static String encodeInput(
     String input,
     int row,
     int col,
     TemplateFormulas formulas,
   ) {
+    if (input.startsWith("'")) return TextContent(input.substring(1)).encode();
     if (input.startsWith('=') && input.length > 1) {
       return formulas.toStored(input, row, col);
     }

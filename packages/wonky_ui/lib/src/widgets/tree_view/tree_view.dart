@@ -480,7 +480,6 @@ class _TreeRowWidgetState<T> extends State<_TreeRowWidget<T>> {
       child: GestureDetector(
         behavior: HitTestBehavior.opaque,
         onTap: renaming ? null : widget.onTap,
-        onDoubleTap: node.hasChildren && !renaming ? () => c.toggle(node.id) : null,
         child: Container(
           margin: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
           decoration: BoxDecoration(
@@ -524,7 +523,7 @@ class _TreeRowWidgetState<T> extends State<_TreeRowWidget<T>> {
       ),
     );
 
-    row = Semantics(
+    Widget result = Semantics(
       selected: selected,
       expanded: node.hasChildren ? expanded : null,
       label: node.label,
@@ -533,7 +532,8 @@ class _TreeRowWidgetState<T> extends State<_TreeRowWidget<T>> {
     );
 
     if (widget.view.onDrop != null) {
-      row = DragTarget<Object>(
+      final target = result;
+      result = DragTarget<Object>(
         onWillAcceptWithDetails: (d) {
           if (!node.enabled) return false;
           final pos = _positionFor(d.offset);
@@ -552,21 +552,22 @@ class _TreeRowWidgetState<T> extends State<_TreeRowWidget<T>> {
           setState(() => _drop = null);
           widget.view.onDrop!(d.data, node, pos);
         },
-        builder: (context, candidates, rejected) => row,
+        builder: (context, candidates, rejected) => target,
       );
     }
 
     final data = widget.view.dragData?.call(node);
     if (data != null && !renaming) {
-      row = Draggable<Object>(
+      final child = result;
+      result = Draggable<Object>(
         data: data,
         dragAnchorStrategy: pointerDragAnchorStrategy,
         feedback: _DragFeedback(label: node.label, icon: node.icon),
-        childWhenDragging: Opacity(opacity: 0.5, child: row),
-        child: row,
+        childWhenDragging: Opacity(opacity: 0.5, child: child),
+        child: child,
       );
     }
-    return row;
+    return result;
   }
 }
 

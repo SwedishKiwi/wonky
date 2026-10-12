@@ -1,0 +1,111 @@
+/// Built-in theme *Manuscript* (06 §9).
+library;
+
+import 'common.dart';
+
+/// JSON of the built-in *Manuscript*: standard manuscript format in a
+/// typewriter face.
+final Map<String, Object?> manuscriptThemeJson = {
+  'schemaVersion': 1,
+  'name': 'Manuscript',
+  'description':
+      'Standard manuscript format: double-spaced typewriter text, centered '
+      'uppercase chapter headings on a new page and "#" scene breaks.',
+  'basedOn': 'builtin:manuscript',
+  'fonts': {
+    'body': 'Courier Prime',
+    'heading': 'Courier Prime',
+    'mono': 'Courier Prime',
+  },
+  'palette': paletteJson(
+    text: '#000000',
+    heading: '#000000',
+    muted: '#555555',
+    accent: '#222222',
+    linkHover: '#000000',
+    page: '#ffffff',
+    canvas: '#e9e9e9',
+    border: '#888888',
+    codeText: '#000000',
+    codeBg: '#f2f2f2',
+    quoteText: '#222222',
+    quoteBar: '#888888',
+    tableHeaderBg: '#eeeeee',
+    tableStripe: '#f7f7f7',
+    mentionBg: '#eeeeee',
+    mentionText: '#000000',
+    highlight: '#fff59d',
+  ),
+  'dark': {
+    'mode': 'explicit',
+    'palette': paletteJson(
+      text: '#e6e6e6',
+      heading: '#f0f0f0',
+      muted: '#a6a6a6',
+      accent: '#d9d9d9',
+      linkHover: '#ffffff',
+      page: '#1a1a1a',
+      canvas: '#111111',
+      border: '#5c5c5c',
+      codeText: '#e6e6e6',
+      codeBg: '#262626',
+      quoteText: '#d0d0d0',
+      quoteBar: '#5c5c5c',
+      tableHeaderBg: '#2a2a2a',
+      tableStripe: '#212121',
+      mentionBg: '#333333',
+      mentionText: '#f0f0f0',
+      highlight: '#4a4416',
+    ),
+    'elements': <String, Object?>{},
+    'syntax': null,
+  },
+  'page': {'defaultMargins': '1in'},
+  'elements': {
+    'body': {
+      'fontSize': '12pt',
+      'lineHeight': 2.0,
+      'firstLineIndent': '0.5in',
+      'spaceAfter': '0pt',
+    },
+    'headings': {
+      'fontSize': '12pt',
+      'fontWeight': 400,
+      'lineHeight': 2.0,
+      'spaceBefore': '0pt',
+      'spaceAfter': '0pt',
+    },
+    'h1': {
+      'caseTransform': 'uppercase',
+      'align': 'center',
+      'pageBreakBefore': true,
+      'spaceBefore': '144pt',
+      'spaceAfter': '24pt',
+    },
+    'h2': {'align': 'center'},
+    'bold': {'fontWeight': 700},
+    'italic': {'fontStyle': 'italic'},
+    'link': {'color': '@text', 'underline': 'always'},
+    'mention': {'background': 'transparent', 'fontWeight': 400},
+    'inlineCode': {'background': 'transparent', 'sizeRatio': 1},
+    'codeBlock': {'fontSize': '1em', 'borderRadius': '0pt', 'padding': '0pt'},
+    'blockquote': {
+      'bar': {'width': '0pt', 'style': 'none'},
+      'padding': {'left': '0.5in'},
+      'spaceAfter': '0pt',
+    },
+    'list': {'spaceAfter': '0pt', 'itemSpacing': '0pt'},
+    'task': {'spaceAfter': '0pt'},
+    'rule': {
+      'style': 'ornament',
+      'ornament': '#',
+      'color': '@text',
+      'spaceBefore': '0pt',
+      'spaceAfter': '0pt',
+    },
+    'image': {'borderRadius': '0pt'},
+    'table': {'borders': 'all', 'borderColor': '@text'},
+  },
+  'syntax': monochromeSyntaxJson,
+  'overlays': <String, Object?>{},
+};

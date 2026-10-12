@@ -66,8 +66,11 @@ abstract final class SuggestionView {
       }
       var result = Map<String, dynamic>.from(attrs ?? const {});
       if (mode == SuggestionViewMode.original) {
-        for (final m in marks.values) {
-          if (m.kind != SuggestionKind.fmt) continue;
+        // The oldest formatting suggestion holds the true original.
+        final fmts =
+            marks.values.where((m) => m.kind == SuggestionKind.fmt).toList()
+              ..sort((a, b) => b.at.compareTo(a.at));
+        for (final m in fmts) {
           final isNewline = op.data == '\n';
           final keys = isNewline ? WonkyAttr.blockKeys : WonkyAttr.inlineKeys;
           result.removeWhere((k, _) => keys.contains(k));

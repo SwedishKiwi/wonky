@@ -5,8 +5,7 @@
 library;
 
 /// The base-62 alphabet in ASCII order.
-const String base62Digits =
-    '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz';
+const String base62Digits = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz';
 
 final List<int> _digitValues = () {
   final table = List<int>.filled(128, -1);
@@ -17,8 +16,7 @@ final List<int> _digitValues = () {
 }();
 
 /// Value of a base-62 digit code unit, or -1 if [codeUnit] is not a digit.
-int base62Value(int codeUnit) =>
-    codeUnit < 128 ? _digitValues[codeUnit] : -1;
+int base62Value(int codeUnit) => codeUnit < 128 ? _digitValues[codeUnit] : -1;
 
 /// Codec between UUIDs and their 22-character base-62 form used inside
 /// stored formula reference tokens (`⟦R:<id22>;C:<id22>⟧`, specs/wonky_sheets/02 §2).

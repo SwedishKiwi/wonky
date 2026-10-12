@@ -82,7 +82,12 @@ abstract interface class FormulaHooks {
 
   /// Whether [stored] references (single cell or range) any cell of [rect] on
   /// [sheetId] (used to find dependents without the graph).
-  bool references(String stored, {required String hostSheetId, required String sheetId, required GridRect rect});
+  bool references(
+    String stored, {
+    required String hostSheetId,
+    required String sheetId,
+    required GridRect rect,
+  });
 
   /// Evaluates a rule formula (CF/DV/filter custom formula or `=` value)
   /// written relative to ([anchorRow], [anchorCol]) for the cell ([row], [col])

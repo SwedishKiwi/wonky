@@ -15,8 +15,7 @@ final class NumberFormatAst {
   final List<NfSection> sections;
 
   /// Whether any of the first two sections carries a condition (`[>1000]`).
-  bool get hasConditions =>
-      sections.take(2).any((s) => s.condition != null);
+  bool get hasConditions => sections.take(2).any((s) => s.condition != null);
 
   /// The section applied to text values: the 4th section, or a trailing
   /// section that only contains `@`/literals. Null when text shows as is.

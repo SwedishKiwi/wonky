@@ -9,3 +9,143 @@ emailIdp:
   - hasAccount:
 jwtRefresh:
   - refreshAccessToken:
+comment:
+  - listThreads:
+  - getThread:
+  - createThread:
+  - reply:
+  - edit:
+  - delete:
+  - deleteThread:
+  - resolve:
+  - reopen:
+  - react:
+  - updateAnchor:
+  - watch:
+drive:
+  - list:
+  - get:
+  - path:
+  - search:
+  - createFolder:
+  - createDocument:
+  - registerSpreadsheet:
+  - createSpreadsheet:
+  - rename:
+  - updateDescription:
+  - move:
+  - copy:
+  - setStarred:
+  - setPinnedOffline:
+  - markOpened:
+  - addShortcut:
+  - removeShortcut:
+  - trash:
+  - restore:
+  - deletePermanently:
+  - emptyTrash:
+  - watch:
+  - listTemplates:
+  - setTemplate:
+  - import:
+  - storageUsage:
+  - setThumbnail:
+  - activity:
+e2eSupport:
+  - latestVerificationCode:
+  - latestPasswordResetCode:
+feedback:
+  - submit:
+  - reportError:
+file:
+  - createUpload:
+  - completeUpload:
+  - getUrl:
+  - getUrls:
+meta:
+  - getInfo:
+notification:
+  - list:
+  - unreadCount:
+  - markRead:
+  - markAllRead:
+  - watch:
+presence:
+  - join:
+sharing:
+  - getSharing:
+  - share:
+  - updateRole:
+  - remove:
+  - transferOwnership:
+  - respondToOwnershipTransfer:
+  - setLink:
+  - rotateLink:
+  - updateSettings:
+  - requestAccess:
+  - handleAccessRequest:
+  - resolveInvite:
+accessToken:
+  - list:
+  - create:
+  - revoke:
+user:
+  - getMe:
+  - updateProfile:
+  - uploadAvatar:
+  - setAvatar:
+  - getPreferences:
+  - updatePreferences:
+  - searchUsers:
+  - getUsers:
+  - accountDeletionPreview:
+  - deleteAccount:
+version:
+  - list:
+  - nameCurrent:
+  - rename:
+  - restore:
+  - getSnapshotUrl:
+sheets:
+  - reserveSpaces:
+  - subscribe:
+  - unsubscribe:
+  - ensureSubscribed:
+  - spaceStats:
+  - revertChange:
+  - reapplyChange:
+  - cellHistory:
+  - activitySummary:
+sheetsSync:
+  - sync:
+document:
+  - connect:
+  - getInfo:
+  - getOps:
+  - getSnapshot:
+  - updateMeta:
+writeExport:
+  - export:
+  - exportWithProgress:
+  - convertForInsert:
+  - fetchImage:
+writeHistory:
+  - getVersionDocument:
+  - diff:
+  - createRestorePoint:
+  - restore:
+  - copyVersion:
+writeTheme:
+  - listBuiltins:
+  - listMine:
+  - get:
+  - getMany:
+  - create:
+  - update:
+  - rename:
+  - duplicate:
+  - delete:
+  - restore:
+  - listRevisions:
+  - getRevision:
+  - usage:

@@ -27,7 +27,7 @@ MutationPlan planAddObject(PlanBuilder b, AddObject op) {
       for (final x in b.model.sheets)
         for (final o in x.objects.values) o.title,
     };
-    for (var i = 1;; i++) {
+    for (var i = 1; ; i++) {
       if (!taken.contains('$prefix $i')) {
         title = '$prefix $i';
         break;
@@ -94,7 +94,12 @@ MutationPlan planAddPivotTable(PlanBuilder b, AddPivotTable op) {
     Cols.sheetId: s.id,
     'anchorRowId': s.rows.idAt(op.anchorRow),
     'anchorColId': s.columns.idAt(op.anchorCol),
-    'sourceRangeJson': b.rangeJson(src, op.source.rect, wholeRows: op.source.wholeRows, wholeColumns: op.source.wholeColumns),
+    'sourceRangeJson': b.rangeJson(
+      src,
+      op.source.rect,
+      wholeRows: op.source.wholeRows,
+      wholeColumns: op.source.wholeColumns,
+    ),
     'specJson': op.specJson,
   });
   b.result['pivotId'] = id;
@@ -114,7 +119,12 @@ MutationPlan planUpdatePivotTable(PlanBuilder b, UpdatePivotTable op) {
   };
   if (op.source != null) {
     final src = b.sheetOf(op.source!.sheetId);
-    writes['sourceRangeJson'] = b.rangeJson(src, op.source!.rect, wholeRows: op.source!.wholeRows, wholeColumns: op.source!.wholeColumns);
+    writes['sourceRangeJson'] = b.rangeJson(
+      src,
+      op.source!.rect,
+      wholeRows: op.source!.wholeRows,
+      wholeColumns: op.source!.wholeColumns,
+    );
   }
   b.update(SheetsTables.pivotTable, op.id, writes);
   b.summary.sheets.add(s.id);
@@ -140,5 +150,8 @@ MutationPlan planGenericRowWrite(PlanBuilder b, GenericRowWrite op) {
     b.update(op.table, op.id, op.columns);
   }
   final isScript = op.table.startsWith('script') || op.table == SheetsTables.macro;
-  return b.build(op.label ?? (isScript ? 'Edit script' : 'Edit'), kinds: [if (isScript) ChangeKinds.scripts]);
+  return b.build(
+    op.label ?? (isScript ? 'Edit script' : 'Edit'),
+    kinds: [if (isScript) ChangeKinds.scripts],
+  );
 }

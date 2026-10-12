@@ -44,6 +44,12 @@ dependencies:
   clock: ^1.1.3
   wonky_core:
     path: ../packages/wonky_core
+  wonky_write_core:
+    path: ../packages/wonky_write_core
+  wonky_ui:
+    path: ../packages/wonky_ui
+  shad: ^0.99.4
+  highlight: ^0.7.0
 
 dev_dependencies:
   flutter_test:

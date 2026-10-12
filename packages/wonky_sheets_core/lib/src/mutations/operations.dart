@@ -163,12 +163,7 @@ final class ToggleFormat extends SheetsOperation {
 /// Applies a border preset (06 §8.3).
 final class SetBorders extends SheetsOperation {
   /// Creates the operation.
-  const SetBorders(
-    this.ranges,
-    this.preset, {
-    this.style = BorderStyle.thin,
-    this.color = 'auto',
-  });
+  const SetBorders(this.ranges, this.preset, {this.style = BorderStyle.thin, this.color = 'auto'});
 
   final List<ResolvedRange> ranges;
   final BorderPreset preset;
@@ -320,7 +315,17 @@ final class ShiftCells extends SheetsOperation {
 }
 
 /// Group/ungroup and outline operations (07 §16).
-enum GroupAction { group, ungroup, collapse, expand, toggle, collapseToLevel, expandAll, collapseAll, removeAll }
+enum GroupAction {
+  group,
+  ungroup,
+  collapse,
+  expand,
+  toggle,
+  collapseToLevel,
+  expandAll,
+  collapseAll,
+  removeAll,
+}
 
 /// An outline group operation over the span [start]..[end] (indices) or a
 /// group id / level.
@@ -631,7 +636,14 @@ final class RemoveBasicFilter extends SheetsOperation {
 /// Creates a saved filter view.
 final class CreateFilterView extends SheetsOperation {
   /// Creates the operation.
-  const CreateFilterView(this.sheetId, this.range, {this.name, this.criteriaJson, this.sortJson, this.viewId});
+  const CreateFilterView(
+    this.sheetId,
+    this.range, {
+    this.name,
+    this.criteriaJson,
+    this.sortJson,
+    this.viewId,
+  });
 
   final String sheetId;
   final GridRect range;
@@ -677,7 +689,14 @@ final class AddNamedRange extends SheetsOperation {
 /// Updates a named range; renames rewrite formulas using it (07 §8.3).
 final class UpdateNamedRange extends SheetsOperation {
   /// Creates the operation.
-  const UpdateNamedRange(this.id, {this.name, this.range, this.formula, this.comment, this.metaJson});
+  const UpdateNamedRange(
+    this.id, {
+    this.name,
+    this.range,
+    this.formula,
+    this.comment,
+    this.metaJson,
+  });
 
   final String id;
   final String? name;
@@ -1019,4 +1038,121 @@ final class MoveRange extends SheetsOperation {
 
   /// Copy instead of move.
   final bool copy;
+}
+
+/// Paste special modes (03 §12.4); [all] = normal paste.
+enum PasteMode {
+  all,
+  valuesOnly,
+  format,
+  formulas,
+  conditionalFormatting,
+  dataValidation,
+  columnWidths,
+  transposed,
+  allExceptBorders,
+}
+
+/// One source cell of a paste.
+final class PasteCell {
+  /// Creates a paste cell.
+  const PasteCell({
+    this.storedFormula,
+    this.formulaA1,
+    this.text,
+    this.content,
+    this.value,
+    this.format,
+    this.note,
+  });
+
+  /// Stored-form formula (same spreadsheet; translated from the source position).
+  final String? storedFormula;
+
+  /// A1 formula relative to the cell (other spreadsheets, HTML `data-sheets-formula`).
+  final String? formulaA1;
+
+  /// Plain text parsed like typing (TSV / HTML without typed values).
+  final String? text;
+
+  /// Literal content (typed values).
+  final CellContent? content;
+
+  /// The source's computed value (used by *Paste values only* for formulas).
+  final CellValue? value;
+
+  /// Format attributes (null = none).
+  final CellFormat? format;
+  final String? note;
+}
+
+/// DV rule carried by a paste source (rects relative to the source top-left).
+typedef PasteDvRule = ({
+  String criteriaJson,
+  bool strict,
+  String? displayStyle,
+  String? helpText,
+  List<GridRect> rects,
+});
+
+/// CF rule carried by a paste source (rects relative to the source top-left).
+typedef PasteCfRule = ({String ruleJson, List<GridRect> rects});
+
+/// Data to paste (internal payload, HTML table or TSV, already decoded).
+final class PasteSource {
+  /// Creates a source.
+  const PasteSource({
+    required this.cells,
+    this.spreadsheetId,
+    this.sheetId,
+    this.sourceRow = 0,
+    this.sourceCol = 0,
+    this.merges = const [],
+    this.dvRules = const [],
+    this.cfRules = const [],
+    this.columnWidths = const [],
+    this.rowHeights = const [],
+    this.isCut = false,
+    this.internal = false,
+  });
+
+  /// Rows × columns (null = empty cell).
+  final List<List<PasteCell?>> cells;
+
+  /// Source spreadsheet (same spreadsheet enables stored formulas and cut-move).
+  final String? spreadsheetId;
+  final String? sheetId;
+
+  /// Source top-left (for formula translation and cut-move).
+  final int sourceRow;
+  final int sourceCol;
+
+  /// Merges relative to the top-left.
+  final List<GridRect> merges;
+  final List<PasteDvRule> dvRules;
+  final List<PasteCfRule> cfRules;
+  final List<double?> columnWidths;
+  final List<double?> rowHeights;
+
+  /// Paste after cut (= move within the same spreadsheet).
+  final bool isCut;
+
+  /// Whether this came from a Wonky payload (enables CF/DV/widths modes).
+  final bool internal;
+
+  /// Height.
+  int get rowCount => cells.length;
+
+  /// Width.
+  int get colCount => cells.fold(0, (m, r) => r.length > m ? r.length : m);
+}
+
+/// Paste into [target] (selection; tiling when an exact multiple, 03 §12.3).
+final class PasteClipboard extends SheetsOperation {
+  /// Creates the operation.
+  const PasteClipboard(this.target, this.source, {this.mode = PasteMode.all});
+
+  final ResolvedRange target;
+  final PasteSource source;
+  final PasteMode mode;
 }

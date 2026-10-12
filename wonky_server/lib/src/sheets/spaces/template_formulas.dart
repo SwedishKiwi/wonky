@@ -1,9 +1,14 @@
-// The codec and workbook view are not exported by wonky_sheets_core's
-// public libraries yet.
-// ignore_for_file: implementation_imports
-import 'package:wonky_sheets_core/src/formula/codec/formula_codec.dart';
-import 'package:wonky_sheets_core/src/formula/model/workbook_view.dart';
-import 'package:wonky_sheets_core/wonky_sheets_core.dart' show GridRect;
+import 'package:wonky_sheets_core/formula.dart'
+    show
+        AxisView,
+        CalcSettings,
+        CodecContext,
+        EngineCellInput,
+        FormulaCodec,
+        GridRect,
+        NamedRangeView,
+        SheetView,
+        WorkbookView;
 
 /// Converts A1 template formulas to the stored, id-based form (Sheets 02 §2)
 /// with `FormulaCodec` over a minimal one-sheet workbook view.
@@ -108,12 +113,12 @@ class _TemplateSheetView implements SheetView {
   final AxisView columns;
 
   @override
-  CellInput? inputAt(int row, int col) => null;
+  EngineCellInput? inputAt(int row, int col) => null;
 
   @override
   void forEachInput(
     GridRect rect,
-    void Function(int row, int col, CellInput input) visit,
+    void Function(int row, int col, EngineCellInput input) visit,
   ) {}
 
   @override

@@ -57,8 +57,12 @@ void _checkJson(String json, String what) {
 MutationPlan planAddCfRule(PlanBuilder b, AddCfRule op) {
   final s = b.sheetOf(op.sheetId);
   _checkJson(op.ruleJson, 'rule');
-  if (op.ranges.isEmpty) throw const PlanException('invalid_range', 'A rule needs at least one range');
-  if (s.cfRules.length >= 500) throw const PlanException('limit_exceeded', 'A sheet can have at most 500 rules');
+  if (op.ranges.isEmpty) {
+    throw const PlanException('invalid_range', 'A rule needs at least one range');
+  }
+  if (s.cfRules.length >= 500) {
+    throw const PlanException('limit_exceeded', 'A sheet can have at most 500 rules');
+  }
   for (final r in op.ranges) {
     b.checkRect(s, r);
   }
@@ -140,7 +144,9 @@ void clearValidationIn(PlanBuilder b, SheetModel s, List<GridRect> rects, {Strin
         b.warnings.add('Validation ranges were simplified');
         remaining = [RectSet.bounds(remaining)!];
       }
-      b.update(SheetsTables.dataValidationRule, rule.id, {Cols.rangesJson: b.rangesJson(s, remaining)});
+      b.update(SheetsTables.dataValidationRule, rule.id, {
+        Cols.rangesJson: b.rangesJson(s, remaining),
+      });
     }
   }
 }
@@ -195,7 +201,10 @@ MutationPlan planInsertCheckboxes(PlanBuilder b, InsertCheckboxes op) {
     if (op.checked != null) 'checked': op.checked,
     if (op.unchecked != null) 'unchecked': op.unchecked,
   };
-  planSetDataValidation(b, SetDataValidation(s.id, op.ranges, jsonEncode(criteria), displayStyle: 'chip'));
+  planSetDataValidation(
+    b,
+    SetDataValidation(s.id, op.ranges, jsonEncode(criteria), displayStyle: 'chip'),
+  );
   final unchecked = op.unchecked == null ? const BoolContent(false) : TextContent(op.unchecked!);
   for (final rect in op.ranges) {
     for (var r = rect.top; r <= rect.bottom; r++) {
@@ -268,7 +277,7 @@ MutationPlan planCreateFilterView(PlanBuilder b, CreateFilterView op) {
   var name = op.name;
   if (name == null) {
     final taken = {for (final v in s.filterViews.values) v.name?.toLowerCase()};
-    for (var i = 1;; i++) {
+    for (var i = 1; ; i++) {
       if (!taken.contains('filter $i')) {
         name = 'Filter $i';
         break;
@@ -352,7 +361,12 @@ MutationPlan planAddNamedRange(PlanBuilder b, AddNamedRange op) {
   String? rangeJson;
   if (op.range != null) {
     final s = b.sheetOf(op.range!.sheetId);
-    rangeJson = b.rangeJson(s, op.range!.rect, wholeRows: op.range!.wholeRows, wholeColumns: op.range!.wholeColumns);
+    rangeJson = b.rangeJson(
+      s,
+      op.range!.rect,
+      wholeRows: op.range!.wholeRows,
+      wholeColumns: op.range!.wholeColumns,
+    );
   }
   final id = op.id ?? b.ctx.ids.newId();
   b.insert(SheetsTables.namedRange, id, {
@@ -364,8 +378,10 @@ MutationPlan planAddNamedRange(PlanBuilder b, AddNamedRange op) {
     'metaJson': op.metaJson,
   });
   b.result['namedRangeId'] = id;
-  return b.build(op.formula != null && op.range == null ? 'Add named function' : 'Add named range',
-      kinds: [ChangeKinds.names]);
+  return b.build(
+    op.formula != null && op.range == null ? 'Add named function' : 'Add named range',
+    kinds: [ChangeKinds.names],
+  );
 }
 
 /// [UpdateNamedRange]: renames rewrite formulas using the old name.
@@ -380,7 +396,12 @@ MutationPlan planUpdateNamedRange(PlanBuilder b, UpdateNamedRange op) {
   }
   if (op.range != null) {
     final s = b.sheetOf(op.range!.sheetId);
-    writes[Cols.rangeJson] = b.rangeJson(s, op.range!.rect, wholeRows: op.range!.wholeRows, wholeColumns: op.range!.wholeColumns);
+    writes[Cols.rangeJson] = b.rangeJson(
+      s,
+      op.range!.rect,
+      wholeRows: op.range!.wholeRows,
+      wholeColumns: op.range!.wholeColumns,
+    );
   }
   if (op.formula != null) writes['formula'] = op.formula;
   if (op.comment != null) writes['comment'] = op.comment;
@@ -418,8 +439,12 @@ void renameNameInFormulas(PlanBuilder b, String oldName, String newName) {
       }
     }
 
-    json(SheetsTables.conditionalFormatRule, [for (final r in s.cfRules.values) (r.id, r.ruleJson)], 'ruleJson');
-    json(SheetsTables.dataValidationRule, [for (final r in s.dvRules.values) (r.id, r.criteriaJson)], 'criteriaJson');
+    json(SheetsTables.conditionalFormatRule, [
+      for (final r in s.cfRules.values) (r.id, r.ruleJson),
+    ], 'ruleJson');
+    json(SheetsTables.dataValidationRule, [
+      for (final r in s.dvRules.values) (r.id, r.criteriaJson),
+    ], 'criteriaJson');
   }
   for (final n in b.model.namedRanges) {
     final f = n.formula;
@@ -487,7 +512,10 @@ MutationPlan planAddProtection(PlanBuilder b, AddProtection op) {
   });
   b.result['protectionId'] = id;
   b.summary.sheets.add(s.id);
-  return b.build(op.range == null ? 'Protect sheet' : 'Protect range', kinds: [ChangeKinds.protection]);
+  return b.build(
+    op.range == null ? 'Protect sheet' : 'Protect range',
+    kinds: [ChangeKinds.protection],
+  );
 }
 
 /// [UpdateProtection].

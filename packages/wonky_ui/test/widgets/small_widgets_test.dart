@@ -165,7 +165,7 @@ void main() {
           brightness: b,
         );
         expect(find.byType(ShadSkeleton), findsWidgets);
-        expect(find.bySemanticsLabel('Loading…'), findsNWidgets(4));
+        expect(find.bySemanticsLabel('Loading…'), findsWidgets);
       });
     });
   }

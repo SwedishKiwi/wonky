@@ -29,13 +29,7 @@ void main() {
       });
     }
 
-    const invalid = [
-      ('a00', null),
-      ('a00', 'a1'),
-      ('0', '1'),
-      ('a1', 'a0'),
-      ('a0', 'a0'),
-    ];
+    const invalid = [('a00', null), ('a00', 'a1'), ('0', '1'), ('a1', 'a0'), ('a0', 'a0')];
     for (final (a, b) in invalid) {
       test('when generating a key between invalid $a and $b then it throws', () {
         expect(() => FractionalIndex.between(a, b), throwsArgumentError);

@@ -11,8 +11,10 @@ import '../extractor/change_delta_extractor.dart';
 import '../mapping/delta_document_mapper.dart';
 import '../mapping/delta_ops.dart';
 import '../mapping/document_mirror.dart';
+import '../requests/block_editing_handlers.dart';
 import '../setup/editor_factory.dart';
 import '../suggesting/suggestion_rewriter.dart';
+import '../view/editor_view_state.dart';
 import 'editor_pipeline.dart';
 import 'editor_types.dart';
 
@@ -52,12 +54,18 @@ class WriteEditorController extends ChangeNotifier {
       mapper: mapper,
       newNodeId: newNodeId,
       verifyInvariants: verifyInvariants,
-      requestHandlers: wonkyRequestHandlers(
-        mode: () => _mode,
-        documentLength: () => mirror.length,
-        onMaxLengthReached: () => _events.add(const EditorNotice(EditorNoticeKind.documentFull)),
-        maxDocumentChars: maxDocumentChars,
-      ),
+      requestHandlers: [
+        ...wonkyRequestHandlers(
+          mode: () => _mode,
+          documentLength: () => mirror.length,
+          onMaxLengthReached: () => _events.add(const EditorNotice(EditorNoticeKind.documentFull)),
+          maxDocumentChars: maxDocumentChars,
+        ),
+        ...blockEditingHandlers(
+          newEmbedId: this.newEmbedId,
+          markdownShortcuts: () => _preferences.markdownShortcuts,
+        ),
+      ],
       reactions: (pipeline) => wonkyReactions(
         pipeline,
         preferences: () => _preferences,
@@ -100,6 +108,9 @@ class WriteEditorController extends ChangeNotifier {
   /// The Delta ⇄ document mapper.
   DeltaDocumentMapper get mapper => _pipeline.mapper;
 
+  /// View state (zoom, layout, find matches, remote cursors, comments).
+  final EditorViewState view = EditorViewState();
+
   /// Focus node of the editor widget.
   final FocusNode focusNode = FocusNode(debugLabel: 'write-editor');
 
@@ -129,7 +140,6 @@ class WriteEditorController extends ChangeNotifier {
   LocalChangeSource? _sourceOverride;
   DeltaSelection? _selection;
   List<LocalDeltaChange>? _group;
-  int _groupDepth = 0;
 
   /// The current selection as Delta offsets, or `null`.
   DeltaSelection? get selection => _selection ?? _currentSelection();
@@ -167,11 +177,9 @@ class WriteEditorController extends ChangeNotifier {
     final outer = _group;
     final changes = <LocalDeltaChange>[];
     _group = changes;
-    _groupDepth += 1;
     try {
       return runLabelled(label, body, source: source);
     } finally {
-      _groupDepth -= 1;
       _group = outer;
       final merged = _merge(changes, label, source);
       if (merged != null) {
@@ -220,6 +228,9 @@ class WriteEditorController extends ChangeNotifier {
       return;
     }
 
+    for (final change in changes) {
+      view.transformThrough(change.delta);
+    }
     final now = _clock.now();
     final local = <LocalDeltaChange>[];
     var before = selectionBefore;
@@ -274,8 +285,9 @@ class WriteEditorController extends ChangeNotifier {
   /// change is reported.
   void applyRemote(Delta change) {
     if (change.isEmpty) return;
-    final result = _pipeline.applier.apply(change, origin: AppliedChangeOrigin.remote);
-    _selection = result.after == null ? _currentSelection() : _currentSelection();
+    _pipeline.applier.apply(change, origin: AppliedChangeOrigin.remote);
+    view.transformThrough(change);
+    _selection = _currentSelection();
     _afterRemote?.call(change);
     notifyListeners();
   }
@@ -309,6 +321,7 @@ class WriteEditorController extends ChangeNotifier {
     final inverse = mirror.invert(change);
     final selectionBefore = _currentSelection();
     final result = _pipeline.applier.apply(change, origin: AppliedChangeOrigin.local, selectionAfter: selectionAfter);
+    view.transformThrough(change);
     _selection = _currentSelection();
     final local = LocalDeltaChange(
       delta: change,
@@ -335,6 +348,9 @@ class WriteEditorController extends ChangeNotifier {
   void resetDocument(Delta delta, {DeltaSelection? selection}) {
     final keep = selection ?? _selection;
     _pipeline.resetDocument(delta, selection: keep);
+    view
+      ..clearFindMatches()
+      ..pendingComment = null;
     _selection = _currentSelection();
     notifyListeners();
   }
@@ -439,15 +455,23 @@ class WriteEditorController extends ChangeNotifier {
 
     // Caret: Backspace over others' text moves before the struck text,
     // Delete moves after it (Write 08 §2.4).
+    // Otherwise the caret goes after the last suggested insertion, or keeps
+    // its place.
     DeltaSelection? selectionAfter;
     final selectionBefore = change.selectionBefore;
+    final lastInsertEnd = _lastInsertEnd(rewritten);
     if (change.kind == LocalChangeKind.deletion && selectionBefore != null && selectionBefore.isCollapsed) {
       final (start, end) = _deletedRange(change.delta);
       selectionAfter = DeltaSelection.collapsed(selectionBefore.base == end ? start : end);
+    } else if (lastInsertEnd != null) {
+      selectionAfter = DeltaSelection.collapsed(lastInsertEnd);
+    } else if (selectionBefore != null) {
+      selectionAfter = selectionBefore.transform(rewritten);
     }
 
     final corrective = change.inverse.compose(rewritten);
     _pipeline.applier.apply(corrective, origin: AppliedChangeOrigin.local, selectionAfter: selectionAfter);
+    view.transformThrough(corrective);
     _selection = _currentSelection();
     _suggestionSession.remember(change, _selection, now, id);
     _emit(LocalDeltaChange(
@@ -462,6 +486,18 @@ class WriteEditorController extends ChangeNotifier {
       nodeIds: change.nodeIds,
       isComposing: change.isComposing,
     ));
+  }
+
+  /// Offset (in the new document) right after the last insertion of [delta].
+  static int? _lastInsertEnd(Delta delta) {
+    var offset = 0;
+    int? end;
+    for (final op in delta.operations) {
+      if (op.isDelete) continue;
+      offset += op.length!;
+      if (op.isInsert) end = offset;
+    }
+    return end;
   }
 
   static (int, int) _deletedRange(Delta delta) {
@@ -482,6 +518,7 @@ class WriteEditorController extends ChangeNotifier {
     _localChanges.close();
     _events.close();
     focusNode.dispose();
+    view.dispose();
     _pipeline.dispose();
     super.dispose();
   }

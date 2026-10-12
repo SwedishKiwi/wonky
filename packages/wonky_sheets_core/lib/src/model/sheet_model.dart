@@ -65,12 +65,23 @@ final class SheetModel {
   }
 
   /// Cells in an index rectangle (row-major).
-  Iterable<(int row, int col, CellRecord cell)> cellsIn(GridRect rect, {bool contentOnly = false}) =>
-      cells.cellsIn(rows, columns, rect.top, rect.left, rect.bottom, rect.right, contentOnly: contentOnly);
+  Iterable<(int row, int col, CellRecord cell)> cellsIn(
+    GridRect rect, {
+    bool contentOnly = false,
+  }) => cells.cellsIn(
+    rows,
+    columns,
+    rect.top,
+    rect.left,
+    rect.bottom,
+    rect.right,
+    contentOnly: contentOnly,
+  );
 
   /// The whole grid as a rectangle (null when the sheet has no rows/columns).
-  GridRect? get gridRect =>
-      rows.length == 0 || columns.length == 0 ? null : GridRect(0, 0, rows.length - 1, columns.length - 1);
+  GridRect? get gridRect => rows.length == 0 || columns.length == 0
+      ? null
+      : GridRect(0, 0, rows.length - 1, columns.length - 1);
 
   /// Bounding box `A1:<last content cell>` (null when empty).
   GridRect? usedRect({bool includeFormatOnly = false}) {
@@ -177,7 +188,8 @@ final class SheetModel {
   }
 
   /// Rule ids of [kind] covering (row, col), in insertion order.
-  List<String> rulesAt(RuleKind kind, int row, int col) => ruleIndex(kind).at(row, col).toSet().toList();
+  List<String> rulesAt(RuleKind kind, int row, int col) =>
+      ruleIndex(kind).at(row, col).toSet().toList();
 
   /// Rule ids of [kind] intersecting [rect].
   List<String> rulesIntersecting(RuleKind kind, GridRect rect) =>

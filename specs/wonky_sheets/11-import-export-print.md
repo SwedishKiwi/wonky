@@ -21,7 +21,7 @@ Priorities: P0 = first complete release, P1 = v1 if possible, P2 = later.
 | XLSX | P0 (values, formulas, formats, structure) / P1 (DV, CF, images, charts) | P0 (values, formulas, formats, structure) / P1 (DV, CF, images, charts) |
 | PDF | — | P0 (via print pipeline) |
 | ODS | P1 | P1 |
-| XLS (BIFF8, legacy) | P1 (read-only via `excel_plus`) | — (never) |
+| XLS (BIFF8, legacy) | P2 (read-only; not supported by the in-house OOXML reader — users convert to .xlsx) | — (never) |
 | HTML (zipped) | — | P1 |
 | JSON (developer) | P2 | P2 |
 
@@ -41,7 +41,7 @@ wonky_sheets_core/lib/io/
   numfmt/           Excel built-in format ids ⇄ patterns, locale tag stripping
   color/            theme/indexed/tint color resolution
   csv/              CsvImporter (streaming), CsvExporter, encoding + delimiter detection
-  xlsx/             XlsxImporter (excel_plus + OoxmlSupplementReader), XlsxExporter
+  xlsx/             XlsxImporter, XlsxExporter (own OOXML reader/writer on archive + xml)
   ods/              OdsImporter, OdsExporter (archive + xml)
   html/             HtmlExporter
   json/             JsonExporter/Importer (P2)
@@ -203,7 +203,7 @@ sum of `<dimension ref>` areas (or sheet XML sizes ÷ 40 bytes when missing).
 
 ### 3.2 Client import
 Runs in a background isolate (desktop) or as chunked work on the main isolate with
-`scheduleTask` yielding every 8 ms (web; `excel_plus` decoding is synchronous on web). Steps:
+`scheduleTask` yielding every 8 ms (web; XLSX decoding is synchronous on web). Steps:
 parse → IR → `IrToRowsPlanner` → `SheetsWriter` chunks → model ingest. Progress dialog with
 Cancel (cancelling rolls back already written chunks via the undo step's inverse).
 
@@ -300,30 +300,19 @@ emits a chunk. Memory stays O(chunk) except the column format statistics.
 ## 5. XLSX / XLS / ODS import
 
 ### 5.1 Library decision
-**`excel_plus` 2.27.1** (MIT, pure Dart, verified publisher almasum.dev, published 2026-10;
-depends on `archive` ^4, `xml` ^7, `csv_plus`). It reads `.xlsx` and legacy `.xls` (BIFF,
-read-only), with SAX streaming and lazy per-sheet loading (`decodeBuffer`, `streamRows`),
-styles (fonts, fills, borders, alignment, rotation, wrap, number formats, theme/indexed
-colors, rich text), merges, column widths/row heights, frozen panes, formula text,
-conditional formats (read), comments, hyperlinks, images, charts (column, bar, line, area, pie,
-doughnut, scatter, radar, bubble, stock), defined names, and works on web (dart2js and wasm).
-Its own formula evaluation engine is **not** used.
-
-Known gaps (from its documentation): R1C1 formulas unsupported; reading back **data validation**
-is not clearly documented; shared-formula handling for `.xlsx` is not explicit. We therefore
-add a small **`OoxmlSupplementReader`** (`archive` + `xml` SAX, in `io/xlsx/supplement/`) that
-reads directly from the package parts for: shared formulas (`<f t="shared" si>`), array
-formulas (`t="array" ref`) and dynamic-array metadata (`cm`), `dataValidations`, threaded
-comments (`threadedComments*.xml`, `persons.xml`), tables (`tables/table*.xml`), sheet
-protection, print settings (`pageSetup`, `pageMargins`, `printOptions`, `headerFooter`,
-`rowBreaks`/`colBreaks`, `_xlnm.Print_Titles`), outline groups and `workbookPr date1904`.
-**Spike in M5**: if `excel_plus` turns out to miss more (or is too slow at 1M cells), either
-vendor it into `third_party/excel_plus` and patch the gaps there (preferred when fixes are
-small — suite [01 §2.3](../01-architecture.md)), or extend the supplement reader into a
-complete OOXML reader (the IR boundary keeps either change local).
-
-Dependency note: `excel_plus` pulls `csv_plus`; we use `csv` 8.0.0 for our own CSV code (both
-are pure Dart; acceptable duplication).
+**Decision (M3, implementation): our own OOXML reader and writer** in `io/xlsx/`, built on
+`archive` (zip) and `xml`, behind the IR boundary — **no `excel_plus`**. Reasons found while
+implementing: we need parts `excel_plus` does not expose reliably (shared/array/dynamic formulas,
+data validations, conditional formatting with dxfs, print settings, outline groups, legacy
+comments + VML, `date1904`), deterministic output for round-trip goldens, and full control of
+streaming and memory at 1M cells. The reader parses `workbook.xml`, relationships,
+`sharedStrings.xml` (rich runs), `styles.xml` (numFmts, fonts, fills, borders, cellXfs, dxfs),
+`theme1.xml`, worksheets, comments and drawings; the writer emits ECMA-376-ordered parts
+(`[Content_Types].xml`, rels, workbook, styles with deduplicated records and custom numFmt ids
+≥ 164, sharedStrings, sheets, comments/VML, docProps) that Excel and LibreOffice open without
+repair. Legacy `.xls` (BIFF8) import is P2 (not supported; the import dialog asks users to save
+as `.xlsx`). ODS uses the same approach (`io/ods/`). If a gap appears later, vendoring a library
+under `third_party/` remains possible without touching code outside `io/xlsx/`.
 
 ### 5.2 XLSX → Wonky mapping
 
@@ -359,7 +348,7 @@ are pure Dart; acceptable duplication).
 | Hyperlinks | `linkUrl` / rich-text link | P0 | External → URL; internal `#Sheet2!A1` → `#gid=<sheetId>&range=A1` internal link format ([06](06-formatting.md)). |
 | Images (drawing anchors) | `EmbeddedObject(kind=image)` | P1 | `twoCellAnchor`/`oneCellAnchor` from cell + EMU offsets (px = EMU / 9525); `absoluteAnchor` → A1 + offsets. EMF/WMF → skipped (warning). Images uploaded as `StoredFile` (server-side import) or queued uploads (client). |
 | In-cell pictures (Excel 365 `IMAGE`, rich value images) | `=IMAGE()` / skipped | P2 | |
-| Charts | `EmbeddedObject(kind=chart)` | P1 | Via `excel_plus` chart model: bar/col (clustered/stacked/percent), line (smooth), area, pie, doughnut, scatter, bubble, radar, stock → candlestick; titles, legend position, axis titles/min/max/log/number format, series colors, data labels (basic), trendlines. Unmappable → skipped with warning. |
+| Charts | `EmbeddedObject(kind=chart)` | P1 | Via the OOXML chart parts (`c:chartSpace`): bar/col (clustered/stacked/percent), line (smooth), area, pie, doughnut, scatter, bubble, radar, stock → candlestick; titles, legend position, axis titles/min/max/log/number format, series colors, data labels (basic), trendlines. Unmappable → skipped with warning. |
 | Pivot tables | values only | P0 | Cells are already present in the sheet XML as cached values; definitions ignored (warning "imported as values"). |
 | Sparklines (x14) | `=SPARKLINE()` | P2 | |
 | Sheet/workbook protection | ignored | P0 | Info warning "Protection was not imported". |
@@ -386,10 +375,9 @@ Wonky's formula language follows Google Sheets syntax ([05-formula-engine.md](05
 - Round-trip tests: every function in our catalog has an import/export expectation row in
   `io/formula/function_map.dart`.
 
-### 5.4 XLS (legacy BIFF8)
-Read with `excel_plus` (`decodeBytes`, read-only), mapped through the same IR (shared and
-array formulas are supported by its `.xls` reader). No server-side LibreOffice conversion
-(keeps the server dependency-free). Export to `.xls` is never offered.
+### 5.4 XLS (legacy BIFF8) (P2)
+Not read in v1 (no BIFF reader in the in-house OOXML code). The import dialog rejects `.xls`
+with "Save the file as .xlsx and import it again". Export to `.xls` is never offered.
 
 ### 5.5 ODS import (P1)
 Custom reader in `io/ods/` (`archive` + `xml` SAX over `content.xml`, `styles.xml`,
@@ -433,7 +421,7 @@ same exporters server-side. Viewers/commenters can export only if the owner allo
   (`exported`).
 
 ### 6.2 XLSX export (Wonky → XLSX)
-Writer: `excel_plus` (styles, merges, widths, freeze panes, formulas, DV, CF, comments,
+Writer: our own streaming OOXML writer (styles, merges, widths, freeze panes, formulas, DV, CF, comments,
 hyperlinks, images, charts, defined names, `encodeToStream` for large workbooks). If the M5
 spike finds gaps or performance problems at 1M cells, `XlsxExporter` switches to our own
 streaming `OoxmlWriter` (`archive` `ZipEncoder` streaming + string buffers) behind the same
@@ -770,7 +758,7 @@ MCP: `drive.import` (suite) accepts `options: ImportOptions` for spreadsheets; S
   the function map; shared formula expansion), OpenFormula translator, paginator (fixtures
   with expected `PageSpec`s), header/footer token rendering.
 - **XLSX corpus** (`wonky_sheets_core/test/fixtures/xlsx/`, ~120 files): generated by Excel,
-  LibreOffice, Google Sheets exports, `excel_plus`, and real-world anonymized files; categories:
+  LibreOffice, Google Sheets exports, our own writer, and real-world anonymized files; categories:
   types & dates (1900/1904), formats, styles, merges, large (1M cells), shared/array/dynamic
   formulas, every supported function, DV, CF, filters, names, images, charts, print settings,
   rich text, comments (legacy/threaded), hidden/very hidden, RTL, unicode sheet names, broken

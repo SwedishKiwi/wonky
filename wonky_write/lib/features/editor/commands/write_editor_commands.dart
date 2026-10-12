@@ -1,0 +1,1266 @@
+import 'package:collection/collection.dart';
+import 'package:dart_quill_delta/dart_quill_delta.dart';
+import 'package:super_editor/super_editor.dart';
+
+import '../applier/delta_applier.dart';
+import '../attributions/wonky_attributions.dart';
+import '../controller/editor_types.dart';
+import '../controller/write_editor_controller.dart';
+import '../mapping/delta_node_codec.dart';
+import '../mapping/delta_ops.dart';
+import '../mapping/wonky_schema.dart';
+import '../model/code_languages.dart';
+import '../model/document_queries.dart';
+import '../model/embeds.dart';
+import '../model/link_url_policy.dart';
+import '../model/table_model.dart';
+import '../reactions/typing_attributes_reaction.dart';
+
+/// Block types of `write.format.blockType` / `write.block.turnInto`.
+enum BlockKind {
+  paragraph,
+  heading1,
+  heading2,
+  heading3,
+  heading4,
+  heading5,
+  heading6,
+  quote,
+  codeBlock,
+  bulleted,
+  numbered,
+  checklist;
+
+  static BlockKind? tryParse(String? name) => BlockKind.values.firstWhereOrNull((k) => k.name == name);
+
+  int? get headingLevel => switch (this) {
+        heading1 => 1,
+        heading2 => 2,
+        heading3 => 3,
+        heading4 => 4,
+        heading5 => 5,
+        heading6 => 6,
+        _ => null,
+      };
+
+  String get label => switch (this) {
+        paragraph => 'Normal text',
+        heading1 => 'Heading 1',
+        heading2 => 'Heading 2',
+        heading3 => 'Heading 3',
+        heading4 => 'Heading 4',
+        heading5 => 'Heading 5',
+        heading6 => 'Heading 6',
+        quote => 'Quote',
+        codeBlock => 'Code block',
+        bulleted => 'Bulleted list',
+        numbered => 'Numbered list',
+        checklist => 'Checklist',
+      };
+}
+
+/// Inline formats of the toggle commands.
+enum InlineFormat {
+  bold('bold', 'Bold'),
+  italic('italic', 'Italic'),
+  strikethrough('strike', 'Strikethrough'),
+  code('code', 'Code');
+
+  const InlineFormat(this.key, this.label);
+
+  /// Delta attribute key.
+  final String key;
+  final String label;
+
+  Attribution get attribution => switch (this) {
+        bold => boldAttribution,
+        italic => italicsAttribution,
+        strikethrough => strikethroughAttribution,
+        code => codeAttribution,
+      };
+}
+
+/// A link found in the document.
+class LinkRun {
+  const LinkRun(this.url, this.start, this.end, {this.mentionUuid});
+
+  final String url;
+
+  /// Delta range `[start, end)`.
+  final int start;
+  final int end;
+
+  /// Set when the link is a mention chip.
+  final String? mentionUuid;
+}
+
+/// Thrown by commands for invalid arguments (reported to MCP callers).
+class EditorCommandError implements Exception {
+  const EditorCommandError(this.message);
+  final String message;
+
+  @override
+  String toString() => 'EditorCommandError: $message';
+}
+
+/// The editor-level implementation of the Write 04 command catalog (§40).
+///
+/// Every mutating method builds one change Delta and applies it through
+/// [WriteEditorController.applyLocal] (one undo step, label = command title),
+/// so it behaves the same from menus, shortcuts and MCP, and becomes a
+/// suggestion in Suggesting mode. Methods return `false` when not applicable.
+class WriteEditorCommands {
+  WriteEditorCommands(this.controller, {LinkUrlPolicy? linkPolicy})
+      : linkPolicy = linkPolicy ?? LinkUrlPolicy(documentUuid: controller.documentUuid);
+
+  final WriteEditorController controller;
+  final LinkUrlPolicy linkPolicy;
+
+  /// Language used for new code blocks (the user's last-used language).
+  String lastCodeLanguage = '';
+
+  bool get canEdit => controller.mode != EditorMode.viewing;
+
+  bool get isSuggesting => controller.mode == EditorMode.suggesting;
+
+  DeltaSelection? get selection => controller.selection;
+
+  LocalDeltaChange? _apply(Delta change, String label, {DeltaSelection? selectionAfter}) {
+    if (!canEdit) return null;
+    if (isSuggesting) controller.startNewSuggestion();
+    return controller.applyLocal(change, label: label, selectionAfter: selectionAfter);
+  }
+
+  List<BlockRef> _selectedBlocks() {
+    final s = selection;
+    if (s == null) return const [];
+    return controller.mirror.blocksInSelection(s);
+  }
+
+  // ---------------------------------------------------------------------------
+  // Inline formatting (§10).
+
+  bool _eligibleFor(InlineFormat format, Operation piece, BlockRef block) {
+    if (block.isCode || !FormatChanges.isInlineText(piece)) return false;
+    if (format != InlineFormat.code && piece.attributes?[DeltaKeys.code] == true) return false;
+    return true;
+  }
+
+  /// Whether [format] can be toggled at the current selection.
+  bool canToggleFormat(InlineFormat format) {
+    final s = selection;
+    if (!canEdit || s == null) return false;
+    final blocks = controller.mirror.blocksInSelection(s);
+    if (blocks.isEmpty || blocks.every((b) => b.isEmbed)) return false;
+    if (s.isCollapsed) return !blocks.first.isCode && blocks.first.isText;
+    return blocks.any((b) => b.isText && !b.isCode);
+  }
+
+  /// Whether [format] is active: all eligible selected characters have it,
+  /// or the typing attributes have it for a collapsed caret.
+  bool isFormatActive(InlineFormat format) {
+    final s = selection;
+    if (s == null) return false;
+    if (s.isCollapsed) {
+      return controller.composer.preferences.currentAttributions.contains(format.attribution);
+    }
+    var any = false;
+    for (final (piece, block) in _pieces(s.start, s.end)) {
+      if (!_eligibleFor(format, piece, block)) continue;
+      any = true;
+      if (piece.attributes?[format.key] != true) return false;
+    }
+    return any;
+  }
+
+  Iterable<(Operation, BlockRef)> _pieces(int start, int end) sync* {
+    for (final block in controller.mirror.blocksIn(start, end)) {
+      var offset = block.start;
+      for (final op in controller.mirror.entryAt(block.index).delta.operations) {
+        final opStart = offset;
+        final opEnd = offset + op.length!;
+        offset = opEnd;
+        final s = opStart > start ? opStart : start;
+        final e = opEnd < end ? opEnd : end;
+        if (e <= s) continue;
+        final data = op.data;
+        if (data is! String) {
+          yield (op, block);
+          continue;
+        }
+        final text = data.substring(s - opStart, e - opStart);
+        for (final part in text.split('\n').indexed) {
+          if (part.$1 > 0) yield (Operation.insert('\n', op.attributes), block);
+          if (part.$2.isNotEmpty) yield (Operation.insert(part.$2, op.attributes), block);
+        }
+      }
+    }
+  }
+
+  /// `write.format.bold` / `italic` / `strikethrough` / `inlineCode`.
+  bool toggleFormat(InlineFormat format) {
+    final s = selection;
+    if (!canToggleFormat(format) || s == null) return false;
+    if (s.isCollapsed) {
+      final preferences = controller.composer.preferences;
+      preferences.toggleStyle(format.attribution);
+      if (format == InlineFormat.code && preferences.currentAttributions.contains(codeAttribution)) {
+        preferences.removeStyles({boldAttribution, italicsAttribution, strikethroughAttribution});
+      }
+      controller.notify(EditorNotice(
+        EditorNoticeKind.announcement,
+        '${format.label} ${preferences.currentAttributions.contains(format.attribution) ? 'on' : 'off'}',
+      ));
+      return true;
+    }
+    final active = isFormatActive(format);
+    final attributes = <String, dynamic>{format.key: active ? null : true};
+    if (format == InlineFormat.code && !active) {
+      attributes.addAll({DeltaKeys.bold: null, DeltaKeys.italic: null, DeltaKeys.strike: null});
+    }
+    final change = FormatChanges.format(
+      controller.mirror,
+      s.start,
+      s.end,
+      attributes,
+      eligible: (piece, block) => _eligibleFor(format, piece, block),
+    );
+    if (change.isEmpty) return false;
+    _apply(change, format.label, selectionAfter: s);
+    controller.notify(EditorNotice(EditorNoticeKind.announcement, '${format.label} ${active ? 'off' : 'on'}'));
+    return true;
+  }
+
+  /// `write.format.clearFormatting`: removes bold, italic, strike and code
+  /// (links, mentions, comments, suggestions and block types are kept).
+  bool clearFormatting() {
+    final s = selection;
+    if (!canEdit || s == null) return false;
+    if (s.isCollapsed) {
+      controller.composer.preferences.removeStyles(
+        {boldAttribution, italicsAttribution, strikethroughAttribution, codeAttribution},
+      );
+      return true;
+    }
+    final change = FormatChanges.format(
+      controller.mirror,
+      s.start,
+      s.end,
+      {DeltaKeys.bold: null, DeltaKeys.italic: null, DeltaKeys.strike: null, DeltaKeys.code: null},
+      eligible: (piece, block) => !block.isCode && FormatChanges.isInlineText(piece),
+    );
+    if (change.isEmpty) return false;
+    _apply(change, 'Clear formatting', selectionAfter: s);
+    return true;
+  }
+
+  // ---------------------------------------------------------------------------
+  // Block types and lists (§12, §13).
+
+  static const _clearBlock = {
+    DeltaKeys.header: null,
+    DeltaKeys.blockquote: null,
+    DeltaKeys.codeBlock: null,
+    DeltaKeys.list: null,
+    DeltaKeys.indent: null,
+  };
+
+  /// The block kind of [block] (lists by their list type).
+  static BlockKind kindOf(BlockRef block) {
+    final node = block.node;
+    if (node is ListItemNode) return node.type == ListItemType.ordered ? BlockKind.numbered : BlockKind.bulleted;
+    if (node is TaskNode) return BlockKind.checklist;
+    if (node is ParagraphNode) {
+      final type = node.getMetadataValue(NodeMetadata.blockType);
+      if (type == codeAttribution) return BlockKind.codeBlock;
+      if (type == blockquoteAttribution) return BlockKind.quote;
+      final level = headingLevelOf(type);
+      if (level != null) return BlockKind.values[BlockKind.heading1.index + level - 1];
+    }
+    return BlockKind.paragraph;
+  }
+
+  /// The common kind of the selected text blocks, or `null` when mixed.
+  BlockKind? get selectedBlockKind {
+    final kinds = _selectedBlocks().where((b) => b.isText).map(kindOf).toSet();
+    return kinds.length == 1 ? kinds.single : null;
+  }
+
+  bool canChangeBlockType() => canEdit && _selectedBlocks().any((b) => b.isText);
+
+  /// `write.format.blockType {type}` and the list toggles. Quote, code and
+  /// lists are toggles; headings are not. With [toggle] `false`
+  /// (`write.block.turnInto`), the type is always applied.
+  bool setBlockType(BlockKind kind, {bool toggle = true, String? nodeId, String? label}) {
+    final blocks = nodeId != null
+        ? [?controller.mirror.blockOf(nodeId)]
+        : _selectedBlocks();
+    final textBlocks = blocks.where((b) => b.isText).toList();
+    if (!canEdit || textBlocks.isEmpty) return false;
+    final isToggle = toggle &&
+        const {BlockKind.quote, BlockKind.codeBlock, BlockKind.bulleted, BlockKind.numbered, BlockKind.checklist}
+            .contains(kind);
+    final target = isToggle && textBlocks.every((b) => kindOf(b) == kind) ? BlockKind.paragraph : kind;
+
+    final language = lastCodeLanguage;
+    final change = Delta();
+    var offset = 0;
+    for (final block in textBlocks) {
+      change.retain(block.start - offset);
+      offset = block.start;
+      final delta = controller.mirror.entryAt(block.index).delta;
+      final current = kindOf(block);
+      final node = block.node;
+      final currentIndent = node is ListItemNode ? node.indent : node is TaskNode ? node.indent : 0;
+      final attributes = _blockAttributesFor(target, current, currentIndent, node, language);
+      for (final op in delta.operations) {
+        final data = op.data;
+        if (data is! String) {
+          change.retain(op.length!);
+          continue;
+        }
+        var runStart = 0;
+        for (var i = 0; i <= data.length; i += 1) {
+          final atEnd = i == data.length;
+          final char = atEnd ? null : data[i];
+          if (!atEnd && char != '\n' && !(target == BlockKind.codeBlock && char == DeltaKeys.softBreak)) {
+            continue;
+          }
+          if (i > runStart) {
+            // Text: code blocks drop inline formatting.
+            change.retain(
+              i - runStart,
+              target == BlockKind.codeBlock ? _stripInline(op.attributes) : null,
+            );
+          }
+          if (!atEnd) {
+            if (char == DeltaKeys.softBreak) {
+              change
+                ..delete(1)
+                ..insert('\n', {DeltaKeys.codeBlock: language});
+            } else {
+              change.retain(1, attributes);
+            }
+          }
+          runStart = i + 1;
+        }
+      }
+      offset += block.length;
+    }
+    change.trim();
+    if (change.isEmpty) return false;
+    final s = selection;
+    _apply(change, label ?? target.label, selectionAfter: s?.transform(change));
+    controller.notify(EditorNotice(EditorNoticeKind.announcement, target.label));
+    return true;
+  }
+
+  static Map<String, dynamic>? _stripInline(Map<String, dynamic>? attributes) {
+    if (attributes == null) return null;
+    final result = <String, dynamic>{
+      for (final key in DeltaKeys.inlineKeys)
+        if (attributes.containsKey(key)) key: null,
+    };
+    return result.isEmpty ? null : result;
+  }
+
+  Map<String, dynamic> _blockAttributesFor(
+    BlockKind target,
+    BlockKind current,
+    int currentIndent,
+    DocumentNode node,
+    String language,
+  ) {
+    final isList = const {BlockKind.bulleted, BlockKind.numbered, BlockKind.checklist};
+    final keepIndent = isList.contains(target) && isList.contains(current) && currentIndent > 0;
+    return switch (target) {
+      BlockKind.paragraph => {..._clearBlock},
+      BlockKind.quote => {..._clearBlock, DeltaKeys.blockquote: true},
+      BlockKind.codeBlock => {
+          ..._clearBlock,
+          DeltaKeys.codeBlock: current == BlockKind.codeBlock ? codeLanguageOf(node) : language,
+        },
+      BlockKind.bulleted => {..._clearBlock, DeltaKeys.list: 'bullet', if (keepIndent) DeltaKeys.indent: currentIndent},
+      BlockKind.numbered => {..._clearBlock, DeltaKeys.list: 'ordered', if (keepIndent) DeltaKeys.indent: currentIndent},
+      BlockKind.checklist => {
+          ..._clearBlock,
+          DeltaKeys.list: node is TaskNode && node.isComplete ? 'checked' : 'unchecked',
+          if (keepIndent) DeltaKeys.indent: currentIndent,
+        },
+      _ => {..._clearBlock, DeltaKeys.header: target.headingLevel},
+    };
+  }
+
+  bool toggleBulleted() => setBlockType(BlockKind.bulleted);
+  bool toggleNumbered() => setBlockType(BlockKind.numbered);
+  bool toggleChecklist() => setBlockType(BlockKind.checklist);
+
+  int _indentOf(DocumentNode node) => node is ListItemNode ? node.indent : node is TaskNode ? node.indent : -1;
+
+  bool _isListNode(DocumentNode? node) => node is ListItemNode || node is TaskNode;
+
+  /// Whether `write.list.indent` can indent at least one selected item.
+  bool canIndent() {
+    if (!canEdit) return false;
+    return _indentPlan().isNotEmpty;
+  }
+
+  Map<BlockRef, int> _indentPlan() {
+    final plan = <BlockRef, int>{};
+    int? previousNewIndent;
+    for (final block in _selectedBlocks()) {
+      if (!_isListNode(block.node)) {
+        previousNewIndent = null;
+        continue;
+      }
+      final indent = _indentOf(block.node);
+      final previousIndent = previousNewIndent ??
+          (block.index > 0 ? _indentOf(controller.mirror.blockAt(block.index - 1).node) : -1);
+      final maxIndent = (previousIndent + 1).clamp(0, DeltaKeys.maxIndent);
+      final newIndent = indent + 1 <= maxIndent ? indent + 1 : indent;
+      if (newIndent != indent) plan[block] = newIndent;
+      previousNewIndent = newIndent;
+    }
+    return plan;
+  }
+
+  /// `write.list.indent` (Tab).
+  bool indent() {
+    final plan = _indentPlan();
+    if (!canEdit || plan.isEmpty) return false;
+    final change = Delta();
+    var offset = 0;
+    for (final MapEntry(key: block, value: level) in plan.entries) {
+      change
+        ..retain(block.lineEnd - offset)
+        ..retain(1, {DeltaKeys.indent: level});
+      offset = block.lineEnd + 1;
+    }
+    _apply(change, 'Indent', selectionAfter: selection);
+    controller.notify(EditorNotice(EditorNoticeKind.announcement, 'Level ${plan.values.last + 1}'));
+    return true;
+  }
+
+  bool canOutdent() => canEdit && _selectedBlocks().any((b) => _isListNode(b.node));
+
+  /// `write.list.outdent` (Shift+Tab): at level 0 the item becomes a paragraph.
+  bool outdent() {
+    final items = _selectedBlocks().where((b) => _isListNode(b.node)).toList();
+    if (!canEdit || items.isEmpty) return false;
+    final change = Delta();
+    var offset = 0;
+    for (final block in items) {
+      final indent = _indentOf(block.node);
+      change
+        ..retain(block.lineEnd - offset)
+        ..retain(1, indent > 0 ? {DeltaKeys.indent: indent - 1 == 0 ? null : indent - 1} : {..._clearBlock});
+      offset = block.lineEnd + 1;
+    }
+    _apply(change, 'Outdent', selectionAfter: selection);
+    return true;
+  }
+
+  bool canToggleChecked({String? nodeId}) =>
+      canEdit && (nodeId != null ? controller.mirror.blockOf(nodeId)?.node is TaskNode : _selectedBlocks().any((b) => b.node is TaskNode));
+
+  /// `write.list.toggleChecked {nodeId?}`.
+  bool toggleChecked({String? nodeId}) {
+    final tasks = (nodeId != null ? [?controller.mirror.blockOf(nodeId)] : _selectedBlocks())
+        .where((b) => b.node is TaskNode)
+        .toList();
+    if (!canEdit || tasks.isEmpty) return false;
+    final check = !tasks.every((b) => (b.node as TaskNode).isComplete);
+    final change = Delta();
+    var offset = 0;
+    for (final block in tasks) {
+      change
+        ..retain(block.lineEnd - offset)
+        ..retain(1, {DeltaKeys.list: check ? 'checked' : 'unchecked'});
+      offset = block.lineEnd + 1;
+    }
+    _apply(change, check ? 'Check item' : 'Uncheck item', selectionAfter: selection);
+    return true;
+  }
+
+  // ---------------------------------------------------------------------------
+  // Links (§11).
+
+  /// The link run at [offset] (or the caret / selection start).
+  LinkRun? linkAt([int? offset]) {
+    final s = selection;
+    final at = offset ?? s?.start;
+    if (at == null) return null;
+    final block = controller.mirror.blockAtOffset(at);
+    final node = block.node;
+    if (node is! TextNode) return null;
+    final local = at - block.start;
+    for (final probe in [local, local - 1]) {
+      if (probe < 0 || probe >= node.text.length) continue;
+      final link = node.text.getAllAttributionsAt(probe).whereType<LinkAttribution>().firstOrNull;
+      if (link == null) continue;
+      final range = node.text.getAttributedRange({link}, probe);
+      final mention = node.text.getAllAttributionsAt(probe).whereType<MentionAttribution>().firstOrNull;
+      return LinkRun(link.plainTextUri, block.start + range.start, block.start + range.end + 1,
+          mentionUuid: mention?.userUuid);
+    }
+    return null;
+  }
+
+  bool canInsertLink() {
+    final s = selection;
+    if (!canEdit || s == null) return false;
+    final blocks = controller.mirror.blocksInSelection(s);
+    return blocks.any((b) => b.isText && !b.isCode);
+  }
+
+  /// `write.link.set {url, text?, range?}`. Throws [EditorCommandError] for
+  /// URLs the policy rejects.
+  bool setLink(String url, {String? text, int? start, int? length}) {
+    final normalized = linkPolicy.normalize(url);
+    if (normalized is InvalidLinkUrl) throw EditorCommandError(normalized.reason);
+    final link = (normalized as ValidLinkUrl).url;
+    if (!canEdit) return false;
+    final s = selection;
+    final rangeStart = start ?? s?.start;
+    final rangeEnd = start != null ? start + (length ?? 0) : s?.end;
+    if (rangeStart == null || rangeEnd == null) return false;
+
+    if (rangeEnd > rangeStart && (text == null || text == controller.mirror.textOf(rangeStart, rangeEnd))) {
+      final change = FormatChanges.format(
+        controller.mirror,
+        rangeStart,
+        rangeEnd,
+        {DeltaKeys.link: link},
+        eligible: (piece, block) => !block.isCode && FormatChanges.isInlineText(piece),
+      );
+      if (change.isEmpty) return false;
+      _apply(change, 'Insert link', selectionAfter: DeltaSelection(rangeStart, rangeEnd));
+      return true;
+    }
+
+    // Collapsed caret (or replacing the selected text): insert linked text.
+    final existing = rangeEnd == rangeStart ? linkAt(rangeStart) : null;
+    if (existing != null && text == null) {
+      final change = DeltaOps.format(existing.start, existing.end - existing.start, {DeltaKeys.link: link});
+      _apply(change, 'Edit link');
+      return true;
+    }
+    final insertText = (text == null || text.isEmpty) ? link : text;
+    final attributes = <String, dynamic>{
+      ...?_inlineFormattingAt(rangeStart),
+      DeltaKeys.link: link,
+    };
+    final change = Delta()
+      ..retain(rangeStart)
+      ..delete(rangeEnd - rangeStart)
+      ..insert(insertText.replaceAll('\n', ' '), attributes);
+    _apply(change, 'Insert link', selectionAfter: DeltaSelection.collapsed(rangeStart + insertText.length));
+    return true;
+  }
+
+  Map<String, dynamic>? _inlineFormattingAt(int offset) {
+    final s = DeltaSelection.collapsed(offset);
+    final documentSelection = controller.mirror.selectionAt(s.base, s.extent);
+    if (documentSelection == null) return null;
+    final attributions = WonkyTypingAttributesReaction.typingAttributesAt(controller.document, documentSelection);
+    final result = <String, dynamic>{
+      for (final format in InlineFormat.values)
+        if (attributions.contains(format.attribution)) format.key: true,
+    };
+    return result.isEmpty ? null : result;
+  }
+
+  /// `write.link.remove {range?}` (default: the link run at the caret).
+  bool removeLink({int? start, int? length}) {
+    if (!canEdit) return false;
+    int from;
+    int to;
+    if (start != null) {
+      from = start;
+      to = start + (length ?? 0);
+    } else {
+      final s = selection;
+      if (s == null) return false;
+      if (s.isCollapsed) {
+        final run = linkAt(s.start);
+        if (run == null) return false;
+        from = run.start;
+        to = run.end;
+      } else {
+        from = s.start;
+        to = s.end;
+      }
+    }
+    final change = FormatChanges.format(
+      controller.mirror,
+      from,
+      to,
+      {DeltaKeys.link: null},
+      eligible: (piece, block) => piece.attributes?[DeltaKeys.mention] == null,
+    );
+    if (change.isEmpty) return false;
+    _apply(change, 'Remove link');
+    return true;
+  }
+
+  // ---------------------------------------------------------------------------
+  // Insertions (§16–19).
+
+  /// Where a new block embed goes: `(offset, replacesEmptyParagraph)`.
+  (int, bool) _embedInsertionPoint() {
+    final s = selection;
+    final block = s == null
+        ? controller.mirror.blockAt(controller.mirror.nodeCount - 1)
+        : controller.mirror.blockAtOffset(s.end);
+    final node = block.node;
+    if (node is ParagraphNode && node.text.isEmpty && kindOf(block) == BlockKind.paragraph) {
+      return (block.start, true);
+    }
+    return (block.start + block.length, false);
+  }
+
+  bool get _caretInCode {
+    final s = selection;
+    return s != null && controller.mirror.blockAtOffset(s.start).isCode;
+  }
+
+  bool canInsertBlock() => canEdit && !_caretInCode;
+
+  /// Inserts the embed [values] (each followed by `"\n"`) after the current
+  /// block (or replacing an empty paragraph), creating a text block after the
+  /// last one when needed, and moves the caret to the following text block.
+  LocalDeltaChange? _insertEmbeds(List<Map<String, dynamic>> values, String label) {
+    if (!canInsertBlock() || values.isEmpty) return null;
+    final (at, replaces) = _embedInsertionPoint();
+    final change = Delta()..retain(at);
+    for (var i = 0; i < values.length; i += 1) {
+      change.insert(values[i]);
+      if (!(replaces && i == values.length - 1)) {
+        change.insert('\n');
+      }
+    }
+    final insertedLength = values.length * 2 - (replaces ? 1 : 0);
+    final afterEnd = at + insertedLength + (replaces ? 1 : 0);
+    final nextIndex = replaces ? controller.mirror.indexAtOffset(at) + 1 : controller.mirror.indexAtOffset(at);
+    final hasTextAfter = at < controller.mirror.length &&
+        nextIndex < controller.mirror.nodeCount &&
+        (replaces || controller.mirror.startOfIndex(nextIndex) == at) &&
+        controller.mirror.blockAt(nextIndex).isText;
+    if (!hasTextAfter) {
+      if (replaces) change.retain(1);
+      change.insert('\n');
+    }
+    return _apply(change, label, selectionAfter: DeltaSelection.collapsed(afterEnd));
+  }
+
+  /// `write.insert.divider`.
+  bool insertDivider() => _insertEmbeds([
+        {
+          DeltaKeys.dividerEmbed: {'id': controller.newEmbedId()},
+        },
+      ], 'Insert divider') !=
+      null;
+
+  /// `write.insert.imageFromUrl {url, alt?}` and the upload flow
+  /// (`write.insert.imageFiles` with `wonky-file://` sources). Returns the
+  /// embed ids.
+  List<String> insertImages(List<({String src, String alt, String? title})> images, {String label = 'Insert image'}) {
+    final ids = <String>[];
+    final values = <Map<String, dynamic>>[];
+    for (final image in images) {
+      final id = controller.newEmbedId();
+      ids.add(id);
+      values.add({
+        DeltaKeys.imageEmbed: {'id': id, 'src': image.src, 'alt': image.alt, 'title': ?image.title},
+      });
+    }
+    if (!canInsertBlock()) return const [];
+
+    // Mid-paragraph: split the paragraph at the caret (§17.2).
+    final s = selection;
+    if (s != null && s.isCollapsed) {
+      final block = controller.mirror.blockAtOffset(s.start);
+      final local = s.start - block.start;
+      if (block.isText && local > 0 && local < block.length - 1) {
+        final change = Delta()
+          ..retain(s.start)
+          ..insert('\n', block.blockAttributes);
+        for (final value in values) {
+          change
+            ..insert(value)
+            ..insert('\n');
+        }
+        _apply(change, label, selectionAfter: DeltaSelection.collapsed(s.start + 1 + values.length * 2));
+        return ids;
+      }
+    }
+    return _insertEmbeds(values, label) == null ? const [] : ids;
+  }
+
+  /// `write.insert.table {rows, cols}`. Returns the table's embed id.
+  String? insertTable({int rows = 3, int columns = 3}) {
+    if (isSuggesting) return null;
+    final table = TableModel.empty(controller.newEmbedId(), rowCount: rows.clamp(1, 2000), columnCount: columns.clamp(1, 64));
+    return _insertEmbeds([table.toInsert()], 'Insert table') == null ? null : table.id;
+  }
+
+  /// `write.insert.mention {userUuid, replaceComposing}`: replaces `[start,
+  /// end)` (the composing `@query`, or nothing) with `@Display Name` + space.
+  bool insertMention({
+    required String userUuid,
+    required String displayName,
+    required String email,
+    int? replaceStart,
+    int? replaceEnd,
+  }) {
+    final s = selection;
+    final start = replaceStart ?? s?.start;
+    final end = replaceEnd ?? s?.end;
+    if (!canEdit || start == null || end == null || _caretInCode) return false;
+    final text = '@$displayName';
+    final change = Delta()
+      ..retain(start)
+      ..delete(end - start)
+      ..insert(text, {DeltaKeys.mention: userUuid, DeltaKeys.link: 'mailto:$email'})
+      ..insert(' ');
+    _apply(change, 'Mention', selectionAfter: DeltaSelection.collapsed(start + text.length + 1));
+    return true;
+  }
+
+  /// `write.edit.insertText {text}` (emoji, special characters, MCP).
+  bool insertText(String text, {int? position, String label = 'Insert text'}) {
+    final s = selection;
+    final start = position ?? s?.start;
+    final end = position ?? s?.end;
+    if (!canEdit || start == null || end == null || text.isEmpty) return false;
+    final block = controller.mirror.blockAtOffset(start);
+    final clean = block.isCode ? text : text.replaceAll('\n', DeltaKeys.softBreak);
+    final change = Delta()
+      ..retain(start)
+      ..delete(end - start)
+      ..insert(clean, block.isCode ? null : _inlineFormattingAt(start));
+    _apply(change, label, selectionAfter: DeltaSelection.collapsed(start + clean.length));
+    return true;
+  }
+
+  // ---------------------------------------------------------------------------
+  // Code blocks (§15).
+
+  BlockRef? _codeBlock(String? nodeId) {
+    final block = nodeId != null
+        ? controller.mirror.blockOf(nodeId)
+        : (selection == null ? null : controller.mirror.blockAtOffset(selection!.start));
+    return block != null && block.isCode ? block : null;
+  }
+
+  bool canEditCode({String? nodeId}) => canEdit && _codeBlock(nodeId) != null;
+
+  /// `write.code.setLanguage {language, nodeId?}`.
+  bool setCodeLanguage(String language, {String? nodeId}) {
+    final block = _codeBlock(nodeId);
+    if (!canEdit || block == null) return false;
+    final normalized = CodeLanguages.normalize(language);
+    lastCodeLanguage = normalized;
+    final change = Delta()..retain(block.start);
+    final delta = controller.mirror.entryAt(block.index).delta;
+    for (final op in delta.operations) {
+      final data = op.data;
+      if (data is! String) {
+        change.retain(op.length!);
+        continue;
+      }
+      var runStart = 0;
+      for (var i = 0; i < data.length; i += 1) {
+        if (data[i] != '\n') continue;
+        if (i > runStart) change.retain(i - runStart);
+        change.retain(1, {DeltaKeys.codeBlock: normalized});
+        runStart = i + 1;
+      }
+      if (runStart < data.length) change.retain(data.length - runStart);
+    }
+    change.trim();
+    _apply(change, 'Set code language', selectionAfter: selection);
+    return true;
+  }
+
+  /// `write.code.exit`: an empty paragraph after the block, caret there.
+  bool exitCodeBlock({bool removeTrailingEmptyLines = false}) {
+    final block = _codeBlock(null);
+    if (!canEdit || block == null) return false;
+    final text = (block.node as TextNode).text.toPlainText();
+    final change = Delta();
+    var end = block.start + block.length;
+    if (removeTrailingEmptyLines && text.endsWith('\n\n')) {
+      // Triple Enter: drop the two empty lines (§15.3).
+      change
+        ..retain(block.lineEnd - 2)
+        ..delete(2)
+        ..retain(1)
+        ..insert('\n');
+      end -= 2;
+    } else {
+      change
+        ..retain(end)
+        ..insert('\n');
+    }
+    _apply(change, 'Exit code block', selectionAfter: DeltaSelection.collapsed(end));
+    return true;
+  }
+
+  static const _indentUnit = 2;
+
+  /// `write.code.indentLines` (Tab in code).
+  bool indentCodeLines() => _shiftCodeLines(indent: true);
+
+  /// `write.code.outdentLines` (Shift+Tab in code).
+  bool outdentCodeLines() => _shiftCodeLines(indent: false);
+
+  bool _shiftCodeLines({required bool indent}) {
+    final s = selection;
+    final block = _codeBlock(null);
+    if (!canEdit || block == null || s == null) return false;
+    final text = (block.node as TextNode).text.toPlainText();
+    final localStart = (s.start - block.start).clamp(0, text.length);
+    final localEnd = (s.end - block.start).clamp(0, text.length);
+
+    if (indent && s.isCollapsed) {
+      final lineStart = localStart == 0 ? 0 : text.lastIndexOf('\n', localStart - 1) + 1;
+      final column = localStart - lineStart;
+      final spaces = _indentUnit - column % _indentUnit;
+      final change = Delta()
+        ..retain(s.start)
+        ..insert(' ' * spaces);
+      _apply(change, 'Indent', selectionAfter: DeltaSelection.collapsed(s.start + spaces));
+      return true;
+    }
+
+    // Every touched line.
+    final lineStarts = <int>[];
+    var lineStart = localStart == 0 ? 0 : text.lastIndexOf('\n', localStart - 1) + 1;
+    while (true) {
+      lineStarts.add(lineStart);
+      final next = text.indexOf('\n', lineStart);
+      if (next < 0 || next + 1 > localEnd || (next + 1 == localEnd && localEnd > localStart)) break;
+      lineStart = next + 1;
+    }
+    final change = Delta();
+    var offset = 0;
+    for (final start in lineStarts) {
+      change.retain(block.start + start - offset);
+      offset = block.start + start;
+      if (indent) {
+        change.insert(' ' * _indentUnit);
+      } else {
+        var count = 0;
+        while (count < _indentUnit && start + count < text.length && text[start + count] == ' ') {
+          count += 1;
+        }
+        if (count > 0) {
+          change.delete(count);
+          offset += count;
+        }
+      }
+    }
+    change.trim();
+    if (change.isEmpty) return true;
+    _apply(change, indent ? 'Indent' : 'Outdent', selectionAfter: s.transform(change));
+    return true;
+  }
+
+  /// The plain text of a code block (`write.code.copy`).
+  String? codeText({String? nodeId}) {
+    final block = _codeBlock(nodeId);
+    return block == null ? null : (block.node as TextNode).text.toPlainText();
+  }
+
+  // ---------------------------------------------------------------------------
+  // Blocks (§22).
+
+  BlockRef? _targetBlock(String? nodeId) => nodeId != null
+      ? controller.mirror.blockOf(nodeId)
+      : (selection == null ? null : controller.mirror.blockAtOffset(selection!.start));
+
+  /// The blocks a block command acts on: the selection's blocks, plus the
+  /// descendants of list items (§22.4).
+  List<BlockRef> _blocksToMove(String? nodeId) {
+    final blocks = nodeId != null ? [?controller.mirror.blockOf(nodeId)] : _selectedBlocks();
+    if (blocks.isEmpty) return const [];
+    final last = blocks.last;
+    final lastIndent = _indentOf(last.node);
+    final result = [...blocks];
+    if (lastIndent >= 0) {
+      for (var i = last.index + 1; i < controller.mirror.nodeCount; i += 1) {
+        final next = controller.mirror.blockAt(i);
+        if (_indentOf(next.node) > lastIndent) {
+          result.add(next);
+        } else {
+          break;
+        }
+      }
+    }
+    return result;
+  }
+
+  bool canMoveBlock({required bool up, String? nodeId}) {
+    if (!canEdit || isSuggesting) return false;
+    final blocks = _blocksToMove(nodeId);
+    if (blocks.isEmpty) return false;
+    return up ? blocks.first.index > 0 : blocks.last.index < controller.mirror.nodeCount - 1;
+  }
+
+  /// `write.block.moveUp` / `moveDown`.
+  bool moveBlock({required bool up, String? nodeId}) {
+    if (!canMoveBlock(up: up, nodeId: nodeId)) return false;
+    final blocks = _blocksToMove(nodeId);
+    final target = up ? blocks.first.index - 1 : blocks.last.index + 2;
+    return moveBlocks([for (final b in blocks) b.id], target, label: 'Move block');
+  }
+
+  /// `write.block.move {nodeIds, toIndex}`: moves the blocks (contiguous run)
+  /// so that they end up before the node currently at [toIndex].
+  bool moveBlocks(List<String> nodeIds, int toIndex, {String label = 'Move block'}) {
+    if (!canEdit || isSuggesting || nodeIds.isEmpty) return false;
+    final blocks = [for (final id in nodeIds) ?controller.mirror.blockOf(id)]..sort((a, b) => a.index.compareTo(b.index));
+    if (blocks.isEmpty) return false;
+    final first = blocks.first;
+    final last = blocks.last;
+    if (toIndex >= first.index && toIndex <= last.index + 1) return false;
+    final start = first.start;
+    final end = last.start + last.length;
+    final fragment = controller.mirror.slice(start, end);
+    final s = selection;
+    final Delta change;
+    int movedStart;
+    if (toIndex < first.index) {
+      final at = controller.mirror.startOfIndex(toIndex);
+      change = Delta()
+        ..retain(at)
+        ..concatInto(fragment)
+        ..retain(start - at)
+        ..delete(end - start);
+      movedStart = at;
+    } else {
+      final at = controller.mirror.startOfIndex(toIndex.clamp(0, controller.mirror.nodeCount));
+      change = Delta()
+        ..retain(start)
+        ..delete(end - start)
+        ..retain(at - end)
+        ..concatInto(fragment);
+      movedStart = at - (end - start);
+    }
+    DeltaSelection? after;
+    if (s != null && s.start >= start && s.end <= end) {
+      after = DeltaSelection(s.base - start + movedStart, s.extent - start + movedStart);
+    }
+    _apply(change..trim(), label, selectionAfter: after);
+    return true;
+  }
+
+  /// `write.block.duplicate {nodeId?}` (embeds get new ids).
+  bool duplicateBlock({String? nodeId}) {
+    final block = _targetBlock(nodeId);
+    if (!canEdit || isSuggesting || block == null) return false;
+    var fragment = controller.mirror.slice(block.start, block.start + block.length);
+    fragment = Delta.fromOperations([
+      for (final op in fragment.operations)
+        if (op.data is Map) Operation.insert(_withNewId(op.data as Map), op.attributes) else op,
+    ]);
+    final change = Delta()..retain(block.start + block.length);
+    for (final op in fragment.operations) {
+      change.push(op);
+    }
+    _apply(change, 'Duplicate', selectionAfter: DeltaSelection.collapsed(block.start + block.length));
+    return true;
+  }
+
+  Map<String, dynamic> _withNewId(Map value) {
+    final type = value.keys.first;
+    final inner = (value[type] as Map).cast<String, dynamic>();
+    return {
+      type: {...inner, 'id': controller.newEmbedId()},
+    };
+  }
+
+  /// `write.block.delete {nodeId?}`. The document keeps at least one
+  /// paragraph.
+  bool deleteBlock({String? nodeId}) {
+    final blocks = nodeId != null ? [?controller.mirror.blockOf(nodeId)] : _selectedBlocks();
+    if (!canEdit || blocks.isEmpty) return false;
+    final start = blocks.first.start;
+    final end = blocks.last.start + blocks.last.length;
+    final change = Delta()
+      ..retain(start)
+      ..delete(end - start);
+    if (start == 0 && end == controller.mirror.length) {
+      change.insert('\n');
+    }
+    _apply(change, 'Delete', selectionAfter: DeltaSelection.collapsed(start));
+    return true;
+  }
+
+  /// `write.block.select {nodeId?}` (block selection, not undoable).
+  bool selectBlock({String? nodeId}) {
+    final block = _targetBlock(nodeId);
+    if (block == null) return false;
+    controller.select(DeltaSelection(block.start, block.start + block.length - 1));
+    return true;
+  }
+
+  // ---------------------------------------------------------------------------
+  // Images (§17.4).
+
+  BlockRef? _embedBlock(String? nodeId, String type) {
+    final block = _targetBlock(nodeId);
+    if (block == null || EmbedNodes.embedTypeOf(block.node) != type) return null;
+    return block;
+  }
+
+  /// Replaces the embed of [block] with [value] (same id): delete + insert.
+  LocalDeltaChange? _replaceEmbed(BlockRef block, Map<String, dynamic> value, String label) {
+    final change = Delta()
+      ..retain(block.start)
+      ..delete(1)
+      ..insert(value, block.node.getMetadataValue(WonkyNodeMetadata.embedAttributes) as Map<String, dynamic>?);
+    return _apply(change, label, selectionAfter: selection);
+  }
+
+  /// `write.image.setAlt {nodeId?, alt, title?}`.
+  bool setImageAlt(String alt, {String? title, String? nodeId}) {
+    final block = _embedBlock(nodeId, DeltaKeys.imageEmbed);
+    if (!canEdit || block == null) return false;
+    final data = EmbedNodes.embedDataOf(block.node)!;
+    final value = {
+      DeltaKeys.imageEmbed: {
+        ...data,
+        'alt': alt.length > 500 ? alt.substring(0, 500) : alt,
+        if (title != null && title.isNotEmpty) 'title': title,
+      }..removeWhere((key, v) => key == 'title' && (title != null && title.isEmpty)),
+    };
+    return _replaceEmbed(block, value, 'Alt text') != null;
+  }
+
+  /// `write.image.replace` / `replaceFromUrl {nodeId?, url}`: keeps the id.
+  bool replaceImage(String src, {String? nodeId}) {
+    final block = _embedBlock(nodeId, DeltaKeys.imageEmbed);
+    if (!canEdit || isSuggesting || block == null) return false;
+    final data = EmbedNodes.embedDataOf(block.node)!;
+    return _replaceEmbed(block, {
+          DeltaKeys.imageEmbed: {...data, 'src': src},
+        }, 'Replace image') !=
+        null;
+  }
+
+  // ---------------------------------------------------------------------------
+  // Tables (§18).
+
+  /// The table at [nodeId] (or the selected one).
+  TableModel? tableOf({String? nodeId}) {
+    final block = _embedBlock(nodeId, DeltaKeys.tableEmbed);
+    return block == null ? null : TableModel.fromEmbed(EmbedNodes.embedDataOf(block.node)!);
+  }
+
+  bool canEditTable({String? nodeId}) => canEdit && !isSuggesting && tableOf(nodeId: nodeId) != null;
+
+  /// `write.table.replace {nodeId, table}`: one undo step "Edit table".
+  bool replaceTable(TableModel table, {String? nodeId, String label = 'Edit table'}) {
+    final block = _embedBlock(nodeId ?? table.id, DeltaKeys.tableEmbed) ?? _embedBlock(nodeId, DeltaKeys.tableEmbed);
+    if (!canEditTable(nodeId: block?.id) || block == null) return false;
+    final current = TableModel.fromEmbed(EmbedNodes.embedDataOf(block.node)!);
+    final next = TableModel(id: current.id, align: table.align, rows: table.rows);
+    if (next == current) return false;
+    return _replaceEmbed(block, next.toInsert(), label) != null;
+  }
+
+  /// Applies [edit] to the table and replaces it (direct table commands).
+  bool editTable(TableModel Function(TableModel table) edit, {String? nodeId, required String label}) {
+    final table = tableOf(nodeId: nodeId);
+    if (table == null) return false;
+    return replaceTable(edit(table), nodeId: nodeId ?? _targetBlock(null)?.id, label: label);
+  }
+
+  // ---------------------------------------------------------------------------
+  // Selection and editing (§4, §23.5).
+
+  /// `write.edit.selectAll`: inside a code block that isn't fully selected,
+  /// selects the code; otherwise the whole document.
+  void selectAll() {
+    final s = selection;
+    final block = s == null ? null : controller.mirror.blockAtOffset(s.start);
+    if (block != null && block.isCode && s != null) {
+      final codeEnd = block.start + block.length - 1;
+      final isFullySelected = s.start == block.start && s.end == codeEnd;
+      final endBlock = controller.mirror.blockAtOffset(s.end);
+      if (!isFullySelected && endBlock.id == block.id) {
+        controller.select(DeltaSelection(block.start, codeEnd));
+        return;
+      }
+    }
+    controller.select(DeltaSelection(0, controller.mirror.length - 1));
+  }
+
+  /// `write.edit.selectRange {anchor, head}`.
+  void selectRange(int anchor, int head) => controller.select(DeltaSelection(anchor, head));
+
+  /// `write.edit.delete`: deletes the selection.
+  bool deleteSelection() {
+    final s = selection;
+    if (!canEdit || s == null || s.isCollapsed) return false;
+    return controller.runLabelled('Delete', () {
+      controller.editor.execute([
+        DeleteContentRequest(documentRange: controller.composer.selection!.normalize(controller.document)),
+        ChangeSelectionRequest(
+          controller.mirror.selectionAt(s.start, s.start),
+          SelectionChangeType.deleteContent,
+          SelectionReason.userInteraction,
+        ),
+      ]);
+      return true;
+    });
+  }
+
+  /// Inserts a Delta [fragment] (from paste, Markdown, MCP) at the selection
+  /// with the paste semantics of §23.3: the first line merges into the
+  /// current block (whose type is kept unless it's an empty paragraph), the
+  /// last line merges with the text after the caret, a selection is replaced.
+  /// In code blocks only plain text is inserted.
+  LocalDeltaChange? insertFragment(Delta fragment, {String label = 'Paste', int? start, int? end}) {
+    final s = selection;
+    final from = start ?? s?.start;
+    final to = end ?? s?.end ?? from;
+    if (!canEdit || from == null || to == null || fragment.isEmpty) return null;
+    final lines = splitDeltaIntoLines(fragment);
+    if (lines.isEmpty) return null;
+
+    final change = Delta()..retain(from);
+    if (to > from) change.delete(to - from);
+
+    final block = controller.mirror.blockAtOffset(from);
+    final local = from - block.start;
+    final blockAttributes = block.blockAttributes;
+    final fragmentEndsWithNewline = _endsWithNewline(fragment);
+
+    if (block.isCode) {
+      // Plain text; newlines stay code lines.
+      final text = lines.map((l) => l.segments.map((s) => s.data is String ? s.data as String : '').join()).join('\n');
+      _insertCodeText(change, text.replaceAll(DeltaKeys.softBreak, '\n'), blockAttributes);
+      final inserted = _insertedLength(change);
+      return _apply(change..trim(), label, selectionAfter: DeltaSelection.collapsed(from + inserted));
+    }
+
+    final isEmptyParagraph = block.isText &&
+        (block.node as TextNode).text.isEmpty &&
+        kindOf(block) == BlockKind.paragraph &&
+        to == from;
+
+    if (isEmptyParagraph) {
+      // The pasted lines win: insert them all before the empty line end and
+      // drop that line end when the fragment brings its own.
+      for (final op in fragment.operations) {
+        change.push(op);
+      }
+      if (fragmentEndsWithNewline) change.delete(1);
+      final inserted = _insertedLength(change);
+      final caret = from + inserted - (fragmentEndsWithNewline ? 1 : 0);
+      return _apply(change..trim(), label, selectionAfter: DeltaSelection.collapsed(caret));
+    }
+
+    // Non-empty block: merge the first line, keep the block's type.
+    final complete = fragmentEndsWithNewline ? lines : lines.sublist(0, lines.length - 1);
+    final trailing = fragmentEndsWithNewline ? null : lines.last;
+    for (var i = 0; i < complete.length; i += 1) {
+      final line = complete[i];
+      if (line.isEmbedLine) {
+        if (i == 0 && local > 0) change.insert('\n', blockAttributes);
+        change
+          ..insert(line.segments.single.data, line.segments.single.attributes)
+          ..insert('\n', AttributionMappingOverlays.of(line.endAttributes));
+        continue;
+      }
+      for (final segment in line.segments) {
+        change.insert(segment.data, segment.attributes);
+      }
+      final ends = i == 0 ? _mergeOverlays(blockAttributes, line.endAttributes) : line.endAttributes;
+      change.insert('\n', ends);
+    }
+    if (trailing != null) {
+      for (final segment in trailing.segments) {
+        change.insert(segment.data, segment.attributes);
+      }
+    }
+    final inserted = _insertedLength(change);
+    return _apply(change..trim(), label, selectionAfter: DeltaSelection.collapsed(from + inserted));
+  }
+
+  static Map<String, dynamic>? _mergeOverlays(Map<String, dynamic>? block, Map<String, dynamic>? end) {
+    final overlays = AttributionMappingOverlays.of(end);
+    if (block == null) return overlays;
+    if (overlays == null) return block;
+    return {...block, ...overlays};
+  }
+
+  void _insertCodeText(Delta change, String text, Map<String, dynamic>? codeAttributes) {
+    final parts = text.split('\n');
+    for (var i = 0; i < parts.length; i += 1) {
+      if (parts[i].isNotEmpty) change.insert(parts[i]);
+      if (i < parts.length - 1) change.insert('\n', codeAttributes);
+    }
+  }
+
+  static int _insertedLength(Delta change) {
+    var length = 0;
+    for (final op in change.operations) {
+      if (op.isInsert) length += op.length!;
+    }
+    return length;
+  }
+
+  static bool _endsWithNewline(Delta fragment) {
+    if (fragment.isEmpty) return false;
+    final data = fragment.last.data;
+    return data is String && data.endsWith('\n');
+  }
+
+  /// `write.edit.replaceRange {start, length, text}` (MCP/AI).
+  bool replaceRangeWithText(int start, int length, String text) {
+    if (!canEdit) return false;
+    final block = controller.mirror.blockAtOffset(start);
+    final clean = block.isCode ? text : text.replaceAll('\n', DeltaKeys.softBreak);
+    final change = Delta()
+      ..retain(start)
+      ..delete(length)
+      ..insert(clean, block.isCode ? null : _inlineFormattingAt(start));
+    _apply(change..trim(), 'Replace', selectionAfter: DeltaSelection.collapsed(start + clean.length));
+    return true;
+  }
+}
+
+extension on Delta {
+  void concatInto(Delta fragment) {
+    for (final op in fragment.operations) {
+      push(op);
+    }
+  }
+}
+
+/// Overlay-only view of attributes (comments/suggestions on line ends).
+abstract final class AttributionMappingOverlays {
+  static Map<String, dynamic>? of(Map<String, dynamic>? attributes) {
+    if (attributes == null) return null;
+    final result = <String, dynamic>{
+      for (final e in attributes.entries)
+        if (DeltaKeys.isOverlay(e.key)) e.key: e.value,
+    };
+    return result.isEmpty ? null : result;
+  }
+}
+
+/// Builds the image embed value used by commands (kept here for callers).
+Map<String, dynamic> imageEmbedValue({required String id, required String src, String alt = '', String? title}) => {
+      DeltaKeys.imageEmbed: {'id': id, 'src': src, 'alt': alt, 'title': ?title},
+    };
+
+/// The embed id of a node, for callers that need it.
+String embedIdOf(DocumentNode node) => EmbedNodes.embedIdOf(node);
+
+/// Serializes a node (for copy-as-Markdown of a block).
+Delta deltaOfNode(DocumentNode node) => const WonkyDeltaSerializer().serializeNode(node);

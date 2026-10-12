@@ -30,7 +30,13 @@ Map<String, Object?> _colValues(Map<FormatAttr, Object?> values) => {
 
 /// Writes explicit attributes to one cell, removing rich-run keys of those
 /// attributes so the whole cell becomes uniform (06 §11).
-void writeCellFormat(PlanBuilder b, SheetModel s, String rowId, String colId, Map<FormatAttr, Object?> values) {
+void writeCellFormat(
+  PlanBuilder b,
+  SheetModel s,
+  String rowId,
+  String colId,
+  Map<FormatAttr, Object?> values,
+) {
   final writes = _colValues(values);
   final cur = b.currentCell(s.id, rowId, colId);
   final content = CellContent.decode(cur?[CellCols.content] as String?);
@@ -42,8 +48,9 @@ void writeCellFormat(PlanBuilder b, SheetModel s, String rowId, String colId, Ma
     }
     if (rich != content.rich) {
       final n = rich.normalize();
-      writes[CellCols.content] =
-          n.rich == null ? TextContent(rich.text).encode() : RichTextContent(n.rich!).encode();
+      writes[CellCols.content] = n.rich == null
+          ? TextContent(rich.text).encode()
+          : RichTextContent(n.rich!).encode();
     }
   }
   b.writeCell(s.id, rowId, colId, writes);
@@ -88,7 +95,10 @@ void applyFormatToRange(PlanBuilder b, ResolvedRange range, Map<FormatAttr, Obje
     // write explicit values at the intersections (Google "last applied wins").
     for (final rowRec in s.rowRecords.values) {
       final rf = b.formatJsonOf(SheetsTables.sheetRow, rowRec.id);
-      final over = {for (final a in attrs) if (rf.has(a)) a: values[a]};
+      final over = {
+        for (final a in attrs)
+          if (rf.has(a)) a: values[a],
+      };
       if (over.isEmpty) continue;
       for (final colId in colIds) {
         writeCellFormat(b, s, rowRec.id, colId, over);
@@ -192,7 +202,8 @@ bool allTrue(PlanBuilder b, List<ResolvedRange> ranges, FormatAttr attr) {
     if (rowsWithout > 0) {
       for (var c = rect.left; c <= rect.right; c++) {
         final colId = s.columns.idAt(c);
-        final v = b.formatJsonOf(SheetsTables.sheetColumn, colId)[attr] as bool? ?? sheetVal ?? false;
+        final v =
+            b.formatJsonOf(SheetsTables.sheetColumn, colId)[attr] as bool? ?? sheetVal ?? false;
         if (!v && (explicitPerCol[colId] ?? 0) < rowsWithout) return false;
       }
     }
@@ -265,7 +276,13 @@ MutationPlan planSetBorders(PlanBuilder b, SetBorders op) {
   return b.build('Borders', kinds: [ChangeKinds.format]);
 }
 
-void _wholeBorders(PlanBuilder b, SheetModel s, ResolvedRange range, BorderPreset preset, String v) {
+void _wholeBorders(
+  PlanBuilder b,
+  SheetModel s,
+  ResolvedRange range,
+  BorderPreset preset,
+  String v,
+) {
   final rect = range.rect;
   final cols = range.wholeColumns;
   // Along = the dimension the range spans entirely.
@@ -375,7 +392,9 @@ MutationPlan planStepFontSize(PlanBuilder b, StepFontSize op) {
     final rect = range.rect;
     if (range.wholeRows || range.wholeColumns) {
       // Default-level step from the active defaults, plus explicit cells.
-      final base = (b.model.explicitFormatChain(s.id, rect.top, rect.left)[FormatAttr.fontSize] as double?) ??
+      final base =
+          (b.model.explicitFormatChain(s.id, rect.top, rect.left)[FormatAttr.fontSize]
+              as double?) ??
           defaultSize;
       applyFormatToRange(b, range, {FormatAttr.fontSize: step(base)});
       continue;
@@ -387,12 +406,16 @@ MutationPlan planStepFontSize(PlanBuilder b, StepFontSize op) {
         final explicit = b.currentCell(s.id, rowId, colId)?[CellCols.fontSize];
         final cur = explicit is num
             ? explicit.toDouble()
-            : (b.model.explicitFormatChain(s.id, r, c)[FormatAttr.fontSize] as double? ?? defaultSize);
+            : (b.model.explicitFormatChain(s.id, r, c)[FormatAttr.fontSize] as double? ??
+                  defaultSize);
         writeCellFormat(b, s, rowId, colId, {FormatAttr.fontSize: step(cur)});
       }
     }
   }
-  return b.build(op.increase ? 'Increase font size' : 'Decrease font size', kinds: [ChangeKinds.format]);
+  return b.build(
+    op.increase ? 'Increase font size' : 'Decrease font size',
+    kinds: [ChangeKinds.format],
+  );
 }
 
 /// [MergeCells] (06 §10).
@@ -436,13 +459,19 @@ MutationPlan planMerge(PlanBuilder b, MergeCells op) {
       final ar = s.rows.indexOf(pv.anchorRowId);
       final ac = s.columns.indexOf(pv.anchorColId);
       if (ar >= 0 && ac >= 0 && pieces.any((p) => p.contains(ar, ac))) {
-        throw const PlanException('merge_conflict', "You can't merge cells that overlap a pivot table");
+        throw const PlanException(
+          'merge_conflict',
+          "You can't merge cells that overlap a pivot table",
+        );
       }
     }
     if (s.rows.visibleIndices(rect.top, rect.bottom).length != rect.rowCount &&
         s.basicFilter != null &&
         pieces.any((p) => p.rowCount > 1)) {
-      throw const PlanException('merge_conflict', "You can't merge cells in a filtered range with hidden rows");
+      throw const PlanException(
+        'merge_conflict',
+        "You can't merge cells in a filtered range with hidden rows",
+      );
     }
     if (s.merges.length + pieces.length > 50000) {
       throw const PlanException('limit_exceeded', 'A sheet can have at most 50,000 merges');

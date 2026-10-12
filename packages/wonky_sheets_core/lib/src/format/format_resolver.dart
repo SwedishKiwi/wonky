@@ -97,14 +97,14 @@ final class ResolvedFormat {
 
   @override
   bool operator ==(Object other) =>
-      other is ResolvedFormat &&
-      FormatAttr.values.every((a) => valueOf(a) == other.valueOf(a));
+      other is ResolvedFormat && FormatAttr.values.every((a) => valueOf(a) == other.valueOf(a));
 
   @override
   int get hashCode => Object.hashAll(FormatAttr.values.map(valueOf));
 
   @override
-  String toString() => 'ResolvedFormat(${{for (final a in FormatAttr.values) a.column: valueOf(a)}})';
+  String toString() =>
+      'ResolvedFormat(${{for (final a in FormatAttr.values) a.column: valueOf(a)}})';
 }
 
 /// Resolves effective formats: CF overlay ▸ cell ▸ row ▸ column ▸ sheet ▸
@@ -117,7 +117,8 @@ final class EffectiveFormatResolver {
   final WorkbookModel model;
 
   /// The explicit chain (no banding, no theme) of a cell.
-  CellFormat explicit(String sheetId, int row, int col) => model.explicitFormatChain(sheetId, row, col);
+  CellFormat explicit(String sheetId, int row, int col) =>
+      model.explicitFormatChain(sheetId, row, col);
 
   /// Resolves the format of the cell at (row, col). [conditional] is the CF
   /// overlay (bold/italic/underline/strikethrough/textColor/fillColor) that wins
@@ -188,9 +189,7 @@ final class EffectiveFormatResolver {
   /// and the cell below — resolved per 06 §8.4 (heavier wins, ties: upper).
   BorderSpec? edgeBelow(String sheetId, int row, int col) {
     final a = BorderSpec.tryParse(explicit(sheetId, row, col)[FormatAttr.borderBottom] as String?);
-    final b = BorderSpec.tryParse(
-      explicit(sheetId, row + 1, col)[FormatAttr.borderTop] as String?,
-    );
+    final b = BorderSpec.tryParse(explicit(sheetId, row + 1, col)[FormatAttr.borderTop] as String?);
     return BorderSpec.resolveShared(a, b);
   }
 

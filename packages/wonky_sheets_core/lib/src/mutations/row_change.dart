@@ -27,13 +27,12 @@ final class RowChange {
        columnsAfter = Map.unmodifiable(columnsAfter ?? const {});
 
   /// An insert of a full row.
-  factory RowChange.insert(String table, String rowId, Map<String, Object?> columns) =>
-      RowChange(
-        table: table,
-        rowId: rowId,
-        op: RowOp.insert,
-        columnsAfter: {...columns, Cols.id: rowId},
-      );
+  factory RowChange.insert(String table, String rowId, Map<String, Object?> columns) => RowChange(
+    table: table,
+    rowId: rowId,
+    op: RowOp.insert,
+    columnsAfter: {...columns, Cols.id: rowId},
+  );
 
   /// An update naming only the touched columns.
   factory RowChange.update(
@@ -50,13 +49,12 @@ final class RowChange {
   );
 
   /// A delete with the full previous row.
-  factory RowChange.delete(String table, String rowId, Map<String, Object?> fullRow) =>
-      RowChange(
-        table: table,
-        rowId: rowId,
-        op: RowOp.delete,
-        columnsBefore: {...fullRow, Cols.id: rowId},
-      );
+  factory RowChange.delete(String table, String rowId, Map<String, Object?> fullRow) => RowChange(
+    table: table,
+    rowId: rowId,
+    op: RowOp.delete,
+    columnsBefore: {...fullRow, Cols.id: rowId},
+  );
 
   /// Table name ([SheetsTables]).
   final String table;
@@ -130,7 +128,9 @@ final class RowChange {
 
   static Map<String, Object?> _jsonColumns(Map<String, Object?> c) => {
     for (final e in c.entries)
-      e.key: e.value is DateTime ? {'\$date': (e.value! as DateTime).toUtc().toIso8601String()} : e.value,
+      e.key: e.value is DateTime
+          ? {'\$date': (e.value! as DateTime).toUtc().toIso8601String()}
+          : e.value,
   };
 
   static Map<String, Object?> _fromJsonColumns(Object? raw) {
@@ -251,9 +251,8 @@ final class ChangeSummary {
   static ChangeSummary parse(String json) {
     final m = jsonDecode(json) as Map<String, Object?>;
     List<String> strs(Object? v) => v is List ? v.map((e) => e.toString()).toList() : [];
-    Map<String, List<String>> lists(Object? v) => v is Map
-        ? {for (final e in v.entries) e.key.toString(): strs(e.value)}
-        : {};
+    Map<String, List<String>> lists(Object? v) =>
+        v is Map ? {for (final e in v.entries) e.key.toString(): strs(e.value)} : {};
     return ChangeSummary(
       sheets: strs(m['sheets']).toSet(),
       ranges: m['ranges'] is List
@@ -325,6 +324,25 @@ final class MutationPlan {
     summary: summary,
     changes: [for (final c in changes.reversed) c.inverse()],
   );
+
+  /// Columns of the `ChangeLog` row written in the same transaction as the
+  /// plan (02 §3.7). [chunk]/[chunks] annotate chunked bulk steps.
+  Map<String, Object?> changeLogColumns({
+    required String spreadsheetId,
+    required String userId,
+    required ActorKind actorKind,
+    required String sessionId,
+    required DateTime at,
+  }) => {
+    Cols.spreadsheetId: spreadsheetId,
+    'userId': userId,
+    'actorKind': actorKind.name,
+    'sessionId': sessionId,
+    'label': label,
+    'summaryJson': summary.encode(),
+    'detailJson': detailJson,
+    'at': at,
+  };
 
   /// Number of distinct cells touched.
   int get cellCount => changes.where((c) => c.table == SheetsTables.cell).length;

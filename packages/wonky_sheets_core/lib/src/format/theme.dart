@@ -4,11 +4,7 @@ import 'dart:math' as math;
 /// Spreadsheet theme (`Spreadsheet.themeJson`, 06 §13).
 final class SpreadsheetTheme {
   /// Creates a theme.
-  const SpreadsheetTheme({
-    this.name = 'Standard',
-    this.textFont = 'Inter',
-    this.colors = const {},
-  });
+  const SpreadsheetTheme({this.name = 'Standard', this.textFont = 'Inter', this.colors = const {}});
 
   /// Theme name (preset name or custom).
   final String name;
@@ -69,12 +65,7 @@ final class SpreadsheetTheme {
     _preset('Coral', 'Nunito', '#FF7043 #FFAB91 #F4511E #FFCCBC #BF360C #FF8A65', '#D84315'),
     _preset('Forest', 'Open Sans', '#2E7D32 #66BB6A #A5D6A7 #558B2F #9CCC65 #1B5E20', '#2E7D32'),
     _preset('Mono', 'Roboto Mono', '#212121 #424242 #616161 #757575 #9E9E9E #BDBDBD', '#1A73E8'),
-    _preset(
-      'Retro',
-      'Courier Prime',
-      '#E76F51 #F4A261 #E9C46A #2A9D8F #264653 #8AB17D',
-      '#264653',
-    ),
+    _preset('Retro', 'Courier Prime', '#E76F51 #F4A261 #E9C46A #2A9D8F #264653 #8AB17D', '#264653'),
     _preset('Ocean', 'Montserrat', '#023E8A #0077B6 #0096C7 #00B4D8 #48CAE4 #90E0EF', '#0077B6'),
   ];
 
@@ -193,7 +184,11 @@ final class SpreadsheetTheme {
   }
 
   @override
-  int get hashCode => Object.hash(name, textFont, Object.hashAllUnordered(colors.entries.map((e) => '${e.key}=${e.value}')));
+  int get hashCode => Object.hash(
+    name,
+    textFont,
+    Object.hashAllUnordered(colors.entries.map((e) => '${e.key}=${e.value}')),
+  );
 }
 
 /// Color helpers.
@@ -205,8 +200,7 @@ abstract final class ColorUtil {
   }
 
   /// (r, g, b) → `#RRGGBB`.
-  static String hex(int r, int g, int b) =>
-      '#${_h(r)}${_h(g)}${_h(b)}';
+  static String hex(int r, int g, int b) => '#${_h(r)}${_h(g)}${_h(b)}';
 
   static String _h(int c) => c.clamp(0, 255).toRadixString(16).padLeft(2, '0').toUpperCase();
 

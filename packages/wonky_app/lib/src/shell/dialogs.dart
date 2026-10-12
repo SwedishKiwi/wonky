@@ -1,0 +1,301 @@
+import 'package:flutter/foundation.dart';
+import 'package:flutter/widgets.dart';
+import 'package:intl/intl.dart' as intl;
+import 'package:shad/shad.dart';
+import 'package:wonky_client/wonky_client.dart';
+
+import '../bootstrap/platform.dart';
+import '../data/api.dart';
+import '../l10n/wonky_app_localizations.dart';
+import 'form_dialog.dart';
+import 'shell_services.dart';
+
+/// A yes/no confirmation (destructive actions confirm instead of undo).
+Future<bool> confirmDialog(
+  BuildContext context, {
+  required String title,
+  String? description,
+  required String confirmLabel,
+  bool destructive = false,
+}) async {
+  final l = WonkyAppLocalizations.of(context);
+  final r = await showWonkyFormDialog(
+    context,
+    WonkyDialogSpec(
+      title: title,
+      description: description,
+      dialogKey: 'dialog.confirm',
+      buttons: [
+        DialogButtonSpec(id: 'cancel', label: l.actionCancel),
+        DialogButtonSpec(id: 'confirm', label: confirmLabel, primary: true, destructive: destructive),
+      ],
+    ),
+  );
+  return r?.buttonId == 'confirm';
+}
+
+/// A single text field dialog (rename, new folder, name version).
+Future<String?> showTextInputDialog(
+  BuildContext context, {
+  required String title,
+  required String label,
+  required String confirmLabel,
+  String initial = '',
+  String? placeholder,
+  String? Function(String)? validator,
+  String dialogKey = 'dialog.text',
+  int? maxLength = 255,
+}) async {
+  final l = WonkyAppLocalizations.of(context);
+  final r = await showWonkyFormDialog(
+    context,
+    WonkyDialogSpec(
+      title: title,
+      dialogKey: dialogKey,
+      fields: [
+        TextFieldSpec(
+          id: 'value',
+          label: label,
+          initial: initial,
+          placeholder: placeholder,
+          maxLength: maxLength,
+          validator: validator ?? (v) => v.trim().isEmpty ? l.errorRequired : null,
+        ),
+      ],
+      buttons: [
+        DialogButtonSpec(id: 'cancel', label: l.actionCancel),
+        DialogButtonSpec(id: 'ok', label: confirmLabel, primary: true),
+      ],
+    ),
+  );
+  if (r?.buttonId != 'ok') return null;
+  return r!.text('value').trim();
+}
+
+/// Validates drive item names (1–255 chars, trimmed, no `/`).
+String? Function(String) itemNameValidator(WonkyAppLocalizations l) => (v) {
+  final t = v.trim();
+  if (t.isEmpty) return l.errorRequired;
+  if (t.contains('/')) return l.errorNameSlash;
+  if (t.length > 255) return l.errorNameTooLong;
+  return null;
+};
+
+Future<String?> showNameVersionDialog(BuildContext context, ShellServices s, {String initial = ''}) {
+  final l = WonkyAppLocalizations.of(context);
+  return showTextInputDialog(
+    context,
+    title: l.nameVersionTitle,
+    label: l.nameVersionLabel,
+    confirmLabel: l.actionSave,
+    initial: initial.isEmpty ? intl.DateFormat.yMMMd().add_jm().format(DateTime.now()) : initial,
+    dialogKey: 'dialog.nameVersion',
+    maxLength: 200,
+  );
+}
+
+/// Help › Report a problem (in-app dialog → `feedback.submit`).
+Future<void> showFeedbackDialog(BuildContext context, ShellServices s) async {
+  final l = WonkyAppLocalizations.of(context);
+  final r = await showWonkyFormDialog(
+    context,
+    WonkyDialogSpec(
+      title: l.feedbackTitle,
+      description: l.feedbackDescription,
+      dialogKey: 'dialog.feedback',
+      width: 480,
+      fields: [
+        SelectFieldSpec(
+          id: 'kind',
+          label: l.feedbackKind,
+          options: {'problem': l.feedbackKindProblem, 'idea': l.feedbackKindIdea},
+          initial: 'problem',
+        ),
+        TextFieldSpec(
+          id: 'message',
+          label: l.feedbackMessage,
+          multiline: true,
+          maxLength: 4000,
+          validator: (v) => v.trim().isEmpty ? l.errorRequired : null,
+        ),
+      ],
+      buttons: [
+        DialogButtonSpec(id: 'cancel', label: l.actionCancel),
+        DialogButtonSpec(id: 'send', label: l.actionSend, primary: true),
+      ],
+    ),
+  );
+  if (r?.buttonId != 'send') return;
+  try {
+    await s.repositories.meta.submitFeedback(
+      FeedbackSubmission(
+        kind: r!.values['kind'] == 'idea' ? FeedbackKind.idea : FeedbackKind.problem,
+        message: r.text('message'),
+        app: s.config.app.name,
+        appVersion: s.serverInfo.value?.minClientVersion ?? 'dev',
+        platform: platformLabel,
+        route: s.router.state.uri.toString(),
+      ),
+    );
+    s.toasts.show(l.feedbackThanks);
+  } catch (e) {
+    s.toasts.error(l.feedbackFailed, description: errorMessage(e));
+  }
+}
+
+/// Help › What's new.
+Future<void> showWhatsNewDialog(BuildContext context, ShellServices s) {
+  final l = WonkyAppLocalizations.of(context);
+  return showShadDialog<void>(
+    context: context,
+    builder: (context) => ShadDialog(
+      title: Text(l.whatsNewTitle),
+      actions: [ShadButton(onPressed: () => Navigator.of(context).pop(), child: Text(l.actionClose))],
+      child: SizedBox(
+        width: 460,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          spacing: 10,
+          children: [
+            for (final item in [l.whatsNew1, l.whatsNew2, l.whatsNew3, l.whatsNew4])
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Padding(
+                    padding: EdgeInsets.only(top: 2, right: 8),
+                    child: Icon(LucideIcons.sparkle, size: 14),
+                  ),
+                  Expanded(child: Text(item)),
+                ],
+              ),
+          ],
+        ),
+      ),
+    ),
+  );
+}
+
+/// Tools › Activity dashboard (suite 07 §6): who did what, recent activity.
+Future<void> showActivityDashboard(BuildContext context, ShellServices s, DriveItemView item) {
+  final l = WonkyAppLocalizations.of(context);
+  return showShadDialog<void>(
+    context: context,
+    builder: (context) => ShadDialog(
+      title: Text(l.activityTitle(item.name)),
+      actions: [ShadButton(onPressed: () => Navigator.of(context).pop(), child: Text(l.actionClose))],
+      child: SizedBox(
+        width: 520,
+        height: 420,
+        child: FutureBuilder<List<ActivityEventView>>(
+          future: s.drive.activity(item.uuid, limit: 100),
+          builder: (context, snap) {
+            final theme = ShadTheme.of(context);
+            if (snap.connectionState != ConnectionState.done) {
+              return const Center(child: ShadSpinner());
+            }
+            if (snap.hasError) return Center(child: Text(errorMessage(snap.error!)));
+            final events = snap.data ?? const [];
+            if (events.isEmpty) return Center(child: Text(l.activityEmpty, style: theme.textTheme.muted));
+            final viewers = <String, int>{};
+            for (final e in events) {
+              final n = e.actor?.displayName;
+              if (n != null) viewers[n] = (viewers[n] ?? 0) + 1;
+            }
+            final top = viewers.entries.toList()..sort((a, b) => b.value.compareTo(a.value));
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Text(l.activityPeople, style: theme.textTheme.small),
+                const SizedBox(height: 6),
+                Wrap(
+                  spacing: 6,
+                  runSpacing: 6,
+                  children: [
+                    for (final e in top.take(8))
+                      ShadBadge.secondary(child: Text('${e.key} · ${e.value}')),
+                  ],
+                ),
+                const SizedBox(height: 12),
+                Text(l.activityRecent, style: theme.textTheme.small),
+                const SizedBox(height: 6),
+                Expanded(
+                  child: ListView.separated(
+                    itemCount: events.length,
+                    separatorBuilder: (_, _) => const ShadSeparator.horizontal(margin: EdgeInsets.zero),
+                    itemBuilder: (context, i) => Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 6),
+                      child: Text(
+                        '${activityText(l, events[i])} · ${intl.DateFormat.yMMMd().add_jm().format(events[i].at.toLocal())}',
+                        style: theme.textTheme.small.copyWith(fontWeight: FontWeight.normal),
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            );
+          },
+        ),
+      ),
+    ),
+  );
+}
+
+/// Human text of an activity event.
+String activityText(WonkyAppLocalizations l, ActivityEventView e) {
+  final who = e.actor?.displayName ?? (e.actorKind.name == 'system' ? l.activitySystem : l.someone);
+  return switch (e.type) {
+    ActivityType.created => l.activityCreated(who),
+    ActivityType.renamed => l.activityRenamed(who),
+    ActivityType.moved => l.activityMoved(who),
+    ActivityType.edited => l.activityEdited(who),
+    ActivityType.commented => l.activityCommented(who),
+    ActivityType.shared => l.activityShared(who),
+    ActivityType.unshared => l.activityUnshared(who),
+    ActivityType.restoredVersion => l.activityRestoredVersion(who),
+    ActivityType.trashed => l.activityTrashed(who),
+    ActivityType.restored => l.activityRestored(who),
+    ActivityType.exported => l.activityExported(who),
+  };
+}
+
+/// "Request access" for a file the user cannot open (No-access page).
+Future<bool> showRequestAccessDialog(BuildContext context, ShellServices s, UuidValue itemUuid) async {
+  final l = WonkyAppLocalizations.of(context);
+  final r = await showWonkyFormDialog(
+    context,
+    WonkyDialogSpec(
+      title: l.requestAccessTitle,
+      description: l.requestAccessDescription,
+      dialogKey: 'dialog.requestAccess',
+      fields: [
+        SelectFieldSpec(
+          id: 'role',
+          label: l.requestAccessRole,
+          options: {'viewer': l.roleViewer, 'commenter': l.roleCommenter, 'editor': l.roleEditor},
+          initial: 'editor',
+        ),
+        TextFieldSpec(id: 'message', label: l.requestAccessMessage, multiline: true, selectAll: false),
+      ],
+      buttons: [
+        DialogButtonSpec(id: 'cancel', label: l.actionCancel),
+        DialogButtonSpec(id: 'send', label: l.requestAccessSend, primary: true),
+      ],
+    ),
+  );
+  if (r?.buttonId != 'send') return false;
+  try {
+    final msg = r!.text('message').trim();
+    await s.repositories.sharing.requestAccess(
+      itemUuid,
+      AccessRole.values.byName('${r.values['role']}'),
+      msg.isEmpty ? null : msg,
+    );
+    s.toasts.show(l.toastAccessRequested);
+    return true;
+  } catch (e) {
+    s.toasts.error(l.requestAccessFailed, description: errorMessage(e));
+    if (kDebugMode) debugPrint('$e');
+    return false;
+  }
+}

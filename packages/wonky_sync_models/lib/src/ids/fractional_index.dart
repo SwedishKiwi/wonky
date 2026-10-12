@@ -83,11 +83,7 @@ abstract final class FractionalIndex {
     }
     final mid = n ~/ 2;
     final c = between(a, b);
-    return [
-      ...nBetween(a, c, mid),
-      c,
-      ...nBetween(c, b, n - mid - 1),
-    ];
+    return [...nBetween(a, c, mid), c, ...nBetween(c, b, n - mid - 1)];
   }
 
   /// Whether [key] is a valid fractional index key.
@@ -120,17 +116,11 @@ abstract final class FractionalIndex {
         n++;
       }
       if (n > 0) {
-        return b.substring(0, n) +
-            _midpoint(
-              n < a.length ? a.substring(n) : '',
-              b.substring(n),
-            );
+        return b.substring(0, n) + _midpoint(n < a.length ? a.substring(n) : '', b.substring(n));
       }
     }
     final digitA = a.isNotEmpty ? base62Value(a.codeUnitAt(0)) : 0;
-    final digitB = b != null && b.isNotEmpty
-        ? base62Value(b.codeUnitAt(0))
-        : base62Digits.length;
+    final digitB = b != null && b.isNotEmpty ? base62Value(b.codeUnitAt(0)) : base62Digits.length;
     if (digitB - digitA > 1) {
       final midDigit = ((digitA + digitB) / 2).round();
       return base62Digits[midDigit];

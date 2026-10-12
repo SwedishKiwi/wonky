@@ -42,13 +42,15 @@ final class WorkbookBuilder {
   set themeJson(String json) => _themeJson = json;
 
   /// Adds a sheet with [rows] × [cols] and makes it current.
-  String sheet(String name, {int rows = 100, int cols = 26, bool hidden = false, int frozenRows = 0}) {
+  String sheet(
+    String name, {
+    int rows = 100,
+    int cols = 26,
+    bool hidden = false,
+    int frozenRows = 0,
+  }) {
     final id = ids.newId();
-    final sortKeys = FractionalIndex.nBetween(
-      _sheets.isEmpty ? null : _lastSheetKey,
-      null,
-      1,
-    );
+    final sortKeys = FractionalIndex.nBetween(_sheets.isEmpty ? null : _lastSheetKey, null, 1);
     _lastSheetKey = sortKeys.single;
     _rows.add(
       RowChange.insert(SheetsTables.sheet, id, {

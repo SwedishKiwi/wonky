@@ -15,7 +15,9 @@ extension PlanBuilderHelpers on PlanBuilder {
   /// The sheet or a `not_found` error.
   SheetModel sheetOf(String sheetId) {
     final s = model.sheet(sheetId);
-    if (s == null) throw PlanException('not_found', 'Sheet not found', details: {'sheetId': sheetId});
+    if (s == null) {
+      throw PlanException('not_found', 'Sheet not found', details: {'sheetId': sheetId});
+    }
     return s;
   }
 
@@ -83,8 +85,12 @@ extension PlanBuilderHelpers on PlanBuilder {
   }
 
   /// GridRange JSON for a rect of [s].
-  String rangeJson(SheetModel s, GridRect rect, {bool wholeRows = false, bool wholeColumns = false}) =>
-      s.gridRange(rect, wholeRows: wholeRows, wholeColumns: wholeColumns).encode();
+  String rangeJson(
+    SheetModel s,
+    GridRect rect, {
+    bool wholeRows = false,
+    bool wholeColumns = false,
+  }) => s.gridRange(rect, wholeRows: wholeRows, wholeColumns: wholeColumns).encode();
 
   /// GridRange list JSON for rects of [s].
   String rangesJson(SheetModel s, Iterable<GridRect> rects) =>
@@ -107,7 +113,10 @@ extension PlanBuilderHelpers on PlanBuilder {
   /// Iterates the current cell rows (overlay-aware) of [s] inside [rect] as
   /// `(row, col, rowId, colId, columns)`; includes cells written earlier in
   /// the plan.
-  Iterable<(int, int, String, String, Map<String, Object?>)> cellsIn(SheetModel s, GridRect rect) sync* {
+  Iterable<(int, int, String, String, Map<String, Object?>)> cellsIn(
+    SheetModel s,
+    GridRect rect,
+  ) sync* {
     final seen = <String>{};
     for (final (r, c, cell) in s.cellsIn(rect)) {
       seen.add(cell.id);

@@ -18,20 +18,28 @@ import 'helpers.dart';
 void validateSheetName(PlanBuilder b, String name, {String? exceptId}) {
   final n = name.trim();
   if (n.isEmpty) throw const PlanException('invalid_argument', 'Sheet name cannot be empty');
-  if (n.length > 100) throw const PlanException('invalid_argument', 'Sheet name is too long (max 100)');
+  if (n.length > 100) {
+    throw const PlanException('invalid_argument', 'Sheet name is too long (max 100)');
+  }
   final lower = n.toLowerCase();
   for (final s in b.model.sheets) {
     if (s.id == exceptId) continue;
     final cur = b.current(SheetsTables.sheet, s.id);
     final curName = (cur?[Cols.name] as String? ?? s.name).toLowerCase();
     if (curName == lower) {
-      throw PlanException('duplicate_name', 'A sheet with the name "$n" already exists. Please enter another name.');
+      throw PlanException(
+        'duplicate_name',
+        'A sheet with the name "$n" already exists. Please enter another name.',
+      );
     }
   }
   for (final e in b.touchedRows(SheetsTables.sheet).entries) {
     if (e.key == exceptId || e.value == null || b.model.sheet(e.key) != null) continue;
     if ((e.value![Cols.name] as String? ?? '').toLowerCase() == lower) {
-      throw PlanException('duplicate_name', 'A sheet with the name "$n" already exists. Please enter another name.');
+      throw PlanException(
+        'duplicate_name',
+        'A sheet with the name "$n" already exists. Please enter another name.',
+      );
     }
   }
 }
@@ -43,7 +51,7 @@ String nextSheetName(PlanBuilder b, {String prefix = 'Sheet', bool spaced = fals
     for (final v in b.touchedRows(SheetsTables.sheet).values)
       if (v != null) (v[Cols.name] as String? ?? '').toLowerCase(),
   };
-  for (var i = 1;; i++) {
+  for (var i = 1; ; i++) {
     final name = spaced ? '$prefix $i' : '$prefix$i';
     if (!taken.contains(name.toLowerCase())) return name;
   }
@@ -162,7 +170,17 @@ Iterable<(String, String)> sheetChildren(SheetModel s) sync* {
   for (final c in s.cells.all) {
     yield (SheetsTables.cell, c.id);
   }
-  for (final m in [s.merges, s.groups, s.protections, s.cfRules, s.dvRules, s.filterViews, s.bandings, s.objects, s.pivots]) {
+  for (final m in [
+    s.merges,
+    s.groups,
+    s.protections,
+    s.cfRules,
+    s.dvRules,
+    s.filterViews,
+    s.bandings,
+    s.objects,
+    s.pivots,
+  ]) {
     for (final r in m.values) {
       yield (r.table, r.id);
     }
@@ -182,7 +200,10 @@ MutationPlan planDeleteSheet(PlanBuilder b, DeleteSheet op) {
   final s = b.sheetOf(op.sheetId);
   final remainingVisible = b.model.sheets.where((x) => x.id != s.id && !x.record!.hidden).length;
   if (remainingVisible == 0) {
-    throw const PlanException('invalid_argument', "You can't remove all the visible sheets in a document");
+    throw const PlanException(
+      'invalid_argument',
+      "You can't remove all the visible sheets in a document",
+    );
   }
   for (final (t, id) in sheetChildren(s)) {
     b.delete(t, id);
@@ -248,7 +269,8 @@ MutationPlan planSetSpreadsheetProperties(PlanBuilder b, SetSpreadsheetPropertie
     if (op.recalcMode != null) SpreadsheetCols.recalcMode: op.recalcMode,
     if (op.iterativeCalc != null) SpreadsheetCols.iterativeCalc: op.iterativeCalc,
     if (op.maxIterations != null) SpreadsheetCols.maxIterations: op.maxIterations,
-    if (op.convergenceThreshold != null) SpreadsheetCols.convergenceThreshold: op.convergenceThreshold,
+    if (op.convergenceThreshold != null)
+      SpreadsheetCols.convergenceThreshold: op.convergenceThreshold,
     if (op.displayLanguage != null) SpreadsheetCols.displayLanguage: op.displayLanguage,
   };
   if (op.themeJson != null) {
@@ -276,7 +298,9 @@ MutationPlan planSetPrintSettings(PlanBuilder b, SetPrintSettings op) {
     if (op.patch == null) {
       next = null;
     } else {
-      final cur = op.replace ? <String, Object?>{} : PlanBuilderHelpers.decodeMap(s.record?.printSettingsJson);
+      final cur = op.replace
+          ? <String, Object?>{}
+          : PlanBuilderHelpers.decodeMap(s.record?.printSettingsJson);
       next = jsonEncode(jsonMergePatch(cur, op.patch!));
     }
     b.update(SheetsTables.sheet, s.id, {SheetCols.printSettingsJson: next});
@@ -333,10 +357,18 @@ MutationPlan planDuplicateSheet(PlanBuilder b, DuplicateSheet op) {
     idMap[c.id] = b.ctx.ids.newId();
   }
   for (final r in s.rowRecords.values) {
-    b.insert(SheetsTables.sheetRow, idMap[r.id]!, {...r.toColumns(), Cols.sheetId: newId}..remove(Cols.id));
+    b.insert(
+      SheetsTables.sheetRow,
+      idMap[r.id]!,
+      {...r.toColumns(), Cols.sheetId: newId}..remove(Cols.id),
+    );
   }
   for (final c in s.columnRecords.values) {
-    b.insert(SheetsTables.sheetColumn, idMap[c.id]!, {...c.toColumns(), Cols.sheetId: newId}..remove(Cols.id));
+    b.insert(
+      SheetsTables.sheetColumn,
+      idMap[c.id]!,
+      {...c.toColumns(), Cols.sheetId: newId}..remove(Cols.id),
+    );
   }
   String remapText(String text) {
     final same = StoredFormula.mapTokens(text, (t) {
@@ -417,13 +449,28 @@ MutationPlan planDuplicateSheet(PlanBuilder b, DuplicateSheet op) {
     copy(m, (c) => c..[Cols.rangeJson] = remapRange(m.rangeJson));
   }
   for (final g in s.groups.values) {
-    copy(g, (c) => c..['startId'] = idMap[g.startId] ?? g.startId..['endId'] = idMap[g.endId] ?? g.endId);
+    copy(
+      g,
+      (c) => c
+        ..['startId'] = idMap[g.startId] ?? g.startId
+        ..['endId'] = idMap[g.endId] ?? g.endId,
+    );
   }
   for (final r in s.cfRules.values) {
-    copy(r, (c) => c..[Cols.rangesJson] = remapRanges(r.rangesJson)..['ruleJson'] = remapJson(r.ruleJson));
+    copy(
+      r,
+      (c) => c
+        ..[Cols.rangesJson] = remapRanges(r.rangesJson)
+        ..['ruleJson'] = remapJson(r.ruleJson),
+    );
   }
   for (final r in s.dvRules.values) {
-    copy(r, (c) => c..[Cols.rangesJson] = remapRanges(r.rangesJson)..['criteriaJson'] = remapJson(r.criteriaJson));
+    copy(
+      r,
+      (c) => c
+        ..[Cols.rangesJson] = remapRanges(r.rangesJson)
+        ..['criteriaJson'] = remapJson(r.criteriaJson),
+    );
   }
   for (final r in s.bandings.values) {
     copy(r, (c) => c..[Cols.rangeJson] = remapRange(r.rangeJson));
@@ -436,7 +483,12 @@ MutationPlan planDuplicateSheet(PlanBuilder b, DuplicateSheet op) {
     });
   }
   for (final r in s.filterViews.values) {
-    copy(r, (c) => c..[Cols.rangeJson] = remapRange(r.rangeJson)..['criteriaJson'] = remapJson(r.criteriaJson));
+    copy(
+      r,
+      (c) => c
+        ..[Cols.rangeJson] = remapRange(r.rangeJson)
+        ..['criteriaJson'] = remapJson(r.criteriaJson),
+    );
   }
   if (s.basicFilter != null) {
     final f = s.basicFilter!;
@@ -453,7 +505,9 @@ MutationPlan planDuplicateSheet(PlanBuilder b, DuplicateSheet op) {
       for (final k in ['rowId', 'colId']) {
         final v = anchor[k];
         if (v is String) {
-          final canonical = v.contains('-') ? v : (Base62Uuid.isValid(v) ? Base62Uuid.decode(v) : v);
+          final canonical = v.contains('-')
+              ? v
+              : (Base62Uuid.isValid(v) ? Base62Uuid.decode(v) : v);
           final mapped = idMap[canonical];
           if (mapped != null) anchor[k] = Base62Uuid.encode(mapped);
         }

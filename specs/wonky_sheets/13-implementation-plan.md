@@ -187,7 +187,7 @@ Rules for parallel work:
 - **Acceptance**: [08](08-charts-and-objects.md) §21.
 
 ### WS-S14 · Import, export, print (M3 CSV, M5 rest)
-- See [11](11-import-export-print.md). Spike in M3: `excel_plus` read/write of a 1M-cell
+- See [11](11-import-export-print.md). Decided: own OOXML reader/writer (`archive` + `xml`, 11 §5.1); M3 perf check of a 1M-cell
   workbook (performance, memory, API gaps) → decision record.
 - **Acceptance**: [11](11-import-export-print.md) §11.
 
@@ -237,14 +237,14 @@ binding unless changed via a contract PR.
 ### 4.1 Writes
 
 ```dart
-/// wonky_sheets_core/lib/mutations/row_change.dart
+/// wonky_sheets_core/lib/src/mutations/row_change.dart (exported by lib/model.dart)
 enum RowOp { insert, update, delete }
 final class RowChange {
   final String table;                     // 'cell', 'sheet_row', …
   final UuidValue rowId;
   final RowOp op;
-  final Map<String, Object?> before;      // only touched columns (empty for insert)
-  final Map<String, Object?> after;       // only touched columns (empty for delete)
+  final Map<String, Object?> columnsBefore; // touched columns; full row for delete (undo revives it)
+  final Map<String, Object?> columnsAfter;  // touched columns; full row for insert
 }
 final class MutationPlan {
   final String label;                     // undo label
@@ -252,9 +252,10 @@ final class MutationPlan {
   final List<RowChange> changes;          // ordered; chunked by the writer (≤ 5,000)
   final Map<String, Object?>? detail;     // ≤ 200 cells before/after → ChangeLog.detailJson
 }
-abstract interface class SheetsMutationPlanner {
-  MutationPlan plan(SheetsOperation op, WorkbookReader model, PlanContext ctx);
+final class SheetsMutationPlanner {              // throws PlanException(code, message)
+  MutationPlan plan(SheetsOperation op, WorkbookModel model, PlanContext ctx);
 }
+// Undo: UndoInverter.invert(plan, currentRowReader) applies the per-column skip rule.
 sealed class SheetsOperation { /* SetCells, Format, InsertRows, DeleteRows, MoveDimension,
   AddSheet, …, AddChart, UpdateObject, SetPrintSettings, ScriptFileSave, … */ }
 
@@ -469,7 +470,7 @@ ranges, prompt-injection corpus.
 | R6 | Synchronous bridge on web (COOP/COEP) breaks other resources | Medium | Medium | Same-origin resources; spike in M3; snapshot-mode fallback; run-on-server option | S16 |
 | R7 | Formula compatibility with Google Sheets/Excel (≈ 450 functions, edge cases, QUERY) | High | Medium | Category-parallel work, test vectors from real apps, explicit unsupported list, import reports | S8 |
 | R8 | Grid rendering performance on web (CanvasKit/skwasm text cost) | Medium | High | Text layout cache, glyph atlas experiments, layer repaint isolation, perf gate in M2 | S4 |
-| R9 | `excel_plus` gaps/performance at 1M cells | Medium | Medium | M3 spike; supplement reader; fallback to own OOXML reader/writer behind IR | S14 |
+| R9 | Own OOXML reader/writer gaps/performance at 1M cells | Medium | Medium | Corpus + LibreOffice validation; streaming parts; IR boundary keeps fixes local | S14 |
 | R10 | Concurrency surprises (LWW on whole JSON specs, partial-range sorts) | Medium | Medium | Read-modify-write within transactions; documentation; conflict review UI; full-row sorts preferred | S11/S13/S15 |
 | R11 | Advisory protection bypass (U9) | Medium | Low | Documented; ChangeLog-based warnings; server-side enforcement for MCP/scripts | S10/S17 |
 | R12 | AI cost and prompt injection | Medium | Medium | Budgets, caching, confirmations, data-tag wrapping, no sharing tools, eval suite | S18 |
@@ -483,7 +484,7 @@ ranges, prompt-injection corpus.
 Questions raised while writing specs 01–13, and where they were settled:
 
 1. **Chart library** — own pure-Dart chart engine ([08](08-charts-and-objects.md) §6); no
-   `fl_chart`. Suite 01 §2.1 updated (`wonky_sheets_core` may use `image`, `pdf`, `excel_plus`,
+   `fl_chart`. Suite 01 §2.1 updated (`wonky_sheets_core` may use `image`, `pdf`,
    `timezone`).
 2. **Model location** — `WorkbookModel` and `SheetsMutationPlanner` live in
    `wonky_sheets_core` ([02](02-data-model.md) §6).

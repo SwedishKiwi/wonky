@@ -2,6 +2,7 @@ import 'dart:convert';
 
 import '../../addressing/grid_geometry.dart';
 import '../../engine_bridge/stored_formula.dart';
+import '../../model/events.dart';
 import '../../model/grid_range.dart';
 import '../../model/records.dart';
 import '../../model/schema.dart';
@@ -40,14 +41,23 @@ Map<String, Object?> cellData(Map<String, Object?>? cell) => {
 };
 
 /// Ensures [s] has at least [rows] × [cols]; returns `(rowIdAt, colIdAt)`.
-(String Function(int), String Function(int)) ensureGridSize(PlanBuilder b, SheetModel s, int rows, int cols) {
+(String Function(int), String Function(int)) ensureGridSize(
+  PlanBuilder b,
+  SheetModel s,
+  int rows,
+  int cols,
+) {
   final needRows = rows - s.rows.length;
   final needCols = cols - s.columns.length;
   final extraRows = <String>[];
   final extraCols = <String>[];
   if (needRows > 0 || needCols > 0) {
     b.checkCellLimit(
-      b.gridCellsWith(s.id, rows > s.rows.length ? rows : s.rows.length, cols > s.columns.length ? cols : s.columns.length),
+      b.gridCellsWith(
+        s.id,
+        rows > s.rows.length ? rows : s.rows.length,
+        cols > s.columns.length ? cols : s.columns.length,
+      ),
     );
     extraRows.addAll(b.appendDimension(s, Dimension.rows, needRows));
     extraCols.addAll(b.appendDimension(s, Dimension.columns, needCols));
@@ -74,13 +84,26 @@ void checkMergesNotSplit(SheetModel s, GridRect dest, {Set<String> ignore = cons
 
 /// [MoveRange]: move (cut/paste, drag) or copy a block (03 §11, §12.6).
 MutationPlan planMoveRange(PlanBuilder b, MoveRange op) {
+  applyMoveRange(b, op);
+  return b.build(op.copy ? 'Copy' : 'Move', kinds: [ChangeKinds.values, ChangeKinds.format]);
+}
+
+/// Adds the writes of [op] to [b].
+void applyMoveRange(PlanBuilder b, MoveRange op) {
   final src = b.sheetOf(op.source.sheetId);
   final dst = b.sheetOf(op.destSheetId);
   final s = op.source.rect;
   b.checkRect(src, s);
-  final d = GridRect(op.destRow, op.destCol, op.destRow + s.rowCount - 1, op.destCol + s.colCount - 1);
-  if (d.top < 0 || d.left < 0) throw const PlanException('invalid_range', 'Destination outside the grid');
-  if (!op.copy && dst.id == src.id && d == s) return b.build('Move');
+  final d = GridRect(
+    op.destRow,
+    op.destCol,
+    op.destRow + s.rowCount - 1,
+    op.destCol + s.colCount - 1,
+  );
+  if (d.top < 0 || d.left < 0) {
+    throw const PlanException('invalid_range', 'Destination outside the grid');
+  }
+  if (!op.copy && dst.id == src.id && d == s) return;
   final (rowIdAt, colIdAt) = ensureGridSize(b, dst, d.bottom + 1, d.right + 1);
   // Merges moving along.
   final srcMerges = [
@@ -93,7 +116,14 @@ MutationPlan planMoveRange(PlanBuilder b, MoveRange op) {
     }
   }
   if (d.bottom < dst.rows.length && d.right < dst.columns.length) {
-    checkMergesNotSplit(dst, d, ignore: {if (!op.copy && dst.id == src.id) for (final (id, _) in srcMerges) id});
+    checkMergesNotSplit(
+      dst,
+      d,
+      ignore: {
+        if (!op.copy && dst.id == src.id)
+          for (final (id, _) in srcMerges) id,
+      },
+    );
   }
   // Snapshot source cells.
   final snapshot = <(int, int), Map<String, Object?>>{};
@@ -133,7 +163,14 @@ MutationPlan planMoveRange(PlanBuilder b, MoveRange op) {
           );
         } else {
           out[CellCols.content] =
-              hooks.remap(content, hostSheetId: dst.id, sourceSheetId: src.id, source: s, destSheetId: dst.id, dest: d) ??
+              hooks.remap(
+                content,
+                hostSheetId: dst.id,
+                sourceSheetId: src.id,
+                source: s,
+                destSheetId: dst.id,
+                dest: d,
+              ) ??
               (dst.id == src.id ? content : _pinSheet(content, src.id));
         }
       }
@@ -149,7 +186,12 @@ MutationPlan planMoveRange(PlanBuilder b, MoveRange op) {
     }
   }
   for (final (id, m) in srcMerges) {
-    final moved = GridRect(m.top - s.top + d.top, m.left - s.left + d.left, m.bottom - s.top + d.top, m.right - s.left + d.left);
+    final moved = GridRect(
+      m.top - s.top + d.top,
+      m.left - s.left + d.left,
+      m.bottom - s.top + d.top,
+      m.right - s.left + d.left,
+    );
     final json = GridRange(
       sheetId: dst.id,
       r1: rowIdAt(moved.top),
@@ -158,19 +200,26 @@ MutationPlan planMoveRange(PlanBuilder b, MoveRange op) {
       c2: colIdAt(moved.right),
     ).encode();
     if (op.copy) {
-      b.insert(SheetsTables.mergedRange, b.ctx.ids.newId(), {Cols.sheetId: dst.id, Cols.rangeJson: json});
+      b.insert(SheetsTables.mergedRange, b.ctx.ids.newId(), {
+        Cols.sheetId: dst.id,
+        Cols.rangeJson: json,
+      });
     } else if (dst.id == src.id) {
       b.update(SheetsTables.mergedRange, id, {Cols.rangeJson: json});
     } else {
       b.delete(SheetsTables.mergedRange, id);
-      b.insert(SheetsTables.mergedRange, b.ctx.ids.newId(), {Cols.sheetId: dst.id, Cols.rangeJson: json});
+      b.insert(SheetsTables.mergedRange, b.ctx.ids.newId(), {
+        Cols.sheetId: dst.id,
+        Cols.rangeJson: json,
+      });
     }
   }
   _moveValidation(b, src, s, dst, d, rowIdAt, colIdAt, copy: op.copy);
   if (!op.copy && hooks != null) _remapReferences(b, src, s, dst, d);
   b.addResolvedRange(ResolvedRange(src.id, s));
-  if (d.bottom < dst.rows.length && d.right < dst.columns.length) b.addResolvedRange(ResolvedRange(dst.id, d));
-  return b.build(op.copy ? 'Copy' : 'Move', kinds: [ChangeKinds.values, ChangeKinds.format]);
+  if (d.bottom < dst.rows.length && d.right < dst.columns.length) {
+    b.addResolvedRange(ResolvedRange(dst.id, d));
+  }
 }
 
 String _pinSheet(String stored, String sheetId) => StoredFormula.mapTokens(
@@ -188,7 +237,8 @@ void _moveValidation(
   String Function(int) colIdAt, {
   required bool copy,
 }) {
-  final moved = <(String criteria, bool strict, String? style, String? help, List<GridRect> rects)>[];
+  final moved =
+      <(String criteria, bool strict, String? style, String? help, List<GridRect> rects)>[];
   for (final rule in src.dvRules.values) {
     final rects = src.ruleRects(RuleKind.dataValidation, rule.id);
     final inside = [
@@ -211,7 +261,13 @@ void _moveValidation(
   for (final (criteria, strict, style, help, rects) in moved) {
     final ranges = [
       for (final r in rects)
-        GridRange(sheetId: dst.id, r1: rowIdAt(r.top), r2: rowIdAt(r.bottom), c1: colIdAt(r.left), c2: colIdAt(r.right)),
+        GridRange(
+          sheetId: dst.id,
+          r1: rowIdAt(r.top),
+          r2: rowIdAt(r.bottom),
+          c1: colIdAt(r.left),
+          c2: colIdAt(r.right),
+        ),
     ];
     b.insert(SheetsTables.dataValidationRule, b.ctx.ids.newId(), {
       Cols.sheetId: dst.id,
@@ -241,7 +297,9 @@ void _subtractDv(PlanBuilder b, SheetModel s, List<GridRect> rects) {
     if (remaining.isEmpty) {
       b.delete(SheetsTables.dataValidationRule, rule.id);
     } else {
-      b.update(SheetsTables.dataValidationRule, rule.id, {Cols.rangesJson: b.rangesJson(s, remaining)});
+      b.update(SheetsTables.dataValidationRule, rule.id, {
+        Cols.rangesJson: b.rangesJson(s, remaining),
+      });
     }
   }
 }
@@ -259,7 +317,14 @@ void _remapReferences(PlanBuilder b, SheetModel src, GridRect s, SheetModel dst,
       // Cells written by this plan were handled above.
       if (b.touched(SheetsTables.cell, cell.id)) continue;
       if (!StoredFormula.mayReference(content, srcRowIds)) continue;
-      final r = hooks.remap(content, hostSheetId: sheet.id, sourceSheetId: src.id, source: s, destSheetId: dst.id, dest: d);
+      final r = hooks.remap(
+        content,
+        hostSheetId: sheet.id,
+        sourceSheetId: src.id,
+        source: s,
+        destSheetId: dst.id,
+        dest: d,
+      );
       if (r != null && r != content) b.update(SheetsTables.cell, cell.id, {CellCols.content: r});
     }
   }
@@ -286,12 +351,19 @@ void _remapReferences(PlanBuilder b, SheetModel src, GridRect s, SheetModel dst,
       var changed = false;
       final out = [
         for (final g in ranges)
-          if (remapRange(g) case final GridRange r) () {
-            changed = true;
-            return r;
-          }() else g,
+          if (remapRange(g) case final GridRange r)
+            () {
+              changed = true;
+              return r;
+            }()
+          else
+            g,
       ];
-      if (changed) b.update(SheetsTables.conditionalFormatRule, rule.id, {Cols.rangesJson: GridRange.encodeList(out)});
+      if (changed) {
+        b.update(SheetsTables.conditionalFormatRule, rule.id, {
+          Cols.rangesJson: GridRange.encodeList(out),
+        });
+      }
     }
   }
   for (final sheet in b.model.sheets) {

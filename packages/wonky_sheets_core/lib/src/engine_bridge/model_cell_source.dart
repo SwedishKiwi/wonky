@@ -12,15 +12,10 @@ import 'value_bridge.dart';
 /// Used where no engine runs (tests, import previews) and as the base the app
 /// and server wrap around their `FormulaEngine`.
 final class ModelCellSource implements CellSource {
-  /// Creates the source. [computed] returns the engine value of a formula
-  /// cell (or null to fall back to empty); [formatHint] returns the result's
+  /// Creates the source. [_computed] returns the engine value of a formula
+  /// cell (or null to fall back to empty); [_formatHint] returns the result's
   /// format hint pattern for cells with Automatic format.
-  ModelCellSource(
-    this.model, {
-    FValue? Function(String sheetId, int row, int col)? computed,
-    String? Function(String sheetId, int row, int col)? formatHint,
-  }) : _computed = computed,
-       _formatHint = formatHint;
+  ModelCellSource(this.model, {this._computed, this._formatHint});
 
   /// The model.
   final WorkbookModel model;
@@ -42,11 +37,13 @@ final class ModelCellSource implements CellSource {
   }
 
   /// [valueAt] as a model [CellValue].
-  CellValue cellValueAt(String sheetId, int row, int col) => valueAt(sheetId, row, col).toCellValue();
+  CellValue cellValueAt(String sheetId, int row, int col) =>
+      valueAt(sheetId, row, col).toCellValue();
 
   @override
   String? numberFormatAt(String sheetId, int row, int col) {
-    final explicit = model.explicitFormatChain(sheetId, row, col).toMap()['numberFormat'] as String?;
+    final explicit =
+        model.explicitFormatChain(sheetId, row, col).toMap()['numberFormat'] as String?;
     return explicit ?? _formatHint?.call(sheetId, row, col);
   }
 

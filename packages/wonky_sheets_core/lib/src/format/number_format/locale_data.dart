@@ -186,17 +186,23 @@ final class LocaleFormatData {
     return map[norm] ?? map[norm.split('_').first];
   }
 
-  static String _clean(String s) =>
-      s.replaceAll(RegExp('[‎‏؜]'), '');
+  static String _clean(String s) => s.replaceAll(RegExp('[‎‏؜]'), '');
 
   static LocaleFormatData _build(String rawId) {
     final id = _normalize(rawId);
-    final NumberSymbols? ns = _lookup(number_data.numberFormatSymbols.cast<String, NumberSymbols>(), id);
+    final NumberSymbols? ns = _lookup(
+      number_data.numberFormatSymbols.cast<String, NumberSymbols>(),
+      id,
+    );
     if (ns == null) return id == 'en_US' ? _fallbackEnUs() : forId('en_US');
     _dateSymbols ??= date_data.dateTimeSymbolMap().cast<String, DateSymbols>();
     final DateSymbols ds = _lookup(_dateSymbols!, id) ?? _dateSymbols!['en_US']!;
     final shortDate = ds.DATEFORMATS[3];
-    final code = ns.DEF_CURRENCY_CODE;
+    var code = ns.DEF_CURRENCY_CODE;
+    final parts = id.split('_');
+    if (!number_data.numberFormatSymbols.containsKey(id) && parts.length > 1) {
+      code = _regionCurrency[parts.last] ?? code;
+    }
     var symbol = code;
     var decimals = 2;
     try {
@@ -346,6 +352,20 @@ final class LocaleFormatData {
   static final Map<String, int> _lcidByLocale = {
     for (final e in lcidLocales.entries)
       if (e.key != 0x040A) e.value: e.key,
+  };
+
+  /// Currency of regions whose locale is only known to intl by language.
+  static const Map<String, String> _regionCurrency = {
+    'US': 'USD', 'GB': 'GBP', 'DE': 'EUR', 'FR': 'EUR', 'ES': 'EUR', 'IT': 'EUR', 'NL': 'EUR', //
+    'AT': 'EUR', 'BE': 'EUR', 'FI': 'EUR', 'IE': 'EUR', 'PT': 'EUR', 'GR': 'EUR', 'LU': 'EUR', //
+    'SK': 'EUR', 'SI': 'EUR', 'EE': 'EUR', 'LV': 'EUR', 'LT': 'EUR', 'HR': 'EUR', 'MT': 'EUR', //
+    'CH': 'CHF', 'LI': 'CHF', 'JP': 'JPY', 'CN': 'CNY', 'IN': 'INR', 'BR': 'BRL', 'RU': 'RUB', //
+    'SE': 'SEK', 'NO': 'NOK', 'DK': 'DKK', 'PL': 'PLN', 'CZ': 'CZK', 'HU': 'HUF', 'TR': 'TRY', //
+    'SA': 'SAR', 'AE': 'AED', 'EG': 'EGP', 'IL': 'ILS', 'KR': 'KRW', 'TW': 'TWD', 'HK': 'HKD', //
+    'SG': 'SGD', 'AU': 'AUD', 'NZ': 'NZD', 'CA': 'CAD', 'MX': 'MXN', 'AR': 'ARS', 'CL': 'CLP', //
+    'CO': 'COP', 'PE': 'PEN', 'ZA': 'ZAR', 'UA': 'UAH', 'TH': 'THB', 'VN': 'VND', 'ID': 'IDR', //
+    'MY': 'MYR', 'PH': 'PHP', 'RO': 'RON', 'BG': 'BGN', 'RS': 'RSD', 'IS': 'ISK', 'PK': 'PKR', //
+    'BD': 'BDT', 'NG': 'NGN', 'KE': 'KES', 'MA': 'MAD', 'QA': 'QAR', 'KW': 'KWD',
   };
 
   /// Default region for bare language ids (`de` → `de_DE`).

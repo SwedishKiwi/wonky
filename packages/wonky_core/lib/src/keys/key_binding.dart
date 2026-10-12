@@ -374,3 +374,26 @@ class ResolvedChord {
     _ => key,
   };
 }
+
+/// Where a key binding is active (suite 08 §1.2). More specific scopes win:
+/// a binding in [editor] shadows the same chord in [global] while the editor
+/// has focus. Apps may define more scopes.
+extension type const KeyScope(String name) {
+  /// The app shell (always active).
+  static const global = KeyScope('global');
+
+  /// The Write editor has focus.
+  static const editor = KeyScope('editor');
+
+  /// The Sheets grid has focus.
+  static const grid = KeyScope('grid');
+
+  /// A Sheets cell is being edited.
+  static const cellEditor = KeyScope('cellEditor');
+
+  /// A dialog has focus.
+  static const dialog = KeyScope('dialog');
+
+  /// The drive list/grid has focus (home screen shortcuts like `N`, `S`).
+  static const drive = KeyScope('drive');
+}

@@ -10,6 +10,9 @@ class MentionAtomicityReaction extends EditReaction {
 
   @override
   void react(EditContext editContext, RequestDispatcher requestDispatcher, List<EditEvent> changeList) {
+    if (_completePartialMentionDeletion(editContext, requestDispatcher, changeList)) {
+      return;
+    }
     if (!changeList.any((e) => e is SelectionChangeEvent)) {
       return;
     }
@@ -31,6 +34,51 @@ class MentionAtomicityReaction extends EditReaction {
         SelectionReason.contentChange,
       ),
     ]);
+  }
+
+  /// When part of a mention was deleted (e.g. one character by an IME), the
+  /// rest of it is deleted too.
+  bool _completePartialMentionDeletion(
+    EditContext editContext,
+    RequestDispatcher requestDispatcher,
+    List<EditEvent> changeList,
+  ) {
+    final lastEdit = changeList.whereType<DocumentEdit>().lastOrNull?.change;
+    if (lastEdit is! TextDeletedEvent) return false;
+    final deleted = lastEdit.deletedText;
+    if (deleted.isEmpty) return false;
+    final mentions = {
+      ...deleted.getAllAttributionsAt(0).whereType<MentionAttribution>(),
+      ...deleted.getAllAttributionsAt(deleted.length - 1).whereType<MentionAttribution>(),
+    };
+    if (mentions.isEmpty) return false;
+    final node = editContext.document.getNodeById(lastEdit.nodeId);
+    if (node is! TextNode) return false;
+    final offset = lastEdit.offset;
+    for (final mention in mentions) {
+      for (final probe in [offset - 1, offset]) {
+        if (probe < 0 || probe >= node.text.length) continue;
+        if (!node.text.hasAttributionAt(probe, attribution: mention)) continue;
+        final range = node.text.getAttributedRange({mention}, probe);
+        requestDispatcher.execute([
+          DeleteContentRequest(
+            documentRange: DocumentRange(
+              start: DocumentPosition(nodeId: node.id, nodePosition: TextNodePosition(offset: range.start)),
+              end: DocumentPosition(nodeId: node.id, nodePosition: TextNodePosition(offset: range.end + 1)),
+            ),
+          ),
+          ChangeSelectionRequest(
+            DocumentSelection.collapsed(
+              position: DocumentPosition(nodeId: node.id, nodePosition: TextNodePosition(offset: range.start)),
+            ),
+            SelectionChangeType.deleteContent,
+            SelectionReason.contentChange,
+          ),
+        ]);
+        return true;
+      }
+    }
+    return false;
   }
 
   /// [position] moved to the nearest edge of the mention it is inside of.

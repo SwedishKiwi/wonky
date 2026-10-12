@@ -42,7 +42,7 @@ class SuggestionRewriter {
     Map<String, dynamic>? lastOwnInsertionData;
     Map<String, dynamic>? previousBaseAttributes;
 
-    for (final op in change.operations) {
+    for (final op in _deletesFirst(change.operations)) {
       if (op.isInsert) {
         // Typing inside or right after your own suggested insertion extends it.
         final ownBefore = _ownInsertion(previousBaseAttributes, context.userUuid);
@@ -155,6 +155,34 @@ class SuggestionRewriter {
         if (base[key] != null) key: base[key],
     };
     result['$_prefix${context.suggestionId}'] = {..._data('fmt', context), 'before': before};
+    return result;
+  }
+
+  /// Reorders `insert, delete` pairs into `delete, insert` so that the
+  /// suggested insertion of a replacement comes after the struck text
+  /// (Write 08 §2.4). Both orders describe the same change.
+  static List<Operation> _deletesFirst(List<Operation> ops) {
+    final result = <Operation>[];
+    var i = 0;
+    while (i < ops.length) {
+      if (ops[i].isInsert) {
+        var j = i;
+        while (j < ops.length && ops[j].isInsert) {
+          j += 1;
+        }
+        var k = j;
+        while (k < ops.length && ops[k].isDelete) {
+          k += 1;
+        }
+        result
+          ..addAll(ops.sublist(j, k))
+          ..addAll(ops.sublist(i, j));
+        i = k;
+        continue;
+      }
+      result.add(ops[i]);
+      i += 1;
+    }
     return result;
   }
 

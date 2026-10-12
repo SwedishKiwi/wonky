@@ -1,7 +1,6 @@
 import '../../content/cell_content.dart';
 import '../../engine_bridge/formula_hooks.dart';
 import '../../formula/parser/formula_locale.dart';
-import '../../formula/values/errors.dart';
 import '../../formula/values/format_hint.dart';
 import '../../formula/values/fvalue.dart';
 import '../../formula/values/numeric.dart';
@@ -307,6 +306,3 @@ final class CompiledCondition {
     }
   }
 }
-
-/// Unused import guard for [ErrorKind] (errors propagate as non-matches).
-typedef _ErrorKindRef = ErrorKind;

@@ -18,6 +18,28 @@ import 'package:serverpod_auth_idp_client/serverpod_auth_idp_client.dart'
 import 'package:serverpod_client/serverpod_client.dart' as _isc;
 import 'package:serverpod_offline_sync_client/serverpod_offline_sync_client.dart'
     as _ipulbpi2;
+import 'package:wonky_client/src/protocol/platform/activity/activity_event_view.dart'
+    as _itempttd;
+import 'package:wonky_client/src/protocol/platform/comments/comment_thread_view.dart'
+    as _i2c85fb0;
+import 'package:wonky_client/src/protocol/platform/drive/drive_item_view.dart'
+    as _iatsgjjq;
+import 'package:wonky_client/src/protocol/platform/drive/template_view.dart'
+    as _i1pzk6fp;
+import 'package:wonky_client/src/protocol/platform/files/file_url_view.dart'
+    as _i4i1hokq;
+import 'package:wonky_client/src/protocol/platform/users/access_token_view.dart'
+    as _ip6swqsj;
+import 'package:wonky_client/src/protocol/platform/users/user_summary.dart'
+    as _iq7femvs;
+import 'package:wonky_client/src/protocol/platform/versions/item_version_view.dart'
+    as _itqtmykd;
+import 'package:wonky_client/src/protocol/write/models/document_op_view.dart'
+    as _i8x9070n;
+import 'package:wonky_client/src/protocol/write/models/write_theme_revision_view.dart'
+    as _igytjuh5;
+import 'package:wonky_client/src/protocol/write/models/write_theme_view.dart'
+    as _i2zuh8f2;
 import 'package:wonky_sync_models/wonky_sync_models.dart' as _i810rwvy;
 import 'platform/activity/activity_event.dart' as _iatdjl5p;
 import 'platform/activity/activity_event_view.dart' as _isa7sjzq;
@@ -37,6 +59,7 @@ import 'platform/common/wonky_error_code.dart' as _inb0isem;
 import 'platform/common/wonky_exception.dart' as _igdswlrw;
 import 'platform/drive/drive_change.dart' as _iktwt5zz;
 import 'platform/drive/drive_change_kind.dart' as _ijoqbs82;
+import 'platform/drive/drive_import_options.dart' as _ig2nixhn;
 import 'platform/drive/drive_item.dart' as _inge8yy2;
 import 'platform/drive/drive_item_kind.dart' as _i8mh39wa;
 import 'platform/drive/drive_item_user_state.dart' as _i0g2m831;
@@ -48,7 +71,6 @@ import 'platform/drive/drive_search_filters.dart' as _i6k3d1nc;
 import 'platform/drive/drive_sort.dart' as _iu13r4v2;
 import 'platform/drive/drive_sort_field.dart' as _ix0g8yw4;
 import 'platform/drive/drive_view.dart' as _ipww3kqy;
-import 'platform/drive/import_options.dart' as _i2cmzvye;
 import 'platform/drive/import_report_view.dart' as _i68yhxa0;
 import 'platform/drive/import_warning_view.dart' as _i48sm9f2;
 import 'platform/drive/storage_usage.dart' as _i26hsnhw;
@@ -152,6 +174,7 @@ export 'platform/common/wonky_error_code.dart';
 export 'platform/common/wonky_exception.dart';
 export 'platform/drive/drive_change.dart';
 export 'platform/drive/drive_change_kind.dart';
+export 'platform/drive/drive_import_options.dart';
 export 'platform/drive/drive_item.dart';
 export 'platform/drive/drive_item_kind.dart';
 export 'platform/drive/drive_item_user_state.dart';
@@ -163,7 +186,6 @@ export 'platform/drive/drive_search_filters.dart';
 export 'platform/drive/drive_sort.dart';
 export 'platform/drive/drive_sort_field.dart';
 export 'platform/drive/drive_view.dart';
-export 'platform/drive/import_options.dart';
 export 'platform/drive/import_report_view.dart';
 export 'platform/drive/import_warning_view.dart';
 export 'platform/drive/storage_usage.dart';
@@ -283,6 +305,7 @@ class Protocol extends _isc.SerializationManager
           _isc.getType<_igdswlrw.WonkyException>,
           _isc.getType<_iktwt5zz.DriveChange>,
           _isc.getType<_ijoqbs82.DriveChangeKind>,
+          _isc.getType<_ig2nixhn.DriveImportOptions>,
           _isc.getType<_inge8yy2.DriveItem>,
           _isc.getType<_i8mh39wa.DriveItemKind>,
           _isc.getType<_i0g2m831.DriveItemUserState>,
@@ -294,7 +317,6 @@ class Protocol extends _isc.SerializationManager
           _isc.getType<_iu13r4v2.DriveSort>,
           _isc.getType<_ix0g8yw4.DriveSortField>,
           _isc.getType<_ipww3kqy.DriveView>,
-          _isc.getType<_i2cmzvye.ImportOptions>,
           _isc.getType<_i68yhxa0.ImportReportView>,
           _isc.getType<_i48sm9f2.ImportWarningView>,
           _isc.getType<_i26hsnhw.StorageUsage>,
@@ -418,6 +440,7 @@ class Protocol extends _isc.SerializationManager
           _isc.getType<_igdswlrw.WonkyException?>,
           _isc.getType<_iktwt5zz.DriveChange?>,
           _isc.getType<_ijoqbs82.DriveChangeKind?>,
+          _isc.getType<_ig2nixhn.DriveImportOptions?>,
           _isc.getType<_inge8yy2.DriveItem?>,
           _isc.getType<_i8mh39wa.DriveItemKind?>,
           _isc.getType<_i0g2m831.DriveItemUserState?>,
@@ -429,7 +452,6 @@ class Protocol extends _isc.SerializationManager
           _isc.getType<_iu13r4v2.DriveSort?>,
           _isc.getType<_ix0g8yw4.DriveSortField?>,
           _isc.getType<_ipww3kqy.DriveView?>,
-          _isc.getType<_i2cmzvye.ImportOptions?>,
           _isc.getType<_i68yhxa0.ImportReportView?>,
           _isc.getType<_i48sm9f2.ImportWarningView?>,
           _isc.getType<_i26hsnhw.StorageUsage?>,
@@ -559,6 +581,21 @@ class Protocol extends _isc.SerializationManager
           _isc.getType<List<_issmv319.DocumentOpView>?>,
           _isc.getType<List<_i48sm9f2.ImportWarningView>?>,
           _isc.getType<List<_ii88i7dv.WriteDiffAuthor>>,
+          _isc.getType<List<_i2c85fb0.CommentThreadView>>,
+          _isc.getType<List<int>>,
+          _isc.getType<List<int>?>,
+          _isc.getType<List<_iatsgjjq.DriveItemView>>,
+          _isc.getType<List<_isc.UuidValue>>,
+          _isc.getType<List<_i1pzk6fp.TemplateView>>,
+          _isc.getType<List<_itempttd.ActivityEventView>>,
+          _isc.getType<List<_i4i1hokq.FileUrlView>>,
+          _isc.getType<List<String>>,
+          _isc.getType<List<_ip6swqsj.AccessTokenView>>,
+          _isc.getType<List<_iq7femvs.UserSummary>>,
+          _isc.getType<List<_itqtmykd.ItemVersionView>>,
+          _isc.getType<List<_i8x9070n.DocumentOpView>>,
+          _isc.getType<List<_i2zuh8f2.WriteThemeView>>,
+          _isc.getType<List<_igytjuh5.WriteThemeRevisionView>>,
         ],
         modules: const [
           _iaic.Protocol.new,
@@ -649,6 +686,9 @@ class Protocol extends _isc.SerializationManager
     if (t == _ijoqbs82.DriveChangeKind) {
       return _ijoqbs82.DriveChangeKind.fromJson(data) as T;
     }
+    if (t == _ig2nixhn.DriveImportOptions) {
+      return _ig2nixhn.DriveImportOptions.fromJson(data) as T;
+    }
     if (t == _inge8yy2.DriveItem) {
       return _inge8yy2.DriveItem.fromJson(data) as T;
     }
@@ -681,9 +721,6 @@ class Protocol extends _isc.SerializationManager
     }
     if (t == _ipww3kqy.DriveView) {
       return _ipww3kqy.DriveView.fromJson(data) as T;
-    }
-    if (t == _i2cmzvye.ImportOptions) {
-      return _i2cmzvye.ImportOptions.fromJson(data) as T;
     }
     if (t == _i68yhxa0.ImportReportView) {
       return _i68yhxa0.ImportReportView.fromJson(data) as T;
@@ -1066,6 +1103,10 @@ class Protocol extends _isc.SerializationManager
       return (data != null ? _ijoqbs82.DriveChangeKind.fromJson(data) : null)
           as T;
     }
+    if (t == _isc.getType<_ig2nixhn.DriveImportOptions?>()) {
+      return (data != null ? _ig2nixhn.DriveImportOptions.fromJson(data) : null)
+          as T;
+    }
     if (t == _isc.getType<_inge8yy2.DriveItem?>()) {
       return (data != null ? _inge8yy2.DriveItem.fromJson(data) : null) as T;
     }
@@ -1106,10 +1147,6 @@ class Protocol extends _isc.SerializationManager
     }
     if (t == _isc.getType<_ipww3kqy.DriveView?>()) {
       return (data != null ? _ipww3kqy.DriveView.fromJson(data) : null) as T;
-    }
-    if (t == _isc.getType<_i2cmzvye.ImportOptions?>()) {
-      return (data != null ? _i2cmzvye.ImportOptions.fromJson(data) : null)
-          as T;
     }
     if (t == _isc.getType<_i68yhxa0.ImportReportView?>()) {
       return (data != null ? _i68yhxa0.ImportReportView.fromJson(data) : null)
@@ -1682,6 +1719,88 @@ class Protocol extends _isc.SerializationManager
               .toList()
           as T;
     }
+    if (t == List<_i2c85fb0.CommentThreadView>) {
+      return (data as List)
+              .map((e) => deserialize<_i2c85fb0.CommentThreadView>(e))
+              .toList()
+          as T;
+    }
+    if (t == List<int>) {
+      return (data as List).map((e) => deserialize<int>(e)).toList() as T;
+    }
+    if (t == _isc.getType<List<int>?>()) {
+      return (data != null
+              ? (data as List).map((e) => deserialize<int>(e)).toList()
+              : null)
+          as T;
+    }
+    if (t == List<_iatsgjjq.DriveItemView>) {
+      return (data as List)
+              .map((e) => deserialize<_iatsgjjq.DriveItemView>(e))
+              .toList()
+          as T;
+    }
+    if (t == List<_isc.UuidValue>) {
+      return (data as List).map((e) => deserialize<_isc.UuidValue>(e)).toList()
+          as T;
+    }
+    if (t == List<_i1pzk6fp.TemplateView>) {
+      return (data as List)
+              .map((e) => deserialize<_i1pzk6fp.TemplateView>(e))
+              .toList()
+          as T;
+    }
+    if (t == List<_itempttd.ActivityEventView>) {
+      return (data as List)
+              .map((e) => deserialize<_itempttd.ActivityEventView>(e))
+              .toList()
+          as T;
+    }
+    if (t == List<_i4i1hokq.FileUrlView>) {
+      return (data as List)
+              .map((e) => deserialize<_i4i1hokq.FileUrlView>(e))
+              .toList()
+          as T;
+    }
+    if (t == List<String>) {
+      return (data as List).map((e) => deserialize<String>(e)).toList() as T;
+    }
+    if (t == List<_ip6swqsj.AccessTokenView>) {
+      return (data as List)
+              .map((e) => deserialize<_ip6swqsj.AccessTokenView>(e))
+              .toList()
+          as T;
+    }
+    if (t == List<_iq7femvs.UserSummary>) {
+      return (data as List)
+              .map((e) => deserialize<_iq7femvs.UserSummary>(e))
+              .toList()
+          as T;
+    }
+    if (t == List<_itqtmykd.ItemVersionView>) {
+      return (data as List)
+              .map((e) => deserialize<_itqtmykd.ItemVersionView>(e))
+              .toList()
+          as T;
+    }
+    if (t == List<_i8x9070n.DocumentOpView>) {
+      return (data as List)
+              .map((e) => deserialize<_i8x9070n.DocumentOpView>(e))
+              .toList()
+          as T;
+    }
+    if (t == List<_i2zuh8f2.WriteThemeView>) {
+      return (data as List)
+              .map((e) => deserialize<_i2zuh8f2.WriteThemeView>(e))
+              .toList()
+          as T;
+    }
+    if (t == List<_igytjuh5.WriteThemeRevisionView>) {
+      return (data as List)
+              .map((e) => deserialize<_igytjuh5.WriteThemeRevisionView>(e))
+              .toList()
+          as T;
+    }
     final modules = dataClassName == null
         ? deserializationMetadata.modulesForType(t)
         : deserializationMetadata.modules;
@@ -1714,6 +1833,7 @@ class Protocol extends _isc.SerializationManager
       _igdswlrw.WonkyException => 'WonkyException',
       _iktwt5zz.DriveChange => 'DriveChange',
       _ijoqbs82.DriveChangeKind => 'DriveChangeKind',
+      _ig2nixhn.DriveImportOptions => 'DriveImportOptions',
       _inge8yy2.DriveItem => 'DriveItem',
       _i8mh39wa.DriveItemKind => 'DriveItemKind',
       _i0g2m831.DriveItemUserState => 'DriveItemUserState',
@@ -1725,7 +1845,6 @@ class Protocol extends _isc.SerializationManager
       _iu13r4v2.DriveSort => 'DriveSort',
       _ix0g8yw4.DriveSortField => 'DriveSortField',
       _ipww3kqy.DriveView => 'DriveView',
-      _i2cmzvye.ImportOptions => 'ImportOptions',
       _i68yhxa0.ImportReportView => 'ImportReportView',
       _i48sm9f2.ImportWarningView => 'ImportWarningView',
       _i26hsnhw.StorageUsage => 'StorageUsage',
@@ -1881,6 +2000,8 @@ class Protocol extends _isc.SerializationManager
         return 'DriveChange';
       case _ijoqbs82.DriveChangeKind():
         return 'DriveChangeKind';
+      case _ig2nixhn.DriveImportOptions():
+        return 'DriveImportOptions';
       case _inge8yy2.DriveItem():
         return 'DriveItem';
       case _i8mh39wa.DriveItemKind():
@@ -1903,8 +2024,6 @@ class Protocol extends _isc.SerializationManager
         return 'DriveSortField';
       case _ipww3kqy.DriveView():
         return 'DriveView';
-      case _i2cmzvye.ImportOptions():
-        return 'ImportOptions';
       case _i68yhxa0.ImportReportView():
         return 'ImportReportView';
       case _i48sm9f2.ImportWarningView():
@@ -2203,6 +2322,9 @@ class Protocol extends _isc.SerializationManager
     if (dataClassName == 'DriveChangeKind') {
       return deserialize<_ijoqbs82.DriveChangeKind>(data['data']);
     }
+    if (dataClassName == 'DriveImportOptions') {
+      return deserialize<_ig2nixhn.DriveImportOptions>(data['data']);
+    }
     if (dataClassName == 'DriveItem') {
       return deserialize<_inge8yy2.DriveItem>(data['data']);
     }
@@ -2235,9 +2357,6 @@ class Protocol extends _isc.SerializationManager
     }
     if (dataClassName == 'DriveView') {
       return deserialize<_ipww3kqy.DriveView>(data['data']);
-    }
-    if (dataClassName == 'ImportOptions') {
-      return deserialize<_i2cmzvye.ImportOptions>(data['data']);
     }
     if (dataClassName == 'ImportReportView') {
       return deserialize<_i68yhxa0.ImportReportView>(data['data']);

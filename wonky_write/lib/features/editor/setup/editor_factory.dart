@@ -3,7 +3,9 @@ import 'package:super_editor/super_editor.dart';
 import '../controller/editor_pipeline.dart';
 import '../controller/editor_types.dart';
 import '../mapping/wonky_schema.dart';
+import '../reactions/auto_pair_reaction.dart';
 import '../reactions/block_conversion_reactions.dart';
+import '../reactions/embed_selection_reaction.dart';
 import '../reactions/mention_atomicity_reaction.dart';
 import '../reactions/reaction_wrappers.dart';
 import '../reactions/typing_attributes_reaction.dart';
@@ -98,8 +100,13 @@ List<EditReaction> wonkyReactions(
     marked(const EmDashReaction(), 'Smart dash', smart),
     marked(const EllipsisReaction(), 'Smart ellipsis', smart),
     marked(const SmartQuotesReaction(), 'Smart quote', smart),
+    AutoPairReaction(
+      enabled: () => preferences().autoPair && mode() != EditorMode.viewing,
+      markdownShortcuts: () => preferences().markdownShortcuts,
+    ),
     UpdateSubTaskIndentAfterTaskDeletionReaction(),
     const MentionAtomicityReaction(),
+    EmbedSelectionReaction(isEditable: () => mode() != EditorMode.viewing),
     const WonkySchemaGuardReaction(),
   ];
 }

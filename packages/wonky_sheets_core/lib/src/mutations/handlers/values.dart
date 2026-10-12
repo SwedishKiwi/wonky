@@ -93,14 +93,18 @@ MutationPlan planSetCellInputs(PlanBuilder b, SetCellInputs op) {
       throw PlanException('invalid_range', 'The values extend beyond the grid of "${s.name}"');
     }
     b.checkCellLimit(
-      b.gridCellsWith(s.id, s.rows.length + (needRows > 0 ? needRows : 0),
-          s.columns.length + (needCols > 0 ? needCols : 0)),
+      b.gridCellsWith(
+        s.id,
+        s.rows.length + (needRows > 0 ? needRows : 0),
+        s.columns.length + (needCols > 0 ? needCols : 0),
+      ),
     );
     extraRows.addAll(b.appendDimension(s, Dimension.rows, needRows));
     extraCols.addAll(b.appendDimension(s, Dimension.columns, needCols));
   }
   String rowIdAt(int i) => i < s.rows.length ? s.rows.idAt(i) : extraRows[i - s.rows.length];
-  String colIdAt(int i) => i < s.columns.length ? s.columns.idAt(i) : extraCols[i - s.columns.length];
+  String colIdAt(int i) =>
+      i < s.columns.length ? s.columns.idAt(i) : extraCols[i - s.columns.length];
   var cells = 0;
   for (var r = 0; r < height; r++) {
     final rowInputs = op.inputs[r];
@@ -128,7 +132,10 @@ MutationPlan planSetCellInputs(PlanBuilder b, SetCellInputs op) {
     );
   }
   b.result['cells'] = cells;
-  return b.build(op.label ?? (cells == 1 ? 'Edit cell' : 'Edit cells'), kinds: [ChangeKinds.values]);
+  return b.build(
+    op.label ?? (cells == 1 ? 'Edit cell' : 'Edit cells'),
+    kinds: [ChangeKinds.values],
+  );
 }
 
 /// [ClearRanges].
@@ -226,7 +233,12 @@ int clearFormattingIn(PlanBuilder b, SheetModel s, ResolvedRange range) {
 
 /// Removes [attrs] from row/column/sheet `formatJson` when the range covers
 /// whole rows/columns/the sheet.
-void clearRowColFormats(PlanBuilder b, SheetModel s, ResolvedRange range, Iterable<FormatAttr> attrs) {
+void clearRowColFormats(
+  PlanBuilder b,
+  SheetModel s,
+  ResolvedRange range,
+  Iterable<FormatAttr> attrs,
+) {
   final remove = {for (final a in attrs) a: null};
   if (range.wholeSheet) {
     b.writeFormatJson(SheetsTables.sheet, s.id, remove);

@@ -228,7 +228,8 @@ abstract final class BorderPresetPlanner {
     // Inner lines are stored on the upper/left cell: drop top/left writes of
     // inner cells that duplicate (they are covered by the facing edge).
     return [
-      for (final e in writes.entries) (row: e.key.$1, col: e.key.$2, attr: e.key.$3, value: e.value),
+      for (final e in writes.entries)
+        (row: e.key.$1, col: e.key.$2, attr: e.key.$3, value: e.value),
     ];
   }
 }

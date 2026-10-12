@@ -24,7 +24,10 @@ void main() {
 
     test('when computing a cell id then it is a version-5 UUID', () {
       final id = SheetsIds.cellId(sheet, row, col);
-      expect(id, matches(RegExp(r'^[0-9a-f]{8}-[0-9a-f]{4}-5[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$')));
+      expect(
+        id,
+        matches(RegExp(r'^[0-9a-f]{8}-[0-9a-f]{4}-5[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$')),
+      );
     });
 
     test('when computing ids then they match the frozen vectors', () {

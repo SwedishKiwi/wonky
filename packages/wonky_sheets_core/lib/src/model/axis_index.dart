@@ -12,8 +12,8 @@ import 'package:wonky_sync_models/ids.dart';
 /// bulk ingestion (loading 1M rows, applying a 5,000-row chunk) costs
 /// O(n + k log k) instead of O(n·k).
 final class AxisIndex {
-  /// Creates an empty axis whose rows/columns are [defaultSize] px by default.
-  AxisIndex({double defaultSize = 21}) : _defaultSize = defaultSize;
+  /// Creates an empty axis whose rows/columns are [_defaultSize] px by default.
+  AxisIndex({this._defaultSize = 21});
 
   double _defaultSize;
 

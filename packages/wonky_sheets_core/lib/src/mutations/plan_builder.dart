@@ -6,7 +6,6 @@ import '../engine_bridge/formula_hooks.dart';
 import '../formula/model/workbook_view.dart' show CellSource;
 import '../format/attributes.dart';
 import '../model/grid_range.dart';
-import '../model/records.dart';
 import '../model/schema.dart';
 import '../model/workbook_model.dart';
 import 'row_change.dart';
@@ -169,11 +168,7 @@ final class PlanBuilder {
   /// Inserts a new row (or revives/replaces an existing one) with [columns].
   void insert(String table, String id, Map<String, Object?> columns) {
     _touch(table, id);
-    _overlay[table]![id] = {
-      Cols.createdAt: ctx.now,
-      ...columns,
-      Cols.id: id,
-    };
+    _overlay[table]![id] = {Cols.createdAt: ctx.now, ...columns, Cols.id: id};
   }
 
   /// Updates columns of an existing row (no-op if the row is missing).
@@ -262,8 +257,7 @@ final class PlanBuilder {
     CellCols.linkUrl,
   };
 
-  static bool _cellIsBlank(Map<String, Object?> c) =>
-      _cellValueColumns.every((k) => c[k] == null);
+  static bool _cellIsBlank(Map<String, Object?> c) => _cellValueColumns.every((k) => c[k] == null);
 
   static bool _eq(Object? a, Object? b) {
     if (a is num && b is num) return a.toDouble() == b.toDouble();

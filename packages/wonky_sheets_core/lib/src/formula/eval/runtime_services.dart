@@ -65,7 +65,7 @@ final class TzDatabaseResolver implements TimeZoneResolver {
     });
     if (loc == null) return Duration.zero;
     final zone = loc.timeZone(utc.millisecondsSinceEpoch);
-    return Duration(milliseconds: zone.offset);
+    return zone.offset;
   }
 }
 

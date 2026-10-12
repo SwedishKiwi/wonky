@@ -8,6 +8,7 @@ import '../parser/formula_locale.dart';
 import '../values/errors.dart';
 import '../values/format_hint.dart';
 import '../values/fvalue.dart';
+import '../recalc/lookup_cache.dart';
 import 'lambda.dart';
 import 'runtime_services.dart';
 
@@ -73,6 +74,9 @@ abstract interface class EvalHost {
 
   /// Named function closure (case-insensitive), or null.
   FCallable? namedFunction(String upperName);
+
+  /// Lookup and criteria caches (05 §11.2).
+  LookupCache get lookupCache;
 
   /// Filter-hidden / user-hidden rows (SUBTOTAL).
   bool isRowHidden(SheetView sheet, int row, {required bool includeUserHidden});

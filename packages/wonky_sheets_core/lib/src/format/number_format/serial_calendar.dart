@@ -55,8 +55,7 @@ abstract final class SerialCalendar {
   static int weekdayOf(int serial) => (serial + 6) % 7;
 
   /// Whether [year] is a leap year.
-  static bool isLeapYear(int year) =>
-      (year % 4 == 0 && year % 100 != 0) || year % 400 == 0;
+  static bool isLeapYear(int year) => (year % 4 == 0 && year % 100 != 0) || year % 400 == 0;
 
   /// Number of days in [month] of [year].
   static int daysInMonth(int year, int month) => switch (month) {
@@ -66,9 +65,14 @@ abstract final class SerialCalendar {
   };
 
   /// Serial of a date-time (wall clock, no time zone).
-  static double serialOfDateTime(int year, int month, int day,
-      [int hour = 0, int minute = 0, num second = 0]) =>
-      serialOf(year, month, day) + (hour * 3600 + minute * 60 + second) / 86400.0;
+  static double serialOfDateTime(
+    int year,
+    int month,
+    int day, [
+    int hour = 0,
+    int minute = 0,
+    num second = 0,
+  ]) => serialOf(year, month, day) + (hour * 3600 + minute * 60 + second) / 86400.0;
 
   /// Serial of the date part of [dateTime] (its fields, ignoring time zone).
   static int serialOfDate(DateTime dateTime) =>

@@ -1,94 +1,36 @@
 import 'dart:io';
 
 import 'package:serverpod_auth_idp_server/core.dart';
-import 'package:serverpod_auth_idp_server/providers/email.dart';
 import 'package:serverpod_cloud_storage/serverpod_cloud_storage.dart';
 
 import 'src/cache_busting.dart';
 import 'src/generated/serverpod.dart';
+import 'src/platform/users/email_idp.dart';
+import 'src/platform/versions/version_service.dart';
+import 'src/sheets/versions/sheets_version_provider.dart';
 import 'src/web/routes/app_config_route.dart';
+import 'src/web/routes/invite_route.dart';
+import 'src/web/routes/root_redirect_route.dart';
+import 'src/write/themes/theme_service.dart';
+import 'src/write/versions/write_version_provider.dart';
 
-/// The starting point of the Serverpod server.
+/// The starting point of the Wonky Work server.
 void run(List<String> args) async {
-  // Initialize Serverpod. The generated Serverpod class is already connected
-  // with your project's generated code.
+  // The generated Serverpod is wired with the protocol, the endpoints and
+  // the offline-sync engine for the `database: sync` tables.
   final pod = Serverpod(args);
 
-  // Initialize authentication services for the server.
-  // Token managers will be used to validate and issue authentication keys,
-  // and the identity providers will be the authentication options available for users.
+  // One sign-in for both apps: email/password with JWTs (specs/04).
   pod.initializeAuthServices(
-    tokenManagerBuilders: [
-      // Use JWT for authentication keys towards the server.
-      JwtConfigFromPasswords(),
-    ],
-    identityProviderBuilders: [
-      // Configure the email identity provider for email/password authentication.
-      // The default setup works with Serverpod Cloud without configuration. In
-      // development the verification codes are logged to the console, and in
-      // staging and production they are sent through the Serverpod Cloud email
-      // service. If you want to use a custom provider for sending emails, use
-      // `EmailIdpConfigFromPasswords`.
-      ServerpodCloudEmailIdpConfig(
-        appDisplayName: 'wonky',
-      ),
-    ],
+    tokenManagerBuilders: [JwtConfigFromPasswords()],
+    identityProviderBuilders: [wonkyEmailIdpConfig()],
   );
 
-  // Serve all files in the web/static relative directory under /web.
-  // These are used by the default web page.
-  pod.webServer.addRoute(
-    StaticRoute.withCacheBusting(cacheBustingConfig),
-    cacheBustingConfig.mountPrefix,
-  );
+  registerVersionProviders();
+  _configureWebServer(pod);
 
-  // Setup the app config route.
-  // We build this configuration based on the servers api url and serve it to
-  // the flutter app.
-  pod.webServer.addRoute(
-    AppConfigRoute(apiConfig: pod.config.apiServer),
-    '/assets/assets/config.json',
-  );
-
-  // Checks if the flutter web app has been built and serves it if it has.
-  final appDir = Directory(Uri(path: 'web/app').toFilePath());
-  if (appDir.existsSync()) {
-    // Serve the flutter web app under /.
-    pod.webServer.addRoute(
-      FlutterRoute(
-        appDir,
-        // If building the Flutter app with WASM, set the below parameter to
-        // true and add the --wasm flag to the flutter build command.
-        enableWasmHeaders: false,
-      ),
-      '/',
-    );
-  } else {
-    // If the flutter web app has not been built, serve the build app page.
-    final defaultRoute = StaticRoute.file(
-      File(
-        Uri(path: 'web/pages/build_flutter_app.html').toFilePath(),
-      ),
-    );
-
-    pod.webServer.addMiddleware(
-      FallbackMiddleware(
-        fallback: defaultRoute,
-        on: (response) => response.statusCode == 404,
-      ).call,
-      '/',
-    );
-
-    pod.webServer.addRoute(
-      defaultRoute,
-      '/**',
-    );
-  }
-
-  // Configure cloud storage.
-  // This setup works with Serverpod Cloud without extra configuration.
-  // If you want to use a custom provider for cloud storage, replace these
-  // with your preferred provider.
+  // Cloud storage for uploads, exports and snapshots. Works with Serverpod
+  // Cloud without configuration; falls back to the database elsewhere.
   pod.addCloudStorage(
     await ServerpodCloudProvider.private(
       fallback: () => DatabaseCloudStorage('private'),
@@ -100,6 +42,83 @@ void run(List<String> args) async {
     ),
   );
 
-  // Start the server.
   await pod.start();
+
+  final session = await pod.createSession(enableLogging: false);
+  try {
+    await ThemeService.upsertBuiltins(session);
+  } finally {
+    await session.close();
+  }
+  await _scheduleJobs(pod);
+}
+
+/// Registers the per-app version providers (specs/07 §5).
+void registerVersionProviders() {
+  VersionService.register(const WriteVersionProvider());
+  VersionService.register(const SheetsVersionProvider());
+}
+
+/// Web routes (specs/01 §2.4): both Flutter web apps on one origin, their
+/// runtime config, the root redirect and share-link landing.
+void _configureWebServer(Serverpod pod) {
+  pod.webServer.addRoute(
+    StaticRoute.withCacheBusting(cacheBustingConfig),
+    cacheBustingConfig.mountPrefix,
+  );
+  pod.webServer.addRoute(RootRedirectRoute(), '/');
+  pod.webServer.addRoute(InviteRoute(), '/invite/:token');
+
+  final fallbackPage = File(
+    Uri(path: 'web/pages/build_flutter_app.html').toFilePath(),
+  );
+  for (final app in const ['write', 'sheets']) {
+    pod.webServer.addRoute(
+      AppConfigRoute(
+        apiConfig: pod.config.apiServer,
+        webConfig: pod.config.webServer ?? pod.config.apiServer,
+      ),
+      '/$app/assets/assets/config.json',
+    );
+    pod.webServer.addRoute(SlashRedirectRoute('/$app/'), '/$app');
+    final dir = Directory(Uri(path: 'web/$app').toFilePath());
+    if (dir.existsSync()) {
+      // Built with --wasm: cross-origin isolation headers (specs/13 §3).
+      pod.webServer.addRoute(FlutterRoute(dir), '/$app');
+    } else {
+      // Not built yet: explain how to build (`serverpod run flutter_build`).
+      pod.webServer.addRoute(StaticRoute.file(fallbackPage), '/$app/**');
+    }
+  }
+}
+
+/// Recurring maintenance jobs (specs/13 §3). Re-registered on every start
+/// under fixed identifiers.
+Future<void> _scheduleJobs(Serverpod pod) async {
+  final futureCalls = pod.futureCalls;
+  Future<void> every(
+    String id,
+    String cron,
+    Future<void> Function(dynamic recurring) schedule,
+  ) async {
+    await futureCalls.cancel(id);
+    await schedule(futureCalls.callRecurring(identifier: id).cron(cron));
+  }
+
+  await every(
+    'wonky.captureVersions',
+    '* * * * *',
+    (r) => r.maintenance.captureVersions(),
+  );
+  await every(
+    'wonky.sendDigests',
+    '*/15 * * * *',
+    (r) => r.maintenance.sendDigests(),
+  );
+  await every(
+    'wonky.cleanupFiles',
+    '7 * * * *',
+    (r) => r.maintenance.cleanupFiles(),
+  );
+  await every('wonky.daily', '17 3 * * *', (r) => r.maintenance.daily());
 }

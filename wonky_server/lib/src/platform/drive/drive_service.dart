@@ -774,6 +774,53 @@ abstract final class DriveService {
     return DriveViews.one(session, actor.userId, item, role: Role.owner);
   }
 
+  /// Creates a spreadsheet from [sheets] (imports).
+  static Future<DriveItemView> createSpreadsheetFromSheets(
+    Session session,
+    Actor actor, {
+    required String name,
+    UuidValue? parentUuid,
+    required List<TemplateSheet> sheets,
+    Map<String, Object?> summary = const {},
+  }) async {
+    final cleanName = normalizeItemName(name);
+    await _parentFor(session, actor, parentUuid);
+    final space = await session.offlineSync.spaces.createFor(actor.authUserId);
+    await SpreadsheetFactory.write(
+      session,
+      spaceUuid: space,
+      authorUuid: actor.authUserId,
+      title: cleanName,
+      sheets: sheets,
+    );
+    final item = await session.db.transaction((tx) async {
+      final parent = await _parentFor(
+        session,
+        actor,
+        parentUuid,
+        transaction: tx,
+      );
+      final item = await _insertItem(
+        session,
+        actor,
+        kind: DriveItemKind.spreadsheet,
+        name: cleanName,
+        parent: parent,
+        contentRef: space,
+        transaction: tx,
+      );
+      await SpaceService.touchSubscription(
+        session,
+        actor.userId,
+        item,
+        transaction: tx,
+      );
+      return item;
+    });
+    await _afterCreate(session, actor, item, summary: summary);
+    return DriveViews.one(session, actor.userId, item, role: Role.owner);
+  }
+
   // ---------------------------------------------------------------- update
 
   static Future<DriveItemView> rename(
@@ -1151,6 +1198,63 @@ abstract final class DriveService {
         copyView = await _finishCopy(session, actor, source, item, copySharing);
     }
     return copyView;
+  }
+
+  /// Creates a document with [content] (version copies, imports), taking
+  /// theme and page setup from [source] when given.
+  static Future<DriveItemView> createDocumentFromContent(
+    Session session,
+    Actor actor, {
+    required String name,
+    UuidValue? parentUuid,
+    required Delta content,
+    Document? source,
+    String? frontMatter,
+    Map<String, Object?> activitySummary = const {},
+  }) async {
+    final docUuid = const Uuid().v7obj();
+    final item = await session.db.transaction((tx) async {
+      final parent = await _parentFor(
+        session,
+        actor,
+        parentUuid,
+        transaction: tx,
+      );
+      final item = await _insertItem(
+        session,
+        actor,
+        kind: DriveItemKind.document,
+        name: name,
+        parent: parent,
+        contentRef: docUuid,
+        transaction: tx,
+      );
+      await DocumentStore.create(
+        session,
+        item: item,
+        documentUuid: docUuid,
+        actor: actor,
+        initial: content,
+        kind: DocumentOpKind.imported,
+        themeId: source?.themeId,
+        pageSetupJson: source?.pageSetupJson ?? '{}',
+        language: source?.language,
+        frontMatter: frontMatter ?? source?.frontMatter,
+        transaction: tx,
+      );
+      await DriveItem.db.updateRow(
+        session,
+        item.copyWith(
+          searchText: DocumentStore.searchText(content),
+          sizeBytes: utf8.encode(DeltaUtils.text(content)).length,
+        ),
+        columns: (t) => [t.searchText, t.sizeBytes],
+        transaction: tx,
+      );
+      return item;
+    });
+    await _afterCreate(session, actor, item, summary: activitySummary);
+    return DriveViews.one(session, actor.userId, item, role: Role.owner);
   }
 
   static Future<UuidValue?> _defaultCopyParent(

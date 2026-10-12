@@ -61,7 +61,12 @@ void main() {
         label: 'Edit',
         summary: ChangeSummary(),
         changes: [
-          RowChange.update(SheetsTables.cell, cell.id, {CellCols.content: 'n:1'}, {CellCols.content: 'n:2'}),
+          RowChange.update(
+            SheetsTables.cell,
+            cell.id,
+            {CellCols.content: 'n:1'},
+            {CellCols.content: 'n:2'},
+          ),
         ],
       );
       m.applyPlan(plan);
@@ -76,7 +81,12 @@ void main() {
         label: 'Edit',
         summary: ChangeSummary(),
         changes: [
-          RowChange.update(SheetsTables.cell, cell.id, {CellCols.content: 'n:1'}, {CellCols.content: 'n:2'}),
+          RowChange.update(
+            SheetsTables.cell,
+            cell.id,
+            {CellCols.content: 'n:1'},
+            {CellCols.content: 'n:2'},
+          ),
         ],
       );
       m.applyPlan(plan);
@@ -91,7 +101,9 @@ void main() {
   group('Given an axis index', () {
     test('when sizes are set then offsets and lookups agree', () {
       final a = AxisIndex(defaultSize: 20);
-      a.load([for (var i = 0; i < 100; i++) ('id$i', 'a${i.toString().padLeft(3, '0')}', null, false)]);
+      a.load([
+        for (var i = 0; i < 100; i++) ('id$i', 'a${i.toString().padLeft(3, '0')}', null, false),
+      ]);
       expect(a.totalSize, 2000);
       a.upsert('id10', a.sortKeyAt(10), size: 100);
       expect(a.offsetOf(11), 20 * 10 + 100);

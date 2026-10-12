@@ -2,9 +2,14 @@ import '../../addressing/grid_geometry.dart';
 import '../values/errors.dart';
 import '../values/fvalue.dart';
 
+/// Former name of [EngineCellInput] (clashes with the model's `CellInput` mutation input in
+/// the package barrel, so it is hidden from `formula.dart`).
+@Deprecated('Use EngineCellInput')
+typedef CellInput = EngineCellInput;
+
 /// Raw content of a non-empty cell as the engine sees it: a stored-form formula or a literal
 /// value (02 §2 content encoding).
-final class CellInput {
+final class EngineCellInput {
   /// Stored-form formula text **without** the leading `=`, or null for literal values.
   final String? formula;
 
@@ -12,40 +17,40 @@ final class CellInput {
   final FValue value;
 
   /// Engine-private cache slot (the engine attaches its node here). Models must create a new
-  /// [CellInput] whenever the content changes and keep the instance otherwise.
+  /// [EngineCellInput] whenever the content changes and keep the instance otherwise.
   Object? engineData;
 
-  CellInput.formula(String stored)
+  EngineCellInput.formula(String stored)
     : formula = stored.startsWith('=') ? stored.substring(1) : stored,
       value = FEmpty.instance;
 
-  CellInput.value(this.value) : formula = null;
+  EngineCellInput.value(this.value) : formula = null;
 
   bool get isFormula => formula != null;
 
   /// Parses the synced content encoding (`=…`, `n:`, `s:`, `b:`, `e:`, `r:`). Returns null for
   /// null/empty content.
-  static CellInput? fromContent(String? content) {
+  static EngineCellInput? fromContent(String? content) {
     if (content == null || content.isEmpty) return null;
-    if (content.startsWith('=')) return CellInput.formula(content.substring(1));
+    if (content.startsWith('=')) return EngineCellInput.formula(content.substring(1));
     if (content.length >= 2 && content.codeUnitAt(1) == 0x3a) {
       final body = content.substring(2);
       switch (content.codeUnitAt(0)) {
         case 0x6e: // n
           final v = double.tryParse(body);
-          return CellInput.value(v == null ? FText(body) : FNumber(v));
+          return EngineCellInput.value(v == null ? FText(body) : FNumber(v));
         case 0x73: // s
-          return CellInput.value(FText(body));
+          return EngineCellInput.value(FText(body));
         case 0x62: // b
-          return CellInput.value(FBool(body == '1' || body.toLowerCase() == 'true'));
+          return EngineCellInput.value(FBool(body == '1' || body.toLowerCase() == 'true'));
         case 0x65: // e
           final k = ErrorKind.fromLiteral(body);
-          return CellInput.value(k == null ? FText(body) : FError(k));
+          return EngineCellInput.value(k == null ? FText(body) : FError(k));
         case 0x72: // r: rich text JSON {"t": "...", "runs": [...]}
-          return CellInput.value(FText(_richPlainText(body)));
+          return EngineCellInput.value(FText(_richPlainText(body)));
       }
     }
-    return CellInput.value(FText(content));
+    return EngineCellInput.value(FText(content));
   }
 
   static String _richPlainText(String json) {
@@ -80,7 +85,7 @@ final class CellInput {
   }
 
   @override
-  String toString() => formula != null ? 'CellInput(=$formula)' : 'CellInput(${value.debugText})';
+  String toString() => formula != null ? 'EngineCellInput(=$formula)' : 'EngineCellInput(${value.debugText})';
 }
 
 /// Ordered ids of one axis (rows or columns) of a sheet (02 §6 `AxisIndex`).
@@ -116,10 +121,10 @@ abstract interface class SheetView {
   AxisView get columns;
 
   /// Content of the cell at current indices, or null when empty.
-  CellInput? inputAt(int row, int col);
+  EngineCellInput? inputAt(int row, int col);
 
   /// Visits the non-empty cells inside [rect] (clamped to the grid) in row-major order.
-  void forEachInput(GridRect rect, void Function(int row, int col, CellInput input) visit);
+  void forEachInput(GridRect rect, void Function(int row, int col, EngineCellInput input) visit);
 
   /// Number of rows up to the last row with content (0 when empty).
   int get usedRowCount;

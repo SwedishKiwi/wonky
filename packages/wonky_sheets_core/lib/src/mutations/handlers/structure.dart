@@ -14,16 +14,20 @@ import '../plan_builder.dart';
 import '../row_change.dart';
 import 'helpers.dart';
 
-String _tableOf(Dimension d) => d == Dimension.rows ? SheetsTables.sheetRow : SheetsTables.sheetColumn;
+String _tableOf(Dimension d) =>
+    d == Dimension.rows ? SheetsTables.sheetRow : SheetsTables.sheetColumn;
 
-String _noun(Dimension d, int n) => d == Dimension.rows ? (n == 1 ? 'row' : 'rows') : (n == 1 ? 'column' : 'columns');
+String _noun(Dimension d, int n) =>
+    d == Dimension.rows ? (n == 1 ? 'row' : 'rows') : (n == 1 ? 'column' : 'columns');
 
 /// [InsertDimension] (03 §13.1).
 MutationPlan planInsertDimension(PlanBuilder b, InsertDimension op) {
   final s = b.sheetOf(op.sheetId);
   final axis = s.axis(op.dimension);
   if (op.count <= 0) throw const PlanException('invalid_argument', 'Count must be positive');
-  if (op.at < 0 || op.at > axis.length) throw const PlanException('invalid_range', 'Insert position is outside the grid');
+  if (op.at < 0 || op.at > axis.length) {
+    throw const PlanException('invalid_range', 'Insert position is outside the grid');
+  }
   final rows = s.rows.length + (op.dimension == Dimension.rows ? op.count : 0);
   final cols = s.columns.length + (op.dimension == Dimension.columns ? op.count : 0);
   b.checkCellLimit(b.gridCellsWith(s.id, rows, cols));
@@ -93,12 +97,17 @@ MutationPlan planInsertDimension(PlanBuilder b, InsertDimension op) {
 MutationPlan planDeleteDimension(PlanBuilder b, DeleteDimension op) {
   final s = b.sheetOf(op.sheetId);
   final axis = s.axis(op.dimension);
-  final ids = {for (final id in op.ids) if (axis.contains(id)) id};
+  final ids = {
+    for (final id in op.ids)
+      if (axis.contains(id)) id,
+  };
   if (ids.isEmpty) return b.build('Delete ${_noun(op.dimension, 0)}');
   if (ids.length >= axis.length) {
     throw PlanException(
       'invalid_argument',
-      op.dimension == Dimension.rows ? 'A sheet must have at least one row' : 'A sheet must have at least one column',
+      op.dimension == Dimension.rows
+          ? 'A sheet must have at least one row'
+          : 'A sheet must have at least one column',
     );
   }
   final table = _tableOf(op.dimension);
@@ -115,14 +124,22 @@ MutationPlan planDeleteDimension(PlanBuilder b, DeleteDimension op) {
   final deletedCols = op.dimension == Dimension.columns ? ids : <String>{};
   repairAfterDelete(b, s, deletedRows, deletedCols);
   b.summary.sheets.add(s.id);
-  return b.build('Delete ${ids.length} ${_noun(op.dimension, ids.length)}', kinds: [ChangeKinds.structure]);
+  return b.build(
+    'Delete ${ids.length} ${_noun(op.dimension, ids.length)}',
+    kinds: [ChangeKinds.structure],
+  );
 }
 
 /// Repairs every id-based range and formula after rows/columns of [s] are
 /// deleted: range endpoints move inward to the nearest surviving id; ranges
 /// left empty delete their rule; formulas are rewritten with
 /// `FormulaHooks.repairBoundaries`.
-void repairAfterDelete(PlanBuilder b, SheetModel s, Set<String> deletedRows, Set<String> deletedCols) {
+void repairAfterDelete(
+  PlanBuilder b,
+  SheetModel s,
+  Set<String> deletedRows,
+  Set<String> deletedCols,
+) {
   GridRange? repair(GridRange g) => repairGridRange(s, g, deletedRows, deletedCols);
 
   // Merges.
@@ -144,7 +161,12 @@ void repairAfterDelete(PlanBuilder b, SheetModel s, Set<String> deletedRows, Set
     }
   }
   // Single-range rules.
-  void single(String table, Iterable<SyncRecord> records, String column, {bool deleteWhenEmpty = true}) {
+  void single(
+    String table,
+    Iterable<SyncRecord> records,
+    String column, {
+    bool deleteWhenEmpty = true,
+  }) {
     for (final rec in records.toList()) {
       final json = rec.column(column) as String?;
       final g = GridRange.tryParse(json);
@@ -216,7 +238,10 @@ void repairAfterDelete(PlanBuilder b, SheetModel s, Set<String> deletedRows, Set
     if (survivors.isEmpty) {
       b.delete(SheetsTables.dimensionGroup, g.id);
     } else {
-      b.update(SheetsTables.dimensionGroup, g.id, {'startId': survivors.first, 'endId': survivors.last});
+      b.update(SheetsTables.dimensionGroup, g.id, {
+        'startId': survivors.first,
+        'endId': survivors.last,
+      });
     }
   }
   // Named ranges on this sheet.
@@ -260,7 +285,13 @@ void repairAfterDelete(PlanBuilder b, SheetModel s, Set<String> deletedRows, Set
     final newCol = reanchor(anchor['colId'] as String?, deletedCols, false);
     final writes = <String, Object?>{};
     if (changedAnchor) {
-      writes['anchorJson'] = jsonEncode({...anchor, 'rowId': newRow, 'colId': newCol, 'dx': 0.0, 'dy': 0.0});
+      writes['anchorJson'] = jsonEncode({
+        ...anchor,
+        'rowId': newRow,
+        'colId': newCol,
+        'dx': 0.0,
+        'dy': 0.0,
+      });
     }
     final spec = PlanBuilderHelpers.decodeMap(o.specJson);
     final repairedSpec = _repairRangesInJson(spec, s, repair);
@@ -297,12 +328,21 @@ void repairAfterDelete(PlanBuilder b, SheetModel s, Set<String> deletedRows, Set
       if (content == null || !content.startsWith('=')) continue;
       if (allDeleted.contains(cell.rowId) || allDeleted.contains(cell.columnId)) continue;
       if (!StoredFormula.mayReference(content, allDeleted)) continue;
-      final repaired = hooks.repairBoundaries(content, deletedRowIds: deletedRows, deletedColIds: deletedCols);
+      final repaired = hooks.repairBoundaries(
+        content,
+        deletedRowIds: deletedRows,
+        deletedColIds: deletedCols,
+      );
       if (repaired != null && repaired != content) {
         b.update(SheetsTables.cell, cell.id, {CellCols.content: repaired});
       }
     }
-    _repairRuleFormulas(b, other, allDeleted, (f) => hooks.repairBoundaries(f, deletedRowIds: deletedRows, deletedColIds: deletedCols));
+    _repairRuleFormulas(
+      b,
+      other,
+      allDeleted,
+      (f) => hooks.repairBoundaries(f, deletedRowIds: deletedRows, deletedColIds: deletedCols),
+    );
   }
   for (final n in b.model.namedRanges) {
     final f = n.formula;
@@ -314,7 +354,12 @@ void repairAfterDelete(PlanBuilder b, SheetModel s, Set<String> deletedRows, Set
 
 /// Applies [rewrite] to formulas inside CF/DV/filter JSON of [s] that may
 /// reference [ids].
-void _repairRuleFormulas(PlanBuilder b, SheetModel s, Set<String> ids, String? Function(String) rewrite) {
+void _repairRuleFormulas(
+  PlanBuilder b,
+  SheetModel s,
+  Set<String> ids,
+  String? Function(String) rewrite,
+) {
   void apply(String table, SyncRecord rec, String column) {
     final json = rec.column(column) as String?;
     if (json == null || !StoredFormula.mayReference(json, ids)) return;
@@ -351,7 +396,9 @@ String _nearestSurvivor(List<String> ids, int i, Set<String> deleted) {
 }
 
 String _canonical(String id) =>
-    id.length == Base62Uuid.length && !id.contains('-') && Base62Uuid.isValid(id) ? Base62Uuid.decode(id) : id;
+    id.length == Base62Uuid.length && !id.contains('-') && Base62Uuid.isValid(id)
+    ? Base62Uuid.decode(id)
+    : id;
 
 bool _sameList(List<GridRange> a, List<GridRange> b) {
   if (a.length != b.length) return false;
@@ -361,7 +408,12 @@ bool _sameList(List<GridRange> a, List<GridRange> b) {
   return true;
 }
 
-GridRect? _remainingRect(SheetModel s, GridRange r, Set<String> deletedRows, Set<String> deletedCols) {
+GridRect? _remainingRect(
+  SheetModel s,
+  GridRange r,
+  Set<String> deletedRows,
+  Set<String> deletedCols,
+) {
   final rr = s.resolve(r);
   if (rr == null) return null;
   var rows = 0;
@@ -379,7 +431,12 @@ GridRect? _remainingRect(SheetModel s, GridRange r, Set<String> deletedRows, Set
 /// Moves deleted endpoints of [g] inward to the nearest surviving id inside
 /// the range (computed on the pre-delete order). Returns [g] unchanged when no
 /// endpoint is deleted, null when nothing survives.
-GridRange? repairGridRange(SheetModel s, GridRange g, Set<String> deletedRows, Set<String> deletedCols) {
+GridRange? repairGridRange(
+  SheetModel s,
+  GridRange g,
+  Set<String> deletedRows,
+  Set<String> deletedCols,
+) {
   final rows = _repairSpan(s.rows.ids, s.rows.indexOf, g.r1, g.r2, deletedRows);
   final cols = _repairSpan(s.columns.ids, s.columns.indexOf, g.c1, g.c2, deletedCols);
   if (rows == null || cols == null) return null;
@@ -456,7 +513,11 @@ Map<String, Object?>? _repairRangesInJson(
   var changed = false;
   Object? walk(Object? v) {
     if (v is Map) {
-      if (v['s'] is String && (v.containsKey('r1') || v.containsKey('c1') || v.containsKey('r2') || v.containsKey('c2'))) {
+      if (v['s'] is String &&
+          (v.containsKey('r1') ||
+              v.containsKey('c1') ||
+              v.containsKey('r2') ||
+              v.containsKey('c2'))) {
         final g = GridRange.tryParse(v);
         if (g != null && g.sheetId == s.id) {
           final r = repair(g);
@@ -481,11 +542,19 @@ Map<String, Object?>? _repairRangesInJson(
 MutationPlan planMoveDimension(PlanBuilder b, MoveDimension op) {
   final s = b.sheetOf(op.sheetId);
   final axis = s.axis(op.dimension);
-  final moving = [for (final id in axis.ids) if (op.ids.contains(id)) id];
+  final moving = [
+    for (final id in axis.ids)
+      if (op.ids.contains(id)) id,
+  ];
   if (moving.isEmpty) return b.build('Move ${_noun(op.dimension, 0)}');
-  final rest = [for (final id in axis.ids) if (!op.ids.contains(id)) id];
+  final rest = [
+    for (final id in axis.ids)
+      if (!op.ids.contains(id)) id,
+  ];
   final beforeIndex = op.beforeId == null ? rest.length : rest.indexOf(op.beforeId!);
-  if (beforeIndex < 0) throw const PlanException('invalid_argument', 'Move target is one of the moved entries');
+  if (beforeIndex < 0) {
+    throw const PlanException('invalid_argument', 'Move target is one of the moved entries');
+  }
   final prevKey = beforeIndex > 0 ? axis.sortKeyOf(rest[beforeIndex - 1]) : null;
   var nextKey = beforeIndex < rest.length ? axis.sortKeyOf(rest[beforeIndex]) : null;
   if (prevKey != null && nextKey != null && prevKey.compareTo(nextKey) >= 0) nextKey = null;
@@ -495,7 +564,10 @@ MutationPlan planMoveDimension(PlanBuilder b, MoveDimension op) {
     b.update(table, moving[i], {Cols.sortKey: keys[i]});
   }
   b.summary.sheets.add(s.id);
-  return b.build('Move ${moving.length} ${_noun(op.dimension, moving.length)}', kinds: [ChangeKinds.structure]);
+  return b.build(
+    'Move ${moving.length} ${_noun(op.dimension, moving.length)}',
+    kinds: [ChangeKinds.structure],
+  );
 }
 
 /// [SetDimensionHidden] (03 §13.5).
@@ -516,7 +588,10 @@ MutationPlan planSetHidden(PlanBuilder b, SetDimensionHidden op) {
   }
   b.summary.sheets.add(s.id);
   final n = op.ids.length;
-  return b.build('${op.hidden ? 'Hide' : 'Unhide'} ${_noun(op.dimension, n)}', kinds: [ChangeKinds.structure]);
+  return b.build(
+    '${op.hidden ? 'Hide' : 'Unhide'} ${_noun(op.dimension, n)}',
+    kinds: [ChangeKinds.structure],
+  );
 }
 
 /// [ResizeDimension] (03 §13.6).
@@ -524,7 +599,7 @@ MutationPlan planResize(PlanBuilder b, ResizeDimension op) {
   final s = b.sheetOf(op.sheetId);
   final table = _tableOf(op.dimension);
   final col = op.dimension == Dimension.rows ? DimCols.height : DimCols.width;
-  final size = op.size == null ? null : op.size!.clamp(2.0, 10000.0);
+  final size = op.size?.clamp(2.0, 10000.0);
   for (final id in op.ids) {
     if (!s.axis(op.dimension).contains(id)) continue;
     b.update(table, id, {col: size});
@@ -539,13 +614,19 @@ MutationPlan planSetFrozen(PlanBuilder b, SetFrozen op) {
   final writes = <String, Object?>{};
   if (op.rows != null) {
     if (op.rows! < 0 || op.rows! >= s.rows.length) {
-      throw const PlanException('invalid_argument', 'Frozen rows must leave at least one row unfrozen');
+      throw const PlanException(
+        'invalid_argument',
+        'Frozen rows must leave at least one row unfrozen',
+      );
     }
     writes[SheetCols.frozenRows] = op.rows;
   }
   if (op.columns != null) {
     if (op.columns! < 0 || op.columns! >= s.columns.length) {
-      throw const PlanException('invalid_argument', 'Frozen columns must leave at least one column unfrozen');
+      throw const PlanException(
+        'invalid_argument',
+        'Frozen columns must leave at least one column unfrozen',
+      );
     }
     writes[SheetCols.frozenColumns] = op.columns;
   }
@@ -553,8 +634,12 @@ MutationPlan planSetFrozen(PlanBuilder b, SetFrozen op) {
   for (final (_, m) in s.mergesIntersecting(s.gridRect ?? const GridRect(0, 0, 0, 0))) {
     final fr = op.rows;
     final fc = op.columns;
-    if ((fr != null && fr > 0 && m.top < fr && m.bottom >= fr) || (fc != null && fc > 0 && m.left < fc && m.right >= fc)) {
-      throw const PlanException('merge_conflict', "You can't freeze rows or columns that contain only part of a merged cell");
+    if ((fr != null && fr > 0 && m.top < fr && m.bottom >= fr) ||
+        (fc != null && fc > 0 && m.left < fc && m.right >= fc)) {
+      throw const PlanException(
+        'merge_conflict',
+        "You can't freeze rows or columns that contain only part of a merged cell",
+      );
     }
   }
   b.update(SheetsTables.sheet, s.id, writes);

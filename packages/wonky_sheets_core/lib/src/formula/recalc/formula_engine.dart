@@ -19,7 +19,9 @@ import '../parser/formula_locale.dart';
 import '../values/errors.dart';
 import '../values/format_hint.dart';
 import '../values/fvalue.dart';
+import '../services/explain.dart';
 import 'engine_types.dart';
+import 'lookup_cache.dart';
 
 /// Engine version stored with cached values (05 §12). Bump on behavior changes.
 const String engineVersion = '1.0.0';
@@ -69,7 +71,7 @@ final class _Node {
   final String rowId;
   final String colId;
   final String key;
-  CellInput input;
+  EngineCellInput input;
   late String formula;
   late CompiledFormula compiled;
   late List<StoredRef> slots;
@@ -137,6 +139,8 @@ final class FormulaEngine implements EvalHost, CellSource {
   NumberTextFormatter textFormatter;
   final EngineConfig config;
   final FormulaCompiler compiler;
+  @override
+  final LookupCache lookupCache = LookupCache();
 
   final Map<String, _Node> _nodes = {};
   final Map<String, Set<_Node>> _nodesBySheet = {};
@@ -587,6 +591,7 @@ final class FormulaEngine implements EvalHost, CellSource {
       return;
     }
     _changeCounter++;
+    lookupCache.bumpColumns(sheetId, rect.left, rect.right);
     final work = Queue<_Node>();
     // Existing nodes in the rect may have been removed.
     final existing = _nodesBySheet[sheetId];
@@ -616,6 +621,7 @@ final class FormulaEngine implements EvalHost, CellSource {
   }
 
   void _cellChanged(SheetView sheet, int row, int col, Queue<_Node> work) {
+    lookupCache.bumpColumn(sheet.id, col);
     final rowId = sheet.rows.idAt(row), colId = sheet.columns.idAt(col);
     final key = '${sheet.id}\u0001$rowId\u0001$colId';
     final input = sheet.inputAt(row, col);
@@ -655,6 +661,7 @@ final class FormulaEngine implements EvalHost, CellSource {
       return;
     }
     final sheet = workbook.sheetById(sheetId);
+    lookupCache.bumpSheet(sheetId);
     _rangeIndexes[sheetId]?.invalidate();
     _spills[sheetId]?.cache = null;
     final work = Queue<_Node>();
@@ -744,6 +751,7 @@ final class FormulaEngine implements EvalHost, CellSource {
       _ensureLoaded();
       return;
     }
+    lookupCache.bumpAll();
     final work = Queue<_Node>();
     final alive = {for (final s in workbook.sheets) s.id};
     for (final n in _nodes.values.toList()) {
@@ -793,6 +801,7 @@ final class FormulaEngine implements EvalHost, CellSource {
     final old = _settings;
     _settings = settings;
     _locale = FormulaLocale.forId(settings.locale);
+    lookupCache.bumpAll();
     final work = Queue<_Node>();
     if (old.locale != settings.locale ||
         old.iterativeCalc != settings.iterativeCalc ||
@@ -851,7 +860,7 @@ final class FormulaEngine implements EvalHost, CellSource {
 
   // ====================================================================== nodes
 
-  _Node _nodeForInput(SheetView sheet, int row, int col, CellInput input) {
+  _Node _nodeForInput(SheetView sheet, int row, int col, EngineCellInput input) {
     final d = input.engineData;
     if (d is _Node && identical(d.input, input) && !d.removed) return d;
     final key = '${sheet.id}\u0001${sheet.rows.idAt(row)}\u0001${sheet.columns.idAt(col)}';
@@ -867,7 +876,7 @@ final class FormulaEngine implements EvalHost, CellSource {
     return _createNode(sheet, row, col, input);
   }
 
-  _Node _createNode(SheetView sheet, int row, int col, CellInput input) {
+  _Node _createNode(SheetView sheet, int row, int col, EngineCellInput input) {
     final n = _Node(sheet.id, sheet.rows.idAt(row), sheet.columns.idAt(col), input);
     _nodes[n.key] = n;
     (_nodesBySheet[sheet.id] ??= {}).add(n);
@@ -887,7 +896,7 @@ final class FormulaEngine implements EvalHost, CellSource {
     if (c.volatile) _volatile.add(n);
   }
 
-  void _updateNode(_Node n, CellInput input) {
+  void _updateNode(_Node n, EngineCellInput input) {
     final oldFormula = n.formula;
     n.input = input;
     input.engineData = n;
@@ -1425,6 +1434,7 @@ final class FormulaEngine implements EvalHost, CellSource {
     if ((!n.hasValue || !FValues.sameValue(n.value, v) || n.hint != hint) && _changed.length < 200000) {
       _changed.add(ChangedCell(sheet.id, row, col));
     }
+    if (!n.hasValue || !FValues.sameValue(n.value, v)) lookupCache.bumpColumn(sheet.id, col);
     n.value = v;
     n.hint = hint;
   }
@@ -1507,8 +1517,10 @@ final class FormulaEngine implements EvalHost, CellSource {
     _propagate(work);
   }
 
-  void _recordSpillChange(String sheetId, GridRect rect) =>
-      (_changedSpills[sheetId] ??= []).add(rect);
+  void _recordSpillChange(String sheetId, GridRect rect) {
+    (_changedSpills[sheetId] ??= []).add(rect);
+    lookupCache.bumpColumns(sheetId, rect.left, rect.right);
+  }
 
   void _spillError(_Node n, SheetView sheet, int row, int col, FError e, int rows, int cols) {
     _clearSpill(n, sheet, row, col);
@@ -1702,6 +1714,13 @@ final class FormulaEngine implements EvalHost, CellSource {
       CompiledRelative._(this, stored.startsWith('=') ? stored.substring(1) : stored, sheetId, anchor);
 
   // ====================================================================== introspection
+
+  /// Evaluation trace of the formula at a cell (Explain formula, MCP), or null.
+  ExplainNode? explain(String sheetId, int row, int col) {
+    _ensureLoaded();
+    settle();
+    return explainCell(this, sheetId, row, col);
+  }
 
   /// Precedent areas and dependent formula cells of a cell (05 §7.1).
   DependencyInfo dependencies(String sheetId, int row, int col, {bool transitive = false}) {

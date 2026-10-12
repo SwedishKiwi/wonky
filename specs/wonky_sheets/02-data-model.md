@@ -3,8 +3,9 @@
 Read first: suite [12-offline-and-sync.md](../12-offline-and-sync.md) §2 (engine
 rules). All synced models live in the shared package `packages/wonky_sync_models`
 (`database: sync`), so server, client and Flutter app share them. Id helpers (UUIDv5
-namespaces, fractional indexing, reference encoding) live in the same package
-(`lib/src/ids.dart`, `lib/src/fractional_index.dart`) so server and clients compute identical ids.
+namespaces, fractional indexing, the 22-char base-62 UUID codec) live in the same package as a
+pure-Dart library without Serverpod imports (`lib/ids.dart`, implementation in `lib/src/ids/`)
+so server and clients compute identical ids.
 
 ## 1. Modeling principles
 
@@ -412,7 +413,7 @@ indexes:
 (`spreadsheetUuid, sheetId, rowId, colId, userId, at, before, after`), `ScriptExecution`
 (logs), `ScriptQuotaUsage`, `SheetsSnapshotIndex` (versions are in `ItemVersion`).
 
-## 6. In-memory model (`wonky_sheets_core/lib/model/`, pure Dart)
+## 6. In-memory model (`wonky_sheets_core/lib/src/model/`, pure Dart, exported by `lib/model.dart`)
 
 The SQLite replica is the persistence layer; the UI and formula engine work on an in-memory
 `WorkbookModel` built from it. It lives in **pure Dart** (`wonky_sheets_core`) because the
@@ -429,6 +430,11 @@ scripts; the Flutter app adds viewport/painter adapters and the DB-backed loader
   format attribute bitset + value table) loaded at open (viewport-first, then background
   streaming in chunks of 10k rows).
 - `RuleIndex`: interval trees for CF, DV, merges, protected ranges, filters, banding.
+- **Generic ingestion**: the model holds plain Dart records (`records.dart`), independent of the
+  generated Serverpod classes; it ingests `RowChange`s (`table`, `rowId`, column-name maps; UUIDs as
+  strings, enums by name) so the app, the server and snapshots share one path
+  (`WorkbookModel.applyChanges`). `ModelWorkbookView` adapts it to the formula engine's
+  `WorkbookView` and `ModelEngineBinding` forwards change batches to the engine.
 - **Change ingestion**:
   - Local writes update the model synchronously (optimistic) and the DB asynchronously.
   - Remote writes: after each `onMergeSuccess(spaceUuid, hlc)` the `RemoteChangeTracker` queries

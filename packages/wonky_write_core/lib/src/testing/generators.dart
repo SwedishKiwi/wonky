@@ -281,11 +281,22 @@ final class EditGen {
   Delta change(Delta document, {bool overlays = false}) {
     final len = DeltaUtils.documentLength(document);
     final doc = WonkyDocument(document);
+    final text = doc.text;
+    // Never split a surrogate pair (editors don't).
+    int fit(int at, int n) {
+      var k = n;
+      while (k > 0 && DeltaUtils.isInsideSurrogatePair(text, at + k)) {
+        k--;
+      }
+      return k;
+    }
+
     final d = Delta();
     var pos = 0;
     final parts = 1 + random.nextInt(3);
     for (var i = 0; i < parts && pos < len; i++) {
-      final skip = random.nextInt(len - pos);
+      var skip = random.nextInt(len - pos);
+      skip = fit(pos, skip);
       d.retain(skip);
       pos += skip;
       final remaining = len - 1 - pos; // keep the final newline
@@ -295,13 +306,13 @@ final class EditGen {
           d.insert(t, random.nextInt(3) == 0 ? {WonkyAttr.bold: true} : null);
         case 2:
           if (remaining > 0) {
-            final n = 1 + random.nextInt(remaining.clamp(1, 6));
+            final n = fit(pos, 1 + random.nextInt(remaining.clamp(1, 6)));
             d.delete(n);
             pos += n;
           }
         case 3:
           if (remaining > 0) {
-            final n = 1 + random.nextInt(remaining.clamp(1, 8));
+            final n = fit(pos, 1 + random.nextInt(remaining.clamp(1, 8)));
             final key = overlays && random.nextBool()
                 ? WonkyAttr.commentKey('c${random.nextInt(3)}')
                 : [WonkyAttr.bold, WonkyAttr.italic, WonkyAttr.strike][random

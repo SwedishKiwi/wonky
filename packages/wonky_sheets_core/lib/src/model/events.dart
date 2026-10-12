@@ -26,10 +26,14 @@ sealed class WorkbookChangeEvent {
 /// their format attributes; [noteKeys] their notes.
 final class CellsChanged extends WorkbookChangeEvent {
   /// Creates the event.
-  CellsChanged(this.sheetId, {Set<CellKey>? contentKeys, Set<CellKey>? formatKeys, Set<CellKey>? noteKeys})
-    : contentKeys = contentKeys ?? {},
-      formatKeys = formatKeys ?? {},
-      noteKeys = noteKeys ?? {};
+  CellsChanged(
+    this.sheetId, {
+    Set<CellKey>? contentKeys,
+    Set<CellKey>? formatKeys,
+    Set<CellKey>? noteKeys,
+  }) : contentKeys = contentKeys ?? {},
+       formatKeys = formatKeys ?? {},
+       noteKeys = noteKeys ?? {};
 
   final String sheetId;
   final Set<CellKey> contentKeys;
@@ -48,7 +52,13 @@ final class CellsChanged extends WorkbookChangeEvent {
 /// their default format changed.
 final class StructureChanged extends WorkbookChangeEvent {
   /// Creates the event.
-  StructureChanged(this.sheetId, this.dimension, {this.order = false, this.sizes = false, this.formats = false});
+  StructureChanged(
+    this.sheetId,
+    this.dimension, {
+    this.order = false,
+    this.sizes = false,
+    this.formats = false,
+  });
 
   final String sheetId;
   final Dimension dimension;
@@ -63,7 +73,8 @@ final class StructureChanged extends WorkbookChangeEvent {
   bool formats;
 
   @override
-  String toString() => 'StructureChanged($sheetId, ${dimension.name}, order: $order, sizes: $sizes, formats: $formats)';
+  String toString() =>
+      'StructureChanged($sheetId, ${dimension.name}, order: $order, sizes: $sizes, formats: $formats)';
 }
 
 /// Sheets were added, removed, renamed, reordered or their properties changed.

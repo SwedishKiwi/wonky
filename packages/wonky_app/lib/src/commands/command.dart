@@ -1,0 +1,214 @@
+import 'package:flutter/widgets.dart';
+import 'package:wonky_core/wonky_core.dart';
+
+import '../document/document_controller.dart';
+import '../shell/shell_services.dart';
+import '../undo/undo_service.dart';
+
+/// Which undo stack a command's changes land on (suite 08 §3.2).
+enum UndoTarget {
+  /// The active document's stack (content, document metadata, comments).
+  document,
+
+  /// The shell stack (drive operations: move, rename, star, trash…).
+  shell,
+}
+
+/// A user-visible action (suite 08 §1). Menus, toolbars, context menus,
+/// shortcuts, the palette, MCP and the AI assistant all invoke commands
+/// through the `CommandDispatcher`; no menu or toolbar calls business logic
+/// directly.
+abstract class Command<A extends CommandArgs> {
+  const Command();
+
+  /// Stable id (`<app|shell>.<area>.<action>`). Never rename.
+  CommandId get id;
+
+  /// Localized title for menus, palette, tooltips and undo labels.
+  String title(BuildContext context);
+
+  /// Longer description (palette; MCP tool description).
+  String? description(BuildContext context) => null;
+
+  IconData? get icon => null;
+
+  /// Extra search terms for the palette.
+  List<String> aliases(BuildContext context) => const [];
+
+  /// Grouping in the keyboard-shortcuts help ("File", "Edit", …).
+  String? category(BuildContext context) => null;
+
+  /// JSON schema of the arguments (MCP `ui.invoke_command`, AI assistant).
+  JsonSchema get argsSchema => JsonSchema.empty;
+
+  /// Parses validated JSON into typed arguments.
+  A parseArgs(Map<String, Object?> json);
+
+  /// Default bindings (platform-aware); users can override them.
+  List<KeyBinding> get defaultBindings => const [];
+
+  /// The scope the default bindings live in.
+  KeyScope get keyScope => KeyScope.global;
+
+  /// Minimum role on the active document; checked only when a document is
+  /// active (drive commands check per-item roles in [isEnabled]).
+  Role get requiredRole => Role.editor;
+
+  /// Whether the command mutates undoable state.
+  bool get isUndoable => true;
+
+  /// Where undo entries go.
+  UndoTarget get undoTarget => UndoTarget.document;
+
+  /// Whether the palette lists the command.
+  bool get showInPalette => true;
+
+  /// Whether the command can run now (drives disabled state everywhere).
+  bool isEnabled(CommandContext ctx, A args) => true;
+
+  /// Tooltip for the disabled state ("You have view access").
+  String? disabledReason(CommandContext ctx, A args) => null;
+
+  /// Checked state of toggles / radio items (null = not checkable).
+  bool? isChecked(CommandContext ctx, A args) => null;
+
+  /// Label of the undo step ("Undo Rename"). Defaults to [title].
+  String undoLabel(BuildContext context, A args) => title(context);
+
+  /// Runs the command. Record undo entries with `ctx.record(entry)`.
+  Future<CommandResult> execute(CommandContext ctx, A args);
+}
+
+/// A command whose arguments are a validated JSON map ([JsonArgs]).
+abstract class JsonCommand extends Command<JsonArgs> {
+  const JsonCommand();
+
+  @override
+  JsonArgs parseArgs(Map<String, Object?> json) => JsonArgs(json);
+}
+
+/// A command defined by closures — handy for app commands that delegate to
+/// a controller.
+class CallbackCommand extends JsonCommand {
+  CallbackCommand({
+    required String id,
+    required String Function(BuildContext context) title,
+    required Future<CommandResult> Function(CommandContext ctx, JsonArgs args) run,
+    this.icon,
+    this.defaultBindings = const [],
+    this.keyScope = KeyScope.global,
+    this.requiredRole = Role.viewer,
+    this.isUndoable = false,
+    this.undoTarget = UndoTarget.document,
+    this.argsSchema = JsonSchema.empty,
+    this.showInPalette = true,
+    bool Function(CommandContext ctx, JsonArgs args)? enabled,
+    bool? Function(CommandContext ctx, JsonArgs args)? checked,
+    String? Function(BuildContext context)? description,
+    String? Function(BuildContext context)? category,
+  }) : id = CommandId(id),
+       _title = title,
+       _run = run,
+       _enabled = enabled,
+       _checked = checked,
+       _description = description,
+       _category = category;
+
+  @override
+  final CommandId id;
+  @override
+  final IconData? icon;
+  @override
+  final List<KeyBinding> defaultBindings;
+  @override
+  final KeyScope keyScope;
+  @override
+  final Role requiredRole;
+  @override
+  final bool isUndoable;
+  @override
+  final UndoTarget undoTarget;
+  @override
+  final JsonSchema argsSchema;
+  @override
+  final bool showInPalette;
+  final String Function(BuildContext) _title;
+  final Future<CommandResult> Function(CommandContext, JsonArgs) _run;
+  final bool Function(CommandContext, JsonArgs)? _enabled;
+  final bool? Function(CommandContext, JsonArgs)? _checked;
+  final String? Function(BuildContext)? _description;
+  final String? Function(BuildContext)? _category;
+
+  @override
+  String title(BuildContext context) => _title(context);
+
+  @override
+  String? description(BuildContext context) => _description?.call(context);
+
+  @override
+  String? category(BuildContext context) => _category?.call(context);
+
+  @override
+  bool isEnabled(CommandContext ctx, JsonArgs args) => _enabled?.call(ctx, args) ?? true;
+
+  @override
+  bool? isChecked(CommandContext ctx, JsonArgs args) => _checked?.call(ctx, args);
+
+  @override
+  Future<CommandResult> execute(CommandContext ctx, JsonArgs args) => _run(ctx, args);
+}
+
+/// Everything a command can use while running (suite 08 §1).
+class CommandContext {
+  CommandContext({
+    required this.services,
+    required this.source,
+    this.buildContext,
+    this.transaction,
+  });
+
+  final ShellServices services;
+  final InvocationSource source;
+
+  /// For dialogs; null when headless.
+  final BuildContext? buildContext;
+
+  /// The open undo transaction (undoable commands only).
+  final UndoTransaction? transaction;
+
+  /// `write` or `sheets`.
+  String get app => services.config.app.name;
+
+  /// The active document controller, if an editor is open.
+  DocumentController? get document => services.activeDocument.value;
+
+  /// The current selection (restored by undo).
+  SelectionSnapshot? get selection => document?.captureSelection();
+
+  /// The user's role on the active document.
+  Role? get role => document?.role;
+
+  UndoService get undo => services.undo;
+
+  /// A context usable for dialogs: the invoking widget's, or the shell's
+  /// navigator context (MCP/headless invocations still show dialogs in the
+  /// live window).
+  BuildContext? get dialogContext =>
+      (buildContext != null && buildContext!.mounted) ? buildContext : services.navigatorContext;
+
+  /// Records an undo entry in the open transaction.
+  void record(UndoEntry entry) {
+    final t = transaction;
+    if (t == null) {
+      throw StateError('No undo transaction: is the command marked isUndoable?');
+    }
+    t.record(entry);
+  }
+
+  CommandContext withTransaction(UndoTransaction? t) => CommandContext(
+    services: services,
+    source: source,
+    buildContext: buildContext,
+    transaction: t,
+  );
+}

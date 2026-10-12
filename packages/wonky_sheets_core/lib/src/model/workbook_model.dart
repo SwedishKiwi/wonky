@@ -128,9 +128,7 @@ final class WorkbookModel implements WorkbookReader {
       for (final s in _sheets.values)
         if (s.record != null) s,
     ];
-    list.sort(
-      (a, b) => FractionalIndex.compare(a.record!.sortKey, a.id, b.record!.sortKey, b.id),
-    );
+    list.sort((a, b) => FractionalIndex.compare(a.record!.sortKey, a.id, b.record!.sortKey, b.id));
     return List<SheetModel>.unmodifiable(list);
   }();
 

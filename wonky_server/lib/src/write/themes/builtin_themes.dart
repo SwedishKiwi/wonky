@@ -1,0 +1,418 @@
+import 'dart:convert';
+
+/// A built-in Write theme (Write 06 §9).
+class BuiltinTheme {
+  const BuiltinTheme({
+    required this.key,
+    required this.name,
+    required this.description,
+    required this.json,
+    this.schemaVersion = 1,
+  });
+
+  final String key;
+  final String name;
+  final String description;
+  final String json;
+  final int schemaVersion;
+}
+
+/// The built-in presets. Built-ins are global rows upserted at server start
+/// (`ThemeService.upsertBuiltins`); editing the JSON here bumps the stored
+/// version so documents using the theme update.
+abstract final class BuiltinThemes {
+  static const schemaVersion = 1;
+
+  static const _lightPalette = {
+    'text': '#1f2328',
+    'heading': '#111111',
+    'muted': '#6b7280',
+    'accent': '#1d4ed8',
+    'link': '@accent',
+    'linkHover': '#1e40af',
+    'page': '#ffffff',
+    'canvas': '#f1f3f4',
+    'border': '#d0d7de',
+    'codeText': '#24292f',
+    'codeBg': '#f6f8fa',
+    'quoteText': '#4b5563',
+    'quoteBar': '#d0d7de',
+    'quoteBg': 'transparent',
+    'tableHeaderBg': '#f3f4f6',
+    'tableStripe': '#fafafa',
+    'mentionBg': '#e0e7ff',
+    'mentionText': '#3730a3',
+    'highlight': '#fff3bf',
+    'custom1': null,
+    'custom2': null,
+    'custom3': null,
+    'custom4': null,
+    'custom5': null,
+    'custom6': null,
+  };
+
+  static const _darkPalette = {
+    'text': '#e6edf3',
+    'heading': '#f0f6fc',
+    'muted': '#9ca3af',
+    'accent': '#93c5fd',
+    'link': '@accent',
+    'linkHover': '#bfdbfe',
+    'page': '#1b1d21',
+    'canvas': '#111214',
+    'border': '#3d444d',
+    'codeText': '#e6edf3',
+    'codeBg': '#24272c',
+    'quoteText': '#c9d1d9',
+    'quoteBar': '#3d444d',
+    'quoteBg': 'transparent',
+    'tableHeaderBg': '#262a30',
+    'tableStripe': '#1f2226',
+    'mentionBg': '#312e81',
+    'mentionText': '#c7d2fe',
+    'highlight': '#5c4b00',
+    'custom1': null,
+    'custom2': null,
+    'custom3': null,
+    'custom4': null,
+    'custom5': null,
+    'custom6': null,
+  };
+
+  static String _theme({
+    required String name,
+    required String description,
+    required String key,
+    required Map<String, String> fonts,
+    required String bodySize,
+    required double lineHeight,
+    String spaceAfter = '8pt',
+    String align = 'left',
+    Map<String, Object?> palette = const {},
+    Map<String, Object?> darkPalette = const {},
+    Map<String, Object?> elements = const {},
+    Map<String, Object?> page = const {},
+  }) => jsonEncode({
+    'schemaVersion': schemaVersion,
+    'name': name,
+    'description': description,
+    'basedOn': 'builtin:$key',
+    'fonts': fonts,
+    'palette': {..._lightPalette, ...palette},
+    'dark': {
+      'mode': 'explicit',
+      'palette': {..._darkPalette, ...darkPalette},
+      'elements': <String, Object?>{},
+      'syntax': null,
+    },
+    'page': {
+      'paperColor': '@page',
+      'canvasColor': '@canvas',
+      'pageShadow': 'soft',
+      'pagelessMaxWidth': '760px',
+      'defaultMargins': '1in',
+      ...page,
+    },
+    'elements': {
+      'body': {
+        'fontFamily': '@body',
+        'fontSize': bodySize,
+        'lineHeight': lineHeight,
+        'color': '@text',
+        'spaceAfter': spaceAfter,
+        'align': align,
+      },
+      'headings': {
+        'fontFamily': '@heading',
+        'fontWeight': 600,
+        'color': '@heading',
+        'keepWithNext': true,
+      },
+      'h1': {'fontSize': '24pt', 'spaceBefore': '18pt', 'spaceAfter': '8pt'},
+      'h2': {'fontSize': '18pt', 'spaceBefore': '16pt', 'spaceAfter': '6pt'},
+      'h3': {'fontSize': '15pt', 'spaceBefore': '14pt', 'spaceAfter': '6pt'},
+      'h4': {'fontSize': '13pt', 'spaceBefore': '12pt', 'spaceAfter': '4pt'},
+      'h5': {'fontSize': '12pt', 'spaceBefore': '10pt', 'spaceAfter': '4pt'},
+      'h6': {'fontSize': '11pt', 'spaceBefore': '10pt', 'spaceAfter': '4pt'},
+      'link': {'color': '@link', 'hoverColor': '@linkHover', 'underline': 'hover'},
+      'inlineCode': {
+        'fontFamily': '@mono',
+        'sizeRatio': 0.9,
+        'color': '@codeText',
+        'background': '@codeBg',
+        'paddingX': '3px',
+        'borderRadius': '4px',
+      },
+      'codeBlock': {
+        'fontFamily': '@mono',
+        'background': '@codeBg',
+        'color': '@codeText',
+        'padding': '12px',
+        'borderRadius': '6px',
+        'wrap': true,
+        'showLanguageLabel': true,
+        'tabSize': 4,
+      },
+      'blockquote': {
+        'color': '@quoteText',
+        'bar': {'width': '3px', 'style': 'solid', 'color': '@quoteBar'},
+        'padding': {'left': '12px'},
+      },
+      'rule': {'style': 'solid', 'thickness': '1px', 'color': '@border', 'width': '100%'},
+      'image': {'maxWidth': '100%', 'align': 'center', 'borderRadius': '6px'},
+      'table': {
+        'width': 'auto',
+        'headerBackground': '@tableHeaderBg',
+        'borders': 'all',
+        'borderColor': '@border',
+        'borderWidth': '1px',
+        'zebra': false,
+      },
+      'mention': {
+        'color': '@mentionText',
+        'background': '@mentionBg',
+        'borderRadius': '4px',
+        'prefix': '@',
+      },
+      ...elements,
+    },
+  });
+
+  static final List<BuiltinTheme> all = [
+    BuiltinTheme(
+      key: 'wonky-default',
+      name: 'Wonky Default',
+      description: 'Clean sans-serif typography with accent links.',
+      json: _theme(
+        key: 'wonky-default',
+        name: 'Wonky Default',
+        description: 'Clean sans-serif typography with accent links.',
+        fonts: {'body': 'Inter', 'heading': 'Inter', 'mono': 'JetBrains Mono'},
+        bodySize: '11pt',
+        lineHeight: 1.5,
+      ),
+    ),
+    BuiltinTheme(
+      key: 'classic-serif',
+      name: 'Classic Serif',
+      description: 'Traditional book typography.',
+      json: _theme(
+        key: 'classic-serif',
+        name: 'Classic Serif',
+        description: 'Traditional book typography.',
+        fonts: {
+          'body': 'Source Serif 4',
+          'heading': 'Source Serif 4',
+          'mono': 'JetBrains Mono',
+        },
+        bodySize: '12pt',
+        lineHeight: 1.45,
+        align: 'justify',
+        elements: {
+          'h1': {'fontSize': '26pt', 'fontWeight': 600},
+          'h3': {'caseTransform': 'smallCaps'},
+          'blockquote': {'fontStyle': 'italic', 'italic': true},
+          'rule': {'style': 'ornament', 'ornament': '⁂', 'color': '@muted'},
+          'body': {
+            'fontFamily': '@body',
+            'fontSize': '12pt',
+            'lineHeight': 1.45,
+            'color': '@text',
+            'spaceAfter': '8pt',
+            'align': 'justify',
+            'fontFeatures': ['onum'],
+          },
+        },
+      ),
+    ),
+    BuiltinTheme(
+      key: 'modern-sans',
+      name: 'Modern Sans',
+      description: 'Bold headings, airy spacing and full-width tables.',
+      json: _theme(
+        key: 'modern-sans',
+        name: 'Modern Sans',
+        description: 'Bold headings, airy spacing and full-width tables.',
+        fonts: {'body': 'Work Sans', 'heading': 'Montserrat', 'mono': 'IBM Plex Mono'},
+        bodySize: '11pt',
+        lineHeight: 1.6,
+        elements: {
+          'headings': {
+            'fontFamily': '@heading',
+            'fontWeight': 700,
+            'letterSpacing': '-0.01em',
+            'color': '@heading',
+          },
+          'h1': {
+            'fontSize': '26pt',
+            'borderBottom': {'width': '2px', 'style': 'solid', 'color': '@accent'},
+            'borderBottomGap': '6px',
+          },
+          'table': {'width': 'full', 'zebra': true, 'zebraColor': '@tableStripe'},
+        },
+      ),
+    ),
+    BuiltinTheme(
+      key: 'academic-apa',
+      name: 'Academic (APA-like)',
+      description: 'Double-spaced papers with APA-style headings.',
+      json: _theme(
+        key: 'academic-apa',
+        name: 'Academic (APA-like)',
+        description: 'Double-spaced papers with APA-style headings.',
+        fonts: {
+          'body': 'Liberation Serif',
+          'heading': 'Liberation Serif',
+          'mono': 'Courier Prime',
+        },
+        bodySize: '12pt',
+        lineHeight: 2.0,
+        spaceAfter: '0pt',
+        page: {'defaultMargins': '1in'},
+        elements: {
+          'headings': {
+            'fontFamily': '@heading',
+            'fontSize': '12pt',
+            'fontWeight': 700,
+            'color': '@text',
+          },
+          'h1': {'fontSize': '12pt', 'align': 'center'},
+          'h2': {'fontSize': '12pt'},
+          'h3': {'fontSize': '12pt', 'fontStyle': 'italic'},
+          'table': {'borders': 'horizontal', 'zebra': false},
+        },
+      ),
+    ),
+    BuiltinTheme(
+      key: 'technical',
+      name: 'Technical',
+      description: 'Dense documentation with numbered headings.',
+      json: _theme(
+        key: 'technical',
+        name: 'Technical',
+        description: 'Dense documentation with numbered headings.',
+        fonts: {'body': 'IBM Plex Sans', 'heading': 'IBM Plex Sans', 'mono': 'IBM Plex Mono'},
+        bodySize: '10.5pt',
+        lineHeight: 1.5,
+        elements: {
+          'headings': {
+            'fontFamily': '@heading',
+            'fontWeight': 600,
+            'color': '@heading',
+            'numbering': {
+              'enabled': true,
+              'fromLevel': 1,
+              'toLevel': 3,
+              'style': 'outline',
+              'suffix': ' ',
+            },
+          },
+          'codeBlock': {
+            'fontFamily': '@mono',
+            'background': '@codeBg',
+            'border': {'width': '1px', 'style': 'solid', 'color': '@border'},
+            'padding': '10px',
+            'wrap': true,
+          },
+          'list': {'itemSpacing': '2pt'},
+        },
+      ),
+    ),
+    BuiltinTheme(
+      key: 'manuscript',
+      name: 'Manuscript',
+      description: 'Standard manuscript format for submissions.',
+      json: _theme(
+        key: 'manuscript',
+        name: 'Manuscript',
+        description: 'Standard manuscript format for submissions.',
+        fonts: {'body': 'Courier Prime', 'heading': 'Courier Prime', 'mono': 'Courier Prime'},
+        bodySize: '12pt',
+        lineHeight: 2.0,
+        spaceAfter: '0pt',
+        elements: {
+          'headings': {
+            'fontFamily': '@heading',
+            'fontSize': '12pt',
+            'fontWeight': 400,
+            'color': '@text',
+          },
+          'h1': {
+            'fontSize': '12pt',
+            'caseTransform': 'uppercase',
+            'align': 'center',
+            'pageBreakBefore': true,
+          },
+          'rule': {'style': 'ornament', 'ornament': '#', 'color': '@text'},
+        },
+      ),
+    ),
+    BuiltinTheme(
+      key: 'minimal-mono',
+      name: 'Minimal Mono',
+      description: 'Monochrome monospace for notes and drafts.',
+      json: _theme(
+        key: 'minimal-mono',
+        name: 'Minimal Mono',
+        description: 'Monochrome monospace for notes and drafts.',
+        fonts: {'body': 'IBM Plex Mono', 'heading': 'IBM Plex Mono', 'mono': 'IBM Plex Mono'},
+        bodySize: '10.5pt',
+        lineHeight: 1.6,
+        palette: {
+          'accent': '#111111',
+          'link': '#111111',
+          'linkHover': '#000000',
+          'codeBg': 'transparent',
+          'tableHeaderBg': 'transparent',
+        },
+        darkPalette: {
+          'accent': '#f0f6fc',
+          'link': '#f0f6fc',
+          'linkHover': '#ffffff',
+          'codeBg': 'transparent',
+          'tableHeaderBg': 'transparent',
+        },
+        elements: {
+          'headings': {
+            'fontFamily': '@heading',
+            'fontSize': '10.5pt',
+            'fontWeight': 700,
+            'color': '@text',
+          },
+          'h1': {'fontSize': '10.5pt'},
+          'h2': {'fontSize': '10.5pt'},
+          'h3': {'fontSize': '10.5pt'},
+          'h4': {'fontSize': '10.5pt'},
+          'h5': {'fontSize': '10.5pt'},
+          'h6': {'fontSize': '10.5pt'},
+        },
+      ),
+    ),
+    BuiltinTheme(
+      key: 'newsletter',
+      name: 'Newsletter',
+      description: 'Pageless layout with display headings and captions.',
+      json: _theme(
+        key: 'newsletter',
+        name: 'Newsletter',
+        description: 'Pageless layout with display headings and captions.',
+        fonts: {'body': 'Lora', 'heading': 'Playfair Display', 'mono': 'Source Code Pro'},
+        bodySize: '11.5pt',
+        lineHeight: 1.55,
+        page: {'pagelessMaxWidth': '640px'},
+        elements: {
+          'h1': {'fontSize': '34pt', 'color': '@accent'},
+          'blockquote': {
+            'bar': {'width': '4px', 'style': 'solid', 'color': '@accent'},
+          },
+          'image': {
+            'maxWidth': '100%',
+            'align': 'center',
+            'shadow': 'soft',
+            'caption': {'show': true, 'align': 'center', 'color': '@muted'},
+          },
+        },
+      ),
+    ),
+  ];
+}

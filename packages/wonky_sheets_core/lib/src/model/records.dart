@@ -7,7 +7,7 @@ abstract final class ColumnReader {
   /// `String` or null.
   static String? str(Map<String, Object?> m, String k) {
     final v = m[k];
-    return v == null ? null : v.toString();
+    return v?.toString();
   }
 
   /// `double` or null.
@@ -114,9 +114,8 @@ final class SpreadsheetRecord extends SyncRecord {
     this.themeJson = '',
     this.createdBy = '',
     this.displayLanguage,
-    DateTime? createdAt,
-  }) : _createdAt = createdAt,
-       super(id);
+    this._createdAt,
+  }) : super(id);
 
   final String title;
   final String locale;
@@ -202,9 +201,8 @@ final class SheetRecord extends SyncRecord {
     this.defaultColumnWidth = 100,
     this.formatJson,
     this.printSettingsJson,
-    DateTime? createdAt,
-  }) : _createdAt = createdAt,
-       super(id);
+    this._createdAt,
+  }) : super(id);
 
   final String spreadsheetId;
   final String name;
@@ -287,9 +285,8 @@ final class DimensionRecord extends SyncRecord {
     this.size,
     this.hidden = false,
     this.formatJson,
-    DateTime? createdAt,
-  }) : _createdAt = createdAt,
-       super(id);
+    this._createdAt,
+  }) : super(id);
 
   /// Whether this is a `SheetRow` (else `SheetColumn`).
   final bool isRow;
@@ -356,9 +353,8 @@ final class CellRecord extends SyncRecord {
     this.content,
     this.note,
     CellFormat? format,
-    DateTime? createdAt,
+    this._createdAt,
   }) : format = format ?? CellFormat.empty,
-       _createdAt = createdAt,
        super(id);
 
   final String sheetId;
@@ -453,7 +449,7 @@ final class CellRecord extends SyncRecord {
         return createdAt;
     }
     final a = FormatAttr.byColumn(column);
-    return a == null ? null : a.toColumnValue(format[a]);
+    return a?.toColumnValue(format[a]);
   }
 
   @override
@@ -599,9 +595,8 @@ final class NamedRangeRecord extends SyncRecord {
     this.formula,
     this.comment,
     this.metaJson,
-    DateTime? createdAt,
-  }) : _createdAt = createdAt,
-       super(id);
+    this._createdAt,
+  }) : super(id);
 
   final String spreadsheetId;
   final String name;

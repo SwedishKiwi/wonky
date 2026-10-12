@@ -15,7 +15,7 @@ typedef DayRange = ({int lo, int hi});
 /// `GMT-8`, `+02:00`). Unknown zones fall back to UTC.
 final class SpreadsheetDates {
   /// Creates the resolver.
-  SpreadsheetDates({this.timeZone = 'UTC', Clock? clock}) : _clock = clock;
+  SpreadsheetDates({this.timeZone = 'UTC', Clock? clock}) : _clock = clock; // ignore: prefer_initializing_formals
 
   /// The spreadsheet time zone.
   final String timeZone;
@@ -44,7 +44,7 @@ final class SpreadsheetDates {
         _tzInitialized = true;
       }
       final loc = tz.getLocation(z);
-      return Duration(milliseconds: loc.timeZone(utc.millisecondsSinceEpoch).offset);
+      return loc.timeZone(utc.millisecondsSinceEpoch).offset;
     } on Object {
       return Duration.zero;
     }
