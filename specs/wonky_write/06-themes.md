@@ -579,6 +579,14 @@ emoji), and CJK (Noto Sans SC/TC/JP/KR — large; web/desktop download on first 
 likewise on demand. All OFL 1.1. License texts are included in the About › Licenses page
 (`LicenseRegistry.addLicense`) and in exported EPUBs that embed fonts.
 
+> Implementation note (iteration 1): the app bundles a subset of static TTFs in
+> `wonky_write/assets/fonts/` — Open Sans, EB Garamond and JetBrains Mono (OFL-1.1, licenses in
+> the same folder and on the About › Licenses page). Families that are not bundled are
+> substituted by category (sans → Inter from `shad` on screen / Open Sans in PDFs, serif → EB
+> Garamond, mono → JetBrains Mono) by `WriteFonts` (`features/themes/write_fonts.dart`); Open
+> Sans is the PDF glyph fallback (Latin Extended, Greek, Cyrillic). CJK/Arabic fallbacks and the
+> full curated set are a TODO.
+
 ### 8.2 Weight snapping
 
 Requested weight → nearest shipped weight of that family (ties go heavier). The inspector's

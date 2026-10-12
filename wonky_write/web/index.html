@@ -32,8 +32,48 @@
 
   <title>Wonky Write</title>
   <link rel="manifest" href="manifest.json">
+  <style>
+    html, body { margin: 0; height: 100%; background: #fafafa; }
+    @media (prefers-color-scheme: dark) { html, body { background: #09090b; } }
+    #wonky-splash {
+      position: fixed; inset: 0; display: flex; align-items: center;
+      justify-content: center; flex-direction: column; gap: 16px;
+      font: 500 14px/1.4 system-ui, -apple-system, "Segoe UI", sans-serif;
+      color: #71717a; transition: opacity .2s ease-out;
+    }
+    #wonky-splash .tile {
+      width: 56px; height: 56px; border-radius: 15px;
+      background: linear-gradient(135deg, #3b82f6, #2563eb);
+      box-shadow: 0 8px 24px rgba(37, 99, 235, .28);
+      display: flex; align-items: center; justify-content: center;
+      animation: wonky-pulse 1.6s ease-in-out infinite;
+    }
+    #wonky-splash svg { width: 30px; height: 30px; }
+    @keyframes wonky-pulse { 50% { transform: scale(.94); opacity: .85; } }
+    @media (prefers-reduced-motion: reduce) { #wonky-splash .tile { animation: none; } }
+  </style>
 </head>
 <body>
+  <div id="wonky-splash" aria-label="Loading Wonky Write">
+    <div class="tile">
+      <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2"
+           stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"/>
+        <path d="M14 2v4a2 2 0 0 0 2 2h4"/><path d="M10 9H8"/>
+        <path d="M16 13H8"/><path d="M16 17H8"/>
+      </svg>
+    </div>
+    <div>Wonky Write</div>
+  </div>
+  <script>
+    // Hide the splash once Flutter renders its first frame.
+    window.addEventListener('flutter-first-frame', function () {
+      var s = document.getElementById('wonky-splash');
+      if (!s) return;
+      s.style.opacity = '0';
+      setTimeout(function () { s.remove(); }, 250);
+    });
+  </script>
   <!--
     You can customize the "flutter_bootstrap.js" script.
     This is useful to provide a custom configuration to the Flutter loader

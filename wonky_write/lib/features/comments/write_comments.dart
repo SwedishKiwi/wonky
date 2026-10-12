@@ -208,7 +208,7 @@ class WriteComments extends ChangeNotifier implements CommentAnchorProvider {
   @override
   num positionOf(CommentThreadView thread) {
     if (thread.anchorKind == CommentAnchorKind.document) return -1;
-    return anchors[thread.uuid.uuid]?.start ?? (1 << 40);
+    return anchors[thread.uuid.uuid]?.start ?? _far;
   }
 
   @override
@@ -271,7 +271,7 @@ class WriteComments extends ChangeNotifier implements CommentAnchorProvider {
     final c = _controller;
     if (c == null || !visible) return null;
     String? best;
-    var bestLength = 1 << 40;
+    var bestLength = _far;
     anchors.forEach((uuid, a) {
       final t = c.thread(uuid);
       if (t == null || t.status != CommentStatus.open) return;
@@ -421,3 +421,7 @@ class WriteComments extends ChangeNotifier implements CommentAnchorProvider {
     super.dispose();
   }
 }
+
+/// A large int that is exact on the VM and the web (`1 << n` with n ≥ 32
+/// is 0 on the web).
+const _far = 0x1FFFFFFFFFFFFF;

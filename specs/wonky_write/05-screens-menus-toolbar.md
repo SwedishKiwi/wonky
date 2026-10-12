@@ -22,8 +22,10 @@ every control is a `CommandButton`/`CommandMenuItem` bound to a command id (suit
 - Ids of commands owned by the shell are prefixed `shell.`; where the suite specs don't name
   them yet, the id here is the proposed name (listed in §23).
 - Every menu, toolbar and context-menu tree is declared once as a `MenuSpec`
-  (`lib/features/document_screen/menus/*.dart`), which also feeds the command palette menu
-  paths, the macOS native menubar (`PlatformMenuBar`) and MCP `ui.get_menu_tree`.
+  (`lib/config/write_menus.dart`: the shell's shared menus extended with Write items plus the
+  Insert and Format menus), which also feeds the command palette menu paths, the macOS native
+  menubar (`PlatformMenuBar`) and MCP `ui.get_menu_tree`. Context, block and code-language menus
+  are built from the same commands in `lib/features/screen/document_menus.dart`.
 
 ## 2. Screen inventory
 
@@ -834,3 +836,25 @@ Commands introduced by this spec (editing/content commands are in [04](04-editor
 | `write.suggestions.accept {id}` / `reject {id}` / `acceptAll` / `rejectAll` / `next` / `previous` | | E (navigation V) | ✓ | Owned by [08](08-comments-suggestions-history.md) |
 
 All of these appear in `ui.list_commands` with their menu paths from §7.
+
+## 25. Implementation notes (iteration 1)
+
+- **Code layout**: screen `lib/features/screen/` (`WriteDocumentScreen`, `WriteToolbar`,
+  `ModeSwitcher`, status bar items, selection toolbar, context menus, dialogs under `dialogs/`);
+  `WriteDocumentController` (`features/screen/write_document_controller.dart`) is the shell's
+  `DocumentController`, built on the sync workstream's `WriteDocumentSession`
+  (`features/document/`). Commands: `lib/commands/` (`editor_commands.dart` wraps
+  `editorCommandCatalog()`; `screen_commands.dart` holds the commands of §24 and 07 §12).
+- **Mode shortcuts**: the per-mode commands `write.mode.editing` / `write.mode.suggesting` /
+  `write.mode.viewing` carry the bindings of §7.3 (key bindings have no fixed args);
+  `write.mode.set {mode}` stays the MCP/AI entry point.
+- **Popovers opened by commands** (link editor) use an anchored modal route
+  (`features/screen/anchored_popover.dart`) positioned at the selection rect; the theme picker,
+  table editor, image dialogs and document settings are `ShadDialog`s.
+- **Comment margin** is shown to the right of the canvas only when there are anchored open
+  threads or pending suggestions and the canvas is ≥ 1080 px wide (`write.view.toggleCommentMargin`).
+- **Not built this iteration** (documented as TODO): spelling (§12.10–12.11), emoji/special
+  characters (§9.5, §12.4), lightbox (§12.15), export options dialog (§12.16), floating
+  image/table toolbars (§5.2–5.3; the context and block menus offer the same commands), drag &
+  drop, AI items, focus/typewriter modes, native macOS menubar, compact-density goldens.
+

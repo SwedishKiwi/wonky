@@ -752,7 +752,7 @@ class DocumentSyncController {
       }
       _revision = m.revision;
       _nextHashAt = hashEvery <= 0
-          ? 1 << 62
+          ? _far
           : (_revision ~/ hashEvery + 1) * hashEvery;
       _loaded = true;
       host.resetDocument(_server);
@@ -1274,7 +1274,7 @@ class DocumentSyncController {
     _recent.clear();
     _queue.removeWhere((rev, _) => rev <= revision);
     _nextHashAt = hashEvery <= 0
-        ? 1 << 62
+        ? _far
         : (_revision ~/ hashEvery + 1) * hashEvery;
     final diff = DeltaDiff.diff(local, _server);
     if (!DeltaUtils.isNoop(diff)) {
@@ -1307,7 +1307,7 @@ class DocumentSyncController {
 
   void _updateStatus() {
     if (_disposed) return;
-    final pending = hasPendingChanges ? _pendingChanges.clamp(1, 1 << 30) : 0;
+    final pending = hasPendingChanges ? _pendingChanges.clamp(1, _far) : 0;
     final log = List<SyncLogEntry>.unmodifiable(_log);
     final SyncStatus next;
     if (_fatal != null) {
@@ -1352,3 +1352,7 @@ class DocumentSyncController {
     if (next != _status.value) _status.value = next;
   }
 }
+
+/// A large int that is exact on the VM and the web (`1 << n` with n ≥ 32
+/// is 0 on the web).
+const _far = 0x1FFFFFFFFFFFFF;

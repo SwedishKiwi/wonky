@@ -44,8 +44,9 @@ final class ImportLimits {
 
   /// No limits (tests, tools).
   static const unlimited = ImportLimits(
-    maxInputBytes: 1 << 52,
-    maxResultChars: 1 << 52,
+    maxInputBytes:
+        0x1FFFFFFFFFFFFF, // 2^53 - 1: web-safe (1 << n is 0 on the web for n >= 32)
+    maxResultChars: 0x1FFFFFFFFFFFFF,
   );
 
   /// Maximum input size in bytes.

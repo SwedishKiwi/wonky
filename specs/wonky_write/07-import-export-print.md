@@ -727,6 +727,14 @@ result).
 
 ### 8.1 Route `/d/:uuid/print` (`PrintPreviewScreen`)
 
+> Implementation note (iteration 1, web first): the client PDF (`PdfExporter`, bundled fonts via
+> `AssetFontProvider`) is shown in the browser's built-in PDF viewer inside an in-app
+> `<iframe>` platform view (`features/print/pdf_view_web.dart`) — page thumbnails, zoom and
+> page navigation come from the viewer, so `Printing.raster` (which loads pdf.js from a CDN) is
+> not used. *Print* calls `print()` on that frame (same tab, browser print dialog); desktop shows
+> a summary and offers *Download PDF* until the `printing` integration lands. Settings: light /
+> dark, suggestions accepted / original, header & footer, table of contents.
+
 ```
 ┌ ← Back   Print preview — Q3 planning                 [Download PDF] [Print] ┐
 ├──────────┬──────────────────────────────────────────────────┬──────────────┤

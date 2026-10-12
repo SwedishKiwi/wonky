@@ -85,36 +85,34 @@ class _DocumentSettingsDialogState extends State<DocumentSettingsDialog> {
           child: const Text('Done'),
         ),
       ],
-      child: Flexible(
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            SizedBox(
-              width: 168,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  for (final (id, label, icon) in tabs)
-                    Padding(
-                      padding: const EdgeInsets.only(bottom: 2),
-                      child: ShadButton.ghost(
-                        key: ValueKey<String>(
-                          'write.dialog.documentSettings.$id',
-                        ),
-                        mainAxisAlignment: MainAxisAlignment.start,
-                        backgroundColor: _tab == id ? cs.accent : null,
-                        leading: Icon(icon, size: 16),
-                        onPressed: () => setState(() => _tab = id),
-                        child: Text(label),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          SizedBox(
+            width: 168,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                for (final (id, label, icon) in tabs)
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 2),
+                    child: ShadButton.ghost(
+                      key: ValueKey<String>(
+                        'write.dialog.documentSettings.$id',
                       ),
+                      mainAxisAlignment: MainAxisAlignment.start,
+                      backgroundColor: _tab == id ? cs.accent : null,
+                      leading: Icon(icon, size: 16),
+                      onPressed: () => setState(() => _tab = id),
+                      child: Text(label),
                     ),
-                ],
-              ),
+                  ),
+              ],
             ),
-            const SizedBox(width: 20),
-            Expanded(child: _content(context)),
-          ],
-        ),
+          ),
+          const SizedBox(width: 20),
+          Expanded(child: _content(context)),
+        ],
       ),
     );
   }

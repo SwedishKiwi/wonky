@@ -268,7 +268,9 @@ class ChangeDeltaExtractor {
 
     // Region bounds: everything before the first and after the last touched
     // node (in either list) is identical in both lists.
-    var start = 1 << 62;
+    // Not `1 << 62`: shifts by ≥ 32 are 0 on the web.
+    const none = 0x1FFFFFFFFFFFFF;
+    var start = none;
     var endOld = -1;
     var endNew = -1;
     for (final id in touched) {
@@ -283,7 +285,7 @@ class ChangeDeltaExtractor {
         if (newIndex > endNew) endNew = newIndex;
       }
     }
-    if (start == 1 << 62) {
+    if (start == none) {
       // Touched nodes that exist in neither list (inserted and removed in the
       // same segment): nothing changed.
       return null;

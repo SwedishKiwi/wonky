@@ -502,7 +502,7 @@ ImportResult buildImportResult(
   final tree = DocTree(blocks);
   Delta delta = const DocTreeToDelta().convert(tree);
   final validation = const WonkyDeltaValidator(
-    maxDocumentChars: 1 << 52,
+    maxDocumentChars: 0x1FFFFFFFFFFFFF,
   ).validate(delta);
   if (!validation.isValid) {
     // Defensive: the normalizer guarantees validity; never return invalid

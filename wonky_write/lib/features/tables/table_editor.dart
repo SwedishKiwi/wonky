@@ -167,11 +167,12 @@ class _TableEditorDialogState extends State<TableEditorDialog> {
   FocusNode _node(int r, int c) => _focus.putIfAbsent((r, c), () {
     final f = FocusNode(debugLabel: 'cell $r,$c');
     f.addListener(() {
-      if (f.hasFocus)
+      if (f.hasFocus) {
         setState(() {
           _row = r;
           _col = c;
         });
+      }
     });
     return f;
   });

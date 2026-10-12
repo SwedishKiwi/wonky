@@ -151,6 +151,9 @@ class WriteDocumentController extends DocumentController {
   /// Scrolls a Delta offset into view (set by the screen's editor widget).
   void Function(int offset)? revealOffset;
 
+  /// Moves keyboard focus to the formatting toolbar (set by the screen).
+  VoidCallback? focusToolbar;
+
   /// Number of laid-out pages in Pages mode (set by the canvas).
   final ValueNotifier<int?> pageCount = ValueNotifier(null);
 
@@ -216,6 +219,7 @@ class WriteDocumentController extends DocumentController {
 
   Object? _lastMeta;
   String? _lastUserTheme;
+  String? _lastTitle;
   bool _metaApplied = false;
 
   void _onSession() {
@@ -223,8 +227,10 @@ class WriteDocumentController extends DocumentController {
     final userTheme = services.prefs.writeDefaults['themeUuid'] as String?;
     if (!_metaApplied ||
         !identical(meta, _lastMeta) ||
-        userTheme != _lastUserTheme) {
+        userTheme != _lastUserTheme ||
+        title != _lastTitle) {
       _metaApplied = true;
+      _lastTitle = title;
       _lastMeta = meta;
       _lastUserTheme = userTheme;
       _applyMeta();
@@ -249,7 +255,16 @@ class WriteDocumentController extends DocumentController {
     view.layout = setup.layout == PageLayoutMode.pages
         ? LayoutMode.pages
         : LayoutMode.pageless;
-    view.pageSetup = editorPageSetupOf(setup, themeMarginsPt: themeMargins);
+    final i = item;
+    view.pageSetup = editorPageSetupOf(
+      setup,
+      themeMarginsPt: themeMargins,
+      tokens: {
+        'title': title.isEmpty ? 'Untitled document' : title,
+        if (i != null) 'author': i.owner.displayName,
+        'date': HeaderFooterTokens.mediumDate(DateTime.now(), language ?? 'en'),
+      },
+    );
   }
 
   void _onPrefs() {
@@ -602,12 +617,20 @@ class WriteDocumentController extends DocumentController {
 EditorPageSetup editorPageSetupOf(
   PageSetup setup, {
   PageMargins themeMarginsPt = const PageMargins.all(72),
+  Map<String, String> tokens = const {},
 }) {
   const px = 96 / 72;
   final m = setup.marginsOr(themeMarginsPt);
   String hf(HeaderFooterSpec s) {
     if (!s.enabled) return '';
-    return [s.left, s.center, s.right].where((t) => t.isNotEmpty).join('   ');
+    var text = [
+      s.left,
+      s.center,
+      s.right,
+    ].where((t) => t.isNotEmpty).join('   ');
+    // {page} / {pages} are expanded per page by the editor's page chrome.
+    tokens.forEach((k, v) => text = text.replaceAll('{$k}', v));
+    return text;
   }
 
   return EditorPageSetup(

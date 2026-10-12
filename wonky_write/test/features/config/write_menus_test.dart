@@ -1,0 +1,69 @@
+import 'dart:ui';
+
+import 'package:flutter_test/flutter_test.dart';
+import 'package:wonky_app/testing.dart';
+import 'package:wonky_app/wonky_app.dart';
+import 'package:wonky_core/wonky_core.dart';
+import 'package:wonky_write/config/write_app_config.dart';
+import 'package:wonky_write/config/write_menus.dart';
+
+void main() {
+  group('Given the Write app config', () {
+    late CommandTestHarness h;
+    late MenuRoot menus;
+
+    setUp(() {
+      h = CommandTestHarness(config: const WriteAppConfig());
+      menus = writeMenus(
+        ShellMenus(lookupWonkyAppLocalizations(const Locale('en'))),
+      );
+    });
+
+    tearDown(() => h.dispose());
+
+    test('when walking the menubar then every item names a registered '
+        'command (AC-05.1)', () {
+      final missing = [
+        for (final c in menus.commands)
+          if (!h.services.registry.contains(c.commandId)) c.commandId,
+      ];
+
+      expect(missing, isEmpty);
+    });
+
+    test('when listing top-level menus then they follow Write 05 §7', () {
+      expect(
+        [for (final m in menus.children) (m as MenuSubmenu).label],
+        ['File', 'Edit', 'View', 'Insert', 'Format', 'Tools', 'Help'],
+      );
+    });
+
+    test('when walking the menubar then menu ids are unique', () {
+      final ids = <String>[];
+      void walk(List<MenuSpec> specs) {
+        for (final s in specs) {
+          if (s is MenuSubmenu) {
+            ids.add(s.effectiveId);
+            walk(s.children);
+          } else if (s is MenuCommand) {
+            ids.add(s.effectiveId);
+          }
+        }
+      }
+
+      walk(menus.children);
+      final dupes = ids.where((id) => ids.where((x) => x == id).length > 1);
+
+      expect(dupes.toSet(), isEmpty);
+    });
+
+    test('when commands are registered then their ids are well formed', () {
+      final bad = [
+        for (final c in h.services.registry.all)
+          if (c.id.value.startsWith('write.') && !c.id.isValid) c.id.value,
+      ];
+
+      expect(bad, isEmpty);
+    });
+  });
+}

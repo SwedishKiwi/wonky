@@ -20,8 +20,14 @@ void main() {
   late SessionHarness h;
   late WriteDocumentController doc;
 
-  Future<CommandResult> run(String id, [Map<String, Object?> args = const {}]) =>
-      h.services.dispatcher.invoke(id, args: args, source: InvocationSource.mcp);
+  Future<CommandResult> run(
+    String id, [
+    Map<String, Object?> args = const {},
+  ]) => h.services.dispatcher.invoke(
+    id,
+    args: args,
+    source: InvocationSource.mcp,
+  );
 
   String text() => DeltaUtils.text(h.session.editor.delta);
 
@@ -71,20 +77,23 @@ void main() {
       expect(h.session.editor.delta.first.attributes, {'bold': true});
     });
 
-    test('when replacing all matches then one undo restores the text', () async {
-      await run('write.find.replaceAll', {
-        'query': 'colour',
-        'replacement': 'color',
-      });
-      expect(text(), 'Hello color world, color\n');
-      expect(h.undo.undoStepsOf(h.session.undoStackKey), hasLength(1));
+    test(
+      'when replacing all matches then one undo restores the text',
+      () async {
+        await run('write.find.replaceAll', {
+          'query': 'colour',
+          'replacement': 'color',
+        });
+        expect(text(), 'Hello color world, color\n');
+        expect(h.undo.undoStepsOf(h.session.undoStackKey), hasLength(1));
 
-      await h.undo.undo();
-      expect(text(), 'Hello colour world, colour\n');
+        await h.undo.undo();
+        expect(text(), 'Hello colour world, colour\n');
 
-      await h.undo.redo();
-      expect(text(), 'Hello color world, color\n');
-    });
+        await h.undo.redo();
+        expect(text(), 'Hello color world, color\n');
+      },
+    );
 
     test('when switching to Pageless then undo switches back', () async {
       final before = doc.pageSetup.layout;
@@ -104,51 +113,66 @@ void main() {
       expect(doc.pageSetup.layout.name, target);
     });
 
-    test('when applying a theme then the editor uses it and undo reverts', () async {
-      final serif = BuiltinThemes.byKey('classic-serif')!;
+    test(
+      'when applying a theme then the editor uses it and undo reverts',
+      () async {
+        final serif = BuiltinThemes.byKey('classic-serif')!;
 
-      await run('write.theme.apply', {'themeId': serif.uuid});
-      await pumpEventQueue();
-      expect(doc.documentTheme.option.uuid, serif.uuid);
+        await run('write.theme.apply', {'themeId': serif.uuid});
+        await pumpEventQueue();
+        expect(doc.documentTheme.option.uuid, serif.uuid);
 
-      await h.undo.undo();
-      await pumpEventQueue();
-      expect(doc.documentTheme.option.builtinKey, BuiltinThemes.defaultKey);
+        await h.undo.undo();
+        await pumpEventQueue();
+        expect(doc.documentTheme.option.builtinKey, BuiltinThemes.defaultKey);
 
-      await h.undo.redo();
-      await pumpEventQueue();
-      expect(doc.documentTheme.option.uuid, serif.uuid);
-    });
+        await h.undo.redo();
+        await pumpEventQueue();
+        expect(doc.documentTheme.option.uuid, serif.uuid);
+      },
+    );
 
     test('when inserting a 2×2 table then undo removes it', () async {
       doc.editor.select(DeltaSelection.collapsed(text().length - 1));
 
       final r = await run('write.insert.table', {'rows': 2, 'cols': 2});
       expect(r.isOk, isTrue);
-      expect(h.session.editor.delta.toList().any((op) => op.data is Map), isTrue);
+      expect(
+        h.session.editor.delta.toList().any((op) => op.data is Map),
+        isTrue,
+      );
 
       await h.undo.undo();
-      expect(h.session.editor.delta.toList().any((op) => op.data is Map), isFalse);
+      expect(
+        h.session.editor.delta.toList().any((op) => op.data is Map),
+        isFalse,
+      );
     });
 
-    test('when the user is in Viewing mode then content commands are disabled', () {
-      h.session.setMode(EditorMode.viewing);
+    test(
+      'when the user is in Viewing mode then content commands are disabled',
+      () {
+        h.session.setMode(EditorMode.viewing);
 
-      final state = h.services.dispatcher.stateOf('write.format.bold');
+        final state = h.services.dispatcher.stateOf('write.format.bold');
 
-      expect(state.enabled, isFalse);
-      expect(state.disabledReason, contains('Switch to Editing'));
-    });
+        expect(state.enabled, isFalse);
+        expect(state.disabledReason, contains('Switch to Editing'));
+      },
+    );
 
-    test('when changing the language then the meta is written and undoable', () async {
-      await run('write.doc.setLanguage', {'language': 'sv-SE'});
-      await pumpEventQueue();
-      expect(doc.language, 'sv-SE');
+    test(
+      'when changing the language then the meta is written and undoable',
+      () async {
+        await run('write.doc.setLanguage', {'language': 'sv-SE'});
+        await pumpEventQueue();
+        expect(doc.language, 'sv-SE');
 
-      await h.undo.undo();
-      await pumpEventQueue();
-      expect(doc.language, isNull);
-    });
+        await h.undo.undo();
+        await pumpEventQueue();
+        expect(doc.language, isNull);
+      },
+    );
 
     test('when navigating to a heading then the caret moves there', () async {
       doc.editor.applyLocal(

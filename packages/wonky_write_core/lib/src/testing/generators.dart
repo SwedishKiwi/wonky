@@ -105,7 +105,9 @@ final class DeltaGen {
   /// A fresh deterministic id.
   String nextId() {
     _ids++;
-    final r = random.nextInt(1 << 32).toRadixString(16).padLeft(8, '0');
+    final r = (random.nextInt(0x10000) * 0x10000 + random.nextInt(0x10000))
+        .toRadixString(16)
+        .padLeft(8, '0');
     return '0192${_ids.toRadixString(16).padLeft(4, '0')}-$r-7000-8000-000000000000';
   }
 

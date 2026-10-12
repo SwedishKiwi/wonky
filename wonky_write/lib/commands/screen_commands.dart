@@ -26,7 +26,9 @@ import '../features/screen/dialogs/page_setup_dialog.dart';
 import '../features/screen/write_document_controller.dart';
 import '../features/tables/table_editor.dart';
 import '../features/themes/document_theme.dart';
+import '../features/themes/theme_adapter.dart';
 import '../features/themes/theme_picker.dart';
+import '../features/themes/write_fonts.dart';
 import '../features/word_count/word_count_dialog.dart';
 import 'editor_commands.dart';
 import 'write_command.dart';
@@ -429,6 +431,19 @@ List<Command<CommandArgs>> viewCommands(ShellServices s) => [
     checked: (d, a) => d.viewPrefs.showSelectionToolbar,
     run: (ctx, d, a) {
       d.viewPrefs.showSelectionToolbar = !d.viewPrefs.showSelectionToolbar;
+      return const CommandResult.ok();
+    },
+  ),
+  WriteCommand(
+    'write.view.focusToolbar',
+    label: 'Focus the toolbar',
+    categoryName: 'View',
+    defaultBindings: const [
+      KeyBinding('F10', alt: true),
+      KeyBinding('.', mod: _mod, alt: true),
+    ],
+    run: (ctx, d, a) {
+      d.focusToolbar?.call();
       return const CommandResult.ok();
     },
   ),
@@ -1126,6 +1141,17 @@ List<Command<CommandArgs>> documentCommands(
       final c = _ctx(ctx);
       if (c == null) return const CommandResult.failed('No window');
       unawaited(themes.loadMine());
+      for (final o in WriteThemeCatalog.builtins) {
+        for (final v in ThemeVariant.values) {
+          unawaited(
+            WriteFonts.ensureLoaded(
+              EditorThemeAdapter.screenFamilies(
+                ThemeResolver.instance.resolve(o.data, v),
+              ),
+            ),
+          );
+        }
+      }
       final selected = ValueNotifier<String?>(d.documentTheme.option.uuid);
       void sync() => selected.value = d.documentTheme.option.uuid;
       d.documentTheme.addListener(sync);

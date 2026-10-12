@@ -73,6 +73,7 @@ dev_dependencies:
   flutter_lints: '>=3.0.0 <7.0.0'
   flutter_test_robots: ^0.0.24
   serverpod_auth_core_client: 4.1.0-beta.3
+  provider: ^6.1.5+1
 
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec

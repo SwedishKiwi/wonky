@@ -1,11 +1,11 @@
 {
-    "name": "wonky_write",
-    "short_name": "wonky_write",
+    "name": "Wonky Write",
+    "short_name": "Write",
     "start_url": ".",
     "display": "standalone",
-    "background_color": "#0175C2",
-    "theme_color": "#0175C2",
-    "description": "A new Flutter project.",
+    "background_color": "#fafafa",
+    "theme_color": "#2563eb",
+    "description": "Wonky Write: collaborative Markdown-first word processor.",
     "orientation": "portrait-primary",
     "prefer_related_applications": false,
     "icons": [

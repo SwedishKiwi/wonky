@@ -1,4 +1,3 @@
-import 'package:dart_quill_delta/dart_quill_delta.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:wonky_write/features/editor/applier/delta_applier.dart';
 import 'package:wonky_write/features/editor/controller/write_editor_controller.dart';
@@ -7,7 +6,9 @@ import 'package:wonky_write/features/screen/document_insights.dart';
 import 'package:wonky_write_core/wonky_write_core.dart' hide DeltaSelection;
 
 Delta sample() => const MarkdownCodec()
-    .importMarkdown('# Plan\n\nOne two three.\n\n## Budget\n\nFour five.\n\n# Next\n')
+    .importMarkdown(
+      '# Plan\n\nOne two three.\n\n## Budget\n\nFour five.\n\n# Next\n',
+    )
     .delta;
 
 void main() {
@@ -54,13 +55,16 @@ void main() {
       expect(insights.selectionStats?.words, 2);
     });
 
-    test('when outline levels are limited to 1 then subheadings are hidden', () {
-      final view = OutlineViewState()..maxLevel = 1;
+    test(
+      'when outline levels are limited to 1 then subheadings are hidden',
+      () {
+        final view = OutlineViewState()..maxLevel = 1;
 
-      final rows = visibleOutlineRows(insights.outline, view);
+        final rows = visibleOutlineRows(insights.outline, view);
 
-      expect(rows.map((r) => r.entry.text), ['Plan', 'Next']);
-    });
+        expect(rows.map((r) => r.entry.text), ['Plan', 'Next']);
+      },
+    );
 
     test('when a section is collapsed then its subheadings are hidden', () {
       final view = OutlineViewState()..toggle(insights.outline.first);

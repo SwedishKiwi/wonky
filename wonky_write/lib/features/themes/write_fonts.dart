@@ -215,3 +215,22 @@ class AssetFontProvider implements FontProvider {
     ];
   }
 }
+
+bool _licensesRegistered = false;
+
+/// Adds the OFL licenses of the bundled document fonts to the app's license
+/// page (Write 06 §8.1).
+void registerWriteFontLicenses() {
+  if (_licensesRegistered) return;
+  _licensesRegistered = true;
+  LicenseRegistry.addLicense(() async* {
+    for (final (family, file) in const [
+      (WriteFonts.openSans, 'OFL-OpenSans.txt'),
+      (WriteFonts.ebGaramond, 'OFL-EBGaramond.txt'),
+      (WriteFonts.jetBrainsMono, 'OFL-JetBrainsMono.txt'),
+    ]) {
+      final text = await rootBundle.loadString('assets/fonts/$file');
+      yield LicenseEntryWithLineBreaks([family], text);
+    }
+  });
+}

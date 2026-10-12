@@ -91,7 +91,7 @@ class WriteSuggestionsController extends ChangeNotifier {
   /// The suggestion covering [offset], if any (shortest wins).
   String? idAt(int offset) {
     String? best;
-    var bestLength = 1 << 40;
+    var bestLength = _far;
     for (final s in pending) {
       for (final p in s.parts) {
         if (offset >= p.start && offset < p.start + p.length) {
@@ -212,3 +212,7 @@ class WriteSuggestionsController extends ChangeNotifier {
     super.dispose();
   }
 }
+
+/// A large int that is exact on the VM and the web (`1 << n` with n ≥ 32
+/// is 0 on the web).
+const _far = 0x1FFFFFFFFFFFFF;

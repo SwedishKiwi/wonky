@@ -398,37 +398,35 @@ class _MarkdownSourceDialogState extends State<_MarkdownSourceDialog> {
           child: const Text('Close'),
         ),
       ],
-      child: Flexible(
-        child: Container(
-          decoration: BoxDecoration(
-            color: cs.muted.withValues(alpha: 0.5),
-            borderRadius: BorderRadius.circular(8),
-            border: Border.all(color: cs.border),
-          ),
-          padding: const EdgeInsets.all(12),
-          child: SelectionArea(
-            child: WonkyScrollArea(
+      child: Container(
+        decoration: BoxDecoration(
+          color: cs.muted.withValues(alpha: 0.5),
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(color: cs.border),
+        ),
+        padding: const EdgeInsets.all(12),
+        child: SelectionArea(
+          child: WonkyScrollArea(
+            controller: _v,
+            child: SingleChildScrollView(
               controller: _v,
-              child: SingleChildScrollView(
-                controller: _v,
-                child: _wrap
-                    ? Row(
+              child: _wrap
+                  ? Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        numbers,
+                        const SizedBox(width: 12),
+                        Expanded(child: text),
+                      ],
+                    )
+                  : SingleChildScrollView(
+                      controller: _h,
+                      scrollDirection: Axis.horizontal,
+                      child: Row(
                         crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          numbers,
-                          const SizedBox(width: 12),
-                          Expanded(child: text),
-                        ],
-                      )
-                    : SingleChildScrollView(
-                        controller: _h,
-                        scrollDirection: Axis.horizontal,
-                        child: Row(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [numbers, const SizedBox(width: 12), text],
-                        ),
+                        children: [numbers, const SizedBox(width: 12), text],
                       ),
-              ),
+                    ),
             ),
           ),
         ),

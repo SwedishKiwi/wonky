@@ -337,6 +337,9 @@ class _ResultRow extends StatelessWidget {
   Widget build(BuildContext context) {
     final cs = theme.colorScheme;
     String clean(String s) => s.replaceAll(RegExp(r'[\n￼]'), ' ');
+    // Context stays within the match's block.
+    final before = match.contextBefore.split('\n').last;
+    final after = match.contextAfter.split('\n').first;
     final heading = match.headingPath.isEmpty ? null : match.headingPath.last;
     return MouseRegion(
       cursor: SystemMouseCursors.click,
@@ -360,7 +363,11 @@ class _ResultRow extends StatelessWidget {
                     color: cs.foreground,
                   ),
                   children: [
-                    TextSpan(text: '…${clean(match.contextBefore)}'),
+                    TextSpan(
+                      text: before.length < match.contextBefore.length
+                          ? clean(before)
+                          : '…${clean(before)}',
+                    ),
                     TextSpan(
                       text: clean(match.text),
                       style: TextStyle(
@@ -368,7 +375,11 @@ class _ResultRow extends StatelessWidget {
                         backgroundColor: cs.findMatch,
                       ),
                     ),
-                    TextSpan(text: '${clean(match.contextAfter)}…'),
+                    TextSpan(
+                      text: after.length < match.contextAfter.length
+                          ? clean(after)
+                          : '${clean(after)}…',
+                    ),
                   ],
                 ),
                 maxLines: 2,

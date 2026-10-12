@@ -39,16 +39,19 @@ void main() {
       expect(find.countLabel, '1 of 2');
     });
 
-    test('when moving next twice then the selection wraps to the first match', () {
-      find.query = 'colour';
+    test(
+      'when moving next twice then the selection wraps to the first match',
+      () {
+        find.query = 'colour';
 
-      find
-        ..next()
-        ..next();
+        find
+          ..next()
+          ..next();
 
-      expect(find.current, 0);
-      expect(editor.selection, const DeltaSelection(4, 10));
-    });
+        expect(find.current, 0);
+        expect(editor.selection, const DeltaSelection(4, 10));
+      },
+    );
 
     test('when replacing one match then only the active match changes', () {
       find
@@ -74,14 +77,17 @@ void main() {
       expect(changes.single.label, 'Replace all');
     });
 
-    test('when the regex is invalid then an error is shown and nothing matches', () {
-      find
-        ..regex = true
-        ..query = '(col';
+    test(
+      'when the regex is invalid then an error is shown and nothing matches',
+      () {
+        find
+          ..regex = true
+          ..query = '(col';
 
-      expect(find.error, 'Invalid regular expression');
-      expect(find.matches, isEmpty);
-    });
+        expect(find.error, 'Invalid regular expression');
+        expect(find.matches, isEmpty);
+      },
+    );
 
     test('when using a regex with a group then the replacement expands it', () {
       find

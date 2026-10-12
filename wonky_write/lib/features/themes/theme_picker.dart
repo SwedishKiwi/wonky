@@ -75,12 +75,10 @@ class ThemePickerDialog extends StatelessWidget {
           child: const Text('Done'),
         ),
       ],
-      child: Flexible(
-        child: ThemeGrid(
-          catalog: catalog,
-          selected: selected,
-          onSelect: readOnly ? null : onSelect,
-        ),
+      child: ThemeGrid(
+        catalog: catalog,
+        selected: selected,
+        onSelect: readOnly ? null : onSelect,
       ),
     );
   }

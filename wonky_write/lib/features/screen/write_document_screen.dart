@@ -18,6 +18,7 @@ import '../editor/applier/delta_applier.dart' show DeltaSelection;
 import '../editor/components/editor_services.dart';
 import '../editor/controller/editor_types.dart';
 import '../editor/keyboard/editor_keyboard.dart';
+import '../editor/pagination/pagination.dart';
 import '../editor/plugins/slash_items.dart';
 import '../editor/popovers/editor_popovers.dart';
 import '../editor/ui/wonky_editor.dart';
@@ -83,6 +84,7 @@ class _WriteDocumentScreenState extends State<WriteDocumentScreen> {
       themes: widget.themes,
     );
     doc.revealOffset = _reveal;
+    doc.focusToolbar = _toolbar.focus;
     unawaited(session.open());
     session.phase.addListener(_onPhase);
     s.panels.addListener(_onPanels);
@@ -95,6 +97,7 @@ class _WriteDocumentScreenState extends State<WriteDocumentScreen> {
     s.panels.removeListener(_onPanels);
     if (kIsWeb) unawaited(BrowserContextMenu.enableContextMenu());
     if (s.panels.isOpen(WritePanels.find)) s.panels.close(WritePanels.find);
+    _pagination?.removeListener(_onPages);
     doc.dispose();
     session.dispose();
     _scroll.dispose();
@@ -102,6 +105,23 @@ class _WriteDocumentScreenState extends State<WriteDocumentScreen> {
   }
 
   void _reveal(int offset) => _editorKey.currentState?.revealOffset(offset);
+
+  PaginationController? _pagination;
+
+  /// Mirrors the editor's page count into the controller (status bar, word
+  /// count dialog).
+  void _attachPagination() {
+    final p = _editorKey.currentState?.pagination;
+    if (p == null || identical(p, _pagination)) return;
+    _pagination?.removeListener(_onPages);
+    _pagination = p..addListener(_onPages);
+    _onPages();
+  }
+
+  void _onPages() {
+    final n = _pagination?.pageCount;
+    if (mounted) doc.pageCount.value = n == null || n < 1 ? null : n;
+  }
 
   void _onPanels() {
     if (doc.find.isActive && !s.panels.isOpen(WritePanels.find)) {
@@ -292,6 +312,9 @@ class _WriteDocumentScreenState extends State<WriteDocumentScreen> {
               : '',
         );
         final pages = doc.view.layout == LayoutMode.pages;
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (mounted) _attachPagination();
+        });
         return PopupMenuHost(
           child: Builder(
             builder: (context) {
