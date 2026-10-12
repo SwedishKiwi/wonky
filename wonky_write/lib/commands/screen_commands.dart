@@ -1152,33 +1152,25 @@ List<Command<CommandArgs>> documentCommands(
           );
         }
       }
-      final selected = ValueNotifier<String?>(d.documentTheme.option.uuid);
-      void sync() => selected.value = d.documentTheme.option.uuid;
-      d.documentTheme.addListener(sync);
-      try {
-        await showThemePicker(
-          c,
-          catalog: themes,
-          selected: selected,
-          readOnly: !d.canChangeSettings,
-          onSelect: (o) => unawaited(
-            s.dispatcher.invoke(
-              'write.theme.apply',
-              args: {'themeId': o.uuid},
-              source: InvocationSource.ui,
-            ),
+      await showThemePicker(
+        c,
+        catalog: themes,
+        selected: d.documentTheme.selectedUuid,
+        readOnly: !d.canChangeSettings,
+        onSelect: (o) => unawaited(
+          s.dispatcher.invoke(
+            'write.theme.apply',
+            args: {'themeId': o.uuid},
+            source: InvocationSource.ui,
           ),
-          onSetDefault: () => unawaited(
-            s.dispatcher.invoke(
-              'write.theme.setUserDefault',
-              source: InvocationSource.ui,
-            ),
+        ),
+        onSetDefault: () => unawaited(
+          s.dispatcher.invoke(
+            'write.theme.setUserDefault',
+            source: InvocationSource.ui,
           ),
-        );
-      } finally {
-        d.documentTheme.removeListener(sync);
-        selected.dispose();
-      }
+        ),
+      );
       d.focusEditor();
       return const CommandResult.ok();
     },

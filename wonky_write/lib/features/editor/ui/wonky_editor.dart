@@ -435,7 +435,9 @@ class WonkyEditorState extends State<WonkyEditor> {
 
     Widget surface = MediaQuery(
       data: MediaQuery.of(context).copyWith(textScaler: TextScaler.noScaling),
-      child: editorWidget,
+      // Material ancestor for the task checkboxes and text-selection
+      // widgets: hosts (the editor screen, version history) are shad-only.
+      child: Material(type: MaterialType.transparency, child: editorWidget),
     );
 
     if (pages) {
@@ -548,6 +550,13 @@ class WonkyEditorState extends State<WonkyEditor> {
       scrollController: _scrollController,
       inputRole: 'write-doc-${controller.documentUuid}',
       inputSource: TextInputSource.ime,
+      // Keep the selection while focus is elsewhere (a menubar menu, the
+      // find field, the comment box), like a word processor: commands from
+      // menus act on it and it comes back when the editor regains focus.
+      selectionPolicies: const SuperEditorSelectionPolicies(
+        clearSelectionWhenEditorLosesFocus: false,
+        clearSelectionWhenImeConnectionCloses: false,
+      ),
       stylesheet: stylesheet,
       selectionStyle: style.selectionStyles,
       customStylePhases: [

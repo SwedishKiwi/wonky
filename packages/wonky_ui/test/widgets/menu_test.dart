@@ -1,3 +1,4 @@
+import 'package:flutter/gestures.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -178,4 +179,81 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text('Zoom in'), findsOneWidget);
   });
+
+  testWidgets(
+    'Given a menu closed with Escape when hovering another title then no menu opens',
+    (tester) async {
+      final controller = WonkyMenubarController();
+      addTearDown(controller.dispose);
+      await pumpWonky(
+        tester,
+        WonkyMenubar(
+          controller: controller,
+          menus: [
+            WonkyMenubarMenu(
+              id: 'edit',
+              label: 'Edit',
+              entries: () => const [WonkyMenuItem(label: 'Undo')],
+            ),
+            WonkyMenubarMenu(
+              id: 'view',
+              label: 'View',
+              entries: () => const [WonkyMenuItem(label: 'Zoom in')],
+            ),
+          ],
+        ),
+      );
+      await tester.tap(find.byKey(const ValueKey('menubar.edit')));
+      await tester.pumpAndSettle();
+      expect(find.text('Undo'), findsOneWidget);
+
+      await tester.sendKeyEvent(LogicalKeyboardKey.escape);
+      await tester.pumpAndSettle();
+      expect(find.text('Undo'), findsNothing);
+      expect(controller.openMenuId, isNull);
+
+      final mouse = await tester.createGesture(kind: PointerDeviceKind.mouse);
+      addTearDown(mouse.removePointer);
+      await mouse.addPointer(location: Offset.zero);
+      await mouse.moveTo(tester.getCenter(find.text('View')));
+      await tester.pumpAndSettle();
+      expect(find.text('Zoom in'), findsNothing);
+    },
+  );
+
+  testWidgets(
+    'Given a focused field when a menu opened with the pointer closes with Escape then the field has focus again',
+    (tester) async {
+      final field = FocusNode(debugLabel: 'field');
+      addTearDown(field.dispose);
+      await pumpWonky(
+        tester,
+        Column(
+          children: [
+            WonkyMenubar(
+              menus: [
+                WonkyMenubarMenu(
+                  id: 'edit',
+                  label: 'Edit',
+                  entries: () => const [WonkyMenuItem(label: 'Undo')],
+                ),
+              ],
+            ),
+            Focus(focusNode: field, child: const SizedBox(height: 40)),
+          ],
+        ),
+      );
+      field.requestFocus();
+      await tester.pump();
+      await tester.tap(find.byKey(const ValueKey('menubar.edit')));
+      await tester.pumpAndSettle();
+      expect(find.text('Undo'), findsOneWidget);
+      expect(field.hasFocus, isFalse, reason: 'the open menu takes the keys');
+
+      await tester.sendKeyEvent(LogicalKeyboardKey.escape);
+      await tester.pumpAndSettle();
+      expect(find.text('Undo'), findsNothing);
+      expect(field.hasFocus, isTrue);
+    },
+  );
 }

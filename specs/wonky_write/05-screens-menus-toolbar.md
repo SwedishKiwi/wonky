@@ -319,6 +319,7 @@ Write behaviour noted.
 | ─ | | | | |
 | Panels ▸ Outline (check) | `write.view.toggleOutline` | ⌘⌥⇧O | Ctrl+Alt+Shift+O | always |
 | Panels ▸ Comments (check) | `shell.comments.togglePanel` | — | — | role allows seeing comments |
+| Panels ▸ Suggestions (check) | `write.suggestions.togglePanel` (also a toolbar toggle next to *Add comment*) | — | — | document loaded |
 | Panels ▸ Version history (check) | `shell.versions.togglePanel` | — | — | `online` |
 | Panels ▸ Assistant (check) | `shell.ai.togglePanel` | ⌘J (outside editor) | Ctrl+J | `aiOn` |
 | Panels ▸ Find and replace (check) | `write.find.open` / `close` | ⌘F | Ctrl+F | always |

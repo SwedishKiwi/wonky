@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:math' as math;
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/gestures.dart' show kSecondaryMouseButton;
@@ -25,6 +26,7 @@ import '../editor/ui/wonky_editor.dart';
 import '../find_replace/find_panel.dart';
 import '../images/image_services.dart';
 import '../outline/outline_panel.dart';
+import '../suggestions/suggestions_panel.dart';
 import '../themes/document_theme.dart';
 import '../word_count/word_count_dialog.dart';
 import 'command_invoke.dart';
@@ -196,6 +198,7 @@ class _WriteDocumentScreenState extends State<WriteDocumentScreen> {
             ),
           ),
         ),
+        suggestionsPanelSpec(session),
       ],
     );
   }
@@ -311,7 +314,6 @@ class _WriteDocumentScreenState extends State<WriteDocumentScreen> {
               ? 'Type / for commands, @ to mention, or just start writing'
               : '',
         );
-        final pages = doc.view.layout == LayoutMode.pages;
         WidgetsBinding.instance.addPostFrameCallback((_) {
           if (mounted) _attachPagination();
         });
@@ -356,39 +358,56 @@ class _WriteDocumentScreenState extends State<WriteDocumentScreen> {
                 ],
               );
               return LayoutBuilder(
-                builder: (context, c) {
-                  final hasCards =
-                      session.comments.anchoredOpenThreads.isNotEmpty ||
-                      session.suggestions.pending.isNotEmpty;
-                  final margin =
-                      hasCards &&
-                      doc.viewPrefs.showCommentMargin &&
-                      c.maxWidth >= 1080;
-                  if (!margin) return stack;
-                  return Row(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      Expanded(child: stack),
-                      ColoredBox(
-                        color: pages ? theme.canvasColor : theme.paperColor,
-                        child: Padding(
-                          padding: const EdgeInsets.fromLTRB(8, 0, 16, 0),
-                          child: CommentMargin(
-                            key: const ValueKey<String>('write.commentMargin'),
-                            session: session,
-                            width: 300,
-                            scrollController: _scroll,
-                          ),
-                        ),
-                      ),
-                    ],
-                  );
-                },
+                builder: (context, c) => ListenableBuilder(
+                  listenable: doc.editor.view,
+                  builder: (context, _) => _withMargin(context, c, stack),
+                ),
               );
             },
           ),
         );
       },
+    );
+  }
+
+  /// Width of the comment margin column including its padding.
+  static const double _marginColumn = 300 + 8 + 16;
+
+  /// The canvas with the comment margin beside it when there are cards and
+  /// the page (at the current zoom) still fits next to it with gutters —
+  /// otherwise cards live in the panels only (Write 05 §3).
+  Widget _withMargin(BuildContext context, BoxConstraints c, Widget stack) {
+    final theme = doc.documentTheme.editorTheme(
+      ShadTheme.of(context).brightness,
+    );
+    final view = doc.editor.view;
+    final pages = view.layout == LayoutMode.pages;
+    final pageWidth = view.pageSetup.size.width * view.zoom;
+    final hasCards =
+        session.comments.anchoredOpenThreads.isNotEmpty ||
+        session.suggestions.pending.isNotEmpty;
+    final margin =
+        hasCards &&
+        doc.viewPrefs.showCommentMargin &&
+        c.maxWidth >= math.max(1080, pageWidth + 2 * 32 + _marginColumn);
+    if (!margin) return stack;
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Expanded(child: stack),
+        ColoredBox(
+          color: pages ? theme.canvasColor : theme.paperColor,
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(8, 0, 16, 0),
+            child: CommentMargin(
+              key: const ValueKey<String>('write.commentMargin'),
+              session: session,
+              width: 300,
+              scrollController: _scroll,
+            ),
+          ),
+        ),
+      ],
     );
   }
 
@@ -488,7 +507,9 @@ class WordCountStatus extends StatelessWidget {
             child: MouseRegion(
               cursor: SystemMouseCursors.click,
               child: Text(
-                pages == null || pages < 1 ? label : '$label · $pages pages',
+                pages == null || pages < 1
+                    ? label
+                    : '$label · $pages ${pages == 1 ? 'page' : 'pages'}',
                 style: theme.textTheme.muted.copyWith(fontSize: 12),
               ),
             ),

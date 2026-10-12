@@ -507,11 +507,16 @@ class CommentThreadCard extends StatefulWidget {
     required this.services,
     required this.controller,
     required this.thread,
+    this.onTap,
   });
 
   final ShellServices services;
   final CommentsController controller;
   final CommentThreadView thread;
+
+  /// Replaces the default tap (`shell.comments.activate`, which also opens
+  /// the comments panel) — e.g. a document margin activates in place.
+  final VoidCallback? onTap;
 
   @override
   State<CommentThreadCard> createState() => _CommentThreadCardState();
@@ -570,8 +575,9 @@ class _CommentThreadCardState extends State<CommentThreadCard> {
     final collapsed = resolved && !_expanded && !active;
     final label = c.anchors?.labelFor(t) ?? t.quotedText;
     return GestureDetector(
-      onTap: () =>
-          _invoke('shell.comments.activate', {'threadUuid': t.uuid.uuid}),
+      onTap:
+          widget.onTap ??
+          () => _invoke('shell.comments.activate', {'threadUuid': t.uuid.uuid}),
       child: Container(
         padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(

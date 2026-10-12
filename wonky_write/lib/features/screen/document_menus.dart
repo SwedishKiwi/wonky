@@ -76,20 +76,37 @@ class PopupMenuHostState extends State<PopupMenuHost> {
   @override
   Widget build(BuildContext context) {
     final entries = _entries;
-    return ShadContextMenu(
-      controller: _controller,
-      anchor: _at == null ? null : ShadGlobalAnchor(_at!),
-      constraints: const BoxConstraints(minWidth: 220),
-      onTapOutside: (_) => _controller.hide(),
-      items: _controller.isOpen && entries != null
-          ? buildWonkyMenuItems(
-              context,
-              entries(),
-              onClose: _controller.hide,
-              requestFocus: true,
-            )
-          : const [SizedBox.shrink()],
-      child: widget.child,
+    // The menu is anchored globally, so its trigger is an empty box beside
+    // the canvas rather than a wrapper around it: `ShadContextMenu` puts its
+    // child in the shared context-menu tap group, and a wrapped canvas would
+    // count as "inside" every other context menu (menubar menus would no
+    // longer close when clicking into the document).
+    return Stack(
+      fit: StackFit.passthrough,
+      children: [
+        widget.child,
+        Positioned(
+          left: 0,
+          top: 0,
+          width: 0,
+          height: 0,
+          child: ShadContextMenu(
+            controller: _controller,
+            anchor: _at == null ? null : ShadGlobalAnchor(_at!),
+            constraints: const BoxConstraints(minWidth: 220),
+            onTapOutside: (_) => _controller.hide(),
+            items: _controller.isOpen && entries != null
+                ? buildWonkyMenuItems(
+                    context,
+                    entries(),
+                    onClose: _controller.hide,
+                    requestFocus: true,
+                  )
+                : const [SizedBox.shrink()],
+            child: const SizedBox.shrink(),
+          ),
+        ),
+      ],
     );
   }
 }

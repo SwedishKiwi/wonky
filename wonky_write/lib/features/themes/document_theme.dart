@@ -125,6 +125,10 @@ class DocumentThemeController extends ChangeNotifier {
 
   String? get themeUuid => _themeUuid;
 
+  /// The uuid of [option] as a listenable that needs no disposal (so a
+  /// closing dialog may keep listening during its exit animation).
+  late final ValueListenable<String?> selectedUuid = _SelectedUuid(this);
+
   set themeUuid(String? uuid) {
     if (uuid == _themeUuid) return;
     _themeUuid = uuid;
@@ -173,6 +177,21 @@ class DocumentThemeController extends ChangeNotifier {
     WriteFonts.generation.removeListener(_onFonts);
     super.dispose();
   }
+}
+
+class _SelectedUuid implements ValueListenable<String?> {
+  _SelectedUuid(this._theme);
+
+  final DocumentThemeController _theme;
+
+  @override
+  String? get value => _theme.option.uuid;
+
+  @override
+  void addListener(VoidCallback listener) => _theme.addListener(listener);
+
+  @override
+  void removeListener(VoidCallback listener) => _theme.removeListener(listener);
 }
 
 final Expando<WriteThemeCatalog> _catalogs = Expando();

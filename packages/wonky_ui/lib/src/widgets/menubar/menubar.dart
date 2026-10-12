@@ -34,7 +34,7 @@ class WonkyMenubarController extends ChangeNotifier {
   final ShadMenubarController _shad = ShadMenubarController();
   List<WonkyMenubarMenu> _menus = const [];
   final Map<int, FocusNode> _focus = {};
-  bool _keyboard = false;
+  final Map<int, ShadPopoverController> _popovers = {};
 
   /// The open menu id, or null.
   String? get openMenuId {
@@ -46,7 +46,6 @@ class WonkyMenubarController extends ChangeNotifier {
   bool open(String id) {
     final i = _menus.indexWhere((m) => m.id == id);
     if (i < 0) return false;
-    _keyboard = true;
     _shad.selectedIndex = i;
     _focus[i]?.requestFocus();
     notifyListeners();
@@ -64,7 +63,6 @@ class WonkyMenubarController extends ChangeNotifier {
 
   /// Closes any open menu.
   void close() {
-    _keyboard = false;
     _shad.selectedIndex = null;
     notifyListeners();
   }
@@ -72,11 +70,52 @@ class WonkyMenubarController extends ChangeNotifier {
   FocusNode _focusAt(int i) =>
       _focus.putIfAbsent(i, () => FocusNode(debugLabel: 'menubar-$i'));
 
+  /// The popover of menu [i]. When it closes on its own (Escape, a menu
+  /// item) while still selected, the menubar deactivates — otherwise
+  /// `ShadMenubar` keeps the index selected and merely hovering another
+  /// title would open its menu.
+  ///
+  /// The menu takes focus while open; when the last menu closes, focus goes
+  /// back to where it was (e.g. the document editor) unless something else
+  /// (a dialog opened by the chosen item) has taken it meanwhile.
+  ShadPopoverController _popoverAt(int i) => _popovers.putIfAbsent(i, () {
+    final c = ShadPopoverController();
+    c.addListener(() {
+      if (c.isOpen) {
+        final f = FocusManager.instance.primaryFocus;
+        if (_returnFocus == null && f != null && !_isOwn(f)) _returnFocus = f;
+        return;
+      }
+      if (_shad.selectedIndex == i) close();
+      if (_shad.selectedIndex == null) _restoreFocus();
+    });
+    return c;
+  });
+
+  FocusNode? _returnFocus;
+
+  bool _isOwn(FocusNode f) => _focus.values.contains(f);
+
+  void _restoreFocus() {
+    final target = _returnFocus;
+    _returnFocus = null;
+    if (target == null) return;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (_shad.selectedIndex != null || target.context == null) return;
+      final f = FocusManager.instance.primaryFocus;
+      final lost = f == null || f is FocusScopeNode || _isOwn(f);
+      if (lost) target.requestFocus();
+    });
+  }
+
   @override
   void dispose() {
     _shad.dispose();
     for (final f in _focus.values) {
       f.dispose();
+    }
+    for (final p in _popovers.values) {
+      p.dispose();
     }
     super.dispose();
   }
@@ -151,6 +190,7 @@ class _WonkyMenubarState extends State<WonkyMenubar> {
             ShadMenubarItem(
               key: ValueKey<String>('menubar.${widget.menus[i].id}'),
               focusNode: controller._focusAt(i),
+              controller: controller._popoverAt(i),
               height: widget.height - 4,
               buttonPadding: const EdgeInsets.symmetric(horizontal: 8),
               constraints: const BoxConstraints(minWidth: 240),
@@ -159,7 +199,10 @@ class _WonkyMenubarState extends State<WonkyMenubar> {
                       context,
                       widget.menus[i].entries(),
                       onClose: controller.close,
-                      requestFocus: controller._keyboard,
+                      // Also when opened with the pointer: the menu takes
+                      // the keys (Escape, ↑/↓, type-ahead) instead of a
+                      // focused document editor behind it.
+                      requestFocus: true,
                     )
                   : const [SizedBox.shrink()],
               child: Text(

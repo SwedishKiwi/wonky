@@ -200,6 +200,7 @@ class _CommentMarginState extends State<CommentMargin> {
               services: s.services,
               controller: controller,
               thread: t,
+              onTap: () => controller.activate(t.uuid.uuid),
             )
           : SuggestionCard(
               key: ValueKey<String>(

@@ -139,6 +139,13 @@ MenuRoot writeMenus(ShellMenus shell) {
       .insertBefore('shell.comments.togglePanel', [
         _c('write.view.toggleOutline', label: 'Outline'),
       ])
+      .insertAfter('shell.comments.togglePanel', [
+        _c(
+          'write.suggestions.togglePanel',
+          label: 'Suggestions',
+          menuId: 'view.panels.suggestions',
+        ),
+      ])
       .appendTo(ShellMenuIds.viewPanels, [
         _c(
           'write.find.open',

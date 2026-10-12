@@ -194,7 +194,12 @@ class WriteToolbar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ListenableBuilder(
-      listenable: Listenable.merge([doc, services.registry, services.undo]),
+      listenable: Listenable.merge([
+        doc,
+        services.registry,
+        services.undo,
+        services.panels,
+      ]),
       builder: (context, _) => _build(context),
     );
   }
@@ -302,6 +307,12 @@ class WriteToolbar extends StatelessWidget {
             'shell.comments.create',
             icon: LucideIcons.messageSquarePlus,
             priority: 2,
+          ),
+          ui.toggle(
+            'write.suggestions.togglePanel',
+            icon: LucideIcons.fileDiff,
+            label: 'Suggestions',
+            priority: 3,
           ),
           ToolbarSplitButton(
             id: 'write.toolbar.image',

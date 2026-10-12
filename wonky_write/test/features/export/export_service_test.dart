@@ -29,14 +29,20 @@ void main() {
       expect(utf8.decode(a.bytes), contains('# Résumé — Łódź'));
     });
 
-    test('when exporting PDF with the bundled fonts then a PDF is produced '
-        'without font fallback warnings', () async {
-      final a = await exporter.export(src, WriteDownloadFormat.pdf);
+    // The bundled fonts come from the asset bundle, which the test binding
+    // serves on the VM only (on `--platform chrome` the load never returns).
+    test(
+      'when exporting PDF with the bundled fonts then a PDF is produced '
+      'without font fallback warnings',
+      testOn: 'vm',
+      () async {
+        final a = await exporter.export(src, WriteDownloadFormat.pdf);
 
-      expect(String.fromCharCodes(a.bytes.take(5)), '%PDF-');
-      expect(a.pageCount, 1);
-      expect(a.warnings.where((w) => w.code == 'font_fallback'), isEmpty);
-    });
+        expect(String.fromCharCodes(a.bytes.take(5)), '%PDF-');
+        expect(a.pageCount, 1);
+        expect(a.warnings.where((w) => w.code == 'font_fallback'), isEmpty);
+      },
+    );
 
     test('when exporting HTML then the document is self-contained', () async {
       final a = await exporter.export(src, WriteDownloadFormat.html);
@@ -51,13 +57,20 @@ void main() {
     });
   });
 
-  test('Given a family that is not bundled when loading it for PDF then '
-      'the category substitute is returned', () async {
-    final face = await AssetFontProvider().load('Source Serif 4', weight: 700);
+  test(
+    'Given a family that is not bundled when loading it for PDF then '
+    'the category substitute is returned',
+    testOn: 'vm',
+    () async {
+      final face = await AssetFontProvider().load(
+        'Source Serif 4',
+        weight: 700,
+      );
 
-    expect(face.bytes.length, greaterThan(10000));
-    expect(face.weight, 700);
-  });
+      expect(face.bytes.length, greaterThan(10000));
+      expect(face.weight, 700);
+    },
+  );
 
   test('Given unsafe characters in a title when sanitizing then they are '
       'replaced and the name is trimmed', () {
