@@ -1,0 +1,18 @@
+name: wonky_sync_models
+description: "Serverpod shared package with the offline-synced models of Wonky Sheets and id helpers."
+publish_to: none
+
+environment:
+  sdk: '^3.12.2'
+
+resolution: workspace
+
+dependencies:
+  serverpod_database: 4.1.0-beta.3
+  serverpod_offline_sync: 0.0.9
+  serverpod_serialization: 4.1.0-beta.3
+  uuid: ^4.6.0
+
+dev_dependencies:
+  lints: '>=3.0.0 <7.0.0'
+  test: ^1.25.5

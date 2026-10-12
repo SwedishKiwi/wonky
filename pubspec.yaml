@@ -8,4 +8,23 @@ workspace:
   - wonky_client
   - wonky_server
   - wonky_flutter
+  - wonky_write
+  - wonky_sheets
+  - packages/wonky_core
+  - packages/wonky_ui
+  - packages/wonky_app
+  - packages/wonky_sync_models
+  - packages/wonky_write_core
+  - packages/wonky_sheets_core
+  - packages/wonky_sheets_script
+  - packages/wonky_mcp_stdio
 
+# Vendored packages (specs/01-architecture.md §2.3). Pub workspaces only honor
+# overrides at the root.
+dependency_overrides:
+  serverpod_offline_sync:
+    path: third_party/serverpod_offline_sync
+  flutter_secure_storage: ^10.0.0
+  # sqlite3_web 0.9.5 made WorkerDatabase `base`, which breaks the web build of
+  # sqlite_async 0.14.5. Keep web/db_worker.js in step with sqlite_async.
+  sqlite3_web: 0.9.4

@@ -1,0 +1,4 @@
+# Matches the formatter settings of the upstream repository.
+formatter:
+  page_width: 88
+  trailing_commas: preserve
