@@ -62,11 +62,7 @@ class WonkyAvatar extends StatelessWidget {
     );
     Widget avatar = imageUrl == null || imageUrl!.isEmpty
         ? fallback
-        : ShadAvatar(
-            imageUrl,
-            size: Size.square(size),
-            placeholder: fallback,
-          );
+        : ShadAvatar(imageUrl, size: Size.square(size), placeholder: fallback);
     if (ringColor != null) {
       avatar = Container(
         padding: const EdgeInsets.all(1.5),

@@ -212,7 +212,10 @@ class UndoStep {
       }
       if (same) return this;
     }
-    return copyWith(entries: out, partiallyRebased: partiallyRebased || dropped);
+    return copyWith(
+      entries: out,
+      partiallyRebased: partiallyRebased || dropped,
+    );
   }
 
   /// JSON for persistence, or null when an entry is not persistable.

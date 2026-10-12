@@ -1,8 +1,6 @@
 import 'package:flutter/widgets.dart';
 import 'dart:convert';
 
-import 'package:flutter/widgets.dart';
-import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:wonky_core/wonky_core.dart';
 import 'package:wonky_ui/wonky_ui.dart';
@@ -83,9 +81,7 @@ class KeymapService extends ChangeNotifier {
           for (final e in map.entries) {
             final list = e.value;
             if (list is! List) continue;
-            out['${e.key}'] = [
-              for (final b in list) ?KeyBinding.fromJson(b),
-            ];
+            out['${e.key}'] = [for (final b in list) ?KeyBinding.fromJson(b)];
           }
         }
       } catch (_) {}
@@ -95,7 +91,8 @@ class KeymapService extends ChangeNotifier {
   }
 
   String get overridesJson => jsonEncode({
-    for (final e in _overrides.entries) e.key: [for (final b in e.value) b.canonical],
+    for (final e in _overrides.entries)
+      e.key: [for (final b in e.value) b.canonical],
   });
 
   /// Adds bindings that carry fixed args or extra chords for a command
@@ -110,10 +107,9 @@ class KeymapService extends ChangeNotifier {
     final o = _overrides[commandId];
     if (o != null) return o;
     final c = registry.byId(commandId);
-    return [
-      ...?c?.defaultBindings,
-      ...?_extra[commandId],
-    ].where((b) => b.appliesTo(platform) && !b.isBrowserReserved(platform)).toList();
+    return [...?c?.defaultBindings, ...?_extra[commandId]]
+        .where((b) => b.appliesTo(platform) && !b.isBrowserReserved(platform))
+        .toList();
   }
 
   /// Key-cap labels of the primary binding (menus, tooltips, palette).
@@ -150,12 +146,18 @@ class KeymapService extends ChangeNotifier {
 
   /// Commands in [scope] (or global) that already use [binding], except
   /// [exceptCommandId]. Contextual lists count as one binding.
-  List<String> conflictsFor(KeyBinding binding, KeyScope scope, {String? exceptCommandId}) {
+  List<String> conflictsFor(
+    KeyBinding binding,
+    KeyScope scope, {
+    String? exceptCommandId,
+  }) {
     final chord = binding.resolve(platform);
     return {
       for (final e in _entries)
         if (e.commandId != exceptCommandId &&
-            (e.scope == scope || e.scope == KeyScope.global || scope == KeyScope.global) &&
+            (e.scope == scope ||
+                e.scope == KeyScope.global ||
+                scope == KeyScope.global) &&
             e.binding.resolve(platform) == chord)
           e.commandId,
     }.toList();
@@ -196,8 +198,14 @@ class KeymapService extends ChangeNotifier {
 
   /// Handles [event] for [scope]: runs the first enabled command bound to
   /// the chord. Returns whether it was handled.
-  KeyEventResult handle(KeyEvent event, KeyScope scope, {BuildContext? context}) {
-    if (event is! KeyDownEvent && event is! KeyRepeatEvent) return KeyEventResult.ignored;
+  KeyEventResult handle(
+    KeyEvent event,
+    KeyScope scope, {
+    BuildContext? context,
+  }) {
+    if (event is! KeyDownEvent && event is! KeyRepeatEvent) {
+      return KeyEventResult.ignored;
+    }
     final chord = chordOf(event);
     if (chord == null) return KeyEventResult.ignored;
     if (scope == KeyScope.global && _isTextEditingChord(chord)) {
@@ -208,7 +216,9 @@ class KeymapService extends ChangeNotifier {
       if (e.binding.resolve(platform) != chord) continue;
       final state = dispatcher.stateOf(e.commandId, e.args);
       if (!state.enabled) continue;
-      if (event is KeyRepeatEvent && !_repeatable(e.commandId)) return KeyEventResult.handled;
+      if (event is KeyRepeatEvent && !_repeatable(e.commandId)) {
+        return KeyEventResult.handled;
+      }
       dispatcher
           .invoke(
             e.commandId,
@@ -226,17 +236,36 @@ class KeymapService extends ChangeNotifier {
   }
 
   static bool _repeatable(String id) =>
-      id.contains('zoom') || id.contains('undo') || id.contains('redo') || id.contains('move');
+      id.contains('zoom') ||
+      id.contains('undo') ||
+      id.contains('redo') ||
+      id.contains('move');
 
   /// Inside a plain text field, editing chords belong to the field.
   bool _isTextEditingChord(ResolvedChord chord) {
     final focus = FocusManager.instance.primaryFocus?.context;
     if (focus == null) return false;
-    final inText = focus.widget is EditableText ||
+    final inText =
+        focus.widget is EditableText ||
         focus.findAncestorWidgetOfExactType<EditableText>() != null;
     if (!inText) return false;
     final primary = platform.isMac ? chord.meta : chord.control;
-    const editing = {'Z', 'Y', 'X', 'C', 'V', 'A', 'ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', 'Home', 'End', 'Backspace', 'Delete'};
+    const editing = {
+      'Z',
+      'Y',
+      'X',
+      'C',
+      'V',
+      'A',
+      'ArrowLeft',
+      'ArrowRight',
+      'ArrowUp',
+      'ArrowDown',
+      'Home',
+      'End',
+      'Backspace',
+      'Delete',
+    };
     if (!primary && !chord.alt) return true; // plain typing
     return editing.contains(chord.key) && !chord.alt;
   }

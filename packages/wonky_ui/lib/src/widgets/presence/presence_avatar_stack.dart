@@ -47,7 +47,8 @@ class PresenceGroup {
 
   PresenceParticipant get primary {
     // Prefer the most active session.
-    final sorted = [...sessions]..sort((a, b) => a.activity.index.compareTo(b.activity.index));
+    final sorted = [...sessions]
+      ..sort((a, b) => a.activity.index.compareTo(b.activity.index));
     return sorted.first;
   }
 
@@ -97,27 +98,31 @@ class _PresenceAvatarStackState extends State<PresenceAvatarStack> {
     super.dispose();
   }
 
-  String _activity(WonkyUiLocalizations l10n, PresenceActivity a) => switch (a) {
-    PresenceActivity.editing => l10n.presenceEditing,
-    PresenceActivity.viewing => l10n.presenceViewing,
-    PresenceActivity.idle => l10n.presenceIdle,
-    PresenceActivity.away => l10n.presenceAway,
-    PresenceActivity.offline => l10n.presenceOffline,
-  };
+  String _activity(WonkyUiLocalizations l10n, PresenceActivity a) =>
+      switch (a) {
+        PresenceActivity.editing => l10n.presenceEditing,
+        PresenceActivity.viewing => l10n.presenceViewing,
+        PresenceActivity.idle => l10n.presenceIdle,
+        PresenceActivity.away => l10n.presenceAway,
+        PresenceActivity.offline => l10n.presenceOffline,
+      };
 
   String _name(WonkyUiLocalizations l10n, PresenceGroup g) {
     final p = g.primary;
     if (p.isSelf) {
       return g.tabs > 1 ? l10n.presenceYouTabs(g.tabs) : l10n.presenceYou;
     }
-    return g.tabs > 1 ? l10n.presenceTabs(p.displayName, g.tabs) : p.displayName;
+    return g.tabs > 1
+        ? l10n.presenceTabs(p.displayName, g.tabs)
+        : p.displayName;
   }
 
   @override
   Widget build(BuildContext context) {
     final l10n = WonkyUiLocalizations.of(context);
     final theme = ShadTheme.of(context);
-    final max = widget.maxVisible ?? WonkyThemeScope.of(context).presenceMaxAvatars;
+    final max =
+        widget.maxVisible ?? WonkyThemeScope.of(context).presenceMaxAvatars;
     final groups = PresenceGroup.of(
       widget.participants.where((p) => widget.showSelf || !p.isSelf),
     );
@@ -129,21 +134,27 @@ class _PresenceAvatarStackState extends State<PresenceAvatarStack> {
     Widget avatarFor(PresenceGroup g) {
       final p = g.primary;
       final color = theme.colorScheme.presence(p.colorIndex);
-      final dim = p.activity == PresenceActivity.idle ||
+      final dim =
+          p.activity == PresenceActivity.idle ||
           p.activity == PresenceActivity.away;
       return ShadTooltip(
         builder: (_) => Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(_name(l10n, g), style: const TextStyle(fontWeight: FontWeight.w600)),
+            Text(
+              _name(l10n, g),
+              style: const TextStyle(fontWeight: FontWeight.w600),
+            ),
             Text(_activity(l10n, p.activity)),
           ],
         ),
         child: GestureDetector(
           onTap: widget.onJumpTo == null ? null : () => widget.onJumpTo!(p),
           child: MouseRegion(
-            cursor: widget.onJumpTo == null ? MouseCursor.defer : SystemMouseCursors.click,
+            cursor: widget.onJumpTo == null
+                ? MouseCursor.defer
+                : SystemMouseCursors.click,
             child: Opacity(
               opacity: dim ? 0.55 : 1,
               child: Semantics(
@@ -152,7 +163,10 @@ class _PresenceAvatarStackState extends State<PresenceAvatarStack> {
                 child: Container(
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
-                    border: Border.all(color: theme.colorScheme.background, width: 2),
+                    border: Border.all(
+                      color: theme.colorScheme.background,
+                      width: 2,
+                    ),
                   ),
                   child: WonkyAvatar(
                     key: ValueKey<String>('presence.avatar.${p.userKey}'),
@@ -185,7 +199,10 @@ class _PresenceAvatarStackState extends State<PresenceAvatarStack> {
                 children: [
                   Padding(
                     padding: const EdgeInsets.only(bottom: 6),
-                    child: Text(l10n.presenceInFile, style: theme.textTheme.small),
+                    child: Text(
+                      l10n.presenceInFile,
+                      style: theme.textTheme.small,
+                    ),
                   ),
                   for (final g in groups)
                     ShadButton.ghost(
@@ -241,11 +258,16 @@ class _PresenceAvatarStackState extends State<PresenceAvatarStack> {
                   decoration: BoxDecoration(
                     color: theme.colorScheme.muted,
                     shape: BoxShape.circle,
-                    border: Border.all(color: theme.colorScheme.background, width: 2),
+                    border: Border.all(
+                      color: theme.colorScheme.background,
+                      width: 2,
+                    ),
                   ),
                   child: Text(
                     l10n.presenceMore(hidden.length),
-                    style: theme.textTheme.small.copyWith(fontSize: widget.size * 0.36),
+                    style: theme.textTheme.small.copyWith(
+                      fontSize: widget.size * 0.36,
+                    ),
                   ),
                 ),
               ),

@@ -48,14 +48,25 @@ class ServerUserRepository implements UserRepository {
   Future<UserProfileView> getMe() => api.guard((c) => c.user.getMe());
 
   @override
-  Future<UserProfileView> updateProfile({String? displayName, String? locale, String? timeZone}) =>
-      api.guard((c) => c.user.updateProfile(displayName: displayName, locale: locale, timeZone: timeZone));
+  Future<UserProfileView> updateProfile({
+    String? displayName,
+    String? locale,
+    String? timeZone,
+  }) => api.guard(
+    (c) => c.user.updateProfile(
+      displayName: displayName,
+      locale: locale,
+      timeZone: timeZone,
+    ),
+  );
 
   @override
-  Future<UserProfileView> setAvatar(UuidValue? fileUuid) => api.guard((c) => c.user.setAvatar(fileUuid));
+  Future<UserProfileView> setAvatar(UuidValue? fileUuid) =>
+      api.guard((c) => c.user.setAvatar(fileUuid));
 
   @override
-  Future<UserPreferences> getPreferences() => api.guard((c) => c.user.getPreferences());
+  Future<UserPreferences> getPreferences() =>
+      api.guard((c) => c.user.getPreferences());
 
   @override
   Future<UserPreferences> updatePreferences(UserPreferencesPatch patch) =>
@@ -70,10 +81,12 @@ class ServerUserRepository implements UserRepository {
       api.guard((c) => c.user.accountDeletionPreview());
 
   @override
-  Future<void> deleteAccount(String confirmation) => api.guard((c) => c.user.deleteAccount(confirmation));
+  Future<void> deleteAccount(String confirmation) =>
+      api.guard((c) => c.user.deleteAccount(confirmation));
 
   @override
-  Future<List<AccessTokenView>> listTokens() => api.guard((c) => c.accessToken.list());
+  Future<List<AccessTokenView>> listTokens() =>
+      api.guard((c) => c.accessToken.list());
 
   @override
   Future<CreatedAccessToken> createToken({
@@ -83,5 +96,6 @@ class ServerUserRepository implements UserRepository {
   }) => api.guard((c) => c.accessToken.create(name, scopes, expiresAt));
 
   @override
-  Future<void> revokeToken(int id) => api.guard((c) => c.accessToken.revoke(id));
+  Future<void> revokeToken(int id) =>
+      api.guard((c) => c.accessToken.revoke(id));
 }

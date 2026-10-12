@@ -11,15 +11,18 @@ import 'palette_list.dart';
 
 /// Quick switcher (`Mod+O`, suite 03 §1): recent files of both kinds plus
 /// drive search; Enter opens in the same window.
-Future<void> showQuickSwitcher(BuildContext context, ShellServices s) => showShadDialog<void>(
-  context: context,
-  builder: (context) => ShadDialog(
-    key: const ValueKey<String>('quickSwitcher'),
-    padding: const EdgeInsets.all(12),
-    constraints: const BoxConstraints(maxWidth: 620),
-    child: SizedBox(width: 600, child: _QuickSwitcher(services: s)),
-  ),
-);
+Future<void> showQuickSwitcher(BuildContext context, ShellServices s) =>
+    showShadDialog<void>(
+      context: context,
+      builder: (context) => ShadDialog(
+        key: const ValueKey<String>('quickSwitcher'),
+        padding: const EdgeInsets.all(12),
+        // Esc closes; a close button would overlap the search field.
+        closeIcon: const SizedBox.shrink(),
+        constraints: const BoxConstraints(maxWidth: 620),
+        child: SizedBox(width: 600, child: _QuickSwitcher(services: s)),
+      ),
+    );
 
 class _QuickSwitcher extends StatefulWidget {
   const _QuickSwitcher({required this.services});
@@ -48,7 +51,10 @@ class _QuickSwitcherState extends State<_QuickSwitcher> {
         )
         .then((p) {
           if (!mounted) return;
-          _recent = [for (final i in p.items) if (i.kind != DriveItemKind.folder) i];
+          _recent = [
+            for (final i in p.items)
+              if (i.kind != DriveItemKind.folder) i,
+          ];
           _list?.refresh();
         })
         .catchError((Object _) {});
@@ -70,7 +76,11 @@ class _QuickSwitcherState extends State<_QuickSwitcher> {
     }
     _debounce = Timer(const Duration(milliseconds: 180), () async {
       try {
-        final p = await widget.services.drive.search(q, filters: DriveSearchFilters(), limit: 20);
+        final p = await widget.services.drive.search(
+          q,
+          filters: DriveSearchFilters(),
+          limit: 20,
+        );
         if (!mounted || q != _q) return;
         _results = p.items;
         _list?.refresh();
@@ -91,7 +101,10 @@ class _QuickSwitcherState extends State<_QuickSwitcher> {
         _search(q);
         final local = q.trim().isEmpty
             ? _recent
-            : [for (final i in _recent) if (i.name.toLowerCase().contains(q.toLowerCase())) i];
+            : [
+                for (final i in _recent)
+                  if (i.name.toLowerCase().contains(q.toLowerCase())) i,
+              ];
         final seen = <String>{};
         final items = [
           for (final i in [...local, ..._results])
@@ -105,7 +118,9 @@ class _QuickSwitcherState extends State<_QuickSwitcher> {
               subtitle: '${describeKind(l, i.kind)} · ${i.owner.displayName}',
               icon: kindIcon(i.kind),
               iconColor: kindColor(i.kind, colors),
-              section: q.trim().isEmpty ? l.quickSwitcherRecent : l.quickSwitcherResults,
+              section: q.trim().isEmpty
+                  ? l.quickSwitcherRecent
+                  : l.quickSwitcherResults,
               onSelected: () => widget.services.openItem(i),
             ),
         ];

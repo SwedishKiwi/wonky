@@ -1,0 +1,357 @@
+import 'dart:async';
+import 'dart:typed_data';
+import 'dart:ui' as ui;
+
+import 'package:clock/clock.dart';
+import 'package:file_picker/file_picker.dart';
+import 'package:flutter/foundation.dart';
+import 'package:http/http.dart' as http;
+import 'package:wonky_app/wonky_app.dart';
+import 'package:wonky_client/wonky_client.dart' show UuidValue;
+import 'package:wonky_write_core/wonky_write_core.dart';
+
+import '../themes/write_fonts.dart';
+
+/// Formats offered under File › Download (Write 07 §9.1, in-scope subset).
+enum WriteDownloadFormat {
+  md('md', 'Markdown (.md)', ExportFormat.markdown),
+  mdZip('mdZip', 'Markdown with images (.zip)', ExportFormat.markdownZip),
+  pdf('pdf', 'PDF document (.pdf)', ExportFormat.pdf),
+  html('html', 'Web page (.html)', ExportFormat.html),
+  htmlZip('htmlZip', 'Web page, zipped (.zip)', ExportFormat.htmlZip),
+  txt('txt', 'Plain text (.txt)', ExportFormat.txt);
+
+  const WriteDownloadFormat(this.id, this.label, this.format);
+
+  /// Command argument (`write.file.download {format}`).
+  final String id;
+  final String label;
+  final ExportFormat format;
+
+  static WriteDownloadFormat? tryParse(String? id) {
+    for (final f in values) {
+      if (f.id == id || f.format.mcpName == id || f.name == id) return f;
+    }
+    return null;
+  }
+}
+
+/// Options of a client-side export (07 §4.1–4.2).
+@immutable
+class WriteExportOptions {
+  const WriteExportOptions({
+    this.suggestions = SuggestionViewMode.accepted,
+    this.variant = ThemeVariant.light,
+    this.headerFooter = true,
+    this.includeToc = false,
+    this.frontMatter = true,
+    this.fileName,
+  });
+
+  final SuggestionViewMode suggestions;
+  final ThemeVariant variant;
+  final bool headerFooter;
+  final bool includeToc;
+  final bool frontMatter;
+  final String? fileName;
+
+  WriteExportOptions copyWith({
+    SuggestionViewMode? suggestions,
+    ThemeVariant? variant,
+    bool? headerFooter,
+    bool? includeToc,
+    bool? frontMatter,
+    String? fileName,
+  }) => WriteExportOptions(
+    suggestions: suggestions ?? this.suggestions,
+    variant: variant ?? this.variant,
+    headerFooter: headerFooter ?? this.headerFooter,
+    includeToc: includeToc ?? this.includeToc,
+    frontMatter: frontMatter ?? this.frontMatter,
+    fileName: fileName ?? this.fileName,
+  );
+
+  Map<String, Object?> toJson() => {
+    'suggestions': suggestions.name,
+    'variant': variant.name,
+    'headerFooter': headerFooter,
+    'includeToc': includeToc,
+    'frontMatter': frontMatter,
+  };
+
+  factory WriteExportOptions.fromJson(Map<String, Object?> json) =>
+      WriteExportOptions(
+        suggestions: json['suggestions'] == 'original'
+            ? SuggestionViewMode.original
+            : SuggestionViewMode.accepted,
+        variant: json['variant'] == 'dark'
+            ? ThemeVariant.dark
+            : ThemeVariant.light,
+        headerFooter: json['headerFooter'] != false,
+        includeToc: json['includeToc'] == true,
+        frontMatter: json['frontMatter'] != false,
+      );
+}
+
+/// What the exporter needs about the document (snapshot at export time).
+@immutable
+class ExportSource {
+  const ExportSource({
+    required this.documentUuid,
+    required this.delta,
+    required this.title,
+    required this.theme,
+    required this.pageSetup,
+    this.revision = 0,
+    this.authorName,
+    this.language,
+    this.frontMatter,
+    this.description,
+    this.createdAt,
+    this.modifiedAt,
+  });
+
+  final String documentUuid;
+  final Delta delta;
+  final String title;
+  final WriteThemeData theme;
+  final PageSetup pageSetup;
+  final int revision;
+  final String? authorName;
+  final String? language;
+  final String? frontMatter;
+  final String? description;
+  final DateTime? createdAt;
+  final DateTime? modifiedAt;
+}
+
+/// Resolves images for client exports (07 §4.4): `wonky-file://` through a
+/// signed URL, `https://` through the server's SSRF-safe proxy (CORS).
+class ClientImageResolver implements ImageResolver {
+  ClientImageResolver({
+    required this.documentUuid,
+    this.signedUrl,
+    this.proxy,
+    http.Client? client,
+  }) : _http = client ?? http.Client();
+
+  final String documentUuid;
+
+  /// Signed URL of a stored file (`file.getUrl`).
+  final Future<String?> Function(UuidValue fileUuid)? signedUrl;
+
+  /// `writeExport.fetchImage` (https images).
+  final Future<Uint8List> Function(String src)? proxy;
+  final http.Client _http;
+  final Map<String, Future<ResolvedImage?>> _cache = {};
+
+  @override
+  Future<ResolvedImage?> resolve(String src) =>
+      _cache.putIfAbsent(src, () => _resolve(src));
+
+  Future<ResolvedImage?> _resolve(String src) async {
+    try {
+      Uint8List? bytes;
+      if (src.startsWith('wonky-file://')) {
+        final uuid = UuidValue.withValidation(
+          src.substring('wonky-file://'.length),
+        );
+        final url = await signedUrl?.call(uuid);
+        if (url == null) return null;
+        final r = await _http.get(Uri.parse(url));
+        if (r.statusCode != 200) return null;
+        bytes = r.bodyBytes;
+      } else if (src.startsWith('https://')) {
+        if (proxy != null) {
+          bytes = await proxy!(src);
+        } else {
+          final r = await _http.get(Uri.parse(src));
+          if (r.statusCode == 200) bytes = r.bodyBytes;
+        }
+      }
+      if (bytes == null || bytes.isEmpty) return null;
+      return await decodeForExport(bytes);
+    } catch (e) {
+      debugPrint('Export image $src failed: $e');
+      return null;
+    }
+  }
+
+  void dispose() => _http.close();
+}
+
+/// Decodes [bytes]; PNG/JPEG pass through, other formats are re-encoded as
+/// PNG (07 §4.4).
+Future<ResolvedImage?> decodeForExport(Uint8List bytes) async {
+  final codec = await ui.instantiateImageCodec(bytes);
+  final frame = await codec.getNextFrame();
+  final image = frame.image;
+  final isPng =
+      bytes.length > 4 &&
+      bytes[0] == 0x89 &&
+      bytes[1] == 0x50 &&
+      bytes[2] == 0x4e;
+  final isJpeg = bytes.length > 3 && bytes[0] == 0xff && bytes[1] == 0xd8;
+  var out = bytes;
+  var mime = isPng ? 'image/png' : 'image/jpeg';
+  if (!isPng && !isJpeg) {
+    final png = await image.toByteData(format: ui.ImageByteFormat.png);
+    if (png == null) return null;
+    out = png.buffer.asUint8List();
+    mime = 'image/png';
+  }
+  final result = ResolvedImage(
+    bytes: out,
+    mime: mime,
+    widthPx: image.width,
+    heightPx: image.height,
+  );
+  image.dispose();
+  codec.dispose();
+  return result;
+}
+
+/// Client-side exports with `wonky_write_core` exporters (07 §4.3: offline
+/// and ≤ 50 pages run on the client — the server path exists for MCP).
+class WriteExporter {
+  WriteExporter({required this.images, FontProvider? fonts, this.origin = ''})
+    : fonts = fonts ?? AssetFontProvider();
+
+  final ImageResolver images;
+  final FontProvider fonts;
+
+  /// Origin for internal links (`https://host`).
+  final String origin;
+
+  ExportInput _input(
+    ExportSource src,
+    WriteExportOptions options, {
+    CancellationToken? cancel,
+    ExportProgressSink? progress,
+  }) => ExportInput(
+    document: src.delta,
+    revision: src.revision,
+    meta: DocMeta(
+      documentUuid: src.documentUuid,
+      title: src.title,
+      authorName: src.authorName,
+      language: src.language,
+      frontMatter: src.frontMatter,
+      description: src.description,
+      createdAt: src.createdAt,
+      modifiedAt: src.modifiedAt,
+    ),
+    theme: src.theme,
+    variant: options.variant,
+    pageSetup: src.pageSetup,
+    images: images,
+    fonts: fonts,
+    links: origin.isEmpty
+        ? const IdentityLinkResolver()
+        : DefaultLinkResolver(origin: origin, documentUuid: src.documentUuid),
+    now: clock.now(),
+    cancel: cancel,
+    progress: progress,
+  );
+
+  /// Exports [src] as [format].
+  Future<ExportArtifact> export(
+    ExportSource src,
+    WriteDownloadFormat format, {
+    WriteExportOptions options = const WriteExportOptions(),
+    CancellationToken? cancel,
+    ExportProgressSink? progress,
+  }) {
+    final input = _input(src, options, cancel: cancel, progress: progress);
+    final name = sanitizeFileName(options.fileName ?? src.title);
+    switch (format) {
+      case WriteDownloadFormat.md:
+        return const MarkdownFileExporter().export(
+          input,
+          MarkdownFileExportOptions(
+            suggestions: options.suggestions,
+            fileName: name,
+            images: MarkdownImageMode.wonkyLink,
+            frontMatter: options.frontMatter,
+          ),
+        );
+      case WriteDownloadFormat.mdZip:
+        return const MarkdownZipExporter().export(
+          input,
+          MarkdownFileExportOptions(
+            suggestions: options.suggestions,
+            fileName: name,
+            frontMatter: options.frontMatter,
+          ),
+        );
+      case WriteDownloadFormat.pdf:
+        return const PdfExporter().export(
+          input,
+          PdfExportOptions(
+            suggestions: options.suggestions,
+            fileName: name,
+            headerFooter: options.headerFooter,
+            includeToc: options.includeToc,
+          ),
+        );
+      case WriteDownloadFormat.html:
+        return const HtmlExporter().export(
+          input,
+          HtmlExportOptions(suggestions: options.suggestions, fileName: name),
+        );
+      case WriteDownloadFormat.htmlZip:
+        return const HtmlZipExporter().export(
+          input,
+          HtmlExportOptions(suggestions: options.suggestions, fileName: name),
+        );
+      case WriteDownloadFormat.txt:
+        return const TxtExporter().export(
+          input,
+          TxtExportOptions(suggestions: options.suggestions, fileName: name),
+        );
+    }
+  }
+}
+
+/// File names without `/\:*?"<>|`, at most 120 characters (07 §4.1).
+String sanitizeFileName(String title) {
+  var s = title.replaceAll(RegExp(r'[/\\:*?"<>|\x00-\x1f]'), ' ').trim();
+  s = s.replaceAll(RegExp(r'\s+'), ' ');
+  if (s.isEmpty) s = 'Untitled document';
+  return s.length > 120 ? s.substring(0, 120).trim() : s;
+}
+
+/// Saves [artifact]: browser download in the same tab on web, a save dialog
+/// on desktop.
+Future<bool> saveArtifact(ExportArtifact artifact) async {
+  final mime = artifact.mimeType.split(';').first.trim();
+  final uri = await FilePicker.saveFile(
+    fileName: artifact.fileName,
+    bytes: artifact.bytes,
+    mimeType: mime,
+    dialogTitle: 'Save ${artifact.fileName}',
+  );
+  return kIsWeb || uri != null;
+}
+
+/// Builds the client image resolver from the shell services.
+ClientImageResolver imageResolverFor(ShellServices s, String documentUuid) =>
+    ClientImageResolver(
+      documentUuid: documentUuid,
+      signedUrl: (uuid) async {
+        final v = await s.repositories.files.getUrl(uuid);
+        return v.url;
+      },
+      proxy: s.client == null
+          ? null
+          : (src) async {
+              final data = await s.client!.writeExport.fetchImage(
+                UuidValue.withValidation(documentUuid),
+                src,
+              );
+              return data.buffer.asUint8List(
+                data.offsetInBytes,
+                data.lengthInBytes,
+              );
+            },
+    );

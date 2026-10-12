@@ -19,10 +19,11 @@ void main() {
       (Role.owner, true, true, true),
     ]) {
       test('when asking capabilities of $role then they match the matrix', () {
-        expect(
-          (role.canComment, role.canEdit, role.isOwner),
-          equals((comment, edit, owner)),
-        );
+        expect((
+          role.canComment,
+          role.canEdit,
+          role.isOwner,
+        ), equals((comment, edit, owner)));
       });
     }
 

@@ -129,6 +129,31 @@ canonical document JSON at a given revision (`Hash` message variant). Mismatch �
 local document state (keeping the outbox as a recovery file), re-inits from a snapshot, and logs
 an error with the op range for diagnosis.
 
+### 3.3 Implementation notes (client)
+- **Acks don't carry the committed op**, but the server may commit something other than
+  what the client sent: it rebases the op *as sent* against the **composition** of the ops
+  since its base (which can order tied inserts differently from transforming through them
+  one by one) and then normalizes it. On `Ack(r)` the client therefore predicts the committed
+  op exactly as the server computes it — `WonkyOt.rebaseOnServer(sent, ops sentBase+1…r-1)`
+  then `WonkyDeltaNormalizer.normalizeChange` — and, when it differs from its local in-flight
+  op, applies the document difference as a *fix-up* (transformed against the buffer like a
+  remote op). When prediction is impossible (the op introduces `sug_*` values, whose `at`
+  is server time, or it was sent on more than one connection) the client fetches
+  `getOps(r, r)` before continuing; ordered processing pauses meanwhile.
+- Server messages are processed strictly by revision: remote ops **and acks** that arrive
+  ahead of a gap wait; the gap is requested with `RequestOps` (re-requested after 3 s). A
+  remote op whose `clientOpId` (Init ops, `getOps`) or `authorSessionId` matches the in-flight
+  op is treated as its ack.
+- The in-memory outbox is the in-flight op plus the composed buffer; reconnects resend the
+  in-flight op (same `clientOpId`) unless it was already sent on that connection.
+- Remote cursors arrive at a server revision: older ones are transformed through the
+  remembered recent ops, newer ones wait; local cursors are expressed at the client's server
+  revision by transforming through the inverse of the pending changes.
+- Undo stacks are rebased by `rebaseWriteStacks` (wonky_write `features/document/write_undo.dart`):
+  the remote change is walked newest → oldest across *all* steps of the undo stack, and
+  separately of the redo stack, before `UndoService.applyRemote` swaps in the results.
+- Write undo stacks are not persisted (entries are only valid against the live document).
+
 ## 4. Undo/redo (Write-specific)
 
 - super_editor history is **disabled** (`isHistoryEnabled: false`) because its undo resets to

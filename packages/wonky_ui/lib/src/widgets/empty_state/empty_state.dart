@@ -39,7 +39,10 @@ class EmptyStateIllustration extends StatelessWidget {
     required Color accent,
     required Color muted,
   }) {
-    final s = _hex(surface), k = _hex(stroke), a = _hex(accent), m = _hex(muted);
+    final s = _hex(surface),
+        k = _hex(stroke),
+        a = _hex(accent),
+        m = _hex(muted);
     final glyph = switch (kind) {
       EmptyIllustration.folder =>
         '<path d="M34 46h22l6 7h30a4 4 0 0 1 4 4v32a4 4 0 0 1-4 4H34a4 4 0 0 1-4-4V50a4 4 0 0 1 4-4z" fill="$s" stroke="$k" stroke-width="2.5"/>'
@@ -142,15 +145,28 @@ class WonkyEmptyState extends StatelessWidget {
               const SizedBox(height: 16),
               Semantics(
                 header: true,
-                child: Text(title, style: theme.textTheme.large, textAlign: TextAlign.center),
+                child: Text(
+                  title,
+                  style: theme.textTheme.large,
+                  textAlign: TextAlign.center,
+                ),
               ),
               if (description != null) ...[
                 const SizedBox(height: 6),
-                Text(description!, style: theme.textTheme.muted, textAlign: TextAlign.center),
+                Text(
+                  description!,
+                  style: theme.textTheme.muted,
+                  textAlign: TextAlign.center,
+                ),
               ],
               if (actions.isNotEmpty) ...[
                 const SizedBox(height: 16),
-                Wrap(spacing: 8, runSpacing: 8, alignment: WrapAlignment.center, children: actions),
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  alignment: WrapAlignment.center,
+                  children: actions,
+                ),
               ],
             ],
           ),

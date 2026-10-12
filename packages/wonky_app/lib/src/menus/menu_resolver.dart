@@ -10,8 +10,10 @@ import '../shell/shell_services.dart';
 class MenuCustomItems {
   const MenuCustomItems({this.widgets = const {}, this.entries = const {}});
 
-  final Map<String, Widget Function(BuildContext context, VoidCallback close)> widgets;
-  final Map<String, List<WonkyMenuEntry> Function(BuildContext context)> entries;
+  final Map<String, Widget Function(BuildContext context, VoidCallback close)>
+  widgets;
+  final Map<String, List<WonkyMenuEntry> Function(BuildContext context)>
+  entries;
 }
 
 /// Turns `MenuSpec` trees into `WonkyMenuEntry`s using the command registry
@@ -51,7 +53,14 @@ class MenuResolver {
             ),
           );
         case MenuCommand():
-          final e = commandEntry(context, s.commandId, args: s.args, label: s.label, radio: s.radio, key: s.effectiveId);
+          final e = commandEntry(
+            context,
+            s.commandId,
+            args: s.args,
+            label: s.label,
+            radio: s.radio,
+            key: s.effectiveId,
+          );
           if (e != null) out.add(e);
       }
     }
@@ -75,13 +84,22 @@ class MenuResolver {
     }
     final state = services.dispatcher.stateOf(commandId, args);
     final title = label ?? command.title(context);
-    final shortcut = args.isEmpty ? services.keymap.labelsOf(commandId) : null;
+    // Drive-scope shortcuts (F2, Del, S…) only apply on the home screen.
+    final driveOnly =
+        command.keyScope == KeyScope.drive &&
+        services.activeDocument.value != null;
+    final shortcut = args.isEmpty && !driveOnly
+        ? services.keymap.labelsOf(commandId)
+        : null;
     void run() {
       services.noteRecentCommand(commandId);
       services.dispatcher
           .invoke(commandId, args: args, source: source, context: context)
           .catchError((Object e) {
-            services.toasts.error(services.l10n?.commandFailed(title) ?? title, description: '$e');
+            services.toasts.error(
+              services.l10n?.commandFailed(title) ?? title,
+              description: '$e',
+            );
             return const CommandResult.failed('error');
           });
     }
@@ -116,7 +134,9 @@ class MenuResolver {
       enabled: state.enabled,
       disabledReason: state.disabledReason,
       onSelected: run,
-      destructive: commandId.endsWith('deleteForever') || commandId.endsWith('emptyTrash'),
+      destructive:
+          commandId.endsWith('deleteForever') ||
+          commandId.endsWith('emptyTrash'),
     );
   }
 
@@ -133,17 +153,18 @@ class MenuResolver {
   ];
 
   /// MCP `ui.get_menu_tree` JSON with runtime state.
-  List<Map<String, Object?>> toJson(BuildContext context, MenuRoot root) => root.toJson(
-    resolve: (c) {
-      final command = services.registry.byId(c.commandId);
-      final state = services.dispatcher.stateOf(c.commandId, c.args);
-      return {
-        'title': c.label ?? command?.title(context) ?? c.commandId,
-        'enabled': state.enabled,
-        if (state.checked != null) 'checked': state.checked,
-        if (services.keymap.shortcutTextOf(c.commandId) != null)
-          'shortcut': services.keymap.shortcutTextOf(c.commandId),
-      };
-    },
-  );
+  List<Map<String, Object?>> toJson(BuildContext context, MenuRoot root) =>
+      root.toJson(
+        resolve: (c) {
+          final command = services.registry.byId(c.commandId);
+          final state = services.dispatcher.stateOf(c.commandId, c.args);
+          return {
+            'title': c.label ?? command?.title(context) ?? c.commandId,
+            'enabled': state.enabled,
+            if (state.checked != null) 'checked': state.checked,
+            if (services.keymap.shortcutTextOf(c.commandId) != null)
+              'shortcut': services.keymap.shortcutTextOf(c.commandId),
+          };
+        },
+      );
 }

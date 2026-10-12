@@ -22,7 +22,9 @@ class AccountSection extends StatefulWidget {
 }
 
 class _AccountSectionState extends State<AccountSection> {
-  late final _name = TextEditingController(text: widget.services.me?.displayName ?? '');
+  late final _name = TextEditingController(
+    text: widget.services.me?.displayName ?? '',
+  );
   bool _saving = false;
 
   ShellServices get s => widget.services;
@@ -39,7 +41,9 @@ class _AccountSectionState extends State<AccountSection> {
     if (name.isEmpty || name == s.me?.displayName) return;
     setState(() => _saving = true);
     try {
-      s.currentUser.value = await s.repositories.users.updateProfile(displayName: name);
+      s.currentUser.value = await s.repositories.users.updateProfile(
+        displayName: name,
+      );
       s.toasts.show(l.settingsSaved);
     } catch (e) {
       s.toasts.error(l.errorGeneric, description: errorMessage(e));
@@ -69,12 +73,19 @@ class _AccountSectionState extends State<AccountSection> {
             id: 'confirm',
             label: l.deleteAccountConfirmLabel(email),
             selectAll: false,
-            validator: (v) => v.trim().toLowerCase() == email.toLowerCase() ? null : l.deleteAccountMismatch,
+            validator: (v) => v.trim().toLowerCase() == email.toLowerCase()
+                ? null
+                : l.deleteAccountMismatch,
           ),
         ],
         buttons: [
           DialogButtonSpec(id: 'cancel', label: l.actionCancel),
-          DialogButtonSpec(id: 'delete', label: l.deleteAccountAction, primary: true, destructive: true),
+          DialogButtonSpec(
+            id: 'delete',
+            label: l.deleteAccountAction,
+            primary: true,
+            destructive: true,
+          ),
         ],
       ),
     );
@@ -102,14 +113,27 @@ class _AccountSectionState extends State<AccountSection> {
               children: [
                 Row(
                   children: [
-                    WonkyAvatar(name: u?.displayName ?? '?', color: u == null ? const Color(0xff71717a) : parseHexColor(u.avatarColor), imageUrl: u?.avatarUrl, size: 56),
+                    WonkyAvatar(
+                      name: u?.displayName ?? '?',
+                      color: u == null
+                          ? const Color(0xff71717a)
+                          : parseHexColor(u.avatarColor),
+                      imageUrl: u?.avatarUrl,
+                      size: 56,
+                    ),
                     const SizedBox(width: 16),
                     Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text(u?.displayName ?? '', style: ShadTheme.of(context).textTheme.large),
-                          Text(u?.email ?? '', style: ShadTheme.of(context).textTheme.muted),
+                          Text(
+                            u?.displayName ?? '',
+                            style: ShadTheme.of(context).textTheme.large,
+                          ),
+                          Text(
+                            u?.email ?? '',
+                            style: ShadTheme.of(context).textTheme.muted,
+                          ),
                         ],
                       ),
                     ),
@@ -122,9 +146,18 @@ class _AccountSectionState extends State<AccountSection> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text(l.authDisplayName, style: ShadTheme.of(context).textTheme.small),
+                          Text(
+                            l.authDisplayName,
+                            style: ShadTheme.of(context).textTheme.small,
+                          ),
                           const SizedBox(height: 6),
-                          ShadInput(key: const ValueKey<String>('settings.account.name'), controller: _name, onSubmitted: (_) => _saveName()),
+                          ShadInput(
+                            key: const ValueKey<String>(
+                              'settings.account.name',
+                            ),
+                            controller: _name,
+                            onSubmitted: (_) => _saveName(),
+                          ),
                         ],
                       ),
                     ),
@@ -159,7 +192,8 @@ class _AccountSectionState extends State<AccountSection> {
                   description: l.settingsSignOutHint,
                   control: ShadButton.outline(
                     key: const ValueKey<String>('settings.account.signOut'),
-                    onPressed: () => s.dispatcher.invoke('shell.account.signOut'),
+                    onPressed: () =>
+                        s.dispatcher.invoke('shell.account.signOut'),
                     child: Text(l.cmdSignOut),
                   ),
                 ),

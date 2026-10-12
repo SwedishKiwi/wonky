@@ -62,7 +62,10 @@ abstract final class WonkyTheme {
 
   /// The (cached) theme for [brightness] and [config].
   static ShadThemeData of(Brightness brightness, WonkyThemeConfig config) =>
-      _cache.putIfAbsent((brightness, config), () => _build(brightness, config));
+      _cache.putIfAbsent((
+        brightness,
+        config,
+      ), () => _build(brightness, config));
 
   /// The monospace font family (formulas, code, shortcuts).
   static const monoFamily = kDefaultFontFamilyMono;
@@ -137,22 +140,20 @@ class WonkyThemeExtension {
       ? Duration.zero
       : Duration(milliseconds: millis);
 
-  WonkyThemeExtension copyWith({
-    WonkyDensity? density,
-    bool? reduceMotion,
-  }) => WonkyThemeExtension(
-    density: density ?? this.density,
-    reduceMotion: reduceMotion ?? this.reduceMotion,
-    toolbarHeight: toolbarHeight,
-    toolbarButtonSize: toolbarButtonSize,
-    statusBarHeight: statusBarHeight,
-    titleRowHeight: titleRowHeight,
-    menubarHeight: menubarHeight,
-    maxTitleWidth: maxTitleWidth,
-    presenceMaxAvatars: presenceMaxAvatars,
-    cursorFlagFadeDelay: cursorFlagFadeDelay,
-    scrollbarThickness: scrollbarThickness,
-  );
+  WonkyThemeExtension copyWith({WonkyDensity? density, bool? reduceMotion}) =>
+      WonkyThemeExtension(
+        density: density ?? this.density,
+        reduceMotion: reduceMotion ?? this.reduceMotion,
+        toolbarHeight: toolbarHeight,
+        toolbarButtonSize: toolbarButtonSize,
+        statusBarHeight: statusBarHeight,
+        titleRowHeight: titleRowHeight,
+        menubarHeight: menubarHeight,
+        maxTitleWidth: maxTitleWidth,
+        presenceMaxAvatars: presenceMaxAvatars,
+        cursorFlagFadeDelay: cursorFlagFadeDelay,
+        scrollbarThickness: scrollbarThickness,
+      );
 
   @override
   bool operator ==(Object other) =>
@@ -187,11 +188,7 @@ class WonkyThemeExtension {
 
 /// Provides [WonkyThemeExtension] to the `wonky_ui` widgets.
 class WonkyThemeScope extends InheritedWidget {
-  const WonkyThemeScope({
-    super.key,
-    required this.data,
-    required super.child,
-  });
+  const WonkyThemeScope({super.key, required this.data, required super.child});
 
   final WonkyThemeExtension data;
 

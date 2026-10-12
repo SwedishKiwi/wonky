@@ -20,8 +20,12 @@ class SignUpScreen extends StatefulWidget {
 }
 
 class _SignUpScreenState extends State<SignUpScreen> {
-  late final _name = TextEditingController(text: widget.services.auth.signUpDraft?.displayName ?? '');
-  late final _email = TextEditingController(text: widget.services.auth.signUpDraft?.email ?? '');
+  late final _name = TextEditingController(
+    text: widget.services.auth.signUpDraft?.displayName ?? '',
+  );
+  late final _email = TextEditingController(
+    text: widget.services.auth.signUpDraft?.email ?? '',
+  );
   final _password = TextEditingController();
   bool _terms = false;
   bool _busy = false;
@@ -37,7 +41,10 @@ class _SignUpScreenState extends State<SignUpScreen> {
 
   Future<void> _submit() async {
     final l = WonkyAppLocalizations.of(context);
-    final strength = passwordStrength(_password.text, context: [_email.text, _name.text]);
+    final strength = passwordStrength(
+      _password.text,
+      context: [_email.text, _name.text],
+    );
     setState(() {
       _nameError = _name.text.trim().isEmpty ? l.errorRequired : null;
       _emailError = validateEmail(l, _email.text);
@@ -49,7 +56,14 @@ class _SignUpScreenState extends State<SignUpScreen> {
       _termsError = _terms ? null : l.authErrorTerms;
       _formError = null;
     });
-    if ([_nameError, _emailError, _passwordError, _termsError].any((e) => e != null)) return;
+    if ([
+      _nameError,
+      _emailError,
+      _passwordError,
+      _termsError,
+    ].any((e) => e != null)) {
+      return;
+    }
     setState(() => _busy = true);
     try {
       await widget.services.auth.startSignUp(
@@ -77,7 +91,10 @@ class _SignUpScreenState extends State<SignUpScreen> {
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           Text(l.authHaveAccount),
-          ShadButton.link(onPressed: () => context.go('/signin'), child: Text(l.authSignIn)),
+          ShadButton.link(
+            onPressed: () => context.go('/signin'),
+            child: Text(l.authSignIn),
+          ),
         ],
       ),
       child: AutofillGroup(
@@ -119,7 +136,12 @@ class _SignUpScreenState extends State<SignUpScreen> {
                   onSubmitted: (_) => _submit(),
                 ),
                 const SizedBox(height: 8),
-                PasswordStrengthMeter(strength: passwordStrength(_password.text, context: [_email.text, _name.text])),
+                PasswordStrengthMeter(
+                  strength: passwordStrength(
+                    _password.text,
+                    context: [_email.text, _name.text],
+                  ),
+                ),
               ],
             ),
             Column(
@@ -135,7 +157,12 @@ class _SignUpScreenState extends State<SignUpScreen> {
                 if (_termsError != null)
                   Padding(
                     padding: const EdgeInsets.only(top: 4),
-                    child: Text(_termsError!, style: theme.textTheme.small.copyWith(color: theme.colorScheme.destructive)),
+                    child: Text(
+                      _termsError!,
+                      style: theme.textTheme.small.copyWith(
+                        color: theme.colorScheme.destructive,
+                      ),
+                    ),
                   ),
               ],
             ),
@@ -143,7 +170,12 @@ class _SignUpScreenState extends State<SignUpScreen> {
               key: const ValueKey<String>('auth.signUp.submit'),
               enabled: !_busy,
               onPressed: _submit,
-              leading: _busy ? const SizedBox.square(dimension: 16, child: ShadSpinner(size: 16)) : null,
+              leading: _busy
+                  ? const SizedBox.square(
+                      dimension: 16,
+                      child: ShadSpinner(size: 16),
+                    )
+                  : null,
               child: Text(l.authCreateAccount),
             ),
           ],

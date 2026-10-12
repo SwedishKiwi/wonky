@@ -39,8 +39,18 @@ class ShellMenus {
 
   MenuSubmenu get file => MenuSpec.submenu(ShellMenuIds.file, l10n.menuFile, [
     MenuSpec.submenu(ShellMenuIds.fileNew, l10n.menuNew, [
-      MenuSpec.command('shell.file.new', label: l10n.menuNewDocument, args: {'kind': 'document'}, id: 'file.new.document'),
-      MenuSpec.command('shell.file.new', label: l10n.menuNewSpreadsheet, args: {'kind': 'spreadsheet'}, id: 'file.new.spreadsheet'),
+      MenuSpec.command(
+        'shell.file.new',
+        label: l10n.menuNewDocument,
+        args: {'kind': 'document'},
+        id: 'file.new.document',
+      ),
+      MenuSpec.command(
+        'shell.file.new',
+        label: l10n.menuNewSpreadsheet,
+        args: {'kind': 'spreadsheet'},
+        id: 'file.new.spreadsheet',
+      ),
       MenuSpec.command('shell.file.newFromTemplate'),
     ]),
     MenuSpec.command('shell.file.open'),
@@ -96,7 +106,13 @@ class ShellMenus {
     MenuSpec.separator(),
     MenuSpec.submenu(ShellMenuIds.viewZoom, l10n.menuZoom, [
       for (final p in const [50, 75, 90, 100, 125, 150, 200])
-        MenuSpec.command('shell.view.zoom', label: '$p%', args: {'percent': p}, id: 'view.zoom.$p', radio: true),
+        MenuSpec.command(
+          'shell.view.zoom',
+          label: '$p%',
+          args: {'percent': p},
+          id: 'view.zoom.$p',
+          radio: true,
+        ),
     ]),
     MenuSpec.submenu(ShellMenuIds.viewPanels, l10n.menuPanels, [
       MenuSpec.command('shell.comments.togglePanel'),
@@ -104,21 +120,54 @@ class ShellMenus {
       MenuSpec.command('shell.ai.togglePanel'),
     ]),
     MenuSpec.submenu(ShellMenuIds.viewTheme, l10n.menuAppTheme, [
-      MenuSpec.command('shell.appearance.setTheme', label: l10n.themeSystem, args: {'mode': 'system'}, id: 'view.theme.system', radio: true),
-      MenuSpec.command('shell.appearance.setTheme', label: l10n.themeLight, args: {'mode': 'light'}, id: 'view.theme.light', radio: true),
-      MenuSpec.command('shell.appearance.setTheme', label: l10n.themeDark, args: {'mode': 'dark'}, id: 'view.theme.dark', radio: true),
+      MenuSpec.command(
+        'shell.appearance.setTheme',
+        label: l10n.themeSystem,
+        args: {'mode': 'system'},
+        id: 'view.theme.system',
+        radio: true,
+      ),
+      MenuSpec.command(
+        'shell.appearance.setTheme',
+        label: l10n.themeLight,
+        args: {'mode': 'light'},
+        id: 'view.theme.light',
+        radio: true,
+      ),
+      MenuSpec.command(
+        'shell.appearance.setTheme',
+        label: l10n.themeDark,
+        args: {'mode': 'dark'},
+        id: 'view.theme.dark',
+        radio: true,
+      ),
     ]),
   ]);
 
-  MenuSubmenu get tools => MenuSpec.submenu(ShellMenuIds.tools, l10n.menuTools, [
-    MenuSpec.command('shell.ai.togglePanel', id: 'tools.assistant'),
-    MenuSpec.command('shell.nav.quickSwitcher', label: l10n.menuExplore, id: 'tools.explore'),
-    MenuSpec.separator(),
-    MenuSpec.command('shell.settings.open', label: l10n.menuPreferences, args: {'section': 'appearance'}, id: 'tools.preferences'),
-    MenuSpec.command('shell.help.shortcuts', id: 'tools.shortcuts'),
-    MenuSpec.command('shell.activity.open'),
-    MenuSpec.command('shell.settings.open', label: l10n.menuAccessibility, args: {'section': 'appearance'}, id: 'tools.accessibility'),
-  ]);
+  MenuSubmenu get tools =>
+      MenuSpec.submenu(ShellMenuIds.tools, l10n.menuTools, [
+        MenuSpec.command('shell.ai.togglePanel', id: 'tools.assistant'),
+        MenuSpec.command(
+          'shell.nav.quickSwitcher',
+          label: l10n.menuExplore,
+          id: 'tools.explore',
+        ),
+        MenuSpec.separator(),
+        MenuSpec.command(
+          'shell.settings.open',
+          label: l10n.menuPreferences,
+          args: {'section': 'appearance'},
+          id: 'tools.preferences',
+        ),
+        MenuSpec.command('shell.help.shortcuts', id: 'tools.shortcuts'),
+        MenuSpec.command('shell.activity.open'),
+        MenuSpec.command(
+          'shell.settings.open',
+          label: l10n.menuAccessibility,
+          args: {'section': 'appearance'},
+          id: 'tools.accessibility',
+        ),
+      ]);
 
   MenuSubmenu get help => MenuSpec.submenu(ShellMenuIds.help, l10n.menuHelp, [
     MenuSpec.command('shell.help.searchMenus'),

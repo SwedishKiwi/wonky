@@ -1,8 +1,6 @@
 import 'package:flutter/widgets.dart';
 import 'dart:async';
 
-import 'package:flutter/widgets.dart';
-import 'package:flutter/foundation.dart';
 import 'package:go_router/go_router.dart';
 import 'package:wonky_client/wonky_client.dart';
 import 'package:wonky_core/wonky_core.dart' hide ActorKind;
@@ -97,7 +95,10 @@ class ShellServices implements ActiveDocumentHost {
     dispatcher = CommandDispatcher(this);
     keymap = KeymapService(registry: registry, dispatcher: dispatcher);
     undo = UndoService(persistence: this.userStore);
-    prefs = PreferencesController(device: deviceStore, users: repositories.users);
+    prefs = PreferencesController(
+      device: deviceStore,
+      users: repositories.users,
+    );
     viewState = ShellViewState(prefs);
     supervisor = StreamSupervisor(connectivity);
     crossApp = CrossAppNavigator(urls);
@@ -138,7 +139,9 @@ class ShellServices implements ActiveDocumentHost {
   /// The router (set by `WonkyShell`).
   late GoRouter router;
 
-  final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>(debugLabel: 'shell');
+  final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>(
+    debugLabel: 'shell',
+  );
 
   /// The active editor's controller.
   final ValueNotifier<DocumentController?> activeDocument = ValueNotifier(null);
@@ -150,7 +153,9 @@ class ShellServices implements ActiveDocumentHost {
   final ValueNotifier<DriveItemView?> currentItem = ValueNotifier(null);
 
   /// The selected items on the home screen.
-  final ValueNotifier<List<DriveItemView>> driveSelection = ValueNotifier(const []);
+  final ValueNotifier<List<DriveItemView>> driveSelection = ValueNotifier(
+    const [],
+  );
 
   /// The folder shown on the home screen (null = root / virtual view).
   final ValueNotifier<DriveItemView?> currentFolder = ValueNotifier(null);
@@ -180,7 +185,9 @@ class ShellServices implements ActiveDocumentHost {
       return;
     }
     if (navIndex >= 0 && navHistory[navIndex] == location) return;
-    if (navIndex < navHistory.length - 1) navHistory.removeRange(navIndex + 1, navHistory.length);
+    if (navIndex < navHistory.length - 1) {
+      navHistory.removeRange(navIndex + 1, navHistory.length);
+    }
     navHistory.add(location);
     if (navHistory.length > 100) navHistory.removeAt(0);
     navIndex = navHistory.length - 1;
@@ -228,7 +235,8 @@ class ShellServices implements ActiveDocumentHost {
   final ValueNotifier<ProtocolInfo?> serverInfo = ValueNotifier(null);
 
   /// Live drive changes (fed by the supervised `drive.watch` stream).
-  final StreamController<DriveChange> _driveChanges = StreamController.broadcast();
+  final StreamController<DriveChange> _driveChanges =
+      StreamController.broadcast();
   Stream<DriveChange> get driveChanges => _driveChanges.stream;
   void emitDriveChange(DriveChange c) => _driveChanges.add(c);
 
@@ -245,7 +253,9 @@ class ShellServices implements ActiveDocumentHost {
 
   WonkyAppLocalizations? get l10n {
     final c = navigatorContext;
-    return c == null ? null : Localizations.of<WonkyAppLocalizations>(c, WonkyAppLocalizations);
+    return c == null
+        ? null
+        : Localizations.of<WonkyAppLocalizations>(c, WonkyAppLocalizations);
   }
 
   UserSummary? get me => currentUser.value?.summary;
@@ -300,8 +310,12 @@ class ShellServices implements ActiveDocumentHost {
         router.go('/drive/${item.uuid.uuid}');
       case DriveItemKind.document:
       case DriveItemKind.spreadsheet:
-        final app = item.kind == DriveItemKind.document ? WonkyAppKind.write : WonkyAppKind.sheets;
-        final path = app == WonkyAppKind.write ? '/d/${item.uuid.uuid}' : '/s/${item.uuid.uuid}';
+        final app = item.kind == DriveItemKind.document
+            ? WonkyAppKind.write
+            : WonkyAppKind.sheets;
+        final path = app == WonkyAppKind.write
+            ? '/d/${item.uuid.uuid}'
+            : '/s/${item.uuid.uuid}';
         if (app == config.app) {
           router.go(path);
         } else {
@@ -349,9 +363,11 @@ class ShellServices implements ActiveDocumentHost {
       config.menus(context, ShellMenus(WonkyAppLocalizations.of(context)));
 
   /// Menu label paths of every command in the menubar.
-  Map<String, List<String>> menuPaths(BuildContext context) => menuRoot(context).commandPaths(
-    titleOf: (c) => registry.byId(c.commandId)?.title(context) ?? c.commandId,
-  );
+  Map<String, List<String>> menuPaths(BuildContext context) =>
+      menuRoot(context).commandPaths(
+        titleOf: (c) =>
+            registry.byId(c.commandId)?.title(context) ?? c.commandId,
+      );
 
   /// Records a command in the palette's recent list.
   void noteRecentCommand(String id) {

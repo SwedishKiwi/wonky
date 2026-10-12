@@ -17,7 +17,9 @@ List<Command<CommandArgs>> driveCommands(ShellServices s) {
   final drive = s.drive;
   void changed(List<DriveItemView> items) {
     for (final i in items) {
-      s.emitDriveChange(DriveChange(kind: DriveChangeKind.updated, itemUuid: i.uuid, item: i));
+      s.emitDriveChange(
+        DriveChange(kind: DriveChangeKind.updated, itemUuid: i.uuid, item: i),
+      );
     }
     final cur = s.currentItem.value;
     if (cur != null) {
@@ -65,7 +67,9 @@ List<Command<CommandArgs>> driveCommands(ShellServices s) {
             after: {v.uuid.uuid: true},
           ),
         );
-        s.emitDriveChange(DriveChange(kind: DriveChangeKind.created, itemUuid: v.uuid, item: v));
+        s.emitDriveChange(
+          DriveChange(kind: DriveChangeKind.created, itemUuid: v.uuid, item: v),
+        );
         return CommandResult.ok({'uuid': v.uuid.uuid});
       },
     ),
@@ -79,10 +83,14 @@ List<Command<CommandArgs>> driveCommands(ShellServices s) {
       undoTarget: UndoTarget.shell,
       category: (l) => l.categoryDrive,
       args: const JsonSchema.object(
-        properties: {...targetProps, 'name': JsonSchema.string(minLength: 1, maxLength: 255)},
+        properties: {
+          ...targetProps,
+          'name': JsonSchema.string(minLength: 1, maxLength: 255),
+        },
       ),
       enabled: (ctx, a) =>
-          hasExplicitTargets(a) || (singleTarget(s, a)?.let(canManageItem) ?? false),
+          hasExplicitTargets(a) ||
+          (singleTarget(s, a)?.let(canManageItem) ?? false),
       run: (ctx, a) async {
         final targets = await fetchTargets(s, a);
         if (targets.length != 1) return const CommandResult.cancelled();
@@ -90,14 +98,18 @@ List<Command<CommandArgs>> driveCommands(ShellServices s) {
         var name = a.string('name');
         if (name == null) {
           // In the editor, File › Rename focuses the title field.
-          if (s.currentItem.value?.uuid == item.uuid && s.startTitleRename != null && s.driveSelection.value.isEmpty) {
+          if (s.currentItem.value?.uuid == item.uuid &&
+              s.startTitleRename != null &&
+              s.driveSelection.value.isEmpty) {
             s.startTitleRename!();
             return const CommandResult.cancelled();
           }
           final c = ctx.dialogContext;
           if (c == null || !c.mounted) return const CommandResult.cancelled();
           name = await showRenameDialog(c, s, item);
-          if (name == null || name == item.name) return const CommandResult.cancelled();
+          if (name == null || name == item.name) {
+            return const CommandResult.cancelled();
+          }
         }
         final v = await drive.rename(item.uuid, name);
         ctx.record(
@@ -122,7 +134,12 @@ List<Command<CommandArgs>> driveCommands(ShellServices s) {
       args: const JsonSchema.object(
         properties: {
           ...targetProps,
-          'folderUuid': JsonSchema.nullable(JsonSchema.string(format: 'uuid', description: 'Target folder; null = My Drive root.')),
+          'folderUuid': JsonSchema.nullable(
+            JsonSchema.string(
+              format: 'uuid',
+              description: 'Target folder; null = My Drive root.',
+            ),
+          ),
         },
       ),
       enabled: (ctx, a) => targetsAll(s, a, canManageItem),
@@ -151,7 +168,9 @@ List<Command<CommandArgs>> driveCommands(ShellServices s) {
         );
         changed(moved);
         for (final m in moved) {
-          s.emitDriveChange(DriveChange(kind: DriveChangeKind.moved, itemUuid: m.uuid, item: m));
+          s.emitDriveChange(
+            DriveChange(kind: DriveChangeKind.moved, itemUuid: m.uuid, item: m),
+          );
         }
         return CommandResult.ok({'moved': moved.length});
       },
@@ -172,7 +191,11 @@ List<Command<CommandArgs>> driveCommands(ShellServices s) {
       ),
       enabled: (ctx, a) =>
           hasExplicitTargets(a) ||
-          (singleTarget(s, a)?.let((i) => !i.isFolder && i.canDownload && !i.isTrashed) ?? false),
+          (singleTarget(
+                s,
+                a,
+              )?.let((i) => !i.isFolder && i.canDownload && !i.isTrashed) ??
+              false),
       run: (ctx, a) async {
         final targets = await fetchTargets(s, a);
         if (targets.length != 1) return const CommandResult.cancelled();
@@ -200,7 +223,9 @@ List<Command<CommandArgs>> driveCommands(ShellServices s) {
           copyComments: req.copyComments,
           copySharing: req.copySharing,
         );
-        s.emitDriveChange(DriveChange(kind: DriveChangeKind.created, itemUuid: v.uuid, item: v));
+        s.emitDriveChange(
+          DriveChange(kind: DriveChangeKind.created, itemUuid: v.uuid, item: v),
+        );
         final l = s.l10n;
         s.toasts.show(
           l?.toastCopyCreated(v.name) ?? v.name,
@@ -216,11 +241,18 @@ List<Command<CommandArgs>> driveCommands(ShellServices s) {
       icon: LucideIcons.folderSymlink,
       category: (l) => l.categoryDrive,
       args: const JsonSchema.object(
-        properties: {...targetProps, 'folderUuid': JsonSchema.nullable(JsonSchema.string(format: 'uuid'))},
+        properties: {
+          ...targetProps,
+          'folderUuid': JsonSchema.nullable(JsonSchema.string(format: 'uuid')),
+        },
       ),
       enabled: (ctx, a) =>
           hasExplicitTargets(a) ||
-          (singleTarget(s, a)?.let((i) => i.owner.uuid != s.me?.uuid && !i.isTrashed) ?? false),
+          (singleTarget(
+                s,
+                a,
+              )?.let((i) => i.owner.uuid != s.me?.uuid && !i.isTrashed) ??
+              false),
       run: (ctx, a) async {
         final targets = await fetchTargets(s, a);
         if (targets.length != 1) return const CommandResult.cancelled();
@@ -255,7 +287,9 @@ List<Command<CommandArgs>> driveCommands(ShellServices s) {
       undoable: true,
       undoTarget: UndoTarget.shell,
       category: (l) => l.categoryDrive,
-      args: const JsonSchema.object(properties: {...targetProps, 'starred': JsonSchema.boolean()}),
+      args: const JsonSchema.object(
+        properties: {...targetProps, 'starred': JsonSchema.boolean()},
+      ),
       enabled: (ctx, a) => targetsAll(s, a, (i) => !i.isTrashed),
       checked: (ctx, a) {
         final t = knownTargets(s, a);
@@ -265,7 +299,9 @@ List<Command<CommandArgs>> driveCommands(ShellServices s) {
         final items = await fetchTargets(s, a);
         if (items.isEmpty) return const CommandResult.cancelled();
         final starred = a.boolean('starred') ?? !items.every((i) => i.starred);
-        final out = [for (final i in items) await drive.setStarred(i.uuid, starred)];
+        final out = [
+          for (final i in items) await drive.setStarred(i.uuid, starred),
+        ];
         ctx.record(
           DriveUndoEntry(
             op: DriveUndoOp.star,
@@ -283,7 +319,9 @@ List<Command<CommandArgs>> driveCommands(ShellServices s) {
       title: (l) => l.cmdMakeAvailableOffline,
       icon: LucideIcons.cloudDownload,
       category: (l) => l.categoryDrive,
-      args: const JsonSchema.object(properties: {...targetProps, 'pinned': JsonSchema.boolean()}),
+      args: const JsonSchema.object(
+        properties: {...targetProps, 'pinned': JsonSchema.boolean()},
+      ),
       enabled: (ctx, a) => targetsAll(s, a, (i) => !i.isFolder && !i.isTrashed),
       checked: (ctx, a) {
         final t = knownTargets(s, a);
@@ -292,8 +330,11 @@ List<Command<CommandArgs>> driveCommands(ShellServices s) {
       run: (ctx, a) async {
         final items = await fetchTargets(s, a);
         if (items.isEmpty) return const CommandResult.cancelled();
-        final pinned = a.boolean('pinned') ?? !items.every((i) => i.pinnedOffline);
-        changed([for (final i in items) await drive.setPinnedOffline(i.uuid, pinned)]);
+        final pinned =
+            a.boolean('pinned') ?? !items.every((i) => i.pinnedOffline);
+        changed([
+          for (final i in items) await drive.setPinnedOffline(i.uuid, pinned),
+        ]);
         return CommandResult.ok({'pinned': pinned});
       },
     ),
@@ -301,7 +342,10 @@ List<Command<CommandArgs>> driveCommands(ShellServices s) {
       'shell.drive.trash',
       title: (l) => l.cmdMoveToTrash,
       icon: LucideIcons.trash2,
-      bindings: const [KeyBinding(Keys.delete), KeyBinding(Keys.backspace, mod: true, mac: true)],
+      bindings: const [
+        KeyBinding(Keys.delete),
+        KeyBinding(Keys.backspace, mod: true, mac: true),
+      ],
       scope: KeyScope.drive,
       undoable: true,
       undoTarget: UndoTarget.shell,
@@ -321,7 +365,9 @@ List<Command<CommandArgs>> driveCommands(ShellServices s) {
           ),
         );
         for (final i in items) {
-          s.emitDriveChange(DriveChange(kind: DriveChangeKind.trashed, itemUuid: i.uuid));
+          s.emitDriveChange(
+            DriveChange(kind: DriveChangeKind.trashed, itemUuid: i.uuid),
+          );
         }
         final cur = s.currentItem.value;
         if (cur != null && items.any((i) => i.uuid == cur.uuid)) {
@@ -332,7 +378,10 @@ List<Command<CommandArgs>> driveCommands(ShellServices s) {
           s.toasts.show(
             l?.toastMovedToTrash(items.length) ?? 'Moved to trash',
             actionLabel: l?.actionUndo,
-            onAction: () => s.dispatcher.invoke('shell.edit.undo', source: InvocationSource.ui),
+            onAction: () => s.dispatcher.invoke(
+              'shell.edit.undo',
+              source: InvocationSource.ui,
+            ),
           );
         }
         return CommandResult.ok({'trashed': items.length});
@@ -360,7 +409,9 @@ List<Command<CommandArgs>> driveCommands(ShellServices s) {
           ),
         );
         for (final i in items) {
-          s.emitDriveChange(DriveChange(kind: DriveChangeKind.restored, itemUuid: i.uuid));
+          s.emitDriveChange(
+            DriveChange(kind: DriveChangeKind.restored, itemUuid: i.uuid),
+          );
         }
         final cur = s.currentItem.value;
         if (cur != null && items.any((i) => i.uuid == cur.uuid)) {
@@ -374,19 +425,26 @@ List<Command<CommandArgs>> driveCommands(ShellServices s) {
       title: (l) => l.cmdDeleteForever,
       icon: LucideIcons.trash,
       category: (l) => l.categoryDrive,
-      args: const JsonSchema.object(properties: {...targetProps, 'confirmed': JsonSchema.boolean()}),
-      enabled: (ctx, a) => targetsAll(s, a, (i) => i.isTrashed && i.myRole.isOwner),
+      args: const JsonSchema.object(
+        properties: {...targetProps, 'confirmed': JsonSchema.boolean()},
+      ),
+      enabled: (ctx, a) =>
+          targetsAll(s, a, (i) => i.isTrashed && i.myRole.isOwner),
       run: (ctx, a) async {
         final items = await fetchTargets(s, a);
         if (items.isEmpty) return const CommandResult.cancelled();
         if (a.boolean('confirmed') != true) {
           final c = ctx.dialogContext;
           if (c == null || !c.mounted) return const CommandResult.cancelled();
-          if (!await confirmDeleteForever(c, items.length)) return const CommandResult.cancelled();
+          if (!await confirmDeleteForever(c, items.length)) {
+            return const CommandResult.cancelled();
+          }
         }
         await drive.deletePermanently([for (final i in items) i.uuid]);
         for (final i in items) {
-          s.emitDriveChange(DriveChange(kind: DriveChangeKind.removed, itemUuid: i.uuid));
+          s.emitDriveChange(
+            DriveChange(kind: DriveChangeKind.removed, itemUuid: i.uuid),
+          );
         }
         return CommandResult.ok({'deleted': items.length});
       },
@@ -396,13 +454,17 @@ List<Command<CommandArgs>> driveCommands(ShellServices s) {
       title: (l) => l.cmdEmptyTrash,
       icon: LucideIcons.trash,
       category: (l) => l.categoryDrive,
-      args: const JsonSchema.object(properties: {'confirmed': JsonSchema.boolean()}),
+      args: const JsonSchema.object(
+        properties: {'confirmed': JsonSchema.boolean()},
+      ),
       enabled: (ctx, a) => s.connectivity.online,
       run: (ctx, a) async {
         if (a.boolean('confirmed') != true) {
           final c = ctx.dialogContext;
           if (c == null || !c.mounted) return const CommandResult.cancelled();
-          if (!await confirmEmptyTrash(c)) return const CommandResult.cancelled();
+          if (!await confirmEmptyTrash(c)) {
+            return const CommandResult.cancelled();
+          }
         }
         final n = await drive.emptyTrash();
         s.refreshDrive();
@@ -414,16 +476,30 @@ List<Command<CommandArgs>> driveCommands(ShellServices s) {
       title: (l) => l.cmdUpload,
       icon: LucideIcons.upload,
       category: (l) => l.categoryDrive,
-      enabled: (ctx, a) => s.config.importHandler != null && s.connectivity.online,
+      enabled: (ctx, a) =>
+          s.config.importHandler != null && s.connectivity.online,
       run: (ctx, a) async {
         final handler = s.config.importHandler;
         final c = ctx.dialogContext;
-        if (handler == null || c == null) return const CommandResult.cancelled();
+        if (handler == null || c == null) {
+          return const CommandResult.cancelled();
+        }
         final files = await handler.pickFiles(c);
         if (files.isEmpty || !c.mounted) return const CommandResult.cancelled();
-        final items = await handler.importFiles(c, s, files, parentUuid: s.currentFolder.value?.uuid);
+        final items = await handler.importFiles(
+          c,
+          s,
+          files,
+          parentUuid: s.currentFolder.value?.uuid,
+        );
         for (final v in items) {
-          s.emitDriveChange(DriveChange(kind: DriveChangeKind.created, itemUuid: v.uuid, item: v));
+          s.emitDriveChange(
+            DriveChange(
+              kind: DriveChangeKind.created,
+              itemUuid: v.uuid,
+              item: v,
+            ),
+          );
         }
         return CommandResult.ok({'imported': items.length});
       },
@@ -464,7 +540,8 @@ List<Command<CommandArgs>> driveCommands(ShellServices s) {
 /// The shareable URL of [item] (its app's base URL + path).
 String itemUrl(ShellServices s, DriveItemView item) => switch (item.kind) {
   DriveItemKind.folder => s.urls.urlFor(s.config.app, item.path),
-  DriveItemKind.document || DriveItemKind.spreadsheet => s.urls.urlFor(appForKind(item.kind), item.path),
+  DriveItemKind.document ||
+  DriveItemKind.spreadsheet => s.urls.urlFor(appForKind(item.kind), item.path),
 };
 
 extension<T> on T {

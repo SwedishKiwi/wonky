@@ -15,7 +15,11 @@ import 'versions_list.dart';
 /// [VersionRenderer] on the left, versions on the right, top bar with
 /// *Back to editing* and *Restore this version*.
 class VersionHistoryScreen extends StatefulWidget {
-  const VersionHistoryScreen({super.key, required this.services, required this.itemUuid});
+  const VersionHistoryScreen({
+    super.key,
+    required this.services,
+    required this.itemUuid,
+  });
 
   final ShellServices services;
   final String itemUuid;
@@ -25,7 +29,10 @@ class VersionHistoryScreen extends StatefulWidget {
 }
 
 class _VersionHistoryScreenState extends State<VersionHistoryScreen> {
-  late final VersionsController c = VersionsController(widget.services, UuidValue.fromString(widget.itemUuid));
+  late final VersionsController c = VersionsController(
+    widget.services,
+    UuidValue.fromString(widget.itemUuid),
+  );
   DriveItemView? _item;
   bool _showChanges = true;
   Object? _error;
@@ -36,12 +43,15 @@ class _VersionHistoryScreenState extends State<VersionHistoryScreen> {
   void initState() {
     super.initState();
     c.load();
-    s.drive.get(c.itemUuid).then((v) {
-      if (mounted) setState(() => _item = v);
-      s.currentItem.value = v;
-    }).catchError((Object e) {
-      if (mounted) setState(() => _error = e);
-    });
+    s.drive
+        .get(c.itemUuid)
+        .then((v) {
+          if (mounted) setState(() => _item = v);
+          s.currentItem.value = v;
+        })
+        .catchError((Object e) {
+          if (mounted) setState(() => _error = e);
+        });
   }
 
   @override
@@ -58,7 +68,11 @@ class _VersionHistoryScreenState extends State<VersionHistoryScreen> {
     final theme = ShadTheme.of(context);
     final renderer = s.config.versionRenderer;
     if (_error != null) {
-      return WonkyEmptyState(illustration: EmptyIllustration.noAccess, title: l.noAccessTitle, description: errorMessage(_error!));
+      return WonkyEmptyState(
+        illustration: EmptyIllustration.noAccess,
+        title: l.noAccessTitle,
+        description: errorMessage(_error!),
+      );
     }
     return CallbackShortcuts(
       bindings: {const SingleActivator(LogicalKeyboardKey.escape): _back},
@@ -69,7 +83,11 @@ class _VersionHistoryScreenState extends State<VersionHistoryScreen> {
             Container(
               height: 56,
               padding: const EdgeInsets.symmetric(horizontal: 12),
-              decoration: BoxDecoration(border: Border(bottom: BorderSide(color: theme.colorScheme.border))),
+              decoration: BoxDecoration(
+                border: Border(
+                  bottom: BorderSide(color: theme.colorScheme.border),
+                ),
+              ),
               child: ListenableBuilder(
                 listenable: c,
                 builder: (context, _) {
@@ -85,7 +103,12 @@ class _VersionHistoryScreenState extends State<VersionHistoryScreen> {
                       const SizedBox(width: 12),
                       Expanded(
                         child: Text(
-                          v == null ? (_item?.name ?? '') : (v.name ?? intl.DateFormat.yMMMd().add_jm().format(v.createdAt.toLocal())),
+                          v == null
+                              ? (_item?.name ?? '')
+                              : (v.name ??
+                                    intl.DateFormat.yMMMd().add_jm().format(
+                                      v.createdAt.toLocal(),
+                                    )),
                           style: theme.textTheme.large,
                           overflow: TextOverflow.ellipsis,
                         ),
@@ -98,7 +121,10 @@ class _VersionHistoryScreenState extends State<VersionHistoryScreen> {
                       const SizedBox(width: 12),
                       ShadButton(
                         key: const ValueKey<String>('history.restore'),
-                        enabled: v != null && (_item?.role == AccessRole.owner || _item?.role == AccessRole.editor),
+                        enabled:
+                            v != null &&
+                            (_item?.role == AccessRole.owner ||
+                                _item?.role == AccessRole.editor),
                         onPressed: () async {
                           await s.dispatcher.invoke(
                             'shell.versions.restore',
@@ -127,9 +153,23 @@ class _VersionHistoryScreenState extends State<VersionHistoryScreen> {
                         builder: (context, _) {
                           final v = c.selected;
                           if (v == null) {
-                            return c.loading ? const Center(child: ShadSpinner()) : Center(child: Text(l.versionsEmpty, style: theme.textTheme.muted));
+                            return c.loading
+                                ? const Center(child: ShadSpinner())
+                                : Center(
+                                    child: Text(
+                                      l.versionsEmpty,
+                                      style: theme.textTheme.muted,
+                                    ),
+                                  );
                           }
-                          if (renderer == null) return Center(child: Text(l.historyNoRenderer, style: theme.textTheme.muted));
+                          if (renderer == null) {
+                            return Center(
+                              child: Text(
+                                l.historyNoRenderer,
+                                style: theme.textTheme.muted,
+                              ),
+                            );
+                          }
                           return renderer.build(
                             context,
                             itemUuid: c.itemUuid,
@@ -143,7 +183,11 @@ class _VersionHistoryScreenState extends State<VersionHistoryScreen> {
                   ),
                   Container(
                     width: 320,
-                    decoration: BoxDecoration(border: Border(left: BorderSide(color: theme.colorScheme.border))),
+                    decoration: BoxDecoration(
+                      border: Border(
+                        left: BorderSide(color: theme.colorScheme.border),
+                      ),
+                    ),
                     child: VersionsList(controller: c, selectable: true),
                   ),
                 ],

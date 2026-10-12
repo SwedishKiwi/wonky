@@ -87,7 +87,9 @@ class _WonkyScrollAreaState extends State<WonkyScrollArea> {
               timeToFade: const Duration(milliseconds: 900),
               interactive: true,
               child: ScrollConfiguration(
-                behavior: ScrollConfiguration.of(context).copyWith(scrollbars: false),
+                behavior: ScrollConfiguration.of(
+                  context,
+                ).copyWith(scrollbars: false),
                 child: widget.child,
               ),
             ),

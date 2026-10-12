@@ -22,7 +22,11 @@ abstract class SharingRepository {
     DateTime? expiresAt,
   });
 
-  Future<SharingInfo> remove(UuidValue itemUuid, {int? userId, String? invitedEmail});
+  Future<SharingInfo> remove(
+    UuidValue itemUuid, {
+    int? userId,
+    String? invitedEmail,
+  });
 
   Future<SharingInfo> transferOwnership(UuidValue itemUuid, int newOwnerUserId);
 
@@ -33,11 +37,22 @@ abstract class SharingRepository {
 
   Future<SharingInfo> rotateLink(UuidValue itemUuid);
 
-  Future<SharingInfo> updateSettings(UuidValue itemUuid, ItemSharingSettings settings);
+  Future<SharingInfo> updateSettings(
+    UuidValue itemUuid,
+    ItemSharingSettings settings,
+  );
 
-  Future<void> requestAccess(UuidValue itemUuid, AccessRole role, String? message);
+  Future<void> requestAccess(
+    UuidValue itemUuid,
+    AccessRole role,
+    String? message,
+  );
 
-  Future<SharingInfo> handleAccessRequest(int requestId, bool approve, AccessRole? role);
+  Future<SharingInfo> handleAccessRequest(
+    int requestId,
+    bool approve,
+    AccessRole? role,
+  );
 
   Future<InviteResolution> resolveInvite(String token);
 }
@@ -49,7 +64,8 @@ class ServerSharingRepository implements SharingRepository {
   final Api api;
 
   @override
-  Future<SharingInfo> getSharing(UuidValue itemUuid) => api.guard((c) => c.sharing.getSharing(itemUuid));
+  Future<SharingInfo> getSharing(UuidValue itemUuid) =>
+      api.guard((c) => c.sharing.getSharing(itemUuid));
 
   @override
   Future<SharingInfo> share(
@@ -59,7 +75,9 @@ class ServerSharingRepository implements SharingRepository {
     bool notify = true,
     String? message,
     DateTime? expiresAt,
-  }) => api.guard((c) => c.sharing.share(itemUuid, emails, role, notify, message, expiresAt));
+  }) => api.guard(
+    (c) => c.sharing.share(itemUuid, emails, role, notify, message, expiresAt),
+  );
 
   @override
   Future<SharingInfo> updateRole(
@@ -67,39 +85,63 @@ class ServerSharingRepository implements SharingRepository {
     required int userId,
     required AccessRole role,
     DateTime? expiresAt,
-  }) => api.guard((c) => c.sharing.updateRole(itemUuid, userId, role, expiresAt: expiresAt));
+  }) => api.guard(
+    (c) => c.sharing.updateRole(itemUuid, userId, role, expiresAt: expiresAt),
+  );
 
   @override
-  Future<SharingInfo> remove(UuidValue itemUuid, {int? userId, String? invitedEmail}) =>
-      api.guard((c) => c.sharing.remove(itemUuid, userId, invitedEmail: invitedEmail));
+  Future<SharingInfo> remove(
+    UuidValue itemUuid, {
+    int? userId,
+    String? invitedEmail,
+  }) => api.guard(
+    (c) => c.sharing.remove(itemUuid, userId, invitedEmail: invitedEmail),
+  );
 
   @override
-  Future<SharingInfo> transferOwnership(UuidValue itemUuid, int newOwnerUserId) =>
-      api.guard((c) => c.sharing.transferOwnership(itemUuid, newOwnerUserId));
+  Future<SharingInfo> transferOwnership(
+    UuidValue itemUuid,
+    int newOwnerUserId,
+  ) => api.guard((c) => c.sharing.transferOwnership(itemUuid, newOwnerUserId));
 
   @override
-  Future<DriveItemView> respondToOwnershipTransfer(int transferId, bool accept) =>
-      api.guard((c) => c.sharing.respondToOwnershipTransfer(transferId, accept));
+  Future<DriveItemView> respondToOwnershipTransfer(
+    int transferId,
+    bool accept,
+  ) => api.guard(
+    (c) => c.sharing.respondToOwnershipTransfer(transferId, accept),
+  );
 
   @override
   Future<SharingInfo> setLink(UuidValue itemUuid, AccessRole? role) =>
       api.guard((c) => c.sharing.setLink(itemUuid, role));
 
   @override
-  Future<SharingInfo> rotateLink(UuidValue itemUuid) => api.guard((c) => c.sharing.rotateLink(itemUuid));
+  Future<SharingInfo> rotateLink(UuidValue itemUuid) =>
+      api.guard((c) => c.sharing.rotateLink(itemUuid));
 
   @override
-  Future<SharingInfo> updateSettings(UuidValue itemUuid, ItemSharingSettings settings) =>
-      api.guard((c) => c.sharing.updateSettings(itemUuid, settings));
+  Future<SharingInfo> updateSettings(
+    UuidValue itemUuid,
+    ItemSharingSettings settings,
+  ) => api.guard((c) => c.sharing.updateSettings(itemUuid, settings));
 
   @override
-  Future<void> requestAccess(UuidValue itemUuid, AccessRole role, String? message) =>
-      api.guard((c) => c.sharing.requestAccess(itemUuid, role, message));
+  Future<void> requestAccess(
+    UuidValue itemUuid,
+    AccessRole role,
+    String? message,
+  ) => api.guard((c) => c.sharing.requestAccess(itemUuid, role, message));
 
   @override
-  Future<SharingInfo> handleAccessRequest(int requestId, bool approve, AccessRole? role) =>
+  Future<SharingInfo> handleAccessRequest(
+    int requestId,
+    bool approve,
+    AccessRole? role,
+  ) =>
       api.guard((c) => c.sharing.handleAccessRequest(requestId, approve, role));
 
   @override
-  Future<InviteResolution> resolveInvite(String token) => api.guard((c) => c.sharing.resolveInvite(token));
+  Future<InviteResolution> resolveInvite(String token) =>
+      api.guard((c) => c.sharing.resolveInvite(token));
 }

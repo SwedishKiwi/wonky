@@ -16,5 +16,6 @@ void reloadPage() => web.window.location.reload();
 
 /// Remembers the last used app so `/` on the server redirects to it.
 void rememberLastApp(String app) {
-  web.document.cookie = 'wonky_last_app=$app; path=/; max-age=31536000; samesite=lax';
+  web.document.cookie =
+      'wonky_last_app=$app; path=/; max-age=31536000; samesite=lax';
 }

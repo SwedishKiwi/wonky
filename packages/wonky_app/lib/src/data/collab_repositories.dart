@@ -40,7 +40,10 @@ abstract class CommentRepository {
 
   Future<CommentView> react(int commentId, String emoji);
 
-  Future<CommentThreadView> updateAnchor(UuidValue threadUuid, String anchorJson);
+  Future<CommentThreadView> updateAnchor(
+    UuidValue threadUuid,
+    String anchorJson,
+  );
 
   Stream<CommentEvent> watch(UuidValue itemUuid);
 }
@@ -51,8 +54,10 @@ class ServerCommentRepository implements CommentRepository {
   final Api api;
 
   @override
-  Future<List<CommentThreadView>> listThreads(UuidValue itemUuid, {CommentFilter filter = CommentFilter.all}) =>
-      api.guard((c) => c.comment.listThreads(itemUuid, filter));
+  Future<List<CommentThreadView>> listThreads(
+    UuidValue itemUuid, {
+    CommentFilter filter = CommentFilter.all,
+  }) => api.guard((c) => c.comment.listThreads(itemUuid, filter));
 
   @override
   Future<CommentThreadView> createThread({
@@ -65,7 +70,16 @@ class ServerCommentRepository implements CommentRepository {
     List<int> mentions = const [],
     int? assigneeId,
   }) => api.guard(
-    (c) => c.comment.createThread(threadUuid, itemUuid, anchorKind, anchorJson, quotedText, body, mentions, assigneeId),
+    (c) => c.comment.createThread(
+      threadUuid,
+      itemUuid,
+      anchorKind,
+      anchorJson,
+      quotedText,
+      body,
+      mentions,
+      assigneeId,
+    ),
   );
 
   @override
@@ -74,37 +88,53 @@ class ServerCommentRepository implements CommentRepository {
     required String body,
     List<int> mentions = const [],
     UuidValue? commentUuid,
-  }) => api.guard((c) => c.comment.reply(threadUuid, body, mentions, commentUuid: commentUuid));
+  }) => api.guard(
+    (c) =>
+        c.comment.reply(threadUuid, body, mentions, commentUuid: commentUuid),
+  );
 
   @override
-  Future<CommentView> edit(int commentId, String body) => api.guard((c) => c.comment.edit(commentId, body));
+  Future<CommentView> edit(int commentId, String body) =>
+      api.guard((c) => c.comment.edit(commentId, body));
 
   @override
-  Future<void> delete(int commentId) => api.guard((c) => c.comment.delete(commentId));
+  Future<void> delete(int commentId) =>
+      api.guard((c) => c.comment.delete(commentId));
 
   @override
-  Future<void> deleteThread(UuidValue threadUuid) => api.guard((c) => c.comment.deleteThread(threadUuid));
+  Future<void> deleteThread(UuidValue threadUuid) =>
+      api.guard((c) => c.comment.deleteThread(threadUuid));
 
   @override
-  Future<CommentThreadView> resolve(UuidValue threadUuid) => api.guard((c) => c.comment.resolve(threadUuid));
+  Future<CommentThreadView> resolve(UuidValue threadUuid) =>
+      api.guard((c) => c.comment.resolve(threadUuid));
 
   @override
-  Future<CommentThreadView> reopen(UuidValue threadUuid) => api.guard((c) => c.comment.reopen(threadUuid));
+  Future<CommentThreadView> reopen(UuidValue threadUuid) =>
+      api.guard((c) => c.comment.reopen(threadUuid));
 
   @override
-  Future<CommentView> react(int commentId, String emoji) => api.guard((c) => c.comment.react(commentId, emoji));
+  Future<CommentView> react(int commentId, String emoji) =>
+      api.guard((c) => c.comment.react(commentId, emoji));
 
   @override
-  Future<CommentThreadView> updateAnchor(UuidValue threadUuid, String anchorJson) =>
-      api.guard((c) => c.comment.updateAnchor(threadUuid, anchorJson));
+  Future<CommentThreadView> updateAnchor(
+    UuidValue threadUuid,
+    String anchorJson,
+  ) => api.guard((c) => c.comment.updateAnchor(threadUuid, anchorJson));
 
   @override
-  Stream<CommentEvent> watch(UuidValue itemUuid) => api.client.comment.watch(itemUuid);
+  Stream<CommentEvent> watch(UuidValue itemUuid) =>
+      api.client.comment.watch(itemUuid);
 }
 
 /// In-app notifications (suite 07 §4).
 abstract class NotificationRepository {
-  Future<NotificationPage> list({String? cursor, int limit = 30, bool unreadOnly = false});
+  Future<NotificationPage> list({
+    String? cursor,
+    int limit = 30,
+    bool unreadOnly = false,
+  });
 
   Future<void> markRead(List<int> ids);
 
@@ -119,11 +149,15 @@ class ServerNotificationRepository implements NotificationRepository {
   final Api api;
 
   @override
-  Future<NotificationPage> list({String? cursor, int limit = 30, bool unreadOnly = false}) =>
-      api.guard((c) => c.notification.list(cursor, limit, unreadOnly));
+  Future<NotificationPage> list({
+    String? cursor,
+    int limit = 30,
+    bool unreadOnly = false,
+  }) => api.guard((c) => c.notification.list(cursor, limit, unreadOnly));
 
   @override
-  Future<void> markRead(List<int> ids) => api.guard((c) => c.notification.markRead(ids));
+  Future<void> markRead(List<int> ids) =>
+      api.guard((c) => c.notification.markRead(ids));
 
   @override
   Future<void> markAllRead() => api.guard((c) => c.notification.markAllRead());
@@ -135,7 +169,10 @@ class ServerNotificationRepository implements NotificationRepository {
 /// Ephemeral presence (suite 07 §1).
 abstract class PresenceRepository {
   /// Joins the roster of [itemUuid]; [updates] carries this session's state.
-  Stream<PresenceEvent> join(UuidValue itemUuid, Stream<PresenceUpdate> updates);
+  Stream<PresenceEvent> join(
+    UuidValue itemUuid,
+    Stream<PresenceUpdate> updates,
+  );
 }
 
 class ServerPresenceRepository implements PresenceRepository {
@@ -144,17 +181,26 @@ class ServerPresenceRepository implements PresenceRepository {
   final Api api;
 
   @override
-  Stream<PresenceEvent> join(UuidValue itemUuid, Stream<PresenceUpdate> updates) =>
-      api.client.presence.join(itemUuid, updates);
+  Stream<PresenceEvent> join(
+    UuidValue itemUuid,
+    Stream<PresenceUpdate> updates,
+  ) => api.client.presence.join(itemUuid, updates);
 }
 
 /// Version history (suite 07 §5).
 abstract class VersionRepository {
-  Future<List<ItemVersionView>> list(UuidValue itemUuid, {bool namedOnly = false});
+  Future<List<ItemVersionView>> list(
+    UuidValue itemUuid, {
+    bool namedOnly = false,
+  });
 
   Future<ItemVersionView> nameCurrent(UuidValue itemUuid, String name);
 
-  Future<ItemVersionView> rename(UuidValue itemUuid, int versionId, String? name);
+  Future<ItemVersionView> rename(
+    UuidValue itemUuid,
+    int versionId,
+    String? name,
+  );
 
   Future<VersionRestoreResult> restore(UuidValue itemUuid, int versionId);
 }
@@ -165,16 +211,21 @@ class ServerVersionRepository implements VersionRepository {
   final Api api;
 
   @override
-  Future<List<ItemVersionView>> list(UuidValue itemUuid, {bool namedOnly = false}) =>
-      api.guard((c) => c.version.list(itemUuid, namedOnly));
+  Future<List<ItemVersionView>> list(
+    UuidValue itemUuid, {
+    bool namedOnly = false,
+  }) => api.guard((c) => c.version.list(itemUuid, namedOnly));
 
   @override
   Future<ItemVersionView> nameCurrent(UuidValue itemUuid, String name) =>
       api.guard((c) => c.version.nameCurrent(itemUuid, name));
 
   @override
-  Future<ItemVersionView> rename(UuidValue itemUuid, int versionId, String? name) =>
-      api.guard((c) => c.version.rename(itemUuid, versionId, name));
+  Future<ItemVersionView> rename(
+    UuidValue itemUuid,
+    int versionId,
+    String? name,
+  ) => api.guard((c) => c.version.rename(itemUuid, versionId, name));
 
   @override
   Future<VersionRestoreResult> restore(UuidValue itemUuid, int versionId) =>
@@ -197,5 +248,6 @@ class ServerMetaRepository implements MetaRepository {
   Future<ProtocolInfo> getInfo() => api.guard((c) => c.meta.getInfo());
 
   @override
-  Future<void> submitFeedback(FeedbackSubmission submission) => api.guard((c) => c.feedback.submit(submission));
+  Future<void> submitFeedback(FeedbackSubmission submission) =>
+      api.guard((c) => c.feedback.submit(submission));
 }

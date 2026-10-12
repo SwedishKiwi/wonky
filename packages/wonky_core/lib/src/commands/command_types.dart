@@ -97,7 +97,12 @@ class JsonArgs extends CommandArgs {
   /// A list of strings (empty when missing).
   List<String> strings(String key) {
     final v = values[key];
-    return v is List ? [for (final e in v) if (e is String) e] : const [];
+    return v is List
+        ? [
+            for (final e in v)
+              if (e is String) e,
+          ]
+        : const [];
   }
 
   @override

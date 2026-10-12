@@ -40,9 +40,15 @@ class _KeyboardSectionState extends State<KeyboardSection> {
       return;
     }
     final command = s.registry.byId(commandId);
-    final conflicts = km.conflictsFor(binding, command?.keyScope ?? KeyScope.global, exceptCommandId: commandId);
+    final conflicts = km.conflictsFor(
+      binding,
+      command?.keyScope ?? KeyScope.global,
+      exceptCommandId: commandId,
+    );
     if (conflicts.isNotEmpty) {
-      final names = [for (final c in conflicts) s.registry.byId(c)?.title(context) ?? c].join(', ');
+      final names = [
+        for (final c in conflicts) s.registry.byId(c)?.title(context) ?? c,
+      ].join(', ');
       final replace = await confirmDialog(
         context,
         title: l.shortcutConflictTitle,
@@ -51,7 +57,10 @@ class _KeyboardSectionState extends State<KeyboardSection> {
       );
       if (!replace) return;
       for (final c in conflicts) {
-        km.setOverride(c, [for (final b in km.bindingsOf(c)) if (b.resolve(km.platform) != binding.resolve(km.platform)) b]);
+        km.setOverride(c, [
+          for (final b in km.bindingsOf(c))
+            if (b.resolve(km.platform) != binding.resolve(km.platform)) b,
+        ]);
       }
     }
     km.setOverride(commandId, [binding]);
@@ -68,7 +77,9 @@ class _KeyboardSectionState extends State<KeyboardSection> {
         final commands = [
           for (final c in s.registry.all)
             if (c.showInPalette &&
-                (_q.isEmpty || c.title(context).toLowerCase().contains(_q.toLowerCase()) || c.id.value.contains(_q)))
+                (_q.isEmpty ||
+                    c.title(context).toLowerCase().contains(_q.toLowerCase()) ||
+                    c.id.value.contains(_q)))
               c,
         ]..sort((a, b) => a.title(context).compareTo(b.title(context)));
         return Column(
@@ -93,7 +104,11 @@ class _KeyboardSectionState extends State<KeyboardSection> {
                 ),
                 const SizedBox(width: 8),
                 ShadButton.ghost(
-                  onPressed: () => s.dispatcher.invoke('shell.help.shortcuts', context: context),
+                  leading: const Icon(LucideIcons.keyboard, size: 16),
+                  onPressed: () => s.dispatcher.invoke(
+                    'shell.help.shortcuts',
+                    context: context,
+                  ),
                   child: Text(l.cmdKeyboardShortcuts),
                 ),
               ],
@@ -102,7 +117,11 @@ class _KeyboardSectionState extends State<KeyboardSection> {
             for (final c in commands)
               Container(
                 padding: const EdgeInsets.symmetric(vertical: 8),
-                decoration: BoxDecoration(border: Border(bottom: BorderSide(color: theme.colorScheme.border))),
+                decoration: BoxDecoration(
+                  border: Border(
+                    bottom: BorderSide(color: theme.colorScheme.border),
+                  ),
+                ),
                 child: Row(
                   children: [
                     Expanded(
@@ -110,7 +129,13 @@ class _KeyboardSectionState extends State<KeyboardSection> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(c.title(context), style: theme.textTheme.small),
-                          Text(c.id.value, style: theme.textTheme.muted.copyWith(fontSize: 11, fontFamily: WonkyTheme.monoFamily)),
+                          Text(
+                            c.id.value,
+                            style: theme.textTheme.muted.copyWith(
+                              fontSize: 11,
+                              fontFamily: WonkyTheme.monoFamily,
+                            ),
+                          ),
                         ],
                       ),
                     ),
@@ -133,7 +158,8 @@ class _KeyboardSectionState extends State<KeyboardSection> {
                                 iconSize: 14,
                                 semanticLabel: l.shortcutReset,
                                 icon: const Icon(LucideIcons.rotateCcw),
-                                onPressed: () => s.keymap.resetOverride(c.id.value),
+                                onPressed: () =>
+                                    s.keymap.resetOverride(c.id.value),
                               ),
                             )
                           : null,

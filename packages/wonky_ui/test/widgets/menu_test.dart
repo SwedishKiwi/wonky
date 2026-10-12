@@ -15,9 +15,21 @@ List<WonkyMenuEntry> _entries(List<String> log) => [
     onSelected: () => log.add('open'),
   ),
   const WonkyMenuSeparator(),
-  WonkyMenuCheckItem(label: 'Ruler', checked: true, onSelected: () => log.add('ruler')),
-  WonkyMenuRadioItem(label: 'Light', selected: false, onSelected: () => log.add('light')),
-  WonkyMenuItem(label: 'Print', enabled: false, onSelected: () => log.add('print')),
+  WonkyMenuCheckItem(
+    label: 'Ruler',
+    checked: true,
+    onSelected: () => log.add('ruler'),
+  ),
+  WonkyMenuRadioItem(
+    label: 'Light',
+    selected: false,
+    onSelected: () => log.add('light'),
+  ),
+  WonkyMenuItem(
+    label: 'Print',
+    enabled: false,
+    onSelected: () => log.add('print'),
+  ),
   WonkyMenuSubmenu(
     label: 'Zoom',
     children: [WonkyMenuItem(label: '100%', onSelected: () => log.add('100'))],
@@ -61,16 +73,19 @@ void main() {
     expect(find.text('Section'), findsNothing);
   });
 
-  testWidgets('Given an open dropdown when tapping a disabled item then nothing '
-      'happens', (tester) async {
-    final log = <String>[];
-    await pumpWonky(tester, _dropdown(log), center: true);
-    await tester.tap(find.byKey(const ValueKey('trigger')));
-    await tester.pumpAndSettle();
-    await tester.tap(find.text('Print'), warnIfMissed: false);
-    await tester.pumpAndSettle();
-    expect(log, isEmpty);
-  });
+  testWidgets(
+    'Given an open dropdown when tapping a disabled item then nothing '
+    'happens',
+    (tester) async {
+      final log = <String>[];
+      await pumpWonky(tester, _dropdown(log), center: true);
+      await tester.tap(find.byKey(const ValueKey('trigger')));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Print'), warnIfMissed: false);
+      await tester.pumpAndSettle();
+      expect(log, isEmpty);
+    },
+  );
 
   testWidgets('Given an open dropdown when typing a letter then focus jumps to '
       'the matching item', (tester) async {
@@ -88,21 +103,24 @@ void main() {
     expect(log, ['light']);
   });
 
-  test('Given entries with stray separators when tidied then they are removed', () {
-    final tidy = <WonkyMenuEntry>[
-      const WonkyMenuSeparator(),
-      const WonkyMenuItem(label: 'a'),
-      const WonkyMenuSeparator(),
-      const WonkyMenuSeparator(),
-      const WonkyMenuItem(label: 'b'),
-      const WonkyMenuSeparator(),
-    ].tidy();
-    expect(tidy.map((e) => e.runtimeType.toString()), [
-      'WonkyMenuItem',
-      'WonkyMenuSeparator',
-      'WonkyMenuItem',
-    ]);
-  });
+  test(
+    'Given entries with stray separators when tidied then they are removed',
+    () {
+      final tidy = <WonkyMenuEntry>[
+        const WonkyMenuSeparator(),
+        const WonkyMenuItem(label: 'a'),
+        const WonkyMenuSeparator(),
+        const WonkyMenuSeparator(),
+        const WonkyMenuItem(label: 'b'),
+        const WonkyMenuSeparator(),
+      ].tidy();
+      expect(tidy.map((e) => e.runtimeType.toString()), [
+        'WonkyMenuItem',
+        'WonkyMenuSeparator',
+        'WonkyMenuItem',
+      ]);
+    },
+  );
 
   for (final b in Brightness.values) {
     testWidgets('Given a menubar in ${b.name} when opening a menu via the '
@@ -115,11 +133,17 @@ void main() {
         WonkyMenubar(
           controller: controller,
           menus: [
-            WonkyMenubarMenu(id: 'file', label: 'File', entries: () => _entries(log)),
+            WonkyMenubarMenu(
+              id: 'file',
+              label: 'File',
+              entries: () => _entries(log),
+            ),
             WonkyMenubarMenu(
               id: 'edit',
               label: 'Edit',
-              entries: () => [WonkyMenuItem(label: 'Undo', onSelected: () => log.add('undo'))],
+              entries: () => [
+                WonkyMenuItem(label: 'Undo', onSelected: () => log.add('undo')),
+              ],
             ),
           ],
         ),
@@ -135,7 +159,9 @@ void main() {
     });
   }
 
-  testWidgets('Given a menubar when tapping a menu then it opens', (tester) async {
+  testWidgets('Given a menubar when tapping a menu then it opens', (
+    tester,
+  ) async {
     await pumpWonky(
       tester,
       WonkyMenubar(

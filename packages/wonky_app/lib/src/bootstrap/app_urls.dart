@@ -51,7 +51,9 @@ class AppUrls {
     const override = String.fromEnvironment('SERVER_URL');
     Map<String, Object?> json = const {};
     try {
-      final text = await (bundle ?? rootBundle).loadString('assets/config.json');
+      final text = await (bundle ?? rootBundle).loadString(
+        'assets/config.json',
+      );
       json = (jsonDecode(text) as Map).cast<String, Object?>();
     } catch (_) {
       // Fall back to defaults below.

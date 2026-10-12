@@ -9,7 +9,13 @@ import 'auth_layout.dart';
 
 /// `/signin` (suite 04 §1.2).
 class SignInScreen extends StatefulWidget {
-  const SignInScreen({super.key, required this.services, this.embedded = false, this.onSignedIn, this.initialEmail});
+  const SignInScreen({
+    super.key,
+    required this.services,
+    this.embedded = false,
+    this.onSignedIn,
+    this.initialEmail,
+  });
 
   final ShellServices services;
 
@@ -107,7 +113,12 @@ class _SignInScreenState extends State<SignInScreen> {
             key: const ValueKey<String>('auth.signIn.submit'),
             enabled: !_busy,
             onPressed: _submit,
-            leading: _busy ? const SizedBox.square(dimension: 16, child: ShadSpinner(size: 16)) : null,
+            leading: _busy
+                ? const SizedBox.square(
+                    dimension: 16,
+                    child: ShadSpinner(size: 16),
+                  )
+                : null,
             child: Text(l.authSignIn),
           ),
         ],

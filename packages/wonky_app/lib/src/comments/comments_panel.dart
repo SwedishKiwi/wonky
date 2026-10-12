@@ -17,7 +17,11 @@ import 'comments_controller.dart';
 /// composer for a new comment and thread cards. Every action is a
 /// `shell.comments.*` command (undoable).
 class CommentsPanel extends StatelessWidget {
-  const CommentsPanel({super.key, required this.services, required this.controller});
+  const CommentsPanel({
+    super.key,
+    required this.services,
+    required this.controller,
+  });
 
   final ShellServices services;
   final CommentsController controller;
@@ -31,7 +35,8 @@ class CommentsPanel extends StatelessWidget {
       builder: (context, _) {
         final c = controller;
         final threads = c.visible;
-        final canComment = services.activeDocument.value?.role.canComment ?? false;
+        final canComment =
+            services.activeDocument.value?.role.canComment ?? false;
         return Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
@@ -70,8 +75,16 @@ class CommentsPanel extends StatelessWidget {
                       const SizedBox(width: 6),
                       WonkyDropdownMenu(
                         entries: () => [
-                          WonkyMenuRadioItem(label: l.commentsSortPosition, selected: c.sort == CommentsSort.position, onSelected: () => c.setSort(CommentsSort.position)),
-                          WonkyMenuRadioItem(label: l.commentsSortDate, selected: c.sort == CommentsSort.date, onSelected: () => c.setSort(CommentsSort.date)),
+                          WonkyMenuRadioItem(
+                            label: l.commentsSortPosition,
+                            selected: c.sort == CommentsSort.position,
+                            onSelected: () => c.setSort(CommentsSort.position),
+                          ),
+                          WonkyMenuRadioItem(
+                            label: l.commentsSortDate,
+                            selected: c.sort == CommentsSort.date,
+                            onSelected: () => c.setSort(CommentsSort.date),
+                          ),
                         ],
                         builder: (context, ctl) => ShadIconButton.outline(
                           semanticLabel: l.commentsSort,
@@ -93,27 +106,42 @@ class CommentsPanel extends StatelessWidget {
                         if (c.draftAnchor != null && canComment)
                           Padding(
                             padding: const EdgeInsets.only(bottom: 12),
-                            child: NewCommentCard(services: services, controller: c),
+                            child: NewCommentCard(
+                              services: services,
+                              controller: c,
+                            ),
                           ),
                         if (threads.isEmpty && c.draftAnchor == null)
                           WonkyEmptyState(
                             illustration: EmptyIllustration.comments,
                             title: l.commentsEmptyTitle,
-                            description: canComment ? l.commentsEmptyBody(services.keymap.shortcutTextOf('shell.comments.create') ?? '') : null,
+                            description: canComment
+                                ? l.commentsEmptyBody(
+                                    services.keymap.shortcutTextOf(
+                                          'shell.comments.create',
+                                        ) ??
+                                        '',
+                                  )
+                                : null,
                             size: 80,
                           ),
                         for (final t in threads)
                           Padding(
                             padding: const EdgeInsets.only(bottom: 10),
                             child: CommentThreadCard(
-                              key: ValueKey<String>('comments.thread.${t.uuid.uuid}'),
+                              key: ValueKey<String>(
+                                'comments.thread.${t.uuid.uuid}',
+                              ),
                               services: services,
                               controller: c,
                               thread: t,
                             ),
                           ),
                         if (c.error != null)
-                          Text(errorMessage(c.error!), style: theme.textTheme.muted),
+                          Text(
+                            errorMessage(c.error!),
+                            style: theme.textTheme.muted,
+                          ),
                       ],
                     ),
             ),
@@ -182,7 +210,10 @@ class MentionFieldState extends State<MentionField> {
     }
     _debounce = Timer(const Duration(milliseconds: 150), () async {
       try {
-        final r = await widget.services.repositories.users.searchUsers(q.isEmpty ? '' : q, limit: 6);
+        final r = await widget.services.repositories.users.searchUsers(
+          q.isEmpty ? '' : q,
+          limit: 6,
+        );
         if (mounted && _query == q) {
           setState(() {
             _suggestions = r;
@@ -223,23 +254,36 @@ class MentionFieldState extends State<MentionField> {
       children: [
         CallbackShortcuts(
           bindings: {
-            const SingleActivator(LogicalKeyboardKey.enter, meta: true): widget.onSubmit,
-            const SingleActivator(LogicalKeyboardKey.enter, control: true): widget.onSubmit,
+            const SingleActivator(LogicalKeyboardKey.enter, meta: true):
+                widget.onSubmit,
+            const SingleActivator(LogicalKeyboardKey.enter, control: true):
+                widget.onSubmit,
             if (_suggestions.isNotEmpty) ...{
-              const SingleActivator(LogicalKeyboardKey.arrowDown): () => setState(() => _active = (_active + 1) % _suggestions.length),
-              const SingleActivator(LogicalKeyboardKey.arrowUp): () => setState(() => _active = (_active - 1 + _suggestions.length) % _suggestions.length),
-              const SingleActivator(LogicalKeyboardKey.enter): () => _pick(_suggestions[_active]),
-              const SingleActivator(LogicalKeyboardKey.tab): () => _pick(_suggestions[_active]),
-              const SingleActivator(LogicalKeyboardKey.escape): () => setState(() => _suggestions = const []),
+              const SingleActivator(LogicalKeyboardKey.arrowDown): () =>
+                  setState(() => _active = (_active + 1) % _suggestions.length),
+              const SingleActivator(LogicalKeyboardKey.arrowUp): () => setState(
+                () => _active =
+                    (_active - 1 + _suggestions.length) % _suggestions.length,
+              ),
+              const SingleActivator(LogicalKeyboardKey.enter): () =>
+                  _pick(_suggestions[_active]),
+              const SingleActivator(LogicalKeyboardKey.tab): () =>
+                  _pick(_suggestions[_active]),
+              const SingleActivator(LogicalKeyboardKey.escape): () =>
+                  setState(() => _suggestions = const []),
             },
           },
           child: ShadTextarea(
-            key: widget.fieldKey == null ? null : ValueKey<String>(widget.fieldKey!),
+            key: widget.fieldKey == null
+                ? null
+                : ValueKey<String>(widget.fieldKey!),
             controller: widget.controller,
             autofocus: widget.autofocus,
             minHeight: 56,
             maxHeight: 200,
-            placeholder: widget.placeholder == null ? null : Text(widget.placeholder!),
+            placeholder: widget.placeholder == null
+                ? null
+                : Text(widget.placeholder!),
             onChanged: _onChanged,
           ),
         ),
@@ -258,12 +302,24 @@ class MentionFieldState extends State<MentionField> {
                     onTap: () => _pick(_suggestions[i]),
                     child: Container(
                       color: i == _active ? theme.colorScheme.accent : null,
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 8,
+                        vertical: 6,
+                      ),
                       child: Row(
                         children: [
-                          WonkyAvatar(name: _suggestions[i].displayName, color: parseHexColor(_suggestions[i].avatarColor), size: 22),
+                          WonkyAvatar(
+                            name: _suggestions[i].displayName,
+                            color: parseHexColor(_suggestions[i].avatarColor),
+                            size: 22,
+                          ),
                           const SizedBox(width: 8),
-                          Expanded(child: Text('${_suggestions[i].displayName} · ${_suggestions[i].email}', overflow: TextOverflow.ellipsis)),
+                          Expanded(
+                            child: Text(
+                              '${_suggestions[i].displayName} · ${_suggestions[i].email}',
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
                         ],
                       ),
                     ),
@@ -278,7 +334,11 @@ class MentionFieldState extends State<MentionField> {
 
 /// The composer for a new thread at the draft anchor.
 class NewCommentCard extends StatefulWidget {
-  const NewCommentCard({super.key, required this.services, required this.controller});
+  const NewCommentCard({
+    super.key,
+    required this.services,
+    required this.controller,
+  });
 
   final ShellServices services;
   final CommentsController controller;
@@ -320,7 +380,10 @@ class _NewCommentCardState extends State<NewCommentCard> {
       );
       _text.clear();
     } catch (e) {
-      widget.services.toasts.error(widget.services.l10n?.commentFailed ?? 'Error', description: errorMessage(e));
+      widget.services.toasts.error(
+        widget.services.l10n?.commentFailed ?? 'Error',
+        description: errorMessage(e),
+      );
     } finally {
       if (mounted) setState(() => _busy = false);
     }
@@ -341,9 +404,20 @@ class _NewCommentCardState extends State<NewCommentCard> {
         children: [
           Row(
             children: [
-              if (me != null) WonkyAvatar(name: me.displayName, color: parseHexColor(me.avatarColor), imageUrl: me.avatarUrl, size: 24),
+              if (me != null)
+                WonkyAvatar(
+                  name: me.displayName,
+                  color: parseHexColor(me.avatarColor),
+                  imageUrl: me.avatarUrl,
+                  size: 24,
+                ),
               const SizedBox(width: 8),
-              Expanded(child: Text(me?.displayName ?? '', style: theme.textTheme.small)),
+              Expanded(
+                child: Text(
+                  me?.displayName ?? '',
+                  style: theme.textTheme.small,
+                ),
+              ),
             ],
           ),
           if (anchor.quotedText != null || anchor.label != null) ...[
@@ -366,14 +440,22 @@ class _NewCommentCardState extends State<NewCommentCard> {
             ShadCheckbox(
               value: _assign,
               onChanged: (v) => setState(() => _assign = v),
-              label: Text(l.commentAssign(_field.currentState!.mentions.first.displayName)),
+              label: Text(
+                l.commentAssign(
+                  _field.currentState!.mentions.first.displayName,
+                ),
+              ),
             ),
           ],
           const SizedBox(height: 8),
           Row(
             mainAxisAlignment: MainAxisAlignment.end,
             children: [
-              ShadButton.ghost(size: ShadButtonSize.sm, onPressed: widget.controller.cancelDraft, child: Text(l.actionCancel)),
+              ShadButton.ghost(
+                size: ShadButtonSize.sm,
+                onPressed: widget.controller.cancelDraft,
+                child: Text(l.actionCancel),
+              ),
               const SizedBox(width: 6),
               ShadButton(
                 key: const ValueKey<String>('comments.new.submit'),
@@ -400,15 +482,32 @@ class _Quote extends StatelessWidget {
     final theme = ShadTheme.of(context);
     return Container(
       padding: const EdgeInsets.only(left: 8),
-      decoration: BoxDecoration(border: Border(left: BorderSide(color: theme.colorScheme.commentHighlightActive, width: 3))),
-      child: Text(text, maxLines: 3, overflow: TextOverflow.ellipsis, style: theme.textTheme.muted.copyWith(fontSize: 12)),
+      decoration: BoxDecoration(
+        border: Border(
+          left: BorderSide(
+            color: theme.colorScheme.commentHighlightActive,
+            width: 3,
+          ),
+        ),
+      ),
+      child: Text(
+        text,
+        maxLines: 3,
+        overflow: TextOverflow.ellipsis,
+        style: theme.textTheme.muted.copyWith(fontSize: 12),
+      ),
     );
   }
 }
 
 /// A thread: comments, reply box, resolve/reopen, ⋮ menu.
 class CommentThreadCard extends StatefulWidget {
-  const CommentThreadCard({super.key, required this.services, required this.controller, required this.thread});
+  const CommentThreadCard({
+    super.key,
+    required this.services,
+    required this.controller,
+    required this.thread,
+  });
 
   final ShellServices services;
   final CommentsController controller;
@@ -439,7 +538,10 @@ class _CommentThreadCardState extends State<CommentThreadCard> {
     try {
       await s.dispatcher.invoke(id, args: args, source: InvocationSource.ui);
     } catch (e) {
-      s.toasts.error(s.l10n?.commentFailed ?? 'Error', description: errorMessage(e));
+      s.toasts.error(
+        s.l10n?.commentFailed ?? 'Error',
+        description: errorMessage(e),
+      );
     }
   }
 
@@ -468,20 +570,35 @@ class _CommentThreadCardState extends State<CommentThreadCard> {
     final collapsed = resolved && !_expanded && !active;
     final label = c.anchors?.labelFor(t) ?? t.quotedText;
     return GestureDetector(
-      onTap: () => _invoke('shell.comments.activate', {'threadUuid': t.uuid.uuid}),
+      onTap: () =>
+          _invoke('shell.comments.activate', {'threadUuid': t.uuid.uuid}),
       child: Container(
         padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(
           color: theme.colorScheme.card,
           borderRadius: BorderRadius.circular(10),
-          border: Border.all(color: active ? theme.colorScheme.ring : theme.colorScheme.border, width: active ? 2 : 1),
-          boxShadow: active ? const [BoxShadow(color: Color(0x1a000000), blurRadius: 8, offset: Offset(0, 2))] : null,
+          border: Border.all(
+            color: active ? theme.colorScheme.ring : theme.colorScheme.border,
+            width: active ? 2 : 1,
+          ),
+          boxShadow: active
+              ? const [
+                  BoxShadow(
+                    color: Color(0x1a000000),
+                    blurRadius: 8,
+                    offset: Offset(0, 2),
+                  ),
+                ]
+              : null,
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           mainAxisSize: MainAxisSize.min,
           children: [
-            if (label != null && label.isNotEmpty) ...[_Quote(text: label), const SizedBox(height: 8)],
+            if (label != null && label.isNotEmpty) ...[
+              _Quote(text: label),
+              const SizedBox(height: 8),
+            ],
             if (orphaned) ...[
               ShadBadge.outline(child: Text(l.commentOrphaned)),
               const SizedBox(height: 6),
@@ -489,7 +606,11 @@ class _CommentThreadCardState extends State<CommentThreadCard> {
             if (collapsed)
               Row(
                 children: [
-                  Icon(LucideIcons.circleCheck, size: 14, color: theme.colorScheme.success),
+                  Icon(
+                    LucideIcons.circleCheck,
+                    size: 14,
+                    color: theme.colorScheme.success,
+                  ),
                   const SizedBox(width: 6),
                   Expanded(
                     child: Text(
@@ -499,13 +620,23 @@ class _CommentThreadCardState extends State<CommentThreadCard> {
                       style: theme.textTheme.muted,
                     ),
                   ),
-                  ShadButton.link(size: ShadButtonSize.sm, onPressed: () => setState(() => _expanded = true), child: Text(l.commentShow)),
+                  ShadButton.link(
+                    size: ShadButtonSize.sm,
+                    onPressed: () => setState(() => _expanded = true),
+                    child: Text(l.commentShow),
+                  ),
                 ],
               )
             else ...[
               for (var i = 0; i < t.comments.length; i++) ...[
                 if (i > 0) const SizedBox(height: 10),
-                _commentRow(context, t, t.comments[i], first: i == 0, role: role),
+                _commentRow(
+                  context,
+                  t,
+                  t.comments[i],
+                  first: i == 0,
+                  role: role,
+                ),
               ],
               const SizedBox(height: 10),
               if (role.canComment && !resolved)
@@ -526,10 +657,17 @@ class _CommentThreadCardState extends State<CommentThreadCard> {
                           Row(
                             mainAxisAlignment: MainAxisAlignment.end,
                             children: [
-                              ShadButton.ghost(size: ShadButtonSize.sm, onPressed: () => setState(() => _replying = false), child: Text(l.actionCancel)),
+                              ShadButton.ghost(
+                                size: ShadButtonSize.sm,
+                                onPressed: () =>
+                                    setState(() => _replying = false),
+                                child: Text(l.actionCancel),
+                              ),
                               const SizedBox(width: 6),
                               ShadButton(
-                                key: ValueKey<String>('comments.reply.${t.uuid.uuid}.send'),
+                                key: ValueKey<String>(
+                                  'comments.reply.${t.uuid.uuid}.send',
+                                ),
                                 size: ShadButtonSize.sm,
                                 onPressed: _sendReply,
                                 child: Text(l.cmdReply),
@@ -541,13 +679,21 @@ class _CommentThreadCardState extends State<CommentThreadCard> {
                     : GestureDetector(
                         onTap: () => setState(() => _replying = true),
                         child: Container(
-                          key: ValueKey<String>('comments.reply.${t.uuid.uuid}.open'),
-                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                          key: ValueKey<String>(
+                            'comments.reply.${t.uuid.uuid}.open',
+                          ),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 10,
+                            vertical: 8,
+                          ),
                           decoration: BoxDecoration(
                             border: Border.all(color: theme.colorScheme.input),
                             borderRadius: BorderRadius.circular(18),
                           ),
-                          child: Text(l.replyPlaceholder, style: theme.textTheme.muted),
+                          child: Text(
+                            l.replyPlaceholder,
+                            style: theme.textTheme.muted,
+                          ),
                         ),
                       ),
             ],
@@ -557,7 +703,13 @@ class _CommentThreadCardState extends State<CommentThreadCard> {
     );
   }
 
-  Widget _commentRow(BuildContext context, CommentThreadView t, CommentView cm, {required bool first, required Role role}) {
+  Widget _commentRow(
+    BuildContext context,
+    CommentThreadView t,
+    CommentView cm, {
+    required bool first,
+    required Role role,
+  }) {
     final l = WonkyAppLocalizations.of(context);
     final theme = ShadTheme.of(context);
     final mine = cm.author?.id == s.me?.id;
@@ -581,7 +733,9 @@ class _CommentThreadCardState extends State<CommentThreadCard> {
           children: [
             WonkyAvatar(
               name: cm.author?.displayName ?? '?',
-              color: cm.author == null ? theme.colorScheme.muted : parseHexColor(cm.author!.avatarColor),
+              color: cm.author == null
+                  ? theme.colorScheme.muted
+                  : parseHexColor(cm.author!.avatarColor),
               imageUrl: cm.author?.avatarUrl,
               icon: cm.authorKind.name == 'user' ? null : LucideIcons.bot,
               size: 26,
@@ -591,7 +745,11 @@ class _CommentThreadCardState extends State<CommentThreadCard> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(cm.author?.displayName ?? l.someone, style: theme.textTheme.small, overflow: TextOverflow.ellipsis),
+                  Text(
+                    cm.author?.displayName ?? l.someone,
+                    style: theme.textTheme.small,
+                    overflow: TextOverflow.ellipsis,
+                  ),
                   Text(
                     '${timeAgo(l, cm.createdAt)}${cm.editedAt != null ? ' · ${l.commentEdited}' : ''}',
                     style: theme.textTheme.muted.copyWith(fontSize: 11),
@@ -603,18 +761,30 @@ class _CommentThreadCardState extends State<CommentThreadCard> {
               ShadTooltip(
                 builder: (_) => Text(resolved ? l.cmdReopen : l.cmdResolve),
                 child: ShadIconButton.ghost(
-                  key: ValueKey<String>('comments.thread.${t.uuid.uuid}.${resolved ? 'reopen' : 'resolve'}'),
+                  key: ValueKey<String>(
+                    'comments.thread.${t.uuid.uuid}.${resolved ? 'reopen' : 'resolve'}',
+                  ),
                   width: 28,
                   height: 28,
                   iconSize: 16,
                   semanticLabel: resolved ? l.cmdReopen : l.cmdResolve,
-                  icon: Icon(resolved ? LucideIcons.rotateCcw : LucideIcons.check),
-                  onPressed: () => _invoke(resolved ? 'shell.comments.reopen' : 'shell.comments.resolve', {'threadUuid': t.uuid.uuid}),
+                  icon: Icon(
+                    resolved ? LucideIcons.rotateCcw : LucideIcons.check,
+                  ),
+                  onPressed: () => _invoke(
+                    resolved
+                        ? 'shell.comments.reopen'
+                        : 'shell.comments.resolve',
+                    {'threadUuid': t.uuid.uuid},
+                  ),
                 ),
               ),
             if (!cm.deleted && (mine || role.canEdit))
               WonkyDropdownMenu(
-                anchor: const ShadAnchor(childAlignment: AlignmentDirectional.bottomEnd, overlayAlignment: AlignmentDirectional.topEnd),
+                anchor: const ShadAnchor(
+                  childAlignment: AlignmentDirectional.bottomEnd,
+                  overlayAlignment: AlignmentDirectional.topEnd,
+                ),
                 entries: () => [
                   if (mine)
                     WonkyMenuItem(
@@ -640,7 +810,8 @@ class _CommentThreadCardState extends State<CommentThreadCard> {
                     onSelected: () {
                       final item = s.currentItem.value;
                       if (item == null) return;
-                      final url = '${s.urls.urlFor(s.config.app, s.config.itemPath(item.uuid.uuid))}?comment=${t.uuid.uuid}';
+                      final url =
+                          '${s.urls.urlFor(s.config.app, s.config.itemPath(item.uuid.uuid))}?comment=${t.uuid.uuid}';
                       Clipboard.setData(ClipboardData(text: url));
                       s.toasts.show(l.toastLinkCopied);
                     },
@@ -667,13 +838,19 @@ class _CommentThreadCardState extends State<CommentThreadCard> {
               Row(
                 mainAxisAlignment: MainAxisAlignment.end,
                 children: [
-                  ShadButton.ghost(size: ShadButtonSize.sm, onPressed: () => setState(() => _editing = null), child: Text(l.actionCancel)),
+                  ShadButton.ghost(
+                    size: ShadButtonSize.sm,
+                    onPressed: () => setState(() => _editing = null),
+                    child: Text(l.actionCancel),
+                  ),
                   ShadButton(
                     size: ShadButtonSize.sm,
                     onPressed: () async {
                       final body = _edit.text.trim();
                       setState(() => _editing = null);
-                      if (body.isNotEmpty && body != cm.body) await widget.controller.edit(cm.id, body);
+                      if (body.isNotEmpty && body != cm.body) {
+                        await widget.controller.edit(cm.id, body);
+                      }
                     },
                     child: Text(l.actionSave),
                   ),
@@ -682,7 +859,12 @@ class _CommentThreadCardState extends State<CommentThreadCard> {
             ],
           )
         else
-          Text(cm.deleted ? l.commentDeleted : cm.body, style: cm.deleted ? theme.textTheme.muted : theme.textTheme.small.copyWith(fontWeight: FontWeight.normal)),
+          Text(
+            cm.deleted ? l.commentDeleted : cm.body,
+            style: cm.deleted
+                ? theme.textTheme.muted
+                : theme.textTheme.small.copyWith(fontWeight: FontWeight.normal),
+          ),
       ],
     );
   }

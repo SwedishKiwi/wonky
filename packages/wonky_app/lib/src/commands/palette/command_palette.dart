@@ -15,28 +15,53 @@ import 'palette_list.dart';
 /// titles, descriptions, aliases and menu paths; sections Recent / All
 /// commands; extra providers "Go to document…" (drive search). With
 /// [menusOnly] it is Help › Search the menus.
-Future<void> showCommandPalette(BuildContext context, ShellServices s, {bool menusOnly = false}) {
+Future<void> showCommandPalette(
+  BuildContext context,
+  ShellServices s, {
+  bool menusOnly = false,
+}) {
   final menuPaths = s.menuPaths(context);
+  final options = s
+      .menuRoot(context)
+      .parameterizedItems(
+        titleOf: (c) => s.registry.byId(c.commandId)?.title(context) ?? '',
+      );
   return showShadDialog<void>(
     context: context,
     builder: (context) => ShadDialog(
       key: const ValueKey<String>('palette'),
       padding: const EdgeInsets.all(12),
+      // Esc closes; a close button would overlap the search field.
+      closeIcon: const SizedBox.shrink(),
       constraints: const BoxConstraints(maxWidth: 620),
       child: SizedBox(
         width: 600,
-        child: _CommandPaletteBody(services: s, menusOnly: menusOnly, menuPaths: menuPaths),
+        child: _CommandPaletteBody(
+          services: s,
+          menusOnly: menusOnly,
+          menuPaths: menuPaths,
+          options: options,
+        ),
       ),
     ),
   );
 }
 
 class _CommandPaletteBody extends StatefulWidget {
-  const _CommandPaletteBody({required this.services, required this.menusOnly, required this.menuPaths});
+  const _CommandPaletteBody({
+    required this.services,
+    required this.menusOnly,
+    required this.menuPaths,
+    required this.options,
+  });
 
   final ShellServices services;
   final bool menusOnly;
   final Map<String, List<String>> menuPaths;
+
+  /// Menu items with fixed arguments (radio options), searchable as their
+  /// own rows: "dark" finds View › App theme › Dark.
+  final List<({MenuCommand item, List<String> path})> options;
 
   @override
   State<_CommandPaletteBody> createState() => _CommandPaletteBodyState();
@@ -65,7 +90,11 @@ class _CommandPaletteBodyState extends State<_CommandPaletteBody> {
     }
     _debounce = Timer(const Duration(milliseconds: 200), () async {
       try {
-        final page = await s.drive.search(q, filters: DriveSearchFilters(), limit: 6);
+        final page = await s.drive.search(
+          q,
+          filters: DriveSearchFilters(),
+          limit: 6,
+        );
         if (!mounted || _docQuery != q) return;
         _docs = page.items;
         state.refresh();
@@ -73,22 +102,34 @@ class _CommandPaletteBodyState extends State<_CommandPaletteBody> {
     });
   }
 
-  List<PaletteRow> _rows(BuildContext context, String q, PaletteListState state) {
+  List<PaletteRow> _rows(
+    BuildContext context,
+    String q,
+    PaletteListState state,
+  ) {
     final l = WonkyAppLocalizations.of(context);
     final commands = [
       for (final c in s.registry.all)
-        if (c.showInPalette && (!widget.menusOnly || widget.menuPaths.containsKey(c.id.value))) c,
+        if (c.showInPalette &&
+            (!widget.menusOnly || widget.menuPaths.containsKey(c.id.value)))
+          c,
     ];
-    PaletteRow rowOf(Command<CommandArgs> c, {String? section}) {
+    PaletteRow rowOf(
+      Command<CommandArgs> c, {
+      String? section,
+      ({MenuCommand item, List<String> path})? option,
+    }) {
       final id = c.id.value;
-      final state = s.dispatcher.stateOf(id);
-      final path = widget.menuPaths[id];
+      final args = option?.item.args ?? const <String, Object?>{};
+      final state = s.dispatcher.stateOf(id, args);
+      final path = option?.path ?? widget.menuPaths[id];
+      final label = option?.item.label;
       return PaletteRow(
-        id: id,
-        title: c.title(context),
+        id: option == null ? id : '$id#${option.path.join('/')}',
+        title: label == null ? c.title(context) : '${c.title(context)}: $label',
         subtitle: path == null ? c.description(context) : path.join(' › '),
         icon: c.icon,
-        shortcut: s.keymap.labelsOf(id),
+        shortcut: option == null ? s.keymap.labelsOf(id) : null,
         enabled: state.enabled,
         disabledReason: state.disabledReason,
         section: section,
@@ -96,7 +137,12 @@ class _CommandPaletteBodyState extends State<_CommandPaletteBody> {
           s.noteRecentCommand(id);
           unawaited(
             s.dispatcher
-                .invoke(id, source: InvocationSource.palette, context: s.navigatorContext)
+                .invoke(
+                  id,
+                  args: args,
+                  source: InvocationSource.palette,
+                  context: s.navigatorContext,
+                )
                 .catchError((Object e) {
                   s.toasts.error(l.commandFailed(id), description: '$e');
                   return const CommandResult.failed('error');
@@ -109,24 +155,42 @@ class _CommandPaletteBodyState extends State<_CommandPaletteBody> {
     if (q.trim().isEmpty) {
       final recent = [
         for (final id in s.recentCommands)
-          if (commands.any((c) => c.id.value == id)) commands.firstWhere((c) => c.id.value == id),
+          if (commands.any((c) => c.id.value == id))
+            commands.firstWhere((c) => c.id.value == id),
       ];
-      final rest = [...commands]..sort((a, b) => a.title(context).compareTo(b.title(context)));
+      final rest = [...commands]
+        ..sort((a, b) => a.title(context).compareTo(b.title(context)));
       return [
         for (final c in recent) rowOf(c, section: l.paletteRecent),
         for (final c in rest) rowOf(c, section: l.paletteAllCommands),
       ];
     }
     _searchDocs(q, state);
-    final ranked = Fuzzy.rank(q, commands, (c) => [
-      c.title(context),
-      ...?widget.menuPaths[c.id.value]?.let((p) => [p.join(' › ')]),
-      ...c.aliases(context),
-      ?c.description(context),
-      c.id.value,
-    ]);
+    final byId = {for (final c in commands) c.id.value: c};
+    final candidates =
+        <(Command<CommandArgs>, ({MenuCommand item, List<String> path})?)>[
+          for (final c in commands) (c, null),
+          for (final o in widget.options)
+            if (byId[o.item.commandId] case final c?) (c, o),
+        ];
+    final ranked = Fuzzy.rank(q, candidates, (e) {
+      final (c, o) = e;
+      if (o != null) return [o.item.label ?? '', o.path.join(' › ')];
+      return [
+        c.title(context),
+        ...?widget.menuPaths[c.id.value]?.let((p) => [p.join(' › ')]),
+        ...c.aliases(context),
+        ?c.description(context),
+        c.id.value,
+      ];
+    });
     return [
-      for (final c in ranked) rowOf(c, section: widget.menusOnly ? l.paletteMenus : l.paletteCommands),
+      for (final (c, o) in ranked)
+        rowOf(
+          c,
+          option: o,
+          section: widget.menusOnly ? l.paletteMenus : l.paletteCommands,
+        ),
       for (final d in _docs)
         PaletteRow(
           id: 'doc.${d.uuid.uuid}',
@@ -144,7 +208,9 @@ class _CommandPaletteBodyState extends State<_CommandPaletteBody> {
   Widget build(BuildContext context) {
     final l = WonkyAppLocalizations.of(context);
     return PaletteList(
-      placeholder: widget.menusOnly ? l.paletteSearchMenus : l.palettePlaceholder,
+      placeholder: widget.menusOnly
+          ? l.paletteSearchMenus
+          : l.palettePlaceholder,
       emptyText: l.paletteEmpty,
       rows: (q, state) => _rows(context, q, state),
     );

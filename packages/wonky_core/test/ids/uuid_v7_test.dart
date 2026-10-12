@@ -9,12 +9,17 @@ void main() {
 
   group('Given a generator with a fixed clock and seeded random', () {
     late UuidV7Generator ids;
-    setUp(() => ids = UuidV7Generator(clock: Clock.fixed(t), random: Random(7)));
+    setUp(
+      () => ids = UuidV7Generator(clock: Clock.fixed(t), random: Random(7)),
+    );
 
     test('when generating an id then it is a version 7 uuid', () {
       final id = ids.nextString();
       expect(UuidV7Generator.isV7(id), isTrue);
-      expect(id, matches(RegExp(r'^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab]')));
+      expect(
+        id,
+        matches(RegExp(r'^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab]')),
+      );
     });
 
     test('when generating an id then its timestamp is the clock time', () {
@@ -49,6 +54,21 @@ void main() {
   group('Given presence colors', () {
     test('when hashing the same key then the slot is stable', () {
       expect(presenceColorIndex('user-42'), presenceColorIndex('user-42'));
+    });
+    test('when hashing known keys then the slots match on every platform '
+        '(32-bit FNV-1a, web included)', () {
+      expect(
+        [
+          for (final k in [
+            '1',
+            '42',
+            'anna@example.test',
+            '01a131ab-5f3f-7e30-a9b2-2d12f5b49832',
+          ])
+            presenceColorIndex(k),
+        ],
+        [4, 11, 1, 10],
+      );
     });
     test('when hashing many keys then all slots are within 0..11', () {
       final slots = {for (var i = 0; i < 500; i++) presenceColorIndex('u$i')};

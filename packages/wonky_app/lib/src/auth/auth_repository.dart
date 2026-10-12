@@ -51,7 +51,10 @@ class ServerAuthRepository extends ChangeNotifier implements AuthRepository {
 
   @override
   Future<void> signIn({required String email, required String password}) async {
-    final success = await client.emailIdp.login(email: email, password: password);
+    final success = await client.emailIdp.login(
+      email: email,
+      password: password,
+    );
     await client.auth.updateSignedInUser(success);
   }
 
@@ -67,7 +70,10 @@ class ServerAuthRepository extends ChangeNotifier implements AuthRepository {
       );
 
   @override
-  Future<void> finishRegistration(String registrationToken, String password) async {
+  Future<void> finishRegistration(
+    String registrationToken,
+    String password,
+  ) async {
     final success = await client.emailIdp.finishRegistration(
       registrationToken: registrationToken,
       password: password,

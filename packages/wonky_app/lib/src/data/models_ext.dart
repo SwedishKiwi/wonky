@@ -42,5 +42,6 @@ extension DriveItemViewX on DriveItemView {
 }
 
 /// The app that edits [kind] (folders: Write).
-WonkyAppKind appForKind(DriveItemKind kind) =>
-    kind == DriveItemKind.spreadsheet ? WonkyAppKind.sheets : WonkyAppKind.write;
+WonkyAppKind appForKind(DriveItemKind kind) => kind == DriveItemKind.spreadsheet
+    ? WonkyAppKind.sheets
+    : WonkyAppKind.write;

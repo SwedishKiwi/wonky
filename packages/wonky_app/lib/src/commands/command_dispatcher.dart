@@ -56,7 +56,8 @@ class CommandDispatcher {
   CommandContext _context(InvocationSource source, BuildContext? context) =>
       CommandContext(services: services, source: source, buildContext: context);
 
-  Command<CommandArgs> _lookup(CommandId id) => registry[id] ?? (throw UnknownCommand(id));
+  Command<CommandArgs> _lookup(CommandId id) =>
+      registry[id] ?? (throw UnknownCommand(id));
 
   /// Parses and validates [json] for [command].
   CommandArgs parse(Command<CommandArgs> command, Map<String, Object?> json) {
@@ -82,14 +83,22 @@ class CommandDispatcher {
   CommandState stateOf(String id, [Map<String, Object?> args = const {}]) {
     final command = registry.byId(id);
     if (command == null) {
-      return const CommandState(enabled: false, checked: null, disabledReason: null);
+      return const CommandState(
+        enabled: false,
+        checked: null,
+        disabledReason: null,
+      );
     }
     final ctx = _context(InvocationSource.menu, null);
     try {
       final a = command.parseArgs(args);
       final role = roleProblem(command, ctx);
       if (role != null) {
-        return CommandState(enabled: false, checked: command.isChecked(ctx, a), disabledReason: role);
+        return CommandState(
+          enabled: false,
+          checked: command.isChecked(ctx, a),
+          disabledReason: role,
+        );
       }
       final enabled = command.isEnabled(ctx, a);
       return CommandState(
@@ -98,7 +107,11 @@ class CommandDispatcher {
         disabledReason: enabled ? null : command.disabledReason(ctx, a),
       );
     } catch (_) {
-      return const CommandState(enabled: false, checked: null, disabledReason: null);
+      return const CommandState(
+        enabled: false,
+        checked: null,
+        disabledReason: null,
+      );
     }
   }
 

@@ -143,13 +143,16 @@ class CallbackCommand extends JsonCommand {
   String? category(BuildContext context) => _category?.call(context);
 
   @override
-  bool isEnabled(CommandContext ctx, JsonArgs args) => _enabled?.call(ctx, args) ?? true;
+  bool isEnabled(CommandContext ctx, JsonArgs args) =>
+      _enabled?.call(ctx, args) ?? true;
 
   @override
-  bool? isChecked(CommandContext ctx, JsonArgs args) => _checked?.call(ctx, args);
+  bool? isChecked(CommandContext ctx, JsonArgs args) =>
+      _checked?.call(ctx, args);
 
   @override
-  Future<CommandResult> execute(CommandContext ctx, JsonArgs args) => _run(ctx, args);
+  Future<CommandResult> execute(CommandContext ctx, JsonArgs args) =>
+      _run(ctx, args);
 }
 
 /// Everything a command can use while running (suite 08 §1).
@@ -187,14 +190,22 @@ class CommandContext {
   /// A context usable for dialogs: the invoking widget's, or the shell's
   /// navigator context (MCP/headless invocations still show dialogs in the
   /// live window).
-  BuildContext? get dialogContext =>
-      (buildContext != null && buildContext!.mounted) ? buildContext : services.navigatorContext;
+  ///
+  /// The global key scope sits above the navigator, so a context without a
+  /// [Navigator] ancestor falls back to the navigator's own context.
+  BuildContext? get dialogContext {
+    final bc = buildContext;
+    if (bc != null && bc.mounted && Navigator.maybeOf(bc) != null) return bc;
+    return services.navigatorContext;
+  }
 
   /// Records an undo entry in the open transaction.
   void record(UndoEntry entry) {
     final t = transaction;
     if (t == null) {
-      throw StateError('No undo transaction: is the command marked isUndoable?');
+      throw StateError(
+        'No undo transaction: is the command marked isUndoable?',
+      );
     }
     t.record(entry);
   }

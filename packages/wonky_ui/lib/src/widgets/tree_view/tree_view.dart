@@ -199,14 +199,23 @@ class WonkyTreeView<T> extends StatefulWidget {
   final FutureOr<bool> Function(WonkyTreeNode<T> node, String name)? onRename;
 
   /// Whether [data] (a dragged node or external payload) may be dropped.
-  final bool Function(Object data, WonkyTreeNode<T> target, WonkyTreeDropPosition position)?
+  final bool Function(
+    Object data,
+    WonkyTreeNode<T> target,
+    WonkyTreeDropPosition position,
+  )?
   canAcceptDrop;
-  final void Function(Object data, WonkyTreeNode<T> target, WonkyTreeDropPosition position)?
+  final void Function(
+    Object data,
+    WonkyTreeNode<T> target,
+    WonkyTreeDropPosition position,
+  )?
   onDrop;
 
   /// Payload when dragging a node (null = not draggable).
   final Object? Function(WonkyTreeNode<T> node)? dragData;
-  final Widget? Function(BuildContext context, WonkyTreeNode<T> node)? trailingBuilder;
+  final Widget? Function(BuildContext context, WonkyTreeNode<T> node)?
+  trailingBuilder;
   final double rowHeight;
   final double indent;
   final String? semanticLabel;
@@ -329,7 +338,9 @@ class _WonkyTreeViewState<T> extends State<WonkyTreeView<T>> {
               itemExtent: widget.rowHeight,
               itemCount: rows.length,
               itemBuilder: (context, i) => _TreeRowWidget<T>(
-                key: ValueKey<String>('${widget.keyPrefix}.node.${rows[i].node.id}'),
+                key: ValueKey<String>(
+                  '${widget.keyPrefix}.node.${rows[i].node.id}',
+                ),
                 row: rows[i],
                 view: widget,
                 treeFocused: _focus.hasFocus,
@@ -413,7 +424,10 @@ class _TreeRowWidgetState<T> extends State<_TreeRowWidget<T>> {
 
     if (renaming && _rename == null) {
       _rename = TextEditingController(text: node.label)
-        ..selection = TextSelection(baseOffset: 0, extentOffset: node.label.length);
+        ..selection = TextSelection(
+          baseOffset: 0,
+          extentOffset: node.label.length,
+        );
     } else if (!renaming && _rename != null) {
       _rename!.dispose();
       _rename = null;
@@ -503,7 +517,10 @@ class _TreeRowWidgetState<T> extends State<_TreeRowWidget<T>> {
                 ? [BoxShadow(color: theme.colorScheme.ring, spreadRadius: 1.5)]
                 : null,
           ),
-          padding: EdgeInsets.only(left: 4 + widget.row.depth * widget.view.indent, right: 4),
+          padding: EdgeInsets.only(
+            left: 4 + widget.row.depth * widget.view.indent,
+            right: 4,
+          ),
           child: Row(
             children: [
               chevron,
@@ -593,7 +610,10 @@ class _DragFeedback extends StatelessWidget {
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            if (icon != null) ...[Icon(icon, size: 14), const SizedBox(width: 6)],
+            if (icon != null) ...[
+              Icon(icon, size: 14),
+              const SizedBox(width: 6),
+            ],
             Text(label, style: theme.textTheme.small),
           ],
         ),

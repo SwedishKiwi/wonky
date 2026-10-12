@@ -26,7 +26,10 @@ abstract class DriveRepository {
     int limit = 50,
   });
 
-  Future<DriveItemView> createFolder({UuidValue? parentUuid, required String name});
+  Future<DriveItemView> createFolder({
+    UuidValue? parentUuid,
+    required String name,
+  });
 
   Future<DriveItemView> createDocument({
     UuidValue? parentUuid,
@@ -53,7 +56,10 @@ abstract class DriveRepository {
 
   Future<DriveItemView> updateDescription(UuidValue uuid, String? description);
 
-  Future<List<DriveItemView>> move(List<UuidValue> uuids, UuidValue? newParentUuid);
+  Future<List<DriveItemView>> move(
+    List<UuidValue> uuids,
+    UuidValue? newParentUuid,
+  );
 
   Future<DriveItemView> copy(
     UuidValue uuid, {
@@ -109,10 +115,12 @@ class ServerDriveRepository implements DriveRepository {
   }) => api.guard((c) => c.drive.list(folderUuid, filter, sort, cursor, limit));
 
   @override
-  Future<DriveItemView> get(UuidValue uuid) => api.guard((c) => c.drive.get(uuid));
+  Future<DriveItemView> get(UuidValue uuid) =>
+      api.guard((c) => c.drive.get(uuid));
 
   @override
-  Future<List<DriveItemView>> path(UuidValue uuid) => api.guard((c) => c.drive.path(uuid));
+  Future<List<DriveItemView>> path(UuidValue uuid) =>
+      api.guard((c) => c.drive.path(uuid));
 
   @override
   Future<DriveListPage> search(
@@ -123,8 +131,10 @@ class ServerDriveRepository implements DriveRepository {
   }) => api.guard((c) => c.drive.search(query, filters, cursor, limit));
 
   @override
-  Future<DriveItemView> createFolder({UuidValue? parentUuid, required String name}) =>
-      api.guard((c) => c.drive.createFolder(parentUuid, name));
+  Future<DriveItemView> createFolder({
+    UuidValue? parentUuid,
+    required String name,
+  }) => api.guard((c) => c.drive.createFolder(parentUuid, name));
 
   @override
   Future<DriveItemView> createDocument({
@@ -150,26 +160,34 @@ class ServerDriveRepository implements DriveRepository {
     UuidValue? parentUuid,
     required String name,
     UuidValue? templateUuid,
-  }) => api.guard((c) => c.drive.createSpreadsheet(parentUuid, name, templateUuid));
+  }) => api.guard(
+    (c) => c.drive.createSpreadsheet(parentUuid, name, templateUuid),
+  );
 
   @override
   Future<DriveItemView> registerSpreadsheet({
     required UuidValue spaceUuid,
     UuidValue? parentUuid,
     required String name,
-  }) => api.guard((c) => c.drive.registerSpreadsheet(spaceUuid, parentUuid, name));
+  }) => api.guard(
+    (c) => c.drive.registerSpreadsheet(spaceUuid, parentUuid, name),
+  );
 
   @override
   Future<DriveItemView> rename(UuidValue uuid, String name) =>
       api.guard((c) => c.drive.rename(uuid, name));
 
   @override
-  Future<DriveItemView> updateDescription(UuidValue uuid, String? description) =>
-      api.guard((c) => c.drive.updateDescription(uuid, description));
+  Future<DriveItemView> updateDescription(
+    UuidValue uuid,
+    String? description,
+  ) => api.guard((c) => c.drive.updateDescription(uuid, description));
 
   @override
-  Future<List<DriveItemView>> move(List<UuidValue> uuids, UuidValue? newParentUuid) =>
-      api.guard((c) => c.drive.move(uuids, newParentUuid));
+  Future<List<DriveItemView>> move(
+    List<UuidValue> uuids,
+    UuidValue? newParentUuid,
+  ) => api.guard((c) => c.drive.move(uuids, newParentUuid));
 
   @override
   Future<DriveItemView> copy(
@@ -178,7 +196,9 @@ class ServerDriveRepository implements DriveRepository {
     UuidValue? parentUuid,
     bool copyComments = false,
     bool copySharing = false,
-  }) => api.guard((c) => c.drive.copy(uuid, newName, parentUuid, copyComments, copySharing));
+  }) => api.guard(
+    (c) => c.drive.copy(uuid, newName, parentUuid, copyComments, copySharing),
+  );
 
   @override
   Future<DriveItemView> setStarred(UuidValue uuid, bool starred) =>
@@ -189,20 +209,24 @@ class ServerDriveRepository implements DriveRepository {
       api.guard((c) => c.drive.setPinnedOffline(uuid, pinned));
 
   @override
-  Future<DriveItemView> markOpened(UuidValue uuid) => api.guard((c) => c.drive.markOpened(uuid));
+  Future<DriveItemView> markOpened(UuidValue uuid) =>
+      api.guard((c) => c.drive.markOpened(uuid));
 
   @override
   Future<DriveItemView> addShortcut(UuidValue uuid, UuidValue? parentUuid) =>
       api.guard((c) => c.drive.addShortcut(uuid, parentUuid));
 
   @override
-  Future<void> removeShortcut(UuidValue uuid) => api.guard((c) => c.drive.removeShortcut(uuid));
+  Future<void> removeShortcut(UuidValue uuid) =>
+      api.guard((c) => c.drive.removeShortcut(uuid));
 
   @override
-  Future<void> trash(List<UuidValue> uuids) => api.guard((c) => c.drive.trash(uuids));
+  Future<void> trash(List<UuidValue> uuids) =>
+      api.guard((c) => c.drive.trash(uuids));
 
   @override
-  Future<void> restore(List<UuidValue> uuids) => api.guard((c) => c.drive.restore(uuids));
+  Future<void> restore(List<UuidValue> uuids) =>
+      api.guard((c) => c.drive.restore(uuids));
 
   @override
   Future<void> deletePermanently(List<UuidValue> uuids) =>
@@ -216,7 +240,8 @@ class ServerDriveRepository implements DriveRepository {
       api.guard((c) => c.drive.listTemplates(kind));
 
   @override
-  Future<StorageUsage> storageUsage() => api.guard((c) => c.drive.storageUsage());
+  Future<StorageUsage> storageUsage() =>
+      api.guard((c) => c.drive.storageUsage());
 
   @override
   Future<List<ActivityEventView>> activity(UuidValue uuid, {int limit = 50}) =>

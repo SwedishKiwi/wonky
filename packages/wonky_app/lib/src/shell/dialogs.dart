@@ -27,7 +27,12 @@ Future<bool> confirmDialog(
       dialogKey: 'dialog.confirm',
       buttons: [
         DialogButtonSpec(id: 'cancel', label: l.actionCancel),
-        DialogButtonSpec(id: 'confirm', label: confirmLabel, primary: true, destructive: destructive),
+        DialogButtonSpec(
+          id: 'confirm',
+          label: confirmLabel,
+          primary: true,
+          destructive: destructive,
+        ),
       ],
     ),
   );
@@ -59,7 +64,8 @@ Future<String?> showTextInputDialog(
           initial: initial,
           placeholder: placeholder,
           maxLength: maxLength,
-          validator: validator ?? (v) => v.trim().isEmpty ? l.errorRequired : null,
+          validator:
+              validator ?? (v) => v.trim().isEmpty ? l.errorRequired : null,
         ),
       ],
       buttons: [
@@ -81,14 +87,20 @@ String? Function(String) itemNameValidator(WonkyAppLocalizations l) => (v) {
   return null;
 };
 
-Future<String?> showNameVersionDialog(BuildContext context, ShellServices s, {String initial = ''}) {
+Future<String?> showNameVersionDialog(
+  BuildContext context,
+  ShellServices s, {
+  String initial = '',
+}) {
   final l = WonkyAppLocalizations.of(context);
   return showTextInputDialog(
     context,
     title: l.nameVersionTitle,
     label: l.nameVersionLabel,
     confirmLabel: l.actionSave,
-    initial: initial.isEmpty ? intl.DateFormat.yMMMd().add_jm().format(DateTime.now()) : initial,
+    initial: initial.isEmpty
+        ? intl.DateFormat.yMMMd().add_jm().format(DateTime.now())
+        : initial,
     dialogKey: 'dialog.nameVersion',
     maxLength: 200,
   );
@@ -108,7 +120,10 @@ Future<void> showFeedbackDialog(BuildContext context, ShellServices s) async {
         SelectFieldSpec(
           id: 'kind',
           label: l.feedbackKind,
-          options: {'problem': l.feedbackKindProblem, 'idea': l.feedbackKindIdea},
+          options: {
+            'problem': l.feedbackKindProblem,
+            'idea': l.feedbackKindIdea,
+          },
           initial: 'problem',
         ),
         TextFieldSpec(
@@ -129,7 +144,9 @@ Future<void> showFeedbackDialog(BuildContext context, ShellServices s) async {
   try {
     await s.repositories.meta.submitFeedback(
       FeedbackSubmission(
-        kind: r!.values['kind'] == 'idea' ? FeedbackKind.idea : FeedbackKind.problem,
+        kind: r!.values['kind'] == 'idea'
+            ? FeedbackKind.idea
+            : FeedbackKind.problem,
         message: r.text('message'),
         app: s.config.app.name,
         appVersion: s.serverInfo.value?.minClientVersion ?? 'dev',
@@ -150,7 +167,12 @@ Future<void> showWhatsNewDialog(BuildContext context, ShellServices s) {
     context: context,
     builder: (context) => ShadDialog(
       title: Text(l.whatsNewTitle),
-      actions: [ShadButton(onPressed: () => Navigator.of(context).pop(), child: Text(l.actionClose))],
+      actions: [
+        ShadButton(
+          onPressed: () => Navigator.of(context).pop(),
+          child: Text(l.actionClose),
+        ),
+      ],
       child: SizedBox(
         width: 460,
         child: Column(
@@ -158,7 +180,12 @@ Future<void> showWhatsNewDialog(BuildContext context, ShellServices s) {
           crossAxisAlignment: CrossAxisAlignment.start,
           spacing: 10,
           children: [
-            for (final item in [l.whatsNew1, l.whatsNew2, l.whatsNew3, l.whatsNew4])
+            for (final item in [
+              l.whatsNew1,
+              l.whatsNew2,
+              l.whatsNew3,
+              l.whatsNew4,
+            ])
               Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -177,13 +204,22 @@ Future<void> showWhatsNewDialog(BuildContext context, ShellServices s) {
 }
 
 /// Tools › Activity dashboard (suite 07 §6): who did what, recent activity.
-Future<void> showActivityDashboard(BuildContext context, ShellServices s, DriveItemView item) {
+Future<void> showActivityDashboard(
+  BuildContext context,
+  ShellServices s,
+  DriveItemView item,
+) {
   final l = WonkyAppLocalizations.of(context);
   return showShadDialog<void>(
     context: context,
     builder: (context) => ShadDialog(
       title: Text(l.activityTitle(item.name)),
-      actions: [ShadButton(onPressed: () => Navigator.of(context).pop(), child: Text(l.actionClose))],
+      actions: [
+        ShadButton(
+          onPressed: () => Navigator.of(context).pop(),
+          child: Text(l.actionClose),
+        ),
+      ],
       child: SizedBox(
         width: 520,
         height: 420,
@@ -194,15 +230,22 @@ Future<void> showActivityDashboard(BuildContext context, ShellServices s, DriveI
             if (snap.connectionState != ConnectionState.done) {
               return const Center(child: ShadSpinner());
             }
-            if (snap.hasError) return Center(child: Text(errorMessage(snap.error!)));
+            if (snap.hasError) {
+              return Center(child: Text(errorMessage(snap.error!)));
+            }
             final events = snap.data ?? const [];
-            if (events.isEmpty) return Center(child: Text(l.activityEmpty, style: theme.textTheme.muted));
+            if (events.isEmpty) {
+              return Center(
+                child: Text(l.activityEmpty, style: theme.textTheme.muted),
+              );
+            }
             final viewers = <String, int>{};
             for (final e in events) {
               final n = e.actor?.displayName;
               if (n != null) viewers[n] = (viewers[n] ?? 0) + 1;
             }
-            final top = viewers.entries.toList()..sort((a, b) => b.value.compareTo(a.value));
+            final top = viewers.entries.toList()
+              ..sort((a, b) => b.value.compareTo(a.value));
             return Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
@@ -222,12 +265,15 @@ Future<void> showActivityDashboard(BuildContext context, ShellServices s, DriveI
                 Expanded(
                   child: ListView.separated(
                     itemCount: events.length,
-                    separatorBuilder: (_, _) => const ShadSeparator.horizontal(margin: EdgeInsets.zero),
+                    separatorBuilder: (_, _) =>
+                        const ShadSeparator.horizontal(margin: EdgeInsets.zero),
                     itemBuilder: (context, i) => Padding(
                       padding: const EdgeInsets.symmetric(vertical: 6),
                       child: Text(
                         '${activityText(l, events[i])} · ${intl.DateFormat.yMMMd().add_jm().format(events[i].at.toLocal())}',
-                        style: theme.textTheme.small.copyWith(fontWeight: FontWeight.normal),
+                        style: theme.textTheme.small.copyWith(
+                          fontWeight: FontWeight.normal,
+                        ),
                       ),
                     ),
                   ),
@@ -243,7 +289,9 @@ Future<void> showActivityDashboard(BuildContext context, ShellServices s, DriveI
 
 /// Human text of an activity event.
 String activityText(WonkyAppLocalizations l, ActivityEventView e) {
-  final who = e.actor?.displayName ?? (e.actorKind.name == 'system' ? l.activitySystem : l.someone);
+  final who =
+      e.actor?.displayName ??
+      (e.actorKind.name == 'system' ? l.activitySystem : l.someone);
   return switch (e.type) {
     ActivityType.created => l.activityCreated(who),
     ActivityType.renamed => l.activityRenamed(who),
@@ -260,7 +308,11 @@ String activityText(WonkyAppLocalizations l, ActivityEventView e) {
 }
 
 /// "Request access" for a file the user cannot open (No-access page).
-Future<bool> showRequestAccessDialog(BuildContext context, ShellServices s, UuidValue itemUuid) async {
+Future<bool> showRequestAccessDialog(
+  BuildContext context,
+  ShellServices s,
+  UuidValue itemUuid,
+) async {
   final l = WonkyAppLocalizations.of(context);
   final r = await showWonkyFormDialog(
     context,
@@ -272,10 +324,19 @@ Future<bool> showRequestAccessDialog(BuildContext context, ShellServices s, Uuid
         SelectFieldSpec(
           id: 'role',
           label: l.requestAccessRole,
-          options: {'viewer': l.roleViewer, 'commenter': l.roleCommenter, 'editor': l.roleEditor},
+          options: {
+            'viewer': l.roleViewer,
+            'commenter': l.roleCommenter,
+            'editor': l.roleEditor,
+          },
           initial: 'editor',
         ),
-        TextFieldSpec(id: 'message', label: l.requestAccessMessage, multiline: true, selectAll: false),
+        TextFieldSpec(
+          id: 'message',
+          label: l.requestAccessMessage,
+          multiline: true,
+          selectAll: false,
+        ),
       ],
       buttons: [
         DialogButtonSpec(id: 'cancel', label: l.actionCancel),

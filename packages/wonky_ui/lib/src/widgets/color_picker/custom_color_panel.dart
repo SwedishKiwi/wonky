@@ -59,7 +59,9 @@ class _CustomColorPanelState extends State<CustomColorPanel> {
 
   void _syncFields() {
     _syncSliders();
-    final c = WonkyColor.fromColor(widget.allowAlpha ? _color : _color.withValues(alpha: 1));
+    final c = WonkyColor.fromColor(
+      widget.allowAlpha ? _color : _color.withValues(alpha: 1),
+    );
     _hex.text = c.hex.substring(1).toUpperCase();
     _r.text = '${(_color.r * 255).round()}';
     _g.text = '${(_color.g * 255).round()}';
@@ -102,7 +104,9 @@ class _CustomColorPanelState extends State<CustomColorPanel> {
   }
 
   KeyEventResult _svKey(FocusNode node, KeyEvent e) {
-    if (e is! KeyDownEvent && e is! KeyRepeatEvent) return KeyEventResult.ignored;
+    if (e is! KeyDownEvent && e is! KeyRepeatEvent) {
+      return KeyEventResult.ignored;
+    }
     const d = 0.02;
     final k = e.logicalKey;
     if (k == LogicalKeyboardKey.arrowLeft) {
@@ -124,24 +128,28 @@ class _CustomColorPanelState extends State<CustomColorPanel> {
     final l10n = WonkyUiLocalizations.of(context);
     final theme = ShadTheme.of(context);
     const width = 224.0;
-    Widget field(String label, TextEditingController c, VoidCallback onDone, {double w = 44}) =>
-        Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text(label, style: theme.textTheme.muted.copyWith(fontSize: 11)),
-            SizedBox(
-              width: w,
-              height: 30,
-              child: ShadInput(
-                controller: c,
-                padding: const EdgeInsets.symmetric(horizontal: 4),
-                inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-                onChanged: (_) => onDone(),
-              ),
-            ),
-          ],
-        );
+    Widget field(
+      String label,
+      TextEditingController c,
+      VoidCallback onDone, {
+      double w = 44,
+    }) => Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Text(label, style: theme.textTheme.muted.copyWith(fontSize: 11)),
+        SizedBox(
+          width: w,
+          height: 30,
+          child: ShadInput(
+            controller: c,
+            padding: const EdgeInsets.symmetric(horizontal: 4),
+            inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+            onChanged: (_) => onDone(),
+          ),
+        ),
+      ],
+    );
 
     return SizedBox(
       width: width,
@@ -153,7 +161,8 @@ class _CustomColorPanelState extends State<CustomColorPanel> {
           const SizedBox(height: 8),
           Semantics(
             label: l10n.colorSaturationValue,
-            value: '${(_hsv.saturation * 100).round()}%, ${(_hsv.value * 100).round()}%',
+            value:
+                '${(_hsv.saturation * 100).round()}%, ${(_hsv.value * 100).round()}%',
             child: Focus(
               focusNode: _svFocus,
               onKeyEvent: _svKey,
@@ -173,7 +182,9 @@ class _CustomColorPanelState extends State<CustomColorPanel> {
                         hue: _hsv.hue,
                         saturation: _hsv.saturation,
                         value: _hsv.value,
-                        focusColor: _svFocus.hasFocus ? theme.colorScheme.ring : null,
+                        focusColor: _svFocus.hasFocus
+                            ? theme.colorScheme.ring
+                            : null,
                         radius: 6,
                       ),
                     ),
@@ -195,7 +206,10 @@ class _CustomColorPanelState extends State<CustomColorPanel> {
             const SizedBox(height: 6),
             Row(
               children: [
-                Text(l10n.colorAlpha, style: theme.textTheme.muted.copyWith(fontSize: 11)),
+                Text(
+                  l10n.colorAlpha,
+                  style: theme.textTheme.muted.copyWith(fontSize: 11),
+                ),
                 Expanded(
                   child: ShadSlider(
                     controller: _alpha,
@@ -225,7 +239,10 @@ class _CustomColorPanelState extends State<CustomColorPanel> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Text(l10n.colorHex, style: theme.textTheme.muted.copyWith(fontSize: 11)),
+                    Text(
+                      l10n.colorHex,
+                      style: theme.textTheme.muted.copyWith(fontSize: 11),
+                    ),
                     SizedBox(
                       height: 30,
                       child: ShadInput(
@@ -234,8 +251,12 @@ class _CustomColorPanelState extends State<CustomColorPanel> {
                         padding: const EdgeInsets.symmetric(horizontal: 4),
                         leading: Text('#', style: theme.textTheme.muted),
                         inputFormatters: [
-                          FilteringTextInputFormatter.allow(RegExp('[0-9a-fA-F]')),
-                          LengthLimitingTextInputFormatter(widget.allowAlpha ? 8 : 6),
+                          FilteringTextInputFormatter.allow(
+                            RegExp('[0-9a-fA-F]'),
+                          ),
+                          LengthLimitingTextInputFormatter(
+                            widget.allowAlpha ? 8 : 6,
+                          ),
                         ],
                         onChanged: _onHex,
                       ),
@@ -316,7 +337,10 @@ class _SvPainter extends CustomPainter {
     final rrect = RRect.fromRectAndRadius(rect, Radius.circular(radius));
     canvas.save();
     canvas.clipRRect(rrect);
-    canvas.drawRect(rect, Paint()..color = HSVColor.fromAHSV(1, hue, 1, 1).toColor());
+    canvas.drawRect(
+      rect,
+      Paint()..color = HSVColor.fromAHSV(1, hue, 1, 1).toColor(),
+    );
     canvas.drawRect(
       rect,
       Paint()

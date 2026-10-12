@@ -21,7 +21,10 @@ void main() {
     });
 
     test('when validating drive.create_folder args then name is required', () {
-      expect(DriveTools.createFolder.inputSchema.accepts({'name': 'A'}), isTrue);
+      expect(
+        DriveTools.createFolder.inputSchema.accepts({'name': 'A'}),
+        isTrue,
+      );
       expect(DriveTools.createFolder.inputSchema.accepts({}), isFalse);
     });
 

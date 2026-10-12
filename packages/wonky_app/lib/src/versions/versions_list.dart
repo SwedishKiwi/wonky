@@ -27,7 +27,10 @@ class VersionsController extends ChangeNotifier {
     loading = true;
     notifyListeners();
     try {
-      versions = await services.repositories.versions.list(itemUuid, namedOnly: namedOnly);
+      versions = await services.repositories.versions.list(
+        itemUuid,
+        namedOnly: namedOnly,
+      );
       error = null;
       selectedId ??= versions.firstOrNull?.id;
     } catch (e) {
@@ -48,7 +51,8 @@ class VersionsController extends ChangeNotifier {
     notifyListeners();
   }
 
-  ItemVersionView? get selected => versions.where((v) => v.id == selectedId).firstOrNull;
+  ItemVersionView? get selected =>
+      versions.where((v) => v.id == selectedId).firstOrNull;
 
   ItemVersionView? previousOf(ItemVersionView v) {
     final i = versions.indexOf(v);
@@ -64,7 +68,12 @@ class VersionsController extends ChangeNotifier {
 /// The versions list grouped by date (suite 07 §5) with ⋮ → name / restore
 /// / make a copy. Used by the side panel and the full-screen history.
 class VersionsList extends StatelessWidget {
-  const VersionsList({super.key, required this.controller, this.onOpenFull, this.selectable = false});
+  const VersionsList({
+    super.key,
+    required this.controller,
+    this.onOpenFull,
+    this.selectable = false,
+  });
 
   final VersionsController controller;
   final VoidCallback? onOpenFull;
@@ -83,7 +92,9 @@ class VersionsList extends StatelessWidget {
         final time = intl.DateFormat.jm();
         final groups = <String, List<ItemVersionView>>{};
         for (final v in c.versions) {
-          groups.putIfAbsent(day.format(v.createdAt.toLocal()), () => []).add(v);
+          groups
+              .putIfAbsent(day.format(v.createdAt.toLocal()), () => [])
+              .add(v);
         }
         return Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -114,41 +125,68 @@ class VersionsList extends StatelessWidget {
               child: c.loading && c.versions.isEmpty
                   ? const Center(child: ShadSpinner())
                   : c.error != null
-                  ? Center(child: Text(errorMessage(c.error!), style: theme.textTheme.muted))
+                  ? Center(
+                      child: Text(
+                        errorMessage(c.error!),
+                        style: theme.textTheme.muted,
+                      ),
+                    )
                   : c.versions.isEmpty
-                  ? WonkyEmptyState(illustration: EmptyIllustration.history, title: l.versionsEmpty, size: 80)
+                  ? WonkyEmptyState(
+                      illustration: EmptyIllustration.history,
+                      title: l.versionsEmpty,
+                      size: 80,
+                    )
                   : ListView(
                       padding: const EdgeInsets.fromLTRB(8, 0, 8, 16),
                       children: [
                         for (final g in groups.entries) ...[
                           Padding(
                             padding: const EdgeInsets.fromLTRB(8, 10, 8, 4),
-                            child: Text(g.key, style: theme.textTheme.muted.copyWith(fontSize: 12, fontWeight: FontWeight.w600)),
+                            child: Text(
+                              g.key,
+                              style: theme.textTheme.muted.copyWith(
+                                fontSize: 12,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
                           ),
                           for (final v in g.value)
                             _VersionTile(
                               key: ValueKey<String>('versions.item.${v.id}'),
                               version: v,
                               selected: selectable && c.selectedId == v.id,
-                              title: v.name ?? time.format(v.createdAt.toLocal()),
+                              title:
+                                  v.name ?? time.format(v.createdAt.toLocal()),
                               subtitle: [
-                                if (v.name != null) time.format(v.createdAt.toLocal()),
-                                if (v.kind == VersionKind.restorePoint) l.versionsRestorePoint,
+                                if (v.name != null)
+                                  time.format(v.createdAt.toLocal()),
+                                if (v.kind == VersionKind.restorePoint)
+                                  l.versionsRestorePoint,
                               ].join(' · '),
                               onTap: selectable ? () => c.select(v.id) : null,
                               menu: () => [
                                 WonkyMenuItem(
-                                  label: v.name == null ? l.versionsName : l.versionsRename,
+                                  label: v.name == null
+                                      ? l.versionsName
+                                      : l.versionsRename,
                                   icon: LucideIcons.pencil,
                                   onSelected: () async {
-                                    final name = await showNameVersionDialog(context, s, initial: v.name ?? '');
+                                    final name = await showNameVersionDialog(
+                                      context,
+                                      s,
+                                      initial: v.name ?? '',
+                                    );
                                     if (name != null) await c.rename(v, name);
                                   },
                                 ),
                                 WonkyMenuItem(
                                   label: l.cmdRestoreVersion,
                                   icon: LucideIcons.archiveRestore,
-                                  enabled: s.activeDocument.value?.role.canEdit ?? s.currentItem.value?.role == AccessRole.owner,
+                                  enabled:
+                                      s.activeDocument.value?.role.canEdit ??
+                                      s.currentItem.value?.role ==
+                                          AccessRole.owner,
                                   onSelected: () async {
                                     await s.dispatcher.invoke(
                                       'shell.versions.restore',
@@ -205,14 +243,29 @@ class _VersionTile extends StatelessWidget {
         ),
         child: Row(
           children: [
-            Icon(version.name != null ? LucideIcons.bookmark : LucideIcons.clock, size: 14, color: theme.colorScheme.mutedForeground),
+            Icon(
+              version.name != null ? LucideIcons.bookmark : LucideIcons.clock,
+              size: 14,
+              color: theme.colorScheme.mutedForeground,
+            ),
             const SizedBox(width: 8),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(title, style: theme.textTheme.small.copyWith(fontWeight: version.name != null ? FontWeight.w600 : FontWeight.normal)),
-                  if (subtitle.isNotEmpty) Text(subtitle, style: theme.textTheme.muted.copyWith(fontSize: 11)),
+                  Text(
+                    title,
+                    style: theme.textTheme.small.copyWith(
+                      fontWeight: version.name != null
+                          ? FontWeight.w600
+                          : FontWeight.normal,
+                    ),
+                  ),
+                  if (subtitle.isNotEmpty)
+                    Text(
+                      subtitle,
+                      style: theme.textTheme.muted.copyWith(fontSize: 11),
+                    ),
                   if (version.authors.isNotEmpty)
                     Padding(
                       padding: const EdgeInsets.only(top: 4),
@@ -221,13 +274,21 @@ class _VersionTile extends StatelessWidget {
                           for (final a in version.authors.take(5))
                             Padding(
                               padding: const EdgeInsets.only(right: 4),
-                              child: WonkyAvatar(name: a.displayName, color: theme.colorScheme.presence(a.colorIndex), size: 16),
+                              child: WonkyAvatar(
+                                name: a.displayName,
+                                color: theme.colorScheme.presence(a.colorIndex),
+                                size: 16,
+                              ),
                             ),
                           Flexible(
                             child: Text(
-                              version.authors.map((a) => a.displayName).join(', '),
+                              version.authors
+                                  .map((a) => a.displayName)
+                                  .join(', '),
                               overflow: TextOverflow.ellipsis,
-                              style: theme.textTheme.muted.copyWith(fontSize: 11),
+                              style: theme.textTheme.muted.copyWith(
+                                fontSize: 11,
+                              ),
                             ),
                           ),
                         ],
@@ -237,7 +298,10 @@ class _VersionTile extends StatelessWidget {
               ),
             ),
             WonkyDropdownMenu(
-              anchor: const ShadAnchor(childAlignment: AlignmentDirectional.bottomEnd, overlayAlignment: AlignmentDirectional.topEnd),
+              anchor: const ShadAnchor(
+                childAlignment: AlignmentDirectional.bottomEnd,
+                overlayAlignment: AlignmentDirectional.topEnd,
+              ),
               entries: menu,
               builder: (context, ctl) => ShadIconButton.ghost(
                 width: 26,

@@ -476,6 +476,11 @@ Client flow (interactive, one undo step "Restore version"):
 Headless (`versions.restore`, MCP/AI): the server does the same under the document lock and
 returns `change_id` (`changes.revert` works for 24 h).
 
+*Current implementation (v1):* the interactive *Restore this version* also uses the suite's
+server-side restore (`shell.versions.restore` → `version.restore`, restore point captured
+first); the restore op reaches every client on the document stream (concurrent edits survive
+through OT) and the step is undone by restoring the restore point (`versions` undo domain).
+
 ---
 
 ## 5. Presence in Write

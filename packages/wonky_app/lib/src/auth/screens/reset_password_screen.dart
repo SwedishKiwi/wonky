@@ -96,14 +96,19 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
             fieldKey: 'auth.reset.code',
             sentAt: draft.codeSentAt,
             busy: _busy,
-            onComplete: (c) => _guard(() => auth.verifyResetCode(c.replaceAll(' ', ''))),
+            onComplete: (c) =>
+                _guard(() => auth.verifyResetCode(c.replaceAll(' ', ''))),
             onResend: () => _guard(() => auth.startReset(draft.email)),
           ),
           const SizedBox(height: 14),
           ShadButton(
             key: const ValueKey<String>('auth.reset.verify'),
             enabled: !_busy,
-            onPressed: () => _guard(() => auth.verifyResetCode((_code.currentState?.code ?? '').replaceAll(' ', ''))),
+            onPressed: () => _guard(
+              () => auth.verifyResetCode(
+                (_code.currentState?.code ?? '').replaceAll(' ', ''),
+              ),
+            ),
             child: Text(l.authVerify),
           ),
         ],
@@ -125,7 +130,9 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
             fieldKey: 'auth.reset.password',
             onChanged: (_) => setState(() {}),
           ),
-          PasswordStrengthMeter(strength: passwordStrength(_password.text, context: [draft.email])),
+          PasswordStrengthMeter(
+            strength: passwordStrength(_password.text, context: [draft.email]),
+          ),
           PasswordField(
             label: l.authConfirmPassword,
             controller: _confirm,
@@ -168,8 +175,12 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
   void _finish() {
     final l = WonkyAppLocalizations.of(context);
     setState(() {
-      _passwordError = _password.text.length < 8 ? l.authErrorPasswordShort : null;
-      _confirmError = _confirm.text != _password.text ? l.authErrorPasswordMismatch : null;
+      _passwordError = _password.text.length < 8
+          ? l.authErrorPasswordShort
+          : null;
+      _confirmError = _confirm.text != _password.text
+          ? l.authErrorPasswordMismatch
+          : null;
     });
     if (_passwordError != null || _confirmError != null) return;
     _guard(() => auth.finishReset(_password.text));

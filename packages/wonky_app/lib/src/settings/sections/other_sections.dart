@@ -28,7 +28,9 @@ class LanguageSection extends StatefulWidget {
 }
 
 class _LanguageSectionState extends State<LanguageSection> {
-  late final _tz = TextEditingController(text: widget.services.currentUser.value?.timeZone ?? '');
+  late final _tz = TextEditingController(
+    text: widget.services.currentUser.value?.timeZone ?? '',
+  );
 
   @override
   void dispose() {
@@ -40,7 +42,10 @@ class _LanguageSectionState extends State<LanguageSection> {
     final s = widget.services;
     final l = WonkyAppLocalizations.of(context);
     try {
-      s.currentUser.value = await s.repositories.users.updateProfile(locale: locale, timeZone: tz);
+      s.currentUser.value = await s.repositories.users.updateProfile(
+        locale: locale,
+        timeZone: tz,
+      );
       s.toasts.show(l.settingsSaved);
     } catch (e) {
       s.toasts.error(l.errorGeneric, description: errorMessage(e));
@@ -105,11 +110,19 @@ class WriteDefaultsSection extends StatelessWidget {
               ('markdownShortcuts', l.writeMarkdownShortcuts, true),
               ('pageless', l.writePageless, false),
             ])
-              SettingsRow(label: label, control: _switch('settings.write.$k', v(k, d), (x) => p.setWriteDefault(k, x))),
+              SettingsRow(
+                label: label,
+                control: _switch(
+                  'settings.write.$k',
+                  v(k, d),
+                  (x) => p.setWriteDefault(k, x),
+                ),
+              ),
             SettingsRow(
               label: l.writeExportFormat,
               control: ShadSelect<String>(
-                initialValue: p.writeDefaults['exportFormat'] as String? ?? 'md',
+                initialValue:
+                    p.writeDefaults['exportFormat'] as String? ?? 'md',
                 options: const [
                   ShadOption(value: 'md', child: Text('Markdown (.md)')),
                   ShadOption(value: 'html', child: Text('HTML (.html)')),
@@ -149,7 +162,14 @@ class SheetsDefaultsSection extends StatelessWidget {
               ('formulaHelp', l.sheetsFormulaHelp, true),
               ('scriptsEnabled', l.sheetsScripts, true),
             ])
-              SettingsRow(label: label, control: _switch('settings.sheets.$k', v(k, d), (x) => p.setSheetsDefault(k, x))),
+              SettingsRow(
+                label: label,
+                control: _switch(
+                  'settings.sheets.$k',
+                  v(k, d),
+                  (x) => p.setSheetsDefault(k, x),
+                ),
+              ),
           ],
         );
       },
@@ -215,7 +235,14 @@ class AiSection extends StatelessWidget {
         title: l.settingsAi,
         description: l.settingsAiHint,
         children: [
-          SettingsRow(label: l.aiEnable, control: _switch('settings.ai.enabled', p.aiEnabled, p.setAiEnabled)),
+          SettingsRow(
+            label: l.aiEnable,
+            control: _switch(
+              'settings.ai.enabled',
+              p.aiEnabled,
+              p.setAiEnabled,
+            ),
+          ),
         ],
       ),
     );
@@ -233,7 +260,11 @@ class DeveloperSection extends StatefulWidget {
 }
 
 class _DeveloperSectionState extends State<DeveloperSection> {
-  late Future<List<AccessTokenView>> _tokens = widget.services.repositories.users.listTokens();
+  late Future<List<AccessTokenView>> _tokens = widget
+      .services
+      .repositories
+      .users
+      .listTokens();
   String? _secret;
 
   ShellServices get s => widget.services;
@@ -249,7 +280,10 @@ class _DeveloperSectionState extends State<DeveloperSection> {
     );
     if (name == null) return;
     try {
-      final t = await s.repositories.users.createToken(name: name, scopes: McpScope.all);
+      final t = await s.repositories.users.createToken(
+        name: name,
+        scopes: McpScope.all,
+      );
       setState(() {
         _secret = t.secret;
         _tokens = s.repositories.users.listTokens();
@@ -276,10 +310,19 @@ class _DeveloperSectionState extends State<DeveloperSection> {
                 title: Text(l.tokenCopyOnce),
                 description: Row(
                   children: [
-                    Expanded(child: Text(_secret!, style: TextStyle(fontFamily: 'packages/shad/GeistMono', color: theme.colorScheme.foreground))),
+                    Expanded(
+                      child: Text(
+                        _secret!,
+                        style: TextStyle(
+                          fontFamily: 'packages/shad/GeistMono',
+                          color: theme.colorScheme.foreground,
+                        ),
+                      ),
+                    ),
                     ShadButton.outline(
                       size: ShadButtonSize.sm,
-                      onPressed: () => Clipboard.setData(ClipboardData(text: _secret!)),
+                      onPressed: () =>
+                          Clipboard.setData(ClipboardData(text: _secret!)),
                       child: Text(l.actionCopy),
                     ),
                   ],
@@ -289,20 +332,31 @@ class _DeveloperSectionState extends State<DeveloperSection> {
               future: _tokens,
               builder: (context, snap) {
                 final list = snap.data ?? const <AccessTokenView>[];
-                if (snap.connectionState != ConnectionState.done) return const ShadSpinner();
-                if (list.isEmpty) return Text(l.tokensEmpty, style: theme.textTheme.muted);
+                if (snap.connectionState != ConnectionState.done) {
+                  return const ShadSpinner();
+                }
+                if (list.isEmpty) {
+                  return Text(l.tokensEmpty, style: theme.textTheme.muted);
+                }
                 return Column(
                   children: [
                     for (final t in list)
                       Row(
                         children: [
-                          Expanded(child: Text('${t.name} · ${t.prefix}…${t.revokedAt != null ? ' · ${l.tokenRevoked}' : ''}')),
+                          Expanded(
+                            child: Text(
+                              '${t.name} · ${t.prefix}…${t.revokedAt != null ? ' · ${l.tokenRevoked}' : ''}',
+                            ),
+                          ),
                           if (t.revokedAt == null)
                             ShadButton.ghost(
                               size: ShadButtonSize.sm,
                               onPressed: () async {
                                 await s.repositories.users.revokeToken(t.id);
-                                setState(() => _tokens = s.repositories.users.listTokens());
+                                setState(
+                                  () => _tokens = s.repositories.users
+                                      .listTokens(),
+                                );
                               },
                               child: Text(l.tokenRevoke),
                             ),
@@ -314,7 +368,11 @@ class _DeveloperSectionState extends State<DeveloperSection> {
             ),
             Align(
               alignment: Alignment.centerLeft,
-              child: ShadButton(onPressed: _create, leading: const Icon(LucideIcons.plus, size: 16), child: Text(l.tokenCreate)),
+              child: ShadButton(
+                onPressed: _create,
+                leading: const Icon(LucideIcons.plus, size: 16),
+                child: Text(l.tokenCreate),
+              ),
             ),
           ],
         ),
@@ -324,13 +382,25 @@ class _DeveloperSectionState extends State<DeveloperSection> {
           children: [
             Container(
               padding: const EdgeInsets.all(10),
-              decoration: BoxDecoration(color: theme.colorScheme.muted, borderRadius: BorderRadius.circular(6)),
-              child: Text(mcpConnectionJson(s), style: const TextStyle(fontFamily: 'packages/shad/GeistMono', fontSize: 12)),
+              decoration: BoxDecoration(
+                color: theme.colorScheme.muted,
+                borderRadius: BorderRadius.circular(6),
+              ),
+              child: Text(
+                mcpConnectionJson(s),
+                style: const TextStyle(
+                  fontFamily: 'packages/shad/GeistMono',
+                  fontSize: 12,
+                ),
+              ),
             ),
             Align(
               alignment: Alignment.centerLeft,
               child: ShadButton.outline(
-                onPressed: () => s.dispatcher.invoke('shell.mcp.copyConnectionInfo', source: InvocationSource.ui),
+                onPressed: () => s.dispatcher.invoke(
+                  'shell.mcp.copyConnectionInfo',
+                  source: InvocationSource.ui,
+                ),
                 child: Text(l.cmdCopyMcpConfig),
               ),
             ),
@@ -338,7 +408,11 @@ class _DeveloperSectionState extends State<DeveloperSection> {
               listenable: s.mcp,
               builder: (context, _) => SettingsRow(
                 label: l.mcpAllowControl,
-                control: _switch('settings.mcp.bridge', s.mcp.enabled, (_) => s.dispatcher.invoke('shell.mcp.toggleUiBridge')),
+                control: _switch(
+                  'settings.mcp.bridge',
+                  s.mcp.enabled,
+                  (_) => s.dispatcher.invoke('shell.mcp.toggleUiBridge'),
+                ),
               ),
             ),
           ],
@@ -365,14 +439,23 @@ class OfflineSection extends StatelessWidget {
         if (d is CachedDriveRepository)
           ListenableBuilder(
             listenable: d,
-            builder: (context, _) => SettingsRow(label: l.offlinePending, control: Text('${d.pendingCount}')),
+            builder: (context, _) => SettingsRow(
+              label: l.offlinePending,
+              control: Text('${d.pendingCount}'),
+            ),
           ),
         SettingsRow(
           label: l.offlineClear,
           description: l.offlineClearHint,
           control: ShadButton.outline(
             onPressed: () async {
-              final ok = await confirmDialog(context, title: l.offlineClear, description: l.offlineClearHint, confirmLabel: l.offlineClear, destructive: true);
+              final ok = await confirmDialog(
+                context,
+                title: l.offlineClear,
+                description: l.offlineClearHint,
+                confirmLabel: l.offlineClear,
+                destructive: true,
+              );
               if (!ok) return;
               if (d is CachedDriveRepository) {
                 await d.cache.clear();
@@ -402,10 +485,26 @@ class AboutSection extends StatelessWidget {
       builder: (context, info, _) => SettingsGroup(
         title: '${services.config.appName} · ${l.wonkyWork}',
         children: [
-          SettingsRow(label: l.aboutAppVersion, control: const Text(clientVersion)),
-          SettingsRow(label: l.aboutServerVersion, control: Text(info?.serverVersion ?? '—')),
-          SettingsRow(label: l.aboutProtocol, control: Text(info == null ? '—' : '${info.minClientVersion} · ${info.syncTablesHash.substring(0, info.syncTablesHash.length.clamp(0, 8))}')),
-          SettingsRow(label: l.aboutRunMode, control: Text(info?.runMode ?? '—')),
+          SettingsRow(
+            label: l.aboutAppVersion,
+            control: const Text(clientVersion),
+          ),
+          SettingsRow(
+            label: l.aboutServerVersion,
+            control: Text(info?.serverVersion ?? '—'),
+          ),
+          SettingsRow(
+            label: l.aboutProtocol,
+            control: Text(
+              info == null
+                  ? '—'
+                  : '${info.minClientVersion} · ${info.syncTablesHash.substring(0, info.syncTablesHash.length.clamp(0, 8))}',
+            ),
+          ),
+          SettingsRow(
+            label: l.aboutRunMode,
+            control: Text(info?.runMode ?? '—'),
+          ),
           Align(
             alignment: Alignment.centerLeft,
             child: ShadButton.outline(
@@ -423,7 +522,10 @@ class AboutSection extends StatelessWidget {
                           for (final e in snap.data ?? const <LicenseEntry>[])
                             Padding(
                               padding: const EdgeInsets.only(bottom: 8),
-                              child: Text(e.packages.join(', '), style: ShadTheme.of(context).textTheme.small),
+                              child: Text(
+                                e.packages.join(', '),
+                                style: ShadTheme.of(context).textTheme.small,
+                              ),
                             ),
                         ],
                       ),

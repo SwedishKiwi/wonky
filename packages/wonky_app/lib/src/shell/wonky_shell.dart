@@ -1,7 +1,9 @@
 import 'dart:async';
 
 import 'package:flutter/foundation.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
+import 'package:flutter_web_plugins/url_strategy.dart';
 import 'package:provider/provider.dart';
 import 'package:shad/shad.dart';
 import 'package:wonky_client/wonky_client.dart';
@@ -38,7 +40,12 @@ import '../undo/undo_service.dart';
 /// void main() => WonkyShell.run(WriteAppConfig());
 /// ```
 class WonkyShell extends StatefulWidget {
-  const WonkyShell({super.key, required this.config, this.client, this.services});
+  const WonkyShell({
+    super.key,
+    required this.config,
+    this.client,
+    this.services,
+  });
 
   final WonkyAppConfig config;
 
@@ -51,6 +58,9 @@ class WonkyShell extends StatefulWidget {
   /// Initializes the client and runs the app.
   static Future<void> run(WonkyAppConfig config) async {
     WidgetsFlutterBinding.ensureInitialized();
+    // Real paths (`/d/<uuid>`), served by the dev server and the server's
+    // FlutterRoute SPA fallback.
+    usePathUrlStrategy();
     final client = await WonkyClient.initialize();
     runApp(WonkyShell(config: config, client: client));
   }
@@ -59,7 +69,9 @@ class WonkyShell extends StatefulWidget {
   static ShellServices createServices(WonkyAppConfig config, WonkyClient wc) {
     final api = Api(wc.client);
     final device = SharedPreferencesStore();
-    final connectivity = ConnectivityService(ping: () async => await wc.client.meta.getInfo());
+    final connectivity = ConnectivityService(
+      ping: () async => await wc.client.meta.getInfo(),
+    );
     late final ShellServices services;
     final remoteDrive = ServerDriveRepository(api);
     final cached = CachedDriveRepository(
@@ -69,7 +81,8 @@ class WonkyShell extends StatefulWidget {
       connectivity: connectivity,
       currentUser: () => services.me,
       onConflict: (op, e) => services.toasts.show(
-        services.l10n?.toastOfflineOpFailed ?? 'A change made offline could not be applied',
+        services.l10n?.toastOfflineOpFailed ??
+            'A change made offline could not be applied',
         description: errorMessage(e),
       ),
     );
@@ -107,12 +120,15 @@ class _WonkyShellState extends State<WonkyShell> {
   @override
   void initState() {
     super.initState();
-    s = widget.services ?? WonkyShell.createServices(widget.config, widget.client!);
+    s =
+        widget.services ??
+        WonkyShell.createServices(widget.config, widget.client!);
     s.router = buildShellRouter(s);
     s.router.routerDelegate.addListener(_onRoute);
     s.registry.registerAll(allShellCommands(s));
     s.registry.registerAll(widget.config.commands(s));
     s.keymap.onOverridesChanged = s.prefs.setKeymapOverrides;
+    HardwareKeyboard.instance.addHandler(_onUnfocusedKey);
     s.crossApp.rememberLastApp(widget.config.app);
     s.auth.onSignedIn = _afterSignIn;
     s.auth.onSigningOut = _beforeSignOut;
@@ -146,7 +162,9 @@ class _WonkyShellState extends State<WonkyShell> {
   Future<void> _afterSignIn(SignUpDraft? draft) async {
     if (draft != null && draft.displayName.isNotEmpty) {
       try {
-        await s.repositories.users.updateProfile(displayName: draft.displayName);
+        await s.repositories.users.updateProfile(
+          displayName: draft.displayName,
+        );
       } catch (e) {
         debugPrint('Setting the display name failed: $e');
       }
@@ -184,12 +202,31 @@ class _WonkyShellState extends State<WonkyShell> {
   }
 
   void _onAuth() {
-    if (s.auth.isSignedIn && s.currentUser.value == null) unawaited(_afterSignIn(null));
+    if (s.auth.isSignedIn && s.currentUser.value == null) {
+      unawaited(_afterSignIn(null));
+    }
     if (mounted) setState(() {});
+  }
+
+  /// Global shortcuts when no widget holds focus (e.g. right after load on
+  /// web, before the view regains DOM focus): the focus chain would never
+  /// reach the global [KeymapScope], so it handles the event here.
+  bool _onUnfocusedKey(KeyEvent event) {
+    final primary = FocusManager.instance.primaryFocus;
+    if (primary != null && primary != FocusManager.instance.rootScope) {
+      return false;
+    }
+    return s.keymap.handle(
+          event,
+          KeyScope.global,
+          context: s.navigatorContext,
+        ) ==
+        KeyEventResult.handled;
   }
 
   @override
   void dispose() {
+    HardwareKeyboard.instance.removeHandler(_onUnfocusedKey);
     _undoSub?.cancel();
     s.auth.removeListener(_onAuth);
     s.router.routerDelegate.removeListener(_onRoute);
@@ -223,14 +260,21 @@ class _WonkyShellState extends State<WonkyShell> {
               ...config.localizationsDelegates,
             ],
             builder: (context, child) => WonkyThemeScope(
-              data: WonkyThemeExtension(density: s.prefs.wonkyDensity, reduceMotion: s.prefs.reduceMotion),
+              data: WonkyThemeExtension(
+                density: s.prefs.wonkyDensity,
+                reduceMotion: s.prefs.reduceMotion,
+              ),
               child: KeymapScope(
                 scope: KeyScope.global,
                 keymap: s.keymap,
                 child: config.wrap(
                   context,
                   s,
-                  ShellOverlays(services: s, ready: _ready, child: child ?? const SizedBox.shrink()),
+                  ShellOverlays(
+                    services: s,
+                    ready: _ready,
+                    child: child ?? const SizedBox.shrink(),
+                  ),
                 ),
               ),
             ),

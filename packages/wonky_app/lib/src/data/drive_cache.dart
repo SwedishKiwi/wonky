@@ -28,7 +28,9 @@ class DriveCache {
         final items = raw['items'];
         if (items is List) {
           for (final j in items) {
-            final v = DriveItemView.fromJson((j as Map).cast<String, dynamic>());
+            final v = DriveItemView.fromJson(
+              (j as Map).cast<String, dynamic>(),
+            );
             _items[v.uuid.uuid] = v;
             _seen[v.uuid.uuid] = clock.now();
           }

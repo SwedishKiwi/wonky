@@ -1,8 +1,6 @@
 import 'package:flutter/widgets.dart';
 import 'dart:async';
 
-import 'package:flutter/widgets.dart';
-import 'package:flutter/foundation.dart';
 import 'package:flutter/semantics.dart';
 import 'package:wonky_client/wonky_client.dart';
 import 'package:wonky_ui/wonky_ui.dart';
@@ -53,18 +51,30 @@ class PresenceSession extends ChangeNotifier with WidgetsBindingObserver {
         _participants = e.participants;
       case PresenceJoined():
         _participants = [
-          for (final p in _participants) if (p.sessionId != e.participant.sessionId) p,
+          for (final p in _participants)
+            if (p.sessionId != e.participant.sessionId) p,
           e.participant,
         ];
         _announce(e.participant.displayName, joined: true);
       case PresenceLeft():
-        final gone = _participants.where((p) => p.sessionId == e.sessionId).firstOrNull;
-        _participants = [for (final p in _participants) if (p.sessionId != e.sessionId) p];
+        final gone = _participants
+            .where((p) => p.sessionId == e.sessionId)
+            .firstOrNull;
+        _participants = [
+          for (final p in _participants)
+            if (p.sessionId != e.sessionId) p,
+        ];
         if (gone != null) _announce(gone.displayName, joined: false);
       case PresenceUpdated():
         _participants = [
           for (final p in _participants)
-            p.sessionId == e.sessionId ? p.copyWith(state: e.state, cursorJson: e.cursorJson, mode: e.mode) : p,
+            p.sessionId == e.sessionId
+                ? p.copyWith(
+                    state: e.state,
+                    cursorJson: e.cursorJson,
+                    mode: e.mode,
+                  )
+                : p,
         ];
       default:
         return;
@@ -85,7 +95,9 @@ class PresenceSession extends ChangeNotifier with WidgetsBindingObserver {
 
   void _send() {
     if (_updates.isClosed) return;
-    _updates.add(PresenceUpdate(state: _state, cursorJson: _pendingCursor, mode: mode));
+    _updates.add(
+      PresenceUpdate(state: _state, cursorJson: _pendingCursor, mode: mode),
+    );
   }
 
   void _setState(PresenceState s) {
@@ -96,7 +108,10 @@ class PresenceSession extends ChangeNotifier with WidgetsBindingObserver {
 
   void _resetIdle() {
     _idle?.cancel();
-    _idle = Timer(const Duration(seconds: 60), () => _setState(PresenceState.idle));
+    _idle = Timer(
+      const Duration(seconds: 60),
+      () => _setState(PresenceState.idle),
+    );
   }
 
   /// Call on user input (the editor scaffold forwards pointer/key events).
@@ -124,7 +139,9 @@ class PresenceSession extends ChangeNotifier with WidgetsBindingObserver {
       case AppLifecycleState.resumed:
         _setState(PresenceState.active);
         _resetIdle();
-      case AppLifecycleState.hidden || AppLifecycleState.paused || AppLifecycleState.inactive:
+      case AppLifecycleState.hidden ||
+          AppLifecycleState.paused ||
+          AppLifecycleState.inactive:
         _setState(PresenceState.away);
       case AppLifecycleState.detached:
         break;
@@ -140,10 +157,15 @@ class PresenceSession extends ChangeNotifier with WidgetsBindingObserver {
         displayName: p.displayName,
         colorIndex: p.colorIndex,
         avatarUrl: p.avatarUrl,
-        isSelf: p.sessionId == _sessionId || p.userId == services.me?.id && p.sessionId == _sessionId,
+        isSelf:
+            p.sessionId == _sessionId ||
+            p.userId == services.me?.id && p.sessionId == _sessionId,
         isAgent: p.actorKind.name != 'user',
         activity: switch (p.state) {
-          PresenceState.active => p.mode == 'viewing' ? PresenceActivity.viewing : PresenceActivity.editing,
+          PresenceState.active =>
+            p.mode == 'viewing'
+                ? PresenceActivity.viewing
+                : PresenceActivity.editing,
           PresenceState.idle => PresenceActivity.idle,
           PresenceState.away => PresenceActivity.away,
           PresenceState.offline => PresenceActivity.offline,

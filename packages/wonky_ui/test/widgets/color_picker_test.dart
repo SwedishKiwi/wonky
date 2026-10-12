@@ -15,8 +15,12 @@ void main() {
     test('when converting to and from Color then it round-trips', () {
       const c = Color(0x80ff0000);
       expect(WonkyColor.fromColor(c).toColor(), c);
-      expect(WonkyColor.fromJson(const WonkyColor('#ff0000', themeRef: 'accent1').toJson()),
-          const WonkyColor('#ff0000', themeRef: 'accent1'));
+      expect(
+        WonkyColor.fromJson(
+          const WonkyColor('#ff0000', themeRef: 'accent1').toJson(),
+        ),
+        const WonkyColor('#ff0000', themeRef: 'accent1'),
+      );
     });
   });
 
@@ -27,7 +31,10 @@ void main() {
         WonkyColor? picked;
         await pumpWonky(
           tester,
-          WonkyColorPicker(resetLabel: 'Automatic', onChanged: (c) => picked = c),
+          WonkyColorPicker(
+            resetLabel: 'Automatic',
+            onChanged: (c) => picked = c,
+          ),
           brightness: b,
           center: true,
         );
@@ -61,7 +68,11 @@ void main() {
   testWidgets('Given the picker when navigating with arrows and Enter then the '
       'highlighted swatch is chosen', (tester) async {
     WonkyColor? picked;
-    await pumpWonky(tester, WonkyColorPicker(onChanged: (c) => picked = c), center: true);
+    await pumpWonky(
+      tester,
+      WonkyColorPicker(onChanged: (c) => picked = c),
+      center: true,
+    );
     await tester.pump();
     await tester.sendKeyEvent(LogicalKeyboardKey.arrowDown); // row 1 col 0
     await tester.sendKeyEvent(LogicalKeyboardKey.arrowRight); // col 1 → red
@@ -69,24 +80,33 @@ void main() {
     expect(picked, const WonkyColor('#ff0000'));
   });
 
-  testWidgets('Given the custom panel when entering a hex and applying then the '
-      'custom color is reported and added', (tester) async {
-    WonkyColor? picked;
-    WonkyColor? added;
-    await pumpWonky(
-      tester,
-      WonkyColorPicker(onChanged: (c) => picked = c, onCustomColorAdded: (c) => added = c),
-      center: true,
-    );
-    await tester.tap(find.byKey(const ValueKey('colorPicker.custom')));
-    await tester.pumpAndSettle();
-    await tester.enterText(find.byKey(const ValueKey('colorPicker.hex')).first, '336699');
-    await tester.pump();
-    await tester.tap(find.byKey(const ValueKey('colorPicker.apply')));
-    await tester.pumpAndSettle();
-    expect(picked, const WonkyColor('#336699'));
-    expect(added, const WonkyColor('#336699'));
-  });
+  testWidgets(
+    'Given the custom panel when entering a hex and applying then the '
+    'custom color is reported and added',
+    (tester) async {
+      WonkyColor? picked;
+      WonkyColor? added;
+      await pumpWonky(
+        tester,
+        WonkyColorPicker(
+          onChanged: (c) => picked = c,
+          onCustomColorAdded: (c) => added = c,
+        ),
+        center: true,
+      );
+      await tester.tap(find.byKey(const ValueKey('colorPicker.custom')));
+      await tester.pumpAndSettle();
+      await tester.enterText(
+        find.byKey(const ValueKey('colorPicker.hex')).first,
+        '336699',
+      );
+      await tester.pump();
+      await tester.tap(find.byKey(const ValueKey('colorPicker.apply')));
+      await tester.pumpAndSettle();
+      expect(picked, const WonkyColor('#336699'));
+      expect(added, const WonkyColor('#336699'));
+    },
+  );
 
   testWidgets('Given theme and recent colors when shown then they appear as '
       'extra rows', (tester) async {
@@ -94,7 +114,12 @@ void main() {
       tester,
       WonkyColorPicker(
         onChanged: (_) {},
-        themeColors: const [WonkyThemeSwatch(color: WonkyColor('#123456', themeRef: 'accent1'), name: 'Accent 1')],
+        themeColors: const [
+          WonkyThemeSwatch(
+            color: WonkyColor('#123456', themeRef: 'accent1'),
+            name: 'Accent 1',
+          ),
+        ],
         recentColors: const [WonkyColor('#abcdef')],
       ),
       center: true,

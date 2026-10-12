@@ -66,7 +66,10 @@ class AppearanceSection extends StatelessWidget {
                   ),
                   for (final a in WonkyTheme.accents)
                     _AccentSwatch(
-                      color: WonkyTheme.of(ShadTheme.of(context).brightness, WonkyThemeConfig(accent: a)).colorScheme.primary,
+                      color: WonkyTheme.of(
+                        ShadTheme.of(context).brightness,
+                        WonkyThemeConfig(accent: a),
+                      ).colorScheme.primary,
                       label: a,
                       selected: p.accent == a,
                       onTap: () => p.setAccent(a),
@@ -84,10 +87,20 @@ class AppearanceSection extends StatelessWidget {
                   key: const ValueKey<String>('settings.density'),
                   initialValue: p.density,
                   options: [
-                    ShadOption(value: UiDensity.comfortable, child: Text(l.densityComfortable)),
-                    ShadOption(value: UiDensity.compact, child: Text(l.densityCompact)),
+                    ShadOption(
+                      value: UiDensity.comfortable,
+                      child: Text(l.densityComfortable),
+                    ),
+                    ShadOption(
+                      value: UiDensity.compact,
+                      child: Text(l.densityCompact),
+                    ),
                   ],
-                  selectedOptionBuilder: (context, v) => Text(v == UiDensity.compact ? l.densityCompact : l.densityComfortable),
+                  selectedOptionBuilder: (context, v) => Text(
+                    v == UiDensity.compact
+                        ? l.densityCompact
+                        : l.densityComfortable,
+                  ),
                   onChanged: (v) {
                     if (v != null) p.setDensity(v);
                   },
@@ -111,7 +124,13 @@ class AppearanceSection extends StatelessWidget {
 }
 
 class _ThemePreview extends StatelessWidget {
-  const _ThemePreview({super.key, required this.mode, required this.label, required this.selected, required this.onTap});
+  const _ThemePreview({
+    super.key,
+    required this.mode,
+    required this.label,
+    required this.selected,
+    required this.onTap,
+  });
 
   final AppThemeMode mode;
   final String label;
@@ -135,7 +154,14 @@ class _ThemePreview extends StatelessWidget {
             const SizedBox(height: 4),
             Container(height: 6, width: 70, color: c.border),
             const Spacer(),
-            Container(height: 12, width: 40, decoration: BoxDecoration(color: c.primary, borderRadius: BorderRadius.circular(3))),
+            Container(
+              height: 12,
+              width: 40,
+              decoration: BoxDecoration(
+                color: c.primary,
+                borderRadius: BorderRadius.circular(3),
+              ),
+            ),
           ],
         ),
       );
@@ -157,12 +183,22 @@ class _ThemePreview extends StatelessWidget {
                 clipBehavior: Clip.antiAlias,
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(8),
-                  border: Border.all(color: selected ? theme.colorScheme.ring : theme.colorScheme.border, width: selected ? 2 : 1),
+                  border: Border.all(
+                    color: selected
+                        ? theme.colorScheme.ring
+                        : theme.colorScheme.border,
+                    width: selected ? 2 : 1,
+                  ),
                 ),
                 child: switch (mode) {
                   AppThemeMode.light => mini(Brightness.light),
                   AppThemeMode.dark => mini(Brightness.dark),
-                  AppThemeMode.system => Row(children: [Expanded(child: mini(Brightness.light)), Expanded(child: mini(Brightness.dark))]),
+                  AppThemeMode.system => Row(
+                    children: [
+                      Expanded(child: mini(Brightness.light)),
+                      Expanded(child: mini(Brightness.dark)),
+                    ],
+                  ),
                 },
               ),
               const SizedBox(height: 6),
@@ -176,7 +212,12 @@ class _ThemePreview extends StatelessWidget {
 }
 
 class _AccentSwatch extends StatelessWidget {
-  const _AccentSwatch({required this.color, required this.label, required this.selected, required this.onTap});
+  const _AccentSwatch({
+    required this.color,
+    required this.label,
+    required this.selected,
+    required this.onTap,
+  });
 
   final Color color;
   final String label;
@@ -200,9 +241,16 @@ class _AccentSwatch extends StatelessWidget {
             padding: const EdgeInsets.all(2),
             decoration: BoxDecoration(
               shape: BoxShape.circle,
-              border: Border.all(color: selected ? theme.colorScheme.ring : const Color(0x00000000), width: 2),
+              border: Border.all(
+                color: selected
+                    ? theme.colorScheme.ring
+                    : const Color(0x00000000),
+                width: 2,
+              ),
             ),
-            child: DecoratedBox(decoration: BoxDecoration(color: color, shape: BoxShape.circle)),
+            child: DecoratedBox(
+              decoration: BoxDecoration(color: color, shape: BoxShape.circle),
+            ),
           ),
         ),
       ),

@@ -17,10 +17,9 @@ void main() {
     });
 
     test('when a required property is missing then it is reported', () {
-      expect(
-        schema.validate({'count': 3}),
-        [const JsonSchemaViolation(r'$', 'missing required property "name"')],
-      );
+      expect(schema.validate({'count': 3}), [
+        const JsonSchemaViolation(r'$', 'missing required property "name"'),
+      ]);
     });
 
     test('when values are out of range or not in the enum then each path is '
@@ -71,7 +70,12 @@ void main() {
   });
 
   group('Given JsonArgs', () {
-    const args = JsonArgs({'n': 3, 's': 'x', 'b': true, 'l': ['a', 1]});
+    const args = JsonArgs({
+      'n': 3,
+      's': 'x',
+      'b': true,
+      'l': ['a', 1],
+    });
     test('when reading typed values then they are converted', () {
       expect(args.integer('n'), 3);
       expect(args.string('s'), 'x');
@@ -81,7 +85,10 @@ void main() {
     });
     test('when a required string is missing then InvalidCommandArgs is '
         'thrown', () {
-      expect(() => args.requireString('zz'), throwsA(isA<InvalidCommandArgs>()));
+      expect(
+        () => args.requireString('zz'),
+        throwsA(isA<InvalidCommandArgs>()),
+      );
     });
   });
 

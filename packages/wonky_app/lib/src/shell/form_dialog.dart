@@ -3,6 +3,7 @@ import 'package:flutter/widgets.dart';
 import 'package:shad/shad.dart';
 
 import 'shell_scope.dart';
+import 'shell_services.dart';
 
 /// A dialog the MCP UI bridge can read and operate (suite 09 §6.2).
 abstract class McpDescribableDialog {
@@ -49,7 +50,11 @@ class TextFieldSpec extends DialogFieldSpec {
 }
 
 class CheckboxFieldSpec extends DialogFieldSpec {
-  const CheckboxFieldSpec({required super.id, required super.label, this.initial = false});
+  const CheckboxFieldSpec({
+    required super.id,
+    required super.label,
+    this.initial = false,
+  });
 
   final bool initial;
 }
@@ -125,8 +130,13 @@ class DialogResult {
 
 /// Shows [spec]; resolves with the pressed button and field values (null
 /// when dismissed).
-Future<DialogResult?> showWonkyFormDialog(BuildContext context, WonkyDialogSpec spec) =>
-    showShadDialog<DialogResult>(context: context, builder: (_) => WonkyFormDialog(spec: spec));
+Future<DialogResult?> showWonkyFormDialog(
+  BuildContext context,
+  WonkyDialogSpec spec,
+) => showShadDialog<DialogResult>(
+  context: context,
+  builder: (_) => WonkyFormDialog(spec: spec),
+);
 
 /// Renders a [WonkyDialogSpec] with shad widgets.
 class WonkyFormDialog extends StatefulWidget {
@@ -138,7 +148,9 @@ class WonkyFormDialog extends StatefulWidget {
   State<WonkyFormDialog> createState() => _WonkyFormDialogState();
 }
 
-class _WonkyFormDialogState extends State<WonkyFormDialog> implements McpDescribableDialog {
+class _WonkyFormDialogState extends State<WonkyFormDialog>
+    implements McpDescribableDialog {
+  ShellServices? _registeredIn;
   final Map<String, TextEditingController> _text = {};
   final Map<String, Object?> _values = {};
   final Map<String, String?> _errors = {};
@@ -151,7 +163,10 @@ class _WonkyFormDialogState extends State<WonkyFormDialog> implements McpDescrib
         case TextFieldSpec():
           final c = TextEditingController(text: f.initial);
           if (f.selectAll) {
-            c.selection = TextSelection(baseOffset: 0, extentOffset: f.initial.length);
+            c.selection = TextSelection(
+              baseOffset: 0,
+              extentOffset: f.initial.length,
+            );
           }
           _text[f.id] = c;
         case CheckboxFieldSpec():
@@ -166,12 +181,13 @@ class _WonkyFormDialogState extends State<WonkyFormDialog> implements McpDescrib
   void didChangeDependencies() {
     super.didChangeDependencies();
     final s = ShellScope.maybeOf(context);
+    _registeredIn = s;
     if (s != null && !s.openDialogs.contains(this)) s.openDialogs.add(this);
   }
 
   @override
   void dispose() {
-    ShellScope.maybeOf(context)?.openDialogs.remove(this);
+    _registeredIn?.openDialogs.remove(this);
     for (final c in _text.values) {
       c.dispose();
     }
@@ -283,24 +299,32 @@ class _WonkyFormDialogState extends State<WonkyFormDialog> implements McpDescrib
                   key: key == null ? null : ValueKey<String>('$key.${f.id}'),
                   controller: _text[f.id],
                   autofocus: autofocus,
-                  placeholder: f.placeholder == null ? null : Text(f.placeholder!),
+                  placeholder: f.placeholder == null
+                      ? null
+                      : Text(f.placeholder!),
                   maxLength: f.maxLength,
                   obscureText: f.obscure,
                   maxLines: f.multiline ? 5 : 1,
                   minLines: f.multiline ? 3 : 1,
-                  onSubmitted: f.multiline ? null : (_) {
-                    final p = _primary;
-                    if (p != null) _press(p);
-                  },
+                  onSubmitted: f.multiline
+                      ? null
+                      : (_) {
+                          final p = _primary;
+                          if (p != null) _press(p);
+                        },
                   onChanged: (_) {
-                    if (_errors[f.id] != null) setState(() => _errors[f.id] = null);
+                    if (_errors[f.id] != null) {
+                      setState(() => _errors[f.id] = null);
+                    }
                   },
                 ),
                 if (_errors[f.id] != null) ...[
                   const SizedBox(height: 4),
                   Text(
                     _errors[f.id]!,
-                    style: theme.textTheme.small.copyWith(color: theme.colorScheme.destructive),
+                    style: theme.textTheme.small.copyWith(
+                      color: theme.colorScheme.destructive,
+                    ),
                   ),
                 ],
               ],
@@ -327,9 +351,11 @@ class _WonkyFormDialogState extends State<WonkyFormDialog> implements McpDescrib
                   key: key == null ? null : ValueKey<String>('$key.${f.id}'),
                   initialValue: _values[f.id] as String?,
                   options: [
-                    for (final o in f.options.entries) ShadOption(value: o.key, child: Text(o.value)),
+                    for (final o in f.options.entries)
+                      ShadOption(value: o.key, child: Text(o.value)),
                   ],
-                  selectedOptionBuilder: (context, v) => Text(f.options[v] ?? v),
+                  selectedOptionBuilder: (context, v) =>
+                      Text(f.options[v] ?? v),
                   onChanged: (v) => setState(() => _values[f.id] = v),
                 ),
               ],
@@ -339,7 +365,8 @@ class _WonkyFormDialogState extends State<WonkyFormDialog> implements McpDescrib
     }
     return CallbackShortcuts(
       bindings: {
-        const SingleActivator(LogicalKeyboardKey.escape): () => Navigator.of(context).pop(),
+        const SingleActivator(LogicalKeyboardKey.escape): () =>
+            Navigator.of(context).pop(),
       },
       child: ShadDialog(
         key: key == null ? null : ValueKey<String>(key),
@@ -350,12 +377,16 @@ class _WonkyFormDialogState extends State<WonkyFormDialog> implements McpDescrib
             b.primary
                 ? (b.destructive
                       ? ShadButton.destructive(
-                          key: key == null ? null : ValueKey<String>('$key.${b.id}'),
+                          key: key == null
+                              ? null
+                              : ValueKey<String>('$key.${b.id}'),
                           onPressed: () => _press(b),
                           child: Text(b.label),
                         )
                       : ShadButton(
-                          key: key == null ? null : ValueKey<String>('$key.${b.id}'),
+                          key: key == null
+                              ? null
+                              : ValueKey<String>('$key.${b.id}'),
                           onPressed: () => _press(b),
                           child: Text(b.label),
                         ))

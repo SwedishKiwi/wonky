@@ -105,7 +105,10 @@ abstract class DocumentController extends ChangeNotifier {
   CommentAnchorProvider? get commentAnchors => null;
 
   /// Scrolls to another participant's cursor (presence avatar click).
-  void revealParticipant(String sessionId) {}
+  /// [sessionId] is the presence-stream session, which differs from the
+  /// document stream's session id; [userId] identifies the participant's
+  /// user so the editor can find their caret.
+  void revealParticipant(String sessionId, {int? userId}) {}
 
   /// Cursor JSON sent with presence updates (Sheets; Write uses its own
   /// document stream).
@@ -131,7 +134,11 @@ class DownloadFormat {
 
 /// Makes [controller] the active document while this widget is mounted.
 class DocumentScope extends StatefulWidget {
-  const DocumentScope({super.key, required this.controller, required this.child});
+  const DocumentScope({
+    super.key,
+    required this.controller,
+    required this.child,
+  });
 
   final DocumentController controller;
   final Widget child;
@@ -148,7 +155,11 @@ abstract class ActiveDocumentHost {
 
 /// Provides the [ActiveDocumentHost] to [DocumentScope]s.
 class ActiveDocumentHostScope extends InheritedWidget {
-  const ActiveDocumentHostScope({super.key, required this.host, required super.child});
+  const ActiveDocumentHostScope({
+    super.key,
+    required this.host,
+    required super.child,
+  });
 
   final ActiveDocumentHost host;
 
@@ -156,7 +167,8 @@ class ActiveDocumentHostScope extends InheritedWidget {
       context.getInheritedWidgetOfExactType<ActiveDocumentHostScope>()?.host;
 
   @override
-  bool updateShouldNotify(ActiveDocumentHostScope oldWidget) => oldWidget.host != host;
+  bool updateShouldNotify(ActiveDocumentHostScope oldWidget) =>
+      oldWidget.host != host;
 }
 
 class _DocumentScopeState extends State<DocumentScope> {
@@ -190,4 +202,34 @@ class _DocumentScopeState extends State<DocumentScope> {
 
   @override
   Widget build(BuildContext context) => widget.child;
+}
+
+/// A minimal [DocumentController] for screens without a real editor yet
+/// (placeholders, read-only previews): item identity and role only.
+class BasicDocumentController extends DocumentController {
+  BasicDocumentController({
+    required this.itemUuid,
+    required this.kind,
+    this.title = '',
+    this.role = Role.viewer,
+  });
+
+  @override
+  final UuidValue itemUuid;
+  @override
+  final DriveItemKind kind;
+  @override
+  String title;
+  @override
+  Role role;
+
+  @override
+  bool get persistUndo => false;
+
+  /// Updates title/role from the loaded drive item.
+  void update({String? title, Role? role}) {
+    if (title != null) this.title = title;
+    if (role != null) this.role = role;
+    notifyListeners();
+  }
 }

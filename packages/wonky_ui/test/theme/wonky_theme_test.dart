@@ -18,7 +18,9 @@ void main() {
     });
 
     test('when compact density is chosen then the spacing step shrinks', () {
-      final c = WonkyTheme.dark(const WonkyThemeConfig(density: WonkyDensity.compact));
+      final c = WonkyTheme.dark(
+        const WonkyThemeConfig(density: WonkyDensity.compact),
+      );
       expect(c.spacing.step, lessThan(WonkyTheme.dark().spacing.step));
     });
 
@@ -28,17 +30,38 @@ void main() {
         expect(scheme.custom.length, greaterThanOrEqualTo(32));
         expect(scheme.presenceColors.toSet(), hasLength(12));
         expect(scheme.canvas, isNotNull);
-        expect(scheme.page, b == Brightness.light ? const Color(0xffffffff) : const Color(0xff1e1e1e));
+        expect(
+          scheme.page,
+          b == Brightness.light
+              ? const Color(0xffffffff)
+              : const Color(0xff1e1e1e),
+        );
       });
 
-      test('when checking contrast in ${b.name} then status tokens are readable '
-          'on the background', () {
-        final s = WonkyTheme.of(b, const WonkyThemeConfig()).colorScheme;
-        for (final c in [s.success, s.warning, s.info, s.destructive, s.mutedForeground]) {
-          expect(_contrast(c, s.background), greaterThanOrEqualTo(4.5), reason: '$c');
-        }
-        expect(_contrast(s.offlineForeground, s.offline), greaterThanOrEqualTo(4.5));
-      });
+      test(
+        'when checking contrast in ${b.name} then status tokens are readable '
+        'on the background',
+        () {
+          final s = WonkyTheme.of(b, const WonkyThemeConfig()).colorScheme;
+          for (final c in [
+            s.success,
+            s.warning,
+            s.info,
+            s.destructive,
+            s.mutedForeground,
+          ]) {
+            expect(
+              _contrast(c, s.background),
+              greaterThanOrEqualTo(4.5),
+              reason: '$c',
+            );
+          }
+          expect(
+            _contrast(s.offlineForeground, s.offline),
+            greaterThanOrEqualTo(4.5),
+          );
+        },
+      );
     }
   });
 }
@@ -48,4 +71,3 @@ double _contrast(Color a, Color b) {
   final hi = la > lb ? la : lb, lo = la > lb ? lb : la;
   return (hi + 0.05) / (lo + 0.05);
 }
-

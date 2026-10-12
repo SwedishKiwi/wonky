@@ -40,23 +40,29 @@ class PreferencesController extends ChangeNotifier {
   };
   String? get accent => _accent;
   UiDensity get density => _density;
-  WonkyDensity get wonkyDensity =>
-      _density == UiDensity.compact ? WonkyDensity.compact : WonkyDensity.comfortable;
+  WonkyDensity get wonkyDensity => _density == UiDensity.compact
+      ? WonkyDensity.compact
+      : WonkyDensity.comfortable;
   bool get reduceMotion => _reduceMotion;
   String get keymapOverrides => _keymap;
   Map<String, Object?> get writeDefaults => Map.unmodifiable(_write);
   Map<String, Object?> get sheetsDefaults => Map.unmodifiable(_sheets);
-  Map<String, Object?> get notificationSettings => Map.unmodifiable(_notifications);
+  Map<String, Object?> get notificationSettings =>
+      Map.unmodifiable(_notifications);
   bool get aiEnabled => _aiEnabled;
 
-  WonkyThemeConfig get themeConfig => WonkyThemeConfig(accent: _accent, density: wonkyDensity);
+  WonkyThemeConfig get themeConfig =>
+      WonkyThemeConfig(accent: _accent, density: wonkyDensity);
 
   /// Loads the device cache (fast, before sign-in).
   Future<void> loadLocal() async {
     final cached = await _device.read('prefs.cache');
     if (cached is Map) {
       try {
-        _apply(UserPreferences.fromJson(cached.cast<String, dynamic>()), notify: false);
+        _apply(
+          UserPreferences.fromJson(cached.cast<String, dynamic>()),
+          notify: false,
+        );
       } catch (_) {}
     }
     final dev = await _device.read('prefs.device');
@@ -178,7 +184,9 @@ class PreferencesController extends ChangeNotifier {
 
   Future<void> setNotificationSetting(String key, Object? value) {
     _notifications = {..._notifications, key: value};
-    return _save(UserPreferencesPatch(notificationSettings: jsonEncode(_notifications)));
+    return _save(
+      UserPreferencesPatch(notificationSettings: jsonEncode(_notifications)),
+    );
   }
 
   // ---- Per-device values ----

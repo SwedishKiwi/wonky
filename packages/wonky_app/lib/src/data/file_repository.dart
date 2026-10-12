@@ -35,9 +35,17 @@ class ServerFileRepository implements FileRepository {
     StoredFileKind kind = StoredFileKind.image,
   }) async {
     final ticket = await api.guard(
-      (c) => c.file.createUpload(fileUuid, itemUuid, fileName, mimeType, bytes.length, kind: kind),
+      (c) => c.file.createUpload(
+        fileUuid,
+        itemUuid,
+        fileName,
+        mimeType,
+        bytes.length,
+        kind: kind,
+      ),
     );
-    if (ticket.status != StoredFileStatus.ready && ticket.uploadDescription != null) {
+    if (ticket.status != StoredFileStatus.ready &&
+        ticket.uploadDescription != null) {
       final uploader = FileUploader(ticket.uploadDescription!);
       await uploader.uploadByteData(ByteData.sublistView(bytes));
     }

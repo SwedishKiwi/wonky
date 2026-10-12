@@ -133,37 +133,62 @@ List<Command<CommandArgs>> navigationCommands(ShellServices s) => [
 ];
 
 void _cycleRegion(ShellServices s, int delta) {
-  final regions = [for (final r in s.focusRegions) if (r.context != null && r.context!.mounted) r];
+  final regions = [
+    for (final r in s.focusRegions)
+      if (r.context != null && r.context!.mounted) r,
+  ];
   if (regions.isEmpty) return;
   final primary = FocusManager.instance.primaryFocus;
   var current = -1;
   for (var i = 0; i < regions.length; i++) {
     final r = regions[i];
-    if (r == primary || (primary != null && primary.ancestors.contains(r))) current = i;
+    if (r == primary || (primary != null && primary.ancestors.contains(r))) {
+      current = i;
+    }
   }
-  final next = regions[((current + delta) % regions.length + regions.length) % regions.length];
-  final first = next.traversalDescendants.where((n) => n.canRequestFocus).firstOrNull;
+  final next =
+      regions[((current + delta) % regions.length + regions.length) %
+          regions.length];
+  final first = next.traversalDescendants
+      .where((n) => n.canRequestFocus)
+      .firstOrNull;
   (first ?? next).requestFocus();
 }
 
 List<Command<CommandArgs>> fileCommands(ShellServices s) {
-  Future<CommandResult> newItem(CommandContext ctx, DriveItemKind kind, {UuidValue? template}) async {
+  Future<CommandResult> newItem(
+    CommandContext ctx,
+    DriveItemKind kind, {
+    UuidValue? template,
+  }) async {
     final parent = s.currentFolder.value?.uuid;
     if (kind == s.config.primaryKind) {
-      final uuid = await s.config.createItem(s, parentUuid: parent, templateUuid: template);
+      final uuid = await s.config.createItem(
+        s,
+        parentUuid: parent,
+        templateUuid: template,
+      );
       if (uuid == null) return const CommandResult.cancelled();
       s.router.go(s.config.itemPath(uuid.uuid));
       return CommandResult.ok({'uuid': uuid.uuid});
     }
-    final uuid = await s.createItemOnServer(kind, parentUuid: parent, templateUuid: template);
+    final uuid = await s.createItemOnServer(
+      kind,
+      parentUuid: parent,
+      templateUuid: template,
+    );
     if (uuid == null) return const CommandResult.cancelled();
     final app = appForKind(kind);
-    await s.crossApp.open(app, app == WonkyAppKind.write ? '/d/${uuid.uuid}' : '/s/${uuid.uuid}');
+    await s.crossApp.open(
+      app,
+      app == WonkyAppKind.write ? '/d/${uuid.uuid}' : '/s/${uuid.uuid}',
+    );
     return CommandResult.ok({'uuid': uuid.uuid});
   }
 
-  DriveItemKind kindOf(JsonArgs a) =>
-      a.string('kind') == 'spreadsheet' ? DriveItemKind.spreadsheet : DriveItemKind.document;
+  DriveItemKind kindOf(JsonArgs a) => a.string('kind') == 'spreadsheet'
+      ? DriveItemKind.spreadsheet
+      : DriveItemKind.document;
 
   return [
     shellCommand(
@@ -180,11 +205,23 @@ List<Command<CommandArgs>> fileCommands(ShellServices s) {
         },
       ),
       enabled: (ctx, a) =>
-          s.connectivity.online || kindOf(a.values.containsKey('kind') ? a : JsonArgs({'kind': s.config.primaryKind.name})) == s.config.primaryKind,
+          s.connectivity.online ||
+          kindOf(
+                a.values.containsKey('kind')
+                    ? a
+                    : JsonArgs({'kind': s.config.primaryKind.name}),
+              ) ==
+              s.config.primaryKind,
       run: (ctx, a) {
-        final kind = a.values.containsKey('kind') ? kindOf(a) : s.config.primaryKind;
+        final kind = a.values.containsKey('kind')
+            ? kindOf(a)
+            : s.config.primaryKind;
         final t = a.string('templateUuid');
-        return newItem(ctx, kind, template: t == null ? null : UuidValue.fromString(t));
+        return newItem(
+          ctx,
+          kind,
+          template: t == null ? null : UuidValue.fromString(t),
+        );
       },
     ),
     // Sheets 04 §3.1 ids (aliases of shell.file.new).
@@ -227,9 +264,18 @@ List<Command<CommandArgs>> fileCommands(ShellServices s) {
       title: (l) => l.cmdMakeCopy,
       icon: LucideIcons.copy,
       palette: false,
-      args: const JsonSchema.object(properties: targetProps, additionalProperties: true),
-      enabled: (ctx, a) => s.dispatcher.stateOf('shell.drive.copy', a.values).enabled,
-      run: (ctx, a) => s.dispatcher.invoke('shell.drive.copy', args: a.values, source: ctx.source, context: ctx.buildContext),
+      args: const JsonSchema.object(
+        properties: targetProps,
+        additionalProperties: true,
+      ),
+      enabled: (ctx, a) =>
+          s.dispatcher.stateOf('shell.drive.copy', a.values).enabled,
+      run: (ctx, a) => s.dispatcher.invoke(
+        'shell.drive.copy',
+        args: a.values,
+        source: ctx.source,
+        context: ctx.buildContext,
+      ),
     ),
     shellCommand(
       'shell.file.open',
@@ -248,8 +294,13 @@ List<Command<CommandArgs>> fileCommands(ShellServices s) {
       title: (l) => l.cmdImport,
       icon: LucideIcons.fileUp,
       category: (l) => l.categoryFile,
-      enabled: (ctx, a) => s.config.importHandler != null && s.connectivity.online,
-      run: (ctx, a) => s.dispatcher.invoke('shell.drive.upload', source: ctx.source, context: ctx.buildContext),
+      enabled: (ctx, a) =>
+          s.config.importHandler != null && s.connectivity.online,
+      run: (ctx, a) => s.dispatcher.invoke(
+        'shell.drive.upload',
+        source: ctx.source,
+        context: ctx.buildContext,
+      ),
     ),
     shellCommand(
       'shell.file.print',
@@ -269,13 +320,19 @@ List<Command<CommandArgs>> fileCommands(ShellServices s) {
       icon: LucideIcons.download,
       category: (l) => l.categoryFile,
       args: const JsonSchema.object(
-        properties: {'format': JsonSchema.string(description: 'Format id, e.g. docx, pdf, xlsx, csv, md.')},
+        properties: {
+          'format': JsonSchema.string(
+            description: 'Format id, e.g. docx, pdf, xlsx, csv, md.',
+          ),
+        },
         required: ['format'],
       ),
       enabled: (ctx, a) {
         final doc = ctx.document;
         final item = s.currentItem.value;
-        return doc != null && (item?.canDownload ?? true) && doc.downloadFormats.isNotEmpty;
+        return doc != null &&
+            (item?.canDownload ?? true) &&
+            doc.downloadFormats.isNotEmpty;
       },
       run: (ctx, a) async {
         await ctx.document!.download(a.requireString('format'));
@@ -311,7 +368,9 @@ List<Command<CommandArgs>> sharingCommands(ShellServices s) => [
     run: (ctx, a) async {
       final t = await fetchTargets(s, a);
       final c = ctx.dialogContext;
-      if (t.length != 1 || c == null || !c.mounted) return const CommandResult.cancelled();
+      if (t.length != 1 || c == null || !c.mounted) {
+        return const CommandResult.cancelled();
+      }
       await showShareDialog(c, s, t.single);
       return const CommandResult.ok();
     },
@@ -340,18 +399,25 @@ List<Command<CommandArgs>> sharingCommands(ShellServices s) => [
     args: const JsonSchema.object(
       properties: {
         'uuid': JsonSchema.string(format: 'uuid'),
-        'role': JsonSchema.string(enumValues: ['viewer', 'commenter', 'editor']),
+        'role': JsonSchema.string(
+          enumValues: ['viewer', 'commenter', 'editor'],
+        ),
         'message': JsonSchema.string(),
       },
     ),
-    enabled: (ctx, a) => a.string('uuid') != null || s.currentItem.value != null,
+    enabled: (ctx, a) =>
+        a.string('uuid') != null || s.currentItem.value != null,
     run: (ctx, a) async {
       final id = a.string('uuid') ?? s.currentItem.value?.uuid.uuid;
       if (id == null) return const CommandResult.cancelled();
       final uuid = UuidValue.fromString(id);
       final role = a.string('role');
       if (role != null) {
-        await s.repositories.sharing.requestAccess(uuid, AccessRole.values.byName(role), a.string('message'));
+        await s.repositories.sharing.requestAccess(
+          uuid,
+          AccessRole.values.byName(role),
+          a.string('message'),
+        );
         s.toasts.show(s.l10n?.toastAccessRequested ?? 'Request sent');
         return const CommandResult.ok();
       }
@@ -368,7 +434,9 @@ List<Command<CommandArgs>> editCommands(ShellServices s) {
   return [
     shellCommand(
       'shell.edit.undo',
-      title: (l) => s.undo.undoLabel.value == null ? l.cmdUndo : l.cmdUndoLabel(s.undo.undoLabel.value!),
+      title: (l) => s.undo.undoLabel.value == null
+          ? l.cmdUndo
+          : l.cmdUndoLabel(s.undo.undoLabel.value!),
       icon: LucideIcons.undo2,
       bindings: const [KeyBinding('Z', mod: true)],
       category: (l) => l.categoryEdit,
@@ -377,20 +445,29 @@ List<Command<CommandArgs>> editCommands(ShellServices s) {
         await ctx.document?.beforeUndo();
         final o = await s.undo.undo();
         _announceUndo(s, o);
-        return o == null ? const CommandResult.cancelled() : CommandResult.ok({'undone': o.step.label});
+        return o == null
+            ? const CommandResult.cancelled()
+            : CommandResult.ok({'undone': o.step.label});
       },
     ),
     shellCommand(
       'shell.edit.redo',
-      title: (l) => s.undo.redoLabel.value == null ? l.cmdRedo : l.cmdRedoLabel(s.undo.redoLabel.value!),
+      title: (l) => s.undo.redoLabel.value == null
+          ? l.cmdRedo
+          : l.cmdRedoLabel(s.undo.redoLabel.value!),
       icon: LucideIcons.redo2,
-      bindings: const [KeyBinding('Z', mod: true, shift: true), KeyBinding('Y', mod: true, mac: false)],
+      bindings: const [
+        KeyBinding('Z', mod: true, shift: true),
+        KeyBinding('Y', mod: true, mac: false),
+      ],
       category: (l) => l.categoryEdit,
       enabled: (ctx, a) => s.undo.canRedo.value,
       run: (ctx, a) async {
         final o = await s.undo.redo();
         _announceUndo(s, o);
-        return o == null ? const CommandResult.cancelled() : CommandResult.ok({'redone': o.step.label});
+        return o == null
+            ? const CommandResult.cancelled()
+            : CommandResult.ok({'redone': o.step.label});
       },
     ),
     shellCommand(
@@ -412,7 +489,11 @@ List<Command<CommandArgs>> editCommands(ShellServices s) {
       palette: false,
       category: (l) => l.categoryEdit,
       args: const JsonSchema.object(
-        properties: {'stepId': JsonSchema.string(description: 'Id of the step from the undo history.')},
+        properties: {
+          'stepId': JsonSchema.string(
+            description: 'Id of the step from the undo history.',
+          ),
+        },
         required: ['stepId'],
       ),
       enabled: (ctx, a) => s.undo.canUndo.value,
@@ -478,7 +559,9 @@ List<Command<CommandArgs>> editCommands(ShellServices s) {
       icon: LucideIcons.textSelect,
       bindings: const [KeyBinding('A', mod: true)],
       category: (l) => l.categoryEdit,
-      enabled: (ctx, a) => inDrive() ? s.driveSelectAll != null : (ctx.document?.canSelectAll ?? false),
+      enabled: (ctx, a) => inDrive()
+          ? s.driveSelectAll != null
+          : (ctx.document?.canSelectAll ?? false),
       run: (ctx, a) async {
         if (inDrive()) {
           s.driveSelectAll?.call();
@@ -499,12 +582,17 @@ void _announceUndo(ShellServices s, UndoOutcome? outcome) {
   if (c != null) {
     SemanticsService.sendAnnouncement(
       View.of(c),
-      outcome.isRedo ? (l?.cmdRedoLabel(label) ?? label) : (l?.cmdUndoLabel(label) ?? label),
+      outcome.isRedo
+          ? (l?.cmdRedoLabel(label) ?? label)
+          : (l?.cmdUndoLabel(label) ?? label),
       Directionality.of(c),
     );
   }
   if (outcome.partial) {
-    s.toasts.show(l?.toastUndoPartial ?? 'Some changes could not be undone because they were edited by someone else.');
+    s.toasts.show(
+      l?.toastUndoPartial ??
+          'Some changes could not be undone because they were edited by someone else.',
+    );
   }
 }
 
@@ -521,22 +609,30 @@ List<Command<CommandArgs>> commentCommands(ShellServices s) {
       undoable: true,
       args: const JsonSchema.object(
         properties: {
-          'body': JsonSchema.string(minLength: 1, description: 'Comment text (Markdown). Omit to open the composer.'),
+          'body': JsonSchema.string(
+            minLength: 1,
+            description: 'Comment text (Markdown). Omit to open the composer.',
+          ),
           'mentions': JsonSchema.array(JsonSchema.integer()),
           'assigneeId': JsonSchema.integer(),
-          'anchorKind': JsonSchema.string(enumValues: ['textRange', 'cell', 'range', 'document']),
+          'anchorKind': JsonSchema.string(
+            enumValues: ['textRange', 'cell', 'range', 'document'],
+          ),
           'anchorJson': JsonSchema.string(),
           'quotedText': JsonSchema.string(),
         },
       ),
       enabled: (ctx, a) =>
           comments.value != null &&
-          (a.string('anchorJson') != null || ctx.document?.commentAnchors?.anchorForSelection() != null),
+          (a.string('anchorJson') != null ||
+              ctx.document?.commentAnchors?.anchorForSelection() != null),
       run: (ctx, a) async {
         final c = comments.value!;
         final anchor = a.string('anchorJson') != null
             ? NewCommentAnchor(
-                kind: CommentAnchorKind.values.byName(a.string('anchorKind') ?? 'document'),
+                kind: CommentAnchorKind.values.byName(
+                  a.string('anchorKind') ?? 'document',
+                ),
                 anchorJson: a.string('anchorJson')!,
                 quotedText: a.string('quotedText'),
               )
@@ -550,7 +646,10 @@ List<Command<CommandArgs>> commentCommands(ShellServices s) {
         final t = await c.createThread(
           anchor: anchor,
           body: body,
-          mentions: [for (final m in (a.values['mentions'] as List?) ?? const []) (m as num).toInt()],
+          mentions: [
+            for (final m in (a.values['mentions'] as List?) ?? const [])
+              (m as num).toInt(),
+          ],
           assigneeId: a.integer('assigneeId'),
         );
         ctx.record(
@@ -589,7 +688,10 @@ List<Command<CommandArgs>> commentCommands(ShellServices s) {
         final t = await comments.value!.reply(
           threadUuid,
           body,
-          mentions: [for (final m in (a.values['mentions'] as List?) ?? const []) (m as num).toInt()],
+          mentions: [
+            for (final m in (a.values['mentions'] as List?) ?? const [])
+              (m as num).toInt(),
+          ],
         );
         ctx.record(
           CommentUndoEntry(
@@ -603,8 +705,18 @@ List<Command<CommandArgs>> commentCommands(ShellServices s) {
       },
     ),
     for (final (id, op, title, icon) in [
-      ('shell.comments.resolve', CommentUndoOp.resolve, 'resolve', LucideIcons.check),
-      ('shell.comments.reopen', CommentUndoOp.reopen, 'reopen', LucideIcons.rotateCcw),
+      (
+        'shell.comments.resolve',
+        CommentUndoOp.resolve,
+        'resolve',
+        LucideIcons.check,
+      ),
+      (
+        'shell.comments.reopen',
+        CommentUndoOp.reopen,
+        'reopen',
+        LucideIcons.rotateCcw,
+      ),
     ])
       shellCommand(
         id,
@@ -641,7 +753,9 @@ List<Command<CommandArgs>> commentCommands(ShellServices s) {
       args: const JsonSchema.object(
         properties: {
           'threadUuid': JsonSchema.string(format: 'uuid'),
-          'commentId': JsonSchema.integer(description: 'Delete one comment instead of the whole thread.'),
+          'commentId': JsonSchema.integer(
+            description: 'Delete one comment instead of the whole thread.',
+          ),
         },
         required: ['threadUuid'],
       ),
@@ -652,9 +766,19 @@ List<Command<CommandArgs>> commentCommands(ShellServices s) {
         final t = c.thread(threadUuid);
         final commentId = a.integer('commentId');
         if (commentId != null) {
-          final body = t?.comments.where((x) => x.id == commentId).firstOrNull?.body;
+          final body = t?.comments
+              .where((x) => x.id == commentId)
+              .firstOrNull
+              ?.body;
           await c.deleteComment(commentId);
-          ctx.record(CommentUndoEntry(op: CommentUndoOp.deleteComment, threadUuid: threadUuid, commentId: commentId, body: body));
+          ctx.record(
+            CommentUndoEntry(
+              op: CommentUndoOp.deleteComment,
+              threadUuid: threadUuid,
+              commentId: commentId,
+              body: body,
+            ),
+          );
         } else {
           await c.deleteThread(threadUuid);
           ctx.record(
@@ -736,7 +860,9 @@ List<Command<CommandArgs>> versionCommands(ShellServices s) {
       icon: LucideIcons.bookmarkPlus,
       category: (l) => l.categoryVersions,
       role: Role.editor,
-      args: const JsonSchema.object(properties: {'name': JsonSchema.string(minLength: 1, maxLength: 200)}),
+      args: const JsonSchema.object(
+        properties: {'name': JsonSchema.string(minLength: 1, maxLength: 200)},
+      ),
       enabled: (ctx, a) => canHistory() && s.connectivity.online,
       run: (ctx, a) async {
         var name = a.string('name');
@@ -746,7 +872,10 @@ List<Command<CommandArgs>> versionCommands(ShellServices s) {
           name = await showNameVersionDialog(c, s);
           if (name == null) return const CommandResult.cancelled();
         }
-        final v = await s.repositories.versions.nameCurrent(s.currentItem.value!.uuid, name);
+        final v = await s.repositories.versions.nameCurrent(
+          s.currentItem.value!.uuid,
+          name,
+        );
         s.toasts.show(s.l10n?.toastVersionNamed(name) ?? name);
         return CommandResult.ok({'versionId': v.id});
       },
@@ -760,7 +889,10 @@ List<Command<CommandArgs>> versionCommands(ShellServices s) {
       role: Role.editor,
       undoable: true,
       args: const JsonSchema.object(
-        properties: {'versionId': JsonSchema.integer(), 'confirmed': JsonSchema.boolean()},
+        properties: {
+          'versionId': JsonSchema.integer(),
+          'confirmed': JsonSchema.boolean(),
+        },
         required: ['versionId'],
       ),
       enabled: (ctx, a) => canHistory() && s.connectivity.online,
@@ -781,7 +913,11 @@ List<Command<CommandArgs>> versionCommands(ShellServices s) {
         final versionId = a.integer('versionId')!;
         final r = await s.repositories.versions.restore(item.uuid, versionId);
         ctx.record(
-          VersionRestoreEntry(itemUuid: item.uuid.uuid, versionId: versionId, restorePointId: r.restorePoint.id),
+          VersionRestoreEntry(
+            itemUuid: item.uuid.uuid,
+            versionId: versionId,
+            restorePointId: r.restorePoint.id,
+          ),
         );
         s.toasts.show(s.l10n?.toastVersionRestored ?? 'Version restored');
         return CommandResult.ok({'restorePointId': r.restorePoint.id});
@@ -904,7 +1040,10 @@ List<Command<CommandArgs>> viewCommands(ShellServices s) {
       'shell.view.toggleFullScreen',
       title: (l) => l.cmdFullScreen,
       icon: LucideIcons.maximize,
-      bindings: const [KeyBinding('F', ctrl: true, mod: true, mac: true), KeyBinding('F11', mac: false)],
+      bindings: const [
+        KeyBinding('F', ctrl: true, mod: true, mac: true),
+        KeyBinding('F11', mac: false),
+      ],
       category: (l) => l.categoryView,
       enabled: (ctx, a) => editor(),
       checked: (ctx, a) => v.fullScreen,
@@ -943,7 +1082,11 @@ List<Command<CommandArgs>> miscCommands(ShellServices s) => [
     icon: LucideIcons.sunMoon,
     category: (l) => l.categoryView,
     args: const JsonSchema.object(
-      properties: {'mode': JsonSchema.string(enumValues: ['system', 'light', 'dark', 'cycle'])},
+      properties: {
+        'mode': JsonSchema.string(
+          enumValues: ['system', 'light', 'dark', 'cycle'],
+        ),
+      },
     ),
     checked: (ctx, a) {
       final m = a.string('mode');
@@ -1000,7 +1143,10 @@ List<Command<CommandArgs>> miscCommands(ShellServices s) => [
     'shell.ai.send',
     title: (l) => l.cmdAssistantSend,
     palette: false,
-    args: const JsonSchema.object(properties: {'prompt': JsonSchema.string(minLength: 1)}, required: ['prompt']),
+    args: const JsonSchema.object(
+      properties: {'prompt': JsonSchema.string(minLength: 1)},
+      required: ['prompt'],
+    ),
     enabled: (ctx, a) => s.assistant?.available ?? false,
     run: (ctx, a) async {
       await s.assistant!.send(a.requireString('prompt'));
@@ -1050,7 +1196,11 @@ List<Command<CommandArgs>> miscCommands(ShellServices s) => [
     category: (l) => l.categoryHelp,
     args: const JsonSchema.object(properties: {'topic': JsonSchema.string()}),
     run: (ctx, a) async {
-      s.router.go(a.string('topic') == null ? '/help' : '/help?topic=${Uri.encodeQueryComponent(a.string('topic')!)}');
+      s.router.go(
+        a.string('topic') == null
+            ? '/help'
+            : '/help?topic=${Uri.encodeQueryComponent(a.string('topic')!)}',
+      );
       return const CommandResult.ok();
     },
   ),
@@ -1148,12 +1298,19 @@ List<Command<CommandArgs>> miscCommands(ShellServices s) => [
   ),
   shellCommand(
     'shell.account.switchApp',
-    title: (l) => s.config.app == WonkyAppKind.write ? l.cmdOpenSheets : l.cmdOpenWrite,
+    title: (l) =>
+        s.config.app == WonkyAppKind.write ? l.cmdOpenSheets : l.cmdOpenWrite,
     icon: LucideIcons.arrowLeftRight,
     category: (l) => l.categoryAccount,
-    args: const JsonSchema.object(properties: {'app': JsonSchema.string(enumValues: ['write', 'sheets'])}),
+    args: const JsonSchema.object(
+      properties: {
+        'app': JsonSchema.string(enumValues: ['write', 'sheets']),
+      },
+    ),
     run: (ctx, a) async {
-      final app = a.string('app') == null ? s.config.app.other : WonkyAppKind.values.byName(a.string('app')!);
+      final app = a.string('app') == null
+          ? s.config.app.other
+          : WonkyAppKind.values.byName(a.string('app')!);
       if (app == s.config.app) {
         s.router.go('/');
       } else {

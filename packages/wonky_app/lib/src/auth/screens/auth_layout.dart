@@ -37,14 +37,23 @@ class AuthLayout extends StatelessWidget {
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
           colors: [
-            Color.alphaBlend(brand.withValues(alpha: theme.brightness == Brightness.dark ? 0.18 : 0.10), theme.colorScheme.background),
+            Color.alphaBlend(
+              brand.withValues(
+                alpha: theme.brightness == Brightness.dark ? 0.18 : 0.10,
+              ),
+              theme.colorScheme.background,
+            ),
             theme.colorScheme.canvas,
           ],
         ),
       ),
       child: Stack(
         children: [
-          Positioned(top: 12, right: 12, child: ThemeToggleButton(services: services)),
+          Positioned(
+            top: 12,
+            right: 12,
+            child: ThemeToggleButton(services: services),
+          ),
           Center(
             child: SingleChildScrollView(
               padding: const EdgeInsets.all(16),
@@ -61,8 +70,16 @@ class AuthLayout extends StatelessWidget {
                         Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Text(services.config.appName, style: theme.textTheme.large),
-                            Text(l.wonkyWork, style: theme.textTheme.muted.copyWith(fontSize: 12)),
+                            Text(
+                              services.config.appName,
+                              style: theme.textTheme.large,
+                            ),
+                            Text(
+                              l.wonkyWork,
+                              style: theme.textTheme.muted.copyWith(
+                                fontSize: 12,
+                              ),
+                            ),
                           ],
                         ),
                       ],
@@ -72,9 +89,15 @@ class AuthLayout extends StatelessWidget {
                       width: double.infinity,
                       title: Semantics(header: true, child: Text(title)),
                       description: subtitle == null ? null : Text(subtitle!),
-                      child: Padding(padding: const EdgeInsets.only(top: 16), child: child),
+                      child: Padding(
+                        padding: const EdgeInsets.only(top: 16),
+                        child: child,
+                      ),
                     ),
-                    if (footer != null) ...[const SizedBox(height: 16), footer!],
+                    if (footer != null) ...[
+                      const SizedBox(height: 16),
+                      footer!,
+                    ],
                   ],
                 ),
               ),
@@ -139,7 +162,13 @@ class AuthField extends StatelessWidget {
           const SizedBox(height: 4),
           Semantics(
             liveRegion: true,
-            child: Text(error!, style: theme.textTheme.small.copyWith(color: theme.colorScheme.destructive, fontWeight: FontWeight.normal)),
+            child: Text(
+              error!,
+              style: theme.textTheme.small.copyWith(
+                color: theme.colorScheme.destructive,
+                fontWeight: FontWeight.normal,
+              ),
+            ),
           ),
         ],
       ],
@@ -189,7 +218,9 @@ class _PasswordFieldState extends State<PasswordField> {
       fieldKey: widget.fieldKey,
       onSubmitted: widget.onSubmitted,
       onChanged: widget.onChanged,
-      autofillHints: [widget.newPassword ? AutofillHints.newPassword : AutofillHints.password],
+      autofillHints: [
+        widget.newPassword ? AutofillHints.newPassword : AutofillHints.password,
+      ],
       trailing: ShadIconButton.ghost(
         width: 24,
         height: 24,

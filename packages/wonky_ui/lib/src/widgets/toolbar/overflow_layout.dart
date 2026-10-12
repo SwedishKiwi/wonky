@@ -99,10 +99,7 @@ class RenderToolbarOverflow extends RenderBox
     with
         ContainerRenderObjectMixin<RenderBox, ToolbarOverflowParentData>,
         RenderBoxContainerDefaultsMixin<RenderBox, ToolbarOverflowParentData> {
-  RenderToolbarOverflow({
-    required this._onHiddenChanged,
-    this._spacing = 2,
-  });
+  RenderToolbarOverflow({required this._onHiddenChanged, this._spacing = 2});
 
   ValueChanged<Set<int>> _onHiddenChanged;
   set onHiddenChanged(ValueChanged<Set<int>> v) => _onHiddenChanged = v;
@@ -247,15 +244,16 @@ class RenderToolbarOverflow extends RenderBox
     if (usedWidth(withOverflow: false) > maxWidth) {
       overflowing = true;
       // Hide candidates: least important first, rightmost first on ties.
-      final candidates = [
-        for (final c in items)
-          if (!(c.parentData! as ToolbarOverflowParentData).pinned) c,
-      ]..sort((a, b) {
-          final pa = a.parentData! as ToolbarOverflowParentData;
-          final pb = b.parentData! as ToolbarOverflowParentData;
-          final p = pb.priority.compareTo(pa.priority);
-          return p != 0 ? p : pb.index.compareTo(pa.index);
-        });
+      final candidates =
+          [
+            for (final c in items)
+              if (!(c.parentData! as ToolbarOverflowParentData).pinned) c,
+          ]..sort((a, b) {
+            final pa = a.parentData! as ToolbarOverflowParentData;
+            final pb = b.parentData! as ToolbarOverflowParentData;
+            final p = pb.priority.compareTo(pa.priority);
+            return p != 0 ? p : pb.index.compareTo(pa.index);
+          });
       for (final c in candidates) {
         if (usedWidth(withOverflow: true) <= maxWidth) break;
         (c.parentData! as ToolbarOverflowParentData).visible = false;

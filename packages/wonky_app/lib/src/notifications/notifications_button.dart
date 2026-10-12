@@ -32,14 +32,20 @@ class _NotificationsButtonState extends State<NotificationsButton> {
   void initState() {
     super.initState();
     unawaited(_load());
-    s.supervisor.supervise<NotificationEvent>('notifications', s.repositories.notifications.watch, (e) {
-      if (!mounted) return;
-      setState(() {
-        _unread = e.unreadCount;
-        final n = e.notification;
-        if (n != null && !_items.any((x) => x.id == n.id)) _items = [n, ..._items];
-      });
-    });
+    s.supervisor.supervise<NotificationEvent>(
+      'notifications',
+      s.repositories.notifications.watch,
+      (e) {
+        if (!mounted) return;
+        setState(() {
+          _unread = e.unreadCount;
+          final n = e.notification;
+          if (n != null && !_items.any((x) => x.id == n.id)) {
+            _items = [n, ..._items];
+          }
+        });
+      },
+    );
   }
 
   @override
@@ -84,10 +90,15 @@ class _NotificationsButtonState extends State<NotificationsButton> {
   Future<void> _open(NotificationView n) async {
     _popover.hide();
     if (n.readAt == null) {
-      unawaited(s.repositories.notifications.markRead([n.id]).catchError((Object _) {}));
+      unawaited(
+        s.repositories.notifications.markRead([n.id]).catchError((Object _) {}),
+      );
       setState(() {
         _unread = (_unread - 1).clamp(0, 1 << 30);
-        _items = [for (final x in _items) x.id == n.id ? x.copyWith(readAt: DateTime.now()) : x];
+        _items = [
+          for (final x in _items)
+            x.id == n.id ? x.copyWith(readAt: DateTime.now()) : x,
+        ];
       });
     }
     final uuid = n.itemUuid;
@@ -119,7 +130,14 @@ class _NotificationsButtonState extends State<NotificationsButton> {
           children: [
             Row(
               children: [
-                Expanded(child: Text(l.notificationsTitle, style: theme.textTheme.small.copyWith(fontWeight: FontWeight.w600))),
+                Expanded(
+                  child: Text(
+                    l.notificationsTitle,
+                    style: theme.textTheme.small.copyWith(
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
                 ShadButton.link(
                   size: ShadButtonSize.sm,
                   enabled: _unread > 0,
@@ -127,7 +145,10 @@ class _NotificationsButtonState extends State<NotificationsButton> {
                     await s.repositories.notifications.markAllRead();
                     setState(() {
                       _unread = 0;
-                      _items = [for (final x in _items) x.copyWith(readAt: x.readAt ?? DateTime.now())];
+                      _items = [
+                        for (final x in _items)
+                          x.copyWith(readAt: x.readAt ?? DateTime.now()),
+                      ];
                     });
                   },
                   child: Text(l.notificationsMarkAllRead),
@@ -139,7 +160,11 @@ class _NotificationsButtonState extends State<NotificationsButton> {
               child: _loading && _items.isEmpty
                   ? const Center(child: ShadSpinner())
                   : _items.isEmpty
-                  ? WonkyEmptyState(illustration: EmptyIllustration.notifications, title: l.notificationsEmpty, size: 72)
+                  ? WonkyEmptyState(
+                      illustration: EmptyIllustration.notifications,
+                      title: l.notificationsEmpty,
+                      size: 72,
+                    )
                   : ListView(
                       children: [
                         for (final n in _items)
@@ -151,7 +176,9 @@ class _NotificationsButtonState extends State<NotificationsButton> {
                                 padding: const EdgeInsets.all(8),
                                 margin: const EdgeInsets.only(bottom: 2),
                                 decoration: BoxDecoration(
-                                  color: n.readAt == null ? theme.colorScheme.accent : null,
+                                  color: n.readAt == null
+                                      ? theme.colorScheme.accent
+                                      : null,
                                   borderRadius: BorderRadius.circular(6),
                                 ),
                                 child: Row(
@@ -159,17 +186,30 @@ class _NotificationsButtonState extends State<NotificationsButton> {
                                   children: [
                                     WonkyAvatar(
                                       name: n.actor?.displayName ?? '?',
-                                      color: n.actor == null ? theme.colorScheme.muted : parseHexColor(n.actor!.avatarColor),
+                                      color: n.actor == null
+                                          ? theme.colorScheme.muted
+                                          : parseHexColor(n.actor!.avatarColor),
                                       imageUrl: n.actor?.avatarUrl,
                                       size: 28,
                                     ),
                                     const SizedBox(width: 8),
                                     Expanded(
                                       child: Column(
-                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
                                         children: [
-                                          Text(_text(l, n), style: theme.textTheme.small.copyWith(fontWeight: FontWeight.normal)),
-                                          Text(timeAgo(l, n.createdAt), style: theme.textTheme.muted.copyWith(fontSize: 12)),
+                                          Text(
+                                            _text(l, n),
+                                            style: theme.textTheme.small
+                                                .copyWith(
+                                                  fontWeight: FontWeight.normal,
+                                                ),
+                                          ),
+                                          Text(
+                                            timeAgo(l, n.createdAt),
+                                            style: theme.textTheme.muted
+                                                .copyWith(fontSize: 12),
+                                          ),
                                         ],
                                       ),
                                     ),
@@ -191,7 +231,9 @@ class _NotificationsButtonState extends State<NotificationsButton> {
           children: [
             ShadIconButton.ghost(
               key: const ValueKey<String>('shell.notifications'),
-              semanticLabel: _unread > 0 ? l.notificationsUnread(_unread) : l.notificationsTitle,
+              semanticLabel: _unread > 0
+                  ? l.notificationsUnread(_unread)
+                  : l.notificationsTitle,
               icon: const Icon(LucideIcons.bell, size: 18),
               onPressed: () {
                 _popover.toggle();
@@ -205,12 +247,22 @@ class _NotificationsButtonState extends State<NotificationsButton> {
                 child: IgnorePointer(
                   child: Container(
                     padding: const EdgeInsets.symmetric(horizontal: 4),
-                    constraints: const BoxConstraints(minWidth: 16, minHeight: 16),
-                    decoration: BoxDecoration(color: theme.colorScheme.destructive, borderRadius: BorderRadius.circular(8)),
+                    constraints: const BoxConstraints(
+                      minWidth: 16,
+                      minHeight: 16,
+                    ),
+                    decoration: BoxDecoration(
+                      color: theme.colorScheme.destructive,
+                      borderRadius: BorderRadius.circular(8),
+                    ),
                     child: Center(
                       child: Text(
                         _unread > 99 ? '99+' : '$_unread',
-                        style: TextStyle(color: theme.colorScheme.destructiveForeground, fontSize: 10, height: 1),
+                        style: TextStyle(
+                          color: theme.colorScheme.destructiveForeground,
+                          fontSize: 10,
+                          height: 1,
+                        ),
                       ),
                     ),
                   ),

@@ -145,7 +145,7 @@ class _WonkyMenubarState extends State<WonkyMenubar> {
         controller: controller._shad,
         border: ShadBorder.none,
         padding: EdgeInsets.zero,
-        backgroundColor: const Color(0x00000000),
+        backgroundColor: theme.colorScheme.background,
         items: [
           for (var i = 0; i < widget.menus.length; i++)
             ShadMenubarItem(

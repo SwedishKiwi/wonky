@@ -98,7 +98,9 @@ class _WonkyDropdownMenuState extends State<WonkyDropdownMenu> {
       constraints: widget.constraints ?? const BoxConstraints(minWidth: 200),
       items: items,
       onTapOutside: (_) => _controller.hide(),
-      child: Builder(builder: (context) => widget.builder(context, _controller)),
+      child: Builder(
+        builder: (context) => widget.builder(context, _controller),
+      ),
     );
   }
 }
@@ -124,7 +126,11 @@ class WonkyContextMenuRegion extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (!enabled) return child;
-    return _LazyContextMenuRegion(entries: entries, onOpen: onOpen, child: child);
+    return _LazyContextMenuRegion(
+      entries: entries,
+      onOpen: onOpen,
+      child: child,
+    );
   }
 }
 
@@ -169,7 +175,11 @@ class _LazyContextMenuRegionState extends State<_LazyContextMenuRegion> {
       constraints: const BoxConstraints(minWidth: 220),
       items: [
         if (_controller.isOpen)
-          ...buildWonkyMenuItems(context, widget.entries(), onClose: _controller.hide)
+          ...buildWonkyMenuItems(
+            context,
+            widget.entries(),
+            onClose: _controller.hide,
+          )
         else
           const SizedBox.shrink(),
       ],

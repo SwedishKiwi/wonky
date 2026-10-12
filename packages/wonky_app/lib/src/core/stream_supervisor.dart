@@ -33,7 +33,8 @@ class _Entry {
 /// backoff 1 s → 30 s plus jitter, and immediately when connectivity returns
 /// (suite 03 §7).
 class StreamSupervisor {
-  StreamSupervisor(this.connectivity, {Random? random}) : _random = random ?? Random() {
+  StreamSupervisor(this.connectivity, {Random? random})
+    : _random = random ?? Random() {
     connectivity.addListener(_onConnectivity);
   }
 
@@ -51,12 +52,7 @@ class StreamSupervisor {
     VoidCallback? onConnected,
   }) {
     _entries.remove(key)?.let(_dispose);
-    final entry = _Entry(
-      open,
-      (e) => onData(e as T),
-      onError,
-      onConnected,
-    );
+    final entry = _Entry(open, (e) => onData(e as T), onError, onConnected);
     _entries[key] = entry;
     _connect(key, entry);
     return SupervisedStream._(key, this);

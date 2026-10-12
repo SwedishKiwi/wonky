@@ -10,7 +10,10 @@ const _session = JsonSchema.string(
 ObjectSchema _withSession([
   Map<String, JsonSchema> props = const {},
   List<String> required = const [],
-]) => ObjectSchema(properties: {'session_id': _session, ...props}, required: required);
+]) => ObjectSchema(
+  properties: {'session_id': _session, ...props},
+  required: required,
+);
 
 /// Shared UI-bridge `ui.*` tools (suite 09 §6.2). Executed by the live app
 /// window through `wonky_app`'s bridge client.
@@ -100,7 +103,8 @@ abstract final class UiTools {
   static final undo = McpToolDefinition(
     name: 'ui.undo',
     title: 'Undo',
-    description: 'Undoes the last step on the user\'s undo stack (Edit › Undo).',
+    description:
+        'Undoes the last step on the user\'s undo stack (Edit › Undo).',
     inputSchema: _withSession(),
     scopes: _scopes,
   );

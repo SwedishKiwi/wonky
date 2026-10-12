@@ -97,11 +97,26 @@ class _EditorScaffoldState extends State<EditorScaffold> {
   late PresenceSession _presence;
   final _titleField = DocumentTitleFieldController();
   final _menubar = WonkyMenubarController();
-  final _toolbarFocus = FocusNode(debugLabel: 'editor.toolbar', skipTraversal: true);
-  final _menubarFocus = FocusNode(debugLabel: 'editor.menubar', skipTraversal: true);
-  final _docFocus = FocusNode(debugLabel: 'editor.document', skipTraversal: true);
-  final _panelFocus = FocusNode(debugLabel: 'editor.panel', skipTraversal: true);
-  final _statusFocus = FocusNode(debugLabel: 'editor.status', skipTraversal: true);
+  final _toolbarFocus = FocusNode(
+    debugLabel: 'editor.toolbar',
+    skipTraversal: true,
+  );
+  final _menubarFocus = FocusNode(
+    debugLabel: 'editor.menubar',
+    skipTraversal: true,
+  );
+  final _docFocus = FocusNode(
+    debugLabel: 'editor.document',
+    skipTraversal: true,
+  );
+  final _panelFocus = FocusNode(
+    debugLabel: 'editor.panel',
+    skipTraversal: true,
+  );
+  final _statusFocus = FocusNode(
+    debugLabel: 'editor.status',
+    skipTraversal: true,
+  );
   StreamSubscription<DriveChange>? _changes;
 
   ShellServices get s => widget.services;
@@ -116,7 +131,13 @@ class _EditorScaffoldState extends State<EditorScaffold> {
     s.startTitleRename = _titleField.startEditing;
     s.focusRegions
       ..clear()
-      ..addAll([_menubarFocus, _toolbarFocus, _docFocus, _panelFocus, _statusFocus]);
+      ..addAll([
+        _menubarFocus,
+        _toolbarFocus,
+        _docFocus,
+        _panelFocus,
+        _statusFocus,
+      ]);
     _changes = s.driveChanges.listen((c) {
       if (c.itemUuid == _uuid && c.item != null) _setItem(c.item!);
     });
@@ -143,7 +164,9 @@ class _EditorScaffoldState extends State<EditorScaffold> {
 
   void _onCurrentItem() {
     final v = s.currentItem.value;
-    if (v != null && v.uuid == _uuid && v != _item && mounted) setState(() => _item = v);
+    if (v != null && v.uuid == _uuid && v != _item && mounted) {
+      setState(() => _item = v);
+    }
   }
 
   void _setItem(DriveItemView v) {
@@ -171,14 +194,30 @@ class _EditorScaffoldState extends State<EditorScaffold> {
     s.currentItem.removeListener(_onCurrentItem);
     if (widget.controller != null) s.deactivate(widget.controller!);
     if (s.comments.value == _comments) s.comments.value = null;
-    if (s.startTitleRename == _titleField.startEditing) s.startTitleRename = null;
-    s.focusRegions.removeWhere((f) => [_menubarFocus, _toolbarFocus, _docFocus, _panelFocus, _statusFocus].contains(f));
+    if (s.startTitleRename == _titleField.startEditing) {
+      s.startTitleRename = null;
+    }
+    s.focusRegions.removeWhere(
+      (f) => [
+        _menubarFocus,
+        _toolbarFocus,
+        _docFocus,
+        _panelFocus,
+        _statusFocus,
+      ].contains(f),
+    );
     if (s.currentItem.value?.uuid == _uuid) s.currentItem.value = null;
     s.viewState.setFullScreen(false);
     _comments.dispose();
     _presence.dispose();
     _menubar.dispose();
-    for (final f in [_toolbarFocus, _menubarFocus, _docFocus, _panelFocus, _statusFocus]) {
+    for (final f in [
+      _toolbarFocus,
+      _menubarFocus,
+      _docFocus,
+      _panelFocus,
+      _statusFocus,
+    ]) {
       f.dispose();
     }
     super.dispose();
@@ -190,13 +229,20 @@ class _EditorScaffoldState extends State<EditorScaffold> {
     source: InvocationSource.ui,
   );
 
-  void _invoke(String id, [Map<String, Object?> args = const {}]) =>
-      s.dispatcher.invoke(id, args: args, source: InvocationSource.ui, context: context).catchError((Object e) {
-        s.toasts.error(s.l10n?.commandFailed(id) ?? id, description: errorMessage(e));
+  void _invoke(String id, [Map<String, Object?> args = const {}]) => s
+      .dispatcher
+      .invoke(id, args: args, source: InvocationSource.ui, context: context)
+      .catchError((Object e) {
+        s.toasts.error(
+          s.l10n?.commandFailed(id) ?? id,
+          description: errorMessage(e),
+        );
         return const CommandResult.failed('error');
       });
 
-  bool _isNoAccess(Object e) => e is WonkyException && (e.code == WonkyErrorCode.forbidden || e.code == WonkyErrorCode.notFound);
+  bool _isNoAccess(Object e) =>
+      e is WonkyException &&
+      (e.code == WonkyErrorCode.forbidden || e.code == WonkyErrorCode.notFound);
 
   @override
   Widget build(BuildContext context) {
@@ -204,11 +250,15 @@ class _EditorScaffoldState extends State<EditorScaffold> {
     final theme = ShadTheme.of(context);
     final err = _error;
     if (err != null) {
-      if (_isNoAccess(err)) return NoAccessPage(services: s, itemUuid: widget.itemUuid);
+      if (_isNoAccess(err)) {
+        return NoAccessPage(services: s, itemUuid: widget.itemUuid);
+      }
       return ColoredBox(
         color: theme.colorScheme.background,
         child: WonkyEmptyState(
-          illustration: isOfflineError(err) ? EmptyIllustration.offline : EmptyIllustration.error,
+          illustration: isOfflineError(err)
+              ? EmptyIllustration.offline
+              : EmptyIllustration.error,
           title: isOfflineError(err) ? l.editorOfflineTitle : l.errorGeneric,
           description: errorMessage(err),
           actions: [
@@ -219,7 +269,10 @@ class _EditorScaffoldState extends State<EditorScaffold> {
               },
               child: Text(l.actionRetry),
             ),
-            ShadButton.ghost(onPressed: () => s.router.go('/'), child: Text(l.goHome)),
+            ShadButton.ghost(
+              onPressed: () => s.router.go('/'),
+              child: Text(l.goHome),
+            ),
           ],
         ),
       );
@@ -247,7 +300,8 @@ class _EditorScaffoldState extends State<EditorScaffold> {
                 icon: LucideIcons.messageSquare,
                 defaultWidth: 360,
                 minWidth: 300,
-                builder: (_) => CommentsPanel(services: s, controller: _comments),
+                builder: (_) =>
+                    CommentsPanel(services: s, controller: _comments),
               ),
               SidePanelSpec(
                 id: ShellPanels.history,
@@ -267,7 +321,9 @@ class _EditorScaffoldState extends State<EditorScaffold> {
             ];
             return CallbackShortcuts(
               bindings: {
-                if (full) const SingleActivator(LogicalKeyboardKey.escape): () => v.setFullScreen(false),
+                if (full)
+                  const SingleActivator(LogicalKeyboardKey.escape): () =>
+                      v.setFullScreen(false),
               },
               child: ColoredBox(
                 color: theme.colorScheme.background,
@@ -282,7 +338,10 @@ class _EditorScaffoldState extends State<EditorScaffold> {
                           padding: const EdgeInsets.only(left: 52),
                           child: WonkyMenubar(
                             controller: _menubar,
-                            menus: MenuResolver(s, custom: _customItems()).menubar(context, s.menuRoot(context)),
+                            menus: MenuResolver(
+                              s,
+                              custom: _customItems(),
+                            ).menubar(context, s.menuRoot(context)),
                           ),
                         ),
                       ),
@@ -292,7 +351,9 @@ class _EditorScaffoldState extends State<EditorScaffold> {
                         child: Container(
                           margin: const EdgeInsets.fromLTRB(8, 2, 8, 4),
                           decoration: BoxDecoration(
-                            color: theme.colorScheme.muted.withValues(alpha: 0.6),
+                            color: theme.colorScheme.muted.withValues(
+                              alpha: 0.6,
+                            ),
                             borderRadius: BorderRadius.circular(20),
                           ),
                           child: Row(
@@ -300,10 +361,19 @@ class _EditorScaffoldState extends State<EditorScaffold> {
                               if (compact)
                                 WonkyDropdownMenu(
                                   entries: () {
-                                    final r = MenuResolver(s, custom: _customItems());
+                                    final r = MenuResolver(
+                                      s,
+                                      custom: _customItems(),
+                                    );
                                     return [
-                                      for (final m in r.menubar(context, s.menuRoot(context)))
-                                        WonkyMenuSubmenu(label: m.label, children: m.entries()),
+                                      for (final m in r.menubar(
+                                        context,
+                                        s.menuRoot(context),
+                                      ))
+                                        WonkyMenuSubmenu(
+                                          label: m.label,
+                                          children: m.entries(),
+                                        ),
                                     ];
                                   },
                                   builder: (context, c) => ShadIconButton.ghost(
@@ -318,15 +388,24 @@ class _EditorScaffoldState extends State<EditorScaffold> {
                                 ),
                               Expanded(child: widget.toolbar!(context)),
                               ShadTooltip(
-                                builder: (_) => Text(compact ? l.showMenus : l.cmdCompactMode),
+                                builder: (_) => Text(
+                                  compact ? l.showMenus : l.cmdCompactMode,
+                                ),
                                 child: ShadIconButton.ghost(
-                                  key: const ValueKey<String>('editor.toggleCompact'),
+                                  key: const ValueKey<String>(
+                                    'editor.toggleCompact',
+                                  ),
                                   width: 30,
                                   height: 30,
                                   iconSize: 16,
                                   semanticLabel: l.cmdCompactMode,
-                                  icon: Icon(compact ? LucideIcons.chevronDown : LucideIcons.chevronUp),
-                                  onPressed: () => _invoke('shell.view.toggleCompact'),
+                                  icon: Icon(
+                                    compact
+                                        ? LucideIcons.chevronDown
+                                        : LucideIcons.chevronUp,
+                                  ),
+                                  onPressed: () =>
+                                      _invoke('shell.view.toggleCompact'),
                                 ),
                               ),
                             ],
@@ -346,14 +425,21 @@ class _EditorScaffoldState extends State<EditorScaffold> {
                               defaultWidth: p.defaultWidth,
                               maxWidth: p.maxWidth,
                               headerActions: p.headerActions,
-                              builder: (c) => Focus(focusNode: _panelFocus, child: p.builder(c)),
+                              builder: (c) => Focus(
+                                focusNode: _panelFocus,
+                                child: p.builder(c),
+                              ),
                             ),
                         ],
                         child: Focus(
                           focusNode: _docFocus,
                           child: item == null || widget.controller == null
                               ? LoadingShimmer.documentPage()
-                              : _trashedBanner(context, item, widget.body(context, item)),
+                              : _trashedBanner(
+                                  context,
+                                  item,
+                                  widget.body(context, item),
+                                ),
                         ),
                       ),
                     ),
@@ -363,14 +449,17 @@ class _EditorScaffoldState extends State<EditorScaffold> {
                         child: StatusBar(
                           left: widget.statusLeft?.call(context) ?? const [],
                           center: [
-                            if (widget.syncStatus ?? widget.controller?.syncStatus case final status?)
+                            if (widget.syncStatus ??
+                                    widget.controller?.syncStatus
+                                case final status?)
                               ValueListenableBuilder<SyncStatus>(
                                 valueListenable: status,
-                                builder: (context, st, _) => SyncStatusIndicator(
-                                  status: st,
-                                  compact: true,
-                                  onRetry: widget.controller?.retrySync,
-                                ),
+                                builder: (context, st, _) =>
+                                    SyncStatusIndicator(
+                                      status: st,
+                                      compact: true,
+                                      onRetry: widget.controller?.retrySync,
+                                    ),
                               ),
                           ],
                           right: [
@@ -401,7 +490,8 @@ class _EditorScaffoldState extends State<EditorScaffold> {
               key: ValueKey<String>('menu.download.${f.id}'),
               label: f.label,
               enabled: s.currentItem.value?.canDownload ?? false,
-              onSelected: () => _invoke('shell.file.download', {'format': f.id}),
+              onSelected: () =>
+                  _invoke('shell.file.download', {'format': f.id}),
             ),
         ],
       },
@@ -423,7 +513,8 @@ class _EditorScaffoldState extends State<EditorScaffold> {
               alignment: Alignment.centerLeft,
               child: ShadButton.outline(
                 size: ShadButtonSize.sm,
-                onPressed: () => _invoke('shell.drive.restore', {'uuid': item.uuid.uuid}),
+                onPressed: () =>
+                    _invoke('shell.drive.restore', {'uuid': item.uuid.uuid}),
                 child: Text(l.cmdRestore),
               ),
             ),
@@ -439,7 +530,13 @@ class _EditorScaffoldState extends State<EditorScaffold> {
     final theme = ShadTheme.of(context);
     final role = item?.myRole ?? Role.viewer;
     final narrow = MediaQuery.sizeOf(context).width < 720;
-    Widget icon(String key, IconData i, String label, VoidCallback? onPressed, {Color? color}) => ShadTooltip(
+    Widget icon(
+      String key,
+      IconData i,
+      String label,
+      VoidCallback? onPressed, {
+      Color? color,
+    }) => ShadTooltip(
       builder: (_) => Text(label),
       child: ShadIconButton.ghost(
         key: ValueKey<String>(key),
@@ -463,11 +560,17 @@ class _EditorScaffoldState extends State<EditorScaffold> {
               child: GestureDetector(
                 key: const ValueKey<String>('editor.home'),
                 onTap: () => _invoke('shell.nav.home'),
-                child: MouseRegion(cursor: SystemMouseCursors.click, child: Padding(padding: const EdgeInsets.all(4), child: s.config.logo(size: 36))),
+                child: MouseRegion(
+                  cursor: SystemMouseCursors.click,
+                  child: Padding(
+                    padding: const EdgeInsets.all(4),
+                    child: s.config.logo(size: 36),
+                  ),
+                ),
               ),
             ),
             const SizedBox(width: 6),
-            Flexible(
+            Expanded(
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -490,33 +593,60 @@ class _EditorScaffoldState extends State<EditorScaffold> {
                           'editor.star',
                           item.starred ? LucideIcons.star : LucideIcons.star,
                           item.starred ? l.cmdUnstar : l.cmdStar,
-                          () => _invoke('shell.drive.setStarred', {'uuid': item.uuid.uuid, 'starred': !item.starred}),
-                          color: item.starred ? theme.colorScheme.warning : null,
+                          () => _invoke('shell.drive.setStarred', {
+                            'uuid': item.uuid.uuid,
+                            'starred': !item.starred,
+                          }),
+                          color: item.starred
+                              ? theme.colorScheme.warning
+                              : null,
                         ),
-                        icon('editor.move', LucideIcons.folderInput, l.cmdMove,
-                            item.canManage ? () => _invoke('shell.drive.move', {'uuid': item.uuid.uuid}) : null),
+                        icon(
+                          'editor.move',
+                          LucideIcons.folderInput,
+                          l.cmdMove,
+                          item.canManage
+                              ? () => _invoke('shell.drive.move', {
+                                  'uuid': item.uuid.uuid,
+                                })
+                              : null,
+                        ),
                       ],
                       if (widget.controller != null)
                         ValueListenableBuilder<SyncStatus>(
-                          valueListenable: widget.syncStatus ?? widget.controller!.syncStatus,
-                          builder: (context, st, _) => SyncStatusIndicator(status: st, compact: narrow, onRetry: widget.controller!.retrySync),
+                          valueListenable:
+                              widget.syncStatus ??
+                              widget.controller!.syncStatus,
+                          builder: (context, st, _) => SyncStatusIndicator(
+                            status: st,
+                            compact: narrow,
+                            onRetry: widget.controller!.retrySync,
+                          ),
                         ),
                       if (role < Role.editor && item != null) ...[
                         const SizedBox(width: 6),
-                        ShadBadge.secondary(child: Text(role == Role.commenter ? l.badgeCommentOnly : l.badgeViewOnly)),
+                        ShadBadge.secondary(
+                          child: Text(
+                            role == Role.commenter
+                                ? l.badgeCommentOnly
+                                : l.badgeViewOnly,
+                          ),
+                        ),
                       ],
                     ],
                   ),
                 ],
               ),
             ),
-            const Spacer(),
             ...?widget.titleRowExtras?.call(context),
             ListenableBuilder(
               listenable: _presence,
               builder: (context, _) => PresenceAvatarStack(
                 participants: _presence.avatars(),
-                onJumpTo: (p) => widget.controller?.revealParticipant(p.sessionId),
+                onJumpTo: (p) => widget.controller?.revealParticipant(
+                  p.sessionId,
+                  userId: int.tryParse(p.userKey),
+                ),
               ),
             ),
             const SizedBox(width: 8),
@@ -530,20 +660,38 @@ class _EditorScaffoldState extends State<EditorScaffold> {
                   padding: const EdgeInsets.symmetric(horizontal: 8),
                   leading: const Icon(LucideIcons.messageSquare, size: 18),
                   onPressed: () => _invoke('shell.comments.togglePanel'),
-                  child: _comments.openCount == 0 ? null : Text('${_comments.openCount}'),
+                  child: _comments.openCount == 0
+                      ? null
+                      : Text('${_comments.openCount}'),
                 ),
               ),
             ),
             if (role.canViewHistory)
-              icon('editor.history', LucideIcons.history, l.cmdSeeVersionHistory, () => _invoke('shell.versions.togglePanel')),
+              icon(
+                'editor.history',
+                LucideIcons.history,
+                l.cmdSeeVersionHistory,
+                () => _invoke('shell.versions.togglePanel'),
+              ),
             if (s.assistant?.available ?? false)
-              icon('editor.assistant', LucideIcons.sparkles, l.cmdAssistant, () => _invoke('shell.ai.togglePanel')),
+              icon(
+                'editor.assistant',
+                LucideIcons.sparkles,
+                l.cmdAssistant,
+                () => _invoke('shell.ai.togglePanel'),
+              ),
             const SizedBox(width: 6),
             if (item != null)
               ShadButton(
                 key: const ValueKey<String>('editor.share'),
-                leading: Icon(item.linkRole != null ? LucideIcons.globe : (item.shared ? LucideIcons.users : LucideIcons.lock), size: 16),
-                onPressed: () => _invoke('shell.sharing.open', {'uuid': item.uuid.uuid}),
+                leading: Icon(
+                  item.linkRole != null
+                      ? LucideIcons.globe
+                      : (item.shared ? LucideIcons.users : LucideIcons.lock),
+                  size: 16,
+                ),
+                onPressed: () =>
+                    _invoke('shell.sharing.open', {'uuid': item.uuid.uuid}),
                 child: Text(l.shareButton),
               ),
             const SizedBox(width: 10),
@@ -566,7 +714,10 @@ class _VersionsPanel extends StatefulWidget {
 }
 
 class _VersionsPanelState extends State<_VersionsPanel> {
-  late final VersionsController c = VersionsController(widget.services, widget.itemUuid)..load();
+  late final VersionsController c = VersionsController(
+    widget.services,
+    widget.itemUuid,
+  )..load();
 
   @override
   void dispose() {
@@ -579,6 +730,9 @@ class _VersionsPanelState extends State<_VersionsPanel> {
     controller: c,
     onOpenFull: widget.services.config.versionRenderer == null
         ? null
-        : () => widget.services.dispatcher.invoke('shell.versions.open', source: InvocationSource.ui),
+        : () => widget.services.dispatcher.invoke(
+            'shell.versions.open',
+            source: InvocationSource.ui,
+          ),
   );
 }

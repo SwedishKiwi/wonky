@@ -33,14 +33,16 @@ class _ScopedStore extends LocalStore {
   Future<Object?> read(String key) => _inner.read('$_prefix$key');
 
   @override
-  Future<void> write(String key, Object? value) => _inner.write('$_prefix$key', value);
+  Future<void> write(String key, Object? value) =>
+      _inner.write('$_prefix$key', value);
 
   @override
   Future<void> remove(String key) => _inner.remove('$_prefix$key');
 
   @override
   Future<List<String>> keys(String prefix) async => [
-    for (final k in await _inner.keys('$_prefix$prefix')) k.substring(_prefix.length),
+    for (final k in await _inner.keys('$_prefix$prefix'))
+      k.substring(_prefix.length),
   ];
 }
 
@@ -91,12 +93,15 @@ class MemoryStore extends LocalStore {
   }
 
   @override
-  Future<void> write(String key, Object? value) async => values[key] = jsonEncode(value);
+  Future<void> write(String key, Object? value) async =>
+      values[key] = jsonEncode(value);
 
   @override
   Future<void> remove(String key) async => values.remove(key);
 
   @override
-  Future<List<String>> keys(String prefix) async =>
-      [for (final k in values.keys) if (k.startsWith(prefix)) k];
+  Future<List<String>> keys(String prefix) async => [
+    for (final k in values.keys)
+      if (k.startsWith(prefix)) k,
+  ];
 }

@@ -125,6 +125,36 @@ class MenuRoot {
     return out;
   }
 
+  /// Every command item with fixed [MenuCommand.args] (radio options such
+  /// as View › App theme › Dark), with its label path. The palette lists
+  /// these as separate rows (suite 08 §3).
+  List<({MenuCommand item, List<String> path})> parameterizedItems({
+    String Function(MenuCommand item)? titleOf,
+  }) {
+    final out = <({MenuCommand item, List<String> path})>[];
+    void walk(List<MenuSpec> nodes, List<String> prefix) {
+      for (final n in nodes) {
+        switch (n) {
+          case MenuCommand(:final args) when args.isNotEmpty:
+            out.add((
+              item: n,
+              path: [...prefix, n.label ?? titleOf?.call(n) ?? n.commandId],
+            ));
+          case MenuSubmenu():
+            walk(n.children, [...prefix, n.label]);
+          case MenuCommand() ||
+              MenuSeparator() ||
+              MenuSectionLabel() ||
+              MenuCustom():
+            break;
+        }
+      }
+    }
+
+    walk(children, const []);
+    return out;
+  }
+
   /// Returns a copy with [items] inserted after the node [targetId].
   /// Throws [StateError] when the target does not exist.
   MenuRoot insertAfter(String targetId, List<MenuSpec> items) =>
@@ -152,7 +182,9 @@ class MenuRoot {
     }
     return _patch(
       submenuId,
-      (n) => [(n as MenuSubmenu).copyWith(children: [...n.children, ...items])],
+      (n) => [
+        (n as MenuSubmenu).copyWith(children: [...n.children, ...items]),
+      ],
     );
   }
 
@@ -198,12 +230,8 @@ class MenuRoot {
 
 /// A submenu.
 class MenuSubmenu extends MenuSpec {
-  const MenuSubmenu(
-    String id,
-    this.label,
-    this.children, {
-    this.mnemonic,
-  }) : super(id: id);
+  const MenuSubmenu(String id, this.label, this.children, {this.mnemonic})
+    : super(id: id);
 
   final String label;
   final List<MenuSpec> children;

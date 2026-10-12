@@ -45,13 +45,18 @@ class StatusBar extends StatelessWidget {
         child: DefaultTextStyle.merge(
           style: theme.textTheme.muted.copyWith(fontSize: 12, height: 1),
           child: IconTheme.merge(
-            data: IconThemeData(size: 14, color: theme.colorScheme.mutedForeground),
+            data: IconThemeData(
+              size: 14,
+              color: theme.colorScheme.mutedForeground,
+            ),
             child: Row(
               children: [
                 Expanded(
                   child: Align(
                     alignment: AlignmentDirectional.centerStart,
-                    child: ClipRect(child: group(left, MainAxisAlignment.start)),
+                    child: ClipRect(
+                      child: group(left, MainAxisAlignment.start),
+                    ),
                   ),
                 ),
                 group(center, MainAxisAlignment.center),

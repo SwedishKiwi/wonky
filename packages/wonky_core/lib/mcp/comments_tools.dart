@@ -177,10 +177,7 @@ abstract final class VersionsTools {
         'Restores a version as a new forward edit (a restore point of the '
         'current state is saved first). Revert with changes.revert.',
     inputSchema: ObjectSchema(
-      properties: {
-        'uuid': McpSchemas.uuid,
-        'version_id': JsonSchema.integer(),
-      },
+      properties: {'uuid': McpSchemas.uuid, 'version_id': JsonSchema.integer()},
       required: ['uuid', 'version_id'],
     ),
     outputSchema: McpSchemas.changeResult,

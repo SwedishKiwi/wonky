@@ -44,7 +44,8 @@ abstract class ImportHandler {
 }
 
 /// A side panel the app contributes to the editor's panel host.
-typedef PanelBuilder = SidePanelSpec Function(BuildContext context, ShellServices services);
+typedef PanelBuilder =
+    SidePanelSpec Function(BuildContext context, ShellServices services);
 
 /// Describes one app to the shared shell (suite 03): `WonkyShell(config:
 /// WriteAppConfig())`.
@@ -85,9 +86,8 @@ abstract class WonkyAppConfig {
   MenuRoot menus(BuildContext context, ShellMenus shell) => shell.root;
 
   /// Builders for `MenuSpec.custom` items, by id.
-  Map<String, Widget Function(BuildContext context, VoidCallback close)> customMenuItems(
-    ShellServices services,
-  ) => const {};
+  Map<String, Widget Function(BuildContext context, VoidCallback close)>
+  customMenuItems(ShellServices services) => const {};
 
   /// App side panels (Outline, Named ranges, …). Shell panels (comments,
   /// history, details) are added by the shell.
@@ -121,14 +121,16 @@ abstract class WonkyAppConfig {
   String untitledName(BuildContext context);
 
   /// Wraps the app (extra providers). Called inside the shell providers.
-  Widget wrap(BuildContext context, ShellServices services, Widget child) => child;
+  Widget wrap(BuildContext context, ShellServices services, Widget child) =>
+      child;
 
   /// Called after sign-in (start sync, …) and before sign-out (stop sync).
   Future<void> onSignedIn(ShellServices services) async {}
   Future<void> onSigningOut(ShellServices services) async {}
 
   /// Settings sections the app adds after the shared ones.
-  List<SettingsSectionSpec> settingsSections(ShellServices services) => const [];
+  List<SettingsSectionSpec> settingsSections(ShellServices services) =>
+      const [];
 }
 
 /// An extra settings section.

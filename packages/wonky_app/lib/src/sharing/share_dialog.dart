@@ -15,8 +15,14 @@ import '../shell/shell_services.dart';
 
 /// The share dialog (suite 06 §5). Sharing changes are not undoable;
 /// removing access and transferring ownership confirm.
-Future<void> showShareDialog(BuildContext context, ShellServices s, DriveItemView item) =>
-    showShadDialog<void>(context: context, builder: (_) => ShareDialog(services: s, item: item));
+Future<void> showShareDialog(
+  BuildContext context,
+  ShellServices s,
+  DriveItemView item,
+) => showShadDialog<void>(
+  context: context,
+  builder: (_) => ShareDialog(services: s, item: item),
+);
 
 String roleLabel(WonkyAppLocalizations l, AccessRole r) => switch (r) {
   AccessRole.viewer => l.roleViewer,
@@ -83,7 +89,10 @@ class _ShareDialogState extends State<ShareDialog> {
       final info = await op();
       if (mounted) setState(() => _info = info);
     } catch (e) {
-      s.toasts.error(s.l10n?.shareFailed ?? 'Error', description: errorMessage(e));
+      s.toasts.error(
+        s.l10n?.shareFailed ?? 'Error',
+        description: errorMessage(e),
+      );
     } finally {
       if (mounted) setState(() => _busy = false);
     }
@@ -103,7 +112,9 @@ class _ShareDialogState extends State<ShareDialog> {
     _debounce = Timer(const Duration(milliseconds: 200), () async {
       try {
         final r = await s.repositories.users.searchUsers(q, limit: 6);
-        if (mounted && _input.text.trim() == q) setState(() => _suggestions = r);
+        if (mounted && _input.text.trim() == q) {
+          setState(() => _suggestions = r);
+        }
       } catch (_) {}
     });
   }
@@ -154,7 +165,10 @@ class _ShareDialogState extends State<ShareDialog> {
     final info = _info;
     Widget body;
     if (_error != null) {
-      body = Padding(padding: const EdgeInsets.all(24), child: Text(errorMessage(_error!), style: theme.textTheme.muted));
+      body = Padding(
+        padding: const EdgeInsets.all(24),
+        child: Text(errorMessage(_error!), style: theme.textTheme.muted),
+      );
     } else if (info == null) {
       body = const SizedBox(height: 200, child: Center(child: ShadSpinner()));
     } else if (_settings) {
@@ -164,7 +178,10 @@ class _ShareDialogState extends State<ShareDialog> {
     }
     final isOwner = info?.myRole == AccessRole.owner;
     return CallbackShortcuts(
-      bindings: {const SingleActivator(LogicalKeyboardKey.escape): () => Navigator.of(context).pop()},
+      bindings: {
+        const SingleActivator(LogicalKeyboardKey.escape): () =>
+            Navigator.of(context).pop(),
+      },
       child: ShadDialog(
         key: const ValueKey<String>('dialog.share'),
         title: Row(
@@ -180,7 +197,9 @@ class _ShareDialogState extends State<ShareDialog> {
               ),
             Expanded(
               child: Text(
-                _settings ? l.shareSettingsTitle : l.shareTitle(widget.item.name),
+                _settings
+                    ? l.shareSettingsTitle
+                    : l.shareTitle(widget.item.name),
                 overflow: TextOverflow.ellipsis,
               ),
             ),
@@ -220,7 +239,12 @@ class _ShareDialogState extends State<ShareDialog> {
               padding: const EdgeInsets.only(bottom: 8),
               child: ShadAlert(
                 icon: const Icon(LucideIcons.keyRound),
-                title: Text(l.shareRequestTitle(r.requester.displayName, roleLabel(l, r.requestedRole))),
+                title: Text(
+                  l.shareRequestTitle(
+                    r.requester.displayName,
+                    roleLabel(l, r.requestedRole),
+                  ),
+                ),
                 description: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -230,13 +254,27 @@ class _ShareDialogState extends State<ShareDialog> {
                       children: [
                         ShadButton(
                           size: ShadButtonSize.sm,
-                          onPressed: _busy ? null : () => _run(() => s.repositories.sharing.handleAccessRequest(r.id, true, r.requestedRole)),
+                          onPressed: _busy
+                              ? null
+                              : () => _run(
+                                  () => s.repositories.sharing
+                                      .handleAccessRequest(
+                                        r.id,
+                                        true,
+                                        r.requestedRole,
+                                      ),
+                                ),
                           child: Text(l.shareApprove),
                         ),
                         const SizedBox(width: 6),
                         ShadButton.outline(
                           size: ShadButtonSize.sm,
-                          onPressed: _busy ? null : () => _run(() => s.repositories.sharing.handleAccessRequest(r.id, false, null)),
+                          onPressed: _busy
+                              ? null
+                              : () => _run(
+                                  () => s.repositories.sharing
+                                      .handleAccessRequest(r.id, false, null),
+                                ),
                           child: Text(l.shareDeny),
                         ),
                       ],
@@ -253,14 +291,24 @@ class _ShareDialogState extends State<ShareDialog> {
             padding: const EdgeInsets.only(bottom: 12),
             child: Text(l.shareCannotShare, style: theme.textTheme.muted),
           ),
-        Text(l.sharePeopleWithAccess, style: theme.textTheme.small.copyWith(fontWeight: FontWeight.w600)),
+        Text(
+          l.sharePeopleWithAccess,
+          style: theme.textTheme.small.copyWith(fontWeight: FontWeight.w600),
+        ),
         const SizedBox(height: 6),
         ConstrainedBox(
           constraints: const BoxConstraints(maxHeight: 220),
           child: ListView(
             shrinkWrap: true,
             children: [
-              _personRow(context, info.owner, info.owner.email, AccessRole.owner, isOwnerRow: true, isMe: info.owner.id == me),
+              _personRow(
+                context,
+                info.owner,
+                info.owner.email,
+                AccessRole.owner,
+                isOwnerRow: true,
+                isMe: info.owner.id == me,
+              ),
               for (final p in info.permissions)
                 if (p.user?.id != info.owner.id)
                   _personRow(
@@ -277,7 +325,10 @@ class _ShareDialogState extends State<ShareDialog> {
           ),
         ),
         const SizedBox(height: 14),
-        Text(l.shareGeneralAccess, style: theme.textTheme.small.copyWith(fontWeight: FontWeight.w600)),
+        Text(
+          l.shareGeneralAccess,
+          style: theme.textTheme.small.copyWith(fontWeight: FontWeight.w600),
+        ),
         const SizedBox(height: 6),
         _generalAccess(context, info),
         const SizedBox(height: 16),
@@ -332,7 +383,8 @@ class _ShareDialogState extends State<ShareDialog> {
                             Text(r),
                             const SizedBox(width: 4),
                             GestureDetector(
-                              onTap: () => setState(() => _recipients.remove(r)),
+                              onTap: () =>
+                                  setState(() => _recipients.remove(r)),
                               child: Semantics(
                                 button: true,
                                 label: l.shareRemoveRecipient(r),
@@ -343,11 +395,15 @@ class _ShareDialogState extends State<ShareDialog> {
                         ),
                       ),
                     ConstrainedBox(
-                      constraints: const BoxConstraints(minWidth: 200, maxWidth: 360),
+                      constraints: const BoxConstraints(
+                        minWidth: 200,
+                        maxWidth: 360,
+                      ),
                       child: CallbackShortcuts(
                         bindings: {
                           const SingleActivator(LogicalKeyboardKey.enter): () {
-                            if (_suggestions.isNotEmpty && _input.text.isNotEmpty) {
+                            if (_suggestions.isNotEmpty &&
+                                _input.text.isNotEmpty) {
                               _addRecipient(_suggestions.first.email);
                             } else if (_input.text.trim().isNotEmpty) {
                               _addRecipient(_input.text);
@@ -361,7 +417,11 @@ class _ShareDialogState extends State<ShareDialog> {
                           controller: _input,
                           focusNode: _inputFocus,
                           autofocus: true,
-                          decoration: const ShadDecoration(border: ShadBorder.none, focusedBorder: ShadBorder.none),
+                          decoration: const ShadDecoration(
+                            border: ShadBorder.none,
+                            focusedBorder: ShadBorder.none,
+                            disableSecondaryBorder: true,
+                          ),
                           placeholder: Text(l.shareAddPeople),
                           keyboardType: TextInputType.emailAddress,
                           onChanged: _onInput,
@@ -373,7 +433,12 @@ class _ShareDialogState extends State<ShareDialog> {
               ),
             ),
             const SizedBox(width: 8),
-            _roleSelect(context, _role, (r) => setState(() => _role = r), key: 'dialog.share.role'),
+            _roleSelect(
+              context,
+              _role,
+              (r) => setState(() => _role = r),
+              key: 'dialog.share.role',
+            ),
           ],
         ),
         if (_suggestions.isNotEmpty)
@@ -392,13 +457,18 @@ class _ShareDialogState extends State<ShareDialog> {
                     height: 40,
                     leading: WonkyAvatar(
                       name: u.displayName,
-                      color: ShadTheme.of(context).colorScheme.presence(u.colorIndex),
+                      color: ShadTheme.of(
+                        context,
+                      ).colorScheme.presence(u.colorIndex),
                       imageUrl: u.avatarUrl,
                       size: 24,
                     ),
                     onPressed: () => _addRecipient(u.email),
                     child: Expanded(
-                      child: Text('${u.displayName} · ${u.email}', overflow: TextOverflow.ellipsis),
+                      child: Text(
+                        '${u.displayName} · ${u.email}',
+                        overflow: TextOverflow.ellipsis,
+                      ),
                     ),
                   ),
               ],
@@ -448,7 +518,11 @@ class _ShareDialogState extends State<ShareDialog> {
       enabled: enabled && !_busy,
       minWidth: 130,
       options: [
-        for (final r in [AccessRole.viewer, AccessRole.commenter, AccessRole.editor])
+        for (final r in [
+          AccessRole.viewer,
+          AccessRole.commenter,
+          AccessRole.editor,
+        ])
           ShadOption(value: r, child: Text(roleLabel(l, r))),
       ],
       selectedOptionBuilder: (context, v) => Text(roleLabel(l, v)),
@@ -471,7 +545,9 @@ class _ShareDialogState extends State<ShareDialog> {
   }) {
     final l = WonkyAppLocalizations.of(context);
     final theme = ShadTheme.of(context);
-    final name = user == null ? (invitedEmail ?? email) : (isMe ? l.shareYou(user.displayName) : user.displayName);
+    final name = user == null
+        ? (invitedEmail ?? email)
+        : (isMe ? l.shareYou(user.displayName) : user.displayName);
     final subtitle = [
       if (user != null) email,
       if (invitedEmail != null) l.sharePending,
@@ -488,12 +564,22 @@ class _ShareDialogState extends State<ShareDialog> {
           offset: Offset(0, 4),
         ),
         entries: () => [
-          for (final r in [AccessRole.viewer, AccessRole.commenter, AccessRole.editor])
+          for (final r in [
+            AccessRole.viewer,
+            AccessRole.commenter,
+            AccessRole.editor,
+          ])
             WonkyMenuRadioItem(
               label: roleLabel(l, r),
               selected: r == role,
               enabled: user != null,
-              onSelected: () => _run(() => s.repositories.sharing.updateRole(widget.item.uuid, userId: user!.id, role: r)),
+              onSelected: () => _run(
+                () => s.repositories.sharing.updateRole(
+                  widget.item.uuid,
+                  userId: user!.id,
+                  role: r,
+                ),
+              ),
             ),
           const WonkyMenuSeparator(),
           if (user != null && _info?.myRole == AccessRole.owner)
@@ -510,7 +596,9 @@ class _ShareDialogState extends State<ShareDialog> {
           ),
         ],
         builder: (context, c) => ShadButton.ghost(
-          key: ValueKey<String>('dialog.share.person.${user?.id ?? invitedEmail}'),
+          key: ValueKey<String>(
+            'dialog.share.person.${user?.id ?? invitedEmail}',
+          ),
           size: ShadButtonSize.sm,
           trailing: const Icon(LucideIcons.chevronDown, size: 14),
           onPressed: c.toggle,
@@ -524,7 +612,9 @@ class _ShareDialogState extends State<ShareDialog> {
         children: [
           WonkyAvatar(
             name: user?.displayName ?? email,
-            color: user == null ? theme.colorScheme.muted : parseHexColor(user.avatarColor),
+            color: user == null
+                ? theme.colorScheme.muted
+                : parseHexColor(user.avatarColor),
             imageUrl: user?.avatarUrl,
             size: 32,
           ),
@@ -535,7 +625,11 @@ class _ShareDialogState extends State<ShareDialog> {
               children: [
                 Text(name, overflow: TextOverflow.ellipsis),
                 if (subtitle.isNotEmpty)
-                  Text(subtitle, overflow: TextOverflow.ellipsis, style: theme.textTheme.muted.copyWith(fontSize: 12)),
+                  Text(
+                    subtitle,
+                    overflow: TextOverflow.ellipsis,
+                    style: theme.textTheme.muted.copyWith(fontSize: 12),
+                  ),
               ],
             ),
           ),
@@ -555,7 +649,13 @@ class _ShareDialogState extends State<ShareDialog> {
       destructive: true,
     );
     if (!ok) return;
-    await _run(() => s.repositories.sharing.remove(widget.item.uuid, userId: user?.id, invitedEmail: invitedEmail));
+    await _run(
+      () => s.repositories.sharing.remove(
+        widget.item.uuid,
+        userId: user?.id,
+        invitedEmail: invitedEmail,
+      ),
+    );
   }
 
   Future<void> _transfer(UserSummary user) async {
@@ -568,7 +668,9 @@ class _ShareDialogState extends State<ShareDialog> {
       destructive: true,
     );
     if (!ok) return;
-    await _run(() => s.repositories.sharing.transferOwnership(widget.item.uuid, user.id));
+    await _run(
+      () => s.repositories.sharing.transferOwnership(widget.item.uuid, user.id),
+    );
     s.toasts.show(l.shareTransferSent(user.displayName));
   }
 
@@ -583,10 +685,15 @@ class _ShareDialogState extends State<ShareDialog> {
           width: 32,
           height: 32,
           decoration: BoxDecoration(
-            color: restricted ? theme.colorScheme.muted : theme.colorScheme.success.withValues(alpha: 0.15),
+            color: restricted
+                ? theme.colorScheme.muted
+                : theme.colorScheme.success.withValues(alpha: 0.15),
             shape: BoxShape.circle,
           ),
-          child: Icon(restricted ? LucideIcons.lock : LucideIcons.globe, size: 16),
+          child: Icon(
+            restricted ? LucideIcons.lock : LucideIcons.globe,
+            size: 16,
+          ),
         ),
         const SizedBox(width: 10),
         Expanded(
@@ -598,13 +705,23 @@ class _ShareDialogState extends State<ShareDialog> {
                 initialValue: restricted ? 'restricted' : 'link',
                 enabled: info.canShare && !_busy,
                 options: [
-                  ShadOption(value: 'restricted', child: Text(l.shareRestricted)),
+                  ShadOption(
+                    value: 'restricted',
+                    child: Text(l.shareRestricted),
+                  ),
                   ShadOption(value: 'link', child: Text(l.shareAnyoneWithLink)),
                 ],
-                selectedOptionBuilder: (context, v) => Text(v == 'restricted' ? l.shareRestricted : l.shareAnyoneWithLink),
+                selectedOptionBuilder: (context, v) => Text(
+                  v == 'restricted' ? l.shareRestricted : l.shareAnyoneWithLink,
+                ),
                 onChanged: (v) {
                   if (v == null) return;
-                  _run(() => s.repositories.sharing.setLink(widget.item.uuid, v == 'restricted' ? null : AccessRole.viewer));
+                  _run(
+                    () => s.repositories.sharing.setLink(
+                      widget.item.uuid,
+                      v == 'restricted' ? null : AccessRole.viewer,
+                    ),
+                  );
                 },
               ),
               const SizedBox(height: 2),
@@ -620,7 +737,8 @@ class _ShareDialogState extends State<ShareDialog> {
           _roleSelect(
             context,
             linkRole,
-            (r) => _run(() => s.repositories.sharing.setLink(widget.item.uuid, r)),
+            (r) =>
+                _run(() => s.repositories.sharing.setLink(widget.item.uuid, r)),
             key: 'dialog.share.linkRole',
             enabled: info.canShare,
           ),
@@ -632,8 +750,9 @@ class _ShareDialogState extends State<ShareDialog> {
   Widget _settingsPage(BuildContext context, SharingInfo info) {
     final l = WonkyAppLocalizations.of(context);
     final st = info.settings;
-    void update(ItemSharingSettings next) =>
-        _run(() => s.repositories.sharing.updateSettings(widget.item.uuid, next));
+    void update(ItemSharingSettings next) => _run(
+      () => s.repositories.sharing.updateSettings(widget.item.uuid, next),
+    );
     return Column(
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -656,13 +775,17 @@ class _ShareDialogState extends State<ShareDialog> {
         ),
         if (info.link != null)
           ShadButton.outline(
-            onPressed: () => _run(() => s.repositories.sharing.rotateLink(widget.item.uuid)),
+            onPressed: () =>
+                _run(() => s.repositories.sharing.rotateLink(widget.item.uuid)),
             leading: const Icon(LucideIcons.refreshCw, size: 16),
             child: Text(l.shareRotateLink),
           ),
         Align(
           alignment: Alignment.centerRight,
-          child: ShadButton(onPressed: () => setState(() => _settings = false), child: Text(l.actionDone)),
+          child: ShadButton(
+            onPressed: () => setState(() => _settings = false),
+            child: Text(l.actionDone),
+          ),
         ),
       ],
     );

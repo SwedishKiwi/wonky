@@ -32,7 +32,11 @@ class CopyRequest {
   final bool copySharing;
 }
 
-Future<String?> showRenameDialog(BuildContext context, ShellServices s, DriveItemView item) {
+Future<String?> showRenameDialog(
+  BuildContext context,
+  ShellServices s,
+  DriveItemView item,
+) {
   final l = WonkyAppLocalizations.of(context);
   return showTextInputDialog(
     context,
@@ -58,7 +62,11 @@ Future<String?> showNewFolderDialog(BuildContext context, ShellServices s) {
   );
 }
 
-Future<CopyRequest?> showCopyDialog(BuildContext context, ShellServices s, DriveItemView item) async {
+Future<CopyRequest?> showCopyDialog(
+  BuildContext context,
+  ShellServices s,
+  DriveItemView item,
+) async {
   final l = WonkyAppLocalizations.of(context);
   final r = await showWonkyFormDialog(
     context,
@@ -66,7 +74,12 @@ Future<CopyRequest?> showCopyDialog(BuildContext context, ShellServices s, Drive
       title: l.copyTitle,
       dialogKey: 'dialog.copy',
       fields: [
-        TextFieldSpec(id: 'name', label: l.copyName, initial: l.copyOfName(item.name), validator: itemNameValidator(l)),
+        TextFieldSpec(
+          id: 'name',
+          label: l.copyName,
+          initial: l.copyOfName(item.name),
+          validator: itemNameValidator(l),
+        ),
         CheckboxFieldSpec(id: 'copyComments', label: l.copyComments),
         CheckboxFieldSpec(id: 'copySharing', label: l.copySharing),
       ],
@@ -118,11 +131,21 @@ Future<MoveTarget?> showMoveDialog(
   String? actionLabel,
 }) => showShadDialog<MoveTarget>(
   context: context,
-  builder: (_) => _MoveDialog(services: s, items: items, title: title, actionLabel: actionLabel),
+  builder: (_) => _MoveDialog(
+    services: s,
+    items: items,
+    title: title,
+    actionLabel: actionLabel,
+  ),
 );
 
 class _MoveDialog extends StatefulWidget {
-  const _MoveDialog({required this.services, required this.items, this.title, this.actionLabel});
+  const _MoveDialog({
+    required this.services,
+    required this.items,
+    this.title,
+    this.actionLabel,
+  });
 
   final ShellServices services;
   final List<DriveItemView> items;
@@ -133,7 +156,9 @@ class _MoveDialog extends StatefulWidget {
   State<_MoveDialog> createState() => _MoveDialogState();
 }
 
-class _MoveDialogState extends State<_MoveDialog> implements McpDescribableDialog {
+class _MoveDialogState extends State<_MoveDialog>
+    implements McpDescribableDialog {
+  ShellServices? _registeredIn;
   DriveItemView? _folder;
   List<DriveItemView> _path = const [];
   List<DriveItemView> _children = const [];
@@ -147,7 +172,9 @@ class _MoveDialogState extends State<_MoveDialog> implements McpDescribableDialo
   @override
   void initState() {
     super.initState();
-    final parent = widget.items.length == 1 ? widget.items.single.parentUuid : null;
+    final parent = widget.items.length == 1
+        ? widget.items.single.parentUuid
+        : null;
     _open(parent);
   }
 
@@ -155,12 +182,15 @@ class _MoveDialogState extends State<_MoveDialog> implements McpDescribableDialo
   void didChangeDependencies() {
     super.didChangeDependencies();
     final services = ShellScope.maybeOf(context);
-    if (services != null && !services.openDialogs.contains(this)) services.openDialogs.add(this);
+    _registeredIn = services;
+    if (services != null && !services.openDialogs.contains(this)) {
+      services.openDialogs.add(this);
+    }
   }
 
   @override
   void dispose() {
-    ShellScope.maybeOf(context)?.openDialogs.remove(this);
+    _registeredIn?.openDialogs.remove(this);
     _newName.dispose();
     super.dispose();
   }
@@ -172,10 +202,15 @@ class _MoveDialogState extends State<_MoveDialog> implements McpDescribableDialo
     });
     try {
       final folder = folderUuid == null ? null : await s.drive.get(folderUuid);
-      final path = folderUuid == null ? const <DriveItemView>[] : await s.drive.path(folderUuid);
+      final path = folderUuid == null
+          ? const <DriveItemView>[]
+          : await s.drive.path(folderUuid);
       final page = await s.drive.list(
         folderUuid: folderUuid,
-        filter: DriveListFilter(view: DriveView.folder, kinds: [DriveItemKind.folder]),
+        filter: DriveListFilter(
+          view: DriveView.folder,
+          kinds: [DriveItemKind.folder],
+        ),
         sort: DriveSort(field: DriveSortField.name, descending: false),
         limit: 200,
       );
@@ -183,7 +218,10 @@ class _MoveDialogState extends State<_MoveDialog> implements McpDescribableDialo
       setState(() {
         _folder = folder;
         _path = path;
-        _children = [for (final c in page.items) if (c.isFolder && !c.isTrashed) c];
+        _children = [
+          for (final c in page.items)
+            if (c.isFolder && !c.isTrashed) c,
+        ];
         _loading = false;
       });
     } catch (e) {
@@ -210,7 +248,10 @@ class _MoveDialogState extends State<_MoveDialog> implements McpDescribableDialo
     final name = _newName.text.trim();
     if (name.isEmpty) return;
     try {
-      final v = await s.drive.createFolder(parentUuid: _folder?.uuid, name: name);
+      final v = await s.drive.createFolder(
+        parentUuid: _folder?.uuid,
+        name: name,
+      );
       _newName.clear();
       setState(() => _creating = false);
       await _open(v.uuid);
@@ -233,7 +274,11 @@ class _MoveDialogState extends State<_MoveDialog> implements McpDescribableDialo
     ],
     'buttons': [
       {'id': 'cancel', 'label': 'Cancel'},
-      {'id': 'move', 'label': widget.actionLabel ?? 'Move here', 'enabled': _canDropHere},
+      {
+        'id': 'move',
+        'label': widget.actionLabel ?? 'Move here',
+        'enabled': _canDropHere,
+      },
     ],
   };
 
@@ -261,13 +306,19 @@ class _MoveDialogState extends State<_MoveDialog> implements McpDescribableDialo
   Widget build(BuildContext context) {
     final l = WonkyAppLocalizations.of(context);
     final theme = ShadTheme.of(context);
-    final title = widget.title ??
-        (widget.items.length == 1 ? l.moveTitleOne(widget.items.single.name) : l.moveTitleMany(widget.items.length));
+    final title =
+        widget.title ??
+        (widget.items.length == 1
+            ? l.moveTitleOne(widget.items.single.name)
+            : l.moveTitleMany(widget.items.length));
     return ShadDialog(
       key: const ValueKey<String>('dialog.move'),
       title: Text(title),
       actions: [
-        ShadButton.outline(onPressed: () => Navigator.of(context).pop(), child: Text(l.actionCancel)),
+        ShadButton.outline(
+          onPressed: () => Navigator.of(context).pop(),
+          child: Text(l.actionCancel),
+        ),
         ShadButton(
           key: const ValueKey<String>('dialog.move.confirm'),
           enabled: _canDropHere && !_loading,
@@ -295,8 +346,15 @@ class _MoveDialogState extends State<_MoveDialog> implements McpDescribableDialo
                 Expanded(
                   child: ShadBreadcrumb(
                     children: [
-                      ShadBreadcrumbLink(onPressed: () => _open(null), child: Text(l.navMyDrive)),
-                      for (final p in _path) ShadBreadcrumbLink(onPressed: () => _open(p.uuid), child: Text(p.name)),
+                      ShadBreadcrumbLink(
+                        onPressed: () => _open(null),
+                        child: Text(l.navMyDrive),
+                      ),
+                      for (final p in _path)
+                        ShadBreadcrumbLink(
+                          onPressed: () => _open(p.uuid),
+                          child: Text(p.name),
+                        ),
                       if (_folder != null) Text(_folder!.name),
                     ],
                   ),
@@ -310,7 +368,9 @@ class _MoveDialogState extends State<_MoveDialog> implements McpDescribableDialo
                     iconSize: 16,
                     semanticLabel: l.cmdNewFolder,
                     icon: const Icon(LucideIcons.folderPlus),
-                    onPressed: (_folder?.canEdit ?? true) ? () => setState(() => _creating = true) : null,
+                    onPressed: (_folder?.canEdit ?? true)
+                        ? () => setState(() => _creating = true)
+                        : null,
                   ),
                 ),
               ],
@@ -324,7 +384,10 @@ class _MoveDialogState extends State<_MoveDialog> implements McpDescribableDialo
                     Expanded(
                       child: CallbackShortcuts(
                         bindings: {
-                          const SingleActivator(LogicalKeyboardKey.escape): () => setState(() => _creating = false),
+                          const SingleActivator(
+                            LogicalKeyboardKey.escape,
+                          ): () =>
+                              setState(() => _creating = false),
                         },
                         child: ShadInput(
                           controller: _newName,
@@ -335,7 +398,10 @@ class _MoveDialogState extends State<_MoveDialog> implements McpDescribableDialo
                       ),
                     ),
                     const SizedBox(width: 6),
-                    ShadButton(onPressed: _createFolder, child: Text(l.actionCreate)),
+                    ShadButton(
+                      onPressed: _createFolder,
+                      child: Text(l.actionCreate),
+                    ),
                   ],
                 ),
               ),
@@ -348,29 +414,50 @@ class _MoveDialogState extends State<_MoveDialog> implements McpDescribableDialo
                 child: _loading
                     ? const Center(child: ShadSpinner())
                     : _error != null
-                    ? Center(child: Text(errorMessage(_error!), style: theme.textTheme.muted))
+                    ? Center(
+                        child: Text(
+                          errorMessage(_error!),
+                          style: theme.textTheme.muted,
+                        ),
+                      )
                     : _children.isEmpty
-                    ? Center(child: Text(l.moveNoFolders, style: theme.textTheme.muted))
+                    ? Center(
+                        child: Text(
+                          l.moveNoFolders,
+                          style: theme.textTheme.muted,
+                        ),
+                      )
                     : ListView(
                         padding: const EdgeInsets.all(4),
                         children: [
                           for (final f in _children)
                             ShadButton.ghost(
-                              key: ValueKey<String>('dialog.move.folder.${f.uuid.uuid}'),
+                              key: ValueKey<String>(
+                                'dialog.move.folder.${f.uuid.uuid}',
+                              ),
                               enabled: !_isMoving(f),
                               mainAxisAlignment: MainAxisAlignment.start,
                               leading: Icon(
                                 LucideIcons.folder,
                                 size: 16,
-                                color: f.canEdit ? null : theme.colorScheme.mutedForeground,
+                                color: f.canEdit
+                                    ? null
+                                    : theme.colorScheme.mutedForeground,
                               ),
-                              trailing: const Icon(LucideIcons.chevronRight, size: 14),
+                              trailing: const Icon(
+                                LucideIcons.chevronRight,
+                                size: 14,
+                              ),
                               onPressed: () => _open(f.uuid),
                               child: Expanded(
                                 child: Text(
                                   f.name,
                                   overflow: TextOverflow.ellipsis,
-                                  style: TextStyle(color: f.canEdit ? null : theme.colorScheme.mutedForeground),
+                                  style: TextStyle(
+                                    color: f.canEdit
+                                        ? null
+                                        : theme.colorScheme.mutedForeground,
+                                  ),
                                 ),
                               ),
                             ),
@@ -381,7 +468,10 @@ class _MoveDialogState extends State<_MoveDialog> implements McpDescribableDialo
             if (_folder != null && !_folder!.canEdit)
               Padding(
                 padding: const EdgeInsets.only(top: 6),
-                child: Text(l.moveNoPermission, style: theme.textTheme.muted.copyWith(fontSize: 12)),
+                child: Text(
+                  l.moveNoPermission,
+                  style: theme.textTheme.muted.copyWith(fontSize: 12),
+                ),
               ),
           ],
         ),

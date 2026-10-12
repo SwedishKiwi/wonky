@@ -34,7 +34,11 @@ class ShellPageFrame extends StatelessWidget {
           Container(
             height: 56,
             padding: const EdgeInsets.symmetric(horizontal: 12),
-            decoration: BoxDecoration(border: Border(bottom: BorderSide(color: theme.colorScheme.border))),
+            decoration: BoxDecoration(
+              border: Border(
+                bottom: BorderSide(color: theme.colorScheme.border),
+              ),
+            ),
             child: Row(
               children: [
                 ShadTooltip(
@@ -43,19 +47,30 @@ class ShellPageFrame extends StatelessWidget {
                     key: const ValueKey<String>('shell.page.back'),
                     semanticLabel: l.actionBack,
                     icon: const Icon(LucideIcons.arrowLeft, size: 18),
-                    onPressed: onBack ?? () => services.canGoBack ? services.goBack() : services.router.go('/'),
+                    onPressed:
+                        onBack ??
+                        () => services.canGoBack
+                            ? services.goBack()
+                            : services.router.go('/'),
                   ),
                 ),
                 const SizedBox(width: 8),
                 GestureDetector(
                   onTap: () => services.router.go('/'),
-                  child: MouseRegion(cursor: SystemMouseCursors.click, child: services.config.logo(size: 28)),
+                  child: MouseRegion(
+                    cursor: SystemMouseCursors.click,
+                    child: services.config.logo(size: 28),
+                  ),
                 ),
                 const SizedBox(width: 12),
                 Expanded(
                   child: Semantics(
                     header: true,
-                    child: Text(title, style: theme.textTheme.large, overflow: TextOverflow.ellipsis),
+                    child: Text(
+                      title,
+                      style: theme.textTheme.large,
+                      overflow: TextOverflow.ellipsis,
+                    ),
                   ),
                 ),
                 ...actions,

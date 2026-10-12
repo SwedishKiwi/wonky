@@ -159,12 +159,14 @@ class UndoService extends ChangeNotifier {
   // ---- Registration ----
 
   /// Registers the handler of a domain (`write.content`, `drive` …).
-  void registerHandler(UndoHandler<UndoEntry> handler) => _handlers[handler.domain] = handler;
+  void registerHandler(UndoHandler<UndoEntry> handler) =>
+      _handlers[handler.domain] = handler;
 
   void unregisterHandler(String domain) => _handlers.remove(domain);
 
   UndoHandler<UndoEntry> _handlerFor(UndoEntry e) =>
-      _handlers[e.domain] ?? (throw StateError('No undo handler for domain "${e.domain}"'));
+      _handlers[e.domain] ??
+      (throw StateError('No undo handler for domain "${e.domain}"'));
 
   /// Opens (or re-attaches) the stack [key]. With [persist], steps are
   /// stored locally and restored here (best effort; entries need decoders).
@@ -248,7 +250,9 @@ class UndoService extends ChangeNotifier {
       s.undo[s.undo.length - 1] = _merge(top, step, now);
     } else {
       s.undo.add(step);
-      if (s.undo.length > maxSteps) s.undo.removeRange(0, s.undo.length - maxSteps);
+      if (s.undo.length > maxSteps) {
+        s.undo.removeRange(0, s.undo.length - maxSteps);
+      }
     }
     _changed(key);
   }
@@ -257,14 +261,20 @@ class UndoService extends ChangeNotifier {
     final entries = [...top.entries];
     for (final e in next.entries) {
       final last = entries.isEmpty ? null : entries.last;
-      final merged = last != null && last.domain == e.domain ? last.coalesce(e) : null;
+      final merged = last != null && last.domain == e.domain
+          ? last.coalesce(e)
+          : null;
       if (merged != null) {
         entries[entries.length - 1] = merged;
       } else {
         entries.add(e);
       }
     }
-    return top.copyWith(entries: entries, selectionAfter: next.selectionAfter, updatedAt: now);
+    return top.copyWith(
+      entries: entries,
+      selectionAfter: next.selectionAfter,
+      updatedAt: now,
+    );
   }
 
   /// Replaces the top step of [stack] (follow-up refinement of the last
@@ -317,15 +327,19 @@ class UndoService extends ChangeNotifier {
       final list = redo ? s.redo : s.undo;
       if (list.isEmpty) continue;
       final step = list.last;
-      if (best == null || step.updatedAt.isAfter(best.$2.updatedAt)) best = (k, step);
+      if (best == null || step.updatedAt.isAfter(best.$2.updatedAt)) {
+        best = (k, step);
+      }
     }
     return best;
   }
 
   /// Steps of [stack], oldest first.
-  List<UndoStep> undoStepsOf(UndoStackKey stack) => List.unmodifiable(_stacks[stack]?.undo ?? const []);
+  List<UndoStep> undoStepsOf(UndoStackKey stack) =>
+      List.unmodifiable(_stacks[stack]?.undo ?? const []);
 
-  List<UndoStep> redoStepsOf(UndoStackKey stack) => List.unmodifiable(_stacks[stack]?.redo ?? const []);
+  List<UndoStep> redoStepsOf(UndoStackKey stack) =>
+      List.unmodifiable(_stacks[stack]?.redo ?? const []);
 
   /// Undoes the most recent step of the active context.
   Future<UndoOutcome?> undo() async {
@@ -357,7 +371,8 @@ class UndoService extends ChangeNotifier {
   List<UndoHistoryEntry> history({int limit = 50}) {
     final all = <UndoHistoryEntry>[
       for (final k in _activeKeys)
-        for (final s in _stacks[k]?.undo ?? const <UndoStep>[]) UndoHistoryEntry(s, k),
+        for (final s in _stacks[k]?.undo ?? const <UndoStep>[])
+          UndoHistoryEntry(s, k),
     ]..sort((a, b) => b.step.updatedAt.compareTo(a.step.updatedAt));
     return all.take(limit).toList();
   }
@@ -390,7 +405,12 @@ class UndoService extends ChangeNotifier {
     final sel = isRedo ? step.selectionAfter : step.selectionBefore;
     if (sel != null) s.restoreSelection?.call(sel);
     _changed(key);
-    final outcome = UndoOutcome(step: step, stack: key, isRedo: isRedo, partial: partial);
+    final outcome = UndoOutcome(
+      step: step,
+      stack: key,
+      isRedo: isRedo,
+      partial: partial,
+    );
     _outcomes.add(outcome);
     return outcome;
   }
@@ -402,7 +422,10 @@ class UndoService extends ChangeNotifier {
     final s = _stacks[key];
     if (s != null && s.persist) {
       _saveTimers[key]?.cancel();
-      _saveTimers[key] = Timer(const Duration(milliseconds: 600), () => _save(key, s));
+      _saveTimers[key] = Timer(
+        const Duration(milliseconds: 600),
+        () => _save(key, s),
+      );
     }
   }
 
@@ -445,7 +468,8 @@ class UndoService extends ChangeNotifier {
       List<UndoStep> decode(Object? list) => [
         if (list is List)
           for (final j in list)
-            if (j is Map) ?UndoStep.fromJson(j.cast<String, Object?>(), decoders),
+            if (j is Map)
+              ?UndoStep.fromJson(j.cast<String, Object?>(), decoders),
       ];
       s.undo.addAll(decode(raw['undo']));
       s.redo.addAll(decode(raw['redo']));

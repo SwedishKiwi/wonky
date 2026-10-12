@@ -51,6 +51,14 @@ dependencies:
   shad: ^0.99.4
   highlight: ^0.7.0
   web: ^1.1.1
+  wonky_app:
+    path: ../packages/wonky_app
+  wonky_client:
+    path: ../wonky_client
+  go_router: ^18.0.2
+  intl: ^0.20.3
+  file_picker: ^13.1.0
+  http: ^1.6.0
 dev_dependencies:
   flutter_test:
     sdk: flutter
@@ -64,6 +72,7 @@ dev_dependencies:
     sdk: flutter
   flutter_lints: '>=3.0.0 <7.0.0'
   flutter_test_robots: ^0.0.24
+  serverpod_auth_core_client: 4.1.0-beta.3
 
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec
@@ -75,6 +84,11 @@ flutter:
   # included with your application, so that you can use the icons in
   # the material Icons class.
   uses-material-design: true
+  assets:
+    - assets/config.json
+    # Document fonts (static TTF, OFL-1.1): loaded on demand with FontLoader
+    # and embedded in client-side PDF exports (Write 06 §8).
+    - assets/fonts/
 
   # To add assets to your application, add an assets section, like this:
   # assets:

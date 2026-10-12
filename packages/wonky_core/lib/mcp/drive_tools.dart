@@ -133,7 +133,8 @@ abstract final class DriveTools {
   static const rename = McpToolDefinition(
     name: 'drive.rename',
     title: 'Rename an item',
-    description: 'Renames a document, spreadsheet or folder (1–255 chars, no "/").',
+    description:
+        'Renames a document, spreadsheet or folder (1–255 chars, no "/").',
     inputSchema: ObjectSchema(
       properties: {
         'uuid': McpSchemas.uuid,
@@ -209,7 +210,8 @@ abstract final class DriveTools {
   static const star = McpToolDefinition(
     name: 'drive.star',
     title: 'Star or unstar',
-    description: 'Stars (or unstars, with starred: false) an item for the user.',
+    description:
+        'Stars (or unstars, with starred: false) an item for the user.',
     inputSchema: ObjectSchema(
       properties: {
         'uuid': McpSchemas.uuid,

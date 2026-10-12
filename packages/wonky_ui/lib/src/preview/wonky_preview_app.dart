@@ -31,7 +31,9 @@ class WonkyTestApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       theme: WonkyTheme.light(config),
       darkTheme: WonkyTheme.dark(config),
-      themeMode: brightness == Brightness.dark ? ThemeMode.dark : ThemeMode.light,
+      themeMode: brightness == Brightness.dark
+          ? ThemeMode.dark
+          : ThemeMode.light,
       locale: locale,
       supportedLocales: const [Locale('en')],
       localizationsDelegates: [
@@ -46,4 +48,3 @@ class WonkyTestApp extends StatelessWidget {
     );
   }
 }
-

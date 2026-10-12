@@ -54,8 +54,10 @@ class UuidV7Generator {
     _lastMillis = millis;
 
     final bytes = List<int>.filled(16, 0);
+    // Division instead of shifts: on the web, bit operations truncate to
+    // 32 bits and would drop the timestamp's high bytes.
     for (var i = 0; i < 6; i++) {
-      bytes[i] = (millis >> (8 * (5 - i))) & 0xff;
+      bytes[i] = (millis ~/ _byteScale[5 - i]) % 256;
     }
     bytes[6] = 0x70 | ((_counter >> 8) & 0x0f);
     bytes[7] = _counter & 0xff;
@@ -84,6 +86,15 @@ class UuidV7Generator {
         '89ab'.contains(parts[3][0].toLowerCase());
   }
 
+  static const _byteScale = [
+    1,
+    0x100,
+    0x10000,
+    0x1000000,
+    0x100000000,
+    0x10000000000,
+  ];
+
   static String _format(List<int> bytes) {
     final b = StringBuffer();
     for (var i = 0; i < 16; i++) {
@@ -103,7 +114,9 @@ int presenceColorIndex(String key, {int slots = 12}) {
   var hash = 0x811c9dc5;
   for (final unit in key.codeUnits) {
     hash ^= unit;
-    hash = (hash * 0x01000193) & 0xffffffff;
+    // hash * 0x01000193 mod 2^32, split so every intermediate stays exact
+    // in a JS double (the web has no 64-bit ints): 0x01000193 = 2^24 + 0x193.
+    hash = ((hash & 0xff) * 0x1000000 + hash * 0x193) % 0x100000000;
   }
   return hash % slots;
 }

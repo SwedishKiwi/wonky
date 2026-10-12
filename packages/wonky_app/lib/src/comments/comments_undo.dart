@@ -5,9 +5,17 @@ import '../shell/shell_services.dart';
 import 'comment_anchor.dart';
 
 /// Comment operations recorded on the document stack (suite 08 §3.3
-/// `comments`): undo of a create deletes, undo of a delete re-creates (as a
-/// new comment), resolve ⇄ reopen.
-enum CommentUndoOp { createThread, reply, resolve, reopen, deleteThread, deleteComment, edit }
+/// `comments`): undo of a create deletes, undo of a delete re-creates (with
+/// the same thread id), resolve ⇄ reopen.
+enum CommentUndoOp {
+  createThread,
+  reply,
+  resolve,
+  reopen,
+  deleteThread,
+  deleteComment,
+  edit,
+}
 
 class CommentUndoEntry extends UndoEntry {
   const CommentUndoEntry({
@@ -41,20 +49,25 @@ class CommentUndoEntry extends UndoEntry {
 
   @override
   UndoEntry? rebase(RemoteChange change) {
-    if (change is FieldRemoteChange && change.target == threadUuid && change.deleted) return null;
+    if (change is FieldRemoteChange &&
+        change.target == threadUuid &&
+        change.deleted) {
+      return null;
+    }
     return this;
   }
 
-  CommentUndoEntry copyWith({String? threadUuid, int? commentId}) => CommentUndoEntry(
-    op: op,
-    threadUuid: threadUuid ?? this.threadUuid,
-    commentId: commentId ?? this.commentId,
-    body: body,
-    previousBody: previousBody,
-    anchorKind: anchorKind,
-    anchorJson: anchorJson,
-    quotedText: quotedText,
-  );
+  CommentUndoEntry copyWith({String? threadUuid, int? commentId}) =>
+      CommentUndoEntry(
+        op: op,
+        threadUuid: threadUuid ?? this.threadUuid,
+        commentId: commentId ?? this.commentId,
+        body: body,
+        previousBody: previousBody,
+        anchorKind: anchorKind,
+        anchorJson: anchorJson,
+        quotedText: quotedText,
+      );
 }
 
 /// Applies [CommentUndoEntry]s through the open file's comments controller.
@@ -72,16 +85,25 @@ class CommentsUndoHandler extends UndoHandler<CommentUndoEntry> {
   @override
   Future<CommentUndoEntry> redo(CommentUndoEntry e) => _apply(e, undo: false);
 
-  Future<CommentUndoEntry> _apply(CommentUndoEntry e, {required bool undo}) async {
+  Future<CommentUndoEntry> _apply(
+    CommentUndoEntry e, {
+    required bool undo,
+  }) async {
     final c = services.comments.value;
     if (c == null) throw const UndoConflict('Comments are not open');
     try {
       switch ((e.op, undo)) {
-        case (CommentUndoOp.createThread, true) || (CommentUndoOp.deleteThread, false):
+        case (CommentUndoOp.createThread, true) ||
+            (CommentUndoOp.deleteThread, false):
           await c.deleteThread(e.threadUuid);
           return e;
-        case (CommentUndoOp.createThread, false) || (CommentUndoOp.deleteThread, true):
+        case (CommentUndoOp.createThread, false) ||
+            (CommentUndoOp.deleteThread, true):
+          // Re-create with the original id: the document's own anchor
+          // (e.g. Write's `cmt_<uuid>` mark) is restored by its content
+          // undo entry and still points at it.
           final t = await c.createThread(
+            threadUuid: UuidValue.fromString(e.threadUuid),
             anchor: NewCommentAnchor(
               kind: e.anchorKind ?? CommentAnchorKind.document,
               anchorJson: e.anchorJson ?? '{}',
@@ -90,10 +112,12 @@ class CommentsUndoHandler extends UndoHandler<CommentUndoEntry> {
             body: e.body ?? '',
           );
           return e.copyWith(threadUuid: t.uuid.uuid);
-        case (CommentUndoOp.reply, true) || (CommentUndoOp.deleteComment, false):
+        case (CommentUndoOp.reply, true) ||
+            (CommentUndoOp.deleteComment, false):
           if (e.commentId != null) await c.deleteComment(e.commentId!);
           return e;
-        case (CommentUndoOp.reply, false) || (CommentUndoOp.deleteComment, true):
+        case (CommentUndoOp.reply, false) ||
+            (CommentUndoOp.deleteComment, true):
           final t = await c.reply(e.threadUuid, e.body ?? '');
           final last = t.comments.isEmpty ? null : t.comments.last;
           return e.copyWith(commentId: last?.id);
@@ -108,7 +132,9 @@ class CommentsUndoHandler extends UndoHandler<CommentUndoEntry> {
           return e;
       }
     } on WonkyException catch (err) {
-      if (err.code == WonkyErrorCode.notFound) throw const UndoConflict('Comment deleted');
+      if (err.code == WonkyErrorCode.notFound) {
+        throw const UndoConflict('Comment deleted');
+      }
       rethrow;
     }
   }

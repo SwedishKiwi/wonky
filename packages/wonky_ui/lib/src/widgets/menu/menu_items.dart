@@ -144,7 +144,9 @@ class _TypeAheadMenuBodyState extends State<_TypeAheadMenuBody> {
     // Repeating the same letter cycles through matches.
     final cycling = _typed.length > 1 && _typed.split('').toSet().length == 1;
     final query = cycling ? _typed[0] : _typed;
-    final start = cycling || _typed.length == 1 ? focusedIndex + 1 : focusedIndex;
+    final start = cycling || _typed.length == 1
+        ? focusedIndex + 1
+        : focusedIndex;
     for (var k = 0; k < count; k++) {
       final i = (start + k + count) % count;
       if (i < 0 || _labels[i].isEmpty) continue;
@@ -189,8 +191,9 @@ class _TypeAheadMenuBodyState extends State<_TypeAheadMenuBody> {
 
   Widget _buildEntry(BuildContext context, WonkyMenuEntry e, bool leading) {
     final theme = ShadTheme.of(context);
-    Widget? lead(IconData? icon) =>
-        leading ? SizedBox(width: 16, child: icon == null ? null : Icon(icon, size: 16)) : null;
+    Widget? lead(IconData? icon) => leading
+        ? SizedBox(width: 16, child: icon == null ? null : Icon(icon, size: 16))
+        : null;
     switch (e) {
       case WonkyMenuSeparator():
         return const ShadSeparator.horizontal(
@@ -231,23 +234,24 @@ class _TypeAheadMenuBodyState extends State<_TypeAheadMenuBody> {
           WonkyMenuCheckItem(:final checked) => lead(
             checked ? LucideIcons.check : null,
           ),
-          WonkyMenuRadioItem(:final selected) => leading
-              ? SizedBox(
-                  width: 16,
-                  child: selected
-                      ? Center(
-                          child: Container(
-                            width: 7,
-                            height: 7,
-                            decoration: BoxDecoration(
-                              color: theme.colorScheme.foreground,
-                              shape: BoxShape.circle,
+          WonkyMenuRadioItem(:final selected) =>
+            leading
+                ? SizedBox(
+                    width: 16,
+                    child: selected
+                        ? Center(
+                            child: Container(
+                              width: 7,
+                              height: 7,
+                              decoration: BoxDecoration(
+                                color: theme.colorScheme.foreground,
+                                shape: BoxShape.circle,
+                              ),
                             ),
-                          ),
-                        )
-                      : null,
-                )
-              : null,
+                          )
+                        : null,
+                  )
+                : null,
           _ => lead(e.icon),
         };
         final shortcut = e.shortcut;
@@ -258,9 +262,7 @@ class _TypeAheadMenuBodyState extends State<_TypeAheadMenuBody> {
           leading: leadingWidget,
           trailing: shortcut == null || shortcut.isEmpty
               ? null
-              : ExcludeSemantics(
-                  child: ShadKbd.group(shortcut, height: 20),
-                ),
+              : ExcludeSemantics(child: ShadKbd.group(shortcut, height: 20)),
           onPressed: e.onSelected,
           child: Text(e.label),
         );

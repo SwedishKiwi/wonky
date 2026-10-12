@@ -1,0 +1,193 @@
+import 'dart:async';
+
+import 'package:flutter/widgets.dart';
+import 'package:wonky_app/wonky_app.dart';
+import 'package:wonky_core/wonky_core.dart';
+
+import '../features/screen/write_document_controller.dart';
+
+/// Runs a Write command against the active document.
+typedef WriteRun =
+    FutureOr<CommandResult> Function(
+      CommandContext ctx,
+      WriteDocumentController doc,
+      JsonArgs args,
+    );
+
+/// A Write command (Write 04 §40, 05 §24): needs an open, loaded document
+/// unless [needsDocument] is false. Titles are English (i18n is out of
+/// scope this iteration).
+class WriteCommand extends JsonCommand {
+  WriteCommand(
+    String id, {
+    required this.label,
+    required this.run,
+    this.icon,
+    this.categoryName,
+    this.descriptionText,
+    this.defaultBindings = const [],
+    this.keyScope = KeyScope.global,
+    this.requiredRole = Role.viewer,
+    this.isUndoable = false,
+    this.argsSchema = JsonSchema.empty,
+    this.showInPalette = true,
+    this.needsDocument = true,
+    this.needsEditable = false,
+    this.enabled,
+    this.checked,
+    this.reason,
+    this.undoLabelOf,
+    this.aliasList = const [],
+  }) : id = CommandId(id);
+
+  @override
+  final CommandId id;
+  final String label;
+  @override
+  final IconData? icon;
+  final String? categoryName;
+  final String? descriptionText;
+  @override
+  final List<KeyBinding> defaultBindings;
+  @override
+  final KeyScope keyScope;
+  @override
+  final Role requiredRole;
+  @override
+  final bool isUndoable;
+  @override
+  final JsonSchema argsSchema;
+  @override
+  final bool showInPalette;
+  final List<String> aliasList;
+
+  /// Whether the command needs an open Write document.
+  final bool needsDocument;
+
+  /// Whether the command changes content (needs Editing/Suggesting rights).
+  final bool needsEditable;
+  final bool Function(WriteDocumentController doc, JsonArgs args)? enabled;
+  final bool? Function(WriteDocumentController doc, JsonArgs args)? checked;
+  final String? Function(WriteDocumentController doc, JsonArgs args)? reason;
+  final String Function(JsonArgs args)? undoLabelOf;
+  final WriteRun run;
+
+  @override
+  String title(BuildContext context) => label;
+
+  @override
+  String? description(BuildContext context) => descriptionText;
+
+  @override
+  String? category(BuildContext context) => categoryName;
+
+  @override
+  List<String> aliases(BuildContext context) => aliasList;
+
+  @override
+  String undoLabel(BuildContext context, JsonArgs args) =>
+      undoLabelOf?.call(args) ?? label;
+
+  @override
+  bool isEnabled(CommandContext ctx, JsonArgs args) {
+    final doc = WriteDocumentController.of(ctx);
+    if (doc == null) return !needsDocument;
+    if (needsDocument && !doc.isLoaded) return false;
+    if (needsEditable && !doc.editable) return false;
+    return enabled?.call(doc, args) ?? true;
+  }
+
+  @override
+  String? disabledReason(CommandContext ctx, JsonArgs args) {
+    final doc = WriteDocumentController.of(ctx);
+    if (doc == null) return null;
+    if (needsEditable && !doc.editable) return editDisabledReason(doc);
+    return reason?.call(doc, args);
+  }
+
+  @override
+  bool? isChecked(CommandContext ctx, JsonArgs args) {
+    final doc = WriteDocumentController.of(ctx);
+    if (doc == null || checked == null) return null;
+    return checked!(doc, args);
+  }
+
+  @override
+  Future<CommandResult> execute(CommandContext ctx, JsonArgs args) async {
+    final doc = WriteDocumentController.of(ctx);
+    if (doc == null) {
+      if (needsDocument) {
+        return const CommandResult.failed('No document is open');
+      }
+    }
+    return await run(ctx, doc!, args);
+  }
+}
+
+/// A Write command that works without an open document (help, prefs).
+class WriteGlobalCommand extends JsonCommand {
+  WriteGlobalCommand(
+    String id, {
+    required this.label,
+    required this.run,
+    this.icon,
+    this.categoryName,
+    this.defaultBindings = const [],
+    this.argsSchema = JsonSchema.empty,
+    this.checked,
+    this.enabled,
+  }) : id = CommandId(id);
+
+  @override
+  final CommandId id;
+  final String label;
+  @override
+  final IconData? icon;
+  final String? categoryName;
+  @override
+  final List<KeyBinding> defaultBindings;
+  @override
+  final JsonSchema argsSchema;
+  final bool? Function(CommandContext ctx, JsonArgs args)? checked;
+  final bool Function(CommandContext ctx, JsonArgs args)? enabled;
+  final FutureOr<CommandResult> Function(CommandContext ctx, JsonArgs args) run;
+
+  @override
+  Role get requiredRole => Role.viewer;
+
+  @override
+  bool get isUndoable => false;
+
+  @override
+  String title(BuildContext context) => label;
+
+  @override
+  String? category(BuildContext context) => categoryName;
+
+  @override
+  bool isEnabled(CommandContext ctx, JsonArgs args) =>
+      enabled?.call(ctx, args) ?? true;
+
+  @override
+  bool? isChecked(CommandContext ctx, JsonArgs args) =>
+      checked?.call(ctx, args);
+
+  @override
+  Future<CommandResult> execute(CommandContext ctx, JsonArgs args) async =>
+      await run(ctx, args);
+}
+
+/// Why content commands are disabled for [doc].
+String editDisabledReason(WriteDocumentController doc) {
+  if (!doc.isLoaded) return 'The document is still loading';
+  if (doc.role < Role.commenter) return 'You have view access';
+  if (doc.editor.mode.name == 'viewing') {
+    return 'Switch to Editing or Suggesting to make changes';
+  }
+  if (doc.role < Role.editor) return 'You can only suggest changes';
+  return 'Not available here';
+}
+
+/// `ok` or `failed(message)`.
+CommandResult okIf(bool ok, [String message = 'Not available here']) =>
+    ok ? const CommandResult.ok() : CommandResult.failed(message);

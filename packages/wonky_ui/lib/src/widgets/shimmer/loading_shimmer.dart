@@ -12,11 +12,17 @@ class LoadingShimmer extends StatelessWidget {
 
   /// Drive list rows (icon, name, owner, date).
   factory LoadingShimmer.driveList({Key? key, int rows = 8}) =>
-      LoadingShimmer._((context, animate) => _driveList(context, rows, animate), key: key);
+      LoadingShimmer._(
+        (context, animate) => _driveList(context, rows, animate),
+        key: key,
+      );
 
   /// Drive grid cards.
   factory LoadingShimmer.driveGrid({Key? key, int cards = 8}) =>
-      LoadingShimmer._((context, animate) => _driveGrid(context, cards, animate), key: key);
+      LoadingShimmer._(
+        (context, animate) => _driveGrid(context, cards, animate),
+        key: key,
+      );
 
   /// A document page with paragraphs.
   factory LoadingShimmer.documentPage({Key? key}) =>
@@ -24,13 +30,17 @@ class LoadingShimmer extends StatelessWidget {
 
   /// A spreadsheet grid.
   factory LoadingShimmer.grid({Key? key, int rows = 18, int columns = 8}) =>
-      LoadingShimmer._((context, animate) => _grid(context, rows, columns, animate), key: key);
+      LoadingShimmer._(
+        (context, animate) => _grid(context, rows, columns, animate),
+        key: key,
+      );
 
   final Widget Function(BuildContext context, bool animate) _builder;
 
   @override
   Widget build(BuildContext context) {
-    final animate = WonkyThemeScope.of(context).motion(context) != Duration.zero;
+    final animate =
+        WonkyThemeScope.of(context).motion(context) != Duration.zero;
     return Semantics(
       label: WonkyUiLocalizations.of(context).loading,
       liveRegion: true,
@@ -39,51 +49,58 @@ class LoadingShimmer extends StatelessWidget {
   }
 
   static Widget _bar(double w, double h, bool animate, {double r = 4}) =>
-      ShadSkeleton(width: w, height: h, animate: animate, radius: BorderRadius.circular(r));
+      ShadSkeleton(
+        width: w,
+        height: h,
+        animate: animate,
+        radius: BorderRadius.circular(r),
+      );
 
-  static Widget _driveList(BuildContext context, int rows, bool animate) => Column(
-    mainAxisSize: MainAxisSize.min,
-    children: [
-      for (var i = 0; i < rows; i++)
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-          child: Row(
-            children: [
-              _bar(20, 20, animate),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Align(
-                  alignment: Alignment.centerLeft,
-                  child: _bar(140.0 + (i * 37) % 120, 14, animate),
-                ),
+  static Widget _driveList(BuildContext context, int rows, bool animate) =>
+      Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          for (var i = 0; i < rows; i++)
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+              child: Row(
+                children: [
+                  _bar(20, 20, animate),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Align(
+                      alignment: Alignment.centerLeft,
+                      child: _bar(140.0 + (i * 37) % 120, 14, animate),
+                    ),
+                  ),
+                  _bar(80, 14, animate),
+                  const SizedBox(width: 24),
+                  _bar(70, 14, animate),
+                ],
               ),
-              _bar(80, 14, animate),
-              const SizedBox(width: 24),
-              _bar(70, 14, animate),
-            ],
-          ),
-        ),
-    ],
-  );
+            ),
+        ],
+      );
 
-  static Widget _driveGrid(BuildContext context, int cards, bool animate) => Wrap(
-    spacing: 16,
-    runSpacing: 16,
-    children: [
-      for (var i = 0; i < cards; i++)
-        SizedBox(
-          width: 200,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              _bar(200, 140, animate, r: 8),
-              const SizedBox(height: 8),
-              _bar(150, 14, animate),
-            ],
-          ),
-        ),
-    ],
-  );
+  static Widget _driveGrid(BuildContext context, int cards, bool animate) =>
+      Wrap(
+        spacing: 16,
+        runSpacing: 16,
+        children: [
+          for (var i = 0; i < cards; i++)
+            SizedBox(
+              width: 200,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  _bar(200, 140, animate, r: 8),
+                  const SizedBox(height: 8),
+                  _bar(150, 14, animate),
+                ],
+              ),
+            ),
+        ],
+      );
 
   static Widget _documentPage(BuildContext context, bool animate) {
     final c = ShadTheme.of(context).colorScheme;

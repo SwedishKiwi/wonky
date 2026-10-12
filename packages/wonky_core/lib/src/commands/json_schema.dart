@@ -140,9 +140,7 @@ class ObjectSchema extends JsonSchema {
   Map<String, Object?> toJson() => {
     'type': 'object',
     ..._meta(),
-    'properties': {
-      for (final e in properties.entries) e.key: e.value.toJson(),
-    },
+    'properties': {for (final e in properties.entries) e.key: e.value.toJson()},
     if (required.isNotEmpty) 'required': required,
     'additionalProperties': additionalProperties,
   };
@@ -211,7 +209,9 @@ class StringSchema extends JsonSchema {
 
   @override
   List<JsonSchemaViolation> validate(Object? value, [String path = r'$']) {
-    if (value is! String) return [JsonSchemaViolation(path, 'expected a string')];
+    if (value is! String) {
+      return [JsonSchemaViolation(path, 'expected a string')];
+    }
     final out = <JsonSchemaViolation>[];
     if (enumValues != null && !enumValues!.contains(value)) {
       out.add(
@@ -265,7 +265,8 @@ class IntegerSchema extends JsonSchema {
 
   @override
   List<JsonSchemaViolation> validate(Object? value, [String path = r'$']) {
-    final isInt = value is int || (value is double && value == value.truncate());
+    final isInt =
+        value is int || (value is double && value == value.truncate());
     if (!isInt) return [JsonSchemaViolation(path, 'expected an integer')];
     final v = (value as num).toInt();
     return [
@@ -327,7 +328,9 @@ class BooleanSchema extends JsonSchema {
 
   @override
   List<JsonSchemaViolation> validate(Object? value, [String path = r'$']) =>
-      value is bool ? const [] : [JsonSchemaViolation(path, 'expected a boolean')];
+      value is bool
+      ? const []
+      : [JsonSchemaViolation(path, 'expected a boolean')];
 }
 
 /// Array schema.
@@ -371,8 +374,7 @@ class ArraySchema extends JsonSchema {
 
 /// `inner` or `null`.
 class NullableSchema extends JsonSchema {
-  const NullableSchema(this.inner)
-    : super(description: null, title: null);
+  const NullableSchema(this.inner) : super(description: null, title: null);
 
   final JsonSchema inner;
 
@@ -388,7 +390,10 @@ class NullableSchema extends JsonSchema {
       return json;
     }
     return {
-      'anyOf': [json, {'type': 'null'}],
+      'anyOf': [
+        json,
+        {'type': 'null'},
+      ],
     };
   }
 

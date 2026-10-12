@@ -136,8 +136,7 @@ extension WonkyColors on ShadColorScheme {
   Color get gridLine => _token(WonkyColorKeys.gridLine);
   Color get gridHeaderBg => _token(WonkyColorKeys.gridHeaderBg);
   Color get gridHeaderFg => _token(WonkyColorKeys.gridHeaderFg);
-  Color get gridHeaderSelectedBg =>
-      _token(WonkyColorKeys.gridHeaderSelectedBg);
+  Color get gridHeaderSelectedBg => _token(WonkyColorKeys.gridHeaderSelectedBg);
   Color get selectionFill => _token(WonkyColorKeys.selectionFill);
   Color get selectionBorder => _token(WonkyColorKeys.selectionBorder);
   Color get fillHandle => _token(WonkyColorKeys.fillHandle);

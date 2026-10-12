@@ -8,13 +8,15 @@ import '../../shell/shell_services.dart';
 import '../command.dart';
 
 /// Shorthand for the shell's localizations.
-WonkyAppLocalizations l10nOf(BuildContext context) => WonkyAppLocalizations.of(context);
+WonkyAppLocalizations l10nOf(BuildContext context) =>
+    WonkyAppLocalizations.of(context);
 
 /// Builds a shell command (most shell commands are thin delegations).
 CallbackCommand shellCommand(
   String id, {
   required String Function(WonkyAppLocalizations l) title,
-  required Future<CommandResult> Function(CommandContext ctx, JsonArgs args) run,
+  required Future<CommandResult> Function(CommandContext ctx, JsonArgs args)
+  run,
   IconData? icon,
   List<KeyBinding> bindings = const [],
   KeyScope scope = KeyScope.global,
@@ -47,7 +49,10 @@ CallbackCommand shellCommand(
 
 /// `{uuid?, uuids?}` targets of drive commands.
 const targetProps = <String, JsonSchema>{
-  'uuid': JsonSchema.string(format: 'uuid', description: 'Target item; defaults to the selection or the open file.'),
+  'uuid': JsonSchema.string(
+    format: 'uuid',
+    description: 'Target item; defaults to the selection or the open file.',
+  ),
   'uuids': JsonSchema.array(JsonSchema.string(format: 'uuid')),
 };
 
@@ -57,9 +62,7 @@ const targetProps = <String, JsonSchema>{
 List<DriveItemView> knownTargets(ShellServices s, JsonArgs a) {
   final ids = [...a.strings('uuids'), ?a.string('uuid')];
   if (ids.isNotEmpty) {
-    return [
-      for (final id in ids) ?s.knownItem(UuidValue.fromString(id)),
-    ];
+    return [for (final id in ids) ?s.knownItem(UuidValue.fromString(id))];
   }
   final sel = s.driveSelection.value;
   if (sel.isNotEmpty) return sel;
@@ -73,15 +76,21 @@ Future<List<DriveItemView>> fetchTargets(ShellServices s, JsonArgs a) async {
   if (ids.isEmpty) return knownTargets(s, a);
   return [
     for (final id in ids)
-      s.knownItem(UuidValue.fromString(id)) ?? await s.drive.get(UuidValue.fromString(id)),
+      s.knownItem(UuidValue.fromString(id)) ??
+          await s.drive.get(UuidValue.fromString(id)),
   ];
 }
 
 /// Whether explicit targets were named in [a] (then enabled-checks are
 /// deferred to execution).
-bool hasExplicitTargets(JsonArgs a) => a.strings('uuids').isNotEmpty || a.string('uuid') != null;
+bool hasExplicitTargets(JsonArgs a) =>
+    a.strings('uuids').isNotEmpty || a.string('uuid') != null;
 
-bool targetsAll(ShellServices s, JsonArgs a, bool Function(DriveItemView) test) {
+bool targetsAll(
+  ShellServices s,
+  JsonArgs a,
+  bool Function(DriveItemView) test,
+) {
   if (hasExplicitTargets(a)) return true;
   final t = knownTargets(s, a);
   return t.isNotEmpty && t.every(test);

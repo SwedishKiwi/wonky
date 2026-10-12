@@ -81,7 +81,9 @@ class PaletteListState extends State<PaletteList> {
     if (_scroll.hasClients) {
       final p = _scroll.position;
       if (top < p.pixels) _scroll.jumpTo(top);
-      if (top + 40 > p.pixels + p.viewportDimension) _scroll.jumpTo(top + 40 - p.viewportDimension);
+      if (top + 40 > p.pixels + p.viewportDimension) {
+        _scroll.jumpTo(top + 40 - p.viewportDimension);
+      }
     }
   }
 
@@ -98,12 +100,15 @@ class PaletteListState extends State<PaletteList> {
     if (_index >= rows.length) _index = rows.isEmpty ? 0 : rows.length - 1;
     return CallbackShortcuts(
       bindings: {
-        const SingleActivator(LogicalKeyboardKey.arrowDown): () => _move(rows, 1),
-        const SingleActivator(LogicalKeyboardKey.arrowUp): () => _move(rows, -1),
+        const SingleActivator(LogicalKeyboardKey.arrowDown): () =>
+            _move(rows, 1),
+        const SingleActivator(LogicalKeyboardKey.arrowUp): () =>
+            _move(rows, -1),
         const SingleActivator(LogicalKeyboardKey.enter): () {
           if (rows.isNotEmpty) _run(rows[_index]);
         },
-        const SingleActivator(LogicalKeyboardKey.escape): () => Navigator.of(context).pop(),
+        const SingleActivator(LogicalKeyboardKey.escape): () =>
+            Navigator.of(context).pop(),
       },
       child: Column(
         mainAxisSize: MainAxisSize.min,
@@ -123,7 +128,12 @@ class PaletteListState extends State<PaletteList> {
             child: rows.isEmpty
                 ? Padding(
                     padding: const EdgeInsets.all(24),
-                    child: Center(child: Text(widget.emptyText ?? '', style: theme.textTheme.muted)),
+                    child: Center(
+                      child: Text(
+                        widget.emptyText ?? '',
+                        style: theme.textTheme.muted,
+                      ),
+                    ),
                   )
                 : ListView.builder(
                     controller: _scroll,
@@ -131,7 +141,9 @@ class PaletteListState extends State<PaletteList> {
                     itemCount: rows.length,
                     itemBuilder: (context, i) {
                       final r = rows[i];
-                      final header = r.section != null && (i == 0 || rows[i - 1].section != r.section);
+                      final header =
+                          r.section != null &&
+                          (i == 0 || rows[i - 1].section != r.section);
                       return Column(
                         crossAxisAlignment: CrossAxisAlignment.stretch,
                         mainAxisSize: MainAxisSize.min,
@@ -141,11 +153,16 @@ class PaletteListState extends State<PaletteList> {
                               padding: const EdgeInsets.fromLTRB(8, 8, 8, 4),
                               child: Text(
                                 r.section!,
-                                style: theme.textTheme.muted.copyWith(fontSize: 12, fontWeight: FontWeight.w600),
+                                style: theme.textTheme.muted.copyWith(
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w600,
+                                ),
                               ),
                             ),
                           _Row(
-                            key: ValueKey<String>('${widget.keyPrefix}.row.${r.id}'),
+                            key: ValueKey<String>(
+                              '${widget.keyPrefix}.row.${r.id}',
+                            ),
                             row: r,
                             highlighted: i == _index,
                             onTap: () => _run(r),
@@ -163,7 +180,13 @@ class PaletteListState extends State<PaletteList> {
 }
 
 class _Row extends StatelessWidget {
-  const _Row({super.key, required this.row, required this.highlighted, required this.onTap, required this.onHover});
+  const _Row({
+    super.key,
+    required this.row,
+    required this.highlighted,
+    required this.onTap,
+    required this.onHover,
+  });
 
   final PaletteRow row;
   final bool highlighted;
@@ -173,7 +196,9 @@ class _Row extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = ShadTheme.of(context);
-    final fg = row.enabled ? theme.colorScheme.foreground : theme.colorScheme.mutedForeground;
+    final fg = row.enabled
+        ? theme.colorScheme.foreground
+        : theme.colorScheme.mutedForeground;
     Widget content = Container(
       height: 40,
       padding: const EdgeInsets.symmetric(horizontal: 8),
@@ -185,7 +210,9 @@ class _Row extends StatelessWidget {
         children: [
           SizedBox(
             width: 24,
-            child: row.icon == null ? null : Icon(row.icon, size: 16, color: row.iconColor ?? fg),
+            child: row.icon == null
+                ? null
+                : Icon(row.icon, size: 16, color: row.iconColor ?? fg),
           ),
           const SizedBox(width: 6),
           Expanded(
@@ -193,18 +220,35 @@ class _Row extends StatelessWidget {
               mainAxisAlignment: MainAxisAlignment.center,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(row.title, maxLines: 1, overflow: TextOverflow.ellipsis, style: theme.textTheme.small.copyWith(color: fg, fontWeight: FontWeight.normal)),
+                Text(
+                  row.title,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: theme.textTheme.small.copyWith(
+                    color: fg,
+                    fontWeight: FontWeight.normal,
+                  ),
+                ),
                 if (row.subtitle != null)
-                  Text(row.subtitle!, maxLines: 1, overflow: TextOverflow.ellipsis, style: theme.textTheme.muted.copyWith(fontSize: 11)),
+                  Text(
+                    row.subtitle!,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: theme.textTheme.muted.copyWith(fontSize: 11),
+                  ),
               ],
             ),
           ),
-          if (row.shortcut != null && row.shortcut!.isNotEmpty) ShadKbd.group(row.shortcut!, height: 20),
+          if (row.shortcut != null && row.shortcut!.isNotEmpty)
+            ShadKbd.group(row.shortcut!, height: 20),
         ],
       ),
     );
     if (!row.enabled && row.disabledReason != null) {
-      content = ShadTooltip(builder: (_) => Text(row.disabledReason!), child: content);
+      content = ShadTooltip(
+        builder: (_) => Text(row.disabledReason!),
+        child: content,
+      );
     }
     return Semantics(
       button: true,

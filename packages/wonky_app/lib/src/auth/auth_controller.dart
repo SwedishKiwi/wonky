@@ -34,8 +34,10 @@ class AuthFailure implements Exception {
     if (e is AuthFailure) return e;
     if (e is EmailAccountLoginException) {
       return AuthFailure(switch (e.reason) {
-        EmailAccountLoginExceptionReason.invalidCredentials => AuthError.invalidCredentials,
-        EmailAccountLoginExceptionReason.tooManyAttempts => AuthError.tooManyAttempts,
+        EmailAccountLoginExceptionReason.invalidCredentials =>
+          AuthError.invalidCredentials,
+        EmailAccountLoginExceptionReason.tooManyAttempts =>
+          AuthError.tooManyAttempts,
         _ => AuthError.unknown,
       }, e);
     }
@@ -43,17 +45,23 @@ class AuthFailure implements Exception {
       return AuthFailure(switch (e.reason) {
         EmailAccountRequestExceptionReason.expired => AuthError.expiredCode,
         EmailAccountRequestExceptionReason.invalid => AuthError.invalidCode,
-        EmailAccountRequestExceptionReason.policyViolation => AuthError.passwordPolicy,
-        EmailAccountRequestExceptionReason.tooManyAttempts => AuthError.tooManyAttempts,
+        EmailAccountRequestExceptionReason.policyViolation =>
+          AuthError.passwordPolicy,
+        EmailAccountRequestExceptionReason.tooManyAttempts =>
+          AuthError.tooManyAttempts,
         _ => AuthError.unknown,
       }, e);
     }
     if (e is EmailAccountPasswordResetException) {
       return AuthFailure(switch (e.reason) {
-        EmailAccountPasswordResetExceptionReason.expired => AuthError.expiredCode,
-        EmailAccountPasswordResetExceptionReason.invalid => AuthError.invalidCode,
-        EmailAccountPasswordResetExceptionReason.policyViolation => AuthError.passwordPolicy,
-        EmailAccountPasswordResetExceptionReason.tooManyAttempts => AuthError.tooManyAttempts,
+        EmailAccountPasswordResetExceptionReason.expired =>
+          AuthError.expiredCode,
+        EmailAccountPasswordResetExceptionReason.invalid =>
+          AuthError.invalidCode,
+        EmailAccountPasswordResetExceptionReason.policyViolation =>
+          AuthError.passwordPolicy,
+        EmailAccountPasswordResetExceptionReason.tooManyAttempts =>
+          AuthError.tooManyAttempts,
         _ => AuthError.unknown,
       }, e);
     }
@@ -74,7 +82,9 @@ class AuthFailure implements Exception {
 /// over the current screen instead of navigating away.
 class AuthController extends ChangeNotifier {
   AuthController(this.repository) {
-    _status = repository.isSignedIn ? AuthStatus.signedIn : AuthStatus.signedOut;
+    _status = repository.isSignedIn
+        ? AuthStatus.signedIn
+        : AuthStatus.signedOut;
     repository.addListener(_onAuthChanged);
   }
 
@@ -102,7 +112,9 @@ class AuthController extends ChangeNotifier {
       return;
     }
     if (_status == AuthStatus.signedIn) {
-      _status = _expectSignOut ? AuthStatus.signedOut : AuthStatus.sessionExpired;
+      _status = _expectSignOut
+          ? AuthStatus.signedOut
+          : AuthStatus.sessionExpired;
       _expectSignOut = false;
       notifyListeners();
     }
@@ -161,7 +173,10 @@ class AuthController extends ChangeNotifier {
   Future<void> verifySignUp(String code) async {
     final d = _draft ?? (throw const AuthFailure(AuthError.expiredCode));
     try {
-      final token = await repository.verifyRegistrationCode(d.requestId, code.trim());
+      final token = await repository.verifyRegistrationCode(
+        d.requestId,
+        code.trim(),
+      );
       await repository.finishRegistration(token, d.password);
       _status = AuthStatus.signedIn;
       final draft = d;
@@ -186,7 +201,11 @@ class AuthController extends ChangeNotifier {
   Future<void> startReset(String email) async {
     try {
       final id = await repository.startPasswordReset(email.trim());
-      _reset = ResetDraft(email: email.trim(), requestId: id, codeSentAt: clock.now());
+      _reset = ResetDraft(
+        email: email.trim(),
+        requestId: id,
+        codeSentAt: clock.now(),
+      );
       notifyListeners();
     } catch (e) {
       throw AuthFailure.from(e);
@@ -196,7 +215,10 @@ class AuthController extends ChangeNotifier {
   Future<void> verifyResetCode(String code) async {
     final r = _reset ?? (throw const AuthFailure(AuthError.expiredCode));
     try {
-      final token = await repository.verifyPasswordResetCode(r.requestId, code.trim());
+      final token = await repository.verifyPasswordResetCode(
+        r.requestId,
+        code.trim(),
+      );
       _reset = r.copyWith(token: token);
       notifyListeners();
     } catch (e) {
@@ -272,13 +294,14 @@ class SignUpDraft {
   final UuidValue requestId;
   final DateTime codeSentAt;
 
-  SignUpDraft copyWith({UuidValue? requestId, DateTime? codeSentAt}) => SignUpDraft(
-    displayName: displayName,
-    email: email,
-    password: password,
-    requestId: requestId ?? this.requestId,
-    codeSentAt: codeSentAt ?? this.codeSentAt,
-  );
+  SignUpDraft copyWith({UuidValue? requestId, DateTime? codeSentAt}) =>
+      SignUpDraft(
+        displayName: displayName,
+        email: email,
+        password: password,
+        requestId: requestId ?? this.requestId,
+        codeSentAt: codeSentAt ?? this.codeSentAt,
+      );
 }
 
 /// In-progress password reset.
@@ -296,6 +319,10 @@ class ResetDraft {
   final DateTime codeSentAt;
   final String? token;
 
-  ResetDraft copyWith({String? token}) =>
-      ResetDraft(email: email, requestId: requestId, codeSentAt: codeSentAt, token: token ?? this.token);
+  ResetDraft copyWith({String? token}) => ResetDraft(
+    email: email,
+    requestId: requestId,
+    codeSentAt: codeSentAt,
+    token: token ?? this.token,
+  );
 }

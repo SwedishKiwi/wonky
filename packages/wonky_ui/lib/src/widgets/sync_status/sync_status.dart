@@ -13,7 +13,11 @@ enum SyncState { saved, saving, offline, error, connecting, reconnecting }
 /// One entry of the sync log shown in the details dialog.
 @immutable
 class SyncLogEntry {
-  const SyncLogEntry({required this.at, required this.message, this.isError = false});
+  const SyncLogEntry({
+    required this.at,
+    required this.message,
+    this.isError = false,
+  });
 
   final DateTime at;
   final String message;
@@ -51,7 +55,8 @@ class SyncStatus {
       other.log.length == log.length;
 
   @override
-  int get hashCode => Object.hash(state, pendingChanges, reconnectAt, error, log.length);
+  int get hashCode =>
+      Object.hash(state, pendingChanges, reconnectAt, error, log.length);
 }
 
 /// Icon + label: *Saved*, *Saving…*, *Offline — changes saved on this
@@ -97,7 +102,8 @@ class _SyncStatusIndicatorState extends State<SyncStatusIndicator> {
   }
 
   void _syncTimer() {
-    final needs = widget.status.state == SyncState.reconnecting &&
+    final needs =
+        widget.status.state == SyncState.reconnecting &&
         widget.status.reconnectAt != null;
     if (needs && _tick == null) {
       _tick = Timer.periodic(const Duration(seconds: 1), (_) {
@@ -115,13 +121,20 @@ class _SyncStatusIndicatorState extends State<SyncStatusIndicator> {
     super.dispose();
   }
 
-  (IconData, String, Color?) _visual(WonkyUiLocalizations l10n, ShadColorScheme c) {
+  (IconData, String, Color?) _visual(
+    WonkyUiLocalizations l10n,
+    ShadColorScheme c,
+  ) {
     final s = widget.status;
     return switch (s.state) {
       SyncState.saved => (LucideIcons.cloudCheck, l10n.syncSaved, null),
       SyncState.saving => (LucideIcons.refreshCw, l10n.syncSaving, null),
       SyncState.offline => (LucideIcons.cloudOff, l10n.syncOffline, c.warning),
-      SyncState.error => (LucideIcons.cloudAlert, l10n.syncError, c.destructive),
+      SyncState.error => (
+        LucideIcons.cloudAlert,
+        l10n.syncError,
+        c.destructive,
+      ),
       SyncState.connecting => (LucideIcons.cloud, l10n.syncConnecting, null),
       SyncState.reconnecting => (
         LucideIcons.cloudOff,
@@ -199,7 +212,9 @@ class _SyncStatusIndicatorState extends State<SyncStatusIndicator> {
                           children: [
                             for (final e in widget.status.log.reversed)
                               Padding(
-                                padding: const EdgeInsets.symmetric(vertical: 2),
+                                padding: const EdgeInsets.symmetric(
+                                  vertical: 2,
+                                ),
                                 child: Row(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [

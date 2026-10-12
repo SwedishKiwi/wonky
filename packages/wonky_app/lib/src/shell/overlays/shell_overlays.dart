@@ -1,8 +1,6 @@
 import 'package:flutter/widgets.dart';
 import 'dart:async';
 
-import 'package:flutter/widgets.dart';
-import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:shad/shad.dart';
 import 'package:wonky_client/wonky_client.dart';
@@ -18,7 +16,12 @@ import '../shell_services.dart';
 /// Global overlays (suite 03 §4): offline banner, session-expired dialog,
 /// version mismatch toast, MCP control pill and the error boundary.
 class ShellOverlays extends StatefulWidget {
-  const ShellOverlays({super.key, required this.services, required this.ready, required this.child});
+  const ShellOverlays({
+    super.key,
+    required this.services,
+    required this.ready,
+    required this.child,
+  });
 
   final ShellServices services;
   final bool ready;
@@ -100,7 +103,9 @@ class _ShellOverlaysState extends State<ShellOverlays> {
             ListenableBuilder(
               listenable: Listenable.merge([s.connectivity, s.auth]),
               builder: (context, _) =>
-                  !s.connectivity.online && s.auth.isSignedIn ? OfflineBanner(services: s) : const SizedBox.shrink(),
+                  !s.connectivity.online && s.auth.isSignedIn
+                  ? OfflineBanner(services: s)
+                  : const SizedBox.shrink(),
             ),
             Expanded(child: widget.child),
           ],
@@ -110,7 +115,9 @@ class _ShellOverlaysState extends State<ShellOverlays> {
           bottom: 16,
           child: ListenableBuilder(
             listenable: s.mcp,
-            builder: (context, _) => s.mcp.controlling ? McpControlPill(services: s) : const SizedBox.shrink(),
+            builder: (context, _) => s.mcp.controlling
+                ? McpControlPill(services: s)
+                : const SizedBox.shrink(),
           ),
         ),
       ],
@@ -119,11 +126,16 @@ class _ShellOverlaysState extends State<ShellOverlays> {
 }
 
 /// The app version compared with `ProtocolInfo.minClientVersion`.
-const clientVersion = String.fromEnvironment('WONKY_VERSION', defaultValue: '0.1.0');
+const clientVersion = String.fromEnvironment(
+  'WONKY_VERSION',
+  defaultValue: '1.0.0',
+);
 
 /// Compares dotted versions (`1.2.10` > `1.2.9`).
 int compareVersions(String a, String b) {
-  List<int> parts(String v) => [for (final p in v.split(RegExp(r'[.+-]'))) int.tryParse(p) ?? 0];
+  List<int> parts(String v) => [
+    for (final p in v.split(RegExp(r'[.+-]'))) int.tryParse(p) ?? 0,
+  ];
   final pa = parts(a), pb = parts(b);
   for (var i = 0; i < 3; i++) {
     final x = i < pa.length ? pa[i] : 0;
@@ -155,7 +167,15 @@ class OfflineBanner extends StatelessWidget {
           children: [
             Icon(LucideIcons.cloudOff, size: 16, color: fg),
             const SizedBox(width: 8),
-            Expanded(child: Text(l.offlineBanner, style: theme.textTheme.small.copyWith(color: fg, fontWeight: FontWeight.normal))),
+            Expanded(
+              child: Text(
+                l.offlineBanner,
+                style: theme.textTheme.small.copyWith(
+                  color: fg,
+                  fontWeight: FontWeight.normal,
+                ),
+              ),
+            ),
             ShadButton.link(
               size: ShadButtonSize.sm,
               foregroundColor: fg,
@@ -187,16 +207,32 @@ class McpControlPill extends StatelessWidget {
         decoration: BoxDecoration(
           color: theme.colorScheme.foreground,
           borderRadius: BorderRadius.circular(999),
-          boxShadow: const [BoxShadow(color: Color(0x33000000), blurRadius: 12)],
+          boxShadow: const [
+            BoxShadow(color: Color(0x33000000), blurRadius: 12),
+          ],
         ),
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(LucideIcons.bot, size: 16, color: theme.colorScheme.background),
+            Icon(
+              LucideIcons.bot,
+              size: 16,
+              color: theme.colorScheme.background,
+            ),
             const SizedBox(width: 8),
-            Text(l.mcpControlling, style: TextStyle(color: theme.colorScheme.background, fontSize: 13)),
+            Text(
+              l.mcpControlling,
+              style: TextStyle(
+                color: theme.colorScheme.background,
+                fontSize: 13,
+              ),
+            ),
             const SizedBox(width: 8),
-            ShadButton.secondary(size: ShadButtonSize.sm, onPressed: services.mcp.stop, child: Text(l.actionStop)),
+            ShadButton.secondary(
+              size: ShadButtonSize.sm,
+              onPressed: services.mcp.stop,
+              child: Text(l.actionStop),
+            ),
           ],
         ),
       ),
@@ -220,7 +256,10 @@ DateTime? _lastReport;
 
 void _report(ShellServices s, String error, StackTrace? stack) {
   final now = DateTime.now();
-  if (_lastReport != null && now.difference(_lastReport!) < const Duration(seconds: 5)) return;
+  if (_lastReport != null &&
+      now.difference(_lastReport!) < const Duration(seconds: 5)) {
+    return;
+  }
   _lastReport = now;
   final client = s.client;
   if (client == null) return;
@@ -250,7 +289,10 @@ class ErrorCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final l = Localizations.of<WonkyAppLocalizations>(context, WonkyAppLocalizations);
+    final l = Localizations.of<WonkyAppLocalizations>(
+      context,
+      WonkyAppLocalizations,
+    );
     final theme = ShadTheme.maybeOf(context);
     if (theme == null || l == null) {
       return const ColoredBox(color: Color(0x22ff0000));
@@ -261,14 +303,19 @@ class ErrorCard extends StatelessWidget {
         child: ShadCard(
           title: Text(l.errorBoundaryTitle),
           description: Text(l.errorBoundaryBody),
-          footer: Row(
-            mainAxisAlignment: MainAxisAlignment.end,
+          footer: Wrap(
+            alignment: WrapAlignment.end,
+            spacing: 8,
+            runSpacing: 8,
             children: [
               ShadButton.outline(
-                onPressed: () => Clipboard.setData(ClipboardData(text: '${details.exceptionAsString()}\n${details.stack}')),
+                onPressed: () => Clipboard.setData(
+                  ClipboardData(
+                    text: '${details.exceptionAsString()}\n${details.stack}',
+                  ),
+                ),
                 child: Text(l.errorCopyDetails),
               ),
-              const SizedBox(width: 8),
               ShadButton(
                 onPressed: () {
                   final r = services.router;

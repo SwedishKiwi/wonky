@@ -68,7 +68,18 @@ abstract final class Keys {
     end,
     pageUp,
     pageDown,
-    'F1', 'F2', 'F3', 'F4', 'F5', 'F6', 'F7', 'F8', 'F9', 'F10', 'F11', 'F12', //
+    'F1',
+    'F2',
+    'F3',
+    'F4',
+    'F5',
+    'F6',
+    'F7',
+    'F8',
+    'F9',
+    'F10',
+    'F11',
+    'F12', //
   };
 
   static const _aliases = {
@@ -257,7 +268,10 @@ class KeyBinding {
       if (b == null) return null;
       final mac = json['mac'];
       final web = json['web'];
-      return b.copyWith(mac: mac is bool ? mac : null, web: web is bool ? web : null);
+      return b.copyWith(
+        mac: mac is bool ? mac : null,
+        web: web is bool ? web : null,
+      );
     }
     return null;
   }

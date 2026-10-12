@@ -23,7 +23,9 @@ void main() {
     id: 's1',
     label: 'Rename',
     entries: const [_FieldEntry('a', '1', '2'), _FieldEntry('b', '1', '2')],
-    selectionBefore: const SelectionSnapshot('drive.list', {'ids': ['a']}),
+    selectionBefore: const SelectionSnapshot('drive.list', {
+      'ids': ['a'],
+    }),
     createdAt: DateTime.utc(2026),
     source: InvocationSource.mcp,
   );
@@ -42,15 +44,21 @@ void main() {
         'unchanged', () {
       final s = step();
       expect(
-        s.rebase(const FieldRemoteChange(domain: 'other', target: 'a', key: 'x')),
+        s.rebase(
+          const FieldRemoteChange(domain: 'other', target: 'a', key: 'x'),
+        ),
         same(s),
       );
     });
 
     test('when both targets change remotely then the step disappears', () {
       final s = step()
-          .rebase(const FieldRemoteChange(domain: 'test', target: 'a', key: 'n'))!
-          .rebase(const FieldRemoteChange(domain: 'test', target: 'b', key: 'n'));
+          .rebase(
+            const FieldRemoteChange(domain: 'test', target: 'a', key: 'n'),
+          )!
+          .rebase(
+            const FieldRemoteChange(domain: 'test', target: 'b', key: 'n'),
+          );
       expect(s, isNull);
     });
 

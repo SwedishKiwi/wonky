@@ -20,14 +20,20 @@ Color kindColor(DriveItemKind kind, ShadColorScheme c) => switch (kind) {
   DriveItemKind.spreadsheet => const Color(0xff16a34a),
 };
 
-String describeKind(WonkyAppLocalizations l, DriveItemKind kind) => switch (kind) {
-  DriveItemKind.folder => l.kindFolder,
-  DriveItemKind.document => l.kindDocument,
-  DriveItemKind.spreadsheet => l.kindSpreadsheet,
-};
+String describeKind(WonkyAppLocalizations l, DriveItemKind kind) =>
+    switch (kind) {
+      DriveItemKind.folder => l.kindFolder,
+      DriveItemKind.document => l.kindDocument,
+      DriveItemKind.spreadsheet => l.kindSpreadsheet,
+    };
 
 /// "10:42", "Yesterday", "Mar 3", "Mar 3, 2024" (suite 05 §3.1).
-String relativeDate(WonkyAppLocalizations l, DateTime t, {DateTime? now, String? locale}) {
+String relativeDate(
+  WonkyAppLocalizations l,
+  DateTime t, {
+  DateTime? now,
+  String? locale,
+}) {
   final n = (now ?? clock.now()).toLocal();
   final d = t.toLocal();
   final today = DateTime(n.year, n.month, n.day);

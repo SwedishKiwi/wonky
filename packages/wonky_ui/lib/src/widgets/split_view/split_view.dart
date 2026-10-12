@@ -70,7 +70,9 @@ class WonkySplitViewController extends ChangeNotifier {
     _recent
       ..remove(id)
       ..insert(0, id);
-    if (_recent.length > maxRecent) _recent.removeRange(maxRecent, _recent.length);
+    if (_recent.length > maxRecent) {
+      _recent.removeRange(maxRecent, _recent.length);
+    }
     notifyListeners();
   }
 
@@ -288,7 +290,9 @@ class _ResizeHandleState extends State<_ResizeHandle> {
             child: Center(
               child: Container(
                 width: active ? 2 : 1,
-                color: active ? theme.colorScheme.ring : theme.colorScheme.border,
+                color: active
+                    ? theme.colorScheme.ring
+                    : theme.colorScheme.border,
               ),
             ),
           ),
@@ -432,12 +436,10 @@ class _PanelFrame extends StatelessWidget {
       ),
     );
     if (motion == Duration.zero) return content;
-    return content.animate().fadeIn(duration: motion).slideX(
-      begin: 0.04,
-      end: 0,
-      duration: motion,
-      curve: Curves.easeOut,
-    );
+    return content
+        .animate()
+        .fadeIn(duration: motion)
+        .slideX(begin: 0.04, end: 0, duration: motion, curve: Curves.easeOut);
   }
 }
 

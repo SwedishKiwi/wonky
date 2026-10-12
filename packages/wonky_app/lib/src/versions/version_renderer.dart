@@ -16,6 +16,10 @@ abstract class VersionRenderer {
   });
 
   /// Downloads a version ("Download as…"); null hides the item.
-  Future<void> Function(BuildContext context, UuidValue itemUuid, ItemVersionView version)?
+  Future<void> Function(
+    BuildContext context,
+    UuidValue itemUuid,
+    ItemVersionView version,
+  )?
   get download => null;
 }

@@ -9,15 +9,20 @@ import '../shell/page_frame.dart';
 import '../shell/shell_services.dart';
 import 'drive_format.dart';
 
-String templateCategoryLabel(WonkyAppLocalizations l, TemplateCategory c) => switch (c) {
-  TemplateCategory.personal => l.templatePersonal,
-  TemplateCategory.work => l.templateWork,
-  TemplateCategory.education => l.templateEducation,
-  TemplateCategory.projectManagement => l.templateProjectManagement,
-  TemplateCategory.finance => l.templateFinance,
-};
+String templateCategoryLabel(WonkyAppLocalizations l, TemplateCategory c) =>
+    switch (c) {
+      TemplateCategory.personal => l.templatePersonal,
+      TemplateCategory.work => l.templateWork,
+      TemplateCategory.education => l.templateEducation,
+      TemplateCategory.projectManagement => l.templateProjectManagement,
+      TemplateCategory.finance => l.templateFinance,
+    };
 
-Future<void> _createFrom(BuildContext context, ShellServices s, TemplateView? t) async {
+Future<void> _createFrom(
+  BuildContext context,
+  ShellServices s,
+  TemplateView? t,
+) async {
   final l = WonkyAppLocalizations.of(context);
   try {
     final uuid = await s.config.createItem(
@@ -34,7 +39,12 @@ Future<void> _createFrom(BuildContext context, ShellServices s, TemplateView? t)
 
 /// A template preview card.
 class TemplateCard extends StatelessWidget {
-  const TemplateCard({super.key, required this.services, this.template, this.width = 148});
+  const TemplateCard({
+    super.key,
+    required this.services,
+    this.template,
+    this.width = 148,
+  });
 
   final ShellServices services;
 
@@ -53,7 +63,9 @@ class TemplateCard extends StatelessWidget {
         button: true,
         label: t?.name ?? l.templateBlank,
         child: GestureDetector(
-          key: ValueKey<String>('drive.template.${t?.key ?? t?.uuid.uuid ?? 'blank'}'),
+          key: ValueKey<String>(
+            'drive.template.${t?.key ?? t?.uuid.uuid ?? 'blank'}',
+          ),
           onTap: () => _createFrom(context, services, t),
           child: MouseRegion(
             cursor: SystemMouseCursors.click,
@@ -70,17 +82,33 @@ class TemplateCard extends StatelessWidget {
                     borderRadius: BorderRadius.circular(6),
                   ),
                   child: t == null
-                      ? Center(child: Icon(LucideIcons.plus, size: 40, color: services.config.brandColor))
+                      ? Center(
+                          child: Icon(
+                            LucideIcons.plus,
+                            size: 40,
+                            color: services.config.brandColor,
+                          ),
+                        )
                       : Text(
                           t.previewText,
                           overflow: TextOverflow.fade,
-                          style: theme.textTheme.muted.copyWith(fontSize: 7, height: 1.4),
+                          style: theme.textTheme.muted.copyWith(
+                            fontSize: 7,
+                            height: 1.4,
+                          ),
                         ),
                 ),
                 const SizedBox(height: 6),
-                Text(t?.name ?? l.templateBlank, overflow: TextOverflow.ellipsis, style: theme.textTheme.small),
+                Text(
+                  t?.name ?? l.templateBlank,
+                  overflow: TextOverflow.ellipsis,
+                  style: theme.textTheme.small,
+                ),
                 if (t != null)
-                  Text(templateCategoryLabel(l, t.category), style: theme.textTheme.muted.copyWith(fontSize: 12)),
+                  Text(
+                    templateCategoryLabel(l, t.category),
+                    style: theme.textTheme.muted.copyWith(fontSize: 12),
+                  ),
               ],
             ),
           ),
@@ -101,9 +129,11 @@ class TemplateStrip extends StatefulWidget {
 }
 
 class _TemplateStripState extends State<TemplateStrip> {
-  late final Future<List<TemplateView>> _templates = widget.services.drive.listTemplates(widget.services.config.primaryKind);
+  late final Future<List<TemplateView>> _templates = widget.services.drive
+      .listTemplates(widget.services.config.primaryKind);
 
-  bool get _hidden => widget.services.prefs.device<bool>('drive.templatesHidden') ?? false;
+  bool get _hidden =>
+      widget.services.prefs.device<bool>('drive.templatesHidden') ?? false;
 
   @override
   Widget build(BuildContext context) {
@@ -119,7 +149,14 @@ class _TemplateStripState extends State<TemplateStrip> {
         children: [
           Row(
             children: [
-              Expanded(child: Text(l.templateStripTitle(describeKind(l, s.config.primaryKind).toLowerCase()), style: theme.textTheme.small)),
+              Expanded(
+                child: Text(
+                  l.templateStripTitle(
+                    describeKind(l, s.config.primaryKind).toLowerCase(),
+                  ),
+                  style: theme.textTheme.small,
+                ),
+              ),
               ShadButton.ghost(
                 size: ShadButtonSize.sm,
                 onPressed: () => s.router.go('/templates'),
@@ -127,14 +164,17 @@ class _TemplateStripState extends State<TemplateStrip> {
                 child: Text(l.templateGallery),
               ),
               ShadTooltip(
-                builder: (_) => Text(_hidden ? l.templatesShow : l.templatesHide),
+                builder: (_) =>
+                    Text(_hidden ? l.templatesShow : l.templatesHide),
                 child: ShadIconButton.ghost(
                   key: const ValueKey<String>('drive.templates.toggle'),
                   width: 28,
                   height: 28,
                   iconSize: 16,
                   semanticLabel: _hidden ? l.templatesShow : l.templatesHide,
-                  icon: Icon(_hidden ? LucideIcons.chevronDown : LucideIcons.chevronUp),
+                  icon: Icon(
+                    _hidden ? LucideIcons.chevronDown : LucideIcons.chevronUp,
+                  ),
                   onPressed: () async {
                     await s.prefs.setDevice('drive.templatesHidden', !_hidden);
                     if (mounted) setState(() {});
@@ -155,7 +195,10 @@ class _TemplateStripState extends State<TemplateStrip> {
                     scrollDirection: Axis.horizontal,
                     children: [
                       TemplateCard(services: s),
-                      for (final t in list.take(6)) ...[const SizedBox(width: 16), TemplateCard(services: s, template: t)],
+                      for (final t in list.take(6)) ...[
+                        const SizedBox(width: 16),
+                        TemplateCard(services: s, template: t),
+                      ],
                     ],
                   );
                 },
@@ -184,9 +227,15 @@ class TemplateGalleryScreen extends StatelessWidget {
       child: FutureBuilder<List<TemplateView>>(
         future: services.drive.listTemplates(services.config.primaryKind),
         builder: (context, snap) {
-          if (snap.connectionState != ConnectionState.done) return const Center(child: ShadSpinner());
+          if (snap.connectionState != ConnectionState.done) {
+            return const Center(child: ShadSpinner());
+          }
           if (snap.hasError) {
-            return WonkyEmptyState(illustration: EmptyIllustration.error, title: l.errorGeneric, description: errorMessage(snap.error!));
+            return WonkyEmptyState(
+              illustration: EmptyIllustration.error,
+              title: l.errorGeneric,
+              description: errorMessage(snap.error!),
+            );
           }
           final byCat = <TemplateCategory, List<TemplateView>>{};
           for (final t in snap.data!) {
@@ -195,16 +244,26 @@ class TemplateGalleryScreen extends StatelessWidget {
           return ListView(
             padding: const EdgeInsets.all(24),
             children: [
-              Wrap(spacing: 16, runSpacing: 16, children: [TemplateCard(services: services)]),
+              Wrap(
+                spacing: 16,
+                runSpacing: 16,
+                children: [TemplateCard(services: services)],
+              ),
               for (final cat in TemplateCategory.values)
                 if (byCat[cat] != null) ...[
                   const SizedBox(height: 24),
-                  Text(templateCategoryLabel(l, cat), style: theme.textTheme.h4),
+                  Text(
+                    templateCategoryLabel(l, cat),
+                    style: theme.textTheme.h4,
+                  ),
                   const SizedBox(height: 12),
                   Wrap(
                     spacing: 16,
                     runSpacing: 16,
-                    children: [for (final t in byCat[cat]!) TemplateCard(services: services, template: t)],
+                    children: [
+                      for (final t in byCat[cat]!)
+                        TemplateCard(services: services, template: t),
+                    ],
                   ),
                 ],
             ],

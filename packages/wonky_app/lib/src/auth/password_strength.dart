@@ -4,14 +4,29 @@ enum PasswordStrength { empty, weak, fair, good, strong }
 /// Estimates password strength from length and character variety, penalizing
 /// common passwords and repeated characters. Purely advisory: the server's
 /// IDP password policy is authoritative.
-PasswordStrength passwordStrength(String password, {List<String> context = const []}) {
+PasswordStrength passwordStrength(
+  String password, {
+  List<String> context = const [],
+}) {
   if (password.isEmpty) return PasswordStrength.empty;
   final lower = password.toLowerCase();
   const common = {
-    'password', 'password1', '12345678', '123456789', 'qwerty123', 'qwertyuiop',
-    'iloveyou', 'letmein1', 'welcome1', 'abc12345', '11111111', 'sunshine',
+    'password',
+    'password1',
+    '12345678',
+    '123456789',
+    'qwerty123',
+    'qwertyuiop',
+    'iloveyou',
+    'letmein1',
+    'welcome1',
+    'abc12345',
+    '11111111',
+    'sunshine',
   };
-  if (common.contains(lower) || password.length < 8) return PasswordStrength.weak;
+  if (common.contains(lower) || password.length < 8) {
+    return PasswordStrength.weak;
+  }
   for (final c in context) {
     final part = c.toLowerCase().split('@').first;
     if (part.length >= 4 && lower.contains(part)) return PasswordStrength.weak;

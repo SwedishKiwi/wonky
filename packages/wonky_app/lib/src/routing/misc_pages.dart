@@ -25,7 +25,12 @@ class NotFoundPage extends StatelessWidget {
         illustration: EmptyIllustration.search,
         title: l.notFoundTitle,
         description: l.notFoundBody,
-        actions: [ShadButton(onPressed: () => services.router.go('/'), child: Text(l.goHome))],
+        actions: [
+          ShadButton(
+            onPressed: () => services.router.go('/'),
+            child: Text(l.goHome),
+          ),
+        ],
       ),
     );
   }
@@ -54,7 +59,11 @@ class NoAccessPage extends StatelessWidget {
           if (itemUuid != null)
             ShadButton(
               key: const ValueKey<String>('shell.noAccess.request'),
-              onPressed: () => showRequestAccessDialog(context, services, UuidValue.fromString(itemUuid!)),
+              onPressed: () => showRequestAccessDialog(
+                context,
+                services,
+                UuidValue.fromString(itemUuid!),
+              ),
               child: Text(l.requestAccessTitle),
             ),
           ShadButton.outline(
@@ -63,7 +72,10 @@ class NoAccessPage extends StatelessWidget {
             },
             child: Text(l.switchAccount),
           ),
-          ShadButton.ghost(onPressed: () => services.router.go('/'), child: Text(l.goHome)),
+          ShadButton.ghost(
+            onPressed: () => services.router.go('/'),
+            child: Text(l.goHome),
+          ),
         ],
       ),
     );
@@ -92,8 +104,12 @@ class _InvitePageState extends State<InvitePage> {
 
   Future<void> _resolve() async {
     try {
-      final r = await widget.services.repositories.sharing.resolveInvite(widget.token);
-      final path = r.kind == DriveItemKind.spreadsheet ? '/s/${r.itemUuid.uuid}' : '/d/${r.itemUuid.uuid}';
+      final r = await widget.services.repositories.sharing.resolveInvite(
+        widget.token,
+      );
+      final path = r.kind == DriveItemKind.spreadsheet
+          ? '/s/${r.itemUuid.uuid}'
+          : '/d/${r.itemUuid.uuid}';
       if (r.kind == DriveItemKind.folder) {
         widget.services.router.go('/drive/${r.itemUuid.uuid}');
       } else {
@@ -116,7 +132,12 @@ class _InvitePageState extends State<InvitePage> {
               illustration: EmptyIllustration.noAccess,
               title: l.inviteInvalid,
               description: errorMessage(_error!),
-              actions: [ShadButton(onPressed: () => widget.services.router.go('/'), child: Text(l.goHome))],
+              actions: [
+                ShadButton(
+                  onPressed: () => widget.services.router.go('/'),
+                  child: Text(l.goHome),
+                ),
+              ],
             ),
     );
   }
@@ -136,9 +157,17 @@ class HelpPage extends StatelessWidget {
     final topics = [
       (LucideIcons.house, l.helpTopicDriveTitle, l.helpTopicDriveBody),
       (LucideIcons.userPlus, l.helpTopicSharingTitle, l.helpTopicSharingBody),
-      (LucideIcons.messageSquare, l.helpTopicCommentsTitle, l.helpTopicCommentsBody),
+      (
+        LucideIcons.messageSquare,
+        l.helpTopicCommentsTitle,
+        l.helpTopicCommentsBody,
+      ),
       (LucideIcons.history, l.helpTopicHistoryTitle, l.helpTopicHistoryBody),
-      (LucideIcons.keyboard, l.helpTopicShortcutsTitle, l.helpTopicShortcutsBody),
+      (
+        LucideIcons.keyboard,
+        l.helpTopicShortcutsTitle,
+        l.helpTopicShortcutsBody,
+      ),
       (LucideIcons.cloudOff, l.helpTopicOfflineTitle, l.helpTopicOfflineBody),
     ];
     return ShellPageFrame(
@@ -159,19 +188,34 @@ class HelpPage extends StatelessWidget {
                     Padding(
                       padding: const EdgeInsets.only(bottom: 12),
                       child: ShadCard(
-                        title: Row(children: [Icon(icon, size: 18), const SizedBox(width: 8), Text(title)]),
-                        child: Padding(padding: const EdgeInsets.only(top: 8), child: Text(body)),
+                        title: Row(
+                          children: [
+                            Icon(icon, size: 18),
+                            const SizedBox(width: 8),
+                            Text(title),
+                          ],
+                        ),
+                        child: Padding(
+                          padding: const EdgeInsets.only(top: 8),
+                          child: Text(body),
+                        ),
                       ),
                     ),
                   Row(
                     children: [
                       ShadButton.outline(
-                        onPressed: () => services.dispatcher.invoke('shell.help.shortcuts', context: context),
+                        onPressed: () => services.dispatcher.invoke(
+                          'shell.help.shortcuts',
+                          context: context,
+                        ),
                         child: Text(l.cmdKeyboardShortcuts),
                       ),
                       const SizedBox(width: 8),
                       ShadButton.outline(
-                        onPressed: () => services.dispatcher.invoke('shell.help.feedback', context: context),
+                        onPressed: () => services.dispatcher.invoke(
+                          'shell.help.feedback',
+                          context: context,
+                        ),
                         child: Text(l.cmdReportProblem),
                       ),
                     ],

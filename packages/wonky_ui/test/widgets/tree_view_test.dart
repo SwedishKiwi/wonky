@@ -28,23 +28,28 @@ WonkyTreeController<String> _controller() => WonkyTreeController<String>(
 
 void main() {
   group('Given a tree controller', () {
-    test('when expanding a node then its children become visible rows', () async {
-      final c = _controller();
-      await c.ensureLoaded();
-      expect(c.rows.map((r) => r.node.id), ['a', 'b']);
-      await c.expand('a');
-      expect(c.rows.map((r) => (r.node.id, r.depth)), [
-        ('a', 0),
-        ('a1', 1),
-        ('a2', 1),
-        ('b', 0),
-      ]);
-      c.collapse('a');
-      expect(c.rows, hasLength(2));
-    });
+    test(
+      'when expanding a node then its children become visible rows',
+      () async {
+        final c = _controller();
+        await c.ensureLoaded();
+        expect(c.rows.map((r) => r.node.id), ['a', 'b']);
+        await c.expand('a');
+        expect(c.rows.map((r) => (r.node.id, r.depth)), [
+          ('a', 0),
+          ('a1', 1),
+          ('a2', 1),
+          ('b', 0),
+        ]);
+        c.collapse('a');
+        expect(c.rows, hasLength(2));
+      },
+    );
 
     test('when a loader fails then the error is exposed', () async {
-      final c = WonkyTreeController<String>(loader: (_) async => throw StateError('x'));
+      final c = WonkyTreeController<String>(
+        loader: (_) async => throw StateError('x'),
+      );
       await c.ensureLoaded();
       expect(c.error, isA<StateError>());
     });
@@ -125,7 +130,8 @@ void main() {
         child: WonkyTreeView<String>(
           controller: c,
           dragData: (n) => n.id,
-          onDrop: (data, target, pos) => drops.add('$data->${target.id}:${pos.name}'),
+          onDrop: (data, target, pos) =>
+              drops.add('$data->${target.id}:${pos.name}'),
         ),
       ),
     );

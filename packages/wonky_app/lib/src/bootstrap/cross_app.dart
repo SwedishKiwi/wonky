@@ -1,5 +1,6 @@
 import 'app_urls.dart';
-import 'navigation_io.dart' if (dart.library.js_interop) 'navigation_web.dart'
+import 'navigation_io.dart'
+    if (dart.library.js_interop) 'navigation_web.dart'
     as nav;
 
 /// Cross-app navigation (suite 03 §1, §6): Write ⇄ Sheets in the same window.
@@ -12,7 +13,9 @@ class CrossAppNavigator {
   Future<void> open(WonkyAppKind app, String path) {
     final web = urls.urlFor(app, path);
     final p = path.startsWith('/') ? path.substring(1) : path;
-    final scheme = app == WonkyAppKind.sheets ? 'wonkysheets://$p' : 'wonkywrite://$p';
+    final scheme = app == WonkyAppKind.sheets
+        ? 'wonkysheets://$p'
+        : 'wonkywrite://$p';
     return nav.openOtherApp(scheme, web);
   }
 

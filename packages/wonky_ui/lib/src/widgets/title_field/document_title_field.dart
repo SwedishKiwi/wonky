@@ -84,7 +84,10 @@ class _DocumentTitleFieldState extends State<DocumentTitleField> {
     setState(() {
       _editing = true;
       _text.text = widget.title;
-      _text.selection = TextSelection(baseOffset: 0, extentOffset: widget.title.length);
+      _text.selection = TextSelection(
+        baseOffset: 0,
+        extentOffset: widget.title.length,
+      );
     });
     WidgetsBinding.instance.addPostFrameCallback((_) => _focus.requestFocus());
   }
@@ -114,8 +117,13 @@ class _DocumentTitleFieldState extends State<DocumentTitleField> {
     final theme = ShadTheme.of(context);
     final l10n = WonkyUiLocalizations.of(context);
     final maxWidth = WonkyThemeScope.of(context).maxTitleWidth;
-    final style = theme.textTheme.large.copyWith(fontWeight: FontWeight.w500, fontSize: 17);
-    final shown = widget.title.isEmpty ? (widget.placeholder ?? l10n.titleUntitled) : widget.title;
+    final style = theme.textTheme.large.copyWith(
+      fontWeight: FontWeight.w500,
+      fontSize: 17,
+    );
+    final shown = widget.title.isEmpty
+        ? (widget.placeholder ?? l10n.titleUntitled)
+        : widget.title;
 
     if (_editing) {
       final w = (_measure(_text.text.isEmpty ? shown : _text.text, style) + 28)
@@ -132,7 +140,9 @@ class _DocumentTitleFieldState extends State<DocumentTitleField> {
             style: style,
             padding: const EdgeInsets.symmetric(horizontal: 6),
             maxLength: widget.maxLength,
-            inputFormatters: [FilteringTextInputFormatter.deny(RegExp('[/\n]'))],
+            inputFormatters: [
+              FilteringTextInputFormatter.deny(RegExp('[/\n]')),
+            ],
             onChanged: (_) => setState(() {}),
             onSubmitted: (_) => _commit(),
           ),

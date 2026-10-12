@@ -29,16 +29,24 @@ class DriveUndoEntry extends UndoEntry {
 
   @override
   UndoEntry? rebase(RemoteChange change) {
-    if (change is! FieldRemoteChange || !items.contains(change.target)) return this;
+    if (change is! FieldRemoteChange || !items.contains(change.target)) {
+      return this;
+    }
     if (change.deleted) {
-      final rest = [for (final i in items) if (i != change.target) i];
+      final rest = [
+        for (final i in items)
+          if (i != change.target) i,
+      ];
       return rest.isEmpty
           ? null
           : DriveUndoEntry(op: op, items: rest, before: before, after: after);
     }
     // Someone else changed the same field: it is no longer ours to undo.
     if (change.key == op.name && change.value != after[change.target]) {
-      final rest = [for (final i in items) if (i != change.target) i];
+      final rest = [
+        for (final i in items)
+          if (i != change.target) i,
+      ];
       return rest.isEmpty
           ? null
           : DriveUndoEntry(op: op, items: rest, before: before, after: after);
@@ -96,7 +104,11 @@ class DriveUndoHandler extends UndoHandler<DriveUndoEntry> {
     return entry;
   }
 
-  Future<void> _write(DriveUndoEntry e, Map<String, Object?> target, {required bool reverse}) async {
+  Future<void> _write(
+    DriveUndoEntry e,
+    Map<String, Object?> target, {
+    required bool reverse,
+  }) async {
     UuidValue u(String s) => UuidValue.fromString(s);
     var skipped = 0;
     for (final id in e.items) {
@@ -122,7 +134,9 @@ class DriveUndoHandler extends UndoHandler<DriveUndoEntry> {
           case DriveUndoOp.trash:
           case DriveUndoOp.createFolder:
             // true = the item is visible (not trashed / exists).
-            target[id] == true ? await drive.restore([u(id)]) : await drive.trash([u(id)]);
+            target[id] == true
+                ? await drive.restore([u(id)])
+                : await drive.trash([u(id)]);
         }
       } on WonkyException catch (err) {
         if (err.code == WonkyErrorCode.notFound) {

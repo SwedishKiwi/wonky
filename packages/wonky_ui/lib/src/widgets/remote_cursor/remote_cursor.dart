@@ -94,7 +94,10 @@ class _RemoteCaretState extends State<RemoteCaret> {
                     opacity: visible ? 1 : 0,
                     duration: ext.motion(context, 200),
                     child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 4,
+                        vertical: 1,
+                      ),
                       decoration: BoxDecoration(
                         color: widget.color,
                         borderRadius: const BorderRadius.only(
@@ -152,7 +155,9 @@ class RemoteSelectionPainter extends CustomPainter {
         ..strokeWidth = borderWidth;
       for (final r in rects) {
         canvas.drawRect(r, fill);
-        if (borderWidth > 0) canvas.drawRect(r.deflate(borderWidth / 2), stroke);
+        if (borderWidth > 0) {
+          canvas.drawRect(r.deflate(borderWidth / 2), stroke);
+        }
       }
     }
   }
@@ -163,7 +168,10 @@ class RemoteSelectionPainter extends CustomPainter {
       old.borderWidth != borderWidth ||
       !_sameSelections(old.selections, selections);
 
-  static bool _sameSelections(List<(Color, List<Rect>)> a, List<(Color, List<Rect>)> b) {
+  static bool _sameSelections(
+    List<(Color, List<Rect>)> a,
+    List<(Color, List<Rect>)> b,
+  ) {
     if (a.length != b.length) return false;
     for (var i = 0; i < a.length; i++) {
       if (a[i].$1 != b[i].$1 || a[i].$2.length != b[i].$2.length) return false;

@@ -69,7 +69,11 @@ class CachedDriveRepository extends ChangeNotifier implements DriveRepository {
     }
   }
 
-  static String listKey(UuidValue? folderUuid, DriveListFilter f, DriveSort s) =>
+  static String listKey(
+    UuidValue? folderUuid,
+    DriveListFilter f,
+    DriveSort s,
+  ) =>
       'folder:${folderUuid?.uuid ?? 'root'}:${f.view.name}:${f.owner.name}:'
       '${f.kinds?.map((k) => k.name).join(',') ?? '*'}:${s.field.name}:${s.descending}:${s.foldersFirst}';
 
@@ -98,7 +102,10 @@ class CachedDriveRepository extends ChangeNotifier implements DriveRepository {
         if (cursor != null) return DriveListPage(items: const []);
         var items = cache.list(key);
         if (items == null && filter.view == DriveView.offline) {
-          items = [for (final i in cache.items) if (i.pinnedOffline) i];
+          items = [
+            for (final i in cache.items)
+              if (i.pinnedOffline) i,
+          ];
         }
         return items == null ? null : DriveListPage(items: items);
       },
@@ -113,17 +120,18 @@ class CachedDriveRepository extends ChangeNotifier implements DriveRepository {
   }, () => cache.item(uuid));
 
   @override
-  Future<List<DriveItemView>> path(UuidValue uuid) => _read(() => remote.path(uuid), () {
-    final out = <DriveItemView>[];
-    var cur = cache.item(uuid)?.parentUuid;
-    while (cur != null) {
-      final p = cache.item(cur);
-      if (p == null) break;
-      out.insert(0, p);
-      cur = p.parentUuid;
-    }
-    return out;
-  });
+  Future<List<DriveItemView>> path(UuidValue uuid) =>
+      _read(() => remote.path(uuid), () {
+        final out = <DriveItemView>[];
+        var cur = cache.item(uuid)?.parentUuid;
+        while (cur != null) {
+          final p = cache.item(cur);
+          if (p == null) break;
+          out.insert(0, p);
+          cur = p.parentUuid;
+        }
+        return out;
+      });
 
   @override
   Future<DriveListPage> search(
@@ -133,7 +141,12 @@ class CachedDriveRepository extends ChangeNotifier implements DriveRepository {
     int limit = 50,
   }) => _read(
     () async {
-      final page = await remote.search(query, filters: filters, cursor: cursor, limit: limit);
+      final page = await remote.search(
+        query,
+        filters: filters,
+        cursor: cursor,
+        limit: limit,
+      );
       cache.put(page.items);
       return page;
     },
@@ -169,16 +182,26 @@ class CachedDriveRepository extends ChangeNotifier implements DriveRepository {
     }
   }
 
-  Future<T> _queue<T>(String kind, Map<String, Object?> args, T Function() optimistic) async {
+  Future<T> _queue<T>(
+    String kind,
+    Map<String, Object?> args,
+    T Function() optimistic,
+  ) async {
     await queue.add(
-      PendingDriveOp(id: _ids.nextString(), kind: kind, args: args, createdAt: clock.now()),
+      PendingDriveOp(
+        id: _ids.nextString(),
+        kind: kind,
+        args: args,
+        createdAt: clock.now(),
+      ),
     );
     notifyListeners();
     return optimistic();
   }
 
   DriveItemView _cached(UuidValue uuid) =>
-      cache.item(uuid) ?? (throw const OfflineException('Item not available offline'));
+      cache.item(uuid) ??
+      (throw const OfflineException('Item not available offline'));
 
   @override
   Future<DriveItemView> rename(UuidValue uuid, String name) => _write(
@@ -186,15 +209,24 @@ class CachedDriveRepository extends ChangeNotifier implements DriveRepository {
     {'uuid': uuid.uuid, 'name': name},
     () async => cache.put([await remote.rename(uuid, name)]).single,
     () {
-      cache.update(uuid, (v) => v.copyWith(name: name, modifiedAt: clock.now()));
+      cache.update(
+        uuid,
+        (v) => v.copyWith(name: name, modifiedAt: clock.now()),
+      );
       return _cached(uuid);
     },
   );
 
   @override
-  Future<List<DriveItemView>> move(List<UuidValue> uuids, UuidValue? newParentUuid) => _write(
+  Future<List<DriveItemView>> move(
+    List<UuidValue> uuids,
+    UuidValue? newParentUuid,
+  ) => _write(
     'move',
-    {'uuids': [for (final u in uuids) u.uuid], 'newParentUuid': newParentUuid?.uuid},
+    {
+      'uuids': [for (final u in uuids) u.uuid],
+      'newParentUuid': newParentUuid?.uuid,
+    },
     () async => cache.put(await remote.move(uuids, newParentUuid)),
     () => [
       for (final u in uuids)
@@ -231,7 +263,9 @@ class CachedDriveRepository extends ChangeNotifier implements DriveRepository {
   @override
   Future<void> trash(List<UuidValue> uuids) => _write(
     'trash',
-    {'uuids': [for (final u in uuids) u.uuid]},
+    {
+      'uuids': [for (final u in uuids) u.uuid],
+    },
     () async {
       await remote.trash(uuids);
       for (final u in uuids) {
@@ -248,7 +282,9 @@ class CachedDriveRepository extends ChangeNotifier implements DriveRepository {
   @override
   Future<void> restore(List<UuidValue> uuids) => _write(
     'restore',
-    {'uuids': [for (final u in uuids) u.uuid]},
+    {
+      'uuids': [for (final u in uuids) u.uuid],
+    },
     () async {
       await remote.restore(uuids);
       for (final u in uuids) {
@@ -295,7 +331,8 @@ class CachedDriveRepository extends ChangeNotifier implements DriveRepository {
         cache.insertIntoFolderLists(v);
         return v;
       },
-      () => _optimisticItem(item, DriveItemKind.document, name, parentUuid, doc),
+      () =>
+          _optimisticItem(item, DriveItemKind.document, name, parentUuid, doc),
     );
   }
 
@@ -316,7 +353,13 @@ class CachedDriveRepository extends ChangeNotifier implements DriveRepository {
       cache.insertIntoFolderLists(v);
       return v;
     },
-    () => _optimisticItem(spaceUuid, DriveItemKind.spreadsheet, name, parentUuid, spaceUuid),
+    () => _optimisticItem(
+      spaceUuid,
+      DriveItemKind.spreadsheet,
+      name,
+      parentUuid,
+      spaceUuid,
+    ),
   );
 
   DriveItemView _optimisticItem(
@@ -382,8 +425,11 @@ class CachedDriveRepository extends ChangeNotifier implements DriveRepository {
   Future<void> _send(PendingDriveOp op) async {
     final a = op.args;
     UuidValue u(String k) => UuidValue.fromString(a[k]! as String);
-    UuidValue? uOpt(String k) => a[k] == null ? null : UuidValue.fromString(a[k]! as String);
-    List<UuidValue> us(String k) => [for (final s in a[k]! as List) UuidValue.fromString('$s')];
+    UuidValue? uOpt(String k) =>
+        a[k] == null ? null : UuidValue.fromString(a[k]! as String);
+    List<UuidValue> us(String k) => [
+      for (final s in a[k]! as List) UuidValue.fromString('$s'),
+    ];
     switch (op.kind) {
       case 'rename':
         cache.put([await remote.rename(u('uuid'), a['name']! as String)]);
@@ -392,7 +438,9 @@ class CachedDriveRepository extends ChangeNotifier implements DriveRepository {
       case 'setStarred':
         cache.put([await remote.setStarred(u('uuid'), a['starred']! as bool)]);
       case 'setPinnedOffline':
-        cache.put([await remote.setPinnedOffline(u('uuid'), a['pinned']! as bool)]);
+        cache.put([
+          await remote.setPinnedOffline(u('uuid'), a['pinned']! as bool),
+        ]);
       case 'trash':
         await remote.trash(us('uuids'));
       case 'restore':
@@ -433,12 +481,14 @@ class CachedDriveRepository extends ChangeNotifier implements DriveRepository {
   }
 
   @override
-  Future<DriveItemView> createFolder({UuidValue? parentUuid, required String name}) =>
-      _online(() async {
-        final v = await remote.createFolder(parentUuid: parentUuid, name: name);
-        cache.insertIntoFolderLists(v);
-        return v;
-      });
+  Future<DriveItemView> createFolder({
+    UuidValue? parentUuid,
+    required String name,
+  }) => _online(() async {
+    final v = await remote.createFolder(parentUuid: parentUuid, name: name);
+    cache.insertIntoFolderLists(v);
+    return v;
+  });
 
   @override
   Future<DriveItemView> createSpreadsheet({
@@ -456,8 +506,13 @@ class CachedDriveRepository extends ChangeNotifier implements DriveRepository {
   });
 
   @override
-  Future<DriveItemView> updateDescription(UuidValue uuid, String? description) =>
-      _online(() async => cache.put([await remote.updateDescription(uuid, description)]).single);
+  Future<DriveItemView> updateDescription(
+    UuidValue uuid,
+    String? description,
+  ) => _online(
+    () async =>
+        cache.put([await remote.updateDescription(uuid, description)]).single,
+  );
 
   @override
   Future<DriveItemView> copy(
@@ -490,7 +545,8 @@ class CachedDriveRepository extends ChangeNotifier implements DriveRepository {
       _online(() => remote.addShortcut(uuid, parentUuid));
 
   @override
-  Future<void> removeShortcut(UuidValue uuid) => _online(() => remote.removeShortcut(uuid));
+  Future<void> removeShortcut(UuidValue uuid) =>
+      _online(() => remote.removeShortcut(uuid));
 
   @override
   Future<void> deletePermanently(List<UuidValue> uuids) => _online(() async {
@@ -518,7 +574,10 @@ class CachedDriveRepository extends ChangeNotifier implements DriveRepository {
 
   @override
   Future<List<ActivityEventView>> activity(UuidValue uuid, {int limit = 50}) =>
-      _read(() => remote.activity(uuid, limit: limit), () => const <ActivityEventView>[]);
+      _read(
+        () => remote.activity(uuid, limit: limit),
+        () => const <ActivityEventView>[],
+      );
 
   @override
   Stream<DriveChange> watch() => remote.watch().map((c) {

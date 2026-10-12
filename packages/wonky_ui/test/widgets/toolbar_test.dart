@@ -48,31 +48,52 @@ void main() {
       testWidgets('when wide enough then every item is visible and there is no '
           'overflow button', (tester) async {
         final log = <String>[];
-        await pumpWonky(tester, WonkyToolbar(groups: _groups(log)), brightness: b);
-        expect(find.byKey(const ValueKey('tb.extra11')).hitTestable(), findsOneWidget);
-        expect(find.byKey(const ValueKey('toolbar.overflow')).hitTestable(), findsNothing);
-      });
-
-      testWidgets('when narrow then low-priority items move to the overflow menu',
-          (tester) async {
-        final log = <String>[];
         await pumpWonky(
           tester,
-          SizedBox(width: 220, child: WonkyToolbar(groups: _groups(log))),
+          WonkyToolbar(groups: _groups(log)),
           brightness: b,
-          center: true,
         );
-        await tester.pump();
-        expect(find.byKey(const ValueKey('tb.undo')).hitTestable(), findsOneWidget);
-        expect(find.byKey(const ValueKey('tb.extra11')).hitTestable(), findsNothing);
-        expect(find.byKey(const ValueKey('toolbar.overflow')).hitTestable(), findsOneWidget);
-
-        await tester.tap(find.byKey(const ValueKey('toolbar.overflow')));
-        await tester.pumpAndSettle();
-        await tester.tap(find.text('Extra 11'));
-        await tester.pumpAndSettle();
-        expect(log, ['extra11']);
+        expect(
+          find.byKey(const ValueKey('tb.extra11')).hitTestable(),
+          findsOneWidget,
+        );
+        expect(
+          find.byKey(const ValueKey('toolbar.overflow')).hitTestable(),
+          findsNothing,
+        );
       });
+
+      testWidgets(
+        'when narrow then low-priority items move to the overflow menu',
+        (tester) async {
+          final log = <String>[];
+          await pumpWonky(
+            tester,
+            SizedBox(width: 220, child: WonkyToolbar(groups: _groups(log))),
+            brightness: b,
+            center: true,
+          );
+          await tester.pump();
+          expect(
+            find.byKey(const ValueKey('tb.undo')).hitTestable(),
+            findsOneWidget,
+          );
+          expect(
+            find.byKey(const ValueKey('tb.extra11')).hitTestable(),
+            findsNothing,
+          );
+          expect(
+            find.byKey(const ValueKey('toolbar.overflow')).hitTestable(),
+            findsOneWidget,
+          );
+
+          await tester.tap(find.byKey(const ValueKey('toolbar.overflow')));
+          await tester.pumpAndSettle();
+          await tester.tap(find.text('Extra 11'));
+          await tester.pumpAndSettle();
+          expect(log, ['extra11']);
+        },
+      );
     });
   }
 

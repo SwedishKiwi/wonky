@@ -51,7 +51,8 @@ class CodeEntryState extends State<CodeEntry> {
 
   String get code => _code;
 
-  int get _remaining => (60 - clock.now().difference(widget.sentAt).inSeconds).clamp(0, 60);
+  int get _remaining =>
+      (60 - clock.now().difference(widget.sentAt).inSeconds).clamp(0, 60);
 
   @override
   Widget build(BuildContext context) {
@@ -70,9 +71,21 @@ class CodeEntryState extends State<CodeEntry> {
             if (v.replaceAll(' ', '').length == 6) widget.onComplete(v);
           },
           children: const [
-            ShadInputOTPGroup(children: [ShadInputOTPSlot(), ShadInputOTPSlot(), ShadInputOTPSlot()]),
+            ShadInputOTPGroup(
+              children: [
+                ShadInputOTPSlot(),
+                ShadInputOTPSlot(),
+                ShadInputOTPSlot(),
+              ],
+            ),
             Icon(LucideIcons.dot),
-            ShadInputOTPGroup(children: [ShadInputOTPSlot(), ShadInputOTPSlot(), ShadInputOTPSlot()]),
+            ShadInputOTPGroup(
+              children: [
+                ShadInputOTPSlot(),
+                ShadInputOTPSlot(),
+                ShadInputOTPSlot(),
+              ],
+            ),
           ],
         ),
         const SizedBox(height: 10),
@@ -83,7 +96,9 @@ class CodeEntryState extends State<CodeEntry> {
             await widget.onResend();
             if (mounted) setState(() {});
           },
-          child: Text(remaining == 0 ? l.authResendCode : l.authResendIn(remaining)),
+          child: Text(
+            remaining == 0 ? l.authResendCode : l.authResendIn(remaining),
+          ),
         ),
       ],
     );
@@ -144,7 +159,10 @@ class _VerifyEmailScreenState extends State<VerifyEmailScreen> {
           children: [
             Text(l.authVerifyNoDraft),
             const SizedBox(height: 12),
-            ShadButton(onPressed: () => context.go('/signup'), child: Text(l.authBackToSignUp)),
+            ShadButton(
+              onPressed: () => context.go('/signup'),
+              child: Text(l.authBackToSignUp),
+            ),
           ],
         ),
       );
@@ -178,7 +196,12 @@ class _VerifyEmailScreenState extends State<VerifyEmailScreen> {
             key: const ValueKey<String>('auth.verify.submit'),
             enabled: !_busy,
             onPressed: () => _verify(_key.currentState?.code ?? ''),
-            leading: _busy ? const SizedBox.square(dimension: 16, child: ShadSpinner(size: 16)) : null,
+            leading: _busy
+                ? const SizedBox.square(
+                    dimension: 16,
+                    child: ShadSpinner(size: 16),
+                  )
+                : null,
             child: Text(l.authVerify),
           ),
           const SizedBox(height: 6),

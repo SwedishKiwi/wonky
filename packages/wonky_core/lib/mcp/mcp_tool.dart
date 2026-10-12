@@ -103,7 +103,8 @@ abstract final class McpSchemas {
     description: 'Maximum number of results (default 50).',
   );
   static const cursor = JsonSchema.string(
-    description: 'Opaque pagination cursor returned as next_cursor by a '
+    description:
+        'Opaque pagination cursor returned as next_cursor by a '
         'previous call.',
   );
   static const role = JsonSchema.string(

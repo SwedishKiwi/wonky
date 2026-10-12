@@ -110,7 +110,10 @@ class _WonkyColorPickerState extends State<WonkyColorPicker> {
     };
     return [
       for (var r = 0; r < WonkyColorPalette.rows.length; r++)
-        [for (var c = 0; c < 10; c++) _Swatch(WonkyColorPalette.at(r, c), name(r, c))],
+        [
+          for (var c = 0; c < 10; c++)
+            _Swatch(WonkyColorPalette.at(r, c), name(r, c)),
+        ],
       if (widget.themeColors.isNotEmpty)
         [for (final t in widget.themeColors.take(10)) _Swatch(t.color, t.name)],
       if (widget.recentColors.isNotEmpty)
@@ -121,7 +124,11 @@ class _WonkyColorPickerState extends State<WonkyColorPicker> {
     ];
   }
 
-  KeyEventResult _onKey(FocusNode node, KeyEvent event, List<List<_Swatch>> rows) {
+  KeyEventResult _onKey(
+    FocusNode node,
+    KeyEvent event,
+    List<List<_Swatch>> rows,
+  ) {
     if (event is! KeyDownEvent && event is! KeyRepeatEvent) {
       return KeyEventResult.ignored;
     }
@@ -189,9 +196,11 @@ class _WonkyColorPickerState extends State<WonkyColorPicker> {
           _SwatchCell(
             key: ValueKey<String>('colorPicker.swatch.$r.$c'),
             swatch: rows[r][c],
-            selected: widget.value?.hex == rows[r][c].color.hex &&
+            selected:
+                widget.value?.hex == rows[r][c].color.hex &&
                 widget.value?.themeRef == rows[r][c].color.themeRef,
-            highlighted: _keyboardActive && _focus.hasFocus && _row == r && _col == c,
+            highlighted:
+                _keyboardActive && _focus.hasFocus && _row == r && _col == c,
             onTap: () => widget.onChanged(rows[r][c].color),
           ),
       ],

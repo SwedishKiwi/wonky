@@ -22,14 +22,17 @@ final _panels = [
 
 void main() {
   group('Given a split view controller', () {
-    test('when opening panels then the most recent is first and toggling closes', () {
-      final c = WonkySplitViewController();
-      c.open('comments');
-      c.open('outline');
-      expect(c.recentPanelIds, ['outline', 'comments']);
-      c.toggle('outline');
-      expect(c.activePanelId, isNull);
-    });
+    test(
+      'when opening panels then the most recent is first and toggling closes',
+      () {
+        final c = WonkySplitViewController();
+        c.open('comments');
+        c.open('outline');
+        expect(c.recentPanelIds, ['outline', 'comments']);
+        c.toggle('outline');
+        expect(c.activePanelId, isNull);
+      },
+    );
 
     test('when cycling then panels rotate through the recent list', () {
       final c = WonkySplitViewController()
@@ -43,7 +46,9 @@ void main() {
 
     test('when committing a width then the callback persists it', () {
       final widths = <String, double>{};
-      final c = WonkySplitViewController(onWidthChanged: (id, w) => widths[id] = w);
+      final c = WonkySplitViewController(
+        onWidthChanged: (id, w) => widths[id] = w,
+      );
       c.setWidth('comments', 400, commit: true);
       expect(widths, {'comments': 400});
       expect(c.widthOf('comments'), 400);
@@ -52,11 +57,17 @@ void main() {
 
   for (final b in Brightness.values) {
     testWidgets('Given a split view in ${b.name} when a panel opens then it '
-        'shows next to the content with tabs for recent panels', (tester) async {
+        'shows next to the content with tabs for recent panels', (
+      tester,
+    ) async {
       final c = WonkySplitViewController();
       await pumpWonky(
         tester,
-        WonkySplitView(controller: c, panels: _panels, child: const Text('main')),
+        WonkySplitView(
+          controller: c,
+          panels: _panels,
+          child: const Text('main'),
+        ),
         brightness: b,
       );
       expect(find.text('comments body'), findsNothing);
@@ -73,18 +84,24 @@ void main() {
     });
   }
 
-  testWidgets('Given an open panel when pressing Esc inside it then it closes',
-      (tester) async {
-    final c = WonkySplitViewController()..open('outline');
-    await pumpWonky(
-      tester,
-      WonkySplitView(controller: c, panels: _panels, child: const Text('main')),
-    );
-    await tester.pumpAndSettle();
-    await tester.sendKeyEvent(LogicalKeyboardKey.escape);
-    await tester.pumpAndSettle();
-    expect(c.activePanelId, isNull);
-  });
+  testWidgets(
+    'Given an open panel when pressing Esc inside it then it closes',
+    (tester) async {
+      final c = WonkySplitViewController()..open('outline');
+      await pumpWonky(
+        tester,
+        WonkySplitView(
+          controller: c,
+          panels: _panels,
+          child: const Text('main'),
+        ),
+      );
+      await tester.pumpAndSettle();
+      await tester.sendKeyEvent(LogicalKeyboardKey.escape);
+      await tester.pumpAndSettle();
+      expect(c.activePanelId, isNull);
+    },
+  );
 
   testWidgets('Given a narrow window when a panel opens then it overlays the '
       'content and the scrim closes it', (tester) async {
@@ -101,8 +118,9 @@ void main() {
     expect(c.activePanelId, isNull);
   });
 
-  testWidgets('Given a collapsed panel when shown then the rail expands it',
-      (tester) async {
+  testWidgets('Given a collapsed panel when shown then the rail expands it', (
+    tester,
+  ) async {
     final c = WonkySplitViewController()..open('comments');
     await pumpWonky(
       tester,

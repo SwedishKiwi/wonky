@@ -14,7 +14,11 @@ import 'drive_format.dart';
 /// The details side panel (suite 05 §3.1, `i`): type, owner, location,
 /// sharing summary, dates, editable description and the activity feed.
 class DriveDetailsPanel extends StatefulWidget {
-  const DriveDetailsPanel({super.key, required this.services, required this.item});
+  const DriveDetailsPanel({
+    super.key,
+    required this.services,
+    required this.item,
+  });
 
   final ShellServices services;
   final DriveItemView? item;
@@ -47,10 +51,18 @@ class _DriveDetailsPanelState extends State<DriveDetailsPanel> {
     final text = _desc.text.trim();
     if (text == (item.description ?? '')) return;
     try {
-      final v = await widget.services.drive.updateDescription(item.uuid, text.isEmpty ? null : text);
-      widget.services.emitDriveChange(DriveChange(kind: DriveChangeKind.updated, itemUuid: v.uuid, item: v));
+      final v = await widget.services.drive.updateDescription(
+        item.uuid,
+        text.isEmpty ? null : text,
+      );
+      widget.services.emitDriveChange(
+        DriveChange(kind: DriveChangeKind.updated, itemUuid: v.uuid, item: v),
+      );
     } catch (e) {
-      widget.services.toasts.error(widget.services.l10n?.errorGeneric ?? 'Error', description: errorMessage(e));
+      widget.services.toasts.error(
+        widget.services.l10n?.errorGeneric ?? 'Error',
+        description: errorMessage(e),
+      );
     }
   }
 
@@ -60,7 +72,11 @@ class _DriveDetailsPanelState extends State<DriveDetailsPanel> {
     final theme = ShadTheme.of(context);
     final item = widget.item;
     if (item == null) {
-      return WonkyEmptyState(illustration: EmptyIllustration.folder, title: l.detailsNothingSelected, size: 80);
+      return WonkyEmptyState(
+        illustration: EmptyIllustration.folder,
+        title: l.detailsNothingSelected,
+        size: 80,
+      );
     }
     _ensure(item);
     final date = intl.DateFormat.yMMMd().add_jm();
@@ -80,8 +96,17 @@ class _DriveDetailsPanelState extends State<DriveDetailsPanel> {
       children: [
         Container(
           height: 120,
-          decoration: BoxDecoration(color: theme.colorScheme.canvas, borderRadius: BorderRadius.circular(8)),
-          child: Center(child: Icon(kindIcon(item.kind), size: 44, color: kindColor(item.kind, theme.colorScheme))),
+          decoration: BoxDecoration(
+            color: theme.colorScheme.canvas,
+            borderRadius: BorderRadius.circular(8),
+          ),
+          child: Center(
+            child: Icon(
+              kindIcon(item.kind),
+              size: 44,
+              color: kindColor(item.kind, theme.colorScheme),
+            ),
+          ),
         ),
         const SizedBox(height: 12),
         Text(item.name, style: theme.textTheme.large),
@@ -91,9 +116,18 @@ class _DriveDetailsPanelState extends State<DriveDetailsPanel> {
           l.detailsOwner,
           Row(
             children: [
-              WonkyAvatar(name: item.owner.displayName, color: parseHexColor(item.owner.avatarColor), size: 20),
+              WonkyAvatar(
+                name: item.owner.displayName,
+                color: parseHexColor(item.owner.avatarColor),
+                size: 20,
+              ),
               const SizedBox(width: 6),
-              Expanded(child: Text(item.owner.displayName, overflow: TextOverflow.ellipsis)),
+              Expanded(
+                child: Text(
+                  item.owner.displayName,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
             ],
           ),
         ),
@@ -103,17 +137,24 @@ class _DriveDetailsPanelState extends State<DriveDetailsPanel> {
             future: _path,
             builder: (context, snap) {
               final p = snap.data;
-              final text = p == null ? '…' : [l.navMyDrive, ...p.map((x) => x.name)].join(' › ');
+              final text = p == null
+                  ? '…'
+                  : [l.navMyDrive, ...p.map((x) => x.name)].join(' › ');
               return Text(text, overflow: TextOverflow.ellipsis);
             },
           ),
         ),
-        row(l.detailsAccess, Text(item.shared ? l.detailsShared : l.detailsPrivate)),
+        row(
+          l.detailsAccess,
+          Text(item.shared ? l.detailsShared : l.detailsPrivate),
+        ),
         row(l.detailsRole, Text(roleName(l, item.role))),
         row(l.detailsModified, Text(date.format(item.modifiedAt.toLocal()))),
-        if (item.lastOpenedAt != null) row(l.detailsOpened, Text(date.format(item.lastOpenedAt!.toLocal()))),
+        if (item.lastOpenedAt != null)
+          row(l.detailsOpened, Text(date.format(item.lastOpenedAt!.toLocal()))),
         row(l.detailsCreated, Text(date.format(item.createdAt.toLocal()))),
-        if (!item.isFolder) row(l.columnSize, Text(formatBytes(item.sizeBytes))),
+        if (!item.isFolder)
+          row(l.columnSize, Text(formatBytes(item.sizeBytes))),
         row(
           l.detailsDescription,
           item.canEdit
@@ -131,16 +172,24 @@ class _DriveDetailsPanelState extends State<DriveDetailsPanel> {
               : Text(item.description ?? '—'),
         ),
         const SizedBox(height: 8),
-        Text(l.detailsActivity, style: theme.textTheme.small.copyWith(fontWeight: FontWeight.w600)),
+        Text(
+          l.detailsActivity,
+          style: theme.textTheme.small.copyWith(fontWeight: FontWeight.w600),
+        ),
         const SizedBox(height: 6),
         FutureBuilder<List<ActivityEventView>>(
           future: _activity,
           builder: (context, snap) {
             if (snap.connectionState != ConnectionState.done) {
-              return const Padding(padding: EdgeInsets.all(12), child: Center(child: ShadSpinner()));
+              return const Padding(
+                padding: EdgeInsets.all(12),
+                child: Center(child: ShadSpinner()),
+              );
             }
             final events = snap.data ?? const [];
-            if (events.isEmpty) return Text(l.activityEmpty, style: theme.textTheme.muted);
+            if (events.isEmpty) {
+              return Text(l.activityEmpty, style: theme.textTheme.muted);
+            }
             return Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
@@ -149,7 +198,9 @@ class _DriveDetailsPanelState extends State<DriveDetailsPanel> {
                     padding: const EdgeInsets.symmetric(vertical: 4),
                     child: Text(
                       '${activityText(l, e)} · ${timeAgo(l, e.at)}',
-                      style: theme.textTheme.small.copyWith(fontWeight: FontWeight.normal),
+                      style: theme.textTheme.small.copyWith(
+                        fontWeight: FontWeight.normal,
+                      ),
                     ),
                   ),
               ],
@@ -175,15 +226,21 @@ class SelectionDetailsPanel extends StatelessWidget {
   final ShellServices services;
 
   @override
-  Widget build(BuildContext context) => ValueListenableBuilder<List<DriveItemView>>(
-    valueListenable: services.driveSelection,
-    builder: (context, sel, _) => ValueListenableBuilder<DriveItemView?>(
-      valueListenable: services.currentItem,
-      builder: (context, cur, _) {
-        final item = sel.length == 1 ? sel.single : (sel.isEmpty ? (cur ?? services.currentFolder.value) : null);
-        return DriveDetailsPanel(key: ValueKey(item?.uuid.uuid), services: services, item: item);
-      },
-    ),
-  );
+  Widget build(BuildContext context) =>
+      ValueListenableBuilder<List<DriveItemView>>(
+        valueListenable: services.driveSelection,
+        builder: (context, sel, _) => ValueListenableBuilder<DriveItemView?>(
+          valueListenable: services.currentItem,
+          builder: (context, cur, _) {
+            final item = sel.length == 1
+                ? sel.single
+                : (sel.isEmpty ? (cur ?? services.currentFolder.value) : null);
+            return DriveDetailsPanel(
+              key: ValueKey(item?.uuid.uuid),
+              services: services,
+              item: item,
+            );
+          },
+        ),
+      );
 }
-

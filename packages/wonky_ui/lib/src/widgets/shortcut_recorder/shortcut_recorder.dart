@@ -32,7 +32,8 @@ class KeyboardShortcutRecorder extends StatefulWidget {
   final String? semanticLabel;
 
   @override
-  State<KeyboardShortcutRecorder> createState() => _KeyboardShortcutRecorderState();
+  State<KeyboardShortcutRecorder> createState() =>
+      _KeyboardShortcutRecorderState();
 }
 
 class _KeyboardShortcutRecorderState extends State<KeyboardShortcutRecorder> {
@@ -121,10 +122,15 @@ class _KeyboardShortcutRecorderState extends State<KeyboardShortcutRecorder> {
                 child: GestureDetector(
                   onTap: _start,
                   child: MouseRegion(
-                    cursor: widget.enabled ? SystemMouseCursors.click : MouseCursor.defer,
+                    cursor: widget.enabled
+                        ? SystemMouseCursors.click
+                        : MouseCursor.defer,
                     child: Container(
                       key: const ValueKey<String>('shortcutRecorder.field'),
-                      constraints: const BoxConstraints(minWidth: 120, minHeight: 32),
+                      constraints: const BoxConstraints(
+                        minWidth: 120,
+                        minHeight: 32,
+                      ),
                       padding: const EdgeInsets.symmetric(horizontal: 8),
                       alignment: Alignment.centerLeft,
                       decoration: BoxDecoration(
@@ -140,9 +146,15 @@ class _KeyboardShortcutRecorderState extends State<KeyboardShortcutRecorder> {
                         ),
                       ),
                       child: _recording
-                          ? Text(l10n.shortcutPress, style: theme.textTheme.muted)
+                          ? Text(
+                              l10n.shortcutPress,
+                              style: theme.textTheme.muted,
+                            )
                           : widget.labels.isEmpty
-                          ? Text(l10n.shortcutNone, style: theme.textTheme.muted)
+                          ? Text(
+                              l10n.shortcutNone,
+                              style: theme.textTheme.muted,
+                            )
                           : ShadKbd.group(widget.labels, height: 22),
                     ),
                   ),
@@ -165,14 +177,19 @@ class _KeyboardShortcutRecorderState extends State<KeyboardShortcutRecorder> {
         if (_recording)
           Padding(
             padding: const EdgeInsets.only(top: 4),
-            child: Text(l10n.shortcutCancelHint, style: theme.textTheme.muted.copyWith(fontSize: 12)),
+            child: Text(
+              l10n.shortcutCancelHint,
+              style: theme.textTheme.muted.copyWith(fontSize: 12),
+            ),
           )
         else if (widget.conflict != null)
           Padding(
             padding: const EdgeInsets.only(top: 4),
             child: Text(
               widget.conflict!,
-              style: theme.textTheme.small.copyWith(color: theme.colorScheme.destructive),
+              style: theme.textTheme.small.copyWith(
+                color: theme.colorScheme.destructive,
+              ),
             ),
           ),
       ],

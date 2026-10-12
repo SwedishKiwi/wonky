@@ -52,7 +52,8 @@ class CommentsController extends ChangeNotifier {
 
   String? get activeThreadUuid => _active;
 
-  int get openCount => _threads.where((t) => t.status == CommentStatus.open).length;
+  int get openCount =>
+      _threads.where((t) => t.status == CommentStatus.open).length;
 
   CommentThreadView? thread(String uuid) {
     for (final t in _threads) {
@@ -89,7 +90,10 @@ class CommentsController extends ChangeNotifier {
   void _onEvent(CommentEvent e) {
     switch (e.kind) {
       case CommentEventKind.threadDeleted:
-        _threads = [for (final t in _threads) if (t.uuid != e.threadUuid) t];
+        _threads = [
+          for (final t in _threads)
+            if (t.uuid != e.threadUuid) t,
+        ];
       case CommentEventKind.threadCreated:
       case CommentEventKind.threadUpdated:
       case CommentEventKind.statusChanged:
@@ -199,7 +203,11 @@ class CommentsController extends ChangeNotifier {
     return t;
   }
 
-  Future<CommentThreadView> reply(String threadUuid, String body, {List<int> mentions = const []}) async {
+  Future<CommentThreadView> reply(
+    String threadUuid,
+    String body, {
+    List<int> mentions = const [],
+  }) async {
     final t = await services.repositories.comments.reply(
       UuidValue.fromString(threadUuid),
       body: body,
@@ -212,14 +220,18 @@ class CommentsController extends ChangeNotifier {
   }
 
   Future<CommentThreadView> resolve(String threadUuid) async {
-    final t = await services.repositories.comments.resolve(UuidValue.fromString(threadUuid));
+    final t = await services.repositories.comments.resolve(
+      UuidValue.fromString(threadUuid),
+    );
     _upsert(t);
     _notify();
     return t;
   }
 
   Future<CommentThreadView> reopen(String threadUuid) async {
-    final t = await services.repositories.comments.reopen(UuidValue.fromString(threadUuid));
+    final t = await services.repositories.comments.reopen(
+      UuidValue.fromString(threadUuid),
+    );
     _upsert(t);
     _notify();
     return t;
@@ -227,8 +239,13 @@ class CommentsController extends ChangeNotifier {
 
   Future<void> deleteThread(String threadUuid) async {
     final existing = thread(threadUuid);
-    await services.repositories.comments.deleteThread(UuidValue.fromString(threadUuid));
-    _threads = [for (final t in _threads) if (t.uuid.uuid != threadUuid) t];
+    await services.repositories.comments.deleteThread(
+      UuidValue.fromString(threadUuid),
+    );
+    _threads = [
+      for (final t in _threads)
+        if (t.uuid.uuid != threadUuid) t,
+    ];
     if (existing != null) anchors?.onThreadDeleted(existing);
     _notify();
   }

@@ -20,7 +20,9 @@ class DriveController extends ChangeNotifier {
   DriveController({required this.services, required this._location}) {
     _sub = services.driveChanges.listen(_onChange);
     services.driveRefresh.addListener(reload);
-    _layout = services.prefs.device<String>('drive.layout') == 'grid' ? DriveLayout.grid : DriveLayout.list;
+    _layout = services.prefs.device<String>('drive.layout') == 'grid'
+        ? DriveLayout.grid
+        : DriveLayout.list;
     services.driveSelectAll = selectAll;
   }
 
@@ -63,13 +65,18 @@ class DriveController extends ChangeNotifier {
   DriveLayout get layout => _layout;
   String? get focusedId => _focused;
 
-  List<DriveItemView> get selection => [for (final i in _items) if (_selected.contains(i.uuid.uuid)) i];
+  List<DriveItemView> get selection => [
+    for (final i in _items)
+      if (_selected.contains(i.uuid.uuid)) i,
+  ];
   bool isSelected(DriveItemView i) => _selected.contains(i.uuid.uuid);
 
   /// Whether the folder allows creating items (My Drive or an editable folder).
   bool get canCreateHere => switch (_location.kind) {
     DriveLocationKind.folder => _folder?.canEdit ?? false,
-    DriveLocationKind.trash || DriveLocationKind.shared || DriveLocationKind.search => false,
+    DriveLocationKind.trash ||
+    DriveLocationKind.shared ||
+    DriveLocationKind.search => false,
     _ => true,
   };
 
@@ -85,9 +92,11 @@ class DriveController extends ChangeNotifier {
   }
 
   List<DriveItemKind>? get _kinds => switch (_type) {
-    DriveTypeFilter.primary => _location.kind == DriveLocationKind.folder || _location.kind == DriveLocationKind.myDrive
-        ? [services.config.primaryKind, DriveItemKind.folder]
-        : [services.config.primaryKind],
+    DriveTypeFilter.primary =>
+      _location.kind == DriveLocationKind.folder ||
+              _location.kind == DriveLocationKind.myDrive
+          ? [services.config.primaryKind, DriveItemKind.folder]
+          : [services.config.primaryKind],
     DriveTypeFilter.documents => [DriveItemKind.document],
     DriveTypeFilter.spreadsheets => [DriveItemKind.spreadsheet],
     DriveTypeFilter.folders => [DriveItemKind.folder],
@@ -95,10 +104,15 @@ class DriveController extends ChangeNotifier {
   };
 
   DriveSort get _sort {
-    final field = _location.groupsByDate && _sortField == DriveSortField.modifiedAt
+    final field =
+        _location.groupsByDate && _sortField == DriveSortField.modifiedAt
         ? DriveSortField.lastOpenedByMe
         : _sortField;
-    return DriveSort(field: field, descending: _descending, foldersFirst: _foldersFirst);
+    return DriveSort(
+      field: field,
+      descending: _descending,
+      foldersFirst: _foldersFirst,
+    );
   }
 
   Future<void> reload() async {
@@ -226,11 +240,13 @@ class DriveController extends ChangeNotifier {
     if (kinds != null && !kinds.contains(item.kind)) return false;
     return switch (_location.kind) {
       DriveLocationKind.folder => item.parentUuid?.uuid == _location.folderUuid,
-      DriveLocationKind.myDrive => item.parentUuid == null && item.owner.id == services.me?.id,
+      DriveLocationKind.myDrive =>
+        item.parentUuid == null && item.owner.id == services.me?.id,
       DriveLocationKind.starred => item.starred,
       DriveLocationKind.offline => item.pinnedOffline,
       DriveLocationKind.shared => item.owner.id != services.me?.id,
-      DriveLocationKind.home || DriveLocationKind.recent => item.lastOpenedAt != null || item.owner.id == services.me?.id,
+      DriveLocationKind.home || DriveLocationKind.recent =>
+        item.lastOpenedAt != null || item.owner.id == services.me?.id,
       DriveLocationKind.trash => true,
       DriveLocationKind.search => false,
     };
@@ -324,7 +340,10 @@ class DriveController extends ChangeNotifier {
   void moveFocus(int delta, {bool extend = false}) {
     if (_items.isEmpty) return;
     var i = _items.indexWhere((x) => x.uuid.uuid == _focused);
-    i = (i < 0 ? (delta > 0 ? 0 : _items.length - 1) : (i + delta)).clamp(0, _items.length - 1);
+    i = (i < 0 ? (delta > 0 ? 0 : _items.length - 1) : (i + delta)).clamp(
+      0,
+      _items.length - 1,
+    );
     select(_items[i], range: extend);
   }
 

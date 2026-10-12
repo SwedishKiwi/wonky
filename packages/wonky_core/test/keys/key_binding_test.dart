@@ -60,12 +60,24 @@ void main() {
 
   group('Given browser-reserved chords', () {
     test('when on web then Mod+W and Mod+T are reserved', () {
-      expect(KeyBinding.parse('Mod+W').isBrowserReserved(KeyPlatform.otherWeb), isTrue);
-      expect(KeyBinding.parse('Mod+T').isBrowserReserved(KeyPlatform.macWeb), isTrue);
+      expect(
+        KeyBinding.parse('Mod+W').isBrowserReserved(KeyPlatform.otherWeb),
+        isTrue,
+      );
+      expect(
+        KeyBinding.parse('Mod+T').isBrowserReserved(KeyPlatform.macWeb),
+        isTrue,
+      );
     });
     test('when on desktop or with Alt then they are not reserved', () {
-      expect(KeyBinding.parse('Mod+W').isBrowserReserved(KeyPlatform.macDesktop), isFalse);
-      expect(KeyBinding.parse('Mod+Alt+N').isBrowserReserved(KeyPlatform.otherWeb), isFalse);
+      expect(
+        KeyBinding.parse('Mod+W').isBrowserReserved(KeyPlatform.macDesktop),
+        isFalse,
+      );
+      expect(
+        KeyBinding.parse('Mod+Alt+N').isBrowserReserved(KeyPlatform.otherWeb),
+        isFalse,
+      );
     });
   });
 

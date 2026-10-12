@@ -1,4 +1,5 @@
-import 'package:wonky_client/wonky_client.dart' show CommentAnchorKind, CommentThreadView;
+import 'package:wonky_client/wonky_client.dart'
+    show CommentAnchorKind, CommentThreadView;
 
 /// A new comment's anchor, produced by the app from the current selection.
 class NewCommentAnchor {

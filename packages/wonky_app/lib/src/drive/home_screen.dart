@@ -26,7 +26,11 @@ import 'item_list.dart';
 /// Home and every drive view (suite 05 §3): top bar, sidebar, template strip,
 /// filter / selection bar, list or grid, details panel.
 class DriveHomeScreen extends StatefulWidget {
-  const DriveHomeScreen({super.key, required this.services, required this.location});
+  const DriveHomeScreen({
+    super.key,
+    required this.services,
+    required this.location,
+  });
 
   final ShellServices services;
   final DriveLocation location;
@@ -36,10 +40,16 @@ class DriveHomeScreen extends StatefulWidget {
 }
 
 class _DriveHomeScreenState extends State<DriveHomeScreen> {
-  late final DriveController c = DriveController(services: widget.services, location: widget.location);
+  late final DriveController c = DriveController(
+    services: widget.services,
+    location: widget.location,
+  );
   final _listFocus = FocusNode(debugLabel: 'drive.list');
   final _searchFocus = FocusNode(debugLabel: 'drive.search');
-  final _sidebarFocus = FocusNode(debugLabel: 'drive.sidebar', skipTraversal: true);
+  final _sidebarFocus = FocusNode(
+    debugLabel: 'drive.sidebar',
+    skipTraversal: true,
+  );
   final _topFocus = FocusNode(debugLabel: 'drive.top', skipTraversal: true);
   bool _sidebarOpen = true;
   bool _dropping = false;
@@ -68,7 +78,9 @@ class _DriveHomeScreenState extends State<DriveHomeScreen> {
 
   @override
   void dispose() {
-    s.focusRegions.removeWhere((f) => f == _topFocus || f == _sidebarFocus || f == _listFocus);
+    s.focusRegions.removeWhere(
+      (f) => f == _topFocus || f == _sidebarFocus || f == _listFocus,
+    );
     if (s.driveSearchFocus == _searchFocus) s.driveSearchFocus = null;
     c.dispose();
     _listFocus.dispose();
@@ -99,7 +111,13 @@ class _DriveHomeScreenState extends State<DriveHomeScreen> {
       final name = f.name;
       final ext = name.contains('.') ? name.split('.').last.toLowerCase() : '';
       if (!handler.extensions.contains(ext)) continue;
-      files.add(ImportFile(name: name, bytes: await f.readAsBytes(), mimeType: f.mimeType));
+      files.add(
+        ImportFile(
+          name: name,
+          bytes: await f.readAsBytes(),
+          mimeType: f.mimeType,
+        ),
+      );
     }
     if (!mounted) return;
     if (files.isEmpty) {
@@ -107,12 +125,22 @@ class _DriveHomeScreenState extends State<DriveHomeScreen> {
       return;
     }
     try {
-      final items = await handler.importFiles(context, s, files, parentUuid: c.folder?.uuid);
+      final items = await handler.importFiles(
+        context,
+        s,
+        files,
+        parentUuid: c.folder?.uuid,
+      );
       for (final v in items) {
-        s.emitDriveChange(DriveChange(kind: DriveChangeKind.created, itemUuid: v.uuid, item: v));
+        s.emitDriveChange(
+          DriveChange(kind: DriveChangeKind.created, itemUuid: v.uuid, item: v),
+        );
       }
     } catch (e) {
-      s.toasts.error(s.l10n?.importFailed ?? 'Error', description: errorMessage(e));
+      s.toasts.error(
+        s.l10n?.importFailed ?? 'Error',
+        description: errorMessage(e),
+      );
     }
   }
 
@@ -126,7 +154,8 @@ class _DriveHomeScreenState extends State<DriveHomeScreen> {
     final main = ListenableBuilder(
       listenable: c,
       builder: (context, _) {
-        final showTemplates = widget.location.kind == DriveLocationKind.home ||
+        final showTemplates =
+            widget.location.kind == DriveLocationKind.home ||
             (widget.location.kind == DriveLocationKind.myDrive);
         return Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -151,7 +180,8 @@ class _DriveHomeScreenState extends State<DriveHomeScreen> {
                 services: s,
                 searchFocus: _searchFocus,
                 initialQuery: widget.location.query,
-                onToggleSidebar: () => setState(() => _sidebarOpen = !_sidebarOpen),
+                onToggleSidebar: () =>
+                    setState(() => _sidebarOpen = !_sidebarOpen),
               ),
             ),
             Expanded(
@@ -159,14 +189,25 @@ class _DriveHomeScreenState extends State<DriveHomeScreen> {
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
                   if (sidebarVisible)
-                    Focus(focusNode: _sidebarFocus, child: DriveSidebar(services: s, location: widget.location)),
+                    Focus(
+                      focusNode: _sidebarFocus,
+                      child: DriveSidebar(
+                        services: s,
+                        location: widget.location,
+                      ),
+                    ),
                   Expanded(
                     child: Container(
-                      margin: EdgeInsets.only(right: narrow ? 0 : 12, bottom: narrow ? 0 : 12),
+                      margin: EdgeInsets.only(
+                        right: narrow ? 0 : 12,
+                        bottom: narrow ? 0 : 12,
+                      ),
                       decoration: BoxDecoration(
                         color: theme.colorScheme.card,
                         borderRadius: narrow ? null : BorderRadius.circular(16),
-                        border: narrow ? null : Border.all(color: theme.colorScheme.border),
+                        border: narrow
+                            ? null
+                            : Border.all(color: theme.colorScheme.border),
                       ),
                       clipBehavior: Clip.antiAlias,
                       child: WonkySplitView(
@@ -180,8 +221,10 @@ class _DriveHomeScreenState extends State<DriveHomeScreen> {
                           ),
                         ],
                         child: DropTarget(
-                          onDragEntered: (_) => setState(() => _dropping = true),
-                          onDragExited: (_) => setState(() => _dropping = false),
+                          onDragEntered: (_) =>
+                              setState(() => _dropping = true),
+                          onDragExited: (_) =>
+                              setState(() => _dropping = false),
                           onDragDone: _onDrop,
                           child: Stack(
                             children: [
@@ -191,10 +234,19 @@ class _DriveHomeScreenState extends State<DriveHomeScreen> {
                                   child: IgnorePointer(
                                     child: Container(
                                       decoration: BoxDecoration(
-                                        color: theme.colorScheme.primary.withValues(alpha: 0.06),
-                                        border: Border.all(color: theme.colorScheme.ring, width: 2),
+                                        color: theme.colorScheme.primary
+                                            .withValues(alpha: 0.06),
+                                        border: Border.all(
+                                          color: theme.colorScheme.ring,
+                                          width: 2,
+                                        ),
                                       ),
-                                      child: Center(child: Text(l.dropToUpload, style: theme.textTheme.large)),
+                                      child: Center(
+                                        child: Text(
+                                          l.dropToUpload,
+                                          style: theme.textTheme.large,
+                                        ),
+                                      ),
                                     ),
                                   ),
                                 ),
@@ -218,10 +270,14 @@ class _DriveHomeScreenState extends State<DriveHomeScreen> {
     if (c.error != null && c.items.isEmpty) {
       final offline = isOfflineError(c.error!);
       return WonkyEmptyState(
-        illustration: offline ? EmptyIllustration.offline : EmptyIllustration.error,
+        illustration: offline
+            ? EmptyIllustration.offline
+            : EmptyIllustration.error,
         title: offline ? l.driveOfflineTitle : l.errorGeneric,
         description: offline ? l.driveOfflineBody : errorMessage(c.error!),
-        actions: [ShadButton.outline(onPressed: c.reload, child: Text(l.actionRetry))],
+        actions: [
+          ShadButton.outline(onPressed: c.reload, child: Text(l.actionRetry)),
+        ],
       );
     }
     if (c.items.isEmpty) return _empty(context, l);
@@ -230,23 +286,53 @@ class _DriveHomeScreenState extends State<DriveHomeScreen> {
 
   Widget _empty(BuildContext context, WonkyAppLocalizations l) {
     final (ill, title, desc) = switch (widget.location.kind) {
-      DriveLocationKind.starred => (EmptyIllustration.starred, l.emptyStarredTitle, l.emptyStarredBody),
-      DriveLocationKind.shared => (EmptyIllustration.shared, l.emptySharedTitle, l.emptySharedBody),
-      DriveLocationKind.trash => (EmptyIllustration.trash, l.emptyTrashViewTitle, l.emptyTrashViewBody),
-      DriveLocationKind.offline => (EmptyIllustration.offline, l.emptyOfflineTitle, l.emptyOfflineBody),
-      DriveLocationKind.search => (EmptyIllustration.search, l.emptySearchTitle, l.emptySearchBody),
-      DriveLocationKind.folder => (EmptyIllustration.folder, l.emptyFolderTitle, l.emptyFolderBody),
+      DriveLocationKind.starred => (
+        EmptyIllustration.starred,
+        l.emptyStarredTitle,
+        l.emptyStarredBody,
+      ),
+      DriveLocationKind.shared => (
+        EmptyIllustration.shared,
+        l.emptySharedTitle,
+        l.emptySharedBody,
+      ),
+      DriveLocationKind.trash => (
+        EmptyIllustration.trash,
+        l.emptyTrashViewTitle,
+        l.emptyTrashViewBody,
+      ),
+      DriveLocationKind.offline => (
+        EmptyIllustration.offline,
+        l.emptyOfflineTitle,
+        l.emptyOfflineBody,
+      ),
+      DriveLocationKind.search => (
+        EmptyIllustration.search,
+        l.emptySearchTitle,
+        l.emptySearchBody,
+      ),
+      DriveLocationKind.folder => (
+        EmptyIllustration.folder,
+        l.emptyFolderTitle,
+        l.emptyFolderBody,
+      ),
       _ => (EmptyIllustration.documents, l.emptyHomeTitle, l.emptyHomeBody),
     };
     final r = MenuResolver(s);
-    final newEntry = r.commandEntry(context, 'shell.file.new', key: 'empty.new');
+    final newEntry = r.commandEntry(
+      context,
+      'shell.file.new',
+      key: 'empty.new',
+    );
     return WonkyEmptyState(
       key: const ValueKey<String>('drive.empty'),
       illustration: ill,
       title: title,
       description: desc,
       actions: [
-        if (c.canCreateHere && newEntry != null && widget.location.kind != DriveLocationKind.trash)
+        if (c.canCreateHere &&
+            newEntry != null &&
+            widget.location.kind != DriveLocationKind.trash)
           ShadButton(
             key: const ValueKey<String>('drive.empty.new'),
             leading: const Icon(LucideIcons.plus, size: 16),
@@ -260,7 +346,11 @@ class _DriveHomeScreenState extends State<DriveHomeScreen> {
 
 /// Breadcrumb/title + filter bar, or the selection action bar.
 class _Header extends StatelessWidget {
-  const _Header({required this.controller, required this.services, required this.title});
+  const _Header({
+    required this.controller,
+    required this.services,
+    required this.title,
+  });
 
   final DriveController controller;
   final ShellServices services;
@@ -273,7 +363,12 @@ class _Header extends StatelessWidget {
     final c = controller;
     final sel = c.selection;
     void run(String id, [Map<String, Object?> args = const {}]) =>
-        services.dispatcher.invoke(id, args: args, source: InvocationSource.toolbar, context: context);
+        services.dispatcher.invoke(
+          id,
+          args: args,
+          source: InvocationSource.toolbar,
+          context: context,
+        );
     Widget cmdIcon(String id, IconData icon, String label, {String? key}) {
       final st = services.dispatcher.stateOf(id);
       return ShadTooltip(
@@ -298,7 +393,14 @@ class _Header extends StatelessWidget {
           Expanded(
             child: c.location.kind == DriveLocationKind.folder
                 ? _Breadcrumb(controller: c, services: services)
-                : Semantics(header: true, child: Text(title, style: theme.textTheme.h4, overflow: TextOverflow.ellipsis)),
+                : Semantics(
+                    header: true,
+                    child: Text(
+                      title,
+                      style: theme.textTheme.h4,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
           ),
           if (c.location.isTrash && c.items.isNotEmpty)
             ShadButton.outline(
@@ -308,12 +410,25 @@ class _Header extends StatelessWidget {
               child: Text(l.cmdEmptyTrash),
             ),
           ShadTooltip(
-            builder: (_) => Text(c.layout == DriveLayout.list ? l.layoutGrid : l.layoutList),
+            builder: (_) => Text(
+              c.layout == DriveLayout.list ? l.layoutGrid : l.layoutList,
+            ),
             child: ShadIconButton.ghost(
               key: const ValueKey<String>('drive.layout'),
-              semanticLabel: c.layout == DriveLayout.list ? l.layoutGrid : l.layoutList,
-              icon: Icon(c.layout == DriveLayout.list ? LucideIcons.layoutGrid : LucideIcons.list, size: 18),
-              onPressed: () => c.setLayout(c.layout == DriveLayout.list ? DriveLayout.grid : DriveLayout.list),
+              semanticLabel: c.layout == DriveLayout.list
+                  ? l.layoutGrid
+                  : l.layoutList,
+              icon: Icon(
+                c.layout == DriveLayout.list
+                    ? LucideIcons.layoutGrid
+                    : LucideIcons.list,
+                size: 18,
+              ),
+              onPressed: () => c.setLayout(
+                c.layout == DriveLayout.list
+                    ? DriveLayout.grid
+                    : DriveLayout.list,
+              ),
             ),
           ),
           ShadTooltip(
@@ -337,7 +452,10 @@ class _Header extends StatelessWidget {
         margin: const EdgeInsets.fromLTRB(12, 4, 12, 8),
         padding: const EdgeInsets.symmetric(horizontal: 8),
         height: 44,
-        decoration: BoxDecoration(color: theme.colorScheme.secondary, borderRadius: BorderRadius.circular(22)),
+        decoration: BoxDecoration(
+          color: theme.colorScheme.secondary,
+          borderRadius: BorderRadius.circular(22),
+        ),
         child: Row(
           children: [
             ShadIconButton.ghost(
@@ -352,15 +470,28 @@ class _Header extends StatelessWidget {
             Text(l.selectedCount(sel.length), style: theme.textTheme.small),
             const SizedBox(width: 12),
             if (trash) ...[
-              cmdIcon('shell.drive.restore', LucideIcons.archiveRestore, l.cmdRestore),
-              cmdIcon('shell.drive.deleteForever', LucideIcons.trash, l.cmdDeleteForever),
+              cmdIcon(
+                'shell.drive.restore',
+                LucideIcons.archiveRestore,
+                l.cmdRestore,
+              ),
+              cmdIcon(
+                'shell.drive.deleteForever',
+                LucideIcons.trash,
+                l.cmdDeleteForever,
+              ),
             ] else ...[
               cmdIcon('shell.sharing.open', LucideIcons.userPlus, l.cmdShare),
               cmdIcon('shell.drive.move', LucideIcons.folderInput, l.cmdMove),
               cmdIcon('shell.drive.copy', LucideIcons.copy, l.cmdMakeCopy),
               cmdIcon('shell.drive.setStarred', LucideIcons.star, l.cmdStar),
-              if (sel.length == 1) cmdIcon('shell.drive.rename', LucideIcons.pencil, l.cmdRename),
-              cmdIcon('shell.drive.trash', LucideIcons.trash2, l.cmdMoveToTrash),
+              if (sel.length == 1)
+                cmdIcon('shell.drive.rename', LucideIcons.pencil, l.cmdRename),
+              cmdIcon(
+                'shell.drive.trash',
+                LucideIcons.trash2,
+                l.cmdMoveToTrash,
+              ),
               WonkyDropdownMenu(
                 entries: () => itemMenuEntries(context, services, trash: false),
                 builder: (context, ctl) => ShadIconButton.ghost(
@@ -378,7 +509,10 @@ class _Header extends StatelessWidget {
       );
     } else {
       String typeLabel(DriveTypeFilter t) => switch (t) {
-        DriveTypeFilter.primary => services.config.primaryKind == DriveItemKind.document ? l.typeDocuments : l.typeSpreadsheets,
+        DriveTypeFilter.primary =>
+          services.config.primaryKind == DriveItemKind.document
+              ? l.typeDocuments
+              : l.typeSpreadsheets,
         DriveTypeFilter.documents => l.typeDocuments,
         DriveTypeFilter.spreadsheets => l.typeSpreadsheets,
         DriveTypeFilter.folders => l.typeFolders,
@@ -397,7 +531,11 @@ class _Header extends StatelessWidget {
         DriveSortField.size => l.sortSize,
         DriveSortField.createdAt => l.sortCreated,
       };
-      Widget chip(String key, String label, List<WonkyMenuEntry> Function() entries) => Padding(
+      Widget chip(
+        String key,
+        String label,
+        List<WonkyMenuEntry> Function() entries,
+      ) => Padding(
         padding: const EdgeInsets.only(right: 8),
         child: WonkyDropdownMenu(
           entries: entries,
@@ -416,29 +554,76 @@ class _Header extends StatelessWidget {
           scrollDirection: Axis.horizontal,
           child: Row(
             children: [
-              chip('type', typeLabel(c.typeFilter), () => [
-                for (final t in DriveTypeFilter.values)
-                  if (!(t == DriveTypeFilter.primary &&
-                      (services.config.primaryKind == DriveItemKind.document ? DriveTypeFilter.documents : DriveTypeFilter.spreadsheets) == t))
-                    WonkyMenuRadioItem(label: typeLabel(t), selected: c.typeFilter == t, onSelected: () => c.setTypeFilter(t)),
-              ]),
-              chip('owner', ownerLabel(c.ownerFilter), () => [
-                for (final o in DriveOwnerFilter.values)
-                  WonkyMenuRadioItem(label: ownerLabel(o), selected: c.ownerFilter == o, onSelected: () => c.setOwnerFilter(o)),
-              ]),
-              chip('sort', l.sortBy(sortLabel(c.sortField)), () => [
-                for (final f in [DriveSortField.name, DriveSortField.modifiedAt, DriveSortField.lastOpenedByMe, DriveSortField.lastModifiedByMe, DriveSortField.size])
-                  WonkyMenuRadioItem(label: sortLabel(f), selected: c.sortField == f, onSelected: () => c.setSort(f, descending: f != DriveSortField.name)),
-                const WonkyMenuSeparator(),
-                WonkyMenuCheckItem(label: l.sortDescending, checked: c.descending, onSelected: () => c.setSort(c.sortField, descending: !c.descending)),
-                WonkyMenuCheckItem(label: l.foldersOnTop, checked: c.foldersFirst, onSelected: () => c.setFoldersFirst(!c.foldersFirst)),
-              ]),
+              chip(
+                'type',
+                typeLabel(c.typeFilter),
+                () => [
+                  for (final t in DriveTypeFilter.values)
+                    if (!(t == DriveTypeFilter.primary &&
+                        (services.config.primaryKind == DriveItemKind.document
+                                ? DriveTypeFilter.documents
+                                : DriveTypeFilter.spreadsheets) ==
+                            t))
+                      WonkyMenuRadioItem(
+                        label: typeLabel(t),
+                        selected: c.typeFilter == t,
+                        onSelected: () => c.setTypeFilter(t),
+                      ),
+                ],
+              ),
+              chip(
+                'owner',
+                ownerLabel(c.ownerFilter),
+                () => [
+                  for (final o in DriveOwnerFilter.values)
+                    WonkyMenuRadioItem(
+                      label: ownerLabel(o),
+                      selected: c.ownerFilter == o,
+                      onSelected: () => c.setOwnerFilter(o),
+                    ),
+                ],
+              ),
+              chip(
+                'sort',
+                l.sortBy(sortLabel(c.sortField)),
+                () => [
+                  for (final f in [
+                    DriveSortField.name,
+                    DriveSortField.modifiedAt,
+                    DriveSortField.lastOpenedByMe,
+                    DriveSortField.lastModifiedByMe,
+                    DriveSortField.size,
+                  ])
+                    WonkyMenuRadioItem(
+                      label: sortLabel(f),
+                      selected: c.sortField == f,
+                      onSelected: () =>
+                          c.setSort(f, descending: f != DriveSortField.name),
+                    ),
+                  const WonkyMenuSeparator(),
+                  WonkyMenuCheckItem(
+                    label: l.sortDescending,
+                    checked: c.descending,
+                    onSelected: () =>
+                        c.setSort(c.sortField, descending: !c.descending),
+                  ),
+                  WonkyMenuCheckItem(
+                    label: l.foldersOnTop,
+                    checked: c.foldersFirst,
+                    onSelected: () => c.setFoldersFirst(!c.foldersFirst),
+                  ),
+                ],
+              ),
             ],
           ),
         ),
       );
     }
-    return Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.stretch, children: [titleRow, bar]);
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [titleRow, bar],
+    );
   }
 }
 
@@ -452,18 +637,29 @@ class _Breadcrumb extends StatelessWidget {
   Widget build(BuildContext context) {
     final l = WonkyAppLocalizations.of(context);
     final theme = ShadTheme.of(context);
-    Widget crumb(String label, String? folderUuid, {bool last = false}) => DragTarget<DriveDragData>(
-      onWillAcceptWithDetails: (_) => !last,
-      onAcceptWithDetails: (d) => dropIntoFolder(services, d.data, folderUuid),
-      builder: (context, cand, _) => last
-          ? Text(label, style: theme.textTheme.h4)
-          : ShadButton.ghost(
-              size: ShadButtonSize.sm,
-              backgroundColor: cand.isNotEmpty ? theme.colorScheme.selection : null,
-              onPressed: () => services.router.go(folderUuid == null ? '/my-drive' : '/drive/$folderUuid'),
-              child: Text(label, style: theme.textTheme.large.copyWith(color: theme.colorScheme.mutedForeground)),
-            ),
-    );
+    Widget crumb(String label, String? folderUuid, {bool last = false}) =>
+        DragTarget<DriveDragData>(
+          onWillAcceptWithDetails: (_) => !last,
+          onAcceptWithDetails: (d) =>
+              dropIntoFolder(services, d.data, folderUuid),
+          builder: (context, cand, _) => last
+              ? Text(label, style: theme.textTheme.h4)
+              : ShadButton.ghost(
+                  size: ShadButtonSize.sm,
+                  backgroundColor: cand.isNotEmpty
+                      ? theme.colorScheme.selection
+                      : null,
+                  onPressed: () => services.router.go(
+                    folderUuid == null ? '/my-drive' : '/drive/$folderUuid',
+                  ),
+                  child: Text(
+                    label,
+                    style: theme.textTheme.large.copyWith(
+                      color: theme.colorScheme.mutedForeground,
+                    ),
+                  ),
+                ),
+        );
     final f = controller.folder;
     return SingleChildScrollView(
       scrollDirection: Axis.horizontal,

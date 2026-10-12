@@ -51,7 +51,10 @@ class _FontPickerState extends State<FontPicker> {
       padding: const EdgeInsets.fromLTRB(8, 8, 8, 4),
       child: Text(
         text,
-        style: theme.textTheme.muted.copyWith(fontSize: 12, fontWeight: FontWeight.w600),
+        style: theme.textTheme.muted.copyWith(
+          fontSize: 12,
+          fontWeight: FontWeight.w600,
+        ),
       ),
     );
     final sections = <(String, List<String>)>[
@@ -80,7 +83,9 @@ class _FontPickerState extends State<FontPicker> {
         if (!anyMatch)
           Padding(
             padding: const EdgeInsets.symmetric(vertical: 16),
-            child: Center(child: Text(l10n.fontNone, style: theme.textTheme.muted)),
+            child: Center(
+              child: Text(l10n.fontNone, style: theme.textTheme.muted),
+            ),
           ),
         for (final (title, fonts) in sections) ...[
           if (_query.isEmpty) header(title),

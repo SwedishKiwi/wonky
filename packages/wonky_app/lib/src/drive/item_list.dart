@@ -19,7 +19,12 @@ bool get _modPressed {
 /// The list/grid of drive items (suite 05 §3.1) with selection, keyboard
 /// navigation, context menus, drag-and-drop and infinite scroll.
 class DriveItemsView extends StatefulWidget {
-  const DriveItemsView({super.key, required this.controller, required this.services, required this.focusNode});
+  const DriveItemsView({
+    super.key,
+    required this.controller,
+    required this.services,
+    required this.focusNode,
+  });
 
   final DriveController controller;
   final ShellServices services;
@@ -39,7 +44,9 @@ class _DriveItemsViewState extends State<DriveItemsView> {
   void initState() {
     super.initState();
     _scroll.addListener(() {
-      if (_scroll.position.pixels > _scroll.position.maxScrollExtent - 400) c.loadMore();
+      if (_scroll.position.pixels > _scroll.position.maxScrollExtent - 400) {
+        c.loadMore();
+      }
     });
   }
 
@@ -50,7 +57,9 @@ class _DriveItemsViewState extends State<DriveItemsView> {
   }
 
   KeyEventResult _onKey(FocusNode node, KeyEvent e) {
-    if (e is! KeyDownEvent && e is! KeyRepeatEvent) return KeyEventResult.ignored;
+    if (e is! KeyDownEvent && e is! KeyRepeatEvent) {
+      return KeyEventResult.ignored;
+    }
     final shift = HardwareKeyboard.instance.isShiftPressed;
     final grid = c.layout == DriveLayout.grid;
     final cols = grid ? _gridColumns : 1;
@@ -80,7 +89,11 @@ class _DriveItemsViewState extends State<DriveItemsView> {
 
   void _tap(DriveItemView item) {
     widget.focusNode.requestFocus();
-    c.select(item, toggle: _modPressed, range: HardwareKeyboard.instance.isShiftPressed);
+    c.select(
+      item,
+      toggle: _modPressed,
+      range: HardwareKeyboard.instance.isShiftPressed,
+    );
   }
 
   void _open(DriveItemView item) {
@@ -99,7 +112,9 @@ class _DriveItemsViewState extends State<DriveItemsView> {
       listenable: c,
       builder: (context, _) {
         final items = c.items;
-        final body = c.layout == DriveLayout.grid ? _grid(context, items) : _list(context, l, items);
+        final body = c.layout == DriveLayout.grid
+            ? _grid(context, items)
+            : _list(context, l, items);
         return Focus(
           focusNode: widget.focusNode,
           onKeyEvent: _onKey,
@@ -109,7 +124,11 @@ class _DriveItemsViewState extends State<DriveItemsView> {
     );
   }
 
-  Widget _list(BuildContext context, WonkyAppLocalizations l, List<DriveItemView> items) {
+  Widget _list(
+    BuildContext context,
+    WonkyAppLocalizations l,
+    List<DriveItemView> items,
+  ) {
     final theme = ShadTheme.of(context);
     final rows = <Widget>[];
     RecentGroup? group;
@@ -121,40 +140,74 @@ class _DriveItemsViewState extends State<DriveItemsView> {
           rows.add(
             Padding(
               padding: const EdgeInsets.fromLTRB(16, 16, 16, 6),
-              child: Text(recentGroupLabel(l, g), style: theme.textTheme.small.copyWith(fontWeight: FontWeight.w600)),
+              child: Text(
+                recentGroupLabel(l, g),
+                style: theme.textTheme.small.copyWith(
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
             ),
           );
         }
       }
-      rows.add(_ItemRow(
-        key: ValueKey<String>('drive.item.${item.uuid.uuid}'),
-        item: item,
-        services: s,
-        selected: c.isSelected(item),
-        focused: c.focusedId == item.uuid.uuid && widget.focusNode.hasFocus,
-        dragData: () => DriveDragData([
-          for (final i in c.isSelected(item) ? c.selection : [item]) i.uuid.uuid,
-        ]),
-        onTap: () => _tap(item),
-        onOpen: () => _open(item),
-        onMenu: () => _prepareMenu(item),
-        trash: c.location.isTrash,
-      ));
+      rows.add(
+        _ItemRow(
+          key: ValueKey<String>('drive.item.${item.uuid.uuid}'),
+          item: item,
+          services: s,
+          selected: c.isSelected(item),
+          focused: c.focusedId == item.uuid.uuid && widget.focusNode.hasFocus,
+          dragData: () => DriveDragData([
+            for (final i in c.isSelected(item) ? c.selection : [item])
+              i.uuid.uuid,
+          ]),
+          onTap: () => _tap(item),
+          onOpen: () => _open(item),
+          onMenu: () => _prepareMenu(item),
+          trash: c.location.isTrash,
+        ),
+      );
     }
     return Column(
       children: [
         Container(
           height: 36,
           padding: const EdgeInsets.symmetric(horizontal: 16),
-          decoration: BoxDecoration(border: Border(bottom: BorderSide(color: theme.colorScheme.border))),
+          decoration: BoxDecoration(
+            border: Border(bottom: BorderSide(color: theme.colorScheme.border)),
+          ),
           child: DefaultTextStyle.merge(
-            style: theme.textTheme.muted.copyWith(fontSize: 12, fontWeight: FontWeight.w600),
+            style: theme.textTheme.muted.copyWith(
+              fontSize: 12,
+              fontWeight: FontWeight.w600,
+            ),
             child: Row(
               children: [
-                Expanded(flex: 6, child: _HeaderCell(label: l.columnName, field: DriveSortField.name, controller: c)),
+                Expanded(
+                  flex: 6,
+                  child: _HeaderCell(
+                    label: l.columnName,
+                    field: DriveSortField.name,
+                    controller: c,
+                  ),
+                ),
                 Expanded(flex: 3, child: Text(l.columnOwner)),
-                Expanded(flex: 3, child: _HeaderCell(label: l.columnModified, field: DriveSortField.modifiedAt, controller: c)),
-                SizedBox(width: 90, child: _HeaderCell(label: l.columnSize, field: DriveSortField.size, controller: c)),
+                Expanded(
+                  flex: 3,
+                  child: _HeaderCell(
+                    label: l.columnModified,
+                    field: DriveSortField.modifiedAt,
+                    controller: c,
+                  ),
+                ),
+                SizedBox(
+                  width: 90,
+                  child: _HeaderCell(
+                    label: l.columnSize,
+                    field: DriveSortField.size,
+                    controller: c,
+                  ),
+                ),
                 const SizedBox(width: 36),
               ],
             ),
@@ -169,7 +222,11 @@ class _DriveItemsViewState extends State<DriveItemsView> {
               padding: const EdgeInsets.only(bottom: 24),
               children: [
                 ...rows,
-                if (c.loadingMore) const Padding(padding: EdgeInsets.all(16), child: Center(child: ShadSpinner())),
+                if (c.loadingMore)
+                  const Padding(
+                    padding: EdgeInsets.all(16),
+                    child: Center(child: ShadSpinner()),
+                  ),
               ],
             ),
           ),
@@ -202,9 +259,11 @@ class _DriveItemsViewState extends State<DriveItemsView> {
                 item: item,
                 services: s,
                 selected: c.isSelected(item),
-                focused: c.focusedId == item.uuid.uuid && widget.focusNode.hasFocus,
+                focused:
+                    c.focusedId == item.uuid.uuid && widget.focusNode.hasFocus,
                 dragData: () => DriveDragData([
-                  for (final x in c.isSelected(item) ? c.selection : [item]) x.uuid.uuid,
+                  for (final x in c.isSelected(item) ? c.selection : [item])
+                    x.uuid.uuid,
                 ]),
                 onTap: () => _tap(item),
                 onOpen: () => _open(item),
@@ -220,7 +279,11 @@ class _DriveItemsViewState extends State<DriveItemsView> {
 }
 
 class _HeaderCell extends StatelessWidget {
-  const _HeaderCell({required this.label, required this.field, required this.controller});
+  const _HeaderCell({
+    required this.label,
+    required this.field,
+    required this.controller,
+  });
 
   final String label;
   final DriveSortField field;
@@ -238,7 +301,12 @@ class _HeaderCell extends StatelessWidget {
             Flexible(child: Text(label, overflow: TextOverflow.ellipsis)),
             if (active) ...[
               const SizedBox(width: 4),
-              Icon(controller.descending ? LucideIcons.arrowDown : LucideIcons.arrowUp, size: 12),
+              Icon(
+                controller.descending
+                    ? LucideIcons.arrowDown
+                    : LucideIcons.arrowUp,
+                size: 12,
+              ),
             ],
           ],
         ),
@@ -267,7 +335,8 @@ class _ItemShell extends StatefulWidget {
   final VoidCallback onOpen;
   final VoidCallback onMenu;
   final bool trash;
-  final Widget Function(BuildContext context, bool hover, bool dropTarget) builder;
+  final Widget Function(BuildContext context, bool hover, bool dropTarget)
+  builder;
 
   @override
   State<_ItemShell> createState() => _ItemShellState();
@@ -292,7 +361,8 @@ class _ItemShellState extends State<_ItemShell> {
     );
     child = WonkyContextMenuRegion(
       onOpen: widget.onMenu,
-      entries: () => itemMenuEntries(context, widget.services, trash: widget.trash),
+      entries: () =>
+          itemMenuEntries(context, widget.services, trash: widget.trash),
       child: child,
     );
     if (item.isFolder && !widget.trash) {
@@ -317,7 +387,10 @@ class _ItemShellState extends State<_ItemShell> {
       child = Draggable<DriveDragData>(
         data: data(),
         dragAnchorStrategy: pointerDragAnchorStrategy,
-        feedback: _DragChip(label: data().uuids.length > 1 ? '${data().uuids.length}' : item.name, icon: kindIcon(item.kind)),
+        feedback: _DragChip(
+          label: data().uuids.length > 1 ? '${data().uuids.length}' : item.name,
+          icon: kindIcon(item.kind),
+        ),
         childWhenDragging: Opacity(opacity: 0.5, child: inner),
         child: inner,
       );
@@ -343,9 +416,18 @@ class _DragChip extends StatelessWidget {
           color: theme.colorScheme.popover,
           border: Border.all(color: theme.colorScheme.border),
           borderRadius: BorderRadius.circular(6),
-          boxShadow: const [BoxShadow(color: Color(0x33000000), blurRadius: 10)],
+          boxShadow: const [
+            BoxShadow(color: Color(0x33000000), blurRadius: 10),
+          ],
         ),
-        child: Row(mainAxisSize: MainAxisSize.min, children: [Icon(icon, size: 14), const SizedBox(width: 6), Text(label, style: theme.textTheme.small)]),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(icon, size: 14),
+            const SizedBox(width: 6),
+            Text(label, style: theme.textTheme.small),
+          ],
+        ),
       ),
     );
   }
@@ -380,8 +462,11 @@ class _ItemRow extends StatelessWidget {
     final l = WonkyAppLocalizations.of(context);
     final theme = ShadTheme.of(context);
     final c = theme.colorScheme;
-    final offlineDim = !services.connectivity.online && !item.pinnedOffline && !item.isFolder;
-    final ownerName = item.owner.id == services.me?.id ? l.ownerMe : item.owner.displayName;
+    final offlineDim =
+        !services.connectivity.online && !item.pinnedOffline && !item.isFolder;
+    final ownerName = item.owner.id == services.me?.id
+        ? l.ownerMe
+        : item.owner.displayName;
     return _ItemShell(
       item: item,
       services: services,
@@ -409,7 +494,10 @@ class _ItemRow extends StatelessWidget {
                   ? c.accent.withValues(alpha: 0.6)
                   : null,
               borderRadius: BorderRadius.circular(8),
-              border: Border.all(color: focused ? c.ring : const Color(0x00000000), width: 1.5),
+              border: Border.all(
+                color: focused ? c.ring : const Color(0x00000000),
+                width: 1.5,
+              ),
             ),
             child: Row(
               children: [
@@ -417,14 +505,31 @@ class _ItemRow extends StatelessWidget {
                   flex: 6,
                   child: Row(
                     children: [
-                      Icon(kindIcon(item.kind), size: 18, color: kindColor(item.kind, c)),
+                      Icon(
+                        kindIcon(item.kind),
+                        size: 18,
+                        color: kindColor(item.kind, c),
+                      ),
                       const SizedBox(width: 10),
                       Flexible(
-                        child: Text(item.name, overflow: TextOverflow.ellipsis, style: theme.textTheme.small.copyWith(fontWeight: FontWeight.w500)),
+                        child: Text(
+                          item.name,
+                          overflow: TextOverflow.ellipsis,
+                          style: theme.textTheme.small.copyWith(
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
                       ),
                       if (item.shared) ...[
                         const SizedBox(width: 6),
-                        ShadTooltip(builder: (_) => Text(l.badgeShared), child: Icon(LucideIcons.users, size: 14, color: c.mutedForeground)),
+                        ShadTooltip(
+                          builder: (_) => Text(l.badgeShared),
+                          child: Icon(
+                            LucideIcons.users,
+                            size: 14,
+                            color: c.mutedForeground,
+                          ),
+                        ),
                       ],
                       if (item.starred) ...[
                         const SizedBox(width: 6),
@@ -432,7 +537,14 @@ class _ItemRow extends StatelessWidget {
                       ],
                       if (item.pinnedOffline) ...[
                         const SizedBox(width: 6),
-                        ShadTooltip(builder: (_) => Text(l.badgeOffline), child: Icon(LucideIcons.circleCheck, size: 14, color: c.success)),
+                        ShadTooltip(
+                          builder: (_) => Text(l.badgeOffline),
+                          child: Icon(
+                            LucideIcons.circleCheck,
+                            size: 14,
+                            color: c.success,
+                          ),
+                        ),
                       ],
                     ],
                   ),
@@ -441,9 +553,20 @@ class _ItemRow extends StatelessWidget {
                   flex: 3,
                   child: Row(
                     children: [
-                      WonkyAvatar(name: item.owner.displayName, color: parseHexColor(item.owner.avatarColor), imageUrl: item.owner.avatarUrl, size: 20),
+                      WonkyAvatar(
+                        name: item.owner.displayName,
+                        color: parseHexColor(item.owner.avatarColor),
+                        imageUrl: item.owner.avatarUrl,
+                        size: 20,
+                      ),
                       const SizedBox(width: 6),
-                      Flexible(child: Text(ownerName, overflow: TextOverflow.ellipsis, style: theme.textTheme.muted.copyWith(fontSize: 13))),
+                      Flexible(
+                        child: Text(
+                          ownerName,
+                          overflow: TextOverflow.ellipsis,
+                          style: theme.textTheme.muted.copyWith(fontSize: 13),
+                        ),
+                      ),
                     ],
                   ),
                 ),
@@ -457,7 +580,10 @@ class _ItemRow extends StatelessWidget {
                 ),
                 SizedBox(
                   width: 90,
-                  child: Text(item.isFolder ? '—' : formatBytes(item.sizeBytes), style: theme.textTheme.muted.copyWith(fontSize: 13)),
+                  child: Text(
+                    item.isFolder ? '—' : formatBytes(item.sizeBytes),
+                    style: theme.textTheme.muted.copyWith(fontSize: 13),
+                  ),
                 ),
                 SizedBox(
                   width: 36,
@@ -466,9 +592,12 @@ class _ItemRow extends StatelessWidget {
                       childAlignment: AlignmentDirectional.bottomEnd,
                       overlayAlignment: AlignmentDirectional.topEnd,
                     ),
-                    entries: () => itemMenuEntries(context, services, trash: trash),
+                    entries: () =>
+                        itemMenuEntries(context, services, trash: trash),
                     builder: (context, ctl) => ShadIconButton.ghost(
-                      key: ValueKey<String>('drive.item.${item.uuid.uuid}.menu'),
+                      key: ValueKey<String>(
+                        'drive.item.${item.uuid.uuid}.menu',
+                      ),
                       width: 28,
                       height: 28,
                       iconSize: 16,
@@ -535,7 +664,12 @@ class _ItemCard extends StatelessWidget {
           decoration: BoxDecoration(
             color: drop ? c.selection : (selected ? c.sidebarAccent : c.card),
             borderRadius: BorderRadius.circular(10),
-            border: Border.all(color: focused ? c.ring : (hover ? c.ring.withValues(alpha: 0.5) : c.border), width: focused ? 2 : 1),
+            border: Border.all(
+              color: focused
+                  ? c.ring
+                  : (hover ? c.ring.withValues(alpha: 0.5) : c.border),
+              width: focused ? 2 : 1,
+            ),
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -543,20 +677,41 @@ class _ItemCard extends StatelessWidget {
               Expanded(
                 child: Container(
                   margin: const EdgeInsets.all(8),
-                  decoration: BoxDecoration(color: c.canvas, borderRadius: BorderRadius.circular(6)),
-                  child: Center(child: Icon(kindIcon(item.kind), size: 40, color: kindColor(item.kind, c).withValues(alpha: 0.7))),
+                  decoration: BoxDecoration(
+                    color: c.canvas,
+                    borderRadius: BorderRadius.circular(6),
+                  ),
+                  child: Center(
+                    child: Icon(
+                      kindIcon(item.kind),
+                      size: 40,
+                      color: kindColor(item.kind, c).withValues(alpha: 0.7),
+                    ),
+                  ),
                 ),
               ),
               Padding(
                 padding: const EdgeInsets.fromLTRB(10, 0, 4, 8),
                 child: Row(
                   children: [
-                    Icon(kindIcon(item.kind), size: 16, color: kindColor(item.kind, c)),
+                    Icon(
+                      kindIcon(item.kind),
+                      size: 16,
+                      color: kindColor(item.kind, c),
+                    ),
                     const SizedBox(width: 6),
-                    Expanded(child: Text(item.name, overflow: TextOverflow.ellipsis, style: theme.textTheme.small)),
-                    if (item.starred) Icon(LucideIcons.star, size: 12, color: c.warning),
+                    Expanded(
+                      child: Text(
+                        item.name,
+                        overflow: TextOverflow.ellipsis,
+                        style: theme.textTheme.small,
+                      ),
+                    ),
+                    if (item.starred)
+                      Icon(LucideIcons.star, size: 12, color: c.warning),
                     WonkyDropdownMenu(
-                      entries: () => itemMenuEntries(context, services, trash: trash),
+                      entries: () =>
+                          itemMenuEntries(context, services, trash: trash),
                       builder: (context, ctl) => ShadIconButton.ghost(
                         width: 26,
                         height: 26,
@@ -579,4 +734,3 @@ class _ItemCard extends StatelessWidget {
     );
   }
 }
-

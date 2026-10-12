@@ -57,7 +57,12 @@ class WonkyTopBar extends StatelessWidget {
                   services.config.logo(size: 32),
                   if (!narrow) ...[
                     const SizedBox(width: 10),
-                    Text(services.config.appName, style: theme.textTheme.large.copyWith(fontWeight: FontWeight.w500)),
+                    Text(
+                      services.config.appName,
+                      style: theme.textTheme.large.copyWith(
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
                   ],
                 ],
               ),
@@ -69,7 +74,11 @@ class WonkyTopBar extends StatelessWidget {
               alignment: Alignment.centerLeft,
               child: ConstrainedBox(
                 constraints: const BoxConstraints(maxWidth: 720),
-                child: DriveSearchField(services: services, focusNode: searchFocus, initialQuery: initialQuery),
+                child: DriveSearchField(
+                  services: services,
+                  focusNode: searchFocus,
+                  initialQuery: initialQuery,
+                ),
               ),
             ),
           ),
@@ -88,7 +97,12 @@ class WonkyTopBar extends StatelessWidget {
 /// Drive search with a suggestions dropdown (recent searches, matching
 /// items, "Search for '…'").
 class DriveSearchField extends StatefulWidget {
-  const DriveSearchField({super.key, required this.services, required this.focusNode, this.initialQuery});
+  const DriveSearchField({
+    super.key,
+    required this.services,
+    required this.focusNode,
+    this.initialQuery,
+  });
 
   final ShellServices services;
   final FocusNode focusNode;
@@ -106,7 +120,11 @@ class _DriveSearchFieldState extends State<DriveSearchField> {
 
   ShellServices get s => widget.services;
 
-  List<String> get _recent => [for (final q in (s.prefs.device<List<Object?>>('search.recent') ?? const [])) '$q'];
+  List<String> get _recent => [
+    for (final q
+        in (s.prefs.device<List<Object?>>('search.recent') ?? const []))
+      '$q',
+  ];
 
   @override
   void initState() {
@@ -135,7 +153,11 @@ class _DriveSearchFieldState extends State<DriveSearchField> {
     }
     _debounce = Timer(const Duration(milliseconds: 200), () async {
       try {
-        final p = await s.drive.search(q, filters: DriveSearchFilters(), limit: 6);
+        final p = await s.drive.search(
+          q,
+          filters: DriveSearchFilters(),
+          limit: 6,
+        );
         if (mounted && _text.text == q) setState(() => _matches = p.items);
       } catch (_) {}
     });
@@ -167,7 +189,13 @@ class _DriveSearchFieldState extends State<DriveSearchField> {
         final q = _text.text.trim();
         final recent = q.isEmpty ? _recent : const <String>[];
         if (q.isEmpty && recent.isEmpty) {
-          return SizedBox(width: 520, child: Padding(padding: const EdgeInsets.all(12), child: Text(l.searchHint, style: theme.textTheme.muted)));
+          return SizedBox(
+            width: 520,
+            child: Padding(
+              padding: const EdgeInsets.all(12),
+              child: Text(l.searchHint, style: theme.textTheme.muted),
+            ),
+          );
         }
         return SizedBox(
           width: 520,
@@ -188,12 +216,18 @@ class _DriveSearchFieldState extends State<DriveSearchField> {
               for (final m in _matches)
                 ShadButton.ghost(
                   mainAxisAlignment: MainAxisAlignment.start,
-                  leading: Icon(kindIcon(m.kind), size: 16, color: kindColor(m.kind, theme.colorScheme)),
+                  leading: Icon(
+                    kindIcon(m.kind),
+                    size: 16,
+                    color: kindColor(m.kind, theme.colorScheme),
+                  ),
                   onPressed: () {
                     _popover.hide();
                     s.openItem(m);
                   },
-                  child: Expanded(child: Text(m.name, overflow: TextOverflow.ellipsis)),
+                  child: Expanded(
+                    child: Text(m.name, overflow: TextOverflow.ellipsis),
+                  ),
                 ),
               if (q.isNotEmpty)
                 ShadButton.ghost(

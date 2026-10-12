@@ -35,13 +35,19 @@ class _WonkyTableSizePickerState extends State<WonkyTableSizePicker> {
     setState(() {
       _rows = r;
       _cols = c;
-      if (r >= _visibleRows - 1) _visibleRows = (r + 2).clamp(widget.initialSize, widget.maxSize);
-      if (c >= _visibleCols - 1) _visibleCols = (c + 2).clamp(widget.initialSize, widget.maxSize);
+      if (r >= _visibleRows - 1) {
+        _visibleRows = (r + 2).clamp(widget.initialSize, widget.maxSize);
+      }
+      if (c >= _visibleCols - 1) {
+        _visibleCols = (c + 2).clamp(widget.initialSize, widget.maxSize);
+      }
     });
   }
 
   KeyEventResult _onKey(FocusNode node, KeyEvent e) {
-    if (e is! KeyDownEvent && e is! KeyRepeatEvent) return KeyEventResult.ignored;
+    if (e is! KeyDownEvent && e is! KeyRepeatEvent) {
+      return KeyEventResult.ignored;
+    }
     final k = e.logicalKey;
     var r = _rows, c = _cols;
     if (k == LogicalKeyboardKey.arrowRight) {
@@ -144,7 +150,12 @@ class _GridPainter extends CustomPainter {
     final f = Paint()..color = fill;
     for (var r = 0; r < rows; r++) {
       for (var c = 0; c < cols; c++) {
-        final rect = Rect.fromLTWH(c * (cell + 2) + 0.5, r * (cell + 2) + 0.5, cell, cell);
+        final rect = Rect.fromLTWH(
+          c * (cell + 2) + 0.5,
+          r * (cell + 2) + 0.5,
+          cell,
+          cell,
+        );
         final sel = r < selRows && c < selCols;
         if (sel) canvas.drawRect(rect, f);
         canvas.drawRect(rect, sel ? sb : b);
