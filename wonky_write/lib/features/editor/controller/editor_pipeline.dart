@@ -19,7 +19,11 @@ class EditorPipeline {
     this.mapper = const DeltaDocumentMapper(),
     String Function()? newNodeId,
     bool? verifyInvariants,
-    required void Function(List<ExtractedChange> changes, List<EditEvent> events) onTransaction,
+    required void Function(
+      List<ExtractedChange> changes,
+      List<EditEvent> events,
+    )
+    onTransaction,
   }) : _newNodeId = newNodeId ?? Editor.createNodeId {
     document = mapper.documentFromDelta(initialDelta, newNodeId: _newNodeId);
     composer = MutableDocumentComposer();
@@ -31,10 +35,7 @@ class EditorPipeline {
       verifyInvariants: verifyInvariants,
     );
     editor = Editor(
-      editables: {
-        Editor.documentKey: document,
-        Editor.composerKey: composer,
-      },
+      editables: {Editor.documentKey: document, Editor.composerKey: composer},
       requestHandlers: [...requestHandlers, ...defaultRequestHandlers],
       reactionPipeline: [],
       // REQUIRED (Write 03 §4): undo is ours, never super_editor's.
@@ -48,9 +49,11 @@ class EditorPipeline {
       newNodeId: _newNodeId,
       verifyInvariants: verifyInvariants,
     );
-    editor.addListener(FunctionalEditListener((events) {
-      onTransaction(extractor.finishTransaction(events), events);
-    }));
+    editor.addListener(
+      FunctionalEditListener((events) {
+        onTransaction(extractor.finishTransaction(events), events);
+      }),
+    );
   }
 
   final DeltaDocumentMapper mapper;

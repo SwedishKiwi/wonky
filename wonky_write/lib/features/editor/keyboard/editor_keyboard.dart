@@ -46,7 +46,9 @@ bool isModPressed() {
   return _isApple ? keyboard.isMetaPressed : keyboard.isControlPressed;
 }
 
-bool get _isApple => defaultTargetPlatform == TargetPlatform.macOS || defaultTargetPlatform == TargetPlatform.iOS;
+bool get _isApple =>
+    defaultTargetPlatform == TargetPlatform.macOS ||
+    defaultTargetPlatform == TargetPlatform.iOS;
 
 /// The Write keyboard actions (Write 04 §41.1): the host keymap first, then
 /// open popovers, then the built-in Write shortcuts (when the shell doesn't
@@ -62,10 +64,18 @@ List<SuperEditorKeyboardAction> wonkyKeyboardActions({
   EditorShortcutCallbacks callbacks = const EditorShortcutCallbacks(),
   bool ime = true,
 }) {
-  ExecutionInstruction handler({required SuperEditorContext editContext, required KeyEvent keyEvent}) {
-    if (popoverKeys != null && popoverKeys(keyEvent)) return ExecutionInstruction.haltExecution;
-    if (keymap != null && keymap(keyEvent)) return ExecutionInstruction.haltExecution;
-    if (builtInShortcuts && _builtInShortcut(keyEvent, controller, commands, callbacks)) {
+  ExecutionInstruction handler({
+    required SuperEditorContext editContext,
+    required KeyEvent keyEvent,
+  }) {
+    if (popoverKeys != null && popoverKeys(keyEvent)) {
+      return ExecutionInstruction.haltExecution;
+    }
+    if (keymap != null && keymap(keyEvent)) {
+      return ExecutionInstruction.haltExecution;
+    }
+    if (builtInShortcuts &&
+        _builtInShortcut(keyEvent, controller, commands, callbacks)) {
       return ExecutionInstruction.haltExecution;
     }
     return ExecutionInstruction.continueExecution;
@@ -105,7 +115,11 @@ bool _builtInShortcut(
   final editable = controller.mode != EditorMode.viewing;
 
   // Ctrl+Alt producing a character is AltGr on Windows: type it (§1).
-  if (!_isApple && keyboard.isControlPressed && alt && event.character != null && event.character!.isNotEmpty) {
+  if (!_isApple &&
+      keyboard.isControlPressed &&
+      alt &&
+      event.character != null &&
+      event.character!.isNotEmpty) {
     return false;
   }
 
@@ -128,10 +142,12 @@ bool _builtInShortcut(
       case LogicalKeyboardKey.backslash:
         return run(commands.clearFormatting);
       case LogicalKeyboardKey.keyU when !shift:
-        controller.notify(const EditorNotice(
-          EditorNoticeKind.markdownHint,
-          "Underline isn't available in Markdown — use italic or bold.",
-        ));
+        controller.notify(
+          const EditorNotice(
+            EditorNoticeKind.markdownHint,
+            "Underline isn't available in Markdown — use italic or bold.",
+          ),
+        );
         return true;
       case LogicalKeyboardKey.keyK when !shift:
         return run(callbacks.onInsertLink);
@@ -184,8 +200,13 @@ bool _builtInShortcut(
   }
 
   // Move blocks: ⌃⇧↑/↓ on macOS, Alt+Shift+↑/↓ elsewhere (§22.4).
-  final moveModifier = _isApple ? keyboard.isControlPressed && !keyboard.isMetaPressed : alt;
-  if (shift && moveModifier && (key == LogicalKeyboardKey.arrowUp || key == LogicalKeyboardKey.arrowDown)) {
+  final moveModifier = _isApple
+      ? keyboard.isControlPressed && !keyboard.isMetaPressed
+      : alt;
+  if (shift &&
+      moveModifier &&
+      (key == LogicalKeyboardKey.arrowUp ||
+          key == LogicalKeyboardKey.arrowDown)) {
     final up = key == LogicalKeyboardKey.arrowUp;
     if (commands.canMoveBlock(up: up)) commands.moveBlock(up: up);
     return true;
@@ -196,8 +217,12 @@ bool _builtInShortcut(
     if (commands.canEditCode()) {
       return run(shift ? commands.outdentCodeLines : commands.indentCodeLines);
     }
-    final blocks = controller.selection == null ? const <BlockRef>[] : controller.mirror.blocksInSelection(controller.selection!);
-    final inList = blocks.any((b) => b.node is ListItemNode || b.node is TaskNode);
+    final blocks = controller.selection == null
+        ? const <BlockRef>[]
+        : controller.mirror.blocksInSelection(controller.selection!);
+    final inList = blocks.any(
+      (b) => b.node is ListItemNode || b.node is TaskNode,
+    );
     if (inList) {
       if (shift) {
         commands.outdent();

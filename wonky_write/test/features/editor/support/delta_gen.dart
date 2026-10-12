@@ -14,7 +14,8 @@ List<int> propertySeeds() {
 }
 
 /// Runs per seed: `WONKY_PROPERTY_RUNS` (default [fallback]).
-int propertyRuns([int fallback = 40]) => int.tryParse(Platform.environment['WONKY_PROPERTY_RUNS'] ?? '') ?? fallback;
+int propertyRuns([int fallback = 40]) =>
+    int.tryParse(Platform.environment['WONKY_PROPERTY_RUNS'] ?? '') ?? fallback;
 
 /// Generates random, valid Wonky Delta documents (Write 02 §1).
 class DeltaGen {
@@ -23,10 +24,23 @@ class DeltaGen {
   final Random random;
   int _ids = 0;
 
-  static const _words = ['lorem', 'ipsum', 'dolor', 'sit', 'amet', 'wonky', 'write', 'über', '日本語', '😀', 'a'];
+  static const _words = [
+    'lorem',
+    'ipsum',
+    'dolor',
+    'sit',
+    'amet',
+    'wonky',
+    'write',
+    'über',
+    '日本語',
+    '😀',
+    'a',
+  ];
   static const _langs = ['', 'dart', 'python', 'js'];
 
-  String nextId(String prefix) => '$prefix-${_ids++}-${random.nextInt(1 << 30)}';
+  String nextId(String prefix) =>
+      '$prefix-${_ids++}-${random.nextInt(1 << 30)}';
 
   bool chance(double p) => random.nextDouble() < p;
 
@@ -47,10 +61,16 @@ class DeltaGen {
       if (chance(0.3)) attributes['italic'] = true;
       if (chance(0.2)) attributes['strike'] = true;
     }
-    if (chance(0.15)) attributes['link'] = 'https://example.com/${random.nextInt(5)}';
+    if (chance(0.15)) {
+      attributes['link'] = 'https://example.com/${random.nextInt(5)}';
+    }
     if (chance(0.1)) attributes['cmt_t${random.nextInt(3)}'] = true;
     if (chance(0.08)) {
-      attributes['sug_s${random.nextInt(3)}'] = {'t': pick(['ins', 'del']), 'by': 'u1', 'at': 1000 + random.nextInt(3)};
+      attributes['sug_s${random.nextInt(3)}'] = {
+        't': pick(['ins', 'del']),
+        'by': 'u1',
+        'at': 1000 + random.nextInt(3),
+      };
     }
     return attributes.isEmpty ? null : attributes;
   }
@@ -59,7 +79,13 @@ class DeltaGen {
     if (chance(0.8)) return null;
     return {
       if (chance(0.6)) 'cmt_t${random.nextInt(3)}': true,
-      if (chance(0.5)) 'sug_s${random.nextInt(3)}': {'t': 'fmt', 'by': 'u2', 'at': 5, 'before': <String, dynamic>{}},
+      if (chance(0.5))
+        'sug_s${random.nextInt(3)}': {
+          't': 'fmt',
+          'by': 'u2',
+          'at': 5,
+          'before': <String, dynamic>{},
+        },
     };
   }
 
@@ -71,7 +97,10 @@ class DeltaGen {
       if (i > 0) text = ' $text';
       if (chance(0.1)) {
         // A mention chip.
-        delta.insert('@Anna Berg', {'mention': 'user-1', 'link': 'mailto:anna@example.com'});
+        delta.insert('@Anna Berg', {
+          'mention': 'user-1',
+          'link': 'mailto:anna@example.com',
+        });
         continue;
       }
       delta.insert(text, inlineAttributes(allowCode: allowCode));
@@ -99,8 +128,17 @@ class DeltaGen {
         return {
           'table': {
             'id': nextId('tbl'),
-            'align': List.generate(cols, (_) => pick<String?>([null, 'left', 'center', 'right'])),
-            'rows': List.generate(rows, (r) => List.generate(cols, (c) => chance(0.3) ? '**${words(1)}**' : words(2))),
+            'align': List.generate(
+              cols,
+              (_) => pick<String?>([null, 'left', 'center', 'right']),
+            ),
+            'rows': List.generate(
+              rows,
+              (r) => List.generate(
+                cols,
+                (c) => chance(0.3) ? '**${words(1)}**' : words(2),
+              ),
+            ),
           },
         };
     }
@@ -125,16 +163,27 @@ class DeltaGen {
           final lang = pick(_langs);
           final lines = 1 + random.nextInt(3);
           for (var l = 0; l < lines; l += 1) {
-            if (chance(0.85)) delta.insert(chance(0.5) ? '  ${words(3)}' : words(3), chance(0.1) ? {'cmt_t2': true} : null);
+            if (chance(0.85)) {
+              delta.insert(
+                chance(0.5) ? '  ${words(3)}' : words(3),
+                chance(0.1) ? {'cmt_t2': true} : null,
+              );
+            }
             delta.insert('\n', {'code-block': lang, ...?overlays()});
           }
           previousListIndent = -1;
         case 2 || 3:
           final listKind = pick(['bullet', 'ordered', 'checked', 'unchecked']);
           final maxIndent = previousListIndent + 1;
-          final indent = maxIndent <= 0 ? 0 : random.nextInt(min(maxIndent, 8) + 1);
+          final indent = maxIndent <= 0
+              ? 0
+              : random.nextInt(min(maxIndent, 8) + 1);
           if (chance(0.9)) _text(delta);
-          delta.insert('\n', {'list': listKind, if (indent > 0) 'indent': indent, ...?overlays()});
+          delta.insert('\n', {
+            'list': listKind,
+            if (indent > 0) 'indent': indent,
+            ...?overlays(),
+          });
           previousListIndent = indent;
         case 4:
           if (chance(0.95)) _text(delta);
@@ -178,7 +227,12 @@ class ChangeGen {
       for (var i = 0; i < data.length; i += 1) {
         offset += 1;
         if (data.codeUnitAt(i) == 10) {
-          lines.add((lineStart, offset - lineStart, isEmbed, op.attributes?['code-block'] != null));
+          lines.add((
+            lineStart,
+            offset - lineStart,
+            isEmbed,
+            op.attributes?['code-block'] != null,
+          ));
           lineStart = offset;
           isEmbed = false;
         }
@@ -194,15 +248,20 @@ class ChangeGen {
     return unit >= 0xDC00 && unit <= 0xDFFF;
   }
 
-  String _plain(Delta document) =>
-      document.operations.map((op) => op.data is String ? op.data as String : '\u0000').join();
+  String _plain(Delta document) => document.operations
+      .map((op) => op.data is String ? op.data as String : '\u0000')
+      .join();
 
-  int _safeOffset(Delta document, int offset) => _isLowSurrogate(document, offset) ? offset - 1 : offset;
+  int _safeOffset(Delta document, int offset) =>
+      _isLowSurrogate(document, offset) ? offset - 1 : offset;
 
   /// A random change against [document].
   Delta change(Delta document) {
     final lines = _lines(document);
-    final textLines = [for (final l in lines) if (!l.$3) l];
+    final textLines = [
+      for (final l in lines)
+        if (!l.$3) l,
+    ];
     final change = Delta();
     if (textLines.isEmpty) {
       // Only embeds: add a text line at the start.
@@ -215,13 +274,22 @@ class ChangeGen {
         final at = _safeOffset(document, line.$1 + random.nextInt(line.$2));
         change
           ..retain(at)
-          ..insert(gen.chance(0.5) ? gen.words(2) : 'x', line.$4 ? null : gen.inlineAttributes());
+          ..insert(
+            gen.chance(0.5) ? gen.words(2) : 'x',
+            line.$4 ? null : gen.inlineAttributes(),
+          );
       case 2:
         // Delete inside a text line (not the line end).
         final line = gen.pick(textLines);
         if (line.$2 <= 1) return change;
-        final from = _safeOffset(document, line.$1 + random.nextInt(line.$2 - 1));
-        final to = _safeOffset(document, from + 1 + random.nextInt(line.$1 + line.$2 - 1 - from));
+        final from = _safeOffset(
+          document,
+          line.$1 + random.nextInt(line.$2 - 1),
+        );
+        final to = _safeOffset(
+          document,
+          from + 1 + random.nextInt(line.$1 + line.$2 - 1 - from),
+        );
         if (to <= from) return change;
         change
           ..retain(from)
@@ -241,7 +309,10 @@ class ChangeGen {
         // Format a text range inside a line.
         final line = gen.pick(textLines);
         if (line.$2 <= 1 || line.$4) return change;
-        final from = _safeOffset(document, line.$1 + random.nextInt(line.$2 - 1));
+        final from = _safeOffset(
+          document,
+          line.$1 + random.nextInt(line.$2 - 1),
+        );
         final length = 1 + random.nextInt(line.$1 + line.$2 - 1 - from);
         final key = gen.pick(['bold', 'italic', 'strike', 'cmt_t9']);
         change
@@ -251,14 +322,49 @@ class ChangeGen {
         // Change a text line's block type.
         final line = gen.pick(textLines);
         final attributes = gen.pick<Map<String, dynamic>>([
-          {'header': 2, 'list': null, 'indent': null, 'blockquote': null, 'code-block': null},
-          {'list': 'bullet', 'header': null, 'blockquote': null, 'code-block': null},
-          {'list': 'unchecked', 'header': null, 'blockquote': null, 'code-block': null},
-          {'blockquote': true, 'header': null, 'list': null, 'indent': null, 'code-block': null},
-          {'code-block': 'dart', 'header': null, 'list': null, 'indent': null, 'blockquote': null},
-          {'header': null, 'list': null, 'indent': null, 'blockquote': null, 'code-block': null},
+          {
+            'header': 2,
+            'list': null,
+            'indent': null,
+            'blockquote': null,
+            'code-block': null,
+          },
+          {
+            'list': 'bullet',
+            'header': null,
+            'blockquote': null,
+            'code-block': null,
+          },
+          {
+            'list': 'unchecked',
+            'header': null,
+            'blockquote': null,
+            'code-block': null,
+          },
+          {
+            'blockquote': true,
+            'header': null,
+            'list': null,
+            'indent': null,
+            'code-block': null,
+          },
+          {
+            'code-block': 'dart',
+            'header': null,
+            'list': null,
+            'indent': null,
+            'blockquote': null,
+          },
+          {
+            'header': null,
+            'list': null,
+            'indent': null,
+            'blockquote': null,
+            'code-block': null,
+          },
         ]);
-        if (attributes['code-block'] != null && _hasInlineAttributes(document, line.$1, line.$2 - 1)) {
+        if (attributes['code-block'] != null &&
+            _hasInlineAttributes(document, line.$1, line.$2 - 1)) {
           return change;
         }
         change
@@ -289,6 +395,10 @@ class ChangeGen {
 
   bool _hasInlineAttributes(Delta document, int from, int length) {
     final slice = document.slice(from, from + length);
-    return slice.operations.any((op) => op.attributes != null && op.attributes!.keys.any((k) => !k.startsWith('cmt_')));
+    return slice.operations.any(
+      (op) =>
+          op.attributes != null &&
+          op.attributes!.keys.any((k) => !k.startsWith('cmt_')),
+    );
   }
 }

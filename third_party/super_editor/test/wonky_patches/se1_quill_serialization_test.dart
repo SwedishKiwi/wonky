@@ -10,10 +10,18 @@ void main() {
       final document = MutableDocument(nodes: [
         ParagraphNode(
           id: '1',
-          text: AttributedText('a code b', AttributedSpans(attributions: [
-            const SpanMarker(attribution: codeAttribution, offset: 2, markerType: SpanMarkerType.start),
-            const SpanMarker(attribution: codeAttribution, offset: 5, markerType: SpanMarkerType.end),
-          ])),
+          text: AttributedText(
+              'a code b',
+              AttributedSpans(attributions: [
+                const SpanMarker(
+                    attribution: codeAttribution,
+                    offset: 2,
+                    markerType: SpanMarkerType.start),
+                const SpanMarker(
+                    attribution: codeAttribution,
+                    offset: 5,
+                    markerType: SpanMarkerType.end),
+              ])),
         ),
       ]);
 
@@ -30,7 +38,8 @@ void main() {
       final document = MutableDocument(nodes: [
         ListItemNode.unordered(id: '1', text: AttributedText('a')),
         ListItemNode.ordered(id: '2', text: AttributedText('b'), indent: 2),
-        TaskNode(id: '3', text: AttributedText('c'), isComplete: true, indent: 1),
+        TaskNode(
+            id: '3', text: AttributedText('c'), isComplete: true, indent: 1),
       ]);
 
       expect(
@@ -50,9 +59,15 @@ void main() {
         ParagraphNode(
           id: '1',
           text: AttributedText('main() {}'),
-          metadata: {'blockType': codeAttribution, codeLanguageMetadataKey: 'dart'},
+          metadata: {
+            'blockType': codeAttribution,
+            codeLanguageMetadataKey: 'dart'
+          },
         ),
-        ParagraphNode(id: '2', text: AttributedText('x'), metadata: {'blockType': codeAttribution}),
+        ParagraphNode(
+            id: '2',
+            text: AttributedText('x'),
+            metadata: {'blockType': codeAttribution}),
       ]);
 
       expect(
@@ -69,10 +84,16 @@ void main() {
       final document = MutableDocument(nodes: [
         HorizontalRuleNode(id: '1'),
         TableBlockNode(id: '2', cells: [
-          [TextNode(id: 'h1', text: AttributedText('A')), TextNode(id: 'h2', text: AttributedText('B'))],
+          [
+            TextNode(id: 'h1', text: AttributedText('A')),
+            TextNode(id: 'h2', text: AttributedText('B'))
+          ],
           [
             TextNode(id: 'c1', text: AttributedText('1')),
-            TextNode(id: 'c2', text: AttributedText('2'), metadata: {TextNodeMetadata.textAlign: 'right'}),
+            TextNode(
+                id: 'c2',
+                text: AttributedText('2'),
+                metadata: {TextNodeMetadata.textAlign: 'right'}),
           ],
         ]),
       ]);
@@ -97,7 +118,8 @@ void main() {
         ParagraphNode(id: '2', text: AttributedText('')),
       ]);
 
-      expect(document.toQuillDeltas(), quillDocumentEquivalentTo(Delta()..insert('a\n')));
+      expect(document.toQuillDeltas(),
+          quillDocumentEquivalentTo(Delta()..insert('a\n')));
       expect(
         document.toQuillDeltas(omitTrailingEmptyParagraph: false),
         quillDocumentEquivalentTo(Delta()..insert('a\n\n')),
@@ -166,12 +188,20 @@ void main() {
       expect(nodes.whereType<HorizontalRuleNode>(), hasLength(1));
       final table = nodes.whereType<TableBlockNode>().single;
       expect(table.rowCount, 2);
-      expect(table.getCell(rowIndex: 0, columnIndex: 0).text.toPlainText(), 'A');
       expect(
-        table.getCell(rowIndex: 0, columnIndex: 0).text.hasAttributionAt(0, attribution: boldAttribution),
+          table.getCell(rowIndex: 0, columnIndex: 0).text.toPlainText(), 'A');
+      expect(
+        table
+            .getCell(rowIndex: 0, columnIndex: 0)
+            .text
+            .hasAttributionAt(0, attribution: boldAttribution),
         isTrue,
       );
-      expect(table.getCell(rowIndex: 1, columnIndex: 1).getMetadataValue(TextNodeMetadata.textAlign), 'center');
+      expect(
+          table
+              .getCell(rowIndex: 1, columnIndex: 1)
+              .getMetadataValue(TextNodeMetadata.textAlign),
+          'center');
     });
   });
 }

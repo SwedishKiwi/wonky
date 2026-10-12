@@ -63,16 +63,16 @@ class WriteEditorPreferences {
     bool? copyPlainTextAsMarkdown,
     bool? spellcheck,
     bool? screenReaderMode,
-  }) =>
-      WriteEditorPreferences(
-        markdownShortcuts: markdownShortcuts ?? this.markdownShortcuts,
-        smartTypography: smartTypography ?? this.smartTypography,
-        autoPair: autoPair ?? this.autoPair,
-        autolink: autolink ?? this.autolink,
-        copyPlainTextAsMarkdown: copyPlainTextAsMarkdown ?? this.copyPlainTextAsMarkdown,
-        spellcheck: spellcheck ?? this.spellcheck,
-        screenReaderMode: screenReaderMode ?? this.screenReaderMode,
-      );
+  }) => WriteEditorPreferences(
+    markdownShortcuts: markdownShortcuts ?? this.markdownShortcuts,
+    smartTypography: smartTypography ?? this.smartTypography,
+    autoPair: autoPair ?? this.autoPair,
+    autolink: autolink ?? this.autolink,
+    copyPlainTextAsMarkdown:
+        copyPlainTextAsMarkdown ?? this.copyPlainTextAsMarkdown,
+    spellcheck: spellcheck ?? this.spellcheck,
+    screenReaderMode: screenReaderMode ?? this.screenReaderMode,
+  );
 
   @override
   bool operator ==(Object other) =>
@@ -87,14 +87,14 @@ class WriteEditorPreferences {
 
   @override
   int get hashCode => Object.hash(
-        markdownShortcuts,
-        smartTypography,
-        autoPair,
-        autolink,
-        copyPlainTextAsMarkdown,
-        spellcheck,
-        screenReaderMode,
-      );
+    markdownShortcuts,
+    smartTypography,
+    autoPair,
+    autolink,
+    copyPlainTextAsMarkdown,
+    spellcheck,
+    screenReaderMode,
+  );
 }
 
 /// Where a local change came from.
@@ -170,7 +170,8 @@ class LocalDeltaChange {
     int groupLength = 0,
     int maxGroupLength = 50,
   }) {
-    if (source != LocalChangeSource.input || next.source != LocalChangeSource.input) {
+    if (source != LocalChangeSource.input ||
+        next.source != LocalChangeSource.input) {
       return false;
     }
     if (kind == LocalChangeKind.other || next.kind != kind) {
@@ -182,7 +183,9 @@ class LocalDeltaChange {
     if (nodeIds.length != 1 || !setEquals(nodeIds, next.nodeIds)) {
       return false;
     }
-    if (selectionAfter != null && next.selectionBefore != null && selectionAfter != next.selectionBefore) {
+    if (selectionAfter != null &&
+        next.selectionBefore != null &&
+        selectionAfter != next.selectionBefore) {
       return false;
     }
     if (isComposing || next.isComposing) {
@@ -198,8 +201,10 @@ class LocalDeltaChange {
     return true;
   }
 
-  static String _insertedText(Delta delta) =>
-      delta.operations.where((op) => op.isInsert && op.data is String).map((op) => op.data as String).join();
+  static String _insertedText(Delta delta) => delta.operations
+      .where((op) => op.isInsert && op.data is String)
+      .map((op) => op.data as String)
+      .join();
 
   /// Number of characters this change inserts or deletes (group length).
   int get size {
@@ -210,7 +215,8 @@ class LocalDeltaChange {
     return size;
   }
 
-  LocalDeltaChange copyWith({String? label, LocalChangeSource? source}) => LocalDeltaChange(
+  LocalDeltaChange copyWith({String? label, LocalChangeSource? source}) =>
+      LocalDeltaChange(
         delta: delta,
         inverse: inverse,
         label: label ?? this.label,

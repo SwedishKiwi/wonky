@@ -44,8 +44,8 @@ class WriteEditorController extends ChangeNotifier {
     bool? verifyInvariants,
     this.maxDocumentChars = 2000000,
     DeltaDocumentMapper mapper = const DeltaDocumentMapper(),
-  })  : _clock = clock ?? const Clock(),
-        newEmbedId = newEmbedId ?? UuidV7Generator.instance.nextString {
+  }) : _clock = clock ?? const Clock(),
+       newEmbedId = newEmbedId ?? UuidV7Generator.instance.nextString {
     _pipeline = EditorPipeline(
       initialDelta: initialDelta ?? (Delta()..insert('\n')),
       mapper: mapper,
@@ -55,7 +55,8 @@ class WriteEditorController extends ChangeNotifier {
         ...wonkyRequestHandlers(
           mode: () => _mode,
           documentLength: () => mirror.length,
-          onMaxLengthReached: () => _events.add(const EditorNotice(EditorNoticeKind.documentFull)),
+          onMaxLengthReached: () =>
+              _events.add(const EditorNotice(EditorNoticeKind.documentFull)),
           maxDocumentChars: maxDocumentChars,
         ),
         ...blockEditingHandlers(
@@ -112,15 +113,20 @@ class WriteEditorController extends ChangeNotifier {
   final FocusNode focusNode = FocusNode(debugLabel: 'write-editor');
 
   /// Key of the document layout (used by layers and popovers).
-  final GlobalKey documentLayoutKey = GlobalKey(debugLabel: 'write-document-layout');
+  final GlobalKey documentLayoutKey = GlobalKey(
+    debugLabel: 'write-document-layout',
+  );
 
   /// The document layout, once the editor is laid out.
-  DocumentLayout? get documentLayout => documentLayoutKey.currentState as DocumentLayout?;
+  DocumentLayout? get documentLayout =>
+      documentLayoutKey.currentState as DocumentLayout?;
 
   // ---------------------------------------------------------------------------
   // Local changes.
 
-  final _localChanges = StreamController<LocalDeltaChange>.broadcast(sync: true);
+  final _localChanges = StreamController<LocalDeltaChange>.broadcast(
+    sync: true,
+  );
 
   /// Every local change, in order, synchronously after it was made.
   Stream<LocalDeltaChange> get localChanges => _localChanges.stream;
@@ -155,7 +161,11 @@ class WriteEditorController extends ChangeNotifier {
 
   /// Runs [body] (which executes editor requests) so that the changes it makes
   /// are reported with [label] and [source].
-  T runLabelled<T>(String label, T Function() body, {LocalChangeSource source = LocalChangeSource.command}) {
+  T runLabelled<T>(
+    String label,
+    T Function() body, {
+    LocalChangeSource source = LocalChangeSource.command,
+  }) {
     final previousLabel = _labelOverride;
     final previousSource = _sourceOverride;
     _labelOverride = label;
@@ -170,7 +180,11 @@ class WriteEditorController extends ChangeNotifier {
 
   /// Runs [body] and reports all local changes it makes as **one** change
   /// (one undo step) labelled [label].
-  T group<T>(String label, T Function() body, {LocalChangeSource source = LocalChangeSource.command}) {
+  T group<T>(
+    String label,
+    T Function() body, {
+    LocalChangeSource source = LocalChangeSource.command,
+  }) {
     final outer = _group;
     final changes = <LocalDeltaChange>[];
     _group = changes;
@@ -185,9 +199,15 @@ class WriteEditorController extends ChangeNotifier {
     }
   }
 
-  LocalDeltaChange? _merge(List<LocalDeltaChange> changes, String label, LocalChangeSource source) {
+  LocalDeltaChange? _merge(
+    List<LocalDeltaChange> changes,
+    String label,
+    LocalChangeSource source,
+  ) {
     if (changes.isEmpty) return null;
-    if (changes.length == 1) return changes.single.copyWith(label: label, source: source);
+    if (changes.length == 1) {
+      return changes.single.copyWith(label: label, source: source);
+    }
     var delta = changes.first.delta;
     var inverse = changes.first.inverse;
     for (final change in changes.skip(1)) {
@@ -232,14 +252,21 @@ class WriteEditorController extends ChangeNotifier {
     final local = <LocalDeltaChange>[];
     var before = selectionBefore;
     for (final change in changes) {
-      final after = change.selectionAfter == null ? null : DeltaSelection(change.selectionAfter!.$1, change.selectionAfter!.$2);
+      final after = change.selectionAfter == null
+          ? null
+          : DeltaSelection(
+              change.selectionAfter!.$1,
+              change.selectionAfter!.$2,
+            );
       final isReaction = change.label != null;
       final next = LocalDeltaChange(
         delta: change.delta,
         inverse: change.inverse,
         label: change.label ?? _labelOverride ?? _defaultLabel(change.kind),
         kind: change.kind,
-        source: isReaction ? LocalChangeSource.reaction : (_sourceOverride ?? LocalChangeSource.input),
+        source: isReaction
+            ? LocalChangeSource.reaction
+            : (_sourceOverride ?? LocalChangeSource.input),
         at: now,
         selectionBefore: before,
         selectionAfter: after,
@@ -249,7 +276,11 @@ class WriteEditorController extends ChangeNotifier {
       before = after;
       if (local.isNotEmpty && change.label == null) {
         // Fixes made after a reaction (schema guard) belong to the previous step.
-        local[local.length - 1] = _merge([local.last, next], local.last.label, local.last.source)!;
+        local[local.length - 1] = _merge(
+          [local.last, next],
+          local.last.label,
+          local.last.source,
+        )!;
       } else {
         local.add(next);
       }
@@ -269,10 +300,10 @@ class WriteEditorController extends ChangeNotifier {
   }
 
   static String _defaultLabel(LocalChangeKind kind) => switch (kind) {
-        LocalChangeKind.typing => 'Typing',
-        LocalChangeKind.deletion => 'Delete',
-        LocalChangeKind.other => 'Edit',
-      };
+    LocalChangeKind.typing => 'Typing',
+    LocalChangeKind.deletion => 'Delete',
+    LocalChangeKind.other => 'Edit',
+  };
 
   // ---------------------------------------------------------------------------
   // Remote and Delta-based changes.
@@ -294,7 +325,8 @@ class WriteEditorController extends ChangeNotifier {
   /// Registers a callback run after every remote change (used by derived
   /// services such as find, presence and pending comment ranges to transform
   /// their offsets).
-  set onRemoteChange(void Function(Delta change)? callback) => _afterRemote = callback;
+  set onRemoteChange(void Function(Delta change)? callback) =>
+      _afterRemote = callback;
 
   /// Applies [change] (against the current document) as a local change and
   /// reports it with [label]. Used for undo/redo ([LocalChangeSource.undo]),
@@ -317,7 +349,11 @@ class WriteEditorController extends ChangeNotifier {
     }
     final inverse = mirror.invert(change);
     final selectionBefore = _currentSelection();
-    final result = _pipeline.applier.apply(change, origin: AppliedChangeOrigin.local, selectionAfter: selectionAfter);
+    final result = _pipeline.applier.apply(
+      change,
+      origin: AppliedChangeOrigin.local,
+      selectionAfter: selectionAfter,
+    );
     view.transformThrough(change);
     _selection = _currentSelection();
     final local = LocalDeltaChange(
@@ -330,7 +366,9 @@ class WriteEditorController extends ChangeNotifier {
       selectionBefore: selectionBefore,
       selectionAfter: _selection ?? result.after,
     );
-    if (_mode == EditorMode.suggesting && source != LocalChangeSource.undo && !_isSuggestionNeutral(change)) {
+    if (_mode == EditorMode.suggesting &&
+        source != LocalChangeSource.undo &&
+        !_isSuggestionNeutral(change)) {
       _emitAsSuggestion(local, alreadyApplied: true);
     } else {
       _emit(local);
@@ -361,12 +399,19 @@ class WriteEditorController extends ChangeNotifier {
   /// Selects Delta offsets `[base, extent]` (not undoable).
   void select(DeltaSelection selection, {bool userInteraction = true}) {
     final max = mirror.length - 1;
-    final documentSelection = mirror.selectionAt(selection.base.clamp(0, max), selection.extent.clamp(0, max));
+    final documentSelection = mirror.selectionAt(
+      selection.base.clamp(0, max),
+      selection.extent.clamp(0, max),
+    );
     editor.execute([
       ChangeSelectionRequest(
         documentSelection,
-        selection.isCollapsed ? SelectionChangeType.placeCaret : SelectionChangeType.expandSelection,
-        userInteraction ? SelectionReason.userInteraction : SelectionReason.contentChange,
+        selection.isCollapsed
+            ? SelectionChangeType.placeCaret
+            : SelectionChangeType.expandSelection,
+        userInteraction
+            ? SelectionReason.userInteraction
+            : SelectionReason.contentChange,
       ),
     ]);
     _selection = _currentSelection();
@@ -424,12 +469,19 @@ class WriteEditorController extends ChangeNotifier {
       if (op.isInsert || op.isDelete) return false;
       final attributes = op.attributes;
       if (attributes == null) continue;
-      if (!attributes.keys.every((k) => k.startsWith('cmt_') || k.startsWith('sug_'))) return false;
+      if (!attributes.keys.every(
+        (k) => k.startsWith('cmt_') || k.startsWith('sug_'),
+      )) {
+        return false;
+      }
     }
     return true;
   }
 
-  void _emitAsSuggestion(LocalDeltaChange change, {bool alreadyApplied = true}) {
+  void _emitAsSuggestion(
+    LocalDeltaChange change, {
+    bool alreadyApplied = true,
+  }) {
     // The document already contains `change`; compute the document before it.
     final after = mirror.toDelta();
     final before = after.compose(change.inverse);
@@ -438,7 +490,12 @@ class WriteEditorController extends ChangeNotifier {
     final rewritten = _rewriter.rewrite(
       before,
       change.delta,
-      SuggestionContext(userUuid: userUuid, nowMs: now.millisecondsSinceEpoch, suggestionId: id, via: suggestionVia),
+      SuggestionContext(
+        userUuid: userUuid,
+        nowMs: now.millisecondsSinceEpoch,
+        suggestionId: id,
+        via: suggestionVia,
+      ),
     );
     if (rewritten == change.delta) {
       _emit(change);
@@ -452,9 +509,13 @@ class WriteEditorController extends ChangeNotifier {
     DeltaSelection? selectionAfter;
     final selectionBefore = change.selectionBefore;
     final lastInsertEnd = _lastInsertEnd(rewritten);
-    if (change.kind == LocalChangeKind.deletion && selectionBefore != null && selectionBefore.isCollapsed) {
+    if (change.kind == LocalChangeKind.deletion &&
+        selectionBefore != null &&
+        selectionBefore.isCollapsed) {
       final (start, end) = _deletedRange(change.delta);
-      selectionAfter = DeltaSelection.collapsed(selectionBefore.base == end ? start : end);
+      selectionAfter = DeltaSelection.collapsed(
+        selectionBefore.base == end ? start : end,
+      );
     } else if (lastInsertEnd != null) {
       selectionAfter = DeltaSelection.collapsed(lastInsertEnd);
     } else if (selectionBefore != null) {
@@ -462,22 +523,28 @@ class WriteEditorController extends ChangeNotifier {
     }
 
     final corrective = change.inverse.compose(rewritten);
-    _pipeline.applier.apply(corrective, origin: AppliedChangeOrigin.local, selectionAfter: selectionAfter);
+    _pipeline.applier.apply(
+      corrective,
+      origin: AppliedChangeOrigin.local,
+      selectionAfter: selectionAfter,
+    );
     view.transformThrough(corrective);
     _selection = _currentSelection();
     _suggestionSession.remember(change, _selection, now, id);
-    _emit(LocalDeltaChange(
-      delta: rewritten,
-      inverse: DeltaOps.invert(rewritten, before),
-      label: change.label,
-      kind: change.kind,
-      source: change.source,
-      at: change.at,
-      selectionBefore: change.selectionBefore,
-      selectionAfter: _selection,
-      nodeIds: change.nodeIds,
-      isComposing: change.isComposing,
-    ));
+    _emit(
+      LocalDeltaChange(
+        delta: rewritten,
+        inverse: DeltaOps.invert(rewritten, before),
+        label: change.label,
+        kind: change.kind,
+        source: change.source,
+        at: change.at,
+        selectionBefore: change.selectionBefore,
+        selectionAfter: _selection,
+        nodeIds: change.nodeIds,
+        isComposing: change.isComposing,
+      ),
+    );
   }
 
   /// Offset (in the new document) right after the last insertion of [delta].
@@ -545,7 +612,12 @@ class SuggestionSession {
     return newId();
   }
 
-  void remember(LocalDeltaChange change, DeltaSelection? selection, DateTime now, String id) {
+  void remember(
+    LocalDeltaChange change,
+    DeltaSelection? selection,
+    DateTime now,
+    String id,
+  ) {
     _id = change.source == LocalChangeSource.input ? id : null;
     _at = now;
     _nodeIds = change.nodeIds;

@@ -90,7 +90,8 @@ class WonkyEditor extends StatefulWidget {
 
   /// People to mention for a query (sharing + contacts + search); `null`
   /// disables the mention picker.
-  final Future<List<MentionCandidate>> Function(String query)? mentionCandidates;
+  final Future<List<MentionCandidate>> Function(String query)?
+  mentionCandidates;
 
   /// Opens a link (internal links navigate; external links show the shell's
   /// "Open external link?" confirm). Mod+click in Editing, click in Viewing.
@@ -113,7 +114,9 @@ class WonkyEditorState extends State<WonkyEditor> {
   late TriggerQueryTracker _triggers;
   late final WriteStylesheetBuilder _styles = WriteStylesheetBuilder();
   final _pagination = PaginationController();
-  late final PaginationStylePhase _paginationPhase = PaginationStylePhase(_pagination);
+  late final PaginationStylePhase _paginationPhase = PaginationStylePhase(
+    _pagination,
+  );
   final _codeHighlight = CodeHighlightStylePhase();
   final _direction = TextDirectionStylePhase();
   final _slashPicker = PickerController<SlashItem>();
@@ -150,7 +153,9 @@ class WonkyEditorState extends State<WonkyEditor> {
 
   void _attach() {
     _commands = widget.commands ?? WriteEditorCommands(controller);
-    _clipboard = widget.clipboard ?? EditorClipboard(controller: controller, commands: _commands);
+    _clipboard =
+        widget.clipboard ??
+        EditorClipboard(controller: controller, commands: _commands);
     _triggers = TriggerQueryTracker(controller);
     _triggers.slash.addListener(_onSlash);
     _triggers.mention.addListener(_onMention);
@@ -194,9 +199,16 @@ class WonkyEditorState extends State<WonkyEditor> {
 
   void _onNotice(EditorNotice notice) {
     if (!mounted) return;
-    if (notice.kind == EditorNoticeKind.announcement && notice.message != null) {
+    if (notice.kind == EditorNoticeKind.announcement &&
+        notice.message != null) {
       final direction = Directionality.maybeOf(context) ?? TextDirection.ltr;
-      unawaited(SemanticsService.sendAnnouncement(View.of(context), notice.message!, direction));
+      unawaited(
+        SemanticsService.sendAnnouncement(
+          View.of(context),
+          notice.message!,
+          direction,
+        ),
+      );
     }
   }
 
@@ -215,8 +227,13 @@ class WonkyEditorState extends State<WonkyEditor> {
 
   void _onSlash() {
     final query = _triggers.slash.value;
-    _slashPicker.items =
-        query == null ? const [] : filterSlashItems(_slashItems, query.query, mode: controller.mode).take(10).toList();
+    _slashPicker.items = query == null
+        ? const []
+        : filterSlashItems(
+            _slashItems,
+            query.query,
+            mode: controller.mode,
+          ).take(10).toList();
     if (mounted) setState(() {});
   }
 
@@ -238,7 +255,14 @@ class WonkyEditorState extends State<WonkyEditor> {
   void _chooseSlash(SlashItem item) {
     final query = _triggers.slash.value;
     if (query == null) return;
-    runSlashItem(controller, _commands, _triggers, query, item, widget.slashHost);
+    runSlashItem(
+      controller,
+      _commands,
+      _triggers,
+      query,
+      item,
+      widget.slashHost,
+    );
     _triggers.dismiss();
   }
 
@@ -257,16 +281,28 @@ class WonkyEditorState extends State<WonkyEditor> {
 
   bool _popoverKeys(KeyEvent event) {
     if (_triggers.slash.value != null && _slashPicker.items.isNotEmpty) {
-      return _slashPicker.handleKey(event, onChoose: _chooseSlash, onClose: _triggers.dismiss);
+      return _slashPicker.handleKey(
+        event,
+        onChoose: _chooseSlash,
+        onClose: _triggers.dismiss,
+      );
     }
     if (_triggers.mention.value != null && widget.mentionCandidates != null) {
-      if (event is KeyDownEvent && event.logicalKey == LogicalKeyboardKey.space && _mentionPicker.items.isEmpty) {
+      if (event is KeyDownEvent &&
+          event.logicalKey == LogicalKeyboardKey.space &&
+          _mentionPicker.items.isEmpty) {
         _triggers.dismiss();
         return false;
       }
-      return _mentionPicker.handleKey(event, onChoose: _chooseMention, onClose: _triggers.dismiss);
+      return _mentionPicker.handleKey(
+        event,
+        onChoose: _chooseMention,
+        onClose: _triggers.dismiss,
+      );
     }
-    if (_linkCard.value != null && event is KeyDownEvent && event.logicalKey == LogicalKeyboardKey.escape) {
+    if (_linkCard.value != null &&
+        event is KeyDownEvent &&
+        event.logicalKey == LogicalKeyboardKey.escape) {
       _linkCard.value = null;
       return true;
     }
@@ -279,11 +315,14 @@ class WonkyEditorState extends State<WonkyEditor> {
   void _updateLinkCardFromCaret() {
     final selection = controller.selection;
     if (selection == null || !selection.isCollapsed) {
-      if (_linkCard.value != null && _hoverTimer == null) _linkCard.value = null;
+      if (_linkCard.value != null && _hoverTimer == null) {
+        _linkCard.value = null;
+      }
       return;
     }
     final run = _commands.linkAt(selection.start);
-    final inside = run != null && selection.start > run.start && selection.start < run.end;
+    final inside =
+        run != null && selection.start > run.start && selection.start < run.end;
     _linkCard.value = inside ? run : null;
   }
 
@@ -293,7 +332,9 @@ class WonkyEditorState extends State<WonkyEditor> {
     final local = layout.getDocumentOffsetFromAncestorOffset(event.position);
     final position = layout.getDocumentPositionAtOffset(local);
     _hoveredNode.value = position?.nodeId;
-    final offset = position == null ? null : controller.mirror.offsetOf(position);
+    final offset = position == null
+        ? null
+        : controller.mirror.offsetOf(position);
     final run = offset == null ? null : _commands.linkAt(offset);
     _hoverTimer?.cancel();
     if (run == null) {
@@ -314,7 +355,9 @@ class WonkyEditorState extends State<WonkyEditor> {
 
   SuggestionPreviewMode get _effectivePreview =>
       controller.view.suggestionPreview ??
-      (controller.mode == EditorMode.viewing ? SuggestionPreviewMode.original : SuggestionPreviewMode.show);
+      (controller.mode == EditorMode.viewing
+          ? SuggestionPreviewMode.original
+          : SuggestionPreviewMode.show);
 
   void _schedulePreviewRebuild() {
     _previewTimer?.cancel();
@@ -330,9 +373,14 @@ class WonkyEditorState extends State<WonkyEditor> {
       return;
     }
     final delta = controller.delta;
-    final Delta viewed = mode == SuggestionPreviewMode.accepted ? SuggestionView.accepted(delta) : SuggestionView.original(delta);
+    final Delta viewed = mode == SuggestionPreviewMode.accepted
+        ? SuggestionView.accepted(delta)
+        : SuggestionView.original(delta);
     final document = const DeltaDocumentMapper().documentFromDelta(viewed);
-    _previewEditor = createDefaultDocumentEditor(document: document, composer: MutableDocumentComposer());
+    _previewEditor = createDefaultDocumentEditor(
+      document: document,
+      composer: MutableDocumentComposer(),
+    );
   }
 
   // ---------------------------------------------------------------------------
@@ -341,7 +389,8 @@ class WonkyEditorState extends State<WonkyEditor> {
   EditorTheme _theme(BuildContext context) {
     final explicit = widget.theme;
     if (explicit != null) return explicit;
-    final brightness = ShadTheme.maybeOf(context)?.brightness ?? Theme.of(context).brightness;
+    final brightness =
+        ShadTheme.maybeOf(context)?.brightness ?? Theme.of(context).brightness;
     return EditorTheme.fallback(brightness);
   }
 
@@ -355,7 +404,9 @@ class WonkyEditorState extends State<WonkyEditor> {
     _pagination.configure(view.pageSetup, zoom * textScale);
 
     final preview = _effectivePreview;
-    final readOnly = controller.mode == EditorMode.viewing || preview != SuggestionPreviewMode.show;
+    final readOnly =
+        controller.mode == EditorMode.viewing ||
+        preview != SuggestionPreviewMode.show;
     final previewMode = preview == SuggestionPreviewMode.show ? null : preview;
     if (previewMode != _previewMode) {
       _previewMode = previewMode;
@@ -428,12 +479,31 @@ class WonkyEditorState extends State<WonkyEditor> {
     _pagination.measure(layout, controller.document);
   }
 
-  List<ComponentBuilder> _componentBuilders(EditorTheme theme, double zoom, {required bool editable, Document? document}) {
+  List<ComponentBuilder> _componentBuilders(
+    EditorTheme theme,
+    double zoom, {
+    required bool editable,
+    Document? document,
+  }) {
     return [
       if (editable && controller.document.nodeCount == 1)
-        HintComponentBuilder(widget.hint, (context) => theme.body.copyWith(color: theme.mutedColor, fontSize: (theme.body.fontSize ?? 14.67) * zoom)),
-      WonkyImageComponentBuilder(services: widget.imageServices, theme: theme, callbacks: widget.blockCallbacks),
-      WonkyTableComponentBuilder(theme: theme, callbacks: widget.blockCallbacks, editable: editable),
+        HintComponentBuilder(
+          widget.hint,
+          (context) => theme.body.copyWith(
+            color: theme.mutedColor,
+            fontSize: (theme.body.fontSize ?? 14.67) * zoom,
+          ),
+        ),
+      WonkyImageComponentBuilder(
+        services: widget.imageServices,
+        theme: theme,
+        callbacks: widget.blockCallbacks,
+      ),
+      WonkyTableComponentBuilder(
+        theme: theme,
+        callbacks: widget.blockCallbacks,
+        editable: editable,
+      ),
       WonkyTaskComponentBuilder(
         controller.editor,
         editable: editable,
@@ -453,13 +523,19 @@ class WonkyEditorState extends State<WonkyEditor> {
     ];
   }
 
-  Widget _buildEditor(EditorTheme theme, WriteEditorStyle style, Stylesheet stylesheet) {
-    final callbacks = widget.shortcutCallbacks ??
+  Widget _buildEditor(
+    EditorTheme theme,
+    WriteEditorStyle style,
+    Stylesheet stylesheet,
+  ) {
+    final callbacks =
+        widget.shortcutCallbacks ??
         EditorShortcutCallbacks(
           onCopy: () => unawaited(_clipboard.copy()),
           onCut: () => unawaited(_clipboard.cut()),
           onPaste: () => unawaited(_clipboard.paste()),
-          onPasteWithoutFormatting: () => unawaited(_clipboard.paste(plainOnly: true)),
+          onPasteWithoutFormatting: () =>
+              unawaited(_clipboard.paste(plainOnly: true)),
           onInsertLink: widget.onEditLink,
         );
     final pages = controller.view.layout == LayoutMode.pages;
@@ -481,7 +557,8 @@ class WonkyEditorState extends State<WonkyEditor> {
       ],
       componentBuilders: _componentBuilders(theme, style.zoom, editable: true),
       documentUnderlayBuilders: [
-        if (pages) _PageChromeLayerBuilder(pagination: _pagination, theme: theme),
+        if (pages)
+          _PageChromeLayerBuilder(pagination: _pagination, theme: theme),
         WonkyHighlightLayerBuilder(controller: controller, theme: theme),
       ],
       documentOverlayBuilders: [
@@ -491,7 +568,8 @@ class WonkyEditorState extends State<WonkyEditor> {
           controller: controller,
           theme: theme,
           hoveredNodeId: _hoveredNode,
-          onTap: (nodeId, rect) => widget.blockCallbacks.onBlockHandleTap?.call(nodeId, rect),
+          onTap: (nodeId, rect) =>
+              widget.blockCallbacks.onBlockHandleTap?.call(nodeId, rect),
         ),
       ],
       keyboardActions: wonkyKeyboardActions(
@@ -504,18 +582,25 @@ class WonkyEditorState extends State<WonkyEditor> {
       ),
       contentTapDelegateFactories: [
         (editContext) => WonkyLinkTapHandler(
-              document: controller.document,
-              composer: controller.composer,
-              requireModifier: true,
-              onOpenLink: widget.onOpenLink,
-            ),
+          document: controller.document,
+          composer: controller.composer,
+          requireModifier: true,
+          onOpenLink: widget.onOpenLink,
+        ),
         superEditorAddEmptyParagraphTapHandlerFactory,
       ],
     );
   }
 
-  Widget _buildReader(EditorTheme theme, WriteEditorStyle style, Stylesheet stylesheet, SuggestionPreviewMode? preview) {
-    final editor = preview == null ? controller.editor : (_previewEditor ?? controller.editor);
+  Widget _buildReader(
+    EditorTheme theme,
+    WriteEditorStyle style,
+    Stylesheet stylesheet,
+    SuggestionPreviewMode? preview,
+  ) {
+    final editor = preview == null
+        ? controller.editor
+        : (_previewEditor ?? controller.editor);
     final isMain = identical(editor, controller.editor);
     final pages = controller.view.layout == LayoutMode.pages;
     return SuperReader(
@@ -530,13 +615,27 @@ class WonkyEditorState extends State<WonkyEditor> {
         _codeHighlight,
         _direction,
       ],
-      componentBuilders: _componentBuilders(theme, style.zoom, editable: false, document: editor.document),
+      componentBuilders: _componentBuilders(
+        theme,
+        style.zoom,
+        editable: false,
+        document: editor.document,
+      ),
       documentUnderlayBuilders: [
-        if (pages && isMain) _ReaderPageChromeLayerBuilder(pagination: _pagination, theme: theme),
-        if (isMain) WonkyReaderHighlightLayerBuilder(controller: controller, theme: theme),
+        if (pages && isMain)
+          _ReaderPageChromeLayerBuilder(pagination: _pagination, theme: theme),
+        if (isMain)
+          WonkyReaderHighlightLayerBuilder(
+            controller: controller,
+            theme: theme,
+          ),
       ],
       documentOverlayBuilders: [
-        if (isMain) WonkyReaderRemoteCaretLayerBuilder(controller: controller, theme: theme),
+        if (isMain)
+          WonkyReaderRemoteCaretLayerBuilder(
+            controller: controller,
+            theme: theme,
+          ),
         ...defaultSuperReaderDocumentOverlayBuilders,
       ],
       contentTapDelegateFactory: (readerContext) => WonkyLinkTapHandler(
@@ -548,7 +647,11 @@ class WonkyEditorState extends State<WonkyEditor> {
     );
   }
 
-  List<Widget> _buildPopovers(BuildContext context, EditorTheme theme, bool readOnly) {
+  List<Widget> _buildPopovers(
+    BuildContext context,
+    EditorTheme theme,
+    bool readOnly,
+  ) {
     final widgets = <Widget>[];
     final layout = controller.documentLayout;
     if (layout == null) return widgets;
@@ -566,52 +669,75 @@ class WonkyEditorState extends State<WonkyEditor> {
     if (!readOnly && slash != null && _slashPicker.items.isNotEmpty) {
       final at = anchorBelow(slash.start);
       if (at != null) {
-        widgets.add(Positioned(
-          left: at.dx,
-          top: at.dy,
-          child: SlashMenu(picker: _slashPicker, theme: theme, onChoose: _chooseSlash),
-        ));
+        widgets.add(
+          Positioned(
+            left: at.dx,
+            top: at.dy,
+            child: SlashMenu(
+              picker: _slashPicker,
+              theme: theme,
+              onChoose: _chooseSlash,
+            ),
+          ),
+        );
       }
     }
     final mention = _triggers.mention.value;
     if (!readOnly && mention != null && widget.mentionCandidates != null) {
       final at = anchorBelow(mention.start);
       if (at != null) {
-        widgets.add(Positioned(
-          left: at.dx,
-          top: at.dy,
-          child: MentionPicker(picker: _mentionPicker, theme: theme, onChoose: _chooseMention),
-        ));
+        widgets.add(
+          Positioned(
+            left: at.dx,
+            top: at.dy,
+            child: MentionPicker(
+              picker: _mentionPicker,
+              theme: theme,
+              onChoose: _chooseMention,
+            ),
+          ),
+        );
       }
     }
     final link = _linkCard.value;
-    if (link != null && link.mentionUuid == null && slash == null && mention == null) {
+    if (link != null &&
+        link.mentionUuid == null &&
+        slash == null &&
+        mention == null) {
       final at = anchorBelow(link.start);
       if (at != null) {
-        widgets.add(Positioned(
-          left: at.dx,
-          top: at.dy,
-          child: LinkHoverCard(
-            url: link.url,
-            theme: theme,
-            actions: LinkCardActions(
-              onOpen: widget.onOpenLink == null ? null : () => widget.onOpenLink!(link.url),
-              onCopy: () => unawaited(Clipboard.setData(ClipboardData(text: link.url))),
-              onEdit: readOnly || widget.onEditLink == null
-                  ? null
-                  : () {
-                      controller.select(DeltaSelection(link.start, link.end));
-                      widget.onEditLink!();
-                    },
-              onRemove: readOnly
-                  ? null
-                  : () {
-                      _commands.removeLink(start: link.start, length: link.end - link.start);
-                      _linkCard.value = null;
-                    },
+        widgets.add(
+          Positioned(
+            left: at.dx,
+            top: at.dy,
+            child: LinkHoverCard(
+              url: link.url,
+              theme: theme,
+              actions: LinkCardActions(
+                onOpen: widget.onOpenLink == null
+                    ? null
+                    : () => widget.onOpenLink!(link.url),
+                onCopy: () =>
+                    unawaited(Clipboard.setData(ClipboardData(text: link.url))),
+                onEdit: readOnly || widget.onEditLink == null
+                    ? null
+                    : () {
+                        controller.select(DeltaSelection(link.start, link.end));
+                        widget.onEditLink!();
+                      },
+                onRemove: readOnly
+                    ? null
+                    : () {
+                        _commands.removeLink(
+                          start: link.start,
+                          length: link.end - link.start,
+                        );
+                        _linkCard.value = null;
+                      },
+              ),
             ),
           ),
-        ));
+        );
       }
     }
     return widgets;
@@ -621,7 +747,12 @@ class WonkyEditorState extends State<WonkyEditor> {
 /// Opens links: with the Mod key in Editing/Suggesting ("interaction mode"),
 /// with a plain click in Viewing (Write 04 §11.6).
 class WonkyLinkTapHandler extends ContentTapDelegate {
-  WonkyLinkTapHandler({required this.document, required this.composer, required this.requireModifier, this.onOpenLink}) {
+  WonkyLinkTapHandler({
+    required this.document,
+    required this.composer,
+    required this.requireModifier,
+    this.onOpenLink,
+  }) {
     composer.isInInteractionMode.addListener(notifyListeners);
   }
 
@@ -640,12 +771,18 @@ class WonkyLinkTapHandler extends ContentTapDelegate {
 
   @override
   MouseCursor? mouseCursorForContentHover(DocumentPosition hoverPosition) =>
-      _active && _linkAt(hoverPosition) != null ? SystemMouseCursors.click : null;
+      _active && _linkAt(hoverPosition) != null
+      ? SystemMouseCursors.click
+      : null;
 
   @override
   TapHandlingInstruction onTap(DocumentTapDetails details) {
-    if (!_active || onOpenLink == null) return TapHandlingInstruction.continueHandling;
-    final position = details.documentLayout.getDocumentPositionNearestToOffset(details.layoutOffset);
+    if (!_active || onOpenLink == null) {
+      return TapHandlingInstruction.continueHandling;
+    }
+    final position = details.documentLayout.getDocumentPositionNearestToOffset(
+      details.layoutOffset,
+    );
     final url = position == null ? null : _linkAt(position);
     if (url == null) return TapHandlingInstruction.continueHandling;
     onOpenLink!(url);
@@ -655,8 +792,14 @@ class WonkyLinkTapHandler extends ContentTapDelegate {
   String? _linkAt(DocumentPosition position) {
     final nodePosition = position.nodePosition;
     final node = document.getNodeById(position.nodeId);
-    if (node is! TextNode || nodePosition is! TextNodePosition || nodePosition.offset >= node.text.length) return null;
-    for (final attribution in node.text.getAllAttributionsAt(nodePosition.offset)) {
+    if (node is! TextNode ||
+        nodePosition is! TextNodePosition ||
+        nodePosition.offset >= node.text.length) {
+      return null;
+    }
+    for (final attribution in node.text.getAllAttributionsAt(
+      nodePosition.offset,
+    )) {
       if (attribution is LinkAttribution) return attribution.plainTextUri;
     }
     return null;
@@ -664,25 +807,35 @@ class WonkyLinkTapHandler extends ContentTapDelegate {
 }
 
 class _PageChromeLayerBuilder implements SuperEditorLayerBuilder {
-  const _PageChromeLayerBuilder({required this.pagination, required this.theme});
+  const _PageChromeLayerBuilder({
+    required this.pagination,
+    required this.theme,
+  });
 
   final PaginationController pagination;
   final EditorTheme theme;
 
   @override
-  ContentLayerWidget build(BuildContext context, SuperEditorContext editContext) =>
-      _PageChromeLayer(pagination: pagination, theme: theme);
+  ContentLayerWidget build(
+    BuildContext context,
+    SuperEditorContext editContext,
+  ) => _PageChromeLayer(pagination: pagination, theme: theme);
 }
 
 class _ReaderPageChromeLayerBuilder implements SuperReaderDocumentLayerBuilder {
-  const _ReaderPageChromeLayerBuilder({required this.pagination, required this.theme});
+  const _ReaderPageChromeLayerBuilder({
+    required this.pagination,
+    required this.theme,
+  });
 
   final PaginationController pagination;
   final EditorTheme theme;
 
   @override
-  ContentLayerWidget build(BuildContext context, SuperReaderContext readerContext) =>
-      _PageChromeLayer(pagination: pagination, theme: theme);
+  ContentLayerWidget build(
+    BuildContext context,
+    SuperReaderContext readerContext,
+  ) => _PageChromeLayer(pagination: pagination, theme: theme);
 }
 
 class _PageChromeLayer extends ContentLayerStatelessWidget {
@@ -692,14 +845,21 @@ class _PageChromeLayer extends ContentLayerStatelessWidget {
   final EditorTheme theme;
 
   @override
-  Widget doBuild(BuildContext context, Element? contentElement, RenderObject? contentLayout) {
+  Widget doBuild(
+    BuildContext context,
+    Element? contentElement,
+    RenderObject? contentLayout,
+  ) {
     return IgnorePointer(
       child: CustomPaint(
         painter: PageChromePainter(
           pagination: pagination,
           paperColor: theme.paperColor,
           borderColor: theme.tableBorderColor,
-          textStyle: TextStyle(fontSize: 11 * pagination.zoom, color: theme.mutedColor),
+          textStyle: TextStyle(
+            fontSize: 11 * pagination.zoom,
+            color: theme.mutedColor,
+          ),
         ),
       ),
     );
@@ -720,14 +880,19 @@ extension WonkyEditorScrolling on WonkyEditorState {
     final current = _scrollController.offset;
     double? target;
     if (rect.top - 64 < current) target = rect.top - 64;
-    if (rect.bottom + 64 > current + viewport) target = rect.bottom + 64 - viewport;
+    if (rect.bottom + 64 > current + viewport) {
+      target = rect.bottom + 64 - viewport;
+    }
     if (target != null) {
-      _scrollController.jumpTo(target.clamp(0, _scrollController.position.maxScrollExtent));
+      _scrollController.jumpTo(
+        target.clamp(0, _scrollController.position.maxScrollExtent),
+      );
     }
   }
 }
 
 /// Convenience for screens: the blocks touched by the selection.
 extension WonkyEditorBlocks on WriteEditorController {
-  List<BlockRef> get selectedBlocks => selection == null ? const [] : mirror.blocksInSelection(selection!);
+  List<BlockRef> get selectedBlocks =>
+      selection == null ? const [] : mirror.blocksInSelection(selection!);
 }

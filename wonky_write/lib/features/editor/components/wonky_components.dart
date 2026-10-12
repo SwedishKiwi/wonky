@@ -25,7 +25,8 @@ abstract final class WonkyEditorKeys {
 // -----------------------------------------------------------------------------
 // Images (Write 04 §17.3).
 
-class WonkyImageViewModel extends SingleColumnLayoutComponentViewModel with SelectionAwareViewModelMixin {
+class WonkyImageViewModel extends SingleColumnLayoutComponentViewModel
+    with SelectionAwareViewModelMixin {
   WonkyImageViewModel({
     required super.nodeId,
     super.createdAt,
@@ -47,15 +48,15 @@ class WonkyImageViewModel extends SingleColumnLayoutComponentViewModel with Sele
 
   @override
   WonkyImageViewModel copy() => WonkyImageViewModel(
-        nodeId: nodeId,
-        maxWidth: maxWidth,
-        padding: padding,
-        src: src,
-        alt: alt,
-        title: title,
-        selection: selection,
-        selectionColor: selectionColor,
-      );
+    nodeId: nodeId,
+    maxWidth: maxWidth,
+    padding: padding,
+    src: src,
+    alt: alt,
+    title: title,
+    selection: selection,
+    selectionColor: selectionColor,
+  );
 
   @override
   bool operator ==(Object other) =>
@@ -76,14 +77,21 @@ class WonkyImageViewModel extends SingleColumnLayoutComponentViewModel with Sele
 /// progress / pending / failed / broken states, alt text as semantics label,
 /// and the block-selection ring.
 class WonkyImageComponentBuilder implements ComponentBuilder {
-  const WonkyImageComponentBuilder({required this.services, required this.theme, this.callbacks = const EditorBlockCallbacks()});
+  const WonkyImageComponentBuilder({
+    required this.services,
+    required this.theme,
+    this.callbacks = const EditorBlockCallbacks(),
+  });
 
   final EditorImageServices services;
   final EditorTheme theme;
   final EditorBlockCallbacks callbacks;
 
   @override
-  SingleColumnLayoutComponentViewModel? createViewModel(Document document, DocumentNode node) {
+  SingleColumnLayoutComponentViewModel? createViewModel(
+    Document document,
+    DocumentNode node,
+  ) {
     if (node is! ImageNode) return null;
     final data = EmbedNodes.embedDataOf(node);
     return WonkyImageViewModel(
@@ -95,20 +103,28 @@ class WonkyImageComponentBuilder implements ComponentBuilder {
   }
 
   @override
-  Widget? createComponent(SingleColumnDocumentComponentContext componentContext, SingleColumnLayoutComponentViewModel viewModel) {
+  Widget? createComponent(
+    SingleColumnDocumentComponentContext componentContext,
+    SingleColumnLayoutComponentViewModel viewModel,
+  ) {
     if (viewModel is! WonkyImageViewModel) return null;
-    final selection = viewModel.selection?.nodeSelection as UpstreamDownstreamNodeSelection?;
+    final selection =
+        viewModel.selection?.nodeSelection as UpstreamDownstreamNodeSelection?;
     final isSelected = selection != null && !selection.isCollapsed;
     return Semantics(
       image: true,
       label: viewModel.alt.isEmpty ? 'image, no description' : viewModel.alt,
       child: GestureDetector(
-        onDoubleTap: callbacks.onImageDoubleTap == null ? null : () => callbacks.onImageDoubleTap!(viewModel.nodeId),
+        onDoubleTap: callbacks.onImageDoubleTap == null
+            ? null
+            : () => callbacks.onImageDoubleTap!(viewModel.nodeId),
         child: Center(
           child: DecoratedBox(
             position: DecorationPosition.foreground,
             decoration: BoxDecoration(
-              border: isSelected ? Border.all(color: theme.ringColor, width: 2) : null,
+              border: isSelected
+                  ? Border.all(color: theme.ringColor, width: 2)
+                  : null,
               borderRadius: BorderRadius.circular(4),
             ),
             child: BoxComponent(
@@ -202,14 +218,22 @@ class _WonkyImageState extends State<_WonkyImage> {
   Widget build(BuildContext context) {
     return LayoutBuilder(
       builder: (context, constraints) {
-        final maxWidth = constraints.maxWidth.isFinite ? constraints.maxWidth : 640.0;
+        final maxWidth = constraints.maxWidth.isFinite
+            ? constraints.maxWidth
+            : 640.0;
         return ValueListenableBuilder<ImageUploadStatus?>(
           valueListenable: _upload,
           builder: (context, upload, _) {
             final provider = upload?.localPreview ?? _provider;
             Widget content;
-            if (_broken || (provider == null && !_resolving && upload == null)) {
-              content = _placeholder(maxWidth, icon: Icons.broken_image_outlined, label: widget.alt.isEmpty ? 'Image unavailable' : widget.alt, retry: true);
+            if (_broken ||
+                (provider == null && !_resolving && upload == null)) {
+              content = _placeholder(
+                maxWidth,
+                icon: Icons.broken_image_outlined,
+                label: widget.alt.isEmpty ? 'Image unavailable' : widget.alt,
+                retry: true,
+              );
             } else if (provider == null) {
               content = _placeholder(
                 maxWidth,
@@ -229,9 +253,15 @@ class _WonkyImageState extends State<_WonkyImage> {
                     WidgetsBinding.instance.addPostFrameCallback((_) {
                       if (mounted && !_broken) setState(() => _broken = true);
                     });
-                    return _placeholder(maxWidth, icon: Icons.broken_image_outlined, label: widget.alt, retry: true);
+                    return _placeholder(
+                      maxWidth,
+                      icon: Icons.broken_image_outlined,
+                      label: widget.alt,
+                      retry: true,
+                    );
                   },
-                  frameBuilder: (context, child, frame, sync) => frame == null && !sync ? _placeholder(maxWidth) : child,
+                  frameBuilder: (context, child, frame, sync) =>
+                      frame == null && !sync ? _placeholder(maxWidth) : child,
                 ),
               );
             }
@@ -239,14 +269,26 @@ class _WonkyImageState extends State<_WonkyImage> {
             return Stack(
               alignment: Alignment.center,
               children: [
-                if (title != null && title.isNotEmpty) Tooltip(message: title, child: content) else content,
-                if (upload != null && upload.phase == ImageUploadPhase.uploading)
-                  Positioned.fill(child: _UploadOverlay(progress: upload.progress, onCancel: () => widget.services.cancel(widget.src))),
+                if (title != null && title.isNotEmpty)
+                  Tooltip(message: title, child: content)
+                else
+                  content,
+                if (upload != null &&
+                    upload.phase == ImageUploadPhase.uploading)
+                  Positioned.fill(
+                    child: _UploadOverlay(
+                      progress: upload.progress,
+                      onCancel: () => widget.services.cancel(widget.src),
+                    ),
+                  ),
                 if (upload != null && upload.phase == ImageUploadPhase.failed)
                   Positioned.fill(
                     child: _FailedOverlay(
                       onRetry: _retry,
-                      onRemove: widget.callbacks.onRemoveImage == null ? null : () => widget.callbacks.onRemoveImage!(widget.nodeId),
+                      onRemove: widget.callbacks.onRemoveImage == null
+                          ? null
+                          : () =>
+                                widget.callbacks.onRemoveImage!(widget.nodeId),
                     ),
                   ),
               ],
@@ -257,7 +299,12 @@ class _WonkyImageState extends State<_WonkyImage> {
     );
   }
 
-  Widget _placeholder(double width, {IconData? icon, String? label, bool retry = false}) {
+  Widget _placeholder(
+    double width, {
+    IconData? icon,
+    String? label,
+    bool retry = false,
+  }) {
     final theme = widget.theme;
     return SizedBox(
       width: width,
@@ -275,7 +322,10 @@ class _WonkyImageState extends State<_WonkyImage> {
               if (label != null)
                 Padding(
                   padding: const EdgeInsets.only(top: 8),
-                  child: Text(label, style: TextStyle(color: theme.mutedColor, fontSize: 13)),
+                  child: Text(
+                    label,
+                    style: TextStyle(color: theme.mutedColor, fontSize: 13),
+                  ),
                 ),
               if (retry)
                 TextButton(
@@ -308,12 +358,19 @@ class _UploadOverlay extends StatelessWidget {
             SizedBox(
               width: 32,
               height: 32,
-              child: CircularProgressIndicator(value: progress, color: Colors.white, strokeWidth: 3),
+              child: CircularProgressIndicator(
+                value: progress,
+                color: Colors.white,
+                strokeWidth: 3,
+              ),
             ),
             if (progress != null)
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 8),
-                child: Text('${(progress! * 100).round()} %', style: const TextStyle(color: Colors.white)),
+                child: Text(
+                  '${(progress! * 100).round()} %',
+                  style: const TextStyle(color: Colors.white),
+                ),
               ),
             IconButton(
               tooltip: 'Cancel upload',
@@ -341,13 +398,31 @@ class _FailedOverlay extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Text('Upload failed', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600)),
+            const Text(
+              'Upload failed',
+              style: TextStyle(
+                color: Colors.white,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
             Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                TextButton(onPressed: onRetry, child: const Text('Retry', style: TextStyle(color: Colors.white))),
+                TextButton(
+                  onPressed: onRetry,
+                  child: const Text(
+                    'Retry',
+                    style: TextStyle(color: Colors.white),
+                  ),
+                ),
                 if (onRemove != null)
-                  TextButton(onPressed: onRemove, child: const Text('Remove', style: TextStyle(color: Colors.white))),
+                  TextButton(
+                    onPressed: onRemove,
+                    child: const Text(
+                      'Remove',
+                      style: TextStyle(color: Colors.white),
+                    ),
+                  ),
               ],
             ),
           ],
@@ -363,7 +438,11 @@ class _FailedOverlay extends StatelessWidget {
 /// Wraps super_editor's Markdown table component with an "Edit table" button
 /// and the block-selection ring; double-click opens the table editor.
 class WonkyTableComponentBuilder implements ComponentBuilder {
-  const WonkyTableComponentBuilder({required this.theme, this.callbacks = const EditorBlockCallbacks(), this.editable = true});
+  const WonkyTableComponentBuilder({
+    required this.theme,
+    this.callbacks = const EditorBlockCallbacks(),
+    this.editable = true,
+  });
 
   final EditorTheme theme;
   final EditorBlockCallbacks callbacks;
@@ -371,34 +450,48 @@ class WonkyTableComponentBuilder implements ComponentBuilder {
   static const _inner = MarkdownTableComponentBuilder();
 
   @override
-  SingleColumnLayoutComponentViewModel? createViewModel(Document document, DocumentNode node) =>
-      node is TableBlockNode ? _inner.createViewModel(document, node) : null;
+  SingleColumnLayoutComponentViewModel? createViewModel(
+    Document document,
+    DocumentNode node,
+  ) => node is TableBlockNode ? _inner.createViewModel(document, node) : null;
 
   @override
-  Widget? createComponent(SingleColumnDocumentComponentContext componentContext, SingleColumnLayoutComponentViewModel viewModel) {
+  Widget? createComponent(
+    SingleColumnDocumentComponentContext componentContext,
+    SingleColumnLayoutComponentViewModel viewModel,
+  ) {
     final table = _inner.createComponent(componentContext, viewModel);
     if (table == null || viewModel is! MarkdownTableViewModel) return null;
     final selection = viewModel.selection?.nodeSelection;
-    final isSelected = selection is UpstreamDownstreamNodeSelection && !selection.isCollapsed;
+    final isSelected =
+        selection is UpstreamDownstreamNodeSelection && !selection.isCollapsed;
     final rows = viewModel.cells.length;
     final columns = rows == 0 ? 0 : viewModel.cells.first.length;
     return Semantics(
       label: 'table, $columns columns, $rows rows',
       child: GestureDetector(
-        onDoubleTap: !editable || callbacks.onEditTable == null ? null : () => callbacks.onEditTable!(viewModel.nodeId),
+        onDoubleTap: !editable || callbacks.onEditTable == null
+            ? null
+            : () => callbacks.onEditTable!(viewModel.nodeId),
         child: _HoverChrome(
           showAlways: isSelected,
           chrome: !editable || callbacks.onEditTable == null
               ? null
               : _ChromeButton(
-                  key: ValueKey('${WonkyEditorKeys.tableEdit}.${viewModel.nodeId}'),
+                  key: ValueKey(
+                    '${WonkyEditorKeys.tableEdit}.${viewModel.nodeId}',
+                  ),
                   icon: Icons.edit_outlined,
                   tooltip: 'Edit table',
                   onTap: (_) => callbacks.onEditTable!(viewModel.nodeId),
                 ),
           child: DecoratedBox(
             position: DecorationPosition.foreground,
-            decoration: BoxDecoration(border: isSelected ? Border.all(color: theme.ringColor, width: 2) : null),
+            decoration: BoxDecoration(
+              border: isSelected
+                  ? Border.all(color: theme.ringColor, width: 2)
+                  : null,
+            ),
             child: table,
           ),
         ),
@@ -429,13 +522,19 @@ class WonkyParagraphComponentBuilder implements ComponentBuilder {
   static const _inner = ParagraphComponentBuilder();
 
   @override
-  SingleColumnLayoutComponentViewModel? createViewModel(Document document, DocumentNode node) {
+  SingleColumnLayoutComponentViewModel? createViewModel(
+    Document document,
+    DocumentNode node,
+  ) {
     if (node is! ParagraphNode) return null;
     return _inner.createViewModel(document, node);
   }
 
   @override
-  Widget? createComponent(SingleColumnDocumentComponentContext componentContext, SingleColumnLayoutComponentViewModel viewModel) {
+  Widget? createComponent(
+    SingleColumnDocumentComponentContext componentContext,
+    SingleColumnLayoutComponentViewModel viewModel,
+  ) {
     if (viewModel is! ParagraphComponentViewModel) return null;
     final component = _inner.createComponent(componentContext, viewModel);
     if (component == null) return null;
@@ -444,7 +543,10 @@ class WonkyParagraphComponentBuilder implements ComponentBuilder {
       return Semantics(
         label: 'quote',
         child: CustomPaint(
-          painter: _QuoteBarPainter(color: theme.quoteBarColor, width: theme.quoteBarWidth * zoom),
+          painter: _QuoteBarPainter(
+            color: theme.quoteBarColor,
+            width: theme.quoteBarWidth * zoom,
+          ),
           child: component,
         ),
       );
@@ -477,11 +579,15 @@ class _QuoteBarPainter extends CustomPainter {
 
   @override
   void paint(Canvas canvas, Size size) {
-    canvas.drawRect(Rect.fromLTWH(0, 0, width, size.height), Paint()..color = color);
+    canvas.drawRect(
+      Rect.fromLTWH(0, 0, width, size.height),
+      Paint()..color = color,
+    );
   }
 
   @override
-  bool shouldRepaint(_QuoteBarPainter oldDelegate) => oldDelegate.color != color || oldDelegate.width != width;
+  bool shouldRepaint(_QuoteBarPainter oldDelegate) =>
+      oldDelegate.color != color || oldDelegate.width != width;
 }
 
 class _CodeBlockChrome extends StatelessWidget {
@@ -533,7 +639,11 @@ class _CodeBlockChrome extends StatelessWidget {
                 if (callbacks.onCopyCode != null) {
                   callbacks.onCopyCode!(nodeId);
                 } else if (node is TextNode) {
-                  unawaited(Clipboard.setData(ClipboardData(text: node.text.toPlainText())));
+                  unawaited(
+                    Clipboard.setData(
+                      ClipboardData(text: node.text.toPlainText()),
+                    ),
+                  );
                 }
               },
             ),
@@ -547,7 +657,11 @@ class _CodeBlockChrome extends StatelessWidget {
 
 /// Shows [chrome] at the top-right corner while hovered (or [showAlways]).
 class _HoverChrome extends StatefulWidget {
-  const _HoverChrome({required this.child, this.chrome, this.showAlways = false});
+  const _HoverChrome({
+    required this.child,
+    this.chrome,
+    this.showAlways = false,
+  });
 
   final Widget child;
   final Widget? chrome;
@@ -577,7 +691,10 @@ class _HoverChromeState extends State<_HoverChrome> {
             child: AnimatedOpacity(
               duration: const Duration(milliseconds: 120),
               opacity: _hovered || widget.showAlways ? 1 : 0,
-              child: IgnorePointer(ignoring: !(_hovered || widget.showAlways), child: chrome),
+              child: IgnorePointer(
+                ignoring: !(_hovered || widget.showAlways),
+                child: chrome,
+              ),
             ),
           ),
         ],
@@ -587,7 +704,13 @@ class _HoverChromeState extends State<_HoverChrome> {
 }
 
 class _ChromeButton extends StatelessWidget {
-  const _ChromeButton({super.key, this.icon, this.label, required this.tooltip, required this.onTap});
+  const _ChromeButton({
+    super.key,
+    this.icon,
+    this.label,
+    required this.tooltip,
+    required this.onTap,
+  });
 
   final IconData? icon;
   final String? label;
@@ -597,8 +720,12 @@ class _ChromeButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final brightness = Theme.of(context).brightness;
-    final background = brightness == Brightness.dark ? const Color(0xff2b2f36) : const Color(0xffffffff);
-    final foreground = brightness == Brightness.dark ? const Color(0xffe6e8eb) : const Color(0xff374151);
+    final background = brightness == Brightness.dark
+        ? const Color(0xff2b2f36)
+        : const Color(0xffffffff);
+    final foreground = brightness == Brightness.dark
+        ? const Color(0xffe6e8eb)
+        : const Color(0xff374151);
     return Tooltip(
       message: tooltip,
       child: Material(
@@ -611,14 +738,19 @@ class _ChromeButton extends StatelessWidget {
               ? null
               : () {
                   final box = context.findRenderObject() as RenderBox?;
-                  final rect = box == null ? Rect.zero : box.localToGlobal(Offset.zero) & box.size;
+                  final rect = box == null
+                      ? Rect.zero
+                      : box.localToGlobal(Offset.zero) & box.size;
                   onTap!(rect);
                 },
           child: Padding(
             padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
             child: icon != null
                 ? Icon(icon, size: 14, color: foreground)
-                : Text(label ?? '', style: TextStyle(fontSize: 12, color: foreground)),
+                : Text(
+                    label ?? '',
+                    style: TextStyle(fontSize: 12, color: foreground),
+                  ),
           ),
         ),
       ),
@@ -632,7 +764,11 @@ class _ChromeButton extends StatelessWidget {
 /// super_editor's task component with the checkbox routed through the
 /// `write.list.toggleChecked {nodeId}` command (one labelled undo step).
 class WonkyTaskComponentBuilder implements ComponentBuilder {
-  WonkyTaskComponentBuilder(this._editor, {required this.onToggle, this.editable = true}) : _inner = TaskComponentBuilder(_editor);
+  WonkyTaskComponentBuilder(
+    this._editor, {
+    required this.onToggle,
+    this.editable = true,
+  }) : _inner = TaskComponentBuilder(_editor);
 
   final Editor _editor;
   final TaskComponentBuilder _inner;
@@ -642,7 +778,10 @@ class WonkyTaskComponentBuilder implements ComponentBuilder {
   Editor get editor => _editor;
 
   @override
-  SingleColumnLayoutComponentViewModel? createViewModel(Document document, DocumentNode node) {
+  SingleColumnLayoutComponentViewModel? createViewModel(
+    Document document,
+    DocumentNode node,
+  ) {
     final model = _inner.createViewModel(document, node);
     if (model == null) return null;
     model.setComplete = editable ? (_) => onToggle(node.id) : null;
@@ -650,10 +789,19 @@ class WonkyTaskComponentBuilder implements ComponentBuilder {
   }
 
   @override
-  Widget? createComponent(SingleColumnDocumentComponentContext componentContext, SingleColumnLayoutComponentViewModel viewModel) {
+  Widget? createComponent(
+    SingleColumnDocumentComponentContext componentContext,
+    SingleColumnLayoutComponentViewModel viewModel,
+  ) {
     final component = _inner.createComponent(componentContext, viewModel);
-    if (component == null || viewModel is! TaskComponentViewModel) return component;
-    return Semantics(checked: viewModel.isComplete, label: 'checkbox', child: component);
+    if (component == null || viewModel is! TaskComponentViewModel) {
+      return component;
+    }
+    return Semantics(
+      checked: viewModel.isComplete,
+      label: 'checkbox',
+      child: component,
+    );
   }
 }
 
@@ -666,13 +814,19 @@ class WonkyEmbedComponentBuilder implements ComponentBuilder {
   final EditorTheme theme;
 
   @override
-  SingleColumnLayoutComponentViewModel? createViewModel(Document document, DocumentNode node) {
+  SingleColumnLayoutComponentViewModel? createViewModel(
+    Document document,
+    DocumentNode node,
+  ) {
     if (node is! WonkyEmbedNode) return null;
     return _EmbedViewModel(nodeId: node.id, type: node.embedType);
   }
 
   @override
-  Widget? createComponent(SingleColumnDocumentComponentContext componentContext, SingleColumnLayoutComponentViewModel viewModel) {
+  Widget? createComponent(
+    SingleColumnDocumentComponentContext componentContext,
+    SingleColumnLayoutComponentViewModel viewModel,
+  ) {
     if (viewModel is! _EmbedViewModel) return null;
     return BoxComponent(
       key: componentContext.componentKey,
@@ -683,13 +837,17 @@ class WonkyEmbedComponentBuilder implements ComponentBuilder {
           border: Border.all(color: theme.tableBorderColor),
           borderRadius: BorderRadius.circular(4),
         ),
-        child: Text('Unsupported content (${viewModel.type})', style: TextStyle(color: theme.mutedColor)),
+        child: Text(
+          'Unsupported content (${viewModel.type})',
+          style: TextStyle(color: theme.mutedColor),
+        ),
       ),
     );
   }
 }
 
-class _EmbedViewModel extends SingleColumnLayoutComponentViewModel with SelectionAwareViewModelMixin {
+class _EmbedViewModel extends SingleColumnLayoutComponentViewModel
+    with SelectionAwareViewModelMixin {
   _EmbedViewModel({
     required super.nodeId,
     required this.type,
@@ -701,9 +859,15 @@ class _EmbedViewModel extends SingleColumnLayoutComponentViewModel with Selectio
   final String type;
 
   @override
-  _EmbedViewModel copy() => _EmbedViewModel(nodeId: nodeId, type: type, padding: padding, maxWidth: maxWidth)
-    ..selection = selection
-    ..selectionColor = selectionColor;
+  _EmbedViewModel copy() =>
+      _EmbedViewModel(
+          nodeId: nodeId,
+          type: type,
+          padding: padding,
+          maxWidth: maxWidth,
+        )
+        ..selection = selection
+        ..selectionColor = selectionColor;
 }
 
 // -----------------------------------------------------------------------------
@@ -716,24 +880,36 @@ class WonkyRuleComponentBuilder implements ComponentBuilder {
   static const _inner = HorizontalRuleComponentBuilder();
 
   @override
-  SingleColumnLayoutComponentViewModel? createViewModel(Document document, DocumentNode node) =>
-      _inner.createViewModel(document, node);
+  SingleColumnLayoutComponentViewModel? createViewModel(
+    Document document,
+    DocumentNode node,
+  ) => _inner.createViewModel(document, node);
 
   @override
-  Widget? createComponent(SingleColumnDocumentComponentContext componentContext, SingleColumnLayoutComponentViewModel viewModel) {
+  Widget? createComponent(
+    SingleColumnDocumentComponentContext componentContext,
+    SingleColumnLayoutComponentViewModel viewModel,
+  ) {
     if (viewModel is! HorizontalRuleComponentViewModel) return null;
     final selection = viewModel.selection?.nodeSelection;
-    final isSelected = selection is UpstreamDownstreamNodeSelection && !selection.isCollapsed;
+    final isSelected =
+        selection is UpstreamDownstreamNodeSelection && !selection.isCollapsed;
     return Semantics(
       label: 'separator',
       child: DecoratedBox(
         position: DecorationPosition.foreground,
-        decoration: BoxDecoration(border: isSelected ? Border.all(color: theme.ringColor, width: 2) : null),
+        decoration: BoxDecoration(
+          border: isSelected
+              ? Border.all(color: theme.ringColor, width: 2)
+              : null,
+        ),
         child: HorizontalRuleComponent(
           componentKey: componentContext.componentKey,
           color: theme.ruleColor,
           thickness: theme.ruleThickness,
-          selection: selection is UpstreamDownstreamNodeSelection ? selection : null,
+          selection: selection is UpstreamDownstreamNodeSelection
+              ? selection
+              : null,
           selectionColor: Colors.transparent,
           caretColor: theme.caretColor,
         ),

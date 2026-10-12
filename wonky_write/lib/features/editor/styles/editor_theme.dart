@@ -69,17 +69,22 @@ class EditorTheme {
     final accent = dark ? const Color(0xff93c5fd) : const Color(0xff1d4ed8);
     const body = 'Inter';
     TextStyle headingStyle(double size, FontWeight weight) => TextStyle(
-          fontFamily: body,
-          fontSize: size,
-          fontWeight: weight,
-          height: 1.25,
-          color: heading,
-        );
+      fontFamily: body,
+      fontSize: size,
+      fontWeight: weight,
+      height: 1.25,
+      color: heading,
+    );
     return EditorTheme(
       brightness: brightness,
       paperColor: dark ? const Color(0xff1e1f22) : const Color(0xffffffff),
       canvasColor: dark ? const Color(0xff151618) : const Color(0xfff1f3f4),
-      body: TextStyle(fontFamily: body, fontSize: 14.67, height: 1.5, color: text),
+      body: TextStyle(
+        fontFamily: body,
+        fontSize: 14.67,
+        height: 1.5,
+        color: text,
+      ),
       paragraphSpacing: 8,
       headings: [
         headingStyle(32, FontWeight.w700),
@@ -91,7 +96,12 @@ class EditorTheme {
       ],
       headingSpacingBefore: const [24, 20, 16, 14, 12, 12],
       headingSpacingAfter: const [8, 6, 6, 4, 4, 4],
-      quote: TextStyle(fontFamily: body, fontSize: 14.67, height: 1.5, color: muted),
+      quote: TextStyle(
+        fontFamily: body,
+        fontSize: 14.67,
+        height: 1.5,
+        color: muted,
+      ),
       quoteBarColor: dark ? const Color(0xff3f4650) : const Color(0xffd0d7de),
       quoteBarWidth: 3,
       codeBlock: TextStyle(
@@ -101,17 +111,23 @@ class EditorTheme {
         height: 1.45,
         color: dark ? const Color(0xffe6edf3) : const Color(0xff24292f),
       ),
-      codeBlockBackground: dark ? const Color(0xff161b22) : const Color(0xfff6f8fa),
+      codeBlockBackground: dark
+          ? const Color(0xff161b22)
+          : const Color(0xfff6f8fa),
       codeBlockPadding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
       codeBlockRadius: 6,
       inlineCodeColor: dark ? const Color(0xffe6edf3) : const Color(0xff24292f),
-      inlineCodeBackground: dark ? const Color(0x33a3b3c3) : const Color(0x1f818b98),
+      inlineCodeBackground: dark
+          ? const Color(0x33a3b3c3)
+          : const Color(0x1f818b98),
       inlineCodeSizeRatio: 0.9,
       monoFontFamily: 'JetBrains Mono',
       linkColor: accent,
       linkUnderline: true,
       mentionColor: dark ? const Color(0xffc7d2fe) : const Color(0xff3730a3),
-      mentionBackground: dark ? const Color(0xff312e81) : const Color(0xffe0e7ff),
+      mentionBackground: dark
+          ? const Color(0xff312e81)
+          : const Color(0xffe0e7ff),
       listMarkerColor: text,
       listIndentPerLevel: 24,
       listItemSpacing: 2,
@@ -120,16 +136,28 @@ class EditorTheme {
       checkedStrike: true,
       ruleColor: dark ? const Color(0xff3f4650) : const Color(0xffd0d7de),
       ruleThickness: 1,
-      tableBorderColor: dark ? const Color(0xff3f4650) : const Color(0xffd0d7de),
-      tableHeaderBackground: dark ? const Color(0xff22272e) : const Color(0xfff3f4f6),
+      tableBorderColor: dark
+          ? const Color(0xff3f4650)
+          : const Color(0xffd0d7de),
+      tableHeaderBackground: dark
+          ? const Color(0xff22272e)
+          : const Color(0xfff3f4f6),
       mutedColor: muted,
       syntax: dark ? _darkSyntax : _lightSyntax,
       selectionColor: dark ? const Color(0x4d60a5fa) : const Color(0x401a73e8),
       caretColor: dark ? const Color(0xfff3f4f6) : const Color(0xff111111),
-      commentHighlight: dark ? const Color(0x40fbbf24) : const Color(0x59fbbc04),
-      commentHighlightActive: dark ? const Color(0x80fbbf24) : const Color(0xa6fbbc04),
-      suggestionInsert: dark ? const Color(0xff4ade80) : const Color(0xff15803d),
-      suggestionDelete: dark ? const Color(0xfff87171) : const Color(0xffb91c1c),
+      commentHighlight: dark
+          ? const Color(0x40fbbf24)
+          : const Color(0x59fbbc04),
+      commentHighlightActive: dark
+          ? const Color(0x80fbbf24)
+          : const Color(0xa6fbbc04),
+      suggestionInsert: dark
+          ? const Color(0xff4ade80)
+          : const Color(0xff15803d),
+      suggestionDelete: dark
+          ? const Color(0xfff87171)
+          : const Color(0xffb91c1c),
       findMatch: dark ? const Color(0x4dfacc15) : const Color(0x66fde047),
       findMatchActive: dark ? const Color(0x99f97316) : const Color(0xb3fb923c),
       presenceColors: dark ? _presenceDark : _presenceLight,

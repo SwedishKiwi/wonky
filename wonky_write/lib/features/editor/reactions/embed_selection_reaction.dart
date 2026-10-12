@@ -12,8 +12,14 @@ class EmbedSelectionReaction extends EditReaction {
   DocumentSelection? _previous;
 
   @override
-  void react(EditContext editorContext, RequestDispatcher requestDispatcher, List<EditEvent> changeList) {
-    final selectionEvent = changeList.whereType<SelectionChangeEvent>().lastOrNull;
+  void react(
+    EditContext editorContext,
+    RequestDispatcher requestDispatcher,
+    List<EditEvent> changeList,
+  ) {
+    final selectionEvent = changeList
+        .whereType<SelectionChangeEvent>()
+        .lastOrNull;
     final composer = editorContext.composer;
     final selection = composer.selection;
     final previous = _previous;
@@ -32,47 +38,73 @@ class EmbedSelectionReaction extends EditReaction {
       return;
     }
 
-    final wasThisEmbedSelected = previous != null &&
+    final wasThisEmbedSelected =
+        previous != null &&
         !previous.isCollapsed &&
         previous.base.nodeId == node.id &&
         previous.extent.nodeId == node.id;
     if (!wasThisEmbedSelected) {
       // Entering the embed: select it whole.
       _previous = DocumentSelection(
-        base: DocumentPosition(nodeId: node.id, nodePosition: const UpstreamDownstreamNodePosition.upstream()),
-        extent: DocumentPosition(nodeId: node.id, nodePosition: const UpstreamDownstreamNodePosition.downstream()),
+        base: DocumentPosition(
+          nodeId: node.id,
+          nodePosition: const UpstreamDownstreamNodePosition.upstream(),
+        ),
+        extent: DocumentPosition(
+          nodeId: node.id,
+          nodePosition: const UpstreamDownstreamNodePosition.downstream(),
+        ),
       );
       requestDispatcher.execute([
-        ChangeSelectionRequest(_previous, SelectionChangeType.expandSelection, SelectionReason.contentChange),
+        ChangeSelectionRequest(
+          _previous,
+          SelectionChangeType.expandSelection,
+          SelectionReason.contentChange,
+        ),
       ]);
       return;
     }
 
     // Leaving the selected embed in the arrow's direction.
     final downstream = position.affinity == TextAffinity.downstream;
-    final neighbor = downstream ? document.getNodeAfter(node) : document.getNodeBefore(node);
+    final neighbor = downstream
+        ? document.getNodeAfter(node)
+        : document.getNodeBefore(node);
     if (neighbor != null) {
       final target = DocumentPosition(
         nodeId: neighbor.id,
-        nodePosition: downstream ? neighbor.beginningPosition : neighbor.endPosition,
+        nodePosition: downstream
+            ? neighbor.beginningPosition
+            : neighbor.endPosition,
       );
       _previous = DocumentSelection.collapsed(position: target);
       requestDispatcher.execute([
-        ChangeSelectionRequest(_previous, SelectionChangeType.placeCaret, SelectionReason.contentChange),
+        ChangeSelectionRequest(
+          _previous,
+          SelectionChangeType.placeCaret,
+          SelectionReason.contentChange,
+        ),
       ]);
       return;
     }
     if (downstream && isEditable()) {
       final paragraphId = Editor.createNodeId();
       _previous = DocumentSelection.collapsed(
-        position: DocumentPosition(nodeId: paragraphId, nodePosition: const TextNodePosition(offset: 0)),
+        position: DocumentPosition(
+          nodeId: paragraphId,
+          nodePosition: const TextNodePosition(offset: 0),
+        ),
       );
       requestDispatcher.execute([
         InsertNodeAfterNodeRequest(
           existingNodeId: node.id,
           newNode: ParagraphNode(id: paragraphId, text: AttributedText('')),
         ),
-        ChangeSelectionRequest(_previous, SelectionChangeType.placeCaret, SelectionReason.contentChange),
+        ChangeSelectionRequest(
+          _previous,
+          SelectionChangeType.placeCaret,
+          SelectionReason.contentChange,
+        ),
       ]);
     }
   }

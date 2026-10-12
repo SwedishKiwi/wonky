@@ -57,10 +57,13 @@ List<EditRequestHandler> wonkyRequestHandlers({
   return [
     // Mode guard (§31): Viewing refuses every content change.
     (editor, request) =>
-        mode() == EditorMode.viewing && !isNonMutatingRequest(request) ? const NoOpEditCommand() : null,
+        mode() == EditorMode.viewing && !isNonMutatingRequest(request)
+        ? const NoOpEditCommand()
+        : null,
     // Document size limit (§3.1).
     (editor, request) {
-      if (!isTextInsertionRequest(request) || documentLength() < maxDocumentChars) {
+      if (!isTextInsertionRequest(request) ||
+          documentLength() < maxDocumentChars) {
         return null;
       }
       onMaxLengthReached();
@@ -82,21 +85,47 @@ List<EditReaction> wonkyReactions(
   bool notInCode() {
     final selection = pipeline.composer.selection;
     if (selection == null) return true;
-    return !isCodeBlockNode(pipeline.document.getNodeById(selection.extent.nodeId));
+    return !isCodeBlockNode(
+      pipeline.document.getNodeById(selection.extent.nodeId),
+    );
   }
 
-  bool markdown() => preferences().markdownShortcuts && notInCode() && mode() != EditorMode.viewing;
-  bool smart() => preferences().smartTypography && notInCode() && mode() != EditorMode.viewing;
-  bool autolink() => preferences().autolink && notInCode() && mode() != EditorMode.viewing;
+  bool markdown() =>
+      preferences().markdownShortcuts &&
+      notInCode() &&
+      mode() != EditorMode.viewing;
+  bool smart() =>
+      preferences().smartTypography &&
+      notInCode() &&
+      mode() != EditorMode.viewing;
+  bool autolink() =>
+      preferences().autolink && notInCode() && mode() != EditorMode.viewing;
 
-  EditReaction marked(EditReaction inner, String label, bool Function() enabled) =>
-      MarkedReaction(ToggleableReaction(inner, enabled), label: label, extractor: extractor);
+  EditReaction marked(
+    EditReaction inner,
+    String label,
+    bool Function() enabled,
+  ) => MarkedReaction(
+    ToggleableReaction(inner, enabled),
+    label: label,
+    extractor: extractor,
+  );
 
   return [
     WonkyTypingAttributesReaction(),
     marked(const LinkifyReaction(), 'Autolink', autolink),
-    marked(BlockPrefixConversionReaction(newEmbedId: newEmbedId), 'Autoformat', markdown),
-    marked(const MarkdownInlineUpstreamSyntaxReaction(defaultUpstreamInlineMarkdownParsers), 'Autoformat', markdown),
+    marked(
+      BlockPrefixConversionReaction(newEmbedId: newEmbedId),
+      'Autoformat',
+      markdown,
+    ),
+    marked(
+      const MarkdownInlineUpstreamSyntaxReaction(
+        defaultUpstreamInlineMarkdownParsers,
+      ),
+      'Autoformat',
+      markdown,
+    ),
     marked(const EmDashReaction(), 'Smart dash', smart),
     marked(const EllipsisReaction(), 'Smart ellipsis', smart),
     marked(const SmartQuotesReaction(), 'Smart quote', smart),

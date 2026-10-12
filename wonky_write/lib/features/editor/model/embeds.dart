@@ -8,25 +8,35 @@ import '../mapping/wonky_schema.dart';
 abstract final class EmbedNodes {
   /// A divider (`{"divider": {"id"}}`).
   static HorizontalRuleNode divider(String id) => HorizontalRuleNode(
-        id: id,
-        metadata: {
-          WonkyNodeMetadata.embed: {
-            DeltaKeys.dividerEmbed: {'id': id},
-          },
-        },
-      );
+    id: id,
+    metadata: {
+      WonkyNodeMetadata.embed: {
+        DeltaKeys.dividerEmbed: {'id': id},
+      },
+    },
+  );
 
   /// An image (`{"image": {"id", "src", "alt", "title"?}}`).
-  static ImageNode image({required String id, required String src, String alt = '', String? title}) => ImageNode(
-        id: id,
-        imageUrl: src,
-        altText: alt,
-        metadata: {
-          WonkyNodeMetadata.embed: {
-            DeltaKeys.imageEmbed: {'id': id, 'src': src, 'alt': alt, 'title': ?title},
-          },
+  static ImageNode image({
+    required String id,
+    required String src,
+    String alt = '',
+    String? title,
+  }) => ImageNode(
+    id: id,
+    imageUrl: src,
+    altText: alt,
+    metadata: {
+      WonkyNodeMetadata.embed: {
+        DeltaKeys.imageEmbed: {
+          'id': id,
+          'src': src,
+          'alt': alt,
+          'title': ?title,
         },
-      );
+      },
+    },
+  );
 
   /// A table (`{"table": {"id", "align", "rows"}}`).
   static TableBlockNode table({

@@ -98,7 +98,7 @@ class _CommandPaletteBodyState extends State<_CommandPaletteBody> {
             s.dispatcher
                 .invoke(id, source: InvocationSource.palette, context: s.navigatorContext)
                 .catchError((Object e) {
-                  s.toasts.error(l.commandFailed(c.title(context)), description: '$e');
+                  s.toasts.error(l.commandFailed(id), description: '$e');
                   return const CommandResult.failed('error');
                 }),
           );

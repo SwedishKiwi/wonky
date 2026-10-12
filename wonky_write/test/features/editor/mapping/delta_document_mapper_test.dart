@@ -14,7 +14,9 @@ void main() {
   var ids = 0;
   String newId() => 'n${ids++}';
 
-  Delta roundTrip(Delta delta) => mapper.deltaFromDocument(mapper.documentFromDelta(delta, newNodeId: newId));
+  Delta roundTrip(Delta delta) => mapper.deltaFromDocument(
+    mapper.documentFromDelta(delta, newNodeId: newId),
+  );
 
   group('Given a Wonky Delta', () {
     final cases = <String, Delta>{
@@ -52,7 +54,12 @@ void main() {
         ..insert('\n', {'code-block': 'dart'}),
       'embeds': Delta()
         ..insert({
-          'image': {'id': 'i1', 'src': 'wonky-file://f1', 'alt': 'Cat', 'title': 'T'},
+          'image': {
+            'id': 'i1',
+            'src': 'wonky-file://f1',
+            'alt': 'Cat',
+            'title': 'T',
+          },
         })
         ..insert('\n')
         ..insert({
@@ -84,58 +91,99 @@ void main() {
     };
 
     for (final MapEntry(key: name, value: delta) in cases.entries) {
-      test('with $name when mapping to a document and back then the Delta is unchanged', () {
-        expect(roundTrip(delta), delta);
-      });
+      test(
+        'with $name when mapping to a document and back then the Delta is unchanged',
+        () {
+          expect(roundTrip(delta), delta);
+        },
+      );
     }
 
-    test('with a code block when mapping then one code node holds all lines and the language', () {
-      final document = mapper.documentFromDelta(cases['a multi-line code block with language']!);
+    test(
+      'with a code block when mapping then one code node holds all lines and the language',
+      () {
+        final document = mapper.documentFromDelta(
+          cases['a multi-line code block with language']!,
+        );
 
-      final node = document.single as ParagraphNode;
-      expect(node.getMetadataValue(NodeMetadata.blockType), codeAttribution);
-      expect(node.getMetadataValue(WonkyNodeMetadata.codeLanguage), 'dart');
-      expect(node.text.toPlainText(), 'void main() {\n  print(1);\n\n}');
-    });
+        final node = document.single as ParagraphNode;
+        expect(node.getMetadataValue(NodeMetadata.blockType), codeAttribution);
+        expect(node.getMetadataValue(WonkyNodeMetadata.codeLanguage), 'dart');
+        expect(node.text.toPlainText(), 'void main() {\n  print(1);\n\n}');
+      },
+    );
 
     test('with embeds when mapping then the embed ids become node ids', () {
       final document = mapper.documentFromDelta(cases['embeds']!);
 
       expect(document.map((n) => n.id), ['i1', 'd1', 't1']);
-      expect(document.first, isA<ImageNode>().having((n) => n.altText, 'alt', 'Cat'));
-      expect(document.last, isA<TableBlockNode>().having((n) => n.rowCount, 'rows', 2));
-    });
-
-    test('with overlays when mapping then they become comment and suggestion attributions', () {
-      final document = mapper.documentFromDelta(cases['overlays on text and line ends']!);
-
-      final heading = document.first as ParagraphNode;
-      expect(heading.text.getAllAttributionsAt(0), contains(const CommentAttribution('th1')));
-      expect(heading.getMetadataValue(WonkyNodeMetadata.lineAttributes), {'cmt_th1': true});
-      final second = document.last as ParagraphNode;
       expect(
-        second.text.getAllAttributionsAt(0).whereType<SuggestionAttribution>().single.type,
-        SuggestionType.insertion,
+        document.first,
+        isA<ImageNode>().having((n) => n.altText, 'alt', 'Cat'),
+      );
+      expect(
+        document.last,
+        isA<TableBlockNode>().having((n) => n.rowCount, 'rows', 2),
       );
     });
 
-    test('that is empty when mapping then the document has one empty paragraph', () {
-      final document = mapper.documentFromDelta(Delta());
+    test(
+      'with overlays when mapping then they become comment and suggestion attributions',
+      () {
+        final document = mapper.documentFromDelta(
+          cases['overlays on text and line ends']!,
+        );
 
-      expect(document.single, isA<ParagraphNode>().having((n) => n.text.length, 'length', 0));
-      expect(mapper.deltaFromDocument(document), Delta()..insert('\n'));
-    });
+        final heading = document.first as ParagraphNode;
+        expect(
+          heading.text.getAllAttributionsAt(0),
+          contains(const CommentAttribution('th1')),
+        );
+        expect(heading.getMetadataValue(WonkyNodeMetadata.lineAttributes), {
+          'cmt_th1': true,
+        });
+        final second = document.last as ParagraphNode;
+        expect(
+          second.text
+              .getAllAttributionsAt(0)
+              .whereType<SuggestionAttribution>()
+              .single
+              .type,
+          SuggestionType.insertion,
+        );
+      },
+    );
+
+    test(
+      'that is empty when mapping then the document has one empty paragraph',
+      () {
+        final document = mapper.documentFromDelta(Delta());
+
+        expect(
+          document.single,
+          isA<ParagraphNode>().having((n) => n.text.length, 'length', 0),
+        );
+        expect(mapper.deltaFromDocument(document), Delta()..insert('\n'));
+      },
+    );
   });
 
   group('Given random valid documents', () {
     for (final seed in propertySeeds()) {
-      test('when round-tripping through the mapper (seed $seed) then every Delta is unchanged', () {
-        final gen = DeltaGen(Random(seed));
-        for (var run = 0; run < propertyRuns(); run += 1) {
-          final delta = gen.document();
-          expect(roundTrip(delta), delta, reason: 'seed $seed run $run: $delta');
-        }
-      });
+      test(
+        'when round-tripping through the mapper (seed $seed) then every Delta is unchanged',
+        () {
+          final gen = DeltaGen(Random(seed));
+          for (var run = 0; run < propertyRuns(); run += 1) {
+            final delta = gen.document();
+            expect(
+              roundTrip(delta),
+              delta,
+              reason: 'seed $seed run $run: $delta',
+            );
+          }
+        },
+      );
     }
   });
 }

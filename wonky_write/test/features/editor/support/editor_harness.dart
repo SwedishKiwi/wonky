@@ -31,7 +31,10 @@ class EditorHarness {
   }
 
   /// Parses `[` `]` markers in [text] (one line) as the selection.
-  factory EditorHarness.text(String text, {EditorMode mode = EditorMode.editing}) {
+  factory EditorHarness.text(
+    String text, {
+    EditorMode mode = EditorMode.editing,
+  }) {
     final start = text.indexOf('[');
     final end = text.indexOf(']');
     final plain = text.replaceAll('[', '').replaceAll(']', '');
@@ -54,7 +57,8 @@ class EditorHarness {
 
   void advance(Duration duration) => clockTime = clockTime.add(duration);
 
-  void select(int base, [int? extent]) => controller.select(DeltaSelection(base, extent ?? base));
+  void select(int base, [int? extent]) =>
+      controller.select(DeltaSelection(base, extent ?? base));
 
   /// Types [text] one character at a time at the caret (like the keyboard).
   void type(String text) {
@@ -72,10 +76,15 @@ class EditorHarness {
   void delete() => editor.execute([const DeleteDownstreamRequest()]);
 
   /// Undoes [change] like the undo handler: applies its inverse locally.
-  void undo(LocalDeltaChange change) =>
-      controller.applyLocal(change.inverse, label: 'Undo', source: LocalChangeSource.undo, selectionAfter: change.selectionBefore);
+  void undo(LocalDeltaChange change) => controller.applyLocal(
+    change.inverse,
+    label: 'Undo',
+    source: LocalChangeSource.undo,
+    selectionAfter: change.selectionBefore,
+  );
 
-  String get plainText => delta.operations.map((op) => op.data is String ? op.data : '￼').join();
+  String get plainText =>
+      delta.operations.map((op) => op.data is String ? op.data : '￼').join();
 
   void dispose() => controller.dispose();
 }

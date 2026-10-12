@@ -54,7 +54,9 @@ class DeltaSelection {
     final newStart = change.transformPosition(start);
     final newEnd = change.transformPosition(end, force: false);
     final clampedEnd = newEnd < newStart ? newStart : newEnd;
-    return isForward ? DeltaSelection(newStart, clampedEnd) : DeltaSelection(clampedEnd, newStart);
+    return isForward
+        ? DeltaSelection(newStart, clampedEnd)
+        : DeltaSelection(clampedEnd, newStart);
   }
 
   Map<String, Object?> toJson() => {'anchor': base, 'head': extent};
@@ -68,7 +70,8 @@ class DeltaSelection {
   }
 
   @override
-  bool operator ==(Object other) => other is DeltaSelection && other.base == base && other.extent == extent;
+  bool operator ==(Object other) =>
+      other is DeltaSelection && other.base == base && other.extent == extent;
 
   @override
   int get hashCode => Object.hash(base, extent);
@@ -91,8 +94,8 @@ class DeltaApplier {
     this.parser = const WonkyDeltaParser(),
     String Function()? newNodeId,
     bool? verifyInvariants,
-  })  : _newNodeId = newNodeId ?? Editor.createNodeId,
-        verifyInvariants = verifyInvariants ?? kDebugMode;
+  }) : _newNodeId = newNodeId ?? Editor.createNodeId,
+       verifyInvariants = verifyInvariants ?? kDebugMode;
 
   /// Tag of patches made by this applier (see [ApplyDocumentPatchRequest.tag]).
   static const patchTag = 'wonky.deltaApplier';
@@ -124,11 +127,15 @@ class DeltaApplier {
       if (!op.isInsert) baseLength += op.length!;
     }
     if (baseLength > docLength) {
-      throw DeltaApplyError('Change base length $baseLength exceeds the document length $docLength');
+      throw DeltaApplyError(
+        'Change base length $baseLength exceeds the document length $docLength',
+      );
     }
 
     final selection = _composer.selection;
-    final selectionBefore = selection == null ? null : _toDeltaSelection(selection);
+    final selectionBefore = selection == null
+        ? null
+        : _toDeltaSelection(selection);
     final composing = _composer.composingRegion.value;
     final composingBefore = composing == null ? null : _toDeltaRange(composing);
 
@@ -153,11 +160,18 @@ class DeltaApplier {
       final sliceStart = mirror.startOfIndex(first);
       final sliceEnd = mirror.startOfIndex(last + 1);
       final isDocumentEnd = last == mirror.nodeCount - 1;
-      final subChange = _restrict(change, sliceStart, sliceEnd, includeInsertsAtEnd: isDocumentEnd);
+      final subChange = _restrict(
+        change,
+        sliceStart,
+        sliceEnd,
+        includeInsertsAtEnd: isDocumentEnd,
+      );
       final oldSlice = mirror.entriesDelta(first, last + 1);
       final newSlice = oldSlice.compose(subChange);
 
-      final oldEntries = [for (var i = first; i <= last; i += 1) mirror.entryAt(i)];
+      final oldEntries = [
+        for (var i = first; i <= last; i += 1) mirror.entryAt(i),
+      ];
       final regionIds = {for (final e in oldEntries) e.nodeId};
       if (regionIds.any(caretNodeIds.contains)) {
         touchesCaretNode = true;
@@ -170,7 +184,11 @@ class DeltaApplier {
         return index < 0 || regionIds.contains(id);
       }
 
-      var newNodes = parser.parse(newSlice, newNodeId: _newNodeId, claimId: claim);
+      var newNodes = parser.parse(
+        newSlice,
+        newNodeId: _newNodeId,
+        claimId: claim,
+      );
       newNodes = _assignIds(oldEntries, newNodes, subChange, claimed);
 
       final newEntries = <MirrorEntry>[];
@@ -179,7 +197,9 @@ class DeltaApplier {
         final node = newNodes[k];
         final entry = mirror.serializeEntry(node);
         final old = oldById[node.id];
-        if (old != null && old.node.runtimeType == node.runtimeType && nodeDeltasEqual(old.delta, entry.delta)) {
+        if (old != null &&
+            old.node.runtimeType == node.runtimeType &&
+            nodeDeltasEqual(old.delta, entry.delta)) {
           newEntries.add(old);
         } else {
           newEntries.add(entry);
@@ -192,8 +212,14 @@ class DeltaApplier {
       // relative order; if they don't (an embed moved within the region),
       // every node of the region is deleted and re-inserted.
       final newIds = {for (final e in newEntries) e.nodeId};
-      final keptOld = [for (final e in oldEntries) if (newIds.contains(e.nodeId)) e.nodeId];
-      final keptNew = [for (final e in newEntries) if (oldById.containsKey(e.nodeId)) e.nodeId];
+      final keptOld = [
+        for (final e in oldEntries)
+          if (newIds.contains(e.nodeId)) e.nodeId,
+      ];
+      final keptNew = [
+        for (final e in newEntries)
+          if (oldById.containsKey(e.nodeId)) e.nodeId,
+      ];
       final keepInPlace = listEquals(keptOld, keptNew);
       for (final old in oldEntries) {
         if (!keepInPlace || !newIds.contains(old.nodeId)) {
@@ -218,7 +244,8 @@ class DeltaApplier {
       mirror.replaceRange(from, to, entries);
     }
 
-    final transformedSelection = selectionAfter ?? selectionBefore?.transform(change);
+    final transformedSelection =
+        selectionAfter ?? selectionBefore?.transform(change);
     DocumentSelection? newSelection;
     if (transformedSelection != null) {
       newSelection = mirror.selectionAt(
@@ -233,7 +260,10 @@ class DeltaApplier {
       if (_intersects(change, composingBefore.$1, composingBefore.$2)) {
         clearComposing = true;
       } else {
-        final start = change.transformPosition(composingBefore.$1, force: false);
+        final start = change.transformPosition(
+          composingBefore.$1,
+          force: false,
+        );
         final end = change.transformPosition(composingBefore.$2, force: false);
         final startPosition = mirror.positionAt(start);
         final endPosition = mirror.positionAt(end);
@@ -246,7 +276,9 @@ class DeltaApplier {
     // The patch must be applied in the same order as computed: per region
     // (last region first). Operations within a region: deletes, then
     // replacements and inserts in ascending order.
-    if (operations.isNotEmpty || newSelection != selection || composingBefore != null) {
+    if (operations.isNotEmpty ||
+        newSelection != selection ||
+        composingBefore != null) {
       editor.execute([
         ApplyDocumentPatchRequest(
           operations: operations,
@@ -255,7 +287,9 @@ class DeltaApplier {
           updateComposingRegion: composingBefore != null,
           composingRegionAfter: clearComposing ? null : newComposing,
           resyncIme: touchesCaretNode || clearComposing,
-          tag: origin == AppliedChangeOrigin.remote ? patchTag : '$patchTag.local',
+          tag: origin == AppliedChangeOrigin.remote
+              ? patchTag
+              : '$patchTag.local',
         ),
       ]);
     }
@@ -273,18 +307,26 @@ class DeltaApplier {
       selection.extent.clamp(0, mirror.length - 1),
     );
     editor.execute([
-      ChangeSelectionRequest(documentSelection, SelectionChangeType.alteredContent, SelectionReason.contentChange),
+      ChangeSelectionRequest(
+        documentSelection,
+        SelectionChangeType.alteredContent,
+        SelectionReason.contentChange,
+      ),
     ]);
   }
 
   void _verify() {
     final nodes = _document.toList();
     if (nodes.length != mirror.nodeCount) {
-      throw DeltaApplyError('Mirror has ${mirror.nodeCount} nodes, document has ${nodes.length}');
+      throw DeltaApplyError(
+        'Mirror has ${mirror.nodeCount} nodes, document has ${nodes.length}',
+      );
     }
     for (var i = 0; i < nodes.length; i += 1) {
       if (!identical(nodes[i], mirror.entryAt(i).node)) {
-        throw DeltaApplyError('Mirror entry $i (${mirror.entryAt(i).nodeId}) differs from node ${nodes[i].id}');
+        throw DeltaApplyError(
+          'Mirror entry $i (${mirror.entryAt(i).nodeId}) differs from node ${nodes[i].id}',
+        );
       }
     }
   }
@@ -342,10 +384,15 @@ class DeltaApplier {
       } else {
         first = mirror.indexAtOffset(offset);
         final endOffset = op.isDelete ? offset + length : offset + length - 1;
-        last = mirror.indexAtOffset(endOffset >= docLength ? docLength - 1 : endOffset);
+        last = mirror.indexAtOffset(
+          endOffset >= docLength ? docLength - 1 : endOffset,
+        );
         offset += length;
       }
-      raw.add((first > 0 ? first - 1 : 0, last + 1 < count ? last + 1 : count - 1));
+      raw.add((
+        first > 0 ? first - 1 : 0,
+        last + 1 < count ? last + 1 : count - 1,
+      ));
     }
     if (raw.isEmpty) {
       return const [];
@@ -355,7 +402,10 @@ class DeltaApplier {
     for (final range in raw.skip(1)) {
       final previous = merged.last;
       if (range.$1 <= previous.$2 + 1) {
-        merged[merged.length - 1] = (previous.$1, range.$2 > previous.$2 ? range.$2 : previous.$2);
+        merged[merged.length - 1] = (
+          previous.$1,
+          range.$2 > previous.$2 ? range.$2 : previous.$2,
+        );
       } else {
         merged.add(range);
       }
@@ -365,12 +415,18 @@ class DeltaApplier {
 
   /// The part of [change] that applies to the old document range
   /// `[from, to)`, expressed relative to `from`.
-  static Delta _restrict(Delta change, int from, int to, {required bool includeInsertsAtEnd}) {
+  static Delta _restrict(
+    Delta change,
+    int from,
+    int to, {
+    required bool includeInsertsAtEnd,
+  }) {
     final result = Delta();
     var offset = 0;
     for (final op in change.operations) {
       if (op.isInsert) {
-        if (offset >= from && (offset < to || (offset == to && includeInsertsAtEnd))) {
+        if (offset >= from &&
+            (offset < to || (offset == to && includeInsertsAtEnd))) {
           result.push(op);
         }
         continue;
@@ -409,7 +465,10 @@ class DeltaApplier {
     var offset = 0;
     for (final node in newNodes) {
       starts.add(offset);
-      offset += mirror.serializer.serializeNode(node).operations.fold<int>(0, (sum, op) => sum + op.length!);
+      offset += mirror.serializer
+          .serializeNode(node)
+          .operations
+          .fold<int>(0, (sum, op) => sum + op.length!);
     }
 
     final assigned = List<String?>.filled(newNodes.length, null);

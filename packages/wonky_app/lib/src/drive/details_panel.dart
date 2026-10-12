@@ -50,7 +50,7 @@ class _DriveDetailsPanelState extends State<DriveDetailsPanel> {
       final v = await widget.services.drive.updateDescription(item.uuid, text.isEmpty ? null : text);
       widget.services.emitDriveChange(DriveChange(kind: DriveChangeKind.updated, itemUuid: v.uuid, item: v));
     } catch (e) {
-      widget.services.toasts.error(WonkyAppLocalizations.of(context).errorGeneric, description: errorMessage(e));
+      widget.services.toasts.error(widget.services.l10n?.errorGeneric ?? 'Error', description: errorMessage(e));
     }
   }
 

@@ -43,9 +43,10 @@ abstract final class DeltaOps {
   }
 
   /// A change that formats `[start, start + length)` with [attributes].
-  static Delta format(int start, int length, Map<String, dynamic> attributes) => Delta()
-    ..retain(start)
-    ..retain(length, attributes);
+  static Delta format(int start, int length, Map<String, dynamic> attributes) =>
+      Delta()
+        ..retain(start)
+        ..retain(length, attributes);
 
   /// A change that deletes `[start, start + length)`.
   static Delta deleteRange(int start, int length) => Delta()

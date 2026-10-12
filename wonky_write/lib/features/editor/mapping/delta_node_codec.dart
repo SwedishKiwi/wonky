@@ -39,9 +39,14 @@ class WonkyDeltaSerializer implements DeltaSerializer {
       // representation. The schema guard removes such nodes.
       return true;
     }
-    final embedAttributes = _mapOf(node.getMetadataValue(WonkyNodeMetadata.embedAttributes));
+    final embedAttributes = _mapOf(
+      node.getMetadataValue(WonkyNodeMetadata.embedAttributes),
+    );
     deltas.insert(embed, embedAttributes);
-    deltas.insert('\n', _mapOf(node.getMetadataValue(WonkyNodeMetadata.lineAttributes)));
+    deltas.insert(
+      '\n',
+      _mapOf(node.getMetadataValue(WonkyNodeMetadata.lineAttributes)),
+    );
     return true;
   }
 
@@ -55,7 +60,9 @@ class WonkyDeltaSerializer implements DeltaSerializer {
   void _serializeTextNode(TextNode node, Delta out) {
     final isCode = isCodeBlockNode(node);
     final blockAttributes = blockAttributesOf(node);
-    final lineAttributes = _mapOf(node.getMetadataValue(WonkyNodeMetadata.lineAttributes));
+    final lineAttributes = _mapOf(
+      node.getMetadataValue(WonkyNodeMetadata.lineAttributes),
+    );
     final text = node.text;
     final plainText = text.toPlainText(includePlaceholders: false);
 
@@ -64,7 +71,9 @@ class WonkyDeltaSerializer implements DeltaSerializer {
         final spanText = plainText.substring(span.start, span.end + 1);
         if (!isCode) {
           out.insert(
-            spanText.contains('\n') ? spanText.replaceAll('\n', DeltaKeys.softBreak) : spanText,
+            spanText.contains('\n')
+                ? spanText.replaceAll('\n', DeltaKeys.softBreak)
+                : spanText,
             AttributionMapping.toAttributes(span.attributions),
           );
           continue;
@@ -81,7 +90,10 @@ class WonkyDeltaSerializer implements DeltaSerializer {
           if (newline < 0) {
             break;
           }
-          out.insert('\n', _merge(blockAttributes, AttributionMapping.overlaysOf(attributes)));
+          out.insert(
+            '\n',
+            _merge(blockAttributes, AttributionMapping.overlaysOf(attributes)),
+          );
           start = newline + 1;
         }
       }
@@ -94,7 +106,9 @@ class WonkyDeltaSerializer implements DeltaSerializer {
   static Map<String, dynamic>? blockAttributesOf(DocumentNode node) {
     if (node is ListItemNode) {
       return {
-        DeltaKeys.list: node.type == ListItemType.ordered ? 'ordered' : 'bullet',
+        DeltaKeys.list: node.type == ListItemType.ordered
+            ? 'ordered'
+            : 'bullet',
         if (node.indent > 0) DeltaKeys.indent: node.indent,
       };
     }
@@ -127,7 +141,9 @@ class WonkyDeltaSerializer implements DeltaSerializer {
     final storedMap = stored is Map<String, dynamic> ? stored : null;
     if (node is ImageNode) {
       final image = storedMap?[DeltaKeys.imageEmbed];
-      if (image is Map && image['src'] == node.imageUrl && (image['alt'] ?? '') == node.altText) {
+      if (image is Map &&
+          image['src'] == node.imageUrl &&
+          (image['alt'] ?? '') == node.altText) {
         return storedMap;
       }
       return {
@@ -148,7 +164,10 @@ class WonkyDeltaSerializer implements DeltaSerializer {
     if (node is TableBlockNode) {
       return storedMap ??
           {
-            DeltaKeys.tableEmbed: {'id': node.id, ...TableDeltaSerializer.defaultTableEmbed(node)},
+            DeltaKeys.tableEmbed: {
+              'id': node.id,
+              ...TableDeltaSerializer.defaultTableEmbed(node),
+            },
           };
     }
     return storedMap;
@@ -161,7 +180,10 @@ class WonkyDeltaSerializer implements DeltaSerializer {
     return null;
   }
 
-  static Map<String, dynamic>? _merge(Map<String, dynamic>? a, Map<String, dynamic>? b) {
+  static Map<String, dynamic>? _merge(
+    Map<String, dynamic>? a,
+    Map<String, dynamic>? b,
+  ) {
     if (a == null || a.isEmpty) return b == null || b.isEmpty ? null : b;
     if (b == null || b.isEmpty) return a;
     return {...a, ...b};
@@ -198,7 +220,9 @@ List<DeltaLine> splitDeltaIntoLines(Delta document) {
   var segments = <Operation>[];
   for (final op in document.operations) {
     if (!op.isInsert) {
-      throw ArgumentError('Expected a document Delta (inserts only), found $op');
+      throw ArgumentError(
+        'Expected a document Delta (inserts only), found $op',
+      );
     }
     final data = op.data;
     if (data is! String) {
@@ -215,7 +239,9 @@ List<DeltaLine> splitDeltaIntoLines(Delta document) {
         break;
       }
       if (newline > start) {
-        segments.add(Operation.insert(data.substring(start, newline), op.attributes));
+        segments.add(
+          Operation.insert(data.substring(start, newline), op.attributes),
+        );
       }
       lines.add(DeltaLine(segments, op.attributes));
       segments = <Operation>[];
@@ -242,7 +268,11 @@ class WonkyDeltaParser {
     required String Function() newNodeId,
     bool Function(String id)? claimId,
   }) {
-    return parseLines(splitDeltaIntoLines(document), newNodeId: newNodeId, claimId: claimId);
+    return parseLines(
+      splitDeltaIntoLines(document),
+      newNodeId: newNodeId,
+      claimId: claimId,
+    );
   }
 
   /// Parses [lines] into nodes, merging consecutive code lines of the same
@@ -265,10 +295,14 @@ class WonkyDeltaParser {
       final language = line.codeLanguage;
       if (language != null) {
         var j = i + 1;
-        while (j < lines.length && !lines[j].isEmbedLine && lines[j].codeLanguage == language) {
+        while (j < lines.length &&
+            !lines[j].isEmbedLine &&
+            lines[j].codeLanguage == language) {
           j += 1;
         }
-        nodes.add(_codeNode(lines.sublist(i, j), language, _takeId(newNodeId, ids)));
+        nodes.add(
+          _codeNode(lines.sublist(i, j), language, _takeId(newNodeId, ids)),
+        );
         i = j;
         continue;
       }
@@ -296,7 +330,9 @@ class WonkyDeltaParser {
         continue;
       }
       builder.append(
-        data.contains(DeltaKeys.softBreak) ? data.replaceAll(DeltaKeys.softBreak, '\n') : data,
+        data.contains(DeltaKeys.softBreak)
+            ? data.replaceAll(DeltaKeys.softBreak, '\n')
+            : data,
         AttributionMapping.fromAttributes(segment.attributes),
       );
     }
@@ -309,18 +345,28 @@ class WonkyDeltaParser {
 
     final list = end?[DeltaKeys.list];
     final rawIndent = end?[DeltaKeys.indent];
-    final indent = rawIndent is int ? rawIndent.clamp(0, DeltaKeys.maxIndent) : 0;
+    final indent = rawIndent is int
+        ? rawIndent.clamp(0, DeltaKeys.maxIndent)
+        : 0;
     if (list == 'bullet' || list == 'ordered') {
       return ListItemNode(
         id: id,
-        itemType: list == 'ordered' ? ListItemType.ordered : ListItemType.unordered,
+        itemType: list == 'ordered'
+            ? ListItemType.ordered
+            : ListItemType.unordered,
         text: text,
         indent: indent,
         metadata: metadata,
       );
     }
     if (list == 'checked' || list == 'unchecked') {
-      return TaskNode(id: id, text: text, isComplete: list == 'checked', indent: indent, metadata: metadata);
+      return TaskNode(
+        id: id,
+        text: text,
+        isComplete: list == 'checked',
+        indent: indent,
+        metadata: metadata,
+      );
     }
 
     final header = end?[DeltaKeys.header];
@@ -330,7 +376,11 @@ class WonkyDeltaParser {
     } else if (end?[DeltaKeys.blockquote] == true) {
       blockType = blockquoteAttribution;
     }
-    return ParagraphNode(id: id, text: text, metadata: {...metadata, NodeMetadata.blockType: blockType});
+    return ParagraphNode(
+      id: id,
+      text: text,
+      metadata: {...metadata, NodeMetadata.blockType: blockType},
+    );
   }
 
   DocumentNode _codeNode(List<DeltaLine> lines, String language, String id) {
@@ -340,11 +390,20 @@ class WonkyDeltaParser {
       for (final segment in line.segments) {
         final data = segment.data;
         if (data is String) {
-          builder.append(data, AttributionMapping.fromAttributes(segment.attributes));
+          builder.append(
+            data,
+            AttributionMapping.fromAttributes(segment.attributes),
+          );
         }
       }
       if (l < lines.length - 1) {
-        builder.append('\n', AttributionMapping.fromAttributes(line.endAttributes, overlaysOnly: true));
+        builder.append(
+          '\n',
+          AttributionMapping.fromAttributes(
+            line.endAttributes,
+            overlaysOnly: true,
+          ),
+        );
       }
     }
     final overlays = AttributionMapping.overlaysOf(lines.last.endAttributes);
@@ -359,7 +418,11 @@ class WonkyDeltaParser {
     );
   }
 
-  DocumentNode _embedNode(DeltaLine line, String Function() newNodeId, bool Function(String id) ids) {
+  DocumentNode _embedNode(
+    DeltaLine line,
+    String Function() newNodeId,
+    bool Function(String id) ids,
+  ) {
     final segment = line.segments.single;
     final embed = (segment.data as Map).cast<String, dynamic>();
     final metadata = <String, dynamic>{
@@ -391,7 +454,11 @@ class WonkyDeltaParser {
       case DeltaKeys.dividerEmbed:
         return HorizontalRuleNode(id: id, metadata: metadata);
       case DeltaKeys.tableEmbed when value is Map:
-        return TableBlockNode(id: id, cells: tableCellsFromEmbed(value), metadata: metadata);
+        return TableBlockNode(
+          id: id,
+          cells: tableCellsFromEmbed(value),
+          metadata: metadata,
+        );
       default:
         return WonkyEmbedNode(id: id, metadata: metadata);
     }
@@ -417,10 +484,15 @@ class WonkyDeltaParser {
           for (var c = 0; c < columns; c += 1)
             TextNode(
               id: Editor.createNodeId(),
-              text: _parseCell(rows[r] is List && c < (rows[r] as List).length ? '${(rows[r] as List)[c] ?? ''}' : ''),
+              text: _parseCell(
+                rows[r] is List && c < (rows[r] as List).length
+                    ? '${(rows[r] as List)[c] ?? ''}'
+                    : '',
+              ),
               metadata: {
                 if (r == 0) NodeMetadata.blockType: tableHeaderAttribution,
-                if (c < align.length && align[c] is String) TextNodeMetadata.textAlign: align[c],
+                if (c < align.length && align[c] is String)
+                  TextNodeMetadata.textAlign: align[c],
               },
             ),
         ],
@@ -475,8 +547,20 @@ class _AttributedTextBuilder {
 
   void _addSpan(Attribution attribution, int start, int end) {
     _markers
-      ..add(SpanMarker(attribution: attribution, offset: start, markerType: SpanMarkerType.start))
-      ..add(SpanMarker(attribution: attribution, offset: end, markerType: SpanMarkerType.end));
+      ..add(
+        SpanMarker(
+          attribution: attribution,
+          offset: start,
+          markerType: SpanMarkerType.start,
+        ),
+      )
+      ..add(
+        SpanMarker(
+          attribution: attribution,
+          offset: end,
+          markerType: SpanMarkerType.end,
+        ),
+      );
   }
 
   AttributedText build() {
@@ -484,9 +568,13 @@ class _AttributedTextBuilder {
       _addSpan(entry.key, entry.value.$1, entry.value.$2);
     }
     _open.clear();
-    return AttributedText(_buffer.toString(), AttributedSpans(attributions: _markers));
+    return AttributedText(
+      _buffer.toString(),
+      AttributedSpans(attributions: _markers),
+    );
   }
 }
 
 /// Whether two serialized node Deltas are equal (deep equality of ops).
-bool nodeDeltasEqual(Delta a, Delta b) => _deepEquality.equals(a.toJson(), b.toJson());
+bool nodeDeltasEqual(Delta a, Delta b) =>
+    _deepEquality.equals(a.toJson(), b.toJson());

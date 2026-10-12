@@ -11,7 +11,9 @@ import '../mapping/wonky_schema.dart';
 class WonkySchemaGuardReaction extends EditReaction {
   const WonkySchemaGuardReaction();
 
-  static final _controlCharacters = RegExp('[\u0000-\u0008\u000B\u000C\u000E-\u001F\u007F]');
+  static final _controlCharacters = RegExp(
+    '[\u0000-\u0008\u000B\u000C\u000E-\u001F\u007F]',
+  );
   static final _tab = RegExp('\t');
 
   static final _allowedBlockTypes = <Attribution>{
@@ -27,16 +29,28 @@ class WonkySchemaGuardReaction extends EditReaction {
   };
 
   @override
-  void modifyContent(EditContext editorContext, RequestDispatcher requestDispatcher, List<EditEvent> changeList) {
+  void modifyContent(
+    EditContext editorContext,
+    RequestDispatcher requestDispatcher,
+    List<EditEvent> changeList,
+  ) {
     _guard(editorContext, requestDispatcher, changeList);
   }
 
   @override
-  void react(EditContext editorContext, RequestDispatcher requestDispatcher, List<EditEvent> changeList) {
+  void react(
+    EditContext editorContext,
+    RequestDispatcher requestDispatcher,
+    List<EditEvent> changeList,
+  ) {
     _guard(editorContext, requestDispatcher, changeList);
   }
 
-  void _guard(EditContext editContext, RequestDispatcher requestDispatcher, List<EditEvent> changeList) {
+  void _guard(
+    EditContext editContext,
+    RequestDispatcher requestDispatcher,
+    List<EditEvent> changeList,
+  ) {
     final touched = <String>{};
     for (final event in changeList) {
       if (event is! DocumentEdit) continue;
@@ -63,7 +77,9 @@ class WonkySchemaGuardReaction extends EditReaction {
       if (node is TextNode) {
         final fixed = fixTextNode(node, document.getNodeAt(index - 1));
         if (!identical(fixed, node)) {
-          requests.add(ReplaceNodeRequest(existingNodeId: node.id, newNode: fixed));
+          requests.add(
+            ReplaceNodeRequest(existingNodeId: node.id, newNode: fixed),
+          );
         }
       } else if (node is! ImageNode &&
           node is! HorizontalRuleNode &&
@@ -88,9 +104,14 @@ class WonkySchemaGuardReaction extends EditReaction {
       final node = document.getNodeById(nodeId);
       if (node is ListItemNode || node is TaskNode) {
         final index = document.getNodeIndexById(nodeId);
-        final fixed = fixTextNode(node as TextNode, document.getNodeAt(index - 1));
+        final fixed = fixTextNode(
+          node as TextNode,
+          document.getNodeAt(index - 1),
+        );
         if (!identical(fixed, node)) {
-          requests.add(ReplaceNodeRequest(existingNodeId: node.id, newNode: fixed));
+          requests.add(
+            ReplaceNodeRequest(existingNodeId: node.id, newNode: fixed),
+          );
         }
       }
     }
@@ -110,21 +131,34 @@ class WonkySchemaGuardReaction extends EditReaction {
     ]);
   }
 
-  DocumentSelection _clampSelection(Document document, DocumentSelection selection, List<EditRequest> requests) {
+  DocumentSelection _clampSelection(
+    Document document,
+    DocumentSelection selection,
+    List<EditRequest> requests,
+  ) {
     DocumentPosition clamp(DocumentPosition position) {
       for (final request in requests) {
-        if (request is ReplaceNodeRequest && request.existingNodeId == position.nodeId) {
+        if (request is ReplaceNodeRequest &&
+            request.existingNodeId == position.nodeId) {
           final node = request.newNode;
           final nodePosition = position.nodePosition;
-          if (node is TextNode && nodePosition is TextNodePosition && nodePosition.offset > node.text.length) {
-            return DocumentPosition(nodeId: node.id, nodePosition: TextNodePosition(offset: node.text.length));
+          if (node is TextNode &&
+              nodePosition is TextNodePosition &&
+              nodePosition.offset > node.text.length) {
+            return DocumentPosition(
+              nodeId: node.id,
+              nodePosition: TextNodePosition(offset: node.text.length),
+            );
           }
         }
       }
       return position;
     }
 
-    return DocumentSelection(base: clamp(selection.base), extent: clamp(selection.extent));
+    return DocumentSelection(
+      base: clamp(selection.base),
+      extent: clamp(selection.extent),
+    );
   }
 
   /// Returns [node] fixed to the schema, or [node] itself when it is valid.
@@ -134,9 +168,13 @@ class WonkySchemaGuardReaction extends EditReaction {
     // Block type and paragraph indentation.
     if (result is ParagraphNode) {
       final blockType = result.getMetadataValue(NodeMetadata.blockType);
-      if (blockType is! Attribution || !_allowedBlockTypes.contains(blockType)) {
+      if (blockType is! Attribution ||
+          !_allowedBlockTypes.contains(blockType)) {
         result = result.copyParagraphWith(
-          metadata: {...result.metadata, NodeMetadata.blockType: paragraphAttribution},
+          metadata: {
+            ...result.metadata,
+            NodeMetadata.blockType: paragraphAttribution,
+          },
         );
       }
       if (result.indent != 0) {
@@ -146,7 +184,9 @@ class WonkySchemaGuardReaction extends EditReaction {
 
     // List indentation: at most 8, at most one deeper than the previous item.
     if (result is ListItemNode || result is TaskNode) {
-      final indent = result is ListItemNode ? result.indent : (result as TaskNode).indent;
+      final indent = result is ListItemNode
+          ? result.indent
+          : (result as TaskNode).indent;
       final previousIndent = previous is ListItemNode
           ? previous.indent
           : previous is TaskNode
@@ -168,8 +208,13 @@ class WonkySchemaGuardReaction extends EditReaction {
     final keptMarkers = <SpanMarker>[];
     for (final marker in markers) {
       final attribution = marker.attribution;
-      final allowed = AttributionMapping.isSchemaAttribution(attribution) || !_isDisallowedFormatting(attribution);
-      final allowedInCode = !isCode || AttributionMapping.isOverlayAttribution(attribution) || !_isInline(attribution);
+      final allowed =
+          AttributionMapping.isSchemaAttribution(attribution) ||
+          !_isDisallowedFormatting(attribution);
+      final allowedInCode =
+          !isCode ||
+          AttributionMapping.isOverlayAttribution(attribution) ||
+          !_isInline(attribution);
       if (allowed && allowedInCode) {
         keptMarkers.add(marker);
       } else {
@@ -177,7 +222,10 @@ class WonkySchemaGuardReaction extends EditReaction {
       }
     }
     if (changedSpans) {
-      text = AttributedText(text.toPlainText(includePlaceholders: false), AttributedSpans(attributions: keptMarkers));
+      text = AttributedText(
+        text.toPlainText(includePlaceholders: false),
+        AttributedSpans(attributions: keptMarkers),
+      );
     }
 
     // Inline code excludes bold/italic/strike.
@@ -189,9 +237,16 @@ class WonkySchemaGuardReaction extends EditReaction {
       if (codeSpans.isNotEmpty) {
         AttributedText? copy;
         for (final span in codeSpans) {
-          for (final excluded in [boldAttribution, italicsAttribution, strikethroughAttribution]) {
+          for (final excluded in [
+            boldAttribution,
+            italicsAttribution,
+            strikethroughAttribution,
+          ]) {
             final range = SpanRange(span.start, span.end);
-            if ((copy ?? text).hasAttributionsWithin(attributions: {excluded}, range: range)) {
+            if ((copy ?? text).hasAttributionsWithin(
+              attributions: {excluded},
+              range: range,
+            )) {
               copy ??= text.copy();
               copy.removeAttribution(excluded, range);
             }
@@ -212,7 +267,8 @@ class WonkySchemaGuardReaction extends EditReaction {
       text = AttributedText(plain, text.spans.copy());
       changedSpans = true;
     }
-    if (_controlCharacters.hasMatch(plain) || (!isCode && plain.contains('\t'))) {
+    if (_controlCharacters.hasMatch(plain) ||
+        (!isCode && plain.contains('\t'))) {
       text = _replaceCharacters(text, isCode);
       changedSpans = true;
     }
@@ -259,7 +315,8 @@ class WonkySchemaGuardReaction extends EditReaction {
       if (isTab) {
         final attributions = text.getAllAttributionsAt(i);
         result = result.copyAndAppend(
-          AttributedText('    ')..addAttributions(attributions, const SpanRange(0, 3)),
+          AttributedText('    ')
+            ..addAttributions(attributions, const SpanRange(0, 3)),
         );
       }
       runStart = i + 1;

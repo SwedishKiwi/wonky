@@ -74,12 +74,16 @@ class PaginationController extends ChangeNotifier {
       final contentBottom = contentTop + contentHeight;
 
       var needed = bottom;
-      final isHeading = node is ParagraphNode && headingLevelOf(node.getMetadataValue(NodeMetadata.blockType)) != null;
+      final isHeading =
+          node is ParagraphNode &&
+          headingLevelOf(node.getMetadataValue(NodeMetadata.blockType)) != null;
       if (isHeading && i + 1 < nodes.length) {
         // Keep with next: at least ~1.5 body lines of the next block.
         needed += 1.5 * 20 * _zoom;
       }
-      if (needed > contentBottom && height <= contentHeight && top > contentTop + 0.5) {
+      if (needed > contentBottom &&
+          height <= contentHeight &&
+          top > contentTop + 0.5) {
         final nextContentTop = (page + 1) * stride + marginTop;
         final gap = nextContentTop - top;
         newGaps[node.id] = gap;
@@ -88,7 +92,8 @@ class PaginationController extends ChangeNotifier {
         top += gap;
         bottom += gap;
       }
-      while (bottom > page * stride + pageHeight - marginBottom && height > contentHeight) {
+      while (bottom > page * stride + pageHeight - marginBottom &&
+          height > contentHeight) {
         // Oversized block: it overflows across the seam.
         page += 1;
       }
@@ -130,7 +135,10 @@ class PaginationStylePhase extends SingleColumnLayoutStylePhase {
   }
 
   @override
-  SingleColumnLayoutViewModel style(Document document, SingleColumnLayoutViewModel viewModel) {
+  SingleColumnLayoutViewModel style(
+    Document document,
+    SingleColumnLayoutViewModel viewModel,
+  ) {
     final gaps = pagination.gaps;
     if (gaps.isEmpty) return viewModel;
     return SingleColumnLayoutViewModel(
@@ -138,7 +146,8 @@ class PaginationStylePhase extends SingleColumnLayoutStylePhase {
       componentViewModels: [
         for (final model in viewModel.componentViewModels)
           if (gaps[model.nodeId] case final gap?)
-            (model.copy()..padding = model.padding.add(EdgeInsets.only(top: gap)))
+            (model.copy()
+              ..padding = model.padding.add(EdgeInsets.only(top: gap)))
           else
             model,
       ],
@@ -181,14 +190,34 @@ class PageChromePainter extends CustomPainter {
         ..drawRect(rect.translate(0, 2), shadow)
         ..drawRect(rect, paper)
         ..drawRect(rect, border);
-      _text(canvas, setup.headerText, i, count, Offset(rect.left + setup.margins.left * zoom, rect.top + setup.margins.top * zoom / 2 - 8));
-      _text(canvas, setup.footerText, i, count, Offset(rect.left + setup.margins.left * zoom, rect.bottom - setup.margins.bottom * zoom / 2 - 8));
+      _text(
+        canvas,
+        setup.headerText,
+        i,
+        count,
+        Offset(
+          rect.left + setup.margins.left * zoom,
+          rect.top + setup.margins.top * zoom / 2 - 8,
+        ),
+      );
+      _text(
+        canvas,
+        setup.footerText,
+        i,
+        count,
+        Offset(
+          rect.left + setup.margins.left * zoom,
+          rect.bottom - setup.margins.bottom * zoom / 2 - 8,
+        ),
+      );
     }
   }
 
   void _text(Canvas canvas, String template, int page, int pages, Offset at) {
     if (template.isEmpty) return;
-    final text = template.replaceAll('{page}', '${page + 1}').replaceAll('{pages}', '$pages');
+    final text = template
+        .replaceAll('{page}', '${page + 1}')
+        .replaceAll('{pages}', '$pages');
     final painter = TextPainter(
       text: TextSpan(text: text, style: textStyle),
       textDirection: TextDirection.ltr,
@@ -198,5 +227,7 @@ class PageChromePainter extends CustomPainter {
 
   @override
   bool shouldRepaint(PageChromePainter oldDelegate) =>
-      oldDelegate.paperColor != paperColor || oldDelegate.borderColor != borderColor || oldDelegate.pagination != pagination;
+      oldDelegate.paperColor != paperColor ||
+      oldDelegate.borderColor != borderColor ||
+      oldDelegate.pagination != pagination;
 }

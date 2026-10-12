@@ -12,6 +12,7 @@ import '../../shell/dialogs.dart';
 import '../../shell/overlays/shell_overlays.dart';
 import '../../shell/shell_services.dart';
 import '../settings_screen.dart';
+import 'package:flutter/foundation.dart';
 
 Widget _switch(String key, bool value, ValueChanged<bool> onChanged) =>
     ShadSwitch(key: ValueKey<String>(key), value: value, onChanged: onChanged);

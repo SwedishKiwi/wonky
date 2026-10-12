@@ -6,7 +6,9 @@ import 'wonky_schema.dart';
 /// raw embed value in its metadata so that it round-trips unchanged.
 class WonkyEmbedNode extends BlockNode {
   WonkyEmbedNode({required this.id, super.metadata}) {
-    initAddToMetadata({NodeMetadata.blockType: const NamedAttribution('wonkyEmbed')});
+    initAddToMetadata({
+      NodeMetadata.blockType: const NamedAttribution('wonkyEmbed'),
+    });
   }
 
   @override
@@ -22,7 +24,8 @@ class WonkyEmbedNode extends BlockNode {
   String? copyContent(NodeSelection selection) => null;
 
   @override
-  bool hasEquivalentContent(DocumentNode other) => other is WonkyEmbedNode && super.hasEquivalentContent(other);
+  bool hasEquivalentContent(DocumentNode other) =>
+      other is WonkyEmbedNode && super.hasEquivalentContent(other);
 
   @override
   DocumentNode copyWithAddedMetadata(Map<String, dynamic> newProperties) =>

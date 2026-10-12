@@ -16,10 +16,12 @@ void main() {
       ]);
       composer = MutableDocumentComposer(
         initialSelection: const DocumentSelection.collapsed(
-          position: DocumentPosition(nodeId: 'b', nodePosition: TextNodePosition(offset: 2)),
+          position: DocumentPosition(
+              nodeId: 'b', nodePosition: TextNodePosition(offset: 2)),
         ),
       );
-      editor = createDefaultDocumentEditor(document: document, composer: composer, isHistoryEnabled: true);
+      editor = createDefaultDocumentEditor(
+          document: document, composer: composer, isHistoryEnabled: true);
       transactions = [];
       editor.addListener(FunctionalEditListener(transactions.add));
     });
@@ -28,8 +30,10 @@ void main() {
       editor.execute([
         ApplyDocumentPatchRequest(
           operations: [
-            ReplaceNodePatch('a', ParagraphNode(id: 'a', text: AttributedText('Hi'))),
-            InsertNodePatch(1, ParagraphNode(id: 'c', text: AttributedText('New'))),
+            ReplaceNodePatch(
+                'a', ParagraphNode(id: 'a', text: AttributedText('Hi'))),
+            InsertNodePatch(
+                1, ParagraphNode(id: 'c', text: AttributedText('New'))),
             MoveNodePatch('b', 0),
             DeleteNodePatch('c'),
           ],
@@ -38,36 +42,49 @@ void main() {
       ]);
 
       expect(document.map((n) => n.id).toList(), ['b', 'a']);
-      expect((document.getNodeById('a') as ParagraphNode).text.toPlainText(), 'Hi');
+      expect((document.getNodeById('a') as ParagraphNode).text.toPlainText(),
+          'Hi');
 
       final events = transactions.single;
-      expect(events.first, isA<DocumentPatchAppliedEvent>().having((e) => e.tag, 'tag', 'remote'));
-      final changes = events.whereType<DocumentEdit>().map((e) => e.change).toList();
-      expect(changes[0], isA<NodeReplacedEvent>().having((e) => e.nodeId, 'nodeId', 'a'));
-      expect(changes[1], isA<NodeInsertedEvent>().having((e) => e.nodeId, 'nodeId', 'c'));
+      expect(
+          events.first,
+          isA<DocumentPatchAppliedEvent>()
+              .having((e) => e.tag, 'tag', 'remote'));
+      final changes =
+          events.whereType<DocumentEdit>().map((e) => e.change).toList();
+      expect(changes[0],
+          isA<NodeReplacedEvent>().having((e) => e.nodeId, 'nodeId', 'a'));
+      expect(changes[1],
+          isA<NodeInsertedEvent>().having((e) => e.nodeId, 'nodeId', 'c'));
       expect(changes[2], isA<NodeMovedEvent>().having((e) => e.to, 'to', 0));
-      expect(changes[3], isA<NodeRemovedEvent>().having((e) => e.nodeId, 'nodeId', 'c'));
+      expect(changes[3],
+          isA<NodeRemovedEvent>().having((e) => e.nodeId, 'nodeId', 'c'));
     });
 
     test('keeps the selection untouched unless asked to update it', () {
       editor.execute([
         ApplyDocumentPatchRequest(operations: [
-          ReplaceNodePatch('a', ParagraphNode(id: 'a', text: AttributedText('Hey there'))),
+          ReplaceNodePatch(
+              'a', ParagraphNode(id: 'a', text: AttributedText('Hey there'))),
         ]),
       ]);
 
       expect(composer.selection!.extent.nodeId, 'b');
-      expect((composer.selection!.extent.nodePosition as TextNodePosition).offset, 2);
+      expect(
+          (composer.selection!.extent.nodePosition as TextNodePosition).offset,
+          2);
     });
 
     test('sets the transformed selection and composing region', () {
       const newSelection = DocumentSelection.collapsed(
-        position: DocumentPosition(nodeId: 'b', nodePosition: TextNodePosition(offset: 5)),
+        position: DocumentPosition(
+            nodeId: 'b', nodePosition: TextNodePosition(offset: 5)),
       );
       editor.execute([
         ApplyDocumentPatchRequest(
           operations: [
-            ReplaceNodePatch('b', ParagraphNode(id: 'b', text: AttributedText('abcWorld'))),
+            ReplaceNodePatch(
+                'b', ParagraphNode(id: 'b', text: AttributedText('abcWorld'))),
           ],
           updateSelection: true,
           selectionAfter: newSelection,
@@ -77,14 +94,16 @@ void main() {
       ]);
 
       expect(composer.selection, newSelection);
-      expect(composer.latestSelectionChange!.reason, SelectionReason.contentChange);
+      expect(composer.latestSelectionChange!.reason,
+          SelectionReason.contentChange);
       expect(composer.composingRegion.value, isNull);
     });
 
     test('is not recorded in the editor history', () {
       editor.execute([
         ApplyDocumentPatchRequest(operations: [
-          ReplaceNodePatch('a', ParagraphNode(id: 'a', text: AttributedText('Changed'))),
+          ReplaceNodePatch(
+              'a', ParagraphNode(id: 'a', text: AttributedText('Changed'))),
         ]),
       ]);
 
@@ -97,7 +116,10 @@ void main() {
 
       editor.execute([
         ApplyDocumentPatchRequest(
-          operations: [ReplaceNodePatch('b', ParagraphNode(id: 'b', text: AttributedText('World!')))],
+          operations: [
+            ReplaceNodePatch(
+                'b', ParagraphNode(id: 'b', text: AttributedText('World!')))
+          ],
           resyncIme: true,
         ),
       ]);
@@ -110,17 +132,25 @@ void main() {
       final reactingEditor = Editor(
         editables: {Editor.documentKey: document, Editor.composerKey: composer},
         requestHandlers: List.from(defaultRequestHandlers),
-        reactionPipeline: [FunctionalEditReaction(react: (_, __, ___) => reactions += 1)],
+        reactionPipeline: [
+          FunctionalEditReaction(react: (_, __, ___) => reactions += 1)
+        ],
       );
 
       reactingEditor.execute([
-        ApplyDocumentPatchRequest(operations: [ReplaceNodePatch('a', ParagraphNode(id: 'a', text: AttributedText('x')))]),
+        ApplyDocumentPatchRequest(operations: [
+          ReplaceNodePatch(
+              'a', ParagraphNode(id: 'a', text: AttributedText('x')))
+        ]),
       ]);
       expect(reactions, 0);
 
       reactingEditor.execute([
         ApplyDocumentPatchRequest(
-          operations: [ReplaceNodePatch('a', ParagraphNode(id: 'a', text: AttributedText('y')))],
+          operations: [
+            ReplaceNodePatch(
+                'a', ParagraphNode(id: 'a', text: AttributedText('y')))
+          ],
           runReactions: true,
         ),
       ]);

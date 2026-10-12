@@ -1,1 +1,1078 @@
-{"@@locale": "en"}
+{
+  "@@locale": "en",
+  "aboutAppVersion": "App version",
+  "aboutLicenses": "Open source licenses",
+  "aboutProtocol": "Protocol",
+  "aboutRunMode": "Server mode",
+  "aboutServerVersion": "Server version",
+  "accountMenu": "Account",
+  "actionBack": "Back",
+  "actionCancel": "Cancel",
+  "actionClear": "Clear",
+  "actionClose": "Close",
+  "actionCopy": "Copy",
+  "actionCreate": "Create",
+  "actionDone": "Done",
+  "actionOk": "OK",
+  "actionOpen": "Open",
+  "actionReload": "Reload",
+  "actionRetry": "Retry",
+  "actionSave": "Save",
+  "actionSend": "Send",
+  "actionShare": "Share",
+  "actionStop": "Stop",
+  "actionUndo": "Undo",
+  "activityCommented": "{who} commented",
+  "@activityCommented": {
+    "placeholders": {
+      "who": {
+        "type": "String"
+      }
+    }
+  },
+  "activityCreated": "{who} created this",
+  "@activityCreated": {
+    "placeholders": {
+      "who": {
+        "type": "String"
+      }
+    }
+  },
+  "activityEdited": "{who} edited",
+  "@activityEdited": {
+    "placeholders": {
+      "who": {
+        "type": "String"
+      }
+    }
+  },
+  "activityEmpty": "No activity yet.",
+  "activityExported": "{who} exported",
+  "@activityExported": {
+    "placeholders": {
+      "who": {
+        "type": "String"
+      }
+    }
+  },
+  "activityMoved": "{who} moved this",
+  "@activityMoved": {
+    "placeholders": {
+      "who": {
+        "type": "String"
+      }
+    }
+  },
+  "activityPeople": "People",
+  "activityRecent": "Recent activity",
+  "activityRenamed": "{who} renamed this",
+  "@activityRenamed": {
+    "placeholders": {
+      "who": {
+        "type": "String"
+      }
+    }
+  },
+  "activityRestored": "{who} restored this from the trash",
+  "@activityRestored": {
+    "placeholders": {
+      "who": {
+        "type": "String"
+      }
+    }
+  },
+  "activityRestoredVersion": "{who} restored a version",
+  "@activityRestoredVersion": {
+    "placeholders": {
+      "who": {
+        "type": "String"
+      }
+    }
+  },
+  "activityShared": "{who} shared this",
+  "@activityShared": {
+    "placeholders": {
+      "who": {
+        "type": "String"
+      }
+    }
+  },
+  "activitySystem": "Wonky Work",
+  "activityTitle": "Activity on “{name}”",
+  "@activityTitle": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "activityTrashed": "{who} moved this to the trash",
+  "@activityTrashed": {
+    "placeholders": {
+      "who": {
+        "type": "String"
+      }
+    }
+  },
+  "activityUnshared": "{who} removed access",
+  "@activityUnshared": {
+    "placeholders": {
+      "who": {
+        "type": "String"
+      }
+    }
+  },
+  "addShortcutAction": "Add shortcut",
+  "addShortcutTitle": "Add shortcut to My Drive",
+  "agentUndoLabel": "AI: {label}",
+  "@agentUndoLabel": {
+    "placeholders": {
+      "label": {
+        "type": "String"
+      }
+    }
+  },
+  "aiEnable": "Enable the assistant",
+  "authBackToSignIn": "Back to sign in",
+  "authBackToSignUp": "Back to sign up",
+  "authChangeEmail": "Change email address",
+  "authCodeResent": "A new code is on its way.",
+  "authConfirmPassword": "Confirm password",
+  "authCreateAccount": "Create account",
+  "authDisplayName": "Name",
+  "authEmail": "Email",
+  "authErrorCodeLength": "Enter the 6-digit code.",
+  "authErrorEmail": "Enter a valid email address.",
+  "authErrorExpiredCode": "This code has expired. Request a new one.",
+  "authErrorInvalidCode": "That code is not right. Check it and try again.",
+  "authErrorInvalidCredentials": "Wrong email or password.",
+  "authErrorNetwork": "Can't reach the server. Check your connection and try again.",
+  "authErrorPasswordMismatch": "The passwords don't match.",
+  "authErrorPasswordPolicy": "This password doesn't meet the requirements. Choose a longer or more varied password.",
+  "authErrorPasswordShort": "Use at least 8 characters.",
+  "authErrorPasswordWeak": "This password is too easy to guess.",
+  "authErrorTerms": "Please accept the terms to continue.",
+  "authErrorTooManyAttempts": "Too many attempts. Wait a moment and try again.",
+  "authErrorUnknown": "Something went wrong. Please try again.",
+  "authForgotPassword": "Forgot password?",
+  "authHaveAccount": "Already have an account?",
+  "authHidePassword": "Hide password",
+  "authNewPassword": "New password",
+  "authNewPasswordSubtitle": "Choose a new password for your account.",
+  "authNoAccount": "New to Wonky Work?",
+  "authPassword": "Password",
+  "authRememberMe": "Keep me signed in",
+  "authResendCode": "Resend code",
+  "authResendIn": "Resend code in {seconds} s",
+  "@authResendIn": {
+    "placeholders": {
+      "seconds": {
+        "type": "int"
+      }
+    }
+  },
+  "authResetSubtitle": "We'll email you a code to reset your password.",
+  "authResetTitle": "Reset your password",
+  "authSendCode": "Send code",
+  "authSetPassword": "Set password and sign in",
+  "authShowPassword": "Show password",
+  "authSignIn": "Sign in",
+  "authSignInSubtitle": "One account for Wonky Write and Wonky Sheets.",
+  "authSignInTitle": "Sign in",
+  "authSignUpSubtitle": "Create one account for Wonky Write and Wonky Sheets.",
+  "authSignUpTitle": "Create your account",
+  "authTerms": "I agree to the terms of service and privacy policy",
+  "authVerify": "Verify",
+  "authVerifyNoDraft": "Start the sign-up again to get a new code.",
+  "authVerifySubtitle": "We sent a 6-digit code to {email}.",
+  "@authVerifySubtitle": {
+    "placeholders": {
+      "email": {
+        "type": "String"
+      }
+    }
+  },
+  "authVerifyTitle": "Verify your email",
+  "badgeCommentOnly": "Comment only",
+  "badgeOffline": "Available offline",
+  "badgeShared": "Shared",
+  "badgeViewOnly": "View only",
+  "categoryAccount": "Account",
+  "categoryComments": "Comments",
+  "categoryDrive": "Drive",
+  "categoryEdit": "Edit",
+  "categoryFile": "File",
+  "categoryHelp": "Help",
+  "categoryNavigation": "Navigation",
+  "categoryOther": "Other",
+  "categorySharing": "Sharing",
+  "categoryTools": "Tools",
+  "categoryVersions": "Version history",
+  "categoryView": "View",
+  "cmdAbout": "About",
+  "cmdActivityDashboard": "Activity dashboard",
+  "cmdAddShortcut": "Add shortcut to Drive",
+  "cmdAssistant": "Assistant",
+  "cmdAssistantNewThread": "New assistant chat",
+  "cmdAssistantSend": "Send to assistant",
+  "cmdAssistantStop": "Stop assistant",
+  "cmdBack": "Back",
+  "cmdClosePanel": "Close panel",
+  "cmdCommandPalette": "Command palette",
+  "cmdComment": "Comment",
+  "cmdCommentsPanel": "Comments",
+  "cmdCompactMode": "Compact mode",
+  "cmdCopy": "Copy",
+  "cmdCopyLink": "Copy link",
+  "cmdCopyMcpConfig": "Copy MCP connection settings",
+  "cmdCut": "Cut",
+  "cmdDeleteComment": "Delete comment",
+  "cmdDeleteForever": "Delete forever",
+  "cmdDetails": "Details",
+  "cmdDownload": "Download",
+  "cmdEmptyTrash": "Empty trash",
+  "cmdFocusSearch": "Search in Drive",
+  "cmdForward": "Forward",
+  "cmdFullScreen": "Full screen",
+  "cmdHelpCenter": "Help center",
+  "cmdHome": "Home",
+  "cmdImport": "Import…",
+  "cmdKeyboardShortcuts": "Keyboard shortcuts",
+  "cmdMakeAvailableOffline": "Make available offline",
+  "cmdMakeCopy": "Make a copy",
+  "cmdMove": "Move",
+  "cmdMoveToTrash": "Move to trash",
+  "cmdNameCurrentVersion": "Name current version",
+  "cmdNewDocument": "New document",
+  "cmdNewFile": "New file",
+  "cmdNewFolder": "New folder",
+  "cmdNewFromTemplate": "From template…",
+  "cmdNewSpreadsheet": "New spreadsheet",
+  "cmdNextPanel": "Next panel",
+  "cmdNextRegion": "Focus next region",
+  "cmdOpen": "Open",
+  "cmdOpenComment": "Open comment",
+  "cmdOpenFile": "Open…",
+  "cmdOpenPanel": "Open panel",
+  "cmdOpenSheets": "Open Wonky Sheets",
+  "cmdOpenWrite": "Open Wonky Write",
+  "cmdPaste": "Paste",
+  "cmdPastePlain": "Paste without formatting",
+  "cmdPreviousPanel": "Previous panel",
+  "cmdPreviousRegion": "Focus previous region",
+  "cmdPrint": "Print",
+  "cmdQuickSwitcher": "Go to file…",
+  "cmdRedo": "Redo",
+  "cmdRedoLabel": "Redo {label}",
+  "@cmdRedoLabel": {
+    "placeholders": {
+      "label": {
+        "type": "String"
+      }
+    }
+  },
+  "cmdRename": "Rename",
+  "cmdReopen": "Reopen",
+  "cmdReply": "Reply",
+  "cmdReportProblem": "Report a problem",
+  "cmdRequestAccess": "Request access",
+  "cmdResolve": "Resolve",
+  "cmdRestore": "Restore",
+  "cmdRestoreVersion": "Restore this version",
+  "cmdSearchMenus": "Search the menus",
+  "cmdSeeVersionHistory": "See version history",
+  "cmdSelectAll": "Select all",
+  "cmdSetTheme": "App theme",
+  "cmdSettings": "Settings",
+  "cmdShare": "Share",
+  "cmdShowMenubar": "Menu bar",
+  "cmdShowStatusBar": "Status bar",
+  "cmdShowToolbar": "Toolbar",
+  "cmdSignOut": "Sign out",
+  "cmdStar": "Star",
+  "cmdStopAgent": "Stop agent control",
+  "cmdTogglePanel": "Toggle panel",
+  "cmdToggleUiBridge": "Allow MCP to control this window",
+  "cmdUndo": "Undo",
+  "cmdUndoHistory": "Undo history…",
+  "cmdUndoLabel": "Undo {label}",
+  "@cmdUndoLabel": {
+    "placeholders": {
+      "label": {
+        "type": "String"
+      }
+    }
+  },
+  "cmdUndoTo": "Undo to step",
+  "cmdUnstar": "Remove star",
+  "cmdUpload": "Upload file…",
+  "cmdVersionsPanel": "Version history panel",
+  "cmdWhatsNew": "What's new",
+  "cmdZoom": "Zoom",
+  "collapseFolders": "Collapse folders",
+  "columnModified": "Last modified",
+  "columnName": "Name",
+  "columnOwner": "Owner",
+  "columnSize": "File size",
+  "commandFailed": "“{title}” failed",
+  "@commandFailed": {
+    "placeholders": {
+      "title": {
+        "type": "String"
+      }
+    }
+  },
+  "commentAction": "Comment",
+  "commentAssign": "Assign to {name}",
+  "@commentAssign": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "commentDelete": "Delete",
+  "commentDeleteThread": "Delete thread",
+  "commentDeleted": "Comment deleted",
+  "commentEdit": "Edit",
+  "commentEdited": "edited",
+  "commentEventAssigned": "assigned the comment",
+  "commentEventReopened": "reopened",
+  "commentEventResolved": "marked as resolved",
+  "commentFailed": "The comment could not be saved",
+  "commentLink": "Link to comment",
+  "commentOrphaned": "Original content deleted",
+  "commentPlaceholder": "Comment or add others with @",
+  "commentShow": "Show",
+  "commentsAll": "All",
+  "commentsEmptyBody": "Select content and press {shortcut} to add a comment.",
+  "@commentsEmptyBody": {
+    "placeholders": {
+      "shortcut": {
+        "type": "String"
+      }
+    }
+  },
+  "commentsEmptyTitle": "No comments yet",
+  "commentsForYou": "For you",
+  "commentsOpen": "Open",
+  "commentsResolved": "Resolved",
+  "commentsSearch": "Search comments",
+  "commentsSort": "Sort",
+  "commentsSortDate": "Sort by date",
+  "commentsSortPosition": "Sort by position",
+  "copyAction": "Make a copy",
+  "copyComments": "Copy comments",
+  "copyName": "Name",
+  "copyOfName": "Copy of {name}",
+  "@copyOfName": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "copySharing": "Share it with the same people",
+  "copyTitle": "Make a copy",
+  "dateYesterday": "Yesterday",
+  "deleteAccountAction": "Delete account",
+  "deleteAccountBody": "This permanently deletes your account {email}. This cannot be undone.",
+  "@deleteAccountBody": {
+    "placeholders": {
+      "email": {
+        "type": "String"
+      }
+    }
+  },
+  "deleteAccountConfirmLabel": "Type {email} to confirm",
+  "@deleteAccountConfirmLabel": {
+    "placeholders": {
+      "email": {
+        "type": "String"
+      }
+    }
+  },
+  "deleteAccountCounts": "You own {documents} documents, {spreadsheets} spreadsheets and {folders} folders.",
+  "@deleteAccountCounts": {
+    "placeholders": {
+      "documents": {
+        "type": "int"
+      },
+      "spreadsheets": {
+        "type": "int"
+      },
+      "folders": {
+        "type": "int"
+      }
+    }
+  },
+  "deleteAccountHint": "Delete your account and the files you own.",
+  "deleteAccountMismatch": "That's not your email address.",
+  "deleteAccountTitle": "Delete account",
+  "deleteForeverAction": "Delete forever",
+  "deleteForeverBody": "These items will be deleted permanently. This can't be undone.",
+  "deleteForeverTitle": "{count, plural, =1{Delete forever?} other{Delete {count} items forever?}}",
+  "@deleteForeverTitle": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "densityComfortable": "Comfortable",
+  "densityCompact": "Compact",
+  "detailsAccess": "Who has access",
+  "detailsActivity": "Activity",
+  "detailsCreated": "Created",
+  "detailsDescription": "Description",
+  "detailsDescriptionHint": "Add a description",
+  "detailsLocation": "Location",
+  "detailsModified": "Modified",
+  "detailsNothingSelected": "Select a file to see its details",
+  "detailsOpened": "Opened by me",
+  "detailsOwner": "Owner",
+  "detailsPrivate": "Private to you",
+  "detailsRole": "Your access",
+  "detailsShared": "Shared",
+  "detailsType": "Type",
+  "driveListLabel": "Files",
+  "driveOfflineBody": "Files you opened recently or made available offline are listed when you're offline.",
+  "driveOfflineTitle": "You're offline",
+  "dropToUpload": "Drop files to upload",
+  "editorOfflineTitle": "This file isn't available offline",
+  "emptyFolderBody": "Drop files here or use the New button.",
+  "emptyFolderTitle": "This folder is empty",
+  "emptyHomeBody": "Create a document or open one shared with you.",
+  "emptyHomeTitle": "Welcome to your drive",
+  "emptyOfflineBody": "Use “Make available offline” on files you need without a connection.",
+  "emptyOfflineTitle": "No offline files",
+  "emptySearchBody": "Try other words or fewer filters.",
+  "emptySearchTitle": "No results",
+  "emptySharedBody": "Files others share with you will show up here.",
+  "emptySharedTitle": "Nothing shared with you yet",
+  "emptyStarredBody": "Add stars to things you want to find easily later.",
+  "emptyStarredTitle": "No starred files yet",
+  "emptyTrashAction": "Empty trash",
+  "emptyTrashBody": "All items in the trash will be deleted forever. This can't be undone.",
+  "emptyTrashTitle": "Empty trash?",
+  "emptyTrashViewBody": "Items in the trash are deleted forever after 30 days.",
+  "emptyTrashViewTitle": "Trash is empty",
+  "errorBoundaryBody": "This part of the app hit an unexpected error. Your work is saved.",
+  "errorBoundaryTitle": "Something went wrong",
+  "errorCopyDetails": "Copy error details",
+  "errorGeneric": "Something went wrong",
+  "errorNameSlash": "Names can't contain “/”.",
+  "errorNameTooLong": "Use at most 255 characters.",
+  "errorRequired": "Required",
+  "expandFolders": "Expand folders",
+  "feedbackDescription": "Tell us what happened or what you'd like to see.",
+  "feedbackFailed": "Your report could not be sent",
+  "feedbackKind": "Type",
+  "feedbackKindIdea": "Idea",
+  "feedbackKindProblem": "Problem",
+  "feedbackMessage": "Message",
+  "feedbackThanks": "Thanks for the feedback!",
+  "feedbackTitle": "Report a problem",
+  "folderTree": "Folders",
+  "foldersOnTop": "Folders on top",
+  "goHome": "Go to Home",
+  "groupEarlier": "Earlier",
+  "groupThisWeek": "Earlier this week",
+  "groupToday": "Today",
+  "groupYesterday": "Yesterday",
+  "helpMenu": "Help",
+  "helpTopicCommentsBody": "Select text or cells and press Ctrl+Alt+M (⌘⌥M on Mac) to comment. Mention people with @ to notify them. Resolve threads when you're done.",
+  "helpTopicCommentsTitle": "Comments",
+  "helpTopicDriveBody": "Your drive holds documents, spreadsheets and folders. Drag files onto folders to move them, star what you use often, and find everything with search.",
+  "helpTopicDriveTitle": "Your drive",
+  "helpTopicHistoryBody": "Versions are saved automatically while you work. Name important versions and restore any of them from File › Version history.",
+  "helpTopicHistoryTitle": "Version history",
+  "helpTopicOfflineBody": "Recently opened files keep working without a connection. Changes sync when you're back online.",
+  "helpTopicOfflineTitle": "Working offline",
+  "helpTopicSharingBody": "Use Share to invite people as viewers, commenters or editors, or turn on link sharing for anyone signed in with the link.",
+  "helpTopicSharingTitle": "Sharing",
+  "helpTopicShortcutsBody": "Press Ctrl+/ (⌘/ on Mac) to see every shortcut, and Ctrl+Shift+P (⌘⇧P) to run any command by name.",
+  "helpTopicShortcutsTitle": "Keyboard shortcuts",
+  "historyBack": "Back to editing",
+  "historyNoRenderer": "Previews of versions aren't available for this file type.",
+  "historyRestoreThis": "Restore this version",
+  "historyShowChanges": "Show changes",
+  "importFailed": "The import failed",
+  "importUnsupported": "These files can't be imported here",
+  "inviteInvalid": "This link is not valid",
+  "inviteTitle": "Opening shared file",
+  "kindDocument": "Document",
+  "kindFolder": "Folder",
+  "kindSpreadsheet": "Spreadsheet",
+  "layoutGrid": "Grid view",
+  "layoutList": "List view",
+  "mcpAllowControl": "Allow MCP to control this window",
+  "mcpControlling": "An agent is controlling this window",
+  "mcpHint": "Use this configuration in Claude Desktop or Claude Code with one of your tokens.",
+  "mcpTitle": "MCP connection",
+  "menuAccessibility": "Accessibility settings",
+  "menuAppTheme": "App theme",
+  "menuDownload": "Download",
+  "menuEdit": "Edit",
+  "menuExplore": "Explore",
+  "menuFile": "File",
+  "menuHelp": "Help",
+  "menuMakeCopy": "Make a copy",
+  "menuMode": "Mode",
+  "menuNew": "New",
+  "menuNewDocument": "Document",
+  "menuNewSpreadsheet": "Spreadsheet",
+  "menuPanels": "Panels",
+  "menuPreferences": "Preferences",
+  "menuShare": "Share",
+  "menuShow": "Show",
+  "menuTools": "Tools",
+  "menuVersionHistory": "Version history",
+  "menuView": "View",
+  "menuZoom": "Zoom",
+  "menus": "Menus",
+  "moreActions": "More actions",
+  "moveHere": "Move here",
+  "moveNoFolders": "No folders here",
+  "moveNoPermission": "You don't have permission to add items to this folder.",
+  "moveTitleMany": "Move {count} items",
+  "@moveTitleMany": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "moveTitleOne": "Move “{name}”",
+  "@moveTitleOne": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "nameVersionLabel": "Version name",
+  "nameVersionTitle": "Name this version",
+  "navHome": "Home",
+  "navMyDrive": "My Drive",
+  "navOffline": "Offline",
+  "navRecent": "Recent",
+  "navShared": "Shared with me",
+  "navStarred": "Starred",
+  "navTrash": "Trash",
+  "newButton": "New",
+  "newFolderLabel": "Folder name",
+  "newFolderTitle": "New folder",
+  "noAccessBody": "You need access to open this file. You're signed in as {email}.",
+  "@noAccessBody": {
+    "placeholders": {
+      "email": {
+        "type": "String"
+      }
+    }
+  },
+  "noAccessTitle": "You need access",
+  "notAllowed": "Not allowed",
+  "notFoundBody": "The page you're looking for doesn't exist.",
+  "notFoundTitle": "Page not found",
+  "notifAccessRequest": "{who} asked for access to {item}",
+  "@notifAccessRequest": {
+    "placeholders": {
+      "who": {
+        "type": "String"
+      },
+      "item": {
+        "type": "String"
+      }
+    }
+  },
+  "notifAssigned": "{who} assigned you a comment in {item}",
+  "@notifAssigned": {
+    "placeholders": {
+      "who": {
+        "type": "String"
+      },
+      "item": {
+        "type": "String"
+      }
+    }
+  },
+  "notifMention": "{who} mentioned you in {item}",
+  "@notifMention": {
+    "placeholders": {
+      "who": {
+        "type": "String"
+      },
+      "item": {
+        "type": "String"
+      }
+    }
+  },
+  "notifOwnership": "{who} wants to make you the owner of {item}",
+  "@notifOwnership": {
+    "placeholders": {
+      "who": {
+        "type": "String"
+      },
+      "item": {
+        "type": "String"
+      }
+    }
+  },
+  "notifReply": "{who} replied in {item}",
+  "@notifReply": {
+    "placeholders": {
+      "who": {
+        "type": "String"
+      },
+      "item": {
+        "type": "String"
+      }
+    }
+  },
+  "notifScriptFailure": "A script failed in {item}",
+  "@notifScriptFailure": {
+    "placeholders": {
+      "item": {
+        "type": "String"
+      }
+    }
+  },
+  "notifShared": "{who} shared {item} with you",
+  "@notifShared": {
+    "placeholders": {
+      "who": {
+        "type": "String"
+      },
+      "item": {
+        "type": "String"
+      }
+    }
+  },
+  "notifSuggestion": "{who} suggested an edit in {item}",
+  "@notifSuggestion": {
+    "placeholders": {
+      "who": {
+        "type": "String"
+      },
+      "item": {
+        "type": "String"
+      }
+    }
+  },
+  "notifSuggestionDecided": "{who} reviewed your suggestion in {item}",
+  "@notifSuggestionDecided": {
+    "placeholders": {
+      "who": {
+        "type": "String"
+      },
+      "item": {
+        "type": "String"
+      }
+    }
+  },
+  "notificationsEmpty": "You're all caught up",
+  "notificationsMarkAllRead": "Mark all as read",
+  "notificationsTitle": "Notifications",
+  "notificationsUnread": "{count, plural, =1{1 unread notification} other{{count} unread notifications}}",
+  "@notificationsUnread": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "notifyEmail": "In-app and email",
+  "notifyInApp": "In-app",
+  "notifyMentions": "Mentions",
+  "notifyOff": "Off",
+  "notifyReplies": "Replies to my comments",
+  "notifyShares": "Files shared with me",
+  "offlineBanner": "You're offline. Changes are saved on this device and will sync when you're back online.",
+  "offlineClear": "Clear local data",
+  "offlineClearHint": "Removes cached files and pending changes from this device.",
+  "offlineCleared": "Local data cleared",
+  "offlinePending": "Changes waiting to sync",
+  "ownerAnyone": "Owned by anyone",
+  "ownerMe": "me",
+  "ownerMeFilter": "Owned by me",
+  "ownerNotMe": "Not owned by me",
+  "paletteAllCommands": "All commands",
+  "paletteCommands": "Commands",
+  "paletteEmpty": "Nothing found",
+  "paletteFiles": "Files",
+  "paletteGoToFile": "Open file",
+  "paletteMenus": "Menus",
+  "palettePlaceholder": "Type a command or search files…",
+  "paletteRecent": "Recent",
+  "paletteSearchMenus": "Search the menus",
+  "panelComments": "Comments",
+  "panelHistory": "Version history",
+  "presenceJoined": "{name} joined",
+  "@presenceJoined": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "presenceLeft": "{name} left",
+  "@presenceLeft": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "quickSwitcherEmpty": "No files found",
+  "quickSwitcherPlaceholder": "Search documents and spreadsheets…",
+  "quickSwitcherRecent": "Recent files",
+  "quickSwitcherResults": "Results",
+  "renameLabel": "Name",
+  "renameTitle": "Rename",
+  "replyPlaceholder": "Reply or add others with @",
+  "requestAccessDescription": "The owner will be notified and can share the file with you.",
+  "requestAccessFailed": "The request could not be sent",
+  "requestAccessMessage": "Message (optional)",
+  "requestAccessRole": "Access",
+  "requestAccessSend": "Request access",
+  "requestAccessTitle": "Request access",
+  "restoreVersionAction": "Restore",
+  "restoreVersionBody": "The current version is kept in the history, so you can switch back at any time.",
+  "restoreVersionTitle": "Restore this version?",
+  "roleCommenter": "Commenter",
+  "roleEditor": "Editor",
+  "roleOwner": "Owner",
+  "roleViewer": "Viewer",
+  "searchFor": "Search for “{query}”",
+  "@searchFor": {
+    "placeholders": {
+      "query": {
+        "type": "String"
+      }
+    }
+  },
+  "searchHint": "Search by name or content",
+  "searchPlaceholder": "Search in Drive",
+  "searchResultsFor": "Results for “{query}”",
+  "@searchResultsFor": {
+    "placeholders": {
+      "query": {
+        "type": "String"
+      }
+    }
+  },
+  "selectedCount": "{count, plural, =1{1 selected} other{{count} selected}}",
+  "@selectedCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "sessionExpiredBody": "Sign in again to continue. Your work is kept.",
+  "sessionExpiredTitle": "Your session expired",
+  "settingsAbout": "About",
+  "settingsAccent": "Accent color",
+  "settingsAccentNeutral": "Neutral",
+  "settingsAccount": "Account",
+  "settingsAi": "AI",
+  "settingsAiHint": "The assistant helps you write and analyze. It only sees files you open with it.",
+  "settingsAppearance": "Appearance",
+  "settingsChangePassword": "Change password",
+  "settingsDensity": "Density",
+  "settingsDeveloper": "Developer & MCP",
+  "settingsKeyboard": "Keyboard shortcuts",
+  "settingsLanguage": "Language & region",
+  "settingsLanguageHint": "Used for dates, numbers and new spreadsheets.",
+  "settingsLayout": "Layout",
+  "settingsNotifications": "Notifications",
+  "settingsOffline": "Offline & storage",
+  "settingsOfflineHint": "Files you open recently stay available on this device.",
+  "settingsPasswordHint": "We'll email you a code to set a new password.",
+  "settingsProfile": "Profile",
+  "settingsReduceMotion": "Reduce motion",
+  "settingsReduceMotionHint": "Turns off non-essential animations.",
+  "settingsSaved": "Saved",
+  "settingsSecurity": "Sign-in & security",
+  "settingsSheets": "Wonky Sheets",
+  "settingsSignOutHint": "Signs you out of Wonky Write and Wonky Sheets on this device.",
+  "settingsTheme": "Theme",
+  "settingsTimeZone": "Time zone",
+  "settingsTimeZoneHint": "IANA name, e.g. Europe/Stockholm. Empty follows this device.",
+  "settingsUiLanguage": "Language",
+  "settingsWrite": "Wonky Write",
+  "shareAddPeople": "Add people by name or email",
+  "shareAnyoneWithLink": "Anyone with the link",
+  "shareApprove": "Approve",
+  "shareButton": "Share",
+  "shareCannotShare": "Only the owner and editors can share this file.",
+  "shareDeny": "Deny",
+  "shareFailed": "The sharing change could not be saved",
+  "shareGeneralAccess": "General access",
+  "shareInherited": "From folder “{folder}”",
+  "@shareInherited": {
+    "placeholders": {
+      "folder": {
+        "type": "String"
+      }
+    }
+  },
+  "shareLinkHint": "Anyone signed in who has the link can open it",
+  "shareMessage": "Message",
+  "shareNotify": "Notify people",
+  "sharePending": "Pending invite",
+  "sharePeopleWithAccess": "People with access",
+  "shareRemoveAccess": "Remove access",
+  "shareRemoveBody": "{name} will lose access to this file.",
+  "@shareRemoveBody": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "shareRemoveRecipient": "Remove {email}",
+  "@shareRemoveRecipient": {
+    "placeholders": {
+      "email": {
+        "type": "String"
+      }
+    }
+  },
+  "shareRemoveTitle": "Remove access?",
+  "shareRequestTitle": "{name} requests {role} access",
+  "@shareRequestTitle": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      },
+      "role": {
+        "type": "String"
+      }
+    }
+  },
+  "shareRestricted": "Restricted",
+  "shareRestrictedHint": "Only people with access can open with the link",
+  "shareRotateLink": "Reset link",
+  "shareSent": "{count, plural, =1{Shared with 1 person} other{Shared with {count} people}}",
+  "@shareSent": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "shareSettingComments": "Viewers can see comments",
+  "shareSettingEditors": "Editors can change permissions and share",
+  "shareSettingExport": "Viewers and commenters can download, print and copy",
+  "shareSettingsTitle": "Sharing settings",
+  "shareTitle": "Share “{name}”",
+  "@shareTitle": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "shareTransferBody": "{name} becomes the owner once they accept. You'll stay an editor.",
+  "@shareTransferBody": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "shareTransferOwnership": "Transfer ownership",
+  "shareTransferSent": "Ownership transfer sent to {name}",
+  "@shareTransferSent": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "shareTransferTitle": "Transfer ownership?",
+  "shareYou": "{name} (you)",
+  "@shareYou": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "sheetsAutocomplete": "Formula suggestions",
+  "sheetsFormulaHelp": "Show formula help",
+  "sheetsScripts": "Allow scripts",
+  "shortcutConflictBody": "{keys} is already used by {commands}. Replace it?",
+  "@shortcutConflictBody": {
+    "placeholders": {
+      "keys": {
+        "type": "String"
+      },
+      "commands": {
+        "type": "String"
+      }
+    }
+  },
+  "shortcutConflictTitle": "Shortcut in use",
+  "shortcutReplace": "Replace",
+  "shortcutReserved": "The browser reserves this shortcut.",
+  "shortcutReset": "Reset to default",
+  "shortcutResetAll": "Reset all",
+  "shortcutsSearch": "Search shortcuts",
+  "shortcutsTitle": "Keyboard shortcuts",
+  "showMenus": "Show menus",
+  "someone": "Someone",
+  "sortBy": "Sort: {field}",
+  "@sortBy": {
+    "placeholders": {
+      "field": {
+        "type": "String"
+      }
+    }
+  },
+  "sortCreated": "Created",
+  "sortDescending": "Descending",
+  "sortModified": "Last modified",
+  "sortModifiedByMe": "Last modified by me",
+  "sortName": "Name",
+  "sortOpenedByMe": "Last opened by me",
+  "sortSize": "File size",
+  "storageUsed": "{size} used",
+  "@storageUsed": {
+    "placeholders": {
+      "size": {
+        "type": "String"
+      }
+    }
+  },
+  "strengthEmpty": "Enter a password",
+  "strengthFair": "Fair",
+  "strengthGood": "Good",
+  "strengthLabel": "Password strength: {label}",
+  "@strengthLabel": {
+    "placeholders": {
+      "label": {
+        "type": "String"
+      }
+    }
+  },
+  "strengthStrong": "Strong",
+  "strengthWeak": "Weak",
+  "switchAccount": "Switch account",
+  "templateBlank": "Blank",
+  "templateEducation": "Education",
+  "templateFinance": "Finance",
+  "templateGallery": "Template gallery",
+  "templatePersonal": "Personal",
+  "templateProjectManagement": "Project management",
+  "templateStripTitle": "Start a new {kind}",
+  "@templateStripTitle": {
+    "placeholders": {
+      "kind": {
+        "type": "String"
+      }
+    }
+  },
+  "templateWork": "Work",
+  "templatesHide": "Hide templates",
+  "templatesShow": "Show templates",
+  "themeDark": "Dark",
+  "themeLight": "Light",
+  "themeSystem": "System",
+  "themeToggleTooltip": "Theme: {mode}",
+  "@themeToggleTooltip": {
+    "placeholders": {
+      "mode": {
+        "type": "String"
+      }
+    }
+  },
+  "timeHoursAgo": "{hours} h ago",
+  "@timeHoursAgo": {
+    "placeholders": {
+      "hours": {
+        "type": "int"
+      }
+    }
+  },
+  "timeJustNow": "Just now",
+  "timeMinutesAgo": "{minutes} min ago",
+  "@timeMinutesAgo": {
+    "placeholders": {
+      "minutes": {
+        "type": "int"
+      }
+    }
+  },
+  "toastAccessRequested": "Request sent",
+  "toastCopyCreated": "Created “{name}”",
+  "@toastCopyCreated": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "toastLinkCopied": "Link copied",
+  "toastMcpConfigCopied": "MCP settings copied",
+  "toastMovedToTrash": "{count, plural, =1{Moved to trash} other{{count} items moved to trash}}",
+  "@toastMovedToTrash": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "toastOfflineOpFailed": "A change made offline could not be applied",
+  "toastShortcutAdded": "Shortcut added",
+  "toastUndoPartial": "Some changes couldn't be undone because they were edited by someone else.",
+  "toastVersionNamed": "Saved version “{name}”",
+  "@toastVersionNamed": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "toastVersionRestored": "Version restored",
+  "toggleSidebar": "Main menu",
+  "tokenCopyOnce": "Copy this token now. You won't see it again.",
+  "tokenCreate": "Create token",
+  "tokenName": "Token name",
+  "tokenRevoke": "Revoke",
+  "tokenRevoked": "revoked",
+  "tokensEmpty": "No tokens yet.",
+  "tokensHint": "Personal access tokens let MCP clients act as you.",
+  "tokensTitle": "Personal access tokens",
+  "trashedBanner": "This file is in the trash.",
+  "typeAll": "All types",
+  "typeDocuments": "Documents",
+  "typeFolders": "Folders",
+  "typeSpreadsheets": "Spreadsheets",
+  "undoHistoryEmpty": "Nothing to undo",
+  "undoHistoryTitle": "Undo history",
+  "untitledFolder": "Untitled folder",
+  "versionNewAvailable": "A new version is available",
+  "versionsEmpty": "No versions yet",
+  "versionsName": "Name this version",
+  "versionsNamedOnly": "Only named versions",
+  "versionsOpenFull": "Open full history",
+  "versionsRename": "Rename version",
+  "versionsRestorePoint": "Before restore",
+  "whatsNew1": "One account for Wonky Write and Wonky Sheets — sign in once, use both.",
+  "whatsNew2": "Every action is a command: press Ctrl+Shift+P (⌘⇧P) to run anything.",
+  "whatsNew3": "Undo covers drive changes too — rename, move, star and trash.",
+  "whatsNew4": "Comments, mentions and version history in every file.",
+  "whatsNewTitle": "What's new",
+  "wonkyWork": "Wonky Work",
+  "writeAutoPair": "Auto-pair brackets and quotes",
+  "writeExportFormat": "Default download format",
+  "writeMarkdownShortcuts": "Markdown shortcuts",
+  "writePageless": "Pageless by default",
+  "writeSmartQuotes": "Smart quotes",
+  "writeSpellcheck": "Spellcheck",
+  "youHaveCommentAccess": "You have comment access",
+  "youHaveViewAccess": "You have view access"
+}

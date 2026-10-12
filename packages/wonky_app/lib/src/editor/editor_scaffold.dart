@@ -20,6 +20,8 @@ import '../routing/misc_pages.dart';
 import '../shell/account_menu.dart';
 import '../shell/shell_services.dart';
 import '../versions/versions_list.dart';
+import '../document/document_controller.dart';
+import 'package:flutter/foundation.dart';
 
 /// The shared editor frame (suite 03 §3.1): title row, menubar, toolbar,
 /// document area with the side panel host, status bar; compact and

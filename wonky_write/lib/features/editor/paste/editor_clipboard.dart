@@ -15,8 +15,8 @@ class EditorClipboard {
     required this.commands,
     SystemClipboard? clipboard,
     ClipboardCodec? codec,
-  })  : clipboard = clipboard ?? SystemClipboard.platform(),
-        codec = codec ?? ClipboardCodec(newEmbedId: controller.newEmbedId);
+  }) : clipboard = clipboard ?? SystemClipboard.platform(),
+       codec = codec ?? ClipboardCodec(newEmbedId: controller.newEmbedId);
 
   final WriteEditorController controller;
   final WriteEditorCommands commands;
@@ -44,7 +44,12 @@ class EditorClipboard {
   Future<bool> copy() async {
     final fragment = selectedFragment();
     if (!copyAllowed || fragment == null) return false;
-    await clipboard.write(codec.encode(fragment, plainAsMarkdown: controller.preferences.copyPlainTextAsMarkdown));
+    await clipboard.write(
+      codec.encode(
+        fragment,
+        plainAsMarkdown: controller.preferences.copyPlainTextAsMarkdown,
+      ),
+    );
     return true;
   }
 
@@ -52,7 +57,12 @@ class EditorClipboard {
   Future<bool> cut() async {
     if (!await copy()) return false;
     final selection = controller.selection!;
-    commands.replaceRangeWithTextLabelled(selection.start, selection.length, '', label: 'Cut');
+    commands.replaceRangeWithTextLabelled(
+      selection.start,
+      selection.length,
+      '',
+      label: 'Cut',
+    );
     return true;
   }
 
@@ -60,7 +70,10 @@ class EditorClipboard {
   Future<bool> copyAs(CopyFormat format) async {
     final fragment = selectedFragment();
     if (!copyAllowed || fragment == null) return false;
-    final encoded = codec.encode(fragment, plainAsMarkdown: format == CopyFormat.markdown);
+    final encoded = codec.encode(
+      fragment,
+      plainAsMarkdown: format == CopyFormat.markdown,
+    );
     final text = switch (format) {
       CopyFormat.markdown => encoded.plainText,
       CopyFormat.plainText => ClipboardCodec.readablePlainText(encoded.delta!),
@@ -72,24 +85,42 @@ class EditorClipboard {
 
   /// `write.edit.paste` (and `pasteWithoutFormatting` with [plainOnly],
   /// `pasteAsMarkdown` with [forceMarkdown]).
-  Future<bool> paste({bool plainOnly = false, bool forceMarkdown = false}) async {
+  Future<bool> paste({
+    bool plainOnly = false,
+    bool forceMarkdown = false,
+  }) async {
     final content = await clipboard.read();
     if (content == null) return false;
-    return pasteContent(content, plainOnly: plainOnly, forceMarkdown: forceMarkdown);
+    return pasteContent(
+      content,
+      plainOnly: plainOnly,
+      forceMarkdown: forceMarkdown,
+    );
   }
 
   /// Pastes already-read [content] (browser paste events, drops, tests).
-  bool pasteContent(ClipboardContent content, {bool plainOnly = false, bool forceMarkdown = false}) {
+  bool pasteContent(
+    ClipboardContent content, {
+    bool plainOnly = false,
+    bool forceMarkdown = false,
+  }) {
     if (!commands.canEdit) return false;
-    if (content.plainText.length > maxPasteLength || (content.html?.length ?? 0) > maxPasteLength * 4) {
-      controller.notify(const EditorNotice(EditorNoticeKind.message, 'This paste is too large'));
+    if (content.plainText.length > maxPasteLength ||
+        (content.html?.length ?? 0) > maxPasteLength * 4) {
+      controller.notify(
+        const EditorNotice(EditorNoticeKind.message, 'This paste is too large'),
+      );
       return false;
     }
     final selection = controller.selection;
     if (selection == null) return false;
     final block = controller.mirror.blockAtOffset(selection.start);
     final inCode = block.isCode;
-    final decoded = codec.decode(content, plainOnly: plainOnly || inCode, forceMarkdown: forceMarkdown);
+    final decoded = codec.decode(
+      content,
+      plainOnly: plainOnly || inCode,
+      forceMarkdown: forceMarkdown,
+    );
     if (decoded == null) return false;
 
     // A single URL over a selection within one block links the selection.
@@ -103,16 +134,19 @@ class EditorClipboard {
         }
       }
     }
-    if (controller.length + decoded.delta.length > controller.maxDocumentChars) {
+    if (controller.length + decoded.delta.length >
+        controller.maxDocumentChars) {
       controller.notify(const EditorNotice(EditorNoticeKind.documentFull));
       return false;
     }
     final change = commands.insertFragment(decoded.delta, label: 'Paste');
     if (decoded.droppedFormatting) {
-      controller.notify(const EditorNotice(
-        EditorNoticeKind.formattingDropped,
-        "Some formatting wasn't kept — Markdown supports bold, italic, strikethrough, code and links",
-      ));
+      controller.notify(
+        const EditorNotice(
+          EditorNoticeKind.formattingDropped,
+          "Some formatting wasn't kept — Markdown supports bold, italic, strikethrough, code and links",
+        ),
+      );
     }
     return change != null;
   }

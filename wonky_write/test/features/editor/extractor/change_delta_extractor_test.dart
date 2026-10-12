@@ -30,95 +30,149 @@ void main() {
   group('Given a paragraph', () {
     setUp(() => setUpWith(Delta()..insert('Hello world\n')));
 
-    test('when typing a character then the change is an insertion classified as typing', () {
-      pipeline.editor.execute([InsertTextRequest(documentPosition: at(5), textToInsert: '!', attributions: {})]);
+    test(
+      'when typing a character then the change is an insertion classified as typing',
+      () {
+        pipeline.editor.execute([
+          InsertTextRequest(
+            documentPosition: at(5),
+            textToInsert: '!',
+            attributions: {},
+          ),
+        ]);
 
-      expect(changes.single.delta, Delta()
-        ..retain(5)
-        ..insert('!'));
-      expect(changes.single.inverse, Delta()
-        ..retain(5)
-        ..delete(1));
-      expect(changes.single.kind, LocalChangeKind.typing);
-    });
+        expect(
+          changes.single.delta,
+          Delta()
+            ..retain(5)
+            ..insert('!'),
+        );
+        expect(
+          changes.single.inverse,
+          Delta()
+            ..retain(5)
+            ..delete(1),
+        );
+        expect(changes.single.kind, LocalChangeKind.typing);
+      },
+    );
 
-    test('when bolding a word then the change is a retain with the bold attribute', () {
-      pipeline.editor.execute([
-        AddTextAttributionsRequest(
-          documentRange: DocumentRange(start: at(0), end: at(5)),
-          attributions: {boldAttribution},
-        ),
-      ]);
+    test(
+      'when bolding a word then the change is a retain with the bold attribute',
+      () {
+        pipeline.editor.execute([
+          AddTextAttributionsRequest(
+            documentRange: DocumentRange(start: at(0), end: at(5)),
+            attributions: {boldAttribution},
+          ),
+        ]);
 
-      expect(changes.single.delta, Delta()..retain(5, {'bold': true}));
-      expect(changes.single.kind, LocalChangeKind.other);
-    });
+        expect(changes.single.delta, Delta()..retain(5, {'bold': true}));
+        expect(changes.single.kind, LocalChangeKind.other);
+      },
+    );
 
     test('when changing the block type then only the line end changes', () {
       pipeline.editor.execute([
-        ChangeParagraphBlockTypeRequest(nodeId: pipeline.document.first.id, blockType: header2Attribution),
-      ]);
-
-      expect(changes.single.delta, Delta()
-        ..retain(11)
-        ..retain(1, {'header': 2}));
-    });
-
-    test('when only a presentation attribution changes then no change is reported', () {
-      pipeline.editor.execute([
-        AddTextAttributionsRequest(
-          documentRange: DocumentRange(start: at(0), end: at(5)),
-          attributions: {spellingErrorAttribution},
+        ChangeParagraphBlockTypeRequest(
+          nodeId: pipeline.document.first.id,
+          blockType: header2Attribution,
         ),
       ]);
 
-      expect(changes, isEmpty);
+      expect(
+        changes.single.delta,
+        Delta()
+          ..retain(11)
+          ..retain(1, {'header': 2}),
+      );
     });
 
-    test('when a reaction checkpoints a transaction then each segment is its own change', () {
-      pipeline.editor.reactionPipeline.add(FunctionalEditReaction(react: (context, dispatcher, changeList) {
-        final hasTyping = changeList.whereType<DocumentEdit>().any((e) => e.change is TextInsertionEvent);
-        if (!hasTyping) return;
-        pipeline.extractor.checkpoint(changeList, labelForNextSegment: 'Autoformat');
-        dispatcher.execute([
+    test(
+      'when only a presentation attribution changes then no change is reported',
+      () {
+        pipeline.editor.execute([
           AddTextAttributionsRequest(
             documentRange: DocumentRange(start: at(0), end: at(5)),
-            attributions: {italicsAttribution},
+            attributions: {spellingErrorAttribution},
           ),
         ]);
-        pipeline.extractor.checkpoint(changeList);
-      }));
 
-      pipeline.editor.execute([InsertTextRequest(documentPosition: at(11), textToInsert: '?', attributions: {})]);
+        expect(changes, isEmpty);
+      },
+    );
 
-      expect(changes, hasLength(2));
-      expect(changes[0].label, isNull);
-      expect(changes[1].label, 'Autoformat');
-      expect(changes[1].delta, Delta()..retain(5, {'italic': true}));
-    });
+    test(
+      'when a reaction checkpoints a transaction then each segment is its own change',
+      () {
+        pipeline.editor.reactionPipeline.add(
+          FunctionalEditReaction(
+            react: (context, dispatcher, changeList) {
+              final hasTyping = changeList.whereType<DocumentEdit>().any(
+                (e) => e.change is TextInsertionEvent,
+              );
+              if (!hasTyping) return;
+              pipeline.extractor.checkpoint(
+                changeList,
+                labelForNextSegment: 'Autoformat',
+              );
+              dispatcher.execute([
+                AddTextAttributionsRequest(
+                  documentRange: DocumentRange(start: at(0), end: at(5)),
+                  attributions: {italicsAttribution},
+                ),
+              ]);
+              pipeline.extractor.checkpoint(changeList);
+            },
+          ),
+        );
+
+        pipeline.editor.execute([
+          InsertTextRequest(
+            documentPosition: at(11),
+            textToInsert: '?',
+            attributions: {},
+          ),
+        ]);
+
+        expect(changes, hasLength(2));
+        expect(changes[0].label, isNull);
+        expect(changes[1].label, 'Autoformat');
+        expect(changes[1].delta, Delta()..retain(5, {'italic': true}));
+      },
+    );
   });
 
   group('Given random documents and random editor requests', () {
     for (final seed in propertySeeds()) {
-      test('when executing them (seed $seed) then every extracted change composes to the new document', () {
-        final gen = DeltaGen(Random(seed));
-        for (var run = 0; run < propertyRuns(20); run += 1) {
-          setUpWith(gen.document(maxLines: 8));
-          var expected = pipeline.delta;
-          for (var step = 0; step < 10; step += 1) {
-            final requests = _randomRequests(gen, pipeline);
-            if (requests.isEmpty) continue;
-            changes.clear();
-            pipeline.editor.execute(requests);
-            for (final change in changes) {
-              expected = expected.compose(change.delta);
+      test(
+        'when executing them (seed $seed) then every extracted change composes to the new document',
+        () {
+          final gen = DeltaGen(Random(seed));
+          for (var run = 0; run < propertyRuns(20); run += 1) {
+            setUpWith(gen.document(maxLines: 8));
+            var expected = pipeline.delta;
+            for (var step = 0; step < 10; step += 1) {
+              final requests = _randomRequests(gen, pipeline);
+              if (requests.isEmpty) continue;
+              changes.clear();
+              pipeline.editor.execute(requests);
+              for (final change in changes) {
+                expected = expected.compose(change.delta);
+              }
+              final actual = pipeline.mapper.deltaFromDocument(
+                pipeline.document,
+              );
+              expect(
+                expected,
+                actual,
+                reason: 'seed $seed run $run step $step: $requests',
+              );
             }
-            final actual = pipeline.mapper.deltaFromDocument(pipeline.document);
-            expect(expected, actual, reason: 'seed $seed run $run step $step: $requests');
+            pipeline.dispose();
           }
-          pipeline.dispose();
-        }
-      });
+        },
+      );
     }
   });
 }
@@ -129,9 +183,11 @@ List<EditRequest> _randomRequests(DeltaGen gen, EditorPipeline pipeline) {
   final node = gen.pick(nodes);
   final textNodes = nodes.whereType<TextNode>().toList();
   DocumentPosition textPosition(TextNode n) => DocumentPosition(
-        nodeId: n.id,
-        nodePosition: TextNodePosition(offset: gen.random.nextInt(n.text.length + 1)),
-      );
+    nodeId: n.id,
+    nodePosition: TextNodePosition(
+      offset: gen.random.nextInt(n.text.length + 1),
+    ),
+  );
   DocumentPosition anyPosition() {
     final n = gen.pick(nodes);
     return n is TextNode
@@ -147,7 +203,9 @@ List<EditRequest> _randomRequests(DeltaGen gen, EditorPipeline pipeline) {
   DocumentRange orderedRange(DocumentPosition a, DocumentPosition b) {
     final oa = pipeline.mirror.offsetOf(a)!;
     final ob = pipeline.mirror.offsetOf(b)!;
-    return oa <= ob ? DocumentRange(start: a, end: b) : DocumentRange(start: b, end: a);
+    return oa <= ob
+        ? DocumentRange(start: a, end: b)
+        : DocumentRange(start: b, end: a);
   }
 
   switch (gen.random.nextInt(11)) {
@@ -167,32 +225,54 @@ List<EditRequest> _randomRequests(DeltaGen gen, EditorPipeline pipeline) {
       final b = textPosition(n);
       return [DeleteContentRequest(documentRange: orderedRange(a, b))];
     case 3:
-      return [DeleteContentRequest(documentRange: orderedRange(anyPosition(), anyPosition()))];
+      return [
+        DeleteContentRequest(
+          documentRange: orderedRange(anyPosition(), anyPosition()),
+        ),
+      ];
     case 4:
       if (textNodes.isEmpty) return const [];
       final n = gen.pick(textNodes);
       final a = textPosition(n);
       final b = textPosition(n);
       return [
-        AddTextAttributionsRequest(documentRange: orderedRange(a, b), attributions: {italicsAttribution}),
+        AddTextAttributionsRequest(
+          documentRange: orderedRange(a, b),
+          attributions: {italicsAttribution},
+        ),
       ];
     case 5:
       if (node is! ParagraphNode) return const [];
       return [
         ChangeParagraphBlockTypeRequest(
           nodeId: node.id,
-          blockType: gen.pick([header1Attribution, blockquoteAttribution, paragraphAttribution, codeAttribution]),
+          blockType: gen.pick([
+            header1Attribution,
+            blockquoteAttribution,
+            paragraphAttribution,
+            codeAttribution,
+          ]),
         ),
       ];
     case 6:
       if (node is ParagraphNode) {
-        return [ConvertParagraphToListItemRequest(nodeId: node.id, type: ListItemType.unordered)];
+        return [
+          ConvertParagraphToListItemRequest(
+            nodeId: node.id,
+            type: ListItemType.unordered,
+          ),
+        ];
       }
       if (node is ListItemNode) {
         return [IndentListItemRequest(nodeId: node.id)];
       }
       if (node is TaskNode) {
-        return [ChangeTaskCompletionRequest(nodeId: node.id, isComplete: !node.isComplete)];
+        return [
+          ChangeTaskCompletionRequest(
+            nodeId: node.id,
+            isComplete: !node.isComplete,
+          ),
+        ];
       }
       return const [];
     case 7:
@@ -204,17 +284,33 @@ List<EditRequest> _randomRequests(DeltaGen gen, EditorPipeline pipeline) {
           nodeIndex: gen.random.nextInt(nodes.length + 1),
           newNode: gen.chance(0.5)
               ? HorizontalRuleNode(id: gen.nextId('hr'))
-              : ParagraphNode(id: gen.nextId('p'), text: AttributedText('inserted')),
+              : ParagraphNode(
+                  id: gen.nextId('p'),
+                  text: AttributedText('inserted'),
+                ),
         ),
       ];
     case 9:
-      return [MoveNodeRequest(nodeId: node.id, newIndex: gen.random.nextInt(nodes.length))];
+      return [
+        MoveNodeRequest(
+          nodeId: node.id,
+          newIndex: gen.random.nextInt(nodes.length),
+        ),
+      ];
     default:
       // Several requests in one transaction (far apart).
       if (textNodes.length < 2) return const [];
       return [
-        InsertTextRequest(documentPosition: textPosition(textNodes.first), textToInsert: 'A', attributions: {}),
-        InsertTextRequest(documentPosition: textPosition(textNodes.last), textToInsert: 'Z', attributions: {}),
+        InsertTextRequest(
+          documentPosition: textPosition(textNodes.first),
+          textToInsert: 'A',
+          attributions: {},
+        ),
+        InsertTextRequest(
+          documentPosition: textPosition(textNodes.last),
+          textToInsert: 'Z',
+          attributions: {},
+        ),
       ];
   }
 }

@@ -17,7 +17,12 @@ enum ImageUploadPhase {
 
 @immutable
 class ImageUploadStatus {
-  const ImageUploadStatus(this.phase, {this.progress, this.uploaderName, this.localPreview});
+  const ImageUploadStatus(
+    this.phase, {
+    this.progress,
+    this.uploaderName,
+    this.localPreview,
+  });
 
   final ImageUploadPhase phase;
 
@@ -41,7 +46,8 @@ abstract class EditorImageServices {
 
   /// The upload status for an image `src`, or a listenable holding `null` when
   /// the image is not being uploaded.
-  ValueListenable<ImageUploadStatus?> uploadStatus(String src) => const _NoUpload();
+  ValueListenable<ImageUploadStatus?> uploadStatus(String src) =>
+      const _NoUpload();
 
   /// Retries a failed upload or a broken URL.
   void retry(String src) {}

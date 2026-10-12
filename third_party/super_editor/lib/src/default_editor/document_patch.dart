@@ -129,7 +129,8 @@ class ApplyDocumentPatchCommand extends EditCommand {
   HistoryBehavior get historyBehavior => request.historyBehavior;
 
   @override
-  String describe() => "Apply document patch (${request.operations.length} operations, tag: ${request.tag})";
+  String describe() =>
+      "Apply document patch (${request.operations.length} operations, tag: ${request.tag})";
 
   @override
   void execute(EditContext context, CommandExecutor executor) {
@@ -137,49 +138,57 @@ class ApplyDocumentPatchCommand extends EditCommand {
     final composer = context.composer;
 
     final changes = <EditEvent>[
-      DocumentPatchAppliedEvent(request.tag, suppressesReactions: !request.runReactions),
+      DocumentPatchAppliedEvent(request.tag,
+          suppressesReactions: !request.runReactions),
     ];
     for (final operation in request.operations) {
       switch (operation) {
         case ReplaceNodePatch(:final nodeId, :final newNode):
           final oldNode = document.getNodeById(nodeId);
           if (oldNode == null) {
-            throw Exception("ApplyDocumentPatchCommand: no node with id '$nodeId' to replace");
+            throw Exception(
+                "ApplyDocumentPatchCommand: no node with id '$nodeId' to replace");
           }
           if (identical(oldNode, newNode)) {
             continue;
           }
           document.replaceNodeById(nodeId, newNode);
           if (newNode.id == nodeId) {
-            changes.add(DocumentEdit(NodeReplacedEvent(nodeId, before: oldNode, after: newNode)));
+            changes.add(DocumentEdit(
+                NodeReplacedEvent(nodeId, before: oldNode, after: newNode)));
           } else {
             changes
               ..add(DocumentEdit(NodeRemovedEvent(nodeId, oldNode)))
-              ..add(DocumentEdit(NodeInsertedEvent(newNode.id, document.getNodeIndexById(newNode.id))));
+              ..add(DocumentEdit(NodeInsertedEvent(
+                  newNode.id, document.getNodeIndexById(newNode.id))));
           }
         case InsertNodePatch(:final index, :final node):
           if (index < 0 || index > document.nodeCount) {
-            throw Exception("ApplyDocumentPatchCommand: insertion index $index out of range");
+            throw Exception(
+                "ApplyDocumentPatchCommand: insertion index $index out of range");
           }
           document.insertNodeAt(index, node);
           changes.add(DocumentEdit(NodeInsertedEvent(node.id, index)));
         case DeleteNodePatch(:final nodeId):
           final oldNode = document.getNodeById(nodeId);
           if (oldNode == null) {
-            throw Exception("ApplyDocumentPatchCommand: no node with id '$nodeId' to delete");
+            throw Exception(
+                "ApplyDocumentPatchCommand: no node with id '$nodeId' to delete");
           }
           document.deleteNode(nodeId);
           changes.add(DocumentEdit(NodeRemovedEvent(nodeId, oldNode)));
         case MoveNodePatch(:final nodeId, :final toIndex):
           final from = document.getNodeIndexById(nodeId);
           if (from < 0) {
-            throw Exception("ApplyDocumentPatchCommand: no node with id '$nodeId' to move");
+            throw Exception(
+                "ApplyDocumentPatchCommand: no node with id '$nodeId' to move");
           }
           if (from == toIndex) {
             continue;
           }
           document.moveNode(nodeId: nodeId, targetIndex: toIndex);
-          changes.add(DocumentEdit(NodeMovedEvent(nodeId: nodeId, from: from, to: toIndex)));
+          changes.add(DocumentEdit(
+              NodeMovedEvent(nodeId: nodeId, from: from, to: toIndex)));
       }
     }
 
@@ -197,7 +206,8 @@ class ApplyDocumentPatchCommand extends EditCommand {
     if (request.updateSelection) {
       final oldSelection = composer.selection;
       if (oldSelection != request.selectionAfter) {
-        composer.setSelectionWithReason(request.selectionAfter, SelectionReason.contentChange);
+        composer.setSelectionWithReason(
+            request.selectionAfter, SelectionReason.contentChange);
         changes.add(SelectionChangeEvent(
           oldSelection: oldSelection,
           newSelection: request.selectionAfter,
@@ -216,7 +226,8 @@ class ApplyDocumentPatchCommand extends EditCommand {
 }
 
 /// Logged by [ApplyDocumentPatchCommand] before the document changes of a patch.
-class DocumentPatchAppliedEvent extends EditEvent implements ReactionSuppressingEvent {
+class DocumentPatchAppliedEvent extends EditEvent
+    implements ReactionSuppressingEvent {
   DocumentPatchAppliedEvent(this.tag, {this.suppressesReactions = true});
 
   /// The [ApplyDocumentPatchRequest.tag] of the patch.

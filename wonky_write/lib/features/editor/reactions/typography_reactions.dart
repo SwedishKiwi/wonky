@@ -6,7 +6,11 @@ import 'reaction_wrappers.dart';
 /// Shared checks for smart typography (Write 04 §8): never in code blocks or
 /// inline code, never after a backslash.
 abstract final class _TypographyContext {
-  static (TextNode, TextInsertionEvent)? typed(EditContext editContext, List<EditEvent> changeList, String char) {
+  static (TextNode, TextInsertionEvent)? typed(
+    EditContext editContext,
+    List<EditEvent> changeList,
+    String char,
+  ) {
     final insertion = TypedText.lastInsertion(changeList);
     if (insertion == null || insertion.text.toPlainText() != char) {
       return null;
@@ -15,32 +19,53 @@ abstract final class _TypographyContext {
     if (node is! TextNode || isCodeBlockNode(node)) {
       return null;
     }
-    if (node.text.getAllAttributionsAt(insertion.offset).contains(codeAttribution)) {
+    if (node.text
+        .getAllAttributionsAt(insertion.offset)
+        .contains(codeAttribution)) {
       return null;
     }
-    if (insertion.offset > 0 && node.text.toPlainText()[insertion.offset - 1] == r'\') {
+    if (insertion.offset > 0 &&
+        node.text.toPlainText()[insertion.offset - 1] == r'\') {
       return null;
     }
     return (node, insertion);
   }
 
-  static List<EditRequest> replace(TextNode node, int start, int end, String replacement, int caretAfter) {
+  static List<EditRequest> replace(
+    TextNode node,
+    int start,
+    int end,
+    String replacement,
+    int caretAfter,
+  ) {
     final attributions = node.text.getAllAttributionsAt(end - 1);
     return [
       DeleteContentRequest(
         documentRange: DocumentRange(
-          start: DocumentPosition(nodeId: node.id, nodePosition: TextNodePosition(offset: start)),
-          end: DocumentPosition(nodeId: node.id, nodePosition: TextNodePosition(offset: end)),
+          start: DocumentPosition(
+            nodeId: node.id,
+            nodePosition: TextNodePosition(offset: start),
+          ),
+          end: DocumentPosition(
+            nodeId: node.id,
+            nodePosition: TextNodePosition(offset: end),
+          ),
         ),
       ),
       InsertTextRequest(
-        documentPosition: DocumentPosition(nodeId: node.id, nodePosition: TextNodePosition(offset: start)),
+        documentPosition: DocumentPosition(
+          nodeId: node.id,
+          nodePosition: TextNodePosition(offset: start),
+        ),
         textToInsert: replacement,
         attributions: attributions,
       ),
       ChangeSelectionRequest(
         DocumentSelection.collapsed(
-          position: DocumentPosition(nodeId: node.id, nodePosition: TextNodePosition(offset: caretAfter)),
+          position: DocumentPosition(
+            nodeId: node.id,
+            nodePosition: TextNodePosition(offset: caretAfter),
+          ),
         ),
         SelectionChangeType.placeCaret,
         SelectionReason.contentChange,
@@ -57,9 +82,15 @@ class SmartQuotesReaction extends EditReaction {
   static final _wordCharacter = RegExp(r'[\p{L}\p{N}]', unicode: true);
 
   @override
-  void react(EditContext editorContext, RequestDispatcher requestDispatcher, List<EditEvent> changeList) {
+  void react(
+    EditContext editorContext,
+    RequestDispatcher requestDispatcher,
+    List<EditEvent> changeList,
+  ) {
     final double = _TypographyContext.typed(editorContext, changeList, '"');
-    final single = double == null ? _TypographyContext.typed(editorContext, changeList, "'") : null;
+    final single = double == null
+        ? _TypographyContext.typed(editorContext, changeList, "'")
+        : null;
     final typed = double ?? single;
     if (typed == null) {
       return;
@@ -73,10 +104,19 @@ class SmartQuotesReaction extends EditReaction {
     if (double != null) {
       replacement = isOpening ? '“' : '”';
     } else {
-      final isApostrophe = previous != null && _wordCharacter.hasMatch(previous);
+      final isApostrophe =
+          previous != null && _wordCharacter.hasMatch(previous);
       replacement = isOpening && !isApostrophe ? '‘' : '’';
     }
-    requestDispatcher.execute(_TypographyContext.replace(node, offset, offset + 1, replacement, offset + 1));
+    requestDispatcher.execute(
+      _TypographyContext.replace(
+        node,
+        offset,
+        offset + 1,
+        replacement,
+        offset + 1,
+      ),
+    );
   }
 }
 
@@ -85,7 +125,11 @@ class EllipsisReaction extends EditReaction {
   const EllipsisReaction();
 
   @override
-  void react(EditContext editorContext, RequestDispatcher requestDispatcher, List<EditEvent> changeList) {
+  void react(
+    EditContext editorContext,
+    RequestDispatcher requestDispatcher,
+    List<EditEvent> changeList,
+  ) {
     final typed = _TypographyContext.typed(editorContext, changeList, '.');
     if (typed == null) {
       return;
@@ -102,7 +146,9 @@ class EllipsisReaction extends EditReaction {
     if (offset >= 3 && text[offset - 3] == r'\') {
       return;
     }
-    requestDispatcher.execute(_TypographyContext.replace(node, offset - 2, offset + 1, '…', offset - 1));
+    requestDispatcher.execute(
+      _TypographyContext.replace(node, offset - 2, offset + 1, '…', offset - 1),
+    );
   }
 }
 
@@ -112,7 +158,11 @@ class EmDashReaction extends EditReaction {
   const EmDashReaction();
 
   @override
-  void react(EditContext editorContext, RequestDispatcher requestDispatcher, List<EditEvent> changeList) {
+  void react(
+    EditContext editorContext,
+    RequestDispatcher requestDispatcher,
+    List<EditEvent> changeList,
+  ) {
     final typed = _TypographyContext.typed(editorContext, changeList, '-');
     if (typed == null) {
       return;
@@ -126,6 +176,8 @@ class EmDashReaction extends EditReaction {
       // Part of `---` (a divider shortcut) or a longer run: leave it.
       return;
     }
-    requestDispatcher.execute(_TypographyContext.replace(node, offset - 1, offset + 1, '—', offset));
+    requestDispatcher.execute(
+      _TypographyContext.replace(node, offset - 1, offset + 1, '—', offset),
+    );
   }
 }

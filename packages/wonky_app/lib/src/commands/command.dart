@@ -92,8 +92,8 @@ abstract class JsonCommand extends Command<JsonArgs> {
 class CallbackCommand extends JsonCommand {
   CallbackCommand({
     required String id,
-    required String Function(BuildContext context) title,
-    required Future<CommandResult> Function(CommandContext ctx, JsonArgs args) run,
+    required this._title,
+    required this._run,
     this.icon,
     this.defaultBindings = const [],
     this.keyScope = KeyScope.global,
@@ -102,17 +102,11 @@ class CallbackCommand extends JsonCommand {
     this.undoTarget = UndoTarget.document,
     this.argsSchema = JsonSchema.empty,
     this.showInPalette = true,
-    bool Function(CommandContext ctx, JsonArgs args)? enabled,
-    bool? Function(CommandContext ctx, JsonArgs args)? checked,
-    String? Function(BuildContext context)? description,
-    String? Function(BuildContext context)? category,
-  }) : id = CommandId(id),
-       _title = title,
-       _run = run,
-       _enabled = enabled,
-       _checked = checked,
-       _description = description,
-       _category = category;
+    this._enabled,
+    this._checked,
+    this._description,
+    this._category,
+  }) : id = CommandId(id);
 
   @override
   final CommandId id;

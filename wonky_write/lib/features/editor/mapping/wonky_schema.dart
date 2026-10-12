@@ -28,9 +28,11 @@ abstract final class DeltaKeys {
   /// Block attribute keys.
   static const blockKeys = {header, blockquote, codeBlock, list, indent};
 
-  static bool isComment(String key) => key.startsWith(commentPrefix) && key.length > commentPrefix.length;
+  static bool isComment(String key) =>
+      key.startsWith(commentPrefix) && key.length > commentPrefix.length;
 
-  static bool isSuggestion(String key) => key.startsWith(suggestionPrefix) && key.length > suggestionPrefix.length;
+  static bool isSuggestion(String key) =>
+      key.startsWith(suggestionPrefix) && key.length > suggestionPrefix.length;
 
   static bool isOverlay(String key) => isComment(key) || isSuggestion(key);
 
@@ -86,7 +88,8 @@ const taskBlockAttribution = NamedAttribution('task');
 
 /// Whether [node] is a code block paragraph.
 bool isCodeBlockNode(DocumentNode? node) =>
-    node is ParagraphNode && node.getMetadataValue(NodeMetadata.blockType) == codeAttribution;
+    node is ParagraphNode &&
+    node.getMetadataValue(NodeMetadata.blockType) == codeAttribution;
 
 /// The code language of a code block node (`""` when unset).
 String codeLanguageOf(DocumentNode node) {

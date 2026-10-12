@@ -31,7 +31,10 @@ class BlockTypeChangeEvent extends NodeChangeEvent {
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
-      other is BlockTypeChangeEvent && nodeId == other.nodeId && before == other.before && after == other.after;
+      other is BlockTypeChangeEvent &&
+          nodeId == other.nodeId &&
+          before == other.before &&
+          after == other.after;
 
   @override
   int get hashCode => nodeId.hashCode ^ before.hashCode ^ after.hashCode;
@@ -57,7 +60,10 @@ class ListItemTypeChangeEvent extends NodeChangeEvent {
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
-      other is ListItemTypeChangeEvent && nodeId == other.nodeId && before == other.before && after == other.after;
+      other is ListItemTypeChangeEvent &&
+          nodeId == other.nodeId &&
+          before == other.before &&
+          after == other.after;
 
   @override
   int get hashCode => nodeId.hashCode ^ before.hashCode ^ after.hashCode;
@@ -83,7 +89,10 @@ class IndentChangeEvent extends NodeChangeEvent {
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
-      other is IndentChangeEvent && nodeId == other.nodeId && before == other.before && after == other.after;
+      other is IndentChangeEvent &&
+          nodeId == other.nodeId &&
+          before == other.before &&
+          after == other.after;
 
   @override
   int get hashCode => nodeId.hashCode ^ before.hashCode ^ after.hashCode;
@@ -104,12 +113,16 @@ class TaskCompletionChangeEvent extends NodeChangeEvent {
   String describe() => "Task completion changed ($nodeId): $before -> $after";
 
   @override
-  String toString() => "TaskCompletionChangeEvent('$nodeId': $before -> $after)";
+  String toString() =>
+      "TaskCompletionChangeEvent('$nodeId': $before -> $after)";
 
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
-      other is TaskCompletionChangeEvent && nodeId == other.nodeId && before == other.before && after == other.after;
+      other is TaskCompletionChangeEvent &&
+          nodeId == other.nodeId &&
+          before == other.before &&
+          after == other.after;
 
   @override
   int get hashCode => nodeId.hashCode ^ before.hashCode ^ after.hashCode;
@@ -150,10 +163,12 @@ class NodeReplacedEvent extends NodeChangeEvent {
   final DocumentNode after;
 
   @override
-  String describe() => "Node replaced ($nodeId): ${before.runtimeType} -> ${after.runtimeType}";
+  String describe() =>
+      "Node replaced ($nodeId): ${before.runtimeType} -> ${after.runtimeType}";
 
   @override
-  String toString() => "NodeReplacedEvent('$nodeId': ${before.runtimeType} -> ${after.runtimeType})";
+  String toString() =>
+      "NodeReplacedEvent('$nodeId': ${before.runtimeType} -> ${after.runtimeType})";
 }
 
 /// Request to change (merge) metadata values of the node with [nodeId].
@@ -220,7 +235,8 @@ class ChangeNodeMetadataCommand extends EditCommand {
 
     document.replaceNodeById(nodeId, node.copyAndReplaceMetadata(newMetadata));
     executor.logChanges([
-      DocumentEdit(NodeMetadataChangeEvent(nodeId, before: before, after: after)),
+      DocumentEdit(
+          NodeMetadataChangeEvent(nodeId, before: before, after: after)),
     ]);
   }
 }

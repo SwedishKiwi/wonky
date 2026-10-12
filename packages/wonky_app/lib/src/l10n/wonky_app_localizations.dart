@@ -96,6 +96,3594 @@ abstract class WonkyAppLocalizations {
 
   /// A list of this localizations delegate's supported locales.
   static const List<Locale> supportedLocales = <Locale>[Locale('en')];
+
+  /// No description provided for @aboutAppVersion.
+  ///
+  /// In en, this message translates to:
+  /// **'App version'**
+  String get aboutAppVersion;
+
+  /// No description provided for @aboutLicenses.
+  ///
+  /// In en, this message translates to:
+  /// **'Open source licenses'**
+  String get aboutLicenses;
+
+  /// No description provided for @aboutProtocol.
+  ///
+  /// In en, this message translates to:
+  /// **'Protocol'**
+  String get aboutProtocol;
+
+  /// No description provided for @aboutRunMode.
+  ///
+  /// In en, this message translates to:
+  /// **'Server mode'**
+  String get aboutRunMode;
+
+  /// No description provided for @aboutServerVersion.
+  ///
+  /// In en, this message translates to:
+  /// **'Server version'**
+  String get aboutServerVersion;
+
+  /// No description provided for @accountMenu.
+  ///
+  /// In en, this message translates to:
+  /// **'Account'**
+  String get accountMenu;
+
+  /// No description provided for @actionBack.
+  ///
+  /// In en, this message translates to:
+  /// **'Back'**
+  String get actionBack;
+
+  /// No description provided for @actionCancel.
+  ///
+  /// In en, this message translates to:
+  /// **'Cancel'**
+  String get actionCancel;
+
+  /// No description provided for @actionClear.
+  ///
+  /// In en, this message translates to:
+  /// **'Clear'**
+  String get actionClear;
+
+  /// No description provided for @actionClose.
+  ///
+  /// In en, this message translates to:
+  /// **'Close'**
+  String get actionClose;
+
+  /// No description provided for @actionCopy.
+  ///
+  /// In en, this message translates to:
+  /// **'Copy'**
+  String get actionCopy;
+
+  /// No description provided for @actionCreate.
+  ///
+  /// In en, this message translates to:
+  /// **'Create'**
+  String get actionCreate;
+
+  /// No description provided for @actionDone.
+  ///
+  /// In en, this message translates to:
+  /// **'Done'**
+  String get actionDone;
+
+  /// No description provided for @actionOk.
+  ///
+  /// In en, this message translates to:
+  /// **'OK'**
+  String get actionOk;
+
+  /// No description provided for @actionOpen.
+  ///
+  /// In en, this message translates to:
+  /// **'Open'**
+  String get actionOpen;
+
+  /// No description provided for @actionReload.
+  ///
+  /// In en, this message translates to:
+  /// **'Reload'**
+  String get actionReload;
+
+  /// No description provided for @actionRetry.
+  ///
+  /// In en, this message translates to:
+  /// **'Retry'**
+  String get actionRetry;
+
+  /// No description provided for @actionSave.
+  ///
+  /// In en, this message translates to:
+  /// **'Save'**
+  String get actionSave;
+
+  /// No description provided for @actionSend.
+  ///
+  /// In en, this message translates to:
+  /// **'Send'**
+  String get actionSend;
+
+  /// No description provided for @actionShare.
+  ///
+  /// In en, this message translates to:
+  /// **'Share'**
+  String get actionShare;
+
+  /// No description provided for @actionStop.
+  ///
+  /// In en, this message translates to:
+  /// **'Stop'**
+  String get actionStop;
+
+  /// No description provided for @actionUndo.
+  ///
+  /// In en, this message translates to:
+  /// **'Undo'**
+  String get actionUndo;
+
+  /// No description provided for @activityCommented.
+  ///
+  /// In en, this message translates to:
+  /// **'{who} commented'**
+  String activityCommented(String who);
+
+  /// No description provided for @activityCreated.
+  ///
+  /// In en, this message translates to:
+  /// **'{who} created this'**
+  String activityCreated(String who);
+
+  /// No description provided for @activityEdited.
+  ///
+  /// In en, this message translates to:
+  /// **'{who} edited'**
+  String activityEdited(String who);
+
+  /// No description provided for @activityEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'No activity yet.'**
+  String get activityEmpty;
+
+  /// No description provided for @activityExported.
+  ///
+  /// In en, this message translates to:
+  /// **'{who} exported'**
+  String activityExported(String who);
+
+  /// No description provided for @activityMoved.
+  ///
+  /// In en, this message translates to:
+  /// **'{who} moved this'**
+  String activityMoved(String who);
+
+  /// No description provided for @activityPeople.
+  ///
+  /// In en, this message translates to:
+  /// **'People'**
+  String get activityPeople;
+
+  /// No description provided for @activityRecent.
+  ///
+  /// In en, this message translates to:
+  /// **'Recent activity'**
+  String get activityRecent;
+
+  /// No description provided for @activityRenamed.
+  ///
+  /// In en, this message translates to:
+  /// **'{who} renamed this'**
+  String activityRenamed(String who);
+
+  /// No description provided for @activityRestored.
+  ///
+  /// In en, this message translates to:
+  /// **'{who} restored this from the trash'**
+  String activityRestored(String who);
+
+  /// No description provided for @activityRestoredVersion.
+  ///
+  /// In en, this message translates to:
+  /// **'{who} restored a version'**
+  String activityRestoredVersion(String who);
+
+  /// No description provided for @activityShared.
+  ///
+  /// In en, this message translates to:
+  /// **'{who} shared this'**
+  String activityShared(String who);
+
+  /// No description provided for @activitySystem.
+  ///
+  /// In en, this message translates to:
+  /// **'Wonky Work'**
+  String get activitySystem;
+
+  /// No description provided for @activityTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Activity on “{name}”'**
+  String activityTitle(String name);
+
+  /// No description provided for @activityTrashed.
+  ///
+  /// In en, this message translates to:
+  /// **'{who} moved this to the trash'**
+  String activityTrashed(String who);
+
+  /// No description provided for @activityUnshared.
+  ///
+  /// In en, this message translates to:
+  /// **'{who} removed access'**
+  String activityUnshared(String who);
+
+  /// No description provided for @addShortcutAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Add shortcut'**
+  String get addShortcutAction;
+
+  /// No description provided for @addShortcutTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Add shortcut to My Drive'**
+  String get addShortcutTitle;
+
+  /// No description provided for @agentUndoLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'AI: {label}'**
+  String agentUndoLabel(String label);
+
+  /// No description provided for @aiEnable.
+  ///
+  /// In en, this message translates to:
+  /// **'Enable the assistant'**
+  String get aiEnable;
+
+  /// No description provided for @authBackToSignIn.
+  ///
+  /// In en, this message translates to:
+  /// **'Back to sign in'**
+  String get authBackToSignIn;
+
+  /// No description provided for @authBackToSignUp.
+  ///
+  /// In en, this message translates to:
+  /// **'Back to sign up'**
+  String get authBackToSignUp;
+
+  /// No description provided for @authChangeEmail.
+  ///
+  /// In en, this message translates to:
+  /// **'Change email address'**
+  String get authChangeEmail;
+
+  /// No description provided for @authCodeResent.
+  ///
+  /// In en, this message translates to:
+  /// **'A new code is on its way.'**
+  String get authCodeResent;
+
+  /// No description provided for @authConfirmPassword.
+  ///
+  /// In en, this message translates to:
+  /// **'Confirm password'**
+  String get authConfirmPassword;
+
+  /// No description provided for @authCreateAccount.
+  ///
+  /// In en, this message translates to:
+  /// **'Create account'**
+  String get authCreateAccount;
+
+  /// No description provided for @authDisplayName.
+  ///
+  /// In en, this message translates to:
+  /// **'Name'**
+  String get authDisplayName;
+
+  /// No description provided for @authEmail.
+  ///
+  /// In en, this message translates to:
+  /// **'Email'**
+  String get authEmail;
+
+  /// No description provided for @authErrorCodeLength.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter the 6-digit code.'**
+  String get authErrorCodeLength;
+
+  /// No description provided for @authErrorEmail.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter a valid email address.'**
+  String get authErrorEmail;
+
+  /// No description provided for @authErrorExpiredCode.
+  ///
+  /// In en, this message translates to:
+  /// **'This code has expired. Request a new one.'**
+  String get authErrorExpiredCode;
+
+  /// No description provided for @authErrorInvalidCode.
+  ///
+  /// In en, this message translates to:
+  /// **'That code is not right. Check it and try again.'**
+  String get authErrorInvalidCode;
+
+  /// No description provided for @authErrorInvalidCredentials.
+  ///
+  /// In en, this message translates to:
+  /// **'Wrong email or password.'**
+  String get authErrorInvalidCredentials;
+
+  /// No description provided for @authErrorNetwork.
+  ///
+  /// In en, this message translates to:
+  /// **'Can\'t reach the server. Check your connection and try again.'**
+  String get authErrorNetwork;
+
+  /// No description provided for @authErrorPasswordMismatch.
+  ///
+  /// In en, this message translates to:
+  /// **'The passwords don\'t match.'**
+  String get authErrorPasswordMismatch;
+
+  /// No description provided for @authErrorPasswordPolicy.
+  ///
+  /// In en, this message translates to:
+  /// **'This password doesn\'t meet the requirements. Choose a longer or more varied password.'**
+  String get authErrorPasswordPolicy;
+
+  /// No description provided for @authErrorPasswordShort.
+  ///
+  /// In en, this message translates to:
+  /// **'Use at least 8 characters.'**
+  String get authErrorPasswordShort;
+
+  /// No description provided for @authErrorPasswordWeak.
+  ///
+  /// In en, this message translates to:
+  /// **'This password is too easy to guess.'**
+  String get authErrorPasswordWeak;
+
+  /// No description provided for @authErrorTerms.
+  ///
+  /// In en, this message translates to:
+  /// **'Please accept the terms to continue.'**
+  String get authErrorTerms;
+
+  /// No description provided for @authErrorTooManyAttempts.
+  ///
+  /// In en, this message translates to:
+  /// **'Too many attempts. Wait a moment and try again.'**
+  String get authErrorTooManyAttempts;
+
+  /// No description provided for @authErrorUnknown.
+  ///
+  /// In en, this message translates to:
+  /// **'Something went wrong. Please try again.'**
+  String get authErrorUnknown;
+
+  /// No description provided for @authForgotPassword.
+  ///
+  /// In en, this message translates to:
+  /// **'Forgot password?'**
+  String get authForgotPassword;
+
+  /// No description provided for @authHaveAccount.
+  ///
+  /// In en, this message translates to:
+  /// **'Already have an account?'**
+  String get authHaveAccount;
+
+  /// No description provided for @authHidePassword.
+  ///
+  /// In en, this message translates to:
+  /// **'Hide password'**
+  String get authHidePassword;
+
+  /// No description provided for @authNewPassword.
+  ///
+  /// In en, this message translates to:
+  /// **'New password'**
+  String get authNewPassword;
+
+  /// No description provided for @authNewPasswordSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose a new password for your account.'**
+  String get authNewPasswordSubtitle;
+
+  /// No description provided for @authNoAccount.
+  ///
+  /// In en, this message translates to:
+  /// **'New to Wonky Work?'**
+  String get authNoAccount;
+
+  /// No description provided for @authPassword.
+  ///
+  /// In en, this message translates to:
+  /// **'Password'**
+  String get authPassword;
+
+  /// No description provided for @authRememberMe.
+  ///
+  /// In en, this message translates to:
+  /// **'Keep me signed in'**
+  String get authRememberMe;
+
+  /// No description provided for @authResendCode.
+  ///
+  /// In en, this message translates to:
+  /// **'Resend code'**
+  String get authResendCode;
+
+  /// No description provided for @authResendIn.
+  ///
+  /// In en, this message translates to:
+  /// **'Resend code in {seconds} s'**
+  String authResendIn(int seconds);
+
+  /// No description provided for @authResetSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'We\'ll email you a code to reset your password.'**
+  String get authResetSubtitle;
+
+  /// No description provided for @authResetTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Reset your password'**
+  String get authResetTitle;
+
+  /// No description provided for @authSendCode.
+  ///
+  /// In en, this message translates to:
+  /// **'Send code'**
+  String get authSendCode;
+
+  /// No description provided for @authSetPassword.
+  ///
+  /// In en, this message translates to:
+  /// **'Set password and sign in'**
+  String get authSetPassword;
+
+  /// No description provided for @authShowPassword.
+  ///
+  /// In en, this message translates to:
+  /// **'Show password'**
+  String get authShowPassword;
+
+  /// No description provided for @authSignIn.
+  ///
+  /// In en, this message translates to:
+  /// **'Sign in'**
+  String get authSignIn;
+
+  /// No description provided for @authSignInSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'One account for Wonky Write and Wonky Sheets.'**
+  String get authSignInSubtitle;
+
+  /// No description provided for @authSignInTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Sign in'**
+  String get authSignInTitle;
+
+  /// No description provided for @authSignUpSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Create one account for Wonky Write and Wonky Sheets.'**
+  String get authSignUpSubtitle;
+
+  /// No description provided for @authSignUpTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Create your account'**
+  String get authSignUpTitle;
+
+  /// No description provided for @authTerms.
+  ///
+  /// In en, this message translates to:
+  /// **'I agree to the terms of service and privacy policy'**
+  String get authTerms;
+
+  /// No description provided for @authVerify.
+  ///
+  /// In en, this message translates to:
+  /// **'Verify'**
+  String get authVerify;
+
+  /// No description provided for @authVerifyNoDraft.
+  ///
+  /// In en, this message translates to:
+  /// **'Start the sign-up again to get a new code.'**
+  String get authVerifyNoDraft;
+
+  /// No description provided for @authVerifySubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'We sent a 6-digit code to {email}.'**
+  String authVerifySubtitle(String email);
+
+  /// No description provided for @authVerifyTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Verify your email'**
+  String get authVerifyTitle;
+
+  /// No description provided for @badgeCommentOnly.
+  ///
+  /// In en, this message translates to:
+  /// **'Comment only'**
+  String get badgeCommentOnly;
+
+  /// No description provided for @badgeOffline.
+  ///
+  /// In en, this message translates to:
+  /// **'Available offline'**
+  String get badgeOffline;
+
+  /// No description provided for @badgeShared.
+  ///
+  /// In en, this message translates to:
+  /// **'Shared'**
+  String get badgeShared;
+
+  /// No description provided for @badgeViewOnly.
+  ///
+  /// In en, this message translates to:
+  /// **'View only'**
+  String get badgeViewOnly;
+
+  /// No description provided for @categoryAccount.
+  ///
+  /// In en, this message translates to:
+  /// **'Account'**
+  String get categoryAccount;
+
+  /// No description provided for @categoryComments.
+  ///
+  /// In en, this message translates to:
+  /// **'Comments'**
+  String get categoryComments;
+
+  /// No description provided for @categoryDrive.
+  ///
+  /// In en, this message translates to:
+  /// **'Drive'**
+  String get categoryDrive;
+
+  /// No description provided for @categoryEdit.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit'**
+  String get categoryEdit;
+
+  /// No description provided for @categoryFile.
+  ///
+  /// In en, this message translates to:
+  /// **'File'**
+  String get categoryFile;
+
+  /// No description provided for @categoryHelp.
+  ///
+  /// In en, this message translates to:
+  /// **'Help'**
+  String get categoryHelp;
+
+  /// No description provided for @categoryNavigation.
+  ///
+  /// In en, this message translates to:
+  /// **'Navigation'**
+  String get categoryNavigation;
+
+  /// No description provided for @categoryOther.
+  ///
+  /// In en, this message translates to:
+  /// **'Other'**
+  String get categoryOther;
+
+  /// No description provided for @categorySharing.
+  ///
+  /// In en, this message translates to:
+  /// **'Sharing'**
+  String get categorySharing;
+
+  /// No description provided for @categoryTools.
+  ///
+  /// In en, this message translates to:
+  /// **'Tools'**
+  String get categoryTools;
+
+  /// No description provided for @categoryVersions.
+  ///
+  /// In en, this message translates to:
+  /// **'Version history'**
+  String get categoryVersions;
+
+  /// No description provided for @categoryView.
+  ///
+  /// In en, this message translates to:
+  /// **'View'**
+  String get categoryView;
+
+  /// No description provided for @cmdAbout.
+  ///
+  /// In en, this message translates to:
+  /// **'About'**
+  String get cmdAbout;
+
+  /// No description provided for @cmdActivityDashboard.
+  ///
+  /// In en, this message translates to:
+  /// **'Activity dashboard'**
+  String get cmdActivityDashboard;
+
+  /// No description provided for @cmdAddShortcut.
+  ///
+  /// In en, this message translates to:
+  /// **'Add shortcut to Drive'**
+  String get cmdAddShortcut;
+
+  /// No description provided for @cmdAssistant.
+  ///
+  /// In en, this message translates to:
+  /// **'Assistant'**
+  String get cmdAssistant;
+
+  /// No description provided for @cmdAssistantNewThread.
+  ///
+  /// In en, this message translates to:
+  /// **'New assistant chat'**
+  String get cmdAssistantNewThread;
+
+  /// No description provided for @cmdAssistantSend.
+  ///
+  /// In en, this message translates to:
+  /// **'Send to assistant'**
+  String get cmdAssistantSend;
+
+  /// No description provided for @cmdAssistantStop.
+  ///
+  /// In en, this message translates to:
+  /// **'Stop assistant'**
+  String get cmdAssistantStop;
+
+  /// No description provided for @cmdBack.
+  ///
+  /// In en, this message translates to:
+  /// **'Back'**
+  String get cmdBack;
+
+  /// No description provided for @cmdClosePanel.
+  ///
+  /// In en, this message translates to:
+  /// **'Close panel'**
+  String get cmdClosePanel;
+
+  /// No description provided for @cmdCommandPalette.
+  ///
+  /// In en, this message translates to:
+  /// **'Command palette'**
+  String get cmdCommandPalette;
+
+  /// No description provided for @cmdComment.
+  ///
+  /// In en, this message translates to:
+  /// **'Comment'**
+  String get cmdComment;
+
+  /// No description provided for @cmdCommentsPanel.
+  ///
+  /// In en, this message translates to:
+  /// **'Comments'**
+  String get cmdCommentsPanel;
+
+  /// No description provided for @cmdCompactMode.
+  ///
+  /// In en, this message translates to:
+  /// **'Compact mode'**
+  String get cmdCompactMode;
+
+  /// No description provided for @cmdCopy.
+  ///
+  /// In en, this message translates to:
+  /// **'Copy'**
+  String get cmdCopy;
+
+  /// No description provided for @cmdCopyLink.
+  ///
+  /// In en, this message translates to:
+  /// **'Copy link'**
+  String get cmdCopyLink;
+
+  /// No description provided for @cmdCopyMcpConfig.
+  ///
+  /// In en, this message translates to:
+  /// **'Copy MCP connection settings'**
+  String get cmdCopyMcpConfig;
+
+  /// No description provided for @cmdCut.
+  ///
+  /// In en, this message translates to:
+  /// **'Cut'**
+  String get cmdCut;
+
+  /// No description provided for @cmdDeleteComment.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete comment'**
+  String get cmdDeleteComment;
+
+  /// No description provided for @cmdDeleteForever.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete forever'**
+  String get cmdDeleteForever;
+
+  /// No description provided for @cmdDetails.
+  ///
+  /// In en, this message translates to:
+  /// **'Details'**
+  String get cmdDetails;
+
+  /// No description provided for @cmdDownload.
+  ///
+  /// In en, this message translates to:
+  /// **'Download'**
+  String get cmdDownload;
+
+  /// No description provided for @cmdEmptyTrash.
+  ///
+  /// In en, this message translates to:
+  /// **'Empty trash'**
+  String get cmdEmptyTrash;
+
+  /// No description provided for @cmdFocusSearch.
+  ///
+  /// In en, this message translates to:
+  /// **'Search in Drive'**
+  String get cmdFocusSearch;
+
+  /// No description provided for @cmdForward.
+  ///
+  /// In en, this message translates to:
+  /// **'Forward'**
+  String get cmdForward;
+
+  /// No description provided for @cmdFullScreen.
+  ///
+  /// In en, this message translates to:
+  /// **'Full screen'**
+  String get cmdFullScreen;
+
+  /// No description provided for @cmdHelpCenter.
+  ///
+  /// In en, this message translates to:
+  /// **'Help center'**
+  String get cmdHelpCenter;
+
+  /// No description provided for @cmdHome.
+  ///
+  /// In en, this message translates to:
+  /// **'Home'**
+  String get cmdHome;
+
+  /// No description provided for @cmdImport.
+  ///
+  /// In en, this message translates to:
+  /// **'Import…'**
+  String get cmdImport;
+
+  /// No description provided for @cmdKeyboardShortcuts.
+  ///
+  /// In en, this message translates to:
+  /// **'Keyboard shortcuts'**
+  String get cmdKeyboardShortcuts;
+
+  /// No description provided for @cmdMakeAvailableOffline.
+  ///
+  /// In en, this message translates to:
+  /// **'Make available offline'**
+  String get cmdMakeAvailableOffline;
+
+  /// No description provided for @cmdMakeCopy.
+  ///
+  /// In en, this message translates to:
+  /// **'Make a copy'**
+  String get cmdMakeCopy;
+
+  /// No description provided for @cmdMove.
+  ///
+  /// In en, this message translates to:
+  /// **'Move'**
+  String get cmdMove;
+
+  /// No description provided for @cmdMoveToTrash.
+  ///
+  /// In en, this message translates to:
+  /// **'Move to trash'**
+  String get cmdMoveToTrash;
+
+  /// No description provided for @cmdNameCurrentVersion.
+  ///
+  /// In en, this message translates to:
+  /// **'Name current version'**
+  String get cmdNameCurrentVersion;
+
+  /// No description provided for @cmdNewDocument.
+  ///
+  /// In en, this message translates to:
+  /// **'New document'**
+  String get cmdNewDocument;
+
+  /// No description provided for @cmdNewFile.
+  ///
+  /// In en, this message translates to:
+  /// **'New file'**
+  String get cmdNewFile;
+
+  /// No description provided for @cmdNewFolder.
+  ///
+  /// In en, this message translates to:
+  /// **'New folder'**
+  String get cmdNewFolder;
+
+  /// No description provided for @cmdNewFromTemplate.
+  ///
+  /// In en, this message translates to:
+  /// **'From template…'**
+  String get cmdNewFromTemplate;
+
+  /// No description provided for @cmdNewSpreadsheet.
+  ///
+  /// In en, this message translates to:
+  /// **'New spreadsheet'**
+  String get cmdNewSpreadsheet;
+
+  /// No description provided for @cmdNextPanel.
+  ///
+  /// In en, this message translates to:
+  /// **'Next panel'**
+  String get cmdNextPanel;
+
+  /// No description provided for @cmdNextRegion.
+  ///
+  /// In en, this message translates to:
+  /// **'Focus next region'**
+  String get cmdNextRegion;
+
+  /// No description provided for @cmdOpen.
+  ///
+  /// In en, this message translates to:
+  /// **'Open'**
+  String get cmdOpen;
+
+  /// No description provided for @cmdOpenComment.
+  ///
+  /// In en, this message translates to:
+  /// **'Open comment'**
+  String get cmdOpenComment;
+
+  /// No description provided for @cmdOpenFile.
+  ///
+  /// In en, this message translates to:
+  /// **'Open…'**
+  String get cmdOpenFile;
+
+  /// No description provided for @cmdOpenPanel.
+  ///
+  /// In en, this message translates to:
+  /// **'Open panel'**
+  String get cmdOpenPanel;
+
+  /// No description provided for @cmdOpenSheets.
+  ///
+  /// In en, this message translates to:
+  /// **'Open Wonky Sheets'**
+  String get cmdOpenSheets;
+
+  /// No description provided for @cmdOpenWrite.
+  ///
+  /// In en, this message translates to:
+  /// **'Open Wonky Write'**
+  String get cmdOpenWrite;
+
+  /// No description provided for @cmdPaste.
+  ///
+  /// In en, this message translates to:
+  /// **'Paste'**
+  String get cmdPaste;
+
+  /// No description provided for @cmdPastePlain.
+  ///
+  /// In en, this message translates to:
+  /// **'Paste without formatting'**
+  String get cmdPastePlain;
+
+  /// No description provided for @cmdPreviousPanel.
+  ///
+  /// In en, this message translates to:
+  /// **'Previous panel'**
+  String get cmdPreviousPanel;
+
+  /// No description provided for @cmdPreviousRegion.
+  ///
+  /// In en, this message translates to:
+  /// **'Focus previous region'**
+  String get cmdPreviousRegion;
+
+  /// No description provided for @cmdPrint.
+  ///
+  /// In en, this message translates to:
+  /// **'Print'**
+  String get cmdPrint;
+
+  /// No description provided for @cmdQuickSwitcher.
+  ///
+  /// In en, this message translates to:
+  /// **'Go to file…'**
+  String get cmdQuickSwitcher;
+
+  /// No description provided for @cmdRedo.
+  ///
+  /// In en, this message translates to:
+  /// **'Redo'**
+  String get cmdRedo;
+
+  /// No description provided for @cmdRedoLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Redo {label}'**
+  String cmdRedoLabel(String label);
+
+  /// No description provided for @cmdRename.
+  ///
+  /// In en, this message translates to:
+  /// **'Rename'**
+  String get cmdRename;
+
+  /// No description provided for @cmdReopen.
+  ///
+  /// In en, this message translates to:
+  /// **'Reopen'**
+  String get cmdReopen;
+
+  /// No description provided for @cmdReply.
+  ///
+  /// In en, this message translates to:
+  /// **'Reply'**
+  String get cmdReply;
+
+  /// No description provided for @cmdReportProblem.
+  ///
+  /// In en, this message translates to:
+  /// **'Report a problem'**
+  String get cmdReportProblem;
+
+  /// No description provided for @cmdRequestAccess.
+  ///
+  /// In en, this message translates to:
+  /// **'Request access'**
+  String get cmdRequestAccess;
+
+  /// No description provided for @cmdResolve.
+  ///
+  /// In en, this message translates to:
+  /// **'Resolve'**
+  String get cmdResolve;
+
+  /// No description provided for @cmdRestore.
+  ///
+  /// In en, this message translates to:
+  /// **'Restore'**
+  String get cmdRestore;
+
+  /// No description provided for @cmdRestoreVersion.
+  ///
+  /// In en, this message translates to:
+  /// **'Restore this version'**
+  String get cmdRestoreVersion;
+
+  /// No description provided for @cmdSearchMenus.
+  ///
+  /// In en, this message translates to:
+  /// **'Search the menus'**
+  String get cmdSearchMenus;
+
+  /// No description provided for @cmdSeeVersionHistory.
+  ///
+  /// In en, this message translates to:
+  /// **'See version history'**
+  String get cmdSeeVersionHistory;
+
+  /// No description provided for @cmdSelectAll.
+  ///
+  /// In en, this message translates to:
+  /// **'Select all'**
+  String get cmdSelectAll;
+
+  /// No description provided for @cmdSetTheme.
+  ///
+  /// In en, this message translates to:
+  /// **'App theme'**
+  String get cmdSetTheme;
+
+  /// No description provided for @cmdSettings.
+  ///
+  /// In en, this message translates to:
+  /// **'Settings'**
+  String get cmdSettings;
+
+  /// No description provided for @cmdShare.
+  ///
+  /// In en, this message translates to:
+  /// **'Share'**
+  String get cmdShare;
+
+  /// No description provided for @cmdShowMenubar.
+  ///
+  /// In en, this message translates to:
+  /// **'Menu bar'**
+  String get cmdShowMenubar;
+
+  /// No description provided for @cmdShowStatusBar.
+  ///
+  /// In en, this message translates to:
+  /// **'Status bar'**
+  String get cmdShowStatusBar;
+
+  /// No description provided for @cmdShowToolbar.
+  ///
+  /// In en, this message translates to:
+  /// **'Toolbar'**
+  String get cmdShowToolbar;
+
+  /// No description provided for @cmdSignOut.
+  ///
+  /// In en, this message translates to:
+  /// **'Sign out'**
+  String get cmdSignOut;
+
+  /// No description provided for @cmdStar.
+  ///
+  /// In en, this message translates to:
+  /// **'Star'**
+  String get cmdStar;
+
+  /// No description provided for @cmdStopAgent.
+  ///
+  /// In en, this message translates to:
+  /// **'Stop agent control'**
+  String get cmdStopAgent;
+
+  /// No description provided for @cmdTogglePanel.
+  ///
+  /// In en, this message translates to:
+  /// **'Toggle panel'**
+  String get cmdTogglePanel;
+
+  /// No description provided for @cmdToggleUiBridge.
+  ///
+  /// In en, this message translates to:
+  /// **'Allow MCP to control this window'**
+  String get cmdToggleUiBridge;
+
+  /// No description provided for @cmdUndo.
+  ///
+  /// In en, this message translates to:
+  /// **'Undo'**
+  String get cmdUndo;
+
+  /// No description provided for @cmdUndoHistory.
+  ///
+  /// In en, this message translates to:
+  /// **'Undo history…'**
+  String get cmdUndoHistory;
+
+  /// No description provided for @cmdUndoLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Undo {label}'**
+  String cmdUndoLabel(String label);
+
+  /// No description provided for @cmdUndoTo.
+  ///
+  /// In en, this message translates to:
+  /// **'Undo to step'**
+  String get cmdUndoTo;
+
+  /// No description provided for @cmdUnstar.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove star'**
+  String get cmdUnstar;
+
+  /// No description provided for @cmdUpload.
+  ///
+  /// In en, this message translates to:
+  /// **'Upload file…'**
+  String get cmdUpload;
+
+  /// No description provided for @cmdVersionsPanel.
+  ///
+  /// In en, this message translates to:
+  /// **'Version history panel'**
+  String get cmdVersionsPanel;
+
+  /// No description provided for @cmdWhatsNew.
+  ///
+  /// In en, this message translates to:
+  /// **'What\'s new'**
+  String get cmdWhatsNew;
+
+  /// No description provided for @cmdZoom.
+  ///
+  /// In en, this message translates to:
+  /// **'Zoom'**
+  String get cmdZoom;
+
+  /// No description provided for @collapseFolders.
+  ///
+  /// In en, this message translates to:
+  /// **'Collapse folders'**
+  String get collapseFolders;
+
+  /// No description provided for @columnModified.
+  ///
+  /// In en, this message translates to:
+  /// **'Last modified'**
+  String get columnModified;
+
+  /// No description provided for @columnName.
+  ///
+  /// In en, this message translates to:
+  /// **'Name'**
+  String get columnName;
+
+  /// No description provided for @columnOwner.
+  ///
+  /// In en, this message translates to:
+  /// **'Owner'**
+  String get columnOwner;
+
+  /// No description provided for @columnSize.
+  ///
+  /// In en, this message translates to:
+  /// **'File size'**
+  String get columnSize;
+
+  /// No description provided for @commandFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'“{title}” failed'**
+  String commandFailed(String title);
+
+  /// No description provided for @commentAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Comment'**
+  String get commentAction;
+
+  /// No description provided for @commentAssign.
+  ///
+  /// In en, this message translates to:
+  /// **'Assign to {name}'**
+  String commentAssign(String name);
+
+  /// No description provided for @commentDelete.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete'**
+  String get commentDelete;
+
+  /// No description provided for @commentDeleteThread.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete thread'**
+  String get commentDeleteThread;
+
+  /// No description provided for @commentDeleted.
+  ///
+  /// In en, this message translates to:
+  /// **'Comment deleted'**
+  String get commentDeleted;
+
+  /// No description provided for @commentEdit.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit'**
+  String get commentEdit;
+
+  /// No description provided for @commentEdited.
+  ///
+  /// In en, this message translates to:
+  /// **'edited'**
+  String get commentEdited;
+
+  /// No description provided for @commentEventAssigned.
+  ///
+  /// In en, this message translates to:
+  /// **'assigned the comment'**
+  String get commentEventAssigned;
+
+  /// No description provided for @commentEventReopened.
+  ///
+  /// In en, this message translates to:
+  /// **'reopened'**
+  String get commentEventReopened;
+
+  /// No description provided for @commentEventResolved.
+  ///
+  /// In en, this message translates to:
+  /// **'marked as resolved'**
+  String get commentEventResolved;
+
+  /// No description provided for @commentFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'The comment could not be saved'**
+  String get commentFailed;
+
+  /// No description provided for @commentLink.
+  ///
+  /// In en, this message translates to:
+  /// **'Link to comment'**
+  String get commentLink;
+
+  /// No description provided for @commentOrphaned.
+  ///
+  /// In en, this message translates to:
+  /// **'Original content deleted'**
+  String get commentOrphaned;
+
+  /// No description provided for @commentPlaceholder.
+  ///
+  /// In en, this message translates to:
+  /// **'Comment or add others with @'**
+  String get commentPlaceholder;
+
+  /// No description provided for @commentShow.
+  ///
+  /// In en, this message translates to:
+  /// **'Show'**
+  String get commentShow;
+
+  /// No description provided for @commentsAll.
+  ///
+  /// In en, this message translates to:
+  /// **'All'**
+  String get commentsAll;
+
+  /// No description provided for @commentsEmptyBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Select content and press {shortcut} to add a comment.'**
+  String commentsEmptyBody(String shortcut);
+
+  /// No description provided for @commentsEmptyTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'No comments yet'**
+  String get commentsEmptyTitle;
+
+  /// No description provided for @commentsForYou.
+  ///
+  /// In en, this message translates to:
+  /// **'For you'**
+  String get commentsForYou;
+
+  /// No description provided for @commentsOpen.
+  ///
+  /// In en, this message translates to:
+  /// **'Open'**
+  String get commentsOpen;
+
+  /// No description provided for @commentsResolved.
+  ///
+  /// In en, this message translates to:
+  /// **'Resolved'**
+  String get commentsResolved;
+
+  /// No description provided for @commentsSearch.
+  ///
+  /// In en, this message translates to:
+  /// **'Search comments'**
+  String get commentsSearch;
+
+  /// No description provided for @commentsSort.
+  ///
+  /// In en, this message translates to:
+  /// **'Sort'**
+  String get commentsSort;
+
+  /// No description provided for @commentsSortDate.
+  ///
+  /// In en, this message translates to:
+  /// **'Sort by date'**
+  String get commentsSortDate;
+
+  /// No description provided for @commentsSortPosition.
+  ///
+  /// In en, this message translates to:
+  /// **'Sort by position'**
+  String get commentsSortPosition;
+
+  /// No description provided for @copyAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Make a copy'**
+  String get copyAction;
+
+  /// No description provided for @copyComments.
+  ///
+  /// In en, this message translates to:
+  /// **'Copy comments'**
+  String get copyComments;
+
+  /// No description provided for @copyName.
+  ///
+  /// In en, this message translates to:
+  /// **'Name'**
+  String get copyName;
+
+  /// No description provided for @copyOfName.
+  ///
+  /// In en, this message translates to:
+  /// **'Copy of {name}'**
+  String copyOfName(String name);
+
+  /// No description provided for @copySharing.
+  ///
+  /// In en, this message translates to:
+  /// **'Share it with the same people'**
+  String get copySharing;
+
+  /// No description provided for @copyTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Make a copy'**
+  String get copyTitle;
+
+  /// No description provided for @dateYesterday.
+  ///
+  /// In en, this message translates to:
+  /// **'Yesterday'**
+  String get dateYesterday;
+
+  /// No description provided for @deleteAccountAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete account'**
+  String get deleteAccountAction;
+
+  /// No description provided for @deleteAccountBody.
+  ///
+  /// In en, this message translates to:
+  /// **'This permanently deletes your account {email}. This cannot be undone.'**
+  String deleteAccountBody(String email);
+
+  /// No description provided for @deleteAccountConfirmLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Type {email} to confirm'**
+  String deleteAccountConfirmLabel(String email);
+
+  /// No description provided for @deleteAccountCounts.
+  ///
+  /// In en, this message translates to:
+  /// **'You own {documents} documents, {spreadsheets} spreadsheets and {folders} folders.'**
+  String deleteAccountCounts(int documents, int spreadsheets, int folders);
+
+  /// No description provided for @deleteAccountHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete your account and the files you own.'**
+  String get deleteAccountHint;
+
+  /// No description provided for @deleteAccountMismatch.
+  ///
+  /// In en, this message translates to:
+  /// **'That\'s not your email address.'**
+  String get deleteAccountMismatch;
+
+  /// No description provided for @deleteAccountTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete account'**
+  String get deleteAccountTitle;
+
+  /// No description provided for @deleteForeverAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete forever'**
+  String get deleteForeverAction;
+
+  /// No description provided for @deleteForeverBody.
+  ///
+  /// In en, this message translates to:
+  /// **'These items will be deleted permanently. This can\'t be undone.'**
+  String get deleteForeverBody;
+
+  /// No description provided for @deleteForeverTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{Delete forever?} other{Delete {count} items forever?}}'**
+  String deleteForeverTitle(int count);
+
+  /// No description provided for @densityComfortable.
+  ///
+  /// In en, this message translates to:
+  /// **'Comfortable'**
+  String get densityComfortable;
+
+  /// No description provided for @densityCompact.
+  ///
+  /// In en, this message translates to:
+  /// **'Compact'**
+  String get densityCompact;
+
+  /// No description provided for @detailsAccess.
+  ///
+  /// In en, this message translates to:
+  /// **'Who has access'**
+  String get detailsAccess;
+
+  /// No description provided for @detailsActivity.
+  ///
+  /// In en, this message translates to:
+  /// **'Activity'**
+  String get detailsActivity;
+
+  /// No description provided for @detailsCreated.
+  ///
+  /// In en, this message translates to:
+  /// **'Created'**
+  String get detailsCreated;
+
+  /// No description provided for @detailsDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Description'**
+  String get detailsDescription;
+
+  /// No description provided for @detailsDescriptionHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Add a description'**
+  String get detailsDescriptionHint;
+
+  /// No description provided for @detailsLocation.
+  ///
+  /// In en, this message translates to:
+  /// **'Location'**
+  String get detailsLocation;
+
+  /// No description provided for @detailsModified.
+  ///
+  /// In en, this message translates to:
+  /// **'Modified'**
+  String get detailsModified;
+
+  /// No description provided for @detailsNothingSelected.
+  ///
+  /// In en, this message translates to:
+  /// **'Select a file to see its details'**
+  String get detailsNothingSelected;
+
+  /// No description provided for @detailsOpened.
+  ///
+  /// In en, this message translates to:
+  /// **'Opened by me'**
+  String get detailsOpened;
+
+  /// No description provided for @detailsOwner.
+  ///
+  /// In en, this message translates to:
+  /// **'Owner'**
+  String get detailsOwner;
+
+  /// No description provided for @detailsPrivate.
+  ///
+  /// In en, this message translates to:
+  /// **'Private to you'**
+  String get detailsPrivate;
+
+  /// No description provided for @detailsRole.
+  ///
+  /// In en, this message translates to:
+  /// **'Your access'**
+  String get detailsRole;
+
+  /// No description provided for @detailsShared.
+  ///
+  /// In en, this message translates to:
+  /// **'Shared'**
+  String get detailsShared;
+
+  /// No description provided for @detailsType.
+  ///
+  /// In en, this message translates to:
+  /// **'Type'**
+  String get detailsType;
+
+  /// No description provided for @driveListLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Files'**
+  String get driveListLabel;
+
+  /// No description provided for @driveOfflineBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Files you opened recently or made available offline are listed when you\'re offline.'**
+  String get driveOfflineBody;
+
+  /// No description provided for @driveOfflineTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'You\'re offline'**
+  String get driveOfflineTitle;
+
+  /// No description provided for @dropToUpload.
+  ///
+  /// In en, this message translates to:
+  /// **'Drop files to upload'**
+  String get dropToUpload;
+
+  /// No description provided for @editorOfflineTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'This file isn\'t available offline'**
+  String get editorOfflineTitle;
+
+  /// No description provided for @emptyFolderBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Drop files here or use the New button.'**
+  String get emptyFolderBody;
+
+  /// No description provided for @emptyFolderTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'This folder is empty'**
+  String get emptyFolderTitle;
+
+  /// No description provided for @emptyHomeBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Create a document or open one shared with you.'**
+  String get emptyHomeBody;
+
+  /// No description provided for @emptyHomeTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Welcome to your drive'**
+  String get emptyHomeTitle;
+
+  /// No description provided for @emptyOfflineBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Use “Make available offline” on files you need without a connection.'**
+  String get emptyOfflineBody;
+
+  /// No description provided for @emptyOfflineTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'No offline files'**
+  String get emptyOfflineTitle;
+
+  /// No description provided for @emptySearchBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Try other words or fewer filters.'**
+  String get emptySearchBody;
+
+  /// No description provided for @emptySearchTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'No results'**
+  String get emptySearchTitle;
+
+  /// No description provided for @emptySharedBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Files others share with you will show up here.'**
+  String get emptySharedBody;
+
+  /// No description provided for @emptySharedTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Nothing shared with you yet'**
+  String get emptySharedTitle;
+
+  /// No description provided for @emptyStarredBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Add stars to things you want to find easily later.'**
+  String get emptyStarredBody;
+
+  /// No description provided for @emptyStarredTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'No starred files yet'**
+  String get emptyStarredTitle;
+
+  /// No description provided for @emptyTrashAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Empty trash'**
+  String get emptyTrashAction;
+
+  /// No description provided for @emptyTrashBody.
+  ///
+  /// In en, this message translates to:
+  /// **'All items in the trash will be deleted forever. This can\'t be undone.'**
+  String get emptyTrashBody;
+
+  /// No description provided for @emptyTrashTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Empty trash?'**
+  String get emptyTrashTitle;
+
+  /// No description provided for @emptyTrashViewBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Items in the trash are deleted forever after 30 days.'**
+  String get emptyTrashViewBody;
+
+  /// No description provided for @emptyTrashViewTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Trash is empty'**
+  String get emptyTrashViewTitle;
+
+  /// No description provided for @errorBoundaryBody.
+  ///
+  /// In en, this message translates to:
+  /// **'This part of the app hit an unexpected error. Your work is saved.'**
+  String get errorBoundaryBody;
+
+  /// No description provided for @errorBoundaryTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Something went wrong'**
+  String get errorBoundaryTitle;
+
+  /// No description provided for @errorCopyDetails.
+  ///
+  /// In en, this message translates to:
+  /// **'Copy error details'**
+  String get errorCopyDetails;
+
+  /// No description provided for @errorGeneric.
+  ///
+  /// In en, this message translates to:
+  /// **'Something went wrong'**
+  String get errorGeneric;
+
+  /// No description provided for @errorNameSlash.
+  ///
+  /// In en, this message translates to:
+  /// **'Names can\'t contain “/”.'**
+  String get errorNameSlash;
+
+  /// No description provided for @errorNameTooLong.
+  ///
+  /// In en, this message translates to:
+  /// **'Use at most 255 characters.'**
+  String get errorNameTooLong;
+
+  /// No description provided for @errorRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'Required'**
+  String get errorRequired;
+
+  /// No description provided for @expandFolders.
+  ///
+  /// In en, this message translates to:
+  /// **'Expand folders'**
+  String get expandFolders;
+
+  /// No description provided for @feedbackDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Tell us what happened or what you\'d like to see.'**
+  String get feedbackDescription;
+
+  /// No description provided for @feedbackFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Your report could not be sent'**
+  String get feedbackFailed;
+
+  /// No description provided for @feedbackKind.
+  ///
+  /// In en, this message translates to:
+  /// **'Type'**
+  String get feedbackKind;
+
+  /// No description provided for @feedbackKindIdea.
+  ///
+  /// In en, this message translates to:
+  /// **'Idea'**
+  String get feedbackKindIdea;
+
+  /// No description provided for @feedbackKindProblem.
+  ///
+  /// In en, this message translates to:
+  /// **'Problem'**
+  String get feedbackKindProblem;
+
+  /// No description provided for @feedbackMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Message'**
+  String get feedbackMessage;
+
+  /// No description provided for @feedbackThanks.
+  ///
+  /// In en, this message translates to:
+  /// **'Thanks for the feedback!'**
+  String get feedbackThanks;
+
+  /// No description provided for @feedbackTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Report a problem'**
+  String get feedbackTitle;
+
+  /// No description provided for @folderTree.
+  ///
+  /// In en, this message translates to:
+  /// **'Folders'**
+  String get folderTree;
+
+  /// No description provided for @foldersOnTop.
+  ///
+  /// In en, this message translates to:
+  /// **'Folders on top'**
+  String get foldersOnTop;
+
+  /// No description provided for @goHome.
+  ///
+  /// In en, this message translates to:
+  /// **'Go to Home'**
+  String get goHome;
+
+  /// No description provided for @groupEarlier.
+  ///
+  /// In en, this message translates to:
+  /// **'Earlier'**
+  String get groupEarlier;
+
+  /// No description provided for @groupThisWeek.
+  ///
+  /// In en, this message translates to:
+  /// **'Earlier this week'**
+  String get groupThisWeek;
+
+  /// No description provided for @groupToday.
+  ///
+  /// In en, this message translates to:
+  /// **'Today'**
+  String get groupToday;
+
+  /// No description provided for @groupYesterday.
+  ///
+  /// In en, this message translates to:
+  /// **'Yesterday'**
+  String get groupYesterday;
+
+  /// No description provided for @helpMenu.
+  ///
+  /// In en, this message translates to:
+  /// **'Help'**
+  String get helpMenu;
+
+  /// No description provided for @helpTopicCommentsBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Select text or cells and press Ctrl+Alt+M (⌘⌥M on Mac) to comment. Mention people with @ to notify them. Resolve threads when you\'re done.'**
+  String get helpTopicCommentsBody;
+
+  /// No description provided for @helpTopicCommentsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Comments'**
+  String get helpTopicCommentsTitle;
+
+  /// No description provided for @helpTopicDriveBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Your drive holds documents, spreadsheets and folders. Drag files onto folders to move them, star what you use often, and find everything with search.'**
+  String get helpTopicDriveBody;
+
+  /// No description provided for @helpTopicDriveTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Your drive'**
+  String get helpTopicDriveTitle;
+
+  /// No description provided for @helpTopicHistoryBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Versions are saved automatically while you work. Name important versions and restore any of them from File › Version history.'**
+  String get helpTopicHistoryBody;
+
+  /// No description provided for @helpTopicHistoryTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Version history'**
+  String get helpTopicHistoryTitle;
+
+  /// No description provided for @helpTopicOfflineBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Recently opened files keep working without a connection. Changes sync when you\'re back online.'**
+  String get helpTopicOfflineBody;
+
+  /// No description provided for @helpTopicOfflineTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Working offline'**
+  String get helpTopicOfflineTitle;
+
+  /// No description provided for @helpTopicSharingBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Use Share to invite people as viewers, commenters or editors, or turn on link sharing for anyone signed in with the link.'**
+  String get helpTopicSharingBody;
+
+  /// No description provided for @helpTopicSharingTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Sharing'**
+  String get helpTopicSharingTitle;
+
+  /// No description provided for @helpTopicShortcutsBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Press Ctrl+/ (⌘/ on Mac) to see every shortcut, and Ctrl+Shift+P (⌘⇧P) to run any command by name.'**
+  String get helpTopicShortcutsBody;
+
+  /// No description provided for @helpTopicShortcutsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Keyboard shortcuts'**
+  String get helpTopicShortcutsTitle;
+
+  /// No description provided for @historyBack.
+  ///
+  /// In en, this message translates to:
+  /// **'Back to editing'**
+  String get historyBack;
+
+  /// No description provided for @historyNoRenderer.
+  ///
+  /// In en, this message translates to:
+  /// **'Previews of versions aren\'t available for this file type.'**
+  String get historyNoRenderer;
+
+  /// No description provided for @historyRestoreThis.
+  ///
+  /// In en, this message translates to:
+  /// **'Restore this version'**
+  String get historyRestoreThis;
+
+  /// No description provided for @historyShowChanges.
+  ///
+  /// In en, this message translates to:
+  /// **'Show changes'**
+  String get historyShowChanges;
+
+  /// No description provided for @importFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'The import failed'**
+  String get importFailed;
+
+  /// No description provided for @importUnsupported.
+  ///
+  /// In en, this message translates to:
+  /// **'These files can\'t be imported here'**
+  String get importUnsupported;
+
+  /// No description provided for @inviteInvalid.
+  ///
+  /// In en, this message translates to:
+  /// **'This link is not valid'**
+  String get inviteInvalid;
+
+  /// No description provided for @inviteTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Opening shared file'**
+  String get inviteTitle;
+
+  /// No description provided for @kindDocument.
+  ///
+  /// In en, this message translates to:
+  /// **'Document'**
+  String get kindDocument;
+
+  /// No description provided for @kindFolder.
+  ///
+  /// In en, this message translates to:
+  /// **'Folder'**
+  String get kindFolder;
+
+  /// No description provided for @kindSpreadsheet.
+  ///
+  /// In en, this message translates to:
+  /// **'Spreadsheet'**
+  String get kindSpreadsheet;
+
+  /// No description provided for @layoutGrid.
+  ///
+  /// In en, this message translates to:
+  /// **'Grid view'**
+  String get layoutGrid;
+
+  /// No description provided for @layoutList.
+  ///
+  /// In en, this message translates to:
+  /// **'List view'**
+  String get layoutList;
+
+  /// No description provided for @mcpAllowControl.
+  ///
+  /// In en, this message translates to:
+  /// **'Allow MCP to control this window'**
+  String get mcpAllowControl;
+
+  /// No description provided for @mcpControlling.
+  ///
+  /// In en, this message translates to:
+  /// **'An agent is controlling this window'**
+  String get mcpControlling;
+
+  /// No description provided for @mcpHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Use this configuration in Claude Desktop or Claude Code with one of your tokens.'**
+  String get mcpHint;
+
+  /// No description provided for @mcpTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'MCP connection'**
+  String get mcpTitle;
+
+  /// No description provided for @menuAccessibility.
+  ///
+  /// In en, this message translates to:
+  /// **'Accessibility settings'**
+  String get menuAccessibility;
+
+  /// No description provided for @menuAppTheme.
+  ///
+  /// In en, this message translates to:
+  /// **'App theme'**
+  String get menuAppTheme;
+
+  /// No description provided for @menuDownload.
+  ///
+  /// In en, this message translates to:
+  /// **'Download'**
+  String get menuDownload;
+
+  /// No description provided for @menuEdit.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit'**
+  String get menuEdit;
+
+  /// No description provided for @menuExplore.
+  ///
+  /// In en, this message translates to:
+  /// **'Explore'**
+  String get menuExplore;
+
+  /// No description provided for @menuFile.
+  ///
+  /// In en, this message translates to:
+  /// **'File'**
+  String get menuFile;
+
+  /// No description provided for @menuHelp.
+  ///
+  /// In en, this message translates to:
+  /// **'Help'**
+  String get menuHelp;
+
+  /// No description provided for @menuMakeCopy.
+  ///
+  /// In en, this message translates to:
+  /// **'Make a copy'**
+  String get menuMakeCopy;
+
+  /// No description provided for @menuMode.
+  ///
+  /// In en, this message translates to:
+  /// **'Mode'**
+  String get menuMode;
+
+  /// No description provided for @menuNew.
+  ///
+  /// In en, this message translates to:
+  /// **'New'**
+  String get menuNew;
+
+  /// No description provided for @menuNewDocument.
+  ///
+  /// In en, this message translates to:
+  /// **'Document'**
+  String get menuNewDocument;
+
+  /// No description provided for @menuNewSpreadsheet.
+  ///
+  /// In en, this message translates to:
+  /// **'Spreadsheet'**
+  String get menuNewSpreadsheet;
+
+  /// No description provided for @menuPanels.
+  ///
+  /// In en, this message translates to:
+  /// **'Panels'**
+  String get menuPanels;
+
+  /// No description provided for @menuPreferences.
+  ///
+  /// In en, this message translates to:
+  /// **'Preferences'**
+  String get menuPreferences;
+
+  /// No description provided for @menuShare.
+  ///
+  /// In en, this message translates to:
+  /// **'Share'**
+  String get menuShare;
+
+  /// No description provided for @menuShow.
+  ///
+  /// In en, this message translates to:
+  /// **'Show'**
+  String get menuShow;
+
+  /// No description provided for @menuTools.
+  ///
+  /// In en, this message translates to:
+  /// **'Tools'**
+  String get menuTools;
+
+  /// No description provided for @menuVersionHistory.
+  ///
+  /// In en, this message translates to:
+  /// **'Version history'**
+  String get menuVersionHistory;
+
+  /// No description provided for @menuView.
+  ///
+  /// In en, this message translates to:
+  /// **'View'**
+  String get menuView;
+
+  /// No description provided for @menuZoom.
+  ///
+  /// In en, this message translates to:
+  /// **'Zoom'**
+  String get menuZoom;
+
+  /// No description provided for @menus.
+  ///
+  /// In en, this message translates to:
+  /// **'Menus'**
+  String get menus;
+
+  /// No description provided for @moreActions.
+  ///
+  /// In en, this message translates to:
+  /// **'More actions'**
+  String get moreActions;
+
+  /// No description provided for @moveHere.
+  ///
+  /// In en, this message translates to:
+  /// **'Move here'**
+  String get moveHere;
+
+  /// No description provided for @moveNoFolders.
+  ///
+  /// In en, this message translates to:
+  /// **'No folders here'**
+  String get moveNoFolders;
+
+  /// No description provided for @moveNoPermission.
+  ///
+  /// In en, this message translates to:
+  /// **'You don\'t have permission to add items to this folder.'**
+  String get moveNoPermission;
+
+  /// No description provided for @moveTitleMany.
+  ///
+  /// In en, this message translates to:
+  /// **'Move {count} items'**
+  String moveTitleMany(int count);
+
+  /// No description provided for @moveTitleOne.
+  ///
+  /// In en, this message translates to:
+  /// **'Move “{name}”'**
+  String moveTitleOne(String name);
+
+  /// No description provided for @nameVersionLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Version name'**
+  String get nameVersionLabel;
+
+  /// No description provided for @nameVersionTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Name this version'**
+  String get nameVersionTitle;
+
+  /// No description provided for @navHome.
+  ///
+  /// In en, this message translates to:
+  /// **'Home'**
+  String get navHome;
+
+  /// No description provided for @navMyDrive.
+  ///
+  /// In en, this message translates to:
+  /// **'My Drive'**
+  String get navMyDrive;
+
+  /// No description provided for @navOffline.
+  ///
+  /// In en, this message translates to:
+  /// **'Offline'**
+  String get navOffline;
+
+  /// No description provided for @navRecent.
+  ///
+  /// In en, this message translates to:
+  /// **'Recent'**
+  String get navRecent;
+
+  /// No description provided for @navShared.
+  ///
+  /// In en, this message translates to:
+  /// **'Shared with me'**
+  String get navShared;
+
+  /// No description provided for @navStarred.
+  ///
+  /// In en, this message translates to:
+  /// **'Starred'**
+  String get navStarred;
+
+  /// No description provided for @navTrash.
+  ///
+  /// In en, this message translates to:
+  /// **'Trash'**
+  String get navTrash;
+
+  /// No description provided for @newButton.
+  ///
+  /// In en, this message translates to:
+  /// **'New'**
+  String get newButton;
+
+  /// No description provided for @newFolderLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Folder name'**
+  String get newFolderLabel;
+
+  /// No description provided for @newFolderTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'New folder'**
+  String get newFolderTitle;
+
+  /// No description provided for @noAccessBody.
+  ///
+  /// In en, this message translates to:
+  /// **'You need access to open this file. You\'re signed in as {email}.'**
+  String noAccessBody(String email);
+
+  /// No description provided for @noAccessTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'You need access'**
+  String get noAccessTitle;
+
+  /// No description provided for @notAllowed.
+  ///
+  /// In en, this message translates to:
+  /// **'Not allowed'**
+  String get notAllowed;
+
+  /// No description provided for @notFoundBody.
+  ///
+  /// In en, this message translates to:
+  /// **'The page you\'re looking for doesn\'t exist.'**
+  String get notFoundBody;
+
+  /// No description provided for @notFoundTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Page not found'**
+  String get notFoundTitle;
+
+  /// No description provided for @notifAccessRequest.
+  ///
+  /// In en, this message translates to:
+  /// **'{who} asked for access to {item}'**
+  String notifAccessRequest(String who, String item);
+
+  /// No description provided for @notifAssigned.
+  ///
+  /// In en, this message translates to:
+  /// **'{who} assigned you a comment in {item}'**
+  String notifAssigned(String who, String item);
+
+  /// No description provided for @notifMention.
+  ///
+  /// In en, this message translates to:
+  /// **'{who} mentioned you in {item}'**
+  String notifMention(String who, String item);
+
+  /// No description provided for @notifOwnership.
+  ///
+  /// In en, this message translates to:
+  /// **'{who} wants to make you the owner of {item}'**
+  String notifOwnership(String who, String item);
+
+  /// No description provided for @notifReply.
+  ///
+  /// In en, this message translates to:
+  /// **'{who} replied in {item}'**
+  String notifReply(String who, String item);
+
+  /// No description provided for @notifScriptFailure.
+  ///
+  /// In en, this message translates to:
+  /// **'A script failed in {item}'**
+  String notifScriptFailure(String item);
+
+  /// No description provided for @notifShared.
+  ///
+  /// In en, this message translates to:
+  /// **'{who} shared {item} with you'**
+  String notifShared(String who, String item);
+
+  /// No description provided for @notifSuggestion.
+  ///
+  /// In en, this message translates to:
+  /// **'{who} suggested an edit in {item}'**
+  String notifSuggestion(String who, String item);
+
+  /// No description provided for @notifSuggestionDecided.
+  ///
+  /// In en, this message translates to:
+  /// **'{who} reviewed your suggestion in {item}'**
+  String notifSuggestionDecided(String who, String item);
+
+  /// No description provided for @notificationsEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'You\'re all caught up'**
+  String get notificationsEmpty;
+
+  /// No description provided for @notificationsMarkAllRead.
+  ///
+  /// In en, this message translates to:
+  /// **'Mark all as read'**
+  String get notificationsMarkAllRead;
+
+  /// No description provided for @notificationsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Notifications'**
+  String get notificationsTitle;
+
+  /// No description provided for @notificationsUnread.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 unread notification} other{{count} unread notifications}}'**
+  String notificationsUnread(int count);
+
+  /// No description provided for @notifyEmail.
+  ///
+  /// In en, this message translates to:
+  /// **'In-app and email'**
+  String get notifyEmail;
+
+  /// No description provided for @notifyInApp.
+  ///
+  /// In en, this message translates to:
+  /// **'In-app'**
+  String get notifyInApp;
+
+  /// No description provided for @notifyMentions.
+  ///
+  /// In en, this message translates to:
+  /// **'Mentions'**
+  String get notifyMentions;
+
+  /// No description provided for @notifyOff.
+  ///
+  /// In en, this message translates to:
+  /// **'Off'**
+  String get notifyOff;
+
+  /// No description provided for @notifyReplies.
+  ///
+  /// In en, this message translates to:
+  /// **'Replies to my comments'**
+  String get notifyReplies;
+
+  /// No description provided for @notifyShares.
+  ///
+  /// In en, this message translates to:
+  /// **'Files shared with me'**
+  String get notifyShares;
+
+  /// No description provided for @offlineBanner.
+  ///
+  /// In en, this message translates to:
+  /// **'You\'re offline. Changes are saved on this device and will sync when you\'re back online.'**
+  String get offlineBanner;
+
+  /// No description provided for @offlineClear.
+  ///
+  /// In en, this message translates to:
+  /// **'Clear local data'**
+  String get offlineClear;
+
+  /// No description provided for @offlineClearHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Removes cached files and pending changes from this device.'**
+  String get offlineClearHint;
+
+  /// No description provided for @offlineCleared.
+  ///
+  /// In en, this message translates to:
+  /// **'Local data cleared'**
+  String get offlineCleared;
+
+  /// No description provided for @offlinePending.
+  ///
+  /// In en, this message translates to:
+  /// **'Changes waiting to sync'**
+  String get offlinePending;
+
+  /// No description provided for @ownerAnyone.
+  ///
+  /// In en, this message translates to:
+  /// **'Owned by anyone'**
+  String get ownerAnyone;
+
+  /// No description provided for @ownerMe.
+  ///
+  /// In en, this message translates to:
+  /// **'me'**
+  String get ownerMe;
+
+  /// No description provided for @ownerMeFilter.
+  ///
+  /// In en, this message translates to:
+  /// **'Owned by me'**
+  String get ownerMeFilter;
+
+  /// No description provided for @ownerNotMe.
+  ///
+  /// In en, this message translates to:
+  /// **'Not owned by me'**
+  String get ownerNotMe;
+
+  /// No description provided for @paletteAllCommands.
+  ///
+  /// In en, this message translates to:
+  /// **'All commands'**
+  String get paletteAllCommands;
+
+  /// No description provided for @paletteCommands.
+  ///
+  /// In en, this message translates to:
+  /// **'Commands'**
+  String get paletteCommands;
+
+  /// No description provided for @paletteEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'Nothing found'**
+  String get paletteEmpty;
+
+  /// No description provided for @paletteFiles.
+  ///
+  /// In en, this message translates to:
+  /// **'Files'**
+  String get paletteFiles;
+
+  /// No description provided for @paletteGoToFile.
+  ///
+  /// In en, this message translates to:
+  /// **'Open file'**
+  String get paletteGoToFile;
+
+  /// No description provided for @paletteMenus.
+  ///
+  /// In en, this message translates to:
+  /// **'Menus'**
+  String get paletteMenus;
+
+  /// No description provided for @palettePlaceholder.
+  ///
+  /// In en, this message translates to:
+  /// **'Type a command or search files…'**
+  String get palettePlaceholder;
+
+  /// No description provided for @paletteRecent.
+  ///
+  /// In en, this message translates to:
+  /// **'Recent'**
+  String get paletteRecent;
+
+  /// No description provided for @paletteSearchMenus.
+  ///
+  /// In en, this message translates to:
+  /// **'Search the menus'**
+  String get paletteSearchMenus;
+
+  /// No description provided for @panelComments.
+  ///
+  /// In en, this message translates to:
+  /// **'Comments'**
+  String get panelComments;
+
+  /// No description provided for @panelHistory.
+  ///
+  /// In en, this message translates to:
+  /// **'Version history'**
+  String get panelHistory;
+
+  /// No description provided for @presenceJoined.
+  ///
+  /// In en, this message translates to:
+  /// **'{name} joined'**
+  String presenceJoined(String name);
+
+  /// No description provided for @presenceLeft.
+  ///
+  /// In en, this message translates to:
+  /// **'{name} left'**
+  String presenceLeft(String name);
+
+  /// No description provided for @quickSwitcherEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'No files found'**
+  String get quickSwitcherEmpty;
+
+  /// No description provided for @quickSwitcherPlaceholder.
+  ///
+  /// In en, this message translates to:
+  /// **'Search documents and spreadsheets…'**
+  String get quickSwitcherPlaceholder;
+
+  /// No description provided for @quickSwitcherRecent.
+  ///
+  /// In en, this message translates to:
+  /// **'Recent files'**
+  String get quickSwitcherRecent;
+
+  /// No description provided for @quickSwitcherResults.
+  ///
+  /// In en, this message translates to:
+  /// **'Results'**
+  String get quickSwitcherResults;
+
+  /// No description provided for @renameLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Name'**
+  String get renameLabel;
+
+  /// No description provided for @renameTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Rename'**
+  String get renameTitle;
+
+  /// No description provided for @replyPlaceholder.
+  ///
+  /// In en, this message translates to:
+  /// **'Reply or add others with @'**
+  String get replyPlaceholder;
+
+  /// No description provided for @requestAccessDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'The owner will be notified and can share the file with you.'**
+  String get requestAccessDescription;
+
+  /// No description provided for @requestAccessFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'The request could not be sent'**
+  String get requestAccessFailed;
+
+  /// No description provided for @requestAccessMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Message (optional)'**
+  String get requestAccessMessage;
+
+  /// No description provided for @requestAccessRole.
+  ///
+  /// In en, this message translates to:
+  /// **'Access'**
+  String get requestAccessRole;
+
+  /// No description provided for @requestAccessSend.
+  ///
+  /// In en, this message translates to:
+  /// **'Request access'**
+  String get requestAccessSend;
+
+  /// No description provided for @requestAccessTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Request access'**
+  String get requestAccessTitle;
+
+  /// No description provided for @restoreVersionAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Restore'**
+  String get restoreVersionAction;
+
+  /// No description provided for @restoreVersionBody.
+  ///
+  /// In en, this message translates to:
+  /// **'The current version is kept in the history, so you can switch back at any time.'**
+  String get restoreVersionBody;
+
+  /// No description provided for @restoreVersionTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Restore this version?'**
+  String get restoreVersionTitle;
+
+  /// No description provided for @roleCommenter.
+  ///
+  /// In en, this message translates to:
+  /// **'Commenter'**
+  String get roleCommenter;
+
+  /// No description provided for @roleEditor.
+  ///
+  /// In en, this message translates to:
+  /// **'Editor'**
+  String get roleEditor;
+
+  /// No description provided for @roleOwner.
+  ///
+  /// In en, this message translates to:
+  /// **'Owner'**
+  String get roleOwner;
+
+  /// No description provided for @roleViewer.
+  ///
+  /// In en, this message translates to:
+  /// **'Viewer'**
+  String get roleViewer;
+
+  /// No description provided for @searchFor.
+  ///
+  /// In en, this message translates to:
+  /// **'Search for “{query}”'**
+  String searchFor(String query);
+
+  /// No description provided for @searchHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Search by name or content'**
+  String get searchHint;
+
+  /// No description provided for @searchPlaceholder.
+  ///
+  /// In en, this message translates to:
+  /// **'Search in Drive'**
+  String get searchPlaceholder;
+
+  /// No description provided for @searchResultsFor.
+  ///
+  /// In en, this message translates to:
+  /// **'Results for “{query}”'**
+  String searchResultsFor(String query);
+
+  /// No description provided for @selectedCount.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 selected} other{{count} selected}}'**
+  String selectedCount(int count);
+
+  /// No description provided for @sessionExpiredBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Sign in again to continue. Your work is kept.'**
+  String get sessionExpiredBody;
+
+  /// No description provided for @sessionExpiredTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Your session expired'**
+  String get sessionExpiredTitle;
+
+  /// No description provided for @settingsAbout.
+  ///
+  /// In en, this message translates to:
+  /// **'About'**
+  String get settingsAbout;
+
+  /// No description provided for @settingsAccent.
+  ///
+  /// In en, this message translates to:
+  /// **'Accent color'**
+  String get settingsAccent;
+
+  /// No description provided for @settingsAccentNeutral.
+  ///
+  /// In en, this message translates to:
+  /// **'Neutral'**
+  String get settingsAccentNeutral;
+
+  /// No description provided for @settingsAccount.
+  ///
+  /// In en, this message translates to:
+  /// **'Account'**
+  String get settingsAccount;
+
+  /// No description provided for @settingsAi.
+  ///
+  /// In en, this message translates to:
+  /// **'AI'**
+  String get settingsAi;
+
+  /// No description provided for @settingsAiHint.
+  ///
+  /// In en, this message translates to:
+  /// **'The assistant helps you write and analyze. It only sees files you open with it.'**
+  String get settingsAiHint;
+
+  /// No description provided for @settingsAppearance.
+  ///
+  /// In en, this message translates to:
+  /// **'Appearance'**
+  String get settingsAppearance;
+
+  /// No description provided for @settingsChangePassword.
+  ///
+  /// In en, this message translates to:
+  /// **'Change password'**
+  String get settingsChangePassword;
+
+  /// No description provided for @settingsDensity.
+  ///
+  /// In en, this message translates to:
+  /// **'Density'**
+  String get settingsDensity;
+
+  /// No description provided for @settingsDeveloper.
+  ///
+  /// In en, this message translates to:
+  /// **'Developer & MCP'**
+  String get settingsDeveloper;
+
+  /// No description provided for @settingsKeyboard.
+  ///
+  /// In en, this message translates to:
+  /// **'Keyboard shortcuts'**
+  String get settingsKeyboard;
+
+  /// No description provided for @settingsLanguage.
+  ///
+  /// In en, this message translates to:
+  /// **'Language & region'**
+  String get settingsLanguage;
+
+  /// No description provided for @settingsLanguageHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Used for dates, numbers and new spreadsheets.'**
+  String get settingsLanguageHint;
+
+  /// No description provided for @settingsLayout.
+  ///
+  /// In en, this message translates to:
+  /// **'Layout'**
+  String get settingsLayout;
+
+  /// No description provided for @settingsNotifications.
+  ///
+  /// In en, this message translates to:
+  /// **'Notifications'**
+  String get settingsNotifications;
+
+  /// No description provided for @settingsOffline.
+  ///
+  /// In en, this message translates to:
+  /// **'Offline & storage'**
+  String get settingsOffline;
+
+  /// No description provided for @settingsOfflineHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Files you open recently stay available on this device.'**
+  String get settingsOfflineHint;
+
+  /// No description provided for @settingsPasswordHint.
+  ///
+  /// In en, this message translates to:
+  /// **'We\'ll email you a code to set a new password.'**
+  String get settingsPasswordHint;
+
+  /// No description provided for @settingsProfile.
+  ///
+  /// In en, this message translates to:
+  /// **'Profile'**
+  String get settingsProfile;
+
+  /// No description provided for @settingsReduceMotion.
+  ///
+  /// In en, this message translates to:
+  /// **'Reduce motion'**
+  String get settingsReduceMotion;
+
+  /// No description provided for @settingsReduceMotionHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Turns off non-essential animations.'**
+  String get settingsReduceMotionHint;
+
+  /// No description provided for @settingsSaved.
+  ///
+  /// In en, this message translates to:
+  /// **'Saved'**
+  String get settingsSaved;
+
+  /// No description provided for @settingsSecurity.
+  ///
+  /// In en, this message translates to:
+  /// **'Sign-in & security'**
+  String get settingsSecurity;
+
+  /// No description provided for @settingsSheets.
+  ///
+  /// In en, this message translates to:
+  /// **'Wonky Sheets'**
+  String get settingsSheets;
+
+  /// No description provided for @settingsSignOutHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Signs you out of Wonky Write and Wonky Sheets on this device.'**
+  String get settingsSignOutHint;
+
+  /// No description provided for @settingsTheme.
+  ///
+  /// In en, this message translates to:
+  /// **'Theme'**
+  String get settingsTheme;
+
+  /// No description provided for @settingsTimeZone.
+  ///
+  /// In en, this message translates to:
+  /// **'Time zone'**
+  String get settingsTimeZone;
+
+  /// No description provided for @settingsTimeZoneHint.
+  ///
+  /// In en, this message translates to:
+  /// **'IANA name, e.g. Europe/Stockholm. Empty follows this device.'**
+  String get settingsTimeZoneHint;
+
+  /// No description provided for @settingsUiLanguage.
+  ///
+  /// In en, this message translates to:
+  /// **'Language'**
+  String get settingsUiLanguage;
+
+  /// No description provided for @settingsWrite.
+  ///
+  /// In en, this message translates to:
+  /// **'Wonky Write'**
+  String get settingsWrite;
+
+  /// No description provided for @shareAddPeople.
+  ///
+  /// In en, this message translates to:
+  /// **'Add people by name or email'**
+  String get shareAddPeople;
+
+  /// No description provided for @shareAnyoneWithLink.
+  ///
+  /// In en, this message translates to:
+  /// **'Anyone with the link'**
+  String get shareAnyoneWithLink;
+
+  /// No description provided for @shareApprove.
+  ///
+  /// In en, this message translates to:
+  /// **'Approve'**
+  String get shareApprove;
+
+  /// No description provided for @shareButton.
+  ///
+  /// In en, this message translates to:
+  /// **'Share'**
+  String get shareButton;
+
+  /// No description provided for @shareCannotShare.
+  ///
+  /// In en, this message translates to:
+  /// **'Only the owner and editors can share this file.'**
+  String get shareCannotShare;
+
+  /// No description provided for @shareDeny.
+  ///
+  /// In en, this message translates to:
+  /// **'Deny'**
+  String get shareDeny;
+
+  /// No description provided for @shareFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'The sharing change could not be saved'**
+  String get shareFailed;
+
+  /// No description provided for @shareGeneralAccess.
+  ///
+  /// In en, this message translates to:
+  /// **'General access'**
+  String get shareGeneralAccess;
+
+  /// No description provided for @shareInherited.
+  ///
+  /// In en, this message translates to:
+  /// **'From folder “{folder}”'**
+  String shareInherited(String folder);
+
+  /// No description provided for @shareLinkHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Anyone signed in who has the link can open it'**
+  String get shareLinkHint;
+
+  /// No description provided for @shareMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Message'**
+  String get shareMessage;
+
+  /// No description provided for @shareNotify.
+  ///
+  /// In en, this message translates to:
+  /// **'Notify people'**
+  String get shareNotify;
+
+  /// No description provided for @sharePending.
+  ///
+  /// In en, this message translates to:
+  /// **'Pending invite'**
+  String get sharePending;
+
+  /// No description provided for @sharePeopleWithAccess.
+  ///
+  /// In en, this message translates to:
+  /// **'People with access'**
+  String get sharePeopleWithAccess;
+
+  /// No description provided for @shareRemoveAccess.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove access'**
+  String get shareRemoveAccess;
+
+  /// No description provided for @shareRemoveBody.
+  ///
+  /// In en, this message translates to:
+  /// **'{name} will lose access to this file.'**
+  String shareRemoveBody(String name);
+
+  /// No description provided for @shareRemoveRecipient.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove {email}'**
+  String shareRemoveRecipient(String email);
+
+  /// No description provided for @shareRemoveTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove access?'**
+  String get shareRemoveTitle;
+
+  /// No description provided for @shareRequestTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'{name} requests {role} access'**
+  String shareRequestTitle(String name, String role);
+
+  /// No description provided for @shareRestricted.
+  ///
+  /// In en, this message translates to:
+  /// **'Restricted'**
+  String get shareRestricted;
+
+  /// No description provided for @shareRestrictedHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Only people with access can open with the link'**
+  String get shareRestrictedHint;
+
+  /// No description provided for @shareRotateLink.
+  ///
+  /// In en, this message translates to:
+  /// **'Reset link'**
+  String get shareRotateLink;
+
+  /// No description provided for @shareSent.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{Shared with 1 person} other{Shared with {count} people}}'**
+  String shareSent(int count);
+
+  /// No description provided for @shareSettingComments.
+  ///
+  /// In en, this message translates to:
+  /// **'Viewers can see comments'**
+  String get shareSettingComments;
+
+  /// No description provided for @shareSettingEditors.
+  ///
+  /// In en, this message translates to:
+  /// **'Editors can change permissions and share'**
+  String get shareSettingEditors;
+
+  /// No description provided for @shareSettingExport.
+  ///
+  /// In en, this message translates to:
+  /// **'Viewers and commenters can download, print and copy'**
+  String get shareSettingExport;
+
+  /// No description provided for @shareSettingsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Sharing settings'**
+  String get shareSettingsTitle;
+
+  /// No description provided for @shareTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Share “{name}”'**
+  String shareTitle(String name);
+
+  /// No description provided for @shareTransferBody.
+  ///
+  /// In en, this message translates to:
+  /// **'{name} becomes the owner once they accept. You\'ll stay an editor.'**
+  String shareTransferBody(String name);
+
+  /// No description provided for @shareTransferOwnership.
+  ///
+  /// In en, this message translates to:
+  /// **'Transfer ownership'**
+  String get shareTransferOwnership;
+
+  /// No description provided for @shareTransferSent.
+  ///
+  /// In en, this message translates to:
+  /// **'Ownership transfer sent to {name}'**
+  String shareTransferSent(String name);
+
+  /// No description provided for @shareTransferTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Transfer ownership?'**
+  String get shareTransferTitle;
+
+  /// No description provided for @shareYou.
+  ///
+  /// In en, this message translates to:
+  /// **'{name} (you)'**
+  String shareYou(String name);
+
+  /// No description provided for @sheetsAutocomplete.
+  ///
+  /// In en, this message translates to:
+  /// **'Formula suggestions'**
+  String get sheetsAutocomplete;
+
+  /// No description provided for @sheetsFormulaHelp.
+  ///
+  /// In en, this message translates to:
+  /// **'Show formula help'**
+  String get sheetsFormulaHelp;
+
+  /// No description provided for @sheetsScripts.
+  ///
+  /// In en, this message translates to:
+  /// **'Allow scripts'**
+  String get sheetsScripts;
+
+  /// No description provided for @shortcutConflictBody.
+  ///
+  /// In en, this message translates to:
+  /// **'{keys} is already used by {commands}. Replace it?'**
+  String shortcutConflictBody(String keys, String commands);
+
+  /// No description provided for @shortcutConflictTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Shortcut in use'**
+  String get shortcutConflictTitle;
+
+  /// No description provided for @shortcutReplace.
+  ///
+  /// In en, this message translates to:
+  /// **'Replace'**
+  String get shortcutReplace;
+
+  /// No description provided for @shortcutReserved.
+  ///
+  /// In en, this message translates to:
+  /// **'The browser reserves this shortcut.'**
+  String get shortcutReserved;
+
+  /// No description provided for @shortcutReset.
+  ///
+  /// In en, this message translates to:
+  /// **'Reset to default'**
+  String get shortcutReset;
+
+  /// No description provided for @shortcutResetAll.
+  ///
+  /// In en, this message translates to:
+  /// **'Reset all'**
+  String get shortcutResetAll;
+
+  /// No description provided for @shortcutsSearch.
+  ///
+  /// In en, this message translates to:
+  /// **'Search shortcuts'**
+  String get shortcutsSearch;
+
+  /// No description provided for @shortcutsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Keyboard shortcuts'**
+  String get shortcutsTitle;
+
+  /// No description provided for @showMenus.
+  ///
+  /// In en, this message translates to:
+  /// **'Show menus'**
+  String get showMenus;
+
+  /// No description provided for @someone.
+  ///
+  /// In en, this message translates to:
+  /// **'Someone'**
+  String get someone;
+
+  /// No description provided for @sortBy.
+  ///
+  /// In en, this message translates to:
+  /// **'Sort: {field}'**
+  String sortBy(String field);
+
+  /// No description provided for @sortCreated.
+  ///
+  /// In en, this message translates to:
+  /// **'Created'**
+  String get sortCreated;
+
+  /// No description provided for @sortDescending.
+  ///
+  /// In en, this message translates to:
+  /// **'Descending'**
+  String get sortDescending;
+
+  /// No description provided for @sortModified.
+  ///
+  /// In en, this message translates to:
+  /// **'Last modified'**
+  String get sortModified;
+
+  /// No description provided for @sortModifiedByMe.
+  ///
+  /// In en, this message translates to:
+  /// **'Last modified by me'**
+  String get sortModifiedByMe;
+
+  /// No description provided for @sortName.
+  ///
+  /// In en, this message translates to:
+  /// **'Name'**
+  String get sortName;
+
+  /// No description provided for @sortOpenedByMe.
+  ///
+  /// In en, this message translates to:
+  /// **'Last opened by me'**
+  String get sortOpenedByMe;
+
+  /// No description provided for @sortSize.
+  ///
+  /// In en, this message translates to:
+  /// **'File size'**
+  String get sortSize;
+
+  /// No description provided for @storageUsed.
+  ///
+  /// In en, this message translates to:
+  /// **'{size} used'**
+  String storageUsed(String size);
+
+  /// No description provided for @strengthEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter a password'**
+  String get strengthEmpty;
+
+  /// No description provided for @strengthFair.
+  ///
+  /// In en, this message translates to:
+  /// **'Fair'**
+  String get strengthFair;
+
+  /// No description provided for @strengthGood.
+  ///
+  /// In en, this message translates to:
+  /// **'Good'**
+  String get strengthGood;
+
+  /// No description provided for @strengthLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Password strength: {label}'**
+  String strengthLabel(String label);
+
+  /// No description provided for @strengthStrong.
+  ///
+  /// In en, this message translates to:
+  /// **'Strong'**
+  String get strengthStrong;
+
+  /// No description provided for @strengthWeak.
+  ///
+  /// In en, this message translates to:
+  /// **'Weak'**
+  String get strengthWeak;
+
+  /// No description provided for @switchAccount.
+  ///
+  /// In en, this message translates to:
+  /// **'Switch account'**
+  String get switchAccount;
+
+  /// No description provided for @templateBlank.
+  ///
+  /// In en, this message translates to:
+  /// **'Blank'**
+  String get templateBlank;
+
+  /// No description provided for @templateEducation.
+  ///
+  /// In en, this message translates to:
+  /// **'Education'**
+  String get templateEducation;
+
+  /// No description provided for @templateFinance.
+  ///
+  /// In en, this message translates to:
+  /// **'Finance'**
+  String get templateFinance;
+
+  /// No description provided for @templateGallery.
+  ///
+  /// In en, this message translates to:
+  /// **'Template gallery'**
+  String get templateGallery;
+
+  /// No description provided for @templatePersonal.
+  ///
+  /// In en, this message translates to:
+  /// **'Personal'**
+  String get templatePersonal;
+
+  /// No description provided for @templateProjectManagement.
+  ///
+  /// In en, this message translates to:
+  /// **'Project management'**
+  String get templateProjectManagement;
+
+  /// No description provided for @templateStripTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Start a new {kind}'**
+  String templateStripTitle(String kind);
+
+  /// No description provided for @templateWork.
+  ///
+  /// In en, this message translates to:
+  /// **'Work'**
+  String get templateWork;
+
+  /// No description provided for @templatesHide.
+  ///
+  /// In en, this message translates to:
+  /// **'Hide templates'**
+  String get templatesHide;
+
+  /// No description provided for @templatesShow.
+  ///
+  /// In en, this message translates to:
+  /// **'Show templates'**
+  String get templatesShow;
+
+  /// No description provided for @themeDark.
+  ///
+  /// In en, this message translates to:
+  /// **'Dark'**
+  String get themeDark;
+
+  /// No description provided for @themeLight.
+  ///
+  /// In en, this message translates to:
+  /// **'Light'**
+  String get themeLight;
+
+  /// No description provided for @themeSystem.
+  ///
+  /// In en, this message translates to:
+  /// **'System'**
+  String get themeSystem;
+
+  /// No description provided for @themeToggleTooltip.
+  ///
+  /// In en, this message translates to:
+  /// **'Theme: {mode}'**
+  String themeToggleTooltip(String mode);
+
+  /// No description provided for @timeHoursAgo.
+  ///
+  /// In en, this message translates to:
+  /// **'{hours} h ago'**
+  String timeHoursAgo(int hours);
+
+  /// No description provided for @timeJustNow.
+  ///
+  /// In en, this message translates to:
+  /// **'Just now'**
+  String get timeJustNow;
+
+  /// No description provided for @timeMinutesAgo.
+  ///
+  /// In en, this message translates to:
+  /// **'{minutes} min ago'**
+  String timeMinutesAgo(int minutes);
+
+  /// No description provided for @toastAccessRequested.
+  ///
+  /// In en, this message translates to:
+  /// **'Request sent'**
+  String get toastAccessRequested;
+
+  /// No description provided for @toastCopyCreated.
+  ///
+  /// In en, this message translates to:
+  /// **'Created “{name}”'**
+  String toastCopyCreated(String name);
+
+  /// No description provided for @toastLinkCopied.
+  ///
+  /// In en, this message translates to:
+  /// **'Link copied'**
+  String get toastLinkCopied;
+
+  /// No description provided for @toastMcpConfigCopied.
+  ///
+  /// In en, this message translates to:
+  /// **'MCP settings copied'**
+  String get toastMcpConfigCopied;
+
+  /// No description provided for @toastMovedToTrash.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{Moved to trash} other{{count} items moved to trash}}'**
+  String toastMovedToTrash(int count);
+
+  /// No description provided for @toastOfflineOpFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'A change made offline could not be applied'**
+  String get toastOfflineOpFailed;
+
+  /// No description provided for @toastShortcutAdded.
+  ///
+  /// In en, this message translates to:
+  /// **'Shortcut added'**
+  String get toastShortcutAdded;
+
+  /// No description provided for @toastUndoPartial.
+  ///
+  /// In en, this message translates to:
+  /// **'Some changes couldn\'t be undone because they were edited by someone else.'**
+  String get toastUndoPartial;
+
+  /// No description provided for @toastVersionNamed.
+  ///
+  /// In en, this message translates to:
+  /// **'Saved version “{name}”'**
+  String toastVersionNamed(String name);
+
+  /// No description provided for @toastVersionRestored.
+  ///
+  /// In en, this message translates to:
+  /// **'Version restored'**
+  String get toastVersionRestored;
+
+  /// No description provided for @toggleSidebar.
+  ///
+  /// In en, this message translates to:
+  /// **'Main menu'**
+  String get toggleSidebar;
+
+  /// No description provided for @tokenCopyOnce.
+  ///
+  /// In en, this message translates to:
+  /// **'Copy this token now. You won\'t see it again.'**
+  String get tokenCopyOnce;
+
+  /// No description provided for @tokenCreate.
+  ///
+  /// In en, this message translates to:
+  /// **'Create token'**
+  String get tokenCreate;
+
+  /// No description provided for @tokenName.
+  ///
+  /// In en, this message translates to:
+  /// **'Token name'**
+  String get tokenName;
+
+  /// No description provided for @tokenRevoke.
+  ///
+  /// In en, this message translates to:
+  /// **'Revoke'**
+  String get tokenRevoke;
+
+  /// No description provided for @tokenRevoked.
+  ///
+  /// In en, this message translates to:
+  /// **'revoked'**
+  String get tokenRevoked;
+
+  /// No description provided for @tokensEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'No tokens yet.'**
+  String get tokensEmpty;
+
+  /// No description provided for @tokensHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Personal access tokens let MCP clients act as you.'**
+  String get tokensHint;
+
+  /// No description provided for @tokensTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Personal access tokens'**
+  String get tokensTitle;
+
+  /// No description provided for @trashedBanner.
+  ///
+  /// In en, this message translates to:
+  /// **'This file is in the trash.'**
+  String get trashedBanner;
+
+  /// No description provided for @typeAll.
+  ///
+  /// In en, this message translates to:
+  /// **'All types'**
+  String get typeAll;
+
+  /// No description provided for @typeDocuments.
+  ///
+  /// In en, this message translates to:
+  /// **'Documents'**
+  String get typeDocuments;
+
+  /// No description provided for @typeFolders.
+  ///
+  /// In en, this message translates to:
+  /// **'Folders'**
+  String get typeFolders;
+
+  /// No description provided for @typeSpreadsheets.
+  ///
+  /// In en, this message translates to:
+  /// **'Spreadsheets'**
+  String get typeSpreadsheets;
+
+  /// No description provided for @undoHistoryEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'Nothing to undo'**
+  String get undoHistoryEmpty;
+
+  /// No description provided for @undoHistoryTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Undo history'**
+  String get undoHistoryTitle;
+
+  /// No description provided for @untitledFolder.
+  ///
+  /// In en, this message translates to:
+  /// **'Untitled folder'**
+  String get untitledFolder;
+
+  /// No description provided for @versionNewAvailable.
+  ///
+  /// In en, this message translates to:
+  /// **'A new version is available'**
+  String get versionNewAvailable;
+
+  /// No description provided for @versionsEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'No versions yet'**
+  String get versionsEmpty;
+
+  /// No description provided for @versionsName.
+  ///
+  /// In en, this message translates to:
+  /// **'Name this version'**
+  String get versionsName;
+
+  /// No description provided for @versionsNamedOnly.
+  ///
+  /// In en, this message translates to:
+  /// **'Only named versions'**
+  String get versionsNamedOnly;
+
+  /// No description provided for @versionsOpenFull.
+  ///
+  /// In en, this message translates to:
+  /// **'Open full history'**
+  String get versionsOpenFull;
+
+  /// No description provided for @versionsRename.
+  ///
+  /// In en, this message translates to:
+  /// **'Rename version'**
+  String get versionsRename;
+
+  /// No description provided for @versionsRestorePoint.
+  ///
+  /// In en, this message translates to:
+  /// **'Before restore'**
+  String get versionsRestorePoint;
+
+  /// No description provided for @whatsNew1.
+  ///
+  /// In en, this message translates to:
+  /// **'One account for Wonky Write and Wonky Sheets — sign in once, use both.'**
+  String get whatsNew1;
+
+  /// No description provided for @whatsNew2.
+  ///
+  /// In en, this message translates to:
+  /// **'Every action is a command: press Ctrl+Shift+P (⌘⇧P) to run anything.'**
+  String get whatsNew2;
+
+  /// No description provided for @whatsNew3.
+  ///
+  /// In en, this message translates to:
+  /// **'Undo covers drive changes too — rename, move, star and trash.'**
+  String get whatsNew3;
+
+  /// No description provided for @whatsNew4.
+  ///
+  /// In en, this message translates to:
+  /// **'Comments, mentions and version history in every file.'**
+  String get whatsNew4;
+
+  /// No description provided for @whatsNewTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'What\'s new'**
+  String get whatsNewTitle;
+
+  /// No description provided for @wonkyWork.
+  ///
+  /// In en, this message translates to:
+  /// **'Wonky Work'**
+  String get wonkyWork;
+
+  /// No description provided for @writeAutoPair.
+  ///
+  /// In en, this message translates to:
+  /// **'Auto-pair brackets and quotes'**
+  String get writeAutoPair;
+
+  /// No description provided for @writeExportFormat.
+  ///
+  /// In en, this message translates to:
+  /// **'Default download format'**
+  String get writeExportFormat;
+
+  /// No description provided for @writeMarkdownShortcuts.
+  ///
+  /// In en, this message translates to:
+  /// **'Markdown shortcuts'**
+  String get writeMarkdownShortcuts;
+
+  /// No description provided for @writePageless.
+  ///
+  /// In en, this message translates to:
+  /// **'Pageless by default'**
+  String get writePageless;
+
+  /// No description provided for @writeSmartQuotes.
+  ///
+  /// In en, this message translates to:
+  /// **'Smart quotes'**
+  String get writeSmartQuotes;
+
+  /// No description provided for @writeSpellcheck.
+  ///
+  /// In en, this message translates to:
+  /// **'Spellcheck'**
+  String get writeSpellcheck;
+
+  /// No description provided for @youHaveCommentAccess.
+  ///
+  /// In en, this message translates to:
+  /// **'You have comment access'**
+  String get youHaveCommentAccess;
+
+  /// No description provided for @youHaveViewAccess.
+  ///
+  /// In en, this message translates to:
+  /// **'You have view access'**
+  String get youHaveViewAccess;
 }
 
 class _WonkyAppLocalizationsDelegate

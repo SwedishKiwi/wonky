@@ -78,6 +78,26 @@ rather than worked around in app code. Planned patches (tracked in
 | **SE-4** | Editable tables: caret and selection inside `TableBlockNode` cells, inline formatting in cells, Tab/Shift+Tab between cells, add/remove/move rows and columns, column alignment; edits reported as events that map to a `table` embed replacement. | In-place table editing (§18.4) | P1 (M5) |
 | **SE-5** | Fixes found by our test suites (IME on web/Windows/Linux, RTL, large-document layout performance, keyboard handling). | All | Ongoing |
 
+**Implementation status (M2)** — see `third_party/super_editor/PATCHES.md`:
+- SE-1 done (plus `toQuillDeltas(omitTrailingEmptyParagraph:)`); the mapper serializes through
+  `toQuillDeltas` with a Wonky `DeltaSerializer` and parses Delta lines directly (no editor round
+  trips) for fast loads.
+- SE-2 is a generic node-level primitive, `ApplyDocumentPatchRequest` (replace/insert/delete/move
+  nodes, transformed selection + composing region, IME resync, non-historical, reactions
+  suppressed). The Delta → node mapping lives in the app's `DeltaApplier`, because it depends on
+  the Wonky schema.
+- SE-3 done (`BlockTypeChangeEvent`, `ListItemTypeChangeEvent`, `IndentChangeEvent`,
+  `TaskCompletionChangeEvent`, `NodeMetadataChangeEvent`, `NodeReplacedEvent`). The extractor
+  doesn't depend on it: it re-serializes only the touched nodes (immutable nodes make unchanged
+  nodes identical instances) and diffs per gap between untouched anchors, with an event fast path
+  for single text insertions/deletions; marked reactions split a transaction by checkpoints
+  taken *before* each marked reaction runs.
+- SE-4 not done in this iteration (tables are edited through `write.table.*` embed replacements).
+- SE-5: list indent limit 8, list-type change keeps indent, IME resync after patches, typing over
+  a selection, undo/redo action exports. `attributed_text` is vendored too
+  (`third_party/attributed_text`, patch AT-1: `addAttribution` inside an existing span corrupted
+  span markers).
+
 Everything must keep working on the unpatched behavior until each patch lands (the app layers —
 mapper, applier, extractor, table popover — are written against our own interfaces), so patches
 can be developed in parallel with the app.

@@ -19,15 +19,29 @@ class AutoPairReaction extends EditReaction {
   final bool Function() markdownShortcuts;
 
   static const _pairs = {'(': ')', '[': ']', '{': '}'};
-  static const _codePairs = {'(': ')', '[': ']', '{': '}', '"': '"', "'": "'", '`': '`'};
+  static const _codePairs = {
+    '(': ')',
+    '[': ']',
+    '{': '}',
+    '"': '"',
+    "'": "'",
+    '`': '`',
+  };
   static final _wordCharacter = RegExp(r'[\p{L}\p{N}]', unicode: true);
 
   /// The closer we inserted last: (nodeId, offset, character).
   (String, int, String)? _pending;
 
   @override
-  void react(EditContext editorContext, RequestDispatcher requestDispatcher, List<EditEvent> changeList) {
-    final edits = changeList.whereType<DocumentEdit>().map((e) => e.change).toList();
+  void react(
+    EditContext editorContext,
+    RequestDispatcher requestDispatcher,
+    List<EditEvent> changeList,
+  ) {
+    final edits = changeList
+        .whereType<DocumentEdit>()
+        .map((e) => e.change)
+        .toList();
     if (edits.isEmpty) {
       return;
     }
@@ -47,7 +61,8 @@ class AutoPairReaction extends EditReaction {
           deletion.offset == insertion.offset &&
           deletion.deletedText.isNotEmpty) {
         final node = document.getNodeById(insertion.nodeId);
-        if (node is TextNode && _wrap(node, insertion, deletion.deletedText, requestDispatcher)) {
+        if (node is TextNode &&
+            _wrap(node, insertion, deletion.deletedText, requestDispatcher)) {
           _pending = null;
           return;
         }
@@ -67,11 +82,18 @@ class AutoPairReaction extends EditReaction {
       final node = document.getNodeById(last.nodeId);
       if (pending == null || node is! TextNode || deleted.length != 1) return;
       final closer = _closerFor(deleted, isCodeBlockNode(node));
-      if (closer == null || pending.$1 != node.id || pending.$2 != last.offset + 1 || pending.$3 != closer) return;
+      if (closer == null ||
+          pending.$1 != node.id ||
+          pending.$2 != last.offset + 1 ||
+          pending.$3 != closer) {
+        return;
+      }
       final text = node.text.toPlainText();
       if (last.offset < text.length && text[last.offset] == closer) {
         requestDispatcher.execute([
-          DeleteContentRequest(documentRange: _range(node.id, last.offset, last.offset + 1)),
+          DeleteContentRequest(
+            documentRange: _range(node.id, last.offset, last.offset + 1),
+          ),
           _caret(node.id, last.offset),
         ]);
       }
@@ -94,11 +116,16 @@ class AutoPairReaction extends EditReaction {
 
     // Overtype the auto-inserted closer.
     final pending = _pending;
-    if (pending != null && pending.$1 == node.id && pending.$3 == typed && pending.$2 == offset) {
+    if (pending != null &&
+        pending.$1 == node.id &&
+        pending.$3 == typed &&
+        pending.$2 == offset) {
       if (offset + 1 < text.length && text[offset + 1] == typed) {
         _pending = null;
         requestDispatcher.execute([
-          DeleteContentRequest(documentRange: _range(node.id, offset + 1, offset + 2)),
+          DeleteContentRequest(
+            documentRange: _range(node.id, offset + 1, offset + 2),
+          ),
           _caret(node.id, offset + 1),
         ]);
         return;
@@ -111,14 +138,24 @@ class AutoPairReaction extends EditReaction {
 
     final closer = _closerFor(typed, isCode);
     if (closer == null) return;
-    if (!isCode && node.text.getAllAttributionsAt(offset).contains(codeAttribution)) return;
-    if ((typed == "'" || typed == '"') && offset > 0 && _wordCharacter.hasMatch(text[offset - 1])) return;
+    if (!isCode &&
+        node.text.getAllAttributionsAt(offset).contains(codeAttribution)) {
+      return;
+    }
+    if ((typed == "'" || typed == '"') &&
+        offset > 0 &&
+        _wordCharacter.hasMatch(text[offset - 1])) {
+      return;
+    }
     final next = offset + 1 < text.length ? text[offset + 1] : null;
     if (next != null && next.trim().isNotEmpty && !_isCloser(next)) return;
 
     requestDispatcher.execute([
       InsertTextRequest(
-        documentPosition: DocumentPosition(nodeId: node.id, nodePosition: TextNodePosition(offset: offset + 1)),
+        documentPosition: DocumentPosition(
+          nodeId: node.id,
+          nodePosition: TextNodePosition(offset: offset + 1),
+        ),
         textToInsert: closer,
         attributions: node.text.getAllAttributionsAt(offset),
       ),
@@ -127,7 +164,12 @@ class AutoPairReaction extends EditReaction {
     _pending = (node.id, offset + 1, closer);
   }
 
-  bool _wrap(TextNode node, TextInsertionEvent insertion, AttributedText deleted, RequestDispatcher dispatcher) {
+  bool _wrap(
+    TextNode node,
+    TextInsertionEvent insertion,
+    AttributedText deleted,
+    RequestDispatcher dispatcher,
+  ) {
     final typed = insertion.text.toPlainText();
     final isCode = isCodeBlockNode(node);
     final offset = insertion.offset;
@@ -144,15 +186,24 @@ class AutoPairReaction extends EditReaction {
           };
     if (formatting != null) {
       if (formatting == codeAttribution) {
-        for (final a in [boldAttribution, italicsAttribution, strikethroughAttribution]) {
+        for (final a in [
+          boldAttribution,
+          italicsAttribution,
+          strikethroughAttribution,
+        ]) {
           selected.removeAttribution(a, SpanRange(0, selected.length - 1));
         }
       }
       selected.addAttribution(formatting, SpanRange(0, selected.length - 1));
       dispatcher.execute([
-        DeleteContentRequest(documentRange: _range(node.id, offset, offset + 1)),
+        DeleteContentRequest(
+          documentRange: _range(node.id, offset, offset + 1),
+        ),
         InsertAttributedTextRequest(
-          DocumentPosition(nodeId: node.id, nodePosition: TextNodePosition(offset: offset)),
+          DocumentPosition(
+            nodeId: node.id,
+            nodePosition: TextNodePosition(offset: offset),
+          ),
           selected,
         ),
         _select(node.id, offset, offset + selected.length),
@@ -164,7 +215,10 @@ class AutoPairReaction extends EditReaction {
     if (closer == null) return false;
     dispatcher.execute([
       InsertAttributedTextRequest(
-        DocumentPosition(nodeId: node.id, nodePosition: TextNodePosition(offset: offset + 1)),
+        DocumentPosition(
+          nodeId: node.id,
+          nodePosition: TextNodePosition(offset: offset + 1),
+        ),
         selected.copyAndAppend(AttributedText(closer)),
       ),
       _select(node.id, offset + 1, offset + 1 + selected.length),
@@ -172,27 +226,47 @@ class AutoPairReaction extends EditReaction {
     return true;
   }
 
-  static String? _closerFor(String opener, bool isCode) => (isCode ? _codePairs : _pairs)[opener];
+  static String? _closerFor(String opener, bool isCode) =>
+      (isCode ? _codePairs : _pairs)[opener];
 
-  static bool _isCloser(String char) => char == ')' || char == ']' || char == '}' || char == '"' || char == "'";
+  static bool _isCloser(String char) =>
+      char == ')' || char == ']' || char == '}' || char == '"' || char == "'";
 
-  static DocumentRange _range(String nodeId, int start, int end) => DocumentRange(
-        start: DocumentPosition(nodeId: nodeId, nodePosition: TextNodePosition(offset: start)),
-        end: DocumentPosition(nodeId: nodeId, nodePosition: TextNodePosition(offset: end)),
+  static DocumentRange _range(String nodeId, int start, int end) =>
+      DocumentRange(
+        start: DocumentPosition(
+          nodeId: nodeId,
+          nodePosition: TextNodePosition(offset: start),
+        ),
+        end: DocumentPosition(
+          nodeId: nodeId,
+          nodePosition: TextNodePosition(offset: end),
+        ),
       );
 
-  static ChangeSelectionRequest _caret(String nodeId, int offset) => ChangeSelectionRequest(
+  static ChangeSelectionRequest _caret(String nodeId, int offset) =>
+      ChangeSelectionRequest(
         DocumentSelection.collapsed(
-          position: DocumentPosition(nodeId: nodeId, nodePosition: TextNodePosition(offset: offset)),
+          position: DocumentPosition(
+            nodeId: nodeId,
+            nodePosition: TextNodePosition(offset: offset),
+          ),
         ),
         SelectionChangeType.placeCaret,
         SelectionReason.contentChange,
       );
 
-  static ChangeSelectionRequest _select(String nodeId, int start, int end) => ChangeSelectionRequest(
+  static ChangeSelectionRequest _select(String nodeId, int start, int end) =>
+      ChangeSelectionRequest(
         DocumentSelection(
-          base: DocumentPosition(nodeId: nodeId, nodePosition: TextNodePosition(offset: start)),
-          extent: DocumentPosition(nodeId: nodeId, nodePosition: TextNodePosition(offset: end)),
+          base: DocumentPosition(
+            nodeId: nodeId,
+            nodePosition: TextNodePosition(offset: start),
+          ),
+          extent: DocumentPosition(
+            nodeId: nodeId,
+            nodePosition: TextNodePosition(offset: end),
+          ),
         ),
         SelectionChangeType.expandSelection,
         SelectionReason.contentChange,

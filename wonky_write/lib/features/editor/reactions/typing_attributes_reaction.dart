@@ -20,9 +20,17 @@ class WonkyTypingAttributesReaction extends EditReaction {
   DocumentSelection? _previousSelection;
 
   @override
-  void react(EditContext editorContext, RequestDispatcher requestDispatcher, List<EditEvent> changeList) {
-    final lastSelectionChange = changeList.lastWhereOrNull((e) => e is SelectionChangeEvent) as SelectionChangeEvent?;
-    final composer = editorContext.find<MutableDocumentComposer>(Editor.composerKey);
+  void react(
+    EditContext editorContext,
+    RequestDispatcher requestDispatcher,
+    List<EditEvent> changeList,
+  ) {
+    final lastSelectionChange =
+        changeList.lastWhereOrNull((e) => e is SelectionChangeEvent)
+            as SelectionChangeEvent?;
+    final composer = editorContext.find<MutableDocumentComposer>(
+      Editor.composerKey,
+    );
     if (lastSelectionChange == null) {
       return;
     }
@@ -37,7 +45,9 @@ class WonkyTypingAttributesReaction extends EditReaction {
         previous.isCollapsed &&
         selection.isCollapsed &&
         previous.extent.nodeId == selection.extent.nodeId &&
-        previous.extent.nodePosition.isEquivalentTo(selection.extent.nodePosition)) {
+        previous.extent.nodePosition.isEquivalentTo(
+          selection.extent.nodePosition,
+        )) {
       // Only the affinity changed, or nothing: keep pending toggles.
       return;
     }
@@ -51,22 +61,31 @@ class WonkyTypingAttributesReaction extends EditReaction {
       // A new, empty block (e.g. after Enter): keep the pending formatting,
       // like Google Docs does.
       composer.preferences.replaceStyles(
-        composer.preferences.currentAttributions.where(AttributionMapping.isFormattingAttribution).toSet(),
+        composer.preferences.currentAttributions
+            .where(AttributionMapping.isFormattingAttribution)
+            .toSet(),
       );
       return;
     }
 
-    composer.preferences.replaceStyles(typingAttributesAt(editorContext.document, selection));
+    composer.preferences.replaceStyles(
+      typingAttributesAt(editorContext.document, selection),
+    );
   }
 
   /// The typing attributes for a caret at [selection] (empty when expanded).
-  static Set<Attribution> typingAttributesAt(Document document, DocumentSelection selection) {
+  static Set<Attribution> typingAttributesAt(
+    Document document,
+    DocumentSelection selection,
+  ) {
     if (!selection.isCollapsed) {
       return const {};
     }
     final node = document.getNodeById(selection.extent.nodeId);
     final position = selection.extent.nodePosition;
-    if (node is! TextNode || position is! TextNodePosition || node.text.isEmpty) {
+    if (node is! TextNode ||
+        position is! TextNodePosition ||
+        node.text.isEmpty) {
       return const {};
     }
     final offset = position.offset;
@@ -89,7 +108,8 @@ class WonkyTypingAttributesReaction extends EditReaction {
       final before = text.getAllAttributionsAt(offset - 1);
       final after = text.getAllAttributionsAt(offset);
       for (final attribution in before) {
-        if ((attribution is LinkAttribution && !before.any((a) => a is MentionAttribution)) ||
+        if ((attribution is LinkAttribution &&
+                !before.any((a) => a is MentionAttribution)) ||
             attribution is CommentAttribution) {
           if (after.contains(attribution)) {
             result.add(attribution);

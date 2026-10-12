@@ -11,14 +11,22 @@ class ToggleableReaction extends EditReaction {
   final bool Function() isEnabled;
 
   @override
-  void modifyContent(EditContext editorContext, RequestDispatcher requestDispatcher, List<EditEvent> changeList) {
+  void modifyContent(
+    EditContext editorContext,
+    RequestDispatcher requestDispatcher,
+    List<EditEvent> changeList,
+  ) {
     if (isEnabled()) {
       inner.modifyContent(editorContext, requestDispatcher, changeList);
     }
   }
 
   @override
-  void react(EditContext editorContext, RequestDispatcher requestDispatcher, List<EditEvent> changeList) {
+  void react(
+    EditContext editorContext,
+    RequestDispatcher requestDispatcher,
+    List<EditEvent> changeList,
+  ) {
     if (isEnabled()) {
       inner.react(editorContext, requestDispatcher, changeList);
     }
@@ -39,13 +47,27 @@ class MarkedReaction extends EditReaction {
   final ChangeDeltaExtractor extractor;
 
   @override
-  void modifyContent(EditContext editorContext, RequestDispatcher requestDispatcher, List<EditEvent> changeList) {
-    _run(changeList, () => inner.modifyContent(editorContext, requestDispatcher, changeList));
+  void modifyContent(
+    EditContext editorContext,
+    RequestDispatcher requestDispatcher,
+    List<EditEvent> changeList,
+  ) {
+    _run(
+      changeList,
+      () => inner.modifyContent(editorContext, requestDispatcher, changeList),
+    );
   }
 
   @override
-  void react(EditContext editorContext, RequestDispatcher requestDispatcher, List<EditEvent> changeList) {
-    _run(changeList, () => inner.react(editorContext, requestDispatcher, changeList));
+  void react(
+    EditContext editorContext,
+    RequestDispatcher requestDispatcher,
+    List<EditEvent> changeList,
+  ) {
+    _run(
+      changeList,
+      () => inner.react(editorContext, requestDispatcher, changeList),
+    );
   }
 
   void _run(List<EditEvent> changeList, void Function() body) {

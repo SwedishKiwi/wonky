@@ -10,7 +10,12 @@ import '../mapping/wonky_schema.dart';
 /// A trigger being typed: `/query` (slash menu) or `@query` (mention picker).
 @immutable
 class TriggerQuery {
-  const TriggerQuery({required this.trigger, required this.query, required this.start, required this.end});
+  const TriggerQuery({
+    required this.trigger,
+    required this.query,
+    required this.start,
+    required this.end,
+  });
 
   /// `/` or `@`.
   final String trigger;
@@ -24,7 +29,11 @@ class TriggerQuery {
 
   @override
   bool operator ==(Object other) =>
-      other is TriggerQuery && other.trigger == trigger && other.query == query && other.start == start && other.end == end;
+      other is TriggerQuery &&
+      other.trigger == trigger &&
+      other.query == query &&
+      other.start == start &&
+      other.end == end;
 
   @override
   int get hashCode => Object.hash(trigger, query, start, end);
@@ -53,7 +62,9 @@ class TriggerQueryTracker {
   int? _dismissedStart;
 
   static final _slash = RegExp(r'(?:^|[\s(\[{])(/[\w\-.#]{0,32})$');
-  static final _mention = RegExp(r'(?:^|[\s(\[{])(@[^\s@()\[\]{}<>,;:!?"]{0,40})$');
+  static final _mention = RegExp(
+    r'(?:^|[\s(\[{])(@[^\s@()\[\]{}<>,;:!?"]{0,40})$',
+  );
 
   /// Hides the open picker until the caret leaves the query (Esc).
   void dismiss() {
@@ -82,7 +93,11 @@ class TriggerQueryTracker {
     if (selection == null || !selection.isCollapsed) return null;
     final node = controller.document.getNodeById(selection.extent.nodeId);
     final position = selection.extent.nodePosition;
-    if (node is! TextNode || position is! TextNodePosition || isCodeBlockNode(node)) return null;
+    if (node is! TextNode ||
+        position is! TextNodePosition ||
+        isCodeBlockNode(node)) {
+      return null;
+    }
     final offset = position.offset;
     final text = node.text.toPlainText();
     final before = text.substring(0, offset);
@@ -92,8 +107,16 @@ class TriggerQueryTracker {
       if (match == null) continue;
       final raw = match.group(1)!;
       final start = offset - raw.length;
-      if (start < text.length && node.text.getAllAttributionsAt(start).contains(codeAttribution)) continue;
-      if (start > 0 && node.text.getAllAttributionsAt(start - 1).any((a) => a is LinkAttribution)) continue;
+      if (start < text.length &&
+          node.text.getAllAttributionsAt(start).contains(codeAttribution)) {
+        continue;
+      }
+      if (start > 0 &&
+          node.text
+              .getAllAttributionsAt(start - 1)
+              .any((a) => a is LinkAttribution)) {
+        continue;
+      }
       return TriggerQuery(
         trigger: trigger,
         query: raw.substring(1),

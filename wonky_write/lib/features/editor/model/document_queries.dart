@@ -8,7 +8,12 @@ import '../mapping/wonky_schema.dart';
 
 /// One block (node) of the document with its Delta position.
 class BlockRef {
-  const BlockRef({required this.index, required this.node, required this.start, required this.length});
+  const BlockRef({
+    required this.index,
+    required this.node,
+    required this.start,
+    required this.length,
+  });
 
   final int index;
   final DocumentNode node;
@@ -31,17 +36,24 @@ class BlockRef {
   bool get isCode => isCodeBlockNode(node);
 
   /// The block attributes of the block's line end.
-  Map<String, dynamic>? get blockAttributes => WonkyDeltaSerializer.blockAttributesOf(node);
+  Map<String, dynamic>? get blockAttributes =>
+      WonkyDeltaSerializer.blockAttributesOf(node);
 
   @override
-  String toString() => 'BlockRef($index ${node.runtimeType} $id @$start+$length)';
+  String toString() =>
+      'BlockRef($index ${node.runtimeType} $id @$start+$length)';
 }
 
 /// Read-only queries over the document mirror used by commands.
 extension DocumentQueries on DocumentMirror {
   BlockRef blockAt(int index) {
     final entry = entryAt(index);
-    return BlockRef(index: index, node: entry.node, start: startOfIndex(index), length: entry.length);
+    return BlockRef(
+      index: index,
+      node: entry.node,
+      start: startOfIndex(index),
+      length: entry.length,
+    );
   }
 
   BlockRef? blockOf(String nodeId) {
@@ -61,7 +73,8 @@ extension DocumentQueries on DocumentMirror {
   }
 
   /// Blocks touched by [selection].
-  List<BlockRef> blocksInSelection(DeltaSelection selection) => blocksIn(selection.start, selection.end);
+  List<BlockRef> blocksInSelection(DeltaSelection selection) =>
+      blocksIn(selection.start, selection.end);
 
   /// Plain text of `[start, end)` (embeds as U+FFFC, line ends as `\n`).
   String textOf(int start, int end) {
@@ -92,7 +105,9 @@ abstract final class FormatChanges {
     if (end <= start) return Delta();
     for (final block in mirror.blocksIn(start, end)) {
       final from = start > block.start ? start : block.start;
-      final to = end < block.start + block.length ? end : block.start + block.length;
+      final to = end < block.start + block.length
+          ? end
+          : block.start + block.length;
       if (to <= from) continue;
       var offset = block.start;
       for (final op in mirror.entryAt(block.index).delta.operations) {
@@ -105,7 +120,12 @@ abstract final class FormatChanges {
         final data = op.data;
         if (data is! String) {
           final piece = Operation.insert(data, op.attributes);
-          change.retain(1, eligible(piece, block) && _changes(op.attributes, attributes) ? attributes : null);
+          change.retain(
+            1,
+            eligible(piece, block) && _changes(op.attributes, attributes)
+                ? attributes
+                : null,
+          );
           continue;
         }
         // Split at line ends so that text and "\n" are judged separately.
@@ -115,12 +135,25 @@ abstract final class FormatChanges {
           final atEnd = i == text.length;
           if (!atEnd && text.codeUnitAt(i) != 10) continue;
           if (i > runStart) {
-            final piece = Operation.insert(text.substring(runStart, i), op.attributes);
-            change.retain(i - runStart, eligible(piece, block) && _changes(op.attributes, attributes) ? attributes : null);
+            final piece = Operation.insert(
+              text.substring(runStart, i),
+              op.attributes,
+            );
+            change.retain(
+              i - runStart,
+              eligible(piece, block) && _changes(op.attributes, attributes)
+                  ? attributes
+                  : null,
+            );
           }
           if (!atEnd) {
             final piece = Operation.insert('\n', op.attributes);
-            change.retain(1, eligible(piece, block) && _changes(op.attributes, attributes) ? attributes : null);
+            change.retain(
+              1,
+              eligible(piece, block) && _changes(op.attributes, attributes)
+                  ? attributes
+                  : null,
+            );
           }
           runStart = i + 1;
         }
@@ -130,7 +163,10 @@ abstract final class FormatChanges {
     return change;
   }
 
-  static bool _changes(Map<String, dynamic>? current, Map<String, dynamic> attributes) {
+  static bool _changes(
+    Map<String, dynamic>? current,
+    Map<String, dynamic> attributes,
+  ) {
     for (final entry in attributes.entries) {
       final value = current?[entry.key];
       if (value != entry.value) return true;

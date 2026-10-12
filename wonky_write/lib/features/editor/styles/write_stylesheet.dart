@@ -11,7 +11,11 @@ import 'editor_theme.dart';
 /// active.
 @immutable
 class CommentHighlightState {
-  const CommentHighlightState({this.hiddenThreads = const {}, this.activeThread, this.visible = true});
+  const CommentHighlightState({
+    this.hiddenThreads = const {},
+    this.activeThread,
+    this.visible = true,
+  });
 
   /// Resolved or orphaned threads (rendered without highlight).
   final Set<String> hiddenThreads;
@@ -69,7 +73,16 @@ class WriteStylesheetBuilder {
     String selfUserUuid = '',
     bool focused = true,
   }) {
-    final key = (theme, zoom, textScale, layout, contentWidth, comments, selfUserUuid, focused);
+    final key = (
+      theme,
+      zoom,
+      textScale,
+      layout,
+      contentWidth,
+      comments,
+      selfUserUuid,
+      focused,
+    );
     if (_lastKey == key && _last != null) return _last!;
     final scale = zoom * textScale;
     final style = WriteEditorStyle(
@@ -82,7 +95,11 @@ class WriteStylesheetBuilder {
         selfUserUuid: selfUserUuid,
       ),
       selectionStyles: SelectionStyles(
-        selectionColor: focused ? theme.selectionColor : theme.selectionColor.withValues(alpha: theme.selectionColor.a * 0.5),
+        selectionColor: focused
+            ? theme.selectionColor
+            : theme.selectionColor.withValues(
+                alpha: theme.selectionColor.a * 0.5,
+              ),
         highlightEmptyTextBlocks: true,
       ),
       caretStyle: CaretStyle(color: theme.caretColor, width: 2),
@@ -104,17 +121,24 @@ class WriteStylesheetBuilder {
     String selfUserUuid = '',
   }) {
     TextStyle scaled(TextStyle style) => style.copyWith(
-          fontSize: (style.fontSize ?? 14.67) * scale,
-          letterSpacing: style.letterSpacing == null ? null : style.letterSpacing! * scale,
-        );
+      fontSize: (style.fontSize ?? 14.67) * scale,
+      letterSpacing: style.letterSpacing == null
+          ? null
+          : style.letterSpacing! * scale,
+    );
     double px(double value) => value * scale;
-    final maxWidth = layout == LayoutMode.pageless ? px(theme.pagelessMaxWidth) : (contentWidth ?? 794) * scale;
+    final maxWidth = layout == LayoutMode.pageless
+        ? px(theme.pagelessMaxWidth)
+        : (contentWidth ?? 794) * scale;
 
     final rules = <StyleRule>[
       StyleRule(BlockSelector.all, (doc, node) {
         return {
           Styles.maxWidth: maxWidth,
-          Styles.padding: CascadingPadding.only(top: px(theme.paragraphSpacing / 2), bottom: px(theme.paragraphSpacing / 2)),
+          Styles.padding: CascadingPadding.only(
+            top: px(theme.paragraphSpacing / 2),
+            bottom: px(theme.paragraphSpacing / 2),
+          ),
           Styles.textStyle: scaled(theme.body),
           Styles.textAlign: TextAlign.start,
         };
@@ -130,7 +154,10 @@ class WriteStylesheetBuilder {
           };
         }),
       for (var level = 1; level <= 6; level += 1)
-        StyleRule(const BlockSelector('paragraph').after('header$level'), (doc, node) {
+        StyleRule(const BlockSelector('paragraph').after('header$level'), (
+          doc,
+          node,
+        ) {
           return {Styles.padding: CascadingPadding.only(top: px(2))};
         }),
       StyleRule(const BlockSelector('blockquote'), (doc, node) {
@@ -155,10 +182,16 @@ class WriteStylesheetBuilder {
         final indent = node is ListItemNode ? node.indent : 0;
         final glyph = theme.bullets[indent % theme.bullets.length];
         return {
-          Styles.padding: CascadingPadding.only(top: px(theme.listItemSpacing), bottom: px(theme.listItemSpacing)),
+          Styles.padding: CascadingPadding.only(
+            top: px(theme.listItemSpacing),
+            bottom: px(theme.listItemSpacing),
+          ),
           Styles.dotColor: theme.listMarkerColor,
           Styles.dotShape: glyph == '▪' ? BoxShape.rectangle : BoxShape.circle,
-          Styles.dotSize: Size(px(glyph == '◦' ? 4 : 5), px(glyph == '◦' ? 4 : 5)),
+          Styles.dotSize: Size(
+            px(glyph == '◦' ? 4 : 5),
+            px(glyph == '◦' ? 4 : 5),
+          ),
           Styles.listNumeralStyle: switch (indent % 3) {
             0 => OrderedListNumeralStyle.arabic,
             1 => OrderedListNumeralStyle.lowerAlpha,
@@ -168,28 +201,45 @@ class WriteStylesheetBuilder {
       }),
       StyleRule(const BlockSelector('task'), (doc, node) {
         return {
-          Styles.padding: CascadingPadding.only(top: px(theme.listItemSpacing), bottom: px(theme.listItemSpacing)),
+          Styles.padding: CascadingPadding.only(
+            top: px(theme.listItemSpacing),
+            bottom: px(theme.listItemSpacing),
+          ),
         };
       }),
       StyleRule(const BlockSelector('horizontalRule'), (doc, node) {
-        return {Styles.padding: CascadingPadding.only(top: px(12), bottom: px(12))};
+        return {
+          Styles.padding: CascadingPadding.only(top: px(12), bottom: px(12)),
+        };
       }),
       StyleRule(const BlockSelector('image'), (doc, node) {
-        return {Styles.padding: CascadingPadding.only(top: px(8), bottom: px(8))};
+        return {
+          Styles.padding: CascadingPadding.only(top: px(8), bottom: px(8)),
+        };
       }),
       StyleRule(const BlockSelector('tableBlock'), (doc, node) {
         return {
           Styles.padding: CascadingPadding.only(top: px(8), bottom: px(8)),
-          TableStyles.headerTextStyle: scaled(theme.body).copyWith(fontWeight: FontWeight.w600),
-          TableStyles.border: TableBorder.all(color: theme.tableBorderColor, width: 1),
-          TableStyles.cellPadding: CascadingPadding.symmetric(horizontal: px(8), vertical: px(4)),
-          TableStyles.cellDecorator: ({
-            required int rowIndex,
-            required int columnIndex,
-            required AttributedText cellText,
-            required Map<String, dynamic> cellMetadata,
-          }) =>
-              rowIndex == 0 ? BoxDecoration(color: theme.tableHeaderBackground) : null,
+          TableStyles.headerTextStyle: scaled(
+            theme.body,
+          ).copyWith(fontWeight: FontWeight.w600),
+          TableStyles.border: TableBorder.all(
+            color: theme.tableBorderColor,
+            width: 1,
+          ),
+          TableStyles.cellPadding: CascadingPadding.symmetric(
+            horizontal: px(8),
+            vertical: px(4),
+          ),
+          TableStyles.cellDecorator:
+              ({
+                required int rowIndex,
+                required int columnIndex,
+                required AttributedText cellText,
+                required Map<String, dynamic> cellMetadata,
+              }) => rowIndex == 0
+              ? BoxDecoration(color: theme.tableHeaderBackground)
+              : null,
         };
       }),
       StyleRule(BlockSelector.all.first(), (doc, node) {
@@ -197,12 +247,21 @@ class WriteStylesheetBuilder {
       }),
       StyleRule(BlockSelector.all.last(), (doc, node) {
         return {
-          Styles.padding: CascadingPadding.only(bottom: layout == LayoutMode.pageless ? px(theme.pagelessPadding.bottom) : 0),
+          Styles.padding: CascadingPadding.only(
+            bottom: layout == LayoutMode.pageless
+                ? px(theme.pagelessPadding.bottom)
+                : 0,
+          ),
         };
       }),
     ];
 
-    final styler = WriteInlineStyler(theme, scale: scale, comments: comments, selfUserUuid: selfUserUuid);
+    final styler = WriteInlineStyler(
+      theme,
+      scale: scale,
+      comments: comments,
+      selfUserUuid: selfUserUuid,
+    );
     return Stylesheet(
       rules: rules,
       inlineTextStyler: styler.call,
@@ -214,15 +273,23 @@ class WriteStylesheetBuilder {
               0,
             )
           : EdgeInsets.zero,
-      selectedTextColorStrategy: ({required Color originalTextColor, required Color selectionHighlightColor}) =>
-          originalTextColor,
+      selectedTextColorStrategy:
+          ({
+            required Color originalTextColor,
+            required Color selectionHighlightColor,
+          }) => originalTextColor,
     );
   }
 }
 
 /// Maps attributions to text styles (Write 06 §6.2, Write 08 §2.5).
 class WriteInlineStyler {
-  WriteInlineStyler(this.theme, {this.scale = 1, this.comments = const CommentHighlightState(), this.selfUserUuid = ''});
+  WriteInlineStyler(
+    this.theme, {
+    this.scale = 1,
+    this.comments = const CommentHighlightState(),
+    this.selfUserUuid = '',
+  });
 
   final EditorTheme theme;
   final double scale;
@@ -232,7 +299,9 @@ class WriteInlineStyler {
   TextStyle call(Set<Attribution> attributions, TextStyle existingStyle) {
     var style = existingStyle;
     var decorations = <TextDecoration>[
-      if (existingStyle.decoration != null && existingStyle.decoration != TextDecoration.none) existingStyle.decoration!,
+      if (existingStyle.decoration != null &&
+          existingStyle.decoration != TextDecoration.none)
+        existingStyle.decoration!,
     ];
     Color? decorationColor;
     TextDecorationStyle? decorationStyle;
@@ -271,19 +340,27 @@ class WriteInlineStyler {
               : theme.mentionBackground,
         );
       } else if (attribution is CommentAttribution) {
-        if (comments.visible && !comments.hiddenThreads.contains(attribution.threadUuid)) {
+        if (comments.visible &&
+            !comments.hiddenThreads.contains(attribution.threadUuid)) {
           openComments += 1;
-          if (attribution.threadUuid == comments.activeThread) activeComment = true;
+          if (attribution.threadUuid == comments.activeThread) {
+            activeComment = true;
+          }
         }
       } else if (attribution is SuggestionAttribution) {
         final color = theme.presenceColorFor(attribution.authorUuid ?? '');
         switch (attribution.type) {
           case SuggestionType.insertion:
-            style = style.copyWith(color: color, backgroundColor: theme.suggestionInsert.withValues(alpha: 0.12));
+            style = style.copyWith(
+              color: color,
+              backgroundColor: theme.suggestionInsert.withValues(alpha: 0.12),
+            );
             decorations.add(TextDecoration.underline);
             decorationColor = color;
           case SuggestionType.deletion:
-            style = style.copyWith(color: (style.color ?? theme.body.color!).withValues(alpha: 0.7));
+            style = style.copyWith(
+              color: (style.color ?? theme.body.color!).withValues(alpha: 0.7),
+            );
             decorations.add(TextDecoration.lineThrough);
             decorationColor = color;
           case SuggestionType.format:
@@ -298,18 +375,31 @@ class WriteInlineStyler {
         if (color != null) {
           style = style.copyWith(
             color: color,
-            fontStyle: attribution.tokenClass == 'comment' ? FontStyle.italic : null,
+            fontStyle: attribution.tokenClass == 'comment'
+                ? FontStyle.italic
+                : null,
           );
         }
-      } else if (attribution is SuggestionPreviewAttribution && attribution.hidden) {
-        style = style.copyWith(color: const Color(0x00000000), fontSize: 0.01, letterSpacing: 0);
+      } else if (attribution is SuggestionPreviewAttribution &&
+          attribution.hidden) {
+        style = style.copyWith(
+          color: const Color(0x00000000),
+          fontSize: 0.01,
+          letterSpacing: 0,
+        );
       }
     }
 
     if (openComments > 0) {
-      final base = activeComment ? theme.commentHighlightActive : theme.commentHighlight;
+      final base = activeComment
+          ? theme.commentHighlightActive
+          : theme.commentHighlight;
       final extra = (openComments - 1).clamp(0, 2) * 0.15;
-      style = style.copyWith(backgroundColor: base.withValues(alpha: (base.a + extra).clamp(0.0, 1.0)));
+      style = style.copyWith(
+        backgroundColor: base.withValues(
+          alpha: (base.a + extra).clamp(0.0, 1.0),
+        ),
+      );
     }
     if (decorations.isNotEmpty) {
       style = style.copyWith(
@@ -324,7 +414,10 @@ class WriteInlineStyler {
 
 /// The text direction of a block from its first strong character (Write 04
 /// §38), falling back to [fallback].
-TextDirection detectTextDirection(String text, {TextDirection fallback = TextDirection.ltr}) {
+TextDirection detectTextDirection(
+  String text, {
+  TextDirection fallback = TextDirection.ltr,
+}) {
   for (final rune in text.runes) {
     if (_isRtl(rune)) return TextDirection.rtl;
     if (_isStrongLtr(rune)) return TextDirection.ltr;
@@ -333,7 +426,9 @@ TextDirection detectTextDirection(String text, {TextDirection fallback = TextDir
 }
 
 bool _isRtl(int rune) =>
-    (rune >= 0x0590 && rune <= 0x08FF) || (rune >= 0xFB1D && rune <= 0xFDFF) || (rune >= 0xFE70 && rune <= 0xFEFF);
+    (rune >= 0x0590 && rune <= 0x08FF) ||
+    (rune >= 0xFB1D && rune <= 0xFDFF) ||
+    (rune >= 0xFE70 && rune <= 0xFEFF);
 
 bool _isStrongLtr(int rune) =>
     (rune >= 0x41 && rune <= 0x5A) ||
@@ -346,7 +441,8 @@ bool _isStrongLtr(int rune) =>
 
 /// Whether [node] should be laid out right-to-left.
 bool isRtlNode(DocumentNode node) =>
-    node is TextNode && detectTextDirection(node.text.toPlainText()) == TextDirection.rtl;
+    node is TextNode &&
+    detectTextDirection(node.text.toPlainText()) == TextDirection.rtl;
 
 /// The code block language label shown in the chip.
 String codeLanguageLabelOf(DocumentNode node) => codeLanguageOf(node);

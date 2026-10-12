@@ -16,7 +16,10 @@ import 'write_stylesheet.dart';
 /// after a debounce so that typing stays responsive; until then the block
 /// renders without highlighting.
 class CodeHighlightStylePhase extends SingleColumnLayoutStylePhase {
-  CodeHighlightStylePhase({this.debounce = const Duration(milliseconds: 120), this.syncLimit = 20000});
+  CodeHighlightStylePhase({
+    this.debounce = const Duration(milliseconds: 120),
+    this.syncLimit = 20000,
+  });
 
   final Duration debounce;
 
@@ -37,16 +40,23 @@ class CodeHighlightStylePhase extends SingleColumnLayoutStylePhase {
   }
 
   @override
-  SingleColumnLayoutViewModel style(Document document, SingleColumnLayoutViewModel viewModel) {
+  SingleColumnLayoutViewModel style(
+    Document document,
+    SingleColumnLayoutViewModel viewModel,
+  ) {
     return SingleColumnLayoutViewModel(
       padding: viewModel.padding,
       componentViewModels: [
-        for (final model in viewModel.componentViewModels) _highlight(document, model),
+        for (final model in viewModel.componentViewModels)
+          _highlight(document, model),
       ],
     );
   }
 
-  SingleColumnLayoutComponentViewModel _highlight(Document document, SingleColumnLayoutComponentViewModel model) {
+  SingleColumnLayoutComponentViewModel _highlight(
+    Document document,
+    SingleColumnLayoutComponentViewModel model,
+  ) {
     if (model is! TextComponentViewModel) return model;
     final node = document.getNodeById(model.nodeId);
     if (node == null || !isCodeBlockNode(node)) return model;
@@ -58,7 +68,11 @@ class CodeHighlightStylePhase extends SingleColumnLayoutStylePhase {
     final cached = _cache[node.id];
     if (cached == null || cached.text != plain || cached.language != language) {
       if (plain.length <= syncLimit) {
-        _cache[node.id] = _Highlighted(plain, language, tokenize(plain, language));
+        _cache[node.id] = _Highlighted(
+          plain,
+          language,
+          tokenize(plain, language),
+        );
       } else {
         _schedule(node.id, plain, language);
         return model;
@@ -71,7 +85,11 @@ class CodeHighlightStylePhase extends SingleColumnLayoutStylePhase {
     final highlighted = text.copy();
     for (final (start, end, token) in spans) {
       if (end > start && end <= highlighted.length) {
-        highlighted.addAttribution(CodeTokenAttribution(token), SpanRange(start, end - 1), autoMerge: false);
+        highlighted.addAttribution(
+          CodeTokenAttribution(token),
+          SpanRange(start, end - 1),
+          autoMerge: false,
+        );
       }
     }
     (copy as TextComponentViewModel).text = highlighted;
@@ -97,7 +115,13 @@ class CodeHighlightStylePhase extends SingleColumnLayoutStylePhase {
         final className = node.className ?? inherited;
         final value = node.value;
         if (value != null) {
-          if (className != null) spans.add((offset, offset + value.length, className.split(' ').first));
+          if (className != null) {
+            spans.add((
+              offset,
+              offset + value.length,
+              className.split(' ').first,
+            ));
+          }
           offset += value.length;
         }
         for (final child in node.children ?? const <Node>[]) {
@@ -132,27 +156,34 @@ class TextDirectionStylePhase extends SingleColumnLayoutStylePhase {
   TextDirection fallback;
 
   @override
-  SingleColumnLayoutViewModel style(Document document, SingleColumnLayoutViewModel viewModel) {
+  SingleColumnLayoutViewModel style(
+    Document document,
+    SingleColumnLayoutViewModel viewModel,
+  ) {
     return SingleColumnLayoutViewModel(
       padding: viewModel.padding,
       componentViewModels: [
         for (final model in viewModel.componentViewModels)
-          if (model is TextComponentViewModel)
-            _withDirection(model)
-          else
-            model,
+          if (model is TextComponentViewModel) _withDirection(model) else model,
       ],
     );
   }
 
-  SingleColumnLayoutComponentViewModel _withDirection(SingleColumnLayoutComponentViewModel model) {
+  SingleColumnLayoutComponentViewModel _withDirection(
+    SingleColumnLayoutComponentViewModel model,
+  ) {
     final textModel = model as TextComponentViewModel;
-    final direction = detectTextDirection(textModel.text.toPlainText(), fallback: fallback);
+    final direction = detectTextDirection(
+      textModel.text.toPlainText(),
+      fallback: fallback,
+    );
     if (direction == textModel.textDirection) return model;
     final copy = model.copy();
     (copy as TextComponentViewModel)
       ..textDirection = direction
-      ..textAlignment = direction == TextDirection.rtl ? TextAlign.right : TextAlign.left;
+      ..textAlignment = direction == TextDirection.rtl
+          ? TextAlign.right
+          : TextAlign.left;
     return copy;
   }
 }

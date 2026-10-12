@@ -1,8 +1,9 @@
+import 'package:flutter/widgets.dart';
 import 'dart:convert';
 
+import 'package:flutter/widgets.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
-import 'package:flutter/widgets.dart';
 import 'package:wonky_core/wonky_core.dart';
 import 'package:wonky_ui/wonky_ui.dart';
 
@@ -151,13 +152,13 @@ class KeymapService extends ChangeNotifier {
   /// [exceptCommandId]. Contextual lists count as one binding.
   List<String> conflictsFor(KeyBinding binding, KeyScope scope, {String? exceptCommandId}) {
     final chord = binding.resolve(platform);
-    return [
+    return {
       for (final e in _entries)
         if (e.commandId != exceptCommandId &&
             (e.scope == scope || e.scope == KeyScope.global || scope == KeyScope.global) &&
             e.binding.resolve(platform) == chord)
           e.commandId,
-    ].toSet().toList();
+    }.toList();
   }
 
   void _rebuild() {

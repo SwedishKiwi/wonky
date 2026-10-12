@@ -53,7 +53,8 @@ class ExtractedChange {
   final bool isComposing;
 
   @override
-  String toString() => 'ExtractedChange($kind${label == null ? '' : ', $label'}: $delta)';
+  String toString() =>
+      'ExtractedChange($kind${label == null ? '' : ', $label'}: $delta)';
 }
 
 /// Thrown (in verification mode) when the extracted change doesn't transform
@@ -139,7 +140,11 @@ class ChangeDeltaExtractor {
   }
 
   ExtractedChange? _extract(List<EditEvent> events, String? label) {
-    if (events.any((e) => e is DocumentPatchAppliedEvent && '${e.tag}'.startsWith(DeltaApplier.patchTag))) {
+    if (events.any(
+      (e) =>
+          e is DocumentPatchAppliedEvent &&
+          '${e.tag}'.startsWith(DeltaApplier.patchTag),
+    )) {
       // Applied by the DeltaApplier, which keeps the mirror in sync itself.
       return null;
     }
@@ -199,10 +204,14 @@ class ChangeDeltaExtractor {
         );
       }
       if (mirror.toDelta() != actualDoc) {
-        throw ChangeExtractionInvariantError('mirror out of sync with the document');
+        throw ChangeExtractionInvariantError(
+          'mirror out of sync with the document',
+        );
       }
       if (composed.compose(inverse) != before) {
-        throw ChangeExtractionInvariantError('inverse does not restore the previous document\ninverse: $inverse');
+        throw ChangeExtractionInvariantError(
+          'inverse does not restore the previous document\ninverse: $inverse',
+        );
       }
     }
 
@@ -210,7 +219,12 @@ class ChangeDeltaExtractor {
       return null;
     }
 
-    final kind = _classify(events, touched, textEventsByNode, hasStructuralEvent);
+    final kind = _classify(
+      events,
+      touched,
+      textEventsByNode,
+      hasStructuralEvent,
+    );
     final selection = composer?.selection;
     return ExtractedChange(
       delta: delta,
@@ -229,7 +243,9 @@ class ChangeDeltaExtractor {
     Map<String, List<NodeChangeEvent>> textEventsByNode,
     bool hasStructuralEvent,
   ) {
-    if (hasStructuralEvent || touched.length != 1 || textEventsByNode.length != 1) {
+    if (hasStructuralEvent ||
+        touched.length != 1 ||
+        textEventsByNode.length != 1) {
       return LocalChangeKind.other;
     }
     final nodeEvents = textEventsByNode.values.single;
@@ -274,7 +290,9 @@ class ChangeDeltaExtractor {
     }
     endOld = endOld < start ? start : endOld + 1;
     endNew = endNew < start ? start : endNew + 1;
-    final suffix = (oldCount - endOld) < (newCount - endNew) ? oldCount - endOld : newCount - endNew;
+    final suffix = (oldCount - endOld) < (newCount - endNew)
+        ? oldCount - endOld
+        : newCount - endNew;
     final oEnd = oldCount - (suffix < 0 ? 0 : suffix);
     final nEnd = newCount - (suffix < 0 ? 0 : suffix);
 
@@ -288,7 +306,9 @@ class ChangeDeltaExtractor {
       if (i < oEnd && j < nEnd) {
         final oldEntry = mirror.entryAt(i);
         final newNode = document.getNodeAt(j)!;
-        if (oldEntry.nodeId == newNode.id && !touched.contains(newNode.id) && identical(oldEntry.node, newNode)) {
+        if (oldEntry.nodeId == newNode.id &&
+            !touched.contains(newNode.id) &&
+            identical(oldEntry.node, newNode)) {
           delta.retain(oldEntry.length);
           inverse.retain(oldEntry.length);
           i += 1;
@@ -319,10 +339,21 @@ class ChangeDeltaExtractor {
         final node = document.getNodeAt(k)!;
         final oldIndex = mirror.indexOfNode(node.id);
         final oldEntry = oldIndex >= 0 ? mirror.entryAt(oldIndex) : null;
-        newEntries.add(oldEntry != null && identical(oldEntry.node, node) ? oldEntry : mirror.serializeEntry(node));
+        newEntries.add(
+          oldEntry != null && identical(oldEntry.node, node)
+              ? oldEntry
+              : mirror.serializeEntry(node),
+        );
       }
 
-      _appendGapChange(delta, inverse, oldEntries, newEntries, textEventsByNode, hasStructuralEvent);
+      _appendGapChange(
+        delta,
+        inverse,
+        oldEntries,
+        newEntries,
+        textEventsByNode,
+        hasStructuralEvent,
+      );
       gaps.add((gi, i, newEntries));
     }
 
@@ -370,8 +401,12 @@ class ChangeDeltaExtractor {
       final events = textEventsByNode[oldEntries.single.nodeId];
       if (events != null && events.length == 1) {
         final event = events.single;
-        if (event is TextInsertionEvent && newLength == oldLength + event.text.length) {
-          final inserted = newEntries.single.delta.slice(event.offset, event.offset + event.text.length);
+        if (event is TextInsertionEvent &&
+            newLength == oldLength + event.text.length) {
+          final inserted = newEntries.single.delta.slice(
+            event.offset,
+            event.offset + event.text.length,
+          );
           final insertion = Delta()..retain(event.offset);
           for (final op in inserted.operations) {
             insertion.push(op);
@@ -386,11 +421,19 @@ class ChangeDeltaExtractor {
           );
           return;
         }
-        if (event is TextDeletedEvent && oldLength == newLength + event.deletedText.length) {
-          final deleted = oldEntries.single.delta.slice(event.offset, event.offset + event.deletedText.length);
-          _append(delta, Delta()
-            ..retain(event.offset)
-            ..delete(event.deletedText.length), oldLength);
+        if (event is TextDeletedEvent &&
+            oldLength == newLength + event.deletedText.length) {
+          final deleted = oldEntries.single.delta.slice(
+            event.offset,
+            event.offset + event.deletedText.length,
+          );
+          _append(
+            delta,
+            Delta()
+              ..retain(event.offset)
+              ..delete(event.deletedText.length),
+            oldLength,
+          );
           final restore = Delta()..retain(event.offset);
           for (final op in deleted.operations) {
             restore.push(op);

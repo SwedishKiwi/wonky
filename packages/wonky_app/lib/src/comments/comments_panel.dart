@@ -320,7 +320,7 @@ class _NewCommentCardState extends State<NewCommentCard> {
       );
       _text.clear();
     } catch (e) {
-      widget.services.toasts.error(WonkyAppLocalizations.of(context).commentFailed, description: errorMessage(e));
+      widget.services.toasts.error(widget.services.l10n?.commentFailed ?? 'Error', description: errorMessage(e));
     } finally {
       if (mounted) setState(() => _busy = false);
     }
@@ -439,7 +439,7 @@ class _CommentThreadCardState extends State<CommentThreadCard> {
     try {
       await s.dispatcher.invoke(id, args: args, source: InvocationSource.ui);
     } catch (e) {
-      s.toasts.error(WonkyAppLocalizations.of(context).commentFailed, description: errorMessage(e));
+      s.toasts.error(s.l10n?.commentFailed ?? 'Error', description: errorMessage(e));
     }
   }
 

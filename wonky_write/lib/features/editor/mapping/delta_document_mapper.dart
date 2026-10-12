@@ -21,21 +21,36 @@ class DeltaDocumentMapper {
   /// Builds the nodes of [delta] (a document Delta that ends with `"\n"`).
   ///
   /// An empty Delta yields one empty paragraph.
-  List<DocumentNode> nodesFromDelta(Delta delta, {String Function()? newNodeId}) {
-    final nodes = parser.parse(delta, newNodeId: newNodeId ?? Editor.createNodeId);
+  List<DocumentNode> nodesFromDelta(
+    Delta delta, {
+    String Function()? newNodeId,
+  }) {
+    final nodes = parser.parse(
+      delta,
+      newNodeId: newNodeId ?? Editor.createNodeId,
+    );
     if (nodes.isEmpty) {
-      return [ParagraphNode(id: (newNodeId ?? Editor.createNodeId)(), text: AttributedText(''))];
+      return [
+        ParagraphNode(
+          id: (newNodeId ?? Editor.createNodeId)(),
+          text: AttributedText(''),
+        ),
+      ];
     }
     return nodes;
   }
 
   /// Builds a [MutableDocument] from [delta].
-  MutableDocument documentFromDelta(Delta delta, {String Function()? newNodeId}) =>
-      MutableDocument(nodes: nodesFromDelta(delta, newNodeId: newNodeId));
+  MutableDocument documentFromDelta(
+    Delta delta, {
+    String Function()? newNodeId,
+  }) => MutableDocument(nodes: nodesFromDelta(delta, newNodeId: newNodeId));
 
   /// Serializes [document] to a canonical Wonky Delta.
-  Delta deltaFromDocument(MutableDocument document) =>
-      document.toQuillDeltas(serializers: [serializer], omitTrailingEmptyParagraph: false);
+  Delta deltaFromDocument(MutableDocument document) => document.toQuillDeltas(
+    serializers: [serializer],
+    omitTrailingEmptyParagraph: false,
+  );
 
   /// Serializes a list of nodes (e.g. a selection fragment) to a Delta.
   Delta deltaFromNodes(Iterable<DocumentNode> nodes) {

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:super_editor/super_editor.dart';
-import 'package:wonky_ui/wonky_ui.dart' show RemoteCaret, RemoteSelectionPainter;
+import 'package:wonky_ui/wonky_ui.dart'
+    show RemoteCaret, RemoteSelectionPainter;
 
 import '../controller/write_editor_controller.dart';
 import '../mapping/document_mirror.dart';
@@ -31,26 +32,37 @@ class _UnderlayData {
 /// color at 20 %, 10 % when unfocused) and the block-selection ring
 /// (Write 04 §22.3, §25.3, §33, §34.2).
 class WonkyHighlightLayerBuilder implements SuperEditorLayerBuilder {
-  const WonkyHighlightLayerBuilder({required this.controller, required this.theme});
+  const WonkyHighlightLayerBuilder({
+    required this.controller,
+    required this.theme,
+  });
 
   final WriteEditorController controller;
   final EditorTheme theme;
 
   @override
-  ContentLayerWidget build(BuildContext context, SuperEditorContext editContext) =>
-      _HighlightLayer(controller: controller, theme: theme);
+  ContentLayerWidget build(
+    BuildContext context,
+    SuperEditorContext editContext,
+  ) => _HighlightLayer(controller: controller, theme: theme);
 }
 
 /// The same layer for `SuperReader`.
-class WonkyReaderHighlightLayerBuilder implements SuperReaderDocumentLayerBuilder {
-  const WonkyReaderHighlightLayerBuilder({required this.controller, required this.theme});
+class WonkyReaderHighlightLayerBuilder
+    implements SuperReaderDocumentLayerBuilder {
+  const WonkyReaderHighlightLayerBuilder({
+    required this.controller,
+    required this.theme,
+  });
 
   final WriteEditorController controller;
   final EditorTheme theme;
 
   @override
-  ContentLayerWidget build(BuildContext context, SuperReaderContext readerContext) =>
-      _HighlightLayer(controller: controller, theme: theme);
+  ContentLayerWidget build(
+    BuildContext context,
+    SuperReaderContext readerContext,
+  ) => _HighlightLayer(controller: controller, theme: theme);
 }
 
 class _HighlightLayer extends DocumentLayoutLayerStatefulWidget {
@@ -60,10 +72,12 @@ class _HighlightLayer extends DocumentLayoutLayerStatefulWidget {
   final EditorTheme theme;
 
   @override
-  DocumentLayoutLayerState<_HighlightLayer, _UnderlayData> createState() => _HighlightLayerState();
+  DocumentLayoutLayerState<_HighlightLayer, _UnderlayData> createState() =>
+      _HighlightLayerState();
 }
 
-class _HighlightLayerState extends DocumentLayoutLayerState<_HighlightLayer, _UnderlayData> {
+class _HighlightLayerState
+    extends DocumentLayoutLayerState<_HighlightLayer, _UnderlayData> {
   @override
   void initState() {
     super.initState();
@@ -103,8 +117,12 @@ class _HighlightLayerState extends DocumentLayoutLayerState<_HighlightLayer, _Un
     final mirror = controller.mirror;
     final view = controller.view;
     final theme = widget.theme;
-    List<Rect> rects(HighlightRange range) =>
-        DocumentGeometry.rectsForRange(documentLayout, mirror, range.start, range.end);
+    List<Rect> rects(HighlightRange range) => DocumentGeometry.rectsForRange(
+      documentLayout,
+      mirror,
+      range.start,
+      range.end,
+    );
 
     final find = <Rect>[];
     final active = <Rect>[];
@@ -121,7 +139,8 @@ class _HighlightLayerState extends DocumentLayoutLayerState<_HighlightLayer, _Un
         count += 1;
         final color = cursor.colorIndex == null
             ? theme.presenceColorFor(cursor.userKey)
-            : theme.presenceColors[cursor.colorIndex! % theme.presenceColors.length];
+            : theme.presenceColors[cursor.colorIndex! %
+                  theme.presenceColors.length];
         remote.add((
           cursor.focused ? color : color.withValues(alpha: 0.5),
           rects(HighlightRange(cursor.selection.start, cursor.selection.end)),
@@ -134,8 +153,14 @@ class _HighlightLayerState extends DocumentLayoutLayerState<_HighlightLayer, _Un
     if (view.blockSelection && selection != null) {
       for (final block in mirror.blocksInSelection(selection)) {
         final rect = documentLayout.getRectForSelection(
-          DocumentPosition(nodeId: block.id, nodePosition: block.node.beginningPosition),
-          DocumentPosition(nodeId: block.id, nodePosition: block.node.endPosition),
+          DocumentPosition(
+            nodeId: block.id,
+            nodePosition: block.node.beginningPosition,
+          ),
+          DocumentPosition(
+            nodeId: block.id,
+            nodePosition: block.node.endPosition,
+          ),
         );
         if (rect != null) blockRects.add(rect);
       }
@@ -144,7 +169,9 @@ class _HighlightLayerState extends DocumentLayoutLayerState<_HighlightLayer, _Un
     return _UnderlayData(
       findRects: find,
       activeFindRects: active,
-      pendingCommentRects: view.pendingComment == null ? const [] : rects(view.pendingComment!),
+      pendingCommentRects: view.pendingComment == null
+          ? const []
+          : rects(view.pendingComment!),
       remoteSelections: remote,
       blockSelectionRects: blockRects,
     );
@@ -159,7 +186,9 @@ class _HighlightLayerState extends DocumentLayoutLayerState<_HighlightLayer, _Un
         children: [
           Positioned.fill(
             child: CustomPaint(
-              painter: RemoteSelectionPainter(selections: layoutData.remoteSelections),
+              painter: RemoteSelectionPainter(
+                selections: layoutData.remoteSelections,
+              ),
             ),
           ),
           Positioned.fill(
@@ -168,10 +197,15 @@ class _HighlightLayerState extends DocumentLayoutLayerState<_HighlightLayer, _Un
                 fills: [
                   (theme.findMatch, layoutData.findRects),
                   (theme.findMatchActive, layoutData.activeFindRects),
-                  (theme.selectionColor.withValues(alpha: 0.3), layoutData.blockSelectionRects),
+                  (
+                    theme.selectionColor.withValues(alpha: 0.3),
+                    layoutData.blockSelectionRects,
+                  ),
                 ],
                 rings: [(theme.ringColor, layoutData.blockSelectionRects)],
-                dashedUnderlines: [(theme.ringColor, layoutData.pendingCommentRects)],
+                dashedUnderlines: [
+                  (theme.ringColor, layoutData.pendingCommentRects),
+                ],
               ),
             ),
           ),
@@ -182,7 +216,11 @@ class _HighlightLayerState extends DocumentLayoutLayerState<_HighlightLayer, _Un
 }
 
 class _RectsPainter extends CustomPainter {
-  _RectsPainter({required this.fills, required this.rings, required this.dashedUnderlines});
+  _RectsPainter({
+    required this.fills,
+    required this.rings,
+    required this.dashedUnderlines,
+  });
 
   final List<(Color, List<Rect>)> fills;
   final List<(Color, List<Rect>)> rings;
@@ -193,7 +231,10 @@ class _RectsPainter extends CustomPainter {
     for (final (color, rects) in fills) {
       final paint = Paint()..color = color;
       for (final rect in rects) {
-        canvas.drawRRect(RRect.fromRectAndRadius(rect, const Radius.circular(2)), paint);
+        canvas.drawRRect(
+          RRect.fromRectAndRadius(rect, const Radius.circular(2)),
+          paint,
+        );
       }
     }
     for (final (color, rects) in rings) {
@@ -202,7 +243,10 @@ class _RectsPainter extends CustomPainter {
         ..style = PaintingStyle.stroke
         ..strokeWidth = 2;
       for (final rect in rects) {
-        canvas.drawRRect(RRect.fromRectAndRadius(rect.inflate(2), const Radius.circular(3)), paint);
+        canvas.drawRRect(
+          RRect.fromRectAndRadius(rect.inflate(2), const Radius.circular(3)),
+          paint,
+        );
       }
     }
     for (final (color, rects) in dashedUnderlines) {
@@ -213,7 +257,11 @@ class _RectsPainter extends CustomPainter {
         var x = rect.left;
         while (x < rect.right) {
           final end = (x + 4).clamp(rect.left, rect.right);
-          canvas.drawLine(Offset(x, rect.bottom), Offset(end, rect.bottom), paint);
+          canvas.drawLine(
+            Offset(x, rect.bottom),
+            Offset(end, rect.bottom),
+            paint,
+          );
           x += 7;
         }
       }
@@ -228,25 +276,36 @@ class _RectsPainter extends CustomPainter {
 /// `wonky_ui`, Write 04 §34.2). Hidden when the collaborator is unfocused;
 /// 50 % alpha when idle.
 class WonkyRemoteCaretLayerBuilder implements SuperEditorLayerBuilder {
-  const WonkyRemoteCaretLayerBuilder({required this.controller, required this.theme});
+  const WonkyRemoteCaretLayerBuilder({
+    required this.controller,
+    required this.theme,
+  });
 
   final WriteEditorController controller;
   final EditorTheme theme;
 
   @override
-  ContentLayerWidget build(BuildContext context, SuperEditorContext editContext) =>
-      _RemoteCaretLayer(controller: controller, theme: theme);
+  ContentLayerWidget build(
+    BuildContext context,
+    SuperEditorContext editContext,
+  ) => _RemoteCaretLayer(controller: controller, theme: theme);
 }
 
-class WonkyReaderRemoteCaretLayerBuilder implements SuperReaderDocumentLayerBuilder {
-  const WonkyReaderRemoteCaretLayerBuilder({required this.controller, required this.theme});
+class WonkyReaderRemoteCaretLayerBuilder
+    implements SuperReaderDocumentLayerBuilder {
+  const WonkyReaderRemoteCaretLayerBuilder({
+    required this.controller,
+    required this.theme,
+  });
 
   final WriteEditorController controller;
   final EditorTheme theme;
 
   @override
-  ContentLayerWidget build(BuildContext context, SuperReaderContext readerContext) =>
-      _RemoteCaretLayer(controller: controller, theme: theme);
+  ContentLayerWidget build(
+    BuildContext context,
+    SuperReaderContext readerContext,
+  ) => _RemoteCaretLayer(controller: controller, theme: theme);
 }
 
 class _CaretData {
@@ -264,10 +323,12 @@ class _RemoteCaretLayer extends DocumentLayoutLayerStatefulWidget {
   final EditorTheme theme;
 
   @override
-  DocumentLayoutLayerState<_RemoteCaretLayer, List<_CaretData>> createState() => _RemoteCaretLayerState();
+  DocumentLayoutLayerState<_RemoteCaretLayer, List<_CaretData>> createState() =>
+      _RemoteCaretLayerState();
 }
 
-class _RemoteCaretLayerState extends DocumentLayoutLayerState<_RemoteCaretLayer, List<_CaretData>> {
+class _RemoteCaretLayerState
+    extends DocumentLayoutLayerState<_RemoteCaretLayer, List<_CaretData>> {
   @override
   void initState() {
     super.initState();
@@ -302,7 +363,8 @@ class _RemoteCaretLayerState extends DocumentLayoutLayerState<_RemoteCaretLayer,
       if (rect == null) continue;
       var color = cursor.colorIndex == null
           ? theme.presenceColorFor(cursor.userKey)
-          : theme.presenceColors[cursor.colorIndex! % theme.presenceColors.length];
+          : theme.presenceColors[cursor.colorIndex! %
+                theme.presenceColors.length];
       if (cursor.idle) color = color.withValues(alpha: 0.5);
       carets.add(_CaretData(cursor, rect, color));
     }
@@ -321,7 +383,9 @@ class _RemoteCaretLayerState extends DocumentLayoutLayerState<_RemoteCaretLayer,
             left: caret.rect.left,
             top: caret.rect.top,
             child: RemoteCaret(
-              name: caret.cursor.isAgent ? '${caret.cursor.name} ✦' : caret.cursor.name,
+              name: caret.cursor.isAgent
+                  ? '${caret.cursor.name} ✦'
+                  : caret.cursor.name,
               color: caret.color,
               height: caret.rect.height,
               lastActivity: caret.cursor.lastActivity ?? caret.cursor.selection,
@@ -336,7 +400,12 @@ class _RemoteCaretLayerState extends DocumentLayoutLayerState<_RemoteCaretLayer,
 /// §22.1). Tapping it calls [onTap] with the node id and the handle's global
 /// rect (the host opens the block menu).
 class WonkyBlockHandleLayerBuilder implements SuperEditorLayerBuilder {
-  const WonkyBlockHandleLayerBuilder({required this.controller, required this.theme, required this.onTap, required this.hoveredNodeId});
+  const WonkyBlockHandleLayerBuilder({
+    required this.controller,
+    required this.theme,
+    required this.onTap,
+    required this.hoveredNodeId,
+  });
 
   final WriteEditorController controller;
   final EditorTheme theme;
@@ -346,12 +415,24 @@ class WonkyBlockHandleLayerBuilder implements SuperEditorLayerBuilder {
   final ValueNotifier<String?> hoveredNodeId;
 
   @override
-  ContentLayerWidget build(BuildContext context, SuperEditorContext editContext) =>
-      _BlockHandleLayer(controller: controller, theme: theme, onTap: onTap, hoveredNodeId: hoveredNodeId);
+  ContentLayerWidget build(
+    BuildContext context,
+    SuperEditorContext editContext,
+  ) => _BlockHandleLayer(
+    controller: controller,
+    theme: theme,
+    onTap: onTap,
+    hoveredNodeId: hoveredNodeId,
+  );
 }
 
 class _BlockHandleLayer extends DocumentLayoutLayerStatefulWidget {
-  const _BlockHandleLayer({required this.controller, required this.theme, required this.onTap, required this.hoveredNodeId});
+  const _BlockHandleLayer({
+    required this.controller,
+    required this.theme,
+    required this.onTap,
+    required this.hoveredNodeId,
+  });
 
   final WriteEditorController controller;
   final EditorTheme theme;
@@ -359,10 +440,12 @@ class _BlockHandleLayer extends DocumentLayoutLayerStatefulWidget {
   final ValueNotifier<String?> hoveredNodeId;
 
   @override
-  DocumentLayoutLayerState<_BlockHandleLayer, (String, Rect)?> createState() => _BlockHandleLayerState();
+  DocumentLayoutLayerState<_BlockHandleLayer, (String, Rect)?> createState() =>
+      _BlockHandleLayerState();
 }
 
-class _BlockHandleLayerState extends DocumentLayoutLayerState<_BlockHandleLayer, (String, Rect)?> {
+class _BlockHandleLayerState
+    extends DocumentLayoutLayerState<_BlockHandleLayer, (String, Rect)?> {
   @override
   void initState() {
     super.initState();
@@ -389,7 +472,9 @@ class _BlockHandleLayerState extends DocumentLayoutLayerState<_BlockHandleLayer,
     if (nodeId == null) return null;
     final node = widget.controller.document.getNodeById(nodeId);
     if (node == null) return null;
-    final rect = documentLayout.getRectForPosition(DocumentPosition(nodeId: nodeId, nodePosition: node.beginningPosition));
+    final rect = documentLayout.getRectForPosition(
+      DocumentPosition(nodeId: nodeId, nodePosition: node.beginningPosition),
+    );
     if (rect == null) return null;
     return (nodeId, rect);
   }
@@ -411,12 +496,21 @@ class _BlockHandleLayerState extends DocumentLayoutLayerState<_BlockHandleLayer,
                 key: ValueKey('write.editor.blockHandle.$nodeId'),
                 onTap: () {
                   final box = handleContext.findRenderObject() as RenderBox?;
-                  widget.onTap(nodeId, box == null ? Rect.zero : box.localToGlobal(Offset.zero) & box.size);
+                  widget.onTap(
+                    nodeId,
+                    box == null
+                        ? Rect.zero
+                        : box.localToGlobal(Offset.zero) & box.size,
+                  );
                 },
                 child: SizedBox(
                   width: 24,
                   height: 24,
-                  child: Icon(Icons.drag_indicator, size: 16, color: widget.theme.mutedColor),
+                  child: Icon(
+                    Icons.drag_indicator,
+                    size: 16,
+                    color: widget.theme.mutedColor,
+                  ),
                 ),
               ),
             ),
@@ -428,7 +522,11 @@ class _BlockHandleLayerState extends DocumentLayoutLayerState<_BlockHandleLayer,
 }
 
 /// Finds the block under a document-space y coordinate (block handle hover).
-String? nodeIdAtDocumentOffset(DocumentLayout layout, DocumentMirror mirror, Offset offset) {
+String? nodeIdAtDocumentOffset(
+  DocumentLayout layout,
+  DocumentMirror mirror,
+  Offset offset,
+) {
   final position = layout.getDocumentPositionNearestToOffset(offset);
   return position?.nodeId;
 }

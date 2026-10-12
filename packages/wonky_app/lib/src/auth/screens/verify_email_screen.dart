@@ -64,7 +64,6 @@ class CodeEntryState extends State<CodeEntry> {
         ShadInputOTP(
           key: ValueKey<String>(widget.fieldKey),
           maxLength: 6,
-          autofocus: true,
           keyboardType: TextInputType.number,
           onChanged: (v) {
             _code = v;

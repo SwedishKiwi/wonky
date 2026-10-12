@@ -16,7 +16,7 @@ import 'local_store.dart';
 /// the background; the last server copy is cached on the device so the
 /// theme is right before sign-in completes. Settings are not undoable.
 class PreferencesController extends ChangeNotifier {
-  PreferencesController({required LocalStore device, this.users}) : _device = device;
+  PreferencesController({required this._device, this.users});
 
   final LocalStore _device;
   UserRepository? users;

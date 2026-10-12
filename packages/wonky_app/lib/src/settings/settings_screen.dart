@@ -122,11 +122,11 @@ class SettingsGroup extends StatelessWidget {
       child: ShadCard(
         title: Text(title),
         description: description == null ? null : Text(description!),
+        backgroundColor: theme.colorScheme.card,
         child: Padding(
           padding: const EdgeInsets.only(top: 14),
           child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, spacing: 14, children: children),
         ),
-        backgroundColor: theme.colorScheme.card,
       ),
     );
   }

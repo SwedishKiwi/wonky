@@ -17,7 +17,7 @@ enum DriveLayout { list, grid }
 /// paging, filters, sort, layout and selection; live updates from
 /// `drive.watch`.
 class DriveController extends ChangeNotifier {
-  DriveController({required this.services, required DriveLocation location}) : _location = location {
+  DriveController({required this.services, required this._location}) {
     _sub = services.driveChanges.listen(_onChange);
     services.driveRefresh.addListener(reload);
     _layout = services.prefs.device<String>('drive.layout') == 'grid' ? DriveLayout.grid : DriveLayout.list;

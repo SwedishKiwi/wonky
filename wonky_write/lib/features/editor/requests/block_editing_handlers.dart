@@ -15,7 +15,12 @@ List<EditRequestHandler> blockEditingHandlers({
   return [
     (editor, request) {
       if (request is! InsertNewlineAtCaretRequest) return null;
-      return _newlineCommand(editor, request.newNodeId, newEmbedId, markdownShortcuts());
+      return _newlineCommand(
+        editor,
+        request.newNodeId,
+        newEmbedId,
+        markdownShortcuts(),
+      );
     },
     (editor, request) {
       if (request is! InsertSoftNewlineAtCaretRequest) return null;
@@ -23,10 +28,17 @@ List<EditRequestHandler> blockEditingHandlers({
       if (selection == null || !selection.isCollapsed) return null;
       final node = editor.document.getNodeById(selection.extent.nodeId);
       if (isCodeBlockNode(node)) {
-        return _CodeNewlineCommand(node!.id, (selection.extent.nodePosition as TextNodePosition).offset);
+        return _CodeNewlineCommand(
+          node!.id,
+          (selection.extent.nodePosition as TextNodePosition).offset,
+        );
       }
       if (node is BlockNode) {
-        return _ParagraphBesideEmbedCommand(node.id, before: true, newNodeId: Editor.createNodeId());
+        return _ParagraphBesideEmbedCommand(
+          node.id,
+          before: true,
+          newNodeId: Editor.createNodeId(),
+        );
       }
       return null;
     },
@@ -34,7 +46,8 @@ List<EditRequestHandler> blockEditingHandlers({
       if (request is DeleteUpstreamRequest) {
         return _backspaceCommand(editor);
       }
-      if (request is DeleteUpstreamAtBeginningOfNodeRequest && request.node is TextNode) {
+      if (request is DeleteUpstreamAtBeginningOfNodeRequest &&
+          request.node is TextNode) {
         return _backspaceAtStartCommand(editor, request.node as TextNode);
       }
       return null;
@@ -46,7 +59,12 @@ List<EditRequestHandler> blockEditingHandlers({
   ];
 }
 
-EditCommand? _newlineCommand(Editor editor, String newNodeId, String Function() newEmbedId, bool markdown) {
+EditCommand? _newlineCommand(
+  Editor editor,
+  String newNodeId,
+  String Function() newEmbedId,
+  bool markdown,
+) {
   final selection = editor.composer.selection;
   if (selection == null || !selection.isCollapsed) return null;
   final document = editor.document;
@@ -54,7 +72,11 @@ EditCommand? _newlineCommand(Editor editor, String newNodeId, String Function() 
   final position = selection.extent.nodePosition;
 
   if (node is BlockNode) {
-    return _ParagraphBesideEmbedCommand(node.id, before: false, newNodeId: newNodeId);
+    return _ParagraphBesideEmbedCommand(
+      node.id,
+      before: false,
+      newNodeId: newNodeId,
+    );
   }
   if (node is! TextNode || position is! TextNodePosition) return null;
   final offset = position.offset;
@@ -69,10 +91,15 @@ EditCommand? _newlineCommand(Editor editor, String newNodeId, String Function() 
 
   if (node is ParagraphNode) {
     final blockType = node.getMetadataValue(NodeMetadata.blockType);
-    if (blockType == paragraphAttribution && markdown && offset == text.length) {
+    if (blockType == paragraphAttribution &&
+        markdown &&
+        offset == text.length) {
       final fence = RegExp(r'^```([\w+#.\-]*)$').firstMatch(text);
       if (fence != null) {
-        return _ConvertToCodeBlockCommand(node.id, CodeLanguages.normalize(fence.group(1) ?? ''));
+        return _ConvertToCodeBlockCommand(
+          node.id,
+          CodeLanguages.normalize(fence.group(1) ?? ''),
+        );
       }
       if (RegExp(r'^(---|—-|\*\*\*|___)$').hasMatch(text)) {
         return _ConvertToDividerCommand(node.id, newEmbedId());
@@ -94,7 +121,9 @@ EditCommand? _newlineCommand(Editor editor, String newNodeId, String Function() 
     return _SetIndentCommand(node.id, node.indent - 1);
   }
   if (node is TaskNode && text.isEmpty) {
-    return node.indent > 0 ? _SetIndentCommand(node.id, node.indent - 1) : _ToParagraphCommand(node.id);
+    return node.indent > 0
+        ? _SetIndentCommand(node.id, node.indent - 1)
+        : _ToParagraphCommand(node.id);
   }
   return null;
 }
@@ -110,7 +139,11 @@ EditCommand? _backspaceCommand(Editor editor) {
     return _backspaceAtStartCommand(editor, node);
   }
   // A mention is deleted as a whole.
-  final mention = MentionAtomicityReaction.mentionAdjacentTo(node, offset, upstream: true);
+  final mention = MentionAtomicityReaction.mentionAdjacentTo(
+    node,
+    offset,
+    upstream: true,
+  );
   if (mention != null && mention.end == offset - 1) {
     return _DeleteTextRangeCommand(node.id, mention.start, mention.end + 1);
   }
@@ -143,16 +176,25 @@ EditCommand? _backspaceAtStartCommand(Editor editor, TextNode node) {
       return const _NoOpCommand();
     }
     if (previous is BlockNode) {
-      return _SelectEmbedCommand(previous.id, deleteNodeId: node.text.isEmpty ? node.id : null);
+      return _SelectEmbedCommand(
+        previous.id,
+        deleteNodeId: node.text.isEmpty ? node.id : null,
+      );
     }
     // Merge into the previous text block; its type wins.
-    return previous is TextNode ? _MergeTextNodesCommand(previous.id, node.id) : null;
+    return previous is TextNode
+        ? _MergeTextNodesCommand(previous.id, node.id)
+        : null;
   }
   if (node is ListItemNode) {
-    return node.indent > 0 ? _SetIndentCommand(node.id, node.indent - 1) : _ToParagraphCommand(node.id);
+    return node.indent > 0
+        ? _SetIndentCommand(node.id, node.indent - 1)
+        : _ToParagraphCommand(node.id);
   }
   if (node is TaskNode) {
-    return node.indent > 0 ? _SetIndentCommand(node.id, node.indent - 1) : _ToParagraphCommand(node.id);
+    return node.indent > 0
+        ? _SetIndentCommand(node.id, node.indent - 1)
+        : _ToParagraphCommand(node.id);
   }
   return null;
 }
@@ -175,17 +217,27 @@ EditCommand? _deleteCommand(Editor editor) {
     }
     return null;
   }
-  final mention = MentionAtomicityReaction.mentionAdjacentTo(node, offset, upstream: false);
+  final mention = MentionAtomicityReaction.mentionAdjacentTo(
+    node,
+    offset,
+    upstream: false,
+  );
   if (mention != null && mention.start == offset) {
     return _DeleteTextRangeCommand(node.id, mention.start, mention.end + 1);
   }
   return null;
 }
 
-void _placeCaret(CommandExecutor executor, String nodeId, NodePosition position) {
+void _placeCaret(
+  CommandExecutor executor,
+  String nodeId,
+  NodePosition position,
+) {
   executor.executeCommand(
     ChangeSelectionCommand(
-      DocumentSelection.collapsed(position: DocumentPosition(nodeId: nodeId, nodePosition: position)),
+      DocumentSelection.collapsed(
+        position: DocumentPosition(nodeId: nodeId, nodePosition: position),
+      ),
       SelectionChangeType.placeCaret,
       SelectionReason.userInteraction,
     ),
@@ -221,12 +273,19 @@ class _CodeNewlineCommand extends EditCommand {
     final insertion = '\n$indent$extra';
     executor.executeCommand(
       InsertTextCommand(
-        documentPosition: DocumentPosition(nodeId: nodeId, nodePosition: TextNodePosition(offset: offset)),
+        documentPosition: DocumentPosition(
+          nodeId: nodeId,
+          nodePosition: TextNodePosition(offset: offset),
+        ),
         textToInsert: insertion,
         attributions: const {},
       ),
     );
-    _placeCaret(executor, nodeId, TextNodePosition(offset: offset + insertion.length));
+    _placeCaret(
+      executor,
+      nodeId,
+      TextNodePosition(offset: offset + insertion.length),
+    );
   }
 }
 
@@ -246,8 +305,14 @@ class _ExitCodeBlockCommand extends EditCommand {
       ..executeCommand(
         DeleteContentCommand(
           documentRange: DocumentRange(
-            start: DocumentPosition(nodeId: nodeId, nodePosition: TextNodePosition(offset: length - 2)),
-            end: DocumentPosition(nodeId: nodeId, nodePosition: TextNodePosition(offset: length)),
+            start: DocumentPosition(
+              nodeId: nodeId,
+              nodePosition: TextNodePosition(offset: length - 2),
+            ),
+            end: DocumentPosition(
+              nodeId: nodeId,
+              nodePosition: TextNodePosition(offset: length),
+            ),
           ),
         ),
       )
@@ -270,21 +335,20 @@ class _ConvertToCodeBlockCommand extends EditCommand {
   @override
   void execute(EditContext context, CommandExecutor executor) {
     final node = context.document.getNodeById(nodeId) as ParagraphNode;
-    executor
-      .executeCommand(
-        ReplaceNodeCommand(
-          existingNodeId: nodeId,
-          newNode: ParagraphNode(
-            id: nodeId,
-            text: AttributedText(''),
-            metadata: {
-              ...node.metadata,
-              NodeMetadata.blockType: codeAttribution,
-              WonkyNodeMetadata.codeLanguage: language,
-            },
-          ),
+    executor.executeCommand(
+      ReplaceNodeCommand(
+        existingNodeId: nodeId,
+        newNode: ParagraphNode(
+          id: nodeId,
+          text: AttributedText(''),
+          metadata: {
+            ...node.metadata,
+            NodeMetadata.blockType: codeAttribution,
+            WonkyNodeMetadata.codeLanguage: language,
+          },
         ),
-      );
+      ),
+    );
     _placeCaret(executor, nodeId, const TextNodePosition(offset: 0));
   }
 }
@@ -305,7 +369,12 @@ class _ConvertToDividerCommand extends EditCommand {
           newNode: node.copyParagraphWith(text: AttributedText('')),
         ),
       )
-      ..executeCommand(InsertNodeBeforeNodeCommand(existingNodeId: nodeId, newNode: EmbedNodes.divider(dividerId)));
+      ..executeCommand(
+        InsertNodeBeforeNodeCommand(
+          existingNodeId: nodeId,
+          newNode: EmbedNodes.divider(dividerId),
+        ),
+      );
     _placeCaret(executor, nodeId, const TextNodePosition(offset: 0));
   }
 }
@@ -318,7 +387,9 @@ class _ChangeBlockTypeWrapper extends EditCommand {
 
   @override
   void execute(EditContext context, CommandExecutor executor) {
-    executor.executeCommand(ChangeParagraphBlockTypeCommand(nodeId: nodeId, blockType: blockType));
+    executor.executeCommand(
+      ChangeParagraphBlockTypeCommand(nodeId: nodeId, blockType: blockType),
+    );
   }
 }
 
@@ -337,11 +408,17 @@ class _SplitKeepingTypeCommand extends EditCommand {
     final second = ParagraphNode(
       id: newNodeId,
       text: node.text.copyText(offset),
-      metadata: {NodeMetadata.blockType: node.getMetadataValue(NodeMetadata.blockType)},
+      metadata: {
+        NodeMetadata.blockType: node.getMetadataValue(NodeMetadata.blockType),
+      },
     );
     executor
-      ..executeCommand(ReplaceNodeCommand(existingNodeId: nodeId, newNode: first))
-      ..executeCommand(InsertNodeAfterNodeCommand(existingNodeId: nodeId, newNode: second));
+      ..executeCommand(
+        ReplaceNodeCommand(existingNodeId: nodeId, newNode: first),
+      )
+      ..executeCommand(
+        InsertNodeAfterNodeCommand(existingNodeId: nodeId, newNode: second),
+      );
     _placeCaret(executor, newNodeId, const TextNodePosition(offset: 0));
   }
 }
@@ -367,7 +444,11 @@ class _ParagraphAboveCommand extends EditCommand {
 
 /// Enter (after) / Shift+Enter (before) on a selected embed (§6.1).
 class _ParagraphBesideEmbedCommand extends EditCommand {
-  _ParagraphBesideEmbedCommand(this.nodeId, {required this.before, required this.newNodeId});
+  _ParagraphBesideEmbedCommand(
+    this.nodeId, {
+    required this.before,
+    required this.newNodeId,
+  });
 
   final String nodeId;
   final bool before;
@@ -378,8 +459,14 @@ class _ParagraphBesideEmbedCommand extends EditCommand {
     final paragraph = ParagraphNode(id: newNodeId, text: AttributedText(''));
     executor.executeCommand(
       before
-          ? InsertNodeBeforeNodeCommand(existingNodeId: nodeId, newNode: paragraph)
-          : InsertNodeAfterNodeCommand(existingNodeId: nodeId, newNode: paragraph),
+          ? InsertNodeBeforeNodeCommand(
+              existingNodeId: nodeId,
+              newNode: paragraph,
+            )
+          : InsertNodeAfterNodeCommand(
+              existingNodeId: nodeId,
+              newNode: paragraph,
+            ),
     );
     _placeCaret(executor, newNodeId, const TextNodePosition(offset: 0));
   }
@@ -396,7 +483,10 @@ class _SetIndentCommand extends EditCommand {
     final node = context.document.getNodeById(nodeId);
     if (node is ListItemNode) {
       executor.executeCommand(
-        ReplaceNodeCommand(existingNodeId: nodeId, newNode: node.copyListItemWith(indent: indent)),
+        ReplaceNodeCommand(
+          existingNodeId: nodeId,
+          newNode: node.copyListItemWith(indent: indent),
+        ),
       );
     } else if (node is TaskNode) {
       executor.executeCommand(SetTaskIndentCommand(nodeId, indent));
@@ -413,7 +503,9 @@ class _ToParagraphCommand extends EditCommand {
   @override
   void execute(EditContext context, CommandExecutor executor) {
     final node = context.document.getNodeById(nodeId) as TextNode;
-    final lineAttributes = node.getMetadataValue(WonkyNodeMetadata.lineAttributes);
+    final lineAttributes = node.getMetadataValue(
+      WonkyNodeMetadata.lineAttributes,
+    );
     executor.executeCommand(
       ReplaceNodeCommand(
         existingNodeId: nodeId,
@@ -453,10 +545,17 @@ class _CodeToParagraphsCommand extends EditCommand {
       if (end < 0) break;
       start = end + 1;
     }
-    executor.executeCommand(ReplaceNodeCommand(existingNodeId: nodeId, newNode: paragraphs.first));
+    executor.executeCommand(
+      ReplaceNodeCommand(existingNodeId: nodeId, newNode: paragraphs.first),
+    );
     var previous = nodeId;
     for (final paragraph in paragraphs.skip(1)) {
-      executor.executeCommand(InsertNodeAfterNodeCommand(existingNodeId: previous, newNode: paragraph));
+      executor.executeCommand(
+        InsertNodeAfterNodeCommand(
+          existingNodeId: previous,
+          newNode: paragraph,
+        ),
+      );
       previous = paragraph.id;
     }
     _placeCaret(executor, nodeId, const TextNodePosition(offset: 0));
@@ -478,8 +577,14 @@ class _SelectEmbedCommand extends EditCommand {
     executor.executeCommand(
       ChangeSelectionCommand(
         DocumentSelection(
-          base: DocumentPosition(nodeId: embedId, nodePosition: const UpstreamDownstreamNodePosition.upstream()),
-          extent: DocumentPosition(nodeId: embedId, nodePosition: const UpstreamDownstreamNodePosition.downstream()),
+          base: DocumentPosition(
+            nodeId: embedId,
+            nodePosition: const UpstreamDownstreamNodePosition.upstream(),
+          ),
+          extent: DocumentPosition(
+            nodeId: embedId,
+            nodePosition: const UpstreamDownstreamNodePosition.downstream(),
+          ),
         ),
         SelectionChangeType.expandSelection,
         SelectionReason.userInteraction,
@@ -500,8 +605,14 @@ class _DeleteTextRangeCommand extends EditCommand {
     executor.executeCommand(
       DeleteContentCommand(
         documentRange: DocumentRange(
-          start: DocumentPosition(nodeId: nodeId, nodePosition: TextNodePosition(offset: start)),
-          end: DocumentPosition(nodeId: nodeId, nodePosition: TextNodePosition(offset: end)),
+          start: DocumentPosition(
+            nodeId: nodeId,
+            nodePosition: TextNodePosition(offset: start),
+          ),
+          end: DocumentPosition(
+            nodeId: nodeId,
+            nodePosition: TextNodePosition(offset: end),
+          ),
         ),
       ),
     );
@@ -534,7 +645,9 @@ class _MergeTextNodesCommand extends EditCommand {
       ..executeCommand(
         ReplaceNodeCommand(
           existingNodeId: firstId,
-          newNode: first.copyTextNodeWith(text: first.text.copyAndAppend(appended)),
+          newNode: first.copyTextNodeWith(
+            text: first.text.copyAndAppend(appended),
+          ),
         ),
       )
       ..executeCommand(DeleteNodeCommand(nodeId: secondId));

@@ -7,7 +7,12 @@ import '../styles/editor_theme.dart';
 /// A person that can be mentioned (Write 04 §19.1).
 @immutable
 class MentionCandidate {
-  const MentionCandidate({required this.userUuid, required this.displayName, required this.email, this.roleLabel});
+  const MentionCandidate({
+    required this.userUuid,
+    required this.displayName,
+    required this.email,
+    this.roleLabel,
+  });
 
   final String userUuid;
   final String displayName;
@@ -25,7 +30,8 @@ class PickerController<T> extends ChangeNotifier {
 
   List<T> get items => _items;
   int get highlighted => _highlighted;
-  T? get current => _items.isEmpty ? null : _items[_highlighted.clamp(0, _items.length - 1)];
+  T? get current =>
+      _items.isEmpty ? null : _items[_highlighted.clamp(0, _items.length - 1)];
 
   set items(List<T> value) {
     _items = value;
@@ -46,7 +52,11 @@ class PickerController<T> extends ChangeNotifier {
   }
 
   /// Handles ↑ ↓ Enter Tab Esc. Returns whether the key was handled.
-  bool handleKey(KeyEvent event, {required void Function(T item) onChoose, required VoidCallback onClose}) {
+  bool handleKey(
+    KeyEvent event, {
+    required void Function(T item) onChoose,
+    required VoidCallback onClose,
+  }) {
     if (event is! KeyDownEvent && event is! KeyRepeatEvent) return false;
     final key = event.logicalKey;
     if (key == LogicalKeyboardKey.arrowDown) {
@@ -73,7 +83,12 @@ class PickerController<T> extends ChangeNotifier {
 
 /// The slash command menu (Write 05 §8.1).
 class SlashMenu extends StatelessWidget {
-  const SlashMenu({super.key, required this.picker, required this.theme, required this.onChoose});
+  const SlashMenu({
+    super.key,
+    required this.picker,
+    required this.theme,
+    required this.onChoose,
+  });
 
   final PickerController<SlashItem> picker;
   final EditorTheme theme;
@@ -94,7 +109,10 @@ class SlashMenu extends StatelessWidget {
           child: items.isEmpty
               ? Padding(
                   padding: const EdgeInsets.all(12),
-                  child: Text('No results', style: TextStyle(color: theme.mutedColor, fontSize: 13)),
+                  child: Text(
+                    'No results',
+                    style: TextStyle(color: theme.mutedColor, fontSize: 13),
+                  ),
                 )
               : ListView.builder(
                   shrinkWrap: true,
@@ -111,9 +129,23 @@ class SlashMenu extends StatelessWidget {
                       onHover: () => picker.highlight(index),
                       child: Row(
                         children: [
-                          Expanded(child: Text(item.title, style: TextStyle(fontSize: 13, color: theme.body.color))),
+                          Expanded(
+                            child: Text(
+                              item.title,
+                              style: TextStyle(
+                                fontSize: 13,
+                                color: theme.body.color,
+                              ),
+                            ),
+                          ),
                           if (item.shortcut != null)
-                            Text(item.shortcut!, style: TextStyle(fontSize: 11, color: theme.mutedColor)),
+                            Text(
+                              item.shortcut!,
+                              style: TextStyle(
+                                fontSize: 11,
+                                color: theme.mutedColor,
+                              ),
+                            ),
                         ],
                       ),
                     );
@@ -127,7 +159,12 @@ class SlashMenu extends StatelessWidget {
 
 /// The @mention picker (Write 05 §9.3).
 class MentionPicker extends StatelessWidget {
-  const MentionPicker({super.key, required this.picker, required this.theme, required this.onChoose});
+  const MentionPicker({
+    super.key,
+    required this.picker,
+    required this.theme,
+    required this.onChoose,
+  });
 
   final PickerController<MentionCandidate> picker;
   final EditorTheme theme;
@@ -148,7 +185,10 @@ class MentionPicker extends StatelessWidget {
           child: items.isEmpty
               ? Padding(
                   padding: const EdgeInsets.all(12),
-                  child: Text('No people found', style: TextStyle(color: theme.mutedColor, fontSize: 13)),
+                  child: Text(
+                    'No people found',
+                    style: TextStyle(color: theme.mutedColor, fontSize: 13),
+                  ),
                 )
               : ListView.builder(
                   shrinkWrap: true,
@@ -157,7 +197,9 @@ class MentionPicker extends StatelessWidget {
                   itemBuilder: (context, index) {
                     final person = items[index];
                     return _PopoverRow(
-                      key: ValueKey('write.editor.mentionPicker.${person.userUuid}'),
+                      key: ValueKey(
+                        'write.editor.mentionPicker.${person.userUuid}',
+                      ),
                       theme: theme,
                       selected: index == picker.highlighted,
                       onTap: () => onChoose(person),
@@ -166,10 +208,18 @@ class MentionPicker extends StatelessWidget {
                         children: [
                           CircleAvatar(
                             radius: 12,
-                            backgroundColor: theme.presenceColorFor(person.userUuid),
+                            backgroundColor: theme.presenceColorFor(
+                              person.userUuid,
+                            ),
                             child: Text(
-                              person.displayName.isEmpty ? '?' : person.displayName.characters.first.toUpperCase(),
-                              style: const TextStyle(fontSize: 11, color: Colors.white),
+                              person.displayName.isEmpty
+                                  ? '?'
+                                  : person.displayName.characters.first
+                                        .toUpperCase(),
+                              style: const TextStyle(
+                                fontSize: 11,
+                                color: Colors.white,
+                              ),
                             ),
                           ),
                           const SizedBox(width: 8),
@@ -177,13 +227,31 @@ class MentionPicker extends StatelessWidget {
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                Text(person.displayName, style: TextStyle(fontSize: 13, color: theme.body.color)),
-                                Text(person.email, style: TextStyle(fontSize: 11, color: theme.mutedColor)),
+                                Text(
+                                  person.displayName,
+                                  style: TextStyle(
+                                    fontSize: 13,
+                                    color: theme.body.color,
+                                  ),
+                                ),
+                                Text(
+                                  person.email,
+                                  style: TextStyle(
+                                    fontSize: 11,
+                                    color: theme.mutedColor,
+                                  ),
+                                ),
                               ],
                             ),
                           ),
                           if (person.roleLabel != null)
-                            Text(person.roleLabel!, style: TextStyle(fontSize: 11, color: theme.mutedColor)),
+                            Text(
+                              person.roleLabel!,
+                              style: TextStyle(
+                                fontSize: 11,
+                                color: theme.mutedColor,
+                              ),
+                            ),
                         ],
                       ),
                     );
@@ -209,7 +277,13 @@ class LinkCardActions {
 /// The link hover card: domain and URL (no remote fetch) with Open, Copy,
 /// Edit and Remove.
 class LinkHoverCard extends StatelessWidget {
-  const LinkHoverCard({super.key, required this.url, required this.theme, required this.actions, this.title});
+  const LinkHoverCard({
+    super.key,
+    required this.url,
+    required this.theme,
+    required this.actions,
+    this.title,
+  });
 
   final String url;
   final String? title;
@@ -222,7 +296,9 @@ class LinkHoverCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final uri = Uri.tryParse(url);
     final isInternal = url.startsWith('wonky://');
-    final heading = isInternal ? (title ?? 'Wonky document') : (uri?.host.isNotEmpty == true ? uri!.host : url);
+    final heading = isInternal
+        ? (title ?? 'Wonky document')
+        : (uri?.host.isNotEmpty == true ? uri!.host : url);
     return _PopoverCard(
       key: cardKey,
       theme: theme,
@@ -231,29 +307,51 @@ class LinkHoverCard extends StatelessWidget {
         padding: const EdgeInsets.fromLTRB(12, 8, 4, 8),
         child: Row(
           children: [
-            Icon(isInternal ? Icons.description_outlined : Icons.public, size: 18, color: theme.mutedColor),
+            Icon(
+              isInternal ? Icons.description_outlined : Icons.public,
+              size: 18,
+              color: theme.mutedColor,
+            ),
             const SizedBox(width: 8),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Text(heading, maxLines: 1, overflow: TextOverflow.ellipsis, style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13, color: theme.body.color)),
-                  Text(_middleEllipsis(url, 44), maxLines: 1, style: TextStyle(fontSize: 11, color: theme.mutedColor)),
+                  Text(
+                    heading,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      fontWeight: FontWeight.w600,
+                      fontSize: 13,
+                      color: theme.body.color,
+                    ),
+                  ),
+                  Text(
+                    _middleEllipsis(url, 44),
+                    maxLines: 1,
+                    style: TextStyle(fontSize: 11, color: theme.mutedColor),
+                  ),
                 ],
               ),
             ),
-            if (actions.onOpen != null) _icon(Icons.open_in_new, 'Open', actions.onOpen!, 'open'),
-            if (actions.onCopy != null) _icon(Icons.copy_outlined, 'Copy link', actions.onCopy!, 'copy'),
-            if (actions.onEdit != null) _icon(Icons.edit_outlined, 'Edit', actions.onEdit!, 'edit'),
-            if (actions.onRemove != null) _icon(Icons.link_off, 'Remove', actions.onRemove!, 'remove'),
+            if (actions.onOpen != null)
+              _icon(Icons.open_in_new, 'Open', actions.onOpen!, 'open'),
+            if (actions.onCopy != null)
+              _icon(Icons.copy_outlined, 'Copy link', actions.onCopy!, 'copy'),
+            if (actions.onEdit != null)
+              _icon(Icons.edit_outlined, 'Edit', actions.onEdit!, 'edit'),
+            if (actions.onRemove != null)
+              _icon(Icons.link_off, 'Remove', actions.onRemove!, 'remove'),
           ],
         ),
       ),
     );
   }
 
-  Widget _icon(IconData icon, String tooltip, VoidCallback onTap, String id) => IconButton(
+  Widget _icon(IconData icon, String tooltip, VoidCallback onTap, String id) =>
+      IconButton(
         key: ValueKey('write.editor.linkCard.$id'),
         tooltip: tooltip,
         iconSize: 16,
@@ -271,7 +369,12 @@ class LinkHoverCard extends StatelessWidget {
 }
 
 class _PopoverCard extends StatelessWidget {
-  const _PopoverCard({super.key, required this.theme, required this.width, required this.child});
+  const _PopoverCard({
+    super.key,
+    required this.theme,
+    required this.width,
+    required this.child,
+  });
 
   final EditorTheme theme;
   final double width;
@@ -286,7 +389,11 @@ class _PopoverCard extends StatelessWidget {
       borderRadius: BorderRadius.circular(8),
       clipBehavior: Clip.antiAlias,
       child: ConstrainedBox(
-        constraints: BoxConstraints(maxWidth: width, minWidth: width, maxHeight: 360),
+        constraints: BoxConstraints(
+          maxWidth: width,
+          minWidth: width,
+          maxHeight: 360,
+        ),
         child: child,
       ),
     );

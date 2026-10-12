@@ -91,7 +91,7 @@ List<Command<CommandArgs>> navigationCommands(ShellServices s) => [
     category: (l) => l.categoryNavigation,
     run: (ctx, a) async {
       final c = ctx.dialogContext;
-      if (c == null) return const CommandResult.cancelled();
+      if (c == null || !c.mounted) return const CommandResult.cancelled();
       await showQuickSwitcher(c, s);
       return const CommandResult.ok();
     },
@@ -105,7 +105,7 @@ List<Command<CommandArgs>> navigationCommands(ShellServices s) => [
     palette: false,
     run: (ctx, a) async {
       final c = ctx.dialogContext;
-      if (c == null) return const CommandResult.cancelled();
+      if (c == null || !c.mounted) return const CommandResult.cancelled();
       await showCommandPalette(c, s);
       return const CommandResult.ok();
     },
@@ -238,7 +238,7 @@ List<Command<CommandArgs>> fileCommands(ShellServices s) {
       category: (l) => l.categoryFile,
       run: (ctx, a) async {
         final c = ctx.dialogContext;
-        if (c == null) return const CommandResult.cancelled();
+        if (c == null || !c.mounted) return const CommandResult.cancelled();
         await showQuickSwitcher(c, s);
         return const CommandResult.ok();
       },
@@ -311,7 +311,7 @@ List<Command<CommandArgs>> sharingCommands(ShellServices s) => [
     run: (ctx, a) async {
       final t = await fetchTargets(s, a);
       final c = ctx.dialogContext;
-      if (t.length != 1 || c == null) return const CommandResult.cancelled();
+      if (t.length != 1 || c == null || !c.mounted) return const CommandResult.cancelled();
       await showShareDialog(c, s, t.single);
       return const CommandResult.ok();
     },
@@ -356,7 +356,7 @@ List<Command<CommandArgs>> sharingCommands(ShellServices s) => [
         return const CommandResult.ok();
       }
       final c = ctx.dialogContext;
-      if (c == null) return const CommandResult.cancelled();
+      if (c == null || !c.mounted) return const CommandResult.cancelled();
       final sent = await showRequestAccessDialog(c, s, uuid);
       return sent ? const CommandResult.ok() : const CommandResult.cancelled();
     },
@@ -401,7 +401,7 @@ List<Command<CommandArgs>> editCommands(ShellServices s) {
       enabled: (ctx, a) => s.undo.canUndo.value,
       run: (ctx, a) async {
         final c = ctx.dialogContext;
-        if (c == null) return const CommandResult.cancelled();
+        if (c == null || !c.mounted) return const CommandResult.cancelled();
         await showUndoHistoryDialog(c, s);
         return const CommandResult.ok();
       },
@@ -742,7 +742,7 @@ List<Command<CommandArgs>> versionCommands(ShellServices s) {
         var name = a.string('name');
         if (name == null) {
           final c = ctx.dialogContext;
-          if (c == null) return const CommandResult.cancelled();
+          if (c == null || !c.mounted) return const CommandResult.cancelled();
           name = await showNameVersionDialog(c, s);
           if (name == null) return const CommandResult.cancelled();
         }
@@ -768,7 +768,7 @@ List<Command<CommandArgs>> versionCommands(ShellServices s) {
         final item = s.currentItem.value!;
         if (a.boolean('confirmed') != true) {
           final c = ctx.dialogContext;
-          if (c == null) return const CommandResult.cancelled();
+          if (c == null || !c.mounted) return const CommandResult.cancelled();
           final l = s.l10n!;
           final ok = await confirmDialog(
             c,
@@ -1025,7 +1025,7 @@ List<Command<CommandArgs>> miscCommands(ShellServices s) => [
     category: (l) => l.categoryHelp,
     run: (ctx, a) async {
       final c = ctx.dialogContext;
-      if (c == null) return const CommandResult.cancelled();
+      if (c == null || !c.mounted) return const CommandResult.cancelled();
       await showCommandPalette(c, s, menusOnly: true);
       return const CommandResult.ok();
     },
@@ -1038,7 +1038,7 @@ List<Command<CommandArgs>> miscCommands(ShellServices s) => [
     category: (l) => l.categoryHelp,
     run: (ctx, a) async {
       final c = ctx.dialogContext;
-      if (c == null) return const CommandResult.cancelled();
+      if (c == null || !c.mounted) return const CommandResult.cancelled();
       await showShortcutsHelp(c, s);
       return const CommandResult.ok();
     },
@@ -1061,7 +1061,7 @@ List<Command<CommandArgs>> miscCommands(ShellServices s) => [
     category: (l) => l.categoryHelp,
     run: (ctx, a) async {
       final c = ctx.dialogContext;
-      if (c == null) return const CommandResult.cancelled();
+      if (c == null || !c.mounted) return const CommandResult.cancelled();
       await showFeedbackDialog(c, s);
       return const CommandResult.ok();
     },
@@ -1073,7 +1073,7 @@ List<Command<CommandArgs>> miscCommands(ShellServices s) => [
     category: (l) => l.categoryHelp,
     run: (ctx, a) async {
       final c = ctx.dialogContext;
-      if (c == null) return const CommandResult.cancelled();
+      if (c == null || !c.mounted) return const CommandResult.cancelled();
       await showWhatsNewDialog(c, s);
       return const CommandResult.ok();
     },

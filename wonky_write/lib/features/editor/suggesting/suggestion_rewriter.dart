@@ -31,8 +31,21 @@ class SuggestionRewriter {
   const SuggestionRewriter();
 
   static const _prefix = 'sug_';
-  static const _inlineKeys = {'bold', 'italic', 'strike', 'code', 'link', 'mention'};
-  static const _blockKeys = {'header', 'blockquote', 'code-block', 'list', 'indent'};
+  static const _inlineKeys = {
+    'bold',
+    'italic',
+    'strike',
+    'code',
+    'link',
+    'mention',
+  };
+  static const _blockKeys = {
+    'header',
+    'blockquote',
+    'code-block',
+    'list',
+    'indent',
+  };
 
   /// Rewrites [change] (against [documentBefore]) into suggestion form.
   Delta rewrite(Delta documentBefore, Delta change, SuggestionContext context) {
@@ -45,15 +58,22 @@ class SuggestionRewriter {
     for (final op in _deletesFirst(change.operations)) {
       if (op.isInsert) {
         // Typing inside or right after your own suggested insertion extends it.
-        final ownBefore = _ownInsertion(previousBaseAttributes, context.userUuid);
-        final ownAfter = base.hasNext ? _ownInsertion(base.peekAttributes, context.userUuid) : null;
+        final ownBefore = _ownInsertion(
+          previousBaseAttributes,
+          context.userUuid,
+        );
+        final ownAfter = base.hasNext
+            ? _ownInsertion(base.peekAttributes, context.userUuid)
+            : null;
         final own = ownBefore ?? ownAfter;
-        final key = own?.$1 ?? lastOwnInsertionKey ?? '$_prefix${context.suggestionId}';
+        final key =
+            own?.$1 ?? lastOwnInsertionKey ?? '$_prefix${context.suggestionId}';
         final data = own?.$2 ?? lastOwnInsertionData ?? _data('ins', context);
         lastOwnInsertionKey = key;
         lastOwnInsertionData = data;
         final attributes = <String, dynamic>{
-          for (final entry in (op.attributes ?? const <String, dynamic>{}).entries)
+          for (final entry
+              in (op.attributes ?? const <String, dynamic>{}).entries)
             if (!entry.key.startsWith(_prefix)) entry.key: entry.value,
           key: data,
         };
@@ -85,7 +105,9 @@ class SuggestionRewriter {
             result.retain(length);
             continue;
           }
-          if (attributes.keys.every((k) => k.startsWith('cmt_') || k.startsWith(_prefix))) {
+          if (attributes.keys.every(
+            (k) => k.startsWith('cmt_') || k.startsWith(_prefix),
+          )) {
             // Comment anchors (and explicit suggestion edits) pass through.
             result.retain(length, attributes);
             continue;
@@ -94,7 +116,10 @@ class SuggestionRewriter {
             result.retain(length, attributes);
             continue;
           }
-          result.retain(length, _formatAttributes(baseAttributes, attributes, isLineEnd, context));
+          result.retain(
+            length,
+            _formatAttributes(baseAttributes, attributes, isLineEnd, context),
+          );
           continue;
         }
 
@@ -107,7 +132,9 @@ class SuggestionRewriter {
           result.retain(length);
           continue;
         }
-        result.retain(length, {'$_prefix${context.suggestionId}': _data('del', context)});
+        result.retain(length, {
+          '$_prefix${context.suggestionId}': _data('del', context),
+        });
       }
     }
     result.trim();
@@ -126,7 +153,10 @@ class SuggestionRewriter {
     // An existing format suggestion of mine on this text keeps its `before`.
     final ownFormat = base.entries.firstWhereOrNull((e) {
       final value = e.value;
-      return e.key.startsWith(_prefix) && value is Map && value['t'] == 'fmt' && value['by'] == context.userUuid;
+      return e.key.startsWith(_prefix) &&
+          value is Map &&
+          value['t'] == 'fmt' &&
+          value['by'] == context.userUuid;
     });
     final result = <String, dynamic>{...change};
     if (ownFormat != null) {
@@ -154,7 +184,10 @@ class SuggestionRewriter {
       for (final key in trackedKeys)
         if (base[key] != null) key: base[key],
     };
-    result['$_prefix${context.suggestionId}'] = {..._data('fmt', context), 'before': before};
+    result['$_prefix${context.suggestionId}'] = {
+      ..._data('fmt', context),
+      'before': before,
+    };
     return result;
   }
 
@@ -187,17 +220,23 @@ class SuggestionRewriter {
   }
 
   static Map<String, dynamic> _data(String type, SuggestionContext context) => {
-        't': type,
-        'by': context.userUuid,
-        'at': context.nowMs,
-        if (context.via != null) 'via': context.via,
-      };
+    't': type,
+    'by': context.userUuid,
+    'at': context.nowMs,
+    if (context.via != null) 'via': context.via,
+  };
 
-  static (String, Map<String, dynamic>)? _ownInsertion(Map<String, dynamic>? attributes, String userUuid) {
+  static (String, Map<String, dynamic>)? _ownInsertion(
+    Map<String, dynamic>? attributes,
+    String userUuid,
+  ) {
     if (attributes == null) return null;
     for (final entry in attributes.entries) {
       final value = entry.value;
-      if (entry.key.startsWith(_prefix) && value is Map && value['t'] == 'ins' && value['by'] == userUuid) {
+      if (entry.key.startsWith(_prefix) &&
+          value is Map &&
+          value['t'] == 'ins' &&
+          value['by'] == userUuid) {
         return (entry.key, value.cast<String, dynamic>());
       }
     }
@@ -206,9 +245,13 @@ class SuggestionRewriter {
 
   static bool _hasDeletion(Map<String, dynamic>? attributes) {
     if (attributes == null) return false;
-    return attributes.entries.any((e) => e.key.startsWith(_prefix) && e.value is Map && (e.value as Map)['t'] == 'del');
+    return attributes.entries.any(
+      (e) =>
+          e.key.startsWith(_prefix) &&
+          e.value is Map &&
+          (e.value as Map)['t'] == 'del',
+    );
   }
-
 }
 
 /// A cursor over a document Delta that can peek at the next attributes.
@@ -221,7 +264,8 @@ class _Cursor {
 
   bool get hasNext => _index < delta.length;
 
-  Map<String, dynamic>? get peekAttributes => hasNext ? delta[_index].attributes : null;
+  Map<String, dynamic>? get peekAttributes =>
+      hasNext ? delta[_index].attributes : null;
 
   /// The next piece of at most [length] characters.
   Operation next(int length) {
@@ -229,7 +273,10 @@ class _Cursor {
     final opLength = op.length!;
     final take = length < opLength - _offset ? length : opLength - _offset;
     final data = op.data;
-    final piece = Operation.insert(data is String ? data.substring(_offset, _offset + take) : data, op.attributes);
+    final piece = Operation.insert(
+      data is String ? data.substring(_offset, _offset + take) : data,
+      op.attributes,
+    );
     _offset += take;
     if (_offset >= opLength) {
       _index += 1;

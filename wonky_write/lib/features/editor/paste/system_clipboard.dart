@@ -1,5 +1,7 @@
 import 'clipboard_codec.dart';
-import 'system_clipboard_io.dart' if (dart.library.js_interop) 'system_clipboard_web.dart' as platform;
+import 'system_clipboard_io.dart'
+    if (dart.library.js_interop) 'system_clipboard_web.dart'
+    as platform;
 
 /// Reads and writes the system clipboard with multiple representations
 /// (Write 04 §23). On web this uses the async Clipboard API (`text/html` +

@@ -88,7 +88,8 @@ class DocumentMirror {
   }
 
   /// Serializes [node] into an entry.
-  MirrorEntry serializeEntry(DocumentNode node) => MirrorEntry(node, serializer.serializeNode(node));
+  MirrorEntry serializeEntry(DocumentNode node) =>
+      MirrorEntry(node, serializer.serializeNode(node));
 
   /// Replaces entries `[start, end)` with [newEntries].
   void replaceRange(int start, int end, List<MirrorEntry> newEntries) {
@@ -147,7 +148,10 @@ class DocumentMirror {
       last += 1;
       lastEnd += _entries[last].length;
     }
-    return entriesDelta(first, last + 1).slice(start - firstStart, end - firstStart);
+    return entriesDelta(
+      first,
+      last + 1,
+    ).slice(start - firstStart, end - firstStart);
   }
 
   /// `change.invert(document)` computed from the slices of the document that
@@ -168,8 +172,14 @@ class DocumentMirror {
           if (op.isDelete) {
             inverted.push(baseOp);
           } else {
-            final attributes = Delta.invertAttributes(op.attributes, baseOp.attributes);
-            inverted.retain(baseOp.length!, attributes.isEmpty ? null : attributes);
+            final attributes = Delta.invertAttributes(
+              op.attributes,
+              baseOp.attributes,
+            );
+            inverted.retain(
+              baseOp.length!,
+              attributes.isEmpty ? null : attributes,
+            );
           }
         }
         offset += length;
@@ -193,7 +203,9 @@ class DocumentMirror {
       return start + nodePosition.offset.clamp(0, entry.length - 1);
     }
     if (nodePosition is UpstreamDownstreamNodePosition) {
-      return nodePosition.affinity == TextAffinity.upstream ? start : start + (entry.length > 1 ? 1 : 0);
+      return nodePosition.affinity == TextAffinity.upstream
+          ? start
+          : start + (entry.length > 1 ? 1 : 0);
     }
     return start;
   }
@@ -207,15 +219,22 @@ class DocumentMirror {
     final index = _index.indexAt(offset);
     final entry = _entries[index];
     final start = _index.startOf(index);
-    final local = (offset - start).clamp(0, entry.length > 0 ? entry.length - 1 : 0);
+    final local = (offset - start).clamp(
+      0,
+      entry.length > 0 ? entry.length - 1 : 0,
+    );
     final node = entry.node;
     if (node is TextNode) {
-      return DocumentPosition(nodeId: node.id, nodePosition: TextNodePosition(offset: local));
+      return DocumentPosition(
+        nodeId: node.id,
+        nodePosition: TextNodePosition(offset: local),
+      );
     }
     return DocumentPosition(
       nodeId: node.id,
-      nodePosition:
-          local == 0 ? const UpstreamDownstreamNodePosition.upstream() : const UpstreamDownstreamNodePosition.downstream(),
+      nodePosition: local == 0
+          ? const UpstreamDownstreamNodePosition.upstream()
+          : const UpstreamDownstreamNodePosition.downstream(),
     );
   }
 

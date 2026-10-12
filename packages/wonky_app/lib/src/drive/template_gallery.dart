@@ -24,7 +24,7 @@ Future<void> _createFrom(BuildContext context, ShellServices s, TemplateView? t)
       s,
       parentUuid: s.currentFolder.value?.uuid,
       templateUuid: t?.uuid,
-      name: t == null ? null : t.name,
+      name: t?.name,
     );
     if (uuid != null) s.router.go(s.config.itemPath(uuid.uuid));
   } catch (e) {

@@ -29,6 +29,7 @@ import '../l10n/wonky_app_localizations.dart';
 import '../routing/router.dart';
 import 'overlays/shell_overlays.dart';
 import 'shell_services.dart';
+import '../undo/undo_service.dart';
 
 /// The shared app shell (suite 03): bootstraps the client, auth, commands,
 /// keymap, undo, routing and overlays, then hosts the app's screens.

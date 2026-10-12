@@ -89,7 +89,8 @@ class SuggestionAttribution implements Attribution {
 
   int? get atMs => (data['at'] as num?)?.toInt();
 
-  Map<String, dynamic>? get before => (data['before'] as Map?)?.cast<String, dynamic>();
+  Map<String, dynamic>? get before =>
+      (data['before'] as Map?)?.cast<String, dynamic>();
 
   String? get via => data['via'] as String?;
 

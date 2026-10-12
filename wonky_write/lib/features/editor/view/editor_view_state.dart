@@ -23,7 +23,8 @@ class HighlightRange {
   bool get isEmpty => end <= start;
 
   @override
-  bool operator ==(Object other) => other is HighlightRange && other.start == start && other.end == end;
+  bool operator ==(Object other) =>
+      other is HighlightRange && other.start == start && other.end == end;
 
   @override
   int get hashCode => Object.hash(start, end);
@@ -68,16 +69,16 @@ class RemoteCursor {
   final int? colorIndex;
 
   RemoteCursor copyWith({DeltaSelection? selection}) => RemoteCursor(
-        sessionId: sessionId,
-        userKey: userKey,
-        name: name,
-        selection: selection ?? this.selection,
-        focused: focused,
-        idle: idle,
-        isAgent: isAgent,
-        lastActivity: lastActivity,
-        colorIndex: colorIndex,
-      );
+    sessionId: sessionId,
+    userKey: userKey,
+    name: name,
+    selection: selection ?? this.selection,
+    focused: focused,
+    idle: idle,
+    isAgent: isAgent,
+    lastActivity: lastActivity,
+    colorIndex: colorIndex,
+  );
 }
 
 /// Page geometry for the Pages layout (Write 04 §29, Write 07 page setup), in
@@ -119,14 +120,27 @@ class EditorPageSetup {
       other.pageGap == pageGap;
 
   @override
-  int get hashCode => Object.hash(size, margins, headerText, footerText, pageGap);
+  int get hashCode =>
+      Object.hash(size, margins, headerText, footerText, pageGap);
 }
 
 /// View state of the editor: not part of the document, not undoable
 /// (Write 04 §25, §29, §31, §33, §34). Ranges are Delta offsets and are
 /// transformed through every document change by the controller.
 class EditorViewState extends ChangeNotifier {
-  static const zoomSteps = [0.5, 0.67, 0.75, 0.8, 0.9, 1.0, 1.1, 1.25, 1.5, 1.75, 2.0];
+  static const zoomSteps = [
+    0.5,
+    0.67,
+    0.75,
+    0.8,
+    0.9,
+    1.0,
+    1.1,
+    1.25,
+    1.5,
+    1.75,
+    2.0,
+  ];
 
   double _zoom = 1;
   double get zoom => _zoom;
@@ -137,9 +151,15 @@ class EditorViewState extends ChangeNotifier {
     notifyListeners();
   }
 
-  void zoomIn() => zoom = zoomSteps.firstWhere((z) => z > _zoom + 0.001, orElse: () => zoomSteps.last);
+  void zoomIn() => zoom = zoomSteps.firstWhere(
+    (z) => z > _zoom + 0.001,
+    orElse: () => zoomSteps.last,
+  );
 
-  void zoomOut() => zoom = zoomSteps.lastWhere((z) => z < _zoom - 0.001, orElse: () => zoomSteps.first);
+  void zoomOut() => zoom = zoomSteps.lastWhere(
+    (z) => z < _zoom - 0.001,
+    orElse: () => zoomSteps.first,
+  );
 
   void zoomReset() => zoom = 1;
 
@@ -187,7 +207,9 @@ class EditorViewState extends ChangeNotifier {
   /// Sets the find matches to paint ([active] = index of the active match).
   void setFindMatches(List<HighlightRange> matches, {int? active}) {
     _findMatches = List.unmodifiable(matches);
-    _activeFindMatch = active == null || active < 0 || active >= matches.length ? null : active;
+    _activeFindMatch = active == null || active < 0 || active >= matches.length
+        ? null
+        : active;
     notifyListeners();
   }
 
@@ -258,8 +280,14 @@ class EditorViewState extends ChangeNotifier {
         for (final entry in _remoteCursors.entries)
           entry.key: entry.value.copyWith(
             selection: DeltaSelection(
-              change.transformPosition(entry.value.selection.base, force: false),
-              change.transformPosition(entry.value.selection.extent, force: false),
+              change.transformPosition(
+                entry.value.selection.base,
+                force: false,
+              ),
+              change.transformPosition(
+                entry.value.selection.extent,
+                force: false,
+              ),
             ),
           ),
       };

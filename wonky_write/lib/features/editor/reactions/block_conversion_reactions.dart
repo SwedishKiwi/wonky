@@ -26,7 +26,11 @@ class BlockPrefixConversionReaction extends EditReaction {
   static final _divider = RegExp(r'^(---|—-|\*\*\*|___) $');
 
   @override
-  void react(EditContext editorContext, RequestDispatcher requestDispatcher, List<EditEvent> changeList) {
+  void react(
+    EditContext editorContext,
+    RequestDispatcher requestDispatcher,
+    List<EditEvent> changeList,
+  ) {
     final insertion = TypedText.lastInsertion(changeList);
     if (insertion == null || !insertion.text.toPlainText().endsWith(' ')) {
       return;
@@ -34,26 +38,37 @@ class BlockPrefixConversionReaction extends EditReaction {
     final document = editorContext.document;
     final composer = editorContext.composer;
     final selection = composer.selection;
-    if (selection == null || !selection.isCollapsed || selection.extent.nodeId != insertion.nodeId) {
+    if (selection == null ||
+        !selection.isCollapsed ||
+        selection.extent.nodeId != insertion.nodeId) {
       return;
     }
     final node = document.getNodeById(insertion.nodeId);
     final caret = selection.extent.nodePosition;
-    if (node is! TextNode || caret is! TextNodePosition || isCodeBlockNode(node)) {
+    if (node is! TextNode ||
+        caret is! TextNodePosition ||
+        isCodeBlockNode(node)) {
       return;
     }
     final prefix = node.text.toPlainText().substring(0, caret.offset);
     final isParagraph =
-        node is ParagraphNode && node.getMetadataValue(NodeMetadata.blockType) == paragraphAttribution;
+        node is ParagraphNode &&
+        node.getMetadataValue(NodeMetadata.blockType) == paragraphAttribution;
 
     final requests = <EditRequest>[];
     final rest = node.text.copyText(prefix.length);
     var deletePrefix = true;
     Match? match;
-    if ((match = _heading.firstMatch(prefix)) != null && (isParagraph || node is ListItemNode || node is TaskNode)) {
+    if ((match = _heading.firstMatch(prefix)) != null &&
+        (isParagraph || node is ListItemNode || node is TaskNode)) {
       final level = match!.group(1)!.length;
       if (node is ParagraphNode) {
-        requests.add(ChangeParagraphBlockTypeRequest(nodeId: node.id, blockType: headerAttributions[level - 1]));
+        requests.add(
+          ChangeParagraphBlockTypeRequest(
+            nodeId: node.id,
+            blockType: headerAttributions[level - 1],
+          ),
+        );
       } else {
         deletePrefix = false;
         requests.add(
@@ -62,18 +77,37 @@ class BlockPrefixConversionReaction extends EditReaction {
             newNode: ParagraphNode(
               id: node.id,
               text: rest,
-              metadata: {..._carriedMetadata(node), NodeMetadata.blockType: headerAttributions[level - 1]},
+              metadata: {
+                ..._carriedMetadata(node),
+                NodeMetadata.blockType: headerAttributions[level - 1],
+              },
             ),
           ),
         );
       }
     } else if (_bullet.hasMatch(prefix) && isParagraph) {
-      requests.add(ConvertParagraphToListItemRequest(nodeId: node.id, type: ListItemType.unordered));
+      requests.add(
+        ConvertParagraphToListItemRequest(
+          nodeId: node.id,
+          type: ListItemType.unordered,
+        ),
+      );
     } else if (_ordered.hasMatch(prefix) && isParagraph) {
-      requests.add(ConvertParagraphToListItemRequest(nodeId: node.id, type: ListItemType.ordered));
+      requests.add(
+        ConvertParagraphToListItemRequest(
+          nodeId: node.id,
+          type: ListItemType.ordered,
+        ),
+      );
     } else if (_quote.hasMatch(prefix) && isParagraph) {
-      requests.add(ChangeParagraphBlockTypeRequest(nodeId: node.id, blockType: blockquoteAttribution));
-    } else if ((match = _task.firstMatch(prefix)) != null && (isParagraph || node is ListItemNode)) {
+      requests.add(
+        ChangeParagraphBlockTypeRequest(
+          nodeId: node.id,
+          blockType: blockquoteAttribution,
+        ),
+      );
+    } else if ((match = _task.firstMatch(prefix)) != null &&
+        (isParagraph || node is ListItemNode)) {
       final checked = (match!.group(2) ?? ' ').toLowerCase() == 'x';
       deletePrefix = false;
       requests.add(
@@ -90,14 +124,25 @@ class BlockPrefixConversionReaction extends EditReaction {
       );
     } else if ((match = _codeFence.firstMatch(prefix)) != null && isParagraph) {
       requests
-        ..add(ChangeParagraphBlockTypeRequest(nodeId: node.id, blockType: codeAttribution))
+        ..add(
+          ChangeParagraphBlockTypeRequest(
+            nodeId: node.id,
+            blockType: codeAttribution,
+          ),
+        )
         ..add(
           ChangeNodeMetadataRequest(
             nodeId: node.id,
-            metadata: {WonkyNodeMetadata.codeLanguage: CodeLanguages.normalize(match!.group(1) ?? '')},
+            metadata: {
+              WonkyNodeMetadata.codeLanguage: CodeLanguages.normalize(
+                match!.group(1) ?? '',
+              ),
+            },
           ),
         );
-    } else if (_divider.hasMatch(prefix) && isParagraph && node.text.length == prefix.length) {
+    } else if (_divider.hasMatch(prefix) &&
+        isParagraph &&
+        node.text.length == prefix.length) {
       requests.add(
         InsertNodeAtIndexRequest(
           nodeIndex: document.getNodeIndexById(node.id),
@@ -109,15 +154,24 @@ class BlockPrefixConversionReaction extends EditReaction {
     }
 
     final prefixRange = DocumentRange(
-      start: DocumentPosition(nodeId: node.id, nodePosition: const TextNodePosition(offset: 0)),
-      end: DocumentPosition(nodeId: node.id, nodePosition: TextNodePosition(offset: prefix.length)),
+      start: DocumentPosition(
+        nodeId: node.id,
+        nodePosition: const TextNodePosition(offset: 0),
+      ),
+      end: DocumentPosition(
+        nodeId: node.id,
+        nodePosition: TextNodePosition(offset: prefix.length),
+      ),
     );
     requestDispatcher.execute([
       if (deletePrefix) DeleteContentRequest(documentRange: prefixRange),
       ...requests,
       ChangeSelectionRequest(
         DocumentSelection.collapsed(
-          position: DocumentPosition(nodeId: node.id, nodePosition: const TextNodePosition(offset: 0)),
+          position: DocumentPosition(
+            nodeId: node.id,
+            nodePosition: const TextNodePosition(offset: 0),
+          ),
         ),
         SelectionChangeType.placeCaret,
         SelectionReason.contentChange,
@@ -127,7 +181,9 @@ class BlockPrefixConversionReaction extends EditReaction {
 
   /// Metadata that survives a node type conversion (line-end overlays).
   static Map<String, dynamic> _carriedMetadata(DocumentNode node) {
-    final lineAttributes = node.getMetadataValue(WonkyNodeMetadata.lineAttributes);
+    final lineAttributes = node.getMetadataValue(
+      WonkyNodeMetadata.lineAttributes,
+    );
     return {WonkyNodeMetadata.lineAttributes: ?lineAttributes};
   }
 }

@@ -48,7 +48,7 @@ List<Command<CommandArgs>> driveCommands(ShellServices s) {
         var name = a.string('name');
         if (name == null) {
           final c = ctx.dialogContext;
-          if (c == null) return const CommandResult.cancelled();
+          if (c == null || !c.mounted) return const CommandResult.cancelled();
           name = await showNewFolderDialog(c, s);
           if (name == null) return const CommandResult.cancelled();
         }
@@ -95,7 +95,7 @@ List<Command<CommandArgs>> driveCommands(ShellServices s) {
             return const CommandResult.cancelled();
           }
           final c = ctx.dialogContext;
-          if (c == null) return const CommandResult.cancelled();
+          if (c == null || !c.mounted) return const CommandResult.cancelled();
           name = await showRenameDialog(c, s, item);
           if (name == null || name == item.name) return const CommandResult.cancelled();
         }
@@ -135,7 +135,7 @@ List<Command<CommandArgs>> driveCommands(ShellServices s) {
           target = f == null ? null : UuidValue.fromString(f);
         } else {
           final c = ctx.dialogContext;
-          if (c == null) return const CommandResult.cancelled();
+          if (c == null || !c.mounted) return const CommandResult.cancelled();
           final picked = await showMoveDialog(c, s, items);
           if (picked == null) return const CommandResult.cancelled();
           target = picked.folderUuid;
@@ -189,7 +189,7 @@ List<Command<CommandArgs>> driveCommands(ShellServices s) {
           );
         } else {
           final c = ctx.dialogContext;
-          if (c == null) return const CommandResult.cancelled();
+          if (c == null || !c.mounted) return const CommandResult.cancelled();
           req = await showCopyDialog(c, s, item);
         }
         if (req == null) return const CommandResult.cancelled();
@@ -230,7 +230,7 @@ List<Command<CommandArgs>> driveCommands(ShellServices s) {
           folder = f == null ? null : UuidValue.fromString(f);
         } else {
           final c = ctx.dialogContext;
-          if (c == null) return const CommandResult.cancelled();
+          if (c == null || !c.mounted) return const CommandResult.cancelled();
           final picked = await showMoveDialog(
             c,
             s,
@@ -381,7 +381,7 @@ List<Command<CommandArgs>> driveCommands(ShellServices s) {
         if (items.isEmpty) return const CommandResult.cancelled();
         if (a.boolean('confirmed') != true) {
           final c = ctx.dialogContext;
-          if (c == null) return const CommandResult.cancelled();
+          if (c == null || !c.mounted) return const CommandResult.cancelled();
           if (!await confirmDeleteForever(c, items.length)) return const CommandResult.cancelled();
         }
         await drive.deletePermanently([for (final i in items) i.uuid]);
@@ -401,7 +401,7 @@ List<Command<CommandArgs>> driveCommands(ShellServices s) {
       run: (ctx, a) async {
         if (a.boolean('confirmed') != true) {
           final c = ctx.dialogContext;
-          if (c == null) return const CommandResult.cancelled();
+          if (c == null || !c.mounted) return const CommandResult.cancelled();
           if (!await confirmEmptyTrash(c)) return const CommandResult.cancelled();
         }
         final n = await drive.emptyTrash();

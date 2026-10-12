@@ -33,7 +33,10 @@ abstract final class AttributionMapping {
   /// Converts [attributions] to Delta attributes, or `null` when there are none.
   ///
   /// With [overlaysOnly], only `cmt_*`/`sug_*` are produced (used for line ends).
-  static Map<String, dynamic>? toAttributes(Iterable<Attribution> attributions, {bool overlaysOnly = false}) {
+  static Map<String, dynamic>? toAttributes(
+    Iterable<Attribution> attributions, {
+    bool overlaysOnly = false,
+  }) {
     Map<String, dynamic>? result;
     for (final attribution in attributions) {
       final String key;
@@ -74,7 +77,10 @@ abstract final class AttributionMapping {
 
   /// Converts Delta attributes to attributions. Unknown keys and block keys are
   /// ignored. With [overlaysOnly], only `cmt_*`/`sug_*` are converted.
-  static Set<Attribution> fromAttributes(Map<String, dynamic>? attributes, {bool overlaysOnly = false}) {
+  static Set<Attribution> fromAttributes(
+    Map<String, dynamic>? attributes, {
+    bool overlaysOnly = false,
+  }) {
     if (attributes == null || attributes.isEmpty) {
       return const {};
     }
@@ -87,13 +93,20 @@ abstract final class AttributionMapping {
       }
       if (DeltaKeys.isComment(key)) {
         if (value == true) {
-          result.add(CommentAttribution(key.substring(DeltaKeys.commentPrefix.length)));
+          result.add(
+            CommentAttribution(key.substring(DeltaKeys.commentPrefix.length)),
+          );
         }
         continue;
       }
       if (DeltaKeys.isSuggestion(key)) {
         if (value is Map) {
-          result.add(SuggestionAttribution(key.substring(DeltaKeys.suggestionPrefix.length), value.cast<String, dynamic>()));
+          result.add(
+            SuggestionAttribution(
+              key.substring(DeltaKeys.suggestionPrefix.length),
+              value.cast<String, dynamic>(),
+            ),
+          );
         }
         continue;
       }
@@ -119,7 +132,8 @@ abstract final class AttributionMapping {
   }
 
   /// A [LinkAttribution] that keeps [url] verbatim as its plain-text URI.
-  static LinkAttribution linkAttributionFor(String url) => LinkAttribution(url, Uri.tryParse(url));
+  static LinkAttribution linkAttributionFor(String url) =>
+      LinkAttribution(url, Uri.tryParse(url));
 
   /// Only the overlay entries (`cmt_*`, `sug_*`) of [attributes], or `null`.
   static Map<String, dynamic>? overlaysOf(Map<String, dynamic>? attributes) {

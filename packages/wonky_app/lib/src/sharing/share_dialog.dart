@@ -83,7 +83,7 @@ class _ShareDialogState extends State<ShareDialog> {
       final info = await op();
       if (mounted) setState(() => _info = info);
     } catch (e) {
-      s.toasts.error(WonkyAppLocalizations.of(context).shareFailed, description: errorMessage(e));
+      s.toasts.error(s.l10n?.shareFailed ?? 'Error', description: errorMessage(e));
     } finally {
       if (mounted) setState(() => _busy = false);
     }
@@ -144,7 +144,7 @@ class _ShareDialogState extends State<ShareDialog> {
 
   Future<void> _copyLink() async {
     await Clipboard.setData(ClipboardData(text: itemUrl(s, widget.item)));
-    s.toasts.show(WonkyAppLocalizations.of(context).toastLinkCopied);
+    s.toasts.show(s.l10n?.toastLinkCopied ?? 'Link copied');
   }
 
   @override

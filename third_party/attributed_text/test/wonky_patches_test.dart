@@ -6,14 +6,18 @@ void main() {
   group('AT-1 addAttribution >', () {
     const bold = NamedAttribution('bold');
 
-    test('adding a range inside an existing compatible span keeps the markers balanced', () {
+    test(
+        'adding a range inside an existing compatible span keeps the markers balanced',
+        () {
       final spans = AttributedSpans()
         ..addAttribution(newAttribution: bold, start: 2, end: 9)
         ..addAttribution(newAttribution: bold, start: 3, end: 8);
 
       expect(spans.markers, [
-        const SpanMarker(attribution: bold, offset: 2, markerType: SpanMarkerType.start),
-        const SpanMarker(attribution: bold, offset: 9, markerType: SpanMarkerType.end),
+        const SpanMarker(
+            attribution: bold, offset: 2, markerType: SpanMarkerType.start),
+        const SpanMarker(
+            attribution: bold, offset: 9, markerType: SpanMarkerType.end),
       ]);
     });
 
@@ -23,8 +27,10 @@ void main() {
         ..addAttribution(newAttribution: bold, start: 0, end: 6);
 
       expect(spans.markers, [
-        const SpanMarker(attribution: bold, offset: 0, markerType: SpanMarkerType.start),
-        const SpanMarker(attribution: bold, offset: 9, markerType: SpanMarkerType.end),
+        const SpanMarker(
+            attribution: bold, offset: 0, markerType: SpanMarkerType.start),
+        const SpanMarker(
+            attribution: bold, offset: 9, markerType: SpanMarkerType.end),
       ]);
     });
 

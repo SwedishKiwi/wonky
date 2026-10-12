@@ -19,11 +19,19 @@ class _WebClipboard extends SystemClipboard {
     final clipboard = web.window.navigator.clipboard;
     try {
       final items = <String, JSAny>{
-        'text/plain': web.Blob([content.plainText.toJS].toJS, web.BlobPropertyBag(type: 'text/plain')),
+        'text/plain': web.Blob(
+          [content.plainText.toJS].toJS,
+          web.BlobPropertyBag(type: 'text/plain'),
+        ),
         if (content.html != null)
-          'text/html': web.Blob([content.html!.toJS].toJS, web.BlobPropertyBag(type: 'text/html')),
+          'text/html': web.Blob(
+            [content.html!.toJS].toJS,
+            web.BlobPropertyBag(type: 'text/html'),
+          ),
       };
-      await clipboard.write([web.ClipboardItem(items.jsify() as JSObject)].toJS).toDart;
+      await clipboard
+          .write([web.ClipboardItem(items.jsify() as JSObject)].toJS)
+          .toDart;
     } catch (_) {
       await clipboard.writeText(content.plainText).toDart;
     }

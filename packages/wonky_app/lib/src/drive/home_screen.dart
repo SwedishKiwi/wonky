@@ -21,6 +21,7 @@ import 'drive_sidebar.dart';
 import 'item_actions.dart';
 import 'template_gallery.dart';
 import 'top_bar.dart';
+import 'item_list.dart';
 
 /// Home and every drive view (suite 05 §3): top bar, sidebar, template strip,
 /// filter / selection bar, list or grid, details panel.
@@ -111,7 +112,7 @@ class _DriveHomeScreenState extends State<DriveHomeScreen> {
         s.emitDriveChange(DriveChange(kind: DriveChangeKind.created, itemUuid: v.uuid, item: v));
       }
     } catch (e) {
-      s.toasts.error(WonkyAppLocalizations.of(context).importFailed, description: errorMessage(e));
+      s.toasts.error(s.l10n?.importFailed ?? 'Error', description: errorMessage(e));
     }
   }
 

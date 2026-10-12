@@ -31,7 +31,11 @@ class ClipboardContent {
 /// Result of decoding pasted content.
 @immutable
 class PastedFragment {
-  const PastedFragment(this.delta, {this.droppedFormatting = false, this.isSingleUrl = false});
+  const PastedFragment(
+    this.delta, {
+    this.droppedFormatting = false,
+    this.isSingleUrl = false,
+  });
 
   final Delta delta;
 
@@ -55,11 +59,19 @@ class ClipboardCodec {
   /// Encodes [fragment] (a document Delta of the selection). Comments are
   /// never copied; suggestions are copied in the accepted view.
   ClipboardContent encode(Delta fragment, {bool plainAsMarkdown = true}) {
-    final accepted = SuggestionView.accepted(_ensureTrailingNewline(fragment), stripComments: true);
+    final accepted = SuggestionView.accepted(
+      _ensureTrailingNewline(fragment),
+      stripComments: true,
+    );
     final markdown = const MarkdownCodec().exportMarkdown(accepted).trimRight();
-    final tree = const DocTreeBuilder().fromDelta(accepted, view: SuggestionViewMode.raw);
+    final tree = const DocTreeBuilder().fromDelta(
+      accepted,
+      view: SuggestionViewMode.raw,
+    );
     final body = const HtmlBodyWriter().blocks(tree.blocks);
-    final encoded = base64Url.encode(utf8.encode(jsonEncode(accepted.toJson())));
+    final encoded = base64Url.encode(
+      utf8.encode(jsonEncode(accepted.toJson())),
+    );
     final html = '<div $_deltaAttribute="$encoded">$body</div>';
     return ClipboardContent(
       plainText: plainAsMarkdown ? markdown : readablePlainText(accepted),
@@ -84,7 +96,9 @@ class ClipboardCodec {
         } else if (type == DeltaKeys.dividerEmbed) {
           line.write('---');
         } else if (type == DeltaKeys.tableEmbed && value is Map) {
-          final rows = (value['rows'] as List? ?? const []).map((r) => (r as List).join('\t'));
+          final rows = (value['rows'] as List? ?? const []).map(
+            (r) => (r as List).join('\t'),
+          );
           line.write(rows.join('\n'));
         }
         continue;
@@ -94,10 +108,14 @@ class ClipboardCodec {
       while (true) {
         final nl = text.indexOf('\n', start);
         if (nl < 0) {
-          line.write(text.substring(start).replaceAll(DeltaKeys.softBreak, '\n'));
+          line.write(
+            text.substring(start).replaceAll(DeltaKeys.softBreak, '\n'),
+          );
           break;
         }
-        line.write(text.substring(start, nl).replaceAll(DeltaKeys.softBreak, '\n'));
+        line.write(
+          text.substring(start, nl).replaceAll(DeltaKeys.softBreak, '\n'),
+        );
         final attrs = op.attributes;
         final list = attrs?[DeltaKeys.list];
         final indent = '  ' * ((attrs?[DeltaKeys.indent] as int?) ?? 0);
@@ -123,7 +141,11 @@ class ClipboardCodec {
   /// Decodes pasted content (§23.3): Wonky Delta → HTML → plain text
   /// (Markdown when it looks like Markdown). With [plainOnly], only the plain
   /// text is used, without Markdown detection (`pasteWithoutFormatting`).
-  PastedFragment? decode(ClipboardContent content, {bool plainOnly = false, bool forceMarkdown = false}) {
+  PastedFragment? decode(
+    ClipboardContent content, {
+    bool plainOnly = false,
+    bool forceMarkdown = false,
+  }) {
     final options = ImportOptions(idGenerator: newEmbedId);
     if (!plainOnly && content.html != null) {
       final embedded = _embeddedDelta(content.html!);
@@ -134,20 +156,37 @@ class ClipboardCodec {
       if (cleaned != null) return PastedFragment(cleaned);
     }
     if (!plainOnly && content.html != null && content.html!.trim().isNotEmpty) {
-      final result = const HtmlImporter().importFragment(content.html!, options: options);
+      final result = const HtmlImporter().importFragment(
+        content.html!,
+        options: options,
+      );
       if (result.delta.isNotEmpty) {
-        return PastedFragment(result.delta, droppedFormatting: result.warnings.isNotEmpty);
+        return PastedFragment(
+          result.delta,
+          droppedFormatting: result.warnings.isNotEmpty,
+        );
       }
     }
-    final text = content.plainText.replaceAll('\r\n', '\n').replaceAll('\r', '\n');
+    final text = content.plainText
+        .replaceAll('\r\n', '\n')
+        .replaceAll('\r', '\n');
     if (text.isEmpty) return null;
     final trimmed = text.trim();
     if (!plainOnly && _url.hasMatch(trimmed)) {
-      return PastedFragment(Delta()..insert(trimmed, {DeltaKeys.link: trimmed}), isSingleUrl: true);
+      return PastedFragment(
+        Delta()..insert(trimmed, {DeltaKeys.link: trimmed}),
+        isSingleUrl: true,
+      );
     }
-    if (!plainOnly && (forceMarkdown || MarkdownDetector.looksLikeMarkdown(text))) {
-      final result = const MarkdownCodec().importMarkdown(text, options: options);
-      if (result.delta.isNotEmpty) return PastedFragment(_withoutTrailingEmptyLine(result.delta, text));
+    if (!plainOnly &&
+        (forceMarkdown || MarkdownDetector.looksLikeMarkdown(text))) {
+      final result = const MarkdownCodec().importMarkdown(
+        text,
+        options: options,
+      );
+      if (result.delta.isNotEmpty) {
+        return PastedFragment(_withoutTrailingEmptyLine(result.delta, text));
+      }
     }
     return PastedFragment(plainTextFragment(text));
   }
@@ -156,12 +195,17 @@ class ClipboardCodec {
   static Delta plainTextFragment(String text) {
     final clean = text
         .replaceAll('\t', '    ')
-        .replaceAll(RegExp('[\u0000-\u0008\u000B\u000C\u000E-\u001F\u007F]'), '');
+        .replaceAll(
+          RegExp('[\u0000-\u0008\u000B\u000C\u000E-\u001F\u007F]'),
+          '',
+        );
     return Delta()..insert(clean);
   }
 
   Delta? _embeddedDelta(String html) {
-    final match = RegExp('$_deltaAttribute="([A-Za-z0-9_=-]+)"').firstMatch(html);
+    final match = RegExp(
+      '$_deltaAttribute="([A-Za-z0-9_=-]+)"',
+    ).firstMatch(html);
     if (match == null) return null;
     try {
       final json = jsonDecode(utf8.decode(base64Url.decode(match.group(1)!)));
@@ -194,7 +238,12 @@ class ClipboardCodec {
           type: {...value, 'id': newEmbedId!()},
         };
       }
-      result.push(Operation.insert(data, attributes == null || attributes.isEmpty ? null : attributes));
+      result.push(
+        Operation.insert(
+          data,
+          attributes == null || attributes.isEmpty ? null : attributes,
+        ),
+      );
     }
     return _endsWithNewline(delta) ? result : _withoutFinalNewline(result);
   }
@@ -205,14 +254,19 @@ class ClipboardCodec {
     return data is String && data.endsWith('\n');
   }
 
-  static Delta _ensureTrailingNewline(Delta delta) => _endsWithNewline(delta) ? delta : (Delta.from(delta)..insert('\n'));
+  static Delta _ensureTrailingNewline(Delta delta) =>
+      _endsWithNewline(delta) ? delta : (Delta.from(delta)..insert('\n'));
 
   static Delta _withoutFinalNewline(Delta delta) {
     final ops = delta.toList();
     final last = ops.removeLast();
     final data = last.data as String;
     final result = Delta.fromOperations(ops);
-    if (data.length > 1) result.push(Operation.insert(data.substring(0, data.length - 1), last.attributes));
+    if (data.length > 1) {
+      result.push(
+        Operation.insert(data.substring(0, data.length - 1), last.attributes),
+      );
+    }
     if (last.attributes != null && data.length == 1) {
       // A final line end with block attributes is kept (complete line).
       return delta;
@@ -226,7 +280,9 @@ class ClipboardCodec {
   static Delta _withoutTrailingEmptyLine(Delta delta, String text) {
     if (text.endsWith('\n')) return delta;
     final last = delta.last;
-    if (last.data is String && (last.data as String).endsWith('\n') && last.attributes == null) {
+    if (last.data is String &&
+        (last.data as String).endsWith('\n') &&
+        last.attributes == null) {
       return _withoutFinalNewline(delta);
     }
     return delta;
@@ -237,7 +293,10 @@ class ClipboardCodec {
 /// signals, or one unambiguous block construct.
 abstract final class MarkdownDetector {
   static final _fence = RegExp(r'^```', multiLine: true);
-  static final _tableDelimiter = RegExp(r'^\s*\|?\s*:?-{3,}:?\s*(\|\s*:?-{3,}:?\s*)+\|?\s*$', multiLine: true);
+  static final _tableDelimiter = RegExp(
+    r'^\s*\|?\s*:?-{3,}:?\s*(\|\s*:?-{3,}:?\s*)+\|?\s*$',
+    multiLine: true,
+  );
   static final _heading = RegExp(r'^#{1,6} \S', multiLine: true);
   static final _task = RegExp(r'^\s*[-*+] \[( |x|X)\] ', multiLine: true);
   static final _signals = <RegExp>[
@@ -253,7 +312,10 @@ abstract final class MarkdownDetector {
   ];
 
   static bool looksLikeMarkdown(String text) {
-    if (_fence.hasMatch(text) || _tableDelimiter.hasMatch(text) || _heading.hasMatch(text) || _task.hasMatch(text)) {
+    if (_fence.hasMatch(text) ||
+        _tableDelimiter.hasMatch(text) ||
+        _heading.hasMatch(text) ||
+        _task.hasMatch(text)) {
       return true;
     }
     var count = 0;
