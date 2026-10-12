@@ -290,49 +290,56 @@ void main() {
       },
     );
 
-    test('when a stdio client goes through wonky_mcp_stdio then the session works', () async {
-      final anna = await TestUsers.create(sessionBuilder, name: 'Anna');
-      final h = await McpHarness.forUser(anna);
-      final input = StreamController<List<int>>();
-      final output = StreamController<List<int>>();
-      final lines = output.stream
-          .transform(utf8.decoder)
-          .transform(const LineSplitter())
-          .map((l) => (jsonDecode(l) as Map).cast<String, dynamic>())
-          .asBroadcastStream();
-      final proxy = StdioHttpProxy(
-        url: url,
-        token: h.secret,
-        input: input.stream,
-        output: output.sink,
-        log: StringBuffer(),
-      );
-      final done = proxy.run();
-      void send(Map<String, Object?> m) =>
-          input.add(utf8.encode('${jsonEncode(m)}\n'));
+    test(
+      'when a stdio client goes through wonky_mcp_stdio then the session works',
+      () async {
+        final anna = await TestUsers.create(sessionBuilder, name: 'Anna');
+        final h = await McpHarness.forUser(anna);
+        final input = StreamController<List<int>>();
+        final output = StreamController<List<int>>();
+        final lines = output.stream
+            .transform(utf8.decoder)
+            .transform(const LineSplitter())
+            .map((l) => (jsonDecode(l) as Map).cast<String, dynamic>())
+            .asBroadcastStream();
+        final proxy = StdioHttpProxy(
+          url: url,
+          token: h.secret,
+          input: input.stream,
+          output: output.sink,
+          log: StringBuffer(),
+        );
+        final done = proxy.run();
+        void send(Map<String, Object?> m) =>
+            input.add(utf8.encode('${jsonEncode(m)}\n'));
 
-      send(rpc(1, 'initialize', {
-        'protocolVersion': '2025-06-18',
-        'capabilities': {},
-        'clientInfo': {'name': 'stdio-test', 'version': '1'},
-      }));
-      final init = await lines.firstWhere((m) => m['id'] == 1);
-      send({'jsonrpc': '2.0', 'method': 'notifications/initialized'});
-      send(rpc(2, 'tools/call', {
-        'name': 'drive.create_document',
-        'arguments': {'name': 'Through stdio'},
-      }));
-      final created = await lines.firstWhere((m) => m['id'] == 2);
-      await input.close();
-      final code = await done;
+        send(
+          rpc(1, 'initialize', {
+            'protocolVersion': '2025-06-18',
+            'capabilities': {},
+            'clientInfo': {'name': 'stdio-test', 'version': '1'},
+          }),
+        );
+        final init = await lines.firstWhere((m) => m['id'] == 1);
+        send({'jsonrpc': '2.0', 'method': 'notifications/initialized'});
+        send(
+          rpc(2, 'tools/call', {
+            'name': 'drive.create_document',
+            'arguments': {'name': 'Through stdio'},
+          }),
+        );
+        final created = await lines.firstWhere((m) => m['id'] == 2);
+        await input.close();
+        final code = await done;
 
-      expect((init['result'] as Map)['protocolVersion'], isA<String>());
-      final item =
-          ((created['result'] as Map)['structuredContent'] as Map)['item']
-              as Map;
-      expect(item['name'], 'Through stdio');
-      expect(code, 0);
-    });
+        expect((init['result'] as Map)['protocolVersion'], isA<String>());
+        final item =
+            ((created['result'] as Map)['structuredContent'] as Map)['item']
+                as Map;
+        expect(item['name'], 'Through stdio');
+        expect(code, 0);
+      },
+    );
 
     for (final profile in [mcp.McpProtocol.legacy, mcp.McpProtocol.stable]) {
       test(

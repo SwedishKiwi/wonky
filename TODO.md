@@ -20,13 +20,20 @@ committed and verified).
    - SVG images in DOCX/ODT/RTF/EPUB (rendered as placeholders);
    - comments in DOCX/ODT exports and embedded DOCX fonts (both P2);
    - LibreOffice and epubcheck validation in CI.
-3. ☐ **MCP** (suite 09, Write 09):
-   - the `/mcp` Streamable HTTP route, `ToolExecutor`, and the `drive.*` / `write.*` / `comments.*` / `versions.*` tools;
-   - the UI bridge hub, the client bridge, and the `ui.*` / `ui.write.*` tools;
-   - the `wonky_mcp_stdio` shim;
-   - personal access token UI polish.
+3. ☑ **MCP** (suite 09, Write 09) — `/mcp` Streamable HTTP route on the web server (custom
+   `mcp_dart` transport; MCP 2026-07-28 stateless + initialize-era sessions), PAT bearer auth
+   with scopes, host/origin checks and rate limits; `ToolExecutor` with `drive.*`, `write.*`
+   (23 tools), `comments.*`, `versions.*`, `changes.revert`, resources and prompts; UI bridge
+   (`uiBridge.connect` + `UiBridgeHub`, client bridge with shared `ui.*` and `ui.write.*`
+   tools, control pill with Stop); `wonky_mcp_stdio`; Settings › Developer (tokens with
+   scopes/expiry, connection snippets, bridge status). Remaining:
+   - resource subscriptions (`notifications/resources/updated`) and MCP 2026
+     `subscriptions/listen`; OAuth 2.1;
+   - `write.compare_versions`, `write.get_theme`, `write.create_theme`/`update_theme`
+     (with the theme editor), the `write.search` regex timeout;
+   - the UI-bridge hub is per server instance (no cross-instance relay yet);
+   - `ui.write.get_layout_info` does not report the visible Delta range yet.
 
-   The core `DocumentEdits` / `DocumentReader` / `AddressResolver` already cover the headless editing logic.
 4. ☐ **AI assistant** (suite 10, Write 09): the server `AnthropicClient` and assistant service, the assistant panel, inline AI (selection ✨ menu, `/ai`, Mod+J), and "Suggest" apply mode.
 5. ☐ **Offline persistence** (suite 12 §1):
    - SQLite `LocalDocument` / `LocalPendingOp` / `LocalUndoStack` / `LocalPendingUpload`;

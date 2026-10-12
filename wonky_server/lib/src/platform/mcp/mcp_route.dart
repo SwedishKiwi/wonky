@@ -41,9 +41,22 @@ class McpRoute extends Route {
     final headers = <String, String>{
       for (final e in request.headers.entries) e.key: e.value.join(', '),
     };
-    final body = request.method == Method.post
-        ? await request.readAsString()
-        : '';
+    String body = '';
+    if (request.method == Method.post) {
+      try {
+        body = await request.readAsString(
+          maxLength: McpHttpHandler.maxBodyChars,
+        );
+      } on MaxBodySizeExceeded {
+        return Response(
+          413,
+          body: Body.fromString(
+            'Request too large',
+            mimeType: MimeType.plainText,
+          ),
+        );
+      }
+    }
     final r = await handler.handle(
       session,
       McpHttpRequest(

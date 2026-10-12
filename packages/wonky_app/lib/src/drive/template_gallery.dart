@@ -89,13 +89,9 @@ class TemplateCard extends StatelessWidget {
                             color: services.config.brandColor,
                           ),
                         )
-                      : Text(
-                          t.previewText,
-                          overflow: TextOverflow.fade,
-                          style: theme.textTheme.muted.copyWith(
-                            fontSize: 7,
-                            height: 1.4,
-                          ),
+                      : SingleChildScrollView(
+                          physics: const NeverScrollableScrollPhysics(),
+                          child: _TemplateThumbnail(text: t.previewText),
                         ),
                 ),
                 const SizedBox(height: 6),
@@ -114,6 +110,52 @@ class TemplateCard extends StatelessWidget {
           ),
         ),
       ),
+    );
+  }
+}
+
+/// A miniature of a template's first lines: headings bold, the rest small
+/// (the server sends one line per block, headings prefixed with "#").
+class _TemplateThumbnail extends StatelessWidget {
+  const _TemplateThumbnail({required this.text});
+
+  final String text;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = ShadTheme.of(context);
+    final fg = theme.colorScheme.foreground;
+    final lines = text.split('\n');
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        for (var i = 0; i < lines.length; i++)
+          if (lines[i].startsWith('# '))
+            Padding(
+              padding: EdgeInsets.only(top: i == 0 ? 0 : 4, bottom: 2),
+              child: Text(
+                lines[i].substring(2),
+                maxLines: 2,
+                overflow: TextOverflow.clip,
+                style: TextStyle(
+                  fontSize: i == 0 ? 9 : 7.5,
+                  height: 1.2,
+                  fontWeight: FontWeight.w600,
+                  color: fg,
+                ),
+              ),
+            )
+          else
+            Text(
+              lines[i],
+              maxLines: 2,
+              overflow: TextOverflow.clip,
+              style: theme.textTheme.muted.copyWith(
+                fontSize: 6.5,
+                height: 1.45,
+              ),
+            ),
+      ],
     );
   }
 }

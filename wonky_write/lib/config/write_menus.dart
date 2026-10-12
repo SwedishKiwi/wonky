@@ -101,6 +101,25 @@ MenuRoot writeMenus(ShellMenus shell) {
             menuId: 'view.suggestions.original',
           ),
         ]),
+        // View-only preview of another theme (Write 06 §5.2).
+        MenuSpec.submenu('view.previewTheme', 'Preview theme', [
+          _c(
+            'write.theme.previewLocal',
+            label: 'Document theme',
+            args: {'themeUuid': null},
+            menuId: 'view.previewTheme.none',
+            radio: true,
+          ),
+          MenuSpec.separator(),
+          for (final b in BuiltinThemes.all)
+            _c(
+              'write.theme.previewLocal',
+              label: b.name,
+              args: {'themeUuid': b.uuid},
+              menuId: 'view.previewTheme.${b.key}',
+              radio: true,
+            ),
+        ]),
       ])
       .appendTo(ShellMenuIds.viewShow, [
         _c('write.view.toggleWordCount', label: 'Word count'),

@@ -58,11 +58,29 @@ class BuiltinTemplate {
 
   String get previewText {
     if (markdown != null) {
-      final text = markdown!
-          .replaceAll(RegExp(r'[#*_`>\-\[\]]'), '')
-          .replaceAll(RegExp(r'\s+'), ' ')
-          .trim();
-      return text.length > 140 ? '${text.substring(0, 140)}…' : text;
+      // One line per block (for the thumbnail): headings keep a leading
+      // "#", list markers become "•", tables become spaced cells.
+      final lines = <String>[];
+      for (var line in markdown!.split('\n')) {
+        line = line.trim();
+        if (line.isEmpty || RegExp(r'^\|?[\s:|-]+\|?$').hasMatch(line)) {
+          continue;
+        }
+        final heading = line.startsWith('#');
+        line = line
+            .replaceFirst(RegExp(r'^#+\s*'), '')
+            .replaceFirst(RegExp(r'^[-*+]\s+\[[ xX]\]\s*'), '☐ ')
+            .replaceFirst(RegExp(r'^[-*+]\s+'), '• ')
+            .replaceFirst(RegExp(r'^>\s*'), '')
+            .replaceAll(RegExp(r'[*_`]'), '')
+            .replaceAll(RegExp(r'\s*\|\s*'), '   ')
+            .trim();
+        if (line.isEmpty) continue;
+        lines.add(heading ? '# $line' : line);
+        if (lines.length >= 14) break;
+      }
+      final text = lines.join('\n');
+      return text.length > 600 ? '${text.substring(0, 600)}…' : text;
     }
     final first = sheets.isEmpty ? const <List<String?>>[] : sheets.first.rows;
     final text = first
