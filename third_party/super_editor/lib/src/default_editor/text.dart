@@ -31,6 +31,7 @@ import 'package:super_editor/src/infrastructure/key_event_extensions.dart';
 import 'package:super_editor/src/infrastructure/keyboard.dart';
 import 'package:super_editor/src/infrastructure/strings.dart';
 import 'package:super_text_layout/super_text_layout.dart';
+import 'package:super_editor/src/default_editor/selection_highlight.dart';
 
 @immutable
 class TextNode extends DocumentNode {
@@ -1320,7 +1321,8 @@ class TextComponentState extends State<TextComponent> with DocumentComponent imp
             children: [
               // Selection highlight beneath the text.
               if (widget.text.length > 0)
-                TextLayoutSelectionHighlight(
+                // WONKY PATCH SE-8: overlapping boxes are painted once.
+                NonOverlappingSelectionHighlight(
                   textLayout: textLayout,
                   style: SelectionHighlightStyle(
                     color: widget.selectionColor,

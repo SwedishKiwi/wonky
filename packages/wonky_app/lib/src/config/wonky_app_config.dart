@@ -59,6 +59,9 @@ abstract class WonkyAppConfig {
   /// "Wonky Write" / "Wonky Sheets" (product name, not localized).
   String get appName;
 
+  /// "Write" / "Sheets": the name next to the logo on the drive home.
+  String get shortAppName => appName.replaceFirst(RegExp(r'^Wonky '), '');
+
   /// The kind of file this app edits.
   DriveItemKind get primaryKind;
 

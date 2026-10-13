@@ -1,7 +1,8 @@
 import 'package:flutter/widgets.dart';
 import 'package:shad/shad.dart';
 import 'package:wonky_client/wonky_client.dart' show DriveItemKind;
-import 'package:wonky_ui/wonky_ui.dart' show WonkyMenuItem;
+
+import '../drive/drive_format.dart';
 
 /// The products of the suite, each with its own icon (suite 02 §5).
 enum WonkyProduct {
@@ -64,8 +65,9 @@ class WonkyProductIcon extends StatelessWidget {
   }
 }
 
-/// The icon of a drive item kind: the product icon for files, a folder glyph
-/// for folders.
+/// The icon of a drive item kind (folder, document, spreadsheet glyphs in
+/// their kind colors). Files keep plain glyphs; product icons stand for the
+/// apps only.
 class DriveKindIcon extends StatelessWidget {
   const DriveKindIcon(this.kind, {super.key, this.size = 20, this.folderColor});
 
@@ -76,37 +78,14 @@ class DriveKindIcon extends StatelessWidget {
   final Color? folderColor;
 
   @override
-  Widget build(BuildContext context) => switch (kind) {
-    DriveItemKind.folder => Icon(
-      LucideIcons.folder,
+  Widget build(BuildContext context) {
+    final colors = ShadTheme.of(context).colorScheme;
+    return Icon(
+      kindIcon(kind),
       size: size,
-      color: folderColor ?? ShadTheme.of(context).colorScheme.mutedForeground,
-    ),
-    DriveItemKind.document => WonkyProductIcon(
-      WonkyProduct.write,
-      size: size,
-      semanticLabel: '',
-    ),
-    DriveItemKind.spreadsheet => WonkyProductIcon(
-      WonkyProduct.sheets,
-      size: size,
-      semanticLabel: '',
-    ),
-  };
+      color: kind == DriveItemKind.folder && folderColor != null
+          ? folderColor
+          : kindColor(kind, colors),
+    );
+  }
 }
-
-/// [item] with [product]'s icon in place of its glyph (menus).
-WonkyMenuItem? withProductIcon(WonkyMenuItem? item, WonkyProduct product) =>
-    item == null
-    ? null
-    : WonkyMenuItem(
-        key: item.key,
-        label: item.label,
-        leading: WonkyProductIcon(product, size: 16, semanticLabel: ''),
-        shortcut: item.shortcut,
-        enabled: item.enabled,
-        disabledReason: item.disabledReason,
-        onSelected: item.onSelected,
-        destructive: item.destructive,
-        semanticLabel: item.semanticLabel,
-      );

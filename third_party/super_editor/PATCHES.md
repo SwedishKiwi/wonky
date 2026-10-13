@@ -129,6 +129,20 @@ Every change is marked with `// WONKY PATCH <id>` in the code. Tests of our patc
 - **Spec**: Write 08 §3.1
 - **Upstream**: generally useful; to be proposed.
 
+## SE-8 — Selection highlight without overlapping bands
+
+- **Reason**: super_text_layout expands every selection box by 2 px above and below and paints
+  the boxes one by one in a translucent color, so the boxes of adjacent lines (and of adjacent
+  styled runs) overlapped and showed as darker bands — very visible when selecting a
+  syntax-highlighted code block.
+- **Changes**: `NonOverlappingSelectionHighlight` / `NonOverlappingSelectionPainter` add all
+  (expanded, rounded) boxes to one path and fill it once; `TextComponent` uses it instead of
+  `TextLayoutSelectionHighlight`.
+- **Files**: `lib/src/default_editor/selection_highlight.dart` (new), `lib/src/default_editor/text.dart`
+- **Tests**: `test/wonky_patches/se8_selection_highlight_test.dart`
+- **Spec**: Write 04 §15.4
+- **Upstream**: generally useful (also for super_text_layout's own painter); to be proposed.
+
 ## Infra
 
 - `pubspec.yaml`: `dependency_overrides: attributed_text: {path: ../attributed_text}` so the

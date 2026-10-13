@@ -64,8 +64,7 @@ GeistMono (formulas, code, shortcuts). Document fonts (Write themes, Sheets cell
 a curated font list (see each app spec) loaded via bundled assets (no runtime Google Fonts on
 web for privacy/offline; `google_fonts` is used only at build-time to fetch files into assets).
 
-Icons: `LucideIcons.*` only, except the product icons (§5) that stand for a product or one of
-its files. Icon size 16 in toolbars/menus, 20 in sidebars, 24 in empty states.
+Icons: `LucideIcons.*` only, except the product icons (§5) that stand for a product (app). Icon size 16 in toolbars/menus, 20 in sidebars, 24 in empty states.
 
 ## 3. shad components we use (mapping)
 
@@ -115,7 +114,8 @@ Thin wrapper over `ShadContextMenu` (controller + anchor) adding:
   `MenuSeparator`, `MenuLabel` (section header), `MenuCustom` (e.g. color grid, table-size grid).
 - Trailing shortcut rendered with `ShadKbd` (platform glyphs: ⌘ ⌥ ⇧ ⌃ on macOS; Ctrl+Alt+Shift
   elsewhere).
-- `WonkyMenuItem.leading`: a 16 px widget shown instead of the icon (e.g. a product icon, §5).
+- `WonkyMenuItem.leading`: a 16 px widget shown instead of the icon (e.g. an app's product icon,
+  §5).
 - Type-ahead: typing letters jumps to items.
 - Used both in `ShadMenubar` items and standalone dropdowns.
 - **Only one menu is open at a time**: menubar menus, dropdown menus and context menus claim the
@@ -214,18 +214,18 @@ Skeleton layouts for drive list, document page, grid (built from `ShadSkeleton`)
 Each product has its own icon (a rounded app tile, `packages/wonky_app/assets/icons/*.webp`,
 sources in `/icons`): `WonkyProductIcon(WonkyProduct.work | drive | write | sheets | slides,
 size:)` in `wonky_app` (`branding/product_icon.dart`; semantics label = product name, `''` for
-decorative use). Use it wherever the UI stands for a product or one of its files, instead of a
-generic glyph:
+decorative use). Product icons stand for the **apps** only; files keep plain glyphs:
 
-- **App logo** (`WonkyAppConfig.logo`): sign-in card, drive top bar, editor title row, page
-  frames and the boot overlay.
-- **File kind icons**: `DriveKindIcon(kind)` — the Write icon for documents, the Sheets icon for
-  spreadsheets, the Lucide folder glyph for folders. Used in the drive list/grid, details panel,
-  drive search suggestions, quick switcher, command palette rows (`PaletteRow.leading`) and the
-  drag chip.
-- **Menus** (`WonkyMenuItem.leading`, §4.2): *New ▸ Document / Spreadsheet*, the account menu's
-  *Open Write / Open Sheets* switch item; the **My Drive** sidebar item uses the Drive icon;
-  the Settings › Write / Sheets sections.
+- **App logo** (`WonkyAppConfig.logo`): drive top bar (with the short name, "Write" / "Sheets",
+  `WonkyAppConfig.shortAppName`), editor title row, page frames and the boot overlay.
+- **Sign-in screens**: the suite icon (`WonkyProduct.work`) with "Wonky Work" as the headline
+  (one sign-in covers the suite).
+- **App menus and settings** (`WonkyMenuItem.leading`, §4.2): the account menu's *Open Write /
+  Open Sheets* switch item and the Settings › Write / Sheets sections.
+- **File kind icons** are not product icons: `DriveKindIcon(kind)` draws the Lucide glyphs
+  (folder / file-text / sheet) in their kind colors — drive list/grid, details panel, search
+  suggestions, quick switcher, command palette rows (`PaletteRow.leading`), drag chip. The *New*
+  menu and *My Drive* keep their glyphs too.
 - **Platform icons** are generated from the same sources: web `favicon.png` (32 px) and PWA
   `icons/Icon-192.png` / `Icon-512.png` (no maskable variants), macOS `AppIcon.appiconset`.
   Write's HTML splash (`web/index.html`) shows the Write icon.

@@ -14,7 +14,6 @@ import '../components/editor_services.dart';
 import '../components/wonky_components.dart';
 import '../controller/editor_types.dart';
 import '../controller/write_editor_controller.dart';
-import '../dnd/block_drag.dart';
 import '../dnd/drop_indicator.dart';
 import '../dnd/external_drop.dart';
 import '../dnd/text_drag.dart';
@@ -157,7 +156,6 @@ class WonkyEditorState extends State<WonkyEditor> {
     skipTraversal: true,
   );
   late TextDragController _textDrag;
-  late BlockDragController _blockDrag;
   late InlineTableEditing _tables;
   ExternalDropSource? _drops;
   final _slashItems = defaultSlashItems();
@@ -189,9 +187,6 @@ class WonkyEditorState extends State<WonkyEditor> {
   /// Drag and drop of the selection (Write 04 §24).
   TextDragController get textDrag => _textDrag;
 
-  /// Block drag via the handle (Write 04 §22.5).
-  BlockDragController get blockDrag => _blockDrag;
-
   /// The current drop indicator.
   DropIndicator get dropIndicator => _dropIndicator;
 
@@ -217,12 +212,6 @@ class WonkyEditorState extends State<WonkyEditor> {
       commands: _commands,
       indicator: _dropIndicator,
     );
-    _blockDrag = BlockDragController(
-      controller: controller,
-      commands: _commands,
-      indicator: _dropIndicator,
-      scrollController: _scrollController,
-    );
     _tables = InlineTableEditing(
       controller: controller,
       commands: _commands,
@@ -247,7 +236,6 @@ class WonkyEditorState extends State<WonkyEditor> {
     _triggers.emoji.removeListener(_onEmoji);
     _triggers.dispose();
     _textDrag.cancel();
-    _blockDrag.dispose();
     if (identical(old.tableEditing, _tables)) old.tableEditing = null;
     _tables.dispose();
     _drops?.detach();
@@ -563,7 +551,6 @@ class WonkyEditorState extends State<WonkyEditor> {
   }
 
   void _onHover(PointerHoverEvent event) {
-    if (_blockDrag.isDragging) return;
     final layout = controller.documentLayout;
     if (layout == null) return;
     final local = layout.getDocumentOffsetFromAncestorOffset(event.position);
@@ -723,9 +710,7 @@ class WonkyEditorState extends State<WonkyEditor> {
         skipTraversal: true,
         child: MouseRegion(
           onHover: _onHover,
-          onExit: (_) {
-            if (!_blockDrag.isDragging) _hoveredNode.value = null;
-          },
+          onExit: (_) => _hoveredNode.value = null,
           child: Stack(
             children: [
               Positioned.fill(child: surface),
@@ -896,20 +881,6 @@ class WonkyEditorState extends State<WonkyEditor> {
           hoveredNodeId: _hoveredNode,
           onTap: (nodeId, rect) =>
               widget.blockCallbacks.onBlockHandleTap?.call(nodeId, rect),
-          drag: BlockHandleDrag(
-            onStart: (nodeId, global) => _blockDrag.start(
-              nodeId,
-              global,
-              overlayContext: context,
-              theme: theme,
-            ),
-            onUpdate: _blockDrag.update,
-            onEnd: () {
-              _blockDrag.end();
-              _hoveredNode.value = null;
-            },
-            onCancel: _blockDrag.cancel,
-          ),
         ),
         DropIndicatorLayerBuilder(
           controller: controller,

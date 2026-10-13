@@ -1219,12 +1219,12 @@ undo gives back the paragraph containing `/h2`.
 ## 22. Block handle, block selection and drag reorder
 
 ### 22.1 Handle
-- `BlockHandleLayerBuilder` (overlay) shows a ⋮⋮ (`LucideIcons.gripVertical`, 16 px, hit
-  target 24×24) in the left gutter, vertically centred on the first line of the hovered block.
+- `BlockHandleLayerBuilder` (overlay) shows a ⋮ (more, 16 px, hit target 24×24) in the left
+  gutter, vertically centred on the first line of the hovered block.
   Pages mode: inside the left page margin. Pageless: 28 px left of the content column.
 - Shown for the hovered block, or the caret block while typing pauses for 1 s. It stays visible
   while the pointer moves from the block into its handle gutter (the 36 px strip left of the
-  block, `blockHandleGutter`), so the handle can be clicked (block menu) and dragged. Hidden
+  block, `blockHandleGutter`), so the handle can be clicked (block menu). Hidden
   while typing, in Viewing mode, and for Commenters (who get only *Comment* through the context
   menu).
 - P1: a **+** button left of the handle inserts an empty paragraph below and opens the slash
@@ -1274,17 +1274,12 @@ undo gives back the paragraph containing `/h2`.
   instant may be lost (a documented OT limitation of moves). Moves are disabled in Suggesting
   mode.
 
-### 22.5 Drag to reorder (P1)
-- Press and drag the handle more than 4 px to start a drag. A ghost (a card with the block's
-  text, or "Image"/"Table", at 60 % opacity, max 320 px) follows the pointer.
-- A **drop indicator** (2 px `primary` line, full content width) snaps between blocks.
-  Autoscroll applies near the viewport edges.
-- Esc cancels. Drop runs `write.block.move`.
-- With a multi-block selection, dragging any selected block's handle moves the whole selection.
-- Reduced motion: no ghost animation.
+### 22.5 Drag to reorder — removed
+Dragging blocks by the handle was removed (drops landed unreliably); blocks move with the block
+menu's *Move up* / *Move down* and `Alt+Shift+↑/↓` (§22.4).
 
-**AC-22.1** Dragging a bullet that has two indented children below a paragraph moves all three
-items. One undo moves them back.
+**AC-22.1** *Move down* on a bullet that has two indented children moves all three items. One
+undo moves them back.
 **AC-22.2** Alt+Shift+↑ on the first block does nothing (the command is disabled).
 
 ## 23. Clipboard
@@ -1425,8 +1420,7 @@ AI. They run through the same pipeline as paste (§23.3, format 1 or 4).
   blocks for files. Images are inserted as whole blocks there (upload flow §17.2), documents after
   the confirmation, as whole blocks.
 
-Implementation: selection drags use patch **SE-6** (`TextDragController`); block drags the
-handle (`BlockDragController`); OS drops `ExternalDropSource` — on the web the browser's
+Implementation: selection drags use patch **SE-6** (`TextDragController`); OS drops `ExternalDropSource` — on the web the browser's
 `dragover`/`drop` events on the window (the default, opening the dropped file in the tab, is
 always prevented). Native desktop builds have no OS drop channel yet (no drop plugin; a federated
 plugin with a web implementation would double-handle web drops). Drops are refused in Viewing

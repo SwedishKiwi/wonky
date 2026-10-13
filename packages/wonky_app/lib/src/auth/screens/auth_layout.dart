@@ -2,6 +2,7 @@ import 'package:flutter/widgets.dart';
 import 'package:shad/shad.dart';
 import 'package:wonky_ui/wonky_ui.dart';
 
+import '../../branding/product_icon.dart';
 import '../../l10n/wonky_app_localizations.dart';
 import '../../shell/account_menu.dart';
 import '../../shell/shell_services.dart';
@@ -62,26 +63,14 @@ class AuthLayout extends StatelessWidget {
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
+                    // One sign-in covers the suite (suite 04 §1): the
+                    // suite's icon and name, not the app's.
                     Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        services.config.logo(size: 36),
+                        const WonkyProductIcon(WonkyProduct.work, size: 40),
                         const SizedBox(width: 10),
-                        Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              services.config.appName,
-                              style: theme.textTheme.large,
-                            ),
-                            Text(
-                              l.wonkyWork,
-                              style: theme.textTheme.muted.copyWith(
-                                fontSize: 12,
-                              ),
-                            ),
-                          ],
-                        ),
+                        Text(l.wonkyWork, style: theme.textTheme.large),
                       ],
                     ),
                     const SizedBox(height: 20),

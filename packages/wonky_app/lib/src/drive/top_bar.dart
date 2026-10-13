@@ -58,7 +58,7 @@ class WonkyTopBar extends StatelessWidget {
                   if (!narrow) ...[
                     const SizedBox(width: 10),
                     Text(
-                      services.config.appName,
+                      services.config.shortAppName,
                       style: theme.textTheme.large.copyWith(
                         fontWeight: FontWeight.w500,
                       ),

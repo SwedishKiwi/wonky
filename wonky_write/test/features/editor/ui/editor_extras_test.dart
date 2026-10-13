@@ -308,7 +308,7 @@ void main() {
     });
   });
 
-  group('Given blocks (drag to reorder, Write 04 §22.5)', () {
+  group('Given blocks (block handle, Write 04 §22)', () {
     testWidgets('when moving the pointer from a paragraph onto its handle '
         'then the handle stays and a tap opens the block menu', (tester) async {
       final taps = <String>[];
@@ -337,76 +337,6 @@ void main() {
       await tester.pump();
       await mouse.removePointer();
       expect(taps, [first]);
-    });
-
-    testWidgets('when dragging a bullet with two children below a paragraph '
-        'then all three move in one undo step (AC-22.1)', (tester) async {
-      final p = await _pump(
-        tester,
-        Delta()
-          ..insert('Parent')
-          ..insert('\n', {'list': 'bullet'})
-          ..insert('Child 1')
-          ..insert('\n', {'list': 'bullet', 'indent': 1})
-          ..insert('Child 2')
-          ..insert('\n', {'list': 'bullet', 'indent': 1})
-          ..insert('After\n'),
-      );
-      final mouse = await tester.createGesture(kind: PointerDeviceKind.mouse);
-      await mouse.addPointer(location: _center(tester, 'Parent'));
-      await mouse.moveTo(_center(tester, 'Parent') + const Offset(1, 0));
-      await tester.pump();
-      final handle = find.byKey(
-        ValueKey(
-          'write.editor.blockHandle.${p.h.controller.document.first.id}',
-        ),
-      );
-      expect(handle, findsOneWidget);
-      final drag = mouse;
-      await drag.moveTo(tester.getCenter(handle));
-      await tester.pump();
-      await drag.down(tester.getCenter(handle));
-      await drag.moveBy(const Offset(0, 6));
-      await tester.pump();
-      expect(p.state.blockDrag.nodeIds, hasLength(3));
-      await drag.moveTo(
-        tester.getBottomLeft(find.text('After', findRichText: true)) +
-            const Offset(20, -2),
-      );
-      await tester.pump();
-      expect(p.state.dropIndicator.value, const BlockDropSpot(4));
-      await drag.up();
-      await tester.pump();
-      await mouse.removePointer();
-
-      expect(
-        p.h.delta,
-        Delta()
-          ..insert('After\nParent')
-          ..insert('\n', {'list': 'bullet'})
-          ..insert('Child 1')
-          ..insert('\n', {'list': 'bullet', 'indent': 1})
-          ..insert('Child 2')
-          ..insert('\n', {'list': 'bullet', 'indent': 1}),
-      );
-      final step = p.h.changes.last;
-      expect(step.label, 'Move block');
-      p.h.undo(step);
-      expect(p.h.plainText, 'Parent\nChild 1\nChild 2\nAfter\n');
-    });
-
-    testWidgets('when pressing Esc during a block drag then nothing moves', (
-      tester,
-    ) async {
-      final p = await _pump(tester, Delta()..insert('One\nTwo\n'));
-      final id = p.h.controller.document.first.id;
-      expect(p.state.blockDrag.start(id, Offset.zero), isTrue);
-      p.state.blockDrag.update(_center(tester, 'Two') + const Offset(0, 10));
-      await tester.sendKeyEvent(LogicalKeyboardKey.escape);
-
-      expect(p.state.blockDrag.isDragging, isFalse);
-      expect(p.state.blockDrag.end(), isFalse);
-      expect(p.h.plainText, 'One\nTwo\n');
     });
   });
 

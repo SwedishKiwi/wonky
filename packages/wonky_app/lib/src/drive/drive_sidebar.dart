@@ -5,7 +5,6 @@ import 'package:shad/shad.dart';
 import 'package:wonky_client/wonky_client.dart';
 import 'package:wonky_ui/wonky_ui.dart';
 
-import '../branding/product_icon.dart';
 import '../data/models_ext.dart';
 import '../l10n/wonky_app_localizations.dart';
 import '../menus/menu_resolver.dart';
@@ -98,14 +97,12 @@ class _DriveSidebarState extends State<DriveSidebar> {
       String label,
       DriveLocation target, {
       bool active = false,
-      Widget? leading,
     }) => DragTarget<DriveDragData>(
       onWillAcceptWithDetails: (_) => target.kind == DriveLocationKind.myDrive,
       onAcceptWithDetails: (d) => dropIntoFolder(s, d.data, null),
       builder: (context, cand, _) => SidebarNavButton(
         key: ValueKey<String>('drive.nav.$key'),
         icon: icon,
-        leading: leading,
         label: label,
         active: active || cand.isNotEmpty,
         onPressed: () => s.router.go(target.path),
@@ -122,29 +119,19 @@ class _DriveSidebarState extends State<DriveSidebar> {
               final r = MenuResolver(s);
               final primaryDoc = s.config.primaryKind == DriveItemKind.document;
               return <WonkyMenuEntry>[
-                ?withProductIcon(
-                  r.commandEntry(
-                    context,
-                    'shell.file.new',
-                    args: {'kind': primaryDoc ? 'document' : 'spreadsheet'},
-                    label: primaryDoc
-                        ? l.menuNewDocument
-                        : l.menuNewSpreadsheet,
-                    key: 'new.primary',
-                  ),
-                  primaryDoc ? WonkyProduct.write : WonkyProduct.sheets,
+                ?r.commandEntry(
+                  context,
+                  'shell.file.new',
+                  args: {'kind': primaryDoc ? 'document' : 'spreadsheet'},
+                  label: primaryDoc ? l.menuNewDocument : l.menuNewSpreadsheet,
+                  key: 'new.primary',
                 ),
-                ?withProductIcon(
-                  r.commandEntry(
-                    context,
-                    'shell.file.new',
-                    args: {'kind': primaryDoc ? 'spreadsheet' : 'document'},
-                    label: primaryDoc
-                        ? l.menuNewSpreadsheet
-                        : l.menuNewDocument,
-                    key: 'new.other',
-                  ),
-                  primaryDoc ? WonkyProduct.sheets : WonkyProduct.write,
+                ?r.commandEntry(
+                  context,
+                  'shell.file.new',
+                  args: {'kind': primaryDoc ? 'spreadsheet' : 'document'},
+                  label: primaryDoc ? l.menuNewSpreadsheet : l.menuNewDocument,
+                  key: 'new.other',
                 ),
                 ?r.commandEntry(context, 'shell.drive.newFolder'),
                 const WonkyMenuSeparator(),
@@ -200,11 +187,6 @@ class _DriveSidebarState extends State<DriveSidebar> {
                             l.navMyDrive,
                             const DriveLocation.myDrive(),
                             active: loc.kind == DriveLocationKind.myDrive,
-                            leading: const WonkyProductIcon(
-                              WonkyProduct.drive,
-                              size: 20,
-                              semanticLabel: '',
-                            ),
                           ),
                         ),
                         ShadIconButton.ghost(
@@ -320,17 +302,13 @@ class _DriveSidebarState extends State<DriveSidebar> {
 class SidebarNavButton extends StatelessWidget {
   const SidebarNavButton({
     super.key,
-    this.icon,
-    this.leading,
+    required this.icon,
     required this.label,
     required this.onPressed,
     this.active = false,
   });
 
-  final IconData? icon;
-
-  /// Shown instead of [icon] (e.g. the Drive product icon).
-  final Widget? leading;
+  final IconData icon;
   final String label;
   final VoidCallback onPressed;
   final bool active;
@@ -351,7 +329,7 @@ class SidebarNavButton extends StatelessWidget {
         decoration: const ShadDecoration(
           border: ShadBorder(radius: BorderRadius.all(Radius.circular(18))),
         ),
-        leading: leading ?? Icon(icon, size: 18),
+        leading: Icon(icon, size: 18),
         onPressed: onPressed,
         child: Flexible(
           child: Text(

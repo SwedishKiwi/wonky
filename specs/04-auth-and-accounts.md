@@ -41,7 +41,7 @@ after re-auth the user continues where they were. Pending offline changes are ke
 
 | Screen | Route | Notes |
 |--------|-------|-------|
-| Sign in | `/signin` | Centered card (max 400 px) on branded background; app logo of the *current* app (its product icon, [02 §5](02-design-system.md)) plus "Wonky Work" wordmark. |
+| Sign in | `/signin` | Centered card (max 400 px) on branded background; the suite icon (Wonky Work product icon, [02 §5](02-design-system.md)) and "Wonky Work" as the headline (no app name, no subheadline): one account covers both apps. |
 | Sign up | `/signup` | Same layout. |
 | Verify email | `/signup/verify` | |
 | Forgot password | `/reset` | |

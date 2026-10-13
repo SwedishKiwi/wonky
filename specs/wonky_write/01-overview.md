@@ -97,7 +97,7 @@ architecture does not block it.
 | Emoji picker (Unicode text) | P1 |
 | Special characters dialog | P1 |
 | Slash command menu (`/`) for all blocks and AI | P0 |
-| Block handle (⋮⋮): turn into, duplicate, delete, move, copy link to heading, comment; drag to reorder | P0 (menu) / P1 (drag) |
+| Block handle (⋮): turn into, duplicate, delete, move up/down, copy link to heading, comment (no drag to reorder) | P0 |
 | Insert date (as plain text in the user's locale format) | P2 |
 | Table of contents (generated as a static list of heading links, with an "Update" action) | P2 |
 

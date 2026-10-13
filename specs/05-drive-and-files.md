@@ -115,15 +115,15 @@ Single-window page at `/` (Write) or `/` (Sheets) — layout:
 
 ### 3.1 Components
 - **TopBar** (shared `WonkyTopBar`): hamburger (collapses sidebar), app logo (the product icon,
-  suite 02 §5) + name (click → home), drive search field with suggestions dropdown (recent
+  suite 02 §5) + short name ("Write" / "Sheets"; click → home), drive search field with suggestions dropdown (recent
   searches, matching items with their kind icons, "Search for '…'" row, filter chips: type,
   owner, modified), app theme toggle (light/dark/system cycle), notifications, account avatar
   menu (name, email, Settings, switch app → *Open Wonky Sheets/Write* with that product's icon,
   Sign out). There is no help button (Help lives in the editor's Help menu; there is no help
   center).
 - **Sidebar** (`DriveSidebar`): *New* button (12 px left of the +; dropdown: New document / New
-  spreadsheet — each with its product icon — / New folder / Upload file… / From template…), nav
-  items (Home, My Drive — with the Drive product icon —, Shared with me, Starred, Offline,
+  spreadsheet / New folder / Upload file… / From template…), nav
+  items (Home, My Drive, Shared with me, Starred, Offline,
   Trash), collapsible folder tree under My Drive (lazy-loaded, drag-and-drop target), storage
   usage footer (no separator above it).
 - **Template strip**: collapsible ("Hide templates"), horizontal list of `TemplateCard`s; *More*
@@ -143,8 +143,7 @@ Single-window page at `/` (Write) or `/` (Sheets) — layout:
 - **Item list** (`DriveItemList`, list mode): columns Name (kind icon, name, shared badge, star,
   offline badge), Owner (avatar+name / "me"), Last modified (relative), File size, row ⋮ menu.
   Grid mode: `DriveItemCard` with thumbnail preview, name, kind icon, ⋮ menu. Kind icons are
-  `DriveKindIcon` (suite 02 §5: Write icon for documents, Sheets icon for spreadsheets, folder
-  glyph for folders), also on the drag chip.
+  `DriveKindIcon` (suite 02 §5: plain glyphs in the kind colors), also on the drag chip.
   Virtualized, infinite scroll, sticky "Today / Yesterday / Earlier this week / Earlier"
   group headers in Recent view.
 - **Selection**: click selects, Mod/Shift-click multi-select, rubber-band selection in grid view,
