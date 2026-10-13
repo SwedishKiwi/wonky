@@ -192,7 +192,9 @@ class UndoService extends ChangeNotifier {
   }) {
     final s = _stacks.putIfAbsent(key, _Stack.new);
     if (s.undo.isNotEmpty || s.redo.isNotEmpty) return;
-    s.undo.addAll(undo.length > maxSteps ? undo.sublist(undo.length - maxSteps) : undo);
+    s.undo.addAll(
+      undo.length > maxSteps ? undo.sublist(undo.length - maxSteps) : undo,
+    );
     s.redo.addAll(redo);
     _changed(key);
   }

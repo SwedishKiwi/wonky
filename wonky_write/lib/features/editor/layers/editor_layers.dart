@@ -405,11 +405,15 @@ class WonkyBlockHandleLayerBuilder implements SuperEditorLayerBuilder {
     required this.theme,
     required this.onTap,
     required this.hoveredNodeId,
+    this.drag,
   });
 
   final WriteEditorController controller;
   final EditorTheme theme;
   final void Function(String nodeId, Rect globalRect) onTap;
+
+  /// Drag-to-reorder callbacks (Write 04 §22.5).
+  final BlockHandleDrag? drag;
 
   /// The node under the pointer (maintained by the editor widget).
   final ValueNotifier<String?> hoveredNodeId;
@@ -423,7 +427,24 @@ class WonkyBlockHandleLayerBuilder implements SuperEditorLayerBuilder {
     theme: theme,
     onTap: onTap,
     hoveredNodeId: hoveredNodeId,
+    drag: drag,
   );
+}
+
+/// Callbacks of a block-handle drag (global pointer positions).
+class BlockHandleDrag {
+  const BlockHandleDrag({
+    required this.onStart,
+    required this.onUpdate,
+    required this.onEnd,
+    required this.onCancel,
+  });
+
+  /// Returns whether the block can be dragged.
+  final bool Function(String nodeId, Offset globalPosition) onStart;
+  final void Function(Offset globalPosition) onUpdate;
+  final VoidCallback onEnd;
+  final VoidCallback onCancel;
 }
 
 class _BlockHandleLayer extends DocumentLayoutLayerStatefulWidget {
@@ -432,12 +453,14 @@ class _BlockHandleLayer extends DocumentLayoutLayerStatefulWidget {
     required this.theme,
     required this.onTap,
     required this.hoveredNodeId,
+    this.drag,
   });
 
   final WriteEditorController controller;
   final EditorTheme theme;
   final void Function(String nodeId, Rect globalRect) onTap;
   final ValueNotifier<String?> hoveredNodeId;
+  final BlockHandleDrag? drag;
 
   @override
   DocumentLayoutLayerState<_BlockHandleLayer, (String, Rect)?> createState() =>
@@ -446,6 +469,8 @@ class _BlockHandleLayer extends DocumentLayoutLayerStatefulWidget {
 
 class _BlockHandleLayerState
     extends DocumentLayoutLayerState<_BlockHandleLayer, (String, Rect)?> {
+  bool _dragging = false;
+
   @override
   void initState() {
     super.initState();
@@ -491,9 +516,39 @@ class _BlockHandleLayerState
           top: rect.top + (rect.height - 24) / 2,
           child: Builder(
             builder: (handleContext) => MouseRegion(
-              cursor: SystemMouseCursors.grab,
+              cursor: _dragging
+                  ? SystemMouseCursors.grabbing
+                  : SystemMouseCursors.grab,
               child: GestureDetector(
                 key: ValueKey('write.editor.blockHandle.$nodeId'),
+                onPanStart: widget.drag == null
+                    ? null
+                    : (details) {
+                        _dragging = widget.drag!.onStart(
+                          nodeId,
+                          details.globalPosition,
+                        );
+                        if (_dragging) setState(() {});
+                      },
+                onPanUpdate: widget.drag == null
+                    ? null
+                    : (details) {
+                        if (_dragging) {
+                          widget.drag!.onUpdate(details.globalPosition);
+                        }
+                      },
+                onPanEnd: widget.drag == null
+                    ? null
+                    : (_) {
+                        if (_dragging) widget.drag!.onEnd();
+                        setState(() => _dragging = false);
+                      },
+                onPanCancel: widget.drag == null
+                    ? null
+                    : () {
+                        if (_dragging) widget.drag!.onCancel();
+                        setState(() => _dragging = false);
+                      },
                 onTap: () {
                   final box = handleContext.findRenderObject() as RenderBox?;
                   widget.onTap(

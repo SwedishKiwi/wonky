@@ -133,3 +133,53 @@ fields:
 `write.ai.rewriteSelection(mode)`, `write.ai.continue`, `write.ai.summarizeDocument`,
 `sheets.ai.suggestFormula`, `sheets.ai.explainFormula`, `sheets.ai.fillRange`,
 `sheets.ai.analyze`.
+
+## 6. Implementation notes (as built)
+
+- **Server** (`wonky_server/lib/src/platform/ai/`): `anthropic/` (`AnthropicClient` +
+  `HttpAnthropicClient`: `package:http`, SSE parser, `MessageAccumulator`, retries on
+  408/409/429/5xx/529 and connection errors with exponential backoff + jitter honouring
+  `retry-after`/`retry-after-ms`, 10 min wall clock, 3 min idle timeout; `FakeAnthropicClient`
+  + `SseScript` replay scripted SSE through the same parser), `ai_models.dart` (the only
+  place with model ids), `ai_config.dart`, `ai_usage_service.dart`, `assistant_tools.dart`,
+  `assistant_service.dart`, `assistant_endpoint.dart`. Write parts in
+  `wonky_server/lib/src/write/ai/` (`write_prompts.dart`, `write_context_builder.dart`,
+  `inline_ai_service.dart`, `proofread_service.dart`).
+- **Configuration**: `wonky: features: ai` + `wonky: ai:` (`enabled`, `dailyTokenBudget`,
+  `maxConcurrentRequests`, `requestTimeoutMinutes`, `maxToolRounds`, `baseUrl`) in
+  `config/<runMode>.yaml`; the key is `anthropicApiKey` in `config/passwords.yaml` (or
+  `SERVERPOD_PASSWORD_anthropicApiKey`). Without a key `assistant.getStatus` reports
+  `reason: notConfigured` and the apps show "AI isn't configured on this server".
+- **Request shape**: `thinking: {type: adaptive, display: "updates" (Opus, tool requests),
+  block_binding: {prefix_mismatch_behavior: "drop_block"}}`, `output_config.effort`,
+  `tool_choice: auto`, `fallbacks: "default"` (not for `claude-haiku-5-5`, which has no
+  server-side fallback), betas `server-side-fallback-2026-07-01`,
+  `thinking-display-updates-2026-08-18`, `thinking-binding-controls-2026-08-01`. An optional
+  feature the API rejects with a 400 (fallbacks, display, block binding, `strict`,
+  `eager_input_streaming`, top-level `cache_control`) is switched off for the process and the
+  request retried, so beta drift degrades instead of breaking the assistant.
+- **Tools**: MCP names contain dots, which the API does not allow: `write.get_document` is sent
+  as `write_get_document`. Schemas are the MCP schemas minus the bound keys (`document_uuid`,
+  `uuid`, `mode`); strict-compatible schemas (closed objects) are sent with
+  numeric/length constraints stripped (the `ToolExecutor` still validates the original) and at
+  most 16 tools are marked `strict`. `comments.reply` is checked to target a thread of the open
+  file. Accept/reject suggestion tools are only listed for Editors+.
+- **Caching**: tools (sorted) → system (breakpoint) → the frozen document snapshot in the
+  thread's first user turn (breakpoint) → conversation via the top-level automatic
+  `cache_control`, so no stored message is ever edited (append-only history, also required by
+  preserved thinking). "Document updated" elements carry the changed sections' Markdown.
+- **Endpoint** `assistant`: `getStatus`, `setQuality`, `chat(threadId?, itemUuid, message,
+  hints)`, `stop(threadId?, runId?)`, `confirm(runId, confirmationId, allow)` (destructive
+  guard), `listThreads(itemUuid)`, `getThread`, `deleteThread`, `clearHistory`,
+  `revertChange(changeId)` (panel Undo fallback), `inline(InlineAiRequest)`,
+  `proofread(itemUuid, start?, length?)`. `AssistantEventType`: `started`, `textDelta`,
+  `progress`, `toolStarted`, `toolFinished`, `confirmationRequired`, `usage`, `maxTokens`,
+  `refusal`, `error`, `done`. Extra tables: `ai_user_setting` (quality); `assistant_message`
+  adds `visible`, `replay`, `runId`, `stopReason`; `assistant_thread` adds the last context
+  revision/Markdown.
+- **Budget**: input + cache writes + output + cache reads ÷ 10 per UTC day; concurrency per user
+  is in memory per server instance.
+- **Client**: shared panel in `packages/wonky_app/lib/src/assistant/` (`ShellAssistant`
+  implements `AssistantHook`, `AssistantController`, `AssistantPanel`, `AiSettingsSection`,
+  `AssistantDocumentAdapter` for app specialization, `FakeAssistantApi` in
+  `package:wonky_app/testing.dart`). Write: `wonky_write/lib/features/ai/`.

@@ -127,6 +127,10 @@ MenuRoot writeMenus(ShellMenus shell) {
         _c('write.view.toggleRemoteCursors', label: 'Collaborator cursors'),
         _c('write.view.toggleSelectionToolbar', label: 'Toolbar on selection'),
       ])
+      .insertAfter('view.layout', [
+        _c('write.view.toggleFocusMode', label: 'Focus mode'),
+        _c('write.view.toggleTypewriter', label: 'Typewriter scrolling'),
+      ])
       .replace(ShellMenuIds.viewZoom, [
         MenuSpec.submenu(ShellMenuIds.viewZoom, 'Zoom', [
           _c('write.view.zoomIn'),
@@ -179,6 +183,11 @@ MenuRoot writeMenus(ShellMenus shell) {
 
   // ---- Tools (§7.6) ----
   root = root
+      .insertAfter('tools.assistant', [
+        _c('write.ai.summarizeDocument', menuId: 'tools.ai.summarize'),
+        _c('write.ai.generateOutline', menuId: 'tools.ai.outline'),
+        _c('write.ai.proofreadDocument', menuId: 'tools.ai.proofread'),
+      ])
       .insertBefore('tools.assistant', [
         _c('write.tools.wordCount', label: 'Word count'),
         _c(
@@ -239,6 +248,8 @@ MenuSubmenu get insertMenu => MenuSpec.submenu(WriteMenuIds.insert, 'Insert', [
   MenuSpec.separator(),
   _c('write.link.insert', label: 'Link…'),
   _c('write.insert.mentionTrigger', label: 'Mention a person'),
+  _c('write.insert.emoji', label: 'Emoji…'),
+  _c('write.insert.specialCharacter', label: 'Special characters…'),
   MenuSpec.separator(),
   _c('shell.comments.create', label: 'Comment', menuId: 'insert.comment'),
   _c('write.insert.fromFile', label: 'From file…', menuId: 'insert.fromFile'),
@@ -279,11 +290,13 @@ MenuSubmenu get formatMenu => MenuSpec.submenu(WriteMenuIds.format, 'Format', [
   _c('write.format.clearFormatting'),
   MenuSpec.separator(),
   MenuSpec.submenu('format.table', 'Table', [
+    _c('write.table.editCell', label: 'Edit cells'),
     _c('write.table.edit', label: 'Edit table…'),
     _c('write.table.copyAsTsv', label: 'Copy as TSV'),
     _c('write.table.delete', label: 'Delete table'),
   ]),
   MenuSpec.submenu('format.image', 'Image', [
+    _c('write.image.preview', label: 'View full size'),
     _c('write.image.editAlt', label: 'Alt text…'),
     _c('write.image.replace', label: 'Replace…'),
     _c('write.image.download', label: 'Download'),

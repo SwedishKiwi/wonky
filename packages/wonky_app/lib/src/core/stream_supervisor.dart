@@ -34,14 +34,15 @@ class _Entry {
 /// (suite 03 §7).
 class StreamSupervisor {
   StreamSupervisor(this.connectivity, {Random? random})
-    : _random = random ?? Random() {
+    : _random = random ?? Random(),
+      _wasOnline = connectivity.online {
     connectivity.addListener(_onConnectivity);
   }
 
   final ConnectivityService connectivity;
   final Random _random;
   final Map<String, _Entry> _entries = {};
-  bool _wasOnline = true;
+  bool _wasOnline;
 
   /// Starts (or replaces) the stream [key].
   SupervisedStream supervise<T>(

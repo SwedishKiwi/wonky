@@ -178,18 +178,21 @@ class PageChromePainter extends CustomPainter {
     final stride = pagination.pageStride;
     final count = pagination.pageCount;
     final paper = Paint()..color = paperColor;
+    // On dark paper a drop shadow is invisible against the (darker) canvas,
+    // so the page edge gets a light hairline instead (Write 06 §9).
+    final dark = paperColor.computeLuminance() < 0.2;
     final shadow = Paint()
-      ..color = const Color(0x22000000)
+      ..color = dark ? const Color(0x66000000) : const Color(0x22000000)
       ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 4);
     final border = Paint()
-      ..color = borderColor
+      ..color = dark ? const Color(0x1fffffff) : borderColor
       ..style = PaintingStyle.stroke;
     for (var i = 0; i < count; i += 1) {
       final rect = Offset(0, i * stride) & pageSize;
       canvas
         ..drawRect(rect.translate(0, 2), shadow)
         ..drawRect(rect, paper)
-        ..drawRect(rect, border);
+        ..drawRect(rect.deflate(0.5), border);
       _text(
         canvas,
         setup.headerText,

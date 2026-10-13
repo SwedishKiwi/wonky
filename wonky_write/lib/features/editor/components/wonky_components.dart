@@ -10,6 +10,7 @@ import '../mapping/wonky_schema.dart';
 import '../model/code_languages.dart';
 import '../model/embeds.dart';
 import '../styles/editor_theme.dart';
+import '../tables/inline_table_editing.dart';
 import 'editor_services.dart';
 
 /// Stable widget keys (specs/15 §7).
@@ -56,7 +57,7 @@ class WonkyImageViewModel extends SingleColumnLayoutComponentViewModel
     title: title,
     selection: selection,
     selectionColor: selectionColor,
-  );
+  )..opacity = opacity;
 
   @override
   bool operator ==(Object other) =>
@@ -81,11 +82,16 @@ class WonkyImageComponentBuilder implements ComponentBuilder {
     required this.services,
     required this.theme,
     this.callbacks = const EditorBlockCallbacks(),
+    this.editable = true,
   });
 
   final EditorImageServices services;
   final EditorTheme theme;
   final EditorBlockCallbacks callbacks;
+
+  /// In read-only views a click opens the lightbox
+  /// ([EditorBlockCallbacks.onImageTap]).
+  final bool editable;
 
   @override
   SingleColumnLayoutComponentViewModel? createViewModel(
@@ -115,7 +121,10 @@ class WonkyImageComponentBuilder implements ComponentBuilder {
       image: true,
       label: viewModel.alt.isEmpty ? 'image, no description' : viewModel.alt,
       child: GestureDetector(
-        onDoubleTap: callbacks.onImageDoubleTap == null
+        onTap: editable || callbacks.onImageTap == null
+            ? null
+            : () => callbacks.onImageTap!(viewModel.nodeId),
+        onDoubleTap: !editable || callbacks.onImageDoubleTap == null
             ? null
             : () => callbacks.onImageDoubleTap!(viewModel.nodeId),
         child: Center(
@@ -129,6 +138,7 @@ class WonkyImageComponentBuilder implements ComponentBuilder {
             ),
             child: BoxComponent(
               key: componentContext.componentKey,
+              opacity: viewModel.opacity,
               child: _WonkyImage(
                 nodeId: viewModel.nodeId,
                 src: viewModel.src,
@@ -436,17 +446,22 @@ class _FailedOverlay extends StatelessWidget {
 // Tables (Write 04 §18.2).
 
 /// Wraps super_editor's Markdown table component with an "Edit table" button
-/// and the block-selection ring; double-click opens the table editor.
+/// and the block-selection ring. With [inlineEditing] (patch SE-4) cells are
+/// edited in place; otherwise double-click opens the table editor.
 class WonkyTableComponentBuilder implements ComponentBuilder {
   const WonkyTableComponentBuilder({
     required this.theme,
     this.callbacks = const EditorBlockCallbacks(),
     this.editable = true,
+    this.inlineEditing,
   });
 
   final EditorTheme theme;
   final EditorBlockCallbacks callbacks;
   final bool editable;
+
+  /// In-place cell editing (Write 04 §18.4).
+  final InlineTableEditing? inlineEditing;
   static const _inner = MarkdownTableComponentBuilder();
 
   @override
@@ -460,8 +475,16 @@ class WonkyTableComponentBuilder implements ComponentBuilder {
     SingleColumnDocumentComponentContext componentContext,
     SingleColumnLayoutComponentViewModel viewModel,
   ) {
-    final table = _inner.createComponent(componentContext, viewModel);
-    if (table == null || viewModel is! MarkdownTableViewModel) return null;
+    if (viewModel is! MarkdownTableViewModel) return null;
+    final inline = editable ? inlineEditing : null;
+    final table = inline == null
+        ? _inner.createComponent(componentContext, viewModel)
+        : MarkdownTableComponent(
+            componentKey: componentContext.componentKey,
+            viewModel: viewModel,
+            cellBuilder: inlineTableCellBuilder(inline, theme),
+          );
+    if (table == null) return null;
     final selection = viewModel.selection?.nodeSelection;
     final isSelected =
         selection is UpstreamDownstreamNodeSelection && !selection.isCollapsed;
@@ -470,7 +493,8 @@ class WonkyTableComponentBuilder implements ComponentBuilder {
     return Semantics(
       label: 'table, $columns columns, $rows rows',
       child: GestureDetector(
-        onDoubleTap: !editable || callbacks.onEditTable == null
+        onDoubleTap:
+            !editable || inline != null || callbacks.onEditTable == null
             ? null
             : () => callbacks.onEditTable!(viewModel.nodeId),
         child: _HoverChrome(

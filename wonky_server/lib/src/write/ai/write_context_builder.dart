@@ -60,7 +60,10 @@ abstract final class WriteContextBuilder {
   static const maxSelectionQuote = 500;
 
   /// Loads the head of [target].
-  static Future<WriteDocContext> load(Session session, WriteTarget target) async {
+  static Future<WriteDocContext> load(
+    Session session,
+    WriteTarget target,
+  ) async {
     final state = await HeadlessDocumentEditor.head(session, target.document);
     return fromContent(
       title: target.item.name,

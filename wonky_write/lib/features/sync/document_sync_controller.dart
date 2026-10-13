@@ -444,7 +444,8 @@ class DocumentSyncController {
   String? get sessionId => _conn?.sessionId;
 
   /// Whether a connection is established and initialized.
-  bool get isConnected => _conn?.initialized ?? false;
+  bool get isConnected =>
+      (_conn?.initialized ?? false) && !(_conn?.lost ?? true);
 
   SyncOtState get otState => _inflight == null
       ? SyncOtState.synchronized

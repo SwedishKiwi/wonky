@@ -7,7 +7,8 @@ import '../controller/editor_types.dart';
 import '../controller/write_editor_controller.dart';
 import '../mapping/wonky_schema.dart';
 
-/// A trigger being typed: `/query` (slash menu) or `@query` (mention picker).
+/// A trigger being typed: `/query` (slash menu), `@query` (mention picker)
+/// or `:query` (emoji suggestions).
 @immutable
 class TriggerQuery {
   const TriggerQuery({
@@ -17,7 +18,7 @@ class TriggerQuery {
     required this.end,
   });
 
-  /// `/` or `@`.
+  /// `/`, `@` or `:`.
   final String trigger;
 
   /// Text after the trigger.
@@ -59,31 +60,47 @@ class TriggerQueryTracker {
   /// The mention query at the caret, or `null`.
   final ValueNotifier<TriggerQuery?> mention = ValueNotifier(null);
 
+  /// The emoji query (`:smi`, at least 2 characters) at the caret, or `null`
+  /// (Write 04 §20.1).
+  final ValueNotifier<TriggerQuery?> emoji = ValueNotifier(null);
+
+  /// Whether the `:` emoji trigger is active.
+  bool emojiEnabled = true;
+
   int? _dismissedStart;
 
   static final _slash = RegExp(r'(?:^|[\s(\[{])(/[\w\-.#]{0,32})$');
   static final _mention = RegExp(
     r'(?:^|[\s(\[{])(@[^\s@()\[\]{}<>,;:!?"]{0,40})$',
   );
+  static final _emoji = RegExp(
+    r'(?:^|[\s(\[{])(:[\p{L}\p{N}_+\-]{2,30})$',
+    unicode: true,
+  );
 
   /// Hides the open picker until the caret leaves the query (Esc).
   void dismiss() {
-    _dismissedStart = slash.value?.start ?? mention.value?.start;
+    _dismissedStart =
+        slash.value?.start ?? mention.value?.start ?? emoji.value?.start;
     slash.value = null;
     mention.value = null;
+    emoji.value = null;
   }
 
   void _update() {
     final next = _compute();
     final slashQuery = next?.trigger == '/' ? next : null;
     final mentionQuery = next?.trigger == '@' ? next : null;
+    final emojiQuery = next?.trigger == ':' ? next : null;
     if (next == null || next.start != _dismissedStart) {
       if (next?.start != _dismissedStart) _dismissedStart = null;
       slash.value = _dismissedStart == null ? slashQuery : null;
       mention.value = _dismissedStart == null ? mentionQuery : null;
+      emoji.value = _dismissedStart == null ? emojiQuery : null;
     } else {
       slash.value = null;
       mention.value = null;
+      emoji.value = null;
     }
   }
 
@@ -106,7 +123,11 @@ class TriggerQueryTracker {
     final index = controller.mirror.indexOfNode(node.id);
     if (index < 0) return null;
     final nodeStart = controller.mirror.startOfIndex(index);
-    for (final (trigger, pattern) in [('/', _slash), ('@', _mention)]) {
+    for (final (trigger, pattern) in [
+      ('/', _slash),
+      ('@', _mention),
+      if (emojiEnabled) (':', _emoji),
+    ]) {
       final match = pattern.firstMatch(before);
       if (match == null) continue;
       final raw = match.group(1)!;
@@ -146,5 +167,6 @@ class TriggerQueryTracker {
     controller.removeListener(_update);
     slash.dispose();
     mention.dispose();
+    emoji.dispose();
   }
 }

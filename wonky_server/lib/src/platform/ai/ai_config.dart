@@ -153,10 +153,15 @@ class AiConfig {
         2,
       ),
       requestTimeout: Duration(
-        minutes: i('requestTimeoutMinutes', 'WONKY_AI_REQUEST_TIMEOUT_MINUTES', 10),
+        minutes: i(
+          'requestTimeoutMinutes',
+          'WONKY_AI_REQUEST_TIMEOUT_MINUTES',
+          10,
+        ),
       ),
       maxToolRounds: i('maxToolRounds', 'WONKY_AI_MAX_TOOL_ROUNDS', 30),
-      baseUrl: '${read('baseUrl', 'WONKY_AI_BASE_URL') ?? 'https://api.anthropic.com'}',
+      baseUrl:
+          '${read('baseUrl', 'WONKY_AI_BASE_URL') ?? 'https://api.anthropic.com'}',
     );
   }
 }

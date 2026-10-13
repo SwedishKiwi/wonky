@@ -119,10 +119,12 @@ class AssistantToolset {
   /// A toolset of [definitions] (sorted by API name: a deterministic order
   /// keeps the prompt cache prefix stable).
   factory AssistantToolset.of(List<McpToolDefinition> definitions) {
-    final built = <(McpToolDefinition, Map<String, Object?>, Set<String>, bool)>[];
+    final built =
+        <(McpToolDefinition, Map<String, Object?>, Set<String>, bool)>[];
     for (final d in definitions) {
       final schema = jsonDecode(jsonEncode(d.inputSchema.toJson())) as Map;
-      final props = (schema['properties'] as Map?)?.cast<String, Object?>() ??
+      final props =
+          (schema['properties'] as Map?)?.cast<String, Object?>() ??
           <String, Object?>{};
       final bound = <String>{
         for (final k in props.keys)
@@ -148,15 +150,15 @@ class AssistantToolset {
       built.add((d, strictOk ? _stripForStrict(out) : out, bound, strictOk));
     }
     // Strict budget: mutating tools first, then by name.
-    final strictNames = (built.where((b) => b.$4).toList()
-          ..sort((a, b) {
-            final ma = a.$1.annotations.readOnly ? 1 : 0;
-            final mb = b.$1.annotations.readOnly ? 1 : 0;
-            return ma != mb ? ma - mb : a.$1.name.compareTo(b.$1.name);
-          }))
-        .take(maxStrictTools)
-        .map((b) => b.$1.name)
-        .toSet();
+    final strictNames =
+        (built.where((b) => b.$4).toList()..sort((a, b) {
+              final ma = a.$1.annotations.readOnly ? 1 : 0;
+              final mb = b.$1.annotations.readOnly ? 1 : 0;
+              return ma != mb ? ma - mb : a.$1.name.compareTo(b.$1.name);
+            }))
+            .take(maxStrictTools)
+            .map((b) => b.$1.name)
+            .toSet();
     final tools = [
       for (final b in built)
         AssistantTool._(

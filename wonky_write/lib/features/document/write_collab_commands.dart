@@ -73,7 +73,8 @@ List<Command<CommandArgs>> writeCollabCommands(ShellServices services) {
       argsSchema: const JsonSchema.object(
         properties: {
           'offline': JsonSchema.boolean(
-            description: 'true = disconnect, false = reconnect; default: toggle.',
+            description:
+                'true = disconnect, false = reconnect; default: toggle.',
           ),
         },
       ),

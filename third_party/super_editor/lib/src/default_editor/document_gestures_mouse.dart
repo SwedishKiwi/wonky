@@ -22,6 +22,8 @@ import 'package:super_editor/src/infrastructure/multi_tap_gesture.dart';
 import 'package:super_editor/src/infrastructure/sliver_hybrid_stack.dart';
 
 import '../infrastructure/document_gestures_interaction_overrides.dart';
+// WONKY PATCH SE-6
+import 'content_drag.dart';
 
 /// Governs mouse gesture interaction with a document, such as scrolling
 /// a document with a scroll wheel, tapping to place a caret, and
@@ -52,6 +54,8 @@ class DocumentMouseInteractor extends StatefulWidget {
     required this.selectionNotifier,
     required this.selectionChanges,
     this.contentTapHandlers,
+    // WONKY PATCH SE-6
+    this.contentDragDelegate,
     required this.autoScroller,
     required this.fillViewport,
     this.showDebugPaint = false,
@@ -72,6 +76,12 @@ class DocumentMouseInteractor extends StatefulWidget {
   /// If a handler returns [TapHandlingInstruction.halt], no subsequent handlers
   /// nor the default tap behavior will be executed.
   final List<ContentTapDelegate>? contentTapHandlers;
+
+  // WONKY PATCH SE-6
+  /// Optional delegate that may take over a pan that starts on content, e.g.,
+  /// to drag the selected text to another place instead of starting a new
+  /// selection. See [ContentDragDelegate].
+  final ContentDragDelegate? contentDragDelegate;
 
   /// Auto-scrolling delegate.
   final AutoScrollController autoScroller;
@@ -112,6 +122,11 @@ class _DocumentMouseInteractorState extends State<DocumentMouseInteractor> with 
 
   /// Holds which kind of device started a pan gesture, e.g., a mouse or a trackpad.
   PointerDeviceKind? _panGestureDevice;
+
+  // WONKY PATCH SE-6: the pointer-down position of the current gesture, and
+  // whether the [ContentDragDelegate] owns the current pan.
+  Offset? _pointerDownGlobal;
+  bool _isContentDrag = false;
 
   late StreamSubscription<DocumentSelectionChange> _selectionSubscription;
 
@@ -563,6 +578,19 @@ class _DocumentMouseInteractorState extends State<DocumentMouseInteractor> with 
 
     _dragStartGlobal = details.globalPosition;
 
+    // WONKY PATCH SE-6: let the content drag delegate take over the pan.
+    final dragDelegate = widget.contentDragDelegate;
+    if (dragDelegate != null && !_isShiftPressed) {
+      final startGlobal = _pointerDownGlobal ?? details.globalPosition;
+      if (dragDelegate.onDragStart(_contentDragDetails(startGlobal))) {
+        _isContentDrag = true;
+        _dragEndGlobal = details.globalPosition;
+        widget.autoScroller.enableAutoScrolling();
+        dragDelegate.onDragUpdate(_contentDragDetails(details.globalPosition));
+        return;
+      }
+    }
+
     widget.autoScroller.enableAutoScrolling();
 
     if (_isShiftPressed) {
@@ -583,6 +611,16 @@ class _DocumentMouseInteractorState extends State<DocumentMouseInteractor> with 
     editorGesturesLog
         .info("Pan update on document, global offset: ${details.globalPosition}, device: $_panGestureDevice");
 
+    // WONKY PATCH SE-6
+    if (_isContentDrag) {
+      _dragEndGlobal = details.globalPosition;
+      widget.contentDragDelegate?.onDragUpdate(_contentDragDetails(details.globalPosition));
+      widget.autoScroller.setGlobalAutoScrollRegion(
+        Rect.fromLTWH(details.globalPosition.dx, details.globalPosition.dy, 1, 1),
+      );
+      return;
+    }
+
     setState(() {
       _dragEndGlobal = details.globalPosition;
 
@@ -596,12 +634,35 @@ class _DocumentMouseInteractorState extends State<DocumentMouseInteractor> with 
 
   void _onPanEnd(DragEndDetails details) {
     editorGesturesLog.info("Pan end on document, device: $_panGestureDevice");
+    // WONKY PATCH SE-6
+    if (_isContentDrag) {
+      _isContentDrag = false;
+      final endGlobal = _dragEndGlobal ?? details.globalPosition;
+      widget.contentDragDelegate?.onDragEnd(_contentDragDetails(endGlobal));
+    }
     _onDragEnd();
   }
 
   void _onPanCancel() {
     editorGesturesLog.info("Pan cancel on document");
+    // WONKY PATCH SE-6
+    if (_isContentDrag) {
+      _isContentDrag = false;
+      widget.contentDragDelegate?.onDragCancel();
+    }
     _onDragEnd();
+  }
+
+  // WONKY PATCH SE-6
+  ContentDragDetails _contentDragDetails(Offset globalOffset) {
+    final layout = _docLayout;
+    final layoutOffset = layout.getDocumentOffsetFromAncestorOffset(globalOffset);
+    return ContentDragDetails(
+      documentLayout: layout,
+      globalOffset: globalOffset,
+      layoutOffset: layoutOffset,
+      position: layout.getDocumentPositionNearestToOffset(layoutOffset),
+    );
   }
 
   void _onDragEnd() {
@@ -621,6 +682,12 @@ class _DocumentMouseInteractorState extends State<DocumentMouseInteractor> with 
   void _updateDragSelection() {
     if (_dragEndGlobal == null) {
       // User isn't dragging. No need to update drag selection.
+      return;
+    }
+    // WONKY PATCH SE-6: while auto-scrolling a content drag, report the new
+    // position under the (unmoved) pointer.
+    if (_isContentDrag) {
+      widget.contentDragDelegate?.onDragUpdate(_contentDragDetails(_dragEndGlobal!));
       return;
     }
 
@@ -802,6 +869,8 @@ Updating drag selection:
       children: [
         Listener(
           onPointerHover: _onMouseMove,
+          // WONKY PATCH SE-6
+          onPointerDown: (event) => _pointerDownGlobal = event.position,
           child: _buildCursorStyle(
             child: _buildGestureInput(
               child: const SizedBox(),

@@ -117,6 +117,10 @@ class WriteEditorController extends ChangeNotifier {
     debugLabel: 'write-document-layout',
   );
 
+  /// In-place table cell editing of the mounted editor widget (SE-4,
+  /// Write 04 §18.4); `null` while no editor is mounted.
+  InlineTableEditingHandle? tableEditing;
+
   /// The document layout, once the editor is laid out.
   DocumentLayout? get documentLayout =>
       documentLayoutKey.currentState as DocumentLayout?;
@@ -623,6 +627,15 @@ class SuggestionSession {
     _nodeIds = change.nodeIds;
     _selection = selection;
   }
+}
+
+/// What commands need from the in-place table editor (`write.table.editCell`).
+abstract interface class InlineTableEditingHandle {
+  /// Starts editing cell ([row], [column]) of the table [tableId].
+  bool activate(String tableId, int row, int column, {bool selectAll});
+
+  /// Stops editing (saving the cell).
+  void deactivate();
 }
 
 /// A notice for the UI (toast, announcement).

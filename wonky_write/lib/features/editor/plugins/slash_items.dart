@@ -50,6 +50,10 @@ class SlashHost {
     this.onTableInserted,
     this.onComment,
     this.onMention,
+    this.onAskAi,
+    this.onContinueWriting,
+    this.onEmoji,
+    this.onSpecialCharacter,
   });
 
   final VoidCallback? onInsertImage;
@@ -60,6 +64,18 @@ class SlashHost {
   final void Function(String tableId)? onTableInserted;
   final VoidCallback? onComment;
   final VoidCallback? onMention;
+
+  /// The inline AI prompt (`/ai`, Write 09 §5.3); null hides the AI items.
+  final VoidCallback? onAskAi;
+
+  /// Continue writing (`/ai continue`, Write 09 §5.4).
+  final VoidCallback? onContinueWriting;
+
+  /// The emoji picker (`/emoji`, Write 04 §20.1).
+  final VoidCallback? onEmoji;
+
+  /// The special characters dialog (`/special`, Write 04 §20.2).
+  final VoidCallback? onSpecialCharacter;
 }
 
 /// The slash menu items.
@@ -187,7 +203,48 @@ List<SlashItem> defaultSlashItems() => [
     aliases: const ['note'],
     run: (c, h) => h.onComment?.call(),
   ),
+  SlashItem(
+    id: 'emoji',
+    title: 'Emoji…',
+    group: SlashGroup.insert,
+    commandId: 'write.insert.emoji',
+    aliases: const ['smiley', 'emoticon'],
+    run: (c, h) => h.onEmoji?.call(),
+  ),
+  SlashItem(
+    id: 'specialCharacter',
+    title: 'Special characters…',
+    group: SlashGroup.insert,
+    commandId: 'write.insert.specialCharacter',
+    aliases: const ['special', 'symbol', 'character', 'unicode'],
+    run: (c, h) => h.onSpecialCharacter?.call(),
+  ),
+  SlashItem(
+    id: 'ai',
+    title: 'Ask AI…',
+    group: SlashGroup.insert,
+    commandId: 'write.ai.inline',
+    aliases: const ['ai', 'assistant', 'generate', 'write'],
+    run: (c, h) => h.onAskAi?.call(),
+  ),
+  SlashItem(
+    id: 'aiContinue',
+    title: 'Continue writing',
+    group: SlashGroup.insert,
+    commandId: 'write.ai.continue',
+    aliases: const ['ai continue', 'continue', 'ai'],
+    run: (c, h) => h.onContinueWriting?.call(),
+  ),
 ];
+
+/// Whether [item] is available with [host] (AI items need AI).
+bool slashItemAvailable(SlashItem item, SlashHost? host) => switch (item.id) {
+  'ai' => host?.onAskAi != null,
+  'aiContinue' => host?.onContinueWriting != null,
+  'emoji' => host?.onEmoji != null,
+  'specialCharacter' => host?.onSpecialCharacter != null,
+  _ => true,
+};
 
 /// Filters and ranks [items] for [query] (prefix match first, then contains,
 /// then group order).

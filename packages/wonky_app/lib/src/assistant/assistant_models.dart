@@ -1,0 +1,204 @@
+import 'dart:convert';
+
+import 'package:flutter/widgets.dart';
+
+/// One tool chip of an assistant reply ("Edited 3 paragraphs").
+class AssistantActivity {
+  AssistantActivity({
+    required this.toolUseId,
+    required this.toolName,
+    required this.summary,
+    this.running = false,
+    this.error = false,
+    this.changeId,
+    this.rangeStart,
+    this.rangeLength,
+    this.revision,
+  });
+
+  factory AssistantActivity.fromJson(Map<String, Object?> json) =>
+      AssistantActivity(
+        toolUseId: '${json['toolUseId']}',
+        toolName: '${json['toolName']}',
+        summary: '${json['summary'] ?? ''}',
+        error: json['error'] == true,
+        changeId: json['changeId'] as String?,
+        rangeStart: (json['rangeStart'] as num?)?.toInt(),
+        rangeLength: (json['rangeLength'] as num?)?.toInt(),
+        revision: (json['revision'] as num?)?.toInt(),
+      );
+
+  final String toolUseId;
+  final String toolName;
+  String summary;
+  bool running;
+  bool error;
+  String? changeId;
+  int? rangeStart;
+  int? rangeLength;
+  int? revision;
+
+  /// Whether the call changed the document (Show / Undo apply).
+  bool get changed => changeId != null;
+
+  /// Whether it has a range to reveal.
+  bool get hasRange => rangeStart != null;
+}
+
+/// The state of an assistant reply.
+enum AssistantReplyStatus { streaming, done, stopped, refused, cutOff, failed }
+
+/// A pending destructive-change confirmation.
+class AssistantConfirmation {
+  const AssistantConfirmation({
+    required this.runId,
+    required this.confirmationId,
+    required this.summary,
+  });
+
+  final String runId;
+  final String confirmationId;
+  final String summary;
+}
+
+/// An entry of the message list.
+sealed class AssistantEntry {
+  AssistantEntry(this.key);
+
+  /// Stable widget key.
+  final String key;
+}
+
+/// A message of the user.
+class AssistantUserEntry extends AssistantEntry {
+  AssistantUserEntry(super.key, this.text);
+  final String text;
+}
+
+/// One assistant run: streamed Markdown plus tool chips.
+class AssistantReplyEntry extends AssistantEntry {
+  AssistantReplyEntry(
+    super.key, {
+    this.runId,
+    String markdown = '',
+    this.status = AssistantReplyStatus.streaming,
+  }) : _markdown = StringBuffer(markdown);
+
+  String? runId;
+  final StringBuffer _markdown;
+  AssistantReplyStatus status;
+  final List<AssistantActivity> activities = [];
+
+  /// The latest progress note while tools run.
+  String? progress;
+  String? error;
+  AssistantConfirmation? confirmation;
+
+  /// Whether the run's changes were undone from the panel.
+  bool undone = false;
+
+  String get markdown => _markdown.toString();
+
+  void append(String text) => _markdown.write(text);
+
+  /// Separates the text of two model rounds.
+  void paragraphBreak() {
+    final s = _markdown.toString();
+    if (s.isNotEmpty && !s.endsWith('\n\n')) {
+      _markdown.write(s.endsWith('\n') ? '\n' : '\n\n');
+    }
+  }
+
+  bool get streaming => status == AssistantReplyStatus.streaming;
+
+  bool get hasChanges => activities.any((a) => a.changed);
+}
+
+/// An action button of a result card ("Insert at cursor").
+class AssistantResultAction {
+  const AssistantResultAction({
+    required this.label,
+    required this.onPressed,
+    this.icon,
+    this.id,
+  });
+
+  final String label;
+  final IconData? icon;
+  final String? id;
+  final void Function(String markdown) onPressed;
+}
+
+/// A result shown in the panel without a chat turn (summaries, outlines,
+/// explanations, proofreading).
+class AssistantResultEntry extends AssistantEntry {
+  AssistantResultEntry(
+    super.key, {
+    required this.title,
+    this.actions = const [],
+    this.builder,
+  });
+
+  final String title;
+  final StringBuffer _markdown = StringBuffer();
+  AssistantReplyStatus status = AssistantReplyStatus.streaming;
+  String? error;
+  final List<AssistantResultAction> actions;
+
+  /// A custom body (the proofreading issue list) instead of Markdown.
+  final WidgetBuilder? builder;
+
+  String get markdown => _markdown.toString();
+  set markdown(String v) {
+    _markdown
+      ..clear()
+      ..write(v);
+  }
+
+  void append(String t) => _markdown.write(t);
+}
+
+/// A context chip of the composer ("Selection: 2 paragraphs").
+class AssistantContextChip {
+  const AssistantContextChip({
+    required this.id,
+    required this.label,
+    this.icon,
+  });
+
+  final String id;
+  final String label;
+  final IconData? icon;
+}
+
+/// A quick prompt under the composer.
+class AssistantQuickPrompt {
+  const AssistantQuickPrompt({
+    required this.label,
+    required this.prompt,
+    this.icon,
+    this.includeComments = false,
+  });
+
+  final String label;
+  final String prompt;
+  final IconData? icon;
+
+  /// Adds the open comments to the context ("Address comments").
+  final bool includeComments;
+}
+
+/// Decodes `toolCallsJson`.
+List<AssistantActivity> decodeActivities(String? json) {
+  if (json == null || json.isEmpty) return [];
+  try {
+    final list = jsonDecode(json);
+    if (list is! List) return [];
+    return [
+      for (final e in list)
+        if (e is Map) AssistantActivity.fromJson(e.cast<String, Object?>()),
+    ];
+  } on FormatException {
+    return [];
+  }
+}

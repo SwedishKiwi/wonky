@@ -304,9 +304,9 @@ class WriteImageServices extends EditorImageServices {
     } catch (_) {}
     if (queue != null && fileUuid != null && queue.contains(fileUuid)) {
       // Inserted on this device and not uploaded yet: the local bytes.
-      return queue.bytesOf(fileUuid).then(
-        (b) => b == null ? null : MemoryImage(b),
-      );
+      return queue
+          .bytesOf(fileUuid)
+          .then((b) => b == null ? null : MemoryImage(b));
     }
     final cached = _urls[src];
     final now = clock.now();

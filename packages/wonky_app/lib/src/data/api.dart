@@ -69,12 +69,12 @@ class Api {
   ]) => simulatedOffline
       ? Stream<T>.error(const OfflineException('simulated offline'))
       : client.callStreamingServerEndpoint<Stream<T>, T>(
-            endpoint,
-            method,
-            args,
-            streams,
-          )
-          as Stream<T>;
+              endpoint,
+              method,
+              args,
+              streams,
+            )
+            as Stream<T>;
 }
 
 /// Whether [e] means "the server is unreachable".

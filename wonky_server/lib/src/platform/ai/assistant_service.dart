@@ -395,7 +395,7 @@ abstract final class AssistantService {
     return McpToolException(
       'needs_confirmation',
       'This change deletes $deleted characters ($pct% of the document). '
-      'The user must confirm it.',
+          'The user must confirm it.',
       details: {
         'deleted_chars': deleted,
         'percent': pct,
@@ -484,7 +484,9 @@ class _Loop {
       return;
     }
     final role = target.role;
-    final applyMode = role < Role.editor ? AiApplyMode.suggest : hints.applyMode;
+    final applyMode = role < Role.editor
+        ? AiApplyMode.suggest
+        : hints.applyMode;
     final toolset = AssistantToolset.write(
       executor,
       canDecideSuggestions: role >= Role.editor,
@@ -533,6 +535,7 @@ class _Loop {
         feature: 'chat',
       );
       AnthropicMessage msg;
+      final progress = <int, StringBuffer>{};
       try {
         msg = await client.send(
           request,
@@ -541,8 +544,13 @@ class _Loop {
             _answer.write(t);
             emit(_ev(AssistantEventType.textDelta, text: t));
           },
-          onThinking: (_, t) {
-            if (t.isNotEmpty) emit(_ev(AssistantEventType.progress, text: t));
+          onThinking: (i, t) {
+            // Progress notes (display "updates"): the whole note so far.
+            final note = (progress[i] ??= StringBuffer())..write(t);
+            final text = note.toString().trim();
+            if (text.isNotEmpty) {
+              emit(_ev(AssistantEventType.progress, text: text));
+            }
           },
         );
       } on AiCancelledException {
@@ -579,7 +587,9 @@ class _Loop {
           stop: 'refusal',
           replay: false,
         );
-        emit(_ev(AssistantEventType.refusal, text: AssistantService.refusalText));
+        emit(
+          _ev(AssistantEventType.refusal, text: AssistantService.refusalText),
+        );
         stoppedEarly = false;
         break;
       }
@@ -725,8 +735,7 @@ class _Loop {
             applyMode: applyMode,
             role: target.role.name,
             selection: selection,
-            caretHeadingPath: hints.caretHeadingPath ??
-                (caret == null ? null : WriteContextBuilder.headingPath(ctx, caret)),
+            caretHeadingPath: hints.caretHeadingPath ?? (caret == null ? null : WriteContextBuilder.headingPath(ctx, caret)),
             localTime: hints.localTime,
             comments: comments,
           )}',
@@ -776,7 +785,10 @@ class _Loop {
     return row.id!;
   }
 
-  Future<void> _setToolCalls(int messageId, List<AssistantToolActivity> a) async {
+  Future<void> _setToolCalls(
+    int messageId,
+    List<AssistantToolActivity> a,
+  ) async {
     if (a.isEmpty) return;
     final row = await AssistantMessage.db.findById(session, messageId);
     if (row == null) return;

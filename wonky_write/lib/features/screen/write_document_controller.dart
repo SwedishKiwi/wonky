@@ -48,11 +48,17 @@ class WriteViewPrefs extends ChangeNotifier {
   bool _commentMargin = true;
   bool _blockHandles = true;
   bool _selectionToolbar = true;
+  bool _focusMode = false;
+  bool _typewriter = false;
 
   bool get showWordCount => _wordCount;
   bool get showCommentMargin => _commentMargin;
   bool get showBlockHandles => _blockHandles;
   bool get showSelectionToolbar => _selectionToolbar;
+
+  /// Focus mode and typewriter scrolling (Write 04 §30).
+  bool get focusMode => _focusMode;
+  bool get typewriter => _typewriter;
 
   Future<void> load() async {
     final s = _store;
@@ -69,6 +75,16 @@ class WriteViewPrefs extends ChangeNotifier {
     _commentMargin = await b('commentMargin');
     _blockHandles = await b('blockHandles');
     _selectionToolbar = await b('selectionToolbar');
+    Future<bool> off(String k) async {
+      try {
+        return (await s.read('write.view.$k')) as bool? ?? false;
+      } catch (_) {
+        return false;
+      }
+    }
+
+    _focusMode = await off('focusMode');
+    _typewriter = await off('typewriter');
     notifyListeners();
   }
 
@@ -82,6 +98,8 @@ class WriteViewPrefs extends ChangeNotifier {
   set showBlockHandles(bool v) => _set('blockHandles', _blockHandles = v);
   set showSelectionToolbar(bool v) =>
       _set('selectionToolbar', _selectionToolbar = v);
+  set focusMode(bool v) => _set('focusMode', _focusMode = v);
+  set typewriter(bool v) => _set('typewriter', _typewriter = v);
 }
 
 /// The open Write document as the shell sees it (suite 03, Write 04 §2.1):
@@ -123,6 +141,7 @@ class WriteDocumentController extends DocumentController {
     editor.addListener(_onEditor);
     editor.view.addListener(notifyListeners);
     viewPrefs.addListener(notifyListeners);
+    viewPrefs.addListener(_applyViewModes);
     documentTheme.addListener(_onTheme);
     services.prefs.addListener(_onPrefs);
     unawaited(viewPrefs.load());
@@ -284,6 +303,13 @@ class WriteDocumentController extends DocumentController {
         'date': HeaderFooterTokens.mediumDate(DateTime.now(), language ?? 'en'),
       },
     );
+  }
+
+  /// Mirrors the per-user view modes into the editor's view state.
+  void _applyViewModes() {
+    view
+      ..focusMode = viewPrefs.focusMode
+      ..typewriter = viewPrefs.typewriter;
   }
 
   void _onPrefs() {

@@ -1,0 +1,10 @@
+{
+  "dictionaries": [
+    {"tag": "en-US", "name": "English (US)", "aff": "en-US.aff", "dic": "en-US.dic", "license": "MIT AND BSD"},
+    {"tag": "en-GB", "name": "English (UK)", "aff": "en-GB.aff", "dic": "en-GB.dic", "license": "MIT AND BSD"},
+    {"tag": "fr-FR", "name": "Français (France)", "aff": "fr-FR.aff", "dic": "fr-FR.dic", "license": "MPL-2.0"},
+    {"tag": "es-ES", "name": "Español (España)", "aff": "es-ES.aff", "dic": "es-ES.dic", "license": "LGPL-3.0-or-later OR MPL-1.1"},
+    {"tag": "nl-NL", "name": "Nederlands", "aff": "nl-NL.aff", "dic": "nl-NL.dic", "license": "BSD-3-Clause"},
+    {"tag": "sv-SE", "name": "Svenska", "aff": "sv-SE.aff", "dic": "sv-SE.dic", "license": "LGPL-3.0"}
+  ]
+}

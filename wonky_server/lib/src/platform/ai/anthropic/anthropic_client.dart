@@ -182,9 +182,7 @@ class HttpAnthropicClient extends AnthropicClient {
         if (betas.isNotEmpty) req.headers['anthropic-beta'] = betas.join(',');
         http.StreamedResponse resp;
         try {
-          resp = await client!
-              .send(req)
-              .timeout(const Duration(seconds: 60));
+          resp = await client!.send(req).timeout(const Duration(seconds: 60));
         } on Object catch (e) {
           client?.close();
           if (closed || (cancel?.isCancelled ?? false)) break;
@@ -302,7 +300,9 @@ class HttpAnthropicClient extends AnthropicClient {
 
   Future<void> _backoff(int attempt, Duration? after, String why) async {
     final d = retry.delay(attempt, retryAfter: after);
-    log?.call('Anthropic request retry ${attempt + 1} in ${d.inMilliseconds} ms ($why)');
+    log?.call(
+      'Anthropic request retry ${attempt + 1} in ${d.inMilliseconds} ms ($why)',
+    );
     await _sleep(d);
   }
 

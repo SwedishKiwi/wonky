@@ -3,6 +3,7 @@ import 'dart:convert';
 
 import 'package:dart_quill_delta/dart_quill_delta.dart';
 import 'package:flutter/foundation.dart';
+import 'package:wonky_client/wonky_client.dart' show DriveItemView;
 
 import '../sync/sync_persistence.dart';
 import 'write_local_store.dart';
@@ -23,6 +24,7 @@ class SqliteSyncPersistence implements SyncPersistence {
     int loggedOps = 0,
     Map<String, String> storedOutbox = const {},
     this.onWritten,
+    this.item,
   }) : _logged = loggedOps,
        _stored = {...storedOutbox};
 
@@ -33,6 +35,9 @@ class SqliteSyncPersistence implements SyncPersistence {
 
   /// Called after every successful write (offline availability, usage).
   final VoidCallback? onWritten;
+
+  /// The drive item (title, pin, offline open); stored with snapshots.
+  DriveItemView? item;
 
   SyncCapture Function()? _capture;
   List<(int, Delta)> _ops = [];
@@ -104,6 +109,7 @@ class SqliteSyncPersistence implements SyncPersistence {
   }
 
   Future<void> _write({bool forceCompact = false}) async {
+    if (_discarded) return;
     final capture = _capture?.call();
     if (capture == null) return;
     final ops = _ops;
@@ -147,6 +153,7 @@ class SqliteSyncPersistence implements SyncPersistence {
         deletes: deletes,
         replaceOutbox: full,
         deltaJson: jsons,
+        item: item,
       );
       _stored = next;
       _logged = compact ? 0 : _logged + ops.length;
@@ -169,6 +176,15 @@ class SqliteSyncPersistence implements SyncPersistence {
       }
     }
   }
+
+  /// Stops writing (the local copy is being deleted).
+  void discard() {
+    _discarded = true;
+    _closed = true;
+    _dirty = false;
+  }
+
+  bool _discarded = false;
 
   @override
   Future<void> close() async {

@@ -341,10 +341,23 @@ class MarkdownTableComponent extends StatefulWidget {
     super.key,
     required this.componentKey,
     required this.viewModel,
+    // WONKY PATCH SE-4
+    this.cellBuilder,
   });
 
   final GlobalKey componentKey;
   final MarkdownTableViewModel viewModel;
+
+  // WONKY PATCH SE-4: editable tables.
+  /// Builds the content of a cell in place of the default read-only text, or
+  /// returns `null` to keep the default.
+  ///
+  /// When a [cellBuilder] is given, the table's cells receive pointer events
+  /// (they are otherwise ignored so that the document's own gestures select
+  /// the table as a block). Apps use it to edit cells in place: a tapped cell
+  /// becomes an editor, Tab moves between cells, and each edit is applied to
+  /// the document as a node replacement.
+  final TableCellContentBuilder? cellBuilder;
 
   @override
   State<MarkdownTableComponent> createState() => _MarkdownTableComponentState();
@@ -390,6 +403,24 @@ class _MarkdownTableComponentState extends State<MarkdownTableComponent> {
   Widget _buildTableComponent({
     required Widget table,
   }) {
+    // WONKY PATCH SE-4: with a cell builder the cells take pointer events, so
+    // the selection highlight is painted without SelectableBox (which ignores
+    // pointers).
+    if (widget.cellBuilder != null) {
+      final selection = widget.viewModel.selection?.nodeSelection;
+      final isSelected = selection is UpstreamDownstreamNodeSelection && !selection.isCollapsed;
+      return DecoratedBox(
+        position: DecorationPosition.foreground,
+        decoration: BoxDecoration(
+          color: isSelected ? widget.viewModel.selectionColor.withValues(alpha: 0.5) : const Color(0x00000000),
+        ),
+        child: BoxComponent(
+          key: widget.componentKey,
+          opacity: widget.viewModel.opacity,
+          child: table,
+        ),
+      );
+    }
     return MouseRegion(
       cursor: SystemMouseCursors.basic,
       hitTestBehavior: HitTestBehavior.translucent,
@@ -448,8 +479,8 @@ class _MarkdownTableComponentState extends State<MarkdownTableComponent> {
   TableRow _buildRow(BuildContext context, List<MarkdownTableCellViewModel> row, int rowIndex) {
     return TableRow(
       children: [
-        for (final cell in row) //
-          _buildCell(context, cell),
+        for (int columnIndex = 0; columnIndex < row.length; columnIndex += 1) //
+          _buildCell(context, row[columnIndex], rowIndex, columnIndex),
       ],
     );
   }
@@ -457,19 +488,35 @@ class _MarkdownTableComponentState extends State<MarkdownTableComponent> {
   Widget _buildCell(
     BuildContext context,
     MarkdownTableCellViewModel cell,
+    // WONKY PATCH SE-4
+    int rowIndex,
+    int columnIndex,
   ) {
+    final Widget defaultContent = SuperText(
+      richText: cell.text.computeInlineSpan(
+        context,
+        cell.textStyleBuilder,
+        widget.viewModel.inlineWidgetBuilders,
+      ),
+      textAlign: cell.textAlign,
+    );
+    // WONKY PATCH SE-4
+    final content = widget.cellBuilder?.call(
+          context,
+          TableCellBuildContext(
+            tableNodeId: widget.viewModel.nodeId,
+            rowIndex: rowIndex,
+            columnIndex: columnIndex,
+            cell: cell,
+            defaultContent: defaultContent,
+          ),
+        ) ??
+        defaultContent;
     return DecoratedBox(
       decoration: cell.decoration ?? const BoxDecoration(),
       child: Padding(
         padding: cell.padding,
-        child: SuperText(
-          richText: cell.text.computeInlineSpan(
-            context,
-            cell.textStyleBuilder,
-            widget.viewModel.inlineWidgetBuilders,
-          ),
-          textAlign: cell.textAlign,
-        ),
+        child: content,
       ),
     );
   }
@@ -577,4 +624,40 @@ class TableStyles {
 
   /// Applies padding to each cell in the table.
   static const String cellPadding = 'tableCellPadding';
+}
+
+// WONKY PATCH SE-4: editable tables.
+
+/// Builds the content of one table cell (see [MarkdownTableComponent.cellBuilder]).
+///
+/// Returning `null` keeps [TableCellBuildContext.defaultContent].
+typedef TableCellContentBuilder = Widget? Function(BuildContext context, TableCellBuildContext cell);
+
+/// What a [TableCellContentBuilder] knows about the cell it builds.
+class TableCellBuildContext {
+  const TableCellBuildContext({
+    required this.tableNodeId,
+    required this.rowIndex,
+    required this.columnIndex,
+    required this.cell,
+    required this.defaultContent,
+  });
+
+  /// The id of the [TableBlockNode].
+  final String tableNodeId;
+
+  /// The row of the cell; `0` is the header row.
+  final int rowIndex;
+
+  /// The column of the cell.
+  final int columnIndex;
+
+  /// The styled view model of the cell (text, alignment, text style builder).
+  final MarkdownTableCellViewModel cell;
+
+  /// The read-only rendering of the cell's text.
+  final Widget defaultContent;
+
+  /// Whether the cell is in the header row.
+  bool get isHeader => rowIndex == 0;
 }

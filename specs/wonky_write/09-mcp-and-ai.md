@@ -365,6 +365,16 @@ adds `wonky_server/lib/src/write/ai/` (`write_context_builder.dart`, `write_prom
 `inline_rewrite_service.dart`, `proofread_service.dart`) and client
 `wonky_write/lib/features/ai/` (preview overlay, issue list, commands).
 
+*As built:* the client side of the undo grouping is `AiUndoGrouping`
+(`wonky_write/lib/features/ai/ai_undo_grouping.dart`, used by `WriteDocumentSession`): ops of a
+run fold into one step while it is the top of the stack (a local edit in between starts a new
+step for the rest of the run); the step is relabelled "AI: <summary>" when the run ends. The
+preview card tracks its range by the anchored text (moved text is found again; changed text
+sets "The original text changed"). Continue writing shows the continuation in a ghost card at
+the caret (Tab/Enter accept, Esc discards, typing discards and types) rather than inline in the
+text layout. The destructive guard exempts documents shorter than 400 characters from the 30 %
+rule. Commands live in `wonky_write/lib/features/ai/ai_commands.dart`.
+
 ### 5.1 Model usage
 
 | Feature | Model / effort | Streaming | Tools |

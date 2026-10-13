@@ -109,7 +109,9 @@ class SseScript {
         }),
       );
     }
-    b.write(_event('content_block_stop', {'type': 'content_block_stop', 'index': i}));
+    b.write(
+      _event('content_block_stop', {'type': 'content_block_stop', 'index': i}),
+    );
     _blocks.add(b.toString());
     return this;
   }
@@ -121,7 +123,11 @@ class SseScript {
       _event('content_block_start', {
             'type': 'content_block_start',
             'index': i,
-            'content_block': {'type': 'thinking', 'thinking': '', 'signature': ''},
+            'content_block': {
+              'type': 'thinking',
+              'thinking': '',
+              'signature': '',
+            },
           }) +
           _event('content_block_delta', {
             'type': 'content_block_delta',
@@ -133,7 +139,10 @@ class SseScript {
             'index': i,
             'delta': {'type': 'signature_delta', 'signature': signature},
           }) +
-          _event('content_block_stop', {'type': 'content_block_stop', 'index': i}),
+          _event('content_block_stop', {
+            'type': 'content_block_stop',
+            'index': i,
+          }),
     );
     return this;
   }
@@ -172,7 +181,9 @@ class SseScript {
         }),
       );
     }
-    b.write(_event('content_block_stop', {'type': 'content_block_stop', 'index': i}));
+    b.write(
+      _event('content_block_stop', {'type': 'content_block_stop', 'index': i}),
+    );
     _blocks.add(b.toString());
     return this;
   }
@@ -190,7 +201,10 @@ class SseScript {
               'to': {'model': to},
             },
           }) +
-          _event('content_block_stop', {'type': 'content_block_stop', 'index': i}),
+          _event('content_block_stop', {
+            'type': 'content_block_stop',
+            'index': i,
+          }),
     );
     return this;
   }

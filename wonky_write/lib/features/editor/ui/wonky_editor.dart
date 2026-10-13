@@ -14,18 +14,25 @@ import '../components/editor_services.dart';
 import '../components/wonky_components.dart';
 import '../controller/editor_types.dart';
 import '../controller/write_editor_controller.dart';
+import '../dnd/block_drag.dart';
+import '../dnd/drop_indicator.dart';
+import '../dnd/external_drop.dart';
+import '../dnd/text_drag.dart';
 import '../keyboard/editor_keyboard.dart';
 import '../layers/editor_layers.dart';
 import '../mapping/delta_document_mapper.dart';
 import '../model/document_queries.dart';
 import '../pagination/pagination.dart';
+import '../paste/clipboard_codec.dart';
 import '../paste/editor_clipboard.dart';
 import '../plugins/slash_items.dart';
 import '../plugins/trigger_queries.dart';
 import '../popovers/editor_popovers.dart';
 import '../styles/editor_theme.dart';
+import '../styles/focus_mode.dart';
 import '../styles/style_phases.dart';
 import '../styles/write_stylesheet.dart';
+import '../tables/inline_table_editing.dart';
 
 /// The Write document editor surface (Write 04): `SuperEditor` (Editing,
 /// Suggesting) or `SuperReader` (Viewing, suggestion previews) over the
@@ -56,6 +63,11 @@ class WonkyEditor extends StatefulWidget {
     this.autofocus = false,
     this.scrollController,
     this.hint = 'Type / for commands, or just start writing',
+    this.extraStylePhases = const [],
+    this.emojiSuggestions,
+    this.onDropFiles,
+    this.inlineTableEditing = true,
+    this.externalDrops,
   });
 
   final WriteEditorController controller;
@@ -104,6 +116,23 @@ class WonkyEditor extends StatefulWidget {
   final ScrollController? scrollController;
   final String hint;
 
+  /// More style phases (e.g. the spellcheck underlines, Write 04 §28.2).
+  final List<SingleColumnLayoutStylePhase> extraStylePhases;
+
+  /// Emoji for a `:query` (Write 04 §20.1); `null` disables the trigger.
+  final EmojiSuggester? emojiSuggestions;
+
+  /// Files dropped from the OS before the block at `blockIndex` (Write 04
+  /// §24): the host uploads images and imports documents. Text and HTML
+  /// drops are pasted by the editor itself.
+  final void Function(List<DroppedFile> files, int blockIndex)? onDropFiles;
+
+  /// In-place table cell editing (SE-4, Write 04 §18.4).
+  final bool inlineTableEditing;
+
+  /// Source of OS drops (defaults to the platform's; tests inject one).
+  final ExternalDropSource? externalDrops;
+
   @override
   State<WonkyEditor> createState() => WonkyEditorState();
 }
@@ -121,6 +150,20 @@ class WonkyEditorState extends State<WonkyEditor> {
   final _direction = TextDirectionStylePhase();
   final _slashPicker = PickerController<SlashItem>();
   final _mentionPicker = PickerController<MentionCandidate>();
+  final _emojiPicker = PickerController<EmojiSuggestion>();
+  final _focusPhase = FocusModeStylePhase();
+  final _dropIndicator = DropIndicator();
+  final _outerFocus = FocusNode(
+    debugLabel: 'write-editor-host',
+    canRequestFocus: false,
+    skipTraversal: true,
+  );
+  late TextDragController _textDrag;
+  late BlockDragController _blockDrag;
+  late InlineTableEditing _tables;
+  ExternalDropSource? _drops;
+  DateTime _lastKeyAt = DateTime.fromMillisecondsSinceEpoch(0);
+  bool _typewriterScheduled = false;
   final _slashItems = defaultSlashItems();
   final _hoveredNode = ValueNotifier<String?>(null);
   final _linkCard = ValueNotifier<LinkRun?>(null);
@@ -144,6 +187,18 @@ class WonkyEditorState extends State<WonkyEditor> {
   /// The pagination state (page count for the status bar).
   PaginationController get pagination => _pagination;
 
+  /// In-place table cell editing (SE-4).
+  InlineTableEditing get tableEditing => _tables;
+
+  /// Drag and drop of the selection (Write 04 §24).
+  TextDragController get textDrag => _textDrag;
+
+  /// Block drag via the handle (Write 04 §22.5).
+  BlockDragController get blockDrag => _blockDrag;
+
+  /// The current drop indicator.
+  DropIndicator get dropIndicator => _dropIndicator;
+
   @override
   void initState() {
     super.initState();
@@ -156,20 +211,54 @@ class WonkyEditorState extends State<WonkyEditor> {
     _clipboard =
         widget.clipboard ??
         EditorClipboard(controller: controller, commands: _commands);
-    _triggers = TriggerQueryTracker(controller);
+    _triggers = TriggerQueryTracker(controller)
+      ..emojiEnabled = widget.emojiSuggestions != null;
     _triggers.slash.addListener(_onSlash);
     _triggers.mention.addListener(_onMention);
+    _triggers.emoji.addListener(_onEmoji);
+    _textDrag = TextDragController(
+      controller: controller,
+      commands: _commands,
+      indicator: _dropIndicator,
+    );
+    _blockDrag = BlockDragController(
+      controller: controller,
+      commands: _commands,
+      indicator: _dropIndicator,
+      scrollController: _scrollController,
+    );
+    _tables = InlineTableEditing(
+      controller: controller,
+      commands: _commands,
+      onUndo: widget.shortcutCallbacks?.onUndo,
+      onRedo: widget.shortcutCallbacks?.onRedo,
+    )..focusParent = _outerFocus;
+    controller.tableEditing = _tables;
     controller.addListener(_onControllerChanged);
     controller.view.addListener(_onViewChanged);
+    controller.composer.selectionNotifier.addListener(_onSelection);
     controller.notices.listen(_onNotice);
+    _drops = widget.externalDrops ?? ExternalDropSource.platform();
+    _drops!.attach(
+      onOver: _onExternalOver,
+      onLeave: _dropIndicator.clear,
+      onDrop: _onExternalDrop,
+    );
   }
 
   void _detach(WriteEditorController old) {
     _triggers.slash.removeListener(_onSlash);
     _triggers.mention.removeListener(_onMention);
+    _triggers.emoji.removeListener(_onEmoji);
     _triggers.dispose();
+    _textDrag.cancel();
+    _blockDrag.dispose();
+    if (identical(old.tableEditing, _tables)) old.tableEditing = null;
+    _tables.dispose();
+    _drops?.detach();
     old.removeListener(_onControllerChanged);
     old.view.removeListener(_onViewChanged);
+    old.composer.selectionNotifier.removeListener(_onSelection);
   }
 
   @override
@@ -191,6 +280,10 @@ class WonkyEditorState extends State<WonkyEditor> {
     _pagination.dispose();
     _slashPicker.dispose();
     _mentionPicker.dispose();
+    _emojiPicker.dispose();
+    _focusPhase.dispose();
+    _dropIndicator.dispose();
+    _outerFocus.dispose();
     _hoveredNode.dispose();
     _linkCard.dispose();
     if (widget.scrollController == null) _scrollController.dispose();
@@ -230,7 +323,10 @@ class WonkyEditorState extends State<WonkyEditor> {
     _slashPicker.items = query == null
         ? const []
         : filterSlashItems(
-            _slashItems,
+            [
+              for (final i in _slashItems)
+                if (slashItemAvailable(i, widget.slashHost)) i,
+            ],
             query.query,
             mode: controller.mode,
           ).take(10).toList();
@@ -250,6 +346,27 @@ class WonkyEditorState extends State<WonkyEditor> {
     if (!mounted || request != _mentionRequest) return;
     _mentionPicker.items = candidates.take(8).toList();
     setState(() {});
+  }
+
+  void _onEmoji() {
+    final query = _triggers.emoji.value;
+    final suggest = widget.emojiSuggestions;
+    _emojiPicker.items = query == null || suggest == null
+        ? const []
+        : suggest(query.query).take(8).toList();
+    if (mounted) setState(() {});
+  }
+
+  void _chooseEmoji(EmojiSuggestion item) {
+    final query = _triggers.emoji.value;
+    if (query == null) return;
+    _commands.replaceRangeWithTextLabelled(
+      query.start,
+      query.end - query.start,
+      item.emoji,
+      label: 'Insert emoji',
+    );
+    _triggers.dismiss();
   }
 
   void _chooseSlash(SlashItem item) {
@@ -280,6 +397,23 @@ class WonkyEditorState extends State<WonkyEditor> {
   }
 
   bool _popoverKeys(KeyEvent event) {
+    _lastKeyAt = DateTime.now();
+    if (event is KeyDownEvent &&
+        event.logicalKey == LogicalKeyboardKey.escape &&
+        _textDrag.isDragging) {
+      _textDrag.cancel();
+      return true;
+    }
+    if (_triggers.emoji.value != null && _emojiPicker.items.isNotEmpty) {
+      if (_emojiPicker.handleKey(
+        event,
+        onChoose: _chooseEmoji,
+        onClose: _triggers.dismiss,
+      )) {
+        return true;
+      }
+    }
+    if (_tableKeys(event)) return true;
     if (_triggers.slash.value != null && _slashPicker.items.isNotEmpty) {
       return _slashPicker.handleKey(
         event,
@@ -310,6 +444,149 @@ class WonkyEditorState extends State<WonkyEditor> {
   }
 
   // ---------------------------------------------------------------------------
+  // Tables (SE-4), focus mode and typewriter scrolling (§18.4, §30).
+
+  /// Enter or F2 on a selected table starts editing its first cell.
+  bool _tableKeys(KeyEvent event) {
+    if (event is! KeyDownEvent || !widget.inlineTableEditing) return false;
+    final key = event.logicalKey;
+    if (key != LogicalKeyboardKey.enter && key != LogicalKeyboardKey.f2) {
+      return false;
+    }
+    final keyboard = HardwareKeyboard.instance;
+    if (keyboard.isShiftPressed ||
+        keyboard.isAltPressed ||
+        keyboard.isMetaPressed ||
+        keyboard.isControlPressed) {
+      return false;
+    }
+    final selection = controller.composer.selection;
+    if (selection == null ||
+        selection.isCollapsed ||
+        selection.base.nodeId != selection.extent.nodeId) {
+      return false;
+    }
+    final node = controller.document.getNodeById(selection.base.nodeId);
+    if (node is! TableBlockNode || !_tables.canEdit(node.id)) return false;
+    return _tables.activate(node.id, 0, 0, selectAll: true);
+  }
+
+  void _onSelection() {
+    final view = controller.view;
+    if (view.focusMode) {
+      _focusPhase.setFocusedNodes(
+        FocusModeStylePhase.nodesOf(
+          controller.document,
+          controller.composer.selection,
+        ),
+      );
+    }
+    if (view.typewriter &&
+        DateTime.now().difference(_lastKeyAt) <
+            const Duration(milliseconds: 400) &&
+        !_typewriterScheduled) {
+      _typewriterScheduled = true;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        _typewriterScheduled = false;
+        if (mounted) _typewriterScroll();
+      });
+    }
+  }
+
+  /// Scrolls so that the caret line sits at 40 % of the viewport (§30).
+  void _typewriterScroll() {
+    final layout = controller.documentLayout;
+    final selection = controller.composer.selection;
+    if (layout == null || selection == null || !_scrollController.hasClients) {
+      return;
+    }
+    final rect = layout.getRectForPosition(selection.extent);
+    if (rect == null) return;
+    final position = _scrollController.position;
+    final target = (rect.center.dy - position.viewportDimension * 0.4).clamp(
+      0.0,
+      position.maxScrollExtent,
+    );
+    if ((target - position.pixels).abs() < 1) return;
+    final reduceMotion = MediaQuery.maybeDisableAnimationsOf(context) ?? false;
+    if (reduceMotion) {
+      _scrollController.jumpTo(target);
+    } else {
+      unawaited(
+        _scrollController.animateTo(
+          target,
+          duration: const Duration(milliseconds: 80),
+          curve: Curves.easeOut,
+        ),
+      );
+    }
+  }
+
+  // ---------------------------------------------------------------------------
+  // Drops from other applications (§24).
+
+  bool get _acceptsDrops =>
+      mounted &&
+      controller.mode != EditorMode.viewing &&
+      _effectivePreview == SuggestionPreviewMode.show &&
+      _commands.canEdit;
+
+  /// Whether [global] is over this editor.
+  bool _isOverEditor(Offset global) {
+    final box = context.findRenderObject();
+    if (box is! RenderBox || !box.hasSize || !box.attached) return false;
+    return (box.localToGlobal(Offset.zero) & box.size).contains(global);
+  }
+
+  bool _onExternalOver(Offset global, ExternalDragKind kind) {
+    if (!_acceptsDrops || !_isOverEditor(global)) {
+      _dropIndicator.clear();
+      return false;
+    }
+    final layout = controller.documentLayout;
+    if (layout == null) return false;
+    final local = layout.getDocumentOffsetFromAncestorOffset(global);
+    if (kind == ExternalDragKind.files) {
+      if (widget.onDropFiles == null) return false;
+      final index = DropGeometry.blockIndexAt(layout, controller, local);
+      _dropIndicator.value = index == null ? null : BlockDropSpot(index);
+      return index != null;
+    }
+    final offset = DropGeometry.caretOffsetAt(layout, controller, local);
+    _dropIndicator.value = offset == null ? null : CaretDropSpot(offset);
+    return offset != null;
+  }
+
+  void _onExternalDrop(ExternalDrop drop) {
+    final spot = _dropIndicator.value;
+    _dropIndicator.clear();
+    if (!_acceptsDrops || !_isOverEditor(drop.globalPosition)) return;
+    final layout = controller.documentLayout;
+    if (layout == null) return;
+    final local = layout.getDocumentOffsetFromAncestorOffset(
+      drop.globalPosition,
+    );
+    if (drop.hasFiles) {
+      final index = spot is BlockDropSpot
+          ? spot.index
+          : DropGeometry.blockIndexAt(layout, controller, local);
+      if (index != null) widget.onDropFiles?.call(drop.files, index);
+      return;
+    }
+    final offset = spot is CaretDropSpot
+        ? spot.offset
+        : DropGeometry.caretOffsetAt(layout, controller, local);
+    if (offset == null) return;
+    final plain = drop.plainText ?? '';
+    if (plain.isEmpty && drop.html == null) return;
+    controller.select(DeltaSelection.collapsed(offset));
+    _clipboard.pasteContent(
+      ClipboardContent(plainText: plain, html: drop.html),
+    );
+    controller.focusNode.requestFocus();
+  }
+
+  // ---------------------------------------------------------------------------
   // Links.
 
   void _updateLinkCardFromCaret() {
@@ -327,6 +604,7 @@ class WonkyEditorState extends State<WonkyEditor> {
   }
 
   void _onHover(PointerHoverEvent event) {
+    if (_blockDrag.isDragging) return;
     final layout = controller.documentLayout;
     if (layout == null) return;
     final local = layout.getDocumentOffsetFromAncestorOffset(event.position);
@@ -435,11 +713,33 @@ class WonkyEditorState extends State<WonkyEditor> {
       selfUserUuid: controller.userUuid,
       focused: controller.focusNode.hasFocus,
     );
-    final stylesheet = pages
+    var stylesheet = pages
         ? style.stylesheet.copyWith(
             documentPadding: view.pageSetup.margins * (zoom * textScale),
           )
         : style.stylesheet;
+    if (view.typewriter && !pages) {
+      // Room below the last line so it can reach 40 % of the viewport (§30).
+      final viewport = MediaQuery.sizeOf(context).height;
+      final padding = stylesheet.documentPadding ?? EdgeInsets.zero;
+      stylesheet = stylesheet.copyWith(
+        documentPadding: padding.copyWith(
+          bottom: padding.bottom + viewport * 0.6,
+        ),
+      );
+    }
+    _focusPhase.enabled = view.focusMode && !readOnly;
+    if (view.focusMode) {
+      _focusPhase.setFocusedNodes(
+        FocusModeStylePhase.nodesOf(
+          controller.document,
+          controller.composer.selection,
+        ),
+      );
+    }
+    _tables
+      ..onUndo = widget.shortcutCallbacks?.onUndo
+      ..onRedo = widget.shortcutCallbacks?.onRedo;
 
     final editorWidget = readOnly
         ? _buildReader(theme, style, stylesheet, previewMode)
@@ -471,16 +771,23 @@ class WonkyEditorState extends State<WonkyEditor> {
       multiline: true,
       readOnly: readOnly,
       label: widget.documentTitle,
-      child: MouseRegion(
-        onHover: _onHover,
-        onExit: (_) {
-          _hoveredNode.value = null;
-        },
-        child: Stack(
-          children: [
-            Positioned.fill(child: surface),
-            ..._buildPopovers(context, theme, readOnly),
-          ],
+      child: Focus(
+        // Parent of the in-place table cell field: outside the SuperEditor,
+        // so the editor's key handlers and IME never see the cell's input.
+        focusNode: _outerFocus,
+        canRequestFocus: false,
+        skipTraversal: true,
+        child: MouseRegion(
+          onHover: _onHover,
+          onExit: (_) {
+            if (!_blockDrag.isDragging) _hoveredNode.value = null;
+          },
+          child: Stack(
+            children: [
+              Positioned.fill(child: surface),
+              ..._buildPopovers(context, theme, readOnly),
+            ],
+          ),
         ),
       ),
     );
@@ -512,11 +819,13 @@ class WonkyEditorState extends State<WonkyEditor> {
         services: widget.imageServices,
         theme: theme,
         callbacks: widget.blockCallbacks,
+        editable: editable,
       ),
       WonkyTableComponentBuilder(
         theme: theme,
         callbacks: widget.blockCallbacks,
         editable: editable,
+        inlineEditing: editable && widget.inlineTableEditing ? _tables : null,
       ),
       WonkyTaskComponentBuilder(
         controller.editor,
@@ -575,8 +884,11 @@ class WonkyEditorState extends State<WonkyEditor> {
         if (pages) _paginationPhase,
         _codeHighlight,
         _direction,
+        ...widget.extraStylePhases,
+        _focusPhase,
       ],
       componentBuilders: _componentBuilders(theme, style.zoom, editable: true),
+      contentDragDelegate: _textDrag,
       documentUnderlayBuilders: [
         if (pages)
           _PageChromeLayerBuilder(pagination: _pagination, theme: theme),
@@ -591,6 +903,25 @@ class WonkyEditorState extends State<WonkyEditor> {
           hoveredNodeId: _hoveredNode,
           onTap: (nodeId, rect) =>
               widget.blockCallbacks.onBlockHandleTap?.call(nodeId, rect),
+          drag: BlockHandleDrag(
+            onStart: (nodeId, global) => _blockDrag.start(
+              nodeId,
+              global,
+              overlayContext: context,
+              theme: theme,
+            ),
+            onUpdate: _blockDrag.update,
+            onEnd: () {
+              _blockDrag.end();
+              _hoveredNode.value = null;
+            },
+            onCancel: _blockDrag.cancel,
+          ),
+        ),
+        DropIndicatorLayerBuilder(
+          controller: controller,
+          indicator: _dropIndicator,
+          theme: theme,
         ),
       ],
       keyboardActions: wonkyKeyboardActions(
@@ -635,6 +966,7 @@ class WonkyEditorState extends State<WonkyEditor> {
         if (pages && isMain) _paginationPhase,
         _codeHighlight,
         _direction,
+        if (isMain) ...widget.extraStylePhases,
       ],
       componentBuilders: _componentBuilders(
         theme,
@@ -720,11 +1052,29 @@ class WonkyEditorState extends State<WonkyEditor> {
         );
       }
     }
+    final emoji = _triggers.emoji.value;
+    if (!readOnly && emoji != null && _emojiPicker.items.isNotEmpty) {
+      final at = anchorBelow(emoji.start);
+      if (at != null) {
+        widgets.add(
+          Positioned(
+            left: at.dx,
+            top: at.dy,
+            child: EmojiMenu(
+              picker: _emojiPicker,
+              theme: theme,
+              onChoose: _chooseEmoji,
+            ),
+          ),
+        );
+      }
+    }
     final link = _linkCard.value;
     if (link != null &&
         link.mentionUuid == null &&
         slash == null &&
-        mention == null) {
+        mention == null &&
+        emoji == null) {
       final at = anchorBelow(link.start);
       if (at != null) {
         widgets.add(

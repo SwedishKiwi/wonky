@@ -1132,6 +1132,41 @@ class WriteEditorCommands {
     return result;
   }
 
+  /// The blocks `write.block.move*` acts on for [nodeId] (or the selection):
+  /// list items include their descendants (§22.4).
+  List<BlockRef> blocksToMove({String? nodeId}) => _blocksToMove(nodeId);
+
+  /// Inserts the complete Delta [lines] (each ending with `"\n"`) as new
+  /// blocks before the block at [index] (`nodeCount` = after the last block),
+  /// e.g. dropped files and images (§24). The caret goes to the end of the
+  /// inserted content.
+  LocalDeltaChange? insertBlocksAt(
+    int index,
+    Delta lines, {
+    required String label,
+  }) {
+    if (!canEdit || lines.isEmpty) return null;
+    final last = lines.last.data;
+    if (last is! String || !last.endsWith('\n')) return null;
+    final count = controller.mirror.nodeCount;
+    final at = index >= count
+        ? controller.mirror.length
+        : controller.mirror.startOfIndex(index.clamp(0, count));
+    final change = Delta()..retain(at);
+    var length = 0;
+    for (final op in lines.operations) {
+      change.push(op);
+      length += op.length!;
+    }
+    return _apply(
+      change..trim(),
+      label,
+      selectionAfter: DeltaSelection.collapsed(
+        (at + length - 1).clamp(0, controller.mirror.length + length - 1),
+      ),
+    );
+  }
+
   bool canMoveBlock({required bool up, String? nodeId}) {
     if (!canEdit || isSuggesting) return false;
     final blocks = _blocksToMove(nodeId);

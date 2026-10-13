@@ -108,35 +108,48 @@ void main() {
       expect(events.last.type, InlineAiEventType.refusal);
     });
 
-    test('when continuing then the text before the caret is the context', () async {
-      fake.enqueue((SseScript()..text(' And then it slept.')).response);
-      final events = await endpoints.assistant
-          .inline(
-            anna.endpointSession,
-            InlineAiRequest(itemUuid: doc.uuid, action: 'continueWriting', start: 30),
-          )
-          .toList();
-      expect(events.last.markdown, ' And then it slept.');
-      final text = jsonEncode(fake.requests.single['messages']);
-      expect(text, contains('text_before_caret'));
-      expect(text, isNot(contains('We should ship')));
-    });
+    test(
+      'when continuing then the text before the caret is the context',
+      () async {
+        fake.enqueue((SseScript()..text(' And then it slept.')).response);
+        final events = await endpoints.assistant
+            .inline(
+              anna.endpointSession,
+              InlineAiRequest(
+                itemUuid: doc.uuid,
+                action: 'continueWriting',
+                start: 30,
+              ),
+            )
+            .toList();
+        expect(events.last.markdown, ' And then it slept.');
+        final text = jsonEncode(fake.requests.single['messages']);
+        expect(text, contains('text_before_caret'));
+        expect(text, isNot(contains('We should ship')));
+      },
+    );
 
-    test('when summarizing the document then the whole document is sent', () async {
-      fake.enqueue((SseScript()..text('- A fox.\n- Shipping.')).response);
-      final events = await endpoints.assistant
-          .inline(
-            anna.endpointSession,
-            InlineAiRequest(
-              itemUuid: doc.uuid,
-              action: 'summarizeDocument',
-              summaryLength: 'short',
-            ),
-          )
-          .toList();
-      expect(events.last.markdown, '- A fox.\n- Shipping.');
-      expect(jsonEncode(fake.requests.single), contains('We should ship it.'));
-    });
+    test(
+      'when summarizing the document then the whole document is sent',
+      () async {
+        fake.enqueue((SseScript()..text('- A fox.\n- Shipping.')).response);
+        final events = await endpoints.assistant
+            .inline(
+              anna.endpointSession,
+              InlineAiRequest(
+                itemUuid: doc.uuid,
+                action: 'summarizeDocument',
+                summaryLength: 'short',
+              ),
+            )
+            .toList();
+        expect(events.last.markdown, '- A fox.\n- Shipping.');
+        expect(
+          jsonEncode(fake.requests.single),
+          contains('We should ship it.'),
+        );
+      },
+    );
 
     test(
       'when proofreading then issues are validated against the document',

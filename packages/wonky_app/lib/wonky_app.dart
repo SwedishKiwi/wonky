@@ -5,6 +5,14 @@
 /// `WonkyShell.run(config)`.
 library;
 
+export 'src/assistant/ai_settings_section.dart';
+export 'src/assistant/assistant_adapter.dart';
+export 'src/assistant/assistant_api.dart';
+export 'src/assistant/assistant_controller.dart';
+export 'src/assistant/assistant_markdown.dart';
+export 'src/assistant/assistant_models.dart';
+export 'src/assistant/assistant_panel.dart';
+export 'src/assistant/shell_assistant.dart';
 export 'src/auth/auth_controller.dart';
 export 'src/auth/auth_repository.dart';
 export 'src/bootstrap/app_urls.dart';

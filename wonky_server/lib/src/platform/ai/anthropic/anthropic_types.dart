@@ -116,7 +116,8 @@ class AnthropicRequest {
       'thinking': {
         'type': 'adaptive',
         if (updates) 'display': 'updates',
-        if (binding) 'block_binding': {'prefix_mismatch_behavior': 'drop_block'},
+        if (binding)
+          'block_binding': {'prefix_mismatch_behavior': 'drop_block'},
       },
       'output_config': {'effort': effort},
       if (system.isNotEmpty) 'system': system,
@@ -171,13 +172,16 @@ class AnthropicUsage {
   final int cacheWriteTokens;
 
   /// Tokens counted against the daily budget.
-  int get total => inputTokens + outputTokens + cacheReadTokens + cacheWriteTokens;
+  int get total =>
+      inputTokens + outputTokens + cacheReadTokens + cacheWriteTokens;
 
   /// Merges a `message_delta` usage (cumulative counts) into this one.
   AnthropicUsage merge(AnthropicUsage o) => AnthropicUsage(
     inputTokens: o.inputTokens > 0 ? o.inputTokens : inputTokens,
     outputTokens: o.outputTokens > 0 ? o.outputTokens : outputTokens,
-    cacheReadTokens: o.cacheReadTokens > 0 ? o.cacheReadTokens : cacheReadTokens,
+    cacheReadTokens: o.cacheReadTokens > 0
+        ? o.cacheReadTokens
+        : cacheReadTokens,
     cacheWriteTokens: o.cacheWriteTokens > 0
         ? o.cacheWriteTokens
         : cacheWriteTokens,

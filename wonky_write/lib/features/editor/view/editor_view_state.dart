@@ -255,6 +255,27 @@ class EditorViewState extends ChangeNotifier {
     notifyListeners();
   }
 
+  bool _focusMode = false;
+
+  /// Focus mode (§30): dims every block but the caret's.
+  bool get focusMode => _focusMode;
+  set focusMode(bool value) {
+    if (value == _focusMode) return;
+    _focusMode = value;
+    notifyListeners();
+  }
+
+  bool _typewriter = false;
+
+  /// Typewriter scrolling (§30): keyboard edits keep the caret line at 40 %
+  /// of the viewport height.
+  bool get typewriter => _typewriter;
+  set typewriter(bool value) {
+    if (value == _typewriter) return;
+    _typewriter = value;
+    notifyListeners();
+  }
+
   /// Whether the current selection is a block selection (§22.3).
   bool _blockSelection = false;
   bool get blockSelection => _blockSelection;

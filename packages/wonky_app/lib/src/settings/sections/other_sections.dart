@@ -5,6 +5,7 @@ import 'package:wonky_client/wonky_client.dart';
 import '../../data/api.dart';
 import '../../l10n/wonky_app_localizations.dart';
 import '../../shell/overlays/shell_overlays.dart';
+import '../../assistant/ai_settings_section.dart';
 import '../../mcp_bridge/developer_settings.dart';
 import '../../shell/shell_services.dart';
 import '../settings_screen.dart';
@@ -224,27 +225,7 @@ class AiSection extends StatelessWidget {
   final ShellServices services;
 
   @override
-  Widget build(BuildContext context) {
-    final l = WonkyAppLocalizations.of(context);
-    final p = services.prefs;
-    return ListenableBuilder(
-      listenable: p,
-      builder: (context, _) => SettingsGroup(
-        title: l.settingsAi,
-        description: l.settingsAiHint,
-        children: [
-          SettingsRow(
-            label: l.aiEnable,
-            control: _switch(
-              'settings.ai.enabled',
-              p.aiEnabled,
-              p.setAiEnabled,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
+  Widget build(BuildContext context) => AiSettingsSection(services: services);
 }
 
 /// Settings › Developer / MCP: tokens, connection snippet, UI-bridge toggle

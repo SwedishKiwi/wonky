@@ -92,13 +92,14 @@ void main() {
     setUp(() async {
       texts.clear();
       thinking.clear();
-      final sse = (SseScript()
-            ..thinking('Looking up the heading')
-            ..text('Done.')
-            ..toolUse('tu_1', 'write_search', {'query': 'Budget'})
-            ..stop('tool_use')
-            ..usage(input: 50, output: 9, cacheRead: 40))
-          .build();
+      final sse =
+          (SseScript()
+                ..thinking('Looking up the heading')
+                ..text('Done.')
+                ..toolUse('tu_1', 'write_search', {'query': 'Budget'})
+                ..stop('tool_use')
+                ..usage(input: 50, output: 9, cacheRead: 40))
+              .build();
       msg = await FakeAnthropicClient([FakeResponse.sse(sse)]).send(
         _request(),
         onText: texts.add,
@@ -127,17 +128,26 @@ void main() {
   });
 
   group('Given a tool use with invalid streamed JSON', () {
-    test('when accumulated then the raw input is reported as invalid', () async {
-      final sse = (SseScript()
-            ..toolUse('tu_1', 'write_search', const {}, rawJson: '{"query": "Bud')
-            ..stop('tool_use'))
-          .build();
-      final msg = await FakeAnthropicClient([FakeResponse.sse(sse)]).send(
-        _request(),
-      );
-      expect(msg.invalidToolInputs['tu_1'], '{"query": "Bud');
-      expect(msg.toolUses.single['input'], isEmpty);
-    });
+    test(
+      'when accumulated then the raw input is reported as invalid',
+      () async {
+        final sse =
+            (SseScript()
+                  ..toolUse(
+                    'tu_1',
+                    'write_search',
+                    const {},
+                    rawJson: '{"query": "Bud',
+                  )
+                  ..stop('tool_use'))
+                .build();
+        final msg = await FakeAnthropicClient([FakeResponse.sse(sse)]).send(
+          _request(),
+        );
+        expect(msg.invalidToolInputs['tu_1'], '{"query": "Bud');
+        expect(msg.toolUses.single['input'], isEmpty);
+      },
+    );
   });
 
   group('Given a response after a server-side fallback', () {
@@ -145,13 +155,14 @@ void main() {
       'when replayed then model-internal blocks before the marker are '
       'dropped and text is kept',
       () async {
-        final sse = (SseScript()
-              ..thinking('declined attempt')
-              ..text('Partial ')
-              ..fallback(AiModels.opus, 'claude-opus-5')
-              ..thinking('fallback thinking', signature: 'sig_2')
-              ..text('answer'))
-            .build();
+        final sse =
+            (SseScript()
+                  ..thinking('declined attempt')
+                  ..text('Partial ')
+                  ..fallback(AiModels.opus, 'claude-opus-5')
+                  ..thinking('fallback thinking', signature: 'sig_2')
+                  ..text('answer'))
+                .build();
         final msg = await FakeAnthropicClient([FakeResponse.sse(sse)]).send(
           _request(),
         );
@@ -301,20 +312,23 @@ void main() {
       },
     );
 
-    test('when the connection drops before any event then it retries', () async {
-      var calls = 0;
-      final client = HttpAnthropicClient(
-        apiKey: 'key',
-        sleep: (_) async {},
-        httpClient: () => MockClient.streaming((req, body) async {
-          calls++;
-          if (calls == 1) throw http.ClientException('reset');
-          return _response(ok);
-        }),
-      );
-      expect((await client.send(_request())).text, 'Hello');
-      expect(calls, 2);
-    });
+    test(
+      'when the connection drops before any event then it retries',
+      () async {
+        var calls = 0;
+        final client = HttpAnthropicClient(
+          apiKey: 'key',
+          sleep: (_) async {},
+          httpClient: () => MockClient.streaming((req, body) async {
+            calls++;
+            if (calls == 1) throw http.ClientException('reset');
+            return _response(ok);
+          }),
+        );
+        expect((await client.send(_request())).text, 'Hello');
+        expect(calls, 2);
+      },
+    );
 
     test('when cancelled then the request stops', () async {
       final cancel = AiCancelToken()..cancel();

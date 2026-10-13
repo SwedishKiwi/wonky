@@ -32,13 +32,26 @@ committed and verified).
    - the UI-bridge hub is per server instance (no cross-instance relay yet);
    - `ui.write.get_layout_info` does not report the visible Delta range yet.
 
-4. ☐ **AI assistant** (suite 10, Write 09): the server `AnthropicClient` and assistant service, the assistant panel, inline AI (selection ✨ menu, `/ai`, Mod+J), and "Suggest" apply mode.
-5. ☐ **Offline persistence** (suite 12 §1):
-   - SQLite `LocalDocument` / `LocalPendingOp` / `LocalUndoStack` / `LocalPendingUpload`;
-   - offline document creation, and "Make available offline";
-   - the offline drive cache and pending drive-op queue.
+4. ☑ **AI assistant** (suite 10, Write 09 §5): server `AnthropicClient` (HTTP + SSE, retries with backoff/`retry-after`, refusal fallbacks, beta features that degrade on a 400) and agent loop (`assistant` endpoint: chat stream, threads, stop, destructive-change confirmation, inline rewrite/continue/summarize/outline/explain, proofread with the strict `report_issues` tool; tools generated from the MCP registry and bound to the open document; prompt caching; daily token budget, 2 concurrent requests, `AiUsage`); one run = one undo step "AI: …" on the requesting client (`onBehalfOfSessionId`/`groupId`); the shared `AssistantPanel` (threads, streaming Markdown, tool chips with Show/Undo, context chips, Stop, quick prompts, Edit/Suggest, privacy notice, "AI isn't configured" state); inline AI (selection ✨ menu, `/ai`, Mod+J prompt, preview with Replace/Insert below/Try again/Refine/Discard and a word diff, continue writing, AI suggestions with `via: ai`); Tools › Summarize document / Generate outline / Proofread document; Settings › AI (enable, quality, usage, clear history). Enable it with `anthropicApiKey` in `config/passwords.yaml`. Still open:
+   - the `ui.write.get_ai_preview` UI-bridge tool, and `write.compare_versions` / `write.get_theme` for the assistant (they don't exist as MCP tools yet);
+   - a live check against the real API (no key in development); the run and concurrency registry is per server instance;
+   - continue writing shows its ghost text in a card at the caret, not inline in the text layout.
+5. ☑ **Offline persistence** (suite 12 §1): per-user `write_cache_<userId>.db` on `sqlite_async`
+   (web: `sqlite3.wasm` + `db_worker.js` in `wonky_write/web/`, OPFS or IndexedDB; desktop: a
+   file) with `LocalDocument` (+ server op log), the durable `LocalPendingOp` outbox (written
+   before sending, 2 s chunks, resent with the same `clientOpId`, `RebaseTooOld` → "Save my
+   offline changes as a copy"), `LocalUndoStack` and `LocalPendingUpload`. Documents open from
+   the device first (stale-while-revalidate), can be created offline, and stay available when
+   opened in the last 14 days (max 50) or made available offline (downloaded, drive badges,
+   unavailable items dimmed). Closed documents with an outbox sync in the background; metadata
+   changes are queued; the profile is cached for offline starts; the drive cache and queue are
+   per user. Settings › Offline & storage shows usage, *Clear local data* and *Simulate offline*
+   (`write.offline.simulate`, the `ConnectivityService.forceOffline` test hook). Still open:
+   - the offline theme cache (documents opened offline use the default theme when their theme
+     was never loaded) and offline comments;
+   - "Offline storage is limited in this browser" for the IndexedDB fallback;
+   - deleting the database file on desktop (tables are truncated, as on the web).
 
-   The outbox is in memory today.
 6. ☐ **Spellcheck** (Write 04, P1): a pure-Dart Hunspell-style checker and the editor hook.
 7. ☐ **Editor extras:**
    - SE-4 in-place table cell editing (tables are edited through the table dialog today);

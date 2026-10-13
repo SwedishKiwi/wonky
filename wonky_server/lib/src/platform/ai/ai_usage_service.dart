@@ -61,7 +61,10 @@ abstract final class AiUsageService {
   /// Budget tokens of [u]: input, cache writes and output count fully,
   /// cache reads a tenth (they cost a tenth or less).
   static int budgetTokens(AnthropicUsage u) =>
-      u.inputTokens + u.cacheWriteTokens + u.outputTokens + u.cacheReadTokens ~/ 10;
+      u.inputTokens +
+      u.cacheWriteTokens +
+      u.outputTokens +
+      u.cacheReadTokens ~/ 10;
 
   /// Budget tokens used today.
   static Future<int> usedToday(Session session, int userId) async {

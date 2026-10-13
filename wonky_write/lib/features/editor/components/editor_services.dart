@@ -92,6 +92,7 @@ class EditorBlockCallbacks {
     this.onCodeLanguageTap,
     this.onCopyCode,
     this.onImageDoubleTap,
+    this.onImageTap,
     this.onBlockHandleTap,
     this.onRemoveImage,
   });
@@ -107,6 +108,9 @@ class EditorBlockCallbacks {
 
   /// Double-click on an image (lightbox, `write.image.preview`).
   final void Function(String nodeId)? onImageDoubleTap;
+
+  /// Click on an image in read-only views (Viewing mode): the lightbox.
+  final void Function(String nodeId)? onImageTap;
 
   /// The ⋮⋮ block handle was tapped (opens the block menu).
   final void Function(String nodeId, Rect globalHandleRect)? onBlockHandleTap;

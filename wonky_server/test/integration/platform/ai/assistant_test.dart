@@ -64,7 +64,8 @@ void main() {
         endpoints,
         anna,
         name: 'Plan',
-        markdown: '# Plan\n\nThe old plan is fine.\n\n## Budget\n\nTen euros.\n',
+        markdown:
+            '# Plan\n\nThe old plan is fine.\n\n## Budget\n\nTen euros.\n',
       );
     });
 
@@ -137,11 +138,14 @@ void main() {
         final first = fake.requests.first;
         final tools = (first['tools'] as List).cast<Map>();
         expect(tools.map((t) => t['name']), contains('write_replace_text'));
-        expect(tools.map((t) => t['name']), isNot(contains('write_set_markdown')));
+        expect(
+          tools.map((t) => t['name']),
+          isNot(contains('write_set_markdown')),
+        );
         final system = (first['system'] as List).single as Map;
         expect(system['cache_control'], {'type': 'ephemeral'});
-        final userBlocks = ((first['messages'] as List).single as Map)['content']
-            as List;
+        final userBlocks =
+            ((first['messages'] as List).single as Map)['content'] as List;
         expect((userBlocks.first as Map)['text'], contains('<document '));
         expect((userBlocks.first as Map)['cache_control'], isNotNull);
         expect((userBlocks.last as Map)['text'], contains('<context>'));
@@ -162,7 +166,11 @@ void main() {
           anna.endpointSession,
           threadId,
         );
-        expect(detail.messages.map((m) => m.role), ['user', 'assistant', 'assistant']);
+        expect(detail.messages.map((m) => m.role), [
+          'user',
+          'assistant',
+          'assistant',
+        ]);
         final usage = await AiUsageService.usedToday(anna.session, anna.id);
         expect(usage, greaterThan(0));
       },
@@ -209,7 +217,8 @@ void main() {
         final before = await _markdown(endpoints, anna, doc);
         final events = await chat('Replace everything').toList();
         final errors = events.where(
-          (e) => e.type == AssistantEventType.toolFinished && e.toolError == true,
+          (e) =>
+              e.type == AssistantEventType.toolFinished && e.toolError == true,
         );
         expect(errors, hasLength(2));
         final results =
@@ -223,23 +232,32 @@ void main() {
       },
     );
 
-    test('when the model sends invalid tool JSON then it gets an error result', () async {
-      fake
-        ..enqueue(
-          (SseScript()
-                ..toolUse('j', 'write_search', const {}, rawJson: '{"query": "Bu')
-                ..stop('tool_use'))
-              .response,
-        )
-        ..enqueue((SseScript()..text('Retrying failed.')).response);
-      await chat('Find budget').toList();
-      final result =
-          (((fake.requests[1]['messages'] as List).last as Map)['content']
-                  as List)
-              .single as Map;
-      expect(result['is_error'], true);
-      expect(result['content'], contains('INVALID_JSON'));
-    });
+    test(
+      'when the model sends invalid tool JSON then it gets an error result',
+      () async {
+        fake
+          ..enqueue(
+            (SseScript()
+                  ..toolUse(
+                    'j',
+                    'write_search',
+                    const {},
+                    rawJson: '{"query": "Bu',
+                  )
+                  ..stop('tool_use'))
+                .response,
+          )
+          ..enqueue((SseScript()..text('Retrying failed.')).response);
+        await chat('Find budget').toList();
+        final result =
+            (((fake.requests[1]['messages'] as List).last as Map)['content']
+                        as List)
+                    .single
+                as Map;
+        expect(result['is_error'], true);
+        expect(result['content'], contains('INVALID_JSON'));
+      },
+    );
 
     test(
       'when the model refuses then the panel shows the refusal and the turn '
@@ -247,7 +265,8 @@ void main() {
       () async {
         fake
           ..enqueue(
-            (SseScript()..stop('refusal', details: {'type': 'refusal'})).response,
+            (SseScript()..stop('refusal', details: {'type': 'refusal'}))
+                .response,
           )
           ..enqueue((SseScript()..text('Hello again.')).response);
         final events = await chat('Something').toList();
@@ -330,48 +349,55 @@ void main() {
           (e) => e.type == AssistantEventType.confirmationRequired,
         );
         expect(ask.toolSummary, contains('delete'));
-        expect(await _markdown(endpoints, anna, doc), isNot(contains('old plan')));
+        expect(
+          await _markdown(endpoints, anna, doc),
+          isNot(contains('old plan')),
+        );
       },
     );
 
-    test('when the user denies a destructive call then nothing is deleted', () async {
-      doc = await TestDrive.document(
-        endpoints,
-        anna,
-        markdown: '# Plan\n\n${'More words. ' * 60}\n',
-      );
-      fake
-        ..enqueue(
-          (SseScript()
-                ..toolUse('d', 'write_delete_range', {
-                  'range': {'type': 'all'},
-                })
-                ..stop('tool_use'))
-              .response,
-        )
-        ..enqueue((SseScript()..text('Okay, I kept it.')).response);
-      final before = await _markdown(endpoints, anna, doc);
-      final done = Completer<void>();
-      chat('Delete everything').listen((e) {
-        if (e.type == AssistantEventType.confirmationRequired) {
-          unawaited(
-            endpoints.assistant.confirm(
-              anna.endpointSession,
-              e.runId!,
-              e.confirmationId!,
-              false,
-            ),
-          );
-        }
-      }, onDone: done.complete);
-      await done.future;
-      expect(await _markdown(endpoints, anna, doc), before);
-      final result =
-          (((fake.requests[1]['messages'] as List).last as Map)['content']
-                  as List)
-              .single as Map;
-      expect(result['content'], contains('denied_by_user'));
-    });
+    test(
+      'when the user denies a destructive call then nothing is deleted',
+      () async {
+        doc = await TestDrive.document(
+          endpoints,
+          anna,
+          markdown: '# Plan\n\n${'More words. ' * 60}\n',
+        );
+        fake
+          ..enqueue(
+            (SseScript()
+                  ..toolUse('d', 'write_delete_range', {
+                    'range': {'type': 'all'},
+                  })
+                  ..stop('tool_use'))
+                .response,
+          )
+          ..enqueue((SseScript()..text('Okay, I kept it.')).response);
+        final before = await _markdown(endpoints, anna, doc);
+        final done = Completer<void>();
+        chat('Delete everything').listen((e) {
+          if (e.type == AssistantEventType.confirmationRequired) {
+            unawaited(
+              endpoints.assistant.confirm(
+                anna.endpointSession,
+                e.runId!,
+                e.confirmationId!,
+                false,
+              ),
+            );
+          }
+        }, onDone: done.complete);
+        await done.future;
+        expect(await _markdown(endpoints, anna, doc), before);
+        final result =
+            (((fake.requests[1]['messages'] as List).last as Map)['content']
+                        as List)
+                    .single
+                as Map;
+        expect(result['content'], contains('denied_by_user'));
+      },
+    );
 
     test(
       'when Suggest mode is on then edits become suggestions authored by the '
@@ -435,7 +461,12 @@ void main() {
 
     test('when the daily budget is spent then chat is refused', () async {
       AiConfig.current = AiConfig(apiKey: 'test-key', dailyTokenBudget: 10);
-      fake.enqueue((SseScript()..usage(input: 50, output: 50)..text('Hi')).response);
+      fake.enqueue(
+        (SseScript()
+              ..usage(input: 50, output: 50)
+              ..text('Hi'))
+            .response,
+      );
       await chat('Hello').toList();
       await expectLater(
         chat('Again').toList(),
@@ -461,28 +492,34 @@ void main() {
       expect(AiUsageService.running(anna.id), 0);
     });
 
-    test('when threads are listed and deleted then only own threads show', () async {
-      fake.enqueue((SseScript()..text('A')).response);
-      final ev = await chat('First').toList();
-      final threads = await endpoints.assistant.listThreads(
-        anna.endpointSession,
-        doc.uuid,
-      );
-      expect(threads.single.title, 'First');
-      final bob = await TestUsers.create(sessionBuilder, name: 'Bob');
-      await expectLater(
-        endpoints.assistant.getThread(bob.endpointSession, ev.first.threadId!),
-        throwsA(isA<WonkyException>()),
-      );
-      await endpoints.assistant.deleteThread(
-        anna.endpointSession,
-        ev.first.threadId!,
-      );
-      expect(
-        await endpoints.assistant.listThreads(anna.endpointSession, doc.uuid),
-        isEmpty,
-      );
-    });
+    test(
+      'when threads are listed and deleted then only own threads show',
+      () async {
+        fake.enqueue((SseScript()..text('A')).response);
+        final ev = await chat('First').toList();
+        final threads = await endpoints.assistant.listThreads(
+          anna.endpointSession,
+          doc.uuid,
+        );
+        expect(threads.single.title, 'First');
+        final bob = await TestUsers.create(sessionBuilder, name: 'Bob');
+        await expectLater(
+          endpoints.assistant.getThread(
+            bob.endpointSession,
+            ev.first.threadId!,
+          ),
+          throwsA(isA<WonkyException>()),
+        );
+        await endpoints.assistant.deleteThread(
+          anna.endpointSession,
+          ev.first.threadId!,
+        );
+        expect(
+          await endpoints.assistant.listThreads(anna.endpointSession, doc.uuid),
+          isEmpty,
+        );
+      },
+    );
 
     test('when a viewer chats then edit tools are refused', () async {
       final vic = await TestUsers.create(sessionBuilder, name: 'Vic');

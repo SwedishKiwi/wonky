@@ -181,10 +181,15 @@ abstract final class ProofreadService {
           for (var w = 0; w < parallel && w < sections.length; w++) worker(),
         ]);
         if (error != null) {
-          emit(ProofreadEvent(type: 'error', error: error, errorCode: errorCode));
+          emit(
+            ProofreadEvent(type: 'error', error: error, errorCode: errorCode),
+          );
         } else if (refused && done == 0) {
           emit(
-            ProofreadEvent(type: 'refusal', error: AssistantService.refusalText),
+            ProofreadEvent(
+              type: 'refusal',
+              error: AssistantService.refusalText,
+            ),
           );
         }
         emit(
@@ -219,8 +224,7 @@ abstract final class ProofreadService {
     return out.stream;
   }
 
-  static int _words(String s) =>
-      RegExp(r'\S+').allMatches(s).length;
+  static int _words(String s) => RegExp(r'\S+').allMatches(s).length;
 
   /// Splits the document (or the range) into sections of at most
   /// [maxWords] words, at headings where possible, else at paragraphs.
@@ -258,7 +262,8 @@ abstract final class ProofreadService {
     for (final l in lines) {
       final w = l.isEmbedLine ? 0 : _words(l.text);
       final heading = l.format.type == BlockType.heading;
-      if (buf.isNotEmpty && (words + w > limit || (heading && words > limit ~/ 2))) {
+      if (buf.isNotEmpty &&
+          (words + w > limit || (heading && words > limit ~/ 2))) {
         flush();
       }
       buf.add(l);

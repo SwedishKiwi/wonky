@@ -46,6 +46,8 @@ import 'blockquote.dart';
 import 'document_caret_overlay.dart';
 import 'document_focus_and_selection_policies.dart';
 import 'document_gestures_mouse.dart';
+// WONKY PATCH SE-6
+import 'content_drag.dart';
 import 'document_hardware_keyboard/document_input_keyboard.dart';
 import 'document_ime/document_input_ime.dart';
 import 'horizontal_rule.dart';
@@ -130,6 +132,8 @@ class SuperEditor extends StatefulWidget {
     this.selectorHandlers,
     this.gestureMode,
     this.contentTapDelegateFactories = const [superEditorLaunchLinkTapHandlerFactory],
+    // WONKY PATCH SE-6
+    this.contentDragDelegate,
     this.selectionLayerLinks,
     this.documentUnderlayBuilders = const [],
     this.documentOverlayBuilders = defaultSuperEditorDocumentOverlayBuilders,
@@ -304,6 +308,13 @@ class SuperEditor extends StatefulWidget {
   /// If a handler returns [TapHandlingInstruction.halt], no subsequent handlers
   /// nor the default tap behavior will be executed.
   final List<SuperEditorContentTapDelegateFactory>? contentTapDelegateFactories;
+
+  // WONKY PATCH SE-6
+  /// Optional delegate that may take over mouse drags that start on content
+  /// (e.g. to drag and drop the selected text), see [ContentDragDelegate].
+  ///
+  /// Only used with mouse gestures ([DocumentGestureMode.mouse]).
+  final ContentDragDelegate? contentDragDelegate;
 
   /// Leader links that connect leader widgets near the user's selection
   /// to carets, handles, and other things that want to follow the selection.
@@ -955,6 +966,8 @@ class SuperEditorState extends State<SuperEditor> {
             for (final plugin in widget.plugins) //
               ...plugin.contentTapHandlers,
           ],
+          // WONKY PATCH SE-6
+          contentDragDelegate: widget.contentDragDelegate,
           autoScroller: _autoScrollController,
           fillViewport: fillViewport,
           showDebugPaint: widget.debugPaint.gestures,

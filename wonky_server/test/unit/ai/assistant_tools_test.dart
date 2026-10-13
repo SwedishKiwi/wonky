@@ -61,7 +61,9 @@ void main() {
       'injected and model values are ignored',
       () {
         final tool = toolset.byApiName('write_replace_text')!;
-        final item = UuidValue.fromString('0192f000-0000-7000-8000-000000000001');
+        final item = UuidValue.fromString(
+          '0192f000-0000-7000-8000-000000000001',
+        );
         final args = toolset.bindArgs(
           tool,
           {
@@ -95,7 +97,9 @@ void main() {
 
   group('Given a schema with an open object', () {
     test('when converted then the tool is not strict', () {
-      final toolset = AssistantToolset.of([WonkyMcpServer.executor['comments.create']!.definition]);
+      final toolset = AssistantToolset.of([
+        WonkyMcpServer.executor['comments.create']!.definition,
+      ]);
       expect(toolset.apiTools.single.strictCompatible, isFalse);
       expect(JsonSchema.empty.toJson()['type'], 'object');
     });

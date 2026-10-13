@@ -65,6 +65,8 @@ export 'src/default_editor/paragraph.dart';
 export 'src/default_editor/layout_single_column/selection_aware_viewmodel.dart';
 export 'src/default_editor/selection_upstream_downstream.dart';
 export 'src/default_editor/super_editor.dart';
+// WONKY PATCH SE-6
+export 'src/default_editor/content_drag.dart';
 export 'src/default_editor/tables/table_block.dart';
 export 'src/default_editor/tasks.dart';
 export 'src/default_editor/text.dart';

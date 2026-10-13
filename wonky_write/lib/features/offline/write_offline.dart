@@ -146,8 +146,10 @@ class WriteOffline extends ChangeNotifier implements OfflineDataProvider {
   /// Re-applies the "Simulate offline" developer switch after a reload.
   static Future<void> _restoreSimulatedOffline(ShellServices s) async {
     try {
-      final v = await s.deviceStore.read(simulateOfflinePref);
-      if (v == true) s.connectivity.forceOffline(true);
+      final device = await s.deviceStore.read('prefs.device');
+      if (device is Map && device[simulateOfflinePref] == true) {
+        s.connectivity.forceOffline(true);
+      }
     } catch (_) {}
   }
 
@@ -198,6 +200,7 @@ class WriteOffline extends ChangeNotifier implements OfflineDataProvider {
   }
 
   final Set<String> _availableItems = {};
+  final Map<String, bool> _pinnedItems = {};
   final Set<String> _claimed = {};
   final Map<String, DocumentSyncController> _background = {};
   final Map<String, Future<void>> _stopping = {};
@@ -266,8 +269,11 @@ class WriteOffline extends ChangeNotifier implements OfflineDataProvider {
     final doc = item.contentRef;
     if (doc == null) return;
     if (_availableItems.contains(item.uuid.uuid)) {
-      unawaited(store.setPinned(item.uuid, item.pinnedOffline));
-      if (!item.pinnedOffline) _scheduleRefresh();
+      if (_pinnedItems[item.uuid.uuid] != item.pinnedOffline) {
+        _pinnedItems[item.uuid.uuid] = item.pinnedOffline;
+        unawaited(store.setPinned(item.uuid, item.pinnedOffline));
+        _scheduleRefresh();
+      }
     } else if (item.pinnedOffline && services.connectivity.online) {
       unawaited(_download(item));
     }
@@ -295,17 +301,26 @@ class WriteOffline extends ChangeNotifier implements OfflineDataProvider {
     try {
       final docs = await store.list();
       final u = await store.usage();
-      _availableItems
-        ..clear()
-        ..addAll(docs.map((d) => d.itemUuid));
-      _usage = OfflineUsage(
+      final items = {for (final d in docs) d.itemUuid};
+      final usage = OfflineUsage(
         documents: u.documents,
         pinned: u.pinned,
         pendingChanges: u.pendingDocs,
         pendingUploads: u.uploads,
         bytes: u.bytes,
       );
-      if (!_closed) notifyListeners();
+      final changed =
+          usage != _usage ||
+          items.length != _availableItems.length ||
+          !items.every(_availableItems.contains);
+      _availableItems
+        ..clear()
+        ..addAll(items);
+      _pinnedItems
+        ..clear()
+        ..addEntries(docs.map((d) => MapEntry(d.itemUuid, d.pinned)));
+      _usage = usage;
+      if (changed && !_closed) notifyListeners();
     } on Object catch (e) {
       debugPrint('Reading the offline store failed: $e');
     }
@@ -344,6 +359,7 @@ class WriteOffline extends ChangeNotifier implements OfflineDataProvider {
     required UuidValue documentUuid,
     required UuidValue itemUuid,
     StoredDocument? stored,
+    DriveItemView? item,
   }) => SqliteSyncPersistence(
     store,
     documentUuid: documentUuid.uuid,
@@ -351,6 +367,7 @@ class WriteOffline extends ChangeNotifier implements OfflineDataProvider {
     loggedOps: stored?.loggedOps ?? 0,
     storedOutbox: stored?.storedOutbox ?? const {},
     onWritten: _scheduleRefresh,
+    item: item ?? stored?.item,
   );
 
   /// Stops background work on [documentUuid] before a session opens it.
@@ -379,6 +396,23 @@ class WriteOffline extends ChangeNotifier implements OfflineDataProvider {
       await evict();
     } on Object catch (e) {
       debugPrint('Updating the offline store failed: $e');
+    }
+  }
+
+  /// Access to [documentUuid] was lost: drops its local copy unless it
+  /// holds changes that were not sent (kept for recovery).
+  Future<void> forget(UuidValue documentUuid) async {
+    try {
+      final docs = await store.list();
+      final d = docs
+          .where((d) => d.documentUuid == documentUuid.uuid)
+          .firstOrNull;
+      if (d != null && d.pendingOps == 0) {
+        await store.deleteDocument(documentUuid.uuid);
+        await refresh();
+      }
+    } on Object catch (e) {
+      debugPrint('Removing the local copy failed: $e');
     }
   }
 

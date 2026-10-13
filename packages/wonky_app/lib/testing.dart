@@ -3,6 +3,7 @@
 /// real dispatcher and undo service. Never import from `lib/` code.
 library;
 
+export 'src/assistant/fake_assistant_api.dart';
 export 'src/testing/command_test_harness.dart';
 export 'src/testing/fake_repositories.dart'
     hide

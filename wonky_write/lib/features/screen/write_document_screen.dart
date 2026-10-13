@@ -12,7 +12,11 @@ import 'package:wonky_client/wonky_client.dart' show DriveItemView;
 import 'package:wonky_core/wonky_core.dart';
 import 'package:wonky_ui/wonky_ui.dart';
 
+import '../ai/ai_panel.dart';
+import '../ai/ai_preview_overlay.dart';
+import '../ai/write_ai_controller.dart';
 import '../import/import_warnings_banner.dart';
+import '../../commands/extras_commands.dart';
 import '../../commands/screen_commands.dart';
 import '../comments/comment_margin.dart';
 import '../document/write_document_session.dart';
@@ -24,6 +28,7 @@ import '../editor/pagination/pagination.dart';
 import '../editor/plugins/slash_items.dart';
 import '../editor/popovers/editor_popovers.dart';
 import '../editor/ui/wonky_editor.dart';
+import '../editor/view/focus_mode_chrome.dart';
 import '../find_replace/find_panel.dart';
 import '../images/image_services.dart';
 import '../outline/outline_panel.dart';
@@ -68,6 +73,7 @@ class WriteDocumentScreen extends StatefulWidget {
 class _WriteDocumentScreenState extends State<WriteDocumentScreen> {
   late final WriteDocumentSession session;
   late final WriteDocumentController doc;
+  late final WriteAiController ai;
   final _editorKey = GlobalKey<WonkyEditorState>();
   final _toolbar = WonkyToolbarController();
   final _scroll = ScrollController();
@@ -88,6 +94,7 @@ class _WriteDocumentScreenState extends State<WriteDocumentScreen> {
     );
     doc.revealOffset = _reveal;
     doc.focusToolbar = _toolbar.focus;
+    ai = WriteAiController(services: s, session: session, doc: doc);
     unawaited(session.open());
     session.phase.addListener(_onPhase);
     s.panels.addListener(_onPanels);
@@ -101,6 +108,7 @@ class _WriteDocumentScreenState extends State<WriteDocumentScreen> {
     if (kIsWeb) unawaited(BrowserContextMenu.enableContextMenu());
     if (s.panels.isOpen(WritePanels.find)) s.panels.close(WritePanels.find);
     _pagination?.removeListener(_onPages);
+    ai.dispose();
     doc.dispose();
     session.dispose();
     _scroll.dispose();
@@ -200,6 +208,7 @@ class _WriteDocumentScreenState extends State<WriteDocumentScreen> {
           ),
         ),
         suggestionsPanelSpec(session),
+        writeAssistantPanelSpec(ai),
       ],
     );
   }
@@ -285,8 +294,15 @@ class _WriteDocumentScreenState extends State<WriteDocumentScreen> {
             onInsertImageFromUrl: () => _invoke('write.insert.imageFromUrl'),
             onInsertLink: () => _invoke('write.link.insert'),
             onTableInserted: (id) =>
-                _invoke('write.table.edit', {'nodeId': id}),
+                _invoke('write.table.editCell', {'nodeId': id}),
             onComment: () => _invoke('shell.comments.create'),
+            onEmoji: () => _invoke('write.insert.emoji'),
+            onSpecialCharacter: () =>
+                _invoke('write.insert.specialCharacter'),
+            onAskAi: ai.shown ? () => _invoke('write.ai.inline') : null,
+            onContinueWriting: ai.shown
+                ? () => _invoke('write.ai.continue')
+                : null,
           ),
           blockCallbacks: EditorBlockCallbacks(
             onEditTable: (nodeId, {row, column}) => _invoke(
@@ -301,7 +317,9 @@ class _WriteDocumentScreenState extends State<WriteDocumentScreen> {
             onCopyCode: (nodeId) =>
                 _invoke('write.code.copy', {'nodeId': nodeId}),
             onImageDoubleTap: (nodeId) =>
-                _invoke('write.image.editAlt', {'nodeId': nodeId}),
+                _invoke('write.image.preview', {'nodeId': nodeId}),
+            onImageTap: (nodeId) =>
+                _invoke('write.image.preview', {'nodeId': nodeId}),
             onBlockHandleTap: (nodeId, rect) => PopupMenuHost.maybeOf(
               _menuContext ?? context,
             )?.show(rect.bottomLeft, () => blockMenuEntries(ui, doc, nodeId)),
@@ -312,6 +330,10 @@ class _WriteDocumentScreenState extends State<WriteDocumentScreen> {
             },
           ),
           mentionCandidates: _mentionCandidates,
+          emojiSuggestions: _emoji,
+          onDropFiles: (files, index) => unawaited(
+            handleDroppedFiles(s, doc, files, index, context: context),
+          ),
           onOpenLink: (url) =>
               unawaited(openWriteLink(s, doc, url, context: context)),
           onEditLink: () => _invoke('write.link.edit'),
@@ -347,15 +369,21 @@ class _WriteDocumentScreenState extends State<WriteDocumentScreen> {
                       ),
                     ),
                   ),
+                  // Inline AI prompt, preview and ghost text (Write 09 §5.3).
+                  Positioned.fill(child: AiPreviewLayer(ai: ai)),
                 ],
               );
               return LayoutBuilder(
                 builder: (context, c) => ListenableBuilder(
                   listenable: doc.editor.view,
-                  builder: (context, _) => _withCue(
-                    context,
-                    _withMargin(context, c, stack),
-                    suggesting: suggesting,
+                  builder: (context, _) => FocusModeChrome(
+                    enabled: doc.editor.view.focusMode,
+                    setChromeHidden: s.viewState.setFullScreen,
+                    child: _withCue(
+                      context,
+                      _withMargin(context, c, stack),
+                      suggesting: suggesting,
+                    ),
                   ),
                 ),
               );
@@ -433,6 +461,8 @@ class _WriteDocumentScreenState extends State<WriteDocumentScreen> {
   }
 
   BuildContext? _menuContext;
+
+  late final _emoji = emojiSuggester(s);
 
   void _openContextMenu(BuildContext context, Offset global) {
     final layout = doc.editor.documentLayout;

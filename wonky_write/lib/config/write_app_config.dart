@@ -7,6 +7,7 @@ import 'package:wonky_core/wonky_core.dart';
 import 'package:wonky_ui/wonky_ui.dart';
 
 import '../commands/screen_commands.dart';
+import '../features/ai/ai_commands.dart';
 import '../commands/theme_commands.dart';
 import '../features/document/write_collab_commands.dart';
 import '../features/history/write_version_renderer.dart';
@@ -116,7 +117,21 @@ class WriteAppConfig extends WonkyAppConfig {
     ...writeCommands(services, themeCatalogFor(services)),
     ...themeCommands(services, themeCatalogFor(services)),
     ...writeCollabCommands(services),
+    ...writeAiCommands(services),
   ];
+
+  /// Installs the AI assistant (suite 10) after sign-in.
+  @override
+  Future<void> onSignedIn(ShellServices services) async {
+    await super.onSignedIn(services);
+    ShellAssistant.install(services);
+  }
+
+  @override
+  Future<void> onSigningOut(ShellServices services) async {
+    ShellAssistant.uninstall(services);
+    await super.onSigningOut(services);
+  }
 
   @override
   MenuRoot menus(BuildContext context, ShellMenus shell) => writeMenus(shell);

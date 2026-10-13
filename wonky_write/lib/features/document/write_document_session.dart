@@ -58,11 +58,13 @@ import 'package:wonky_ui/wonky_ui.dart' show SyncState, SyncStatus;
 import 'package:wonky_write_core/wonky_write_core.dart'
     show DeltaUtils, MarkdownCodec, PageSetup, documentHash;
 
+import '../ai/ai_undo_grouping.dart';
 import '../collab/remote_presence.dart';
 import '../comments/write_comments.dart';
 import '../editor/applier/delta_applier.dart' show DeltaSelection;
 import '../editor/controller/editor_types.dart';
 import '../editor/controller/write_editor_controller.dart';
+import '../offline/sqlite_sync_persistence.dart';
 import '../offline/write_local_store.dart' show StoredDocument;
 import '../offline/write_offline.dart';
 import '../suggestions/suggestions_controller.dart';
@@ -243,6 +245,13 @@ class WriteDocumentSession extends ChangeNotifier {
 
   late final _SessionHost _host;
   late final _WriteContentUndoHandler _contentUndo;
+
+  /// Undo grouping of AI assistant runs made on behalf of this session.
+  late final AiUndoGrouping aiUndo = AiUndoGrouping(
+    undo: services.undo,
+    stack: undoStackKey,
+    nextId: _ids.nextString,
+  );
   late final WriteMetaUndoHandler _metaUndo;
   StreamSubscription<LocalDeltaChange>? _localSub;
   StreamSubscription<EditorNotice>? _noticeSub;
@@ -380,6 +389,7 @@ class WriteDocumentSession extends ChangeNotifier {
           documentUuid: doc,
           itemUuid: itemUuid,
           stored: stored,
+          item: item,
         ),
       );
       _sync = sync;
@@ -518,6 +528,8 @@ class WriteDocumentSession extends ChangeNotifier {
 
   void _setItem(DriveItemView item) {
     _item = item;
+    final p = _sync?.persistence;
+    if (p is SqliteSyncPersistence) p.item = item;
     if (_docRole == null) _setRole(roleOf(item.role));
     notifyListeners();
   }
@@ -919,6 +931,15 @@ class WriteDocumentSession extends ChangeNotifier {
         _onResynced(e);
       case SyncAccessLost(:final error):
         this.error = error;
+        final lostDoc = _documentUuid;
+        final p = _sync?.persistence;
+        if (lostDoc != null &&
+            p is SqliteSyncPersistence &&
+            !(_sync?.hasPendingChanges ?? true)) {
+          // No access, nothing unsent: the local copy goes.
+          p.discard();
+          unawaited(_offline?.forget(lostDoc));
+        }
         _setModeInternally(EditorMode.viewing);
         _phase.value = WriteSessionPhase.noAccess;
         notifyListeners();
@@ -1041,6 +1062,12 @@ class WriteDocumentSession extends ChangeNotifier {
 
   Timer? _undoSave;
 
+  final Completer<void> _closed = Completer<void>();
+
+  /// Completes after [dispose] once the local copy is written (tests, the
+  /// screen's teardown).
+  Future<void> get whenClosed => _closed.future;
+
   void _onUndoChanged() {
     if (!isLoaded || _disposed) return;
     _undoSave?.cancel();
@@ -1112,7 +1139,7 @@ class WriteDocumentSession extends ChangeNotifier {
   @override
   void dispose() {
     if (_disposed) return;
-    if (isLoaded) unawaited(_saveUndo());
+    final undoSaved = isLoaded ? _saveUndo() : Future<void>.value();
     _disposed = true;
     _undoSave?.cancel();
     _stopReopen();
@@ -1128,11 +1155,14 @@ class WriteDocumentSession extends ChangeNotifier {
     final sync = _sync;
     final offline = _offline;
     final doc = _documentUuid;
-    Future<void> closing = Future.value();
-    if (sync != null) closing = sync.dispose();
-    if (offline != null && doc != null && _claimed) {
-      unawaited(closing.whenComplete(() => offline.release(doc)));
+    Future<void> closing = undoSaved;
+    if (sync != null) {
+      closing = Future.wait([undoSaved, sync.dispose()]);
     }
+    if (offline != null && doc != null && _claimed) {
+      closing = closing.whenComplete(() => offline.release(doc));
+    }
+    _closed.complete(closing.catchError((Object _) {}));
     presence.dispose();
     comments.dispose();
     suggestions.dispose();
@@ -1157,8 +1187,23 @@ class _SessionHost implements SyncDocumentHost {
 
   @override
   void applyRemoteChange(Delta change, RemoteChangeInfo info) {
+    // AI runs on behalf of this session land on its undo stack as one
+    // step per run (Write 09 §5.2).
+    final ownRun =
+        info.origin == RemoteChangeOrigin.remote &&
+        AiUndoGrouping.isOwnRun(
+          onBehalfOf: info.onBehalfOfSessionId,
+          groupId: info.groupId,
+          sessionId: session._sync?.sessionId,
+        );
+    final before = ownRun ? session.editor.delta : null;
     session.editor.applyRemote(change);
-    session._afterRemoteChange(change);
+    if (before != null) {
+      session.aiUndo.record(change, before, info.groupId!);
+      session._contentVersion.value++;
+    } else {
+      session._afterRemoteChange(change);
+    }
   }
 
   @override

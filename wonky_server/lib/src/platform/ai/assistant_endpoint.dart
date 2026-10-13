@@ -84,12 +84,14 @@ class AssistantEndpoint extends Endpoint {
     itemUuid,
   );
 
-  Future<AssistantThreadDetail> getThread(Session session, int threadId) async =>
-      AssistantService.getThread(
-        session,
-        await UserService.actorOf(session),
-        threadId,
-      );
+  Future<AssistantThreadDetail> getThread(
+    Session session,
+    int threadId,
+  ) async => AssistantService.getThread(
+    session,
+    await UserService.actorOf(session),
+    threadId,
+  );
 
   Future<void> deleteThread(Session session, int threadId) async =>
       AssistantService.deleteThread(
@@ -100,7 +102,10 @@ class AssistantEndpoint extends Endpoint {
 
   /// Deletes every conversation of the user; returns how many.
   Future<int> clearHistory(Session session) async =>
-      AssistantService.clearHistory(session, await UserService.actorOf(session));
+      AssistantService.clearHistory(
+        session,
+        await UserService.actorOf(session),
+      );
 
   /// Reverts an assistant change by its `change_id` (panel Undo fallback).
   Future<void> revertChange(Session session, String changeId) async {
@@ -113,7 +118,10 @@ class AssistantEndpoint extends Endpoint {
 
   /// Inline AI: rewrite a selection, continue writing, explain, summarize,
   /// generate an outline (Write 09 §5.3–5.5).
-  Stream<InlineAiEvent> inline(Session session, InlineAiRequest request) async* {
+  Stream<InlineAiEvent> inline(
+    Session session,
+    InlineAiRequest request,
+  ) async* {
     final actor = await UserService.actorOf(session);
     yield* await InlineAiService.run(session, actor, request);
   }

@@ -325,6 +325,7 @@ class WriteLocalStore {
     required Set<String> deletes,
     required Map<String, String> deltaJson,
     bool replaceOutbox = false,
+    DriveItemView? item,
   }) {
     final now = _ms(clock.now());
     final meta = capture.meta == null
@@ -335,11 +336,17 @@ class WriteLocalStore {
         final snapshot = jsonEncode(capture.serverDocument.toJson());
         await tx.execute(
           '''
-          INSERT INTO local_document (document_uuid, item_uuid,
-            snapshot_json, snapshot_revision, head_revision, meta_json, role,
-            theme_id, updated_at, size_bytes)
-          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+          INSERT INTO local_document (document_uuid, item_uuid, title,
+            item_json, pinned, last_opened_at, snapshot_json,
+            snapshot_revision, head_revision, meta_json, role, theme_id,
+            updated_at, size_bytes)
+          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
           ON CONFLICT(document_uuid) DO UPDATE SET
+            title = CASE WHEN excluded.item_json IS NULL
+              THEN local_document.title ELSE excluded.title END,
+            item_json = COALESCE(excluded.item_json, local_document.item_json),
+            pinned = CASE WHEN excluded.item_json IS NULL
+              THEN local_document.pinned ELSE excluded.pinned END,
             snapshot_json = excluded.snapshot_json,
             snapshot_revision = excluded.snapshot_revision,
             head_revision = excluded.head_revision,
@@ -351,6 +358,10 @@ class WriteLocalStore {
           [
             documentUuid,
             itemUuid,
+            item?.name ?? '',
+            item == null ? null : jsonEncode(item.toJson()),
+            (item?.pinnedOffline ?? false) ? 1 : 0,
+            now,
             snapshot,
             capture.revision,
             capture.revision,

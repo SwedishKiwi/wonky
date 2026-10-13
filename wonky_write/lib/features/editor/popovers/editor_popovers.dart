@@ -431,3 +431,92 @@ class _PopoverRow extends StatelessWidget {
     );
   }
 }
+
+/// One emoji offered by the `:` trigger (Write 04 §20.1).
+@immutable
+class EmojiSuggestion {
+  const EmojiSuggestion({
+    required this.emoji,
+    required this.name,
+    this.shortcode,
+  });
+
+  /// The emoji (inserted as plain text).
+  final String emoji;
+
+  /// Its CLDR name ("grinning face").
+  final String name;
+
+  /// The matching shortcode, without colons ("grinning").
+  final String? shortcode;
+}
+
+/// Emoji matching a `:query` (at most a few, best first).
+typedef EmojiSuggester = List<EmojiSuggestion> Function(String query);
+
+/// The `:` emoji suggestions popover.
+class EmojiMenu extends StatelessWidget {
+  const EmojiMenu({
+    super.key,
+    required this.picker,
+    required this.theme,
+    required this.onChoose,
+  });
+
+  final PickerController<EmojiSuggestion> picker;
+  final EditorTheme theme;
+  final void Function(EmojiSuggestion item) onChoose;
+
+  static const menuKey = ValueKey<String>('write.editor.emojiMenu');
+
+  @override
+  Widget build(BuildContext context) {
+    return ListenableBuilder(
+      listenable: picker,
+      builder: (context, _) {
+        final items = picker.items;
+        return _PopoverCard(
+          key: menuKey,
+          theme: theme,
+          width: 260,
+          child: ListView.builder(
+            shrinkWrap: true,
+            padding: const EdgeInsets.symmetric(vertical: 4),
+            itemCount: items.length,
+            itemBuilder: (context, index) {
+              final item = items[index];
+              return _PopoverRow(
+                key: ValueKey('write.editor.emojiMenu.$index'),
+                theme: theme,
+                selected: index == picker.highlighted,
+                onTap: () => onChoose(item),
+                onHover: () => picker.highlight(index),
+                child: Row(
+                  children: [
+                    SizedBox(
+                      width: 28,
+                      child: Text(
+                        item.emoji,
+                        style: const TextStyle(fontSize: 18),
+                      ),
+                    ),
+                    Expanded(
+                      child: Text(
+                        item.shortcode == null
+                            ? item.name
+                            : ':${item.shortcode}:  ${item.name}',
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(fontSize: 13, color: theme.body.color),
+                      ),
+                    ),
+                  ],
+                ),
+              );
+            },
+          ),
+        );
+      },
+    );
+  }
+}

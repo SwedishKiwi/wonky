@@ -5,6 +5,7 @@ import 'package:flutter/widgets.dart';
 import 'package:shad/shad.dart';
 import 'package:wonky_ui/wonky_ui.dart';
 
+import '../ai/ai_selection_menu.dart';
 import '../editor/commands/write_editor_commands.dart';
 import '../editor/controller/editor_types.dart';
 import 'write_document_controller.dart';
@@ -266,6 +267,7 @@ class _SelectionToolbar extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           children: viewing
               ? [
+                  AiSelectionButton(doc: doc, ui: ui),
                   button(
                     'shell.comments.create',
                     LucideIcons.messageSquarePlus,
@@ -280,6 +282,7 @@ class _SelectionToolbar extends StatelessWidget {
                   ),
                 ]
               : [
+                  AiSelectionButton(doc: doc, ui: ui),
                   heading('H1', BlockKind.heading1),
                   heading('H2', BlockKind.heading2),
                   heading('H3', BlockKind.heading3),

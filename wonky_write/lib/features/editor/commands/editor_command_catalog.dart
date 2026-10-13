@@ -502,11 +502,11 @@ List<EditorCommandSpec> editorCommandCatalog() {
     ),
     EditorCommandSpec(
       id: 'write.insert.specialCharacter',
-      title: 'Special character',
+      title: 'Special characters…',
       requiredRole: Role.commenter,
+      // Without `char` the screen opens the dialog (Write 04 §20.2).
       argsSchema: const JsonSchema.object(
         properties: {'char': JsonSchema.string()},
-        required: ['char'],
       ),
       run: (t, a) => _result(
         t.commands.insertText(

@@ -31,6 +31,7 @@ import '../features/themes/theme_picker.dart';
 import '../features/themes/write_fonts.dart';
 import '../features/word_count/word_count_dialog.dart';
 import 'editor_commands.dart';
+import 'extras_commands.dart';
 import 'write_command.dart';
 
 const _mod = true;
@@ -41,7 +42,8 @@ List<Command<CommandArgs>> writeCommands(
   ShellServices s,
   WriteThemeCatalog themes,
 ) => [
-  ...editorCommands(s, overrides: _overrides(s)),
+  ...editorCommands(s, overrides: {..._overrides(s), ...extrasOverrides(s)}),
+  ...extrasCommands(s),
   ...fileCommands(s),
   ...findCommands(s),
   ...viewCommands(s),
@@ -77,7 +79,12 @@ Map<String, WriteRun Function(EditorCommandSpec spec)> _overrides(
     final data = r.data;
     if (r.isOk && _ui(ctx) && c != null && data is Map) {
       final id = data['id'] as String?;
-      if (id != null) {
+      // In-place cell editing (SE-4) starts on the first cell; without it
+      // the table editor opens.
+      final inline = d.editor.tableEditing;
+      if (id != null && inline != null) {
+        scheduleMicrotask(() => inline.activate(id, 0, 0, selectAll: true));
+      } else if (id != null) {
         scheduleMicrotask(() {
           if (c.mounted) {
             unawaited(_editTable(c, d, nodeId: id, label: 'Insert table'));

@@ -77,8 +77,8 @@ class EditorTheme {
     );
     return EditorTheme(
       brightness: brightness,
-      paperColor: dark ? const Color(0xff1e1f22) : const Color(0xffffffff),
-      canvasColor: dark ? const Color(0xff151618) : const Color(0xfff1f3f4),
+      paperColor: dark ? const Color(0xff24262a) : const Color(0xffffffff),
+      canvasColor: dark ? const Color(0xff0d0f12) : const Color(0xfff1f3f4),
       body: TextStyle(
         fontFamily: body,
         fontSize: 14.67,

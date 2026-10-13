@@ -1,0 +1,805 @@
+import 'dart:async';
+
+import 'package:flutter/services.dart';
+import 'package:flutter/widgets.dart';
+import 'package:shad/shad.dart';
+import 'package:wonky_client/wonky_client.dart';
+import 'package:wonky_ui/wonky_ui.dart';
+
+import '../shell/shell_services.dart';
+import 'assistant_controller.dart';
+import 'assistant_markdown.dart';
+import 'assistant_models.dart';
+
+/// The assistant side panel (suite 10 §3): thread picker, streaming
+/// Markdown replies with tool chips (Show / Undo), the composer with
+/// context chips, Stop, quick prompts, the Edit directly / Suggest toggle
+/// and the privacy notice.
+class AssistantPanel extends StatefulWidget {
+  const AssistantPanel({
+    super.key,
+    required this.services,
+    required this.controller,
+  });
+
+  final ShellServices services;
+  final AssistantController controller;
+
+  static const privacyNotice =
+      'The assistant sends this document and your messages to Anthropic to '
+      'generate answers.';
+
+  @override
+  State<AssistantPanel> createState() => _AssistantPanelState();
+}
+
+class _AssistantPanelState extends State<AssistantPanel> {
+  final _input = TextEditingController();
+  final _focus = FocusNode(debugLabel: 'assistant.input');
+  final _scroll = ScrollController();
+  int _lastCount = 0;
+  int _lastLength = 0;
+
+  AssistantController get c => widget.controller;
+
+  @override
+  void initState() {
+    super.initState();
+    unawaited(c.ensureLoaded());
+    c.addListener(_onChanged);
+  }
+
+  @override
+  void didUpdateWidget(AssistantPanel old) {
+    super.didUpdateWidget(old);
+    if (!identical(old.controller, widget.controller)) {
+      old.controller.removeListener(_onChanged);
+      widget.controller.addListener(_onChanged);
+      unawaited(c.ensureLoaded());
+    }
+  }
+
+  @override
+  void dispose() {
+    c.removeListener(_onChanged);
+    _input.dispose();
+    _focus.dispose();
+    _scroll.dispose();
+    super.dispose();
+  }
+
+  void _onChanged() {
+    final length = c.currentReply?.markdown.length ?? 0;
+    if (c.entries.length != _lastCount || length != _lastLength) {
+      _lastCount = c.entries.length;
+      _lastLength = length;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (_scroll.hasClients) {
+          _scroll.jumpTo(_scroll.position.maxScrollExtent);
+        }
+      });
+    }
+  }
+
+  Future<void> _send([String? text, bool includeComments = false]) async {
+    final t = (text ?? _input.text).trim();
+    if (t.isEmpty || c.busy) return;
+    if (text == null) _input.clear();
+    await c.send(t, includeComments: includeComments);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return ListenableBuilder(
+      listenable: c,
+      builder: (context, _) {
+        final status = c.status.value;
+        return Column(
+          key: const ValueKey<String>('assistant.panel'),
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            _header(context),
+            if (status != null && !status.available)
+              _unavailable(context, status),
+            Expanded(child: _messages(context)),
+            _composer(context, enabled: status?.available ?? false),
+          ],
+        );
+      },
+    );
+  }
+
+  Widget _header(BuildContext context) {
+    final theme = ShadTheme.of(context);
+    final current = c.threads.where((t) => t.id == c.threadId).firstOrNull;
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(10, 8, 6, 6),
+      child: Row(
+        children: [
+          Expanded(
+            child: WonkyDropdownMenu(
+              entries: () => [
+                WonkyMenuItem(
+                  label: 'New chat',
+                  icon: LucideIcons.squarePen,
+                  onSelected: () => unawaited(c.newThread()),
+                ),
+                if (c.threads.isNotEmpty) const WonkyMenuSeparator(),
+                for (final t in c.threads)
+                  WonkyMenuRadioItem(
+                    label: t.title,
+                    selected: t.id == c.threadId,
+                    onSelected: () => unawaited(c.selectThread(t.id)),
+                  ),
+              ],
+              builder: (context, ctl) => ShadButton.ghost(
+                key: const ValueKey<String>('assistant.threadPicker'),
+                mainAxisAlignment: MainAxisAlignment.start,
+                padding: const EdgeInsets.symmetric(horizontal: 8),
+                trailing: const Icon(LucideIcons.chevronDown, size: 14),
+                onPressed: ctl.toggle,
+                child: Flexible(
+                  child: Text(
+                    current?.title ?? 'New chat',
+                    overflow: TextOverflow.ellipsis,
+                    style: theme.textTheme.small,
+                  ),
+                ),
+              ),
+            ),
+          ),
+          ShadTooltip(
+            builder: (_) => const Text('New chat'),
+            child: ShadIconButton.ghost(
+              key: const ValueKey<String>('assistant.newThread'),
+              width: 30,
+              height: 30,
+              iconSize: 16,
+              semanticLabel: 'New chat',
+              icon: const Icon(LucideIcons.squarePen),
+              onPressed: () => unawaited(c.newThread()),
+            ),
+          ),
+          WonkyDropdownMenu(
+            entries: () => [
+              WonkyMenuItem(
+                label: 'Clear chat',
+                icon: LucideIcons.eraser,
+                onSelected: () => unawaited(c.newThread()),
+              ),
+              WonkyMenuItem(
+                label: 'Delete this chat',
+                icon: LucideIcons.trash2,
+                onSelected: () => unawaited(_delete(context)),
+              ),
+              const WonkyMenuSeparator(),
+              WonkyMenuItem(
+                label: 'AI settings',
+                icon: LucideIcons.settings,
+                onSelected: () => widget.services.router.go('/settings/ai'),
+              ),
+            ],
+            builder: (context, ctl) => ShadIconButton.ghost(
+              key: const ValueKey<String>('assistant.more'),
+              width: 30,
+              height: 30,
+              iconSize: 16,
+              semanticLabel: 'More',
+              icon: const Icon(LucideIcons.ellipsisVertical),
+              onPressed: ctl.toggle,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _delete(BuildContext context) async {
+    try {
+      await c.deleteThread();
+    } on Object {
+      widget.services.toasts.error("Couldn't delete the chat");
+    }
+  }
+
+  Widget _unavailable(BuildContext context, AssistantStatus status) {
+    final theme = ShadTheme.of(context);
+    final optedOut = status.reason == 'optedOut';
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(12, 0, 12, 8),
+      child: ShadAlert(
+        key: const ValueKey<String>('assistant.unavailable'),
+        icon: const Icon(LucideIcons.sparkles),
+        title: Text(
+          status.message ?? "AI isn't configured on this server.",
+          style: theme.textTheme.small,
+        ),
+        description: optedOut
+            ? Padding(
+                padding: const EdgeInsets.only(top: 6),
+                child: ShadButton.outline(
+                  size: ShadButtonSize.sm,
+                  onPressed: () => widget.services.router.go('/settings/ai'),
+                  child: const Text('Open AI settings'),
+                ),
+              )
+            : status.reason == 'notConfigured'
+            ? const Text(
+                'An administrator can enable it by adding an Anthropic API '
+                'key to the server configuration.',
+              )
+            : null,
+      ),
+    );
+  }
+
+  Widget _messages(BuildContext context) {
+    if (c.loading && c.entries.isEmpty) {
+      return const Center(child: ShadSpinner());
+    }
+    if (c.entries.isEmpty) return _empty(context);
+    return ListView(
+      key: const ValueKey<String>('assistant.messages'),
+      controller: _scroll,
+      padding: const EdgeInsets.fromLTRB(12, 4, 12, 12),
+      children: [
+        if (c.loadError != null)
+          Padding(
+            padding: const EdgeInsets.only(bottom: 8),
+            child: Text(
+              c.loadError!,
+              style: ShadTheme.of(context).textTheme.muted,
+            ),
+          ),
+        for (final e in c.entries)
+          Padding(
+            key: ValueKey<String>('assistant.entry.${e.key}'),
+            padding: const EdgeInsets.only(bottom: 10),
+            child: switch (e) {
+              AssistantUserEntry() => _UserBubble(text: e.text),
+              AssistantReplyEntry() => _ReplyView(controller: c, reply: e),
+              AssistantResultEntry() => _ResultView(controller: c, result: e),
+            },
+          ),
+      ],
+    );
+  }
+
+  Widget _empty(BuildContext context) {
+    final theme = ShadTheme.of(context);
+    return ListView(
+      padding: const EdgeInsets.fromLTRB(16, 24, 16, 12),
+      children: [
+        Icon(LucideIcons.sparkles, size: 28, color: theme.colorScheme.primary),
+        const SizedBox(height: 10),
+        Text(
+          'Ask about this document or tell the assistant what to change.',
+          textAlign: TextAlign.center,
+          style: theme.textTheme.small,
+        ),
+        const SizedBox(height: 4),
+        Text(
+          'Every change it makes can be undone in one step.',
+          textAlign: TextAlign.center,
+          style: theme.textTheme.muted.copyWith(fontSize: 12),
+        ),
+      ],
+    );
+  }
+
+  Widget _composer(BuildContext context, {required bool enabled}) {
+    final theme = ShadTheme.of(context);
+    final cs = theme.colorScheme;
+    final chips = c.chips;
+    final prompts = c.adapter.quickPrompts;
+    return Container(
+      decoration: BoxDecoration(
+        border: Border(top: BorderSide(color: cs.border)),
+      ),
+      padding: const EdgeInsets.fromLTRB(10, 8, 10, 8),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        spacing: 6,
+        children: [
+          if (prompts.isNotEmpty && !c.busy)
+            Wrap(
+              spacing: 6,
+              runSpacing: 6,
+              children: [
+                for (final p in prompts)
+                  ShadButton.outline(
+                    key: ValueKey<String>('assistant.quick.${p.label}'),
+                    size: ShadButtonSize.sm,
+                    enabled: enabled,
+                    leading: p.icon == null ? null : Icon(p.icon, size: 13),
+                    onPressed: () =>
+                        unawaited(_send(p.prompt, p.includeComments)),
+                    child: Text(p.label),
+                  ),
+              ],
+            ),
+          if (chips.isNotEmpty)
+            Wrap(
+              spacing: 6,
+              runSpacing: 4,
+              children: [
+                for (final chip in chips)
+                  _Chip(
+                    key: ValueKey<String>('assistant.chip.${chip.id}'),
+                    chip: chip,
+                    onRemove: () => c.removeChip(chip.id),
+                  ),
+              ],
+            ),
+          CallbackShortcuts(
+            bindings: {
+              const SingleActivator(LogicalKeyboardKey.enter): () =>
+                  unawaited(_send()),
+              const SingleActivator(LogicalKeyboardKey.numpadEnter): () =>
+                  unawaited(_send()),
+            },
+            child: ShadInput(
+              key: const ValueKey<String>('assistant.input'),
+              controller: _input,
+              focusNode: _focus,
+              enabled: enabled,
+              minLines: 2,
+              maxLines: 8,
+              keyboardType: TextInputType.multiline,
+              placeholder: const Text('Ask the assistant…'),
+            ),
+          ),
+          Row(
+            children: [
+              _ModeToggle(controller: c),
+              const Spacer(),
+              if (c.busy)
+                ShadButton.outline(
+                  key: const ValueKey<String>('assistant.stop'),
+                  size: ShadButtonSize.sm,
+                  leading: const Icon(LucideIcons.square, size: 12),
+                  onPressed: () => unawaited(c.stop()),
+                  child: const Text('Stop'),
+                )
+              else
+                ShadButton(
+                  key: const ValueKey<String>('assistant.send'),
+                  size: ShadButtonSize.sm,
+                  enabled: enabled,
+                  leading: const Icon(LucideIcons.sendHorizontal, size: 13),
+                  onPressed: () => unawaited(_send()),
+                  child: const Text('Send'),
+                ),
+            ],
+          ),
+          Text(
+            AssistantPanel.privacyNotice,
+            key: const ValueKey<String>('assistant.notice'),
+            style: theme.textTheme.muted.copyWith(fontSize: 11),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _ModeToggle extends StatelessWidget {
+  const _ModeToggle({required this.controller});
+
+  final AssistantController controller;
+
+  @override
+  Widget build(BuildContext context) {
+    final c = controller;
+    Widget option(AiApplyMode mode, String label, IconData icon, String tip) {
+      final selected = c.applyMode == mode;
+      final enabled = mode == AiApplyMode.suggest || c.canEditDirectly;
+      return ShadTooltip(
+        builder: (_) => Text(tip),
+        child: selected
+            ? ShadButton.secondary(
+                key: ValueKey<String>('assistant.mode.${mode.name}'),
+                size: ShadButtonSize.sm,
+                leading: Icon(icon, size: 13),
+                onPressed: () {},
+                child: Text(label),
+              )
+            : ShadButton.ghost(
+                key: ValueKey<String>('assistant.mode.${mode.name}'),
+                size: ShadButtonSize.sm,
+                enabled: enabled,
+                leading: Icon(icon, size: 13),
+                onPressed: () => c.setApplyMode(mode),
+                child: Text(label),
+              ),
+      );
+    }
+
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        option(
+          AiApplyMode.edit,
+          'Edit',
+          LucideIcons.pencil,
+          c.canEditDirectly
+              ? 'Edit directly: changes go straight into the document'
+              : 'You can only suggest changes in this document',
+        ),
+        option(
+          AiApplyMode.suggest,
+          'Suggest',
+          LucideIcons.gitPullRequestArrow,
+          'Suggest: changes arrive as suggestions to accept or reject',
+        ),
+      ],
+    );
+  }
+}
+
+class _Chip extends StatelessWidget {
+  const _Chip({super.key, required this.chip, required this.onRemove});
+
+  final AssistantContextChip chip;
+  final VoidCallback onRemove;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = ShadTheme.of(context);
+    final cs = theme.colorScheme;
+    return Container(
+      padding: const EdgeInsets.fromLTRB(8, 2, 2, 2),
+      decoration: BoxDecoration(
+        color: cs.secondary,
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(chip.icon ?? LucideIcons.textSelect, size: 12),
+          const SizedBox(width: 4),
+          ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 220),
+            child: Text(
+              chip.label,
+              overflow: TextOverflow.ellipsis,
+              style: theme.textTheme.small.copyWith(fontSize: 12),
+            ),
+          ),
+          ShadIconButton.ghost(
+            key: ValueKey<String>('assistant.chip.${chip.id}.remove'),
+            width: 20,
+            height: 20,
+            iconSize: 11,
+            semanticLabel: 'Remove ${chip.label}',
+            icon: const Icon(LucideIcons.x),
+            onPressed: onRemove,
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _UserBubble extends StatelessWidget {
+  const _UserBubble({required this.text});
+
+  final String text;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = ShadTheme.of(context);
+    final cs = theme.colorScheme;
+    return Align(
+      alignment: Alignment.centerRight,
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 320),
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
+          decoration: BoxDecoration(
+            color: cs.secondary,
+            borderRadius: BorderRadius.circular(10),
+          ),
+          child: Text(text, style: theme.textTheme.small),
+        ),
+      ),
+    );
+  }
+}
+
+class _ReplyView extends StatelessWidget {
+  const _ReplyView({required this.controller, required this.reply});
+
+  final AssistantController controller;
+  final AssistantReplyEntry reply;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = ShadTheme.of(context);
+    final cs = theme.colorScheme;
+    final r = reply;
+    final md = r.markdown.trim();
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      spacing: 6,
+      children: [
+        if (r.activities.isNotEmpty)
+          Wrap(
+            spacing: 6,
+            runSpacing: 6,
+            children: [
+              for (final a in r.activities)
+                _ActivityChip(controller: controller, reply: r, activity: a),
+            ],
+          ),
+        if (md.isNotEmpty) AssistantMarkdown(md),
+        if (r.streaming && md.isEmpty && r.activities.every((a) => !a.running))
+          Row(
+            children: [
+              const SizedBox(width: 14, height: 14, child: ShadSpinner()),
+              const SizedBox(width: 8),
+              Text(r.progress ?? 'Thinking…', style: theme.textTheme.muted),
+            ],
+          )
+        else if (r.streaming && r.progress != null)
+          Text(
+            r.progress!,
+            style: theme.textTheme.muted.copyWith(fontSize: 12),
+          ),
+        if (r.confirmation != null) _confirmation(context, r.confirmation!),
+        if (r.status == AssistantReplyStatus.refused)
+          _note(
+            context,
+            LucideIcons.ban,
+            r.error ?? AssistantController.refusalText,
+          ),
+        if (r.status == AssistantReplyStatus.failed)
+          _note(
+            context,
+            LucideIcons.circleAlert,
+            r.error ?? 'Something went wrong.',
+          ),
+        if (r.status == AssistantReplyStatus.stopped)
+          _note(context, LucideIcons.square, 'Stopped'),
+        if (r.status == AssistantReplyStatus.cutOff)
+          Align(
+            alignment: Alignment.centerLeft,
+            child: ShadButton.outline(
+              key: const ValueKey<String>('assistant.continue'),
+              size: ShadButtonSize.sm,
+              enabled: !controller.busy,
+              onPressed: () => unawaited(controller.continueAnswer()),
+              child: const Text('Continue'),
+            ),
+          ),
+        if (!r.streaming && r.hasChanges)
+          Row(
+            children: [
+              ShadButton.ghost(
+                key: const ValueKey<String>('assistant.reply.undo'),
+                size: ShadButtonSize.sm,
+                enabled: !r.undone,
+                leading: const Icon(LucideIcons.undo2, size: 13),
+                onPressed: () => unawaited(controller.undoReply(r)),
+                child: Text(r.undone ? 'Undone' : 'Undo changes'),
+              ),
+              if (md.isNotEmpty)
+                ShadButton.ghost(
+                  size: ShadButtonSize.sm,
+                  leading: const Icon(LucideIcons.copy, size: 13),
+                  onPressed: () => Clipboard.setData(ClipboardData(text: md)),
+                  child: const Text('Copy'),
+                ),
+            ],
+          )
+        else if (!r.streaming && md.isNotEmpty)
+          Row(
+            children: [
+              ShadButton.ghost(
+                key: const ValueKey<String>('assistant.reply.insert'),
+                size: ShadButtonSize.sm,
+                enabled: controller.adapter.role.canComment,
+                leading: const Icon(LucideIcons.textCursorInput, size: 13),
+                onPressed: () =>
+                    unawaited(controller.adapter.insertMarkdown(md)),
+                child: const Text('Insert at cursor'),
+              ),
+              ShadButton.ghost(
+                size: ShadButtonSize.sm,
+                leading: const Icon(LucideIcons.copy, size: 13),
+                onPressed: () => Clipboard.setData(ClipboardData(text: md)),
+                child: const Text('Copy'),
+              ),
+            ],
+          ),
+        if (r.streaming)
+          Container(height: 1, color: cs.border.withValues(alpha: 0.5)),
+      ],
+    );
+  }
+
+  Widget _note(BuildContext context, IconData icon, String text) {
+    final theme = ShadTheme.of(context);
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Icon(icon, size: 14, color: theme.colorScheme.mutedForeground),
+        const SizedBox(width: 6),
+        Expanded(child: Text(text, style: theme.textTheme.muted)),
+      ],
+    );
+  }
+
+  Widget _confirmation(BuildContext context, AssistantConfirmation conf) {
+    final theme = ShadTheme.of(context);
+    return ShadCard(
+      key: const ValueKey<String>('assistant.confirmation'),
+      padding: const EdgeInsets.all(10),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        spacing: 8,
+        children: [
+          Text(conf.summary, style: theme.textTheme.small),
+          Row(
+            spacing: 6,
+            children: [
+              ShadButton.destructive(
+                key: const ValueKey<String>('assistant.confirm.allow'),
+                size: ShadButtonSize.sm,
+                onPressed: () => unawaited(controller.confirm(true)),
+                child: const Text('Allow'),
+              ),
+              ShadButton.outline(
+                key: const ValueKey<String>('assistant.confirm.deny'),
+                size: ShadButtonSize.sm,
+                onPressed: () => unawaited(controller.confirm(false)),
+                child: const Text('Deny'),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _ActivityChip extends StatelessWidget {
+  const _ActivityChip({
+    required this.controller,
+    required this.reply,
+    required this.activity,
+  });
+
+  final AssistantController controller;
+  final AssistantReplyEntry reply;
+  final AssistantActivity activity;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = ShadTheme.of(context);
+    final cs = theme.colorScheme;
+    final a = activity;
+    return Container(
+      key: ValueKey<String>('assistant.activity.${a.toolUseId}'),
+      padding: const EdgeInsets.fromLTRB(8, 3, 3, 3),
+      decoration: BoxDecoration(
+        border: Border.all(color: a.error ? cs.destructive : cs.border),
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          if (a.running)
+            const SizedBox(width: 12, height: 12, child: ShadSpinner())
+          else
+            Icon(
+              a.error
+                  ? LucideIcons.circleAlert
+                  : a.changed
+                  ? LucideIcons.pencilLine
+                  : LucideIcons.eye,
+              size: 12,
+              color: a.error ? cs.destructive : cs.mutedForeground,
+            ),
+          const SizedBox(width: 6),
+          ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 200),
+            child: Text(
+              a.summary.isEmpty ? a.toolName : a.summary,
+              overflow: TextOverflow.ellipsis,
+              style: theme.textTheme.small.copyWith(fontSize: 12),
+            ),
+          ),
+          if (a.hasRange && !a.running)
+            ShadButton.link(
+              key: const ValueKey<String>('assistant.activity.show'),
+              size: ShadButtonSize.sm,
+              padding: const EdgeInsets.symmetric(horizontal: 6),
+              onPressed: () => controller.show(a),
+              child: const Text('Show'),
+            ),
+          if (a.changed && !a.running)
+            ShadButton.link(
+              key: const ValueKey<String>('assistant.activity.undo'),
+              size: ShadButtonSize.sm,
+              padding: const EdgeInsets.symmetric(horizontal: 6),
+              enabled: !reply.undone && !reply.streaming,
+              onPressed: () => unawaited(controller.undoReply(reply)),
+              child: const Text('Undo'),
+            )
+          else
+            const SizedBox(width: 4),
+        ],
+      ),
+    );
+  }
+}
+
+class _ResultView extends StatelessWidget {
+  const _ResultView({required this.controller, required this.result});
+
+  final AssistantController controller;
+  final AssistantResultEntry result;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = ShadTheme.of(context);
+    final r = result;
+    final md = r.markdown.trim();
+    final streaming = r.status == AssistantReplyStatus.streaming;
+    return ShadCard(
+      padding: const EdgeInsets.all(10),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        spacing: 8,
+        children: [
+          Row(
+            children: [
+              Icon(
+                LucideIcons.sparkles,
+                size: 13,
+                color: theme.colorScheme.primary,
+              ),
+              const SizedBox(width: 6),
+              Expanded(child: Text(r.title, style: theme.textTheme.small)),
+              if (streaming)
+                const SizedBox(width: 12, height: 12, child: ShadSpinner()),
+              ShadIconButton.ghost(
+                width: 24,
+                height: 24,
+                iconSize: 12,
+                semanticLabel: 'Close',
+                icon: const Icon(LucideIcons.x),
+                onPressed: () => controller.removeEntry(r),
+              ),
+            ],
+          ),
+          if (r.builder != null)
+            r.builder!(context)
+          else if (md.isNotEmpty)
+            AssistantMarkdown(md),
+          if (r.error != null) Text(r.error!, style: theme.textTheme.muted),
+          if (r.status == AssistantReplyStatus.done &&
+              md.isNotEmpty &&
+              r.actions.isNotEmpty)
+            Wrap(
+              spacing: 6,
+              runSpacing: 6,
+              children: [
+                for (final a in r.actions)
+                  ShadButton.outline(
+                    key: a.id == null
+                        ? null
+                        : ValueKey<String>('assistant.result.${a.id}'),
+                    size: ShadButtonSize.sm,
+                    leading: a.icon == null ? null : Icon(a.icon, size: 13),
+                    onPressed: () => a.onPressed(md),
+                    child: Text(a.label),
+                  ),
+              ],
+            ),
+        ],
+      ),
+    );
+  }
+}

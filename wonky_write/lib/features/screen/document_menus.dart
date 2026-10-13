@@ -188,6 +188,7 @@ List<WonkyMenuEntry> contextMenuEntries(
   if (doc.onImage) {
     return [
       ...out,
+      ui.item('write.image.preview', icon: LucideIcons.maximize),
       ui.item('write.image.editAlt'),
       ui.item('write.image.replace'),
       ui.item('write.image.download', icon: LucideIcons.download),
@@ -205,6 +206,7 @@ List<WonkyMenuEntry> contextMenuEntries(
   if (doc.inTable) {
     return [
       ...out,
+      ui.item('write.table.editCell', label: 'Edit cells'),
       ui.item('write.table.edit'),
       const WonkyMenuSeparator(),
       ui.item('write.edit.copyAsMarkdown', label: 'Copy (Markdown)'),
@@ -360,6 +362,11 @@ List<WonkyMenuEntry> blockMenuEntries(
     ],
     if (doc.embedData('image', nodeId) != null) ...[
       const WonkyMenuSeparator(),
+      ui.item(
+        'write.image.preview',
+        args: {'nodeId': nodeId},
+        keyName: 'block.preview',
+      ),
       ui.item(
         'write.image.editAlt',
         args: {'nodeId': nodeId},

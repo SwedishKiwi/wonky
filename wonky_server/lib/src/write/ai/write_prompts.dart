@@ -94,7 +94,8 @@ Rules:
           'flowing while keeping the meaning and tone.',
     'fixGrammar' =>
       'Fix spelling, grammar and punctuation. Change nothing else.',
-    'shorter' => 'Make it shorter (about half the length), keeping the key points.',
+    'shorter' =>
+      'Make it shorter (about half the length), keeping the key points.',
     'longer' =>
       'Make it longer (about one and a half times the length) with more '
           'detail and explanation, without inventing facts.',
@@ -103,8 +104,9 @@ Rules:
     'translate' =>
       'Translate it into ${language ?? 'English'}. Keep the formatting.',
     'summarize' => 'Summarize it in a few sentences.',
-    _ => (instruction == null || instruction.trim().isEmpty)
-        ? 'Improve the writing.'
-        : instruction.trim(),
+    _ =>
+      (instruction == null || instruction.trim().isEmpty)
+          ? 'Improve the writing.'
+          : instruction.trim(),
   };
 }

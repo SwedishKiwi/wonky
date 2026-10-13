@@ -84,7 +84,9 @@ abstract final class InlineAiService {
           cancel: cancel,
           onText: (t) {
             if (!out.isClosed) {
-              out.add(InlineAiEvent(type: InlineAiEventType.textDelta, text: t));
+              out.add(
+                InlineAiEvent(type: InlineAiEventType.textDelta, text: t),
+              );
             }
           },
         );
@@ -215,7 +217,10 @@ abstract final class InlineAiService {
     }
     if (action == continueAction) {
       final tier = AiTier.continueWriting(quality);
-      final caret = (req.start ?? ctx.doc.length - 1).clamp(0, ctx.doc.length - 1);
+      final caret = (req.start ?? ctx.doc.length - 1).clamp(
+        0,
+        ctx.doc.length - 1,
+      );
       final before = _lastWords(
         DocumentReader.renderMarkdown(
           ctx.content.slice(0, caret),
@@ -288,8 +293,9 @@ abstract final class InlineAiService {
           'detailed' =>
             'in detail: a short overview paragraph followed by the key '
                 'points of each section as a bullet list',
-          _ => 'in one paragraph followed by up to five key points as a '
-              'bullet list',
+          _ =>
+            'in one paragraph followed by up to five key points as a '
+                'bullet list',
         };
         task = 'Summarize the document $length.';
         body = _documentBody(ctx);
@@ -329,7 +335,8 @@ abstract final class InlineAiService {
     var note = '';
     if (md.length > limit) {
       md = md.substring(0, limit);
-      note = '\n<note>The document was cut off here because it is very long.</note>';
+      note =
+          '\n<note>The document was cut off here because it is very long.</note>';
     }
     return '<document title="${ctx.title}">\n$md\n</document>$note';
   }

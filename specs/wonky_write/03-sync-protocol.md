@@ -121,7 +121,19 @@ States (ot.js): **Synchronized**, **AwaitingAck(inflight)**,
 On (re)connect the client sends `connect(knownRevision = revision)` and receives missed ops
 (transformed into its inflight/buffer as above); then re-submits the outbox: the inflight op is
 resent with the same `clientOpId` (idempotent), the buffer follows. Long offline periods compose
-the outbox into ≤ 1 op per 2 s of editing.
+the outbox into ≤ 1 op per 2 s of editing: the buffer is a list of chunks (one per 2 s window and
+per op kind/group); remote ops are transformed through the chunks one after the other, and when
+the in-flight op is acknowledged the leading chunks of the same kind are composed into the next
+op.
+
+The outbox is durable (suite 12 §1): the controller reports every server-document change and
+outbox change to a `SyncPersistence` (`features/sync/sync_persistence.dart`, SQLite
+implementation in `features/offline/`) and sends an op only after the write that contains it
+completed. After a reload `DocumentSyncController.restore` loads the stored server document and
+outbox (the document renders and is editable before connecting); a restored in-flight op is
+treated as possibly sent, so its committed form is never predicted (it is taken from `Init` ops
+or `getOps`). If the server is behind the stored revision (another history), the client resyncs
+and offers the local state as a copy.
 
 ### 3.2 Integrity check
 Every 200 revisions (and on demand in debug), client and server compare a SHA-256 of the
@@ -144,15 +156,18 @@ an error with the op range for diagnosis.
   ahead of a gap wait; the gap is requested with `RequestOps` (re-requested after 3 s). A
   remote op whose `clientOpId` (Init ops, `getOps`) or `authorSessionId` matches the in-flight
   op is treated as its ack.
-- The in-memory outbox is the in-flight op plus the composed buffer; reconnects resend the
-  in-flight op (same `clientOpId`) unless it was already sent on that connection.
+- The outbox is the in-flight op plus the buffer chunks (persisted, §3.1); reconnects resend
+  the in-flight op (same `clientOpId`) unless it was already sent on that connection.
 - Remote cursors arrive at a server revision: older ones are transformed through the
   remembered recent ops, newer ones wait; local cursors are expressed at the client's server
   revision by transforming through the inverse of the pending changes.
 - Undo stacks are rebased by `rebaseWriteStacks` (wonky_write `features/document/write_undo.dart`):
   the remote change is walked newest → oldest across *all* steps of the undo stack, and
   separately of the redo stack, before `UndoService.applyRemote` swaps in the results.
-- Write undo stacks are not persisted (entries are only valid against the live document).
+- Write undo stacks are not persisted by the shell (entries are only valid against the live
+  document). The session stores them best-effort with the offline copy (`LocalUndoStack`,
+  suite 12 §1.1) together with the hash of the local document, and restores them only when the
+  restored document has the same hash.
 
 ## 4. Undo/redo (Write-specific)
 

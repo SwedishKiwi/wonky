@@ -56,6 +56,9 @@ class FakeDocumentServer {
   /// Corrupts hash results (integrity test).
   bool corruptHashes = false;
 
+  /// Submits are received but dropped (lost in transit).
+  bool dropSubmits = false;
+
   AccessRole roleFor(int userId) => _roles[userId] ?? AccessRole.editor;
   final Map<int, AccessRole> _roles = {};
 
@@ -180,7 +183,7 @@ class FakeDocumentServer {
     received.add(m);
     switch (m) {
       case DocSubmitOp():
-        _submit(conn, m);
+        if (!dropSubmits) _submit(conn, m);
       case DocRequestOps():
         for (final o in ops) {
           if (o.revision >= m.fromRevision && o.revision <= m.toRevision) {
