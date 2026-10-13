@@ -1445,6 +1445,9 @@ class WonkyAppLocalizationsEn extends WonkyAppLocalizations {
   String get settingsAi => 'AI';
 
   @override
+  String get settingsAiProviders => 'AI providers';
+
+  @override
   String get settingsAiHint =>
       'The assistant helps you write and analyze. It only sees files you open with it.';
 
@@ -1459,6 +1462,25 @@ class WonkyAppLocalizationsEn extends WonkyAppLocalizations {
 
   @override
   String get settingsDeveloper => 'Developer & MCP';
+
+  @override
+  String get settingsServerTitle => 'Server';
+
+  @override
+  String get settingsRedis => 'Redis';
+
+  @override
+  String get settingsRedisHint =>
+      'Messaging between server instances; needed when more than one runs.';
+
+  @override
+  String get redisConnected => 'Connected';
+
+  @override
+  String get redisNotReachable => 'Not reachable';
+
+  @override
+  String get redisNotConfigured => 'Not configured';
 
   @override
   String get settingsKeyboard => 'Keyboard shortcuts';
@@ -1995,7 +2017,12 @@ class WonkyAppLocalizationsEn extends WonkyAppLocalizations {
 
   @override
   String get assistantPrivacyNotice =>
-      'The assistant sends this document and your messages to Anthropic to generate answers.';
+      'The assistant sends this document and your messages to the AI provider to generate answers.';
+
+  @override
+  String assistantPrivacyNoticeProvider(String provider) {
+    return 'The assistant sends this document and your messages to $provider to generate answers.';
+  }
 
   @override
   String get assistantModeEdit => 'Edit';
@@ -2061,7 +2088,14 @@ class WonkyAppLocalizationsEn extends WonkyAppLocalizations {
 
   @override
   String get aiNotConfiguredHint =>
-      'An administrator can enable it by adding an Anthropic API key to the server configuration.';
+      'Add your own OpenAI, Anthropic or Gemini API key to use it, or ask an administrator to add one to the server.';
+
+  @override
+  String get aiNotConfiguredAdminHint =>
+      'An administrator can enable it by adding an OpenAI, Anthropic or Gemini API key to the server configuration.';
+
+  @override
+  String get aiAddApiKey => 'Add an API key';
 
   @override
   String get aiDisabled => 'AI is turned off on this server.';
@@ -2115,6 +2149,79 @@ class WonkyAppLocalizationsEn extends WonkyAppLocalizations {
   String aiUsagePercent(int percent) {
     return '$percent %';
   }
+
+  @override
+  String get aiProviderOpenai => 'OpenAI';
+
+  @override
+  String get aiProviderAnthropic => 'Anthropic';
+
+  @override
+  String get aiProviderGemini => 'Google Gemini';
+
+  @override
+  String get aiProvidersServerTitle => 'Provided by this server';
+
+  @override
+  String aiProvidersServerBody(String provider) {
+    return 'AI requests go to $provider with this server\'s API key. You don\'t need a key of your own.';
+  }
+
+  @override
+  String get aiProvidersKeyTitle => 'Your API key';
+
+  @override
+  String get aiProvidersKeyHint =>
+      'This server has no AI provider set up. Add your own key to use the assistant and the other AI features. The key is stored on the server, used only for your requests and never shown again.';
+
+  @override
+  String get aiProvidersProvider => 'Provider';
+
+  @override
+  String get aiProvidersKey => 'API key';
+
+  @override
+  String get aiProvidersKeyPlaceholder => 'Paste your API key';
+
+  @override
+  String get aiProvidersSave => 'Save key';
+
+  @override
+  String get aiProvidersSaved => 'API key saved';
+
+  @override
+  String get aiProvidersSaveFailed => 'Couldn\'t save the API key';
+
+  @override
+  String get aiProvidersCurrent => 'Your key';
+
+  @override
+  String aiProvidersCurrentValue(String provider, String last4) {
+    return '$provider key ending in $last4';
+  }
+
+  @override
+  String get aiProvidersRemove => 'Remove key';
+
+  @override
+  String get aiProvidersRemoveTitle => 'Remove your API key?';
+
+  @override
+  String get aiProvidersRemoveBody =>
+      'AI features stop working for you until you add a key again.';
+
+  @override
+  String get aiProvidersRemoved => 'API key removed';
+
+  @override
+  String get aiProvidersRemoveFailed => 'Couldn\'t remove the API key';
+
+  @override
+  String get aiProvidersNotAllowed =>
+      'This server doesn\'t allow personal API keys. Ask an administrator to set up AI.';
+
+  @override
+  String get aiProvidersManage => 'Manage AI providers';
 
   @override
   String get aiChatHistory => 'Chat history';
@@ -3794,6 +3901,9 @@ class WonkyAppLocalizationsEnXa extends WonkyAppLocalizationsEn {
   String get settingsAi => '[ÅÎ o]';
 
   @override
+  String get settingsAiProviders => '[ÅÎ þŕöṽîðéŕš one]';
+
+  @override
   String get settingsAiHint =>
       '[Ţĥé åššîšţåñţ ĥéļþš ýöû ŵŕîţé åñð åñåļýžé. Îţ öñļý šééš ƒîļéš ýöû öþéñ ŵîţĥ îţ. one two three four five]';
 
@@ -3808,6 +3918,25 @@ class WonkyAppLocalizationsEnXa extends WonkyAppLocalizationsEn {
 
   @override
   String get settingsDeveloper => '[Ðéṽéļöþéŕ & ṀÇÞ one t]';
+
+  @override
+  String get settingsServerTitle => '[Šéŕṽéŕ one]';
+
+  @override
+  String get settingsRedis => '[Ŕéðîš on]';
+
+  @override
+  String get settingsRedisHint =>
+      '[Ṁéššåĝîñĝ ƀéţŵééñ šéŕṽéŕ îñšţåñçéš; ñééðéð ŵĥéñ ɱöŕé ţĥåñ öñé ŕûñš. one two three four fi]';
+
+  @override
+  String get redisConnected => '[Çöññéçţéð one]';
+
+  @override
+  String get redisNotReachable => '[Ñöţ ŕéåçĥåƀļé one t]';
+
+  @override
+  String get redisNotConfigured => '[Ñöţ çöñƒîĝûŕéð one t]';
 
   @override
   String get settingsKeyboard => '[Ķéýƀöåŕð šĥöŕţçûţš one tw]';
@@ -4351,7 +4480,12 @@ class WonkyAppLocalizationsEnXa extends WonkyAppLocalizationsEn {
 
   @override
   String get assistantPrivacyNotice =>
-      '[Ţĥé åššîšţåñţ šéñðš ţĥîš ðöçûɱéñţ åñð ýöûŕ ɱéššåĝéš ţö Åñţĥŕöþîç ţö ĝéñéŕåţé åñšŵéŕš. one two three four five si]';
+      '[Ţĥé åššîšţåñţ šéñðš ţĥîš ðöçûɱéñţ åñð ýöûŕ ɱéššåĝéš ţö ţĥé ÅÎ þŕöṽîðéŕ ţö ĝéñéŕåţé åñšŵéŕš. one two three four five six]';
+
+  @override
+  String assistantPrivacyNoticeProvider(String provider) {
+    return '[Ţĥé åššîšţåñţ šéñðš ţĥîš ðöçûɱéñţ åñð ýöûŕ ɱéššåĝéš ţö $provider ţö ĝéñéŕåţé åñšŵéŕš. one two three four five]';
+  }
 
   @override
   String get assistantModeEdit => '[Éðîţ on]';
@@ -4419,7 +4553,14 @@ class WonkyAppLocalizationsEnXa extends WonkyAppLocalizationsEn {
 
   @override
   String get aiNotConfiguredHint =>
-      '[Åñ åðɱîñîšţŕåţöŕ çåñ éñåƀļé îţ ƀý åððîñĝ åñ Åñţĥŕöþîç ÅÞÎ ķéý ţö ţĥé šéŕṽéŕ çöñƒîĝûŕåţîöñ. one two three four five six]';
+      '[Åðð ýöûŕ öŵñ ÖþéñÅÎ, Åñţĥŕöþîç öŕ Ĝéɱîñî ÅÞÎ ķéý ţö ûšé îţ, öŕ åšķ åñ åðɱîñîšţŕåţöŕ ţö åðð öñé ţö ţĥé šéŕṽéŕ. one two three four five six sev]';
+
+  @override
+  String get aiNotConfiguredAdminHint =>
+      '[Åñ åðɱîñîšţŕåţöŕ çåñ éñåƀļé îţ ƀý åððîñĝ åñ ÖþéñÅÎ, Åñţĥŕöþîç öŕ Ĝéɱîñî ÅÞÎ ķéý ţö ţĥé šéŕṽéŕ çöñƒîĝûŕåţîöñ. one two three four five six seve]';
+
+  @override
+  String get aiAddApiKey => '[Åðð åñ ÅÞÎ ķéý one]';
 
   @override
   String get aiDisabled => '[ÅÎ îš ţûŕñéð öƒƒ öñ ţĥîš šéŕṽéŕ. one two th]';
@@ -4475,6 +4616,80 @@ class WonkyAppLocalizationsEnXa extends WonkyAppLocalizationsEn {
   String aiUsagePercent(int percent) {
     return '[$percent % o]';
   }
+
+  @override
+  String get aiProviderOpenai => '[ÖþéñÅÎ one]';
+
+  @override
+  String get aiProviderAnthropic => '[Åñţĥŕöþîç one]';
+
+  @override
+  String get aiProviderGemini => '[Ĝööĝļé Ĝéɱîñî one t]';
+
+  @override
+  String get aiProvidersServerTitle => '[Þŕöṽîðéð ƀý ţĥîš šéŕṽéŕ one two]';
+
+  @override
+  String aiProvidersServerBody(String provider) {
+    return '[ÅÎ ŕéǫûéšţš ĝö ţö $provider ŵîţĥ ţĥîš šéŕṽéŕ\'š ÅÞÎ ķéý. Ýöû ðöñ\'ţ ñééð å ķéý öƒ ýöûŕ öŵñ. one two three four five]';
+  }
+
+  @override
+  String get aiProvidersKeyTitle => '[Ýöûŕ ÅÞÎ ķéý one]';
+
+  @override
+  String get aiProvidersKeyHint =>
+      '[Ţĥîš šéŕṽéŕ ĥåš ñö ÅÎ þŕöṽîðéŕ šéţ ûþ. Åðð ýöûŕ öŵñ ķéý ţö ûšé ţĥé åššîšţåñţ åñð ţĥé öţĥéŕ ÅÎ ƒéåţûŕéš. Ţĥé ķéý îš šţöŕéð öñ ţĥé šéŕṽéŕ, ûšéð öñļý ƒöŕ ýöûŕ ŕéǫûéšţš åñð ñéṽéŕ šĥöŵñ åĝåîñ. one two three four five six seven eight nine ten one]';
+
+  @override
+  String get aiProvidersProvider => '[Þŕöṽîðéŕ one]';
+
+  @override
+  String get aiProvidersKey => '[ÅÞÎ ķéý one]';
+
+  @override
+  String get aiProvidersKeyPlaceholder => '[Þåšţé ýöûŕ ÅÞÎ ķéý one tw]';
+
+  @override
+  String get aiProvidersSave => '[Šåṽé ķéý one]';
+
+  @override
+  String get aiProvidersSaved => '[ÅÞÎ ķéý šåṽéð one]';
+
+  @override
+  String get aiProvidersSaveFailed => '[Çöûļðñ\'ţ šåṽé ţĥé ÅÞÎ ķéý one two]';
+
+  @override
+  String get aiProvidersCurrent => '[Ýöûŕ ķéý one]';
+
+  @override
+  String aiProvidersCurrentValue(String provider, String last4) {
+    return '[$provider ķéý éñðîñĝ îñ $last4 one]';
+  }
+
+  @override
+  String get aiProvidersRemove => '[Ŕéɱöṽé ķéý one]';
+
+  @override
+  String get aiProvidersRemoveTitle => '[Ŕéɱöṽé ýöûŕ ÅÞÎ ķéý? one tw]';
+
+  @override
+  String get aiProvidersRemoveBody =>
+      '[ÅÎ ƒéåţûŕéš šţöþ ŵöŕķîñĝ ƒöŕ ýöû ûñţîļ ýöû åðð å ķéý åĝåîñ. one two three fou]';
+
+  @override
+  String get aiProvidersRemoved => '[ÅÞÎ ķéý ŕéɱöṽéð one t]';
+
+  @override
+  String get aiProvidersRemoveFailed =>
+      '[Çöûļðñ\'ţ ŕéɱöṽé ţĥé ÅÞÎ ķéý one two t]';
+
+  @override
+  String get aiProvidersNotAllowed =>
+      '[Ţĥîš šéŕṽéŕ ðöéšñ\'ţ åļļöŵ þéŕšöñåļ ÅÞÎ ķéýš. Åšķ åñ åðɱîñîšţŕåţöŕ ţö šéţ ûþ ÅÎ. one two three four five]';
+
+  @override
+  String get aiProvidersManage => '[Ṁåñåĝé ÅÎ þŕöṽîðéŕš one tw]';
 
   @override
   String get aiChatHistory => '[Çĥåţ ĥîšţöŕý one]';

@@ -114,7 +114,8 @@ wonky_sheets_core     → wonky_core, wonky_sync_models (model types only), peti
 wonky_sheets_script   → wonky_core, wonky_sheets_core, dart_eval, eval_annotation, native_synchronization
 wonky_sync_models     → serverpod_database, serverpod_offline_sync, serverpod_serialization, uuid
 wonky_server          → serverpod, serverpod_auth_idp_server, serverpod_offline_sync(_server), serverpod_cloud_storage,
-                        wonky_core, wonky_write_core, wonky_sheets_core, wonky_sheets_script, wonky_sync_models, mcp_dart, http
+                        wonky_core, wonky_write_core, wonky_sheets_core, wonky_sheets_script, wonky_sync_models, mcp_dart, http,
+                        dartantic_ai (AI providers: OpenAI, Anthropic, Gemini — 10 §1; pure Dart, no Flutter)
 wonky_client          → generated: serverpod_client + module clients (serverpod_auth_idp_client,
                         serverpod_auth_core_client), serverpod_offline_sync_client, serverpod_database,
                         wonky_sync_models
@@ -329,7 +330,7 @@ src/
     activity/                  # ActivityEvent
     files/                     # StoredFile (uploads: images, avatars, imports, exports), signed URLs
     mcp/                       # transport, auth, ToolExecutor, UiBridgeHub, UiBridgeEndpoint
-    ai/                        # AnthropicClient, AssistantService, AssistantEndpoint
+    ai/                        # AiModelClient (dartantic_ai), AiKeys, AssistantService, AssistantEndpoint
     feedback/                  # FeedbackEndpoint
   write/
     models/                    # Document, DocumentOp, DocumentSnapshot, WriteTheme, …
@@ -381,7 +382,7 @@ Feature folders are the unit of parallel work: e.g. Write `features/editor`,
              │ Endpoints ─► Services ─► Postgres (platform + Write tables)       │
              │                       └► Offline-sync engine (Sheets spaces)      │
              │ MCP route ─► ToolExecutor ─► same Services  (+ UiBridgeHub ─► apps)│
-             │ AssistantService ─► Anthropic Messages API ─► ToolExecutor        │
+             │ AssistantService ─► dartantic_ai (OpenAI/Anthropic/Gemini) ─► Tools│
              │ session.messages (Redis when multi-instance): presence, doc ops,  │
              │   drive changes, comments, UI bridge                              │
              └───────────────────────────────────────────────────────────────────┘
@@ -396,7 +397,8 @@ allowedHosts, allowedOrigins}`, `sheets: {maxCellsPerSpreadsheet, maxActiveSpace
 scriptTimeoutMs, scriptDailyQuotaMs}`, `write: {snapshotEveryNOps, maxDocumentChars}`,
 `webApps: {write: {dir: web/write, path: /write/}, sheets: {dir: web/sheets, path: /sheets/}}`
 (§2.4); the template's commented-out `authCookie` + `allowedOrigins` are enabled (§2.5).
-Secrets in `passwords.yaml`: `anthropicApiKey`, `jwt…` (existing), email provider credentials.
+Secrets in `passwords.yaml`: `openaiApiKey` / `anthropicApiKey` / `geminiApiKey` (any or none,
+10 §1), `jwt…` (existing), email provider credentials.
 
 Redis is **required** as soon as more than one server instance runs (global
 `session.messages` for presence, Write op fan-out, UI bridge and assistant relays, plus the
@@ -407,8 +409,9 @@ without Redis (local scope).
 
 ## 7. Protocol versioning
 
-- `ProtocolInfo { serverVersion, minClientVersion, syncTablesHash }` returned by
-  `meta.getInfo()`; clients check on connect (see shell spec for UX).
+- `ProtocolInfo { serverVersion, minClientVersion, syncTablesHash, …, redisEnabled,
+  redisConnected }` returned by `meta.getInfo()`; clients check on connect (see shell spec for
+  UX). The Redis fields feed Settings › Developer (suite 04 §4).
 - Offline-sync schema changes are lock-step (the engine rejects clients with a different
   `syncTablesHash`). Rule: synced schema changes are batched into releases; clients that fail the
   hash check show a blocking "Update required" screen **after** exporting any pending local

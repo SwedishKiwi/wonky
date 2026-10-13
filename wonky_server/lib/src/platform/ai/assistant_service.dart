@@ -18,10 +18,12 @@ import '../mcp/tool_executor.dart';
 import '../mcp/tool_support.dart';
 import '../mcp/wonky_mcp_server.dart';
 import 'ai_config.dart';
+import 'ai_keys.dart';
 import 'ai_models.dart';
 import 'ai_usage_service.dart';
-import 'anthropic/anthropic_client.dart';
+import 'assistant_history.dart';
 import 'assistant_tools.dart';
+import 'llm/ai_client.dart';
 
 /// A running assistant loop (for `stop` and destructive confirmations).
 class AssistantRun {
@@ -69,8 +71,9 @@ class AssistantToolActivity {
 }
 
 /// The assistant agent loop (suite 10 §2): builds the request (tools →
-/// frozen system prompt → document snapshot → conversation, caching in
-/// that order), streams the answer, executes tool calls through the MCP
+/// frozen system prompt → document snapshot → conversation, a stable
+/// prefix for provider-side prompt caches), streams the answer from the
+/// user's provider ([AiKeys.backendFor]), executes tool calls through the MCP
 /// [ToolExecutor] (in parallel, results in one user message), and loops
 /// until the model ends its turn. Every op of a run carries the run id as
 /// `groupId` and the requesting app session as `onBehalfOfSessionId`, so
@@ -531,7 +534,7 @@ class _Loop {
   final ToolExecutor executor;
   final void Function(AssistantEvent) emit;
 
-  final List<Map<String, Object?>> _messages = [];
+  final List<ChatMessage> _messages = [];
   final StringBuffer _answer = StringBuffer();
   int? _lastAssistantId;
 
@@ -543,8 +546,8 @@ class _Loop {
   );
 
   Future<void> execute() async {
-    final client = AiConfig.client;
-    if (client == null) {
+    final backend = await AiKeys.backendFor(session, actor.userId);
+    if (backend == null) {
       emit(
         _ev(AssistantEventType.error)
           ..error = AiUsageService.notConfiguredMessage
@@ -572,13 +575,7 @@ class _Loop {
     emit(_ev(AssistantEventType.started)..messageId = userMessageId);
 
     final tier = AiTier.chat(quality);
-    final system = [
-      {
-        'type': 'text',
-        'text': WritePrompts.assistant,
-        'cache_control': {'type': 'ephemeral'},
-      },
-    ];
+    final client = backend.client;
     final config = AiConfig.current;
     var stoppedEarly = true;
     for (var round = 0; round < config.maxToolRounds; round++) {
@@ -594,17 +591,18 @@ class _Loop {
         stoppedEarly = false;
         break;
       }
-      final request = AnthropicRequest(
-        model: tier.model,
+      final request = AiRequest(
+        model: backend.model(tier),
         effort: tier.effort,
-        system: system,
+        system: WritePrompts.assistant,
         tools: toolset.apiTools,
         messages: List.of(_messages),
         userId: 'u${actor.userId}',
         feature: 'chat',
+        cacheKey: 'wonky-thread-${ar.threadId}',
       );
-      AnthropicMessage msg;
-      final progress = <int, StringBuffer>{};
+      AiResponse msg;
+      final progress = StringBuffer();
       try {
         msg = await client.send(
           request,
@@ -613,10 +611,11 @@ class _Loop {
             _answer.write(t);
             emit(_ev(AssistantEventType.textDelta, text: t));
           },
-          onThinking: (i, t) {
-            // Progress notes (display "updates"): the whole note so far.
-            final note = (progress[i] ??= StringBuffer())..write(t);
-            final text = note.toString().trim();
+          onThinking: (t) {
+            // Reasoning the provider streams (progress notes): the whole
+            // note so far.
+            progress.write(t);
+            final text = progress.toString().trim();
             if (text.isNotEmpty) {
               emit(_ev(AssistantEventType.progress, text: text));
             }
@@ -624,7 +623,23 @@ class _Loop {
         );
       } on AiCancelledException {
         break;
-      } on AnthropicApiException catch (e) {
+      } on AiApiException catch (e) {
+        if (e.type == 'refusal') {
+          await _persistAssistant(
+            null,
+            AssistantService.refusalText,
+            stop: AiStopReason.refusal,
+            replay: false,
+          );
+          emit(
+            _ev(
+              AssistantEventType.refusal,
+              text: AssistantService.refusalText,
+            ),
+          );
+          stoppedEarly = false;
+          break;
+        }
         emit(
           _ev(AssistantEventType.error)
             ..error = AssistantErrors.message(e)
@@ -636,7 +651,7 @@ class _Loop {
       await AiUsageService.record(
         session,
         userId: actor.userId,
-        model: msg.model ?? tier.model,
+        model: msg.model ?? request.model,
         feature: 'chat',
         usage: msg.usage,
       );
@@ -649,11 +664,11 @@ class _Loop {
 
       // Always check stop_reason before using the content.
       final stop = msg.stopReason;
-      if (stop == 'refusal') {
+      if (stop == AiStopReason.refusal) {
         await _persistAssistant(
-          const [],
+          null,
           AssistantService.refusalText,
-          stop: 'refusal',
+          stop: AiStopReason.refusal,
           replay: false,
         );
         emit(
@@ -662,30 +677,24 @@ class _Loop {
         stoppedEarly = false;
         break;
       }
-      final content = msg.replayContent;
-      final toolUses = [
-        for (final b in content)
-          if (b['type'] == 'tool_use') b,
-      ];
+      final toolUses = msg.toolCalls;
       final assistantId = await _persistAssistant(
-        content,
+        msg.hasContent ? msg.message : null,
         msg.text,
         stop: stop,
-        replay: content.isNotEmpty,
+        replay: msg.hasContent,
       );
-      if (content.isNotEmpty) {
-        _messages.add({'role': 'assistant', 'content': content});
-      }
+      if (msg.hasContent) _messages.add(msg.message);
 
-      if (stop == 'pause_turn') continue;
       if (toolUses.isNotEmpty) {
-        if (stop == 'max_tokens' || stop == 'model_context_window_exceeded') {
+        if (stop == AiStopReason.maxTokens) {
           // A cut-off tool call is never executed; answer it so the
           // history stays valid, then offer "Continue".
           await _appendToolResults([
             for (final t in toolUses)
               _toolResult(
-                '${t['id']}',
+                t.callId,
+                t.toolName,
                 jsonEncode({
                   'code': 'truncated',
                   'message':
@@ -701,21 +710,14 @@ class _Loop {
         }
         final activities = <AssistantToolActivity>[];
         final results = await Future.wait([
-          for (final t in toolUses)
-            _execute(
-              runner,
-              t,
-              msg.invalidToolInputs,
-              applyMode,
-              activities,
-            ),
+          for (final t in toolUses) _execute(runner, t, applyMode, activities),
         ]);
         await _setToolCalls(assistantId, activities);
         await _appendToolResults(results);
         if (ar.cancel.isCancelled) break;
         continue;
       }
-      if (stop == 'max_tokens' || stop == 'model_context_window_exceeded') {
+      if (stop == AiStopReason.maxTokens) {
         emit(_ev(AssistantEventType.maxTokens));
       }
       stoppedEarly = false;
@@ -745,10 +747,10 @@ class _Loop {
       where: (m) => m.threadId.equals(ar.threadId) & m.replay.equals(true),
       orderBy: (m) => m.id,
     );
+    final toolNames = <String, String>{};
     for (final m in rows) {
-      final content = jsonDecode(m.contentJson ?? '[]');
-      if (content is! List || content.isEmpty) continue;
-      _messages.add({'role': m.role, 'content': content});
+      final msg = AssistantHistory.decode(m.role, m.contentJson, toolNames);
+      if (msg != null) _messages.add(msg);
     }
   }
 
@@ -763,24 +765,24 @@ class _Loop {
       length: hints.selectionLength,
       text: hints.selectionText,
     );
-    final blocks = <Map<String, Object?>>[];
+    final blocks = <TextPart>[];
     final first = _messages.isEmpty;
     if (first) {
-      blocks.add({
-        'type': 'text',
-        'text': WriteContextBuilder.snapshot(
-          ctx,
-          focusOffset: selection?.start ?? hints.selectionStart,
+      blocks.add(
+        TextPart(
+          WriteContextBuilder.snapshot(
+            ctx,
+            focusOffset: selection?.start ?? hints.selectionStart,
+          ),
         ),
-        'cache_control': {'type': 'ephemeral'},
-      });
+      );
     } else if (thread.contextRevision != ctx.revision) {
       final update = WriteContextBuilder.update(
         previousMarkdown: thread.contextMarkdown,
         previousRevision: thread.contextRevision,
         now: ctx,
       );
-      if (update != null) blocks.add({'type': 'text', 'text': update});
+      if (update != null) blocks.add(TextPart(update));
     }
     String? comments;
     if (hints.includeComments) {
@@ -796,42 +798,43 @@ class _Loop {
       comments = out.result?.text;
     }
     final caret = hints.selectionStart;
-    blocks.add({
-      'type': 'text',
-      'text':
-          '$message\n\n${WriteContextBuilder.volatile(
-            c: ctx,
-            applyMode: applyMode,
-            role: target.role.name,
-            selection: selection,
-            caretHeadingPath: hints.caretHeadingPath ?? (caret == null ? null : WriteContextBuilder.headingPath(ctx, caret)),
-            localTime: hints.localTime,
-            comments: comments,
-          )}',
-    });
+    blocks.add(
+      TextPart(
+        '$message\n\n${WriteContextBuilder.volatile(
+          c: ctx,
+          applyMode: applyMode,
+          role: target.role.name,
+          selection: selection,
+          caretHeadingPath: hints.caretHeadingPath ?? (caret == null ? null : WriteContextBuilder.headingPath(ctx, caret)),
+          localTime: hints.localTime,
+          comments: comments,
+        )}',
+      ),
+    );
     thread = thread.copyWith(
       contextRevision: ctx.revision,
       contextMarkdown: ctx.markdown,
       updatedAt: nowUtc(),
     );
     await AssistantThread.db.updateRow(session, thread);
+    final userTurn = ChatMessage(role: ChatMessageRole.user, parts: blocks);
     final row = await AssistantMessage.db.insertRow(
       session,
       AssistantMessage(
         threadId: ar.threadId,
         role: 'user',
-        contentJson: jsonEncode(blocks),
+        contentJson: AssistantHistory.encode(userTurn),
         displayText: message,
         runId: ar.runId,
         createdAt: nowUtc(),
       ),
     );
-    _messages.add({'role': 'user', 'content': blocks});
+    _messages.add(userTurn);
     return row.id!;
   }
 
   Future<int> _persistAssistant(
-    List<Map<String, Object?>> content,
+    ChatMessage? content,
     String text, {
     String? stop,
     required bool replay,
@@ -841,7 +844,7 @@ class _Loop {
       AssistantMessage(
         threadId: ar.threadId,
         role: 'assistant',
-        contentJson: jsonEncode(content),
+        contentJson: content == null ? '[]' : AssistantHistory.encode(content),
         displayText: text,
         visible: text.trim().isNotEmpty || stop == 'refusal',
         replay: replay,
@@ -871,32 +874,31 @@ class _Loop {
     _lastAssistantId = row.id;
   }
 
-  Future<void> _appendToolResults(List<Map<String, Object?>> results) async {
+  Future<void> _appendToolResults(List<ToolPart> results) async {
+    final turn = ChatMessage(role: ChatMessageRole.user, parts: results);
     await AssistantMessage.db.insertRow(
       session,
       AssistantMessage(
         threadId: ar.threadId,
         role: 'user',
-        contentJson: jsonEncode(results),
+        contentJson: AssistantHistory.encode(turn),
         displayText: '',
         visible: false,
         runId: ar.runId,
         createdAt: nowUtc(),
       ),
     );
-    _messages.add({'role': 'user', 'content': results});
+    _messages.add(turn);
   }
 
-  static Map<String, Object?> _toolResult(
+  /// A tool result. Providers have no common error flag: failures are
+  /// JSON with `code` and `message` (and the tool chip shows them).
+  static ToolPart _toolResult(
     String id,
+    String toolName,
     String content, {
     bool isError = false,
-  }) => {
-    'type': 'tool_result',
-    'tool_use_id': id,
-    'content': content,
-    if (isError) 'is_error': true,
-  };
+  }) => ToolPart.result(callId: id, toolName: toolName, result: content);
 
   ToolContext _toolContext({bool guarded = true}) => ToolContext(
     session: session,
@@ -913,15 +915,14 @@ class _Loop {
         : null,
   );
 
-  Future<Map<String, Object?>> _execute(
+  Future<ToolPart> _execute(
     AssistantToolRunner runner,
-    Map<String, Object?> block,
-    Map<String, String> invalidInputs,
+    ToolPart call,
     AiApplyMode applyMode,
     List<AssistantToolActivity> activities,
   ) async {
-    final id = '${block['id']}';
-    final apiName = '${block['name']}';
+    final id = call.callId;
+    final apiName = call.toolName;
     final tool = runner.toolset.byApiName(apiName);
     final mcpName = tool?.name ?? apiName;
     final activity = AssistantToolActivity(
@@ -936,7 +937,7 @@ class _Loop {
         ..toolName = mcpName
         ..toolSummary = activity.summary,
     );
-    Map<String, Object?> finish(String content, {required bool error}) {
+    ToolPart finish(String content, {required bool error}) {
       activity.error = error;
       emit(
         _ev(AssistantEventType.toolFinished)
@@ -949,15 +950,10 @@ class _Loop {
           ..rangeLength = activity.rangeLength
           ..revision = activity.revision,
       );
-      return _toolResult(id, content, isError: error);
+      return _toolResult(id, apiName, content, isError: error);
     }
 
-    final raw = invalidInputs[id];
-    if (raw != null) {
-      activity.summary = 'Invalid tool call';
-      return finish(jsonEncode({'INVALID_JSON': raw}), error: true);
-    }
-    final input = (block['input'] as Map?)?.cast<String, Object?>() ?? {};
+    final input = Map<String, Object?>.of(call.arguments ?? const {});
     var outcome = await runner.run(
       _toolContext(),
       apiName,
@@ -1049,10 +1045,10 @@ class _Loop {
 
 /// User-facing messages for API failures.
 abstract final class AssistantErrors {
-  static String message(AnthropicApiException e) {
+  static String message(AiApiException e) {
     if (e.isAuth) {
-      return "AI isn't configured correctly on this server (the API key was "
-          'rejected).';
+      return 'The AI provider rejected the API key. Check the key in '
+          'Settings › AI providers, or ask an administrator.';
     }
     if (e.isRateLimit || e.isOverloaded) {
       return 'The AI service is busy right now. Try again in a moment.';
@@ -1065,7 +1061,7 @@ abstract final class AssistantErrors {
     return 'The AI service returned an error. Try again.';
   }
 
-  static String code(AnthropicApiException e) {
+  static String code(AiApiException e) {
     if (e.isAuth) return 'auth';
     if (e.isRateLimit) return 'rate_limited';
     if (e.isOverloaded) return 'overloaded';

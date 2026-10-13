@@ -1,64 +1,81 @@
 import '../common/models.dart';
+import 'llm/ai_client.dart';
 
-/// Claude model ids and effort levels (suite 10 §1). The only place model
-/// ids are written down; everything else asks [AiTier].
+export 'llm/ai_client.dart' show AiEffort;
+
+/// Default model ids per provider (suite 10 §1). The only place model ids
+/// are written down; `config/<runMode>.yaml` (`wonky: ai: models:`) can
+/// override them, everything else asks [AiTier] and `AiConfig.modelFor`.
 abstract final class AiModels {
-  /// Default model (Best and Balanced).
+  /// Anthropic: Best and Balanced.
   static const opus = 'claude-opus-5-5';
 
-  /// Fast tier and inline completions.
+  /// Anthropic: Fast and inline completions.
   static const haiku = 'claude-haiku-5-5';
 
-  /// Whether [model] supports the server-side refusal fallback
-  /// (`fallbacks: "default"`). Claude Haiku 5.5 has none: sending a list
-  /// is a 400 and "default" leaves a decline declined.
-  static bool supportsServerFallback(String model) => model != haiku;
+  static const gpt = 'gpt-5';
+  static const gptMini = 'gpt-5-mini';
+  static const geminiPro = 'gemini-2.5-pro';
+  static const geminiFlash = 'gemini-2.5-flash';
 
-  /// Whether [model] returns progress notes between tool calls as
-  /// `thinking` blocks with `display: "updates"`.
-  static bool supportsDisplayUpdates(String model) => model == opus;
+  /// The default `(model, fastModel)` of [provider].
+  static (String, String) defaults(AiProvider provider) => switch (provider) {
+    AiProvider.anthropic => (opus, haiku),
+    AiProvider.openai => (gpt, gptMini),
+    AiProvider.gemini => (geminiPro, geminiFlash),
+  };
 }
 
-/// Effort levels (`output_config.effort`).
-abstract final class AiEffort {
-  static const low = 'low';
-  static const medium = 'medium';
-  static const high = 'high';
+/// Which of the provider's two configured models a feature uses.
+enum AiModelSize {
+  /// `model`: Best and Balanced.
+  large,
+
+  /// `fastModel`: Fast and inline completions.
+  small,
 }
 
-/// A model plus effort level.
+/// A model size plus effort level.
 class AiTier {
-  const AiTier(this.model, this.effort);
+  const AiTier(this.size, this.effort);
 
-  final String model;
+  final AiModelSize size;
   final String effort;
 
   /// The assistant panel (suite 10 §1 table).
   static AiTier chat(AiQuality q) => switch (q) {
-    AiQuality.best => const AiTier(AiModels.opus, AiEffort.high),
-    AiQuality.balanced => const AiTier(AiModels.opus, AiEffort.medium),
-    AiQuality.fast => const AiTier(AiModels.haiku, AiEffort.low),
+    AiQuality.best => const AiTier(AiModelSize.large, AiEffort.high),
+    AiQuality.balanced => const AiTier(AiModelSize.large, AiEffort.medium),
+    AiQuality.fast => const AiTier(AiModelSize.small, AiEffort.low),
   };
 
   /// Inline rewrite / translate / tone (Write 09 §5.1): the user's setting
   /// with effort capped at `medium`.
   static AiTier rewrite(AiQuality q) => switch (q) {
     AiQuality.best || AiQuality.balanced => const AiTier(
-      AiModels.opus,
+      AiModelSize.large,
       AiEffort.medium,
     ),
-    AiQuality.fast => const AiTier(AiModels.haiku, AiEffort.low),
+    AiQuality.fast => const AiTier(AiModelSize.small, AiEffort.low),
   };
 
-  /// Continue writing: Haiku when Fast, else Opus at `low`.
+  /// Continue writing: the fast model when Fast, else the large one at
+  /// `low`.
   static AiTier continueWriting(AiQuality q) => switch (q) {
-    AiQuality.fast => const AiTier(AiModels.haiku, AiEffort.low),
-    _ => const AiTier(AiModels.opus, AiEffort.low),
+    AiQuality.fast => const AiTier(AiModelSize.small, AiEffort.low),
+    _ => const AiTier(AiModelSize.large, AiEffort.low),
   };
 
   /// Summarize, outline, explain and proofread: the user's setting.
   static AiTier document(AiQuality q) => chat(q);
 
   @override
-  String toString() => '$model/$effort';
+  bool operator ==(Object other) =>
+      other is AiTier && other.size == size && other.effort == effort;
+
+  @override
+  int get hashCode => Object.hash(size, effort);
+
+  @override
+  String toString() => '${size.name}/$effort';
 }

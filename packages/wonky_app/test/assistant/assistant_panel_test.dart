@@ -1,5 +1,6 @@
 import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import 'package:wonky_app/testing.dart';
 import 'package:wonky_app/wonky_app.dart';
@@ -376,6 +377,71 @@ void main() {
         find.byKey(const ValueKey<String>('assistant.send')),
       );
       expect(send.enabled, isFalse);
+    },
+  );
+
+  testWidgets(
+    'Given no server key when the panel shows then it offers to add an API '
+    'key and the button opens Settings › AI providers',
+    (tester) async {
+      h.services.router = GoRouter(
+        routes: [
+          GoRoute(path: '/', builder: (_, _) => const SizedBox()),
+          GoRoute(
+            path: '/settings/:section',
+            builder: (_, _) => const SizedBox(),
+          ),
+        ],
+      );
+      status.value = AssistantStatus(
+        available: false,
+        reason: 'notConfigured',
+        quality: AiQuality.best,
+        tokensUsedToday: 0,
+        dailyTokenBudget: 0,
+        userKeysAllowed: true,
+      );
+      await pump(tester);
+
+      await tester.tap(
+        find.byKey(const ValueKey<String>('assistant.addApiKey')),
+      );
+      await tester.pumpAndSettle();
+
+      expect(
+        h.services.router.routeInformationProvider.value.uri.path,
+        '/settings/ai-providers',
+      );
+    },
+  );
+
+  testWidgets(
+    'Given personal keys are off when AI is not configured then no key '
+    'button is offered',
+    (tester) async {
+      status.value = AssistantStatus(
+        available: false,
+        reason: 'notConfigured',
+        quality: AiQuality.best,
+        tokensUsedToday: 0,
+        dailyTokenBudget: 0,
+      );
+      await pump(tester);
+
+      expect(
+        find.byKey(const ValueKey<String>('assistant.addApiKey')),
+        findsNothing,
+      );
+    },
+  );
+
+  testWidgets(
+    'Given a provider when the panel shows then the privacy notice names it',
+    (tester) async {
+      status.value = api.status.copyWith(provider: AiProvider.gemini);
+      await pump(tester);
+
+      expect(find.textContaining('Google Gemini'), findsOneWidget);
     },
   );
 

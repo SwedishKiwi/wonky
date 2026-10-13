@@ -193,6 +193,7 @@ const rules = <String, PackageRule>{
       'wonky_sync_models',
       'mcp_dart',
       'http',
+      'dartantic_ai',
     },
     exceptions: {
       'crypto': 'token and content hashes',

@@ -1684,6 +1684,9 @@ The editor chrome is always shown (05 §3.3).
 - Switching widgets (`SuperEditor` ⇄ `SuperReader`) reuses the **same** `MutableDocument`,
   stylesheet and layers. The scroll anchor (top visible node + intra-node offset) and the
   selection are preserved. The editor focus node is released in Viewing mode.
+- Viewing mode shows the document without suggestions (a read-only preview document with its
+  own layout key); in the Pages layout it is paginated and drawn on pages like the editor
+  (the pagination phase and page chrome measure whichever document is shown, §29.3).
 - **Mode guard** (`wonkyModeGuardHandlers`): in Viewing mode, every content-mutating
   `EditRequest` (inserts, deletes, attribution changes, node changes) is refused before any
   command runs. Selection and composing requests pass. This is a backstop: commands already

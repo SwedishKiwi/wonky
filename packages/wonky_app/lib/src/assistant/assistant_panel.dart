@@ -11,7 +11,8 @@ import '../shell/shell_services.dart';
 import 'assistant_controller.dart';
 import 'assistant_markdown.dart';
 import 'assistant_models.dart';
-import 'shell_assistant.dart' show assistantStatusMessage;
+import 'shell_assistant.dart'
+    show assistantPrivacyNotice, assistantStatusMessage, openAiProviderSettings;
 
 /// The assistant side panel (suite 10 §3): thread picker, streaming
 /// Markdown replies with tool chips (Show / Undo), the composer with
@@ -228,9 +229,32 @@ class _AssistantPanelState extends State<AssistantPanel> {
                 ),
               )
             : status.reason == 'notConfigured'
-            ? Text(l.aiNotConfiguredHint)
+            ? _notConfigured(context, status)
             : null,
       ),
+    );
+  }
+
+  /// AI isn't configured: when the server has no key, the user can add
+  /// their own in Settings › AI providers.
+  Widget _notConfigured(BuildContext context, AssistantStatus status) {
+    final l = WonkyAppLocalizations.of(context);
+    if (!status.userKeysAllowed) return Text(l.aiNotConfiguredAdminHint);
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(l.aiNotConfiguredHint),
+        Padding(
+          padding: const EdgeInsets.only(top: 6),
+          child: ShadButton.outline(
+            key: const ValueKey<String>('assistant.addApiKey'),
+            size: ShadButtonSize.sm,
+            leading: const Icon(LucideIcons.keyRound, size: 13),
+            onPressed: () => openAiProviderSettings(widget.services, context),
+            child: Text(l.aiAddApiKey),
+          ),
+        ),
+      ],
     );
   }
 
@@ -376,7 +400,7 @@ class _AssistantPanelState extends State<AssistantPanel> {
             ],
           ),
           Text(
-            l.assistantPrivacyNotice,
+            assistantPrivacyNotice(l, c.status.value),
             key: const ValueKey<String>('assistant.notice'),
             style: theme.textTheme.muted.copyWith(fontSize: 11),
           ),

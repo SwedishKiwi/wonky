@@ -20,7 +20,13 @@
 
 ## 2. Privacy
 - Data minimization in logs (no document content in logs; ids only).
-- AI: opt-out per user and per deployment; notice in panel; Anthropic API key server-side only.
+- AI: opt-out per user and per deployment; notice in panel naming the provider. Provider API
+  keys (server passwords `openaiApiKey`, `anthropicApiKey`, `geminiApiKey`, and users' own keys
+  in `ai_user_key`) are server-side only. A user's own key is accepted only while the server has
+  none, used only for that user's requests, never logged and never returned (the client sees the
+  provider and the last four characters); the model is `serverOnly`. It is stored **unencrypted**
+  in Postgres (there is no encryption helper): database access or a backup exposes it, so
+  deployments that must avoid that set `ai.allowUserKeys: false` and configure a server key.
 - Account deletion deletes owned items (or transfers on request), personal spaces, tokens,
   notifications; anonymizes authorship in shared items ("Deleted user").
 - Export of all user data (*Settings › Account › Download your data*: zip of documents as

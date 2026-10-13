@@ -772,11 +772,21 @@
   "settingsAccentNeutral": "Neutral",
   "settingsAccount": "Account",
   "settingsAi": "AI",
+  "settingsAiProviders": "AI providers",
   "settingsAiHint": "The assistant helps you write and analyze. It only sees files you open with it.",
   "settingsAppearance": "Appearance",
   "settingsChangePassword": "Change password",
   "settingsDensity": "Density",
   "settingsDeveloper": "Developer & MCP",
+  "settingsServerTitle": "Server",
+  "@settingsServerTitle": {
+    "description": "Settings › Developer group with the server's status."
+  },
+  "settingsRedis": "Redis",
+  "settingsRedisHint": "Messaging between server instances; needed when more than one runs.",
+  "redisConnected": "Connected",
+  "redisNotReachable": "Not reachable",
+  "redisNotConfigured": "Not configured",
   "settingsKeyboard": "Keyboard shortcuts",
   "settingsLanguage": "Language & region",
   "settingsLanguageHint": "Used for dates, numbers and new spreadsheets.",
@@ -1078,7 +1088,15 @@
   "assistantEmptyTitle": "Ask about this document or tell the assistant what to change.",
   "assistantEmptyBody": "Every change it makes can be undone in one step.",
   "assistantPlaceholder": "Ask the assistant…",
-  "assistantPrivacyNotice": "The assistant sends this document and your messages to Anthropic to generate answers.",
+  "assistantPrivacyNotice": "The assistant sends this document and your messages to the AI provider to generate answers.",
+  "assistantPrivacyNoticeProvider": "The assistant sends this document and your messages to {provider} to generate answers.",
+  "@assistantPrivacyNoticeProvider": {
+    "placeholders": {
+      "provider": {
+        "type": "String"
+      }
+    }
+  },
   "assistantModeEdit": "Edit",
   "assistantModeEditHint": "Edit directly: changes go straight into the document",
   "assistantModeEditUnavailable": "You can only suggest changes in this document",
@@ -1105,7 +1123,9 @@
   "assistantShow": "Show",
   "assistantCopyCode": "Copy code",
   "aiNotConfigured": "AI isn't configured on this server.",
-  "aiNotConfiguredHint": "An administrator can enable it by adding an Anthropic API key to the server configuration.",
+  "aiNotConfiguredHint": "Add your own OpenAI, Anthropic or Gemini API key to use it, or ask an administrator to add one to the server.",
+  "aiNotConfiguredAdminHint": "An administrator can enable it by adding an OpenAI, Anthropic or Gemini API key to the server configuration.",
+  "aiAddApiKey": "Add an API key",
   "aiDisabled": "AI is turned off on this server.",
   "aiOptedOut": "The assistant is turned off in your settings (Settings › AI).",
   "aiAssistantTitle": "Assistant",
@@ -1129,6 +1149,45 @@
       }
     }
   },
+  "aiProviderOpenai": "OpenAI",
+  "aiProviderAnthropic": "Anthropic",
+  "aiProviderGemini": "Google Gemini",
+  "aiProvidersServerTitle": "Provided by this server",
+  "aiProvidersServerBody": "AI requests go to {provider} with this server's API key. You don't need a key of your own.",
+  "@aiProvidersServerBody": {
+    "placeholders": {
+      "provider": {
+        "type": "String"
+      }
+    }
+  },
+  "aiProvidersKeyTitle": "Your API key",
+  "aiProvidersKeyHint": "This server has no AI provider set up. Add your own key to use the assistant and the other AI features. The key is stored on the server, used only for your requests and never shown again.",
+  "aiProvidersProvider": "Provider",
+  "aiProvidersKey": "API key",
+  "aiProvidersKeyPlaceholder": "Paste your API key",
+  "aiProvidersSave": "Save key",
+  "aiProvidersSaved": "API key saved",
+  "aiProvidersSaveFailed": "Couldn't save the API key",
+  "aiProvidersCurrent": "Your key",
+  "aiProvidersCurrentValue": "{provider} key ending in {last4}",
+  "@aiProvidersCurrentValue": {
+    "placeholders": {
+      "provider": {
+        "type": "String"
+      },
+      "last4": {
+        "type": "String"
+      }
+    }
+  },
+  "aiProvidersRemove": "Remove key",
+  "aiProvidersRemoveTitle": "Remove your API key?",
+  "aiProvidersRemoveBody": "AI features stop working for you until you add a key again.",
+  "aiProvidersRemoved": "API key removed",
+  "aiProvidersRemoveFailed": "Couldn't remove the API key",
+  "aiProvidersNotAllowed": "This server doesn't allow personal API keys. Ask an administrator to set up AI.",
+  "aiProvidersManage": "Manage AI providers",
   "aiChatHistory": "Chat history",
   "aiChatHistoryHint": "Delete all your assistant chats.",
   "aiClearHistory": "Clear history",

@@ -50,6 +50,8 @@ import 'platform/activity/activity_trend_point.dart' as _ighcq381;
 import 'platform/activity/activity_type.dart' as _i50cy468;
 import 'platform/activity/activity_viewer.dart' as _ikcwdr17;
 import 'platform/ai/models/ai_apply_mode.dart' as _iyja8k5e;
+import 'platform/ai/models/ai_provider.dart' as _ir7z75mb;
+import 'platform/ai/models/ai_provider_key_view.dart' as _ic2q2fwi;
 import 'platform/ai/models/ai_quality.dart' as _iviyoyk9;
 import 'platform/ai/models/ai_usage.dart' as _i7i53on7;
 import 'platform/ai/models/ai_user_setting.dart' as _imx2nn1q;
@@ -188,6 +190,8 @@ export 'platform/activity/activity_trend_point.dart';
 export 'platform/activity/activity_type.dart';
 export 'platform/activity/activity_viewer.dart';
 export 'platform/ai/models/ai_apply_mode.dart';
+export 'platform/ai/models/ai_provider.dart';
+export 'platform/ai/models/ai_provider_key_view.dart';
 export 'platform/ai/models/ai_quality.dart';
 export 'platform/ai/models/ai_usage.dart';
 export 'platform/ai/models/ai_user_setting.dart';
@@ -342,6 +346,8 @@ class Protocol extends _isc.SerializationManager
           _isc.getType<_i50cy468.ActivityType>,
           _isc.getType<_ikcwdr17.ActivityViewer>,
           _isc.getType<_iyja8k5e.AiApplyMode>,
+          _isc.getType<_ir7z75mb.AiProvider>,
+          _isc.getType<_ic2q2fwi.AiProviderKeyView>,
           _isc.getType<_iviyoyk9.AiQuality>,
           _isc.getType<_i7i53on7.AiUsage>,
           _isc.getType<_imx2nn1q.AiUserSetting>,
@@ -506,6 +512,8 @@ class Protocol extends _isc.SerializationManager
           _isc.getType<_i50cy468.ActivityType?>,
           _isc.getType<_ikcwdr17.ActivityViewer?>,
           _isc.getType<_iyja8k5e.AiApplyMode?>,
+          _isc.getType<_ir7z75mb.AiProvider?>,
+          _isc.getType<_ic2q2fwi.AiProviderKeyView?>,
           _isc.getType<_iviyoyk9.AiQuality?>,
           _isc.getType<_i7i53on7.AiUsage?>,
           _isc.getType<_imx2nn1q.AiUserSetting?>,
@@ -764,6 +772,12 @@ class Protocol extends _isc.SerializationManager
     }
     if (t == _iyja8k5e.AiApplyMode) {
       return _iyja8k5e.AiApplyMode.fromJson(data) as T;
+    }
+    if (t == _ir7z75mb.AiProvider) {
+      return _ir7z75mb.AiProvider.fromJson(data) as T;
+    }
+    if (t == _ic2q2fwi.AiProviderKeyView) {
+      return _ic2q2fwi.AiProviderKeyView.fromJson(data) as T;
     }
     if (t == _iviyoyk9.AiQuality) {
       return _iviyoyk9.AiQuality.fromJson(data) as T;
@@ -1261,6 +1275,13 @@ class Protocol extends _isc.SerializationManager
     }
     if (t == _isc.getType<_iyja8k5e.AiApplyMode?>()) {
       return (data != null ? _iyja8k5e.AiApplyMode.fromJson(data) : null) as T;
+    }
+    if (t == _isc.getType<_ir7z75mb.AiProvider?>()) {
+      return (data != null ? _ir7z75mb.AiProvider.fromJson(data) : null) as T;
+    }
+    if (t == _isc.getType<_ic2q2fwi.AiProviderKeyView?>()) {
+      return (data != null ? _ic2q2fwi.AiProviderKeyView.fromJson(data) : null)
+          as T;
     }
     if (t == _isc.getType<_iviyoyk9.AiQuality?>()) {
       return (data != null ? _iviyoyk9.AiQuality.fromJson(data) : null) as T;
@@ -2181,6 +2202,8 @@ class Protocol extends _isc.SerializationManager
       _i50cy468.ActivityType => 'ActivityType',
       _ikcwdr17.ActivityViewer => 'ActivityViewer',
       _iyja8k5e.AiApplyMode => 'AiApplyMode',
+      _ir7z75mb.AiProvider => 'AiProvider',
+      _ic2q2fwi.AiProviderKeyView => 'AiProviderKeyView',
       _iviyoyk9.AiQuality => 'AiQuality',
       _i7i53on7.AiUsage => 'AiUsage',
       _imx2nn1q.AiUserSetting => 'AiUserSetting',
@@ -2366,6 +2389,10 @@ class Protocol extends _isc.SerializationManager
         return 'ActivityViewer';
       case _iyja8k5e.AiApplyMode():
         return 'AiApplyMode';
+      case _ir7z75mb.AiProvider():
+        return 'AiProvider';
+      case _ic2q2fwi.AiProviderKeyView():
+        return 'AiProviderKeyView';
       case _iviyoyk9.AiQuality():
         return 'AiQuality';
       case _i7i53on7.AiUsage():
@@ -2734,6 +2761,12 @@ class Protocol extends _isc.SerializationManager
     }
     if (dataClassName == 'AiApplyMode') {
       return deserialize<_iyja8k5e.AiApplyMode>(data['data']);
+    }
+    if (dataClassName == 'AiProvider') {
+      return deserialize<_ir7z75mb.AiProvider>(data['data']);
+    }
+    if (dataClassName == 'AiProviderKeyView') {
+      return deserialize<_ic2q2fwi.AiProviderKeyView>(data['data']);
     }
     if (dataClassName == 'AiQuality') {
       return deserialize<_iviyoyk9.AiQuality>(data['data']);

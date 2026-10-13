@@ -18,6 +18,8 @@ import 'package:serverpod_auth_idp_server/serverpod_auth_idp_server.dart'
 import 'package:serverpod_offline_sync_server/serverpod_offline_sync_server.dart'
     as _izehhkf5;
 import 'package:wonky_server/src/generated/future_calls.dart' as _iwslocjr;
+import 'package:wonky_server/src/generated/platform/ai/models/ai_provider.dart'
+    as _i02m7u6n;
 import 'package:wonky_server/src/generated/platform/ai/models/ai_quality.dart'
     as _idrzmvpg;
 import 'package:wonky_server/src/generated/platform/ai/models/assistant_context_hints.dart'
@@ -524,6 +526,41 @@ class Endpoints extends _is.EndpointDispatch {
                     session,
                     params['quality'],
                   ),
+        ),
+        'setProviderKey': _is.MethodConnector(
+          name: 'setProviderKey',
+          params: {
+            'provider': _is.ParameterDescription(
+              name: 'provider',
+              type: _is.getType<_i02m7u6n.AiProvider>(),
+              nullable: false,
+            ),
+            'apiKey': _is.ParameterDescription(
+              name: 'apiKey',
+              type: _is.getType<String>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _is.Session session,
+                Map<String, dynamic> params,
+              ) async => (endpoints['assistant'] as _i8k7ge8b.AssistantEndpoint)
+                  .setProviderKey(
+                    session,
+                    params['provider'],
+                    params['apiKey'],
+                  ),
+        ),
+        'removeProviderKey': _is.MethodConnector(
+          name: 'removeProviderKey',
+          params: {},
+          call:
+              (
+                _is.Session session,
+                Map<String, dynamic> params,
+              ) async => (endpoints['assistant'] as _i8k7ge8b.AssistantEndpoint)
+                  .removeProviderKey(session),
         ),
         'stop': _is.MethodConnector(
           name: 'stop',

@@ -26,7 +26,10 @@ abstract class ProtocolInfo
     required this.features,
     required this.limits,
     required this.serverTime,
-  });
+    bool? redisEnabled,
+    bool? redisConnected,
+  }) : redisEnabled = redisEnabled ?? false,
+       redisConnected = redisConnected ?? false;
 
   factory ProtocolInfo({
     required String serverVersion,
@@ -36,6 +39,8 @@ abstract class ProtocolInfo
     required _iebgpwu8.FeatureFlags features,
     required _ii93uvig.ServerLimits limits,
     required DateTime serverTime,
+    bool? redisEnabled,
+    bool? redisConnected,
   }) = _ProtocolInfoImpl;
 
   factory ProtocolInfo.fromJson(Map<String, dynamic> jsonSerialization) {
@@ -53,6 +58,14 @@ abstract class ProtocolInfo
       serverTime: _isc.DateTimeJsonExtension.fromJson(
         jsonSerialization['serverTime'],
       ),
+      redisEnabled: jsonSerialization['redisEnabled'] == null
+          ? null
+          : _isc.BoolJsonExtension.fromJson(jsonSerialization['redisEnabled']),
+      redisConnected: jsonSerialization['redisConnected'] == null
+          ? null
+          : _isc.BoolJsonExtension.fromJson(
+              jsonSerialization['redisConnected'],
+            ),
     );
   }
 
@@ -71,6 +84,12 @@ abstract class ProtocolInfo
 
   DateTime serverTime;
 
+  /// Redis is configured (multi-instance messaging, specs/13 §4).
+  bool redisEnabled;
+
+  /// The server reached Redis (a ping) when this was returned.
+  bool redisConnected;
+
   /// Returns a shallow copy of this [ProtocolInfo]
   /// with some or all fields replaced by the given arguments.
   @_isc.useResult
@@ -82,6 +101,8 @@ abstract class ProtocolInfo
     _iebgpwu8.FeatureFlags? features,
     _ii93uvig.ServerLimits? limits,
     DateTime? serverTime,
+    bool? redisEnabled,
+    bool? redisConnected,
   });
   @override
   Map<String, dynamic> toJson() {
@@ -94,6 +115,8 @@ abstract class ProtocolInfo
       'features': features.toJson(),
       'limits': limits.toJson(),
       'serverTime': serverTime.toJson(),
+      'redisEnabled': redisEnabled,
+      'redisConnected': redisConnected,
     };
   }
 
@@ -108,6 +131,8 @@ abstract class ProtocolInfo
       'features': features.toJsonForProtocol(),
       'limits': limits.toJsonForProtocol(),
       'serverTime': serverTime.toJson(),
+      'redisEnabled': redisEnabled,
+      'redisConnected': redisConnected,
     };
   }
 
@@ -126,6 +151,8 @@ class _ProtocolInfoImpl extends ProtocolInfo {
     required _iebgpwu8.FeatureFlags features,
     required _ii93uvig.ServerLimits limits,
     required DateTime serverTime,
+    bool? redisEnabled,
+    bool? redisConnected,
   }) : super._(
          serverVersion: serverVersion,
          minClientVersion: minClientVersion,
@@ -134,6 +161,8 @@ class _ProtocolInfoImpl extends ProtocolInfo {
          features: features,
          limits: limits,
          serverTime: serverTime,
+         redisEnabled: redisEnabled,
+         redisConnected: redisConnected,
        );
 
   /// Returns a shallow copy of this [ProtocolInfo]
@@ -148,6 +177,8 @@ class _ProtocolInfoImpl extends ProtocolInfo {
     _iebgpwu8.FeatureFlags? features,
     _ii93uvig.ServerLimits? limits,
     DateTime? serverTime,
+    bool? redisEnabled,
+    bool? redisConnected,
   }) {
     return ProtocolInfo(
       serverVersion: serverVersion ?? this.serverVersion,
@@ -157,6 +188,8 @@ class _ProtocolInfoImpl extends ProtocolInfo {
       features: features ?? this.features.copyWith(),
       limits: limits ?? this.limits.copyWith(),
       serverTime: serverTime ?? this.serverTime,
+      redisEnabled: redisEnabled ?? this.redisEnabled,
+      redisConnected: redisConnected ?? this.redisConnected,
     );
   }
 }

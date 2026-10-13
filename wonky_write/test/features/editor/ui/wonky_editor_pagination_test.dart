@@ -142,6 +142,27 @@ void main() {
     );
 
     testWidgets(
+      'when viewing (read-only, without suggestions) then the pages are drawn too',
+      (tester) async {
+        final h = await _pumpPages(tester, _paragraphs(120));
+        h.controller.mode = EditorMode.viewing;
+        await tester.pumpAndSettle();
+
+        expect(
+          find.byKey(const ValueKey<String>('write.editor.reader')),
+          findsOneWidget,
+        );
+        expect(_state(tester).pagination.pageCount, greaterThan(2));
+        expect(
+          find.byWidgetPredicate(
+            (w) => w is CustomPaint && w.painter is PageChromePainter,
+          ),
+          findsOneWidget,
+        );
+      },
+    );
+
+    testWidgets(
       'when a collaborator inserts many paragraphs then none straddles a page boundary',
       (tester) async {
         final h = await _pumpPages(tester, Delta()..insert('Start\n'));

@@ -1,7 +1,6 @@
 import 'package:serverpod/serverpod.dart';
 import 'package:test/test.dart';
 import 'package:wonky_core/wonky_core.dart' show JsonSchema;
-import 'package:wonky_server/src/platform/ai/anthropic/anthropic_types.dart';
 import 'package:wonky_server/src/platform/ai/assistant_service.dart';
 import 'package:wonky_server/src/platform/ai/assistant_tools.dart';
 import 'package:wonky_server/src/platform/common/models.dart';
@@ -44,15 +43,9 @@ void main() {
       }
     });
 
-    test('when strict then the schema has no unsupported constraints', () {
-      final strict = toolset.apiTools.where((t) => t.strictCompatible).toList();
-      expect(strict, isNotEmpty);
-      expect(strict.length, lessThanOrEqualTo(AssistantToolset.maxStrictTools));
-      for (final t in strict) {
-        final s = t.inputSchema.toString();
-        expect(s, isNot(contains('minLength')), reason: t.name);
-        expect(s, isNot(contains('maximum')), reason: t.name);
-        expect(s, isNot(contains('additionalProperties: true')));
+    test('when built then tool names are valid for every provider', () {
+      for (final t in toolset.apiTools) {
+        expect(t.name, matches(RegExp(r'^[a-zA-Z_][a-zA-Z0-9_-]{0,63}$')));
       }
     });
 
@@ -95,12 +88,12 @@ void main() {
     });
   });
 
-  group('Given a schema with an open object', () {
-    test('when converted then the tool is not strict', () {
-      final toolset = AssistantToolset.of([
-        WonkyMcpServer.executor['comments.create']!.definition,
-      ]);
-      expect(toolset.apiTools.single.strictCompatible, isFalse);
+  group('Given a tool with an open object schema', () {
+    test('when converted then the schema is passed on unchanged', () {
+      final def = WonkyMcpServer.executor['comments.create']!.definition;
+      final toolset = AssistantToolset.of([def]);
+      final props = toolset.apiTools.single.inputSchema['properties'] as Map;
+      expect(props.keys, isNot(contains('uuid')));
       expect(JsonSchema.empty.toJson()['type'], 'object');
     });
   });
@@ -131,15 +124,5 @@ void main() {
       final change = Delta()..delete(400);
       expect(AssistantService.guardViolation(small, change), isNotNull);
     });
-  });
-
-  test('AnthropicTool omits strict when the feature is off', () {
-    const t = AnthropicTool(
-      name: 'a',
-      description: 'b',
-      inputSchema: {},
-      strictCompatible: true,
-    );
-    expect(t.toJson({}).containsKey('strict'), isFalse);
   });
 }

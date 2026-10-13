@@ -4,10 +4,10 @@ import 'package:serverpod/serverpod.dart';
 import 'package:wonky_core/wonky_core.dart' show Role;
 import 'package:wonky_write_core/wonky_write_core.dart';
 
-import '../../platform/ai/ai_config.dart';
+import '../../platform/ai/ai_keys.dart';
 import '../../platform/ai/ai_models.dart';
 import '../../platform/ai/ai_usage_service.dart';
-import '../../platform/ai/anthropic/anthropic_client.dart';
+import '../../platform/ai/llm/ai_client.dart';
 import '../../platform/ai/assistant_service.dart'
     show AssistantErrors, AssistantService;
 import '../../platform/common/actor.dart';
@@ -60,8 +60,8 @@ abstract final class InlineAiService {
       req.itemUuid,
       min: isRewrite || isContinue ? Role.commenter : Role.viewer,
     );
-    final client = AiConfig.client;
-    if (client == null) {
+    final backend = await AiKeys.backendFor(session, actor.userId);
+    if (backend == null) {
       throw WonkyException(
         code: WonkyErrorCode.unavailable,
         message: AiUsageService.notConfiguredMessage,
@@ -70,7 +70,14 @@ abstract final class InlineAiService {
     final quality = await AiUsageService.quality(session, actor.userId);
     final ctx = await WriteContextBuilder.load(session, target);
     final release = AiUsageService.acquire(actor.userId);
-    final request = build(req, ctx, quality, userId: actor.userId);
+    final request = build(
+      req,
+      ctx,
+      quality,
+      model: backend.model,
+      userId: actor.userId,
+    );
+    final client = backend.client;
     final cancel = AiCancelToken();
     final out = StreamController<InlineAiEvent>();
     out.onCancel = cancel.cancel;
@@ -98,7 +105,7 @@ abstract final class InlineAiService {
           usage: msg.usage,
         );
         if (out.isClosed) return;
-        if (msg.stopReason == 'refusal') {
+        if (msg.stopReason == AiStopReason.refusal) {
           out.add(
             InlineAiEvent(
               type: InlineAiEventType.refusal,
@@ -111,13 +118,22 @@ abstract final class InlineAiService {
           InlineAiEvent(
             type: InlineAiEventType.done,
             markdown: clean(msg.text, keepLeadingSpace: isContinue),
-            errorCode: msg.stopReason == 'max_tokens' ? 'max_tokens' : null,
+            errorCode: msg.stopReason == AiStopReason.maxTokens
+                ? 'max_tokens'
+                : null,
           ),
         );
       } on AiCancelledException {
         // Discarded by the user.
-      } on AnthropicApiException catch (e) {
-        if (!out.isClosed) {
+      } on AiApiException catch (e) {
+        if (!out.isClosed && e.type == 'refusal') {
+          out.add(
+            InlineAiEvent(
+              type: InlineAiEventType.refusal,
+              error: AssistantService.refusalText,
+            ),
+          );
+        } else if (!out.isClosed) {
           out.add(
             InlineAiEvent(
               type: InlineAiEventType.error,
@@ -153,17 +169,17 @@ abstract final class InlineAiService {
   }
 
   /// The model request of [req] (pure; tests check prompts and tiers).
-  static AnthropicRequest build(
+  /// [model] maps a tier to the provider's model id.
+  static AiRequest build(
     InlineAiRequest req,
     WriteDocContext ctx,
     AiQuality quality, {
+    required String Function(AiTier tier) model,
     int? userId,
   }) {
     final action = req.action;
     final outline = WriteContextBuilder.outlineJson(ctx);
-    List<Map<String, Object?>> user(String text) => [
-      {'type': 'text', 'text': text},
-    ];
+    ChatMessage user(String text) => ChatMessage.user(text);
     if (rewriteActions.contains(action)) {
       final tier = AiTier.rewrite(quality);
       final instruction = WritePrompts.rewriteInstruction(
@@ -182,35 +198,22 @@ abstract final class InlineAiService {
           'Reply with only the replacement Markdown for <selection>.';
       final prev = req.previousOutput;
       final messages = [
-        {'role': 'user', 'content': user(first)},
+        user(first),
         if (prev != null) ...[
-          {
-            'role': 'assistant',
-            'content': user(prev.isEmpty ? '(empty)' : prev),
-          },
-          {
-            'role': 'user',
-            'content': user(
-              'Revise your replacement: '
-              '${(req.instruction ?? '').trim().isEmpty ? 'try a different version' : req.instruction!.trim()}. '
-              'Reply with only the revised replacement Markdown.',
-            ),
-          },
+          ChatMessage.model(prev.isEmpty ? '(empty)' : prev),
+          user(
+            'Revise your replacement: '
+            '${(req.instruction ?? '').trim().isEmpty ? 'try a different version' : req.instruction!.trim()}. '
+            'Reply with only the revised replacement Markdown.',
+          ),
         ],
       ];
-      return AnthropicRequest(
-        model: tier.model,
+      return AiRequest(
+        model: model(tier),
         effort: tier.effort,
         maxTokens: 32000,
-        system: [
-          {
-            'type': 'text',
-            'text': WritePrompts.rewrite,
-            'cache_control': {'type': 'ephemeral'},
-          },
-        ],
+        system: WritePrompts.rewrite,
         messages: messages,
-        cacheConversation: false,
         userId: userId == null ? null : 'u$userId',
         feature: 'rewrite',
       );
@@ -231,31 +234,21 @@ abstract final class InlineAiService {
       final line = ctx.doc.lineAt(caret);
       final emptyLine = line.contentLength == 0;
       final maxWords = (req.maxWords ?? 300).clamp(10, 300);
-      return AnthropicRequest(
-        model: tier.model,
+      return AiRequest(
+        model: model(tier),
         effort: tier.effort,
         maxTokens: 8000,
-        system: [
-          {
-            'type': 'text',
-            'text': WritePrompts.continueWriting,
-            'cache_control': {'type': 'ephemeral'},
-          },
-        ],
+        system: WritePrompts.continueWriting,
         messages: [
-          {
-            'role': 'user',
-            'content': user(
-              '<document_title>${ctx.title}</document_title>\n'
-              '<document_outline>$outline</document_outline>\n'
-              '<text_before_caret>$before</text_before_caret>\n'
-              '<caret>${emptyLine ? 'at the start of an empty paragraph' : 'at the end of the text above, inside its last paragraph'}</caret>\n'
-              'Continue writing from the caret. At most $maxWords words.'
-              '${(req.instruction ?? '').trim().isEmpty ? '' : ' Guidance from the user: ${req.instruction!.trim()}'}',
-            ),
-          },
+          user(
+            '<document_title>${ctx.title}</document_title>\n'
+            '<document_outline>$outline</document_outline>\n'
+            '<text_before_caret>$before</text_before_caret>\n'
+            '<caret>${emptyLine ? 'at the start of an empty paragraph' : 'at the end of the text above, inside its last paragraph'}</caret>\n'
+            'Continue writing from the caret. At most $maxWords words.'
+            '${(req.instruction ?? '').trim().isEmpty ? '' : ' Guidance from the user: ${req.instruction!.trim()}'}',
+          ),
         ],
-        cacheConversation: false,
         userId: userId == null ? null : 'u$userId',
         feature: 'continue',
       );
@@ -300,26 +293,12 @@ abstract final class InlineAiService {
         task = 'Summarize the document $length.';
         body = _documentBody(ctx);
     }
-    return AnthropicRequest(
-      model: tier.model,
+    return AiRequest(
+      model: model(tier),
       effort: tier.effort,
       maxTokens: 32000,
-      system: [
-        {
-          'type': 'text',
-          'text': WritePrompts.documentActions,
-          'cache_control': {'type': 'ephemeral'},
-        },
-      ],
-      messages: [
-        {
-          'role': 'user',
-          'content': user(
-            '${body.isEmpty ? '' : '$body\n'}<task>$task</task>',
-          ),
-        },
-      ],
-      cacheConversation: false,
+      system: WritePrompts.documentActions,
+      messages: [user('${body.isEmpty ? '' : '$body\n'}<task>$task</task>')],
       userId: userId == null ? null : 'u$userId',
       feature: action == 'generateOutline'
           ? 'outline'

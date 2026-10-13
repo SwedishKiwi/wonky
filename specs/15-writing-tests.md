@@ -94,7 +94,7 @@ void main() {
   `DeterministicRandom`) and seed them in tests.
 - **Async**: await the operation or the stream event; for Serverpod streams use
   `flushEventQueue()`. `Future.delayed` in a test is not allowed.
-- **Network**: no outgoing calls. External services (Anthropic, email, URL fetch proxy,
+- **Network**: no outgoing calls. External services (AI providers, email, URL fetch proxy,
   cloud storage) are behind interfaces with fakes (§5).
 - **Locale and fonts**: tests set locale and time zone explicitly (Sheets parsing/formatting
   depends on them); goldens load bundled fonts only.
@@ -104,7 +104,7 @@ void main() {
 | Need | Use |
 |------|-----|
 | Collaborator with simple state (repository, store, clock) | **In-memory fake** implementing the real interface, shipped from the owning package's `lib/testing.dart` (e.g. `FakeDriveRepository` in `wonky_app`) |
-| External service (Anthropic Messages API, email, HTTP fetch) | Fake implementation with scripted responses (`FakeAnthropicClient` replays recorded responses; records requests for assertions) |
+| External service (AI providers via `dartantic_ai`, email, HTTP fetch) | Fake implementation with scripted responses (`FakeAiModelClient` replays scripted model turns; records requests for assertions) |
 | Verify an interaction at a boundary (e.g. "notification sent once") | `mocktail` mock, sparingly |
 | Generated Serverpod client | **Never mock it.** UI talks to repositories ([03 §5](03-app-shell-and-navigation.md)); fake the repository instead. Client ↔ server behavior is covered by server tests |
 | Database | Real (embedded Postgres via `withServerpod`, in-memory/temporary SQLite for the Sheets sync DB) |
@@ -151,7 +151,7 @@ endpoints the test tools are regenerated (automatic under `serverpod start`, oth
 - **Future calls / scheduled jobs**: call the job's handler directly with a fixed clock;
   scheduling itself is tested once per job (it is registered with the right delay).
 - **External services**: injected through the server's service registry; `withServerpod`
-  tests register fakes in `setUp` (`Services.overrideForTest(anthropic: FakeAnthropicClient())`).
+  tests register fakes in `setUp` (e.g. `AiConfig.clientOverride = FakeAiModelClient()`).
 - **MCP**: tool logic is tested through `ToolExecutor` with a token-resolved user; each tool
   also has one test through the `/mcp` route (JSON-RPC in, result out) — 09 contract rule.
   If the test tools don't expose the web server, the route tests start the server on port 0

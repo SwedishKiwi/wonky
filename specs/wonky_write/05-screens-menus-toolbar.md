@@ -67,8 +67,8 @@ every control is a `CommandButton`/`CommandMenuItem` bound to a command id (suit
 Region structure (top to bottom): `EditorHeader` (title row, menubar, toolbar — always shown)
 → `ShadResizablePanelGroup` [ `DocumentCanvas` with the comment margin | `WonkySplitView` side
 panel host ] → `StatusBar`, shown only when *Display word count while typing* is on (§11).
-The side panel host shows the open panel (header: one icon per panel — Outline, Find,
-Assistant, History — the open one highlighted, then header actions and collapse ⇥) or, when
+The side panel host shows the open panel (header: one icon per panel — Assistant, Outline,
+Find, History — the open one highlighted, then header actions and collapse ⇥) or, when
 collapsed, a 44 px icon rail at the right edge (§10).
 Write passes `commentsInPanel: false` to `EditorScaffold` and sets `WriteViewPrefs` as the
 shell's `CommentsHost` (suite 07 §2.3): comments and suggestions are shown only in the margin.
@@ -501,9 +501,9 @@ comment margin (§10.2).
 
 | Rail order | Panel | id | Shown | Toggle |
 |------------|-------|----|-------|--------|
-| 1 | Outline | `outline` | always | `write.view.toggleOutline` |
-| 2 | Find and replace | `find` | always | `write.find.open` |
-| 3 | Assistant | `assistant` | when the assistant is available | `shell.ai.togglePanel` |
+| 1 | Assistant | `assistant` | when the assistant is available | `shell.ai.togglePanel` |
+| 2 | Outline | `outline` | always | `write.view.toggleOutline` |
+| 3 | Find and replace | `find` | always | `write.find.open` |
 | 4 | Version history | `history` | roles that can view history | `shell.versions.togglePanel` |
 
 ### 10.1 Outline panel (`OutlinePanel`)
@@ -671,11 +671,11 @@ shortcuts; rows disabled by role with tooltip ("You need edit access — Request
 
 | Aspect | Editing | Suggesting | Viewing |
 |--------|---------|------------|---------|
-| Editor widget | `SuperEditor` | `SuperEditor` + rewrite | `SuperReader` |
+| Editor widget | `SuperEditor` | `SuperEditor` + rewrite | `SuperReader` (with pages in Pages layout, also when it shows the document without suggestions) |
 | Toolbar | full | full, non-suggestable items disabled | items 1–6 + switcher |
 | Menus | all | non-suggestable items disabled with reason | editing items disabled |
 | Comment margin | yes | yes | if role allows |
-| Canvas cue | none | thin 2 px `success` line under toolbar | none |
+| Mode line (2 px under the toolbar, full window width) | page-background color (`canvas` in Pages, `paper` in Pageless) | `success` (green) | page-background color |
 | Caret | visible | visible (author colour tinted) | selection only |
 
 Switching modes is instant; announcements via `SemanticsService` ("Suggesting mode").

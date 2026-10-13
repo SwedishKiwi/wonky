@@ -181,7 +181,10 @@ class _WriteDocumentScreenState extends State<WriteDocumentScreen> {
       showStatusBar: doc.viewPrefs.showWordCount,
       statusLeft: (context) => [WordCountStatus(doc: doc)],
       commentsInPanel: false,
+      belowToolbar: _modeLine,
+      // Rail order: Assistant, Outline, Find (then the shell's History).
       panels: [
+        if (s.assistant?.available ?? false) writeAssistantPanelSpec(ai),
         SidePanelSpec(
           id: WritePanels.outline,
           title: writeL10n(context).screenPanelOutline,
@@ -208,7 +211,6 @@ class _WriteDocumentScreenState extends State<WriteDocumentScreen> {
             ),
           ),
         ),
-        if (s.assistant?.available ?? false) writeAssistantPanelSpec(ai),
       ],
     );
   }
@@ -273,7 +275,6 @@ class _WriteDocumentScreenState extends State<WriteDocumentScreen> {
       ]),
       builder: (context, _) {
         final theme = doc.documentTheme.editorTheme(brightness);
-        final suggesting = doc.editor.mode == EditorMode.suggesting;
         final editor = WonkyEditor(
           endInset: _marginShown(context) ? _marginColumn : 0,
           key: _editorKey,
@@ -384,11 +385,7 @@ class _WriteDocumentScreenState extends State<WriteDocumentScreen> {
                     session.comments,
                     session.suggestions,
                   ]),
-                  builder: (context, _) => _withCue(
-                    context,
-                    _withMargin(context, c, stack),
-                    suggesting: suggesting,
-                  ),
+                  builder: (context, _) => _withMargin(context, c, stack),
                 ),
               );
             },
@@ -398,30 +395,30 @@ class _WriteDocumentScreenState extends State<WriteDocumentScreen> {
     );
   }
 
-  /// The suggesting-mode cue: a 2 px success-colored line across the whole
-  /// canvas, comment margin included (Write 05 §3).
-  Widget _withCue(
-    BuildContext context,
-    Widget canvas, {
-    required bool suggesting,
-  }) {
-    if (!suggesting) return canvas;
-    return Stack(
-      children: [
-        Positioned.fill(child: canvas),
-        Positioned(
-          left: 0,
-          right: 0,
-          top: 0,
-          height: 2,
-          child: ColoredBox(
-            key: const ValueKey<String>('write.canvas.suggestingCue'),
-            color: ShadTheme.of(context).colorScheme.success,
+  /// The 2 px line under the toolbar across the whole window (Write 05 §3):
+  /// green while suggesting, otherwise the page background's color (so the
+  /// layout doesn't shift between modes).
+  Widget _modeLine(BuildContext context) => ListenableBuilder(
+    listenable: Listenable.merge([doc, doc.documentTheme]),
+    builder: (context, _) {
+      final suggesting = doc.editor.mode == EditorMode.suggesting;
+      final theme = doc.documentTheme.editorTheme(
+        ShadTheme.of(context).brightness,
+      );
+      final pages = doc.editor.view.layout == LayoutMode.pages;
+      return SizedBox(
+        height: 2,
+        child: ColoredBox(
+          key: ValueKey<String>(
+            suggesting ? 'write.canvas.suggestingCue' : 'write.canvas.modeLine',
           ),
+          color: suggesting
+              ? ShadTheme.of(context).colorScheme.success
+              : (pages ? theme.canvasColor : theme.paperColor),
         ),
-      ],
-    );
-  }
+      );
+    },
+  );
 
   /// Width of the comment margin column including its padding.
   static const double _marginColumn = 300 + 8 + 16;

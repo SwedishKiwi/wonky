@@ -148,11 +148,14 @@ void main() {
     }
   }
 
-  testWidgets('Given suggesting mode with a suggestion card when the comment '
-      'margin shows then the suggesting cue spans the margin too', (
+  testWidgets('Given the mode line under the toolbar then it is gray in '
+      'editing and green across the whole window while suggesting', (
     tester,
   ) async {
     await pumpScreen(tester);
+    final line = find.byKey(const ValueKey('write.canvas.modeLine'));
+    expect(line, findsOneWidget);
+    expect(tester.getSize(line).width, 1440);
     await h.invoke('write.mode.set', {'mode': 'suggesting'});
     session.editor.applyLocal(
       Delta()
@@ -169,10 +172,8 @@ void main() {
     final margin = find.byKey(const ValueKey('write.commentMargin')).first;
     expect(cue, findsOneWidget);
     expect(margin, findsOneWidget);
-    expect(
-      tester.getTopRight(cue).dx,
-      greaterThanOrEqualTo(tester.getTopRight(margin).dx),
-    );
+    expect(tester.getSize(cue).width, 1440);
+    expect(line, findsNothing);
     await tester.pumpWidget(const SizedBox());
     await tester.pump(const Duration(seconds: 2));
   });

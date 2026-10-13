@@ -4,11 +4,12 @@ import '../../write/ai/inline_ai_service.dart';
 import '../../write/ai/proofread_service.dart';
 import '../common/models.dart';
 import '../users/user_service.dart';
+import 'ai_keys.dart';
 import 'ai_usage_service.dart';
 import 'assistant_service.dart';
 
 /// The AI assistant (suite 10 §2, Write 09 §5). Model calls happen here on
-/// the server; the API key never reaches clients.
+/// the server; API keys (the server's and users' own) never reach clients.
 class AssistantEndpoint extends Endpoint {
   @override
   bool get requireLogin => true;
@@ -24,6 +25,26 @@ class AssistantEndpoint extends Endpoint {
   Future<AssistantStatus> setQuality(Session session, AiQuality quality) async {
     final actor = await UserService.actorOf(session);
     await AiUsageService.setQuality(session, actor.userId, quality);
+    return AiUsageService.status(session, actor.userId);
+  }
+
+  /// Settings › AI providers: stores the user's own API key for
+  /// [provider] (only while the server has no key). The key is never
+  /// returned; the status shows the provider and its last four characters.
+  Future<AssistantStatus> setProviderKey(
+    Session session,
+    AiProvider provider,
+    String apiKey,
+  ) async {
+    final actor = await UserService.actorOf(session);
+    await AiKeys.setUserKey(session, actor.userId, provider, apiKey);
+    return AiUsageService.status(session, actor.userId);
+  }
+
+  /// Settings › AI providers › Remove: deletes the user's own key.
+  Future<AssistantStatus> removeProviderKey(Session session) async {
+    final actor = await UserService.actorOf(session);
+    await AiKeys.removeUserKey(session, actor.userId);
     return AiUsageService.status(session, actor.userId);
   }
 

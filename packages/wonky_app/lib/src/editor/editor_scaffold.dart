@@ -56,6 +56,7 @@ class EditorScaffold extends StatefulWidget {
     this.syncStatus,
     this.showStatusBar = true,
     this.commentsInPanel = true,
+    this.belowToolbar,
   });
 
   final ShellServices services;
@@ -86,6 +87,10 @@ class EditorScaffold extends StatefulWidget {
 
   /// Overrides the controller's sync status.
   final ValueListenable<SyncStatus>? syncStatus;
+
+  /// A full-width strip between the toolbar and the document area (Write:
+  /// the 2 px mode line, green while suggesting).
+  final WidgetBuilder? belowToolbar;
 
   /// Whether the status bar ([statusLeft], [statusRight]) is shown.
   final bool showStatusBar;
@@ -378,6 +383,7 @@ class _EditorScaffoldState extends State<EditorScaffold> {
                         child: widget.toolbar!(context),
                       ),
                     ),
+                  ?widget.belowToolbar?.call(context),
                   Expanded(
                     child: WonkySplitView(
                       controller: s.panels,

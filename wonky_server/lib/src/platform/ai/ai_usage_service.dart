@@ -4,7 +4,8 @@ import '../common/errors.dart';
 import '../common/models.dart';
 import '../common/time.dart';
 import 'ai_config.dart';
-import 'anthropic/anthropic_types.dart';
+import 'ai_keys.dart';
+import 'llm/ai_client.dart';
 
 /// Availability, settings, budgets and concurrency of the AI features
 /// (suite 10 §1 "Limits & cost control", "Privacy").
@@ -15,6 +16,9 @@ abstract final class AiUsageService {
   static const optedOut = 'optedOut';
 
   static const notConfiguredMessage = "AI isn't configured on this server.";
+  static const addKeyMessage =
+      "AI isn't set up on this server. Add your own OpenAI, Anthropic or "
+      'Gemini API key in Settings › AI providers to use it.';
   static const disabledMessage = 'AI is turned off on this server.';
   static const optedOutMessage =
       'The assistant is turned off in your settings (Settings › AI).';
@@ -60,7 +64,7 @@ abstract final class AiUsageService {
 
   /// Budget tokens of [u]: input, cache writes and output count fully,
   /// cache reads a tenth (they cost a tenth or less).
-  static int budgetTokens(AnthropicUsage u) =>
+  static int budgetTokens(AiTokenUsage u) =>
       u.inputTokens +
       u.cacheWriteTokens +
       u.outputTokens +
@@ -89,7 +93,7 @@ abstract final class AiUsageService {
     required int userId,
     required String model,
     required String feature,
-    required AnthropicUsage usage,
+    required AiTokenUsage usage,
   }) async {
     session.log(
       'AI $feature $model: $usage',
@@ -116,19 +120,24 @@ abstract final class AiUsageService {
     where: (t) => t.at < nowUtc().subtract(const Duration(days: 90)),
   );
 
-  /// The status shown in the panel and settings.
+  /// The status shown in the panel and settings: availability, the
+  /// provider and whose key is used, whether the user may add a key.
   static Future<AssistantStatus> status(Session session, int userId) async {
     final config = AiConfig.current;
     final q = await quality(session, userId);
     final used = await usedToday(session, userId);
+    final userKey = config.configured
+        ? null
+        : await AiKeys.userKey(session, userId);
+    final credentials = AiKeys.resolve(config, userKey: userKey);
     String? reason;
     String? message;
     if (!config.enabled) {
       reason = disabled;
       message = disabledMessage;
-    } else if (AiConfig.client == null) {
+    } else if (credentials == null) {
       reason = notConfigured;
-      message = notConfiguredMessage;
+      message = config.userKeysAllowed ? addKeyMessage : notConfiguredMessage;
     } else {
       final prefs = await UserPreferences.db.findFirstRow(
         session,
@@ -146,6 +155,10 @@ abstract final class AiUsageService {
       quality: q,
       tokensUsedToday: used,
       dailyTokenBudget: config.dailyTokenBudget,
+      provider: config.enabled ? credentials?.provider : null,
+      keySource: config.enabled ? credentials?.source.name : null,
+      userKeysAllowed: config.userKeysAllowed,
+      userKey: userKey == null ? null : AiKeys.view(userKey),
     );
   }
 

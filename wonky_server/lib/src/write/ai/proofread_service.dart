@@ -3,10 +3,10 @@ import 'dart:async';
 import 'package:serverpod/serverpod.dart';
 import 'package:wonky_write_core/wonky_write_core.dart';
 
-import '../../platform/ai/ai_config.dart';
 import '../../platform/ai/ai_models.dart';
 import '../../platform/ai/ai_usage_service.dart';
-import '../../platform/ai/anthropic/anthropic_client.dart';
+import '../../platform/ai/ai_keys.dart';
+import '../../platform/ai/llm/ai_client.dart';
 import '../../platform/ai/assistant_service.dart'
     show AssistantErrors, AssistantService;
 import '../../platform/common/actor.dart';
@@ -45,12 +45,11 @@ abstract final class ProofreadService {
   ];
 
   /// The strict result tool.
-  static const tool = AnthropicTool(
+  static const tool = AiToolSpec(
     name: toolName,
     description:
         'Reports every proofreading issue found in the section. Call it '
         'exactly once, with an empty list when there are no issues.',
-    strictCompatible: true,
     inputSchema: {
       'type': 'object',
       'properties': {
@@ -101,8 +100,8 @@ abstract final class ProofreadService {
       actor,
       itemUuid,
     );
-    final client = AiConfig.client;
-    if (client == null) {
+    final backend = await AiKeys.backendFor(session, actor.userId);
+    if (backend == null) {
       throw WonkyException(
         code: WonkyErrorCode.unavailable,
         message: AiUsageService.notConfiguredMessage,
@@ -135,18 +134,21 @@ abstract final class ProofreadService {
             final section = queue.removeAt(0);
             final i = n++;
             try {
-              final msg = await client.send(
-                request(section, quality, userId: actor.userId),
-                cancel: cancel,
+              final req = request(
+                section,
+                quality,
+                model: backend.model,
+                userId: actor.userId,
               );
+              final msg = await backend.client.send(req, cancel: cancel);
               await AiUsageService.record(
                 s,
                 userId: actor.userId,
-                model: msg.model ?? AiTier.document(quality).model,
+                model: msg.model ?? req.model,
                 feature: 'proofread',
                 usage: msg.usage,
               );
-              if (msg.stopReason == 'refusal') {
+              if (msg.stopReason == AiStopReason.refusal) {
                 refused = true;
               } else {
                 final issues = validate(ctx, section, msg, prefix: 's$i');
@@ -163,7 +165,7 @@ abstract final class ProofreadService {
               }
             } on AiCancelledException {
               return;
-            } on AnthropicApiException catch (e) {
+            } on AiApiException catch (e) {
               error ??= AssistantErrors.message(e);
               errorCode ??= AssistantErrors.code(e);
             }
@@ -273,38 +275,27 @@ abstract final class ProofreadService {
     return out;
   }
 
-  static AnthropicRequest request(
+  /// The model request of [section] ([model] maps a tier to the
+  /// provider's model id).
+  static AiRequest request(
     ProofreadSection section,
     AiQuality quality, {
+    required String Function(AiTier tier) model,
     int? userId,
   }) {
     final tier = AiTier.document(quality);
-    return AnthropicRequest(
-      model: tier.model,
+    return AiRequest(
+      model: model(tier),
       effort: tier.effort,
       maxTokens: 32000,
-      system: [
-        {
-          'type': 'text',
-          'text': WritePrompts.proofread,
-          'cache_control': {'type': 'ephemeral'},
-        },
-      ],
+      system: WritePrompts.proofread,
       tools: const [tool],
       messages: [
-        {
-          'role': 'user',
-          'content': [
-            {
-              'type': 'text',
-              'text':
-                  '<section>\n${section.text}\n</section>\n'
-                  'Proofread the section and call report_issues once.',
-            },
-          ],
-        },
+        ChatMessage.user(
+          '<section>\n${section.text}\n</section>\n'
+          'Proofread the section and call report_issues once.',
+        ),
       ],
-      cacheConversation: false,
       userId: userId == null ? null : 'u$userId',
       feature: 'proofread',
     );
@@ -315,16 +306,15 @@ abstract final class ProofreadService {
   static List<ProofreadIssue> validate(
     WriteDocContext ctx,
     ProofreadSection section,
-    AnthropicMessage msg, {
+    AiResponse msg, {
     String prefix = '',
   }) {
     final out = <ProofreadIssue>[];
     final resolver = AddressResolver.of(ctx.doc);
     var n = 0;
-    for (final use in msg.toolUses) {
-      if (use['name'] != toolName) continue;
-      if (msg.invalidToolInputs.containsKey('${use['id']}')) continue;
-      final issues = (use['input'] as Map?)?['issues'];
+    for (final use in msg.toolCalls) {
+      if (use.toolName != toolName) continue;
+      final issues = use.arguments?['issues'];
       if (issues is! List) continue;
       for (final raw in issues) {
         if (raw is! Map) continue;

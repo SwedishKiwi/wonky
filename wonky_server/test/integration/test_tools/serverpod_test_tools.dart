@@ -28,6 +28,8 @@ import 'package:wonky_server/src/generated/platform/activity/activity_dashboard.
     as _iwuvk2ka;
 import 'package:wonky_server/src/generated/platform/activity/activity_event_view.dart'
     as _iiw0494r;
+import 'package:wonky_server/src/generated/platform/ai/models/ai_provider.dart'
+    as _i02m7u6n;
 import 'package:wonky_server/src/generated/platform/ai/models/ai_quality.dart'
     as _idrzmvpg;
 import 'package:wonky_server/src/generated/platform/ai/models/assistant_context_hints.dart'
@@ -933,6 +935,71 @@ class _AssistantEndpoint {
           endpointPath: 'assistant',
           methodName: 'setQuality',
           parameters: _ist.testObjectToJson({'quality': quality}),
+          serializationManager: _serializationManager,
+        );
+        var _localReturnValue =
+            await (_localCallContext.method.call(
+                  _localUniqueSession,
+                  _localCallContext.arguments,
+                )
+                as _ida.Future<_ibfulm5p.AssistantStatus>);
+        return _localReturnValue;
+      } finally {
+        await _localUniqueSession.close();
+      }
+    });
+  }
+
+  _ida.Future<_ibfulm5p.AssistantStatus> setProviderKey(
+    _ist.TestSessionBuilder sessionBuilder,
+    _i02m7u6n.AiProvider provider,
+    String apiKey,
+  ) async {
+    return _ist.callAwaitableFunctionAndHandleExceptions(() async {
+      var _localUniqueSession =
+          (sessionBuilder as _ist.InternalTestSessionBuilder).internalBuild(
+            endpoint: 'assistant',
+            method: 'setProviderKey',
+          );
+      try {
+        var _localCallContext = await _endpointDispatch.getMethodCallContext(
+          createSessionCallback: (_) => _localUniqueSession,
+          endpointPath: 'assistant',
+          methodName: 'setProviderKey',
+          parameters: _ist.testObjectToJson({
+            'provider': provider,
+            'apiKey': apiKey,
+          }),
+          serializationManager: _serializationManager,
+        );
+        var _localReturnValue =
+            await (_localCallContext.method.call(
+                  _localUniqueSession,
+                  _localCallContext.arguments,
+                )
+                as _ida.Future<_ibfulm5p.AssistantStatus>);
+        return _localReturnValue;
+      } finally {
+        await _localUniqueSession.close();
+      }
+    });
+  }
+
+  _ida.Future<_ibfulm5p.AssistantStatus> removeProviderKey(
+    _ist.TestSessionBuilder sessionBuilder,
+  ) async {
+    return _ist.callAwaitableFunctionAndHandleExceptions(() async {
+      var _localUniqueSession =
+          (sessionBuilder as _ist.InternalTestSessionBuilder).internalBuild(
+            endpoint: 'assistant',
+            method: 'removeProviderKey',
+          );
+      try {
+        var _localCallContext = await _endpointDispatch.getMethodCallContext(
+          createSessionCallback: (_) => _localUniqueSession,
+          endpointPath: 'assistant',
+          methodName: 'removeProviderKey',
+          parameters: _ist.testObjectToJson({}),
           serializationManager: _serializationManager,
         );
         var _localReturnValue =

@@ -2,7 +2,8 @@ import 'dart:convert';
 
 import 'package:test/test.dart';
 import 'package:wonky_server/src/platform/ai/ai_config.dart';
-import 'package:wonky_server/src/platform/ai/anthropic/fake_anthropic_client.dart';
+import 'package:wonky_server/src/platform/ai/llm/ai_client.dart';
+import 'package:wonky_server/src/platform/ai/llm/fake_ai_client.dart';
 import 'package:wonky_server/src/platform/common/models.dart';
 
 import '../../../support/test_drive.dart';
@@ -10,11 +11,11 @@ import '../../../support/test_users.dart';
 import '../../../support/wonky_serverpod.dart';
 
 void main() {
-  late FakeAnthropicClient fake;
+  late FakeAiModelClient fake;
 
   setUp(() {
-    fake = FakeAnthropicClient();
-    AiConfig.current = AiConfig(apiKey: 'test-key');
+    fake = FakeAiModelClient();
+    AiConfig.current = AiConfig(serverKeys: {AiProvider.anthropic: 'test-key'});
     AiConfig.clientOverride = fake;
   });
   tearDown(() => AiConfig.clientOverride = null);
@@ -42,7 +43,7 @@ void main() {
       'final Markdown is cleaned',
       () async {
         fake.enqueue(
-          (SseScript()..text('```markdown\nThe quick brown fox jumped.\n```'))
+          (AiScript()..text('```markdown\nThe quick brown fox jumped.\n```'))
               .response,
         );
         final events = await endpoints.assistant
@@ -60,19 +61,16 @@ void main() {
         expect(events.last.type, InlineAiEventType.done);
         expect(events.last.markdown, 'The quick brown fox jumped.');
         final req = fake.requests.single;
-        expect((req['output_config'] as Map)['effort'], 'medium');
-        expect(req.containsKey('tools'), isFalse);
-        final text =
-            (((req['messages'] as List).single as Map)['content'] as List)
-                    .single
-                as Map;
-        expect(text['text'], contains('<selection>Teh quick'));
-        expect(text['text'], contains('shorter'));
+        expect(req.effort, 'medium');
+        expect(req.tools, isEmpty);
+        final text = req.messages.single.text;
+        expect(text, contains('<selection>Teh quick'));
+        expect(text, contains('shorter'));
       },
     );
 
     test('when refining then the previous output is a prior turn', () async {
-      fake.enqueue((SseScript()..text('Formal text.')).response);
+      fake.enqueue((AiScript()..text('Formal text.')).response);
       await endpoints.assistant
           .inline(
             anna.endpointSession,
@@ -85,16 +83,16 @@ void main() {
             ),
           )
           .toList();
-      final messages = fake.requests.single['messages'] as List;
-      expect(messages.map((m) => (m as Map)['role']), [
-        'user',
-        'assistant',
-        'user',
+      final messages = fake.requests.single.messages;
+      expect(messages.map((m) => m.role), [
+        ChatMessageRole.user,
+        ChatMessageRole.model,
+        ChatMessageRole.user,
       ]);
     });
 
     test('when the model refuses then nothing can be inserted', () async {
-      fake.enqueue((SseScript()..stop('refusal')).response);
+      fake.enqueue((AiScript()..stop(AiStopReason.refusal)).response);
       final events = await endpoints.assistant
           .inline(
             anna.endpointSession,
@@ -111,7 +109,7 @@ void main() {
     test(
       'when continuing then the text before the caret is the context',
       () async {
-        fake.enqueue((SseScript()..text(' And then it slept.')).response);
+        fake.enqueue((AiScript()..text(' And then it slept.')).response);
         final events = await endpoints.assistant
             .inline(
               anna.endpointSession,
@@ -123,7 +121,9 @@ void main() {
             )
             .toList();
         expect(events.last.markdown, ' And then it slept.');
-        final text = jsonEncode(fake.requests.single['messages']);
+        final text = jsonEncode([
+          for (final m in fake.requests.single.messages) m.toJson(),
+        ]);
         expect(text, contains('text_before_caret'));
         expect(text, isNot(contains('We should ship')));
       },
@@ -132,7 +132,7 @@ void main() {
     test(
       'when summarizing the document then the whole document is sent',
       () async {
-        fake.enqueue((SseScript()..text('- A fox.\n- Shipping.')).response);
+        fake.enqueue((AiScript()..text('- A fox.\n- Shipping.')).response);
         final events = await endpoints.assistant
             .inline(
               anna.endpointSession,
@@ -145,7 +145,7 @@ void main() {
             .toList();
         expect(events.last.markdown, '- A fox.\n- Shipping.');
         expect(
-          jsonEncode(fake.requests.single),
+          fake.requests.single.messages.single.text,
           contains('We should ship it.'),
         );
       },
@@ -155,7 +155,7 @@ void main() {
       'when proofreading then issues are validated against the document',
       () async {
         fake.enqueue(
-          (SseScript()
+          (AiScript()
                 ..toolUse('p', 'report_issues', {
                   'issues': [
                     {
@@ -174,7 +174,7 @@ void main() {
                     },
                   ],
                 })
-                ..stop('tool_use'))
+                ..stop(AiStopReason.toolUse))
               .response,
         );
         final events = await endpoints.assistant
@@ -189,9 +189,8 @@ void main() {
         expect(issues.single.replacement, 'The');
         expect(issues.single.occurrence, 1);
         expect(events.last.type, 'done');
-        final tool = (fake.requests.single['tools'] as List).single as Map;
-        expect(tool['name'], 'report_issues');
-        expect(tool['strict'], true);
+        final tool = fake.requests.single.tools.single;
+        expect(tool.name, 'report_issues');
       },
     );
 

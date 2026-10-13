@@ -6,7 +6,7 @@ import 'package:wonky_core/wonky_core.dart' show McpToolDefinition;
 import '../common/models.dart';
 import '../mcp/tool_executor.dart';
 import '../mcp/tool_support.dart';
-import 'anthropic/anthropic_types.dart';
+import 'llm/ai_client.dart';
 
 /// One MCP tool as the assistant sees it.
 class AssistantTool {
@@ -14,8 +14,9 @@ class AssistantTool {
 
   final McpToolDefinition definition;
 
-  /// The Messages API definition (name without dots, bound keys removed).
-  final AnthropicTool api;
+  /// The definition sent to the model (name without dots, bound keys
+  /// removed).
+  final AiToolSpec api;
 
   /// Argument keys the server fills in (`document_uuid`, `uuid`, `mode`).
   final Set<String> bound;
@@ -86,10 +87,6 @@ class AssistantToolset {
   /// Keys bound to the open document.
   static const _documentKeys = {'document_uuid', 'uuid'};
 
-  /// At most this many tools are marked `strict` (schema compilation cost
-  /// and API limits); mutating tools first.
-  static const maxStrictTools = 16;
-
   final List<AssistantTool> tools;
 
   late final Map<String, AssistantTool> _byApiName = {
@@ -117,10 +114,9 @@ class AssistantToolset {
   }
 
   /// A toolset of [definitions] (sorted by API name: a deterministic order
-  /// keeps the prompt cache prefix stable).
+  /// keeps provider-side prompt caches warm).
   factory AssistantToolset.of(List<McpToolDefinition> definitions) {
-    final built =
-        <(McpToolDefinition, Map<String, Object?>, Set<String>, bool)>[];
+    final tools = <AssistantTool>[];
     for (final d in definitions) {
       final schema = jsonDecode(jsonEncode(d.inputSchema.toJson())) as Map;
       final props =
@@ -146,32 +142,19 @@ class AssistantToolset {
       } else {
         out['required'] = required;
       }
-      final strictOk = _strictCompatible(out);
-      built.add((d, strictOk ? _stripForStrict(out) : out, bound, strictOk));
-    }
-    // Strict budget: mutating tools first, then by name.
-    final strictNames =
-        (built.where((b) => b.$4).toList()..sort((a, b) {
-              final ma = a.$1.annotations.readOnly ? 1 : 0;
-              final mb = b.$1.annotations.readOnly ? 1 : 0;
-              return ma != mb ? ma - mb : a.$1.name.compareTo(b.$1.name);
-            }))
-            .take(maxStrictTools)
-            .map((b) => b.$1.name)
-            .toSet();
-    final tools = [
-      for (final b in built)
+      tools.add(
         AssistantTool._(
-          b.$1,
-          AnthropicTool(
-            name: apiNameOf(b.$1.name),
-            description: _describe(b.$1),
-            inputSchema: b.$2,
-            strictCompatible: strictNames.contains(b.$1.name),
+          d,
+          AiToolSpec(
+            name: apiNameOf(d.name),
+            description: _describe(d),
+            inputSchema: out,
           ),
-          b.$3,
+          bound,
         ),
-    ]..sort((a, b) => a.apiName.compareTo(b.apiName));
+      );
+    }
+    tools.sort((a, b) => a.apiName.compareTo(b.apiName));
     return AssistantToolset._(tools);
   }
 
@@ -190,7 +173,7 @@ class AssistantToolset {
   }
 
   /// The API definitions.
-  List<AnthropicTool> get apiTools => [for (final t in tools) t.api];
+  List<AiToolSpec> get apiTools => [for (final t in tools) t.api];
 
   AssistantTool? byApiName(String name) => _byApiName[name];
 
@@ -214,52 +197,6 @@ class AssistantToolset {
       }
     }
     return args;
-  }
-
-  /// Whether [schema] fits the strict-mode subset: every object closed
-  /// (`additionalProperties: false`) and no recursion.
-  static bool _strictCompatible(Object? schema) {
-    if (schema is List) return schema.every(_strictCompatible);
-    if (schema is! Map) return true;
-    if (schema['type'] == 'object' || schema['properties'] is Map) {
-      if (schema['additionalProperties'] != false) return false;
-    }
-    if (schema.containsKey(r'$ref')) return false;
-    for (final v in schema.values) {
-      if (v is Map || v is List) {
-        if (!_strictCompatible(v)) return false;
-      }
-    }
-    return true;
-  }
-
-  static const _unsupported = {
-    'minimum',
-    'maximum',
-    'exclusiveMinimum',
-    'exclusiveMaximum',
-    'multipleOf',
-    'minLength',
-    'maxLength',
-    'minItems',
-    'maxItems',
-    'pattern',
-  };
-
-  /// Removes keywords strict mode does not support (the executor still
-  /// validates them against the original schema).
-  static Map<String, Object?> _stripForStrict(Map<String, Object?> schema) {
-    Object? walk(Object? v, {bool isProperties = false}) {
-      if (v is List) return [for (final e in v) walk(e)];
-      if (v is! Map) return v;
-      return <String, Object?>{
-        for (final e in v.entries)
-          if (isProperties || !_unsupported.contains(e.key))
-            '${e.key}': walk(e.value, isProperties: e.key == 'properties'),
-      };
-    }
-
-    return walk(schema) as Map<String, Object?>;
   }
 }
 

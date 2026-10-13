@@ -87,7 +87,7 @@ importers, theme editor, chart editor, pivot editor, script editor + runtime, AI
 - Client: error reporting endpoint (`feedback.reportError` with stack, app/build version,
   route, anonymized state), performance marks (open time, frame drops) sampled.
 - Health: Serverpod health endpoints (`/livez`, `/readyz`) with custom indicators (DB, Redis,
-  Anthropic reachability (non-critical), storage).
+  AI provider reachability (non-critical), storage).
 
 ## 6. Code quality rules
 - `dart analyze` clean (strict-casts, strict-inference, strict-raw-types), `dart format`.

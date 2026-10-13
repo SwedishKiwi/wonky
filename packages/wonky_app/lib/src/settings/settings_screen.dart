@@ -1,6 +1,8 @@
 import 'package:flutter/widgets.dart';
 import 'package:shad/shad.dart';
 
+import '../assistant/ai_providers_section.dart';
+import '../assistant/shell_assistant.dart' show ShellAssistant;
 import '../branding/product_icon.dart';
 import '../config/wonky_app_config.dart';
 import '../l10n/wonky_app_localizations.dart';
@@ -90,6 +92,12 @@ class SettingsScreen extends StatelessWidget {
         l.settingsAi,
         LucideIcons.sparkles,
         (_) => AiSection(services: s),
+      ),
+      _Section(
+        ShellAssistant.aiProvidersSection,
+        l.settingsAiProviders,
+        LucideIcons.keyRound,
+        (_) => AiProvidersSection(services: s),
       ),
       _Section(
         'developer',

@@ -12,7 +12,8 @@ import 'shell_assistant.dart';
 
 /// Settings › AI (suite 10 §1 privacy, Write 09 §5.1): the opt-out, the
 /// quality tier, today's usage, clearing the chat history and the notice
-/// that content is sent to Anthropic.
+/// naming the provider content is sent to. Keys are on Settings › AI
+/// providers (`AiProvidersSection`).
 class AiSettingsSection extends StatefulWidget {
   const AiSettingsSection({super.key, required this.services});
 
@@ -93,6 +94,19 @@ class _AiSettingsSectionState extends State<AiSettingsSection> {
                       color: theme.colorScheme.destructive,
                     ),
                   ),
+                if (status != null &&
+                    status.reason == 'notConfigured' &&
+                    status.userKeysAllowed)
+                  SettingsRow(
+                    label: l.aiAddApiKey,
+                    description: l.aiNotConfiguredHint,
+                    control: ShadButton.outline(
+                      key: const ValueKey<String>('settings.ai.addApiKey'),
+                      onPressed: () =>
+                          openAiProviderSettings(widget.services, context),
+                      child: Text(l.aiProvidersManage),
+                    ),
+                  ),
                 SettingsRow(
                   label: l.aiEnable,
                   description: l.aiEnableHint,
@@ -156,7 +170,7 @@ class _AiSettingsSectionState extends State<AiSettingsSection> {
                   ),
                 ),
                 Text(
-                  l.assistantPrivacyNotice,
+                  assistantPrivacyNotice(l, status),
                   style: theme.textTheme.muted.copyWith(fontSize: 12),
                 ),
               ],

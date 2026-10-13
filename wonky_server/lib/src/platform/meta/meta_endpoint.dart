@@ -11,7 +11,10 @@ class MetaEndpoint extends Endpoint {
 
   Future<ProtocolInfo> getInfo(Session session) async {
     final c = WonkyConfig.current;
+    final redis = session.serverpod.redisController;
     return ProtocolInfo(
+      redisEnabled: redis != null,
+      redisConnected: redis != null && await _ping(redis),
       serverVersion: c.serverVersion,
       minClientVersion: c.minClientVersion,
       syncTablesHash: _hash ??= SheetsVersionProvider.syncTablesHashOf(),
@@ -33,5 +36,14 @@ class MetaEndpoint extends Endpoint {
       ),
       serverTime: nowUtc(),
     );
+  }
+
+  /// Whether Redis answers a ping (briefly: clients call this on connect).
+  static Future<bool> _ping(RedisController redis) async {
+    try {
+      return await redis.ping().timeout(const Duration(seconds: 1));
+    } catch (_) {
+      return false;
+    }
   }
 }

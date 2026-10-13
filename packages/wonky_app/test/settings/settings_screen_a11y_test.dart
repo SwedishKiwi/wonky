@@ -30,6 +30,7 @@ void main() {
     'keyboard',
     'write',
     'ai',
+    'ai-providers',
     'developer',
     'offline',
     'about',

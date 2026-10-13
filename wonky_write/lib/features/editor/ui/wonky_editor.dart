@@ -173,6 +173,10 @@ class WonkyEditorState extends State<WonkyEditor> {
 
   // Read-only preview document (Viewing / suggestion previews).
   Editor? _previewEditor;
+
+  /// Layout of the read-only preview document (Viewing mode shows the
+  /// document without suggestions), so its pages are measured too.
+  final _previewLayoutKey = GlobalKey();
   SuggestionPreviewMode? _previewMode;
 
   WriteEditorController get controller => widget.controller;
@@ -767,10 +771,17 @@ class WonkyEditorState extends State<WonkyEditor> {
 
   void _repaginate() {
     if (!mounted || controller.view.layout != LayoutMode.pages) return;
-    final layout = controller.documentLayout;
+    // A read-only preview (Viewing mode, previews) has its own document.
+    final preview = _previewMode == null ? null : _previewEditor;
+    final layout = preview == null
+        ? controller.documentLayout
+        : _previewLayoutKey.currentState as DocumentLayout?;
     if (layout == null) return;
     if (_repaginationPasses >= _maxRepaginationPasses) return;
-    final changed = _pagination.measure(layout, controller.document);
+    final changed = _pagination.measure(
+      layout,
+      preview?.document ?? controller.document,
+    );
     _repaginationPasses = changed ? _repaginationPasses + 1 : 0;
   }
 
@@ -919,11 +930,14 @@ class WonkyEditorState extends State<WonkyEditor> {
       key: const ValueKey<String>('write.editor.reader'),
       editor: editor,
       focusNode: isMain ? controller.focusNode : null,
-      documentLayoutKey: isMain ? controller.documentLayoutKey : null,
+      documentLayoutKey: isMain
+          ? controller.documentLayoutKey
+          : _previewLayoutKey,
       scrollController: _scrollController,
       stylesheet: stylesheet,
       customStylePhases: [
-        if (pages && isMain) _paginationPhase,
+        // Pages also for previews (Viewing mode shows one).
+        if (pages) _paginationPhase,
         _codeHighlight,
         _direction,
         if (isMain) ...widget.extraStylePhases,
@@ -935,7 +949,7 @@ class WonkyEditorState extends State<WonkyEditor> {
         document: editor.document,
       ),
       documentUnderlayBuilders: [
-        if (pages && isMain)
+        if (pages)
           _ReaderPageChromeLayerBuilder(
             pagination: _pagination,
             theme: theme,

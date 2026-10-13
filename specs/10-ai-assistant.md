@@ -1,59 +1,87 @@
-# 10 · AI Assistant (Claude)
+# 10 · AI Assistant
 
-Both apps include an **Assistant** side panel powered by Claude. All model calls happen on the
-**server** (API key never reaches clients). The assistant acts on documents through the **same
-tool layer as MCP** ([09-mcp.md](09-mcp.md)), so anything it does is permission-checked,
-attributed (`actorKind: ai`) and undoable as one step.
+Both apps include an **Assistant** side panel powered by a large language model from
+**OpenAI, Anthropic or Google Gemini**. All model calls happen on the **server** (API keys
+never reach clients). The assistant acts on documents through the **same tool layer as MCP**
+([09-mcp.md](09-mcp.md)), so anything it does is permission-checked, attributed
+(`actorKind: ai`) and undoable as one step.
 
 ## 1. Model and API usage
 
-- Dart has no official Anthropic SDK → the server calls the **Messages API over HTTPS**
-  (`POST https://api.anthropic.com/v1/messages`) with the `http` package, wrapped in an
-  `AnthropicClient` class in `wonky_server/lib/src/platform/ai/anthropic_client.dart`.
-- Headers: `x-api-key` (from `config/passwords.yaml` → `anthropicApiKey`),
-  `anthropic-version: 2023-06-01`, `content-type: application/json`, and
-  `anthropic-beta: server-side-fallback-2026-07-01` (for refusal fallbacks, below).
-- **Default model: `claude-opus-5-5`.** User setting "AI quality" maps to:
+- The server talks to the providers through **`package:dartantic_ai`** (3.4.x, pure Dart;
+  it wraps `openai_dart` (Chat Completions), `anthropic_sdk_dart` (Messages) and
+  `googleai_dart` (Gemini)). Our code depends only on the provider-agnostic
+  `AiModelClient` interface (`platform/ai/llm/ai_client.dart`): `DartanticAiClient` in
+  production, `FakeAiModelClient` in tests. Messages are dartantic `ChatMessage`s
+  (text / tool-call / tool-result parts), which is also the stored history format.
+- **Providers and keys.** Server keys are Serverpod passwords: `openaiApiKey`,
+  `anthropicApiKey` (unchanged name), `geminiApiKey` (`config/passwords.yaml` or
+  `SERVERPOD_PASSWORD_<name>`). `wonky: ai: provider` picks the provider when several keys
+  are set; otherwise the first with a key in the order Anthropic → OpenAI → Gemini.
+- **User keys** (*Settings › AI providers*). When the server has **no key at all** (and
+  `ai.allowUserKeys` is on, the default), each user can add their own key: pick the provider,
+  paste the key. Resolution per request: **server key > the user's key > none** (`AiKeys`).
+  The key is stored server-side in the `ai_user_key` table (one row per user, a
+  `serverOnly` model, so the class does not exist in the client), used only for that user's
+  requests, never logged and **never returned** — clients see only the provider and the last
+  four characters (`AiProviderKeyView`). It is not encrypted at rest (no encryption helper
+  exists; see [13 §2](13-security-and-operations.md)). Users can replace or remove it; a server
+  that has its own key refuses personal keys.
+- **Models.** "AI quality" maps to a model size and effort:
   | Setting | Model | Effort |
   |---------|-------|--------|
-  | Best (default) | `claude-opus-5-5` | `high` |
-  | Balanced | `claude-opus-5-5` | `medium` |
-  | Fast | `claude-haiku-5-5` | `low` |
-  Inline completions (autocomplete-style suggestions, formula suggestions) use
-  `claude-haiku-5-5`. Model ids live in one constants file; never hard-code elsewhere.
-- **Thinking**: `thinking: {type: "adaptive"}` (do not send `budget_tokens` — rejected on these
-  models). Effort is set via `output_config: {effort: …}`. Do not set `temperature`/`top_p`.
-- **Streaming** (`"stream": true`, SSE) for every assistant request; `max_tokens: 64000`. The
-  server parses SSE events and relays text deltas and tool activity to the client over a
-  Serverpod stream.
-- **Tool use**: tools are generated from the MCP tool registry (same JSON schemas). Use
-  `tool_choice: {type: "auto"}` only (forced tool choice returns 400 on these models). Mark
-  tools `strict: true` where schemas allow it. Set `eager_input_streaming: true` on tools; the
-  server validates the parsed input against the schema before executing, and returns an
-  `is_error: true` tool_result on invalid input. Execute parallel tool calls concurrently and
-  return all `tool_result` blocks in one user message.
-- **Stop reasons**: always check `stop_reason` before reading content. Handle `refusal`
-  (show "The assistant can't help with that request."), `max_tokens` (offer "Continue"),
-  `pause_turn`, `tool_use` (loop).
-- **Refusal fallbacks**: send `fallbacks: "default"` with the beta header above.
-- **Prompt caching**: stable prefix order = tools (sorted, deterministic) → system prompt (frozen,
-  no timestamps) → document context → conversation. Put `cache_control: {type: "ephemeral"}` on
-  the system prompt and after the document snapshot. Volatile data (current selection, time)
-  goes at the end of the latest user turn. Log `usage.cache_read_input_tokens` to verify.
-- **History**: assistant transcripts are append-only (never edit earlier turns; thinking blocks
-  are passed back unchanged). New context (e.g. the document changed) is appended as a new user
-  turn element, not by rewriting history.
-- **Limits & cost control**: per-user daily token budget (config), per-request timeout 10 min,
-  concurrency 2 requests per user. Usage stored in `AiUsage` table (userId, model, input/output/
-  cache tokens, at).
+  | Best (default) | `model` | `high` |
+  | Balanced | `model` | `medium` |
+  | Fast | `fastModel` | `low` |
+  Defaults per provider (`AiModels`, the only place with model ids; `ai.models.<provider>`
+  overrides them): Anthropic `claude-opus-5-5` / `claude-haiku-5-5`, OpenAI `gpt-5` /
+  `gpt-5-mini`, Gemini `gemini-2.5-pro` / `gemini-2.5-flash`. Inline completions use the fast
+  model. Effort is sent to OpenAI as `reasoning_effort`; dartantic has no effort option for
+  Anthropic and Gemini, which use their model defaults. No `temperature`/`top_p`.
+- **Streaming** for every request; `maxTokens` 64000 (chat), 32000 (inline/proofread),
+  8000 (continue). The server accumulates the dartantic stream (`AiStreamAccumulator`: text
+  and reasoning deltas, tool calls merged by id, cumulative usage) and relays text deltas and
+  tool activity to the client over a Serverpod stream. Reasoning text a provider streams is
+  shown as progress notes.
+- **Tool use**: tools are generated from the MCP tool registry (same JSON schemas) and passed
+  to dartantic as tool definitions, but **never executed by dartantic**: the assistant loop
+  executes every call through the `ToolExecutor` (validation, permissions, destructive-change
+  confirmation, undo grouping), runs parallel calls concurrently and returns all results in
+  one user message. Tool choice is the provider default (auto).
+- **Stop reasons** (normalized, `AiStopReason`): `end_turn`, `tool_use` (loop), `max_tokens`
+  (offer "Continue"; a cut-off tool call is never executed), `refusal` (content filter /
+  recitation, or an SDK refusal error: "The assistant can't help with that request.").
+- **Prompt caching**: the request keeps a stable prefix (tools sorted → frozen system prompt →
+  document snapshot → conversation; volatile data at the end of the latest user turn) so
+  provider-side automatic caching works; OpenAI gets `prompt_cache_key` = the thread. Explicit
+  Anthropic `cache_control` breakpoints are not available through dartantic.
+- **History**: transcripts are append-only (never edit earlier turns; provider metadata such
+  as Gemini thought signatures is stored with the turn and replayed). New context (the document
+  changed) is appended as a new user turn element, not by rewriting history. Threads stored
+  before the provider switch (raw Anthropic blocks) are converted on load (`AssistantHistory`);
+  their thinking blocks are dropped.
+- **Limits & cost control**: per-user daily token budget (config), per-request timeout 10 min
+  (3 min idle), concurrency 2 requests per user. Retries (429/5xx/connection) are the provider
+  SDKs'. Usage stored in `AiUsage` table (userId, model, input/output/cache tokens, at); cache
+  token counts are not reported through dartantic (0).
 - **Privacy**: AI is opt-out per user (Settings → AI) and can be disabled server-wide
-  (`config: ai.enabled`). The panel shows a notice that document content is sent to Anthropic.
+  (`config: ai.enabled`). The panel shows a notice naming the provider content is sent to.
+
+### 1.1 What the Anthropic-only client did that dartantic does not (accepted)
+
+Adaptive thinking with `display: "updates"` progress notes, `output_config.effort` for Claude,
+server-side refusal fallbacks (`fallbacks: "default"`) and the `refusal` stop reason (an
+Anthropic refusal now arrives as an ordinary, usually empty, answer), explicit
+`cache_control` breakpoints and cache token accounting, `strict` / `eager_input_streaming`
+tools, `is_error` on tool results (errors are JSON with `code`/`message`), a configurable
+Anthropic `baseUrl`, and our own retry policy honouring `retry-after`.
 
 ## 2. Server components (`wonky_server/lib/src/platform/ai/`)
 
 | File | Responsibility |
 |------|----------------|
-| `anthropic_client.dart` | HTTP + SSE parsing, retries (429/5xx/connection with exponential backoff, honor `retry-after`), typed request/response models. |
+| `llm/ai_client.dart`, `llm/dartantic_ai_client.dart` | `AiModelClient` interface and its `dartantic_ai` implementation (OpenAI, Anthropic, Gemini), stream accumulation, error mapping. |
+| `ai_config.dart`, `ai_keys.dart` | Config (`wonky: ai:`), server keys, user keys, key resolution (server > user > none). |
 | `assistant_service.dart` | Agent loop: build request, stream, execute tools via `ToolExecutor`, loop until `end_turn`. One loop = one undo transaction for the user ("AI: …"). |
 | `context_builder.dart` | Builds document context: Write → Markdown of doc (or outline + selected sections if > 200k tokens); Sheets → sheet list, used ranges, headers, sample rows, selection values, named ranges. |
 | `prompts/` | System prompts per app/mode, versioned constants. |
@@ -92,6 +120,10 @@ fields:
 
 ## 3. UI — Assistant panel (`wonky_app` `AssistantPanel`, specialized per app)
 
+- Not configured: the panel shows "AI isn't configured on this server" and, when the server
+  has no key, *Add an API key* (`assistant.addApiKey`), which runs `shell.settings.open
+  {section: ai-providers}`. Inline AI entry points stay visible but disabled, with the server's
+  message ("… Add your own … API key in Settings › AI providers …") as the reason.
 - Toggle: its icon in the side panel rail (there is no title-row or toolbar ✨ button),
   *Tools › Assistant*, *View › Panels › Assistant*, `Mod+J` (contextual binding: in Write, inside
   an empty paragraph `Mod+J` opens the inline AI prompt instead — see suite 08 §1.2). Right side
@@ -138,51 +170,53 @@ fields:
 
 ## 6. Implementation notes (as built)
 
-- **Server** (`wonky_server/lib/src/platform/ai/`): `anthropic/` (`AnthropicClient` +
-  `HttpAnthropicClient`: `package:http`, SSE parser, `MessageAccumulator`, retries on
-  408/409/429/5xx/529 and connection errors with exponential backoff + jitter honouring
-  `retry-after`/`retry-after-ms`, 10 min wall clock, 3 min idle timeout; `FakeAnthropicClient`
-  + `SseScript` replay scripted SSE through the same parser), `ai_models.dart` (the only
-  place with model ids), `ai_config.dart`, `ai_usage_service.dart`, `assistant_tools.dart`,
-  `assistant_service.dart`, `assistant_endpoint.dart`. Write parts in
-  `wonky_server/lib/src/write/ai/` (`write_prompts.dart`, `write_context_builder.dart`,
-  `inline_ai_service.dart`, `proofread_service.dart`).
-- **Configuration**: `wonky: features: ai` + `wonky: ai:` (`enabled`, `dailyTokenBudget`,
-  `maxConcurrentRequests`, `requestTimeoutMinutes`, `maxToolRounds`, `baseUrl`) in
-  `config/<runMode>.yaml`; the key is `anthropicApiKey` in `config/passwords.yaml` (or
-  `SERVERPOD_PASSWORD_anthropicApiKey`). Without a key `assistant.getStatus` reports
-  `reason: notConfigured` and the apps show "AI isn't configured on this server".
-- **Request shape**: `thinking: {type: adaptive, display: "updates" (Opus, tool requests),
-  block_binding: {prefix_mismatch_behavior: "drop_block"}}`, `output_config.effort`,
-  `tool_choice: auto`, `fallbacks: "default"` (not for `claude-haiku-5-5`, which has no
-  server-side fallback), betas `server-side-fallback-2026-07-01`,
-  `thinking-display-updates-2026-08-18`, `thinking-binding-controls-2026-08-01`. An optional
-  feature the API rejects with a 400 (fallbacks, display, block binding, `strict`,
-  `eager_input_streaming`, top-level `cache_control`) is switched off for the process and the
-  request retried, so beta drift degrades instead of breaking the assistant.
-- **Tools**: MCP names contain dots, which the API does not allow: `write.get_document` is sent
-  as `write_get_document`. Schemas are the MCP schemas minus the bound keys (`document_uuid`,
-  `uuid`, `mode`); strict-compatible schemas (closed objects) are sent with
-  numeric/length constraints stripped (the `ToolExecutor` still validates the original) and at
-  most 16 tools are marked `strict`. `comments.reply` is checked to target a thread of the open
-  file. Accept/reject suggestion tools are only listed for Editors+.
-- **Caching**: tools (sorted) → system (breakpoint) → the frozen document snapshot in the
-  thread's first user turn (breakpoint) → conversation via the top-level automatic
-  `cache_control`, so no stored message is ever edited (append-only history, also required by
-  preserved thinking). "Document updated" elements carry the changed sections' Markdown.
+- **Server** (`wonky_server/lib/src/platform/ai/`): `llm/` (`AiModelClient`, `AiRequest`,
+  `AiResponse`, `AiApiException`, `AiCancelToken`; `DartanticAiClient` + `AiStreamAccumulator`;
+  `FakeAiModelClient` + `AiScript` replay scripted turns in tests), `ai_models.dart` (the only
+  place with model ids; `AiTier` = model size + effort), `ai_config.dart`, `ai_keys.dart`
+  (`AiKeys.resolve`, `AiBackend`), `assistant_history.dart` (stored turns, legacy
+  conversion), `ai_usage_service.dart`, `assistant_tools.dart`, `assistant_service.dart`,
+  `assistant_endpoint.dart`. Write parts in `wonky_server/lib/src/write/ai/`
+  (`write_prompts.dart`, `write_context_builder.dart`, `inline_ai_service.dart`,
+  `proofread_service.dart`).
+- **Configuration**: `wonky: features: ai` + `wonky: ai:` (`enabled`, `provider`,
+  `allowUserKeys`, `models: {<provider>: {model, fastModel}}`, `dailyTokenBudget`,
+  `maxConcurrentRequests`, `requestTimeoutMinutes`, `maxToolRounds`) in
+  `config/<runMode>.yaml`, env overrides `WONKY_AI_*`; the keys are the passwords
+  `anthropicApiKey`, `openaiApiKey`, `geminiApiKey`. Without any key `assistant.getStatus`
+  reports `reason: notConfigured` with `userKeysAllowed: true`, and the apps offer *Add an API
+  key* (Assistant panel, Settings › AI) leading to Settings › AI providers.
+- **Request shape**: system prompt as a dartantic system message, tools as dartantic tools
+  (never executed by dartantic), OpenAI: `max_completion_tokens`, `reasoning_effort`,
+  `stream_options.include_usage`, `prompt_cache_key`, `safety_identifier`; Anthropic:
+  `max_tokens`, `metadata.user_id`; Gemini: `maxOutputTokens`.
+- **Tools**: MCP names contain dots, which the providers do not allow: `write.get_document` is
+  sent as `write_get_document`. Schemas are the MCP schemas minus the bound keys
+  (`document_uuid`, `uuid`, `mode`); the `ToolExecutor` validates every input against the
+  original schema. `comments.reply` is checked to target a thread of the open file.
+  Accept/reject suggestion tools are only listed for Editors+.
+- **Caching**: tools (sorted) → system → the frozen document snapshot in the thread's first
+  user turn → conversation, so no stored message is ever edited and provider-side prefix
+  caches stay valid. "Document updated" elements carry the changed sections' Markdown.
 - **Endpoint** `assistant`: `getStatus`, `setQuality`, `chat(threadId?, itemUuid, message,
   hints)`, `stop(threadId?, runId?)`, `confirm(runId, confirmationId, allow)` (destructive
   guard), `listThreads(itemUuid)`, `getThread`, `deleteThread`, `clearHistory`,
   `revertChange(changeId)` (panel Undo fallback), `inline(InlineAiRequest)`,
-  `proofread(itemUuid, start?, length?)`. `AssistantEventType`: `started`, `textDelta`,
+  `proofread(itemUuid, start?, length?)`, `setProviderKey(provider, apiKey)` and
+  `removeProviderKey()` (Settings › AI providers; both return the status, which carries
+  `provider`, `keySource` (`server`/`user`), `userKeysAllowed` and `userKey` = provider + last
+  four characters). `AssistantEventType`: `started`, `textDelta`,
   `progress`, `toolStarted`, `toolFinished`, `confirmationRequired`, `usage`, `maxTokens`,
   `refusal`, `error`, `done`. Extra tables: `ai_user_setting` (quality); `assistant_message`
-  adds `visible`, `replay`, `runId`, `stopReason`; `assistant_thread` adds the last context
-  revision/Markdown.
+  adds `visible`, `replay`, `runId`, `stopReason` (`contentJson` = a dartantic `ChatMessage`
+  JSON object; legacy rows hold Anthropic block arrays); `assistant_thread` adds the last context
+  revision/Markdown; `ai_user_key` (server-only: userId unique, provider, apiKey, timestamps).
 - **Budget**: input + cache writes + output + cache reads ÷ 10 per UTC day; concurrency per user
   is in memory per server instance. `stop` and `confirm` reach a run on another instance as
   relayed signals ([13 §4](13-security-and-operations.md)).
 - **Client**: shared panel in `packages/wonky_app/lib/src/assistant/` (`ShellAssistant`
   implements `AssistantHook`, `AssistantController`, `AssistantPanel`, `AiSettingsSection`,
+  `AiProvidersSection` (Settings › AI providers, section id `ai-providers`, opened with
+  `shell.settings.open {section: ai-providers}` via `openAiProviderSettings`),
   `AssistantDocumentAdapter` for app specialization, `FakeAssistantApi` in
   `package:wonky_app/testing.dart`). Write: `wonky_write/lib/features/ai/`.

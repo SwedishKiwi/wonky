@@ -24,6 +24,8 @@ import 'package:wonky_client/src/protocol/platform/activity/activity_dashboard.d
     as _ilqfn3s9;
 import 'package:wonky_client/src/protocol/platform/activity/activity_event_view.dart'
     as _itempttd;
+import 'package:wonky_client/src/protocol/platform/ai/models/ai_provider.dart'
+    as _i9ndea8y;
 import 'package:wonky_client/src/protocol/platform/ai/models/ai_quality.dart'
     as _il8jkded;
 import 'package:wonky_client/src/protocol/platform/ai/models/assistant_context_hints.dart'
@@ -424,7 +426,7 @@ class EndpointActivity extends _isc.EndpointRef {
 }
 
 /// The AI assistant (suite 10 §2, Write 09 §5). Model calls happen here on
-/// the server; the API key never reaches clients.
+/// the server; API keys (the server's and users' own) never reach clients.
 /// {@category Endpoint}
 class EndpointAssistant extends _isc.EndpointRef {
   EndpointAssistant(_isc.EndpointCaller caller) : super(caller);
@@ -449,6 +451,29 @@ class EndpointAssistant extends _isc.EndpointRef {
     'setQuality',
     {'quality': quality},
   );
+
+  /// Settings › AI providers: stores the user's own API key for
+  /// [provider] (only while the server has no key). The key is never
+  /// returned; the status shows the provider and its last four characters.
+  _ida.Future<_idfnr0x0.AssistantStatus> setProviderKey(
+    _i9ndea8y.AiProvider provider,
+    String apiKey,
+  ) => caller.callServerEndpoint<_idfnr0x0.AssistantStatus>(
+    'assistant',
+    'setProviderKey',
+    {
+      'provider': provider,
+      'apiKey': apiKey,
+    },
+  );
+
+  /// Settings › AI providers › Remove: deletes the user's own key.
+  _ida.Future<_idfnr0x0.AssistantStatus> removeProviderKey() =>
+      caller.callServerEndpoint<_idfnr0x0.AssistantStatus>(
+        'assistant',
+        'removeProviderKey',
+        {},
+      );
 
   /// Sends a message ([threadId] null = new thread on [itemUuid]) and
   /// streams the run: `started` (thread + run id), text deltas, progress

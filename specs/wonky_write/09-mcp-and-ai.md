@@ -515,8 +515,8 @@ Points the prompt must cover:
 - AI cannot change sharing, delete files, or act on documents other than the open one (schema
   binding + server check).
 - Usage budgets, concurrency and opt-out per suite; the panel shows the "content is sent to
-  Anthropic" notice.
-- `refusal` stop reason → card/panel message "The assistant can't help with that request."; the
+  <provider>" notice (OpenAI, Anthropic or Google Gemini, suite 10 §1).
+- `refusal` stop reason (content filter / provider refusal) → card/panel message "The assistant can't help with that request."; the
   preview shows nothing to insert.
 
 ---
@@ -598,10 +598,11 @@ The same `document_edits.dart` builders back the client commands (e.g. *Insert t
 - **Server integration** (`serverpod_test` + in-process MCP client over the HTTP route): one test
   file per tool group; concurrency tests with a simulated editing client submitting ops while
   tools run; `changes.revert` after interleaved edits; resource reads/subscriptions.
-- **AI**: `AnthropicClient` replaced by a fake that replays recorded SSE fixtures (text deltas,
-  tool_use with `eager_input_streaming`, refusal, max_tokens); context builder snapshot tests
-  (small/large docs, caching breakpoints in the right places); proofread chunking and quote
-  validation; allowlist enforcement; destructive guard.
+- **AI**: the `AiModelClient` replaced by `FakeAiModelClient` replaying scripted turns (text
+  deltas, reasoning, tool calls, refusal, max_tokens); the dartantic stream accumulator and
+  legacy-history conversion unit tested; key resolution (server > user > none) and the
+  personal-key endpoints; context builder snapshot tests (small/large docs); proofread chunking
+  and quote validation; allowlist enforcement; destructive guard.
 - **Client**: widget tests for the preview overlay (streaming, refine, discard, remote change),
   ghost text, proofread panel; undo grouping of assistant runs (`onBehalfOfSessionId`).
 - **End-to-end** (flutter_driver + MCP via the serverpod MCP server and the `ui.*` bridge): open a

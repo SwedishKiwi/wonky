@@ -50,6 +50,44 @@ class FakeAssistantApi implements AssistantApi {
     return status;
   }
 
+  /// Keys saved through [setProviderKey] (provider, key), in order.
+  final List<(AiProvider, String)> savedKeys = [];
+
+  @override
+  Future<AssistantStatus> setProviderKey(
+    AiProvider provider,
+    String apiKey,
+  ) async {
+    savedKeys.add((provider, apiKey));
+    final k = apiKey.trim();
+    status = status.copyWith(
+      available: true,
+      reason: null,
+      message: null,
+      provider: provider,
+      keySource: 'user',
+      userKey: AiProviderKeyView(
+        provider: provider,
+        last4: k.length <= 4 ? k : k.substring(k.length - 4),
+        updatedAt: DateTime.utc(2026),
+      ),
+    );
+    return status;
+  }
+
+  @override
+  Future<AssistantStatus> removeProviderKey() async {
+    status = AssistantStatus(
+      available: false,
+      reason: 'notConfigured',
+      quality: status.quality,
+      tokensUsedToday: status.tokensUsedToday,
+      dailyTokenBudget: status.dailyTokenBudget,
+      userKeysAllowed: status.userKeysAllowed,
+    );
+    return status;
+  }
+
   @override
   Stream<AssistantEvent> chat({
     required int? threadId,

@@ -100,12 +100,21 @@ wonky:
       - http://localhost:8102
     rateLimitPerMinute: 600
     sessionIdleMinutes: 60
-  # The AI assistant (specs/10-ai-assistant.md §1, read by
-  # lib/src/platform/ai/ai_config.dart). The Anthropic API key is the
-  # `anthropicApiKey` entry in config/passwords.yaml; without it the apps show
-  # "AI isn't configured on this server".
+  # The AI features (specs/10-ai-assistant.md §1, read by
+  # lib/src/platform/ai/ai_config.dart), through dartantic_ai. Server keys are
+  # the `openaiApiKey`, `anthropicApiKey` and `geminiApiKey` entries in
+  # config/passwords.yaml. `provider` picks one when several are set
+  # (default: the first with a key, Anthropic → OpenAI → Gemini). Without any
+  # server key users can add their own in Settings › AI providers
+  # (`allowUserKeys`). `models` overrides the default model ids per provider.
   ai:
     enabled: true
+    # provider: anthropic
+    allowUserKeys: true
+    # models:
+    #   anthropic: {model: claude-opus-5-5, fastModel: claude-haiku-5-5}
+    #   openai: {model: gpt-5, fastModel: gpt-5-mini}
+    #   gemini: {model: gemini-2.5-pro, fastModel: gemini-2.5-flash}
     dailyTokenBudget: 2000000
     maxConcurrentRequests: 2
     requestTimeoutMinutes: 10

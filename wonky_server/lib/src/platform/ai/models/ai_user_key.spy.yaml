@@ -1,0 +1,16 @@
+### A user's own AI provider API key (suite 10 §1 "Keys"). Only used when
+### the server has no key of its own. Server-only: the key is never sent to
+### a client (clients see `AiProviderKeyView`).
+class: AiUserKey
+serverOnly: true
+table: ai_user_key
+fields:
+  userId: int, relation(parent=user_profile, onDelete=Cascade)
+  provider: AiProvider
+  apiKey: String
+  createdAt: DateTime
+  updatedAt: DateTime
+indexes:
+  ai_user_key_user_idx:
+    fields: userId
+    unique: true

@@ -20,6 +20,9 @@ void main() {
         expect(info.syncTablesHash, contains(':'));
         expect(info.runMode, ServerpodRunMode.test);
         expect(info.limits.maxDocumentChars, 2000000);
+        // Tests run without Redis.
+        expect(info.redisEnabled, isFalse);
+        expect(info.redisConnected, isFalse);
       },
     );
   });

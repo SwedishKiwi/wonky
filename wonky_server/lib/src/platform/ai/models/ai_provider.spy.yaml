@@ -1,0 +1,8 @@
+### The AI model providers the server can call through `dartantic_ai`
+### (suite 10 §1).
+enum: AiProvider
+serialized: byName
+values:
+  - openai
+  - anthropic
+  - gemini

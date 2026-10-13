@@ -2662,6 +2662,12 @@ abstract class WonkyAppLocalizations {
   /// **'AI'**
   String get settingsAi;
 
+  /// No description provided for @settingsAiProviders.
+  ///
+  /// In en, this message translates to:
+  /// **'AI providers'**
+  String get settingsAiProviders;
+
   /// No description provided for @settingsAiHint.
   ///
   /// In en, this message translates to:
@@ -2691,6 +2697,42 @@ abstract class WonkyAppLocalizations {
   /// In en, this message translates to:
   /// **'Developer & MCP'**
   String get settingsDeveloper;
+
+  /// Settings › Developer group with the server's status.
+  ///
+  /// In en, this message translates to:
+  /// **'Server'**
+  String get settingsServerTitle;
+
+  /// No description provided for @settingsRedis.
+  ///
+  /// In en, this message translates to:
+  /// **'Redis'**
+  String get settingsRedis;
+
+  /// No description provided for @settingsRedisHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Messaging between server instances; needed when more than one runs.'**
+  String get settingsRedisHint;
+
+  /// No description provided for @redisConnected.
+  ///
+  /// In en, this message translates to:
+  /// **'Connected'**
+  String get redisConnected;
+
+  /// No description provided for @redisNotReachable.
+  ///
+  /// In en, this message translates to:
+  /// **'Not reachable'**
+  String get redisNotReachable;
+
+  /// No description provided for @redisNotConfigured.
+  ///
+  /// In en, this message translates to:
+  /// **'Not configured'**
+  String get redisNotConfigured;
 
   /// No description provided for @settingsKeyboard.
   ///
@@ -3625,8 +3667,14 @@ abstract class WonkyAppLocalizations {
   /// No description provided for @assistantPrivacyNotice.
   ///
   /// In en, this message translates to:
-  /// **'The assistant sends this document and your messages to Anthropic to generate answers.'**
+  /// **'The assistant sends this document and your messages to the AI provider to generate answers.'**
   String get assistantPrivacyNotice;
+
+  /// No description provided for @assistantPrivacyNoticeProvider.
+  ///
+  /// In en, this message translates to:
+  /// **'The assistant sends this document and your messages to {provider} to generate answers.'**
+  String assistantPrivacyNoticeProvider(String provider);
 
   /// No description provided for @assistantModeEdit.
   ///
@@ -3745,8 +3793,20 @@ abstract class WonkyAppLocalizations {
   /// No description provided for @aiNotConfiguredHint.
   ///
   /// In en, this message translates to:
-  /// **'An administrator can enable it by adding an Anthropic API key to the server configuration.'**
+  /// **'Add your own OpenAI, Anthropic or Gemini API key to use it, or ask an administrator to add one to the server.'**
   String get aiNotConfiguredHint;
+
+  /// No description provided for @aiNotConfiguredAdminHint.
+  ///
+  /// In en, this message translates to:
+  /// **'An administrator can enable it by adding an OpenAI, Anthropic or Gemini API key to the server configuration.'**
+  String get aiNotConfiguredAdminHint;
+
+  /// No description provided for @aiAddApiKey.
+  ///
+  /// In en, this message translates to:
+  /// **'Add an API key'**
+  String get aiAddApiKey;
 
   /// No description provided for @aiDisabled.
   ///
@@ -3843,6 +3903,138 @@ abstract class WonkyAppLocalizations {
   /// In en, this message translates to:
   /// **'{percent} %'**
   String aiUsagePercent(int percent);
+
+  /// No description provided for @aiProviderOpenai.
+  ///
+  /// In en, this message translates to:
+  /// **'OpenAI'**
+  String get aiProviderOpenai;
+
+  /// No description provided for @aiProviderAnthropic.
+  ///
+  /// In en, this message translates to:
+  /// **'Anthropic'**
+  String get aiProviderAnthropic;
+
+  /// No description provided for @aiProviderGemini.
+  ///
+  /// In en, this message translates to:
+  /// **'Google Gemini'**
+  String get aiProviderGemini;
+
+  /// No description provided for @aiProvidersServerTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Provided by this server'**
+  String get aiProvidersServerTitle;
+
+  /// No description provided for @aiProvidersServerBody.
+  ///
+  /// In en, this message translates to:
+  /// **'AI requests go to {provider} with this server\'s API key. You don\'t need a key of your own.'**
+  String aiProvidersServerBody(String provider);
+
+  /// No description provided for @aiProvidersKeyTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Your API key'**
+  String get aiProvidersKeyTitle;
+
+  /// No description provided for @aiProvidersKeyHint.
+  ///
+  /// In en, this message translates to:
+  /// **'This server has no AI provider set up. Add your own key to use the assistant and the other AI features. The key is stored on the server, used only for your requests and never shown again.'**
+  String get aiProvidersKeyHint;
+
+  /// No description provided for @aiProvidersProvider.
+  ///
+  /// In en, this message translates to:
+  /// **'Provider'**
+  String get aiProvidersProvider;
+
+  /// No description provided for @aiProvidersKey.
+  ///
+  /// In en, this message translates to:
+  /// **'API key'**
+  String get aiProvidersKey;
+
+  /// No description provided for @aiProvidersKeyPlaceholder.
+  ///
+  /// In en, this message translates to:
+  /// **'Paste your API key'**
+  String get aiProvidersKeyPlaceholder;
+
+  /// No description provided for @aiProvidersSave.
+  ///
+  /// In en, this message translates to:
+  /// **'Save key'**
+  String get aiProvidersSave;
+
+  /// No description provided for @aiProvidersSaved.
+  ///
+  /// In en, this message translates to:
+  /// **'API key saved'**
+  String get aiProvidersSaved;
+
+  /// No description provided for @aiProvidersSaveFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t save the API key'**
+  String get aiProvidersSaveFailed;
+
+  /// No description provided for @aiProvidersCurrent.
+  ///
+  /// In en, this message translates to:
+  /// **'Your key'**
+  String get aiProvidersCurrent;
+
+  /// No description provided for @aiProvidersCurrentValue.
+  ///
+  /// In en, this message translates to:
+  /// **'{provider} key ending in {last4}'**
+  String aiProvidersCurrentValue(String provider, String last4);
+
+  /// No description provided for @aiProvidersRemove.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove key'**
+  String get aiProvidersRemove;
+
+  /// No description provided for @aiProvidersRemoveTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove your API key?'**
+  String get aiProvidersRemoveTitle;
+
+  /// No description provided for @aiProvidersRemoveBody.
+  ///
+  /// In en, this message translates to:
+  /// **'AI features stop working for you until you add a key again.'**
+  String get aiProvidersRemoveBody;
+
+  /// No description provided for @aiProvidersRemoved.
+  ///
+  /// In en, this message translates to:
+  /// **'API key removed'**
+  String get aiProvidersRemoved;
+
+  /// No description provided for @aiProvidersRemoveFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t remove the API key'**
+  String get aiProvidersRemoveFailed;
+
+  /// No description provided for @aiProvidersNotAllowed.
+  ///
+  /// In en, this message translates to:
+  /// **'This server doesn\'t allow personal API keys. Ask an administrator to set up AI.'**
+  String get aiProvidersNotAllowed;
+
+  /// No description provided for @aiProvidersManage.
+  ///
+  /// In en, this message translates to:
+  /// **'Manage AI providers'**
+  String get aiProvidersManage;
 
   /// No description provided for @aiChatHistory.
   ///

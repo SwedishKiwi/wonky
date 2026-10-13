@@ -1,6 +1,7 @@
 import 'package:flutter/widgets.dart';
 import 'package:shad/shad.dart';
 import 'package:wonky_client/wonky_client.dart';
+import 'package:wonky_ui/wonky_ui.dart' show WonkyColors;
 
 import '../../data/api.dart';
 import '../../l10n/wonky_app_localizations.dart';
@@ -253,16 +254,117 @@ class AiSection extends StatelessWidget {
   Widget build(BuildContext context) => AiSettingsSection(services: services);
 }
 
-/// Settings › Developer / MCP: tokens, connection snippet, UI-bridge toggle
-/// (implemented by the MCP bridge, `mcp_bridge/developer_settings.dart`).
+/// Settings › Developer / MCP: the server's status (Redis), then tokens,
+/// connection snippet, UI-bridge toggle (implemented by the MCP bridge,
+/// `mcp_bridge/developer_settings.dart`).
 class DeveloperSection extends StatelessWidget {
   const DeveloperSection({super.key, required this.services});
 
   final ShellServices services;
 
   @override
-  Widget build(BuildContext context) =>
-      McpDeveloperSettings(services: services);
+  Widget build(BuildContext context) => Column(
+    crossAxisAlignment: CrossAxisAlignment.stretch,
+    children: [
+      ServerStatusGroup(services: services),
+      const SizedBox(height: 24),
+      McpDeveloperSettings(services: services),
+    ],
+  );
+}
+
+/// Whether the backend is connected to Redis (`ProtocolInfo.redisEnabled` /
+/// `redisConnected`, refreshed when shown and on *Reload*).
+class ServerStatusGroup extends StatefulWidget {
+  const ServerStatusGroup({super.key, required this.services});
+
+  final ShellServices services;
+
+  @override
+  State<ServerStatusGroup> createState() => _ServerStatusGroupState();
+}
+
+class _ServerStatusGroupState extends State<ServerStatusGroup> {
+  bool _loading = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _refresh();
+  }
+
+  Future<void> _refresh() async {
+    setState(() => _loading = true);
+    try {
+      final s = widget.services;
+      s.serverInfo.value = await s.repositories.meta.getInfo();
+    } catch (_) {
+      // Offline: keep the last known status.
+    } finally {
+      if (mounted) setState(() => _loading = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final l = WonkyAppLocalizations.of(context);
+    final theme = ShadTheme.of(context);
+    return ValueListenableBuilder<ProtocolInfo?>(
+      valueListenable: widget.services.serverInfo,
+      builder: (context, info, _) {
+        final (label, color) = switch (info) {
+          null => ('—', theme.colorScheme.mutedForeground),
+          ProtocolInfo(redisEnabled: false) => (
+            l.redisNotConfigured,
+            theme.colorScheme.mutedForeground,
+          ),
+          ProtocolInfo(redisConnected: true) => (
+            l.redisConnected,
+            theme.colorScheme.success,
+          ),
+          _ => (l.redisNotReachable, theme.colorScheme.destructive),
+        };
+        return SettingsGroup(
+          title: l.settingsServerTitle,
+          children: [
+            SettingsRow(
+              label: l.settingsRedis,
+              description: l.settingsRedisHint,
+              control: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Container(
+                    width: 8,
+                    height: 8,
+                    decoration: BoxDecoration(
+                      color: color,
+                      shape: BoxShape.circle,
+                    ),
+                  ),
+                  const SizedBox(width: 6),
+                  Text(
+                    label,
+                    key: const ValueKey<String>('settings.server.redis'),
+                  ),
+                  const SizedBox(width: 8),
+                  ShadIconButton.ghost(
+                    key: const ValueKey<String>('settings.server.reload'),
+                    width: 28,
+                    height: 28,
+                    iconSize: 14,
+                    semanticLabel: l.actionReload,
+                    enabled: !_loading,
+                    icon: const Icon(LucideIcons.refreshCw),
+                    onPressed: _refresh,
+                  ),
+                ],
+              ),
+            ),
+          ],
+        );
+      },
+    );
+  }
 }
 
 /// Settings › About: versions and licenses.

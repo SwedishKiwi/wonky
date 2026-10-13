@@ -123,8 +123,16 @@ Full-screen in-app page with a left nav (shad `ShadTabs` vertical or custom `Set
    help, iterative calc defaults, enable scripts (per-user kill switch).
 7. **Notifications** – mentions, comment replies, share notifications: in-app / email / off.
 8. **AI** – enable assistant, default model tier (Fast/Balanced/Best — maps to server-side model
-   choice), clear AI history.
-9. **Developer / MCP** – personal access tokens (list, create with name + scopes + expiry, copy
+   choice), clear AI history, the privacy notice naming the provider; when AI isn't configured,
+   *Add an API key* links to *AI providers*.
+   **AI providers** (`/settings/ai-providers`, its own nav item after AI) – which provider the
+   server uses; when the server has no key, the user's own key: provider select (OpenAI /
+   Anthropic / Google Gemini), masked key field, *Save key*, and the saved key shown as
+   "OpenAI key ending in abcd" with *Remove key* (confirm). The key is never shown again
+   ([10 §1](10-ai-assistant.md)).
+9. **Developer / MCP** – *Server* status: whether the backend is connected to Redis
+   (*Connected* / *Not reachable* / *Not configured*, from `ProtocolInfo.redisEnabled` /
+   `redisConnected` — `meta.getInfo` pings Redis, 1 s timeout — with a reload button); personal access tokens (list, create with name + scopes + expiry, copy
    once, revoke), MCP connection instructions (copyable JSON config for Claude Desktop /
    Claude Code), live UI-bridge status ("This window is controllable by MCP: On/Off").
 10. **Offline & storage** – offline availability toggles (per file pinning list), local storage

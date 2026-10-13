@@ -4,8 +4,9 @@ import 'dart:convert';
 import 'package:test/test.dart';
 import 'package:wonky_server/src/platform/ai/ai_config.dart';
 import 'package:wonky_server/src/platform/ai/ai_usage_service.dart';
-import 'package:wonky_server/src/platform/ai/anthropic/fake_anthropic_client.dart';
 import 'package:wonky_server/src/platform/ai/assistant_service.dart';
+import 'package:wonky_server/src/platform/ai/llm/ai_client.dart';
+import 'package:wonky_server/src/platform/ai/llm/fake_ai_client.dart';
 import 'package:wonky_server/src/platform/cluster/cluster.dart';
 import 'package:wonky_server/src/platform/common/models.dart';
 import 'package:wonky_write_core/wonky_write_core.dart';
@@ -42,11 +43,14 @@ AssistantContextHints _hints({
 );
 
 void main() {
-  late FakeAnthropicClient fake;
+  late FakeAiModelClient fake;
 
   setUp(() {
-    fake = FakeAnthropicClient();
-    AiConfig.current = AiConfig(apiKey: 'test-key', dailyTokenBudget: 1000000);
+    fake = FakeAiModelClient();
+    AiConfig.current = AiConfig(
+      serverKeys: {AiProvider.anthropic: 'test-key'},
+      dailyTokenBudget: 1000000,
+    );
     AiConfig.clientOverride = fake;
     AssistantService.confirmationTimeout = const Duration(seconds: 20);
   });
@@ -94,18 +98,18 @@ void main() {
         );
         fake
           ..enqueue(
-            (SseScript()
+            (AiScript()
                   ..thinking('I will fix the wording.')
                   ..toolUse('tu_1', 'write_replace_text', {
                     'find': 'old plan',
                     'replace': 'new plan',
                     'occurrence': 1,
                   })
-                  ..stop('tool_use'))
+                  ..stop(AiStopReason.toolUse))
                 .response,
           )
           ..enqueue(
-            (SseScript()
+            (AiScript()
                   ..text('I replaced "old plan" with "new plan".')
                   ..usage(cacheRead: 900))
                 .response,
@@ -135,32 +139,27 @@ void main() {
         expect(op.groupId, events.first.runId);
         await client.close();
 
-        // Request shape: tools → system (cached) → snapshot (cached).
+        // Request shape: tools → frozen system prompt → snapshot first,
+        // volatile context last.
         final first = fake.requests.first;
-        final tools = (first['tools'] as List).cast<Map>();
-        expect(tools.map((t) => t['name']), contains('write_replace_text'));
-        expect(
-          tools.map((t) => t['name']),
-          isNot(contains('write_set_markdown')),
-        );
-        final system = (first['system'] as List).single as Map;
-        expect(system['cache_control'], {'type': 'ephemeral'});
-        final userBlocks =
-            ((first['messages'] as List).single as Map)['content'] as List;
-        expect((userBlocks.first as Map)['text'], contains('<document '));
-        expect((userBlocks.first as Map)['cache_control'], isNotNull);
-        expect((userBlocks.last as Map)['text'], contains('<context>'));
+        final tools = first.tools.map((t) => t.name);
+        expect(tools, contains('write_replace_text'));
+        expect(tools, isNot(contains('write_set_markdown')));
+        expect(first.system, isNotEmpty);
+        expect(first.model, 'claude-opus-5-5');
+        expect(first.cacheKey, 'wonky-thread-${events.first.threadId}');
+        final userParts = first.messages.single.parts.cast<TextPart>();
+        expect(userParts.first.text, contains('<document '));
+        expect(userParts.last.text, contains('<context>'));
 
-        // Both tool results go back in one user message; the assistant
-        // turn (with its thinking block) is replayed verbatim.
-        final second = fake.requests[1]['messages'] as List;
+        // The tool results go back in one user message; the model turn is
+        // replayed verbatim.
+        final second = fake.requests[1].messages;
         expect(second, hasLength(3));
-        final assistant = (second[1] as Map)['content'] as List;
-        expect((assistant.first as Map)['type'], 'thinking');
-        expect((assistant.first as Map)['signature'], 'sig_test');
-        final results = (second[2] as Map)['content'] as List;
-        expect((results.single as Map)['type'], 'tool_result');
-        expect((results.single as Map)['tool_use_id'], 'tu_1');
+        expect(second[1].role, ChatMessageRole.model);
+        expect(second[1].toolCalls.single.callId, 'tu_1');
+        expect(second[2].toolResults.single.callId, 'tu_1');
+        expect(second[2].toolResults.single.toolName, 'write_replace_text');
 
         final threadId = events.first.threadId!;
         final detail = await endpoints.assistant.getThread(
@@ -183,22 +182,20 @@ void main() {
       () async {
         fake
           ..enqueue(
-            (SseScript()
+            (AiScript()
                   ..toolUse('a', 'write_get_outline', const {})
                   ..toolUse('b', 'write_get_stats', const {})
-                  ..stop('tool_use'))
+                  ..stop(AiStopReason.toolUse))
                 .response,
           )
-          ..enqueue((SseScript()..text('Two sections.')).response);
+          ..enqueue((AiScript()..text('Two sections.')).response);
         final events = await chat('How long is it?').toList();
         expect(
           events.where((e) => e.type == AssistantEventType.toolFinished),
           hasLength(2),
         );
-        final results =
-            ((fake.requests[1]['messages'] as List).last as Map)['content']
-                as List;
-        expect(results.map((r) => (r as Map)['tool_use_id']), ['a', 'b']);
+        final results = fake.requests[1].messages.last.toolResults;
+        expect(results.map((r) => r.callId), ['a', 'b']);
       },
     );
 
@@ -208,13 +205,13 @@ void main() {
       () async {
         fake
           ..enqueue(
-            (SseScript()
+            (AiScript()
                   ..toolUse('x', 'write_set_markdown', {'markdown': '# Gone'})
                   ..toolUse('y', 'drive_share', {'email': 'eve@example.test'})
-                  ..stop('tool_use'))
+                  ..stop(AiStopReason.toolUse))
                 .response,
           )
-          ..enqueue((SseScript()..text('I cannot do that.')).response);
+          ..enqueue((AiScript()..text('I cannot do that.')).response);
         final before = await _markdown(endpoints, anna, doc);
         final events = await chat('Replace everything').toList();
         final errors = events.where(
@@ -222,41 +219,33 @@ void main() {
               e.type == AssistantEventType.toolFinished && e.toolError == true,
         );
         expect(errors, hasLength(2));
-        final results =
-            ((fake.requests[1]['messages'] as List).last as Map)['content']
-                as List;
-        for (final r in results.cast<Map>()) {
-          expect(r['is_error'], true);
-          expect(jsonDecode(r['content'] as String)['code'], 'forbidden');
-        }
+        final results = fake.requests[1].messages.last.toolResults;
+        expect(
+          results.map((r) => jsonDecode(r.result! as String)['code']),
+          ['forbidden', 'forbidden'],
+        );
         expect(await _markdown(endpoints, anna, doc), before);
       },
     );
 
     test(
-      'when the model sends invalid tool JSON then it gets an error result',
+      'when the model sends invalid tool input then it gets an error result',
       () async {
         fake
           ..enqueue(
-            (SseScript()
-                  ..toolUse(
-                    'j',
-                    'write_search',
-                    const {},
-                    rawJson: '{"query": "Bu',
-                  )
-                  ..stop('tool_use'))
+            (AiScript()
+                  ..toolUse('j', 'write_search', const {'query': 42})
+                  ..stop(AiStopReason.toolUse))
                 .response,
           )
-          ..enqueue((SseScript()..text('Retrying failed.')).response);
-        await chat('Find budget').toList();
-        final result =
-            (((fake.requests[1]['messages'] as List).last as Map)['content']
-                        as List)
-                    .single
-                as Map;
-        expect(result['is_error'], true);
-        expect(result['content'], contains('INVALID_JSON'));
+          ..enqueue((AiScript()..text('Retrying failed.')).response);
+        final events = await chat('Find budget').toList();
+        final fin = events.firstWhere(
+          (e) => e.type == AssistantEventType.toolFinished,
+        );
+        expect(fin.toolError, isTrue);
+        final result = fake.requests[1].messages.last.toolResults.single;
+        expect(jsonDecode(result.result! as String), contains('code'));
       },
     );
 
@@ -266,10 +255,9 @@ void main() {
       () async {
         fake
           ..enqueue(
-            (SseScript()..stop('refusal', details: {'type': 'refusal'}))
-                .response,
+            (AiScript()..stop(AiStopReason.refusal)).response,
           )
-          ..enqueue((SseScript()..text('Hello again.')).response);
+          ..enqueue((AiScript()..text('Hello again.')).response);
         final events = await chat('Something').toList();
         expect(
           events.map((e) => e.type),
@@ -277,8 +265,11 @@ void main() {
         );
         final threadId = events.first.threadId!;
         await chat('Try again', threadId: threadId).toList();
-        final replay = fake.requests.last['messages'] as List;
-        expect(replay.map((m) => (m as Map)['role']), ['user', 'user']);
+        final replay = fake.requests.last.messages;
+        expect(replay.map((m) => m.role), [
+          ChatMessageRole.user,
+          ChatMessageRole.user,
+        ]);
       },
     );
 
@@ -287,11 +278,11 @@ void main() {
       'executed and Continue is offered',
       () async {
         fake.enqueue(
-          (SseScript()
+          (AiScript()
                 ..toolUse('t', 'write_delete_range', {
                   'range': {'type': 'all'},
                 })
-                ..stop('max_tokens'))
+                ..stop(AiStopReason.maxTokens))
               .response,
         );
         final before = await _markdown(endpoints, anna, doc);
@@ -315,7 +306,7 @@ void main() {
         );
         fake
           ..enqueue(
-            (SseScript()
+            (AiScript()
                   ..toolUse('d', 'write_delete_range', {
                     'range': {
                       'type': 'heading_section',
@@ -323,10 +314,10 @@ void main() {
                       'include_heading': true,
                     },
                   })
-                  ..stop('tool_use'))
+                  ..stop(AiStopReason.toolUse))
                 .response,
           )
-          ..enqueue((SseScript()..text('Deleted.')).response);
+          ..enqueue((AiScript()..text('Deleted.')).response);
         final events = <AssistantEvent>[];
         final done = Completer<void>();
         chat('Delete everything').listen(
@@ -367,14 +358,14 @@ void main() {
         );
         fake
           ..enqueue(
-            (SseScript()
+            (AiScript()
                   ..toolUse('d', 'write_delete_range', {
                     'range': {'type': 'all'},
                   })
-                  ..stop('tool_use'))
+                  ..stop(AiStopReason.toolUse))
                 .response,
           )
-          ..enqueue((SseScript()..text('Okay, I kept it.')).response);
+          ..enqueue((AiScript()..text('Okay, I kept it.')).response);
         final before = await _markdown(endpoints, anna, doc);
         final done = Completer<void>();
         chat('Delete everything').listen((e) {
@@ -391,12 +382,8 @@ void main() {
         }, onDone: done.complete);
         await done.future;
         expect(await _markdown(endpoints, anna, doc), before);
-        final result =
-            (((fake.requests[1]['messages'] as List).last as Map)['content']
-                        as List)
-                    .single
-                as Map;
-        expect(result['content'], contains('denied_by_user'));
+        final result = fake.requests[1].messages.last.toolResults.single;
+        expect(result.result, contains('denied_by_user'));
       },
     );
 
@@ -406,16 +393,16 @@ void main() {
       () async {
         fake
           ..enqueue(
-            (SseScript()
+            (AiScript()
                   ..toolUse('s', 'write_replace_text', {
                     'find': 'Ten euros',
                     'replace': 'Twelve euros',
                     'occurrence': 1,
                   })
-                  ..stop('tool_use'))
+                  ..stop(AiStopReason.toolUse))
                 .response,
           )
-          ..enqueue((SseScript()..text('Suggested.')).response);
+          ..enqueue((AiScript()..text('Suggested.')).response);
         await chat(
           'Raise the budget',
           hints: _hints(mode: AiApplyMode.suggest),
@@ -436,11 +423,11 @@ void main() {
       'when continuing a thread after the document changed then an update '
       'is appended and history is unchanged',
       () async {
-        fake.enqueue((SseScript()..text('It is a plan.')).response);
+        fake.enqueue((AiScript()..text('It is a plan.')).response);
         final first = await chat('What is this?').toList();
         final threadId = first.first.threadId!;
         final firstHistory = jsonEncode(
-          (fake.requests.first['messages'] as List).first,
+          fake.requests.first.messages.first.toJson(),
         );
         final client = await TestDocClient.connect(
           endpoints,
@@ -450,20 +437,23 @@ void main() {
         client.edit(Delta()..insert('Intro\n'));
         await client.processUntilSynchronized();
         await client.close();
-        fake.enqueue((SseScript()..text('Now with an intro.')).response);
+        fake.enqueue((AiScript()..text('Now with an intro.')).response);
         await chat('And now?', threadId: threadId).toList();
-        final messages = fake.requests.last['messages'] as List;
-        expect(jsonEncode(messages.first), firstHistory);
-        final last = (messages.last as Map)['content'] as List;
-        expect((last.first as Map)['text'], contains('<document_update'));
-        expect((last.first as Map)['text'], contains('Intro'));
+        final messages = fake.requests.last.messages;
+        expect(jsonEncode(messages.first.toJson()), firstHistory);
+        final update = messages.last.parts.first as TextPart;
+        expect(update.text, contains('<document_update'));
+        expect(update.text, contains('Intro'));
       },
     );
 
     test('when the daily budget is spent then chat is refused', () async {
-      AiConfig.current = AiConfig(apiKey: 'test-key', dailyTokenBudget: 10);
+      AiConfig.current = AiConfig(
+        serverKeys: {AiProvider.anthropic: 'test-key'},
+        dailyTokenBudget: 10,
+      );
       fake.enqueue(
-        (SseScript()
+        (AiScript()
               ..usage(input: 50, output: 50)
               ..text('Hi'))
             .response,
@@ -486,7 +476,7 @@ void main() {
         final run = AssistantService.runsOf(anna.id).single;
         await endpoints.assistant.stop(anna.endpointSession, null, run.runId);
       };
-      fake.enqueue((SseScript()..text('Long answer')).response);
+      fake.enqueue((AiScript()..text('Long answer')).response);
       final events = await chat('Write a lot').toList();
       expect(events.last.type, AssistantEventType.done);
       expect(events.last.errorCode, 'stopped');
@@ -517,7 +507,7 @@ void main() {
               ),
             );
           };
-          fake.enqueue((SseScript()..text('Long answer')).response);
+          fake.enqueue((AiScript()..text('Long answer')).response);
 
           final events = await chat('Write a lot').toList();
 
@@ -537,14 +527,14 @@ void main() {
           );
           fake
             ..enqueue(
-              (SseScript()
+              (AiScript()
                     ..toolUse('d', 'write_delete_range', {
                       'range': {'type': 'all'},
                     })
-                    ..stop('tool_use'))
+                    ..stop(AiStopReason.toolUse))
                   .response,
             )
-            ..enqueue((SseScript()..text('Deleted.')).response);
+            ..enqueue((AiScript()..text('Deleted.')).response);
           final done = Completer<void>();
           chat('Delete everything').listen((e) {
             if (e.type == AssistantEventType.confirmationRequired) {
@@ -609,7 +599,7 @@ void main() {
     test(
       'when threads are listed and deleted then only own threads show',
       () async {
-        fake.enqueue((SseScript()..text('A')).response);
+        fake.enqueue((AiScript()..text('A')).response);
         final ev = await chat('First').toList();
         final threads = await endpoints.assistant.listThreads(
           anna.endpointSession,
@@ -640,16 +630,16 @@ void main() {
       await TestDrive.share(endpoints, doc, anna, vic, AccessRole.viewer);
       fake
         ..enqueue(
-          (SseScript()
+          (AiScript()
                 ..toolUse('v', 'write_replace_text', {
                   'find': 'old',
                   'replace': 'new',
                   'occurrence': 1,
                 })
-                ..stop('tool_use'))
+                ..stop(AiStopReason.toolUse))
               .response,
         )
-        ..enqueue((SseScript()..text('No access.')).response);
+        ..enqueue((AiScript()..text('No access.')).response);
       final events = await chat('Fix it', as: vic).toList();
       final fin = events.firstWhere(
         (e) => e.type == AssistantEventType.toolFinished,
@@ -660,18 +650,40 @@ void main() {
   });
 
   withWonkyServerpod('Given the assistant status', (sessionBuilder, endpoints) {
-    test('when no API key is configured then AI is not available', () async {
-      AiConfig.clientOverride = null;
-      AiConfig.current = AiConfig();
-      final u = await TestUsers.create(sessionBuilder);
-      final status = await endpoints.assistant.getStatus(u.endpointSession);
-      expect(status.available, isFalse);
-      expect(status.reason, 'notConfigured');
-      expect(status.message, "AI isn't configured on this server.");
-    });
+    test(
+      'when no API key is configured then AI is not available and users '
+      'may add their own key',
+      () async {
+        AiConfig.clientOverride = null;
+        AiConfig.current = AiConfig();
+        final u = await TestUsers.create(sessionBuilder);
+        final status = await endpoints.assistant.getStatus(u.endpointSession);
+        expect(status.available, isFalse);
+        expect(status.reason, 'notConfigured');
+        expect(status.message, AiUsageService.addKeyMessage);
+        expect(status.userKeysAllowed, isTrue);
+        expect(status.provider, isNull);
+      },
+    );
+
+    test(
+      'when no key is configured and personal keys are off then the status '
+      'says AI is not configured',
+      () async {
+        AiConfig.current = AiConfig(allowUserKeys: false);
+        final u = await TestUsers.create(sessionBuilder);
+        final status = await endpoints.assistant.getStatus(u.endpointSession);
+        expect(status.reason, 'notConfigured');
+        expect(status.message, AiUsageService.notConfiguredMessage);
+        expect(status.userKeysAllowed, isFalse);
+      },
+    );
 
     test('when the server disables AI then it is not available', () async {
-      AiConfig.current = AiConfig(apiKey: 'k', enabled: false);
+      AiConfig.current = AiConfig(
+        serverKeys: {AiProvider.anthropic: 'k'},
+        enabled: false,
+      );
       final u = await TestUsers.create(sessionBuilder);
       final status = await endpoints.assistant.getStatus(u.endpointSession);
       expect(status.reason, 'disabled');
@@ -694,13 +706,13 @@ void main() {
         AiQuality.fast,
       );
       expect(s.quality, AiQuality.fast);
-      fake.enqueue((SseScript(model: 'claude-haiku-5-5')..text('Hi')).response);
+      fake.enqueue((AiScript(model: 'claude-haiku-5-5')..text('Hi')).response);
       final d = await TestDrive.document(endpoints, u, markdown: 'Hi\n');
       await endpoints.assistant
           .chat(u.endpointSession, null, d.uuid, 'Hi', _hints())
           .toList();
-      expect(fake.requests.single['model'], 'claude-haiku-5-5');
-      expect((fake.requests.single['output_config'] as Map)['effort'], 'low');
+      expect(fake.requests.single.model, 'claude-haiku-5-5');
+      expect(fake.requests.single.effort, 'low');
     });
   });
 }

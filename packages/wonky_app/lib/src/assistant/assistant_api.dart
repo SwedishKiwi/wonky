@@ -5,6 +5,11 @@ import 'package:wonky_client/wonky_client.dart';
 abstract class AssistantApi {
   Future<AssistantStatus> getStatus();
   Future<AssistantStatus> setQuality(AiQuality quality);
+
+  /// Settings › AI providers: stores the user's own key (the server never
+  /// returns it).
+  Future<AssistantStatus> setProviderKey(AiProvider provider, String apiKey);
+  Future<AssistantStatus> removeProviderKey();
   Stream<AssistantEvent> chat({
     required int? threadId,
     required UuidValue itemUuid,
@@ -40,6 +45,13 @@ class ServerAssistantApi implements AssistantApi {
   @override
   Future<AssistantStatus> setQuality(AiQuality quality) =>
       _a.setQuality(quality);
+
+  @override
+  Future<AssistantStatus> setProviderKey(AiProvider provider, String apiKey) =>
+      _a.setProviderKey(provider, apiKey);
+
+  @override
+  Future<AssistantStatus> removeProviderKey() => _a.removeProviderKey();
 
   @override
   Stream<AssistantEvent> chat({

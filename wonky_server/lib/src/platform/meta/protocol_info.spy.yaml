@@ -9,3 +9,7 @@ fields:
   features: FeatureFlags
   limits: ServerLimits
   serverTime: DateTime
+  ### Redis is configured (multi-instance messaging, specs/13 §4).
+  redisEnabled: bool, default=false
+  ### The server reached Redis (a ping) when this was returned.
+  redisConnected: bool, default=false

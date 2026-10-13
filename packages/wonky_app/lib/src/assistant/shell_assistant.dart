@@ -1,7 +1,8 @@
 import 'dart:async';
 
-import 'package:flutter/foundation.dart';
+import 'package:flutter/widgets.dart';
 import 'package:wonky_client/wonky_client.dart';
+import 'package:wonky_core/wonky_core.dart' show InvocationSource;
 
 import '../commands/shell_commands/general_commands.dart' show ShellPanels;
 import '../l10n/wonky_app_localizations.dart';
@@ -21,6 +22,35 @@ String assistantStatusMessage(
   'optedOut' => l.aiOptedOut,
   _ => status.message ?? l.aiNotConfigured,
 };
+
+/// The display name of [provider].
+String aiProviderName(WonkyAppLocalizations l, AiProvider provider) =>
+    switch (provider) {
+      AiProvider.openai => l.aiProviderOpenai,
+      AiProvider.anthropic => l.aiProviderAnthropic,
+      AiProvider.gemini => l.aiProviderGemini,
+    };
+
+/// The privacy notice of [status]: names the provider content goes to.
+String assistantPrivacyNotice(
+  WonkyAppLocalizations l,
+  AssistantStatus? status,
+) {
+  final p = status?.provider;
+  return p == null
+      ? l.assistantPrivacyNotice
+      : l.assistantPrivacyNoticeProvider(aiProviderName(l, p));
+}
+
+/// Opens Settings › AI providers (where users add their own key) through
+/// the `shell.settings.open` command.
+void openAiProviderSettings(ShellServices services, BuildContext context) =>
+    services.dispatcher.invoke(
+      'shell.settings.open',
+      args: const {'section': ShellAssistant.aiProvidersSection},
+      source: InvocationSource.menu,
+      context: context,
+    );
 
 /// The installed assistant (suite 10 §3): the shared [AssistantHook] the
 /// `shell.ai.*` commands and the ✨ buttons use. Apps create one
@@ -93,6 +123,21 @@ class ShellAssistant extends AssistantHook {
   Future<void> setQuality(AiQuality quality) async {
     status.value = await api.setQuality(quality);
   }
+
+  /// Settings › AI providers: saves the user's own key.
+  Future<void> setProviderKey(AiProvider provider, String apiKey) async {
+    status.value = await api.setProviderKey(provider, apiKey);
+    services.registry.notifyStateChanged();
+  }
+
+  /// Settings › AI providers › Remove key.
+  Future<void> removeProviderKey() async {
+    status.value = await api.removeProviderKey();
+    services.registry.notifyStateChanged();
+  }
+
+  /// The settings section id of Settings › AI providers.
+  static const aiProvidersSection = 'ai-providers';
 
   /// The controller of [adapter]'s file (created on first use).
   AssistantController controllerFor(AssistantDocumentAdapter adapter) {
@@ -172,6 +217,13 @@ class _UnavailableApi implements AssistantApi {
 
   @override
   Future<AssistantStatus> setQuality(AiQuality quality) => getStatus();
+
+  @override
+  Future<AssistantStatus> setProviderKey(AiProvider provider, String apiKey) =>
+      _fail();
+
+  @override
+  Future<AssistantStatus> removeProviderKey() => getStatus();
 
   @override
   Stream<AssistantEvent> chat({

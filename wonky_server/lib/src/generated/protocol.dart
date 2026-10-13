@@ -55,8 +55,11 @@ import 'platform/activity/activity_viewer.dart' as _ikcwdr17;
 import 'platform/activity/item_view_day.dart' as _ixdmbuaj;
 import 'platform/activity/user_activity_settings.dart' as _ifmsnq1y;
 import 'platform/ai/models/ai_apply_mode.dart' as _iyja8k5e;
+import 'platform/ai/models/ai_provider.dart' as _ir7z75mb;
+import 'platform/ai/models/ai_provider_key_view.dart' as _ic2q2fwi;
 import 'platform/ai/models/ai_quality.dart' as _iviyoyk9;
 import 'platform/ai/models/ai_usage.dart' as _i7i53on7;
+import 'platform/ai/models/ai_user_key.dart' as _ivv7zvxt;
 import 'platform/ai/models/ai_user_setting.dart' as _imx2nn1q;
 import 'platform/ai/models/assistant_context_hints.dart' as _ic7e83wd;
 import 'platform/ai/models/assistant_event.dart' as _imp4tsxo;
@@ -214,8 +217,11 @@ export 'platform/activity/activity_viewer.dart';
 export 'platform/activity/item_view_day.dart';
 export 'platform/activity/user_activity_settings.dart';
 export 'platform/ai/models/ai_apply_mode.dart';
+export 'platform/ai/models/ai_provider.dart';
+export 'platform/ai/models/ai_provider_key_view.dart';
 export 'platform/ai/models/ai_quality.dart';
 export 'platform/ai/models/ai_usage.dart';
+export 'platform/ai/models/ai_user_key.dart';
 export 'platform/ai/models/ai_user_setting.dart';
 export 'platform/ai/models/assistant_context_hints.dart';
 export 'platform/ai/models/assistant_event.dart';
@@ -389,8 +395,11 @@ class Protocol extends _is.DatabaseSerializationManager
           _is.getType<_ixdmbuaj.ItemViewDay>,
           _is.getType<_ifmsnq1y.UserActivitySettings>,
           _is.getType<_iyja8k5e.AiApplyMode>,
+          _is.getType<_ir7z75mb.AiProvider>,
+          _is.getType<_ic2q2fwi.AiProviderKeyView>,
           _is.getType<_iviyoyk9.AiQuality>,
           _is.getType<_i7i53on7.AiUsage>,
+          _is.getType<_ivv7zvxt.AiUserKey>,
           _is.getType<_imx2nn1q.AiUserSetting>,
           _is.getType<_ic7e83wd.AssistantContextHints>,
           _is.getType<_imp4tsxo.AssistantEvent>,
@@ -575,8 +584,11 @@ class Protocol extends _is.DatabaseSerializationManager
           _is.getType<_ixdmbuaj.ItemViewDay?>,
           _is.getType<_ifmsnq1y.UserActivitySettings?>,
           _is.getType<_iyja8k5e.AiApplyMode?>,
+          _is.getType<_ir7z75mb.AiProvider?>,
+          _is.getType<_ic2q2fwi.AiProviderKeyView?>,
           _is.getType<_iviyoyk9.AiQuality?>,
           _is.getType<_i7i53on7.AiUsage?>,
+          _is.getType<_ivv7zvxt.AiUserKey?>,
           _is.getType<_imx2nn1q.AiUserSetting?>,
           _is.getType<_ic7e83wd.AssistantContextHints?>,
           _is.getType<_imp4tsxo.AssistantEvent?>,
@@ -1085,6 +1097,79 @@ class Protocol extends _is.DatabaseSerializationManager
           ],
           type: 'btree',
           isUnique: false,
+          isPrimary: false,
+        ),
+      ],
+      managed: true,
+    ),
+    _isp.TableDefinition(
+      name: 'ai_user_key',
+      dartName: 'AiUserKey',
+      schema: 'public',
+      module: 'wonky',
+      columns: [
+        _isp.ColumnDefinition(
+          name: 'id',
+          columnType: _isp.ColumnType.bigint,
+          isNullable: false,
+          dartType: 'int?',
+          columnDefault: 'serial',
+        ),
+        _isp.ColumnDefinition(
+          name: 'userId',
+          columnType: _isp.ColumnType.bigint,
+          isNullable: false,
+          dartType: 'int',
+        ),
+        _isp.ColumnDefinition(
+          name: 'provider',
+          columnType: _isp.ColumnType.text,
+          isNullable: false,
+          dartType: 'protocol:AiProvider',
+        ),
+        _isp.ColumnDefinition(
+          name: 'apiKey',
+          columnType: _isp.ColumnType.text,
+          isNullable: false,
+          dartType: 'String',
+        ),
+        _isp.ColumnDefinition(
+          name: 'createdAt',
+          columnType: _isp.ColumnType.timestampWithoutTimeZone,
+          isNullable: false,
+          dartType: 'DateTime',
+        ),
+        _isp.ColumnDefinition(
+          name: 'updatedAt',
+          columnType: _isp.ColumnType.timestampWithoutTimeZone,
+          isNullable: false,
+          dartType: 'DateTime',
+        ),
+      ],
+      foreignKeys: [
+        _isp.ForeignKeyDefinition(
+          constraintName: 'ai_user_key_fk_0',
+          columns: ['userId'],
+          referenceTable: 'user_profile',
+          referenceTableSchema: 'public',
+          referenceColumns: ['id'],
+          onUpdate: _isp.ForeignKeyAction.noAction,
+          onDelete: _isp.ForeignKeyAction.cascade,
+          matchType: null,
+        ),
+      ],
+      indexes: [
+        _isp.IndexDefinition(
+          indexName: 'ai_user_key_user_idx',
+          tableSpace: null,
+          elements: [
+            _isp.IndexElementDefinition(
+              type: _isp.IndexElementDefinitionType.column,
+              definition: 'userId',
+            ),
+          ],
+          type: 'btree',
+          isUnique: true,
           isPrimary: false,
         ),
       ],
@@ -5039,11 +5124,20 @@ class Protocol extends _is.DatabaseSerializationManager
     if (t == _iyja8k5e.AiApplyMode) {
       return _iyja8k5e.AiApplyMode.fromJson(data) as T;
     }
+    if (t == _ir7z75mb.AiProvider) {
+      return _ir7z75mb.AiProvider.fromJson(data) as T;
+    }
+    if (t == _ic2q2fwi.AiProviderKeyView) {
+      return _ic2q2fwi.AiProviderKeyView.fromJson(data) as T;
+    }
     if (t == _iviyoyk9.AiQuality) {
       return _iviyoyk9.AiQuality.fromJson(data) as T;
     }
     if (t == _i7i53on7.AiUsage) {
       return _i7i53on7.AiUsage.fromJson(data) as T;
+    }
+    if (t == _ivv7zvxt.AiUserKey) {
+      return _ivv7zvxt.AiUserKey.fromJson(data) as T;
     }
     if (t == _imx2nn1q.AiUserSetting) {
       return _imx2nn1q.AiUserSetting.fromJson(data) as T;
@@ -5608,11 +5702,21 @@ class Protocol extends _is.DatabaseSerializationManager
     if (t == _is.getType<_iyja8k5e.AiApplyMode?>()) {
       return (data != null ? _iyja8k5e.AiApplyMode.fromJson(data) : null) as T;
     }
+    if (t == _is.getType<_ir7z75mb.AiProvider?>()) {
+      return (data != null ? _ir7z75mb.AiProvider.fromJson(data) : null) as T;
+    }
+    if (t == _is.getType<_ic2q2fwi.AiProviderKeyView?>()) {
+      return (data != null ? _ic2q2fwi.AiProviderKeyView.fromJson(data) : null)
+          as T;
+    }
     if (t == _is.getType<_iviyoyk9.AiQuality?>()) {
       return (data != null ? _iviyoyk9.AiQuality.fromJson(data) : null) as T;
     }
     if (t == _is.getType<_i7i53on7.AiUsage?>()) {
       return (data != null ? _i7i53on7.AiUsage.fromJson(data) : null) as T;
+    }
+    if (t == _is.getType<_ivv7zvxt.AiUserKey?>()) {
+      return (data != null ? _ivv7zvxt.AiUserKey.fromJson(data) : null) as T;
     }
     if (t == _is.getType<_imx2nn1q.AiUserSetting?>()) {
       return (data != null ? _imx2nn1q.AiUserSetting.fromJson(data) : null)
@@ -6614,8 +6718,11 @@ class Protocol extends _is.DatabaseSerializationManager
       _ixdmbuaj.ItemViewDay => 'ItemViewDay',
       _ifmsnq1y.UserActivitySettings => 'UserActivitySettings',
       _iyja8k5e.AiApplyMode => 'AiApplyMode',
+      _ir7z75mb.AiProvider => 'AiProvider',
+      _ic2q2fwi.AiProviderKeyView => 'AiProviderKeyView',
       _iviyoyk9.AiQuality => 'AiQuality',
       _i7i53on7.AiUsage => 'AiUsage',
+      _ivv7zvxt.AiUserKey => 'AiUserKey',
       _imx2nn1q.AiUserSetting => 'AiUserSetting',
       _ic7e83wd.AssistantContextHints => 'AssistantContextHints',
       _imp4tsxo.AssistantEvent => 'AssistantEvent',
@@ -6824,10 +6931,16 @@ class Protocol extends _is.DatabaseSerializationManager
         return 'UserActivitySettings';
       case _iyja8k5e.AiApplyMode():
         return 'AiApplyMode';
+      case _ir7z75mb.AiProvider():
+        return 'AiProvider';
+      case _ic2q2fwi.AiProviderKeyView():
+        return 'AiProviderKeyView';
       case _iviyoyk9.AiQuality():
         return 'AiQuality';
       case _i7i53on7.AiUsage():
         return 'AiUsage';
+      case _ivv7zvxt.AiUserKey():
+        return 'AiUserKey';
       case _imx2nn1q.AiUserSetting():
         return 'AiUserSetting';
       case _ic7e83wd.AssistantContextHints():
@@ -7246,11 +7359,20 @@ class Protocol extends _is.DatabaseSerializationManager
     if (dataClassName == 'AiApplyMode') {
       return deserialize<_iyja8k5e.AiApplyMode>(data['data']);
     }
+    if (dataClassName == 'AiProvider') {
+      return deserialize<_ir7z75mb.AiProvider>(data['data']);
+    }
+    if (dataClassName == 'AiProviderKeyView') {
+      return deserialize<_ic2q2fwi.AiProviderKeyView>(data['data']);
+    }
     if (dataClassName == 'AiQuality') {
       return deserialize<_iviyoyk9.AiQuality>(data['data']);
     }
     if (dataClassName == 'AiUsage') {
       return deserialize<_i7i53on7.AiUsage>(data['data']);
+    }
+    if (dataClassName == 'AiUserKey') {
+      return deserialize<_ivv7zvxt.AiUserKey>(data['data']);
     }
     if (dataClassName == 'AiUserSetting') {
       return deserialize<_imx2nn1q.AiUserSetting>(data['data']);
@@ -7848,6 +7970,8 @@ class Protocol extends _is.DatabaseSerializationManager
         return _ifmsnq1y.UserActivitySettings.t;
       case _i7i53on7.AiUsage:
         return _i7i53on7.AiUsage.t;
+      case _ivv7zvxt.AiUserKey:
+        return _ivv7zvxt.AiUserKey.t;
       case _imx2nn1q.AiUserSetting:
         return _imx2nn1q.AiUserSetting.t;
       case _i8cittxq.AssistantMessage:

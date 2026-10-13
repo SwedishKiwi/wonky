@@ -16,6 +16,8 @@ activity:
 assistant:
   - getStatus:
   - setQuality:
+  - setProviderKey:
+  - removeProviderKey:
   - chat:
   - stop:
   - confirm:

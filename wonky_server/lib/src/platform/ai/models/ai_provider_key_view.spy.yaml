@@ -1,0 +1,7 @@
+### What a client sees of the user's own API key: the provider and the
+### last four characters, never the key.
+class: AiProviderKeyView
+fields:
+  provider: AiProvider
+  last4: String
+  updatedAt: DateTime
