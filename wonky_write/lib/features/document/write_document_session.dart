@@ -58,6 +58,7 @@ import 'package:wonky_ui/wonky_ui.dart' show SyncState, SyncStatus;
 import 'package:wonky_write_core/wonky_write_core.dart'
     show DeltaUtils, MarkdownCodec, PageSetup, documentHash;
 
+import '../../l10n/write_l10n.dart';
 import '../ai/ai_undo_grouping.dart';
 import '../collab/remote_presence.dart';
 import '../comments/write_comments.dart';
@@ -251,6 +252,7 @@ class WriteDocumentSession extends ChangeNotifier {
     undo: services.undo,
     stack: undoStackKey,
     nextId: _ids.nextString,
+    l10n: () => writeL10nOf(services),
   );
   late final WriteMetaUndoHandler _metaUndo;
   StreamSubscription<LocalDeltaChange>? _localSub;
@@ -363,7 +365,7 @@ class WriteDocumentSession extends ChangeNotifier {
       if (item.kind != DriveItemKind.document || doc == null) {
         throw WonkyException(
           code: WonkyErrorCode.notFound,
-          message: 'This is not a document.',
+          message: writeL10nOf(services).sessionNotADocument,
         );
       }
       _documentUuid = doc;
@@ -675,7 +677,7 @@ class WriteDocumentSession extends ChangeNotifier {
       undo.push(
         UndoStep(
           id: _ids.nextString(),
-          label: label ?? 'Change document settings',
+          label: label ?? writeL10nOf(services).sessionUndoChangeSettings,
           entries: [entry],
         ),
         stack: undoStackKey,
@@ -684,20 +686,25 @@ class WriteDocumentSession extends ChangeNotifier {
   }
 
   /// Assigns a theme (null = the default).
-  Future<void> setTheme(String? themeUuid, {String label = 'Change theme'}) =>
-      setMeta('themeId', jsonEncode(themeUuid), label: label);
+  Future<void> setTheme(String? themeUuid, {String? label}) => setMeta(
+    'themeId',
+    jsonEncode(themeUuid),
+    label: label ?? writeL10nOf(services).sessionUndoChangeTheme,
+  );
 
   /// Replaces the page setup.
-  Future<void> setPageSetup(
-    PageSetup setup, {
-    String label = 'Change page setup',
-  }) => setMeta('pageSetup', jsonEncode(setup.toJson()), label: label);
+  Future<void> setPageSetup(PageSetup setup, {String? label}) => setMeta(
+    'pageSetup',
+    jsonEncode(setup.toJson()),
+    label: label ?? writeL10nOf(services).sessionUndoChangePageSetup,
+  );
 
   /// Sets the document language (null = the user's locale).
-  Future<void> setLanguage(
-    String? language, {
-    String label = 'Change language',
-  }) => setMeta('language', jsonEncode(language), label: label);
+  Future<void> setLanguage(String? language, {String? label}) => setMeta(
+    'language',
+    jsonEncode(language),
+    label: label ?? writeL10nOf(services).sessionUndoChangeLanguage,
+  );
 
   Future<void> _writeMeta(String field, String valueJson) async {
     final doc = _documentUuid;
@@ -873,7 +880,7 @@ class WriteDocumentSession extends ChangeNotifier {
 
   void _onNotice(EditorNotice n) {
     if (n.kind == EditorNoticeKind.documentFull) {
-      services.toasts.error('This document reached its maximum size');
+      services.toasts.error(writeL10nOf(services).sessionDocumentFull);
     }
   }
 
@@ -903,8 +910,9 @@ class WriteDocumentSession extends ChangeNotifier {
         _docRole = roleOf(role);
         _setRole(_docRole!);
         if (!initial && previous != currentRole) {
+          final l = writeL10nOf(services);
           services.toasts.show(
-            'Your access changed to ${_roleName(currentRole)}',
+            l.sessionAccessChanged(_roleName(l, currentRole)),
           );
         }
         notifyListeners();
@@ -956,77 +964,76 @@ class WriteDocumentSession extends ChangeNotifier {
     }
   }
 
-  static String _roleName(Role r) => switch (r) {
-    Role.viewer => 'Viewer',
-    Role.commenter => 'Commenter',
-    Role.editor => 'Editor',
-    Role.owner => 'Owner',
+  static String _roleName(WriteLocalizations l, Role r) => switch (r) {
+    Role.viewer => l.sessionRoleViewer,
+    Role.commenter => l.sessionRoleCommenter,
+    Role.editor => l.sessionRoleEditor,
+    Role.owner => l.sessionRoleOwner,
   };
 
   void _onResynced(SyncResynced e) {
     final recovery = e.recoveryDocument;
     if (!e.lostLocalChanges) return;
+    final l = writeL10nOf(services);
     final tooOld = e.reason == ResyncReason.rebaseTooOld;
     final reason = switch (e.code) {
-      DocRejectCode.tooLarge => 'The document would exceed its maximum size.',
-      DocRejectCode.forbiddenForRole =>
-        'You no longer have permission to edit.',
-      DocRejectCode.rebaseTooOld =>
-        'Your offline changes are too old to be merged.',
+      DocRejectCode.tooLarge => l.sessionRejectTooLarge,
+      DocRejectCode.forbiddenForRole => l.sessionRejectForbidden,
+      DocRejectCode.rebaseTooOld => l.sessionRejectTooOld,
       _ => e.message,
     };
     services.toasts.show(
-      tooOld
-          ? "Your offline changes couldn't be merged"
-          : 'Some of your changes could not be saved',
+      tooOld ? l.sessionOfflineChangesNotMerged : l.sessionChangesNotSaved,
       description: reason,
       destructive: true,
       duration: const Duration(seconds: 20),
       actionLabel: recovery == null
           ? null
           : (tooOld
-                ? 'Save my offline changes as a copy'
-                : 'Save them as a copy'),
+                ? l.sessionSaveOfflineChangesAsCopy
+                : l.sessionSaveChangesAsCopy),
       onAction: recovery == null
           ? null
-          : () => saveCopy(
-              recovery,
-              suffix: tooOld ? 'offline changes' : 'my changes',
-            ),
+          : () => saveCopy(recovery, offlineChanges: tooOld),
     );
   }
 
   /// Saves [document] (e.g. unsaved local changes) as a new document next
-  /// to this one ("Save my changes as a copy", suite 12 §1.2). With the
-  /// offline store the copy is created with client ids and its content
-  /// goes through the outbox (works offline, keeps every attribute);
-  /// otherwise it is created from Markdown.
+  /// to this one ("Save my changes as a copy", suite 12 §1.2), named
+  /// "<title> (my changes)" — or "(offline changes)" with
+  /// [offlineChanges]. With the offline store the copy is created with
+  /// client ids and its content goes through the outbox (works offline,
+  /// keeps every attribute); otherwise it is created from Markdown.
   Future<DriveItemView?> saveCopy(
     Delta document, {
-    String suffix = 'my changes',
+    bool offlineChanges = false,
   }) async {
+    final l = writeL10nOf(services);
+    final name = offlineChanges
+        ? l.sessionCopyNameOfflineChanges(title)
+        : l.sessionCopyNameMyChanges(title);
     try {
       final offline = _offline;
       final copy = offline != null
           ? await offline.createDocument(
               parentUuid: _item?.parentUuid,
-              name: '$title ($suffix)',
+              name: name,
               content: document,
             )
           : await services.drive.createDocument(
               parentUuid: _item?.parentUuid,
-              name: '$title ($suffix)',
+              name: name,
               initialMarkdown: const MarkdownCodec().exportMarkdown(document),
             );
       services.toasts.show(
-        'Saved a copy',
+        l.sessionCopySaved,
         description: copy.name,
-        actionLabel: 'Open',
+        actionLabel: l.sessionOpen,
         onAction: () => services.openItem(copy),
       );
       return copy;
     } catch (e) {
-      services.toasts.error('Could not save a copy', description: '$e');
+      services.toasts.error(l.sessionCopyFailed, description: '$e');
       return null;
     }
   }
@@ -1237,7 +1244,7 @@ class _WriteContentUndoHandler extends UndoHandler<WriteContentUndoEntry> {
     }
     final applied = session.editor.applyLocal(
       entry.change,
-      label: 'Undo',
+      label: writeL10nOf(session.services).commonUndo,
       source: LocalChangeSource.undo,
       selectionAfter: entry.select,
     );

@@ -5,10 +5,12 @@ import 'package:shad/shad.dart';
 import 'package:wonky_app/wonky_app.dart';
 import 'package:wonky_write_core/wonky_write_core.dart' hide ThemeCatalog;
 
+import '../../../l10n/write_l10n.dart';
 import '../../themes/theme_picker.dart';
 import '../command_invoke.dart';
 import '../write_document_controller.dart';
 import 'document_dialogs.dart';
+import 'page_setup_dialog.dart';
 
 /// Document settings (`write.dialog.documentSettings`, Write 05 §13.1):
 /// General (language, layout, my default mode), Theme, Page setup and
@@ -63,21 +65,20 @@ class _DocumentSettingsDialogState extends State<DocumentSettingsDialog> {
 
   @override
   Widget build(BuildContext context) {
+    final l = writeL10n(context);
     final size = MediaQuery.sizeOf(context);
     final tabs = <(String, String, IconData)>[
-      ('general', 'General', LucideIcons.settings),
-      ('theme', 'Theme', LucideIcons.palette),
-      ('pageSetup', 'Page setup', LucideIcons.ruler),
-      ('markdown', 'Markdown', LucideIcons.fileCode),
+      ('general', l.docSettingsTabGeneral, LucideIcons.settings),
+      ('theme', l.docSettingsTabTheme, LucideIcons.palette),
+      ('pageSetup', l.docSettingsTabPageSetup, LucideIcons.ruler),
+      ('markdown', l.docSettingsTabMarkdown, LucideIcons.fileCode),
     ];
     final theme = ShadTheme.of(context);
     final cs = theme.colorScheme;
     return ShadDialog(
       key: const ValueKey<String>('write.dialog.documentSettings'),
-      title: const Text('Document settings'),
-      description: d.canChangeSettings
-          ? null
-          : const Text('Only editors can change document settings.'),
+      title: Text(l.docSettingsTitle),
+      description: d.canChangeSettings ? null : Text(l.docSettingsReadOnly),
       constraints: BoxConstraints(
         maxWidth: (size.width * 0.92).clamp(320, 880),
         maxHeight: size.height * 0.88,
@@ -86,7 +87,7 @@ class _DocumentSettingsDialogState extends State<DocumentSettingsDialog> {
         ShadButton(
           key: const ValueKey<String>('write.dialog.documentSettings.done'),
           onPressed: () => Navigator.of(context).pop(),
-          child: const Text('Done'),
+          child: Text(l.commonDone),
         ),
       ],
       child: Row(
@@ -100,15 +101,18 @@ class _DocumentSettingsDialogState extends State<DocumentSettingsDialog> {
                 for (final (id, label, icon) in tabs)
                   Padding(
                     padding: const EdgeInsets.only(bottom: 2),
-                    child: ShadButton.ghost(
-                      key: ValueKey<String>(
-                        'write.dialog.documentSettings.$id',
+                    child: Semantics(
+                      selected: _tab == id,
+                      child: ShadButton.ghost(
+                        key: ValueKey<String>(
+                          'write.dialog.documentSettings.$id',
+                        ),
+                        mainAxisAlignment: MainAxisAlignment.start,
+                        backgroundColor: _tab == id ? cs.accent : null,
+                        leading: Icon(icon, size: 16),
+                        onPressed: () => setState(() => _tab = id),
+                        child: Text(label),
                       ),
-                      mainAxisAlignment: MainAxisAlignment.start,
-                      backgroundColor: _tab == id ? cs.accent : null,
-                      leading: Icon(icon, size: 16),
-                      onPressed: () => setState(() => _tab = id),
-                      child: Text(label),
                     ),
                   ),
               ],
@@ -146,6 +150,7 @@ class _DocumentSettingsDialogState extends State<DocumentSettingsDialog> {
   }
 
   Widget _content(BuildContext context) {
+    final l = writeL10n(context);
     final theme = ShadTheme.of(context);
     final ro = !d.canChangeSettings;
     switch (_tab) {
@@ -154,7 +159,7 @@ class _DocumentSettingsDialogState extends State<DocumentSettingsDialog> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              'Current theme: ${d.documentTheme.option.name}',
+              l.docSettingsCurrentTheme(d.documentTheme.option.name),
               style: theme.textTheme.small,
             ),
             const SizedBox(height: 12),
@@ -180,7 +185,7 @@ class _DocumentSettingsDialogState extends State<DocumentSettingsDialog> {
                   size: ShadButtonSize.sm,
                   onPressed: () =>
                       invokeCommand(context, 'write.theme.setUserDefault'),
-                  child: const Text('Save as my default theme'),
+                  child: Text(l.docSettingsSaveDefaultTheme),
                 ),
                 ShadButton.ghost(
                   key: const ValueKey<String>(
@@ -193,7 +198,7 @@ class _DocumentSettingsDialogState extends State<DocumentSettingsDialog> {
                     Navigator.of(context).pop();
                     unawaited(invokeWith(services, 'write.theme.openEditor'));
                   },
-                  child: const Text('Customize…'),
+                  child: Text(l.docSettingsCustomizeTheme),
                 ),
               ],
             ),
@@ -203,8 +208,10 @@ class _DocumentSettingsDialogState extends State<DocumentSettingsDialog> {
         final s = d.pageSetup;
         final m = s.marginsOr(d.themeMargins);
         String inch(double pt) => '${(pt / 72).toStringAsFixed(2)}"';
+        final margins =
+            '${inch(m.top)} ${inch(m.right)} ${inch(m.bottom)} ${inch(m.left)}';
         String hf(HeaderFooterSpec x) => !x.enabled || x.isEmpty
-            ? 'None'
+            ? l.docSettingsNone
             : [
                 x.left,
                 x.center,
@@ -216,30 +223,33 @@ class _DocumentSettingsDialogState extends State<DocumentSettingsDialog> {
             children: [
               _summary(
                 context,
-                'Layout',
-                s.layout == PageLayoutMode.pages ? 'Pages' : 'Pageless',
+                l.docSettingsLayout,
+                layoutModeLabel(l, s.layout),
               ),
               _summary(
                 context,
-                'Paper',
-                '${s.paper.name.toUpperCase()} · ${s.orientation.name}',
+                l.docSettingsPaper,
+                l.docSettingsPaperValue(
+                  paperSizeLabel(l, s.paper),
+                  orientationLabel(l, s.orientation),
+                ),
               ),
               _summary(
                 context,
-                'Margins',
+                l.docSettingsMargins,
                 s.margins == null
-                    ? 'From the theme (${inch(m.top)} ${inch(m.right)} ${inch(m.bottom)} ${inch(m.left)})'
-                    : '${inch(m.top)} ${inch(m.right)} ${inch(m.bottom)} ${inch(m.left)}',
+                    ? l.docSettingsMarginsFromTheme(margins)
+                    : margins,
               ),
-              _summary(context, 'Header', hf(s.header)),
-              _summary(context, 'Footer', hf(s.footer)),
+              _summary(context, l.pageSetupHeader, hf(s.header)),
+              _summary(context, l.pageSetupFooter, hf(s.footer)),
               const SizedBox(height: 12),
               ShadButton.outline(
                 key: const ValueKey<String>(
                   'write.dialog.documentSettings.editPageSetup',
                 ),
                 onPressed: () => invokeCommand(context, 'write.doc.pageSetup'),
-                child: const Text('Edit page setup…'),
+                child: Text(l.docSettingsEditPageSetup),
               ),
             ],
           ),
@@ -248,11 +258,7 @@ class _DocumentSettingsDialogState extends State<DocumentSettingsDialog> {
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(
-              'Front matter is YAML metadata at the top of the Markdown file '
-              '(title, tags, author…). It is kept on import and export.',
-              style: theme.textTheme.muted,
-            ),
+            Text(l.docSettingsFrontMatterInfo, style: theme.textTheme.muted),
             const SizedBox(height: 12),
             Container(
               width: double.infinity,
@@ -263,7 +269,7 @@ class _DocumentSettingsDialogState extends State<DocumentSettingsDialog> {
               ),
               child: Text(
                 (d.frontMatter ?? '').isEmpty
-                    ? 'No front matter'
+                    ? l.docSettingsNoFrontMatter
                     : d.frontMatter!,
                 style: theme.textTheme.small.copyWith(
                   fontFamily: 'packages/shad/GeistMono',
@@ -276,13 +282,17 @@ class _DocumentSettingsDialogState extends State<DocumentSettingsDialog> {
                 ShadButton.outline(
                   onPressed: () =>
                       invokeCommand(context, 'write.doc.properties'),
-                  child: Text(ro ? 'View details…' : 'Edit front matter…'),
+                  child: Text(
+                    ro
+                        ? l.docSettingsViewDetails
+                        : l.docSettingsEditFrontMatter,
+                  ),
                 ),
                 const SizedBox(width: 8),
                 ShadButton.ghost(
                   onPressed: () =>
                       invokeCommand(context, 'write.tools.viewMarkdown'),
-                  child: const Text('View Markdown source'),
+                  child: Text(l.docSettingsViewMarkdownSource),
                 ),
               ],
             ),
@@ -292,16 +302,21 @@ class _DocumentSettingsDialogState extends State<DocumentSettingsDialog> {
         final prefs = ShellScope.of(context).prefs;
         final defaultMode =
             prefs.writeDefaults['defaultMode'] as String? ?? 'editing';
+        String modeLabel(String mode) => switch (mode) {
+          'suggesting' => l.docSettingsModeSuggesting,
+          'viewing' => l.docSettingsModeViewing,
+          _ => l.docSettingsModeEditing,
+        };
         return SingleChildScrollView(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               _row(
                 context,
-                'Language',
+                l.docSettingsLanguage,
                 Row(
                   children: [
-                    Text(languageName(d.language), style: theme.textTheme.p),
+                    Text(languageName(d.language, l), style: theme.textTheme.p),
                     const SizedBox(width: 12),
                     ShadButton.outline(
                       key: const ValueKey<String>(
@@ -311,14 +326,14 @@ class _DocumentSettingsDialogState extends State<DocumentSettingsDialog> {
                       enabled: !ro,
                       onPressed: () =>
                           invokeCommand(context, 'write.doc.languageDialog'),
-                      child: const Text('Change…'),
+                      child: Text(l.docSettingsChangeLanguage),
                     ),
                   ],
                 ),
               ),
               _row(
                 context,
-                'Layout',
+                l.docSettingsLayout,
                 ShadRadioGroup<String>(
                   key: ValueKey<String>('layout.${d.pageSetup.layout.name}'),
                   initialValue: d.pageSetup.layout.name,
@@ -330,38 +345,40 @@ class _DocumentSettingsDialogState extends State<DocumentSettingsDialog> {
                     'write.doc.setLayout',
                     args: {'layout': v},
                   ),
-                  items: const [
+                  items: [
                     ShadRadio(
-                      key: ValueKey<String>(
+                      key: const ValueKey<String>(
                         'write.dialog.documentSettings.pages',
                       ),
                       value: 'pages',
-                      label: Text('Pages'),
+                      label: Text(l.pageSetupPages),
                     ),
                     ShadRadio(
-                      key: ValueKey<String>(
+                      key: const ValueKey<String>(
                         'write.dialog.documentSettings.pageless',
                       ),
                       value: 'pageless',
-                      label: Text('Pageless'),
+                      label: Text(l.pageSetupPageless),
                     ),
                   ],
                 ),
-                hint: 'Pageless shows one continuous column, like a web page.',
+                hint: l.docSettingsPagelessHint,
               ),
               _row(
                 context,
-                'Default mode for me',
+                l.docSettingsDefaultMode,
                 ShadSelect<String>(
                   initialValue: defaultMode,
                   minWidth: 200,
-                  options: const [
-                    ShadOption(value: 'editing', child: Text('Editing')),
-                    ShadOption(value: 'suggesting', child: Text('Suggesting')),
-                    ShadOption(value: 'viewing', child: Text('Viewing')),
+                  options: [
+                    for (final mode in const [
+                      'editing',
+                      'suggesting',
+                      'viewing',
+                    ])
+                      ShadOption(value: mode, child: Text(modeLabel(mode))),
                   ],
-                  selectedOptionBuilder: (context, v) =>
-                      Text(v[0].toUpperCase() + v.substring(1)),
+                  selectedOptionBuilder: (context, v) => Text(modeLabel(v)),
                   onChanged: (v) {
                     if (v != null) {
                       invokeCommand(
@@ -372,7 +389,7 @@ class _DocumentSettingsDialogState extends State<DocumentSettingsDialog> {
                     }
                   },
                 ),
-                hint: 'Used when you open documents you can edit.',
+                hint: l.docSettingsDefaultModeHint,
               ),
             ],
           ),

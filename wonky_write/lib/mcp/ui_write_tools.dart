@@ -4,6 +4,7 @@ import 'package:wonky_write_core/wonky_write_core.dart';
 
 import '../features/editor/applier/delta_applier.dart' as editor;
 import '../features/screen/write_document_controller.dart';
+import '../l10n/write_l10n.dart';
 
 /// Wonky Write's UI-bridge tools (`ui.write.*`, Write 09 §3), executed in
 /// the live window on the open document. Mutations go through the
@@ -308,7 +309,7 @@ abstract final class UiWriteToolHandlers {
     final applied = r.appliedRange;
     final ok = d.session.applyContentChange(
       r.change,
-      label: 'Insert Markdown',
+      label: writeL10nOf(c.services).undoInsertMarkdown,
       selectionAfter: applied == null
           ? null
           : editor.DeltaSelection.collapsed(applied.end),

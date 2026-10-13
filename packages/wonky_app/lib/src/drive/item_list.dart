@@ -222,6 +222,8 @@ class _DriveItemsViewState extends State<DriveItemsView> {
         Expanded(
           child: GestureDetector(
             behavior: HitTestBehavior.translucent,
+            // Pointer convenience; keyboard and screen readers use Esc.
+            excludeFromSemantics: true,
             onTap: c.clearSelection,
             child: ListView(
               controller: _scroll,
@@ -247,6 +249,7 @@ class _DriveItemsViewState extends State<DriveItemsView> {
         _gridColumns = ((constraints.maxWidth - 32) / 216).floor().clamp(1, 12);
         return GestureDetector(
           behavior: HitTestBehavior.translucent,
+          excludeFromSemantics: true,
           onTap: c.clearSelection,
           child: GridView.builder(
             controller: _scroll,
@@ -298,23 +301,26 @@ class _HeaderCell extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final active = controller.sortField == field;
-    return GestureDetector(
-      onTap: () => controller.setSort(field),
-      child: MouseRegion(
-        cursor: SystemMouseCursors.click,
-        child: Row(
-          children: [
-            Flexible(child: Text(label, overflow: TextOverflow.ellipsis)),
-            if (active) ...[
-              const SizedBox(width: 4),
-              Icon(
-                controller.descending
-                    ? LucideIcons.arrowDown
-                    : LucideIcons.arrowUp,
-                size: 12,
-              ),
+    return Semantics(
+      button: true,
+      child: GestureDetector(
+        onTap: () => controller.setSort(field),
+        child: MouseRegion(
+          cursor: SystemMouseCursors.click,
+          child: Row(
+            children: [
+              Flexible(child: Text(label, overflow: TextOverflow.ellipsis)),
+              if (active) ...[
+                const SizedBox(width: 4),
+                Icon(
+                  controller.descending
+                      ? LucideIcons.arrowDown
+                      : LucideIcons.arrowUp,
+                  size: 12,
+                ),
+              ],
             ],
-          ],
+          ),
         ),
       ),
     );
@@ -383,11 +389,19 @@ class _ItemShellState extends State<_ItemShell> {
         child: widget.builder(context, _hover, _drop),
       ),
     );
-    child = WonkyContextMenuRegion(
-      onOpen: widget.onMenu,
-      entries: () =>
-          itemMenuEntries(context, widget.services, trash: widget.trash),
-      child: child,
+    // The context menu region exposes its own tap/long-press semantics node
+    // around the row's; label it too (labeledTapTargetGuideline).
+    child = Semantics(
+      label: WonkyAppLocalizations.of(context).driveItemLabel(
+        describeKind(WonkyAppLocalizations.of(context), item.kind),
+        item.name,
+      ),
+      child: WonkyContextMenuRegion(
+        onOpen: widget.onMenu,
+        entries: () =>
+            itemMenuEntries(context, widget.services, trash: widget.trash),
+        child: child,
+      ),
     );
     if (item.isFolder && !widget.trash) {
       final inner = child;
@@ -502,7 +516,7 @@ class _ItemRow extends StatelessWidget {
       builder: (context, hover, drop) => Semantics(
         selected: selected,
         button: true,
-        label: '${describeKind(l, item.kind)} ${item.name}',
+        label: l.driveItemLabel(describeKind(l, item.kind), item.name),
         child: _OfflineDim(
           dim: offlineDim,
           child: Container(
@@ -674,7 +688,7 @@ class _ItemCard extends StatelessWidget {
       builder: (context, hover, drop) => Semantics(
         selected: selected,
         button: true,
-        label: '${describeKind(l, item.kind)} ${item.name}',
+        label: l.driveItemLabel(describeKind(l, item.kind), item.name),
         child: _OfflineDim(
           dim:
               !services.connectivity.online &&

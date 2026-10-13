@@ -4,25 +4,29 @@ import 'package:file_picker/file_picker.dart';
 import 'package:flutter/widgets.dart';
 import 'package:shad/shad.dart';
 
+import '../../l10n/write_l10n.dart';
 import 'image_services.dart';
 
 /// Opens the platform picker for images (png, jpg, gif, webp; up to 20).
-/// Rejected files are reported through [onRejected].
+/// Rejected files are reported through [onRejected], with the reason in [l]
+/// (English when omitted).
 Future<List<PickedImage>> pickImageFiles({
   bool multiple = true,
   void Function(String name, String reason)? onRejected,
+  WriteLocalizations? l,
 }) async {
+  final strings = l ?? writeL10nEnglish;
   final files = multiple
       ? await FilePicker.pickFiles(
           type: FileType.custom,
           allowedExtensions: ImageRules.extensions,
-          dialogTitle: 'Insert images',
+          dialogTitle: strings.imagePickMultipleTitle,
         )
       : [
           ?await FilePicker.pickFile(
             type: FileType.custom,
             allowedExtensions: ImageRules.extensions,
-            dialogTitle: 'Choose an image',
+            dialogTitle: strings.imagePickSingleTitle,
           ),
         ];
   final out = <PickedImage>[];
@@ -32,7 +36,7 @@ Future<List<PickedImage>> pickImageFiles({
       final mime = ImageRules.validate(f.name, bytes);
       out.add(PickedImage(name: f.name, bytes: bytes, mimeType: mime));
     } on ImageRejected catch (e) {
-      onRejected?.call(f.name, e.message);
+      onRejected?.call(f.name, e.messageIn(strings));
     }
   }
   return out;
@@ -41,25 +45,25 @@ Future<List<PickedImage>> pickImageFiles({
 /// Result of the image-by-URL dialog.
 typedef ImageUrlResult = ({String url, String alt});
 
-/// Insert image by URL (`write.dialog.imageUrl`, Write 05 §12.1).
+/// Insert image by URL (`write.dialog.imageUrl`, Write 05 §12.1). [title]
+/// and [action] default to "Insert image by URL" / "Insert".
 Future<ImageUrlResult?> showImageUrlDialog(
   BuildContext context, {
-  String title = 'Insert image by URL',
-  String action = 'Insert',
+  String? title,
+  String? action,
 }) => showShadDialog<ImageUrlResult>(
   context: context,
   builder: (_) => ImageUrlDialog(title: title, action: action),
 );
 
 class ImageUrlDialog extends StatefulWidget {
-  const ImageUrlDialog({
-    super.key,
-    this.title = 'Insert image by URL',
-    this.action = 'Insert',
-  });
+  const ImageUrlDialog({super.key, this.title, this.action});
 
-  final String title;
-  final String action;
+  /// Defaults to "Insert image by URL".
+  final String? title;
+
+  /// Defaults to "Insert".
+  final String? action;
 
   @override
   State<ImageUrlDialog> createState() => _ImageUrlDialogState();
@@ -95,10 +99,11 @@ class _ImageUrlDialogState extends State<ImageUrlDialog> {
   }
 
   String? _problem(String url) {
-    if (url.isEmpty) return 'Enter an image URL';
+    final l = writeL10n(context);
+    if (url.isEmpty) return l.imageUrlEmpty;
     final uri = Uri.tryParse(url);
-    if (uri == null || !uri.hasAuthority) return 'Enter a valid URL';
-    if (uri.scheme != 'https') return 'Images must use https:// URLs';
+    if (uri == null || !uri.hasAuthority) return l.imageUrlInvalid;
+    if (uri.scheme != 'https') return l.imageUrlNeedsHttps;
     return null;
   }
 
@@ -129,23 +134,24 @@ class _ImageUrlDialogState extends State<ImageUrlDialog> {
 
   @override
   Widget build(BuildContext context) {
+    final l = writeL10n(context);
     final theme = ShadTheme.of(context);
     final cs = theme.colorScheme;
     return ShadDialog(
       key: const ValueKey<String>('write.dialog.imageUrl'),
-      title: Text(widget.title),
+      title: Text(widget.title ?? l.imageUrlTitle),
       constraints: const BoxConstraints(maxWidth: 520),
       actions: [
         ShadButton.outline(
           key: const ValueKey<String>('write.dialog.imageUrl.cancel'),
           onPressed: () => Navigator.of(context).pop(),
-          child: const Text('Cancel'),
+          child: Text(l.commonCancel),
         ),
         ShadButton(
           key: const ValueKey<String>('write.dialog.imageUrl.insert'),
           enabled: _canInsert,
           onPressed: _submit,
-          child: Text(widget.action),
+          child: Text(widget.action ?? l.commonInsert),
         ),
       ],
       child: Column(
@@ -153,27 +159,32 @@ class _ImageUrlDialogState extends State<ImageUrlDialog> {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           const SizedBox(height: 4),
-          Text('Image URL', style: theme.textTheme.small),
+          ExcludeSemantics(
+            child: Text(l.imageUrlLabel, style: theme.textTheme.small),
+          ),
           const SizedBox(height: 6),
-          ShadInput(
-            key: const ValueKey<String>('write.dialog.imageUrl.url'),
-            controller: _url,
-            focusNode: _urlFocus,
-            autofocus: true,
-            placeholder: const Text('https://example.com/picture.png'),
-            leading: Icon(
-              LucideIcons.link,
-              size: 16,
-              color: cs.mutedForeground,
+          Semantics(
+            label: l.imageUrlLabel,
+            child: ShadInput(
+              key: const ValueKey<String>('write.dialog.imageUrl.url'),
+              controller: _url,
+              focusNode: _urlFocus,
+              autofocus: true,
+              placeholder: const Text('https://example.com/picture.png'),
+              leading: Icon(
+                LucideIcons.link,
+                size: 16,
+                color: cs.mutedForeground,
+              ),
+              onChanged: (_) {
+                _debounce?.cancel();
+                _debounce = Timer(const Duration(milliseconds: 400), _validate);
+              },
+              onSubmitted: (_) {
+                _validate(showError: true);
+                _submit();
+              },
             ),
-            onChanged: (_) {
-              _debounce?.cancel();
-              _debounce = Timer(const Duration(milliseconds: 400), _validate);
-            },
-            onSubmitted: (_) {
-              _validate(showError: true);
-              _submit();
-            },
           ),
           if (_error != null) ...[
             const SizedBox(height: 6),
@@ -191,7 +202,10 @@ class _ImageUrlDialogState extends State<ImageUrlDialog> {
               border: Border.all(color: cs.border),
             ),
             clipBehavior: Clip.antiAlias,
-            child: _previewWidget(context),
+            child: Semantics(
+              label: l.imagePreviewSemantic,
+              child: _previewWidget(context),
+            ),
           ),
           if (_preview == _Preview.failed) ...[
             const SizedBox(height: 8),
@@ -199,23 +213,28 @@ class _ImageUrlDialogState extends State<ImageUrlDialog> {
               key: const ValueKey<String>('write.dialog.imageUrl.anyway'),
               value: _insertAnyway,
               onChanged: (v) => setState(() => _insertAnyway = v),
-              label: const Text('Insert anyway'),
+              label: Text(l.imageInsertAnyway),
             ),
           ],
           const SizedBox(height: 12),
-          Text('Alt text', style: theme.textTheme.small),
+          ExcludeSemantics(
+            child: Text(l.imageAltText, style: theme.textTheme.small),
+          ),
           const SizedBox(height: 6),
-          ShadTextarea(
-            key: const ValueKey<String>('write.dialog.imageUrl.alt'),
-            controller: _alt,
-            minHeight: 64,
-            maxHeight: 120,
-            maxLength: 500,
-            placeholder: const Text('Describe the image'),
+          Semantics(
+            label: l.imageAltText,
+            child: ShadTextarea(
+              key: const ValueKey<String>('write.dialog.imageUrl.alt'),
+              controller: _alt,
+              minHeight: 64,
+              maxHeight: 120,
+              maxLength: 500,
+              placeholder: Text(l.imageAltPlaceholder),
+            ),
           ),
           const SizedBox(height: 4),
           Text(
-            "Describe the image for people who can't see it",
+            l.imageAltHint,
             style: theme.textTheme.muted.copyWith(fontSize: 12),
           ),
         ],
@@ -224,6 +243,7 @@ class _ImageUrlDialogState extends State<ImageUrlDialog> {
   }
 
   Widget _previewWidget(BuildContext context) {
+    final l = writeL10n(context);
     final theme = ShadTheme.of(context);
     final url = _previewUrl;
     if (url == null) {
@@ -237,7 +257,7 @@ class _ImageUrlDialogState extends State<ImageUrlDialog> {
               color: theme.colorScheme.mutedForeground,
             ),
             const SizedBox(height: 8),
-            Text('A preview appears here', style: theme.textTheme.muted),
+            Text(l.imagePreviewEmpty, style: theme.textTheme.muted),
           ],
         ),
       );
@@ -276,7 +296,7 @@ class _ImageUrlDialogState extends State<ImageUrlDialog> {
                 color: theme.colorScheme.mutedForeground,
               ),
               const SizedBox(height: 8),
-              Text("Couldn't load image", style: theme.textTheme.muted),
+              Text(l.imagePreviewFailed, style: theme.textTheme.muted),
             ],
           ),
         );
@@ -326,23 +346,22 @@ class _ImageAltDialogState extends State<ImageAltDialog> {
 
   @override
   Widget build(BuildContext context) {
+    final l = writeL10n(context);
     final theme = ShadTheme.of(context);
     return ShadDialog(
       key: const ValueKey<String>('write.dialog.imageAlt'),
-      title: const Text('Alt text'),
-      description: const Text(
-        "Describe the image for people who can't see it.",
-      ),
+      title: Text(l.imageAltText),
+      description: Text(l.imageAltDescription),
       constraints: const BoxConstraints(maxWidth: 460),
       actions: [
         ShadButton.outline(
           onPressed: () => Navigator.of(context).pop(),
-          child: const Text('Cancel'),
+          child: Text(l.commonCancel),
         ),
         ShadButton(
           key: const ValueKey<String>('write.dialog.imageAlt.save'),
           onPressed: _save,
-          child: const Text('Save'),
+          child: Text(l.commonSave),
         ),
       ],
       child: Column(
@@ -350,37 +369,47 @@ class _ImageAltDialogState extends State<ImageAltDialog> {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           const SizedBox(height: 4),
-          Text('Alt text', style: theme.textTheme.small),
+          ExcludeSemantics(
+            child: Text(l.imageAltText, style: theme.textTheme.small),
+          ),
           const SizedBox(height: 6),
           ListenableBuilder(
             listenable: _alt,
             builder: (context, _) => Column(
               crossAxisAlignment: CrossAxisAlignment.end,
               children: [
-                ShadTextarea(
-                  key: const ValueKey<String>('write.dialog.imageAlt.alt'),
-                  controller: _alt,
-                  autofocus: true,
-                  maxLength: 500,
-                  minHeight: 80,
-                  maxHeight: 160,
+                Semantics(
+                  label: l.imageAltText,
+                  child: ShadTextarea(
+                    key: const ValueKey<String>('write.dialog.imageAlt.alt'),
+                    controller: _alt,
+                    autofocus: true,
+                    maxLength: 500,
+                    minHeight: 80,
+                    maxHeight: 160,
+                  ),
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  '${_alt.text.length}/500',
+                  l.imageAltCount(_alt.text.length, 500),
                   style: theme.textTheme.muted.copyWith(fontSize: 12),
                 ),
               ],
             ),
           ),
           const SizedBox(height: 8),
-          Text('Title (optional)', style: theme.textTheme.small),
+          ExcludeSemantics(
+            child: Text(l.imageTitleOptional, style: theme.textTheme.small),
+          ),
           const SizedBox(height: 6),
-          ShadInput(
-            key: const ValueKey<String>('write.dialog.imageAlt.title'),
-            controller: _title,
-            placeholder: const Text('Shown as a tooltip'),
-            onSubmitted: (_) => _save(),
+          Semantics(
+            label: l.imageTitleOptional,
+            child: ShadInput(
+              key: const ValueKey<String>('write.dialog.imageAlt.title'),
+              controller: _title,
+              placeholder: Text(l.imageTitlePlaceholder),
+              onSubmitted: (_) => _save(),
+            ),
           ),
         ],
       ),

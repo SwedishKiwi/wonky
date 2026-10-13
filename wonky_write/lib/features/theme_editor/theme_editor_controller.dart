@@ -7,6 +7,7 @@ import 'package:wonky_core/wonky_core.dart';
 import 'package:wonky_write_core/wonky_write_core.dart'
     hide ThemeCatalog, DeltaSelection;
 
+import '../../l10n/write_l10n.dart';
 import '../themes/document_theme.dart';
 import '../themes/theme_repository.dart';
 import 'theme_editor_model.dart';
@@ -82,8 +83,16 @@ class ThemeEditorController extends ChangeNotifier implements ThemeDraftHost {
     this.documentItemUuid,
     this.setDefault,
     this.defaultThemeUuid,
+    WriteLocalizations Function()? strings,
     UuidV7Generator? ids,
-  }) : _ids = ids ?? UuidV7Generator.instance;
+  }) : _ids = ids ?? UuidV7Generator.instance,
+       _strings = strings ?? _english;
+
+  static WriteLocalizations _english() => writeL10nEnglish;
+
+  /// The UI strings (undo labels, error messages) in the app's locale.
+  final WriteLocalizations Function() _strings;
+  WriteLocalizations get _l => _strings();
 
   /// Library operations (null without a server connection).
   late final ThemeLibrary? library = repository == null
@@ -93,6 +102,7 @@ class ThemeEditorController extends ChangeNotifier implements ThemeDraftHost {
           catalog: catalog,
           undo: undo,
           ids: _ids,
+          strings: _strings,
         );
 
   @override
@@ -323,7 +333,7 @@ class ThemeEditorController extends ChangeNotifier implements ThemeDraftHost {
     String? coalesceKey,
     String? label,
   }) {
-    if (readOnly) return const ThemeEditResult.failed(_readOnlyMessage);
+    if (readOnly) return ThemeEditResult.failed(_l.themeEditorReadOnlyMessage);
     ThemeJson next;
     try {
       next = ThemePropertyPath.set(_draftJson, path, value, variant: variant);
@@ -337,7 +347,9 @@ class ThemeEditorController extends ChangeNotifier implements ThemeDraftHost {
     }
     return _commit(
       next,
-      label: label ?? 'Change ${propLabel(path.split('.').last)}',
+      label:
+          label ??
+          _l.themeEditorUndoChange(propLabel(_l, path.split('.').last)),
       coalesceKey: coalesceKey,
     );
   }
@@ -360,9 +372,6 @@ class ThemeEditorController extends ChangeNotifier implements ThemeDraftHost {
     out['dark'] = dark;
     return out;
   }
-
-  static const _readOnlyMessage =
-      'This theme is read-only. Duplicate it to customize.';
 
   ThemeEditResult _commit(
     ThemeJson next, {
@@ -403,7 +412,7 @@ class ThemeEditorController extends ChangeNotifier implements ThemeDraftHost {
 
   /// Removes every override of [node] (`write.theme.resetElement`).
   ThemeEditResult resetElement(ThemeNode node) {
-    if (readOnly) return const ThemeEditResult.failed(_readOnlyMessage);
+    if (readOnly) return ThemeEditResult.failed(_l.themeEditorReadOnlyMessage);
     final next = jsonDecode(jsonEncode(_draftJson)) as Map<String, Object?>;
     void drop(Object? section, String key) {
       if (section is Map) section.remove(key);
@@ -433,25 +442,28 @@ class ThemeEditorController extends ChangeNotifier implements ThemeDraftHost {
       case ThemeNodeKind.general:
         return const ThemeEditResult.ok();
     }
-    return _commit(next, label: 'Reset ${node.label}');
+    return _commit(next, label: _l.themeEditorUndoReset(node.label(_l)));
   }
 
   /// Fixes a failing contrast pair (`write.theme.fixContrast`): the
   /// foreground lightness changes minimally (one draft step).
   ThemeEditResult fixContrast(String pairId, ThemeVariant variant) {
-    if (readOnly) return const ThemeEditResult.failed(_readOnlyMessage);
+    if (readOnly) return ThemeEditResult.failed(_l.themeEditorReadOnlyMessage);
     final fix = ContrastChecker().fix(draft, pairId, variant);
     if (fix == null) {
-      return const ThemeEditResult.failed('Nothing to fix for this pair');
+      return ThemeEditResult.failed(_l.themeEditorNothingToFix);
     }
     final next = ThemePropertyPath.set(_draftJson, fix.path, fix.value);
-    return _commit(next, label: 'Fix contrast');
+    return _commit(next, label: _l.cmdThemeFixContrast);
   }
 
   /// Replaces the draft with a revision's JSON (one draft step).
   ThemeEditResult loadRevision(ThemeRevision r) {
-    if (readOnly) return const ThemeEditResult.failed(_readOnlyMessage);
-    return _commit(_decode(r.json), label: 'Restore version ${r.version}');
+    if (readOnly) return ThemeEditResult.failed(_l.themeEditorReadOnlyMessage);
+    return _commit(
+      _decode(r.json),
+      label: _l.themeEditorUndoRestoreVersion(r.version),
+    );
   }
 
   /// Discards the draft (`write.theme.revert`).
@@ -544,7 +556,7 @@ class ThemeEditorController extends ChangeNotifier implements ThemeDraftHost {
     final repo = repository;
     final r = _record;
     if (readOnly || r == null || repo == null) {
-      return const ThemeEditResult.failed(_readOnlyMessage);
+      return ThemeEditResult.failed(_l.themeEditorReadOnlyMessage);
     }
     if (!dirty && !overwrite) return const ThemeEditResult.ok();
     final expected = overwrite && _conflict != null
@@ -566,7 +578,7 @@ class ThemeEditorController extends ChangeNotifier implements ThemeDraftHost {
       undo.push(
         UndoStep(
           id: _ids.nextString(),
-          label: 'Edit theme “${saved.name}”',
+          label: _l.themeEditorUndoEdit(saved.name),
           entries: [
             ThemeLibraryUndoEntry(
               op: ThemeLibraryOp.saved,
@@ -585,12 +597,12 @@ class ThemeEditorController extends ChangeNotifier implements ThemeDraftHost {
       _conflict = c;
       _saving = false;
       _notify();
-      return const ThemeEditResult.failed('The theme was changed elsewhere');
+      return ThemeEditResult.failed(_l.themeEditorChangedElsewhere);
     } catch (e) {
       _saving = false;
       _lastError = '$e';
       _notify();
-      return ThemeEditResult.failed('Saving failed: $e');
+      return ThemeEditResult.failed(_l.themeEditorSavingFailedWith('$e'));
     }
   }
 
@@ -620,7 +632,7 @@ class ThemeEditorController extends ChangeNotifier implements ThemeDraftHost {
     final lib = library;
     if (lib == null) return null;
     final r = await lib.create(
-      name ?? '${this.name} (copy)',
+      name ?? _l.themeLibraryCopyName(this.name),
       draft.toJson(),
       basedOnUuid: themeUuid,
     );
@@ -643,11 +655,11 @@ class ThemeEditorController extends ChangeNotifier implements ThemeDraftHost {
     final lib = library;
     final r = _record;
     if (readOnly || lib == null || r == null) {
-      return const ThemeEditResult.failed(_readOnlyMessage);
+      return ThemeEditResult.failed(_l.themeEditorReadOnlyMessage);
     }
     final clean = newName.trim();
     if (clean.isEmpty || clean.length > 80) {
-      return const ThemeEditResult.failed('Theme names have 1–80 characters');
+      return ThemeEditResult.failed(_l.themeEditorNameLength);
     }
     if (clean == r.name) return const ThemeEditResult.ok();
     try {
@@ -657,7 +669,7 @@ class ThemeEditorController extends ChangeNotifier implements ThemeDraftHost {
     } on ThemeConflict catch (c) {
       _conflict = c;
       _notify();
-      return const ThemeEditResult.failed('The theme was changed elsewhere');
+      return ThemeEditResult.failed(_l.themeEditorChangedElsewhere);
     }
   }
 
@@ -665,7 +677,7 @@ class ThemeEditorController extends ChangeNotifier implements ThemeDraftHost {
   Future<ThemeEditResult> delete() async {
     final lib = library;
     if (readOnly || lib == null) {
-      return const ThemeEditResult.failed(_readOnlyMessage);
+      return ThemeEditResult.failed(_l.themeEditorReadOnlyMessage);
     }
     _record = await lib.delete(themeUuid);
     _notify();
@@ -676,7 +688,7 @@ class ThemeEditorController extends ChangeNotifier implements ThemeDraftHost {
   Future<ThemeEditResult> restore() async {
     final lib = library;
     if (!isMine || lib == null) {
-      return const ThemeEditResult.failed('Only the owner can restore it');
+      return ThemeEditResult.failed(_l.themeEditorOnlyOwnerRestore);
     }
     _record = await lib.restore(themeUuid);
     _notify();
@@ -692,19 +704,17 @@ class ThemeEditorController extends ChangeNotifier implements ThemeDraftHost {
     final doc = _document;
     final repo = repository;
     if (doc == null || repo == null) {
-      return const ThemeEditResult.failed('No document to apply it to');
+      return ThemeEditResult.failed(_l.themeEditorNoDocument);
     }
     if (!doc.canEdit) {
-      return const ThemeEditResult.failed(
-        'You need edit access to change the document theme',
-      );
+      return ThemeEditResult.failed(_l.themeEditorNeedEditAccess);
     }
     if (doc.themeUuid == themeUuid) return const ThemeEditResult.ok();
     await repo.assignToDocument(doc.documentUuid, themeUuid);
     undo.push(
       UndoStep(
         id: _ids.nextString(),
-        label: 'Change theme',
+        label: _l.themeEditorUndoChangeTheme,
         entries: [
           ThemeLibraryUndoEntry(
             op: ThemeLibraryOp.assigned,

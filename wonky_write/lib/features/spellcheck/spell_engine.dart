@@ -18,9 +18,9 @@ class SpellWord {
   final bool followedByPeriod;
 }
 
-/// The spell checker as the editor sees it. The Hunspell implementation
-/// (`package:wonky_write_core/spellcheck.dart`) is loaded as a deferred
-/// library, so the app only depends on this interface.
+/// The spell checker as the editor sees it (implemented with
+/// `package:wonky_write_core/spellcheck.dart` in `hunspell_engine.dart`;
+/// tests can inject fakes).
 abstract class SpellEngine {
   /// The dictionary's BCP-47 tag ("en-US").
   String get tag;

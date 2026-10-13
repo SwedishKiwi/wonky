@@ -4,6 +4,7 @@ import 'package:shad/shad.dart';
 import 'package:wonky_ui/wonky_ui.dart';
 import 'package:wonky_write_core/wonky_write_core.dart';
 
+import '../../l10n/write_l10n.dart';
 import '../screen/command_invoke.dart';
 import 'find_controller.dart';
 
@@ -110,6 +111,7 @@ class _FindPanelState extends State<FindPanel> {
 
   @override
   Widget build(BuildContext context) {
+    final l = writeL10n(context);
     final theme = ShadTheme.of(context);
     final cs = theme.colorScheme;
     final error = c.error;
@@ -124,31 +126,39 @@ class _FindPanelState extends State<FindPanel> {
             child: Row(
               children: [
                 Expanded(
-                  child: ShadInput(
-                    key: const ValueKey<String>('find.query'),
-                    controller: _find,
-                    focusNode: _findFocus,
-                    placeholder: const Text('Find in document'),
-                    leading: Icon(
-                      LucideIcons.search,
-                      size: 16,
-                      color: cs.mutedForeground,
+                  child: Semantics(
+                    label: l.findPlaceholder,
+                    child: ShadInput(
+                      key: const ValueKey<String>('find.query'),
+                      controller: _find,
+                      focusNode: _findFocus,
+                      placeholder: Text(l.findPlaceholder),
+                      leading: Icon(
+                        LucideIcons.search,
+                        size: 16,
+                        color: cs.mutedForeground,
+                      ),
+                      trailing: c.countLabel.isEmpty
+                          ? null
+                          : Semantics(
+                              liveRegion: true,
+                              child: Text(
+                                c.countLabel,
+                                key: const ValueKey<String>('find.count'),
+                                style: theme.textTheme.muted.copyWith(
+                                  fontSize: 12,
+                                ),
+                              ),
+                            ),
+                      onChanged: (v) => c.query = v,
                     ),
-                    trailing: c.countLabel.isEmpty
-                        ? null
-                        : Text(
-                            c.countLabel,
-                            key: const ValueKey<String>('find.count'),
-                            style: theme.textTheme.muted.copyWith(fontSize: 12),
-                          ),
-                    onChanged: (v) => c.query = v,
                   ),
                 ),
                 const SizedBox(width: 4),
                 _IconAction(
                   keyName: 'find.previous',
                   icon: LucideIcons.chevronUp,
-                  label: 'Previous match',
+                  label: l.findPreviousMatch,
                   shortcut: shortcutOf(context, 'write.find.previous'),
                   onPressed: c.matches.isEmpty
                       ? null
@@ -157,7 +167,7 @@ class _FindPanelState extends State<FindPanel> {
                 _IconAction(
                   keyName: 'find.next',
                   icon: LucideIcons.chevronDown,
-                  label: 'Next match',
+                  label: l.findNextMatch,
                   shortcut: shortcutOf(context, 'write.find.next'),
                   onPressed: c.matches.isEmpty
                       ? null
@@ -172,7 +182,7 @@ class _FindPanelState extends State<FindPanel> {
               children: [
                 _OptionToggle(
                   keyName: 'find.matchCase',
-                  label: 'Match case',
+                  label: l.findMatchCase,
                   value: c.matchCase,
                   onChanged: (v) => c.matchCase = v,
                   child: const Text('Aa'),
@@ -180,7 +190,7 @@ class _FindPanelState extends State<FindPanel> {
                 const SizedBox(width: 4),
                 _OptionToggle(
                   keyName: 'find.wholeWord',
-                  label: 'Whole word',
+                  label: l.findWholeWord,
                   value: c.wholeWord,
                   onChanged: (v) => c.wholeWord = v,
                   child: const Text(
@@ -191,7 +201,7 @@ class _FindPanelState extends State<FindPanel> {
                 const SizedBox(width: 4),
                 _OptionToggle(
                   keyName: 'find.regex',
-                  label: 'Regular expression',
+                  label: l.findRegex,
                   value: c.regex,
                   onChanged: (v) => c.regex = v,
                   child: const Text('.*'),
@@ -207,7 +217,7 @@ class _FindPanelState extends State<FindPanel> {
                     size: 14,
                   ),
                   onPressed: c.toggleReplace,
-                  child: const Text('Replace'),
+                  child: Text(l.findToggleReplace),
                 ),
               ],
             ),
@@ -226,22 +236,23 @@ class _FindPanelState extends State<FindPanel> {
               padding: const EdgeInsets.fromLTRB(12, 8, 12, 0),
               child: ShadTooltip(
                 builder: (_) => Text(
-                  widget.editable
-                      ? 'Replace with'
-                      : 'You can only search in this mode',
+                  widget.editable ? l.findReplaceWith : l.findSearchOnly,
                 ),
-                child: ShadInput(
-                  key: const ValueKey<String>('find.replacement'),
-                  controller: _replace,
-                  focusNode: _replaceFocus,
-                  enabled: widget.editable,
-                  placeholder: const Text('Replace with'),
-                  leading: Icon(
-                    LucideIcons.replace,
-                    size: 16,
-                    color: cs.mutedForeground,
+                child: Semantics(
+                  label: l.findReplaceWith,
+                  child: ShadInput(
+                    key: const ValueKey<String>('find.replacement'),
+                    controller: _replace,
+                    focusNode: _replaceFocus,
+                    enabled: widget.editable,
+                    placeholder: Text(l.findReplaceWith),
+                    leading: Icon(
+                      LucideIcons.replace,
+                      size: 16,
+                      color: cs.mutedForeground,
+                    ),
+                    onChanged: (v) => c.replacement = v,
                   ),
-                  onChanged: (v) => c.replacement = v,
                 ),
               ),
             ),
@@ -254,7 +265,7 @@ class _FindPanelState extends State<FindPanel> {
                     size: ShadButtonSize.sm,
                     enabled: canReplace,
                     onPressed: _replaceOne,
-                    child: const Text('Replace'),
+                    child: Text(l.findReplaceOne),
                   ),
                   const SizedBox(width: 8),
                   ShadButton.secondary(
@@ -262,7 +273,7 @@ class _FindPanelState extends State<FindPanel> {
                     size: ShadButtonSize.sm,
                     enabled: canReplace,
                     onPressed: _replaceAll,
-                    child: const Text('Replace all'),
+                    child: Text(l.findReplaceAll),
                   ),
                 ],
               ),
@@ -277,15 +288,16 @@ class _FindPanelState extends State<FindPanel> {
   }
 
   Widget _results(BuildContext context) {
+    final l = writeL10n(context);
     final theme = ShadTheme.of(context);
     if (!c.hasQuery) {
-      return _hint(context, 'Type to search the document.');
+      return _hint(context, l.findTypeToSearch);
     }
     if (c.error != null) return const SizedBox.shrink();
     if (c.matches.isEmpty) {
       return _hint(
         context,
-        "No results for '${c.query}'",
+        l.findNoResultsFor(c.query),
         key: const ValueKey<String>('find.noResults'),
       );
     }
@@ -300,6 +312,11 @@ class _FindPanelState extends State<FindPanel> {
           final active = i == c.current;
           return _ResultRow(
             key: ValueKey<String>('find.result.$i'),
+            semanticLabel: l.findResultSemantic(
+              i + 1,
+              c.matches.length,
+              m.text,
+            ),
             match: m,
             active: active,
             onTap: () => c.goTo(i),
@@ -322,12 +339,14 @@ class _FindPanelState extends State<FindPanel> {
 class _ResultRow extends StatelessWidget {
   const _ResultRow({
     super.key,
+    required this.semanticLabel,
     required this.match,
     required this.active,
     required this.onTap,
     required this.theme,
   });
 
+  final String semanticLabel;
   final SearchMatch match;
   final bool active;
   final VoidCallback onTap;
@@ -341,61 +360,68 @@ class _ResultRow extends StatelessWidget {
     final before = match.contextBefore.split('\n').last;
     final after = match.contextAfter.split('\n').first;
     final heading = match.headingPath.isEmpty ? null : match.headingPath.last;
-    return MouseRegion(
-      cursor: SystemMouseCursors.click,
-      child: GestureDetector(
-        behavior: HitTestBehavior.opaque,
-        onTap: onTap,
-        child: Container(
-          margin: const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
-          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
-          decoration: BoxDecoration(
-            color: active ? cs.accent : null,
-            borderRadius: BorderRadius.circular(6),
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text.rich(
-                TextSpan(
-                  style: theme.textTheme.small.copyWith(
-                    fontWeight: FontWeight.w400,
-                    color: cs.foreground,
-                  ),
-                  children: [
-                    TextSpan(
-                      text: before.length < match.contextBefore.length
-                          ? clean(before)
-                          : '…${clean(before)}',
+    return Semantics(
+      button: true,
+      selected: active,
+      label: semanticLabel,
+      excludeSemantics: true,
+      onTap: onTap,
+      child: MouseRegion(
+        cursor: SystemMouseCursors.click,
+        child: GestureDetector(
+          behavior: HitTestBehavior.opaque,
+          onTap: onTap,
+          child: Container(
+            margin: const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+            decoration: BoxDecoration(
+              color: active ? cs.accent : null,
+              borderRadius: BorderRadius.circular(6),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text.rich(
+                  TextSpan(
+                    style: theme.textTheme.small.copyWith(
+                      fontWeight: FontWeight.w400,
+                      color: cs.foreground,
                     ),
-                    TextSpan(
-                      text: clean(match.text),
-                      style: TextStyle(
-                        fontWeight: FontWeight.w600,
-                        backgroundColor: cs.findMatch,
+                    children: [
+                      TextSpan(
+                        text: before.length < match.contextBefore.length
+                            ? clean(before)
+                            : '…${clean(before)}',
                       ),
-                    ),
-                    TextSpan(
-                      text: after.length < match.contextAfter.length
-                          ? clean(after)
-                          : '${clean(after)}…',
-                    ),
-                  ],
-                ),
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
-              ),
-              if (heading != null)
-                Padding(
-                  padding: const EdgeInsets.only(top: 2),
-                  child: Text(
-                    heading,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: theme.textTheme.muted.copyWith(fontSize: 11),
+                      TextSpan(
+                        text: clean(match.text),
+                        style: TextStyle(
+                          fontWeight: FontWeight.w600,
+                          backgroundColor: cs.findMatch,
+                        ),
+                      ),
+                      TextSpan(
+                        text: after.length < match.contextAfter.length
+                            ? clean(after)
+                            : '${clean(after)}…',
+                      ),
+                    ],
                   ),
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
                 ),
-            ],
+                if (heading != null)
+                  Padding(
+                    padding: const EdgeInsets.only(top: 2),
+                    child: Text(
+                      heading,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: theme.textTheme.muted.copyWith(fontSize: 11),
+                    ),
+                  ),
+              ],
+            ),
           ),
         ),
       ),

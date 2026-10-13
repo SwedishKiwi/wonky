@@ -52,13 +52,13 @@ committed and verified).
    - "Offline storage is limited in this browser" for the IndexedDB fallback;
    - deleting the database file on desktop (tables are truncated, as on the web).
 
-6. ☐ **Spellcheck** (Write 04, P1): a pure-Dart Hunspell-style checker and the editor hook.
-7. ☐ **Editor extras:**
-   - SE-4 in-place table cell editing (tables are edited through the table dialog today);
-   - drag and drop of text, files and blocks (block-handle drag);
-   - emoji picker and special characters;
-   - image lightbox;
-   - focus mode and typewriter scrolling.
+6. ☑ **Spellcheck** (Write 04 §28): pure-Dart Hunspell checker in `wonky_write_core` (`package:wonky_write_core/spellcheck.dart`: affixes, flags, compounding, REP/MAP/KEY/TRY + n-gram suggestions, tokenizer with the skip rules); bundled en-US, en-GB, fr-FR, es-ES, nl-NL, sv-SE, da-DK dictionaries (open licenses, `assets/dictionaries/LICENSES.md`), loaded on first need and parsed in 8 ms frame slices; red wavy underlines, context-menu suggestions, Ignore, Add to dictionary (synced personal dictionary), Tools › Spelling (Check spelling… dialog with Change / Change all, Next error ⌘', Underline errors, Ignore UPPERCASE, Personal dictionary…), per-document language. Still open:
+   - de-DE, it-IT, nb-NO (GPL-only upstream) and pt-BR, pl-PL (size) dictionaries; licenses in About;
+   - a Web Worker / isolate for checking very large documents.
+7. ☑ **Editor extras:** SE-4 in-place table cell editing (click a cell, Tab/Enter navigation, Markdown source per cell, one "Edit cell" step per commit); drag and drop (SE-6 selection move/copy, block drag via the handle with drop line and auto-scroll, web OS drops of images, documents and text/HTML); emoji picker (Insert › Emoji, `/emoji`, `:` trigger) and special characters dialog; image lightbox; focus mode (with chrome auto-hide) and typewriter scrolling. Still open:
+   - OS drag and drop in native desktop builds (needs a drop plugin);
+   - the emoji picker in wonky_ui for comment reactions; self-hosted fallback fonts (`fontFallbackBaseUrl`);
+   - table cells: caret inside cells in the document itself (cells are edited through a per-cell field).
 8. ☐ **Notifications**: email digests (no mail provider is configured; the job only logs), mention emails, and the activity dashboard (07 §6).
 9. ☐ **Quality**:
    - i18n beyond English (pseudo-locales);
@@ -66,10 +66,10 @@ committed and verified).
    - E2E `integration_test` journeys (11 §1.1);
    - extending CI to every package plus the dependency-rule check (01 §2.1);
    - a performance suite.
-10. ☐ **Deployment**:
+10. ☐ **Deployment** (deferred to a later iteration; the release build served at `/write/` already loads and works in development):
     - verify production builds served by the server at `/write/` and `/sheets/` (`serverpod run flutter_build`), with WASM and cross-origin-isolation headers;
     - the sign-in is shared on the single origin; in development the two `flutter run` origins (8101 and 8102) don't share it.
-11. ☐ **Desktop** packaging (macOS first): native menubar, keychain sharing between apps, `wonkysheets://` / `wonkywrite://` URL schemes.
+11. ☐ **Desktop** packaging (deferred to a later iteration) (macOS first): native menubar, keychain sharing between apps, `wonkysheets://` / `wonkywrite://` URL schemes.
 
 ## Known issues
 

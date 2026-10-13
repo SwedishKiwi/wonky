@@ -8,6 +8,7 @@ import 'package:wonky_client/wonky_client.dart'
     show FileUrlView, StoredFileKind, StoredFileStatus, UuidValue;
 import 'package:wonky_core/wonky_core.dart' show UuidV7Generator;
 
+import '../../l10n/write_l10n.dart';
 import '../document/write_document_session.dart';
 import '../editor/components/editor_services.dart';
 import '../offline/pending_uploads.dart';
@@ -26,10 +27,26 @@ class PickedImage {
   final String mimeType;
 }
 
+/// Why an image file was rejected.
+enum ImageRejectReason { svg, unsupportedFormat, tooLarge }
+
 /// Why an image file was rejected (Write 04 §17.1).
 class ImageRejected implements Exception {
-  const ImageRejected(this.message);
-  final String message;
+  const ImageRejected(this.reason);
+  final ImageRejectReason reason;
+
+  /// The message in [l] (shown in toasts).
+  String messageIn(WriteLocalizations l) => switch (reason) {
+    ImageRejectReason.svg => l.imageRejectedSvg,
+    ImageRejectReason.unsupportedFormat => l.imageRejectedFormat,
+    ImageRejectReason.tooLarge => l.imageRejectedTooLarge(
+      ImageRules.maxBytes ~/ (1024 * 1024),
+    ),
+  };
+
+  /// The English message; UI code uses [messageIn].
+  String get message => messageIn(writeL10nEnglish);
+
   @override
   String toString() => message;
 }
@@ -47,12 +64,14 @@ abstract final class ImageRules {
     if (ext == 'svg' ||
         _startsWith(bytes, '<svg') ||
         _startsWith(bytes, '<?xml')) {
-      throw const ImageRejected("SVG images aren't supported");
+      throw const ImageRejected(ImageRejectReason.svg);
     }
     final mime = sniff(bytes) ?? _byExtension(ext);
-    if (mime == null) throw const ImageRejected('Unsupported image format');
+    if (mime == null) {
+      throw const ImageRejected(ImageRejectReason.unsupportedFormat);
+    }
     if (bytes.length > maxBytes) {
-      throw const ImageRejected('Image is larger than 20 MB');
+      throw const ImageRejected(ImageRejectReason.tooLarge);
     }
     return mime;
   }

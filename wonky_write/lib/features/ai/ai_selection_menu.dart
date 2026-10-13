@@ -4,12 +4,22 @@ import 'package:wonky_ui/wonky_ui.dart';
 
 import '../screen/write_document_controller.dart';
 import '../screen/write_toolbar.dart' show CommandUi;
+import '../../l10n/write_l10n.dart';
 import 'write_ai_controller.dart';
 
-/// Tones of "Change tone ▸".
-const aiTones = ['Professional', 'Casual', 'Friendly', 'Confident'];
+/// Tone ids of "Change tone ▸" (sent to the model).
+const aiTones = ['professional', 'casual', 'friendly', 'confident'];
 
-/// Languages of "Translate ▸".
+/// The display name of tone [id].
+String aiToneLabel(WriteLocalizations l, String id) => switch (id) {
+  'casual' => l.aiToneCasual,
+  'friendly' => l.aiToneFriendly,
+  'confident' => l.aiToneConfident,
+  'professional' => l.aiToneProfessional,
+  _ => id,
+};
+
+/// Languages of "Translate ▸" (English names, sent to the model).
 const aiLanguages = [
   'English',
   'Swedish',
@@ -23,9 +33,26 @@ const aiLanguages = [
   'Chinese',
 ];
 
+/// The display name of [language] (an English name from [aiLanguages]).
+String aiLanguageLabel(WriteLocalizations l, String language) =>
+    switch (language) {
+      'English' => l.aiLanguageEnglish,
+      'Swedish' => l.aiLanguageSwedish,
+      'German' => l.aiLanguageGerman,
+      'French' => l.aiLanguageFrench,
+      'Spanish' => l.aiLanguageSpanish,
+      'Italian' => l.aiLanguageItalian,
+      'Portuguese' => l.aiLanguagePortuguese,
+      'Dutch' => l.aiLanguageDutch,
+      'Japanese' => l.aiLanguageJapanese,
+      'Chinese' => l.aiLanguageChinese,
+      _ => language,
+    };
+
 /// The ✨ entries of the selection toolbar (Write 09 §5.3), all bound to
 /// `write.ai.rewriteSelection`.
 List<WonkyMenuEntry> aiSelectionEntries(CommandUi ui) {
+  final l = writeL10n(ui.context);
   WonkyMenuEntry item(
     String mode,
     String label,
@@ -46,53 +73,53 @@ List<WonkyMenuEntry> aiSelectionEntries(CommandUi ui) {
   }
 
   return [
-    item('improve', 'Improve writing', LucideIcons.wandSparkles),
-    item('fixGrammar', 'Fix spelling & grammar', LucideIcons.spellCheck),
-    item('shorter', 'Make shorter', LucideIcons.minimize2),
-    item('longer', 'Make longer', LucideIcons.maximize2),
+    item('improve', l.aiImproveWriting, LucideIcons.wandSparkles),
+    item('fixGrammar', l.aiFixGrammar, LucideIcons.spellCheck),
+    item('shorter', l.aiMakeShorter, LucideIcons.minimize2),
+    item('longer', l.aiMakeLonger, LucideIcons.maximize2),
     WonkyMenuSubmenu(
       key: const ValueKey<String>('write.ai.menu.tone'),
-      label: 'Change tone',
+      label: l.aiChangeTone,
       icon: LucideIcons.messageCircle,
       children: [
         for (final t in aiTones)
           item(
             'tone',
-            t,
+            aiToneLabel(l, t),
             LucideIcons.dot,
-            extra: {'tone': t.toLowerCase()},
-            key: 'tone.${t.toLowerCase()}',
+            extra: {'tone': t},
+            key: 'tone.$t',
           ),
       ],
     ),
     WonkyMenuSubmenu(
       key: const ValueKey<String>('write.ai.menu.translate'),
-      label: 'Translate',
+      label: l.aiTranslate,
       icon: LucideIcons.languages,
       children: [
-        for (final l in aiLanguages)
+        for (final lang in aiLanguages)
           item(
             'translate',
-            l,
+            aiLanguageLabel(l, lang),
             LucideIcons.dot,
-            extra: {'language': l},
-            key: 'translate.${l.toLowerCase()}',
+            extra: {'language': lang},
+            key: 'translate.${lang.toLowerCase()}',
           ),
       ],
     ),
     const WonkyMenuSeparator(),
-    item('summarize', 'Summarize', LucideIcons.listCollapse),
-    item('explain', 'Explain', LucideIcons.lightbulb),
+    item('summarize', l.aiSummarize, LucideIcons.listCollapse),
+    item('explain', l.aiExplain, LucideIcons.lightbulb),
     WonkyMenuItem(
       key: const ValueKey<String>('write.ai.menu.continue'),
-      label: 'Continue writing',
+      label: l.cmdAiContinue,
       icon: LucideIcons.penLine,
       enabled: ui.state('write.ai.continue').enabled,
       onSelected: () => ui.run('write.ai.continue'),
     ),
     WonkyMenuItem(
       key: const ValueKey<String>('write.ai.menu.custom'),
-      label: 'Custom…',
+      label: l.aiCustom,
       icon: LucideIcons.sparkles,
       enabled: ui.state('write.ai.inline').enabled,
       onSelected: () => ui.run('write.ai.inline'),
@@ -112,10 +139,11 @@ class AiSelectionButton extends StatelessWidget {
     final ai = WriteAiController.forItem(doc.itemUuid);
     if (ai == null || !ai.shown) return const SizedBox.shrink();
     final theme = ShadTheme.of(context);
+    final label = writeL10n(context).aiButtonLabel;
     return WonkyDropdownMenu(
       entries: () => aiSelectionEntries(ui),
       builder: (context, c) => ShadTooltip(
-        builder: (_) => const Text('AI'),
+        builder: (_) => Text(label),
         child: ShadButton.ghost(
           key: const ValueKey<String>('write.selectionToolbar.ai'),
           height: 30,
@@ -126,7 +154,7 @@ class AiSelectionButton extends StatelessWidget {
             color: theme.colorScheme.primary,
           ),
           onPressed: c.toggle,
-          child: const Text('AI'),
+          child: Text(label),
         ),
       ),
     );

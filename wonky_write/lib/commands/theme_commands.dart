@@ -18,6 +18,7 @@ import '../features/theme_editor/theme_library.dart';
 import '../features/theme_editor/theme_undo.dart';
 import '../features/themes/document_theme.dart';
 import '../features/themes/theme_repository.dart';
+import '../l10n/write_l10n.dart';
 import 'write_command.dart';
 
 /// The path of the theme editor route (Write 06 §10.1).
@@ -52,8 +53,8 @@ class ThemeCommand extends JsonCommand {
 
   @override
   final CommandId id;
-  final String label;
-  final String? descriptionText;
+  final WriteText label;
+  final WriteText? descriptionText;
   @override
   final bool isUndoable;
   @override
@@ -81,13 +82,14 @@ class ThemeCommand extends JsonCommand {
       ThemeEditorController.active.value;
 
   @override
-  String title(BuildContext context) => label;
+  String title(BuildContext context) => label(writeL10n(context));
 
   @override
-  String? description(BuildContext context) => descriptionText;
+  String? description(BuildContext context) =>
+      descriptionText?.call(writeL10n(context));
 
   @override
-  String? category(BuildContext context) => 'Themes';
+  String? category(BuildContext context) => writeL10n(context).categoryThemes;
 
   @override
   Role get requiredRole => Role.viewer;
@@ -107,11 +109,12 @@ class ThemeCommand extends JsonCommand {
   @override
   String? disabledReason(CommandContext ctx, JsonArgs args) {
     final e = _editor;
-    if (needsEditor && e == null) return 'Open the theme editor first';
+    final l = writeL10nOf(ctx.services);
+    if (needsEditor && e == null) return l.commandReasonOpenThemeEditorFirst;
     if (needsEditable && (e?.readOnly ?? true)) {
       return e?.isBuiltin ?? false
-          ? 'Built-in themes can’t be changed'
-          : 'This theme is read-only';
+          ? l.commandReasonBuiltinThemeReadOnly
+          : l.commandReasonThemeReadOnly;
     }
     return null;
   }
@@ -124,10 +127,6 @@ class ThemeCommand extends JsonCommand {
   Future<CommandResult> execute(CommandContext ctx, JsonArgs args) async =>
       await run(ctx, _editor, args);
 }
-
-CommandResult _result(ThemeEditResult r) => r.isOk
-    ? CommandResult.ok(r.data)
-    : CommandResult.failed(r.error ?? 'Failed');
 
 ThemeVariant? _variant(JsonArgs a) => switch (a.string('variant')) {
   'dark' => ThemeVariant.dark,
@@ -152,8 +151,19 @@ List<Command<CommandArgs>> themeCommands(
     final repo = themeRepositoryFor(s);
     return repo == null
         ? null
-        : ThemeLibrary(repository: repo, catalog: themes, undo: s.undo);
+        : ThemeLibrary(
+            repository: repo,
+            catalog: themes,
+            undo: s.undo,
+            strings: () => writeL10nOf(s),
+          );
   }
+
+  WriteLocalizations l10n() => writeL10nOf(s);
+
+  CommandResult editResult(ThemeEditResult r) => r.isOk
+      ? CommandResult.ok(r.data)
+      : CommandResult.failed(r.error ?? l10n().commandToastFailed);
 
   BuildContext? ui(CommandContext ctx) =>
       ctx.source.isAgent ? null : ctx.dialogContext;
@@ -178,8 +188,8 @@ List<Command<CommandArgs>> themeCommands(
     // ------------------------------------------------------------ open
     ThemeCommand(
       'write.theme.openEditor',
-      label: 'Customize theme…',
-      descriptionText: 'Open the theme editor for the document theme',
+      label: (l) => l.cmdThemeOpenEditor,
+      descriptionText: (l) => l.cmdThemeOpenEditorDescription,
       icon: LucideIcons.paintbrush,
       argsSchema: const JsonSchema.object(
         properties: {
@@ -200,7 +210,7 @@ List<Command<CommandArgs>> themeCommands(
     ),
     ThemeCommand(
       'write.theme.openManager',
-      label: 'Manage themes…',
+      label: (l) => l.cmdThemeOpenManager,
       icon: LucideIcons.swatchBook,
       run: (ctx, e, a) {
         final doc = docItem(ctx);
@@ -210,22 +220,22 @@ List<Command<CommandArgs>> themeCommands(
     ),
     WriteCommand(
       'write.theme.useDefault',
-      label: 'Use my default theme',
-      categoryName: 'Format',
+      label: (l) => l.cmdThemeUseDefault,
+      categoryName: (l) => l.categoryFormat,
       requiredRole: Role.editor,
       isUndoable: true,
       enabled: (d, a) => d.canChangeSettings,
       checked: (d, a) => d.themeUuid == null,
       run: (ctx, d, a) async {
         if (d.themeUuid == null) return const CommandResult.ok();
-        await d.setMeta('themeId', null, label: 'Use my default theme');
+        await d.setMeta('themeId', null, label: l10n().undoUseDefaultTheme);
         return const CommandResult.ok();
       },
     ),
     WriteCommand(
       'write.theme.previewLocal',
-      label: 'Preview theme',
-      categoryName: 'View',
+      label: (l) => l.cmdThemePreviewLocal,
+      categoryName: (l) => l.categoryView,
       showInPalette: false,
       argsSchema: const JsonSchema.object(
         properties: {'themeUuid': JsonSchema.nullable(JsonSchema.string())},
@@ -242,7 +252,7 @@ List<Command<CommandArgs>> themeCommands(
     // --------------------------------------------------------- library
     ThemeCommand(
       'write.theme.create',
-      label: 'New theme',
+      label: (l) => l.cmdThemeCreate,
       icon: LucideIcons.plus,
       isUndoable: true,
       argsSchema: const JsonSchema.object(
@@ -253,12 +263,16 @@ List<Command<CommandArgs>> themeCommands(
       ),
       run: (ctx, e, a) async {
         final lib = library();
-        if (lib == null) return const CommandResult.failed('Offline');
+        if (lib == null) {
+          return CommandResult.failed(l10n().commandToastOffline);
+        }
         final from = a.string('fromThemeUuid');
         final source = from == null ? null : await themes.load(from);
         final r = await lib.create(
           a.string('name') ??
-              (source == null ? 'My theme' : '${source.name} (copy)'),
+              (source == null
+                  ? l10n().commandDialogNewThemeName
+                  : l10n().commandDialogThemeCopyName(source.name)),
           (source?.data ?? BuiltinThemes.wonkyDefault.theme).toJson(),
           basedOnUuid: source?.uuid ?? BuiltinThemes.wonkyDefault.uuid,
         );
@@ -268,8 +282,8 @@ List<Command<CommandArgs>> themeCommands(
     ),
     ThemeCommand(
       'write.theme.duplicate',
-      label: 'Duplicate theme',
-      descriptionText: 'Copy a theme into my themes',
+      label: (l) => l.cmdThemeDuplicate,
+      descriptionText: (l) => l.cmdThemeDuplicateDescription,
       icon: LucideIcons.copy,
       isUndoable: true,
       argsSchema: const JsonSchema.object(
@@ -287,14 +301,14 @@ List<Command<CommandArgs>> themeCommands(
         } else {
           r = await library()?.duplicate(uuid, name: a.string('name'));
         }
-        if (r == null) return const CommandResult.failed('Offline');
+        if (r == null) return CommandResult.failed(l10n().commandToastOffline);
         if (ui(ctx) != null) {
           open(r.uuid, doc: docItem(ctx));
           final doc = e?.document;
           if (doc != null && doc.canEdit && doc.themeUuid == uuid) {
             s.toasts.show(
-              'Copied to “${r.name}”',
-              actionLabel: 'Apply to document',
+              l10n().commandToastThemeCopied(r.name),
+              actionLabel: l10n().cmdThemeApplyToDocument,
               onAction: () => unawaited(
                 s.dispatcher.invoke(
                   'write.theme.applyToDocument',
@@ -309,7 +323,7 @@ List<Command<CommandArgs>> themeCommands(
     ),
     ThemeCommand(
       'write.theme.rename',
-      label: 'Rename theme…',
+      label: (l) => l.cmdThemeRename,
       icon: LucideIcons.pencil,
       isUndoable: true,
       argsSchema: const JsonSchema.object(
@@ -322,7 +336,9 @@ List<Command<CommandArgs>> themeCommands(
           a.string('themeUuid') != null || (e != null && !e.readOnly),
       run: (ctx, e, a) async {
         final uuid = targetUuid(e, a);
-        if (uuid == null) return const CommandResult.failed('No theme');
+        if (uuid == null) {
+          return CommandResult.failed(l10n().commandToastNoTheme);
+        }
         var name = a.string('name');
         final current = themes.lookup(uuid)?.name ?? e?.name ?? '';
         if (name == null) {
@@ -332,24 +348,24 @@ List<Command<CommandArgs>> themeCommands(
           if (name == null) return const CommandResult.cancelled();
         }
         if (e != null && e.themeUuid == uuid) {
-          return _result(await e.rename(name));
+          return editResult(await e.rename(name));
         }
         final repo = themeRepositoryFor(s);
         final lib = library();
         if (repo == null || lib == null) {
-          return const CommandResult.failed('Offline');
+          return CommandResult.failed(l10n().commandToastOffline);
         }
         try {
           await lib.rename(await repo.get(uuid), name);
         } on ThemeConflict {
-          return const CommandResult.failed('The theme was changed elsewhere');
+          return CommandResult.failed(l10n().commandToastThemeChangedElsewhere);
         }
         return const CommandResult.ok();
       },
     ),
     ThemeCommand(
       'write.theme.delete',
-      label: 'Delete theme',
+      label: (l) => l.cmdThemeDelete,
       icon: LucideIcons.trash2,
       isUndoable: true,
       argsSchema: const JsonSchema.object(
@@ -364,10 +380,12 @@ List<Command<CommandArgs>> themeCommands(
         final uuid = targetUuid(e, a);
         final repo = themeRepositoryFor(s);
         if (uuid == null || repo == null) {
-          return const CommandResult.failed('No theme');
+          return CommandResult.failed(l10n().commandToastNoTheme);
         }
         if (themes.lookup(uuid)?.isBuiltin ?? false) {
-          return const CommandResult.failed('Built-in themes can’t be deleted');
+          return CommandResult.failed(
+            l10n().commandToastBuiltinThemeCannotBeDeleted,
+          );
         }
         final c = ui(ctx);
         if (a.boolean('confirmed') != true && c != null) {
@@ -378,13 +396,9 @@ List<Command<CommandArgs>> themeCommands(
           if (used > 0 && c.mounted) {
             final ok = await confirmDialog(
               c,
-              title: 'Delete theme?',
-              description: used == 1
-                  ? 'One of your documents uses this theme. It keeps looking '
-                        'the same until you choose another theme.'
-                  : '$used of your documents use this theme. They keep '
-                        'looking the same until you choose another theme.',
-              confirmLabel: 'Delete',
+              title: writeL10n(c).commandDialogDeleteThemeTitle,
+              description: writeL10n(c).commandDialogDeleteThemeBody(used),
+              confirmLabel: writeL10n(c).commonDelete,
               destructive: true,
             );
             if (!ok) return const CommandResult.cancelled();
@@ -392,13 +406,13 @@ List<Command<CommandArgs>> themeCommands(
         }
         if (e != null && e.themeUuid == uuid) {
           final r = await e.delete();
-          if (!r.isOk) return _result(r);
+          if (!r.isOk) return editResult(r);
         } else {
           await library()!.delete(uuid);
         }
         s.toasts.show(
-          'Theme deleted',
-          actionLabel: 'Undo',
+          l10n().commandToastThemeDeleted,
+          actionLabel: l10n().commonUndo,
           onAction: () => unawaited(
             s.dispatcher.invoke('shell.edit.undo', source: InvocationSource.ui),
           ),
@@ -408,7 +422,7 @@ List<Command<CommandArgs>> themeCommands(
     ),
     ThemeCommand(
       'write.theme.restore',
-      label: 'Restore theme',
+      label: (l) => l.cmdThemeRestore,
       icon: LucideIcons.archiveRestore,
       isUndoable: true,
       argsSchema: themeArg,
@@ -416,17 +430,23 @@ List<Command<CommandArgs>> themeCommands(
           a.string('themeUuid') != null || (e != null && e.isDeleted),
       run: (ctx, e, a) async {
         final uuid = targetUuid(e, a);
-        if (uuid == null) return const CommandResult.failed('No theme');
-        if (e != null && e.themeUuid == uuid) return _result(await e.restore());
+        if (uuid == null) {
+          return CommandResult.failed(l10n().commandToastNoTheme);
+        }
+        if (e != null && e.themeUuid == uuid) {
+          return editResult(await e.restore());
+        }
         final lib = library();
-        if (lib == null) return const CommandResult.failed('Offline');
+        if (lib == null) {
+          return CommandResult.failed(l10n().commandToastOffline);
+        }
         await lib.restore(uuid);
         return const CommandResult.ok();
       },
     ),
     ThemeCommand(
       'write.theme.setAsDefault',
-      label: 'Set as my default theme',
+      label: (l) => l.cmdThemeSetAsDefault,
       icon: LucideIcons.star,
       argsSchema: themeArg,
       checked: (e, a) {
@@ -441,14 +461,20 @@ List<Command<CommandArgs>> themeCommands(
       run: (ctx, e, a) async {
         final uuid = targetUuid(e, a)!;
         await s.prefs.setWriteDefault(defaultThemeKey, uuid);
-        final name = themes.lookup(uuid)?.name ?? e?.name ?? 'The theme';
-        if (ui(ctx) != null) s.toasts.show('“$name” is now your default theme');
+        final name = themes.lookup(uuid)?.name ?? e?.name;
+        if (ui(ctx) != null) {
+          s.toasts.show(
+            name == null
+                ? l10n().commandToastDefaultThemeUnnamed
+                : l10n().commandToastDefaultTheme(name),
+          );
+        }
         return const CommandResult.ok();
       },
     ),
     ThemeCommand(
       'write.theme.applyToDocument',
-      label: 'Apply to document',
+      label: (l) => l.cmdThemeApplyToDocument,
       icon: LucideIcons.check,
       isUndoable: true,
       needsEditor: true,
@@ -457,18 +483,21 @@ List<Command<CommandArgs>> themeCommands(
       run: (ctx, e, a) async {
         final r = await e!.applyToDocument();
         if (r.isOk && ui(ctx) != null) {
+          final title = e.document?.title;
           s.toasts.show(
-            'Theme applied to “${e.document?.title ?? 'the document'}”',
+            title == null
+                ? l10n().commandToastThemeApplied
+                : l10n().commandToastThemeAppliedTo(title),
           );
         }
-        return _result(r);
+        return editResult(r);
       },
     ),
 
     // ---------------------------------------------------------- editor
     ThemeCommand(
       'write.theme.selectElement',
-      label: 'Select theme element',
+      label: (l) => l.cmdThemeSelectElement,
       showInPalette: false,
       needsEditor: true,
       argsSchema: const JsonSchema.object(
@@ -484,7 +513,7 @@ List<Command<CommandArgs>> themeCommands(
     ),
     ThemeCommand(
       'write.theme.setProperty',
-      label: 'Change theme property',
+      label: (l) => l.cmdThemeSetProperty,
       showInPalette: false,
       isUndoable: true,
       needsEditor: true,
@@ -502,7 +531,7 @@ List<Command<CommandArgs>> themeCommands(
         },
         required: ['path'],
       ),
-      run: (ctx, e, a) => _result(
+      run: (ctx, e, a) => editResult(
         e!.setProperty(
           a.requireString('path'),
           a.values['value'],
@@ -513,7 +542,7 @@ List<Command<CommandArgs>> themeCommands(
     ),
     ThemeCommand(
       'write.theme.resetElement',
-      label: 'Reset element',
+      label: (l) => l.cmdThemeResetElement,
       showInPalette: false,
       isUndoable: true,
       needsEditor: true,
@@ -525,12 +554,12 @@ List<Command<CommandArgs>> themeCommands(
         final id = a.string('element');
         final node = id == null ? e!.selected : ThemeNode.parse(id);
         if (node == null) return const CommandResult.failed('Unknown element');
-        return _result(e!.resetElement(node));
+        return editResult(e!.resetElement(node));
       },
     ),
     ThemeCommand(
       'write.theme.fixContrast',
-      label: 'Fix contrast',
+      label: (l) => l.cmdThemeFixContrast,
       showInPalette: false,
       isUndoable: true,
       needsEditor: true,
@@ -542,7 +571,7 @@ List<Command<CommandArgs>> themeCommands(
         },
         required: ['pairId'],
       ),
-      run: (ctx, e, a) => _result(
+      run: (ctx, e, a) => editResult(
         e!.fixContrast(
           a.requireString('pairId'),
           _variant(a) ?? ThemeVariant.light,
@@ -551,7 +580,7 @@ List<Command<CommandArgs>> themeCommands(
     ),
     ThemeCommand(
       'write.theme.revert',
-      label: 'Revert theme changes',
+      label: (l) => l.cmdThemeRevert,
       icon: LucideIcons.undo,
       needsEditor: true,
       enabled: (e, a) => e?.dirty ?? false,
@@ -563,9 +592,9 @@ List<Command<CommandArgs>> themeCommands(
         if (c != null && a.boolean('confirmed') != true) {
           final ok = await confirmDialog(
             c,
-            title: 'Revert changes?',
-            description: 'Your unsaved changes to this theme will be lost.',
-            confirmLabel: 'Revert',
+            title: writeL10n(c).commandDialogRevertThemeTitle,
+            description: writeL10n(c).commandDialogRevertThemeBody,
+            confirmLabel: writeL10n(c).commandDialogRevertThemeConfirm,
             destructive: true,
           );
           if (!ok) return const CommandResult.cancelled();
@@ -576,7 +605,7 @@ List<Command<CommandArgs>> themeCommands(
     ),
     ThemeCommand(
       'write.theme.save',
-      label: 'Save theme',
+      label: (l) => l.cmdThemeSave,
       icon: LucideIcons.save,
       isUndoable: true,
       needsEditor: true,
@@ -593,7 +622,7 @@ List<Command<CommandArgs>> themeCommands(
               await e.reloadTheirs();
               return const CommandResult.ok();
             case ThemeConflictChoice.overwrite:
-              return _result(await e.overwrite());
+              return editResult(await e.overwrite());
             case ThemeConflictChoice.copy:
               final copy = await e.saveAsCopy();
               if (copy != null) open(copy.uuid, doc: e.documentItemUuid);
@@ -602,12 +631,12 @@ List<Command<CommandArgs>> themeCommands(
               return const CommandResult.cancelled();
           }
         }
-        return _result(r);
+        return editResult(r);
       },
     ),
     ThemeCommand(
       'write.theme.showRevisions',
-      label: 'Theme version history…',
+      label: (l) => l.cmdThemeShowRevisions,
       icon: LucideIcons.history,
       needsEditor: true,
       enabled: (e, a) => e?.isMine ?? false,
@@ -631,17 +660,21 @@ List<Command<CommandArgs>> themeCommands(
           current: e.version,
         );
         if (picked == null) return const CommandResult.cancelled();
-        return _result(e.loadRevision(picked));
+        return editResult(e.loadRevision(picked));
       },
     ),
-    for (final (id, label, value) in const [
-      ('write.theme.setPreviewSource', 'Preview source', 'source'),
-      ('write.theme.setPreviewVariant', 'Preview variant', 'variant'),
-      ('write.theme.setPreviewLayout', 'Preview layout', 'layout'),
+    for (final (id, value) in const [
+      ('write.theme.setPreviewSource', 'source'),
+      ('write.theme.setPreviewVariant', 'variant'),
+      ('write.theme.setPreviewLayout', 'layout'),
     ])
       ThemeCommand(
         id,
-        label: label,
+        label: (l) => switch (value) {
+          'source' => l.cmdThemeSetPreviewSource,
+          'variant' => l.cmdThemeSetPreviewVariant,
+          _ => l.cmdThemeSetPreviewLayout,
+        },
         showInPalette: false,
         needsEditor: true,
         argsSchema: JsonSchema.object(
@@ -692,7 +725,7 @@ List<Command<CommandArgs>> themeCommands(
     // ---------------------------------------------------- import/export
     ThemeCommand(
       'write.theme.importJson',
-      label: 'Import theme…',
+      label: (l) => l.cmdThemeImportJson,
       icon: LucideIcons.upload,
       isUndoable: true,
       argsSchema: const JsonSchema.object(
@@ -700,7 +733,9 @@ List<Command<CommandArgs>> themeCommands(
       ),
       run: (ctx, e, a) async {
         final lib = library();
-        if (lib == null) return const CommandResult.failed('Offline');
+        if (lib == null) {
+          return CommandResult.failed(l10n().commandToastOffline);
+        }
         var source = a.string('json');
         final c = ui(ctx);
         if (source == null) {
@@ -708,7 +743,7 @@ List<Command<CommandArgs>> themeCommands(
           final f = await FilePicker.pickFile(
             type: FileType.custom,
             allowedExtensions: const ['json'],
-            dialogTitle: 'Import a theme',
+            dialogTitle: writeL10n(c).commandDialogImportThemeTitle,
           );
           if (f == null) return const CommandResult.cancelled();
           final bytes = await f.readAsBytes();
@@ -739,7 +774,7 @@ List<Command<CommandArgs>> themeCommands(
     for (final css in const [false, true])
       ThemeCommand(
         css ? 'write.theme.exportCss' : 'write.theme.exportJson',
-        label: css ? 'Export theme as CSS…' : 'Export theme as JSON…',
+        label: (l) => css ? l.cmdThemeExportCss : l.cmdThemeExportJson,
         icon: LucideIcons.download,
         argsSchema: themeArg,
         enabled: (e, a) => targetUuid(e, a) != null,
@@ -777,7 +812,7 @@ List<Command<CommandArgs>> themeCommands(
             fileName: fileName,
             bytes: Uint8List.fromList(utf8.encode(text)),
             mimeType: css ? 'text/css' : 'application/json',
-            dialogTitle: 'Save $fileName',
+            dialogTitle: l10n().commandDialogSaveFileTitle(fileName),
           );
           return kIsWeb || saved != null
               ? const CommandResult.ok()

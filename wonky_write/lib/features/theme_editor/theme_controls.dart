@@ -13,6 +13,7 @@ import 'package:wonky_write_core/wonky_write_core.dart'
         PaletteKey,
         argbToHex;
 
+import '../../l10n/write_l10n.dart';
 import '../themes/write_fonts.dart';
 import 'theme_editor_model.dart';
 
@@ -41,15 +42,18 @@ class ThemePropRow extends StatelessWidget {
   /// Control below the label (lists, edges).
   final bool wide;
 
-  String? get _inheritedText {
+  /// `(source, value)` of the inherited value, if any.
+  (String, String)? _inheritedOf(WriteLocalizations l) {
     final i = inherited;
     if (i == null || i.value == null) return null;
-    return 'Inherited from ${i.source}: ${describeValue(i.value)}';
+    return (i.source(l), describeValue(l, i.value));
   }
 
   @override
   Widget build(BuildContext context) {
     final theme = ShadTheme.of(context);
+    final l = writeL10n(context);
+    final inheritedFrom = _inheritedOf(l);
     final labelStyle = theme.textTheme.small.copyWith(
       fontSize: 13,
       fontWeight: isSet ? FontWeight.w600 : FontWeight.w400,
@@ -63,7 +67,9 @@ class ThemePropRow extends StatelessWidget {
       maxLines: 2,
       overflow: TextOverflow.ellipsis,
     );
-    final tip = isSet ? null : _inheritedText;
+    final tip = isSet || inheritedFrom == null
+        ? null
+        : l.themeControlsInheritedFrom(inheritedFrom.$1, inheritedFrom.$2);
     if (tip != null) {
       labelWidget = ShadTooltip(builder: (_) => Text(tip), child: labelWidget);
     }
@@ -72,15 +78,18 @@ class ThemePropRow extends StatelessWidget {
       child: isSet && enabled && onReset != null
           ? ShadTooltip(
               builder: (_) => Text(
-                _inheritedText == null
-                    ? 'Reset'
-                    : 'Reset — ${_inheritedText!.replaceFirst('Inherited from ', 'inherit from ')}',
+                inheritedFrom == null
+                    ? l.commonReset
+                    : l.themeControlsResetInherit(
+                        inheritedFrom.$1,
+                        inheritedFrom.$2,
+                      ),
               ),
               child: ShadIconButton.ghost(
                 width: 26,
                 height: 26,
                 iconSize: 14,
-                semanticLabel: 'Reset $label',
+                semanticLabel: l.themeControlsResetProperty(label),
                 icon: const Icon(LucideIcons.rotateCcw),
                 onPressed: onReset,
               ),
@@ -122,22 +131,17 @@ class ThemePropRow extends StatelessWidget {
 }
 
 /// A short human form of a raw theme JSON value.
-String describeValue(Object? v) {
+String describeValue(WriteLocalizations l, Object? v) {
   if (v == null) return '—';
-  if (v is bool) return v ? 'On' : 'Off';
+  if (v is bool) return v ? l.themeControlsOn : l.themeControlsOff;
   if (v is num) return _number(v);
   if (v is String) {
     if (v.startsWith('@')) {
       final key = PaletteKey.fromJsonName(v.substring(1));
-      if (key != null) return paletteLabel(key);
-      return switch (v) {
-        '@body' => 'Body font',
-        '@heading' => 'Heading font',
-        '@mono' => 'Code font',
-        _ => v,
-      };
+      if (key != null) return paletteLabel(l, key);
+      return fontRoleLabel(l, v);
     }
-    return v.isEmpty ? '“”' : enumLabelOrRaw(v);
+    return v.isEmpty ? '“”' : enumLabelOrRaw(l, v);
   }
   if (v is List) return v.join(' ');
   if (v is Map) {
@@ -146,10 +150,10 @@ String describeValue(Object? v) {
         v['width'],
         v['style'],
         v['color'],
-      ].whereType<Object>().map(describeValue).join(' ');
+      ].whereType<Object>().map((x) => describeValue(l, x)).join(' ');
     }
     return v.entries
-        .map((e) => '${e.key} ${describeValue(e.value)}')
+        .map((e) => '${e.key} ${describeValue(l, e.value)}')
         .join(', ');
   }
   return '$v';
@@ -163,10 +167,28 @@ String _number(num v) {
 }
 
 /// [enumLabel] for known enum values, else the raw text.
-String enumLabelOrRaw(String v) {
+String enumLabelOrRaw(WriteLocalizations l, String v) {
   if (Length.tryParse(v) != null || v.startsWith('#')) return v;
-  return enumLabel(v);
+  return enumLabel(l, v);
 }
+
+/// "Body font" for `@body` (theme font roles), else [ref] itself.
+String fontRoleLabel(WriteLocalizations l, String ref) => switch (ref) {
+  '@body' => l.themeControlsBodyFont,
+  '@heading' => l.themeControlsHeadingFont,
+  '@mono' => l.themeControlsCodeFont,
+  _ => ref,
+};
+
+/// Display name of a length unit.
+String lengthUnitLabel(WriteLocalizations l, LengthUnit u) => switch (u) {
+  LengthUnit.pt => l.themeControlsUnitPt,
+  LengthUnit.px => l.themeControlsUnitPx,
+  LengthUnit.em => l.themeControlsUnitEm,
+  LengthUnit.mm => l.themeControlsUnitMm,
+  LengthUnit.inch => l.themeControlsUnitIn,
+  LengthUnit.percent => l.themeControlsUnitPercent,
+};
 
 /// A length: number + unit (`11pt`, `1.2em`, `40%`). Converting units keeps
 /// the visual value (Write 06 §10.3).
@@ -230,6 +252,7 @@ class ThemeLengthField extends StatelessWidget {
         if (kind.units.contains(u)) u,
     ];
     String fmt(num v, LengthUnit u) => Length(v.toDouble(), u).toJson();
+    final l = writeL10n(context);
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
@@ -247,19 +270,24 @@ class ThemeLengthField extends StatelessWidget {
         const SizedBox(width: 4),
         SizedBox(
           width: 60,
-          child: ShadSelect<LengthUnit>(
-            key: ValueKey<String>('unit.${unit.json}'),
-            enabled: enabled && units.length > 1,
-            initialValue: unit,
-            minWidth: 60,
-            options: [
-              for (final u in units) ShadOption(value: u, child: Text(u.json)),
-            ],
-            selectedOptionBuilder: (context, u) => Text(u.json),
-            onChanged: (u) {
-              if (u == null || u == unit || parsed == null) return;
-              onChanged(fmt(_convert(parsed, u), u));
-            },
+          child: Semantics(
+            label: l.themeControlsUnit,
+            child: ShadSelect<LengthUnit>(
+              key: ValueKey<String>('unit.${unit.json}'),
+              enabled: enabled && units.length > 1,
+              initialValue: unit,
+              minWidth: 60,
+              options: [
+                for (final u in units)
+                  ShadOption(value: u, child: Text(lengthUnitLabel(l, u))),
+              ],
+              selectedOptionBuilder: (context, u) =>
+                  Text(lengthUnitLabel(l, u)),
+              onChanged: (u) {
+                if (u == null || u == unit || parsed == null) return;
+                onChanged(fmt(_convert(parsed, u), u));
+              },
+            ),
           ),
         ),
       ],
@@ -339,12 +367,12 @@ class _ThemeColorFieldState extends State<ThemeColorField> {
     };
   }
 
-  String _label(String? ref) {
-    if (ref == null) return 'Automatic';
-    if (ref == 'transparent') return 'None';
+  String _label(WriteLocalizations l, String? ref) {
+    if (ref == null) return l.themeControlsColorAutomatic;
+    if (ref == 'transparent') return l.themeControlsColorNone;
     if (ref.startsWith('@')) {
       final k = PaletteKey.fromJsonName(ref.substring(1));
-      return k == null ? ref : paletteLabel(k);
+      return k == null ? ref : paletteLabel(l, k);
     }
     return ref.toUpperCase();
   }
@@ -352,6 +380,7 @@ class _ThemeColorFieldState extends State<ThemeColorField> {
   @override
   Widget build(BuildContext context) {
     final theme = ShadTheme.of(context);
+    final l = writeL10n(context);
     final argb = _argb(widget.value);
     final swatches = [
       for (final k in PaletteKey.values)
@@ -361,7 +390,7 @@ class _ThemeColorFieldState extends State<ThemeColorField> {
               argbToHex(c).toUpperCase(),
               themeRef: '@${k.name}',
             ),
-            name: paletteLabel(k),
+            name: paletteLabel(l, k),
           ),
     ];
     final current = widget.value == null
@@ -380,7 +409,9 @@ class _ThemeColorFieldState extends State<ThemeColorField> {
             WonkyColorPicker(
               value: current,
               themeColors: swatches,
-              resetLabel: widget.allowReset ? 'Automatic (inherit)' : null,
+              resetLabel: widget.allowReset
+                  ? l.themeControlsColorAutomaticInherit
+                  : null,
               allowAlpha: true,
               onChanged: (c) {
                 _popover.hide();
@@ -406,7 +437,7 @@ class _ThemeColorFieldState extends State<ThemeColorField> {
                     _popover.hide();
                     widget.onChanged('transparent');
                   },
-                  child: const Text('No color'),
+                  child: Text(l.themeControlsNoColor),
                 ),
               ),
           ],
@@ -414,7 +445,10 @@ class _ThemeColorFieldState extends State<ThemeColorField> {
       ),
       child: Semantics(
         button: true,
-        label: '${widget.semanticLabel ?? 'Color'}: ${_label(widget.value)}',
+        label: l.themeControlsColorValue(
+          widget.semanticLabel ?? l.themePropColor,
+          _label(l, widget.value),
+        ),
         child: ShadButton.outline(
           width: widget.width,
           mainAxisAlignment: MainAxisAlignment.start,
@@ -442,7 +476,7 @@ class _ThemeColorFieldState extends State<ThemeColorField> {
             child: ConstrainedBox(
               constraints: const BoxConstraints(maxWidth: 120),
               child: Text(
-                _label(widget.value),
+                _label(l, widget.value),
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
                 style: theme.textTheme.small.copyWith(fontSize: 12),
@@ -475,13 +509,6 @@ class ThemeFontField extends StatelessWidget {
   final bool enabled;
   final bool allowRoles;
 
-  static String _roleName(String ref) => switch (ref) {
-    '@body' => 'Body',
-    '@heading' => 'Heading',
-    '@mono' => 'Code',
-    _ => ref,
-  };
-
   TextStyle _face(String family) => TextStyle(
     fontFamily: WriteFonts.screenFamilyFor(family),
     fontFamilyFallback: WriteFonts.screenFallbackFor(family),
@@ -500,7 +527,7 @@ class ThemeFontField extends StatelessWidget {
       return Text.rich(
         TextSpan(
           children: [
-            TextSpan(text: '${_roleName(v)} font · '),
+            TextSpan(text: '${fontRoleLabel(writeL10n(context), v)} · '),
             TextSpan(text: family, style: _face(family)),
           ],
         ),
@@ -513,6 +540,7 @@ class ThemeFontField extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = ShadTheme.of(context);
+    final l = writeL10n(context);
     Widget header(String text) => Padding(
       padding: const EdgeInsets.fromLTRB(8, 8, 8, 4),
       child: Text(
@@ -529,12 +557,13 @@ class ThemeFontField extends StatelessWidget {
         if (f.category == c && f.isDisplay == display) f.family,
     ];
     final sections = <(String, List<String>)>[
-      if (allowRoles) ('Theme fonts', [for (final (r, _) in roles) r]),
-      ('Sans serif', of(FontCategory.sans)),
-      ('Serif', of(FontCategory.serif)),
-      ('Monospace', of(FontCategory.mono)),
+      if (allowRoles)
+        (l.themeEditorSourceThemeFonts, [for (final (r, _) in roles) r]),
+      (l.fontCategorySans, of(FontCategory.sans)),
+      (l.fontCategorySerif, of(FontCategory.serif)),
+      (l.fontCategoryMono, of(FontCategory.mono)),
       (
-        'Display',
+        l.fontCategoryDisplay,
         [
           ...of(FontCategory.sans, display: true),
           ...of(FontCategory.serif, display: true),
@@ -547,7 +576,7 @@ class ThemeFontField extends StatelessWidget {
       initialValue: value,
       minWidth: 180,
       maxHeight: 360,
-      placeholder: const Text('Choose a font'),
+      placeholder: Text(l.fontChoose),
       selectedOptionBuilder: _optionLabel,
       onChanged: (v) {
         if (v != null && v != value) onChanged(v);
@@ -573,21 +602,25 @@ class ThemeEnumField extends StatelessWidget {
     required this.value,
     required this.onChanged,
     this.enabled = true,
-    this.labelOf = enumLabel,
+    this.labelOf,
   });
 
   final List<String> values;
   final String? value;
   final ValueChanged<String> onChanged;
   final bool enabled;
-  final String Function(String) labelOf;
+
+  /// Display label of a value ([enumLabel] when null).
+  final String Function(String)? labelOf;
 
   @override
   Widget build(BuildContext context) {
     final theme = ShadTheme.of(context);
+    final l = writeL10n(context);
+    final labelOf = this.labelOf ?? (String v) => enumLabel(l, v);
     final short =
         values.length <= 4 && values.every((v) => labelOf(v).length <= 9);
-    if (!short) return _select();
+    if (!short) return _select(labelOf);
     final style = theme.textTheme.small.copyWith(fontSize: 12);
     final direction = Directionality.of(context);
     final scaler = MediaQuery.textScalerOf(context);
@@ -603,12 +636,17 @@ class ThemeEnumField extends StatelessWidget {
       p.dispose();
     }
     return LayoutBuilder(
-      builder: (context, box) =>
-          needed > box.maxWidth ? _select() : _toggle(theme, style),
+      builder: (context, box) => needed > box.maxWidth
+          ? _select(labelOf)
+          : _toggle(theme, style, labelOf),
     );
   }
 
-  Widget _toggle(ShadThemeData theme, TextStyle style) {
+  Widget _toggle(
+    ShadThemeData theme,
+    TextStyle style,
+    String Function(String) labelOf,
+  ) {
     {
       return Container(
         padding: const EdgeInsets.all(2),
@@ -648,7 +686,7 @@ class ThemeEnumField extends StatelessWidget {
     }
   }
 
-  Widget _select() {
+  Widget _select(String Function(String) labelOf) {
     return ShadSelect<String>(
       key: ValueKey<String>('enum.$value'),
       enabled: enabled,

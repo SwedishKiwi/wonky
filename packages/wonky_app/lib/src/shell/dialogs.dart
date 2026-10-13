@@ -4,6 +4,7 @@ import 'package:intl/intl.dart' as intl;
 import 'package:shad/shad.dart';
 import 'package:wonky_client/wonky_client.dart';
 
+import '../activity/activity_dashboard_dialog.dart';
 import '../bootstrap/platform.dart';
 import '../data/api.dart';
 import '../l10n/wonky_app_localizations.dart';
@@ -203,89 +204,13 @@ Future<void> showWhatsNewDialog(BuildContext context, ShellServices s) {
   );
 }
 
-/// Tools › Activity dashboard (suite 07 §6): who did what, recent activity.
+/// Tools › Activity dashboard (suite 07 §6): viewers, view and comment
+/// trends, the activity feed and "Show my view history".
 Future<void> showActivityDashboard(
   BuildContext context,
   ShellServices s,
   DriveItemView item,
-) {
-  final l = WonkyAppLocalizations.of(context);
-  return showShadDialog<void>(
-    context: context,
-    builder: (context) => ShadDialog(
-      title: Text(l.activityTitle(item.name)),
-      actions: [
-        ShadButton(
-          onPressed: () => Navigator.of(context).pop(),
-          child: Text(l.actionClose),
-        ),
-      ],
-      child: SizedBox(
-        width: 520,
-        height: 420,
-        child: FutureBuilder<List<ActivityEventView>>(
-          future: s.drive.activity(item.uuid, limit: 100),
-          builder: (context, snap) {
-            final theme = ShadTheme.of(context);
-            if (snap.connectionState != ConnectionState.done) {
-              return const Center(child: ShadSpinner());
-            }
-            if (snap.hasError) {
-              return Center(child: Text(errorMessage(snap.error!)));
-            }
-            final events = snap.data ?? const [];
-            if (events.isEmpty) {
-              return Center(
-                child: Text(l.activityEmpty, style: theme.textTheme.muted),
-              );
-            }
-            final viewers = <String, int>{};
-            for (final e in events) {
-              final n = e.actor?.displayName;
-              if (n != null) viewers[n] = (viewers[n] ?? 0) + 1;
-            }
-            final top = viewers.entries.toList()
-              ..sort((a, b) => b.value.compareTo(a.value));
-            return Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                Text(l.activityPeople, style: theme.textTheme.small),
-                const SizedBox(height: 6),
-                Wrap(
-                  spacing: 6,
-                  runSpacing: 6,
-                  children: [
-                    for (final e in top.take(8))
-                      ShadBadge.secondary(child: Text('${e.key} · ${e.value}')),
-                  ],
-                ),
-                const SizedBox(height: 12),
-                Text(l.activityRecent, style: theme.textTheme.small),
-                const SizedBox(height: 6),
-                Expanded(
-                  child: ListView.separated(
-                    itemCount: events.length,
-                    separatorBuilder: (_, _) =>
-                        const ShadSeparator.horizontal(margin: EdgeInsets.zero),
-                    itemBuilder: (context, i) => Padding(
-                      padding: const EdgeInsets.symmetric(vertical: 6),
-                      child: Text(
-                        '${activityText(l, events[i])} · ${intl.DateFormat.yMMMd().add_jm().format(events[i].at.toLocal())}',
-                        style: theme.textTheme.small.copyWith(
-                          fontWeight: FontWeight.normal,
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
-              ],
-            );
-          },
-        ),
-      ),
-    ),
-  );
-}
+) => showActivityDashboardDialog(context, s, item);
 
 /// Human text of an activity event.
 String activityText(WonkyAppLocalizations l, ActivityEventView e) {

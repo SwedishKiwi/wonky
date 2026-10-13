@@ -1,0 +1,131 @@
+/* AUTOMATICALLY GENERATED CODE DO NOT MODIFY */
+/*   To generate run: "serverpod generate"    */
+
+// ignore_for_file: implementation_imports
+// ignore_for_file: library_private_types_in_public_api
+// ignore_for_file: non_constant_identifier_names
+// ignore_for_file: public_member_api_docs
+// ignore_for_file: type_literal_in_constant_pattern
+// ignore_for_file: use_super_parameters
+// ignore_for_file: invalid_use_of_internal_member
+
+// ignore_for_file: no_leading_underscores_for_library_prefixes
+import 'package:serverpod/serverpod.dart' as _is;
+import 'package:wonky_server/src/generated/protocol.dart' as _il4umwa0;
+import '../../platform/common/access_role.dart' as _iv7g6vuy;
+import '../../platform/users/user_summary.dart' as _itg9e9ms;
+
+/// A row of the activity dashboard's viewers list.
+abstract class ActivityViewer
+    implements _is.SerializableModel, _is.ProtocolSerialization {
+  ActivityViewer._({
+    required this.user,
+    this.role,
+    required this.lastViewedAt,
+    required this.views,
+  });
+
+  factory ActivityViewer({
+    required _itg9e9ms.UserSummary user,
+    _iv7g6vuy.AccessRole? role,
+    required DateTime lastViewedAt,
+    required int views,
+  }) = _ActivityViewerImpl;
+
+  factory ActivityViewer.fromJson(Map<String, dynamic> jsonSerialization) {
+    return ActivityViewer(
+      user: _il4umwa0.Protocol().deserialize<_itg9e9ms.UserSummary>(
+        jsonSerialization['user'],
+      ),
+      role: jsonSerialization['role'] == null
+          ? null
+          : _iv7g6vuy.AccessRole.fromJson(
+              (jsonSerialization['role'] as String),
+            ),
+      lastViewedAt: _is.DateTimeJsonExtension.fromJson(
+        jsonSerialization['lastViewedAt'],
+      ),
+      views: jsonSerialization['views'] as int,
+    );
+  }
+
+  _itg9e9ms.UserSummary user;
+
+  /// The viewer's current role on the item.
+  _iv7g6vuy.AccessRole? role;
+
+  DateTime lastViewedAt;
+
+  /// Views within the dashboard's period.
+  int views;
+
+  /// Returns a shallow copy of this [ActivityViewer]
+  /// with some or all fields replaced by the given arguments.
+  @_is.useResult
+  ActivityViewer copyWith({
+    _itg9e9ms.UserSummary? user,
+    _iv7g6vuy.AccessRole? role,
+    DateTime? lastViewedAt,
+    int? views,
+  });
+  @override
+  Map<String, dynamic> toJson() {
+    return {
+      '__className__': 'ActivityViewer',
+      'user': user.toJson(),
+      if (role != null) 'role': role?.toJson(),
+      'lastViewedAt': lastViewedAt.toJson(),
+      'views': views,
+    };
+  }
+
+  @override
+  Map<String, dynamic> toJsonForProtocol() {
+    return {
+      '__className__': 'ActivityViewer',
+      'user': user.toJsonForProtocol(),
+      if (role != null) 'role': role?.toJson(),
+      'lastViewedAt': lastViewedAt.toJson(),
+      'views': views,
+    };
+  }
+
+  @override
+  String toString() {
+    return _is.SerializationManager.encode(this);
+  }
+}
+
+class _Undefined {}
+
+class _ActivityViewerImpl extends ActivityViewer {
+  _ActivityViewerImpl({
+    required _itg9e9ms.UserSummary user,
+    _iv7g6vuy.AccessRole? role,
+    required DateTime lastViewedAt,
+    required int views,
+  }) : super._(
+         user: user,
+         role: role,
+         lastViewedAt: lastViewedAt,
+         views: views,
+       );
+
+  /// Returns a shallow copy of this [ActivityViewer]
+  /// with some or all fields replaced by the given arguments.
+  @_is.useResult
+  @override
+  ActivityViewer copyWith({
+    _itg9e9ms.UserSummary? user,
+    Object? role = _Undefined,
+    DateTime? lastViewedAt,
+    int? views,
+  }) {
+    return ActivityViewer(
+      user: user ?? this.user.copyWith(),
+      role: role is _iv7g6vuy.AccessRole? ? role : this.role,
+      lastViewedAt: lastViewedAt ?? this.lastViewedAt,
+      views: views ?? this.views,
+    );
+  }
+}

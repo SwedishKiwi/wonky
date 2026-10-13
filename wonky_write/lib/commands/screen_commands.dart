@@ -30,6 +30,7 @@ import '../features/themes/theme_adapter.dart';
 import '../features/themes/theme_picker.dart';
 import '../features/themes/write_fonts.dart';
 import '../features/word_count/word_count_dialog.dart';
+import '../l10n/write_l10n.dart';
 import 'editor_commands.dart';
 import 'extras_commands.dart';
 import 'write_command.dart';
@@ -88,7 +89,7 @@ Map<String, WriteRun Function(EditorCommandSpec spec)> _overrides(
       } else if (id != null) {
         scheduleMicrotask(() {
           if (c.mounted) {
-            unawaited(_editTable(c, d, nodeId: id, label: 'Insert table'));
+            unawaited(_editTable(c, d, nodeId: id));
           }
         });
       }
@@ -102,10 +103,11 @@ Map<String, WriteRun Function(EditorCommandSpec spec)> _overrides(
         .firstOrNull;
     if (mode == null) return const CommandResult.failed('Unknown mode');
     if (!d.session.canUseMode(mode)) {
+      final l = writeL10nOf(s);
       return CommandResult.failed(
         mode == EditorMode.editing
-            ? 'You need edit access to edit directly'
-            : 'You need comment access to suggest',
+            ? l.commandToastNeedEditAccessToEdit
+            : l.commandToastNeedCommentAccessToSuggest,
       );
     }
     d.session.setMode(mode);
@@ -120,15 +122,18 @@ Future<CommandResult> _editTable(
   String? nodeId,
   int row = 0,
   int col = 0,
-  String label = 'Edit table',
 }) async {
+  final l = writeL10n(context);
   final data = d.embedData('table', nodeId);
-  if (data == null) return const CommandResult.failed('No table selected');
+  if (data == null) return CommandResult.failed(l.commandToastNoTableSelected);
   final table = TableModel.fromEmbed(data);
   final edited = await showTableEditor(context, table, row: row, column: col);
   d.focusEditor();
   if (edited == null) return const CommandResult.cancelled();
-  return okIf(d.commands.replaceTable(edited, nodeId: table.id));
+  return okIf(
+    d.commands.replaceTable(edited, nodeId: table.id),
+    l.reasonNotAvailable,
+  );
 }
 
 // ---------------------------------------------------------------------------
@@ -137,8 +142,8 @@ Future<CommandResult> _editTable(
 List<Command<CommandArgs>> fileCommands(ShellServices s) => [
   WriteCommand(
     'write.file.download',
-    label: 'Download',
-    categoryName: 'File',
+    label: (l) => l.cmdFileDownload,
+    categoryName: (l) => l.categoryFile,
     argsSchema: JsonSchema.object(
       properties: {
         'format': JsonSchema.string(
@@ -149,7 +154,7 @@ List<Command<CommandArgs>> fileCommands(ShellServices s) => [
       required: const ['format'],
     ),
     enabled: (d, a) => d.copyAllowed,
-    reason: (d, a) => d.copyAllowed ? null : 'The owner turned off downloads',
+    reason: (l, d, a) => d.copyAllowed ? null : l.reasonDownloadsDisabled,
     run: (ctx, d, a) async {
       final f = WriteDownloadFormat.tryParse(a.string('format'));
       if (f == null) return const CommandResult.failed('Unknown format');
@@ -165,8 +170,8 @@ List<Command<CommandArgs>> fileCommands(ShellServices s) => [
   ),
   WriteCommand(
     'write.file.print',
-    label: 'Print',
-    categoryName: 'File',
+    label: (l) => l.cmdFilePrint,
+    categoryName: (l) => l.categoryFile,
     enabled: (d, a) => d.copyAllowed,
     run: (ctx, d, a) async {
       await d.print();
@@ -175,15 +180,15 @@ List<Command<CommandArgs>> fileCommands(ShellServices s) => [
   ),
   WriteCommand(
     'write.insert.fromFile',
-    label: 'Insert from file…',
-    categoryName: 'Insert',
+    label: (l) => l.cmdInsertFromFile,
+    categoryName: (l) => l.categoryInsert,
     requiredRole: Role.commenter,
     isUndoable: true,
     needsEditable: true,
-    descriptionText:
-        'Insert a Markdown, text, HTML, Word, OpenDocument or RTF file at the cursor',
+    descriptionText: (l) => l.cmdInsertFromFileDescription,
     run: (ctx, d, a) async {
-      final files = await pickImportFiles(multiple: false);
+      final l = writeL10nOf(s);
+      final files = await pickImportFiles(multiple: false, l: l);
       if (files.isEmpty) return const CommandResult.cancelled();
       final f = files.single;
       try {
@@ -191,18 +196,19 @@ List<Command<CommandArgs>> fileCommands(ShellServices s) => [
           f.name,
           Uint8List.fromList(f.bytes),
           uploadImage: importImageUploader(s, itemUuid: d.itemUuid),
+          l: l,
         );
         final change = d.commands.insertFragment(
           converted.result.delta,
-          label: 'Insert file',
+          label: l.undoInsertFile,
         );
         if (converted.warnings.isNotEmpty) {
           s.toasts.show(
-            'Inserted “${f.name}”',
+            l.commandToastInsertedFile(f.name),
             description: converted.warnings.take(5).join('\n'),
           );
         }
-        return okIf(change != null);
+        return okIf(change != null, l.reasonNotAvailable);
       } catch (e) {
         return CommandResult.failed(errorMessage(e));
       }
@@ -226,8 +232,8 @@ List<Command<CommandArgs>> findCommands(ShellServices s) {
   return [
     WriteCommand(
       'write.find.open',
-      label: 'Find',
-      categoryName: 'Edit',
+      label: (l) => l.cmdFindOpen,
+      categoryName: (l) => l.categoryEdit,
       defaultBindings: const [KeyBinding('F', mod: _mod)],
       argsSchema: const JsonSchema.object(
         properties: {'query': JsonSchema.string()},
@@ -240,8 +246,8 @@ List<Command<CommandArgs>> findCommands(ShellServices s) {
     ),
     WriteCommand(
       'write.find.openReplace',
-      label: 'Find and replace',
-      categoryName: 'Edit',
+      label: (l) => l.cmdFindOpenReplace,
+      categoryName: (l) => l.categoryEdit,
       defaultBindings: const [
         KeyBinding('H', mod: _mod, shift: true, mac: true),
         KeyBinding('H', mod: _mod, mac: false),
@@ -253,8 +259,8 @@ List<Command<CommandArgs>> findCommands(ShellServices s) {
     ),
     WriteCommand(
       'write.find.close',
-      label: 'Close find',
-      categoryName: 'Edit',
+      label: (l) => l.cmdFindClose,
+      categoryName: (l) => l.categoryEdit,
       showInPalette: false,
       run: (ctx, d, a) {
         d.find.close();
@@ -265,8 +271,8 @@ List<Command<CommandArgs>> findCommands(ShellServices s) {
     ),
     WriteCommand(
       'write.find.next',
-      label: 'Find next',
-      categoryName: 'Edit',
+      label: (l) => l.cmdFindNext,
+      categoryName: (l) => l.categoryEdit,
       defaultBindings: const [
         KeyBinding('G', mod: _mod),
         KeyBinding('F3', mac: false),
@@ -280,8 +286,8 @@ List<Command<CommandArgs>> findCommands(ShellServices s) {
     ),
     WriteCommand(
       'write.find.previous',
-      label: 'Find previous',
-      categoryName: 'Edit',
+      label: (l) => l.cmdFindPrevious,
+      categoryName: (l) => l.categoryEdit,
       defaultBindings: const [
         KeyBinding('G', mod: _mod, shift: true),
         KeyBinding('F3', shift: true, mac: false),
@@ -295,8 +301,8 @@ List<Command<CommandArgs>> findCommands(ShellServices s) {
     ),
     WriteCommand(
       'write.find.replace',
-      label: 'Replace',
-      categoryName: 'Edit',
+      label: (l) => l.cmdFindReplace,
+      categoryName: (l) => l.categoryEdit,
       requiredRole: Role.commenter,
       isUndoable: true,
       needsEditable: true,
@@ -312,13 +318,16 @@ List<Command<CommandArgs>> findCommands(ShellServices s) {
         if (q != null) d.find.open(query: q);
         final r = a.string('replacement');
         if (r != null) d.find.replacement = r;
-        return okIf(d.find.replace(), 'No match to replace');
+        return okIf(
+          d.find.replace(),
+          writeL10nOf(s).commandToastNoMatchToReplace,
+        );
       },
     ),
     WriteCommand(
       'write.find.replaceAll',
-      label: 'Replace all',
-      categoryName: 'Edit',
+      label: (l) => l.cmdFindReplaceAll,
+      categoryName: (l) => l.categoryEdit,
       requiredRole: Role.commenter,
       isUndoable: true,
       needsEditable: true,
@@ -347,11 +356,12 @@ List<Command<CommandArgs>> findCommands(ShellServices s) {
         final r = a.string('replacement');
         if (r != null) f.replacement = r;
         final n = f.replaceAll();
-        if (n == 0) return const CommandResult.failed('No matches');
+        final l = writeL10nOf(s);
+        if (n == 0) return CommandResult.failed(l.commandToastNoMatches);
         if (_ui(ctx)) {
           s.toasts.show(
-            'Replaced $n ${n == 1 ? 'occurrence' : 'occurrences'}',
-            actionLabel: 'Undo',
+            l.commandToastReplacedOccurrences(n),
+            actionLabel: l.commonUndo,
             onAction: () => unawaited(
               s.dispatcher.invoke(
                 'shell.edit.undo',
@@ -365,8 +375,8 @@ List<Command<CommandArgs>> findCommands(ShellServices s) {
     ),
     WriteCommand(
       'write.nav.goToHeading',
-      label: 'Go to heading…',
-      categoryName: 'Navigation',
+      label: (l) => l.cmdNavGoToHeading,
+      categoryName: (l) => l.categoryNavigation,
       defaultBindings: const [KeyBinding('G', mod: _mod, alt: true)],
       argsSchema: const JsonSchema.object(
         properties: {
@@ -377,13 +387,16 @@ List<Command<CommandArgs>> findCommands(ShellServices s) {
       enabled: (d, a) => d.insights.outline.isNotEmpty,
       run: (ctx, d, a) async {
         final outline = d.insights.outline;
+        final l = writeL10nOf(s);
         var index = a.integer('index');
         final text = a.string('text');
         if (index == null && text != null) {
           index = outline.indexWhere(
             (e) => e.text.toLowerCase().contains(text.toLowerCase()),
           );
-          if (index < 0) return const CommandResult.failed('No such heading');
+          if (index < 0) {
+            return CommandResult.failed(l.commandToastNoSuchHeading);
+          }
         }
         if (index == null) {
           final c = _ctx(ctx);
@@ -392,7 +405,7 @@ List<Command<CommandArgs>> findCommands(ShellServices s) {
           if (e == null) return const CommandResult.cancelled();
           index = e.index;
         }
-        return okIf(d.goToHeading(index), 'No such heading');
+        return okIf(d.goToHeading(index), l.commandToastNoSuchHeading);
       },
     ),
   ];
@@ -404,8 +417,8 @@ List<Command<CommandArgs>> findCommands(ShellServices s) {
 List<Command<CommandArgs>> viewCommands(ShellServices s) => [
   WriteCommand(
     'write.view.toggleOutline',
-    label: 'Outline',
-    categoryName: 'View',
+    label: (l) => l.cmdViewToggleOutline,
+    categoryName: (l) => l.categoryView,
     defaultBindings: const [KeyBinding('O', mod: _mod, alt: true, shift: true)],
     checked: (d, a) => s.panels.isOpen(WritePanels.outline),
     run: (ctx, d, a) {
@@ -415,8 +428,8 @@ List<Command<CommandArgs>> viewCommands(ShellServices s) => [
   ),
   WriteCommand(
     'write.view.toggleWordCount',
-    label: 'Word count',
-    categoryName: 'View',
+    label: (l) => l.cmdViewToggleWordCount,
+    categoryName: (l) => l.categoryView,
     checked: (d, a) => d.viewPrefs.showWordCount,
     run: (ctx, d, a) {
       d.viewPrefs.showWordCount = !d.viewPrefs.showWordCount;
@@ -425,8 +438,8 @@ List<Command<CommandArgs>> viewCommands(ShellServices s) => [
   ),
   WriteCommand(
     'write.view.toggleCommentMargin',
-    label: 'Comments in margin',
-    categoryName: 'View',
+    label: (l) => l.cmdViewToggleCommentMargin,
+    categoryName: (l) => l.categoryView,
     checked: (d, a) => d.viewPrefs.showCommentMargin,
     run: (ctx, d, a) {
       d.viewPrefs.showCommentMargin = !d.viewPrefs.showCommentMargin;
@@ -435,8 +448,8 @@ List<Command<CommandArgs>> viewCommands(ShellServices s) => [
   ),
   WriteCommand(
     'write.view.toggleSelectionToolbar',
-    label: 'Toolbar on selection',
-    categoryName: 'View',
+    label: (l) => l.cmdViewToggleSelectionToolbar,
+    categoryName: (l) => l.categoryView,
     showInPalette: false,
     checked: (d, a) => d.viewPrefs.showSelectionToolbar,
     run: (ctx, d, a) {
@@ -446,8 +459,8 @@ List<Command<CommandArgs>> viewCommands(ShellServices s) => [
   ),
   WriteCommand(
     'write.view.focusToolbar',
-    label: 'Focus the toolbar',
-    categoryName: 'View',
+    label: (l) => l.cmdViewFocusToolbar,
+    categoryName: (l) => l.categoryView,
     defaultBindings: const [
       KeyBinding('F10', alt: true),
       KeyBinding('.', mod: _mod, alt: true),
@@ -459,8 +472,8 @@ List<Command<CommandArgs>> viewCommands(ShellServices s) => [
   ),
   WriteCommand(
     'write.view.zoomFit',
-    label: 'Fit',
-    categoryName: 'View',
+    label: (l) => l.cmdViewZoomFit,
+    categoryName: (l) => l.categoryView,
     argsSchema: const JsonSchema.object(
       properties: {
         'mode': JsonSchema.string(enumValues: ['width', 'page']),
@@ -492,8 +505,8 @@ List<Command<CommandArgs>> viewCommands(ShellServices s) => [
   ),
   WriteCommand(
     'write.outline.setMaxLevel',
-    label: 'Outline levels',
-    categoryName: 'View',
+    label: (l) => l.cmdOutlineSetMaxLevel,
+    categoryName: (l) => l.categoryView,
     showInPalette: false,
     argsSchema: const JsonSchema.object(
       properties: {'level': JsonSchema.integer(minimum: 1, maximum: 6)},
@@ -507,22 +520,26 @@ List<Command<CommandArgs>> viewCommands(ShellServices s) => [
       return const CommandResult.ok();
     },
   ),
-  for (final (mode, label, key) in const [
-    (EditorMode.editing, 'Editing mode', 'Z'),
-    (EditorMode.suggesting, 'Suggesting mode', 'X'),
-    (EditorMode.viewing, 'Viewing mode', 'C'),
+  for (final (mode, key) in const [
+    (EditorMode.editing, 'Z'),
+    (EditorMode.suggesting, 'X'),
+    (EditorMode.viewing, 'C'),
   ])
     WriteCommand(
       'write.mode.${mode.name}',
-      label: label,
-      categoryName: 'View',
+      label: (l) => switch (mode) {
+        EditorMode.editing => l.cmdModeEditing,
+        EditorMode.suggesting => l.cmdModeSuggesting,
+        EditorMode.viewing => l.cmdModeViewing,
+      },
+      categoryName: (l) => l.categoryView,
       defaultBindings: [KeyBinding(key, mod: _mod, alt: true, shift: true)],
       enabled: (d, a) => d.session.canUseMode(mode),
-      reason: (d, a) => d.session.canUseMode(mode)
+      reason: (l, d, a) => d.session.canUseMode(mode)
           ? null
           : mode == EditorMode.editing
-          ? 'You need edit access'
-          : 'You need comment access',
+          ? l.reasonNeedEditAccess
+          : l.reasonNeedCommentAccess,
       checked: (d, a) => d.editor.mode == mode,
       run: (ctx, d, a) {
         d.session.setMode(mode);
@@ -538,9 +555,9 @@ List<Command<CommandArgs>> viewCommands(ShellServices s) => [
 List<Command<CommandArgs>> insertCommands(ShellServices s) => [
   WriteCommand(
     'write.insert.image',
-    label: 'Image',
-    descriptionText: 'Upload images from your computer',
-    categoryName: 'Insert',
+    label: (l) => l.cmdInsertImage,
+    descriptionText: (l) => l.cmdInsertImageDescription,
+    categoryName: (l) => l.categoryInsert,
     requiredRole: Role.commenter,
     isUndoable: true,
     needsEditable: true,
@@ -548,6 +565,7 @@ List<Command<CommandArgs>> insertCommands(ShellServices s) => [
     run: (ctx, d, a) async {
       final picked = await pickImageFiles(
         onRejected: (name, reason) => s.toasts.error(reason, description: name),
+        l: writeL10nOf(s),
       );
       if (picked.isEmpty) return const CommandResult.cancelled();
       return insertPickedImages(d, picked);
@@ -555,9 +573,9 @@ List<Command<CommandArgs>> insertCommands(ShellServices s) => [
   ),
   WriteCommand(
     'write.insert.tableDialog',
-    label: 'Table…',
-    descriptionText: 'Insert a table of a custom size',
-    categoryName: 'Insert',
+    label: (l) => l.cmdInsertTableDialog,
+    descriptionText: (l) => l.cmdInsertTableDialogDescription,
+    categoryName: (l) => l.categoryInsert,
     needsEditable: true,
     requiredRole: Role.editor,
     enabled: (d, a) =>
@@ -577,21 +595,25 @@ List<Command<CommandArgs>> insertCommands(ShellServices s) => [
   ),
   WriteCommand(
     'write.insert.mentionTrigger',
-    label: 'Mention a person',
-    categoryName: 'Insert',
+    label: (l) => l.cmdInsertMentionTrigger,
+    categoryName: (l) => l.categoryInsert,
     requiredRole: Role.commenter,
     isUndoable: true,
     needsEditable: true,
     enabled: (d, a) => d.commands.canInsertLink(),
     run: (ctx, d, a) {
       d.focusEditor();
-      return okIf(d.commands.insertText('@', label: 'Mention'));
+      final l = writeL10nOf(s);
+      return okIf(
+        d.commands.insertText('@', label: l.undoMention),
+        l.reasonNotAvailable,
+      );
     },
   ),
   WriteCommand(
     'write.link.insert',
-    label: 'Insert link',
-    categoryName: 'Insert',
+    label: (l) => l.cmdLinkInsert,
+    categoryName: (l) => l.categoryInsert,
     defaultBindings: const [KeyBinding('K', mod: _mod)],
     keyScope: KeyScope.editor,
     requiredRole: Role.commenter,
@@ -602,8 +624,8 @@ List<Command<CommandArgs>> insertCommands(ShellServices s) => [
   ),
   WriteCommand(
     'write.link.edit',
-    label: 'Edit link',
-    categoryName: 'Insert',
+    label: (l) => l.cmdLinkEdit,
+    categoryName: (l) => l.categoryInsert,
     requiredRole: Role.commenter,
     isUndoable: true,
     needsEditable: true,
@@ -612,33 +634,37 @@ List<Command<CommandArgs>> insertCommands(ShellServices s) => [
   ),
   WriteCommand(
     'write.link.open',
-    label: 'Open link',
-    categoryName: 'Insert',
+    label: (l) => l.cmdLinkOpen,
+    categoryName: (l) => l.categoryInsert,
     enabled: (d, a) => d.commands.linkAt() != null,
     run: (ctx, d, a) async {
       final link = d.commands.linkAt();
-      if (link == null) return const CommandResult.failed('No link here');
+      if (link == null) {
+        return CommandResult.failed(writeL10nOf(s).commandToastNoLinkHere);
+      }
       await openWriteLink(s, d, link.url, context: _ctx(ctx));
       return const CommandResult.ok();
     },
   ),
   WriteCommand(
     'write.link.copy',
-    label: 'Copy link',
-    categoryName: 'Insert',
+    label: (l) => l.cmdLinkCopy,
+    categoryName: (l) => l.categoryInsert,
     enabled: (d, a) => d.commands.linkAt() != null,
     run: (ctx, d, a) async {
       final link = d.commands.linkAt();
-      if (link == null) return const CommandResult.failed('No link here');
+      if (link == null) {
+        return CommandResult.failed(writeL10nOf(s).commandToastNoLinkHere);
+      }
       await Clipboard.setData(ClipboardData(text: link.url));
-      s.toasts.show('Link copied');
+      s.toasts.show(writeL10nOf(s).commandToastLinkCopied);
       return const CommandResult.ok();
     },
   ),
   WriteCommand(
     'write.image.editAlt',
-    label: 'Alt text…',
-    categoryName: 'Images',
+    label: (l) => l.cmdImageEditAlt,
+    categoryName: (l) => l.categoryImages,
     requiredRole: Role.commenter,
     isUndoable: true,
     needsEditable: true,
@@ -650,8 +676,9 @@ List<Command<CommandArgs>> insertCommands(ShellServices s) => [
       final nodeId = a.string('nodeId');
       final data = d.embedData('image', nodeId);
       final c = _ctx(ctx);
+      final l = writeL10nOf(s);
       if (data == null || c == null) {
-        return const CommandResult.failed('No image selected');
+        return CommandResult.failed(l.commandToastNoImageSelected);
       }
       final r = await showImageAltDialog(
         c,
@@ -666,13 +693,14 @@ List<Command<CommandArgs>> insertCommands(ShellServices s) => [
           title: r.title,
           nodeId: nodeId ?? d.block()?.id,
         ),
+        l.reasonNotAvailable,
       );
     },
   ),
   WriteCommand(
     'write.image.replace',
-    label: 'Replace image…',
-    categoryName: 'Images',
+    label: (l) => l.cmdImageReplace,
+    categoryName: (l) => l.categoryImages,
     requiredRole: Role.commenter,
     isUndoable: true,
     needsEditable: true,
@@ -685,18 +713,22 @@ List<Command<CommandArgs>> insertCommands(ShellServices s) => [
       final picked = await pickImageFiles(
         multiple: false,
         onRejected: (name, reason) => s.toasts.error(reason, description: name),
+        l: writeL10nOf(s),
       );
       if (picked.isEmpty || nodeId == null) {
         return const CommandResult.cancelled();
       }
       final src = d.images.startUpload(picked.single);
-      return okIf(d.commands.replaceImage(src, nodeId: nodeId));
+      return okIf(
+        d.commands.replaceImage(src, nodeId: nodeId),
+        writeL10nOf(s).reasonNotAvailable,
+      );
     },
   ),
   WriteCommand(
     'write.image.download',
-    label: 'Download image',
-    categoryName: 'Images',
+    label: (l) => l.cmdImageDownload,
+    categoryName: (l) => l.categoryImages,
     argsSchema: const JsonSchema.object(
       properties: {'nodeId': JsonSchema.string()},
     ),
@@ -704,14 +736,17 @@ List<Command<CommandArgs>> insertCommands(ShellServices s) => [
         d.copyAllowed && d.embedData('image', a.string('nodeId')) != null,
     run: (ctx, d, a) async {
       final data = d.embedData('image', a.string('nodeId'));
-      if (data == null) return const CommandResult.failed('No image selected');
+      final l = writeL10nOf(s);
+      if (data == null) {
+        return CommandResult.failed(l.commandToastNoImageSelected);
+      }
       final src = '${data['src']}';
       final local = d.images.localBytes(src);
       final resolver = imageResolverFor(s, d.itemUuid.uuid);
       try {
         final bytes = local ?? (await resolver.resolve(src))?.bytes;
         if (bytes == null) {
-          return const CommandResult.failed('Image unavailable');
+          return CommandResult.failed(l.commandToastImageUnavailable);
         }
         final mime = ImageRules.sniff(bytes) ?? 'image/png';
         final ext = mime.split('/').last.replaceAll('jpeg', 'jpg');
@@ -731,8 +766,8 @@ List<Command<CommandArgs>> insertCommands(ShellServices s) => [
   ),
   WriteCommand(
     'write.table.edit',
-    label: 'Edit table…',
-    categoryName: 'Tables',
+    label: (l) => l.cmdTableEdit,
+    categoryName: (l) => l.categoryTables,
     requiredRole: Role.editor,
     isUndoable: true,
     needsEditable: true,
@@ -744,8 +779,8 @@ List<Command<CommandArgs>> insertCommands(ShellServices s) => [
       },
     ),
     enabled: (d, a) => d.commands.canEditTable(nodeId: a.string('nodeId')),
-    reason: (d, a) => d.editor.mode == EditorMode.suggesting
-        ? "Tables can't be edited in Suggesting mode"
+    reason: (l, d, a) => d.editor.mode == EditorMode.suggesting
+        ? l.reasonTablesNotInSuggesting
         : null,
     run: (ctx, d, a) async {
       final c = _ctx(ctx);
@@ -761,8 +796,8 @@ List<Command<CommandArgs>> insertCommands(ShellServices s) => [
   ),
   WriteCommand(
     'write.table.copyAsTsv',
-    label: 'Copy as TSV',
-    categoryName: 'Tables',
+    label: (l) => l.cmdTableCopyAsTsv,
+    categoryName: (l) => l.categoryTables,
     argsSchema: const JsonSchema.object(
       properties: {'nodeId': JsonSchema.string()},
     ),
@@ -770,18 +805,21 @@ List<Command<CommandArgs>> insertCommands(ShellServices s) => [
         d.copyAllowed && d.embedData('table', a.string('nodeId')) != null,
     run: (ctx, d, a) async {
       final data = d.embedData('table', a.string('nodeId'));
-      if (data == null) return const CommandResult.failed('No table selected');
+      final l = writeL10nOf(s);
+      if (data == null) {
+        return CommandResult.failed(l.commandToastNoTableSelected);
+      }
       await Clipboard.setData(
         ClipboardData(text: TableModel.fromEmbed(data).toTsv()),
       );
-      s.toasts.show('Table copied as tab-separated values');
+      s.toasts.show(l.commandToastTableCopiedAsTsv);
       return const CommandResult.ok();
     },
   ),
   WriteCommand(
     'write.code.copy',
-    label: 'Copy code',
-    categoryName: 'Code blocks',
+    label: (l) => l.cmdCodeCopy,
+    categoryName: (l) => l.categoryCodeBlocks,
     argsSchema: const JsonSchema.object(
       properties: {'nodeId': JsonSchema.string()},
     ),
@@ -790,9 +828,10 @@ List<Command<CommandArgs>> insertCommands(ShellServices s) => [
         d.commands.codeText(nodeId: a.string('nodeId')) != null,
     run: (ctx, d, a) async {
       final text = d.commands.codeText(nodeId: a.string('nodeId'));
-      if (text == null) return const CommandResult.failed('No code block');
+      final l = writeL10nOf(s);
+      if (text == null) return CommandResult.failed(l.commandToastNoCodeBlock);
       await Clipboard.setData(ClipboardData(text: text));
-      s.toasts.show('Code copied');
+      s.toasts.show(l.commandToastCodeCopied);
       return const CommandResult.ok();
     },
   ),
@@ -804,19 +843,20 @@ CommandResult insertPickedImages(
   WriteDocumentController d,
   List<PickedImage> picked,
 ) {
+  final l = writeL10nOf(d.services);
   final images = [
     for (final p in picked)
       (src: d.images.startUpload(p), alt: '', title: null),
   ];
   final ids = d.commands.insertImages(
     images,
-    label: images.length == 1 ? 'Insert image' : 'Insert images',
+    label: l.undoInsertImages(images.length),
   );
   if (ids.isEmpty) {
     for (final i in images) {
       d.images.cancel(i.src);
     }
-    return const CommandResult.failed('Images can’t be inserted here');
+    return CommandResult.failed(l.commandToastImagesCannotBeInserted);
   }
   return CommandResult.ok({'ids': ids});
 }
@@ -833,7 +873,8 @@ Future<CommandResult> _linkEditor(
     d.editor.select(DeltaSelection(existing.start, existing.end));
     sel = d.editor.selection;
   }
-  if (sel == null) return const CommandResult.failed('Place the cursor first');
+  final l = writeL10n(c);
+  if (sel == null) return CommandResult.failed(l.commandToastPlaceCursorFirst);
   final blocks = d.editor.mirror.blocksInSelection(sel);
   final single = blocks.length <= 1;
   final text = sel.isCollapsed
@@ -869,6 +910,7 @@ Future<CommandResult> _linkEditor(
           start: range.start,
           length: range.end - range.start,
         ),
+        l.reasonNotAvailable,
       );
     case ApplyLink(:final url, text: final newText):
       try {
@@ -880,6 +922,7 @@ Future<CommandResult> _linkEditor(
             start: range.start,
             length: range.end - range.start,
           ),
+          l.reasonNotAvailable,
         );
       } on EditorCommandError catch (e) {
         return CommandResult.failed(e.message);
@@ -921,9 +964,9 @@ Future<void> openWriteLink(
   final uri = Uri.tryParse(url);
   final ok = await confirmDialog(
     c,
-    title: 'Open external link?',
+    title: writeL10n(c).commandDialogOpenExternalLinkTitle,
     description: uri?.host.isNotEmpty == true ? '${uri!.host}\n$url' : url,
-    confirmLabel: 'Open',
+    confirmLabel: writeL10n(c).commandDialogOpenExternalLinkConfirm,
   );
   if (ok) await s.crossApp.openExternal(url);
 }
@@ -937,8 +980,8 @@ List<Command<CommandArgs>> documentCommands(
 ) => [
   WriteCommand(
     'write.doc.pageSetup',
-    label: 'Page setup…',
-    categoryName: 'File',
+    label: (l) => l.cmdDocPageSetup,
+    categoryName: (l) => l.categoryFile,
     argsSchema: const JsonSchema.object(
       properties: {
         'tab': JsonSchema.string(enumValues: ['page', 'headerFooter']),
@@ -968,8 +1011,8 @@ List<Command<CommandArgs>> documentCommands(
   ),
   WriteCommand(
     'write.doc.setPageSetup',
-    label: 'Change page setup',
-    categoryName: 'File',
+    label: (l) => l.cmdDocSetPageSetup,
+    categoryName: (l) => l.categoryFile,
     requiredRole: Role.editor,
     isUndoable: true,
     showInPalette: false,
@@ -984,14 +1027,18 @@ List<Command<CommandArgs>> documentCommands(
       final setup = PageSetup.fromJson(Map<String, dynamic>.from(raw));
       final errors = setup.validate(themeMargins: d.themeMargins);
       if (errors.isNotEmpty) return CommandResult.failed(errors.join('; '));
-      await d.setMeta('pageSetup', setup, label: 'Change page setup');
+      await d.setMeta(
+        'pageSetup',
+        setup,
+        label: writeL10nOf(s).undoChangePageSetup,
+      );
       return const CommandResult.ok();
     },
   ),
   WriteCommand(
     'write.doc.setLayout',
-    label: 'Page layout',
-    categoryName: 'View',
+    label: (l) => l.cmdDocSetLayout,
+    categoryName: (l) => l.categoryView,
     requiredRole: Role.editor,
     isUndoable: true,
     argsSchema: const JsonSchema.object(
@@ -1004,9 +1051,9 @@ List<Command<CommandArgs>> documentCommands(
     checked: (d, a) => a.string('layout') == null
         ? null
         : d.pageSetup.layout.name == a.string('layout'),
-    undoLabelOf: (a) => a.string('layout') == 'pages'
-        ? 'Switch to Pages'
-        : 'Switch to Pageless',
+    undoLabelOf: (l, a) => a.string('layout') == 'pages'
+        ? l.undoSwitchToPages
+        : l.undoSwitchToPageless,
     run: (ctx, d, a) async {
       final layout = a.string('layout') == 'pages'
           ? PageLayoutMode.pages
@@ -1017,16 +1064,16 @@ List<Command<CommandArgs>> documentCommands(
         'pageSetup',
         PageSetup.fromJson(json),
         label: layout == PageLayoutMode.pages
-            ? 'Switch to Pages'
-            : 'Switch to Pageless',
+            ? writeL10nOf(s).undoSwitchToPages
+            : writeL10nOf(s).undoSwitchToPageless,
       );
       return const CommandResult.ok();
     },
   ),
   WriteCommand(
     'write.doc.languageDialog',
-    label: 'Language…',
-    categoryName: 'File',
+    label: (l) => l.cmdDocLanguageDialog,
+    categoryName: (l) => l.categoryFile,
     requiredRole: Role.editor,
     enabled: (d, a) => d.canChangeSettings,
     run: (ctx, d, a) async {
@@ -1044,8 +1091,8 @@ List<Command<CommandArgs>> documentCommands(
   ),
   WriteCommand(
     'write.doc.setLanguage',
-    label: 'Change language',
-    categoryName: 'File',
+    label: (l) => l.cmdDocSetLanguage,
+    categoryName: (l) => l.categoryFile,
     requiredRole: Role.editor,
     isUndoable: true,
     showInPalette: false,
@@ -1058,15 +1105,15 @@ List<Command<CommandArgs>> documentCommands(
       await d.setMeta(
         'language',
         a.requireString('language'),
-        label: 'Change language',
+        label: writeL10nOf(s).undoChangeLanguage,
       );
       return const CommandResult.ok();
     },
   ),
   WriteCommand(
     'write.doc.setFrontMatter',
-    label: 'Change front matter',
-    categoryName: 'File',
+    label: (l) => l.cmdDocSetFrontMatter,
+    categoryName: (l) => l.categoryFile,
     requiredRole: Role.editor,
     isUndoable: true,
     showInPalette: false,
@@ -1080,26 +1127,27 @@ List<Command<CommandArgs>> documentCommands(
       await d.setMeta(
         'frontMatter',
         text.isEmpty ? null : text,
-        label: 'Change front matter',
+        label: writeL10nOf(s).undoChangeFrontMatter,
       );
       return const CommandResult.ok();
     },
   ),
   WriteCommand(
     'write.doc.properties',
-    label: 'Details',
-    categoryName: 'File',
+    label: (l) => l.cmdDocProperties,
+    categoryName: (l) => l.categoryFile,
     run: (ctx, d, a) async {
       final c = _ctx(ctx);
       if (c == null) return const CommandResult.failed('No window');
       d.insights.refresh();
       final i = d.item;
-      var location = 'My Drive';
+      final myDrive = writeL10n(c).commandDialogMyDrive;
+      var location = myDrive;
       if (i?.parentUuid != null) {
         try {
           final path = await s.drive.path(i!.uuid);
           if (path.isNotEmpty) {
-            location = ['My Drive', for (final p in path) p.name].join(' › ');
+            location = [myDrive, for (final p in path) p.name].join(' › ');
           }
         } catch (_) {}
       }
@@ -1109,7 +1157,7 @@ List<Command<CommandArgs>> documentCommands(
         item: i,
         location: location,
         words: d.insights.stats.words,
-        language: languageName(d.language),
+        language: languageName(d.language, writeL10n(c)),
         themeName: d.documentTheme.option.name,
         revision: d.session.sync?.revision ?? 0,
         frontMatter: d.frontMatter,
@@ -1126,9 +1174,9 @@ List<Command<CommandArgs>> documentCommands(
   ),
   WriteCommand(
     'write.doc.settings',
-    label: 'Settings…',
-    descriptionText: 'Document language, layout, theme and page setup',
-    categoryName: 'File',
+    label: (l) => l.cmdDocSettings,
+    descriptionText: (l) => l.cmdDocSettingsDescription,
+    categoryName: (l) => l.categoryFile,
     argsSchema: const JsonSchema.object(
       properties: {
         'tab': JsonSchema.string(
@@ -1145,8 +1193,8 @@ List<Command<CommandArgs>> documentCommands(
   ),
   WriteCommand(
     'write.theme.openPicker',
-    label: 'Choose theme…',
-    categoryName: 'Format',
+    label: (l) => l.cmdThemeOpenPicker,
+    categoryName: (l) => l.categoryFormat,
     run: (ctx, d, a) async {
       final c = _ctx(ctx);
       if (c == null) return const CommandResult.failed('No window');
@@ -1201,8 +1249,8 @@ List<Command<CommandArgs>> documentCommands(
   ),
   WriteCommand(
     'write.theme.apply',
-    label: 'Apply theme',
-    categoryName: 'Format',
+    label: (l) => l.cmdThemeApply,
+    categoryName: (l) => l.categoryFormat,
     requiredRole: Role.editor,
     isUndoable: true,
     showInPalette: false,
@@ -1221,7 +1269,11 @@ List<Command<CommandArgs>> documentCommands(
       final id = a.string('themeId') ?? a.string('themeUuid');
       if (id == null) {
         // `null` = *Use my default theme* (Write 06 §11).
-        await d.setMeta('themeId', null, label: 'Use my default theme');
+        await d.setMeta(
+          'themeId',
+          null,
+          label: writeL10nOf(s).undoUseDefaultTheme,
+        );
         return const CommandResult.ok();
       }
       final option =
@@ -1229,25 +1281,29 @@ List<Command<CommandArgs>> documentCommands(
           await themes.load(id, viaDocumentUuid: d.session.documentUuid?.uuid);
       if (option == null) return const CommandResult.failed('Unknown theme');
       if (d.themeUuid == option.uuid) return const CommandResult.ok();
-      await d.setMeta('themeId', option.uuid, label: 'Change theme');
+      await d.setMeta(
+        'themeId',
+        option.uuid,
+        label: writeL10nOf(s).undoChangeTheme,
+      );
       return const CommandResult.ok();
     },
   ),
   WriteCommand(
     'write.theme.setUserDefault',
-    label: 'Save as my default theme',
-    categoryName: 'Format',
+    label: (l) => l.cmdThemeSetUserDefault,
+    categoryName: (l) => l.categoryFormat,
     run: (ctx, d, a) async {
       final option = d.documentTheme.option;
       await s.prefs.setWriteDefault(defaultThemeKey, option.uuid);
-      s.toasts.show('“${option.name}” is now your default theme');
+      s.toasts.show(writeL10nOf(s).commandToastDefaultTheme(option.name));
       return const CommandResult.ok();
     },
   ),
   WriteCommand(
     'write.tools.wordCount',
-    label: 'Word count',
-    categoryName: 'Tools',
+    label: (l) => l.cmdToolsWordCount,
+    categoryName: (l) => l.categoryTools,
     defaultBindings: const [KeyBinding('C', mod: _mod, shift: true)],
     run: (ctx, d, a) async {
       final c = _ctx(ctx);
@@ -1264,8 +1320,8 @@ List<Command<CommandArgs>> documentCommands(
   ),
   WriteCommand(
     'write.tools.viewMarkdown',
-    label: 'View Markdown source',
-    categoryName: 'Tools',
+    label: (l) => l.cmdToolsViewMarkdown,
+    categoryName: (l) => l.categoryTools,
     enabled: (d, a) => d.copyAllowed,
     run: (ctx, d, a) async {
       final markdown = const MarkdownCodec().exportMarkdown(
@@ -1284,8 +1340,8 @@ List<Command<CommandArgs>> documentCommands(
   ),
   WriteGlobalCommand(
     'write.help.markdownGuide',
-    label: 'Markdown & formatting guide',
-    categoryName: 'Help',
+    label: (l) => l.cmdHelpMarkdownGuide,
+    categoryName: (l) => l.categoryHelp,
     run: (ctx, a) async {
       final c = ctx.dialogContext;
       if (c != null) await showMarkdownGuide(c);
@@ -1298,11 +1354,11 @@ List<Command<CommandArgs>> documentCommands(
 // Preferences (Tools › Preferences, `UserPreferences.writeDefaults`).
 
 List<Command<CommandArgs>> prefCommands(ShellServices s) {
-  WriteGlobalCommand pref(String id, String key, String label) =>
+  WriteGlobalCommand pref(String id, String key, WriteText label) =>
       WriteGlobalCommand(
         id,
         label: label,
-        categoryName: 'Preferences',
+        categoryName: (l) => l.categoryPreferences,
         argsSchema: const JsonSchema.object(
           properties: {'enabled': JsonSchema.boolean()},
         ),
@@ -1318,29 +1374,33 @@ List<Command<CommandArgs>> prefCommands(ShellServices s) {
     pref(
       'write.prefs.setMarkdownShortcuts',
       'markdownShortcuts',
-      'Markdown shortcuts',
+      (l) => l.cmdPrefsSetMarkdownShortcuts,
     ),
     pref(
       'write.prefs.setSmartTypography',
       'smartQuotes',
-      'Smart quotes and dashes',
+      (l) => l.cmdPrefsSetSmartTypography,
     ),
-    pref('write.prefs.setAutoPair', 'autoPairBrackets', 'Auto-pair brackets'),
-    pref('write.prefs.setAutolink', 'autolink', 'Automatically detect links'),
+    pref(
+      'write.prefs.setAutoPair',
+      'autoPairBrackets',
+      (l) => l.cmdPrefsSetAutoPair,
+    ),
+    pref('write.prefs.setAutolink', 'autolink', (l) => l.cmdPrefsSetAutolink),
     pref(
       'write.prefs.setCopyAsMarkdown',
       'copyAsMarkdown',
-      'Copy plain text as Markdown',
+      (l) => l.cmdPrefsSetCopyAsMarkdown,
     ),
     pref(
       'write.prefs.setSelectionToolbar',
       'selectionToolbar',
-      'Show toolbar on selection',
+      (l) => l.cmdPrefsSetSelectionToolbar,
     ),
     WriteGlobalCommand(
       'write.prefs.setDefaultMode',
-      label: 'Default mode',
-      categoryName: 'Preferences',
+      label: (l) => l.cmdPrefsSetDefaultMode,
+      categoryName: (l) => l.categoryPreferences,
       argsSchema: const JsonSchema.object(
         properties: {
           'mode': JsonSchema.string(

@@ -4,6 +4,7 @@ import 'package:shad/shad.dart';
 import 'package:wonky_ui/wonky_ui.dart';
 import 'package:wonky_write_core/wonky_write_core.dart' show InlineMarkdown;
 
+import '../../l10n/write_l10n.dart';
 import '../editor/model/table_model.dart';
 
 /// Opens the table editor (`write.dialog.tableEditor`, Write 04 §18.4) on
@@ -42,20 +43,21 @@ class _TableSizeDialogState extends State<TableSizeDialog> {
 
   @override
   Widget build(BuildContext context) {
+    final l = writeL10n(context);
     final theme = ShadTheme.of(context);
     return ShadDialog(
       key: const ValueKey<String>('write.dialog.tableSize'),
-      title: const Text('Insert table'),
+      title: Text(l.tableEditorInsertTitle),
       constraints: const BoxConstraints(maxWidth: 380),
       actions: [
         ShadButton.outline(
           onPressed: () => Navigator.of(context).pop(),
-          child: const Text('Cancel'),
+          child: Text(l.commonCancel),
         ),
         ShadButton(
           key: const ValueKey<String>('write.dialog.tableSize.insert'),
           onPressed: _insert,
-          child: const Text('Insert'),
+          child: Text(l.commonInsert),
         ),
       ],
       child: CallbackShortcuts(
@@ -65,10 +67,13 @@ class _TableSizeDialogState extends State<TableSizeDialog> {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             const SizedBox(height: 4),
-            Text('Rows', style: theme.textTheme.small),
+            ExcludeSemantics(
+              child: Text(l.tableEditorRows, style: theme.textTheme.small),
+            ),
             const SizedBox(height: 4),
             WonkyNumberStepper(
               key: const ValueKey<String>('write.dialog.tableSize.rows'),
+              semanticLabel: l.tableEditorRows,
               value: _rows,
               min: 2,
               max: 2000,
@@ -76,14 +81,17 @@ class _TableSizeDialogState extends State<TableSizeDialog> {
             ),
             const SizedBox(height: 4),
             Text(
-              'Including the header row',
+              l.tableEditorIncludingHeader,
               style: theme.textTheme.muted.copyWith(fontSize: 12),
             ),
             const SizedBox(height: 12),
-            Text('Columns', style: theme.textTheme.small),
+            ExcludeSemantics(
+              child: Text(l.tableEditorColumns, style: theme.textTheme.small),
+            ),
             const SizedBox(height: 4),
             WonkyNumberStepper(
               key: const ValueKey<String>('write.dialog.tableSize.cols'),
+              semanticLabel: l.tableEditorColumns,
               value: _cols,
               min: 1,
               max: 64,
@@ -277,21 +285,24 @@ class _TableEditorDialogState extends State<TableEditorDialog> {
     }
     final discard = await showShadDialog<bool>(
       context: context,
-      builder: (context) => ShadDialog.alert(
-        key: const ValueKey<String>('write.dialog.discardTable'),
-        title: const Text('Discard changes to this table?'),
-        actions: [
-          ShadButton.outline(
-            onPressed: () => Navigator.of(context).pop(false),
-            child: const Text('Keep editing'),
-          ),
-          ShadButton.destructive(
-            key: const ValueKey<String>('write.dialog.discardTable.discard'),
-            onPressed: () => Navigator.of(context).pop(true),
-            child: const Text('Discard'),
-          ),
-        ],
-      ),
+      builder: (context) {
+        final l = writeL10n(context);
+        return ShadDialog.alert(
+          key: const ValueKey<String>('write.dialog.discardTable'),
+          title: Text(l.tableEditorDiscardTitle),
+          actions: [
+            ShadButton.outline(
+              onPressed: () => Navigator.of(context).pop(false),
+              child: Text(l.tableEditorKeepEditing),
+            ),
+            ShadButton.destructive(
+              key: const ValueKey<String>('write.dialog.discardTable.discard'),
+              onPressed: () => Navigator.of(context).pop(true),
+              child: Text(l.tableEditorDiscard),
+            ),
+          ],
+        );
+      },
     );
     if (discard == true && mounted) Navigator.of(context).pop();
   }
@@ -382,6 +393,7 @@ class _TableEditorDialogState extends State<TableEditorDialog> {
 
   @override
   Widget build(BuildContext context) {
+    final l = writeL10n(context);
     final theme = ShadTheme.of(context);
     final cs = theme.colorScheme;
     final size = MediaQuery.sizeOf(context);
@@ -422,7 +434,7 @@ class _TableEditorDialogState extends State<TableEditorDialog> {
     );
     return ShadDialog(
       key: const ValueKey<String>('write.dialog.tableEditor'),
-      title: const Text('Edit table'),
+      title: Text(l.tableEditorTitle),
       closeIconData: null,
       constraints: BoxConstraints(
         maxWidth: narrow ? size.width : (size.width * 0.9).clamp(480, 1100),
@@ -432,22 +444,29 @@ class _TableEditorDialogState extends State<TableEditorDialog> {
         Padding(
           padding: const EdgeInsets.only(right: 8),
           child: Center(
-            child: Text(
-              '${_draft.rowCount} × ${_draft.columnCount}',
-              key: const ValueKey<String>('write.dialog.tableEditor.size'),
-              style: theme.textTheme.muted,
+            child: Semantics(
+              label: l.tableEditorSizeSemantic(
+                _draft.rowCount,
+                _draft.columnCount,
+              ),
+              excludeSemantics: true,
+              child: Text(
+                l.tableEditorSize(_draft.rowCount, _draft.columnCount),
+                key: const ValueKey<String>('write.dialog.tableEditor.size'),
+                style: theme.textTheme.muted,
+              ),
             ),
           ),
         ),
         ShadButton.outline(
           key: const ValueKey<String>('write.dialog.tableEditor.cancel'),
           onPressed: _cancel,
-          child: const Text('Cancel'),
+          child: Text(l.commonCancel),
         ),
         ShadButton(
           key: const ValueKey<String>('write.dialog.tableEditor.done'),
           onPressed: _done,
-          child: const Text('Done'),
+          child: Text(l.commonDone),
         ),
       ],
       child: body,
@@ -455,6 +474,7 @@ class _TableEditorDialogState extends State<TableEditorDialog> {
   }
 
   Widget _toolbar(BuildContext context) {
+    final l = writeL10n(context);
     Widget button(
       String key,
       IconData icon,
@@ -488,7 +508,7 @@ class _TableEditorDialogState extends State<TableEditorDialog> {
         button(
           'rowAbove',
           LucideIcons.betweenHorizontalEnd,
-          'Insert row above',
+          l.tableEditorInsertRowAbove,
           _row == 0
               ? null
               : () => _structural(_draft.insertRow(_row), row: _row),
@@ -496,13 +516,13 @@ class _TableEditorDialogState extends State<TableEditorDialog> {
         button(
           'rowBelow',
           LucideIcons.betweenHorizontalStart,
-          'Insert row below',
+          l.tableEditorInsertRowBelow,
           () => _structural(_draft.insertRow(_row + 1), row: _row + 1),
         ),
         button(
           'colLeft',
           LucideIcons.betweenVerticalEnd,
-          'Insert column left',
+          l.tableEditorInsertColumnLeft,
           _draft.columnCount >= 64
               ? null
               : () => _structural(_draft.insertColumn(_col), col: _col),
@@ -510,7 +530,7 @@ class _TableEditorDialogState extends State<TableEditorDialog> {
         button(
           'colRight',
           LucideIcons.betweenVerticalStart,
-          'Insert column right',
+          l.tableEditorInsertColumnRight,
           _draft.columnCount >= 64
               ? null
               : () => _structural(_draft.insertColumn(_col + 1), col: _col + 1),
@@ -519,7 +539,7 @@ class _TableEditorDialogState extends State<TableEditorDialog> {
         button(
           'deleteRow',
           LucideIcons.rows3,
-          'Delete row',
+          l.tableEditorDeleteRow,
           _row == 0 || _draft.rowCount <= 1
               ? null
               : () => _structural(_draft.deleteRow(_row), row: _row - 1),
@@ -527,7 +547,7 @@ class _TableEditorDialogState extends State<TableEditorDialog> {
         button(
           'deleteColumn',
           LucideIcons.columns3,
-          'Delete column',
+          l.tableEditorDeleteColumn,
           _draft.columnCount <= 1
               ? null
               : () => _structural(_draft.deleteColumn(_col), col: _col - 1),
@@ -536,7 +556,7 @@ class _TableEditorDialogState extends State<TableEditorDialog> {
         button(
           'moveUp',
           LucideIcons.arrowUp,
-          'Move row up',
+          l.tableEditorMoveRowUp,
           _row <= 1
               ? null
               : () =>
@@ -545,7 +565,7 @@ class _TableEditorDialogState extends State<TableEditorDialog> {
         button(
           'moveDown',
           LucideIcons.arrowDown,
-          'Move row down',
+          l.tableEditorMoveRowDown,
           _row == 0 || _row >= _draft.rowCount - 1
               ? null
               : () =>
@@ -554,7 +574,7 @@ class _TableEditorDialogState extends State<TableEditorDialog> {
         button(
           'moveLeft',
           LucideIcons.arrowLeft,
-          'Move column left',
+          l.tableEditorMoveColumnLeft,
           _col == 0
               ? null
               : () => _structural(
@@ -565,7 +585,7 @@ class _TableEditorDialogState extends State<TableEditorDialog> {
         button(
           'moveRight',
           LucideIcons.arrowRight,
-          'Move column right',
+          l.tableEditorMoveColumnRight,
           _col >= _draft.columnCount - 1
               ? null
               : () => _structural(
@@ -575,9 +595,13 @@ class _TableEditorDialogState extends State<TableEditorDialog> {
         ),
         sep(),
         for (final (a, icon, label) in [
-          (TableAlign.left, LucideIcons.alignLeft, 'Align left'),
-          (TableAlign.center, LucideIcons.alignCenter, 'Align center'),
-          (TableAlign.right, LucideIcons.alignRight, 'Align right'),
+          (TableAlign.left, LucideIcons.alignLeft, l.tableEditorAlignLeft),
+          (
+            TableAlign.center,
+            LucideIcons.alignCenter,
+            l.tableEditorAlignCenter,
+          ),
+          (TableAlign.right, LucideIcons.alignRight, l.tableEditorAlignRight),
         ])
           ShadTooltip(
             builder: (_) => Text(label),
@@ -595,26 +619,36 @@ class _TableEditorDialogState extends State<TableEditorDialog> {
             ),
           ),
         sep(),
-        button('bold', LucideIcons.bold, 'Bold', () => _wrap('**')),
-        button('italic', LucideIcons.italic, 'Italic', () => _wrap('*')),
+        button('bold', LucideIcons.bold, l.cmdFormatBold, () => _wrap('**')),
+        button(
+          'italic',
+          LucideIcons.italic,
+          l.cmdFormatItalic,
+          () => _wrap('*'),
+        ),
         button(
           'strike',
           LucideIcons.strikethrough,
-          'Strikethrough',
+          l.cmdFormatStrikethrough,
           () => _wrap('~~'),
         ),
-        button('code', LucideIcons.code, 'Code', () => _wrap('`')),
+        button(
+          'code',
+          LucideIcons.code,
+          l.cmdFormatInlineCode,
+          () => _wrap('`'),
+        ),
         sep(),
         button(
           'undo',
           LucideIcons.undo2,
-          'Undo',
+          l.commonUndo,
           _undo.isEmpty ? null : _undoDraft,
         ),
         button(
           'redo',
           LucideIcons.redo2,
-          'Redo',
+          l.tableEditorRedo,
           _redo.isEmpty ? null : _redoDraft,
         ),
       ],
@@ -622,18 +656,9 @@ class _TableEditorDialogState extends State<TableEditorDialog> {
   }
 
   Widget _grid(BuildContext context) {
+    final l = writeL10n(context);
     final theme = ShadTheme.of(context);
     final cs = theme.colorScheme;
-    String letter(int c) {
-      var n = c;
-      var s = '';
-      do {
-        s = String.fromCharCode(65 + n % 26) + s;
-        n = n ~/ 26 - 1;
-      } while (n >= 0);
-      return s;
-    }
-
     final gutter = TextStyle(
       fontSize: 11,
       color: cs.mutedForeground,
@@ -650,12 +675,18 @@ class _TableEditorDialogState extends State<TableEditorDialog> {
           children: [
             const SizedBox(height: 24),
             for (var c = 0; c < _draft.columnCount; c++)
-              GestureDetector(
-                onTap: () {
-                  setState(() => _col = c);
-                  _focusCell();
-                },
-                child: Center(child: Text(letter(c), style: gutter)),
+              Semantics(
+                button: true,
+                label: l.tableEditorSelectColumn(_letter(c)),
+                excludeSemantics: true,
+                child: GestureDetector(
+                  behavior: HitTestBehavior.opaque,
+                  onTap: () {
+                    setState(() => _col = c);
+                    _focusCell();
+                  },
+                  child: Center(child: Text(_letter(c), style: gutter)),
+                ),
               ),
           ],
         ),
@@ -665,12 +696,21 @@ class _TableEditorDialogState extends State<TableEditorDialog> {
               color: r == 0 ? cs.muted.withValues(alpha: 0.5) : null,
             ),
             children: [
-              GestureDetector(
-                onTap: () {
-                  setState(() => _row = r);
-                  _focusCell();
-                },
-                child: Center(child: Text('${r + 1}', style: gutter)),
+              Semantics(
+                button: true,
+                label: l.tableEditorSelectRow(r + 1),
+                excludeSemantics: true,
+                child: GestureDetector(
+                  behavior: HitTestBehavior.opaque,
+                  onTap: () {
+                    setState(() => _row = r);
+                    _focusCell();
+                  },
+                  child: SizedBox(
+                    height: 34,
+                    child: Center(child: Text('${r + 1}', style: gutter)),
+                  ),
+                ),
               ),
               for (var c = 0; c < _draft.columnCount; c++) _cell(context, r, c),
             ],
@@ -679,7 +719,19 @@ class _TableEditorDialogState extends State<TableEditorDialog> {
     );
   }
 
+  /// The column letter: A … Z, AA ….
+  static String _letter(int c) {
+    var n = c;
+    var s = '';
+    do {
+      s = String.fromCharCode(65 + n % 26) + s;
+      n = n ~/ 26 - 1;
+    } while (n >= 0);
+    return s;
+  }
+
   Widget _cell(BuildContext context, int r, int c) {
+    final l = writeL10n(context);
     final theme = ShadTheme.of(context);
     final cs = theme.colorScheme;
     final selected = r == _row && c == _col;
@@ -696,20 +748,28 @@ class _TableEditorDialogState extends State<TableEditorDialog> {
           width: 2,
         ),
       ),
-      child: EditableText(
-        key: ValueKey<String>('write.dialog.tableEditor.cell.$r.$c'),
-        controller: _controller(r, c),
-        focusNode: _node(r, c),
-        maxLines: 1,
-        textAlign: align,
-        style: theme.textTheme.small.copyWith(
-          fontWeight: r == 0 ? FontWeight.w600 : FontWeight.w400,
-          color: cs.foreground,
+      child: Semantics(
+        label: r == 0
+            ? l.tableEditorHeaderCell(_letter(c))
+            : l.tableEditorCell(r + 1, _letter(c)),
+        textField: true,
+        child: EditableText(
+          key: ValueKey<String>('write.dialog.tableEditor.cell.$r.$c'),
+          controller: _controller(r, c),
+          focusNode: _node(r, c),
+          maxLines: 1,
+          textAlign: align,
+          style: theme.textTheme.small.copyWith(
+            fontWeight: r == 0 ? FontWeight.w600 : FontWeight.w400,
+            color: cs.foreground,
+          ),
+          cursorColor: cs.foreground,
+          backgroundCursorColor: cs.mutedForeground,
+          selectionColor: cs.selection,
+          inputFormatters: [
+            FilteringTextInputFormatter.deny(RegExp(r'[\n\r]')),
+          ],
         ),
-        cursorColor: cs.foreground,
-        backgroundCursorColor: cs.mutedForeground,
-        selectionColor: cs.selection,
-        inputFormatters: [FilteringTextInputFormatter.deny(RegExp(r'[\n\r]'))],
       ),
     );
   }

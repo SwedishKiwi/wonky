@@ -6,6 +6,7 @@ import 'package:wonky_core/wonky_core.dart'
 import 'package:wonky_ui/wonky_ui.dart';
 import 'package:wonky_write_core/wonky_write_core.dart' show SuggestionInfo;
 
+import '../../l10n/write_l10n.dart';
 import '../document/write_document_session.dart';
 
 /// Runs a Write collaboration command through the dispatcher (undo
@@ -31,7 +32,7 @@ Future<void> invokeCollabCommand(
       context: context,
     );
   } catch (e) {
-    s.toasts.error('Could not complete the action', description: '$e');
+    s.toasts.error(writeL10nOf(s).suggestionActionFailed, description: '$e');
   }
 }
 
@@ -55,18 +56,18 @@ class SuggestionCard extends StatelessWidget {
 
   static String keyOf(String id) => 'write.suggestion.$id';
 
-  String _author() {
+  String _author(WriteLocalizations l) {
     final s = suggestion;
     final thread = session.suggestions.threadOf(s.id);
     final name = thread?.createdBy?.displayName;
     if (name != null) return name;
     if (s.by == session.userUuid) {
-      return session.services.me?.displayName ?? 'You';
+      return session.services.me?.displayName ?? l.suggestionYou;
     }
     for (final p in session.presence.participants) {
       if (p.userUuid.uuid == s.by) return p.displayName;
     }
-    return 'Someone';
+    return l.suggestionSomeone;
   }
 
   String _time(BuildContext context) {
@@ -76,10 +77,11 @@ class SuggestionCard extends StatelessWidget {
       WonkyAppLocalizations,
     );
     if (l != null) return timeAgo(l, at);
+    final w = writeL10n(context);
     final diff = DateTime.now().difference(at);
-    if (diff.inMinutes < 1) return 'Just now';
-    if (diff.inHours < 1) return '${diff.inMinutes} min ago';
-    if (diff.inDays < 1) return '${diff.inHours} h ago';
+    if (diff.inMinutes < 1) return w.suggestionJustNow;
+    if (diff.inHours < 1) return w.suggestionMinutesAgo(diff.inMinutes);
+    if (diff.inDays < 1) return w.suggestionHoursAgo(diff.inHours);
     return '${at.year}-${at.month.toString().padLeft(2, '0')}-'
         '${at.day.toString().padLeft(2, '0')}';
   }
@@ -92,6 +94,12 @@ class SuggestionCard extends StatelessWidget {
     final color = theme.colorScheme.presence(presenceColorIndex(s.by));
     final key = keyOf(s.id);
     final own = c.isOwn(s);
+    final l = writeL10n(context);
+    final author = _author(l);
+    final via = s.via == 'mcp' ? l.suggestionViaMcp : l.suggestionViaAi;
+    final rejectLabel = own && !c.canDecide
+        ? l.suggestionWithdraw
+        : l.cmdSuggestionsReject;
     return GestureDetector(
       key: ValueKey<String>(key),
       behavior: HitTestBehavior.opaque,
@@ -109,14 +117,14 @@ class SuggestionCard extends StatelessWidget {
             children: [
               Row(
                 children: [
-                  WonkyAvatar(name: _author(), color: color, size: 22),
+                  WonkyAvatar(name: author, color: color, size: 22),
                   const SizedBox(width: 8),
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          _author(),
+                          author,
                           style: theme.textTheme.small,
                           overflow: TextOverflow.ellipsis,
                         ),
@@ -129,13 +137,10 @@ class SuggestionCard extends StatelessWidget {
                   ),
                   if (s.via != null)
                     ShadTooltip(
-                      builder: (_) => Text(
-                        s.via == 'mcp'
-                            ? 'Suggested via MCP'
-                            : 'Suggested by AI',
-                      ),
+                      builder: (_) => Text(via),
                       child: Icon(
                         LucideIcons.sparkles,
+                        semanticLabel: via,
                         size: 14,
                         color: theme.colorScheme.mutedForeground,
                       ),
@@ -159,13 +164,13 @@ class SuggestionCard extends StatelessWidget {
                   children: [
                     if (c.canDecide)
                       ShadTooltip(
-                        builder: (_) => const Text('Accept suggestion'),
+                        builder: (_) => Text(l.cmdSuggestionsAccept),
                         child: ShadIconButton.ghost(
                           key: ValueKey<String>('$key.accept'),
                           width: 30,
                           height: 30,
                           iconSize: 16,
-                          semanticLabel: 'Accept suggestion',
+                          semanticLabel: l.cmdSuggestionsAccept,
                           icon: const Icon(LucideIcons.check),
                           onPressed: () => invokeCollabCommand(
                             session,
@@ -180,19 +185,13 @@ class SuggestionCard extends StatelessWidget {
                       ),
                     if (c.canReject(s))
                       ShadTooltip(
-                        builder: (_) => Text(
-                          own && !c.canDecide
-                              ? 'Withdraw suggestion'
-                              : 'Reject suggestion',
-                        ),
+                        builder: (_) => Text(rejectLabel),
                         child: ShadIconButton.ghost(
                           key: ValueKey<String>('$key.reject'),
                           width: 30,
                           height: 30,
                           iconSize: 16,
-                          semanticLabel: own && !c.canDecide
-                              ? 'Withdraw suggestion'
-                              : 'Reject suggestion',
+                          semanticLabel: rejectLabel,
                           icon: const Icon(LucideIcons.x),
                           onPressed: () => invokeCollabCommand(
                             session,

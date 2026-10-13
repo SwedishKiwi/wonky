@@ -6,55 +6,101 @@ import 'package:serverpod/serverpod.dart';
 import '../common/actor.dart';
 import '../common/errors.dart';
 import '../common/models.dart';
+import '../common/json.dart';
 import '../common/time.dart';
 import '../users/user_service.dart';
-
-/// Sends notification digests by email. The default implementation logs the
-/// digest; deployments plug in their mail provider with [NotificationService.mailer].
-abstract interface class NotificationMailer {
-  Future<void> sendDigest(
-    Session session, {
-    required String email,
-    required String displayName,
-    required List<NotificationView> notifications,
-  });
-}
-
-class LoggingNotificationMailer implements NotificationMailer {
-  const LoggingNotificationMailer();
-
-  @override
-  Future<void> sendDigest(
-    Session session, {
-    required String email,
-    required String displayName,
-    required List<NotificationView> notifications,
-  }) async {
-    session.log(
-      'Notification digest with ${notifications.length} notification(s) '
-      'not sent: no mail provider is configured.',
-    );
-  }
-}
+import '../../generated/future_calls.dart';
+import '../../web/routes/app_config_route.dart' show ServerConfigPublicUrl;
+import 'email/email_sender.dart';
+import 'email/notification_emails.dart';
 
 /// In-app notifications (specs/07 §4).
 abstract final class NotificationService {
-  static NotificationMailer mailer = const LoggingNotificationMailer();
+  static EmailSender? _emailSender;
+
+  /// Delivers notification emails; [EmailSenders.fromServer] by default
+  /// (logs in development). Tests install a fake.
+  static EmailSender get emailSender =>
+      _emailSender ??= EmailSenders.fromServer();
+  static set emailSender(EmailSender? sender) => _emailSender = sender;
+
+  /// Schedules the immediate email of a notification. By default a future
+  /// call without delay ([NotificationEmailFutureCall]); tests replace it to
+  /// run [sendImmediate] inline.
+  static Future<void> Function(Session session, int notificationId)
+  scheduleImmediateEmail = _scheduleViaFutureCall;
+
+  static Future<void> _scheduleViaFutureCall(
+    Session session,
+    int notificationId,
+  ) => session.serverpod.futureCalls
+      .callWithDelay(Duration.zero)
+      .notificationEmail
+      .send(notificationId);
+
+  /// The public web origin used for links in emails.
+  static Uri webOrigin() {
+    try {
+      final config = Serverpod.instance.config;
+      return (config.webServer ?? config.apiServer).publicUrl;
+    } on Object {
+      return Uri.parse('http://localhost:8082');
+    }
+  }
+
+  static NotificationEmails get _emails =>
+      NotificationEmails(webOrigin: webOrigin());
+
+  /// Kinds that are emailed right away instead of in the digest.
+  static const immediateKinds = {
+    NotificationKind.mention,
+    NotificationKind.assigned,
+  };
 
   static String channel(int userId) => 'notifications:$userId';
 
   /// The preference key (notificationSettings) of a [kind].
   static String settingKey(NotificationKind kind) => switch (kind) {
     NotificationKind.mention => 'mentions',
-    NotificationKind.reply => 'replies',
     NotificationKind.assigned => 'mentions',
+    NotificationKind.reply => 'replies',
     NotificationKind.shared => 'shares',
-    NotificationKind.accessRequest => 'shares',
     NotificationKind.ownershipTransfer => 'shares',
+    NotificationKind.accessRequest => 'accessRequests',
     NotificationKind.suggestion => 'suggestions',
     NotificationKind.suggestionDecided => 'suggestions',
     NotificationKind.scriptFailure => 'scripts',
   };
+
+  /// Older settings stored access requests under `shares`.
+  static const _fallbackKeys = {'accessRequests': 'shares'};
+
+  /// The channel (`inApp`, `email` or `off`) for [kind] in the decoded
+  /// notificationSettings [settings].
+  static String channelOf(
+    Map<String, Object?> settings,
+    NotificationKind kind,
+  ) {
+    final key = settingKey(kind);
+    final value = settings[key] ?? settings[_fallbackKeys[key]];
+    return value == 'email' || value == 'off' ? value as String : 'inApp';
+  }
+
+  /// Whether non-mention emails are batched in the digest (`digest`,
+  /// default true) or sent one by one.
+  static bool digestOf(Map<String, Object?> settings) =>
+      settings['digest'] != false;
+
+  static Future<Map<String, Object?>> _settings(
+    Session session,
+    int userId,
+  ) async {
+    final prefs = await UserPreferences.db.findFirstRow(
+      session,
+      where: (t) => t.userId.equals(userId),
+    );
+    return decodeObject(prefs?.notificationSettings);
+  }
 
   /// Creates a notification for [userId] unless they turned this kind off.
   /// Notifications about one's own actions are never created.
@@ -67,11 +113,8 @@ abstract final class NotificationService {
     Map<String, Object?> payload = const {},
   }) async {
     if (actor != null && actor.userId == userId) return null;
-    final channelSetting = await UserService.notificationChannel(
-      session,
-      userId,
-      settingKey(kind),
-    );
+    final settings = await _settings(session, userId);
+    final channelSetting = channelOf(settings, kind);
     if (channelSetting == 'off') return null;
     final row = await UserNotification.db.insertRow(
       session,
@@ -92,6 +135,18 @@ abstract final class NotificationService {
       channel(userId),
       NotificationSignal(notificationId: row.id),
     );
+    if (channelSetting == 'email' &&
+        (immediateKinds.contains(kind) || !digestOf(settings))) {
+      try {
+        await scheduleImmediateEmail(session, row.id!);
+      } on Object catch (e) {
+        // The digest job picks it up.
+        session.log(
+          'Could not schedule the email of notification ${row.id}: $e',
+          level: LogLevel.warning,
+        );
+      }
+    }
     return row;
   }
 
@@ -210,8 +265,53 @@ abstract final class NotificationService {
     }
   }
 
-  /// Email digest job (every 15 min): unread notifications whose kind the
-  /// user set to "email" and that were not emailed yet.
+  /// Sends the email of one notification (mentions and assignments, or
+  /// every kind when the user turned the digest off). Idempotent: skips
+  /// notifications that were read, already emailed, or whose kind is no
+  /// longer set to email. Returns whether an email was sent.
+  static Future<bool> sendImmediate(
+    Session session,
+    int notificationId, {
+    DateTime? now,
+  }) async {
+    final row = await UserNotification.db.findById(session, notificationId);
+    if (row == null || row.readAt != null || row.emailedAt != null) {
+      return false;
+    }
+    final settings = await _settings(session, row.userId);
+    if (channelOf(settings, row.kind) != 'email') return false;
+    final profile = await UserProfile.db.findById(session, row.userId);
+    if (profile == null) return false;
+    final view = (await _views(session, [row])).single;
+    try {
+      await emailSender.send(
+        session,
+        _emails.single(
+          to: profile.email,
+          displayName: profile.displayName,
+          notification: view,
+        ),
+      );
+    } on Exception catch (e) {
+      // Left unmarked: the next digest retries it.
+      session.log(
+        'Email of notification $notificationId failed: $e',
+        level: LogLevel.warning,
+      );
+      return false;
+    }
+    await UserNotification.db.updateWhere(
+      session,
+      columnValues: (t) => [t.emailedAt(now ?? nowUtc())],
+      where: (t) => t.id.equals(notificationId) & t.emailedAt.equals(null),
+    );
+    return true;
+  }
+
+  /// Email digest job (every 15 min, specs/07 §4): per user, one email with
+  /// the unread notifications of the last two days whose kind is set to
+  /// email and that were not emailed yet (including immediate emails that
+  /// failed). Returns the number of digests sent.
   static Future<int> sendDigests(Session session, {DateTime? now}) async {
     final at = now ?? nowUtc();
     final pending = await UserNotification.db.find(
@@ -229,24 +329,22 @@ abstract final class NotificationService {
     }
     var sent = 0;
     for (final entry in byUser.entries) {
-      final wanted = <UserNotification>[];
-      for (final n in entry.value) {
-        final setting = await UserService.notificationChannel(
-          session,
-          entry.key,
-          settingKey(n.kind),
-        );
-        if (setting == 'email') wanted.add(n);
-      }
+      final settings = await _settings(session, entry.key);
+      final wanted = [
+        for (final n in entry.value)
+          if (channelOf(settings, n.kind) == 'email') n,
+      ];
       if (wanted.isEmpty) continue;
       final profile = await UserProfile.db.findById(session, entry.key);
       if (profile == null) continue;
       try {
-        await mailer.sendDigest(
+        await emailSender.send(
           session,
-          email: profile.email,
-          displayName: profile.displayName,
-          notifications: await _views(session, wanted),
+          _emails.digest(
+            to: profile.email,
+            displayName: profile.displayName,
+            notifications: await _views(session, wanted),
+          ),
         );
       } on Exception catch (e) {
         session.log(
@@ -258,7 +356,9 @@ abstract final class NotificationService {
       await UserNotification.db.updateWhere(
         session,
         columnValues: (t) => [t.emailedAt(at)],
-        where: (t) => t.id.inSet({for (final n in wanted) n.id!}),
+        where: (t) =>
+            t.id.inSet(<int>{for (final n in wanted) n.id!}) &
+            t.emailedAt.equals(null),
       );
       sent++;
     }

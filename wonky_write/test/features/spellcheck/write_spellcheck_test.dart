@@ -1,7 +1,6 @@
 import 'package:dart_quill_delta/dart_quill_delta.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:super_editor/super_editor.dart';
 import 'package:super_editor/super_editor_test.dart';
 import 'package:wonky_write/features/editor/applier/delta_applier.dart';
 import 'package:wonky_write/features/editor/commands/write_editor_commands.dart';
@@ -24,7 +23,8 @@ Future<(EditorHarness, WriteSpellcheck)> _pump(
   final h = EditorHarness(delta);
   final spell = WriteSpellcheck(
     controller: h.controller,
-    dictionaries: _dictionaries,
+    // One per test: futures don't survive a test's fake-async zone.
+    dictionaries: SpellDictionaries(),
   );
   await tester.pumpWidget(
     MaterialApp(
@@ -40,10 +40,12 @@ Future<(EditorHarness, WriteSpellcheck)> _pump(
   spell.configure(enabled: true, language: 'en-US', skipAllCaps: skipAllCaps);
   // Loading the dictionary reads assets (real I/O) and parses in idle slices.
   for (var i = 0; i < 400 && spell.state == SpellcheckState.loading; i += 1) {
-    await tester.runAsync(() => Future<void>.delayed(const Duration(milliseconds: 5)));
+    await tester.runAsync(
+      () => Future<void>.delayed(const Duration(milliseconds: 5)),
+    );
     await tester.pump(const Duration(milliseconds: 10));
   }
-  await tester.pump(const Duration(milliseconds: 300));
+  await _settle(tester);
   addTearDown(() {
     spell.dispose();
     h.dispose();
@@ -51,7 +53,12 @@ Future<(EditorHarness, WriteSpellcheck)> _pump(
   return (h, spell);
 }
 
-final _dictionaries = SpellDictionaries();
+/// Lets the debounced, frame-sliced checking run.
+Future<void> _settle(WidgetTester tester) async {
+  await tester.pump();
+  await tester.pump(const Duration(milliseconds: 300));
+  await tester.pump();
+}
 
 List<String> _flagged(WriteSpellcheck spell) => [
   for (final e in spell.errors) e.word,
@@ -83,13 +90,15 @@ void main() {
       await tester.placeCaretInParagraph(h.controller.document.first.id, 0);
 
       await tester.typeImeText('I saw teh ');
-      await tester.pump(const Duration(milliseconds: 300));
+      await _settle(tester);
 
       final error = spell.errorAt(7);
       expect(error?.word, 'teh');
       final node = h.controller.document.first.id;
-      expect(spell.styler.getErrorsForNode(node).single.range,
-          const TextRange(start: 6, end: 9));
+      expect(
+        spell.styler.getErrorsForNode(node).single.range,
+        const TextRange(start: 6, end: 9),
+      );
       final suggestion = spell.suggestionsFor('teh').first;
       expect(suggestion, 'the');
 
@@ -100,7 +109,7 @@ void main() {
         suggestion,
         label: 'Correct spelling',
       );
-      await tester.pump(const Duration(milliseconds: 300));
+      await _settle(tester);
 
       expect(h.plainText, 'I saw the \n');
       expect(h.changes.last.label, 'Correct spelling');
@@ -113,35 +122,44 @@ void main() {
       await tester.placeCaretInParagraph(h.controller.document.first.id, 0);
 
       await tester.typeImeText('Hello wrld');
-      await tester.pump(const Duration(milliseconds: 300));
+      await _settle(tester);
 
       expect(spell.errors, isEmpty);
     });
 
     testWidgets('when ignoring a word then all its occurrences are accepted '
         'for the session', (tester) async {
-      final (_, spell) = await _pump(tester, Delta()..insert('Zorblax and zorblax.\n'));
+      final (_, spell) = await _pump(
+        tester,
+        Delta()..insert('Zorblax and zorblax.\n'),
+      );
       expect(_flagged(spell), ['Zorblax', 'zorblax']);
 
       spell.ignore('Zorblax');
       spell.ignore('zorblax');
-      await tester.pump(const Duration(milliseconds: 300));
+      await _settle(tester);
 
       expect(spell.errors, isEmpty);
     });
 
-    testWidgets('when adding a personal word then it is accepted', (tester) async {
-      final (_, spell) = await _pump(tester, Delta()..insert('Wonkyness rules\n'));
+    testWidgets('when adding a personal word then it is accepted', (
+      tester,
+    ) async {
+      final (_, spell) = await _pump(
+        tester,
+        Delta()..insert('Wonkyness rules\n'),
+      );
       expect(_flagged(spell), ['Wonkyness']);
 
       spell.wordAdded('Wonkyness');
-      await tester.pump(const Duration(milliseconds: 300));
+      await _settle(tester);
 
       expect(spell.errors, isEmpty);
     });
 
-    testWidgets('when ALL-CAPS words are not skipped then they are checked',
-        (tester) async {
+    testWidgets('when ALL-CAPS words are not skipped then they are checked', (
+      tester,
+    ) async {
       final (_, spell) = await _pump(
         tester,
         Delta()..insert('THSI is LOUD\n'),
@@ -153,7 +171,10 @@ void main() {
 
     testWidgets('when using Change all then every occurrence is fixed in one '
         'undo step', (tester) async {
-      final (h, spell) = await _pump(tester, Delta()..insert('recieve and recieve\n'));
+      final (h, spell) = await _pump(
+        tester,
+        Delta()..insert('recieve and recieve\n'),
+      );
       expect(_flagged(spell), ['recieve', 'recieve']);
 
       final count = changeAllSpelling(
@@ -163,13 +184,14 @@ void main() {
         'recieve',
         'receive',
       );
-      await tester.pump(const Duration(milliseconds: 300));
+      await _settle(tester);
 
       expect(count, 2);
       expect(h.plainText, 'receive and receive\n');
       expect(h.changes, hasLength(1));
       h.undo(h.changes.single);
       expect(h.plainText, 'recieve and recieve\n');
+      await _settle(tester);
     });
 
     testWidgets('when turning spellcheck off then the underlines go away', (

@@ -4,6 +4,7 @@ import 'package:flutter/widgets.dart';
 import 'package:shad/shad.dart';
 import 'package:wonky_write_core/wonky_write_core.dart' hide ThemeCatalog;
 
+import '../../l10n/write_l10n.dart';
 import '../editor/styles/editor_theme.dart';
 import 'document_theme.dart';
 import 'theme_adapter.dart';
@@ -61,15 +62,12 @@ class ThemePickerDialog extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final size = MediaQuery.sizeOf(context);
+    final l = writeL10n(context);
     return ShadDialog(
       key: const ValueKey<String>('write.dialog.themePicker'),
-      title: const Text('Document theme'),
+      title: Text(l.themePickerTitle),
       description: Text(
-        readOnly
-            ? 'Themes control fonts, colors and spacing. You need edit access '
-                  'to change the theme.'
-            : 'Themes control fonts, colors and spacing — the Markdown stays '
-                  'the same.',
+        readOnly ? l.themePickerDescriptionReadOnly : l.themePickerDescription,
       ),
       constraints: BoxConstraints(
         maxWidth: (size.width * 0.92).clamp(320, 860),
@@ -83,7 +81,7 @@ class ThemePickerDialog extends StatelessWidget {
               Navigator.of(context).pop();
               onNewTheme!();
             },
-            child: const Text('New theme'),
+            child: Text(l.cmdThemeCreate),
           ),
         if (onCustomize != null)
           ShadButton.outline(
@@ -93,18 +91,18 @@ class ThemePickerDialog extends StatelessWidget {
               Navigator.of(context).pop();
               onCustomize!();
             },
-            child: const Text('Customize…'),
+            child: Text(l.themePickerCustomize),
           ),
         if (onSetDefault != null)
           ShadButton.ghost(
             key: const ValueKey<String>('write.dialog.themePicker.default'),
             onPressed: onSetDefault,
-            child: const Text('Save as my default theme'),
+            child: Text(l.cmdThemeSetUserDefault),
           ),
         ShadButton(
           key: const ValueKey<String>('write.dialog.themePicker.done'),
           onPressed: () => Navigator.of(context).pop(),
-          child: const Text('Done'),
+          child: Text(l.commonDone),
         ),
       ],
       child: ThemeGrid(
@@ -197,7 +195,7 @@ class _ThemeCardState extends State<ThemeCard> {
     return Semantics(
       button: true,
       selected: widget.selected,
-      label: '${widget.option.name} theme',
+      label: writeL10n(context).themePickerCardLabel(widget.option.name),
       child: MouseRegion(
         cursor: widget.onTap == null
             ? SystemMouseCursors.basic
@@ -262,7 +260,13 @@ class _ThemeCardState extends State<ThemeCard> {
                     ),
                   ),
                   if (widget.selected)
-                    Icon(LucideIcons.check, size: 16, color: cs.primary),
+                    ExcludeSemantics(
+                      child: Icon(
+                        LucideIcons.check,
+                        size: 16,
+                        color: cs.primary,
+                      ),
+                    ),
                 ],
               ),
               if (widget.option.description case final d?
@@ -307,7 +311,7 @@ class _Sample extends StatelessWidget {
             ),
             const SizedBox(height: 6),
             Text(
-              'The quick brown fox jumps over the lazy dog.',
+              writeL10n(context).themePickerSampleText,
               maxLines: 3,
               overflow: TextOverflow.clip,
               style: body.copyWith(fontSize: 9, height: 1.35),

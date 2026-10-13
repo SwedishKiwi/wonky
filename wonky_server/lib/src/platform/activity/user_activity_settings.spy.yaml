@@ -1,0 +1,14 @@
+### Activity privacy of a user (specs/07 §6). No row = defaults.
+class: UserActivitySettings
+table: user_activity_settings
+serverOnly: true
+fields:
+  userId: int, relation(parent=user_profile, onDelete=Cascade)
+  ### "Show my view history": when false the user is left out of viewer
+  ### lists (their views still count, anonymously, in the trend charts).
+  showViewHistory: bool, default=true
+  updatedAt: DateTime
+indexes:
+  user_activity_settings_user_idx:
+    fields: userId
+    unique: true

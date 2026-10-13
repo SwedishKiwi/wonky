@@ -2,6 +2,7 @@ import 'package:shad/shad.dart' show LucideIcons;
 import 'package:wonky_app/wonky_app.dart';
 import 'package:wonky_core/wonky_core.dart';
 
+import '../../l10n/write_l10n.dart';
 import '../editor/controller/editor_types.dart';
 import '../offline/write_offline.dart';
 import '../suggestions/suggestions_panel.dart';
@@ -9,7 +10,6 @@ import 'write_document_api.dart';
 import 'write_document_session.dart';
 
 const _ok = CommandResult.ok();
-const _nothing = CommandResult.failed('Nothing to do');
 
 /// Write's collaboration commands (Write 08 §7): comments, suggestions,
 /// presence and history. Shared comment/version actions stay the suite's
@@ -23,6 +23,8 @@ List<Command<CommandArgs>> writeCollabCommands(ShellServices services) {
   WriteDocumentSession? session(CommandContext ctx) =>
       WriteDocumentSession.of(ctx);
   bool loaded(CommandContext ctx) => session(ctx)?.isLoaded ?? false;
+  CommandResult nothing() =>
+      CommandResult.failed(writeL10nOf(services).commandToastNothingToDo);
 
   const threadArgs = JsonSchema.object(
     properties: {'threadUuid': JsonSchema.string(format: 'uuid')},
@@ -67,9 +69,9 @@ List<Command<CommandArgs>> writeCollabCommands(ShellServices services) {
     // ---- Offline (suite 12) ----
     CallbackCommand(
       id: 'write.offline.simulate',
-      title: (_) => 'Simulate offline',
+      title: (c) => writeL10n(c).cmdOfflineSimulate,
       icon: LucideIcons.cloudOff,
-      category: (_) => 'Developer',
+      category: (c) => writeL10n(c).categoryDeveloper,
       argsSchema: const JsonSchema.object(
         properties: {
           'offline': JsonSchema.boolean(
@@ -90,10 +92,10 @@ List<Command<CommandArgs>> writeCollabCommands(ShellServices services) {
     // ---- Comments ----
     CallbackCommand(
       id: 'write.comments.addDocumentComment',
-      title: (_) => 'Comment on the whole document',
+      title: (c) => writeL10n(c).cmdCommentsAddDocumentComment,
       icon: LucideIcons.messageSquareText,
       requiredRole: Role.commenter,
-      category: (_) => 'Comments',
+      category: (c) => writeL10n(c).categoryComments,
       enabled: (ctx, _) => loaded(ctx) && services.comments.value != null,
       run: (ctx, _) async {
         session(ctx)!.comments.startDocumentComment();
@@ -102,10 +104,10 @@ List<Command<CommandArgs>> writeCollabCommands(ShellServices services) {
     ),
     CallbackCommand(
       id: 'write.comments.activate',
-      title: (_) => 'Open comment',
+      title: (c) => writeL10n(c).cmdCommentsActivate,
       argsSchema: threadArgs,
       showInPalette: false,
-      category: (_) => 'Comments',
+      category: (c) => writeL10n(c).categoryComments,
       enabled: (ctx, _) => loaded(ctx),
       run: (ctx, a) async {
         session(ctx)!.comments.activate(a.requireString('threadUuid'));
@@ -115,41 +117,43 @@ List<Command<CommandArgs>> writeCollabCommands(ShellServices services) {
     for (final previous in [false, true])
       CallbackCommand(
         id: previous ? 'write.comments.previous' : 'write.comments.next',
-        title: (_) => previous ? 'Previous comment' : 'Next comment',
+        title: (c) => previous
+            ? writeL10n(c).cmdCommentsPrevious
+            : writeL10n(c).cmdCommentsNext,
         icon: previous ? LucideIcons.chevronUp : LucideIcons.chevronDown,
         defaultBindings: [
           KeyBinding(previous ? 'P' : 'N', mod: true, alt: true),
         ],
         keyScope: KeyScope.editor,
-        category: (_) => 'Comments',
+        category: (c) => writeL10n(c).categoryComments,
         enabled: (ctx, _) =>
             loaded(ctx) &&
             session(ctx)!.comments.anchoredOpenThreads.isNotEmpty,
         run: (ctx, _) async =>
-            session(ctx)!.comments.next(previous: previous) ? _ok : _nothing,
+            session(ctx)!.comments.next(previous: previous) ? _ok : nothing(),
       ),
     CallbackCommand(
       id: 'write.comments.reattach',
-      title: (_) => 'Re-attach comment to selection',
+      title: (c) => writeL10n(c).cmdCommentsReattach,
       argsSchema: threadArgs,
       requiredRole: Role.editor,
       isUndoable: true,
       showInPalette: false,
-      category: (_) => 'Comments',
+      category: (c) => writeL10n(c).categoryComments,
       enabled: (ctx, _) =>
           loaded(ctx) && session(ctx)!.comments.selectionRange() != null,
       run: (ctx, a) async =>
           session(ctx)!.comments.reattach(a.requireString('threadUuid'))
           ? _ok
-          : _nothing,
+          : nothing(),
     ),
     CallbackCommand(
       id: 'write.comments.deleteThread',
-      title: (_) => 'Delete comment thread',
+      title: (c) => writeL10n(c).cmdCommentsDeleteThread,
       argsSchema: threadArgs,
       requiredRole: Role.commenter,
       showInPalette: false,
-      category: (_) => 'Comments',
+      category: (c) => writeL10n(c).categoryComments,
       enabled: (ctx, _) => loaded(ctx) && services.comments.value != null,
       run: (ctx, a) => services.dispatcher.invoke(
         'shell.comments.delete',
@@ -162,26 +166,26 @@ List<Command<CommandArgs>> writeCollabCommands(ShellServices services) {
     // ---- Suggestions ----
     CallbackCommand(
       id: 'write.suggestions.accept',
-      title: (_) => 'Accept suggestion',
+      title: (c) => writeL10n(c).cmdSuggestionsAccept,
       icon: LucideIcons.check,
       argsSchema: idsArgs,
       requiredRole: Role.editor,
       isUndoable: true,
-      category: (_) => 'Suggestions',
+      category: (c) => writeL10n(c).categorySuggestions,
       enabled: (ctx, a) => loaded(ctx) && ids(session(ctx)!, a).isNotEmpty,
       run: (ctx, a) async {
         final s = session(ctx)!;
-        return s.suggestions.accept(ids(s, a)) ? _ok : _nothing;
+        return s.suggestions.accept(ids(s, a)) ? _ok : nothing();
       },
     ),
     CallbackCommand(
       id: 'write.suggestions.reject',
-      title: (_) => 'Reject suggestion',
+      title: (c) => writeL10n(c).cmdSuggestionsReject,
       icon: LucideIcons.x,
       argsSchema: idsArgs,
       requiredRole: Role.commenter,
       isUndoable: true,
-      category: (_) => 'Suggestions',
+      category: (c) => writeL10n(c).categorySuggestions,
       enabled: (ctx, a) {
         final s = session(ctx);
         if (s == null || !s.isLoaded) return false;
@@ -194,7 +198,7 @@ List<Command<CommandArgs>> writeCollabCommands(ShellServices services) {
       },
       run: (ctx, a) async {
         final s = session(ctx)!;
-        return s.suggestions.reject(ids(s, a)) ? _ok : _nothing;
+        return s.suggestions.reject(ids(s, a)) ? _ok : nothing();
       },
     ),
     for (final accept in [true, false])
@@ -202,13 +206,14 @@ List<Command<CommandArgs>> writeCollabCommands(ShellServices services) {
         id: accept
             ? 'write.suggestions.acceptAll'
             : 'write.suggestions.rejectAll',
-        title: (_) =>
-            accept ? 'Accept all suggestions' : 'Reject all suggestions',
+        title: (c) => accept
+            ? writeL10n(c).cmdSuggestionsAcceptAll
+            : writeL10n(c).cmdSuggestionsRejectAll,
         icon: accept ? LucideIcons.checkCheck : LucideIcons.listX,
         argsSchema: authorArgs,
         requiredRole: Role.editor,
         isUndoable: true,
-        category: (_) => 'Suggestions',
+        category: (c) => writeL10n(c).categorySuggestions,
         enabled: (ctx, a) =>
             loaded(ctx) &&
             session(
@@ -221,24 +226,28 @@ List<Command<CommandArgs>> writeCollabCommands(ShellServices services) {
           final ok = accept
               ? c.acceptAll(authorUuid: author)
               : c.rejectAll(authorUuid: author);
-          return ok ? _ok : _nothing;
+          return ok ? _ok : nothing();
         },
       ),
     for (final previous in [false, true])
       CallbackCommand(
         id: previous ? 'write.suggestions.previous' : 'write.suggestions.next',
-        title: (_) => previous ? 'Previous suggestion' : 'Next suggestion',
-        category: (_) => 'Suggestions',
+        title: (c) => previous
+            ? writeL10n(c).cmdSuggestionsPrevious
+            : writeL10n(c).cmdSuggestionsNext,
+        category: (c) => writeL10n(c).categorySuggestions,
         enabled: (ctx, _) =>
             loaded(ctx) && session(ctx)!.suggestions.pending.isNotEmpty,
         run: (ctx, _) async =>
-            session(ctx)!.suggestions.next(previous: previous) ? _ok : _nothing,
+            session(ctx)!.suggestions.next(previous: previous)
+            ? _ok
+            : nothing(),
       ),
     CallbackCommand(
       id: 'write.suggestions.togglePanel',
-      title: (_) => 'Suggestions',
+      title: (c) => writeL10n(c).cmdSuggestionsTogglePanel,
       icon: LucideIcons.fileDiff,
-      category: (_) => 'Suggestions',
+      category: (c) => writeL10n(c).categorySuggestions,
       enabled: (ctx, _) => loaded(ctx),
       checked: (_, _) => services.panels.isOpen(writeSuggestionsPanelId),
       run: (ctx, _) async {
@@ -248,10 +257,10 @@ List<Command<CommandArgs>> writeCollabCommands(ShellServices services) {
     ),
     CallbackCommand(
       id: 'write.mode.suggest',
-      title: (_) => 'Suggesting',
+      title: (c) => writeL10n(c).cmdModeSuggest,
       icon: LucideIcons.pencilLine,
       requiredRole: Role.commenter,
-      category: (_) => 'View',
+      category: (c) => writeL10n(c).categoryView,
       showInPalette: false,
       enabled: (ctx, _) => loaded(ctx),
       checked: (ctx, _) => session(ctx)?.editor.mode == EditorMode.suggesting,
@@ -269,22 +278,24 @@ List<Command<CommandArgs>> writeCollabCommands(ShellServices services) {
     // ---- Presence ----
     CallbackCommand(
       id: 'write.presence.jumpTo',
-      title: (_) => 'Go to collaborator',
+      title: (c) => writeL10n(c).cmdPresenceJumpTo,
       argsSchema: sessionArgs,
       showInPalette: false,
-      category: (_) => 'Collaboration',
+      category: (c) => writeL10n(c).categoryCollaboration,
       enabled: (ctx, _) => loaded(ctx),
       run: (ctx, a) async =>
           session(ctx)!.presence.reveal(a.requireString('sessionId'))
           ? _ok
-          : const CommandResult.failed('No cursor for this collaborator'),
+          : CommandResult.failed(
+              writeL10nOf(services).commandToastNoCollaboratorCursor,
+            ),
     ),
     CallbackCommand(
       id: 'write.presence.follow',
-      title: (_) => 'Follow collaborator',
+      title: (c) => writeL10n(c).cmdPresenceFollow,
       argsSchema: sessionArgs,
       showInPalette: false,
-      category: (_) => 'Collaboration',
+      category: (c) => writeL10n(c).categoryCollaboration,
       enabled: (ctx, _) => loaded(ctx),
       run: (ctx, a) async {
         session(ctx)!.presence.follow(a.requireString('sessionId'));
@@ -293,8 +304,8 @@ List<Command<CommandArgs>> writeCollabCommands(ShellServices services) {
     ),
     CallbackCommand(
       id: 'write.presence.unfollow',
-      title: (_) => 'Stop following',
-      category: (_) => 'Collaboration',
+      title: (c) => writeL10n(c).cmdPresenceUnfollow,
+      category: (c) => writeL10n(c).categoryCollaboration,
       enabled: (ctx, _) => session(ctx)?.presence.following != null,
       run: (ctx, _) async {
         session(ctx)!.presence.unfollow();
@@ -305,10 +316,10 @@ List<Command<CommandArgs>> writeCollabCommands(ShellServices services) {
     // ---- History ----
     CallbackCommand(
       id: 'write.history.open',
-      title: (_) => 'See version history',
+      title: (c) => writeL10n(c).cmdHistoryOpen,
       icon: LucideIcons.history,
       requiredRole: Role.editor,
-      category: (_) => 'Version history',
+      category: (c) => writeL10n(c).categoryVersionHistory,
       argsSchema: const JsonSchema.object(
         properties: {'versionId': JsonSchema.integer()},
       ),
@@ -325,9 +336,9 @@ List<Command<CommandArgs>> writeCollabCommands(ShellServices services) {
     ),
     CallbackCommand(
       id: 'write.history.nameCurrentVersion',
-      title: (_) => 'Name current version',
+      title: (c) => writeL10n(c).cmdHistoryNameCurrentVersion,
       requiredRole: Role.editor,
-      category: (_) => 'Version history',
+      category: (c) => writeL10n(c).categoryVersionHistory,
       argsSchema: const JsonSchema.object(
         properties: {'name': JsonSchema.string(minLength: 1, maxLength: 200)},
       ),
@@ -340,9 +351,9 @@ List<Command<CommandArgs>> writeCollabCommands(ShellServices services) {
     ),
     CallbackCommand(
       id: 'write.history.restore',
-      title: (_) => 'Restore this version',
+      title: (c) => writeL10n(c).cmdHistoryRestore,
       requiredRole: Role.editor,
-      category: (_) => 'Version history',
+      category: (c) => writeL10n(c).categoryVersionHistory,
       showInPalette: false,
       argsSchema: const JsonSchema.object(
         properties: {
@@ -360,9 +371,9 @@ List<Command<CommandArgs>> writeCollabCommands(ShellServices services) {
     ),
     CallbackCommand(
       id: 'write.history.copyVersion',
-      title: (_) => 'Make a copy of this version',
+      title: (c) => writeL10n(c).cmdHistoryCopyVersion,
       requiredRole: Role.editor,
-      category: (_) => 'Version history',
+      category: (c) => writeL10n(c).categoryVersionHistory,
       showInPalette: false,
       argsSchema: const JsonSchema.object(
         properties: {
@@ -375,7 +386,7 @@ List<Command<CommandArgs>> writeCollabCommands(ShellServices services) {
         final item = services.currentItem.value;
         final doc = item?.contentRef;
         final client = services.client;
-        if (doc == null || client == null) return _nothing;
+        if (doc == null || client == null) return nothing();
         final copy = await ServerWriteDocumentApi(client).copyVersion(
           doc,
           a.integer('versionId')!,
@@ -389,9 +400,9 @@ List<Command<CommandArgs>> writeCollabCommands(ShellServices services) {
     // ---- Sync ----
     CallbackCommand(
       id: 'write.sync.retry',
-      title: (_) => 'Reconnect now',
+      title: (c) => writeL10n(c).cmdSyncRetry,
       icon: LucideIcons.refreshCw,
-      category: (_) => 'File',
+      category: (c) => writeL10n(c).categoryFile,
       enabled: (ctx, _) => session(ctx)?.sync != null,
       run: (ctx, _) async {
         await session(ctx)!.retry();

@@ -3,6 +3,8 @@ import 'package:shad/shad.dart';
 import 'package:wonky_ui/wonky_ui.dart';
 import 'package:wonky_write_core/wonky_write_core.dart';
 
+import '../../../l10n/write_l10n.dart';
+
 /// Result of the page setup dialog.
 @immutable
 class PageSetupResult {
@@ -29,6 +31,43 @@ Future<PageSetupResult?> showPageSetupDialog(
 );
 
 enum _Unit { inches, mm }
+
+/// The display name of a paper size ("A4 (210 × 297 mm)").
+String paperSizeLabel(WriteLocalizations l, PaperSize p) => switch (p) {
+  PaperSize.letter => l.pageSetupPaperLetter,
+  PaperSize.legal => l.pageSetupPaperLegal,
+  PaperSize.tabloid => l.pageSetupPaperTabloid,
+  PaperSize.a3 => l.pageSetupPaperA3,
+  PaperSize.a4 => l.pageSetupPaperA4,
+  PaperSize.a5 => l.pageSetupPaperA5,
+  PaperSize.custom => l.pageSetupPaperCustom,
+};
+
+/// Paper sizes in menu order.
+const _paperOrder = [
+  PaperSize.letter,
+  PaperSize.legal,
+  PaperSize.tabloid,
+  PaperSize.a3,
+  PaperSize.a4,
+  PaperSize.a5,
+  PaperSize.custom,
+];
+
+/// The display name of a page orientation.
+String orientationLabel(WriteLocalizations l, PageOrientation o) => switch (o) {
+  PageOrientation.portrait => l.pageSetupPortrait,
+  PageOrientation.landscape => l.pageSetupLandscape,
+};
+
+/// The display name of a page layout mode.
+String layoutModeLabel(WriteLocalizations l, PageLayoutMode m) => switch (m) {
+  PageLayoutMode.pages => l.pageSetupPages,
+  PageLayoutMode.pageless => l.pageSetupPageless,
+};
+
+/// A margin side: [id] is stable (widget keys), the label is localized.
+enum _Side { top, bottom, left, right }
 
 class PageSetupDialog extends StatefulWidget {
   const PageSetupDialog({
@@ -83,15 +122,12 @@ class _PageSetupDialogState extends State<PageSetupDialog> {
   double _toUnit(double pt) => _unit == _Unit.inches ? pt / 72 : pt / 72 * 25.4;
   double _fromUnit(num v) => _unit == _Unit.inches ? v * 72.0 : v / 25.4 * 72;
 
-  static const _paperLabels = {
-    PaperSize.letter: 'Letter (8.5" × 11")',
-    PaperSize.legal: 'Legal (8.5" × 14")',
-    PaperSize.tabloid: 'Tabloid (11" × 17")',
-    PaperSize.a3: 'A3 (297 × 420 mm)',
-    PaperSize.a4: 'A4 (210 × 297 mm)',
-    PaperSize.a5: 'A5 (148 × 210 mm)',
-    PaperSize.custom: 'Custom…',
-  };
+  String _unitSuffix(WriteLocalizations l) => _unit == _Unit.inches
+      ? l.pageSetupUnitInchesShort
+      : l.pageSetupUnitMillimetersShort;
+
+  String _unitName(WriteLocalizations l, _Unit u) =>
+      u == _Unit.inches ? l.pageSetupUnitInches : l.pageSetupUnitMillimeters;
 
   void _preset(double topBottom, double leftRight) => setState(() {
     _themeMargins = false;
@@ -105,13 +141,12 @@ class _PageSetupDialogState extends State<PageSetupDialog> {
 
   @override
   Widget build(BuildContext context) {
+    final l = writeL10n(context);
     final ro = widget.readOnly;
     return ShadDialog(
       key: const ValueKey<String>('write.dialog.pageSetup'),
-      title: const Text('Page setup'),
-      description: ro
-          ? const Text('You need edit access to change the page setup.')
-          : null,
+      title: Text(l.pageSetupTitle),
+      description: ro ? Text(l.pageSetupReadOnly) : null,
       constraints: const BoxConstraints(maxWidth: 680),
       actions: [
         if (!ro)
@@ -120,19 +155,19 @@ class _PageSetupDialogState extends State<PageSetupDialog> {
             onPressed: () => Navigator.of(
               context,
             ).pop(PageSetupResult(_result, setAsDefault: true)),
-            child: const Text('Set as default'),
+            child: Text(l.pageSetupSetAsDefault),
           ),
         ShadButton.outline(
           key: const ValueKey<String>('write.dialog.pageSetup.cancel'),
           onPressed: () => Navigator.of(context).pop(),
-          child: Text(ro ? 'Close' : 'Cancel'),
+          child: Text(ro ? l.commonClose : l.commonCancel),
         ),
         if (!ro)
           ShadButton(
             key: const ValueKey<String>('write.dialog.pageSetup.ok'),
             onPressed: () =>
                 Navigator.of(context).pop(PageSetupResult(_result)),
-            child: const Text('OK'),
+            child: Text(l.commonOk),
           ),
       ],
       child: IgnorePointer(
@@ -148,12 +183,12 @@ class _PageSetupDialogState extends State<PageSetupDialog> {
                   ShadTab(
                     value: 'page',
                     content: _pageTab(context),
-                    child: const Text('Page'),
+                    child: Text(l.pageSetupTabPage),
                   ),
                   ShadTab(
                     value: 'headerFooter',
                     content: _headerFooterTab(context),
-                    child: const Text('Header & footer'),
+                    child: Text(l.pageSetupTabHeaderFooter),
                   ),
                 ],
               ),
@@ -178,40 +213,41 @@ class _PageSetupDialogState extends State<PageSetupDialog> {
   );
 
   Widget _pageTab(BuildContext context) {
+    final l = writeL10n(context);
     final theme = ShadTheme.of(context);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       mainAxisSize: MainAxisSize.min,
       children: [
-        _label(context, 'Layout'),
+        _label(context, l.pageSetupLayout),
         ShadRadioGroup<PageLayoutMode>(
           initialValue: _layout,
           axis: Axis.horizontal,
           spacing: 16,
           onChanged: (v) => setState(() => _layout = v ?? _layout),
-          items: const [
+          items: [
             ShadRadio(
-              key: ValueKey<String>('write.dialog.pageSetup.pages'),
+              key: const ValueKey<String>('write.dialog.pageSetup.pages'),
               value: PageLayoutMode.pages,
-              label: Text('Pages'),
+              label: Text(l.pageSetupPages),
             ),
             ShadRadio(
-              key: ValueKey<String>('write.dialog.pageSetup.pageless'),
+              key: const ValueKey<String>('write.dialog.pageSetup.pageless'),
               value: PageLayoutMode.pageless,
-              label: Text('Pageless'),
+              label: Text(l.pageSetupPageless),
             ),
           ],
         ),
-        _label(context, 'Paper size'),
+        _label(context, l.pageSetupPaperSize),
         ShadSelect<PaperSize>(
           key: const ValueKey<String>('write.dialog.pageSetup.paper'),
           initialValue: _paper,
           minWidth: 240,
           options: [
-            for (final e in _paperLabels.entries)
-              ShadOption(value: e.key, child: Text(e.value)),
+            for (final p in _paperOrder)
+              ShadOption(value: p, child: Text(paperSizeLabel(l, p))),
           ],
-          selectedOptionBuilder: (context, v) => Text(_paperLabels[v]!),
+          selectedOptionBuilder: (context, v) => Text(paperSizeLabel(l, v)),
           onChanged: (v) => setState(() => _paper = v ?? _paper),
         ),
         if (_paper == PaperSize.custom) ...[
@@ -225,8 +261,8 @@ class _PageSetupDialogState extends State<PageSetupDialog> {
                   max: _unit == _Unit.inches ? 40 : 1000,
                   step: _unit == _Unit.inches ? 0.25 : 5,
                   fractionDigits: _unit == _Unit.inches ? 2 : 0,
-                  suffix: _unit == _Unit.inches ? 'in' : 'mm',
-                  semanticLabel: 'Width',
+                  suffix: _unitSuffix(l),
+                  semanticLabel: l.pageSetupWidth,
                   onChanged: (v) => setState(() => _customW = _fromUnit(v)),
                 ),
               ),
@@ -241,42 +277,41 @@ class _PageSetupDialogState extends State<PageSetupDialog> {
                   max: _unit == _Unit.inches ? 40 : 1000,
                   step: _unit == _Unit.inches ? 0.25 : 5,
                   fractionDigits: _unit == _Unit.inches ? 2 : 0,
-                  suffix: _unit == _Unit.inches ? 'in' : 'mm',
-                  semanticLabel: 'Height',
+                  suffix: _unitSuffix(l),
+                  semanticLabel: l.pageSetupHeight,
                   onChanged: (v) => setState(() => _customH = _fromUnit(v)),
                 ),
               ),
             ],
           ),
         ],
-        _label(context, 'Orientation'),
+        _label(context, l.pageSetupOrientation),
         ShadRadioGroup<PageOrientation>(
           initialValue: _orientation,
           axis: Axis.horizontal,
           spacing: 16,
           onChanged: (v) => setState(() => _orientation = v ?? _orientation),
-          items: const [
-            ShadRadio(value: PageOrientation.portrait, label: Text('Portrait')),
-            ShadRadio(
-              value: PageOrientation.landscape,
-              label: Text('Landscape'),
-            ),
+          items: [
+            for (final o in PageOrientation.values)
+              ShadRadio(value: o, label: Text(orientationLabel(l, o))),
           ],
         ),
         Row(
           children: [
-            _label(context, 'Margins'),
+            _label(context, l.pageSetupMargins),
             const Spacer(),
-            ShadSelect<_Unit>(
-              initialValue: _unit,
-              minWidth: 90,
-              options: const [
-                ShadOption(value: _Unit.inches, child: Text('inches')),
-                ShadOption(value: _Unit.mm, child: Text('mm')),
-              ],
-              selectedOptionBuilder: (context, v) =>
-                  Text(v == _Unit.inches ? 'inches' : 'mm'),
-              onChanged: (v) => setState(() => _unit = v ?? _unit),
+            Semantics(
+              label: l.pageSetupUnitsLabel,
+              child: ShadSelect<_Unit>(
+                initialValue: _unit,
+                minWidth: 90,
+                options: [
+                  for (final u in _Unit.values)
+                    ShadOption(value: u, child: Text(_unitName(l, u))),
+                ],
+                selectedOptionBuilder: (context, v) => Text(_unitName(l, v)),
+                onChanged: (v) => setState(() => _unit = v ?? _unit),
+              ),
             ),
           ],
         ),
@@ -287,7 +322,7 @@ class _PageSetupDialogState extends State<PageSetupDialog> {
             _themeMargins = v;
             if (v) _margins = widget.themeMargins;
           }),
-          label: const Text('Use the theme’s margins'),
+          label: Text(l.pageSetupUseThemeMargins),
         ),
         const SizedBox(height: 8),
         Opacity(
@@ -299,7 +334,7 @@ class _PageSetupDialogState extends State<PageSetupDialog> {
                 Row(
                   children: [
                     Expanded(
-                      child: _margin('Top', _margins.top, (v) {
+                      child: _margin(l, _Side.top, _margins.top, (v) {
                         _margins = PageMargins(
                           top: v,
                           right: _margins.right,
@@ -310,7 +345,7 @@ class _PageSetupDialogState extends State<PageSetupDialog> {
                     ),
                     const SizedBox(width: 8),
                     Expanded(
-                      child: _margin('Bottom', _margins.bottom, (v) {
+                      child: _margin(l, _Side.bottom, _margins.bottom, (v) {
                         _margins = PageMargins(
                           top: _margins.top,
                           right: _margins.right,
@@ -325,7 +360,7 @@ class _PageSetupDialogState extends State<PageSetupDialog> {
                 Row(
                   children: [
                     Expanded(
-                      child: _margin('Left', _margins.left, (v) {
+                      child: _margin(l, _Side.left, _margins.left, (v) {
                         _margins = PageMargins(
                           top: _margins.top,
                           right: _margins.right,
@@ -336,7 +371,7 @@ class _PageSetupDialogState extends State<PageSetupDialog> {
                     ),
                     const SizedBox(width: 8),
                     Expanded(
-                      child: _margin('Right', _margins.right, (v) {
+                      child: _margin(l, _Side.right, _margins.right, (v) {
                         _margins = PageMargins(
                           top: _margins.top,
                           right: v,
@@ -355,21 +390,21 @@ class _PageSetupDialogState extends State<PageSetupDialog> {
         Wrap(
           spacing: 6,
           children: [
-            Text('Presets:', style: theme.textTheme.muted),
+            Text(l.pageSetupPresets, style: theme.textTheme.muted),
             ShadButton.link(
               size: ShadButtonSize.sm,
               onPressed: () => _preset(72, 72),
-              child: const Text('Normal'),
+              child: Text(l.pageSetupPresetNormal),
             ),
             ShadButton.link(
               size: ShadButtonSize.sm,
               onPressed: () => _preset(36, 36),
-              child: const Text('Narrow'),
+              child: Text(l.pageSetupPresetNarrow),
             ),
             ShadButton.link(
               size: ShadButtonSize.sm,
               onPressed: () => _preset(72, 144),
-              child: const Text('Wide'),
+              child: Text(l.pageSetupPresetWide),
             ),
           ],
         ),
@@ -377,26 +412,50 @@ class _PageSetupDialogState extends State<PageSetupDialog> {
     );
   }
 
-  Widget _margin(String label, double pt, void Function(double) set) => Row(
-    children: [
-      SizedBox(width: 52, child: Text(label)),
-      Expanded(
-        child: WonkyNumberStepper(
-          key: ValueKey<String>('write.dialog.pageSetup.margin.$label'),
-          value: double.parse(_toUnit(pt).toStringAsFixed(2)),
-          min: 0,
-          max: _unit == _Unit.inches ? 4 : 100,
-          step: _unit == _Unit.inches ? 0.1 : 1,
-          fractionDigits: _unit == _Unit.inches ? 2 : 0,
-          suffix: _unit == _Unit.inches ? 'in' : 'mm',
-          semanticLabel: '$label margin',
-          onChanged: (v) => setState(() => set(_fromUnit(v))),
-        ),
+  Widget _margin(
+    WriteLocalizations l,
+    _Side side,
+    double pt,
+    void Function(double) set,
+  ) {
+    final (label, semantic) = switch (side) {
+      _Side.top => (l.pageSetupMarginTop, l.pageSetupMarginTopSemantic),
+      _Side.bottom => (
+        l.pageSetupMarginBottom,
+        l.pageSetupMarginBottomSemantic,
       ),
-    ],
-  );
+      _Side.left => (l.pageSetupMarginLeft, l.pageSetupMarginLeftSemantic),
+      _Side.right => (l.pageSetupMarginRight, l.pageSetupMarginRightSemantic),
+    };
+    // Stable key ids (English side names, used by tests and drivers).
+    final id = switch (side) {
+      _Side.top => 'Top',
+      _Side.bottom => 'Bottom',
+      _Side.left => 'Left',
+      _Side.right => 'Right',
+    };
+    return Row(
+      children: [
+        SizedBox(width: 52, child: ExcludeSemantics(child: Text(label))),
+        Expanded(
+          child: WonkyNumberStepper(
+            key: ValueKey<String>('write.dialog.pageSetup.margin.$id'),
+            value: double.parse(_toUnit(pt).toStringAsFixed(2)),
+            min: 0,
+            max: _unit == _Unit.inches ? 4 : 100,
+            step: _unit == _Unit.inches ? 0.1 : 1,
+            fractionDigits: _unit == _Unit.inches ? 2 : 0,
+            suffix: _unitSuffix(l),
+            semanticLabel: semantic,
+            onChanged: (v) => setState(() => set(_fromUnit(v))),
+          ),
+        ),
+      ],
+    );
+  }
 
   Widget _headerFooterTab(BuildContext context) {
+    final l = writeL10n(context);
     final theme = ShadTheme.of(context);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -404,7 +463,7 @@ class _PageSetupDialogState extends State<PageSetupDialog> {
       children: [
         const SizedBox(height: 8),
         Text(
-          'Tokens: {page} {pages} {title} {date} {author}',
+          l.pageSetupTokens('{page} {pages} {title} {date} {author}'),
           style: theme.textTheme.muted.copyWith(
             fontSize: 12,
             fontFamily: WonkyTheme.monoFamily,
@@ -412,13 +471,13 @@ class _PageSetupDialogState extends State<PageSetupDialog> {
         ),
         _HeaderFooterEditor(
           keyPrefix: 'header',
-          label: 'Header',
+          label: l.pageSetupHeader,
           spec: _header,
           onChanged: (s) => setState(() => _header = s),
         ),
         _HeaderFooterEditor(
           keyPrefix: 'footer',
-          label: 'Footer',
+          label: l.pageSetupFooter,
           spec: _footer,
           onChanged: (s) => setState(() => _footer = s),
         ),
@@ -427,18 +486,18 @@ class _PageSetupDialogState extends State<PageSetupDialog> {
           key: const ValueKey<String>('write.dialog.pageSetup.differentFirst'),
           value: _differentFirst,
           onChanged: (v) => setState(() => _differentFirst = v),
-          label: const Text('Different first page'),
+          label: Text(l.pageSetupDifferentFirstPage),
         ),
         if (_differentFirst) ...[
           _HeaderFooterEditor(
             keyPrefix: 'firstHeader',
-            label: 'First page header',
+            label: l.pageSetupFirstPageHeader,
             spec: _firstHeader,
             onChanged: (s) => setState(() => _firstHeader = s),
           ),
           _HeaderFooterEditor(
             keyPrefix: 'firstFooter',
-            label: 'First page footer',
+            label: l.pageSetupFirstPageFooter,
             spec: _firstFooter,
             onChanged: (s) => setState(() => _firstFooter = s),
           ),
@@ -457,7 +516,7 @@ class _PageSetupDialogState extends State<PageSetupDialog> {
               distancePt: _footer.distancePt,
             ),
           ),
-          child: const Text('Show page numbers'),
+          child: Text(l.pageSetupShowPageNumbers),
         ),
       ],
     );
@@ -512,6 +571,7 @@ class _HeaderFooterEditorState extends State<_HeaderFooterEditor> {
 
   @override
   Widget build(BuildContext context) {
+    final l = writeL10n(context);
     final theme = ShadTheme.of(context);
     Widget field(String key, TextEditingController c, String hint) => Expanded(
       child: ShadInput(
@@ -540,11 +600,11 @@ class _HeaderFooterEditorState extends State<_HeaderFooterEditor> {
           const SizedBox(height: 6),
           Row(
             children: [
-              field('left', _left, 'Left'),
+              field('left', _left, l.pageSetupFieldLeft),
               const SizedBox(width: 6),
-              field('center', _center, 'Center'),
+              field('center', _center, l.pageSetupFieldCenter),
               const SizedBox(width: 6),
-              field('right', _right, 'Right'),
+              field('right', _right, l.pageSetupFieldRight),
             ],
           ),
         ],

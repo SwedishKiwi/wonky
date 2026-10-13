@@ -14,12 +14,12 @@ import 'package:serverpod/serverpod.dart' as _is;
 import 'package:wonky_server/src/generated/protocol.dart' as _il4umwa0;
 import '../../../protocol.dart' as _i26f4ubs;
 part 'ui_bridge_cancel.dart';
-part 'ui_bridge_stop.dart';
-part 'ui_bridge_status.dart';
-part 'ui_bridge_welcome.dart';
 part 'ui_bridge_hello.dart';
-part 'ui_bridge_response.dart';
 part 'ui_bridge_request.dart';
+part 'ui_bridge_response.dart';
+part 'ui_bridge_status.dart';
+part 'ui_bridge_stop.dart';
+part 'ui_bridge_welcome.dart';
 
 /// Messages of `uiBridge.connect` in both directions (suite 09 §6.1).
 sealed class UiBridgeMessage

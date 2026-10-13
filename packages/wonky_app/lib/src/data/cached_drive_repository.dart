@@ -620,11 +620,14 @@ class CachedDriveRepository extends ChangeNotifier implements DriveRepository {
   Future<StorageUsage> storageUsage() => _online(remote.storageUsage);
 
   @override
-  Future<List<ActivityEventView>> activity(UuidValue uuid, {int limit = 50}) =>
-      _read(
-        () => remote.activity(uuid, limit: limit),
-        () => const <ActivityEventView>[],
-      );
+  Future<List<ActivityEventView>> activity(
+    UuidValue uuid, {
+    int? beforeId,
+    int limit = 50,
+  }) => _read(
+    () => remote.activity(uuid, beforeId: beforeId, limit: limit),
+    () => const <ActivityEventView>[],
+  );
 
   @override
   Stream<DriveChange> watch() => remote.watch().map((c) {

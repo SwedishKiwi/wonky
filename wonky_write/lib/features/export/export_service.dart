@@ -9,29 +9,46 @@ import 'package:wonky_app/wonky_app.dart';
 import 'package:wonky_client/wonky_client.dart' show UuidValue;
 import 'package:wonky_write_core/wonky_write_core.dart';
 
+import '../../l10n/write_l10n.dart';
 import '../themes/write_fonts.dart';
 
 /// Formats offered under File › Download (Write 07 §9.1). All of them are
 /// generated on the client with the shared core exporters (offline too);
 /// [WriteExporter] hands very large documents to the server.
 enum WriteDownloadFormat {
-  md('md', 'Markdown (.md)', ExportFormat.markdown),
-  mdZip('mdZip', 'Markdown with images (.zip)', ExportFormat.markdownZip),
-  pdf('pdf', 'PDF document (.pdf)', ExportFormat.pdf),
-  html('html', 'Web page (.html)', ExportFormat.html),
-  htmlZip('htmlZip', 'Web page, zipped (.zip)', ExportFormat.htmlZip),
-  docx('docx', 'Microsoft Word (.docx)', ExportFormat.docx),
-  odt('odt', 'OpenDocument text (.odt)', ExportFormat.odt),
-  rtf('rtf', 'Rich Text Format (.rtf)', ExportFormat.rtf),
-  epub('epub', 'EPUB publication (.epub)', ExportFormat.epub),
-  txt('txt', 'Plain text (.txt)', ExportFormat.txt);
+  md('md', ExportFormat.markdown),
+  mdZip('mdZip', ExportFormat.markdownZip),
+  pdf('pdf', ExportFormat.pdf),
+  html('html', ExportFormat.html),
+  htmlZip('htmlZip', ExportFormat.htmlZip),
+  docx('docx', ExportFormat.docx),
+  odt('odt', ExportFormat.odt),
+  rtf('rtf', ExportFormat.rtf),
+  epub('epub', ExportFormat.epub),
+  txt('txt', ExportFormat.txt);
 
-  const WriteDownloadFormat(this.id, this.label, this.format);
+  const WriteDownloadFormat(this.id, this.format);
 
   /// Command argument (`write.file.download {format}`).
   final String id;
-  final String label;
   final ExportFormat format;
+
+  /// The format's display name in [l] ("PDF document (.pdf)").
+  String labelOf(WriteLocalizations l) => switch (this) {
+    md => l.exportFormatMd,
+    mdZip => l.exportFormatMdZip,
+    pdf => l.exportFormatPdf,
+    html => l.exportFormatHtml,
+    htmlZip => l.exportFormatHtmlZip,
+    docx => l.exportFormatDocx,
+    odt => l.exportFormatOdt,
+    rtf => l.exportFormatRtf,
+    epub => l.exportFormatEpub,
+    txt => l.exportFormatTxt,
+  };
+
+  /// The English display name; UI code uses [labelOf].
+  String get label => labelOf(writeL10nEnglish);
 
   static WriteDownloadFormat? tryParse(String? id) {
     for (final f in values) {
@@ -350,23 +367,29 @@ class WriteExporter {
   }
 }
 
-/// File names without `/\:*?"<>|`, at most 120 characters (07 §4.1).
-String sanitizeFileName(String title) {
+/// File names without `/\:*?"<>|`, at most 120 characters (07 §4.1). An
+/// empty [title] becomes "Untitled document" in [l] (English by default).
+String sanitizeFileName(String title, {WriteLocalizations? l}) {
   var s = title.replaceAll(RegExp(r'[/\\:*?"<>|\x00-\x1f]'), ' ').trim();
   s = s.replaceAll(RegExp(r'\s+'), ' ');
-  if (s.isEmpty) s = 'Untitled document';
+  if (s.isEmpty) s = (l ?? writeL10nEnglish).untitledDocument;
   return s.length > 120 ? s.substring(0, 120).trim() : s;
 }
 
 /// Saves [artifact]: browser download in the same tab on web, a save dialog
-/// on desktop.
-Future<bool> saveArtifact(ExportArtifact artifact) async {
+/// (titled in [l], English by default) on desktop.
+Future<bool> saveArtifact(
+  ExportArtifact artifact, {
+  WriteLocalizations? l,
+}) async {
   final mime = artifact.mimeType.split(';').first.trim();
   final uri = await FilePicker.saveFile(
     fileName: artifact.fileName,
     bytes: artifact.bytes,
     mimeType: mime,
-    dialogTitle: 'Save ${artifact.fileName}',
+    dialogTitle: (l ?? writeL10nEnglish).exportSaveDialogTitle(
+      artifact.fileName,
+    ),
   );
   return kIsWeb || uri != null;
 }

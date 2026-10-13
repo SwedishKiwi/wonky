@@ -412,7 +412,11 @@ class _MarkdownTableComponentState extends State<MarkdownTableComponent> {
       return DecoratedBox(
         position: DecorationPosition.foreground,
         decoration: BoxDecoration(
-          color: isSelected ? widget.viewModel.selectionColor.withValues(alpha: 0.5) : const Color(0x00000000),
+          // Half the selection color's own opacity (a transparent selection
+          // color paints nothing).
+          color: isSelected
+              ? widget.viewModel.selectionColor.withValues(alpha: widget.viewModel.selectionColor.a * 0.5)
+              : const Color(0x00000000),
         ),
         child: BoxComponent(
           key: widget.componentKey,

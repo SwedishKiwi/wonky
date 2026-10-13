@@ -4,10 +4,10 @@ import 'package:flutter/widgets.dart';
 import 'package:shad/shad.dart';
 import 'package:wonky_client/wonky_client.dart';
 
+import '../l10n/wonky_app_localizations.dart';
 import '../settings/settings_screen.dart';
 import '../shell/dialogs.dart';
 import '../shell/shell_services.dart';
-import 'assistant_panel.dart';
 import 'shell_assistant.dart';
 
 /// Settings › AI (suite 10 §1 privacy, Write 09 §5.1): the opt-out, the
@@ -32,38 +32,37 @@ class _AiSettingsSectionState extends State<AiSettingsSection> {
     if (a != null) unawaited(a.refreshStatus());
   }
 
-  static String _qualityLabel(AiQuality q) => switch (q) {
-    AiQuality.best => 'Best',
-    AiQuality.balanced => 'Balanced',
-    AiQuality.fast => 'Fast',
-  };
+  static String _qualityLabel(WonkyAppLocalizations l, AiQuality q) =>
+      switch (q) {
+        AiQuality.best => l.aiQualityBest,
+        AiQuality.balanced => l.aiQualityBalanced,
+        AiQuality.fast => l.aiQualityFast,
+      };
 
-  static String _qualityHint(AiQuality q) => switch (q) {
-    AiQuality.best => 'Most capable answers and edits',
-    AiQuality.balanced => 'Good answers, a little faster',
-    AiQuality.fast => 'Quickest answers for simple tasks',
-  };
+  static String _qualityHint(WonkyAppLocalizations l, AiQuality q) =>
+      switch (q) {
+        AiQuality.best => l.aiQualityBestHint,
+        AiQuality.balanced => l.aiQualityBalancedHint,
+        AiQuality.fast => l.aiQualityFastHint,
+      };
 
   Future<void> _clear(BuildContext context) async {
     final a = _assistant;
     if (a == null) return;
+    final l = WonkyAppLocalizations.of(context);
     final ok = await confirmDialog(
       context,
-      title: 'Clear assistant history?',
-      description:
-          'All your assistant chats in every document are deleted. This '
-          "can't be undone. Edits the assistant made stay in the documents.",
-      confirmLabel: 'Clear history',
+      title: l.aiClearHistoryTitle,
+      description: l.aiClearHistoryBody,
+      confirmLabel: l.aiClearHistory,
       destructive: true,
     );
     if (!ok) return;
     try {
       final n = await a.api.clearHistory();
-      widget.services.toasts.show(
-        n == 1 ? 'Deleted 1 chat' : 'Deleted $n chats',
-      );
+      widget.services.toasts.show(l.aiHistoryCleared(n));
     } on Object {
-      widget.services.toasts.error("Couldn't clear the history");
+      widget.services.toasts.error(l.aiClearHistoryFailed);
     }
   }
 
@@ -72,6 +71,7 @@ class _AiSettingsSectionState extends State<AiSettingsSection> {
     final p = widget.services.prefs;
     final a = _assistant;
     final theme = ShadTheme.of(context);
+    final l = WonkyAppLocalizations.of(context);
     return ListenableBuilder(
       listenable: Listenable.merge([p, ?a?.status]),
       builder: (context, _) {
@@ -82,24 +82,20 @@ class _AiSettingsSectionState extends State<AiSettingsSection> {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             SettingsGroup(
-              title: 'Assistant',
-              description:
-                  'The assistant helps you write, edit and understand '
-                  'documents. It only sees the document you use it in.',
+              title: l.aiAssistantTitle,
+              description: l.aiAssistantHint,
               children: [
                 if (status != null && !serverReady)
                   Text(
-                    status.message ?? "AI isn't configured on this server.",
+                    assistantStatusMessage(l, status),
                     key: const ValueKey<String>('settings.ai.serverStatus'),
                     style: theme.textTheme.small.copyWith(
                       color: theme.colorScheme.destructive,
                     ),
                   ),
                 SettingsRow(
-                  label: 'Enable the assistant',
-                  description:
-                      'Turn off to hide AI features and stop sending '
-                      'content to the AI service.',
+                  label: l.aiEnable,
+                  description: l.aiEnableHint,
                   control: ShadSwitch(
                     key: const ValueKey<String>('settings.ai.enabled'),
                     value: p.aiEnabled,
@@ -110,10 +106,10 @@ class _AiSettingsSectionState extends State<AiSettingsSection> {
                   ),
                 ),
                 SettingsRow(
-                  label: 'AI quality',
+                  label: l.aiQuality,
                   description: status == null
                       ? null
-                      : _qualityHint(status.quality),
+                      : _qualityHint(l, status.quality),
                   control: ShadSelect<AiQuality>(
                     key: const ValueKey<String>('settings.ai.quality'),
                     initialValue: status?.quality ?? AiQuality.best,
@@ -121,44 +117,46 @@ class _AiSettingsSectionState extends State<AiSettingsSection> {
                     minWidth: 160,
                     options: [
                       for (final q in AiQuality.values)
-                        ShadOption(value: q, child: Text(_qualityLabel(q))),
+                        ShadOption(value: q, child: Text(_qualityLabel(l, q))),
                     ],
                     selectedOptionBuilder: (context, q) =>
-                        Text(_qualityLabel(q)),
+                        Text(_qualityLabel(l, q)),
                     onChanged: (q) async {
                       if (q == null || a == null) return;
                       try {
                         await a.setQuality(q);
                       } on Object {
-                        widget.services.toasts.error(
-                          "Couldn't save the AI quality",
-                        );
+                        widget.services.toasts.error(l.aiQualitySaveFailed);
                       }
                     },
                   ),
                 ),
                 if (status != null && status.dailyTokenBudget > 0)
                   SettingsRow(
-                    label: 'Usage today',
-                    description: 'Resets daily at midnight UTC.',
+                    label: l.aiUsageToday,
+                    description: l.aiUsageTodayHint,
                     control: Text(
-                      '${(status.tokensUsedToday * 100 / status.dailyTokenBudget).clamp(0, 100).round()} %',
+                      l.aiUsagePercent(
+                        (status.tokensUsedToday * 100 / status.dailyTokenBudget)
+                            .clamp(0, 100)
+                            .round(),
+                      ),
                       key: const ValueKey<String>('settings.ai.usage'),
                       style: theme.textTheme.small,
                     ),
                   ),
                 SettingsRow(
-                  label: 'Chat history',
-                  description: 'Delete all your assistant chats.',
+                  label: l.aiChatHistory,
+                  description: l.aiChatHistoryHint,
                   control: ShadButton.outline(
                     key: const ValueKey<String>('settings.ai.clearHistory'),
                     enabled: a != null,
                     onPressed: () => unawaited(_clear(context)),
-                    child: const Text('Clear history'),
+                    child: Text(l.aiClearHistory),
                   ),
                 ),
                 Text(
-                  AssistantPanel.privacyNotice,
+                  l.assistantPrivacyNotice,
                   style: theme.textTheme.muted.copyWith(fontSize: 12),
                 ),
               ],

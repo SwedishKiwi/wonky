@@ -6,6 +6,7 @@ import 'package:wonky_app/wonky_app.dart';
 import 'package:wonky_core/wonky_core.dart' show InvocationSource;
 import 'package:wonky_write_core/wonky_write_core.dart' show BuiltinThemes;
 
+import '../../l10n/write_l10n.dart';
 import 'document_theme.dart';
 import 'theme_picker.dart' show ThemeSwatchPreview;
 
@@ -48,6 +49,7 @@ class _ThemeSettingsSectionState extends State<ThemeSettingsSection> {
     return ListenableBuilder(
       listenable: Listenable.merge([s.prefs, widget.themes]),
       builder: (context, _) {
+        final l = writeL10n(context);
         final current =
             defaultThemeUuidOf(s.prefs.writeDefaults) ??
             BuiltinThemes.wonkyDefault.uuid;
@@ -62,19 +64,17 @@ class _ThemeSettingsSectionState extends State<ThemeSettingsSection> {
           ],
         );
         return SettingsGroup(
-          title: 'Document themes',
-          description:
-              'Themes set fonts, colors and spacing. Documents that use '
-              '“my default theme” show your default.',
+          title: l.settingsDocumentThemes,
+          description: l.themeSettingsDescription,
           children: [
             SettingsRow(
-              label: 'Default theme',
+              label: l.themeSettingsDefaultTheme,
               control: SizedBox(
                 width: 240,
                 child: ShadSelect<String>(
                   key: ValueKey<String>('settings.write.defaultTheme.$current'),
                   initialValue: known ? current : null,
-                  placeholder: const Text('Wonky Default'),
+                  placeholder: Text(BuiltinThemes.wonkyDefault.name),
                   minWidth: 240,
                   selectedOptionBuilder: (context, v) {
                     final o = options.firstWhere(
@@ -96,7 +96,7 @@ class _ThemeSettingsSectionState extends State<ThemeSettingsSection> {
               ),
             ),
             SettingsRow(
-              label: 'Theme editor',
+              label: l.themeSettingsThemeEditor,
               control: Wrap(
                 spacing: 8,
                 children: [
@@ -106,13 +106,13 @@ class _ThemeSettingsSectionState extends State<ThemeSettingsSection> {
                     onPressed: () => _invoke('write.theme.openEditor', {
                       'themeUuid': current,
                     }),
-                    child: const Text('Edit…'),
+                    child: Text(l.themeSettingsEdit),
                   ),
                   ShadButton.ghost(
                     key: const ValueKey<String>('settings.write.manageThemes'),
                     size: ShadButtonSize.sm,
                     onPressed: () => _invoke('write.theme.openManager'),
-                    child: const Text('Manage themes…'),
+                    child: Text(l.cmdThemeOpenManager),
                   ),
                 ],
               ),

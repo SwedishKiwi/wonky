@@ -62,10 +62,26 @@ Every change is marked with `// WONKY PATCH <id>` in the code. Tests of our patc
 - **Spec**: Write 02 §4.4
 - **Upstream**: to be proposed.
 
-## SE-4 — Editable tables (not done)
+## SE-4 — Editable tables (cell content builder)
 
-In-place table cell editing is **not implemented** in this iteration (P1, cut by the scope note).
-Tables are edited through the `write.table.*` commands (embed replacement, one undo step each).
+- **Reason**: Write edits table cells in place (Write 04 §18.4). The table stays one block node
+  (the document caret never enters it, the `table` embed schema is unchanged); the app turns the
+  tapped cell into an editor of the cell's inline Markdown and applies each edit as a node
+  replacement (`write.table.replace` semantics, one undo step). Upstream cells are read-only and
+  ignore pointer events.
+- **Changes**:
+  - `MarkdownTableComponent(cellBuilder:)` with `TableCellContentBuilder` /
+    `TableCellBuildContext` (`tableNodeId`, `rowIndex`, `columnIndex`, styled `cell` view model,
+    `defaultContent`, `isHeader`). Returning `null` keeps the default text.
+  - With a cell builder the table is not wrapped in `IgnorePointer`/`SelectableBox`, so cells take
+    taps and text input; the block-selection highlight is painted directly.
+  - `TableComponentFit.scale` no longer builds the table (and every cell) twice.
+- **Files**: `lib/src/default_editor/tables/table_markdown.dart`
+- **Tests**: `test/wonky_patches/se4_table_cell_builder_test.dart`; app side
+  `wonky_write/test/features/editor/ui/editor_extras_test.dart`
+- **Spec**: Write 04 §2.2, §18.4
+- **Upstream**: generally useful (custom/editable cells); to be proposed. Caret positions inside
+  cells (a `TableCellPosition`) remain a possible later step.
 
 ## SE-5 — Fixes found by our tests
 
@@ -85,6 +101,21 @@ Tables are edited through the `write.table.*` commands (embed replacement, one u
 - **Tests**: `test/wonky_patches/se5_fixes_test.dart`, `se3_node_change_events_test.dart`,
   `se2_document_patch_test.dart`
 - **Upstream**: 1–5 are general fixes; to be filed upstream.
+
+## SE-6 — Content drag delegate (drag and drop of the selection)
+
+- **Reason**: dragging selected text must move it (Write 04 §24), but `DocumentMouseInteractor`
+  always turned a pan into a new drag selection.
+- **Changes**: `ContentDragDelegate` / `ContentDragDetails` (new file
+  `lib/src/default_editor/content_drag.dart`); `SuperEditor(contentDragDelegate:)` →
+  `DocumentMouseInteractor`. On pan start (from the pointer-down position, not with Shift) the
+  delegate may claim the drag; it then gets updates (also while auto-scrolling near the viewport
+  edges), end and cancel, and the selection is left alone. Mouse gesture mode only.
+- **Files**: `content_drag.dart`, `document_gestures_mouse.dart`, `super_editor.dart`,
+  `lib/super_editor.dart`
+- **Tests**: `test/wonky_patches/se6_content_drag_test.dart`
+- **Spec**: Write 04 §24
+- **Upstream**: generally useful; to be proposed.
 
 ## Infra
 

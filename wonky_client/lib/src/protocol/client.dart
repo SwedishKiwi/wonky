@@ -20,6 +20,8 @@ import 'package:serverpod_auth_idp_client/serverpod_auth_idp_client.dart'
 import 'package:serverpod_client/serverpod_client.dart' as _isc;
 import 'package:serverpod_offline_sync_client/serverpod_offline_sync_client.dart'
     as _ipulbpi2;
+import 'package:wonky_client/src/protocol/platform/activity/activity_dashboard.dart'
+    as _ilqfn3s9;
 import 'package:wonky_client/src/protocol/platform/activity/activity_event_view.dart'
     as _itempttd;
 import 'package:wonky_client/src/protocol/platform/ai/models/ai_quality.dart'
@@ -380,6 +382,44 @@ class EndpointJwtRefresh extends _iacc.EndpointRefreshJwtTokens {
         'refreshAccessToken',
         {'refreshToken': refreshToken},
         authenticated: false,
+      );
+}
+
+/// Tools › Activity dashboard (specs/07 §6): viewers, view and comment
+/// trends, and the "Show my view history" privacy setting.
+/// {@category Endpoint}
+class EndpointActivity extends _isc.EndpointRef {
+  EndpointActivity(_isc.EndpointCaller caller) : super(caller);
+
+  @override
+  String get name => 'activity';
+
+  /// The dashboard of [itemUuid] for the last [days] days (1–365).
+  _ida.Future<_ilqfn3s9.ActivityDashboard> dashboard(
+    _isc.UuidValue itemUuid,
+    int days,
+  ) => caller.callServerEndpoint<_ilqfn3s9.ActivityDashboard>(
+    'activity',
+    'dashboard',
+    {
+      'itemUuid': itemUuid,
+      'days': days,
+    },
+  );
+
+  /// The caller's "Show my view history" setting.
+  _ida.Future<bool> showViewHistory() => caller.callServerEndpoint<bool>(
+    'activity',
+    'showViewHistory',
+    {},
+  );
+
+  /// Turns the caller's "Show my view history" on or off; returns it.
+  _ida.Future<bool> setShowViewHistory(bool show) =>
+      caller.callServerEndpoint<bool>(
+        'activity',
+        'setShowViewHistory',
+        {'show': show},
       );
 }
 
@@ -2190,6 +2230,7 @@ class Client extends _isc.ServerpodClientShared {
        ) {
     emailIdp = EndpointEmailIdp(this);
     jwtRefresh = EndpointJwtRefresh(this);
+    activity = EndpointActivity(this);
     assistant = EndpointAssistant(this);
     comment = EndpointComment(this);
     drive = EndpointDrive(this);
@@ -2216,6 +2257,8 @@ class Client extends _isc.ServerpodClientShared {
   late final EndpointEmailIdp emailIdp;
 
   late final EndpointJwtRefresh jwtRefresh;
+
+  late final EndpointActivity activity;
 
   late final EndpointAssistant assistant;
 
@@ -2263,6 +2306,7 @@ class Client extends _isc.ServerpodClientShared {
   Map<String, _isc.EndpointRef> get endpointRefLookup => {
     'emailIdp': emailIdp,
     'jwtRefresh': jwtRefresh,
+    'activity': activity,
     'assistant': assistant,
     'comment': comment,
     'drive': drive,

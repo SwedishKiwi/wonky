@@ -76,5 +76,31 @@ void main() {
       expect(taps, 1);
       expect(find.text('Apples', findRichText: true), findsNothing);
     });
+
+    testWidgets('a selected table with a transparent selection color paints no fill', (tester) async {
+      final document = MutableDocument(nodes: [_table()]);
+      final viewModel = const MarkdownTableComponentBuilder().createViewModel(document, document.first)
+          as MarkdownTableViewModel
+        ..selection = DocumentNodeSelection(
+          nodeId: 't',
+          nodeSelection: const UpstreamDownstreamNodeSelection.all(),
+        )
+        ..selectionColor = const Color(0x00000000);
+      await tester.pumpWidget(MaterialApp(
+        home: Scaffold(
+          body: MarkdownTableComponent(
+            componentKey: GlobalKey(),
+            viewModel: viewModel,
+            cellBuilder: (context, cell) => null,
+          ),
+        ),
+      ));
+
+      final fills = [
+        for (final e in find.byType(DecoratedBox).evaluate())
+          if ((e.widget as DecoratedBox).decoration case BoxDecoration(:final color?) when color.a > 0) color,
+      ];
+      expect(fills, isEmpty);
+    });
   });
 }

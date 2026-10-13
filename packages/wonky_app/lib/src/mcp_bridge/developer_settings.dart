@@ -17,16 +17,18 @@ import '../shell/shell_services.dart';
 import 'mcp_bridge_client.dart';
 import 'mcp_bridge_scope.dart';
 
-/// Human labels of the token scopes (suite 09 §2).
-const mcpScopeLabels = <String, String>{
-  McpScope.driveRead: 'Drive: read (list, search, export)',
-  McpScope.driveWrite: 'Drive: write (create, rename, move, trash, share)',
-  McpScope.writeRead: 'Documents: read',
-  McpScope.writeEdit: 'Documents: edit (content, comments, suggestions)',
-  McpScope.sheetsRead: 'Spreadsheets: read',
-  McpScope.sheetsEdit: 'Spreadsheets: edit',
-  McpScope.scriptsRun: 'Scripts: run',
-  McpScope.uiControl: 'Control app windows (ui.* tools)',
+/// The human label of a token [scope] (suite 09 §2); unknown scopes show
+/// their id.
+String mcpScopeLabel(WonkyAppLocalizations l, String scope) => switch (scope) {
+  McpScope.driveRead => l.mcpScopeDriveRead,
+  McpScope.driveWrite => l.mcpScopeDriveWrite,
+  McpScope.writeRead => l.mcpScopeWriteRead,
+  McpScope.writeEdit => l.mcpScopeWriteEdit,
+  McpScope.sheetsRead => l.mcpScopeSheetsRead,
+  McpScope.sheetsEdit => l.mcpScopeSheetsEdit,
+  McpScope.scriptsRun => l.mcpScopeScriptsRun,
+  McpScope.uiControl => l.mcpScopeUiControl,
+  _ => scope,
 };
 
 /// Default scopes of new tokens (Sheets is not available yet).
@@ -125,9 +127,7 @@ class _McpDeveloperSettingsState extends State<McpDeveloperSettings> {
       context,
       WonkyDialogSpec(
         title: l.tokenCreate,
-        description:
-            'The token acts as you with the permissions you choose. You '
-            'can revoke it at any time.',
+        description: l.tokenCreateHint,
         dialogKey: 'dialog.createToken',
         width: 480,
         fields: [
@@ -136,24 +136,23 @@ class _McpDeveloperSettingsState extends State<McpDeveloperSettings> {
             label: l.tokenName,
             initial: 'Claude Code',
             maxLength: 100,
-            validator: (v) =>
-                v.trim().isEmpty ? 'Give the token a name.' : null,
+            validator: (v) => v.trim().isEmpty ? l.tokenNameRequired : null,
           ),
           for (final scope in McpScope.all)
             if (!scope.startsWith('sheets') && scope != McpScope.scriptsRun)
               CheckboxFieldSpec(
                 id: 'scope:$scope',
-                label: mcpScopeLabels[scope] ?? scope,
+                label: mcpScopeLabel(l, scope),
                 initial: mcpDefaultScopes.contains(scope),
               ),
-          const SelectFieldSpec(
+          SelectFieldSpec(
             id: 'expiry',
-            label: 'Expires',
+            label: l.tokenExpires,
             options: {
-              '30': 'In 30 days',
-              '90': 'In 90 days',
-              '365': 'In 1 year',
-              'never': 'Never',
+              '30': l.tokenExpiresInDays(30),
+              '90': l.tokenExpiresInDays(90),
+              '365': l.tokenExpiresInYear,
+              'never': l.tokenNever,
             },
             initial: '90',
           ),
@@ -174,7 +173,7 @@ class _McpDeveloperSettingsState extends State<McpDeveloperSettings> {
         if (r.flag('scope:$scope')) scope,
     ];
     if (scopes.isEmpty) {
-      s.toasts.error('Choose at least one permission.');
+      s.toasts.error(l.tokenScopesRequired);
       return;
     }
     final expiry = r.text('expiry');
@@ -198,10 +197,8 @@ class _McpDeveloperSettingsState extends State<McpDeveloperSettings> {
     final l = WonkyAppLocalizations.of(context);
     final ok = await confirmDialog(
       context,
-      title: 'Revoke "${t.name}"?',
-      description:
-          'MCP clients using this token stop working immediately. This '
-          "can't be undone.",
+      title: l.tokenRevokeTitle(t.name),
+      description: l.tokenRevokeBody,
       confirmLabel: l.tokenRevoke,
       destructive: true,
     );
@@ -215,9 +212,9 @@ class _McpDeveloperSettingsState extends State<McpDeveloperSettings> {
     }
   }
 
-  void _copy(String text, String what) {
+  void _copy(String text, String toast) {
     Clipboard.setData(ClipboardData(text: text));
-    s.toasts.show('$what copied');
+    s.toasts.show(toast);
   }
 
   String _date(DateTime? d) =>
@@ -232,7 +229,7 @@ class _McpDeveloperSettingsState extends State<McpDeveloperSettings> {
     final status = revoked
         ? l.tokenRevoked
         : expired
-        ? 'expired'
+        ? l.tokenExpired
         : null;
     return Padding(
       key: ValueKey<String>('settings.mcp.token.${t.id}'),
@@ -245,7 +242,9 @@ class _McpDeveloperSettingsState extends State<McpDeveloperSettings> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  '${t.name}${status == null ? '' : ' · $status'}',
+                  status == null
+                      ? t.name
+                      : l.tokenNameWithStatus(t.name, status),
                   style: theme.textTheme.small.copyWith(
                     color: status == null
                         ? theme.colorScheme.foreground
@@ -261,9 +260,15 @@ class _McpDeveloperSettingsState extends State<McpDeveloperSettings> {
                   ),
                 ),
                 Text(
-                  'Created ${_date(t.createdAt)} · '
-                  'expires ${t.expiresAt == null ? 'never' : _date(t.expiresAt)} · '
-                  'last used ${t.lastUsedAt == null ? 'never' : _date(t.lastUsedAt)}',
+                  l.tokenDates(
+                    _date(t.createdAt),
+                    t.expiresAt == null
+                        ? l.tokenNeverLower
+                        : _date(t.expiresAt),
+                    t.lastUsedAt == null
+                        ? l.tokenNeverLower
+                        : _date(t.lastUsedAt),
+                  ),
                   style: theme.textTheme.muted.copyWith(fontSize: 12),
                 ),
               ],
@@ -346,7 +351,8 @@ class _McpDeveloperSettingsState extends State<McpDeveloperSettings> {
                       ShadButton.outline(
                         key: const ValueKey<String>('settings.mcp.copyToken'),
                         size: ShadButtonSize.sm,
-                        onPressed: () => _copy(created.secret, 'Token'),
+                        onPressed: () =>
+                            _copy(created.secret, l.toastTokenCopied),
                         child: Text(l.actionCopy),
                       ),
                     ],
@@ -377,8 +383,8 @@ class _McpDeveloperSettingsState extends State<McpDeveloperSettings> {
         SettingsGroup(
           title: l.mcpTitle,
           description:
-              '${l.mcpHint} Endpoint: $url'
-              '${created == null ? ' Replace \${WONKY_TOKEN} with a token.' : ''}',
+              '${l.mcpHint} ${l.mcpEndpoint(url)}'
+              '${created == null ? ' ${l.mcpReplaceToken(r'${WONKY_TOKEN}')}' : ''}',
           children: [
             Wrap(
               spacing: 6,
@@ -402,7 +408,7 @@ class _McpDeveloperSettingsState extends State<McpDeveloperSettings> {
               child: ShadButton.outline(
                 key: const ValueKey<String>('settings.mcp.copySnippet'),
                 onPressed: () =>
-                    _copy(snippets[_snippet].$2, snippets[_snippet].$1),
+                    _copy(snippets[_snippet].$2, l.toastMcpConfigCopied),
                 leading: const Icon(LucideIcons.copy, size: 16),
                 child: Text(l.cmdCopyMcpConfig),
               ),
@@ -410,11 +416,8 @@ class _McpDeveloperSettingsState extends State<McpDeveloperSettings> {
           ],
         ),
         SettingsGroup(
-          title: 'Window control',
-          description:
-              'Lets MCP clients with the ui:control permission drive this '
-              'window: navigate, run commands, fill dialogs, take '
-              'screenshots. A pill with Stop shows while an agent works.',
+          title: l.mcpWindowControl,
+          description: l.mcpWindowControlHint,
           children: [
             ListenableBuilder(
               listenable: s.mcp,
@@ -432,13 +435,14 @@ class _McpDeveloperSettingsState extends State<McpDeveloperSettings> {
               ListenableBuilder(
                 listenable: Listenable.merge([bridge.state, bridge.sessionId]),
                 builder: (context, _) => SettingsRow(
-                  label: 'Status',
+                  label: l.mcpBridgeStatus,
                   control: Text(
                     switch (bridge.state.value) {
-                      McpBridgeState.off => 'Off',
-                      McpBridgeState.connecting => 'Connecting…',
-                      McpBridgeState.connected =>
-                        'On · window ${bridge.sessionId.value ?? ''}',
+                      McpBridgeState.off => l.mcpBridgeOff,
+                      McpBridgeState.connecting => l.mcpBridgeConnecting,
+                      McpBridgeState.connected => l.mcpBridgeConnected(
+                        bridge.sessionId.value ?? '',
+                      ),
                     },
                     key: const ValueKey<String>('settings.mcp.bridgeStatus'),
                     style: theme.textTheme.small,

@@ -104,6 +104,8 @@ class McpBridgeClient {
     await services.supervisor.cancel(supervisorKey);
     await _out?.close();
     _out = null;
+    // [dispose] stops without waiting; its notifiers are gone by now.
+    if (_disposed) return;
     sessionId.value = null;
     state.value = McpBridgeState.off;
   }
@@ -281,7 +283,10 @@ class McpBridgeClient {
     }
   }
 
+  bool _disposed = false;
+
   void dispose() {
+    _disposed = true;
     unawaited(stop());
     state.dispose();
     sessionId.dispose();

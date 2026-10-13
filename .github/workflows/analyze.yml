@@ -6,7 +6,21 @@ on:
   pull_request:
     branches: [main]
 
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{github.workflow}}-${{github.ref}}
+  cancel-in-progress: true
+
+env:
+  # Keep in step with format.yml, tests.yml and deploy.yml. The workspace lock
+  # file needs Flutter >= 3.47.0 (pubspec.lock `sdks:`).
+  FLUTTER_VERSION: '3.47.5'
+
 jobs:
+  # Every workspace member (root pubspec.yaml `workspace:`) plus tool/.
+  # Generated code is excluded by each package's analysis_options.yaml.
   analyze:
     runs-on: ubuntu-latest
 
@@ -15,11 +29,33 @@ jobs:
 
       - uses: subosito/flutter-action@v2
         with:
-          flutter-version: '3.44.4'
+          flutter-version: ${{env.FLUTTER_VERSION}}
+          cache: true
 
       - name: Install dependencies
         run: flutter pub get
 
       - name: Analyze
-        working-directory: wonky_server
-        run: dart analyze --fatal-infos
+        run: |
+          members=$(awk '/^workspace:/{f=1;next} /^[^ -]/{f=0} f && /^ *- /{sub(/^ *- */,""); sub(/ *#.*/,""); print}' pubspec.yaml)
+          dart analyze --fatal-infos $members tool
+
+  # Package dependency rules (specs/01-architecture.md §2.1).
+  dependencies:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: ${{env.FLUTTER_VERSION}}
+          cache: true
+
+      # Writes .dart_tool/package_graph.json, which the check reads to find
+      # external packages that depend on Flutter.
+      - name: Install dependencies
+        run: flutter pub get
+
+      - name: Check package dependency rules
+        run: dart run tool/check_dependencies.dart

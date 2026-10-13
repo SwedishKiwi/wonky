@@ -241,10 +241,13 @@ endpoints the test tools are regenerated (automatic under `serverpod start`, oth
 | E2E | `flutter test integration_test/<file>.dart -d <device>` with the server running |
 | Coverage | `dart test --coverage=coverage` / `flutter test --coverage` |
 
-CI (extended in M0, see [01 §2](01-architecture.md)) runs every workspace package: unit,
-property (fixed + one random seed), widget and server tests on every PR; goldens on PRs that
-touch Flutter packages; `slow`, `e2e`, long property runs, export validation and the perf suite
-nightly.
+CI (`.github/workflows/tests.yml`, see [01 §2](01-architecture.md)) runs every workspace
+package that has tests, one job per package, on every PR: `dart test -x slow -x e2e` for pure-Dart
+packages, `flutter test -x golden -x slow -x e2e` for Flutter packages and apps, `dart test` in
+`wonky_server`, plus the vendored packages' own suites (`third_party/super_editor`,
+`third_party/attributed_text`). Still to be added: one random property seed per run, image
+goldens on PRs that touch Flutter packages (needs the golden container of §7), and the nightly
+`slow`, `e2e`, long property, export-validation and perf runs.
 
 **Coverage**: logic folders of `*_core`, `wonky_sheets_script` and `wonky_sync_models` keep
 ≥ 90 % line coverage ([Sheets 13 §7.1](wonky_sheets/13-implementation-plan.md)); other

@@ -34,7 +34,7 @@ import '../images/image_services.dart';
 import '../outline/outline_panel.dart';
 import '../suggestions/suggestions_panel.dart';
 import '../themes/document_theme.dart';
-import '../word_count/word_count_dialog.dart';
+import '../../l10n/write_l10n.dart';
 import 'command_invoke.dart';
 import 'document_menus.dart';
 import 'selection_toolbar.dart';
@@ -179,7 +179,7 @@ class _WriteDocumentScreenState extends State<WriteDocumentScreen> {
       panels: [
         SidePanelSpec(
           id: WritePanels.outline,
-          title: 'Outline',
+          title: writeL10n(context).screenPanelOutline,
           icon: LucideIcons.listTree,
           defaultWidth: 280,
           minWidth: 220,
@@ -194,7 +194,7 @@ class _WriteDocumentScreenState extends State<WriteDocumentScreen> {
         ),
         SidePanelSpec(
           id: WritePanels.find,
-          title: 'Find and replace',
+          title: writeL10n(context).screenPanelFind,
           icon: LucideIcons.search,
           defaultWidth: 340,
           minWidth: 300,
@@ -237,22 +237,23 @@ class _WriteDocumentScreenState extends State<WriteDocumentScreen> {
 
   Widget _failed(BuildContext context) {
     final err = session.error;
+    final l = writeL10n(context);
     return WonkyEmptyState(
       illustration: err != null && isOfflineError(err)
           ? EmptyIllustration.offline
           : EmptyIllustration.error,
       title: err != null && isOfflineError(err)
-          ? "This document isn't available offline"
-          : 'Something went wrong opening this document',
+          ? l.screenOfflineUnavailable
+          : l.screenOpenFailed,
       description: err == null ? null : errorMessage(err),
       actions: [
         ShadButton.outline(
           onPressed: () => unawaited(session.retry()),
-          child: const Text('Try again'),
+          child: Text(l.screenTryAgain),
         ),
         ShadButton.ghost(
           onPressed: () => s.router.go('/'),
-          child: const Text('Go back'),
+          child: Text(l.screenGoBack),
         ),
       ],
     );
@@ -297,8 +298,7 @@ class _WriteDocumentScreenState extends State<WriteDocumentScreen> {
                 _invoke('write.table.editCell', {'nodeId': id}),
             onComment: () => _invoke('shell.comments.create'),
             onEmoji: () => _invoke('write.insert.emoji'),
-            onSpecialCharacter: () =>
-                _invoke('write.insert.specialCharacter'),
+            onSpecialCharacter: () => _invoke('write.insert.specialCharacter'),
             onAskAi: ai.shown ? () => _invoke('write.ai.inline') : null,
             onContinueWriting: ai.shown
                 ? () => _invoke('write.ai.continue')
@@ -338,9 +338,7 @@ class _WriteDocumentScreenState extends State<WriteDocumentScreen> {
           onOpenLink: (url) =>
               unawaited(openWriteLink(s, doc, url, context: context)),
           onEditLink: () => _invoke('write.link.edit'),
-          hint: doc.editable
-              ? 'Type / for commands, @ to mention, or just start writing'
-              : '',
+          hint: doc.editable ? writeL10n(context).screenEditorHint : '',
         );
         WidgetsBinding.instance.addPostFrameCallback((_) {
           if (mounted) _attachPagination();
@@ -537,32 +535,50 @@ class WordCountStatus extends StatelessWidget {
       ]),
       builder: (context, _) {
         if (!doc.viewPrefs.showWordCount) return const SizedBox.shrink();
+        final l = writeL10n(context);
         final stats = doc.insights.stats;
-        final label = wordCountLabel(stats, doc.insights.selectionStats);
+        final selection = doc.insights.selectionStats;
+        final words = selection == null
+            ? l.screenStatusWords(stats.words)
+            : l.screenStatusSelectedOfWords(selection.words, stats.words);
         final pages = doc.view.layout == LayoutMode.pages
             ? doc.pageCount.value
             : null;
+        final text = pages == null || pages < 1
+            ? words
+            : l.screenStatusWordsAndPages(words, pages);
+        void open() => unawaited(
+          invokeWith(
+            ShellScope.of(context),
+            'write.tools.wordCount',
+            context: context,
+          ),
+        );
         return ShadTooltip(
           builder: (_) => Text(
-            '${formatCount(stats.characters)} characters · '
-            '${readingTime(stats)} read',
-          ),
-          child: GestureDetector(
-            key: const ValueKey<String>('write.status.wordCount'),
-            onTap: () => unawaited(
-              invokeWith(
-                ShellScope.of(context),
-                'write.tools.wordCount',
-                context: context,
-              ),
+            l.screenStatusCharactersReading(
+              stats.characters,
+              math.max(0, stats.readingTimeMinutes),
             ),
-            child: MouseRegion(
-              cursor: SystemMouseCursors.click,
-              child: Text(
-                pages == null || pages < 1
-                    ? label
-                    : '$label · $pages ${pages == 1 ? 'page' : 'pages'}',
-                style: theme.textTheme.muted.copyWith(fontSize: 12),
+          ),
+          // One labeled button node for screen readers (the text is the
+          // label; tapping opens the word count dialog).
+          child: Semantics(
+            container: true,
+            button: true,
+            label: text,
+            hint: l.screenWordCountHint,
+            onTap: open,
+            excludeSemantics: true,
+            child: GestureDetector(
+              key: const ValueKey<String>('write.status.wordCount'),
+              onTap: open,
+              child: MouseRegion(
+                cursor: SystemMouseCursors.click,
+                child: Text(
+                  text,
+                  style: theme.textTheme.muted.copyWith(fontSize: 12),
+                ),
               ),
             ),
           ),
@@ -596,7 +612,7 @@ class _UploadsStatus extends StatelessWidget {
                   ),
                   const SizedBox(width: 6),
                   Text(
-                    n == 1 ? 'Uploading 1 image…' : 'Uploading $n images…',
+                    writeL10n(context).screenUploadingImages(n),
                     style: theme.textTheme.muted.copyWith(fontSize: 12),
                   ),
                 ],
@@ -619,6 +635,8 @@ class LayoutStatus extends StatelessWidget {
       builder: (context, _) {
         final pages = doc.view.layout == LayoutMode.pages;
         final ui = CommandUi(context, ShellScope.of(context));
+        final l = ui.l;
+        final layout = pages ? l.menuLayoutPages : l.menuLayoutPageless;
         return WonkyDropdownMenu(
           anchor: const ShadAnchor(
             childAlignment: AlignmentDirectional.topEnd,
@@ -629,19 +647,19 @@ class LayoutStatus extends StatelessWidget {
             ui.item(
               'write.doc.setLayout',
               args: {'layout': 'pages'},
-              label: 'Pages',
+              label: l.menuLayoutPages,
               radio: true,
               keyName: 'layout.pages',
             ),
             ui.item(
               'write.doc.setLayout',
               args: {'layout': 'pageless'},
-              label: 'Pageless',
+              label: l.menuLayoutPageless,
               radio: true,
               keyName: 'layout.pageless',
             ),
             const WonkyMenuSeparator(),
-            ui.item('write.doc.pageSetup', label: 'Page setup…'),
+            ui.item('write.doc.pageSetup', label: l.cmdDocPageSetup),
           ],
           builder: (context, c) => ShadButton.ghost(
             key: const ValueKey<String>('write.status.layout'),
@@ -653,7 +671,8 @@ class LayoutStatus extends StatelessWidget {
             ),
             onPressed: c.toggle,
             child: Text(
-              pages ? 'Pages' : 'Pageless',
+              layout,
+              semanticsLabel: l.screenPageLayout(layout),
               style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w400),
             ),
           ),
@@ -676,6 +695,7 @@ class ZoomStatus extends StatelessWidget {
       builder: (context, _) {
         final s = ShellScope.of(context);
         final ui = CommandUi(context, s);
+        final l = ui.l;
         final zoom = (doc.view.zoom * 100).round();
         Widget icon(String key, IconData i, String id, String label) =>
             ShadTooltip(
@@ -700,7 +720,7 @@ class ZoomStatus extends StatelessWidget {
               'write.status.zoomOut',
               LucideIcons.minus,
               'write.view.zoomOut',
-              'Zoom out',
+              l.cmdViewZoomOut,
             ),
             WonkyDropdownMenu(
               anchor: const ShadAnchor(
@@ -713,7 +733,7 @@ class ZoomStatus extends StatelessWidget {
                 for (final p in zoomPresets)
                   WonkyMenuRadioItem(
                     key: ValueKey<String>('menu.statusZoom.$p'),
-                    label: '$p%',
+                    label: l.screenZoomPercent(p),
                     selected: p == zoom,
                     onSelected: () =>
                         ui.run('write.view.zoomSet', {'percent': p}),
@@ -722,22 +742,28 @@ class ZoomStatus extends StatelessWidget {
                 ui.item(
                   'write.view.zoomFit',
                   args: {'mode': 'width'},
-                  label: 'Fit width',
+                  label: l.menuFitWidth,
                   keyName: 'status.fitWidth',
                 ),
               ],
               builder: (context, c) => ShadButton.ghost(
                 key: const ValueKey<String>('write.status.zoom'),
                 height: 22,
-                width: 48,
-                padding: EdgeInsets.zero,
+                padding: const EdgeInsets.symmetric(horizontal: 6),
                 onPressed: c.toggle,
-                child: Text(
-                  '$zoom%',
-                  style: const TextStyle(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w400,
-                    fontFeatures: [FontFeature.tabularFigures()],
+                // At least 36 px so the width does not jump between zoom
+                // levels; grows for longer (translated) labels.
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(minWidth: 36),
+                  child: Text(
+                    l.screenZoomPercent(zoom),
+                    textAlign: TextAlign.center,
+                    semanticsLabel: l.screenZoomLevel(zoom),
+                    style: const TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w400,
+                      fontFeatures: [FontFeature.tabularFigures()],
+                    ),
                   ),
                 ),
               ),
@@ -746,7 +772,7 @@ class ZoomStatus extends StatelessWidget {
               'write.status.zoomIn',
               LucideIcons.plus,
               'write.view.zoomIn',
-              'Zoom in',
+              l.cmdViewZoomIn,
             ),
           ],
         );
@@ -767,7 +793,8 @@ class ModeStatus extends StatelessWidget {
       listenable: doc,
       builder: (context, _) {
         final ui = CommandUi(context, ShellScope.of(context));
-        final (icon, label, _) = ModeSwitcher.describe(doc.editor.mode);
+        final (icon, _, _) = ModeSwitcher.describe(ui.l, doc.editor.mode);
+        final label = ModeSwitcher.modeName(ui.l, doc.editor.mode);
         final cs = ShadTheme.of(context).colorScheme;
         return WonkyDropdownMenu(
           anchor: const ShadAnchor(
@@ -777,13 +804,13 @@ class ModeStatus extends StatelessWidget {
           ),
           entries: () => modeEntries(ui, doc),
           builder: (context, c) => ShadTooltip(
-            builder: (_) => Text('$label mode'),
+            builder: (_) => Text(label),
             child: ShadIconButton.ghost(
               key: const ValueKey<String>('write.status.mode'),
               width: 22,
               height: 22,
               iconSize: 13,
-              semanticLabel: '$label mode',
+              semanticLabel: label,
               icon: Icon(
                 icon,
                 color: doc.editor.mode == EditorMode.suggesting

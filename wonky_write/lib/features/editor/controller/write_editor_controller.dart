@@ -636,6 +636,9 @@ abstract interface class InlineTableEditingHandle {
 
   /// Stops editing (saving the cell).
   void deactivate();
+
+  /// Whether a cell is being edited.
+  bool get isEditing;
 }
 
 /// A notice for the UI (toast, announcement).

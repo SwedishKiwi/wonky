@@ -87,7 +87,11 @@ class AuthLayout extends StatelessWidget {
                     const SizedBox(height: 20),
                     ShadCard(
                       width: double.infinity,
-                      title: Semantics(header: true, child: Text(title)),
+                      title: Semantics(
+                        container: true,
+                        header: true,
+                        child: Text(title),
+                      ),
                       description: subtitle == null ? null : Text(subtitle!),
                       child: Padding(
                         padding: const EdgeInsets.only(top: 16),

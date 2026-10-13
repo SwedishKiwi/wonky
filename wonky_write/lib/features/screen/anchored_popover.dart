@@ -2,6 +2,8 @@ import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
 import 'package:shad/shad.dart';
 
+import '../../l10n/write_l10n.dart';
+
 /// Shows [builder] in a modal popover below (or above, when there is no
 /// room) [anchor] (global coordinates), like a `ShadPopover` but opened
 /// programmatically from commands (link editor, table size …). Esc or a
@@ -17,7 +19,7 @@ Future<T?> showAnchoredPopover<T>(
     anchor: anchor,
     builder: builder,
     width: width,
-    label: barrierLabel ?? 'Dismiss',
+    label: barrierLabel ?? writeL10n(context).popoverDismiss,
   ),
 );
 

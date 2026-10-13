@@ -29,8 +29,17 @@ The repository was created from the Serverpod project template and two `flutter 
 | `specs/` | These specs; app specs in `specs/wonky_write/` and `specs/wonky_sheets/` | — |
 
 Root `pubspec.yaml` is a pub workspace (currently `wonky_client`, `wonky_server`, `wonky_flutter`).
-`.mcp.json` points the `serverpod` MCP at `wonky_server`. CI (`.github/workflows`) runs analyze,
-format and tests for `wonky_server` only, plus a Serverpod Cloud deploy workflow.
+`.mcp.json` points the `serverpod` MCP at `wonky_server`. CI (`.github/workflows`, extended in
+M0 step 6) covers every workspace member: `analyze.yml` runs `dart analyze --fatal-infos` over all
+members and `tool/`, plus the dependency-rule check `dart run tool/check_dependencies.dart`
+(§2.1); `format.yml` runs `dart format --output=none --set-exit-if-changed` over the same
+folders (generated code included — the generator formats its output); `tests.yml` runs the
+server tests (embedded Postgres, after `serverpod generate`), one matrix job per other member
+that has tests (`dart test -x slow -x e2e`, or `flutter test -x golden -x slow -x e2e` for
+Flutter packages; the list is derived from the root `workspace:`), and the vendored suites of
+`super_editor` (`flutter test -x golden`) and `attributed_text` (§2.3 rule 4;
+`serverpod_offline_sync` has none). `deploy.yml` deploys to Serverpod Cloud. All workflows pin
+Flutter 3.47.5 (the workspace lock file needs Flutter ≥ 3.47.0).
 
 **Target layout.**
 
@@ -90,8 +99,11 @@ referred to by package name.
 
 ### 2.1 Package dependency rules (enforced by a CI script)
 
+Enforced by `dart run tool/check_dependencies.dart` (repository root; CI job `dependencies` in
+`analyze.yml`). The script mirrors this subsection in its `rules` table — change both together.
+
 ```
-wonky_core            → (pure Dart deps only)
+wonky_core            → (common utilities only, see below)
 wonky_write_core      → wonky_core, dart_quill_delta (9.x by default; see §2.2), markdown, html, pdf,
                         archive, xml, image, crypto, highlight (or re_highlight — spike decides)
 wonky_sheets_core     → wonky_core, wonky_sync_models (model types only), petitparser, intl, timezone, archive, xml, csv,
@@ -100,7 +112,10 @@ wonky_sheets_script   → wonky_core, wonky_sheets_core, dart_eval, eval_annotat
 wonky_sync_models     → serverpod_database, serverpod_offline_sync, serverpod_serialization, uuid
 wonky_server          → serverpod, serverpod_auth_idp_server, serverpod_offline_sync(_server), serverpod_cloud_storage,
                         wonky_core, wonky_write_core, wonky_sheets_core, wonky_sheets_script, wonky_sync_models, mcp_dart, http
-wonky_client          → generated (+ serverpod_offline_sync_client, serverpod_database, wonky_sync_models)
+wonky_client          → generated: serverpod_client + module clients (serverpod_auth_idp_client,
+                        serverpod_auth_core_client), serverpod_offline_sync_client, serverpod_database,
+                        wonky_sync_models
+wonky_mcp_stdio       → args, http
 wonky_ui              → flutter, shad
 wonky_app             → wonky_ui, wonky_core, wonky_client, serverpod_flutter, serverpod_auth_idp_flutter, go_router, provider, mcp_dart
 wonky_write           → wonky_app, wonky_ui, wonky_write_core, super_editor (vendored), super_clipboard, printing, file_saver,
@@ -112,6 +127,53 @@ wonky_sheets          → wonky_app, wonky_ui, wonky_sheets_core, wonky_sheets_s
 
 Forbidden: any `*_core` importing Flutter; `wonky_ui` importing client/server code; Write
 packages importing Sheets packages and vice versa; feature code importing generated server code.
+
+**What the script checks** (only `dependencies:`, not `dev_dependencies:`; imports in `lib/` and
+`bin/`; `third_party/*` are external packages and are not checked):
+
+- every dependency is in the package's list above, in the common utilities, or in the justified
+  exceptions below;
+- pure-Dart packages (`*_core`, `wonky_sheets_script`, `wonky_sync_models`, `wonky_mcp_stdio`,
+  `wonky_server`, `wonky_client`) neither depend on nor import Flutter or any package that
+  (transitively) depends on it (read from `.dart_tool/package_graph.json`);
+- `wonky_ui` imports none of `wonky_client`, `wonky_server`, `wonky_app`, `serverpod*`;
+- Write packages (`wonky_write`, `wonky_write_core`) import no Sheets package (`wonky_sheets`,
+  `wonky_sheets_core`, `wonky_sheets_script`) and vice versa;
+- nothing outside `wonky_server` imports `package:wonky_server/`, and no relative import leaves
+  its package (e.g. into `wonky_server/lib/src/generated`);
+- every imported package is declared under `dependencies:` of the importing package. Two
+  exceptions: `lib/driver.dart` (the development entry point, `target:` under
+  `serverpod: flutter_apps:`) may import `dev_dependencies` (`flutter_driver`), and files
+  written by `serverpod generate` are skipped for this one rule (they import packages provided
+  transitively by the Serverpod runtime packages, e.g. `serverpod_auth_core_*`, `http`).
+
+**Common utilities** (any package): `collection`, `meta`, `clock`, `characters`, `path`, `uuid`,
+`intl`. Flutter packages also: `flutter`, `flutter_localizations`, `flutter_web_plugins`, `web`
+(browser APIs behind conditional imports), `cupertino_icons`.
+
+**Justified exceptions** (beyond the lists above):
+
+| Package | Dependency | Why |
+|---------|------------|-----|
+| `wonky_write_core` | `diff_match_patch` | Minimal text diffs for overlay-preserving Delta diffs (`DeltaDiff`) |
+| `wonky_sheets_core` | `vector_math` | `Matrix4` for `PdfGraphics.setTransform` in the PDF renderer (already a dependency of `pdf`) |
+| `wonky_server` | `crypto` | Token and content hashes |
+| `wonky_server` | `dart_quill_delta` | Server-authoritative OT over Deltas (A4) |
+| `wonky_server` | `yaml` | Reads the `wonky`/`mcp`/`ai` sections of the config files |
+| `wonky_ui` | `flutter_svg` | Empty-state illustrations (already a dependency of `shad`) |
+| `wonky_ui` | `flutter_test` | `pumpWonky` in `lib/testing.dart` (15 §7) |
+| `wonky_app` | `shad` | The shell UI is built with shad (02) |
+| `wonky_app` | `flutter_test` | `pumpShell` / `CommandTestHarness` in `lib/testing.dart` (15 §7) |
+| `wonky_app` | `serverpod_auth_idp_client` | Auth types used by the auth controller |
+| `wonky_app` | `desktop_drop` | Dropping files from the OS onto the drive (desktop) |
+| `wonky_app` | `url_launcher` | Opening the other app on desktop; external links |
+| `wonky_app` | `shared_preferences` | Per-device settings (`LocalStore`) |
+| `wonky_app` | `sqlite_async`, `path_provider` | Offline cache and outbox (`LocalDatabase`, 12) and its file location on desktop |
+| `wonky_write`, `wonky_sheets` | `wonky_core`, `wonky_client`, `shad`, `go_router` | Ids/commands/undo, repositories calling endpoints (never widgets, 11 §6), shad UI (02), routes (A9) |
+| `wonky_write` | `dart_quill_delta` | Client side of the Delta OT (A4) |
+| `wonky_write` | `highlight` | Code block syntax highlighting (same engine as `wonky_write_core`) |
+| `wonky_write` | `http` | Fetches server-side exports |
+| `wonky_write` | `sqlite_async` | Offline document cache (with `wonky_app`'s `LocalDatabase`) |
 
 ### 2.2 Third-party version policy
 - `super_editor`: **vendored** in `third_party/super_editor`, based on 0.3.0-dev.52 (pre-1.0,

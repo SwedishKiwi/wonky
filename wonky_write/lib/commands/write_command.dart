@@ -5,6 +5,9 @@ import 'package:wonky_app/wonky_app.dart';
 import 'package:wonky_core/wonky_core.dart';
 
 import '../features/screen/write_document_controller.dart';
+import '../l10n/write_l10n.dart';
+
+export '../l10n/write_l10n.dart' show WriteLocalizations, WriteText;
 
 /// Runs a Write command against the active document.
 typedef WriteRun =
@@ -15,8 +18,8 @@ typedef WriteRun =
     );
 
 /// A Write command (Write 04 §40, 05 §24): needs an open, loaded document
-/// unless [needsDocument] is false. Titles are English (i18n is out of
-/// scope this iteration).
+/// unless [needsDocument] is false. Titles, categories, descriptions and
+/// reasons are resolved from the Write localizations when shown.
 class WriteCommand extends JsonCommand {
   WriteCommand(
     String id, {
@@ -42,11 +45,11 @@ class WriteCommand extends JsonCommand {
 
   @override
   final CommandId id;
-  final String label;
+  final WriteText label;
   @override
   final IconData? icon;
-  final String? categoryName;
-  final String? descriptionText;
+  final WriteText? categoryName;
+  final WriteText? descriptionText;
   @override
   final List<KeyBinding> defaultBindings;
   @override
@@ -68,25 +71,34 @@ class WriteCommand extends JsonCommand {
   final bool needsEditable;
   final bool Function(WriteDocumentController doc, JsonArgs args)? enabled;
   final bool? Function(WriteDocumentController doc, JsonArgs args)? checked;
-  final String? Function(WriteDocumentController doc, JsonArgs args)? reason;
-  final String Function(JsonArgs args)? undoLabelOf;
+  final String? Function(
+    WriteLocalizations l,
+    WriteDocumentController doc,
+    JsonArgs args,
+  )?
+  reason;
+  final String Function(WriteLocalizations l, JsonArgs args)? undoLabelOf;
   final WriteRun run;
 
   @override
-  String title(BuildContext context) => label;
+  String title(BuildContext context) => label(writeL10n(context));
 
   @override
-  String? description(BuildContext context) => descriptionText;
+  String? description(BuildContext context) =>
+      descriptionText?.call(writeL10n(context));
 
   @override
-  String? category(BuildContext context) => categoryName;
+  String? category(BuildContext context) =>
+      categoryName?.call(writeL10n(context));
 
   @override
   List<String> aliases(BuildContext context) => aliasList;
 
   @override
-  String undoLabel(BuildContext context, JsonArgs args) =>
-      undoLabelOf?.call(args) ?? label;
+  String undoLabel(BuildContext context, JsonArgs args) {
+    final l = writeL10n(context);
+    return undoLabelOf?.call(l, args) ?? label(l);
+  }
 
   @override
   bool isEnabled(CommandContext ctx, JsonArgs args) {
@@ -101,8 +113,9 @@ class WriteCommand extends JsonCommand {
   String? disabledReason(CommandContext ctx, JsonArgs args) {
     final doc = WriteDocumentController.of(ctx);
     if (doc == null) return null;
-    if (needsEditable && !doc.editable) return editDisabledReason(doc);
-    return reason?.call(doc, args);
+    final l = writeL10nOf(ctx.services);
+    if (needsEditable && !doc.editable) return editDisabledReason(l, doc);
+    return reason?.call(l, doc, args);
   }
 
   @override
@@ -140,10 +153,10 @@ class WriteGlobalCommand extends JsonCommand {
 
   @override
   final CommandId id;
-  final String label;
+  final WriteText label;
   @override
   final IconData? icon;
-  final String? categoryName;
+  final WriteText? categoryName;
   @override
   final List<KeyBinding> defaultBindings;
   @override
@@ -159,10 +172,11 @@ class WriteGlobalCommand extends JsonCommand {
   bool get isUndoable => false;
 
   @override
-  String title(BuildContext context) => label;
+  String title(BuildContext context) => label(writeL10n(context));
 
   @override
-  String? category(BuildContext context) => categoryName;
+  String? category(BuildContext context) =>
+      categoryName?.call(writeL10n(context));
 
   @override
   bool isEnabled(CommandContext ctx, JsonArgs args) =>
@@ -178,14 +192,12 @@ class WriteGlobalCommand extends JsonCommand {
 }
 
 /// Why content commands are disabled for [doc].
-String editDisabledReason(WriteDocumentController doc) {
-  if (!doc.isLoaded) return 'The document is still loading';
-  if (doc.role < Role.commenter) return 'You have view access';
-  if (doc.editor.mode.name == 'viewing') {
-    return 'Switch to Editing or Suggesting to make changes';
-  }
-  if (doc.role < Role.editor) return 'You can only suggest changes';
-  return 'Not available here';
+String editDisabledReason(WriteLocalizations l, WriteDocumentController doc) {
+  if (!doc.isLoaded) return l.reasonDocumentLoading;
+  if (doc.role < Role.commenter) return l.reasonViewAccess;
+  if (doc.editor.mode.name == 'viewing') return l.reasonSwitchToEditOrSuggest;
+  if (doc.role < Role.editor) return l.reasonSuggestOnly;
+  return l.reasonNotAvailable;
 }
 
 /// `ok` or `failed(message)`.

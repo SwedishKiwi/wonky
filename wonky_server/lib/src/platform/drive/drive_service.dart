@@ -1448,6 +1448,8 @@ abstract final class DriveService {
       state.copyWith(lastOpenedAt: nowUtc(), viaLink: viaLink),
       columns: (t) => [t.lastOpenedAt, t.viaLink],
     );
+    // Activity dashboard view counts (specs/07 §6).
+    await ActivityService.recordView(session, item.id!, actor.userId);
   }
 
   /// Records that the caller edited [item] (for "Last modified by me").

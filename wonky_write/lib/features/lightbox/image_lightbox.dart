@@ -71,7 +71,10 @@ class ImageLightboxState extends State<ImageLightbox> {
   bool _failed = false;
 
   /// The current zoom (1 = natural size).
-  double get zoom => _transform.value.getMaxScaleOnAxis() * _baseScale;
+  double get zoom => _scaleOf(_transform.value) * _baseScale;
+
+  /// The x scale of [m] (no rotation; `getMaxScaleOnAxis` would include z).
+  static double _scaleOf(Matrix4 m) => m.entry(0, 0);
 
   /// Scale of the laid-out image (fit) relative to the natural size.
   double _baseScale = 1;
@@ -148,7 +151,7 @@ class ImageLightboxState extends State<ImageLightbox> {
     final clamped = value.clamp(ImageLightbox.minZoom, ImageLightbox.maxZoom);
     final scale = clamped / _baseScale;
     final center = Offset(_viewport.width / 2, _viewport.height / 2);
-    final current = _transform.value.getMaxScaleOnAxis();
+    final current = _scaleOf(_transform.value);
     final focal = _transform.toScene(center);
     final next = Matrix4.identity()
       ..translateByDouble(center.dx, center.dy, 0, 1)

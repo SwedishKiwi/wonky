@@ -5,7 +5,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:flutter/services.dart';
 
-import 'hunspell_engine.dart' deferred as hunspell;
+import 'hunspell_engine.dart' as hunspell;
 import 'spell_engine.dart';
 
 /// A bundled Hunspell dictionary (`assets/dictionaries/index.json`).
@@ -34,12 +34,15 @@ class DictionaryInfo {
   final String license;
 }
 
-/// Loads spellcheck dictionaries on first need (Write 04 §28.2): the
-/// checker library is deferred, the files are fetched from the app bundle
-/// and parsed in 8 ms idle-time slices so typing stays smooth.
+/// Loads spellcheck dictionaries on first need (Write 04 §28.2): the files
+/// (the bulk of the download) are fetched from the app bundle only when a
+/// document needs them, and parsed in 8 ms slices, one per frame, so typing
+/// stays smooth.
 class SpellDictionaries {
-  SpellDictionaries({AssetBundle? bundle, this.slice = const Duration(milliseconds: 8)})
-    : _bundle = bundle ?? rootBundle;
+  SpellDictionaries({
+    AssetBundle? bundle,
+    this.slice = const Duration(milliseconds: 8),
+  }) : _bundle = bundle ?? rootBundle;
 
   /// The shared instance (dictionaries are cached for the app's lifetime).
   static final SpellDictionaries instance = SpellDictionaries();
@@ -54,7 +57,7 @@ class SpellDictionaries {
   /// The bundled dictionaries.
   Future<List<DictionaryInfo>> available() => _index ??= () async {
     try {
-      final raw = await _bundle.loadString('$_root/index.json');
+      final raw = await _bundle.loadString('$_root/index.json', cache: false);
       final json = jsonDecode(raw) as Map<String, dynamic>;
       return [
         for (final d in json['dictionaries'] as List)
@@ -106,7 +109,6 @@ class SpellDictionaries {
 
   Future<SpellEngine?> _load(DictionaryInfo info) async {
     try {
-      await hunspell.loadLibrary();
       final aff = await _bundle.loadString('$_root/${info.aff}', cache: false);
       final dic = await _bundle.loadString('$_root/${info.dic}', cache: false);
       return await hunspell.createHunspellEngine(
@@ -123,13 +125,13 @@ class SpellDictionaries {
     }
   }
 
-  /// Waits for the next idle slot of the UI thread.
+  /// Waits for the next frame: one parse slice per frame keeps typing
+  /// smooth (no timers, so nothing is left pending when a view goes away).
   static Future<void> _idle() {
     final completer = Completer<void>();
-    SchedulerBinding.instance.scheduleTask<void>(
-      completer.complete,
-      Priority.animation,
-    );
+    final binding = SchedulerBinding.instance;
+    binding.addPostFrameCallback((_) => completer.complete());
+    binding.scheduleFrame();
     return completer.future;
   }
 

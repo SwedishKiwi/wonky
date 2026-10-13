@@ -70,6 +70,11 @@ importers, theme editor, chart editor, pivot editor, script editor + runtime, AI
   `GlobalShadLocalizations` for component strings.
 - v1 ships English; all strings externalized from day one; pseudo-locale (`en_XA`) build for
   testing truncation/RTL (`ar_XB`).
+- Pseudo-locale: `dart run tool/pseudo_locale.dart <x_en.arb> <x_en_XA.arb>` regenerates an
+  `en_XA` ARB (accented letters, ~35% padding, `[…]` brackets; ICU placeholders, plural/select
+  and `#` kept; `--self-test` checks the transform) — rerun it after adding keys. Build or run
+  any app with `--dart-define=WONKY_LOCALE=en_XA` (or any supported tag, e.g. `en`) to force the
+  shell's locale; shad, Flutter's `Global*Localizations` and untranslated keys fall back to `en`.
 - RTL: shell mirrors; Write supports RTL paragraphs (super_editor RTL support); Sheets has
   per-sheet RTL.
 - Locale-aware formatting of dates/numbers in UI; Sheets uses the spreadsheet locale for cell

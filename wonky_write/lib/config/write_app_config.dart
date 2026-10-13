@@ -17,6 +17,7 @@ import '../features/screen/write_document_screen.dart';
 import '../features/theme_editor/theme_editor_screen.dart';
 import '../features/themes/document_theme.dart';
 import '../features/themes/theme_settings.dart';
+import '../l10n/write_l10n.dart';
 import '../mcp/ui_write_tools.dart';
 import 'write_menus.dart';
 
@@ -50,7 +51,13 @@ class WriteAppConfig extends WonkyAppConfig {
   String itemPath(String uuid) => '/d/$uuid';
 
   @override
-  String untitledName(BuildContext context) => 'Untitled document';
+  String untitledName(BuildContext context) =>
+      writeL10n(context).untitledDocument;
+
+  @override
+  List<LocalizationsDelegate<dynamic>> get localizationsDelegates => const [
+    WriteLocalizations.delegate,
+  ];
 
   @override
   Widget buildEditor(BuildContext context, GoRouterState state, String uuid) {
@@ -134,7 +141,8 @@ class WriteAppConfig extends WonkyAppConfig {
   }
 
   @override
-  MenuRoot menus(BuildContext context, ShellMenus shell) => writeMenus(shell);
+  MenuRoot menus(BuildContext context, ShellMenus shell) =>
+      writeMenus(shell, l10n: writeL10n(context));
 
   @override
   Map<String, Widget Function(BuildContext context, VoidCallback close)>
@@ -168,7 +176,7 @@ class WriteAppConfig extends WonkyAppConfig {
   List<SettingsSectionSpec> settingsSections(ShellServices services) => [
     SettingsSectionSpec(
       id: 'themes',
-      title: (_) => 'Document themes',
+      title: (c) => writeL10n(c).settingsDocumentThemes,
       icon: LucideIcons.palette,
       builder: (_) => ThemeSettingsSection(
         services: services,

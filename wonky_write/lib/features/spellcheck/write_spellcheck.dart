@@ -105,8 +105,9 @@ class WriteSpellcheck extends ChangeNotifier {
   final _dirty = <String>{};
   final _errors = <String, List<(int, int, String)>>{};
   final _cache = <String, bool>{};
-  Timer? _timer;
-  bool _sliceScheduled = false;
+  bool _frameScheduled = false;
+  bool _immediate = false;
+  Duration? _changedAt;
   String? _caretNodeId;
 
   SpellcheckState get state => _state;
@@ -214,19 +215,39 @@ class WriteSpellcheck extends ChangeNotifier {
     _schedule(immediately: true);
   }
 
+  /// Work runs in post-frame slices (no timers): the first frame after a
+  /// change notes its time, slices start [debounce] later.
   void _schedule({bool immediately = false}) {
-    if (_dirty.isEmpty || _engine == null) return;
-    _timer?.cancel();
-    _timer = Timer(immediately ? Duration.zero : debounce, _scheduleSlice);
+    if (_dirty.isEmpty || _engine == null || _disposed) return;
+    if (immediately) _immediate = true;
+    if (!immediately) _changedAt = null;
+    _requestFrame();
   }
 
-  void _scheduleSlice() {
-    if (_sliceScheduled || _disposed) return;
-    _sliceScheduled = true;
-    SchedulerBinding.instance.scheduleTask<void>(() {
-      _sliceScheduled = false;
-      if (_runSlice()) _scheduleSlice();
-    }, Priority.animation);
+  void _requestFrame() {
+    if (_frameScheduled) return;
+    _frameScheduled = true;
+    final binding = SchedulerBinding.instance;
+    binding.addPostFrameCallback(_onFrame);
+    binding.scheduleFrame();
+  }
+
+  void _onFrame(Duration timeStamp) {
+    _frameScheduled = false;
+    if (_disposed || _dirty.isEmpty || _engine == null) return;
+    if (!_immediate) {
+      final changedAt = _changedAt ??= timeStamp;
+      if (timeStamp - changedAt < debounce) {
+        _requestFrame();
+        return;
+      }
+    }
+    _immediate = false;
+    _changedAt = null;
+    if (_runSlice()) {
+      _immediate = true;
+      _requestFrame();
+    }
   }
 
   /// Checks dirty blocks (caret block first) for at most [sliceBudget].
@@ -266,7 +287,6 @@ class WriteSpellcheck extends ChangeNotifier {
   void checkAllNow() {
     final engine = _engine;
     if (engine == null) return;
-    _timer?.cancel();
     for (final node in controller.document) {
       _dirty.add(node.id);
     }
@@ -364,7 +384,6 @@ class WriteSpellcheck extends ChangeNotifier {
   }
 
   void _clearAll() {
-    _timer?.cancel();
     _dirty.clear();
     _errors.clear();
     styler.clearAllErrors();
@@ -461,7 +480,6 @@ class WriteSpellcheck extends ChangeNotifier {
   @override
   void dispose() {
     _disposed = true;
-    _timer?.cancel();
     controller.document.removeListener(_onDocumentChange);
     controller.composer.selectionNotifier.removeListener(_onSelection);
     styler.dispose();

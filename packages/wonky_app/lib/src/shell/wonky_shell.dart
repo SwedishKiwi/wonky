@@ -34,6 +34,41 @@ import 'overlays/shell_overlays.dart';
 import 'shell_services.dart';
 import '../undo/undo_service.dart';
 
+/// The locale tag forced at build time with
+/// `--dart-define=WONKY_LOCALE=<tag>` (e.g. `en_XA`, the pseudo-locale of
+/// specs/11 §4); empty to follow the system locale.
+const wonkyLocaleTag = String.fromEnvironment('WONKY_LOCALE');
+
+/// Parses a locale [tag] (`en`, `en_XA`, `en-XA`, `zh_Hant_TW`) into a locale
+/// the shell supports, or null when [tag] is empty or its language isn't
+/// supported (the shell then follows the system locale).
+Locale? forcedLocale([String tag = wonkyLocaleTag]) {
+  final parts = tag.trim().split(RegExp('[-_]'));
+  if (parts.first.isEmpty) return null;
+  String? script;
+  String? country;
+  for (final p in parts.skip(1)) {
+    if (p.length == 4 && script == null && country == null) {
+      script = '${p[0].toUpperCase()}${p.substring(1).toLowerCase()}';
+    } else {
+      country = p.toUpperCase();
+    }
+  }
+  final locale = Locale.fromSubtags(
+    languageCode: parts.first.toLowerCase(),
+    scriptCode: script,
+    countryCode: country,
+  );
+  final supported = WonkyAppLocalizations.supportedLocales.any(
+    (s) => s.languageCode == locale.languageCode,
+  );
+  if (!supported) {
+    debugPrint('WONKY_LOCALE=$tag is not a supported locale; ignored.');
+    return null;
+  }
+  return locale;
+}
+
 /// The shared app shell (suite 03): bootstraps the client, auth, commands,
 /// keymap, undo, routing and overlays, then hosts the app's screens.
 ///
@@ -100,6 +135,7 @@ class WonkyShell extends StatefulWidget {
         versions: ServerVersionRepository(api),
         files: ServerFileRepository(api),
         meta: ServerMetaRepository(api),
+        activity: ServerActivityRepository(api),
       ),
       urls: wc.urls,
       connectivity: connectivity,
@@ -116,6 +152,7 @@ class WonkyShell extends StatefulWidget {
 class _WonkyShellState extends State<WonkyShell> {
   late final ShellServices s;
   bool _ready = false;
+  final Locale? _locale = forcedLocale();
   StreamSubscription<UndoOutcome>? _undoSub;
 
   @override
@@ -254,6 +291,7 @@ class _WonkyShellState extends State<WonkyShell> {
             darkTheme: WonkyTheme.dark(s.prefs.themeConfig),
             themeMode: s.prefs.themeMode,
             routerConfig: s.router,
+            locale: _locale,
             supportedLocales: WonkyAppLocalizations.supportedLocales,
             localizationsDelegates: [
               WonkyAppLocalizations.delegate,

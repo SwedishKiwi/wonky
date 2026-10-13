@@ -77,6 +77,7 @@ rather than worked around in app code. Planned patches (tracked in
 | **SE-3** | Detailed change events: block-type, list-type, indent, task-completion and metadata changes emit specific events with before/after values (instead of a bare `NodeChangeEvent`). | `ChangeDeltaExtractor` fast path (no line-diff fallback) ([02 §4.4](02-document-model.md)) | M2 |
 | **SE-4** | Editable tables: caret and selection inside `TableBlockNode` cells, inline formatting in cells, Tab/Shift+Tab between cells, add/remove/move rows and columns, column alignment; edits reported as events that map to a `table` embed replacement. | In-place table editing (§18.4) | P1 (M5) |
 | **SE-5** | Fixes found by our test suites (IME on web/Windows/Linux, RTL, large-document layout performance, keyboard handling). | All | Ongoing |
+| **SE-6** | Content drag delegate: an app may take over a mouse drag that starts on content (drag and drop of the selection) instead of a new drag selection. | Drag and drop (§24) | P1 |
 
 **Implementation status (M2)** — see `third_party/super_editor/PATCHES.md`:
 - SE-1 done (plus `toQuillDeltas(omitTrailingEmptyParagraph:)`); the mapper serializes through
@@ -92,7 +93,12 @@ rather than worked around in app code. Planned patches (tracked in
   nodes identical instances) and diffs per gap between untouched anchors, with an event fast path
   for single text insertions/deletions; marked reactions split a transaction by checkpoints
   taken *before* each marked reaction runs.
-- SE-4 not done in this iteration (tables are edited through `write.table.*` embed replacements).
+- SE-4 done as a **cell content builder** (`MarkdownTableComponent.cellBuilder`): the table stays
+  one block node (the document caret never enters it); the app's `InlineTableEditing` turns the
+  tapped cell into a text field over the cell's inline Markdown source (focus parented outside the
+  `SuperEditor`, so its keys and IME never reach the editor) and commits each cell edit as a
+  `table` embed replacement (§18.4).
+- SE-6 done: `SuperEditor.contentDragDelegate` (§24).
 - SE-5: list indent limit 8, list-type change keeps indent, IME resync after patches, typing over
   a selection, undo/redo action exports. `attributed_text` is vendored too
   (`third_party/attributed_text`, patch AT-1: `addAttribution` inside an existing span corrupted
@@ -921,8 +927,10 @@ inputs and their toasts:
   - View full size (`write.image.preview`)
   - Comment
   - Delete
-- Double-click opens the **lightbox**: an in-app full-screen overlay with zoom 25–400 %, pan,
-  and Esc to close. It never opens a new tab.
+- Double-click (or a click in Viewing mode, or *View full size*, `write.image.preview {nodeId?}`)
+  opens the **lightbox** (`features/lightbox/`): an in-app full-screen overlay with zoom 25–400 %
+  of the natural size (buttons, +/−/0 keys, wheel, pinch), pan, a caption with the alt text or
+  title, and Esc / the close button / a backdrop click to close. It never opens a new tab.
 - **Alt text dialog**: Alt text (textarea, 0–500 chars, with a hint about describing the
   image), Title (optional, shown as a tooltip and exported as the Markdown title), Save and
   Cancel. `write.image.setAlt {nodeId?, alt, title?}`, one undo step.
@@ -958,8 +966,8 @@ selectable only as a whole.
 - Wide tables scroll horizontally with the built-in scrollbar. Cells wrap text up to a minimum
   column width of 64 px.
 - **Affordances** on hover or selection: an **Edit table** button (pencil, top-right of the
-  table) and the block handle. Double-clicking a cell opens the table editor focused on that
-  cell.
+  table, opens the table editor popover) and the block handle. Clicking a cell edits it in place
+  (§18.4).
 
 ### 18.3 Insert
 - `write.insert.table {rows, cols}`. Defaults 3×3 (rows include the header row). Bounds 1–2,000
@@ -968,16 +976,31 @@ selectable only as a whole.
   Table ▸ has the same picker plus *Custom size…* (a dialog with two `WonkyNumberStepper`s).
   Slash `/table` inserts 3×3.
 - Inserts the embed (empty cells, `align` all `null`) after the current block, or replaces an
-  empty paragraph. Then it **opens the table editor** focused on cell (0,0). The insertion is
-  its own undo step, "Insert table".
+  empty paragraph. Then it starts **in-place editing** of cell (0,0) (the popover when in-place
+  editing is unavailable). The insertion is its own undo step, "Insert table".
 
 ### 18.4 Table editor
-Because the node is read-only in upstream `super_editor`, v1 editing happens in
-**`TableEditorPopover`** (below). With patch **SE-4** (vendored copy, §2.2, P1) cells become
-editable in place: typing, inline formatting, Tab navigation and row/column operations work
-directly in the document, each structural change still producing one `table` embed replacement
-and one undo step; the popover then remains for bulk operations (paste grid, sort column,
-resize) and for narrow screens.
+**In-place editing** (patch **SE-4**, `features/editor/tables/inline_table_editing.dart`,
+`write.table.editCell {nodeId?, row?, col?}`): clicking a cell (or Enter / F2 on a selected
+table) turns it into a text field holding the cell's **inline Markdown source**; other cells keep
+their rendering. While a cell is edited the local selection (presence) is the table embed.
+- Tab / Shift+Tab: next / previous cell (Tab selects the cell's text; Tab in the last cell appends
+  a row). Enter: cell below; in the last row it appends a row. Shift+Enter: cell above. ↑ ↓: row
+  above / below; ← → at the text edges: previous / next cell. Leaving the first or last cell (or
+  the top / bottom row) puts the caret before / after the table.
+- Mod+B / I / E, Mod+Shift+X wrap the field selection in `**`, `*`, `` ` ``, `~~`; Mod+K wraps it
+  as `[text]()`.
+- Esc leaves the cell with the table selected; Mod+Enter leaves it with the caret after the table.
+- Commits: on leaving the cell, on focus loss, and after 1.5 s without typing (so collaborators
+  see the edit). Each commit is one `table` embed replacement and one undo step "Edit cell";
+  appended rows are their own step "Insert row". Mod+Z in a field with draft history undoes the
+  draft; in a clean field it runs the document undo.
+- Concurrency: a remote change to other cells updates the field when it is clean; a dirty draft
+  wins when committed (last writer wins, per cell). If the table or the cell disappears, editing
+  stops with a notice.
+
+The **`TableEditorPopover`** (below) remains for bulk operations (structure, alignment, paste
+grid, sort) and narrow screens.
 - an anchored overlay covering the table's on-screen bounds, min 480 px wide, max the canvas
   width, max height 70 % of the viewport, internally scrollable;
 - a full-screen dialog below the `md` breakpoint.
@@ -1085,28 +1108,33 @@ entirely.
 ## 20. Emoji and special characters
 
 ### 20.1 Emoji picker (P1)
-- `WonkyEmojiPicker` (**wonky_ui**, also reused for comment reactions):
+- `WonkyEmojiPicker` (`wonky_write/lib/features/emoji/`; to move to wonky_ui for comment
+  reactions once wonky_ui has a small preferences-store interface):
   - search by CLDR short name and keywords;
   - category tabs, recent (per user, max 24), skin-tone selector (stored preference);
   - grid keyboard navigation with arrows and Enter.
-- Data: a bundled JSON generated at build time from Unicode emoji data (v15.1), with no runtime
-  network.
-- Entry points: Insert › Emoji, slash `/emoji`, the floating toolbar overflow, and the OS emoji
-  panel (works through IME).
-- Insert: `write.edit.insertText {text}`, one undo step, "Insert emoji". Emoji are plain text.
+- Data: `assets/emoji/emoji.json` (1,898 emoji, Unicode emoji ≤ 15.1, CLDR names, keywords and
+  shortcodes from emojibase-data, MIT), generated by `tool/unicode/gen_emoji.py`; loaded on first
+  use, no runtime network.
+- Entry points: Insert › Emoji (`write.insert.emoji {emoji?}`; without args the picker opens at
+  the caret), slash `/emoji`, the `:` trigger, and the OS emoji panel (works through IME).
+- Insert: one undo step, "Insert emoji". Emoji are plain text.
 - Fonts on web: configure the Flutter engine's `fontFallbackBaseUrl` to **self-hosted** Noto
   fonts (`/write/assets/fonts/fallback/`), so emoji and CJK fallback never fetch from
   `fonts.gstatic.com` (privacy and offline, suite 02 §2).
-- P2: `:shortcode` autocomplete via a second `ActionTagsPlugin` (trigger `:`) with a distinct
-  `actionTagId`.
+- `:` trigger (P1, done): `:` after the block start, whitespace or an opening bracket plus at
+  least two characters (`:smi`) opens a suggestion popover (8 matches by shortcode, name and
+  keyword, in the user's skin tone); ↑ ↓ Enter/Tab choose (the emoji replaces `:query`, one step
+  "Insert emoji"), Esc dismisses. Times (`10:30`) and URLs never trigger it.
 
 ### 20.2 Special characters dialog (P1)
 Insert › Special characters…: `write.insert.specialCharacter` with no args opens the dialog.
 With `{char}` it inserts directly.
 - Category select: Punctuation, Arrows, Math, Currency, Latin, Greek, Cyrillic, Symbols,
   Technical, Box drawing.
-- Search by Unicode name, from a bundled name table of ~6,000 characters. Exact code point
-  input (`U+2192` or `2192`) is also accepted.
+- Search by Unicode name, from a bundled name table (`assets/unicode/special_chars.json`, 6,365
+  characters, generated from Unicode 16 names by `tool/unicode/gen_special_chars.py`). Exact code
+  point input (`U+2192` or `2192`) is also accepted.
 - A recent row, and a large preview with name and code point on hover or focus.
 - Clicking a character inserts it at the caret, as one undo step per insertion. The dialog
   stays open. **Close** button, or Esc.
@@ -1218,8 +1246,8 @@ undo gives back the paragraph containing `/h2`.
   mode.
 
 ### 22.5 Drag to reorder (P1)
-- Press and drag the handle more than 4 px to start a drag. A ghost (snapshot of the block at
-  60 % opacity, max 320 px tall) follows the pointer.
+- Press and drag the handle more than 4 px to start a drag. A ghost (a card with the block's
+  text, or "Image"/"Table", at 60 % opacity, max 320 px) follows the pointer.
 - A **drop indicator** (2 px `primary` line, full content width) snaps between blocks.
   Autoscroll applies near the viewport edges.
 - Esc cancels. Drop runs `write.block.move`.
@@ -1364,8 +1392,16 @@ AI. They run through the same pipeline as paste (§23.3, format 1 or 4).
 | Text/HTML from other apps | Paste pipeline at the drop position |
 | Other files | Toast "Can't insert this file type" |
 
-Implemented with `super_drag_and_drop` `DropRegion` around the canvas (web and desktop). Drops
-are refused in Viewing mode.
+- Drops from other applications are placed by a 2 px indicator: a caret for text, a line between
+  blocks for files. Images are inserted as whole blocks there (upload flow §17.2), documents after
+  the confirmation, as whole blocks.
+
+Implementation: selection drags use patch **SE-6** (`TextDragController`); block drags the
+handle (`BlockDragController`); OS drops `ExternalDropSource` — on the web the browser's
+`dragover`/`drop` events on the window (the default, opening the dropped file in the tab, is
+always prevented). Native desktop builds have no OS drop channel yet (no drop plugin; a federated
+plugin with a web implementation would double-handle web drops). Drops are refused in Viewing
+mode and suggestion previews.
 
 ## 25. Find and replace
 
@@ -1480,23 +1516,30 @@ takes < 100 ms on a 100-page document.
 ### 28.2 Spellcheck (P1)
 - **Why custom**: Flutter renders text itself, and the browser only sees the hidden IME
   textarea, so browser spellcheck cannot underline document text.
-- **Checker**: pure Dart, Hunspell-compatible (`.aff` + `.dic`), in `wonky_write_core/lib/spell/`
-  so it is usable on the server (AI proofread, MCP).
+- **Checker**: pure Dart, Hunspell-compatible (`.aff` + `.dic`), in
+  `wonky_write_core/lib/src/spellcheck/` (library `package:wonky_write_core/spellcheck.dart`) so it
+  is usable on the server (AI proofread, MCP).
   - Supports PFX/SFX with conditions, compound flags (basic), REP/TRY suggestions, and
     edit-distance-2 suggestions bounded at 50 ms per word.
-  - Runs in a background isolate on desktop. On web it runs in an idle-time scheduler
-    (time-sliced, 8 ms chunks via `SchedulerBinding.scheduleTask` with `Priority.idle`)
-    until a Dart web worker is available.
-- **Dictionaries**: en-US, en-GB, de-DE, fr-FR, es-ES, it-IT, pt-BR, nl-NL, sv-SE, da-DK,
-  nb-NO, pl-PL. Source: LibreOffice dictionaries; licenses are listed in About.
-  - Served from our server `/assets/dict/<lang>/` and cached locally (web: Cache Storage,
-    desktop: app support dir). Downloaded on first need.
+  - Runs on the UI thread in time slices of at most 8 ms, one slice per frame (post-frame
+    callbacks; `Priority.idle` tasks starve while the caret blinks), on all platforms: the
+    dictionary parse (en-US ≈ 20 ms in total) and the checking of changed blocks (≈ 2 µs per
+    word), 120 ms after the last change, caret block first.
+- **Dictionaries**: en-US, en-GB (SCOWL, MIT AND BSD), fr-FR (MPL-2.0), es-ES (LGPL/MPL),
+  nl-NL (BSD-3), sv-SE (LGPL-3.0), da-DK (LGPL/MPL) — open-licensed Hunspell dictionaries via the
+  `dictionary-*` npm packages; sources and licenses in `wonky_write/assets/dictionaries/LICENSES.md`.
+  GPL-only dictionaries (de, it, nb) are not bundled; pt-BR and pl-PL are deferred for size.
+  - Bundled as app assets (`assets/dictionaries/<tag>.aff|.dic`, `index.json`) and fetched only
+    when a document needs one (the web build downloads assets on demand). Language → dictionary:
+    exact tag, en-AU/NZ/IE/ZA/IN → en-GB, other `en` → en-US, then the same primary language.
 - **Scope**:
   - Visible blocks first, then the rest at idle. Re-checks changed nodes only.
   - Skipped: code blocks, inline code, links, mentions, URLs, emails, words with digits,
     ALL-CAPS (setting), CamelCase, and words under 2 chars.
 - **Personal dictionary**: `UserPreferences.writeDefaults.personalDictionary` (synced, max
-  10,000 words). *Ignore* applies per document for the session (in-memory).
+  10,000 words; Tools › Spelling › Personal dictionary… lists and edits it). *Ignore* applies per
+  document for the session (in-memory). The word being typed (caret inside or at its end) is
+  checked once the caret leaves it.
 - **Rendering**: `SpellingAndGrammarStyler` style phase with `spellingErrorAttribution` (red
   wavy underline in the `destructive` token). Presentation-only (§2.5).
 - **Interactions**:
@@ -1508,7 +1551,9 @@ takes < 100 ms on a 100-page document.
   - Tools › Spelling ▸ *Check spelling…* opens the dialog (05 §12): Change, Change all
     (one undo step), Ignore, Ignore all, Add.
   - Tools › Spelling ▸ *Underline errors* (`write.spell.toggle`, per-user setting
-    `writeDefaults.spellcheck`).
+    `writeDefaults.spellcheck`) and *Ignore words in UPPERCASE*
+    (`write.spell.toggleIgnoreUppercase`, `writeDefaults.spellcheckIgnoreUppercase`).
+  - `write.spell.replace` takes Delta offsets `{start, length, word}`.
 - Grammar is not supported (P2 through AI proofread, [suite 10](../10-ai-assistant.md)).
 
 **AC-28.1** Typing "teh " underlines "teh" within 300 ms. Choosing "the" from the context menu
@@ -1594,8 +1639,9 @@ paragraph line.
 
 - **Focus mode** (`write.view.toggleFocusMode`): `FocusModeStylePhase` lowers the text colour
   alpha to 35 % for every block except the caret block (or the blocks touched by the
-  selection). The chrome auto-hides (toolbar and menubar collapse until the pointer hits the
-  top 8 px). Remote cursors are hidden. Disabled in large-document mode.
+  selection; embeds use opacity). The chrome auto-hides through the shell's full-screen state
+  (title row, menubar, toolbar and status bar) and comes back while the pointer is at the top
+  8 px of the canvas, hiding again once it is back in the document (`FocusModeChrome`).
 - **Typewriter scrolling** (`write.view.toggleTypewriter`): on every selection change caused by
   typing or keyboard navigation, scroll so the caret line sits at 40 % of the viewport height.
   The scroll is animated 80 ms, or instant with reduce motion. The canvas gets bottom padding

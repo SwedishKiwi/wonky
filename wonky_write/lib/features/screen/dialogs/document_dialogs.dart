@@ -7,6 +7,8 @@ import 'package:wonky_client/wonky_client.dart' show DriveItemView;
 import 'package:wonky_ui/wonky_ui.dart';
 import 'package:wonky_write_core/wonky_write_core.dart' show OutlineEntry;
 
+import '../../../l10n/write_l10n.dart';
+
 /// Document languages (BCP-47 with native names), Write 05 §12.7.
 const documentLanguages = <String, String>{
   'en-US': 'English (United States)',
@@ -48,9 +50,21 @@ const documentLanguages = <String, String>{
   'zh-TW': '中文（繁體）',
 };
 
-/// The display name of a language tag.
-String languageName(String? tag) =>
-    tag == null ? 'Not set' : (documentLanguages[tag] ?? tag);
+/// The display name of a language tag (native names stay untranslated);
+/// "Not set" in [l] (English when omitted).
+String languageName(String? tag, [WriteLocalizations? l]) => tag == null
+    ? (l ?? writeL10nEnglish).docDialogLanguageNotSet
+    : (documentLanguages[tag] ?? tag);
+
+/// A date and time like "Oct 13, 2026 4:05 PM" in [locale] (US English when
+/// the locale has no date symbols).
+String formatDocumentDate(DateTime d, String locale) {
+  try {
+    return intl.DateFormat.yMMMd(locale).add_jm().format(d);
+  } catch (_) {
+    return intl.DateFormat.yMMMd('en_US').add_jm().format(d);
+  }
+}
 
 /// Document language (`write.dialog.language`). Returns the tag.
 Future<String?> showLanguageDialog(BuildContext context, {String? current}) =>
@@ -73,6 +87,7 @@ class _LanguageDialogState extends State<_LanguageDialog> {
 
   @override
   Widget build(BuildContext context) {
+    final l = writeL10n(context);
     final options = documentLanguages.entries.where(
       (e) =>
           _search.isEmpty ||
@@ -81,20 +96,18 @@ class _LanguageDialogState extends State<_LanguageDialog> {
     );
     return ShadDialog(
       key: const ValueKey<String>('write.dialog.language'),
-      title: const Text('Document language'),
-      description: const Text(
-        'Used for spelling, hyphenation in exports and screen readers.',
-      ),
+      title: Text(l.docDialogLanguageTitle),
+      description: Text(l.docDialogLanguageDescription),
       constraints: const BoxConstraints(maxWidth: 420),
       actions: [
         ShadButton.outline(
           onPressed: () => Navigator.of(context).pop(),
-          child: const Text('Cancel'),
+          child: Text(l.commonCancel),
         ),
         ShadButton(
           key: const ValueKey<String>('write.dialog.language.ok'),
           onPressed: () => Navigator.of(context).pop(_value),
-          child: const Text('OK'),
+          child: Text(l.commonOk),
         ),
       ],
       child: Padding(
@@ -104,13 +117,13 @@ class _LanguageDialogState extends State<_LanguageDialog> {
           initialValue: _value,
           minWidth: 360,
           maxHeight: 320,
-          searchPlaceholder: const Text('Search languages'),
+          searchPlaceholder: Text(l.docDialogLanguageSearch),
           onSearchChanged: (v) => setState(() => _search = v),
           options: [
             for (final e in options)
               ShadOption(value: e.key, child: Text('${e.value}  ·  ${e.key}')),
           ],
-          selectedOptionBuilder: (context, v) => Text(languageName(v)),
+          selectedOptionBuilder: (context, v) => Text(languageName(v, l)),
           onChanged: (v) => setState(() => _value = v ?? _value),
         ),
       ),
@@ -181,15 +194,16 @@ class _DetailsDialogState extends State<_DetailsDialog> {
 
   /// Minimal YAML sanity check: `key: value` lines, lists, comments.
   String? _validate(String text) {
+    final l = writeL10n(context);
     final lines = text.split('\n');
     for (var i = 0; i < lines.length; i++) {
-      final l = lines[i];
-      if (l.trim().isEmpty || l.trimLeft().startsWith('#')) continue;
-      if (l.trim() == '---') return 'Line ${i + 1}: remove the --- fences';
-      final isList = l.trimLeft().startsWith('- ');
-      final isContinuation = l.startsWith(' ') || l.startsWith('\t');
-      if (!isList && !isContinuation && !l.contains(':')) {
-        return 'Line ${i + 1}: expected "key: value"';
+      final line = lines[i];
+      if (line.trim().isEmpty || line.trimLeft().startsWith('#')) continue;
+      if (line.trim() == '---') return l.docDialogFrontMatterFences(i + 1);
+      final isList = line.trimLeft().startsWith('- ');
+      final isContinuation = line.startsWith(' ') || line.startsWith('\t');
+      if (!isList && !isContinuation && !line.contains(':')) {
+        return l.docDialogFrontMatterExpected(i + 1);
       }
     }
     return null;
@@ -208,44 +222,52 @@ class _DetailsDialogState extends State<_DetailsDialog> {
   @override
   Widget build(BuildContext context) {
     final theme = ShadTheme.of(context);
+    final l = writeL10n(context);
     final i = widget.item;
-    final date = intl.DateFormat.yMMMd('en_US').add_jm();
+    String date(DateTime d) => formatDocumentDate(d.toLocal(), l.localeName);
+    final decimal = intl.NumberFormat.decimalPattern(l.localeName);
+    final oneDecimal = intl.NumberFormat('0.0', l.localeName);
     String size(int bytes) => bytes < 1024
-        ? '$bytes B'
+        ? l.docDialogSizeBytes(bytes)
         : bytes < 1024 * 1024
-        ? '${(bytes / 1024).toStringAsFixed(1)} KB'
-        : '${(bytes / 1024 / 1024).toStringAsFixed(1)} MB';
+        ? l.docDialogSizeKilobytes(oneDecimal.format(bytes / 1024))
+        : l.docDialogSizeMegabytes(oneDecimal.format(bytes / 1024 / 1024));
+    final modifiedBy = i?.modifiedBy;
     final rows = <(String, String)>[
-      ('Title', i?.name ?? ''),
-      ('Location', widget.location),
-      if (i != null) ('Owner', i.owner.displayName),
-      if (i != null) ('Created', date.format(i.createdAt.toLocal())),
+      (l.docDialogRowTitle, i?.name ?? ''),
+      (l.docDialogRowLocation, widget.location),
+      if (i != null) (l.docDialogRowOwner, i.owner.displayName),
+      if (i != null) (l.docDialogRowCreated, date(i.createdAt)),
       if (i != null)
         (
-          'Modified',
-          '${date.format(i.modifiedAt.toLocal())}'
-              '${i.modifiedBy == null ? '' : ' by ${i.modifiedBy!.displayName}'}',
+          l.docDialogRowModified,
+          modifiedBy == null
+              ? date(i.modifiedAt)
+              : l.docDialogModifiedBy(
+                  date(i.modifiedAt),
+                  modifiedBy.displayName,
+                ),
         ),
-      if (i != null) ('Size', size(i.sizeBytes)),
-      ('Words', intl.NumberFormat.decimalPattern('en_US').format(widget.words)),
-      ('Language', widget.language),
-      ('Theme', widget.themeName),
-      ('Revision', '${widget.revision}'),
+      if (i != null) (l.docDialogRowSize, size(i.sizeBytes)),
+      (l.docDialogRowWords, decimal.format(widget.words)),
+      (l.docDialogRowLanguage, widget.language),
+      (l.docDialogRowTheme, widget.themeName),
+      (l.docDialogRowRevision, '${widget.revision}'),
     ];
     return ShadDialog(
       key: const ValueKey<String>('write.dialog.properties'),
-      title: const Text('Document details'),
+      title: Text(l.docDialogDetailsTitle),
       constraints: const BoxConstraints(maxWidth: 560),
       actions: [
         ShadButton.outline(
           onPressed: () => Navigator.of(context).pop(),
-          child: const Text('Close'),
+          child: Text(l.commonClose),
         ),
         if (widget.canEdit)
           ShadButton(
             key: const ValueKey<String>('write.dialog.properties.save'),
             onPressed: _save,
-            child: const Text('Save'),
+            child: Text(l.commonSave),
           ),
       ],
       child: Column(
@@ -268,7 +290,7 @@ class _DetailsDialogState extends State<_DetailsDialog> {
               ),
             ),
           const SizedBox(height: 12),
-          Text('Front matter (YAML)', style: theme.textTheme.small),
+          Text(l.docDialogFrontMatterLabel, style: theme.textTheme.small),
           const SizedBox(height: 6),
           ShadTextarea(
             key: const ValueKey<String>('write.dialog.properties.frontMatter'),
@@ -276,7 +298,7 @@ class _DetailsDialogState extends State<_DetailsDialog> {
             readOnly: !widget.canEdit,
             minHeight: 96,
             maxHeight: 220,
-            placeholder: const Text('title: My document\ntags: [notes]'),
+            placeholder: Text(l.docDialogFrontMatterPlaceholder),
             style: TextStyle(
               fontFamily: WonkyTheme.monoFamily,
               fontSize: 13,
@@ -340,6 +362,7 @@ class _MarkdownSourceDialogState extends State<_MarkdownSourceDialog> {
 
   @override
   Widget build(BuildContext context) {
+    final l = writeL10n(context);
     final theme = ShadTheme.of(context);
     final cs = theme.colorScheme;
     final lines = widget.markdown.split('\n');
@@ -364,7 +387,7 @@ class _MarkdownSourceDialogState extends State<_MarkdownSourceDialog> {
     final size = MediaQuery.sizeOf(context);
     return ShadDialog(
       key: const ValueKey<String>('write.dialog.markdownSource'),
-      title: const Text('Markdown source'),
+      title: Text(l.docDialogMarkdownSourceTitle),
       constraints: BoxConstraints(
         maxWidth: (size.width * 0.9).clamp(320, 900),
         maxHeight: size.height * 0.85,
@@ -373,13 +396,13 @@ class _MarkdownSourceDialogState extends State<_MarkdownSourceDialog> {
         ShadCheckbox(
           value: _wrap,
           onChanged: (v) => setState(() => _wrap = v),
-          label: const Text('Wrap lines'),
+          label: Text(l.docDialogWrapLines),
         ),
         ShadButton.outline(
           key: const ValueKey<String>('write.dialog.markdownSource.download'),
           leading: const Icon(LucideIcons.download, size: 16),
           onPressed: widget.onDownload,
-          child: const Text('Download .md'),
+          child: Text(l.docDialogDownloadMarkdown),
         ),
         ShadButton.outline(
           key: const ValueKey<String>('write.dialog.markdownSource.copy'),
@@ -391,11 +414,11 @@ class _MarkdownSourceDialogState extends State<_MarkdownSourceDialog> {
             await Clipboard.setData(ClipboardData(text: widget.markdown));
             if (mounted) setState(() => _copied = true);
           },
-          child: Text(_copied ? 'Copied' : 'Copy'),
+          child: Text(_copied ? l.docDialogCopied : l.commonCopy),
         ),
         ShadButton(
           onPressed: () => Navigator.of(context).pop(),
-          child: const Text('Close'),
+          child: Text(l.commonClose),
         ),
       ],
       child: Container(
@@ -463,6 +486,7 @@ class _GoToHeadingState extends State<_GoToHeading> {
 
   @override
   Widget build(BuildContext context) {
+    final l = writeL10n(context);
     final theme = ShadTheme.of(context);
     final m = _matches;
     final minLevel = widget.outline.isEmpty
@@ -470,7 +494,7 @@ class _GoToHeadingState extends State<_GoToHeading> {
         : widget.outline.map((e) => e.level).reduce((a, b) => a < b ? a : b);
     return ShadDialog(
       key: const ValueKey<String>('write.dialog.goToHeading'),
-      title: const Text('Go to heading'),
+      title: Text(l.docDialogGoToHeadingTitle),
       constraints: const BoxConstraints(maxWidth: 480),
       child: Focus(
         onKeyEvent: (node, e) {
@@ -498,7 +522,7 @@ class _GoToHeadingState extends State<_GoToHeading> {
             const SizedBox(height: 4),
             ShadInput(
               autofocus: true,
-              placeholder: const Text('Search headings'),
+              placeholder: Text(l.docDialogSearchHeadings),
               leading: const Icon(LucideIcons.search, size: 16),
               onChanged: (v) => setState(() {
                 _q = v;
@@ -516,7 +540,10 @@ class _GoToHeadingState extends State<_GoToHeading> {
               child: m.isEmpty
                   ? Padding(
                       padding: const EdgeInsets.all(12),
-                      child: Text('No headings', style: theme.textTheme.muted),
+                      child: Text(
+                        l.docDialogNoHeadings,
+                        style: theme.textTheme.muted,
+                      ),
                     )
                   : ListView.builder(
                       shrinkWrap: true,
@@ -524,6 +551,7 @@ class _GoToHeadingState extends State<_GoToHeading> {
                       itemBuilder: (context, i) {
                         final e = m[i];
                         return GestureDetector(
+                          behavior: HitTestBehavior.opaque,
                           onTap: () => Navigator.of(context).pop(e),
                           child: Container(
                             padding: EdgeInsets.fromLTRB(
@@ -537,7 +565,9 @@ class _GoToHeadingState extends State<_GoToHeading> {
                               borderRadius: BorderRadius.circular(6),
                             ),
                             child: Text(
-                              e.text.isEmpty ? 'Untitled heading' : e.text,
+                              e.text.isEmpty
+                                  ? l.docDialogUntitledHeading
+                                  : e.text,
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
                               style: theme.textTheme.small.copyWith(
@@ -562,26 +592,24 @@ class _GoToHeadingState extends State<_GoToHeading> {
 Future<void> showMarkdownGuide(BuildContext context) => showShadDialog<void>(
   context: context,
   builder: (context) {
+    final l = writeL10n(context);
     final theme = ShadTheme.of(context);
     final cs = theme.colorScheme;
-    const rows = [
-      (
-        '# Heading 1 … ###### Heading 6',
-        'Headings (type at the start of a line)',
-      ),
-      ('**bold** or __bold__', 'Bold (⌘B / Ctrl+B)'),
-      ('*italic* or _italic_', 'Italic (⌘I / Ctrl+I)'),
-      ('~~strikethrough~~', 'Strikethrough (⌘⇧X / Ctrl+Shift+X)'),
-      ('`code`', 'Inline code (⌘E / Ctrl+E)'),
-      ('[text](https://…)', 'Link (⌘K / Ctrl+K)'),
-      ('- item  or  * item', 'Bulleted list'),
-      ('1. item', 'Numbered list'),
-      ('[ ] task  or  [x] done', 'Checklist'),
-      ('> quote', 'Quote'),
-      ('``` + space', 'Code block'),
-      ('---', 'Divider'),
-      ('/', 'Command menu: insert tables, images and more'),
-      ('@', 'Mention a person'),
+    final rows = [
+      (l.docDialogGuideSyntaxHeadings, l.docDialogGuideHeadings),
+      (l.docDialogGuideSyntaxBold, l.docDialogGuideBold),
+      (l.docDialogGuideSyntaxItalic, l.docDialogGuideItalic),
+      (l.docDialogGuideSyntaxStrikethrough, l.docDialogGuideStrikethrough),
+      (l.docDialogGuideSyntaxCode, l.docDialogGuideCode),
+      (l.docDialogGuideSyntaxLink, l.docDialogGuideLink),
+      (l.docDialogGuideSyntaxBullets, l.docDialogGuideBullets),
+      (l.docDialogGuideSyntaxNumbered, l.docDialogGuideNumbered),
+      (l.docDialogGuideSyntaxChecklist, l.docDialogGuideChecklist),
+      (l.docDialogGuideSyntaxQuote, l.docDialogGuideQuote),
+      (l.docDialogGuideSyntaxCodeBlock, l.docDialogGuideCodeBlock),
+      ('---', l.docDialogGuideDivider),
+      ('/', l.docDialogGuideCommandMenu),
+      ('@', l.docDialogGuideMention),
     ];
     final mono = TextStyle(
       fontFamily: WonkyTheme.monoFamily,
@@ -590,16 +618,13 @@ Future<void> showMarkdownGuide(BuildContext context) => showShadDialog<void>(
     );
     return ShadDialog(
       key: const ValueKey<String>('write.dialog.markdownGuide'),
-      title: const Text('Markdown & formatting'),
-      description: const Text(
-        'Wonky Write documents are Markdown. Type these shortcuts and they '
-        'turn into formatting as you write.',
-      ),
+      title: Text(l.docDialogGuideTitle),
+      description: Text(l.docDialogGuideDescription),
       constraints: const BoxConstraints(maxWidth: 600),
       actions: [
         ShadButton(
           onPressed: () => Navigator.of(context).pop(),
-          child: const Text('Got it'),
+          child: Text(l.docDialogGuideGotIt),
         ),
       ],
       child: Column(
@@ -619,11 +644,7 @@ Future<void> showMarkdownGuide(BuildContext context) => showShadDialog<void>(
               ),
             ),
           const SizedBox(height: 8),
-          Text(
-            'Underline and text colors are not part of Markdown — use bold or '
-            'italic, or change how emphasis looks with a theme.',
-            style: theme.textTheme.muted,
-          ),
+          Text(l.docDialogGuideFootnote, style: theme.textTheme.muted),
         ],
       ),
     );

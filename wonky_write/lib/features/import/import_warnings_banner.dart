@@ -6,6 +6,8 @@ import 'package:wonky_app/wonky_app.dart';
 import 'package:wonky_client/wonky_client.dart'
     show ImportWarningView, UuidValue;
 
+import '../../l10n/write_l10n.dart';
+
 /// The import banner (Write 07 §3.2 step 5): the first time the importing
 /// user opens an imported document, "N elements couldn't be imported
 /// exactly" with *Details* and *Dismiss* is shown above [child]. The
@@ -78,6 +80,7 @@ class _ImportWarningsBannerState extends State<ImportWarningsBanner> {
     if (_warnings.isEmpty) return widget.child;
     final n = _warnings.length;
     final theme = ShadTheme.of(context);
+    final l = writeL10n(context);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
@@ -86,11 +89,7 @@ class _ImportWarningsBannerState extends State<ImportWarningsBanner> {
           child: ShadAlert(
             key: const ValueKey<String>('write.importBanner'),
             icon: const Icon(LucideIcons.fileWarning),
-            title: Text(
-              n == 1
-                  ? "1 element couldn't be imported exactly"
-                  : "$n elements couldn't be imported exactly",
-            ),
+            title: Text(l.importBannerTitle(n)),
             description: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -118,13 +117,17 @@ class _ImportWarningsBannerState extends State<ImportWarningsBanner> {
                       key: const ValueKey<String>('write.importBanner.details'),
                       size: ShadButtonSize.sm,
                       onPressed: () => setState(() => _expanded = !_expanded),
-                      child: Text(_expanded ? 'Hide details' : 'Details'),
+                      child: Text(
+                        _expanded
+                            ? l.importBannerHideDetails
+                            : l.importBannerDetails,
+                      ),
                     ),
                     ShadButton.ghost(
                       key: const ValueKey<String>('write.importBanner.dismiss'),
                       size: ShadButtonSize.sm,
                       onPressed: () => setState(() => _warnings = const []),
-                      child: const Text('Dismiss'),
+                      child: Text(l.importBannerDismiss),
                     ),
                   ],
                 ),

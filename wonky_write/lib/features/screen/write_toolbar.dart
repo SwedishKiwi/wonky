@@ -7,6 +7,7 @@ import 'package:wonky_ui/wonky_ui.dart';
 import '../../commands/command_icons.dart';
 import '../editor/commands/write_editor_commands.dart';
 import '../editor/controller/editor_types.dart';
+import '../../l10n/write_l10n.dart';
 import 'command_invoke.dart';
 import 'write_document_controller.dart';
 
@@ -17,6 +18,9 @@ class CommandUi {
 
   final BuildContext context;
   final ShellServices s;
+
+  /// The Write strings of [context].
+  WriteLocalizations get l => writeL10n(context);
 
   CommandState state(String id, [Map<String, Object?> args = const {}]) =>
       s.dispatcher.stateOf(id, args);
@@ -130,31 +134,41 @@ class CommandUi {
 }
 
 /// Paragraph styles of the style dropdown (Write 05 §4.1).
-const paragraphStyles = <(BlockKind, String)>[
-  (BlockKind.paragraph, 'Normal text'),
-  (BlockKind.heading1, 'Heading 1'),
-  (BlockKind.heading2, 'Heading 2'),
-  (BlockKind.heading3, 'Heading 3'),
-  (BlockKind.heading4, 'Heading 4'),
-  (BlockKind.heading5, 'Heading 5'),
-  (BlockKind.heading6, 'Heading 6'),
-  (BlockKind.quote, 'Quote'),
-  (BlockKind.codeBlock, 'Code block'),
+const paragraphStyles = <BlockKind>[
+  BlockKind.paragraph,
+  BlockKind.heading1,
+  BlockKind.heading2,
+  BlockKind.heading3,
+  BlockKind.heading4,
+  BlockKind.heading5,
+  BlockKind.heading6,
+  BlockKind.quote,
+  BlockKind.codeBlock,
 ];
 
-/// Label of the current paragraph style ('' when mixed / not a text block).
-String paragraphStyleLabel(BlockKind? kind) {
-  if (kind == null) return 'Normal text';
-  for (final (k, label) in paragraphStyles) {
-    if (k == kind) return label;
-  }
-  return switch (kind) {
-    BlockKind.bulleted ||
-    BlockKind.numbered ||
-    BlockKind.checklist => 'Normal text',
-    _ => 'Normal text',
-  };
-}
+/// Display name of the paragraph style [kind] (lists and other blocks show
+/// as "Normal text").
+String blockKindLabel(WriteLocalizations l, BlockKind kind) => switch (kind) {
+  BlockKind.heading1 => l.cmdFormatBlockTypeHeading1,
+  BlockKind.heading2 => l.cmdFormatBlockTypeHeading2,
+  BlockKind.heading3 => l.cmdFormatBlockTypeHeading3,
+  BlockKind.heading4 => l.cmdFormatBlockTypeHeading4,
+  BlockKind.heading5 => l.cmdFormatBlockTypeHeading5,
+  BlockKind.heading6 => l.cmdFormatBlockTypeHeading6,
+  BlockKind.quote => l.cmdFormatBlockTypeQuote,
+  BlockKind.codeBlock => l.cmdFormatBlockTypeCodeBlock,
+  BlockKind.bulleted => l.cmdListToggleBulleted,
+  BlockKind.numbered => l.cmdListToggleNumbered,
+  BlockKind.checklist => l.cmdListToggleChecklist,
+  _ => l.cmdFormatBlockTypeParagraph,
+};
+
+/// Label of the current paragraph style ("Normal text" when mixed / not a
+/// paragraph style).
+String paragraphStyleLabel(WriteLocalizations l, BlockKind? kind) =>
+    kind != null && paragraphStyles.contains(kind)
+    ? blockKindLabel(l, kind)
+    : l.cmdFormatBlockTypeParagraph;
 
 /// Zoom presets of the zoom dropdown (Write 05 §4 item 6).
 const zoomPresets = [50, 75, 90, 100, 125, 150, 200];
@@ -165,10 +179,10 @@ List<WonkyMenuEntry> paragraphStyleEntries(
   CommandUi ui,
   BlockKind? current,
 ) => [
-  for (final (kind, label) in paragraphStyles)
+  for (final kind in paragraphStyles)
     WonkyMenuRadioItem(
       key: ValueKey<String>('menu.style.${kind.name}'),
-      label: label,
+      label: blockKindLabel(ui.l, kind),
       selected: current == kind,
       shortcut: ui.shortcut('write.format.blockType.${kind.name}'),
       enabled: ui.state('write.format.blockType', {'type': kind.name}).enabled,
@@ -179,6 +193,25 @@ List<WonkyMenuEntry> paragraphStyleEntries(
 ];
 
 /// The formatting toolbar of the editor screen (Write 05 §4).
+/// Gives an icon-only toolbar item (empty visible label) an accessible
+/// name: the inline control's semantics are merged into one labeled node.
+class LabeledToolbarItem extends ToolbarItem {
+  LabeledToolbarItem(this.item, {required this.label})
+    : super(id: item.id, priority: item.priority, pinned: item.pinned);
+
+  final ToolbarItem item;
+  final String label;
+
+  @override
+  Widget build(BuildContext context) => MergeSemantics(
+    child: Semantics(label: label, child: item.build(context)),
+  );
+
+  @override
+  List<WonkyMenuEntry> overflowEntries(BuildContext context) =>
+      item.overflowEntries(context);
+}
+
 class WriteToolbar extends StatelessWidget {
   const WriteToolbar({
     super.key,
@@ -206,6 +239,7 @@ class WriteToolbar extends StatelessWidget {
 
   Widget _build(BuildContext context) {
     final ui = CommandUi(context, services);
+    final l = ui.l;
     final viewing = doc.editor.mode == EditorMode.viewing;
     final zoom = (doc.view.zoom * 100).round();
     final undoLabel = services.undo.undoLabel.value;
@@ -217,14 +251,16 @@ class WriteToolbar extends StatelessWidget {
         'shell.edit.undo',
         icon: LucideIcons.undo2,
         priority: 1,
-        label: undoLabel == null ? 'Undo' : 'Undo $undoLabel',
+        label: undoLabel == null ? l.commonUndo : l.toolbarUndo(undoLabel),
         onLongPress: () => ui.run('shell.edit.undoHistory'),
       ),
       ui.button(
         'shell.edit.redo',
         icon: LucideIcons.redo2,
         priority: 1,
-        label: redoLabel == null ? 'Redo' : 'Redo $redoLabel',
+        label: redoLabel == null
+            ? l.toolbarRedo
+            : l.toolbarRedoAction(redoLabel),
       ),
       ui.button(
         'shell.help.searchMenus',
@@ -238,14 +274,14 @@ class WriteToolbar extends StatelessWidget {
       ToolbarDropdownButton(
         id: 'write.toolbar.zoom',
         priority: 3,
-        label: '$zoom%',
-        tooltip: 'Zoom',
+        label: l.screenZoomPercent(zoom),
+        tooltip: l.toolbarZoom,
         minWidth: 34,
         entries: () => [
           for (final p in zoomPresets)
             WonkyMenuRadioItem(
               key: ValueKey<String>('menu.zoom.$p'),
-              label: '$p%',
+              label: l.screenZoomPercent(p),
               selected: zoom == p,
               onSelected: () => ui.run('write.view.zoomSet', {'percent': p}),
             ),
@@ -253,12 +289,12 @@ class WriteToolbar extends StatelessWidget {
           ui.item(
             'write.view.zoomFit',
             args: {'mode': 'width'},
-            label: 'Fit width',
+            label: l.menuFitWidth,
           ),
           ui.item(
             'write.view.zoomFit',
             args: {'mode': 'page'},
-            label: 'Fit page',
+            label: l.menuFitPage,
           ),
         ],
       ),
@@ -267,7 +303,7 @@ class WriteToolbar extends StatelessWidget {
     if (viewing) {
       return WonkyToolbar(
         controller: controller,
-        semanticLabel: 'Formatting toolbar',
+        semanticLabel: l.toolbarLabel,
         onEscape: doc.focusEditor,
         groups: [history, zoomGroup],
         trailing: [_modeItem(context, ui)],
@@ -279,7 +315,7 @@ class WriteToolbar extends StatelessWidget {
     });
     return WonkyToolbar(
       controller: controller,
-      semanticLabel: 'Formatting toolbar',
+      semanticLabel: l.toolbarLabel,
       onEscape: doc.focusEditor,
       groups: [
         history,
@@ -288,8 +324,8 @@ class WriteToolbar extends StatelessWidget {
           ToolbarDropdownButton(
             id: 'write.toolbar.style',
             priority: 1,
-            label: paragraphStyleLabel(kind),
-            tooltip: 'Styles',
+            label: paragraphStyleLabel(l, kind),
+            tooltip: l.toolbarStyles,
             minWidth: 96,
             enabled: styleState.enabled,
             entries: () => paragraphStyleEntries(ui, kind),
@@ -311,50 +347,60 @@ class WriteToolbar extends StatelessWidget {
           ui.toggle(
             'write.suggestions.togglePanel',
             icon: LucideIcons.fileDiff,
-            label: 'Suggestions',
+            label: l.toolbarSuggestions,
             priority: 3,
           ),
           ToolbarSplitButton(
             id: 'write.toolbar.image',
             priority: 2,
             icon: LucideIcons.image,
-            label: 'Insert image',
+            label: l.toolbarInsertImage,
             enabled: ui.state('write.insert.image').enabled,
             onPressed: () => ui.run('write.insert.image'),
             entries: () => [
-              ui.item('write.insert.image', label: 'Upload from computer'),
-              ui.item('write.insert.imageFromUrl', label: 'By URL…'),
+              ui.item('write.insert.image', label: l.toolbarImageUpload),
+              ui.item('write.insert.imageFromUrl', label: l.menuImageByUrl),
             ],
           ),
-          ToolbarDropdownButton(
-            id: 'write.toolbar.table',
-            priority: 3,
-            label: '',
-            icon: LucideIcons.table,
-            tooltip: 'Insert table',
-            enabled: ui.state('write.insert.table').enabled,
-            entries: () => [
-              WonkyMenuCustom(
-                label: 'Table size',
-                builder: (context, close) => Padding(
-                  padding: const EdgeInsets.all(8),
-                  child: WonkyTableSizePicker(
-                    key: const ValueKey<String>('write.toolbar.tablePicker'),
-                    onSelected: (rows, cols) {
-                      close();
-                      ui.run('write.insert.table', {
-                        'rows': rows,
-                        'cols': cols,
-                      });
-                    },
+          LabeledToolbarItem(
+            label: l.toolbarInsertTable,
+            ToolbarDropdownButton(
+              id: 'write.toolbar.table',
+              priority: 3,
+              label: '',
+              icon: LucideIcons.table,
+              tooltip: l.toolbarInsertTable,
+              enabled: ui.state('write.insert.table').enabled,
+              entries: () => [
+                WonkyMenuCustom(
+                  label: l.menuTableSize,
+                  builder: (context, close) => Padding(
+                    padding: const EdgeInsets.all(8),
+                    child: WonkyTableSizePicker(
+                      key: const ValueKey<String>('write.toolbar.tablePicker'),
+                      onSelected: (rows, cols) {
+                        close();
+                        ui.run('write.insert.table', {
+                          'rows': rows,
+                          'cols': cols,
+                        });
+                      },
+                    ),
                   ),
                 ),
-              ),
-              const WonkyMenuSeparator(),
-              ui.item('write.insert.tableDialog', label: 'Custom size…'),
-            ],
+                const WonkyMenuSeparator(),
+                ui.item(
+                  'write.insert.tableDialog',
+                  label: l.menuTableCustomSize,
+                ),
+              ],
+            ),
           ),
-          ui.button('write.insert.divider', priority: 6, label: 'Divider'),
+          ui.button(
+            'write.insert.divider',
+            priority: 6,
+            label: l.cmdInsertDivider,
+          ),
         ], id: 'insert'),
         ToolbarGroup([
           ui.toggle('write.list.toggleBulleted', priority: 1),
@@ -368,18 +414,18 @@ class WriteToolbar extends StatelessWidget {
             'write.format.blockType.quote',
             priority: 4,
             keyName: 'quote',
-            label: 'Quote',
+            label: l.cmdFormatBlockTypeQuote,
           ),
           ui.toggle(
             'write.format.blockType.codeBlock',
             priority: 4,
             keyName: 'codeBlock',
-            label: 'Code block',
+            label: l.cmdFormatBlockTypeCodeBlock,
           ),
           ui.button('write.format.clearFormatting', priority: 4),
         ], id: 'blocks'),
         ToolbarGroup([
-          ui.button('write.theme.openPicker', priority: 5, label: 'Theme'),
+          ui.button('write.theme.openPicker', priority: 5, label: l.menuTheme),
         ], id: 'theme'),
         if (services.assistant?.available ?? false)
           ToolbarGroup([
@@ -387,7 +433,7 @@ class WriteToolbar extends StatelessWidget {
               'shell.ai.togglePanel',
               icon: LucideIcons.sparkles,
               priority: 2,
-              label: 'Assistant',
+              label: l.toolbarAssistant,
             ),
           ], id: 'ai'),
       ],
@@ -402,7 +448,7 @@ class WriteToolbar extends StatelessWidget {
       id: 'write.toolbar.link',
       priority: 1,
       icon: LucideIcons.link,
-      label: inLink ? 'Edit link' : 'Insert link',
+      label: inLink ? ui.l.toolbarEditLink : ui.l.cmdLinkInsert,
       value: inLink,
       shortcut: ui.shortcut('write.link.insert'),
       enabled: st.enabled,
@@ -422,12 +468,12 @@ class WriteToolbar extends StatelessWidget {
 
 /// Mode menu entries (View › Mode, mode switcher).
 List<WonkyMenuEntry> modeEntries(CommandUi ui, WriteDocumentController doc) => [
-  for (final (mode, label) in const [
-    (EditorMode.editing, 'Editing'),
-    (EditorMode.suggesting, 'Suggesting'),
-    (EditorMode.viewing, 'Viewing'),
-  ])
-    ui.item('write.mode.${mode.name}', label: label, radio: true),
+  for (final mode in EditorMode.values)
+    ui.item(
+      'write.mode.${mode.name}',
+      label: ModeSwitcher.describe(ui.l, mode).$2,
+      radio: true,
+    ),
 ];
 
 /// The Editing / Suggesting / Viewing switcher (Write 05 §15).
@@ -437,30 +483,42 @@ class ModeSwitcher extends StatelessWidget {
   final WriteDocumentController doc;
   final CommandUi ui;
 
-  static (IconData, String, String) describe(EditorMode m) => switch (m) {
+  /// Icon, name and description of the mode [m].
+  static (IconData, String, String) describe(
+    WriteLocalizations l,
+    EditorMode m,
+  ) => switch (m) {
     EditorMode.editing => (
       LucideIcons.pencil,
-      'Editing',
-      'Edit document directly',
+      l.screenModeEditing,
+      l.screenModeEditingDescription,
     ),
     EditorMode.suggesting => (
       LucideIcons.messageSquareDiff,
-      'Suggesting',
-      'Edits become suggestions',
+      l.screenModeSuggesting,
+      l.screenModeSuggestingDescription,
     ),
     EditorMode.viewing => (
       LucideIcons.eye,
-      'Viewing',
-      'Read or print final document',
+      l.screenModeViewing,
+      l.screenModeViewingDescription,
     ),
+  };
+
+  /// "Editing mode" / "Suggesting mode" / "Viewing mode".
+  static String modeName(WriteLocalizations l, EditorMode m) => switch (m) {
+    EditorMode.editing => l.cmdModeEditing,
+    EditorMode.suggesting => l.cmdModeSuggesting,
+    EditorMode.viewing => l.cmdModeViewing,
   };
 
   @override
   Widget build(BuildContext context) {
     final theme = ShadTheme.of(context);
     final cs = theme.colorScheme;
+    final l = writeL10n(context);
     final mode = doc.editor.mode;
-    final (icon, label, _) = describe(mode);
+    final (icon, label, _) = describe(l, mode);
     final wide = MediaQuery.sizeOf(context).width >= 1024;
     final suggesting = mode == EditorMode.suggesting;
     return WonkyDropdownMenu(
@@ -473,13 +531,13 @@ class ModeSwitcher extends StatelessWidget {
       entries: () => [
         for (final m in EditorMode.values)
           WonkyMenuCustom(
-            label: describe(m).$2,
+            label: describe(l, m).$2,
             builder: (context, close) =>
                 _ModeRow(mode: m, ui: ui, current: mode, close: close),
           ),
       ],
       builder: (context, c) => ShadTooltip(
-        builder: (_) => const Text('Mode'),
+        builder: (_) => Text(l.toolbarMode),
         child: ShadButton.outline(
           key: const ValueKey<String>('write.toolbar.modeSwitcher'),
           height: 30,
@@ -497,7 +555,13 @@ class ModeSwitcher extends StatelessWidget {
             color: cs.mutedForeground,
           ),
           onPressed: c.toggle,
-          child: wide ? Text(label) : const SizedBox.shrink(),
+          // Icon-only when narrow: name the mode for screen readers.
+          child: wide
+              ? Text(label)
+              : Semantics(
+                  label: modeName(l, mode),
+                  child: const SizedBox.shrink(),
+                ),
         ),
       ),
     );
@@ -521,7 +585,8 @@ class _ModeRow extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = ShadTheme.of(context);
     final cs = theme.colorScheme;
-    final (icon, label, description) = ModeSwitcher.describe(mode);
+    final l = writeL10n(context);
+    final (icon, label, description) = ModeSwitcher.describe(l, mode);
     final st = ui.state('write.mode.set', {'mode': mode.name});
     final selected = mode == current;
     final shortcut = ui.s.keymap.labelsOf('write.mode.${mode.name}');
@@ -562,8 +627,9 @@ class _ModeRow extends StatelessWidget {
       ),
     );
     return ShadTooltip(
-      builder: (_) =>
-          Text(st.enabled ? label : (st.disabledReason ?? 'Not available')),
+      builder: (_) => Text(
+        st.enabled ? label : (st.disabledReason ?? l.reasonNotAvailable),
+      ),
       child: MouseRegion(
         cursor: st.enabled
             ? SystemMouseCursors.click

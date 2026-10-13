@@ -266,7 +266,16 @@ class _DriveHomeScreenState extends State<DriveHomeScreen> {
   }
 
   Widget _body(BuildContext context, WonkyAppLocalizations l) {
-    if (c.loading && c.items.isEmpty) return LoadingShimmer.driveList();
+    if (c.loading && c.items.isEmpty) {
+      // Clipped: the placeholder rows may be taller than a short window.
+      return ClipRect(
+        child: OverflowBox(
+          alignment: Alignment.topCenter,
+          maxHeight: double.infinity,
+          child: LoadingShimmer.driveList(),
+        ),
+      );
+    }
     if (c.error != null && c.items.isEmpty) {
       final offline = isOfflineError(c.error!);
       return WonkyEmptyState(
@@ -394,6 +403,7 @@ class _Header extends StatelessWidget {
             child: c.location.kind == DriveLocationKind.folder
                 ? _Breadcrumb(controller: c, services: services)
                 : Semantics(
+                    container: true,
                     header: true,
                     child: Text(
                       title,

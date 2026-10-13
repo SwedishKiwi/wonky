@@ -20,24 +20,103 @@ List<Command<CommandArgs>> editorCommands(
     _wrap(spec, overrides[spec.id]?.call(spec)),
 ];
 
-String _categoryOf(String id) {
+String _categoryOf(WriteLocalizations l, String id) {
   final area = id.split('.')[1];
   return switch (area) {
-    'edit' => 'Edit',
-    'format' => 'Format',
-    'list' => 'Format',
-    'link' => 'Insert',
-    'insert' => 'Insert',
-    'block' => 'Blocks',
-    'code' => 'Code blocks',
-    'image' => 'Images',
-    'table' => 'Tables',
-    'view' => 'View',
-    'mode' => 'View',
-    'nav' => 'Navigation',
-    _ => 'Write',
+    'edit' => l.categoryEdit,
+    'format' => l.categoryFormat,
+    'list' => l.categoryFormat,
+    'link' => l.categoryInsert,
+    'insert' => l.categoryInsert,
+    'block' => l.categoryBlocks,
+    'code' => l.categoryCodeBlocks,
+    'image' => l.categoryImages,
+    'table' => l.categoryTables,
+    'view' => l.categoryView,
+    'mode' => l.categoryView,
+    'nav' => l.categoryNavigation,
+    _ => l.categoryWrite,
   };
 }
+
+/// Localized title of a catalog command (the catalog's English titles are
+/// the fallback for ids added later).
+String? editorCommandTitle(WriteLocalizations l, String id) => switch (id) {
+  'write.edit.copy' => l.cmdEditCopy,
+  'write.edit.cut' => l.cmdEditCut,
+  'write.edit.paste' => l.cmdEditPaste,
+  'write.edit.pasteWithoutFormatting' => l.cmdEditPasteWithoutFormatting,
+  'write.edit.pasteAsMarkdown' => l.cmdEditPasteAsMarkdown,
+  'write.edit.copyAsMarkdown' => l.cmdEditCopyAsMarkdown,
+  'write.edit.copyAsPlainText' => l.cmdEditCopyAsPlainText,
+  'write.edit.copyAsHtml' => l.cmdEditCopyAsHtml,
+  'write.edit.selectAll' => l.cmdEditSelectAll,
+  'write.edit.delete' => l.cmdEditDelete,
+  'write.edit.insertText' => l.cmdEditInsertText,
+  'write.edit.replaceRange' => l.cmdEditReplaceRange,
+  'write.edit.selectRange' => l.cmdEditSelectRange,
+  'write.format.bold' => l.cmdFormatBold,
+  'write.format.italic' => l.cmdFormatItalic,
+  'write.format.strikethrough' => l.cmdFormatStrikethrough,
+  'write.format.inlineCode' => l.cmdFormatInlineCode,
+  'write.format.clearFormatting' => l.cmdFormatClearFormatting,
+  'write.format.blockType' => l.cmdFormatBlockType,
+  'write.format.blockType.paragraph' => l.cmdFormatBlockTypeParagraph,
+  'write.format.blockType.heading1' => l.cmdFormatBlockTypeHeading1,
+  'write.format.blockType.heading2' => l.cmdFormatBlockTypeHeading2,
+  'write.format.blockType.heading3' => l.cmdFormatBlockTypeHeading3,
+  'write.format.blockType.heading4' => l.cmdFormatBlockTypeHeading4,
+  'write.format.blockType.heading5' => l.cmdFormatBlockTypeHeading5,
+  'write.format.blockType.heading6' => l.cmdFormatBlockTypeHeading6,
+  'write.format.blockType.quote' => l.cmdFormatBlockTypeQuote,
+  'write.format.blockType.codeBlock' => l.cmdFormatBlockTypeCodeBlock,
+  'write.format.markdownHint' => l.cmdFormatMarkdownHint,
+  'write.list.toggleBulleted' => l.cmdListToggleBulleted,
+  'write.list.toggleNumbered' => l.cmdListToggleNumbered,
+  'write.list.toggleChecklist' => l.cmdListToggleChecklist,
+  'write.list.indent' => l.cmdListIndent,
+  'write.list.outdent' => l.cmdListOutdent,
+  'write.list.toggleChecked' => l.cmdListToggleChecked,
+  'write.link.set' => l.cmdLinkSet,
+  'write.link.remove' => l.cmdLinkRemove,
+  'write.insert.divider' => l.cmdInsertDivider,
+  'write.insert.imageFromUrl' => l.cmdInsertImageFromUrl,
+  'write.insert.table' => l.cmdInsertTable,
+  'write.insert.mention' => l.cmdInsertMention,
+  'write.insert.specialCharacter' => l.cmdInsertSpecialCharacter,
+  'write.block.turnInto' => l.cmdBlockTurnInto,
+  'write.block.duplicate' => l.cmdBlockDuplicate,
+  'write.block.delete' => l.cmdBlockDelete,
+  'write.block.moveUp' => l.cmdBlockMoveUp,
+  'write.block.moveDown' => l.cmdBlockMoveDown,
+  'write.block.move' => l.cmdBlockMove,
+  'write.block.select' => l.cmdBlockSelect,
+  'write.code.setLanguage' => l.cmdCodeSetLanguage,
+  'write.code.exit' => l.cmdCodeExit,
+  'write.code.indentLines' => l.cmdCodeIndentLines,
+  'write.code.outdentLines' => l.cmdCodeOutdentLines,
+  'write.image.setAlt' => l.cmdImageSetAlt,
+  'write.image.replaceFromUrl' => l.cmdImageReplaceFromUrl,
+  'write.table.insertRow' => l.cmdTableInsertRow,
+  'write.table.insertColumn' => l.cmdTableInsertColumn,
+  'write.table.deleteRow' => l.cmdTableDeleteRow,
+  'write.table.deleteColumn' => l.cmdTableDeleteColumn,
+  'write.table.moveRow' => l.cmdTableMoveRow,
+  'write.table.moveColumn' => l.cmdTableMoveColumn,
+  'write.table.setColumnAlignment' => l.cmdTableSetColumnAlignment,
+  'write.table.setCell' => l.cmdTableSetCell,
+  'write.table.delete' => l.cmdTableDelete,
+  'write.view.zoomIn' => l.cmdViewZoomIn,
+  'write.view.zoomOut' => l.cmdViewZoomOut,
+  'write.view.zoomReset' => l.cmdViewZoomReset,
+  'write.view.zoomSet' => l.cmdViewZoomSet,
+  'write.view.toggleRemoteCursors' => l.cmdViewToggleRemoteCursors,
+  'write.view.suggestionPreview' => l.cmdViewSuggestionPreview,
+  'write.mode.set' => l.cmdModeSet,
+  'write.nav.documentStart' => l.cmdNavDocumentStart,
+  'write.nav.documentEnd' => l.cmdNavDocumentEnd,
+  _ => null,
+};
 
 KeyScope _scopeOf(String id) =>
     id.startsWith('write.view.') || id.startsWith('write.mode.')
@@ -57,9 +136,9 @@ WriteCommand _wrap(EditorCommandSpec spec, WriteRun? override) {
 
   return WriteCommand(
     spec.id,
-    label: spec.title,
+    label: (l) => editorCommandTitle(l, spec.id) ?? spec.title,
     icon: commandIcons[spec.id],
-    categoryName: spec.category ?? _categoryOf(spec.id),
+    categoryName: (l) => _categoryOf(l, spec.id),
     defaultBindings: spec.bindings,
     keyScope: _scopeOf(spec.id),
     requiredRole: spec.requiredRole,
@@ -68,14 +147,14 @@ WriteCommand _wrap(EditorCommandSpec spec, WriteRun? override) {
     needsEditable: content,
     enabled: (d, a) => roleAllows(d) && spec.isEnabled(d.target, a),
     checked: spec.checked == null ? null : (d, a) => spec.checked!(d.target, a),
-    reason: (d, a) {
+    reason: (l, d, a) {
       if (!roleAllows(d)) {
         return spec.suggestable
-            ? 'Switch to Suggesting to propose changes'
-            : 'You need edit access';
+            ? l.reasonSwitchToSuggesting
+            : l.reasonNeedEditAccess;
       }
       if (!spec.suggestable && d.editor.mode == EditorMode.suggesting) {
-        return "This can't be suggested — switch to Editing";
+        return l.reasonCannotSuggest;
       }
       return null;
     },

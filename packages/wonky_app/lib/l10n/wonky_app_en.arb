@@ -698,13 +698,31 @@
   "offlineUnavailable": "This file isn't available offline",
   "offlineDocuments": "Files on this device",
   "offlineDocumentsValue": "{count, plural, =0{None} =1{1 file} other{{count} files}}",
-  "@offlineDocumentsValue": {"placeholders": {"count": {"type": "int"}}},
+  "@offlineDocumentsValue": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "offlinePinnedCount": "{count, plural, =0{No files made available offline} =1{1 made available offline} other{{count} made available offline}}",
-  "@offlinePinnedCount": {"placeholders": {"count": {"type": "int"}}},
+  "@offlinePinnedCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "offlineUploads": "Images waiting to upload",
   "offlineStorageUsed": "Storage used",
   "offlineClearUnsynced": "{count, plural, =1{1 change hasn't synced yet and will be lost.} other{{count} changes haven't synced yet and will be lost.}}",
-  "@offlineClearUnsynced": {"placeholders": {"count": {"type": "int"}}},
+  "@offlineClearUnsynced": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "offlineSimulate": "Simulate offline",
   "offlineSimulateHint": "Disconnects from the server to try offline editing (developer setting).",
   "ownerAnyone": "Owned by anyone",
@@ -1088,5 +1106,295 @@
   "writeSmartQuotes": "Smart quotes",
   "writeSpellcheck": "Spellcheck",
   "youHaveCommentAccess": "You have comment access",
-  "youHaveViewAccess": "You have view access"
+  "youHaveViewAccess": "You have view access",
+  "assistantNewChat": "New chat",
+  "assistantClearChat": "Clear chat",
+  "assistantDeleteChat": "Delete this chat",
+  "assistantDeleteChatFailed": "Couldn't delete the chat",
+  "assistantAiSettings": "AI settings",
+  "assistantOpenAiSettings": "Open AI settings",
+  "assistantEmptyTitle": "Ask about this document or tell the assistant what to change.",
+  "assistantEmptyBody": "Every change it makes can be undone in one step.",
+  "assistantPlaceholder": "Ask the assistant…",
+  "assistantPrivacyNotice": "The assistant sends this document and your messages to Anthropic to generate answers.",
+  "assistantModeEdit": "Edit",
+  "assistantModeEditHint": "Edit directly: changes go straight into the document",
+  "assistantModeEditUnavailable": "You can only suggest changes in this document",
+  "assistantModeSuggest": "Suggest",
+  "assistantModeSuggestHint": "Suggest: changes arrive as suggestions to accept or reject",
+  "assistantRemoveChip": "Remove {label}",
+  "@assistantRemoveChip": {
+    "placeholders": {
+      "label": {
+        "type": "String"
+      }
+    }
+  },
+  "assistantThinking": "Thinking…",
+  "assistantRefused": "The assistant can't help with that request.",
+  "assistantFailed": "Something went wrong.",
+  "assistantStopped": "Stopped",
+  "assistantContinue": "Continue",
+  "assistantUndone": "Undone",
+  "assistantUndoChanges": "Undo changes",
+  "assistantInsertAtCursor": "Insert at cursor",
+  "assistantAllow": "Allow",
+  "assistantDeny": "Deny",
+  "assistantShow": "Show",
+  "assistantCopyCode": "Copy code",
+  "aiNotConfigured": "AI isn't configured on this server.",
+  "aiNotConfiguredHint": "An administrator can enable it by adding an Anthropic API key to the server configuration.",
+  "aiDisabled": "AI is turned off on this server.",
+  "aiOptedOut": "The assistant is turned off in your settings (Settings › AI).",
+  "aiAssistantTitle": "Assistant",
+  "aiAssistantHint": "The assistant helps you write, edit and understand documents. It only sees the document you use it in.",
+  "aiEnableHint": "Turn off to hide AI features and stop sending content to the AI service.",
+  "aiQuality": "AI quality",
+  "aiQualityBest": "Best",
+  "aiQualityBestHint": "Most capable answers and edits",
+  "aiQualityBalanced": "Balanced",
+  "aiQualityBalancedHint": "Good answers, a little faster",
+  "aiQualityFast": "Fast",
+  "aiQualityFastHint": "Quickest answers for simple tasks",
+  "aiQualitySaveFailed": "Couldn't save the AI quality",
+  "aiUsageToday": "Usage today",
+  "aiUsageTodayHint": "Resets daily at midnight UTC.",
+  "aiUsagePercent": "{percent} %",
+  "@aiUsagePercent": {
+    "placeholders": {
+      "percent": {
+        "type": "int"
+      }
+    }
+  },
+  "aiChatHistory": "Chat history",
+  "aiChatHistoryHint": "Delete all your assistant chats.",
+  "aiClearHistory": "Clear history",
+  "aiClearHistoryTitle": "Clear assistant history?",
+  "aiClearHistoryBody": "All your assistant chats in every document are deleted. This can't be undone. Edits the assistant made stay in the documents.",
+  "aiClearHistoryFailed": "Couldn't clear the history",
+  "aiHistoryCleared": "{count, plural, =1{Deleted 1 chat} other{Deleted {count} chats}}",
+  "@aiHistoryCleared": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "mcpScopeDriveRead": "Drive: read (list, search, export)",
+  "mcpScopeDriveWrite": "Drive: write (create, rename, move, trash, share)",
+  "mcpScopeWriteRead": "Documents: read",
+  "mcpScopeWriteEdit": "Documents: edit (content, comments, suggestions)",
+  "mcpScopeSheetsRead": "Spreadsheets: read",
+  "mcpScopeSheetsEdit": "Spreadsheets: edit",
+  "mcpScopeScriptsRun": "Scripts: run",
+  "mcpScopeUiControl": "Control app windows (ui.* tools)",
+  "tokenCreateHint": "The token acts as you with the permissions you choose. You can revoke it at any time.",
+  "tokenNameRequired": "Give the token a name.",
+  "tokenScopesRequired": "Choose at least one permission.",
+  "tokenExpires": "Expires",
+  "tokenExpiresInDays": "{days, plural, =1{In 1 day} other{In {days} days}}",
+  "@tokenExpiresInDays": {
+    "placeholders": {
+      "days": {
+        "type": "int"
+      }
+    }
+  },
+  "tokenExpiresInYear": "In 1 year",
+  "tokenNever": "Never",
+  "tokenNeverLower": "never",
+  "tokenExpired": "expired",
+  "tokenNameWithStatus": "{name} · {status}",
+  "@tokenNameWithStatus": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      },
+      "status": {
+        "type": "String"
+      }
+    }
+  },
+  "tokenDates": "Created {created} · expires {expires} · last used {lastUsed}",
+  "@tokenDates": {
+    "placeholders": {
+      "created": {
+        "type": "String"
+      },
+      "expires": {
+        "type": "String"
+      },
+      "lastUsed": {
+        "type": "String"
+      }
+    }
+  },
+  "tokenRevokeTitle": "Revoke \"{name}\"?",
+  "@tokenRevokeTitle": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "tokenRevokeBody": "MCP clients using this token stop working immediately. This can't be undone.",
+  "toastTokenCopied": "Token copied",
+  "mcpEndpoint": "Endpoint: {url}",
+  "@mcpEndpoint": {
+    "placeholders": {
+      "url": {
+        "type": "String"
+      }
+    }
+  },
+  "mcpReplaceToken": "Replace {variable} with a token.",
+  "@mcpReplaceToken": {
+    "placeholders": {
+      "variable": {
+        "type": "String"
+      }
+    }
+  },
+  "mcpWindowControl": "Window control",
+  "mcpWindowControlHint": "Lets MCP clients with the ui:control permission drive this window: navigate, run commands, fill dialogs, take screenshots. A pill with Stop shows while an agent works.",
+  "mcpBridgeStatus": "Status",
+  "mcpBridgeOff": "Off",
+  "mcpBridgeConnecting": "Connecting…",
+  "mcpBridgeConnected": "On · window {id}",
+  "@mcpBridgeConnected": {
+    "placeholders": {
+      "id": {
+        "type": "String"
+      }
+    }
+  },
+  "driveItemLabel": "{kind} {name}",
+  "@driveItemLabel": {
+    "description": "Screen reader label of a drive row or card, e.g. 'Document Plan'.",
+    "placeholders": {
+      "kind": {
+        "type": "String"
+      },
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "activityTabViewers": "Viewers",
+  "activityTabTrends": "Trends",
+  "activityTabActivity": "Activity",
+  "activityPeriodDays": "Last {days} days",
+  "@activityPeriodDays": {
+    "placeholders": {
+      "days": {
+        "type": "int"
+      }
+    }
+  },
+  "activityShowMyViewHistory": "Show my view history",
+  "activityShowMyViewHistoryHint": "When this is off, you're not listed as a viewer of any file. Your views are still counted anonymously in the trends.",
+  "activityViewersHidden": "{count, plural, =1{1 more person turned off their view history} other{{count} more people turned off their view history}}",
+  "@activityViewersHidden": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "activityViewersEmpty": "{days, plural, =1{Nobody with access opened this today} other{Nobody with access opened this in the last {days} days}}",
+  "@activityViewersEmpty": {
+    "placeholders": {
+      "days": {
+        "type": "int"
+      }
+    }
+  },
+  "activityViewersCount": "{count, plural, =1{1 person with access opened this in the last {days} days} other{{count} people with access opened this in the last {days} days}}",
+  "@activityViewersCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      },
+      "days": {
+        "type": "int"
+      }
+    }
+  },
+  "activityLastViewed": "Viewed {time}",
+  "@activityLastViewed": {
+    "placeholders": {
+      "time": {
+        "type": "String"
+      }
+    }
+  },
+  "activityViewCount": "{count, plural, =1{1 view} other{{count} views}}",
+  "@activityViewCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "activityChartSummary": "{title}: {total} in total, at most {peak} on one day",
+  "@activityChartSummary": {
+    "placeholders": {
+      "title": {
+        "type": "String"
+      },
+      "total": {
+        "type": "int"
+      },
+      "peak": {
+        "type": "int"
+      }
+    }
+  },
+  "activityViewTrend": "Views",
+  "activityViewTrendHint": "Unique viewers per day",
+  "activityCommentTrend": "Comments",
+  "activityCommentTrendHint": "Comments and replies per day",
+  "activityShowMore": "Show more",
+  "notificationsFilterAll": "All",
+  "notificationsFilterUnread": "Unread",
+  "notificationsFilterUnreadCount": "Unread ({count})",
+  "@notificationsFilterUnreadCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "notificationsSettings": "Notification settings",
+  "notificationsLoadFailed": "Couldn't load your notifications",
+  "notificationsEmptyUnread": "No unread notifications",
+  "notificationsLoadMore": "Load more",
+  "notificationsUnreadMarker": "unread",
+  "notifSuggestionAccepted": "{who} accepted your suggestion in {item}",
+  "@notifSuggestionAccepted": {
+    "placeholders": {
+      "who": {
+        "type": "String"
+      },
+      "item": {
+        "type": "String"
+      }
+    }
+  },
+  "notifSuggestionRejected": "{who} rejected your suggestion in {item}",
+  "@notifSuggestionRejected": {
+    "placeholders": {
+      "who": {
+        "type": "String"
+      },
+      "item": {
+        "type": "String"
+      }
+    }
+  },
+  "notifyAccessRequests": "Access requests",
+  "notifySuggestions": "Suggestions on my files",
+  "notifyDigest": "Bundle emails",
+  "notifyDigestHint": "Send one email every 15 minutes instead of one per notification. Mentions and assignments are always emailed right away."
 }

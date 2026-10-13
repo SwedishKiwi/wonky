@@ -30,6 +30,7 @@ import 'package:wonky_write_core/wonky_write_core.dart'
         argbToHex,
         listNumberStyleValues;
 
+import '../../l10n/write_l10n.dart';
 import 'theme_controls.dart';
 import 'theme_editor_controller.dart';
 import 'theme_editor_model.dart';
@@ -83,13 +84,14 @@ class _InspectorBody extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = ShadTheme.of(context);
+    final l = writeL10n(context);
     final warnings = c.warningsOf(node);
     final children = <Widget>[
       Row(
         children: [
           Expanded(
             child: Text(
-              node.label,
+              node.label(l),
               key: const ValueKey<String>('write.themeEditor.inspector.title'),
               style: theme.textTheme.large.copyWith(fontSize: 16),
               overflow: TextOverflow.ellipsis,
@@ -101,7 +103,7 @@ class _InspectorBody extends StatelessWidget {
               size: ShadButtonSize.sm,
               leading: const Icon(LucideIcons.rotateCcw, size: 14),
               onPressed: () => a.resetElement(node),
-              child: const Text('Reset'),
+              child: Text(l.commonReset),
             ),
         ],
       ),
@@ -144,16 +146,12 @@ class _InspectorBody extends StatelessWidget {
   // ---------------------------------------------------------- sections
 
   List<Widget> _sections(BuildContext context) {
+    final l = writeL10n(context);
     final out = <Widget>[];
     if (node.kind == ThemeNodeKind.advanced) {
-      out.add(
-        _Note(
-          'Overlays replace the app colors for selection, comments, '
-          'suggestions and find matches. Usually best left to the app.',
-        ),
-      );
+      out.add(_Note(l.themeInspectorOverlaysNote));
     }
-    for (final (title, prefix, object) in sectionsOf(node)) {
+    for (final (title, prefix, object) in sectionsOf(l, node)) {
       if (title.isNotEmpty) out.add(_SectionTitle(title));
       final groups = <PropGroup, List<Widget>>{};
       for (final f in object.fields.entries) {
@@ -168,7 +166,7 @@ class _InspectorBody extends StatelessWidget {
         final rows = groups[g];
         if (rows == null || rows.isEmpty) continue;
         out
-          ..add(_GroupTitle(propGroupLabel(g, node)))
+          ..add(_GroupTitle(propGroupLabel(l, g, node)))
           ..addAll(rows);
       }
     }
@@ -192,6 +190,7 @@ class _InspectorBody extends StatelessWidget {
     ThemeVariant? variant,
     String? label,
   }) {
+    final l = writeL10n(context);
     final qualified = ThemePropertyPath.qualify(path, variant);
     Object? raw;
     try {
@@ -206,8 +205,8 @@ class _InspectorBody extends StatelessWidget {
     final name =
         label ??
         (key == 'numbering' && node.element == ThemeElement.list
-            ? 'Numbering per level'
-            : propLabel(key));
+            ? l.themeInspectorNumberingPerLevel
+            : propLabel(l, key));
     void set(Object? v, {String? gesture}) =>
         a.setProperty(path, v, variant: variant, gesture: gesture);
     void reset() => set(null);
@@ -291,7 +290,7 @@ class _InspectorBody extends StatelessWidget {
               values: [for (final w in weights) '$w'],
               value: current,
               enabled: enabled,
-              labelOf: _weightLabel,
+              labelOf: (w) => _weightLabel(l, w),
               onChanged: (v) => set(int.parse(v)),
             ),
           ),
@@ -365,7 +364,7 @@ class _InspectorBody extends StatelessWidget {
           row(
             ThemeTextField(
               value: effective is List ? effective.join(', ') : null,
-              placeholder: 'e.g. onum, liga',
+              placeholder: l.themeInspectorFeaturesHint,
               width: 160,
               enabled: enabled,
               onChanged: (v) {
@@ -440,16 +439,16 @@ class _InspectorBody extends StatelessWidget {
   static bool _isPerSide(Map m) =>
       m.keys.any((k) => const {'top', 'right', 'bottom', 'left'}.contains(k));
 
-  static String _weightLabel(String w) => switch (w) {
-    '100' => 'Thin',
-    '200' => 'Extra light',
-    '300' => 'Light',
-    '400' => 'Regular',
-    '500' => 'Medium',
-    '600' => 'Semibold',
-    '700' => 'Bold',
-    '800' => 'Extra bold',
-    '900' => 'Black',
+  static String _weightLabel(WriteLocalizations l, String w) => switch (w) {
+    '100' => l.fontWeightThin,
+    '200' => l.fontWeightExtraLight,
+    '300' => l.fontWeightLight,
+    '400' => l.fontWeightRegular,
+    '500' => l.fontWeightMedium,
+    '600' => l.fontWeightSemibold,
+    '700' => l.fontWeightBold,
+    '800' => l.fontWeightExtraBold,
+    '900' => l.fontWeightBlack,
     _ => w,
   };
 
@@ -461,11 +460,10 @@ class _InspectorBody extends StatelessWidget {
         if (f.value is ColorProp) f.key,
     ];
     if (colors.isEmpty) return const [];
+    final l = writeL10n(context);
     return [
-      const _GroupTitle('Dark variant'),
-      const _Note(
-        'Unset colors follow the light variant (through the dark theme colors).',
-      ),
+      _GroupTitle(l.themeInspectorDarkVariant),
+      _Note(l.themeInspectorDarkOverridesNote),
       for (final k in colors)
         ..._prop(
           context,
@@ -473,7 +471,7 @@ class _InspectorBody extends StatelessWidget {
           k,
           const ColorProp(),
           variant: ThemeVariant.dark,
-          label: '${propLabel(k)} (dark)',
+          label: l.themeInspectorDarkLabel(propLabel(l, k)),
         ),
     ];
   }
@@ -482,6 +480,7 @@ class _InspectorBody extends StatelessWidget {
 
   List<Widget> _general(BuildContext context) {
     final theme = ShadTheme.of(context);
+    final l = writeL10n(context);
     String? str(String path) {
       final v = ThemePropertyPath.get(c.draftJson, path);
       return v is String ? v : null;
@@ -489,7 +488,7 @@ class _InspectorBody extends StatelessWidget {
 
     return [
       ThemePropRow(
-        label: 'Name',
+        label: l.themeInspectorName,
         child: Row(
           children: [
             Flexible(
@@ -504,13 +503,13 @@ class _InspectorBody extends StatelessWidget {
                 key: const ValueKey<String>('write.themeEditor.renameInline'),
                 size: ShadButtonSize.sm,
                 onPressed: a.rename,
-                child: const Text('Rename'),
+                child: Text(l.commonRename),
               ),
           ],
         ),
       ),
       ThemePropRow(
-        label: 'Description',
+        label: l.themeInspectorDescription,
         isSet: str('description') != null,
         onReset: () => a.setProperty('description', null),
         enabled: enabled,
@@ -523,29 +522,30 @@ class _InspectorBody extends StatelessWidget {
               a.setProperty('description', v.trim().isEmpty ? null : v.trim()),
         ),
       ),
-      const _GroupTitle('Dark variant'),
+      _GroupTitle(l.themeInspectorDarkVariant),
       ThemePropRow(
-        label: 'Dark colors',
+        label: l.themeInspectorDarkColors,
         child: ThemeEnumField(
           values: const ['derived', 'explicit'],
           value: str('dark.mode') ?? 'derived',
           enabled: enabled,
-          labelOf: (v) => v == 'derived' ? 'Derived' : 'Custom',
+          labelOf: (v) => v == 'derived'
+              ? l.themeInspectorDarkDerived
+              : l.themeInspectorDarkCustom,
           onChanged: (v) => a.setProperty('dark.mode', v),
         ),
       ),
       _Note(
         str('dark.mode') == 'explicit'
-            ? 'The dark palette is set completely in Theme colors.'
-            : 'Dark colors are computed from the light palette with good '
-                  'contrast. Override single colors in Theme colors.',
+            ? l.themeInspectorDarkExplicitNote
+            : l.themeInspectorDarkDerivedNote,
       ),
       if (c.record?.updatedAt case final at?) ...[
-        const _GroupTitle('About'),
+        _GroupTitle(l.themeInspectorAbout),
         ThemePropRow(
-          label: 'Version',
+          label: l.themeInspectorVersion,
           child: Text(
-            '${c.version} · saved ${_date(at.toLocal())}',
+            l.themeInspectorVersionSaved(c.version, at.toLocal()),
             style: theme.textTheme.muted.copyWith(fontSize: 12),
           ),
         ),
@@ -553,13 +553,10 @@ class _InspectorBody extends StatelessWidget {
     ];
   }
 
-  static String _date(DateTime d) =>
-      '${d.year}-${d.month.toString().padLeft(2, '0')}-'
-      '${d.day.toString().padLeft(2, '0')}';
-
   // ------------------------------------------------------------ palette
 
   List<Widget> _palette(BuildContext context) {
+    final l = writeL10n(context);
     final light = c.resolved(ThemeVariant.light).palette;
     final dark = c.resolved(ThemeVariant.dark).palette;
     final explicit =
@@ -578,7 +575,7 @@ class _InspectorBody extends StatelessWidget {
           children: [
             Expanded(
               child: Text(
-                paletteLabel(k),
+                paletteLabel(l, k),
                 style: ShadTheme.of(
                   context,
                 ).textTheme.small.copyWith(fontSize: 13),
@@ -592,7 +589,7 @@ class _InspectorBody extends StatelessWidget {
               allowReset: k.isCustom,
               allowTransparent: k.role == core.PaletteRole.surface,
               width: 96,
-              semanticLabel: '${paletteLabel(k)} (light)',
+              semanticLabel: l.themeInspectorLightLabel(paletteLabel(l, k)),
               onChanged: (v) => a.setProperty('palette.${k.name}', v),
             ),
             const SizedBox(width: 6),
@@ -605,7 +602,7 @@ class _InspectorBody extends StatelessWidget {
               allowReset: !explicit,
               allowTransparent: k.role == core.PaletteRole.surface,
               width: 96,
-              semanticLabel: '${paletteLabel(k)} (dark)',
+              semanticLabel: l.themeInspectorDarkLabel(paletteLabel(l, k)),
               onChanged: (v) => a.setProperty(
                 'palette.${k.name}',
                 v,
@@ -621,10 +618,8 @@ class _InspectorBody extends StatelessWidget {
     return [
       _Note(
         explicit
-            ? 'Light and custom dark colors. Elements reference these '
-                  'colors, so changing one updates everything that uses it.'
-            : 'Light colors on the left; dark colors on the right are derived '
-                  'unless you override them.',
+            ? l.themeInspectorPaletteExplicitNote
+            : l.themeInspectorPaletteDerivedNote,
       ),
       Padding(
         padding: const EdgeInsets.only(top: 6, bottom: 2),
@@ -634,14 +629,14 @@ class _InspectorBody extends StatelessWidget {
             SizedBox(
               width: 102,
               child: Text(
-                'Light',
+                l.themeInspectorLight,
                 style: theme.textTheme.muted.copyWith(fontSize: 12),
               ),
             ),
             SizedBox(
               width: 96,
               child: Text(
-                'Dark',
+                l.themeInspectorDark,
                 style: theme.textTheme.muted.copyWith(fontSize: 12),
               ),
             ),
@@ -650,7 +645,7 @@ class _InspectorBody extends StatelessWidget {
       ),
       for (final k in PaletteKey.values)
         if (!k.isCustom) pair(k),
-      const _GroupTitle('Custom colors'),
+      _GroupTitle(l.themeInspectorCustomColors),
       for (final k in PaletteKey.values)
         if (k.isCustom) pair(k),
     ];
@@ -658,56 +653,55 @@ class _InspectorBody extends StatelessWidget {
 
   // -------------------------------------------------------------- fonts
 
-  List<Widget> _fonts(BuildContext context) => [
-    const _Note(
-      'Elements use these three fonts unless they pick a font of their own.',
-    ),
-    for (final (role, label) in const [
-      ('body', 'Body'),
-      ('heading', 'Headings'),
-      ('mono', 'Code'),
-    ])
-      ThemePropRow(
-        key: ValueKey<String>('write.themeEditor.prop.fonts.$role'),
-        label: label,
-        child: ThemeFontField(
-          value: ThemePropertyPath.get(c.draftJson, 'fonts.$role') as String?,
-          roles: const [],
-          allowRoles: false,
-          enabled: enabled,
-          onChanged: (v) => a.setProperty('fonts.$role', v),
+  List<Widget> _fonts(BuildContext context) {
+    final l = writeL10n(context);
+    return [
+      _Note(l.themeInspectorFontsNote),
+      for (final (role, label) in [
+        ('body', l.themeInspectorFontBody),
+        ('heading', l.themeInspectorFontHeadings),
+        ('mono', l.themeInspectorFontCode),
+      ])
+        ThemePropRow(
+          key: ValueKey<String>('write.themeEditor.prop.fonts.$role'),
+          label: label,
+          child: ThemeFontField(
+            value: ThemePropertyPath.get(c.draftJson, 'fonts.$role') as String?,
+            roles: const [],
+            allowRoles: false,
+            enabled: enabled,
+            onChanged: (v) => a.setProperty('fonts.$role', v),
+          ),
         ),
-      ),
-  ];
+    ];
+  }
 
   // ------------------------------------------------------------- syntax
 
   List<Widget> _syntax(BuildContext context) {
     final light = c.resolved(ThemeVariant.light);
     final dark = c.resolved(ThemeVariant.dark);
+    final l = writeL10n(context);
     return [
-      const _Note(
-        'Token colors of code blocks. Unlisted tokens use the code text '
-        'color; dark colors are derived unless overridden.',
-      ),
+      _Note(l.themeInspectorSyntaxNote),
       for (final t in SyntaxToken.values) ...[
-        _SubTitle(syntaxLabel(t)),
+        _SubTitle(syntaxLabel(l, t)),
         ..._prop(
           context,
           'syntax.${t.name}.color',
           'color',
           const ColorProp(),
-          label: 'Color',
+          label: l.themePropColor,
         ),
         ..._prop(
           context,
           'syntax.${t.name}.fontStyle',
           'fontStyle',
           const EnumProp(['normal', 'italic']),
-          label: 'Style',
+          label: l.themePropStyle,
         ),
         ThemePropRow(
-          label: 'Color (dark)',
+          label: l.themeInspectorDarkLabel(l.themePropColor),
           isSet:
               ThemePropertyPath.get(
                 c.draftJson,
@@ -732,7 +726,7 @@ class _InspectorBody extends StatelessWidget {
                     : argbToHex(dark.syntax[t]!.color)),
             palette: dark.palette,
             enabled: enabled,
-            semanticLabel: '${syntaxLabel(t)} (dark)',
+            semanticLabel: l.themeInspectorDarkLabel(syntaxLabel(l, t)),
             onChanged: (v) => a.setProperty(
               'syntax.${t.name}.color',
               v,
@@ -740,7 +734,7 @@ class _InspectorBody extends StatelessWidget {
             ),
           ),
         ),
-        if (light.syntax[t] == null) const _Note('Uses the code text color.'),
+        if (light.syntax[t] == null) _Note(l.themeInspectorUsesCodeTextColor),
       ],
     ];
   }
@@ -756,11 +750,15 @@ class _ReadOnlyBanner extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l = writeL10n(context);
+    final owner = c.record?.ownerName;
     final text = c.isBuiltin
-        ? 'Built-in themes can’t be changed.'
+        ? l.themeInspectorBuiltinReadOnly
         : c.isDeleted
-        ? 'This theme is deleted.'
-        : 'This theme belongs to ${c.record?.ownerName ?? 'someone else'}.';
+        ? l.themeInspectorDeleted
+        : owner == null
+        ? l.themeInspectorBelongsToSomeoneElse
+        : l.themeInspectorBelongsTo(owner);
     return ShadAlert(
       key: const ValueKey<String>('write.themeEditor.readOnly'),
       icon: const Icon(LucideIcons.lock),
@@ -774,7 +772,9 @@ class _ReadOnlyBanner extends StatelessWidget {
           onPressed: a.duplicate,
           child: Flexible(
             child: Text(
-              c.isBuiltin ? 'Duplicate to customize' : 'Copy to my themes',
+              c.isBuiltin
+                  ? l.themeEditorDuplicateToCustomize
+                  : l.themeEditorCopyToMyThemes,
               overflow: TextOverflow.ellipsis,
             ),
           ),
@@ -793,7 +793,10 @@ class _ContrastWarning extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = ShadTheme.of(context);
-    final variant = result.variant == ThemeVariant.dark ? ' (dark)' : '';
+    final l = writeL10n(context);
+    final ratio = result.ratio.toStringAsFixed(1);
+    final required = result.required.toStringAsFixed(1);
+    final pair = pairLabel(l, result.pairId);
     return Container(
       key: ValueKey<String>(
         'write.themeEditor.contrast.${result.pairId}.${result.variant.name}',
@@ -816,9 +819,9 @@ class _ContrastWarning extends StatelessWidget {
           const SizedBox(width: 8),
           Expanded(
             child: Text(
-              'Contrast ${result.ratio.toStringAsFixed(1)}:1$variant — '
-              '${pairLabel(result.pairId)} needs '
-              '${result.required.toStringAsFixed(1)}:1',
+              result.variant == ThemeVariant.dark
+                  ? l.themeInspectorContrastWarningDark(ratio, pair, required)
+                  : l.themeInspectorContrastWarning(ratio, pair, required),
               style: theme.textTheme.small.copyWith(fontSize: 12),
             ),
           ),
@@ -827,7 +830,7 @@ class _ContrastWarning extends StatelessWidget {
               size: ShadButtonSize.sm,
               height: 28,
               onPressed: () => onFix!(result.pairId, result.variant),
-              child: const Text('Fix'),
+              child: Text(l.themeInspectorFix),
             ),
         ],
       ),
@@ -931,6 +934,7 @@ class _LevelList extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = ShadTheme.of(context);
+    final l = writeL10n(context);
     final list = values.length == 9
         ? values
         : List<String>.generate(
@@ -949,42 +953,49 @@ class _LevelList extends StatelessWidget {
       runSpacing: 6,
       children: [
         for (var i = 0; i < 9; i++)
-          Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text(
-                '${i + 1}',
-                style: theme.textTheme.muted.copyWith(fontSize: 10),
-              ),
-              if (options == null)
-                ThemeTextField(
-                  value: list[i],
-                  maxLength: 8,
-                  width: 44,
-                  enabled: enabled,
-                  onChanged: (v) {
-                    if (v.isNotEmpty) change(i, v);
-                  },
-                )
-              else
-                SizedBox(
-                  width: 64,
-                  child: ShadSelect<String>(
-                    key: ValueKey<String>('level.$i.${list[i]}'),
-                    initialValue: list[i],
-                    enabled: enabled,
-                    minWidth: 64,
-                    selectedOptionBuilder: (context, v) => Text(enumLabel(v)),
-                    onChanged: (v) {
-                      if (v != null && v != list[i]) change(i, v);
-                    },
-                    options: [
-                      for (final o in options ?? listNumberStyleValues)
-                        ShadOption(value: o, child: Text(enumLabel(o))),
-                    ],
+          Semantics(
+            container: true,
+            label: l.themeInspectorLevel(i + 1),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                ExcludeSemantics(
+                  child: Text(
+                    '${i + 1}',
+                    style: theme.textTheme.muted.copyWith(fontSize: 10),
                   ),
                 ),
-            ],
+                if (options == null)
+                  ThemeTextField(
+                    value: list[i],
+                    maxLength: 8,
+                    width: 44,
+                    enabled: enabled,
+                    onChanged: (v) {
+                      if (v.isNotEmpty) change(i, v);
+                    },
+                  )
+                else
+                  SizedBox(
+                    width: 64,
+                    child: ShadSelect<String>(
+                      key: ValueKey<String>('level.$i.${list[i]}'),
+                      initialValue: list[i],
+                      enabled: enabled,
+                      minWidth: 64,
+                      selectedOptionBuilder: (context, v) =>
+                          Text(enumLabel(l, v)),
+                      onChanged: (v) {
+                        if (v != null && v != list[i]) change(i, v);
+                      },
+                      options: [
+                        for (final o in options ?? listNumberStyleValues)
+                          ShadOption(value: o, child: Text(enumLabel(l, o))),
+                      ],
+                    ),
+                  ),
+              ],
+            ),
           ),
       ],
     );
@@ -1008,6 +1019,7 @@ class _BorderEditor extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final v = value ?? const {};
+    final l = writeL10n(context);
     void change(String key, Object? x) {
       final next = <String, Object?>{
         for (final e in v.entries) '${e.key}': e.value,
@@ -1038,8 +1050,8 @@ class _BorderEditor extends StatelessWidget {
             initialValue: v['style'] as String?,
             enabled: enabled,
             minWidth: 104,
-            placeholder: const Text('Style'),
-            selectedOptionBuilder: (context, s) => Text(enumLabel(s)),
+            placeholder: Text(l.themePropStyle),
+            selectedOptionBuilder: (context, s) => Text(enumLabel(l, s)),
             onChanged: (s) {
               if (s != null) change('style', s);
             },
@@ -1051,7 +1063,7 @@ class _BorderEditor extends StatelessWidget {
                 'dotted',
                 'double',
               ])
-                ShadOption(value: s, child: Text(enumLabel(s))),
+                ShadOption(value: s, child: Text(enumLabel(l, s))),
             ],
           ),
         ),
@@ -1059,7 +1071,7 @@ class _BorderEditor extends StatelessWidget {
           value: v['color'] as String?,
           palette: palette,
           enabled: enabled,
-          semanticLabel: 'Border color',
+          semanticLabel: l.themePropBorderColor,
           onChanged: (x) => change('color', x),
         ),
       ],
@@ -1098,14 +1110,20 @@ class _EdgesEditorState extends State<_EdgesEditor> {
     final uniform = sides.values.toSet().length == 1;
     final linked = _linked ?? uniform;
     final theme = ShadTheme.of(context);
+    final l = writeL10n(context);
     Widget link = ShadTooltip(
-      builder: (_) =>
-          Text(linked ? 'Set sides separately' : 'Same on all sides'),
+      builder: (_) => Text(
+        linked
+            ? l.themeInspectorSetSidesSeparately
+            : l.themeInspectorSameOnAllSides,
+      ),
       child: ShadIconButton.ghost(
         width: 28,
         height: 28,
         iconSize: 14,
-        semanticLabel: linked ? 'Unlink sides' : 'Link sides',
+        semanticLabel: linked
+            ? l.themeInspectorUnlinkSides
+            : l.themeInspectorLinkSides,
         icon: Icon(linked ? LucideIcons.link : LucideIcons.unlink),
         onPressed: widget.enabled
             ? () => setState(() => _linked = !linked)
@@ -1136,7 +1154,7 @@ class _EdgesEditorState extends State<_EdgesEditor> {
                 SizedBox(
                   width: 52,
                   child: Text(
-                    enumLabel(s),
+                    enumLabel(l, s),
                     style: theme.textTheme.muted.copyWith(fontSize: 12),
                   ),
                 ),

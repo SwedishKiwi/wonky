@@ -2,6 +2,8 @@ import 'package:flutter/widgets.dart';
 import 'package:wonky_app/wonky_app.dart';
 import 'package:wonky_core/wonky_core.dart';
 
+import '../../l10n/write_l10n.dart';
+
 /// Invokes a command from a control of the Write screen (menus, toolbar,
 /// panels and dialogs never call business logic directly — Write 05).
 ///
@@ -44,7 +46,10 @@ Future<CommandResult> invokeWith(
     s.toasts.error(e.message);
     return CommandResult.failed(e.message);
   } catch (e) {
-    s.toasts.error('Something went wrong', description: errorMessage(e));
+    s.toasts.error(
+      writeL10nOf(s).commandToastFailed,
+      description: errorMessage(e),
+    );
     return CommandResult.failed('$e');
   }
 }

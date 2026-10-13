@@ -1,0 +1,18 @@
+### Views of a drive item per user and UTC day (activity dashboard, specs/07 §6).
+### Written on every open (`DriveService.recordOpen`).
+class: ItemViewDay
+table: item_view_day
+serverOnly: true
+fields:
+  itemId: int, relation(parent=drive_item, onDelete=Cascade)
+  userId: int, relation(parent=user_profile, onDelete=Cascade)
+  ### UTC midnight of the day.
+  day: DateTime
+  views: int, default=1
+  lastViewedAt: DateTime
+indexes:
+  item_view_day_idx:
+    fields: itemId, userId, day
+    unique: true
+  item_view_day_item_idx:
+    fields: itemId, day

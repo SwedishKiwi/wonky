@@ -3,26 +3,35 @@ import 'package:intl/intl.dart' as intl;
 import 'package:shad/shad.dart';
 import 'package:wonky_write_core/wonky_write_core.dart';
 
+import '../../l10n/write_l10n.dart';
 import '../screen/command_invoke.dart';
 import '../screen/write_document_controller.dart';
 
-final _number = intl.NumberFormat.decimalPattern('en_US');
+/// "1,234" in the locale of [l] (English when omitted).
+String formatCount(int n, [WriteLocalizations? l]) =>
+    intl.NumberFormat.decimalPattern(
+      (l ?? writeL10nEnglish).localeName,
+    ).format(n);
 
-/// "1,234".
-String formatCount(int n) => _number.format(n);
-
-/// "3 min" / "< 1 min".
-String readingTime(DocumentStats s) {
+/// "3 min" / "< 1 min" in [l] (English when omitted).
+String readingTime(DocumentStats s, [WriteLocalizations? l]) {
+  final strings = l ?? writeL10nEnglish;
   final m = s.readingTimeMinutes;
-  return m <= 0 ? '< 1 min' : '$m min';
+  return m <= 0
+      ? strings.wordCountReadingTimeUnderOne
+      : strings.wordCountReadingTimeMinutes(m);
 }
 
-/// Status bar label: "1,234 words" or "56 of 1,234 words".
-String wordCountLabel(DocumentStats doc, DocumentStats? selection) {
-  final total = formatCount(doc.words);
-  final unit = doc.words == 1 ? 'word' : 'words';
-  if (selection == null) return '$total $unit';
-  return '${formatCount(selection.words)} of $total $unit';
+/// Status bar label: "1,234 words" or "56 of 1,234 words" in [l] (English
+/// when omitted).
+String wordCountLabel(
+  DocumentStats doc,
+  DocumentStats? selection, [
+  WriteLocalizations? l,
+]) {
+  final strings = l ?? writeL10nEnglish;
+  if (selection == null) return strings.wordCountWords(doc.words);
+  return strings.wordCountSelectionOfWords(selection.words, doc.words);
 }
 
 /// Word count dialog (`write.dialog.wordCount`, Write 05 §12.5).
@@ -46,53 +55,52 @@ class WordCountDialog extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l = writeL10n(context);
     final theme = ShadTheme.of(context);
+    String count(int n) => formatCount(n, l);
+    String time(DocumentStats s) => readingTime(s, l);
     return ListenableBuilder(
       listenable: doc,
       builder: (context, _) {
         final s = doc.insights.stats;
         final sel = doc.insights.selectionStats;
         final rows = <(String, String, String?)>[
-          if (pageCount != null) ('Pages', formatCount(pageCount!), null),
+          if (pageCount != null) (l.wordCountPages, count(pageCount!), null),
           (
-            'Words',
-            formatCount(s.words),
-            sel == null ? null : formatCount(sel.words),
+            l.wordCountRowWords,
+            count(s.words),
+            sel == null ? null : count(sel.words),
           ),
           (
-            'Characters',
-            formatCount(s.characters),
-            sel == null ? null : formatCount(sel.characters),
+            l.wordCountCharacters,
+            count(s.characters),
+            sel == null ? null : count(sel.characters),
           ),
           (
-            'Characters excluding spaces',
-            formatCount(s.charactersNoSpaces),
-            sel == null ? null : formatCount(sel.charactersNoSpaces),
+            l.wordCountCharactersNoSpaces,
+            count(s.charactersNoSpaces),
+            sel == null ? null : count(sel.charactersNoSpaces),
           ),
           (
-            'Paragraphs',
-            formatCount(s.paragraphs),
-            sel == null ? null : formatCount(sel.paragraphs),
+            l.wordCountParagraphs,
+            count(s.paragraphs),
+            sel == null ? null : count(sel.paragraphs),
           ),
-          (
-            'Reading time',
-            readingTime(s),
-            sel == null ? null : readingTime(sel),
-          ),
+          (l.wordCountReadingTime, time(s), sel == null ? null : time(sel)),
         ];
         TextStyle head = theme.textTheme.small.copyWith(
           color: theme.colorScheme.mutedForeground,
         );
         return ShadDialog(
           key: const ValueKey<String>('write.dialog.wordCount'),
-          title: const Text('Word count'),
+          title: Text(l.wordCountTitle),
           constraints: const BoxConstraints(maxWidth: 420),
           actions: [
             ShadButton(
               key: const ValueKey<String>('write.dialog.wordCount.ok'),
               autofocus: true,
               onPressed: () => Navigator.of(context).pop(),
-              child: const Text('OK'),
+              child: Text(l.commonOk),
             ),
           ],
           child: Column(
@@ -110,10 +118,16 @@ class WordCountDialog extends StatelessWidget {
                   TableRow(
                     children: [
                       const SizedBox(),
-                      _cell(Text('Document', style: head), right: true),
+                      _cell(
+                        Text(l.wordCountColumnDocument, style: head),
+                        right: true,
+                      ),
                       sel == null
                           ? const SizedBox()
-                          : _cell(Text('Selection', style: head), right: true),
+                          : _cell(
+                              Text(l.wordCountColumnSelection, style: head),
+                              right: true,
+                            ),
                     ],
                   ),
                   for (final (label, value, selValue) in rows)
@@ -161,7 +175,7 @@ class WordCountDialog extends StatelessWidget {
                     value: doc.viewPrefs.showWordCount,
                     onChanged: (_) =>
                         invokeCommand(context, 'write.view.toggleWordCount'),
-                    label: const Text('Display word count while typing'),
+                    label: Text(l.wordCountShowWhileTyping),
                   ),
                 ],
               ),

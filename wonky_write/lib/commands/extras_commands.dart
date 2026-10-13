@@ -21,6 +21,7 @@ import '../features/screen/write_document_controller.dart';
 import '../features/special_chars/special_chars_dialog.dart';
 import '../features/spellcheck/spelling_dialogs.dart';
 import '../features/spellcheck/write_spellcheck.dart';
+import '../l10n/write_l10n.dart';
 import 'editor_commands.dart';
 import 'write_command.dart';
 
@@ -30,22 +31,26 @@ import 'write_command.dart';
 List<Command<CommandArgs>> extrasCommands(ShellServices s) => [
   WriteCommand(
     'write.insert.emoji',
-    label: 'Emoji…',
+    label: (l) => l.cmdInsertEmoji,
     icon: LucideIcons.smile,
-    categoryName: 'Insert',
+    categoryName: (l) => l.categoryInsert,
     requiredRole: Role.commenter,
     isUndoable: true,
     needsEditable: true,
-    descriptionText: 'Pick an emoji to insert at the cursor',
+    descriptionText: (l) => l.cmdInsertEmojiDescription,
     argsSchema: const JsonSchema.object(
       properties: {'emoji': JsonSchema.string()},
     ),
     enabled: (d, a) => d.commands.canEdit,
-    undoLabelOf: (_) => 'Insert emoji',
+    undoLabelOf: (l, _) => l.undoInsertEmoji,
     run: (ctx, d, a) async {
       final direct = a.string('emoji');
       if (direct != null && direct.isNotEmpty) {
-        return okIf(d.commands.insertText(direct, label: 'Insert emoji'));
+        final l = writeL10nOf(s);
+        return okIf(
+          d.commands.insertText(direct, label: l.undoInsertEmoji),
+          l.reasonNotAvailable,
+        );
       }
       final c = ctx.dialogContext;
       if (c == null) return const CommandResult.failed('emoji is required');
@@ -55,19 +60,24 @@ List<Command<CommandArgs>> extrasCommands(ShellServices s) => [
         prefs: emojiPrefsOf(s),
         anchor: _caretAnchor(d),
         onSelected: (emoji) {
-          chosen = d.commands.insertText(emoji, label: 'Insert emoji');
+          chosen = d.commands.insertText(
+            emoji,
+            label: writeL10nOf(s).undoInsertEmoji,
+          );
         },
       );
       d.focusEditor();
-      return chosen ? const CommandResult.ok() : const CommandResult.cancelled();
+      return chosen
+          ? const CommandResult.ok()
+          : const CommandResult.cancelled();
     },
   ),
   WriteCommand(
     'write.image.preview',
-    label: 'View full size',
+    label: (l) => l.cmdImagePreview,
     icon: LucideIcons.maximize,
-    categoryName: 'Images',
-    descriptionText: 'Show the image in a full-screen viewer',
+    categoryName: (l) => l.categoryImages,
+    descriptionText: (l) => l.cmdImagePreviewDescription,
     argsSchema: const JsonSchema.object(
       properties: {'nodeId': JsonSchema.string()},
     ),
@@ -75,7 +85,10 @@ List<Command<CommandArgs>> extrasCommands(ShellServices s) => [
     run: (ctx, d, a) async {
       final data = d.embedData('image', a.string('nodeId'));
       final c = ctx.dialogContext;
-      if (data == null) return const CommandResult.failed('No image selected');
+      final l = writeL10nOf(s);
+      if (data == null) {
+        return CommandResult.failed(l.commandToastNoImageSelected);
+      }
       if (c == null) return const CommandResult.failed('No window');
       final ok = await openLightbox(
         c,
@@ -84,15 +97,15 @@ List<Command<CommandArgs>> extrasCommands(ShellServices s) => [
         title: data['title'] as String?,
       );
       d.focusEditor();
-      return okIf(ok, 'The image isn’t available');
+      return okIf(ok, l.commandToastImageUnavailable);
     },
   ),
   WriteCommand(
     'write.table.editCell',
-    label: 'Edit table cell',
-    categoryName: 'Tables',
+    label: (l) => l.cmdTableEditCell,
+    categoryName: (l) => l.categoryTables,
     requiredRole: Role.editor,
-    descriptionText: 'Edit a table cell in place',
+    descriptionText: (l) => l.cmdTableEditCellDescription,
     argsSchema: const JsonSchema.object(
       properties: {
         'nodeId': JsonSchema.string(),
@@ -107,8 +120,9 @@ List<Command<CommandArgs>> extrasCommands(ShellServices s) => [
     run: (ctx, d, a) {
       final table = d.commands.tableOf(nodeId: a.string('nodeId'));
       final editing = d.editor.tableEditing;
+      final l = writeL10nOf(s);
       if (table == null || editing == null) {
-        return const CommandResult.failed('No table selected');
+        return CommandResult.failed(l.commandToastNoTableSelected);
       }
       return okIf(
         editing.activate(
@@ -117,15 +131,16 @@ List<Command<CommandArgs>> extrasCommands(ShellServices s) => [
           a.integer('col') ?? 0,
           selectAll: true,
         ),
+        l.reasonNotAvailable,
       );
     },
   ),
   WriteCommand(
     'write.view.toggleFocusMode',
-    label: 'Focus mode',
+    label: (l) => l.cmdViewToggleFocusMode,
     icon: LucideIcons.focus,
-    categoryName: 'View',
-    descriptionText: 'Dim everything but the paragraph you are writing',
+    categoryName: (l) => l.categoryView,
+    descriptionText: (l) => l.cmdViewToggleFocusModeDescription,
     checked: (d, a) => d.viewPrefs.focusMode,
     run: (ctx, d, a) {
       d.viewPrefs.focusMode = !d.viewPrefs.focusMode;
@@ -135,9 +150,9 @@ List<Command<CommandArgs>> extrasCommands(ShellServices s) => [
   ),
   WriteCommand(
     'write.view.toggleTypewriter',
-    label: 'Typewriter scrolling',
-    categoryName: 'View',
-    descriptionText: 'Keep the line you are typing in the middle of the screen',
+    label: (l) => l.cmdViewToggleTypewriter,
+    categoryName: (l) => l.categoryView,
+    descriptionText: (l) => l.cmdViewToggleTypewriterDescription,
     checked: (d, a) => d.viewPrefs.typewriter,
     run: (ctx, d, a) {
       d.viewPrefs.typewriter = !d.viewPrefs.typewriter;
@@ -154,8 +169,8 @@ List<Command<CommandArgs>> spellCommands(ShellServices s) {
   return [
     WriteGlobalCommand(
       'write.spell.toggle',
-      label: 'Underline spelling errors',
-      categoryName: 'Tools',
+      label: (l) => l.cmdSpellToggle,
+      categoryName: (l) => l.categoryTools,
       argsSchema: const JsonSchema.object(
         properties: {'enabled': JsonSchema.boolean()},
       ),
@@ -170,8 +185,8 @@ List<Command<CommandArgs>> spellCommands(ShellServices s) {
     ),
     WriteGlobalCommand(
       'write.spell.toggleIgnoreUppercase',
-      label: 'Ignore words in UPPERCASE',
-      categoryName: 'Tools',
+      label: (l) => l.cmdSpellToggleIgnoreUppercase,
+      categoryName: (l) => l.categoryTools,
       checked: (ctx, a) => pref('spellcheckIgnoreUppercase', true),
       run: (ctx, a) async {
         await s.prefs.setWriteDefault(
@@ -183,8 +198,8 @@ List<Command<CommandArgs>> spellCommands(ShellServices s) {
     ),
     WriteCommand(
       'write.spell.replace',
-      label: 'Correct spelling',
-      categoryName: 'Tools',
+      label: (l) => l.cmdSpellReplace,
+      categoryName: (l) => l.categoryTools,
       requiredRole: Role.commenter,
       isUndoable: true,
       needsEditable: true,
@@ -197,22 +212,22 @@ List<Command<CommandArgs>> spellCommands(ShellServices s) {
         },
         required: ['start', 'length', 'word'],
       ),
-      undoLabelOf: (_) => 'Correct spelling',
+      undoLabelOf: (l, _) => l.undoCorrectSpelling,
       run: (ctx, d, a) {
         final ok = d.commands.replaceRangeWithTextLabelled(
           a.integer('start')!,
           a.integer('length')!,
           a.requireString('word'),
-          label: 'Correct spelling',
+          label: writeL10nOf(s).undoCorrectSpelling,
         );
         d.focusEditor();
-        return okIf(ok);
+        return okIf(ok, writeL10nOf(s).reasonNotAvailable);
       },
     ),
     WriteCommand(
       'write.spell.ignore',
-      label: 'Ignore',
-      categoryName: 'Tools',
+      label: (l) => l.cmdSpellIgnore,
+      categoryName: (l) => l.categoryTools,
       showInPalette: false,
       argsSchema: const JsonSchema.object(
         properties: {'word': JsonSchema.string()},
@@ -226,8 +241,8 @@ List<Command<CommandArgs>> spellCommands(ShellServices s) {
     ),
     WriteCommand(
       'write.spell.addToDictionary',
-      label: 'Add to dictionary',
-      categoryName: 'Tools',
+      label: (l) => l.cmdSpellAddToDictionary,
+      categoryName: (l) => l.categoryTools,
       showInPalette: false,
       argsSchema: const JsonSchema.object(
         properties: {'word': JsonSchema.string()},
@@ -241,15 +256,17 @@ List<Command<CommandArgs>> spellCommands(ShellServices s) {
     ),
     WriteCommand(
       'write.spell.nextError',
-      label: 'Next spelling error',
-      categoryName: 'Tools',
+      label: (l) => l.cmdSpellNextError,
+      categoryName: (l) => l.categoryTools,
       defaultBindings: const [KeyBinding("'", mod: true)],
       keyScope: KeyScope.editor,
       enabled: (d, a) => d.spellcheck.errors.isNotEmpty,
       run: (ctx, d, a) {
         final errors = d.spellcheck.errors;
         if (errors.isEmpty) {
-          return const CommandResult.failed('No spelling errors');
+          return CommandResult.failed(
+            writeL10nOf(s).commandToastNoSpellingErrors,
+          );
         }
         final from = d.editor.selection?.end ?? 0;
         final next = errors.firstWhere(
@@ -263,9 +280,9 @@ List<Command<CommandArgs>> spellCommands(ShellServices s) {
     ),
     WriteCommand(
       'write.spell.check',
-      label: 'Check spelling…',
+      label: (l) => l.cmdSpellCheck,
       icon: LucideIcons.spellCheck,
-      categoryName: 'Tools',
+      categoryName: (l) => l.categoryTools,
       run: (ctx, d, a) async {
         final c = ctx.dialogContext;
         if (c == null) return const CommandResult.failed('No window');
@@ -288,8 +305,8 @@ List<Command<CommandArgs>> spellCommands(ShellServices s) {
     ),
     WriteCommand(
       'write.spell.personalDictionary',
-      label: 'Personal dictionary…',
-      categoryName: 'Tools',
+      label: (l) => l.cmdSpellPersonalDictionary,
+      categoryName: (l) => l.categoryTools,
       run: (ctx, d, a) async {
         final c = ctx.dialogContext;
         if (c == null) return const CommandResult.failed('No window');
@@ -317,7 +334,7 @@ Future<void> addToPersonalDictionary(
   final words = d.personalDictionary;
   if (words.contains(word)) return;
   if (words.length >= 10000) {
-    s.toasts.error('Your personal dictionary is full (10,000 words)');
+    s.toasts.error(writeL10nOf(s).commandToastPersonalDictionaryFull(10000));
     return;
   }
   d.spellcheck.wordAdded(word);
@@ -336,9 +353,10 @@ List<WonkyMenuEntry> spellingMenuEntries(
   final error = d.spellcheck.errorAt(sel.start);
   if (error == null) return const [];
   final suggestions = d.spellcheck.suggestionsFor(error.word);
+  final l = writeL10nOf(d.services);
   return [
     if (suggestions.isEmpty)
-      const WonkyMenuLabel('No spelling suggestions')
+      WonkyMenuLabel(l.commandMenuNoSpellingSuggestions)
     else
       for (var i = 0; i < suggestions.length; i += 1)
         WonkyMenuItem(
@@ -353,12 +371,12 @@ List<WonkyMenuEntry> spellingMenuEntries(
         ),
     WonkyMenuItem(
       key: const ValueKey<String>('menu.spell.ignore'),
-      label: 'Ignore',
+      label: l.cmdSpellIgnore,
       onSelected: () => run('write.spell.ignore', {'word': error.word}),
     ),
     WonkyMenuItem(
       key: const ValueKey<String>('menu.spell.add'),
-      label: 'Add “${error.word}” to dictionary',
+      label: l.commandMenuAddWordToDictionary(error.word),
       onSelected: () =>
           run('write.spell.addToDictionary', {'word': error.word}),
     ),
@@ -380,7 +398,10 @@ Map<String, WriteRun Function(EditorCommandSpec spec)> extrasOverrides(
       c,
       store: s.userStore,
       onInsert: (char) {
-        if (d.commands.insertText(char, label: 'Insert special character')) {
+        if (d.commands.insertText(
+          char,
+          label: writeL10nOf(s).undoInsertSpecialCharacter,
+        )) {
           inserted += 1;
         }
       },
@@ -415,20 +436,24 @@ Rect? _caretAnchor(WriteDocumentController d) {
 EmojiSuggester emojiSuggester(ShellServices s) {
   EmojiCatalog? catalog;
   var loading = false;
+  void load() {
+    if (loading) return;
+    loading = true;
+    unawaited(
+      EmojiCatalog.load().then<void>((value) => catalog = value).catchError((
+        Object _,
+      ) {
+        loading = false;
+      }),
+    );
+  }
+
+  // Loaded with the screen so the first `:query` already has results.
+  load();
   return (query) {
     final c = catalog;
     if (c == null) {
-      if (!loading) {
-        loading = true;
-        unawaited(
-          EmojiCatalog.load().then((value) => catalog = value).catchError((
-            Object _,
-          ) {
-            loading = false;
-            return EmojiCatalog.fromJson('{"categories":[],"emoji":[]}');
-          }),
-        );
-      }
+      load();
       return const [];
     }
     final tone = emojiPrefsOf(s).skinTone;
@@ -471,8 +496,8 @@ Future<void> handleDroppedFiles(
     } on ImageRejected catch (e) {
       s.toasts.error(
         ImageRules.extensions.contains(f.extension) || f.extension == 'svg'
-            ? e.message
-            : 'Can’t insert this file type',
+            ? e.messageIn(writeL10nOf(s))
+            : writeL10nOf(s).commandToastUnsupportedFileType,
         description: f.name,
       );
     }
@@ -497,7 +522,7 @@ Future<void> handleDroppedFiles(
     final change = d.commands.insertBlocksAt(
       index,
       lines,
-      label: values.length == 1 ? 'Insert image' : 'Insert images',
+      label: writeL10nOf(s).undoInsertImages(values.length),
     );
     if (change == null) {
       for (final v in values) {
@@ -510,8 +535,8 @@ Future<void> handleDroppedFiles(
     if (c == null || !c.mounted) return;
     final ok = await confirmDialog(
       c,
-      title: 'Insert contents of “${f.name}” here?',
-      confirmLabel: 'Insert',
+      title: writeL10n(c).commandDialogInsertFileContentsTitle(f.name),
+      confirmLabel: writeL10n(c).commonInsert,
     );
     if (!ok) continue;
     try {
@@ -519,21 +544,33 @@ Future<void> handleDroppedFiles(
         f.name,
         f.bytes,
         uploadImage: importImageUploader(s, itemUuid: d.itemUuid),
+        l: writeL10nOf(s),
       );
       var delta = converted.result.delta;
       final last = delta.isEmpty ? null : delta.last.data;
       if (last is! String || !last.endsWith('\n')) {
-        delta = delta.compose(Delta()..retain(delta.length)..insert('\n'));
+        delta = delta.compose(
+          Delta()
+            ..retain(delta.length)
+            ..insert('\n'),
+        );
       }
-      d.commands.insertBlocksAt(index, delta, label: 'Insert file');
+      d.commands.insertBlocksAt(
+        index,
+        delta,
+        label: writeL10nOf(s).undoInsertFile,
+      );
       if (converted.warnings.isNotEmpty) {
         s.toasts.show(
-          'Inserted “${f.name}”',
+          writeL10nOf(s).commandToastInsertedFile(f.name),
           description: converted.warnings.take(5).join('\n'),
         );
       }
     } catch (e) {
-      s.toasts.error('Couldn’t insert “${f.name}”', description: '$e');
+      s.toasts.error(
+        writeL10nOf(s).commandToastCouldNotInsertFile(f.name),
+        description: '$e',
+      );
     }
   }
   d.focusEditor();

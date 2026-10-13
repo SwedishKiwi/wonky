@@ -189,7 +189,14 @@ class NotificationsSection extends StatelessWidget {
     return ListenableBuilder(
       listenable: p,
       builder: (context, _) {
-        String v(String k) => p.notificationSettings[k] as String? ?? 'inApp';
+        // Access requests used to follow the `shares` setting (07 §4).
+        String v(String k) =>
+            (p.notificationSettings[k] ??
+                    (k == 'accessRequests'
+                        ? p.notificationSettings['shares']
+                        : null))
+                as String? ??
+            'inApp';
         Widget choice(String k) => ShadSelect<String>(
           key: ValueKey<String>('settings.notifications.$k'),
           initialValue: v(k),
@@ -211,6 +218,23 @@ class NotificationsSection extends StatelessWidget {
             SettingsRow(label: l.notifyMentions, control: choice('mentions')),
             SettingsRow(label: l.notifyReplies, control: choice('replies')),
             SettingsRow(label: l.notifyShares, control: choice('shares')),
+            SettingsRow(
+              label: l.notifyAccessRequests,
+              control: choice('accessRequests'),
+            ),
+            SettingsRow(
+              label: l.notifySuggestions,
+              control: choice('suggestions'),
+            ),
+            SettingsRow(
+              label: l.notifyDigest,
+              description: l.notifyDigestHint,
+              control: ShadSwitch(
+                key: const ValueKey<String>('settings.notifications.digest'),
+                value: p.notificationSettings['digest'] != false,
+                onChanged: (v) => p.setNotificationSetting('digest', v),
+              ),
+            ),
           ],
         );
       },

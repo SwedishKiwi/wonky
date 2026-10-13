@@ -4,10 +4,23 @@ import 'package:flutter/foundation.dart';
 import 'package:wonky_client/wonky_client.dart';
 
 import '../commands/shell_commands/general_commands.dart' show ShellPanels;
+import '../l10n/wonky_app_localizations.dart';
 import '../shell/shell_services.dart';
 import 'assistant_adapter.dart';
 import 'assistant_api.dart';
 import 'assistant_controller.dart';
+
+/// The localized explanation of an unavailable [status] (the server's
+/// English `message` only for reasons the app doesn't know).
+String assistantStatusMessage(
+  WonkyAppLocalizations l,
+  AssistantStatus status,
+) => switch (status.reason) {
+  'notConfigured' => l.aiNotConfigured,
+  'disabled' => l.aiDisabled,
+  'optedOut' => l.aiOptedOut,
+  _ => status.message ?? l.aiNotConfigured,
+};
 
 /// The installed assistant (suite 10 §3): the shared [AssistantHook] the
 /// `shell.ai.*` commands and the ✨ buttons use. Apps create one

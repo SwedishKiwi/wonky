@@ -1,0 +1,5 @@
+### One day of an activity trend (UTC day).
+class: ActivityTrendPoint
+fields:
+  day: DateTime
+  count: int

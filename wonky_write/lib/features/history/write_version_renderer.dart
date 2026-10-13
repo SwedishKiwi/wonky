@@ -11,6 +11,7 @@ import 'package:wonky_ui/wonky_ui.dart';
 import 'package:wonky_write_core/wonky_write_core.dart'
     show DeltaUtils, DiffAttr, WonkyAttr;
 
+import '../../l10n/write_l10n.dart';
 import '../document/write_document_api.dart';
 import '../editor/controller/editor_types.dart';
 import '../editor/controller/write_editor_controller.dart';
@@ -226,7 +227,9 @@ class WriteVersionViewState extends State<WriteVersionView> {
     final item = await widget.api.getItem(widget.itemUuid);
     _item = item;
     final ref = item.contentRef;
-    if (ref == null) throw StateError('Not a document');
+    if (ref == null) {
+      throw _LoadError(writeL10nOf(widget.services).historyNotADocument);
+    }
     return _documentUuid = ref;
   }
 
@@ -239,7 +242,9 @@ class WriteVersionViewState extends State<WriteVersionView> {
     try {
       final doc = await _doc();
       final rev = widget.version.revision;
-      if (rev == null) throw StateError('This version has no revision');
+      if (rev == null) {
+        throw _LoadError(writeL10nOf(widget.services).historyNoRevision);
+      }
       final from = widget.previous?.revision;
       VersionContent content;
       WriteDiffView? diff;
@@ -305,24 +310,25 @@ class WriteVersionViewState extends State<WriteVersionView> {
 
   Future<void> makeCopy() async {
     final s = widget.services;
+    final l = writeL10nOf(s);
     try {
       final doc = await _doc();
-      final base = _item?.name ?? 'Untitled document';
+      final base = _item?.name ?? l.untitledDocument;
       final name = widget.version.name ?? base;
       final copy = await widget.api.copyVersion(
         doc,
         widget.version.id,
-        'Copy of $name',
+        l.historyCopyOf(name),
         parentUuid: _item?.parentUuid,
       );
       s.toasts.show(
-        'Copy created',
+        l.historyCopyCreated,
         description: copy.name,
-        actionLabel: 'Open',
+        actionLabel: l.historyOpen,
         onAction: () => s.openItem(copy),
       );
     } catch (e) {
-      s.toasts.error('Could not make a copy', description: errorMessage(e));
+      s.toasts.error(l.historyCopyFailed, description: errorMessage(e));
     }
   }
 
@@ -332,6 +338,7 @@ class WriteVersionViewState extends State<WriteVersionView> {
     final err = _error;
     final content = _content;
     final editorTheme = widget.theme ?? EditorTheme.fallback(theme.brightness);
+    final l = writeL10n(context);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
@@ -340,12 +347,12 @@ class WriteVersionViewState extends State<WriteVersionView> {
           child: err != null
               ? WonkyEmptyState(
                   illustration: EmptyIllustration.error,
-                  title: 'This version could not be loaded',
+                  title: l.historyCouldNotLoad,
                   description: errorMessage(err),
                   actions: [
                     ShadButton.outline(
                       onPressed: _load,
-                      child: const Text('Retry'),
+                      child: Text(l.commonRetry),
                     ),
                   ],
                 )
@@ -358,7 +365,7 @@ class WriteVersionViewState extends State<WriteVersionView> {
                       controller: _editor,
                       theme: editorTheme,
                       scrollController: _scroll,
-                      documentTitle: widget.version.name ?? 'Version',
+                      documentTitle: widget.version.name ?? l.historyVersion,
                       hint: '',
                     ),
                     if (_loading)
@@ -379,6 +386,7 @@ class WriteVersionViewState extends State<WriteVersionView> {
     final content = _content;
     final authors = content?.authors ?? const <VersionAuthor>[];
     final n = changes.length;
+    final l = writeL10n(context);
     return Container(
       height: 44,
       padding: const EdgeInsets.symmetric(horizontal: 12),
@@ -408,10 +416,10 @@ class WriteVersionViewState extends State<WriteVersionView> {
           if (widget.showChanges && content != null) ...[
             Text(
               n == 0
-                  ? 'No changes'
+                  ? l.historyNoChanges
                   : (_change < 0
-                        ? '$n ${n == 1 ? 'change' : 'changes'}'
-                        : 'Change ${_change + 1} of $n'),
+                        ? l.historyChangeCount(n)
+                        : l.historyChangeOf(_change + 1, n)),
               key: const ValueKey<String>('write.history.changeCount'),
               style: theme.textTheme.muted,
             ),
@@ -421,7 +429,7 @@ class WriteVersionViewState extends State<WriteVersionView> {
               height: 30,
               iconSize: 16,
               enabled: n > 0,
-              semanticLabel: 'Previous change',
+              semanticLabel: l.historyPreviousChange,
               icon: const Icon(LucideIcons.chevronUp),
               onPressed: () => goToChange(previous: true),
             ),
@@ -431,7 +439,7 @@ class WriteVersionViewState extends State<WriteVersionView> {
               height: 30,
               iconSize: 16,
               enabled: n > 0,
-              semanticLabel: 'Next change',
+              semanticLabel: l.historyNextChange,
               icon: const Icon(LucideIcons.chevronDown),
               onPressed: goToChange,
             ),
@@ -442,7 +450,7 @@ class WriteVersionViewState extends State<WriteVersionView> {
             size: ShadButtonSize.sm,
             leading: const Icon(LucideIcons.copy, size: 14),
             onPressed: makeCopy,
-            child: const Text('Make a copy'),
+            child: Text(l.historyMakeCopy),
           ),
         ],
       ),
@@ -472,48 +480,63 @@ class _AuthorChip extends StatelessWidget {
       if (author.deleted > 0) '−${author.deleted}',
       if (author.formatted > 0) '~${author.formatted}',
     ].join(' ');
+    final l = writeL10n(context);
+    final tip = hidden
+        ? l.historyShowChangesBy(author.name)
+        : l.historyHideChangesBy(author.name);
     return ShadTooltip(
-      builder: (_) => Text(
-        hidden
-            ? 'Show changes by ${author.name}'
-            : 'Hide changes by ${author.name}',
-      ),
+      builder: (_) => Text(tip),
       child: GestureDetector(
         key: ValueKey<String>('write.history.author.${author.key}'),
         onTap: onTap,
-        child: Opacity(
-          opacity: hidden ? 0.45 : 1,
-          child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(999),
-              border: Border.all(color: color),
-            ),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Container(
-                  width: 8,
-                  height: 8,
-                  decoration: BoxDecoration(
-                    color: color,
-                    shape: BoxShape.circle,
+        child: Semantics(
+          button: true,
+          toggled: !hidden,
+          hint: tip,
+          child: Opacity(
+            opacity: hidden ? 0.45 : 1,
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(999),
+                border: Border.all(color: color),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Container(
+                    width: 8,
+                    height: 8,
+                    decoration: BoxDecoration(
+                      color: color,
+                      shape: BoxShape.circle,
+                    ),
                   ),
-                ),
-                const SizedBox(width: 6),
-                Text(author.name, style: theme.textTheme.small),
-                if (counts.isNotEmpty) ...[
                   const SizedBox(width: 6),
-                  Text(
-                    counts,
-                    style: theme.textTheme.muted.copyWith(fontSize: 11),
-                  ),
+                  Text(author.name, style: theme.textTheme.small),
+                  if (counts.isNotEmpty) ...[
+                    const SizedBox(width: 6),
+                    Text(
+                      counts,
+                      style: theme.textTheme.muted.copyWith(fontSize: 11),
+                    ),
+                  ],
                 ],
-              ],
+              ),
             ),
           ),
         ),
       ),
     );
   }
+}
+
+/// A load failure shown as is in the error state.
+class _LoadError implements Exception {
+  const _LoadError(this.message);
+
+  final String message;
+
+  @override
+  String toString() => message;
 }

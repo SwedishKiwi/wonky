@@ -3,6 +3,7 @@ import 'package:wonky_app/wonky_app.dart';
 import 'package:wonky_core/wonky_core.dart';
 import 'package:wonky_write_core/wonky_write_core.dart' show WonkyOt;
 
+import '../../l10n/write_l10n.dart';
 import '../document/write_undo.dart';
 
 /// Puts the ops of an AI assistant run, executed on the server on behalf
@@ -19,14 +20,16 @@ class AiUndoGrouping {
     required this.undo,
     required this.stack,
     required this.nextId,
-  });
+    WriteLocalizations Function()? l10n,
+  }) : _l10n = l10n ?? (() => writeL10nEnglish);
 
   final UndoService undo;
   final UndoStackKey stack;
   final String Function() nextId;
 
-  /// Default label until the run finishes.
-  static const defaultLabel = 'AI edit';
+  /// The strings of the undo labels (the shell's locale; English when not
+  /// given).
+  final WriteLocalizations Function() _l10n;
 
   /// groupId → undo step id.
   final Map<String, String> _steps = {};
@@ -89,7 +92,8 @@ class AiUndoGrouping {
     undo.push(
       UndoStep(
         id: id,
-        label: defaultLabel,
+        // Default label until the run finishes.
+        label: _l10n().aiUndoDefault,
         entries: [WriteContentUndoEntry(change: inverse)],
         source: InvocationSource.ai,
       ),
@@ -108,7 +112,10 @@ class AiUndoGrouping {
     final id = _steps[groupId];
     final steps = undo.undoStepsOf(stack);
     if (id == null || steps.isEmpty || steps.last.id != id) return;
-    final label = 'AI: ${summary.trim().isEmpty ? 'Edit' : summary.trim()}';
+    final l = _l10n();
+    final label = l.aiUndoLabel(
+      summary.trim().isEmpty ? l.commonEdit : summary.trim(),
+    );
     if (steps.last.label == label) return;
     undo.replaceLast(steps.last.copyWith(label: label), stack: stack);
   }

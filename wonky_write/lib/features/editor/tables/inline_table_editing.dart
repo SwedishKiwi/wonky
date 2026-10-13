@@ -109,6 +109,9 @@ class InlineTableEditing extends ChangeNotifier
   /// The cell being edited, or `null`.
   TableCellRef? get active => _active;
 
+  @override
+  bool get isEditing => _active != null;
+
   /// Whether the field differs from the cell's content.
   bool get isDirty => _active != null && text.text != _base;
 

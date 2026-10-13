@@ -5,6 +5,7 @@ import 'package:flutter/widgets.dart';
 import 'package:shad/shad.dart';
 import 'package:wonky_app/wonky_app.dart';
 
+import '../../l10n/write_l10n.dart';
 import 'write_ai_controller.dart';
 
 /// The inline AI layer over the document canvas (Write 09 §5.3–5.4): the
@@ -121,7 +122,7 @@ class _GhostTextState extends State<_GhostText> {
       // Typing discards the suggestion and types.
       ai.discard();
       ai.doc.focusEditor();
-      ai.doc.commands.insertText(ch, label: 'Typing');
+      ai.doc.commands.insertText(ch, label: writeL10n(context).aiTypingUndo);
       return KeyEventResult.handled;
     }
     return KeyEventResult.ignored;
@@ -132,6 +133,7 @@ class _GhostTextState extends State<_GhostText> {
     final theme = ShadTheme.of(context);
     final cs = theme.colorScheme;
     final p = widget.preview;
+    final l = writeL10n(context);
     return Focus(
       focusNode: _focus,
       onKeyEvent: _onKey,
@@ -153,7 +155,7 @@ class _GhostTextState extends State<_GhostText> {
                 children: [
                   const SizedBox(width: 12, height: 12, child: ShadSpinner()),
                   const SizedBox(width: 8),
-                  Text('Writing…', style: theme.textTheme.muted),
+                  Text(l.aiWriting, style: theme.textTheme.muted),
                 ],
               )
             else if (p.error != null)
@@ -171,9 +173,7 @@ class _GhostTextState extends State<_GhostText> {
               children: [
                 Expanded(
                   child: Text(
-                    p.canApply
-                        ? 'Tab or Enter to accept · Esc to discard'
-                        : 'Esc to discard',
+                    p.canApply ? l.aiGhostHintAccept : l.aiGhostHintDiscard,
                     style: theme.textTheme.muted.copyWith(fontSize: 11),
                   ),
                 ),
@@ -185,7 +185,7 @@ class _GhostTextState extends State<_GhostText> {
                       widget.ai.insert();
                       widget.ai.doc.focusEditor();
                     },
-                    child: const Text('Accept'),
+                    child: Text(l.aiAccept),
                   ),
                 ShadButton.ghost(
                   key: const ValueKey<String>('write.ai.ghost.discard'),
@@ -194,7 +194,7 @@ class _GhostTextState extends State<_GhostText> {
                     widget.ai.discard();
                     widget.ai.doc.focusEditor();
                   },
-                  child: const Text('Discard'),
+                  child: Text(l.aiDiscard),
                 ),
               ],
             ),
@@ -330,6 +330,7 @@ class _PreviewCardState extends State<_PreviewCard> {
 
   Widget _promptBox(BuildContext context) {
     final theme = ShadTheme.of(context);
+    final l = writeL10n(context);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       mainAxisSize: MainAxisSize.min,
@@ -354,8 +355,8 @@ class _PreviewCardState extends State<_PreviewCard> {
             focusNode: _promptFocus,
             placeholder: Text(
               p.length == 0
-                  ? 'Tell AI what to write…'
-                  : 'Tell AI how to change the selection…',
+                  ? l.aiPromptWritePlaceholder
+                  : l.aiPromptEditPlaceholder,
             ),
             onSubmitted: (v) => unawaited(ai.submitPrompt(v)),
           ),
@@ -373,19 +374,19 @@ class _PreviewCardState extends State<_PreviewCard> {
                   ai.discard();
                   unawaited(ai.continueWriting());
                 },
-                child: const Text('Continue writing'),
+                child: Text(l.cmdAiContinue),
               ),
             ShadButton(
               key: const ValueKey<String>('write.ai.prompt.submit'),
               size: ShadButtonSize.sm,
               onPressed: () => unawaited(ai.submitPrompt(_prompt.text)),
-              child: const Text('Generate'),
+              child: Text(l.aiGenerate),
             ),
             ShadButton.ghost(
               key: const ValueKey<String>('write.ai.prompt.cancel'),
               size: ShadButtonSize.sm,
               onPressed: _close,
-              child: const Text('Cancel'),
+              child: Text(l.commonCancel),
             ),
           ],
         ),
@@ -398,6 +399,7 @@ class _PreviewCardState extends State<_PreviewCard> {
     final cs = theme.colorScheme;
     final streaming = p.status == AiPreviewStatus.streaming;
     final rewrite = p.kind == AiPreviewKind.rewrite;
+    final l = writeL10n(context);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       mainAxisSize: MainAxisSize.min,
@@ -417,13 +419,20 @@ class _PreviewCardState extends State<_PreviewCard> {
               ),
             ),
             if (streaming)
-              const SizedBox(width: 12, height: 12, child: ShadSpinner()),
+              Semantics(
+                label: l.aiWriting,
+                child: const SizedBox(
+                  width: 12,
+                  height: 12,
+                  child: ShadSpinner(),
+                ),
+              ),
             if (rewrite && p.canApply)
               ShadButton.ghost(
                 key: const ValueKey<String>('write.ai.preview.diff'),
                 size: ShadButtonSize.sm,
                 onPressed: ai.toggleDiff,
-                child: Text(p.showDiff ? 'Hide changes' : 'Show changes'),
+                child: Text(p.showDiff ? l.aiHideChanges : l.aiShowChanges),
               ),
           ],
         ),
@@ -439,13 +448,13 @@ class _PreviewCardState extends State<_PreviewCard> {
                 : p.showDiff
                 ? _WordDiff(before: p.originalText, after: p.markdown)
                 : p.markdown.trim().isEmpty && streaming
-                ? Text('Writing…', style: theme.textTheme.muted)
+                ? Text(l.aiWriting, style: theme.textTheme.muted)
                 : AssistantMarkdown(p.markdown),
           ),
         ),
         if (p.originalChanged)
           Text(
-            'The original text changed.',
+            l.aiOriginalChanged,
             key: const ValueKey<String>('write.ai.preview.changed'),
             style: theme.textTheme.muted.copyWith(color: cs.destructive),
           ),
@@ -459,7 +468,7 @@ class _PreviewCardState extends State<_PreviewCard> {
                 size: ShadButtonSize.sm,
                 enabled: p.canApply && ai.canWrite,
                 onPressed: _primary,
-                child: Text(ai.suggestMode ? 'Suggest' : 'Replace'),
+                child: Text(ai.suggestMode ? l.aiSuggest : l.aiReplace),
               ),
             if (rewrite)
               ShadButton.outline(
@@ -469,7 +478,7 @@ class _PreviewCardState extends State<_PreviewCard> {
                 onPressed: () {
                   if (ai.insert(below: true)) ai.doc.focusEditor();
                 },
-                child: const Text('Insert below'),
+                child: Text(l.aiInsertBelow),
               )
             else
               ShadButton(
@@ -477,7 +486,7 @@ class _PreviewCardState extends State<_PreviewCard> {
                 size: ShadButtonSize.sm,
                 enabled: p.canApply && ai.canWrite,
                 onPressed: _primary,
-                child: const Text('Insert'),
+                child: Text(l.commonInsert),
               ),
             if (!p.originalChanged)
               ShadButton.ghost(
@@ -486,20 +495,20 @@ class _PreviewCardState extends State<_PreviewCard> {
                 enabled: !streaming,
                 leading: const Icon(LucideIcons.refreshCw, size: 13),
                 onPressed: () => unawaited(ai.retry()),
-                child: const Text('Try again'),
+                child: Text(l.cmdAiPreviewRetry),
               ),
             ShadButton.ghost(
               key: const ValueKey<String>('write.ai.preview.copy'),
               size: ShadButtonSize.sm,
               enabled: p.markdown.isNotEmpty,
               onPressed: () => unawaited(ai.copy()),
-              child: const Text('Copy'),
+              child: Text(l.commonCopy),
             ),
             ShadButton.ghost(
               key: const ValueKey<String>('write.ai.preview.discard'),
               size: ShadButtonSize.sm,
               onPressed: _close,
-              child: const Text('Discard'),
+              child: Text(l.aiDiscard),
             ),
           ],
         ),
@@ -508,7 +517,7 @@ class _PreviewCardState extends State<_PreviewCard> {
             key: const ValueKey<String>('write.ai.preview.refine'),
             controller: _refine,
             focusNode: _refineFocus,
-            placeholder: const Text('Refine: “Make it more formal”'),
+            placeholder: Text(l.aiRefinePlaceholder),
             onSubmitted: (v) {
               final t = v.trim();
               if (t.isEmpty) return;
@@ -518,7 +527,7 @@ class _PreviewCardState extends State<_PreviewCard> {
           ),
         if (p.canApply)
           Text(
-            'Enter to ${rewrite && !p.originalChanged ? 'replace' : 'insert'} · Esc to discard',
+            rewrite && !p.originalChanged ? l.aiHintReplace : l.aiHintInsert,
             style: theme.textTheme.muted.copyWith(fontSize: 11),
           ),
       ],

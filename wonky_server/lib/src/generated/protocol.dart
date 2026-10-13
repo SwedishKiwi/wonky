@@ -44,9 +44,16 @@ import 'package:wonky_server/src/generated/write/models/write_theme_revision_vie
 import 'package:wonky_server/src/generated/write/models/write_theme_view.dart'
     as _ipbzt39t;
 import 'package:wonky_sync_models/wonky_sync_models.dart' as _i810rwvy;
+import 'future_calls_generated_models/notification_email_future_call_send_model.dart'
+    as _inb6x2l0;
+import 'platform/activity/activity_dashboard.dart' as _izr1y672;
 import 'platform/activity/activity_event.dart' as _iatdjl5p;
 import 'platform/activity/activity_event_view.dart' as _isa7sjzq;
+import 'platform/activity/activity_trend_point.dart' as _ighcq381;
 import 'platform/activity/activity_type.dart' as _i50cy468;
+import 'platform/activity/activity_viewer.dart' as _ikcwdr17;
+import 'platform/activity/item_view_day.dart' as _ixdmbuaj;
+import 'platform/activity/user_activity_settings.dart' as _ifmsnq1y;
 import 'platform/ai/models/ai_apply_mode.dart' as _iyja8k5e;
 import 'platform/ai/models/ai_quality.dart' as _iviyoyk9;
 import 'platform/ai/models/ai_usage.dart' as _i7i53on7;
@@ -196,9 +203,14 @@ import 'write/models/write_theme_revision.dart' as _i7pbwt05;
 import 'write/models/write_theme_revision_view.dart' as _ick3mhj2;
 import 'write/models/write_theme_view.dart' as _ixbjd26z;
 import 'write/models/write_version_document.dart' as _is9bkd9t;
+export 'platform/activity/activity_dashboard.dart';
 export 'platform/activity/activity_event.dart';
 export 'platform/activity/activity_event_view.dart';
+export 'platform/activity/activity_trend_point.dart';
 export 'platform/activity/activity_type.dart';
+export 'platform/activity/activity_viewer.dart';
+export 'platform/activity/item_view_day.dart';
+export 'platform/activity/user_activity_settings.dart';
 export 'platform/ai/models/ai_apply_mode.dart';
 export 'platform/ai/models/ai_quality.dart';
 export 'platform/ai/models/ai_usage.dart';
@@ -363,9 +375,15 @@ class Protocol extends _is.DatabaseSerializationManager
       _is.ProtocolDeserialization.cached(
         this,
         types: const [
+          _is.getType<_inb6x2l0.NotificationEmailFutureCallSendModel>,
+          _is.getType<_izr1y672.ActivityDashboard>,
           _is.getType<_iatdjl5p.ActivityEvent>,
           _is.getType<_isa7sjzq.ActivityEventView>,
+          _is.getType<_ighcq381.ActivityTrendPoint>,
           _is.getType<_i50cy468.ActivityType>,
+          _is.getType<_ikcwdr17.ActivityViewer>,
+          _is.getType<_ixdmbuaj.ItemViewDay>,
+          _is.getType<_ifmsnq1y.UserActivitySettings>,
           _is.getType<_iyja8k5e.AiApplyMode>,
           _is.getType<_iviyoyk9.AiQuality>,
           _is.getType<_i7i53on7.AiUsage>,
@@ -428,11 +446,11 @@ class Protocol extends _is.DatabaseSerializationManager
           _is.getType<_ik7q11oy.StoredFileStatus>,
           _is.getType<_ichw8k0i.UiBridgeCancel>,
           _is.getType<_ichw8k0i.UiBridgeHello>,
-          _is.getType<_ichw8k0i.UiBridgeStop>,
-          _is.getType<_ichw8k0i.UiBridgeStatus>,
-          _is.getType<_ichw8k0i.UiBridgeWelcome>,
-          _is.getType<_ichw8k0i.UiBridgeResponse>,
           _is.getType<_ichw8k0i.UiBridgeRequest>,
+          _is.getType<_ichw8k0i.UiBridgeResponse>,
+          _is.getType<_ichw8k0i.UiBridgeStatus>,
+          _is.getType<_ichw8k0i.UiBridgeStop>,
+          _is.getType<_ichw8k0i.UiBridgeWelcome>,
           _is.getType<_ivk6eyvx.FeatureFlags>,
           _is.getType<_ib575x0y.ProtocolInfo>,
           _is.getType<_i28el0at.ServerLimits>,
@@ -541,9 +559,15 @@ class Protocol extends _is.DatabaseSerializationManager
           _is.getType<_ick3mhj2.WriteThemeRevisionView>,
           _is.getType<_ixbjd26z.WriteThemeView>,
           _is.getType<_is9bkd9t.WriteVersionDocument>,
+          _is.getType<_inb6x2l0.NotificationEmailFutureCallSendModel?>,
+          _is.getType<_izr1y672.ActivityDashboard?>,
           _is.getType<_iatdjl5p.ActivityEvent?>,
           _is.getType<_isa7sjzq.ActivityEventView?>,
+          _is.getType<_ighcq381.ActivityTrendPoint?>,
           _is.getType<_i50cy468.ActivityType?>,
+          _is.getType<_ikcwdr17.ActivityViewer?>,
+          _is.getType<_ixdmbuaj.ItemViewDay?>,
+          _is.getType<_ifmsnq1y.UserActivitySettings?>,
           _is.getType<_iyja8k5e.AiApplyMode?>,
           _is.getType<_iviyoyk9.AiQuality?>,
           _is.getType<_i7i53on7.AiUsage?>,
@@ -606,11 +630,11 @@ class Protocol extends _is.DatabaseSerializationManager
           _is.getType<_ik7q11oy.StoredFileStatus?>,
           _is.getType<_ichw8k0i.UiBridgeCancel?>,
           _is.getType<_ichw8k0i.UiBridgeHello?>,
-          _is.getType<_ichw8k0i.UiBridgeStop?>,
-          _is.getType<_ichw8k0i.UiBridgeStatus?>,
-          _is.getType<_ichw8k0i.UiBridgeWelcome?>,
-          _is.getType<_ichw8k0i.UiBridgeResponse?>,
           _is.getType<_ichw8k0i.UiBridgeRequest?>,
+          _is.getType<_ichw8k0i.UiBridgeResponse?>,
+          _is.getType<_ichw8k0i.UiBridgeStatus?>,
+          _is.getType<_ichw8k0i.UiBridgeStop?>,
+          _is.getType<_ichw8k0i.UiBridgeWelcome?>,
           _is.getType<_ivk6eyvx.FeatureFlags?>,
           _is.getType<_ib575x0y.ProtocolInfo?>,
           _is.getType<_i28el0at.ServerLimits?>,
@@ -719,6 +743,8 @@ class Protocol extends _is.DatabaseSerializationManager
           _is.getType<_ick3mhj2.WriteThemeRevisionView?>,
           _is.getType<_ixbjd26z.WriteThemeView?>,
           _is.getType<_is9bkd9t.WriteVersionDocument?>,
+          _is.getType<List<_ikcwdr17.ActivityViewer>>,
+          _is.getType<List<_ighcq381.ActivityTrendPoint>>,
           _is.getType<List<_i4rkdm2k.AssistantMessageView>>,
           _is.getType<List<_ivmxemza.ProofreadIssue>>,
           _is.getType<List<_ivmxemza.ProofreadIssue>?>,
@@ -3215,6 +3241,115 @@ class Protocol extends _is.DatabaseSerializationManager
       managed: true,
     ),
     _isp.TableDefinition(
+      name: 'item_view_day',
+      dartName: 'ItemViewDay',
+      schema: 'public',
+      module: 'wonky',
+      columns: [
+        _isp.ColumnDefinition(
+          name: 'id',
+          columnType: _isp.ColumnType.bigint,
+          isNullable: false,
+          dartType: 'int?',
+          columnDefault: 'serial',
+        ),
+        _isp.ColumnDefinition(
+          name: 'itemId',
+          columnType: _isp.ColumnType.bigint,
+          isNullable: false,
+          dartType: 'int',
+        ),
+        _isp.ColumnDefinition(
+          name: 'userId',
+          columnType: _isp.ColumnType.bigint,
+          isNullable: false,
+          dartType: 'int',
+        ),
+        _isp.ColumnDefinition(
+          name: 'day',
+          columnType: _isp.ColumnType.timestampWithoutTimeZone,
+          isNullable: false,
+          dartType: 'DateTime',
+        ),
+        _isp.ColumnDefinition(
+          name: 'views',
+          columnType: _isp.ColumnType.bigint,
+          isNullable: false,
+          dartType: 'int',
+          columnDefault: '1',
+        ),
+        _isp.ColumnDefinition(
+          name: 'lastViewedAt',
+          columnType: _isp.ColumnType.timestampWithoutTimeZone,
+          isNullable: false,
+          dartType: 'DateTime',
+        ),
+      ],
+      foreignKeys: [
+        _isp.ForeignKeyDefinition(
+          constraintName: 'item_view_day_fk_0',
+          columns: ['itemId'],
+          referenceTable: 'drive_item',
+          referenceTableSchema: 'public',
+          referenceColumns: ['id'],
+          onUpdate: _isp.ForeignKeyAction.noAction,
+          onDelete: _isp.ForeignKeyAction.cascade,
+          matchType: null,
+        ),
+        _isp.ForeignKeyDefinition(
+          constraintName: 'item_view_day_fk_1',
+          columns: ['userId'],
+          referenceTable: 'user_profile',
+          referenceTableSchema: 'public',
+          referenceColumns: ['id'],
+          onUpdate: _isp.ForeignKeyAction.noAction,
+          onDelete: _isp.ForeignKeyAction.cascade,
+          matchType: null,
+        ),
+      ],
+      indexes: [
+        _isp.IndexDefinition(
+          indexName: 'item_view_day_idx',
+          tableSpace: null,
+          elements: [
+            _isp.IndexElementDefinition(
+              type: _isp.IndexElementDefinitionType.column,
+              definition: 'itemId',
+            ),
+            _isp.IndexElementDefinition(
+              type: _isp.IndexElementDefinitionType.column,
+              definition: 'userId',
+            ),
+            _isp.IndexElementDefinition(
+              type: _isp.IndexElementDefinitionType.column,
+              definition: 'day',
+            ),
+          ],
+          type: 'btree',
+          isUnique: true,
+          isPrimary: false,
+        ),
+        _isp.IndexDefinition(
+          indexName: 'item_view_day_item_idx',
+          tableSpace: null,
+          elements: [
+            _isp.IndexElementDefinition(
+              type: _isp.IndexElementDefinitionType.column,
+              definition: 'itemId',
+            ),
+            _isp.IndexElementDefinition(
+              type: _isp.IndexElementDefinitionType.column,
+              definition: 'day',
+            ),
+          ],
+          type: 'btree',
+          isUnique: false,
+          isPrimary: false,
+        ),
+      ],
+      managed: true,
+    ),
+    _isp.TableDefinition(
       name: 'notification',
       dartName: 'UserNotification',
       schema: 'public',
@@ -4220,6 +4355,68 @@ class Protocol extends _is.DatabaseSerializationManager
       managed: true,
     ),
     _isp.TableDefinition(
+      name: 'user_activity_settings',
+      dartName: 'UserActivitySettings',
+      schema: 'public',
+      module: 'wonky',
+      columns: [
+        _isp.ColumnDefinition(
+          name: 'id',
+          columnType: _isp.ColumnType.bigint,
+          isNullable: false,
+          dartType: 'int?',
+          columnDefault: 'serial',
+        ),
+        _isp.ColumnDefinition(
+          name: 'userId',
+          columnType: _isp.ColumnType.bigint,
+          isNullable: false,
+          dartType: 'int',
+        ),
+        _isp.ColumnDefinition(
+          name: 'showViewHistory',
+          columnType: _isp.ColumnType.boolean,
+          isNullable: false,
+          dartType: 'bool',
+          columnDefault: 'true',
+        ),
+        _isp.ColumnDefinition(
+          name: 'updatedAt',
+          columnType: _isp.ColumnType.timestampWithoutTimeZone,
+          isNullable: false,
+          dartType: 'DateTime',
+        ),
+      ],
+      foreignKeys: [
+        _isp.ForeignKeyDefinition(
+          constraintName: 'user_activity_settings_fk_0',
+          columns: ['userId'],
+          referenceTable: 'user_profile',
+          referenceTableSchema: 'public',
+          referenceColumns: ['id'],
+          onUpdate: _isp.ForeignKeyAction.noAction,
+          onDelete: _isp.ForeignKeyAction.cascade,
+          matchType: null,
+        ),
+      ],
+      indexes: [
+        _isp.IndexDefinition(
+          indexName: 'user_activity_settings_user_idx',
+          tableSpace: null,
+          elements: [
+            _isp.IndexElementDefinition(
+              type: _isp.IndexElementDefinitionType.column,
+              definition: 'userId',
+            ),
+          ],
+          type: 'btree',
+          isUnique: true,
+          isPrimary: false,
+        ),
+      ],
+      managed: true,
+    ),
+    _isp.TableDefinition(
       name: 'user_preferences',
       dartName: 'UserPreferences',
       schema: 'public',
@@ -4804,14 +5001,32 @@ class Protocol extends _is.DatabaseSerializationManager
       }
     }
 
+    if (t == _inb6x2l0.NotificationEmailFutureCallSendModel) {
+      return _inb6x2l0.NotificationEmailFutureCallSendModel.fromJson(data) as T;
+    }
+    if (t == _izr1y672.ActivityDashboard) {
+      return _izr1y672.ActivityDashboard.fromJson(data) as T;
+    }
     if (t == _iatdjl5p.ActivityEvent) {
       return _iatdjl5p.ActivityEvent.fromJson(data) as T;
     }
     if (t == _isa7sjzq.ActivityEventView) {
       return _isa7sjzq.ActivityEventView.fromJson(data) as T;
     }
+    if (t == _ighcq381.ActivityTrendPoint) {
+      return _ighcq381.ActivityTrendPoint.fromJson(data) as T;
+    }
     if (t == _i50cy468.ActivityType) {
       return _i50cy468.ActivityType.fromJson(data) as T;
+    }
+    if (t == _ikcwdr17.ActivityViewer) {
+      return _ikcwdr17.ActivityViewer.fromJson(data) as T;
+    }
+    if (t == _ixdmbuaj.ItemViewDay) {
+      return _ixdmbuaj.ItemViewDay.fromJson(data) as T;
+    }
+    if (t == _ifmsnq1y.UserActivitySettings) {
+      return _ifmsnq1y.UserActivitySettings.fromJson(data) as T;
     }
     if (t == _iyja8k5e.AiApplyMode) {
       return _iyja8k5e.AiApplyMode.fromJson(data) as T;
@@ -4999,20 +5214,20 @@ class Protocol extends _is.DatabaseSerializationManager
     if (t == _ichw8k0i.UiBridgeHello) {
       return _ichw8k0i.UiBridgeHello.fromJson(data) as T;
     }
-    if (t == _ichw8k0i.UiBridgeStop) {
-      return _ichw8k0i.UiBridgeStop.fromJson(data) as T;
-    }
-    if (t == _ichw8k0i.UiBridgeStatus) {
-      return _ichw8k0i.UiBridgeStatus.fromJson(data) as T;
-    }
-    if (t == _ichw8k0i.UiBridgeWelcome) {
-      return _ichw8k0i.UiBridgeWelcome.fromJson(data) as T;
+    if (t == _ichw8k0i.UiBridgeRequest) {
+      return _ichw8k0i.UiBridgeRequest.fromJson(data) as T;
     }
     if (t == _ichw8k0i.UiBridgeResponse) {
       return _ichw8k0i.UiBridgeResponse.fromJson(data) as T;
     }
-    if (t == _ichw8k0i.UiBridgeRequest) {
-      return _ichw8k0i.UiBridgeRequest.fromJson(data) as T;
+    if (t == _ichw8k0i.UiBridgeStatus) {
+      return _ichw8k0i.UiBridgeStatus.fromJson(data) as T;
+    }
+    if (t == _ichw8k0i.UiBridgeStop) {
+      return _ichw8k0i.UiBridgeStop.fromJson(data) as T;
+    }
+    if (t == _ichw8k0i.UiBridgeWelcome) {
+      return _ichw8k0i.UiBridgeWelcome.fromJson(data) as T;
     }
     if (t == _ivk6eyvx.FeatureFlags) {
       return _ivk6eyvx.FeatureFlags.fromJson(data) as T;
@@ -5338,6 +5553,16 @@ class Protocol extends _is.DatabaseSerializationManager
     if (t == _is9bkd9t.WriteVersionDocument) {
       return _is9bkd9t.WriteVersionDocument.fromJson(data) as T;
     }
+    if (t == _is.getType<_inb6x2l0.NotificationEmailFutureCallSendModel?>()) {
+      return (data != null
+              ? _inb6x2l0.NotificationEmailFutureCallSendModel.fromJson(data)
+              : null)
+          as T;
+    }
+    if (t == _is.getType<_izr1y672.ActivityDashboard?>()) {
+      return (data != null ? _izr1y672.ActivityDashboard.fromJson(data) : null)
+          as T;
+    }
     if (t == _is.getType<_iatdjl5p.ActivityEvent?>()) {
       return (data != null ? _iatdjl5p.ActivityEvent.fromJson(data) : null)
           as T;
@@ -5346,8 +5571,25 @@ class Protocol extends _is.DatabaseSerializationManager
       return (data != null ? _isa7sjzq.ActivityEventView.fromJson(data) : null)
           as T;
     }
+    if (t == _is.getType<_ighcq381.ActivityTrendPoint?>()) {
+      return (data != null ? _ighcq381.ActivityTrendPoint.fromJson(data) : null)
+          as T;
+    }
     if (t == _is.getType<_i50cy468.ActivityType?>()) {
       return (data != null ? _i50cy468.ActivityType.fromJson(data) : null) as T;
+    }
+    if (t == _is.getType<_ikcwdr17.ActivityViewer?>()) {
+      return (data != null ? _ikcwdr17.ActivityViewer.fromJson(data) : null)
+          as T;
+    }
+    if (t == _is.getType<_ixdmbuaj.ItemViewDay?>()) {
+      return (data != null ? _ixdmbuaj.ItemViewDay.fromJson(data) : null) as T;
+    }
+    if (t == _is.getType<_ifmsnq1y.UserActivitySettings?>()) {
+      return (data != null
+              ? _ifmsnq1y.UserActivitySettings.fromJson(data)
+              : null)
+          as T;
     }
     if (t == _is.getType<_iyja8k5e.AiApplyMode?>()) {
       return (data != null ? _iyja8k5e.AiApplyMode.fromJson(data) : null) as T;
@@ -5589,23 +5831,23 @@ class Protocol extends _is.DatabaseSerializationManager
       return (data != null ? _ichw8k0i.UiBridgeHello.fromJson(data) : null)
           as T;
     }
-    if (t == _is.getType<_ichw8k0i.UiBridgeStop?>()) {
-      return (data != null ? _ichw8k0i.UiBridgeStop.fromJson(data) : null) as T;
-    }
-    if (t == _is.getType<_ichw8k0i.UiBridgeStatus?>()) {
-      return (data != null ? _ichw8k0i.UiBridgeStatus.fromJson(data) : null)
-          as T;
-    }
-    if (t == _is.getType<_ichw8k0i.UiBridgeWelcome?>()) {
-      return (data != null ? _ichw8k0i.UiBridgeWelcome.fromJson(data) : null)
+    if (t == _is.getType<_ichw8k0i.UiBridgeRequest?>()) {
+      return (data != null ? _ichw8k0i.UiBridgeRequest.fromJson(data) : null)
           as T;
     }
     if (t == _is.getType<_ichw8k0i.UiBridgeResponse?>()) {
       return (data != null ? _ichw8k0i.UiBridgeResponse.fromJson(data) : null)
           as T;
     }
-    if (t == _is.getType<_ichw8k0i.UiBridgeRequest?>()) {
-      return (data != null ? _ichw8k0i.UiBridgeRequest.fromJson(data) : null)
+    if (t == _is.getType<_ichw8k0i.UiBridgeStatus?>()) {
+      return (data != null ? _ichw8k0i.UiBridgeStatus.fromJson(data) : null)
+          as T;
+    }
+    if (t == _is.getType<_ichw8k0i.UiBridgeStop?>()) {
+      return (data != null ? _ichw8k0i.UiBridgeStop.fromJson(data) : null) as T;
+    }
+    if (t == _is.getType<_ichw8k0i.UiBridgeWelcome?>()) {
+      return (data != null ? _ichw8k0i.UiBridgeWelcome.fromJson(data) : null)
           as T;
     }
     if (t == _is.getType<_ivk6eyvx.FeatureFlags?>()) {
@@ -6054,6 +6296,18 @@ class Protocol extends _is.DatabaseSerializationManager
               : null)
           as T;
     }
+    if (t == List<_ikcwdr17.ActivityViewer>) {
+      return (data as List)
+              .map((e) => deserialize<_ikcwdr17.ActivityViewer>(e))
+              .toList()
+          as T;
+    }
+    if (t == List<_ighcq381.ActivityTrendPoint>) {
+      return (data as List)
+              .map((e) => deserialize<_ighcq381.ActivityTrendPoint>(e))
+              .toList()
+          as T;
+    }
     if (t == List<_i4rkdm2k.AssistantMessageView>) {
       return (data as List)
               .map((e) => deserialize<_i4rkdm2k.AssistantMessageView>(e))
@@ -6325,9 +6579,16 @@ class Protocol extends _is.DatabaseSerializationManager
 
   static String? getClassNameForType(Type type) {
     return switch (type) {
+      _inb6x2l0.NotificationEmailFutureCallSendModel =>
+        'NotificationEmailFutureCallSendModel',
+      _izr1y672.ActivityDashboard => 'ActivityDashboard',
       _iatdjl5p.ActivityEvent => 'ActivityEvent',
       _isa7sjzq.ActivityEventView => 'ActivityEventView',
+      _ighcq381.ActivityTrendPoint => 'ActivityTrendPoint',
       _i50cy468.ActivityType => 'ActivityType',
+      _ikcwdr17.ActivityViewer => 'ActivityViewer',
+      _ixdmbuaj.ItemViewDay => 'ItemViewDay',
+      _ifmsnq1y.UserActivitySettings => 'UserActivitySettings',
       _iyja8k5e.AiApplyMode => 'AiApplyMode',
       _iviyoyk9.AiQuality => 'AiQuality',
       _i7i53on7.AiUsage => 'AiUsage',
@@ -6390,11 +6651,11 @@ class Protocol extends _is.DatabaseSerializationManager
       _ik7q11oy.StoredFileStatus => 'StoredFileStatus',
       _ichw8k0i.UiBridgeCancel => 'UiBridgeCancel',
       _ichw8k0i.UiBridgeHello => 'UiBridgeHello',
-      _ichw8k0i.UiBridgeStop => 'UiBridgeStop',
-      _ichw8k0i.UiBridgeStatus => 'UiBridgeStatus',
-      _ichw8k0i.UiBridgeWelcome => 'UiBridgeWelcome',
-      _ichw8k0i.UiBridgeResponse => 'UiBridgeResponse',
       _ichw8k0i.UiBridgeRequest => 'UiBridgeRequest',
+      _ichw8k0i.UiBridgeResponse => 'UiBridgeResponse',
+      _ichw8k0i.UiBridgeStatus => 'UiBridgeStatus',
+      _ichw8k0i.UiBridgeStop => 'UiBridgeStop',
+      _ichw8k0i.UiBridgeWelcome => 'UiBridgeWelcome',
       _ivk6eyvx.FeatureFlags => 'FeatureFlags',
       _ib575x0y.ProtocolInfo => 'ProtocolInfo',
       _i28el0at.ServerLimits => 'ServerLimits',
@@ -6517,12 +6778,24 @@ class Protocol extends _is.DatabaseSerializationManager
     }
 
     switch (data) {
+      case _inb6x2l0.NotificationEmailFutureCallSendModel():
+        return 'NotificationEmailFutureCallSendModel';
+      case _izr1y672.ActivityDashboard():
+        return 'ActivityDashboard';
       case _iatdjl5p.ActivityEvent():
         return 'ActivityEvent';
       case _isa7sjzq.ActivityEventView():
         return 'ActivityEventView';
+      case _ighcq381.ActivityTrendPoint():
+        return 'ActivityTrendPoint';
       case _i50cy468.ActivityType():
         return 'ActivityType';
+      case _ikcwdr17.ActivityViewer():
+        return 'ActivityViewer';
+      case _ixdmbuaj.ItemViewDay():
+        return 'ItemViewDay';
+      case _ifmsnq1y.UserActivitySettings():
+        return 'UserActivitySettings';
       case _iyja8k5e.AiApplyMode():
         return 'AiApplyMode';
       case _iviyoyk9.AiQuality():
@@ -6647,16 +6920,16 @@ class Protocol extends _is.DatabaseSerializationManager
         return 'UiBridgeCancel';
       case _ichw8k0i.UiBridgeHello():
         return 'UiBridgeHello';
-      case _ichw8k0i.UiBridgeStop():
-        return 'UiBridgeStop';
-      case _ichw8k0i.UiBridgeStatus():
-        return 'UiBridgeStatus';
-      case _ichw8k0i.UiBridgeWelcome():
-        return 'UiBridgeWelcome';
-      case _ichw8k0i.UiBridgeResponse():
-        return 'UiBridgeResponse';
       case _ichw8k0i.UiBridgeRequest():
         return 'UiBridgeRequest';
+      case _ichw8k0i.UiBridgeResponse():
+        return 'UiBridgeResponse';
+      case _ichw8k0i.UiBridgeStatus():
+        return 'UiBridgeStatus';
+      case _ichw8k0i.UiBridgeStop():
+        return 'UiBridgeStop';
+      case _ichw8k0i.UiBridgeWelcome():
+        return 'UiBridgeWelcome';
       case _ivk6eyvx.FeatureFlags():
         return 'FeatureFlags';
       case _ib575x0y.ProtocolInfo():
@@ -6911,14 +7184,34 @@ class Protocol extends _is.DatabaseSerializationManager
     if (dataClassName is! String) {
       return super.deserializeByClassName(data);
     }
+    if (dataClassName == 'NotificationEmailFutureCallSendModel') {
+      return deserialize<_inb6x2l0.NotificationEmailFutureCallSendModel>(
+        data['data'],
+      );
+    }
+    if (dataClassName == 'ActivityDashboard') {
+      return deserialize<_izr1y672.ActivityDashboard>(data['data']);
+    }
     if (dataClassName == 'ActivityEvent') {
       return deserialize<_iatdjl5p.ActivityEvent>(data['data']);
     }
     if (dataClassName == 'ActivityEventView') {
       return deserialize<_isa7sjzq.ActivityEventView>(data['data']);
     }
+    if (dataClassName == 'ActivityTrendPoint') {
+      return deserialize<_ighcq381.ActivityTrendPoint>(data['data']);
+    }
     if (dataClassName == 'ActivityType') {
       return deserialize<_i50cy468.ActivityType>(data['data']);
+    }
+    if (dataClassName == 'ActivityViewer') {
+      return deserialize<_ikcwdr17.ActivityViewer>(data['data']);
+    }
+    if (dataClassName == 'ItemViewDay') {
+      return deserialize<_ixdmbuaj.ItemViewDay>(data['data']);
+    }
+    if (dataClassName == 'UserActivitySettings') {
+      return deserialize<_ifmsnq1y.UserActivitySettings>(data['data']);
     }
     if (dataClassName == 'AiApplyMode') {
       return deserialize<_iyja8k5e.AiApplyMode>(data['data']);
@@ -7106,20 +7399,20 @@ class Protocol extends _is.DatabaseSerializationManager
     if (dataClassName == 'UiBridgeHello') {
       return deserialize<_ichw8k0i.UiBridgeHello>(data['data']);
     }
-    if (dataClassName == 'UiBridgeStop') {
-      return deserialize<_ichw8k0i.UiBridgeStop>(data['data']);
-    }
-    if (dataClassName == 'UiBridgeStatus') {
-      return deserialize<_ichw8k0i.UiBridgeStatus>(data['data']);
-    }
-    if (dataClassName == 'UiBridgeWelcome') {
-      return deserialize<_ichw8k0i.UiBridgeWelcome>(data['data']);
+    if (dataClassName == 'UiBridgeRequest') {
+      return deserialize<_ichw8k0i.UiBridgeRequest>(data['data']);
     }
     if (dataClassName == 'UiBridgeResponse') {
       return deserialize<_ichw8k0i.UiBridgeResponse>(data['data']);
     }
-    if (dataClassName == 'UiBridgeRequest') {
-      return deserialize<_ichw8k0i.UiBridgeRequest>(data['data']);
+    if (dataClassName == 'UiBridgeStatus') {
+      return deserialize<_ichw8k0i.UiBridgeStatus>(data['data']);
+    }
+    if (dataClassName == 'UiBridgeStop') {
+      return deserialize<_ichw8k0i.UiBridgeStop>(data['data']);
+    }
+    if (dataClassName == 'UiBridgeWelcome') {
+      return deserialize<_ichw8k0i.UiBridgeWelcome>(data['data']);
     }
     if (dataClassName == 'FeatureFlags') {
       return deserialize<_ivk6eyvx.FeatureFlags>(data['data']);
@@ -7513,6 +7806,10 @@ class Protocol extends _is.DatabaseSerializationManager
     switch (t) {
       case _iatdjl5p.ActivityEvent:
         return _iatdjl5p.ActivityEvent.t;
+      case _ixdmbuaj.ItemViewDay:
+        return _ixdmbuaj.ItemViewDay.t;
+      case _ifmsnq1y.UserActivitySettings:
+        return _ifmsnq1y.UserActivitySettings.t;
       case _i7i53on7.AiUsage:
         return _i7i53on7.AiUsage.t;
       case _imx2nn1q.AiUserSetting:

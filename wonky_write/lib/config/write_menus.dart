@@ -2,6 +2,8 @@ import 'package:wonky_app/wonky_app.dart';
 import 'package:wonky_core/wonky_core.dart';
 import 'package:wonky_write_core/wonky_write_core.dart' show BuiltinThemes;
 
+import '../l10n/write_l10n.dart';
+
 /// Menu ids of the Write menus (stable: used by MCP `ui.get_menu_tree`).
 abstract final class WriteMenuIds {
   static const insert = 'insert';
@@ -18,40 +20,42 @@ MenuCommand _c(
 }) => MenuSpec.command(id, label: label, args: args, id: menuId, radio: radio);
 
 /// The Write menubar (Write 05 §7): the shell's shared menus extended with
-/// Write items, plus the Insert and Format menus.
-MenuRoot writeMenus(ShellMenus shell) {
+/// Write items, plus the Insert and Format menus. Labels come from [l10n]
+/// (default: the Write strings in the locale of the shell's strings).
+MenuRoot writeMenus(ShellMenus shell, {WriteLocalizations? l10n}) {
+  final l = l10n ?? writeL10nFor(shell.l10n);
   var root = shell.root;
 
   // ---- File (§7.1) ----
   root = root
       .insertAfter('shell.file.import', [
-        _c('write.insert.fromFile', label: 'Insert from file…'),
+        _c('write.insert.fromFile', label: l.cmdInsertFromFile),
       ])
       .replace('shell.file.details', [
-        _c('write.doc.properties', label: 'Details'),
+        _c('write.doc.properties', label: l.cmdDocProperties),
       ])
       .insertAfter(ShellMenuIds.fileEndOfVersions, [
-        _c('write.doc.languageDialog', label: 'Language…'),
-        _c('write.doc.pageSetup', label: 'Page setup…'),
-        _c('write.doc.settings', label: 'Settings…'),
+        _c('write.doc.languageDialog', label: l.cmdDocLanguageDialog),
+        _c('write.doc.pageSetup', label: l.cmdDocPageSetup),
+        _c('write.doc.settings', label: l.cmdDocSettings),
         MenuSpec.separator(),
       ]);
 
   // ---- Edit (§7.2) ----
   root = root
       .insertAfter('shell.edit.pasteWithoutFormatting', [
-        MenuSpec.submenu('edit.copyAs', 'Copy as', [
-          _c('write.edit.copyAsMarkdown', label: 'Markdown'),
-          _c('write.edit.copyAsPlainText', label: 'Plain text'),
-          _c('write.edit.copyAsHtml', label: 'HTML'),
+        MenuSpec.submenu('edit.copyAs', l.menuCopyAs, [
+          _c('write.edit.copyAsMarkdown', label: l.menuCopyAsMarkdown),
+          _c('write.edit.copyAsPlainText', label: l.menuCopyAsPlainText),
+          _c('write.edit.copyAsHtml', label: l.menuCopyAsHtml),
         ]),
-        _c('write.edit.pasteAsMarkdown', label: 'Paste as Markdown'),
+        _c('write.edit.pasteAsMarkdown', label: l.cmdEditPasteAsMarkdown),
       ])
       .insertAfter('shell.edit.selectAll', [_c('write.edit.delete')])
       .appendTo(ShellMenuIds.edit, [
         MenuSpec.separator(),
-        _c('write.find.open', label: 'Find'),
-        _c('write.find.openReplace', label: 'Find and replace'),
+        _c('write.find.open', label: l.cmdFindOpen),
+        _c('write.find.openReplace', label: l.cmdFindOpenReplace),
         _c('write.find.next'),
         _c('write.find.previous'),
         _c('write.nav.goToHeading'),
@@ -60,52 +64,52 @@ MenuRoot writeMenus(ShellMenus shell) {
   // ---- View (§7.3) ----
   root = root
       .appendTo(ShellMenuIds.viewMode, [
-        _c('write.mode.editing', label: 'Editing', radio: true),
-        _c('write.mode.suggesting', label: 'Suggesting', radio: true),
-        _c('write.mode.viewing', label: 'Viewing', radio: true),
+        _c('write.mode.editing', label: l.screenModeEditing, radio: true),
+        _c('write.mode.suggesting', label: l.screenModeSuggesting, radio: true),
+        _c('write.mode.viewing', label: l.screenModeViewing, radio: true),
       ])
       .insertAfter(ShellMenuIds.viewMode, [
-        MenuSpec.submenu('view.layout', 'Page layout', [
+        MenuSpec.submenu('view.layout', l.menuPageLayout, [
           _c(
             'write.doc.setLayout',
-            label: 'Pages',
+            label: l.menuLayoutPages,
             args: {'layout': 'pages'},
             menuId: 'view.layout.pages',
             radio: true,
           ),
           _c(
             'write.doc.setLayout',
-            label: 'Pageless',
+            label: l.menuLayoutPageless,
             args: {'layout': 'pageless'},
             menuId: 'view.layout.pageless',
             radio: true,
           ),
         ]),
-        MenuSpec.submenu('view.suggestions', 'Suggestions', [
+        MenuSpec.submenu('view.suggestions', l.menuSuggestions, [
           _c(
             'write.view.suggestionPreview',
-            label: 'Show suggestions',
+            label: l.menuShowSuggestions,
             args: {'mode': 'show'},
             menuId: 'view.suggestions.show',
           ),
           _c(
             'write.view.suggestionPreview',
-            label: 'Preview accepted',
+            label: l.menuPreviewAccepted,
             args: {'mode': 'accepted'},
             menuId: 'view.suggestions.accepted',
           ),
           _c(
             'write.view.suggestionPreview',
-            label: 'Preview original',
+            label: l.menuPreviewOriginal,
             args: {'mode': 'original'},
             menuId: 'view.suggestions.original',
           ),
         ]),
         // View-only preview of another theme (Write 06 §5.2).
-        MenuSpec.submenu('view.previewTheme', 'Preview theme', [
+        MenuSpec.submenu('view.previewTheme', l.menuPreviewTheme, [
           _c(
             'write.theme.previewLocal',
-            label: 'Document theme',
+            label: l.menuDocumentTheme,
             args: {'themeUuid': null},
             menuId: 'view.previewTheme.none',
             radio: true,
@@ -122,24 +126,33 @@ MenuRoot writeMenus(ShellMenus shell) {
         ]),
       ])
       .appendTo(ShellMenuIds.viewShow, [
-        _c('write.view.toggleWordCount', label: 'Word count'),
-        _c('write.view.toggleCommentMargin', label: 'Comments in margin'),
-        _c('write.view.toggleRemoteCursors', label: 'Collaborator cursors'),
-        _c('write.view.toggleSelectionToolbar', label: 'Toolbar on selection'),
+        _c('write.view.toggleWordCount', label: l.cmdViewToggleWordCount),
+        _c(
+          'write.view.toggleCommentMargin',
+          label: l.cmdViewToggleCommentMargin,
+        ),
+        _c(
+          'write.view.toggleRemoteCursors',
+          label: l.cmdViewToggleRemoteCursors,
+        ),
+        _c(
+          'write.view.toggleSelectionToolbar',
+          label: l.cmdViewToggleSelectionToolbar,
+        ),
       ])
       .insertAfter('view.layout', [
-        _c('write.view.toggleFocusMode', label: 'Focus mode'),
-        _c('write.view.toggleTypewriter', label: 'Typewriter scrolling'),
+        _c('write.view.toggleFocusMode', label: l.cmdViewToggleFocusMode),
+        _c('write.view.toggleTypewriter', label: l.cmdViewToggleTypewriter),
       ])
       .replace(ShellMenuIds.viewZoom, [
-        MenuSpec.submenu(ShellMenuIds.viewZoom, 'Zoom', [
+        MenuSpec.submenu(ShellMenuIds.viewZoom, l.menuZoom, [
           _c('write.view.zoomIn'),
           _c('write.view.zoomOut'),
           MenuSpec.separator(),
           for (final p in const [50, 75, 90, 100, 125, 150, 200])
             _c(
               'shell.view.zoom',
-              label: '$p%',
+              label: l.screenZoomPercent(p),
               args: {'percent': p},
               menuId: 'view.zoom.$p',
               radio: true,
@@ -147,39 +160,42 @@ MenuRoot writeMenus(ShellMenus shell) {
           MenuSpec.separator(),
           _c(
             'write.view.zoomFit',
-            label: 'Fit width',
+            label: l.menuFitWidth,
             args: {'mode': 'width'},
             menuId: 'view.zoom.fitWidth',
           ),
           _c(
             'write.view.zoomFit',
-            label: 'Fit page',
+            label: l.menuFitPage,
             args: {'mode': 'page'},
             menuId: 'view.zoom.fitPage',
           ),
-          _c('write.view.zoomReset', label: 'Reset to 100%'),
+          _c('write.view.zoomReset', label: l.menuZoomReset),
         ]),
       ])
       .insertBefore('shell.comments.togglePanel', [
-        _c('write.view.toggleOutline', label: 'Outline'),
+        _c('write.view.toggleOutline', label: l.cmdViewToggleOutline),
       ])
       .insertAfter('shell.comments.togglePanel', [
         _c(
           'write.suggestions.togglePanel',
-          label: 'Suggestions',
+          label: l.cmdSuggestionsTogglePanel,
           menuId: 'view.panels.suggestions',
         ),
       ])
       .appendTo(ShellMenuIds.viewPanels, [
         _c(
           'write.find.open',
-          label: 'Find and replace',
+          label: l.cmdFindOpenReplace,
           menuId: 'view.panels.find',
         ),
       ]);
 
   // ---- Insert (§7.4) and Format (§7.5) ----
-  root = root.insertMenusBefore(ShellMenuIds.tools, [insertMenu, formatMenu]);
+  root = root.insertMenusBefore(ShellMenuIds.tools, [
+    insertMenu(l),
+    formatMenu(l),
+  ]);
 
   // ---- Tools (§7.6) ----
   root = root
@@ -189,34 +205,37 @@ MenuRoot writeMenus(ShellMenus shell) {
         _c('write.ai.proofreadDocument', menuId: 'tools.ai.proofread'),
       ])
       .insertBefore('tools.assistant', [
-        _c('write.tools.wordCount', label: 'Word count'),
+        _c('write.tools.wordCount', label: l.cmdToolsWordCount),
         _c(
           'write.doc.languageDialog',
-          label: 'Language…',
+          label: l.cmdDocLanguageDialog,
           menuId: 'tools.language',
         ),
-        _c('write.tools.viewMarkdown', label: 'View Markdown source'),
-        MenuSpec.submenu('tools.spelling', 'Spelling', [
-          _c('write.spell.check', label: 'Check spelling…'),
-          _c('write.spell.nextError', label: 'Next error'),
+        _c('write.tools.viewMarkdown', label: l.cmdToolsViewMarkdown),
+        MenuSpec.submenu('tools.spelling', l.menuSpelling, [
+          _c('write.spell.check', label: l.cmdSpellCheck),
+          _c('write.spell.nextError', label: l.menuNextError),
           MenuSpec.separator(),
-          _c('write.spell.toggle', label: 'Underline errors'),
+          _c('write.spell.toggle', label: l.menuUnderlineErrors),
           _c(
             'write.spell.toggleIgnoreUppercase',
-            label: 'Ignore words in UPPERCASE',
+            label: l.cmdSpellToggleIgnoreUppercase,
           ),
           MenuSpec.separator(),
-          _c('write.spell.personalDictionary', label: 'Personal dictionary…'),
+          _c(
+            'write.spell.personalDictionary',
+            label: l.cmdSpellPersonalDictionary,
+          ),
           _c(
             'write.doc.languageDialog',
-            label: 'Language…',
+            label: l.cmdDocLanguageDialog,
             menuId: 'tools.spelling.language',
           ),
         ]),
         MenuSpec.separator(),
       ])
       .insertBefore('tools.preferences', [
-        MenuSpec.submenu('tools.writePrefs', 'Preferences', [
+        MenuSpec.submenu('tools.writePrefs', l.menuPreferences, [
           _c('write.prefs.setMarkdownShortcuts'),
           _c('write.prefs.setSmartTypography'),
           _c('write.prefs.setAutoPair'),
@@ -226,7 +245,7 @@ MenuRoot writeMenus(ShellMenus shell) {
           MenuSpec.separator(),
           _c(
             'shell.settings.open',
-            label: 'All preferences…',
+            label: l.menuAllPreferences,
             args: {'section': 'write'},
             menuId: 'tools.writePrefs.all',
           ),
@@ -240,114 +259,146 @@ MenuRoot writeMenus(ShellMenus shell) {
 }
 
 /// Insert (Write 05 §7.4).
-MenuSubmenu get insertMenu => MenuSpec.submenu(WriteMenuIds.insert, 'Insert', [
-  MenuSpec.submenu('insert.image', 'Image', [
-    _c('write.insert.image', label: 'Upload from computer…'),
-    _c('write.insert.imageFromUrl', label: 'By URL…'),
+MenuSubmenu insertMenu(
+  WriteLocalizations l,
+) => MenuSpec.submenu(WriteMenuIds.insert, l.menuInsert, [
+  MenuSpec.submenu('insert.image', l.menuImage, [
+    _c('write.insert.image', label: l.menuImageUpload),
+    _c('write.insert.imageFromUrl', label: l.menuImageByUrl),
   ]),
-  MenuSpec.submenu('insert.table', 'Table', [
-    MenuSpec.custom(WriteMenuIds.tablePicker, label: 'Table size'),
+  MenuSpec.submenu('insert.table', l.menuTable, [
+    MenuSpec.custom(WriteMenuIds.tablePicker, label: l.menuTableSize),
     MenuSpec.separator(),
-    _c('write.insert.tableDialog', label: 'Custom size…'),
+    _c('write.insert.tableDialog', label: l.menuTableCustomSize),
   ]),
-  _c('write.insert.divider', label: 'Divider (horizontal line)'),
+  _c('write.insert.divider', label: l.menuDividerLine),
   _c(
     'write.format.blockType.codeBlock',
-    label: 'Code block',
+    label: l.cmdFormatBlockTypeCodeBlock,
     menuId: 'insert.codeBlock',
   ),
-  _c('write.format.blockType.quote', label: 'Quote', menuId: 'insert.quote'),
+  _c(
+    'write.format.blockType.quote',
+    label: l.cmdFormatBlockTypeQuote,
+    menuId: 'insert.quote',
+  ),
   _c(
     'write.list.toggleChecklist',
-    label: 'Checklist',
+    label: l.cmdListToggleChecklist,
     menuId: 'insert.checklist',
   ),
   MenuSpec.separator(),
-  _c('write.link.insert', label: 'Link…'),
-  _c('write.insert.mentionTrigger', label: 'Mention a person'),
-  _c('write.insert.emoji', label: 'Emoji…'),
-  _c('write.insert.specialCharacter', label: 'Special characters…'),
+  _c('write.link.insert', label: l.menuLink),
+  _c('write.insert.mentionTrigger', label: l.cmdInsertMentionTrigger),
+  _c('write.insert.emoji', label: l.cmdInsertEmoji),
+  _c('write.insert.specialCharacter', label: l.cmdInsertSpecialCharacter),
   MenuSpec.separator(),
-  _c('shell.comments.create', label: 'Comment', menuId: 'insert.comment'),
-  _c('write.insert.fromFile', label: 'From file…', menuId: 'insert.fromFile'),
+  _c('shell.comments.create', label: l.menuComment, menuId: 'insert.comment'),
+  _c('write.insert.fromFile', label: l.menuFromFile, menuId: 'insert.fromFile'),
 ]);
 
 /// Format (Write 05 §7.5).
-MenuSubmenu get formatMenu => MenuSpec.submenu(WriteMenuIds.format, 'Format', [
-  MenuSpec.submenu('format.text', 'Text', [
-    _c('write.format.bold'),
-    _c('write.format.italic'),
-    _c('write.format.strikethrough'),
-    _c('write.format.inlineCode', label: 'Code'),
-  ]),
-  MenuSpec.submenu('format.styles', 'Paragraph styles', [
-    _c('write.format.blockType.paragraph', label: 'Normal text', radio: true),
-    for (var i = 1; i <= 6; i++)
-      _c('write.format.blockType.heading$i', label: 'Heading $i', radio: true),
-    _c('write.format.blockType.quote', label: 'Quote', radio: true),
-    _c('write.format.blockType.codeBlock', label: 'Code block', radio: true),
-  ]),
-  MenuSpec.submenu('format.lists', 'Bullets & numbering', [
-    _c('write.list.toggleBulleted', label: 'Bulleted list'),
-    _c('write.list.toggleNumbered', label: 'Numbered list'),
-    _c('write.list.toggleChecklist', label: 'Checklist'),
-    MenuSpec.separator(),
-    _c('write.list.indent', label: 'Increase indent'),
-    _c('write.list.outdent', label: 'Decrease indent'),
-    _c('write.list.toggleChecked', label: 'Mark as done / not done'),
-  ]),
-  MenuSpec.submenu('format.link', 'Link', [
-    _c(
-      'write.link.insert',
-      label: 'Insert or edit link…',
-      menuId: 'format.link.insert',
-    ),
-    _c('write.link.remove', label: 'Remove link'),
-  ]),
-  _c('write.format.clearFormatting'),
-  MenuSpec.separator(),
-  MenuSpec.submenu('format.table', 'Table', [
-    _c('write.table.editCell', label: 'Edit cells'),
-    _c('write.table.edit', label: 'Edit table…'),
-    _c('write.table.copyAsTsv', label: 'Copy as TSV'),
-    _c('write.table.delete', label: 'Delete table'),
-  ]),
-  MenuSpec.submenu('format.image', 'Image', [
-    _c('write.image.preview', label: 'View full size'),
-    _c('write.image.editAlt', label: 'Alt text…'),
-    _c('write.image.replace', label: 'Replace…'),
-    _c('write.image.download', label: 'Download'),
-  ]),
-  MenuSpec.submenu('format.code', 'Code block', [
-    _c('write.code.copy', label: 'Copy code'),
-    _c('write.code.exit', label: 'Exit code block'),
-  ]),
-  MenuSpec.separator(),
-  MenuSpec.submenu('format.theme', 'Theme', [
-    for (final b in BuiltinThemes.all)
+MenuSubmenu formatMenu(WriteLocalizations l) =>
+    MenuSpec.submenu(WriteMenuIds.format, l.menuFormat, [
+      MenuSpec.submenu('format.text', l.menuText, [
+        _c('write.format.bold'),
+        _c('write.format.italic'),
+        _c('write.format.strikethrough'),
+        _c('write.format.inlineCode', label: l.cmdFormatInlineCode),
+      ]),
+      MenuSpec.submenu('format.styles', l.menuParagraphStyles, [
+        _c(
+          'write.format.blockType.paragraph',
+          label: l.cmdFormatBlockTypeParagraph,
+          radio: true,
+        ),
+        for (var i = 1; i <= 6; i++)
+          _c(
+            'write.format.blockType.heading$i',
+            label: _heading(l, i),
+            radio: true,
+          ),
+        _c(
+          'write.format.blockType.quote',
+          label: l.cmdFormatBlockTypeQuote,
+          radio: true,
+        ),
+        _c(
+          'write.format.blockType.codeBlock',
+          label: l.cmdFormatBlockTypeCodeBlock,
+          radio: true,
+        ),
+      ]),
+      MenuSpec.submenu('format.lists', l.menuBulletsNumbering, [
+        _c('write.list.toggleBulleted', label: l.cmdListToggleBulleted),
+        _c('write.list.toggleNumbered', label: l.cmdListToggleNumbered),
+        _c('write.list.toggleChecklist', label: l.cmdListToggleChecklist),
+        MenuSpec.separator(),
+        _c('write.list.indent', label: l.cmdListIndent),
+        _c('write.list.outdent', label: l.cmdListOutdent),
+        _c('write.list.toggleChecked', label: l.menuToggleChecked),
+      ]),
+      MenuSpec.submenu('format.link', l.menuLinkSubmenu, [
+        _c(
+          'write.link.insert',
+          label: l.menuInsertOrEditLink,
+          menuId: 'format.link.insert',
+        ),
+        _c('write.link.remove', label: l.cmdLinkRemove),
+      ]),
+      _c('write.format.clearFormatting'),
+      MenuSpec.separator(),
+      MenuSpec.submenu('format.table', l.menuTable, [
+        _c('write.table.editCell', label: l.menuEditCells),
+        _c('write.table.edit', label: l.cmdTableEdit),
+        _c('write.table.copyAsTsv', label: l.cmdTableCopyAsTsv),
+        _c('write.table.delete', label: l.cmdTableDelete),
+      ]),
+      MenuSpec.submenu('format.image', l.menuImage, [
+        _c('write.image.preview', label: l.cmdImagePreview),
+        _c('write.image.editAlt', label: l.cmdImageEditAlt),
+        _c('write.image.replace', label: l.menuImageReplace),
+        _c('write.image.download', label: l.menuImageDownload),
+      ]),
+      MenuSpec.submenu('format.code', l.menuCodeBlock, [
+        _c('write.code.copy', label: l.cmdCodeCopy),
+        _c('write.code.exit', label: l.cmdCodeExit),
+      ]),
+      MenuSpec.separator(),
+      MenuSpec.submenu('format.theme', l.menuTheme, [
+        for (final b in BuiltinThemes.all)
+          _c(
+            'write.theme.apply',
+            label: b.name,
+            args: {'themeId': b.uuid},
+            menuId: 'format.theme.${b.key}',
+            radio: true,
+          ),
+        _c(
+          'write.theme.useDefault',
+          label: l.cmdThemeUseDefault,
+          menuId: 'format.theme.useDefault',
+          radio: true,
+        ),
+        MenuSpec.separator(),
+        _c('write.theme.openPicker', label: l.menuMoreThemes),
+        _c('write.theme.openEditor', label: l.cmdThemeOpenEditor),
+        _c('write.theme.openManager', label: l.cmdThemeOpenManager),
+        MenuSpec.separator(),
+        _c('write.theme.setUserDefault', label: l.cmdThemeSetUserDefault),
+      ]),
       _c(
-        'write.theme.apply',
-        label: b.name,
-        args: {'themeId': b.uuid},
-        menuId: 'format.theme.${b.key}',
-        radio: true,
+        'write.help.markdownGuide',
+        label: l.menuFormattingSupported,
+        menuId: 'format.guide',
       ),
-    _c(
-      'write.theme.useDefault',
-      label: 'Use my default theme',
-      menuId: 'format.theme.useDefault',
-      radio: true,
-    ),
-    MenuSpec.separator(),
-    _c('write.theme.openPicker', label: 'More themes…'),
-    _c('write.theme.openEditor', label: 'Customize theme…'),
-    _c('write.theme.openManager', label: 'Manage themes…'),
-    MenuSpec.separator(),
-    _c('write.theme.setUserDefault', label: 'Save as my default theme'),
-  ]),
-  _c(
-    'write.help.markdownGuide',
-    label: 'What formatting is supported?',
-    menuId: 'format.guide',
-  ),
-]);
+    ]);
+
+String _heading(WriteLocalizations l, int level) => switch (level) {
+  1 => l.cmdFormatBlockTypeHeading1,
+  2 => l.cmdFormatBlockTypeHeading2,
+  3 => l.cmdFormatBlockTypeHeading3,
+  4 => l.cmdFormatBlockTypeHeading4,
+  5 => l.cmdFormatBlockTypeHeading5,
+  _ => l.cmdFormatBlockTypeHeading6,
+};

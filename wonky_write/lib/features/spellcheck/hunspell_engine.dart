@@ -32,8 +32,7 @@ class _HunspellEngine implements SpellEngine {
 
   @override
   bool check(String word, {bool followedByPeriod = false}) =>
-      _checker.check(word) ||
-      (followedByPeriod && _checker.check('$word.'));
+      _checker.check(word) || (followedByPeriod && _checker.check('$word.'));
 
   @override
   List<String> suggest(String word, {int max = 5}) =>
@@ -54,12 +53,7 @@ class _HunspellEngine implements SpellEngine {
     }
     return [
       for (final t in _tokenizer!.tokenize(text, skipRanges: skipRanges))
-        SpellWord(
-          t.start,
-          t.end,
-          t.word,
-          followedByPeriod: t.followedByPeriod,
-        ),
+        SpellWord(t.start, t.end, t.word, followedByPeriod: t.followedByPeriod),
     ];
   }
 

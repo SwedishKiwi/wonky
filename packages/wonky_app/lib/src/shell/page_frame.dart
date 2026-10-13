@@ -55,16 +55,21 @@ class ShellPageFrame extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(width: 8),
-                GestureDetector(
-                  onTap: () => services.router.go('/'),
-                  child: MouseRegion(
-                    cursor: SystemMouseCursors.click,
-                    child: services.config.logo(size: 28),
+                Semantics(
+                  button: true,
+                  label: l.goHome,
+                  child: GestureDetector(
+                    onTap: () => services.router.go('/'),
+                    child: MouseRegion(
+                      cursor: SystemMouseCursors.click,
+                      child: services.config.logo(size: 28),
+                    ),
                   ),
                 ),
                 const SizedBox(width: 12),
                 Expanded(
                   child: Semantics(
+                    container: true,
                     header: true,
                     child: Text(
                       title,

@@ -6,10 +6,12 @@ import 'package:shad/shad.dart';
 import 'package:wonky_client/wonky_client.dart';
 import 'package:wonky_ui/wonky_ui.dart';
 
+import '../l10n/wonky_app_localizations.dart';
 import '../shell/shell_services.dart';
 import 'assistant_controller.dart';
 import 'assistant_markdown.dart';
 import 'assistant_models.dart';
+import 'shell_assistant.dart' show assistantStatusMessage;
 
 /// The assistant side panel (suite 10 §3): thread picker, streaming
 /// Markdown replies with tool chips (Show / Undo), the composer with
@@ -24,10 +26,6 @@ class AssistantPanel extends StatefulWidget {
 
   final ShellServices services;
   final AssistantController controller;
-
-  static const privacyNotice =
-      'The assistant sends this document and your messages to Anthropic to '
-      'generate answers.';
 
   @override
   State<AssistantPanel> createState() => _AssistantPanelState();
@@ -111,6 +109,7 @@ class _AssistantPanelState extends State<AssistantPanel> {
 
   Widget _header(BuildContext context) {
     final theme = ShadTheme.of(context);
+    final l = WonkyAppLocalizations.of(context);
     final current = c.threads.where((t) => t.id == c.threadId).firstOrNull;
     return Padding(
       padding: const EdgeInsets.fromLTRB(10, 8, 6, 6),
@@ -120,7 +119,7 @@ class _AssistantPanelState extends State<AssistantPanel> {
             child: WonkyDropdownMenu(
               entries: () => [
                 WonkyMenuItem(
-                  label: 'New chat',
+                  label: l.assistantNewChat,
                   icon: LucideIcons.squarePen,
                   onSelected: () => unawaited(c.newThread()),
                 ),
@@ -140,7 +139,7 @@ class _AssistantPanelState extends State<AssistantPanel> {
                 onPressed: ctl.toggle,
                 child: Flexible(
                   child: Text(
-                    current?.title ?? 'New chat',
+                    current?.title ?? l.assistantNewChat,
                     overflow: TextOverflow.ellipsis,
                     style: theme.textTheme.small,
                   ),
@@ -149,13 +148,13 @@ class _AssistantPanelState extends State<AssistantPanel> {
             ),
           ),
           ShadTooltip(
-            builder: (_) => const Text('New chat'),
+            builder: (_) => Text(l.assistantNewChat),
             child: ShadIconButton.ghost(
               key: const ValueKey<String>('assistant.newThread'),
               width: 30,
               height: 30,
               iconSize: 16,
-              semanticLabel: 'New chat',
+              semanticLabel: l.assistantNewChat,
               icon: const Icon(LucideIcons.squarePen),
               onPressed: () => unawaited(c.newThread()),
             ),
@@ -163,30 +162,33 @@ class _AssistantPanelState extends State<AssistantPanel> {
           WonkyDropdownMenu(
             entries: () => [
               WonkyMenuItem(
-                label: 'Clear chat',
+                label: l.assistantClearChat,
                 icon: LucideIcons.eraser,
                 onSelected: () => unawaited(c.newThread()),
               ),
               WonkyMenuItem(
-                label: 'Delete this chat',
+                label: l.assistantDeleteChat,
                 icon: LucideIcons.trash2,
                 onSelected: () => unawaited(_delete(context)),
               ),
               const WonkyMenuSeparator(),
               WonkyMenuItem(
-                label: 'AI settings',
+                label: l.assistantAiSettings,
                 icon: LucideIcons.settings,
                 onSelected: () => widget.services.router.go('/settings/ai'),
               ),
             ],
-            builder: (context, ctl) => ShadIconButton.ghost(
-              key: const ValueKey<String>('assistant.more'),
-              width: 30,
-              height: 30,
-              iconSize: 16,
-              semanticLabel: 'More',
-              icon: const Icon(LucideIcons.ellipsisVertical),
-              onPressed: ctl.toggle,
+            builder: (context, ctl) => ShadTooltip(
+              builder: (_) => Text(l.moreActions),
+              child: ShadIconButton.ghost(
+                key: const ValueKey<String>('assistant.more'),
+                width: 30,
+                height: 30,
+                iconSize: 16,
+                semanticLabel: l.moreActions,
+                icon: const Icon(LucideIcons.ellipsisVertical),
+                onPressed: ctl.toggle,
+              ),
             ),
           ),
         ],
@@ -195,15 +197,17 @@ class _AssistantPanelState extends State<AssistantPanel> {
   }
 
   Future<void> _delete(BuildContext context) async {
+    final failed = WonkyAppLocalizations.of(context).assistantDeleteChatFailed;
     try {
       await c.deleteThread();
     } on Object {
-      widget.services.toasts.error("Couldn't delete the chat");
+      widget.services.toasts.error(failed);
     }
   }
 
   Widget _unavailable(BuildContext context, AssistantStatus status) {
     final theme = ShadTheme.of(context);
+    final l = WonkyAppLocalizations.of(context);
     final optedOut = status.reason == 'optedOut';
     return Padding(
       padding: const EdgeInsets.fromLTRB(12, 0, 12, 8),
@@ -211,7 +215,7 @@ class _AssistantPanelState extends State<AssistantPanel> {
         key: const ValueKey<String>('assistant.unavailable'),
         icon: const Icon(LucideIcons.sparkles),
         title: Text(
-          status.message ?? "AI isn't configured on this server.",
+          assistantStatusMessage(l, status),
           style: theme.textTheme.small,
         ),
         description: optedOut
@@ -220,14 +224,11 @@ class _AssistantPanelState extends State<AssistantPanel> {
                 child: ShadButton.outline(
                   size: ShadButtonSize.sm,
                   onPressed: () => widget.services.router.go('/settings/ai'),
-                  child: const Text('Open AI settings'),
+                  child: Text(l.assistantOpenAiSettings),
                 ),
               )
             : status.reason == 'notConfigured'
-            ? const Text(
-                'An administrator can enable it by adding an Anthropic API '
-                'key to the server configuration.',
-              )
+            ? Text(l.aiNotConfiguredHint)
             : null,
       ),
     );
@@ -267,19 +268,20 @@ class _AssistantPanelState extends State<AssistantPanel> {
 
   Widget _empty(BuildContext context) {
     final theme = ShadTheme.of(context);
+    final l = WonkyAppLocalizations.of(context);
     return ListView(
       padding: const EdgeInsets.fromLTRB(16, 24, 16, 12),
       children: [
         Icon(LucideIcons.sparkles, size: 28, color: theme.colorScheme.primary),
         const SizedBox(height: 10),
         Text(
-          'Ask about this document or tell the assistant what to change.',
+          l.assistantEmptyTitle,
           textAlign: TextAlign.center,
           style: theme.textTheme.small,
         ),
         const SizedBox(height: 4),
         Text(
-          'Every change it makes can be undone in one step.',
+          l.assistantEmptyBody,
           textAlign: TextAlign.center,
           style: theme.textTheme.muted.copyWith(fontSize: 12),
         ),
@@ -289,6 +291,7 @@ class _AssistantPanelState extends State<AssistantPanel> {
 
   Widget _composer(BuildContext context, {required bool enabled}) {
     final theme = ShadTheme.of(context);
+    final l = WonkyAppLocalizations.of(context);
     final cs = theme.colorScheme;
     final chips = c.chips;
     final prompts = c.adapter.quickPrompts;
@@ -346,7 +349,7 @@ class _AssistantPanelState extends State<AssistantPanel> {
               minLines: 2,
               maxLines: 8,
               keyboardType: TextInputType.multiline,
-              placeholder: const Text('Ask the assistant…'),
+              placeholder: Text(l.assistantPlaceholder),
             ),
           ),
           Row(
@@ -359,7 +362,7 @@ class _AssistantPanelState extends State<AssistantPanel> {
                   size: ShadButtonSize.sm,
                   leading: const Icon(LucideIcons.square, size: 12),
                   onPressed: () => unawaited(c.stop()),
-                  child: const Text('Stop'),
+                  child: Text(l.actionStop),
                 )
               else
                 ShadButton(
@@ -368,12 +371,12 @@ class _AssistantPanelState extends State<AssistantPanel> {
                   enabled: enabled,
                   leading: const Icon(LucideIcons.sendHorizontal, size: 13),
                   onPressed: () => unawaited(_send()),
-                  child: const Text('Send'),
+                  child: Text(l.actionSend),
                 ),
             ],
           ),
           Text(
-            AssistantPanel.privacyNotice,
+            l.assistantPrivacyNotice,
             key: const ValueKey<String>('assistant.notice'),
             style: theme.textTheme.muted.copyWith(fontSize: 11),
           ),
@@ -391,6 +394,7 @@ class _ModeToggle extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final c = controller;
+    final l = WonkyAppLocalizations.of(context);
     Widget option(AiApplyMode mode, String label, IconData icon, String tip) {
       final selected = c.applyMode == mode;
       final enabled = mode == AiApplyMode.suggest || c.canEditDirectly;
@@ -420,17 +424,17 @@ class _ModeToggle extends StatelessWidget {
       children: [
         option(
           AiApplyMode.edit,
-          'Edit',
+          l.assistantModeEdit,
           LucideIcons.pencil,
           c.canEditDirectly
-              ? 'Edit directly: changes go straight into the document'
-              : 'You can only suggest changes in this document',
+              ? l.assistantModeEditHint
+              : l.assistantModeEditUnavailable,
         ),
         option(
           AiApplyMode.suggest,
-          'Suggest',
+          l.assistantModeSuggest,
           LucideIcons.gitPullRequestArrow,
-          'Suggest: changes arrive as suggestions to accept or reject',
+          l.assistantModeSuggestHint,
         ),
       ],
     );
@@ -471,7 +475,9 @@ class _Chip extends StatelessWidget {
             width: 20,
             height: 20,
             iconSize: 11,
-            semanticLabel: 'Remove ${chip.label}',
+            semanticLabel: WonkyAppLocalizations.of(
+              context,
+            ).assistantRemoveChip(chip.label),
             icon: const Icon(LucideIcons.x),
             onPressed: onRemove,
           ),
@@ -517,6 +523,7 @@ class _ReplyView extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = ShadTheme.of(context);
     final cs = theme.colorScheme;
+    final l = WonkyAppLocalizations.of(context);
     final r = reply;
     final md = r.markdown.trim();
     return Column(
@@ -538,7 +545,10 @@ class _ReplyView extends StatelessWidget {
             children: [
               const SizedBox(width: 14, height: 14, child: ShadSpinner()),
               const SizedBox(width: 8),
-              Text(r.progress ?? 'Thinking…', style: theme.textTheme.muted),
+              Text(
+                r.progress ?? l.assistantThinking,
+                style: theme.textTheme.muted,
+              ),
             ],
           )
         else if (r.streaming && r.progress != null)
@@ -551,16 +561,14 @@ class _ReplyView extends StatelessWidget {
           _note(
             context,
             LucideIcons.ban,
-            r.error ?? AssistantController.refusalText,
+            r.error == null || r.error == AssistantController.refusalText
+                ? l.assistantRefused
+                : r.error!,
           ),
         if (r.status == AssistantReplyStatus.failed)
-          _note(
-            context,
-            LucideIcons.circleAlert,
-            r.error ?? 'Something went wrong.',
-          ),
+          _note(context, LucideIcons.circleAlert, r.error ?? l.assistantFailed),
         if (r.status == AssistantReplyStatus.stopped)
-          _note(context, LucideIcons.square, 'Stopped'),
+          _note(context, LucideIcons.square, l.assistantStopped),
         if (r.status == AssistantReplyStatus.cutOff)
           Align(
             alignment: Alignment.centerLeft,
@@ -569,7 +577,7 @@ class _ReplyView extends StatelessWidget {
               size: ShadButtonSize.sm,
               enabled: !controller.busy,
               onPressed: () => unawaited(controller.continueAnswer()),
-              child: const Text('Continue'),
+              child: Text(l.assistantContinue),
             ),
           ),
         if (!r.streaming && r.hasChanges)
@@ -581,14 +589,16 @@ class _ReplyView extends StatelessWidget {
                 enabled: !r.undone,
                 leading: const Icon(LucideIcons.undo2, size: 13),
                 onPressed: () => unawaited(controller.undoReply(r)),
-                child: Text(r.undone ? 'Undone' : 'Undo changes'),
+                child: Text(
+                  r.undone ? l.assistantUndone : l.assistantUndoChanges,
+                ),
               ),
               if (md.isNotEmpty)
                 ShadButton.ghost(
                   size: ShadButtonSize.sm,
                   leading: const Icon(LucideIcons.copy, size: 13),
                   onPressed: () => Clipboard.setData(ClipboardData(text: md)),
-                  child: const Text('Copy'),
+                  child: Text(l.actionCopy),
                 ),
             ],
           )
@@ -602,13 +612,13 @@ class _ReplyView extends StatelessWidget {
                 leading: const Icon(LucideIcons.textCursorInput, size: 13),
                 onPressed: () =>
                     unawaited(controller.adapter.insertMarkdown(md)),
-                child: const Text('Insert at cursor'),
+                child: Text(l.assistantInsertAtCursor),
               ),
               ShadButton.ghost(
                 size: ShadButtonSize.sm,
                 leading: const Icon(LucideIcons.copy, size: 13),
                 onPressed: () => Clipboard.setData(ClipboardData(text: md)),
-                child: const Text('Copy'),
+                child: Text(l.actionCopy),
               ),
             ],
           ),
@@ -632,6 +642,7 @@ class _ReplyView extends StatelessWidget {
 
   Widget _confirmation(BuildContext context, AssistantConfirmation conf) {
     final theme = ShadTheme.of(context);
+    final l = WonkyAppLocalizations.of(context);
     return ShadCard(
       key: const ValueKey<String>('assistant.confirmation'),
       padding: const EdgeInsets.all(10),
@@ -647,13 +658,13 @@ class _ReplyView extends StatelessWidget {
                 key: const ValueKey<String>('assistant.confirm.allow'),
                 size: ShadButtonSize.sm,
                 onPressed: () => unawaited(controller.confirm(true)),
-                child: const Text('Allow'),
+                child: Text(l.assistantAllow),
               ),
               ShadButton.outline(
                 key: const ValueKey<String>('assistant.confirm.deny'),
                 size: ShadButtonSize.sm,
                 onPressed: () => unawaited(controller.confirm(false)),
-                child: const Text('Deny'),
+                child: Text(l.assistantDeny),
               ),
             ],
           ),
@@ -678,6 +689,7 @@ class _ActivityChip extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = ShadTheme.of(context);
     final cs = theme.colorScheme;
+    final l = WonkyAppLocalizations.of(context);
     final a = activity;
     return Container(
       key: ValueKey<String>('assistant.activity.${a.toolUseId}'),
@@ -716,7 +728,7 @@ class _ActivityChip extends StatelessWidget {
               size: ShadButtonSize.sm,
               padding: const EdgeInsets.symmetric(horizontal: 6),
               onPressed: () => controller.show(a),
-              child: const Text('Show'),
+              child: Text(l.assistantShow),
             ),
           if (a.changed && !a.running)
             ShadButton.link(
@@ -725,7 +737,7 @@ class _ActivityChip extends StatelessWidget {
               padding: const EdgeInsets.symmetric(horizontal: 6),
               enabled: !reply.undone && !reply.streaming,
               onPressed: () => unawaited(controller.undoReply(reply)),
-              child: const Text('Undo'),
+              child: Text(l.actionUndo),
             )
           else
             const SizedBox(width: 4),
@@ -768,7 +780,7 @@ class _ResultView extends StatelessWidget {
                 width: 24,
                 height: 24,
                 iconSize: 12,
-                semanticLabel: 'Close',
+                semanticLabel: WonkyAppLocalizations.of(context).actionClose,
                 icon: const Icon(LucideIcons.x),
                 onPressed: () => controller.removeEntry(r),
               ),

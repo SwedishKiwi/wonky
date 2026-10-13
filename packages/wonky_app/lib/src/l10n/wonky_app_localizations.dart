@@ -95,7 +95,10 @@ abstract class WonkyAppLocalizations {
       ];
 
   /// A list of this localizations delegate's supported locales.
-  static const List<Locale> supportedLocales = <Locale>[Locale('en')];
+  static const List<Locale> supportedLocales = <Locale>[
+    Locale('en'),
+    Locale('en', 'XA'),
+  ];
 
   /// No description provided for @aboutAppVersion.
   ///
@@ -3750,6 +3753,696 @@ abstract class WonkyAppLocalizations {
   /// In en, this message translates to:
   /// **'You have view access'**
   String get youHaveViewAccess;
+
+  /// No description provided for @assistantNewChat.
+  ///
+  /// In en, this message translates to:
+  /// **'New chat'**
+  String get assistantNewChat;
+
+  /// No description provided for @assistantClearChat.
+  ///
+  /// In en, this message translates to:
+  /// **'Clear chat'**
+  String get assistantClearChat;
+
+  /// No description provided for @assistantDeleteChat.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete this chat'**
+  String get assistantDeleteChat;
+
+  /// No description provided for @assistantDeleteChatFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t delete the chat'**
+  String get assistantDeleteChatFailed;
+
+  /// No description provided for @assistantAiSettings.
+  ///
+  /// In en, this message translates to:
+  /// **'AI settings'**
+  String get assistantAiSettings;
+
+  /// No description provided for @assistantOpenAiSettings.
+  ///
+  /// In en, this message translates to:
+  /// **'Open AI settings'**
+  String get assistantOpenAiSettings;
+
+  /// No description provided for @assistantEmptyTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Ask about this document or tell the assistant what to change.'**
+  String get assistantEmptyTitle;
+
+  /// No description provided for @assistantEmptyBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Every change it makes can be undone in one step.'**
+  String get assistantEmptyBody;
+
+  /// No description provided for @assistantPlaceholder.
+  ///
+  /// In en, this message translates to:
+  /// **'Ask the assistant…'**
+  String get assistantPlaceholder;
+
+  /// No description provided for @assistantPrivacyNotice.
+  ///
+  /// In en, this message translates to:
+  /// **'The assistant sends this document and your messages to Anthropic to generate answers.'**
+  String get assistantPrivacyNotice;
+
+  /// No description provided for @assistantModeEdit.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit'**
+  String get assistantModeEdit;
+
+  /// No description provided for @assistantModeEditHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit directly: changes go straight into the document'**
+  String get assistantModeEditHint;
+
+  /// No description provided for @assistantModeEditUnavailable.
+  ///
+  /// In en, this message translates to:
+  /// **'You can only suggest changes in this document'**
+  String get assistantModeEditUnavailable;
+
+  /// No description provided for @assistantModeSuggest.
+  ///
+  /// In en, this message translates to:
+  /// **'Suggest'**
+  String get assistantModeSuggest;
+
+  /// No description provided for @assistantModeSuggestHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Suggest: changes arrive as suggestions to accept or reject'**
+  String get assistantModeSuggestHint;
+
+  /// No description provided for @assistantRemoveChip.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove {label}'**
+  String assistantRemoveChip(String label);
+
+  /// No description provided for @assistantThinking.
+  ///
+  /// In en, this message translates to:
+  /// **'Thinking…'**
+  String get assistantThinking;
+
+  /// No description provided for @assistantRefused.
+  ///
+  /// In en, this message translates to:
+  /// **'The assistant can\'t help with that request.'**
+  String get assistantRefused;
+
+  /// No description provided for @assistantFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Something went wrong.'**
+  String get assistantFailed;
+
+  /// No description provided for @assistantStopped.
+  ///
+  /// In en, this message translates to:
+  /// **'Stopped'**
+  String get assistantStopped;
+
+  /// No description provided for @assistantContinue.
+  ///
+  /// In en, this message translates to:
+  /// **'Continue'**
+  String get assistantContinue;
+
+  /// No description provided for @assistantUndone.
+  ///
+  /// In en, this message translates to:
+  /// **'Undone'**
+  String get assistantUndone;
+
+  /// No description provided for @assistantUndoChanges.
+  ///
+  /// In en, this message translates to:
+  /// **'Undo changes'**
+  String get assistantUndoChanges;
+
+  /// No description provided for @assistantInsertAtCursor.
+  ///
+  /// In en, this message translates to:
+  /// **'Insert at cursor'**
+  String get assistantInsertAtCursor;
+
+  /// No description provided for @assistantAllow.
+  ///
+  /// In en, this message translates to:
+  /// **'Allow'**
+  String get assistantAllow;
+
+  /// No description provided for @assistantDeny.
+  ///
+  /// In en, this message translates to:
+  /// **'Deny'**
+  String get assistantDeny;
+
+  /// No description provided for @assistantShow.
+  ///
+  /// In en, this message translates to:
+  /// **'Show'**
+  String get assistantShow;
+
+  /// No description provided for @assistantCopyCode.
+  ///
+  /// In en, this message translates to:
+  /// **'Copy code'**
+  String get assistantCopyCode;
+
+  /// No description provided for @aiNotConfigured.
+  ///
+  /// In en, this message translates to:
+  /// **'AI isn\'t configured on this server.'**
+  String get aiNotConfigured;
+
+  /// No description provided for @aiNotConfiguredHint.
+  ///
+  /// In en, this message translates to:
+  /// **'An administrator can enable it by adding an Anthropic API key to the server configuration.'**
+  String get aiNotConfiguredHint;
+
+  /// No description provided for @aiDisabled.
+  ///
+  /// In en, this message translates to:
+  /// **'AI is turned off on this server.'**
+  String get aiDisabled;
+
+  /// No description provided for @aiOptedOut.
+  ///
+  /// In en, this message translates to:
+  /// **'The assistant is turned off in your settings (Settings › AI).'**
+  String get aiOptedOut;
+
+  /// No description provided for @aiAssistantTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Assistant'**
+  String get aiAssistantTitle;
+
+  /// No description provided for @aiAssistantHint.
+  ///
+  /// In en, this message translates to:
+  /// **'The assistant helps you write, edit and understand documents. It only sees the document you use it in.'**
+  String get aiAssistantHint;
+
+  /// No description provided for @aiEnableHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Turn off to hide AI features and stop sending content to the AI service.'**
+  String get aiEnableHint;
+
+  /// No description provided for @aiQuality.
+  ///
+  /// In en, this message translates to:
+  /// **'AI quality'**
+  String get aiQuality;
+
+  /// No description provided for @aiQualityBest.
+  ///
+  /// In en, this message translates to:
+  /// **'Best'**
+  String get aiQualityBest;
+
+  /// No description provided for @aiQualityBestHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Most capable answers and edits'**
+  String get aiQualityBestHint;
+
+  /// No description provided for @aiQualityBalanced.
+  ///
+  /// In en, this message translates to:
+  /// **'Balanced'**
+  String get aiQualityBalanced;
+
+  /// No description provided for @aiQualityBalancedHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Good answers, a little faster'**
+  String get aiQualityBalancedHint;
+
+  /// No description provided for @aiQualityFast.
+  ///
+  /// In en, this message translates to:
+  /// **'Fast'**
+  String get aiQualityFast;
+
+  /// No description provided for @aiQualityFastHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Quickest answers for simple tasks'**
+  String get aiQualityFastHint;
+
+  /// No description provided for @aiQualitySaveFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t save the AI quality'**
+  String get aiQualitySaveFailed;
+
+  /// No description provided for @aiUsageToday.
+  ///
+  /// In en, this message translates to:
+  /// **'Usage today'**
+  String get aiUsageToday;
+
+  /// No description provided for @aiUsageTodayHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Resets daily at midnight UTC.'**
+  String get aiUsageTodayHint;
+
+  /// No description provided for @aiUsagePercent.
+  ///
+  /// In en, this message translates to:
+  /// **'{percent} %'**
+  String aiUsagePercent(int percent);
+
+  /// No description provided for @aiChatHistory.
+  ///
+  /// In en, this message translates to:
+  /// **'Chat history'**
+  String get aiChatHistory;
+
+  /// No description provided for @aiChatHistoryHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete all your assistant chats.'**
+  String get aiChatHistoryHint;
+
+  /// No description provided for @aiClearHistory.
+  ///
+  /// In en, this message translates to:
+  /// **'Clear history'**
+  String get aiClearHistory;
+
+  /// No description provided for @aiClearHistoryTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Clear assistant history?'**
+  String get aiClearHistoryTitle;
+
+  /// No description provided for @aiClearHistoryBody.
+  ///
+  /// In en, this message translates to:
+  /// **'All your assistant chats in every document are deleted. This can\'t be undone. Edits the assistant made stay in the documents.'**
+  String get aiClearHistoryBody;
+
+  /// No description provided for @aiClearHistoryFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t clear the history'**
+  String get aiClearHistoryFailed;
+
+  /// No description provided for @aiHistoryCleared.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{Deleted 1 chat} other{Deleted {count} chats}}'**
+  String aiHistoryCleared(int count);
+
+  /// No description provided for @mcpScopeDriveRead.
+  ///
+  /// In en, this message translates to:
+  /// **'Drive: read (list, search, export)'**
+  String get mcpScopeDriveRead;
+
+  /// No description provided for @mcpScopeDriveWrite.
+  ///
+  /// In en, this message translates to:
+  /// **'Drive: write (create, rename, move, trash, share)'**
+  String get mcpScopeDriveWrite;
+
+  /// No description provided for @mcpScopeWriteRead.
+  ///
+  /// In en, this message translates to:
+  /// **'Documents: read'**
+  String get mcpScopeWriteRead;
+
+  /// No description provided for @mcpScopeWriteEdit.
+  ///
+  /// In en, this message translates to:
+  /// **'Documents: edit (content, comments, suggestions)'**
+  String get mcpScopeWriteEdit;
+
+  /// No description provided for @mcpScopeSheetsRead.
+  ///
+  /// In en, this message translates to:
+  /// **'Spreadsheets: read'**
+  String get mcpScopeSheetsRead;
+
+  /// No description provided for @mcpScopeSheetsEdit.
+  ///
+  /// In en, this message translates to:
+  /// **'Spreadsheets: edit'**
+  String get mcpScopeSheetsEdit;
+
+  /// No description provided for @mcpScopeScriptsRun.
+  ///
+  /// In en, this message translates to:
+  /// **'Scripts: run'**
+  String get mcpScopeScriptsRun;
+
+  /// No description provided for @mcpScopeUiControl.
+  ///
+  /// In en, this message translates to:
+  /// **'Control app windows (ui.* tools)'**
+  String get mcpScopeUiControl;
+
+  /// No description provided for @tokenCreateHint.
+  ///
+  /// In en, this message translates to:
+  /// **'The token acts as you with the permissions you choose. You can revoke it at any time.'**
+  String get tokenCreateHint;
+
+  /// No description provided for @tokenNameRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'Give the token a name.'**
+  String get tokenNameRequired;
+
+  /// No description provided for @tokenScopesRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose at least one permission.'**
+  String get tokenScopesRequired;
+
+  /// No description provided for @tokenExpires.
+  ///
+  /// In en, this message translates to:
+  /// **'Expires'**
+  String get tokenExpires;
+
+  /// No description provided for @tokenExpiresInDays.
+  ///
+  /// In en, this message translates to:
+  /// **'{days, plural, =1{In 1 day} other{In {days} days}}'**
+  String tokenExpiresInDays(int days);
+
+  /// No description provided for @tokenExpiresInYear.
+  ///
+  /// In en, this message translates to:
+  /// **'In 1 year'**
+  String get tokenExpiresInYear;
+
+  /// No description provided for @tokenNever.
+  ///
+  /// In en, this message translates to:
+  /// **'Never'**
+  String get tokenNever;
+
+  /// No description provided for @tokenNeverLower.
+  ///
+  /// In en, this message translates to:
+  /// **'never'**
+  String get tokenNeverLower;
+
+  /// No description provided for @tokenExpired.
+  ///
+  /// In en, this message translates to:
+  /// **'expired'**
+  String get tokenExpired;
+
+  /// No description provided for @tokenNameWithStatus.
+  ///
+  /// In en, this message translates to:
+  /// **'{name} · {status}'**
+  String tokenNameWithStatus(String name, String status);
+
+  /// No description provided for @tokenDates.
+  ///
+  /// In en, this message translates to:
+  /// **'Created {created} · expires {expires} · last used {lastUsed}'**
+  String tokenDates(String created, String expires, String lastUsed);
+
+  /// No description provided for @tokenRevokeTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Revoke \"{name}\"?'**
+  String tokenRevokeTitle(String name);
+
+  /// No description provided for @tokenRevokeBody.
+  ///
+  /// In en, this message translates to:
+  /// **'MCP clients using this token stop working immediately. This can\'t be undone.'**
+  String get tokenRevokeBody;
+
+  /// No description provided for @toastTokenCopied.
+  ///
+  /// In en, this message translates to:
+  /// **'Token copied'**
+  String get toastTokenCopied;
+
+  /// No description provided for @mcpEndpoint.
+  ///
+  /// In en, this message translates to:
+  /// **'Endpoint: {url}'**
+  String mcpEndpoint(String url);
+
+  /// No description provided for @mcpReplaceToken.
+  ///
+  /// In en, this message translates to:
+  /// **'Replace {variable} with a token.'**
+  String mcpReplaceToken(String variable);
+
+  /// No description provided for @mcpWindowControl.
+  ///
+  /// In en, this message translates to:
+  /// **'Window control'**
+  String get mcpWindowControl;
+
+  /// No description provided for @mcpWindowControlHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Lets MCP clients with the ui:control permission drive this window: navigate, run commands, fill dialogs, take screenshots. A pill with Stop shows while an agent works.'**
+  String get mcpWindowControlHint;
+
+  /// No description provided for @mcpBridgeStatus.
+  ///
+  /// In en, this message translates to:
+  /// **'Status'**
+  String get mcpBridgeStatus;
+
+  /// No description provided for @mcpBridgeOff.
+  ///
+  /// In en, this message translates to:
+  /// **'Off'**
+  String get mcpBridgeOff;
+
+  /// No description provided for @mcpBridgeConnecting.
+  ///
+  /// In en, this message translates to:
+  /// **'Connecting…'**
+  String get mcpBridgeConnecting;
+
+  /// No description provided for @mcpBridgeConnected.
+  ///
+  /// In en, this message translates to:
+  /// **'On · window {id}'**
+  String mcpBridgeConnected(String id);
+
+  /// Screen reader label of a drive row or card, e.g. 'Document Plan'.
+  ///
+  /// In en, this message translates to:
+  /// **'{kind} {name}'**
+  String driveItemLabel(String kind, String name);
+
+  /// No description provided for @activityTabViewers.
+  ///
+  /// In en, this message translates to:
+  /// **'Viewers'**
+  String get activityTabViewers;
+
+  /// No description provided for @activityTabTrends.
+  ///
+  /// In en, this message translates to:
+  /// **'Trends'**
+  String get activityTabTrends;
+
+  /// No description provided for @activityTabActivity.
+  ///
+  /// In en, this message translates to:
+  /// **'Activity'**
+  String get activityTabActivity;
+
+  /// No description provided for @activityPeriodDays.
+  ///
+  /// In en, this message translates to:
+  /// **'Last {days} days'**
+  String activityPeriodDays(int days);
+
+  /// No description provided for @activityShowMyViewHistory.
+  ///
+  /// In en, this message translates to:
+  /// **'Show my view history'**
+  String get activityShowMyViewHistory;
+
+  /// No description provided for @activityShowMyViewHistoryHint.
+  ///
+  /// In en, this message translates to:
+  /// **'When this is off, you\'re not listed as a viewer of any file. Your views are still counted anonymously in the trends.'**
+  String get activityShowMyViewHistoryHint;
+
+  /// No description provided for @activityViewersHidden.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 more person turned off their view history} other{{count} more people turned off their view history}}'**
+  String activityViewersHidden(int count);
+
+  /// No description provided for @activityViewersEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'{days, plural, =1{Nobody with access opened this today} other{Nobody with access opened this in the last {days} days}}'**
+  String activityViewersEmpty(int days);
+
+  /// No description provided for @activityViewersCount.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 person with access opened this in the last {days} days} other{{count} people with access opened this in the last {days} days}}'**
+  String activityViewersCount(int count, int days);
+
+  /// No description provided for @activityLastViewed.
+  ///
+  /// In en, this message translates to:
+  /// **'Viewed {time}'**
+  String activityLastViewed(String time);
+
+  /// No description provided for @activityViewCount.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 view} other{{count} views}}'**
+  String activityViewCount(int count);
+
+  /// No description provided for @activityChartSummary.
+  ///
+  /// In en, this message translates to:
+  /// **'{title}: {total} in total, at most {peak} on one day'**
+  String activityChartSummary(String title, int total, int peak);
+
+  /// No description provided for @activityViewTrend.
+  ///
+  /// In en, this message translates to:
+  /// **'Views'**
+  String get activityViewTrend;
+
+  /// No description provided for @activityViewTrendHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Unique viewers per day'**
+  String get activityViewTrendHint;
+
+  /// No description provided for @activityCommentTrend.
+  ///
+  /// In en, this message translates to:
+  /// **'Comments'**
+  String get activityCommentTrend;
+
+  /// No description provided for @activityCommentTrendHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Comments and replies per day'**
+  String get activityCommentTrendHint;
+
+  /// No description provided for @activityShowMore.
+  ///
+  /// In en, this message translates to:
+  /// **'Show more'**
+  String get activityShowMore;
+
+  /// No description provided for @notificationsFilterAll.
+  ///
+  /// In en, this message translates to:
+  /// **'All'**
+  String get notificationsFilterAll;
+
+  /// No description provided for @notificationsFilterUnread.
+  ///
+  /// In en, this message translates to:
+  /// **'Unread'**
+  String get notificationsFilterUnread;
+
+  /// No description provided for @notificationsFilterUnreadCount.
+  ///
+  /// In en, this message translates to:
+  /// **'Unread ({count})'**
+  String notificationsFilterUnreadCount(int count);
+
+  /// No description provided for @notificationsSettings.
+  ///
+  /// In en, this message translates to:
+  /// **'Notification settings'**
+  String get notificationsSettings;
+
+  /// No description provided for @notificationsLoadFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t load your notifications'**
+  String get notificationsLoadFailed;
+
+  /// No description provided for @notificationsEmptyUnread.
+  ///
+  /// In en, this message translates to:
+  /// **'No unread notifications'**
+  String get notificationsEmptyUnread;
+
+  /// No description provided for @notificationsLoadMore.
+  ///
+  /// In en, this message translates to:
+  /// **'Load more'**
+  String get notificationsLoadMore;
+
+  /// No description provided for @notificationsUnreadMarker.
+  ///
+  /// In en, this message translates to:
+  /// **'unread'**
+  String get notificationsUnreadMarker;
+
+  /// No description provided for @notifSuggestionAccepted.
+  ///
+  /// In en, this message translates to:
+  /// **'{who} accepted your suggestion in {item}'**
+  String notifSuggestionAccepted(String who, String item);
+
+  /// No description provided for @notifSuggestionRejected.
+  ///
+  /// In en, this message translates to:
+  /// **'{who} rejected your suggestion in {item}'**
+  String notifSuggestionRejected(String who, String item);
+
+  /// No description provided for @notifyAccessRequests.
+  ///
+  /// In en, this message translates to:
+  /// **'Access requests'**
+  String get notifyAccessRequests;
+
+  /// No description provided for @notifySuggestions.
+  ///
+  /// In en, this message translates to:
+  /// **'Suggestions on my files'**
+  String get notifySuggestions;
+
+  /// No description provided for @notifyDigest.
+  ///
+  /// In en, this message translates to:
+  /// **'Bundle emails'**
+  String get notifyDigest;
+
+  /// No description provided for @notifyDigestHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Send one email every 15 minutes instead of one per notification. Mentions and assignments are always emailed right away.'**
+  String get notifyDigestHint;
 }
 
 class _WonkyAppLocalizationsDelegate
@@ -3772,6 +4465,18 @@ class _WonkyAppLocalizationsDelegate
 }
 
 WonkyAppLocalizations lookupWonkyAppLocalizations(Locale locale) {
+  // Lookup logic when language+country codes are specified.
+  switch (locale.languageCode) {
+    case 'en':
+      {
+        switch (locale.countryCode) {
+          case 'XA':
+            return WonkyAppLocalizationsEnXa();
+        }
+        break;
+      }
+  }
+
   // Lookup logic when only language code is specified.
   switch (locale.languageCode) {
     case 'en':

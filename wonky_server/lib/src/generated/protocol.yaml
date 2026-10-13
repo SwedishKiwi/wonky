@@ -9,6 +9,10 @@ emailIdp:
   - hasAccount:
 jwtRefresh:
   - refreshAccessToken:
+activity:
+  - dashboard:
+  - showViewHistory:
+  - setShowViewHistory:
 assistant:
   - getStatus:
   - setQuality:

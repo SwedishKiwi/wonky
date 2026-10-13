@@ -1,0 +1,18 @@
+### Tools › Activity dashboard (specs/07 §6).
+class: ActivityDashboard
+fields:
+  ### Period length in days (the trends have one point per day, oldest first).
+  days: int
+  ### Viewers are listed for Editors and Owners only.
+  canSeeViewers: bool
+  ### People in the item's share set who opened it, most recent first. Empty
+  ### unless [canSeeViewers]; people with "Show my view history" off are left out.
+  viewers: List<ActivityViewer>
+  ### Viewers left out because they turned their view history off.
+  hiddenViewers: int
+  ### Unique viewers per day.
+  viewTrend: List<ActivityTrendPoint>
+  ### Comments and replies per day.
+  commentTrend: List<ActivityTrendPoint>
+  ### The caller's own "Show my view history" setting.
+  showMyViewHistory: bool

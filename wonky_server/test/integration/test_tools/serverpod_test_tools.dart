@@ -22,6 +22,10 @@ import 'package:serverpod_offline_sync_server/serverpod_offline_sync_server.dart
     as _izehhkf5;
 import 'package:serverpod_test/serverpod_test.dart' as _ist;
 import 'package:wonky_server/src/generated/future_calls.dart' as _iwslocjr;
+import 'package:wonky_server/src/generated/future_calls_generated_models/notification_email_future_call_send_model.dart'
+    as _iuw2rc8h;
+import 'package:wonky_server/src/generated/platform/activity/activity_dashboard.dart'
+    as _iwuvk2ka;
 import 'package:wonky_server/src/generated/platform/activity/activity_event_view.dart'
     as _iiw0494r;
 import 'package:wonky_server/src/generated/platform/ai/models/ai_quality.dart'
@@ -297,6 +301,8 @@ class TestEndpoints {
 
   late final _JwtRefreshEndpoint jwtRefresh;
 
+  late final _ActivityEndpoint activity;
+
   late final _AssistantEndpoint assistant;
 
   late final _CommentEndpoint comment;
@@ -350,6 +356,10 @@ class _InternalTestEndpoints extends TestEndpoints
       serializationManager,
     );
     jwtRefresh = _JwtRefreshEndpoint(
+      endpoints,
+      serializationManager,
+    );
+    activity = _ActivityEndpoint(
       endpoints,
       serializationManager,
     );
@@ -438,6 +448,8 @@ class _InternalTestEndpoints extends TestEndpoints
 
 class _FutureCalls {
   late final maintenance = _MaintenanceFutureCall();
+
+  late final notificationEmail = _NotificationEmailFutureCall();
 }
 
 class _EmailIdpEndpoint {
@@ -750,6 +762,113 @@ class _JwtRefreshEndpoint {
                   _localCallContext.arguments,
                 )
                 as _ida.Future<_iacs.AuthSuccess>);
+        return _localReturnValue;
+      } finally {
+        await _localUniqueSession.close();
+      }
+    });
+  }
+}
+
+class _ActivityEndpoint {
+  _ActivityEndpoint(
+    this._endpointDispatch,
+    this._serializationManager,
+  );
+
+  final _is.EndpointDispatch _endpointDispatch;
+
+  final _is.SerializationManager _serializationManager;
+
+  _ida.Future<_iwuvk2ka.ActivityDashboard> dashboard(
+    _ist.TestSessionBuilder sessionBuilder,
+    _is.UuidValue itemUuid,
+    int days,
+  ) async {
+    return _ist.callAwaitableFunctionAndHandleExceptions(() async {
+      var _localUniqueSession =
+          (sessionBuilder as _ist.InternalTestSessionBuilder).internalBuild(
+            endpoint: 'activity',
+            method: 'dashboard',
+          );
+      try {
+        var _localCallContext = await _endpointDispatch.getMethodCallContext(
+          createSessionCallback: (_) => _localUniqueSession,
+          endpointPath: 'activity',
+          methodName: 'dashboard',
+          parameters: _ist.testObjectToJson({
+            'itemUuid': itemUuid,
+            'days': days,
+          }),
+          serializationManager: _serializationManager,
+        );
+        var _localReturnValue =
+            await (_localCallContext.method.call(
+                  _localUniqueSession,
+                  _localCallContext.arguments,
+                )
+                as _ida.Future<_iwuvk2ka.ActivityDashboard>);
+        return _localReturnValue;
+      } finally {
+        await _localUniqueSession.close();
+      }
+    });
+  }
+
+  _ida.Future<bool> showViewHistory(
+    _ist.TestSessionBuilder sessionBuilder,
+  ) async {
+    return _ist.callAwaitableFunctionAndHandleExceptions(() async {
+      var _localUniqueSession =
+          (sessionBuilder as _ist.InternalTestSessionBuilder).internalBuild(
+            endpoint: 'activity',
+            method: 'showViewHistory',
+          );
+      try {
+        var _localCallContext = await _endpointDispatch.getMethodCallContext(
+          createSessionCallback: (_) => _localUniqueSession,
+          endpointPath: 'activity',
+          methodName: 'showViewHistory',
+          parameters: _ist.testObjectToJson({}),
+          serializationManager: _serializationManager,
+        );
+        var _localReturnValue =
+            await (_localCallContext.method.call(
+                  _localUniqueSession,
+                  _localCallContext.arguments,
+                )
+                as _ida.Future<bool>);
+        return _localReturnValue;
+      } finally {
+        await _localUniqueSession.close();
+      }
+    });
+  }
+
+  _ida.Future<bool> setShowViewHistory(
+    _ist.TestSessionBuilder sessionBuilder,
+    bool show,
+  ) async {
+    return _ist.callAwaitableFunctionAndHandleExceptions(() async {
+      var _localUniqueSession =
+          (sessionBuilder as _ist.InternalTestSessionBuilder).internalBuild(
+            endpoint: 'activity',
+            method: 'setShowViewHistory',
+          );
+      try {
+        var _localCallContext = await _endpointDispatch.getMethodCallContext(
+          createSessionCallback: (_) => _localUniqueSession,
+          endpointPath: 'activity',
+          methodName: 'setShowViewHistory',
+          parameters: _ist.testObjectToJson({'show': show}),
+          serializationManager: _serializationManager,
+        );
+        var _localReturnValue =
+            await (_localCallContext.method.call(
+                  _localUniqueSession,
+                  _localCallContext.arguments,
+                )
+                as _ida.Future<bool>);
         return _localReturnValue;
       } finally {
         await _localUniqueSession.close();
@@ -5632,6 +5751,27 @@ class _MaintenanceFutureCall {
       await _iwslocjr.MaintenanceDailyFutureCall().invoke(
         _localUniqueSession,
         null,
+      );
+    } finally {
+      await _localUniqueSession.close();
+    }
+  }
+}
+
+class _NotificationEmailFutureCall {
+  Future<void> send(
+    _ist.TestSessionBuilder sessionBuilder,
+    int notificationId,
+  ) async {
+    var object = _iuw2rc8h.NotificationEmailFutureCallSendModel(
+      notificationId: notificationId,
+    );
+    var _localUniqueSession =
+        (sessionBuilder as _ist.InternalTestSessionBuilder).internalBuild();
+    try {
+      await _iwslocjr.NotificationEmailSendFutureCall().invoke(
+        _localUniqueSession,
+        object,
       );
     } finally {
       await _localUniqueSession.close();

@@ -1,0 +1,201 @@
+import 'dart:convert';
+
+import '../../common/json.dart';
+import '../../common/models.dart';
+import 'email_sender.dart';
+
+/// Renders notification emails (specs/07 §4): one email for a mention or an
+/// assignment, a digest for everything else. Links point at the apps on the
+/// web server (`<origin>/write/d/<uuid>`, `<origin>/sheets/s/<uuid>`).
+class NotificationEmails {
+  const NotificationEmails({required this.webOrigin});
+
+  /// The public web server origin, e.g. `https://wonky.example.com`.
+  final Uri webOrigin;
+
+  /// A link to the item of [n], or the Write home when it has no item.
+  Uri linkFor(NotificationView n) {
+    final uuid = n.itemUuid?.uuid;
+    final path = switch ((uuid, n.itemKind)) {
+      (null, _) => '/write/',
+      (_, DriveItemKind.spreadsheet) => '/sheets/s/$uuid',
+      (_, DriveItemKind.folder) => '/write/drive/$uuid',
+      _ => '/write/d/$uuid',
+    };
+    return webOrigin.replace(path: path);
+  }
+
+  /// The settings page where notification emails are turned off.
+  Uri get settingsLink =>
+      webOrigin.replace(path: '/write/settings/notifications');
+
+  /// The one-line description of [n] (plain text).
+  String describe(NotificationView n) {
+    final who = n.actor?.displayName ?? 'Someone';
+    final what = '“${n.itemName ?? 'an item'}”';
+    final p = decodeObject(n.payload);
+    return switch (n.kind) {
+      NotificationKind.mention => '$who mentioned you in $what',
+      NotificationKind.reply => '$who replied to a comment in $what',
+      NotificationKind.assigned => '$who assigned you a comment in $what',
+      NotificationKind.shared =>
+        '$who shared $what with you'
+            '${p['role'] is String ? ' (${_roleName('${p['role']}')})' : ''}',
+      NotificationKind.accessRequest =>
+        '$who requests '
+            '${p['role'] is String ? '${_roleName('${p['role']}')} ' : ''}'
+            'access to $what',
+      NotificationKind.suggestion => '$who suggested edits in $what',
+      NotificationKind.suggestionDecided =>
+        '$who ${p['decision'] == 'rejected' ? 'rejected' : 'accepted'} '
+            'your suggestion in $what',
+      NotificationKind.ownershipTransfer =>
+        '$who wants to transfer ownership of $what to you',
+      NotificationKind.scriptFailure => 'A script failed in $what',
+    };
+  }
+
+  static String _roleName(String role) => switch (role) {
+    'viewer' => 'viewer',
+    'commenter' => 'commenter',
+    'editor' => 'editor',
+    'owner' => 'owner',
+    _ => role,
+  };
+
+  /// Quoted context of [n]: the comment excerpt or the share message.
+  String? excerpt(NotificationView n) {
+    final p = decodeObject(n.payload);
+    final e = p['excerpt'] ?? p['message'];
+    return e is String && e.trim().isNotEmpty ? e.trim() : null;
+  }
+
+  /// The email for a single mention or assignment.
+  OutgoingEmail single({
+    required String to,
+    required String displayName,
+    required NotificationView notification,
+  }) {
+    final line = describe(notification);
+    final quote = excerpt(notification);
+    final link = linkFor(notification);
+    final text = StringBuffer()
+      ..writeln('Hi $displayName,')
+      ..writeln()
+      ..writeln('$line.');
+    if (quote != null) {
+      text
+        ..writeln()
+        ..writeln(quote.split('\n').map((l) => '> $l').join('\n'));
+    }
+    text
+      ..writeln()
+      ..writeln('Open: $link')
+      ..writeln()
+      ..writeln(_footerText);
+    return OutgoingEmail(
+      to: to,
+      subject: line,
+      text: text.toString(),
+      html: _html(
+        greeting: 'Hi ${_e(displayName)},',
+        entries: [_entryHtml(notification)],
+      ),
+      category: notification.kind.name,
+    );
+  }
+
+  /// The digest email of [notifications] (grouped by item, newest first).
+  OutgoingEmail digest({
+    required String to,
+    required String displayName,
+    required List<NotificationView> notifications,
+  }) {
+    final sorted = [...notifications]
+      ..sort((a, b) => b.createdAt.compareTo(a.createdAt));
+    final groups = <String, List<NotificationView>>{};
+    for (final n in sorted) {
+      groups.putIfAbsent(n.itemUuid?.uuid ?? '', () => []).add(n);
+    }
+    final count = sorted.length;
+    final subject = count == 1
+        ? describe(sorted.single)
+        : '$count new notifications in Wonky Work';
+    final text = StringBuffer()
+      ..writeln('Hi $displayName,')
+      ..writeln()
+      ..writeln(
+        count == 1
+            ? 'Here is what happened while you were away:'
+            : 'Here are $count updates since your last email:',
+      );
+    for (final group in groups.values) {
+      text
+        ..writeln()
+        ..writeln(group.first.itemName ?? 'Wonky Work');
+      for (final n in group) {
+        text.writeln('  • ${describe(n)}');
+        final q = excerpt(n);
+        if (q != null) text.writeln('    “${_oneLine(q)}”');
+      }
+      text.writeln('  Open: ${linkFor(group.first)}');
+    }
+    text
+      ..writeln()
+      ..writeln(_footerText);
+    return OutgoingEmail(
+      to: to,
+      subject: subject,
+      text: text.toString(),
+      html: _html(
+        greeting: 'Hi ${_e(displayName)},',
+        entries: [for (final n in sorted) _entryHtml(n)],
+      ),
+      category: 'digest',
+    );
+  }
+
+  String get _footerText =>
+      'You get these emails because of your notification settings. '
+      'Change them: $settingsLink';
+
+  String _entryHtml(NotificationView n) {
+    final quote = excerpt(n);
+    return '<tr><td style="padding:12px 0;border-bottom:1px solid #e5e7eb">'
+        '<div style="font-size:14px;color:#111827">${_e(describe(n))}</div>'
+        '${quote == null ? '' : '<div style="margin-top:6px;padding-left:10px;border-left:3px solid #d1d5db;color:#4b5563;font-size:13px">${_e(_oneLine(quote))}</div>'}'
+        '<div style="margin-top:8px"><a href="${_e(linkFor(n).toString())}" '
+        'style="color:#2563eb;font-size:13px;text-decoration:none">Open</a></div>'
+        '</td></tr>';
+  }
+
+  String _html({required String greeting, required List<String> entries}) =>
+      '<!doctype html><html><body style="margin:0;padding:24px;'
+      'background:#f9fafb;font-family:-apple-system,Segoe UI,Roboto,'
+      'Helvetica,Arial,sans-serif">'
+      '<table role="presentation" width="100%" style="max-width:560px;'
+      'margin:0 auto;background:#ffffff;border-radius:8px;padding:24px">'
+      '<tr><td style="font-size:15px;color:#111827;padding-bottom:8px">'
+      '$greeting</td></tr>'
+      '${entries.join()}'
+      '<tr><td style="padding-top:16px;font-size:12px;color:#6b7280">'
+      'You get these emails because of your notification settings. '
+      '<a href="${_e(settingsLink.toString())}" style="color:#6b7280">'
+      'Change them</a>.</td></tr></table></body></html>';
+
+  static String _oneLine(String s) {
+    final flat = s.replaceAll(RegExp(r'\s+'), ' ').trim();
+    return flat.length > 160 ? '${flat.substring(0, 160)}…' : flat;
+  }
+
+  static const _escape = HtmlEscape(
+    HtmlEscapeMode(
+      escapeLtGt: true,
+      escapeQuot: true,
+      escapeApos: true,
+      escapeSlash: false,
+    ),
+  );
+
+  static String _e(String s) => _escape.convert(s);
+}

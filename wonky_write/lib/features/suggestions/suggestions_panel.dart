@@ -3,6 +3,7 @@ import 'package:shad/shad.dart';
 import 'package:wonky_app/wonky_app.dart';
 import 'package:wonky_ui/wonky_ui.dart';
 
+import '../../l10n/write_l10n.dart';
 import '../document/write_document_session.dart';
 import '../editor/controller/editor_types.dart';
 import 'suggestion_card.dart';
@@ -15,7 +16,7 @@ const writeSuggestionsPanelId = 'suggestions';
 SidePanelSpec suggestionsPanelSpec(WriteDocumentSession session) =>
     SidePanelSpec(
       id: writeSuggestionsPanelId,
-      title: 'Suggestions',
+      title: writeL10nOf(session.services).suggestionPanelTitle,
       icon: LucideIcons.fileDiff,
       defaultWidth: 340,
       minWidth: 300,
@@ -35,13 +36,14 @@ class WriteSuggestionsPanel extends StatelessWidget {
     final n = c.count();
     if (n == 0) return;
     if (n > 10) {
+      final l = writeL10n(context);
       final ok = await confirmDialog(
         context,
-        title: accept ? 'Accept all suggestions?' : 'Reject all suggestions?',
+        title: accept ? l.suggestionAcceptAllTitle : l.suggestionRejectAllTitle,
         description: accept
-            ? 'All $n suggestions will be applied to the document.'
-            : 'All $n suggestions will be discarded.',
-        confirmLabel: accept ? 'Accept all' : 'Reject all',
+            ? l.suggestionAcceptAllBody(n)
+            : l.suggestionRejectAllBody(n),
+        confirmLabel: accept ? l.suggestionAcceptAll : l.suggestionRejectAll,
         destructive: !accept,
       );
       if (!ok) return;
@@ -64,6 +66,7 @@ class WriteSuggestionsPanel extends StatelessWidget {
       builder: (context, _) {
         final c = session.suggestions;
         final list = c.pending;
+        final l = writeL10n(context);
         return Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
@@ -74,9 +77,8 @@ class WriteSuggestionsPanel extends StatelessWidget {
                   Expanded(
                     child: Text(
                       list.isEmpty
-                          ? 'No suggestions'
-                          : '${list.length} '
-                                '${list.length == 1 ? 'suggestion' : 'suggestions'}',
+                          ? l.suggestionNone
+                          : l.suggestionCount(list.length),
                       style: theme.textTheme.muted,
                     ),
                   ),
@@ -87,7 +89,7 @@ class WriteSuggestionsPanel extends StatelessWidget {
                       ),
                       size: ShadButtonSize.sm,
                       onPressed: () => _all(context, accept: true),
-                      child: const Text('Accept all'),
+                      child: Text(l.suggestionAcceptAll),
                     ),
                     const SizedBox(width: 6),
                     ShadButton.ghost(
@@ -96,7 +98,7 @@ class WriteSuggestionsPanel extends StatelessWidget {
                       ),
                       size: ShadButtonSize.sm,
                       onPressed: () => _all(context, accept: false),
-                      child: const Text('Reject all'),
+                      child: Text(l.suggestionRejectAll),
                     ),
                   ],
                 ],
@@ -106,9 +108,8 @@ class WriteSuggestionsPanel extends StatelessWidget {
               child: list.isEmpty
                   ? WonkyEmptyState(
                       illustration: EmptyIllustration.comments,
-                      title: 'No suggestions',
-                      description:
-                          'Switch to Suggesting mode to propose changes.',
+                      title: l.suggestionNone,
+                      description: l.suggestionEmptyHint,
                       actions: [
                         if (session.canUseMode(EditorMode.suggesting) &&
                             !c.suggesting)
@@ -118,7 +119,7 @@ class WriteSuggestionsPanel extends StatelessWidget {
                             ),
                             onPressed: () =>
                                 session.setMode(EditorMode.suggesting),
-                            child: const Text('Switch to Suggesting'),
+                            child: Text(l.suggestionSwitchToSuggesting),
                           ),
                       ],
                     )

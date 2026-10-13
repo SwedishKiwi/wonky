@@ -13,6 +13,8 @@ import 'package:wonky_write_core/wonky_write_core.dart'
         ThemeVariant,
         WriteThemeData;
 
+import '../../l10n/write_l10n.dart';
+
 /// Decoded theme JSON.
 typedef ThemeJson = Map<String, Object?>;
 
@@ -61,15 +63,16 @@ class ThemeNode {
     return null;
   }
 
-  String get label => switch (kind) {
-    ThemeNodeKind.general => 'Name & variants',
-    ThemeNodeKind.palette => 'Theme colors',
-    ThemeNodeKind.fonts => 'Fonts',
-    ThemeNodeKind.page => 'Page',
-    ThemeNodeKind.syntax => 'Syntax colors',
-    ThemeNodeKind.headerFooter => 'Page header & footer',
-    ThemeNodeKind.advanced => 'Advanced',
-    ThemeNodeKind.element => elementLabel(element!),
+  /// Display name in the element tree and inspector.
+  String label(WriteLocalizations l) => switch (kind) {
+    ThemeNodeKind.general => l.themeEditorNodeGeneral,
+    ThemeNodeKind.palette => l.themeEditorNodePalette,
+    ThemeNodeKind.fonts => l.themeEditorNodeFonts,
+    ThemeNodeKind.page => l.themeEditorNodePage,
+    ThemeNodeKind.syntax => l.themeEditorNodeSyntax,
+    ThemeNodeKind.headerFooter => l.themeEditorNodeHeaderFooter,
+    ThemeNodeKind.advanced => l.themeEditorNodeAdvanced,
+    ThemeNodeKind.element => elementLabel(l, element!),
   };
 
   @override
@@ -84,38 +87,47 @@ class ThemeNode {
 }
 
 /// Display name of [e].
-String elementLabel(ThemeElement e) => switch (e) {
-  ThemeElement.body => 'Body text',
-  ThemeElement.headings => 'All headings',
-  ThemeElement.h1 => 'Heading 1',
-  ThemeElement.h2 => 'Heading 2',
-  ThemeElement.h3 => 'Heading 3',
-  ThemeElement.h4 => 'Heading 4',
-  ThemeElement.h5 => 'Heading 5',
-  ThemeElement.h6 => 'Heading 6',
-  ThemeElement.paragraphAfterHeading => 'Paragraph after heading',
-  ThemeElement.bold => 'Bold',
-  ThemeElement.italic => 'Italic',
-  ThemeElement.strike => 'Strikethrough',
-  ThemeElement.inlineCode => 'Inline code',
-  ThemeElement.link => 'Link',
-  ThemeElement.mention => 'Mention',
-  ThemeElement.blockquote => 'Blockquote',
-  ThemeElement.codeBlock => 'Code block',
-  ThemeElement.list => 'Lists',
-  ThemeElement.task => 'Task lists',
-  ThemeElement.rule => 'Horizontal rule',
-  ThemeElement.image => 'Image',
-  ThemeElement.table => 'Table',
-  ThemeElement.header => 'Page header',
-  ThemeElement.footer => 'Page footer',
+String elementLabel(WriteLocalizations l, ThemeElement e) => switch (e) {
+  ThemeElement.body => l.themeElementBody,
+  ThemeElement.headings => l.themeElementHeadings,
+  ThemeElement.h1 => l.themeElementHeading(1),
+  ThemeElement.h2 => l.themeElementHeading(2),
+  ThemeElement.h3 => l.themeElementHeading(3),
+  ThemeElement.h4 => l.themeElementHeading(4),
+  ThemeElement.h5 => l.themeElementHeading(5),
+  ThemeElement.h6 => l.themeElementHeading(6),
+  ThemeElement.paragraphAfterHeading => l.themeElementParagraphAfterHeading,
+  ThemeElement.bold => l.themeElementBold,
+  ThemeElement.italic => l.themeElementItalic,
+  ThemeElement.strike => l.themeElementStrike,
+  ThemeElement.inlineCode => l.themeElementInlineCode,
+  ThemeElement.link => l.themeElementLink,
+  ThemeElement.mention => l.themeElementMention,
+  ThemeElement.blockquote => l.themeElementBlockquote,
+  ThemeElement.codeBlock => l.themeElementCodeBlock,
+  ThemeElement.list => l.themeElementList,
+  ThemeElement.task => l.themeElementTask,
+  ThemeElement.rule => l.themeElementRule,
+  ThemeElement.image => l.themeElementImage,
+  ThemeElement.table => l.themeElementTable,
+  ThemeElement.header => l.themeElementHeader,
+  ThemeElement.footer => l.themeElementFooter,
 };
 
 /// A group of the element tree.
 class ThemeTreeGroup {
-  const ThemeTreeGroup(this.label, this.nodes, {this.node});
+  const ThemeTreeGroup(this.id, this.nodes, {this.node});
 
-  final String label;
+  /// `headings`, `inline`, `blocks`, or empty for an untitled group.
+  final String id;
+
+  /// The group's title (empty for an untitled group).
+  String label(WriteLocalizations l) => switch (id) {
+    'headings' => l.themeEditorTreeHeadings,
+    'inline' => l.themeEditorTreeInline,
+    'blocks' => l.themeEditorTreeBlocks,
+    _ => '',
+  };
 
   /// The group's own node (Headings → all headings), if selectable.
   final ThemeNode? node;
@@ -131,7 +143,7 @@ const List<ThemeTreeGroup> themeTree = [
     ThemeNode.fonts,
     ThemeNode.element(ThemeElement.body),
   ]),
-  ThemeTreeGroup('Headings', node: ThemeNode.element(ThemeElement.headings), [
+  ThemeTreeGroup('headings', node: ThemeNode.element(ThemeElement.headings), [
     ThemeNode.element(ThemeElement.h1),
     ThemeNode.element(ThemeElement.h2),
     ThemeNode.element(ThemeElement.h3),
@@ -140,7 +152,7 @@ const List<ThemeTreeGroup> themeTree = [
     ThemeNode.element(ThemeElement.h6),
     ThemeNode.element(ThemeElement.paragraphAfterHeading),
   ]),
-  ThemeTreeGroup('Inline', [
+  ThemeTreeGroup('inline', [
     ThemeNode.element(ThemeElement.bold),
     ThemeNode.element(ThemeElement.italic),
     ThemeNode.element(ThemeElement.strike),
@@ -148,7 +160,7 @@ const List<ThemeTreeGroup> themeTree = [
     ThemeNode.element(ThemeElement.link),
     ThemeNode.element(ThemeElement.mention),
   ]),
-  ThemeTreeGroup('Blocks', [
+  ThemeTreeGroup('blocks', [
     ThemeNode.element(ThemeElement.blockquote),
     ThemeNode.element(ThemeElement.codeBlock),
     ThemeNode.syntax,
@@ -168,22 +180,32 @@ final List<ThemeNode> allThemeNodes = [
 
 /// The property sections a node edits: `(title, pathPrefix, catalog
 /// object)`. A path prefix plus a field name is a `setProperty` path.
-List<(String, String, ObjectProp)> sectionsOf(ThemeNode node) =>
-    switch (node.kind) {
-      ThemeNodeKind.element => [
-        ('', 'elements.${node.element!.name}', _catalog(node.element!)),
-      ],
-      ThemeNodeKind.page => [('', 'page', _pageWithoutHeaderFooter)],
-      ThemeNodeKind.headerFooter => [
-        ('Header and footer', 'page.headerFooter', _headerFooter),
-        ('Header only', 'elements.header', _catalog(ThemeElement.header)),
-        ('Footer only', 'elements.footer', _catalog(ThemeElement.footer)),
-      ],
-      ThemeNodeKind.advanced => [
-        ('App overlays', 'overlays', core.ThemeCatalog.overlays),
-      ],
-      _ => const [],
-    };
+List<(String, String, ObjectProp)> sectionsOf(
+  WriteLocalizations l,
+  ThemeNode node,
+) => switch (node.kind) {
+  ThemeNodeKind.element => [
+    ('', 'elements.${node.element!.name}', _catalog(node.element!)),
+  ],
+  ThemeNodeKind.page => [('', 'page', _pageWithoutHeaderFooter)],
+  ThemeNodeKind.headerFooter => [
+    (l.themeEditorSectionHeaderAndFooter, 'page.headerFooter', _headerFooter),
+    (
+      l.themeEditorSectionHeaderOnly,
+      'elements.header',
+      _catalog(ThemeElement.header),
+    ),
+    (
+      l.themeEditorSectionFooterOnly,
+      'elements.footer',
+      _catalog(ThemeElement.footer),
+    ),
+  ],
+  ThemeNodeKind.advanced => [
+    (l.themeEditorSectionAppOverlays, 'overlays', core.ThemeCatalog.overlays),
+  ],
+  _ => const [],
+};
 
 ObjectProp _catalog(ThemeElement e) => core.ThemeCatalog.elements[e]!;
 
@@ -199,22 +221,23 @@ final ObjectProp _headerFooter =
 /// element-specific).
 enum PropGroup { text, spacing, box, specific }
 
-String propGroupLabel(PropGroup g, ThemeNode node) => switch (g) {
-  PropGroup.text => 'Text',
-  PropGroup.spacing => 'Spacing',
-  PropGroup.box => 'Box',
-  PropGroup.specific => switch (node.element) {
-    ThemeElement.list => 'Markers',
-    ThemeElement.task => 'Checkboxes',
-    ThemeElement.table => 'Table',
-    ThemeElement.image => 'Image',
-    ThemeElement.rule => 'Line',
-    ThemeElement.link => 'Link',
-    ThemeElement.codeBlock => 'Code',
-    ThemeElement.headings => 'Numbering',
-    _ => 'More',
-  },
-};
+String propGroupLabel(WriteLocalizations l, PropGroup g, ThemeNode node) =>
+    switch (g) {
+      PropGroup.text => l.themeEditorGroupText,
+      PropGroup.spacing => l.themeEditorGroupSpacing,
+      PropGroup.box => l.themeEditorGroupBox,
+      PropGroup.specific => switch (node.element) {
+        ThemeElement.list => l.themeEditorGroupMarkers,
+        ThemeElement.task => l.themeEditorGroupCheckboxes,
+        ThemeElement.table => l.themeEditorGroupTable,
+        ThemeElement.image => l.themeEditorGroupImage,
+        ThemeElement.rule => l.themeEditorGroupLine,
+        ThemeElement.link => l.themeEditorGroupLink,
+        ThemeElement.codeBlock => l.themeEditorGroupCode,
+        ThemeElement.headings => l.themeEditorGroupNumbering,
+        _ => l.themeEditorGroupMore,
+      },
+    };
 
 const _textKeys = {
   'fontFamily',
@@ -269,104 +292,104 @@ PropGroup groupOf(String key) {
   return PropGroup.specific;
 }
 
-const _labels = <String, String>{
-  'fontFamily': 'Font',
-  'fontSize': 'Size',
-  'fontWeight': 'Weight',
-  'fontStyle': 'Style',
-  'lineHeight': 'Line height',
-  'letterSpacing': 'Letter spacing',
-  'color': 'Color',
-  'caseTransform': 'Case',
-  'fontFeatures': 'OpenType features',
-  'spaceBefore': 'Space before',
-  'spaceAfter': 'Space after',
-  'padding': 'Padding',
-  'background': 'Background',
-  'border': 'Border',
-  'borderRadius': 'Corner radius',
-  'keepWithNext': 'Keep with next',
-  'pageBreakBefore': 'Page break before',
-  'align': 'Alignment',
-  'firstLineIndent': 'First-line indent',
-  'numbering': 'Heading numbering',
-  'enabled': 'Enabled',
-  'fromLevel': 'From level',
-  'toLevel': 'To level',
-  'style': 'Style',
-  'suffix': 'Suffix',
-  'borderBottom': 'Bottom border',
-  'borderTop': 'Top border',
-  'borderBottomGap': 'Gap above border',
-  'lineColor': 'Line color',
-  'lineThickness': 'Line thickness',
-  'sizeRatio': 'Size ratio',
-  'paddingX': 'Horizontal padding',
-  'hoverColor': 'Hover color',
-  'underline': 'Underline',
-  'underlineStyle': 'Underline style',
-  'underlineThickness': 'Underline thickness',
-  'prefix': 'Prefix',
-  'bar': 'Left bar',
-  'italic': 'Italic',
-  'wrap': 'Wrap lines',
-  'showLanguageLabel': 'Language label',
-  'tabSize': 'Tab size',
-  'lineNumbers': 'Line numbers',
-  'bullets': 'Bullets per level',
-  'bulletColor': 'Bullet color',
-  'bulletScale': 'Bullet size',
-  'numberSuffix': 'Number suffix',
-  'numberColor': 'Number color',
-  'indentPerLevel': 'Indent per level',
-  'markerGap': 'Marker gap',
-  'itemSpacing': 'Item spacing',
-  'checkbox': 'Checkbox',
-  'shape': 'Shape',
-  'size': 'Size',
-  'borderColor': 'Border color',
-  'checkedFill': 'Checked fill',
-  'checkColor': 'Check mark',
-  'checkedText': 'Checked items',
-  'strike': 'Strike through',
-  'opacity': 'Opacity',
-  'thickness': 'Thickness',
-  'width': 'Width',
-  'ornament': 'Ornament',
-  'maxWidth': 'Max width',
-  'shadow': 'Shadow',
-  'caption': 'Caption',
-  'show': 'Show',
-  'gap': 'Gap',
-  'headerBackground': 'Header background',
-  'headerColor': 'Header text',
-  'headerFontWeight': 'Header weight',
-  'borders': 'Borders',
-  'borderWidth': 'Border width',
-  'zebra': 'Zebra rows',
-  'zebraColor': 'Zebra color',
-  'cellPadding': 'Cell padding',
-  'fontSizeRatio': 'Text size ratio',
-  'paperColor': 'Paper',
-  'canvasColor': 'Canvas',
-  'pageShadow': 'Page shadow',
-  'pagelessMaxWidth': 'Pageless width',
-  'pagelessPadding': 'Pageless padding',
-  'defaultMargins': 'Default margins',
-  'selection': 'Selection',
-  'caret': 'Caret',
-  'commentHighlight': 'Comment highlight',
-  'commentHighlightActive': 'Active comment',
-  'suggestionInsert': 'Suggested insertion',
-  'suggestionDelete': 'Suggested deletion',
-  'findMatch': 'Find match',
-  'findMatchActive': 'Current find match',
+/// Display label of property [key] (a catalog field name). Unknown keys
+/// are spelled out from their camel case.
+String propLabel(WriteLocalizations l, String key) => switch (key) {
+  'fontFamily' => l.themePropFontFamily,
+  'fontSize' => l.themePropFontSize,
+  'fontWeight' => l.themePropFontWeight,
+  'fontStyle' => l.themePropFontStyle,
+  'lineHeight' => l.themePropLineHeight,
+  'letterSpacing' => l.themePropLetterSpacing,
+  'color' => l.themePropColor,
+  'caseTransform' => l.themePropCaseTransform,
+  'fontFeatures' => l.themePropFontFeatures,
+  'spaceBefore' => l.themePropSpaceBefore,
+  'spaceAfter' => l.themePropSpaceAfter,
+  'padding' => l.themePropPadding,
+  'background' => l.themePropBackground,
+  'border' => l.themePropBorder,
+  'borderRadius' => l.themePropBorderRadius,
+  'keepWithNext' => l.themePropKeepWithNext,
+  'pageBreakBefore' => l.themePropPageBreakBefore,
+  'align' => l.themePropAlign,
+  'firstLineIndent' => l.themePropFirstLineIndent,
+  'numbering' => l.themePropNumbering,
+  'enabled' => l.themePropEnabled,
+  'fromLevel' => l.themePropFromLevel,
+  'toLevel' => l.themePropToLevel,
+  'style' => l.themePropStyle,
+  'suffix' => l.themePropSuffix,
+  'borderBottom' => l.themePropBorderBottom,
+  'borderTop' => l.themePropBorderTop,
+  'borderBottomGap' => l.themePropBorderBottomGap,
+  'lineColor' => l.themePropLineColor,
+  'lineThickness' => l.themePropLineThickness,
+  'sizeRatio' => l.themePropSizeRatio,
+  'paddingX' => l.themePropPaddingX,
+  'hoverColor' => l.themePropHoverColor,
+  'underline' => l.themePropUnderline,
+  'underlineStyle' => l.themePropUnderlineStyle,
+  'underlineThickness' => l.themePropUnderlineThickness,
+  'prefix' => l.themePropPrefix,
+  'bar' => l.themePropBar,
+  'italic' => l.themePropItalic,
+  'wrap' => l.themePropWrap,
+  'showLanguageLabel' => l.themePropShowLanguageLabel,
+  'tabSize' => l.themePropTabSize,
+  'lineNumbers' => l.themePropLineNumbers,
+  'bullets' => l.themePropBullets,
+  'bulletColor' => l.themePropBulletColor,
+  'bulletScale' => l.themePropBulletScale,
+  'numberSuffix' => l.themePropNumberSuffix,
+  'numberColor' => l.themePropNumberColor,
+  'indentPerLevel' => l.themePropIndentPerLevel,
+  'markerGap' => l.themePropMarkerGap,
+  'itemSpacing' => l.themePropItemSpacing,
+  'checkbox' => l.themePropCheckbox,
+  'shape' => l.themePropShape,
+  'size' => l.themePropSize,
+  'borderColor' => l.themePropBorderColor,
+  'checkedFill' => l.themePropCheckedFill,
+  'checkColor' => l.themePropCheckColor,
+  'checkedText' => l.themePropCheckedText,
+  'strike' => l.themePropStrike,
+  'opacity' => l.themePropOpacity,
+  'thickness' => l.themePropThickness,
+  'width' => l.themePropWidth,
+  'ornament' => l.themePropOrnament,
+  'maxWidth' => l.themePropMaxWidth,
+  'shadow' => l.themePropShadow,
+  'caption' => l.themePropCaption,
+  'show' => l.themePropShow,
+  'gap' => l.themePropGap,
+  'headerBackground' => l.themePropHeaderBackground,
+  'headerColor' => l.themePropHeaderColor,
+  'headerFontWeight' => l.themePropHeaderFontWeight,
+  'borders' => l.themePropBorders,
+  'borderWidth' => l.themePropBorderWidth,
+  'zebra' => l.themePropZebra,
+  'zebraColor' => l.themePropZebraColor,
+  'cellPadding' => l.themePropCellPadding,
+  'fontSizeRatio' => l.themePropFontSizeRatio,
+  'paperColor' => l.themePropPaperColor,
+  'canvasColor' => l.themePropCanvasColor,
+  'pageShadow' => l.themePropPageShadow,
+  'pagelessMaxWidth' => l.themePropPagelessMaxWidth,
+  'pagelessPadding' => l.themePropPagelessPadding,
+  'defaultMargins' => l.themePropDefaultMargins,
+  'selection' => l.themePropSelection,
+  'caret' => l.themePropCaret,
+  'commentHighlight' => l.themePropCommentHighlight,
+  'commentHighlightActive' => l.themePropCommentHighlightActive,
+  'suggestionInsert' => l.themePropSuggestionInsert,
+  'suggestionDelete' => l.themePropSuggestionDelete,
+  'findMatch' => l.themePropFindMatch,
+  'findMatchActive' => l.themePropFindMatchActive,
+  _ => _spelledOut(key),
 };
 
-/// Display label of property [key].
-String propLabel(String key) {
-  final l = _labels[key];
-  if (l != null) return l;
+String _spelledOut(String key) {
   final spaced = key.replaceAllMapped(
     RegExp('([A-Z])'),
     (m) => ' ${m[1]!.toLowerCase()}',
@@ -375,9 +398,9 @@ String propLabel(String key) {
 }
 
 /// Display labels of enum values.
-String enumLabel(String value) => switch (value) {
-  'none' => 'None',
-  'smallCaps' => 'Small caps',
+String enumLabel(WriteLocalizations l, String value) => switch (value) {
+  'none' => l.themeEditorEnumNone,
+  'smallCaps' => l.themeEditorEnumSmallCaps,
   'upperRoman-upperAlpha-decimal' => 'I. A. 1.',
   'decimal' => '1.',
   'outline' => '1.1.1',
@@ -386,41 +409,85 @@ String enumLabel(String value) => switch (value) {
   'upperAlpha' => 'A.',
   'lowerRoman' => 'i.',
   'upperRoman' => 'I.',
-  'headerOnly' => 'Header only',
-  '@' => '@ prefix',
-  '' => 'No prefix',
+  'headerOnly' => l.themeEditorEnumHeaderOnly,
+  '@' => l.themeEditorEnumAtPrefix,
+  '' => l.themeEditorEnumNoPrefix,
+  'normal' => l.themeEditorEnumNormal,
+  'italic' => l.themeEditorEnumItalic,
+  'oblique' => l.themeEditorEnumOblique,
+  'uppercase' => l.themeEditorEnumUppercase,
+  'lowercase' => l.themeEditorEnumLowercase,
+  'capitalize' => l.themeEditorEnumCapitalize,
+  'left' => l.themeEditorEnumLeft,
+  'center' => l.themeEditorEnumCenter,
+  'right' => l.themeEditorEnumRight,
+  'justify' => l.themeEditorEnumJustify,
+  'top' => l.themeEditorEnumTop,
+  'bottom' => l.themeEditorEnumBottom,
+  'always' => l.themeEditorEnumAlways,
+  'hover' => l.themeEditorEnumHover,
+  'solid' => l.themeEditorEnumSolid,
+  'dotted' => l.themeEditorEnumDotted,
+  'dashed' => l.themeEditorEnumDashed,
+  'double' => l.themeEditorEnumDouble,
+  'ornament' => l.themeEditorEnumOrnament,
+  'square' => l.themeEditorEnumSquare,
+  'rounded' => l.themeEditorEnumRounded,
+  'circle' => l.themeEditorEnumCircle,
+  'soft' => l.themeEditorEnumSoft,
+  'strong' => l.themeEditorEnumStrong,
+  'auto' => l.themeEditorEnumAuto,
+  'full' => l.themeEditorEnumFull,
+  'all' => l.themeEditorEnumAll,
+  'horizontal' => l.themeEditorEnumHorizontal,
+  'outer' => l.themeEditorEnumOuter,
+  // Other values (font families, symbols) are shown as they are.
   _ => value[0].toUpperCase() + value.substring(1),
 };
 
 /// Display name of a palette key.
-String paletteLabel(PaletteKey k) => switch (k) {
-  PaletteKey.text => 'Text',
-  PaletteKey.heading => 'Headings',
-  PaletteKey.muted => 'Muted text',
-  PaletteKey.accent => 'Accent',
-  PaletteKey.link => 'Link',
-  PaletteKey.linkHover => 'Link hover',
-  PaletteKey.page => 'Page',
-  PaletteKey.canvas => 'Canvas',
-  PaletteKey.border => 'Borders',
-  PaletteKey.codeText => 'Code text',
-  PaletteKey.codeBg => 'Code background',
-  PaletteKey.quoteText => 'Quote text',
-  PaletteKey.quoteBar => 'Quote bar',
-  PaletteKey.quoteBg => 'Quote background',
-  PaletteKey.tableHeaderBg => 'Table header',
-  PaletteKey.tableStripe => 'Table stripe',
-  PaletteKey.mentionBg => 'Mention background',
-  PaletteKey.mentionText => 'Mention text',
-  PaletteKey.highlight => 'Highlight',
-  _ => 'Custom ${k.name.substring(6)}',
+String paletteLabel(WriteLocalizations l, PaletteKey k) => switch (k) {
+  PaletteKey.text => l.themeEditorPaletteText,
+  PaletteKey.heading => l.themeEditorPaletteHeading,
+  PaletteKey.muted => l.themeEditorPaletteMuted,
+  PaletteKey.accent => l.themeEditorPaletteAccent,
+  PaletteKey.link => l.themeEditorPaletteLink,
+  PaletteKey.linkHover => l.themeEditorPaletteLinkHover,
+  PaletteKey.page => l.themeEditorPalettePage,
+  PaletteKey.canvas => l.themeEditorPaletteCanvas,
+  PaletteKey.border => l.themeEditorPaletteBorder,
+  PaletteKey.codeText => l.themeEditorPaletteCodeText,
+  PaletteKey.codeBg => l.themeEditorPaletteCodeBg,
+  PaletteKey.quoteText => l.themeEditorPaletteQuoteText,
+  PaletteKey.quoteBar => l.themeEditorPaletteQuoteBar,
+  PaletteKey.quoteBg => l.themeEditorPaletteQuoteBg,
+  PaletteKey.tableHeaderBg => l.themeEditorPaletteTableHeaderBg,
+  PaletteKey.tableStripe => l.themeEditorPaletteTableStripe,
+  PaletteKey.mentionBg => l.themeEditorPaletteMentionBg,
+  PaletteKey.mentionText => l.themeEditorPaletteMentionText,
+  PaletteKey.highlight => l.themeEditorPaletteHighlight,
+  _ => l.themeEditorPaletteCustom(k.name.substring(6)),
 };
 
 /// Display name of a syntax token.
-String syntaxLabel(SyntaxToken t) => switch (t) {
-  SyntaxToken.builtin => 'Built-in',
-  SyntaxToken.regexp => 'Regular expression',
-  _ => t.name[0].toUpperCase() + t.name.substring(1),
+String syntaxLabel(WriteLocalizations l, SyntaxToken t) => switch (t) {
+  SyntaxToken.keyword => l.themeEditorSyntaxKeyword,
+  SyntaxToken.string => l.themeEditorSyntaxString,
+  SyntaxToken.number => l.themeEditorSyntaxNumber,
+  SyntaxToken.comment => l.themeEditorSyntaxComment,
+  SyntaxToken.function => l.themeEditorSyntaxFunction,
+  SyntaxToken.type => l.themeEditorSyntaxType,
+  SyntaxToken.variable => l.themeEditorSyntaxVariable,
+  SyntaxToken.operator => l.themeEditorSyntaxOperator,
+  SyntaxToken.punctuation => l.themeEditorSyntaxPunctuation,
+  SyntaxToken.builtin => l.themeEditorSyntaxBuiltin,
+  SyntaxToken.literal => l.themeEditorSyntaxLiteral,
+  SyntaxToken.meta => l.themeEditorSyntaxMeta,
+  SyntaxToken.tag => l.themeEditorSyntaxTag,
+  SyntaxToken.attribute => l.themeEditorSyntaxAttribute,
+  SyntaxToken.regexp => l.themeEditorSyntaxRegexp,
+  SyntaxToken.addition => l.themeEditorSyntaxAddition,
+  SyntaxToken.deletion => l.themeEditorSyntaxDeletion,
 };
 
 /// The node a contrast pair belongs to (tree ⚠ and inspector warnings).
@@ -448,27 +515,27 @@ ThemeNode nodeOfPair(String pairId) {
 }
 
 /// Human name of a contrast pair ("Heading 2 on the page").
-String pairLabel(String pairId) {
+String pairLabel(WriteLocalizations l, String pairId) {
   if (pairId.startsWith('syntax.')) {
     final t = SyntaxToken.fromJsonName(pairId.substring(7));
-    return '${t == null ? pairId : syntaxLabel(t)} tokens on code';
+    return l.themeEditorPairSyntax(t == null ? pairId : syntaxLabel(l, t));
   }
   return switch (pairId) {
-    'body' => 'Body text on the page',
-    'caption' => 'Captions on the page',
-    'header' => 'Page header text',
-    'footer' => 'Page footer text',
-    'link' => 'Links on the page',
-    'mention' => 'Mentions on their chip',
-    'inlineCode' => 'Inline code on its background',
-    'codeBlock' => 'Code on the code background',
-    'blockquote' => 'Quote text',
-    'tableHeader' => 'Table header text',
-    'tableCell' => 'Table cell text',
-    'tableZebra' => 'Text on zebra rows',
-    'taskChecked' => 'Checked task text',
+    'body' => l.themeEditorPairBody,
+    'caption' => l.themeEditorPairCaption,
+    'header' => l.themeEditorPairHeader,
+    'footer' => l.themeEditorPairFooter,
+    'link' => l.themeEditorPairLink,
+    'mention' => l.themeEditorPairMention,
+    'inlineCode' => l.themeEditorPairInlineCode,
+    'codeBlock' => l.themeEditorPairCodeBlock,
+    'blockquote' => l.themeEditorPairBlockquote,
+    'tableHeader' => l.themeEditorPairTableHeader,
+    'tableCell' => l.themeEditorPairTableCell,
+    'tableZebra' => l.themeEditorPairTableZebra,
+    'taskChecked' => l.themeEditorPairTaskChecked,
     _ => switch (nodeOfPair(pairId).element) {
-      final e? => '${elementLabel(e)} on the page',
+      final e? => l.themeEditorPairElement(elementLabel(l, e)),
       null => pairId,
     },
   };
@@ -481,7 +548,7 @@ class InheritedValue {
   final Object? value;
 
   /// "Body", "All headings", "Wonky Default" …
-  final String source;
+  final WriteText source;
 }
 
 /// Looks up inherited values for the inspector's placeholders and reset
@@ -489,6 +556,10 @@ class InheritedValue {
 /// layer, the cascade parents (text properties only) and finally the
 /// built-in base.
 abstract final class ThemeInheritance {
+  /// The built-in base theme (its name is not translated).
+  static String _builtinBase(WriteLocalizations _) =>
+      core.BuiltinThemes.wonkyDefault.name;
+
   static List<ThemeElement> _parents(ThemeElement e) => switch (e) {
     ThemeElement.h1 ||
     ThemeElement.h2 ||
@@ -542,7 +613,9 @@ abstract final class ThemeInheritance {
     if (segs.first == 'dark') {
       final light = segs.sublist(1).join('.');
       final v = at(json, light);
-      if (v != null) return InheritedValue(v, 'Light variant');
+      if (v != null) {
+        return InheritedValue(v, (l) => l.themeEditorSourceLightVariant);
+      }
       return of(json, light);
     }
     if (segs.first == 'elements' && segs.length >= 3) {
@@ -558,31 +631,39 @@ abstract final class ThemeInheritance {
         if (inherits) {
           for (final p in _parents(e)) {
             final v = at(json, 'elements.${p.name}.$rest');
-            if (v != null) return InheritedValue(v, elementLabel(p));
+            if (v != null) return InheritedValue(v, (l) => elementLabel(l, p));
             if (p == ThemeElement.body &&
                 (e == ThemeElement.header || e == ThemeElement.footer)) {
               final hf = at(json, 'page.headerFooter.$rest');
-              if (hf != null) return InheritedValue(hf, 'Header and footer');
+              if (hf != null) {
+                return InheritedValue(
+                  hf,
+                  (l) => l.themeEditorSectionHeaderAndFooter,
+                );
+              }
             }
           }
         }
         if (key == 'fontFamily' && segs.length == 3) {
           final role = core.ThemeCatalog.roleOf(e);
-          return InheritedValue('@${role.name}', 'Theme fonts');
+          return InheritedValue(
+            '@${role.name}',
+            (l) => l.themeEditorSourceThemeFonts,
+          );
         }
         final b = at(base, path);
-        if (b != null) return InheritedValue(b, 'Wonky Default');
+        if (b != null) return InheritedValue(b, _builtinBase);
         if (inherits) {
           for (final p in _parents(e)) {
             final v = at(base, 'elements.${p.name}.$rest');
-            if (v != null) return InheritedValue(v, elementLabel(p));
+            if (v != null) return InheritedValue(v, (l) => elementLabel(l, p));
           }
         }
         return null;
       }
     }
     final b = at(base, path);
-    return b == null ? null : InheritedValue(b, 'Wonky Default');
+    return b == null ? null : InheritedValue(b, _builtinBase);
   }
 
   /// The concrete font family [element] uses in [theme] (for weight

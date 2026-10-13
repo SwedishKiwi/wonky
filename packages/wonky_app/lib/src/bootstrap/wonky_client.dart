@@ -18,12 +18,19 @@ class WonkyClient {
   final Client client;
   final AppUrls urls;
 
+  /// Replaces the persisted session storage (E2E tests keep the session in
+  /// memory so runs neither depend on nor touch the OS keychain).
+  @visibleForTesting
+  static ClientAuthSuccessStorage? sessionStorageOverride;
+
   /// Loads the config and initializes the client and its auth session.
   static Future<WonkyClient> initialize({AppUrls? urls}) async {
     final u = urls ?? await AppUrls.load();
     final client = Client(u.apiUrl)
       ..connectivityMonitor = FlutterConnectivityMonitor()
-      ..authSessionManager = FlutterAuthSessionManager();
+      ..authSessionManager = FlutterAuthSessionManager(
+        storage: sessionStorageOverride ?? _desktopSessionStorage(),
+      );
     if (kIsWeb) {
       // One sign-in for both apps: the session lives in the httpOnly auth
       // cookie on the shared origin; tokens never sit in JS storage.
@@ -39,5 +46,22 @@ class WonkyClient {
       debugPrint('Auth initialization failed: $e');
     }
     return WonkyClient._(client, u);
+  }
+
+  /// macOS: the data-protection keychain needs a signed app with the
+  /// `keychain-access-groups` entitlement (error -34018 otherwise, so the
+  /// session could not be saved and sign-in failed in debug and E2E runs).
+  /// The login keychain works for sandboxed, unsigned builds too. Other
+  /// platforms keep the package default.
+  static ClientAuthSuccessStorage? _desktopSessionStorage() {
+    if (kIsWeb || defaultTargetPlatform != TargetPlatform.macOS) return null;
+    return SecureClientAuthSuccessStorage(
+      secureStorage: const FlutterSecureStorage(
+        mOptions: MacOsOptions(
+          accessibility: KeychainAccessibility.first_unlock_this_device,
+          usesDataProtectionKeychain: false,
+        ),
+      ),
+    );
   }
 }

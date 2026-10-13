@@ -166,6 +166,34 @@ class ServerNotificationRepository implements NotificationRepository {
   Stream<NotificationEvent> watch() => api.client.notification.watch();
 }
 
+/// The activity dashboard (suite 07 §6).
+abstract class ActivityRepository {
+  Future<ActivityDashboard> dashboard(UuidValue itemUuid, {int days = 28});
+
+  /// The caller's "Show my view history" setting.
+  Future<bool> showViewHistory();
+
+  Future<bool> setShowViewHistory(bool show);
+}
+
+class ServerActivityRepository implements ActivityRepository {
+  ServerActivityRepository(this.api);
+
+  final Api api;
+
+  @override
+  Future<ActivityDashboard> dashboard(UuidValue itemUuid, {int days = 28}) =>
+      api.guard((c) => c.activity.dashboard(itemUuid, days));
+
+  @override
+  Future<bool> showViewHistory() =>
+      api.guard((c) => c.activity.showViewHistory());
+
+  @override
+  Future<bool> setShowViewHistory(bool show) =>
+      api.guard((c) => c.activity.setShowViewHistory(show));
+}
+
 /// Ephemeral presence (suite 07 §1).
 abstract class PresenceRepository {
   /// Joins the roster of [itemUuid]; [updates] carries this session's state.

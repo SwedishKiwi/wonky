@@ -30,6 +30,7 @@ import '../outline/outline_panel.dart';
 import '../spellcheck/write_spellcheck.dart';
 import '../themes/document_theme.dart';
 import '../themes/write_fonts.dart';
+import '../../l10n/write_l10n.dart';
 import 'document_insights.dart';
 
 /// Ids of the Write side panels (Write 05 §10).
@@ -132,7 +133,12 @@ class WriteDocumentController extends DocumentController {
       clipboard: clipboard,
     );
     insights = DocumentInsights(editor);
-    find = FindController(editor, commands: commands, reveal: reveal);
+    find = FindController(
+      editor,
+      commands: commands,
+      reveal: reveal,
+      strings: () => writeL10nOf(services),
+    );
     documentTheme = DocumentThemeController(themes);
     session.onThemeVersion = _onThemeVersion;
     session.addListener(_onSession);
@@ -267,7 +273,12 @@ class WriteDocumentController extends DocumentController {
   /// Personal dictionary words (`writeDefaults.personalDictionary`).
   List<String> get personalDictionary {
     final raw = services.prefs.writeDefaults['personalDictionary'];
-    return raw is List ? [for (final w in raw) if (w is String) w] : const [];
+    return raw is List
+        ? [
+            for (final w in raw)
+              if (w is String) w,
+          ]
+        : const [];
   }
 
   void _configureSpellcheck() {
@@ -319,7 +330,7 @@ class WriteDocumentController extends DocumentController {
       setup,
       themeMarginsPt: themeMargins,
       tokens: {
-        'title': title.isEmpty ? 'Untitled document' : title,
+        'title': title.isEmpty ? writeL10nOf(services).untitledDocument : title,
         if (i != null) 'author': i.owner.displayName,
         'date': HeaderFooterTokens.mediumDate(DateTime.now(), language ?? 'en'),
       },
@@ -372,7 +383,8 @@ class WriteDocumentController extends DocumentController {
 
   @override
   List<DownloadFormat> get downloadFormats => [
-    for (final f in WriteDownloadFormat.values) DownloadFormat(f.id, f.label),
+    for (final f in WriteDownloadFormat.values)
+      DownloadFormat(f.id, f.labelOf(writeL10nOf(services))),
   ];
 
   @override
@@ -383,7 +395,7 @@ class WriteDocumentController extends DocumentController {
   Future<void> download(String format) async {
     final f = WriteDownloadFormat.tryParse(format);
     if (f == null) {
-      services.toasts.error('Unknown format "$format"');
+      services.toasts.error(writeL10nOf(services).screenUnknownFormat(format));
       return;
     }
     await downloadAs(f);
@@ -399,17 +411,18 @@ class WriteDocumentController extends DocumentController {
     WriteDownloadFormat format, {
     WriteExportOptions options = const WriteExportOptions(),
   }) async {
+    final l = writeL10nOf(services);
     final toast = services.toasts.show(
-      'Preparing ${format.label}…',
+      l.screenPreparingExport(format.labelOf(l)),
       duration: const Duration(seconds: 30),
     );
     try {
       final artifact = await exportAs(format, options: options);
       services.toasts.hide(toast);
-      final saved = await saveArtifact(artifact);
+      final saved = await saveArtifact(artifact, l: l);
       if (saved) {
         services.toasts.show(
-          'Exported “${artifact.fileName}”',
+          l.screenExported(artifact.fileName),
           description: artifact.warnings.isEmpty
               ? null
               : artifact.warnings.map((w) => w.message).take(5).join('\n'),
@@ -418,7 +431,7 @@ class WriteDocumentController extends DocumentController {
       return saved;
     } catch (e) {
       services.toasts.hide(toast);
-      services.toasts.error('Export failed', description: '$e');
+      services.toasts.error(l.screenExportFailed, description: '$e');
       return false;
     }
   }
@@ -429,7 +442,7 @@ class WriteDocumentController extends DocumentController {
     return ExportSource(
       documentUuid: itemUuid.uuid,
       delta: editor.delta,
-      title: title.isEmpty ? 'Untitled document' : title,
+      title: title.isEmpty ? writeL10nOf(services).untitledDocument : title,
       theme: documentTheme.option.data,
       pageSetup: pageSetup,
       revision: session.revision,
@@ -503,7 +516,7 @@ class WriteDocumentController extends DocumentController {
   String? get selectionSummary {
     final s = insights.selectionStats;
     if (s == null) return null;
-    return '${s.words} ${s.words == 1 ? 'word' : 'words'} selected';
+    return writeL10nOf(services).screenWordsSelected(s.words);
   }
 
   @override

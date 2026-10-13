@@ -116,14 +116,14 @@ class PopupMenuHostState extends State<PopupMenuHost> {
 List<WonkyMenuEntry> turnIntoEntries(CommandUi ui, BlockKind? current) => [
   ...paragraphStyleEntries(ui, current),
   const WonkyMenuSeparator(),
-  for (final (kind, label) in const [
-    (BlockKind.bulleted, 'Bulleted list'),
-    (BlockKind.numbered, 'Numbered list'),
-    (BlockKind.checklist, 'Checklist'),
+  for (final kind in const [
+    BlockKind.bulleted,
+    BlockKind.numbered,
+    BlockKind.checklist,
   ])
     WonkyMenuRadioItem(
       key: ValueKey<String>('menu.turnInto.${kind.name}'),
-      label: label,
+      label: blockKindLabel(ui.l, kind),
       selected: current == kind,
       enabled: ui.state('write.format.blockType', {'type': kind.name}).enabled,
       onSelected: () => ui.run('write.format.blockType', {'type': kind.name}),
@@ -141,18 +141,19 @@ List<WonkyMenuEntry> contextMenuEntries(
   final link = doc.commands.linkAt();
   final kind = doc.commands.selectedBlockKind;
   final selected = doc.selectedText;
+  final l = ui.l;
   final out = <WonkyMenuEntry>[
     // Suggestions for a misspelled word at the caret (Write 04 §28.2).
     ...spellingMenuEntries(doc, (id, args) => ui.run(id, args)),
   ];
 
   WonkyMenuEntry copyAs() => WonkyMenuSubmenu(
-    label: 'Copy as',
+    label: l.menuCopyAs,
     icon: LucideIcons.clipboardCopy,
     children: [
-      ui.item('write.edit.copyAsMarkdown', label: 'Markdown'),
-      ui.item('write.edit.copyAsPlainText', label: 'Plain text'),
-      ui.item('write.edit.copyAsHtml', label: 'HTML'),
+      ui.item('write.edit.copyAsMarkdown', label: l.menuCopyAsMarkdown),
+      ui.item('write.edit.copyAsPlainText', label: l.menuCopyAsPlainText),
+      ui.item('write.edit.copyAsHtml', label: l.menuCopyAsHtml),
     ],
   );
 
@@ -160,8 +161,10 @@ List<WonkyMenuEntry> contextMenuEntries(
     'write.find.open',
     args: {'query': ?selected},
     label: selected == null
-        ? 'Search document'
-        : 'Search document for “${selected.length > 24 ? '${selected.substring(0, 24)}…' : selected}”',
+        ? l.docMenuSearchDocument
+        : l.docMenuSearchDocumentFor(
+            selected.length > 24 ? '${selected.substring(0, 24)}…' : selected,
+          ),
     icon: LucideIcons.search,
     keyName: 'context.search',
   );
@@ -183,7 +186,7 @@ List<WonkyMenuEntry> contextMenuEntries(
       ...out,
       ui.item('write.edit.copy'),
       copyAs(),
-      ui.item('shell.comments.create', label: 'Comment'),
+      ui.item('shell.comments.create', label: l.menuComment),
       const WonkyMenuSeparator(),
       search(),
     ];
@@ -197,28 +200,28 @@ List<WonkyMenuEntry> contextMenuEntries(
       ui.item('write.image.replace'),
       ui.item('write.image.download', icon: LucideIcons.download),
       const WonkyMenuSeparator(),
-      ui.item('shell.comments.create', label: 'Comment'),
+      ui.item('shell.comments.create', label: l.menuComment),
       ui.item('write.edit.cut'),
       ui.item('write.edit.copy'),
-      ui.item('write.block.delete', label: 'Delete image'),
+      ui.item('write.block.delete', label: l.docMenuDeleteImage),
       const WonkyMenuSeparator(),
-      ui.item('write.block.moveUp', label: 'Move up'),
-      ui.item('write.block.moveDown', label: 'Move down'),
+      ui.item('write.block.moveUp', label: l.docMenuMoveUp),
+      ui.item('write.block.moveDown', label: l.docMenuMoveDown),
     ];
   }
 
   if (doc.inTable) {
     return [
       ...out,
-      ui.item('write.table.editCell', label: 'Edit cells'),
+      ui.item('write.table.editCell', label: l.menuEditCells),
       ui.item('write.table.edit'),
       const WonkyMenuSeparator(),
-      ui.item('write.edit.copyAsMarkdown', label: 'Copy (Markdown)'),
+      ui.item('write.edit.copyAsMarkdown', label: l.docMenuCopyMarkdown),
       ui.item('write.table.copyAsTsv'),
-      ui.item('shell.comments.create', label: 'Comment'),
+      ui.item('shell.comments.create', label: l.menuComment),
       const WonkyMenuSeparator(),
-      ui.item('write.block.moveUp', label: 'Move up'),
-      ui.item('write.block.moveDown', label: 'Move down'),
+      ui.item('write.block.moveUp', label: l.docMenuMoveUp),
+      ui.item('write.block.moveDown', label: l.docMenuMoveDown),
       ui.item('write.table.delete'),
     ];
   }
@@ -226,12 +229,12 @@ List<WonkyMenuEntry> contextMenuEntries(
   if (doc.inCode) {
     out.addAll([
       WonkyMenuSubmenu(
-        label: 'Language',
+        label: l.docMenuLanguage,
         icon: LucideIcons.code,
         children: codeLanguageEntries(ui, doc),
       ),
       ui.item('write.code.copy'),
-      ui.item('write.code.exit', label: 'Exit code block'),
+      ui.item('write.code.exit', label: l.cmdCodeExit),
       const WonkyMenuSeparator(),
     ]);
   }
@@ -245,10 +248,10 @@ List<WonkyMenuEntry> contextMenuEntries(
       ui.item('write.edit.paste'),
       ui.item('write.edit.pasteWithoutFormatting'),
       const WonkyMenuSeparator(),
-      ui.item('shell.comments.create', label: 'Comment'),
+      ui.item('shell.comments.create', label: l.menuComment),
       ui.item(
         'write.link.insert',
-        label: link == null ? 'Insert link' : 'Edit link',
+        label: link == null ? l.cmdLinkInsert : l.toolbarEditLink,
       ),
       const WonkyMenuSeparator(),
       ui.item('write.format.bold'),
@@ -257,7 +260,7 @@ List<WonkyMenuEntry> contextMenuEntries(
       ui.item('write.format.inlineCode'),
       ui.item('write.format.clearFormatting'),
       WonkyMenuSubmenu(
-        label: 'Turn into',
+        label: l.docMenuTurnInto,
         icon: LucideIcons.pilcrow,
         children: turnIntoEntries(ui, kind),
       ),
@@ -272,30 +275,30 @@ List<WonkyMenuEntry> contextMenuEntries(
     ui.item('write.edit.pasteWithoutFormatting'),
     const WonkyMenuSeparator(),
     ui.item('write.link.insert'),
-    ui.item('shell.comments.create', label: 'Comment'),
+    ui.item('shell.comments.create', label: l.menuComment),
     const WonkyMenuSeparator(),
     WonkyMenuSubmenu(
-      label: 'Turn into',
+      label: l.docMenuTurnInto,
       icon: LucideIcons.pilcrow,
       children: turnIntoEntries(ui, kind),
     ),
     WonkyMenuSubmenu(
-      label: 'Insert',
+      label: l.menuInsert,
       icon: LucideIcons.plus,
       children: [
-        ui.item('write.insert.image', label: 'Image'),
-        ui.item('write.insert.imageFromUrl', label: 'Image by URL…'),
+        ui.item('write.insert.image', label: l.menuImage),
+        ui.item('write.insert.imageFromUrl', label: l.docMenuImageByUrl),
         ui.item(
           'write.insert.table',
           args: {'rows': 3, 'cols': 3},
-          label: 'Table',
+          label: l.menuTable,
           keyName: 'context.insertTable',
         ),
         ui.item('write.insert.divider'),
         ui.item(
           'write.format.blockType',
           args: {'type': 'codeBlock'},
-          label: 'Code block',
+          label: l.cmdFormatBlockTypeCodeBlock,
           keyName: 'context.codeBlock',
         ),
       ],
@@ -314,40 +317,41 @@ List<WonkyMenuEntry> blockMenuEntries(
   final block = doc.block(nodeId);
   final kind = block == null ? null : WriteEditorCommands.kindOf(block);
   final isText = block?.isText ?? false;
+  final l = ui.l;
   return [
     if (isText)
       WonkyMenuSubmenu(
-        label: 'Turn into',
+        label: l.docMenuTurnInto,
         icon: LucideIcons.pilcrow,
         children: turnIntoEntries(ui, kind),
       ),
     ui.item(
       'write.block.duplicate',
       args: {'nodeId': nodeId},
-      label: 'Duplicate',
+      label: l.docMenuDuplicate,
       keyName: 'block.duplicate',
     ),
     ui.item(
       'write.edit.copyAsMarkdown',
-      label: 'Copy as Markdown',
+      label: l.cmdEditCopyAsMarkdown,
       keyName: 'block.copyMarkdown',
     ),
     ui.item(
       'shell.comments.create',
-      label: 'Comment',
+      label: l.menuComment,
       keyName: 'block.comment',
     ),
     const WonkyMenuSeparator(),
     ui.item(
       'write.block.moveUp',
       args: {'nodeId': nodeId},
-      label: 'Move up',
+      label: l.docMenuMoveUp,
       keyName: 'block.moveUp',
     ),
     ui.item(
       'write.block.moveDown',
       args: {'nodeId': nodeId},
-      label: 'Move down',
+      label: l.docMenuMoveDown,
       keyName: 'block.moveDown',
     ),
     if (doc.embedData('table', nodeId) != null) ...[
@@ -355,7 +359,7 @@ List<WonkyMenuEntry> blockMenuEntries(
       ui.item(
         'write.table.edit',
         args: {'nodeId': nodeId},
-        label: 'Edit table…',
+        label: l.cmdTableEdit,
         keyName: 'block.editTable',
       ),
       ui.item(
@@ -386,7 +390,7 @@ List<WonkyMenuEntry> blockMenuEntries(
     ui.item(
       'write.block.delete',
       args: {'nodeId': nodeId},
-      label: 'Delete',
+      label: l.commonDelete,
       keyName: 'block.delete',
     ),
   ];
@@ -404,7 +408,7 @@ List<WonkyMenuEntry> codeLanguageEntries(
   return [
     WonkyMenuRadioItem(
       key: const ValueKey<String>('menu.code.plain'),
-      label: 'Plain text',
+      label: ui.l.docMenuPlainText,
       selected: current == null || current == '' || current == true,
       onSelected: () =>
           ui.run('write.code.setLanguage', {'language': '', 'nodeId': ?nodeId}),

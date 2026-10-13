@@ -6,11 +6,10 @@ import 'package:wonky_client/wonky_client.dart';
 import 'package:wonky_core/wonky_core.dart' hide ActorKind;
 
 import '../../commands/write_command.dart';
+import '../../l10n/write_l10n.dart';
 import '../editor/applier/delta_applier.dart' show DeltaSelection;
 import 'proofread_results.dart';
 import 'write_ai_controller.dart';
-
-const _category = 'AI';
 
 const _rewriteModes = [
   'improve',
@@ -28,6 +27,7 @@ const _rewriteModes = [
 /// a result is one undo step labelled "AI: …".
 List<Command<CommandArgs>> writeAiCommands(ShellServices services) {
   WriteAiController? ai(CommandContext ctx) => WriteAiController.of(ctx);
+  WriteLocalizations l10n() => writeL10nOf(services);
   bool on(CommandContext ctx) {
     final a = ai(ctx);
     return a != null && a.shown;
@@ -35,7 +35,7 @@ List<Command<CommandArgs>> writeAiCommands(ShellServices services) {
 
   WriteCommand cmd(
     String id, {
-    required String label,
+    required WriteText label,
     required FutureOr<CommandResult> Function(
       CommandContext ctx,
       WriteAiController ai,
@@ -48,13 +48,13 @@ List<Command<CommandArgs>> writeAiCommands(ShellServices services) {
     List<KeyBinding> bindings = const [],
     KeyScope scope = KeyScope.global,
     bool palette = true,
-    String? description,
+    WriteText? description,
     bool needsEditable = false,
   }) => WriteCommand(
     id,
     label: label,
     icon: LucideIcons.sparkles,
-    categoryName: _category,
+    categoryName: (l) => l.categoryAI,
     descriptionText: description,
     requiredRole: role,
     argsSchema: args,
@@ -67,7 +67,7 @@ List<Command<CommandArgs>> writeAiCommands(ShellServices services) {
       if (c == null || !c.shown) return false;
       return enabled?.call(c, a) ?? c.available;
     },
-    reason: (doc, a) {
+    reason: (l, doc, a) {
       final c = WriteAiController.forItem(doc.itemUuid);
       if (c == null) return null;
       final s = c.assistant?.status.value;
@@ -77,7 +77,7 @@ List<Command<CommandArgs>> writeAiCommands(ShellServices services) {
     run: (ctx, doc, a) async {
       final c = ai(ctx);
       if (c == null || !on(ctx)) {
-        return const CommandResult.failed('AI is not available');
+        return CommandResult.failed(l10n().commandToastAiUnavailable);
       }
       return run(ctx, c, a);
     },
@@ -89,11 +89,8 @@ List<Command<CommandArgs>> writeAiCommands(ShellServices services) {
   return [
     cmd(
       'write.ai.rewriteSelection',
-      label: 'Rewrite with AI',
-      description:
-          'Rewrites the selection (improve, fixGrammar, shorter, longer, tone, '
-          'translate, custom) into a preview; explain/summarize answer in the '
-          'panel. Pass range {start, length} to target Delta offsets.',
+      label: (l) => l.cmdAiRewriteSelection,
+      description: (l) => l.cmdAiRewriteSelectionDescription,
       role: Role.commenter,
       args: const JsonSchema.object(
         properties: {
@@ -127,7 +124,9 @@ List<Command<CommandArgs>> writeAiCommands(ShellServices services) {
           unawaited(c.explainSelection(summarize: mode == 'summarize'));
           return ok();
         }
-        if (!c.canWrite) return const CommandResult.failed('Read-only');
+        if (!c.canWrite) {
+          return CommandResult.failed(l10n().commandToastReadOnly);
+        }
         unawaited(
           c.rewriteSelection(
             mode,
@@ -142,10 +141,8 @@ List<Command<CommandArgs>> writeAiCommands(ShellServices services) {
     ),
     cmd(
       'write.ai.inline',
-      label: 'Ask AI…',
-      description:
-          'Opens the inline AI prompt at the caret (empty paragraph) or for '
-          'the selection.',
+      label: (l) => l.cmdAiInline,
+      description: (l) => l.cmdAiInlineDescription,
       role: Role.commenter,
       bindings: const [KeyBinding('J', mod: true)],
       scope: KeyScope.editor,
@@ -167,8 +164,8 @@ List<Command<CommandArgs>> writeAiCommands(ShellServices services) {
     ),
     cmd(
       'write.ai.continue',
-      label: 'Continue writing',
-      description: 'Continues the text at the caret (ghost text; Tab accepts).',
+      label: (l) => l.cmdAiContinue,
+      description: (l) => l.cmdAiContinueDescription,
       role: Role.commenter,
       args: const JsonSchema.object(
         properties: {'maxWords': JsonSchema.integer(minimum: 10, maximum: 300)},
@@ -181,7 +178,7 @@ List<Command<CommandArgs>> writeAiCommands(ShellServices services) {
     ),
     cmd(
       'write.ai.summarizeDocument',
-      label: 'Summarize document',
+      label: (l) => l.cmdAiSummarizeDocument,
       args: const JsonSchema.object(
         properties: {
           'length': JsonSchema.string(
@@ -196,7 +193,7 @@ List<Command<CommandArgs>> writeAiCommands(ShellServices services) {
     ),
     cmd(
       'write.ai.generateOutline',
-      label: 'Generate outline',
+      label: (l) => l.cmdAiGenerateOutline,
       args: const JsonSchema.object(
         properties: {'prompt': JsonSchema.string()},
       ),
@@ -207,7 +204,7 @@ List<Command<CommandArgs>> writeAiCommands(ShellServices services) {
     ),
     cmd(
       'write.ai.proofreadDocument',
-      label: 'Proofread document',
+      label: (l) => l.cmdAiProofreadDocument,
       run: (ctx, c, a) async {
         unawaited(c.proofread());
         return ok();
@@ -215,26 +212,27 @@ List<Command<CommandArgs>> writeAiCommands(ShellServices services) {
     ),
     cmd(
       'write.ai.previewReplace',
-      label: 'Replace with AI result',
+      label: (l) => l.cmdAiPreviewReplace,
       palette: false,
       role: Role.commenter,
       enabled: (c, a) => c.preview?.canApply ?? false,
-      run: (ctx, c, a) =>
-          c.replace() ? ok() : const CommandResult.failed('Nothing to replace'),
+      run: (ctx, c, a) => c.replace()
+          ? ok()
+          : CommandResult.failed(l10n().commandToastNothingToReplace),
     ),
     cmd(
       'write.ai.previewInsertBelow',
-      label: 'Insert AI result below',
+      label: (l) => l.cmdAiPreviewInsertBelow,
       palette: false,
       role: Role.commenter,
       enabled: (c, a) => c.preview?.canApply ?? false,
       run: (ctx, c, a) => c.insert(below: true)
           ? ok()
-          : const CommandResult.failed('Nothing to insert'),
+          : CommandResult.failed(l10n().commandToastNothingToInsert),
     ),
     cmd(
       'write.ai.previewRetry',
-      label: 'Try again',
+      label: (l) => l.cmdAiPreviewRetry,
       palette: false,
       enabled: (c, a) => c.preview != null,
       run: (ctx, c, a) async {
@@ -244,7 +242,7 @@ List<Command<CommandArgs>> writeAiCommands(ShellServices services) {
     ),
     cmd(
       'write.ai.previewRefine',
-      label: 'Refine AI result',
+      label: (l) => l.cmdAiPreviewRefine,
       palette: false,
       args: const JsonSchema.object(
         properties: {'instruction': JsonSchema.string(minLength: 1)},
@@ -258,7 +256,7 @@ List<Command<CommandArgs>> writeAiCommands(ShellServices services) {
     ),
     cmd(
       'write.ai.previewDiscard',
-      label: 'Discard AI result',
+      label: (l) => l.cmdAiPreviewDiscard,
       palette: false,
       enabled: (c, a) => c.preview != null,
       run: (ctx, c, a) {
@@ -268,7 +266,7 @@ List<Command<CommandArgs>> writeAiCommands(ShellServices services) {
     ),
     cmd(
       'write.ai.setApplyMode',
-      label: 'AI apply mode',
+      label: (l) => l.cmdAiSetApplyMode,
       palette: false,
       args: const JsonSchema.object(
         properties: {
@@ -288,7 +286,7 @@ List<Command<CommandArgs>> writeAiCommands(ShellServices services) {
     ),
     cmd(
       'write.ai.acceptIssue',
-      label: 'Accept proofreading issue',
+      label: (l) => l.cmdAiAcceptIssue,
       palette: false,
       role: Role.commenter,
       args: const JsonSchema.object(
@@ -300,12 +298,14 @@ List<Command<CommandArgs>> writeAiCommands(ShellServices services) {
         final r = c.proofreadResults!;
         final id = a.requireString('issueId');
         final s = r.issues.where((i) => i.issue.id == id).toList();
-        return r.accept(s) ? ok() : const CommandResult.failed('Text changed');
+        return r.accept(s)
+            ? ok()
+            : CommandResult.failed(l10n().commandToastTextChanged);
       },
     ),
     cmd(
       'write.ai.dismissIssue',
-      label: 'Dismiss proofreading issue',
+      label: (l) => l.cmdAiDismissIssue,
       palette: false,
       args: const JsonSchema.object(
         properties: {'issueId': JsonSchema.string()},
@@ -323,7 +323,7 @@ List<Command<CommandArgs>> writeAiCommands(ShellServices services) {
     ),
     cmd(
       'write.ai.acceptAllIssues',
-      label: 'Accept all proofreading issues',
+      label: (l) => l.cmdAiAcceptAllIssues,
       palette: false,
       role: Role.commenter,
       args: const JsonSchema.object(
@@ -345,7 +345,7 @@ List<Command<CommandArgs>> writeAiCommands(ShellServices services) {
               ];
         return r.accept(list)
             ? ok()
-            : const CommandResult.failed('Nothing to accept');
+            : CommandResult.failed(l10n().commandToastNothingToAccept);
       },
     ),
   ];

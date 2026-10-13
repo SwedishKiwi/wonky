@@ -30,6 +30,7 @@ import 'package:wonky_core/wonky_core.dart' show UuidV7Generator;
 import 'package:wonky_write_core/wonky_write_core.dart'
     show DeltaUtils, WonkyOt;
 
+import '../../l10n/write_l10n.dart';
 import '../document/write_document_api.dart';
 import '../sync/connection_keeper.dart';
 import '../sync/document_sync_controller.dart';
@@ -748,16 +749,17 @@ class WriteOffline extends ChangeNotifier implements OfflineDataProvider {
   /// (the server rejected the offline changes, e.g. `rebaseTooOld`).
   Future<void> _saveRecovery(StoredDocument stored, Delta document) async {
     try {
-      final name = stored.item?.name ?? 'Untitled document';
+      final l = writeL10nOf(services);
+      final name = stored.item?.name ?? l.untitledDocument;
       final copy = await createDocument(
         parentUuid: stored.item?.parentUuid,
-        name: '$name (offline changes)',
+        name: l.sessionCopyNameOfflineChanges(name),
         content: document,
       );
       services.toasts.show(
-        'Your offline changes to “$name” were saved as a copy',
+        l.offlineChangesSavedAsCopy(name),
         description: copy.name,
-        actionLabel: 'Open',
+        actionLabel: l.sessionOpen,
         onAction: () => services.openItem(copy),
       );
     } catch (e) {

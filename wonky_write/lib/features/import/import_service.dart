@@ -13,6 +13,8 @@ import 'package:wonky_client/wonky_client.dart'
         UuidValue;
 import 'package:wonky_write_core/wonky_write_core.dart';
 
+import '../../l10n/write_l10n.dart';
+
 /// File types Write imports (Write 07 §3): Markdown (and Markdown zips from
 /// our *Markdown with images* export), text, HTML, Word, OpenDocument and
 /// RTF.
@@ -78,11 +80,13 @@ class ConvertedImport {
 /// With [uploadImage], embedded images are uploaded and referenced as
 /// `wonky-file://`; images that cannot be uploaded become placeholders.
 /// Without it, images are dropped to placeholders too (an `import-image://`
-/// source never enters a document).
+/// source never enters a document). A file without a usable name becomes
+/// "Imported document" in [l] (English by default).
 Future<ConvertedImport> convertImport(
   String fileName,
   Uint8List bytes, {
   ImportImageUploader? uploadImage,
+  WriteLocalizations? l,
 }) async {
   final raw = await const WonkyImporters(
     limits: ImportLimits.client,
@@ -99,7 +103,9 @@ Future<ConvertedImport> convertImport(
       (result.title?.trim().isNotEmpty ?? false
           ? result.title!.trim()
           : null) ??
-      (base.trim().isEmpty ? 'Imported document' : base.trim());
+      (base.trim().isEmpty
+          ? (l ?? writeL10nEnglish).importDefaultName
+          : base.trim());
   return ConvertedImport(name: name, result: result);
 }
 
@@ -126,19 +132,23 @@ ImportImageUploader importImageUploader(
   return view.fileUuid.uuid;
 };
 
-/// Picks importable files.
-Future<List<ImportFile>> pickImportFiles({bool multiple = true}) async {
+/// Picks importable files (dialog titled in [l], English by default).
+Future<List<ImportFile>> pickImportFiles({
+  bool multiple = true,
+  WriteLocalizations? l,
+}) async {
+  final t = l ?? writeL10nEnglish;
   final files = multiple
       ? await FilePicker.pickFiles(
           type: FileType.custom,
           allowedExtensions: writeImportExtensions.toList(),
-          dialogTitle: 'Import documents',
+          dialogTitle: t.importDialogTitleMany,
         )
       : [
           ?await FilePicker.pickFile(
             type: FileType.custom,
             allowedExtensions: writeImportExtensions.toList(),
-            dialogTitle: 'Choose a file',
+            dialogTitle: t.importDialogTitleOne,
           ),
         ];
   return [
@@ -183,6 +193,7 @@ Future<ImportedDocument> importAsDocument(
     fileName,
     bytes,
     uploadImage: importImageUploader(s),
+    l: writeL10nOf(s),
   );
   final item = await s.drive.createDocument(
     parentUuid: parentUuid,
@@ -201,7 +212,8 @@ class WriteImportHandler implements ImportHandler {
   Set<String> get extensions => writeImportExtensions;
 
   @override
-  Future<List<ImportFile>> pickFiles(BuildContext context) => pickImportFiles();
+  Future<List<ImportFile>> pickFiles(BuildContext context) =>
+      pickImportFiles(l: writeL10n(context));
 
   @override
   Future<List<DriveItemView>> importFiles(
@@ -210,11 +222,12 @@ class WriteImportHandler implements ImportHandler {
     List<ImportFile> files, {
     UuidValue? parentUuid,
   }) async {
+    final l = writeL10nOf(services);
     final created = <DriveItemView>[];
     final problems = <String>[];
     for (final f in files) {
       if (!writeImportExtensions.contains(f.extension)) {
-        problems.add('${f.name}: unsupported file type');
+        problems.add(l.importProblemUnsupported(f.name));
         continue;
       }
       try {
@@ -226,29 +239,28 @@ class WriteImportHandler implements ImportHandler {
         );
         created.add(r.item);
         if (r.warnings.isNotEmpty) {
-          problems.add(
-            '${f.name}: ${r.warnings.length} '
-            '${r.warnings.length == 1 ? 'element' : 'elements'} '
-            "couldn't be imported exactly",
-          );
+          problems.add(l.importProblemInexact(f.name, r.warnings.length));
         }
       } catch (e) {
-        problems.add('${f.name}: ${errorMessage(e)}');
+        problems.add(l.importProblemFailed(f.name, errorMessage(e)));
       }
     }
     if (created.isNotEmpty) {
       services.toasts.show(
         created.length == 1
-            ? 'Imported “${created.single.name}”'
-            : 'Imported ${created.length} documents',
+            ? l.importToastImportedOne(created.single.name)
+            : l.importToastImportedMany(created.length),
         description: problems.isEmpty ? null : problems.join('\n'),
-        actionLabel: created.length == 1 ? 'Open' : null,
+        actionLabel: created.length == 1 ? l.sessionOpen : null,
         onAction: created.length == 1
             ? () => services.openItem(created.single)
             : null,
       );
     } else if (problems.isNotEmpty) {
-      services.toasts.error('Import failed', description: problems.join('\n'));
+      services.toasts.error(
+        l.importToastFailed,
+        description: problems.join('\n'),
+      );
     }
     services.refreshDrive();
     return created;

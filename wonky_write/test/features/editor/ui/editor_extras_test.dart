@@ -1,6 +1,3 @@
-import 'dart:typed_data';
-import 'dart:ui' show Offset;
-
 import 'package:dart_quill_delta/dart_quill_delta.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
@@ -151,8 +148,9 @@ void main() {
       expect(field.controller!.text, '3');
     });
 
-    testWidgets('when pressing Tab in the last cell then a row is appended',
-        (tester) async {
+    testWidgets('when pressing Tab in the last cell then a row is appended', (
+      tester,
+    ) async {
       final p = await _pump(tester, _tableDoc());
       await tester.tapAt(_center(tester, '3'));
       await tester.pump();
@@ -229,8 +227,9 @@ void main() {
       expect(find.byType(TextField), findsNothing);
     });
 
-    testWidgets('when undoing in a clean cell then the document undo runs',
-        (tester) async {
+    testWidgets('when undoing in a clean cell then the document undo runs', (
+      tester,
+    ) async {
       var undos = 0;
       await _pump(tester, _tableDoc(), onUndo: () => undos += 1);
       await tester.tapAt(_center(tester, 'Apples'));
@@ -324,7 +323,9 @@ void main() {
       await mouse.moveTo(_center(tester, 'Parent') + const Offset(1, 0));
       await tester.pump();
       final handle = find.byKey(
-        ValueKey('write.editor.blockHandle.${p.h.controller.document.first.id}'),
+        ValueKey(
+          'write.editor.blockHandle.${p.h.controller.document.first.id}',
+        ),
       );
       expect(handle, findsOneWidget);
       final drag = mouse;
@@ -400,11 +401,7 @@ void main() {
 
       p.drops.over!(at, ExternalDragKind.text);
       p.drops.drop!(
-        ExternalDrop(
-          globalPosition: at,
-          plainText: 'big',
-          html: '<b>big</b>',
-        ),
+        ExternalDrop(globalPosition: at, plainText: 'big', html: '<b>big</b>'),
       );
       await tester.pump();
 
@@ -552,7 +549,7 @@ void main() {
         'room below the last line', (tester) async {
       final p = await _pump(
         tester,
-        Delta()..insert(List.filled(40, 'Line').join('\n') + '\n'),
+        Delta()..insert('${List.filled(40, 'Line').join('\n')}\n'),
       );
       ScrollPosition position() => tester
           .state<ScrollableState>(
@@ -576,7 +573,7 @@ void main() {
         'moves to 40 % of the viewport', (tester) async {
       final p = await _pump(
         tester,
-        Delta()..insert(List.filled(80, 'Line').join('\n') + '\n'),
+        Delta()..insert('${List.filled(80, 'Line').join('\n')}\n'),
       );
       p.h.controller.view.typewriter = true;
       await tester.pumpAndSettle();

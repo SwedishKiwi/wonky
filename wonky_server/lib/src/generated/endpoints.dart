@@ -60,6 +60,7 @@ import 'package:wonky_server/src/generated/write/models/document_meta_patch.dart
     as _issank2j;
 import '../auth/email_idp_endpoint.dart' as _iuc1hd5t;
 import '../auth/jwt_refresh_endpoint.dart' as _inwq3ztq;
+import '../platform/activity/activity_endpoint.dart' as _id6etezj;
 import '../platform/ai/assistant_endpoint.dart' as _i8k7ge8b;
 import '../platform/comments/comment_endpoint.dart' as _iuwjzuw0;
 import '../platform/drive/drive_endpoint.dart' as _ijanxtjh;
@@ -96,6 +97,12 @@ class Endpoints extends _is.EndpointDispatch {
         ..initialize(
           server,
           'jwtRefresh',
+          null,
+        ),
+      'activity': _id6etezj.ActivityEndpoint()
+        ..initialize(
+          server,
+          'activity',
           null,
         ),
       'assistant': _i8k7ge8b.AssistantEndpoint()
@@ -422,6 +429,66 @@ class Endpoints extends _is.EndpointDispatch {
                         session,
                         refreshToken: params['refreshToken'],
                       ),
+        ),
+      },
+    );
+    connectors['activity'] = _is.EndpointConnector(
+      name: 'activity',
+      endpoint: endpoints['activity']!,
+      methodConnectors: {
+        'dashboard': _is.MethodConnector(
+          name: 'dashboard',
+          params: {
+            'itemUuid': _is.ParameterDescription(
+              name: 'itemUuid',
+              type: _is.getType<_is.UuidValue>(),
+              nullable: false,
+            ),
+            'days': _is.ParameterDescription(
+              name: 'days',
+              type: _is.getType<int>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _is.Session session,
+                Map<String, dynamic> params,
+              ) async => (endpoints['activity'] as _id6etezj.ActivityEndpoint)
+                  .dashboard(
+                    session,
+                    params['itemUuid'],
+                    params['days'],
+                  ),
+        ),
+        'showViewHistory': _is.MethodConnector(
+          name: 'showViewHistory',
+          params: {},
+          call:
+              (
+                _is.Session session,
+                Map<String, dynamic> params,
+              ) async => (endpoints['activity'] as _id6etezj.ActivityEndpoint)
+                  .showViewHistory(session),
+        ),
+        'setShowViewHistory': _is.MethodConnector(
+          name: 'setShowViewHistory',
+          params: {
+            'show': _is.ParameterDescription(
+              name: 'show',
+              type: _is.getType<bool>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _is.Session session,
+                Map<String, dynamic> params,
+              ) async => (endpoints['activity'] as _id6etezj.ActivityEndpoint)
+                  .setShowViewHistory(
+                    session,
+                    params['show'],
+                  ),
         ),
       },
     );

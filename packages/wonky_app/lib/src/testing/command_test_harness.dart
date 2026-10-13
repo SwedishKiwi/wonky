@@ -88,6 +88,7 @@ class CommandTestHarness {
     VersionRepository? versions,
     FileRepository? files,
     MetaRepository? meta,
+    ActivityRepository? activity,
     LocalStore? store,
     UuidV7Generator? ids,
     bool registerShellCommands = true,
@@ -108,6 +109,7 @@ class CommandTestHarness {
         versions: versions ?? UnfakedVersionRepository(),
         files: files ?? UnfakedFileRepository(),
         meta: meta ?? UnfakedMetaRepository(),
+        activity: activity,
       ),
       urls: const AppUrls(
         apiUrl: 'http://localhost:8080/',

@@ -4,6 +4,7 @@ import 'package:shad/shad.dart';
 import 'package:wonky_ui/wonky_ui.dart';
 import 'package:wonky_write_core/wonky_write_core.dart';
 
+import '../../l10n/write_l10n.dart';
 import '../screen/command_invoke.dart';
 import '../screen/document_insights.dart';
 
@@ -154,6 +155,7 @@ class _OutlinePanelState extends State<OutlinePanel> {
         final rows = visibleOutlineRows(outline, widget.view);
         final current = widget.insights.currentHeading;
         if (outline.isEmpty) return _empty(context);
+        final l = writeL10n(context);
         return Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
@@ -162,8 +164,7 @@ class _OutlinePanelState extends State<OutlinePanel> {
               child: Row(
                 children: [
                   Text(
-                    '${outline.length} '
-                    '${outline.length == 1 ? 'heading' : 'headings'}',
+                    l.outlineHeadingCount(outline.length),
                     style: theme.textTheme.muted.copyWith(fontSize: 12),
                   ),
                   const Spacer(),
@@ -171,26 +172,26 @@ class _OutlinePanelState extends State<OutlinePanel> {
                     entries: () => [
                       WonkyMenuItem(
                         key: const ValueKey<String>('outline.collapseAll'),
-                        label: 'Collapse all',
+                        label: l.outlineCollapseAll,
                         icon: LucideIcons.chevronsDownUp,
                         onSelected: () => widget.view.collapseAll(outline),
                       ),
                       WonkyMenuItem(
                         key: const ValueKey<String>('outline.expandAll'),
-                        label: 'Expand all',
+                        label: l.outlineExpandAll,
                         icon: LucideIcons.chevronsUpDown,
                         onSelected: widget.view.expandAll,
                       ),
                       const WonkyMenuSeparator(),
                       WonkyMenuSubmenu(
-                        label: 'Show levels',
+                        label: l.outlineShowLevels,
                         children: [
                           for (var level = 1; level <= 6; level++)
                             WonkyMenuRadioItem(
                               key: ValueKey<String>('outline.levels.$level'),
                               label: level == 1
-                                  ? 'Heading 1 only'
-                                  : 'Up to heading $level',
+                                  ? l.outlineHeading1Only
+                                  : l.outlineUpToLevel(level),
                               selected: widget.view.maxLevel == level,
                               onSelected: () => invokeCommand(
                                 context,
@@ -201,14 +202,17 @@ class _OutlinePanelState extends State<OutlinePanel> {
                         ],
                       ),
                     ],
-                    builder: (context, c) => ShadIconButton.ghost(
-                      key: const ValueKey<String>('outline.menu'),
-                      width: 28,
-                      height: 28,
-                      iconSize: 16,
-                      semanticLabel: 'Outline options',
-                      icon: const Icon(LucideIcons.ellipsisVertical),
-                      onPressed: c.toggle,
+                    builder: (context, c) => ShadTooltip(
+                      builder: (_) => Text(l.outlineOptions),
+                      child: ShadIconButton.ghost(
+                        key: const ValueKey<String>('outline.menu'),
+                        width: 28,
+                        height: 28,
+                        iconSize: 16,
+                        semanticLabel: l.outlineOptions,
+                        icon: const Icon(LucideIcons.ellipsisVertical),
+                        onPressed: c.toggle,
+                      ),
                     ),
                   ),
                 ],
@@ -254,6 +258,7 @@ class _OutlinePanelState extends State<OutlinePanel> {
 
   Widget _empty(BuildContext context) {
     final theme = ShadTheme.of(context);
+    final l = writeL10n(context);
     return Padding(
       key: const ValueKey<String>('outline.empty'),
       padding: const EdgeInsets.fromLTRB(20, 32, 20, 20),
@@ -267,7 +272,7 @@ class _OutlinePanelState extends State<OutlinePanel> {
           ),
           const SizedBox(height: 12),
           Text(
-            'Headings you add to the document will appear here.',
+            l.outlineEmpty,
             textAlign: TextAlign.center,
             style: theme.textTheme.muted,
           ),
@@ -279,7 +284,7 @@ class _OutlinePanelState extends State<OutlinePanel> {
               'write.format.blockType',
               args: {'type': 'heading1'},
             ),
-            child: const Text('Turn this line into a heading'),
+            child: Text(l.outlineMakeHeading),
           ),
         ],
       ),
@@ -317,7 +322,8 @@ class _OutlineRowWidgetState extends State<_OutlineRowWidget> {
     final theme = ShadTheme.of(context);
     final cs = theme.colorScheme;
     final e = widget.row.entry;
-    final text = e.text.trim().isEmpty ? 'Untitled heading' : e.text;
+    final l = writeL10n(context);
+    final text = e.text.trim().isEmpty ? l.outlineUntitledHeading : e.text;
     final top = widget.row.depth == 0;
     return MouseRegion(
       cursor: SystemMouseCursors.click,
@@ -348,15 +354,26 @@ class _OutlineRowWidgetState extends State<_OutlineRowWidget> {
               SizedBox(width: 4.0 + widget.row.depth * 12),
               SizedBox(
                 width: 18,
+                height: 30,
                 child: widget.row.hasChildren
-                    ? GestureDetector(
-                        onTap: widget.onToggle,
-                        child: Icon(
-                          widget.collapsed
-                              ? LucideIcons.chevronRight
-                              : LucideIcons.chevronDown,
-                          size: 14,
-                          color: cs.mutedForeground,
+                    ? Semantics(
+                        button: true,
+                        expanded: !widget.collapsed,
+                        label: widget.collapsed
+                            ? l.outlineExpandSection(text)
+                            : l.outlineCollapseSection(text),
+                        excludeSemantics: true,
+                        child: GestureDetector(
+                          // The whole 18×30 cell toggles, not only the icon.
+                          behavior: HitTestBehavior.opaque,
+                          onTap: widget.onToggle,
+                          child: Icon(
+                            widget.collapsed
+                                ? LucideIcons.chevronRight
+                                : LucideIcons.chevronDown,
+                            size: 14,
+                            color: cs.mutedForeground,
+                          ),
                         ),
                       )
                     : null,

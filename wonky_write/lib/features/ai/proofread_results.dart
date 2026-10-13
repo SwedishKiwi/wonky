@@ -3,6 +3,7 @@ import 'package:shad/shad.dart';
 import 'package:wonky_client/wonky_client.dart';
 import 'package:wonky_write_core/wonky_write_core.dart';
 
+import '../../l10n/write_l10n.dart';
 import 'write_ai_controller.dart';
 
 enum ProofreadIssueStatus { open, accepted, dismissed, stale }
@@ -36,12 +37,12 @@ class ProofreadResults extends ChangeNotifier {
     'clarity',
   ];
 
-  static String categoryLabel(String c) => switch (c) {
-    'spelling' => 'Spelling',
-    'grammar' => 'Grammar',
-    'punctuation' => 'Punctuation',
-    'style' => 'Style',
-    _ => 'Clarity',
+  static String categoryLabel(WriteLocalizations l, String c) => switch (c) {
+    'spelling' => l.proofreadCategorySpelling,
+    'grammar' => l.proofreadCategoryGrammar,
+    'punctuation' => l.proofreadCategoryPunctuation,
+    'style' => l.proofreadCategoryStyle,
+    _ => l.proofreadCategoryClarity,
   };
 
   void onEvent(ProofreadEvent e) {
@@ -159,8 +160,8 @@ class ProofreadResults extends ChangeNotifier {
       normalized.change,
       label ??
           (edits.length == 1
-              ? 'AI: Fix “${edits.single.$2.issue.quote}”'
-              : 'AI: Accept ${edits.length} corrections'),
+              ? ai.l10n.proofreadUndoFix(edits.single.$2.issue.quote)
+              : ai.l10n.proofreadUndoAcceptMany(edits.length)),
     );
     if (ok) {
       for (final (_, s) in edits) {
@@ -198,14 +199,15 @@ class ProofreadIssueList extends StatelessWidget {
       listenable: results,
       builder: (context, _) {
         final theme = ShadTheme.of(context);
+        final l = writeL10n(context);
         final r = results;
         final children = <Widget>[];
         if (!r.finished) {
           children.add(
             Text(
               r.sectionsTotal == 0
-                  ? 'Proofreading…'
-                  : 'Proofreading… ${r.sectionsDone} of ${r.sectionsTotal} sections',
+                  ? l.proofreadInProgress
+                  : l.proofreadProgress(r.sectionsDone, r.sectionsTotal),
               style: theme.textTheme.muted,
             ),
           );
@@ -213,7 +215,7 @@ class ProofreadIssueList extends StatelessWidget {
         if (r.finished && r.issues.isEmpty && r.error == null) {
           children.add(
             Text(
-              'No issues found.',
+              l.proofreadNoIssues,
               key: const ValueKey<String>('proofread.none'),
               style: theme.textTheme.small,
             ),
@@ -229,7 +231,7 @@ class ProofreadIssueList extends StatelessWidget {
                 size: ShadButtonSize.sm,
                 enabled: r.ai.canWrite,
                 onPressed: () => r.accept(open),
-                child: Text('Accept all (${open.length})'),
+                child: Text(l.proofreadAcceptAllCount(open.length)),
               ),
             ),
           );
@@ -248,7 +250,10 @@ class ProofreadIssueList extends StatelessWidget {
                 children: [
                   Expanded(
                     child: Text(
-                      '${ProofreadResults.categoryLabel(c)} (${items.length})',
+                      l.proofreadCategoryCount(
+                        ProofreadResults.categoryLabel(l, c),
+                        items.length,
+                      ),
                       style: theme.textTheme.small.copyWith(
                         fontWeight: FontWeight.w600,
                       ),
@@ -261,10 +266,9 @@ class ProofreadIssueList extends StatelessWidget {
                       enabled: r.ai.canWrite,
                       onPressed: () => r.accept(
                         openInCat,
-                        label:
-                            'AI: Accept ${ProofreadResults.categoryLabel(c).toLowerCase()} fixes',
+                        label: l.proofreadUndoAcceptCategory(c),
                       ),
-                      child: const Text('Accept all'),
+                      child: Text(l.proofreadAcceptAll),
                     ),
                 ],
               ),
@@ -297,6 +301,7 @@ class _IssueTile extends StatelessWidget {
     final s = state;
     final open = s.status == ProofreadIssueStatus.open;
     final muted = !open;
+    final l = writeL10n(context);
     return Opacity(
       opacity: muted ? 0.55 : 1,
       child: Container(
@@ -312,27 +317,31 @@ class _IssueTile extends StatelessWidget {
           children: [
             GestureDetector(
               onTap: () => results.show(s),
-              child: Text.rich(
-                TextSpan(
-                  children: [
-                    TextSpan(
-                      text: s.issue.quote,
-                      style: TextStyle(
-                        decoration: TextDecoration.lineThrough,
-                        color: cs.destructive,
+              child: Semantics(
+                button: true,
+                hint: l.proofreadShowIssue(s.issue.quote),
+                child: Text.rich(
+                  TextSpan(
+                    children: [
+                      TextSpan(
+                        text: s.issue.quote,
+                        style: TextStyle(
+                          decoration: TextDecoration.lineThrough,
+                          color: cs.destructive,
+                        ),
                       ),
-                    ),
-                    const TextSpan(text: '  →  '),
-                    TextSpan(
-                      text: s.issue.replacement,
-                      style: TextStyle(
-                        color: cs.primary,
-                        fontWeight: FontWeight.w600,
+                      const TextSpan(text: '  →  '),
+                      TextSpan(
+                        text: s.issue.replacement,
+                        style: TextStyle(
+                          color: cs.primary,
+                          fontWeight: FontWeight.w600,
+                        ),
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
+                  style: theme.textTheme.small,
                 ),
-                style: theme.textTheme.small,
               ),
             ),
             if (s.issue.explanation.isNotEmpty)
@@ -348,24 +357,24 @@ class _IssueTile extends StatelessWidget {
                     size: ShadButtonSize.sm,
                     enabled: results.ai.canWrite,
                     onPressed: () => results.accept([s]),
-                    child: const Text('Accept'),
+                    child: Text(l.proofreadAccept),
                   ),
                   const SizedBox(width: 6),
                   ShadButton.ghost(
                     key: ValueKey<String>('proofread.dismiss.${s.issue.id}'),
                     size: ShadButtonSize.sm,
                     onPressed: () => results.dismiss(s),
-                    child: const Text('Dismiss'),
+                    child: Text(l.proofreadDismiss),
                   ),
                 ],
                 ProofreadIssueStatus.accepted => [
-                  Text('Accepted', style: theme.textTheme.muted),
+                  Text(l.proofreadAccepted, style: theme.textTheme.muted),
                 ],
                 ProofreadIssueStatus.dismissed => [
-                  Text('Dismissed', style: theme.textTheme.muted),
+                  Text(l.proofreadDismissed, style: theme.textTheme.muted),
                 ],
                 ProofreadIssueStatus.stale => [
-                  Text('Text changed', style: theme.textTheme.muted),
+                  Text(l.proofreadTextChanged, style: theme.textTheme.muted),
                 ],
               },
             ),

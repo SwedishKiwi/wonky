@@ -254,7 +254,7 @@ void main() {
       expect(OfflineApp.text(s1), 'Hello\n');
       expect(DeltaUtils.text(recovery!), 'Hello offline\n');
 
-      final copy = await s1.saveCopy(recovery!, suffix: 'offline changes');
+      final copy = await s1.saveCopy(recovery!, offlineChanges: true);
       expect(copy, isNotNull);
       expect(copy!.name, 'Plan (offline changes)');
       final server = backend.serverFor(copy.contentRef!);

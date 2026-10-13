@@ -3,6 +3,8 @@ import 'dart:typed_data';
 import 'package:flutter/widgets.dart';
 import 'package:shad/shad.dart';
 
+import '../../l10n/write_l10n.dart';
+
 /// Whether the platform shows PDFs inline (web: the browser's viewer).
 const bool canPreviewPdfInline = false;
 
@@ -16,6 +18,7 @@ class PdfView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = ShadTheme.of(context);
+    final l = writeL10n(context);
     return Center(
       child: Column(
         mainAxisSize: MainAxisSize.min,
@@ -27,11 +30,13 @@ class PdfView extends StatelessWidget {
           ),
           const SizedBox(height: 12),
           Text(
-            pageCount == null ? 'PDF ready' : 'PDF ready · $pageCount pages',
+            pageCount == null
+                ? l.printPdfReady
+                : l.printPdfReadyPages(pageCount!),
             style: theme.textTheme.large,
           ),
           const SizedBox(height: 4),
-          Text('Use Download PDF to save it.', style: theme.textTheme.muted),
+          Text(l.printPdfDesktopHint, style: theme.textTheme.muted),
         ],
       ),
     );

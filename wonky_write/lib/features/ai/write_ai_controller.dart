@@ -8,10 +8,12 @@ import 'package:wonky_client/wonky_client.dart';
 import 'package:wonky_core/wonky_core.dart' hide ActorKind;
 import 'package:wonky_write_core/wonky_write_core.dart' hide DeltaSelection;
 
+import '../../l10n/write_l10n.dart';
 import '../document/write_document_session.dart';
 import '../editor/applier/delta_applier.dart' show DeltaSelection;
 import '../editor/controller/editor_types.dart';
 import '../screen/write_document_controller.dart';
+import 'ai_selection_menu.dart' show aiLanguageLabel, aiToneLabel;
 import 'proofread_results.dart';
 import 'write_assistant_adapter.dart';
 
@@ -134,6 +136,9 @@ class WriteAiController extends ChangeNotifier {
 
   ShellAssistant? get assistant => ShellAssistant.of(services);
 
+  /// The Write strings in the shell's locale.
+  WriteLocalizations get l10n => writeL10nOf(services);
+
   /// The assistant API (the installed assistant's, or the test override).
   AssistantApi? get api => _apiOverride ?? assistant?.api;
 
@@ -237,7 +242,7 @@ class WriteAiController extends ChangeNotifier {
     final p = AiPreview(
       kind: AiPreviewKind.rewrite,
       action: action,
-      title: rewriteTitle(action, tone: tone, language: language),
+      title: rewriteTitle(l10n, action, tone: tone, language: language),
       start: sel.start,
       length: sel.length,
       originalText: WonkyDocument(d).text.substring(
@@ -265,7 +270,7 @@ class WriteAiController extends ChangeNotifier {
     final p = AiPreview(
       kind: AiPreviewKind.prompt,
       action: 'custom',
-      title: sel.isCollapsed ? 'Ask AI to write' : 'Ask AI to edit',
+      title: sel.isCollapsed ? l10n.aiAskToWrite : l10n.aiAskToEdit,
       start: sel.start,
       length: sel.length,
       originalText: w.text.substring(
@@ -314,7 +319,7 @@ class WriteAiController extends ChangeNotifier {
     final p = AiPreview(
       kind: AiPreviewKind.continuation,
       action: 'continueWriting',
-      title: 'Continue writing',
+      title: l10n.cmdAiContinue,
       start: sel.end,
       length: 0,
       originalText: '',
@@ -387,11 +392,11 @@ class WriteAiController extends ChangeNotifier {
                 p
                   ..markdown = ''
                   ..status = AiPreviewStatus.refused
-                  ..error = e.error ?? AssistantController.refusalText;
+                  ..error = e.error ?? l10n.aiRefusal;
               case InlineAiEventType.error:
                 p
                   ..status = AiPreviewStatus.failed
-                  ..error = e.error ?? 'Something went wrong.';
+                  ..error = e.error ?? l10n.aiErrorGeneric;
             }
             _notifyPreview();
           },
@@ -446,7 +451,7 @@ class WriteAiController extends ChangeNotifier {
     final p = _preview;
     if (p == null) return;
     await Clipboard.setData(ClipboardData(text: p.markdown));
-    services.toasts.show('Copied');
+    services.toasts.show(l10n.aiCopied);
   }
 
   void toggleDiff() {
@@ -510,7 +515,12 @@ class WriteAiController extends ChangeNotifier {
     } on AddressException {
       return false;
     }
-    final ok = applyChange(d, r.change, 'AI: ${p.title}', r.appliedRange);
+    final ok = applyChange(
+      d,
+      r.change,
+      l10n.aiUndoLabel(p.title),
+      r.appliedRange,
+    );
     if (ok) discard();
     return ok;
   }
@@ -545,9 +555,10 @@ class WriteAiController extends ChangeNotifier {
     } on AddressException {
       return false;
     }
-    final label = p.kind == AiPreviewKind.continuation
-        ? 'AI: Continue writing'
-        : 'AI: ${p.title}';
+    final l = l10n;
+    final label = l.aiUndoLabel(
+      p.kind == AiPreviewKind.continuation ? l.cmdAiContinue : p.title,
+    );
     final ok = applyChange(d, r.change, label, r.appliedRange);
     if (ok) discard();
     return ok;
@@ -600,7 +611,12 @@ class WriteAiController extends ChangeNotifier {
     } on AddressException {
       return false;
     }
-    return applyChange(d, r.change, label ?? 'AI: Insert', r.appliedRange);
+    return applyChange(
+      d,
+      r.change,
+      label ?? l10n.aiUndoLabel(l10n.commonInsert),
+      r.appliedRange,
+    );
   }
 
   // ---------------------------------------------------------------- panel
@@ -628,33 +644,36 @@ class WriteAiController extends ChangeNotifier {
     );
   }
 
-  List<AssistantResultAction> _insertActions({bool outline = false}) => [
-    AssistantResultAction(
-      id: 'insertCursor',
-      label: 'Insert at cursor',
-      icon: LucideIcons.textCursorInput,
-      onPressed: (md) => insertMarkdown(md),
-    ),
-    AssistantResultAction(
-      id: 'insertTop',
-      label: 'Insert at top',
-      icon: LucideIcons.arrowUpToLine,
-      onPressed: (md) => insertMarkdown(md, atTop: true),
-    ),
-    if (outline)
+  List<AssistantResultAction> _insertActions({bool outline = false}) {
+    final l = l10n;
+    return [
       AssistantResultAction(
-        id: 'insertList',
-        label: 'Insert as bullet list',
-        icon: LucideIcons.list,
-        onPressed: (md) => insertMarkdown(outlineAsList(md)),
+        id: 'insertCursor',
+        label: l.aiInsertAtCursor,
+        icon: LucideIcons.textCursorInput,
+        onPressed: (md) => insertMarkdown(md),
       ),
-    AssistantResultAction(
-      id: 'copy',
-      label: 'Copy',
-      icon: LucideIcons.copy,
-      onPressed: (md) => Clipboard.setData(ClipboardData(text: md)),
-    ),
-  ];
+      AssistantResultAction(
+        id: 'insertTop',
+        label: l.aiInsertAtTop,
+        icon: LucideIcons.arrowUpToLine,
+        onPressed: (md) => insertMarkdown(md, atTop: true),
+      ),
+      if (outline)
+        AssistantResultAction(
+          id: 'insertList',
+          label: l.aiInsertAsList,
+          icon: LucideIcons.list,
+          onPressed: (md) => insertMarkdown(outlineAsList(md)),
+        ),
+      AssistantResultAction(
+        id: 'copy',
+        label: l.commonCopy,
+        icon: LucideIcons.copy,
+        onPressed: (md) => Clipboard.setData(ClipboardData(text: md)),
+      ),
+    ];
+  }
 
   /// Explain / Summarize the selection in the panel.
   Future<void> explainSelection({bool summarize = false}) async {
@@ -662,7 +681,7 @@ class WriteAiController extends ChangeNotifier {
     if (c == null || !available || !hasSelection) return;
     _openPanel();
     final r = c.addResult(
-      summarize ? 'Summary of the selection' : 'Explanation',
+      summarize ? l10n.aiResultSelectionSummary : l10n.aiResultExplanation,
       actions: _insertActions(),
     );
     await c.streamInline(
@@ -676,7 +695,10 @@ class WriteAiController extends ChangeNotifier {
     final c = chat;
     if (c == null || !available) return;
     _openPanel();
-    final r = c.addResult('Document summary', actions: _insertActions());
+    final r = c.addResult(
+      l10n.aiResultDocumentSummary,
+      actions: _insertActions(),
+    );
     await c.streamInline(
       InlineAiRequest(
         itemUuid: session.itemUuid,
@@ -692,7 +714,10 @@ class WriteAiController extends ChangeNotifier {
     final c = chat;
     if (c == null || !available) return;
     _openPanel();
-    final r = c.addResult('Outline', actions: _insertActions(outline: true));
+    final r = c.addResult(
+      l10n.aiResultOutline,
+      actions: _insertActions(outline: true),
+    );
     await c.streamInline(
       InlineAiRequest(
         itemUuid: session.itemUuid,
@@ -731,7 +756,7 @@ class WriteAiController extends ChangeNotifier {
     final results = ProofreadResults(this);
     _proofread = results;
     final entry = c.addResult(
-      'Proofreading',
+      l10n.aiResultProofreading,
       builder: (context) => ProofreadIssueList(results: results),
     );
     results.addListener(c.refresh);
@@ -751,16 +776,24 @@ class WriteAiController extends ChangeNotifier {
     assistant?.refreshStatus();
   }
 
-  static String rewriteTitle(String action, {String? tone, String? language}) =>
-      switch (action) {
-        'improve' => 'Improve writing',
-        'fixGrammar' => 'Fix spelling & grammar',
-        'shorter' => 'Make shorter',
-        'longer' => 'Make longer',
-        'tone' => 'Change tone: ${tone ?? 'professional'}',
-        'translate' => 'Translate to ${language ?? 'English'}',
-        _ => 'Edit with AI',
-      };
+  /// The preview title (and undo label) of rewrite [action]; [tone] is a
+  /// tone id and [language] an English language name.
+  static String rewriteTitle(
+    WriteLocalizations l,
+    String action, {
+    String? tone,
+    String? language,
+  }) => switch (action) {
+    'improve' => l.aiImproveWriting,
+    'fixGrammar' => l.aiFixGrammar,
+    'shorter' => l.aiMakeShorter,
+    'longer' => l.aiMakeLonger,
+    'tone' => l.aiTitleChangeTone(aiToneLabel(l, tone ?? 'professional')),
+    'translate' => l.aiTitleTranslate(
+      aiLanguageLabel(l, language ?? 'English'),
+    ),
+    _ => l.aiTitleEditWithAi,
+  };
 
   @override
   void dispose() {

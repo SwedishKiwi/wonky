@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:wonky_client/wonky_client.dart';
 
+import '../../l10n/write_l10n.dart';
 import '../document/write_document_session.dart';
 import '../editor/applier/delta_applier.dart' show DeltaSelection;
 import '../editor/view/editor_view_state.dart' show RemoteCursor;
@@ -95,7 +96,9 @@ class RemotePresenceController extends ChangeNotifier {
       RemoteCursor(
         sessionId: e.sessionId,
         userKey: '${p?.userUuid.uuid ?? e.userId}',
-        name: isSelf ? 'You (other tab)' : (p?.displayName ?? 'Someone'),
+        name: isSelf
+            ? writeL10nOf(session.services).presenceYouOtherTab
+            : (p?.displayName ?? writeL10nOf(session.services).presenceSomeone),
         selection: DeltaSelection(e.anchor, e.head),
         focused: e.focused,
         isAgent: p != null && p.actorKind != ActorKind.user,

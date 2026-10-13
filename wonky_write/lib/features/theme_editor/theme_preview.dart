@@ -8,6 +8,7 @@ import 'package:wonky_ui/wonky_ui.dart';
 import 'package:wonky_write_core/wonky_write_core.dart'
     show Delta, PageSetup, PageMargins, ThemeElement, ThemeVariant, WonkyAttr;
 
+import '../../l10n/write_l10n.dart';
 import '../editor/controller/editor_types.dart';
 import '../editor/controller/write_editor_controller.dart';
 import '../editor/ui/wonky_editor.dart';
@@ -39,6 +40,19 @@ class _ThemePreviewState extends State<ThemePreview> {
   ThemePreviewSource? _shownSource;
   ThemeEditorController get c => widget.controller;
   int? _lastOffset;
+
+  /// The sample document's title (header/footer `{title}` token).
+  String _sampleTitle = writeL10nEnglish.themeEditorSampleTitle;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final title = writeL10n(context).themeEditorSampleTitle;
+    if (title != _sampleTitle) {
+      _sampleTitle = title;
+      _sync();
+    }
+  }
 
   @override
   void initState() {
@@ -92,7 +106,7 @@ class _ThemePreviewState extends State<ThemePreview> {
         bottom: margins.bottom,
         left: margins.left,
       ),
-      tokens: {'title': c.document?.title ?? 'Sample document'},
+      tokens: {'title': c.document?.title ?? _sampleTitle},
     );
     view.zoom = c.zoom;
   }
@@ -186,7 +200,7 @@ class _ThemePreviewState extends State<ThemePreview> {
                   controller: _editor,
                   theme: theme,
                   scrollController: _scroll,
-                  documentTitle: 'Theme preview',
+                  documentTitle: writeL10n(context).themeEditorPreviewTitle,
                   hint: '',
                 ),
               ),

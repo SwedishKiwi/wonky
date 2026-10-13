@@ -477,6 +477,9 @@ class WonkyTableComponentBuilder implements ComponentBuilder {
   ) {
     if (viewModel is! MarkdownTableViewModel) return null;
     final inline = editable ? inlineEditing : null;
+    // Selected tables show the ring, not a translucent fill over the cells
+    // (which would also cover the cell being edited).
+    if (inline != null) viewModel.selectionColor = const Color(0x00000000);
     final table = inline == null
         ? _inner.createComponent(componentContext, viewModel)
         : MarkdownTableComponent(

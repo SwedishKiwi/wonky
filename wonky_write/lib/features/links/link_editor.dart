@@ -8,6 +8,7 @@ import 'package:wonky_client/wonky_client.dart'
     show DriveItemKind, DriveItemView, DriveSearchFilters;
 import 'package:wonky_write_core/wonky_write_core.dart' show OutlineEntry;
 
+import '../../l10n/write_l10n.dart';
 import '../editor/model/link_url_policy.dart';
 
 /// What the link editor returns.
@@ -138,6 +139,7 @@ class _LinkEditorState extends State<LinkEditor> {
   }
 
   List<_Suggestion> get _suggestions {
+    final l = writeL10n(context);
     final q = _url.text.trim().toLowerCase();
     final query = q.startsWith('#') ? q.substring(1) : q;
     if (q.contains('://') || q.contains('@')) return const [];
@@ -148,7 +150,7 @@ class _LinkEditorState extends State<LinkEditor> {
           _Suggestion(
             '#${h.anchorId}',
             h.text,
-            'Heading ${h.level}',
+            l.linkSuggestionHeading(h.level),
             LucideIcons.heading,
           ),
     ].take(6);
@@ -158,7 +160,7 @@ class _LinkEditorState extends State<LinkEditor> {
         _Suggestion(
           'wonky://doc/${d.uuid.uuid}',
           d.name,
-          'Document',
+          l.linkSuggestionDocument,
           LucideIcons.fileText,
         ),
     ];
@@ -204,6 +206,7 @@ class _LinkEditorState extends State<LinkEditor> {
 
   @override
   Widget build(BuildContext context) {
+    final l = writeL10n(context);
     final theme = ShadTheme.of(context);
     final cs = theme.colorScheme;
     final suggestions = _suggestions;
@@ -217,32 +220,42 @@ class _LinkEditorState extends State<LinkEditor> {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             if (widget.showText) ...[
-              Text('Text', style: theme.textTheme.small),
+              ExcludeSemantics(
+                child: Text(l.linkText, style: theme.textTheme.small),
+              ),
               const SizedBox(height: 4),
-              ShadInput(
-                key: const ValueKey<String>('write.popover.link.text'),
-                controller: _text,
-                placeholder: const Text('Text to display'),
-                onSubmitted: (_) => _apply(),
+              Semantics(
+                label: l.linkText,
+                child: ShadInput(
+                  key: const ValueKey<String>('write.popover.link.text'),
+                  controller: _text,
+                  placeholder: Text(l.linkTextPlaceholder),
+                  onSubmitted: (_) => _apply(),
+                ),
               ),
               const SizedBox(height: 10),
             ],
-            Text('Link', style: theme.textTheme.small),
+            ExcludeSemantics(
+              child: Text(l.linkUrl, style: theme.textTheme.small),
+            ),
             const SizedBox(height: 4),
-            ShadInput(
-              key: const ValueKey<String>('write.popover.link.url'),
-              controller: _url,
-              focusNode: _urlFocus,
-              autofocus: true,
-              placeholder: const Text('Paste a link or search'),
-              leading: Icon(
-                LucideIcons.link,
-                size: 16,
-                color: cs.mutedForeground,
+            Semantics(
+              label: l.linkUrl,
+              child: ShadInput(
+                key: const ValueKey<String>('write.popover.link.url'),
+                controller: _url,
+                focusNode: _urlFocus,
+                autofocus: true,
+                placeholder: Text(l.linkUrlPlaceholder),
+                leading: Icon(
+                  LucideIcons.link,
+                  size: 16,
+                  color: cs.mutedForeground,
+                ),
+                onSubmitted: (_) => _highlight >= 0 && suggestions.isNotEmpty
+                    ? _apply(suggestions[_highlight].url)
+                    : _apply(),
               ),
-              onSubmitted: (_) => _highlight >= 0 && suggestions.isNotEmpty
-                  ? _apply(suggestions[_highlight].url)
-                  : _apply(),
             ),
             if (_error != null) ...[
               const SizedBox(height: 6),
@@ -279,13 +292,13 @@ class _LinkEditorState extends State<LinkEditor> {
                     leading: const Icon(LucideIcons.unlink, size: 14),
                     onPressed: () =>
                         Navigator.of(context).pop(const RemoveLink()),
-                    child: const Text('Remove link'),
+                    child: Text(l.linkRemove),
                   ),
                 const Spacer(),
                 ShadButton.outline(
                   size: ShadButtonSize.sm,
                   onPressed: () => Navigator.of(context).pop(),
-                  child: const Text('Cancel'),
+                  child: Text(l.commonCancel),
                 ),
                 const SizedBox(width: 8),
                 ListenableBuilder(
@@ -295,7 +308,7 @@ class _LinkEditorState extends State<LinkEditor> {
                     size: ShadButtonSize.sm,
                     enabled: _url.text.trim().isNotEmpty,
                     onPressed: () => _apply(),
-                    child: const Text('Apply'),
+                    child: Text(l.commonApply),
                   ),
                 ),
               ],
@@ -325,6 +338,7 @@ class _SuggestionRow extends StatelessWidget {
     return MouseRegion(
       cursor: SystemMouseCursors.click,
       child: GestureDetector(
+        behavior: HitTestBehavior.opaque,
         onTap: onTap,
         child: Container(
           padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),

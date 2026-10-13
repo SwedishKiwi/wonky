@@ -143,7 +143,16 @@ class _EditorScaffoldState extends State<EditorScaffold> {
     });
     s.currentItem.addListener(_onCurrentItem);
     unawaited(_load());
-    _activate();
+    _activateAfterBuild();
+  }
+
+  /// Activating notifies shell listeners (undo, command state, active
+  /// document); doing that from initState/didUpdateWidget marked other
+  /// widgets dirty during the build (found by the E2E journeys).
+  void _activateAfterBuild() {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) _activate();
+    });
   }
 
   void _activate() {
@@ -157,8 +166,11 @@ class _EditorScaffoldState extends State<EditorScaffold> {
   void didUpdateWidget(EditorScaffold oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (oldWidget.controller != widget.controller) {
-      if (oldWidget.controller != null) s.deactivate(oldWidget.controller!);
-      _activate();
+      final old = oldWidget.controller;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (old != null) s.deactivate(old);
+      });
+      _activateAfterBuild();
     }
   }
 
@@ -192,7 +204,14 @@ class _EditorScaffoldState extends State<EditorScaffold> {
   void dispose() {
     _changes?.cancel();
     s.currentItem.removeListener(_onCurrentItem);
-    if (widget.controller != null) s.deactivate(widget.controller!);
+    final controller = widget.controller;
+    if (controller != null) {
+      // Not while the tree is locked (see [_activateAfterBuild]); a no-op
+      // when another editor activated in the meantime.
+      WidgetsBinding.instance.addPostFrameCallback(
+        (_) => s.deactivate(controller),
+      );
+    }
     if (s.comments.value == _comments) s.comments.value = null;
     if (s.startTitleRename == _titleField.startEditing) {
       s.startTitleRename = null;

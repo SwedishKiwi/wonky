@@ -5,6 +5,7 @@ import 'package:super_editor/super_editor.dart'
     show DocumentChangeLog, MutableDocument;
 import 'package:wonky_write_core/wonky_write_core.dart' hide DeltaSelection;
 
+import '../../l10n/write_l10n.dart';
 import '../editor/applier/delta_applier.dart' show DeltaSelection;
 import '../editor/commands/write_editor_commands.dart';
 import '../editor/controller/write_editor_controller.dart';
@@ -14,7 +15,7 @@ import '../editor/view/editor_view_state.dart';
 /// matches (painted through `EditorViewState.setFindMatches`), the active
 /// match, replace one / replace all (one undo step).
 class FindController extends ChangeNotifier {
-  FindController(this.editor, {this.commands, this.reveal}) {
+  FindController(this.editor, {this.commands, this.reveal, this.strings}) {
     editor.addListener(_onEditorChanged);
   }
 
@@ -25,6 +26,11 @@ class FindController extends ChangeNotifier {
 
   /// Scrolls a Delta offset into view.
   final void Function(int offset)? reveal;
+
+  /// The UI strings (count label, errors, undo labels); English when null.
+  final WriteLocalizations Function()? strings;
+
+  WriteLocalizations get _l => strings?.call() ?? writeL10nEnglish;
 
   late final WriteEditorCommands _commands =
       commands ?? WriteEditorCommands(editor);
@@ -74,9 +80,12 @@ class FindController extends ChangeNotifier {
   String get countLabel {
     if (_query.isEmpty) return '';
     if (_error != null) return '';
-    if (_matches.isEmpty) return 'No results';
-    final n = _truncated ? '${_matches.length}+' : '${_matches.length}';
-    return _current == null ? n : '${_current! + 1} of $n';
+    final l = _l;
+    if (_matches.isEmpty) return l.findNoResults;
+    final n = _truncated
+        ? l.findCountMore(_matches.length)
+        : '${_matches.length}';
+    return _current == null ? n : l.findCountOf(_current! + 1, n);
   }
 
   /// Opens find (panel open; [query] prefills, e.g. the selected text).
@@ -190,7 +199,7 @@ class FindController extends ChangeNotifier {
     } on AddressException catch (e) {
       _matches = const [];
       _current = null;
-      _error = _regex ? 'Invalid regular expression' : e.message;
+      _error = _regex ? _l.findInvalidRegex : e.message;
     }
     _paint();
     notifyListeners();
@@ -258,6 +267,7 @@ class FindController extends ChangeNotifier {
       m.start,
       m.length,
       _replacementFor(m),
+      label: _l.findUndoReplace,
     );
     _replacing = false;
     _search();
@@ -276,14 +286,15 @@ class FindController extends ChangeNotifier {
     final targets = List<SearchMatch>.of(_matches);
     var count = 0;
     _replacing = true;
+    final label = _l.findUndoReplaceAll;
     try {
-      editor.group('Replace all', () {
+      editor.group(label, () {
         for (final m in targets.reversed) {
           if (_commands.replaceRangeWithTextLabelled(
             m.start,
             m.length,
             _replacementFor(m),
-            label: 'Replace all',
+            label: label,
           )) {
             count++;
           }

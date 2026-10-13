@@ -43,9 +43,12 @@ import 'package:wonky_client/src/protocol/write/models/write_theme_revision_view
 import 'package:wonky_client/src/protocol/write/models/write_theme_view.dart'
     as _i2zuh8f2;
 import 'package:wonky_sync_models/wonky_sync_models.dart' as _i810rwvy;
+import 'platform/activity/activity_dashboard.dart' as _izr1y672;
 import 'platform/activity/activity_event.dart' as _iatdjl5p;
 import 'platform/activity/activity_event_view.dart' as _isa7sjzq;
+import 'platform/activity/activity_trend_point.dart' as _ighcq381;
 import 'platform/activity/activity_type.dart' as _i50cy468;
+import 'platform/activity/activity_viewer.dart' as _ikcwdr17;
 import 'platform/ai/models/ai_apply_mode.dart' as _iyja8k5e;
 import 'platform/ai/models/ai_quality.dart' as _iviyoyk9;
 import 'platform/ai/models/ai_usage.dart' as _i7i53on7;
@@ -177,9 +180,12 @@ import 'write/models/write_theme_revision.dart' as _i7pbwt05;
 import 'write/models/write_theme_revision_view.dart' as _ick3mhj2;
 import 'write/models/write_theme_view.dart' as _ixbjd26z;
 import 'write/models/write_version_document.dart' as _is9bkd9t;
+export 'platform/activity/activity_dashboard.dart';
 export 'platform/activity/activity_event.dart';
 export 'platform/activity/activity_event_view.dart';
+export 'platform/activity/activity_trend_point.dart';
 export 'platform/activity/activity_type.dart';
+export 'platform/activity/activity_viewer.dart';
 export 'platform/ai/models/ai_apply_mode.dart';
 export 'platform/ai/models/ai_quality.dart';
 export 'platform/ai/models/ai_usage.dart';
@@ -327,9 +333,12 @@ class Protocol extends _isc.SerializationManager
       _isc.ProtocolDeserialization.cached(
         this,
         types: const [
+          _isc.getType<_izr1y672.ActivityDashboard>,
           _isc.getType<_iatdjl5p.ActivityEvent>,
           _isc.getType<_isa7sjzq.ActivityEventView>,
+          _isc.getType<_ighcq381.ActivityTrendPoint>,
           _isc.getType<_i50cy468.ActivityType>,
+          _isc.getType<_ikcwdr17.ActivityViewer>,
           _isc.getType<_iyja8k5e.AiApplyMode>,
           _isc.getType<_iviyoyk9.AiQuality>,
           _isc.getType<_i7i53on7.AiUsage>,
@@ -389,11 +398,11 @@ class Protocol extends _isc.SerializationManager
           _isc.getType<_ik7q11oy.StoredFileStatus>,
           _isc.getType<_ichw8k0i.UiBridgeCancel>,
           _isc.getType<_ichw8k0i.UiBridgeHello>,
-          _isc.getType<_ichw8k0i.UiBridgeStop>,
-          _isc.getType<_ichw8k0i.UiBridgeStatus>,
-          _isc.getType<_ichw8k0i.UiBridgeWelcome>,
-          _isc.getType<_ichw8k0i.UiBridgeResponse>,
           _isc.getType<_ichw8k0i.UiBridgeRequest>,
+          _isc.getType<_ichw8k0i.UiBridgeResponse>,
+          _isc.getType<_ichw8k0i.UiBridgeStatus>,
+          _isc.getType<_ichw8k0i.UiBridgeStop>,
+          _isc.getType<_ichw8k0i.UiBridgeWelcome>,
           _isc.getType<_ivk6eyvx.FeatureFlags>,
           _isc.getType<_ib575x0y.ProtocolInfo>,
           _isc.getType<_i28el0at.ServerLimits>,
@@ -487,9 +496,12 @@ class Protocol extends _isc.SerializationManager
           _isc.getType<_ick3mhj2.WriteThemeRevisionView>,
           _isc.getType<_ixbjd26z.WriteThemeView>,
           _isc.getType<_is9bkd9t.WriteVersionDocument>,
+          _isc.getType<_izr1y672.ActivityDashboard?>,
           _isc.getType<_iatdjl5p.ActivityEvent?>,
           _isc.getType<_isa7sjzq.ActivityEventView?>,
+          _isc.getType<_ighcq381.ActivityTrendPoint?>,
           _isc.getType<_i50cy468.ActivityType?>,
+          _isc.getType<_ikcwdr17.ActivityViewer?>,
           _isc.getType<_iyja8k5e.AiApplyMode?>,
           _isc.getType<_iviyoyk9.AiQuality?>,
           _isc.getType<_i7i53on7.AiUsage?>,
@@ -549,11 +561,11 @@ class Protocol extends _isc.SerializationManager
           _isc.getType<_ik7q11oy.StoredFileStatus?>,
           _isc.getType<_ichw8k0i.UiBridgeCancel?>,
           _isc.getType<_ichw8k0i.UiBridgeHello?>,
-          _isc.getType<_ichw8k0i.UiBridgeStop?>,
-          _isc.getType<_ichw8k0i.UiBridgeStatus?>,
-          _isc.getType<_ichw8k0i.UiBridgeWelcome?>,
-          _isc.getType<_ichw8k0i.UiBridgeResponse?>,
           _isc.getType<_ichw8k0i.UiBridgeRequest?>,
+          _isc.getType<_ichw8k0i.UiBridgeResponse?>,
+          _isc.getType<_ichw8k0i.UiBridgeStatus?>,
+          _isc.getType<_ichw8k0i.UiBridgeStop?>,
+          _isc.getType<_ichw8k0i.UiBridgeWelcome?>,
           _isc.getType<_ivk6eyvx.FeatureFlags?>,
           _isc.getType<_ib575x0y.ProtocolInfo?>,
           _isc.getType<_i28el0at.ServerLimits?>,
@@ -647,6 +659,8 @@ class Protocol extends _isc.SerializationManager
           _isc.getType<_ick3mhj2.WriteThemeRevisionView?>,
           _isc.getType<_ixbjd26z.WriteThemeView?>,
           _isc.getType<_is9bkd9t.WriteVersionDocument?>,
+          _isc.getType<List<_ikcwdr17.ActivityViewer>>,
+          _isc.getType<List<_ighcq381.ActivityTrendPoint>>,
           _isc.getType<List<_i4rkdm2k.AssistantMessageView>>,
           _isc.getType<List<_ivmxemza.ProofreadIssue>>,
           _isc.getType<List<_ivmxemza.ProofreadIssue>?>,
@@ -726,14 +740,23 @@ class Protocol extends _isc.SerializationManager
       }
     }
 
+    if (t == _izr1y672.ActivityDashboard) {
+      return _izr1y672.ActivityDashboard.fromJson(data) as T;
+    }
     if (t == _iatdjl5p.ActivityEvent) {
       return _iatdjl5p.ActivityEvent.fromJson(data) as T;
     }
     if (t == _isa7sjzq.ActivityEventView) {
       return _isa7sjzq.ActivityEventView.fromJson(data) as T;
     }
+    if (t == _ighcq381.ActivityTrendPoint) {
+      return _ighcq381.ActivityTrendPoint.fromJson(data) as T;
+    }
     if (t == _i50cy468.ActivityType) {
       return _i50cy468.ActivityType.fromJson(data) as T;
+    }
+    if (t == _ikcwdr17.ActivityViewer) {
+      return _ikcwdr17.ActivityViewer.fromJson(data) as T;
     }
     if (t == _iyja8k5e.AiApplyMode) {
       return _iyja8k5e.AiApplyMode.fromJson(data) as T;
@@ -912,20 +935,20 @@ class Protocol extends _isc.SerializationManager
     if (t == _ichw8k0i.UiBridgeHello) {
       return _ichw8k0i.UiBridgeHello.fromJson(data) as T;
     }
-    if (t == _ichw8k0i.UiBridgeStop) {
-      return _ichw8k0i.UiBridgeStop.fromJson(data) as T;
-    }
-    if (t == _ichw8k0i.UiBridgeStatus) {
-      return _ichw8k0i.UiBridgeStatus.fromJson(data) as T;
-    }
-    if (t == _ichw8k0i.UiBridgeWelcome) {
-      return _ichw8k0i.UiBridgeWelcome.fromJson(data) as T;
+    if (t == _ichw8k0i.UiBridgeRequest) {
+      return _ichw8k0i.UiBridgeRequest.fromJson(data) as T;
     }
     if (t == _ichw8k0i.UiBridgeResponse) {
       return _ichw8k0i.UiBridgeResponse.fromJson(data) as T;
     }
-    if (t == _ichw8k0i.UiBridgeRequest) {
-      return _ichw8k0i.UiBridgeRequest.fromJson(data) as T;
+    if (t == _ichw8k0i.UiBridgeStatus) {
+      return _ichw8k0i.UiBridgeStatus.fromJson(data) as T;
+    }
+    if (t == _ichw8k0i.UiBridgeStop) {
+      return _ichw8k0i.UiBridgeStop.fromJson(data) as T;
+    }
+    if (t == _ichw8k0i.UiBridgeWelcome) {
+      return _ichw8k0i.UiBridgeWelcome.fromJson(data) as T;
     }
     if (t == _ivk6eyvx.FeatureFlags) {
       return _ivk6eyvx.FeatureFlags.fromJson(data) as T;
@@ -1206,6 +1229,10 @@ class Protocol extends _isc.SerializationManager
     if (t == _is9bkd9t.WriteVersionDocument) {
       return _is9bkd9t.WriteVersionDocument.fromJson(data) as T;
     }
+    if (t == _isc.getType<_izr1y672.ActivityDashboard?>()) {
+      return (data != null ? _izr1y672.ActivityDashboard.fromJson(data) : null)
+          as T;
+    }
     if (t == _isc.getType<_iatdjl5p.ActivityEvent?>()) {
       return (data != null ? _iatdjl5p.ActivityEvent.fromJson(data) : null)
           as T;
@@ -1214,8 +1241,16 @@ class Protocol extends _isc.SerializationManager
       return (data != null ? _isa7sjzq.ActivityEventView.fromJson(data) : null)
           as T;
     }
+    if (t == _isc.getType<_ighcq381.ActivityTrendPoint?>()) {
+      return (data != null ? _ighcq381.ActivityTrendPoint.fromJson(data) : null)
+          as T;
+    }
     if (t == _isc.getType<_i50cy468.ActivityType?>()) {
       return (data != null ? _i50cy468.ActivityType.fromJson(data) : null) as T;
+    }
+    if (t == _isc.getType<_ikcwdr17.ActivityViewer?>()) {
+      return (data != null ? _ikcwdr17.ActivityViewer.fromJson(data) : null)
+          as T;
     }
     if (t == _isc.getType<_iyja8k5e.AiApplyMode?>()) {
       return (data != null ? _iyja8k5e.AiApplyMode.fromJson(data) : null) as T;
@@ -1445,23 +1480,23 @@ class Protocol extends _isc.SerializationManager
       return (data != null ? _ichw8k0i.UiBridgeHello.fromJson(data) : null)
           as T;
     }
-    if (t == _isc.getType<_ichw8k0i.UiBridgeStop?>()) {
-      return (data != null ? _ichw8k0i.UiBridgeStop.fromJson(data) : null) as T;
-    }
-    if (t == _isc.getType<_ichw8k0i.UiBridgeStatus?>()) {
-      return (data != null ? _ichw8k0i.UiBridgeStatus.fromJson(data) : null)
-          as T;
-    }
-    if (t == _isc.getType<_ichw8k0i.UiBridgeWelcome?>()) {
-      return (data != null ? _ichw8k0i.UiBridgeWelcome.fromJson(data) : null)
+    if (t == _isc.getType<_ichw8k0i.UiBridgeRequest?>()) {
+      return (data != null ? _ichw8k0i.UiBridgeRequest.fromJson(data) : null)
           as T;
     }
     if (t == _isc.getType<_ichw8k0i.UiBridgeResponse?>()) {
       return (data != null ? _ichw8k0i.UiBridgeResponse.fromJson(data) : null)
           as T;
     }
-    if (t == _isc.getType<_ichw8k0i.UiBridgeRequest?>()) {
-      return (data != null ? _ichw8k0i.UiBridgeRequest.fromJson(data) : null)
+    if (t == _isc.getType<_ichw8k0i.UiBridgeStatus?>()) {
+      return (data != null ? _ichw8k0i.UiBridgeStatus.fromJson(data) : null)
+          as T;
+    }
+    if (t == _isc.getType<_ichw8k0i.UiBridgeStop?>()) {
+      return (data != null ? _ichw8k0i.UiBridgeStop.fromJson(data) : null) as T;
+    }
+    if (t == _isc.getType<_ichw8k0i.UiBridgeWelcome?>()) {
+      return (data != null ? _ichw8k0i.UiBridgeWelcome.fromJson(data) : null)
           as T;
     }
     if (t == _isc.getType<_ivk6eyvx.FeatureFlags?>()) {
@@ -1843,6 +1878,18 @@ class Protocol extends _isc.SerializationManager
               : null)
           as T;
     }
+    if (t == List<_ikcwdr17.ActivityViewer>) {
+      return (data as List)
+              .map((e) => deserialize<_ikcwdr17.ActivityViewer>(e))
+              .toList()
+          as T;
+    }
+    if (t == List<_ighcq381.ActivityTrendPoint>) {
+      return (data as List)
+              .map((e) => deserialize<_ighcq381.ActivityTrendPoint>(e))
+              .toList()
+          as T;
+    }
     if (t == List<_i4rkdm2k.AssistantMessageView>) {
       return (data as List)
               .map((e) => deserialize<_i4rkdm2k.AssistantMessageView>(e))
@@ -2114,9 +2161,12 @@ class Protocol extends _isc.SerializationManager
 
   static String? getClassNameForType(Type type) {
     return switch (type) {
+      _izr1y672.ActivityDashboard => 'ActivityDashboard',
       _iatdjl5p.ActivityEvent => 'ActivityEvent',
       _isa7sjzq.ActivityEventView => 'ActivityEventView',
+      _ighcq381.ActivityTrendPoint => 'ActivityTrendPoint',
       _i50cy468.ActivityType => 'ActivityType',
+      _ikcwdr17.ActivityViewer => 'ActivityViewer',
       _iyja8k5e.AiApplyMode => 'AiApplyMode',
       _iviyoyk9.AiQuality => 'AiQuality',
       _i7i53on7.AiUsage => 'AiUsage',
@@ -2176,11 +2226,11 @@ class Protocol extends _isc.SerializationManager
       _ik7q11oy.StoredFileStatus => 'StoredFileStatus',
       _ichw8k0i.UiBridgeCancel => 'UiBridgeCancel',
       _ichw8k0i.UiBridgeHello => 'UiBridgeHello',
-      _ichw8k0i.UiBridgeStop => 'UiBridgeStop',
-      _ichw8k0i.UiBridgeStatus => 'UiBridgeStatus',
-      _ichw8k0i.UiBridgeWelcome => 'UiBridgeWelcome',
-      _ichw8k0i.UiBridgeResponse => 'UiBridgeResponse',
       _ichw8k0i.UiBridgeRequest => 'UiBridgeRequest',
+      _ichw8k0i.UiBridgeResponse => 'UiBridgeResponse',
+      _ichw8k0i.UiBridgeStatus => 'UiBridgeStatus',
+      _ichw8k0i.UiBridgeStop => 'UiBridgeStop',
+      _ichw8k0i.UiBridgeWelcome => 'UiBridgeWelcome',
       _ivk6eyvx.FeatureFlags => 'FeatureFlags',
       _ib575x0y.ProtocolInfo => 'ProtocolInfo',
       _i28el0at.ServerLimits => 'ServerLimits',
@@ -2288,12 +2338,18 @@ class Protocol extends _isc.SerializationManager
     }
 
     switch (data) {
+      case _izr1y672.ActivityDashboard():
+        return 'ActivityDashboard';
       case _iatdjl5p.ActivityEvent():
         return 'ActivityEvent';
       case _isa7sjzq.ActivityEventView():
         return 'ActivityEventView';
+      case _ighcq381.ActivityTrendPoint():
+        return 'ActivityTrendPoint';
       case _i50cy468.ActivityType():
         return 'ActivityType';
+      case _ikcwdr17.ActivityViewer():
+        return 'ActivityViewer';
       case _iyja8k5e.AiApplyMode():
         return 'AiApplyMode';
       case _iviyoyk9.AiQuality():
@@ -2412,16 +2468,16 @@ class Protocol extends _isc.SerializationManager
         return 'UiBridgeCancel';
       case _ichw8k0i.UiBridgeHello():
         return 'UiBridgeHello';
-      case _ichw8k0i.UiBridgeStop():
-        return 'UiBridgeStop';
-      case _ichw8k0i.UiBridgeStatus():
-        return 'UiBridgeStatus';
-      case _ichw8k0i.UiBridgeWelcome():
-        return 'UiBridgeWelcome';
-      case _ichw8k0i.UiBridgeResponse():
-        return 'UiBridgeResponse';
       case _ichw8k0i.UiBridgeRequest():
         return 'UiBridgeRequest';
+      case _ichw8k0i.UiBridgeResponse():
+        return 'UiBridgeResponse';
+      case _ichw8k0i.UiBridgeStatus():
+        return 'UiBridgeStatus';
+      case _ichw8k0i.UiBridgeStop():
+        return 'UiBridgeStop';
+      case _ichw8k0i.UiBridgeWelcome():
+        return 'UiBridgeWelcome';
       case _ivk6eyvx.FeatureFlags():
         return 'FeatureFlags';
       case _ib575x0y.ProtocolInfo():
@@ -2642,14 +2698,23 @@ class Protocol extends _isc.SerializationManager
     if (dataClassName is! String) {
       return super.deserializeByClassName(data);
     }
+    if (dataClassName == 'ActivityDashboard') {
+      return deserialize<_izr1y672.ActivityDashboard>(data['data']);
+    }
     if (dataClassName == 'ActivityEvent') {
       return deserialize<_iatdjl5p.ActivityEvent>(data['data']);
     }
     if (dataClassName == 'ActivityEventView') {
       return deserialize<_isa7sjzq.ActivityEventView>(data['data']);
     }
+    if (dataClassName == 'ActivityTrendPoint') {
+      return deserialize<_ighcq381.ActivityTrendPoint>(data['data']);
+    }
     if (dataClassName == 'ActivityType') {
       return deserialize<_i50cy468.ActivityType>(data['data']);
+    }
+    if (dataClassName == 'ActivityViewer') {
+      return deserialize<_ikcwdr17.ActivityViewer>(data['data']);
     }
     if (dataClassName == 'AiApplyMode') {
       return deserialize<_iyja8k5e.AiApplyMode>(data['data']);
@@ -2828,20 +2893,20 @@ class Protocol extends _isc.SerializationManager
     if (dataClassName == 'UiBridgeHello') {
       return deserialize<_ichw8k0i.UiBridgeHello>(data['data']);
     }
-    if (dataClassName == 'UiBridgeStop') {
-      return deserialize<_ichw8k0i.UiBridgeStop>(data['data']);
-    }
-    if (dataClassName == 'UiBridgeStatus') {
-      return deserialize<_ichw8k0i.UiBridgeStatus>(data['data']);
-    }
-    if (dataClassName == 'UiBridgeWelcome') {
-      return deserialize<_ichw8k0i.UiBridgeWelcome>(data['data']);
+    if (dataClassName == 'UiBridgeRequest') {
+      return deserialize<_ichw8k0i.UiBridgeRequest>(data['data']);
     }
     if (dataClassName == 'UiBridgeResponse') {
       return deserialize<_ichw8k0i.UiBridgeResponse>(data['data']);
     }
-    if (dataClassName == 'UiBridgeRequest') {
-      return deserialize<_ichw8k0i.UiBridgeRequest>(data['data']);
+    if (dataClassName == 'UiBridgeStatus') {
+      return deserialize<_ichw8k0i.UiBridgeStatus>(data['data']);
+    }
+    if (dataClassName == 'UiBridgeStop') {
+      return deserialize<_ichw8k0i.UiBridgeStop>(data['data']);
+    }
+    if (dataClassName == 'UiBridgeWelcome') {
+      return deserialize<_ichw8k0i.UiBridgeWelcome>(data['data']);
     }
     if (dataClassName == 'FeatureFlags') {
       return deserialize<_ivk6eyvx.FeatureFlags>(data['data']);

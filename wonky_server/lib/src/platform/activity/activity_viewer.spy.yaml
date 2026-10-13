@@ -1,0 +1,9 @@
+### A row of the activity dashboard's viewers list.
+class: ActivityViewer
+fields:
+  user: UserSummary
+  ### The viewer's current role on the item.
+  role: AccessRole?
+  lastViewedAt: DateTime
+  ### Views within the dashboard's period.
+  views: int

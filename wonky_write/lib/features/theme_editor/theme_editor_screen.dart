@@ -13,6 +13,7 @@ import 'package:wonky_write_core/wonky_write_core.dart'
     show BuiltinThemes, Delta, ThemeVariant;
 
 import '../../commands/theme_commands.dart';
+import '../../l10n/write_l10n.dart';
 import '../document/write_document_session.dart' show WriteDocumentMeta;
 import '../themes/document_theme.dart';
 import '../themes/theme_picker.dart' show ThemeSwatchPreview;
@@ -125,6 +126,7 @@ class ThemeEditorScreenState extends State<ThemeEditorScreen>
       undo: s.undo,
       repository: themeRepositoryFor(s),
       myUserUuid: s.me?.uuid.uuid,
+      strings: () => writeL10nOf(s),
       documentItemUuid: widget.docItemUuid,
       loadDocument: _loadDocument,
       setDefault: (uuid) => s.prefs.setWriteDefault(defaultThemeKey, uuid),
@@ -207,7 +209,7 @@ class ThemeEditorScreenState extends State<ThemeEditorScreen>
     return ThemeEditorDocument(
       itemUuid: itemUuid,
       documentUuid: docUuid.uuid,
-      title: item.name.isEmpty ? 'Untitled document' : item.name,
+      title: item.name.isEmpty ? writeL10nOf(s).untitledDocument : item.name,
       delta: Delta.fromJson(decoded is List ? decoded : const []),
       themeUuid: meta.themeUuid,
       canEdit: item.role == AccessRole.editor || item.role == AccessRole.owner,
@@ -267,7 +269,7 @@ class ThemeEditorScreenState extends State<ThemeEditorScreen>
       if (choice == UnsavedThemeChoice.save) {
         final r = await controller.save();
         if (!r.isOk) {
-          s.toasts.error(r.error ?? 'Saving failed');
+          s.toasts.error(r.error ?? writeL10nOf(s).themeEditorSavingFailed);
           return false;
         }
       } else {
@@ -340,26 +342,31 @@ class ThemeEditorScreenState extends State<ThemeEditorScreen>
     );
   }
 
-  Widget _error(BuildContext context) => Center(
-    child: WonkyEmptyState(
-      key: const ValueKey<String>('write.themeEditor.error'),
-      illustration: EmptyIllustration.search,
-      title: 'This theme can’t be opened',
-      description: 'It may have been deleted, or you no longer have access.',
-      actions: [
-        ShadButton(onPressed: _back, child: const Text('Go back')),
-        ShadButton.outline(
-          onPressed: () => s.router.go(
-            themeEditorPath(
-              BuiltinThemes.wonkyDefault.uuid,
-              docItemUuid: widget.docItemUuid,
+  Widget _error(BuildContext context) {
+    final l = writeL10n(context);
+    return Center(
+      child: WonkyEmptyState(
+        key: const ValueKey<String>('write.themeEditor.error'),
+        illustration: EmptyIllustration.search,
+        title: l.themeEditorOpenErrorTitle,
+        description: l.themeEditorOpenErrorDescription,
+        actions: [
+          ShadButton(onPressed: _back, child: Text(l.themeEditorGoBack)),
+          ShadButton.outline(
+            onPressed: () => s.router.go(
+              themeEditorPath(
+                BuiltinThemes.wonkyDefault.uuid,
+                docItemUuid: widget.docItemUuid,
+              ),
+            ),
+            child: Text(
+              l.themeEditorOpenTheme(BuiltinThemes.wonkyDefault.name),
             ),
           ),
-          child: const Text('Open Wonky Default'),
-        ),
-      ],
-    ),
-  );
+        ],
+      ),
+    );
+  }
 
   Widget _body(BuildContext context) {
     final theme = ShadTheme.of(context);
@@ -397,6 +404,7 @@ class ThemeEditorScreenState extends State<ThemeEditorScreen>
 
   Widget _narrow(BuildContext context, BoxConstraints box) {
     final theme = ShadTheme.of(context);
+    final l = writeL10n(context);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
@@ -405,10 +413,10 @@ class ThemeEditorScreenState extends State<ThemeEditorScreen>
           child: ShadTabs<int>(
             value: _narrowTab,
             onChanged: (v) => setState(() => _narrowTab = v),
-            tabs: const [
-              ShadTab(value: 0, child: Text('Themes')),
-              ShadTab(value: 1, child: Text('Elements')),
-              ShadTab(value: 2, child: Text('Properties')),
+            tabs: [
+              ShadTab(value: 0, child: Text(l.themeEditorThemes)),
+              ShadTab(value: 1, child: Text(l.themeEditorElements)),
+              ShadTab(value: 2, child: Text(l.themeEditorProperties)),
             ],
           ),
         ),
@@ -451,20 +459,21 @@ class _Header extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = ShadTheme.of(context);
     final cs = theme.colorScheme;
+    final l = writeL10n(context);
     final s = state.s;
     final doc = c.document;
     void run(String id) => unawaited(state._invoke(id));
     final status = c.saving
-        ? ('Saving…', cs.mutedForeground)
+        ? (l.themeEditorStatusSaving, cs.mutedForeground)
         : c.isBuiltin
-        ? ('Built-in · read-only', cs.mutedForeground)
+        ? (l.themeEditorStatusBuiltin, cs.mutedForeground)
         : c.isDeleted
-        ? ('Deleted', cs.destructive)
+        ? (l.themeEditorStatusDeleted, cs.destructive)
         : c.readOnly
-        ? ('Read-only', cs.mutedForeground)
+        ? (l.themeEditorStatusReadOnly, cs.mutedForeground)
         : c.dirty
-        ? ('Unsaved changes', cs.warning)
-        : ('All changes saved', cs.mutedForeground);
+        ? (l.themeEditorStatusUnsaved, cs.warning)
+        : (l.themeEditorStatusSaved, cs.mutedForeground);
     Widget iconButton(String id, IconData icon, String label, bool enabled) =>
         ShadTooltip(
           builder: (_) => Text(label),
@@ -501,7 +510,9 @@ class _Header extends StatelessWidget {
             child: ConstrainedBox(
               constraints: const BoxConstraints(maxWidth: 220),
               child: Text(
-                doc == null ? 'Back' : 'Back to “${doc.title}”',
+                doc == null
+                    ? l.themeEditorBack
+                    : l.themeEditorBackTo(doc.title),
                 overflow: TextOverflow.ellipsis,
               ),
             ),
@@ -547,9 +558,7 @@ class _Header extends StatelessWidget {
                         [
                           status.$1,
                           if (c.isMine && (c.usage ?? 0) > 0)
-                            c.usage == 1
-                                ? 'Used by 1 of your documents'
-                                : 'Used by ${c.usage} of your documents',
+                            l.themeEditorUsedBy(c.usage!),
                         ].join(' · '),
                         key: const ValueKey<String>('write.themeEditor.status'),
                         overflow: TextOverflow.ellipsis,
@@ -571,8 +580,8 @@ class _Header extends StatelessWidget {
               'shell.edit.undo',
               LucideIcons.undo2,
               s.undo.undoLabel.value == null
-                  ? 'Undo'
-                  : 'Undo ${s.undo.undoLabel.value}',
+                  ? l.commonUndo
+                  : l.themeEditorUndoLabel(s.undo.undoLabel.value!),
               can,
             ),
           ),
@@ -582,8 +591,8 @@ class _Header extends StatelessWidget {
               'shell.edit.redo',
               LucideIcons.redo2,
               s.undo.redoLabel.value == null
-                  ? 'Redo'
-                  : 'Redo ${s.undo.redoLabel.value}',
+                  ? l.themeEditorRedo
+                  : l.themeEditorRedoLabel(s.undo.redoLabel.value!),
               can,
             ),
           ),
@@ -595,7 +604,9 @@ class _Header extends StatelessWidget {
               leading: const Icon(LucideIcons.copy, size: 14),
               onPressed: () => run('write.theme.duplicate'),
               child: Text(
-                c.isBuiltin ? 'Duplicate to customize' : 'Copy to my themes',
+                c.isBuiltin
+                    ? l.themeEditorDuplicateToCustomize
+                    : l.themeEditorCopyToMyThemes,
               ),
             )
           else if (c.isDeleted && c.isMine)
@@ -603,7 +614,7 @@ class _Header extends StatelessWidget {
               key: const ValueKey<String>('write.themeEditor.restore'),
               size: ShadButtonSize.sm,
               onPressed: () => run('write.theme.restore'),
-              child: const Text('Restore theme'),
+              child: Text(l.cmdThemeRestore),
             )
           else ...[
             if (c.dirty)
@@ -611,14 +622,14 @@ class _Header extends StatelessWidget {
                 key: const ValueKey<String>('write.themeEditor.revert'),
                 size: ShadButtonSize.sm,
                 onPressed: () => run('write.theme.revert'),
-                child: const Text('Revert'),
+                child: Text(l.themeEditorRevert),
               ),
             ShadButton(
               key: const ValueKey<String>('write.themeEditor.save'),
               size: ShadButtonSize.sm,
               enabled: c.dirty && !c.saving,
               onPressed: () => run('write.theme.save'),
-              child: const Text('Save'),
+              child: Text(l.commonSave),
             ),
           ],
           if (canApply) ...[
@@ -627,18 +638,18 @@ class _Header extends StatelessWidget {
               key: const ValueKey<String>('write.themeEditor.apply'),
               size: ShadButtonSize.sm,
               onPressed: () => run('write.theme.applyToDocument'),
-              child: const Text('Apply to document'),
+              child: Text(l.cmdThemeApplyToDocument),
             ),
           ],
           const SizedBox(width: 4),
           WonkyDropdownMenu(
-            entries: () => _menu(state),
+            entries: () => _menu(state, l),
             builder: (context, ctl) => ShadIconButton.ghost(
               key: const ValueKey<String>('write.themeEditor.more'),
               width: 32,
               height: 32,
               iconSize: 16,
-              semanticLabel: 'More theme actions',
+              semanticLabel: l.themeEditorMoreActions,
               icon: const Icon(LucideIcons.ellipsisVertical),
               onPressed: ctl.toggle,
             ),
@@ -649,7 +660,7 @@ class _Header extends StatelessWidget {
   }
 }
 
-List<WonkyMenuEntry> _menu(ThemeEditorScreenState state) {
+List<WonkyMenuEntry> _menu(ThemeEditorScreenState state, WriteLocalizations l) {
   final c = state.controller;
   void run(String id, [Map<String, Object?> args = const {}]) =>
       unawaited(state._invoke(id, args));
@@ -657,42 +668,42 @@ List<WonkyMenuEntry> _menu(ThemeEditorScreenState state) {
     if (c.isMine && !c.isDeleted)
       WonkyMenuItem(
         key: const ValueKey<String>('write.themeEditor.menu.rename'),
-        label: 'Rename…',
+        label: l.themeEditorMenuRename,
         icon: LucideIcons.pencil,
         onSelected: () => run('write.theme.rename'),
       ),
     WonkyMenuItem(
       key: const ValueKey<String>('write.themeEditor.menu.duplicate'),
-      label: 'Duplicate',
+      label: l.themeEditorMenuDuplicate,
       icon: LucideIcons.copy,
       onSelected: () => run('write.theme.duplicate'),
     ),
     if (c.isMine)
       WonkyMenuItem(
         key: const ValueKey<String>('write.themeEditor.menu.history'),
-        label: 'Version history…',
+        label: l.themeEditorMenuVersionHistory,
         icon: LucideIcons.history,
         onSelected: () => run('write.theme.showRevisions'),
       ),
     WonkyMenuCheckItem(
       key: const ValueKey<String>('write.themeEditor.menu.default'),
-      label: 'My default theme',
+      label: l.themeEditorMenuMyDefault,
       checked: c.isDefault,
       onSelected: () => run('write.theme.setAsDefault'),
     ),
     const WonkyMenuSeparator(),
     WonkyMenuItem(
-      label: 'Export as JSON…',
+      label: l.themeEditorMenuExportJson,
       icon: LucideIcons.fileJson,
       onSelected: () => run('write.theme.exportJson'),
     ),
     WonkyMenuItem(
-      label: 'Export as CSS…',
+      label: l.themeEditorMenuExportCss,
       icon: LucideIcons.fileCode,
       onSelected: () => run('write.theme.exportCss'),
     ),
     WonkyMenuItem(
-      label: 'Import theme…',
+      label: l.cmdThemeImportJson,
       icon: LucideIcons.upload,
       onSelected: () => run('write.theme.importJson'),
     ),
@@ -700,14 +711,14 @@ List<WonkyMenuEntry> _menu(ThemeEditorScreenState state) {
       const WonkyMenuSeparator(),
       if (c.isDeleted)
         WonkyMenuItem(
-          label: 'Restore theme',
+          label: l.cmdThemeRestore,
           icon: LucideIcons.archiveRestore,
           onSelected: () => run('write.theme.restore'),
         )
       else
         WonkyMenuItem(
           key: const ValueKey<String>('write.themeEditor.menu.delete'),
-          label: 'Delete theme',
+          label: l.cmdThemeDelete,
           icon: LucideIcons.trash2,
           destructive: true,
           onSelected: () => run('write.theme.delete'),
@@ -734,6 +745,7 @@ class _Sidebar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final catalog = state.widget.themes;
+    final l = writeL10n(context);
     return ListenableBuilder(
       listenable: Listenable.merge([catalog, state.s.prefs]),
       builder: (context, _) {
@@ -753,21 +765,21 @@ class _Sidebar extends StatelessWidget {
         final children = <Widget>[];
         if (showThemes) {
           children.addAll([
-            const _SideTitle('Themes'),
+            _SideTitle(l.themeEditorThemes),
             if (defaultOption != null) ...[
-              const _SideSubtitle('My default'),
+              _SideSubtitle(l.themeEditorMyDefault),
               _ThemeRow(state: state, option: defaultOption, isDefault: true),
             ],
             if (foreign != null) ...[
-              const _SideSubtitle('Used by this document'),
+              _SideSubtitle(l.themeEditorUsedByThisDocument),
               _ThemeRow(state: state, option: foreign),
             ],
-            const _SideSubtitle('My themes'),
+            _SideSubtitle(l.themeEditorMyThemes),
             if (mine.isEmpty)
               Padding(
                 padding: const EdgeInsets.fromLTRB(16, 2, 12, 6),
                 child: Text(
-                  'Duplicate a built-in theme to make it your own.',
+                  l.themeEditorNoThemesHint,
                   style: ShadTheme.of(
                     context,
                   ).textTheme.muted.copyWith(fontSize: 12),
@@ -779,7 +791,7 @@ class _Sidebar extends StatelessWidget {
                 option: t,
                 isDefault: t.uuid == defaultUuid,
               ),
-            const _SideSubtitle('Built-in'),
+            _SideSubtitle(l.themeEditorBuiltin),
             for (final t in builtins)
               _ThemeRow(
                 state: state,
@@ -798,14 +810,14 @@ class _Sidebar extends StatelessWidget {
                     leading: const Icon(LucideIcons.plus, size: 14),
                     onPressed: () =>
                         unawaited(state._invoke('write.theme.create')),
-                    child: const Text('New theme'),
+                    child: Text(l.cmdThemeCreate),
                   ),
                   ShadButton.ghost(
                     size: ShadButtonSize.sm,
                     leading: const Icon(LucideIcons.upload, size: 14),
                     onPressed: () =>
                         unawaited(state._invoke('write.theme.importJson')),
-                    child: const Text('Import'),
+                    child: Text(l.themeEditorImport),
                   ),
                 ],
               ),
@@ -813,7 +825,7 @@ class _Sidebar extends StatelessWidget {
           ]);
         }
         if (showTree) {
-          children.add(const _SideTitle('Elements'));
+          children.add(_SideTitle(l.themeEditorElements));
           children.add(_ElementTree(c: c));
         }
         return ListView(
@@ -882,6 +894,7 @@ class _ThemeRow extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = ShadTheme.of(context);
     final cs = theme.colorScheme;
+    final l = writeL10n(context);
     final current = option.uuid == state.widget.themeUuid;
     final mine =
         !option.isBuiltin &&
@@ -893,30 +906,30 @@ class _ThemeRow extends StatelessWidget {
       child: WonkyContextMenuRegion(
         entries: () => [
           WonkyMenuItem(
-            label: 'Duplicate',
+            label: l.themeEditorMenuDuplicate,
             icon: LucideIcons.copy,
             onSelected: () => run('write.theme.duplicate'),
           ),
           if (mine)
             WonkyMenuItem(
-              label: 'Rename…',
+              label: l.themeEditorMenuRename,
               icon: LucideIcons.pencil,
               onSelected: () => run('write.theme.rename'),
             ),
           WonkyMenuCheckItem(
-            label: 'My default theme',
+            label: l.themeEditorMenuMyDefault,
             checked: isDefault,
             onSelected: () => run('write.theme.setAsDefault'),
           ),
           WonkyMenuItem(
-            label: 'Export as JSON…',
+            label: l.themeEditorMenuExportJson,
             icon: LucideIcons.fileJson,
             onSelected: () => run('write.theme.exportJson'),
           ),
           if (mine) ...[
             const WonkyMenuSeparator(),
             WonkyMenuItem(
-              label: 'Delete',
+              label: l.commonDelete,
               icon: LucideIcons.trash2,
               destructive: true,
               onSelected: () => run('write.theme.delete'),
@@ -935,7 +948,12 @@ class _ThemeRow extends StatelessWidget {
           onPressed: () => state._openTheme(option.uuid),
           leading: ThemeSwatchPreview(option: option, size: 16),
           trailing: isDefault
-              ? Icon(LucideIcons.star, size: 13, color: cs.mutedForeground)
+              ? Icon(
+                  LucideIcons.star,
+                  size: 13,
+                  color: cs.mutedForeground,
+                  semanticLabel: l.themeEditorMyDefault,
+                )
               : null,
           child: Expanded(
             child: Text(
@@ -963,6 +981,7 @@ class _ElementTree extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = ShadTheme.of(context);
     final cs = theme.colorScheme;
+    final l = writeL10n(context);
     Widget row(ThemeNode node, {int depth = 0, bool group = false}) {
       final selected = c.selected == node;
       final warn = c.warningsOf(node).isNotEmpty;
@@ -984,7 +1003,7 @@ class _ElementTree extends StatelessWidget {
                 children: [
                   Expanded(
                     child: Text(
-                      node.label,
+                      node.label(l),
                       textAlign: TextAlign.start,
                       overflow: TextOverflow.ellipsis,
                       style: theme.textTheme.small.copyWith(
@@ -999,11 +1018,12 @@ class _ElementTree extends StatelessWidget {
                     Padding(
                       padding: const EdgeInsets.only(left: 4),
                       child: ShadTooltip(
-                        builder: (_) => const Text('Low contrast'),
+                        builder: (_) => Text(l.themeEditorLowContrast),
                         child: Icon(
                           LucideIcons.triangleAlert,
                           size: 13,
                           color: cs.warning,
+                          semanticLabel: l.themeEditorLowContrast,
                         ),
                       ),
                     ),
@@ -1011,7 +1031,7 @@ class _ElementTree extends StatelessWidget {
                     Padding(
                       padding: const EdgeInsets.only(left: 6),
                       child: Semantics(
-                        label: 'Customized',
+                        label: l.themeEditorCustomized,
                         child: Container(
                           width: 6,
                           height: 6,
@@ -1036,8 +1056,8 @@ class _ElementTree extends StatelessWidget {
         for (final g in themeTree) ...[
           if (g.node != null)
             row(g.node!, group: true)
-          else if (g.label.isNotEmpty)
-            _SideSubtitle(g.label),
+          else if (g.label(l).isNotEmpty)
+            _SideSubtitle(g.label(l)),
           for (final n in g.nodes) row(n, depth: g.node == null ? 0 : 1),
         ],
       ],
@@ -1057,6 +1077,7 @@ class _PreviewPane extends StatelessWidget {
     final c = state.controller;
     final theme = ShadTheme.of(context);
     final cs = theme.colorScheme;
+    final l = writeL10n(context);
     void run(String id, Map<String, Object?> args) =>
         unawaited(state._invoke(id, args));
     final warnings = c.contrastWarnings;
@@ -1079,7 +1100,7 @@ class _PreviewPane extends StatelessWidget {
                   children: [
                     if (!compact) ...[
                       Text(
-                        'Preview',
+                        l.themeEditorPreview,
                         style: theme.textTheme.small.copyWith(
                           fontWeight: FontWeight.w600,
                         ),
@@ -1091,8 +1112,14 @@ class _PreviewPane extends StatelessWidget {
                         keyPrefix: 'source',
                         values: const ['sample', 'document'],
                         labels: compact
-                            ? const ['Sample', 'Document']
-                            : const ['Sample', 'This document'],
+                            ? [
+                                l.themeEditorSourceSample,
+                                l.themeEditorSourceDocument,
+                              ]
+                            : [
+                                l.themeEditorSourceSample,
+                                l.themeEditorSourceThisDocument,
+                              ],
                         value: c.source.name,
                         onChanged: (v) =>
                             run('write.theme.setPreviewSource', {'source': v}),
@@ -1103,7 +1130,7 @@ class _PreviewPane extends StatelessWidget {
                       keyPrefix: 'variant',
                       values: const ['light', 'dark'],
                       icons: const [LucideIcons.sun, LucideIcons.moon],
-                      labels: const ['Light', 'Dark'],
+                      labels: [l.themeInspectorLight, l.themeInspectorDark],
                       iconsOnly: compact,
                       value: c.variant.name,
                       onChanged: (v) =>
@@ -1113,7 +1140,10 @@ class _PreviewPane extends StatelessWidget {
                     _Segmented(
                       keyPrefix: 'layout',
                       values: const ['pageless', 'pages'],
-                      labels: const ['Pageless', 'Pages'],
+                      labels: [
+                        l.themeEditorLayoutPageless,
+                        l.themeEditorLayoutPages,
+                      ],
                       icons: const [LucideIcons.panelTop, LucideIcons.fileText],
                       iconsOnly: compact,
                       value: c.layout.name,
@@ -1123,31 +1153,36 @@ class _PreviewPane extends StatelessWidget {
                     const SizedBox(width: 8),
                     SizedBox(
                       width: 84,
-                      child: ShadSelect<double>(
-                        key: ValueKey<String>(
-                          'write.themeEditor.zoom.${c.zoom}',
+                      child: Semantics(
+                        label: l.themeEditorZoom,
+                        child: ShadSelect<double>(
+                          key: ValueKey<String>(
+                            'write.themeEditor.zoom.${c.zoom}',
+                          ),
+                          initialValue: c.zoom,
+                          minWidth: 84,
+                          selectedOptionBuilder: (context, z) =>
+                              Text(l.themeEditorZoomPercent((z * 100).round())),
+                          onChanged: (z) {
+                            if (z != null) c.setZoom(z);
+                          },
+                          options: [
+                            for (final z in const [
+                              0.5,
+                              0.75,
+                              0.9,
+                              1.0,
+                              1.25,
+                              1.5,
+                            ])
+                              ShadOption(
+                                value: z,
+                                child: Text(
+                                  l.themeEditorZoomPercent((z * 100).round()),
+                                ),
+                              ),
+                          ],
                         ),
-                        initialValue: c.zoom,
-                        minWidth: 84,
-                        selectedOptionBuilder: (context, z) =>
-                            Text('${(z * 100).round()}%'),
-                        onChanged: (z) {
-                          if (z != null) c.setZoom(z);
-                        },
-                        options: [
-                          for (final z in const [
-                            0.5,
-                            0.75,
-                            0.9,
-                            1.0,
-                            1.25,
-                            1.5,
-                          ])
-                            ShadOption(
-                              value: z,
-                              child: Text('${(z * 100).round()}%'),
-                            ),
-                        ],
                       ),
                     ),
                     const SizedBox(width: 12),
@@ -1167,9 +1202,10 @@ class _PreviewPane extends StatelessWidget {
                         child: Text(
                           compact
                               ? '${warnings.length}'
-                              : warnings.length == 1
-                              ? '1 contrast warning'
-                              : '${warnings.length} contrast warnings',
+                              : l.themeEditorContrastWarnings(warnings.length),
+                          semanticsLabel: l.themeEditorContrastWarnings(
+                            warnings.length,
+                          ),
                         ),
                       ),
                   ],

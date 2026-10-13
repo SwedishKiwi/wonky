@@ -4,10 +4,10 @@ import 'package:shad/shad.dart';
 import 'package:wonky_client/wonky_client.dart';
 import 'package:wonky_ui/wonky_ui.dart';
 
+import '../activity/activity_feed.dart';
 import '../data/api.dart';
 import '../data/models_ext.dart';
 import '../l10n/wonky_app_localizations.dart';
-import '../shell/dialogs.dart';
 import '../shell/shell_services.dart';
 import 'drive_format.dart';
 
@@ -28,7 +28,6 @@ class DriveDetailsPanel extends StatefulWidget {
 }
 
 class _DriveDetailsPanelState extends State<DriveDetailsPanel> {
-  Future<List<ActivityEventView>>? _activity;
   Future<List<DriveItemView>>? _path;
   final _desc = TextEditingController();
   String? _loadedFor;
@@ -43,7 +42,6 @@ class _DriveDetailsPanelState extends State<DriveDetailsPanel> {
     if (_loadedFor == item.uuid.uuid) return;
     _loadedFor = item.uuid.uuid;
     _desc.text = item.description ?? '';
-    _activity = widget.services.drive.activity(item.uuid, limit: 30);
     _path = widget.services.drive.path(item.uuid);
   }
 
@@ -177,35 +175,10 @@ class _DriveDetailsPanelState extends State<DriveDetailsPanel> {
           style: theme.textTheme.small.copyWith(fontWeight: FontWeight.w600),
         ),
         const SizedBox(height: 6),
-        FutureBuilder<List<ActivityEventView>>(
-          future: _activity,
-          builder: (context, snap) {
-            if (snap.connectionState != ConnectionState.done) {
-              return const Padding(
-                padding: EdgeInsets.all(12),
-                child: Center(child: ShadSpinner()),
-              );
-            }
-            final events = snap.data ?? const [];
-            if (events.isEmpty) {
-              return Text(l.activityEmpty, style: theme.textTheme.muted);
-            }
-            return Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                for (final e in events)
-                  Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 4),
-                    child: Text(
-                      '${activityText(l, e)} · ${timeAgo(l, e.at)}',
-                      style: theme.textTheme.small.copyWith(
-                        fontWeight: FontWeight.normal,
-                      ),
-                    ),
-                  ),
-              ],
-            );
-          },
+        ActivityFeed(
+          key: ValueKey<String>('details.activity.${item.uuid.uuid}'),
+          services: widget.services,
+          itemUuid: item.uuid,
         ),
       ],
     );

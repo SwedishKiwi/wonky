@@ -11,6 +11,7 @@ import 'package:wonky_write_core/wonky_write_core.dart'
         embedChar,
         softBreak;
 
+import '../../l10n/write_l10n.dart';
 import '../document/write_document_session.dart';
 import '../editor/styles/write_stylesheet.dart' show CommentHighlightState;
 import '../editor/view/editor_view_state.dart' show HighlightRange;
@@ -200,7 +201,7 @@ class WriteComments extends ChangeNotifier implements CommentAnchorProvider {
   @override
   String? labelFor(CommentThreadView thread) {
     if (thread.anchorKind == CommentAnchorKind.document) {
-      return 'Whole document';
+      return writeL10nOf(session.services).commentWholeDocument;
     }
     return thread.quotedText;
   }
@@ -231,23 +232,27 @@ class WriteComments extends ChangeNotifier implements CommentAnchorProvider {
         ? (pending.isEmpty ? null : (pending.start, pending.end))
         : (_lastRange ?? selectionRange());
     _lastRange = null;
+    final l = writeL10nOf(session.services);
     if (range == null) {
       session.services.toasts.show(
-        'The text you selected was deleted',
-        description: 'The comment was saved without a position.',
+        l.commentSelectionDeleted,
+        description: l.commentSavedWithoutPosition,
       );
       return;
     }
     session.applyContentChange(
       CommentAnchors.addAnchor(thread.uuid.uuid, range.$1, range.$2 - range.$1),
-      label: 'Comment',
+      label: l.commentUndoAdd,
     );
   }
 
   @override
   void onThreadDeleted(CommentThreadView thread) {
     if (session.services.undo.isApplying) return;
-    removeAnchor(thread.uuid.uuid, label: 'Delete comment');
+    removeAnchor(
+      thread.uuid.uuid,
+      label: writeL10nOf(session.services).commentUndoDelete,
+    );
   }
 
   /// Removes every anchor of [threadUuid] (one undoable change).
@@ -384,7 +389,10 @@ class WriteComments extends ChangeNotifier implements CommentAnchorProvider {
         threadUuid,
       ).compose(change);
     }
-    return session.applyContentChange(change, label: 'Re-attach comment');
+    return session.applyContentChange(
+      change,
+      label: writeL10nOf(session.services).commentUndoReattach,
+    );
   }
 
   /// Opens the composer for a comment on the whole document
@@ -394,10 +402,10 @@ class WriteComments extends ChangeNotifier implements CommentAnchorProvider {
     if (c == null || !session.currentRole.canComment) return;
     session.services.panels.open(ShellPanels.comments);
     c.startDraft(
-      const NewCommentAnchor(
+      NewCommentAnchor(
         kind: CommentAnchorKind.document,
         anchorJson: writeAnchorJson,
-        label: 'Whole document',
+        label: writeL10nOf(session.services).commentWholeDocument,
       ),
     );
   }

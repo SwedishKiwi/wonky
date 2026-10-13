@@ -8,6 +8,7 @@ import 'package:wonky_ui/wonky_ui.dart';
 import '../ai/ai_selection_menu.dart';
 import '../editor/commands/write_editor_commands.dart';
 import '../editor/controller/editor_types.dart';
+import '../../l10n/write_l10n.dart';
 import 'write_document_controller.dart';
 import 'write_toolbar.dart';
 
@@ -82,6 +83,8 @@ class _SelectionToolbarLayerState extends State<SelectionToolbarLayer> {
     if (!mounted || s == null || s.isCollapsed || _pointerDown) return;
     if (_dismissedFor == s) return;
     if (!doc.viewPrefs.showSelectionToolbar) return;
+    // A table cell is edited in place (its own field has the focus).
+    if (doc.editor.tableEditing?.isEditing ?? false) return;
     setState(() => _visible = true);
   }
 
@@ -169,6 +172,7 @@ class _SelectionToolbar extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = ShadTheme.of(context);
     final cs = theme.colorScheme;
+    final l = writeL10n(context);
     final viewing = doc.editor.mode == EditorMode.viewing;
     final kind = doc.commands.selectedBlockKind;
     Widget toggle(String id, IconData icon) {
@@ -217,22 +221,30 @@ class _SelectionToolbar extends StatelessWidget {
       );
     }
 
-    Widget heading(String text, BlockKind k) {
+    Widget heading(int level, BlockKind k) {
       final selected = kind == k;
       final st = ui.state('write.format.blockType', {'type': k.name});
-      return ShadToggle(
-        key: ValueKey<String>('write.selectionToolbar.${k.name}'),
-        value: selected,
-        enabled: st.enabled,
-        width: 30,
-        height: 30,
-        padding: EdgeInsets.zero,
-        onChanged: (_) => ui.run('write.format.blockType', {
-          'type': selected ? 'paragraph' : k.name,
-        }),
-        child: Text(
-          text,
-          style: theme.textTheme.small.copyWith(fontWeight: FontWeight.w600),
+      final name = blockKindLabel(l, k);
+      return ShadTooltip(
+        builder: (_) => ToolbarTooltipContent(
+          label: name,
+          shortcut: ui.shortcut('write.format.blockType.${k.name}'),
+        ),
+        child: ShadToggle(
+          key: ValueKey<String>('write.selectionToolbar.${k.name}'),
+          value: selected,
+          enabled: st.enabled,
+          width: 30,
+          height: 30,
+          padding: EdgeInsets.zero,
+          semanticLabel: name,
+          onChanged: (_) => ui.run('write.format.blockType', {
+            'type': selected ? 'paragraph' : k.name,
+          }),
+          child: Text(
+            l.selectionToolbarHeadingShort(level),
+            style: theme.textTheme.small.copyWith(fontWeight: FontWeight.w600),
+          ),
         ),
       );
     }
@@ -246,7 +258,7 @@ class _SelectionToolbar extends StatelessWidget {
 
     return Semantics(
       container: true,
-      label: 'Selection toolbar',
+      label: l.selectionToolbarLabel,
       child: Container(
         key: const ValueKey<String>('write.selectionToolbar'),
         height: 40,
@@ -271,21 +283,21 @@ class _SelectionToolbar extends StatelessWidget {
                   button(
                     'shell.comments.create',
                     LucideIcons.messageSquarePlus,
-                    label: 'Comment',
+                    label: l.menuComment,
                   ),
                   button('write.edit.copy', LucideIcons.copy),
                   button(
                     'write.find.open',
                     LucideIcons.search,
-                    label: 'Search document',
+                    label: l.docMenuSearchDocument,
                     args: {'query': ?doc.selectedText},
                   ),
                 ]
               : [
                   AiSelectionButton(doc: doc, ui: ui),
-                  heading('H1', BlockKind.heading1),
-                  heading('H2', BlockKind.heading2),
-                  heading('H3', BlockKind.heading3),
+                  heading(1, BlockKind.heading1),
+                  heading(2, BlockKind.heading2),
+                  heading(3, BlockKind.heading3),
                   sep(),
                   toggle('write.format.bold', LucideIcons.bold),
                   toggle('write.format.italic', LucideIcons.italic),
@@ -299,7 +311,7 @@ class _SelectionToolbar extends StatelessWidget {
                   button(
                     'shell.comments.create',
                     LucideIcons.messageSquarePlus,
-                    label: 'Comment',
+                    label: l.menuComment,
                   ),
                   WonkyDropdownMenu(
                     entries: () => [
@@ -308,26 +320,29 @@ class _SelectionToolbar extends StatelessWidget {
                       ui.item(
                         'write.find.open',
                         args: {'query': ?doc.selectedText},
-                        label: 'Search document',
+                        label: l.docMenuSearchDocument,
                         keyName: 'selection.search',
                       ),
                       const WonkyMenuSeparator(),
                       WonkyMenuItem(
-                        label: 'Hide this toolbar',
+                        label: l.selectionToolbarHide,
                         icon: LucideIcons.eyeOff,
                         onSelected: onDismiss,
                       ),
                     ],
-                    builder: (context, c) => ShadIconButton.ghost(
-                      key: const ValueKey<String>(
-                        'write.selectionToolbar.more',
+                    builder: (context, c) => ShadTooltip(
+                      builder: (_) => Text(l.commonMore),
+                      child: ShadIconButton.ghost(
+                        key: const ValueKey<String>(
+                          'write.selectionToolbar.more',
+                        ),
+                        width: 30,
+                        height: 30,
+                        iconSize: 16,
+                        semanticLabel: l.commonMore,
+                        icon: const Icon(LucideIcons.ellipsis),
+                        onPressed: c.toggle,
                       ),
-                      width: 30,
-                      height: 30,
-                      iconSize: 16,
-                      semanticLabel: 'More',
-                      icon: const Icon(LucideIcons.ellipsis),
-                      onPressed: c.toggle,
                     ),
                   ),
                 ],

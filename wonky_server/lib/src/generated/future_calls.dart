@@ -15,6 +15,10 @@ import 'dart:async' as _ida;
 import 'package:clock/clock.dart' as _io0w16m8;
 import 'package:serverpod/serverpod.dart' as _is;
 import '../platform/jobs/maintenance_future_call.dart' as _imgsvm9k;
+import '../platform/notifications/notification_email_future_call.dart'
+    as _i1dis1nt;
+import 'future_calls_generated_models/notification_email_future_call_send_model.dart'
+    as _inb6x2l0;
 
 /// Invokes a future call.
 typedef _InvokeFutureCall =
@@ -63,6 +67,7 @@ class FutureCalls extends _is.FutureCallDispatch<_FutureCallRef> {
       'MaintenanceSendDigestsFutureCall': MaintenanceSendDigestsFutureCall(),
       'MaintenanceCleanupFilesFutureCall': MaintenanceCleanupFilesFutureCall(),
       'MaintenanceDailyFutureCall': MaintenanceDailyFutureCall(),
+      'NotificationEmailSendFutureCall': NotificationEmailSendFutureCall(),
     };
     _futureCallManager = futureCallManager;
     _serverId = serverId;
@@ -184,6 +189,10 @@ class _FutureCallRef {
   final _InvokeFutureCall _invokeFutureCall;
 
   late final maintenance = _MaintenanceFutureCallDispatcher(_invokeFutureCall);
+
+  late final notificationEmail = _NotificationEmailFutureCallDispatcher(
+    _invokeFutureCall,
+  );
 }
 
 class _MaintenanceFutureCallDispatcher {
@@ -216,6 +225,22 @@ class _MaintenanceFutureCallDispatcher {
     return _invokeFutureCall(
       'MaintenanceDailyFutureCall',
       null,
+    );
+  }
+}
+
+class _NotificationEmailFutureCallDispatcher {
+  _NotificationEmailFutureCallDispatcher(this._invokeFutureCall);
+
+  final _InvokeFutureCall _invokeFutureCall;
+
+  Future<void> send(int notificationId) {
+    var object = _inb6x2l0.NotificationEmailFutureCallSendModel(
+      notificationId: notificationId,
+    );
+    return _invokeFutureCall(
+      'NotificationEmailSendFutureCall',
+      object,
     );
   }
 }
@@ -267,5 +292,25 @@ class MaintenanceDailyFutureCall extends _is.FutureCall
     _is.SerializableModel? object,
   ) async {
     await _imgsvm9k.MaintenanceFutureCall().daily(session);
+  }
+}
+
+class NotificationEmailSendFutureCall
+    extends _is.FutureCall<_inb6x2l0.NotificationEmailFutureCallSendModel>
+    implements
+        _is.InvokableFutureCall<
+          _inb6x2l0.NotificationEmailFutureCallSendModel
+        > {
+  @override
+  _ida.Future<void> invoke(
+    _is.Session session,
+    _inb6x2l0.NotificationEmailFutureCallSendModel? object,
+  ) async {
+    if (object != null) {
+      await _i1dis1nt.NotificationEmailFutureCall().send(
+        session,
+        object.notificationId,
+      );
+    }
   }
 }

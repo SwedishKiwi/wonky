@@ -49,12 +49,12 @@ class WriteAssistantAdapter extends ChangeNotifier
     if (s == null) return null;
     final d = WonkyDocument(ai.doc.editor.delta);
     final lines = d.linesInRange(s.start, s.length).length;
-    if (lines > 1) return 'Selection: $lines paragraphs';
+    if (lines > 1) return ai.l10n.aiChipSelectionParagraphs(lines);
     final text = d.text
         .substring(s.start, s.end.clamp(s.start, d.text.length))
         .trim();
     final short = text.length > 32 ? '${text.substring(0, 30)}…' : text;
-    return 'Selection: “$short”';
+    return ai.l10n.aiChipSelectionQuote(short);
   }
 
   @override
@@ -103,35 +103,39 @@ class WriteAssistantAdapter extends ChangeNotifier
   }
 
   @override
-  List<AssistantQuickPrompt> get quickPrompts => [
-    const AssistantQuickPrompt(
-      label: 'Summarize',
-      prompt: 'Summarize this document in a few bullet points.',
-      icon: LucideIcons.listCollapse,
-    ),
-    if (role >= Role.commenter) ...[
-      const AssistantQuickPrompt(
-        label: 'Improve',
-        prompt:
-            'Improve the clarity and flow of the selected text (or of the '
-            'document if nothing is selected) with small, targeted edits.',
-        icon: LucideIcons.wandSparkles,
+  List<AssistantQuickPrompt> get quickPrompts {
+    final l = ai.l10n;
+    // The prompts are instructions for the model and stay in English.
+    return [
+      AssistantQuickPrompt(
+        label: l.aiSummarize,
+        prompt: 'Summarize this document in a few bullet points.',
+        icon: LucideIcons.listCollapse,
       ),
-      const AssistantQuickPrompt(
-        label: 'Fix typos',
-        prompt: 'Fix spelling and grammar mistakes in the document.',
-        icon: LucideIcons.spellCheck,
-      ),
-      const AssistantQuickPrompt(
-        label: 'Address comments',
-        prompt:
-            'Go through the open comments and make the changes they ask '
-            'for. Reply to each comment you addressed.',
-        icon: LucideIcons.messagesSquare,
-        includeComments: true,
-      ),
-    ],
-  ];
+      if (role >= Role.commenter) ...[
+        AssistantQuickPrompt(
+          label: l.aiQuickImprove,
+          prompt:
+              'Improve the clarity and flow of the selected text (or of the '
+              'document if nothing is selected) with small, targeted edits.',
+          icon: LucideIcons.wandSparkles,
+        ),
+        AssistantQuickPrompt(
+          label: l.aiQuickFixTypos,
+          prompt: 'Fix spelling and grammar mistakes in the document.',
+          icon: LucideIcons.spellCheck,
+        ),
+        AssistantQuickPrompt(
+          label: l.aiQuickAddressComments,
+          prompt:
+              'Go through the open comments and make the changes they ask '
+              'for. Reply to each comment you addressed.',
+          icon: LucideIcons.messagesSquare,
+          includeComments: true,
+        ),
+      ],
+    ];
+  }
 
   @override
   void show(AssistantActivity activity) {

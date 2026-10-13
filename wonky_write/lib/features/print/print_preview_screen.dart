@@ -5,10 +5,12 @@ import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
 import 'package:shad/shad.dart';
 import 'package:wonky_app/wonky_app.dart';
-import 'package:wonky_client/wonky_client.dart' show DriveItemView, UuidValue;
+import 'package:wonky_client/wonky_client.dart'
+    show DriveItemView, UuidValue, WonkyErrorCode, WonkyException;
 import 'package:wonky_ui/wonky_ui.dart';
 import 'package:wonky_write_core/wonky_write_core.dart' hide ThemeCatalog;
 
+import '../../l10n/write_l10n.dart';
 import '../document/write_document_session.dart' show WriteDocumentMeta;
 import '../export/export_service.dart';
 import '../screen/write_document_controller.dart';
@@ -62,12 +64,23 @@ class _PrintPreviewScreenState extends State<PrintPreviewScreen> {
   void _back() => s.router.go('/d/${widget.itemUuid}');
 
   Future<void> _load() async {
+    final l = writeL10nOf(s);
     try {
       final client = s.client;
-      if (client == null) throw StateError('No server connection');
+      if (client == null) {
+        throw WonkyException(
+          code: WonkyErrorCode.unavailable,
+          message: l.printNoServer,
+        );
+      }
       final item = await s.drive.get(UuidValue.withValidation(widget.itemUuid));
       final docUuid = item.contentRef;
-      if (docUuid == null) throw StateError('This is not a document');
+      if (docUuid == null) {
+        throw WonkyException(
+          code: WonkyErrorCode.notFound,
+          message: l.sessionNotADocument,
+        );
+      }
       final info = await client.document.getInfo(docUuid);
       final snap = await client.document.getSnapshot(docUuid, null);
       final meta = WriteDocumentMeta.fromView(info.meta);
@@ -85,7 +98,7 @@ class _PrintPreviewScreenState extends State<PrintPreviewScreen> {
         _source = ExportSource(
           documentUuid: widget.itemUuid,
           delta: delta.isEmpty ? (Delta()..insert('\n')) : delta,
-          title: item.name.isEmpty ? 'Untitled document' : item.name,
+          title: item.name.isEmpty ? l.untitledDocument : item.name,
           theme: theme,
           pageSetup: meta.pageSetup,
           revision: snap.revision,
@@ -143,25 +156,31 @@ class _PrintPreviewScreenState extends State<PrintPreviewScreen> {
     final pdf = _pdf;
     final src = _source;
     if (pdf == null || src == null) return;
+    final l = writeL10nOf(s);
     await saveArtifact(
       ExportArtifact(
-        fileName: '${sanitizeFileName(src.title)}.pdf',
+        fileName: '${sanitizeFileName(src.title, l: l)}.pdf',
         mimeType: 'application/pdf',
         bytes: pdf,
         pageCount: _pages,
       ),
+      l: l,
     );
   }
 
   Future<void> _print() async {
     final pdf = _pdf;
     if (pdf == null) return;
-    final ok = await printPdf(pdf, title: _source?.title ?? 'Document');
+    final l = writeL10nOf(s);
+    final ok = await printPdf(
+      pdf,
+      title: _source?.title ?? l.printDocumentTitle,
+    );
     if (!ok) {
       s.toasts.show(
-        'Printing isn’t available here',
-        description: 'Download the PDF and print it from your PDF viewer.',
-        actionLabel: 'Download PDF',
+        l.printUnavailableTitle,
+        description: l.printUnavailableBody,
+        actionLabel: l.printDownloadPdf,
         onAction: () => unawaited(_download()),
       );
     }
@@ -208,6 +227,7 @@ class _PrintPreviewScreenState extends State<PrintPreviewScreen> {
 
   Widget _header(BuildContext context) {
     final theme = ShadTheme.of(context);
+    final l = writeL10n(context);
     final title = _source?.title ?? _item?.name ?? '';
     return SizedBox(
       height: 56,
@@ -219,27 +239,36 @@ class _PrintPreviewScreenState extends State<PrintPreviewScreen> {
               key: const ValueKey<String>('print.back'),
               leading: const Icon(LucideIcons.arrowLeft, size: 16),
               onPressed: _back,
-              child: const Text('Back'),
+              child: Text(l.printBack),
             ),
             const SizedBox(width: 8),
             Expanded(
-              child: Text(
-                title.isEmpty ? 'Print preview' : 'Print preview — $title',
-                overflow: TextOverflow.ellipsis,
-                style: theme.textTheme.large,
+              child: Semantics(
+                header: true,
+                child: Text(
+                  title.isEmpty
+                      ? l.printPreviewTitle
+                      : l.printPreviewTitleWithName(title),
+                  overflow: TextOverflow.ellipsis,
+                  style: theme.textTheme.large,
+                ),
               ),
             ),
             if (_busy)
-              const Padding(
-                padding: EdgeInsets.only(right: 12),
-                child: ShadSpinner(size: 16),
+              Padding(
+                padding: const EdgeInsets.only(right: 12),
+                child: Semantics(
+                  label: l.printUpdatingPreview,
+                  liveRegion: true,
+                  child: const ShadSpinner(size: 16),
+                ),
               ),
             ShadButton.outline(
               key: const ValueKey<String>('print.download'),
               enabled: _pdf != null && _canExport,
               leading: const Icon(LucideIcons.download, size: 16),
               onPressed: _download,
-              child: const Text('Download PDF'),
+              child: Text(l.printDownloadPdf),
             ),
             const SizedBox(width: 8),
             ShadButton(
@@ -247,7 +276,7 @@ class _PrintPreviewScreenState extends State<PrintPreviewScreen> {
               enabled: _pdf != null && _canExport,
               leading: const Icon(LucideIcons.printer, size: 16),
               onPressed: _print,
-              child: const Text('Print'),
+              child: Text(l.cmdFilePrint),
             ),
           ],
         ),
@@ -257,12 +286,13 @@ class _PrintPreviewScreenState extends State<PrintPreviewScreen> {
 
   Widget _preview(BuildContext context) {
     final cs = ShadTheme.of(context).colorScheme;
+    final l = writeL10n(context);
     if (_error != null) {
       return WonkyEmptyState(
         illustration: isOfflineError(_error!)
             ? EmptyIllustration.offline
             : EmptyIllustration.error,
-        title: 'The preview could not be created',
+        title: l.printPreviewFailed,
         description: errorMessage(_error!),
         actions: [
           ShadButton.outline(
@@ -270,37 +300,47 @@ class _PrintPreviewScreenState extends State<PrintPreviewScreen> {
               setState(() => _error = null);
               unawaited(_source == null ? _load() : _render());
             },
-            child: const Text('Try again'),
+            child: Text(l.printTryAgain),
           ),
         ],
       );
     }
     if (!_canExport) {
-      return const WonkyEmptyState(
+      return WonkyEmptyState(
         illustration: EmptyIllustration.error,
-        title: 'The owner turned off printing and downloads',
-        description: 'Ask an editor for a copy.',
+        title: l.printDownloadsDisabledTitle,
+        description: l.printDownloadsDisabledBody,
       );
     }
     final pdf = _pdf;
     if (pdf == null) {
       return ColoredBox(
         color: cs.canvas,
-        child: const Center(child: ShadSpinner()),
+        child: Center(
+          child: Semantics(
+            label: l.printUpdatingPreview,
+            child: const ShadSpinner(),
+          ),
+        ),
       );
     }
     return ColoredBox(
       color: cs.canvas,
-      child: PdfView(
-        key: const ValueKey<String>('print.preview'),
-        bytes: pdf,
-        pageCount: _pages,
+      child: Semantics(
+        label: l.printPdfPreviewLabel,
+        container: true,
+        child: PdfView(
+          key: const ValueKey<String>('print.preview'),
+          bytes: pdf,
+          pageCount: _pages,
+        ),
       ),
     );
   }
 
   Widget _settings(BuildContext context) {
     final theme = ShadTheme.of(context);
+    final l = writeL10n(context);
     final o = _options;
     Widget label(String t) => Padding(
       padding: const EdgeInsets.only(top: 16, bottom: 6),
@@ -309,48 +349,53 @@ class _PrintPreviewScreenState extends State<PrintPreviewScreen> {
     return ListView(
       padding: const EdgeInsets.all(16),
       children: [
-        Text('Settings', style: theme.textTheme.large),
+        Semantics(
+          header: true,
+          child: Text(l.printSettings, style: theme.textTheme.large),
+        ),
         if (_pages != null) ...[
           const SizedBox(height: 4),
           Text(
-            _pages == 1 ? '1 page' : '$_pages pages',
+            l.printPageCount(_pages!),
             key: const ValueKey<String>('print.pages'),
             style: theme.textTheme.muted,
           ),
         ],
-        label('Colors'),
+        label(l.printColors),
         ShadRadioGroup<ThemeVariant>(
           initialValue: o.variant,
           onChanged: (v) => _setOptions(o.copyWith(variant: v)),
-          items: const [
+          items: [
             ShadRadio(
-              key: ValueKey<String>('print.light'),
+              key: const ValueKey<String>('print.light'),
               value: ThemeVariant.light,
-              label: Text('Light'),
+              label: Text(l.printColorsLight),
             ),
             ShadRadio(
-              key: ValueKey<String>('print.dark'),
+              key: const ValueKey<String>('print.dark'),
               value: ThemeVariant.dark,
-              label: Text('Dark'),
+              label: Text(l.printColorsDark),
             ),
           ],
         ),
-        label('Suggestions'),
+        label(l.printSuggestions),
         ShadSelect<SuggestionViewMode>(
           initialValue: o.suggestions,
           minWidth: 240,
-          options: const [
+          options: [
             ShadOption(
               value: SuggestionViewMode.accepted,
-              child: Text('As if accepted'),
+              child: Text(l.printSuggestionsAccepted),
             ),
             ShadOption(
               value: SuggestionViewMode.original,
-              child: Text('Original'),
+              child: Text(l.printSuggestionsOriginal),
             ),
           ],
           selectedOptionBuilder: (context, v) => Text(
-            v == SuggestionViewMode.original ? 'Original' : 'As if accepted',
+            v == SuggestionViewMode.original
+                ? l.printSuggestionsOriginal
+                : l.printSuggestionsAccepted,
           ),
           onChanged: (v) {
             if (v != null) _setOptions(o.copyWith(suggestions: v));
@@ -361,19 +406,18 @@ class _PrintPreviewScreenState extends State<PrintPreviewScreen> {
           key: const ValueKey<String>('print.headerFooter'),
           value: o.headerFooter,
           onChanged: (v) => _setOptions(o.copyWith(headerFooter: v)),
-          label: const Text('Header & footer'),
+          label: Text(l.printHeaderFooter),
         ),
         const SizedBox(height: 10),
         ShadCheckbox(
           key: const ValueKey<String>('print.toc'),
           value: o.includeToc,
           onChanged: (v) => _setOptions(o.copyWith(includeToc: v)),
-          label: const Text('Table of contents'),
+          label: Text(l.printToc),
         ),
         const SizedBox(height: 20),
         Text(
-          'Paper size, margins and the header text come from the '
-          'document’s page setup (File › Page setup…).',
+          l.printPageSetupHint,
           style: theme.textTheme.muted.copyWith(fontSize: 12),
         ),
       ],

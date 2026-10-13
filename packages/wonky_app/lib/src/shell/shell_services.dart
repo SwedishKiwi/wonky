@@ -61,7 +61,8 @@ class ShellRepositories {
     required this.versions,
     required this.files,
     required this.meta,
-  });
+    ActivityRepository? activity,
+  }) : _activity = activity; // ignore: prefer_initializing_formals
 
   final DriveRepository drive;
   final UserRepository users;
@@ -72,6 +73,11 @@ class ShellRepositories {
   final VersionRepository versions;
   final FileRepository files;
   final MetaRepository meta;
+  final ActivityRepository? _activity;
+
+  /// The activity dashboard; throws when the shell was built without one.
+  ActivityRepository get activity =>
+      _activity ?? (throw StateError('No ActivityRepository installed.'));
 }
 
 /// Long-lived services created by `WonkyShell` and provided to the whole
@@ -268,7 +274,7 @@ class ShellServices implements ActiveDocumentHost {
 
   @override
   void activate(DocumentController controller) {
-    if (_active == controller) return;
+    if (_disposed || _active == controller) return;
     if (_active != null) deactivate(_active!);
     _active = controller;
     for (final h in controller.undoHandlers) {
@@ -289,7 +295,7 @@ class ShellServices implements ActiveDocumentHost {
 
   @override
   void deactivate(DocumentController controller) {
-    if (_active != controller) return;
+    if (_disposed || _active != controller) return;
     controller.removeListener(_onDocumentChanged);
     _active = null;
     undo.setActiveDocument(null);
@@ -377,7 +383,10 @@ class ShellServices implements ActiveDocumentHost {
     if (recentCommands.length > 8) recentCommands.removeLast();
   }
 
+  bool _disposed = false;
+
   void dispose() {
+    _disposed = true;
     keymap.dispose();
     dispatcher.dispose();
     undo.dispose();

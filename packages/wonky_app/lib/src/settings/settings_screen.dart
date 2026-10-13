@@ -126,7 +126,9 @@ class SettingsScreen extends StatelessWidget {
                   : null,
               leading: Icon(x.icon, size: 16),
               onPressed: () => s.router.go('/settings/${x.id}'),
-              child: Text(x.title),
+              child: Flexible(
+                child: Text(x.title, overflow: TextOverflow.ellipsis),
+              ),
             ),
         ],
       ),
@@ -142,6 +144,7 @@ class SettingsScreen extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 Semantics(
+                  container: true,
                   header: true,
                   child: Text(current.title, style: theme.textTheme.h3),
                 ),
@@ -233,7 +236,7 @@ class SettingsRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = ShadTheme.of(context);
-    return Row(
+    final row = Row(
       children: [
         Expanded(
           child: Column(
@@ -252,5 +255,10 @@ class SettingsRow extends StatelessWidget {
         control,
       ],
     );
+    // A switch or checkbox has no text of its own: the row's label names it
+    // for screen readers (labeledTapTargetGuideline).
+    return control is ShadSwitch || control is ShadCheckbox
+        ? MergeSemantics(child: row)
+        : row;
   }
 }

@@ -4,6 +4,7 @@ import 'package:wonky_client/wonky_client.dart';
 import 'package:wonky_write_core/wonky_write_core.dart'
     show SuggestionIndex, SuggestionInfo, SuggestionOps;
 
+import '../../l10n/write_l10n.dart';
 import '../document/write_document_session.dart';
 import '../editor/controller/editor_types.dart';
 
@@ -112,9 +113,7 @@ class WriteSuggestionsController extends ChangeNotifier {
     if (!canDecide || ids.isEmpty) return false;
     return _apply(
       SuggestionOps.accept(session.editor.delta, ids),
-      ids.length == 1
-          ? 'Accept suggestion'
-          : 'Accept ${ids.length} suggestions',
+      writeL10nOf(session.services).suggestionUndoAccept(ids.length),
     );
   }
 
@@ -126,11 +125,10 @@ class WriteSuggestionsController extends ChangeNotifier {
     if (infos.isEmpty || !infos.every(canReject)) return false;
     final own = infos.every(isOwn);
     final n = infos.length;
+    final l = writeL10nOf(session.services);
     return _apply(
       SuggestionOps.reject(session.editor.delta, ids),
-      own
-          ? (n == 1 ? 'Withdraw suggestion' : 'Withdraw $n suggestions')
-          : (n == 1 ? 'Reject suggestion' : 'Reject $n suggestions'),
+      own ? l.suggestionUndoWithdraw(n) : l.suggestionUndoReject(n),
     );
   }
 

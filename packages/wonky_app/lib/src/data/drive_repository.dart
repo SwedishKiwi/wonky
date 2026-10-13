@@ -93,7 +93,12 @@ abstract class DriveRepository {
 
   Future<StorageUsage> storageUsage();
 
-  Future<List<ActivityEventView>> activity(UuidValue uuid, {int limit = 50});
+  /// The activity feed of [uuid], newest first; [beforeId] pages back.
+  Future<List<ActivityEventView>> activity(
+    UuidValue uuid, {
+    int? beforeId,
+    int limit = 50,
+  });
 
   /// Live changes of items visible to the user.
   Stream<DriveChange> watch();
@@ -244,8 +249,11 @@ class ServerDriveRepository implements DriveRepository {
       api.guard((c) => c.drive.storageUsage());
 
   @override
-  Future<List<ActivityEventView>> activity(UuidValue uuid, {int limit = 50}) =>
-      api.guard((c) => c.drive.activity(uuid, null, limit));
+  Future<List<ActivityEventView>> activity(
+    UuidValue uuid, {
+    int? beforeId,
+    int limit = 50,
+  }) => api.guard((c) => c.drive.activity(uuid, beforeId, limit));
 
   @override
   Stream<DriveChange> watch() => api.client.drive.watch();

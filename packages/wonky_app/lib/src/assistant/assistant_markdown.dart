@@ -2,6 +2,8 @@ import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
 import 'package:shad/shad.dart';
 
+import '../l10n/wonky_app_localizations.dart';
+
 /// Renders assistant Markdown (streamed, so partial input must render):
 /// headings, paragraphs, lists, quotes, fenced code with a copy button,
 /// rules, tables (as aligned text) and inline bold / italic / strike /
@@ -98,7 +100,12 @@ class AssistantMarkdown extends StatelessWidget {
                     width: 26,
                     height: 26,
                     iconSize: 13,
-                    semanticLabel: 'Copy code',
+                    semanticLabel:
+                        Localizations.of<WonkyAppLocalizations>(
+                          context,
+                          WonkyAppLocalizations,
+                        )?.assistantCopyCode ??
+                        'Copy code',
                     icon: const Icon(LucideIcons.copy),
                     onPressed: () {
                       final copy = onCopyCode;

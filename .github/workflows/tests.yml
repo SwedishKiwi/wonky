@@ -6,8 +6,21 @@ on:
   pull_request:
     branches: [main]
 
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{github.workflow}}-${{github.ref}}
+  cancel-in-progress: true
+
+env:
+  # Keep in step with analyze.yml, format.yml and deploy.yml. The workspace
+  # lock file needs Flutter >= 3.47.0 (pubspec.lock `sdks:`).
+  FLUTTER_VERSION: '3.47.5'
+
 jobs:
-  test:
+  # Server unit + integration tests against an embedded PostgreSQL.
+  server:
     runs-on: ubuntu-latest
     env:
       VERSION: '4.1.0-beta.3'
@@ -19,7 +32,8 @@ jobs:
 
       - uses: subosito/flutter-action@v2
         with:
-          flutter-version: '3.44.4'
+          flutter-version: ${{env.FLUTTER_VERSION}}
+          cache: true
 
       # The test config sets `database.dataPath`, so the tests run against an
       # embedded PostgreSQL that Serverpod starts itself. No Docker needed.
@@ -48,3 +62,102 @@ jobs:
       - name: Run tests
         working-directory: wonky_server
         run: dart test
+
+  # Lists the other workspace members that have tests (test/**_test.dart), with the test
+  # runner each needs (Flutter when the pubspec depends on the Flutter SDK).
+  list-packages:
+    runs-on: ubuntu-latest
+    outputs:
+      packages: ${{steps.list.outputs.packages}}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - id: list
+        run: |
+          members=$(awk '/^workspace:/{f=1;next} /^[^ -]/{f=0} f && /^ *- /{sub(/^ *- */,""); sub(/ *#.*/,""); print}' pubspec.yaml)
+          json='['
+          sep=''
+          for p in $members; do
+            [ "$p" = wonky_server ] && continue
+            # `dart test` fails when there are no tests.
+            [ -n "$(find "$p/test" -name '*_test.dart' 2>/dev/null | head -1)" ] || continue
+            if grep -qE '^  flutter:' "$p/pubspec.yaml"; then tool=flutter; else tool=dart; fi
+            json="$json$sep{\"path\":\"$p\",\"tool\":\"$tool\"}"
+            sep=','
+          done
+          json="$json]"
+          echo "$json"
+          echo "packages=$json" >> "$GITHUB_OUTPUT"
+
+  # Unit, property (fixed seeds) and widget tests, one job per package.
+  # `slow` and `e2e` run nightly; image goldens (`golden` in Flutter packages)
+  # run only in the golden container (specs/15-writing-tests.md §7, §10).
+  # Pure-Dart `golden` tests compare JSON fixtures and run here.
+  package:
+    name: test (${{matrix.package.path}})
+    needs: list-packages
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        package: ${{fromJSON(needs.list-packages.outputs.packages)}}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: ${{env.FLUTTER_VERSION}}
+          cache: true
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      - name: Run tests
+        working-directory: ${{matrix.package.path}}
+        run: |
+          if [ "${{matrix.package.tool}}" = flutter ]; then
+            flutter test -x golden -x slow -x e2e
+          else
+            dart test -x slow -x e2e
+          fi
+
+  # Own test suites of the vendored packages (specs/01-architecture.md §2.3
+  # rule 4), including the tests of our patches. They are not workspace
+  # members and resolve their own (committed) lock files.
+  # third_party/serverpod_offline_sync ships no tests.
+  third-party:
+    name: test (${{matrix.package.path}})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        package:
+          - path: third_party/super_editor
+            tool: flutter
+          - path: third_party/attributed_text
+            tool: dart
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: ${{env.FLUTTER_VERSION}}
+          cache: true
+
+      - name: Install dependencies
+        working-directory: ${{matrix.package.path}}
+        run: ${{matrix.package.tool}} pub get
+
+      # super_editor's goldens need its own Docker golden runner
+      # (third_party/super_editor/README_TESTS.md).
+      - name: Run tests
+        working-directory: ${{matrix.package.path}}
+        run: |
+          if [ "${{matrix.package.tool}}" = flutter ]; then
+            flutter test -x golden
+          else
+            dart test
+          fi

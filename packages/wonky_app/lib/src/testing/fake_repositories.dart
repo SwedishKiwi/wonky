@@ -450,8 +450,18 @@ class FakeDriveRepository implements DriveRepository {
   @override
   Future<List<ActivityEventView>> activity(
     UuidValue uuid, {
+    int? beforeId,
     int limit = 50,
-  }) async => const [];
+  }) async {
+    final events = activityByItem[uuid.uuid] ?? const <ActivityEventView>[];
+    return [
+      for (final e in events)
+        if (beforeId == null || e.id < beforeId) e,
+    ].take(limit).toList();
+  }
+
+  /// Activity events per item uuid, newest first (for [activity]).
+  final activityByItem = <String, List<ActivityEventView>>{};
 
   @override
   Stream<DriveChange> watch() => _changes.stream;
@@ -658,6 +668,96 @@ class FakeAuthRepository extends ChangeNotifier implements AuthRepository {
 
   @override
   Future<void> signOut({bool allDevices = false}) async => _setSignedIn(false);
+}
+
+/// In-memory [NotificationRepository]: [items] newest first, cursor paging
+/// by id, read state, and [emit] to push a live event.
+class FakeNotificationRepository implements NotificationRepository {
+  FakeNotificationRepository({List<NotificationView>? items})
+    : items = [...?items];
+
+  final List<NotificationView> items;
+  final _events = StreamController<NotificationEvent>.broadcast();
+  int listCalls = 0;
+
+  int get unreadCount => items.where((n) => n.readAt == null).length;
+
+  @override
+  Future<NotificationPage> list({
+    String? cursor,
+    int limit = 30,
+    bool unreadOnly = false,
+  }) async {
+    listCalls++;
+    final before = int.tryParse(cursor ?? '');
+    final matching = [
+      for (final n in items)
+        if ((!unreadOnly || n.readAt == null) &&
+            (before == null || n.id < before))
+          n,
+    ];
+    final page = matching.take(limit).toList();
+    return NotificationPage(
+      items: page,
+      nextCursor: matching.length > limit ? '${page.last.id}' : null,
+      unreadCount: unreadCount,
+    );
+  }
+
+  @override
+  Future<void> markRead(List<int> ids) async {
+    for (var i = 0; i < items.length; i++) {
+      if (ids.contains(items[i].id) && items[i].readAt == null) {
+        items[i] = items[i].copyWith(readAt: clock.now());
+      }
+    }
+  }
+
+  @override
+  Future<void> markAllRead() => markRead([for (final n in items) n.id]);
+
+  /// Adds [n] (newest) and pushes it to [watch] listeners.
+  void emit(NotificationView n) {
+    items.insert(0, n);
+    _events.add(NotificationEvent(notification: n, unreadCount: unreadCount));
+  }
+
+  @override
+  Stream<NotificationEvent> watch() => _events.stream;
+}
+
+/// In-memory [ActivityRepository] returning [dashboards] by item uuid.
+class FakeActivityRepository implements ActivityRepository {
+  FakeActivityRepository({Map<String, ActivityDashboard>? dashboards})
+    : dashboards = {...?dashboards};
+
+  final Map<String, ActivityDashboard> dashboards;
+  bool viewHistory = true;
+  final requestedDays = <int>[];
+
+  /// When set, [setShowViewHistory] throws it (to test rollback).
+  Object? failSetting;
+
+  @override
+  Future<ActivityDashboard> dashboard(
+    UuidValue itemUuid, {
+    int days = 28,
+  }) async {
+    requestedDays.add(days);
+    final d = dashboards[itemUuid.uuid];
+    if (d == null) throw FakeNotFound(itemUuid.uuid);
+    return d.copyWith(showMyViewHistory: viewHistory);
+  }
+
+  @override
+  Future<bool> showViewHistory() async => viewHistory;
+
+  @override
+  Future<bool> setShowViewHistory(bool show) async {
+    final failure = failSetting;
+    if (failure != null) throw failure;
+    return viewHistory = show;
+  }
 }
 
 /// Base of the repositories the fakes don't model: every call fails with a
