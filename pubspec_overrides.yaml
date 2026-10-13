@@ -1,0 +1,19 @@
+# Local dependency overrides for the workspace (see the comment above
+# `dependency_overrides` in pubspec.yaml). This file REPLACES the overrides in
+# pubspec.yaml, so it repeats the server's pins from there (sqlite3_web).
+#
+# Kept out of the Serverpod Cloud upload on purpose: the server does not use
+# the Flutter-only packages below, and the vendored paths are not part of the
+# uploaded workspace.
+dependency_overrides:
+  # Vendored super_editor with Wonky patches (third_party/super_editor/PATCHES.md).
+  super_editor:
+    path: third_party/super_editor
+  # Vendored with patch AT-1 (third_party/attributed_text/PATCHES.md), needed by
+  # super_editor and super_text_layout.
+  attributed_text:
+    path: third_party/attributed_text
+  flutter_secure_storage: ^10.0.0
+  # sqlite3_web 0.9.5 made WorkerDatabase `base`, which breaks the web build of
+  # sqlite_async 0.14.5. Keep web/db_worker.js in step with sqlite_async.
+  sqlite3_web: 0.9.4

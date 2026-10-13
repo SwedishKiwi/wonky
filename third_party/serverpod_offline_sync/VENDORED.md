@@ -7,5 +7,6 @@
 | Date | 2026-10-12 |
 | License | BSD-3-Clause (see `LICENSE`) |
 
-Wired through `dependency_overrides` in the workspace root `pubspec.yaml`
-(suite spec 01 §2.3). Remove once an upstream release contains all patches.
+A workspace member (listed under `workspace:` in the root `pubspec.yaml`, patch OS-3) rather
+than a path override, because the server uses it and Serverpod Cloud only uploads workspace
+packages (suite spec 01 §2.3). Remove once an upstream release contains all patches.

@@ -32,7 +32,8 @@
 ///      `serverpod generate` are skipped for this one check.
 ///
 /// `third_party/*` packages are external packages and are not checked
-/// (01 §2.3 rule 7). Whether an external package depends on Flutter is read
+/// (01 §2.3 rule 7), also when they are workspace members (as the vendored
+/// `serverpod_offline_sync` is, so Serverpod Cloud uploads it). Whether an external package depends on Flutter is read
 /// from `.dart_tool/package_graph.json` (written by `pub get`); without it the
 /// script falls back to the package name and says so.
 ///
@@ -336,7 +337,9 @@ void main(List<String> args) {
     );
   }
 
-  final members = _workspaceMembers(root);
+  final members = _workspaceMembers(
+    root,
+  ).where((m) => !m.startsWith('third_party/')).toList();
   for (final memberPath in members) {
     final dir = Directory('${root.path}/$memberPath');
     final pubspec = File('${dir.path}/pubspec.yaml');

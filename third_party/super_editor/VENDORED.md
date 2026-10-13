@@ -15,7 +15,8 @@ not needed to build or test): `doc/`, `example/`, `example_chat/`, `example_perf
 `test_goldens/`.
 
 Wired through `dependency_overrides: super_editor: {path: third_party/super_editor}` in the
-workspace root `pubspec.yaml` (suite spec 01 §2.3). `super_text_layout` and `attributed_text`
+workspace root `pubspec_overrides.yaml` (Flutter-only, kept out of the Serverpod Cloud build;
+suite spec 01 §2.3). `super_text_layout` and `attributed_text`
 are **not** vendored (no patch needs them).
 
 Compatibility: the unpatched copy builds and passes its own suite (5,599 tests, `flutter test

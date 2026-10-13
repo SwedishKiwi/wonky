@@ -45,7 +45,8 @@ Flutter 3.47.5 (the workspace lock file needs Flutter ≥ 3.47.0).
 
 ```
 wonky/
-├── pubspec.yaml                         # root Dart pub workspace listing every package below (+ dependency_overrides, §2.3)
+├── pubspec.yaml                         # root Dart pub workspace listing every package below (+ server overrides, §2.3)
+├── pubspec_overrides.yaml               # Flutter-only path overrides of vendored packages (§2.3)
 ├── .mcp.json                            # serverpod MCP → wonky_server; dart MCP
 ├── AGENTS.md                            # agent instructions (project summary, MCP usage, checklist)
 ├── specs/                               # suite-level specs (this folder)
@@ -200,9 +201,20 @@ fragile workarounds around it in app code; keep app-specific logic in our own pa
 
 Rules:
 1. **Location & wiring**: `third_party/<package>/`, keeping the original package **name** (so
-   transitive dependents resolve to it) and wired with `dependency_overrides: <package>: {path:
-   third_party/<package>}` in the **workspace root `pubspec.yaml`** (pub workspaces only honor
-   overrides at the root). Dependent packages keep a normal version constraint.
+   transitive dependents resolve to it). Dependent packages keep a normal version constraint.
+   How it is wired depends on whether the **server** uses it, because Serverpod Cloud builds the
+   server from the root `pubspec.yaml` trimmed to the server's workspace packages, uploads only
+   those, and pub resolves every root override even when nothing depends on it:
+   - **Used by the server** (`serverpod_offline_sync`): a **workspace member** (`resolution:
+     workspace` in its pubspec, listed under `workspace:`), so the Cloud CLI uploads it. Its
+     version must satisfy the hosted dependents' constraints.
+   - **Flutter-only** (`super_editor`, `attributed_text`): a path override in the root
+     **`pubspec_overrides.yaml`** (committed). Pub reads it locally; the Cloud CLI doesn't upload
+     it. A path override in `pubspec.yaml` would break the cloud `pub get` (folder not uploaded),
+     and a Flutter-only hosted override there would pull Flutter into it.
+   `pubspec_overrides.yaml` replaces the overrides of `pubspec.yaml`, so it repeats the server's
+   hosted pins (e.g. `sqlite3_web`). Check a change with `scloud deploy --wet-run --output
+   deployment.zip`: unzip it and run `dart pub get --enforce-lockfile` in its server folder.
 2. **Provenance**: copy from an exact released version or git commit; record it in
    `third_party/<package>/VENDORED.md` (source, version/commit, date, license). Keep the
    original `LICENSE`. Only permissive licenses (MIT, BSD, Apache-2.0); check before copying.

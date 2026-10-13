@@ -12,7 +12,8 @@
 Vendored because the Write editor's property tests found a span-marker corruption bug in
 `AttributedSpans.addAttribution` (patch AT-1) that `super_editor` triggers through
 `AddTextAttributionsRequest`. Wired with `dependency_overrides: attributed_text: {path:
-third_party/attributed_text}` in the workspace root `pubspec.yaml`; the vendored
+third_party/attributed_text}` in the workspace root `pubspec_overrides.yaml` (Flutter-only,
+kept out of the Serverpod Cloud build; suite spec 01 §2.3); the vendored
 `third_party/super_editor/pubspec.yaml` overrides it too, so its own suite runs against this copy.
 
 Run the tests: `cd third_party/attributed_text && dart pub get && dart test`.
