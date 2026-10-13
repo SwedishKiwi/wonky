@@ -143,6 +143,20 @@
   "authErrorPasswordWeak": "This password is too easy to guess.",
   "authErrorTerms": "Please accept the terms to continue.",
   "authErrorTooManyAttempts": "Too many attempts. Wait a moment and try again.",
+  "authContinueWithGoogle": "Continue with Google",
+  "@authContinueWithGoogle": {
+    "description": "Google sign-in button on the sign-in and sign-up screens (Google's branding wording)."
+  },
+  "authOr": "or",
+  "@authOr": {
+    "description": "Divider between the Google button and the email form."
+  },
+  "authGoogleTerms": "By continuing with Google, you agree to the terms of service and the privacy policy.",
+  "@authGoogleTerms": {
+    "description": "Under the Google button on the sign-up screen."
+  },
+  "authErrorGoogleUnavailable": "Sign in with Google isn't set up on this server.",
+  "authErrorPopupBlocked": "Your browser blocked the Google sign-in window. Allow pop-ups for this site and try again.",
   "authErrorUnknown": "Something went wrong. Please try again.",
   "authForgotPassword": "Forgot password?",
   "authHaveAccount": "Already have an account?",

@@ -6,7 +6,7 @@ import 'package:wonky_core/wonky_core.dart'
     show DriveTools, McpToolDefinition, Role;
 import 'package:wonky_write_core/wonky_write_core.dart' as core;
 
-import '../../web/routes/app_config_route.dart';
+import '../config/wonky_config.dart';
 import '../../write/export/write_export_service.dart';
 import '../../write/export/write_import_service.dart';
 import '../../write/mcp/headless_editor.dart';
@@ -43,11 +43,11 @@ abstract final class DriveToolHandlers {
 
   // ---------------------------------------------------------------- views
 
-  /// The public base URL of the web apps (`http://localhost:8082`).
+  /// The public base URL of the web apps (`https://wonky.work`,
+  /// `http://localhost:8082` in development).
   static Uri get webBase {
     try {
-      final pod = Serverpod.instance;
-      return (pod.config.webServer ?? pod.config.apiServer).publicUrl;
+      return WonkyConfig.current.webOrigin(Serverpod.instance.config);
     } on Object {
       return Uri.parse('http://localhost:8082');
     }

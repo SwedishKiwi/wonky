@@ -75,6 +75,7 @@ import '../platform/notifications/notification_endpoint.dart' as _ia40tpv4;
 import '../platform/presence/presence_endpoint.dart' as _iv7snmpw;
 import '../platform/sharing/sharing_endpoint.dart' as _itz30x9e;
 import '../platform/users/access_token_endpoint.dart' as _iusd4uiv;
+import '../platform/users/google_idp_endpoint.dart' as _i3henulz;
 import '../platform/users/user_endpoint.dart' as _iwtyukq6;
 import '../platform/versions/version_endpoint.dart' as _im6cm90k;
 import '../sheets/endpoints/sheets_endpoint.dart' as _izrkvdrt;
@@ -177,6 +178,12 @@ class Endpoints extends _is.EndpointDispatch {
         ..initialize(
           server,
           'accessToken',
+          null,
+        ),
+      'googleIdp': _i3henulz.GoogleIdpEndpoint()
+        ..initialize(
+          server,
+          'googleIdp',
           null,
         ),
       'user': _iwtyukq6.UserEndpoint()
@@ -2634,6 +2641,78 @@ class Endpoints extends _is.EndpointDispatch {
                         session,
                         params['id'],
                       ),
+        ),
+      },
+    );
+    connectors['googleIdp'] = _is.EndpointConnector(
+      name: 'googleIdp',
+      endpoint: endpoints['googleIdp']!,
+      methodConnectors: {
+        'login': _is.MethodConnector(
+          name: 'login',
+          params: {
+            'idToken': _is.ParameterDescription(
+              name: 'idToken',
+              type: _is.getType<String>(),
+              nullable: false,
+            ),
+            'accessToken': _is.ParameterDescription(
+              name: 'accessToken',
+              type: _is.getType<String?>(),
+              nullable: true,
+            ),
+          },
+          call:
+              (
+                _is.Session session,
+                Map<String, dynamic> params,
+              ) async =>
+                  (endpoints['googleIdp'] as _i3henulz.GoogleIdpEndpoint).login(
+                    session,
+                    idToken: params['idToken'],
+                    accessToken: params['accessToken'],
+                  ),
+        ),
+        'loginWithCode': _is.MethodConnector(
+          name: 'loginWithCode',
+          params: {
+            'code': _is.ParameterDescription(
+              name: 'code',
+              type: _is.getType<String>(),
+              nullable: false,
+            ),
+            'codeVerifier': _is.ParameterDescription(
+              name: 'codeVerifier',
+              type: _is.getType<String>(),
+              nullable: false,
+            ),
+            'redirectUri': _is.ParameterDescription(
+              name: 'redirectUri',
+              type: _is.getType<String>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _is.Session session,
+                Map<String, dynamic> params,
+              ) async => (endpoints['googleIdp'] as _i3henulz.GoogleIdpEndpoint)
+                  .loginWithCode(
+                    session,
+                    code: params['code'],
+                    codeVerifier: params['codeVerifier'],
+                    redirectUri: params['redirectUri'],
+                  ),
+        ),
+        'hasAccount': _is.MethodConnector(
+          name: 'hasAccount',
+          params: {},
+          call:
+              (
+                _is.Session session,
+                Map<String, dynamic> params,
+              ) async => (endpoints['googleIdp'] as _i3henulz.GoogleIdpEndpoint)
+                  .hasAccount(session),
         ),
       },
     );

@@ -281,6 +281,8 @@ String authErrorText(WonkyAppLocalizations l, AuthError e) => switch (e) {
   AuthError.invalidCode => l.authErrorInvalidCode,
   AuthError.expiredCode => l.authErrorExpiredCode,
   AuthError.passwordPolicy => l.authErrorPasswordPolicy,
+  AuthError.googleUnavailable => l.authErrorGoogleUnavailable,
+  AuthError.popupBlocked => l.authErrorPopupBlocked,
   AuthError.network => l.authErrorNetwork,
   AuthError.unknown => l.authErrorUnknown,
 };
@@ -313,4 +315,85 @@ class AuthErrorBanner extends StatelessWidget {
       ),
     ),
   );
+}
+
+/// "Continue with Google" (suite 04 §1.6): an outline button with Google's
+/// unaltered "G", above the email form. Signs in, or creates the account on
+/// a first sign-in. Shown only where Google sign-in is offered (web).
+class GoogleSignInButton extends StatefulWidget {
+  const GoogleSignInButton({
+    super.key,
+    required this.services,
+    required this.onError,
+    this.onSignedIn,
+  });
+
+  final ShellServices services;
+
+  /// Shows a form error (null clears it).
+  final ValueChanged<String?> onError;
+  final VoidCallback? onSignedIn;
+
+  @override
+  State<GoogleSignInButton> createState() => _GoogleSignInButtonState();
+}
+
+class _GoogleSignInButtonState extends State<GoogleSignInButton> {
+  /// The pending attempt. The button stays enabled while Google's popup is
+  /// open: the app can't see the popup close (cross-origin isolation), so a
+  /// click starts over in the same popup.
+  int _attempt = 0;
+  bool _busy = false;
+
+  Future<void> _signIn() async {
+    final l = WonkyAppLocalizations.of(context);
+    final attempt = ++_attempt;
+    widget.onError(null);
+    setState(() => _busy = true);
+    try {
+      if (await widget.services.auth.signInWithGoogle()) {
+        widget.onSignedIn?.call();
+      }
+    } on AuthFailure catch (e) {
+      if (attempt == _attempt) widget.onError(authErrorText(l, e.error));
+    } finally {
+      if (mounted && attempt == _attempt) setState(() => _busy = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final l = WonkyAppLocalizations.of(context);
+    return ShadButton.outline(
+      key: const ValueKey<String>('auth.google'),
+      onPressed: _signIn,
+      leading: _busy
+          ? const SizedBox.square(dimension: 18, child: ShadSpinner(size: 16))
+          : const GoogleLogo(),
+      child: Text(l.authContinueWithGoogle),
+    );
+  }
+}
+
+/// A horizontal rule with a centered label ("or").
+class AuthDivider extends StatelessWidget {
+  const AuthDivider({super.key, required this.label});
+
+  final String label;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = ShadTheme.of(context);
+    final line = Expanded(
+      child: Container(height: 1, color: theme.colorScheme.border),
+    );
+    return Row(
+      spacing: 12,
+      children: [
+        line,
+        Text(label, style: theme.textTheme.muted.copyWith(fontSize: 12)),
+        line,
+      ],
+    );
+  }
 }

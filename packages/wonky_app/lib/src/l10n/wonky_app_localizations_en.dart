@@ -215,6 +215,24 @@ class WonkyAppLocalizationsEn extends WonkyAppLocalizations {
       'Too many attempts. Wait a moment and try again.';
 
   @override
+  String get authContinueWithGoogle => 'Continue with Google';
+
+  @override
+  String get authOr => 'or';
+
+  @override
+  String get authGoogleTerms =>
+      'By continuing with Google, you agree to the terms of service and the privacy policy.';
+
+  @override
+  String get authErrorGoogleUnavailable =>
+      'Sign in with Google isn\'t set up on this server.';
+
+  @override
+  String get authErrorPopupBlocked =>
+      'Your browser blocked the Google sign-in window. Allow pop-ups for this site and try again.';
+
+  @override
   String get authErrorUnknown => 'Something went wrong. Please try again.';
 
   @override
@@ -2657,6 +2675,24 @@ class WonkyAppLocalizationsEnXa extends WonkyAppLocalizationsEn {
   @override
   String get authErrorTooManyAttempts =>
       '[Ţöö ɱåñý åţţéɱþţš. Ŵåîţ å ɱöɱéñţ åñð ţŕý åĝåîñ. one two three]';
+
+  @override
+  String get authContinueWithGoogle => '[Çöñţîñûé ŵîţĥ Ĝööĝļé one two]';
+
+  @override
+  String get authOr => '[öŕ o]';
+
+  @override
+  String get authGoogleTerms =>
+      '[Ɓý çöñţîñûîñĝ ŵîţĥ Ĝööĝļé, ýöû åĝŕéé ţö ţĥé ţéŕɱš öƒ šéŕṽîçé åñð ţĥé þŕîṽåçý þöļîçý. one two three four five s]';
+
+  @override
+  String get authErrorGoogleUnavailable =>
+      '[Šîĝñ îñ ŵîţĥ Ĝööĝļé îšñ\'ţ šéţ ûþ öñ ţĥîš šéŕṽéŕ. one two three]';
+
+  @override
+  String get authErrorPopupBlocked =>
+      '[Ýöûŕ ƀŕöŵšéŕ ƀļöçķéð ţĥé Ĝööĝļé šîĝñ-îñ ŵîñðöŵ. Åļļöŵ þöþ-ûþš ƒöŕ ţĥîš šîţé åñð ţŕý åĝåîñ. one two three four five six]';
 
   @override
   String get authErrorUnknown =>

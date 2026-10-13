@@ -24,7 +24,14 @@ class WonkyConfig {
     this.maxImportUploadBytes = 100 * 1024 * 1024,
     this.minClientVersion = '1.0.0',
     this.serverVersion = '1.0.0',
+    this.publicWebUrl,
   });
+
+  /// The public origin of the web apps in production (`wonky.work`).
+  /// Serverpod Cloud generates the server config with its own hosts, and
+  /// `config/*.yaml` is not uploaded (`.scloudignore`), so production
+  /// defaults to this in code.
+  static const productionWebUrl = 'https://wonky.work';
 
   final bool aiEnabled;
   final bool scriptingEnabled;
@@ -41,6 +48,25 @@ class WonkyConfig {
   final int maxImportUploadBytes;
   final String minClientVersion;
   final String serverVersion;
+
+  /// The origin users reach the apps on (`publicWebUrl` / env
+  /// `WONKY_PUBLIC_WEB_URL`), when it differs from the web server's
+  /// configured public host. Used for every public link: the apps' config,
+  /// emails, MCP links, the legal pages and the Google sign-in redirect.
+  final String? publicWebUrl;
+
+  /// [publicWebUrl] or, without it, the web server's public URL in
+  /// [config].
+  Uri webOrigin(ServerpodConfig config) {
+    final url = publicWebUrl;
+    if (url != null && url.isNotEmpty) return Uri.parse(url).resolve('/');
+    final server = config.webServer ?? config.apiServer;
+    return Uri(
+      scheme: server.publicScheme,
+      host: server.publicHost,
+      port: server.publicPort,
+    ).resolve('/');
+  }
 
   static WonkyConfig? _current;
 
@@ -74,7 +100,13 @@ class WonkyConfig {
         section = yaml['wonky'] as Map;
       }
     }
-    return fromMap(section, environment: Platform.environment);
+    return fromMap(
+      section,
+      environment: Platform.environment,
+      defaultPublicWebUrl: runMode == ServerpodRunMode.production
+          ? productionWebUrl
+          : null,
+    );
   }
 
   /// Builds a configuration from the `wonky:` [map], applying [environment]
@@ -82,6 +114,7 @@ class WonkyConfig {
   static WonkyConfig fromMap(
     Map<dynamic, dynamic> map, {
     Map<String, String> environment = const {},
+    String? defaultPublicWebUrl,
   }) {
     Object? read(String section, String key) {
       final envKey = 'WONKY_${section.toUpperCase()}_${_snake(key)}';
@@ -132,6 +165,10 @@ class WonkyConfig {
       ),
       minClientVersion: s('minClientVersion', '1.0.0'),
       serverVersion: s('serverVersion', '1.0.0'),
+      publicWebUrl:
+          environment['WONKY_PUBLIC_WEB_URL'] ??
+          (map['publicWebUrl'] as String?) ??
+          defaultPublicWebUrl,
     );
   }
 

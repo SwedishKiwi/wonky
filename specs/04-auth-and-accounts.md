@@ -1,7 +1,8 @@
 # 04 · Authentication, Accounts and Preferences
 
 One account works in both apps. Auth is implemented with **Serverpod's built-in IDP**
-(`serverpod_auth_idp_server` / `serverpod_auth_idp_flutter`, 4.1.x), email + password only.
+(`serverpod_auth_idp_server` / `serverpod_auth_idp_flutter`, 4.1.x): email + password, and
+**Sign in with Google** on web (§1.6).
 The scaffolded `JwtConfigFromPasswords()` token manager and `ServerpodCloudEmailIdpConfig` (or
 `EmailIdpConfigFromPasswords` when self-hosting mail) in `wonky_server/lib/server.dart` are
 kept. **One sign-in covers both apps**: on web the session lives in Serverpod's httpOnly auth
@@ -10,7 +11,8 @@ cookie on the shared origin; desktop details in [01 §2.5](01-architecture.md).
 ## 1. Flows
 
 ### 1.1 Sign up
-1. **Sign-up screen**: Display name, email, password (+ strength meter), "I agree to the terms"
+1. **Sign-up screen**: *Continue with Google* (web, §1.6; a line below it says continuing
+   accepts the terms and the privacy policy), an "or" divider, then display name, email, password (+ strength meter), "I agree to the terms"
    checkbox with *Terms of service* · *Privacy policy* links below it (the web server's `/terms`
    and `/privacy` pages, suite 13 §5; opened like external links, `AppUrls.page`), *Create
    account* button, link to *Sign in*.
@@ -22,6 +24,7 @@ cookie on the shared origin; desktop details in [01 §2.5](01-architecture.md).
    document + welcome spreadsheet (from templates) → land on **Home**.
 
 ### 1.2 Sign in
+- *Continue with Google* (web, §1.6) and an "or" divider above the form.
 - Email, password, *Remember me* (keeps the session across restarts: on web via the shared
   httpOnly auth cookie, on desktop via secure storage), *Forgot password?*, *Create account*.
 - Errors inline under fields; rate limited server-side (IDP default) with a friendly message.
@@ -38,6 +41,47 @@ different DB file — see offline spec), and in-memory undo stacks.
 JWT refresh is automatic. If refresh fails (revoked/expired), show a blocking
 **"Session expired"** dialog over the current screen (state preserved) with a sign-in form;
 after re-auth the user continues where they were. Pending offline changes are kept.
+
+### 1.6 Sign in with Google (web)
+Serverpod's Google IDP ([Serverpod docs](https://docs.serverpod.dev/concepts/authentication/providers/google/setup)),
+OAuth2 authorization code + PKCE in a popup (the single-window exception of
+[03 §1](03-app-shell-and-navigation.md)). Desktop doesn't offer it yet.
+
+- **Server** (`platform/users/google_idp.dart`): enabled only when the `googleClientSecret`
+  password holds a valid client JSON (the Google Cloud console's *Web application* client,
+  `{"web": {"client_id", "client_secret", …}}`; on Serverpod Cloud a password secret).
+  `redirect_uris` is optional: Google's download only has it when the client had redirect
+  URIs at download time, Serverpod requires the key but doesn't use it, and Google validates
+  the redirect URI against the console. A missing or invalid secret turns Google sign-in off with a warning on stderr; it
+  never stops the server. `GoogleIdpEndpoint` (`googleIdp`) extends `GoogleIdpBaseEndpoint`;
+  `FlutterWebAuth2CallbackRoute` serves `/auth/callback`, the page that posts the code back to
+  the app (same origin as `/write/` and `/sheets/`). `AppConfigRoute` adds `google: {clientId,
+  redirectUri}` to `config.json`, with `redirectUri` = the public web origin + `/auth/callback`
+  ([01 §2.4](01-architecture.md)).
+- **Accounts**: Google's default validation requires a verified email and a name. A first
+  Google sign-in for an email that already has a Wonky account signs in to **that** account
+  (the Google account is linked to it and the auth user the IDP just created is deleted);
+  otherwise a new `UserProfile` is created with Google's full name. Later sign-ins use the
+  linked account.
+- **Client** (`auth/google_web_flow.dart`, `google_popup_web.dart`): Wonky runs the popup
+  itself instead of `GoogleWebSignInService`/`flutter_web_auth_2`. The apps are
+  cross-origin isolated (COOP `same-origin`, 13 §3), so the popup has no opener and the app
+  can't see it close: the plugin would spin until its 5-minute timeout, and a retry could take
+  the earlier attempt's result. `GoogleAuthRequest` builds Google's authorization URL (PKCE
+  S256, random `state`, `openid` + email + profile scopes, `prompt=select_account`); the popup
+  (`window.open`, one window name, opened in the click's task) returns via `/auth/callback`,
+  which leaves the callback URL in `localStorage` (or posts it to the opener); results are
+  matched by `state`, and stale ones are dropped. A new click restarts the attempt in the same
+  popup, so the button stays enabled while it waits. `access_denied` (the user declined) does
+  nothing; a blocked popup says to allow pop-ups. Then `googleIdp.loginWithCode(code,
+  codeVerifier, redirectUri)` and `client.auth.updateSignedInUser`. The *Continue with Google* button
+  (outline, Google's unaltered multicolor "G" — `GoogleLogo` in `wonky_ui` — in light and
+  dark) is shown on web; when the server has no Google client (e.g. local development without
+  the callback registered) it shows "Sign in with Google isn't set up on this server." Closing
+  the popup does nothing. The button also appears in the session-expired dialog's form.
+- **Google Cloud console** (production): authorized JavaScript origin `https://wonky.work`,
+  redirect URI `https://wonky.work/auth/callback`, authorized domain `wonky.work`, consent
+  screen links `https://wonky.work/privacy` and `https://wonky.work/terms` (13 §5).
 
 ## 2. Screens (shared, in `wonky_app`)
 
@@ -151,6 +195,8 @@ settings are **not** on the undo stack (they apply immediately and are trivially
 `uploadAvatar()` (upload description flow), `getPreferences()`, `updatePreferences(patch)`,
 `searchUsers(query, limit)` (for share dialog & @mentions; only returns users who share at least
 one item with the caller, or exact email matches), `deleteAccount(confirmation)`.
+
+`GoogleIdpEndpoint` (`googleIdp`): Serverpod's `GoogleIdpBaseEndpoint` (`loginWithCode`, §1.6).
 
 `AccessTokenEndpoint` (`accessToken`): `list()`, `create(name, scopes, expiresAt)` →
 `{token, secret}`, `revoke(id)`.

@@ -123,6 +123,27 @@ class _SignUpScreenState extends State<SignUpScreen> {
           spacing: 14,
           children: [
             if (_formError != null) AuthErrorBanner(message: _formError!),
+            if (widget.services.auth.offersGoogleSignIn) ...[
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                mainAxisSize: MainAxisSize.min,
+                spacing: 6,
+                children: [
+                  GoogleSignInButton(
+                    services: widget.services,
+                    onError: (e) {
+                      if (mounted) setState(() => _formError = e);
+                    },
+                  ),
+                  Text(
+                    l.authGoogleTerms,
+                    textAlign: TextAlign.center,
+                    style: theme.textTheme.muted.copyWith(fontSize: 12),
+                  ),
+                ],
+              ),
+              AuthDivider(label: l.authOr),
+            ],
             AuthField(
               label: l.authDisplayName,
               controller: _name,

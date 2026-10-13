@@ -4,13 +4,13 @@ import 'dart:convert';
 import 'package:serverpod/serverpod.dart';
 
 import '../common/actor.dart';
+import '../config/wonky_config.dart';
 import '../common/errors.dart';
 import '../common/models.dart';
 import '../common/json.dart';
 import '../common/time.dart';
 import '../users/user_service.dart';
 import '../../generated/future_calls.dart';
-import '../../web/routes/app_config_route.dart' show ServerConfigPublicUrl;
 import 'email/email_sender.dart';
 import 'email/notification_emails.dart';
 
@@ -41,8 +41,7 @@ abstract final class NotificationService {
   /// The public web origin used for links in emails.
   static Uri webOrigin() {
     try {
-      final config = Serverpod.instance.config;
-      return (config.webServer ?? config.apiServer).publicUrl;
+      return WonkyConfig.current.webOrigin(Serverpod.instance.config);
     } on Object {
       return Uri.parse('http://localhost:8082');
     }

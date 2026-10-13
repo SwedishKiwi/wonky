@@ -611,6 +611,20 @@ class FakeAuthRepository extends ChangeNotifier implements AuthRepository {
     _setSignedIn(true);
   }
 
+  /// Whether the fake offers Google sign-in, and what the popup does:
+  /// true signs in, false is a closed popup, null means not configured.
+  @override
+  bool offersGoogleSignIn = false;
+  bool? googleOutcome = true;
+
+  @override
+  Future<bool> signInWithGoogle() async {
+    final outcome = googleOutcome;
+    if (outcome == null) throw const GoogleSignInUnavailableException();
+    if (outcome) _setSignedIn(true);
+    return outcome;
+  }
+
   UuidValue _request(String email) {
     final id = UuidV7Generator.instance.next();
     _requests[id] = email.toLowerCase();

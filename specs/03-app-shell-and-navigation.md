@@ -16,6 +16,9 @@ commands, menus, editor screen builder).
 - External links (in documents, help) open in the system browser only after a confirm popover
   ("Open external link? example.com — Open / Copy link"). On desktop this launches the OS browser
   (that's an external app, not a Wonky window).
+- **Exception: Sign in with Google** (web, [04 §1.6](04-auth-and-accounts.md)) runs Google's
+  consent page in a short-lived, named OAuth popup that closes itself after `/auth/callback`
+  hands the result back. It is Google's page, not Wonky content.
 - Dialogs, pickers, previews (print preview, export preview, version compare) are in-app overlays
   or full-screen in-app routes with a back/close affordance.
 - **Quick switcher** (`Mod+O`): dialog listing recent files of both kinds + search; Enter opens

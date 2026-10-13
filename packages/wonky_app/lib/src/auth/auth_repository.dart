@@ -2,7 +2,19 @@ import 'package:flutter/foundation.dart';
 import 'package:serverpod_auth_idp_flutter/serverpod_auth_idp_flutter.dart';
 import 'package:wonky_client/wonky_client.dart';
 
-/// Email/password authentication through Serverpod's email IDP (suite 04 §1).
+import '../bootstrap/app_urls.dart';
+import 'google_popup_io.dart'
+    if (dart.library.js_interop) 'google_popup_web.dart'
+    as popup;
+import 'google_web_flow.dart';
+
+/// Thrown when Google sign-in is offered but the server has no Google OAuth
+/// client (e.g. local development, suite 04 §1.6).
+class GoogleSignInUnavailableException implements Exception {
+  const GoogleSignInUnavailableException();
+}
+
+/// Authentication through Serverpod's email and Google IDPs (suite 04 §1).
 abstract class AuthRepository implements Listenable {
   bool get isSignedIn;
 
@@ -10,6 +22,15 @@ abstract class AuthRepository implements Listenable {
   UuidValue? get authUserId;
 
   Future<void> signIn({required String email, required String password});
+
+  /// Whether "Continue with Google" is offered (web only, suite 04 §1.6).
+  bool get offersGoogleSignIn;
+
+  /// Signs in with Google in a popup; a first sign-in creates the account
+  /// (or links it to the account with the same email, on the server).
+  /// Returns false when the user closes the popup. Throws
+  /// [GoogleSignInUnavailableException] when the server has no Google client.
+  Future<bool> signInWithGoogle();
 
   /// Returns the account request id.
   Future<UuidValue> startRegistration(String email);
@@ -37,11 +58,14 @@ abstract class AuthRepository implements Listenable {
 
 /// [AuthRepository] on the generated client (`emailIdp` + `client.auth`).
 class ServerAuthRepository extends ChangeNotifier implements AuthRepository {
-  ServerAuthRepository(this.client) {
+  ServerAuthRepository(this.client, {this.google}) {
     client.auth.authInfoListenable.addListener(notifyListeners);
   }
 
   final Client client;
+
+  /// The server's Google OAuth client (`config.json`), if any.
+  final GoogleSignInConfig? google;
 
   @override
   bool get isSignedIn => client.auth.isAuthenticated;
@@ -56,6 +80,31 @@ class ServerAuthRepository extends ChangeNotifier implements AuthRepository {
       password: password,
     );
     await client.auth.updateSignedInUser(success);
+  }
+
+  @override
+  bool get offersGoogleSignIn => kIsWeb;
+
+  @override
+  Future<bool> signInWithGoogle() async {
+    final config = google;
+    if (config == null) throw const GoogleSignInUnavailableException();
+    // Synchronous up to the popup: it must open in the click's task.
+    final request = GoogleAuthRequest.create(config);
+    final href = await popup.awaitGooglePopup(
+      request.url,
+      accepts: request.answeredBy,
+    );
+    if (href == null) return false;
+    final code = GoogleAuthRequest.codeOf(href);
+    if (code == null) return false;
+    final success = await client.googleIdp.loginWithCode(
+      code: code,
+      codeVerifier: request.codeVerifier,
+      redirectUri: request.redirectUri,
+    );
+    await client.auth.updateSignedInUser(success);
+    return true;
   }
 
   @override

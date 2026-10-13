@@ -11,9 +11,28 @@ enum WonkyAppKind {
   WonkyAppKind get other => this == write ? sheets : write;
 }
 
+/// The Google OAuth web client of the server (suite 04 §1.6): the client id
+/// and the redirect URI of the server's `/auth/callback` page.
+class GoogleSignInConfig {
+  const GoogleSignInConfig({required this.clientId, required this.redirectUri});
+
+  final String clientId;
+  final String redirectUri;
+
+  static GoogleSignInConfig? fromJson(Object? json) {
+    if (json is! Map) return null;
+    final id = json['clientId'];
+    final redirect = json['redirectUri'];
+    if (id is! String || id.isEmpty) return null;
+    if (redirect is! String || redirect.isEmpty) return null;
+    return GoogleSignInConfig(clientId: id, redirectUri: redirect);
+  }
+}
+
 /// Contents of `assets/config.json` (suite 01 §2.4):
-/// `{"apiUrl": "...", "apps": {"write": "...", "sheets": "..."},
-/// "cookieAuth": true}`.
+/// `{"apiUrl": "...", "webUrl": "...", "apps": {"write": "...",
+/// "sheets": "..."}, "cookieAuth": true, "google": {"clientId": "...",
+/// "redirectUri": "..."}}`.
 ///
 /// In production the server's `AppConfigRoute` replaces the bundled file at
 /// runtime; in development the bundled file lists the `flutter run` origins.
@@ -23,12 +42,16 @@ class AppUrls {
     required this.apps,
     this.cookieAuth = false,
     this.webUrl = fallbackWebUrl,
+    this.google,
   });
 
   final String apiUrl;
 
   /// The web server (legal pages `/privacy`, `/terms`), ending with `/`.
   final String webUrl;
+
+  /// Sign in with Google, when the server has a Google OAuth client.
+  final GoogleSignInConfig? google;
 
   static const fallbackWebUrl = 'http://localhost:8082/';
 
@@ -66,6 +89,7 @@ class AppUrls {
       apps: apps,
       cookieAuth: json['cookieAuth'] == true,
       webUrl: web is String && web.isNotEmpty ? _slash(web) : fallbackWebUrl,
+      google: GoogleSignInConfig.fromJson(json['google']),
     );
   }
 
@@ -92,6 +116,7 @@ class AppUrls {
             apps: urls.apps,
             cookieAuth: urls.cookieAuth,
             webUrl: urls.webUrl,
+            google: urls.google,
           );
   }
 

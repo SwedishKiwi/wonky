@@ -124,7 +124,9 @@ class WonkyShell extends StatefulWidget {
     );
     services = ShellServices(
       config: config,
-      auth: AuthController(ServerAuthRepository(wc.client)),
+      auth: AuthController(
+        ServerAuthRepository(wc.client, google: wc.urls.google),
+      ),
       repositories: ShellRepositories(
         drive: cached,
         users: ServerUserRepository(api),

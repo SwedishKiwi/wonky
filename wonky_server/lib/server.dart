@@ -10,8 +10,10 @@ import 'src/cache_busting.dart';
 import 'src/generated/future_calls.dart' show FutureCalls;
 import 'src/generated/serverpod.dart';
 import 'src/platform/cluster/cluster.dart';
+import 'src/platform/config/wonky_config.dart';
 import 'src/platform/mcp/mcp_route.dart';
 import 'src/platform/users/email_idp.dart';
+import 'src/platform/users/google_idp.dart';
 import 'src/platform/versions/version_service.dart';
 import 'src/sheets/versions/sheets_version_provider.dart';
 import 'src/web/routes/app_config_route.dart';
@@ -29,7 +31,7 @@ void run(List<String> args) async {
   // One sign-in for both apps: email/password with JWTs (specs/04).
   pod.initializeAuthServices(
     tokenManagerBuilders: [JwtConfigFromPasswords()],
-    identityProviderBuilders: [wonkyEmailIdpConfig()],
+    identityProviderBuilders: [wonkyEmailIdpConfig(), ?wonkyGoogleIdpConfig()],
   );
 
   registerVersionProviders();
@@ -81,6 +83,9 @@ void _configureWebServer(Serverpod pod) {
     cacheBustingConfig.mountPrefix,
   );
   pod.webServer.addRoute(RootRedirectRoute(), '/');
+  // Sign in with Google on web (specs/04 §1.6): the OAuth2 redirect lands
+  // here and hands the code back to the app's sign-in popup.
+  pod.webServer.addRoute(FlutterWebAuth2CallbackRoute(), '/auth/callback');
   // Legal pages (specs/13 §5), linked from account creation.
   for (final page in const ['privacy', 'terms']) {
     pod.webServer.addRoute(
@@ -99,8 +104,9 @@ void _configureWebServer(Serverpod pod) {
     pod.webServer.addRoute(
       AppConfigRoute(
         apiConfig: pod.config.apiServer,
-        webConfig: pod.config.webServer ?? pod.config.apiServer,
+        webOrigin: WonkyConfig.current.webOrigin(pod.config),
         cookieAuth: pod.config.authCookie != null,
+        googleClientId: googleWebClientId(),
       ),
       '/$app/assets/assets/config.json',
     );

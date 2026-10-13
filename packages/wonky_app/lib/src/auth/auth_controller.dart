@@ -5,6 +5,7 @@ import 'package:flutter/foundation.dart';
 import 'package:serverpod_auth_idp_client/serverpod_auth_idp_client.dart';
 
 import 'auth_repository.dart';
+import 'google_web_flow.dart';
 
 /// Where the session stands.
 enum AuthStatus { signedOut, signedIn, sessionExpired }
@@ -16,6 +17,8 @@ enum AuthError {
   invalidCode,
   expiredCode,
   passwordPolicy,
+  googleUnavailable,
+  popupBlocked,
   network,
   unknown,
 }
@@ -64,6 +67,12 @@ class AuthFailure implements Exception {
           AuthError.tooManyAttempts,
         _ => AuthError.unknown,
       }, e);
+    }
+    if (e is GoogleSignInUnavailableException) {
+      return AuthFailure(AuthError.googleUnavailable, e);
+    }
+    if (e is GooglePopupBlockedException) {
+      return AuthFailure(AuthError.popupBlocked, e);
     }
     if (e is ServerpodClientNetworkException || e is TimeoutException) {
       return AuthFailure(AuthError.network, e);
@@ -128,6 +137,23 @@ class AuthController extends ChangeNotifier {
       _status = AuthStatus.signedIn;
       notifyListeners();
       await onSignedIn?.call(null);
+    } catch (e) {
+      throw AuthFailure.from(e);
+    }
+  }
+
+  /// Whether "Continue with Google" is shown (web, suite 04 §1.6).
+  bool get offersGoogleSignIn => repository.offersGoogleSignIn;
+
+  /// Signs in (or up) with Google (suite 04 §1.6). Returns false when the
+  /// user declined, or a newer attempt replaced this one.
+  Future<bool> signInWithGoogle() async {
+    try {
+      if (!await repository.signInWithGoogle()) return false;
+      _status = AuthStatus.signedIn;
+      notifyListeners();
+      await onSignedIn?.call(null);
+      return true;
     } catch (e) {
       throw AuthFailure.from(e);
     }

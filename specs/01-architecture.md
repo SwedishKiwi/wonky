@@ -260,7 +260,8 @@ one origin; there is no separate host app.
 |------|-------------|-------|
 | `/write/…` | `web/write/` — `wonky_write` built with `--base-href /write/` | `FlutterRoute` (SPA fallback to `index.html`) |
 | `/sheets/…` | `web/sheets/` — `wonky_sheets` built with `--base-href /sheets/` | `FlutterRoute` |
-| `/write/assets/assets/config.json`, `/sheets/assets/assets/config.json` | `AppConfigRoute` | Replaces the bundled `assets/config.json` at runtime: `{apiUrl, webUrl, apps: {write, sheets}, cookieAuth}` (the API URL, the web server's URL for the legal pages, and the base URL of each app, for cross-app links) |
+| `/write/assets/assets/config.json`, `/sheets/assets/assets/config.json` | `AppConfigRoute` | Replaces the bundled `assets/config.json` at runtime: `{apiUrl, webUrl, apps: {write, sheets}, cookieAuth, google?: {clientId, redirectUri}}` (the API URL, the public web origin for the legal pages, the base URL of each app for cross-app links, and Google sign-in, 04 §1.6). The public web origin is `wonky.publicWebUrl` / `WONKY_PUBLIC_WEB_URL`, default `https://wonky.work` in production (Serverpod Cloud generates the server config, so its own `*.serverpod.space` host is never used in links), else the web server's public host; e-mail and MCP links use it too |
+| `/auth/callback` | `FlutterWebAuth2CallbackRoute` | OAuth popup callback for Sign in with Google (04 §1.6) |
 | `/privacy`, `/terms` | `StaticRoute.file` | Privacy policy and terms of service (`web/pages/privacy.html`, `terms.html`; suite 13 §5) |
 | `/` | redirect | To the last used app (`wonky_last_app` cookie set by the apps, default `/write/`) |
 | `/mcp`, `/files/…`, `/invite/:token` | server routes | See 09, 05, 06 |

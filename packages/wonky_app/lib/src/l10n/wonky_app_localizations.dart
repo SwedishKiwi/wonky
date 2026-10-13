@@ -454,6 +454,36 @@ abstract class WonkyAppLocalizations {
   /// **'Too many attempts. Wait a moment and try again.'**
   String get authErrorTooManyAttempts;
 
+  /// Google sign-in button on the sign-in and sign-up screens (Google's branding wording).
+  ///
+  /// In en, this message translates to:
+  /// **'Continue with Google'**
+  String get authContinueWithGoogle;
+
+  /// Divider between the Google button and the email form.
+  ///
+  /// In en, this message translates to:
+  /// **'or'**
+  String get authOr;
+
+  /// Under the Google button on the sign-up screen.
+  ///
+  /// In en, this message translates to:
+  /// **'By continuing with Google, you agree to the terms of service and the privacy policy.'**
+  String get authGoogleTerms;
+
+  /// No description provided for @authErrorGoogleUnavailable.
+  ///
+  /// In en, this message translates to:
+  /// **'Sign in with Google isn\'t set up on this server.'**
+  String get authErrorGoogleUnavailable;
+
+  /// No description provided for @authErrorPopupBlocked.
+  ///
+  /// In en, this message translates to:
+  /// **'Your browser blocked the Google sign-in window. Allow pop-ups for this site and try again.'**
+  String get authErrorPopupBlocked;
+
   /// No description provided for @authErrorUnknown.
   ///
   /// In en, this message translates to:

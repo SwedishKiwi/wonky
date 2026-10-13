@@ -110,6 +110,10 @@ accessToken:
   - list:
   - create:
   - revoke:
+googleIdp:
+  - login:
+  - loginWithCode:
+  - hasAccount:
 user:
   - getMe:
   - updateProfile:

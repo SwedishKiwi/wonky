@@ -38,5 +38,26 @@ void main() {
         'http://localhost:8082/privacy',
       );
     });
+
+    test('when it has a google client then Google sign-in is configured', () {
+      final urls = AppUrls.fromJson({
+        'apiUrl': 'https://wonkywork.api.serverpod.space',
+        'webUrl': 'https://wonky.work/',
+        'google': {
+          'clientId': 'id.apps.googleusercontent.com',
+          'redirectUri': 'https://wonky.work/auth/callback',
+        },
+      });
+
+      expect(urls.google?.clientId, 'id.apps.googleusercontent.com');
+      expect(urls.google?.redirectUri, 'https://wonky.work/auth/callback');
+      expect(AppUrls.fromJson(const {}).google, isNull);
+      expect(
+        AppUrls.fromJson(const {
+          'google': {'clientId': ''},
+        }).google,
+        isNull,
+      );
+    });
   });
 }

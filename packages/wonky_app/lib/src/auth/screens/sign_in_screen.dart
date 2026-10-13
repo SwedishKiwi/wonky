@@ -73,6 +73,16 @@ class _SignInScreenState extends State<SignInScreen> {
         spacing: 14,
         children: [
           if (_formError != null) AuthErrorBanner(message: _formError!),
+          if (widget.services.auth.offersGoogleSignIn) ...[
+            GoogleSignInButton(
+              services: widget.services,
+              onSignedIn: widget.onSignedIn,
+              onError: (e) {
+                if (mounted) setState(() => _formError = e);
+              },
+            ),
+            AuthDivider(label: l.authOr),
+          ],
           AuthField(
             label: l.authEmail,
             controller: _email,

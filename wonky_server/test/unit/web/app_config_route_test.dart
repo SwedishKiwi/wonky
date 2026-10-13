@@ -2,6 +2,7 @@ import 'dart:convert';
 
 import 'package:serverpod/serverpod.dart';
 import 'package:test/test.dart';
+import 'package:wonky_server/src/platform/config/wonky_config.dart';
 import 'package:wonky_server/src/web/routes/app_config_route.dart';
 
 void main() {
@@ -12,43 +13,85 @@ void main() {
     publicPort: 443,
   );
 
-  group('Given a server deployed on separate API and web hosts', () {
+  group('Given production on Serverpod Cloud with the wonky.work domain', () {
     test(
-      'when building config.json then it lists the API and both app URLs',
+      'when building config.json then the apps and pages are on wonky.work '
+      'and the Google redirect is its /auth/callback',
       () {
         final route = AppConfigRoute(
           apiConfig: server('wonkywork.api.serverpod.space'),
-          webConfig: server('wonkywork.serverpod.space'),
+          webOrigin: Uri.parse('https://wonky.work'),
           cookieAuth: false,
+          googleClientId: 'abc.apps.googleusercontent.com',
         );
 
         final json = jsonDecode(route.widget.render()) as Map<String, dynamic>;
 
         expect(json, {
           'apiUrl': 'https://wonkywork.api.serverpod.space',
-          'webUrl': 'https://wonkywork.serverpod.space/',
+          'webUrl': 'https://wonky.work/',
           'apps': {
-            'write': 'https://wonkywork.serverpod.space/write/',
-            'sheets': 'https://wonkywork.serverpod.space/sheets/',
+            'write': 'https://wonky.work/write/',
+            'sheets': 'https://wonky.work/sheets/',
           },
           'cookieAuth': false,
+          'google': {
+            'clientId': 'abc.apps.googleusercontent.com',
+            'redirectUri': 'https://wonky.work/auth/callback',
+          },
         });
       },
     );
 
-    test(
-      'when the server is configured for cookie auth then config.json says so',
-      () {
-        final route = AppConfigRoute(
-          apiConfig: server('api.example.com'),
-          webConfig: server('app.example.com'),
-          cookieAuth: true,
-        );
+    test('when Google sign-in is not configured then config.json has no '
+        'google entry', () {
+      final route = AppConfigRoute(
+        apiConfig: server('api.example.com'),
+        webOrigin: Uri.parse('https://app.example.com'),
+        cookieAuth: true,
+      );
 
-        final json = jsonDecode(route.widget.render()) as Map<String, dynamic>;
+      final json = jsonDecode(route.widget.render()) as Map<String, dynamic>;
 
-        expect(json['cookieAuth'], isTrue);
-      },
+      expect(json['cookieAuth'], isTrue);
+      expect(json.containsKey('google'), isFalse);
+    });
+  });
+
+  group('Given the public web origin', () {
+    final config = ServerpodConfig(
+      apiServer: server('api.example.com'),
+      webServer: server('wonkywork.serverpod.space'),
     );
+
+    test('when running in production then it defaults to wonky.work', () {
+      final c = WonkyConfig.fromMap(
+        const {},
+        defaultPublicWebUrl: WonkyConfig.productionWebUrl,
+      );
+
+      expect(c.webOrigin(config).toString(), 'https://wonky.work/');
+    });
+
+    test('when WONKY_PUBLIC_WEB_URL is set then it wins', () {
+      final c = WonkyConfig.fromMap(
+        const {},
+        environment: const {
+          'WONKY_PUBLIC_WEB_URL': 'https://staging.wonky.work',
+        },
+        defaultPublicWebUrl: WonkyConfig.productionWebUrl,
+      );
+
+      expect(c.webOrigin(config).toString(), 'https://staging.wonky.work/');
+    });
+
+    test('when nothing is set then the web server public URL is used', () {
+      final c = WonkyConfig.fromMap(const {});
+
+      expect(
+        c.webOrigin(config).toString(),
+        'https://wonkywork.serverpod.space/',
+      );
+    });
   });
 }
