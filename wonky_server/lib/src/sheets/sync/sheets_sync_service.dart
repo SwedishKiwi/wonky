@@ -6,6 +6,7 @@ import 'package:serverpod_offline_sync_server/serverpod_offline_sync_server.dart
 import '../../platform/common/actor.dart';
 import '../../platform/common/models.dart';
 import '../changelog/change_log_consumer.dart';
+import '../../platform/cluster/cluster_bus.dart';
 
 /// The custom sync endpoint's server side (suite 12 §2.5): wraps
 /// `session.offlineSync.sync` with `onMergeSuccess`, which fans out
@@ -42,7 +43,8 @@ abstract final class SheetsSyncService {
     final last = _lastHlc[key];
     if (last != null && hlc.compareTo(last) <= 0) return;
     _lastHlc[key] = hlc;
-    await session.messages.postMessage(
+    await ClusterBus.post(
+      session,
       mergedChannel(space),
       SheetsMergedSignal(spaceUuid: space, hlc: hlc.toString()),
     );

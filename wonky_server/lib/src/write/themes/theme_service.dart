@@ -12,6 +12,7 @@ import '../../platform/common/time.dart';
 import '../../platform/sharing/access_service.dart';
 import '../../platform/users/user_service.dart';
 import 'builtin_theme_ids.dart';
+import '../../platform/cluster/cluster_bus.dart';
 
 /// Write themes (Write 06 §5): built-in themes are global rows upserted at
 /// start; user themes live in the owner's library with optimistic
@@ -374,7 +375,8 @@ abstract final class ThemeService {
     UuidValue uuid,
     int version,
     String hash,
-  ) => session.messages.postMessage(
+  ) => ClusterBus.post(
+    session,
     channel(uuid),
     DocMetaChanged(
       field: 'themeVersion',

@@ -38,12 +38,26 @@ class MetaEndpoint extends Endpoint {
     );
   }
 
-  /// Whether Redis answers a ping (briefly: clients call this on connect).
-  static Future<bool> _ping(RedisController redis) async {
-    try {
-      return await redis.ping().timeout(const Duration(seconds: 1));
-    } catch (_) {
-      return false;
+  /// Whether Redis answers a ping, cached for [_pingTtl]: every open app
+  /// calls `getInfo` as its connectivity heartbeat (every 15 s), which must
+  /// not become a Redis command per user.
+  static Future<bool> _ping(RedisController redis) {
+    final now = DateTime.now();
+    final cached = _pinged;
+    if (cached != null && now.difference(cached.$1) < _pingTtl) {
+      return cached.$2;
     }
+    final result = () async {
+      try {
+        return await redis.ping().timeout(const Duration(seconds: 1));
+      } catch (_) {
+        return false;
+      }
+    }();
+    _pinged = (now, result);
+    return result;
   }
+
+  static const _pingTtl = Duration(seconds: 30);
+  static (DateTime, Future<bool>)? _pinged;
 }

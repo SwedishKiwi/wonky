@@ -13,6 +13,7 @@ import '../users/user_service.dart';
 import '../../generated/future_calls.dart';
 import 'email/email_sender.dart';
 import 'email/notification_emails.dart';
+import '../cluster/cluster_bus.dart';
 
 /// In-app notifications (specs/07 §4).
 abstract final class NotificationService {
@@ -130,7 +131,8 @@ abstract final class NotificationService {
         createdAt: nowUtc(),
       ),
     );
-    await session.messages.postMessage(
+    await ClusterBus.post(
+      session,
       channel(userId),
       NotificationSignal(notificationId: row.id),
     );
@@ -222,7 +224,8 @@ abstract final class NotificationService {
             t.readAt.equals(null),
       );
     }
-    await session.messages.postMessage(
+    await ClusterBus.post(
+      session,
       channel(actor.userId),
       NotificationSignal(),
     );
@@ -235,7 +238,8 @@ abstract final class NotificationService {
       columnValues: (t) => [t.readAt(nowUtc())],
       where: (t) => t.userId.equals(actor.userId) & t.readAt.equals(null),
     );
-    await session.messages.postMessage(
+    await ClusterBus.post(
+      session,
       channel(actor.userId),
       NotificationSignal(),
     );

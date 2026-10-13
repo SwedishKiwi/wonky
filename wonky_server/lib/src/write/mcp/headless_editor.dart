@@ -20,6 +20,7 @@ import '../ot/document_cache.dart';
 import '../ot/document_service.dart';
 import '../ot/document_store.dart';
 import '../ot/ot_service.dart';
+import '../../platform/cluster/cluster_bus.dart';
 
 /// A Write document resolved for a tool call.
 class WriteTarget {
@@ -649,8 +650,8 @@ abstract final class AgentPresence {
     entry.touch(
       onExpire: () {
         _entries.remove(key);
-        final messages = Serverpod.instance.server.messageCentral;
-        messages.postMessage(
+        ClusterBus.postOn(
+          Serverpod.instance,
           DocumentBus.channel(target.document.uuid),
           DocBusMessage(type: 'left', originSessionId: sessionId),
         );

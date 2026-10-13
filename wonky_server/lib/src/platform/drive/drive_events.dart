@@ -6,6 +6,7 @@ import '../common/actor.dart';
 import '../common/models.dart';
 import '../sharing/access_service.dart';
 import 'drive_views.dart';
+import '../cluster/cluster_bus.dart';
 
 /// Live drive updates (`drive.watch`, specs/05 §2). Changes are posted per
 /// user on `drive:user:<userId>`; each watcher resolves the item with its
@@ -27,7 +28,7 @@ abstract final class DriveEvents {
     };
     final signal = DriveChangeSignal(kind: kind, itemUuid: item.uuid);
     for (final userId in users) {
-      await session.messages.postMessage(channel(userId), signal);
+      await ClusterBus.post(session, channel(userId), signal);
     }
   }
 

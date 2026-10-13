@@ -397,6 +397,7 @@ Feature folders are the unit of parallel work: e.g. Write `features/editor`,
 `features: {ai, scripting, mcpUiBridge, experimentalCharts}`, `ai: {enabled, dailyTokenBudgetPerUser}`, `mcp: {enabled, port?,
 allowedHosts, allowedOrigins}`, `sheets: {maxCellsPerSpreadsheet, maxActiveSpacesPerUser,
 scriptTimeoutMs, scriptDailyQuotaMs}`, `write: {snapshotEveryNOps, maxDocumentChars}`,
+`cluster: {busFlushMs}` (13 §4, `WONKY_CLUSTER_BUS_FLUSH_MS`), `publicWebUrl`,
 `webApps: {write: {dir: web/write, path: /write/}, sheets: {dir: web/sheets, path: /sheets/}}`
 (§2.4); the template's commented-out `authCookie` + `allowedOrigins` are enabled (§2.5).
 Secrets in `passwords.yaml`: `openaiApiKey` / `anthropicApiKey` / `geminiApiKey` (any or none,

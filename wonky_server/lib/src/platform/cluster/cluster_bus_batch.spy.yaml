@@ -1,0 +1,10 @@
+### The bus messages one server instance relays to the others in one Redis
+### publish (specs/13 §4): `messages[i]` (encoded with its type) goes to
+### `channels[i]`, in order.
+class: ClusterBusBatch
+serverOnly: true
+fields:
+  ### The instance that posted the batch (it ignores its own batches).
+  originInstance: String
+  channels: List<String>
+  messages: List<String>

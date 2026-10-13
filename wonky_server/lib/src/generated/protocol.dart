@@ -75,6 +75,7 @@ import 'platform/ai/models/inline_ai_event_type.dart' as _i6pcz5z6;
 import 'platform/ai/models/inline_ai_request.dart' as _i4m43iwr;
 import 'platform/ai/models/proofread_event.dart' as _ie0jt2ne;
 import 'platform/ai/models/proofread_issue.dart' as _ivmxemza;
+import 'platform/cluster/cluster_bus_batch.dart' as _i4piktk8;
 import 'platform/cluster/cluster_signal.dart' as _ipkzl9y7;
 import 'platform/comments/comment.dart' as _iyixppck;
 import 'platform/comments/comment_anchor_kind.dart' as _iw81twtc;
@@ -237,6 +238,7 @@ export 'platform/ai/models/inline_ai_event_type.dart';
 export 'platform/ai/models/inline_ai_request.dart';
 export 'platform/ai/models/proofread_event.dart';
 export 'platform/ai/models/proofread_issue.dart';
+export 'platform/cluster/cluster_bus_batch.dart';
 export 'platform/cluster/cluster_signal.dart';
 export 'platform/comments/comment.dart';
 export 'platform/comments/comment_anchor_kind.dart';
@@ -415,6 +417,7 @@ class Protocol extends _is.DatabaseSerializationManager
           _is.getType<_i4m43iwr.InlineAiRequest>,
           _is.getType<_ie0jt2ne.ProofreadEvent>,
           _is.getType<_ivmxemza.ProofreadIssue>,
+          _is.getType<_i4piktk8.ClusterBusBatch>,
           _is.getType<_ipkzl9y7.ClusterSignal>,
           _is.getType<_iyixppck.Comment>,
           _is.getType<_iw81twtc.CommentAnchorKind>,
@@ -604,6 +607,7 @@ class Protocol extends _is.DatabaseSerializationManager
           _is.getType<_i4m43iwr.InlineAiRequest?>,
           _is.getType<_ie0jt2ne.ProofreadEvent?>,
           _is.getType<_ivmxemza.ProofreadIssue?>,
+          _is.getType<_i4piktk8.ClusterBusBatch?>,
           _is.getType<_ipkzl9y7.ClusterSignal?>,
           _is.getType<_iyixppck.Comment?>,
           _is.getType<_iw81twtc.CommentAnchorKind?>,
@@ -768,6 +772,7 @@ class Protocol extends _is.DatabaseSerializationManager
           _is.getType<List<_i4rkdm2k.AssistantMessageView>>,
           _is.getType<List<_ivmxemza.ProofreadIssue>>,
           _is.getType<List<_ivmxemza.ProofreadIssue>?>,
+          _is.getType<List<String>>,
           _is.getType<List<int>>,
           _is.getType<List<_i4xrxro7.CommentView>>,
           _is.getType<List<_i6y7tspy.UserSummary>>,
@@ -776,7 +781,6 @@ class Protocol extends _is.DatabaseSerializationManager
           _is.getType<List<_i8mh39wa.DriveItemKind>?>,
           _is.getType<List<_infxyf98.DriveItemView>>,
           _is.getType<List<_i48sm9f2.ImportWarningView>>,
-          _is.getType<List<String>>,
           _is.getType<List<_izfzk9h3.NotificationView>>,
           _is.getType<List<String>?>,
           _is.getType<List<_iylgyc33.Participant>>,
@@ -5184,6 +5188,9 @@ class Protocol extends _is.DatabaseSerializationManager
     if (t == _ivmxemza.ProofreadIssue) {
       return _ivmxemza.ProofreadIssue.fromJson(data) as T;
     }
+    if (t == _i4piktk8.ClusterBusBatch) {
+      return _i4piktk8.ClusterBusBatch.fromJson(data) as T;
+    }
     if (t == _ipkzl9y7.ClusterSignal) {
       return _ipkzl9y7.ClusterSignal.fromJson(data) as T;
     }
@@ -5784,6 +5791,10 @@ class Protocol extends _is.DatabaseSerializationManager
     }
     if (t == _is.getType<_ivmxemza.ProofreadIssue?>()) {
       return (data != null ? _ivmxemza.ProofreadIssue.fromJson(data) : null)
+          as T;
+    }
+    if (t == _is.getType<_i4piktk8.ClusterBusBatch?>()) {
+      return (data != null ? _i4piktk8.ClusterBusBatch.fromJson(data) : null)
           as T;
     }
     if (t == _is.getType<_ipkzl9y7.ClusterSignal?>()) {
@@ -6456,6 +6467,9 @@ class Protocol extends _is.DatabaseSerializationManager
               : null)
           as T;
     }
+    if (t == List<String>) {
+      return (data as List).map((e) => deserialize<String>(e)).toList() as T;
+    }
     if (t == List<int>) {
       return (data as List).map((e) => deserialize<int>(e)).toList() as T;
     }
@@ -6503,9 +6517,6 @@ class Protocol extends _is.DatabaseSerializationManager
               .map((e) => deserialize<_i48sm9f2.ImportWarningView>(e))
               .toList()
           as T;
-    }
-    if (t == List<String>) {
-      return (data as List).map((e) => deserialize<String>(e)).toList() as T;
     }
     if (t == List<_izfzk9h3.NotificationView>) {
       return (data as List)
@@ -6738,6 +6749,7 @@ class Protocol extends _is.DatabaseSerializationManager
       _i4m43iwr.InlineAiRequest => 'InlineAiRequest',
       _ie0jt2ne.ProofreadEvent => 'ProofreadEvent',
       _ivmxemza.ProofreadIssue => 'ProofreadIssue',
+      _i4piktk8.ClusterBusBatch => 'ClusterBusBatch',
       _ipkzl9y7.ClusterSignal => 'ClusterSignal',
       _iyixppck.Comment => 'Comment',
       _iw81twtc.CommentAnchorKind => 'CommentAnchorKind',
@@ -6971,6 +6983,8 @@ class Protocol extends _is.DatabaseSerializationManager
         return 'ProofreadEvent';
       case _ivmxemza.ProofreadIssue():
         return 'ProofreadIssue';
+      case _i4piktk8.ClusterBusBatch():
+        return 'ClusterBusBatch';
       case _ipkzl9y7.ClusterSignal():
         return 'ClusterSignal';
       case _iyixppck.Comment():
@@ -7418,6 +7432,9 @@ class Protocol extends _is.DatabaseSerializationManager
     }
     if (dataClassName == 'ProofreadIssue') {
       return deserialize<_ivmxemza.ProofreadIssue>(data['data']);
+    }
+    if (dataClassName == 'ClusterBusBatch') {
+      return deserialize<_i4piktk8.ClusterBusBatch>(data['data']);
     }
     if (dataClassName == 'ClusterSignal') {
       return deserialize<_ipkzl9y7.ClusterSignal>(data['data']);

@@ -12,6 +12,7 @@ import '../common/roles.dart';
 import '../common/time.dart';
 import '../sharing/access_service.dart';
 import '../users/user_service.dart';
+import '../cluster/cluster_bus.dart';
 
 /// Ephemeral presence (specs/07 §1). Nothing is stored: every joined session
 /// keeps its own view of the roster from the `presence:<itemUuid>` channel
@@ -79,7 +80,8 @@ abstract final class PresenceService {
           emit(PresenceJoined(participant: p));
           if (me != null) {
             unawaited(
-              session.messages.postMessage(
+              ClusterBus.post(
+                session,
                 ch,
                 PresenceBusMessage(
                   type: 'here',
@@ -145,16 +147,16 @@ abstract final class PresenceService {
     void beat() {
       if (closed || me == null) return;
       unawaited(
-        session.messages
-            .postMessage(
-              ch,
-              PresenceBusMessage(
-                type: 'beat',
-                sessionId: sessionId,
-                participant: me,
-              ),
-            )
-            .catchError((Object _) => false),
+        ClusterBus.post(
+          session,
+          ch,
+          PresenceBusMessage(
+            type: 'beat',
+            sessionId: sessionId,
+            participant: me,
+          ),
+          coalesceKey: 'beat:$sessionId',
+        ).catchError((Object _) {}),
       );
       final now = clock.now();
       final cutoff = now.subtract(heartbeatInterval * 3);
@@ -178,7 +180,8 @@ abstract final class PresenceService {
       heartbeat?.cancel();
       session.messages.removeListener(ch, onBus);
       await input?.cancel();
-      await session.messages.postMessage(
+      await ClusterBus.post(
+        session,
         ch,
         PresenceBusMessage(type: 'bye', sessionId: sessionId),
       );
@@ -187,7 +190,8 @@ abstract final class PresenceService {
     Future<void> handle(PresenceUpdate u) async {
       if (closed || me == null) return;
       me = me!.copyWith(state: u.state, cursorJson: u.cursorJson, mode: u.mode);
-      await session.messages.postMessage(
+      await ClusterBus.post(
+        session,
         ch,
         PresenceBusMessage(
           type: 'update',
@@ -196,6 +200,8 @@ abstract final class PresenceService {
           cursorJson: u.cursorJson,
           mode: u.mode,
         ),
+        // Other instances only need the latest state and cursor.
+        coalesceKey: 'update:$sessionId',
       );
       final hints = u.hints;
       if (hints != null && hints.isNotEmpty && role >= Role.editor) {
@@ -212,7 +218,8 @@ abstract final class PresenceService {
           hintsInWindow++;
         }
         if (accepted.isNotEmpty) {
-          await session.messages.postMessage(
+          await ClusterBus.post(
+            session,
             ch,
             PresenceBusMessage(
               type: 'hints',
@@ -224,7 +231,8 @@ abstract final class PresenceService {
       }
       if (u.followingSessionId != following) {
         following = u.followingSessionId;
-        await session.messages.postMessage(
+        await ClusterBus.post(
+          session,
           ch,
           PresenceBusMessage(
             type: 'follow',
@@ -258,7 +266,8 @@ abstract final class PresenceService {
         joinedAt: nowUtc(),
       );
       session.messages.addListener(ch, onBus);
-      await session.messages.postMessage(
+      await ClusterBus.post(
+        session,
         ch,
         PresenceBusMessage(
           type: 'hello',
@@ -340,7 +349,8 @@ abstract final class PresenceService {
       joinedAt: nowUtc(),
     );
     final ch = channel(itemUuid);
-    await session.messages.postMessage(
+    await ClusterBus.post(
+      session,
       ch,
       PresenceBusMessage(
         type: 'hello',
@@ -348,9 +358,10 @@ abstract final class PresenceService {
         participant: participant,
       ),
     );
-    final messages = session.serverpod.server.messageCentral;
+    final pod = session.serverpod;
     Timer(ttl, () {
-      messages.postMessage(
+      ClusterBus.postOn(
+        pod,
         ch,
         PresenceBusMessage(type: 'bye', sessionId: sessionId),
       );
@@ -364,7 +375,8 @@ abstract final class PresenceService {
     UuidValue itemUuid,
     String kind,
     Map<String, Object?> payload,
-  ) => session.messages.postMessage(
+  ) => ClusterBus.post(
+    session,
     channel(itemUuid),
     PresenceBusMessage(
       type: 'notice',

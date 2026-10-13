@@ -10,6 +10,7 @@ import 'src/cache_busting.dart';
 import 'src/generated/future_calls.dart' show FutureCalls;
 import 'src/generated/serverpod.dart';
 import 'src/platform/cluster/cluster.dart';
+import 'src/platform/cluster/cluster_bus.dart';
 import 'src/platform/config/wonky_config.dart';
 import 'src/platform/mcp/mcp_route.dart';
 import 'src/platform/users/email_idp.dart';
@@ -51,6 +52,11 @@ void run(List<String> args) async {
   );
 
   await pod.start();
+  // Bus messages from the other instances arrive in batches (specs/13 §4).
+  ClusterBus.flushInterval = Duration(
+    milliseconds: WonkyConfig.current.busFlushMs,
+  );
+  await ClusterBus.listen(pod);
 
   final session = await pod.createSession(enableLogging: false);
   try {

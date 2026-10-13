@@ -1,6 +1,7 @@
 import 'package:serverpod/serverpod.dart';
 
 import '../../platform/common/models.dart';
+import '../../platform/cluster/cluster_bus.dart';
 
 /// The `doc:<documentUuid>` channel connecting all editing sessions of a
 /// document (Write 03 §2 step 7): remote ops, cursors, participants, meta
@@ -12,7 +13,16 @@ abstract final class DocumentBus {
     Session session,
     UuidValue documentUuid,
     DocBusMessage message,
-  ) => session.messages.postMessage(channel(documentUuid), message);
+  ) => ClusterBus.post(
+    session,
+    channel(documentUuid),
+    message,
+    // Other instances only need a session's latest cursor and beat.
+    coalesceKey: switch (message.type) {
+      'cursor' || 'beat' => '${message.type}:${message.originSessionId}',
+      _ => null,
+    },
+  );
 
   /// Asks every connected session of the document to re-check its role.
   static Future<void> rolesChanged(

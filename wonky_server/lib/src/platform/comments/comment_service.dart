@@ -12,6 +12,7 @@ import '../common/time.dart';
 import '../notifications/notification_service.dart';
 import '../sharing/access_service.dart';
 import '../users/user_service.dart';
+import '../cluster/cluster_bus.dart';
 
 /// Comment threads (specs/07 §2). Commenter+ create, reply, react and
 /// resolve; authors edit/delete their comments; Editors+ delete any thread.
@@ -793,7 +794,8 @@ abstract final class CommentService {
     DriveItem item,
     CommentEventKind kind,
     UuidValue threadUuid,
-  ) => session.messages.postMessage(
+  ) => ClusterBus.post(
+    session,
     channel(item.uuid),
     CommentSignal(kind: kind, threadUuid: threadUuid),
   );

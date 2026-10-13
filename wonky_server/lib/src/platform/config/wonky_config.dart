@@ -25,6 +25,7 @@ class WonkyConfig {
     this.minClientVersion = '1.0.0',
     this.serverVersion = '1.0.0',
     this.publicWebUrl,
+    this.busFlushMs = 1000,
   });
 
   /// The public origin of the web apps in production (`wonky.work`).
@@ -54,6 +55,10 @@ class WonkyConfig {
   /// configured public host. Used for every public link: the apps' config,
   /// emails, MCP links, the legal pages and the Google sign-in redirect.
   final String? publicWebUrl;
+
+  /// How long bus messages wait before they are relayed to the other
+  /// instances in one Redis publish (`cluster.busFlushMs`, specs/13 §4).
+  final int busFlushMs;
 
   /// [publicWebUrl] or, without it, the web server's public URL in
   /// [config].
@@ -165,6 +170,7 @@ class WonkyConfig {
       ),
       minClientVersion: s('minClientVersion', '1.0.0'),
       serverVersion: s('serverVersion', '1.0.0'),
+      busFlushMs: i('cluster', 'busFlushMs', 1000),
       publicWebUrl:
           environment['WONKY_PUBLIC_WEB_URL'] ??
           (map['publicWebUrl'] as String?) ??

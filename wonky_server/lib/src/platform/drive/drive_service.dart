@@ -27,6 +27,7 @@ import '../sharing/acl_events.dart';
 import 'drive_events.dart';
 import 'drive_views.dart';
 import 'templates/builtin_templates.dart';
+import '../cluster/cluster_bus.dart';
 
 /// Wonky Drive (specs/05 §2).
 abstract final class DriveService {
@@ -1382,7 +1383,8 @@ abstract final class DriveService {
       state.copyWith(starred: starred),
       columns: (t) => [t.starred],
     );
-    await session.messages.postMessage(
+    await ClusterBus.post(
+      session,
       DriveEvents.channel(actor.userId),
       DriveChangeSignal(kind: DriveChangeKind.updated, itemUuid: item.uuid),
     );
@@ -1408,7 +1410,8 @@ abstract final class DriveService {
       columns: (t) => [t.pinnedOffline],
     );
     await SpaceService.setPinned(session, actor, item, pinned);
-    await session.messages.postMessage(
+    await ClusterBus.post(
+      session,
       DriveEvents.channel(actor.userId),
       DriveChangeSignal(kind: DriveChangeKind.updated, itemUuid: item.uuid),
     );
@@ -1503,7 +1506,8 @@ abstract final class DriveService {
       state.copyWith(shortcutParentId: parentId),
       columns: (t) => [t.shortcutParentId],
     );
-    await session.messages.postMessage(
+    await ClusterBus.post(
+      session,
       DriveEvents.channel(actor.userId),
       DriveChangeSignal(kind: DriveChangeKind.updated, itemUuid: item.uuid),
     );
@@ -1522,7 +1526,8 @@ abstract final class DriveService {
       columnValues: (t) => [t.shortcutParentId(null)],
       where: (t) => t.itemId.equals(item.id!) & t.userId.equals(actor.userId),
     );
-    await session.messages.postMessage(
+    await ClusterBus.post(
+      session,
       DriveEvents.channel(actor.userId),
       DriveChangeSignal(kind: DriveChangeKind.updated, itemUuid: item.uuid),
     );
@@ -1682,7 +1687,7 @@ abstract final class DriveService {
         itemUuid: n.uuid,
       );
       for (final u in users) {
-        await session.messages.postMessage(DriveEvents.channel(u), signal);
+        await ClusterBus.post(session, DriveEvents.channel(u), signal);
       }
     }
   }
