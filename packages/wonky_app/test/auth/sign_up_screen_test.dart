@@ -34,4 +34,23 @@ void main() {
     expect(find.text('Required').evaluate().length, before - 1);
     await settleTooltips(tester);
   });
+
+  testWidgets('Given the sign-up form then the agreement links to the terms '
+      'and the privacy policy', (tester) async {
+    await pumpWonky(
+      tester,
+      SignUpScreen(services: h.services),
+      extraDelegates: const [WonkyAppLocalizations.delegate],
+      wrap: (context, child) =>
+          Provider<ShellServices>.value(value: h.services, child: child!),
+    );
+
+    expect(find.byKey(const ValueKey('auth.signUp.termsLink')), findsOneWidget);
+    expect(
+      find.byKey(const ValueKey('auth.signUp.privacyLink')),
+      findsOneWidget,
+    );
+    expect(find.text('Terms of service'), findsOneWidget);
+    expect(find.text('Privacy policy'), findsOneWidget);
+  });
 }

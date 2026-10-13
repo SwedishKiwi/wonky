@@ -112,3 +112,14 @@ cluster code paths on the local bus, messages from "another instance" are posted
 foreign `originInstance` or straight onto the channels, evicting `DocumentCache` gives a
 connection the state another instance would have, and two `McpHttpHandler`s share an
 `InMemoryMcpSessionDirectory`.
+
+## 5. Legal pages
+
+The web server serves a privacy policy (`/privacy`) and terms of service (`/terms`): static
+HTML in `wonky_server/web/pages/` (`privacy.html`, `terms.html`), styled like the app (light and
+dark, the Wonky Work icon). They name Serverpod AB (Sjöbjörnsvägen 46, 117 67 Stockholm, Sweden)
+as the provider and data controller, and are linked from the sign-up screen (suite 04 §1.1).
+Google sign-in requires both. Keep them in step with the product (data collected, AI providers,
+retention — trash is purged after 30 days, `DriveService.trashRetention`) and have changes
+reviewed before publishing; material changes update the effective date and are announced.
+

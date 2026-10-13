@@ -26,8 +26,8 @@ ShadApp.router(
 ```
 
 - `WonkyTheme` builds `ShadThemeData` from: style tokens (`ShadStyleTokens.vega` default),
-  color scheme (`ShadZincColorScheme` default; accent override from user prefs via
-  `ShadColorScheme.fromName`), radius, density (`ShadSpacing` scale: comfortable / compact), and
+  color scheme (`ShadZincColorScheme`; `WonkyThemeConfig.accent` exists but the apps don't
+  offer an accent choice), radius, density (`ShadSpacing` scale: comfortable / compact), and
   **custom tokens** (below).
 - Themes are cached and compared by value: `ShadThemeData` inequality triggers a 200 ms lerp
   on every rebuild, so `WonkyTheme` memoizes per (brightness, accent, density) key.

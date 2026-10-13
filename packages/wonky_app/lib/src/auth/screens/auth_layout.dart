@@ -64,13 +64,19 @@ class AuthLayout extends StatelessWidget {
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     // One sign-in covers the suite (suite 04 §1): the
-                    // suite's icon and name, not the app's.
+                    // suite's icon and name, not the app's — left-aligned
+                    // with the card below.
                     Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
+                      key: const ValueKey<String>('auth.brand'),
                       children: [
-                        const WonkyProductIcon(WonkyProduct.work, size: 40),
-                        const SizedBox(width: 10),
-                        Text(l.wonkyWork, style: theme.textTheme.large),
+                        const WonkyProductIcon(WonkyProduct.work, size: 56),
+                        const SizedBox(width: 12),
+                        Text(
+                          l.wonkyWork,
+                          style: theme.textTheme.h3.copyWith(
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
                       ],
                     ),
                     const SizedBox(height: 20),

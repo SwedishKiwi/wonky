@@ -81,6 +81,13 @@ void _configureWebServer(Serverpod pod) {
     cacheBustingConfig.mountPrefix,
   );
   pod.webServer.addRoute(RootRedirectRoute(), '/');
+  // Legal pages (specs/13 §5), linked from account creation.
+  for (final page in const ['privacy', 'terms']) {
+    pod.webServer.addRoute(
+      StaticRoute.file(File(Uri(path: 'web/pages/$page.html').toFilePath())),
+      '/$page',
+    );
+  }
   pod.webServer.addRoute(InviteRoute(), '/invite/:token');
   // The MCP endpoint (specs/09-mcp.md §1): Streamable HTTP, bearer tokens.
   pod.webServer.addRoute(McpRoute(), '/mcp');

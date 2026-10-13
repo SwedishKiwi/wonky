@@ -586,6 +586,18 @@ abstract class WonkyAppLocalizations {
   /// **'I agree to the terms of service and privacy policy'**
   String get authTerms;
 
+  /// Link under the sign-up agreement checkbox; opens the terms page.
+  ///
+  /// In en, this message translates to:
+  /// **'Terms of service'**
+  String get authTermsLink;
+
+  /// Link under the sign-up agreement checkbox; opens the privacy policy page.
+  ///
+  /// In en, this message translates to:
+  /// **'Privacy policy'**
+  String get authPrivacyLink;
+
   /// No description provided for @authVerify.
   ///
   /// In en, this message translates to:

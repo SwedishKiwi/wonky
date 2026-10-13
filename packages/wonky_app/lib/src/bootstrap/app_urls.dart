@@ -22,9 +22,18 @@ class AppUrls {
     required this.apiUrl,
     required this.apps,
     this.cookieAuth = false,
+    this.webUrl = fallbackWebUrl,
   });
 
   final String apiUrl;
+
+  /// The web server (legal pages `/privacy`, `/terms`), ending with `/`.
+  final String webUrl;
+
+  static const fallbackWebUrl = 'http://localhost:8082/';
+
+  /// The URL of a page on the web server, e.g. `page('terms')`.
+  String page(String path) => '$webUrl$path';
 
   /// Whether the API accepts cookie auth (suite 01 §2.5); set by the
   /// server's `AppConfigRoute` when `authCookie` is configured. When false
@@ -51,10 +60,12 @@ class AppUrls {
         if (v is String && v.isNotEmpty) apps[k] = _slash(v);
       }
     }
+    final web = json['webUrl'];
     return AppUrls(
       apiUrl: _slash(api),
       apps: apps,
       cookieAuth: json['cookieAuth'] == true,
+      webUrl: web is String && web.isNotEmpty ? _slash(web) : fallbackWebUrl,
     );
   }
 
@@ -80,6 +91,7 @@ class AppUrls {
             apiUrl: _slash(override),
             apps: urls.apps,
             cookieAuth: urls.cookieAuth,
+            webUrl: urls.webUrl,
           );
   }
 

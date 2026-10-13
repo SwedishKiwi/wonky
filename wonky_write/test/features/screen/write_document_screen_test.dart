@@ -310,6 +310,31 @@ void main() {
     await tester.pump(const Duration(seconds: 2));
   });
 
+  testWidgets('Given the toolbar then the comments toggle sits before the '
+      'mode switcher, the title row has none, and it toggles the margin', (
+    tester,
+  ) async {
+    await pumpScreen(tester);
+    final toggle = find.byKey(const ValueKey('write.toolbar.comments'));
+    final mode = find.byKey(const ValueKey('write.toolbar.modeSwitcher'));
+    expect(toggle, findsOneWidget);
+    expect(find.byKey(const ValueKey('editor.comments')), findsNothing);
+    expect(tester.getCenter(toggle).dx, lessThan(tester.getCenter(mode).dx));
+    // Some space between the two buttons.
+    expect(
+      tester.getRect(mode).left - tester.getRect(toggle).right,
+      greaterThanOrEqualTo(6),
+    );
+    expect(h.services.commentsHost!.isShown, isTrue);
+
+    await tester.tap(toggle);
+    await tester.runAsync(pumpEventQueue);
+    await tester.pump();
+    expect(h.services.commentsHost!.isShown, isFalse);
+    await tester.pumpWidget(const SizedBox());
+    await tester.pump(const Duration(seconds: 2));
+  });
+
   testWidgets('Given the screen when it loads then the panels are icons in '
       'the rail, and the title row has no history or assistant buttons', (
     tester,

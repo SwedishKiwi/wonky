@@ -22,7 +22,6 @@ class PreferencesController extends ChangeNotifier {
   UserRepository? users;
 
   AppThemeMode _theme = AppThemeMode.system;
-  String? _accent;
   UiDensity _density = UiDensity.comfortable;
   bool _reduceMotion = false;
   String _keymap = '{}';
@@ -38,7 +37,6 @@ class PreferencesController extends ChangeNotifier {
     AppThemeMode.light => ThemeMode.light,
     AppThemeMode.dark => ThemeMode.dark,
   };
-  String? get accent => _accent;
   UiDensity get density => _density;
   WonkyDensity get wonkyDensity => _density == UiDensity.compact
       ? WonkyDensity.compact
@@ -51,8 +49,9 @@ class PreferencesController extends ChangeNotifier {
       Map.unmodifiable(_notifications);
   bool get aiEnabled => _aiEnabled;
 
-  WonkyThemeConfig get themeConfig =>
-      WonkyThemeConfig(accent: _accent, density: wonkyDensity);
+  /// The app theme: always the neutral palette (there is no accent color
+  /// choice, suite 04 §4.2).
+  WonkyThemeConfig get themeConfig => WonkyThemeConfig(density: wonkyDensity);
 
   /// Loads the device cache (fast, before sign-in).
   Future<void> loadLocal() async {
@@ -85,7 +84,6 @@ class PreferencesController extends ChangeNotifier {
 
   void _apply(UserPreferences p, {bool notify = true}) {
     _theme = p.appTheme;
-    _accent = p.accentColor;
     _density = p.density;
     _reduceMotion = p.reduceMotion;
     _keymap = p.keymapOverrides;
@@ -121,7 +119,6 @@ class PreferencesController extends ChangeNotifier {
   UserPreferences _snapshot() => UserPreferences(
     userId: 0,
     appTheme: _theme,
-    accentColor: _accent,
     density: _density,
     reduceMotion: _reduceMotion,
     keymapOverrides: _keymap,
@@ -142,15 +139,6 @@ class PreferencesController extends ChangeNotifier {
     AppThemeMode.light => AppThemeMode.dark,
     AppThemeMode.dark => AppThemeMode.system,
   });
-
-  Future<void> setAccent(String? accent) {
-    _accent = accent;
-    return _save(
-      accent == null
-          ? UserPreferencesPatch(clearAccentColor: true)
-          : UserPreferencesPatch(accentColor: accent),
-    );
-  }
 
   Future<void> setDensity(UiDensity density) {
     _density = density;

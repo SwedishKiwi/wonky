@@ -8,8 +8,8 @@ import '../../l10n/wonky_app_localizations.dart';
 import '../../shell/shell_services.dart';
 import '../settings_screen.dart';
 
-/// Settings › Appearance (suite 04 §4.2): theme with preview cards, accent,
-/// density, reduce motion.
+/// Settings › Appearance (suite 04 §4.2): theme with preview cards, density,
+/// reduce motion.
 class AppearanceSection extends StatelessWidget {
   const AppearanceSection({super.key, required this.services});
 
@@ -46,33 +46,6 @@ class AppearanceSection extends StatelessWidget {
                         args: {'mode': mode.name},
                         source: InvocationSource.ui,
                       ),
-                    ),
-                ],
-              ),
-            ],
-          ),
-          SettingsGroup(
-            title: l.settingsAccent,
-            children: [
-              Wrap(
-                spacing: 8,
-                runSpacing: 8,
-                children: [
-                  _AccentSwatch(
-                    color: ShadTheme.of(context).colorScheme.foreground,
-                    label: l.settingsAccentNeutral,
-                    selected: p.accent == null,
-                    onTap: () => p.setAccent(null),
-                  ),
-                  for (final a in WonkyTheme.accents)
-                    _AccentSwatch(
-                      color: WonkyTheme.of(
-                        ShadTheme.of(context).brightness,
-                        WonkyThemeConfig(accent: a),
-                      ).colorScheme.primary,
-                      label: a,
-                      selected: p.accent == a,
-                      onTap: () => p.setAccent(a),
                     ),
                 ],
               ),
@@ -204,53 +177,6 @@ class _ThemePreview extends StatelessWidget {
               const SizedBox(height: 6),
               Text(label, style: theme.textTheme.small),
             ],
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _AccentSwatch extends StatelessWidget {
-  const _AccentSwatch({
-    required this.color,
-    required this.label,
-    required this.selected,
-    required this.onTap,
-  });
-
-  final Color color;
-  final String label;
-  final bool selected;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = ShadTheme.of(context);
-    return ShadTooltip(
-      builder: (_) => Text(label),
-      child: Semantics(
-        button: true,
-        selected: selected,
-        label: label,
-        child: GestureDetector(
-          onTap: onTap,
-          child: Container(
-            width: 28,
-            height: 28,
-            padding: const EdgeInsets.all(2),
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              border: Border.all(
-                color: selected
-                    ? theme.colorScheme.ring
-                    : const Color(0x00000000),
-                width: 2,
-              ),
-            ),
-            child: DecoratedBox(
-              decoration: BoxDecoration(color: color, shape: BoxShape.circle),
-            ),
           ),
         ),
       ),

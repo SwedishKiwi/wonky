@@ -172,6 +172,14 @@
   "authSignUpSubtitle": "Create one account for Wonky Write and Wonky Sheets.",
   "authSignUpTitle": "Create your account",
   "authTerms": "I agree to the terms of service and privacy policy",
+  "authTermsLink": "Terms of service",
+  "@authTermsLink": {
+    "description": "Link under the sign-up agreement checkbox; opens the terms page."
+  },
+  "authPrivacyLink": "Privacy policy",
+  "@authPrivacyLink": {
+    "description": "Link under the sign-up agreement checkbox; opens the privacy policy page."
+  },
   "authVerify": "Verify",
   "authVerifyNoDraft": "Start the sign-up again to get a new code.",
   "authVerifySubtitle": "We sent a 6-digit code to {email}.",

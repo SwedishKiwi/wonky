@@ -40,35 +40,53 @@ class WonkyAvatar extends StatelessWidget {
         .toUpperCase();
   }
 
+  /// Width of the ring and its gap to the avatar (drawn inside [size]).
+  static const double _ringWidth = 2;
+  static const double _ringGap = 1.5;
+
   @override
   Widget build(BuildContext context) {
     final fg = ShadColorScheme.contrastingForeground(color);
+    // With a ring, the whole avatar (ring included) is [size] wide, so hosts
+    // that size it (e.g. the presence stack) don't clip the ring.
+    final inner = ringColor == null ? size : size - 2 * (_ringWidth + _ringGap);
     final fallback = Container(
-      width: size,
-      height: size,
+      width: inner,
+      height: inner,
       alignment: Alignment.center,
       decoration: BoxDecoration(color: color, shape: BoxShape.circle),
       child: icon != null
-          ? Icon(icon, size: size * 0.55, color: fg)
+          ? Icon(icon, size: inner * 0.55, color: fg)
           : Text(
               initialsOf(name),
+              textAlign: TextAlign.center,
+              // Centered on the glyphs: no inherited letter spacing (which
+              // pads one side) and no extra line leading.
+              textHeightBehavior: const TextHeightBehavior(
+                applyHeightToFirstAscent: false,
+                applyHeightToLastDescent: false,
+              ),
               style: TextStyle(
                 color: fg,
-                fontSize: size * 0.4,
+                fontSize: inner * 0.4,
                 fontWeight: FontWeight.w600,
+                letterSpacing: 0,
                 height: 1,
+                leadingDistribution: TextLeadingDistribution.even,
               ),
             ),
     );
     Widget avatar = imageUrl == null || imageUrl!.isEmpty
         ? fallback
-        : ShadAvatar(imageUrl, size: Size.square(size), placeholder: fallback);
+        : ShadAvatar(imageUrl, size: Size.square(inner), placeholder: fallback);
     if (ringColor != null) {
       avatar = Container(
-        padding: const EdgeInsets.all(1.5),
+        width: size,
+        height: size,
+        alignment: Alignment.center,
         decoration: BoxDecoration(
           shape: BoxShape.circle,
-          border: Border.all(color: ringColor!, width: 2),
+          border: Border.all(color: ringColor!, width: _ringWidth),
         ),
         child: avatar,
       );

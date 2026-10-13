@@ -301,7 +301,7 @@ class WriteToolbar extends StatelessWidget {
         semanticLabel: l.toolbarLabel,
         onEscape: doc.focusEditor,
         groups: [history, zoomGroup],
-        trailing: [_modeItem(context, ui)],
+        trailing: [_commentsItem(ui), _modeItem(context, ui)],
       );
     }
 
@@ -417,7 +417,7 @@ class WriteToolbar extends StatelessWidget {
           ui.button('write.theme.openPicker', priority: 5, label: l.menuTheme),
         ], id: 'theme'),
       ],
-      trailing: [_modeItem(context, ui)],
+      trailing: [_commentsItem(ui), _modeItem(context, ui)],
     );
   }
 
@@ -437,6 +437,20 @@ class WriteToolbar extends StatelessWidget {
     );
   }
 
+  ToolbarItem _commentsItem(CommandUi ui) => ToolbarCustom(
+    id: 'write.toolbar.comments',
+    pinned: true,
+    priority: 1,
+    // Space before the mode switcher next to it.
+    builder: (context) => Padding(
+      padding: const EdgeInsets.only(right: 6),
+      child: CommentsToggle(doc: doc, ui: ui),
+    ),
+    overflow: [
+      ui.item('shell.comments.togglePanel', label: ui.l.menuShowComments),
+    ],
+  );
+
   ToolbarItem _modeItem(BuildContext context, CommandUi ui) => ToolbarCustom(
     id: 'write.toolbar.mode',
     pinned: true,
@@ -455,6 +469,72 @@ List<WonkyMenuEntry> modeEntries(CommandUi ui, WriteDocumentController doc) => [
       radio: true,
     ),
 ];
+
+/// Shows / hides comments and suggestions in the margin
+/// (`shell.comments.togglePanel`, Write 05 §4): styled like the mode
+/// switcher next to it, filled with the comment highlight yellow (no
+/// darker edge) while they are shown, with the number of open threads.
+class CommentsToggle extends StatelessWidget {
+  const CommentsToggle({super.key, required this.doc, required this.ui});
+
+  final WriteDocumentController doc;
+  final CommandUi ui;
+
+  @override
+  Widget build(BuildContext context) {
+    final l = ui.l;
+    return ListenableBuilder(
+      listenable: Listenable.merge([
+        doc.viewPrefs,
+        doc.session.comments,
+        doc.documentTheme,
+      ]),
+      builder: (context, _) {
+        final shown = doc.viewPrefs.showCommentMargin;
+        // The same yellow as commented text.
+        final yellow = doc.documentTheme
+            .editorTheme(ShadTheme.of(context).brightness)
+            .commentHighlight;
+        final count = doc.session.comments.controller?.openCount ?? 0;
+        final shortcut = ui.shortcut('shell.comments.togglePanel');
+        final tooltip = shortcut == null || shortcut.isEmpty
+            ? l.menuShowComments
+            : '${l.menuShowComments} (${shortcut.join()})';
+        // Merged so the tap target carries the label and toggle state.
+        return MergeSemantics(
+          child: Semantics(
+            toggled: shown,
+            label: l.menuShowComments,
+            child: ShadTooltip(
+              builder: (_) => Text(tooltip),
+              child: ShadButton.outline(
+                key: const ValueKey<String>('write.toolbar.comments'),
+                height: 30,
+                padding: const EdgeInsets.symmetric(horizontal: 10),
+                backgroundColor: shown ? yellow : null,
+                hoverBackgroundColor: shown ? yellow : null,
+                pressedBackgroundColor: shown ? yellow : null,
+                decoration: shown
+                    ? ShadDecoration(
+                        border: ShadBorder.all(color: yellow, width: 1),
+                      )
+                    : null,
+                leading: Icon(
+                  shown
+                      ? LucideIcons.messageSquareText
+                      : LucideIcons.messageSquare,
+                  size: 15,
+                ),
+                onPressed: () => ui.run('shell.comments.togglePanel'),
+                child: count == 0 ? const SizedBox.shrink() : Text('$count'),
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+}
 
 /// The Editing / Suggesting / Viewing switcher (Write 05 §15).
 class ModeSwitcher extends StatelessWidget {

@@ -25,5 +25,18 @@ void main() {
 
       expect(urls.cookieAuth, isTrue);
     });
+
+    test('when it has a webUrl then the legal pages are on that server', () {
+      final urls = AppUrls.fromJson({
+        'apiUrl': 'https://wonkywork.api.serverpod.space',
+        'webUrl': 'https://wonkywork.serverpod.space',
+      });
+
+      expect(urls.page('terms'), 'https://wonkywork.serverpod.space/terms');
+      expect(
+        AppUrls.fromJson(const {}).page('privacy'),
+        'http://localhost:8082/privacy',
+      );
+    });
   });
 }

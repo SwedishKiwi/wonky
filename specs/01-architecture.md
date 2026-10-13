@@ -260,7 +260,8 @@ one origin; there is no separate host app.
 |------|-------------|-------|
 | `/write/…` | `web/write/` — `wonky_write` built with `--base-href /write/` | `FlutterRoute` (SPA fallback to `index.html`) |
 | `/sheets/…` | `web/sheets/` — `wonky_sheets` built with `--base-href /sheets/` | `FlutterRoute` |
-| `/write/assets/assets/config.json`, `/sheets/assets/assets/config.json` | `AppConfigRoute` | Replaces the bundled `assets/config.json` at runtime: `{apiUrl, apps: {write, sheets}}` (the API URL and the base URL of each app, for cross-app links) |
+| `/write/assets/assets/config.json`, `/sheets/assets/assets/config.json` | `AppConfigRoute` | Replaces the bundled `assets/config.json` at runtime: `{apiUrl, webUrl, apps: {write, sheets}, cookieAuth}` (the API URL, the web server's URL for the legal pages, and the base URL of each app, for cross-app links) |
+| `/privacy`, `/terms` | `StaticRoute.file` | Privacy policy and terms of service (`web/pages/privacy.html`, `terms.html`; suite 13 §5) |
 | `/` | redirect | To the last used app (`wonky_last_app` cookie set by the apps, default `/write/`) |
 | `/mcp`, `/files/…`, `/invite/:token` | server routes | See 09, 05, 06 |
 | anything else unbuilt | `web/pages/build_flutter_app.html` | Template fallback shown when an app's build folder is missing |

@@ -1,18 +1,20 @@
 import 'package:serverpod/serverpod.dart';
 
 /// Serves `assets/config.json` of the web apps (specs/01 §2.4):
-/// `{apiUrl, apps: {write, sheets}, cookieAuth}` with the API URL, the base
-/// URL of each app on this web server (for cross-app links) and whether the
-/// API accepts cookie auth (specs/01 §2.5).
+/// `{apiUrl, webUrl, apps: {write, sheets}, cookieAuth}` with the API URL,
+/// this web server's URL (legal pages), the base URL of each app on it (for
+/// cross-app links) and whether the API accepts cookie auth (specs/01 §2.5).
 class AppConfigWidget extends JsonWidget {
   AppConfigWidget({
     required String apiUrl,
+    required String webUrl,
     required String writeUrl,
     required String sheetsUrl,
     required bool cookieAuth,
   }) : super(
          object: {
            'apiUrl': apiUrl,
+           'webUrl': webUrl,
            'apps': {'write': writeUrl, 'sheets': sheetsUrl},
            'cookieAuth': cookieAuth,
          },
@@ -30,6 +32,7 @@ class AppConfigRoute extends WidgetRoute {
     required bool cookieAuth,
   }) : widget = AppConfigWidget(
          apiUrl: apiConfig.publicUrl.toString(),
+         webUrl: webConfig.publicUrl.resolve('/').toString(),
          writeUrl: webConfig.publicUrl.resolve('/write/').toString(),
          sheetsUrl: webConfig.publicUrl.resolve('/sheets/').toString(),
          cookieAuth: cookieAuth,

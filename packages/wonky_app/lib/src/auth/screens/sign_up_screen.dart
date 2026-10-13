@@ -176,6 +176,32 @@ class _SignUpScreenState extends State<SignUpScreen> {
                   }),
                   label: Text(l.authTerms),
                 ),
+                // The pages themselves (served by the web server, suite 13
+                // §5) open outside the app, like external links.
+                Padding(
+                  padding: const EdgeInsets.only(left: 24, top: 2),
+                  child: Wrap(
+                    crossAxisAlignment: WrapCrossAlignment.center,
+                    children: [
+                      for (final (key, label, page) in [
+                        ('auth.signUp.termsLink', l.authTermsLink, 'terms'),
+                        (
+                          'auth.signUp.privacyLink',
+                          l.authPrivacyLink,
+                          'privacy',
+                        ),
+                      ])
+                        ShadButton.link(
+                          key: ValueKey<String>(key),
+                          size: ShadButtonSize.sm,
+                          padding: const EdgeInsets.symmetric(horizontal: 4),
+                          onPressed: () => widget.services.crossApp
+                              .openExternal(widget.services.urls.page(page)),
+                          child: Text(label),
+                        ),
+                    ],
+                  ),
+                ),
                 if (_termsError != null)
                   Padding(
                     padding: const EdgeInsets.only(top: 4),

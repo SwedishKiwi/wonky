@@ -182,6 +182,8 @@ class _WriteDocumentScreenState extends State<WriteDocumentScreen> {
       statusLeft: (context) => [WordCountStatus(doc: doc)],
       commentsInPanel: false,
       belowToolbar: _modeLine,
+      // The comments toggle is in the toolbar, next to the mode switcher.
+      commentsButton: false,
       // Rail order: Assistant, Outline, Find (then the shell's History).
       panels: [
         if (s.assistant?.available ?? false) writeAssistantPanelSpec(ai),

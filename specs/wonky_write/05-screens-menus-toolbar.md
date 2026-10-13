@@ -47,9 +47,9 @@ every control is a `CommandButton`/`CommandMenuItem` bound to a command id (suit
 
 ```
 ┌──────────────────────────────────────────────────────────────────────────────────────────────┐
-│ [W] Q3 planning ☆ 📁 ✓ Saved        (A)(B)(C)+2  💬3  [🔒 Share]  (me)         │ Title row 48
+│ [W] Q3 planning ☆ 📁 ✓ Saved        (A)(B)(C)+2       [🔒 Share]  (me)         │ Title row 48
 │ File  Edit  View  Insert  Format  Tools  Help                                                │ Menubar 32
-│ ↶ ↷ 🖨 │ 100% ▾ │ Normal text ▾ │ B I S <> │ 🔗 💬 🖼▾ ⊞▾ │ • 1. ☑ ⇤ ⇥ │ ❝ {} │ T̸ │ ⋯ ✎Editing▾│ Toolbar 40
+│ ↶ ↷ 🖨 │ 100% ▾ │ Normal text ▾ │ B I S <> │ 🔗 💬 🖼▾ ⊞▾ │ • 1. ☑ ⇤ ⇥ │ ❝ {} │ T̸ │ ⋯ [💬3] ✎Editing▾│ Toolbar 40
 ├──────────────────────────────────────────────────────────────────────┬───────────────────────┤
 │ canvas ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░ │ [≡][⌕][✦][◷]    ⋮ [⇥] │
 │ ░░  ┌──────────────── page ────────────────┐   ┌ comment card ┐    │ open panel (shared    │
@@ -85,7 +85,6 @@ Overlays (dialogs, palette, toasts, offline banner, MCP pill) per suite 03 §3.
 | Sync status | `SyncStatusIndicator` | Saved / Saving… / Offline (tooltip and details: "Offline — changes saved on this device") / Sync error (click → details) |
 | — spacer — | | |
 | Presence | `PresenceAvatarStack` | Click avatar → `write.nav.goToCollaborator`; ⋮ → Follow (`write.nav.follow`) |
-| Comments | `ShadButton.ghost` (message-square) + badge (open threads) | `shell.comments.togglePanel`: shows/hides the comment margin (comments and suggestions, §10) |
 | Share | `ShadButton` primary (lock / globe / users icon by link state) | `shell.sharing.open` |
 | Account | `ShadAvatar` menu | suite 04 |
 
@@ -144,6 +143,7 @@ shortcut.
 | 24 | | Clear formatting | button (remove-formatting) | `write.format.clearFormatting` | 4 | `editable` |
 | 25 | Theme | Theme | button (palette) → theme picker popover | `write.theme.openPicker` ([06](06-themes.md)) | 5 | role ≥ editor |
 | — | (right, pinned) | `⋯` overflow | dropdown | — | — | shown only when items overflow |
+| — | (right, pinned) | Comments toggle (`CommentsToggle`, key `write.toolbar.comments`): outline button styled like the mode switcher, message-square icon + open-thread count, filled with the comment highlight yellow (`commentHighlight`, same-colored border, no darker edge) while comments are shown, 6 px before the mode switcher | `shell.comments.togglePanel` (shows/hides the comment margin, §10) | 1 | role allows seeing comments |
 | — | (right, pinned) | Mode switcher | §15 | `write.mode.set` | 1 | per role |
 
 (Item 3, *Search the menus*, and the *Collapse header* chevron were removed with menu search and
@@ -519,7 +519,8 @@ comment margin (§10.2).
 ### 10.2 Comment margin (comments and suggestions)
 The only place comments and suggestions are shown (`CommentMargin`, layout in
 [08](08-comments-suggestions-history.md) §3.2). `WriteViewPrefs` is the shell's `CommentsHost`
-(suite 07 §2.3): the title-row 💬 button and *View › Comments and suggestions*
+(suite 07 §2.3): the toolbar's comments toggle (left of the mode switcher, §4) and *View ›
+Comments and suggestions*
 (`shell.comments.togglePanel`) show/hide the margin (local pref `write.view.commentMargin`,
 default on); `shell.comments.create` and `shell.comments.activate` show it.
 - **No filter**: the margin shows the open threads and pending suggestions; the Open / For you

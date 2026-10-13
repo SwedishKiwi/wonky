@@ -287,6 +287,12 @@ class WonkyAppLocalizationsEn extends WonkyAppLocalizations {
   String get authTerms => 'I agree to the terms of service and privacy policy';
 
   @override
+  String get authTermsLink => 'Terms of service';
+
+  @override
+  String get authPrivacyLink => 'Privacy policy';
+
+  @override
   String get authVerify => 'Verify';
 
   @override
@@ -2725,6 +2731,12 @@ class WonkyAppLocalizationsEnXa extends WonkyAppLocalizationsEn {
   @override
   String get authTerms =>
       '[Î åĝŕéé ţö ţĥé ţéŕɱš öƒ šéŕṽîçé åñð þŕîṽåçý þöļîçý one two three f]';
+
+  @override
+  String get authTermsLink => '[Ţéŕɱš öƒ šéŕṽîçé one t]';
+
+  @override
+  String get authPrivacyLink => '[Þŕîṽåçý þöļîçý one t]';
 
   @override
   String get authVerify => '[Ṽéŕîƒý one]';

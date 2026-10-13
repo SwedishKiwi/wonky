@@ -11,7 +11,9 @@ cookie on the shared origin; desktop details in [01 §2.5](01-architecture.md).
 
 ### 1.1 Sign up
 1. **Sign-up screen**: Display name, email, password (+ strength meter), "I agree to the terms"
-   checkbox, *Create account* button, link to *Sign in*.
+   checkbox with *Terms of service* · *Privacy policy* links below it (the web server's `/terms`
+   and `/privacy` pages, suite 13 §5; opened like external links, `AppUrls.page`), *Create
+   account* button, link to *Sign in*.
 2. Server sends a verification code (development: logged to console).
 3. **Verify email screen**: 6-digit code input (`ShadInputOTP`), *Resend code* (60 s cooldown),
    *Change email*.
@@ -41,7 +43,7 @@ after re-auth the user continues where they were. Pending offline changes are ke
 
 | Screen | Route | Notes |
 |--------|-------|-------|
-| Sign in | `/signin` | Centered card (max 400 px) on branded background; the suite icon (Wonky Work product icon, [02 §5](02-design-system.md)) and "Wonky Work" as the headline (no app name, no subheadline): one account covers both apps. |
+| Sign in | `/signin` | Centered card (max 400 px) on branded background; the suite icon (Wonky Work product icon, 56 px, [02 §5](02-design-system.md)) and "Wonky Work" as the headline (no app name, no subheadline), left-aligned with the card: one account covers both apps. |
 | Sign up | `/signup` | Same layout. |
 | Verify email | `/signup/verify` | |
 | Forgot password | `/reset` | |
@@ -113,7 +115,8 @@ Full-screen in-app page with a left nav (shad `ShadTabs` vertical or custom `Set
    verification), password change, delete account (type-to-confirm; transfers or deletes owned
    files — dialog lists counts).
 2. **Appearance** – App theme (System/Light/Dark segmented control with live preview cards),
-   accent color, density, reduce motion.
+   density, reduce motion. (No accent color choice: the app uses the neutral palette; the stored
+   `accentColor` preference is ignored.)
 3. **Language & region** – UI language, default locale for new spreadsheets (number/date
    formats), time zone.
 4. **Keyboard shortcuts** – see [08-commands-and-undo.md](08-commands-and-undo.md) §1.2.

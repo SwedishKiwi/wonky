@@ -26,6 +26,7 @@ void main() {
 
         expect(json, {
           'apiUrl': 'https://wonkywork.api.serverpod.space',
+          'webUrl': 'https://wonkywork.serverpod.space/',
           'apps': {
             'write': 'https://wonkywork.serverpod.space/write/',
             'sheets': 'https://wonkywork.serverpod.space/sheets/',

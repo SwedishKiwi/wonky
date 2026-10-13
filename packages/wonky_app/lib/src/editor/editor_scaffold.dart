@@ -57,6 +57,7 @@ class EditorScaffold extends StatefulWidget {
     this.showStatusBar = true,
     this.commentsInPanel = true,
     this.belowToolbar,
+    this.commentsButton = true,
   });
 
   final ShellServices services;
@@ -87,6 +88,10 @@ class EditorScaffold extends StatefulWidget {
 
   /// Overrides the controller's sync status.
   final ValueListenable<SyncStatus>? syncStatus;
+
+  /// Whether the title row has the comments button (Write has it in its
+  /// toolbar instead).
+  final bool commentsButton;
 
   /// A full-width strip between the toolbar and the document area (Write:
   /// the 2 px mode line, green while suggesting).
@@ -600,28 +605,32 @@ class _EditorScaffoldState extends State<EditorScaffold> {
               ),
             ),
             const SizedBox(width: 8),
-            ListenableBuilder(
-              listenable: _comments,
-              // Merged so the tap target carries the label (and the count).
-              builder: (context, _) => MergeSemantics(
-                child: Semantics(
-                  label: l.cmdCommentsPanel,
-                  child: ShadTooltip(
-                    builder: (_) => Text(l.cmdCommentsPanel),
-                    child: ShadButton.ghost(
-                      key: const ValueKey<String>('editor.comments'),
-                      height: 32,
-                      padding: const EdgeInsets.symmetric(horizontal: 8),
-                      leading: const Icon(LucideIcons.messageSquare, size: 18),
-                      onPressed: () => _invoke('shell.comments.togglePanel'),
-                      child: _comments.openCount == 0
-                          ? null
-                          : Text('${_comments.openCount}'),
+            if (widget.commentsButton)
+              ListenableBuilder(
+                listenable: _comments,
+                // Merged so the tap target carries the label (and the count).
+                builder: (context, _) => MergeSemantics(
+                  child: Semantics(
+                    label: l.cmdCommentsPanel,
+                    child: ShadTooltip(
+                      builder: (_) => Text(l.cmdCommentsPanel),
+                      child: ShadButton.ghost(
+                        key: const ValueKey<String>('editor.comments'),
+                        height: 32,
+                        padding: const EdgeInsets.symmetric(horizontal: 8),
+                        leading: const Icon(
+                          LucideIcons.messageSquare,
+                          size: 18,
+                        ),
+                        onPressed: () => _invoke('shell.comments.togglePanel'),
+                        child: _comments.openCount == 0
+                            ? null
+                            : Text('${_comments.openCount}'),
+                      ),
                     ),
                   ),
                 ),
               ),
-            ),
             const SizedBox(width: 6),
             if (item != null)
               ShadButton(
