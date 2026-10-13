@@ -44,14 +44,17 @@ void main() {
       expect(c.activePanelId, 'c');
     });
 
-    test('when committing a width then the callback persists it', () {
-      final widths = <String, double>{};
-      final c = WonkySplitViewController(
-        onWidthChanged: (id, w) => widths[id] = w,
-      );
-      c.setWidth('comments', 400, commit: true);
-      expect(widths, {'comments': 400});
-      expect(c.widthOf('comments'), 400);
+    test('when committing a width then every panel has it and the callback '
+        'persists it', () {
+      final widths = <double>[];
+      final c = WonkySplitViewController(onWidthChanged: widths.add);
+      expect(c.width, WonkySplitViewController.defaultWidth);
+      c.setWidth(400, commit: true);
+      expect(widths, [400]);
+      c.open('comments');
+      expect(c.width, 400);
+      c.open('outline');
+      expect(c.width, 400);
     });
   });
 
@@ -76,7 +79,7 @@ void main() {
       c.open('outline');
       await tester.pumpAndSettle();
       expect(find.byKey(const ValueKey('panel.tab.comments')), findsOneWidget);
-      await tester.tap(find.byKey(const ValueKey('panel.close')));
+      await tester.tap(find.byKey(const ValueKey('panel.collapse')));
       await tester.pumpAndSettle();
       expect(c.activePanelId, isNull);
     });
@@ -130,6 +133,51 @@ void main() {
     await tester.tap(find.byKey(const ValueKey('panel.tab.outline')));
     await tester.pumpAndSettle();
     expect(c.activePanelId, 'outline');
+    await settleTooltips(tester);
+  });
+
+  testWidgets('Given collapsed panels when shown then every panel is an icon '
+      'in the rail, an icon opens its panel and collapsing returns to the '
+      'rail', (tester) async {
+    final c = WonkySplitViewController();
+    await pumpWonky(
+      tester,
+      WonkySplitView(controller: c, panels: _panels, child: const Text('main')),
+    );
+    await tester.pumpAndSettle();
+    expect(find.byKey(const ValueKey('panel.rail')), findsOneWidget);
+    expect(find.byKey(const ValueKey('panel.rail.outline')), findsOneWidget);
+
+    await tester.tap(find.byKey(const ValueKey('panel.rail.outline')));
+    await tester.pumpAndSettle();
+    expect(find.text('outline body'), findsOneWidget);
+    expect(find.text('Outline'), findsNothing, reason: 'no panel heading');
+    expect(find.byKey(const ValueKey('panel.rail')), findsNothing);
+
+    await tester.tap(find.byKey(const ValueKey('panel.collapse')));
+    await tester.pumpAndSettle();
+    expect(c.activePanelId, isNull);
+    expect(find.byKey(const ValueKey('panel.rail')), findsOneWidget);
+    await settleTooltips(tester);
+  });
+
+  testWidgets('Given a split view without a rail when the panel closes then '
+      'it is hidden', (tester) async {
+    final c = WonkySplitViewController()..open('comments');
+    await pumpWonky(
+      tester,
+      WonkySplitView(
+        controller: c,
+        panels: _panels.take(1).toList(),
+        rail: false,
+        child: const Text('main'),
+      ),
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const ValueKey('panel.close')));
+    await tester.pumpAndSettle();
+    expect(find.byKey(const ValueKey('panel.rail')), findsNothing);
+    expect(find.text('comments body'), findsNothing);
     await settleTooltips(tester);
   });
 }

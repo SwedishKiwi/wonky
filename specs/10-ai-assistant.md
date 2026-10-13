@@ -92,9 +92,11 @@ fields:
 
 ## 3. UI — Assistant panel (`wonky_app` `AssistantPanel`, specialized per app)
 
-- Toggle: toolbar ✨ button, *Tools › Assistant*, `Mod+J` (contextual binding: in Write, inside an
-  empty paragraph `Mod+J` opens the inline AI prompt instead — see suite 08 §1.2). Right side panel (resizable,
-  360–640 px), shares the right-panel slot with Comments/History/Outline (tabbed).
+- Toggle: its icon in the side panel rail (there is no title-row or toolbar ✨ button),
+  *Tools › Assistant*, *View › Panels › Assistant*, `Mod+J` (contextual binding: in Write, inside
+  an empty paragraph `Mod+J` opens the inline AI prompt instead — see suite 08 §1.2). Right side
+  panel in the shared panel host (suite 02 §4.5: shared width 300–640 px, collapses to the icon
+  rail); the rail shows it only when the assistant is available.
 - Header: thread picker (dropdown of threads for this file + "New chat"), ⋮ (Clear, Delete thread,
   Settings).
 - Message list: user bubbles, assistant Markdown rendering (code blocks with copy), **tool

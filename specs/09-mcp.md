@@ -165,7 +165,7 @@ UiBridgeEndpoint.connect(Stream<UiBridgeMessage> fromApp) → Stream<UiBridgeMes
 | `ui.get_dialog` | Describes the open dialog: title, fields (id, label, type, value, options), buttons. |
 | `ui.fill_dialog` | `{field_id: value}`; `ui.press_dialog_button(button_id)`. |
 | `ui.close_dialog` | Esc. |
-| `ui.open_panel` / `ui.close_panel` | `panel_id` (outline, find, history, assistant, …; `comments` in Sheets — Write shows comments in its margin, toggled with `shell.comments.togglePanel` via `ui.invoke_command`). |
+| `ui.open_panel` / `ui.close_panel` | `panel_id` (outline, find, history, assistant, …; `comments` in Sheets — Write shows comments in its margin, toggled with `shell.comments.togglePanel` via `ui.invoke_command`). In the editors `ui.close_panel` collapses the panel to the icon rail. |
 | `ui.set_app_theme` | system/light/dark. |
 | `ui.screenshot` | PNG of the window (`RepaintBoundary.toImage`), optional `region`/`scale`; returned as MCP image content. |
 | `ui.get_semantics` | Accessibility tree dump (role, label, value, bounds) for generic inspection. |

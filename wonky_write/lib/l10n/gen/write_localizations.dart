@@ -2431,12 +2431,6 @@ abstract class WriteLocalizations {
   /// **'Insert table'**
   String get toolbarInsertTable;
 
-  /// Toggles the AI assistant panel.
-  ///
-  /// In en, this message translates to:
-  /// **'Assistant'**
-  String get toolbarAssistant;
-
   /// No description provided for @toolbarEditLink.
   ///
   /// In en, this message translates to:
@@ -2520,12 +2514,6 @@ abstract class WriteLocalizations {
   /// In en, this message translates to:
   /// **'Image by URL…'**
   String get docMenuImageByUrl;
-
-  /// No description provided for @docMenuDuplicate.
-  ///
-  /// In en, this message translates to:
-  /// **'Duplicate'**
-  String get docMenuDuplicate;
 
   /// Code block language: no syntax highlighting.
   ///

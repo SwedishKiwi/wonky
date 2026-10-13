@@ -176,9 +176,17 @@ class OfflineBanner extends StatelessWidget {
                 ),
               ),
             ),
-            ShadButton.link(
+            // A ghost button tinted with the banner's own colors (the link
+            // style's hover switched to the theme's link colors).
+            ShadButton.ghost(
+              key: const ValueKey<String>('shell.offlineBanner.retry'),
               size: ShadButtonSize.sm,
+              height: 26,
               foregroundColor: fg,
+              hoverForegroundColor: fg,
+              pressedForegroundColor: fg,
+              hoverBackgroundColor: fg.withValues(alpha: 0.12),
+              pressedBackgroundColor: fg.withValues(alpha: 0.2),
               onPressed: services.connectivity.reconnect,
               child: Text(l.actionRetry),
             ),

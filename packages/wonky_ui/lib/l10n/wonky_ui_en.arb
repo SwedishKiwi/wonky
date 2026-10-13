@@ -42,6 +42,7 @@
   "hueBlue": "blue",
   "huePurple": "purple",
   "hueMagenta": "magenta",
+  "panelCollapse": "Collapse panel",
   "panelClose": "Close panel",
   "panelResize": "Resize panel",
   "treeExpand": "Expand",

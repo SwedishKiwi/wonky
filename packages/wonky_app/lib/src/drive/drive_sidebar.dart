@@ -22,6 +22,9 @@ class DriveSidebar extends StatefulWidget {
     required this.location,
   });
 
+  /// Width of the sidebar.
+  static const double width = 256;
+
   final ShellServices services;
   final DriveLocation location;
 
@@ -109,7 +112,7 @@ class _DriveSidebarState extends State<DriveSidebar> {
       ),
     );
     return Container(
-      width: 256,
+      width: DriveSidebar.width,
       padding: const EdgeInsets.fromLTRB(12, 4, 12, 12),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,

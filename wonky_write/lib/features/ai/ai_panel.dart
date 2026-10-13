@@ -13,9 +13,6 @@ SidePanelSpec writeAssistantPanelSpec(WriteAiController ai) => SidePanelSpec(
   id: ShellPanels.assistant,
   title: writeL10nOf(ai.services).aiPanelTitle,
   icon: LucideIcons.sparkles,
-  defaultWidth: 400,
-  minWidth: 360,
-  maxWidth: 640,
   builder: (context) => ListenableBuilder(
     listenable: Listenable.merge([ai.services.prefs, ?ai.assistant?.status]),
     builder: (context, _) {

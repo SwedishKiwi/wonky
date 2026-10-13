@@ -416,15 +416,6 @@ class WriteToolbar extends StatelessWidget {
         ToolbarGroup([
           ui.button('write.theme.openPicker', priority: 5, label: l.menuTheme),
         ], id: 'theme'),
-        if (services.assistant?.available ?? false)
-          ToolbarGroup([
-            ui.button(
-              'shell.ai.togglePanel',
-              icon: LucideIcons.sparkles,
-              priority: 2,
-              label: l.toolbarAssistant,
-            ),
-          ], id: 'ai'),
       ],
       trailing: [_modeItem(context, ui)],
     );

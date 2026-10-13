@@ -167,7 +167,6 @@ SuperEditor(
   documentOverlayBuilders: [
     DefaultCaretOverlayBuilder(caretStyle: CaretStyle(width: 2, color: theme.foreground)),
     RemoteCursorLayerBuilder(...),      // §34
-    BlockHandleLayerBuilder(...),       // §22 ⋮⋮ handles
     CommentAnchorBoundsOverlay(...),    // §33 (based on AttributedTextBoundsOverlay)
     UploadProgressLayerBuilder(...),    // §17.4
   ],
@@ -774,7 +773,7 @@ clients.
   `BlockSelector("blockquote").after("blockquote")` to collapse the vertical padding between
   them and continue the left border.
 - Applied with `write.format.blockType {type: quote}` (toggle), `> `, slash `/quote`, or the
-  block menu.
+  context menu's *Turn into*.
 - Enter, Backspace and Shift+Enter work as in §6.
 - No nesting. Lists inside quotes are not supported: making a quote line a list removes the
   quote type.
@@ -993,7 +992,7 @@ selectable only as a whole.
 - Wide tables scroll horizontally with the built-in scrollbar. Cells wrap text up to a minimum
   column width of 64 px.
 - **Affordances** on hover or selection: an **Edit table** button (pencil, top-right of the
-  table, opens the table editor popover) and the block handle. Clicking a cell edits it in place
+  table, opens the table editor popover). Clicking a cell edits it in place
   (§18.4).
 
 ### 18.3 Insert
@@ -1072,7 +1071,7 @@ Concurrency:
 - If a remote op **deletes** the table: "This table was deleted." with **Insert as new table**
   and **Discard**.
 
-Direct commands (no editor UI; for MCP, context menu and block menu). Each is one undo step
+Direct commands (no editor UI; for MCP and the context menu). Each is one undo step
 that replaces the embed:
 `write.table.insertRow {nodeId?, index, position: above|below}`,
 `write.table.insertColumn {nodeId?, index, position: left|right}`,
@@ -1216,34 +1215,20 @@ With `{char}` it inserts directly.
 **AC-21.1** Typing `/h2` + Enter in an empty paragraph makes an H2 with no `/h2` text left. One
 undo gives back the paragraph containing `/h2`.
 
-## 22. Block handle, block selection and drag reorder
+## 22. Block commands, block selection and moving blocks
 
-### 22.1 Handle
-- `BlockHandleLayerBuilder` (overlay) shows a ⋮ (more, 16 px, hit target 24×24) in the left
-  gutter, vertically centred on the first line of the hovered block.
-  Pages mode: inside the left page margin. Pageless: 28 px left of the content column.
-- Shown for the hovered block, or the caret block while typing pauses for 1 s. It stays visible
-  while the pointer moves from the block into its handle gutter (the 36 px strip left of the
-  block, `blockHandleGutter`), so the handle can be clicked (block menu). Hidden
-  while typing, in Viewing mode, and for Commenters (who get only *Comment* through the context
-  menu).
-- P1: a **+** button left of the handle inserts an empty paragraph below and opens the slash
-  menu.
+### 22.1 Block handle — removed
+There is no block handle (the ⋮ next to the hovered block) and no view pref for it; the
+`BlockHandleLayerBuilder` layer, its gutter and the `onBlockHandleTap` callback are gone.
 
-### 22.2 Block menu (click on the handle, or `Shift+F10` / the context-menu key on a selected block)
-- Turn into ▸ (Text, Heading 1–6, Bulleted, Numbered, Checklist, Quote, Code block):
-  `write.block.turnInto {type, nodeId?}`
-- Duplicate: `write.block.duplicate` (embeds get a new id)
-- Copy link to heading (headings only): `write.block.copyLink`
-- Copy as Markdown: `write.block.copyAsMarkdown`
-- Comment: `shell.comments.create` (anchor = block text)
-- Move up / Move down: `write.block.moveUp` / `write.block.moveDown`
-- Delete: `write.block.delete`
-- Type-specific additions:
-  - Image: Alt text, Replace, Download.
-  - Table: Edit table, Copy as TSV.
-  - Code: Language ▸, Copy code.
-  - Task: Check/Uncheck.
+### 22.2 Block menu — removed
+There is no block menu. Its commands remain as commands (palette, MCP, shortcuts) and, where
+they apply, in the context menu (05 §6: *Turn into*, image/table/code items, Move up/down):
+- `write.block.turnInto {type, nodeId?}` (Text, Heading 1–6, Bulleted, Numbered, Checklist,
+  Quote, Code block)
+- `write.block.duplicate` (embeds get a new id), `write.block.copyLink` (headings only),
+  `write.block.copyAsMarkdown`, `write.block.delete`
+- `write.block.moveUp` / `write.block.moveDown` (§22.4)
 
 ### 22.3 Block selection
 - Embeds are selected by click or arrow (§4, §5). For text blocks, `Esc` with a collapsed caret
@@ -1264,7 +1249,7 @@ undo gives back the paragraph containing `/h2`.
 |---------|-------|-----------|
 | `write.block.moveUp` | ⌃⇧↑ | Alt+Shift+↑ |
 | `write.block.moveDown` | ⌃⇧↓ | Alt+Shift+↓ |
-| `write.block.move {nodeIds, toIndex}` | (drag; MCP) | |
+| `write.block.move {nodeIds, toIndex}` | (MCP) | |
 
 - Moves the blocks touched by the selection.
 - A **list item moves with its descendants**: the contiguous following items with greater
@@ -1275,8 +1260,9 @@ undo gives back the paragraph containing `/h2`.
   mode.
 
 ### 22.5 Drag to reorder — removed
-Dragging blocks by the handle was removed (drops landed unreliably); blocks move with the block
-menu's *Move up* / *Move down* and `Alt+Shift+↑/↓` (§22.4).
+Dragging blocks by the handle was removed (drops landed unreliably), and the handle itself is
+gone (§22.1); blocks move with `write.block.moveUp` / `moveDown` (`Alt+Shift+↑/↓`, §22.4) and
+the context menu's *Move up* / *Move down* on embeds.
 
 **AC-22.1** *Move down* on a bullet that has two indented children moves all three items. One
 undo moves them back.
@@ -1889,7 +1875,7 @@ only components whose view model changed. Mitigations are mandatory:
    highlight, spellcheck, find and pagination phases).
 2. **Layers paint only the viewport.** A cached prefix array of component offsets (updated
    post-layout) answers "nodes in [y0, y1]" by binary search. Remote cursors, find highlights,
-   comment bounds and block handles use it.
+   and comment bounds use it.
 3. **O(log n) index**: `DeltaIndex` (Fenwick) for every offset ⇄ position conversion. The
    extractor's fast path avoids full serialisation.
 4. **Debounced derived work**: syntax highlighting 120 ms, find 150 ms, stats 250 ms,
@@ -1951,7 +1937,7 @@ feature flag.
 ### 37.3 Keyboard
 - Every popover is reachable and operable by keyboard: slash menu, link popover, mention
   picker, language picker and image toolbar (`Alt+F10` focuses the floating toolbar).
-- The block menu opens with Shift+F10 or the context-menu key.
+- Shift+F10 or the context-menu key opens the context menu for the caret/selection (05 §6).
 - Leaving the editor: `Esc` (collapse the selection or select the block), `Esc` again, then
   `Tab` / `Shift+Tab` move focus to the next or previous region. `F6` / `Shift+F6` cycle
   regions (menubar → toolbar → document → side panel → status bar when shown), owned by 05 §19.
@@ -1970,8 +1956,8 @@ feature flag.
   direction). It is applied as `textDirection` in component view models. `super_editor`
   supports RTL layout per text component (see its `demo_rtl` example). Nothing is stored in
   the Delta.
-- For RTL blocks: list markers, checkboxes and indentation mirror to the right; block handles
-  move to the right gutter; quote borders mirror.
+- For RTL blocks: list markers, checkboxes and indentation mirror to the right; quote borders
+  mirror.
 - Caret movement: ←/→ move **visually**. Word jumps follow the visual direction.
   Home/End use the logical line start/end.
 - Mixed-direction runs inside a line rely on Flutter's bidi layout. Selection highlights use
@@ -2190,7 +2176,7 @@ lib/
                                        #   inline_text_styler.dart, style phases (code highlight, direction,
                                        #   suggestion preview)
       layers/                          # page_chrome, remote_selection, remote_cursor, find_matches, mention_chip,
-                                       #   block_selection, block_handle, comment_anchor_bounds, upload_progress,
+                                       #   block_selection, comment_anchor_bounds, upload_progress,
                                        #   viewport_node_index.dart (offset prefix array)
       plugins/                         # slash (ActionTagsPlugin glue), mentions (StableTagPlugin glue),
                                        #   inline markdown plugin wiring

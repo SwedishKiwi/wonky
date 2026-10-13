@@ -21,6 +21,7 @@ class WonkyTopBar extends StatelessWidget {
     required this.onToggleSidebar,
     required this.searchFocus,
     this.initialQuery,
+    this.contentStart,
   });
 
   final ShellServices services;
@@ -28,47 +29,67 @@ class WonkyTopBar extends StatelessWidget {
   final FocusNode searchFocus;
   final String? initialQuery;
 
+  /// Where the page content starts (from the left edge) while the sidebar is
+  /// open: the search field starts there too, aligned with the content
+  /// below. Null: right after the logo.
+  final double? contentStart;
+
   @override
   Widget build(BuildContext context) {
     final l = WonkyAppLocalizations.of(context);
     final theme = ShadTheme.of(context);
     final narrow = MediaQuery.sizeOf(context).width < 640;
+    const padding = 12.0;
+    final leading = Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        ShadTooltip(
+          builder: (_) => Text(l.toggleSidebar),
+          child: ShadIconButton.ghost(
+            key: const ValueKey<String>('shell.topBar.menu'),
+            semanticLabel: l.toggleSidebar,
+            icon: const Icon(LucideIcons.menu, size: 18),
+            onPressed: onToggleSidebar,
+          ),
+        ),
+        const SizedBox(width: 4),
+        GestureDetector(
+          onTap: () => services.router.go('/'),
+          child: MouseRegion(
+            cursor: SystemMouseCursors.click,
+            child: Row(
+              children: [
+                services.config.logo(size: 32),
+                if (!narrow) ...[
+                  const SizedBox(width: 10),
+                  Text(
+                    services.config.shortAppName,
+                    style: theme.textTheme.large.copyWith(
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ],
+              ],
+            ),
+          ),
+        ),
+      ],
+    );
+    final start = contentStart;
     return Container(
       height: 64,
-      padding: const EdgeInsets.symmetric(horizontal: 12),
+      padding: const EdgeInsets.symmetric(horizontal: padding),
       child: Row(
         children: [
-          ShadTooltip(
-            builder: (_) => Text(l.toggleSidebar),
-            child: ShadIconButton.ghost(
-              key: const ValueKey<String>('shell.topBar.menu'),
-              semanticLabel: l.toggleSidebar,
-              icon: const Icon(LucideIcons.menu, size: 18),
-              onPressed: onToggleSidebar,
-            ),
-          ),
-          const SizedBox(width: 4),
-          GestureDetector(
-            onTap: () => services.router.go('/'),
-            child: MouseRegion(
-              cursor: SystemMouseCursors.click,
-              child: Row(
-                children: [
-                  services.config.logo(size: 32),
-                  if (!narrow) ...[
-                    const SizedBox(width: 10),
-                    Text(
-                      services.config.shortAppName,
-                      style: theme.textTheme.large.copyWith(
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-                  ],
-                ],
-              ),
-            ),
-          ),
-          const SizedBox(width: 24),
+          if (start != null && !narrow)
+            SizedBox(
+              width: start - padding,
+              child: Align(alignment: Alignment.centerLeft, child: leading),
+            )
+          else ...[
+            leading,
+            const SizedBox(width: 24),
+          ],
           Expanded(
             child: Align(
               alignment: Alignment.centerLeft,

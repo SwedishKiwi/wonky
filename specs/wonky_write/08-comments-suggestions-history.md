@@ -104,7 +104,7 @@ Status changes are broadcast through `CommentEndpoint.watch` (`CommentEvent.stat
 Orphaned threads carry the quoted text and the label **"Original content deleted"**; they can be
 resolved, deleted or re-anchored by an Editor (`write.comments.reattach`, *Re-attach to
 selection*, sets `cmt_*` on the new selection → back to `open`). They have no anchor, so the
-margin lists them at its top (§1.1); the *Open* filter includes them.
+margin lists them at its top (§1.1) with the other open threads.
 
 ### 1.5 Resolve, reopen, delete
 
@@ -256,7 +256,7 @@ proposed edit reads at a glance; the author is on the margin card.
 - Clicking a card selects/highlights all parts of the suggestion; clicking suggested text
   activates its card.
 - Suggestion cards live only in the margin (there is no Suggestions panel or toolbar toggle);
-  they show with the margin's *Open* filter (§3.2). *Accept all* / *Reject all*
+  the margin shows them with the open threads (§3.2). *Accept all* / *Reject all*
   (`write.suggestions.acceptAll` / `rejectAll`, confirm when > 10) are commands (palette, MCP).
 
 ### 2.8 Accept / reject operations (`SuggestionOps`, core)
@@ -367,12 +367,15 @@ else (active index a):
   `WriteViewPrefs` is the shell `CommentsHost`: the title-row 💬 button and *View › Comments and
   suggestions* (`shell.comments.togglePanel`) show/hide it (local pref `write.view.commentMargin`,
   default on); creating or activating a comment shows it.
-- Filter at the top of the margin (`CommentsFilterTabs`): **Open** (default; open threads and
-  pending suggestions) / **For you** (open threads that mention or are assigned to me).
+- The margin has no filter: it shows open threads and pending suggestions (the shared
+  `CommentsFilterTabs` Open / For you filter is not shown and stays at *Open*).
 - The new-comment composer is a card in the margin at its anchor (an item of the layout above).
-- Margin column: 300 px (plus gutters) to the right of the page (Pages) or of the content column
-  (Pageless) when the page at the current zoom still fits beside it; otherwise the margin
-  overlays the right edge of the canvas. Below 600 px canvas width it is hidden.
+- Margin column: 300 px cards (column 324 px with its padding) to the right of the page (Pages)
+  or of the content column (Pageless). Pages: the margin is drawn over the canvas's right edge
+  and the page centers in the rest (`WonkyEditor.endInset`), moving left as needed; when the
+  window is too narrow for both, the page sits at an 8 px left gutter so the margin covers at most
+  the page's right margin. Pageless: a column beside the content. Hidden below 600 px window
+  width.
 
 ### 3.3 Interaction
 

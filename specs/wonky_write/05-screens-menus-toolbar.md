@@ -1,7 +1,7 @@
 # Write 05 · Screens, Menus, Toolbar, Panels and Dialogs
 
 Defines every Wonky Write screen and every piece of chrome around the editor: header, menubar
-(every item), toolbar (every control), floating toolbars, context menus, slash/block menus,
+(every item), toolbar (every control), floating toolbars, context menus, slash menu,
 popovers, side panels, comment margin, word count bar, dialogs, empty/loading/error states,
 view modes, Pages vs Pageless rendering, responsive behaviour and light/dark rules.
 
@@ -24,7 +24,7 @@ every control is a `CommandButton`/`CommandMenuItem` bound to a command id (suit
 - Every menu, toolbar and context-menu tree is declared once as a `MenuSpec`
   (`lib/config/write_menus.dart`: the shell's shared menus extended with Write items plus the
   Insert and Format menus), which also feeds the command palette menu paths, the macOS native
-  menubar (`PlatformMenuBar`) and MCP `ui.get_menu_tree`. Context, block and code-language menus
+  menubar (`PlatformMenuBar`) and MCP `ui.get_menu_tree`. Context and code-language menus
   are built from the same commands in `lib/features/screen/document_menus.dart`.
 
 ## 2. Screen inventory
@@ -47,14 +47,14 @@ every control is a `CommandButton`/`CommandMenuItem` bound to a command id (suit
 
 ```
 ┌──────────────────────────────────────────────────────────────────────────────────────────────┐
-│ [W] Q3 planning ☆ 📁 ✓ Saved        (A)(B)(C)+2  💬3  🕘  ✨  [🔒 Share]  (me)   │ Title row 48
+│ [W] Q3 planning ☆ 📁 ✓ Saved        (A)(B)(C)+2  💬3  [🔒 Share]  (me)         │ Title row 48
 │ File  Edit  View  Insert  Format  Tools  Help                                                │ Menubar 32
 │ ↶ ↷ 🖨 │ 100% ▾ │ Normal text ▾ │ B I S <> │ 🔗 💬 🖼▾ ⊞▾ │ • 1. ☑ ⇤ ⇥ │ ❝ {} │ T̸ │ ⋯ ✎Editing▾│ Toolbar 40
 ├──────────────────────────────────────────────────────────────────────┬───────────────────────┤
-│ canvas ░░░░░░░░░░░░░░░░░░░░░░░░░░░░ [ Open | For you ] ░░░░░░░░░░░░░ │ Side panel (optional) │
-│ ░░  ┌──────────────── page ────────────────┐   ┌ comment card ┐    │ Outline | Find |      │
-│ ░░  │ header: Q3 planning           p. 1   │   │ (B) Bo  2m   │    │ History | Assistant   │
-│ ░⋮⋮ │ # Q3 planning                        │───│ Shorter?     │    │                       │
+│ canvas ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░ │ [≡][⌕][✦][◷]    ⋮ [⇥] │
+│ ░░  ┌──────────────── page ────────────────┐   ┌ comment card ┐    │ open panel (shared    │
+│ ░░  │ header: Q3 planning           p. 1   │   │ (B) Bo  2m   │    │ width; collapsed:     │
+│ ░░  │ # Q3 planning                        │───│ Shorter?     │    │ 44 px icon rail)      │
 │ ░░  │ Body text with a [comment anchor]…   │   │ [Reply…]  ✓  │    │                       │
 │ ░░  │ • bullet          ▏Anna              │   └──────────────┘    │                       │
 │ ░░  └──────────────────────────────────────┘                       │                       │
@@ -67,6 +67,9 @@ every control is a `CommandButton`/`CommandMenuItem` bound to a command id (suit
 Region structure (top to bottom): `EditorHeader` (title row, menubar, toolbar — always shown)
 → `ShadResizablePanelGroup` [ `DocumentCanvas` with the comment margin | `WonkySplitView` side
 panel host ] → `StatusBar`, shown only when *Display word count while typing* is on (§11).
+The side panel host shows the open panel (header: one icon per panel — Outline, Find,
+Assistant, History — the open one highlighted, then header actions and collapse ⇥) or, when
+collapsed, a 44 px icon rail at the right edge (§10).
 Write passes `commentsInPanel: false` to `EditorScaffold` and sets `WriteViewPrefs` as the
 shell's `CommentsHost` (suite 07 §2.3): comments and suggestions are shown only in the margin.
 Overlays (dialogs, palette, toasts, offline banner, MCP pill) per suite 03 §3.
@@ -79,17 +82,21 @@ Overlays (dialogs, palette, toasts, offline banner, MCP pill) per suite 03 §3.
 | Title | `DocumentTitleField` | Rename via `shell.drive.rename {uuid, name}` (undoable, domain `drive`). Placeholder "Untitled document". Empty commit reverts. Viewers: plain text |
 | Star | `ShadToggle` (star icon) | `shell.drive.setStarred` |
 | Move | `ShadIconButton` (folder) | `shell.drive.move` → Move dialog (suite 05) |
-| Sync status | `SyncStatusIndicator` | Saved / Saving… / Offline — changes saved on this device / Sync error (click → details) |
+| Sync status | `SyncStatusIndicator` | Saved / Saving… / Offline (tooltip and details: "Offline — changes saved on this device") / Sync error (click → details) |
 | — spacer — | | |
 | Presence | `PresenceAvatarStack` | Click avatar → `write.nav.goToCollaborator`; ⋮ → Follow (`write.nav.follow`) |
 | Comments | `ShadButton.ghost` (message-square) + badge (open threads) | `shell.comments.togglePanel`: shows/hides the comment margin (comments and suggestions, §10) |
-| Version history | `ShadIconButton` (history) | `shell.versions.togglePanel` (panel; panel has "Open full history") |
-| Assistant | `ShadIconButton` (sparkles) | `shell.ai.togglePanel` (`Mod+J` outside editor scope); hidden when `!aiOn` |
 | Share | `ShadButton` primary (lock / globe / users icon by link state) | `shell.sharing.open` |
 | Account | `ShadAvatar` menu | suite 04 |
 
+There are no Version history or Assistant buttons in the title row (and no Assistant button
+group in the toolbar): both panels are icons in the side panel rail (§10), and stay reachable
+through their commands (`shell.versions.togglePanel`, `shell.ai.togglePanel` / `Mod+J`,
+View › Panels).
+
 ### 3.3 Menubar row (32 px)
-`WonkyMenubar` with menus File, Edit, View, Insert, Format, Tools, Help (full content §7). On
+`WonkyMenubar` (flat, no drop shadow; suite 02 §4.3) with menus File, Edit, View, Insert, Format,
+Tools, Help (full content §7). On
 macOS desktop with native menus enabled, the row is hidden and `PlatformMenuBar` is generated
 from the same `MenuSpec`. The menubar and the toolbar are always shown (no compact mode or full
 screen). Only one menu is open at a time (suite 02 §4.2). Every Write command without an
@@ -99,8 +106,7 @@ Upload from computer*).
 
 ### 3.4 Canvas
 `DocumentCanvas` = `WonkyScrollArea` containing a `CustomScrollView` whose sliver child is the
-`SuperEditor`/`SuperReader` (it wraps itself in a `SliverToBoxAdapter`), plus left gutter (block
-handles), right margin (comment cards / suggestion cards, §10) and page chrome underlay. Background
+`SuperEditor`/`SuperReader` (it wraps itself in a `SliverToBoxAdapter`), plus the right margin (comment cards / suggestion cards, §10) and page chrome underlay. Background
 `canvas` token (Pages) or `page` token (Pageless). Details §16.
 
 ## 4. Toolbar
@@ -229,7 +235,6 @@ shown greyed with reason tooltip.
 | **Code block** | Language ▸ (recent + "More…") · Copy code · Exit code block · ─ · standard text items (Cut/Copy/Paste) |
 | **Divider** | Cut · Copy · Delete · Move up / down |
 | **Comment highlight** (prepended) | Open comment (`shell.comments.activate {threadUuid}`) · ─ |
-| **Block handle** (left-click/right-click) | Block menu (§8.2) |
 | **Page header/footer area** (Pages) | Edit header & footer… (`write.doc.pageSetup {tab: headerFooter}`) · Page setup… |
 | **Viewing mode** | Copy · Copy as ▸ · Comment (if allowed) · Search document · Open link (on links) |
 
@@ -424,7 +429,7 @@ The `MenuSpec` additionally yields: app menu (About, Preferences ⌘,, Hide ⌘H
 handled), Window menu (Minimize, Zoom — OS). Edit menu items use native selectors only where
 Flutter requires; all others dispatch commands.
 
-## 8. Slash menu and block menu (UI)
+## 8. Slash menu (UI)
 
 ### 8.1 Slash menu (`SlashMenu`, app widget)
 Popover (min 280 / max 360 px wide, max 400 px tall) anchored at the `/` tag rect: search
@@ -433,11 +438,10 @@ AI), rows = icon (20 px box) + title + muted description ("Big section heading")
 shortcut; highlighted row uses `accent`. Footer hint "↑↓ to navigate · ↵ to select · esc to
 dismiss". Empty state "No results" row (and space closes). Items/behaviour: 04 §21.
 
-### 8.2 Block menu (`BlockMenu`, app widget)
-`WonkyDropdownMenu` opened from the ⋮⋮ handle: header shows block type + mini preview; items per
-04 §22.2: Turn into ▸ (icons per type, current type checked), Duplicate, Copy link to heading,
-Copy as Markdown, Comment, ─, Move up (⌃⇧↑ / Alt+Shift+↑), Move down, ─, type-specific items,
-─, Delete (destructive style). Keyboard type-ahead enabled.
+### 8.2 Block menu — removed
+There is no block handle and no block menu (04 §22). Block commands stay reachable elsewhere:
+*Turn into* and the type-specific items in the context menu (§6), Move up / Move down with
+`write.block.moveUp` / `moveDown` (⌃⇧↑/↓ / Alt+Shift+↑/↓), the palette and MCP.
 
 ## 9. Popovers
 
@@ -481,24 +485,30 @@ Owned by [06](06-themes.md): grid of theme cards (light+dark preview thumbnails)
 
 ## 10. Side panels and the comment margin
 
-Hosted by `WonkySplitView` (suite 02 §4.5) on the right; one active panel, shown or hidden (no
-collapsed rail); the header always shows every panel as an icon tab — Outline, Find, History,
-Assistant; width persisted per panel; `Mod+Alt+Shift+1…5` switches to the n-th tab;
-Esc (with focus in panel) closes; below `md` panels open as `ShadSheet` from the right (90 %
-width, max 420). MCP panel ids in parentheses. File › Details (`details`) also opens in the host
-but is not a tab (`showAsTab: false`). There is **no comments panel and no suggestions panel**:
-comments and suggestions are shown only in the comment margin (§10.2).
+Hosted by `WonkySplitView` (suite 02 §4.5, `rail: true`) on the right; one active panel. All
+panels share one width (default 360, min 300, max 640; device pref `panel.width`). Panels
+**collapse** instead of closing: collapsed, the host shows a 44 px vertical **icon rail** at the
+right edge (`panel.rail`), one icon per panel in the order of the table below
+(`panel.rail.<id>`); clicking an icon opens that panel. The open panel's header shows only the
+same icon buttons (the open one highlighted; the panel name is the icon's tooltip and the body's
+semantics label, there is no heading), the panel's header actions and a collapse button
+(`panel.collapse`). `Mod+Alt+Shift+1…5` switches to the n-th panel; Esc (with focus in panel)
+collapses; below 768 px the open panel overlays the canvas from the right (380 px, full width
+below 420 px) over a scrim that collapses it when tapped. MCP panel ids in parentheses. File ›
+Details (`details`) also opens in the host but is not in the rail (`showAsTab: false`). There is
+**no comments panel and no suggestions panel**: comments and suggestions are shown only in the
+comment margin (§10.2).
 
-| Panel | id | Default / min width | Toggle |
-|-------|----|---------------------|--------|
-| Outline | `outline` | 280 / 220 | `write.view.toggleOutline` |
-| Find and replace | `find` | 340 / 300 | `write.find.open` |
-| Version history | `history` | 320 / 280 | `shell.versions.togglePanel` |
-| Assistant | `assistant` | 400 / 360 (max 640) | `shell.ai.togglePanel` |
+| Rail order | Panel | id | Shown | Toggle |
+|------------|-------|----|-------|--------|
+| 1 | Outline | `outline` | always | `write.view.toggleOutline` |
+| 2 | Find and replace | `find` | always | `write.find.open` |
+| 3 | Assistant | `assistant` | when the assistant is available | `shell.ai.togglePanel` |
+| 4 | Version history | `history` | roles that can view history | `shell.versions.togglePanel` |
 
 ### 10.1 Outline panel (`OutlinePanel`)
-- Header: title "Outline", ⋮ (Collapse all, Expand all, Show levels ▸ 1–6 (`write.outline.setMaxLevel`,
-  view pref), Close).
+- Top row: heading count and ⋮ (Collapse all, Expand all, Show levels ▸ 1–6
+  (`write.outline.setMaxLevel`, view pref)); collapsing is the host header's ⇥.
 - Body: `WonkyTreeView` of headings (indent 12 px per level relative to the minimum level
   present), text truncated with ellipsis, tooltip with full text; current heading highlighted
   (`accent` background + `primary` left bar 2 px); click → `write.nav.goToHeading {nodeId}`;
@@ -512,17 +522,18 @@ The only place comments and suggestions are shown (`CommentMargin`, layout in
 (suite 07 §2.3): the title-row 💬 button and *View › Comments and suggestions*
 (`shell.comments.togglePanel`) show/hide the margin (local pref `write.view.commentMargin`,
 default on); `shell.comments.create` and `shell.comments.activate` show it.
-- **Filter** at the top of the margin: `CommentsFilterTabs` **Open** (default) / **For you**
-  (open threads that mention or are assigned to me); pending suggestions show with *Open*.
-  Resolved threads are not shown; there is no search.
+- **No filter**: the margin shows the open threads and pending suggestions; the Open / For you
+  filter (`CommentsFilterTabs`) is not shown in the margin and stays at *Open*. Resolved threads
+  are not shown; there is no search.
 - **Cards**: thread cards (`shell.comments.activate` on click) and suggestion cards with
   Accept/Reject (Editors) or Withdraw (author) plus the suggestion thread's replies and a reply
   box (08 §2.5). *Accept all / Reject all* stay available as commands
   (`write.suggestions.acceptAll` / `rejectAll`: palette, MCP).
 - **New comment**: the composer is a card in the margin at its anchor.
-- **Placement**: beside the page when the page (at the current zoom) still fits next to the
-  margin column with gutters; otherwise the margin overlays the right edge of the canvas. Hidden
-  below 600 px canvas width. Shown only when there are cards (anchored open threads, pending
+- **Placement** (Pages): the margin is drawn over the canvas's right edge and the page centers in
+  the rest (`WonkyEditor.endInset`), moving left as needed; when the window is too narrow for both,
+  the page sits at an 8 px left gutter so the margin covers at most the page's right margin.
+  Pageless: a column beside the content. Hidden below 600 px window width. Shown only when there are cards (anchored open threads, pending
   suggestions or a draft).
 
 ### 10.3 Version history panel
@@ -539,7 +550,7 @@ and flash-highlight the changed range in the editor (1.5 s `findMatchActive` pul
 
 ### 10.5 Find and replace panel (`FindPanel`) — 04 §25
 ```
-┌ Find and replace ─────────────── ✕ ┐
+┌──────────────────────────────────────┐
 │ [🔍 colour            ] 3 of 42 ↑ ↓ │
 │ [Aa] [ab] [.*]  Search in: Doc ▾     │
 │ [⇄  color             ]              │
@@ -619,7 +630,7 @@ changes: LWW via `updateMeta`, undoable in domain `write.meta`, broadcast as `Me
 can change them; others see read-only values.
 
 ### 13.2 Per-user view preferences (local, not undoable, not synced)
-Zoom, mode, panel visibility/width, word count bar shown (default off), comment margin shown
+Zoom, mode, panel visibility, the shared panel width (device pref `panel.width`), word count bar shown (default off), comment margin shown
 (default on), selection toolbar, suggestion preview mode — persisted per user (and per document
 for zoom/mode) in local prefs. Collaborator cursors are always shown.
 
@@ -663,7 +674,6 @@ shortcuts; rows disabled by role with tooltip ("You need edit access — Request
 | Editor widget | `SuperEditor` | `SuperEditor` + rewrite | `SuperReader` |
 | Toolbar | full | full, non-suggestable items disabled | items 1–6 + switcher |
 | Menus | all | non-suggestable items disabled with reason | editing items disabled |
-| Block handles | yes | yes (Turn into, Comment; no move/duplicate) | no |
 | Comment margin | yes | yes | if role allows |
 | Canvas cue | none | thin 2 px `success` line under toolbar | none |
 | Caret | visible | visible (author colour tinted) | selection only |
@@ -682,8 +692,7 @@ Switching modes is instant; announcements via `SemanticsService` ("Suggesting mo
 | Content width | page width − margins | `min(theme pageless max width, viewport − 96)` |
 | Header/footer | painted in margins: theme `pageChrome` text style (default: 10 pt, `muted` equivalent of theme text), tokens expanded; double-click → Page setup › Header & footer | none |
 | Page number indicator | on scroll, a floating pill "Page 3 of 7" near the scrollbar thumb for 1 s | none |
-| Block handles | in left margin (≥ 28 px), else overlaid on page edge | 28 px left of column |
-| Comment margin | right of page if it fits beside it, else overlaying the canvas's right edge (§10.2) | same, relative to the column |
+| Comment margin | over the canvas's right edge; the page centers in the rest and moves left (8 px gutter minimum) (§10.2) | always beside the column |
 | Seam (oversized block) | dashed line + "page n" label in gutter (04 §29.3) | n/a |
 | Print preview | same paginator as export, exact ([07](07-import-export-print.md)) | prints using page setup (pageless documents still print on pages) |
 
@@ -695,9 +704,9 @@ Breakpoints = shad `ShadBreakpoints` (sm 640, md 768, lg 1024, xl 1280, 2xl 1536
 |-------|--------|---------|--------|--------|
 | ≥ xl | full title row | all items fit | comment margin beside the page | docked, resizable |
 | lg–xl | full | prio ≥ 5 overflow | comment margin beside the page or overlaying the canvas's right edge | docked (squeezes canvas; Pages mode auto *Fit width* if the page no longer fits and user zoom was 100 %) |
-| md–lg | star/move/history move into a ⋮ menu; avatars max 2 | prio ≥ 3 overflow; mode switcher icon-only | comment margin overlays the right edge | docked min width or overlay if canvas < 480 px |
-| sm–md | title truncates; Share becomes icon button | prio ≥ 2 overflow | Pages rendered at fit-width zoom (indicator shows effective %); margin overlays (hidden below 600 px canvas) | `ShadSheet` overlay |
-| < sm (≥ 360) | app icon, title, ⋮, Share icon | Undo/Redo, style, B, I, link, list, ⋯ | Pageless-like padding 16 px (Pages still drawn as scaled cards); no margin | full-width sheet |
+| md–lg | star/move move into a ⋮ menu; avatars max 2 | prio ≥ 3 overflow; mode switcher icon-only | comment margin overlays the right edge | docked min width or overlay if canvas < 480 px |
+| sm–md | title truncates; Share becomes icon button | prio ≥ 2 overflow | Pages rendered at fit-width zoom (indicator shows effective %); margin overlays (hidden below 600 px canvas) | overlay from the right over a scrim (380 px) |
+| < sm (≥ 360) | app icon, title, ⋮, Share icon | Undo/Redo, style, B, I, link, list, ⋯ | Pageless-like padding 16 px (Pages still drawn as scaled cards); no margin | full-width overlay |
 
 The word count bar (§11), when on, is the same at every width.
 
@@ -733,7 +742,8 @@ modes.
 - Menubar access: `Alt+F/E/V/I/O/T/H` (Win/Linux) and `Ctrl+Alt+F…` (macOS web) open menus
   (suite 02 §4.3); menu commands are searched in the command palette.
 - Toolbar: `Alt+F10` / `Mod+Alt+.`; floating toolbar: `Alt+F10` when visible (takes precedence).
-- Panels: `Mod+Alt+Shift+1…5` switch; `Esc` closes and returns focus to the document.
+- Panels: `Mod+Alt+Shift+1…5` switch; `Esc` collapses the panel to the rail and returns focus to
+  the document.
 - Title field: no dedicated shortcut (avoids conflicts); reachable via `F6` and *File › Rename*
   (which focuses `DocumentTitleField` with its text selected).
 
@@ -768,12 +778,12 @@ modes.
 | `WonkyCharacterGrid` | **wonky_ui** | Virtualized glyph grid with keyboard nav (special chars, could serve emoji) |
 | `ModeSwitcher` | app | §15 |
 | `ParagraphStylePicker` | app | §4.1 (theme-rendered items) |
-| `SlashMenu`, `BlockMenu` | app | §8 |
+| `SlashMenu` | app | §8 |
 | `LinkEditorPopover`, `LinkHoverCard`, `MentionPicker`, `CodeLanguagePicker` | app | §9 |
 | `ImageToolbar`, `TableToolbar`, `SelectionToolbar` | app | §5 (built on `WonkyFloatingToolbar`) |
 | `TableEditorPopover` + `TableGridEditor` | app | 04 §18.4 |
 | `DocumentCanvas`, `PageChrome` painter | app | §3.4, §16 |
-| `CommentMargin` host (with `CommentsFilterTabs` and the composer card) | app | §10.2, 04 §33 |
+| `CommentMargin` host (with the composer card; no filter) | app | §10.2, 04 §33 |
 | `FindPanel`, `OutlinePanel` | app | §10 |
 | `WordCountDialog`, `PageSetupDialog`, `SpellingDialog`, `SpecialCharactersDialog`, `DocumentDetailsDialog`, Markdown guide dialog (`showMarkdownGuide`) | app | §12, §7.7 |
 | `OffscreenPresenceIndicators` | app | 04 §34.2 |
@@ -870,9 +880,12 @@ All of these appear in `ui.list_commands` with their menu paths from §7.
 - **Removed** (no longer part of the product): compact mode, full screen, View › Show, menu
   search, help center, File › Settings (document settings dialog), View › Preview theme, Format ›
   "What formatting is supported", Tools › View Markdown source, focus mode and typewriter
-  scrolling, the comments and suggestions side panels, the activity dashboard.
+  scrolling, the comments and suggestions side panels, the activity dashboard, the block handle
+  and block menu (and their view pref), the title row's History and Assistant buttons and
+  the toolbar's Assistant button group (both panels are in the rail), the margin's Open / For
+  you filter.
 - **Not built this iteration** (documented as TODO): spelling (§12.10–12.11), emoji/special
   characters (§9.5, §12.4), lightbox (§12.15), export options dialog (§12.16), floating
-  image/table toolbars (§5.2–5.3; the context and block menus offer the same commands), drag &
+  image/table toolbars (§5.2–5.3; the context menu offers the same commands), drag &
   drop, AI items, native macOS menubar, compact-density goldens.
 

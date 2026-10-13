@@ -93,7 +93,6 @@ class EditorBlockCallbacks {
     this.onCopyCode,
     this.onImageDoubleTap,
     this.onImageTap,
-    this.onBlockHandleTap,
     this.onRemoveImage,
   });
 
@@ -111,9 +110,6 @@ class EditorBlockCallbacks {
 
   /// Click on an image in read-only views (Viewing mode): the lightbox.
   final void Function(String nodeId)? onImageTap;
-
-  /// The ⋮⋮ block handle was tapped (opens the block menu).
-  final void Function(String nodeId, Rect globalHandleRect)? onBlockHandleTap;
 
   /// Remove a failed upload's image.
   final void Function(String nodeId)? onRemoveImage;

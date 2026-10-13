@@ -256,6 +256,10 @@ class _SyncStatusIndicatorState extends State<SyncStatusIndicator> {
     final l10n = WonkyUiLocalizations.of(context);
     final theme = ShadTheme.of(context);
     final (icon, label, color) = _visual(l10n, theme.colorScheme);
+    // The row says just "Offline"; the tooltip and details explain it.
+    final shortLabel = widget.status.state == SyncState.offline
+        ? l10n.syncOfflineShort
+        : label;
     final fg = color ?? theme.colorScheme.mutedForeground;
     final content = Row(
       mainAxisSize: MainAxisSize.min,
@@ -265,7 +269,7 @@ class _SyncStatusIndicatorState extends State<SyncStatusIndicator> {
           const SizedBox(width: 6),
           Flexible(
             child: Text(
-              label,
+              shortLabel,
               overflow: TextOverflow.ellipsis,
               style: theme.textTheme.muted.copyWith(fontSize: 12, color: fg),
             ),

@@ -98,7 +98,7 @@ Single-window page at `/` (Write) or `/` (Sheets) — layout:
 
 ```
 ┌──────────────────────────────────────────────────────────────────────────────┐
-│ [≡] [App logo] Wonky Write   [ 🔍 Search in Drive…            ]  [◐] [🔔] [👤] │  ← TopBar
+│ [≡] [◆] Write    [ 🔍 Search in Drive…                        ]  [◐] [🔔] [👤] │  ← TopBar
 ├───────────────┬──────────────────────────────────────────────────────────────┤
 │ + New         │  Start a new document                                         │
 │               │  [Blank] [Meeting notes] [Project brief] [Letter] [More ▸]    │ ← Template strip
@@ -115,7 +115,10 @@ Single-window page at `/` (Write) or `/` (Sheets) — layout:
 
 ### 3.1 Components
 - **TopBar** (shared `WonkyTopBar`): hamburger (collapses sidebar), app logo (the product icon,
-  suite 02 §5) + short name ("Write" / "Sheets"; click → home), drive search field with suggestions dropdown (recent
+  suite 02 §5) + short name ("Write" / "Sheets"; click → home), drive search field (while the
+  sidebar is open it starts where the page content starts — sidebar 256 px + the 20 px content
+  inset, `WonkyTopBar.contentStart` — so it lines up with "Start a new document" / "Home") with
+  suggestions dropdown (recent
   searches, matching items with their kind icons, "Search for '…'" row, filter chips: type,
   owner, modified), app theme toggle (light/dark/system cycle), notifications, account avatar
   menu (name, email, Settings, switch app → *Open Wonky Sheets/Write* with that product's icon,
@@ -126,7 +129,8 @@ Single-window page at `/` (Write) or `/` (Sheets) — layout:
   items (Home, My Drive, Shared with me, Starred, Offline,
   Trash), collapsible folder tree under My Drive (lazy-loaded, drag-and-drop target), storage
   usage footer (no separator above it).
-- **Template strip**: collapsible ("Hide templates"), horizontal list of `TemplateCard`s; *More*
+- **Template strip**: collapsible ("Hide templates"), 20 px horizontal padding (matching the list
+  header), horizontal list of `TemplateCard`s; *More*
   opens the template gallery page (`/templates`) with categories (Personal, Work, Education,
   Project management, Finance for Sheets…). A card draws a **miniature page** in the template's
   `previewStyle` (paper, text, heading and accent colors for the current app theme; accent
@@ -154,7 +158,8 @@ Single-window page at `/` (Write) or `/` (Sheets) — layout:
   Copy link, Rename, Move to…, Add shortcut, Star/Unstar, Make available offline, Make a copy,
   Download as ▸ (formats), Version history, Details, Move to trash. In Trash: Restore, Delete
   forever.
-- **Details panel** (toggle `i`): right side panel with thumbnail (or the kind icon), type, owner, location,
+- **Details panel** (toggle `i`): right side panel (`WonkySplitView` with `rail: false`: a close
+  button, no icon rail; suite 02 §4.5) with thumbnail (or the kind icon), type, owner, location,
   sharing summary, created/modified/opened, description (editable), activity feed (who did
   what, from server activity log).
 - **Drag and drop**: items onto folders (sidebar tree or list) moves them (undoable); files

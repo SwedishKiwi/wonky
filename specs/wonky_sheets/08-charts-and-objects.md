@@ -499,9 +499,9 @@ and, if `label = equation`, also next to the line end.
 
 ## 8. Chart editor side panel
 
-Panel id `chartEditor` in `WonkySplitView` (default width 340, min 300). It opens on insert,
-on double-click, from ⋮ › *Edit chart*, and via `sheets.chart.edit`. Header: title "Chart
-editor", ✕. Body: `ShadTabs` with **Setup** and **Customize**. When it is open, the edited
+Panel id `chartEditor` in `WonkySplitView` (the shared panel width, suite 02 §4.5). It opens on
+insert, on double-click, from ⋮ › *Edit chart*, and via `sheets.chart.edit`. Header: the host's
+panel icons and collapse (no title). Body: `ShadTabs` with **Setup** and **Customize**. When it is open, the edited
 object stays selected and the panel follows selection: selecting another chart switches the
 panel to that chart. Selecting a cell keeps the panel open with an empty state ("Select a chart
 to edit it").

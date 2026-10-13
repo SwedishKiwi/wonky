@@ -253,7 +253,7 @@ class _TemplateStripState extends State<TemplateStrip> {
     final s = widget.services;
     return Container(
       color: theme.colorScheme.canvas,
-      padding: const EdgeInsets.fromLTRB(24, 12, 24, 16),
+      padding: const EdgeInsets.fromLTRB(20, 12, 20, 16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         mainAxisSize: MainAxisSize.min,

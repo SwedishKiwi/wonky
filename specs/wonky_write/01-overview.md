@@ -97,7 +97,7 @@ architecture does not block it.
 | Emoji picker (Unicode text) | P1 |
 | Special characters dialog | P1 |
 | Slash command menu (`/`) for all blocks and AI | P0 |
-| Block handle (⋮): turn into, duplicate, delete, move up/down, copy link to heading, comment (no drag to reorder) | P0 |
+| Block commands: turn into, duplicate, delete, move up/down (`Alt+Shift+↑/↓`), copy link to heading — via shortcuts, context menu, palette and MCP (no block handle or block menu, no drag to reorder) | P0 |
 | Insert date (as plain text in the user's locale format) | P2 |
 | Table of contents (generated as a static list of heading links, with an "Update" action) | P2 |
 
@@ -122,7 +122,7 @@ architecture does not block it.
 | Real-time co-editing (OT), offline outbox, reconnect rebase | P0 | [03-sync-protocol.md](03-sync-protocol.md), suite 12 |
 | Presence avatars, remote cursors and selections with name flags | P0 | 04 §34, suite 07 |
 | Follow a collaborator | P1 | 04 §34.4 |
-| Comments: anchored to text, margin cards (the only place they show; Open / For you filter), @mentions, resolve | P0 | [08-comments-suggestions-history.md](08-comments-suggestions-history.md) |
+| Comments: anchored to text, margin cards (the only place they show; open threads only, no filter), @mentions, resolve | P0 | [08-comments-suggestions-history.md](08-comments-suggestions-history.md) |
 | Suggesting mode (tracked changes), accept/reject, per-author colors; suggestion cards with replies in the margin | P0 | 08 + 04 §32 |
 | Version history: list, compare with highlighted changes, restore, name | P0 | 08, suite 07 |
 | View modes: Editing / Suggesting / Viewing; role-driven read-only (`SuperReader`) | P0 | 04 §31, 05 §15 |

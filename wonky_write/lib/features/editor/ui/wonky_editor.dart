@@ -66,6 +66,7 @@ class WonkyEditor extends StatefulWidget {
     this.onDropFiles,
     this.inlineTableEditing = true,
     this.externalDrops,
+    this.endInset = 0,
   });
 
   final WriteEditorController controller;
@@ -128,6 +129,11 @@ class WonkyEditor extends StatefulWidget {
   /// In-place table cell editing (SE-4, Write 04 §18.4).
   final bool inlineTableEditing;
 
+  /// Pages mode: width at the end of the canvas that something is drawn over
+  /// (the comment margin). The page centers in the rest — moving left, down
+  /// to an 8 px gutter — so it stays clear of it when there is room.
+  final double endInset;
+
   /// Source of OS drops (defaults to the platform's; tests inject one).
   final ExternalDropSource? externalDrops;
 
@@ -159,7 +165,6 @@ class WonkyEditorState extends State<WonkyEditor> {
   late InlineTableEditing _tables;
   ExternalDropSource? _drops;
   final _slashItems = defaultSlashItems();
-  final _hoveredNode = ValueNotifier<String?>(null);
   final _linkCard = ValueNotifier<LinkRun?>(null);
   late ScrollController _scrollController;
   Timer? _hoverTimer;
@@ -265,7 +270,6 @@ class WonkyEditorState extends State<WonkyEditor> {
     _emojiPicker.dispose();
     _dropIndicator.dispose();
     _outerFocus.dispose();
-    _hoveredNode.dispose();
     _linkCard.dispose();
     if (widget.scrollController == null) _scrollController.dispose();
     super.dispose();
@@ -532,30 +536,11 @@ class WonkyEditorState extends State<WonkyEditor> {
     _linkCard.value = inside ? run : null;
   }
 
-  /// The block whose handle gutter (left of the block, Write 04 §22) is at
-  /// [local], so the handle stays while the pointer moves onto it.
-  String? _handleGutterNode(DocumentLayout layout, Offset local) {
-    final nearest = layout.getDocumentPositionNearestToOffset(local);
-    if (nearest == null) return null;
-    final node = controller.document.getNodeById(nearest.nodeId);
-    if (node == null) return null;
-    final box = layout.getRectForSelection(
-      DocumentPosition(nodeId: node.id, nodePosition: node.beginningPosition),
-      DocumentPosition(nodeId: node.id, nodePosition: node.endPosition),
-    );
-    if (box == null) return null;
-    final inGutter =
-        local.dx >= box.left - blockHandleGutter && local.dx <= box.left;
-    final inBlock = local.dy >= box.top - 4 && local.dy <= box.bottom + 4;
-    return inGutter && inBlock ? node.id : null;
-  }
-
   void _onHover(PointerHoverEvent event) {
     final layout = controller.documentLayout;
     if (layout == null) return;
     final local = layout.getDocumentOffsetFromAncestorOffset(event.position);
     final position = layout.getDocumentPositionAtOffset(local);
-    _hoveredNode.value = position?.nodeId ?? _handleGutterNode(layout, local);
     final offset = position == null
         ? null
         : controller.mirror.offsetOf(position);
@@ -682,11 +667,30 @@ class WonkyEditorState extends State<WonkyEditor> {
 
     if (pages) {
       final pageWidth = view.pageSetup.size.width * zoom * textScale;
+      final page = surface;
       surface = ColoredBox(
         color: theme.canvasColor,
-        child: Align(
-          alignment: Alignment.topCenter,
-          child: SizedBox(width: pageWidth, child: surface),
+        child: LayoutBuilder(
+          builder: (context, c) {
+            const gutter = 8.0;
+            final free = c.maxWidth - widget.endInset;
+            final left = free >= pageWidth + 2 * gutter
+                ? (free - pageWidth) / 2
+                : widget.endInset > 0
+                ? gutter
+                : ((c.maxWidth - pageWidth) / 2).clamp(0.0, double.infinity);
+            return Padding(
+              padding: EdgeInsets.only(left: left),
+              child: Align(
+                alignment: Alignment.topLeft,
+                child: SizedBox(
+                  key: const ValueKey<String>('write.page'),
+                  width: pageWidth,
+                  child: page,
+                ),
+              ),
+            );
+          },
         ),
       );
       // A rebuild (edit, selection, view change) gets a fresh budget of
@@ -710,7 +714,6 @@ class WonkyEditorState extends State<WonkyEditor> {
         skipTraversal: true,
         child: MouseRegion(
           onHover: _onHover,
-          onExit: (_) => _hoveredNode.value = null,
           child: Stack(
             children: [
               Positioned.fill(child: surface),
@@ -875,13 +878,6 @@ class WonkyEditorState extends State<WonkyEditor> {
       documentOverlayBuilders: [
         DefaultCaretOverlayBuilder(caretStyle: style.caretStyle),
         WonkyRemoteCaretLayerBuilder(controller: controller, theme: theme),
-        WonkyBlockHandleLayerBuilder(
-          controller: controller,
-          theme: theme,
-          hoveredNodeId: _hoveredNode,
-          onTap: (nodeId, rect) =>
-              widget.blockCallbacks.onBlockHandleTap?.call(nodeId, rect),
-        ),
         DropIndicatorLayerBuilder(
           controller: controller,
           indicator: _dropIndicator,

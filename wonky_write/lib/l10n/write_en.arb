@@ -680,10 +680,6 @@
   "toolbarInsertImage": "Insert image",
   "toolbarImageUpload": "Upload from computer",
   "toolbarInsertTable": "Insert table",
-  "toolbarAssistant": "Assistant",
-  "@toolbarAssistant": {
-    "description": "Toggles the AI assistant panel."
-  },
   "toolbarEditLink": "Edit link",
   "toolbarMode": "Mode",
   "@toolbarMode": {
@@ -722,7 +718,6 @@
     "description": "Submenu to change the block type."
   },
   "docMenuImageByUrl": "Image by URL…",
-  "docMenuDuplicate": "Duplicate",
   "docMenuPlainText": "Plain text",
   "@docMenuPlainText": {
     "description": "Code block language: no syntax highlighting."

@@ -65,7 +65,7 @@ final sheetsMenuSpec = MenuSpec.root([
 
 ```
 ┌──────────────────────────────────────────────────────────────────────────────────────────┐
-│ [▦] Q3 Budget ☆ 📁 ☁ Saved            (A)(B)(+2)  💬3  🕘  ✨  [🔒 Share]  (me)          │ row 1 (48)
+│ [▦] Q3 Budget ☆ 📁 ☁ Saved            (A)(B)(+2)  💬3  [🔒 Share]  (me)                │ row 1 (48)
 │ File Edit View Insert Format Data Tools Extensions Help                                   │ row 2 (32)
 │ ↶ ↷ 🖨 🖌 100%▾ │ $ % .0 .00 123▾ │ Inter▾ │ − 10 + │ B I S A │ ◧ ⊞▾ ⊟▾ │ ≡▾ ⊥▾ ↵▾ ⟲▾ │ 🔗 💬 📊 ⏷▾ Σ▾ │     │ row 3 (40)
 ├────────────┬────┬───────────────────────────────────────────────────────────┬────┬───┤
@@ -84,9 +84,10 @@ final sheetsMenuSpec = MenuSpec.root([
 
 - Rows 1–3 follow suite 03 §3.1. Title row: app icon (Sheets product icon, → Home), `DocumentTitleField`
   (rename = `shell.drive.rename`, 1 step on the shell stack), star, move, `SyncStatusIndicator`,
-  `PresenceAvatarStack`, comments button (badge = open threads, toggles Comments panel), version
-  history button (`sheets.history.open`), ✨ Assistant (`shell.ai.togglePanel`), **Share**,
-  account menu.
+  `PresenceAvatarStack`, comments button (badge = open threads, toggles Comments panel), **Share**,
+  account menu. No history or ✨ Assistant buttons: those are reached through the side panel
+  host's icon rail (suite 03 §3.1) and their commands (`sheets.history.open`,
+  `shell.ai.togglePanel`).
 - Rows 1–3 are always shown (suite 03 §3.1: no compact mode or full screen).
 - Viewer/commenter mode: toolbar shows only Print, Zoom, Filter views (temporary),
   and a `ShadBadge` "View only" (or "Comment only") with *Request edit access*.
@@ -620,39 +621,41 @@ Paste, Paste special ▸, Clear all formatting, Fit all columns to data, Unhide 
 
 ## 10. Side panels
 
-All panels are `SidePanelSpec`s hosted by `WonkySplitView` (one active, shown or hidden — no
-collapsed rail; the header shows every panel as a tab; width persisted per id, Esc closes,
-`Mod+Alt+Shift+{n}` cycles). Panels operate on the **current
+All panels are `SidePanelSpec`s hosted by `WonkySplitView` (suite 02 §4.5: one active; collapsed
+panels show as a 44 px icon rail at the right edge, Sheets panels first, then History; the header
+shows the panel icons, header actions and collapse; all panels share one width — default 360,
+min 300, max 640, device pref `panel.width`; Esc collapses; `Mod+Alt+Shift+{n}` cycles). Panels operate on the **current
 selection** by default and expose a `RangeInput` (§13) to change it. **Rule editors** (CF, DV,
 banding, protection, named ranges, theme) edit a *draft*: the grid shows a live, non-persisted
 preview, *Done* commits the draft as **one undo step** and *Cancel* discards it. List-level actions
 (delete a rule, reorder by drag, enable/disable) commit immediately (1 step each). Object editors
 (chart, pivot, slicer) follow [08](08-charts-and-objects.md) / [07](07-data-tools.md).
 
-| Panel id | Title | Opened by | Default width | Body spec |
-|----------|-------|-----------|---------------|-----------|
-| `sheets.panel.conditionalFormatting` | Conditional format rules | `sheets.cf.openPanel` | 320 | [06 §15.9](06-formatting.md#15-conditional-formatting) |
-| `sheets.panel.alternatingColors` | Alternating colors | `sheets.banding.openPanel` | 300 | 06 §14 |
-| `sheets.panel.theme` | Themes | `sheets.theme.openPanel` | 300 | 06 §13 |
-| `sheets.panel.dataValidation` | Data validation rules | `sheets.dv.openPanel` | 340 | 07 |
-| `sheets.panel.namedRanges` | Named ranges | `sheets.namedRanges.openPanel` | 320 | 07 |
-| `sheets.panel.namedFunctions` | Named functions | `sheets.namedFunctions.openPanel` | 360 | 07 / 05 |
-| `sheets.panel.protected` | Protected sheets & ranges | `sheets.protect.openPanel` | 340 | 07 |
-| `sheets.panel.chartEditor` | Chart editor (Setup / Customize tabs) | chart select + edit, `sheets.chart.insert` | 360 | 08 |
-| `sheets.panel.pivotEditor` | Pivot table editor | pivot *Edit*, `sheets.insert.pivotTable` | 360 | 07 |
-| `sheets.panel.slicer` | Slicer (P2) | `sheets.slicer.add` | 320 | 07 |
-| `sheets.panel.filterViews` | Filter views | Data › Change view ▸ Manage | 320 | 07 |
-| `sheets.panel.columnStats` | Column stats | `sheets.data.columnStats` | 320 | 07 |
-| `sheets.panel.explore` | Explore | `sheets.explore.toggle` | 360 | 12 |
-| — | Edit history (single cell) | `sheets.history.showCellHistory` — a popover, not a panel | — | [10 §6](10-collaboration-history.md) |
-| `sheets.panel.cleanupSuggestions` | Cleanup suggestions (P2) | `sheets.cleanup.openSuggestions` | 320 | 07 |
-| `comments` (shell) | Comments | header button, `sheets.comments.openPanel` | 360 | 10 / suite 07 |
-| `assistant` (shell) | Assistant | ✨, `shell.ai.togglePanel` | 400 | suite 10, 12 |
-| — | Version history | full-screen route `/s/:uuid/history` | — | 10 |
-| — | Script editor | full-screen route `/s/:uuid/script` | — | 09 |
+| Panel id | Title | Opened by | Body spec |
+|----------|-------|-----------|-----------|
+| `sheets.panel.conditionalFormatting` | Conditional format rules | `sheets.cf.openPanel` | [06 §15.9](06-formatting.md#15-conditional-formatting) |
+| `sheets.panel.alternatingColors` | Alternating colors | `sheets.banding.openPanel` | 06 §14 |
+| `sheets.panel.theme` | Themes | `sheets.theme.openPanel` | 06 §13 |
+| `sheets.panel.dataValidation` | Data validation rules | `sheets.dv.openPanel` | 07 |
+| `sheets.panel.namedRanges` | Named ranges | `sheets.namedRanges.openPanel` | 07 |
+| `sheets.panel.namedFunctions` | Named functions | `sheets.namedFunctions.openPanel` | 07 / 05 |
+| `sheets.panel.protected` | Protected sheets & ranges | `sheets.protect.openPanel` | 07 |
+| `sheets.panel.chartEditor` | Chart editor (Setup / Customize tabs) | chart select + edit, `sheets.chart.insert` | 08 |
+| `sheets.panel.pivotEditor` | Pivot table editor | pivot *Edit*, `sheets.insert.pivotTable` | 07 |
+| `sheets.panel.slicer` | Slicer (P2) | `sheets.slicer.add` | 07 |
+| `sheets.panel.filterViews` | Filter views | Data › Change view ▸ Manage | 07 |
+| `sheets.panel.columnStats` | Column stats | `sheets.data.columnStats` | 07 |
+| `sheets.panel.explore` | Explore | `sheets.explore.toggle` | 12 |
+| — | Edit history (single cell) | `sheets.history.showCellHistory` — a popover, not a panel | [10 §6](10-collaboration-history.md) |
+| `sheets.panel.cleanupSuggestions` | Cleanup suggestions (P2) | `sheets.cleanup.openSuggestions` | 07 |
+| `comments` (shell) | Comments | header button, `sheets.comments.openPanel` | 10 / suite 07 |
+| `assistant` (shell) | Assistant | rail icon, `shell.ai.togglePanel` | suite 10, 12 |
+| — | Version history | full-screen route `/s/:uuid/history` | 10 |
+| — | Script editor | full-screen route `/s/:uuid/script` | 09 |
 
-Panel chrome: header with title, help (?) link, close ✕; body in `WonkyScrollArea`; footer with
-primary *Done*. At widths < MD (suite 02 §6) panels open as a `ShadSheet` over the grid.
+Panel chrome: host header with the panel icons (no title; the name is the icon's tooltip), the
+panel's header actions (e.g. help (?) link) and collapse; body in `WonkyScrollArea`; footer with
+primary *Done*. Below 768 px the open panel overlays the grid from the right over a scrim.
 
 ---
 

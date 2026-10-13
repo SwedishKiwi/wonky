@@ -151,12 +151,15 @@ void main() {
             brightness: b,
             center: true,
           );
-          expect(
-            find.text('Offline — changes saved on this device'),
-            findsOneWidget,
-          );
+          // Short in the row; the details explain it.
+          expect(find.text('Offline'), findsOneWidget);
           await tester.tap(find.byKey(const ValueKey('sync.status')));
           await tester.pumpAndSettle();
+          // In the dialog (and the tooltip).
+          expect(
+            find.text('Offline — changes saved on this device'),
+            findsWidgets,
+          );
           expect(find.text('3 changes waiting to sync'), findsOneWidget);
           expect(find.text('Connection lost'), findsOneWidget);
           await tester.tap(find.byKey(const ValueKey('sync.retry')));

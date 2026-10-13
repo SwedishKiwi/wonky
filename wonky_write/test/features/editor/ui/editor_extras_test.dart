@@ -7,7 +7,6 @@ import 'package:flutter_test_robots/flutter_test_robots.dart';
 import 'package:super_editor/super_editor.dart';
 import 'package:super_editor/super_editor_test.dart';
 import 'package:wonky_write/features/editor/applier/delta_applier.dart';
-import 'package:wonky_write/features/editor/components/editor_services.dart';
 import 'package:wonky_write/features/editor/dnd/drop_indicator.dart';
 import 'package:wonky_write/features/editor/dnd/external_drop.dart';
 import 'package:wonky_write/features/editor/keyboard/editor_keyboard.dart';
@@ -57,7 +56,6 @@ Future<_Pumped> _pump(
   EmojiSuggester? emoji,
   void Function(List<DroppedFile> files, int index)? onDropFiles,
   VoidCallback? onUndo,
-  void Function(String nodeId, Rect rect)? onBlockHandleTap,
 }) async {
   tester.view.physicalSize = const Size(1200, 900);
   tester.view.devicePixelRatio = 1;
@@ -77,9 +75,6 @@ Future<_Pumped> _pump(
           onDropFiles: onDropFiles,
           externalDrops: drops,
           shortcutCallbacks: EditorShortcutCallbacks(onUndo: onUndo),
-          blockCallbacks: EditorBlockCallbacks(
-            onBlockHandleTap: onBlockHandleTap,
-          ),
         ),
       ),
     ),
@@ -305,38 +300,6 @@ void main() {
 
       expect(ok, isFalse);
       expect(p.h.delta, Delta()..insert('Hello world\n'));
-    });
-  });
-
-  group('Given blocks (block handle, Write 04 §22)', () {
-    testWidgets('when moving the pointer from a paragraph onto its handle '
-        'then the handle stays and a tap opens the block menu', (tester) async {
-      final taps = <String>[];
-      final p = await _pump(
-        tester,
-        Delta()..insert('First paragraph\nSecond paragraph\n'),
-        onBlockHandleTap: (nodeId, _) => taps.add(nodeId),
-      );
-      final first = p.h.controller.document.first.id;
-      final handle = find.byKey(ValueKey('write.editor.blockHandle.$first'));
-      final mouse = await tester.createGesture(kind: PointerDeviceKind.mouse);
-      await mouse.addPointer(location: _center(tester, 'First paragraph'));
-      await mouse.moveTo(
-        _center(tester, 'First paragraph') + const Offset(1, 0),
-      );
-      await tester.pump();
-      expect(handle, findsOneWidget);
-
-      // Off the text, into the gutter where the handle is.
-      await mouse.moveTo(tester.getCenter(handle));
-      await tester.pump();
-      expect(handle, findsOneWidget);
-
-      await mouse.down(tester.getCenter(handle));
-      await mouse.up();
-      await tester.pump();
-      await mouse.removePointer();
-      expect(taps, [first]);
     });
   });
 

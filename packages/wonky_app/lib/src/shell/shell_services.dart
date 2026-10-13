@@ -109,8 +109,8 @@ class ShellServices implements ActiveDocumentHost {
     crossApp = CrossAppNavigator(urls);
     toasts = Toasts(() => navigatorContext);
     panels = WonkySplitViewController(
-      widths: _panelWidths(),
-      onWidthChanged: (id, w) => prefs.setDevice('panel.width.$id', w),
+      width: prefs.device<double>('panel.width'),
+      onWidthChanged: (w) => prefs.setDevice('panel.width', w),
     );
     undo.registerHandler(DriveUndoHandler(repositories.drive));
     undo.registerHandler(CommentsUndoHandler(this));
@@ -267,8 +267,6 @@ class ShellServices implements ActiveDocumentHost {
   }
 
   UserSummary? get me => currentUser.value?.summary;
-
-  Map<String, double> _panelWidths() => {};
 
   // ---- Active document host ----
 

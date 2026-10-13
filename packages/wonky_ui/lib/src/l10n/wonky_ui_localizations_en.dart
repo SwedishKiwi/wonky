@@ -128,6 +128,9 @@ class WonkyUiLocalizationsEn extends WonkyUiLocalizations {
   String get hueMagenta => 'magenta';
 
   @override
+  String get panelCollapse => 'Collapse panel';
+
+  @override
   String get panelClose => 'Close panel';
 
   @override

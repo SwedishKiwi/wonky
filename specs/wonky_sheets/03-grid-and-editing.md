@@ -1253,7 +1253,7 @@ database.
 | Undo step fully no-op | toast "Nothing to undo here — this was changed by someone else." and the step is dropped |
 | Edited cell changed remotely while you were editing it | on commit, your value wins (LWW, later HLC); no toast. Offline edits replaced by newer remote edits → review toast/dialog per [10 §9](10-collaboration-history.md) |
 | Row/column you are editing deleted remotely | editor closes, toast "The row you were editing was deleted by Bo." |
-| Offline | Shell offline banner; `SyncStatusIndicator` "Offline — changes saved on this device"; remote cursors fade out after 30 s |
+| Offline | Shell offline banner; `SyncStatusIndicator` "Offline" (tooltip: "Offline — changes saved on this device"); remote cursors fade out after 30 s |
 | Sync error | Status "Sync error" (click → details & retry) |
 
 ---

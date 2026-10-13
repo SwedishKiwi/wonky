@@ -22,7 +22,6 @@ abstract final class WonkyEditorKeys {
   static const codeCopy = 'write.editor.codeCopy';
   static const tableEdit = 'write.editor.tableEdit';
   static const imageRetry = 'write.editor.imageRetry';
-  static const blockHandle = 'write.editor.blockHandle';
 }
 
 // -----------------------------------------------------------------------------

@@ -182,6 +182,9 @@ class _DriveHomeScreenState extends State<DriveHomeScreen> {
                 initialQuery: widget.location.query,
                 onToggleSidebar: () =>
                     setState(() => _sidebarOpen = !_sidebarOpen),
+                // Search starts where the content does (sidebar + the
+                // content's 20 px inset).
+                contentStart: sidebarVisible ? DriveSidebar.width + 20 : null,
               ),
             ),
             Expanded(
@@ -212,6 +215,8 @@ class _DriveHomeScreenState extends State<DriveHomeScreen> {
                       clipBehavior: Clip.antiAlias,
                       child: WonkySplitView(
                         controller: s.panels,
+                        // One panel: closing hides it (no icon rail).
+                        rail: false,
                         panels: [
                           SidePanelSpec(
                             id: ShellPanels.details,

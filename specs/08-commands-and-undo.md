@@ -264,7 +264,7 @@ through the active document controller, never re-register these ids):
 | Edit | `shell.edit.undo`, `shell.edit.redo`, `shell.edit.undoHistory`, `shell.edit.undoTo {stepIndex}`, `shell.edit.cut`, `shell.edit.copy`, `shell.edit.paste`, `shell.edit.pasteWithoutFormatting`, `shell.edit.selectAll` |
 | Comments | `shell.comments.create`, `shell.comments.reply`, `shell.comments.resolve`, `shell.comments.reopen`, `shell.comments.delete`, `shell.comments.activate {threadUuid}`, `shell.comments.togglePanel` (show through the app's `CommentsHost` when set, else the comments side panel; suite 07 §2.3) |
 | Versions | `shell.versions.open`, `shell.versions.togglePanel`, `shell.versions.nameCurrent`, `shell.versions.restore {versionId}` |
-| Panels | `shell.panels.open {panelId}`, `shell.panels.close {panelId}`, `shell.panels.toggle {panelId}` |
+| Panels | `shell.panels.open {panelId}`, `shell.panels.close {panelId}`, `shell.panels.toggle {panelId}` (in the editors, closing collapses the panel to the icon rail, suite 02 §4.5) |
 | MCP | `shell.mcp.copyConnectionInfo`, `shell.mcp.toggleUiBridge`, `shell.mcp.stopControl` |
 | View | `shell.view.zoom {percent}` (the editor chrome is always shown: no compact mode, full screen or show/hide toggles for toolbar, menubar or status bar) |
 | Appearance & settings | `shell.appearance.setTheme {mode}`, `shell.settings.open {section}` |

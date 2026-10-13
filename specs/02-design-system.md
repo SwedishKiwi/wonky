@@ -129,7 +129,8 @@ Thin wrapper over `ShadContextMenu` (controller + anchor) adding:
 menubar, the command-palette menu paths and the MCP `ui.get_menu_tree` output. `Alt` (Win/Linux)
 or `Ctrl+F2`-style focus shortcut (`Alt+F` opens File etc. on Win/Linux; on macOS, `Ctrl+Alt+F`)
 to avoid conflicts. Menu commands are found through the command palette (suite 08); there is no
-separate menu search.
+separate menu search. The strip is flat: the shad menubar's `controlShadow` is clipped away
+(`ClipRect`), so it has no drop shadow; the menus themselves are unchanged.
 
 ### 4.4 `WonkyColorPicker`
 Popover content used for text color (Sheets), fill color, border color, tab color, chart colors,
@@ -147,13 +148,26 @@ theme colors:
 A right-side **panel host** used by both apps: hosts Outline, Comments, Version history,
 Assistant, Find & replace (Sheets uses a dialog), Script editor sidebar, Named ranges, Data
 validation, Conditional formatting, Chart editor, Pivot editor, etc. Built on
-`ShadResizablePanelGroup`. Behaviors: one active panel at a time; the host is either showing it
-or hidden (no collapsed icon rail); the header always shows **every** panel as an icon tab (when
-there is more than one) to switch between them, plus the panel's header actions and close ✕;
-width persisted per panel id, Esc closes, `Mod+Alt+Shift+[` / `Mod+Alt+Shift+]`
-cycle panels (`Mod+Alt+Shift+0–9` is reserved for Sheets macros). Panels declare `id`, `title`,
-`icon`, `minWidth`, `defaultWidth`, `builder`, `headerActions` and `showAsTab` (default true;
-false for panels opened only by their command, e.g. File › Details).
+`ShadResizablePanelGroup`. Behaviors:
+- One active panel at a time. **All panels share one width** (default 360, min 300, max 640,
+  persisted as the device pref `panel.width`).
+- **Collapse, not close** (`rail: true`, the editors): a collapsed host shows a 44 px vertical
+  **icon rail** at the right edge (`panel.rail`, buttons `panel.rail.<id>`), one icon per
+  `showAsTab` panel; clicking an icon opens that panel. The open panel's header shows only icon
+  buttons (one per `showAsTab` panel, the open one highlighted; the panel name is the icon's
+  tooltip and the body's semantics label — there is no heading), then the panel's header actions
+  and a collapse button (`panel.collapse`, `panelRightClose` icon). Esc and the narrow-window scrim
+  collapse the panel too.
+- `rail: false` (the drive's single details panel): no rail; the header keeps a close button
+  (`panel.close`) and the host hides.
+- One left border: the resize handle draws its 1 px line at its left edge on the panel
+  background (a centered line read as a double border).
+- `Mod+Alt+Shift+[` / `Mod+Alt+Shift+]` cycle panels (`Mod+Alt+Shift+0–9` is reserved for Sheets
+  macros).
+
+Panels (`SidePanelSpec`) declare `id`, `title`, `icon`, `builder`, `headerActions` and
+`showAsTab` (default true; false for panels opened only by their command, e.g. File › Details,
+which are not in the rail). They declare no width of their own.
 
 ### 4.6 `WonkyTreeView`
 Lazy tree (drive folder tree, document outline, script file tree): expand/collapse, keyboard
@@ -193,8 +207,9 @@ sync status lives in the title row (§4.14) and the app theme in View › App th
 scaffold shows it only when the app asks for it (`showStatusBar`).
 
 ### 4.14 `SyncStatusIndicator`
-Icon + label: *Saved*, *Saving…*, *Offline — changes saved on this device*, *Sync error*
-(clickable → details dialog with retry & log). Lives in each app's title row.
+Icon + label: *Saved*, *Saving…*, *Offline*, *Sync error* (clickable → details dialog with retry
+& log). Offline, the label is just *Offline* (`syncOfflineShort`); the tooltip and the details
+dialog say *Offline — changes saved on this device*. Lives in each app's title row.
 
 ### 4.15 `DocumentTitleField`
 Inline-editable title in the editor header: looks like text, becomes `ShadInput` on click,
@@ -233,7 +248,8 @@ decorative use). Product icons stand for the **apps** only; files keep plain gly
 ## 6. Layout, responsiveness, motion
 
 - Breakpoints: shad `ShadBreakpoints`. Desktop-first. At `< MD` the sidebar collapses to a drawer
-  (`ShadSheet`), side panels open as sheets over content, toolbars overflow aggressively. Nothing
+  (`ShadSheet`), below 768 px the open side panel overlays the content from the right over a
+  scrim (§4.5), toolbars overflow aggressively. Nothing
   may overflow at 360 px width.
 - Motion: 150–200 ms ease-out for popovers/panels; disabled when *Reduce motion* is on or
   `MediaQuery.disableAnimations`.

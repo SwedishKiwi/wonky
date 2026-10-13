@@ -186,8 +186,6 @@ class _WriteDocumentScreenState extends State<WriteDocumentScreen> {
           id: WritePanels.outline,
           title: writeL10n(context).screenPanelOutline,
           icon: LucideIcons.listTree,
-          defaultWidth: 280,
-          minWidth: 220,
           builder: (context) => OutlinePanel(
             insights: doc.insights,
             view: doc.outlineView,
@@ -201,8 +199,6 @@ class _WriteDocumentScreenState extends State<WriteDocumentScreen> {
           id: WritePanels.find,
           title: writeL10n(context).screenPanelFind,
           icon: LucideIcons.search,
-          defaultWidth: 340,
-          minWidth: 300,
           builder: (context) => ListenableBuilder(
             listenable: doc,
             builder: (context, _) => FindPanel(
@@ -212,7 +208,7 @@ class _WriteDocumentScreenState extends State<WriteDocumentScreen> {
             ),
           ),
         ),
-        writeAssistantPanelSpec(ai),
+        if (s.assistant?.available ?? false) writeAssistantPanelSpec(ai),
       ],
     );
   }
@@ -267,11 +263,19 @@ class _WriteDocumentScreenState extends State<WriteDocumentScreen> {
     final brightness = ShadTheme.of(context).brightness;
     final ui = CommandUi(context, s);
     return ListenableBuilder(
-      listenable: Listenable.merge([doc.documentTheme, doc.viewPrefs, session]),
+      listenable: Listenable.merge([
+        doc.documentTheme,
+        doc.viewPrefs,
+        session,
+        // The page makes room for the comment margin when it shows.
+        session.comments,
+        session.suggestions,
+      ]),
       builder: (context, _) {
         final theme = doc.documentTheme.editorTheme(brightness);
         final suggesting = doc.editor.mode == EditorMode.suggesting;
         final editor = WonkyEditor(
+          endInset: _marginShown(context) ? _marginColumn : 0,
           key: _editorKey,
           controller: doc.editor,
           commands: doc.commands,
@@ -324,9 +328,6 @@ class _WriteDocumentScreenState extends State<WriteDocumentScreen> {
                 _invoke('write.image.preview', {'nodeId': nodeId}),
             onImageTap: (nodeId) =>
                 _invoke('write.image.preview', {'nodeId': nodeId}),
-            onBlockHandleTap: (nodeId, rect) => PopupMenuHost.maybeOf(
-              _menuContext ?? context,
-            )?.show(rect.bottomLeft, () => blockMenuEntries(ui, doc, nodeId)),
             onRemoveImage: (nodeId) {
               final data = doc.embedData('image', nodeId);
               if (data != null) doc.images.cancel('${data['src']}');
@@ -425,69 +426,56 @@ class _WriteDocumentScreenState extends State<WriteDocumentScreen> {
   /// Width of the comment margin column including its padding.
   static const double _marginColumn = 300 + 8 + 16;
 
-  /// The canvas with the comment margin (Write 05 §3, 08 §3.2): comments
-  /// and suggestions are shown only there, toggled with the comments button
-  /// (`shell.comments.togglePanel`). It sits beside the page when the page
-  /// (at the current zoom) still fits next to it, and over the canvas's
-  /// right edge otherwise.
-  Widget _withMargin(BuildContext context, BoxConstraints c, Widget stack) {
-    final theme = doc.documentTheme.editorTheme(
-      ShadTheme.of(context).brightness,
-    );
-    final view = doc.editor.view;
-    final pages = view.layout == LayoutMode.pages;
-    final pageWidth = view.pageSetup.size.width * view.zoom;
+  /// Whether the comment margin shows: there are cards (threads,
+  /// suggestions or a draft), the user may see comments, the margin is
+  /// turned on and the window is wide enough.
+  bool _marginShown(BuildContext context) {
     final comments = session.comments;
-    final controller = comments.controller;
     final hasCards =
         comments.anchoredOpenThreads.isNotEmpty ||
         comments.unanchoredThreads.isNotEmpty ||
         session.suggestions.pending.isNotEmpty ||
         comments.draftOffset != null;
-    if (controller == null ||
-        !comments.visible ||
-        !hasCards ||
-        !doc.viewPrefs.showCommentMargin ||
-        c.maxWidth < 600) {
-      return stack;
-    }
-    final background = pages ? theme.canvasColor : theme.paperColor;
+    return comments.controller != null &&
+        comments.visible &&
+        hasCards &&
+        doc.viewPrefs.showCommentMargin &&
+        MediaQuery.sizeOf(context).width >= 600;
+  }
+
+  /// The canvas with the comment margin (Write 05 §3, 08 §3.2): comments
+  /// and suggestions are shown only there, toggled with the comments button
+  /// (`shell.comments.togglePanel`). Pages: the margin is drawn over the
+  /// canvas's right edge and the page centers in the rest (`endInset`),
+  /// moving left down to an 8 px gutter — it overlaps the page only when the
+  /// window is too narrow for both. Pageless: the margin is a column beside
+  /// the content.
+  Widget _withMargin(BuildContext context, BoxConstraints c, Widget stack) {
+    if (!_marginShown(context)) return stack;
+    final theme = doc.documentTheme.editorTheme(
+      ShadTheme.of(context).brightness,
+    );
+    final pages = doc.editor.view.layout == LayoutMode.pages;
     final margin = SizedBox(
       width: _marginColumn,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Padding(
-            padding: const EdgeInsets.fromLTRB(8, 8, 16, 4),
-            child: ListenableBuilder(
-              listenable: controller,
-              builder: (context, _) =>
-                  CommentsFilterTabs(controller: controller),
-            ),
+      child: ClipRect(
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(8, 0, 16, 0),
+          child: CommentMargin(
+            key: const ValueKey<String>('write.commentMargin'),
+            session: session,
+            width: 300,
+            scrollController: _scroll,
           ),
-          Expanded(
-            child: ClipRect(
-              child: Padding(
-                padding: const EdgeInsets.fromLTRB(8, 0, 16, 0),
-                child: CommentMargin(
-                  key: const ValueKey<String>('write.commentMargin'),
-                  session: session,
-                  width: 300,
-                  scrollController: _scroll,
-                ),
-              ),
-            ),
-          ),
-        ],
+        ),
       ),
     );
-    final beside = c.maxWidth >= pageWidth + 2 * 32 + _marginColumn;
-    if (beside) {
+    if (!pages) {
       return Row(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           Expanded(child: stack),
-          ColoredBox(color: background, child: margin),
+          ColoredBox(color: theme.paperColor, child: margin),
         ],
       );
     }

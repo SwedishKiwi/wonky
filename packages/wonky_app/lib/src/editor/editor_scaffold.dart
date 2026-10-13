@@ -324,19 +324,9 @@ class _EditorScaffoldState extends State<EditorScaffold> {
                   id: ShellPanels.comments,
                   title: l.panelComments,
                   icon: LucideIcons.messageSquare,
-                  defaultWidth: 360,
-                  minWidth: 300,
                   builder: (_) =>
                       CommentsPanel(services: s, controller: _comments),
                 ),
-              SidePanelSpec(
-                id: ShellPanels.history,
-                title: l.panelHistory,
-                icon: LucideIcons.history,
-                defaultWidth: 320,
-                minWidth: 280,
-                builder: (_) => _VersionsPanel(services: s, itemUuid: _uuid),
-              ),
               SidePanelSpec(
                 id: ShellPanels.details,
                 title: l.cmdDetails,
@@ -345,7 +335,17 @@ class _EditorScaffoldState extends State<EditorScaffold> {
                 showAsTab: false,
                 builder: (_) => DriveDetailsPanel(services: s, item: _item),
               ),
+              // App panels first, then history; all of them are icons in
+              // the rail (suite 03 §3.1), so the title row has no buttons
+              // for them.
               ...widget.panels,
+              if (item?.myRole.canViewHistory ?? false)
+                SidePanelSpec(
+                  id: ShellPanels.history,
+                  title: l.panelHistory,
+                  icon: LucideIcons.history,
+                  builder: (_) => _VersionsPanel(services: s, itemUuid: _uuid),
+                ),
             ];
             return ColoredBox(
               color: theme.colorScheme.background,
@@ -387,10 +387,8 @@ class _EditorScaffoldState extends State<EditorScaffold> {
                             id: p.id,
                             title: p.title,
                             icon: p.icon,
-                            minWidth: p.minWidth,
-                            defaultWidth: p.defaultWidth,
-                            maxWidth: p.maxWidth,
                             headerActions: p.headerActions,
+                            showAsTab: p.showAsTab,
                             builder: (c) => Focus(
                               focusNode: _panelFocus,
                               child: p.builder(c),
@@ -618,20 +616,6 @@ class _EditorScaffoldState extends State<EditorScaffold> {
                 ),
               ),
             ),
-            if (role.canViewHistory)
-              icon(
-                'editor.history',
-                LucideIcons.history,
-                l.cmdSeeVersionHistory,
-                () => _invoke('shell.versions.togglePanel'),
-              ),
-            if (s.assistant?.available ?? false)
-              icon(
-                'editor.assistant',
-                LucideIcons.sparkles,
-                l.cmdAssistant,
-                () => _invoke('shell.ai.togglePanel'),
-              ),
             const SizedBox(width: 6),
             if (item != null)
               ShadButton(

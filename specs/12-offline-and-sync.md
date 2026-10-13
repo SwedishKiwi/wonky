@@ -58,7 +58,8 @@ reference `wonky-file://<fileUuid>` before the bytes arrive; clients render a pl
   controller only sends an op once the write that contains it completed.
 - Offline: editing continues; pending ops accumulate (composed into one op per 2 s of typing to
   bound the queue). Remote cursors disappear; presence shows "Offline". The status indicator
-  says "Offline — changes saved on this device"; the shell shows the offline banner.
+  says "Offline" (its tooltip and details dialog: "Offline — changes saved on this device"); the
+  shell shows the offline banner.
 - Reconnect: client sends pending ops with their `baseRevision`; server transforms them against
   ops since that revision (bounded: if `baseRevision` is older than the server's retained op
   log — 30 days — the server rejects with `RebaseTooOld`, and the client offers *Save my offline

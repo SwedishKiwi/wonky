@@ -64,7 +64,9 @@ links use the app base URLs from `config.json`; the sign-in session is shared by
 ├───────────────────────────────────────────────────────────────────────────┤
 │                                                     │                     │
 │                 Main content (route)                │  Side panel host    │
-│                                                     │  (WonkySplitView)   │
+│                                                     │  (WonkySplitView;   │
+│                                                     │  icon rail when     │
+│                                                     │  collapsed)         │
 ├───────────────────────────────────────────────────────────────────────────┤
 │ StatusBar (editor screens only, optional — only the app's items)          │
 └───────────────────────────────────────────────────────────────────────────┘
@@ -84,10 +86,14 @@ Row 1 (title row, 48 px):
   count). Comments show through the app's `CommentsHost` when it sets one
   (`ShellServices.commentsHost`; Write: the margin next to the page), otherwise in the comments
   side panel.
-- Version history button (clock icon).
-- Assistant button (✨).
 - **Share** button (primary; lock/globe icon by link state).
 - Account avatar menu.
+
+There are no History or Assistant buttons in the title row: those panels (and the app's other
+panels) are opened from the side panel host's icon rail at the right edge
+([02 §4.5](02-design-system.md)), or by their commands and shortcuts (View › Panels). Rail order:
+the app's panels first, then History (only for roles that can view history). File › Details
+opens the details panel (not in the rail).
 
 Row 2: `WonkyMenubar` (File, Edit, View, Insert, Format, …app menus…, Tools, Extensions (Sheets:
 Scripts), Help). Row 3: `WonkyToolbar` in a rounded container (margin 8 px left/right, 6 px above,
@@ -124,8 +130,8 @@ one that was open ([02 §4.2](02-design-system.md)).
 ## 4. Global overlays and states
 
 - **Offline banner**: thin top bar "You're offline. Changes are saved on this device and will
-  sync when you're back online." with *Details*. Edits remain enabled for offline-capable
-  content.
+  sync when you're back online." with *Retry* (`shell.offlineBanner.retry`, a small ghost
+  button tinted with the banner's own colors). Edits remain enabled for offline-capable content.
 - **Reconnecting** indicator in `SyncStatusIndicator` with exponential backoff timer.
 - **Version mismatch**: if the server's protocol version is newer than the client's
   (`/version` check on connect), show a non-blocking toast "A new version is available —

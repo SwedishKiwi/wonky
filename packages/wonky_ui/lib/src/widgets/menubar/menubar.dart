@@ -186,39 +186,44 @@ class _WonkyMenubarState extends State<WonkyMenubar> {
     return Semantics(
       container: true,
       explicitChildNodes: true,
-      child: ShadMenubar(
-        controller: controller._shad,
-        border: ShadBorder.none,
-        padding: EdgeInsets.zero,
-        backgroundColor: theme.colorScheme.background,
-        items: [
-          for (var i = 0; i < widget.menus.length; i++)
-            ShadMenubarItem(
-              key: ValueKey<String>('menubar.${widget.menus[i].id}'),
-              focusNode: controller._focusAt(i),
-              controller: controller._popoverAt(i),
-              height: widget.height - 4,
-              buttonPadding: const EdgeInsets.symmetric(horizontal: 8),
-              constraints: const BoxConstraints(minWidth: 240),
-              items: selected == i
-                  ? buildWonkyMenuItems(
-                      context,
-                      widget.menus[i].entries(),
-                      onClose: controller.close,
-                      // Also when opened with the pointer: the menu takes
-                      // the keys (Escape, ↑/↓, type-ahead) instead of a
-                      // focused document editor behind it.
-                      requestFocus: true,
-                    )
-                  : const [SizedBox.shrink()],
-              child: Text(
-                widget.menus[i].label,
-                style: theme.textTheme.small.copyWith(
-                  fontWeight: FontWeight.normal,
+      // The strip's `controlShadow` (a theme token without a per-widget
+      // override) is painted outside it; clipped, the menubar is flat. The
+      // menus open in overlays and keep their shadows.
+      child: ClipRect(
+        child: ShadMenubar(
+          controller: controller._shad,
+          border: ShadBorder.none,
+          padding: EdgeInsets.zero,
+          backgroundColor: theme.colorScheme.background,
+          items: [
+            for (var i = 0; i < widget.menus.length; i++)
+              ShadMenubarItem(
+                key: ValueKey<String>('menubar.${widget.menus[i].id}'),
+                focusNode: controller._focusAt(i),
+                controller: controller._popoverAt(i),
+                height: widget.height - 4,
+                buttonPadding: const EdgeInsets.symmetric(horizontal: 8),
+                constraints: const BoxConstraints(minWidth: 240),
+                items: selected == i
+                    ? buildWonkyMenuItems(
+                        context,
+                        widget.menus[i].entries(),
+                        onClose: controller.close,
+                        // Also when opened with the pointer: the menu takes
+                        // the keys (Escape, ↑/↓, type-ahead) instead of a
+                        // focused document editor behind it.
+                        requestFocus: true,
+                      )
+                    : const [SizedBox.shrink()],
+                child: Text(
+                  widget.menus[i].label,
+                  style: theme.textTheme.small.copyWith(
+                    fontWeight: FontWeight.normal,
+                  ),
                 ),
               ),
-            ),
-        ],
+          ],
+        ),
       ),
     );
   }

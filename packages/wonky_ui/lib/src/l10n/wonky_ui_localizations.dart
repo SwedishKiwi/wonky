@@ -319,6 +319,12 @@ abstract class WonkyUiLocalizations {
   /// **'magenta'**
   String get hueMagenta;
 
+  /// No description provided for @panelCollapse.
+  ///
+  /// In en, this message translates to:
+  /// **'Collapse panel'**
+  String get panelCollapse;
+
   /// No description provided for @panelClose.
   ///
   /// In en, this message translates to:

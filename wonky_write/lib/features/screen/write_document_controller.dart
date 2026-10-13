@@ -49,13 +49,11 @@ class WriteViewPrefs extends ChangeNotifier implements CommentsHost {
 
   bool _wordCount = false;
   bool _commentMargin = true;
-  bool _blockHandles = true;
   bool _selectionToolbar = true;
 
   /// The word count status bar ("Display word count while typing").
   bool get showWordCount => _wordCount;
   bool get showCommentMargin => _commentMargin;
-  bool get showBlockHandles => _blockHandles;
   bool get showSelectionToolbar => _selectionToolbar;
 
   @override
@@ -79,7 +77,6 @@ class WriteViewPrefs extends ChangeNotifier implements CommentsHost {
 
     _wordCount = await b('wordCount', fallback: false);
     _commentMargin = await b('commentMargin');
-    _blockHandles = await b('blockHandles');
     _selectionToolbar = await b('selectionToolbar');
     notifyListeners();
   }
@@ -91,7 +88,6 @@ class WriteViewPrefs extends ChangeNotifier implements CommentsHost {
 
   set showWordCount(bool v) => _set('wordCount', _wordCount = v);
   set showCommentMargin(bool v) => _set('commentMargin', _commentMargin = v);
-  set showBlockHandles(bool v) => _set('blockHandles', _blockHandles = v);
   set showSelectionToolbar(bool v) =>
       _set('selectionToolbar', _selectionToolbar = v);
 }

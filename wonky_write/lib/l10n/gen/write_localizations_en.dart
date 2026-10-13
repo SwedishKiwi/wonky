@@ -1254,9 +1254,6 @@ class WriteLocalizationsEn extends WriteLocalizations {
   String get toolbarInsertTable => 'Insert table';
 
   @override
-  String get toolbarAssistant => 'Assistant';
-
-  @override
   String get toolbarEditLink => 'Edit link';
 
   @override
@@ -1301,9 +1298,6 @@ class WriteLocalizationsEn extends WriteLocalizations {
 
   @override
   String get docMenuImageByUrl => 'Image by URL…';
-
-  @override
-  String get docMenuDuplicate => 'Duplicate';
 
   @override
   String get docMenuPlainText => 'Plain text';
@@ -5536,9 +5530,6 @@ class WriteLocalizationsEnXa extends WriteLocalizationsEn {
   String get toolbarInsertTable => '[Îñšéŕţ ţåƀļé one]';
 
   @override
-  String get toolbarAssistant => '[Åššîšţåñţ one]';
-
-  @override
   String get toolbarEditLink => '[Éðîţ ļîñķ one]';
 
   @override
@@ -5583,9 +5574,6 @@ class WriteLocalizationsEnXa extends WriteLocalizationsEn {
 
   @override
   String get docMenuImageByUrl => '[Îɱåĝé ƀý ÛŔĻ… one]';
-
-  @override
-  String get docMenuDuplicate => '[Ðûþļîçåţé one]';
 
   @override
   String get docMenuPlainText => '[Þļåîñ ţéẋţ one]';

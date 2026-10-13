@@ -12,6 +12,7 @@ import 'package:wonky_write/config/write_app_config.dart';
 import 'package:wonky_write/features/document/write_document_session.dart';
 import 'package:wonky_write/features/editor/applier/delta_applier.dart'
     show DeltaSelection;
+import 'package:wonky_write/features/editor/ui/wonky_editor.dart';
 import 'package:wonky_write/features/screen/write_document_screen.dart';
 import 'package:wonky_write/features/sync/connection_keeper.dart';
 import 'package:wonky_write/features/themes/document_theme.dart';
@@ -194,7 +195,8 @@ void main() {
     }
     final margin = find.byKey(const ValueKey('write.commentMargin'));
     expect(margin, findsWidgets);
-    expect(find.byKey(const ValueKey('comments.filter.open')), findsOneWidget);
+    // No Open / For you filter in the margin.
+    expect(find.byKey(const ValueKey('comments.filter.open')), findsNothing);
 
     await tester.runAsync(
       () =>
@@ -263,6 +265,67 @@ void main() {
       ),
       findsOneWidget,
     );
+    await tester.pumpWidget(const SizedBox());
+    await tester.pump(const Duration(seconds: 2));
+  });
+
+  testWidgets('Given a suggestion card and a window with room for both then '
+      'the page moves left of the comment margin', (tester) async {
+    await pumpScreen(tester, size: const Size(1240, 900));
+    await h.invoke('write.mode.set', {'mode': 'suggesting'});
+    session.editor.applyLocal(
+      Delta()
+        ..retain(5)
+        ..insert('ned'),
+      label: 'Typing',
+    );
+    for (var i = 0; i < 10; i++) {
+      await tester.runAsync(pumpEventQueue);
+      await tester.pump(const Duration(milliseconds: 50));
+    }
+
+    final page = tester.getRect(find.byKey(const ValueKey('write.page')));
+    final margin = tester.getRect(
+      find.byKey(const ValueKey('write.commentMargin')).first,
+    );
+    expect(page.right, lessThanOrEqualTo(margin.left));
+
+    // Too narrow for both: the page moves to the left gutter, so the margin
+    // covers at most the page's right margin, not its text.
+    await tester.binding.setSurfaceSize(const Size(1100, 900));
+    tester.view.physicalSize = const Size(1100, 900);
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 50));
+    final narrowPage = tester.getRect(find.byKey(const ValueKey('write.page')));
+    final narrowMargin = tester.getRect(
+      find.byKey(const ValueKey('write.commentMargin')).first,
+    );
+    final canvasLeft = tester.getTopLeft(find.byType(WonkyEditor)).dx;
+    expect(narrowPage.left - canvasLeft, closeTo(8, 0.5));
+    final textRight =
+        narrowPage.right - session.editor.view.pageSetup.margins.right;
+    expect(textRight, lessThanOrEqualTo(narrowMargin.left));
+    await tester.pumpWidget(const SizedBox());
+    await tester.pump(const Duration(seconds: 2));
+  });
+
+  testWidgets('Given the screen when it loads then the panels are icons in '
+      'the rail, and the title row has no history or assistant buttons', (
+    tester,
+  ) async {
+    await pumpScreen(tester);
+
+    expect(find.byKey(const ValueKey('panel.rail')), findsOneWidget);
+    expect(find.byKey(const ValueKey('panel.rail.outline')), findsOneWidget);
+    expect(find.byKey(const ValueKey('panel.rail.find')), findsOneWidget);
+    // File › Details is not in the rail.
+    expect(find.byKey(const ValueKey('panel.rail.details')), findsNothing);
+    expect(find.byKey(const ValueKey('editor.history')), findsNothing);
+    expect(find.byKey(const ValueKey('editor.assistant')), findsNothing);
+
+    await tester.tap(find.byKey(const ValueKey('panel.rail.outline')));
+    await tester.pump(const Duration(milliseconds: 300));
+    expect(find.byKey(const ValueKey('panel.collapse')), findsOneWidget);
     await tester.pumpWidget(const SizedBox());
     await tester.pump(const Duration(seconds: 2));
   });

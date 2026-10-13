@@ -110,8 +110,8 @@ Editors+ can delete any thread. Viewers see comments only if the owner allows it
   Write shows them only in the margin next to the page (Write 05 §10, Write 08 §3.2); Sheets
   uses the side panel.
 - **Comments panel** (side panel, `EditorScaffold.commentsInPanel`): filter tabs
-  (`CommentsFilterTabs`, shared with Write's margin) **Open** (default) / **For you** (open
-  threads that mention or are assigned to me), sort (position / date); each thread links to its
+  (`CommentsFilterTabs`) **Open** (default) / **For you** (open threads that mention or are
+  assigned to me; Write's margin hides the filter and always shows Open), sort (position / date); each thread links to its
   anchor. Resolved threads are not listed; there is no comments search.
 - Notification bell? No — notifications are in the account menu and email (see §4).
 - All comment actions are commands (`shell.comments.*`) and undoable (create → delete, etc.).
