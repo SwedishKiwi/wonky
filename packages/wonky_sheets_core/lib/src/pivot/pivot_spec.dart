@@ -39,7 +39,12 @@ enum PivotSummarize {
   }
 
   /// Whether the result inherits the source column's number format (07 §7.5).
-  bool get inheritsFormat => this == sum || this == average || this == min || this == max || this == median;
+  bool get inheritsFormat =>
+      this == sum ||
+      this == average ||
+      this == min ||
+      this == max ||
+      this == median;
 }
 
 /// "Show as" of pivot values.
@@ -102,20 +107,30 @@ sealed class PivotGrouping {
       case 'histogram':
         final size = json['size'];
         if (size is! num || size <= 0) return null;
-        double? n(Object? v) => v is num ? v.toDouble() : (v is String ? double.tryParse(v) : null);
-        return PivotHistogramGrouping(size.toDouble(), min: n(json['min']), max: n(json['max']));
+        double? n(Object? v) =>
+            v is num ? v.toDouble() : (v is String ? double.tryParse(v) : null);
+        return PivotHistogramGrouping(
+          size.toDouble(),
+          min: n(json['min']),
+          max: n(json['max']),
+        );
       case 'manual':
         final groups = <PivotManualGroup>[];
         if (json['groups'] is List) {
           for (final g in json['groups'] as List) {
             if (g is! Map || g['name'] is! String) continue;
-            groups.add(PivotManualGroup(g['name'] as String, [
-              if (g['items'] is List)
-                for (final i in g['items'] as List) i.toString(),
-            ]));
+            groups.add(
+              PivotManualGroup(g['name'] as String, [
+                if (g['items'] is List)
+                  for (final i in g['items'] as List) i.toString(),
+              ]),
+            );
           }
         }
-        return PivotManualGrouping(groups, ungrouped: json['ungrouped'] as String?);
+        return PivotManualGrouping(
+          groups,
+          ungrouped: json['ungrouped'] as String?,
+        );
     }
     return null;
   }
@@ -140,7 +155,12 @@ final class PivotHistogramGrouping extends PivotGrouping {
   final double? max;
 
   @override
-  Map<String, Object?> toJson() => {'kind': 'histogram', 'size': size, 'min': ?min, 'max': ?max};
+  Map<String, Object?> toJson() => {
+    'kind': 'histogram',
+    'size': size,
+    'min': ?min,
+    'max': ?max,
+  };
 }
 
 /// One named manual group.
@@ -185,7 +205,9 @@ final class PivotGroupSpec {
       label: m['label'] as String?,
       showTotals: m['showTotals'] != false,
       ascending: m['order'] != 'desc',
-      sortByValueIndex: sbv is Map && sbv['valueIndex'] is num ? (sbv['valueIndex'] as num).toInt() : null,
+      sortByValueIndex: sbv is Map && sbv['valueIndex'] is num
+          ? (sbv['valueIndex'] as num).toInt()
+          : null,
       repeatLabels: m['repeatLabels'] == true,
       group: PivotGrouping.tryParse(m['group']),
     );
@@ -209,7 +231,9 @@ final class PivotGroupSpec {
     'label': label,
     'showTotals': showTotals,
     'order': ascending ? 'asc' : 'desc',
-    'sortByValue': sortByValueIndex == null ? null : {'valueIndex': sortByValueIndex},
+    'sortByValue': sortByValueIndex == null
+        ? null
+        : {'valueIndex': sortByValueIndex},
     'repeatLabels': repeatLabels,
     'group': group?.toJson(),
   };
@@ -242,7 +266,7 @@ final class PivotValueSpec {
   final String? formula;
   final PivotSummarize summarizeBy;
 
-  /// Display name; default "<SUMMARIZE> of <header>".
+  /// Display name; default `"<SUMMARIZE> of <header>"`.
   final String? name;
   final PivotShowAs showAs;
   final String? numberFormat;
@@ -270,13 +294,18 @@ final class PivotValueSpec {
 final class PivotFilterSpec {
   const PivotFilterSpec(this.source, this.criteria);
 
-  factory PivotFilterSpec.fromJson(Map<String, Object?> m) =>
-      PivotFilterSpec(m['source']?.toString() ?? '', ColumnCriteria.fromJson(m['criteria']));
+  factory PivotFilterSpec.fromJson(Map<String, Object?> m) => PivotFilterSpec(
+    m['source']?.toString() ?? '',
+    ColumnCriteria.fromJson(m['criteria']),
+  );
 
   final String source;
   final ColumnCriteria criteria;
 
-  Map<String, Object?> toJson() => {'source': source, 'criteria': criteria.toJson()};
+  Map<String, Object?> toJson() => {
+    'source': source,
+    'criteria': criteria.toJson(),
+  };
 }
 
 /// `PivotTable.specJson` v1 (07 §7.1).
@@ -312,7 +341,9 @@ final class PivotSpec {
       columns: list('columns', PivotGroupSpec.fromJson),
       values: list('values', PivotValueSpec.fromJson),
       filters: list('filters', PivotFilterSpec.fromJson),
-      valueLayout: m['valueLayout'] == 'rows' ? PivotValueLayout.rows : PivotValueLayout.columns,
+      valueLayout: m['valueLayout'] == 'rows'
+          ? PivotValueLayout.rows
+          : PivotValueLayout.columns,
       showEmptyGroups: m['showEmptyGroups'] == true,
     );
   }
@@ -341,7 +372,8 @@ final class PivotSpec {
   String encode() => jsonEncode(toJson());
 
   @override
-  bool operator ==(Object other) => other is PivotSpec && other.encode() == encode();
+  bool operator ==(Object other) =>
+      other is PivotSpec && other.encode() == encode();
 
   @override
   int get hashCode => encode().hashCode;

@@ -58,7 +58,10 @@ final class ValueSortSpec extends SortSpec {
   Map<String, Object?> toJson() => {'colId': colId, 'ascending': ascending};
 
   @override
-  bool operator ==(Object other) => other is ValueSortSpec && other.colId == colId && other.ascending == ascending;
+  bool operator ==(Object other) =>
+      other is ValueSortSpec &&
+      other.colId == colId &&
+      other.ascending == ascending;
 
   @override
   int get hashCode => Object.hash(colId, ascending);
@@ -76,11 +79,18 @@ final class ColorSortSpec extends SortSpec {
   final String? textColor;
 
   @override
-  Map<String, Object?> toJson() => {'colId': colId, 'fillColor': ?fillColor, 'textColor': ?textColor};
+  Map<String, Object?> toJson() => {
+    'colId': colId,
+    'fillColor': ?fillColor,
+    'textColor': ?textColor,
+  };
 
   @override
   bool operator ==(Object other) =>
-      other is ColorSortSpec && other.colId == colId && other.fillColor == fillColor && other.textColor == textColor;
+      other is ColorSortSpec &&
+      other.colId == colId &&
+      other.fillColor == fillColor &&
+      other.textColor == textColor;
 
   @override
   int get hashCode => Object.hash(colId, fillColor, textColor);

@@ -9,15 +9,20 @@ import 'sort_keys.dart';
 import 'sort_spec.dart';
 
 /// Effective colors of a cell for sort/filter by color.
-typedef CellColorResolver = ({String? fill, String? text}) Function(int row, int col);
+typedef CellColorResolver =
+    ({String? fill, String? text}) Function(int row, int col);
 
 /// An immutable snapshot of the key columns of a range (07 §2.7): one
 /// [SortKeyColumn] per column id, plus effective colors for color keys.
 final class SortTable {
   /// Creates a snapshot of [rowCount] rows.
-  SortTable(this.rowCount, this.columns, {Map<String, List<String?>>? fills, Map<String, List<String?>>? textColors})
-    : fills = fills ?? const {},
-      textColors = textColors ?? const {};
+  SortTable(
+    this.rowCount,
+    this.columns, {
+    Map<String, List<String?>>? fills,
+    Map<String, List<String?>>? textColors,
+  }) : fills = fills ?? const {},
+       textColors = textColors ?? const {};
 
   /// Builds the snapshot of the key columns of [specs] over the rows of
   /// [rect] (data rows only) from computed values. Color keys use [colors].
@@ -48,9 +53,15 @@ final class SortTable {
         case ColorSortSpec():
           if (colors == null) continue;
           if (s.fillColor != null) {
-            fills.putIfAbsent(s.colId, () => [for (var i = 0; i < n; i++) colors(rect.top + i, c).fill]);
+            fills.putIfAbsent(
+              s.colId,
+              () => [for (var i = 0; i < n; i++) colors(rect.top + i, c).fill],
+            );
           } else {
-            texts.putIfAbsent(s.colId, () => [for (var i = 0; i < n; i++) colors(rect.top + i, c).text]);
+            texts.putIfAbsent(
+              s.colId,
+              () => [for (var i = 0; i < n; i++) colors(rect.top + i, c).text],
+            );
           }
       }
     }
@@ -75,15 +86,23 @@ abstract final class SortPermutation {
   /// The stable permutation of [table] rows by [specs]: `result[i]` is the
   /// source row (offset in the range) placed at position `i`. Keys whose
   /// column is missing are ignored. [isCancelled] is polled between merge passes.
-  static Int32List compute(SortTable table, List<SortSpec> specs, {bool Function()? isCancelled}) {
+  static Int32List compute(
+    SortTable table,
+    List<SortSpec> specs, {
+    bool Function()? isCancelled,
+  }) {
     final cmps = <int Function(int, int)>[];
     for (final s in specs) {
       switch (s) {
         case ValueSortSpec(:final colId, :final ascending):
           final col = table.columns[colId];
-          if (col != null) cmps.add((i, j) => col.compare(i, j, ascending: ascending));
+          if (col != null) {
+            cmps.add((i, j) => col.compare(i, j, ascending: ascending));
+          }
         case ColorSortSpec(:final colId, :final fillColor, :final textColor):
-          final list = fillColor != null ? table.fills[colId] : table.textColors[colId];
+          final list = fillColor != null
+              ? table.fills[colId]
+              : table.textColors[colId];
           final target = (fillColor ?? textColor)?.toUpperCase();
           if (list == null || target == null) continue;
           final has = Uint8List(table.rowCount);
@@ -101,7 +120,11 @@ abstract final class SortPermutation {
       return 0;
     }
 
-    return StableSort.indices(table.rowCount, compare, isCancelled: isCancelled);
+    return StableSort.indices(
+      table.rowCount,
+      compare,
+      isCancelled: isCancelled,
+    );
   }
 
   /// The inverse permutation (`inverse[perm[i]] = i`).
@@ -134,7 +157,11 @@ final class DataJobCancelled implements Exception {
 /// Stable merge sort over indices (ties keep index order).
 abstract final class StableSort {
   /// Sorts `0..n-1` by [compare]; equal elements keep ascending index order.
-  static Int32List indices(int n, int Function(int a, int b) compare, {bool Function()? isCancelled}) {
+  static Int32List indices(
+    int n,
+    int Function(int a, int b) compare, {
+    bool Function()? isCancelled,
+  }) {
     var a = Int32List(n);
     for (var i = 0; i < n; i++) {
       a[i] = i;

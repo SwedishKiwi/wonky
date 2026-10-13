@@ -36,7 +36,10 @@ void main() {
     return GroupLayout(sid, Dimension.rows, s.rows, s.groups.values);
   }
 
-  List<String> spans() => [for (final g in layout().spans()) '${g.start + 1}-${g.end + 1}:d${g.depth}${g.collapsed ? 'c' : ''}'];
+  List<String> spans() => [
+    for (final g in layout().spans())
+      '${g.start + 1}-${g.end + 1}:d${g.depth}${g.collapsed ? 'c' : ''}',
+  ];
 
   void addGroup(String id, int s, int e, int depth, {bool collapsed = false}) =>
       m.upsertRow(SheetsTables.dimensionGroup, id, {
@@ -61,7 +64,9 @@ void main() {
     test('when pressing level 1 then everything collapses', () {
       apply(m, layout().collapseToLevel(1));
       expect(spans(), ['3-8:d1c', '4-5:d2c']);
-      expect(layout().collapsedHiddenIds(), {for (var i = 2; i <= 7; i++) b.rowId(i)});
+      expect(layout().collapsedHiddenIds(), {
+        for (var i = 2; i <= 7; i++) b.rowId(i),
+      });
       expect(layout().collapsedRanges(), [(2, 7)]);
     });
 
@@ -75,10 +80,13 @@ void main() {
       expect(spans(), ['3-8:d1', '4-4:d2']);
     });
 
-    test('when ungrouping the whole outer span then the deepest group goes first', () {
-      apply(m, layout().ungroup(2, 7, ids));
-      expect(spans(), ['3-8:d1']);
-    });
+    test(
+      'when ungrouping the whole outer span then the deepest group goes first',
+      () {
+        apply(m, layout().ungroup(2, 7, ids));
+        expect(spans(), ['3-8:d1']);
+      },
+    );
 
     test('when ungrouping the middle of a group then it splits', () {
       apply(m, layout().ungroup(4, 4, ids));
@@ -86,10 +94,13 @@ void main() {
       expect(spans(), ['3-4:d1', '4-4:d2', '7-8:d1']);
     });
 
-    test('when grouping the identical span again then it nests one level deeper', () {
-      apply(m, layout().create(3, 4, ids));
-      expect(spans(), ['3-8:d1', '4-5:d2', '4-5:d3']);
-    });
+    test(
+      'when grouping the identical span again then it nests one level deeper',
+      () {
+        apply(m, layout().create(3, 4, ids));
+        expect(spans(), ['3-8:d1', '4-5:d2', '4-5:d3']);
+      },
+    );
 
     test('when a span contains existing groups then they get deeper', () {
       apply(m, layout().create(1, 9, ids));
@@ -113,44 +124,59 @@ void main() {
   });
 
   group('Given partially overlapping spans', () {
-    test('when grouping over a partial overlap at the same depth then the spans merge', () {
-      apply(m, layout().create(4, 7, ids));
-      final changes = layout().create(2, 5, ids);
-      expect(changes.inserts, isEmpty);
-      apply(m, changes);
-      expect(spans(), ['3-8:d1']);
-    });
+    test(
+      'when grouping over a partial overlap at the same depth then the spans merge',
+      () {
+        apply(m, layout().create(4, 7, ids));
+        final changes = layout().create(2, 5, ids);
+        expect(changes.inserts, isEmpty);
+        apply(m, changes);
+        expect(spans(), ['3-8:d1']);
+      },
+    );
 
-    test('when two users grouped overlapping spans offline then normalization converges', () {
-      addGroup(fid(2), 4, 9, 1);
-      addGroup(fid(1), 2, 6, 1);
-      apply(m, layout().normalize());
-      expect(spans(), ['3-7:d1', '5-10:d1']);
-      expect(layout().normalize().isEmpty, isTrue);
-    });
+    test(
+      'when two users grouped overlapping spans offline then normalization converges',
+      () {
+        addGroup(fid(2), 4, 9, 1);
+        addGroup(fid(1), 2, 6, 1);
+        apply(m, layout().normalize());
+        expect(spans(), ['3-7:d1', '5-10:d1']);
+        expect(layout().normalize().isEmpty, isTrue);
+      },
+    );
 
-    test('when identical spans with equal stored depth exist then the smaller id is kept', () {
-      addGroup(fid(2), 2, 6, 1);
-      addGroup(fid(1), 2, 6, 1);
-      final c = layout().normalize();
-      expect(c.deletes, {fid(2)});
-    });
+    test(
+      'when identical spans with equal stored depth exist then the smaller id is kept',
+      () {
+        addGroup(fid(2), 2, 6, 1);
+        addGroup(fid(1), 2, 6, 1);
+        final c = layout().normalize();
+        expect(c.deletes, {fid(2)});
+      },
+    );
 
     test('when nesting exceeds 8 levels then grouping is refused', () {
       for (var i = 0; i < 8; i++) {
         apply(m, layout().create(i, 20 - i, ids));
       }
       expect(layout().maxDepth, 8);
-      expect(layout().create(10, 10, ids).error, "You can't group more than 8 levels.");
+      expect(
+        layout().create(10, 10, ids).error,
+        "You can't group more than 8 levels.",
+      );
     });
 
-    test('when stored depths are wrong then normalization fixes only those rows', () {
-      addGroup(fid(1), 2, 9, 3);
-      addGroup(fid(2), 3, 4, 2);
-      final c = layout().normalize();
-      expect(c.updates, {
-        fid(1): {'depth': 1},
-      });
-    });
+    test(
+      'when stored depths are wrong then normalization fixes only those rows',
+      () {
+        addGroup(fid(1), 2, 9, 3);
+        addGroup(fid(2), 3, 4, 2);
+        final c = layout().normalize();
+        expect(c.updates, {
+          fid(1): {'depth': 1},
+        });
+      },
+    );
   });
 }

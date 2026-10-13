@@ -7,9 +7,16 @@ export 'src/formula/codec/formula_codec.dart';
 export 'src/formula/codec/ref_resolver.dart';
 export 'src/formula/codec/ref_token.dart';
 export 'src/formula/eval/args.dart' show Args, AggMode;
-export 'src/formula/eval/compiler.dart' show CompiledFormula, FormulaCompiler, TemplateKey;
+export 'src/formula/eval/compiler.dart'
+    show CompiledFormula, FormulaCompiler, TemplateKey;
 export 'src/formula/eval/eval_context.dart'
-    show CompiledExpr, EvalContext, EvalHost, FormulaError, NumberTextFormatter, fail;
+    show
+        CompiledExpr,
+        EvalContext,
+        EvalHost,
+        FormulaError,
+        NumberTextFormatter,
+        fail;
 export 'src/formula/eval/runtime_services.dart';
 export 'src/formula/external/external_data.dart';
 export 'src/formula/functions/registry.dart';

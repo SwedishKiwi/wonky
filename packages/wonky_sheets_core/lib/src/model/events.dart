@@ -151,7 +151,8 @@ final class WorkbookChangeBatch {
   bool get isEmpty => events.isEmpty;
 
   /// Events of type [T].
-  Iterable<T> whereType<T extends WorkbookChangeEvent>() => events.whereType<T>();
+  Iterable<T> whereType<T extends WorkbookChangeEvent>() =>
+      events.whereType<T>();
 
   @override
   String toString() => 'WorkbookChangeBatch($events)';

@@ -69,10 +69,20 @@ final class DataBarResult {
       other.axis == axis;
 
   @override
-  int get hashCode => Object.hash(start, end, color, negative, gradient, showValue, rightToLeft, axis);
+  int get hashCode => Object.hash(
+    start,
+    end,
+    color,
+    negative,
+    gradient,
+    showValue,
+    rightToLeft,
+    axis,
+  );
 
   @override
-  String toString() => 'DataBarResult($start–$end, $color${axis == null ? '' : ', axis $axis'})';
+  String toString() =>
+      'DataBarResult($start–$end, $color${axis == null ? '' : ', axis $axis'})';
 }
 
 /// An icon to paint left of the text (06 §15.7).
@@ -91,7 +101,10 @@ final class IconResult {
 
   @override
   bool operator ==(Object other) =>
-      other is IconResult && other.set == set && other.index == index && other.showValue == showValue;
+      other is IconResult &&
+      other.set == set &&
+      other.index == index &&
+      other.showValue == showValue;
 
   @override
   int get hashCode => Object.hash(set, index, showValue);
@@ -103,7 +116,12 @@ final class IconResult {
 /// The conditional formatting of one cell (06 §15.8).
 final class CfResult {
   /// Creates a result.
-  const CfResult({required this.overlay, this.scaleColor, this.dataBar, this.icon});
+  const CfResult({
+    required this.overlay,
+    this.scaleColor,
+    this.dataBar,
+    this.icon,
+  });
 
   /// No conditional formatting.
   static final CfResult none = CfResult(overlay: CellFormat.empty);
@@ -136,7 +154,8 @@ final class CfResult {
   int get hashCode => Object.hash(overlay, scaleColor, dataBar, icon);
 
   @override
-  String toString() => 'CfResult(${overlay.toMap()}, scale: $scaleColor, bar: $dataBar, icon: $icon)';
+  String toString() =>
+      'CfResult(${overlay.toMap()}, scale: $scaleColor, bar: $dataBar, icon: $icon)';
 }
 
 /// A rule being edited in the CF panel, previewed without persisting
@@ -164,7 +183,15 @@ final class CfDraft {
 final Object _noResult = Object();
 
 final class _RuleState {
-  _RuleState(this.id, this.sortKey, this.ruleJson, this.rangesJson, this.rule, this.rects, this.generation);
+  _RuleState(
+    this.id,
+    this.sortKey,
+    this.ruleJson,
+    this.rangesJson,
+    this.rule,
+    this.rects,
+    this.generation,
+  );
 
   final String id;
   final String sortKey;
@@ -180,7 +207,8 @@ final class _RuleState {
   /// rowId → colId → result (bool, color, DataBarResult, IconResult or [_noResult]).
   final Map<String, Map<String, Object>> results = {};
 
-  CellPos get anchor => rects.isEmpty ? const CellPos(0, 0) : rects.first.topLeft;
+  CellPos get anchor =>
+      rects.isEmpty ? const CellPos(0, 0) : rects.first.topLeft;
 
   void clear() {
     results.clear();
@@ -258,7 +286,9 @@ final class CfEvaluator {
         final hit = list.any((k) {
           final r = sheet.rows.indexOf(k.rowId);
           final c = sheet.columns.indexOf(k.colId);
-          return r >= 0 && c >= 0 && st.rects.any((rect) => rect.contains(r, c));
+          return r >= 0 &&
+              c >= 0 &&
+              st.rects.any((rect) => rect.contains(r, c));
         });
         if (hit) {
           st.clear();
@@ -319,7 +349,15 @@ final class CfEvaluator {
       for (final r in GridRange.parseList(rec.rangesJson))
         if (sheet.resolve(r) case final ResolvedRange rr) rr.rect,
     ];
-    final st = _RuleState(ruleId, rec.sortKey, rec.ruleJson, rec.rangesJson, CfRule.parse(rec.ruleJson), rects, gen);
+    final st = _RuleState(
+      ruleId,
+      rec.sortKey,
+      rec.ruleJson,
+      rec.rangesJson,
+      CfRule.parse(rec.ruleJson),
+      rects,
+      gen,
+    );
     _states[ruleId] = st;
     return st;
   }
@@ -339,7 +377,9 @@ final class CfEvaluator {
       final st = _ruleState(sheet, id);
       if (st != null) out.add(st);
     }
-    if (d != null && d.sheetId == sheet.id && d.ranges.any((r) => r.contains(row, col))) {
+    if (d != null &&
+        d.sheetId == sheet.id &&
+        d.ranges.any((r) => r.contains(row, col))) {
       final st = _ruleState(sheet, d.ruleId);
       if (st != null) out.add(st);
     }
@@ -366,13 +406,17 @@ final class CfEvaluator {
     DataBarResult? bar;
     IconResult? icon;
     CellValue? value;
-    CellValue cellValue() => value ??= values.valueAt(sheetId, row, col).toCellValue();
+    CellValue cellValue() =>
+        value ??= values.valueAt(sheetId, row, col).toCellValue();
 
     for (final st in rules) {
       final rule = st.rule;
       if (rule is CfDataBarRule && bar != null) continue;
       if (rule is CfIconSetRule && icon != null) continue;
-      if (rule is CfColorScaleRule && (fmt?.containsKey(FormatAttr.fillColor) ?? false)) continue;
+      if (rule is CfColorScaleRule &&
+          (fmt?.containsKey(FormatAttr.fillColor) ?? false)) {
+        continue;
+      }
       final cached = st.results[rowId]?[colId];
       final Object result;
       if (cached != null) {
@@ -404,7 +448,9 @@ final class CfEvaluator {
     }
     if (fmt == null && bar == null && icon == null) return CfResult.none;
     return CfResult(
-      overlay: fmt == null ? CellFormat.empty : CellFormat.intern(CellFormat(fmt)),
+      overlay: fmt == null
+          ? CellFormat.empty
+          : CellFormat.intern(CellFormat(fmt)),
       scaleColor: scaleColor,
       dataBar: bar,
       icon: icon,
@@ -413,7 +459,13 @@ final class CfEvaluator {
 
   /// Evaluates one rule for a cell: bool (boolean rules), color string,
   /// [DataBarResult] or [IconResult]; null when nothing applies.
-  Object? _evaluateRule(SheetModel sheet, _RuleState st, int row, int col, CellValue value) {
+  Object? _evaluateRule(
+    SheetModel sheet,
+    _RuleState st,
+    int row,
+    int col,
+    CellValue value,
+  ) {
     final rule = st.rule;
     switch (rule) {
       case CfBooleanRule():
@@ -424,7 +476,12 @@ final class CfEvaluator {
           anchorRow: a.row,
           anchorCol: a.col,
         );
-        return c.test(value, row: row, col: col, numberFormat: values.numberFormatAt(sheet.id, row, col));
+        return c.test(
+          value,
+          row: row,
+          col: col,
+          numberFormat: values.numberFormatAt(sheet.id, row, col),
+        );
       case CfColorScaleRule():
         if (value is! NumberValue) return null;
         return _scaleColor(sheet, st, rule, value.number);
@@ -447,8 +504,17 @@ final class CfEvaluator {
         final h = hooks;
         if (h == null) return null;
         final a = st.anchor;
-        final r = h.evaluateRelative(text, sheetId: sheet.id, anchorRow: a.row, anchorCol: a.col, row: a.row, col: a.col);
-        return r is FError ? null : ValueText.numberOf(r, locale: conditions.locale);
+        final r = h.evaluateRelative(
+          text,
+          sheetId: sheet.id,
+          anchorRow: a.row,
+          anchorCol: a.col,
+          row: a.row,
+          col: a.col,
+        );
+        return r is FError
+            ? null
+            : ValueText.numberOf(r, locale: conditions.locale);
       }
       return ValueText.parseNumber(text, locale: conditions.locale);
     }
@@ -472,12 +538,20 @@ final class CfEvaluator {
     }
   }
 
-  List<double?> _thresholds(SheetModel sheet, _RuleState st, List<CfThreshold> ts) =>
-      st.thresholds ??= [for (final t in ts) _threshold(sheet, st, t)];
+  List<double?> _thresholds(
+    SheetModel sheet,
+    _RuleState st,
+    List<CfThreshold> ts,
+  ) => st.thresholds ??= [for (final t in ts) _threshold(sheet, st, t)];
 
   String _color(String c) => model.theme.resolveColor(c) ?? c;
 
-  String? _scaleColor(SheetModel sheet, _RuleState st, CfColorScaleRule rule, double v) {
+  String? _scaleColor(
+    SheetModel sheet,
+    _RuleState st,
+    CfColorScaleRule rule,
+    double v,
+  ) {
     final pts = rule.points;
     final ts = _thresholds(sheet, st, [for (final p in pts) p.threshold]);
     final xs = <double>[];
@@ -501,7 +575,12 @@ final class CfEvaluator {
     return cs.last;
   }
 
-  DataBarResult? _dataBar(SheetModel sheet, _RuleState st, CfDataBarRule rule, double v) {
+  DataBarResult? _dataBar(
+    SheetModel sheet,
+    _RuleState st,
+    CfDataBarRule rule,
+    double v,
+  ) {
     final ts = _thresholds(sheet, st, [rule.min, rule.max]);
     var min = ts[0];
     var max = ts[1];
@@ -543,9 +622,16 @@ final class CfEvaluator {
     }
   }
 
-  IconResult? _icon(SheetModel sheet, _RuleState st, CfIconSetRule rule, double v) {
+  IconResult? _icon(
+    SheetModel sheet,
+    _RuleState st,
+    CfIconSetRule rule,
+    double v,
+  ) {
     final n = rule.set.iconCount;
-    final ts = _thresholds(sheet, st, [for (final t in rule.thresholds) t.threshold]);
+    final ts = _thresholds(sheet, st, [
+      for (final t in rule.thresholds) t.threshold,
+    ]);
     var index = n - 1;
     for (var i = 0; i < rule.thresholds.length && i < n - 1; i++) {
       final x = ts[i];

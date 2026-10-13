@@ -110,7 +110,9 @@ MutationPlan planAddPivotTable(PlanBuilder b, AddPivotTable op) {
 /// [UpdatePivotTable].
 MutationPlan planUpdatePivotTable(PlanBuilder b, UpdatePivotTable op) {
   final cur = b.current(SheetsTables.pivotTable, op.id);
-  if (cur == null) throw const PlanException('not_found', 'Pivot table not found');
+  if (cur == null) {
+    throw const PlanException('not_found', 'Pivot table not found');
+  }
   final s = b.sheetOf(cur[Cols.sheetId] as String);
   final writes = <String, Object?>{
     if (op.specJson != null) 'specJson': op.specJson,
@@ -134,7 +136,9 @@ MutationPlan planUpdatePivotTable(PlanBuilder b, UpdatePivotTable op) {
 /// [DeletePivotTable].
 MutationPlan planDeletePivotTable(PlanBuilder b, DeletePivotTable op) {
   final cur = b.current(SheetsTables.pivotTable, op.id);
-  if (cur == null) throw const PlanException('not_found', 'Pivot table not found');
+  if (cur == null) {
+    throw const PlanException('not_found', 'Pivot table not found');
+  }
   b.delete(SheetsTables.pivotTable, op.id);
   b.summary.sheets.add(cur[Cols.sheetId] as String);
   return b.build('Delete pivot table', kinds: [ChangeKinds.objects]);
@@ -149,7 +153,8 @@ MutationPlan planGenericRowWrite(PlanBuilder b, GenericRowWrite op) {
   } else {
     b.update(op.table, op.id, op.columns);
   }
-  final isScript = op.table.startsWith('script') || op.table == SheetsTables.macro;
+  final isScript =
+      op.table.startsWith('script') || op.table == SheetsTables.macro;
   return b.build(
     op.label ?? (isScript ? 'Edit script' : 'Edit'),
     kinds: [if (isScript) ChangeKinds.scripts],

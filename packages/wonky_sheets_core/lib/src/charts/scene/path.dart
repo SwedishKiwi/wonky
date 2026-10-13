@@ -20,7 +20,8 @@ final class PMoveTo extends PathCmd {
   List<Object> toJson(num Function(double) n) => ['M', n(x), n(y)];
 
   @override
-  bool operator ==(Object other) => other is PMoveTo && other.x == x && other.y == y;
+  bool operator ==(Object other) =>
+      other is PMoveTo && other.x == x && other.y == y;
 
   @override
   int get hashCode => Object.hash('M', x, y);
@@ -37,7 +38,8 @@ final class PLineTo extends PathCmd {
   List<Object> toJson(num Function(double) n) => ['L', n(x), n(y)];
 
   @override
-  bool operator ==(Object other) => other is PLineTo && other.x == x && other.y == y;
+  bool operator ==(Object other) =>
+      other is PLineTo && other.x == x && other.y == y;
 
   @override
   int get hashCode => Object.hash('L', x, y);
@@ -55,7 +57,15 @@ final class PCubicTo extends PathCmd {
   final double y;
 
   @override
-  List<Object> toJson(num Function(double) n) => ['C', n(x1), n(y1), n(x2), n(y2), n(x), n(y)];
+  List<Object> toJson(num Function(double) n) => [
+    'C',
+    n(x1),
+    n(y1),
+    n(x2),
+    n(y2),
+    n(x),
+    n(y),
+  ];
 
   @override
   bool operator ==(Object other) =>
@@ -176,14 +186,18 @@ final class PathBuilder {
   }
 
   /// Adds a closed rectangle.
-  void rect(double l, double t, double w, double h) => polygon([l, t, l + w, t, l + w, t + h, l, t + h]);
+  void rect(double l, double t, double w, double h) =>
+      polygon([l, t, l + w, t, l + w, t + h, l, t + h]);
 }
 
 /// Path utilities shared by renderers and hit-testing.
 abstract final class PathGeometry {
   /// Flattens [cmds] into polylines (one per sub-path, `x, y` pairs) with curves subdivided so
   /// the chord error stays below [tolerance] px. The bool marks closed sub-paths.
-  static List<(Float64List, bool)> flatten(List<PathCmd> cmds, {double tolerance = 0.25}) {
+  static List<(Float64List, bool)> flatten(
+    List<PathCmd> cmds, {
+    double tolerance = 0.25,
+  }) {
     final out = <(Float64List, bool)>[];
     var cur = <double>[];
     var cx = 0.0, cy = 0.0;
@@ -215,7 +229,14 @@ abstract final class PathGeometry {
             ..add(y);
           cx = x;
           cy = y;
-        case PCubicTo(:final x1, :final y1, :final x2, :final y2, :final x, :final y):
+        case PCubicTo(
+          :final x1,
+          :final y1,
+          :final x2,
+          :final y2,
+          :final x,
+          :final y,
+        ):
           if (cur.isEmpty) {
             cur
               ..add(cx)
@@ -225,11 +246,17 @@ abstract final class PathGeometry {
             _dist(cx, cy, x1, y1) + _dist(x1, y1, x2, y2) + _dist(x2, y2, x, y),
             1e-9,
           );
-          final n = math.sqrt(dd / math.max(tolerance, 1e-3)).ceil().clamp(1, 256);
+          final n = math
+              .sqrt(dd / math.max(tolerance, 1e-3))
+              .ceil()
+              .clamp(1, 256);
           for (var i = 1; i <= n; i++) {
             final t = i / n;
             final mt = 1 - t;
-            final a = mt * mt * mt, b = 3 * mt * mt * t, cc = 3 * mt * t * t, d = t * t * t;
+            final a = mt * mt * mt,
+                b = 3 * mt * mt * t,
+                cc = 3 * mt * t * t,
+                d = t * t * t;
             cur
               ..add(a * cx + b * x1 + cc * x2 + d * x)
               ..add(a * cy + b * y1 + cc * y2 + d * y);
@@ -252,7 +279,11 @@ abstract final class PathGeometry {
   }
 
   /// Non-zero winding test of ([x], [y]) against flattened sub-paths (all treated as closed).
-  static bool containsPoint(List<(Float64List, bool)> polys, double x, double y) {
+  static bool containsPoint(
+    List<(Float64List, bool)> polys,
+    double x,
+    double y,
+  ) {
     var winding = 0;
     for (final (p, _) in polys) {
       final n = p.length ~/ 2;
@@ -270,11 +301,24 @@ abstract final class PathGeometry {
     return winding != 0;
   }
 
-  static double _cross(double x0, double y0, double x1, double y1, double x, double y) =>
-      (x1 - x0) * (y - y0) - (x - x0) * (y1 - y0);
+  static double _cross(
+    double x0,
+    double y0,
+    double x1,
+    double y1,
+    double x,
+    double y,
+  ) => (x1 - x0) * (y - y0) - (x - x0) * (y1 - y0);
 
   /// Distance from ([px], [py]) to the segment (a, b).
-  static double segmentDistance(double px, double py, double ax, double ay, double bx, double by) {
+  static double segmentDistance(
+    double px,
+    double py,
+    double ax,
+    double ay,
+    double bx,
+    double by,
+  ) {
     final dx = bx - ax, dy = by - ay;
     final len2 = dx * dx + dy * dy;
     var t = len2 == 0 ? 0.0 : ((px - ax) * dx + (py - ay) * dy) / len2;

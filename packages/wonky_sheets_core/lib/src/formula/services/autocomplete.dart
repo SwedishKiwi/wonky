@@ -6,7 +6,14 @@ import '../parser/lexer.dart';
 import 'call_context.dart';
 
 /// Kinds of completion items (05 §18).
-enum CompletionKind { builtin, namedFunction, customFunction, namedRange, letName, sheet }
+enum CompletionKind {
+  builtin,
+  namedFunction,
+  customFunction,
+  namedRange,
+  letName,
+  sheet,
+}
 
 /// One completion candidate.
 final class CompletionItem {
@@ -42,7 +49,12 @@ final class CompletionList {
   final int replaceStart;
   final int replaceEnd;
   final String prefix;
-  const CompletionList(this.items, this.replaceStart, this.replaceEnd, this.prefix);
+  const CompletionList(
+    this.items,
+    this.replaceStart,
+    this.replaceEnd,
+    this.prefix,
+  );
 
   static const CompletionList empty = CompletionList([], 0, 0, '');
   bool get isEmpty => items.isEmpty;
@@ -77,13 +89,54 @@ final class CompletionContext {
 
 /// Popularity of common functions (ties in ranking, 05 §4.3).
 const Map<String, int> functionPopularity = {
-  'SUM': 100, 'IF': 95, 'VLOOKUP': 90, 'COUNTIF': 85, 'AVERAGE': 84, 'SUMIF': 80, 'COUNT': 78, //
-  'INDEX': 76, 'MATCH': 75, 'XLOOKUP': 74, 'IFERROR': 73, 'FILTER': 72, 'COUNTA': 70, 'MAX': 69, //
-  'MIN': 68, 'ROUND': 67, 'TODAY': 66, 'NOW': 65, 'CONCATENATE': 64, 'SUMIFS': 63, 'COUNTIFS': 62, //
-  'UNIQUE': 61, 'SORT': 60, 'QUERY': 59, 'ARRAYFORMULA': 58, 'TEXT': 57, 'LEFT': 56, 'RIGHT': 55, //
-  'MID': 54, 'LEN': 53, 'TRIM': 52, 'SPLIT': 51, 'DATE': 50, 'AND': 49, 'OR': 48, 'NOT': 47, //
-  'IMPORTRANGE': 46, 'REGEXMATCH': 45, 'SUBSTITUTE': 44, 'IFS': 43, 'AVERAGEIF': 42, 'ABS': 41, //
-  'VALUE': 40, 'UPPER': 39, 'LOWER': 38, 'PROPER': 37, 'TEXTJOIN': 36, 'SEQUENCE': 35, //
+  'SUM': 100,
+  'IF': 95,
+  'VLOOKUP': 90,
+  'COUNTIF': 85,
+  'AVERAGE': 84,
+  'SUMIF': 80,
+  'COUNT': 78, //
+  'INDEX': 76,
+  'MATCH': 75,
+  'XLOOKUP': 74,
+  'IFERROR': 73,
+  'FILTER': 72,
+  'COUNTA': 70,
+  'MAX': 69, //
+  'MIN': 68,
+  'ROUND': 67,
+  'TODAY': 66,
+  'NOW': 65,
+  'CONCATENATE': 64,
+  'SUMIFS': 63,
+  'COUNTIFS': 62, //
+  'UNIQUE': 61,
+  'SORT': 60,
+  'QUERY': 59,
+  'ARRAYFORMULA': 58,
+  'TEXT': 57,
+  'LEFT': 56,
+  'RIGHT': 55, //
+  'MID': 54,
+  'LEN': 53,
+  'TRIM': 52,
+  'SPLIT': 51,
+  'DATE': 50,
+  'AND': 49,
+  'OR': 48,
+  'NOT': 47, //
+  'IMPORTRANGE': 46,
+  'REGEXMATCH': 45,
+  'SUBSTITUTE': 44,
+  'IFS': 43,
+  'AVERAGEIF': 42,
+  'ABS': 41, //
+  'VALUE': 40,
+  'UPPER': 39,
+  'LOWER': 38,
+  'PROPER': 37,
+  'TEXTJOIN': 36,
+  'SEQUENCE': 35, //
 };
 
 bool _identChar(int c) => FormulaLexer.isIdentPart(c);
@@ -95,10 +148,16 @@ CompletionList completionsAt(String text, int caret, CompletionContext ctx) {
   if (!text.startsWith('=') && !text.startsWith('+') && !text.startsWith('-')) {
     return CompletionList.empty;
   }
-  final tokens = FormulaLexer(locale: ctx.locale, storedForm: false).tokenize(text);
+  final tokens = FormulaLexer(
+    locale: ctx.locale,
+    storedForm: false,
+  ).tokenize(text);
   // inside a string → no completions
   for (final t in tokens) {
-    if ((t.kind == TokenKind.string || t.kind == TokenKind.unterminatedString) && t.start < caret && caret < t.end + (t.kind == TokenKind.unterminatedString ? 1 : 0)) {
+    if ((t.kind == TokenKind.string ||
+            t.kind == TokenKind.unterminatedString) &&
+        t.start < caret &&
+        caret < t.end + (t.kind == TokenKind.unterminatedString ? 1 : 0)) {
       return CompletionList.empty;
     }
   }
@@ -107,21 +166,32 @@ CompletionList completionsAt(String text, int caret, CompletionContext ctx) {
   if (q >= 0) {
     final between = text.substring(q + 1, caret);
     final quotesBefore = "'".allMatches(text.substring(0, q)).length;
-    if (quotesBefore.isEven && !between.contains("'") && !between.contains('!')) {
+    if (quotesBefore.isEven &&
+        !between.contains("'") &&
+        !between.contains('!')) {
       final items = <CompletionItem>[];
       final low = between.toLowerCase();
       for (final s in ctx.sheetNames) {
         if (s.toLowerCase().startsWith(low)) {
-          items.add(CompletionItem(
-            kind: CompletionKind.sheet,
-            name: s,
-            summary: 'Sheet',
-            insertText: "'${s.replaceAll("'", "''")}'!",
-            matches: [(0, between.length)],
-          ));
+          items.add(
+            CompletionItem(
+              kind: CompletionKind.sheet,
+              name: s,
+              summary: 'Sheet',
+              insertText: "'${s.replaceAll("'", "''")}'!",
+              matches: [(0, between.length)],
+            ),
+          );
         }
       }
-      if (items.isNotEmpty) return CompletionList(items.take(ctx.maxItems).toList(), q, caret, between);
+      if (items.isNotEmpty) {
+        return CompletionList(
+          items.take(ctx.maxItems).toList(),
+          q,
+          caret,
+          between,
+        );
+      }
     }
   }
   var start = caret;
@@ -129,8 +199,12 @@ CompletionList completionsAt(String text, int caret, CompletionContext ctx) {
     start--;
   }
   if (start == caret) return CompletionList.empty;
-  if (!FormulaLexer.isIdentStart(text.codeUnitAt(start))) return CompletionList.empty;
-  if (caret < text.length && _identChar(text.codeUnitAt(caret))) return CompletionList.empty;
+  if (!FormulaLexer.isIdentStart(text.codeUnitAt(start))) {
+    return CompletionList.empty;
+  }
+  if (caret < text.length && _identChar(text.codeUnitAt(caret))) {
+    return CompletionList.empty;
+  }
   // expression position: previous significant char
   var p = start - 1;
   while (p >= 0 && ' \t\r\n'.contains(text[p])) {
@@ -139,7 +213,9 @@ CompletionList completionsAt(String text, int caret, CompletionContext ctx) {
   if (p >= 0) {
     final c = text[p];
     const allowed = '=+-*/^&<>(,;:{}%\\';
-    if (!allowed.contains(c) && c != ctx.locale.argSeparator) return CompletionList.empty;
+    if (!allowed.contains(c) && c != ctx.locale.argSeparator) {
+      return CompletionList.empty;
+    }
   }
   final prefix = text.substring(start, caret);
   final up = prefix.toUpperCase();
@@ -151,7 +227,9 @@ CompletionList completionsAt(String text, int caret, CompletionContext ctx) {
     // word start inside dotted / underscored names: DIST → NORM.DIST
     for (var i = 1; i < n.length; i++) {
       final prev = n[i - 1];
-      if ((prev == '.' || prev == '_') && n.startsWith(up, i)) return 2000 - n.length;
+      if ((prev == '.' || prev == '_') && n.startsWith(up, i)) {
+        return 2000 - n.length;
+      }
     }
     // fuzzy subsequence
     var k = 0;
@@ -168,7 +246,8 @@ CompletionList completionsAt(String text, int caret, CompletionContext ctx) {
     return i >= 0 ? [(i, i + up.length)] : const [];
   }
 
-  int popularity(String name) => ctx.usage[name] ?? functionPopularity[name] ?? 0;
+  int popularity(String name) =>
+      ctx.usage[name] ?? functionPopularity[name] ?? 0;
 
   for (final spec in ctx.registry.all) {
     if (!spec.implemented) continue;
@@ -205,10 +284,18 @@ CompletionList completionsAt(String text, int caret, CompletionContext ctx) {
   for (final name in ctx.customFunctionNames) {
     final s = score(name);
     if (s == null) continue;
-    final summary = cp != null && cp.has(name.toUpperCase()) ? cp.help(name.toUpperCase()).summary : 'Custom function';
+    final summary = cp != null && cp.has(name.toUpperCase())
+        ? cp.help(name.toUpperCase()).summary
+        : 'Custom function';
     scored.add((
       s * 1000 + 400,
-      CompletionItem(kind: CompletionKind.customFunction, name: name, summary: summary, insertText: '$name(', matches: matchesOf(name)),
+      CompletionItem(
+        kind: CompletionKind.customFunction,
+        name: name,
+        summary: summary,
+        insertText: '$name(',
+        matches: matchesOf(name),
+      ),
     ));
   }
   // LET / LAMBDA names in scope
@@ -224,7 +311,13 @@ CompletionList completionsAt(String text, int caret, CompletionContext ctx) {
       if (s == null) return;
       scored.add((
         s * 1000 + 900,
-        CompletionItem(kind: CompletionKind.letName, name: name, summary: '$fn variable', insertText: name, matches: matchesOf(name)),
+        CompletionItem(
+          kind: CompletionKind.letName,
+          name: name,
+          summary: '$fn variable',
+          insertText: name,
+          matches: matchesOf(name),
+        ),
       ));
     });
   }
@@ -232,5 +325,10 @@ CompletionList completionsAt(String text, int caret, CompletionContext ctx) {
     final c = b.$1.compareTo(a.$1);
     return c != 0 ? c : a.$2.name.compareTo(b.$2.name);
   });
-  return CompletionList([for (final s in scored.take(ctx.maxItems)) s.$2], start, caret, prefix);
+  return CompletionList(
+    [for (final s in scored.take(ctx.maxItems)) s.$2],
+    start,
+    caret,
+    prefix,
+  );
 }

@@ -80,7 +80,11 @@ abstract final class DecimalsAdjuster {
     return out;
   }
 
-  static void _numberEdit(NfSection s, bool increase, List<(int, int, String)> edits) {
+  static void _numberEdit(
+    NfSection s,
+    bool increase,
+    List<(int, int, String)> edits,
+  ) {
     NfDigit? lastDecimal;
     NfDigit? lastInteger;
     NfDecimalPoint? point;
@@ -116,7 +120,11 @@ abstract final class DecimalsAdjuster {
     }
   }
 
-  static void _timeEdit(NfSection s, bool increase, List<(int, int, String)> edits) {
+  static void _timeEdit(
+    NfSection s,
+    bool increase,
+    List<(int, int, String)> edits,
+  ) {
     NfFractionalSeconds? frac;
     NfToken? seconds;
     for (final t in s.tokens) {

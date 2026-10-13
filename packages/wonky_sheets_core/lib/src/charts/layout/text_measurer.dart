@@ -35,7 +35,8 @@ extension TextMeasurerX on TextMeasurer {
     var lo = 0, hi = text.length;
     while (lo < hi) {
       final mid = (lo + hi + 1) >> 1;
-      if (measure('${text.substring(0, mid).trimRight()}$dots', style).width <= maxWidth) {
+      if (measure('${text.substring(0, mid).trimRight()}$dots', style).width <=
+          maxWidth) {
         lo = mid;
       } else {
         hi = mid - 1;
@@ -49,7 +50,10 @@ extension TextMeasurerX on TextMeasurer {
 /// the server raster path, tests and scene goldens.
 final class ApproxTextMeasurer implements TextMeasurer {
   /// Creates the measurer.
-  const ApproxTextMeasurer({this.ascentRatio = 0.93, this.lineHeightRatio = 1.17});
+  const ApproxTextMeasurer({
+    this.ascentRatio = 0.93,
+    this.lineHeightRatio = 1.17,
+  });
 
   /// Ascent as a fraction of the font size.
   final double ascentRatio;
@@ -59,11 +63,86 @@ final class ApproxTextMeasurer implements TextMeasurer {
 
   // ASCII 0x20..0x7E.
   static const List<int> _ascii = [
-    278, 278, 355, 556, 556, 889, 667, 191, 333, 333, 389, 584, 278, 333, 278, 278, //
-    556, 556, 556, 556, 556, 556, 556, 556, 556, 556, 278, 278, 584, 584, 584, 556, //
-    1015, 667, 667, 722, 722, 667, 611, 778, 722, 278, 500, 667, 556, 833, 722, 778, //
-    667, 778, 722, 667, 611, 722, 667, 944, 667, 667, 611, 278, 278, 278, 469, 556, //
-    333, 556, 556, 500, 556, 556, 278, 556, 556, 222, 222, 500, 222, 833, 556, 556, //
+    278,
+    278,
+    355,
+    556,
+    556,
+    889,
+    667,
+    191,
+    333,
+    333,
+    389,
+    584,
+    278,
+    333,
+    278,
+    278, //
+    556,
+    556,
+    556,
+    556,
+    556,
+    556,
+    556,
+    556,
+    556,
+    556,
+    278,
+    278,
+    584,
+    584,
+    584,
+    556, //
+    1015,
+    667,
+    667,
+    722,
+    722,
+    667,
+    611,
+    778,
+    722,
+    278,
+    500,
+    667,
+    556,
+    833,
+    722,
+    778, //
+    667,
+    778,
+    722,
+    667,
+    611,
+    722,
+    667,
+    944,
+    667,
+    667,
+    611,
+    278,
+    278,
+    278,
+    469,
+    556, //
+    333,
+    556,
+    556,
+    500,
+    556,
+    556,
+    278,
+    556,
+    556,
+    222,
+    222,
+    500,
+    222,
+    833,
+    556,
+    556, //
     556, 556, 333, 500, 278, 556, 500, 722, 500, 500, 500, 334, 260, 334, 584,
   ];
 
@@ -88,6 +167,10 @@ final class ApproxTextMeasurer implements TextMeasurer {
     }
     var w = units * style.size / 1000;
     if (style.bold) w *= 1.06;
-    return TextMetrics(w, style.size * lineHeightRatio, style.size * ascentRatio);
+    return TextMetrics(
+      w,
+      style.size * lineHeightRatio,
+      style.size * ascentRatio,
+    );
   }
 }

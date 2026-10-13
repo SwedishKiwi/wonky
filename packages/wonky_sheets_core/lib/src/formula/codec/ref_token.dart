@@ -84,10 +84,13 @@ final class RefToken {
     return b.toString();
   }
 
-  static String _escape(String s) =>
-      s.replaceAll('%', '%25').replaceAll(';', '%3B').replaceAll(close, '%E2%9F%A7');
+  static String _escape(String s) => s
+      .replaceAll('%', '%25')
+      .replaceAll(';', '%3B')
+      .replaceAll(close, '%E2%9F%A7');
 
-  static String _unescape(String s) => s.contains('%') ? Uri.decodeComponent(s) : s;
+  static String _unescape(String s) =>
+      s.contains('%') ? Uri.decodeComponent(s) : s;
 
   /// Decodes the inside of a token (without the brackets). Returns null when malformed.
   static RefToken? decodeBody(String body) {
@@ -151,15 +154,32 @@ final class RefToken {
       other.unbound == unbound;
 
   @override
-  int get hashCode =>
-      Object.hash(sheetId, rowId, colId, absRow, absCol, rowKey, colKey, unbound);
+  int get hashCode => Object.hash(
+    sheetId,
+    rowId,
+    colId,
+    absRow,
+    absCol,
+    rowKey,
+    colKey,
+    unbound,
+  );
 
   @override
   String toString() => encode();
 }
 
 /// Shape of an id-based reference.
-enum StoredRefKind { cell, rect, columns, rows, openRows, openColumns, unbound, invalid }
+enum StoredRefKind {
+  cell,
+  rect,
+  columns,
+  rows,
+  openRows,
+  openColumns,
+  unbound,
+  invalid,
+}
 
 /// A stored reference: one token (cell / unbound) or a range `⟦a⟧:⟦b⟧`.
 final class StoredRef {
@@ -173,7 +193,9 @@ final class StoredRef {
     if (start.isUnbound) return StoredRefKind.unbound;
     final e = end;
     if (e == null) {
-      return start.hasRow && start.hasCol ? StoredRefKind.cell : StoredRefKind.invalid;
+      return start.hasRow && start.hasCol
+          ? StoredRefKind.cell
+          : StoredRefKind.invalid;
     }
     if (start.hasRow && start.hasCol) {
       if (e.hasRow && e.hasCol) return StoredRefKind.rect;
@@ -181,12 +203,17 @@ final class StoredRef {
       if (e.hasRow) return StoredRefKind.openColumns;
       return StoredRefKind.invalid;
     }
-    if (start.hasCol && !start.hasRow && e.hasCol && !e.hasRow) return StoredRefKind.columns;
-    if (start.hasRow && !start.hasCol && e.hasRow && !e.hasCol) return StoredRefKind.rows;
+    if (start.hasCol && !start.hasRow && e.hasCol && !e.hasRow) {
+      return StoredRefKind.columns;
+    }
+    if (start.hasRow && !start.hasCol && e.hasRow && !e.hasCol) {
+      return StoredRefKind.rows;
+    }
     return StoredRefKind.invalid;
   }
 
-  String encode() => end == null ? start.encode() : '${start.encode()}:${end!.encode()}';
+  String encode() =>
+      end == null ? start.encode() : '${start.encode()}:${end!.encode()}';
 
   /// Parses `⟦…⟧` or `⟦…⟧:⟦…⟧` (complete text).
   static StoredRef? parse(String text) {
@@ -202,7 +229,8 @@ final class StoredRef {
   }
 
   @override
-  bool operator ==(Object other) => other is StoredRef && other.start == start && other.end == end;
+  bool operator ==(Object other) =>
+      other is StoredRef && other.start == start && other.end == end;
 
   @override
   int get hashCode => Object.hash(start, end);

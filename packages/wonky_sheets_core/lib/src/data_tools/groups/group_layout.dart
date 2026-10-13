@@ -10,7 +10,13 @@ const int kMaxGroupDepth = 8;
 /// A group resolved to current indices.
 final class GroupSpan {
   /// Creates a span.
-  const GroupSpan(this.id, this.start, this.end, this.depth, {this.collapsed = false});
+  const GroupSpan(
+    this.id,
+    this.start,
+    this.end,
+    this.depth, {
+    this.collapsed = false,
+  });
 
   final String id;
 
@@ -28,17 +34,22 @@ final class GroupSpan {
   bool intersects(int s, int e) => start <= e && end >= s;
 
   @override
-  String toString() => 'GroupSpan($id, $start–$end, d$depth${collapsed ? ', collapsed' : ''})';
+  String toString() =>
+      'GroupSpan($id, $start–$end, d$depth${collapsed ? ', collapsed' : ''})';
 }
 
 /// Record changes produced by group operations, as `DimensionGroup` column
 /// maps for the mutation planner.
 final class GroupChanges {
   /// Creates changes.
-  GroupChanges({Map<String, Map<String, Object?>>? inserts, Map<String, Map<String, Object?>>? updates, Set<String>? deletes, this.error})
-    : inserts = inserts ?? {},
-      updates = updates ?? {},
-      deletes = deletes ?? {};
+  GroupChanges({
+    Map<String, Map<String, Object?>>? inserts,
+    Map<String, Map<String, Object?>>? updates,
+    Set<String>? deletes,
+    this.error,
+  }) : inserts = inserts ?? {},
+       updates = updates ?? {},
+       deletes = deletes ?? {};
 
   /// A refused operation.
   GroupChanges.error(String message) : this(error: message);
@@ -58,11 +69,19 @@ final class GroupChanges {
   bool get isEmpty => inserts.isEmpty && updates.isEmpty && deletes.isEmpty;
 
   @override
-  String toString() => 'GroupChanges(+${inserts.keys}, ~$updates, -$deletes${error == null ? '' : ', $error'})';
+  String toString() =>
+      'GroupChanges(+${inserts.keys}, ~$updates, -$deletes${error == null ? '' : ', $error'})';
 }
 
 final class _G {
-  _G(this.id, this.start, this.end, this.depth, this.collapsed, {this.isNew = false});
+  _G(
+    this.id,
+    this.start,
+    this.end,
+    this.depth,
+    this.collapsed, {
+    this.isNew = false,
+  });
   final String id;
   int start;
   int end;
@@ -76,8 +95,12 @@ final class _G {
 /// the group commands.
 final class GroupLayout {
   /// Creates the layout of [groups] (one sheet, one [dimension]) on [axis].
-  GroupLayout(this.sheetId, this.dimension, this.axis, Iterable<DimensionGroupRecord> groups)
-    : records = {
+  GroupLayout(
+    this.sheetId,
+    this.dimension,
+    this.axis,
+    Iterable<DimensionGroupRecord> groups,
+  ) : records = {
         for (final g in groups)
           if (g.dimension == dimension && g.sheetId == sheetId) g.id: g,
       };
@@ -87,7 +110,8 @@ final class GroupLayout {
   final AxisIndex axis;
   final Map<String, DimensionGroupRecord> records;
 
-  static const _messageTooDeep = "You can't group more than $kMaxGroupDepth levels.";
+  static const _messageTooDeep =
+      "You can't group more than $kMaxGroupDepth levels.";
 
   /// Resolved spans (groups whose endpoints are missing are skipped), in
   /// normalization order.
@@ -97,7 +121,15 @@ final class GroupLayout {
       final s = axis.indexOf(g.startId);
       final e = axis.indexOf(g.endId);
       if (s < 0 || e < 0) continue;
-      out.add(GroupSpan(g.id, s < e ? s : e, s < e ? e : s, g.depth, collapsed: g.collapsed));
+      out.add(
+        GroupSpan(
+          g.id,
+          s < e ? s : e,
+          s < e ? e : s,
+          g.depth,
+          collapsed: g.collapsed,
+        ),
+      );
     }
     out.sort(_order);
     return out;
@@ -171,7 +203,11 @@ final class GroupLayout {
   };
 
   /// Builds the changes turning the stored records into [gs] (plus [deletes]).
-  GroupChanges _diff(List<_G> gs, Set<String> deletes, {bool checkDepth = false}) {
+  GroupChanges _diff(
+    List<_G> gs,
+    Set<String> deletes, {
+    bool checkDepth = false,
+  }) {
     final depths = _depths(gs, deletes);
     if (checkDepth) {
       for (final g in gs) {
@@ -284,7 +320,9 @@ final class GroupLayout {
         if (!deletes.contains(g.id)) g,
     ];
     // Provisional depth sorts the new group inside identical spans.
-    if (reuse == null) kept.add(_G(ids.newId(), s, e, kMaxGroupDepth + 1, false, isNew: true));
+    if (reuse == null) {
+      kept.add(_G(ids.newId(), s, e, kMaxGroupDepth + 1, false, isNew: true));
+    }
     return _diff(kept, deletes, checkDepth: true);
   }
 
@@ -309,7 +347,9 @@ final class GroupLayout {
       } else if (end >= g.end) {
         g.end = start - 1;
       } else {
-        added.add(_G(ids.newId(), end + 1, g.end, g.depth, g.collapsed, isNew: true));
+        added.add(
+          _G(ids.newId(), end + 1, g.end, g.depth, g.collapsed, isNew: true),
+        );
         g.end = start - 1;
       }
     }
@@ -325,9 +365,11 @@ final class GroupLayout {
   GroupChanges toggle(String groupId) {
     final r = records[groupId];
     if (r == null) return GroupChanges();
-    return GroupChanges(updates: {
-      groupId: {'collapsed': !r.collapsed},
-    });
+    return GroupChanges(
+      updates: {
+        groupId: {'collapsed': !r.collapsed},
+      },
+    );
   }
 
   GroupChanges _setCollapsed(bool Function(GroupSpan s) collapsed) {
@@ -340,7 +382,8 @@ final class GroupLayout {
   }
 
   /// Level button [level]: groups with depth ≥ level collapse, others expand.
-  GroupChanges collapseToLevel(int level) => _setCollapsed((s) => s.depth >= level);
+  GroupChanges collapseToLevel(int level) =>
+      _setCollapsed((s) => s.depth >= level);
 
   /// Expands every group.
   GroupChanges expandAll() => _setCollapsed((_) => false);

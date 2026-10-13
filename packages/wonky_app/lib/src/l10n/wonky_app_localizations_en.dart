@@ -2505,6 +2505,18 @@ class WonkyAppLocalizationsEn extends WonkyAppLocalizations {
   @override
   String get notifyDigestHint =>
       'Send one email every 15 minutes instead of one per notification. Mentions and assignments are always emailed right away.';
+
+  @override
+  String get exportFormatMarkdown => 'Markdown (.md)';
+
+  @override
+  String get exportFormatHtml => 'HTML (.html)';
+
+  @override
+  String get exportFormatPdf => 'PDF (.pdf)';
+
+  @override
+  String get exportFormatText => 'Plain text (.txt)';
 }
 
 /// The translations for English (`en_XA`).
@@ -5047,4 +5059,16 @@ class WonkyAppLocalizationsEnXa extends WonkyAppLocalizationsEn {
   @override
   String get notifyDigestHint =>
       '[Šéñð öñé éɱåîļ éṽéŕý 15 ɱîñûţéš îñšţéåð öƒ öñé þéŕ ñöţîƒîçåţîöñ. Ṁéñţîöñš åñð åššîĝñɱéñţš åŕé åļŵåýš éɱåîļéð ŕîĝĥţ åŵåý. one two three four five six seven ei]';
+
+  @override
+  String get exportFormatMarkdown => '[Ṁåŕķðöŵñ (.ɱð) one t]';
+
+  @override
+  String get exportFormatHtml => '[ĤŢṀĻ (.ĥţɱļ) one]';
+
+  @override
+  String get exportFormatPdf => '[ÞÐƑ (.þðƒ) one]';
+
+  @override
+  String get exportFormatText => '[Þļåîñ ţéẋţ (.ţẋţ) one tw]';
 }

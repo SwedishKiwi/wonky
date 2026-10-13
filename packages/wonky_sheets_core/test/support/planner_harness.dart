@@ -32,7 +32,8 @@ final class PlannerHarness {
 
   String get sheetId => model.sheets.first.id;
 
-  MutationPlan plan(SheetsOperation op) => const SheetsMutationPlanner().plan(op, model, ctx);
+  MutationPlan plan(SheetsOperation op) =>
+      const SheetsMutationPlanner().plan(op, model, ctx);
 
   MutationPlan apply(SheetsOperation op) {
     final p = plan(op);

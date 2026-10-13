@@ -62,37 +62,39 @@ abstract final class NumberFormatParser {
   static final Parser<List<_Raw>> _parser = _build();
 
   static Parser<List<_Raw>> _build() {
-    Parser<_Raw> tok(Parser<Object?> p, _Raw Function(String text, int start, int end) f) =>
-        p.flatten().token().map((t) => f(t.value, t.start, t.stop));
+    Parser<_Raw> tok(
+      Parser<Object?> p,
+      _Raw Function(String text, int start, int end) f,
+    ) => p.flatten().token().map((t) => f(t.value, t.start, t.stop));
 
-    final bracket = seq3(
-      char('['),
-      noneOf(']').star().flatten(),
-      char(']'),
-    ).token().map((t) => _Raw(_RawKind.bracket, t.input, t.start, t.stop, t.value.$2));
-    final quoted = seq3(
-      char('"'),
-      noneOf('"').star().flatten(),
-      char('"'),
-    ).token().map((t) => _Raw(_RawKind.literal, t.input, t.start, t.stop, t.value.$2));
-    final escape = seq2(
-      char(r'\'),
-      any(),
-    ).token().map((t) => _Raw(_RawKind.literal, t.input, t.start, t.stop, t.value.$2));
-    final repeat = seq2(
-      char('*'),
-      any(),
-    ).token().map((t) => _Raw(_RawKind.repeat, t.input, t.start, t.stop, t.value.$2));
-    final spacer = seq2(
-      char('_'),
-      any(),
-    ).token().map((t) => _Raw(_RawKind.spacer, t.input, t.start, t.stop, t.value.$2));
+    final bracket = seq3(char('['), noneOf(']').star().flatten(), char(']'))
+        .token()
+        .map(
+          (t) => _Raw(_RawKind.bracket, t.input, t.start, t.stop, t.value.$2),
+        );
+    final quoted = seq3(char('"'), noneOf('"').star().flatten(), char('"'))
+        .token()
+        .map(
+          (t) => _Raw(_RawKind.literal, t.input, t.start, t.stop, t.value.$2),
+        );
+    final escape = seq2(char(r'\'), any()).token().map(
+      (t) => _Raw(_RawKind.literal, t.input, t.start, t.stop, t.value.$2),
+    );
+    final repeat = seq2(char('*'), any()).token().map(
+      (t) => _Raw(_RawKind.repeat, t.input, t.start, t.stop, t.value.$2),
+    );
+    final spacer = seq2(char('_'), any()).token().map(
+      (t) => _Raw(_RawKind.spacer, t.input, t.start, t.stop, t.value.$2),
+    );
     final general = tok(
       string('General', ignoreCase: true),
       (s, a, b) => _Raw(_RawKind.general, s, a, b),
     );
     final ampm = tok(
-      [string('AM/PM', ignoreCase: true), string('A/P', ignoreCase: true)].toChoiceParser(),
+      [
+        string('AM/PM', ignoreCase: true),
+        string('A/P', ignoreCase: true),
+      ].toChoiceParser(),
       (s, a, b) => _Raw(_RawKind.ampm, s, a, b),
     );
     final exponent = tok(
@@ -101,16 +103,25 @@ abstract final class NumberFormatParser {
     );
     final dateRun = [
       for (final l in const ['d', 'm', 'y', 'h', 's'])
-        tok(char(l, ignoreCase: true).plus(), (s, a, b) => _Raw(_RawKind.dateRun, s, a, b)),
+        tok(
+          char(l, ignoreCase: true).plus(),
+          (s, a, b) => _Raw(_RawKind.dateRun, s, a, b),
+        ),
     ].toChoiceParser();
-    final digitPh = tok(anyOf('0#?'), (s, a, b) => _Raw(_RawKind.digit, s, a, b));
+    final digitPh = tok(
+      anyOf('0#?'),
+      (s, a, b) => _Raw(_RawKind.digit, s, a, b),
+    );
     final number = tok(
       seq2(pattern('1-9'), digit().star()),
       (s, a, b) => _Raw(_RawKind.number, s, a, b, s),
     );
     Parser<_Raw> single(String c, _RawKind kind) =>
         tok(char(c), (s, a, b) => _Raw(kind, s, a, b, s));
-    final other = tok(noneOf('"[\\*_;'), (s, a, b) => _Raw(_RawKind.literal, s, a, b, s));
+    final other = tok(
+      noneOf('"[\\*_;'),
+      (s, a, b) => _Raw(_RawKind.literal, s, a, b, s),
+    );
     final token = [
       bracket,
       quoted,
@@ -147,7 +158,10 @@ abstract final class NumberFormatParser {
     for (final r in raws) {
       if (r.kind == _RawKind.semicolon) {
         if (sections.length == 4) {
-          throw FormatParseError(r.start, 'A format can have at most 4 sections');
+          throw FormatParseError(
+            r.start,
+            'A format can have at most 4 sections',
+          );
         }
         sections.add([]);
         sectionStarts.add(r.end);
@@ -157,7 +171,9 @@ abstract final class NumberFormatParser {
     }
     final out = <NfSection>[];
     for (var i = 0; i < sections.length; i++) {
-      final end = i + 1 < sectionStarts.length ? sectionStarts[i + 1] - 1 : pattern.length;
+      final end = i + 1 < sectionStarts.length
+          ? sectionStarts[i + 1] - 1
+          : pattern.length;
       out.add(_section(sections[i], sectionStarts[i], end));
     }
     return NumberFormatAst(pattern, List.unmodifiable(out));
@@ -189,7 +205,10 @@ abstract final class NumberFormatParser {
     return switch (pattern[position]) {
       '"' => FormatParseError(position, 'Unterminated quoted text'),
       '[' => FormatParseError(position, 'Missing closing bracket "]"'),
-      r'\' => FormatParseError(position, 'Escape character at the end of the format'),
+      r'\' => FormatParseError(
+        position,
+        'Escape character at the end of the format',
+      ),
       '*' => FormatParseError(position, 'Missing character after "*"'),
       '_' => FormatParseError(position, 'Missing character after "_"'),
       final c => FormatParseError(position, 'Unexpected character "$c"'),
@@ -199,7 +218,10 @@ abstract final class NumberFormatParser {
   static final RegExp _conditionRe = RegExp(
     r'^\s*(<=|>=|<>|<|>|=)\s*([+-]?(?:\d+\.?\d*|\.\d+)(?:[eE][+-]?\d+)?)\s*$',
   );
-  static final RegExp _elapsedRe = RegExp(r'^(h+|m+|s+)$', caseSensitive: false);
+  static final RegExp _elapsedRe = RegExp(
+    r'^(h+|m+|s+)$',
+    caseSensitive: false,
+  );
 
   static NfSection _section(List<_Raw> raws, int start, int end) {
     NfCondition? condition;
@@ -225,7 +247,10 @@ abstract final class NumberFormatParser {
       final cm = _conditionRe.firstMatch(inner);
       if (cm != null) {
         if (condition != null) {
-          throw FormatParseError(r.start, 'A section can have only one condition');
+          throw FormatParseError(
+            r.start,
+            'A section can have only one condition',
+          );
         }
         condition = NfCondition(
           NfConditionOp.values.firstWhere((o) => o.symbol == cm.group(1)),
@@ -239,7 +264,10 @@ abstract final class NumberFormatParser {
         continue;
       }
       if (inner.toLowerCase().startsWith('color')) {
-        throw FormatParseError(r.start, 'Unknown color "[$inner]" (use Color1 to Color56)');
+        throw FormatParseError(
+          r.start,
+          'Unknown color "[$inner]" (use Color1 to Color56)',
+        );
       }
       throw FormatParseError(r.start, 'Unknown color or condition "[$inner]"');
     }
@@ -336,30 +364,51 @@ abstract final class NumberFormatParser {
               out.add(
                 n <= 2
                     ? NfDatePart(NfDateUnit.day, n, r.start, r.end)
-                    : NfDatePart(NfDateUnit.weekday, n == 3 ? 3 : 4, r.start, r.end),
+                    : NfDatePart(
+                        NfDateUnit.weekday,
+                        n == 3 ? 3 : 4,
+                        r.start,
+                        r.end,
+                      ),
               );
             case 'y':
-              out.add(NfDatePart(NfDateUnit.year, n <= 2 ? 2 : 4, r.start, r.end));
+              out.add(
+                NfDatePart(NfDateUnit.year, n <= 2 ? 2 : 4, r.start, r.end),
+              );
             case 'h':
-              out.add(NfDatePart(NfDateUnit.hour, n >= 2 ? 2 : 1, r.start, r.end));
+              out.add(
+                NfDatePart(NfDateUnit.hour, n >= 2 ? 2 : 1, r.start, r.end),
+              );
             case 's':
-              out.add(NfDatePart(NfDateUnit.second, n >= 2 ? 2 : 1, r.start, r.end));
+              out.add(
+                NfDatePart(NfDateUnit.second, n >= 2 ? 2 : 1, r.start, r.end),
+              );
               // Fractional seconds: `.0`, `.00`, `.000` directly after.
               if (i + 2 < raws.length &&
                   raws[i + 1].kind == _RawKind.point &&
                   raws[i + 2].kind == _RawKind.digit &&
                   raws[i + 2].text == '0') {
                 var j = i + 2;
-                while (j < raws.length && raws[j].kind == _RawKind.digit && raws[j].text == '0') {
+                while (j < raws.length &&
+                    raws[j].kind == _RawKind.digit &&
+                    raws[j].text == '0') {
                   j++;
                 }
-                out.add(NfFractionalSeconds(j - i - 2, raws[i + 1].start, raws[j - 1].end));
+                out.add(
+                  NfFractionalSeconds(
+                    j - i - 2,
+                    raws[i + 1].start,
+                    raws[j - 1].end,
+                  ),
+                );
                 i = j;
                 continue;
               }
             default: // m
               if (n >= 3) {
-                out.add(NfDatePart(NfDateUnit.month, n >= 5 ? 5 : n, r.start, r.end));
+                out.add(
+                  NfDatePart(NfDateUnit.month, n >= 5 ? 5 : n, r.start, r.end),
+                );
               } else {
                 ambiguous.add(out.length);
                 out.add(NfDatePart(NfDateUnit.month, n, r.start, r.end));
@@ -378,10 +427,18 @@ abstract final class NumberFormatParser {
               raws[i + 2].kind == _RawKind.digit &&
               raws[i + 2].text == '0') {
             var j = i + 2;
-            while (j < raws.length && raws[j].kind == _RawKind.digit && raws[j].text == '0') {
+            while (j < raws.length &&
+                raws[j].kind == _RawKind.digit &&
+                raws[j].text == '0') {
               j++;
             }
-            out.add(NfFractionalSeconds(j - i - 2, raws[i + 1].start, raws[j - 1].end));
+            out.add(
+              NfFractionalSeconds(
+                j - i - 2,
+                raws[i + 1].start,
+                raws[j - 1].end,
+              ),
+            );
             i = j;
             continue;
           }
@@ -421,9 +478,8 @@ abstract final class NumberFormatParser {
     return false;
   }
 
-  static ({List<NfToken> tokens, NfSectionKind kind, NfNumberLayout layout}) _numberTokens(
-    List<_Raw> raws,
-  ) {
+  static ({List<NfToken> tokens, NfSectionKind kind, NfNumberLayout layout})
+  _numberTokens(List<_Raw> raws) {
     final n = raws.length;
     final expIdx = raws.indexWhere((r) => r.kind == _RawKind.exponent);
     final mantissaEnd = expIdx < 0 ? n : expIdx;
@@ -434,7 +490,8 @@ abstract final class NumberFormatParser {
       for (var i = 1; i + 1 < n; i++) {
         if (raws[i].kind == _RawKind.slash &&
             raws[i - 1].kind == _RawKind.digit &&
-            (raws[i + 1].kind == _RawKind.digit || raws[i + 1].kind == _RawKind.number)) {
+            (raws[i + 1].kind == _RawKind.digit ||
+                raws[i + 1].kind == _RawKind.number)) {
           slashIdx = i;
           break;
         }
@@ -512,7 +569,9 @@ abstract final class NumberFormatParser {
         case _RawKind.point when i == pointIdx:
           tokens.add(NfDecimalPoint(r.start, r.end));
         case _RawKind.exponent when i == expIdx:
-          tokens.add(NfExponent(r.text[0], r.start, r.end, alwaysSign: r.text[1] == '+'));
+          tokens.add(
+            NfExponent(r.text[0], r.start, r.end, alwaysSign: r.text[1] == '+'),
+          );
         case _RawKind.slash when i == slashIdx:
           tokens.add(NfFractionSlash(r.start, r.end));
         case _RawKind.number when slashIdx >= 0 && i == slashIdx + 1:

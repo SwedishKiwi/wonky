@@ -31,19 +31,25 @@ void main() {
       (0, -1, true, 110, 16),
       (-20, 0, true, 0, 26),
     ]) {
-      test('when nudging ($sx, $sy) large=$large then the top-left is ($left, $top)', () {
-        final n = anchor.nudge(sx, sy, rows, cols, large: large);
+      test(
+        'when nudging ($sx, $sy) large=$large then the top-left is ($left, $top)',
+        () {
+          final n = anchor.nudge(sx, sy, rows, cols, large: large);
 
-        expect(n.rectIn(rows, cols), ChartRect(left, top, 200, 100));
-      });
+          expect(n.rectIn(rows, cols), ChartRect(left, top, 200, 100));
+        },
+      );
     }
 
-    test('when nudging across a cell edge then the anchor moves to the new cell', () {
-      final n = anchor.nudge(0, -1, rows, cols, large: true);
+    test(
+      'when nudging across a cell edge then the anchor moves to the new cell',
+      () {
+        final n = anchor.nudge(0, -1, rows, cols, large: true);
 
-      expect(n.rowId, rows.idAt(0));
-      expect(n.dy, 16);
-    });
+        expect(n.rowId, rows.idAt(0));
+        expect(n.dy, 16);
+      },
+    );
 
     test('when moving by a px delta then the result is normalized', () {
       final n = anchor.moveBy(80, 40, rows, cols);
@@ -61,22 +67,28 @@ void main() {
       (5, 5, 4, 3),
       (-5, -5, 0, 0),
     ]) {
-      test('when nudging by ($dRow, $dCol) cells then the anchor is row $row, column $col', () {
-        final n = anchor.nudgeByCells(dRow, dCol, rows, cols);
+      test(
+        'when nudging by ($dRow, $dCol) cells then the anchor is row $row, column $col',
+        () {
+          final n = anchor.nudgeByCells(dRow, dCol, rows, cols);
 
-        expect((rows.indexOf(n.rowId!), cols.indexOf(n.colId!)), (row, col));
-      });
+          expect((rows.indexOf(n.rowId!), cols.indexOf(n.colId!)), (row, col));
+        },
+      );
     }
 
-    test('when nudging by cells into a narrower cell then offsets that do not fit reset', () {
-      final wide = anchor.moveToCell(1, 3, rows, cols, dx: 90, dy: 35);
+    test(
+      'when nudging by cells into a narrower cell then offsets that do not fit reset',
+      () {
+        final wide = anchor.moveToCell(1, 3, rows, cols, dx: 90, dy: 35);
 
-      final n = wide.nudgeByCells(0, -1, rows, cols);
+        final n = wide.nudgeByCells(0, -1, rows, cols);
 
-      expect(cols.indexOf(n.colId!), 2);
-      expect(n.dx, 0);
-      expect(n.dy, 35);
-    });
+        expect(cols.indexOf(n.colId!), 2);
+        expect(n.dx, 0);
+        expect(n.dy, 35);
+      },
+    );
 
     test('when moving to a cell then the offsets are stored in that cell', () {
       final n = anchor.moveToCell(3, 3, rows, cols, dx: 5, dy: 6);
@@ -84,50 +96,78 @@ void main() {
       expect(n.rectIn(rows, cols), const ChartRect(185, 67, 200, 100));
     });
 
-    test('when moving to a cell with an offset past its edge then it is normalized', () {
-      final n = anchor.moveToCell(0, 0, rows, cols, dx: 110);
+    test(
+      'when moving to a cell with an offset past its edge then it is normalized',
+      () {
+        final n = anchor.moveToCell(0, 0, rows, cols, dx: 110);
 
-      expect(cols.indexOf(n.colId!), 2);
-      expect(n.dx, 10);
-    });
+        expect(cols.indexOf(n.colId!), 2);
+        expect(n.dx, 10);
+      },
+    );
 
     test('when duplicating then the copy is offset by (+16, +16)', () {
-      expect(anchor.duplicated(rows, cols).rectIn(rows, cols), const ChartRect(126, 42, 200, 100));
+      expect(
+        anchor.duplicated(rows, cols).rectIn(rows, cols),
+        const ChartRect(126, 42, 200, 100),
+      );
     });
 
-    for (final (w, h, keep, ew, eh) in <(double, double, bool?, double, double)>[
-      (300, 50, null, 300, 50),
-      (10, 5000, null, 20, 4000),
-      (400, 100, true, 400, 200),
-      (100, 300, true, 600, 300),
-      (8000, 10, true, 4000, 2000),
-      (5, 5, true, 40, 20),
-    ]) {
-      test('when resizing to $w × $h keepAspect=$keep then the size is $ew × $eh', () {
-        final r = anchor.resized(w, h, keepAspect: keep);
+    for (final (w, h, keep, ew, eh)
+        in <(double, double, bool?, double, double)>[
+          (300, 50, null, 300, 50),
+          (10, 5000, null, 20, 4000),
+          (400, 100, true, 400, 200),
+          (100, 300, true, 600, 300),
+          (8000, 10, true, 4000, 2000),
+          (5, 5, true, 40, 20),
+        ]) {
+      test(
+        'when resizing to $w × $h keepAspect=$keep then the size is $ew × $eh',
+        () {
+          final r = anchor.resized(w, h, keepAspect: keep);
 
-        expect((r.width, r.height), (ew, eh));
-        expect((r.rowId, r.colId, r.dx, r.dy), (anchor.rowId, anchor.colId, anchor.dx, anchor.dy));
-      });
+          expect((r.width, r.height), (ew, eh));
+          expect(
+            (r.rowId, r.colId, r.dx, r.dy),
+            (anchor.rowId, anchor.colId, anchor.dx, anchor.dy),
+          );
+        },
+      );
     }
 
-    test('when resizing a lockAspect object without keepAspect then the ratio is kept', () {
-      final r = anchor.copyWith(lockAspect: true).resized(400, 0);
+    test(
+      'when resizing a lockAspect object without keepAspect then the ratio is kept',
+      () {
+        final r = anchor.copyWith(lockAspect: true).resized(400, 0);
 
-      expect((r.width, r.height), (400, 200));
-    });
+        expect((r.width, r.height), (400, 200));
+      },
+    );
 
-    test('when dragging the top-left handle then the bottom-right corner stays fixed', () {
-      final r = anchor.resizeByHandle(ResizeHandle.topLeft, -10, -6, rows, cols);
+    test(
+      'when dragging the top-left handle then the bottom-right corner stays fixed',
+      () {
+        final r = anchor.resizeByHandle(
+          ResizeHandle.topLeft,
+          -10,
+          -6,
+          rows,
+          cols,
+        );
 
-      expect(r.rectIn(rows, cols), const ChartRect(100, 20, 210, 106));
-    });
+        expect(r.rectIn(rows, cols), const ChartRect(100, 20, 210, 106));
+      },
+    );
 
-    test('when dragging the left handle past the sheet edge then it stops at 0', () {
-      final r = anchor.resizeByHandle(ResizeHandle.left, -500, 0, rows, cols);
+    test(
+      'when dragging the left handle past the sheet edge then it stops at 0',
+      () {
+        final r = anchor.resizeByHandle(ResizeHandle.left, -500, 0, rows, cols);
 
-      expect(r.rectIn(rows, cols), const ChartRect(0, 26, 310, 100));
-    });
+        expect(r.rectIn(rows, cols), const ChartRect(0, 26, 310, 100));
+      },
+    );
 
     test('when dragging a corner with keepAspect then the ratio is kept', () {
       final r = anchor.resizeByHandle(
@@ -185,43 +225,61 @@ void main() {
       expect(r, const ChartRect(98, 0, 82, 30));
     });
 
-    test('when snap-resizing the bottom-right handle then those edges snap', () {
-      final r = GridSnap.snapResize(
-        const ChartRect(10, 5, 160, 30),
-        ResizeHandle.bottomRight,
-        rows,
-        cols,
-      );
+    test(
+      'when snap-resizing the bottom-right handle then those edges snap',
+      () {
+        final r = GridSnap.snapResize(
+          const ChartRect(10, 5, 160, 30),
+          ResizeHandle.bottomRight,
+          rows,
+          cols,
+        );
 
-      expect(r, const ChartRect(10, 5, 170, 35));
-    });
+        expect(r, const ChartRect(10, 5, 170, 35));
+      },
+    );
 
-    test('when snapping would make the object too small then the edge stays', () {
-      final r = GridSnap.snapResize(const ChartRect(90, 0, 25, 25), ResizeHandle.left, rows, cols);
+    test(
+      'when snapping would make the object too small then the edge stays',
+      () {
+        final r = GridSnap.snapResize(
+          const ChartRect(90, 0, 25, 25),
+          ResizeHandle.left,
+          rows,
+          cols,
+        );
 
-      expect(r, const ChartRect(90, 0, 25, 25));
-    });
+        expect(r, const ChartRect(90, 0, 25, 25));
+      },
+    );
   });
 
   group('Given size constraints', () {
-    for (final (w, h, aspect, ew, eh) in <(double, double, double?, double, double)>[
-      (100, 100, null, 100, 100),
-      (1, 1, null, 20, 20),
-      (100, 10, 2, 100, 50),
-      (10, 100, 2, 200, 100),
-      (1, 1, 200, 4000, 20),
-    ]) {
-      test('when constraining $w × $h with aspect $aspect then the size is $ew × $eh', () {
-        final s = ObjectGeometry.constrainSize(w, h, aspect: aspect);
+    for (final (w, h, aspect, ew, eh)
+        in <(double, double, double?, double, double)>[
+          (100, 100, null, 100, 100),
+          (1, 1, null, 20, 20),
+          (100, 10, 2, 100, 50),
+          (10, 100, 2, 200, 100),
+          (1, 1, 200, 4000, 20),
+        ]) {
+      test(
+        'when constraining $w × $h with aspect $aspect then the size is $ew × $eh',
+        () {
+          final s = ObjectGeometry.constrainSize(w, h, aspect: aspect);
 
-        expect((s.width, s.height), (ew, eh));
-      });
+          expect((s.width, s.height), (ew, eh));
+        },
+      );
     }
 
-    test('when the ratio cannot fit the limits then each side is clamped on its own', () {
-      final s = ObjectGeometry.constrainSize(10, 10, aspect: 1000);
+    test(
+      'when the ratio cannot fit the limits then each side is clamped on its own',
+      () {
+        final s = ObjectGeometry.constrainSize(10, 10, aspect: 1000);
 
-      expect((s.width, s.height), (4000, 20));
-    });
+        expect((s.width, s.height), (4000, 20));
+      },
+    );
   });
 }

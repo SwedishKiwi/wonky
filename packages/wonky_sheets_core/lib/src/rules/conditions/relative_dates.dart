@@ -15,7 +15,8 @@ typedef DayRange = ({int lo, int hi});
 /// `GMT-8`, `+02:00`). Unknown zones fall back to UTC.
 final class SpreadsheetDates {
   /// Creates the resolver.
-  SpreadsheetDates({this.timeZone = 'UTC', Clock? clock}) : _clock = clock; // ignore: prefer_initializing_formals
+  SpreadsheetDates({this.timeZone = 'UTC', Clock? clock})
+    : _clock = clock; // ignore: prefer_initializing_formals
 
   /// The spreadsheet time zone.
   final String timeZone;
@@ -25,12 +26,16 @@ final class SpreadsheetDates {
 
   static bool _tzInitialized = false;
 
-  static final RegExp _offsetRe = RegExp(r'^(?:UTC|GMT)?\s*([+-])(\d{1,2})(?::?(\d{2}))?$');
+  static final RegExp _offsetRe = RegExp(
+    r'^(?:UTC|GMT)?\s*([+-])(\d{1,2})(?::?(\d{2}))?$',
+  );
 
   /// The UTC offset of [timeZone] at the instant [utc].
   Duration offsetAt(DateTime utc) {
     final z = timeZone.trim();
-    if (z.isEmpty || z == 'UTC' || z == 'GMT' || z == 'Etc/UTC' || z == 'Z') return Duration.zero;
+    if (z.isEmpty || z == 'UTC' || z == 'GMT' || z == 'Etc/UTC' || z == 'Z') {
+      return Duration.zero;
+    }
     final m = _offsetRe.firstMatch(z);
     if (m != null) {
       final sign = m.group(1) == '-' ? -1 : 1;

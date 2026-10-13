@@ -26,7 +26,8 @@ Object? jsonMergePatch(Object? target, Object? patch) {
 }
 
 /// An in-memory upgrade of a spec JSON from version `v` to `v + 1`.
-typedef ChartSpecUpgrade = Map<String, Object?> Function(Map<String, Object?> json);
+typedef ChartSpecUpgrade =
+    Map<String, Object?> Function(Map<String, Object?> json);
 
 /// `ChartSpec` v1 (08 §3): the `specJson` of chart objects.
 ///
@@ -100,8 +101,12 @@ final class ChartSpec extends SpecNode {
       axes: ChartAxes.fromJson(r.obj('axes')),
       legend: ChartLegend.fromJson(r.obj('legend')),
       gridlines: ChartGridlines.fromJson(r.obj('gridlines')),
-      series: {for (final e in seriesJson.entries) e.key: SeriesStyle.fromJson(e.value)},
-      typeOptions: (deepCopyJson(r.obj('typeOptions') ?? const {})! as Map).cast(),
+      series: {
+        for (final e in seriesJson.entries)
+          e.key: SeriesStyle.fromJson(e.value),
+      },
+      typeOptions: (deepCopyJson(r.obj('typeOptions') ?? const {})! as Map)
+          .cast(),
       extras: r.extras(_keys),
     );
   }
@@ -201,16 +206,20 @@ final class ChartSpec extends SpecNode {
   PieOptions get pieOptions => PieOptions.fromJson(typeOptions);
 
   /// Histogram options.
-  HistogramOptions get histogramOptions => HistogramOptions.fromJson(typeOptions);
+  HistogramOptions get histogramOptions =>
+      HistogramOptions.fromJson(typeOptions);
 
   /// Candlestick options.
-  CandlestickOptions get candlestickOptions => CandlestickOptions.fromJson(typeOptions);
+  CandlestickOptions get candlestickOptions =>
+      CandlestickOptions.fromJson(typeOptions);
 
   /// Waterfall options.
-  WaterfallOptions get waterfallOptions => WaterfallOptions.fromJson(typeOptions);
+  WaterfallOptions get waterfallOptions =>
+      WaterfallOptions.fromJson(typeOptions);
 
   /// Scorecard options.
-  ScorecardOptions get scorecardOptions => ScorecardOptions.fromJson(typeOptions);
+  ScorecardOptions get scorecardOptions =>
+      ScorecardOptions.fromJson(typeOptions);
 
   /// Table options.
   TableOptions get tableOptions => TableOptions.fromJson(typeOptions);
@@ -255,7 +264,8 @@ final class ChartSpec extends SpecNode {
     if (isFromNewerVersion) {
       throw StateError('Chart created with a newer version of Wonky Sheets');
     }
-    final merged = (jsonMergePatch(toJson(), patch)! as Map).cast<String, Object?>();
+    final merged = (jsonMergePatch(toJson(), patch)! as Map)
+        .cast<String, Object?>();
     merged['v'] = currentVersion;
     final issues = ChartSpecSchema.validate(merged);
     if (issues.isNotEmpty) throw ChartSpecValidationException(issues);
@@ -271,7 +281,8 @@ final class ChartSpec extends SpecNode {
   ChartSpec withType(ChartType newType, {ChartStacking? stacking}) {
     if (newType == type && stacking == null) return this;
     final parked = extras['typeOptionsByType'] is Map
-        ? (deepCopyJson(extras['typeOptionsByType'])! as Map).cast<String, Object?>()
+        ? (deepCopyJson(extras['typeOptionsByType'])! as Map)
+              .cast<String, Object?>()
         : <String, Object?>{};
     var restored = typeOptions;
     if (newType != type) {
@@ -281,13 +292,17 @@ final class ChartSpec extends SpecNode {
         parked.remove(typeId);
       }
       final r = parked.remove(newType.id);
-      restored = r is Map ? r.cast<String, Object?>() : const <String, Object?>{};
+      restored = r is Map
+          ? r.cast<String, Object?>()
+          : const <String, Object?>{};
     }
     final newExtras = {...extras}..remove('typeOptionsByType');
     if (parked.isNotEmpty) newExtras['typeOptionsByType'] = parked;
     return ChartSpec._raw(
       type: newType,
-      stacking: newType.supportsStacking ? (stacking ?? this.stacking) : ChartStacking.none,
+      stacking: newType.supportsStacking
+          ? (stacking ?? this.stacking)
+          : ChartStacking.none,
       data: data,
       style: style,
       title: title,

@@ -59,13 +59,17 @@ committed and verified).
    - OS drag and drop in native desktop builds (needs a drop plugin);
    - the emoji picker in wonky_ui for comment reactions; self-hosted fallback fonts (`fontFallbackBaseUrl`);
    - table cells: caret inside cells in the document itself (cells are edited through a per-cell field).
-8. ☐ **Notifications**: email digests (no mail provider is configured; the job only logs), mention emails, and the activity dashboard (07 §6).
-9. ☐ **Quality**:
-   - i18n beyond English (pseudo-locales);
-   - golden tests on CI;
-   - E2E `integration_test` journeys (11 §1.1);
-   - extending CI to every package plus the dependency-rule check (01 §2.1);
-   - a performance suite.
+8. ☑ **Notifications** (07 §4, §6): pluggable `EmailSender` (Resend HTTP API with the passwords `resendApiKey` + `emailFrom`, otherwise logged), mention/assignment emails right away (`NotificationEmailFutureCall`), the 15-minute digest for the other kinds (or one email each with `digest: false`), honoring Settings › Notifications (mentions, replies, shares, access requests, suggestions, digest); notifications popover (grouping, excerpts, All/Unread, paging, settings link, keyboard); activity dashboard (viewers for Editors+ from the share set, view and comment trend charts, "Show my view history"); paged activity feed in the details panel. Still open:
+   - localized emails (server emails are English);
+   - undo for *Mark all as read*;
+   - deep links from emails to the comment thread.
+9. ◐ **Quality**:
+   - ☑ CI runs analyze, format and tests for every workspace package (+ vendored `super_editor`/`attributed_text` suites) and `tool/check_dependencies.dart` (01 §2.1); open violation: `wonky_sheets_core` imports `vector_math` without declaring it; Sheets packages still have analyzer infos and unformatted files, so the analyze/format jobs fail until they are cleaned up;
+   - ☑ i18n: wonky_app and wonky_write strings in ARB (`write_en.arb`, `wonky_app_en.arb`), `en_XA` pseudo-locale (`tool/pseudo_locale.dart`, `--dart-define=WONKY_LOCALE=en_XA`); the menubar overflows at 1024 px under en_XA; `ar_XB` (RTL) is not generated yet;
+   - ☑ accessibility: labeled icon buttons, `textContrastGuideline` + `labeledTapTargetGuideline` in the screen-level tests (home, settings, Write screen, notifications, activity dashboard);
+   - ◐ E2E journeys in `wonky_write/integration_test` (macOS; nightly `e2e.yml`): 1, 2, 5, 6 and 8 (MCP drive/write tools; `ui.invoke_command` not yet) pass locally; web needs `flutter drive` + chromedriver; journeys 3, 4, 7, 9, 10 are open;
+   - ☐ golden tests on CI (masters must be regenerated on Linux; the light destructive color changed);
+   - ☐ a performance suite.
 10. ☐ **Deployment** (deferred to a later iteration; the release build served at `/write/` already loads and works in development):
     - verify production builds served by the server at `/write/` and `/sheets/` (`serverpod run flutter_build`), with WASM and cross-origin-isolation headers;
     - the sign-in is shared on the single origin; in development the two `flutter run` origins (8101 and 8102) don't share it.

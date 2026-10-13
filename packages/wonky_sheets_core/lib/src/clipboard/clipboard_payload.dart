@@ -45,7 +45,8 @@ final class ClipCell {
     'r': sourceRow,
     'c': sourceCol,
     if (content != null) 'x': content,
-    if (value != null && value is! EmptyValue) 'v': CellContent.fromValue(value!)?.encode(),
+    if (value != null && value is! EmptyValue)
+      'v': CellContent.fromValue(value!)?.encode(),
     if (formulaA1 != null) 'a1': formulaA1,
     if (!format.isEmpty) 'f': format.toMap(),
     if (note != null) 'n': note,
@@ -61,7 +62,9 @@ final class ClipCell {
       content: m['x'] as String?,
       value: v is String ? CellContent.decode(v)?.literalValue : null,
       formulaA1: m['a1'] as String?,
-      format: f is Map ? CellFormat.fromMap(f.cast<String, Object?>()) : CellFormat.empty,
+      format: f is Map
+          ? CellFormat.fromMap(f.cast<String, Object?>())
+          : CellFormat.empty,
       note: m['n'] as String?,
     );
   }
@@ -78,8 +81,15 @@ final class ClipCell {
       other.note == note;
 
   @override
-  int get hashCode =>
-      Object.hash(sourceRow, sourceCol, content, value, formulaA1, format, note);
+  int get hashCode => Object.hash(
+    sourceRow,
+    sourceCol,
+    content,
+    value,
+    formulaA1,
+    format,
+    note,
+  );
 
   @override
   String toString() => 'ClipCell(${toJson()})';
@@ -221,7 +231,8 @@ final class SheetsClipboardPayload {
       row < cells.length && col < cells[row].length ? cells[row][col] : null;
 
   /// Rules of [kind].
-  Iterable<ClipRule> rulesOf(ClipRuleKind kind) => rules.where((r) => r.kind == kind);
+  Iterable<ClipRule> rulesOf(ClipRuleKind kind) =>
+      rules.where((r) => r.kind == kind);
 
   /// A copy marked as cut / not cut.
   SheetsClipboardPayload withCut(bool cut) => SheetsClipboardPayload(
@@ -280,8 +291,12 @@ final class SheetsClipboardPayload {
     }
     final range = GridRange.tryParse(m['range']);
     final rect = _parseRect(m['rect']);
-    if (range == null || rect == null) throw const FormatException('Missing range');
-    List<int> ints(Object? o) => [for (final e in (o as List? ?? const [])) (e as num).toInt()];
+    if (range == null || rect == null) {
+      throw const FormatException('Missing range');
+    }
+    List<int> ints(Object? o) => [
+      for (final e in (o as List? ?? const [])) (e as num).toInt(),
+    ];
     final rowIndices = ints(m['ri']);
     final colIndices = ints(m['ci']);
     final cells = List.generate(
@@ -292,14 +307,18 @@ final class SheetsClipboardPayload {
       if (e is! List || e.length != 3) continue;
       final r = (e[0] as num).toInt();
       final c = (e[1] as num).toInt();
-      if (r < 0 || c < 0 || r >= rowIndices.length || c >= colIndices.length) continue;
+      if (r < 0 || c < 0 || r >= rowIndices.length || c >= colIndices.length) {
+        continue;
+      }
       cells[r][c] = ClipCell.fromJson((e[2] as Map).cast<String, Object?>());
     }
     List<double?> sizes(Object? o, int n) {
       final l = o as List?;
       return [
         for (var i = 0; i < n; i++)
-          l != null && i < l.length && l[i] is num ? (l[i] as num).toDouble() : null,
+          l != null && i < l.length && l[i] is num
+              ? (l[i] as num).toDouble()
+              : null,
       ];
     }
 

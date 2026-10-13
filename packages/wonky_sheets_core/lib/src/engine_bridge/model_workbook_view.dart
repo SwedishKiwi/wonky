@@ -48,7 +48,8 @@ final class ModelWorkbookView implements WorkbookView {
   }
 
   @override
-  Iterable<NamedRangeView> get namedRanges => model.namedRanges.map(_NamedView.new);
+  Iterable<NamedRangeView> get namedRanges =>
+      model.namedRanges.map(_NamedView.new);
 
   @override
   CalcSettings get settings {
@@ -129,7 +130,10 @@ final class _SheetView implements SheetView {
   CellInput? inputAt(int row, int col) => cellInputOf(s.cellAt(row, col));
 
   @override
-  void forEachInput(GridRect rect, void Function(int row, int col, CellInput input) visit) {
+  void forEachInput(
+    GridRect rect,
+    void Function(int row, int col, CellInput input) visit,
+  ) {
     for (final (r, c, cell) in s.cellsIn(rect, contentOnly: true)) {
       final input = cellInputOf(cell);
       if (input != null) visit(r, c, input);
@@ -158,7 +162,9 @@ final class _SheetView implements SheetView {
 
   @override
   String? numberFormatAt(int row, int col) {
-    final f = model.explicitFormatChain(s.id, row, col)[FormatAttr.numberFormat] as String?;
+    final f =
+        model.explicitFormatChain(s.id, row, col)[FormatAttr.numberFormat]
+            as String?;
     return f == 'preset:automatic' ? null : f;
   }
 
@@ -166,7 +172,8 @@ final class _SheetView implements SheetView {
   bool isRowFilterHidden(int row) =>
       row >= 0 &&
       row < s.rows.length &&
-      (s.rows.isHiddenBy(HiddenLayers.filter, row) || s.rows.isHiddenBy(HiddenLayers.slicer, row));
+      (s.rows.isHiddenBy(HiddenLayers.filter, row) ||
+          s.rows.isHiddenBy(HiddenLayers.slicer, row));
 
   @override
   double columnWidthAt(int col) =>

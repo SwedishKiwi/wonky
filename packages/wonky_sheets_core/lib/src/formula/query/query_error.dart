@@ -8,10 +8,13 @@ final class QueryException implements Exception {
 
   /// `PARSE_ERROR` for [token] at the 1-based [line] and [column].
   factory QueryException.parse(String token, int line, int column) =>
-      QueryException('PARSE_ERROR: Encountered "$token" at line $line, column $column.');
+      QueryException(
+        'PARSE_ERROR: Encountered "$token" at line $line, column $column.',
+      );
 
   /// Unknown column identifier.
-  factory QueryException.noColumn(String id) => QueryException('NO_COLUMN: $id');
+  factory QueryException.noColumn(String id) =>
+      QueryException('NO_COLUMN: $id');
 
   /// A non-aggregated column outside the `group by` list.
   factory QueryException.addColToGroupBy(String id) =>

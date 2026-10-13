@@ -17,9 +17,14 @@ import 'helpers.dart';
 /// for export safety is NOT required by Sheets — only uniqueness and length).
 void validateSheetName(PlanBuilder b, String name, {String? exceptId}) {
   final n = name.trim();
-  if (n.isEmpty) throw const PlanException('invalid_argument', 'Sheet name cannot be empty');
+  if (n.isEmpty) {
+    throw const PlanException('invalid_argument', 'Sheet name cannot be empty');
+  }
   if (n.length > 100) {
-    throw const PlanException('invalid_argument', 'Sheet name is too long (max 100)');
+    throw const PlanException(
+      'invalid_argument',
+      'Sheet name is too long (max 100)',
+    );
   }
   final lower = n.toLowerCase();
   for (final s in b.model.sheets) {
@@ -34,7 +39,9 @@ void validateSheetName(PlanBuilder b, String name, {String? exceptId}) {
     }
   }
   for (final e in b.touchedRows(SheetsTables.sheet).entries) {
-    if (e.key == exceptId || e.value == null || b.model.sheet(e.key) != null) continue;
+    if (e.key == exceptId || e.value == null || b.model.sheet(e.key) != null) {
+      continue;
+    }
     if ((e.value![Cols.name] as String? ?? '').toLowerCase() == lower) {
       throw PlanException(
         'duplicate_name',
@@ -45,7 +52,11 @@ void validateSheetName(PlanBuilder b, String name, {String? exceptId}) {
 }
 
 /// The next free default name `SheetN` / `<prefix> N`.
-String nextSheetName(PlanBuilder b, {String prefix = 'Sheet', bool spaced = false}) {
+String nextSheetName(
+  PlanBuilder b, {
+  String prefix = 'Sheet',
+  bool spaced = false,
+}) {
   final taken = {
     for (final s in b.model.sheets) s.name.toLowerCase(),
     for (final v in b.touchedRows(SheetsTables.sheet).values)
@@ -65,7 +76,9 @@ String _sheetKeyAt(PlanBuilder b, int? index, {String? excludeId}) {
   final i = index == null ? keys.length : index.clamp(0, keys.length);
   final prev = i > 0 ? keys[i - 1] : null;
   final next = i < keys.length ? keys[i] : null;
-  if (prev != null && next != null && prev.compareTo(next) >= 0) return FractionalIndex.after(prev);
+  if (prev != null && next != null && prev.compareTo(next) >= 0) {
+    return FractionalIndex.after(prev);
+  }
   return FractionalIndex.between(prev, next);
 }
 
@@ -149,7 +162,9 @@ MutationPlan planCreateSpreadsheet(PlanBuilder b, CreateSpreadsheet op) {
 MutationPlan planAddSheet(PlanBuilder b, AddSheet op) {
   final name = op.name ?? nextSheetName(b);
   validateSheetName(b, name);
-  if (op.kind == SheetKind.grid) b.checkCellLimit(b.model.gridCellCount + op.rows * op.columns);
+  if (op.kind == SheetKind.grid) {
+    b.checkCellLimit(b.model.gridCellCount + op.rows * op.columns);
+  }
   final id = insertSheet(
     b,
     name: name.trim(),
@@ -185,7 +200,9 @@ Iterable<(String, String)> sheetChildren(SheetModel s) sync* {
       yield (r.table, r.id);
     }
   }
-  if (s.basicFilter != null) yield (SheetsTables.basicFilter, s.basicFilter!.id);
+  if (s.basicFilter != null) {
+    yield (SheetsTables.basicFilter, s.basicFilter!.id);
+  }
   for (final id in s.rowRecords.keys) {
     yield (SheetsTables.sheetRow, id);
   }
@@ -198,7 +215,9 @@ Iterable<(String, String)> sheetChildren(SheetModel s) sync* {
 /// revives all of them with the same ids).
 MutationPlan planDeleteSheet(PlanBuilder b, DeleteSheet op) {
   final s = b.sheetOf(op.sheetId);
-  final remainingVisible = b.model.sheets.where((x) => x.id != s.id && !x.record!.hidden).length;
+  final remainingVisible = b.model.sheets
+      .where((x) => x.id != s.id && !x.record!.hidden)
+      .length;
   if (remainingVisible == 0) {
     throw const PlanException(
       'invalid_argument',
@@ -236,8 +255,15 @@ MutationPlan planMoveSheet(PlanBuilder b, MoveSheet op) {
 MutationPlan planSetSheetProperties(PlanBuilder b, SetSheetProperties op) {
   final s = b.sheetOf(op.sheetId);
   if (op.hidden == true) {
-    final visible = b.model.sheets.where((x) => x.id != s.id && !x.record!.hidden).length;
-    if (visible == 0) throw const PlanException('invalid_argument', "You can't hide all sheets");
+    final visible = b.model.sheets
+        .where((x) => x.id != s.id && !x.record!.hidden)
+        .length;
+    if (visible == 0) {
+      throw const PlanException(
+        'invalid_argument',
+        "You can't hide all sheets",
+      );
+    }
   }
   b.update(SheetsTables.sheet, s.id, {
     if (op.tabColor != null) SheetCols.tabColor: op.tabColor,
@@ -245,8 +271,10 @@ MutationPlan planSetSheetProperties(PlanBuilder b, SetSheetProperties op) {
     if (op.hidden != null) Cols.hidden: op.hidden,
     if (op.showGridlines != null) SheetCols.showGridlines: op.showGridlines,
     if (op.rightToLeft != null) SheetCols.rightToLeft: op.rightToLeft,
-    if (op.defaultRowHeight != null) SheetCols.defaultRowHeight: op.defaultRowHeight,
-    if (op.defaultColumnWidth != null) SheetCols.defaultColumnWidth: op.defaultColumnWidth,
+    if (op.defaultRowHeight != null)
+      SheetCols.defaultRowHeight: op.defaultRowHeight,
+    if (op.defaultColumnWidth != null)
+      SheetCols.defaultColumnWidth: op.defaultColumnWidth,
   });
   b.summary.sheets.add(s.id);
   final label = op.hidden == true
@@ -260,18 +288,24 @@ MutationPlan planSetSheetProperties(PlanBuilder b, SetSheetProperties op) {
 }
 
 /// [SetSpreadsheetProperties].
-MutationPlan planSetSpreadsheetProperties(PlanBuilder b, SetSpreadsheetProperties op) {
+MutationPlan planSetSpreadsheetProperties(
+  PlanBuilder b,
+  SetSpreadsheetProperties op,
+) {
   final id = b.model.spreadsheetId;
   final writes = <String, Object?>{
     if (op.title != null) SpreadsheetCols.title: op.title,
     if (op.locale != null) SpreadsheetCols.locale: op.locale,
     if (op.timeZone != null) SpreadsheetCols.timeZone: op.timeZone,
     if (op.recalcMode != null) SpreadsheetCols.recalcMode: op.recalcMode,
-    if (op.iterativeCalc != null) SpreadsheetCols.iterativeCalc: op.iterativeCalc,
-    if (op.maxIterations != null) SpreadsheetCols.maxIterations: op.maxIterations,
+    if (op.iterativeCalc != null)
+      SpreadsheetCols.iterativeCalc: op.iterativeCalc,
+    if (op.maxIterations != null)
+      SpreadsheetCols.maxIterations: op.maxIterations,
     if (op.convergenceThreshold != null)
       SpreadsheetCols.convergenceThreshold: op.convergenceThreshold,
-    if (op.displayLanguage != null) SpreadsheetCols.displayLanguage: op.displayLanguage,
+    if (op.displayLanguage != null)
+      SpreadsheetCols.displayLanguage: op.displayLanguage,
   };
   if (op.themeJson != null) {
     final theme = SpreadsheetTheme.parse(op.themeJson);
@@ -310,14 +344,20 @@ MutationPlan planSetPrintSettings(PlanBuilder b, SetPrintSettings op) {
 }
 
 /// RFC 7386 JSON merge patch.
-Map<String, Object?> jsonMergePatch(Map<String, Object?> target, Map<String, Object?> patch) {
+Map<String, Object?> jsonMergePatch(
+  Map<String, Object?> target,
+  Map<String, Object?> patch,
+) {
   final out = Map<String, Object?>.of(target);
   patch.forEach((k, v) {
     if (v == null) {
       out.remove(k);
     } else if (v is Map) {
       final t = out[k];
-      out[k] = jsonMergePatch(t is Map ? t.cast<String, Object?>() : {}, v.cast<String, Object?>());
+      out[k] = jsonMergePatch(
+        t is Map ? t.cast<String, Object?>() : {},
+        v.cast<String, Object?>(),
+      );
     } else {
       out[k] = v;
     }
@@ -392,7 +432,9 @@ MutationPlan planDuplicateSheet(PlanBuilder b, DuplicateSheet op) {
       ..[CellCols.rowId] = rowId
       ..[CellCols.columnId] = colId;
     final content = cell.content;
-    if (content != null && content.startsWith('=')) cols[CellCols.content] = remapText(content);
+    if (content != null && content.startsWith('=')) {
+      cols[CellCols.content] = remapText(content);
+    }
     b.insert(SheetsTables.cell, SheetsIds.cellId(newId, rowId, colId), cols);
   }
   String? remapRange(String? json) {
@@ -413,7 +455,9 @@ MutationPlan planDuplicateSheet(PlanBuilder b, DuplicateSheet op) {
   }
 
   String remapRanges(String json) => GridRange.encodeList(
-    GridRange.parseList(json).map((g) => GridRange.tryParse(remapRange(g.encode()))!),
+    GridRange.parseList(
+      json,
+    ).map((g) => GridRange.tryParse(remapRange(g.encode()))!),
   );
 
   String remapJson(String json) {
@@ -438,7 +482,10 @@ MutationPlan planDuplicateSheet(PlanBuilder b, DuplicateSheet op) {
     return jsonEncode(walk(out));
   }
 
-  void copy(SyncRecord r, Map<String, Object?> Function(Map<String, Object?>) f) {
+  void copy(
+    SyncRecord r,
+    Map<String, Object?> Function(Map<String, Object?>) f,
+  ) {
     final cols = r.toColumns()
       ..remove(Cols.id)
       ..[Cols.sheetId] = newId;
@@ -478,7 +525,9 @@ MutationPlan planDuplicateSheet(PlanBuilder b, DuplicateSheet op) {
   for (final r in s.protections.values) {
     copy(r, (c) {
       c[Cols.rangeJson] = remapRange(r.rangeJson);
-      if (r.exceptRangesJson != null) c['exceptRangesJson'] = remapRanges(r.exceptRangesJson!);
+      if (r.exceptRangesJson != null) {
+        c['exceptRangesJson'] = remapRanges(r.exceptRangesJson!);
+      }
       return c;
     });
   }
@@ -532,5 +581,7 @@ MutationPlan planDuplicateSheet(PlanBuilder b, DuplicateSheet op) {
 
 String _remapCriteriaKeys(String json, Map<String, String> idMap) {
   final m = PlanBuilderHelpers.decodeMap(json);
-  return jsonEncode({for (final e in m.entries) idMap[e.key] ?? e.key: e.value});
+  return jsonEncode({
+    for (final e in m.entries) idMap[e.key] ?? e.key: e.value,
+  });
 }

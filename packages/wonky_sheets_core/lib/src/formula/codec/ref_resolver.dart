@@ -13,16 +13,34 @@ final class ResolvedRef {
   final int? col1;
   final int? row2;
   final int? col2;
-  const ResolvedRef(this.sheet, this.kind, this.row1, this.col1, this.row2, this.col2);
+  const ResolvedRef(
+    this.sheet,
+    this.kind,
+    this.row1,
+    this.col1,
+    this.row2,
+    this.col2,
+  );
 }
 
 /// Why a reference could not be resolved.
-enum RefFailure { sheetMissing, rowOrColumnMissing, emptyRange, unresolvedSheetName, outOfBounds }
+enum RefFailure {
+  sheetMissing,
+  rowOrColumnMissing,
+  emptyRange,
+  unresolvedSheetName,
+  outOfBounds,
+}
 
 abstract final class RefResolver {
   /// Index of an endpoint id on [axis]; when missing and [key] is set, the fallback position.
   /// [isStart] selects the first surviving index at/after the slot; otherwise the last before.
-  static int endpointIndex(AxisView axis, String id, String? key, {required bool isStart}) {
+  static int endpointIndex(
+    AxisView axis,
+    String id,
+    String? key, {
+    required bool isStart,
+  }) {
     final i = axis.indexOf(id);
     if (i >= 0) return i;
     if (key == null) return -1;
@@ -58,12 +76,21 @@ abstract final class RefResolver {
           (maxCol > maxCol2 ? maxCol : maxCol2) >= target.columns.length) {
         return RefFailure.outOfBounds;
       }
-      return ResolvedRef(target, area.kind, area.row1, area.col1, area.row2, area.col2);
+      return ResolvedRef(
+        target,
+        area.kind,
+        area.row1,
+        area.col1,
+        area.row2,
+        area.col2,
+      );
     }
     final sh = sheet!;
     final e = ref.end;
     if (e == null) {
-      if (s.rowId == null || s.colId == null) return RefFailure.rowOrColumnMissing;
+      if (s.rowId == null || s.colId == null) {
+        return RefFailure.rowOrColumnMissing;
+      }
       final r = sh.rows.indexOf(s.rowId!);
       final c = sh.columns.indexOf(s.colId!);
       if (r < 0 || c < 0) return RefFailure.rowOrColumnMissing;
@@ -100,28 +127,50 @@ abstract final class RefResolver {
     final endRowMissing = e.rowId != null && sh.rows.indexOf(e.rowId!) < 0;
     final startColMissing = s.colId != null && sh.columns.indexOf(s.colId!) < 0;
     final endColMissing = e.colId != null && sh.columns.indexOf(e.colId!) < 0;
-    if (kind == A1Kind.rows || kind == A1Kind.rect || kind == A1Kind.openColumns) {
-      if (r1 != null && r2 != null && (startRowMissing || endRowMissing) && r1 > r2) {
+    if (kind == A1Kind.rows ||
+        kind == A1Kind.rect ||
+        kind == A1Kind.openColumns) {
+      if (r1 != null &&
+          r2 != null &&
+          (startRowMissing || endRowMissing) &&
+          r1 > r2) {
         return RefFailure.emptyRange;
       }
     }
-    if (kind == A1Kind.columns || kind == A1Kind.rect || kind == A1Kind.openRows) {
-      if (c1 != null && c2 != null && (startColMissing || endColMissing) && c1 > c2) {
+    if (kind == A1Kind.columns ||
+        kind == A1Kind.rect ||
+        kind == A1Kind.openRows) {
+      if (c1 != null &&
+          c2 != null &&
+          (startColMissing || endColMissing) &&
+          c1 > c2) {
         return RefFailure.emptyRange;
       }
     }
     if ((r1 != null && (r1 < 0 || r1 >= sh.rows.length) && startRowMissing) ||
-        (c1 != null && (c1 < 0 || c1 >= sh.columns.length) && startColMissing)) {
+        (c1 != null &&
+            (c1 < 0 || c1 >= sh.columns.length) &&
+            startColMissing)) {
       return RefFailure.emptyRange;
     }
-    if ((r2 != null && r2 < 0) || (c2 != null && c2 < 0)) return RefFailure.emptyRange;
+    if ((r2 != null && r2 < 0) || (c2 != null && c2 < 0)) {
+      return RefFailure.emptyRange;
+    }
     // Normalize order for rectangles typed bottom-up (B5:A1).
-    if (r1 != null && r2 != null && r1 > r2 && !startRowMissing && !endRowMissing) {
+    if (r1 != null &&
+        r2 != null &&
+        r1 > r2 &&
+        !startRowMissing &&
+        !endRowMissing) {
       final t = r1;
       r1 = r2;
       r2 = t;
     }
-    if (c1 != null && c2 != null && c1 > c2 && !startColMissing && !endColMissing) {
+    if (c1 != null &&
+        c2 != null &&
+        c1 > c2 &&
+        !startColMissing &&
+        !endColMissing) {
       final t = c1;
       c1 = c2;
       c2 = t;

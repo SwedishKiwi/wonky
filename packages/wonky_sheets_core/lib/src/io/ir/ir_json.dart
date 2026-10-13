@@ -27,30 +27,47 @@ abstract final class IrJson {
       if (doc.title != null) 'title': doc.title,
       'sheets': [
         for (final s in doc.sheets)
-          _sheet(doc, s, includeCachedValues: includeCachedValues, includeImages: includeImages),
+          _sheet(
+            doc,
+            s,
+            includeCachedValues: includeCachedValues,
+            includeImages: includeImages,
+          ),
       ],
       if (doc.namedRanges.isNotEmpty)
         'namedRanges': [
-          for (final n in [...doc.namedRanges]..sort((a, b) => a.name.toLowerCase().compareTo(b.name.toLowerCase())))
+          for (final n
+              in [...doc.namedRanges]..sort(
+                (a, b) => a.name.toLowerCase().compareTo(b.name.toLowerCase()),
+              ))
             _sorted({
               'name': n.name,
               if (n.sheet != null) 'sheet': n.sheet,
               if (n.range != null) 'range': n.range!.toA1(),
               if (n.formulaA1 != null) 'formula': n.formulaA1,
-              if (n.comment != null && n.comment!.isNotEmpty) 'comment': n.comment,
+              if (n.comment != null && n.comment!.isNotEmpty)
+                'comment': n.comment,
               if (n.hidden) 'hidden': true,
             }),
         ],
-      if (includeWarnings) 'warnings': [for (final w in doc.warnings) w.toJson()],
+      if (includeWarnings)
+        'warnings': [for (final w in doc.warnings) w.toJson()],
     };
     return _sorted(out);
   }
 
   /// Pretty-printed normalized JSON.
-  static String encode(WorkbookDocument doc, {bool includeCachedValues = true, bool includeWarnings = false}) =>
-      const JsonEncoder.withIndent('  ').convert(
-        normalize(doc, includeCachedValues: includeCachedValues, includeWarnings: includeWarnings),
-      );
+  static String encode(
+    WorkbookDocument doc, {
+    bool includeCachedValues = true,
+    bool includeWarnings = false,
+  }) => const JsonEncoder.withIndent('  ').convert(
+    normalize(
+      doc,
+      includeCachedValues: includeCachedValues,
+      includeWarnings: includeWarnings,
+    ),
+  );
 
   static Map<String, Object?> _sheet(
     WorkbookDocument doc,
@@ -90,12 +107,15 @@ abstract final class IrJson {
       if (!s.showGridlines) 'showGridlines': false,
       if (s.frozenRows > 0) 'frozenRows': s.frozenRows,
       if (s.frozenColumns > 0) 'frozenColumns': s.frozenColumns,
-      if (s.defaultRowHeight != null) 'defaultRowHeight': _round(s.defaultRowHeight!),
-      if (s.defaultColumnWidth != null) 'defaultColumnWidth': _round(s.defaultColumnWidth!),
+      if (s.defaultRowHeight != null)
+        'defaultRowHeight': _round(s.defaultRowHeight!),
+      if (s.defaultColumnWidth != null)
+        'defaultColumnWidth': _round(s.defaultColumnWidth!),
       if (rows.isNotEmpty) 'rows': rows,
       if (cols.isNotEmpty) 'columns': cols,
       if (cells.isNotEmpty) 'cells': cells,
-      if (s.merges.isNotEmpty) 'merges': ([for (final m in s.merges) m.a1]..sort()),
+      if (s.merges.isNotEmpty)
+        'merges': ([for (final m in s.merges) m.a1]..sort()),
       if (s.validations.isNotEmpty)
         'validations': [
           for (final v in s.validations)
@@ -121,7 +141,10 @@ abstract final class IrJson {
         'filter': _norm({
           'range': s.autoFilter!.range.toA1(),
           if (s.autoFilter!.criteria.isNotEmpty)
-            'criteria': {for (final e in s.autoFilter!.criteria.entries) '${e.key}': e.value},
+            'criteria': {
+              for (final e in s.autoFilter!.criteria.entries)
+                '${e.key}': e.value,
+            },
           if (s.autoFilter!.sort.isNotEmpty) 'sort': s.autoFilter!.sort,
         }),
       if (includeImages && s.images.isNotEmpty)
@@ -137,7 +160,8 @@ abstract final class IrJson {
         ],
       if (s.charts.isNotEmpty)
         'charts': [
-          for (final c in s.charts) _norm({'anchor': _anchor(c.anchor), 'spec': c.spec}),
+          for (final c in s.charts)
+            _norm({'anchor': _anchor(c.anchor), 'spec': c.spec}),
         ],
       if (s.print != null && s.print!.isNotEmpty) 'print': _norm(s.print),
     });
@@ -153,14 +177,22 @@ abstract final class IrJson {
   };
 
   /// Normalized JSON of one cell.
-  static Map<String, Object?> cellJson(WorkbookDocument doc, IrCell cell, {bool includeCachedValue = true}) {
+  static Map<String, Object?> cellJson(
+    WorkbookDocument doc,
+    IrCell cell, {
+    bool includeCachedValue = true,
+  }) {
     final j = <String, Object?>{};
     if (cell.formulaA1 != null) {
       j['f'] = cell.formulaA1;
-      if (cell.formulaKind != IrFormulaKind.normal) j['kind'] = cell.formulaKind.name;
+      if (cell.formulaKind != IrFormulaKind.normal) {
+        j['kind'] = cell.formulaKind.name;
+      }
       if (cell.arrayRef != null) j['ref'] = cell.arrayRef!.a1;
     }
-    if (cell.value != null && (cell.formulaA1 == null || includeCachedValue)) j['v'] = valueJson(cell.value!);
+    if (cell.value != null && (cell.formulaA1 == null || includeCachedValue)) {
+      j['v'] = valueJson(cell.value!);
+    }
     final f = formatJson(doc, doc.formats[cell.format]);
     if (f.isNotEmpty) j['fmt'] = f;
     if (cell.note != null && cell.note!.isNotEmpty) j['note'] = cell.note;
@@ -179,7 +211,8 @@ abstract final class IrJson {
       'r': {
         't': rich.text,
         'runs': [
-          for (final run in rich.runs) {'s': run.start, 'e': run.end, 'f': _norm(run.format)},
+          for (final run in rich.runs)
+            {'s': run.start, 'e': run.end, 'f': _norm(run.format)},
         ],
       },
     },
@@ -210,15 +243,24 @@ abstract final class IrJson {
       if (a == FormatAttr.linkUrl) continue;
       final v = a.toColumnValue(f.attrs[a]);
       if (_dropDefaults.contains('${a.column}:$v')) continue;
-      if (a == FormatAttr.fontFamily && doc.defaultFontFamily != null && v == doc.defaultFontFamily) continue;
-      if (a == FormatAttr.fontSize && doc.defaultFontSize != null && v == doc.defaultFontSize) continue;
+      if (a == FormatAttr.fontFamily &&
+          doc.defaultFontFamily != null &&
+          v == doc.defaultFontFamily) {
+        continue;
+      }
+      if (a == FormatAttr.fontSize &&
+          doc.defaultFontSize != null &&
+          v == doc.defaultFontSize) {
+        continue;
+      }
       m[a.column] = v is double ? _num(v) : v;
     }
     if (f.extras.isNotEmpty) m['extras'] = _norm(f.extras);
     return _sorted(m);
   }
 
-  static Object _num(double d) => d == d.truncateToDouble() && d.abs() < 1e15 ? d.toInt() : d;
+  static Object _num(double d) =>
+      d == d.truncateToDouble() && d.abs() < 1e15 ? d.toInt() : d;
 
   static Object _round(double d) => _num((d * 100).roundToDouble() / 100);
 
@@ -235,7 +277,8 @@ abstract final class IrJson {
     return v;
   }
 
-  static Map<String, Object?> _sorted(Map<String, Object?> m) => _norm(m) as Map<String, Object?>;
+  static Map<String, Object?> _sorted(Map<String, Object?> m) =>
+      _norm(m) as Map<String, Object?>;
 
   static int _fnv(List<int> bytes) {
     var h = 0x811c9dc5;
@@ -268,7 +311,15 @@ final class IrStatistics {
 
   /// Computes statistics of [doc].
   factory IrStatistics.of(WorkbookDocument doc) {
-    var cells = 0, formulas = 0, merges = 0, dv = 0, cf = 0, notes = 0, links = 0, images = 0, charts = 0;
+    var cells = 0,
+        formulas = 0,
+        merges = 0,
+        dv = 0,
+        cf = 0,
+        notes = 0,
+        links = 0,
+        images = 0,
+        charts = 0;
     final per = <String, int>{};
     for (final s in doc.sheets) {
       per[s.name] = s.cells.length;
@@ -337,4 +388,5 @@ final class IrStatistics {
 }
 
 /// Enum name helper for IR JSON readers.
-T? irEnum<T extends Enum>(List<T> values, Object? name) => enumByName(values, name);
+T? irEnum<T extends Enum>(List<T> values, Object? name) =>
+    enumByName(values, name);

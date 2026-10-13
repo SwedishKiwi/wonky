@@ -24,6 +24,7 @@ export 'spec/chart_type.dart';
 export 'spec/image_spec.dart';
 export 'spec/series_style.dart';
 export 'spec/spec_json.dart' show SpecNode;
-export 'spec/spec_schema.dart' show ChartSpecIssue, ChartSpecSchema, ChartSpecValidationException;
+export 'spec/spec_schema.dart'
+    show ChartSpecIssue, ChartSpecSchema, ChartSpecValidationException;
 export 'spec/type_options.dart';
 export 'stats/stats.dart';

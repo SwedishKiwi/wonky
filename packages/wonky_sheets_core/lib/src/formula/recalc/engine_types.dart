@@ -11,12 +11,18 @@ final class ComputedValue {
   /// Shown with the previous value while recalculation is pending.
   final bool stale;
 
-  const ComputedValue(this.value, {this.hint = FormatHint.none, this.spill, this.stale = false});
+  const ComputedValue(
+    this.value, {
+    this.hint = FormatHint.none,
+    this.spill,
+    this.stale = false,
+  });
 
   static const ComputedValue empty = ComputedValue(FEmpty.instance);
 
   @override
-  String toString() => 'ComputedValue(${value.debugText}${stale ? ', stale' : ''})';
+  String toString() =>
+      'ComputedValue(${value.debugText}${stale ? ', stale' : ''})';
 }
 
 /// Spill extent of an array formula host.
@@ -45,7 +51,10 @@ final class ChangedCell {
 
   @override
   bool operator ==(Object other) =>
-      other is ChangedCell && other.sheetId == sheetId && other.row == row && other.col == col;
+      other is ChangedCell &&
+      other.sheetId == sheetId &&
+      other.row == row &&
+      other.col == col;
 
   @override
   int get hashCode => Object.hash(sheetId, row, col);
@@ -86,8 +95,11 @@ final class AxisChange {
   /// Deleted or moved ids.
   final List<String> ids;
 
-  const AxisChange.inserted(this.index, this.count) : kind = AxisChangeKind.inserted, ids = const [];
-  const AxisChange.deleted(this.index, this.count, this.ids) : kind = AxisChangeKind.deleted;
+  const AxisChange.inserted(this.index, this.count)
+    : kind = AxisChangeKind.inserted,
+      ids = const [];
+  const AxisChange.deleted(this.index, this.count, this.ids)
+    : kind = AxisChangeKind.deleted;
   const AxisChange.moved(this.ids)
     : kind = AxisChangeKind.moved,
       index = 0,
@@ -140,7 +152,8 @@ final class FormulaCellRef {
   const FormulaCellRef(this.sheetId, this.row, this.col, this.stored);
 
   @override
-  String toString() => 'FormulaCellRef($sheetId!${CellPos(row, col).a1} =$stored)';
+  String toString() =>
+      'FormulaCellRef($sheetId!${CellPos(row, col).a1} =$stored)';
 }
 
 /// Precedents/dependents of a cell (05 §7.1 `dependencies`).

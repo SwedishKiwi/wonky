@@ -25,7 +25,8 @@ const Map<FormatAttr, String> _runKeys = {
 };
 
 Map<String, Object?> _colValues(Map<FormatAttr, Object?> values) => {
-  for (final e in values.entries) e.key.column: e.key.toColumnValue(e.key.normalize(e.value)),
+  for (final e in values.entries)
+    e.key.column: e.key.toColumnValue(e.key.normalize(e.value)),
 };
 
 /// Writes explicit attributes to one cell, removing rich-run keys of those
@@ -57,7 +58,11 @@ void writeCellFormat(
 }
 
 /// Applies [values] to one range with the strategies of 06 §1.3.
-void applyFormatToRange(PlanBuilder b, ResolvedRange range, Map<FormatAttr, Object?> values) {
+void applyFormatToRange(
+  PlanBuilder b,
+  ResolvedRange range,
+  Map<FormatAttr, Object?> values,
+) {
   final s = b.sheetOf(range.sheetId);
   final rect = range.rect;
   final attrs = values.keys.toSet();
@@ -82,7 +87,9 @@ void applyFormatToRange(PlanBuilder b, ResolvedRange range, Map<FormatAttr, Obje
     return;
   }
   if (range.wholeColumns) {
-    final colIds = [for (var c = rect.left; c <= rect.right; c++) s.columns.idAt(c)];
+    final colIds = [
+      for (var c = rect.left; c <= rect.right; c++) s.columns.idAt(c),
+    ];
     for (final id in colIds) {
       b.writeFormatJson(SheetsTables.sheetColumn, id, values);
     }
@@ -136,14 +143,20 @@ MutationPlan planSetFormat(PlanBuilder b, SetFormat op) {
   if (op.values.isEmpty) return b.build(op.label ?? 'Format');
   for (final v in op.values.entries) {
     if (v.value != null && v.key.normalize(v.value) == null) {
-      throw PlanException('invalid_argument', 'Invalid value for ${v.key.column}: ${v.value}');
+      throw PlanException(
+        'invalid_argument',
+        'Invalid value for ${v.key.column}: ${v.value}',
+      );
     }
   }
   for (final range in op.ranges) {
     b.addResolvedRange(range);
     applyFormatToRange(b, range, op.values);
   }
-  return b.build(op.label ?? _formatLabel(op.values.keys), kinds: [ChangeKinds.format]);
+  return b.build(
+    op.label ?? _formatLabel(op.values.keys),
+    kinds: [ChangeKinds.format],
+  );
 }
 
 String _formatLabel(Iterable<FormatAttr> attrs) {
@@ -191,7 +204,9 @@ bool allTrue(PlanBuilder b, List<ResolvedRange> ranges, FormatAttr attr) {
       if (v is! bool) continue;
       if (!v) return false;
       explicitPerRow[rowId] = (explicitPerRow[rowId] ?? 0) + 1;
-      if (!rowVal.containsKey(rowId)) explicitPerCol[colId] = (explicitPerCol[colId] ?? 0) + 1;
+      if (!rowVal.containsKey(rowId)) {
+        explicitPerCol[colId] = (explicitPerCol[colId] ?? 0) + 1;
+      }
     }
     // Rows with a row-level value.
     for (final e in rowVal.entries) {
@@ -203,7 +218,9 @@ bool allTrue(PlanBuilder b, List<ResolvedRange> ranges, FormatAttr attr) {
       for (var c = rect.left; c <= rect.right; c++) {
         final colId = s.columns.idAt(c);
         final v =
-            b.formatJsonOf(SheetsTables.sheetColumn, colId)[attr] as bool? ?? sheetVal ?? false;
+            b.formatJsonOf(SheetsTables.sheetColumn, colId)[attr] as bool? ??
+            sheetVal ??
+            false;
         if (!v && (explicitPerCol[colId] ?? 0) < rowsWithout) return false;
       }
     }
@@ -214,7 +231,10 @@ bool allTrue(PlanBuilder b, List<ResolvedRange> ranges, FormatAttr attr) {
 /// [ToggleFormat].
 MutationPlan planToggleFormat(PlanBuilder b, ToggleFormat op) {
   if (op.attr.type != FormatValueType.bool) {
-    throw PlanException('invalid_argument', '${op.attr.column} is not a toggle');
+    throw PlanException(
+      'invalid_argument',
+      '${op.attr.column} is not a toggle',
+    );
   }
   final value = !allTrue(b, op.ranges, op.attr);
   return planSetFormat(b, SetFormat(op.ranges, {op.attr: value}));
@@ -269,7 +289,9 @@ MutationPlan planSetBorders(PlanBuilder b, SetBorders op) {
       final rowId = s.rows.idAt(w.row);
       final colId = s.columns.idAt(w.col);
       final cur = b.currentCell(s.id, rowId, colId);
-      if (w.value == null && (cur == null || cur[w.attr.column] == null)) continue;
+      if (w.value == null && (cur == null || cur[w.attr.column] == null)) {
+        continue;
+      }
       b.writeCell(s.id, rowId, colId, {w.attr.column: w.value});
     }
   }
@@ -295,7 +317,8 @@ void _wholeBorders(
   final endEdge = cols ? FormatAttr.borderRight : FormatAttr.borderBottom;
   final alongA = cols ? FormatAttr.borderTop : FormatAttr.borderLeft;
   final alongB = cols ? FormatAttr.borderBottom : FormatAttr.borderRight;
-  void fj(int i, Map<FormatAttr, Object?> m) => b.writeFormatJson(table, idAt(i), m);
+  void fj(int i, Map<FormatAttr, Object?> m) =>
+      b.writeFormatJson(table, idAt(i), m);
 
   void explicitEdge(int otherIndex, FormatAttr edge) {
     // Writes an edge on every cell of the first/last row (columns ranges) or
@@ -363,7 +386,9 @@ void _wholeBorders(
       }
       for (final (_, _, rowId, colId, cur) in b.cellsIn(s, rect).toList()) {
         if (FormatAttr.borders.any((a) => cur[a.column] != null)) {
-          b.writeCell(s.id, rowId, colId, {for (final a in FormatAttr.borders) a.column: null});
+          b.writeCell(s.id, rowId, colId, {
+            for (final a in FormatAttr.borders) a.column: null,
+          });
         }
       }
   }
@@ -393,7 +418,11 @@ MutationPlan planStepFontSize(PlanBuilder b, StepFontSize op) {
     if (range.wholeRows || range.wholeColumns) {
       // Default-level step from the active defaults, plus explicit cells.
       final base =
-          (b.model.explicitFormatChain(s.id, rect.top, rect.left)[FormatAttr.fontSize]
+          (b.model.explicitFormatChain(
+                s.id,
+                rect.top,
+                rect.left,
+              )[FormatAttr.fontSize]
               as double?) ??
           defaultSize;
       applyFormatToRange(b, range, {FormatAttr.fontSize: step(base)});
@@ -406,7 +435,8 @@ MutationPlan planStepFontSize(PlanBuilder b, StepFontSize op) {
         final explicit = b.currentCell(s.id, rowId, colId)?[CellCols.fontSize];
         final cur = explicit is num
             ? explicit.toDouble()
-            : (b.model.explicitFormatChain(s.id, r, c)[FormatAttr.fontSize] as double? ??
+            : (b.model.explicitFormatChain(s.id, r, c)[FormatAttr.fontSize]
+                      as double? ??
                   defaultSize);
         writeCellFormat(b, s, rowId, colId, {FormatAttr.fontSize: step(cur)});
       }
@@ -444,15 +474,22 @@ MutationPlan planMerge(PlanBuilder b, MergeCells op) {
     }
     if (pieces.isEmpty || pieces.every((p) => p.isSingleCell)) {
       if (op.mode == MergeMode.all) {
-        throw const PlanException('invalid_range', 'Select more than one cell to merge');
+        throw const PlanException(
+          'invalid_range',
+          'Select more than one cell to merge',
+        );
       }
       continue;
     }
     final fr = s.record?.frozenRows ?? 0;
     final fc = s.record?.frozenColumns ?? 0;
     for (final p in pieces) {
-      if ((fr > 0 && p.top < fr && p.bottom >= fr) || (fc > 0 && p.left < fc && p.right >= fc)) {
-        throw const PlanException('merge_conflict', "You can't merge frozen and non-frozen cells");
+      if ((fr > 0 && p.top < fr && p.bottom >= fr) ||
+          (fc > 0 && p.left < fc && p.right >= fc)) {
+        throw const PlanException(
+          'merge_conflict',
+          "You can't merge frozen and non-frozen cells",
+        );
       }
     }
     for (final pv in s.pivots.values) {
@@ -474,13 +511,18 @@ MutationPlan planMerge(PlanBuilder b, MergeCells op) {
       );
     }
     if (s.merges.length + pieces.length > 50000) {
-      throw const PlanException('limit_exceeded', 'A sheet can have at most 50,000 merges');
+      throw const PlanException(
+        'limit_exceeded',
+        'A sheet can have at most 50,000 merges',
+      );
     }
     // Data loss.
     final losing = <(int, int)>[];
     for (final p in pieces) {
       for (final (r, c, _, _, cur) in b.cellsIn(s, p)) {
-        if ((r != p.top || c != p.left) && cur[CellCols.content] != null) losing.add((r, c));
+        if ((r != p.top || c != p.left) && cur[CellCols.content] != null) {
+          losing.add((r, c));
+        }
       }
     }
     if (losing.isNotEmpty && !op.force) {
@@ -501,7 +543,8 @@ MutationPlan planMerge(PlanBuilder b, MergeCells op) {
       final kept = b.currentCell(s.id, keptRow, keptCol);
       final keptFormat = <String, Object?>{
         for (final a in FormatAttr.values)
-          if (!FormatAttr.borders.contains(a) && a != FormatAttr.linkUrl) a.column: kept?[a.column],
+          if (!FormatAttr.borders.contains(a) && a != FormatAttr.linkUrl)
+            a.column: kept?[a.column],
       };
       for (var r = p.top; r <= p.bottom; r++) {
         for (var c = p.left; c <= p.right; c++) {
@@ -511,7 +554,9 @@ MutationPlan planMerge(PlanBuilder b, MergeCells op) {
           final colId = s.columns.idAt(c);
           final cur = b.currentCell(s.id, rowId, colId);
           if (cur?[CellCols.content] != null) writes[CellCols.content] = null;
-          if (cur == null && keptFormat.values.every((v) => v == null)) continue;
+          if (cur == null && keptFormat.values.every((v) => v == null)) {
+            continue;
+          }
           b.writeCell(s.id, rowId, colId, writes);
         }
       }
@@ -522,7 +567,10 @@ MutationPlan planMerge(PlanBuilder b, MergeCells op) {
       });
     }
   }
-  return b.build('Merge cells', kinds: [ChangeKinds.format, ChangeKinds.structure]);
+  return b.build(
+    'Merge cells',
+    kinds: [ChangeKinds.format, ChangeKinds.structure],
+  );
 }
 
 /// [UnmergeCells].
@@ -534,7 +582,10 @@ MutationPlan planUnmerge(PlanBuilder b, UnmergeCells op) {
       b.delete(SheetsTables.mergedRange, id);
     }
   }
-  return b.build('Unmerge cells', kinds: [ChangeKinds.format, ChangeKinds.structure]);
+  return b.build(
+    'Unmerge cells',
+    kinds: [ChangeKinds.format, ChangeKinds.structure],
+  );
 }
 
 /// The merge records of a sheet keyed by id (convenience for tests/UI).

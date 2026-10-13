@@ -27,10 +27,11 @@ final class SliceStyle extends SpecNode {
   final Map<String, Object?> extras;
 
   @override
-  Map<String, Object?> toJson() => (JsonWriter(extras)
-        ..opt('color', color)
-        ..unlessDefault('offset', jsonNum(offset), 0))
-      .json;
+  Map<String, Object?> toJson() =>
+      (JsonWriter(extras)
+            ..opt('color', color)
+            ..unlessDefault('offset', jsonNum(offset), 0))
+          .json;
 }
 
 /// Pie / doughnut options.
@@ -51,11 +52,16 @@ final class PieOptions extends SpecNode {
     final s = r.obj('slices') ?? const {};
     return PieOptions(
       pieHole: r.dblOr('pieHole', 0).clamp(0.0, 0.9),
-      sliceLabel: r.enumOr('sliceLabel', SliceLabel.values, SliceLabel.percentage),
+      sliceLabel: r.enumOr(
+        'sliceLabel',
+        SliceLabel.values,
+        SliceLabel.percentage,
+      ),
       borderColor: r.str('borderColor'),
       slices: {
         for (final e in s.entries)
-          if (int.tryParse(e.key) case final int i) i: SliceStyle.fromJson(e.value),
+          if (int.tryParse(e.key) case final int i)
+            i: SliceStyle.fromJson(e.value),
       },
       startAngle: r.dblOr('startAngle', 0),
       otherThreshold: r.intOr('pieOtherThreshold', 50),
@@ -79,7 +85,11 @@ final class PieOptions extends SpecNode {
     final keys = slices.keys.toList()..sort();
     return (JsonWriter()
           ..unlessDefault('pieHole', jsonNum(pieHole), 0)
-          ..unlessDefault('sliceLabel', sliceLabel.name, SliceLabel.percentage.name)
+          ..unlessDefault(
+            'sliceLabel',
+            sliceLabel.name,
+            SliceLabel.percentage.name,
+          )
           ..opt('borderColor', borderColor)
           ..nested('slices', {for (final k in keys) '$k': slices[k]!.toJson()})
           ..unlessDefault('startAngle', jsonNum(startAngle), 0)
@@ -91,7 +101,11 @@ final class PieOptions extends SpecNode {
 /// Histogram options.
 final class HistogramOptions extends SpecNode {
   /// Creates histogram options.
-  const HistogramOptions({this.bucketSize, this.outlierPercentile = 0, this.showItemDividers = false});
+  const HistogramOptions({
+    this.bucketSize,
+    this.outlierPercentile = 0,
+    this.showItemDividers = false,
+  });
 
   /// Reads `typeOptions`.
   factory HistogramOptions.fromJson(Object? json) {
@@ -112,11 +126,15 @@ final class HistogramOptions extends SpecNode {
   final bool showItemDividers;
 
   @override
-  Map<String, Object?> toJson() => (JsonWriter()
-        ..opt('bucketSize', bucketSize == null ? null : jsonNum(bucketSize!))
-        ..unlessDefault('outlierPercentile', jsonNum(outlierPercentile), 0)
-        ..unlessDefault('showItemDividers', showItemDividers, false))
-      .json;
+  Map<String, Object?> toJson() =>
+      (JsonWriter()
+            ..opt(
+              'bucketSize',
+              bucketSize == null ? null : jsonNum(bucketSize!),
+            )
+            ..unlessDefault('outlierPercentile', jsonNum(outlierPercentile), 0)
+            ..unlessDefault('showItemDividers', showItemDividers, false))
+          .json;
 }
 
 /// Candlestick options.
@@ -146,12 +164,13 @@ final class CandlestickOptions extends SpecNode {
   final bool fallingFilled;
 
   @override
-  Map<String, Object?> toJson() => (JsonWriter()
-        ..opt('risingColor', risingColor)
-        ..opt('fallingColor', fallingColor)
-        ..unlessDefault('risingFilled', risingFilled, false)
-        ..unlessDefault('fallingFilled', fallingFilled, true))
-      .json;
+  Map<String, Object?> toJson() =>
+      (JsonWriter()
+            ..opt('risingColor', risingColor)
+            ..opt('fallingColor', fallingColor)
+            ..unlessDefault('risingFilled', risingFilled, false)
+            ..unlessDefault('fallingFilled', fallingFilled, true))
+          .json;
 }
 
 /// Waterfall subtotal.
@@ -171,7 +190,10 @@ final class WaterfallSubtotal extends SpecNode {
   final String label;
 
   @override
-  Map<String, Object?> toJson() => {'afterIndex': afterIndex, if (label.isNotEmpty) 'label': label};
+  Map<String, Object?> toJson() => {
+    'afterIndex': afterIndex,
+    if (label.isNotEmpty) 'label': label,
+  };
 }
 
 /// Waterfall options.
@@ -218,21 +240,31 @@ final class WaterfallOptions extends SpecNode {
   final String? subtotalColor;
 
   @override
-  Map<String, Object?> toJson() => (JsonWriter()
-        ..nested(
-          'connectorLines',
-          (JsonWriter()
-                ..unlessDefault('show', connectorShow, true)
-                ..opt('color', connectorColor)
-                ..unlessDefault('dash', connectorDash.name, LineDash.solid.name))
-              .json,
-        )
-        ..opt('subtotals', subtotals.isEmpty ? null : [for (final s in subtotals) s.toJson()])
-        ..unlessDefault('firstValueIsSubtotal', firstValueIsSubtotal, false)
-        ..opt('positiveColor', positiveColor)
-        ..opt('negativeColor', negativeColor)
-        ..opt('subtotalColor', subtotalColor))
-      .json;
+  Map<String, Object?> toJson() =>
+      (JsonWriter()
+            ..nested(
+              'connectorLines',
+              (JsonWriter()
+                    ..unlessDefault('show', connectorShow, true)
+                    ..opt('color', connectorColor)
+                    ..unlessDefault(
+                      'dash',
+                      connectorDash.name,
+                      LineDash.solid.name,
+                    ))
+                  .json,
+            )
+            ..opt(
+              'subtotals',
+              subtotals.isEmpty
+                  ? null
+                  : [for (final s in subtotals) s.toJson()],
+            )
+            ..unlessDefault('firstValueIsSubtotal', firstValueIsSubtotal, false)
+            ..opt('positiveColor', positiveColor)
+            ..opt('negativeColor', negativeColor)
+            ..opt('subtotalColor', subtotalColor))
+          .json;
 }
 
 /// Scorecard options. [keyValueRef] / [baselineRef] are GridRange JSON (a single cell or a
@@ -257,7 +289,11 @@ final class ScorecardOptions extends SpecNode {
     return ScorecardOptions(
       keyValueRef: GridRange.tryParse(r.map['keyValueRef']),
       baselineRef: GridRange.tryParse(r.map['baselineRef']),
-      aggregate: r.enumOr('aggregate', ChartAggregate.values, ChartAggregate.sum),
+      aggregate: r.enumOr(
+        'aggregate',
+        ChartAggregate.values,
+        ChartAggregate.sum,
+      ),
       compareMode: r.enumOr(
         'compareMode',
         ScorecardCompareMode.values,
@@ -284,17 +320,26 @@ final class ScorecardOptions extends SpecNode {
   final bool showSparkline;
 
   @override
-  Map<String, Object?> toJson() => (JsonWriter()
-        ..opt('keyValueRef', keyValueRef?.toJson())
-        ..opt('baselineRef', baselineRef?.toJson())
-        ..unlessDefault('aggregate', aggregate.name, ChartAggregate.sum.name)
-        ..unlessDefault('compareMode', compareMode.name, ScorecardCompareMode.absolute.name)
-        ..opt('keyFormat', keyFormat)
-        ..opt('baselineFormat', baselineFormat)
-        ..opt('positiveColor', positiveColor)
-        ..opt('negativeColor', negativeColor)
-        ..unlessDefault('showSparkline', showSparkline, false))
-      .json;
+  Map<String, Object?> toJson() =>
+      (JsonWriter()
+            ..opt('keyValueRef', keyValueRef?.toJson())
+            ..opt('baselineRef', baselineRef?.toJson())
+            ..unlessDefault(
+              'aggregate',
+              aggregate.name,
+              ChartAggregate.sum.name,
+            )
+            ..unlessDefault(
+              'compareMode',
+              compareMode.name,
+              ScorecardCompareMode.absolute.name,
+            )
+            ..opt('keyFormat', keyFormat)
+            ..opt('baselineFormat', baselineFormat)
+            ..opt('positiveColor', positiveColor)
+            ..opt('negativeColor', negativeColor)
+            ..unlessDefault('showSparkline', showSparkline, false))
+          .json;
 }
 
 /// Table chart options.
@@ -334,27 +379,35 @@ final class TableOptions extends SpecNode {
   final bool formatFromSource;
 
   @override
-  Map<String, Object?> toJson() => (JsonWriter()
-        ..unlessDefault('pageSize', pageSize, 0)
-        ..opt('sortColumn', sortColumn)
-        ..unlessDefault('sortAscending', sortAscending, true)
-        ..unlessDefault('showRowNumbers', showRowNumbers, false)
-        ..unlessDefault('alternatingColors', alternatingColors, true)
-        ..unlessDefault('formatFromSource', formatFromSource, true))
-      .json;
+  Map<String, Object?> toJson() =>
+      (JsonWriter()
+            ..unlessDefault('pageSize', pageSize, 0)
+            ..opt('sortColumn', sortColumn)
+            ..unlessDefault('sortAscending', sortAscending, true)
+            ..unlessDefault('showRowNumbers', showRowNumbers, false)
+            ..unlessDefault('alternatingColors', alternatingColors, true)
+            ..unlessDefault('formatFromSource', formatFromSource, true))
+          .json;
 }
 
 /// Radar options.
 final class RadarOptions extends SpecNode {
   /// Creates radar options.
-  const RadarOptions({this.fillOpacity = 0.2, this.gridShape = RadarGridShape.polygon});
+  const RadarOptions({
+    this.fillOpacity = 0.2,
+    this.gridShape = RadarGridShape.polygon,
+  });
 
   /// Reads `typeOptions`.
   factory RadarOptions.fromJson(Object? json) {
     final r = JsonReader(json);
     return RadarOptions(
       fillOpacity: r.dblOr('fillOpacity', 0.2).clamp(0.0, 1.0),
-      gridShape: r.enumOr('gridShape', RadarGridShape.values, RadarGridShape.polygon),
+      gridShape: r.enumOr(
+        'gridShape',
+        RadarGridShape.values,
+        RadarGridShape.polygon,
+      ),
     );
   }
 
@@ -362,23 +415,35 @@ final class RadarOptions extends SpecNode {
   final RadarGridShape gridShape;
 
   @override
-  Map<String, Object?> toJson() => (JsonWriter()
-        ..unlessDefault('fillOpacity', jsonNum(fillOpacity), jsonNum(0.2))
-        ..unlessDefault('gridShape', gridShape.name, RadarGridShape.polygon.name))
-      .json;
+  Map<String, Object?> toJson() =>
+      (JsonWriter()
+            ..unlessDefault('fillOpacity', jsonNum(fillOpacity), jsonNum(0.2))
+            ..unlessDefault(
+              'gridShape',
+              gridShape.name,
+              RadarGridShape.polygon.name,
+            ))
+          .json;
 }
 
 /// Bubble options.
 final class BubbleOptions extends SpecNode {
   /// Creates bubble options.
-  const BubbleOptions({this.minSize = 6, this.maxSize = 36, this.colorBy = BubbleColorBy.series});
+  const BubbleOptions({
+    this.minSize = 6,
+    this.maxSize = 36,
+    this.colorBy = BubbleColorBy.series,
+  });
 
   /// Reads `typeOptions`.
   factory BubbleOptions.fromJson(Object? json) {
     final r = JsonReader(json);
     final range = r.list('sizeRange');
     var lo = 6.0, hi = 36.0;
-    if (range != null && range.length == 2 && range[0] is num && range[1] is num) {
+    if (range != null &&
+        range.length == 2 &&
+        range[0] is num &&
+        range[1] is num) {
       lo = (range[0] as num).toDouble().clamp(1.0, 200.0);
       hi = (range[1] as num).toDouble().clamp(lo, 400.0);
     }
@@ -395,11 +460,14 @@ final class BubbleOptions extends SpecNode {
   final BubbleColorBy colorBy;
 
   @override
-  Map<String, Object?> toJson() => (JsonWriter()
-        ..opt(
-          'sizeRange',
-          minSize == 6 && maxSize == 36 ? null : [jsonNum(minSize), jsonNum(maxSize)],
-        )
-        ..unlessDefault('colorBy', colorBy.name, BubbleColorBy.series.name))
-      .json;
+  Map<String, Object?> toJson() =>
+      (JsonWriter()
+            ..opt(
+              'sizeRange',
+              minSize == 6 && maxSize == 36
+                  ? null
+                  : [jsonNum(minSize), jsonNum(maxSize)],
+            )
+            ..unlessDefault('colorBy', colorBy.name, BubbleColorBy.series.name))
+          .json;
 }

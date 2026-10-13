@@ -87,7 +87,11 @@ enum GuardStatus { allowed, warnings, blocked }
 /// A protection touched by a write.
 final class ProtectionHit {
   /// Creates a hit.
-  const ProtectionHit(this.protectionId, this.rect, {required this.warningOnly});
+  const ProtectionHit(
+    this.protectionId,
+    this.rect, {
+    required this.warningOnly,
+  });
 
   final String protectionId;
 
@@ -97,13 +101,17 @@ final class ProtectionHit {
 
   @override
   bool operator ==(Object other) =>
-      other is ProtectionHit && other.protectionId == protectionId && other.rect == rect && other.warningOnly == warningOnly;
+      other is ProtectionHit &&
+      other.protectionId == protectionId &&
+      other.rect == rect &&
+      other.warningOnly == warningOnly;
 
   @override
   int get hashCode => Object.hash(protectionId, rect, warningOnly);
 
   @override
-  String toString() => 'ProtectionHit($protectionId, ${rect?.a1}, warning: $warningOnly)';
+  String toString() =>
+      'ProtectionHit($protectionId, ${rect?.a1}, warning: $warningOnly)';
 }
 
 /// Result of [ProtectionGuard.check].
@@ -160,7 +168,8 @@ final class ProtectedIndex {
   final SheetModel sheet;
 
   /// Protections intersecting [rect] (ids, insertion order).
-  List<String> intersecting(GridRect rect) => sheet.rulesIntersecting(RuleKind.protection, rect);
+  List<String> intersecting(GridRect rect) =>
+      sheet.rulesIntersecting(RuleKind.protection, rect);
 
   /// Protections covering a cell (except ranges subtracted).
   List<String> at(int row, int col) => [
@@ -171,7 +180,10 @@ final class ProtectedIndex {
   bool _exceptContains(String id, int row, int col) {
     final p = sheet.protections[id];
     if (p == null) return false;
-    return ProtectionGuard._exceptRects(sheet, p).any((r) => r.contains(row, col));
+    return ProtectionGuard._exceptRects(
+      sheet,
+      p,
+    ).any((r) => r.contains(row, col));
   }
 }
 
@@ -198,13 +210,20 @@ final class ProtectionGuard {
     return const {};
   }
 
-  static List<GridRect> _exceptRects(SheetModel sheet, ProtectedRangeRecord p) => [
+  static List<GridRect> _exceptRects(
+    SheetModel sheet,
+    ProtectedRangeRecord p,
+  ) => [
     for (final r in GridRange.parseList(p.exceptRangesJson))
       if (sheet.resolve(r) case final ResolvedRange rr) rr.rect,
   ];
 
   /// Whether [userId] may edit cells of [p] without warning.
-  static bool canEdit(ProtectedRangeRecord p, String userId, {required bool isOwner}) {
+  static bool canEdit(
+    ProtectedRangeRecord p,
+    String userId, {
+    required bool isOwner,
+  }) {
     if (isOwner) return true;
     final u = userId.toLowerCase();
     if (p.createdBy.toLowerCase() == u) return true;
@@ -212,8 +231,11 @@ final class ProtectionGuard {
   }
 
   /// Whether [userId] may change or remove [p] (owner and its editors).
-  static bool canManage(ProtectedRangeRecord p, String userId, {required bool isOwner}) =>
-      canEdit(p, userId, isOwner: isOwner);
+  static bool canManage(
+    ProtectedRangeRecord p,
+    String userId, {
+    required bool isOwner,
+  }) => canEdit(p, userId, isOwner: isOwner);
 
   _Prot? _resolve(SheetModel sheet, String id) {
     final p = sheet.protections[id];
@@ -223,7 +245,11 @@ final class ProtectionGuard {
   }
 
   /// Checks [intent] for [userId].
-  GuardResult check(WriteIntent intent, String userId, {required bool isOwner}) {
+  GuardResult check(
+    WriteIntent intent,
+    String userId, {
+    required bool isOwner,
+  }) {
     if (intent is NameWrite) return GuardResult.allowed;
     if (intent is FilterWrite && intent.isView) return GuardResult.allowed;
     final sheet = model.sheet(intent.sheetId);
@@ -233,7 +259,9 @@ final class ProtectionGuard {
     void hit(_Prot p, GridRect? rect) {
       final editable = canEdit(p.record, userId, isOwner: isOwner);
       if (editable) return;
-      hits.add(ProtectionHit(p.record.id, rect, warningOnly: p.record.warningOnly));
+      hits.add(
+        ProtectionHit(p.record.id, rect, warningOnly: p.record.warningOnly),
+      );
       if (!p.record.warningOnly) blocked = true;
     }
 
@@ -246,7 +274,9 @@ final class ProtectionGuard {
         _checkRects(sheet, [range], hit);
         for (final id in sheet.protections.keys) {
           final p = _resolve(sheet, id)!;
-          if (p.isSheet && !hits.any((h) => h.protectionId == id)) hit(p, range);
+          if (p.isSheet && !hits.any((h) => h.protectionId == id)) {
+            hit(p, range);
+          }
         }
       case SheetOp():
       case ObjectWrite():
@@ -260,7 +290,10 @@ final class ProtectionGuard {
         break;
     }
     if (hits.isEmpty) return GuardResult.allowed;
-    return GuardResult(blocked ? GuardStatus.blocked : GuardStatus.warnings, _dedupe(hits));
+    return GuardResult(
+      blocked ? GuardStatus.blocked : GuardStatus.warnings,
+      _dedupe(hits),
+    );
   }
 
   static List<ProtectionHit> _dedupe(List<ProtectionHit> hits) {
@@ -271,7 +304,11 @@ final class ProtectionGuard {
     ];
   }
 
-  void _checkRects(SheetModel sheet, List<GridRect> rects, void Function(_Prot, GridRect?) hit) {
+  void _checkRects(
+    SheetModel sheet,
+    List<GridRect> rects,
+    void Function(_Prot, GridRect?) hit,
+  ) {
     for (final rect in rects) {
       for (final id in sheet.rulesIntersecting(RuleKind.protection, rect)) {
         final p = _resolve(sheet, id);
@@ -293,7 +330,12 @@ final class ProtectionGuard {
     }
   }
 
-  void _checkStructural(SheetModel sheet, Dimension dim, List<int> indices, void Function(_Prot, GridRect?) hit) {
+  void _checkStructural(
+    SheetModel sheet,
+    Dimension dim,
+    List<int> indices,
+    void Function(_Prot, GridRect?) hit,
+  ) {
     if (indices.isEmpty) return;
     final grid = sheet.gridRect;
     if (grid == null) return;

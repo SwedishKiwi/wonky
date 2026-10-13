@@ -49,7 +49,8 @@ final class SceneTag {
   final String? detail;
 
   /// Copy with a point index.
-  SceneTag withPoint(int index) => SceneTag(role, seriesKey: seriesKey, pointIndex: index, detail: detail);
+  SceneTag withPoint(int index) =>
+      SceneTag(role, seriesKey: seriesKey, pointIndex: index, detail: detail);
 
   /// Stable JSON.
   Map<String, Object?> toJson() => {
@@ -136,14 +137,19 @@ final class TextStyleSpec {
   final int color;
 
   /// Copy with changes.
-  TextStyleSpec copyWith({String? family, double? size, bool? bold, bool? italic, int? color}) =>
-      TextStyleSpec(
-        family: family ?? this.family,
-        size: size ?? this.size,
-        bold: bold ?? this.bold,
-        italic: italic ?? this.italic,
-        color: color ?? this.color,
-      );
+  TextStyleSpec copyWith({
+    String? family,
+    double? size,
+    bool? bold,
+    bool? italic,
+    int? color,
+  }) => TextStyleSpec(
+    family: family ?? this.family,
+    size: size ?? this.size,
+    bold: bold ?? this.bold,
+    italic: italic ?? this.italic,
+    color: color ?? this.color,
+  );
 
   /// Stable JSON.
   Map<String, Object?> toJson(num Function(double) n) => {
@@ -203,7 +209,11 @@ enum TextAnchor {
 
   /// Offset from the anchor point to the baseline-left origin of the text, for a text box of
   /// [width] × [height] with [ascent] (unrotated).
-  (double dx, double dy) baselineOrigin(double width, double height, double ascent) {
+  (double dx, double dy) baselineOrigin(
+    double width,
+    double height,
+    double ascent,
+  ) {
     final dx = -hFactor * width;
     final dy = switch (_v) {
       _V.top => ascent,
@@ -276,7 +286,13 @@ final class SRect extends ScenePrimitive {
 /// A general path.
 final class SPath extends ScenePrimitive {
   /// Creates a path.
-  const SPath(this.cmds, {this.fill, this.stroke, this.evenOdd = false, super.tag});
+  const SPath(
+    this.cmds, {
+    this.fill,
+    this.stroke,
+    this.evenOdd = false,
+    super.tag,
+  });
 
   final List<PathCmd> cmds;
 
@@ -292,7 +308,10 @@ final class SPath extends ScenePrimitive {
 
   @override
   ChartRect get bounds {
-    var l = double.infinity, t = double.infinity, r = -double.infinity, b = -double.infinity;
+    var l = double.infinity,
+        t = double.infinity,
+        r = -double.infinity,
+        b = -double.infinity;
     void add(double x, double y) {
       if (x < l) l = x;
       if (x > r) r = x;
@@ -306,7 +325,14 @@ final class SPath extends ScenePrimitive {
           add(x, y);
         case PLineTo(:final x, :final y):
           add(x, y);
-        case PCubicTo(:final x1, :final y1, :final x2, :final y2, :final x, :final y):
+        case PCubicTo(
+          :final x1,
+          :final y1,
+          :final x2,
+          :final y2,
+          :final x,
+          :final y,
+        ):
           add(x1, y1);
           add(x2, y2);
           add(x, y);
@@ -428,7 +454,8 @@ final class SMarkers extends ScenePrimitive {
     if (stroke != null) 'stroke': stroke!.toJson(n),
     if (indices != null) 'indices': indices!.toList(),
     if (sizes != null) 'sizes': [for (final s in sizes!) n(s)],
-    if (fills != null) 'fills': [for (final f in fills!) argbHex(f & 0xFFFFFFFF)],
+    if (fills != null)
+      'fills': [for (final f in fills!) argbHex(f & 0xFFFFFFFF)],
   };
 }
 
@@ -551,8 +578,16 @@ final class SText extends ScenePrimitive {
     final b = box;
     if (angle == 0) return b;
     final c = math.cos(angle), s = math.sin(angle);
-    var l = double.infinity, t = double.infinity, r = -double.infinity, bt = -double.infinity;
-    for (final (x, y) in [(b.left, b.top), (b.right, b.top), (b.right, b.bottom), (b.left, b.bottom)]) {
+    var l = double.infinity,
+        t = double.infinity,
+        r = -double.infinity,
+        bt = -double.infinity;
+    for (final (x, y) in [
+      (b.left, b.top),
+      (b.right, b.top),
+      (b.right, b.bottom),
+      (b.left, b.bottom),
+    ]) {
       final dx = x - at.x, dy = y - at.y;
       final rx = at.x + dx * c - dy * s, ry = at.y + dx * s + dy * c;
       l = math.min(l, rx);
@@ -737,7 +772,9 @@ final class ChartScene {
             walk(children, clip);
             continue;
           case SClip(:final rect, :final children):
-            final c = clip == null ? rect : (clip.intersect(rect) ?? ChartRect.zero);
+            final c = clip == null
+                ? rect
+                : (clip.intersect(rect) ?? ChartRect.zero);
             walk(children, c);
             continue;
           default:
@@ -759,19 +796,37 @@ final class ChartScene {
   static int _rank(SceneTag t) => switch (t.role) {
     SceneRole.point || SceneRole.dataLabel => 5,
     SceneRole.series || SceneRole.trendline || SceneRole.legendEntry => 4,
-    SceneRole.tableCell || SceneRole.tableHeader || SceneRole.keyValue || SceneRole.baseline => 4,
-    SceneRole.title || SceneRole.subtitle || SceneRole.axisTitle || SceneRole.axisLabel => 3,
+    SceneRole.tableCell ||
+    SceneRole.tableHeader ||
+    SceneRole.keyValue ||
+    SceneRole.baseline => 4,
+    SceneRole.title ||
+    SceneRole.subtitle ||
+    SceneRole.axisTitle ||
+    SceneRole.axisLabel => 3,
     SceneRole.legend || SceneRole.axisLine || SceneRole.connector => 2,
     SceneRole.gridline || SceneRole.tick => 1,
     _ => 0,
   };
 
-  static SceneHit? _hitPrimitive(ScenePrimitive p, SceneTag tag, double x, double y, double tol) {
+  static SceneHit? _hitPrimitive(
+    ScenePrimitive p,
+    SceneTag tag,
+    double x,
+    double y,
+    double tol,
+  ) {
     switch (p) {
       case SRect(:final rect):
         final d = rect.distanceTo(x, y);
         return d <= tol ? SceneHit(tag, p, d) : null;
-      case SArc(:final center, :final radius, :final innerRadius, :final start, :final sweep):
+      case SArc(
+        :final center,
+        :final radius,
+        :final innerRadius,
+        :final start,
+        :final sweep,
+      ):
         final dx = x - center.x, dy = y - center.y;
         final r = math.sqrt(dx * dx + dy * dy);
         if (r > radius + tol || r < innerRadius - tol) return null;
@@ -779,7 +834,9 @@ final class ChartScene {
         var a = math.atan2(dy, dx) - (sweep >= 0 ? start : start + sweep);
         a %= 2 * math.pi;
         if (a > sweep.abs()) return null;
-        final d = r > radius ? r - radius : (r < innerRadius ? innerRadius - r : 0.0);
+        final d = r > radius
+            ? r - radius
+            : (r < innerRadius ? innerRadius - r : 0.0);
         return SceneHit(tag, p, d);
       case SText():
         return p.containsPoint(x, y, tol) ? SceneHit(tag, p, 0) : null;
@@ -788,7 +845,10 @@ final class ChartScene {
         var bestD = double.infinity;
         for (var k = 0; k < p.length; k++) {
           final dx = xy[2 * k] - x, dy = xy[2 * k + 1] - y;
-          final d = math.max(0.0, math.sqrt(dx * dx + dy * dy) - p.sizeOf(k) / 2);
+          final d = math.max(
+            0.0,
+            math.sqrt(dx * dx + dy * dy) - p.sizeOf(k) / 2,
+          );
           if (d < bestD) {
             bestD = d;
             bestK = k;
@@ -810,7 +870,14 @@ final class ChartScene {
         }
         var segD = double.infinity;
         for (var k = 0; k + 1 < n; k++) {
-          final d = PathGeometry.segmentDistance(x, y, xy[2 * k], xy[2 * k + 1], xy[2 * k + 2], xy[2 * k + 3]);
+          final d = PathGeometry.segmentDistance(
+            x,
+            y,
+            xy[2 * k],
+            xy[2 * k + 1],
+            xy[2 * k + 2],
+            xy[2 * k + 3],
+          );
           if (d < segD) segD = d;
         }
         final d = math.max(0.0, math.min(segD, bestD) - stroke.width / 2);
@@ -818,16 +885,32 @@ final class ChartScene {
         return SceneHit(tag.withPoint(p.pointIndexOf(bestK)), p, d);
       case SPath(:final cmds, :final fill, :final stroke):
         final polys = PathGeometry.flatten(cmds, tolerance: 0.5);
-        if (fill != null && PathGeometry.containsPoint(polys, x, y)) return SceneHit(tag, p, 0);
+        if (fill != null && PathGeometry.containsPoint(polys, x, y)) {
+          return SceneHit(tag, p, 0);
+        }
         var segD = double.infinity;
         for (final (poly, closed) in polys) {
           final n = poly.length ~/ 2;
           for (var k = 0; k + 1 < n; k++) {
-            final d = PathGeometry.segmentDistance(x, y, poly[2 * k], poly[2 * k + 1], poly[2 * k + 2], poly[2 * k + 3]);
+            final d = PathGeometry.segmentDistance(
+              x,
+              y,
+              poly[2 * k],
+              poly[2 * k + 1],
+              poly[2 * k + 2],
+              poly[2 * k + 3],
+            );
             if (d < segD) segD = d;
           }
           if (closed && n > 1) {
-            final d = PathGeometry.segmentDistance(x, y, poly[2 * n - 2], poly[2 * n - 1], poly[0], poly[1]);
+            final d = PathGeometry.segmentDistance(
+              x,
+              y,
+              poly[2 * n - 2],
+              poly[2 * n - 1],
+              poly[0],
+              poly[1],
+            );
             if (d < segD) segD = d;
           }
         }
@@ -841,7 +924,10 @@ final class ChartScene {
 
 ChartRect _boundsOf(Float64List xy, double pad) {
   if (xy.length < 2) return ChartRect.zero;
-  var l = double.infinity, t = double.infinity, r = -double.infinity, b = -double.infinity;
+  var l = double.infinity,
+      t = double.infinity,
+      r = -double.infinity,
+      b = -double.infinity;
   for (var i = 0; i + 1 < xy.length; i += 2) {
     final x = xy[i], y = xy[i + 1];
     if (x < l) l = x;
@@ -861,7 +947,8 @@ num sceneNum(double v) {
 }
 
 /// `#AARRGGBB` for an ARGB int.
-String argbHex(int argb) => '#${(argb & 0xFFFFFFFF).toRadixString(16).padLeft(8, '0').toUpperCase()}';
+String argbHex(int argb) =>
+    '#${(argb & 0xFFFFFFFF).toRadixString(16).padLeft(8, '0').toUpperCase()}';
 
 /// Color helpers on ARGB ints.
 abstract final class Argb {
@@ -879,22 +966,35 @@ abstract final class Argb {
 
   /// Builds an ARGB int.
   static int of(int a, int r, int g, int b) =>
-      ((a.clamp(0, 255) << 24) | (r.clamp(0, 255) << 16) | (g.clamp(0, 255) << 8) | b.clamp(0, 255)) &
+      ((a.clamp(0, 255) << 24) |
+          (r.clamp(0, 255) << 16) |
+          (g.clamp(0, 255) << 8) |
+          b.clamp(0, 255)) &
       0xFFFFFFFF;
 
   /// [c] with its alpha multiplied by [opacity] (0..1).
-  static int withOpacity(int c, double opacity) =>
-      of((alpha(c) * opacity.clamp(0.0, 1.0)).round(), red(c), green(c), blue(c));
+  static int withOpacity(int c, double opacity) => of(
+    (alpha(c) * opacity.clamp(0.0, 1.0)).round(),
+    red(c),
+    green(c),
+    blue(c),
+  );
 
   /// Linear mix of [a] and [b] (t = 0 → a).
   static int lerp(int a, int b, double t) {
     final tt = t.clamp(0.0, 1.0);
     int ch(int x, int y) => (x + (y - x) * tt).round();
-    return of(ch(alpha(a), alpha(b)), ch(red(a), red(b)), ch(green(a), green(b)), ch(blue(a), blue(b)));
+    return of(
+      ch(alpha(a), alpha(b)),
+      ch(red(a), red(b)),
+      ch(green(a), green(b)),
+      ch(blue(a), blue(b)),
+    );
   }
 
   /// `#RRGGBB` of [c] (alpha dropped).
-  static String rgbHex(int c) => '#${(c & 0xFFFFFF).toRadixString(16).padLeft(6, '0').toUpperCase()}';
+  static String rgbHex(int c) =>
+      '#${(c & 0xFFFFFF).toRadixString(16).padLeft(6, '0').toUpperCase()}';
 
   /// Opacity 0..1 of [c].
   static double opacity(int c) => alpha(c) / 255.0;

@@ -61,7 +61,9 @@ RowMoveStrategy applyRowPermutation(
   final n = rect.rowCount;
   assert(permutation.length == n, 'permutation length must match rows');
   final keep = keepCount ?? n;
-  final st = strategy ?? (keep < n ? RowMoveStrategy.contentMove : chooseRowMoveStrategy(s, rect));
+  final st =
+      strategy ??
+      (keep < n ? RowMoveStrategy.contentMove : chooseRowMoveStrategy(s, rect));
   var identity = true;
   for (var i = 0; i < n; i++) {
     if (permutation[i] != i) identity = false;
@@ -112,7 +114,9 @@ RowMoveStrategy applyRowPermutation(
   if (keys.toSet().length != n) {
     // Ties: generate fresh distinct keys inside the block's bounds.
     final before = rect.top > 0 ? s.rows.sortKeyAt(rect.top - 1) : null;
-    final after = rect.bottom + 1 < s.rows.length ? s.rows.sortKeyAt(rect.bottom + 1) : null;
+    final after = rect.bottom + 1 < s.rows.length
+        ? s.rows.sortKeyAt(rect.bottom + 1)
+        : null;
     keys = FractionalIndex.nBetween(
       before == keys.first ? null : before,
       after == keys.last ? null : after,
@@ -124,8 +128,9 @@ RowMoveStrategy applyRowPermutation(
     b.update(SheetsTables.sheetRow, newIdAt[i], {Cols.sortKey: keys[i]});
   }
   final oldIndex = {for (var i = 0; i < n; i++) oldIds[i]: rect.top + i};
-  String newRowIdAt(int pos) =>
-      pos >= rect.top && pos <= rect.bottom ? newIdAt[pos - rect.top] : s.rows.idAt(pos);
+  String newRowIdAt(int pos) => pos >= rect.top && pos <= rect.bottom
+      ? newIdAt[pos - rect.top]
+      : s.rows.idAt(pos);
   int oldIndexOf(String id) => oldIndex[id] ?? s.rows.indexOf(id);
   final newPos = {for (var i = 0; i < n; i++) newIdAt[i]: rect.top + i};
 
@@ -165,7 +170,9 @@ RowMoveStrategy applyRowPermutation(
           oldIndexOf: oldIndexOf,
         );
         if (repinned != null) f = repinned;
-        if (f != content) b.update(SheetsTables.cell, cell.id, {CellCols.content: f});
+        if (f != content) {
+          b.update(SheetsTables.cell, cell.id, {CellCols.content: f});
+        }
       }
     }
   }
@@ -194,13 +201,23 @@ RowMoveStrategy applyRowPermutation(
   return st;
 }
 
-String? _keyOf(SheetModel s, String rowId, List<String> newIdAt, List<String> keys, GridRect rect) {
+String? _keyOf(
+  SheetModel s,
+  String rowId,
+  List<String> newIdAt,
+  List<String> keys,
+  GridRect rect,
+) {
   final i = newIdAt.indexOf(rowId);
   if (i >= 0) return keys[i];
   return s.rows.sortKeyOf(rowId);
 }
 
-void _repinRuleRanges(PlanBuilder b, SheetModel s, GridRange? Function(GridRange) repin) {
+void _repinRuleRanges(
+  PlanBuilder b,
+  SheetModel s,
+  GridRange? Function(GridRange) repin,
+) {
   void single(String table, Iterable<SyncRecord> recs, String column) {
     for (final r in recs) {
       final g = GridRange.tryParse(r.column(column) as String?);
@@ -224,14 +241,18 @@ void _repinRuleRanges(PlanBuilder b, SheetModel s, GridRange? Function(GridRange
           else
             g,
       ];
-      if (changed) b.update(table, r.id, {Cols.rangesJson: GridRange.encodeList(out)});
+      if (changed) {
+        b.update(table, r.id, {Cols.rangesJson: GridRange.encodeList(out)});
+      }
     }
   }
 
   single(SheetsTables.mergedRange, s.merges.values, Cols.rangeJson);
   single(SheetsTables.banding, s.bandings.values, Cols.rangeJson);
   single(SheetsTables.filterView, s.filterViews.values, Cols.rangeJson);
-  if (s.basicFilter != null) single(SheetsTables.basicFilter, [s.basicFilter!], Cols.rangeJson);
+  if (s.basicFilter != null) {
+    single(SheetsTables.basicFilter, [s.basicFilter!], Cols.rangeJson);
+  }
   single(SheetsTables.protectedRange, s.protections.values, Cols.rangeJson);
   multi(SheetsTables.conditionalFormatRule, s.cfRules.values);
   multi(SheetsTables.dataValidationRule, s.dvRules.values);
@@ -243,7 +264,8 @@ void _repinRuleRanges(PlanBuilder b, SheetModel s, GridRange? Function(GridRange
       var changed = false;
       Object? walk(Object? v) {
         if (v is Map) {
-          if (v['s'] is String && (v.containsKey('r1') || v.containsKey('c1'))) {
+          if (v['s'] is String &&
+              (v.containsKey('r1') || v.containsKey('c1'))) {
             final g = GridRange.tryParse(v);
             final n = g == null ? null : repin(g);
             if (n != null) {
@@ -259,13 +281,22 @@ void _repinRuleRanges(PlanBuilder b, SheetModel s, GridRange? Function(GridRange
       }
 
       final out = walk(spec);
-      if (changed) b.update(SheetsTables.embeddedObject, o.id, {'specJson': jsonEncode(out)});
+      if (changed) {
+        b.update(SheetsTables.embeddedObject, o.id, {
+          'specJson': jsonEncode(out),
+        });
+      }
     }
   }
   // Groups: endpoints at positions.
   for (final g in s.groups.values) {
     if (g.dimension != Dimension.rows) continue;
     final n = repin(GridRange(sheetId: s.id, r1: g.startId, r2: g.endId));
-    if (n != null) b.update(SheetsTables.dimensionGroup, g.id, {'startId': n.r1, 'endId': n.r2});
+    if (n != null) {
+      b.update(SheetsTables.dimensionGroup, g.id, {
+        'startId': n.r1,
+        'endId': n.r2,
+      });
+    }
   }
 }

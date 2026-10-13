@@ -19,12 +19,19 @@ AxisIndex testAxis(
       ? const <String>[]
       : FractionalIndex.nBetween(null, null, sizes.length);
   return AxisIndex(defaultSize: defaultSize)..load([
-    for (var i = 0; i < sizes.length; i++) (testUuid(ns, i), keys[i], sizes[i], hidden.contains(i)),
+    for (var i = 0; i < sizes.length; i++)
+      (testUuid(ns, i), keys[i], sizes[i], hidden.contains(i)),
   ]);
 }
 
 /// Inserts [count] rows of [height] px right before row [index] of [sheetId].
-void insertRowsBefore(WorkbookModel m, String sheetId, int index, int count, {double? height}) {
+void insertRowsBefore(
+  WorkbookModel m,
+  String sheetId,
+  int index,
+  int count, {
+  double? height,
+}) {
   final rows = m.sheet(sheetId)!.rows;
   final before = index == 0 ? null : rows.sortKeyAt(index - 1);
   final after = index >= rows.length ? null : rows.sortKeyAt(index);
@@ -41,11 +48,16 @@ void insertRowsBefore(WorkbookModel m, String sheetId, int index, int count, {do
 }
 
 /// Adds an embedded object row with [anchor] to the builder's current sheet.
-void addObject(WorkbookBuilder b, String sheetId, String id, String anchorJson, {int zIndex = 0}) =>
-    b.row(SheetsTables.embeddedObject, id, {
-      Cols.sheetId: sheetId,
-      'kind': EmbeddedObjectKind.chart.name,
-      'anchorJson': anchorJson,
-      'specJson': '{"v":1}',
-      'zIndex': zIndex,
-    });
+void addObject(
+  WorkbookBuilder b,
+  String sheetId,
+  String id,
+  String anchorJson, {
+  int zIndex = 0,
+}) => b.row(SheetsTables.embeddedObject, id, {
+  Cols.sheetId: sheetId,
+  'kind': EmbeddedObjectKind.chart.name,
+  'anchorJson': anchorJson,
+  'specJson': '{"v":1}',
+  'zIndex': zIndex,
+});

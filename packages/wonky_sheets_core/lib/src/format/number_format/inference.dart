@@ -15,7 +15,8 @@ abstract final class FormatInference {
   static const String duration = '[h]:mm';
 
   /// Whether detection applies to a target cell with [targetFormat].
-  static bool appliesTo(String? targetFormat) => NumberFormatPresets.isAutomatic(targetFormat);
+  static bool appliesTo(String? targetFormat) =>
+      NumberFormatPresets.isAutomatic(targetFormat);
 
   static String _decimals(int n) => n > 0 ? '.${'0' * n}' : '';
 
@@ -28,7 +29,12 @@ abstract final class FormatInference {
 
   /// Currency for a typed [symbol] (`$` → `"$"`, others `[$€]`); decimals as
   /// typed, at least 2 when any were typed.
-  static String currency(String symbol, int decimals, {bool before = true, bool spaced = false}) {
+  static String currency(
+    String symbol,
+    int decimals, {
+    bool before = true,
+    bool spaced = false,
+  }) {
     final d = decimals == 0 ? 0 : (decimals < 2 ? 2 : decimals);
     final tok = symbol == r'$' ? r'"$"' : '[\$$symbol]';
     final num = '#,##0${_decimals(d)}';
@@ -38,7 +44,11 @@ abstract final class FormatInference {
 
   /// Time of day as typed: `h:mm`, `h:mm:ss`, `h:mm:ss.000`, with ` AM/PM`
   /// when typed with a 12-hour marker.
-  static String time({bool seconds = false, bool fraction = false, bool twelveHour = false}) {
+  static String time({
+    bool seconds = false,
+    bool fraction = false,
+    bool twelveHour = false,
+  }) {
     final b = StringBuffer('h:mm');
     if (seconds) b.write(':ss');
     if (seconds && fraction) b.write('.000');
@@ -47,7 +57,8 @@ abstract final class FormatInference {
   }
 
   /// Elapsed duration (`[h]:mm` / `[h]:mm:ss`).
-  static String elapsed({bool seconds = true}) => seconds ? durationWithSeconds : duration;
+  static String elapsed({bool seconds = true}) =>
+      seconds ? durationWithSeconds : duration;
 
   /// ISO date shape (`yyyy-mm-dd`, optionally ` hh:mm` / ` hh:mm:ss`).
   static String isoDate({bool time = false, bool seconds = false}) {
@@ -56,6 +67,11 @@ abstract final class FormatInference {
   }
 
   /// The format detected for typed [input] in [locale], or null (Automatic).
-  static String? infer(String input, {String locale = 'en_US', DateTime? today}) =>
-      InputParser.instance.parse(input, locale: locale, today: today).autoNumberFormat;
+  static String? infer(
+    String input, {
+    String locale = 'en_US',
+    DateTime? today,
+  }) => InputParser.instance
+      .parse(input, locale: locale, today: today)
+      .autoNumberFormat;
 }

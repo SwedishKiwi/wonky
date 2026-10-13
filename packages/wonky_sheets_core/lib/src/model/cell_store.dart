@@ -28,7 +28,8 @@ final class CellStore {
   Iterable<CellRecord> inRow(String rowId) => _rows[rowId]?.values ?? const [];
 
   /// Cells of a column (unordered).
-  Iterable<CellRecord> inColumn(String colId) => _cols[colId]?.values ?? const [];
+  Iterable<CellRecord> inColumn(String colId) =>
+      _cols[colId]?.values ?? const [];
 
   /// Number of cells in a row.
   int rowCount(String rowId) => _rows[rowId]?.length ?? 0;
@@ -179,12 +180,16 @@ final class CellStore {
     var lastRow = -1;
     var lastCol = -1;
     for (final e in _rows.entries) {
-      if (!includeFormatOnly && !e.value.values.any((c) => c.content != null)) continue;
+      if (!includeFormatOnly && !e.value.values.any((c) => c.content != null)) {
+        continue;
+      }
       final r = rows.indexOf(e.key);
       if (r > lastRow) lastRow = r;
     }
     for (final e in _cols.entries) {
-      if (!includeFormatOnly && !e.value.values.any((c) => c.content != null)) continue;
+      if (!includeFormatOnly && !e.value.values.any((c) => c.content != null)) {
+        continue;
+      }
       final c = cols.indexOf(e.key);
       if (c > lastCol) lastCol = c;
     }

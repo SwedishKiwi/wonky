@@ -14,7 +14,14 @@ import '../values/numeric.dart';
 abstract final class Operators {
   static const int maxText = 50000;
 
-  static FValue _num(FValue v, FormulaLocale loc, String fn, int param, int year, void Function(double) ok) {
+  static FValue _num(
+    FValue v,
+    FormulaLocale loc,
+    String fn,
+    int param,
+    int year,
+    void Function(double) ok,
+  ) {
     final r = Coerce.toNumber(v, loc, fn: fn, param: param, currentYear: year);
     if (r is FError) return r;
     ok(r as double);
@@ -22,7 +29,13 @@ abstract final class Operators {
   }
 
   /// Applies [op] to two scalars.
-  static FValue binary(BinaryOp op, FValue a, FValue b, FormulaLocale loc, {int year = 2000}) {
+  static FValue binary(
+    BinaryOp op,
+    FValue a,
+    FValue b,
+    FormulaLocale loc, {
+    int year = 2000,
+  }) {
     if (a is FRich) a = a.scalar;
     if (b is FRich) b = b.scalar;
     if (op.isComparison) {
@@ -67,7 +80,9 @@ abstract final class Operators {
       case BinaryOp.mul:
         return _finite(x * y, _mulHint(ha, hb));
       case BinaryOp.div:
-        if (y == 0) return FError(ErrorKind.div0, ErrorMessages.divByZero('DIVIDE', 2));
+        if (y == 0) {
+          return FError(ErrorKind.div0, ErrorMessages.divByZero('DIVIDE', 2));
+        }
         return _finite(x / y, _mulHint(ha, FormatHint.none));
       case BinaryOp.pow:
         return power(x, y);
@@ -79,7 +94,9 @@ abstract final class Operators {
   /// `x ^ y` (Sheets: 0^0 = 1; negative base with fractional exponent → #NUM!).
   static FValue power(double x, double y) {
     if (x == 0 && y == 0) return FNumber.one;
-    if (x == 0 && y < 0) return FError(ErrorKind.div0, ErrorMessages.divByZero('POW', 1));
+    if (x == 0 && y < 0) {
+      return FError(ErrorKind.div0, ErrorMessages.divByZero('POW', 1));
+    }
     if (x < 0 && y != y.truncateToDouble()) return FError.num;
     final r = math.pow(x, y).toDouble();
     if (!r.isFinite) return FError.num;
@@ -94,8 +111,12 @@ abstract final class Operators {
       h.isDateLike || _isTime(h) || h.kind == FormatHintKind.duration;
 
   static FormatHint _addHint(FormatHint a, FormatHint b) {
-    if (a.isDateLike && !b.isDateLike) return _isTime(b) ? FormatHint.dateTime : a;
-    if (b.isDateLike && !a.isDateLike) return _isTime(a) ? FormatHint.dateTime : b;
+    if (a.isDateLike && !b.isDateLike) {
+      return _isTime(b) ? FormatHint.dateTime : a;
+    }
+    if (b.isDateLike && !a.isDateLike) {
+      return _isTime(a) ? FormatHint.dateTime : b;
+    }
     if (_isTime(a) && _isTime(b)) return FormatHint.time;
     if (a.isNone) return _dateish(b) ? b : _currencyOrPercent(b);
     if (b.isNone) return _dateish(a) ? a : _currencyOrPercent(a);
@@ -104,7 +125,9 @@ abstract final class Operators {
   }
 
   static FormatHint _currencyOrPercent(FormatHint h) =>
-      h.kind == FormatHintKind.currency || h.kind == FormatHintKind.fromCell ? h : FormatHint.none;
+      h.kind == FormatHintKind.currency || h.kind == FormatHintKind.fromCell
+      ? h
+      : FormatHint.none;
 
   static FormatHint _subHint(FormatHint a, FormatHint b) {
     if (a.isDateLike && b.isDateLike) return FormatHint.none;
@@ -122,13 +145,24 @@ abstract final class Operators {
   }
 
   /// Unary minus/plus.
-  static FValue unary(UnaryOp op, FValue v, FormulaLocale loc, {int year = 2000}) {
+  static FValue unary(
+    UnaryOp op,
+    FValue v,
+    FormulaLocale loc, {
+    int year = 2000,
+  }) {
     if (v is FRich) v = v.scalar;
     if (op == UnaryOp.plus) {
       // UPLUS returns its argument unchanged (no coercion), like Sheets.
       return v is FOmitted ? FEmpty.instance : v;
     }
-    final r = Coerce.toNumber(v, loc, fn: 'UMINUS', param: 1, currentYear: year);
+    final r = Coerce.toNumber(
+      v,
+      loc,
+      fn: 'UMINUS',
+      param: 1,
+      currentYear: year,
+    );
     if (r is FError) return r;
     final d = r as double;
     return FNumber(d == 0 ? 0.0 : -d, v is FNumber ? v.hint : FormatHint.none);
@@ -137,7 +171,13 @@ abstract final class Operators {
   /// Postfix percent.
   static FValue percent(FValue v, FormulaLocale loc, {int year = 2000}) {
     if (v is FRich) v = v.scalar;
-    final r = Coerce.toNumber(v, loc, fn: 'UNARY_PERCENT', param: 1, currentYear: year);
+    final r = Coerce.toNumber(
+      v,
+      loc,
+      fn: 'UNARY_PERCENT',
+      param: 1,
+      currentYear: year,
+    );
     if (r is FError) return r;
     return FNumber((r as double) / 100, FormatHint.percent);
   }
@@ -183,7 +223,11 @@ abstract final class Operators {
       });
     }
     final (rows, cols) = shape;
-    return FArray.generate(rows, cols, (r, c) => f(elem(a, r, c), elem(b, r, c)));
+    return FArray.generate(
+      rows,
+      cols,
+      (r, c) => f(elem(a, r, c), elem(b, r, c)),
+    );
   }
 
   static FValue? _padElem(FValue v, int r, int c) {

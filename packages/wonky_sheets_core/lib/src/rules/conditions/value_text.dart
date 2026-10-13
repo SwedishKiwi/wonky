@@ -25,7 +25,11 @@ abstract final class ValueText {
 
   /// Parses [text] like typed input in [locale] into a number (dates, times,
   /// percentages and currency included), or null.
-  static double? parseNumber(String text, {String locale = 'en_US', InputParser? parser}) {
+  static double? parseNumber(
+    String text, {
+    String locale = 'en_US',
+    InputParser? parser,
+  }) {
     final t = text.trim();
     if (t.isEmpty) return null;
     final parsed = (parser ?? InputParser.instance).parse(t, locale: locale);
@@ -36,7 +40,11 @@ abstract final class ValueText {
   }
 
   /// Parses [text] as a date (serial, time of day included), or null.
-  static double? parseDate(String text, {String locale = 'en_US', InputParser? parser}) {
+  static double? parseDate(
+    String text, {
+    String locale = 'en_US',
+    InputParser? parser,
+  }) {
     final t = text.trim();
     if (t.isEmpty) return null;
     final parsed = (parser ?? InputParser.instance).parse(t, locale: locale);

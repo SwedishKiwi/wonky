@@ -71,7 +71,8 @@ sealed class QExpr {
   List<QExpr> get children => const [];
 
   /// Whether this expression contains an aggregation.
-  bool get hasAggregate => children.any((c) => c is QAggregate || c.hasAggregate);
+  bool get hasAggregate =>
+      children.any((c) => c is QAggregate || c.hasAggregate);
 
   @override
   bool operator ==(Object other) => other is QExpr && other.key == key;

@@ -146,12 +146,17 @@ final class SpreadsheetRecord extends SyncRecord {
       locale: r(m, SpreadsheetCols.locale) ?? 'en_US',
       timeZone: r(m, SpreadsheetCols.timeZone) ?? 'UTC',
       recalcMode:
-          enumByName(RecalcMode.values, m[SpreadsheetCols.recalcMode]) ?? RecalcMode.onChange,
-      iterativeCalc: ColumnReader.boolean(m, SpreadsheetCols.iterativeCalc) ?? false,
-      maxIterations: ColumnReader.integer(m, SpreadsheetCols.maxIterations) ?? 50,
-      convergenceThreshold: ColumnReader.dbl(m, SpreadsheetCols.convergenceThreshold) ?? 0.05,
+          enumByName(RecalcMode.values, m[SpreadsheetCols.recalcMode]) ??
+          RecalcMode.onChange,
+      iterativeCalc:
+          ColumnReader.boolean(m, SpreadsheetCols.iterativeCalc) ?? false,
+      maxIterations:
+          ColumnReader.integer(m, SpreadsheetCols.maxIterations) ?? 50,
+      convergenceThreshold:
+          ColumnReader.dbl(m, SpreadsheetCols.convergenceThreshold) ?? 0.05,
       defaultFontFamily: r(m, SpreadsheetCols.defaultFontFamily) ?? 'Inter',
-      defaultFontSize: ColumnReader.dbl(m, SpreadsheetCols.defaultFontSize) ?? 10,
+      defaultFontSize:
+          ColumnReader.dbl(m, SpreadsheetCols.defaultFontSize) ?? 10,
       themeJson: r(m, SpreadsheetCols.themeJson) ?? '',
       createdBy: r(m, Cols.createdBy) ?? '',
       displayLanguage: r(m, SpreadsheetCols.displayLanguage),
@@ -243,7 +248,8 @@ final class SheetRecord extends SyncRecord {
     frozenRows: ColumnReader.integer(m, SheetCols.frozenRows) ?? 0,
     frozenColumns: ColumnReader.integer(m, SheetCols.frozenColumns) ?? 0,
     defaultRowHeight: ColumnReader.dbl(m, SheetCols.defaultRowHeight) ?? 21,
-    defaultColumnWidth: ColumnReader.dbl(m, SheetCols.defaultColumnWidth) ?? 100,
+    defaultColumnWidth:
+        ColumnReader.dbl(m, SheetCols.defaultColumnWidth) ?? 100,
     formatJson: ColumnReader.str(m, Cols.formatJson),
     printSettingsJson: ColumnReader.str(m, SheetCols.printSettingsJson),
     createdAt: ColumnReader.date(m, Cols.createdAt),
@@ -485,7 +491,8 @@ final class CellRecord extends SyncRecord {
 /// Base of sheet-scoped rule/range records.
 abstract class SheetScopedRecord extends SyncRecord {
   /// Creates a sheet-scoped record.
-  const SheetScopedRecord(super.id, this.sheetId, DateTime? createdAt) : _createdAt = createdAt;
+  const SheetScopedRecord(super.id, this.sheetId, DateTime? createdAt)
+    : _createdAt = createdAt;
 
   /// Owning sheet.
   final String sheetId;
@@ -512,12 +519,13 @@ final class MergedRangeRecord extends SheetScopedRecord {
   String get table => SheetsTables.mergedRange;
 
   /// From a column map.
-  factory MergedRangeRecord.fromColumns(Map<String, Object?> m) => MergedRangeRecord(
-    id: ColumnReader.str(m, Cols.id)!,
-    sheetId: ColumnReader.str(m, Cols.sheetId) ?? '',
-    rangeJson: ColumnReader.str(m, Cols.rangeJson) ?? '{}',
-    createdAt: ColumnReader.date(m, Cols.createdAt),
-  );
+  factory MergedRangeRecord.fromColumns(Map<String, Object?> m) =>
+      MergedRangeRecord(
+        id: ColumnReader.str(m, Cols.id)!,
+        sheetId: ColumnReader.str(m, Cols.sheetId) ?? '',
+        rangeJson: ColumnReader.str(m, Cols.rangeJson) ?? '{}',
+        createdAt: ColumnReader.date(m, Cols.createdAt),
+      );
 
   @override
   Map<String, Object?> toColumns() => {
@@ -556,16 +564,18 @@ final class DimensionGroupRecord extends SheetScopedRecord {
   String get table => SheetsTables.dimensionGroup;
 
   /// From a column map.
-  factory DimensionGroupRecord.fromColumns(Map<String, Object?> m) => DimensionGroupRecord(
-    id: ColumnReader.str(m, Cols.id)!,
-    sheetId: ColumnReader.str(m, Cols.sheetId) ?? '',
-    dimension: enumByName(Dimension.values, m['dimension']) ?? Dimension.rows,
-    startId: ColumnReader.str(m, 'startId') ?? '',
-    endId: ColumnReader.str(m, 'endId') ?? '',
-    depth: ColumnReader.integer(m, 'depth') ?? 1,
-    collapsed: ColumnReader.boolean(m, 'collapsed') ?? false,
-    createdAt: ColumnReader.date(m, Cols.createdAt),
-  );
+  factory DimensionGroupRecord.fromColumns(Map<String, Object?> m) =>
+      DimensionGroupRecord(
+        id: ColumnReader.str(m, Cols.id)!,
+        sheetId: ColumnReader.str(m, Cols.sheetId) ?? '',
+        dimension:
+            enumByName(Dimension.values, m['dimension']) ?? Dimension.rows,
+        startId: ColumnReader.str(m, 'startId') ?? '',
+        endId: ColumnReader.str(m, 'endId') ?? '',
+        depth: ColumnReader.integer(m, 'depth') ?? 1,
+        collapsed: ColumnReader.boolean(m, 'collapsed') ?? false,
+        createdAt: ColumnReader.date(m, Cols.createdAt),
+      );
 
   @override
   Map<String, Object?> toColumns() => {
@@ -616,16 +626,17 @@ final class NamedRangeRecord extends SyncRecord {
   String get table => SheetsTables.namedRange;
 
   /// From a column map.
-  factory NamedRangeRecord.fromColumns(Map<String, Object?> m) => NamedRangeRecord(
-    id: ColumnReader.str(m, Cols.id)!,
-    spreadsheetId: ColumnReader.str(m, Cols.spreadsheetId) ?? '',
-    name: ColumnReader.str(m, Cols.name) ?? '',
-    rangeJson: ColumnReader.str(m, Cols.rangeJson),
-    formula: ColumnReader.str(m, 'formula'),
-    comment: ColumnReader.str(m, 'comment'),
-    metaJson: ColumnReader.str(m, 'metaJson'),
-    createdAt: ColumnReader.date(m, Cols.createdAt),
-  );
+  factory NamedRangeRecord.fromColumns(Map<String, Object?> m) =>
+      NamedRangeRecord(
+        id: ColumnReader.str(m, Cols.id)!,
+        spreadsheetId: ColumnReader.str(m, Cols.spreadsheetId) ?? '',
+        name: ColumnReader.str(m, Cols.name) ?? '',
+        rangeJson: ColumnReader.str(m, Cols.rangeJson),
+        formula: ColumnReader.str(m, 'formula'),
+        comment: ColumnReader.str(m, 'comment'),
+        metaJson: ColumnReader.str(m, 'metaJson'),
+        createdAt: ColumnReader.date(m, Cols.createdAt),
+      );
 
   @override
   Map<String, Object?> toColumns() => {
@@ -671,17 +682,18 @@ final class ProtectedRangeRecord extends SheetScopedRecord {
   String get table => SheetsTables.protectedRange;
 
   /// From a column map.
-  factory ProtectedRangeRecord.fromColumns(Map<String, Object?> m) => ProtectedRangeRecord(
-    id: ColumnReader.str(m, Cols.id)!,
-    sheetId: ColumnReader.str(m, Cols.sheetId) ?? '',
-    rangeJson: ColumnReader.str(m, Cols.rangeJson),
-    exceptRangesJson: ColumnReader.str(m, 'exceptRangesJson'),
-    description: ColumnReader.str(m, 'description'),
-    warningOnly: ColumnReader.boolean(m, 'warningOnly') ?? false,
-    editorsJson: ColumnReader.str(m, 'editorsJson') ?? '[]',
-    createdBy: ColumnReader.str(m, Cols.createdBy) ?? '',
-    createdAt: ColumnReader.date(m, Cols.createdAt),
-  );
+  factory ProtectedRangeRecord.fromColumns(Map<String, Object?> m) =>
+      ProtectedRangeRecord(
+        id: ColumnReader.str(m, Cols.id)!,
+        sheetId: ColumnReader.str(m, Cols.sheetId) ?? '',
+        rangeJson: ColumnReader.str(m, Cols.rangeJson),
+        exceptRangesJson: ColumnReader.str(m, 'exceptRangesJson'),
+        description: ColumnReader.str(m, 'description'),
+        warningOnly: ColumnReader.boolean(m, 'warningOnly') ?? false,
+        editorsJson: ColumnReader.str(m, 'editorsJson') ?? '[]',
+        createdBy: ColumnReader.str(m, Cols.createdBy) ?? '',
+        createdAt: ColumnReader.date(m, Cols.createdAt),
+      );
 
   @override
   Map<String, Object?> toColumns() => {
@@ -834,20 +846,22 @@ final class FilterRecord extends SheetScopedRecord {
   final String? createdBy;
 
   @override
-  String get table => isView ? SheetsTables.filterView : SheetsTables.basicFilter;
+  String get table =>
+      isView ? SheetsTables.filterView : SheetsTables.basicFilter;
 
   /// From a column map of [table].
-  factory FilterRecord.fromColumns(String table, Map<String, Object?> m) => FilterRecord(
-    id: ColumnReader.str(m, Cols.id)!,
-    sheetId: ColumnReader.str(m, Cols.sheetId) ?? '',
-    isView: table == SheetsTables.filterView,
-    rangeJson: ColumnReader.str(m, Cols.rangeJson) ?? '{}',
-    criteriaJson: ColumnReader.str(m, 'criteriaJson') ?? '{}',
-    sortJson: ColumnReader.str(m, 'sortJson'),
-    name: ColumnReader.str(m, Cols.name),
-    createdBy: ColumnReader.str(m, Cols.createdBy),
-    createdAt: ColumnReader.date(m, Cols.createdAt),
-  );
+  factory FilterRecord.fromColumns(String table, Map<String, Object?> m) =>
+      FilterRecord(
+        id: ColumnReader.str(m, Cols.id)!,
+        sheetId: ColumnReader.str(m, Cols.sheetId) ?? '',
+        isView: table == SheetsTables.filterView,
+        rangeJson: ColumnReader.str(m, Cols.rangeJson) ?? '{}',
+        criteriaJson: ColumnReader.str(m, 'criteriaJson') ?? '{}',
+        sortJson: ColumnReader.str(m, 'sortJson'),
+        name: ColumnReader.str(m, Cols.name),
+        createdBy: ColumnReader.str(m, Cols.createdBy),
+        createdAt: ColumnReader.date(m, Cols.createdAt),
+      );
 
   @override
   Map<String, Object?> toColumns() => {
@@ -932,17 +946,20 @@ final class EmbeddedObjectRecord extends SheetScopedRecord {
   String get table => SheetsTables.embeddedObject;
 
   /// From a column map.
-  factory EmbeddedObjectRecord.fromColumns(Map<String, Object?> m) => EmbeddedObjectRecord(
-    id: ColumnReader.str(m, Cols.id)!,
-    sheetId: ColumnReader.str(m, Cols.sheetId) ?? '',
-    kind: enumByName(EmbeddedObjectKind.values, m['kind']) ?? EmbeddedObjectKind.chart,
-    anchorJson: ColumnReader.str(m, 'anchorJson') ?? '{}',
-    specJson: ColumnReader.str(m, 'specJson') ?? '{}',
-    zIndex: ColumnReader.integer(m, 'zIndex') ?? 0,
-    title: ColumnReader.str(m, 'title'),
-    altText: ColumnReader.str(m, 'altText'),
-    createdAt: ColumnReader.date(m, Cols.createdAt),
-  );
+  factory EmbeddedObjectRecord.fromColumns(Map<String, Object?> m) =>
+      EmbeddedObjectRecord(
+        id: ColumnReader.str(m, Cols.id)!,
+        sheetId: ColumnReader.str(m, Cols.sheetId) ?? '',
+        kind:
+            enumByName(EmbeddedObjectKind.values, m['kind']) ??
+            EmbeddedObjectKind.chart,
+        anchorJson: ColumnReader.str(m, 'anchorJson') ?? '{}',
+        specJson: ColumnReader.str(m, 'specJson') ?? '{}',
+        zIndex: ColumnReader.integer(m, 'zIndex') ?? 0,
+        title: ColumnReader.str(m, 'title'),
+        altText: ColumnReader.str(m, 'altText'),
+        createdAt: ColumnReader.date(m, Cols.createdAt),
+      );
 
   @override
   Map<String, Object?> toColumns() => {
@@ -984,15 +1001,16 @@ final class PivotTableRecord extends SheetScopedRecord {
   String get table => SheetsTables.pivotTable;
 
   /// From a column map.
-  factory PivotTableRecord.fromColumns(Map<String, Object?> m) => PivotTableRecord(
-    id: ColumnReader.str(m, Cols.id)!,
-    sheetId: ColumnReader.str(m, Cols.sheetId) ?? '',
-    anchorRowId: ColumnReader.str(m, 'anchorRowId') ?? '',
-    anchorColId: ColumnReader.str(m, 'anchorColId') ?? '',
-    sourceRangeJson: ColumnReader.str(m, 'sourceRangeJson') ?? '{}',
-    specJson: ColumnReader.str(m, 'specJson') ?? '{}',
-    createdAt: ColumnReader.date(m, Cols.createdAt),
-  );
+  factory PivotTableRecord.fromColumns(Map<String, Object?> m) =>
+      PivotTableRecord(
+        id: ColumnReader.str(m, Cols.id)!,
+        sheetId: ColumnReader.str(m, Cols.sheetId) ?? '',
+        anchorRowId: ColumnReader.str(m, 'anchorRowId') ?? '',
+        anchorColId: ColumnReader.str(m, 'anchorColId') ?? '',
+        sourceRangeJson: ColumnReader.str(m, 'sourceRangeJson') ?? '{}',
+        specJson: ColumnReader.str(m, 'specJson') ?? '{}',
+        createdAt: ColumnReader.date(m, Cols.createdAt),
+      );
 
   @override
   Map<String, Object?> toColumns() => {

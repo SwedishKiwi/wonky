@@ -163,7 +163,12 @@ final class ToggleFormat extends SheetsOperation {
 /// Applies a border preset (06 §8.3).
 final class SetBorders extends SheetsOperation {
   /// Creates the operation.
-  const SetBorders(this.ranges, this.preset, {this.style = BorderStyle.thin, this.color = 'auto'});
+  const SetBorders(
+    this.ranges,
+    this.preset, {
+    this.style = BorderStyle.thin,
+    this.color = 'auto',
+  });
 
   final List<ResolvedRange> ranges;
   final BorderPreset preset;
@@ -207,7 +212,11 @@ enum MergeMode { all, horizontal, vertical }
 /// throws `PlanException('merge_data_loss')` so the UI can confirm.
 final class MergeCells extends SheetsOperation {
   /// Creates the operation.
-  const MergeCells(this.ranges, {this.mode = MergeMode.all, this.force = false});
+  const MergeCells(
+    this.ranges, {
+    this.mode = MergeMode.all,
+    this.force = false,
+  });
 
   final List<ResolvedRange> ranges;
   final MergeMode mode;
@@ -272,7 +281,12 @@ final class MoveDimension extends SheetsOperation {
 /// Hides/unhides rows/columns (03 §13.5).
 final class SetDimensionHidden extends SheetsOperation {
   /// Creates the operation.
-  const SetDimensionHidden(this.sheetId, this.dimension, this.ids, {required this.hidden});
+  const SetDimensionHidden(
+    this.sheetId,
+    this.dimension,
+    this.ids, {
+    required this.hidden,
+  });
 
   final String sheetId;
   final Dimension dimension;
@@ -504,7 +518,13 @@ final class SetPrintSettings extends SheetsOperation {
 /// Adds a conditional format rule before [beforeRuleId] (null = last).
 final class AddCfRule extends SheetsOperation {
   /// Creates the operation.
-  const AddCfRule(this.sheetId, this.ranges, this.ruleJson, {this.beforeRuleId, this.ruleId});
+  const AddCfRule(
+    this.sheetId,
+    this.ranges,
+    this.ruleJson, {
+    this.beforeRuleId,
+    this.ruleId,
+  });
 
   final String sheetId;
   final List<GridRect> ranges;
@@ -591,7 +611,12 @@ final class DeleteDvRule extends SheetsOperation {
 /// Insert › Checkbox: a checkbox rule plus `b:0` in empty cells (07 §6.7).
 final class InsertCheckboxes extends SheetsOperation {
   /// Creates the operation.
-  const InsertCheckboxes(this.sheetId, this.ranges, {this.checked, this.unchecked});
+  const InsertCheckboxes(
+    this.sheetId,
+    this.ranges, {
+    this.checked,
+    this.unchecked,
+  });
 
   final String sheetId;
   final List<GridRect> ranges;
@@ -602,7 +627,12 @@ final class InsertCheckboxes extends SheetsOperation {
 /// Creates/replaces the basic filter (id = `SheetsIds.basicFilterId`).
 final class SetBasicFilter extends SheetsOperation {
   /// Creates the operation.
-  const SetBasicFilter(this.sheetId, this.range, {this.criteriaJson, this.sortJson});
+  const SetBasicFilter(
+    this.sheetId,
+    this.range, {
+    this.criteriaJson,
+    this.sortJson,
+  });
 
   final String sheetId;
   final GridRect range;
@@ -613,7 +643,12 @@ final class SetBasicFilter extends SheetsOperation {
 /// Sets (null removes) one column's criteria of the basic filter.
 final class SetFilterColumnCriteria extends SheetsOperation {
   /// Creates the operation.
-  const SetFilterColumnCriteria(this.sheetId, this.colId, this.criteria, {this.viewId});
+  const SetFilterColumnCriteria(
+    this.sheetId,
+    this.colId,
+    this.criteria, {
+    this.viewId,
+  });
 
   final String sheetId;
   final String colId;
@@ -656,7 +691,13 @@ final class CreateFilterView extends SheetsOperation {
 /// Updates a filter view.
 final class UpdateFilterView extends SheetsOperation {
   /// Creates the operation.
-  const UpdateFilterView(this.viewId, {this.name, this.range, this.criteriaJson, this.sortJson});
+  const UpdateFilterView(
+    this.viewId, {
+    this.name,
+    this.range,
+    this.criteriaJson,
+    this.sortJson,
+  });
 
   final String viewId;
   final String? name;
@@ -676,7 +717,14 @@ final class DeleteFilterView extends SheetsOperation {
 /// Adds a named range ([range]) or named function/formula ([formula], stored form).
 final class AddNamedRange extends SheetsOperation {
   /// Creates the operation.
-  const AddNamedRange(this.name, {this.range, this.formula, this.comment, this.metaJson, this.id});
+  const AddNamedRange(
+    this.name, {
+    this.range,
+    this.formula,
+    this.comment,
+    this.metaJson,
+    this.id,
+  });
 
   final String name;
   final ResolvedRange? range;
@@ -876,7 +924,13 @@ final class AddPivotTable extends SheetsOperation {
 /// Updates a pivot table.
 final class UpdatePivotTable extends SheetsOperation {
   /// Creates the operation.
-  const UpdatePivotTable(this.id, {this.specJson, this.source, this.anchorRow, this.anchorCol});
+  const UpdatePivotTable(
+    this.id, {
+    this.specJson,
+    this.source,
+    this.anchorRow,
+    this.anchorCol,
+  });
 
   final String id;
   final String? specJson;
@@ -898,7 +952,13 @@ final class DeletePivotTable extends SheetsOperation {
 /// `script_trigger`).
 final class GenericRowWrite extends SheetsOperation {
   /// Creates the operation.
-  const GenericRowWrite(this.table, this.id, this.columns, {this.delete = false, this.label});
+  const GenericRowWrite(
+    this.table,
+    this.id,
+    this.columns, {
+    this.delete = false,
+    this.label,
+  });
 
   final String table;
   final String id;
@@ -915,7 +975,12 @@ final class GenericRowWrite extends SheetsOperation {
 /// One sort key (07 §2.1).
 final class SortKeySpec {
   /// Creates a key.
-  const SortKeySpec(this.colId, {this.ascending = true, this.fillColor, this.textColor});
+  const SortKeySpec(
+    this.colId, {
+    this.ascending = true,
+    this.fillColor,
+    this.textColor,
+  });
 
   final String colId;
   final bool ascending;
@@ -1018,7 +1083,12 @@ enum FillMode { auto, copy }
 /// Fills [target] from [source] (target includes or extends the source).
 final class FillSeries extends SheetsOperation {
   /// Creates the operation.
-  const FillSeries(this.sheetId, this.source, this.target, {this.mode = FillMode.auto});
+  const FillSeries(
+    this.sheetId,
+    this.source,
+    this.target, {
+    this.mode = FillMode.auto,
+  });
 
   final String sheetId;
   final GridRect source;
@@ -1029,7 +1099,13 @@ final class FillSeries extends SheetsOperation {
 /// Moves (cut/paste, drag-move) or copies a block (03 §11, §12.6).
 final class MoveRange extends SheetsOperation {
   /// Creates the operation.
-  const MoveRange(this.source, this.destSheetId, this.destRow, this.destCol, {this.copy = false});
+  const MoveRange(
+    this.source,
+    this.destSheetId,
+    this.destRow,
+    this.destCol, {
+    this.copy = false,
+  });
 
   final ResolvedRange source;
   final String destSheetId;

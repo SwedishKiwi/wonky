@@ -40,14 +40,17 @@ void main() {
       expect(batch.whereType<CellsChanged>().single.contentKeys, hasLength(1));
     });
 
-    test('when an id-based range loses its end row then it shrinks via the sort key hint', () {
-      final s = m.sheets.single;
-      final g = s.gridRange(const GridRect(0, 0, 4, 0));
-      m.deleteRow(SheetsTables.sheetRow, b.rowId(4));
-      expect(s.resolve(g)!.rect, const GridRect(0, 0, 3, 0));
-      m.deleteRow(SheetsTables.sheetRow, b.rowId(0));
-      expect(s.resolve(g)!.rect, const GridRect(0, 0, 2, 0));
-    });
+    test(
+      'when an id-based range loses its end row then it shrinks via the sort key hint',
+      () {
+        final s = m.sheets.single;
+        final g = s.gridRange(const GridRect(0, 0, 4, 0));
+        m.deleteRow(SheetsTables.sheetRow, b.rowId(4));
+        expect(s.resolve(g)!.rect, const GridRect(0, 0, 3, 0));
+        m.deleteRow(SheetsTables.sheetRow, b.rowId(0));
+        expect(s.resolve(g)!.rect, const GridRect(0, 0, 2, 0));
+      },
+    );
 
     test('when exporting rows then reloading yields the same cells', () {
       final copy = WorkbookModel.fromRows(m.spreadsheetId, m.allRows());
@@ -92,7 +95,11 @@ void main() {
       m.applyPlan(plan);
       m.upsertRow(SheetsTables.cell, cell.id, {CellCols.content: 'n:3'});
       final skipped = <String>[];
-      final undo = UndoInverter.invert(plan, m, skipped: (t, id, c) => skipped.add(c));
+      final undo = UndoInverter.invert(
+        plan,
+        m,
+        skipped: (t, id, c) => skipped.add(c),
+      );
       expect(undo, isEmpty);
       expect(skipped, [CellCols.content]);
     });
@@ -102,7 +109,8 @@ void main() {
     test('when sizes are set then offsets and lookups agree', () {
       final a = AxisIndex(defaultSize: 20);
       a.load([
-        for (var i = 0; i < 100; i++) ('id$i', 'a${i.toString().padLeft(3, '0')}', null, false),
+        for (var i = 0; i < 100; i++)
+          ('id$i', 'a${i.toString().padLeft(3, '0')}', null, false),
       ]);
       expect(a.totalSize, 2000);
       a.upsert('id10', a.sortKeyAt(10), size: 100);
@@ -116,16 +124,19 @@ void main() {
   });
 
   group('Given a rect index', () {
-    test('when querying points and rects then only covering entries are returned', () {
-      final idx = RectIndex<String>([
-        (const GridRect(0, 0, 9, 9), 'a'),
-        (const GridRect(5, 5, 20, 6), 'b'),
-        (const GridRect(30, 0, 40, 2), 'c'),
-      ]);
-      expect(idx.at(6, 5), ['a', 'b']);
-      expect(idx.at(15, 6), ['b']);
-      expect(idx.at(15, 7), isEmpty);
-      expect(idx.intersecting(const GridRect(8, 0, 31, 0)), ['a', 'c']);
-    });
+    test(
+      'when querying points and rects then only covering entries are returned',
+      () {
+        final idx = RectIndex<String>([
+          (const GridRect(0, 0, 9, 9), 'a'),
+          (const GridRect(5, 5, 20, 6), 'b'),
+          (const GridRect(30, 0, 40, 2), 'c'),
+        ]);
+        expect(idx.at(6, 5), ['a', 'b']);
+        expect(idx.at(15, 6), ['b']);
+        expect(idx.at(15, 7), isEmpty);
+        expect(idx.intersecting(const GridRect(8, 0, 31, 0)), ['a', 'c']);
+      },
+    );
   });
 }

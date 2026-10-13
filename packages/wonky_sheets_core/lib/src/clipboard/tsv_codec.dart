@@ -71,7 +71,10 @@ abstract final class TsvCodec {
   /// `""` is a quote and tabs/newlines are literal. A closing quote followed by
   /// other text keeps that text (lenient). `\r\n`, `\n` and `\r` end rows; a
   /// trailing line break does not add an empty row.
-  static TsvParseResult parseWithReport(String text, {String delimiter = '\t'}) {
+  static TsvParseResult parseWithReport(
+    String text, {
+    String delimiter = '\t',
+  }) {
     final d = delimiter.codeUnitAt(0);
     final rows = <List<String>>[];
     var row = <String>[];
@@ -143,7 +146,11 @@ abstract final class TsvCodec {
         r.add('');
       }
     }
-    return TsvParseResult(rows, truncatedCells: truncated, suggestSplit: detectSplit(rows));
+    return TsvParseResult(
+      rows,
+      truncatedCells: truncated,
+      suggestSplit: detectSplit(rows),
+    );
   }
 
   /// "Split text to columns" detection: a single column whose non-empty

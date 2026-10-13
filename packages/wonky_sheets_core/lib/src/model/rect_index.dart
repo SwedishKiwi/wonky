@@ -32,8 +32,10 @@ final class RectIndex<T> {
   _Node? _build(List<int> items) {
     if (items.isEmpty) return null;
     // Median of interval midpoints.
-    final mids = [for (final i in items) (_entries[i].rect.top + _entries[i].rect.bottom) ~/ 2]
-      ..sort();
+    final mids = [
+      for (final i in items)
+        (_entries[i].rect.top + _entries[i].rect.bottom) ~/ 2,
+    ]..sort();
     final center = mids[mids.length ~/ 2];
     final left = <int>[];
     final right = <int>[];
@@ -48,7 +50,8 @@ final class RectIndex<T> {
         here.add(i);
       }
     }
-    final byTop = List.of(here)..sort((a, b) => _entries[a].rect.top - _entries[b].rect.top);
+    final byTop = List.of(here)
+      ..sort((a, b) => _entries[a].rect.top - _entries[b].rect.top);
     final byBottom = List.of(here)
       ..sort((a, b) => _entries[b].rect.bottom - _entries[a].rect.bottom);
     return _Node(center, byTop, byBottom, _build(left), _build(right));
@@ -103,7 +106,9 @@ final class RectIndex<T> {
     visit(_root);
     final out = [
       for (final i in hits)
-        if (_entries[i].rect.left <= q.right && _entries[i].rect.right >= q.left) i,
+        if (_entries[i].rect.left <= q.right &&
+            _entries[i].rect.right >= q.left)
+          i,
     ]..sort();
     return [for (final i in out) _entries[i].value];
   }

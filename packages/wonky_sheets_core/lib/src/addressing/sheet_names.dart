@@ -3,7 +3,8 @@ import 'column_letters.dart';
 /// Quoting rules for sheet names in A1 references (05 §3.4).
 abstract final class SheetNames {
   /// `Sheet1` → `Sheet1`; `Q3 plan` → `'Q3 plan'`; `It's` → `'It''s'`.
-  static String quoteIfNeeded(String name) => needsQuoting(name) ? quote(name) : name;
+  static String quoteIfNeeded(String name) =>
+      needsQuoting(name) ? quote(name) : name;
 
   static String quote(String name) => "'${name.replaceAll("'", "''")}'";
 
@@ -23,7 +24,11 @@ abstract final class SheetNames {
     if (!(ColumnLetters.isLetter(first) || first == 0x5f)) return true;
     for (var i = 1; i < name.length; i++) {
       final c = name.codeUnitAt(i);
-      if (!(ColumnLetters.isLetter(c) || ColumnLetters.isDigit(c) || c == 0x5f)) return true;
+      if (!(ColumnLetters.isLetter(c) ||
+          ColumnLetters.isDigit(c) ||
+          c == 0x5f)) {
+        return true;
+      }
     }
     final upper = name.toUpperCase();
     if (upper == 'TRUE' || upper == 'FALSE') return true;
@@ -45,7 +50,9 @@ abstract final class SheetNames {
     return row != null && row >= 1 && row <= ColumnLetters.maxRows;
   }
 
-  static final RegExp _r1c1 = RegExp(r'^[Rr]([0-9]*)[Cc]([0-9]*)$|^[Rr][0-9]*$|^[Cc][0-9]*$');
+  static final RegExp _r1c1 = RegExp(
+    r'^[Rr]([0-9]*)[Cc]([0-9]*)$|^[Rr][0-9]*$|^[Cc][0-9]*$',
+  );
 
   /// `R1C1`, `R2C`, `RC`, `R`, `C3` look like R1C1 references.
   static bool looksLikeR1C1(String text) => _r1c1.hasMatch(text);

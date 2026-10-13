@@ -25,7 +25,9 @@ final class SparseGrid<T extends Object> {
 
   /// Sets (or with null removes) the value at ([row], [col]).
   void set(int row, int col, T? value) {
-    if (row < 0 || col < 0) throw RangeError('Negative grid position ($row, $col)');
+    if (row < 0 || col < 0) {
+      throw RangeError('Negative grid position ($row, $col)');
+    }
     var r = _rows[row];
     if (value == null) {
       if (r == null) return;

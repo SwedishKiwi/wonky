@@ -98,7 +98,9 @@ abstract final class SortKeys {
       if (m != null) {
         b.write(m);
       } else if (r >= 0xff01 && r <= 0xff5e) {
-        b.writeCharCode(r - 0xfee0); // fullwidth ASCII (compatibility decomposition)
+        b.writeCharCode(
+          r - 0xfee0,
+        ); // fullwidth ASCII (compatibility decomposition)
       } else if (r == 0x3000) {
         b.write(' ');
       } else {

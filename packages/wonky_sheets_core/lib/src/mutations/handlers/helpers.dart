@@ -16,7 +16,11 @@ extension PlanBuilderHelpers on PlanBuilder {
   SheetModel sheetOf(String sheetId) {
     final s = model.sheet(sheetId);
     if (s == null) {
-      throw PlanException('not_found', 'Sheet not found', details: {'sheetId': sheetId});
+      throw PlanException(
+        'not_found',
+        'Sheet not found',
+        details: {'sheetId': sheetId},
+      );
     }
     return s;
   }
@@ -29,16 +33,25 @@ extension PlanBuilderHelpers on PlanBuilder {
         rect.right >= s.columns.length ||
         rect.bottom < rect.top ||
         rect.right < rect.left) {
-      throw PlanException('invalid_range', 'Range ${rect.a1} is outside the grid of "${s.name}"');
+      throw PlanException(
+        'invalid_range',
+        'Range ${rect.a1} is outside the grid of "${s.name}"',
+      );
     }
   }
 
   /// Writes a `formatJson` column of a row/column/sheet record: sets the given
   /// attributes (null removes the key).
-  void writeFormatJson(String table, String id, Map<FormatAttr, Object?> values) {
+  void writeFormatJson(
+    String table,
+    String id,
+    Map<FormatAttr, Object?> values,
+  ) {
     final cur = current(table, id);
     if (cur == null) return;
-    final f = CellFormat.fromJson(cur[Cols.formatJson] as String?).withValues(values);
+    final f = CellFormat.fromJson(
+      cur[Cols.formatJson] as String?,
+    ).withValues(values);
     update(table, id, {Cols.formatJson: f.toJson()});
   }
 
@@ -73,12 +86,18 @@ extension PlanBuilderHelpers on PlanBuilder {
     final axis = s.axis(d);
     final lastKey = axis.length == 0 ? null : axis.sortKeyAt(axis.length - 1);
     final keys = FractionalIndex.nBetween(lastKey, null, count);
-    final table = d == Dimension.rows ? SheetsTables.sheetRow : SheetsTables.sheetColumn;
+    final table = d == Dimension.rows
+        ? SheetsTables.sheetRow
+        : SheetsTables.sheetColumn;
     final ids = <String>[];
     for (final k in keys) {
       final id = ctx.ids.newId();
       ids.add(id);
-      insert(table, id, {Cols.sheetId: s.id, Cols.sortKey: k, Cols.hidden: false});
+      insert(table, id, {
+        Cols.sheetId: s.id,
+        Cols.sortKey: k,
+        Cols.hidden: false,
+      });
     }
     summary.kinds.add('structure');
     return ids;
@@ -90,7 +109,9 @@ extension PlanBuilderHelpers on PlanBuilder {
     GridRect rect, {
     bool wholeRows = false,
     bool wholeColumns = false,
-  }) => s.gridRange(rect, wholeRows: wholeRows, wholeColumns: wholeColumns).encode();
+  }) => s
+      .gridRange(rect, wholeRows: wholeRows, wholeColumns: wholeColumns)
+      .encode();
 
   /// GridRange list JSON for rects of [s].
   String rangesJson(SheetModel s, Iterable<GridRect> rects) =>
@@ -130,7 +151,13 @@ extension PlanBuilderHelpers on PlanBuilder {
       final r = s.rows.indexOf(v[CellCols.rowId] as String);
       final c = s.columns.indexOf(v[CellCols.columnId] as String);
       if (r < 0 || c < 0 || !rect.contains(r, c)) continue;
-      yield (r, c, v[CellCols.rowId] as String, v[CellCols.columnId] as String, Map.of(v));
+      yield (
+        r,
+        c,
+        v[CellCols.rowId] as String,
+        v[CellCols.columnId] as String,
+        Map.of(v),
+      );
     }
   }
 

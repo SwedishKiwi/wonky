@@ -145,7 +145,10 @@ class FArray extends FValue {
   FArray.lazy(this.rows, this.cols) : _cells = const [];
 
   factory FArray.generate(int rows, int cols, FValue Function(int r, int c) f) {
-    final cells = List<FValue>.generate(rows * cols, (i) => f(i ~/ cols, i % cols));
+    final cells = List<FValue>.generate(
+      rows * cols,
+      (i) => f(i ~/ cols, i % cols),
+    );
     return FArray(rows, cols, cells);
   }
 
@@ -159,7 +162,8 @@ class FArray extends FValue {
   factory FArray.row(List<FValue> values) => FArray(1, values.length, values);
 
   /// A single column.
-  factory FArray.column(List<FValue> values) => FArray(values.length, 1, values);
+  factory FArray.column(List<FValue> values) =>
+      FArray(values.length, 1, values);
 
   int get length => rows * cols;
 
@@ -205,7 +209,9 @@ class FArray extends FValue {
 
   @override
   bool operator ==(Object other) {
-    if (other is! FArray || other.rows != rows || other.cols != cols) return false;
+    if (other is! FArray || other.rows != rows || other.cols != cols) {
+      return false;
+    }
     for (var r = 0; r < rows; r++) {
       for (var c = 0; c < cols; c++) {
         if (at(r, c) != other.at(r, c)) return false;
@@ -235,7 +241,13 @@ final class ResolvedArea {
   final int bottom;
   final int right;
 
-  const ResolvedArea(this.sheetId, this.top, this.left, this.bottom, this.right);
+  const ResolvedArea(
+    this.sheetId,
+    this.top,
+    this.left,
+    this.bottom,
+    this.right,
+  );
 
   factory ResolvedArea.cell(String sheetId, int row, int col) =>
       ResolvedArea(sheetId, row, col, row, col);
@@ -309,7 +321,8 @@ final class FLambda extends FValue {
   const FLambda(this.closure);
 
   @override
-  String get debugText => '<lambda ${closure.name}(${closure.params.join(', ')})>';
+  String get debugText =>
+      '<lambda ${closure.name}(${closure.params.join(', ')})>';
 }
 
 /// Kind of a renderable rich value.
@@ -327,7 +340,10 @@ final class FRich extends FValue {
 
   @override
   bool operator ==(Object other) =>
-      other is FRich && other.kind == kind && other.scalar == scalar && other.payload == payload;
+      other is FRich &&
+      other.kind == kind &&
+      other.scalar == scalar &&
+      other.payload == payload;
 
   @override
   int get hashCode => Object.hash(kind, scalar);
@@ -344,7 +360,9 @@ abstract final class FValues {
       return (a.v == b.v || (a.v.isNaN && b.v.isNaN)) && a.hint == b.hint;
     }
     if (a is FError && b is FError) {
-      return a.kind == b.kind && a.pending == b.pending && a.message == b.message;
+      return a.kind == b.kind &&
+          a.pending == b.pending &&
+          a.message == b.message;
     }
     if (a is FArray && b is FArray) {
       if (a.rows != b.rows || a.cols != b.cols) return false;

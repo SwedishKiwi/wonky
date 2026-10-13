@@ -31,7 +31,10 @@ void main() {
     tearDown(() => binding.dispose());
 
     test('when a precedent changes then the formula value updates', () {
-      expect(binding.engine.valueAt(h.sheetId, 4, 0).toCellValue(), const NumberValue(6));
+      expect(
+        binding.engine.valueAt(h.sheetId, 4, 0).toCellValue(),
+        const NumberValue(6),
+      );
       h.apply(
         SetCellInputs(
           sheetId: h.sheetId,
@@ -42,48 +45,65 @@ void main() {
           ],
         ),
       );
-      expect(binding.engine.valueAt(h.sheetId, 4, 0).toCellValue(), const NumberValue(15));
+      expect(
+        binding.engine.valueAt(h.sheetId, 4, 0).toCellValue(),
+        const NumberValue(15),
+      );
     });
 
     test('when a row inside the range is deleted then the sum shrinks', () {
       final s = h.model.sheets.first;
       h.apply(DeleteDimension(s.id, Dimension.rows, [s.rows.idAt(1)]));
-      expect(binding.engine.valueAt(h.sheetId, 3, 0).toCellValue(), const NumberValue(4));
-    });
-
-    test('when a CF custom formula is evaluated relative to an anchor then offsets apply', () {
-      final hooks = EngineFormulaHooks(h.model, engine: binding.engine);
-      final stored = hooks.toStored('=A1>1', sheetId: h.sheetId, row: 0, col: 1);
       expect(
-        hooks
-            .evaluateRelative(
-              stored,
-              sheetId: h.sheetId,
-              anchorRow: 0,
-              anchorCol: 1,
-              row: 0,
-              col: 1,
-            )
-            .toCellValue(),
-        const BoolValue(false),
-      );
-      expect(
-        hooks
-            .evaluateRelative(
-              stored,
-              sheetId: h.sheetId,
-              anchorRow: 0,
-              anchorCol: 1,
-              row: 2,
-              col: 1,
-            )
-            .toCellValue(),
-        const BoolValue(true),
+        binding.engine.valueAt(h.sheetId, 3, 0).toCellValue(),
+        const NumberValue(4),
       );
     });
 
-    test('when running maintenance on a consistent workbook then the plan is empty', () {
-      expect(WorkbookMaintenance.plan(h.model, h.ctx).isEmpty, isTrue);
-    });
+    test(
+      'when a CF custom formula is evaluated relative to an anchor then offsets apply',
+      () {
+        final hooks = EngineFormulaHooks(h.model, engine: binding.engine);
+        final stored = hooks.toStored(
+          '=A1>1',
+          sheetId: h.sheetId,
+          row: 0,
+          col: 1,
+        );
+        expect(
+          hooks
+              .evaluateRelative(
+                stored,
+                sheetId: h.sheetId,
+                anchorRow: 0,
+                anchorCol: 1,
+                row: 0,
+                col: 1,
+              )
+              .toCellValue(),
+          const BoolValue(false),
+        );
+        expect(
+          hooks
+              .evaluateRelative(
+                stored,
+                sheetId: h.sheetId,
+                anchorRow: 0,
+                anchorCol: 1,
+                row: 2,
+                col: 1,
+              )
+              .toCellValue(),
+          const BoolValue(true),
+        );
+      },
+    );
+
+    test(
+      'when running maintenance on a consistent workbook then the plan is empty',
+      () {
+        expect(WorkbookMaintenance.plan(h.model, h.ctx).isEmpty, isTrue);
+      },
+    );
   });
 }

@@ -52,9 +52,13 @@ final class SnapshotHeader {
 
   /// From JSON.
   static SnapshotHeader fromJson(Map<String, Object?> m) {
-    if (m['format'] != format) throw const FormatException('Not a Wonky Sheets snapshot');
+    if (m['format'] != format) {
+      throw const FormatException('Not a Wonky Sheets snapshot');
+    }
     final v = m['v'];
-    if (v is! int || v > version) throw FormatException('Unsupported snapshot version $v');
+    if (v is! int || v > version) {
+      throw FormatException('Unsupported snapshot version $v');
+    }
     return SnapshotHeader(
       spreadsheetId: m['spreadsheetId']! as String,
       capturedAt: DateTime.parse(m['capturedAt']! as String),
@@ -125,7 +129,8 @@ abstract final class SnapshotCodec {
     final keys = <String, Map<String, String>>{};
     final reverse = <String, Map<String, String>>{};
     for (final t in tables) {
-      final cols = <String>{for (final r in byTable[t]!) ...r.keys}.toList()..sort();
+      final cols = <String>{for (final r in byTable[t]!) ...r.keys}.toList()
+        ..sort();
       final m = <String, String>{};
       final rv = <String, String>{};
       for (var i = 0; i < cols.length; i++) {
@@ -157,7 +162,9 @@ abstract final class SnapshotCodec {
         b.writeln(jsonEncode({'tb': t, 'row': row}));
       }
     }
-    return Uint8List.fromList(const GZipEncoder().encode(utf8.encode(b.toString())));
+    return Uint8List.fromList(
+      const GZipEncoder().encode(utf8.encode(b.toString())),
+    );
   }
 
   /// Encodes the full state of [model].

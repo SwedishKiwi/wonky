@@ -2,7 +2,8 @@ import 'dart:math' as math;
 import 'dart:typed_data';
 
 /// Receives the coverage (0..1) of one pixel row: `coverage[x]` for `x0 <= x < x1`.
-typedef CoverageSink = void Function(int y, int x0, int x1, Float32List coverage);
+typedef CoverageSink =
+    void Function(int y, int x0, int x1, Float32List coverage);
 
 /// An anti-aliased scanline polygon rasterizer.
 ///
@@ -86,7 +87,12 @@ final class CoverageRasterizer {
   /// Adds the closed polygon through the [count] points of [xy] (`x, y` pairs) starting at
   /// point [start]. With [positive] the edges are oriented so the polygon's signed area is
   /// positive; polygons added that way union correctly under the non-zero rule.
-  void addPolygon(List<double> xy, {int start = 0, int? count, bool positive = false}) {
+  void addPolygon(
+    List<double> xy, {
+    int start = 0,
+    int? count,
+    bool positive = false,
+  }) {
     final n = count ?? (xy.length ~/ 2 - start);
     if (n < 2) return;
     final o = start * 2;
@@ -95,14 +101,22 @@ final class CoverageRasterizer {
       var area = 0.0;
       for (var i = 0; i < n; i++) {
         final j = i + 1 == n ? 0 : i + 1;
-        area += xy[o + 2 * i] * xy[o + 2 * j + 1] - xy[o + 2 * j] * xy[o + 2 * i + 1];
+        area +=
+            xy[o + 2 * i] * xy[o + 2 * j + 1] -
+            xy[o + 2 * j] * xy[o + 2 * i + 1];
       }
       if (area == 0) return;
       sign = area > 0 ? 1 : -1;
     }
     for (var i = 0; i < n; i++) {
       final j = i + 1 == n ? 0 : i + 1;
-      addEdge(xy[o + 2 * i], xy[o + 2 * i + 1], xy[o + 2 * j], xy[o + 2 * j + 1], sign);
+      addEdge(
+        xy[o + 2 * i],
+        xy[o + 2 * i + 1],
+        xy[o + 2 * j],
+        xy[o + 2 * j + 1],
+        sign,
+      );
     }
   }
 
@@ -144,7 +158,10 @@ final class CoverageRasterizer {
       _next = Int32List(cap);
     }
     final edges = _edges, dirs = _dirs, slope = _slope;
-    final active = _active, activeX = _activeX, pending = _pending, next = _next;
+    final active = _active,
+        activeX = _activeX,
+        pending = _pending,
+        next = _next;
     final head = Int32List(rows)..fillRange(0, rows, -1);
     for (var e = 0; e < count; e++) {
       final y0 = edges[4 * e + 1], y1 = edges[4 * e + 3];

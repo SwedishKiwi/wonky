@@ -128,13 +128,16 @@ abstract final class Numeric {
 
   /// Rounds half away from zero at [places] decimals (negative = left of the point), decimal
   /// correct on the 15-significant-digit representation.
-  static double roundHalfAway(double x, int places) => _round(x, places, _RoundMode.halfAway);
+  static double roundHalfAway(double x, int places) =>
+      _round(x, places, _RoundMode.halfAway);
 
   /// Rounds away from zero.
-  static double roundUp(double x, int places) => _round(x, places, _RoundMode.up);
+  static double roundUp(double x, int places) =>
+      _round(x, places, _RoundMode.up);
 
   /// Rounds toward zero (truncate).
-  static double roundDown(double x, int places) => _round(x, places, _RoundMode.down);
+  static double roundDown(double x, int places) =>
+      _round(x, places, _RoundMode.down);
 
   static double _round(double x, int places, _RoundMode mode) {
     if (!x.isFinite || x == 0) return x;
@@ -211,14 +214,18 @@ abstract final class Numeric {
   /// Truncates toward zero, safe for large values.
   static int truncInt(double x) {
     if (!x.isFinite) return 0;
-    if (x.abs() > 9007199254740992) return x < 0 ? -9007199254740992 : 9007199254740992;
+    if (x.abs() > 9007199254740992) {
+      return x < 0 ? -9007199254740992 : 9007199254740992;
+    }
     return x.truncate();
   }
 
   /// Floor as int, safe for large values.
   static int floorInt(double x) {
     if (!x.isFinite) return 0;
-    if (x.abs() > 9007199254740992) return x < 0 ? -9007199254740992 : 9007199254740992;
+    if (x.abs() > 9007199254740992) {
+      return x < 0 ? -9007199254740992 : 9007199254740992;
+    }
     return x.floor();
   }
 }

@@ -14,31 +14,49 @@ void main() {
       ('de_CH', '.', "'", false),
     ];
     for (final (id, dec, group, indian) in cases) {
-      test('when loading $id then decimal, grouping and Indian grouping match', () {
-        final l = LocaleFormatData.forId(id);
-        expect((l.decimal, l.group, l.indianGrouping, l.minus), equals((dec, group, indian, '-')));
-      });
+      test(
+        'when loading $id then decimal, grouping and Indian grouping match',
+        () {
+          final l = LocaleFormatData.forId(id);
+          expect((
+            l.decimal,
+            l.group,
+            l.indianGrouping,
+            l.minus,
+          ), equals((dec, group, indian, '-')));
+        },
+      );
     }
 
-    test('when loading de_DE then names, AM/PM and currency come from CLDR', () {
-      final l = LocaleFormatData.forId('de_DE');
-      expect((
-        l.months[9],
-        l.weekdays[1],
-        l.currencyCode,
-        l.currencySymbol,
-        l.currencyBefore,
-      ), equals(('Oktober', 'Montag', 'EUR', '€', false)));
-    });
+    test(
+      'when loading de_DE then names, AM/PM and currency come from CLDR',
+      () {
+        final l = LocaleFormatData.forId('de_DE');
+        expect((
+          l.months[9],
+          l.weekdays[1],
+          l.currencyCode,
+          l.currencySymbol,
+          l.currencyBefore,
+        ), equals(('Oktober', 'Montag', 'EUR', '€', false)));
+      },
+    );
 
     test('when loading ja_JP then AM/PM markers are Japanese', () {
       final l = LocaleFormatData.forId('ja_JP');
-      expect((l.am, l.pm, l.dateOrder), equals(('午前', '午後', DatePartOrder.ymd)));
+      expect((
+        l.am,
+        l.pm,
+        l.dateOrder,
+      ), equals(('午前', '午後', DatePartOrder.ymd)));
     });
 
-    test('when loading a region intl only knows by language then the region currency is used', () {
-      expect(LocaleFormatData.forId('ar_SA').currencyCode, equals('SAR'));
-    });
+    test(
+      'when loading a region intl only knows by language then the region currency is used',
+      () {
+        expect(LocaleFormatData.forId('ar_SA').currencyCode, equals('SAR'));
+      },
+    );
 
     test('when loading an unknown locale then en_US data is used', () {
       expect(LocaleFormatData.forId('xx_YY').decimal, equals('.'));
@@ -60,10 +78,13 @@ void main() {
       (0x809, 'en_GB'),
     ];
     for (final (lcid, id) in cases) {
-      test('when mapping 0x${lcid.toRadixString(16)} then it is $id and back', () {
-        expect(LocaleFormatData.localeIdForLcid(lcid), equals(id));
-        expect(LocaleFormatData.lcidOf(id), equals(lcid));
-      });
+      test(
+        'when mapping 0x${lcid.toRadixString(16)} then it is $id and back',
+        () {
+          expect(LocaleFormatData.localeIdForLcid(lcid), equals(id));
+          expect(LocaleFormatData.lcidOf(id), equals(lcid));
+        },
+      );
     }
 
     test('when the map is listed then it covers at least 120 LCIDs', () {
@@ -99,9 +120,15 @@ void main() {
       ('preset:automatic', 'de_DE', 1.5, '1,5'),
     ];
     for (final (pattern, locale, value, expected) in cases) {
-      test('when formatting $value with "$pattern" in $locale then it shows "$expected"', () {
-        expect(f.formatText(NumberValue(value), pattern, locale: locale), equals(expected));
-      });
+      test(
+        'when formatting $value with "$pattern" in $locale then it shows "$expected"',
+        () {
+          expect(
+            f.formatText(NumberValue(value), pattern, locale: locale),
+            equals(expected),
+          );
+        },
+      );
     }
   });
 }

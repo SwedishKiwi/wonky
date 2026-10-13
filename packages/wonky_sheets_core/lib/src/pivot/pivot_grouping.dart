@@ -8,26 +8,49 @@ import 'source_table.dart';
 
 /// A normalized group key (07 §7.4 step 2) with its display label.
 final class PivotKey {
-  PivotKey._(this.rank, this.number, this.text, this.label, {this.inheritsFormat = false});
+  PivotKey._(
+    this.rank,
+    this.number,
+    this.text,
+    this.label, {
+    this.inheritsFormat = false,
+  });
 
   /// A number group (raw numbers, date units, histogram buckets).
-  factory PivotKey.number(double n, CellValue label, {bool inheritsFormat = false}) =>
-      PivotKey._(SortKeys.number, n == 0 ? 0.0 : n, '', label, inheritsFormat: inheritsFormat);
+  factory PivotKey.number(
+    double n,
+    CellValue label, {
+    bool inheritsFormat = false,
+  }) => PivotKey._(
+    SortKeys.number,
+    n == 0 ? 0.0 : n,
+    '',
+    label,
+    inheritsFormat: inheritsFormat,
+  );
 
   /// A text group (case-insensitive; [label] = first-seen casing).
-  factory PivotKey.text(String text) => PivotKey._(SortKeys.text, 0, text.toLowerCase(), TextValue(text));
+  factory PivotKey.text(String text) =>
+      PivotKey._(SortKeys.text, 0, text.toLowerCase(), TextValue(text));
 
   /// A named group (manual groups, `(non-date)`), compared by name.
   factory PivotKey.named(String name) => PivotKey.text(name);
 
   /// Boolean group.
-  factory PivotKey.boolean(bool b) => PivotKey._(SortKeys.boolean, b ? 1 : 0, '', BoolValue(b));
+  factory PivotKey.boolean(bool b) =>
+      PivotKey._(SortKeys.boolean, b ? 1 : 0, '', BoolValue(b));
 
   /// Error group.
-  factory PivotKey.error(CellErrorKind k) => PivotKey._(SortKeys.error, k.code.toDouble(), '', ErrorValue(k));
+  factory PivotKey.error(CellErrorKind k) =>
+      PivotKey._(SortKeys.error, k.code.toDouble(), '', ErrorValue(k));
 
   /// The blank group (empty label, sorted last).
-  static final PivotKey blank = PivotKey._(SortKeys.blank, 0, '', CellValue.empty);
+  static final PivotKey blank = PivotKey._(
+    SortKeys.blank,
+    0,
+    '',
+    CellValue.empty,
+  );
 
   /// Type group ([SortKeys] constants).
   final int rank;
@@ -92,10 +115,15 @@ final class _Blank {
 final class PivotGrouper {
   /// Creates the grouper for [spec] over [column]. [histogramMin]/[histogramMax]
   /// default the bucket bounds to the data range.
-  PivotGrouper(this.spec, this.column, {String locale = 'en_US', double? histogramMin, double? histogramMax})
-    : _locale = FormulaLocale.forId(locale),
-      _hMin = histogramMin,
-      _hMax = histogramMax {
+  PivotGrouper(
+    this.spec,
+    this.column, {
+    String locale = 'en_US',
+    double? histogramMin,
+    double? histogramMax,
+  }) : _locale = FormulaLocale.forId(locale),
+       _hMin = histogramMin,
+       _hMax = histogramMax {
     final g = spec.group;
     if (g is PivotManualGrouping) {
       for (final group in g.groups) {
@@ -126,7 +154,11 @@ final class PivotGrouper {
 
   PivotKey _plain(CellValue v) => switch (v) {
     _ when v.isBlank() => PivotKey.blank,
-    NumberValue(:final number) => PivotKey.number(number, v, inheritsFormat: true),
+    NumberValue(:final number) => PivotKey.number(
+      number,
+      v,
+      inheritsFormat: true,
+    ),
     TextValue(:final text) => PivotKey.text(text),
     BoolValue(:final value) => PivotKey.boolean(value),
     ErrorValue(:final kind) => PivotKey.error(kind),
@@ -153,13 +185,25 @@ final class PivotGrouper {
         final x = v.number;
         final min = g.min ?? _hMin ?? x;
         final max = g.max ?? _hMax ?? x;
-        if (x < min) return PivotKey.number(double.negativeInfinity, TextValue('< ${Numeric.toText(min)}'));
-        if (x > max) return PivotKey.number(double.infinity, TextValue('> ${Numeric.toText(max)}'));
+        if (x < min) {
+          return PivotKey.number(
+            double.negativeInfinity,
+            TextValue('< ${Numeric.toText(min)}'),
+          );
+        }
+        if (x > max) {
+          return PivotKey.number(
+            double.infinity,
+            TextValue('> ${Numeric.toText(max)}'),
+          );
+        }
         final b = ((x - min) / size).floor();
         final lo = min + b * size;
         return PivotKey.number(
           b.toDouble(),
-          TextValue('${Numeric.toText(Numeric.stabilize(lo))}–${Numeric.toText(Numeric.stabilize(lo + size))}'),
+          TextValue(
+            '${Numeric.toText(Numeric.stabilize(lo))}–${Numeric.toText(Numeric.stabilize(lo + size))}',
+          ),
         );
     }
   }
@@ -171,7 +215,8 @@ final class PivotGrouper {
     final t = DateSerial.timeOf(serial);
     final q = (d.month - 1) ~/ 3 + 1;
     final mon = _locale.shortMonths[d.month - 1];
-    PivotKey k(num key, String label) => PivotKey.number(key.toDouble(), TextValue(label));
+    PivotKey k(num key, String label) =>
+        PivotKey.number(key.toDouble(), TextValue(label));
     switch (unit) {
       case PivotDateUnit.second:
         return k(t.second, '${t.second}');
@@ -183,7 +228,9 @@ final class PivotGrouper {
         return k(t.hour * 60 + t.minute, '${t.hour}:${_two(t.minute)}');
       case PivotDateUnit.hourMinuteAmPm:
         final h12 = t.hour % 12 == 0 ? 12 : t.hour % 12;
-        final ampm = _locale.amPm.length == 2 ? _locale.amPm[t.hour < 12 ? 0 : 1] : (t.hour < 12 ? 'AM' : 'PM');
+        final ampm = _locale.amPm.length == 2
+            ? _locale.amPm[t.hour < 12 ? 0 : 1]
+            : (t.hour < 12 ? 'AM' : 'PM');
         return k(t.hour * 60 + t.minute, '$h12:${_two(t.minute)} $ampm');
       case PivotDateUnit.dayOfWeek:
         final w = DateSerial.weekday(serial);
@@ -206,7 +253,10 @@ final class PivotGrouper {
       case PivotDateUnit.yearQuarter:
         return k(d.year * 10 + q, '${d.year}-Q$q');
       case PivotDateUnit.yearMonthDay:
-        return k(serial.floorToDouble(), '${d.year}-${_two(d.month)}-${_two(d.day)}');
+        return k(
+          serial.floorToDouble(),
+          '${d.year}-${_two(d.month)}-${_two(d.day)}',
+        );
     }
   }
 }

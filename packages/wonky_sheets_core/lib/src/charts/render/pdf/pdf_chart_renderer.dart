@@ -82,7 +82,13 @@ final class PdfChartRenderer {
 }
 
 final class _Fonts {
-  _Fonts(this.regular, this.useStandard, {this.bold, this.italic, this.boldItalic});
+  _Fonts(
+    this.regular,
+    this.useStandard, {
+    this.bold,
+    this.italic,
+    this.boldItalic,
+  });
 
   final PdfFont regular;
   final bool useStandard;
@@ -92,10 +98,20 @@ final class _Fonts {
 
   PdfFont pick(bool isBold, bool isItalic) {
     if (isBold && isItalic) {
-      return boldItalic ??= _standard('Helvetica-BoldOblique', PdfFont.helveticaBoldOblique);
+      return boldItalic ??= _standard(
+        'Helvetica-BoldOblique',
+        PdfFont.helveticaBoldOblique,
+      );
     }
-    if (isBold) return bold ??= _standard('Helvetica-Bold', PdfFont.helveticaBold);
-    if (isItalic) return italic ??= _standard('Helvetica-Oblique', PdfFont.helveticaOblique);
+    if (isBold) {
+      return bold ??= _standard('Helvetica-Bold', PdfFont.helveticaBold);
+    }
+    if (isItalic) {
+      return italic ??= _standard(
+        'Helvetica-Oblique',
+        PdfFont.helveticaOblique,
+      );
+    }
     return regular;
   }
 
@@ -158,7 +174,13 @@ final class _PdfPainter {
         );
       case SPath(:final cmds, :final fill, :final stroke, :final evenOdd):
         if (cmds.isEmpty) return;
-        paint(() => _path(cmds), fill: fill, stroke: stroke, evenOdd: evenOdd, opacity: opacity);
+        paint(
+          () => _path(cmds),
+          fill: fill,
+          stroke: stroke,
+          evenOdd: evenOdd,
+          opacity: opacity,
+        );
       case SPolyline(:final xy, :final stroke):
         if (xy.length < 4) return;
         paint(
@@ -231,7 +253,14 @@ final class _PdfPainter {
           g.moveTo(x, y);
         case PLineTo(:final x, :final y):
           g.lineTo(x, y);
-        case PCubicTo(:final x1, :final y1, :final x2, :final y2, :final x, :final y):
+        case PCubicTo(
+          :final x1,
+          :final y1,
+          :final x2,
+          :final y2,
+          :final x,
+          :final y,
+        ):
           g.curveTo(x1, y1, x2, y2, x, y);
         case PClose():
           g.closePath();
@@ -273,7 +302,9 @@ final class _PdfPainter {
           SStrokeJoin.bevel => PdfLineJoin.bevel,
         })
         ..setMiterLimit(RenderGeometry.miterLimit)
-        ..setLineDashPattern(RenderGeometry.effectiveDash(s.dash) ?? const <num>[]);
+        ..setLineDashPattern(
+          RenderGeometry.effectiveDash(s.dash) ?? const <num>[],
+        );
     }
     build();
     if (doFill && doStroke) {
@@ -287,7 +318,11 @@ final class _PdfPainter {
 
   void _text(SText p, double opacity) {
     final style = p.style;
-    if (!(style.size > 0) || !RenderGeometry.fillVisible(style.color) || !(opacity > 0)) return;
+    if (!(style.size > 0) ||
+        !RenderGeometry.fillVisible(style.color) ||
+        !(opacity > 0)) {
+      return;
+    }
     if (!p.at.x.isFinite || !p.at.y.isFinite) return;
     final font = fonts.pick(style.bold, style.italic);
     final text = _encodable(p.text, font);
@@ -303,7 +338,9 @@ final class _PdfPainter {
     // Glyph space (u, v up) → scene space (y down): at + R(angle)·(dx + u, dy − v).
     transform(c, s, s, -c, p.at.x + c * dx - s * dy, p.at.y + s * dx + c * dy);
     g
-      ..setGraphicState(PdfGraphicState(fillOpacity: _opacity(style.color, opacity)))
+      ..setGraphicState(
+        PdfGraphicState(fillOpacity: _opacity(style.color, opacity)),
+      )
       ..setFillColor(_color(style.color))
       ..drawString(font, size, text, 0, 0)
       ..restoreContext();
@@ -326,9 +363,13 @@ final class _PdfPainter {
     return b.toString();
   }
 
-  static PdfColor _color(int argb) =>
-      PdfColor(Argb.red(argb) / 255, Argb.green(argb) / 255, Argb.blue(argb) / 255);
+  static PdfColor _color(int argb) => PdfColor(
+    Argb.red(argb) / 255,
+    Argb.green(argb) / 255,
+    Argb.blue(argb) / 255,
+  );
 
   static double _opacity(int argb, double opacity) =>
-      ((Argb.alpha(argb) / 255) * opacity.clamp(0.0, 1.0) * 1000).round() / 1000;
+      ((Argb.alpha(argb) / 255) * opacity.clamp(0.0, 1.0) * 1000).round() /
+      1000;
 }

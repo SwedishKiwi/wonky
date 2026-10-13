@@ -18,7 +18,10 @@ void main() {
     });
 
     test('when encoding and decoding a snapshot then all rows round-trip', () {
-      final bytes = SnapshotCodec.encodeModel(h.model, capturedAt: DateTime.utc(2026, 10, 12));
+      final bytes = SnapshotCodec.encodeModel(
+        h.model,
+        capturedAt: DateTime.utc(2026, 10, 12),
+      );
       final snap = SnapshotCodec.decode(bytes);
       expect(snap.header.spreadsheetId, h.model.spreadsheetId);
       expect(snap.header.counts[SheetsTables.cell], 3);
@@ -35,35 +38,46 @@ void main() {
       expect(() => SnapshotCodec.decode([1, 2, 3]), throwsFormatException);
     });
 
-    test('when diffing two versions then changed cells and structure are reported', () {
-      final v1 = SnapshotCodec.decode(
-        SnapshotCodec.encodeModel(h.model, capturedAt: DateTime.utc(2026)),
-      );
-      h.apply(
-        SetCellInputs(
-          sheetId: h.sheetId,
-          row: 1,
-          col: 1,
-          inputs: [
-            [const CellInput.user('4')],
-          ],
-        ),
-      );
-      h.apply(SetFormat([h.range('A1')], {FormatAttr.italic: true}));
-      h.apply(InsertDimension(h.sheetId, Dimension.rows, 0, 1, inheritFrom: InheritFrom.none));
-      h.apply(RenameSheet(h.sheetId, 'Data'));
-      final v2 = SnapshotCodec.decode(
-        SnapshotCodec.encodeModel(h.model, capturedAt: DateTime.utc(2026, 2)),
-      );
-      final d = SnapshotDiffer.diff(v1, v2);
-      expect(
-        d.cells.map((c) => c.kind),
-        containsAll([CellChangeKind.content, CellChangeKind.format]),
-      );
-      expect(d.structure[h.sheetId]!.rowsAdded, hasLength(1));
-      expect(d.sheetsRenamed[h.sheetId], ('Sheet1', 'Data'));
-      expect(SnapshotDiff.fromJson(d.toJson()).cells, d.cells);
-    });
+    test(
+      'when diffing two versions then changed cells and structure are reported',
+      () {
+        final v1 = SnapshotCodec.decode(
+          SnapshotCodec.encodeModel(h.model, capturedAt: DateTime.utc(2026)),
+        );
+        h.apply(
+          SetCellInputs(
+            sheetId: h.sheetId,
+            row: 1,
+            col: 1,
+            inputs: [
+              [const CellInput.user('4')],
+            ],
+          ),
+        );
+        h.apply(SetFormat([h.range('A1')], {FormatAttr.italic: true}));
+        h.apply(
+          InsertDimension(
+            h.sheetId,
+            Dimension.rows,
+            0,
+            1,
+            inheritFrom: InheritFrom.none,
+          ),
+        );
+        h.apply(RenameSheet(h.sheetId, 'Data'));
+        final v2 = SnapshotCodec.decode(
+          SnapshotCodec.encodeModel(h.model, capturedAt: DateTime.utc(2026, 2)),
+        );
+        final d = SnapshotDiffer.diff(v1, v2);
+        expect(
+          d.cells.map((c) => c.kind),
+          containsAll([CellChangeKind.content, CellChangeKind.format]),
+        );
+        expect(d.structure[h.sheetId]!.rowsAdded, hasLength(1));
+        expect(d.sheetsRenamed[h.sheetId], ('Sheet1', 'Data'));
+        expect(SnapshotDiff.fromJson(d.toJson()).cells, d.cells);
+      },
+    );
 
     test(
       'when restoring a version then the plan turns current into the version and undo reverts',
@@ -81,7 +95,9 @@ void main() {
           ),
         );
         h.apply(
-          DeleteDimension(h.sheetId, Dimension.columns, [h.model.sheets.first.columns.idAt(2)]),
+          DeleteDimension(h.sheetId, Dimension.columns, [
+            h.model.sheets.first.columns.idAt(2),
+          ]),
         );
         final plan = SnapshotDiffer.restorePlan(v1Rows, h.model.allRows());
         h.model.applyPlan(plan);

@@ -43,21 +43,29 @@ final class ColumnCriteria {
 
   /// Whether no criterion is set.
   bool get isEmpty =>
-      hiddenValues.isEmpty && condition == null && visibleBackgroundColor == null && visibleForegroundColor == null;
+      hiddenValues.isEmpty &&
+      condition == null &&
+      visibleBackgroundColor == null &&
+      visibleForegroundColor == null;
 
   /// Whether color criteria are set.
-  bool get hasColor => visibleBackgroundColor != null || visibleForegroundColor != null;
+  bool get hasColor =>
+      visibleBackgroundColor != null || visibleForegroundColor != null;
 
   /// JSON map.
   Map<String, Object?> toJson() => {
     if (hiddenValues.isNotEmpty) 'hiddenValues': hiddenValues.toList(),
     if (condition != null) 'condition': condition!.toJson(),
-    if (visibleBackgroundColor != null) 'visibleBackgroundColor': visibleBackgroundColor,
-    if (visibleForegroundColor != null) 'visibleForegroundColor': visibleForegroundColor,
+    if (visibleBackgroundColor != null)
+      'visibleBackgroundColor': visibleBackgroundColor,
+    if (visibleForegroundColor != null)
+      'visibleForegroundColor': visibleForegroundColor,
   };
 
   @override
-  bool operator ==(Object other) => other is ColumnCriteria && jsonEncode(other.toJson()) == jsonEncode(toJson());
+  bool operator ==(Object other) =>
+      other is ColumnCriteria &&
+      jsonEncode(other.toJson()) == jsonEncode(toJson());
 
   @override
   int get hashCode => jsonEncode(toJson()).hashCode;
@@ -90,7 +98,10 @@ final class FilterCriteria {
   /// From a decoded JSON map.
   factory FilterCriteria.fromJson(Object? json) {
     if (json is! Map) return FilterCriteria();
-    return FilterCriteria({for (final e in json.entries) e.key.toString(): ColumnCriteria.fromJson(e.value)});
+    return FilterCriteria({
+      for (final e in json.entries)
+        e.key.toString(): ColumnCriteria.fromJson(e.value),
+    });
   }
 
   /// Non-empty criteria by column id.
@@ -101,20 +112,28 @@ final class FilterCriteria {
 
   /// A copy with [colId]'s criteria replaced (null or empty clears).
   FilterCriteria withColumn(String colId, ColumnCriteria? criteria) =>
-      FilterCriteria({...columns, colId: ?criteria}..removeWhere((k, v) => k == colId && (criteria?.isEmpty ?? true)));
+      FilterCriteria(
+        {...columns, colId: ?criteria}
+          ..removeWhere((k, v) => k == colId && (criteria?.isEmpty ?? true)),
+      );
 
   /// A copy keeping only [colIds] (after range changes / deleted columns).
-  FilterCriteria retain(Set<String> colIds) =>
-      FilterCriteria({for (final e in columns.entries) if (colIds.contains(e.key)) e.key: e.value});
+  FilterCriteria retain(Set<String> colIds) => FilterCriteria({
+    for (final e in columns.entries)
+      if (colIds.contains(e.key)) e.key: e.value,
+  });
 
   /// JSON map.
-  Map<String, Object?> toJson() => {for (final e in columns.entries) e.key: e.value.toJson()};
+  Map<String, Object?> toJson() => {
+    for (final e in columns.entries) e.key: e.value.toJson(),
+  };
 
   /// `criteriaJson`.
   String encode() => jsonEncode(toJson());
 
   @override
-  bool operator ==(Object other) => other is FilterCriteria && other.encode() == encode();
+  bool operator ==(Object other) =>
+      other is FilterCriteria && other.encode() == encode();
 
   @override
   int get hashCode => encode().hashCode;

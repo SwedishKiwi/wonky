@@ -39,7 +39,16 @@ enum PaperSize {
   /// `es_MX` (and US-style locales), A4 otherwise.
   static PaperSize defaultFor(String locale) {
     final l = locale.replaceAll('-', '_').toLowerCase();
-    const letterLocales = {'en_us', 'en_ca', 'es_mx', 'en', 'fr_ca', 'es_us', 'en_ph', 'es_co'};
+    const letterLocales = {
+      'en_us',
+      'en_ca',
+      'es_mx',
+      'en',
+      'fr_ca',
+      'es_us',
+      'en_ph',
+      'es_co',
+    };
     return letterLocales.contains(l) ? letter : a4;
   }
 }

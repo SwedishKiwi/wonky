@@ -13,14 +13,24 @@ void registerFilter(FunctionRegistryBuilder b) {
     'Returns a filtered version of the source range, returning only rows or columns that meet the specified conditions.',
     [
       P.array('range', 'The data to be filtered.'),
-      P.array('condition1', 'A column or row containing true or false values corresponding to the first column or row of range, or an array formula evaluating to true or false.'),
-      P.rep('condition2', ArgKind.array, 'Additional rows or columns containing boolean values.'),
+      P.array(
+        'condition1',
+        'A column or row containing true or false values corresponding to the first column or row of range, or an array formula evaluating to true or false.',
+      ),
+      P.rep(
+        'condition2',
+        ArgKind.array,
+        'Additional rows or columns containing boolean values.',
+      ),
     ],
     _filter,
     returns: ReturnKind.array,
     priority: Priority.p0,
     cost: FunctionCost.heavy,
-    examples: ['FILTER(A2:B26, A2:A26 > 5, D2:D26 < 10)', 'FILTER(A2:C, B2:B = "East")'],
+    examples: [
+      'FILTER(A2:B26, A2:A26 > 5, D2:D26 < 10)',
+      'FILTER(A2:C, B2:B = "East")',
+    ],
     seeAlso: ['SORT', 'UNIQUE', 'QUERY'],
   );
   b.fn(
@@ -28,8 +38,17 @@ void registerFilter(FunctionRegistryBuilder b) {
     'Sorts the rows of a given array or range by the values in one or more columns.',
     [
       P.array('range', 'The data to be sorted.'),
-      P.array('sort_column', 'The index of the column in range or a range outside of range containing the values by which to sort.', true),
-      P.bool_('is_ascending', 'TRUE or FALSE indicating whether to sort sort_column in ascending order.', true, true),
+      P.array(
+        'sort_column',
+        'The index of the column in range or a range outside of range containing the values by which to sort.',
+        true,
+      ),
+      P.bool_(
+        'is_ascending',
+        'TRUE or FALSE indicating whether to sort sort_column in ascending order.',
+        true,
+        true,
+      ),
       P.rep('sort_column2', ArgKind.array, 'Additional columns.'),
       P.rep('is_ascending2', ArgKind.boolean, 'Additional sort orders.'),
     ],
@@ -45,10 +64,28 @@ void registerFilter(FunctionRegistryBuilder b) {
     'Returns the first n items in a data set after performing a sort.',
     [
       P.array('range', 'The data to be sorted to find the first n items.'),
-      P.num('n', 'The number of items to return. Must be greater than 0.', true, 1),
-      P.num('display_ties_mode', '0 (default) at most n rows; 1 n rows plus ties of the nth; 2 at most n rows after removing duplicate rows; 3 at most n unique sort keys with all their duplicates.', true, 0),
-      P.rep('sort_column1', ArgKind.array, 'The index of the column or a range with the values by which to sort.'),
-      P.rep('is_ascending1', ArgKind.boolean, 'TRUE or FALSE indicating whether to sort in ascending order.'),
+      P.num(
+        'n',
+        'The number of items to return. Must be greater than 0.',
+        true,
+        1,
+      ),
+      P.num(
+        'display_ties_mode',
+        '0 (default) at most n rows; 1 n rows plus ties of the nth; 2 at most n rows after removing duplicate rows; 3 at most n unique sort keys with all their duplicates.',
+        true,
+        0,
+      ),
+      P.rep(
+        'sort_column1',
+        ArgKind.array,
+        'The index of the column or a range with the values by which to sort.',
+      ),
+      P.rep(
+        'is_ascending1',
+        ArgKind.boolean,
+        'TRUE or FALSE indicating whether to sort in ascending order.',
+      ),
     ],
     _sortn,
     returns: ReturnKind.array,
@@ -76,8 +113,18 @@ void registerFilter(FunctionRegistryBuilder b) {
     'Returns unique rows in the provided source range, discarding duplicates. Rows are returned in the order in which they first appear in the source range.',
     [
       P.array('range', 'The data to filter by unique entries.'),
-      P.bool_('by_column', 'Whether to filter the data by columns or by rows.', true, false),
-      P.bool_('exactly_once', 'Whether to return only entries with no duplicates.', true, false),
+      P.bool_(
+        'by_column',
+        'Whether to filter the data by columns or by rows.',
+        true,
+        false,
+      ),
+      P.bool_(
+        'exactly_once',
+        'Whether to return only entries with no duplicates.',
+        true,
+        false,
+      ),
     ],
     _unique,
     returns: ReturnKind.array,
@@ -119,9 +166,16 @@ FValue _filter(Args a) {
       if (!_truthy(v)) keep[k] = false;
     }
   }
-  final idx = [for (var k = 0; k < keep.length; k++) if (keep[k]) k];
-  if (idx.isEmpty) return const FError(ErrorKind.na, ErrorMessages.noMatchFilter);
-  if (byRows ?? true) return FArray.generate(idx.length, data.cols, (r, c) => data.at(idx[r], c));
+  final idx = [
+    for (var k = 0; k < keep.length; k++)
+      if (keep[k]) k,
+  ];
+  if (idx.isEmpty) {
+    return const FError(ErrorKind.na, ErrorMessages.noMatchFilter);
+  }
+  if (byRows ?? true) {
+    return FArray.generate(idx.length, data.cols, (r, c) => data.at(idx[r], c));
+  }
   return FArray.generate(data.rows, idx.length, (r, c) => data.at(r, idx[c]));
 }
 
@@ -130,8 +184,12 @@ typedef _Key = (List<FValue> values, bool ascending);
 
 _Key _keyOf(Args a, FArray data, FValue spec, bool ascending) {
   if (spec is FArray && spec.length > 1) {
-    if (spec.cols == 1 && spec.rows == data.rows) return (spec.column(0), ascending);
-    if (spec.rows == 1 && spec.cols == data.rows) return (spec.row(0), ascending);
+    if (spec.cols == 1 && spec.rows == data.rows) {
+      return (spec.column(0), ascending);
+    }
+    if (spec.rows == 1 && spec.cols == data.rows) {
+      return (spec.row(0), ascending);
+    }
     fail(ErrorKind.value, '${a.fn} has mismatched range sizes.');
   }
   final s = spec is FArray ? spec.topLeft : spec;
@@ -139,7 +197,10 @@ _Key _keyOf(Args a, FArray data, FValue spec, bool ascending) {
   final col = switch (s) {
     FNumber(:final v) => v.truncate(),
     FBool(:final v) => v ? 1 : 0,
-    _ => fail(ErrorKind.value, '${a.fn} sort column must be a number or a range.'),
+    _ => fail(
+      ErrorKind.value,
+      '${a.fn} sort column must be a number or a range.',
+    ),
   };
   if (col < 1 || col > data.cols) {
     fail(ErrorKind.value, 'Sort column index for ${a.fn} out of range: $col.');
@@ -168,7 +229,10 @@ FValue _sort(Args a) {
     for (var i = 1; i < a.length; i += 2) {
       final spec = a[i];
       if (spec is FOmitted) {
-        keys.add((data.column(0), i + 1 < a.length ? a.boolOr(i + 1, true) : true));
+        keys.add((
+          data.column(0),
+          i + 1 < a.length ? a.boolOr(i + 1, true) : true,
+        ));
         continue;
       }
       final asc = i + 1 < a.length ? a.boolOr(i + 1, true) : true;
@@ -205,7 +269,9 @@ FValue _sortn(Args a) {
   final n = a.has(1) ? a.integer(1) : 1;
   final mode = a.intOr(2, 0);
   if (n < 1) fail(ErrorKind.num, 'SORTN n must be greater than 0.');
-  if (mode < 0 || mode > 3) fail(ErrorKind.value, 'Invalid display_ties_mode $mode.');
+  if (mode < 0 || mode > 3) {
+    fail(ErrorKind.value, 'Invalid display_ties_mode $mode.');
+  }
   final keys = <_Key>[];
   for (var i = 3; i < a.length; i += 2) {
     final asc = i + 1 < a.length ? a.boolOr(i + 1, true) : true;
@@ -213,7 +279,8 @@ FValue _sortn(Args a) {
   }
   if (keys.isEmpty) keys.add((data.column(0), true));
   final order = _order(data.rows, keys);
-  String sortKey(int r) => [for (final (v, _) in keys) _valueKey(v[r])].join('\u0001');
+  String sortKey(int r) =>
+      [for (final (v, _) in keys) _valueKey(v[r])].join('\u0001');
   final out = <int>[];
   switch (mode) {
     case 0:
@@ -252,7 +319,9 @@ FValue _sortby(Args a) {
   for (var i = 1; i < a.length; i += 2) {
     final by = a.array(i);
     final order = i + 1 < a.length ? a.intOr(i + 1, 1) : 1;
-    if (order != 1 && order != -1) fail(ErrorKind.value, 'SORTBY sort_order must be 1 or -1.');
+    if (order != 1 && order != -1) {
+      fail(ErrorKind.value, 'SORTBY sort_order must be 1 or -1.');
+    }
     if (by.cols == 1 && by.rows == data.rows) {
       keys.add((by.column(0), order == 1));
     } else if (by.rows == 1 && by.cols == data.cols && data.rows == 1) {
@@ -269,7 +338,9 @@ FValue _unique(Args a) {
   var data = a.array(0);
   final byCol = a.boolOr(1, false);
   final once = a.boolOr(2, false);
-  if (byCol) data = FArray.generate(data.cols, data.rows, (r, c) => data.at(c, r));
+  if (byCol) {
+    data = FArray.generate(data.cols, data.rows, (r, c) => data.at(c, r));
+  }
   final counts = <String, int>{};
   final first = <String, int>{};
   for (var r = 0; r < data.rows; r++) {
@@ -281,11 +352,18 @@ FValue _unique(Args a) {
     for (final e in first.entries)
       if (!once || counts[e.key] == 1) e.value,
   ];
-  if (rows.isEmpty) return const FError(ErrorKind.na, 'No unique values found.');
-  final out = FArray.generate(rows.length, data.cols, (r, c) => data.at(rows[r], c));
+  if (rows.isEmpty) {
+    return const FError(ErrorKind.na, 'No unique values found.');
+  }
+  final out = FArray.generate(
+    rows.length,
+    data.cols,
+    (r, c) => data.at(rows[r], c),
+  );
   if (byCol) return FArray.generate(out.cols, out.rows, (r, c) => out.at(c, r));
   return out;
 }
 
 /// Exposed so other modules can reuse the stable multi-key order.
-List<int> stableOrder(int n, List<(List<FValue>, bool)> keys) => _order(n, keys);
+List<int> stableOrder(int n, List<(List<FValue>, bool)> keys) =>
+    _order(n, keys);

@@ -13,7 +13,14 @@ import '../registry.dart';
 void registerInfo(FunctionRegistryBuilder b) {
   b.category = FunctionCategory.info;
 
-  void isFn(String name, String summary, bool Function(FValue v) test, {Priority priority = Priority.p0, bool passPending = true, String example = ''}) {
+  void isFn(
+    String name,
+    String summary,
+    bool Function(FValue v) test, {
+    Priority priority = Priority.p0,
+    bool passPending = true,
+    String example = '',
+  }) {
     b.fn(
       name,
       summary,
@@ -29,25 +36,59 @@ void registerInfo(FunctionRegistryBuilder b) {
     );
   }
 
-  isFn('ISBLANK', 'Checks whether the referenced cell is empty.', (v) => v is FEmpty);
-  isFn('ISERR', 'Checks whether a value is an error other than #N/A.', (v) => v is FError && v.kind != ErrorKind.na);
-  isFn('ISERROR', 'Checks whether a value is an error.', (v) => v is FError, example: 'ISERROR(A1/B1)');
-  isFn('ISNA', 'Checks whether a value is the error #N/A.', (v) => v is FError && v.kind == ErrorKind.na);
-  isFn('ISLOGICAL', 'Checks whether a value is TRUE or FALSE.', (v) => v is FBool);
+  isFn(
+    'ISBLANK',
+    'Checks whether the referenced cell is empty.',
+    (v) => v is FEmpty,
+  );
+  isFn(
+    'ISERR',
+    'Checks whether a value is an error other than #N/A.',
+    (v) => v is FError && v.kind != ErrorKind.na,
+  );
+  isFn(
+    'ISERROR',
+    'Checks whether a value is an error.',
+    (v) => v is FError,
+    example: 'ISERROR(A1/B1)',
+  );
+  isFn(
+    'ISNA',
+    'Checks whether a value is the error #N/A.',
+    (v) => v is FError && v.kind == ErrorKind.na,
+  );
+  isFn(
+    'ISLOGICAL',
+    'Checks whether a value is TRUE or FALSE.',
+    (v) => v is FBool,
+  );
   isFn('ISNUMBER', 'Checks whether a value is a number.', (v) => v is FNumber);
   isFn('ISTEXT', 'Checks whether a value is text.', (v) => v is FText);
-  isFn('ISNONTEXT', 'Checks whether a value is non-textual.', (v) => v is! FText);
+  isFn(
+    'ISNONTEXT',
+    'Checks whether a value is non-textual.',
+    (v) => v is! FText,
+  );
   isFn(
     'ISEMAIL',
     'Checks whether a value is a valid email address.',
-    (v) => v is FText && RegExp(r"^[A-Za-z0-9.!#$%&'*+/=?^_`{|}~-]+@[A-Za-z0-9](?:[A-Za-z0-9-]{0,61}[A-Za-z0-9])?(?:\.[A-Za-z0-9](?:[A-Za-z0-9-]{0,61}[A-Za-z0-9])?)*\.[A-Za-z]{2,}$").hasMatch(v.v.trim()),
+    (v) =>
+        v is FText &&
+        RegExp(
+          r"^[A-Za-z0-9.!#$%&'*+/=?^_`{|}~-]+@[A-Za-z0-9](?:[A-Za-z0-9-]{0,61}[A-Za-z0-9])?(?:\.[A-Za-z0-9](?:[A-Za-z0-9-]{0,61}[A-Za-z0-9])?)*\.[A-Za-z]{2,}$",
+        ).hasMatch(v.v.trim()),
     priority: Priority.p1,
     example: 'ISEMAIL("hello@example.com")',
   );
   isFn(
     'ISURL',
     'Checks whether a value is a valid URL.',
-    (v) => v is FText && RegExp(r'^(?:(?:https?|ftp)://)?(?:[A-Za-z0-9-]+\.)+[A-Za-z]{2,}(?::\d+)?(?:[/?#]\S*)?$', caseSensitive: false).hasMatch(v.v.trim()),
+    (v) =>
+        v is FText &&
+        RegExp(
+          r'^(?:(?:https?|ftp)://)?(?:[A-Za-z0-9-]+\.)+[A-Za-z]{2,}(?::\d+)?(?:[/?#]\S*)?$',
+          caseSensitive: false,
+        ).hasMatch(v.v.trim()),
     priority: Priority.p1,
     example: 'ISURL("https://example.com")',
   );
@@ -101,7 +142,14 @@ void registerInfo(FunctionRegistryBuilder b) {
       if (v is FRich) v = v.scalar;
       return switch (v) {
         FNumber(:final hint) => FBool(hint.isDateLike),
-        FText(:final v) => FBool(DateTimeParser.parse(v, a.locale, currentYear: a.ctx.currentYear)?.hasDate ?? false),
+        FText(:final v) => FBool(
+          DateTimeParser.parse(
+                v,
+                a.locale,
+                currentYear: a.ctx.currentYear,
+              )?.hasDate ??
+              false,
+        ),
         _ => FBool.f,
       };
     },
@@ -113,17 +161,32 @@ void registerInfo(FunctionRegistryBuilder b) {
   b.fn(
     'ERROR.TYPE',
     'Returns a number corresponding to the error value in a different cell.',
-    [P.scalar('reference', 'The cell to find the error number for, although you can also provide the error value directly.')],
+    [
+      P.scalar(
+        'reference',
+        'The cell to find the error number for, although you can also provide the error value directly.',
+      ),
+    ],
     (a) {
       final v = a.scalarOrError(0);
       if (v is FError) return FNumber(v.kind.typeCode.toDouble());
-      return const FError(ErrorKind.na, 'ERROR.TYPE parameter 1 is not an error.');
+      return const FError(
+        ErrorKind.na,
+        'ERROR.TYPE parameter 1 is not an error.',
+      );
     },
     handlesErrors: true,
     priority: Priority.p0,
     examples: ['ERROR.TYPE(A1)', 'ERROR.TYPE(1/0)'],
   );
-  b.fn('NA', 'Returns the "value not available" error, #N/A.', const [], (_) => const FError(ErrorKind.na, 'Value not available.'), priority: Priority.p0, examples: ['NA()']);
+  b.fn(
+    'NA',
+    'Returns the "value not available" error, #N/A.',
+    const [],
+    (_) => const FError(ErrorKind.na, 'Value not available.'),
+    priority: Priority.p0,
+    examples: ['NA()'],
+  );
   b.fn(
     'N',
     'Returns the argument provided as a number. Text is converted to 0 and errors are returned as-is.',
@@ -165,7 +228,10 @@ void registerInfo(FunctionRegistryBuilder b) {
     'CELL',
     'Returns the requested information about the specified cell.',
     [
-      P.text('info_type', 'The type of information requested: "address", "col", "color", "contents", "format", "parentheses", "prefix", "protect", "row", "type", "width".'),
+      P.text(
+        'info_type',
+        'The type of information requested: "address", "col", "color", "contents", "format", "parentheses", "prefix", "protect", "row", "type", "width".',
+      ),
       P.ref('reference', 'The reference to the cell.'),
     ],
     _cell,
@@ -176,7 +242,13 @@ void registerInfo(FunctionRegistryBuilder b) {
   b.fn(
     'SHEET',
     'Returns the sheet number of the specified sheet or other reference.',
-    [P.any('value', 'A reference or the name of a sheet. Defaults to the sheet containing the formula.', true)],
+    [
+      P.any(
+        'value',
+        'A reference or the name of a sheet. Defaults to the sheet containing the formula.',
+        true,
+      ),
+    ],
     (a) {
       final sheets = a.ctx.workbook.sheets;
       String id = a.ctx.sheet.id;
@@ -207,7 +279,13 @@ void registerInfo(FunctionRegistryBuilder b) {
   b.fn(
     'SHEETS',
     'Returns the number of sheets in a reference or in the spreadsheet.',
-    [P.any('reference', 'A reference (counts 1) — omit to count all sheets.', true)],
+    [
+      P.any(
+        'reference',
+        'A reference (counts 1) — omit to count all sheets.',
+        true,
+      ),
+    ],
     (a) {
       a.ctx.deps.sheetNames = true;
       if (a.has(0) && a[0] is FRef) return FNumber.one;
@@ -217,7 +295,11 @@ void registerInfo(FunctionRegistryBuilder b) {
     priority: Priority.p2,
     examples: ['SHEETS()'],
   );
-  b.stub('INFO', 'Returns information about the operating environment (not supported).', message: ErrorMessages.notAvailable('INFO'));
+  b.stub(
+    'INFO',
+    'Returns information about the operating environment (not supported).',
+    message: ErrorMessages.notAvailable('INFO'),
+  );
 }
 
 FValue _cell(Args a) {
@@ -256,14 +338,25 @@ FValue _cell(Args a) {
       return FText(_formatCode(host.cellHint(s, row, col)));
     case 'color':
       final h = host.cellHint(s, row, col);
-      return FNumber(h.kind == FormatHintKind.fromCell && (h.detail ?? '').contains(';[') ? 1 : 0);
+      return FNumber(
+        h.kind == FormatHintKind.fromCell && (h.detail ?? '').contains(';[')
+            ? 1
+            : 0,
+      );
     case 'parentheses':
       final h = host.cellHint(s, row, col);
-      return FNumber(h.kind == FormatHintKind.fromCell && (h.detail ?? '').contains('(') ? 1 : 0);
+      return FNumber(
+        h.kind == FormatHintKind.fromCell && (h.detail ?? '').contains('(')
+            ? 1
+            : 0,
+      );
     case 'protect':
       return FNumber.one;
     default:
-      fail(ErrorKind.value, "Function CELL parameter 1 value '$type' is not valid.");
+      fail(
+        ErrorKind.value,
+        "Function CELL parameter 1 value '$type' is not valid.",
+      );
   }
 }
 
@@ -287,11 +380,12 @@ String _formatCode(FormatHint h) {
       if (FormatHint.looksLikeDatePattern(p)) return 'D1';
       final dec = RegExp(r'\.(0+)').firstMatch(p)?.group(1)?.length ?? 0;
       if (p.contains('%')) return 'P$dec';
-      if (p.contains(r'$') || p.contains('€') || p.contains('£')) return 'C$dec';
+      if (p.contains(r'$') || p.contains('€') || p.contains('£')) {
+        return 'C$dec';
+      }
       if (p.contains('E+') || p.contains('E-')) return 'S$dec';
       if (p.contains(',')) return ',$dec';
       if (RegExp('[0#]').hasMatch(p)) return 'F$dec';
       return 'G';
   }
 }
-

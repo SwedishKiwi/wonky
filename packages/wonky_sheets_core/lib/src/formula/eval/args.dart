@@ -33,10 +33,13 @@ final class Args {
   String get fn => spec.name;
   FormulaLocale get locale => ctx.locale;
 
-  FValue operator [](int i) => i < _values.length ? _values[i] : FOmitted.instance;
+  FValue operator [](int i) =>
+      i < _values.length ? _values[i] : FOmitted.instance;
 
   /// Whether argument [i] was given (not omitted).
-  bool has(int i) => i < _values.length && (_values[i] is! FOmitted || _thunks.length > i && _thunks[i] != null);
+  bool has(int i) =>
+      i < _values.length &&
+      (_values[i] is! FOmitted || _thunks.length > i && _thunks[i] != null);
 
   /// Raw list of values.
   List<FValue> get values => _values;
@@ -63,7 +66,13 @@ final class Args {
   FValue scalarOrError(int i) => _scalar(i);
 
   double _toNumber(FValue v, int i) {
-    final r = Coerce.toNumber(v, locale, fn: fn, param: i + 1, currentYear: ctx.currentYear);
+    final r = Coerce.toNumber(
+      v,
+      locale,
+      fn: fn,
+      param: i + 1,
+      currentYear: ctx.currentYear,
+    );
     if (r is FError) throw FormulaError(r);
     final d = r as double;
     return d;
@@ -133,7 +142,10 @@ final class Args {
     final v = this[i];
     if (v is FRef) return v;
     if (v is FError) throw FormulaError(v);
-    fail(ErrorKind.value, message ?? 'Function $fn parameter ${i + 1} expects a range.');
+    fail(
+      ErrorKind.value,
+      message ?? 'Function $fn parameter ${i + 1} expects a range.',
+    );
   }
 
   /// Whether argument [i] is a reference.
@@ -143,7 +155,8 @@ final class Args {
   (int, int) shape(int i) => RangeAccess.shape(this[i]);
 
   /// Visits values of argument [i] (references skip blanks).
-  void forEach(int i, void Function(FValue v) visit) => RangeAccess.forEach(ctx, this[i], visit);
+  void forEach(int i, void Function(FValue v) visit) =>
+      RangeAccess.forEach(ctx, this[i], visit);
 
   /// Flattened values (row-major for arrays; references materialized).
   List<FValue> flat(int i) {
@@ -166,7 +179,11 @@ final class Args {
   /// Evaluates lazy argument [i] and dereferences it to a scalar value (errors returned).
   FValue lazyScalar(int i) {
     var v = lazy(i);
-    if (v is FRef) v = ctx.arrayMode ? RangeAccess.materialize(ctx, v) : RangeAccess.intersect(ctx, v);
+    if (v is FRef) {
+      v = ctx.arrayMode
+          ? RangeAccess.materialize(ctx, v)
+          : RangeAccess.intersect(ctx, v);
+    }
     if (v is FRich) v = v.scalar;
     return v;
   }
@@ -188,7 +205,11 @@ final class Args {
   // ---------------------------------------------------------------- aggregates
 
   /// Numbers of arguments [from]..[to] per aggregate rules. Errors throw.
-  List<double> numbers({int from = 0, int? to, AggMode mode = AggMode.numbers}) {
+  List<double> numbers({
+    int from = 0,
+    int? to,
+    AggMode mode = AggMode.numbers,
+  }) {
     final out = <double>[];
     collectNumbers(out, from: from, to: to, mode: mode);
     return out;

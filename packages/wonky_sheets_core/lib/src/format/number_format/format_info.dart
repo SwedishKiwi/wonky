@@ -41,7 +41,13 @@ enum NumberFormatKind {
 /// Classification of a number format (toolbar state, fill series, format
 /// hints, exporters).
 final class NumberFormatInfo {
-  const NumberFormatInfo._(this.kind, this.decimals, this.grouping, this.valid, this.pattern);
+  const NumberFormatInfo._(
+    this.kind,
+    this.decimals,
+    this.grouping,
+    this.valid,
+    this.pattern,
+  );
 
   /// Kind.
   final NumberFormatKind kind;
@@ -60,10 +66,12 @@ final class NumberFormatInfo {
   final String? pattern;
 
   /// Whether values display as dates (date or date time).
-  bool get isDateLike => kind == NumberFormatKind.date || kind == NumberFormatKind.dateTime;
+  bool get isDateLike =>
+      kind == NumberFormatKind.date || kind == NumberFormatKind.dateTime;
 
   /// Whether values display as a time of day or duration.
-  bool get isTimeLike => kind == NumberFormatKind.time || kind == NumberFormatKind.duration;
+  bool get isTimeLike =>
+      kind == NumberFormatKind.time || kind == NumberFormatKind.duration;
 
   /// Whether values display as any date/time/duration.
   bool get isDateOrTime => isDateLike || isTimeLike;
@@ -113,7 +121,23 @@ final class NumberFormatInfo {
       of(format, locale: locale).isCurrency;
 
   static const Set<String> _currencySymbols = {
-    r'$', '€', '£', '¥', '₹', '₩', '₽', '₺', '₪', '₫', '฿', '₴', '₱', '₦', '¢', 'kr', 'zł', //
+    r'$',
+    '€',
+    '£',
+    '¥',
+    '₹',
+    '₩',
+    '₽',
+    '₺',
+    '₪',
+    '₫',
+    '฿',
+    '₴',
+    '₱',
+    '₦',
+    '¢',
+    'kr',
+    'zł', //
     'CHF', 'Kč', 'Ft', 'R', r'R$', 'lei', 'лв', 'USD', 'EUR', 'GBP', 'JPY',
   };
 
@@ -121,7 +145,13 @@ final class NumberFormatInfo {
     if (pattern == null) return _automatic;
     final ast = NumberFormatParser.tryParse(pattern);
     if (ast == null) {
-      return NumberFormatInfo._(NumberFormatKind.automatic, 0, false, false, pattern);
+      return NumberFormatInfo._(
+        NumberFormatKind.automatic,
+        0,
+        false,
+        false,
+        pattern,
+      );
     }
     final sections = ast.numberSections;
     if (sections.isEmpty) {
@@ -129,12 +159,32 @@ final class NumberFormatInfo {
     }
     final s = sections.first;
     switch (s.kind) {
-      case NfSectionKind.general || NfSectionKind.empty || NfSectionKind.literal:
-        return NumberFormatInfo._(NumberFormatKind.automatic, 0, false, true, pattern);
+      case NfSectionKind.general ||
+          NfSectionKind.empty ||
+          NfSectionKind.literal:
+        return NumberFormatInfo._(
+          NumberFormatKind.automatic,
+          0,
+          false,
+          true,
+          pattern,
+        );
       case NfSectionKind.text:
-        return NumberFormatInfo._(NumberFormatKind.text, 0, false, true, pattern);
+        return NumberFormatInfo._(
+          NumberFormatKind.text,
+          0,
+          false,
+          true,
+          pattern,
+        );
       case NfSectionKind.fraction:
-        return NumberFormatInfo._(NumberFormatKind.fraction, 0, false, true, pattern);
+        return NumberFormatInfo._(
+          NumberFormatKind.fraction,
+          0,
+          false,
+          true,
+          pattern,
+        );
       case NfSectionKind.scientific:
         return NumberFormatInfo._(
           NumberFormatKind.scientific,
@@ -185,12 +235,20 @@ final class NumberFormatInfo {
             kind = NumberFormatKind.percent;
             break;
           }
-          if (t is NfLocaleTag && t.symbol.isNotEmpty) kind = NumberFormatKind.currency;
+          if (t is NfLocaleTag && t.symbol.isNotEmpty) {
+            kind = NumberFormatKind.currency;
+          }
           if (t is NfLiteral && _currencySymbols.contains(t.text.trim())) {
             kind = NumberFormatKind.currency;
           }
         }
-        return NumberFormatInfo._(kind, l.decimalPlaceholders, l.grouping, true, pattern);
+        return NumberFormatInfo._(
+          kind,
+          l.decimalPlaceholders,
+          l.grouping,
+          true,
+          pattern,
+        );
     }
   }
 

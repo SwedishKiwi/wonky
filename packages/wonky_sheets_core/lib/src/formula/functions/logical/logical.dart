@@ -16,9 +16,19 @@ void registerLogical(FunctionRegistryBuilder b) {
     'IF',
     'Returns one value if a logical expression is TRUE and another if it is FALSE.',
     [
-      P.any('logical_expression', 'An expression or reference to a cell containing an expression that represents a logical value, i.e. TRUE or FALSE.'),
-      P.lazy('value_if_true', 'The value the function returns if logical_expression is TRUE.'),
-      P.lazy('value_if_false', 'The value the function returns if logical_expression is FALSE.', true),
+      P.any(
+        'logical_expression',
+        'An expression or reference to a cell containing an expression that represents a logical value, i.e. TRUE or FALSE.',
+      ),
+      P.lazy(
+        'value_if_true',
+        'The value the function returns if logical_expression is TRUE.',
+      ),
+      P.lazy(
+        'value_if_false',
+        'The value the function returns if logical_expression is FALSE.',
+        true,
+      ),
     ],
     _if,
     priority: Priority.p0,
@@ -34,8 +44,16 @@ void registerLogical(FunctionRegistryBuilder b) {
     [
       P.lazy('condition1', 'The first condition to be evaluated.'),
       P.lazy('value1', 'The returned value if condition1 is TRUE.'),
-      P.rep('condition2', ArgKind.lazy, 'Additional conditions to be evaluated if the previous ones are FALSE.'),
-      P.rep('value2', ArgKind.lazy, 'Additional values to be returned if their corresponding conditions are TRUE.'),
+      P.rep(
+        'condition2',
+        ArgKind.lazy,
+        'Additional conditions to be evaluated if the previous ones are FALSE.',
+      ),
+      P.rep(
+        'value2',
+        ArgKind.lazy,
+        'Additional values to be returned if their corresponding conditions are TRUE.',
+      ),
     ],
     _ifs,
     priority: Priority.p0,
@@ -49,12 +67,19 @@ void registerLogical(FunctionRegistryBuilder b) {
     'Returns the first argument if it is not an error value, otherwise returns the second argument if present, or a blank if absent.',
     [
       P.lazy('value', 'The value to return if value itself is not an error.'),
-      P.lazy('value_if_error', 'The value the function returns if value is an error.', true),
+      P.lazy(
+        'value_if_error',
+        'The value the function returns if value is an error.',
+        true,
+      ),
     ],
     (a) => _catch(a, (e) => true),
     priority: Priority.p0,
     handlesErrors: true,
-    examples: ['IFERROR(A1/B1, 0)', 'IFERROR(VLOOKUP(E2, A:B, 2, FALSE), "Not found")'],
+    examples: [
+      'IFERROR(A1/B1, 0)',
+      'IFERROR(VLOOKUP(E2, A:B, 2, FALSE), "Not found")',
+    ],
     seeAlso: ['IFNA', 'ISERROR'],
   );
 
@@ -62,8 +87,14 @@ void registerLogical(FunctionRegistryBuilder b) {
     'IFNA',
     'Evaluates a value. If the value is an #N/A error, returns the specified value.',
     [
-      P.lazy('value', 'The value to return if value itself is not an #N/A error.'),
-      P.lazy('value_if_na', 'The value the function returns if value is an #N/A error.'),
+      P.lazy(
+        'value',
+        'The value to return if value itself is not an #N/A error.',
+      ),
+      P.lazy(
+        'value_if_na',
+        'The value the function returns if value is an #N/A error.',
+      ),
     ],
     (a) => _catch(a, (e) => e.kind == ErrorKind.na),
     priority: Priority.p0,
@@ -76,8 +107,15 @@ void registerLogical(FunctionRegistryBuilder b) {
     'AND',
     'Returns TRUE if all of the provided arguments are logically true, and FALSE if any of the provided arguments are logically false.',
     [
-      P.range('logical_expression1', 'An expression or reference to a cell containing an expression that represents some logical value.'),
-      P.rep('logical_expression2', ArgKind.range, 'More expressions that represent logical values.'),
+      P.range(
+        'logical_expression1',
+        'An expression or reference to a cell containing an expression that represents some logical value.',
+      ),
+      P.rep(
+        'logical_expression2',
+        ArgKind.range,
+        'More expressions that represent logical values.',
+      ),
     ],
     (a) => _andOr(a, and: true),
     priority: Priority.p0,
@@ -89,8 +127,15 @@ void registerLogical(FunctionRegistryBuilder b) {
     'OR',
     'Returns TRUE if any of the provided arguments are logically true, and FALSE if all of the provided arguments are logically false.',
     [
-      P.range('logical_expression1', 'An expression or reference to a cell containing an expression that represents some logical value.'),
-      P.rep('logical_expression2', ArgKind.range, 'More expressions that represent logical values.'),
+      P.range(
+        'logical_expression1',
+        'An expression or reference to a cell containing an expression that represents some logical value.',
+      ),
+      P.rep(
+        'logical_expression2',
+        ArgKind.range,
+        'More expressions that represent logical values.',
+      ),
     ],
     (a) => _andOr(a, and: false),
     priority: Priority.p0,
@@ -102,7 +147,10 @@ void registerLogical(FunctionRegistryBuilder b) {
     'XOR',
     'Returns TRUE if an odd number of the provided arguments are logically true.',
     [
-      P.range('logical_expression1', 'An expression or reference to a cell containing a logical value.'),
+      P.range(
+        'logical_expression1',
+        'An expression or reference to a cell containing a logical value.',
+      ),
       P.rep('logical_expression2', ArgKind.range, 'More expressions.'),
     ],
     _xor,
@@ -113,15 +161,34 @@ void registerLogical(FunctionRegistryBuilder b) {
   b.fn(
     'NOT',
     'Returns the opposite of a logical value.',
-    [P.bool_('logical_expression', 'An expression or reference holding an expression that represents some logical value.')],
+    [
+      P.bool_(
+        'logical_expression',
+        'An expression or reference holding an expression that represents some logical value.',
+      ),
+    ],
     (a) => FBool(!a.boolean(0)),
     priority: Priority.p0,
     examples: ['NOT(TRUE)', 'NOT(A1 > 5)'],
     seeAlso: ['AND', 'OR'],
   );
 
-  b.fn('TRUE', 'Returns the logical value TRUE.', const [], (_) => FBool.t, priority: Priority.p0, examples: ['TRUE()']);
-  b.fn('FALSE', 'Returns the logical value FALSE.', const [], (_) => FBool.f, priority: Priority.p0, examples: ['FALSE()']);
+  b.fn(
+    'TRUE',
+    'Returns the logical value TRUE.',
+    const [],
+    (_) => FBool.t,
+    priority: Priority.p0,
+    examples: ['TRUE()'],
+  );
+  b.fn(
+    'FALSE',
+    'Returns the logical value FALSE.',
+    const [],
+    (_) => FBool.f,
+    priority: Priority.p0,
+    examples: ['FALSE()'],
+  );
 
   b.fn(
     'SWITCH',
@@ -129,9 +196,20 @@ void registerLogical(FunctionRegistryBuilder b) {
     [
       P.scalar('expression', 'Any valid value.'),
       P.lazy('case1', 'The first case to be checked against expression.'),
-      P.lazy('value1', 'The corresponding value to be returned if case1 matches expression.'),
-      P.rep('case2', ArgKind.lazy, 'Additional cases to try if the previous ones don\'t match expression.'),
-      P.rep('value2', ArgKind.lazy, 'Additional values to be returned if their corresponding cases match expression.'),
+      P.lazy(
+        'value1',
+        'The corresponding value to be returned if case1 matches expression.',
+      ),
+      P.rep(
+        'case2',
+        ArgKind.lazy,
+        'Additional cases to try if the previous ones don\'t match expression.',
+      ),
+      P.rep(
+        'value2',
+        ArgKind.lazy,
+        'Additional values to be returned if their corresponding cases match expression.',
+      ),
     ],
     _switch,
     priority: Priority.p0,
@@ -145,10 +223,17 @@ void registerLogical(FunctionRegistryBuilder b) {
     'LET',
     'Assigns names to calculation results and returns the result of the formula expression.',
     [
-      P.any('name1', 'The name to assign. Must start with a letter and cannot be a cell reference.'),
+      P.any(
+        'name1',
+        'The name to assign. Must start with a letter and cannot be a cell reference.',
+      ),
       P.lazy('value_expression1', 'The formula whose result name1 refers to.'),
       P.rep('name2', ArgKind.any, 'More names.'),
-      P.rep('value_expression2', ArgKind.lazy, 'More value expressions; the last argument is the formula expression.'),
+      P.rep(
+        'value_expression2',
+        ArgKind.lazy,
+        'More value expressions; the last argument is the formula expression.',
+      ),
     ],
     (_) => FError.value,
     minArgs: 3,
@@ -195,7 +280,10 @@ Object _truth(FValue v, String fn) {
     final u = v.v.toUpperCase();
     if (u == 'TRUE') return true;
     if (u == 'FALSE') return false;
-    return FError(ErrorKind.value, "Function $fn parameter 1 expects boolean values. But '${v.v}' is a text and cannot be coerced to a boolean.");
+    return FError(
+      ErrorKind.value,
+      "Function $fn parameter 1 expects boolean values. But '${v.v}' is a text and cannot be coerced to a boolean.",
+    );
   }
   return Coerce.toBool(v, fn: fn);
 }
@@ -361,7 +449,10 @@ FValue _andOr(Args a, {required bool and}) {
     result = and ? (result && (t as bool)) : (result || (t as bool));
   }
   if (!any) {
-    return FError(ErrorKind.value, 'Function ${and ? 'AND' : 'OR'} parameter 1 expects boolean values.');
+    return FError(
+      ErrorKind.value,
+      'Function ${and ? 'AND' : 'OR'} parameter 1 expects boolean values.',
+    );
   }
   return FBool(result);
 }
@@ -396,7 +487,12 @@ FValue _xor(Args a) {
     any = true;
     if (t as bool) count++;
   }
-  if (!any) return FError(ErrorKind.value, 'Function XOR parameter 1 expects boolean values.');
+  if (!any) {
+    return FError(
+      ErrorKind.value,
+      'Function XOR parameter 1 expects boolean values.',
+    );
+  }
   return FBool(count.isOdd);
 }
 
@@ -409,7 +505,9 @@ FValue _switch(Args a) {
     var c = a.lazy(1 + 2 * k);
     c = _scalarOf(a, c);
     if (c is FError) return c;
-    if (Compare.compare(e, c) == 0 && _sameKind(e, c)) return _passValue(a.lazy(2 + 2 * k));
+    if (Compare.compare(e, c) == 0 && _sameKind(e, c)) {
+      return _passValue(a.lazy(2 + 2 * k));
+    }
   }
   if ((n - 1).isOdd) return _passValue(a.lazy(n - 1));
   return const FError(ErrorKind.na, 'No match.');

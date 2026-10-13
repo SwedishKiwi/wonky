@@ -23,24 +23,39 @@ List<String> _sortedCfKeys(PlanBuilder b, SheetModel s, {String? exceptId}) {
     keys.add(cur[Cols.sortKey] as String);
   }
   for (final e in b.touchedRows(SheetsTables.conditionalFormatRule).entries) {
-    if (e.key == exceptId || e.value == null || s.cfRules.containsKey(e.key)) continue;
-    if (e.value![Cols.sheetId] == s.id) keys.add(e.value![Cols.sortKey] as String);
+    if (e.key == exceptId || e.value == null || s.cfRules.containsKey(e.key)) {
+      continue;
+    }
+    if (e.value![Cols.sheetId] == s.id) {
+      keys.add(e.value![Cols.sortKey] as String);
+    }
   }
   keys.sort();
   return keys;
 }
 
-String _cfKeyBefore(PlanBuilder b, SheetModel s, String? beforeRuleId, {String? exceptId}) {
+String _cfKeyBefore(
+  PlanBuilder b,
+  SheetModel s,
+  String? beforeRuleId, {
+  String? exceptId,
+}) {
   final keys = _sortedCfKeys(b, s, exceptId: exceptId);
   final beforeKey = beforeRuleId == null
       ? null
-      : b.current(SheetsTables.conditionalFormatRule, beforeRuleId)?[Cols.sortKey] as String?;
+      : b.current(
+              SheetsTables.conditionalFormatRule,
+              beforeRuleId,
+            )?[Cols.sortKey]
+            as String?;
   return PlanBuilderHelpers.keyBefore(keys, beforeKey);
 }
 
 SheetModel _ruleSheet(PlanBuilder b, String table, String id) {
   final cur = b.current(table, id);
-  if (cur == null) throw PlanException('not_found', 'Rule not found', details: {'id': id});
+  if (cur == null) {
+    throw PlanException('not_found', 'Rule not found', details: {'id': id});
+  }
   return b.sheetOf(cur[Cols.sheetId] as String);
 }
 
@@ -58,10 +73,16 @@ MutationPlan planAddCfRule(PlanBuilder b, AddCfRule op) {
   final s = b.sheetOf(op.sheetId);
   _checkJson(op.ruleJson, 'rule');
   if (op.ranges.isEmpty) {
-    throw const PlanException('invalid_range', 'A rule needs at least one range');
+    throw const PlanException(
+      'invalid_range',
+      'A rule needs at least one range',
+    );
   }
   if (s.cfRules.length >= 500) {
-    throw const PlanException('limit_exceeded', 'A sheet can have at most 500 rules');
+    throw const PlanException(
+      'limit_exceeded',
+      'A sheet can have at most 500 rules',
+    );
   }
   for (final r in op.ranges) {
     b.checkRect(s, r);
@@ -115,14 +136,24 @@ MutationPlan planReorderCfRule(PlanBuilder b, ReorderCfRule op) {
 /// [SetCfEnabled].
 MutationPlan planSetCfEnabled(PlanBuilder b, SetCfEnabled op) {
   final s = _ruleSheet(b, SheetsTables.conditionalFormatRule, op.ruleId);
-  b.update(SheetsTables.conditionalFormatRule, op.ruleId, {'enabled': op.enabled});
+  b.update(SheetsTables.conditionalFormatRule, op.ruleId, {
+    'enabled': op.enabled,
+  });
   b.summary.sheets.add(s.id);
-  return b.build(op.enabled ? 'Enable rule' : 'Disable rule', kinds: [ChangeKinds.rules]);
+  return b.build(
+    op.enabled ? 'Enable rule' : 'Disable rule',
+    kinds: [ChangeKinds.rules],
+  );
 }
 
 /// Subtracts [rects] from every DV rule of [s] except [exceptId]; rules left
 /// empty are deleted (07 §6.4).
-void clearValidationIn(PlanBuilder b, SheetModel s, List<GridRect> rects, {String? exceptId}) {
+void clearValidationIn(
+  PlanBuilder b,
+  SheetModel s,
+  List<GridRect> rects, {
+  String? exceptId,
+}) {
   for (final rule in s.dvRules.values.toList()) {
     if (rule.id == exceptId) continue;
     final cur = b.current(SheetsTables.dataValidationRule, rule.id);
@@ -160,7 +191,9 @@ MutationPlan planSetDataValidation(PlanBuilder b, SetDataValidation op) {
   }
   if (op.criteriaJson == null) {
     clearValidationIn(b, s, op.ranges);
-    if (op.ruleId != null) b.delete(SheetsTables.dataValidationRule, op.ruleId!);
+    if (op.ruleId != null) {
+      b.delete(SheetsTables.dataValidationRule, op.ruleId!);
+    }
     return b.build('Remove data validation', kinds: [ChangeKinds.rules]);
   }
   _checkJson(op.criteriaJson!, 'criteria');
@@ -176,7 +209,8 @@ MutationPlan planSetDataValidation(PlanBuilder b, SetDataValidation op) {
     'helpText': op.helpText,
   };
   final id = op.ruleId ?? b.ctx.ids.newId();
-  if (op.ruleId != null && b.current(SheetsTables.dataValidationRule, id) != null) {
+  if (op.ruleId != null &&
+      b.current(SheetsTables.dataValidationRule, id) != null) {
     b.update(SheetsTables.dataValidationRule, id, cols);
   } else {
     b.insert(SheetsTables.dataValidationRule, id, cols);
@@ -203,9 +237,16 @@ MutationPlan planInsertCheckboxes(PlanBuilder b, InsertCheckboxes op) {
   };
   planSetDataValidation(
     b,
-    SetDataValidation(s.id, op.ranges, jsonEncode(criteria), displayStyle: 'chip'),
+    SetDataValidation(
+      s.id,
+      op.ranges,
+      jsonEncode(criteria),
+      displayStyle: 'chip',
+    ),
   );
-  final unchecked = op.unchecked == null ? const BoolContent(false) : TextContent(op.unchecked!);
+  final unchecked = op.unchecked == null
+      ? const BoolContent(false)
+      : TextContent(op.unchecked!);
   for (final rect in op.ranges) {
     for (var r = rect.top; r <= rect.bottom; r++) {
       for (var c = rect.left; c <= rect.right; c++) {
@@ -216,7 +257,10 @@ MutationPlan planInsertCheckboxes(PlanBuilder b, InsertCheckboxes op) {
       }
     }
   }
-  return b.build('Insert checkbox', kinds: [ChangeKinds.rules, ChangeKinds.values]);
+  return b.build(
+    'Insert checkbox',
+    kinds: [ChangeKinds.rules, ChangeKinds.values],
+  );
 }
 
 /// [SetBasicFilter].
@@ -241,9 +285,14 @@ MutationPlan planSetBasicFilter(PlanBuilder b, SetBasicFilter op) {
 }
 
 /// [SetFilterColumnCriteria].
-MutationPlan planSetFilterColumnCriteria(PlanBuilder b, SetFilterColumnCriteria op) {
+MutationPlan planSetFilterColumnCriteria(
+  PlanBuilder b,
+  SetFilterColumnCriteria op,
+) {
   final s = b.sheetOf(op.sheetId);
-  final table = op.viewId == null ? SheetsTables.basicFilter : SheetsTables.filterView;
+  final table = op.viewId == null
+      ? SheetsTables.basicFilter
+      : SheetsTables.filterView;
   final id = op.viewId ?? SheetsIds.basicFilterId(s.id);
   final cur = b.current(table, id);
   if (cur == null) throw const PlanException('not_found', 'Filter not found');
@@ -264,7 +313,9 @@ MutationPlan planSetFilterColumnCriteria(PlanBuilder b, SetFilterColumnCriteria 
 MutationPlan planRemoveBasicFilter(PlanBuilder b, RemoveBasicFilter op) {
   final s = b.sheetOf(op.sheetId);
   b.delete(SheetsTables.basicFilter, SheetsIds.basicFilterId(s.id));
-  if (s.basicFilter != null) b.delete(SheetsTables.basicFilter, s.basicFilter!.id);
+  if (s.basicFilter != null) {
+    b.delete(SheetsTables.basicFilter, s.basicFilter!.id);
+  }
   b.summary.sheets.add(s.id);
   return b.build('Remove filter', kinds: [ChangeKinds.filters]);
 }
@@ -347,7 +398,10 @@ void _validateName(PlanBuilder b, String name, {String? exceptId}) {
     if (n.id == exceptId) continue;
     final cur = b.current(SheetsTables.namedRange, n.id);
     if (cur != null && (cur[Cols.name] as String).toLowerCase() == lower) {
-      throw const PlanException('duplicate_name', 'A range with this name already exists.');
+      throw const PlanException(
+        'duplicate_name',
+        'A range with this name already exists.',
+      );
     }
   }
 }
@@ -356,7 +410,10 @@ void _validateName(PlanBuilder b, String name, {String? exceptId}) {
 MutationPlan planAddNamedRange(PlanBuilder b, AddNamedRange op) {
   _validateName(b, op.name);
   if (op.range == null && op.formula == null) {
-    throw const PlanException('invalid_argument', 'A named range needs a range or a formula');
+    throw const PlanException(
+      'invalid_argument',
+      'A named range needs a range or a formula',
+    );
   }
   String? rangeJson;
   if (op.range != null) {
@@ -379,7 +436,9 @@ MutationPlan planAddNamedRange(PlanBuilder b, AddNamedRange op) {
   });
   b.result['namedRangeId'] = id;
   return b.build(
-    op.formula != null && op.range == null ? 'Add named function' : 'Add named range',
+    op.formula != null && op.range == null
+        ? 'Add named function'
+        : 'Add named range',
     kinds: [ChangeKinds.names],
   );
 }
@@ -387,7 +446,9 @@ MutationPlan planAddNamedRange(PlanBuilder b, AddNamedRange op) {
 /// [UpdateNamedRange]: renames rewrite formulas using the old name.
 MutationPlan planUpdateNamedRange(PlanBuilder b, UpdateNamedRange op) {
   final cur = b.current(SheetsTables.namedRange, op.id);
-  if (cur == null) throw const PlanException('not_found', 'Named range not found');
+  if (cur == null) {
+    throw const PlanException('not_found', 'Named range not found');
+  }
   final oldName = cur[Cols.name] as String;
   final writes = <String, Object?>{};
   if (op.name != null && op.name != oldName) {
@@ -429,7 +490,9 @@ void renameNameInFormulas(PlanBuilder b, String oldName, String newName) {
       final content = cell.content;
       if (content == null || !content.startsWith('=')) continue;
       final r = rewrite(content);
-      if (r != null) b.update(SheetsTables.cell, cell.id, {CellCols.content: r});
+      if (r != null) {
+        b.update(SheetsTables.cell, cell.id, {CellCols.content: r});
+      }
     }
     void json(String table, Iterable<(String, String?)> rows, String column) {
       for (final (id, j) in rows) {
@@ -504,7 +567,9 @@ MutationPlan planAddProtection(PlanBuilder b, AddProtection op) {
   b.insert(SheetsTables.protectedRange, id, {
     Cols.sheetId: s.id,
     Cols.rangeJson: op.range == null ? null : b.rangeJson(s, op.range!),
-    'exceptRangesJson': op.exceptRanges.isEmpty ? null : b.rangesJson(s, op.exceptRanges),
+    'exceptRangesJson': op.exceptRanges.isEmpty
+        ? null
+        : b.rangesJson(s, op.exceptRanges),
     'description': op.description,
     'warningOnly': op.warningOnly,
     'editorsJson': jsonEncode(op.editors),
@@ -526,7 +591,9 @@ MutationPlan planUpdateProtection(PlanBuilder b, UpdateProtection op) {
     if (op.range != null) Cols.rangeJson: b.rangeJson(s, op.range!),
     if (op.wholeSheet) Cols.rangeJson: null,
     if (op.exceptRanges != null)
-      'exceptRangesJson': op.exceptRanges!.isEmpty ? null : b.rangesJson(s, op.exceptRanges!),
+      'exceptRangesJson': op.exceptRanges!.isEmpty
+          ? null
+          : b.rangesJson(s, op.exceptRanges!),
     if (op.description != null) 'description': op.description,
     if (op.warningOnly != null) 'warningOnly': op.warningOnly,
     if (op.editors != null) 'editorsJson': jsonEncode(op.editors),

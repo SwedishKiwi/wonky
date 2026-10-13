@@ -12,7 +12,11 @@ abstract final class NumberFormatRenderer {
   static const FormattedValue _empty = FormattedValue([]);
 
   /// Renders [value] with [ast] in [locale].
-  static FormattedValue render(NumberFormatAst ast, CellValue value, LocaleFormatData locale) {
+  static FormattedValue render(
+    NumberFormatAst ast,
+    CellValue value,
+    LocaleFormatData locale,
+  ) {
     switch (value) {
       case EmptyValue():
         return _empty;
@@ -28,7 +32,11 @@ abstract final class NumberFormatRenderer {
   }
 
   /// Renders a text value: the text section (`@`) if any, else the text as is.
-  static FormattedValue renderText(NumberFormatAst ast, String text, LocaleFormatData locale) {
+  static FormattedValue renderText(
+    NumberFormatAst ast,
+    String text,
+    LocaleFormatData locale,
+  ) {
     final s = ast.textSection;
     if (s == null) return FormattedValue.text(text);
     if (s.kind == NfSectionKind.empty) return _empty;
@@ -45,10 +53,17 @@ abstract final class NumberFormatRenderer {
 
   /// Automatic display of a number.
   static FormattedValue automatic(double x, LocaleFormatData locale) =>
-      FormattedValue.text(AutomaticFormatter.formatWith(x, locale), overflowHashes: true);
+      FormattedValue.text(
+        AutomaticFormatter.formatWith(x, locale),
+        overflowHashes: true,
+      );
 
   /// Renders a number.
-  static FormattedValue renderNumber(NumberFormatAst ast, double x, LocaleFormatData locale) {
+  static FormattedValue renderNumber(
+    NumberFormatAst ast,
+    double x,
+    LocaleFormatData locale,
+  ) {
     if (!x.isFinite) return FormattedValue.text('#NUM!');
     if (x == 0) x = 0; // normalize -0.0
     final sections = ast.numberSections;
@@ -223,7 +238,9 @@ abstract final class NumberFormatRenderer {
       final kind = (tokens[idx[j]] as NfDigit).kind;
       final d = j < frac.length ? frac[j] : '0';
       if (trailing && d == '0' && kind != NfDigitKind.zero) {
-        out[idx[j]] = kind == NfDigitKind.question ? const SpacerSegment('0') : null;
+        out[idx[j]] = kind == NfDigitKind.question
+            ? const SpacerSegment('0')
+            : null;
         continue;
       }
       trailing = false;
@@ -232,9 +249,15 @@ abstract final class NumberFormatRenderer {
     return out;
   }
 
-  static FormattedValue _number(NfSection s, double v, LocaleFormatData locale) {
+  static FormattedValue _number(
+    NfSection s,
+    double v,
+    LocaleFormatData locale,
+  ) {
     final l = s.layout!;
-    final dec = DecimalDigits.of(v).shift(l.scaleExponent).roundToDecimals(l.decimalPlaceholders);
+    final dec = DecimalDigits.of(
+      v,
+    ).shift(l.scaleExponent).roundToDecimals(l.decimalPlaceholders);
     final intStr = dec.integerString();
     final frac = dec.fractionString(l.decimalPlaceholders);
     final tokens = s.tokens;
@@ -250,7 +273,9 @@ abstract final class NumberFormatRenderer {
           final seg = decs[i];
           if (seg != null) out.add(seg);
         case NfDecimalPoint():
-          if (l.integerPlaceholders == 0) out.text(_grouped(intStr, l.grouping, locale));
+          if (l.integerPlaceholders == 0) {
+            out.text(_grouped(intStr, l.grouping, locale));
+          }
           out.text(locale.decimal);
         case NfTextPlaceholder():
           break;
@@ -262,17 +287,27 @@ abstract final class NumberFormatRenderer {
     return out.build(s.colorArgb);
   }
 
-  static String _grouped(String digits, bool grouping, LocaleFormatData locale) {
+  static String _grouped(
+    String digits,
+    bool grouping,
+    LocaleFormatData locale,
+  ) {
     if (!grouping) return digits;
     final b = StringBuffer();
     for (var j = 0; j < digits.length; j++) {
       b.write(digits[j]);
-      if (_isGroupBoundary(digits.length - 1 - j, locale.indianGrouping)) b.write(locale.group);
+      if (_isGroupBoundary(digits.length - 1 - j, locale.indianGrouping)) {
+        b.write(locale.group);
+      }
     }
     return b.toString();
   }
 
-  static FormattedValue _scientific(NfSection s, double v, LocaleFormatData locale) {
+  static FormattedValue _scientific(
+    NfSection s,
+    double v,
+    LocaleFormatData locale,
+  ) {
     final l = s.layout!;
     final base = DecimalDigits.of(v).shift(l.scaleExponent);
     final n = l.integerPlaceholders < 1 ? 1 : l.integerPlaceholders;
@@ -290,10 +325,15 @@ abstract final class NumberFormatRenderer {
     final tokens = s.tokens;
     final intStr = m.integerString();
     final ints = _integerChunks(tokens, intStr, false, locale);
-    final decs = _decimalChunks(tokens, m.fractionString(l.decimalPlaceholders));
+    final decs = _decimalChunks(
+      tokens,
+      m.fractionString(l.decimalPlaceholders),
+    );
     var zeroPad = 0;
     for (final t in tokens) {
-      if (t is NfDigit && t.role == NfDigitRole.exponent && t.kind == NfDigitKind.zero) {
+      if (t is NfDigit &&
+          t.role == NfDigitRole.exponent &&
+          t.kind == NfDigitKind.zero) {
         zeroPad++;
       }
     }
@@ -366,7 +406,11 @@ abstract final class NumberFormatRenderer {
     return (p1, q1);
   }
 
-  static FormattedValue _fraction(NfSection s, double v, LocaleFormatData locale) {
+  static FormattedValue _fraction(
+    NfSection s,
+    double v,
+    LocaleFormatData locale,
+  ) {
     final l = s.layout!;
     final a = roundToSignificantDigits(v.abs());
     var whole = 0;
@@ -512,7 +556,9 @@ abstract final class NumberFormatRenderer {
     final minute = (secOfDay % 3600) ~/ 60;
     final second = secOfDay % 60;
     final totalSeconds = _floorDiv(units, scale);
-    final names = s.lcid != null ? (LocaleFormatData.forLcid(s.lcid!) ?? locale) : locale;
+    final names = s.lcid != null
+        ? (LocaleFormatData.forLcid(s.lcid!) ?? locale)
+        : locale;
     final ampm = s.hasAmPm;
     ({int year, int month, int day})? ymd;
     if (hasDate) ymd = SerialCalendar.dateOf(day);
@@ -525,18 +571,26 @@ abstract final class NumberFormatRenderer {
               out.text(length == 1 ? '${ymd!.day}' : _pad(ymd!.day, 2));
             case NfDateUnit.weekday:
               final w = SerialCalendar.weekdayOf(day);
-              out.text(length == 3 ? names.shortWeekdays[w] : names.weekdays[w]);
+              out.text(
+                length == 3 ? names.shortWeekdays[w] : names.weekdays[w],
+              );
             case NfDateUnit.month:
               final m = ymd!.month;
               out.text(switch (length) {
                 1 => '$m',
                 2 => _pad(m, 2),
-                3 => (hasDay ? names.shortMonths : names.standaloneShortMonths)[m - 1],
+                3 =>
+                  (hasDay ? names.shortMonths : names.standaloneShortMonths)[m -
+                      1],
                 4 => (hasDay ? names.months : names.standaloneMonths)[m - 1],
-                _ => String.fromCharCode(names.standaloneMonths[m - 1].runes.first),
+                _ => String.fromCharCode(
+                  names.standaloneMonths[m - 1].runes.first,
+                ),
               });
             case NfDateUnit.year:
-              out.text(length == 2 ? _pad(ymd!.year % 100, 2) : _pad(ymd!.year, 4));
+              out.text(
+                length == 2 ? _pad(ymd!.year % 100, 2) : _pad(ymd!.year, 4),
+              );
             case NfDateUnit.hour:
               var h = hour;
               if (ampm) h = h % 12 == 0 ? 12 : h % 12;
@@ -548,7 +602,9 @@ abstract final class NumberFormatRenderer {
           }
         case NfFractionalSeconds(:final digits):
           final f = k == 0 ? '' : _pad(fracUnits, k);
-          final shown = f.length >= digits ? f.substring(0, digits) : f.padRight(digits, '0');
+          final shown = f.length >= digits
+              ? f.substring(0, digits)
+              : f.padRight(digits, '0');
           out.text('${locale.decimal}$shown');
         case NfElapsed(:final unit, :final length):
           final value = switch (unit) {
@@ -641,6 +697,10 @@ final class _Out {
 
   FormattedValue build(int? color, {bool overflow = true}) {
     _flush();
-    return FormattedValue(List.unmodifiable(_segs), colorArgb: color, overflowHashes: overflow);
+    return FormattedValue(
+      List.unmodifiable(_segs),
+      colorArgb: color,
+      overflowHashes: overflow,
+    );
   }
 }

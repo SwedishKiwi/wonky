@@ -13,23 +13,42 @@ void registerArray(FunctionRegistryBuilder b) {
   b.fn(
     'ARRAYFORMULA',
     'Enables the display of values returned from an array formula into multiple rows and/or columns and the use of non-array functions with arrays.',
-    [P.array('array_formula', 'A range, mathematical expression using one cell range or multiple ranges of the same size, or a function that returns a result greater than one cell.')],
+    [
+      P.array(
+        'array_formula',
+        'A range, mathematical expression using one cell range or multiple ranges of the same size, or a function that returns a result greater than one cell.',
+      ),
+    ],
     (a) => a[0],
     returns: ReturnKind.array,
     handlesErrors: true,
     priority: Priority.p0,
-    examples: ['ARRAYFORMULA(A1:C1 * A2:C2)', 'ARRAYFORMULA(SUM(A1:A10 * B1:B10))'],
+    examples: [
+      'ARRAYFORMULA(A1:C1 * A2:C2)',
+      'ARRAYFORMULA(SUM(A1:A10 * B1:B10))',
+    ],
   );
 
   b.fn(
     'SUMPRODUCT',
     'Calculates the sum of the products of corresponding entries in two equal-sized arrays or ranges.',
-    [P.array('array1', 'The first array or range whose entries will be multiplied with corresponding entries in the second such array or range.'), P.rep('array2', ArgKind.array, 'Additional arrays of the same size.')],
+    [
+      P.array(
+        'array1',
+        'The first array or range whose entries will be multiplied with corresponding entries in the second such array or range.',
+      ),
+      P.rep('array2', ArgKind.array, 'Additional arrays of the same size.'),
+    ],
     (a) {
       final arrays = [for (var i = 0; i < a.length; i++) a.array(i)];
       final r = arrays.first.rows, c = arrays.first.cols;
       for (final x in arrays) {
-        if (x.rows != r || x.cols != c) fail(ErrorKind.value, 'SUMPRODUCT has mismatched range sizes. Expected row count: $r. column count: $c. Actual row count: ${x.rows}, column count: ${x.cols}.');
+        if (x.rows != r || x.cols != c) {
+          fail(
+            ErrorKind.value,
+            'SUMPRODUCT has mismatched range sizes. Expected row count: $r. column count: $c. Actual row count: ${x.rows}, column count: ${x.cols}.',
+          );
+        }
       }
       var sum = 0.0;
       for (var i = 0; i < r * c; i++) {
@@ -47,14 +66,29 @@ void registerArray(FunctionRegistryBuilder b) {
     examples: ['SUMPRODUCT(A2:C5, D2:F5)', 'SUMPRODUCT((A1:A10 > 5) * B1:B10)'],
   );
 
-  void pairSum(String name, String summary, double Function(double x, double y) f) {
+  void pairSum(
+    String name,
+    String summary,
+    double Function(double x, double y) f,
+  ) {
     b.fn(
       name,
       summary,
-      [P.array('array_x', 'The array or range of values whose entries are the first operand.'), P.array('array_y', 'The array or range of values whose entries are the second operand.')],
+      [
+        P.array(
+          'array_x',
+          'The array or range of values whose entries are the first operand.',
+        ),
+        P.array(
+          'array_y',
+          'The array or range of values whose entries are the second operand.',
+        ),
+      ],
       (a) {
         final x = a.array(0), y = a.array(1);
-        if (x.length != y.length) fail(ErrorKind.na, ErrorMessages.arraySizeMismatch(name));
+        if (x.length != y.length) {
+          fail(ErrorKind.na, ErrorMessages.arraySizeMismatch(name));
+        }
         var s = 0.0;
         var any = false;
         for (var i = 0; i < x.length; i++) {
@@ -74,14 +108,31 @@ void registerArray(FunctionRegistryBuilder b) {
     );
   }
 
-  pairSum('SUMX2MY2', 'Calculates the sum of the differences of the squares of values in two arrays.', (x, y) => x * x - y * y);
-  pairSum('SUMX2PY2', 'Calculates the sum of the sums of the squares of values in two arrays.', (x, y) => x * x + y * y);
-  pairSum('SUMXMY2', 'Calculates the sum of the squares of differences of values in two arrays.', (x, y) => (x - y) * (x - y));
+  pairSum(
+    'SUMX2MY2',
+    'Calculates the sum of the differences of the squares of values in two arrays.',
+    (x, y) => x * x - y * y,
+  );
+  pairSum(
+    'SUMX2PY2',
+    'Calculates the sum of the sums of the squares of values in two arrays.',
+    (x, y) => x * x + y * y,
+  );
+  pairSum(
+    'SUMXMY2',
+    'Calculates the sum of the squares of differences of values in two arrays.',
+    (x, y) => (x - y) * (x - y),
+  );
 
   b.fn(
     'TRANSPOSE',
     'Transposes the rows and columns of an array or range of cells.',
-    [P.array('array_or_range', 'The array or range whose rows and columns will be swapped.')],
+    [
+      P.array(
+        'array_or_range',
+        'The array or range whose rows and columns will be swapped.',
+      ),
+    ],
     (a) {
       final x = a.array(0);
       return FArray.generate(x.cols, x.rows, (r, c) => x.at(c, r));
@@ -94,11 +145,22 @@ void registerArray(FunctionRegistryBuilder b) {
   b.fn(
     'MMULT',
     'Calculates the matrix product of two matrices specified as arrays or ranges.',
-    [P.array('matrix1', 'The first matrix in the matrix multiplication operation.'), P.array('matrix2', 'The second matrix in the matrix multiplication operation.')],
+    [
+      P.array(
+        'matrix1',
+        'The first matrix in the matrix multiplication operation.',
+      ),
+      P.array(
+        'matrix2',
+        'The second matrix in the matrix multiplication operation.',
+      ),
+    ],
     (a) {
       final m1 = _matrix(a, 0), m2 = _matrix(a, 1);
       final n = m1.length, k = m1.first.length, p = m2.first.length;
-      if (k != m2.length) fail(ErrorKind.value, 'MMULT has mismatched dimensions.');
+      if (k != m2.length) {
+        fail(ErrorKind.value, 'MMULT has mismatched dimensions.');
+      }
       return FArray.generate(n, p, (r, c) {
         var s = 0.0;
         for (var i = 0; i < k; i++) {
@@ -113,10 +175,17 @@ void registerArray(FunctionRegistryBuilder b) {
   b.fn(
     'MDETERM',
     'Returns the matrix determinant of a square matrix specified as an array or range.',
-    [P.array('square_matrix', 'An array or range with an equal number of rows and columns representing a matrix.')],
+    [
+      P.array(
+        'square_matrix',
+        'An array or range with an equal number of rows and columns representing a matrix.',
+      ),
+    ],
     (a) {
       final m = _matrix(a, 0);
-      if (m.length != m.first.length) fail(ErrorKind.value, 'MDETERM requires a square matrix.');
+      if (m.length != m.first.length) {
+        fail(ErrorKind.value, 'MDETERM requires a square matrix.');
+      }
       return numResult(_lu(m).det);
     },
     examples: ['MDETERM({1,2;3,4})'],
@@ -124,11 +193,18 @@ void registerArray(FunctionRegistryBuilder b) {
   b.fn(
     'MINVERSE',
     'Returns the multiplicative inverse of a square matrix specified as an array or range.',
-    [P.array('square_matrix', 'An array or range with an equal number of rows and columns representing a matrix.')],
+    [
+      P.array(
+        'square_matrix',
+        'An array or range with an equal number of rows and columns representing a matrix.',
+      ),
+    ],
     (a) {
       final m = _matrix(a, 0);
       final n = m.length;
-      if (n != m.first.length) fail(ErrorKind.value, 'MINVERSE requires a square matrix.');
+      if (n != m.first.length) {
+        fail(ErrorKind.value, 'MINVERSE requires a square matrix.');
+      }
       final inv = invert(m);
       if (inv == null) fail(ErrorKind.num, 'MINVERSE: the matrix is singular.');
       return FArray.generate(n, n, (r, c) => FNumber(inv[r][c]));
@@ -140,7 +216,11 @@ void registerArray(FunctionRegistryBuilder b) {
   b.fn(
     'ARRAY_CONSTRAIN',
     'Constrains an array result to a specified size.',
-    [P.array('input_range', 'The range to constrain.'), P.num('num_rows', 'The number of rows the result should contain.'), P.num('num_cols', 'The number of columns the result should contain.')],
+    [
+      P.array('input_range', 'The range to constrain.'),
+      P.num('num_rows', 'The number of rows the result should contain.'),
+      P.num('num_cols', 'The number of columns the result should contain.'),
+    ],
     (a) {
       final x = a.array(0);
       final r = a.integer(1), c = a.integer(2);
@@ -176,7 +256,11 @@ void registerArray(FunctionRegistryBuilder b) {
   b.fn(
     'TAKE',
     'Returns rows or columns from the start or end of an array.',
-    [P.array('array', 'The array to take from.'), P.num('rows', 'Rows to take; negative takes from the end.', true), P.num('columns', 'Columns to take; negative takes from the end.', true)],
+    [
+      P.array('array', 'The array to take from.'),
+      P.num('rows', 'Rows to take; negative takes from the end.', true),
+      P.num('columns', 'Columns to take; negative takes from the end.', true),
+    ],
     (a) => takeDrop(a, take: true),
     returns: ReturnKind.array,
     examples: ['TAKE(A1:C10, 3)', 'TAKE(A1:C10, -2, 1)'],
@@ -184,7 +268,11 @@ void registerArray(FunctionRegistryBuilder b) {
   b.fn(
     'DROP',
     'Removes rows or columns from the start or end of an array.',
-    [P.array('array', 'The array to drop from.'), P.num('rows', 'Rows to drop; negative drops from the end.', true), P.num('columns', 'Columns to drop; negative drops from the end.', true)],
+    [
+      P.array('array', 'The array to drop from.'),
+      P.num('rows', 'Rows to drop; negative drops from the end.', true),
+      P.num('columns', 'Columns to drop; negative drops from the end.', true),
+    ],
     (a) => takeDrop(a, take: false),
     returns: ReturnKind.array,
     examples: ['DROP(A1:C10, 1)'],
@@ -196,15 +284,25 @@ void registerArray(FunctionRegistryBuilder b) {
       P.array('array', 'The array to expand.'),
       P.num('rows', 'The number of rows of the result.'),
       P.num('columns', 'The number of columns of the result.', true),
-      P.scalar('pad_with', 'The value with which to pad. Default is #N/A.', true),
+      P.scalar(
+        'pad_with',
+        'The value with which to pad. Default is #N/A.',
+        true,
+      ),
     ],
     (a) {
       final x = a.array(0);
       final r = a.has(1) ? a.integer(1) : x.rows;
       final c = a.has(2) ? a.integer(2) : x.cols;
-      if (r < x.rows || c < x.cols) fail(ErrorKind.value, 'EXPAND cannot shrink an array.');
+      if (r < x.rows || c < x.cols) {
+        fail(ErrorKind.value, 'EXPAND cannot shrink an array.');
+      }
       final pad = a.has(3) ? a.scalarOrError(3) : FError.na;
-      return FArray.generate(r, c, (i, j) => i < x.rows && j < x.cols ? x.at(i, j) : pad);
+      return FArray.generate(
+        r,
+        c,
+        (i, j) => i < x.rows && j < x.cols ? x.at(i, j) : pad,
+      );
     },
     returns: ReturnKind.array,
     examples: ['EXPAND(A1:B2, 3, 3, 0)'],
@@ -217,7 +315,9 @@ void registerArray(FunctionRegistryBuilder b) {
       final rows = <List<FValue>>[];
       for (final p in parts) {
         for (var r = 0; r < p.rows; r++) {
-          rows.add([for (var c = 0; c < w; c++) c < p.cols ? p.at(r, c) : FError.na]);
+          rows.add([
+            for (var c = 0; c < w; c++) c < p.cols ? p.at(r, c) : FError.na,
+          ]);
         }
       }
       return FArray.fromRows(rows);
@@ -237,7 +337,10 @@ void registerArray(FunctionRegistryBuilder b) {
   b.fn(
     'HSTACK',
     'Appends ranges horizontally and in sequence to return a larger array.',
-    [P.array('range1', 'The first range to append.'), P.rep('range2', ArgKind.array, 'Additional ranges to add.')],
+    [
+      P.array('range1', 'The first range to append.'),
+      P.rep('range2', ArgKind.array, 'Additional ranges to add.'),
+    ],
     (a) => stack(a, vertical: false),
     returns: ReturnKind.array,
     priority: Priority.p0,
@@ -246,7 +349,10 @@ void registerArray(FunctionRegistryBuilder b) {
   b.fn(
     'VSTACK',
     'Appends ranges vertically and in sequence to return a larger array.',
-    [P.array('range1', 'The first range to append.'), P.rep('range2', ArgKind.array, 'Additional ranges to add.')],
+    [
+      P.array('range1', 'The first range to append.'),
+      P.rep('range2', ArgKind.array, 'Additional ranges to add.'),
+    ],
     (a) => stack(a, vertical: true),
     returns: ReturnKind.array,
     priority: Priority.p0,
@@ -256,7 +362,10 @@ void registerArray(FunctionRegistryBuilder b) {
   b.fn(
     'FLATTEN',
     'Flattens all the values from one or more ranges into a single column.',
-    [P.array('range1', 'The first range to flatten.'), P.rep('range2', ArgKind.array, 'Additional ranges to flatten.')],
+    [
+      P.array('range1', 'The first range to flatten.'),
+      P.rep('range2', ArgKind.array, 'Additional ranges to flatten.'),
+    ],
     (a) {
       final out = <FValue>[];
       for (var i = 0; i < a.length; i++) {
@@ -298,8 +407,18 @@ void registerArray(FunctionRegistryBuilder b) {
     'Transforms an array or range of cells into a single column.',
     [
       P.array('array_or_range', 'The array or range to transform.'),
-      P.num('ignore', '0 keep all (default), 1 ignore blanks, 2 ignore errors, 3 ignore blanks and errors.', true, 0),
-      P.bool_('scan_by_column', 'Scan column by column (TRUE) or row by row (FALSE, default).', true, false),
+      P.num(
+        'ignore',
+        '0 keep all (default), 1 ignore blanks, 2 ignore errors, 3 ignore blanks and errors.',
+        true,
+        0,
+      ),
+      P.bool_(
+        'scan_by_column',
+        'Scan column by column (TRUE) or row by row (FALSE, default).',
+        true,
+        false,
+      ),
     ],
     (a) => toVector(a, column: true),
     returns: ReturnKind.array,
@@ -310,8 +429,18 @@ void registerArray(FunctionRegistryBuilder b) {
     'Transforms an array or range of cells into a single row.',
     [
       P.array('array_or_range', 'The array or range to transform.'),
-      P.num('ignore', '0 keep all (default), 1 ignore blanks, 2 ignore errors, 3 ignore blanks and errors.', true, 0),
-      P.bool_('scan_by_column', 'Scan column by column (TRUE) or row by row (FALSE, default).', true, false),
+      P.num(
+        'ignore',
+        '0 keep all (default), 1 ignore blanks, 2 ignore errors, 3 ignore blanks and errors.',
+        true,
+        0,
+      ),
+      P.bool_(
+        'scan_by_column',
+        'Scan column by column (TRUE) or row by row (FALSE, default).',
+        true,
+        false,
+      ),
     ],
     (a) => toVector(a, column: false),
     returns: ReturnKind.array,
@@ -320,7 +449,9 @@ void registerArray(FunctionRegistryBuilder b) {
 
   FValue wrap(Args a, {required bool rows}) {
     final x = a.array(0);
-    if (x.rows != 1 && x.cols != 1) fail(ErrorKind.value, '${a.fn} expects a single row or column.');
+    if (x.rows != 1 && x.cols != 1) {
+      fail(ErrorKind.value, '${a.fn} expects a single row or column.');
+    }
     final n = a.integer(1);
     if (n < 1) fail(ErrorKind.num);
     final pad = a.has(2) ? a.scalarOrError(2) : FError.na;
@@ -341,7 +472,15 @@ void registerArray(FunctionRegistryBuilder b) {
   b.fn(
     'WRAPROWS',
     'Wraps the provided row or column of cells by rows after a specified number of elements to form a new array.',
-    [P.array('range', 'The range to wrap.'), P.num('wrap_count', 'The maximum number of cells for each row.'), P.scalar('pad_with', 'The value with which to fill the extra cells.', true)],
+    [
+      P.array('range', 'The range to wrap.'),
+      P.num('wrap_count', 'The maximum number of cells for each row.'),
+      P.scalar(
+        'pad_with',
+        'The value with which to fill the extra cells.',
+        true,
+      ),
+    ],
     (a) => wrap(a, rows: true),
     returns: ReturnKind.array,
     examples: ['WRAPROWS(A1:A10, 3)'],
@@ -349,7 +488,15 @@ void registerArray(FunctionRegistryBuilder b) {
   b.fn(
     'WRAPCOLS',
     'Wraps the provided row or column of cells by columns after a specified number of elements to form a new array.',
-    [P.array('range', 'The range to wrap.'), P.num('wrap_count', 'The maximum number of cells for each column.'), P.scalar('pad_with', 'The value with which to fill the extra cells.', true)],
+    [
+      P.array('range', 'The range to wrap.'),
+      P.num('wrap_count', 'The maximum number of cells for each column.'),
+      P.scalar(
+        'pad_with',
+        'The value with which to fill the extra cells.',
+        true,
+      ),
+    ],
     (a) => wrap(a, rows: false),
     returns: ReturnKind.array,
     examples: ['WRAPCOLS(A1:A10, 3)'],
@@ -365,7 +512,10 @@ List<List<double>> _matrix(Args a, int i) {
           switch (x.at(r, c)) {
             FNumber(:final v) => v,
             final FError e => throw FormulaError(e),
-            _ => fail(ErrorKind.value, 'Function ${a.fn} parameter ${i + 1} expects number values.'),
+            _ => fail(
+              ErrorKind.value,
+              'Function ${a.fn} parameter ${i + 1} expects number values.',
+            ),
           },
       ],
   ];
@@ -413,7 +563,8 @@ _Lu _lu(List<List<double>> m) {
 List<List<double>>? invert(List<List<double>> m) {
   final n = m.length;
   final a = [
-    for (var i = 0; i < n; i++) [...m[i], for (var j = 0; j < n; j++) i == j ? 1.0 : 0.0],
+    for (var i = 0; i < n; i++)
+      [...m[i], for (var j = 0; j < n; j++) i == j ? 1.0 : 0.0],
   ];
   for (var k = 0; k < n; k++) {
     var p = k;

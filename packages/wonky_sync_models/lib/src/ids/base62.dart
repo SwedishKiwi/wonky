@@ -5,7 +5,8 @@
 library;
 
 /// The base-62 alphabet in ASCII order.
-const String base62Digits = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz';
+const String base62Digits =
+    '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz';
 
 final List<int> _digitValues = () {
   final table = List<int>.filled(128, -1);
@@ -71,7 +72,9 @@ abstract final class Base62Uuid {
         bytes[i] = acc & 0xff;
         carry = acc >> 8;
       }
-      if (carry != 0) throw FormatException('Base-62 id overflows 128 bits', id22);
+      if (carry != 0) {
+        throw FormatException('Base-62 id overflows 128 bits', id22);
+      }
     }
     return bytes;
   }

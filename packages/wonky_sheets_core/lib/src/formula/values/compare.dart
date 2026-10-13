@@ -49,13 +49,14 @@ abstract final class Compare {
 
   /// Exact-match key for hashing lookups: numbers by value, text folded, booleans; null for
   /// blanks/errors.
-  static Object? matchKey(FValue v, {bool caseSensitive = false}) => switch (v) {
-    FNumber(:final v) => v == 0 ? 0.0 : v,
-    FText(:final v) => caseSensitive ? 's:$v' : 's:${fold(v)}',
-    FBool(:final v) => v,
-    FRich(:final scalar) => matchKey(scalar, caseSensitive: caseSensitive),
-    _ => null,
-  };
+  static Object? matchKey(FValue v, {bool caseSensitive = false}) =>
+      switch (v) {
+        FNumber(:final v) => v == 0 ? 0.0 : v,
+        FText(:final v) => caseSensitive ? 's:$v' : 's:${fold(v)}',
+        FBool(:final v) => v,
+        FRich(:final scalar) => matchKey(scalar, caseSensitive: caseSensitive),
+        _ => null,
+      };
 
   static String _collationKey(String s) {
     final b = StringBuffer();
@@ -68,9 +69,57 @@ abstract final class Compare {
   static final Map<int, String> _stripMark = () {
     const from = 'àáâãäåāăąçćčďèéêëēėęěìíîïīįłñńňòóôõöøōőŕřśšşťùúûüūůűųýÿźżžß';
     const to = [
-      'a', 'a', 'a', 'a', 'a', 'a', 'a', 'a', 'a', 'c', 'c', 'c', 'd', 'e', 'e', 'e', 'e', //
-      'e', 'e', 'e', 'e', 'i', 'i', 'i', 'i', 'i', 'i', 'l', 'n', 'n', 'n', 'o', 'o', 'o', //
-      'o', 'o', 'o', 'o', 'o', 'r', 'r', 's', 's', 's', 't', 'u', 'u', 'u', 'u', 'u', 'u', //
+      'a',
+      'a',
+      'a',
+      'a',
+      'a',
+      'a',
+      'a',
+      'a',
+      'a',
+      'c',
+      'c',
+      'c',
+      'd',
+      'e',
+      'e',
+      'e',
+      'e', //
+      'e',
+      'e',
+      'e',
+      'e',
+      'i',
+      'i',
+      'i',
+      'i',
+      'i',
+      'i',
+      'l',
+      'n',
+      'n',
+      'n',
+      'o',
+      'o',
+      'o', //
+      'o',
+      'o',
+      'o',
+      'o',
+      'o',
+      'r',
+      'r',
+      's',
+      's',
+      's',
+      't',
+      'u',
+      'u',
+      'u',
+      'u',
+      'u',
+      'u', //
       'u', 'u', 'y', 'y', 'z', 'z', 'z', 'ss',
     ];
     final m = <int, String>{};

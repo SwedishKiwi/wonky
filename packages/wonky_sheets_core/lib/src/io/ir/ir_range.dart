@@ -20,7 +20,8 @@ final class IrRange {
   factory IrRange.cell(int row, int col) => IrRange._(row, col, row, col);
 
   /// From an index rectangle.
-  factory IrRange.rect(GridRect r) => IrRange._(r.top, r.left, r.bottom, r.right);
+  factory IrRange.rect(GridRect r) =>
+      IrRange._(r.top, r.left, r.bottom, r.right);
 
   /// Whole columns.
   factory IrRange.columns(int c1, int c2) => IrRange(null, c1, null, c2);
@@ -129,7 +130,11 @@ final class IrRange {
 
   @override
   bool operator ==(Object other) =>
-      other is IrRange && other.r1 == r1 && other.r2 == r2 && other.c1 == c1 && other.c2 == c2;
+      other is IrRange &&
+      other.r1 == r1 &&
+      other.r2 == r2 &&
+      other.c1 == c1 &&
+      other.c2 == c2;
 
   @override
   int get hashCode => Object.hash(r1, c1, r2, c2);

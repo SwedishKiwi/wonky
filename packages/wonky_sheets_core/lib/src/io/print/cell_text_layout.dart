@@ -22,13 +22,17 @@ final class CellTextStyle {
   final bool italic;
 
   /// A copy with changes.
-  CellTextStyle copyWith({String? family, double? size, bool? bold, bool? italic}) =>
-      CellTextStyle(
-        family: family ?? this.family,
-        size: size ?? this.size,
-        bold: bold ?? this.bold,
-        italic: italic ?? this.italic,
-      );
+  CellTextStyle copyWith({
+    String? family,
+    double? size,
+    bool? bold,
+    bool? italic,
+  }) => CellTextStyle(
+    family: family ?? this.family,
+    size: size ?? this.size,
+    bold: bold ?? this.bold,
+    italic: italic ?? this.italic,
+  );
 
   @override
   bool operator ==(Object other) =>
@@ -42,7 +46,8 @@ final class CellTextStyle {
   int get hashCode => Object.hash(family, size, bold, italic);
 
   @override
-  String toString() => 'CellTextStyle($family ${size}pt${bold ? ' b' : ''}${italic ? ' i' : ''})';
+  String toString() =>
+      'CellTextStyle($family ${size}pt${bold ? ' b' : ''}${italic ? ' i' : ''})';
 }
 
 /// Font metrics used by [CellTextLayout] (03 §2.6). Implemented over `pdf`
@@ -81,7 +86,9 @@ final class ApproximateTextMeasurer implements CellTextMeasurer {
     if (r == 0x20) return 0.278;
     if (r >= 0x30 && r <= 0x39) return 0.556;
     if (r >= 0x1100 && _isWide(r)) return 1.0;
-    if (r == 0x69 || r == 0x6c || r == 0x2e || r == 0x2c || r == 0x27) return 0.25;
+    if (r == 0x69 || r == 0x6c || r == 0x2e || r == 0x2c || r == 0x27) {
+      return 0.25;
+    }
     if (r == 0x6d || r == 0x77 || r == 0x4d || r == 0x57) return 0.85;
     if (r >= 0x41 && r <= 0x5a) return bold ? 0.72 : 0.67;
     return bold ? 0.6 : 0.55;
@@ -344,7 +351,13 @@ abstract final class CellTextLayout {
           HorizontalAlign.center => -w / 2,
         };
         lines.add(
-          LayoutLine(ranges[i].$1, ranges[i].$2, lx, -blockH / 2 + i * lineH + baselineOffset, w),
+          LayoutLine(
+            ranges[i].$1,
+            ranges[i].$2,
+            lx,
+            -blockH / 2 + i * lineH + baselineOffset,
+            w,
+          ),
         );
       }
       return CellTextLayoutResult(
@@ -426,19 +439,27 @@ abstract final class CellTextLayout {
     );
   }
 
-  static double _alignX(HorizontalAlign a, double cellWidth, double pad, double w) =>
-      switch (a) {
-        HorizontalAlign.left => pad,
-        HorizontalAlign.right => cellWidth - pad - w,
-        HorizontalAlign.center => (cellWidth - w) / 2,
-      };
+  static double _alignX(
+    HorizontalAlign a,
+    double cellWidth,
+    double pad,
+    double w,
+  ) => switch (a) {
+    HorizontalAlign.left => pad,
+    HorizontalAlign.right => cellWidth - pad - w,
+    HorizontalAlign.center => (cellWidth - w) / 2,
+  };
 
-  static double _blockTop(VerticalAlign v, double cellHeight, double pad, double h) =>
-      switch (v) {
-        VerticalAlign.top => pad,
-        VerticalAlign.middle => (cellHeight - h) / 2,
-        VerticalAlign.bottom => cellHeight - pad - h,
-      };
+  static double _blockTop(
+    VerticalAlign v,
+    double cellHeight,
+    double pad,
+    double h,
+  ) => switch (v) {
+    VerticalAlign.top => pad,
+    VerticalAlign.middle => (cellHeight - h) / 2,
+    VerticalAlign.bottom => cellHeight - pad - h,
+  };
 
   static int _trimEnd(String t, int s, int e) {
     var i = e;
@@ -473,7 +494,8 @@ abstract final class CellTextLayout {
         continue;
       }
       final lineEndTrim = _trimEnd(t, lineStart, next);
-      if (widthOf(lineStart, lineEndTrim) > maxWidth + 1e-9 && next - lineStart > 1) {
+      if (widthOf(lineStart, lineEndTrim) > maxWidth + 1e-9 &&
+          next - lineStart > 1) {
         if (lastBreak > lineStart) {
           out.add((lineStart, lastBreak));
           lineStart = lastBreak;
@@ -585,9 +607,12 @@ final class _StyleMap {
     }
   }
 
-  double maxLineHeight(CellTextMeasurer m) => allStyles.map(m.lineHeight).reduce(math.max);
-  double maxAscent(CellTextMeasurer m) => allStyles.map(m.ascent).reduce(math.max);
-  double maxDescent(CellTextMeasurer m) => allStyles.map(m.descent).reduce(math.max);
+  double maxLineHeight(CellTextMeasurer m) =>
+      allStyles.map(m.lineHeight).reduce(math.max);
+  double maxAscent(CellTextMeasurer m) =>
+      allStyles.map(m.ascent).reduce(math.max);
+  double maxDescent(CellTextMeasurer m) =>
+      allStyles.map(m.descent).reduce(math.max);
 
   /// Prefix advance widths per UTF-16 offset (surrogate pairs measured as one
   /// glyph and attributed to the high surrogate).

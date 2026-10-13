@@ -21,7 +21,11 @@ abstract final class PasteTiling {
 
   /// `(down, across)` repetitions when [selection] is an exact multiple of
   /// the source size (including 1 × 1), else null.
-  static (int down, int across)? tiles(int sourceRows, int sourceCols, GridRect selection) {
+  static (int down, int across)? tiles(
+    int sourceRows,
+    int sourceCols,
+    GridRect selection,
+  ) {
     if (sourceRows <= 0 || sourceCols <= 0) return null;
     final rows = selection.rowCount;
     final cols = selection.colCount;

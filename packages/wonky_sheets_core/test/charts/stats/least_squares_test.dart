@@ -23,8 +23,16 @@ void main() {
     final cases = <(String, double Function(LeastSquaresFit), double)>[
       ('slope', (f) => f.coefficients[0], 0.6),
       ('intercept', (f) => f.intercept, 2.2),
-      ('slope standard error', (f) => f.standardErrors![0], math.sqrt(0.8 / 10)),
-      ('intercept standard error', (f) => f.interceptStandardError!, math.sqrt(0.8 * 1.1)),
+      (
+        'slope standard error',
+        (f) => f.standardErrors![0],
+        math.sqrt(0.8 / 10),
+      ),
+      (
+        'intercept standard error',
+        (f) => f.interceptStandardError!,
+        math.sqrt(0.8 * 1.1),
+      ),
       ('R²', (f) => f.r2, 0.6),
       ('standard error of y', (f) => f.standardErrorY, math.sqrt(0.8)),
       ('F statistic', (f) => f.fStatistic, 4.5),
@@ -57,7 +65,11 @@ void main() {
       test(
         'when fitting with intercept = $intercept then all stats match exact normal equations',
         () {
-          final reference = ExactLinest.of([exact(x1), exact(x2)], exact(y), intercept: intercept);
+          final reference = ExactLinest.of(
+            [exact(x1), exact(x2)],
+            exact(y),
+            intercept: intercept,
+          );
 
           final fit = LeastSquares.fit([x1, x2], y, intercept: intercept)!;
 
@@ -84,20 +96,23 @@ void main() {
     final x1 = f64([1, 2, 3, 4, 5, 6]);
     final y = f64([1.1, 2.3, 2.8, 4.2, 4.9, 6.1]);
 
-    test('when x2 = 2·x1 then x2 gets coefficient 0 and is excluded from df', () {
-      final x2 = f64([for (final v in x1) 2 * v]);
-      final single = LeastSquares.fit([x1], y)!;
+    test(
+      'when x2 = 2·x1 then x2 gets coefficient 0 and is excluded from df',
+      () {
+        final x2 = f64([for (final v in x1) 2 * v]);
+        final single = LeastSquares.fit([x1], y)!;
 
-      final fit = LeastSquares.fit([x1, x2], y)!;
+        final fit = LeastSquares.fit([x1, x2], y)!;
 
-      expect(fit.rank, 1);
-      expect(fit.degreesOfFreedom, 4);
-      expect(fit.coefficients[1], 0);
-      expect(fit.standardErrors![1], 0);
-      expect(fit.coefficients[0], closeToRel(single.coefficients[0]));
-      expect(fit.standardErrors![0], closeToRel(single.standardErrors![0]));
-      expect(fit.fStatistic, closeToRel(single.fStatistic));
-    });
+        expect(fit.rank, 1);
+        expect(fit.degreesOfFreedom, 4);
+        expect(fit.coefficients[1], 0);
+        expect(fit.standardErrors![1], 0);
+        expect(fit.coefficients[0], closeToRel(single.coefficients[0]));
+        expect(fit.standardErrors![0], closeToRel(single.standardErrors![0]));
+        expect(fit.fStatistic, closeToRel(single.fStatistic));
+      },
+    );
 
     test('when a column is constant then it is absorbed by the intercept', () {
       final fit = LeastSquares.fit([f64(List.filled(6, 5)), x1], y)!;
@@ -141,28 +156,34 @@ void main() {
   });
 
   group('Given degenerate fits', () {
-    test('when df is 0 then standard errors are null and sey and F are NaN', () {
-      final fit = LeastSquares.fit([
-        f64([1, 2]),
-      ], f64([3, 5]))!;
+    test(
+      'when df is 0 then standard errors are null and sey and F are NaN',
+      () {
+        final fit = LeastSquares.fit([
+          f64([1, 2]),
+        ], f64([3, 5]))!;
 
-      expect(fit.degreesOfFreedom, 0);
-      expect(fit.standardErrors, isNull);
-      expect(fit.interceptStandardError, isNull);
-      expect(fit.standardErrorY, isNaN);
-      expect(fit.fStatistic, isNaN);
-      expect(fit.r2, closeToRel(1));
-    });
+        expect(fit.degreesOfFreedom, 0);
+        expect(fit.standardErrors, isNull);
+        expect(fit.interceptStandardError, isNull);
+        expect(fit.standardErrorY, isNaN);
+        expect(fit.fStatistic, isNaN);
+        expect(fit.r2, closeToRel(1));
+      },
+    );
 
-    test('when the fit is exact with df > 0 then F is infinite and sey is 0', () {
-      final fit = LeastSquares.fit([
-        f64([1, 2, 4]),
-      ], f64([2, 4, 8]))!;
+    test(
+      'when the fit is exact with df > 0 then F is infinite and sey is 0',
+      () {
+        final fit = LeastSquares.fit([
+          f64([1, 2, 4]),
+        ], f64([2, 4, 8]))!;
 
-      expect(fit.coefficients[0], closeToRel(2));
-      expect(fit.standardErrorY, closeToRel(0));
-      expect(fit.fStatistic, double.infinity);
-    });
+        expect(fit.coefficients[0], closeToRel(2));
+        expect(fit.standardErrorY, closeToRel(0));
+        expect(fit.fStatistic, double.infinity);
+      },
+    );
 
     test('when y is constant then R² is defined as 1', () {
       final fit = LeastSquares.fit([

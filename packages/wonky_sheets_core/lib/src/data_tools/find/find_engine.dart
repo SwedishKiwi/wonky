@@ -60,7 +60,8 @@ final class FindMatch {
   int get hashCode => Object.hash(sheetId, row, col, kind, isOverlay);
 
   @override
-  String toString() => 'FindMatch($sheetId!${CellPos(row, col).a1}, ${kind.name})';
+  String toString() =>
+      'FindMatch($sheetId!${CellPos(row, col).a1}, ${kind.name})';
 }
 
 /// Result of [FindEngine.find].
@@ -101,23 +102,44 @@ final class FindEngine {
 
   /// The A1 text of a formula cell (stored text when no hooks are given).
   String formulaText(String sheetId, int row, int col, String stored) =>
-      hooks?.toA1(stored, sheetId: sheetId, row: row, col: col, locale: locale) ?? stored;
+      hooks?.toA1(
+        stored,
+        sheetId: sheetId,
+        row: row,
+        col: col,
+        locale: locale,
+      ) ??
+      stored;
 
   /// The kind of the first match in the cell, or null.
-  FindMatchKind? matchCell(FindMatcher m, FindQuery q, SheetModel sheet, int row, int col, CellRecord? cell) {
+  FindMatchKind? matchCell(
+    FindMatcher m,
+    FindQuery q,
+    SheetModel sheet,
+    int row,
+    int col,
+    CellRecord? cell,
+  ) {
     final content = cell?.decoded;
     if (content is FormulaContent && q.searchFormulas) {
-      if (m.matches(formulaText(sheet.id, row, col, content.text))) return FindMatchKind.formula;
+      if (m.matches(formulaText(sheet.id, row, col, content.text))) {
+        return FindMatchKind.formula;
+      }
     }
     final v = reader.valueAt(sheet.id, row, col);
     if (!v.isBlank()) {
-      final t = reader.display.displayText(v, reader.numberFormatAt(sheet.id, row, col));
+      final t = reader.display.displayText(
+        v,
+        reader.numberFormatAt(sheet.id, row, col),
+      );
       if (m.matches(t)) return FindMatchKind.value;
     }
     if (q.searchLinks && cell != null) {
       final link = cell.format[FormatAttr.linkUrl] as String?;
       if (link != null && m.matches(link)) return FindMatchKind.link;
-      if (content is RichTextContent && content.rich.links.any(m.matches)) return FindMatchKind.link;
+      if (content is RichTextContent && content.rich.links.any(m.matches)) {
+        return FindMatchKind.link;
+      }
     }
     return null;
   }
@@ -157,14 +179,20 @@ final class FindEngine {
     for (final sheet in sheets) {
       final grid = sheet.gridRect;
       if (grid == null) continue;
-      final rect = q.scope == FindScope.range && q.range != null ? q.range!.intersection(grid) : grid;
+      final rect = q.scope == FindScope.range && q.range != null
+          ? q.range!.intersection(grid)
+          : grid;
       if (rect == null) continue;
       final overlay = <CellPos>{
         for (final p in overlayCells?.call(sheet.id) ?? const <CellPos>[])
           if (rect.contains(p.row, p.col)) p,
       };
       final positions = <(int, int, CellRecord?)>[
-        for (final (r, c, cell) in sheet.cellsIn(rect, contentOnly: !q.searchLinks)) (r, c, cell),
+        for (final (r, c, cell) in sheet.cellsIn(
+          rect,
+          contentOnly: !q.searchLinks,
+        ))
+          (r, c, cell),
       ];
       if (overlay.isNotEmpty) {
         final have = {for (final p in positions) CellPos(p.$1, p.$2)};
@@ -180,9 +208,19 @@ final class FindEngine {
         if (skipHidden && hidden) continue;
         final kind = matchCell(m, q, sheet, r, c, cell);
         if (kind == null) continue;
-        final match = FindMatch(sheet.id, r, c, kind, isOverlay: overlay.contains(CellPos(r, c)), inHiddenRow: hidden);
+        final match = FindMatch(
+          sheet.id,
+          r,
+          c,
+          kind,
+          isOverlay: overlay.contains(CellPos(r, c)),
+          inHiddenRow: hidden,
+        );
         final isBefore =
-            isStart && (r < startRow || (r == startRow && (includeStart ? c < startCol : c <= startCol)));
+            isStart &&
+            (r < startRow ||
+                (r == startRow &&
+                    (includeStart ? c < startCol : c <= startCol)));
         (isBefore ? before : after).add(match);
         total++;
         if (total >= cap) {
@@ -271,7 +309,8 @@ final class ReplacePlan {
   int get instanceCount => replacements.fold(0, (s, r) => s + r.instances);
 
   /// Number of protected skips ("12 cells were skipped because they are protected").
-  int get protectedCount => skipped.where((s) => s.reason == ReplaceSkipReason.protected).length;
+  int get protectedCount =>
+      skipped.where((s) => s.reason == ReplaceSkipReason.protected).length;
 }
 
 /// Computes replacements for find matches (07 §11.3).
@@ -284,17 +323,21 @@ final class ReplaceEngine {
   /// The edit text of a value: what the cell editor shows (text; numbers in
   /// Automatic form with the locale decimal, dates/times as displayed;
   /// booleans; error literals).
-  static String editText(CellValue v, String? numberFormat, String displayText, {String decimal = '.'}) =>
-      switch (v) {
-        EmptyValue() => '',
-        TextValue(:final text) => text,
-        NumberValue(:final number) =>
-          numberFormat != null && FormatHint.looksLikeDatePattern(numberFormat)
-              ? displayText
-              : Numeric.toText(number, decimal: decimal),
-        BoolValue(:final value) => value ? 'TRUE' : 'FALSE',
-        ErrorValue(:final kind) => kind.literal,
-      };
+  static String editText(
+    CellValue v,
+    String? numberFormat,
+    String displayText, {
+    String decimal = '.',
+  }) => switch (v) {
+    EmptyValue() => '',
+    TextValue(:final text) => text,
+    NumberValue(:final number) =>
+      numberFormat != null && FormatHint.looksLikeDatePattern(numberFormat)
+          ? displayText
+          : Numeric.toText(number, decimal: decimal),
+    BoolValue(:final value) => value ? 'TRUE' : 'FALSE',
+    ErrorValue(:final kind) => kind.literal,
+  };
 
   /// Plans replacing [query] matches by [replacement] in [matches].
   /// [canEdit] reports whether the user may edit a cell (protection guard).
@@ -312,7 +355,8 @@ final class ReplaceEngine {
     final decimal = FormulaLocale.forId(find.locale).decimal;
     for (final match in matches) {
       if (!seen.add((match.sheetId, match.row, match.col))) continue;
-      SkippedCell skip(ReplaceSkipReason r) => SkippedCell(match.sheetId, match.row, match.col, r);
+      SkippedCell skip(ReplaceSkipReason r) =>
+          SkippedCell(match.sheetId, match.row, match.col, r);
       if (match.isOverlay) {
         skipped.add(skip(ReplaceSkipReason.overlay));
         continue;
@@ -328,17 +372,34 @@ final class ReplaceEngine {
       switch (match.kind) {
         case FindMatchKind.formula:
           if (content is FormulaContent) {
-            final a1 = find.formulaText(match.sheetId, match.row, match.col, content.text);
+            final a1 = find.formulaText(
+              match.sheetId,
+              match.row,
+              match.col,
+              content.text,
+            );
             final (text, spans) = m.replaceAll(a1, replacement);
             if (spans.isNotEmpty) {
-              r = CellReplacement(match.sheetId, match.row, match.col, newFormulaA1: text, instances: spans.length);
+              r = CellReplacement(
+                match.sheetId,
+                match.row,
+                match.col,
+                newFormulaA1: text,
+                instances: spans.length,
+              );
             }
           }
         case FindMatchKind.link:
           final link = cell?.format[FormatAttr.linkUrl] as String?;
           if (link != null && m.matches(link)) {
             final (text, spans) = m.replaceAll(link, replacement);
-            r = CellReplacement(match.sheetId, match.row, match.col, newLinkUrl: text, instances: spans.length);
+            r = CellReplacement(
+              match.sheetId,
+              match.row,
+              match.col,
+              newLinkUrl: text,
+              instances: spans.length,
+            );
           }
         case FindMatchKind.value:
           if (content is FormulaContent || content == null) break;
@@ -356,12 +417,22 @@ final class ReplaceEngine {
             break;
           }
           final v = content.literalValue;
-          final fmt = find.reader.numberFormatAt(match.sheetId, match.row, match.col);
+          final fmt = find.reader.numberFormatAt(
+            match.sheetId,
+            match.row,
+            match.col,
+          );
           final display = find.reader.display.displayText(v, fmt);
           final edit = editText(v, fmt, display, decimal: decimal);
           final (text, spans) = m.replaceAll(edit, replacement);
           if (spans.isNotEmpty) {
-            r = CellReplacement(match.sheetId, match.row, match.col, newEditText: text, instances: spans.length);
+            r = CellReplacement(
+              match.sheetId,
+              match.row,
+              match.col,
+              newEditText: text,
+              instances: spans.length,
+            );
           }
       }
       if (r == null) {

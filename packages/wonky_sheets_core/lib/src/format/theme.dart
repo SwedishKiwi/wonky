@@ -4,7 +4,11 @@ import 'dart:math' as math;
 /// Spreadsheet theme (`Spreadsheet.themeJson`, 06 §13).
 final class SpreadsheetTheme {
   /// Creates a theme.
-  const SpreadsheetTheme({this.name = 'Standard', this.textFont = 'Inter', this.colors = const {}});
+  const SpreadsheetTheme({
+    this.name = 'Standard',
+    this.textFont = 'Inter',
+    this.colors = const {},
+  });
 
   /// Theme name (preset name or custom).
   final String name;
@@ -48,8 +52,18 @@ final class SpreadsheetTheme {
   /// Built-in presets (06 §13.2).
   static final List<SpreadsheetTheme> presets = [
     standard,
-    _preset('Simple', 'Roboto', '#3C78D8 #6AA84F #F1C232 #CC0000 #674EA7 #E69138', '#1155CC'),
-    _preset('Streamline', 'Lato', '#2C3E50 #3498DB #1ABC9C #F39C12 #E74C3C #9B59B6', '#2980B9'),
+    _preset(
+      'Simple',
+      'Roboto',
+      '#3C78D8 #6AA84F #F1C232 #CC0000 #674EA7 #E69138',
+      '#1155CC',
+    ),
+    _preset(
+      'Streamline',
+      'Lato',
+      '#2C3E50 #3498DB #1ABC9C #F39C12 #E74C3C #9B59B6',
+      '#2980B9',
+    ),
     _preset(
       'Paperback',
       'Merriweather',
@@ -62,14 +76,44 @@ final class SpreadsheetTheme {
       '#00796B #0097A7 #0288D1 #26A69A #80CBC4 #004D40',
       '#00796B',
     ),
-    _preset('Coral', 'Nunito', '#FF7043 #FFAB91 #F4511E #FFCCBC #BF360C #FF8A65', '#D84315'),
-    _preset('Forest', 'Open Sans', '#2E7D32 #66BB6A #A5D6A7 #558B2F #9CCC65 #1B5E20', '#2E7D32'),
-    _preset('Mono', 'Roboto Mono', '#212121 #424242 #616161 #757575 #9E9E9E #BDBDBD', '#1A73E8'),
-    _preset('Retro', 'Courier Prime', '#E76F51 #F4A261 #E9C46A #2A9D8F #264653 #8AB17D', '#264653'),
-    _preset('Ocean', 'Montserrat', '#023E8A #0077B6 #0096C7 #00B4D8 #48CAE4 #90E0EF', '#0077B6'),
+    _preset(
+      'Coral',
+      'Nunito',
+      '#FF7043 #FFAB91 #F4511E #FFCCBC #BF360C #FF8A65',
+      '#D84315',
+    ),
+    _preset(
+      'Forest',
+      'Open Sans',
+      '#2E7D32 #66BB6A #A5D6A7 #558B2F #9CCC65 #1B5E20',
+      '#2E7D32',
+    ),
+    _preset(
+      'Mono',
+      'Roboto Mono',
+      '#212121 #424242 #616161 #757575 #9E9E9E #BDBDBD',
+      '#1A73E8',
+    ),
+    _preset(
+      'Retro',
+      'Courier Prime',
+      '#E76F51 #F4A261 #E9C46A #2A9D8F #264653 #8AB17D',
+      '#264653',
+    ),
+    _preset(
+      'Ocean',
+      'Montserrat',
+      '#023E8A #0077B6 #0096C7 #00B4D8 #48CAE4 #90E0EF',
+      '#0077B6',
+    ),
   ];
 
-  static SpreadsheetTheme _preset(String name, String font, String accents, String link) {
+  static SpreadsheetTheme _preset(
+    String name,
+    String font,
+    String accents,
+    String link,
+  ) {
     final a = accents.split(' ');
     return SpreadsheetTheme(
       name: name,
@@ -110,12 +154,16 @@ final class SpreadsheetTheme {
     final merged = Map<String, String>.of(standard.colors);
     if (colors is Map) {
       colors.forEach((k, v) {
-        if (k is String && v is String && _hex.hasMatch(v)) merged[k] = v.toUpperCase();
+        if (k is String && v is String && _hex.hasMatch(v)) {
+          merged[k] = v.toUpperCase();
+        }
       });
     }
     final t = SpreadsheetTheme(
       name: m['name'] is String ? m['name'] as String : 'Custom',
-      textFont: fonts is Map && fonts['text'] is String ? fonts['text'] as String : 'Inter',
+      textFont: fonts is Map && fonts['text'] is String
+          ? fonts['text'] as String
+          : 'Inter',
       colors: merged,
     );
     if (_cache.length > 64) _cache.clear();
@@ -135,12 +183,15 @@ final class SpreadsheetTheme {
   });
 
   /// Copy with changes.
-  SpreadsheetTheme copyWith({String? name, String? textFont, Map<String, String>? colors}) =>
-      SpreadsheetTheme(
-        name: name ?? this.name,
-        textFont: textFont ?? this.textFont,
-        colors: colors ?? this.colors,
-      );
+  SpreadsheetTheme copyWith({
+    String? name,
+    String? textFont,
+    Map<String, String>? colors,
+  }) => SpreadsheetTheme(
+    name: name ?? this.name,
+    textFont: textFont ?? this.textFont,
+    colors: colors ?? this.colors,
+  );
 
   /// Resolves a color string: `#RRGGBB` (normalized upper case), `theme:<key>`
   /// → the theme color; `auto`/null/invalid → null.
@@ -166,7 +217,9 @@ final class SpreadsheetTheme {
   }
 
   /// Accent colors 1–6.
-  List<String> get accents => [for (var i = 1; i <= 6; i++) colors['accent$i'] ?? '#000000'];
+  List<String> get accents => [
+    for (var i = 1; i <= 6; i++) colors['accent$i'] ?? '#000000',
+  ];
 
   @override
   bool operator ==(Object other) =>
@@ -202,7 +255,8 @@ abstract final class ColorUtil {
   /// (r, g, b) → `#RRGGBB`.
   static String hex(int r, int g, int b) => '#${_h(r)}${_h(g)}${_h(b)}';
 
-  static String _h(int c) => c.clamp(0, 255).toRadixString(16).padLeft(2, '0').toUpperCase();
+  static String _h(int c) =>
+      c.clamp(0, 255).toRadixString(16).padLeft(2, '0').toUpperCase();
 
   /// Component-wise sRGB linear interpolation (06 §15.5).
   static String lerp(String a, String b, double t) {
@@ -217,10 +271,12 @@ abstract final class ColorUtil {
   }
 
   /// Mixes [hex] towards white by [amount] (0..1).
-  static String lighten(String hexColor, double amount) => lerp(hexColor, '#FFFFFF', amount);
+  static String lighten(String hexColor, double amount) =>
+      lerp(hexColor, '#FFFFFF', amount);
 
   /// Mixes [hex] towards black by [amount] (0..1).
-  static String darken(String hexColor, double amount) => lerp(hexColor, '#000000', amount);
+  static String darken(String hexColor, double amount) =>
+      lerp(hexColor, '#000000', amount);
 
   /// WCAG relative luminance.
   static double luminance(String hexColor) {

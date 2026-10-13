@@ -19,6 +19,7 @@ dependencies:
   petitparser: ^7.1.0
   timezone: ^0.11.1
   uuid: ^4.5.1
+  vector_math: ^2.1.4
   wonky_core:
     path: ../wonky_core
   wonky_sync_models:

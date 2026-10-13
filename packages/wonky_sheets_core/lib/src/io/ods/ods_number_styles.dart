@@ -14,7 +14,11 @@ abstract final class OdsNumberStyles {
 
   /// The pattern of a data style element; [byName] resolves `style:map`
   /// targets. Wonky's own `wonky:pattern` attribute wins when present.
-  static String? toPattern(XmlElement style, XmlElement? Function(String name) byName, [int depth = 0]) {
+  static String? toPattern(
+    XmlElement style,
+    XmlElement? Function(String name) byName, [
+    int depth = 0,
+  ]) {
     final own = style.attr('pattern');
     if (own != null && own.isNotEmpty) return own;
     final kind = style.localName;
@@ -49,7 +53,9 @@ abstract final class OdsNumberStyles {
             ..write('E+${'0' * (e.intAttr('min-exponent-digits') ?? 2)}');
         case 'fraction':
           final ip = e.intAttr('min-integer-digits') ?? 0;
-          b.write('${ip > 0 ? '# ' : ''}${'?' * (e.intAttr('min-numerator-digits') ?? 1)}/${e.attr('denominator-value') ?? '?' * (e.intAttr('min-denominator-digits') ?? 1)}');
+          b.write(
+            '${ip > 0 ? '# ' : ''}${'?' * (e.intAttr('min-numerator-digits') ?? 1)}/${e.attr('denominator-value') ?? '?' * (e.intAttr('min-denominator-digits') ?? 1)}',
+          );
         case 'text':
           b.write(_literal(e.innerText, percent: kind == 'percentage-style'));
         case 'currency-symbol':
@@ -102,7 +108,11 @@ abstract final class OdsNumberStyles {
     final ip = e.intAttr('min-integer-digits') ?? 1;
     final grouping = e.boolAttr('grouping') ?? false;
     var integer = '0' * ip;
-    if (grouping) integer = ip >= 4 ? integer : '#,${'#' * (3 - ip)}$integer'.replaceFirst('#,', '#,');
+    if (grouping) {
+      integer = ip >= 4
+          ? integer
+          : '#,${'#' * (3 - ip)}$integer'.replaceFirst('#,', '#,');
+    }
     if (grouping && ip < 4) integer = '#,${'#' * (3 - ip)}${'0' * ip}';
     if (integer.isEmpty) integer = '#';
     final dec = dp > 0 ? '.${'0' * minDp}${'#' * (dp - minDp)}' : '';
@@ -121,7 +131,9 @@ abstract final class OdsNumberStyles {
   /// Data style XML elements (`<number:…-style style:name="N…">`) for
   /// [pattern]; the main style is named [name], map targets `${name}P0`, ….
   static String toXml(String pattern, String name, {String locale = 'en_US'}) {
-    final p = pattern.startsWith('preset:') ? ExcelNumberFormats.presetPattern(pattern, locale) : pattern;
+    final p = pattern.startsWith('preset:')
+        ? ExcelNumberFormats.presetPattern(pattern, locale)
+        : pattern;
     final sections = _splitSections(p);
     final out = StringBuffer();
     final conditions = sections.length == 2
@@ -129,17 +141,23 @@ abstract final class OdsNumberStyles {
         : sections.length >= 3
         ? const ['value()>0', 'value()<0']
         : const <String>[];
-    final mains = sections.length <= 1 ? sections : sections.sublist(0, conditions.length);
-    final last = sections.length <= 1 ? (sections.isEmpty ? '' : sections.first) : sections[conditions.length];
+    final mains = sections.length <= 1
+        ? sections
+        : sections.sublist(0, conditions.length);
+    final last = sections.length <= 1
+        ? (sections.isEmpty ? '' : sections.first)
+        : sections[conditions.length];
     if (sections.length > 1) {
       for (var i = 0; i < mains.length; i++) {
         out.write(_section(mains[i], '${name}P$i', null, const []));
       }
     }
-    out.write(_section(last, name, sections.length > 1 ? pattern : pattern, [
-      if (sections.length > 1)
-        for (var i = 0; i < mains.length; i++) (conditions[i], '${name}P$i'),
-    ]));
+    out.write(
+      _section(last, name, sections.length > 1 ? pattern : pattern, [
+        if (sections.length > 1)
+          for (var i = 0; i < mains.length; i++) (conditions[i], '${name}P$i'),
+      ]),
+    );
     return out.toString();
   }
 
@@ -166,9 +184,16 @@ abstract final class OdsNumberStyles {
     return out;
   }
 
-  static String _section(String s, String name, String? fullPattern, List<(String, String)> maps) {
+  static String _section(
+    String s,
+    String name,
+    String? fullPattern,
+    List<(String, String)> maps,
+  ) {
     final lower = _unquoted(s).toLowerCase();
-    final hasDate = RegExp('[yd]').hasMatch(lower) || (lower.contains('m') && !RegExp('[hs]').hasMatch(lower));
+    final hasDate =
+        RegExp('[yd]').hasMatch(lower) ||
+        (lower.contains('m') && !RegExp('[hs]').hasMatch(lower));
     final hasTime = RegExp('[hs]').hasMatch(lower) || lower.contains('am/pm');
     final kind = s.contains('@')
         ? 'text-style'
@@ -182,24 +207,43 @@ abstract final class OdsNumberStyles {
         ? 'currency-style'
         : 'number-style';
     final attrs = StringBuffer('style:name="$name"');
-    if (fullPattern != null) attrs.write(' wonky:pattern="${Ooxml.attr(fullPattern)}"');
-    if (kind == 'time-style' && s.contains('[h')) attrs.write(' number:truncate-on-overflow="false"');
+    if (fullPattern != null) {
+      attrs.write(' wonky:pattern="${Ooxml.attr(fullPattern)}"');
+    }
+    if (kind == 'time-style' && s.contains('[h')) {
+      attrs.write(' number:truncate-on-overflow="false"');
+    }
     final body = StringBuffer();
-    final color = RegExp(r'\[(Red|Blue|Green|Yellow|Magenta|Cyan|Black|White)\]', caseSensitive: false).firstMatch(s);
+    final color = RegExp(
+      r'\[(Red|Blue|Green|Yellow|Magenta|Cyan|Black|White)\]',
+      caseSensitive: false,
+    ).firstMatch(s);
     if (color != null) {
-      final hex = _colorNames.entries.firstWhere((e) => e.value.toLowerCase() == color.group(1)!.toLowerCase()).key;
+      final hex = _colorNames.entries
+          .firstWhere(
+            (e) => e.value.toLowerCase() == color.group(1)!.toLowerCase(),
+          )
+          .key;
       body.write('<style:text-properties fo:color="${hex.toLowerCase()}"/>');
     }
-    body.write(kind == 'date-style' || kind == 'time-style' ? _dateElements(s) : _numberElements(s, kind));
+    body.write(
+      kind == 'date-style' || kind == 'time-style'
+          ? _dateElements(s)
+          : _numberElements(s, kind),
+    );
     for (final (cond, target) in maps) {
-      body.write('<style:map style:condition="${Ooxml.attr(cond)}" style:apply-style-name="$target"/>');
+      body.write(
+        '<style:map style:condition="${Ooxml.attr(cond)}" style:apply-style-name="$target"/>',
+      );
     }
     return '<number:$kind $attrs>$body</number:$kind>';
   }
 
-  static String _unquoted(String s) => s.replaceAll(RegExp(r'"[^"]*"|\\.|\[[^\]]*\]'), '');
+  static String _unquoted(String s) =>
+      s.replaceAll(RegExp(r'"[^"]*"|\\.|\[[^\]]*\]'), '');
 
-  static String _text(String t) => t.isEmpty ? '' : '<number:text>${Ooxml.esc(t)}</number:text>';
+  static String _text(String t) =>
+      t.isEmpty ? '' : '<number:text>${Ooxml.esc(t)}</number:text>';
 
   static String _numberElements(String s, String kind) {
     final out = StringBuffer();
@@ -218,7 +262,9 @@ abstract final class OdsNumberStyles {
         final t = end < 0 ? s.substring(i + 1) : s.substring(i + 1, end);
         if (kind == 'currency-style' && RegExp(r'^[$€£¥]$').hasMatch(t)) {
           flushLit();
-          out.write('<number:currency-symbol>${Ooxml.esc(t)}</number:currency-symbol>');
+          out.write(
+            '<number:currency-symbol>${Ooxml.esc(t)}</number:currency-symbol>',
+          );
         } else {
           lit.write(t);
         }
@@ -242,7 +288,9 @@ abstract final class OdsNumberStyles {
           final dash = inner.indexOf('-');
           final sym = dash < 0 ? inner.substring(1) : inner.substring(1, dash);
           flushLit();
-          out.write('<number:currency-symbol>${Ooxml.esc(sym)}</number:currency-symbol>');
+          out.write(
+            '<number:currency-symbol>${Ooxml.esc(sym)}</number:currency-symbol>',
+          );
         }
         i = end < 0 ? s.length : end + 1;
         continue;
@@ -256,8 +304,13 @@ abstract final class OdsNumberStyles {
       if ('0#?,.'.contains(c) && !numberDone) {
         var j = i;
         while (j < s.length && '0#?,.Ee+-/ '.contains(s[j])) {
-          if ((s[j] == '-' || s[j] == '+') && !(j > 0 && (s[j - 1] == 'E' || s[j - 1] == 'e'))) break;
-          if (s[j] == ' ' && !(j + 1 < s.length && '?#0'.contains(s[j + 1]))) break;
+          if ((s[j] == '-' || s[j] == '+') &&
+              !(j > 0 && (s[j - 1] == 'E' || s[j - 1] == 'e'))) {
+            break;
+          }
+          if (s[j] == ' ' && !(j + 1 < s.length && '?#0'.contains(s[j + 1]))) {
+            break;
+          }
           j++;
         }
         final num = s.substring(i, j);
@@ -278,7 +331,9 @@ abstract final class OdsNumberStyles {
     if (num.contains('/')) {
       final parts = num.trim().split(RegExp(r'\s+'));
       final frac = parts.last.split('/');
-      final whole = parts.length > 1 ? ' number:min-integer-digits="1"' : ' number:min-integer-digits="0"';
+      final whole = parts.length > 1
+          ? ' number:min-integer-digits="1"'
+          : ' number:min-integer-digits="0"';
       final den = frac.length > 1 ? frac[1] : '?';
       final denAttr = RegExp(r'^\d+$').hasMatch(den)
           ? ' number:denominator-value="$den"'
@@ -294,10 +349,13 @@ abstract final class OdsNumberStyles {
     final minInt = intPart.replaceAll(RegExp('[^0]'), '').length;
     final minDec = decPart.replaceAll(RegExp('[^0]'), '').length;
     final dec = decPart.replaceAll(RegExp('[^0#?]'), '').length;
-    final attrs = ' number:decimal-places="$dec" number:min-decimal-places="$minDec" number:min-integer-digits="$minInt"'
+    final attrs =
+        ' number:decimal-places="$dec" number:min-decimal-places="$minDec" number:min-integer-digits="$minInt"'
         '${grouping ? ' number:grouping="true"' : ''}';
     if (e >= 0) {
-      final expDigits = num.substring(e + 1).replaceAll(RegExp('[^0#]'), '').length;
+      final expDigits = num.substring(
+        e + 1,
+      ).replaceAll(RegExp('[^0#]'), '').length;
       return '<number:scientific-number$attrs number:min-exponent-digits="$expDigits"/>';
     }
     return '<number:number$attrs/>';
@@ -332,7 +390,9 @@ abstract final class OdsNumberStyles {
         final inner = end < 0 ? '' : lower.substring(i + 1, end);
         if (RegExp(r'^h+$').hasMatch(inner)) {
           flush();
-          out.write('<number:hours${inner.length > 1 ? ' number:style="long"' : ''}/>');
+          out.write(
+            '<number:hours${inner.length > 1 ? ' number:style="long"' : ''}/>',
+          );
           lastWasHour = true;
         } else if (RegExp(r'^m+$').hasMatch(inner)) {
           flush();
@@ -358,9 +418,11 @@ abstract final class OdsNumberStyles {
           case 'y':
             out.write('<number:year${n > 2 ? ' number:style="long"' : ''}/>');
           case 'd':
-            out.write(n >= 3
-                ? '<number:day-of-week${n > 3 ? ' number:style="long"' : ''}/>'
-                : '<number:day${n > 1 ? ' number:style="long"' : ''}/>');
+            out.write(
+              n >= 3
+                  ? '<number:day-of-week${n > 3 ? ' number:style="long"' : ''}/>'
+                  : '<number:day${n > 1 ? ' number:style="long"' : ''}/>',
+            );
           case 'h':
             out.write('<number:hours${n > 1 ? ' number:style="long"' : ''}/>');
             lastWasHour = true;
@@ -374,16 +436,25 @@ abstract final class OdsNumberStyles {
               dp = k - j - 1;
               j = k;
             }
-            out.write('<number:seconds${n > 1 ? ' number:style="long"' : ''}${dp > 0 ? ' number:decimal-places="$dp"' : ''}/>');
+            out.write(
+              '<number:seconds${n > 1 ? ' number:style="long"' : ''}${dp > 0 ? ' number:decimal-places="$dp"' : ''}/>',
+            );
           case 'm':
             final rest = lower.substring(j);
-            final minute = lastWasHour || RegExp(r'^[^a-z]*s').hasMatch(rest) && n <= 2;
+            final minute =
+                lastWasHour || RegExp(r'^[^a-z]*s').hasMatch(rest) && n <= 2;
             if (minute && n <= 2) {
-              out.write('<number:minutes${n > 1 ? ' number:style="long"' : ''}/>');
+              out.write(
+                '<number:minutes${n > 1 ? ' number:style="long"' : ''}/>',
+              );
             } else if (n >= 3) {
-              out.write('<number:month number:textual="true"${n > 3 ? ' number:style="long"' : ''}/>');
+              out.write(
+                '<number:month number:textual="true"${n > 3 ? ' number:style="long"' : ''}/>',
+              );
             } else {
-              out.write('<number:month${n > 1 ? ' number:style="long"' : ''}/>');
+              out.write(
+                '<number:month${n > 1 ? ' number:style="long"' : ''}/>',
+              );
             }
         }
         if (c != 'h' && c != 'm') lastWasHour = c == 'h';

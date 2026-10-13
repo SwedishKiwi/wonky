@@ -6,11 +6,17 @@ import 'formula_tokens.dart';
 /// ODF OpenFormula (`of:=SUM([.A1:.A3])`) ⇄ Wonky A1 (11 §5.5, §6.4).
 final class OpenFormulaTranslator {
   /// Creates a translator; [excel] handles `msoxl:` formulas.
-  OpenFormulaTranslator({ExcelFormulaTranslator? excel}) : excel = excel ?? ExcelFormulaTranslator();
+  OpenFormulaTranslator({ExcelFormulaTranslator? excel})
+    : excel = excel ?? ExcelFormulaTranslator();
 
   final ExcelFormulaTranslator excel;
 
-  static const _namespacePrefixes = ['COM.MICROSOFT.', 'ORG.OPENOFFICE.', 'ORG.LIBREOFFICE.', '_XLFN.'];
+  static const _namespacePrefixes = [
+    'COM.MICROSOFT.',
+    'ORG.OPENOFFICE.',
+    'ORG.LIBREOFFICE.',
+    '_XLFN.',
+  ];
 
   /// `table:formula` value → Wonky A1 (without `=`).
   FormulaTranslation importFormula(String odf) {
@@ -21,7 +27,11 @@ final class OpenFormulaTranslator {
       return excel.importFormula(s);
     }
     final colon = s.indexOf(':');
-    if (colon > 0 && colon < 8 && RegExp(r'^[a-z]+$').hasMatch(s.substring(0, colon))) s = s.substring(colon + 1);
+    if (colon > 0 &&
+        colon < 8 &&
+        RegExp(r'^[a-z]+$').hasMatch(s.substring(0, colon))) {
+      s = s.substring(colon + 1);
+    }
     if (s.startsWith('=')) s = s.substring(1);
     final unsupported = <String>{};
     final b = StringBuffer();
@@ -85,7 +95,10 @@ final class OpenFormulaTranslator {
       }
     }
     final res = excel.importFormula(FormulaTokenizer.render(out));
-    return FormulaTranslation(res.formula, unsupported: {...unsupported, ...res.unsupported});
+    return FormulaTranslation(
+      res.formula,
+      unsupported: {...unsupported, ...res.unsupported},
+    );
   }
 
   /// Wonky A1 (without `=`) → `of:=…`.
@@ -202,7 +215,9 @@ final class OpenFormulaTranslator {
         j++;
       }
       final name = s.substring(1, j).replaceAll("''", "'");
-      final rest = j + 1 < s.length && s[j + 1] == '.' ? s.substring(j + 2) : s.substring(j + 1);
+      final rest = j + 1 < s.length && s[j + 1] == '.'
+          ? s.substring(j + 2)
+          : s.substring(j + 1);
       return (name, rest);
     }
     final dot = s.lastIndexOf('.');
@@ -223,5 +238,7 @@ final class OpenFormulaTranslator {
   }
 
   static String _odfSheet(String name) =>
-      RegExp(r'^[A-Za-z_][A-Za-z0-9_]*$').hasMatch(name) ? name : SheetNames.quote(name);
+      RegExp(r'^[A-Za-z_][A-Za-z0-9_]*$').hasMatch(name)
+      ? name
+      : SheetNames.quote(name);
 }

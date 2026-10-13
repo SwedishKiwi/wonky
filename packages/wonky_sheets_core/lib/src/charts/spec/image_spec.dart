@@ -8,7 +8,12 @@ enum ImageFit { stretch, contain, cover }
 /// Crop fractions (P2).
 final class ImageCrop extends SpecNode {
   /// Creates a crop (fractions 0..1 cut from each edge).
-  const ImageCrop({this.left = 0, this.top = 0, this.right = 0, this.bottom = 0});
+  const ImageCrop({
+    this.left = 0,
+    this.top = 0,
+    this.right = 0,
+    this.bottom = 0,
+  });
 
   /// Parses JSON leniently.
   factory ImageCrop.fromJson(Object? json) {
@@ -119,16 +124,17 @@ final class ImageSpec extends SpecNode {
   );
 
   @override
-  Map<String, Object?> toJson() => (JsonWriter(extras)
-        ..put('v', currentVersion)
-        ..put('fileUuid', fileUuid)
-        ..put('mime', mime)
-        ..put('naturalWidth', naturalWidth)
-        ..put('naturalHeight', naturalHeight)
-        ..put('crop', crop?.toJson())
-        ..put('fit', fit.name)
-        ..put('sourceUrl', sourceUrl))
-      .json;
+  Map<String, Object?> toJson() =>
+      (JsonWriter(extras)
+            ..put('v', currentVersion)
+            ..put('fileUuid', fileUuid)
+            ..put('mime', mime)
+            ..put('naturalWidth', naturalWidth)
+            ..put('naturalHeight', naturalHeight)
+            ..put('crop', crop?.toJson())
+            ..put('fit', fit.name)
+            ..put('sourceUrl', sourceUrl))
+          .json;
 
   /// `specJson` string.
   String encode() => jsonEncode(toJson());

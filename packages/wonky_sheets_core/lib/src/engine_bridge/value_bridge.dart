@@ -10,7 +10,8 @@ extension FValueToCellValue on FValue {
   CellValue toCellValue() {
     final v = this;
     return switch (v) {
-      FNumber(:final v) => v.isFinite ? NumberValue(v) : const ErrorValue(CellErrorKind.num),
+      FNumber(:final v) =>
+        v.isFinite ? NumberValue(v) : const ErrorValue(CellErrorKind.num),
       FText(:final v) => TextValue(v),
       FBool(:final v) => BoolValue(v),
       FError(:final kind, :final message, :final pending) => ErrorValue(

@@ -18,9 +18,9 @@ Key rules from the specs: every user-visible action is a command and every state
 | `wonky_sheets/` | Flutter app: Wonky Sheets |
 | `packages/` | Shared packages: `wonky_core`, `wonky_ui`, `wonky_app` (shell), `wonky_sync_models`, `wonky_write_core`, `wonky_sheets_core`, `wonky_sheets_script`, `wonky_mcp_stdio` |
 | `third_party/` | Vendored, locally patched third-party packages (`specs/01-architecture.md` §2.3) |
-| `wonky_flutter/` | Template Flutter app. Use it only as a reference for connecting to the server and auth; it is deleted in milestone M0 |
+| `tool/` | Repository scripts (dependency-rule check, pseudo-locale) |
 
-Current state: the repo is the fresh template. `wonky_write` and `wonky_sheets` are plain `flutter create` apps that are not yet in the pub workspace, and `packages/` and `third_party/` don't exist yet. The M0 steps in `specs/01-architecture.md` §2 move it to the target layout. Until then, `serverpod: flutter_apps:` in `wonky_server/pubspec.yaml` launches only `wonky_flutter`.
+Current state: the M0 restructure is done. **Wonky Write is complete for its first iteration** (sign-in, drive, sharing, real-time editor, comments, suggestions, history, themes and theme editor, import/export, offline cache, spellcheck, MCP, AI assistant). **Wonky Sheets is paused**: its core packages compile and are tested, the app only boots to its home. Deferred work is in `TODO.md`; the Sheets status and how to resume it are in `specs/wonky_sheets/STATUS.md`. `serverpod: flutter_apps:` launches `write` (web-port 8101) and `sheets` (8102). The debug web apps load slowly (thousands of DDC modules); for browser checks build a release with `flutter build web --wasm --base-href /write/ --output ../wonky_server/web/write` in `wonky_write` and open http://localhost:8082/write/.
 
 ## Serverpod workflow
 
@@ -70,4 +70,4 @@ If the user asks you to test an app:
 2. Pass the DTD to `connect_dart_tooling_daemon` (`dart` MCP) to connect to the app
 3. Use `flutter_driver` (`dart` MCP) to navigate through the app
 
-Each app is launched from its `lib/driver.dart` (`wonky_write/lib/driver.dart`, `wonky_sheets/lib/driver.dart`; before M0, `wonky_flutter/lib/driver.dart`). It starts the Flutter driver extension with text entry emulation turned off so the app stays usable by hand. To let the driver type, set `enableTextEntryEmulation: true` there and `hot_restart` the app.
+Each app is launched from its `lib/driver.dart` (`wonky_write/lib/driver.dart`, `wonky_sheets/lib/driver.dart`). It starts the Flutter driver extension with text entry emulation turned off so the app stays usable by hand. To let the driver type, set `enableTextEntryEmulation: true` there and `hot_restart` the app.

@@ -85,14 +85,39 @@ final class FormulaLocale {
   );
 
   static const List<String> englishMonths = [
-    'January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', //
+    'January',
+    'February',
+    'March',
+    'April',
+    'May',
+    'June',
+    'July',
+    'August',
+    'September', //
     'October', 'November', 'December',
   ];
   static const List<String> englishShortMonths = [
-    'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec', //
+    'Jan',
+    'Feb',
+    'Mar',
+    'Apr',
+    'May',
+    'Jun',
+    'Jul',
+    'Aug',
+    'Sep',
+    'Oct',
+    'Nov',
+    'Dec', //
   ];
   static const List<String> englishWeekdays = [
-    'Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', //
+    'Sunday',
+    'Monday',
+    'Tuesday',
+    'Wednesday',
+    'Thursday',
+    'Friday',
+    'Saturday', //
   ];
   static const List<String> englishShortWeekdays = [
     'Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', //
@@ -102,10 +127,32 @@ final class FormulaLocale {
   static Map<String, DateSymbols>? _dateSymbols;
 
   static const Map<String, String> _currencySymbols = {
-    'USD': r'$', 'EUR': '€', 'GBP': '£', 'JPY': '¥', 'CNY': '¥', 'INR': '₹', 'KRW': '₩', //
-    'BRL': r'R$', 'RUB': '₽', 'CHF': 'CHF', 'SEK': 'kr', 'NOK': 'kr', 'DKK': 'kr', //
-    'PLN': 'zł', 'CZK': 'Kč', 'TRY': '₺', 'AUD': r'$', 'CAD': r'$', 'NZD': r'$', //
-    'MXN': r'$', 'ZAR': 'R', 'ILS': '₪', 'HUF': 'Ft', 'UAH': '₴', 'VND': '₫', 'THB': '฿', //
+    'USD': r'$',
+    'EUR': '€',
+    'GBP': '£',
+    'JPY': '¥',
+    'CNY': '¥',
+    'INR': '₹',
+    'KRW': '₩', //
+    'BRL': r'R$',
+    'RUB': '₽',
+    'CHF': 'CHF',
+    'SEK': 'kr',
+    'NOK': 'kr',
+    'DKK': 'kr', //
+    'PLN': 'zł',
+    'CZK': 'Kč',
+    'TRY': '₺',
+    'AUD': r'$',
+    'CAD': r'$',
+    'NZD': r'$', //
+    'MXN': r'$',
+    'ZAR': 'R',
+    'ILS': '₪',
+    'HUF': 'Ft',
+    'UAH': '₴',
+    'VND': '₫',
+    'THB': '฿', //
   };
 
   /// Locale for a `Spreadsheet.locale` id. Unknown ids fall back to the language, then en_US.

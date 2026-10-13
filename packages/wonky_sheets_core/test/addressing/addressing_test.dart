@@ -3,7 +3,16 @@ import 'package:wonky_sheets_core/formula.dart';
 
 void main() {
   group('Given column letters', () {
-    const cases = <(int, String)>[(0, 'A'), (25, 'Z'), (26, 'AA'), (51, 'AZ'), (52, 'BA'), (701, 'ZZ'), (702, 'AAA'), (18277, 'ZZZ')];
+    const cases = <(int, String)>[
+      (0, 'A'),
+      (25, 'Z'),
+      (26, 'AA'),
+      (51, 'AZ'),
+      (52, 'BA'),
+      (701, 'ZZ'),
+      (702, 'AAA'),
+      (18277, 'ZZZ'),
+    ];
     for (final (index, letters) in cases) {
       test('when converting $index then it is $letters and back', () {
         expect(ColumnLetters.fromIndex(index), letters);
@@ -31,23 +40,48 @@ void main() {
       ('B3:5', const A1Area.raw(A1Kind.openColumns, row1: 2, col1: 1, row2: 4)),
       ("'Q3 plan'!A1:B2", A1Area.rect(0, 0, 1, 1, sheet: 'Q3 plan')),
       ("'It''s'!C7", const A1Area.cell(6, 2, sheet: "It's")),
-      ('Sheet2!ZZZ10000000', const A1Area.cell(9999999, 18277, sheet: 'Sheet2')),
+      (
+        'Sheet2!ZZZ10000000',
+        const A1Area.cell(9999999, 18277, sheet: 'Sheet2'),
+      ),
     ];
     for (final (text, area) in cases) {
-      test('when parsing "$text" then it is ${area.kind.name} and formats back', () {
-        expect(A1Area.tryParse(text), area);
-        expect(area.format(), text);
-      });
+      test(
+        'when parsing "$text" then it is ${area.kind.name} and formats back',
+        () {
+          expect(A1Area.tryParse(text), area);
+          expect(area.format(), text);
+        },
+      );
     }
-    for (final bad in ['A0', 'AAAA1', 'A10000001', 'A1B', 'A01', 'LOG10(', '1', 'A', "'unterminated!A1"]) {
+    for (final bad in [
+      'A0',
+      'AAAA1',
+      'A10000001',
+      'A1B',
+      'A01',
+      'LOG10(',
+      '1',
+      'A',
+      "'unterminated!A1",
+    ]) {
       test('when parsing "$bad" then it is not a reference', () {
         expect(A1Area.tryParse(bad), isNull);
       });
     }
-    test('when resolving an open area then missing bounds use the sheet size', () {
-      expect(const A1Area.columns(0, 1).toRect(100, 26), const GridRect(0, 0, 99, 1));
-      expect(A1Area.rect(4, 1, 0, 0).toRect(10, 10), const GridRect(0, 0, 4, 1));
-    });
+    test(
+      'when resolving an open area then missing bounds use the sheet size',
+      () {
+        expect(
+          const A1Area.columns(0, 1).toRect(100, 26),
+          const GridRect(0, 0, 99, 1),
+        );
+        expect(
+          A1Area.rect(4, 1, 0, 0).toRect(10, 10),
+          const GridRect(0, 0, 4, 1),
+        );
+      },
+    );
   });
 
   group('Given sheet names', () {
@@ -78,7 +112,10 @@ void main() {
       expect(Base62Uuid.decode(b), id);
     });
     test('when encoding the zero and max UUID then they round-trip', () {
-      for (final id in ['00000000-0000-0000-0000-000000000000', 'ffffffff-ffff-ffff-ffff-ffffffffffff']) {
+      for (final id in [
+        '00000000-0000-0000-0000-000000000000',
+        'ffffffff-ffff-ffff-ffff-ffffffffffff',
+      ]) {
         expect(Base62Uuid.decode(Base62Uuid.encode(id)), id);
       }
     });
@@ -98,11 +135,14 @@ void main() {
       ('R[1]:R[2]', 0, 0, '2:3'),
     ];
     for (final (text, r, c, a1) in cases) {
-      test('when parsing "$text" at R${r + 1}C${c + 1} then it is $a1 and formats back', () {
-        final area = R1C1.tryParse(text, r, c);
-        expect(area?.format(), a1);
-        expect(R1C1.format(area!, r, c), text);
-      });
+      test(
+        'when parsing "$text" at R${r + 1}C${c + 1} then it is $a1 and formats back',
+        () {
+          final area = R1C1.tryParse(text, r, c);
+          expect(area?.format(), a1);
+          expect(R1C1.format(area!, r, c), text);
+        },
+      );
     }
     test('when a relative reference leaves the grid then it is invalid', () {
       expect(R1C1.tryParse('R[-1]C', 0, 0), isNull);
@@ -111,12 +151,18 @@ void main() {
 
   group('Given grid rectangles', () {
     const r = GridRect(1, 1, 3, 4);
-    test('when testing containment and intersection then edges are inclusive', () {
-      expect(r.contains(3, 4), isTrue);
-      expect(r.contains(4, 4), isFalse);
-      expect(r.intersection(const GridRect(3, 4, 9, 9)), const GridRect(3, 4, 3, 4));
-      expect(r.intersects(const GridRect(4, 0, 5, 0)), isFalse);
-      expect(r.a1, 'B2:E4');
-    });
+    test(
+      'when testing containment and intersection then edges are inclusive',
+      () {
+        expect(r.contains(3, 4), isTrue);
+        expect(r.contains(4, 4), isFalse);
+        expect(
+          r.intersection(const GridRect(3, 4, 9, 9)),
+          const GridRect(3, 4, 3, 4),
+        );
+        expect(r.intersects(const GridRect(4, 0, 5, 0)), isFalse);
+        expect(r.a1, 'B2:E4');
+      },
+    );
   });
 }

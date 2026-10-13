@@ -41,17 +41,20 @@ void main() {
       _formula(h, 'D3', '=SUM(A1:A5)');
     });
 
-    test('when moving the block then references fully inside follow it (03 §11)', () {
-      final before = h.dump();
-      h.apply(MoveRange(h.range('A1:B3'), h.sheetId, 9, 2));
-      expect(h.content('A1'), isNull);
-      expect(h.content('C10'), 'n:1');
-      expect(h.formulaA1('D1'), '=C10');
-      expect(h.formulaA1('D2'), '=SUM(C10:C12)');
-      expect(h.formulaA1('D3'), '=SUM(A1:A5)');
-      h.undo();
-      expect(h.dump(), before);
-    });
+    test(
+      'when moving the block then references fully inside follow it (03 §11)',
+      () {
+        final before = h.dump();
+        h.apply(MoveRange(h.range('A1:B3'), h.sheetId, 9, 2));
+        expect(h.content('A1'), isNull);
+        expect(h.content('C10'), 'n:1');
+        expect(h.formulaA1('D1'), '=C10');
+        expect(h.formulaA1('D2'), '=SUM(C10:C12)');
+        expect(h.formulaA1('D3'), '=SUM(A1:A5)');
+        h.undo();
+        expect(h.dump(), before);
+      },
+    );
 
     test('when copying a formula then relative references are translated', () {
       h.apply(MoveRange(h.range('D1'), h.sheetId, 1, 4, copy: true));
@@ -59,18 +62,21 @@ void main() {
       expect(h.formulaA1('D1'), '=A1');
     });
 
-    test('when pasting a source into a larger multiple then it is tiled (03 §12.3)', () {
-      const src = PasteSource(
-        cells: [
-          [PasteCell(content: NumberContent(7)), PasteCell(text: 'x')],
-        ],
-      );
-      h.apply(PasteClipboard(h.range('A10:D11'), src));
-      expect(h.content('A10'), 'n:7');
-      expect(h.content('B10'), 's:x');
-      expect(h.content('C11'), 'n:7');
-      expect(h.content('D11'), 's:x');
-    });
+    test(
+      'when pasting a source into a larger multiple then it is tiled (03 §12.3)',
+      () {
+        const src = PasteSource(
+          cells: [
+            [PasteCell(content: NumberContent(7)), PasteCell(text: 'x')],
+          ],
+        );
+        h.apply(PasteClipboard(h.range('A10:D11'), src));
+        expect(h.content('A10'), 'n:7');
+        expect(h.content('B10'), 's:x');
+        expect(h.content('C11'), 'n:7');
+        expect(h.content('D11'), 's:x');
+      },
+    );
 
     test('when pasting values only then computed values replace formulas', () {
       final src = PasteSource(
@@ -91,19 +97,22 @@ void main() {
       expect(h.cell('F1')!.format.isEmpty, isTrue);
     });
 
-    test('when pasting a formula from the same spreadsheet then it is translated', () {
-      final src = PasteSource(
-        spreadsheetId: h.model.spreadsheetId,
-        sheetId: h.sheetId,
-        sourceRow: 0,
-        sourceCol: 3,
-        cells: [
-          [PasteCell(storedFormula: h.content('D1'))],
-        ],
-      );
-      h.apply(PasteClipboard(h.range('E5'), src));
-      expect(h.formulaA1('E5'), '=B5');
-    });
+    test(
+      'when pasting a formula from the same spreadsheet then it is translated',
+      () {
+        final src = PasteSource(
+          spreadsheetId: h.model.spreadsheetId,
+          sheetId: h.sheetId,
+          sourceRow: 0,
+          sourceCol: 3,
+          cells: [
+            [PasteCell(storedFormula: h.content('D1'))],
+          ],
+        );
+        h.apply(PasteClipboard(h.range('E5'), src));
+        expect(h.formulaA1('E5'), '=B5');
+      },
+    );
 
     test(
       'when randomizing with a seed then rows are permuted and formulas keep copy semantics',
@@ -118,70 +127,104 @@ void main() {
       },
     );
 
-    test('when shifting cells right then the strip moves and references follow', () {
-      h.apply(ShiftCells(h.range('A1:A3'), ShiftDirection.right));
-      expect(h.content('A1'), isNull);
-      expect(h.content('B1'), 'n:1');
-      expect(h.content('C1'), 's:a');
-    });
+    test(
+      'when shifting cells right then the strip moves and references follow',
+      () {
+        h.apply(ShiftCells(h.range('A1:A3'), ShiftDirection.right));
+        expect(h.content('A1'), isNull);
+        expect(h.content('B1'), 'n:1');
+        expect(h.content('C1'), 's:a');
+      },
+    );
   });
 
   group('Given rules and names', () {
     late PlannerHarness h;
     setUp(() => h = _harness());
 
-    test('when adding CF rules with beforeRuleId then sort keys order them', () {
-      final s = h.model.sheets.first;
-      final a =
-          h.apply(AddCfRule(s.id, [h.range('A1:A3').rect], '{"v":1}')).result['ruleId']! as String;
-      final b =
-          h
-                  .apply(AddCfRule(s.id, [h.range('B1:B3').rect], '{"v":1}', beforeRuleId: a))
-                  .result['ruleId']!
-              as String;
-      expect(s.cfRules[b]!.sortKey.compareTo(s.cfRules[a]!.sortKey), lessThan(0));
-      h.apply(ReorderCfRule(b, null));
-      expect(s.cfRules[b]!.sortKey.compareTo(s.cfRules[a]!.sortKey), greaterThan(0));
-    });
+    test(
+      'when adding CF rules with beforeRuleId then sort keys order them',
+      () {
+        final s = h.model.sheets.first;
+        final a =
+            h
+                    .apply(AddCfRule(s.id, [h.range('A1:A3').rect], '{"v":1}'))
+                    .result['ruleId']!
+                as String;
+        final b =
+            h
+                    .apply(
+                      AddCfRule(
+                        s.id,
+                        [h.range('B1:B3').rect],
+                        '{"v":1}',
+                        beforeRuleId: a,
+                      ),
+                    )
+                    .result['ruleId']!
+                as String;
+        expect(
+          s.cfRules[b]!.sortKey.compareTo(s.cfRules[a]!.sortKey),
+          lessThan(0),
+        );
+        h.apply(ReorderCfRule(b, null));
+        expect(
+          s.cfRules[b]!.sortKey.compareTo(s.cfRules[a]!.sortKey),
+          greaterThan(0),
+        );
+      },
+    );
 
     test(
       'when a new validation overlaps an old one then the old range is subtracted (07 §6.4)',
       () {
         final s = h.model.sheets.first;
-        h.apply(SetDataValidation(s.id, [const GridRect(0, 0, 9, 0)], '{"type":"checkbox"}'));
+        h.apply(
+          SetDataValidation(s.id, [
+            const GridRect(0, 0, 9, 0),
+          ], '{"type":"checkbox"}'),
+        );
         final old = s.dvRules.keys.single;
         h.apply(
           SetDataValidation(s.id, [
             const GridRect(0, 0, 4, 0),
           ], '{"type":"numberGreater","values":[{"v":"1"}]}'),
         );
-        expect(s.ruleRects(RuleKind.dataValidation, old), [const GridRect(5, 0, 9, 0)]);
+        expect(s.ruleRects(RuleKind.dataValidation, old), [
+          const GridRect(5, 0, 9, 0),
+        ]);
         expect(s.dvRules, hasLength(2));
       },
     );
 
-    test('when renaming a named range then formulas using it are rewritten', () {
-      h.apply(AddNamedRange('Sales', range: h.range('A1:A3')));
-      _formula(h, 'E1', '=SUM(Sales)');
-      final id = h.model.namedRange('sales')!.id;
-      h.apply(UpdateNamedRange(id, name: 'Revenue'));
-      expect(h.formulaA1('E1'), '=SUM(Revenue)');
-      expect(
-        () => h.plan(const AddNamedRange('TAX2024', formula: '=1')),
-        throwsA(isA<PlanException>()),
-      );
-      expect(
-        () => h.plan(const AddNamedRange('true_x', formula: '=1')),
-        throwsA(isA<PlanException>()),
-      );
-    });
+    test(
+      'when renaming a named range then formulas using it are rewritten',
+      () {
+        h.apply(AddNamedRange('Sales', range: h.range('A1:A3')));
+        _formula(h, 'E1', '=SUM(Sales)');
+        final id = h.model.namedRange('sales')!.id;
+        h.apply(UpdateNamedRange(id, name: 'Revenue'));
+        expect(h.formulaA1('E1'), '=SUM(Revenue)');
+        expect(
+          () => h.plan(const AddNamedRange('TAX2024', formula: '=1')),
+          throwsA(isA<PlanException>()),
+        );
+        expect(
+          () => h.plan(const AddNamedRange('true_x', formula: '=1')),
+          throwsA(isA<PlanException>()),
+        );
+      },
+    );
 
-    test('when inserting checkboxes then empty cells get FALSE and a rule is added', () {
-      final s = h.model.sheets.first;
-      h.apply(InsertCheckboxes(s.id, [const GridRect(0, 4, 1, 4)]));
-      expect(h.content('E1'), 'b:0');
-      expect(s.dvRules.values.single.criteriaJson, contains('checkbox'));
-    });
+    test(
+      'when inserting checkboxes then empty cells get FALSE and a rule is added',
+      () {
+        final s = h.model.sheets.first;
+        h.apply(InsertCheckboxes(s.id, [const GridRect(0, 4, 1, 4)]));
+        expect(h.content('E1'), 'b:0');
+        expect(s.dvRules.values.single.criteriaJson, contains('checkbox'));
+      },
+    );
 
     test('when adding a basic filter then its id is deterministic', () {
       final s = h.model.sheets.first;
@@ -225,7 +268,9 @@ void main() {
               4 => MoveDimension(s.id, Dimension.columns, [
                 s.columns.idAt(c),
               ], s.columns.idAt(rnd.nextInt(s.columns.length))),
-              5 => SetBorders([ResolvedRange(s.id, GridRect(r, c, r + 1, c))], BorderPreset.all),
+              5 => SetBorders([
+                ResolvedRange(s.id, GridRect(r, c, r + 1, c)),
+              ], BorderPreset.all),
               6 => MoveRange(
                 ResolvedRange(s.id, GridRect(r, c, r, c)),
                 s.id,

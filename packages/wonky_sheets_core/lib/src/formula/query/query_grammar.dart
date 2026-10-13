@@ -5,9 +5,34 @@ import 'query_error.dart';
 
 /// Words that cannot be used as bare column identifiers (backquote them instead: `` `BY` ``).
 const Set<String> queryReservedWords = {
-  'and', 'asc', 'by', 'contains', 'date', 'datetime', 'desc', 'ends', 'false', 'format', //
-  'group', 'is', 'label', 'like', 'limit', 'matches', 'no_format', 'no_values', 'not', //
-  'null', 'offset', 'options', 'or', 'order', 'pivot', 'select', 'starts', 'timeofday', //
+  'and',
+  'asc',
+  'by',
+  'contains',
+  'date',
+  'datetime',
+  'desc',
+  'ends',
+  'false',
+  'format', //
+  'group',
+  'is',
+  'label',
+  'like',
+  'limit',
+  'matches',
+  'no_format',
+  'no_values',
+  'not', //
+  'null',
+  'offset',
+  'options',
+  'or',
+  'order',
+  'pivot',
+  'select',
+  'starts',
+  'timeofday', //
   'timestamp', 'true', 'where', 'with',
 };
 
@@ -48,13 +73,12 @@ class QueryGrammarDefinition extends GrammarDefinition<Query> {
   /// Bare (`A`, `Col3`, `Revenue_2`) or backquoted (`` `my col` ``) column identifier.
   Parser<String> identifier() => tok(
     [
-      seq2(
-        pattern('A-Za-z_'),
-        pattern('A-Za-z0-9_').starString(),
-      ).flatten(message: 'identifier expected').where(
-        (s) => !queryReservedWords.contains(s.toLowerCase()),
-        message: 'identifier expected',
-      ),
+      seq2(pattern('A-Za-z_'), pattern('A-Za-z0-9_').starString())
+          .flatten(message: 'identifier expected')
+          .where(
+            (s) => !queryReservedWords.contains(s.toLowerCase()),
+            message: 'identifier expected',
+          ),
       pattern('^`').starString().skip(before: char('`'), after: char('`')),
     ].toChoiceParser(),
   );
@@ -71,10 +95,17 @@ class QueryGrammarDefinition extends GrammarDefinition<Query> {
   Parser<double> numberLiteral() => tok(
     seq3(
       [
-        seq2(digit().plusString(), seq2(char('.'), digit().starString()).optional()),
+        seq2(
+          digit().plusString(),
+          seq2(char('.'), digit().starString()).optional(),
+        ),
         seq2(char('.'), digit().plusString()),
       ].toChoiceParser(),
-      seq3(anyOf('eE'), anyOf('+-').optional(), digit().plusString()).optional(),
+      seq3(
+        anyOf('eE'),
+        anyOf('+-').optional(),
+        digit().plusString(),
+      ).optional(),
       pattern('A-Za-z_').not(),
     ).flatten(message: 'number expected').map(double.parse),
   );
@@ -89,39 +120,40 @@ class QueryGrammarDefinition extends GrammarDefinition<Query> {
 
   // ------------------------------------------------------------------ clauses
 
-  Parser<Query> query() => seq2(
-    ref0(space).star(),
-    seq2(
-      seq5(
-        ref0(selectClause),
-        ref0(whereClause),
-        ref0(groupByClause),
-        ref0(pivotClause),
-        ref0(orderByClause),
-      ),
-      seq5(
-        ref0(limitClause),
-        ref0(offsetClause),
-        ref0(labelClause),
-        ref0(formatClause),
-        ref0(optionsClause),
-      ),
-    ),
-  ).map2((_, clauses) {
-    final ((sel, wh, gb, pv, ob), (lim, off, lab, fmt, opts)) = clauses;
-    return Query(
-      select: sel?.items,
-      where: wh,
-      groupBy: gb ?? const [],
-      pivot: pv ?? const [],
-      orderBy: ob ?? const [],
-      limit: lim,
-      offset: off,
-      labels: lab ?? const [],
-      formats: fmt ?? const [],
-      options: opts ?? const {},
-    );
-  });
+  Parser<Query> query() =>
+      seq2(
+        ref0(space).star(),
+        seq2(
+          seq5(
+            ref0(selectClause),
+            ref0(whereClause),
+            ref0(groupByClause),
+            ref0(pivotClause),
+            ref0(orderByClause),
+          ),
+          seq5(
+            ref0(limitClause),
+            ref0(offsetClause),
+            ref0(labelClause),
+            ref0(formatClause),
+            ref0(optionsClause),
+          ),
+        ),
+      ).map2((_, clauses) {
+        final ((sel, wh, gb, pv, ob), (lim, off, lab, fmt, opts)) = clauses;
+        return Query(
+          select: sel?.items,
+          where: wh,
+          groupBy: gb ?? const [],
+          pivot: pv ?? const [],
+          orderBy: ob ?? const [],
+          limit: lim,
+          offset: off,
+          labels: lab ?? const [],
+          formats: fmt ?? const [],
+          options: opts ?? const {},
+        );
+      });
 
   /// `select *` or `select e1, e2, …`.
   Parser<SelectList?> selectClause() => committed(
@@ -132,12 +164,16 @@ class QueryGrammarDefinition extends GrammarDefinition<Query> {
     ].toChoiceParser(failureJoiner: selectFarthest),
   );
 
-  Parser<QCond?> whereClause() => committed(ref1(keyword, 'where'), ref0(orCondition));
+  Parser<QCond?> whereClause() =>
+      committed(ref1(keyword, 'where'), ref0(orCondition));
 
-  Parser<List<QExpr>?> groupByClause() =>
-      committed(seq2(ref1(keyword, 'group'), ref1(keyword, 'by')), ref0(exprList));
+  Parser<List<QExpr>?> groupByClause() => committed(
+    seq2(ref1(keyword, 'group'), ref1(keyword, 'by')),
+    ref0(exprList),
+  );
 
-  Parser<List<QExpr>?> pivotClause() => committed(ref1(keyword, 'pivot'), ref0(exprList));
+  Parser<List<QExpr>?> pivotClause() =>
+      committed(ref1(keyword, 'pivot'), ref0(exprList));
 
   Parser<List<QOrderItem>?> orderByClause() => committed(
     seq2(ref1(keyword, 'order'), ref1(keyword, 'by')),
@@ -152,9 +188,11 @@ class QueryGrammarDefinition extends GrammarDefinition<Query> {
     ].toChoiceParser().optional(),
   ).map2((e, desc) => QOrderItem(e, descending: desc ?? false));
 
-  Parser<int?> limitClause() => committed(ref1(keyword, 'limit'), ref0(integer));
+  Parser<int?> limitClause() =>
+      committed(ref1(keyword, 'limit'), ref0(integer));
 
-  Parser<int?> offsetClause() => committed(ref1(keyword, 'offset'), ref0(integer));
+  Parser<int?> offsetClause() =>
+      committed(ref1(keyword, 'offset'), ref0(integer));
 
   Parser<List<(QExpr, String)>?> labelClause() =>
       committed(ref1(keyword, 'label'), ref0(exprStringList));
@@ -164,7 +202,9 @@ class QueryGrammarDefinition extends GrammarDefinition<Query> {
 
   Parser<Set<QOption>?> optionsClause() => committed(
     ref1(keyword, 'options'),
-    ref0(option).plusSeparated(ref1(symbol, ',')).map((s) => s.elements.toSet()),
+    ref0(
+      option,
+    ).plusSeparated(ref1(symbol, ',')).map((s) => s.elements.toSet()),
   );
 
   Parser<QOption> option() => [
@@ -175,10 +215,11 @@ class QueryGrammarDefinition extends GrammarDefinition<Query> {
   Parser<List<QExpr>> exprList() =>
       ref0(expression).plusSeparated(ref1(symbol, ',')).map((s) => s.elements);
 
-  Parser<List<(QExpr, String)>> exprStringList() => seq2(ref0(expression), ref0(stringLiteral))
-      .map2((e, s) => (e, s))
-      .plusSeparated(ref1(symbol, ','))
-      .map((s) => s.elements);
+  Parser<List<(QExpr, String)>> exprStringList() =>
+      seq2(ref0(expression), ref0(stringLiteral))
+          .map2((e, s) => (e, s))
+          .plusSeparated(ref1(symbol, ','))
+          .map((s) => s.elements);
 
   // ------------------------------------------------------------------ conditions
 
@@ -198,22 +239,31 @@ class QueryGrammarDefinition extends GrammarDefinition<Query> {
   /// `expr <tail>` or `( condition )`. The expression form is tried first so that
   /// `(A + 1) > 2` parses as a comparison.
   Parser<QCond> predicate() => [
-    seq2(ref0(expression), ref0(predicateTail)).map2((e, tail) => tail == null ? QBoolValue(e) : tail(e)),
+    seq2(
+      ref0(expression),
+      ref0(predicateTail),
+    ).map2((e, tail) => tail == null ? QBoolValue(e) : tail(e)),
     ref0(orCondition).skip(before: ref1(symbol, '('), after: ref1(symbol, ')')),
   ].toChoiceParser(failureJoiner: selectFarthest);
 
   /// What follows the left operand of a predicate (null: bare boolean expression). An
   /// operator without a valid right operand fails at the right operand.
   Parser<QCond Function(QExpr)?> predicateTail() => [
-    seq3(ref1(keyword, 'is'), ref1(keyword, 'not').optional(), ref1(keyword, 'null'))
-        .map3<QCond Function(QExpr)?>(
-          (_, not, _) => (QExpr e) => QIsNull(e, negated: not != null),
-        ),
+    seq3(
+      ref1(keyword, 'is'),
+      ref1(keyword, 'not').optional(),
+      ref1(keyword, 'null'),
+    ).map3<QCond Function(QExpr)?>(
+      (_, not, _) =>
+          (QExpr e) => QIsNull(e, negated: not != null),
+    ),
     seq2(ref0(compareOp), ref0(expression)).map2<QCond Function(QExpr)?>(
-      (op, r) => (QExpr l) => QCompare(op, l, r),
+      (op, r) =>
+          (QExpr l) => QCompare(op, l, r),
     ),
     seq2(ref0(stringOp), ref0(expression)).map2<QCond Function(QExpr)?>(
-      (op, r) => (QExpr l) => QStringMatch(op, l, r),
+      (op, r) =>
+          (QExpr l) => QStringMatch(op, l, r),
     ),
     [
       ref0(compareOp),
@@ -234,8 +284,14 @@ class QueryGrammarDefinition extends GrammarDefinition<Query> {
 
   Parser<QStringOp> stringOp() => [
     ref1(keyword, 'contains').map((_) => QStringOp.contains),
-    seq2(ref1(keyword, 'starts'), ref1(keyword, 'with')).map((_) => QStringOp.startsWith),
-    seq2(ref1(keyword, 'ends'), ref1(keyword, 'with')).map((_) => QStringOp.endsWith),
+    seq2(
+      ref1(keyword, 'starts'),
+      ref1(keyword, 'with'),
+    ).map((_) => QStringOp.startsWith),
+    seq2(
+      ref1(keyword, 'ends'),
+      ref1(keyword, 'with'),
+    ).map((_) => QStringOp.endsWith),
     ref1(keyword, 'matches').map((_) => QStringOp.matches),
     ref1(keyword, 'like').map((_) => QStringOp.like),
   ].toChoiceParser();
@@ -270,10 +326,22 @@ class QueryGrammarDefinition extends GrammarDefinition<Query> {
     ref0(stringLiteral).map(QString.new),
     ref1(keyword, 'true').map((_) => const QBool(true)),
     ref1(keyword, 'false').map((_) => const QBool(false)),
-    seq2(ref1(keyword, 'datetime'), ref0(stringLiteral)).map2((_, s) => QDateLiteral(QDateKind.datetime, s)),
-    seq2(ref1(keyword, 'timestamp'), ref0(stringLiteral)).map2((_, s) => QDateLiteral(QDateKind.datetime, s)),
-    seq2(ref1(keyword, 'timeofday'), ref0(stringLiteral)).map2((_, s) => QDateLiteral(QDateKind.timeofday, s)),
-    seq2(ref1(keyword, 'date'), ref0(stringLiteral)).map2((_, s) => QDateLiteral(QDateKind.date, s)),
+    seq2(
+      ref1(keyword, 'datetime'),
+      ref0(stringLiteral),
+    ).map2((_, s) => QDateLiteral(QDateKind.datetime, s)),
+    seq2(
+      ref1(keyword, 'timestamp'),
+      ref0(stringLiteral),
+    ).map2((_, s) => QDateLiteral(QDateKind.datetime, s)),
+    seq2(
+      ref1(keyword, 'timeofday'),
+      ref0(stringLiteral),
+    ).map2((_, s) => QDateLiteral(QDateKind.timeofday, s)),
+    seq2(
+      ref1(keyword, 'date'),
+      ref0(stringLiteral),
+    ).map2((_, s) => QDateLiteral(QDateKind.date, s)),
   ].toChoiceParser(failureJoiner: selectFarthest);
 
   /// `avg(x)`, `count(x)`, `max(x)`, `min(x)`, `sum(x)`.
@@ -291,10 +359,7 @@ class QueryGrammarDefinition extends GrammarDefinition<Query> {
       for (final f in QScalarFn.values) ref1(keyword, f.name).map((_) => f),
     ].toChoiceParser(),
     ref1(symbol, '('),
-    seq2(
-      ref0(expression).starSeparated(ref1(symbol, ',')),
-      ref1(symbol, ')'),
-    ),
+    seq2(ref0(expression).starSeparated(ref1(symbol, ',')), ref1(symbol, ')')),
   ).map3((f, _, a) => QCall(f, a.$1.elements));
 }
 
@@ -333,17 +398,22 @@ abstract final class QueryParser {
     return QueryException.parse(_tokenAt(text, p), line, col);
   }
 
-  static bool _isSpace(int c) => c == 0x20 || c == 0x09 || c == 0x0a || c == 0x0d;
+  static bool _isSpace(int c) =>
+      c == 0x20 || c == 0x09 || c == 0x0a || c == 0x0d;
 
   static bool _isWord(int c) =>
-      (c >= 0x30 && c <= 0x39) || (c >= 0x41 && c <= 0x5a) || (c >= 0x61 && c <= 0x7a) || c == 0x5f;
+      (c >= 0x30 && c <= 0x39) ||
+      (c >= 0x41 && c <= 0x5a) ||
+      (c >= 0x61 && c <= 0x7a) ||
+      c == 0x5f;
 
   static String _tokenAt(String text, int p) {
     if (p >= text.length) return '<EOF>';
     final c = text.codeUnitAt(p);
     if (_isWord(c)) {
       var e = p;
-      while (e < text.length && (_isWord(text.codeUnitAt(e)) || text.codeUnitAt(e) == 0x2e)) {
+      while (e < text.length &&
+          (_isWord(text.codeUnitAt(e)) || text.codeUnitAt(e) == 0x2e)) {
         e++;
       }
       return text.substring(p, e);

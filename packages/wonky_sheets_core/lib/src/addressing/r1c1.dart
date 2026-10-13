@@ -14,7 +14,12 @@ abstract final class R1C1 {
   }
 
   /// Formats [area] relative to the host cell ([hostRow], [hostCol]).
-  static String format(A1Area area, int hostRow, int hostCol, {bool includeSheet = true}) {
+  static String format(
+    A1Area area,
+    int hostRow,
+    int hostCol, {
+    bool includeSheet = true,
+  }) {
     final b = StringBuffer();
     if (includeSheet && area.sheet != null) {
       b
@@ -82,7 +87,10 @@ abstract final class R1C1 {
     bool boundary(int end) {
       if (end >= rest.length) return true;
       final c = rest.codeUnitAt(end);
-      return !(ColumnLetters.isLetter(c) || ColumnLetters.isDigit(c) || c == 0x5f || c == 0x28);
+      return !(ColumnLetters.isLetter(c) ||
+          ColumnLetters.isDigit(c) ||
+          c == 0x5f ||
+          c == 0x28);
     }
 
     if (m1 != null) {
@@ -115,7 +123,10 @@ abstract final class R1C1 {
       }
       if (!boundary(end)) return null;
       if (r1 < 0 || c1 < 0) return null;
-      return (A1Area.cell(r1, c1, sheet: sheet, absRow: ar1, absCol: ac1), i + end);
+      return (
+        A1Area.cell(r1, c1, sheet: sheet, absRow: ar1, absCol: ac1),
+        i + end,
+      );
     }
     final mr = _rowRe.firstMatch(rest);
     if (mr != null && mr.end < rest.length && rest.codeUnitAt(mr.end) == 0x3a) {

@@ -306,7 +306,9 @@ final class ObjectAnchor {
     Map<String, Object?> extras = const {},
   }) {
     if (rows.length == 0 || columns.length == 0) {
-      throw ArgumentError('Cannot anchor an object on a sheet without rows or columns');
+      throw ArgumentError(
+        'Cannot anchor an object on a sheet without rows or columns',
+      );
     }
     final (c, ox) = _locate(columns, x);
     final (r, oy) = _locate(rows, y);
@@ -342,13 +344,16 @@ final class ObjectAnchor {
     Map<String, Object?> extras = const {},
   }) {
     if (rows.length == 0 || columns.length == 0) {
-      throw ArgumentError('Cannot anchor an object on a sheet without rows or columns');
+      throw ArgumentError(
+        'Cannot anchor an object on a sheet without rows or columns',
+      );
     }
     final r = row.clamp(0, rows.length - 1);
     final c = col.clamp(0, columns.length - 1);
     final ox = dx.isNaN || dx < 0 ? 0.0 : dx;
     final oy = dy.isNaN || dy < 0 ? 0.0 : dy;
-    final fits = (ox == 0 || ox < columns.sizeAt(c)) && (oy == 0 || oy < rows.sizeAt(r));
+    final fits =
+        (ox == 0 || ox < columns.sizeAt(c)) && (oy == 0 || oy < rows.sizeAt(r));
     if (!fits) {
       return normalizeAt(
         columns.offsetOf(c) + ox,
@@ -388,7 +393,10 @@ final class ObjectAnchor {
     final r = base.rowId == null ? -1 : rows.indexOf(base.rowId!);
     final c = base.colId == null ? -1 : columns.indexOf(base.colId!);
     if (r < 0 || c < 0) return base;
-    if (base.dx >= 0 && base.dx < columns.sizeAt(c) && base.dy >= 0 && base.dy < rows.sizeAt(r)) {
+    if (base.dx >= 0 &&
+        base.dx < columns.sizeAt(c) &&
+        base.dy >= 0 &&
+        base.dy < rows.sizeAt(r)) {
       return ObjectAnchor(
         v: v,
         rowId: base.rowId,
@@ -440,7 +448,12 @@ final class ObjectAnchor {
   // Move, resize, nudge (08 §9.3).
 
   /// Moved by ([ddx], [ddy]) px and normalized.
-  ObjectAnchor moveBy(double ddx, double ddy, AxisIndex rows, AxisIndex columns) {
+  ObjectAnchor moveBy(
+    double ddx,
+    double ddy,
+    AxisIndex rows,
+    AxisIndex columns,
+  ) {
     if (ownSheet) return this;
     final rect = _currentRect(rows, columns);
     return _at(rect.left + ddx, rect.top + ddy, width, height, rows, columns);
@@ -487,7 +500,12 @@ final class ObjectAnchor {
   /// Alt+arrow nudge: moves the anchor by [dRow] rows and [dCol] columns,
   /// skipping hidden ones and stopping at the sheet edges. The offsets are
   /// kept when they fit the new cell, else reset to 0.
-  ObjectAnchor nudgeByCells(int dRow, int dCol, AxisIndex rows, AxisIndex columns) {
+  ObjectAnchor nudgeByCells(
+    int dRow,
+    int dCol,
+    AxisIndex rows,
+    AxisIndex columns,
+  ) {
     if (ownSheet || rows.length == 0 || columns.length == 0) return this;
     final base = normalized(rows, columns);
     final r = _stepVisible(rows, rows.indexOf(base.rowId!), dRow);
@@ -518,7 +536,9 @@ final class ObjectAnchor {
     final size = ObjectGeometry.constrainSize(
       width,
       height,
-      aspect: keep && this.width > 0 && this.height > 0 ? this.width / this.height : null,
+      aspect: keep && this.width > 0 && this.height > 0
+          ? this.width / this.height
+          : null,
     );
     return copyWith(width: size.width, height: size.height);
   }
@@ -534,7 +554,9 @@ final class ObjectAnchor {
     AxisIndex columns, {
     bool? keepAspect,
   }) {
-    if (ownSheet) return resized(width + ddx, height + ddy, keepAspect: keepAspect);
+    if (ownSheet) {
+      return resized(width + ddx, height + ddy, keepAspect: keepAspect);
+    }
     final rect = ObjectGeometry.resizeRect(
       _currentRect(rows, columns),
       handle,
@@ -557,21 +579,28 @@ final class ObjectAnchor {
   // ---------------------------------------------------------------------------
   // Internals.
 
-  ObjectAnchor _at(double x, double y, double w, double h, AxisIndex rows, AxisIndex columns) =>
-      normalizeAt(
-        x,
-        y,
-        width: w,
-        height: h,
-        rows: rows,
-        columns: columns,
-        lockAspect: lockAspect,
-        v: v,
-        extras: extras,
-      );
+  ObjectAnchor _at(
+    double x,
+    double y,
+    double w,
+    double h,
+    AxisIndex rows,
+    AxisIndex columns,
+  ) => normalizeAt(
+    x,
+    y,
+    width: w,
+    height: h,
+    rows: rows,
+    columns: columns,
+    lockAspect: lockAspect,
+    v: v,
+    extras: extras,
+  );
 
   ChartRect _currentRect(AxisIndex rows, AxisIndex columns) =>
-      (reanchor(rows, columns) ?? this).rectIn(rows, columns) ?? ChartRect(0, 0, width, height);
+      (reanchor(rows, columns) ?? this).rectIn(rows, columns) ??
+      ChartRect(0, 0, width, height);
 
   static (int, double) _locate(AxisIndex axis, double px) {
     final p = px.isNaN || px <= 0 ? 0.0 : (px.isFinite ? px : axis.totalSize);
@@ -598,13 +627,16 @@ final class ObjectAnchor {
     return i;
   }
 
-  static double? _num(Object? v) => v is num && v.isFinite ? v.toDouble() : null;
+  static double? _num(Object? v) =>
+      v is num && v.isFinite ? v.toDouble() : null;
 
   static String? _str(Object? v) => v is String && v.isNotEmpty ? v : null;
 
   static String? _decodeId(Object? v) {
     if (v is! String || v.isEmpty) return null;
-    if (v.length == Base62Uuid.length && Base62Uuid.isValid(v)) return Base62Uuid.decode(v);
+    if (v.length == Base62Uuid.length && Base62Uuid.isValid(v)) {
+      return Base62Uuid.decode(v);
+    }
     return v.length == 36 ? v.toLowerCase() : v;
   }
 
@@ -618,7 +650,9 @@ final class ObjectAnchor {
   }
 
   static Object? _copyJson(Object? v) {
-    if (v is Map) return {for (final e in v.entries) '${e.key}': _copyJson(e.value)};
+    if (v is Map) {
+      return {for (final e in v.entries) '${e.key}': _copyJson(e.value)};
+    }
     if (v is List) return [for (final x in v) _copyJson(x)];
     return v;
   }

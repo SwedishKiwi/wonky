@@ -96,14 +96,34 @@ final class _RasterContext {
         }
         raster.clear();
         final alpha = _strokeSetup(stroke);
-        stroker.addPolyline(pts, false, _hw, stroke.cap, stroke.join, dash: _dash(stroke));
+        stroker.addPolyline(
+          pts,
+          false,
+          _hw,
+          stroke.cap,
+          stroke.join,
+          dash: _dash(stroke),
+        );
         _paint(stroke.color, alpha, false);
       case SMarkers():
         _markers(p);
       case SArc():
-        _shape(p.toPath(), p.fill, p.stroke, p.isFullCircle && p.innerRadius > 0);
+        _shape(
+          p.toPath(),
+          p.fill,
+          p.stroke,
+          p.isFullCircle && p.innerRadius > 0,
+        );
       case SText():
-        text.draw(p, surface, scale, cl: clipL, ct: clipT, cr: clipR, cb: clipB);
+        text.draw(
+          p,
+          surface,
+          scale,
+          cl: clipL,
+          ct: clipT,
+          cr: clipR,
+          cb: clipB,
+        );
       case SClip(:final rect, :final children):
         final r = RenderGeometry.normalize(rect);
         final saved = (clipL, clipT, clipR, clipB);
@@ -142,8 +162,18 @@ final class _RasterContext {
       // Skip markers entirely outside the clip.
       final ext = (size / 2 + (strokeOn ? p.stroke!.width : 0)) * scale + 1;
       final dx = x * scale, dy = y * scale;
-      if (dx + ext < clipL || dx - ext > clipR || dy + ext < clipT || dy - ext > clipB) continue;
-      _shape(RenderGeometry.markerPath(p.shape, x, y, size), fill, p.stroke, false);
+      if (dx + ext < clipL ||
+          dx - ext > clipR ||
+          dy + ext < clipT ||
+          dy - ext > clipB) {
+        continue;
+      }
+      _shape(
+        RenderGeometry.markerPath(p.shape, x, y, size),
+        fill,
+        p.stroke,
+        false,
+      );
     }
   }
 

@@ -20,7 +20,11 @@ void registerConditional(FunctionRegistryBuilder b) {
     [
       P.range('range', 'The range which is tested against criterion.'),
       P.scalar('criterion', 'The pattern or test to apply to range.'),
-      P.range('sum_range', 'The range to be summed, if different from range.', true),
+      P.range(
+        'sum_range',
+        'The range to be summed, if different from range.',
+        true,
+      ),
     ],
     (a) => _single(a, _Agg.sum, sumIndex: a.has(2) ? 2 : 0),
     priority: Priority.p0,
@@ -33,7 +37,10 @@ void registerConditional(FunctionRegistryBuilder b) {
     [
       P.range('sum_range', 'The range to sum.'),
       P.range('criteria_range1', 'The range to check against criterion1.'),
-      P.scalar('criterion1', 'The pattern or test to apply to criteria_range1.'),
+      P.scalar(
+        'criterion1',
+        'The pattern or test to apply to criteria_range1.',
+      ),
       P.rep('criteria_range2', ArgKind.range, 'Additional ranges to check.'),
       P.rep('criterion2', ArgKind.scalar, 'Additional criteria to check.'),
     ],
@@ -60,7 +67,10 @@ void registerConditional(FunctionRegistryBuilder b) {
     'Returns the count of a range depending on multiple criteria.',
     [
       P.range('criteria_range1', 'The range to check against criterion1.'),
-      P.scalar('criterion1', 'The pattern or test to apply to criteria_range1.'),
+      P.scalar(
+        'criterion1',
+        'The pattern or test to apply to criteria_range1.',
+      ),
       P.rep('criteria_range2', ArgKind.range, 'Additional ranges to check.'),
       P.rep('criterion2', ArgKind.scalar, 'Additional criteria to check.'),
     ],
@@ -74,7 +84,11 @@ void registerConditional(FunctionRegistryBuilder b) {
     [
       P.range('criteria_range', 'The range to check against criterion.'),
       P.scalar('criterion', 'The pattern or test to apply to criteria_range.'),
-      P.range('average_range', 'The range to average. If not included, criteria_range is used for the average instead.', true),
+      P.range(
+        'average_range',
+        'The range to average. If not included, criteria_range is used for the average instead.',
+        true,
+      ),
     ],
     (a) => _single(a, _Agg.average, sumIndex: a.has(2) ? 2 : 0),
     priority: Priority.p0,
@@ -86,7 +100,10 @@ void registerConditional(FunctionRegistryBuilder b) {
     [
       P.range('average_range', 'The range to average.'),
       P.range('criteria_range1', 'The range to check against criterion1.'),
-      P.scalar('criterion1', 'The pattern or test to apply to criteria_range1.'),
+      P.scalar(
+        'criterion1',
+        'The pattern or test to apply to criteria_range1.',
+      ),
       P.rep('criteria_range2', ArgKind.range, 'Additional ranges to check.'),
       P.rep('criterion2', ArgKind.scalar, 'Additional criteria to check.'),
     ],
@@ -98,9 +115,18 @@ void registerConditional(FunctionRegistryBuilder b) {
     'MAXIFS',
     'Returns the maximum value in a range of cells, filtered by a set of criteria.',
     [
-      P.range('range', 'The range of cells from which the maximum will be determined.'),
-      P.range('criteria_range1', 'The range of cells over which to evaluate criterion1.'),
-      P.scalar('criterion1', 'The pattern or test to apply to criteria_range1.'),
+      P.range(
+        'range',
+        'The range of cells from which the maximum will be determined.',
+      ),
+      P.range(
+        'criteria_range1',
+        'The range of cells over which to evaluate criterion1.',
+      ),
+      P.scalar(
+        'criterion1',
+        'The pattern or test to apply to criteria_range1.',
+      ),
       P.rep('criteria_range2', ArgKind.range, 'Additional ranges to evaluate.'),
       P.rep('criterion2', ArgKind.scalar, 'Additional criteria.'),
     ],
@@ -112,9 +138,18 @@ void registerConditional(FunctionRegistryBuilder b) {
     'MINIFS',
     'Returns the minimum value in a range of cells, filtered by a set of criteria.',
     [
-      P.range('range', 'The range of cells from which the minimum will be determined.'),
-      P.range('criteria_range1', 'The range of cells over which to evaluate criterion1.'),
-      P.scalar('criterion1', 'The pattern or test to apply to criteria_range1.'),
+      P.range(
+        'range',
+        'The range of cells from which the minimum will be determined.',
+      ),
+      P.range(
+        'criteria_range1',
+        'The range of cells over which to evaluate criterion1.',
+      ),
+      P.scalar(
+        'criterion1',
+        'The pattern or test to apply to criteria_range1.',
+      ),
       P.rep('criteria_range2', ArgKind.range, 'Additional ranges to evaluate.'),
       P.rep('criterion2', ArgKind.scalar, 'Additional criteria.'),
     ],
@@ -135,7 +170,8 @@ final class _Grid {
   final List<FValue> cells;
   _Grid(this.rows, this.cols, this.logicalRows, this.logicalCols, this.cells);
   int get logicalCount => logicalRows * logicalCols;
-  FValue at(int r, int c) => (r < rows && c < cols) ? cells[r * cols + c] : FEmpty.instance;
+  FValue at(int r, int c) =>
+      (r < rows && c < cols) ? cells[r * cols + c] : FEmpty.instance;
 }
 
 FRef _rangeArg(Args a, int i) {
@@ -156,16 +192,32 @@ _Grid _grid(Args a, FRef ref, int rows, int cols) {
   final cc = math.max(0, math.min(cols, uc - area.left));
   final key = 'G|${area.sheetId}|${area.top}|${area.left}|$cr|$cc';
   final stamp = ctx.host.lookupCache.stampOf(
-    ResolvedArea(area.sheetId, area.top, area.left, area.top + math.max<int>(cr, 1) - 1, area.left + math.max<int>(cc, 1) - 1),
+    ResolvedArea(
+      area.sheetId,
+      area.top,
+      area.left,
+      area.top + math.max<int>(cr, 1) - 1,
+      area.left + math.max<int>(cc, 1) - 1,
+    ),
   );
   final cached = ctx.host.lookupCache.get<_Grid>(key, stamp);
-  if (cached != null) return _Grid(cached.rows, cached.cols, rows, cols, cached.cells);
+  if (cached != null) {
+    return _Grid(cached.rows, cached.cols, rows, cols, cached.cells);
+  }
   final cells = List<FValue>.filled(cr * cc, FEmpty.instance);
   if (cr > 0 && cc > 0) {
     ctx.host.forEachValue(
       s,
-      ResolvedArea(area.sheetId, area.top, area.left, area.top + cr - 1, area.left + cc - 1).rect,
-      (r, c, v) => cells[(r - area.top) * cc + (c - area.left)] = v is FRich ? v.scalar : v,
+      ResolvedArea(
+        area.sheetId,
+        area.top,
+        area.left,
+        area.top + cr - 1,
+        area.left + cc - 1,
+      ).rect,
+      (r, c, v) => cells[(r - area.top) * cc + (c - area.left)] = v is FRich
+          ? v.scalar
+          : v,
     );
   }
   final g = _Grid(cr, cc, rows, cols, cells);
@@ -186,7 +238,9 @@ final class _Index {
       if (k != null) (eq[k] ??= []).add(i);
       if (v is FNumber) sortedPos.add(i);
     }
-    sortedPos.sort((x, y) => (g.cells[x] as FNumber).v.compareTo((g.cells[y] as FNumber).v));
+    sortedPos.sort(
+      (x, y) => (g.cells[x] as FNumber).v.compareTo((g.cells[y] as FNumber).v),
+    );
     for (final p in sortedPos) {
       sortedNum.add((g.cells[p] as FNumber).v);
     }
@@ -206,7 +260,9 @@ final class _Index {
           if (b.isEmpty) return a;
           return ([...a, ...b]..sort());
         }
-        if (o is FText && o.v.isNotEmpty) return eq['s:${Compare.fold(o.v)}'] ?? const <int>[];
+        if (o is FText && o.v.isNotEmpty) {
+          return eq['s:${Compare.fold(o.v)}'] ?? const <int>[];
+        }
         if (o is FBool) return eq[o.v] ?? const <int>[];
         return null;
       case CriterionOp.lt:
@@ -244,7 +300,13 @@ _Index? _indexFor(Args a, FRef ref, _Grid g) {
   final area = ref.area;
   final key = 'I|${area.sheetId}|${area.top}|${area.left}|${g.rows}|${g.cols}';
   final stamp = a.ctx.host.lookupCache.stampOf(
-    ResolvedArea(area.sheetId, area.top, area.left, area.top + g.rows - 1, area.left + g.cols - 1),
+    ResolvedArea(
+      area.sheetId,
+      area.top,
+      area.left,
+      area.top + g.rows - 1,
+      area.left + g.cols - 1,
+    ),
   );
   final cached = a.ctx.host.lookupCache.get<_Index>(key, stamp);
   if (cached != null) return cached;
@@ -296,7 +358,9 @@ final class _Acc {
       case _Agg.sum:
         return numResult(sum + comp);
       case _Agg.average:
-        if (count == 0) return FError(ErrorKind.div0, ErrorMessages.divZeroEval(fn));
+        if (count == 0) {
+          return FError(ErrorKind.div0, ErrorMessages.divZeroEval(fn));
+        }
         return numResult((sum + comp) / count);
       case _Agg.max:
       case _Agg.min:
@@ -342,14 +406,19 @@ FValue _single(Args a, _Agg agg, {int sumIndex = 0}) {
     if (tail > 0 && crit.test(FEmpty.instance)) acc.count += tail;
   }
   final r = acc.result(a.fn);
-  if (r is FNumber && agg != _Agg.count && !acc.hint.isNone) return r.withHint(acc.hint);
+  if (r is FNumber && agg != _Agg.count && !acc.hint.isNone) {
+    return r.withHint(acc.hint);
+  }
   return r;
 }
 
 FValue _multi(Args a, _Agg agg, {required int valueIndex, required int first}) {
   final pairs = (a.length - first) ~/ 2;
   if ((a.length - first).isOdd || pairs == 0) {
-    return FError(ErrorKind.na, ErrorMessages.wrongArgCount(a.fn, first + 2, 255, a.length));
+    return FError(
+      ErrorKind.na,
+      ErrorMessages.wrongArgCount(a.fn, first + 2, 255, a.length),
+    );
   }
   final refs = <FRef>[];
   final crits = <Criterion>[];
@@ -418,9 +487,13 @@ FValue _multi(Args a, _Agg agg, {required int valueIndex, required int first}) {
   }
   if (agg == _Agg.count) {
     final tail = rows * cols - cr * cc;
-    if (tail > 0 && crits.every((c) => c.test(FEmpty.instance))) acc.count += tail;
+    if (tail > 0 && crits.every((c) => c.test(FEmpty.instance))) {
+      acc.count += tail;
+    }
   }
   final r = acc.result(a.fn);
-  if (r is FNumber && agg != _Agg.count && !acc.hint.isNone) return r.withHint(acc.hint);
+  if (r is FNumber && agg != _Agg.count && !acc.hint.isNone) {
+    return r.withHint(acc.hint);
+  }
   return r;
 }

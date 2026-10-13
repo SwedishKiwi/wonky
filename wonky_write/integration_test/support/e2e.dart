@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
+import 'dart:io';
 
 import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -8,6 +9,7 @@ import 'package:serverpod_auth_core_client/serverpod_auth_core_client.dart'
 import 'package:super_editor/super_editor_test.dart';
 import 'package:wonky_app/wonky_app.dart';
 import 'package:wonky_client/wonky_client.dart';
+import 'package:wonky_core/wonky_core.dart' show McpScope;
 import 'package:wonky_write/main.dart' as app;
 
 /// E2E support for the Write journeys (specs/11 §1.1, specs/15 §9). The
@@ -180,6 +182,12 @@ Future<void> waitForEditor(WidgetTester tester) async {
   await settle(tester, const Duration(seconds: 1));
 }
 
+/// Puts the caret into the editor.
+Future<void> focusEditor(WidgetTester tester) async {
+  await tester.tap(find.byKey(const ValueKey<String>('write.editor')));
+  await settle(tester, const Duration(milliseconds: 300));
+}
+
 /// Types [text] through the IME, the way a user does on web and desktop.
 Future<void> typeInEditor(WidgetTester tester, String text) async {
   await tester.typeImeText(text);
@@ -304,5 +312,134 @@ class E2eClient {
       if (op['insert'] is String) op['insert'] as String,
   ].join();
 
+  /// Shares [itemUuid] with [email] as [role] (this client must be allowed
+  /// to share).
+  Future<void> share(UuidValue itemUuid, String email, AccessRole role) =>
+      client.sharing.share(itemUuid, [email], role, false, null, null);
+
+  /// Submits one Delta op to the document on `document.connect` (the
+  /// collaboration protocol the app uses) and waits for the server's ack.
+  /// [build] gets the current text length (without the final newline).
+  Future<void> submitOp(
+    UuidValue itemUuid,
+    List<Map<String, Object?>> Function(int textLength) build,
+  ) async {
+    final info = await client.drive.get(itemUuid);
+    final ref = info.contentRef!;
+    final snap = await client.document.getSnapshot(ref, null);
+    var length = 0;
+    for (final op in jsonDecode(snap.deltaJson) as List<Object?>) {
+      final insert = (op as Map)['insert'];
+      length += insert is String ? insert.length : 1;
+    }
+    final input = StreamController<DocClientMessage>();
+    final messages = client.document
+        .connect(ref, snap.revision, input.stream)
+        .asBroadcastStream();
+    final opId = const Uuid().v7obj();
+    final acked = messages
+        .firstWhere(
+          (m) => (m is DocAck && m.clientOpId == opId) || m is DocOpRejected,
+        )
+        .timeout(const Duration(seconds: 20));
+    await messages.firstWhere((m) => m is DocInit);
+    input.add(
+      DocSubmitOp(
+        clientOpId: opId,
+        baseRevision: snap.revision,
+        deltaJson: jsonEncode(build(length - 1)),
+        kind: DocumentOpKind.content,
+      ),
+    );
+    final reply = await acked;
+    await input.close();
+    if (reply is DocOpRejected) {
+      throw TestFailure('Op rejected: ${reply.code} ${reply.message}');
+    }
+  }
+
+  /// Creates a personal access token for MCP with all scopes.
+  Future<String> createMcpToken() async {
+    final t = await client.accessToken.create('e2e', McpScope.all, null);
+    return t.secret;
+  }
+
   void close() => client.close();
+}
+
+/// A JSON-RPC session on the `/mcp` route of the web server (specs/09).
+class E2eMcp {
+  E2eMcp(this.token, {Uri? url}) : url = url ?? Uri.parse(mcpUrl);
+
+  static const mcpUrl = String.fromEnvironment(
+    'WONKY_E2E_MCP',
+    defaultValue: 'http://localhost:8082/mcp',
+  );
+
+  final String token;
+  final Uri url;
+  final _http = HttpClient();
+  String? _session;
+  var _id = 0;
+
+  Future<Map<String, Object?>> _post(Map<String, Object?> body) async {
+    final req = await _http.postUrl(url);
+    req.headers
+      ..set('accept', 'application/json, text/event-stream')
+      ..set('authorization', 'Bearer $token')
+      ..contentType = ContentType.json;
+    if (_session != null) req.headers.set('mcp-session-id', _session!);
+    req.write(jsonEncode(body));
+    final res = await req.close();
+    _session ??= res.headers.value('mcp-session-id');
+    final text = await res.transform(utf8.decoder).join();
+    if (res.statusCode == 202 || text.isEmpty) return const {};
+    if (res.statusCode != 200) {
+      throw TestFailure('MCP ${res.statusCode}: $text');
+    }
+    // Plain JSON or a single SSE `data:` event.
+    final json = text.trimLeft().startsWith('{')
+        ? text
+        : text
+              .split('\n')
+              .where((l) => l.startsWith('data:'))
+              .map((l) => l.substring(5).trim())
+              .last;
+    return (jsonDecode(json) as Map).cast<String, Object?>();
+  }
+
+  Future<void> initialize() async {
+    await _post({
+      'jsonrpc': '2.0',
+      'id': ++_id,
+      'method': 'initialize',
+      'params': {
+        'protocolVersion': '2025-06-18',
+        'capabilities': <String, Object?>{},
+        'clientInfo': {'name': 'wonky-e2e', 'version': '1'},
+      },
+    });
+    await _post({'jsonrpc': '2.0', 'method': 'notifications/initialized'});
+  }
+
+  /// Calls [tool]; returns its `structuredContent` (fails on tool errors).
+  Future<Map<String, Object?>> call(
+    String tool,
+    Map<String, Object?> arguments,
+  ) async {
+    final reply = await _post({
+      'jsonrpc': '2.0',
+      'id': ++_id,
+      'method': 'tools/call',
+      'params': {'name': tool, 'arguments': arguments},
+    });
+    final result = (reply['result'] as Map?)?.cast<String, Object?>();
+    if (result == null || result['isError'] == true) {
+      throw TestFailure('$tool failed: $reply');
+    }
+    return (result['structuredContent'] as Map? ?? const {})
+        .cast<String, Object?>();
+  }
+
+  void close() => _http.close(force: true);
 }

@@ -1,5 +1,15 @@
 /// Kinds of automatic result formats (05 §6.2).
-enum FormatHintKind { none, date, time, dateTime, duration, percent, currency, scientific, fromCell }
+enum FormatHintKind {
+  none,
+  date,
+  time,
+  dateTime,
+  duration,
+  percent,
+  currency,
+  scientific,
+  fromCell,
+}
 
 /// Automatic display format of a formula result. Never synced; cached with computed values.
 final class FormatHint {
@@ -18,10 +28,13 @@ final class FormatHint {
   static const FormatHint duration = FormatHint._(FormatHintKind.duration);
   static const FormatHint percent = FormatHint._(FormatHintKind.percent);
   static const FormatHint scientific = FormatHint._(FormatHintKind.scientific);
-  static const FormatHint currencyDefault = FormatHint._(FormatHintKind.currency);
+  static const FormatHint currencyDefault = FormatHint._(
+    FormatHintKind.currency,
+  );
 
-  factory FormatHint.currency([String? code]) =>
-      code == null ? currencyDefault : FormatHint._(FormatHintKind.currency, code);
+  factory FormatHint.currency([String? code]) => code == null
+      ? currencyDefault
+      : FormatHint._(FormatHintKind.currency, code);
 
   /// Format of the source cell (bare references, lookups).
   factory FormatHint.fromCell(String numberFormat) =>

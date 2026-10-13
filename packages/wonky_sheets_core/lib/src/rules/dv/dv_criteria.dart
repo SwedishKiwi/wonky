@@ -19,11 +19,13 @@ final class DvChipColors {
 
   Map<String, Object?> toJson() => {'bg': ?bg, 'fg': ?fg};
 
-  static DvChipColors fromJson(Object? json) =>
-      json is Map ? DvChipColors(bg: json['bg'] as String?, fg: json['fg'] as String?) : const DvChipColors();
+  static DvChipColors fromJson(Object? json) => json is Map
+      ? DvChipColors(bg: json['bg'] as String?, fg: json['fg'] as String?)
+      : const DvChipColors();
 
   @override
-  bool operator ==(Object other) => other is DvChipColors && other.bg == bg && other.fg == fg;
+  bool operator ==(Object other) =>
+      other is DvChipColors && other.bg == bg && other.fg == fg;
 
   @override
   int get hashCode => Object.hash(bg, fg);
@@ -51,7 +53,8 @@ final class DvOption {
   }
 
   @override
-  bool operator ==(Object other) => other is DvOption && other.value == value && other.colors == colors;
+  bool operator ==(Object other) =>
+      other is DvOption && other.value == value && other.colors == colors;
 
   @override
   int get hashCode => Object.hash(value, colors);
@@ -122,12 +125,21 @@ sealed class DvCriteria {
         if (range == null) return null;
         final colors = <String, DvChipColors>{};
         if (m['colors'] is Map) {
-          (m['colors'] as Map).forEach((k, v) => colors[k.toString()] = DvChipColors.fromJson(v));
+          (m['colors'] as Map).forEach(
+            (k, v) => colors[k.toString()] = DvChipColors.fromJson(v),
+          );
         }
-        return DvRangeCriteria(range, colors: colors, allowMultiple: m['allowMultiple'] == true);
+        return DvRangeCriteria(
+          range,
+          colors: colors,
+          allowMultiple: m['allowMultiple'] == true,
+        );
       case 'checkbox':
         String? s(Object? v) => v?.toString();
-        return DvCheckboxCriteria(checked: s(m['checked']), unchecked: s(m['unchecked']));
+        return DvCheckboxCriteria(
+          checked: s(m['checked']),
+          unchecked: s(m['unchecked']),
+        );
     }
     final c = Condition.tryParse(m);
     if (c == null || !c.type.usableIn(ConditionUse.dataValidation)) return null;
@@ -147,7 +159,8 @@ sealed class DvCriteria {
 /// Dropdown of items.
 final class DvListCriteria extends DvCriteria {
   /// Creates list criteria.
-  DvListCriteria(List<DvOption> options, {this.allowMultiple = false}) : options = List.unmodifiable(options);
+  DvListCriteria(List<DvOption> options, {this.allowMultiple = false})
+    : options = List.unmodifiable(options);
 
   final List<DvOption> options;
 
@@ -173,8 +186,11 @@ final class DvListCriteria extends DvCriteria {
 /// Dropdown from a range: items = distinct display values of [range].
 final class DvRangeCriteria extends DvCriteria {
   /// Creates range criteria.
-  DvRangeCriteria(this.range, {Map<String, DvChipColors> colors = const {}, this.allowMultiple = false})
-    : colors = Map.unmodifiable(colors);
+  DvRangeCriteria(
+    this.range, {
+    Map<String, DvChipColors> colors = const {},
+    this.allowMultiple = false,
+  }) : colors = Map.unmodifiable(colors);
 
   final GridRange range;
 
@@ -186,7 +202,8 @@ final class DvRangeCriteria extends DvCriteria {
   Map<String, Object?> toJson() => {
     'type': 'oneOfRange',
     'range': range.toJson(),
-    if (colors.isNotEmpty) 'colors': {for (final e in colors.entries) e.key: e.value.toJson()},
+    if (colors.isNotEmpty)
+      'colors': {for (final e in colors.entries) e.key: e.value.toJson()},
     'allowMultiple': allowMultiple,
   };
 }
@@ -206,7 +223,11 @@ final class DvCheckboxCriteria extends DvCriteria {
   bool get hasCustomValues => checked != null || unchecked != null;
 
   @override
-  Map<String, Object?> toJson() => {'type': 'checkbox', 'checked': ?checked, 'unchecked': ?unchecked};
+  Map<String, Object?> toJson() => {
+    'type': 'checkbox',
+    'checked': ?checked,
+    'unchecked': ?unchecked,
+  };
 }
 
 /// Any DV-capable [Condition] (07 §3.3).

@@ -4443,6 +4443,30 @@ abstract class WonkyAppLocalizations {
   /// In en, this message translates to:
   /// **'Send one email every 15 minutes instead of one per notification. Mentions and assignments are always emailed right away.'**
   String get notifyDigestHint;
+
+  /// No description provided for @exportFormatMarkdown.
+  ///
+  /// In en, this message translates to:
+  /// **'Markdown (.md)'**
+  String get exportFormatMarkdown;
+
+  /// No description provided for @exportFormatHtml.
+  ///
+  /// In en, this message translates to:
+  /// **'HTML (.html)'**
+  String get exportFormatHtml;
+
+  /// No description provided for @exportFormatPdf.
+  ///
+  /// In en, this message translates to:
+  /// **'PDF (.pdf)'**
+  String get exportFormatPdf;
+
+  /// No description provided for @exportFormatText.
+  ///
+  /// In en, this message translates to:
+  /// **'Plain text (.txt)'**
+  String get exportFormatText;
 }
 
 class _WonkyAppLocalizationsDelegate

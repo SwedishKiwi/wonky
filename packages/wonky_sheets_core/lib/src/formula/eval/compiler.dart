@@ -4,7 +4,6 @@ import '../../addressing/a1.dart';
 import '../ast/ast.dart';
 import '../codec/ref_resolver.dart';
 import '../codec/ref_token.dart';
-import '../functions/function_spec.dart';
 import '../functions/registry.dart';
 import '../model/workbook_view.dart';
 import '../parser/formula_grammar.dart';
@@ -220,7 +219,10 @@ final class FormulaCompiler {
           case SlotRefNode(:final index):
             return (ctx) => index < ctx.slots.length
                 ? resolveStored(ctx, ctx.slots[index])
-                : const FError(ErrorKind.ref, ErrorMessages.referenceDoesNotExist);
+                : const FError(
+                    ErrorKind.ref,
+                    ErrorMessages.referenceDoesNotExist,
+                  );
           case StoredRefNode(:final ref):
             return (ctx) => resolveStored(ctx, ref);
           case A1RefNode(:final area):
@@ -231,7 +233,8 @@ final class FormulaCompiler {
         final upper = name.toUpperCase();
         if (scope != null && scope.contains(upper)) {
           return (ctx) =>
-              ctx.env?.lookup(upper) ?? FError(ErrorKind.name, ErrorMessages.unknownRange(name));
+              ctx.env?.lookup(upper) ??
+              FError(ErrorKind.name, ErrorMessages.unknownRange(name));
         }
         m.names.add(upper);
         return (ctx) => resolveName(ctx, upper, name);
@@ -261,8 +264,15 @@ final class FormulaCompiler {
           final a = _operand(ctx, l(ctx));
           final b = _operand(ctx, r(ctx));
           final loc = ctx.locale;
-          if (a is! FArray && b is! FArray) return Operators.binary(op, a, b, loc);
-          return Operators.lift2(a, b, op.functionName, (x, y) => Operators.binary(op, x, y, loc));
+          if (a is! FArray && b is! FArray) {
+            return Operators.binary(op, a, b, loc);
+          }
+          return Operators.lift2(
+            a,
+            b,
+            op.functionName,
+            (x, y) => Operators.binary(op, x, y, loc),
+          );
         };
       case RangeOpExpr(:final left, :final right):
         final l = _c(left, scope, m);
@@ -275,7 +285,10 @@ final class FormulaCompiler {
           final fv = f(ctx);
           if (fv is FError) return fv;
           if (fv is! FLambda) {
-            return const FError(ErrorKind.value, 'The expression is not a function.');
+            return const FError(
+              ErrorKind.value,
+              'The expression is not a function.',
+            );
           }
           return invokeCallable(ctx, fv.closure, [
             for (final x in a) x == null ? FOmitted.instance : x(ctx),
@@ -333,7 +346,10 @@ final class FormulaCompiler {
   CompiledExpr _let(CallExpr e, _Scope? scope, _Meta m) {
     final args = e.args;
     if (args.length < 3 || args.length.isEven) {
-      final err = FError(ErrorKind.na, ErrorMessages.wrongArgCount('LET', 3, 255, args.length));
+      final err = FError(
+        ErrorKind.na,
+        ErrorMessages.wrongArgCount('LET', 3, 255, args.length),
+      );
       return (_) => err;
     }
     final names = <String>[];
@@ -355,7 +371,9 @@ final class FormulaCompiler {
       s.names.add(up);
     }
     final bodyExpr = args.last;
-    final body = bodyExpr == null ? (EvalContext _) => FEmpty.instance : _c(bodyExpr, s, m);
+    final body = bodyExpr == null
+        ? (EvalContext _) => FEmpty.instance
+        : _c(bodyExpr, s, m);
     return (ctx) {
       final prev = ctx.env;
       final env = LambdaEnv(prev);
@@ -374,14 +392,20 @@ final class FormulaCompiler {
   CompiledExpr _lambda(CallExpr e, _Scope? scope, _Meta m) {
     final args = e.args;
     if (args.isEmpty || args.last == null) {
-      final err = FError(ErrorKind.na, ErrorMessages.wrongArgCount('LAMBDA', 1, 255, args.length));
+      final err = FError(
+        ErrorKind.na,
+        ErrorMessages.wrongArgCount('LAMBDA', 1, 255, args.length),
+      );
       return (_) => err;
     }
     final params = <String>[];
     for (var i = 0; i < args.length - 1; i++) {
       final p = args[i];
       if (p is! NameExpr || A1Area.tryParse(p.name) != null) {
-        final err = FError(ErrorKind.value, 'Argument ${i + 1} of function LAMBDA must be a valid name.');
+        final err = FError(
+          ErrorKind.value,
+          'Argument ${i + 1} of function LAMBDA must be a valid name.',
+        );
         return (_) => err;
       }
       params.add(p.name.toUpperCase());
@@ -397,12 +421,19 @@ final class FormulaCompiler {
       case FRef():
         if (v.area.isSingleCell) {
           final s = RangeAccess.sheetOf(ctx, v.area);
-          if (s == null) return const FError(ErrorKind.ref, ErrorMessages.referenceDoesNotExist);
+          if (s == null) {
+            return const FError(
+              ErrorKind.ref,
+              ErrorMessages.referenceDoesNotExist,
+            );
+          }
           if (v.dynamic) ctx.deps.areas.add(v.area);
           final x = RangeAccess.cellWithHint(ctx, s, v.area.top, v.area.left);
           return x is FRich ? x.scalar : x;
         }
-        return ctx.arrayMode ? RangeAccess.materialize(ctx, v) : RangeAccess.intersect(ctx, v);
+        return ctx.arrayMode
+            ? RangeAccess.materialize(ctx, v)
+            : RangeAccess.intersect(ctx, v);
       case FRich(:final scalar):
         return scalar;
       case FOmitted():
@@ -418,10 +449,16 @@ final class FormulaCompiler {
     if (a is FError) return a;
     if (b is FError) return b;
     if (a is! FRef || b is! FRef) {
-      return const FError(ErrorKind.value, ErrorMessages.rangeOperatorRequiresRefs);
+      return const FError(
+        ErrorKind.value,
+        ErrorMessages.rangeOperatorRequiresRefs,
+      );
     }
     if (a.area.sheetId != b.area.sheetId) {
-      return const FError(ErrorKind.value, ErrorMessages.rangeOperatorRequiresRefs);
+      return const FError(
+        ErrorKind.value,
+        ErrorMessages.rangeOperatorRequiresRefs,
+      );
     }
     final x = a.area, y = b.area;
     return FRef(
@@ -447,7 +484,9 @@ final class FormulaCompiler {
           v = RangeAccess.deref(ctx, v);
         }
         if (v is FRich) v = v.scalar;
-        if (v is FLambda) v = const FError(ErrorKind.value, ErrorMessages.lambdaResult);
+        if (v is FLambda) {
+          v = const FError(ErrorKind.value, ErrorMessages.lambdaResult);
+        }
         if (v is FOmitted) v = FEmpty.instance;
         parts.add(v is FArray ? v : FArray(1, 1, [v]));
       }
@@ -487,7 +526,9 @@ final class FormulaCompiler {
       return b.length == 1 ? b.at(0, 0) : b;
     }
     final total = rowBlocks.fold<int>(0, (s, b) => s + b.rows);
-    if (total * w > maxArrayCells) return const FError(ErrorKind.num, ErrorMessages.resultTooLarge);
+    if (total * w > maxArrayCells) {
+      return const FError(ErrorKind.num, ErrorMessages.resultTooLarge);
+    }
     final cells = <FValue>[];
     for (final b in rowBlocks) {
       for (var r = 0; r < b.rows; r++) {
@@ -537,7 +578,9 @@ final class FormulaCompiler {
   static FValue _refFailure(RefFailure f, StoredRef ref) => switch (f) {
     RefFailure.unresolvedSheetName => FError(
       ErrorKind.ref,
-      ErrorMessages.unresolvedSheet(A1Area.tryParse(ref.start.unbound ?? '')?.sheet ?? ''),
+      ErrorMessages.unresolvedSheet(
+        A1Area.tryParse(ref.start.unbound ?? '')?.sheet ?? '',
+      ),
     ),
     RefFailure.outOfBounds => FError(
       ErrorKind.ref,
@@ -553,7 +596,10 @@ final class FormulaCompiler {
       sheet = ctx.workbook.sheetByName(area.sheet!);
       ctx.deps.sheetNames = true;
       if (sheet == null) {
-        return FError(ErrorKind.ref, ErrorMessages.unresolvedSheet(area.sheet!));
+        return FError(
+          ErrorKind.ref,
+          ErrorMessages.unresolvedSheet(area.sheet!),
+        );
       }
     }
     ctx.deps.axisSheets.add(sheet.id);
@@ -576,23 +622,46 @@ final class FormulaCompiler {
   /// Resolves an [IdRange] (named ranges).
   static FValue resolveIdRange(EvalContext ctx, IdRange r) {
     final sheet = ctx.workbook.sheetById(r.sheetId);
-    if (sheet == null) return const FError(ErrorKind.ref, ErrorMessages.referenceDoesNotExist);
+    if (sheet == null) {
+      return const FError(ErrorKind.ref, ErrorMessages.referenceDoesNotExist);
+    }
     int idx(AxisView axis, String? id, String? key, bool start, int dflt) {
       if (id == null) return dflt;
       return RefResolver.endpointIndex(axis, id, key, isStart: start);
     }
 
     final r1 = idx(sheet.rows, r.rowStart, r.rowStartKey, true, 0);
-    final r2 = idx(sheet.rows, r.rowEnd, r.rowEndKey, false, sheet.rows.length - 1);
+    final r2 = idx(
+      sheet.rows,
+      r.rowEnd,
+      r.rowEndKey,
+      false,
+      sheet.rows.length - 1,
+    );
     final c1 = idx(sheet.columns, r.colStart, r.colStartKey, true, 0);
-    final c2 = idx(sheet.columns, r.colEnd, r.colEndKey, false, sheet.columns.length - 1);
-    if (r1 < 0 || c1 < 0 || r2 < r1 || c2 < c1 || r1 >= sheet.rows.length || c1 >= sheet.columns.length) {
+    final c2 = idx(
+      sheet.columns,
+      r.colEnd,
+      r.colEndKey,
+      false,
+      sheet.columns.length - 1,
+    );
+    if (r1 < 0 ||
+        c1 < 0 ||
+        r2 < r1 ||
+        c2 < c1 ||
+        r1 >= sheet.rows.length ||
+        c1 >= sheet.columns.length) {
       return const FError(ErrorKind.ref, ErrorMessages.referenceDoesNotExist);
     }
     return FRef(
       ResolvedArea(sheet.id, r1, c1, r2, c2),
       dynamic: true,
-      open: r.rowEnd == null || r.colEnd == null || r.rowStart == null || r.colStart == null,
+      open:
+          r.rowEnd == null ||
+          r.colEnd == null ||
+          r.rowStart == null ||
+          r.colStart == null,
     );
   }
 
@@ -622,10 +691,17 @@ final class FormulaCompiler {
       if (args.length != nf.params.length) {
         return FError(
           ErrorKind.na,
-          ErrorMessages.wrongArgCount(nf.name, nf.params.length, nf.params.length, args.length),
+          ErrorMessages.wrongArgCount(
+            nf.name,
+            nf.params.length,
+            nf.params.length,
+            args.length,
+          ),
         );
       }
-      final values = [for (final a in args) a == null ? FOmitted.instance : a(ctx)];
+      final values = [
+        for (final a in args) a == null ? FOmitted.instance : a(ctx),
+      ];
       final r = invokeCallable(ctx, nf, values);
       return r;
     }
@@ -647,7 +723,11 @@ final class FormulaCompiler {
   }
 
   /// Calls a built-in with argument evaluation per [ArgKind], error propagation and lifting.
-  static FValue dispatch(EvalContext ctx, FunctionSpec spec, List<CompiledExpr?> exprs) {
+  static FValue dispatch(
+    EvalContext ctx,
+    FunctionSpec spec,
+    List<CompiledExpr?> exprs,
+  ) {
     final n = exprs.length;
     final values = List<FValue>.filled(n, FOmitted.instance);
     List<CompiledExpr?> thunks = const [];
@@ -711,7 +791,9 @@ final class FormulaCompiler {
       if (a.rows > rows) rows = a.rows;
       if (a.cols > cols) cols = a.cols;
     }
-    if (rows * cols > maxArrayCells) return const FError(ErrorKind.num, ErrorMessages.resultTooLarge);
+    if (rows * cols > maxArrayCells) {
+      return const FError(ErrorKind.num, ErrorMessages.resultTooLarge);
+    }
     final out = List<FValue>.filled(rows * cols, FEmpty.instance);
     final elementValues = List<FValue>.of(values);
     for (var r = 0; r < rows; r++) {

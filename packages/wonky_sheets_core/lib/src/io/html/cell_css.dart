@@ -53,11 +53,18 @@ abstract final class CellCss {
       VerticalAlign.bottom => 'bottom',
     });
     p('text-align', d.hAlign.name);
-    if (f.fontFamily != defaultFont) p('font-family', HtmlText.cssFontFamily(f.fontFamily));
-    if (f.fontSize != defaultSize) p('font-size', '${HtmlText.num(f.fontSize)}pt');
+    if (f.fontFamily != defaultFont) {
+      p('font-family', HtmlText.cssFontFamily(f.fontFamily));
+    }
+    if (f.fontSize != defaultSize) {
+      p('font-size', '${HtmlText.num(f.fontSize)}pt');
+    }
     if (f.bold) p('font-weight', 'bold');
     if (f.italic) p('font-style', 'italic');
-    final deco = [if (d.underline) 'underline', if (f.strikethrough) 'line-through'];
+    final deco = [
+      if (d.underline) 'underline',
+      if (f.strikethrough) 'line-through',
+    ];
     if (deco.isNotEmpty) p('text-decoration', deco.join(' '));
     if (d.textColor != null) p('color', d.textColor!);
     if (d.fillColor != null) p('background-color', d.fillColor!);
@@ -111,7 +118,10 @@ abstract final class CellCss {
     if (f['bold'] == false) p('font-weight', 'normal');
     if (f['italic'] == true) p('font-style', 'italic');
     if (f['italic'] == false) p('font-style', 'normal');
-    final deco = [if (f['underline'] == true) 'underline', if (f['strikethrough'] == true) 'line-through'];
+    final deco = [
+      if (f['underline'] == true) 'underline',
+      if (f['strikethrough'] == true) 'line-through',
+    ];
     if (deco.isNotEmpty) p('text-decoration', deco.join(' '));
     final color = theme.resolveColor(f['textColor'] as String?);
     if (color != null) p('color', color);
@@ -134,16 +144,24 @@ abstract final class CellCss {
       final b = StringBuffer();
       var pos = 0;
       for (final run in rich.runs) {
-        if (run.start > pos) b.write(HtmlText.escapeMultiline(text.substring(pos, run.start)));
-        final seg = HtmlText.escapeMultiline(text.substring(run.start, run.end));
+        if (run.start > pos) {
+          b.write(HtmlText.escapeMultiline(text.substring(pos, run.start)));
+        }
+        final seg = HtmlText.escapeMultiline(
+          text.substring(run.start, run.end),
+        );
         final style = runStyle(run.format, theme);
-        var html = style.isEmpty ? seg : '<span style="${HtmlText.attr(style)}">$seg</span>';
+        var html = style.isEmpty
+            ? seg
+            : '<span style="${HtmlText.attr(style)}">$seg</span>';
         final link = run.link == null ? null : toHref(run.link!);
         if (link != null) html = '<a href="${HtmlText.attr(link)}">$html</a>';
         b.write(html);
         pos = run.end;
       }
-      if (pos < text.length) b.write(HtmlText.escapeMultiline(text.substring(pos)));
+      if (pos < text.length) {
+        b.write(HtmlText.escapeMultiline(text.substring(pos)));
+      }
       inner = b.toString();
     } else {
       inner = HtmlText.escapeMultiline(text);

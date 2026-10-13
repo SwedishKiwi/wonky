@@ -1396,5 +1396,9 @@
   "notifyAccessRequests": "Access requests",
   "notifySuggestions": "Suggestions on my files",
   "notifyDigest": "Bundle emails",
-  "notifyDigestHint": "Send one email every 15 minutes instead of one per notification. Mentions and assignments are always emailed right away."
+  "notifyDigestHint": "Send one email every 15 minutes instead of one per notification. Mentions and assignments are always emailed right away.",
+  "exportFormatMarkdown": "Markdown (.md)",
+  "exportFormatHtml": "HTML (.html)",
+  "exportFormatPdf": "PDF (.pdf)",
+  "exportFormatText": "Plain text (.txt)"
 }

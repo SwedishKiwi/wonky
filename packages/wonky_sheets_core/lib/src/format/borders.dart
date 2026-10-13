@@ -57,7 +57,9 @@ final class BorderSpec {
     final styleName = bar < 0 ? s : s.substring(0, bar);
     final style = BorderStyle.tryParse(styleName);
     if (style == null) return null;
-    final color = bar < 0 || bar == s.length - 1 ? 'auto' : s.substring(bar + 1);
+    final color = bar < 0 || bar == s.length - 1
+        ? 'auto'
+        : s.substring(bar + 1);
     return BorderSpec(style, color);
   }
 
@@ -87,7 +89,18 @@ final class BorderSpec {
 }
 
 /// Border picker presets (06 §8.3).
-enum BorderPreset { all, inner, horizontal, vertical, outer, top, bottom, left, right, clear }
+enum BorderPreset {
+  all,
+  inner,
+  horizontal,
+  vertical,
+  outer,
+  top,
+  bottom,
+  left,
+  right,
+  clear,
+}
 
 /// One planned edge write: set [attr] of the cell at ([row], [col]) to [value]
 /// (encoded edge or null).

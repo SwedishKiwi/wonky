@@ -14,8 +14,12 @@ enum ClipboardOrigin { wonky, googleSheets, excel, libreOffice, web }
 /// paste planner.
 final class ClipboardPasteValue {
   /// Creates a paste value.
-  ClipboardPasteValue({this.content, this.formulaA1, CellFormat? format, this.note})
-    : format = format ?? CellFormat.empty;
+  ClipboardPasteValue({
+    this.content,
+    this.formulaA1,
+    CellFormat? format,
+    this.note,
+  }) : format = format ?? CellFormat.empty;
 
   /// Literal content (null with [formulaA1] null = empty cell).
   final CellContent? content;
@@ -31,7 +35,8 @@ final class ClipboardPasteValue {
   final String? note;
 
   @override
-  String toString() => 'ClipboardPasteValue($content, $formulaA1, $format, $note)';
+  String toString() =>
+      'ClipboardPasteValue($content, $formulaA1, $format, $note)';
 }
 
 /// One cell of a parsed HTML table (03 §12.5).
@@ -102,13 +107,20 @@ final class ClipboardTableCell {
       autoLink = p.autoLinkUrl;
     }
     final r = rich;
-    if (content is TextContent && r != null && r.text == content.text && r.runs.isNotEmpty) {
+    if (content is TextContent &&
+        r != null &&
+        r.text == content.text &&
+        r.runs.isNotEmpty) {
       content = RichTextContent(r);
     }
     var f = format;
     final nf = numberFormat ?? autoFormat;
-    if (nf != null && !f.has(FormatAttr.numberFormat)) f = f.withValue(FormatAttr.numberFormat, nf);
-    if (autoLink != null && !f.has(FormatAttr.linkUrl)) f = f.withValue(FormatAttr.linkUrl, autoLink);
+    if (nf != null && !f.has(FormatAttr.numberFormat)) {
+      f = f.withValue(FormatAttr.numberFormat, nf);
+    }
+    if (autoLink != null && !f.has(FormatAttr.linkUrl)) {
+      f = f.withValue(FormatAttr.linkUrl, autoLink);
+    }
     // Alignment equal to the general alignment of the value is not explicit.
     final align = f[FormatAttr.hAlign];
     if (align != null && formula == null) {
@@ -120,11 +132,17 @@ final class ClipboardTableCell {
       };
       if (general == align) f = f.withValue(FormatAttr.hAlign, null);
     }
-    return ClipboardPasteValue(content: content, formulaA1: formula, format: f, note: note);
+    return ClipboardPasteValue(
+      content: content,
+      formulaA1: formula,
+      format: f,
+      note: note,
+    );
   }
 
   @override
-  String toString() => 'ClipboardTableCell("$text", $typedValue, $formulaR1C1, $format)';
+  String toString() =>
+      'ClipboardTableCell("$text", $typedValue, $formulaR1C1, $format)';
 }
 
 /// A parsed clipboard HTML table: cells on a grid (covered merge cells and

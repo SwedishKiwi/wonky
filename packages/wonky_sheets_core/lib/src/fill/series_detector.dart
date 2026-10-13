@@ -54,7 +54,8 @@ final class FillItem {
   int get hashCode => Object.hash(sourceIndex, content, isFormula);
 
   @override
-  String toString() => 'FillItem($sourceIndex, $content${isFormula ? ', formula' : ''})';
+  String toString() =>
+      'FillItem($sourceIndex, $content${isFormula ? ', formula' : ''})';
 }
 
 enum _Kind { other, number, date, time, textNumber, list }
@@ -62,7 +63,13 @@ enum _Kind { other, number, date, time, textNumber, list }
 enum _Case { asList, upper, lower }
 
 final class _Cell {
-  _Cell(this.kind, {this.value = 0, this.prefix = '', this.suffix = '', this.width = 0});
+  _Cell(
+    this.kind, {
+    this.value = 0,
+    this.prefix = '',
+    this.suffix = '',
+    this.width = 0,
+  });
 
   final _Kind kind;
   final double value;
@@ -208,7 +215,9 @@ final class SeriesDetector {
             value: double.parse(digits),
             prefix: text.substring(0, m.start),
             suffix: text.substring(m.end),
-            width: digits.length > 1 && digits.startsWith('0') ? digits.length : 0,
+            width: digits.length > 1 && digits.startsWith('0')
+                ? digits.length
+                : 0,
           );
         }
         return _Cell(_Kind.other);
@@ -271,7 +280,12 @@ final class SeriesDetector {
     run.listId = common.keys.reduce((a, b) => a < b ? a : b);
   }
 
-  CellContent? _valueAt(_Run run, int p, FillMode mode, List<List<String>> lists) {
+  CellContent? _valueAt(
+    _Run run,
+    int p,
+    FillMode mode,
+    List<List<String>> lists,
+  ) {
     final r = run.length;
     final cells = run.cells;
     final auto = mode == FillMode.auto;
@@ -313,7 +327,9 @@ final class SeriesDetector {
         var step = 1;
         if (r >= 2) {
           step = (cells[1].lists[run.listId]! - i0) % n;
-          if (step == 0) return TextContent(_applyCase(list[i0], cells[0].textCase));
+          if (step == 0) {
+            return TextContent(_applyCase(list[i0], cells[0].textCase));
+          }
         }
         final idx = (i0 + p * step) % n;
         return TextContent(_applyCase(list[idx], cells[0].textCase));
@@ -369,7 +385,8 @@ final class SeriesDetector {
     final sameDay = ymd.every((d) => d.day == ymd.first.day);
     final allEom = ymd.every(isEom);
     if (sameDay || allEom) {
-      int monthIndex(({int year, int month, int day}) d) => d.year * 12 + d.month - 1;
+      int monthIndex(({int year, int month, int day}) d) =>
+          d.year * 12 + d.month - 1;
       final step = monthIndex(ymd[1]) - monthIndex(ymd[0]);
       var equal = step != 0;
       for (var k = 2; k < ymd.length && equal; k++) {
@@ -378,7 +395,12 @@ final class SeriesDetector {
       if (equal) {
         final frac = cells[0].value - days[0];
         final preferred = allEom && !sameDay ? 31 : ymd.first.day;
-        return SerialCalendar.addMonths(days[0], p * step, preferredDay: preferred) + frac;
+        return SerialCalendar.addMonths(
+              days[0],
+              p * step,
+              preferredDay: preferred,
+            ) +
+            frac;
       }
     }
     return _trend(cells, p);
@@ -398,5 +420,6 @@ final class _ListIndex {
 
   final Map<String, Map<int, int>> _map = {};
 
-  Map<int, int> lookup(String text) => _map[text.trim().toLowerCase()] ?? const {};
+  Map<int, int> lookup(String text) =>
+      _map[text.trim().toLowerCase()] ?? const {};
 }

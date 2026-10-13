@@ -9,7 +9,11 @@ import 'sort_keys.dart';
 abstract final class HeaderDetector {
   /// Checks the first row of [rect] using [value] (computed values). At most
   /// [sampleRows] data rows are inspected.
-  static bool looksLikeHeader(CellValue Function(int row, int col) value, GridRect rect, {int sampleRows = 500}) {
+  static bool looksLikeHeader(
+    CellValue Function(int row, int col) value,
+    GridRect rect, {
+    int sampleRows = 500,
+  }) {
     if (rect.rowCount < 2) return false;
     var anyHeader = false;
     for (var c = rect.left; c <= rect.right; c++) {
@@ -19,7 +23,9 @@ abstract final class HeaderDetector {
       anyHeader = true;
     }
     if (!anyHeader) return false;
-    final last = rect.top + sampleRows < rect.bottom ? rect.top + sampleRows : rect.bottom;
+    final last = rect.top + sampleRows < rect.bottom
+        ? rect.top + sampleRows
+        : rect.bottom;
     for (var c = rect.left; c <= rect.right; c++) {
       final counts = List<int>.filled(4, 0);
       for (var r = rect.top + 1; r <= last; r++) {
@@ -63,8 +69,10 @@ final class SortRefusal {
   /// The guard result for protection refusals.
   final GuardResult? guard;
 
-  static const String verticalMergeMessage = "Can't sort a range with vertically merged cells";
-  static const String overlayMessage = "You can't sort a range that contains part of an array result or pivot table";
+  static const String verticalMergeMessage =
+      "Can't sort a range with vertically merged cells";
+  static const String overlayMessage =
+      "You can't sort a range that contains part of an array result or pivot table";
 
   @override
   String toString() => 'SortRefusal(${kind.name}: $message)';
@@ -81,7 +89,8 @@ abstract final class SortStrategy {
   static SortStrategyKind choose(SheetModel sheet, GridRect rect) {
     if (hasVerticalMerge(sheet, rect)) return SortStrategyKind.contentMove;
     final grid = sheet.gridRect;
-    final fullWidth = grid != null && rect.left <= grid.left && rect.right >= grid.right;
+    final fullWidth =
+        grid != null && rect.left <= grid.left && rect.right >= grid.right;
     if (fullWidth) return SortStrategyKind.rowReorder;
     for (var r = rect.top; r <= rect.bottom; r++) {
       final rowId = sheet.rows.tryIdAt(r);
@@ -89,11 +98,17 @@ abstract final class SortStrategy {
       if (sheet.cells.rowCount(rowId) == 0) continue;
       for (final cell in sheet.cells.inRow(rowId)) {
         final c = sheet.columns.indexOf(cell.columnId);
-        if (c >= 0 && (c < rect.left || c > rect.right)) return SortStrategyKind.contentMove;
+        if (c >= 0 && (c < rect.left || c > rect.right)) {
+          return SortStrategyKind.contentMove;
+        }
       }
       // Horizontal merges crossing the range edge also pin the row.
-      for (final (_, m) in sheet.mergesIntersecting(GridRect(r, rect.left, r, rect.right))) {
-        if (m.left < rect.left || m.right > rect.right) return SortStrategyKind.contentMove;
+      for (final (_, m) in sheet.mergesIntersecting(
+        GridRect(r, rect.left, r, rect.right),
+      )) {
+        if (m.left < rect.left || m.right > rect.right) {
+          return SortStrategyKind.contentMove;
+        }
       }
     }
     return SortStrategyKind.rowReorder;
@@ -111,14 +126,30 @@ abstract final class SortStrategy {
     bool isOwner = false,
   }) {
     if (hasVerticalMerge(sheet, rect)) {
-      return const SortRefusal(SortRefusalKind.verticalMerge, SortRefusal.verticalMergeMessage);
+      return const SortRefusal(
+        SortRefusalKind.verticalMerge,
+        SortRefusal.verticalMergeMessage,
+      );
     }
     if (hasOverlay?.call(rect) ?? false) {
-      return const SortRefusal(SortRefusalKind.overlay, SortRefusal.overlayMessage);
+      return const SortRefusal(
+        SortRefusalKind.overlay,
+        SortRefusal.overlayMessage,
+      );
     }
     if (guard != null && userId != null) {
-      final g = guard.check(CellWrites(sheet.id, [rect]), userId, isOwner: isOwner);
-      if (g.isBlocked) return SortRefusal(SortRefusalKind.protected, GuardResult.blockedMessage, guard: g);
+      final g = guard.check(
+        CellWrites(sheet.id, [rect]),
+        userId,
+        isOwner: isOwner,
+      );
+      if (g.isBlocked) {
+        return SortRefusal(
+          SortRefusalKind.protected,
+          GuardResult.blockedMessage,
+          guard: g,
+        );
+      }
     }
     return null;
   }

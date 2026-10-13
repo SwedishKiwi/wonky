@@ -22,7 +22,10 @@ abstract final class ChartDescriber {
       b.write(' ${names.length} series: ${names.join(', ')}.');
     }
     final d = data.domain;
-    if (!d.isSynthetic && d.length > 0 && spec.type != ChartType.histogram && spec.type != ChartType.scorecard) {
+    if (!d.isSynthetic &&
+        d.length > 0 &&
+        spec.type != ChartType.histogram &&
+        spec.type != ChartType.scorecard) {
       final name = d.name.trim().isEmpty ? 'X axis' : d.name.trim();
       final labels = d.labels.where((l) => l.isNotEmpty).toList();
       if (labels.isNotEmpty) {

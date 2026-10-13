@@ -32,7 +32,9 @@ final class EngineCellInput {
   /// null/empty content.
   static EngineCellInput? fromContent(String? content) {
     if (content == null || content.isEmpty) return null;
-    if (content.startsWith('=')) return EngineCellInput.formula(content.substring(1));
+    if (content.startsWith('=')) {
+      return EngineCellInput.formula(content.substring(1));
+    }
     if (content.length >= 2 && content.codeUnitAt(1) == 0x3a) {
       final body = content.substring(2);
       switch (content.codeUnitAt(0)) {
@@ -42,7 +44,9 @@ final class EngineCellInput {
         case 0x73: // s
           return EngineCellInput.value(FText(body));
         case 0x62: // b
-          return EngineCellInput.value(FBool(body == '1' || body.toLowerCase() == 'true'));
+          return EngineCellInput.value(
+            FBool(body == '1' || body.toLowerCase() == 'true'),
+          );
         case 0x65: // e
           final k = ErrorKind.fromLiteral(body);
           return EngineCellInput.value(k == null ? FText(body) : FError(k));
@@ -56,20 +60,18 @@ final class EngineCellInput {
   static String _richPlainText(String json) {
     final m = RegExp(r'"t"\s*:\s*"((?:[^"\\]|\\.)*)"').firstMatch(json);
     if (m == null) return '';
-    return m
-        .group(1)!
-        .replaceAllMapped(RegExp(r'\\(u[0-9a-fA-F]{4}|.)'), (x) {
-          final e = x.group(1)!;
-          if (e.startsWith('u') && e.length == 5) {
-            return String.fromCharCode(int.parse(e.substring(1), radix: 16));
-          }
-          return switch (e) {
-            'n' => '\n',
-            't' => '\t',
-            'r' => '\r',
-            _ => e,
-          };
-        });
+    return m.group(1)!.replaceAllMapped(RegExp(r'\\(u[0-9a-fA-F]{4}|.)'), (x) {
+      final e = x.group(1)!;
+      if (e.startsWith('u') && e.length == 5) {
+        return String.fromCharCode(int.parse(e.substring(1), radix: 16));
+      }
+      return switch (e) {
+        'n' => '\n',
+        't' => '\t',
+        'r' => '\r',
+        _ => e,
+      };
+    });
   }
 
   /// Inverse of [fromContent] for literal values and formulas.
@@ -85,7 +87,9 @@ final class EngineCellInput {
   }
 
   @override
-  String toString() => formula != null ? 'EngineCellInput(=$formula)' : 'EngineCellInput(${value.debugText})';
+  String toString() => formula != null
+      ? 'EngineCellInput(=$formula)'
+      : 'EngineCellInput(${value.debugText})';
 }
 
 /// Ordered ids of one axis (rows or columns) of a sheet (02 §6 `AxisIndex`).
@@ -124,7 +128,10 @@ abstract interface class SheetView {
   EngineCellInput? inputAt(int row, int col);
 
   /// Visits the non-empty cells inside [rect] (clamped to the grid) in row-major order.
-  void forEachInput(GridRect rect, void Function(int row, int col, EngineCellInput input) visit);
+  void forEachInput(
+    GridRect rect,
+    void Function(int row, int col, EngineCellInput input) visit,
+  );
 
   /// Number of rows up to the last row with content (0 when empty).
   int get usedRowCount;
@@ -310,5 +317,10 @@ abstract interface class CellSource {
   String? numberFormatAt(String sheetId, int row, int col);
 
   /// Whether the row/column is hidden (user, group or, when [includeFilter], filter).
-  bool isHidden(String sheetId, GridDimension dimension, int index, {bool includeFilter = true});
+  bool isHidden(
+    String sheetId,
+    GridDimension dimension,
+    int index, {
+    bool includeFilter = true,
+  });
 }

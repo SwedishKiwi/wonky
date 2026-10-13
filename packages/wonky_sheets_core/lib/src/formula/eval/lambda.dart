@@ -41,7 +41,12 @@ final class LambdaClosure implements FCallable {
     if (args.length > params.length) {
       return FError(
         ErrorKind.na,
-        ErrorMessages.wrongArgCount(name, params.length, params.length, args.length),
+        ErrorMessages.wrongArgCount(
+          name,
+          params.length,
+          params.length,
+          args.length,
+        ),
       );
     }
     if (ctx.callDepth >= maxLambdaDepth) {

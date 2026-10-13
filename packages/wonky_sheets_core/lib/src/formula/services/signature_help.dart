@@ -45,7 +45,8 @@ final class SignatureInfo {
   });
 
   @override
-  String toString() => 'SignatureInfo($functionName, arg $argIndex → param $activeParam)';
+  String toString() =>
+      'SignatureInfo($functionName, arg $argIndex → param $activeParam)';
 }
 
 /// Signature help (05 §4.3): innermost unclosed call at [caret].
@@ -83,7 +84,9 @@ SignatureInfo? signatureAt(
         argIndex: f.argIndex,
         activeParam: active,
         activeRepeatGroup: group,
-        params: [for (final p in spec.params) p.optional ? '[${p.name}]' : p.name],
+        params: [
+          for (final p in spec.params) p.optional ? '[${p.name}]' : p.name,
+        ],
         help: spec.help,
         spec: spec,
         callStart: f.start,
@@ -92,7 +95,12 @@ SignatureInfo? signatureAt(
     if (upper == 'LET' || upper == 'LAMBDA') {
       final spec2 = reg.lookup(upper);
       final params = upper == 'LET'
-          ? ['name1', 'value_expression1', '[name2, value_expression2, …]', 'formula_expression']
+          ? [
+              'name1',
+              'value_expression1',
+              '[name2, value_expression2, …]',
+              'formula_expression',
+            ]
           : ['[name, …]', 'formula_expression'];
       return SignatureInfo(
         functionName: upper,
@@ -113,7 +121,9 @@ SignatureInfo? signatureAt(
         functionName: n.name,
         source: SignatureSource.namedFunction,
         argIndex: f.argIndex,
-        activeParam: params.isEmpty ? 0 : (f.argIndex < params.length ? f.argIndex : params.length - 1),
+        activeParam: params.isEmpty
+            ? 0
+            : (f.argIndex < params.length ? f.argIndex : params.length - 1),
         params: params,
         help: FunctionHelp(
           summary: n.comment ?? '',
@@ -128,12 +138,16 @@ SignatureInfo? signatureAt(
     }
     if (customFunctions != null && customFunctions.has(upper)) {
       final h = customFunctions.help(upper);
-      final params = [for (final a in h.args) a.optional ? '[${a.name}]' : a.name];
+      final params = [
+        for (final a in h.args) a.optional ? '[${a.name}]' : a.name,
+      ];
       return SignatureInfo(
         functionName: upper,
         source: SignatureSource.customFunction,
         argIndex: f.argIndex,
-        activeParam: params.isEmpty ? 0 : (f.argIndex < params.length ? f.argIndex : params.length - 1),
+        activeParam: params.isEmpty
+            ? 0
+            : (f.argIndex < params.length ? f.argIndex : params.length - 1),
         params: params,
         help: h,
         callStart: f.start,
@@ -153,15 +167,22 @@ SignatureInfo? signatureAt(
 }
 
 List<String> _lambdaParams(String formula, FormulaLocale locale) {
-  final tokens = FormulaLexer.significant(const FormulaLexer().tokenize(formula.startsWith('=') ? formula : '=$formula'));
+  final tokens = FormulaLexer.significant(
+    const FormulaLexer().tokenize(
+      formula.startsWith('=') ? formula : '=$formula',
+    ),
+  );
   final out = <String>[];
   for (var i = 0; i + 1 < tokens.length; i++) {
-    if (tokens[i].kind == TokenKind.functionName && tokens[i].text.toUpperCase() == 'LAMBDA') {
+    if (tokens[i].kind == TokenKind.functionName &&
+        tokens[i].text.toUpperCase() == 'LAMBDA') {
       var k = i + 2;
       final names = <String>[];
       while (k < tokens.length) {
         final t = tokens[k];
-        if (t.kind == TokenKind.name && k + 1 < tokens.length && tokens[k + 1].kind == TokenKind.argSeparator) {
+        if (t.kind == TokenKind.name &&
+            k + 1 < tokens.length &&
+            tokens[k + 1].kind == TokenKind.argSeparator) {
           names.add(t.text);
           k += 2;
           continue;
@@ -184,7 +205,9 @@ Map<String, String> _metaParams(String? metaJson) {
     if (params is! List) return const {};
     return {
       for (final p in params)
-        if (p is Map && p['name'] is String) (p['name'] as String).toLowerCase(): (p['description'] as String?) ?? '',
+        if (p is Map && p['name'] is String)
+          (p['name'] as String).toLowerCase():
+              (p['description'] as String?) ?? '',
     };
   } on FormatException {
     return const {};
@@ -196,7 +219,10 @@ List<String> _metaExamples(String? metaJson) {
   try {
     final m = jsonDecode(metaJson);
     if (m is Map && m['examples'] is List) {
-      return [for (final e in m['examples'] as List) if (e is String) e];
+      return [
+        for (final e in m['examples'] as List)
+          if (e is String) e,
+      ];
     }
   } on FormatException {
     return const [];

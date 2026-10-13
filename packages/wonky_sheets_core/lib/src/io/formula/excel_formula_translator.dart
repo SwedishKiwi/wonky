@@ -5,7 +5,12 @@ import 'function_map.dart';
 /// Result of a formula translation.
 final class FormulaTranslation {
   /// Creates a result.
-  const FormulaTranslation(this.formula, {this.unsupported = const {}, this.notes = const [], this.changedSemantics = false});
+  const FormulaTranslation(
+    this.formula, {
+    this.unsupported = const {},
+    this.notes = const [],
+    this.changedSemantics = false,
+  });
 
   /// The translated formula (without leading `=`).
   final String formula;
@@ -56,15 +61,20 @@ final class ExcelFormulaTranslator {
     final unsupported = <String>{};
     var changed = false;
     final lambdaNames = _boundNames(tokens);
-    final renames = {for (final e in nameRenames.entries) e.key.toLowerCase(): e.value};
-    final sheetMap = {for (final e in sheetRenames.entries) e.key.toLowerCase(): e.value};
+    final renames = {
+      for (final e in nameRenames.entries) e.key.toLowerCase(): e.value,
+    };
+    final sheetMap = {
+      for (final e in sheetRenames.entries) e.key.toLowerCase(): e.value,
+    };
     final out = <FToken>[];
     for (var i = 0; i < tokens.length; i++) {
       final t = tokens[i];
       switch (t.kind) {
         case FTok.func:
           var stripped = FunctionMap.stripPrefixes(t.text);
-          if (stripped.length > 6 && stripped.substring(0, 6).toLowerCase() == '_xlpm.') {
+          if (stripped.length > 6 &&
+              stripped.substring(0, 6).toLowerCase() == '_xlpm.') {
             stripped = stripped.substring(6);
           }
           final upper = stripped.toUpperCase();
@@ -81,25 +91,31 @@ final class ExcelFormulaTranslator {
             i += 2;
             continue;
           }
-          final isLocal = lambdaNames.contains(upper) || knownNames.contains(upper);
+          final isLocal =
+              lambdaNames.contains(upper) || knownNames.contains(upper);
           if (!isLocal) {
             if (FunctionMap.excelOnly.contains(upper) &&
                 !(isSupportedFunction?.call(upper) ?? false)) {
               unsupported.add(upper);
-            } else if (isSupportedFunction != null && !isSupportedFunction!(upper)) {
+            } else if (isSupportedFunction != null &&
+                !isSupportedFunction!(upper)) {
               unsupported.add(upper);
             }
           }
           out.add(FToken(FTok.func, isLocal ? stripped : upper));
         case FTok.name:
           var text = t.text;
-          if (text.length > 6 && text.substring(0, 6).toLowerCase() == '_xlpm.') text = text.substring(6);
+          if (text.length > 6 &&
+              text.substring(0, 6).toLowerCase() == '_xlpm.') {
+            text = text.substring(6);
+          }
           final bang = text.lastIndexOf('!');
           if (bang > 0) {
             final sheet = SheetNames.unquote(text.substring(0, bang));
             final nn = sheetMap[sheet.toLowerCase()] ?? sheet;
             final local = text.substring(bang + 1);
-            text = '${SheetNames.quoteIfNeeded(nn)}!${renames[local.toLowerCase()] ?? local}';
+            text =
+                '${SheetNames.quoteIfNeeded(nn)}!${renames[local.toLowerCase()] ?? local}';
           } else {
             text = renames[text.toLowerCase()] ?? text;
           }
@@ -130,13 +146,17 @@ final class ExcelFormulaTranslator {
           changed = true;
         case FTok.spill:
           // `A1#` → ANCHORARRAY(A1): wrap the previous reference.
-          final prev = out.isNotEmpty ? out.removeLast() : FToken(FTok.unknown, '');
+          final prev = out.isNotEmpty
+              ? out.removeLast()
+              : FToken(FTok.unknown, '');
           out
             ..add(FToken(FTok.func, 'ANCHORARRAY'))
             ..add(FToken(FTok.open, '('))
             ..add(prev)
             ..add(FToken(FTok.close, ')'));
-          if (!(isSupportedFunction?.call('ANCHORARRAY') ?? false)) unsupported.add('ANCHORARRAY');
+          if (!(isSupportedFunction?.call('ANCHORARRAY') ?? false)) {
+            unsupported.add('ANCHORARRAY');
+          }
         case FTok.boolean:
           out.add(FToken(FTok.boolean, t.text.toUpperCase()));
         case FTok.error:
@@ -145,7 +165,11 @@ final class ExcelFormulaTranslator {
           out.add(t);
       }
     }
-    return FormulaTranslation(FormulaTokenizer.render(out), unsupported: unsupported, changedSemantics: changed);
+    return FormulaTranslation(
+      FormulaTokenizer.render(out),
+      unsupported: unsupported,
+      changedSemantics: changed,
+    );
   }
 
   /// Wonky A1 (without `=`) → Excel OOXML storage form.
@@ -154,7 +178,9 @@ final class ExcelFormulaTranslator {
     final bound = _boundNames(tokens);
     final notes = <String>[];
     final googleOnly = <String>{};
-    final sheetMap = {for (final e in sheetRenames.entries) e.key.toLowerCase(): e.value};
+    final sheetMap = {
+      for (final e in sheetRenames.entries) e.key.toLowerCase(): e.value,
+    };
     for (final t in tokens) {
       switch (t.kind) {
         case FTok.func:
@@ -180,7 +206,11 @@ final class ExcelFormulaTranslator {
     for (final g in googleOnly) {
       notes.add('Function $g is not available in Excel');
     }
-    return FormulaTranslation(FormulaTokenizer.render(tokens), unsupported: googleOnly, notes: notes);
+    return FormulaTranslation(
+      FormulaTokenizer.render(tokens),
+      unsupported: googleOnly,
+      notes: notes,
+    );
   }
 
   /// Names bound by LET/LAMBDA anywhere in the formula (upper case).
@@ -237,7 +267,8 @@ final class ExcelFormulaTranslator {
 /// is tokenized once and shifted per dependent cell.
 final class SharedFormula {
   /// Creates a shared formula anchored at ([row], [col]).
-  SharedFormula(this.formula, this.row, this.col) : _tokens = FormulaTokenizer.tokenize(formula);
+  SharedFormula(this.formula, this.row, this.col)
+    : _tokens = FormulaTokenizer.tokenize(formula);
 
   /// The master formula (any dialect using A1 references).
   final String formula;
@@ -246,6 +277,13 @@ final class SharedFormula {
   final List<FToken> _tokens;
 
   /// The formula as seen from ([r], [c]).
-  String at(int r, int c) =>
-      r == row && c == col ? formula : FormulaRewriter.shiftTokens(_tokens, r - row, c - col, maxRows: 1048576, maxCols: 16384);
+  String at(int r, int c) => r == row && c == col
+      ? formula
+      : FormulaRewriter.shiftTokens(
+          _tokens,
+          r - row,
+          c - col,
+          maxRows: 1048576,
+          maxCols: 16384,
+        );
 }

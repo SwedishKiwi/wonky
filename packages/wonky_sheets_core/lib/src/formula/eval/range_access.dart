@@ -21,7 +21,9 @@ abstract final class RangeAccess {
   static FValue cell(EvalContext ctx, FRef ref) {
     _record(ctx, ref);
     final s = sheetOf(ctx, ref.area);
-    if (s == null) return const FError(ErrorKind.ref, ErrorMessages.referenceDoesNotExist);
+    if (s == null) {
+      return const FError(ErrorKind.ref, ErrorMessages.referenceDoesNotExist);
+    }
     return ctx.host.cellValue(s, ref.area.top, ref.area.left);
   }
 
@@ -41,7 +43,9 @@ abstract final class RangeAccess {
     if (a.isSingleCell) return cell(ctx, ref);
     _record(ctx, ref);
     final s = sheetOf(ctx, a);
-    if (s == null) return const FError(ErrorKind.ref, ErrorMessages.referenceDoesNotExist);
+    if (s == null) {
+      return const FError(ErrorKind.ref, ErrorMessages.referenceDoesNotExist);
+    }
     if (a.left == a.right && ctx.row >= a.top && ctx.row <= a.bottom) {
       return ctx.host.cellValue(s, ctx.row, a.left);
     }
@@ -67,10 +71,16 @@ abstract final class RangeAccess {
   }
 
   /// Materializes a reference into a dense array (open references clamped).
-  static FValue materialize(EvalContext ctx, FRef ref, {bool withHints = true}) {
+  static FValue materialize(
+    EvalContext ctx,
+    FRef ref, {
+    bool withHints = true,
+  }) {
     _record(ctx, ref);
     final s = sheetOf(ctx, ref.area);
-    if (s == null) return const FError(ErrorKind.ref, ErrorMessages.referenceDoesNotExist);
+    if (s == null) {
+      return const FError(ErrorKind.ref, ErrorMessages.referenceDoesNotExist);
+    }
     final a = clamp(ctx, ref);
     final rows = a.rows, cols = a.cols;
     if (rows * cols > maxArrayCells) {
@@ -115,13 +125,19 @@ abstract final class RangeAccess {
 
   /// Visits the non-empty values of a reference, array or scalar. Arrays include empties
   /// (they are dense); references skip blank cells.
-  static void forEach(EvalContext ctx, FValue v, void Function(FValue v) visit) {
+  static void forEach(
+    EvalContext ctx,
+    FValue v,
+    void Function(FValue v) visit,
+  ) {
     switch (v) {
       case FRef():
         _record(ctx, v);
         final s = sheetOf(ctx, v.area);
         if (s == null) {
-          visit(const FError(ErrorKind.ref, ErrorMessages.referenceDoesNotExist));
+          visit(
+            const FError(ErrorKind.ref, ErrorMessages.referenceDoesNotExist),
+          );
           return;
         }
         ctx.host.forEachValue(s, v.area.rect, (_, _, x) => visit(x));
@@ -148,7 +164,11 @@ abstract final class RangeAccess {
         final s = sheetOf(ctx, v.area);
         if (s == null) return;
         final a = v.area;
-        ctx.host.forEachValue(s, a.rect, (r, c, x) => visit(r - a.top, c - a.left, x));
+        ctx.host.forEachValue(
+          s,
+          a.rect,
+          (r, c, x) => visit(r - a.top, c - a.left, x),
+        );
       case FArray():
         for (var r = 0; r < v.rows; r++) {
           for (var c = 0; c < v.cols; c++) {

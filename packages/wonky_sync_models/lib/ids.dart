@@ -8,4 +8,9 @@ library;
 export 'src/ids/base62.dart' show Base62Uuid, base62Digits, base62Value;
 export 'src/ids/fractional_index.dart' show FractionalIndex;
 export 'src/ids/sheets_ids.dart'
-    show IdGenerator, SeededIdGenerator, SequentialIdGenerator, SheetsIds, UuidV7IdGenerator;
+    show
+        IdGenerator,
+        SeededIdGenerator,
+        SequentialIdGenerator,
+        SheetsIds,
+        UuidV7IdGenerator;

@@ -95,35 +95,53 @@ void main() {
 
   group('Given edge-case patterns in en_US', () {
     for (final (pattern, value, expected) in _cases) {
-      test('when formatting $value with "$pattern" then it shows "$expected"', () {
-        expect(formatter.formatText(CellValue.from(value), pattern), equals(expected));
-      });
+      test(
+        'when formatting $value with "$pattern" then it shows "$expected"',
+        () {
+          expect(
+            formatter.formatText(CellValue.from(value), pattern),
+            equals(expected),
+          );
+        },
+      );
     }
   });
 
   group('Given segment output', () {
     test('when a pattern has a spacer then a spacer segment is produced', () {
       final r = formatter.format(const NumberValue(5), '#,##0.00_);(#,##0.00)');
-      expect(r.segments, equals([const TextSegment('5.00'), const SpacerSegment(')')]));
+      expect(
+        r.segments,
+        equals([const TextSegment('5.00'), const SpacerSegment(')')]),
+      );
     });
 
     test('when a pattern has a repeat then one repeat segment is produced', () {
       final r = formatter.format(const NumberValue(5), '0*-*=');
-      expect(r.segments, equals([const TextSegment('5'), const RepeatSegment('-')]));
-    });
-
-    test('when the accounting preset formats a negative then spacer and repeat are kept', () {
-      final r = formatter.format(const NumberValue(-1000.12), 'preset:accounting');
       expect(
         r.segments,
-        equals([
-          const SpacerSegment('('),
-          const TextSegment(r'$'),
-          const RepeatSegment(' '),
-          const TextSegment('(1,000.12)'),
-        ]),
+        equals([const TextSegment('5'), const RepeatSegment('-')]),
       );
     });
+
+    test(
+      'when the accounting preset formats a negative then spacer and repeat are kept',
+      () {
+        final r = formatter.format(
+          const NumberValue(-1000.12),
+          'preset:accounting',
+        );
+        expect(
+          r.segments,
+          equals([
+            const SpacerSegment('('),
+            const TextSegment(r'$'),
+            const RepeatSegment(' '),
+            const TextSegment('(1,000.12)'),
+          ]),
+        );
+      },
+    );
 
     test('when a ? pads a digit then a digit-wide spacer is produced', () {
       final r = formatter.format(const NumberValue(1.5), '?0.0');
@@ -133,24 +151,36 @@ void main() {
 
   group('Given value kinds', () {
     test('when formatting a number then overflow hashes are requested', () {
-      expect(formatter.format(const NumberValue(1), '0.00').overflowHashes, isTrue);
+      expect(
+        formatter.format(const NumberValue(1), '0.00').overflowHashes,
+        isTrue,
+      );
     });
 
     test('when formatting text then no overflow hashes are requested', () {
-      expect(formatter.format(const TextValue('a'), '@').overflowHashes, isFalse);
+      expect(
+        formatter.format(const TextValue('a'), '@').overflowHashes,
+        isFalse,
+      );
     });
 
     test('when formatting an empty value then nothing is shown', () {
       expect(formatter.format(CellValue.empty, '0.00').segments, isEmpty);
     });
 
-    test('when formatting with two colored sections then the section color applies', () {
-      final r = formatter.format(const NumberValue(-3), '[Blue]0;[Red]-0');
-      expect((r.plainText, r.colorArgb), equals(('-3', 0xFFFF0000)));
-    });
+    test(
+      'when formatting with two colored sections then the section color applies',
+      () {
+        final r = formatter.format(const NumberValue(-3), '[Blue]0;[Red]-0');
+        expect((r.plainText, r.colorArgb), equals(('-3', 0xFFFF0000)));
+      },
+    );
 
     test('when color names are upper case then they are recognized', () {
-      expect(formatter.format(const NumberValue(3), '[BLUE]0').colorArgb, equals(0xFF0000FF));
+      expect(
+        formatter.format(const NumberValue(3), '[BLUE]0').colorArgb,
+        equals(0xFF0000FF),
+      );
     });
 
     test('when a text section has a color then text values get it', () {
@@ -159,23 +189,40 @@ void main() {
     });
 
     test('when NaN is formatted then #NUM! is shown', () {
-      expect(formatter.formatText(const NumberValue(double.nan), '0'), equals('#NUM!'));
+      expect(
+        formatter.formatText(const NumberValue(double.nan), '0'),
+        equals('#NUM!'),
+      );
     });
 
     test('when negative zero is formatted then it shows as zero', () {
-      expect(formatter.formatText(const NumberValue(-0.0), '0.0'), equals('0.0'));
+      expect(
+        formatter.formatText(const NumberValue(-0.0), '0.0'),
+        equals('0.0'),
+      );
     });
   });
 
   group('Given format hints', () {
-    test('when an Automatic cell has a date hint then the date preset is used', () {
-      final hint = NumberFormatter.hintFor(FormatHint.date, 'en_US');
-      final r = formatter.formatWithHint(const NumberValue(46307), null, hintPattern: hint);
-      expect(r.plainText, equals('10/12/2026'));
-    });
+    test(
+      'when an Automatic cell has a date hint then the date preset is used',
+      () {
+        final hint = NumberFormatter.hintFor(FormatHint.date, 'en_US');
+        final r = formatter.formatWithHint(
+          const NumberValue(46307),
+          null,
+          hintPattern: hint,
+        );
+        expect(r.plainText, equals('10/12/2026'));
+      },
+    );
 
     test('when the cell has an explicit format then the hint is ignored', () {
-      final r = formatter.formatWithHint(const NumberValue(46307), '0', hintPattern: 'preset:date');
+      final r = formatter.formatWithHint(
+        const NumberValue(46307),
+        '0',
+        hintPattern: 'preset:date',
+      );
       expect(r.plainText, equals('46307'));
     });
 
@@ -199,23 +246,29 @@ void main() {
   });
 
   group('Given the cache', () {
-    test('when formatting the same value twice then the cached result is returned', () {
-      final f = NumberFormatter(cache: NumberFormatCache(valueCapacity: 2));
-      final a = f.format(const NumberValue(1), '0.00');
-      final b = f.format(const NumberValue(1), '0.00');
-      expect(identical(a, b), isTrue);
-    });
+    test(
+      'when formatting the same value twice then the cached result is returned',
+      () {
+        final f = NumberFormatter(cache: NumberFormatCache(valueCapacity: 2));
+        final a = f.format(const NumberValue(1), '0.00');
+        final b = f.format(const NumberValue(1), '0.00');
+        expect(identical(a, b), isTrue);
+      },
+    );
 
-    test('when the value cache is full then the least recently used entry is evicted', () {
-      final cache = NumberFormatCache(valueCapacity: 2);
-      final f = NumberFormatter(cache: cache);
-      f.format(const NumberValue(1), '0');
-      f.format(const NumberValue(2), '0');
-      f.format(const NumberValue(1), '0');
-      f.format(const NumberValue(3), '0');
-      expect(cache.lookup('0', 'en_US', 2.0), isNull);
-      expect(cache.lookup('0', 'en_US', 1.0), isNotNull);
-    });
+    test(
+      'when the value cache is full then the least recently used entry is evicted',
+      () {
+        final cache = NumberFormatCache(valueCapacity: 2);
+        final f = NumberFormatter(cache: cache);
+        f.format(const NumberValue(1), '0');
+        f.format(const NumberValue(2), '0');
+        f.format(const NumberValue(1), '0');
+        f.format(const NumberValue(3), '0');
+        expect(cache.lookup('0', 'en_US', 2.0), isNull);
+        expect(cache.lookup('0', 'en_US', 1.0), isNotNull);
+      },
+    );
 
     test('when an invalid pattern is cached then its error is available', () {
       final cache = NumberFormatCache();

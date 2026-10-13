@@ -40,7 +40,8 @@ final class SpacerSegment extends FormatSegment {
   final String char;
 
   @override
-  bool operator ==(Object other) => other is SpacerSegment && other.char == char;
+  bool operator ==(Object other) =>
+      other is SpacerSegment && other.char == char;
 
   @override
   int get hashCode => char.hashCode ^ 0x5bace;
@@ -58,7 +59,8 @@ final class RepeatSegment extends FormatSegment {
   final String char;
 
   @override
-  bool operator ==(Object other) => other is RepeatSegment && other.char == char;
+  bool operator ==(Object other) =>
+      other is RepeatSegment && other.char == char;
 
   @override
   int get hashCode => char.hashCode ^ 0x7e9ea7;
@@ -70,11 +72,22 @@ final class RepeatSegment extends FormatSegment {
 /// Result of [NumberFormatter.format].
 final class FormattedValue {
   /// Creates a formatted value.
-  const FormattedValue(this.segments, {this.colorArgb, this.overflowHashes = false});
+  const FormattedValue(
+    this.segments, {
+    this.colorArgb,
+    this.overflowHashes = false,
+  });
 
   /// Plain text result.
-  factory FormattedValue.text(String text, {int? colorArgb, bool overflowHashes = false}) =>
-      FormattedValue([TextSegment(text)], colorArgb: colorArgb, overflowHashes: overflowHashes);
+  factory FormattedValue.text(
+    String text, {
+    int? colorArgb,
+    bool overflowHashes = false,
+  }) => FormattedValue(
+    [TextSegment(text)],
+    colorArgb: colorArgb,
+    overflowHashes: overflowHashes,
+  );
 
   /// Output segments.
   final List<FormatSegment> segments;
@@ -117,7 +130,8 @@ final class FormattedValue {
   }
 
   @override
-  int get hashCode => Object.hash(Object.hashAll(segments), colorArgb, overflowHashes);
+  int get hashCode =>
+      Object.hash(Object.hashAll(segments), colorArgb, overflowHashes);
 
   @override
   String toString() => 'FormattedValue($plainText)';
@@ -127,7 +141,8 @@ final class FormattedValue {
 /// (06 §5.11). Pure, synchronous and cached.
 final class NumberFormatter {
   /// Creates a formatter with its own [cache].
-  NumberFormatter({NumberFormatCache? cache}) : cache = cache ?? NumberFormatCache();
+  NumberFormatter({NumberFormatCache? cache})
+    : cache = cache ?? NumberFormatCache();
 
   /// Shared instance (caches inside).
   static final NumberFormatter instance = NumberFormatter();
@@ -144,7 +159,11 @@ final class NumberFormatter {
   ///
   /// Booleans always display `TRUE`/`FALSE`, errors their literal. Invalid
   /// patterns render with Automatic rules.
-  FormattedValue format(CellValue value, String? patternOrPreset, {String locale = 'en_US'}) {
+  FormattedValue format(
+    CellValue value,
+    String? patternOrPreset, {
+    String locale = 'en_US',
+  }) {
     switch (value) {
       case EmptyValue():
         return _empty;
@@ -179,7 +198,11 @@ final class NumberFormatter {
   FormattedValue _render(String pattern, CellValue value, String locale) {
     final ast = cache.ast(pattern);
     if (ast == null) return _automatic(value, locale);
-    return NumberFormatRenderer.render(ast, value, LocaleFormatData.forId(locale));
+    return NumberFormatRenderer.render(
+      ast,
+      value,
+      LocaleFormatData.forId(locale),
+    );
   }
 
   FormattedValue _automatic(CellValue value, String locale) => switch (value) {
@@ -192,8 +215,11 @@ final class NumberFormatter {
   };
 
   /// [format] flattened to plain text.
-  String formatText(CellValue value, String? patternOrPreset, {String locale = 'en_US'}) =>
-      format(value, patternOrPreset, locale: locale).plainText;
+  String formatText(
+    CellValue value,
+    String? patternOrPreset, {
+    String locale = 'en_US',
+  }) => format(value, patternOrPreset, locale: locale).plainText;
 
   /// Formats a formula result: when [pattern] is Automatic, the result's
   /// format hint pattern [hintPattern] (see [hintFor]) is used instead
@@ -204,7 +230,9 @@ final class NumberFormatter {
     String locale = 'en_US',
     String? hintPattern,
   }) {
-    if (NumberFormatPresets.isAutomatic(pattern) && hintPattern != null && value is NumberValue) {
+    if (NumberFormatPresets.isAutomatic(pattern) &&
+        hintPattern != null &&
+        value is NumberValue) {
       return format(value, hintPattern, locale: locale);
     }
     return format(value, pattern, locale: locale);
@@ -231,8 +259,13 @@ final class NumberFormatter {
       case FormatHintKind.currency:
         final code = hint.detail;
         final loc = LocaleFormatData.forId(locale);
-        if (code == null || code == loc.currencyCode) return NumberFormatPresets.currency;
-        return NumberFormatPresets.currencyPattern(loc, symbol: currencySymbolFor(code));
+        if (code == null || code == loc.currencyCode) {
+          return NumberFormatPresets.currency;
+        }
+        return NumberFormatPresets.currencyPattern(
+          loc,
+          symbol: currencySymbolFor(code),
+        );
       case FormatHintKind.fromCell:
         final p = hint.detail;
         return NumberFormatPresets.isAutomatic(p) ? null : p;
@@ -241,13 +274,36 @@ final class NumberFormatter {
 
   /// Display symbol of an ISO currency code (`EUR` → `€`); the code itself
   /// when no common symbol exists.
-  static String currencySymbolFor(String code) => _currencySymbols[code.toUpperCase()] ?? code;
+  static String currencySymbolFor(String code) =>
+      _currencySymbols[code.toUpperCase()] ?? code;
 
   static const Map<String, String> _currencySymbols = {
-    'USD': r'$', 'EUR': '€', 'GBP': '£', 'JPY': '¥', 'CNY': '¥', 'INR': '₹', 'KRW': '₩', //
-    'BRL': r'R$', 'RUB': '₽', 'CHF': 'CHF', 'SEK': 'kr', 'NOK': 'kr', 'DKK': 'kr', //
-    'PLN': 'zł', 'CZK': 'Kč', 'TRY': '₺', 'AUD': r'A$', 'CAD': r'CA$', 'NZD': r'NZ$', //
-    'MXN': r'MX$', 'ZAR': 'R', 'ILS': '₪', 'HUF': 'Ft', 'UAH': '₴', 'VND': '₫', 'THB': '฿', //
+    'USD': r'$',
+    'EUR': '€',
+    'GBP': '£',
+    'JPY': '¥',
+    'CNY': '¥',
+    'INR': '₹',
+    'KRW': '₩', //
+    'BRL': r'R$',
+    'RUB': '₽',
+    'CHF': 'CHF',
+    'SEK': 'kr',
+    'NOK': 'kr',
+    'DKK': 'kr', //
+    'PLN': 'zł',
+    'CZK': 'Kč',
+    'TRY': '₺',
+    'AUD': r'A$',
+    'CAD': r'CA$',
+    'NZD': r'NZ$', //
+    'MXN': r'MX$',
+    'ZAR': 'R',
+    'ILS': '₪',
+    'HUF': 'Ft',
+    'UAH': '₴',
+    'VND': '₫',
+    'THB': '฿', //
     'PHP': '₱', 'NGN': '₦', 'HKD': r'HK$', 'SGD': r'S$', 'TWD': r'NT$',
   };
 }

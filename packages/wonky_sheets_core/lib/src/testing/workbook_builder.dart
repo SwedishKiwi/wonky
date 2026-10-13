@@ -19,8 +19,11 @@ import '../mutations/row_change.dart';
 /// ```
 final class WorkbookBuilder {
   /// Creates a builder with deterministic ids.
-  WorkbookBuilder({IdGenerator? ids, String? spreadsheetId, this.locale = 'en_US'})
-    : ids = ids ?? SequentialIdGenerator() {
+  WorkbookBuilder({
+    IdGenerator? ids,
+    String? spreadsheetId,
+    this.locale = 'en_US',
+  }) : ids = ids ?? SequentialIdGenerator() {
     this.spreadsheetId = spreadsheetId ?? this.ids.newId();
   }
 
@@ -34,7 +37,8 @@ final class WorkbookBuilder {
   late final String spreadsheetId;
 
   final List<RowChange> _rows = [];
-  final Map<String, ({String id, List<String> rows, List<String> cols})> _sheets = {};
+  final Map<String, ({String id, List<String> rows, List<String> cols})>
+  _sheets = {};
   String? _current;
   String? _themeJson;
 
@@ -50,7 +54,11 @@ final class WorkbookBuilder {
     int frozenRows = 0,
   }) {
     final id = ids.newId();
-    final sortKeys = FractionalIndex.nBetween(_sheets.isEmpty ? null : _lastSheetKey, null, 1);
+    final sortKeys = FractionalIndex.nBetween(
+      _sheets.isEmpty ? null : _lastSheetKey,
+      null,
+      1,
+    );
     _lastSheetKey = sortKeys.single;
     _rows.add(
       RowChange.insert(SheetsTables.sheet, id, {
@@ -107,13 +115,20 @@ final class WorkbookBuilder {
   String sheetId(String name) => _sheets[name]!.id;
 
   /// Row id at [index] of the current (or [sheet]) sheet.
-  String rowId(int index, {String? sheet}) => _sheets[sheet ?? _current]!.rows[index];
+  String rowId(int index, {String? sheet}) =>
+      _sheets[sheet ?? _current]!.rows[index];
 
   /// Column id at [index].
-  String colId(int index, {String? sheet}) => _sheets[sheet ?? _current]!.cols[index];
+  String colId(int index, {String? sheet}) =>
+      _sheets[sheet ?? _current]!.cols[index];
 
   /// Sets the encoded content of the cell at [a1] (e.g. `n:1`, `s:x`, `=…`).
-  void set(String a1, String? content, {Map<FormatAttr, Object?>? format, String? note}) {
+  void set(
+    String a1,
+    String? content, {
+    Map<FormatAttr, Object?>? format,
+    String? note,
+  }) {
     final area = A1Area.tryParse(a1)!;
     final s = _sheets[area.sheet ?? _current]!;
     final rowId = s.rows[area.row1!];
@@ -127,14 +142,18 @@ final class WorkbookBuilder {
         CellCols.content: content,
         CellCols.note: note,
         if (format != null)
-          for (final e in format.entries) e.key.column: e.key.toColumnValue(e.value),
+          for (final e in format.entries)
+            e.key.column: e.key.toColumnValue(e.value),
       }),
     );
   }
 
   /// Sets a literal value (num, String, bool) at [a1].
-  void value(String a1, Object? v, {Map<FormatAttr, Object?>? format}) =>
-      set(a1, CellContent.fromValue(CellValue.from(v))?.encode(), format: format);
+  void value(String a1, Object? v, {Map<FormatAttr, Object?>? format}) => set(
+    a1,
+    CellContent.fromValue(CellValue.from(v))?.encode(),
+    format: format,
+  );
 
   /// Fills a block starting at [topLeft] with literal values (row-major).
   void values(String topLeft, List<List<Object?>> rows) {
@@ -143,7 +162,11 @@ final class WorkbookBuilder {
       for (var c = 0; c < rows[r].length; c++) {
         final v = rows[r][c];
         if (v == null) continue;
-        final a = A1Area.cell(area.row1! + r, area.col1! + c, sheet: area.sheet);
+        final a = A1Area.cell(
+          area.row1! + r,
+          area.col1! + c,
+          sheet: area.sheet,
+        );
         value(a.format(), v);
       }
     }

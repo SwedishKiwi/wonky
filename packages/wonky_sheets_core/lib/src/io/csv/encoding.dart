@@ -95,9 +95,9 @@ abstract class ChunkedTextDecoder {
 
 final class _Utf8ChunkDecoder extends ChunkedTextDecoder {
   final StringBuffer _sink = StringBuffer();
-  late final ByteConversionSink _conv = const Utf8Decoder(allowMalformed: true).startChunkedConversion(
-    StringConversionSink.fromStringSink(_sink),
-  );
+  late final ByteConversionSink _conv = const Utf8Decoder(
+    allowMalformed: true,
+  ).startChunkedConversion(StringConversionSink.fromStringSink(_sink));
   bool _first = true;
 
   @override
@@ -105,7 +105,9 @@ final class _Utf8ChunkDecoder extends ChunkedTextDecoder {
     var b = bytes;
     if (_first && b.isNotEmpty) {
       _first = false;
-      if (b.length >= 3 && b[0] == 0xef && b[1] == 0xbb && b[2] == 0xbf) b = b.sublist(3);
+      if (b.length >= 3 && b[0] == 0xef && b[1] == 0xbb && b[2] == 0xbf) {
+        b = b.sublist(3);
+      }
     }
     _conv.add(b);
     final s = _sink.toString();
@@ -182,15 +184,41 @@ final class SingleByteDecoder extends ChunkedTextDecoder {
   String close() => '';
 
   /// ISO-8859-1.
-  static final List<int> latin1 = List<int>.generate(256, (i) => i, growable: false);
+  static final List<int> latin1 = List<int>.generate(
+    256,
+    (i) => i,
+    growable: false,
+  );
 
   /// Windows-1252 (0x80–0x9F differ from Latin-1; undefined bytes map to
   /// their Latin-1 control code).
   static final List<int> windows1252 = () {
     final t = List<int>.generate(256, (i) => i);
     const hi = [
-      0x20AC, 0x81, 0x201A, 0x0192, 0x201E, 0x2026, 0x2020, 0x2021, 0x02C6, 0x2030, 0x0160, 0x2039, //
-      0x0152, 0x8D, 0x017D, 0x8F, 0x90, 0x2018, 0x2019, 0x201C, 0x201D, 0x2022, 0x2013, 0x2014,
+      0x20AC,
+      0x81,
+      0x201A,
+      0x0192,
+      0x201E,
+      0x2026,
+      0x2020,
+      0x2021,
+      0x02C6,
+      0x2030,
+      0x0160,
+      0x2039, //
+      0x0152,
+      0x8D,
+      0x017D,
+      0x8F,
+      0x90,
+      0x2018,
+      0x2019,
+      0x201C,
+      0x201D,
+      0x2022,
+      0x2013,
+      0x2014,
       0x02DC, 0x2122, 0x0161, 0x203A, 0x0153, 0x9D, 0x017E, 0x0178,
     ];
     for (var i = 0; i < 32; i++) {
@@ -202,7 +230,16 @@ final class SingleByteDecoder extends ChunkedTextDecoder {
   /// ISO-8859-15 (Latin-9).
   static final List<int> latin9 = () {
     final t = List<int>.generate(256, (i) => i);
-    const changes = {0xA4: 0x20AC, 0xA6: 0x0160, 0xA8: 0x0161, 0xB4: 0x017D, 0xB8: 0x017E, 0xBC: 0x0152, 0xBD: 0x0153, 0xBE: 0x0178};
+    const changes = {
+      0xA4: 0x20AC,
+      0xA6: 0x0160,
+      0xA8: 0x0161,
+      0xB4: 0x017D,
+      0xB8: 0x017E,
+      0xBC: 0x0152,
+      0xBD: 0x0153,
+      0xBE: 0x0178,
+    };
     changes.forEach((k, v) => t[k] = v);
     return List<int>.unmodifiable(t);
   }();
@@ -211,16 +248,126 @@ final class SingleByteDecoder extends ChunkedTextDecoder {
   static final List<int> macRoman = () {
     final t = List<int>.generate(256, (i) => i);
     const hi = [
-      0x00C4, 0x00C5, 0x00C7, 0x00C9, 0x00D1, 0x00D6, 0x00DC, 0x00E1, 0x00E0, 0x00E2, 0x00E4, 0x00E3, //
-      0x00E5, 0x00E7, 0x00E9, 0x00E8, 0x00EA, 0x00EB, 0x00ED, 0x00EC, 0x00EE, 0x00EF, 0x00F1, 0x00F3,
-      0x00F2, 0x00F4, 0x00F6, 0x00F5, 0x00FA, 0x00F9, 0x00FB, 0x00FC, 0x2020, 0x00B0, 0x00A2, 0x00A3,
-      0x00A7, 0x2022, 0x00B6, 0x00DF, 0x00AE, 0x00A9, 0x2122, 0x00B4, 0x00A8, 0x2260, 0x00C6, 0x00D8,
-      0x221E, 0x00B1, 0x2264, 0x2265, 0x00A5, 0x00B5, 0x2202, 0x2211, 0x220F, 0x03C0, 0x222B, 0x00AA,
-      0x00BA, 0x03A9, 0x00E6, 0x00F8, 0x00BF, 0x00A1, 0x00AC, 0x221A, 0x0192, 0x2248, 0x2206, 0x00AB,
-      0x00BB, 0x2026, 0x00A0, 0x00C0, 0x00C3, 0x00D5, 0x0152, 0x0153, 0x2013, 0x2014, 0x201C, 0x201D,
-      0x2018, 0x2019, 0x00F7, 0x25CA, 0x00FF, 0x0178, 0x2044, 0x20AC, 0x2039, 0x203A, 0xFB01, 0xFB02,
-      0x2021, 0x00B7, 0x201A, 0x201E, 0x2030, 0x00C2, 0x00CA, 0x00C1, 0x00CB, 0x00C8, 0x00CD, 0x00CE,
-      0x00CF, 0x00CC, 0x00D3, 0x00D4, 0xF8FF, 0x00D2, 0x00DA, 0x00DB, 0x00D9, 0x0131, 0x02C6, 0x02DC,
+      0x00C4,
+      0x00C5,
+      0x00C7,
+      0x00C9,
+      0x00D1,
+      0x00D6,
+      0x00DC,
+      0x00E1,
+      0x00E0,
+      0x00E2,
+      0x00E4,
+      0x00E3, //
+      0x00E5,
+      0x00E7,
+      0x00E9,
+      0x00E8,
+      0x00EA,
+      0x00EB,
+      0x00ED,
+      0x00EC,
+      0x00EE,
+      0x00EF,
+      0x00F1,
+      0x00F3,
+      0x00F2,
+      0x00F4,
+      0x00F6,
+      0x00F5,
+      0x00FA,
+      0x00F9,
+      0x00FB,
+      0x00FC,
+      0x2020,
+      0x00B0,
+      0x00A2,
+      0x00A3,
+      0x00A7,
+      0x2022,
+      0x00B6,
+      0x00DF,
+      0x00AE,
+      0x00A9,
+      0x2122,
+      0x00B4,
+      0x00A8,
+      0x2260,
+      0x00C6,
+      0x00D8,
+      0x221E,
+      0x00B1,
+      0x2264,
+      0x2265,
+      0x00A5,
+      0x00B5,
+      0x2202,
+      0x2211,
+      0x220F,
+      0x03C0,
+      0x222B,
+      0x00AA,
+      0x00BA,
+      0x03A9,
+      0x00E6,
+      0x00F8,
+      0x00BF,
+      0x00A1,
+      0x00AC,
+      0x221A,
+      0x0192,
+      0x2248,
+      0x2206,
+      0x00AB,
+      0x00BB,
+      0x2026,
+      0x00A0,
+      0x00C0,
+      0x00C3,
+      0x00D5,
+      0x0152,
+      0x0153,
+      0x2013,
+      0x2014,
+      0x201C,
+      0x201D,
+      0x2018,
+      0x2019,
+      0x00F7,
+      0x25CA,
+      0x00FF,
+      0x0178,
+      0x2044,
+      0x20AC,
+      0x2039,
+      0x203A,
+      0xFB01,
+      0xFB02,
+      0x2021,
+      0x00B7,
+      0x201A,
+      0x201E,
+      0x2030,
+      0x00C2,
+      0x00CA,
+      0x00C1,
+      0x00CB,
+      0x00C8,
+      0x00CD,
+      0x00CE,
+      0x00CF,
+      0x00CC,
+      0x00D3,
+      0x00D4,
+      0xF8FF,
+      0x00D2,
+      0x00DA,
+      0x00DB,
+      0x00D9,
+      0x0131,
+      0x02C6,
+      0x02DC,
       0x00AF, 0x02D8, 0x02D9, 0x02DA, 0x00B8, 0x02DD, 0x02DB, 0x02C7,
     ];
     for (var i = 0; i < 128; i++) {
@@ -233,7 +380,11 @@ final class SingleByteDecoder extends ChunkedTextDecoder {
 /// Result of [EncodingSniffer.sniff].
 final class SniffedEncoding {
   /// Creates a result.
-  const SniffedEncoding(this.encoding, {this.bomLength = 0, required this.reason});
+  const SniffedEncoding(
+    this.encoding, {
+    this.bomLength = 0,
+    required this.reason,
+  });
 
   final TextEncoding encoding;
 
@@ -248,14 +399,29 @@ final class SniffedEncoding {
 abstract final class EncodingSniffer {
   /// Sniffs [head] (the first bytes of the file; ≥ 64 KB when available).
   static SniffedEncoding sniff(List<int> head) {
-    if (head.length >= 3 && head[0] == 0xef && head[1] == 0xbb && head[2] == 0xbf) {
-      return const SniffedEncoding(TextEncoding.utf8, bomLength: 3, reason: 'bom');
+    if (head.length >= 3 &&
+        head[0] == 0xef &&
+        head[1] == 0xbb &&
+        head[2] == 0xbf) {
+      return const SniffedEncoding(
+        TextEncoding.utf8,
+        bomLength: 3,
+        reason: 'bom',
+      );
     }
     if (head.length >= 2 && head[0] == 0xff && head[1] == 0xfe) {
-      return const SniffedEncoding(TextEncoding.utf16le, bomLength: 2, reason: 'bom');
+      return const SniffedEncoding(
+        TextEncoding.utf16le,
+        bomLength: 2,
+        reason: 'bom',
+      );
     }
     if (head.length >= 2 && head[0] == 0xfe && head[1] == 0xff) {
-      return const SniffedEncoding(TextEncoding.utf16be, bomLength: 2, reason: 'bom');
+      return const SniffedEncoding(
+        TextEncoding.utf16be,
+        bomLength: 2,
+        reason: 'bom',
+      );
     }
     final n4k = head.length < 4096 ? head.length : 4096;
     if (n4k >= 2) {
@@ -315,7 +481,9 @@ abstract final class EncodingSniffer {
         if (c & 0xc0 != 0x80) return false;
         cp = (cp << 6) | (c & 0x3f);
       }
-      if (cp < min || cp > 0x10ffff || (cp >= 0xd800 && cp <= 0xdfff)) return false;
+      if (cp < min || cp > 0x10ffff || (cp >= 0xd800 && cp <= 0xdfff)) {
+        return false;
+      }
       i += len;
     }
     return true;

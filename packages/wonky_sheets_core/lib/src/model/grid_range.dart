@@ -113,7 +113,9 @@ final class GridRange {
       jsonEncode([for (final r in ranges) r.toJson()]);
 
   static String _decodeId(String x) {
-    if (x.length == Base62Uuid.length && !x.contains('-') && Base62Uuid.isValid(x)) {
+    if (x.length == Base62Uuid.length &&
+        !x.contains('-') &&
+        Base62Uuid.isValid(x)) {
       return Base62Uuid.decode(x);
     }
     return x;
@@ -180,7 +182,12 @@ final class GridRange {
 /// A range resolved to current indices.
 final class ResolvedRange {
   /// Creates a resolved range.
-  const ResolvedRange(this.sheetId, this.rect, {this.wholeRows = false, this.wholeColumns = false});
+  const ResolvedRange(
+    this.sheetId,
+    this.rect, {
+    this.wholeRows = false,
+    this.wholeColumns = false,
+  });
 
   /// The sheet.
   final String sheetId;
@@ -220,9 +227,13 @@ abstract final class RectSet {
     if (i == null) return [a];
     final out = <GridRect>[];
     if (i.top > a.top) out.add(GridRect(a.top, a.left, i.top - 1, a.right));
-    if (i.bottom < a.bottom) out.add(GridRect(i.bottom + 1, a.left, a.bottom, a.right));
+    if (i.bottom < a.bottom) {
+      out.add(GridRect(i.bottom + 1, a.left, a.bottom, a.right));
+    }
     if (i.left > a.left) out.add(GridRect(i.top, a.left, i.bottom, i.left - 1));
-    if (i.right < a.right) out.add(GridRect(i.top, i.right + 1, i.bottom, a.right));
+    if (i.right < a.right) {
+      out.add(GridRect(i.top, i.right + 1, i.bottom, a.right));
+    }
     return out;
   }
 

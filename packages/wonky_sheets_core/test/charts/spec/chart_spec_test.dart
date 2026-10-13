@@ -2,7 +2,6 @@ import 'dart:convert';
 
 import 'package:test/test.dart';
 import 'package:wonky_sheets_core/src/charts/charts.dart';
-import 'package:wonky_sheets_core/src/charts/spec/spec_json.dart';
 
 const _sheet = '0193a3c2-0000-7000-8000-000000000001';
 const _row1 = '0193a3c2-0000-7000-8000-000000000011';
@@ -60,10 +59,22 @@ Map<String, Object?> _fullSpec() => {
       'labels': {'slant': 'custom', 'angle': -45},
       'reverse': true,
     },
-    'v': {'min': 0, 'max': 100, 'logScale': true, 'numberFormat': '0%', 'showLine': false},
-    'v2': {'title': {'text': 'Units'}},
+    'v': {
+      'min': 0,
+      'max': 100,
+      'logScale': true,
+      'numberFormat': '0%',
+      'showLine': false,
+    },
+    'v2': {
+      'title': {'text': 'Units'},
+    },
   },
-  'legend': {'position': 'bottom', 'alignment': 'end', 'font': {'italic': true}},
+  'legend': {
+    'position': 'bottom',
+    'alignment': 'end',
+    'font': {'italic': true},
+  },
   'gridlines': {
     'v': {
       'major': {'show': true, 'count': 5, 'color': '#CCCCCC'},
@@ -82,7 +93,12 @@ Map<String, Object?> _fullSpec() => {
       'pointSize': 6,
       'pointShape': 'diamond',
       'dataLabels': {'show': true, 'position': 'above', 'type': 'percent'},
-      'trendline': {'type': 'polynomial', 'degree': 3, 'label': 'equation', 'showR2': true},
+      'trendline': {
+        'type': 'polynomial',
+        'degree': 3,
+        'label': 'equation',
+        'showR2': true,
+      },
       'points': {
         '3': {'color': '#E53935'},
       },
@@ -116,11 +132,14 @@ void main() {
       expect(s.pieOptions.pieHole, 0.5);
     });
 
-    test('when encoding as a string and parsing it then the specs are equal', () {
-      final s = ChartSpec.fromJson(_fullSpec());
-      expect(ChartSpec.fromJson(s.encode()), s);
-      expect(ChartSpec.fromJson(s.encode()).hashCode, s.hashCode);
-    });
+    test(
+      'when encoding as a string and parsing it then the specs are equal',
+      () {
+        final s = ChartSpec.fromJson(_fullSpec());
+        expect(ChartSpec.fromJson(s.encode()), s);
+        expect(ChartSpec.fromJson(s.encode()).hashCode, s.hashCode);
+      },
+    );
   });
 
   group('Given JSON with unknown keys at several levels', () {
@@ -132,15 +151,30 @@ void main() {
         'ranges': <Object?>[],
         'futureData': true,
         'seriesRefs': [
-          {'key': 'k1', 'ref': {'range': 0, 'offset': 1, 'futureRef': 2}, 'futureSeriesRef': 'x'},
+          {
+            'key': 'k1',
+            'ref': {'range': 0, 'offset': 1, 'futureRef': 2},
+            'futureSeriesRef': 'x',
+          },
         ],
       },
       'style': {'futureStyle': 'y'},
-      'title': {'text': 'T', 'font': {'futureFont': 1}},
-      'axes': {'h': {'futureAxis': [1, 2]}, 'futureAxes': 0},
+      'title': {
+        'text': 'T',
+        'font': {'futureFont': 1},
+      },
+      'axes': {
+        'h': {
+          'futureAxis': [1, 2],
+        },
+        'futureAxes': 0,
+      },
       'legend': {'futureLegend': null},
       'series': {
-        'k1': {'futureSeries': {'deep': true}, 'dataLabels': {'futureDl': 1}},
+        'k1': {
+          'futureSeries': {'deep': true},
+          'dataLabels': {'futureDl': 1},
+        },
       },
     };
 
@@ -208,18 +242,35 @@ void main() {
     });
 
     test('when the type is unknown then the id is preserved', () {
-      final s = ChartSpec.fromJson({'v': 1, 'type': 'sankey', 'data': {'ranges': <Object?>[]}});
+      final s = ChartSpec.fromJson({
+        'v': 1,
+        'type': 'sankey',
+        'data': {'ranges': <Object?>[]},
+      });
       expect(s.hasKnownType, isFalse);
       expect(s.toJson()['type'], 'sankey');
     });
 
-    test('when the version is newer then the JSON is kept verbatim and patching fails', () {
-      final json = {'v': 2, 'type': 'column', 'newField': {'x': 1}, 'data': {'ranges': <Object?>[]}};
-      final s = ChartSpec.fromJson(json);
-      expect(s.isFromNewerVersion, isTrue);
-      expect(s.toJson(), json);
-      expect(() => s.patch({'title': {'text': 'x'}}), throwsStateError);
-    });
+    test(
+      'when the version is newer then the JSON is kept verbatim and patching fails',
+      () {
+        final json = {
+          'v': 2,
+          'type': 'column',
+          'newField': {'x': 1},
+          'data': {'ranges': <Object?>[]},
+        };
+        final s = ChartSpec.fromJson(json);
+        expect(s.isFromNewerVersion, isTrue);
+        expect(s.toJson(), json);
+        expect(
+          () => s.patch({
+            'title': {'text': 'x'},
+          }),
+          throwsStateError,
+        );
+      },
+    );
   });
 
   group('Given a version upgrade hook', () {
@@ -266,23 +317,66 @@ void main() {
 
     final invalid = <(String, Map<String, Object?>, String)>[
       ('an unknown type', {'type': 'sankey'}, 'type'),
-      ('a negative header count', {'data': {'headerCount': -1}}, 'data.headerCount'),
-      ('a bad color', {'style': {'background': 'blueish'}}, 'style.background'),
-      ('a pie hole above 0.9', {'typeOptions': {'pieHole': 0.95}}, 'typeOptions.pieHole'),
-      ('a bad legend position', {'legend': {'position': 'diagonal'}}, 'legend.position'),
-      ('min ≥ max', {'axes': {'v': {'min': 10, 'max': 5, 'logScale': false}}}, 'axes.v.min'),
+      (
+        'a negative header count',
+        {
+          'data': {'headerCount': -1},
+        },
+        'data.headerCount',
+      ),
+      (
+        'a bad color',
+        {
+          'style': {'background': 'blueish'},
+        },
+        'style.background',
+      ),
+      (
+        'a pie hole above 0.9',
+        {
+          'typeOptions': {'pieHole': 0.95},
+        },
+        'typeOptions.pieHole',
+      ),
+      (
+        'a bad legend position',
+        {
+          'legend': {'position': 'diagonal'},
+        },
+        'legend.position',
+      ),
+      (
+        'min ≥ max',
+        {
+          'axes': {
+            'v': {'min': 10, 'max': 5, 'logScale': false},
+          },
+        },
+        'axes.v.min',
+      ),
       (
         'a series ref to a missing range',
         {
           'data': {
             'seriesRefs': [
-              {'key': 'x', 'ref': {'range': 3, 'offset': 0}},
+              {
+                'key': 'x',
+                'ref': {'range': 3, 'offset': 0},
+              },
             ],
           },
         },
         'data.seriesRefs[0].ref.range',
       ),
-      ('a string line width', {'series': {'k': {'lineWidth': 'thick'}}}, 'series.k.lineWidth'),
+      (
+        'a string line width',
+        {
+          'series': {
+            'k': {'lineWidth': 'thick'},
+          },
+        },
+        'series.k.lineWidth',
+      ),
       ('removing the data section', {'data': null}, 'data'),
     ];
     for (final (name, patch, path) in invalid) {
@@ -309,22 +403,31 @@ void main() {
       'typeOptions': {'pieHole': 0.4, 'sliceLabel': 'value'},
     });
 
-    test('when switching to column and back then the pie options are restored', () {
-      final col = pie.withType(ChartType.column);
-      expect(col.typeOptions, isEmpty);
-      expect(col.extras['typeOptionsByType'], {
-        'pie': {'pieHole': 0.4, 'sliceLabel': 'value'},
-      });
-      final back = col.withType(ChartType.pie);
-      expect(back.pieOptions.pieHole, 0.4);
-      expect(back.extras.containsKey('typeOptionsByType'), isFalse);
-    });
+    test(
+      'when switching to column and back then the pie options are restored',
+      () {
+        final col = pie.withType(ChartType.column);
+        expect(col.typeOptions, isEmpty);
+        expect(col.extras['typeOptionsByType'], {
+          'pie': {'pieHole': 0.4, 'sliceLabel': 'value'},
+        });
+        final back = col.withType(ChartType.pie);
+        expect(back.pieOptions.pieHole, 0.4);
+        expect(back.extras.containsKey('typeOptionsByType'), isFalse);
+      },
+    );
 
-    test('when switching to a type without stacking then stacking is dropped', () {
-      final s = pie.withType(ChartType.column, stacking: ChartStacking.percent);
-      expect(s.stacking, ChartStacking.percent);
-      expect(s.withType(ChartType.line).stacking, ChartStacking.none);
-    });
+    test(
+      'when switching to a type without stacking then stacking is dropped',
+      () {
+        final s = pie.withType(
+          ChartType.column,
+          stacking: ChartStacking.percent,
+        );
+        expect(s.stacking, ChartStacking.percent);
+        expect(s.withType(ChartType.line).stacking, ChartStacking.none);
+      },
+    );
   });
 
   group('Given type options', () {
@@ -341,15 +444,53 @@ void main() {
       expect(WaterfallOptions.fromJson(o.toJson()), o);
     });
 
-    final roundTrips = <(String, SpecNode Function(Object?), Map<String, Object?>)>[
-      ('pie', PieOptions.fromJson, {'pieHole': 0.25, 'slices': {'2': {'offset': 0.2}}, 'startAngle': 90}),
-      ('histogram', HistogramOptions.fromJson, {'bucketSize': 5, 'outlierPercentile': 5}),
-      ('candlestick', CandlestickOptions.fromJson, {'risingColor': '#00FF00', 'risingFilled': true}),
-      ('table', TableOptions.fromJson, {'pageSize': 10, 'sortColumn': 1, 'sortAscending': false}),
-      ('radar', RadarOptions.fromJson, {'fillOpacity': 0.5, 'gridShape': 'circle'}),
-      ('bubble', BubbleOptions.fromJson, {'sizeRange': [4, 40], 'colorBy': 'category'}),
-      ('scorecard', ScorecardOptions.fromJson, {'aggregate': 'average', 'compareMode': 'percent'}),
-    ];
+    final roundTrips =
+        <(String, SpecNode Function(Object?), Map<String, Object?>)>[
+          (
+            'pie',
+            PieOptions.fromJson,
+            {
+              'pieHole': 0.25,
+              'slices': {
+                '2': {'offset': 0.2},
+              },
+              'startAngle': 90,
+            },
+          ),
+          (
+            'histogram',
+            HistogramOptions.fromJson,
+            {'bucketSize': 5, 'outlierPercentile': 5},
+          ),
+          (
+            'candlestick',
+            CandlestickOptions.fromJson,
+            {'risingColor': '#00FF00', 'risingFilled': true},
+          ),
+          (
+            'table',
+            TableOptions.fromJson,
+            {'pageSize': 10, 'sortColumn': 1, 'sortAscending': false},
+          ),
+          (
+            'radar',
+            RadarOptions.fromJson,
+            {'fillOpacity': 0.5, 'gridShape': 'circle'},
+          ),
+          (
+            'bubble',
+            BubbleOptions.fromJson,
+            {
+              'sizeRange': [4, 40],
+              'colorBy': 'category',
+            },
+          ),
+          (
+            'scorecard',
+            ScorecardOptions.fromJson,
+            {'aggregate': 'average', 'compareMode': 'percent'},
+          ),
+        ];
     for (final (name, parse, json) in roundTrips) {
       test('when round-tripping $name options then the JSON is unchanged', () {
         expect(parse(json).toJson(), json);

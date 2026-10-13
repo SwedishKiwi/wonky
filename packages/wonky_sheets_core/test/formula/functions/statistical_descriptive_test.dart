@@ -97,11 +97,14 @@ void main() {
       ('=MODE(5.6, 4, 4, 3, 2, 4)', 4),
       ('=MODE.SNGL({1, 2, 2, 1})', 1),
       ('=MODE(1, 2, 3)', '#N/A'),
-      ('=MODE.MULT({1, 2, 3, 4, 3, 2, 1, 2, 3, 5, 6, 1})', [
-        [1],
-        [2],
-        [3],
-      ]),
+      (
+        '=MODE.MULT({1, 2, 3, 4, 3, 2, 1, 2, 3, 5, 6, 1})',
+        [
+          [1],
+          [2],
+          [3],
+        ],
+      ),
       ('=MODE.MULT({1, 1, 2})', 1),
       ('=MODE.MULT(1, 2)', '#N/A'),
     ];
@@ -116,13 +119,25 @@ void main() {
     final t = FormulaTestBench();
     t.setColumn('A1', [10, 20, 30]);
     t.sheet1.setNumberFormat(0, 0, r'"$"#,##0.00');
-    for (final f in ['=AVERAGE(A1:A3)', '=MIN(A1:A3)', '=MAX(A1:A3)', '=MEDIAN(A1:A3)']) {
-      test('when evaluating $f then the result carries the cell format hint', () {
-        expect(
-          t.eval(f),
-          isA<FNumber>().having((n) => n.hint.kind, 'hint', FormatHintKind.fromCell),
-        );
-      });
+    for (final f in [
+      '=AVERAGE(A1:A3)',
+      '=MIN(A1:A3)',
+      '=MAX(A1:A3)',
+      '=MEDIAN(A1:A3)',
+    ]) {
+      test(
+        'when evaluating $f then the result carries the cell format hint',
+        () {
+          expect(
+            t.eval(f),
+            isA<FNumber>().having(
+              (n) => n.hint.kind,
+              'hint',
+              FormatHintKind.fromCell,
+            ),
+          );
+        },
+      );
     }
   });
 
@@ -214,7 +229,18 @@ void main() {
 
   group('Given spread and shape functions', () {
     final t = FormulaTestBench();
-    t.setColumn('A1', [1345, 1301, 1368, 1322, 1310, 1370, 1318, 1350, 1303, 1299]);
+    t.setColumn('A1', [
+      1345,
+      1301,
+      1368,
+      1322,
+      1310,
+      1370,
+      1318,
+      1350,
+      1303,
+      1299,
+    ]);
     t.setColumn('B1', [2, 'x', true]);
     const cases = <(String, Object)>[
       // Excel docs (breaking strength sample): STDEV 27.46392, STDEV.P 26.05456, VAR 754.2667,

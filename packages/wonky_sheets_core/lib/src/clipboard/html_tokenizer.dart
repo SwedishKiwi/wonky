@@ -42,7 +42,8 @@ final class HtmlTextToken extends HtmlToken {
   final bool raw;
 
   @override
-  String toString() => 'Text(${text.length > 40 ? '${text.substring(0, 40)}…' : text})';
+  String toString() =>
+      'Text(${text.length > 40 ? '${text.substring(0, 40)}…' : text})';
 }
 
 /// `<!-- … -->`.
@@ -57,7 +58,13 @@ final class HtmlComment extends HtmlToken {
 /// throws; unknown constructs (`<!DOCTYPE>`, `<?xml?>`, `<![if …]>`, CDATA)
 /// are skipped; unterminated tags/comments end at the end of input.
 abstract final class HtmlTokenizer {
-  static const _rawTextElements = {'style', 'script', 'title', 'textarea', 'xmp'};
+  static const _rawTextElements = {
+    'style',
+    'script',
+    'title',
+    'textarea',
+    'xmp',
+  };
 
   /// Tokenizes [html].
   static List<HtmlToken> tokenize(String html) {
@@ -97,7 +104,8 @@ abstract final class HtmlTokenizer {
         i = end < 0 ? n : end + 3;
         continue;
       }
-      if (i + 1 < n && (html.codeUnitAt(i + 1) == 0x21 || html.codeUnitAt(i + 1) == 0x3f)) {
+      if (i + 1 < n &&
+          (html.codeUnitAt(i + 1) == 0x21 || html.codeUnitAt(i + 1) == 0x3f)) {
         // <!DOCTYPE …>, <![if …]>, <?xml …?>
         flushText();
         final end = html.indexOf('>', i);
@@ -134,7 +142,12 @@ abstract final class HtmlTokenizer {
           final body = html.substring(i, bodyEnd);
           if (body.isNotEmpty) {
             out.add(
-              HtmlTextToken(tag.name == 'title' || tag.name == 'textarea' ? decodeEntities(body) : body, raw: true),
+              HtmlTextToken(
+                tag.name == 'title' || tag.name == 'textarea'
+                    ? decodeEntities(body)
+                    : body,
+                raw: true,
+              ),
             );
           }
           if (close < 0) {
@@ -170,9 +183,15 @@ abstract final class HtmlTokenizer {
       (c >= 0x41 && c <= 0x5a) || (c >= 0x61 && c <= 0x7a);
 
   static bool _isNameChar(int c) =>
-      _isNameStart(c) || (c >= 0x30 && c <= 0x39) || c == 0x2d || c == 0x3a || c == 0x5f || c == 0x2e;
+      _isNameStart(c) ||
+      (c >= 0x30 && c <= 0x39) ||
+      c == 0x2d ||
+      c == 0x3a ||
+      c == 0x5f ||
+      c == 0x2e;
 
-  static bool _isSpace(int c) => c == 0x20 || c == 0x09 || c == 0x0a || c == 0x0d || c == 0x0c;
+  static bool _isSpace(int c) =>
+      c == 0x20 || c == 0x09 || c == 0x0a || c == 0x0d || c == 0x0c;
 
   static (HtmlStartTag, int) _startTag(String s, int i) {
     final n = s.length;
@@ -206,7 +225,10 @@ abstract final class HtmlTokenizer {
       final ns = j;
       while (j < n) {
         c = s.codeUnitAt(j);
-        if (_isSpace(c) || c == 0x3d || c == 0x3e || (c == 0x2f && j + 1 < n && s.codeUnitAt(j + 1) == 0x3e)) {
+        if (_isSpace(c) ||
+            c == 0x3d ||
+            c == 0x3e ||
+            (c == 0x2f && j + 1 < n && s.codeUnitAt(j + 1) == 0x3e)) {
           break;
         }
         j++;
@@ -232,7 +254,9 @@ abstract final class HtmlTokenizer {
           j = end < 0 ? n : end + 1;
         } else {
           final vs = j;
-          while (j < n && !_isSpace(s.codeUnitAt(j)) && s.codeUnitAt(j) != 0x3e) {
+          while (j < n &&
+              !_isSpace(s.codeUnitAt(j)) &&
+              s.codeUnitAt(j) != 0x3e) {
             j++;
           }
           value = s.substring(vs, j);
@@ -240,36 +264,173 @@ abstract final class HtmlTokenizer {
       }
       attrs.putIfAbsent(attrName, () => decodeEntities(value));
     }
-    const voidElements = {'br', 'col', 'img', 'meta', 'link', 'hr', 'input', 'wbr', 'base', 'area'};
-    return (HtmlStartTag(name, attrs, selfClosing: selfClosing || voidElements.contains(name)), j);
+    const voidElements = {
+      'br',
+      'col',
+      'img',
+      'meta',
+      'link',
+      'hr',
+      'input',
+      'wbr',
+      'base',
+      'area',
+    };
+    return (
+      HtmlStartTag(
+        name,
+        attrs,
+        selfClosing: selfClosing || voidElements.contains(name),
+      ),
+      j,
+    );
   }
 
   static const Map<String, int> _entities = {
-    'amp': 0x26, 'lt': 0x3c, 'gt': 0x3e, 'quot': 0x22, 'apos': 0x27, 'nbsp': 0xa0, //
-    'iexcl': 0xa1, 'cent': 0xa2, 'pound': 0xa3, 'curren': 0xa4, 'yen': 0xa5, 'brvbar': 0xa6,
-    'sect': 0xa7, 'uml': 0xa8, 'copy': 0xa9, 'ordf': 0xaa, 'laquo': 0xab, 'not': 0xac,
-    'shy': 0xad, 'reg': 0xae, 'macr': 0xaf, 'deg': 0xb0, 'plusmn': 0xb1, 'sup2': 0xb2,
-    'sup3': 0xb3, 'acute': 0xb4, 'micro': 0xb5, 'para': 0xb6, 'middot': 0xb7, 'cedil': 0xb8,
-    'sup1': 0xb9, 'ordm': 0xba, 'raquo': 0xbb, 'frac14': 0xbc, 'frac12': 0xbd, 'frac34': 0xbe,
-    'iquest': 0xbf, 'times': 0xd7, 'divide': 0xf7, 'szlig': 0xdf, 'agrave': 0xe0, 'aacute': 0xe1,
-    'acirc': 0xe2, 'atilde': 0xe3, 'auml': 0xe4, 'aring': 0xe5, 'aelig': 0xe6, 'ccedil': 0xe7,
-    'egrave': 0xe8, 'eacute': 0xe9, 'ecirc': 0xea, 'euml': 0xeb, 'igrave': 0xec, 'iacute': 0xed,
-    'icirc': 0xee, 'iuml': 0xef, 'eth': 0xf0, 'ntilde': 0xf1, 'ograve': 0xf2, 'oacute': 0xf3,
-    'ocirc': 0xf4, 'otilde': 0xf5, 'ouml': 0xf6, 'oslash': 0xf8, 'ugrave': 0xf9, 'uacute': 0xfa,
-    'ucirc': 0xfb, 'uuml': 0xfc, 'yacute': 0xfd, 'thorn': 0xfe, 'yuml': 0xff, 'Agrave': 0xc0,
-    'Aacute': 0xc1, 'Acirc': 0xc2, 'Atilde': 0xc3, 'Auml': 0xc4, 'Aring': 0xc5, 'AElig': 0xc6,
-    'Ccedil': 0xc7, 'Egrave': 0xc8, 'Eacute': 0xc9, 'Ecirc': 0xca, 'Euml': 0xcb, 'Igrave': 0xcc,
-    'Iacute': 0xcd, 'Icirc': 0xce, 'Iuml': 0xcf, 'ETH': 0xd0, 'Ntilde': 0xd1, 'Ograve': 0xd2,
-    'Oacute': 0xd3, 'Ocirc': 0xd4, 'Otilde': 0xd5, 'Ouml': 0xd6, 'Oslash': 0xd8, 'Ugrave': 0xd9,
-    'Uacute': 0xda, 'Ucirc': 0xdb, 'Uuml': 0xdc, 'Yacute': 0xdd, 'THORN': 0xde, 'euro': 0x20ac,
-    'ndash': 0x2013, 'mdash': 0x2014, 'lsquo': 0x2018, 'rsquo': 0x2019, 'sbquo': 0x201a,
-    'ldquo': 0x201c, 'rdquo': 0x201d, 'bdquo': 0x201e, 'dagger': 0x2020, 'Dagger': 0x2021,
-    'bull': 0x2022, 'hellip': 0x2026, 'permil': 0x2030, 'prime': 0x2032, 'lsaquo': 0x2039,
-    'rsaquo': 0x203a, 'trade': 0x2122, 'larr': 0x2190, 'uarr': 0x2191, 'rarr': 0x2192,
-    'darr': 0x2193, 'minus': 0x2212, 'le': 0x2264, 'ge': 0x2265, 'ne': 0x2260, 'infin': 0x221e,
-    'ensp': 0x2002, 'emsp': 0x2003, 'thinsp': 0x2009, 'zwnj': 0x200c, 'zwj': 0x200d,
-    'OElig': 0x152, 'oelig': 0x153, 'Scaron': 0x160, 'scaron': 0x161, 'Yuml': 0x178,
-    'fnof': 0x192, 'circ': 0x2c6, 'tilde': 0x2dc, 'alpha': 0x3b1, 'beta': 0x3b2, 'pi': 0x3c0,
+    'amp': 0x26,
+    'lt': 0x3c,
+    'gt': 0x3e,
+    'quot': 0x22,
+    'apos': 0x27,
+    'nbsp': 0xa0, //
+    'iexcl': 0xa1,
+    'cent': 0xa2,
+    'pound': 0xa3,
+    'curren': 0xa4,
+    'yen': 0xa5,
+    'brvbar': 0xa6,
+    'sect': 0xa7,
+    'uml': 0xa8,
+    'copy': 0xa9,
+    'ordf': 0xaa,
+    'laquo': 0xab,
+    'not': 0xac,
+    'shy': 0xad,
+    'reg': 0xae,
+    'macr': 0xaf,
+    'deg': 0xb0,
+    'plusmn': 0xb1,
+    'sup2': 0xb2,
+    'sup3': 0xb3,
+    'acute': 0xb4,
+    'micro': 0xb5,
+    'para': 0xb6,
+    'middot': 0xb7,
+    'cedil': 0xb8,
+    'sup1': 0xb9,
+    'ordm': 0xba,
+    'raquo': 0xbb,
+    'frac14': 0xbc,
+    'frac12': 0xbd,
+    'frac34': 0xbe,
+    'iquest': 0xbf,
+    'times': 0xd7,
+    'divide': 0xf7,
+    'szlig': 0xdf,
+    'agrave': 0xe0,
+    'aacute': 0xe1,
+    'acirc': 0xe2,
+    'atilde': 0xe3,
+    'auml': 0xe4,
+    'aring': 0xe5,
+    'aelig': 0xe6,
+    'ccedil': 0xe7,
+    'egrave': 0xe8,
+    'eacute': 0xe9,
+    'ecirc': 0xea,
+    'euml': 0xeb,
+    'igrave': 0xec,
+    'iacute': 0xed,
+    'icirc': 0xee,
+    'iuml': 0xef,
+    'eth': 0xf0,
+    'ntilde': 0xf1,
+    'ograve': 0xf2,
+    'oacute': 0xf3,
+    'ocirc': 0xf4,
+    'otilde': 0xf5,
+    'ouml': 0xf6,
+    'oslash': 0xf8,
+    'ugrave': 0xf9,
+    'uacute': 0xfa,
+    'ucirc': 0xfb,
+    'uuml': 0xfc,
+    'yacute': 0xfd,
+    'thorn': 0xfe,
+    'yuml': 0xff,
+    'Agrave': 0xc0,
+    'Aacute': 0xc1,
+    'Acirc': 0xc2,
+    'Atilde': 0xc3,
+    'Auml': 0xc4,
+    'Aring': 0xc5,
+    'AElig': 0xc6,
+    'Ccedil': 0xc7,
+    'Egrave': 0xc8,
+    'Eacute': 0xc9,
+    'Ecirc': 0xca,
+    'Euml': 0xcb,
+    'Igrave': 0xcc,
+    'Iacute': 0xcd,
+    'Icirc': 0xce,
+    'Iuml': 0xcf,
+    'ETH': 0xd0,
+    'Ntilde': 0xd1,
+    'Ograve': 0xd2,
+    'Oacute': 0xd3,
+    'Ocirc': 0xd4,
+    'Otilde': 0xd5,
+    'Ouml': 0xd6,
+    'Oslash': 0xd8,
+    'Ugrave': 0xd9,
+    'Uacute': 0xda,
+    'Ucirc': 0xdb,
+    'Uuml': 0xdc,
+    'Yacute': 0xdd,
+    'THORN': 0xde,
+    'euro': 0x20ac,
+    'ndash': 0x2013,
+    'mdash': 0x2014,
+    'lsquo': 0x2018,
+    'rsquo': 0x2019,
+    'sbquo': 0x201a,
+    'ldquo': 0x201c,
+    'rdquo': 0x201d,
+    'bdquo': 0x201e,
+    'dagger': 0x2020,
+    'Dagger': 0x2021,
+    'bull': 0x2022,
+    'hellip': 0x2026,
+    'permil': 0x2030,
+    'prime': 0x2032,
+    'lsaquo': 0x2039,
+    'rsaquo': 0x203a,
+    'trade': 0x2122,
+    'larr': 0x2190,
+    'uarr': 0x2191,
+    'rarr': 0x2192,
+    'darr': 0x2193,
+    'minus': 0x2212,
+    'le': 0x2264,
+    'ge': 0x2265,
+    'ne': 0x2260,
+    'infin': 0x221e,
+    'ensp': 0x2002,
+    'emsp': 0x2003,
+    'thinsp': 0x2009,
+    'zwnj': 0x200c,
+    'zwj': 0x200d,
+    'OElig': 0x152,
+    'oelig': 0x153,
+    'Scaron': 0x160,
+    'scaron': 0x161,
+    'Yuml': 0x178,
+    'fnof': 0x192,
+    'circ': 0x2c6,
+    'tilde': 0x2dc,
+    'alpha': 0x3b1,
+    'beta': 0x3b2,
+    'pi': 0x3c0,
     'sigma': 0x3c3, 'mu': 0x3bc, 'Omega': 0x3a9, 'check': 0x2713,
   };
 
@@ -298,7 +459,10 @@ abstract final class HtmlTokenizer {
         if (j > ds) {
           final v = int.tryParse(s.substring(ds, j), radix: hex ? 16 : 10);
           if (j < s.length && s.codeUnitAt(j) == 0x3b) j++;
-          if (v != null && v > 0 && v <= 0x10ffff && (v < 0xd800 || v > 0xdfff)) {
+          if (v != null &&
+              v > 0 &&
+              v <= 0x10ffff &&
+              (v < 0xd800 || v > 0xdfff)) {
             b.writeCharCode(v == 0xa0 ? 0xa0 : v);
           } else {
             b.writeCharCode(0xfffd);
@@ -329,8 +493,11 @@ abstract final class HtmlTokenizer {
   }
 
   static bool _isAlnum(int c) =>
-      (c >= 0x30 && c <= 0x39) || (c >= 0x41 && c <= 0x5a) || (c >= 0x61 && c <= 0x7a);
+      (c >= 0x30 && c <= 0x39) ||
+      (c >= 0x41 && c <= 0x5a) ||
+      (c >= 0x61 && c <= 0x7a);
 
   static bool _isDigitIn(int c, bool hex) =>
-      (c >= 0x30 && c <= 0x39) || (hex && ((c | 0x20) >= 0x61 && (c | 0x20) <= 0x66));
+      (c >= 0x30 && c <= 0x39) ||
+      (hex && ((c | 0x20) >= 0x61 && (c | 0x20) <= 0x66));
 }

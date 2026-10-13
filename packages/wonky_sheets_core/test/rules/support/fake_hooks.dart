@@ -15,11 +15,15 @@ final class FakeHooks implements FormulaHooks {
   int evaluations = 0;
 
   static final RegExp _ref = RegExp(r'^(\$?)([A-Za-z]{1,3})(\$?)(\d+)$');
-  static final RegExp _expr = RegExp(r'^(.+?)\s*(>=|<=|<>|>|<|=|\+|-|\*|/)\s*(.+)$');
+  static final RegExp _expr = RegExp(
+    r'^(.+?)\s*(>=|<=|<>|>|<|=|\+|-|\*|/)\s*(.+)$',
+  );
 
   FValue _operand(String t, String sheetId, int dr, int dc) {
     t = t.trim();
-    if (t.startsWith('"') && t.endsWith('"') && t.length >= 2) return FText(t.substring(1, t.length - 1));
+    if (t.startsWith('"') && t.endsWith('"') && t.length >= 2) {
+      return FText(t.substring(1, t.length - 1));
+    }
     if (t.toUpperCase() == 'TRUE') return FBool.t;
     if (t.toUpperCase() == 'FALSE') return FBool.f;
     final n = double.tryParse(t);
@@ -56,7 +60,9 @@ final class FakeHooks implements FormulaHooks {
     final dr = row - anchorRow;
     final dc = col - anchorCol;
     final m = _expr.firstMatch(body);
-    if (m == null || m.group(1)!.startsWith('"')) return _operand(body, sheetId, dr, dc);
+    if (m == null || m.group(1)!.startsWith('"')) {
+      return _operand(body, sheetId, dr, dc);
+    }
     final a = _operand(m.group(1)!, sheetId, dr, dc);
     final b = _operand(m.group(3)!, sheetId, dr, dc);
     if (a is FError) return a;
@@ -84,12 +90,22 @@ final class FakeHooks implements FormulaHooks {
   }
 
   @override
-  String toA1(String stored, {required String sheetId, required int row, required int col, String locale = 'en_US'}) =>
-      stored;
+  String toA1(
+    String stored, {
+    required String sheetId,
+    required int row,
+    required int col,
+    String locale = 'en_US',
+  }) => stored;
 
   @override
-  String toStored(String a1Formula, {required String sheetId, required int row, required int col, String locale = 'en_US'}) =>
-      a1Formula;
+  String toStored(
+    String a1Formula, {
+    required String sheetId,
+    required int row,
+    required int col,
+    String locale = 'en_US',
+  }) => a1Formula;
 
   @override
   String translate(
@@ -103,8 +119,11 @@ final class FakeHooks implements FormulaHooks {
   }) => stored;
 
   @override
-  String? repairBoundaries(String stored, {required Set<String> deletedRowIds, required Set<String> deletedColIds}) =>
-      null;
+  String? repairBoundaries(
+    String stored, {
+    required Set<String> deletedRowIds,
+    required Set<String> deletedColIds,
+  }) => null;
 
   @override
   String? remap(
@@ -131,6 +150,10 @@ final class FakeHooks implements FormulaHooks {
   String renameName(String stored, String oldName, String newName) => stored;
 
   @override
-  bool references(String stored, {required String hostSheetId, required String sheetId, required GridRect rect}) =>
-      false;
+  bool references(
+    String stored, {
+    required String hostSheetId,
+    required String sheetId,
+    required GridRect rect,
+  }) => false;
 }

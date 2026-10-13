@@ -65,7 +65,10 @@ sealed class SchemaNode {
       out['enum'] = [...out['enum']! as List<Object?>, null];
     } else if (t == null) {
       return {
-        'anyOf': [out, const {'type': 'null'}],
+        'anyOf': [
+          out,
+          const {'type': 'null'},
+        ],
       };
     }
     return out;
@@ -75,7 +78,12 @@ sealed class SchemaNode {
 /// An object with known [fields].
 final class ObjectSchema extends SchemaNode {
   /// Creates an object schema.
-  const ObjectSchema(this.fields, {this.required = const {}, super.nullable, super.description});
+  const ObjectSchema(
+    this.fields, {
+    this.required = const {},
+    super.nullable,
+    super.description,
+  });
 
   final Map<String, SchemaNode> fields;
   final Set<String> required;
@@ -87,10 +95,14 @@ final class ObjectSchema extends SchemaNode {
       return;
     }
     for (final k in required) {
-      if (!value.containsKey(k)) out.add(ChartSpecIssue(_join(path, k), 'is required'));
+      if (!value.containsKey(k)) {
+        out.add(ChartSpecIssue(_join(path, k), 'is required'));
+      }
     }
     for (final e in fields.entries) {
-      if (value.containsKey(e.key)) e.value.check(_join(path, e.key), value[e.key], out);
+      if (value.containsKey(e.key)) {
+        e.value.check(_join(path, e.key), value[e.key], out);
+      }
     }
   }
 
@@ -106,7 +118,12 @@ final class ObjectSchema extends SchemaNode {
 /// A map with arbitrary string keys (series keys, point indexes).
 final class MapSchema extends SchemaNode {
   /// Creates a map schema; [intKeys] requires non-negative integer keys.
-  const MapSchema(this.values, {this.intKeys = false, super.nullable, super.description});
+  const MapSchema(
+    this.values, {
+    this.intKeys = false,
+    super.nullable,
+    super.description,
+  });
 
   final SchemaNode values;
   final bool intKeys;
@@ -120,7 +137,9 @@ final class MapSchema extends SchemaNode {
     for (final e in value.entries) {
       final k = '${e.key}';
       if (intKeys && (int.tryParse(k) ?? -1) < 0) {
-        out.add(ChartSpecIssue(_join(path, k), 'key must be a non-negative integer'));
+        out.add(
+          ChartSpecIssue(_join(path, k), 'key must be a non-negative integer'),
+        );
       }
       values.check(_join(path, k), e.value, out);
     }
@@ -129,7 +148,8 @@ final class MapSchema extends SchemaNode {
   @override
   Map<String, Object?> jsonSchema() => _wrap({
     'type': 'array',
-    'description': 'Entries as key/value pairs (maps are not strict-schema compatible).',
+    'description':
+        'Entries as key/value pairs (maps are not strict-schema compatible).',
     'items': {
       'type': 'object',
       'properties': {
@@ -145,7 +165,12 @@ final class MapSchema extends SchemaNode {
 /// A list.
 final class ListSchema extends SchemaNode {
   /// Creates a list schema.
-  const ListSchema(this.items, {this.minItems = 0, super.nullable, super.description});
+  const ListSchema(
+    this.items, {
+    this.minItems = 0,
+    super.nullable,
+    super.description,
+  });
 
   final SchemaNode items;
   final int minItems;
@@ -156,14 +181,17 @@ final class ListSchema extends SchemaNode {
       out.add(ChartSpecIssue(path, 'must be a list'));
       return;
     }
-    if (value.length < minItems) out.add(ChartSpecIssue(path, 'needs at least $minItems items'));
+    if (value.length < minItems) {
+      out.add(ChartSpecIssue(path, 'needs at least $minItems items'));
+    }
     for (var i = 0; i < value.length; i++) {
       items.check('$path[$i]', value[i], out);
     }
   }
 
   @override
-  Map<String, Object?> jsonSchema() => _wrap({'type': 'array', 'items': items.jsonSchema()});
+  Map<String, Object?> jsonSchema() =>
+      _wrap({'type': 'array', 'items': items.jsonSchema()});
 }
 
 /// An enum by name.
@@ -176,7 +204,12 @@ final class EnumSchema extends SchemaNode {
   @override
   void checkValue(String path, Object value, List<ChartSpecIssue> out) {
     if (value is! String || !values.any((e) => e.name == value)) {
-      out.add(ChartSpecIssue(path, 'must be one of ${values.map((e) => e.name).join(', ')}'));
+      out.add(
+        ChartSpecIssue(
+          path,
+          'must be one of ${values.map((e) => e.name).join(', ')}',
+        ),
+      );
     }
   }
 
@@ -190,7 +223,13 @@ final class EnumSchema extends SchemaNode {
 /// A number with optional bounds.
 final class NumSchema extends SchemaNode {
   /// Creates a number schema.
-  const NumSchema({this.min, this.max, this.integer = false, super.nullable, super.description});
+  const NumSchema({
+    this.min,
+    this.max,
+    this.integer = false,
+    super.nullable,
+    super.description,
+  });
 
   final num? min;
   final num? max;
@@ -205,8 +244,12 @@ final class NumSchema extends SchemaNode {
     if (integer && value != value.truncate()) {
       out.add(ChartSpecIssue(path, 'must be an integer'));
     }
-    if (min != null && value < min!) out.add(ChartSpecIssue(path, 'must be ≥ $min'));
-    if (max != null && value > max!) out.add(ChartSpecIssue(path, 'must be ≤ $max'));
+    if (min != null && value < min!) {
+      out.add(ChartSpecIssue(path, 'must be ≥ $min'));
+    }
+    if (max != null && value > max!) {
+      out.add(ChartSpecIssue(path, 'must be ≤ $max'));
+    }
   }
 
   @override
@@ -234,7 +277,12 @@ final class BoolSchema extends SchemaNode {
 /// A string, optionally a WonkyColor (`#RGB`, `#RRGGBB`, `#AARRGGBB`, `theme:<key>`).
 final class StrSchema extends SchemaNode {
   /// Creates a string schema.
-  const StrSchema({this.color = false, this.nonEmpty = false, super.nullable, super.description});
+  const StrSchema({
+    this.color = false,
+    this.nonEmpty = false,
+    super.nullable,
+    super.description,
+  });
 
   final bool color;
   final bool nonEmpty;
@@ -249,17 +297,19 @@ final class StrSchema extends SchemaNode {
       out.add(ChartSpecIssue(path, 'must be a string'));
       return;
     }
-    if (nonEmpty && value.isEmpty) out.add(ChartSpecIssue(path, 'must not be empty'));
+    if (nonEmpty && value.isEmpty) {
+      out.add(ChartSpecIssue(path, 'must not be empty'));
+    }
     if (color && !_color.hasMatch(value)) {
-      out.add(ChartSpecIssue(path, 'must be a color (#RRGGBB or theme:<name>)'));
+      out.add(
+        ChartSpecIssue(path, 'must be a color (#RRGGBB or theme:<name>)'),
+      );
     }
   }
 
   @override
-  Map<String, Object?> jsonSchema() => _wrap({
-    'type': 'string',
-    if (color) 'pattern': _color.pattern,
-  });
+  Map<String, Object?> jsonSchema() =>
+      _wrap({'type': 'string', if (color) 'pattern': _color.pattern});
 }
 
 /// A GridRange JSON object.
@@ -270,7 +320,9 @@ final class GridRangeSchema extends SchemaNode {
   @override
   void checkValue(String path, Object value, List<ChartSpecIssue> out) {
     if (GridRange.tryParse(value) == null) {
-      out.add(ChartSpecIssue(path, 'must be a GridRange {"s": sheetId, "r1"…"c2"}'));
+      out.add(
+        ChartSpecIssue(path, 'must be a GridRange {"s": sheetId, "r1"…"c2"}'),
+      );
     }
   }
 
@@ -279,7 +331,11 @@ final class GridRangeSchema extends SchemaNode {
     'type': 'object',
     'properties': {
       for (final k in ['s', 'r1', 'r2', 'c1', 'c2', 'r1k', 'r2k', 'c1k', 'c2k'])
-        k: k == 's' ? const {'type': 'string'} : const {'type': ['string', 'null']},
+        k: k == 's'
+            ? const {'type': 'string'}
+            : const {
+                'type': ['string', 'null'],
+              },
     },
     'required': ['s', 'r1', 'r2', 'c1', 'c2', 'r1k', 'r2k', 'c1k', 'c2k'],
     'additionalProperties': false,
@@ -389,7 +445,10 @@ abstract final class ChartSpecSchema {
     }),
     'trendline': _trendline,
     'errorBars': AnySchema(description: 'P2'),
-    'points': MapSchema(ObjectSchema({'color': StrSchema(color: true)}), intKeys: true),
+    'points': MapSchema(
+      ObjectSchema({'color': StrSchema(color: true)}),
+      intKeys: true,
+    ),
     'labelOverride': StrSchema(),
   });
 
@@ -399,7 +458,10 @@ abstract final class ChartSpecSchema {
     'sliceLabel': EnumSchema(SliceLabel.values),
     'borderColor': StrSchema(color: true),
     'slices': MapSchema(
-      ObjectSchema({'color': StrSchema(color: true), 'offset': NumSchema(min: 0, max: 1)}),
+      ObjectSchema({
+        'color': StrSchema(color: true),
+        'offset': NumSchema(min: 0, max: 1),
+      }),
       intKeys: true,
     ),
     'startAngle': NumSchema(min: -360, max: 360),
@@ -420,10 +482,13 @@ abstract final class ChartSpecSchema {
       'dash': EnumSchema(LineDash.values),
     }),
     'subtotals': ListSchema(
-      ObjectSchema({
-        'afterIndex': NumSchema(min: 0, integer: true, nullable: false),
-        'label': StrSchema(),
-      }, required: {'afterIndex'}),
+      ObjectSchema(
+        {
+          'afterIndex': NumSchema(min: 0, integer: true, nullable: false),
+          'label': StrSchema(),
+        },
+        required: {'afterIndex'},
+      ),
     ),
     'firstValueIsSubtotal': BoolSchema(),
     'positiveColor': StrSchema(color: true),
@@ -448,7 +513,10 @@ abstract final class ChartSpecSchema {
     'fillOpacity': NumSchema(min: 0, max: 1),
     'gridShape': EnumSchema(RadarGridShape.values),
     // bubble
-    'sizeRange': ListSchema(NumSchema(min: 1, max: 400, nullable: false), minItems: 2),
+    'sizeRange': ListSchema(
+      NumSchema(min: 1, max: 400, nullable: false),
+      minItems: 2,
+    ),
     'colorBy': EnumSchema(BubbleColorBy.values),
   });
 
@@ -465,13 +533,20 @@ abstract final class ChartSpecSchema {
         'useFirstColumnAsLabels': BoolSchema(),
         'treatLabelsAsText': BoolSchema(),
         'aggregate': EnumSchema(ChartAggregate.values),
-        'domain': ObjectSchema({'ref': _dataRef, 'reverse': BoolSchema(), 'key': StrSchema()}),
+        'domain': ObjectSchema({
+          'ref': _dataRef,
+          'reverse': BoolSchema(),
+          'key': StrSchema(),
+        }),
         'seriesRefs': ListSchema(
-          ObjectSchema({
-            'key': StrSchema(nonEmpty: true, nullable: false),
-            'ref': _dataRef,
-            'hidden': BoolSchema(),
-          }, required: {'key'}),
+          ObjectSchema(
+            {
+              'key': StrSchema(nonEmpty: true, nullable: false),
+              'ref': _dataRef,
+              'hidden': BoolSchema(),
+            },
+            required: {'key'},
+          ),
         ),
         'includeHidden': BoolSchema(),
         'emptyCells': EnumSchema(EmptyCellMode.values),
@@ -512,7 +587,10 @@ abstract final class ChartSpecSchema {
       final ranges = data['ranges'];
       final n = ranges is List ? ranges.length : 0;
       void checkRef(String path, Object? ref) {
-        if (ref is Map && ref['range'] is num && (ref['range'] as num) >= n && n > 0) {
+        if (ref is Map &&
+            ref['range'] is num &&
+            (ref['range'] as num) >= n &&
+            n > 0) {
           out.add(ChartSpecIssue('$path.range', 'refers to a missing range'));
         }
       }
@@ -528,7 +606,9 @@ abstract final class ChartSpecSchema {
           checkRef('data.seriesRefs[$i].ref', r['ref']);
           final k = r['key'];
           if (k is String && !keys.add(k)) {
-            out.add(ChartSpecIssue('data.seriesRefs[$i].key', 'duplicate series key'));
+            out.add(
+              ChartSpecIssue('data.seriesRefs[$i].key', 'duplicate series key'),
+            );
           }
         }
       }

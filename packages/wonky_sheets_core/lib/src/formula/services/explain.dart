@@ -20,7 +20,13 @@ final class ExplainNode {
   final ResolvedArea? area;
   final List<ExplainNode> children;
 
-  const ExplainNode(this.label, this.value, this.span, this.children, {this.area});
+  const ExplainNode(
+    this.label,
+    this.value,
+    this.span,
+    this.children, {
+    this.area,
+  });
 
   /// JSON with arrays truncated to 10×10 and text to 100 chars (05 §18).
   Map<String, Object?> toJson() => {
@@ -41,7 +47,10 @@ final class ExplainNode {
     FNumber(:final v) => v,
     FText(:final v) => v.length > 100 ? '${v.substring(0, 100)}…' : v,
     FBool(:final v) => v,
-    FError(:final kind, :final message) => {'error': kind.literal, 'message': ?message},
+    FError(:final kind, :final message) => {
+      'error': kind.literal,
+      'message': ?message,
+    },
     FEmpty() || FOmitted() => null,
     FArray() => {
       'rows': v.rows,
@@ -58,7 +67,12 @@ final class ExplainNode {
 }
 
 /// Builds the evaluation trace of the formula at a cell (null for non-formula cells).
-ExplainNode? explainCell(FormulaEngine engine, String sheetId, int row, int col) {
+ExplainNode? explainCell(
+  FormulaEngine engine,
+  String sheetId,
+  int row,
+  int col,
+) {
   final sheet = engine.workbook.sheetById(sheetId);
   if (sheet == null) return null;
   final stored = sheet.inputAt(row, col)?.formula;
@@ -73,23 +87,42 @@ ExplainNode? explainCell(FormulaEngine engine, String sheetId, int row, int col)
     locale: engine.locale,
   );
   if (ast == null) {
-    return ExplainNode(FormulaCodec.toA1(stored, codec), compiled.root(_ctx(engine, sheet.id, row, col, slots)), SourceSpan.none, const []);
+    return ExplainNode(
+      FormulaCodec.toA1(stored, codec),
+      compiled.root(_ctx(engine, sheet.id, row, col, slots)),
+      SourceSpan.none,
+      const [],
+    );
   }
   String render(RefNode r) => switch (r) {
-    SlotRefNode(:final index) => index < slots.length
-        ? FormulaCodec.renderStoredRef(slots[index], engine.workbook, sheet, sheetId)
-        : '#REF!',
-    StoredRefNode(:final ref) => FormulaCodec.renderStoredRef(ref, engine.workbook, sheet, sheetId),
+    SlotRefNode(:final index) =>
+      index < slots.length
+          ? FormulaCodec.renderStoredRef(
+              slots[index],
+              engine.workbook,
+              sheet,
+              sheetId,
+            )
+          : '#REF!',
+    StoredRefNode(:final ref) => FormulaCodec.renderStoredRef(
+      ref,
+      engine.workbook,
+      sheet,
+      sheetId,
+    ),
     A1RefNode(:final area) => area.format(),
   };
 
   ExplainNode build(Expr e, Set<String> locals) {
     final inner = e;
     final nextLocals = {...locals};
-    if (e is CallExpr && (e.name.toUpperCase() == 'LET' || e.name.toUpperCase() == 'LAMBDA')) {
+    if (e is CallExpr &&
+        (e.name.toUpperCase() == 'LET' || e.name.toUpperCase() == 'LAMBDA')) {
       for (var i = 0; i < e.args.length - 1; i++) {
         final a = e.args[i];
-        if (a is NameExpr && (e.name.toUpperCase() == 'LAMBDA' || i.isEven)) nextLocals.add(a.name.toUpperCase());
+        if (a is NameExpr && (e.name.toUpperCase() == 'LAMBDA' || i.isEven)) {
+          nextLocals.add(a.name.toUpperCase());
+        }
       }
     }
     final usesLocal = _usesNames(inner, locals);
@@ -111,7 +144,13 @@ ExplainNode? explainCell(FormulaEngine engine, String sheetId, int row, int col)
         kids.add(build(c, nextLocals));
       }
     }
-    return ExplainNode(printFormula(inner, renderRef: render), value, inner.span, kids, area: area);
+    return ExplainNode(
+      printFormula(inner, renderRef: render),
+      value,
+      inner.span,
+      kids,
+      area: area,
+    );
   }
 
   return build(ast, const {});
@@ -127,7 +166,13 @@ bool _usesNames(Expr e, Set<String> names) {
   return false;
 }
 
-EvalContext _ctx(FormulaEngine engine, String sheetId, int row, int col, List<StoredRef> slots) {
+EvalContext _ctx(
+  FormulaEngine engine,
+  String sheetId,
+  int row,
+  int col,
+  List<StoredRef> slots,
+) {
   final sheet = engine.workbook.sheetById(sheetId)!;
   return EvalContext(
     host: engine,

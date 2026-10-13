@@ -35,39 +35,47 @@ void main() {
       h.apply(AddNamedRange('Nums', range: h.range('A1:A2')));
     });
 
-    test('when copying the space then every id is new and formulas point at the copy', () {
-      const target = '11111111-1111-4111-8111-111111111111';
-      final copy = SpaceCopier.copy(
-        h.model.allRows(),
-        sourceSpaceId: h.model.spreadsheetId,
-        targetSpaceId: target,
-        ids: SeededIdGenerator(9),
-        userId: 'u',
-        now: DateTime.utc(2026),
-      );
-      final m = WorkbookModel.fromRows(target, copy.rows);
-      expect(m.spreadsheet.id, target);
-      final s = m.sheets.single;
-      expect(s.id, isNot(h.sheetId));
-      final f = s.cellAt(2, 0)!.content!;
-      final hooks = EngineFormulaHooks(m);
-      expect(hooks.toA1(f, sheetId: s.id, row: 2, col: 0), '=SUM(A1:A2)');
-      expect(s.cfRules.values.single.rangesJson, contains(s.id));
-      expect(m.namedRange('Nums')!.rangeJson, contains(s.id));
-      for (final (t, c) in copy.rows) {
-        if (t == SheetsTables.cell) {
-          expect(
-            c[Cols.id],
-            SheetsIds.cellId(
-              c[Cols.sheetId]! as String,
-              c[CellCols.rowId]! as String,
-              c[CellCols.columnId]! as String,
-            ),
-          );
+    test(
+      'when copying the space then every id is new and formulas point at the copy',
+      () {
+        const target = '11111111-1111-4111-8111-111111111111';
+        final copy = SpaceCopier.copy(
+          h.model.allRows(),
+          sourceSpaceId: h.model.spreadsheetId,
+          targetSpaceId: target,
+          ids: SeededIdGenerator(9),
+          userId: 'u',
+          now: DateTime.utc(2026),
+        );
+        final m = WorkbookModel.fromRows(target, copy.rows);
+        expect(m.spreadsheet.id, target);
+        final s = m.sheets.single;
+        expect(s.id, isNot(h.sheetId));
+        final f = s.cellAt(2, 0)!.content!;
+        final hooks = EngineFormulaHooks(m);
+        expect(hooks.toA1(f, sheetId: s.id, row: 2, col: 0), '=SUM(A1:A2)');
+        expect(s.cfRules.values.single.rangesJson, contains(s.id));
+        expect(m.namedRange('Nums')!.rangeJson, contains(s.id));
+        for (final (t, c) in copy.rows) {
+          if (t == SheetsTables.cell) {
+            expect(
+              c[Cols.id],
+              SheetsIds.cellId(
+                c[Cols.sheetId]! as String,
+                c[CellCols.rowId]! as String,
+                c[CellCols.columnId]! as String,
+              ),
+            );
+          }
         }
-      }
-      final originalIds = {for (final (_, c) in h.model.allRows()) c[Cols.id]};
-      expect(copy.rows.where((r) => originalIds.contains(r.$2[Cols.id])), isEmpty);
-    });
+        final originalIds = {
+          for (final (_, c) in h.model.allRows()) c[Cols.id],
+        };
+        expect(
+          copy.rows.where((r) => originalIds.contains(r.$2[Cols.id])),
+          isEmpty,
+        );
+      },
+    );
   });
 }

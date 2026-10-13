@@ -9,17 +9,31 @@ import 'cell_text_layout.dart';
 abstract interface class PdfFontProvider {
   /// The font for [family] (as stored in the cell; substitution is the
   /// provider's job) in [doc].
-  PdfFont font(PdfDocument doc, String family, {bool bold = false, bool italic = false});
+  PdfFont font(
+    PdfDocument doc,
+    String family, {
+    bool bold = false,
+    bool italic = false,
+  });
 
   /// Fonts tried per glyph, in order, when [font] lacks a glyph (fallback
   /// chain: Noto Sans → Noto Sans Symbols → CJK …).
-  List<PdfFont> fallbacks(PdfDocument doc, {bool bold = false, bool italic = false});
+  List<PdfFont> fallbacks(
+    PdfDocument doc, {
+    bool bold = false,
+    bool italic = false,
+  });
 }
 
 /// Regular/bold/italic/bold-italic TTF data of one family.
 final class TtfFontFamily {
   /// Creates a family; missing variants fall back to [regular].
-  const TtfFontFamily({required this.regular, this.bold, this.italic, this.boldItalic});
+  const TtfFontFamily({
+    required this.regular,
+    this.bold,
+    this.italic,
+    this.boldItalic,
+  });
 
   final ByteData regular;
   final ByteData? bold;
@@ -28,7 +42,9 @@ final class TtfFontFamily {
 
   /// The data for a variant.
   ByteData variant({bool bold = false, bool italic = false}) {
-    if (bold && italic) return boldItalic ?? this.bold ?? this.italic ?? regular;
+    if (bold && italic) {
+      return boldItalic ?? this.bold ?? this.italic ?? regular;
+    }
     if (bold) return this.bold ?? regular;
     if (italic) return this.italic ?? regular;
     return regular;
@@ -54,7 +70,11 @@ abstract final class CellFontSubstitution {
   };
 
   /// The bundled family [family] is rendered with (unknown → [fallback]).
-  static String resolve(String family, Set<String> available, {String fallback = 'Inter'}) {
+  static String resolve(
+    String family,
+    Set<String> available, {
+    String fallback = 'Inter',
+  }) {
     if (available.contains(family)) return family;
     final lower = family.toLowerCase();
     for (final a in available) {
@@ -68,7 +88,8 @@ abstract final class CellFontSubstitution {
 
 final Expando<Map<String, PdfFont>> _docFonts = Expando('wonky-pdf-fonts');
 
-Map<String, PdfFont> _cacheFor(PdfDocument doc) => _docFonts[doc] ??= <String, PdfFont>{};
+Map<String, PdfFont> _cacheFor(PdfDocument doc) =>
+    _docFonts[doc] ??= <String, PdfFont>{};
 
 /// The 14 standard PDF fonts: monospace families → Courier, serif families →
 /// Times, others → Helvetica. Latin-1 only (other glyphs need TTF fonts).
@@ -113,7 +134,12 @@ final class BuiltInPdfFontProvider implements PdfFontProvider {
   }
 
   @override
-  PdfFont font(PdfDocument doc, String family, {bool bold = false, bool italic = false}) {
+  PdfFont font(
+    PdfDocument doc,
+    String family, {
+    bool bold = false,
+    bool italic = false,
+  }) {
     final base = baseFamily(family);
     final key = 'builtin:$base:$bold:$italic';
     return _cacheFor(doc).putIfAbsent(key, () {
@@ -138,8 +164,11 @@ final class BuiltInPdfFontProvider implements PdfFontProvider {
   }
 
   @override
-  List<PdfFont> fallbacks(PdfDocument doc, {bool bold = false, bool italic = false}) =>
-      const [];
+  List<PdfFont> fallbacks(
+    PdfDocument doc, {
+    bool bold = false,
+    bool italic = false,
+  }) => const [];
 }
 
 /// Bundled TTF fonts (apps and the server pass the curated cell fonts).
@@ -163,7 +192,12 @@ final class TtfPdfFontProvider implements PdfFontProvider {
   final PdfFontProvider base;
 
   @override
-  PdfFont font(PdfDocument doc, String family, {bool bold = false, bool italic = false}) {
+  PdfFont font(
+    PdfDocument doc,
+    String family, {
+    bool bold = false,
+    bool italic = false,
+  }) {
     final name = CellFontSubstitution.resolve(
       family,
       families.keys.toSet(),
@@ -178,11 +212,18 @@ final class TtfPdfFontProvider implements PdfFontProvider {
   }
 
   @override
-  List<PdfFont> fallbacks(PdfDocument doc, {bool bold = false, bool italic = false}) => [
+  List<PdfFont> fallbacks(
+    PdfDocument doc, {
+    bool bold = false,
+    bool italic = false,
+  }) => [
     for (var i = 0; i < fallbackFamilies.length; i++)
       _cacheFor(doc).putIfAbsent(
         'ttf-fallback:$i:$bold:$italic',
-        () => PdfTtfFont(doc, fallbackFamilies[i].variant(bold: bold, italic: italic)),
+        () => PdfTtfFont(
+          doc,
+          fallbackFamilies[i].variant(bold: bold, italic: italic),
+        ),
       ),
   ];
 }
@@ -194,7 +235,11 @@ typedef PdfFontRun = ({PdfFont font, String text});
 /// supports become `?` (or are dropped when even `?` is unsupported).
 abstract final class PdfGlyphRuns {
   /// Font runs of [text].
-  static List<PdfFontRun> split(String text, PdfFont primary, List<PdfFont> fallbacks) {
+  static List<PdfFontRun> split(
+    String text,
+    PdfFont primary,
+    List<PdfFont> fallbacks,
+  ) {
     final out = <PdfFontRun>[];
     PdfFont? curFont;
     final cur = StringBuffer();
@@ -242,7 +287,8 @@ abstract final class PdfGlyphRuns {
 final class PdfFontMeasurer implements CellTextMeasurer {
   /// Creates a measurer for fonts of [provider] in [doc] (a private metrics
   /// document when omitted).
-  PdfFontMeasurer(this.provider, [PdfDocument? doc]) : doc = doc ?? PdfDocument();
+  PdfFontMeasurer(this.provider, [PdfDocument? doc])
+    : doc = doc ?? PdfDocument();
 
   final PdfFontProvider provider;
   final PdfDocument doc;
@@ -280,7 +326,8 @@ final class PdfFontMeasurer implements CellTextMeasurer {
   double ascent(CellTextStyle style) => fontOf(style).ascent.abs() * style.size;
 
   @override
-  double descent(CellTextStyle style) => fontOf(style).descent.abs() * style.size;
+  double descent(CellTextStyle style) =>
+      fontOf(style).descent.abs() * style.size;
 
   @override
   double lineHeight(CellTextStyle style) {

@@ -55,7 +55,14 @@ final class FormulaToken {
   final int depth;
   final RefInfo? ref;
 
-  const FormulaToken(this.kind, this.start, this.end, this.text, this.depth, [this.ref]);
+  const FormulaToken(
+    this.kind,
+    this.start,
+    this.end,
+    this.text,
+    this.depth, [
+    this.ref,
+  ]);
 
   bool get isReference =>
       kind == TokenKind.cellRef ||
@@ -80,7 +87,10 @@ final class FormulaLexer {
   /// Whether `⟦…⟧` tokens are recognized (stored form).
   final bool storedForm;
 
-  const FormulaLexer({this.locale = FormulaLocale.enUS, this.storedForm = true});
+  const FormulaLexer({
+    this.locale = FormulaLocale.enUS,
+    this.storedForm = true,
+  });
 
   static bool isIdentStart(int c) =>
       ColumnLetters.isLetter(c) || c == 0x5f || (c >= 0xc0 && c < 0x2000);
@@ -174,9 +184,13 @@ final class FormulaLexer {
         continue;
       }
       // A1 references (incl. sheet prefixes, row ranges, $-refs)
-      if (c == 0x24 || c == 0x27 || isIdentStart(c) || ColumnLetters.isDigit(c)) {
+      if (c == 0x24 ||
+          c == 0x27 ||
+          isIdentStart(c) ||
+          ColumnLetters.isDigit(c)) {
         final prev = _prevSignificant(out);
-        final afterDot = prev != null && prev.end == i && prev.kind == TokenKind.number;
+        final afterDot =
+            prev != null && prev.end == i && prev.kind == TokenKind.number;
         if (!afterDot) {
           final m = A1Scanner.scan(text, i);
           if (m != null) {
@@ -341,7 +355,8 @@ final class FormulaLexer {
     }
     if (j < n && text.codeUnitAt(j) == dec) {
       // In comma-decimal locales a ',' directly followed by a non-digit is a separator.
-      final nextIsDigit = j + 1 < n && ColumnLetters.isDigit(text.codeUnitAt(j + 1));
+      final nextIsDigit =
+          j + 1 < n && ColumnLetters.isDigit(text.codeUnitAt(j + 1));
       if (nextIsDigit || dec == 0x2e) {
         j++;
         while (j < n && ColumnLetters.isDigit(text.codeUnitAt(j))) {
@@ -351,7 +366,9 @@ final class FormulaLexer {
     }
     if (j < n && (text.codeUnitAt(j) == 0x65 || text.codeUnitAt(j) == 0x45)) {
       var k = j + 1;
-      if (k < n && (text.codeUnitAt(k) == 0x2b || text.codeUnitAt(k) == 0x2d)) k++;
+      if (k < n && (text.codeUnitAt(k) == 0x2b || text.codeUnitAt(k) == 0x2d)) {
+        k++;
+      }
       final ds = k;
       while (k < n && ColumnLetters.isDigit(text.codeUnitAt(k))) {
         k++;
@@ -376,6 +393,8 @@ final class FormulaLexer {
   }
 
   /// Significant (non-whitespace) tokens.
-  static List<FormulaToken> significant(List<FormulaToken> tokens) =>
-      [for (final t in tokens) if (!t.isTrivia) t];
+  static List<FormulaToken> significant(List<FormulaToken> tokens) => [
+    for (final t in tokens)
+      if (!t.isTrivia) t,
+  ];
 }

@@ -34,7 +34,8 @@ final class BuiltinNumberTextFormatter implements NumberTextFormatter {
   }
 
   /// Automatic ("General") display of a number (06 §5.9).
-  static String automatic(double x, FormulaLocale locale) => _automatic(x, locale);
+  static String automatic(double x, FormulaLocale locale) =>
+      _automatic(x, locale);
 
   static _Format? _parse(String pattern) {
     if (_cache.containsKey(pattern)) return _cache[pattern];
@@ -56,7 +57,23 @@ final class _InvalidPattern implements Exception {
   const _InvalidPattern();
 }
 
-enum _K { lit, ph, dot, comma, percent, permille, exp, at, slash, digit, date, elapsed, ampm, general, fracSec }
+enum _K {
+  lit,
+  ph,
+  dot,
+  comma,
+  percent,
+  permille,
+  exp,
+  at,
+  slash,
+  digit,
+  date,
+  elapsed,
+  ampm,
+  general,
+  fracSec,
+}
 
 final class _T {
   final _K k;
@@ -97,7 +114,8 @@ final class _Section {
 
   bool get isEmpty => toks.isEmpty;
   bool get hasAt => toks.any((t) => t.k == _K.at);
-  bool get isDate => toks.any((t) => t.k == _K.date || t.k == _K.elapsed || t.k == _K.ampm);
+  bool get isDate =>
+      toks.any((t) => t.k == _K.date || t.k == _K.elapsed || t.k == _K.ampm);
   bool get hasElapsed => toks.any((t) => t.k == _K.elapsed);
 }
 
@@ -105,8 +123,13 @@ final class _Format {
   final List<_Section> sections;
   _Format(this.sections);
 
-  static final RegExp _condRe = RegExp(r'^(<=|>=|<>|<|>|=)\s*([+-]?(?:\d+\.?\d*|\.\d+)(?:[eE][+-]?\d+)?)$');
-  static final RegExp _elapsedRe = RegExp(r'^(h+|m+|s+)$', caseSensitive: false);
+  static final RegExp _condRe = RegExp(
+    r'^(<=|>=|<>|<|>|=)\s*([+-]?(?:\d+\.?\d*|\.\d+)(?:[eE][+-]?\d+)?)$',
+  );
+  static final RegExp _elapsedRe = RegExp(
+    r'^(h+|m+|s+)$',
+    caseSensitive: false,
+  );
 
   static _Format parse(String p) {
     final raw = _split(p);
@@ -188,7 +211,9 @@ final class _Format {
           } else if (inner.startsWith(r'$')) {
             final dash = inner.indexOf('-');
             lit(dash < 0 ? inner.substring(1) : inner.substring(1, dash));
-            if (dash >= 0) localeId = _lcidLocale(inner.substring(dash + 1)) ?? localeId;
+            if (dash >= 0) {
+              localeId = _lcidLocale(inner.substring(dash + 1)) ?? localeId;
+            }
           }
           // colors ([Red], [Color10]) and other bracket tokens ([DBNum1], …) do not apply to
           // text output
@@ -207,22 +232,31 @@ final class _Format {
           toks.add(const _T(_K.at));
         case '/':
           toks.add(const _T(_K.slash));
-        case 'E' || 'e' when i + 1 < s.length && (s[i + 1] == '+' || s[i + 1] == '-'):
+        case 'E' || 'e'
+            when i + 1 < s.length && (s[i + 1] == '+' || s[i + 1] == '-'):
           toks.add(_T(_K.exp, c, s[i + 1] == '+' ? 1 : 0));
           i += 2;
           continue;
         default:
           if (c.codeUnitAt(0) >= 0x31 && c.codeUnitAt(0) <= 0x39) {
             toks.add(_T(_K.digit, c));
-          } else if (lower == 'g' && s.length - i >= 7 && s.substring(i, i + 7).toLowerCase() == 'general') {
+          } else if (lower == 'g' &&
+              s.length - i >= 7 &&
+              s.substring(i, i + 7).toLowerCase() == 'general') {
             toks.add(const _T(_K.general));
             i += 7;
             continue;
-          } else if (lower == 'a' && s.length - i >= 5 && s.substring(i, i + 5).toLowerCase() == 'am/pm') {
-            toks.add(_T(_K.ampm, s.substring(i, i + 5) == 'am/pm' ? 'am/pm' : 'AM/PM'));
+          } else if (lower == 'a' &&
+              s.length - i >= 5 &&
+              s.substring(i, i + 5).toLowerCase() == 'am/pm') {
+            toks.add(
+              _T(_K.ampm, s.substring(i, i + 5) == 'am/pm' ? 'am/pm' : 'AM/PM'),
+            );
             i += 5;
             continue;
-          } else if (lower == 'a' && s.length - i >= 3 && s.substring(i, i + 3).toLowerCase() == 'a/p') {
+          } else if (lower == 'a' &&
+              s.length - i >= 3 &&
+              s.substring(i, i + 3).toLowerCase() == 'a/p') {
             toks.add(_T(_K.ampm, c == 'a' ? 'a/p' : 'A/P'));
             i += 3;
             continue;
@@ -260,7 +294,10 @@ final class _Format {
     for (var i = 0; i < src.length; i++) {
       final t = src[i];
       switch (t.k) {
-        case _K.dot when i + 1 < src.length && src[i + 1].k == _K.ph && src[i + 1].s == '0':
+        case _K.dot
+            when i + 1 < src.length &&
+                src[i + 1].k == _K.ph &&
+                src[i + 1].s == '0':
           var j = i + 1;
           while (j < src.length && src[j].k == _K.ph && src[j].s == '0') {
             j++;
@@ -321,17 +358,61 @@ final class _Format {
   }
 
   static const Map<int, String> _lcids = {
-    0x0401: 'ar_SA', 0x0402: 'bg_BG', 0x0403: 'ca_ES', 0x0404: 'zh_TW', 0x0405: 'cs_CZ', //
-    0x0406: 'da_DK', 0x0407: 'de_DE', 0x0408: 'el_GR', 0x0409: 'en_US', 0x040A: 'es_ES', //
-    0x040B: 'fi_FI', 0x040C: 'fr_FR', 0x040D: 'he_IL', 0x040E: 'hu_HU', 0x040F: 'is_IS', //
-    0x0410: 'it_IT', 0x0411: 'ja_JP', 0x0412: 'ko_KR', 0x0413: 'nl_NL', 0x0414: 'nb_NO', //
-    0x0415: 'pl_PL', 0x0416: 'pt_BR', 0x0418: 'ro_RO', 0x0419: 'ru_RU', 0x041A: 'hr_HR', //
-    0x041B: 'sk_SK', 0x041D: 'sv_SE', 0x041E: 'th_TH', 0x041F: 'tr_TR', 0x0421: 'id_ID', //
-    0x0422: 'uk_UA', 0x0424: 'sl_SI', 0x0425: 'et_EE', 0x0426: 'lv_LV', 0x0427: 'lt_LT', //
-    0x042A: 'vi_VN', 0x0439: 'hi_IN', 0x043E: 'ms_MY', 0x0804: 'zh_CN', 0x0807: 'de_CH', //
-    0x0809: 'en_GB', 0x080A: 'es_MX', 0x080C: 'fr_BE', 0x0810: 'it_CH', 0x0813: 'nl_BE', //
-    0x0816: 'pt_PT', 0x0C07: 'de_AT', 0x0C09: 'en_AU', 0x0C0A: 'es_ES', 0x0C0C: 'fr_CA', //
-    0x1009: 'en_CA', 0x100C: 'fr_CH', 0x1409: 'en_NZ', 0x1809: 'en_IE', 0x1C09: 'en_ZA', //
+    0x0401: 'ar_SA',
+    0x0402: 'bg_BG',
+    0x0403: 'ca_ES',
+    0x0404: 'zh_TW',
+    0x0405: 'cs_CZ', //
+    0x0406: 'da_DK',
+    0x0407: 'de_DE',
+    0x0408: 'el_GR',
+    0x0409: 'en_US',
+    0x040A: 'es_ES', //
+    0x040B: 'fi_FI',
+    0x040C: 'fr_FR',
+    0x040D: 'he_IL',
+    0x040E: 'hu_HU',
+    0x040F: 'is_IS', //
+    0x0410: 'it_IT',
+    0x0411: 'ja_JP',
+    0x0412: 'ko_KR',
+    0x0413: 'nl_NL',
+    0x0414: 'nb_NO', //
+    0x0415: 'pl_PL',
+    0x0416: 'pt_BR',
+    0x0418: 'ro_RO',
+    0x0419: 'ru_RU',
+    0x041A: 'hr_HR', //
+    0x041B: 'sk_SK',
+    0x041D: 'sv_SE',
+    0x041E: 'th_TH',
+    0x041F: 'tr_TR',
+    0x0421: 'id_ID', //
+    0x0422: 'uk_UA',
+    0x0424: 'sl_SI',
+    0x0425: 'et_EE',
+    0x0426: 'lv_LV',
+    0x0427: 'lt_LT', //
+    0x042A: 'vi_VN',
+    0x0439: 'hi_IN',
+    0x043E: 'ms_MY',
+    0x0804: 'zh_CN',
+    0x0807: 'de_CH', //
+    0x0809: 'en_GB',
+    0x080A: 'es_MX',
+    0x080C: 'fr_BE',
+    0x0810: 'it_CH',
+    0x0813: 'nl_BE', //
+    0x0816: 'pt_PT',
+    0x0C07: 'de_AT',
+    0x0C09: 'en_AU',
+    0x0C0A: 'es_ES',
+    0x0C0C: 'fr_CA', //
+    0x1009: 'en_CA',
+    0x100C: 'fr_CH',
+    0x1409: 'en_NZ',
+    0x1809: 'en_IE',
+    0x1C09: 'en_ZA', //
     0x4009: 'en_IN',
   };
 
@@ -345,13 +426,17 @@ final class _Format {
 
   List<_Section> get _numberSections {
     if (sections.length == 4) return sections.sublist(0, 3);
-    if (sections.length > 1 && sections.last.hasAt) return sections.sublist(0, sections.length - 1);
+    if (sections.length > 1 && sections.last.hasAt) {
+      return sections.sublist(0, sections.length - 1);
+    }
     if (sections.length == 1 && sections[0].hasAt) return const [];
     return sections;
   }
 
   String formatText(String text, FormulaLocale locale) {
-    final ts = _textSection ?? (sections.length == 1 && sections[0].hasAt ? sections[0] : null);
+    final ts =
+        _textSection ??
+        (sections.length == 1 && sections[0].hasAt ? sections[0] : null);
     if (ts == null) return text;
     final b = StringBuffer();
     for (final t in ts.toks) {
@@ -497,7 +582,11 @@ final class _Format {
     String? expText;
     if (expAt >= 0) {
       final et = toks[expAt];
-      final (m, e) = _mantissa(v, intPh.map((i) => toks[i].s).toList(), decPh.length);
+      final (m, e) = _mantissa(
+        v,
+        intPh.map((i) => toks[i].s).toList(),
+        decPh.length,
+      );
       intDigits = m.$1;
       fracDigits = m.$2;
       final minDigits = expPh.where((i) => toks[i].s == '0').length;
@@ -512,7 +601,9 @@ final class _Format {
       grouping && expAt < 0,
       locale.group,
     );
-    final decOut = _decPlaceholders([for (final i in decPh) toks[i].s], fracDigits);
+    final decOut = _decPlaceholders([
+      for (final i in decPh) toks[i].s,
+    ], fracDigits);
     final significant = '$intDigits$fracDigits'.replaceAll('0', '').isNotEmpty;
 
     final b = StringBuffer();
@@ -552,7 +643,11 @@ final class _Format {
   }
 
   /// Mantissa digits (integer, fraction) and exponent for scientific formats.
-  static ((String, String), int) _mantissa(double v, List<String> intPh, int decimals) {
+  static ((String, String), int) _mantissa(
+    double v,
+    List<String> intPh,
+    int decimals,
+  ) {
     if (v == 0) return (('', ''.padRight(decimals, '0')), 0);
     var d = _Dec.of(v);
     final n = intPh.length;
@@ -579,7 +674,12 @@ final class _Format {
   static int _floorDiv(int a, int b) => (a / b).floor();
 
   /// Output per integer placeholder (left to right), the leftmost taking overflow digits.
-  static List<String> _intPlaceholders(List<String> ph, String digits, bool grouping, String group) {
+  static List<String> _intPlaceholders(
+    List<String> ph,
+    String digits,
+    bool grouping,
+    String group,
+  ) {
     final n = ph.length;
     final out = List<String>.filled(n, '');
     if (n == 0) return out;
@@ -606,7 +706,9 @@ final class _Format {
         ch = digits[i - pad];
       }
       buffers[k].write(ch);
-      if (grouping && isDigit && pos > 0 && pos % 3 == 0) buffers[k].write(group);
+      if (grouping && isDigit && pos > 0 && pos % 3 == 0) {
+        buffers[k].write(group);
+      }
     }
     for (var k = 0; k < n; k++) {
       out[k] = buffers[k].toString();
@@ -643,7 +745,13 @@ final class _Format {
     return -1;
   }
 
-  static String _formatFraction(double v, bool negative, List<_T> toks, int slash, FormulaLocale locale) {
+  static String _formatFraction(
+    double v,
+    bool negative,
+    List<_T> toks,
+    int slash,
+    FormulaLocale locale,
+  ) {
     var numStart = slash;
     while (numStart > 0 && toks[numStart - 1].k == _K.ph) {
       numStart--;
@@ -653,7 +761,8 @@ final class _Format {
     final fixedDen = toks[denEnd].k == _K.digit;
     final denText = StringBuffer();
     final denPh = <String>[];
-    while (denEnd < toks.length && toks[denEnd].k == (fixedDen ? _K.digit : _K.ph)) {
+    while (denEnd < toks.length &&
+        toks[denEnd].k == (fixedDen ? _K.digit : _K.ph)) {
       if (fixedDen) {
         denText.write(toks[denEnd].s);
       } else {
@@ -663,12 +772,17 @@ final class _Format {
     }
     if (fixedDen) {
       // digits may continue as '0' placeholders (e.g. ?/10 → digit 1, ph 0)
-      while (denEnd < toks.length && toks[denEnd].k == _K.ph && toks[denEnd].s == '0') {
+      while (denEnd < toks.length &&
+          toks[denEnd].k == _K.ph &&
+          toks[denEnd].s == '0') {
         denText.write('0');
         denEnd++;
       }
     }
-    final intIdx = <int>[for (var i = 0; i < numStart; i++) if (toks[i].k == _K.ph) i];
+    final intIdx = <int>[
+      for (var i = 0; i < numStart; i++)
+        if (toks[i].k == _K.ph) i,
+    ];
     final hasInt = intIdx.isNotEmpty;
     final whole0 = hasInt ? v.floorToDouble() : 0.0;
     final f = v - whole0;
@@ -702,7 +816,9 @@ final class _Format {
       if (i < numStart) {
         if (t.k == _K.ph) {
           b.write(intOut[ip++]);
-        } else if (!(i > lastInt && lastInt >= 0 && (intEmpty || !showFraction))) {
+        } else if (!(i > lastInt &&
+            lastInt >= 0 &&
+            (intEmpty || !showFraction))) {
           b.write(_plain(t, locale));
         }
         continue;
@@ -803,7 +919,9 @@ final class _Format {
   static const double _maxSerial = 2958466; // 10000-01-01
 
   static String _formatDate(double serial, _Section s, FormulaLocale locale) {
-    if (serial < _minSerial || serial >= _maxSerial) return _automatic(serial, locale);
+    if (serial < _minSerial || serial >= _maxSerial) {
+      return _automatic(serial, locale);
+    }
     final loc = s.localeId == null ? locale : FormulaLocale.forId(s.localeId!);
     final toks = s.toks;
     var sign = '';
@@ -856,12 +974,18 @@ final class _Format {
           final digits = frac.toString().padLeft(fd, '0');
           b
             ..write(loc.decimal)
-            ..write(t.n <= fd ? digits.substring(0, t.n) : digits.padRight(t.n, '0'));
+            ..write(
+              t.n <= fd ? digits.substring(0, t.n) : digits.padRight(t.n, '0'),
+            );
         case _K.date:
           final n = t.n;
           switch (t.s) {
             case 'y':
-              b.write(n <= 2 ? two(ymd.year % 100) : ymd.year.toString().padLeft(4, '0'));
+              b.write(
+                n <= 2
+                    ? two(ymd.year % 100)
+                    : ymd.year.toString().padLeft(4, '0'),
+              );
             case 'd':
               b.write(switch (n) {
                 1 => '${ymd.day}',
@@ -875,7 +999,10 @@ final class _Format {
                 1 => '${ymd.month}',
                 2 => two(ymd.month),
                 3 => loc.shortMonths[ymd.month - 1],
-                5 => name.isEmpty ? '' : String.fromCharCode(name.runes.first).toUpperCase(),
+                5 =>
+                  name.isEmpty
+                      ? ''
+                      : String.fromCharCode(name.runes.first).toUpperCase(),
                 _ => name,
               });
             case 'M':

@@ -11,7 +11,12 @@ import 'ooxml.dart';
 /// fills, borders, cellXfs, dxfs).
 final class XlsxStyleWriter {
   /// Creates a writer with the workbook default font.
-  XlsxStyleWriter({required this.defaultFont, required this.defaultSize, required this.locale, this.warnings}) {
+  XlsxStyleWriter({
+    required this.defaultFont,
+    required this.defaultSize,
+    required this.locale,
+    this.warnings,
+  }) {
     _font(null, null, false, false, false, false, null);
     _fills
       ..add('<fill><patternFill patternType="none"/></fill>')
@@ -55,7 +60,9 @@ final class XlsxStyleWriter {
       if (idx != null) return 'theme="$idx"';
       return 'auto="1"';
     }
-    final hex = RegExp(r'^#[0-9A-Fa-f]{6}$').hasMatch(color) ? color : '#000000';
+    final hex = RegExp(r'^#[0-9A-Fa-f]{6}$').hasMatch(color)
+        ? color
+        : '#000000';
     return 'rgb="${ExcelColors.toArgb(hex)}"';
   }
 
@@ -69,15 +76,27 @@ final class XlsxStyleWriter {
     });
   }
 
-  int _font(String? name, double? size, bool b, bool i, bool u, bool s, String? color) {
+  int _font(
+    String? name,
+    double? size,
+    bool b,
+    bool i,
+    bool u,
+    bool s,
+    String? color,
+  ) {
     final x = StringBuffer('<font>');
     if (b) x.write('<b/>');
     if (i) x.write('<i/>');
     if (s) x.write('<strike/>');
     if (u) x.write('<u/>');
     x.write('<sz val="${_n(size ?? defaultSize)}"/>');
-    x.write(color == null ? '<color theme="1"/>' : '<color ${colorAttrs(color)}/>');
-    x.write('<name val="${Ooxml.attr(name ?? defaultFont)}"/><family val="2"/>');
+    x.write(
+      color == null ? '<color theme="1"/>' : '<color ${colorAttrs(color)}/>',
+    );
+    x.write(
+      '<name val="${Ooxml.attr(name ?? defaultFont)}"/><family val="2"/>',
+    );
     x.write('</font>');
     final key = x.toString();
     return _fontIndex.putIfAbsent(key, () {
@@ -88,7 +107,8 @@ final class XlsxStyleWriter {
 
   int _fill(String? color) {
     if (color == null) return 0;
-    final key = '<fill><patternFill patternType="solid"><fgColor ${colorAttrs(color)}/><bgColor indexed="64"/></patternFill></fill>';
+    final key =
+        '<fill><patternFill patternType="solid"><fgColor ${colorAttrs(color)}/><bgColor indexed="64"/></patternFill></fill>';
     return _fillIndex.putIfAbsent(key, () {
       _fills.add(key);
       return _fills.length - 1;
@@ -110,7 +130,8 @@ final class XlsxStyleWriter {
   }
 
   /// `<border>` XML from edge values.
-  static String borderXml(Map<String, Object?> edges) => '<border>'
+  static String borderXml(Map<String, Object?> edges) =>
+      '<border>'
       '${_edge('left', edges['borderLeft'] as String?)}${_edge('right', edges['borderRight'] as String?)}'
       '${_edge('top', edges['borderTop'] as String?)}${_edge('bottom', edges['borderBottom'] as String?)}<diagonal/></border>';
 
@@ -157,10 +178,18 @@ final class XlsxStyleWriter {
         al.write(' vertical="center"');
     }
     final rot = a[FormatAttr.rotation] as int?;
-    if (rot != null && rot != 0) al.write(' textRotation="${rot == 255 ? 255 : (rot < 0 ? 90 - rot : rot.clamp(0, 90))}"');
+    if (rot != null && rot != 0) {
+      al.write(
+        ' textRotation="${rot == 255 ? 255 : (rot < 0 ? 90 - rot : rot.clamp(0, 90))}"',
+      );
+    }
     if (a[FormatAttr.wrap] == WrapStrategy.wrap) al.write(' wrapText="1"');
     if (a[FormatAttr.wrap] == WrapStrategy.clip) {
-      warnings?.add('clipWrap', 'Clip wrapping is not available in Excel (overflow used)', severity: ImportSeverity.info);
+      warnings?.add(
+        'clipWrap',
+        'Clip wrapping is not available in Excel (overflow used)',
+        severity: ImportSeverity.info,
+      );
     }
     final indent = f.extras['indent'];
     if (indent is num && indent > 0) al.write(' indent="${indent.toInt()}"');
@@ -168,7 +197,9 @@ final class XlsxStyleWriter {
     final prot = StringBuffer();
     if (f.extras['locked'] == false) prot.write(' locked="0"');
     if (f.extras['formulaHidden'] == true) prot.write(' hidden="1"');
-    final x = StringBuffer('<xf numFmtId="$nf" fontId="$font" fillId="$fill" borderId="$border" xfId="0"');
+    final x = StringBuffer(
+      '<xf numFmtId="$nf" fontId="$font" fillId="$fill" borderId="$border" xfId="0"',
+    );
     if (nf != 0) x.write(' applyNumberFormat="1"');
     if (font != 0) x.write(' applyFont="1"');
     if (fill != 0) x.write(' applyFill="1"');
@@ -204,14 +235,20 @@ final class XlsxStyleWriter {
     if (format['italic'] == false) font.write('<i val="0"/>');
     if (format['strikethrough'] == true) font.write('<strike/>');
     if (format['underline'] == true) font.write('<u/>');
-    if (format['textColor'] is String) font.write('<color ${colorAttrs(format['textColor'] as String)}/>');
+    if (format['textColor'] is String) {
+      font.write('<color ${colorAttrs(format['textColor'] as String)}/>');
+    }
     if (font.isNotEmpty) b.write('<font>$font</font>');
     final nf = extras['numberFormat'];
     if (nf is String) {
-      b.write('<numFmt numFmtId="${numFmtId(nf)}" formatCode="${Ooxml.attr(nf)}"/>');
+      b.write(
+        '<numFmt numFmtId="${numFmtId(nf)}" formatCode="${Ooxml.attr(nf)}"/>',
+      );
     }
     if (format['fillColor'] is String) {
-      b.write('<fill><patternFill><bgColor ${colorAttrs(format['fillColor'] as String)}/></patternFill></fill>');
+      b.write(
+        '<fill><patternFill><bgColor ${colorAttrs(format['fillColor'] as String)}/></patternFill></fill>',
+      );
     }
     final borders = extras['borders'];
     if (borders is Map) b.write(borderXml(borders.cast<String, Object?>()));
@@ -225,7 +262,9 @@ final class XlsxStyleWriter {
 
   /// The `styles.xml` part.
   String build() {
-    final b = StringBuffer('<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n<styleSheet xmlns="${Ooxml.main}">');
+    final b = StringBuffer(
+      '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n<styleSheet xmlns="${Ooxml.main}">',
+    );
     if (_numFmts.isNotEmpty) {
       b.write('<numFmts count="${_numFmts.length}">');
       for (final (id, code) in _numFmts) {
@@ -236,14 +275,21 @@ final class XlsxStyleWriter {
     b.write('<fonts count="${_fonts.length}">${_fonts.join()}</fonts>');
     b.write('<fills count="${_fills.length}">${_fills.join()}</fills>');
     b.write('<borders count="${_borders.length}">${_borders.join()}</borders>');
-    b.write('<cellStyleXfs count="1"><xf numFmtId="0" fontId="0" fillId="0" borderId="0"/></cellStyleXfs>');
+    b.write(
+      '<cellStyleXfs count="1"><xf numFmtId="0" fontId="0" fillId="0" borderId="0"/></cellStyleXfs>',
+    );
     b.write('<cellXfs count="${_xfs.length}">${_xfs.join()}</cellXfs>');
-    b.write('<cellStyles count="1"><cellStyle name="Normal" xfId="0" builtinId="0"/></cellStyles>');
+    b.write(
+      '<cellStyles count="1"><cellStyle name="Normal" xfId="0" builtinId="0"/></cellStyles>',
+    );
     b.write('<dxfs count="${_dxfs.length}">${_dxfs.join()}</dxfs>');
-    b.write('<tableStyles count="0" defaultTableStyle="TableStyleMedium2" defaultPivotStyle="PivotStyleLight16"/>');
+    b.write(
+      '<tableStyles count="0" defaultTableStyle="TableStyleMedium2" defaultPivotStyle="PivotStyleLight16"/>',
+    );
     b.write('</styleSheet>');
     return b.toString();
   }
 
-  static String _n(double d) => d == d.truncateToDouble() ? d.toInt().toString() : d.toString();
+  static String _n(double d) =>
+      d == d.truncateToDouble() ? d.toInt().toString() : d.toString();
 }

@@ -34,7 +34,10 @@ enum ArgKind {
   any;
 
   bool get isScalarLike =>
-      this == ArgKind.scalar || this == ArgKind.number || this == ArgKind.text || this == ArgKind.boolean;
+      this == ArgKind.scalar ||
+      this == ArgKind.number ||
+      this == ArgKind.text ||
+      this == ArgKind.boolean;
 }
 
 /// Function categories in Insert › Function order (05 §14.1).
@@ -93,7 +96,13 @@ final class ArgHelp {
   final bool optional;
   final String? defaultText;
   final bool repeatable;
-  const ArgHelp(this.name, this.description, {this.optional = false, this.defaultText, this.repeatable = false});
+  const ArgHelp(
+    this.name,
+    this.description, {
+    this.optional = false,
+    this.defaultText,
+    this.repeatable = false,
+  });
 
   Map<String, Object?> toJson() => {
     'name': name,

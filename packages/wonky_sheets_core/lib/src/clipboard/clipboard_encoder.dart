@@ -74,10 +74,14 @@ abstract final class ClipboardEncoder {
     final grid = sheet.gridRect;
     if (grid == null) throw const ClipboardCopyException('Empty sheet');
     var rect = range.rect.intersection(grid);
-    if (rect == null) throw const ClipboardCopyException('Range outside the grid');
+    if (rect == null) {
+      throw const ClipboardCopyException('Range outside the grid');
+    }
     if (range.wholeRows || range.wholeColumns) {
       final used = sheet.usedRect(includeFormatOnly: true);
-      final bottom = range.wholeColumns ? (used?.bottom ?? rect.top) : rect.bottom;
+      final bottom = range.wholeColumns
+          ? (used?.bottom ?? rect.top)
+          : rect.bottom;
       final right = range.wholeRows ? (used?.right ?? rect.left) : rect.right;
       rect = GridRect(
         rect.top,
@@ -149,7 +153,10 @@ abstract final class ClipboardEncoder {
     }
 
     // Cells.
-    final cells = List.generate(rowIdx.length, (_) => List<ClipCell?>.filled(colIdx.length, null));
+    final cells = List.generate(
+      rowIdx.length,
+      (_) => List<ClipCell?>.filled(colIdx.length, null),
+    );
     final displays = List.generate(
       rowIdx.length,
       (_) => List<CellDisplay?>.filled(colIdx.length, null),
@@ -165,13 +172,22 @@ abstract final class ClipboardEncoder {
         tsvRow.add(covered.contains((i, j)) ? '' : d.text);
         final rec = d.record;
         final fmt = model.explicitFormatChain(sheetId, r, c);
-        if (rec?.content == null && rec?.note == null && fmt.isEmpty && d.value.isBlank()) {
+        if (rec?.content == null &&
+            rec?.note == null &&
+            fmt.isEmpty &&
+            d.value.isBlank()) {
           continue;
         }
         String? a1;
         final content = rec?.content;
         if (hooks != null && content != null && content.startsWith('=')) {
-          a1 = hooks.toA1(content, sheetId: sheetId, row: r, col: c, locale: 'en_US');
+          a1 = hooks.toA1(
+            content,
+            sheetId: sheetId,
+            row: r,
+            col: c,
+            locale: 'en_US',
+          );
         }
         cells[i][j] = ClipCell(
           sourceRow: r,
@@ -285,14 +301,24 @@ abstract final class ClipboardEncoder {
   }) {
     final theme = model.theme;
     final ss = model.spreadsheet;
-    final defaultFont = theme.textFont.isNotEmpty ? theme.textFont : ss.defaultFontFamily;
+    final defaultFont = theme.textFont.isNotEmpty
+        ? theme.textFont
+        : ss.defaultFontFamily;
     final defaultSize = ss.defaultFontSize;
     final b = StringBuffer()
       ..write('<meta charset="utf-8">')
-      ..write('<style type="text/css"><!--br {mso-data-placement:same-cell;}--></style>')
-      ..write('<table data-wonky-clip="${HtmlText.attr(clipId)}" cellspacing="0" ')
-      ..write('cellpadding="0" dir="${sheet.record?.rightToLeft == true ? 'rtl' : 'ltr'}" ')
-      ..write('border="1" style="table-layout:fixed;font-size:${HtmlText.num(defaultSize)}pt;')
+      ..write(
+        '<style type="text/css"><!--br {mso-data-placement:same-cell;}--></style>',
+      )
+      ..write(
+        '<table data-wonky-clip="${HtmlText.attr(clipId)}" cellspacing="0" ',
+      )
+      ..write(
+        'cellpadding="0" dir="${sheet.record?.rightToLeft == true ? 'rtl' : 'ltr'}" ',
+      )
+      ..write(
+        'border="1" style="table-layout:fixed;font-size:${HtmlText.num(defaultSize)}pt;',
+      )
       ..write('font-family:${HtmlText.cssFontFamily(defaultFont)};width:0px;')
       ..write('border-collapse:collapse;border:none">');
     if (payloadB64 != null) b.write('<!--wonky:$payloadB64-->');
@@ -302,13 +328,17 @@ abstract final class ClipboardEncoder {
     }
     b.write('</colgroup><tbody>');
     for (var i = 0; i < rowIdx.length; i++) {
-      b.write('<tr style="height:${HtmlText.num(sheet.rows.naturalSizeAt(rowIdx[i]))}px;">');
+      b.write(
+        '<tr style="height:${HtmlText.num(sheet.rows.naturalSizeAt(rowIdx[i]))}px;">',
+      );
       for (var j = 0; j < colIdx.length; j++) {
         if (covered.contains((i, j))) continue;
         final merge = mergeByAnchor[(i, j)];
         final srcRow = merge?.$2.top ?? rowIdx[i];
         final srcCol = merge?.$2.left ?? colIdx[j];
-        final d = merge == null ? displays[i][j]! : resolver.display(sheet.id, srcRow, srcCol);
+        final d = merge == null
+            ? displays[i][j]!
+            : resolver.display(sheet.id, srcRow, srcCol);
         final edges = resolver.edges(
           sheet.id,
           srcRow,
@@ -342,14 +372,18 @@ abstract final class ClipboardEncoder {
             ? SheetsHtmlAttrs.interchangePattern(d.format.numberFormat)
             : null;
         if (nf != null) {
-          b.write(' data-sheets-numberformat="${HtmlText.attr(SheetsHtmlAttrs.encodeNumberFormat(nf))}"');
+          b.write(
+            ' data-sheets-numberformat="${HtmlText.attr(SheetsHtmlAttrs.encodeNumberFormat(nf))}"',
+          );
         }
         final note = d.record?.note;
         if (note != null && note.isNotEmpty) {
           b.write(' data-sheets-note="${HtmlText.attr(note)}"');
         }
         final link = HtmlText.safeUrl(d.linkUrl);
-        if (link != null) b.write(' data-sheets-hyperlink="${HtmlText.attr(link)}"');
+        if (link != null) {
+          b.write(' data-sheets-hyperlink="${HtmlText.attr(link)}"');
+        }
         b.write('>');
         b.write(CellCss.body(d, model.theme));
         b.write('</td>');

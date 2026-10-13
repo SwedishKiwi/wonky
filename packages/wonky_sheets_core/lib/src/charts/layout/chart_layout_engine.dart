@@ -63,7 +63,15 @@ abstract final class ChartLayoutEngine {
     TextMeasurer measurer, {
     ChartValueFormatter fmt = const DefaultChartValueFormatter(),
     ChartLayoutOptions options = const ChartLayoutOptions(),
-  }) => layoutDetailed(spec, data, size, theme, measurer, fmt: fmt, options: options).scene;
+  }) => layoutDetailed(
+    spec,
+    data,
+    size,
+    theme,
+    measurer,
+    fmt: fmt,
+    options: options,
+  ).scene;
 
   /// [layout] plus warnings.
   static ChartLayout layoutDetailed(
@@ -95,7 +103,14 @@ enum _Mark { column, line, area, scatter }
 
 /// A resolved series for drawing.
 final class _SeriesInfo {
-  _SeriesInfo(this.position, this.series, this.style, this.color, this.mark, this.rightAxis);
+  _SeriesInfo(
+    this.position,
+    this.series,
+    this.style,
+    this.color,
+    this.mark,
+    this.rightAxis,
+  );
 
   /// Position in `data.series` (palette index).
   final int position;
@@ -110,7 +125,14 @@ final class _SeriesInfo {
 
 /// A legend entry.
 final class _LegendEntry {
-  _LegendEntry(this.label, this.color, this.kind, {this.seriesKey, this.dash, this.shape});
+  _LegendEntry(
+    this.label,
+    this.color,
+    this.kind, {
+    this.seriesKey,
+    this.dash,
+    this.shape,
+  });
 
   final String label;
   final int color;
@@ -123,7 +145,15 @@ final class _LegendEntry {
 }
 
 final class _Ctx {
-  _Ctx(this.spec, this.data, this.size, this.theme, this.measurer, this.fmt, this.options);
+  _Ctx(
+    this.spec,
+    this.data,
+    this.size,
+    this.theme,
+    this.measurer,
+    this.fmt,
+    this.options,
+  );
 
   final ChartSpec spec;
   final ChartData data;
@@ -147,16 +177,21 @@ final class _Ctx {
   // ---------------------------------------------------------------------------
   // Text helpers.
 
-  TextStyleSpec font(ChartFont f, {double size = 12, bool bold = false, int? color}) =>
-      TextStyleSpec(
-        family: f.family ?? family,
-        size: f.size ?? size,
-        bold: f.bold || bold,
-        italic: f.italic,
-        color: theme.color(f.color, color ?? theme.text),
-      );
+  TextStyleSpec font(
+    ChartFont f, {
+    double size = 12,
+    bool bold = false,
+    int? color,
+  }) => TextStyleSpec(
+    family: f.family ?? family,
+    size: f.size ?? size,
+    bold: f.bold || bold,
+    italic: f.italic,
+    color: theme.color(f.color, color ?? theme.text),
+  );
 
-  TextMetrics measure(String text, TextStyleSpec style) => measurer.measure(text, style);
+  TextMetrics measure(String text, TextStyleSpec style) =>
+      measurer.measure(text, style);
 
   SText text(
     String s,
@@ -197,7 +232,9 @@ final class _Ctx {
       final s = data.series[i];
       final st = spec.seriesStyle(s.key);
       final mark = switch (spec.type) {
-        ChartType.column || ChartType.bar || ChartType.histogram => _Mark.column,
+        ChartType.column ||
+        ChartType.bar ||
+        ChartType.histogram => _Mark.column,
         ChartType.line || ChartType.radar => _Mark.line,
         ChartType.area => _Mark.area,
         ChartType.scatter || ChartType.bubble => _Mark.scatter,
@@ -231,15 +268,26 @@ final class _Ctx {
 
   /// Dash used for series [i] (explicit dash, or a pattern for accessibility).
   List<double>? seriesDash(_SeriesInfo s, double width) {
-    if (s.style.lineDash != LineDash.solid) return dashPattern(s.style.lineDash, width);
+    if (s.style.lineDash != LineDash.solid) {
+      return dashPattern(s.style.lineDash, width);
+    }
     if (!options.distinguishByPattern) return null;
-    const cycle = [LineDash.solid, LineDash.dash, LineDash.dot, LineDash.dashDot, LineDash.longDash];
+    const cycle = [
+      LineDash.solid,
+      LineDash.dash,
+      LineDash.dot,
+      LineDash.dashDot,
+      LineDash.longDash,
+    ];
     return dashPattern(cycle[s.position % cycle.length], width);
   }
 
   MarkerShape seriesShape(_SeriesInfo s) {
     final explicit = MarkerShape.values[s.style.pointShape.index];
-    if (!options.distinguishByPattern || s.style.pointShape != PointShape.circle) return explicit;
+    if (!options.distinguishByPattern ||
+        s.style.pointShape != PointShape.circle) {
+      return explicit;
+    }
     return MarkerShape.values[s.position % MarkerShape.values.length];
   }
 
@@ -250,7 +298,11 @@ final class _Ctx {
   }
 
   /// Wraps [children] in a dimmed group when another series is highlighted.
-  void addSeriesGroup(String key, List<ScenePrimitive> children, List<ScenePrimitive> into) {
+  void addSeriesGroup(
+    String key,
+    List<ScenePrimitive> children,
+    List<ScenePrimitive> into,
+  ) {
     if (children.isEmpty) return;
     final o = seriesOpacity(key);
     if (o == 1) {
@@ -265,7 +317,9 @@ final class _Ctx {
 
   void run() {
     final full = ChartRect(0, 0, size.width, size.height);
-    out.add(SRect(full, fill: background, tag: const SceneTag(SceneRole.background)));
+    out.add(
+      SRect(full, fill: background, tag: const SceneTag(SceneRole.background)),
+    );
     if (spec.style.border != null) {
       out.add(
         SRect(
@@ -275,7 +329,10 @@ final class _Ctx {
       );
     }
     if (spec.isFromNewerVersion) {
-      emptyState(full, 'This chart was created with a newer version of Wonky Sheets');
+      emptyState(
+        full,
+        'This chart was created with a newer version of Wonky Sheets',
+      );
       return;
     }
     if (!spec.hasKnownType || !spec.type.isImplemented) {
@@ -316,16 +373,29 @@ final class _Ctx {
     }
     if (insideLegendBox != null) {
       final p = plotArea ?? content;
-      placeLegend(legendEntries, LegendPosition.inside, p.deflate(left: 8, top: 8, right: 8, bottom: 8), legendPrims);
+      placeLegend(
+        legendEntries,
+        LegendPosition.inside,
+        p.deflate(left: 8, top: 8, right: 8, bottom: 8),
+        legendPrims,
+      );
     }
     out.addAll(legendPrims);
-    if (maximize) drawTitles(plotArea?.deflate(left: 6, top: 4) ?? content, overlay: true);
+    if (maximize) {
+      drawTitles(plotArea?.deflate(left: 6, top: 4) ?? content, overlay: true);
+    }
   }
 
   void emptyState(ChartRect r, String message) {
-    final style = TextStyleSpec(family: family, size: 14, color: theme.mutedText);
+    final style = TextStyleSpec(
+      family: family,
+      size: 14,
+      color: theme.mutedText,
+    );
     final m = measure(message, style);
-    final shown = m.width > r.width ? measurer.ellipsize(message, style, r.width) : message;
+    final shown = m.width > r.width
+        ? measurer.ellipsize(message, style, r.width)
+        : message;
     out.add(
       text(
         shown,
@@ -379,7 +449,12 @@ final class _Ctx {
         for (var i = 0; i < data.domain.length; i++) {
           if (!(s.values[i] > 0)) continue;
           entries.add(
-            _LegendEntry(data.domain.labels[i], sliceColor(i, opts.slices[i]?.color), 'box', seriesKey: '$i'),
+            _LegendEntry(
+              data.domain.labels[i],
+              sliceColor(i, opts.slices[i]?.color),
+              'box',
+              seriesKey: '$i',
+            ),
           );
         }
         return entries;
@@ -411,7 +486,9 @@ final class _Ctx {
         ),
       );
       final tl = s.style.trendline;
-      if (tl != null && tl.label != TrendlineLabel.none && spec.type.supportsTrendlines) {
+      if (tl != null &&
+          tl.label != TrendlineLabel.none &&
+          spec.type.supportsTrendlines) {
         final label = trendlineLegendLabel(s, tl);
         if (label != null) {
           entries.add(
@@ -434,7 +511,12 @@ final class _Ctx {
     if (groups == null) return [];
     return [
       for (var i = 0; i < groups.$1.length; i++)
-        _LegendEntry(groups.$1[i], theme.seriesColor(i), 'marker', seriesKey: 'group:$i'),
+        _LegendEntry(
+          groups.$1[i],
+          theme.seriesColor(i),
+          'marker',
+          seriesKey: 'group:$i',
+        ),
     ];
   }
 
@@ -457,7 +539,9 @@ final class _Ctx {
 
   String? trendlineLegendLabel(_SeriesInfo s, TrendlineSpec tl) {
     if (tl.label == TrendlineLabel.custom) {
-      return tl.customLabel.isEmpty ? 'Trendline for ${s.series.name}' : tl.customLabel;
+      return tl.customLabel.isEmpty
+          ? 'Trendline for ${s.series.name}'
+          : tl.customLabel;
     }
     final fit = trendlineFit(s, tl);
     if (fit == null) return null;
@@ -479,9 +563,15 @@ final class _Ctx {
     if (tl.type == TrendlineType.movingAverage) return null;
     return _fits.putIfAbsent(s.key, () {
       final kind = RegressionKind.values[tl.type.index];
-      final r = Regression.fit(kind, regressionX(), s.series.values, degree: tl.degree);
+      final r = Regression.fit(
+        kind,
+        regressionX(),
+        s.series.values,
+        degree: tl.degree,
+      );
       if (r != null && r.skippedCount > 0) {
-        final invalid = r.skippedCount - s.series.values.where((v) => v.isNaN).length;
+        final invalid =
+            r.skippedCount - s.series.values.where((v) => v.isNaN).length;
         if (invalid > 0) {
           warnings.add(
             ChartWarning(
@@ -504,7 +594,10 @@ final class _Ctx {
     return switch (spec.type) {
       ChartType.pie => LegendPosition.right,
       ChartType.histogram => LegendPosition.top,
-      _ => entries.length > 1 || spec.type == ChartType.bubble ? LegendPosition.top : LegendPosition.none,
+      _ =>
+        entries.length > 1 || spec.type == ChartType.bubble
+            ? LegendPosition.top
+            : LegendPosition.none,
     };
   }
 
@@ -518,7 +611,12 @@ final class _Ctx {
 
   /// Lays out the legend at [pos] inside [r]; appends primitives; returns the rect left for
   /// the chart body.
-  ChartRect placeLegend(List<_LegendEntry> entries, LegendPosition pos, ChartRect r, List<ScenePrimitive> into) {
+  ChartRect placeLegend(
+    List<_LegendEntry> entries,
+    LegendPosition pos,
+    ChartRect r,
+    List<ScenePrimitive> into,
+  ) {
     final style = font(spec.legend.font, size: 12, color: theme.text);
     final lm = measure('Ag', style);
     const swatch = 12.0, gap = 6.0, itemGap = 16.0;
@@ -547,7 +645,9 @@ final class _Ctx {
       final top = pos == LegendPosition.top ? r.top : r.bottom - total;
       for (var ri = 0; ri < rows.length; ri++) {
         final row = rows[ri];
-        final rw = row.fold<double>(0, (s, x) => s + x.$2) + itemGap * (row.length - 1);
+        final rw =
+            row.fold<double>(0, (s, x) => s + x.$2) +
+            itemGap * (row.length - 1);
         var x = switch (align) {
           LegendAlignment.start => r.left,
           LegendAlignment.center => r.left + (r.width - rw) / 2,
@@ -555,15 +655,33 @@ final class _Ctx {
         };
         final cy = top + ri * rowH + rowH / 2;
         for (final (e, w) in row) {
-          drawLegendItem(e, x, cy, w - swatch - gap, style, into, entries.indexOf(e));
+          drawLegendItem(
+            e,
+            x,
+            cy,
+            w - swatch - gap,
+            style,
+            into,
+            entries.indexOf(e),
+          );
           x += w + itemGap;
         }
       }
-      into.insert(0, SRect(ChartRect(r.left, top, r.width, total), tag: const SceneTag(SceneRole.legend)));
-      return pos == LegendPosition.top ? r.deflate(top: total + 8) : r.deflate(bottom: total + 8);
+      into.insert(
+        0,
+        SRect(
+          ChartRect(r.left, top, r.width, total),
+          tag: const SceneTag(SceneRole.legend),
+        ),
+      );
+      return pos == LegendPosition.top
+          ? r.deflate(top: total + 8)
+          : r.deflate(bottom: total + 8);
     }
     // Vertical legends (left, right, inside).
-    final maxLabel = pos == LegendPosition.inside ? r.width * 0.5 : r.width * 0.3;
+    final maxLabel = pos == LegendPosition.inside
+        ? r.width * 0.5
+        : r.width * 0.3;
     var w = 0.0;
     for (final e in entries) {
       w = math.max(w, itemWidth(e.label, maxLabel));
@@ -593,10 +711,23 @@ final class _Ctx {
         top = r.top + (r.height - h) / 2;
     }
     if (pos != LegendPosition.inside) {
-      into.add(SRect(ChartRect(left, top, w, h), tag: const SceneTag(SceneRole.legend)));
+      into.add(
+        SRect(
+          ChartRect(left, top, w, h),
+          tag: const SceneTag(SceneRole.legend),
+        ),
+      );
     }
     for (var i = 0; i < shown.length; i++) {
-      drawLegendItem(shown[i], left, top + i * rowH + rowH / 2, w - swatch - gap, style, into, i);
+      drawLegendItem(
+        shown[i],
+        left,
+        top + i * rowH + rowH / 2,
+        w - swatch - gap,
+        style,
+        into,
+        i,
+      );
     }
     return switch (pos) {
       LegendPosition.left => r.deflate(left: w + 16),
@@ -614,7 +745,11 @@ final class _Ctx {
     List<ScenePrimitive> into,
     int index,
   ) {
-    final tag = SceneTag(SceneRole.legendEntry, seriesKey: e.seriesKey, detail: '$index');
+    final tag = SceneTag(
+      SceneRole.legendEntry,
+      seriesKey: e.seriesKey,
+      detail: '$index',
+    );
     final items = <ScenePrimitive>[];
     switch (e.kind) {
       case 'line' || 'lineMarker':
@@ -626,17 +761,44 @@ final class _Ctx {
           ),
         );
         if (e.kind == 'lineMarker') {
-          items.add(SMarkers(Float64List.fromList([x + 6, cy]), e.shape ?? MarkerShape.circle, 6, fill: e.color, tag: tag));
+          items.add(
+            SMarkers(
+              Float64List.fromList([x + 6, cy]),
+              e.shape ?? MarkerShape.circle,
+              6,
+              fill: e.color,
+              tag: tag,
+            ),
+          );
         }
       case 'marker':
-        items.add(SMarkers(Float64List.fromList([x + 6, cy]), e.shape ?? MarkerShape.circle, 9, fill: e.color, tag: tag));
+        items.add(
+          SMarkers(
+            Float64List.fromList([x + 6, cy]),
+            e.shape ?? MarkerShape.circle,
+            9,
+            fill: e.color,
+            tag: tag,
+          ),
+        );
       default:
-        items.add(SRect(ChartRect(x, cy - 6, 12, 12), fill: e.color, radius: 2, tag: tag));
+        items.add(
+          SRect(
+            ChartRect(x, cy - 6, 12, 12),
+            fill: e.color,
+            radius: 2,
+            tag: tag,
+          ),
+        );
     }
     final label = measurer.ellipsize(e.label, style, labelWidth + 0.01);
-    items.add(text(label, x + 18, cy, style, anchor: TextAnchor.middleLeft, tag: tag));
+    items.add(
+      text(label, x + 18, cy, style, anchor: TextAnchor.middleLeft, tag: tag),
+    );
     final key = e.seriesKey;
-    if (key != null && options.highlightSeriesKey != null && spec.type != ChartType.pie) {
+    if (key != null &&
+        options.highlightSeriesKey != null &&
+        spec.type != ChartType.pie) {
       addSeriesGroup(key, items, into);
     } else {
       into.addAll(items);

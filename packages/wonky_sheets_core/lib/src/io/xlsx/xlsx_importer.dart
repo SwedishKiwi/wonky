@@ -55,7 +55,12 @@ final class XlsxImportOptions {
 /// A sheet listed by [XlsxImporter.listSheets].
 final class XlsxSheetInfo {
   /// Creates info.
-  const XlsxSheetInfo(this.name, {this.hidden = false, this.estimatedCells = 0, this.isChart = false});
+  const XlsxSheetInfo(
+    this.name, {
+    this.hidden = false,
+    this.estimatedCells = 0,
+    this.isChart = false,
+  });
 
   final String name;
   final bool hidden;
@@ -68,7 +73,10 @@ final class XlsxSheetInfo {
 /// XLSX → IR (11 §5.2), own OOXML reader over `archive` + `xml`.
 abstract final class XlsxImporter {
   /// Imports [bytes]. Broken files throw [XlsxFormatException].
-  static WorkbookDocument import(Uint8List bytes, [XlsxImportOptions options = const XlsxImportOptions()]) {
+  static WorkbookDocument import(
+    Uint8List bytes, [
+    XlsxImportOptions options = const XlsxImportOptions(),
+  ]) {
     try {
       return _Reader(ZipPackage.open(bytes), options).read();
     } on XlsxFormatException {
@@ -85,10 +93,13 @@ abstract final class XlsxImporter {
       final r = _Reader(pkg, const XlsxImportOptions());
       final wbPath = r._workbookPath();
       final wb = pkg.xml(wbPath)?.rootElement;
-      if (wb == null) throw const XlsxFormatException('The file has no workbook part');
+      if (wb == null) {
+        throw const XlsxFormatException('The file has no workbook part');
+      }
       final rels = pkg.rels(wbPath);
       return [
-        for (final s in wb.child('sheets')?.elems('sheet') ?? const <XmlElement>[])
+        for (final s
+            in wb.child('sheets')?.elems('sheet') ?? const <XmlElement>[])
           () {
             final rel = rels[s.attr('id')];
             final path = rel?.target;
@@ -96,7 +107,11 @@ abstract final class XlsxImporter {
             final isChart = rel?.type.endsWith('/chartsheet') ?? false;
             if (path != null && !isChart) {
               final head = pkg.text(path);
-              final m = head == null ? null : RegExp(r'<(?:\w+:)?dimension\s+ref="([^"]+)"').firstMatch(head);
+              final m = head == null
+                  ? null
+                  : RegExp(
+                      r'<(?:\w+:)?dimension\s+ref="([^"]+)"',
+                    ).firstMatch(head);
               final dim = m == null ? null : IrRange.parseA1(m.group(1)!)?.$2;
               if (dim != null && dim.isBounded) {
                 est = (dim.r2! - dim.r1! + 1) * (dim.c2! - dim.c1! + 1);
@@ -161,7 +176,8 @@ final class _RichBuilder {
       case 'i':
         f[RichRunKeys.italic] = val == null || val == '1' || val == 'true';
       case 'strike':
-        f[RichRunKeys.strikethrough] = val == null || val == '1' || val == 'true';
+        f[RichRunKeys.strikethrough] =
+            val == null || val == '1' || val == 'true';
       case 'u':
         f[RichRunKeys.underline] = val != 'none';
       case 'sz':
@@ -186,7 +202,9 @@ final class _RichBuilder {
   }
 
   void endRun() {
-    if (_runFormat != null && text.length > _runStart && _runFormat!.isNotEmpty) {
+    if (_runFormat != null &&
+        text.length > _runStart &&
+        _runFormat!.isNotEmpty) {
       runs.add(RichRun(_runStart, text.length, _runFormat!));
     }
     _runFormat = null;
@@ -227,15 +245,23 @@ final class _Reader {
     }
     if (pkg.has('xl/workbook.xml')) return 'xl/workbook.xml';
     if (pkg.has('content.xml')) {
-      throw const XlsxFormatException('This is an OpenDocument spreadsheet (.ods), not an XLSX file');
+      throw const XlsxFormatException(
+        'This is an OpenDocument spreadsheet (.ods), not an XLSX file',
+      );
     }
-    throw const XlsxFormatException('The file has no workbook part (not an XLSX file)');
+    throw const XlsxFormatException(
+      'The file has no workbook part (not an XLSX file)',
+    );
   }
 
   WorkbookDocument read() {
     final wbPath = _workbookPath();
     final wb = pkg.xml(wbPath)?.rootElement;
-    if (wb == null || wb.localName != 'workbook') throw const XlsxFormatException('The workbook part is missing or invalid');
+    if (wb == null || wb.localName != 'workbook') {
+      throw const XlsxFormatException(
+        'The workbook part is missing or invalid',
+      );
+    }
     final rels = pkg.rels(wbPath);
     OoxmlRel? relOf(String suffix) {
       for (final r in rels.values) {
@@ -250,10 +276,15 @@ final class _Reader {
     final idx = stylesDoc?.rootElement.child('colors')?.child('indexedColors');
     if (idx != null) {
       palette = [
-        for (final c in idx.elems('rgbColor')) ExcelColors.parseRgb(c.attr('rgb')) ?? '#000000',
+        for (final c in idx.elems('rgbColor'))
+          ExcelColors.parseRgb(c.attr('rgb')) ?? '#000000',
       ];
     }
-    colors = ColorResolver(theme: themeSlots, palette: palette, themeReferences: options.themeColorReferences);
+    colors = ColorResolver(
+      theme: themeSlots,
+      palette: palette,
+      themeReferences: options.themeColorReferences,
+    );
     styles = XlsxStylesReader(stylesDoc, colors);
     for (final w in styles.numberFormatWarnings.toSet()) {
       doc.warnings.add('numberFormat', w);
@@ -264,7 +295,8 @@ final class _Reader {
       RichRunKeys.fontFamily: ?doc.defaultFontFamily,
       RichRunKeys.fontSize: ?doc.defaultFontSize,
       RichRunKeys.textColor: 'theme:text',
-      if (styles.defaultFont?.color != null) RichRunKeys.textColor: styles.defaultFont!.color,
+      if (styles.defaultFont?.color != null)
+        RichRunKeys.textColor: styles.defaultFont!.color,
     };
     final ssPath = relOf('/sharedStrings')?.target;
     if (ssPath != null) sst = _readSharedStrings(ssPath);
@@ -275,22 +307,32 @@ final class _Reader {
     final title = core?.child('title')?.innerText.trim();
     if (title != null && title.isNotEmpty) doc.title = title;
 
-    final sheetEls = wb.child('sheets')?.elems('sheet').toList() ?? const <XmlElement>[];
-    if (sheetEls.isEmpty) throw const XlsxFormatException('The workbook has no sheets');
+    final sheetEls =
+        wb.child('sheets')?.elems('sheet').toList() ?? const <XmlElement>[];
+    if (sheetEls.isEmpty) {
+      throw const XlsxFormatException('The workbook has no sheets');
+    }
     final sheetNames = [for (final s in sheetEls) s.attr('name') ?? 'Sheet'];
 
     // Defined names first: sheet-scoped renames are needed by formulas.
-    final names = wb.child('definedNames')?.elems('definedName').toList() ?? const <XmlElement>[];
+    final names =
+        wb.child('definedNames')?.elems('definedName').toList() ??
+        const <XmlElement>[];
     final workbookNames = <String>{
       for (final n in names)
-        if (n.attr('localSheetId') == null) (n.attr('name') ?? '').toLowerCase(),
+        if (n.attr('localSheetId') == null)
+          (n.attr('name') ?? '').toLowerCase(),
     };
     final knownNames = <String>{for (final n in names) n.attr('name') ?? ''};
     final renames = <int, Map<String, String>>{};
     for (final n in names) {
       final local = n.intAttr('localSheetId');
       final name = n.attr('name') ?? '';
-      if (local == null || name.startsWith('_xlnm.') || local >= sheetNames.length) continue;
+      if (local == null ||
+          name.startsWith('_xlnm.') ||
+          local >= sheetNames.length) {
+        continue;
+      }
       var nn = '${_identifier(sheetNames[local])}_$name';
       var k = 2;
       while (workbookNames.contains(nn.toLowerCase())) {
@@ -299,7 +341,11 @@ final class _Reader {
       workbookNames.add(nn.toLowerCase());
       knownNames.add(nn);
       (renames[local] ??= {})[name] = nn;
-      doc.warnings.add('sheetScopedName', 'Sheet-scoped name "$name" was renamed to "$nn"', sheet: sheetNames[local]);
+      doc.warnings.add(
+        'sheetScopedName',
+        'Sheet-scoped name "$name" was renamed to "$nn"',
+        sheet: sheetNames[local],
+      );
     }
 
     final printAreas = <int, String>{};
@@ -310,11 +356,19 @@ final class _Reader {
       if (options.sheets != null && !options.sheets!.contains(name)) continue;
       final rel = rels[s.attr('id')];
       if (rel == null || !pkg.has(rel.target)) {
-        doc.warnings.add('missingSheet', 'Sheet "$name" could not be found in the file', sheet: name);
+        doc.warnings.add(
+          'missingSheet',
+          'Sheet "$name" could not be found in the file',
+          sheet: name,
+        );
         continue;
       }
       if (!rel.type.endsWith('/worksheet')) {
-        doc.warnings.add('sheetSkipped', 'Chart and dialog sheets were not imported', sheet: name);
+        doc.warnings.add(
+          'sheetSkipped',
+          'Chart and dialog sheets were not imported',
+          sheet: name,
+        );
         continue;
       }
       final translator = ExcelFormulaTranslator(
@@ -325,12 +379,20 @@ final class _Reader {
       final sheet = IrSheet(name);
       final state = s.attr('state') ?? 'visible';
       if (state != 'visible') sheet.hidden = true;
-      if (state == 'veryHidden') doc.warnings.add('veryHidden', 'Very hidden sheet imported as hidden', sheet: name);
+      if (state == 'veryHidden') {
+        doc.warnings.add(
+          'veryHidden',
+          'Very hidden sheet imported as hidden',
+          sheet: name,
+        );
+      }
       _readSheet(rel.target, sheet, translator);
       doc.sheets.add(sheet);
     }
     if (doc.sheets.isEmpty && options.sheets == null) {
-      throw const XlsxFormatException('The workbook has no readable worksheets');
+      throw const XlsxFormatException(
+        'The workbook has no readable worksheets',
+      );
     }
 
     // Names.
@@ -354,18 +416,33 @@ final class _Reader {
       final finalName = local == null ? name : renames[local]?[name] ?? name;
       final parsed = IrRange.parseA1(t.formula);
       if (parsed != null && parsed.$1 != null) {
-        doc.namedRanges.add(IrNamedRange(
-          name: finalName,
-          sheet: parsed.$1,
-          range: parsed.$2.openAt(maxRows: Ooxml.maxRows, maxCols: Ooxml.maxCols),
-          comment: n.attr('comment'),
-          hidden: n.boolAttr('hidden') ?? false,
-        ));
+        doc.namedRanges.add(
+          IrNamedRange(
+            name: finalName,
+            sheet: parsed.$1,
+            range: parsed.$2.openAt(
+              maxRows: Ooxml.maxRows,
+              maxCols: Ooxml.maxCols,
+            ),
+            comment: n.attr('comment'),
+            hidden: n.boolAttr('hidden') ?? false,
+          ),
+        );
       } else {
         if (!t.isSupported) {
-          doc.warnings.add('unsupportedName', 'Name "$finalName" uses unsupported ${t.unsupported.join(', ')}');
+          doc.warnings.add(
+            'unsupportedName',
+            'Name "$finalName" uses unsupported ${t.unsupported.join(', ')}',
+          );
         }
-        doc.namedRanges.add(IrNamedRange(name: finalName, formulaA1: t.formula, comment: n.attr('comment'), hidden: n.boolAttr('hidden') ?? false));
+        doc.namedRanges.add(
+          IrNamedRange(
+            name: finalName,
+            formulaA1: t.formula,
+            comment: n.attr('comment'),
+            hidden: n.boolAttr('hidden') ?? false,
+          ),
+        );
       }
     }
     for (var i = 0; i < sheetEls.length; i++) {
@@ -381,8 +458,12 @@ final class _Reader {
         for (final part in titles.split(',')) {
           final r = IrRange.parseA1(part)?.$2;
           if (r == null) continue;
-          if (r.wholeRows) (sheet.print ??= {})['repeatRows'] = {'start': r.r1, 'end': r.r2};
-          if (r.wholeColumns) (sheet.print ??= {})['repeatCols'] = {'start': r.c1, 'end': r.c2};
+          if (r.wholeRows) {
+            (sheet.print ??= {})['repeatRows'] = {'start': r.r1, 'end': r.r2};
+          }
+          if (r.wholeColumns) {
+            (sheet.print ??= {})['repeatCols'] = {'start': r.c1, 'end': r.c2};
+          }
         }
       }
     }
@@ -398,12 +479,35 @@ final class _Reader {
   void _packageWarnings() {
     final names = pkg.names.map((n) => n.toLowerCase()).toList();
     bool any(String p) => names.any((n) => n.contains(p));
-    if (any('vbaproject.bin')) doc.warnings.add('vba', 'VBA macros were not imported', severity: ImportSeverity.info);
-    if (any('externallinks/')) doc.warnings.add('externalLinks', 'External links were not imported; their cached values were kept');
-    if (any('pivottables/')) doc.warnings.add('pivotTable', 'Pivot tables were imported as values', severity: ImportSeverity.info);
-    if (any('slicers/') || any('slicercaches/')) doc.warnings.add('slicers', 'Slicers were not imported');
-    if (any('connections.xml')) doc.warnings.add('connections', 'Data connections were not imported');
-    if (any('activex/') || any('ctrlprops/')) doc.warnings.add('controls', 'Form controls were not imported');
+    if (any('vbaproject.bin')) {
+      doc.warnings.add(
+        'vba',
+        'VBA macros were not imported',
+        severity: ImportSeverity.info,
+      );
+    }
+    if (any('externallinks/')) {
+      doc.warnings.add(
+        'externalLinks',
+        'External links were not imported; their cached values were kept',
+      );
+    }
+    if (any('pivottables/')) {
+      doc.warnings.add(
+        'pivotTable',
+        'Pivot tables were imported as values',
+        severity: ImportSeverity.info,
+      );
+    }
+    if (any('slicers/') || any('slicercaches/')) {
+      doc.warnings.add('slicers', 'Slicers were not imported');
+    }
+    if (any('connections.xml')) {
+      doc.warnings.add('connections', 'Data connections were not imported');
+    }
+    if (any('activex/') || any('ctrlprops/')) {
+      doc.warnings.add('controls', 'Form controls were not imported');
+    }
   }
 
   void _readTheme(String? path) {
@@ -483,7 +587,9 @@ final class _Reader {
         }
       }
     } on XmlException catch (e) {
-      throw XlsxFormatException('The shared strings part is not well-formed XML (${e.message})');
+      throw XlsxFormatException(
+        'The shared strings part is not well-formed XML (${e.message})',
+      );
     }
     return out;
   }
@@ -493,10 +599,16 @@ final class _Reader {
     return _xfIndex[key] ??= doc.formats.intern(styles.xf(key).format);
   }
 
-  static final RegExp _sheetDataStart = RegExp(r'<(\w+:)?sheetData(\s[^>]*)?(/?)>');
+  static final RegExp _sheetDataStart = RegExp(
+    r'<(\w+:)?sheetData(\s[^>]*)?(/?)>',
+  );
   static final RegExp _sheetDataEnd = RegExp(r'</(\w+:)?sheetData\s*>');
 
-  void _readSheet(String path, IrSheet sheet, ExcelFormulaTranslator translator) {
+  void _readSheet(
+    String path,
+    IrSheet sheet,
+    ExcelFormulaTranslator translator,
+  ) {
     final text = pkg.text(path) ?? '';
     final start = _sheetDataStart.firstMatch(text);
     String rest;
@@ -509,15 +621,20 @@ final class _Reader {
       data = '';
     } else {
       final end = _sheetDataEnd.firstMatch(text.substring(start.end));
-      if (end == null) throw XlsxFormatException('Sheet "${sheet.name}" is truncated');
+      if (end == null) {
+        throw XlsxFormatException('Sheet "${sheet.name}" is truncated');
+      }
       data = text.substring(start.end, start.end + end.start);
-      rest = text.substring(0, start.start) + text.substring(start.end + end.end);
+      rest =
+          text.substring(0, start.start) + text.substring(start.end + end.end);
     }
     XmlElement root;
     try {
       root = XmlDocument.parse(rest).rootElement;
     } on XmlException catch (e) {
-      throw XlsxFormatException('Sheet "${sheet.name}" is not well-formed XML (${e.message})');
+      throw XlsxFormatException(
+        'Sheet "${sheet.name}" is not well-formed XML (${e.message})',
+      );
     }
     final warn = doc.warnings;
     final sheetRels = pkg.rels(path);
@@ -526,14 +643,20 @@ final class _Reader {
     final sheetPr = root.child('sheetPr');
     final tab = sheetPr?.child('tabColor');
     if (tab != null) {
-      sheet.tabColor = ColorResolver(theme: themeSlots, palette: colors.palette, themeReferences: false).resolve(
-        rgb: tab.attr('rgb'),
-        theme: tab.attr('theme'),
-        indexed: tab.attr('indexed'),
-        tint: tab.attr('tint'),
-      );
+      sheet.tabColor =
+          ColorResolver(
+            theme: themeSlots,
+            palette: colors.palette,
+            themeReferences: false,
+          ).resolve(
+            rgb: tab.attr('rgb'),
+            theme: tab.attr('theme'),
+            indexed: tab.attr('indexed'),
+            tint: tab.attr('tint'),
+          );
     }
-    final fitToPage = sheetPr?.child('pageSetUpPr')?.boolAttr('fitToPage') ?? false;
+    final fitToPage =
+        sheetPr?.child('pageSetUpPr')?.boolAttr('fitToPage') ?? false;
     // sheetViews
     final view = root.child('sheetViews')?.child('sheetView');
     if (view != null) {
@@ -558,7 +681,13 @@ final class _Reader {
       } else if (base != null) {
         sheet.defaultColumnWidth = Ooxml.widthToPx(base + 5 / Ooxml.mdw);
       }
-      if (fpr.boolAttr('zeroHeight') ?? false) warn.add('zeroHeight', 'Rows hidden by default were shown', sheet: sheet.name);
+      if (fpr.boolAttr('zeroHeight') ?? false) {
+        warn.add(
+          'zeroHeight',
+          'Rows hidden by default were shown',
+          sheet: sheet.name,
+        );
+      }
     }
     sheet.defaultColumnWidth ??= 64;
     sheet.defaultRowHeight ??= 20;
@@ -568,7 +697,12 @@ final class _Reader {
     final xfWarnings = <(String, String), int>{};
     _readSheetData(data, sheet, translator, arrays, xfWarnings);
     for (final e in xfWarnings.entries) {
-      warn.add(e.key.$1, '${e.key.$2} (${e.value} cells)', sheet: sheet.name, count: 1);
+      warn.add(
+        e.key.$1,
+        '${e.key.$2} (${e.value} cells)',
+        sheet: sheet.name,
+        count: 1,
+      );
     }
     for (final a in arrays) {
       for (var r = a.top; r <= a.bottom; r++) {
@@ -584,7 +718,8 @@ final class _Reader {
 
     // cols (after cells: runs are capped at the used range)
     final usedCols = sheet.cells.maxCol + 1;
-    for (final col in root.child('cols')?.elems('col') ?? const <XmlElement>[]) {
+    for (final col
+        in root.child('cols')?.elems('col') ?? const <XmlElement>[]) {
       final min = (col.intAttr('min') ?? 1) - 1;
       var max = (col.intAttr('max') ?? (min + 1)) - 1;
       final hidden = col.boolAttr('hidden') ?? false;
@@ -593,7 +728,9 @@ final class _Reader {
       if (max - min > 16384) max = min + 16384;
       final width = col.doubleAttr('width');
       final px = width == null ? null : Ooxml.widthToPx(width);
-      final custom = (col.boolAttr('customWidth') ?? false) || (px != null && px != sheet.defaultColumnWidth);
+      final custom =
+          (col.boolAttr('customWidth') ?? false) ||
+          (px != null && px != sheet.defaultColumnWidth);
       final dim = IrDim(
         size: custom ? px : null,
         hidden: hidden,
@@ -607,13 +744,19 @@ final class _Reader {
       }
     }
 
-    for (final m in root.child('mergeCells')?.elems('mergeCell') ?? const <XmlElement>[]) {
+    for (final m
+        in root.child('mergeCells')?.elems('mergeCell') ??
+            const <XmlElement>[]) {
       final r = IrRange.parseA1(m.attr('ref') ?? '')?.$2;
-      if (r != null && r.isBounded && !(r.r1 == r.r2 && r.c1 == r.c2)) sheet.merges.add(r.rect);
+      if (r != null && r.isBounded && !(r.r1 == r.r2 && r.c1 == r.c2)) {
+        sheet.merges.add(r.rect);
+      }
     }
 
     // hyperlinks
-    for (final h in root.child('hyperlinks')?.elems('hyperlink') ?? const <XmlElement>[]) {
+    for (final h
+        in root.child('hyperlinks')?.elems('hyperlink') ??
+            const <XmlElement>[]) {
       final r = IrRange.parseA1(h.attr('ref') ?? '')?.$2;
       if (r == null || !r.isBounded) continue;
       final rel = sheetRels[h.attr('id')];
@@ -635,7 +778,9 @@ final class _Reader {
     }
 
     final rules = XlsxRules(translator, warn, sheet: sheet.name);
-    for (final dv in root.child('dataValidations')?.elems('dataValidation') ?? const <XmlElement>[]) {
+    for (final dv
+        in root.child('dataValidations')?.elems('dataValidation') ??
+            const <XmlElement>[]) {
       final v = rules.importValidation(dv);
       if (v != null) sheet.validations.add(v);
     }
@@ -643,18 +788,30 @@ final class _Reader {
     for (final cf in root.elems('conditionalFormatting')) {
       final ranges = parseSqref(cf.attr('sqref'));
       for (final rule in cf.elems('cfRule')) {
-        final c = rules.importConditionalFormat(rule, ranges, styles.dxfs, colors);
+        final c = rules.importConditionalFormat(
+          rule,
+          ranges,
+          styles.dxfs,
+          colors,
+        );
         if (c != null) cfs.add((rule.intAttr('priority') ?? 1 << 30, c));
       }
     }
     // x14 extensions (cross-sheet validations, extended CF).
-    for (final ext in root.child('extLst')?.elems('ext') ?? const <XmlElement>[]) {
-      for (final dv in ext.child('dataValidations')?.elems('dataValidation') ?? const <XmlElement>[]) {
+    for (final ext
+        in root.child('extLst')?.elems('ext') ?? const <XmlElement>[]) {
+      for (final dv
+          in ext.child('dataValidations')?.elems('dataValidation') ??
+              const <XmlElement>[]) {
         final v = rules.importValidation(dv);
         if (v != null) sheet.validations.add(v);
       }
       if (ext.child('conditionalFormattings') != null) {
-        warn.add('cfExtension', 'Extended conditional formats (data bar/icon options) were simplified', sheet: sheet.name);
+        warn.add(
+          'cfExtension',
+          'Extended conditional formats (data bar/icon options) were simplified',
+          sheet: sheet.name,
+        );
       }
     }
     cfs.sort((a, b) => a.$1.compareTo(b.$1));
@@ -662,14 +819,19 @@ final class _Reader {
 
     final af = root.child('autoFilter');
     if (af != null) {
-      final f = rules.importFilter(af, (r, c) => irDisplayText(doc, sheet.cells.get(r, c)));
+      final f = rules.importFilter(
+        af,
+        (r, c) => irDisplayText(doc, sheet.cells.get(r, c)),
+      );
       if (f != null) {
         sheet.autoFilter = f;
         if (f.criteria.isNotEmpty && f.range.isBounded) {
           // Rows hidden by the filter are recomputed, not user-hidden.
           for (var r = f.range.r1! + 1; r <= f.range.r2!; r++) {
             final d = sheet.rows[r];
-            if (d != null && d.hidden) sheet.rows[r] = d.copyWith(hidden: false);
+            if (d != null && d.hidden) {
+              sheet.rows[r] = d.copyWith(hidden: false);
+            }
           }
         }
       }
@@ -687,10 +849,20 @@ final class _Reader {
     if (print != null) sheet.print = {...?sheet.print, ...print};
 
     if (root.child('sheetProtection') != null) {
-      warn.add('protection', 'Protection was not imported', severity: ImportSeverity.info, sheet: sheet.name);
+      warn.add(
+        'protection',
+        'Protection was not imported',
+        severity: ImportSeverity.info,
+        sheet: sheet.name,
+      );
     }
     if (root.child('tableParts') != null) {
-      warn.add('tables', 'Tables were imported as plain ranges', severity: ImportSeverity.info, sheet: sheet.name);
+      warn.add(
+        'tables',
+        'Tables were imported as plain ranges',
+        severity: ImportSeverity.info,
+        sheet: sheet.name,
+      );
     }
 
     // comments / notes
@@ -699,7 +871,9 @@ final class _Reader {
       if (rel.type.endsWith('/comments')) _readComments(rel.target, sheet);
     }
     for (final rel in sheetRels.values) {
-      if (rel.type.endsWith('/threadedComment')) _readThreaded(rel.target, sheet, persons);
+      if (rel.type.endsWith('/threadedComment')) {
+        _readThreaded(rel.target, sheet, persons);
+      }
     }
     if (options.includeImages) {
       for (final rel in sheetRels.values) {
@@ -758,14 +932,26 @@ final class _Reader {
         case 'b':
           if (v != null) value = IrBool(v.trim() == '1' || v.trim() == 'true');
         case 'e':
-          if (v != null) value = IrError(CellErrorKind.tryParse(v) ?? CellErrorKind.value);
+          if (v != null) {
+            value = IrError(CellErrorKind.tryParse(v) ?? CellErrorKind.value);
+          }
         case 'str':
           if (v != null) value = IrText(Ooxml.decodeEscapes(v));
         case 'd':
           final dt = v == null ? null : DateTime.tryParse(v.trim());
           if (dt != null) {
-            final u = DateTime.utc(dt.year, dt.month, dt.day, dt.hour, dt.minute, dt.second, dt.millisecond);
-            value = IrNumber(DateSerial.fromUnixMillis(u.millisecondsSinceEpoch));
+            final u = DateTime.utc(
+              dt.year,
+              dt.month,
+              dt.day,
+              dt.hour,
+              dt.minute,
+              dt.second,
+              dt.millisecond,
+            );
+            value = IrNumber(
+              DateSerial.fromUnixMillis(u.millisecondsSinceEpoch),
+            );
           }
         default:
           final d = double.tryParse(v?.trim() ?? '');
@@ -791,7 +977,9 @@ final class _Reader {
         if (fType == 'array') {
           kind = cm ? IrFormulaKind.dynamicArray : IrFormulaKind.array;
           final r = IrRange.parseA1(fRef ?? '')?.$2;
-          arrayRef = r != null && r.isBounded ? r.rect : GridRect.cell(row, col);
+          arrayRef = r != null && r.isBounded
+              ? r.rect
+              : GridRect.cell(row, col);
           arrays.add(arrayRef);
         }
       }
@@ -802,9 +990,12 @@ final class _Reader {
           for (final u in tr.unsupported) {
             unsupportedCounts[u] = (unsupportedCounts[u] ?? 0) + 1;
           }
-          note = 'Imported value — original formula used unsupported function '
+          note =
+              'Imported value — original formula used unsupported function '
               '${tr.unsupported.join(', ')}: =$formula';
-          if (options.unsupportedFormulas == UnsupportedFormulaMode.text) value = IrText('=$formula');
+          if (options.unsupportedFormulas == UnsupportedFormulaMode.text) {
+            value = IrText('=$formula');
+          }
           formula = null;
           kind = IrFormulaKind.normal;
           arrayRef = null;
@@ -812,7 +1003,14 @@ final class _Reader {
           formula = 'ARRAYFORMULA($formula)';
         }
       }
-      final cell = IrCell(value: value, formulaA1: formula, formulaKind: kind, arrayRef: arrayRef, format: format, note: note);
+      final cell = IrCell(
+        value: value,
+        formulaA1: formula,
+        formulaKind: kind,
+        arrayRef: arrayRef,
+        format: format,
+        note: note,
+      );
       if (!cell.isEmpty) sheet.cells.set(row, col, cell);
     }
 
@@ -831,11 +1029,18 @@ final class _Reader {
               final cf = _evAttr(e, 'customFormat');
               final s = int.tryParse(_evAttr(e, 's') ?? '');
               final dim = IrDim(
-                size: (custom == '1' || custom == 'true') && ht != null ? Ooxml.ptToPx(ht) : null,
+                size: (custom == '1' || custom == 'true') && ht != null
+                    ? Ooxml.ptToPx(ht)
+                    : null,
                 hidden: hidden == '1' || hidden == 'true',
-                outlineLevel: int.tryParse(_evAttr(e, 'outlineLevel') ?? '') ?? 0,
-                collapsed: _evAttr(e, 'collapsed') == '1' || _evAttr(e, 'collapsed') == 'true',
-                format: (cf == '1' || cf == 'true') && s != null ? _formatOf(s) : 0,
+                outlineLevel:
+                    int.tryParse(_evAttr(e, 'outlineLevel') ?? '') ?? 0,
+                collapsed:
+                    _evAttr(e, 'collapsed') == '1' ||
+                    _evAttr(e, 'collapsed') == 'true',
+                format: (cf == '1' || cf == 'true') && s != null
+                    ? _formatOf(s)
+                    : 0,
               );
               if (!dim.isDefault) sheet.rows[row] = dim;
             case 'c':
@@ -907,7 +1112,9 @@ final class _Reader {
         }
       }
     } on XmlException catch (e) {
-      throw XlsxFormatException('Sheet "${sheet.name}" is not well-formed XML (${e.message})');
+      throw XlsxFormatException(
+        'Sheet "${sheet.name}" is not well-formed XML (${e.message})',
+      );
     }
     for (final e in unsupportedCounts.entries) {
       doc.warnings.add(
@@ -918,10 +1125,20 @@ final class _Reader {
       );
     }
     if (implicit > 0) {
-      doc.warnings.add('implicitIntersection', 'The implicit intersection operator @ was removed ($implicit formulas)', sheet: sheet.name, count: implicit);
+      doc.warnings.add(
+        'implicitIntersection',
+        'The implicit intersection operator @ was removed ($implicit formulas)',
+        sheet: sheet.name,
+        count: implicit,
+      );
     }
     if (fictitious > 0) {
-      doc.warnings.add('fictitiousDate', 'Excel\'s fictitious date 1900-02-29 was imported as #VALUE!', sheet: sheet.name, count: fictitious);
+      doc.warnings.add(
+        'fictitiousDate',
+        'Excel\'s fictitious date 1900-02-29 was imported as #VALUE!',
+        sheet: sheet.name,
+        count: fictitious,
+      );
     }
   }
 
@@ -932,7 +1149,9 @@ final class _Reader {
     final out = <String, String>{};
     for (final name in pkg.names) {
       if (!name.toLowerCase().contains('persons/')) continue;
-      for (final p in pkg.xml(name)?.findAllElements('person', namespaceUri: '*') ?? const <XmlElement>[]) {
+      for (final p
+          in pkg.xml(name)?.findAllElements('person', namespaceUri: '*') ??
+              const <XmlElement>[]) {
         final id = p.attr('id');
         if (id != null) out[id] = p.attr('displayName') ?? '';
       }
@@ -943,18 +1162,28 @@ final class _Reader {
   void _readComments(String path, IrSheet sheet) {
     final root = pkg.xml(path)?.rootElement;
     if (root == null) return;
-    final authors = [for (final a in root.child('authors')?.elems('author') ?? const <XmlElement>[]) a.innerText];
-    for (final c in root.child('commentList')?.elems('comment') ?? const <XmlElement>[]) {
+    final authors = [
+      for (final a
+          in root.child('authors')?.elems('author') ?? const <XmlElement>[])
+        a.innerText,
+    ];
+    for (final c
+        in root.child('commentList')?.elems('comment') ??
+            const <XmlElement>[]) {
       final a = A1Area.tryParse(c.attr('ref') ?? '');
       if (a == null) continue;
       final textEl = c.child('text');
       final b = StringBuffer();
       for (final t in textEl?.descendantElements ?? const <XmlElement>[]) {
-        if (t.localName == 't' && t.parentElement?.localName != 'rPh') b.write(t.innerText);
+        if (t.localName == 't' && t.parentElement?.localName != 'rPh') {
+          b.write(t.innerText);
+        }
       }
       var text = Ooxml.decodeEscapes(b.toString());
       final ai = c.intAttr('authorId');
-      final author = ai != null && ai >= 0 && ai < authors.length ? authors[ai] : null;
+      final author = ai != null && ai >= 0 && ai < authors.length
+          ? authors[ai]
+          : null;
       if (author != null && author.isNotEmpty && text.startsWith('$author:')) {
         text = text.substring(author.length + 1);
         if (text.startsWith('\r\n')) {
@@ -983,15 +1212,27 @@ final class _Reader {
       final a = A1Area.tryParse(e.key);
       if (a == null) continue;
       final cell = sheet.cells.get(a.row1!, a.col1!) ?? const IrCell();
-      sheet.cells.set(a.row1!, a.col1!, cell.copyWith(note: e.value.join('\n')));
+      sheet.cells.set(
+        a.row1!,
+        a.col1!,
+        cell.copyWith(note: e.value.join('\n')),
+      );
     }
     if (byRef.isNotEmpty) {
-      doc.warnings.add('threadedComments', 'Threaded comments were imported as notes', severity: ImportSeverity.info, sheet: sheet.name, count: byRef.length);
+      doc.warnings.add(
+        'threadedComments',
+        'Threaded comments were imported as notes',
+        severity: ImportSeverity.info,
+        sheet: sheet.name,
+        count: byRef.length,
+      );
     }
   }
 
-  double _colPx(IrSheet s, int c) => s.columns[c]?.size ?? s.defaultColumnWidth ?? 64;
-  double _rowPx(IrSheet s, int r) => s.rows[r]?.size ?? s.defaultRowHeight ?? 20;
+  double _colPx(IrSheet s, int c) =>
+      s.columns[c]?.size ?? s.defaultColumnWidth ?? 64;
+  double _rowPx(IrSheet s, int r) =>
+      s.rows[r]?.size ?? s.defaultRowHeight ?? 20;
 
   void _readDrawing(String path, IrSheet sheet) {
     final root = pkg.xml(path)?.rootElement;
@@ -1000,7 +1241,11 @@ final class _Reader {
     var charts = 0, shapes = 0;
     for (final anchor in root.childElements) {
       final kind = anchor.localName;
-      if (kind != 'twoCellAnchor' && kind != 'oneCellAnchor' && kind != 'absoluteAnchor') continue;
+      if (kind != 'twoCellAnchor' &&
+          kind != 'oneCellAnchor' &&
+          kind != 'absoluteAnchor') {
+        continue;
+      }
       final pic = anchor.child('pic');
       if (pic == null) {
         if (anchor.child('graphicFrame') != null) {
@@ -1024,14 +1269,20 @@ final class _Reader {
         _ => null,
       };
       if (mime == null) {
-        doc.warnings.add('imageFormat', 'Images in ${ext.toUpperCase()} format were not imported', sheet: sheet.name);
+        doc.warnings.add(
+          'imageFormat',
+          'Images in ${ext.toUpperCase()} format were not imported',
+          sheet: sheet.name,
+        );
         continue;
       }
       final bytes = pkg.bytes(rel.target);
       if (bytes == null) continue;
       int row = 0, col = 0;
       double dx = 0, dy = 0, w = 0, h = 0;
-      double emu(XmlElement? e, String n) => (double.tryParse(e?.child(n)?.innerText.trim() ?? '') ?? 0) / Ooxml.emuPerPx;
+      double emu(XmlElement? e, String n) =>
+          (double.tryParse(e?.child(n)?.innerText.trim() ?? '') ?? 0) /
+          Ooxml.emuPerPx;
       final from = anchor.child('from');
       if (from != null) {
         col = int.tryParse(from.child('col')?.innerText.trim() ?? '') ?? 0;
@@ -1039,11 +1290,13 @@ final class _Reader {
         dx = emu(from, 'colOff');
         dy = emu(from, 'rowOff');
       }
-      final extEl = anchor.child('ext') ?? pic.child('spPr')?.child('xfrm')?.child('ext');
+      final extEl =
+          anchor.child('ext') ?? pic.child('spPr')?.child('xfrm')?.child('ext');
       if (kind == 'twoCellAnchor' && anchor.child('to') != null) {
         final to = anchor.child('to')!;
         final tc = int.tryParse(to.child('col')?.innerText.trim() ?? '') ?? col;
-        final trw = int.tryParse(to.child('row')?.innerText.trim() ?? '') ?? row;
+        final trw =
+            int.tryParse(to.child('row')?.innerText.trim() ?? '') ?? row;
         var x = -dx, y = -dy;
         for (var c = col; c < tc; c++) {
           x += _colPx(sheet, c);
@@ -1072,17 +1325,40 @@ final class _Reader {
         dy = y;
       }
       final props = pic.child('nvPicPr')?.child('cNvPr');
-      sheet.images.add(IrImage(
-        bytes: bytes,
-        mimeType: mime,
-        anchor: IrAnchor(row: row, col: col, dx: _r(dx), dy: _r(dy), width: _r(w), height: _r(h)),
-        altText: props?.attr('descr'),
-        title: props?.attr('title'),
-        name: rel.target.split('/').last,
-      ));
+      sheet.images.add(
+        IrImage(
+          bytes: bytes,
+          mimeType: mime,
+          anchor: IrAnchor(
+            row: row,
+            col: col,
+            dx: _r(dx),
+            dy: _r(dy),
+            width: _r(w),
+            height: _r(h),
+          ),
+          altText: props?.attr('descr'),
+          title: props?.attr('title'),
+          name: rel.target.split('/').last,
+        ),
+      );
     }
-    if (charts > 0) doc.warnings.add('charts', 'Charts were not imported', sheet: sheet.name, count: charts);
-    if (shapes > 0) doc.warnings.add('shapes', 'Shapes and drawings were not imported', sheet: sheet.name, count: shapes);
+    if (charts > 0) {
+      doc.warnings.add(
+        'charts',
+        'Charts were not imported',
+        sheet: sheet.name,
+        count: charts,
+      );
+    }
+    if (shapes > 0) {
+      doc.warnings.add(
+        'shapes',
+        'Shapes and drawings were not imported',
+        sheet: sheet.name,
+        count: shapes,
+      );
+    }
   }
 
   static double _r(double v) => (v * 100).roundToDouble() / 100;

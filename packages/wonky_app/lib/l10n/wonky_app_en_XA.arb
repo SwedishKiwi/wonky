@@ -724,5 +724,9 @@
   "notifyAccessRequests": "[Åççéšš ŕéǫûéšţš one t]",
   "notifySuggestions": "[Šûĝĝéšţîöñš öñ ɱý ƒîļéš one two]",
   "notifyDigest": "[Ɓûñðļé éɱåîļš one t]",
-  "notifyDigestHint": "[Šéñð öñé éɱåîļ éṽéŕý 15 ɱîñûţéš îñšţéåð öƒ öñé þéŕ ñöţîƒîçåţîöñ. Ṁéñţîöñš åñð åššîĝñɱéñţš åŕé åļŵåýš éɱåîļéð ŕîĝĥţ åŵåý. one two three four five six seven ei]"
+  "notifyDigestHint": "[Šéñð öñé éɱåîļ éṽéŕý 15 ɱîñûţéš îñšţéåð öƒ öñé þéŕ ñöţîƒîçåţîöñ. Ṁéñţîöñš åñð åššîĝñɱéñţš åŕé åļŵåýš éɱåîļéð ŕîĝĥţ åŵåý. one two three four five six seven ei]",
+  "exportFormatMarkdown": "[Ṁåŕķðöŵñ (.ɱð) one t]",
+  "exportFormatHtml": "[ĤŢṀĻ (.ĥţɱļ) one]",
+  "exportFormatPdf": "[ÞÐƑ (.þðƒ) one]",
+  "exportFormatText": "[Þļåîñ ţéẋţ (.ţẋţ) one tw]"
 }

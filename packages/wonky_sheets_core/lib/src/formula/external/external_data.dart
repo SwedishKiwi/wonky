@@ -14,7 +14,9 @@ final class ExternalKey {
 
   @override
   bool operator ==(Object other) =>
-      other is ExternalKey && other.function == function && other.argsHash == argsHash;
+      other is ExternalKey &&
+      other.function == function &&
+      other.argsHash == argsHash;
 
   @override
   int get hashCode => Object.hash(function, argsHash);
@@ -82,7 +84,11 @@ abstract interface class CustomFunctionProvider {
   /// Cached value, or null after scheduling evaluation (the cell shows "Loading…").
   /// [args] are scalars or [FArray]s (ranges converted row-major). [callerCellId] is
   /// `sheetId:rowId:colId`.
-  CustomFunctionResult? lookup(String upperName, List<FValue> args, String callerCellId);
+  CustomFunctionResult? lookup(
+    String upperName,
+    List<FValue> args,
+    String callerCellId,
+  );
 
   /// Emits when results arrive or a new build is installed (null = everything changed).
   Stream<String?> get updates;
@@ -92,13 +98,16 @@ abstract interface class CustomFunctionProvider {
 final class MemoryExternalDataProvider implements ExternalDataProvider {
   final Map<ExternalKey, ExternalResult> results = {};
   final List<(ExternalKey, ExternalRequest)> requests = [];
-  final StreamController<ExternalKey> _updates = StreamController.broadcast(sync: true);
+  final StreamController<ExternalKey> _updates = StreamController.broadcast(
+    sync: true,
+  );
 
   @override
   ExternalResult? lookup(ExternalKey key) => results[key];
 
   @override
-  void request(ExternalKey key, ExternalRequest req) => requests.add((key, req));
+  void request(ExternalKey key, ExternalRequest req) =>
+      requests.add((key, req));
 
   /// Completes a request.
   void complete(ExternalKey key, FValue value) {

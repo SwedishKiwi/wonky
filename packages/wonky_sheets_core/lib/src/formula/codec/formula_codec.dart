@@ -63,7 +63,11 @@ abstract final class FormulaCodec {
         case TokenKind.error:
           b.write(t.text.toUpperCase());
         case TokenKind.number:
-          b.write(ctx.locale.decimal == '.' ? t.text : t.text.replaceAll(ctx.locale.decimal, '.'));
+          b.write(
+            ctx.locale.decimal == '.'
+                ? t.text
+                : t.text.replaceAll(ctx.locale.decimal, '.'),
+          );
         case TokenKind.argSeparator:
         case TokenKind.arrayColSep:
           b.write(',');
@@ -110,8 +114,16 @@ abstract final class FormulaCodec {
     final cols = sheet.columns;
     bool rowOk(int? r) => r == null || r < rows.length;
     bool colOk(int? c) => c == null || c < cols.length;
-    if (!rowOk(area.row1) || !rowOk(area.row2) || !colOk(area.col1) || !colOk(area.col2)) {
-      return RefToken(sheetId: sheetId, unbound: area.format(includeSheet: sheetId == null && area.sheet != null)).encode();
+    if (!rowOk(area.row1) ||
+        !rowOk(area.row2) ||
+        !colOk(area.col1) ||
+        !colOk(area.col2)) {
+      return RefToken(
+        sheetId: sheetId,
+        unbound: area.format(
+          includeSheet: sheetId == null && area.sheet != null,
+        ),
+      ).encode();
     }
     if (area.kind == A1Kind.cell) {
       return RefToken(
@@ -122,17 +134,30 @@ abstract final class FormulaCodec {
         absCol: area.absCol1,
       ).encode();
     }
-    RefToken endpoint(int? r, bool ar, int? c, bool ac, String? sid) => RefToken(
-      sheetId: sid,
-      rowId: r == null ? null : rows.idAt(r),
-      colId: c == null ? null : cols.idAt(c),
-      absRow: r != null && ar,
-      absCol: c != null && ac,
-      rowKey: r == null ? null : rows.sortKeyAt(r),
-      colKey: c == null ? null : cols.sortKeyAt(c),
+    RefToken endpoint(int? r, bool ar, int? c, bool ac, String? sid) =>
+        RefToken(
+          sheetId: sid,
+          rowId: r == null ? null : rows.idAt(r),
+          colId: c == null ? null : cols.idAt(c),
+          absRow: r != null && ar,
+          absCol: c != null && ac,
+          rowKey: r == null ? null : rows.sortKeyAt(r),
+          colKey: c == null ? null : cols.sortKeyAt(c),
+        );
+    final start = endpoint(
+      area.row1,
+      area.absRow1,
+      area.col1,
+      area.absCol1,
+      sheetId,
     );
-    final start = endpoint(area.row1, area.absRow1, area.col1, area.absCol1, sheetId);
-    final end = endpoint(area.row2, area.absRow2, area.col2, area.absCol2, null);
+    final end = endpoint(
+      area.row2,
+      area.absRow2,
+      area.col2,
+      area.absCol2,
+      null,
+    );
     return '${start.encode()}:${end.encode()}';
   }
 
@@ -145,9 +170,18 @@ abstract final class FormulaCodec {
     for (final t in tokens) {
       switch (t.kind) {
         case TokenKind.storedRef:
-          b.write(renderStoredRef(t.ref!.stored!, ctx.workbook, host, ctx.hostSheetId));
+          b.write(
+            renderStoredRef(
+              t.ref!.stored!,
+              ctx.workbook,
+              host,
+              ctx.hostSheetId,
+            ),
+          );
         case TokenKind.number:
-          b.write(loc.decimal == '.' ? t.text : t.text.replaceAll('.', loc.decimal));
+          b.write(
+            loc.decimal == '.' ? t.text : t.text.replaceAll('.', loc.decimal),
+          );
         case TokenKind.argSeparator:
           b.write(loc.argSeparator);
         case TokenKind.arrayColSep:
@@ -182,7 +216,9 @@ abstract final class FormulaCodec {
     if (r is! ResolvedRef) return '#REF!';
     final area = A1Area.raw(
       r.kind,
-      sheet: (s.sheetId != null && s.sheetId != hostSheetId) ? r.sheet.name : null,
+      sheet: (s.sheetId != null && s.sheetId != hostSheetId)
+          ? r.sheet.name
+          : null,
       row1: r.row1,
       col1: r.col1,
       row2: r.row2,
@@ -196,7 +232,8 @@ abstract final class FormulaCodec {
   }
 
   /// Canonical A1 form of user text: `toA1(toStored(a1))`.
-  static String normalize(String a1, CodecContext ctx) => toA1(toStored(a1, ctx), ctx);
+  static String normalize(String a1, CodecContext ctx) =>
+      toA1(toStored(a1, ctx), ctx);
 
   /// Copy/fill/paste (03 §10, §12.3): shifts relative parts by the index delta between the
   /// hosts. [fromSheetId]/[toSheetId] default to the same sheet. Refs shifted out of the grid
@@ -250,7 +287,12 @@ abstract final class FormulaCodec {
       String? rowId = tok.rowId, colId = tok.colId;
       String? rowKey = tok.rowKey, colKey = tok.colKey;
       if (tok.rowId != null) {
-        final idx = RefResolver.endpointIndex(refSheet.rows, tok.rowId!, tok.rowKey, isStart: isStart);
+        final idx = RefResolver.endpointIndex(
+          refSheet.rows,
+          tok.rowId!,
+          tok.rowKey,
+          isStart: isStart,
+        );
         if (idx < 0) return null;
         final ni = tok.absRow ? idx : idx + dRow;
         if (ni < 0 || ni >= targetSheet.rows.length) return null;
@@ -258,21 +300,32 @@ abstract final class FormulaCodec {
         if (tok.rowKey != null) rowKey = targetSheet.rows.sortKeyAt(ni);
       }
       if (tok.colId != null) {
-        final idx = RefResolver.endpointIndex(refSheet.columns, tok.colId!, tok.colKey, isStart: isStart);
+        final idx = RefResolver.endpointIndex(
+          refSheet.columns,
+          tok.colId!,
+          tok.colKey,
+          isStart: isStart,
+        );
         if (idx < 0) return null;
         final ni = tok.absCol ? idx : idx + dCol;
         if (ni < 0 || ni >= targetSheet.columns.length) return null;
         colId = targetSheet.columns.idAt(ni);
         if (tok.colKey != null) colKey = targetSheet.columns.sortKeyAt(ni);
       }
-      return tok.copyWith(rowId: rowId, colId: colId, rowKey: rowKey, colKey: colKey);
+      return tok.copyWith(
+        rowId: rowId,
+        colId: colId,
+        rowKey: rowKey,
+        colKey: colKey,
+      );
     }
 
     // Missing ids (deleted rows) stay as they are (they render #REF!).
     if (ref.end == null) {
       final a = shift(s, isStart: true);
       if (a == null) {
-        final missing = (s.rowId != null && refSheet.rows.indexOf(s.rowId!) < 0) ||
+        final missing =
+            (s.rowId != null && refSheet.rows.indexOf(s.rowId!) < 0) ||
             (s.colId != null && refSheet.columns.indexOf(s.colId!) < 0);
         return missing ? ref.encode() : '#REF!';
       }
@@ -329,7 +382,9 @@ abstract final class FormulaCodec {
       final s = ref.start;
       final area = A1Area.raw(
         r.kind,
-        sheet: (s.sheetId != null && s.sheetId != ctx.hostSheetId) ? r.sheet.name : null,
+        sheet: (s.sheetId != null && s.sheetId != ctx.hostSheetId)
+            ? r.sheet.name
+            : null,
         row1: r.row1,
         col1: r.col1,
         row2: r.row2,
@@ -372,8 +427,15 @@ abstract final class FormulaCodec {
         i = e;
         continue;
       }
-      final prevIdent = i > 0 && FormulaLexer.isIdentPart(text.codeUnitAt(i - 1));
-      if (!prevIdent && (c == 0x52 || c == 0x72 || c == 0x43 || c == 0x63 || c == 0x27 || FormulaLexer.isIdentStart(c))) {
+      final prevIdent =
+          i > 0 && FormulaLexer.isIdentPart(text.codeUnitAt(i - 1));
+      if (!prevIdent &&
+          (c == 0x52 ||
+              c == 0x72 ||
+              c == 0x43 ||
+              c == 0x63 ||
+              c == 0x27 ||
+              FormulaLexer.isIdentStart(c))) {
         final m = R1C1.scan(text, i, hostRow, hostCol);
         if (m != null) {
           b.write(m.$1.format());

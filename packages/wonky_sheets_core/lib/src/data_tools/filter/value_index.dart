@@ -8,7 +8,12 @@ final class ValueIndex {
   ValueIndex._(this.col, this.top, this._texts, this._rows, this._repr);
 
   /// Builds the index for rows [top]..[bottom] of column [col].
-  factory ValueIndex.build(FilterDataSource source, int col, int top, int bottom) {
+  factory ValueIndex.build(
+    FilterDataSource source,
+    int col,
+    int top,
+    int bottom,
+  ) {
     final n = bottom - top + 1 < 0 ? 0 : bottom - top + 1;
     final texts = List<String>.filled(n, '');
     final rows = <String, List<int>>{};

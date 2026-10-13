@@ -33,8 +33,11 @@ abstract final class ReferenceRewriter {
     return changed ? b.toString() : null;
   }
 
-  static SheetView? _sheetOf(StoredRef ref, WorkbookView wb, String hostSheetId) =>
-      wb.sheetById(ref.start.sheetId ?? hostSheetId);
+  static SheetView? _sheetOf(
+    StoredRef ref,
+    WorkbookView wb,
+    String hostSheetId,
+  ) => wb.sheetById(ref.start.sheetId ?? hostSheetId);
 
   /// Rename of a named range/function: rewrites name and function-name tokens
   /// (case-insensitive) only (05 §5.5, 07 §8.3).
@@ -87,16 +90,37 @@ abstract final class ReferenceRewriter {
       if (!source.containsRect(rect)) return null;
       final newSheetId = destSheetId == hostSheetId ? null : destSheetId;
       RefToken move(RefToken t, bool first) {
-        String? rowId = t.rowId, colId = t.colId, rowKey = t.rowKey, colKey = t.colKey;
+        String? rowId = t.rowId,
+            colId = t.colId,
+            rowKey = t.rowKey,
+            colKey = t.colKey;
         if (t.rowId != null) {
-          final i = RefResolver.endpointIndex(sheet.rows, t.rowId!, t.rowKey, isStart: first) + dRow;
+          final i =
+              RefResolver.endpointIndex(
+                sheet.rows,
+                t.rowId!,
+                t.rowKey,
+                isStart: first,
+              ) +
+              dRow;
           rowId = dst.rows.idAt(i.clamp(0, dst.rows.length - 1));
-          if (rowKey != null) rowKey = dst.rows.sortKeyAt(i.clamp(0, dst.rows.length - 1));
+          if (rowKey != null) {
+            rowKey = dst.rows.sortKeyAt(i.clamp(0, dst.rows.length - 1));
+          }
         }
         if (t.colId != null) {
-          final i = RefResolver.endpointIndex(sheet.columns, t.colId!, t.colKey, isStart: first) + dCol;
+          final i =
+              RefResolver.endpointIndex(
+                sheet.columns,
+                t.colId!,
+                t.colKey,
+                isStart: first,
+              ) +
+              dCol;
           colId = dst.columns.idAt(i.clamp(0, dst.columns.length - 1));
-          if (colKey != null) colKey = dst.columns.sortKeyAt(i.clamp(0, dst.columns.length - 1));
+          if (colKey != null) {
+            colKey = dst.columns.sortKeyAt(i.clamp(0, dst.columns.length - 1));
+          }
         }
         return t.copyWith(
           sheetId: first ? newSheetId : null,
@@ -108,7 +132,9 @@ abstract final class ReferenceRewriter {
       }
 
       // the moved block must fit the destination grid
-      if (dest.bottom >= dst.rows.length || dest.right >= dst.columns.length) return null;
+      if (dest.bottom >= dst.rows.length || dest.right >= dst.columns.length) {
+        return null;
+      }
       final a = move(ref.start, true);
       final e = ref.end == null ? null : move(ref.end!, false);
       return StoredRef(a, e).encode();
@@ -137,8 +163,10 @@ abstract final class ReferenceRewriter {
       if (!hit(s) && !hit(e)) return null;
       final sheet = _findSheet(ref, workbook, hostSheetId);
       if (sheet == null) return null;
-      RefToken? fixStart(RefToken t, RefToken other) => _inward(t, other, sheet, deletedRowIds, deletedColIds, start: true);
-      RefToken? fixEnd(RefToken t, RefToken other) => _inward(t, other, sheet, deletedRowIds, deletedColIds, start: false);
+      RefToken? fixStart(RefToken t, RefToken other) =>
+          _inward(t, other, sheet, deletedRowIds, deletedColIds, start: true);
+      RefToken? fixEnd(RefToken t, RefToken other) =>
+          _inward(t, other, sheet, deletedRowIds, deletedColIds, start: false);
       final ns = fixStart(s, e);
       final ne = fixEnd(e, s);
       if (ns == null || ne == null) return '#REF!';
@@ -147,17 +175,27 @@ abstract final class ReferenceRewriter {
       final r2 = ne.rowId == null ? null : sheet.rows.indexOf(ne.rowId!);
       final c1 = ns.colId == null ? null : sheet.columns.indexOf(ns.colId!);
       final c2 = ne.colId == null ? null : sheet.columns.indexOf(ne.colId!);
-      if ((r1 != null && r2 != null && r1 > r2) || (c1 != null && c2 != null && c1 > c2)) {
+      if ((r1 != null && r2 != null && r1 > r2) ||
+          (c1 != null && c2 != null && c1 > c2)) {
         return '#REF!';
       }
       return StoredRef(ns, ne).encode();
     });
   }
 
-  static SheetView? _findSheet(StoredRef ref, WorkbookView wb, String? hostSheetId) {
+  static SheetView? _findSheet(
+    StoredRef ref,
+    WorkbookView wb,
+    String? hostSheetId,
+  ) {
     if (ref.start.sheetId != null) return wb.sheetById(ref.start.sheetId!);
     if (hostSheetId != null) return wb.sheetById(hostSheetId);
-    final ids = [ref.start.rowId, ref.start.colId, ref.end?.rowId, ref.end?.colId];
+    final ids = [
+      ref.start.rowId,
+      ref.start.colId,
+      ref.end?.rowId,
+      ref.end?.colId,
+    ];
     for (final sheet in wb.sheets) {
       for (var i = 0; i < ids.length; i++) {
         final id = ids[i];
@@ -176,14 +214,24 @@ abstract final class ReferenceRewriter {
     RefToken other,
     SheetView sheet,
     Set<String> delRows,
-    Set<String> delCols,
-    {required bool start}
-  ) {
+    Set<String> delCols, {
+    required bool start,
+  }) {
     var out = t;
-    String? fix(AxisView axis, String id, String? key, String? otherId, String? otherKey, Set<String> deleted, void Function(String id, String key) set) {
+    String? fix(
+      AxisView axis,
+      String id,
+      String? key,
+      String? otherId,
+      String? otherKey,
+      Set<String> deleted,
+      void Function(String id, String key) set,
+    ) {
       if (!deleted.contains(id)) return id;
       var i = axis.indexOf(id);
-      final j = otherId == null ? (start ? axis.length - 1 : 0) : RefResolver.endpointIndex(axis, otherId, otherKey, isStart: !start);
+      final j = otherId == null
+          ? (start ? axis.length - 1 : 0)
+          : RefResolver.endpointIndex(axis, otherId, otherKey, isStart: !start);
       if (i >= 0) {
         // before the delete: scan inward past deleted entries
         while (i >= 0 && i < axis.length && deleted.contains(axis.idAt(i))) {
@@ -202,15 +250,31 @@ abstract final class ReferenceRewriter {
     }
 
     if (t.rowId != null) {
-      final r = fix(sheet.rows, t.rowId!, t.rowKey, other.rowId, other.rowKey, delRows, (id, key) {
-        out = out.copyWith(rowId: id, rowKey: key);
-      });
+      final r = fix(
+        sheet.rows,
+        t.rowId!,
+        t.rowKey,
+        other.rowId,
+        other.rowKey,
+        delRows,
+        (id, key) {
+          out = out.copyWith(rowId: id, rowKey: key);
+        },
+      );
       if (r == null) return null;
     }
     if (t.colId != null) {
-      final c = fix(sheet.columns, t.colId!, t.colKey, other.colId, other.colKey, delCols, (id, key) {
-        out = out.copyWith(colId: id, colKey: key);
-      });
+      final c = fix(
+        sheet.columns,
+        t.colId!,
+        t.colKey,
+        other.colId,
+        other.colKey,
+        delCols,
+        (id, key) {
+          out = out.copyWith(colId: id, colKey: key);
+        },
+      );
       if (c == null) return null;
     }
     return out;

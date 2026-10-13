@@ -1,7 +1,6 @@
 import '../../addressing/grid_geometry.dart';
 import '../codec/ref_token.dart';
 import '../external/external_data.dart';
-import '../functions/function_spec.dart';
 import '../functions/registry.dart';
 import '../model/workbook_view.dart';
 import '../parser/formula_locale.dart';
@@ -35,7 +34,8 @@ final class FormulaError implements Exception {
 abstract class EvaluationInterrupt implements Exception {}
 
 /// Throws a [FormulaError].
-Never fail(ErrorKind kind, [String? message]) => throw FormulaError(FError(kind, message));
+Never fail(ErrorKind kind, [String? message]) =>
+    throw FormulaError(FError(kind, message));
 
 /// What the evaluator needs from the engine (implemented by `FormulaEngine`).
 abstract interface class EvalHost {
@@ -60,7 +60,11 @@ abstract interface class EvalHost {
   FormatHint cellHint(SheetView sheet, int row, int col);
 
   /// Visits the non-empty computed values in [rect] (inputs and spill overlays).
-  void forEachValue(SheetView sheet, GridRect rect, void Function(int row, int col, FValue v) visit);
+  void forEachValue(
+    SheetView sheet,
+    GridRect rect,
+    void Function(int row, int col, FValue v) visit,
+  );
 
   /// Used extent including spill overlays.
   int usedRows(SheetView sheet);

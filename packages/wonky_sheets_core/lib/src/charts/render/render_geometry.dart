@@ -19,7 +19,12 @@ abstract final class RenderGeometry {
   /// Circles are two half-circle arcs; the triangle is equilateral with side [size] pointing
   /// up; polygon (a pentagon) and star (five points) are inscribed in the marker circle with a
   /// vertex on top; the square and the diamond fill the marker's bounding square.
-  static List<PathCmd> markerPath(MarkerShape shape, double cx, double cy, double size) {
+  static List<PathCmd> markerPath(
+    MarkerShape shape,
+    double cx,
+    double cy,
+    double size,
+  ) {
     final r = size / 2;
     final b = PathBuilder();
     switch (shape) {
@@ -66,7 +71,8 @@ abstract final class RenderGeometry {
   }
 
   /// [rect] normalized to non-negative width and height.
-  static ChartRect normalize(ChartRect rect) => rect.width >= 0 && rect.height >= 0
+  static ChartRect normalize(ChartRect rect) =>
+      rect.width >= 0 && rect.height >= 0
       ? rect
       : ChartRect.fromLTRB(rect.left, rect.top, rect.right, rect.bottom);
 
@@ -107,7 +113,10 @@ abstract final class RenderGeometry {
 
   /// Whether [stroke] paints anything.
   static bool strokeVisible(SStroke? stroke) =>
-      stroke != null && stroke.width > 0 && stroke.width.isFinite && Argb.alpha(stroke.color) > 0;
+      stroke != null &&
+      stroke.width > 0 &&
+      stroke.width.isFinite &&
+      Argb.alpha(stroke.color) > 0;
 
   /// Whether the ARGB [fill] paints anything.
   static bool fillVisible(int? fill) => fill != null && Argb.alpha(fill) > 0;

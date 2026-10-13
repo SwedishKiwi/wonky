@@ -36,7 +36,9 @@ abstract final class ObjectPlacement {
     double height = ObjectAnchor.defaultChartHeight,
   }) {
     final first = dataRegion.right + 1;
-    final col = first >= 0 && first < columns.length ? columns.nextVisible(first, 1) : null;
+    final col = first >= 0 && first < columns.length
+        ? columns.nextVisible(first, 1)
+        : null;
     if (col != null) {
       final left = columns.offsetOf(col);
       if (viewport == null || left < viewport.right) {
@@ -64,13 +66,20 @@ abstract final class ObjectPlacement {
   /// Default size of a new image: its natural size scaled down to fit in
   /// 600 × 400 px keeping the aspect ratio, never upscaled (08 §10.1), then
   /// kept within 20–4000 px.
-  static ChartSize defaultImageSize(double naturalWidth, double naturalHeight) =>
-      _fit(naturalWidth, naturalHeight, imageFitWidth, imageFitHeight);
+  static ChartSize defaultImageSize(
+    double naturalWidth,
+    double naturalHeight,
+  ) => _fit(naturalWidth, naturalHeight, imageFitWidth, imageFitHeight);
 
   /// Size for *Reset size*: the natural size, capped to 4000 px keeping the
   /// aspect ratio (08 §10.1).
   static ChartSize resetImageSize(double naturalWidth, double naturalHeight) =>
-      _fit(naturalWidth, naturalHeight, ObjectAnchor.maxSize, ObjectAnchor.maxSize);
+      _fit(
+        naturalWidth,
+        naturalHeight,
+        ObjectAnchor.maxSize,
+        ObjectAnchor.maxSize,
+      );
 
   /// Anchor of an image inserted over cells at the active cell ([row],
   /// [col]) with `dx = dy = 0`, default size and `lockAspect: true`.
@@ -144,7 +153,10 @@ abstract final class ChartSheetAnchors {
   /// A copy of [spec] with [anchor] stored as `previousAnchor`. An
   /// [ObjectAnchor.ownSheet] anchor is not stored (the copy keeps any older
   /// value).
-  static Map<String, Object?> withPreviousAnchor(Map<dynamic, dynamic> spec, ObjectAnchor anchor) {
+  static Map<String, Object?> withPreviousAnchor(
+    Map<dynamic, dynamic> spec,
+    ObjectAnchor anchor,
+  ) {
     final out = {for (final e in spec.entries) '${e.key}': e.value};
     if (!anchor.ownSheet) out[previousAnchorKey] = anchor.toJson();
     return out;
@@ -163,8 +175,11 @@ abstract final class ChartSheetAnchors {
   }
 
   /// A copy of [spec] without a stored previous anchor.
-  static Map<String, Object?> withoutPreviousAnchor(Map<dynamic, dynamic> spec) {
-    final out = {for (final e in spec.entries) '${e.key}': e.value}..remove(previousAnchorKey);
+  static Map<String, Object?> withoutPreviousAnchor(
+    Map<dynamic, dynamic> spec,
+  ) {
+    final out = {for (final e in spec.entries) '${e.key}': e.value}
+      ..remove(previousAnchorKey);
     if (out['extras'] case final Map<dynamic, dynamic> extras
         when extras.containsKey(previousAnchorKey)) {
       out['extras'] = {
@@ -192,9 +207,12 @@ abstract final class ChartSheetAnchors {
             (prev.colId != null && columns.contains(prev.colId!)))) {
       return prev.normalized(rows, columns);
     }
-    final w = prev?.width ?? (current.width > 0 ? current.width : ObjectAnchor.defaultChartWidth);
+    final w =
+        prev?.width ??
+        (current.width > 0 ? current.width : ObjectAnchor.defaultChartWidth);
     final h =
-        prev?.height ?? (current.height > 0 ? current.height : ObjectAnchor.defaultChartHeight);
+        prev?.height ??
+        (current.height > 0 ? current.height : ObjectAnchor.defaultChartHeight);
     return ObjectAnchor.atCell(
       0,
       0,

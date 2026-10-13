@@ -155,7 +155,8 @@ final class BitmapTextPainter {
     final ix = fx.toInt(), iy = fy.toInt();
     if (ix < -1 || iy < -1 || ix >= w || iy >= h) return 0;
     final tx = x - fx, ty = y - fy;
-    double at(int xx, int yy) => (xx < 0 || yy < 0 || xx >= w || yy >= h) ? 0 : bmp[yy * w + xx];
+    double at(int xx, int yy) =>
+        (xx < 0 || yy < 0 || xx >= w || yy >= h) ? 0 : bmp[yy * w + xx];
     final top = at(ix, iy) * (1 - tx) + at(ix + 1, iy) * tx;
     final bot = at(ix, iy + 1) * (1 - tx) + at(ix + 1, iy + 1) * tx;
     return top * (1 - ty) + bot * ty;
@@ -173,10 +174,21 @@ final class BitmapTextPainter {
       for (var y = 0; y < ch.height; y++) {
         for (var x = 0; x < ch.width; x++) {
           // Glyph coverage is stored in the alpha channel (color channels are white).
-          out[y * ch.width + x] = ch.image.getPixel(x, y).aNormalized.toDouble();
+          out[y * ch.width + x] = ch.image
+              .getPixel(x, y)
+              .aNormalized
+              .toDouble();
         }
       }
-      g = _GlyphBitmap(rune, out, ch.width, ch.height, ch.xOffset, ch.yOffset, ch.xAdvance);
+      g = _GlyphBitmap(
+        rune,
+        out,
+        ch.width,
+        ch.height,
+        ch.xOffset,
+        ch.yOffset,
+        ch.xAdvance,
+      );
     } else {
       g = _synthesize(font, rune);
     }
@@ -214,7 +226,22 @@ final class BitmapTextPainter {
     0x7E: (
       0.584,
       [
-        [0.07, 0.31, 0.13, 0.37, 0.2, 0.39, 0.29, 0.36, 0.38, 0.32, 0.45, 0.31, 0.51, 0.37],
+        [
+          0.07,
+          0.31,
+          0.13,
+          0.37,
+          0.2,
+          0.39,
+          0.29,
+          0.36,
+          0.38,
+          0.32,
+          0.45,
+          0.31,
+          0.51,
+          0.37,
+        ],
       ],
     ), // ~
   };
@@ -252,7 +279,9 @@ final class BitmapTextPainter {
     var right = 0.0;
     int? prev;
     for (var rune in text.runes) {
-      if (rune == 0x09 || rune == 0x0A || rune == 0x0D || rune == 0xA0) rune = 0x20;
+      if (rune == 0x09 || rune == 0x0A || rune == 0x0D || rune == 0xA0) {
+        rune = 0x20;
+      }
       if (rune < 0x20 || rune == 0x7F) continue;
       var g = _glyph(font, rune);
       if (g == null && rune == 0x20) {

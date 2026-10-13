@@ -17,7 +17,8 @@ abstract final class WhitespaceTrimmer {
       c == 0x205f ||
       c == 0x3000;
 
-  static bool _isEdgeWhitespace(int c) => isSpaceSeparator(c) || c == 0x09 || c == 0x0a || c == 0x0d;
+  static bool _isEdgeWhitespace(int c) =>
+      isSpaceSeparator(c) || c == 0x09 || c == 0x0a || c == 0x0d;
 
   /// The trimmed text and the old → new offset map (length `text.length + 1`).
   static (String, Int32List) trimWithMap(String text) {
@@ -73,13 +74,16 @@ abstract final class WhitespaceTrimmer {
       case RichTextContent(:final rich):
         final (t, map) = trimWithMap(rich.text);
         if (t == rich.text) return null;
-        return RichTextContent(rich.remap(t, (o) => map[o.clamp(0, rich.text.length)]));
+        return RichTextContent(
+          rich.remap(t, (o) => map[o.clamp(0, rich.text.length)]),
+        );
       default:
         return null;
     }
   }
 
   /// Toast text after trimming [count] cells.
-  static String message(int count) =>
-      count == 0 ? 'No whitespace to trim.' : 'Trimmed whitespace from $count cell${count == 1 ? '' : 's'}.';
+  static String message(int count) => count == 0
+      ? 'No whitespace to trim.'
+      : 'Trimmed whitespace from $count cell${count == 1 ? '' : 's'}.';
 }

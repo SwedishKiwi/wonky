@@ -36,7 +36,12 @@ abstract interface class FilterDataSource {
 /// colors through [EffectiveFormatResolver] (with the optional CF overlay).
 final class SheetFilterSource implements FilterDataSource {
   /// Creates the source.
-  SheetFilterSource(this.sheetId, this.reader, {this.formats, this.conditional});
+  SheetFilterSource(
+    this.sheetId,
+    this.reader, {
+    this.formats,
+    this.conditional,
+  });
 
   final String sheetId;
   final CellTextReader reader;
@@ -51,13 +56,19 @@ final class SheetFilterSource implements FilterDataSource {
   CellValue valueAt(int row, int col) => reader.valueAt(sheetId, row, col);
 
   @override
-  String displayTextAt(int row, int col) => reader.displayTextAt(sheetId, row, col);
+  String displayTextAt(int row, int col) =>
+      reader.displayTextAt(sheetId, row, col);
 
   @override
-  String? numberFormatAt(int row, int col) => reader.numberFormatAt(sheetId, row, col);
+  String? numberFormatAt(int row, int col) =>
+      reader.numberFormatAt(sheetId, row, col);
 
-  ResolvedFormat? _fmt(int row, int col) =>
-      formats?.resolve(sheetId, row, col, conditional: conditional?.call(row, col));
+  ResolvedFormat? _fmt(int row, int col) => formats?.resolve(
+    sheetId,
+    row,
+    col,
+    conditional: conditional?.call(row, col),
+  );
 
   @override
   String? fillColorAt(int row, int col) {
@@ -98,7 +109,13 @@ final class FilterInput {
       final c = sheet.columns.indexOf(e.key);
       if (c >= range.left && c <= range.right) byIndex[c] = e.value;
     }
-    return FilterInput(sheetId: sheet.id, range: range, criteria: byIndex, source: source, conditions: conditions);
+    return FilterInput(
+      sheetId: sheet.id,
+      range: range,
+      criteria: byIndex,
+      source: source,
+      conditions: conditions,
+    );
   }
 
   final String sheetId;
@@ -176,13 +193,17 @@ final class ChecklistEntry {
 
   @override
   bool operator ==(Object other) =>
-      other is ChecklistEntry && other.text == text && other.count == count && other.hiddenByOthers == hiddenByOthers;
+      other is ChecklistEntry &&
+      other.text == text &&
+      other.count == count &&
+      other.hiddenByOthers == hiddenByOthers;
 
   @override
   int get hashCode => Object.hash(text, count, hiddenByOthers);
 
   @override
-  String toString() => 'ChecklistEntry("$text", $count${hiddenByOthers ? ', hidden' : ''})';
+  String toString() =>
+      'ChecklistEntry("$text", $count${hiddenByOthers ? ', hidden' : ''})';
 }
 
 /// Computes filter-hidden rows (07 §3.4): a row is visible iff for every
@@ -191,25 +212,50 @@ final class ChecklistEntry {
 abstract final class FilterEngine {
   static String _normColor(String? c, String dflt) => (c ?? dflt).toUpperCase();
 
-  static bool Function(int row) _columnTest(FilterInput input, int col, ColumnCriteria cc, ValueIndex? index) {
+  static bool Function(int row) _columnTest(
+    FilterInput input,
+    int col,
+    ColumnCriteria cc,
+    ValueIndex? index,
+  ) {
     final src = input.source;
     final compiled = cc.condition == null
         ? null
-        : input.conditions.compile(cc.condition!, sheetId: input.sheetId, anchorRow: input.dataTop, anchorCol: col);
+        : input.conditions.compile(
+            cc.condition!,
+            sheetId: input.sheetId,
+            anchorRow: input.dataTop,
+            anchorCol: col,
+          );
     final hidden = cc.hiddenValues;
     final bg = cc.visibleBackgroundColor?.toUpperCase();
     final fg = cc.visibleForegroundColor?.toUpperCase();
     return (row) {
       if (hidden.isNotEmpty) {
-        final t = index != null ? index.textAt(row) : src.displayTextAt(row, col);
+        final t = index != null
+            ? index.textAt(row)
+            : src.displayTextAt(row, col);
         if (hidden.contains(t)) return false;
       }
       if (compiled != null) {
         final v = src.valueAt(row, col);
-        if (!compiled.test(v, row: row, col: col, numberFormat: src.numberFormatAt(row, col))) return false;
+        if (!compiled.test(
+          v,
+          row: row,
+          col: col,
+          numberFormat: src.numberFormatAt(row, col),
+        )) {
+          return false;
+        }
       }
-      if (bg != null && _normColor(src.fillColorAt(row, col), '#FFFFFF') != bg) return false;
-      if (fg != null && _normColor(src.textColorAt(row, col), '#000000') != fg) return false;
+      if (bg != null &&
+          _normColor(src.fillColorAt(row, col), '#FFFFFF') != bg) {
+        return false;
+      }
+      if (fg != null &&
+          _normColor(src.textColorAt(row, col), '#000000') != fg) {
+        return false;
+      }
       return true;
     };
   }
@@ -227,7 +273,8 @@ abstract final class FilterEngine {
     final hidden = Uint8List(n);
     final tests = <bool Function(int)>[
       for (final e in input.criteria.entries)
-        if (e.key != excludeColumn) _columnTest(input, e.key, e.value, indexes?[e.key]),
+        if (e.key != excludeColumn)
+          _columnTest(input, e.key, e.value, indexes?[e.key]),
     ];
     if (tests.isNotEmpty) {
       for (var i = 0; i < n; i++) {
@@ -245,10 +292,18 @@ abstract final class FilterEngine {
   }
 
   /// Re-evaluates only [rows] (live re-filtering after cell edits).
-  static RowVisibility update(RowVisibility previous, FilterInput input, Iterable<int> rows, {Map<int, ValueIndex>? indexes}) {
+  static RowVisibility update(
+    RowVisibility previous,
+    FilterInput input,
+    Iterable<int> rows, {
+    Map<int, ValueIndex>? indexes,
+  }) {
     if (previous.range != input.range) return compute(input, indexes: indexes);
     final hidden = Uint8List.fromList(previous.hidden);
-    final tests = [for (final e in input.criteria.entries) _columnTest(input, e.key, e.value, indexes?[e.key])];
+    final tests = [
+      for (final e in input.criteria.entries)
+        _columnTest(input, e.key, e.value, indexes?[e.key]),
+    ];
     for (final row in rows) {
       final i = row - input.dataTop;
       if (i < 0 || i >= hidden.length) continue;
@@ -259,8 +314,14 @@ abstract final class FilterEngine {
 
   /// The values checklist of column [col] considering the other columns'
   /// criteria (07 §3.5): `(Blanks)` first, then the column's sort order.
-  static List<ChecklistEntry> checklist(FilterInput input, int col, {ValueIndex? index}) {
-    final idx = index ?? ValueIndex.build(input.source, col, input.dataTop, input.range.bottom);
+  static List<ChecklistEntry> checklist(
+    FilterInput input,
+    int col, {
+    ValueIndex? index,
+  }) {
+    final idx =
+        index ??
+        ValueIndex.build(input.source, col, input.dataTop, input.range.bottom);
     final others = compute(input, excludeColumn: col);
     final visible = <String, int>{};
     final hiddenOnly = <String, int>{};

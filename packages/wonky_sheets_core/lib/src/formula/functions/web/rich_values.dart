@@ -26,7 +26,8 @@ final class SparklineValue {
   int get hashCode => Object.hash(chartType, values.length, options.length);
 
   @override
-  String toString() => 'SparklineValue($chartType, ${values.length} points, $options)';
+  String toString() =>
+      'SparklineValue($chartType, ${values.length} points, $options)';
 }
 
 /// `IMAGE(url, mode, height, width, alt_text)` result (08 §10.2).
@@ -39,7 +40,13 @@ final class ImageValue {
   final double? width;
   final String? altText;
 
-  const ImageValue(this.url, {this.mode = 1, this.height, this.width, this.altText});
+  const ImageValue(
+    this.url, {
+    this.mode = 1,
+    this.height,
+    this.width,
+    this.altText,
+  });
 
   /// Whether the URL refers to a Wonky Drive file (`wonky-file://<uuid>`).
   bool get isWonkyFile => url.startsWith('wonky-file://');
@@ -70,7 +77,8 @@ final class LinkValue {
   bool get isInternal => url.startsWith('#');
 
   @override
-  bool operator ==(Object other) => other is LinkValue && other.url == url && other.label == label;
+  bool operator ==(Object other) =>
+      other is LinkValue && other.url == url && other.label == label;
 
   @override
   int get hashCode => Object.hash(url, label);

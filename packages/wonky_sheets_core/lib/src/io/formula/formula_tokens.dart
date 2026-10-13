@@ -63,13 +63,22 @@ final class FToken {
 /// Lexical conventions of a formula dialect.
 final class FormulaDialect {
   /// Creates a dialect.
-  const FormulaDialect({this.argSeparator = ',', this.decimal = '.', this.arrayColSeparator = ',', this.arrayRowSeparator = ';'});
+  const FormulaDialect({
+    this.argSeparator = ',',
+    this.decimal = '.',
+    this.arrayColSeparator = ',',
+    this.arrayRowSeparator = ';',
+  });
 
   /// Canonical (en_US / Excel file / Wonky stored) conventions.
   static const canonical = FormulaDialect();
 
   /// Decimal-comma conventions (de_DE, fr_FR, …).
-  static const decimalComma = FormulaDialect(argSeparator: ';', decimal: ',', arrayColSeparator: r'\');
+  static const decimalComma = FormulaDialect(
+    argSeparator: ';',
+    decimal: ',',
+    arrayColSeparator: r'\',
+  );
 
   final String argSeparator;
   final String decimal;
@@ -77,11 +86,40 @@ final class FormulaDialect {
   final String arrayRowSeparator;
 
   /// Conventions of a spreadsheet locale.
-  static FormulaDialect forLocale(String? locale) => usesDecimalComma(locale) ? decimalComma : canonical;
+  static FormulaDialect forLocale(String? locale) =>
+      usesDecimalComma(locale) ? decimalComma : canonical;
 
   static const Set<String> _commaLanguages = {
-    'de', 'fr', 'es', 'it', 'pt', 'nl', 'ru', 'pl', 'sv', 'da', 'nb', 'no', 'nn', 'fi', 'cs', //
-    'sk', 'sl', 'hr', 'sr', 'bs', 'hu', 'ro', 'bg', 'el', 'tr', 'uk', 'be', 'lt', 'lv', 'et', //
+    'de',
+    'fr',
+    'es',
+    'it',
+    'pt',
+    'nl',
+    'ru',
+    'pl',
+    'sv',
+    'da',
+    'nb',
+    'no',
+    'nn',
+    'fi',
+    'cs', //
+    'sk',
+    'sl',
+    'hr',
+    'sr',
+    'bs',
+    'hu',
+    'ro',
+    'bg',
+    'el',
+    'tr',
+    'uk',
+    'be',
+    'lt',
+    'lv',
+    'et', //
     'id', 'vi', 'ca', 'gl', 'eu', 'is', 'az', 'kk', 'ka', 'mk', 'sq',
   };
 
@@ -118,7 +156,10 @@ const List<String> kFormulaErrorLiterals = [
 /// input.
 abstract final class FormulaTokenizer {
   static bool _identStart(int c) =>
-      ColumnLetters.isLetter(c) || c == 0x5f || c == 0x5c || (c >= 0xc0 && c != 0x27e6 && c != 0x27e7);
+      ColumnLetters.isLetter(c) ||
+      c == 0x5f ||
+      c == 0x5c ||
+      (c >= 0xc0 && c != 0x27e6 && c != 0x27e7);
 
   static bool _identPart(int c) =>
       ColumnLetters.isLetter(c) ||
@@ -129,7 +170,10 @@ abstract final class FormulaTokenizer {
       (c >= 0xc0 && c != 0x27e6 && c != 0x27e7);
 
   /// Tokenizes [text] (without leading `=`).
-  static List<FToken> tokenize(String text, {FormulaDialect dialect = FormulaDialect.canonical}) {
+  static List<FToken> tokenize(
+    String text, {
+    FormulaDialect dialect = FormulaDialect.canonical,
+  }) {
     final out = <FToken>[];
     final stack = <int>[];
     final n = text.length;
@@ -196,7 +240,8 @@ abstract final class FormulaTokenizer {
         }
         String? lit;
         for (final l in kFormulaErrorLiterals) {
-          if (n - i >= l.length && text.substring(i, i + l.length).toUpperCase() == l) {
+          if (n - i >= l.length &&
+              text.substring(i, i + l.length).toUpperCase() == l) {
             lit = l;
             break;
           }
@@ -215,7 +260,8 @@ abstract final class FormulaTokenizer {
         final close = text.indexOf(']', i);
         if (close > 0) {
           var j = close + 1;
-          while (j < n && (_identPart(text.codeUnitAt(j)) || text.codeUnitAt(j) == 0x20)) {
+          while (j < n &&
+              (_identPart(text.codeUnitAt(j)) || text.codeUnitAt(j) == 0x20)) {
             j++;
           }
           if (j < n && text.codeUnitAt(j) == 0x21) {
@@ -238,13 +284,18 @@ abstract final class FormulaTokenizer {
         i = e;
         continue;
       }
-      if (c == 0x24 || c == 0x27 || _identStart(c) || ColumnLetters.isDigit(c)) {
+      if (c == 0x24 ||
+          c == 0x27 ||
+          _identStart(c) ||
+          ColumnLetters.isDigit(c)) {
         final prevNumber = out.isNotEmpty && out.last.kind == FTok.number;
         if (!prevNumber) {
           final m = A1Scanner.scan(text, i);
           if (m != null && !(m.end < n && text.codeUnitAt(m.end) == 0x28)) {
             final s = m.area.sheet;
-            final kind = s != null && (s.startsWith('[') || s.contains('[')) ? FTok.external : FTok.ref;
+            final kind = s != null && (s.startsWith('[') || s.contains('['))
+                ? FTok.external
+                : FTok.ref;
             out.add(FToken(kind, text.substring(i, m.end), m.area));
             i = m.end;
             continue;
@@ -274,7 +325,9 @@ abstract final class FormulaTokenizer {
         }
       }
       if (ColumnLetters.isDigit(c) ||
-          (text.startsWith(dialect.decimal, i) && i + 1 < n && ColumnLetters.isDigit(text.codeUnitAt(i + 1)))) {
+          (text.startsWith(dialect.decimal, i) &&
+              i + 1 < n &&
+              ColumnLetters.isDigit(text.codeUnitAt(i + 1)))) {
         final e = _scanNumber(text, i, dialect.decimal);
         out.add(FToken(FTok.number, text.substring(i, e)));
         i = e;
@@ -418,7 +471,9 @@ abstract final class FormulaTokenizer {
     }
     if (j < n && (text.codeUnitAt(j) == 0x45 || text.codeUnitAt(j) == 0x65)) {
       var k = j + 1;
-      if (k < n && (text.codeUnitAt(k) == 0x2b || text.codeUnitAt(k) == 0x2d)) k++;
+      if (k < n && (text.codeUnitAt(k) == 0x2b || text.codeUnitAt(k) == 0x2d)) {
+        k++;
+      }
       if (k < n && ColumnLetters.isDigit(text.codeUnitAt(k))) {
         while (k < n && ColumnLetters.isDigit(text.codeUnitAt(k))) {
           k++;
@@ -447,28 +502,52 @@ abstract final class FormulaTokenizer {
 abstract final class FormulaRewriter {
   /// Shifts relative references by ([dRow], [dCol]) (shared formulas,
   /// copy semantics). References moved outside the grid become `#REF!`.
-  static String shift(String formula, int dRow, int dCol, {int maxRows = 10000000, int maxCols = 18278}) {
+  static String shift(
+    String formula,
+    int dRow,
+    int dCol, {
+    int maxRows = 10000000,
+    int maxCols = 18278,
+  }) {
     if (dRow == 0 && dCol == 0) return formula;
     final tokens = FormulaTokenizer.tokenize(formula);
     return shiftTokens(tokens, dRow, dCol, maxRows: maxRows, maxCols: maxCols);
   }
 
   /// [shift] on pre-tokenized input (tokens are not modified).
-  static String shiftTokens(List<FToken> tokens, int dRow, int dCol, {int maxRows = 10000000, int maxCols = 18278}) {
+  static String shiftTokens(
+    List<FToken> tokens,
+    int dRow,
+    int dCol, {
+    int maxRows = 10000000,
+    int maxCols = 18278,
+  }) {
     final b = StringBuffer();
     for (final t in tokens) {
       if (t.kind != FTok.ref || t.area == null) {
         b.write(t.text);
         continue;
       }
-      final shifted = shiftArea(t.area!, dRow, dCol, maxRows: maxRows, maxCols: maxCols);
+      final shifted = shiftArea(
+        t.area!,
+        dRow,
+        dCol,
+        maxRows: maxRows,
+        maxCols: maxCols,
+      );
       b.write(shifted == null ? '#REF!' : shifted.format());
     }
     return b.toString();
   }
 
   /// Shifts the relative parts of [a]; null when out of the grid.
-  static A1Area? shiftArea(A1Area a, int dRow, int dCol, {int maxRows = 10000000, int maxCols = 18278}) {
+  static A1Area? shiftArea(
+    A1Area a,
+    int dRow,
+    int dCol, {
+    int maxRows = 10000000,
+    int maxCols = 18278,
+  }) {
     int? r(int? v, bool abs) => v == null ? null : (abs ? v : v + dRow);
     int? c(int? v, bool abs) => v == null ? null : (abs ? v : v + dCol);
     final r1 = r(a.row1, a.absRow1);
@@ -496,7 +575,9 @@ abstract final class FormulaRewriter {
   /// new name).
   static String renameSheets(String formula, Map<String, String> renames) {
     if (renames.isEmpty) return formula;
-    final lower = {for (final e in renames.entries) e.key.toLowerCase(): e.value};
+    final lower = {
+      for (final e in renames.entries) e.key.toLowerCase(): e.value,
+    };
     final tokens = FormulaTokenizer.tokenize(formula);
     var changed = false;
     for (final t in tokens) {
@@ -523,7 +604,9 @@ abstract final class FormulaRewriter {
   /// Renames name tokens (case-insensitive).
   static String renameNames(String formula, Map<String, String> renames) {
     if (renames.isEmpty) return formula;
-    final lower = {for (final e in renames.entries) e.key.toLowerCase(): e.value};
+    final lower = {
+      for (final e in renames.entries) e.key.toLowerCase(): e.value,
+    };
     final tokens = FormulaTokenizer.tokenize(formula);
     var changed = false;
     for (final t in tokens) {
@@ -542,7 +625,9 @@ abstract final class FormulaRewriter {
   /// canonical separators (`SUM(1.5,A1)`).
   static String toCanonical(String formula, FormulaDialect dialect) {
     if (identical(dialect, FormulaDialect.canonical) ||
-        (dialect.argSeparator == ',' && dialect.decimal == '.' && dialect.arrayColSeparator == ',')) {
+        (dialect.argSeparator == ',' &&
+            dialect.decimal == '.' &&
+            dialect.arrayColSeparator == ',')) {
       return formula;
     }
     final tokens = FormulaTokenizer.tokenize(formula, dialect: dialect);

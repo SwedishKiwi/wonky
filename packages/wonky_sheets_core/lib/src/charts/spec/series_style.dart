@@ -18,7 +18,11 @@ final class DataLabelsSpec extends SpecNode {
     final r = JsonReader(json);
     return DataLabelsSpec(
       show: r.boolOr('show', false),
-      position: r.enumOr('position', DataLabelPosition.values, DataLabelPosition.auto),
+      position: r.enumOr(
+        'position',
+        DataLabelPosition.values,
+        DataLabelPosition.auto,
+      ),
       type: r.enumOr('type', DataLabelType.values, DataLabelType.value),
       font: ChartFont.fromJson(r.obj('font')),
       extras: r.extras(const {'show', 'position', 'type', 'font'}),
@@ -32,12 +36,17 @@ final class DataLabelsSpec extends SpecNode {
   final Map<String, Object?> extras;
 
   @override
-  Map<String, Object?> toJson() => (JsonWriter(extras)
-        ..unlessDefault('show', show, false)
-        ..unlessDefault('position', position.name, DataLabelPosition.auto.name)
-        ..unlessDefault('type', type.name, DataLabelType.value.name)
-        ..nested('font', font.toJson()))
-      .json;
+  Map<String, Object?> toJson() =>
+      (JsonWriter(extras)
+            ..unlessDefault('show', show, false)
+            ..unlessDefault(
+              'position',
+              position.name,
+              DataLabelPosition.auto.name,
+            )
+            ..unlessDefault('type', type.name, DataLabelType.value.name)
+            ..nested('font', font.toJson()))
+          .json;
 }
 
 /// Trendline of a series (08 §7).
@@ -115,20 +124,21 @@ final class TrendlineSpec extends SpecNode {
   final Map<String, Object?> extras;
 
   @override
-  Map<String, Object?> toJson() => (JsonWriter(extras)
-        ..put('type', type.name)
-        ..unlessDefault('degree', degree, 2)
-        ..unlessDefault('period', period, 2)
-        ..unlessDefault('label', label.name, TrendlineLabel.none.name)
-        ..unlessDefault('customLabel', customLabel, '')
-        ..unlessDefault('showR2', showR2, false)
-        ..opt('color', color)
-        ..unlessDefault('opacity', jsonNum(opacity), 1)
-        ..unlessDefault('lineWidth', jsonNum(lineWidth), 2)
-        ..unlessDefault('lineDash', lineDash.name, LineDash.solid.name)
-        ..unlessDefault('forward', jsonNum(forward), 0)
-        ..unlessDefault('backward', jsonNum(backward), 0))
-      .json;
+  Map<String, Object?> toJson() =>
+      (JsonWriter(extras)
+            ..put('type', type.name)
+            ..unlessDefault('degree', degree, 2)
+            ..unlessDefault('period', period, 2)
+            ..unlessDefault('label', label.name, TrendlineLabel.none.name)
+            ..unlessDefault('customLabel', customLabel, '')
+            ..unlessDefault('showR2', showR2, false)
+            ..opt('color', color)
+            ..unlessDefault('opacity', jsonNum(opacity), 1)
+            ..unlessDefault('lineWidth', jsonNum(lineWidth), 2)
+            ..unlessDefault('lineDash', lineDash.name, LineDash.solid.name)
+            ..unlessDefault('forward', jsonNum(forward), 0)
+            ..unlessDefault('backward', jsonNum(backward), 0))
+          .json;
 }
 
 /// "Format data point" override (08 §3.4 `points`).
@@ -146,7 +156,8 @@ final class PointStyle extends SpecNode {
   final Map<String, Object?> extras;
 
   @override
-  Map<String, Object?> toJson() => (JsonWriter(extras)..opt('color', color)).json;
+  Map<String, Object?> toJson() =>
+      (JsonWriter(extras)..opt('color', color)).json;
 }
 
 /// Per-series style override (08 §3.4). Null fields use the chart type's defaults.
@@ -192,7 +203,8 @@ final class SeriesStyle extends SpecNode {
       errorBars: r.obj('errorBars'),
       points: {
         for (final e in pts.entries)
-          if (int.tryParse(e.key) case final int i) i: PointStyle.fromJson(e.value),
+          if (int.tryParse(e.key) case final int i)
+            i: PointStyle.fromJson(e.value),
       },
       labelOverride: r.str('labelOverride'),
       extras: r.extras(_keys),
@@ -290,7 +302,10 @@ final class SeriesStyle extends SpecNode {
           ..opt('type', type?.name)
           ..unlessDefault('axis', axis.name, SeriesAxis.left.name)
           ..opt('color', color)
-          ..opt('fillOpacity', fillOpacity == null ? null : jsonNum(fillOpacity!))
+          ..opt(
+            'fillOpacity',
+            fillOpacity == null ? null : jsonNum(fillOpacity!),
+          )
           ..opt('lineColor', lineColor)
           ..unlessDefault('lineOpacity', jsonNum(lineOpacity), 1)
           ..opt('lineWidth', lineWidth == null ? null : jsonNum(lineWidth!))
@@ -300,7 +315,9 @@ final class SeriesStyle extends SpecNode {
           ..nested('dataLabels', dataLabels.toJson())
           ..opt('trendline', trendline?.toJson())
           ..opt('errorBars', errorBars == null ? null : deepCopyJson(errorBars))
-          ..nested('points', {for (final k in sortedPoints) '$k': points[k]!.toJson()})
+          ..nested('points', {
+            for (final k in sortedPoints) '$k': points[k]!.toJson(),
+          })
           ..opt('labelOverride', labelOverride))
         .json;
   }

@@ -34,7 +34,14 @@ final class QueryTable {
 
   final int rowCount;
 
-  QueryTable._(this.ids, this.labels, this.types, this.columns, this.hints, this.rowCount);
+  QueryTable._(
+    this.ids,
+    this.labels,
+    this.types,
+    this.columns,
+    this.hints,
+    this.rowCount,
+  );
 
   /// Index of the column with identifier [id] (case-insensitive), or -1.
   int indexOf(String id) {
@@ -150,7 +157,8 @@ final class QueryTable {
           FormatHintKind.date => QType.date,
           FormatHintKind.dateTime => QType.datetime,
           FormatHintKind.time => QType.timeofday,
-          FormatHintKind.fromCell => _patternTypes[hint.detail ?? ''] ??= patternType(hint.detail ?? ''),
+          FormatHintKind.fromCell =>
+            _patternTypes[hint.detail ?? ''] ??= patternType(hint.detail ?? ''),
           _ => QType.number,
         };
       case FText(:final v):
@@ -191,7 +199,12 @@ final class QueryTable {
         final end = p.indexOf(']', i);
         if (end < 0) break;
         final inner = p.substring(i + 1, end).toLowerCase();
-        if (inner == 'h' || inner == 'hh' || inner == 'm' || inner == 'mm' || inner == 's' || inner == 'ss') {
+        if (inner == 'h' ||
+            inner == 'hh' ||
+            inner == 'm' ||
+            inner == 'mm' ||
+            inner == 's' ||
+            inner == 'ss') {
           time = true;
         }
         i = end;
@@ -200,7 +213,9 @@ final class QueryTable {
       final l = c.toLowerCase();
       if (l == 'y' || l == 'd') date = true;
       if (l == 'h' || l == 's') time = true;
-      if (l == 'a' && p.substring(i).toLowerCase().startsWith('am/pm')) time = true;
+      if (l == 'a' && p.substring(i).toLowerCase().startsWith('am/pm')) {
+        time = true;
+      }
     }
     if (date && time) return QType.datetime;
     if (date) return QType.date;

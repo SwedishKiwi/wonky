@@ -111,7 +111,10 @@ final class PlanBuilder {
   FormulaHooks get formulas {
     final f = ctx.formulas;
     if (f == null) {
-      throw const PlanException('unsupported', 'This operation needs the formula engine');
+      throw const PlanException(
+        'unsupported',
+        'This operation needs the formula engine',
+      );
     }
     return f;
   }
@@ -130,14 +133,19 @@ final class PlanBuilder {
   }
 
   /// Whether [table]/[id] was touched by this plan.
-  bool touched(String table, String id) => _overlay[table]?.containsKey(id) ?? false;
+  bool touched(String table, String id) =>
+      _overlay[table]?.containsKey(id) ?? false;
 
   /// Current value of one column.
-  Object? currentValue(String table, String id, String column) => current(table, id)?[column];
+  Object? currentValue(String table, String id, String column) =>
+      current(table, id)?[column];
 
   /// Current cell columns at (sheetId, rowId, colId), or null.
-  Map<String, Object?>? currentCell(String sheetId, String rowId, String colId) =>
-      current(SheetsTables.cell, SheetsIds.cellId(sheetId, rowId, colId));
+  Map<String, Object?>? currentCell(
+    String sheetId,
+    String rowId,
+    String colId,
+  ) => current(SheetsTables.cell, SheetsIds.cellId(sheetId, rowId, colId));
 
   /// Current cell content.
   String? currentContent(String sheetId, String rowId, String colId) =>
@@ -151,7 +159,8 @@ final class PlanBuilder {
   }
 
   /// All touched rows of [table] with their final columns (null = deleted).
-  Map<String, Map<String, Object?>?> touchedRows(String table) => _overlay[table] ?? const {};
+  Map<String, Map<String, Object?>?> touchedRows(String table) =>
+      _overlay[table] ?? const {};
 
   // ---------------------------------------------------------------------------
   // Writing.
@@ -190,7 +199,12 @@ final class PlanBuilder {
   /// Writes cell columns at (sheetId, rowId, colId), creating the cell row with
   /// its deterministic id when needed. A cell whose fields all become null is
   /// deleted.
-  void writeCell(String sheetId, String rowId, String colId, Map<String, Object?> columns) {
+  void writeCell(
+    String sheetId,
+    String rowId,
+    String colId,
+    Map<String, Object?> columns,
+  ) {
     if (columns.isEmpty) return;
     final id = SheetsIds.cellId(sheetId, rowId, colId);
     final cur = current(SheetsTables.cell, id);
@@ -208,7 +222,12 @@ final class PlanBuilder {
   }
 
   /// Writes a cell at current indices of [sheetId].
-  void writeCellAt(String sheetId, int row, int col, Map<String, Object?> columns) {
+  void writeCellAt(
+    String sheetId,
+    int row,
+    int col,
+    Map<String, Object?> columns,
+  ) {
     final s = model.sheet(sheetId)!;
     writeCell(sheetId, s.rows.idAt(row), s.columns.idAt(col), columns);
   }
@@ -225,7 +244,9 @@ final class PlanBuilder {
     final s = model.sheet(r.sheetId);
     if (s == null) return;
     summary.sheets.add(r.sheetId);
-    addRange(s.gridRange(r.rect, wholeRows: r.wholeRows, wholeColumns: r.wholeColumns));
+    addRange(
+      s.gridRange(r.rect, wholeRows: r.wholeRows, wholeColumns: r.wholeColumns),
+    );
   }
 
   /// Adds change kinds.
@@ -257,7 +278,8 @@ final class PlanBuilder {
     CellCols.linkUrl,
   };
 
-  static bool _cellIsBlank(Map<String, Object?> c) => _cellValueColumns.every((k) => c[k] == null);
+  static bool _cellIsBlank(Map<String, Object?> c) =>
+      _cellValueColumns.every((k) => c[k] == null);
 
   static bool _eq(Object? a, Object? b) {
     if (a is num && b is num) return a.toDouble() == b.toDouble();
@@ -277,7 +299,9 @@ final class PlanBuilder {
     for (final (table, id) in _touchOrder) {
       final original = model.currentColumns(table, id);
       var fin = _overlay[table]![id];
-      if (fin != null && table == SheetsTables.cell && _cellIsBlank(fin)) fin = null;
+      if (fin != null && table == SheetsTables.cell && _cellIsBlank(fin)) {
+        fin = null;
+      }
       if (original == null && fin == null) continue;
       if (original == null) {
         upserts.add(RowChange.insert(table, id, fin!));

@@ -23,6 +23,19 @@ class NotificationsController extends ChangeNotifier {
   Object? _error;
   String? _cursor;
   int _generation = 0;
+  bool _disposed = false;
+
+  @override
+  void notifyListeners() {
+    // Requests finish after the popover/dialog closed.
+    if (!_disposed) super.notifyListeners();
+  }
+
+  @override
+  void dispose() {
+    _disposed = true;
+    super.dispose();
+  }
 
   List<NotificationView> get items => _items;
   int get unreadCount => _unread;

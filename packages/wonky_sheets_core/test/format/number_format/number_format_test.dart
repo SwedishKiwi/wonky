@@ -74,12 +74,19 @@ void main() {
   group('Given the 06 §5.13 test vectors', () {
     final formatter = NumberFormatter();
     for (final (n, pattern, value, locale, expected, color) in _vectors) {
-      test('when formatting vector $n ($pattern, $value, $locale) then it shows "$expected"', () {
-        final result = formatter.format(CellValue.from(value), pattern, locale: locale);
+      test(
+        'when formatting vector $n ($pattern, $value, $locale) then it shows "$expected"',
+        () {
+          final result = formatter.format(
+            CellValue.from(value),
+            pattern,
+            locale: locale,
+          );
 
-        expect(result.plainText, equals(expected));
-        expect(result.colorArgb, equals(color));
-      });
+          expect(result.plainText, equals(expected));
+          expect(result.colorArgb, equals(color));
+        },
+      );
     }
   });
 
@@ -98,13 +105,25 @@ void main() {
       test('when parsing "$pattern" then it fails at position $position', () {
         expect(
           () => NumberFormatParser.parse(pattern),
-          throwsA(isA<FormatParseError>().having((e) => e.position, 'position', position)),
+          throwsA(
+            isA<FormatParseError>().having(
+              (e) => e.position,
+              'position',
+              position,
+            ),
+          ),
         );
       });
     }
 
-    test('when formatting with an invalid pattern then Automatic rules apply', () {
-      expect(NumberFormatter().formatText(const NumberValue(1.5), '0.00"'), equals('1.5'));
-    });
+    test(
+      'when formatting with an invalid pattern then Automatic rules apply',
+      () {
+        expect(
+          NumberFormatter().formatText(const NumberValue(1.5), '0.00"'),
+          equals('1.5'),
+        );
+      },
+    );
   });
 }

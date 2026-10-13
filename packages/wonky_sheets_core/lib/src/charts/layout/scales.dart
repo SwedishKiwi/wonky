@@ -42,10 +42,12 @@ final class LinearScale extends ChartScale {
   final Float64List ticks;
 
   @override
-  double map(double v) => max == min ? (r0 + r1) / 2 : r0 + (v - min) / (max - min) * (r1 - r0);
+  double map(double v) =>
+      max == min ? (r0 + r1) / 2 : r0 + (v - min) / (max - min) * (r1 - r0);
 
   @override
-  double invert(double px) => r1 == r0 ? min : min + (px - r0) / (r1 - r0) * (max - min);
+  double invert(double px) =>
+      r1 == r0 ? min : min + (px - r0) / (r1 - r0) * (max - min);
 
   @override
   Float64List minorTicks(int perMajor) {
@@ -83,7 +85,9 @@ final class LogScale extends ChartScale {
   double map(double v) {
     if (!(v > 0)) return double.nan;
     final l = math.log(v) / math.ln10;
-    return _l1 == _l0 ? (r0 + r1) / 2 : r0 + (l - _l0) / (_l1 - _l0) * (r1 - r0);
+    return _l1 == _l0
+        ? (r0 + r1) / 2
+        : r0 + (l - _l0) / (_l1 - _l0) * (r1 - r0);
   }
 
   @override
@@ -171,7 +175,10 @@ abstract final class NiceTicks {
     if (!(step > 0)) return 0;
     for (var d = 0; d <= 12; d++) {
       final scaled = step * math.pow(10, d);
-      if ((scaled - scaled.roundToDouble()).abs() < 1e-6 * math.max(1, scaled.abs())) return d;
+      if ((scaled - scaled.roundToDouble()).abs() <
+          1e-6 * math.max(1, scaled.abs())) {
+        return d;
+      }
     }
     return 12;
   }
@@ -287,7 +294,11 @@ abstract final class TimeTicks {
 
   /// Ticks within [lo]..[hi] with at most about [target] ticks and the number format pattern to
   /// label them.
-  static (Float64List ticks, String pattern) compute(double lo, double hi, int target) {
+  static (Float64List ticks, String pattern) compute(
+    double lo,
+    double hi,
+    int target,
+  ) {
     final span = hi - lo;
     final t = math.max(2, target);
     if (!(span > 0)) return (Float64List.fromList([lo]), 'yyyy-mm-dd');
@@ -307,7 +318,11 @@ abstract final class TimeTicks {
     // Months and years.
     final a = DateSerial.toYmd(lo);
     final months = span / 30.44;
-    for (final (m, pattern) in const [(1, 'mmm yyyy'), (3, 'mmm yyyy'), (6, 'mmm yyyy')]) {
+    for (final (m, pattern) in const [
+      (1, 'mmm yyyy'),
+      (3, 'mmm yyyy'),
+      (6, 'mmm yyyy'),
+    ]) {
       if (months / m <= t) {
         final out = <double>[];
         var y = a.year, mo = a.month;

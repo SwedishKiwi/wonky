@@ -5,7 +5,14 @@ import 'least_squares.dart';
 import 'stat_number_format.dart';
 
 /// Trendline model types (specs/wonky_sheets/08-charts-and-objects.md §7).
-enum RegressionKind { linear, exponential, polynomial, logarithmic, power, movingAverage }
+enum RegressionKind {
+  linear,
+  exponential,
+  polynomial,
+  logarithmic,
+  power,
+  movingAverage,
+}
 
 /// A fitted trendline model.
 final class RegressionResult {
@@ -19,17 +26,27 @@ final class RegressionResult {
     required this.pointCount,
     this.skippedCount = 0,
     int? degree,
-  }) : degree = degree ?? (kind == RegressionKind.polynomial ? coefficients.length - 1 : 1),
+  }) : degree =
+           degree ??
+           (kind == RegressionKind.polynomial ? coefficients.length - 1 : 1),
        _tCoefficients = null,
        _center = 0,
        _scale = 1,
        _termScale = 1 {
     if (kind == RegressionKind.movingAverage) {
-      throw ArgumentError.value(kind, 'kind', 'moving averages have no regression result');
+      throw ArgumentError.value(
+        kind,
+        'kind',
+        'moving averages have no regression result',
+      );
     }
     final expected = kind == RegressionKind.polynomial ? this.degree + 1 : 2;
     if (coefficients.length != expected) {
-      throw ArgumentError.value(coefficients.length, 'coefficients', 'expected $expected');
+      throw ArgumentError.value(
+        coefficients.length,
+        'coefficients',
+        'expected $expected',
+      );
     }
   }
 
@@ -117,7 +134,8 @@ final class RegressionResult {
   /// (floating-point noise such as `4.4E-16`). A coefficient that formats as 1 is written as
   /// `x` (not `1x`), −1 as `-x`. Numbers use [StatNumberFormat.format].
   String equation({int significantDigits = 4}) {
-    String fmt(double v) => StatNumberFormat.format(v, significantDigits: significantDigits);
+    String fmt(double v) =>
+        StatNumberFormat.format(v, significantDigits: significantDigits);
     final c = coefficients;
     switch (kind) {
       case RegressionKind.linear:
@@ -161,7 +179,10 @@ final class RegressionResult {
 
   /// Joins `(coefficient, suffix, scale)` terms. A scale of 0 disables negligible-term dropping
   /// for that term; otherwise `|coefficient| · scale` is the term's magnitude.
-  static String _joinTerms(List<(double, String, double)> terms, String Function(double) fmt) {
+  static String _joinTerms(
+    List<(double, String, double)> terms,
+    String Function(double) fmt,
+  ) {
     var total = 0.0;
     var snapping = true;
     for (final (c, _, scale) in terms) {
@@ -174,7 +195,11 @@ final class RegressionResult {
     var first = true;
     for (final (c, suffix, scale) in terms) {
       if (c == 0) continue;
-      if (snapping && scale != 0 && c.abs() * scale <= negligibleTermRatio * total) continue;
+      if (snapping &&
+          scale != 0 &&
+          c.abs() * scale <= negligibleTermRatio * total) {
+        continue;
+      }
       final magnitude = fmt(c.abs());
       final coefText = suffix.isNotEmpty && magnitude == '1' ? '' : magnitude;
       final term = '$coefText$suffix';
@@ -279,8 +304,14 @@ abstract final class Regression {
   /// The degree used is `min(degree, 10, distinctX − 1)`, so it never exceeds n − 1. Null when
   /// fewer than two valid points or fewer than two distinct x values remain. [degree] must be
   /// ≥ 1.
-  static RegressionResult? polynomial(Float64List x, Float64List y, int degree) {
-    if (degree < 1) throw RangeError.range(degree, 1, maxPolynomialDegree, 'degree');
+  static RegressionResult? polynomial(
+    Float64List x,
+    Float64List y,
+    int degree,
+  ) {
+    if (degree < 1) {
+      throw RangeError.range(degree, 1, maxPolynomialDegree, 'degree');
+    }
     final p = _Points.collect(x, y, _validAll);
     final n = p.n;
     if (n < 2) return null;
@@ -343,7 +374,9 @@ abstract final class Regression {
   /// before. A window containing a NaN (or non-finite) input yields NaN. [period] must be ≥ 1;
   /// a period longer than the series gives all NaN.
   static Float64List movingAverage(Float64List y, int period) {
-    if (period < 1) throw RangeError.value(period, 'period', 'must be at least 1');
+    if (period < 1) {
+      throw RangeError.value(period, 'period', 'must be at least 1');
+    }
     final n = y.length;
     final out = Float64List(n)..fillRange(0, n, double.nan);
     if (period > n) return out;
@@ -431,9 +464,17 @@ final class _Points {
   final int skipped;
   final double maxAbsX;
 
-  static _Points collect(Float64List x, Float64List y, bool Function(double, double) valid) {
+  static _Points collect(
+    Float64List x,
+    Float64List y,
+    bool Function(double, double) valid,
+  ) {
     if (x.length != y.length) {
-      throw ArgumentError.value(y.length, 'y', 'length must equal x.length (${x.length})');
+      throw ArgumentError.value(
+        y.length,
+        'y',
+        'length must equal x.length (${x.length})',
+      );
     }
     final total = x.length;
     final xs = Float64List(total);

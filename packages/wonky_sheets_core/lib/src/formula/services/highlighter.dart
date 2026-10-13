@@ -31,7 +31,8 @@ final class HighlightSpan {
   const HighlightSpan(this.start, this.end, this.cls, [this.colorIndex]);
 
   @override
-  String toString() => '${cls.name}[$start,$end)${colorIndex == null ? '' : '#$colorIndex'}';
+  String toString() =>
+      '${cls.name}[$start,$end)${colorIndex == null ? '' : '#$colorIndex'}';
 }
 
 /// A reference in edited A1 text with its colour (drives the coloured range boxes, 03 §8.7).
@@ -45,7 +46,8 @@ final class FormulaReferenceSpan {
   const FormulaReferenceSpan(this.start, this.end, this.area, this.colorIndex);
 
   @override
-  String toString() => 'FormulaReferenceSpan(${area.format()} [$start,$end) #$colorIndex)';
+  String toString() =>
+      'FormulaReferenceSpan(${area.format()} [$start,$end) #$colorIndex)';
 }
 
 /// Syntax highlighting and reference colouring for the cell editor (05 §4.3).
@@ -63,7 +65,10 @@ abstract final class FormulaHighlighter {
     int? caret,
     bool Function(String name)? isNamedRange,
   }) {
-    final tokens = FormulaLexer(locale: locale, storedForm: false).tokenize(text);
+    final tokens = FormulaLexer(
+      locale: locale,
+      storedForm: false,
+    ).tokenize(text);
     final colors = <String, int>{};
     final out = <HighlightSpan>[];
     // paren matching
@@ -82,8 +87,11 @@ abstract final class FormulaHighlighter {
     if (caret != null) {
       for (var i = 0; i < tokens.length; i++) {
         final t = tokens[i];
-        final isParen = t.kind == TokenKind.openParen || t.kind == TokenKind.closeParen;
-        if (isParen && (t.start == caret || t.end == caret) && match.containsKey(i)) {
+        final isParen =
+            t.kind == TokenKind.openParen || t.kind == TokenKind.closeParen;
+        if (isParen &&
+            (t.start == caret || t.end == caret) &&
+            match.containsKey(i)) {
           caretPair
             ..add(i)
             ..add(match[i]!);
@@ -99,7 +107,9 @@ abstract final class FormulaHighlighter {
             TokenKind.columnRange ||
             TokenKind.rowRange:
           final key = _refKey(t.ref!.a1!);
-          final idx = colors.putIfAbsent(key, () => colors.length) % referenceColorCount;
+          final idx =
+              colors.putIfAbsent(key, () => colors.length) %
+              referenceColorCount;
           out.add(HighlightSpan(t.start, t.end, HighlightClass.reference, idx));
         case TokenKind.storedRef:
           out.add(HighlightSpan(t.start, t.end, HighlightClass.reference));
@@ -111,8 +121,12 @@ abstract final class FormulaHighlighter {
           final named = isNamedRange?.call(t.text) ?? false;
           if (named) {
             final key = 'name:${t.text.toUpperCase()}';
-            final idx = colors.putIfAbsent(key, () => colors.length) % referenceColorCount;
-            out.add(HighlightSpan(t.start, t.end, HighlightClass.namedRange, idx));
+            final idx =
+                colors.putIfAbsent(key, () => colors.length) %
+                referenceColorCount;
+            out.add(
+              HighlightSpan(t.start, t.end, HighlightClass.namedRange, idx),
+            );
           } else {
             out.add(HighlightSpan(t.start, t.end, HighlightClass.name));
           }
@@ -129,7 +143,9 @@ abstract final class FormulaHighlighter {
         case TokenKind.openParen || TokenKind.closeParen:
           final cls = !match.containsKey(i)
               ? HighlightClass.unmatchedParen
-              : (caretPair.contains(i) ? HighlightClass.matchedParen : HighlightClass.punctuation);
+              : (caretPair.contains(i)
+                    ? HighlightClass.matchedParen
+                    : HighlightClass.punctuation);
           out.add(HighlightSpan(t.start, t.end, cls));
         case TokenKind.openBrace ||
             TokenKind.closeBrace ||
@@ -148,14 +164,22 @@ abstract final class FormulaHighlighter {
 
   /// References of [text] with colour indices in order of first appearance (identical
   /// references share a colour).
-  static List<FormulaReferenceSpan> references(String text, {FormulaLocale locale = FormulaLocale.enUS}) {
-    final tokens = FormulaLexer(locale: locale, storedForm: false).tokenize(text);
+  static List<FormulaReferenceSpan> references(
+    String text, {
+    FormulaLocale locale = FormulaLocale.enUS,
+  }) {
+    final tokens = FormulaLexer(
+      locale: locale,
+      storedForm: false,
+    ).tokenize(text);
     final colors = <String, int>{};
     final out = <FormulaReferenceSpan>[];
     for (final t in tokens) {
       final a = t.ref?.a1;
       if (a == null) continue;
-      final idx = colors.putIfAbsent(_refKey(a), () => colors.length) % referenceColorCount;
+      final idx =
+          colors.putIfAbsent(_refKey(a), () => colors.length) %
+          referenceColorCount;
       out.add(FormulaReferenceSpan(t.start, t.end, a, idx));
     }
     return out;

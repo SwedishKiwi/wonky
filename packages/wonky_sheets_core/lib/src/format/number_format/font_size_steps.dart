@@ -4,7 +4,22 @@ abstract final class FontSizeSteps {
   static const List<double> menu = [6, 7, 8, 9, 10, 11, 12, 14, 18, 24, 36];
 
   /// Sizes stepped through by `increaseFontSize` / `decreaseFontSize`.
-  static const List<double> steps = [6, 7, 8, 9, 10, 11, 12, 14, 18, 24, 36, 48, 72, 96];
+  static const List<double> steps = [
+    6,
+    7,
+    8,
+    9,
+    10,
+    11,
+    12,
+    14,
+    18,
+    24,
+    36,
+    48,
+    72,
+    96,
+  ];
 
   /// Minimum size accepted by the stepper.
   static const double min = 1;

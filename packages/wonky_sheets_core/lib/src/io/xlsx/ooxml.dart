@@ -19,13 +19,20 @@ final class XlsxFormatException implements Exception {
 
 /// OOXML namespaces, content types and relationship types.
 abstract final class Ooxml {
-  static const main = 'http://schemas.openxmlformats.org/spreadsheetml/2006/main';
-  static const rel = 'http://schemas.openxmlformats.org/officeDocument/2006/relationships';
-  static const pkgRel = 'http://schemas.openxmlformats.org/package/2006/relationships';
-  static const contentTypes = 'http://schemas.openxmlformats.org/package/2006/content-types';
-  static const drawingMl = 'http://schemas.openxmlformats.org/drawingml/2006/main';
-  static const xdr = 'http://schemas.openxmlformats.org/drawingml/2006/spreadsheetDrawing';
-  static const mc = 'http://schemas.openxmlformats.org/markup-compatibility/2006';
+  static const main =
+      'http://schemas.openxmlformats.org/spreadsheetml/2006/main';
+  static const rel =
+      'http://schemas.openxmlformats.org/officeDocument/2006/relationships';
+  static const pkgRel =
+      'http://schemas.openxmlformats.org/package/2006/relationships';
+  static const contentTypes =
+      'http://schemas.openxmlformats.org/package/2006/content-types';
+  static const drawingMl =
+      'http://schemas.openxmlformats.org/drawingml/2006/main';
+  static const xdr =
+      'http://schemas.openxmlformats.org/drawingml/2006/spreadsheetDrawing';
+  static const mc =
+      'http://schemas.openxmlformats.org/markup-compatibility/2006';
 
   static const relOfficeDocument = '$rel/officeDocument';
   static const relWorksheet = '$rel/worksheet';
@@ -38,7 +45,8 @@ abstract final class Ooxml {
   static const relDrawing = '$rel/drawing';
   static const relImage = '$rel/image';
   static const relSheetMetadata = '$rel/sheetMetadata';
-  static const relCoreProps = 'http://schemas.openxmlformats.org/package/2006/relationships/metadata/core-properties';
+  static const relCoreProps =
+      'http://schemas.openxmlformats.org/package/2006/relationships/metadata/core-properties';
   static const relExtProps = '$rel/extended-properties';
 
   /// Max rows/columns of an XLSX sheet.
@@ -52,7 +60,8 @@ abstract final class Ooxml {
   static const mdw = 7;
 
   /// `<col width>` (characters incl. padding) → px (11 §5.2).
-  static double widthToPx(double w) => ((256 * w + (128 ~/ mdw)) / 256 * mdw).truncateToDouble();
+  static double widthToPx(double w) =>
+      ((256 * w + (128 ~/ mdw)) / 256 * mdw).truncateToDouble();
 
   /// px → `<col width>` such that [widthToPx] returns the same integer px.
   static double pxToWidth(double px) {
@@ -86,7 +95,10 @@ abstract final class Ooxml {
   /// Decodes `_xHHHH_` escapes of OOXML strings.
   static String decodeEscapes(String s) {
     if (!s.contains('_x')) return s;
-    return s.replaceAllMapped(_xEscape, (m) => String.fromCharCode(int.parse(m.group(1)!, radix: 16)));
+    return s.replaceAllMapped(
+      _xEscape,
+      (m) => String.fromCharCode(int.parse(m.group(1)!, radix: 16)),
+    );
   }
 
   /// Encodes characters invalid in XML 1.0 (and literal `_xHHHH_`
@@ -95,7 +107,9 @@ abstract final class Ooxml {
     var needs = false;
     for (var i = 0; i < s.length; i++) {
       final c = s.codeUnitAt(i);
-      if ((c < 0x20 && c != 0x09 && c != 0x0a && c != 0x0d) || c == 0xfffe || c == 0xffff) {
+      if ((c < 0x20 && c != 0x09 && c != 0x0a && c != 0x0d) ||
+          c == 0xfffe ||
+          c == 0xffff) {
         needs = true;
         break;
       }
@@ -105,7 +119,9 @@ abstract final class Ooxml {
     final b = StringBuffer();
     for (var i = 0; i < out.length; i++) {
       final c = out.codeUnitAt(i);
-      if ((c < 0x20 && c != 0x09 && c != 0x0a && c != 0x0d) || c == 0xfffe || c == 0xffff) {
+      if ((c < 0x20 && c != 0x09 && c != 0x0a && c != 0x0d) ||
+          c == 0xfffe ||
+          c == 0xffff) {
         b.write('_x${c.toRadixString(16).padLeft(4, '0').toUpperCase()}_');
       } else {
         b.writeCharCode(c);
@@ -118,7 +134,10 @@ abstract final class Ooxml {
   static String esc(String s) {
     final t = encodeEscapes(s);
     if (!t.contains(RegExp(r'[&<>]'))) return t;
-    return t.replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('>', '&gt;');
+    return t
+        .replaceAll('&', '&amp;')
+        .replaceAll('<', '&lt;')
+        .replaceAll('>', '&gt;');
   }
 
   /// Escapes an attribute value for XML (double quotes).
@@ -138,7 +157,9 @@ abstract final class Ooxml {
   /// (`xl/workbook.xml` + `worksheets/sheet1.xml` → `xl/worksheets/sheet1.xml`).
   static String resolve(String base, String target) {
     if (target.startsWith('/')) return target.substring(1);
-    final dir = base.contains('/') ? base.substring(0, base.lastIndexOf('/')) : '';
+    final dir = base.contains('/')
+        ? base.substring(0, base.lastIndexOf('/'))
+        : '';
     final parts = [if (dir.isNotEmpty) ...dir.split('/')];
     for (final p in target.split('/')) {
       if (p == '..') {
@@ -178,7 +199,9 @@ final class ZipPackage {
   /// Opens [bytes]; throws [XlsxFormatException] for non-zip data.
   factory ZipPackage.open(Uint8List bytes) {
     if (bytes.length < 4 || bytes[0] != 0x50 || bytes[1] != 0x4b) {
-      throw const XlsxFormatException('The file is not a ZIP package (XLSX/ODS)');
+      throw const XlsxFormatException(
+        'The file is not a ZIP package (XLSX/ODS)',
+      );
     }
     try {
       final archive = ZipDecoder().decodeBytes(bytes);
@@ -228,7 +251,9 @@ final class ZipPackage {
     final b = bytes(name);
     if (b == null) return null;
     var start = 0;
-    if (b.length >= 3 && b[0] == 0xef && b[1] == 0xbb && b[2] == 0xbf) start = 3;
+    if (b.length >= 3 && b[0] == 0xef && b[1] == 0xbb && b[2] == 0xbf) {
+      start = 3;
+    }
     if (b.length >= 2 && b[0] == 0xff && b[1] == 0xfe) {
       final codes = <int>[];
       for (var i = 2; i + 1 < b.length; i += 2) {
@@ -247,7 +272,9 @@ final class ZipPackage {
     try {
       return XmlDocument.parse(t);
     } on XmlException catch (e) {
-      throw XlsxFormatException('Part $name is not well-formed XML (${e.message})');
+      throw XlsxFormatException(
+        'Part $name is not well-formed XML (${e.message})',
+      );
     }
   }
 
@@ -262,7 +289,12 @@ final class ZipPackage {
       final target = r.getAttribute('Target') ?? '';
       if (id == null) continue;
       final ext = r.getAttribute('TargetMode') == 'External';
-      out[id] = OoxmlRel(id, type, ext ? target : Ooxml.resolve(part, Uri.decodeFull(target)), external: ext);
+      out[id] = OoxmlRel(
+        id,
+        type,
+        ext ? target : Ooxml.resolve(part, Uri.decodeFull(target)),
+        external: ext,
+      );
     }
     return out;
   }
@@ -279,7 +311,8 @@ extension XmlElementX on XmlElement {
   }
 
   /// Child elements with [local] name.
-  Iterable<XmlElement> elems(String local) => childElements.where((c) => c.localName == local);
+  Iterable<XmlElement> elems(String local) =>
+      childElements.where((c) => c.localName == local);
 
   /// Attribute by local name (ignores prefixes).
   String? attr(String local) {

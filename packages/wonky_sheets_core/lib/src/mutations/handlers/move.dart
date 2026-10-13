@@ -64,13 +64,19 @@ Map<String, Object?> cellData(Map<String, Object?>? cell) => {
   }
   return (
     (i) => i < s.rows.length ? s.rows.idAt(i) : extraRows[i - s.rows.length],
-    (i) => i < s.columns.length ? s.columns.idAt(i) : extraCols[i - s.columns.length],
+    (i) => i < s.columns.length
+        ? s.columns.idAt(i)
+        : extraCols[i - s.columns.length],
   );
 }
 
 /// Refuses writes that would break apart merges in [dest] of [s], ignoring
 /// merges in [ignore].
-void checkMergesNotSplit(SheetModel s, GridRect dest, {Set<String> ignore = const {}}) {
+void checkMergesNotSplit(
+  SheetModel s,
+  GridRect dest, {
+  Set<String> ignore = const {},
+}) {
   for (final (id, m) in s.mergesIntersecting(dest)) {
     if (ignore.contains(id)) continue;
     if (!dest.containsRect(m)) {
@@ -85,7 +91,10 @@ void checkMergesNotSplit(SheetModel s, GridRect dest, {Set<String> ignore = cons
 /// [MoveRange]: move (cut/paste, drag) or copy a block (03 §11, §12.6).
 MutationPlan planMoveRange(PlanBuilder b, MoveRange op) {
   applyMoveRange(b, op);
-  return b.build(op.copy ? 'Copy' : 'Move', kinds: [ChangeKinds.values, ChangeKinds.format]);
+  return b.build(
+    op.copy ? 'Copy' : 'Move',
+    kinds: [ChangeKinds.values, ChangeKinds.format],
+  );
 }
 
 /// Adds the writes of [op] to [b].
@@ -112,7 +121,10 @@ void applyMoveRange(PlanBuilder b, MoveRange op) {
   ];
   for (final (_, m) in src.mergesIntersecting(s)) {
     if (!s.containsRect(m)) {
-      throw const PlanException('merge_conflict', "You can't move only part of a merged cell");
+      throw const PlanException(
+        'merge_conflict',
+        "You can't move only part of a merged cell",
+      );
     }
   }
   if (d.bottom < dst.rows.length && d.right < dst.columns.length) {
@@ -238,7 +250,15 @@ void _moveValidation(
   required bool copy,
 }) {
   final moved =
-      <(String criteria, bool strict, String? style, String? help, List<GridRect> rects)>[];
+      <
+        (
+          String criteria,
+          bool strict,
+          String? style,
+          String? help,
+          List<GridRect> rects,
+        )
+      >[];
   for (final rule in src.dvRules.values) {
     final rects = src.ruleRects(RuleKind.dataValidation, rule.id);
     final inside = [
@@ -257,7 +277,9 @@ void _moveValidation(
   if (moved.isEmpty) return;
   // Remove validation from the moved-out source (move) and the destination.
   if (!copy) _subtractDv(b, src, [s]);
-  if (d.bottom < dst.rows.length && d.right < dst.columns.length) _subtractDv(b, dst, [d]);
+  if (d.bottom < dst.rows.length && d.right < dst.columns.length) {
+    _subtractDv(b, dst, [d]);
+  }
   for (final (criteria, strict, style, help, rects) in moved) {
     final ranges = [
       for (final r in rects)
@@ -306,7 +328,13 @@ void _subtractDv(PlanBuilder b, SheetModel s, List<GridRect> rects) {
 
 /// Retargets formulas (outside the moved block) and id ranges fully inside the
 /// moved block to the destination (05 §5.5).
-void _remapReferences(PlanBuilder b, SheetModel src, GridRect s, SheetModel dst, GridRect d) {
+void _remapReferences(
+  PlanBuilder b,
+  SheetModel src,
+  GridRect s,
+  SheetModel dst,
+  GridRect d,
+) {
   final hooks = b.formulas;
   final srcRowIds = [for (var r = s.top; r <= s.bottom; r++) src.rows.idAt(r)];
   final destRowIds = <int, String>{};
@@ -325,16 +353,25 @@ void _remapReferences(PlanBuilder b, SheetModel src, GridRect s, SheetModel dst,
         destSheetId: dst.id,
         dest: d,
       );
-      if (r != null && r != content) b.update(SheetsTables.cell, cell.id, {CellCols.content: r});
+      if (r != null && r != content) {
+        b.update(SheetsTables.cell, cell.id, {CellCols.content: r});
+      }
     }
   }
   // Id ranges fully inside the source block (named ranges, CF, chart ranges).
   GridRange? remapRange(GridRange g) {
     if (g.sheetId != src.id) return null;
     final rr = src.resolve(g);
-    if (rr == null || !s.containsRect(rr.rect) || rr.wholeRows || rr.wholeColumns) return null;
+    if (rr == null ||
+        !s.containsRect(rr.rect) ||
+        rr.wholeRows ||
+        rr.wholeColumns) {
+      return null;
+    }
     final m = rr.rect.shift(d.top - s.top, d.left - s.left);
-    if (m.bottom >= dst.rows.length || m.right >= dst.columns.length) return null;
+    if (m.bottom >= dst.rows.length || m.right >= dst.columns.length) {
+      return null;
+    }
     destRowIds[m.top] = dst.rows.idAt(m.top);
     return dst.gridRange(m);
   }
@@ -343,7 +380,9 @@ void _remapReferences(PlanBuilder b, SheetModel src, GridRect s, SheetModel dst,
     final g = GridRange.tryParse(n.rangeJson);
     if (g == null) continue;
     final r = remapRange(g);
-    if (r != null) b.update(SheetsTables.namedRange, n.id, {Cols.rangeJson: r.encode()});
+    if (r != null) {
+      b.update(SheetsTables.namedRange, n.id, {Cols.rangeJson: r.encode()});
+    }
   }
   if (src.id == dst.id) {
     for (final rule in src.cfRules.values) {
@@ -372,7 +411,8 @@ void _remapReferences(PlanBuilder b, SheetModel src, GridRect s, SheetModel dst,
       var changed = false;
       Object? walk(Object? v) {
         if (v is Map) {
-          if (v['s'] is String && (v.containsKey('r1') || v.containsKey('c1'))) {
+          if (v['s'] is String &&
+              (v.containsKey('r1') || v.containsKey('c1'))) {
             final g = GridRange.tryParse(v);
             final r = g == null ? null : remapRange(g);
             if (r != null) {
@@ -388,7 +428,11 @@ void _remapReferences(PlanBuilder b, SheetModel src, GridRect s, SheetModel dst,
       }
 
       final out = walk(spec);
-      if (changed) b.update(SheetsTables.embeddedObject, o.id, {'specJson': jsonEncode(out)});
+      if (changed) {
+        b.update(SheetsTables.embeddedObject, o.id, {
+          'specJson': jsonEncode(out),
+        });
+      }
     }
   }
 }

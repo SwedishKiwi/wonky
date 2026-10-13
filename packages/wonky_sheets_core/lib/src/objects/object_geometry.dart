@@ -19,17 +19,22 @@ enum ResizeHandle {
   bool get movesLeft => this == topLeft || this == left || this == bottomLeft;
 
   /// Whether dragging moves the right edge.
-  bool get movesRight => this == topRight || this == right || this == bottomRight;
+  bool get movesRight =>
+      this == topRight || this == right || this == bottomRight;
 
   /// Whether dragging moves the top edge.
   bool get movesTop => this == topLeft || this == top || this == topRight;
 
   /// Whether dragging moves the bottom edge.
-  bool get movesBottom => this == bottomLeft || this == bottom || this == bottomRight;
+  bool get movesBottom =>
+      this == bottomLeft || this == bottom || this == bottomRight;
 
   /// Whether this is a corner handle (resizes both dimensions).
   bool get isCorner =>
-      this == topLeft || this == topRight || this == bottomLeft || this == bottomRight;
+      this == topLeft ||
+      this == topRight ||
+      this == bottomLeft ||
+      this == bottomRight;
 }
 
 /// Pure size and rectangle math for embedded objects (08 §9.3).
@@ -48,10 +53,18 @@ abstract final class ObjectGeometry {
     double maxWidth = ObjectAnchor.maxSize,
     double maxHeight = ObjectAnchor.maxSize,
   }) {
-    final maxW = math.max(ObjectAnchor.minSize, math.min(maxWidth, ObjectAnchor.maxSize));
-    final maxH = math.max(ObjectAnchor.minSize, math.min(maxHeight, ObjectAnchor.maxSize));
-    double clampW(double w) => w.isNaN ? ObjectAnchor.minSize : w.clamp(ObjectAnchor.minSize, maxW);
-    double clampH(double h) => h.isNaN ? ObjectAnchor.minSize : h.clamp(ObjectAnchor.minSize, maxH);
+    final maxW = math.max(
+      ObjectAnchor.minSize,
+      math.min(maxWidth, ObjectAnchor.maxSize),
+    );
+    final maxH = math.max(
+      ObjectAnchor.minSize,
+      math.min(maxHeight, ObjectAnchor.maxSize),
+    );
+    double clampW(double w) =>
+        w.isNaN ? ObjectAnchor.minSize : w.clamp(ObjectAnchor.minSize, maxW);
+    double clampH(double h) =>
+        h.isNaN ? ObjectAnchor.minSize : h.clamp(ObjectAnchor.minSize, maxH);
     if (aspect == null || !aspect.isFinite || aspect <= 0) {
       return ChartSize(clampW(width), clampH(height));
     }
@@ -92,7 +105,8 @@ abstract final class ObjectGeometry {
     if (handle.movesRight) w += ddx;
     if (handle.movesTop) h -= ddy;
     if (handle.movesBottom) h += ddy;
-    final aspect = keepAspect && handle.isCorner && start.width > 0 && start.height > 0
+    final aspect =
+        keepAspect && handle.isCorner && start.width > 0 && start.height > 0
         ? start.width / start.height
         : null;
     final size = constrainSize(
@@ -104,7 +118,12 @@ abstract final class ObjectGeometry {
     );
     final left = handle.movesLeft ? start.right - size.width : start.left;
     final top = handle.movesTop ? start.bottom - size.height : start.top;
-    return ChartRect(math.max(0, left), math.max(0, top), size.width, size.height);
+    return ChartRect(
+      math.max(0, left),
+      math.max(0, top),
+      size.width,
+      size.height,
+    );
   }
 }
 
@@ -146,11 +165,18 @@ abstract final class GridSnap {
     var r = rect.right;
     var t = rect.top;
     var b = rect.bottom;
-    bool ok(double a, double z) => z - a >= ObjectAnchor.minSize && z - a <= ObjectAnchor.maxSize;
-    if (handle.movesLeft && ok(snapOffset(l, columns), r)) l = snapOffset(l, columns);
-    if (handle.movesRight && ok(l, snapOffset(r, columns))) r = snapOffset(r, columns);
+    bool ok(double a, double z) =>
+        z - a >= ObjectAnchor.minSize && z - a <= ObjectAnchor.maxSize;
+    if (handle.movesLeft && ok(snapOffset(l, columns), r)) {
+      l = snapOffset(l, columns);
+    }
+    if (handle.movesRight && ok(l, snapOffset(r, columns))) {
+      r = snapOffset(r, columns);
+    }
     if (handle.movesTop && ok(snapOffset(t, rows), b)) t = snapOffset(t, rows);
-    if (handle.movesBottom && ok(t, snapOffset(b, rows))) b = snapOffset(b, rows);
+    if (handle.movesBottom && ok(t, snapOffset(b, rows))) {
+      b = snapOffset(b, rows);
+    }
     return ChartRect(l, t, r - l, b - t);
   }
 

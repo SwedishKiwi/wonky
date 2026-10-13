@@ -304,7 +304,11 @@ final class PrintWarning {
 /// Result of [Paginator.paginate].
 final class PaginationResult {
   /// Creates a result.
-  const PaginationResult(this.pages, this.warnings, {required this.requestedPages});
+  const PaginationResult(
+    this.pages,
+    this.warnings, {
+    required this.requestedPages,
+  });
 
   final List<PageSpec> pages;
   final List<PrintWarning> warnings;
@@ -345,8 +349,12 @@ abstract final class Paginator {
           targets.add((s, grid == null ? null : sel.rect.intersection(grid)));
         }
       case PrintScope.namedRange:
-        final n = job.namedRange == null ? null : model.namedRange(job.namedRange!);
-        final g = n?.rangeJson == null ? null : GridRange.tryParse(n!.rangeJson);
+        final n = job.namedRange == null
+            ? null
+            : model.namedRange(job.namedRange!);
+        final g = n?.rangeJson == null
+            ? null
+            : GridRange.tryParse(n!.rangeJson);
         final rr = g == null ? null : model.resolve(g);
         if (rr == null) {
           warnings.add(
@@ -371,7 +379,15 @@ abstract final class Paginator {
 
     for (final (sheet, explicitRect) in targets) {
       final settings = job.settingsFor(sheet, loc);
-      final ctx = _SheetContext(model, sheet, settings, source, measurer, rowHeightPx, loc);
+      final ctx = _SheetContext(
+        model,
+        sheet,
+        settings,
+        source,
+        measurer,
+        rowHeightPx,
+        loc,
+      );
       final pages = sheet.record?.kind == SheetKind.chart
           ? ctx.chartPages()
           : ctx.cellPages(
@@ -383,7 +399,12 @@ abstract final class Paginator {
       drafts.addAll(pages);
     }
     if (drafts.isEmpty) {
-      warnings.add(const PrintWarning(PrintWarningKind.empty, 'There is nothing to print.'));
+      warnings.add(
+        const PrintWarning(
+          PrintWarningKind.empty,
+          'There is nothing to print.',
+        ),
+      );
     }
     if (requested > PrintMetrics.warnPages) {
       warnings.add(
@@ -457,7 +478,12 @@ abstract final class Paginator {
       right = math.max(right, c.right);
     }
     if (bottom < 0 || right < 0) return null;
-    return GridRect(0, 0, math.min(bottom, grid.bottom), math.min(right, grid.right));
+    return GridRect(
+      0,
+      0,
+      math.min(bottom, grid.bottom),
+      math.min(right, grid.right),
+    );
   }
 }
 
@@ -483,8 +509,12 @@ final class _SheetContext {
 
   late final double pageW = settings.pageWidthPt;
   late final double pageH = settings.pageHeightPt;
-  late final double headerH = _bandHeight(settings.headerFooter.effectiveHeader);
-  late final double footerH = _bandHeight(settings.headerFooter.effectiveFooter);
+  late final double headerH = _bandHeight(
+    settings.headerFooter.effectiveHeader,
+  );
+  late final double footerH = _bandHeight(
+    settings.headerFooter.effectiveFooter,
+  );
   late final double left = settings.margins.leftPt;
   late final double top = settings.margins.topPt + headerH;
   late final double availW = math.max(
@@ -493,7 +523,11 @@ final class _SheetContext {
   );
   late final double availH = math.max(
     1,
-    pageH - settings.margins.topPt - settings.margins.bottomPt - headerH - footerH,
+    pageH -
+        settings.margins.topPt -
+        settings.margins.bottomPt -
+        headerH -
+        footerH,
   );
 
   static double _bandHeight(HeaderFooterSections s) =>
@@ -598,7 +632,11 @@ final class _SheetContext {
     final o = rowHeightPx?.call(sheet.id, r);
     if (o != null) return o;
     final natural = sheet.rows.naturalSizeAt(r);
-    if (source == null || measurer == null || sheet.rows.explicitSizeAt(r) != null) return natural;
+    if (source == null ||
+        measurer == null ||
+        sheet.rows.explicitSizeAt(r) != null) {
+      return natural;
+    }
     return math.max(natural, _autoFit(r, range));
   }
 
@@ -606,7 +644,10 @@ final class _SheetContext {
 
   double _autoFit(int r, GridRect range) {
     var best = 0.0;
-    final cells = sheet.cellsIn(GridRect(r, range.left, r, range.right), contentOnly: true);
+    final cells = sheet.cellsIn(
+      GridRect(r, range.left, r, range.right),
+      contentOnly: true,
+    );
     for (final (row, col, cell) in cells) {
       final content = cell.decoded;
       if (content == null) continue;
@@ -647,9 +688,15 @@ final class _SheetContext {
         (f['fontSize'] is double && (f['fontSize'] as double) > 12);
   }
 
-  List<PageSpec> cellPages(GridRect? range, List<PrintWarning> warnings, {required bool onlySheet}) {
+  List<PageSpec> cellPages(
+    GridRect? range,
+    List<PrintWarning> warnings, {
+    required bool onlySheet,
+  }) {
     final grid = sheet.gridRect;
-    final rect = range == null || grid == null ? null : range.intersection(grid);
+    final rect = range == null || grid == null
+        ? null
+        : range.intersection(grid);
     final visRows = rect == null
         ? const <int>[]
         : [
@@ -690,8 +737,16 @@ final class _SheetContext {
       ];
     }
 
-    var rRows = repeatOf(settings.repeatRows, sheet.record?.frozenRows ?? 0, sheet.rows);
-    var rCols = repeatOf(settings.repeatCols, sheet.record?.frozenColumns ?? 0, sheet.columns);
+    var rRows = repeatOf(
+      settings.repeatRows,
+      sheet.record?.frozenRows ?? 0,
+      sheet.rows,
+    );
+    var rCols = repeatOf(
+      settings.repeatCols,
+      sheet.record?.frozenColumns ?? 0,
+      sheet.columns,
+    );
     var bodyRows = [
       for (final r in visRows)
         if (!rRows.contains(r)) r,
@@ -724,9 +779,14 @@ final class _SheetContext {
       PrintScaleMode.custom => settings.scalePercent / 100,
       PrintScaleMode.fitWidth => availW / (totalW * k),
       PrintScaleMode.fitHeight => availH / (totalH * k),
-      PrintScaleMode.fitPage => math.min(availW / (totalW * k), availH / (totalH * k)),
+      PrintScaleMode.fitPage => math.min(
+        availW / (totalW * k),
+        availH / (totalH * k),
+      ),
     };
-    if (settings.scaleMode != PrintScaleMode.custom) scale = math.min(1.0, scale);
+    if (settings.scaleMode != PrintScaleMode.custom) {
+      scale = math.min(1.0, scale);
+    }
     scale = scale.clamp(0.1, 4.0).toDouble();
 
     final pageWPx = availW / (k * scale);
@@ -884,9 +944,14 @@ final class _SheetContext {
       entries.add((r, col, note));
     }
     if (entries.isEmpty) return const [];
-    entries.sort((a, b) => a.$1 != b.$1 ? a.$1.compareTo(b.$1) : a.$2.compareTo(b.$2));
+    entries.sort(
+      (a, b) => a.$1 != b.$1 ? a.$1.compareTo(b.$1) : a.$2.compareTo(b.$2),
+    );
     final m = measurer ?? const ApproximateTextMeasurer();
-    const style = CellTextStyle(family: 'Helvetica', size: PrintMetrics.notesFontPt);
+    const style = CellTextStyle(
+      family: 'Helvetica',
+      size: PrintMetrics.notesFontPt,
+    );
     final lines = <NoteLine>[NoteLine('Notes · ${sheet.name}', heading: true)];
     for (final (r, c, note) in entries) {
       final text = '${CellPos(r, c).a1}: ${note.replaceAll('\r\n', '\n')}';
@@ -901,14 +966,18 @@ final class _SheetContext {
         paddingY: 0,
       );
       for (var i = 0; i < layout.lines.length; i++) {
-        lines.add(NoteLine(layout.lineText(layout.lines[i]), continuation: i > 0));
+        lines.add(
+          NoteLine(layout.lineText(layout.lines[i]), continuation: i > 0),
+        );
       }
     }
     final pages = <List<NoteLine>>[];
     var cur = <NoteLine>[];
     var used = 0.0;
     for (final l in lines) {
-      final lh = l.heading ? PrintMetrics.notesHeadingPt : PrintMetrics.notesLinePt;
+      final lh = l.heading
+          ? PrintMetrics.notesHeadingPt
+          : PrintMetrics.notesLinePt;
       if (cur.isNotEmpty && used + lh > availH) {
         pages.add(cur);
         cur = <NoteLine>[];

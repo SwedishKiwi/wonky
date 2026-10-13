@@ -50,8 +50,9 @@ final class FormulaTestBench {
 
   MemorySheet get sheet1 => workbook.sheets.first;
 
-  MemorySheet sheet(String? name) =>
-      name == null ? sheet1 : (workbook.sheetByName(name) ?? (throw ArgumentError('no sheet $name')));
+  MemorySheet sheet(String? name) => name == null
+      ? sheet1
+      : (workbook.sheetByName(name) ?? (throw ArgumentError('no sheet $name')));
 
   FormulaLocale get locale => FormulaLocale.forId(workbook.settings.locale);
 
@@ -74,17 +75,29 @@ final class FormulaTestBench {
     if (text.startsWith('=')) {
       final stored = FormulaCodec.toStored(
         text,
-        CodecContext(workbook: workbook, hostSheetId: s.id, hostRow: row, hostCol: col, locale: locale),
+        CodecContext(
+          workbook: workbook,
+          hostSheetId: s.id,
+          hostRow: row,
+          hostCol: col,
+          locale: locale,
+        ),
       );
       return EngineCellInput.formula(stored);
     }
-    if (text.startsWith("'")) return EngineCellInput.value(FText(text.substring(1)));
+    if (text.startsWith("'")) {
+      return EngineCellInput.value(FText(text.substring(1)));
+    }
     final upper = text.toUpperCase();
-    if (upper == 'TRUE' || upper == 'FALSE') return EngineCellInput.value(FBool(upper == 'TRUE'));
+    if (upper == 'TRUE' || upper == 'FALSE') {
+      return EngineCellInput.value(FBool(upper == 'TRUE'));
+    }
     final err = ErrorKind.fromLiteral(upper);
     if (err != null) return EngineCellInput.value(FError(err));
     final n = TextNumberParser.parse(text, locale);
-    if (n != null && text.trim().isNotEmpty) return EngineCellInput.value(FNumber(n.$1));
+    if (n != null && text.trim().isNotEmpty) {
+      return EngineCellInput.value(FNumber(n.$1));
+    }
     return EngineCellInput.value(FText(text));
   }
 
@@ -117,7 +130,10 @@ final class FormulaTestBench {
       }
       if (rows[i].length > w) w = rows[i].length;
     }
-    engine.rectChanged(s.id, GridRect(r, c, r + rows.length - 1, c + (w == 0 ? 0 : w - 1)));
+    engine.rectChanged(
+      s.id,
+      GridRect(r, c, r + rows.length - 1, c + (w == 0 ? 0 : w - 1)),
+    );
   }
 
   /// Computed value after settling all pending recalculation.
@@ -149,7 +165,13 @@ final class FormulaTestBench {
     if (stored == null) return '';
     return FormulaCodec.toA1(
       stored,
-      CodecContext(workbook: workbook, hostSheetId: s.id, hostRow: r, hostCol: c, locale: locale),
+      CodecContext(
+        workbook: workbook,
+        hostSheetId: s.id,
+        hostRow: r,
+        hostCol: c,
+        locale: locale,
+      ),
     );
   }
 
@@ -158,7 +180,11 @@ final class FormulaTestBench {
     final s = sheet(sheetName);
     final ids = s.rows.insert(index, count);
     s.structureChanged();
-    engine.axisChanged(s.id, GridDimension.rows, AxisChange.inserted(index, count));
+    engine.axisChanged(
+      s.id,
+      GridDimension.rows,
+      AxisChange.inserted(index, count),
+    );
     return ids;
   }
 
@@ -166,7 +192,11 @@ final class FormulaTestBench {
     final s = sheet(sheetName);
     final ids = s.rows.delete(index, count);
     s.purgeDeleted();
-    engine.axisChanged(s.id, GridDimension.rows, AxisChange.deleted(index, count, ids));
+    engine.axisChanged(
+      s.id,
+      GridDimension.rows,
+      AxisChange.deleted(index, count, ids),
+    );
     return ids;
   }
 
@@ -174,7 +204,11 @@ final class FormulaTestBench {
     final s = sheet(sheetName);
     final ids = s.columns.insert(index, count);
     s.structureChanged();
-    engine.axisChanged(s.id, GridDimension.columns, AxisChange.inserted(index, count));
+    engine.axisChanged(
+      s.id,
+      GridDimension.columns,
+      AxisChange.inserted(index, count),
+    );
     return ids;
   }
 
@@ -182,7 +216,11 @@ final class FormulaTestBench {
     final s = sheet(sheetName);
     final ids = s.columns.delete(index, count);
     s.purgeDeleted();
-    engine.axisChanged(s.id, GridDimension.columns, AxisChange.deleted(index, count, ids));
+    engine.axisChanged(
+      s.id,
+      GridDimension.columns,
+      AxisChange.deleted(index, count, ids),
+    );
     return ids;
   }
 

@@ -25,10 +25,11 @@ final class DataRef extends SpecNode {
   final Map<String, Object?> extras;
 
   @override
-  Map<String, Object?> toJson() => (JsonWriter(extras)
-        ..put('range', range)
-        ..put('offset', offset))
-      .json;
+  Map<String, Object?> toJson() =>
+      (JsonWriter(extras)
+            ..put('range', range)
+            ..put('offset', offset))
+          .json;
 }
 
 /// The domain (X axis) column.
@@ -67,11 +68,12 @@ final class DomainRef extends SpecNode {
   );
 
   @override
-  Map<String, Object?> toJson() => (JsonWriter(extras)
-        ..put('ref', ref.toJson())
-        ..unlessDefault('reverse', reverse, false)
-        ..opt('key', key))
-      .json;
+  Map<String, Object?> toJson() =>
+      (JsonWriter(extras)
+            ..put('ref', ref.toJson())
+            ..unlessDefault('reverse', reverse, false)
+            ..opt('key', key))
+          .json;
 }
 
 /// One series reference; [key] is the stable series key (source column id, row id when
@@ -115,11 +117,12 @@ final class SeriesRef extends SpecNode {
   );
 
   @override
-  Map<String, Object?> toJson() => (JsonWriter(extras)
-        ..put('key', key)
-        ..put('ref', ref.toJson())
-        ..unlessDefault('hidden', hidden, false))
-      .json;
+  Map<String, Object?> toJson() =>
+      (JsonWriter(extras)
+            ..put('key', key)
+            ..put('ref', ref.toJson())
+            ..unlessDefault('hidden', hidden, false))
+          .json;
 }
 
 /// `data` section (08 §3.2).
@@ -162,7 +165,11 @@ final class ChartDataSpec extends SpecNode {
           if (SeriesRef.fromJson(s) case final SeriesRef sr) sr,
       ],
       includeHidden: r.boolOr('includeHidden', false),
-      emptyCells: r.enumOr('emptyCells', EmptyCellMode.values, EmptyCellMode.gap),
+      emptyCells: r.enumOr(
+        'emptyCells',
+        EmptyCellMode.values,
+        EmptyCellMode.gap,
+      ),
       maxPoints: r.integer('maxPoints'),
       extras: r.extras(_keys),
     );
@@ -225,7 +232,8 @@ final class ChartDataSpec extends SpecNode {
     ranges: ranges ?? this.ranges,
     switchRowsColumns: switchRowsColumns ?? this.switchRowsColumns,
     headerCount: clearHeaderCount ? null : (headerCount ?? this.headerCount),
-    useFirstColumnAsLabels: useFirstColumnAsLabels ?? this.useFirstColumnAsLabels,
+    useFirstColumnAsLabels:
+        useFirstColumnAsLabels ?? this.useFirstColumnAsLabels,
     treatLabelsAsText: treatLabelsAsText ?? this.treatLabelsAsText,
     aggregate: clearAggregate ? null : (aggregate ?? this.aggregate),
     domain: clearDomain ? null : (domain ?? this.domain),
@@ -237,17 +245,26 @@ final class ChartDataSpec extends SpecNode {
   );
 
   @override
-  Map<String, Object?> toJson() => (JsonWriter(extras)
-        ..put('ranges', [for (final r in ranges) r.toJson()])
-        ..unlessDefault('switchRowsColumns', switchRowsColumns, false)
-        ..opt('headerCount', headerCount)
-        ..unlessDefault('useFirstColumnAsLabels', useFirstColumnAsLabels, true)
-        ..unlessDefault('treatLabelsAsText', treatLabelsAsText, false)
-        ..opt('aggregate', aggregate?.name)
-        ..opt('domain', domain?.toJson())
-        ..put('seriesRefs', [for (final s in seriesRefs) s.toJson()])
-        ..unlessDefault('includeHidden', includeHidden, false)
-        ..unlessDefault('emptyCells', emptyCells.name, EmptyCellMode.gap.name)
-        ..opt('maxPoints', maxPoints))
-      .json;
+  Map<String, Object?> toJson() =>
+      (JsonWriter(extras)
+            ..put('ranges', [for (final r in ranges) r.toJson()])
+            ..unlessDefault('switchRowsColumns', switchRowsColumns, false)
+            ..opt('headerCount', headerCount)
+            ..unlessDefault(
+              'useFirstColumnAsLabels',
+              useFirstColumnAsLabels,
+              true,
+            )
+            ..unlessDefault('treatLabelsAsText', treatLabelsAsText, false)
+            ..opt('aggregate', aggregate?.name)
+            ..opt('domain', domain?.toJson())
+            ..put('seriesRefs', [for (final s in seriesRefs) s.toJson()])
+            ..unlessDefault('includeHidden', includeHidden, false)
+            ..unlessDefault(
+              'emptyCells',
+              emptyCells.name,
+              EmptyCellMode.gap.name,
+            )
+            ..opt('maxPoints', maxPoints))
+          .json;
 }

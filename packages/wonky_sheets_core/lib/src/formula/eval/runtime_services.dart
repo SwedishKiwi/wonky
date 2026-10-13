@@ -52,7 +52,10 @@ final class TzDatabaseResolver implements TimeZoneResolver {
 
   @override
   Duration offsetAt(String timeZone, DateTime utc) {
-    if (timeZone.isEmpty || timeZone == 'UTC' || timeZone == 'Etc/UTC' || timeZone == 'GMT') {
+    if (timeZone.isEmpty ||
+        timeZone == 'UTC' ||
+        timeZone == 'Etc/UTC' ||
+        timeZone == 'GMT') {
       return Duration.zero;
     }
     _init();
@@ -75,7 +78,8 @@ final class FixedOffsetResolver implements TimeZoneResolver {
   const FixedOffsetResolver([this.offsets = const {}]);
 
   @override
-  Duration offsetAt(String timeZone, DateTime utc) => offsets[timeZone] ?? Duration.zero;
+  Duration offsetAt(String timeZone, DateTime utc) =>
+      offsets[timeZone] ?? Duration.zero;
 }
 
 /// Deterministic, platform-independent pseudo-random numbers for RAND()/RANDBETWEEN()/
@@ -84,7 +88,8 @@ abstract final class DeterministicRandom {
   static int _imul(int a, int b) {
     final ah = (a >> 16) & 0xffff, al = a & 0xffff;
     final bh = (b >> 16) & 0xffff, bl = b & 0xffff;
-    return ((al * bl) + ((((ah * bl) + (al * bh)) & 0xffff) << 16)) & 0xffffffff;
+    return ((al * bl) + ((((ah * bl) + (al * bh)) & 0xffff) << 16)) &
+        0xffffffff;
   }
 
   /// FNV-1a over UTF-16 code units.
@@ -107,7 +112,12 @@ abstract final class DeterministicRandom {
   }
 
   /// Uniform double in [0, 1) for (spreadsheet, cell, call index, epoch).
-  static double uniform(String spreadsheetId, String cellId, int callIndex, String epoch) {
+  static double uniform(
+    String spreadsheetId,
+    String cellId,
+    int callIndex,
+    String epoch,
+  ) {
     final h1 = hashString('$spreadsheetId|$cellId|$epoch');
     final a = _mix(h1 ^ _imul(callIndex + 1, 0x9e3779b9));
     final b = _mix(a ^ 0x5bd1e995 ^ _imul(callIndex + 7, 0x27d4eb2d));

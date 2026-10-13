@@ -31,7 +31,8 @@ abstract final class HtmlText {
   }
 
   /// Escapes an attribute value (to be wrapped in double quotes).
-  static String attr(String s) => escape(s).replaceAll('\n', '&#10;').replaceAll('\t', '&#9;');
+  static String attr(String s) =>
+      escape(s).replaceAll('\n', '&#10;').replaceAll('\t', '&#9;');
 
   /// A safe `href` for a cell link: `http(s)`/`mailto` URLs are kept, others
   /// (e.g. `javascript:`) return null. Internal links are handled by callers.
@@ -39,7 +40,9 @@ abstract final class HtmlText {
     if (url == null) return null;
     final u = url.trim();
     final lower = u.toLowerCase();
-    if (lower.startsWith('http://') || lower.startsWith('https://') || lower.startsWith('mailto:')) {
+    if (lower.startsWith('http://') ||
+        lower.startsWith('https://') ||
+        lower.startsWith('mailto:')) {
       return u;
     }
     if (lower.startsWith('www.')) return 'https://$u';

@@ -53,10 +53,14 @@ final class _SvgWriter {
     final w = _n(scene.width), h = _n(scene.height);
     _b
       ..write('<?xml version="1.0" encoding="UTF-8"?>\n')
-      ..write('<svg xmlns="http://www.w3.org/2000/svg" version="1.1" width="$w" height="$h" ')
+      ..write(
+        '<svg xmlns="http://www.w3.org/2000/svg" version="1.1" width="$w" height="$h" ',
+      )
       ..write('viewBox="0 0 $w $h">\n');
     if (RenderGeometry.fillVisible(scene.background)) {
-      _line('<rect x="0" y="0" width="$w" height="$h"${_fill(scene.background)}/>');
+      _line(
+        '<rect x="0" y="0" width="$w" height="$h"${_fill(scene.background)}/>',
+      );
     }
     _list(scene.primitives);
     _b.write('</svg>\n');
@@ -103,7 +107,9 @@ final class _SvgWriter {
       case SArc():
         final d = _pathData(p.toPath());
         if (d.isEmpty) return;
-        final rule = p.isFullCircle && p.innerRadius > 0 ? ' fill-rule="evenodd"' : '';
+        final rule = p.isFullCircle && p.innerRadius > 0
+            ? ' fill-rule="evenodd"'
+            : '';
         _line('<path d="$d"$rule${_fill(p.fill)}${_stroke(p.stroke)}/>');
       case SText():
         _text(p);
@@ -186,7 +192,9 @@ final class _SvgWriter {
     if (s.bold) attrs.write(' font-weight="bold"');
     if (s.italic) attrs.write(' font-style="italic"');
     attrs.write(_fill(s.color));
-    final anchor = p.anchor.hFactor <= 0.25 ? null : (p.anchor.hFactor >= 0.75 ? 'end' : 'middle');
+    final anchor = p.anchor.hFactor <= 0.25
+        ? null
+        : (p.anchor.hFactor >= 0.75 ? 'end' : 'middle');
     if (anchor != null) attrs.write(' text-anchor="$anchor"');
     if (!p.anchor.isBaseline) {
       if (p.height > 0) {
@@ -204,9 +212,13 @@ final class _SvgWriter {
     }
     if (p.angle != 0 && p.angle.isFinite) {
       final deg = _n(p.angle * 180 / math.pi);
-      if (deg != '0') attrs.write(' transform="rotate($deg ${_n(p.at.x)} ${_n(p.at.y)})"');
+      if (deg != '0') {
+        attrs.write(' transform="rotate($deg ${_n(p.at.x)} ${_n(p.at.y)})"');
+      }
     }
-    if (p.text.startsWith(' ') || p.text.endsWith(' ') || p.text.contains('  ')) {
+    if (p.text.startsWith(' ') ||
+        p.text.endsWith(' ') ||
+        p.text.contains('  ')) {
       attrs.write(' xml:space="preserve"');
     }
     _line('<text $attrs>$text</text>');
@@ -262,7 +274,14 @@ final class _SvgWriter {
           b.write('M${_n(x)} ${_n(y)}');
         case PLineTo(:final x, :final y):
           b.write('L${_n(x)} ${_n(y)}');
-        case PCubicTo(:final x1, :final y1, :final x2, :final y2, :final x, :final y):
+        case PCubicTo(
+          :final x1,
+          :final y1,
+          :final x2,
+          :final y2,
+          :final x,
+          :final y,
+        ):
           b.write('C${_n(x1)} ${_n(y1)} ${_n(x2)} ${_n(y2)} ${_n(x)} ${_n(y)}');
         case PClose():
           b.write('Z');
@@ -271,7 +290,9 @@ final class _SvgWriter {
     return b.toString();
   }
 
-  static final RegExp _invalidXml = RegExp('[\u0000-\u0008\u000B\u000C\u000E-\u001F￾￿]');
+  static final RegExp _invalidXml = RegExp(
+    '[\u0000-\u0008\u000B\u000C\u000E-\u001F￾￿]',
+  );
 
   static String _escapeText(String s) => s
       .replaceAll(_invalidXml, '')

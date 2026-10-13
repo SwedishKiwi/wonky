@@ -18,7 +18,8 @@ final class NumberFormatCache {
 
   // Value is the AST, or a FormatParseError for invalid patterns.
   final LinkedHashMap<String, Object> _asts = LinkedHashMap();
-  final LinkedHashMap<(String, String, Object), FormattedValue> _values = LinkedHashMap();
+  final LinkedHashMap<(String, String, Object), FormattedValue> _values =
+      LinkedHashMap();
 
   /// Number of cached ASTs.
   int get astCount => _asts.length;
@@ -57,7 +58,12 @@ final class NumberFormatCache {
   }
 
   /// Stores a formatted value.
-  void store(String pattern, String locale, Object valueKey, FormattedValue value) {
+  void store(
+    String pattern,
+    String locale,
+    Object valueKey,
+    FormattedValue value,
+  ) {
     final key = (pattern, locale, valueKey);
     _values.remove(key);
     if (_values.length >= valueCapacity) _values.remove(_values.keys.first);

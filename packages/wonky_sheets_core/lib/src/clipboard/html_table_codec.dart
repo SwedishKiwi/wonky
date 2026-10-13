@@ -32,7 +32,10 @@ abstract final class HtmlTableCodec {
       rows += placed[i].rows + (i > 0 ? 1 : 0);
       cols = math.max(cols, placed[i].cols);
     }
-    final cells = List.generate(rows, (_) => List<ClipboardTableCell?>.filled(cols, null));
+    final cells = List.generate(
+      rows,
+      (_) => List<ClipboardTableCell?>.filled(cols, null),
+    );
     final merges = <GridRect>[];
     final widths = List<double?>.filled(cols, null);
     final heights = List<double?>.filled(rows, null);
@@ -91,7 +94,10 @@ abstract final class HtmlTableCodec {
         c += cs;
       }
     }
-    final cells = List.generate(nRows, (_) => List<ClipboardTableCell?>.filled(width, null));
+    final cells = List.generate(
+      nRows,
+      (_) => List<ClipboardTableCell?>.filled(width, null),
+    );
     final merges = <GridRect>[];
     final widths = List<double?>.filled(width, null);
     for (var c = 0; c < width && c < t.colWidths.length; c++) {
@@ -101,21 +107,25 @@ abstract final class HtmlTableCodec {
       cells[r][c] = cell.result;
       final (rs, cs) = cell.placedSpan;
       if (rs > 1 || cs > 1) merges.add(GridRect(r, c, r + rs - 1, c + cs - 1));
-      if (cs == 1 && widths[c] == null && cell.widthPx != null) widths[c] = cell.widthPx;
+      if (cs == 1 && widths[c] == null && cell.widthPx != null) {
+        widths[c] = cell.widthPx;
+      }
     }
-    return _Placed(
-      nRows,
-      width,
-      cells,
-      merges,
-      widths,
-      [for (final row in t.rows) row.heightPx],
-    );
+    return _Placed(nRows, width, cells, merges, widths, [
+      for (final row in t.rows) row.heightPx,
+    ]);
   }
 }
 
 final class _Placed {
-  _Placed(this.rows, this.cols, this.cells, this.merges, this.widths, this.heights);
+  _Placed(
+    this.rows,
+    this.cols,
+    this.cells,
+    this.merges,
+    this.widths,
+    this.heights,
+  );
   final int rows;
   final int cols;
   final List<List<ClipboardTableCell?>> cells;
@@ -244,7 +254,9 @@ final class _Parser {
     String? rawOwner;
     for (final t in tokens) {
       if (t is HtmlStartTag) rawOwner = t.name;
-      if (t is HtmlTextToken && t.raw && rawOwner == 'style') styles.writeln(t.text);
+      if (t is HtmlTextToken && t.raw && rawOwner == 'style') {
+        styles.writeln(t.text);
+      }
     }
     if (styles.isNotEmpty) sheet = CssStyleSheet.parse(styles.toString());
     var inRaw = false;
@@ -290,12 +302,17 @@ final class _Parser {
   void _detect(HtmlStartTag t) {
     final a = t.attributes;
     if (t.name == 'google-sheets-html-origin') _google = true;
-    if (t.name == 'html' && (a['xmlns:x']?.contains('office:excel') ?? false)) _excel = true;
+    if (t.name == 'html' && (a['xmlns:x']?.contains('office:excel') ?? false)) {
+      _excel = true;
+    }
     if (t.name == 'meta') {
       final content = (a['content'] ?? '').toLowerCase();
       final name = (a['name'] ?? '').toLowerCase();
       if (name == 'generator' && content.contains('libreoffice')) _libre = true;
-      if ((name == 'progid' || name == 'generator') && content.contains('excel')) _excel = true;
+      if ((name == 'progid' || name == 'generator') &&
+          content.contains('excel')) {
+        _excel = true;
+      }
     }
     for (final k in a.keys) {
       if (k.startsWith('data-sheets-')) _google = true;
@@ -330,18 +347,29 @@ final class _Parser {
         _tableStack.add(table);
       case 'colgroup':
         final table = _tableStack.lastOrNull;
-        final w = Css.lengthPx(_decls(t)['width']) ?? Css.lengthPx(t.attributes['width']);
+        final w =
+            Css.lengthPx(_decls(t)['width']) ??
+            Css.lengthPx(t.attributes['width']);
         if (table == null || w == null) return;
-        final span = int.tryParse(t.attributes['span'] ?? '')?.clamp(1, HtmlTableCodec.maxSpan) ?? 1;
+        final span =
+            int.tryParse(
+              t.attributes['span'] ?? '',
+            )?.clamp(1, HtmlTableCodec.maxSpan) ??
+            1;
         for (var i = 0; i < span; i++) {
           table.colWidths.add(w);
         }
       case 'col':
         final table = _tableStack.lastOrNull;
         if (table == null) return;
-        final span = int.tryParse(t.attributes['span'] ?? '')?.clamp(1, HtmlTableCodec.maxSpan) ?? 1;
+        final span =
+            int.tryParse(
+              t.attributes['span'] ?? '',
+            )?.clamp(1, HtmlTableCodec.maxSpan) ??
+            1;
         final d = _decls(t);
-        final w = Css.lengthPx(d['width']) ?? Css.lengthPx(t.attributes['width']);
+        final w =
+            Css.lengthPx(d['width']) ?? Css.lengthPx(t.attributes['width']);
         for (var i = 0; i < span; i++) {
           table.colWidths.add(w);
         }
@@ -351,7 +379,8 @@ final class _Parser {
         _closeCell();
         _closeRow();
         final d = _decls(t);
-        final h = Css.lengthPx(d['height']) ?? Css.lengthPx(t.attributes['height']);
+        final h =
+            Css.lengthPx(d['height']) ?? Css.lengthPx(t.attributes['height']);
         _row = _Row(d, t.attributes, h);
         // Rows hidden with `display:none` (Excel's column-width helper row).
         if (d['display']?.trim().toLowerCase() != 'none') table.rows.add(_row!);
@@ -454,16 +483,26 @@ final class _Parser {
   // ---------------------------------------------------------------------------
 
   Map<String, String> _decls(HtmlStartTag t, {bool includeTagRules = true}) {
-    final classes = (t.attributes['class'] ?? '').split(RegExp(r'\s+')).where((c) => c.isNotEmpty);
+    final classes = (t.attributes['class'] ?? '')
+        .split(RegExp(r'\s+'))
+        .where((c) => c.isNotEmpty);
     final out = <String, String>{};
     if (!sheet.isEmpty) {
-      final fromSheet = sheet.declarationsFor(t.name, classes.toList(), includeTagOnly: false);
+      final fromSheet = sheet.declarationsFor(
+        t.name,
+        classes.toList(),
+        includeTagOnly: false,
+      );
       if (includeTagRules) {
         final tagOnly = sheet.declarationsFor(t.name, const []);
         // Tag rules are document defaults: Google's `td {border:…}` are
         // gridlines, fonts (`td {font-family:Calibri}`) are the app default.
         tagOnly.forEach((k, v) {
-          if (!k.startsWith('border') && k != 'font-family' && k != 'font-size') out[k] = v;
+          if (!k.startsWith('border') &&
+              k != 'font-family' &&
+              k != 'font-size') {
+            out[k] = v;
+          }
         });
       }
       out.addAll(fromSheet);
@@ -495,10 +534,16 @@ final class _Parser {
         if (size != null) f[RichRunKeys.fontSize] = size;
     }
     final d = Css.parseDeclarations(t.attributes['style']);
-    final classes = (t.attributes['class'] ?? '').split(RegExp(r'\s+')).where((c) => c.isNotEmpty);
+    final classes = (t.attributes['class'] ?? '')
+        .split(RegExp(r'\s+'))
+        .where((c) => c.isNotEmpty);
     final all = {
       if (!sheet.isEmpty && classes.isNotEmpty)
-        ...sheet.declarationsFor(t.name, classes.toList(), includeTagOnly: false),
+        ...sheet.declarationsFor(
+          t.name,
+          classes.toList(),
+          includeTagOnly: false,
+        ),
       ...d,
     };
     final fw = _bold(all['font-weight']);
@@ -595,7 +640,10 @@ final class _Parser {
     final decls = <String, String>{};
     void inherit(Map<String, String> m) {
       m.forEach((k, v) {
-        if (k.startsWith('border') || k == 'font-family' || k == 'font-size' || k == 'width') {
+        if (k.startsWith('border') ||
+            k == 'font-family' ||
+            k == 'font-size' ||
+            k == 'width') {
           return;
         }
         if (k == 'height') return;
@@ -609,7 +657,9 @@ final class _Parser {
 
     final attrs = <FormatAttr, Object?>{};
     // Legacy attributes (lowest precedence).
-    final bg = Css.color(a['bgcolor'] ?? row?.attrs['bgcolor'] ?? table.attrs['bgcolor']);
+    final bg = Css.color(
+      a['bgcolor'] ?? row?.attrs['bgcolor'] ?? table.attrs['bgcolor'],
+    );
     if (bg != null) attrs[FormatAttr.fillColor] = bg;
     final align = _hAlign(a['align'] ?? row?.attrs['align']);
     if (align != null) attrs[FormatAttr.hAlign] = align;
@@ -633,7 +683,9 @@ final class _Parser {
       if (dl.contains('line-through')) attrs[FormatAttr.strikethrough] = true;
     }
     final color = Css.color(decls['color']);
-    if (color != null) attrs[FormatAttr.textColor] = color == '#000000' ? null : color;
+    if (color != null) {
+      attrs[FormatAttr.textColor] = color == '#000000' ? null : color;
+    }
     final bgCss = decls['background-color'] ?? decls['background'];
     if (bgCss != null) {
       final c = Css.color(bgCss) ?? _firstColor(bgCss);
@@ -655,7 +707,9 @@ final class _Parser {
     _borders(decls, attrs);
 
     // Number format.
-    String? numberFormat = SheetsHtmlAttrs.decodeNumberFormat(a['data-sheets-numberformat']);
+    String? numberFormat = SheetsHtmlAttrs.decodeNumberFormat(
+      a['data-sheets-numberformat'],
+    );
     numberFormat ??= _msoNumberFormat(decls['mso-number-format']);
     numberFormat ??= _sdnum(a['sdnum']);
 
@@ -665,7 +719,8 @@ final class _Parser {
       text = text.substring(0, kMaxPastedCellChars);
       runs = [
         for (final r in runs)
-          if (r.start < text.length) r.copyWith(end: math.min(r.end, text.length)),
+          if (r.start < text.length)
+            r.copyWith(end: math.min(r.end, text.length)),
       ];
       truncated++;
     }
@@ -673,7 +728,9 @@ final class _Parser {
     // Whole-cell keys → cell format; the rest stay runs.
     final cellRunKeys = _promote(text, runs);
     cellRunKeys.forEach((k, v) {
-      final attr = k == RichRunKeys.link ? FormatAttr.linkUrl : FormatAttr.byColumn(k);
+      final attr = k == RichRunKeys.link
+          ? FormatAttr.linkUrl
+          : FormatAttr.byColumn(k);
       if (attr != null) attrs[attr] = v;
     });
     final hyperlink = _safeLink(a['data-sheets-hyperlink']);
@@ -683,18 +740,24 @@ final class _Parser {
       final cellMap = {for (final e in cellRunKeys.entries) e.key: e.value};
       final norm = RichText(text, runs).normalize(cellFormat: cellMap);
       rich = norm.rich;
-      if (norm.wholeCellLink != null) attrs[FormatAttr.linkUrl] = norm.wholeCellLink;
+      if (norm.wholeCellLink != null) {
+        attrs[FormatAttr.linkUrl] = norm.wholeCellLink;
+      }
     }
 
     // Typed values.
     CellValue? typed = SheetsHtmlAttrs.decodeValue(a['data-sheets-value']);
     if (typed == null && a.containsKey('x:num')) {
       final v = a['x:num']!;
-      final n = double.tryParse((v.isEmpty ? text : v).trim().replaceAll(',', ''));
+      final n = double.tryParse(
+        (v.isEmpty ? text : v).trim().replaceAll(',', ''),
+      );
       if (n != null && n.isFinite) typed = NumberValue(n);
     }
     if (typed == null && a.containsKey('x:bool')) {
-      final v = (a['x:bool']!.isEmpty ? text : a['x:bool']!).trim().toUpperCase();
+      final v = (a['x:bool']!.isEmpty ? text : a['x:bool']!)
+          .trim()
+          .toUpperCase();
       if (v == 'TRUE' || v == 'FALSE') typed = BoolValue(v == 'TRUE');
     }
     if (typed == null && a.containsKey('x:str')) {
@@ -705,7 +768,9 @@ final class _Parser {
       final n = double.tryParse(a['sdval']!.trim());
       if (n != null && n.isFinite) typed = NumberValue(n);
     }
-    if (typed == null && numberFormat == '@' && text.isNotEmpty) typed = TextValue(text);
+    if (typed == null && numberFormat == '@' && text.isNotEmpty) {
+      typed = TextValue(text);
+    }
 
     // Typed text is exact (tabs and repeated spaces survive HTML collapsing).
     if (typed is TextValue && typed.text != text) {
@@ -717,7 +782,9 @@ final class _Parser {
     st.cell.result = ClipboardTableCell(
       text: text,
       typedValue: typed,
-      formulaR1C1: formula != null && formula.trim().startsWith('=') ? formula.trim() : null,
+      formulaR1C1: formula != null && formula.trim().startsWith('=')
+          ? formula.trim()
+          : null,
       excelFormula: a['x:fmla'],
       numberFormat: numberFormat,
       format: CellFormat(attrs),
@@ -734,12 +801,13 @@ final class _Parser {
     return null;
   }
 
-  static HorizontalAlign? _hAlign(String? v) => switch (v?.trim().toLowerCase()) {
-    'left' || 'start' || 'justify' => HorizontalAlign.left,
-    'center' || '-webkit-center' || 'middle' => HorizontalAlign.center,
-    'right' || 'end' => HorizontalAlign.right,
-    _ => null,
-  };
+  static HorizontalAlign? _hAlign(String? v) =>
+      switch (v?.trim().toLowerCase()) {
+        'left' || 'start' || 'justify' => HorizontalAlign.left,
+        'center' || '-webkit-center' || 'middle' => HorizontalAlign.center,
+        'right' || 'end' => HorizontalAlign.right,
+        _ => null,
+      };
 
   static VerticalAlign? _vAlign(String? v) => switch (v?.trim().toLowerCase()) {
     'top' || 'text-top' => VerticalAlign.top,
@@ -759,7 +827,10 @@ final class _Parser {
       final ov = d['text-overflow']?.trim().toLowerCase();
       return ov == 'clip' ? WrapStrategy.clip : WrapStrategy.overflow;
     }
-    if (w == 'normal' || w == 'pre-wrap' || w == 'pre-line' || w == 'break-spaces') {
+    if (w == 'normal' ||
+        w == 'pre-wrap' ||
+        w == 'pre-line' ||
+        w == 'break-spaces') {
       return WrapStrategy.wrap;
     }
     return null;
@@ -772,7 +843,9 @@ final class _Parser {
       if (n != null) return n == 255 ? 255 : n.clamp(-90, 90);
     }
     final wm = d['writing-mode']?.toLowerCase();
-    if (wm != null && wm.startsWith('vertical') && (d['text-orientation'] ?? '').contains('upright')) {
+    if (wm != null &&
+        wm.startsWith('vertical') &&
+        (d['text-orientation'] ?? '').contains('upright')) {
       return 255;
     }
     final t = d['transform'];
@@ -788,7 +861,8 @@ final class _Parser {
 
   static void _borders(Map<String, String> d, Map<FormatAttr, Object?> attrs) {
     final sides = <String, CssBorder>{};
-    CssBorder empty() => (widthPx: null, style: null, color: null, widthInPt: false);
+    CssBorder empty() =>
+        (widthPx: null, style: null, color: null, widthInPt: false);
     CssBorder merge(CssBorder a, CssBorder b) => (
       widthPx: b.widthPx ?? a.widthPx,
       style: b.style ?? a.style,
@@ -808,7 +882,9 @@ final class _Parser {
         for (final s in names) {
           sides[s] = b;
         }
-      } else if (k == 'border-width' || k == 'border-style' || k == 'border-color') {
+      } else if (k == 'border-width' ||
+          k == 'border-style' ||
+          k == 'border-color') {
         final box = Css.box(v);
         for (var i = 0; i < 4; i++) {
           final b = Css.border(box[i]);
@@ -862,7 +938,9 @@ final class _Parser {
     final second = v.indexOf(';', first + 1);
     if (second < 0) return null;
     final f = v.substring(second + 1).trim();
-    if (f.isEmpty || f.toLowerCase() == 'general' || f == 'Standard') return null;
+    if (f.isEmpty || f.toLowerCase() == 'general' || f == 'Standard') {
+      return null;
+    }
     return f;
   }
 
@@ -968,7 +1046,8 @@ final class _Parser {
     }
     if (promoted.isEmpty) return promoted;
     for (var i = runs.length - 1; i >= 0; i--) {
-      final f = Map<String, Object?>.of(runs[i].format)..removeWhere((k, _) => promoted.containsKey(k));
+      final f = Map<String, Object?>.of(runs[i].format)
+        ..removeWhere((k, _) => promoted.containsKey(k));
       if (f.isEmpty) {
         runs.removeAt(i);
       } else {

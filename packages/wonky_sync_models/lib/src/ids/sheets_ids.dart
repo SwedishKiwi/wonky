@@ -13,10 +13,12 @@ abstract final class SheetsIds {
   static const String cellNamespace = '94020249-01b0-4143-b745-68f9aa91516f';
 
   /// Namespace of `BasicFilter` ids (max one per sheet).
-  static const String basicFilterNamespace = 'b91fc39a-b965-45dd-97f5-cba48eaffd93';
+  static const String basicFilterNamespace =
+      'b91fc39a-b965-45dd-97f5-cba48eaffd93';
 
   /// Namespace of `ScriptBuild` ids (one per script project).
-  static const String scriptBuildNamespace = '6c3bc01f-4fcd-4bbe-9bdd-04eecab04088';
+  static const String scriptBuildNamespace =
+      '6c3bc01f-4fcd-4bbe-9bdd-04eecab04088';
 
   static const Uuid _uuid = Uuid();
 

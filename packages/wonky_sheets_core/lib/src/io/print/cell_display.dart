@@ -48,7 +48,12 @@ typedef ConditionalOverlayProvider =
 
 /// The four resolved edges of a cell (shared-edge conflicts already applied,
 /// 06 §8.4); null = no border.
-typedef CellEdges = ({BorderSpec? top, BorderSpec? right, BorderSpec? bottom, BorderSpec? left});
+typedef CellEdges = ({
+  BorderSpec? top,
+  BorderSpec? right,
+  BorderSpec? bottom,
+  BorderSpec? left,
+});
 
 /// In-cell widget of a cell (03 §14.1–14.2).
 enum CellWidgetKind { none, checkbox, dropdownChip, dropdownArrow }
@@ -56,7 +61,12 @@ enum CellWidgetKind { none, checkbox, dropdownChip, dropdownArrow }
 /// Data validation information relevant for rendering.
 final class CellWidgetInfo {
   /// Creates widget info.
-  const CellWidgetInfo(this.kind, {this.checked = false, this.chipFill, this.chipText});
+  const CellWidgetInfo(
+    this.kind, {
+    this.checked = false,
+    this.chipFill,
+    this.chipText,
+  });
 
   /// No widget.
   static const none = CellWidgetInfo(CellWidgetKind.none);
@@ -189,7 +199,9 @@ final class CellDisplayResolver {
         ? rf.numberFormat
         : (source.numberFormatAt(sheetId, row, col) ?? kAutomaticNumberFormat);
     final formatted = formatter.format(value, pattern, locale: locale);
-    final widget = sheet == null ? CellWidgetInfo.none : _widget(sheet, row, col, value, formatted);
+    final widget = sheet == null
+        ? CellWidgetInfo.none
+        : _widget(sheet, row, col, value, formatted);
     final theme = model.theme;
 
     final explicit = formats.explicit(sheetId, row, col);
@@ -208,7 +220,9 @@ final class CellDisplayResolver {
     }
     final underline =
         rf.underline ||
-        (link != null && !explicit.has(FormatAttr.underline) && cf?.format?[FormatAttr.underline] == null);
+        (link != null &&
+            !explicit.has(FormatAttr.underline) &&
+            cf?.format?[FormatAttr.underline] == null);
     final align = rf.hAlign ?? _generalAlign(value, widget.kind);
     return CellDisplay(
       row: row,
@@ -245,7 +259,13 @@ final class CellDisplayResolver {
   /// The resolved edges of the cell at (row, col) — or of the merged area
   /// whose bottom-right cell is ([bottomRow], [rightCol]) — with shared-edge
   /// conflicts resolved against the neighbours (06 §8.4–8.5).
-  CellEdges edges(String sheetId, int row, int col, {int? bottomRow, int? rightCol}) {
+  CellEdges edges(
+    String sheetId,
+    int row,
+    int col, {
+    int? bottomRow,
+    int? rightCol,
+  }) {
     final b = bottomRow ?? row;
     final r = rightCol ?? col;
     BorderSpec? vis(BorderSpec? s) => s == null || s.isNone ? null : s;
@@ -278,17 +298,30 @@ final class CellDisplayResolver {
     };
   }
 
-  CellWidgetInfo _widget(SheetModel s, int row, int col, CellValue v, FormattedValue f) {
+  CellWidgetInfo _widget(
+    SheetModel s,
+    int row,
+    int col,
+    CellValue v,
+    FormattedValue f,
+  ) {
     final dv = _dvAt(s, row, col);
     if (dv == null) return CellWidgetInfo.none;
     switch (dv.kind) {
       case CellWidgetKind.checkbox:
-        return CellWidgetInfo(CellWidgetKind.checkbox, checked: dv.isChecked(v));
+        return CellWidgetInfo(
+          CellWidgetKind.checkbox,
+          checked: dv.isChecked(v),
+        );
       case CellWidgetKind.dropdownChip:
       case CellWidgetKind.dropdownArrow:
         final text = f.plainText;
         final colors = dv.colors[text];
-        return CellWidgetInfo(dv.kind, chipFill: colors?.$1, chipText: colors?.$2);
+        return CellWidgetInfo(
+          dv.kind,
+          chipFill: colors?.$1,
+          chipText: colors?.$2,
+        );
       case CellWidgetKind.none:
         return CellWidgetInfo.none;
     }
@@ -309,9 +342,12 @@ final class CellDisplayResolver {
     }
     if (best == null) return null;
     final rule = best;
-    return _dvCache.putIfAbsent('${rule.id}|${rule.criteriaJson}|${rule.displayStyle}', () {
-      return _DvInfo.parse(rule);
-    });
+    return _dvCache.putIfAbsent(
+      '${rule.id}|${rule.criteriaJson}|${rule.displayStyle}',
+      () {
+        return _DvInfo.parse(rule);
+      },
+    );
   }
 }
 
@@ -327,7 +363,8 @@ final class _DvInfo {
     return switch (v) {
       TextValue(:final text) => text == checked,
       NumberValue(:final number) => CellContent.formatNumber(number) == checked,
-      BoolValue(:final value) => (value ? 'TRUE' : 'FALSE') == checked!.toUpperCase(),
+      BoolValue(:final value) =>
+        (value ? 'TRUE' : 'FALSE') == checked!.toUpperCase(),
       _ => false,
     };
   }
@@ -357,14 +394,19 @@ final class _DvInfo {
       if (options is List) {
         for (final o in options) {
           if (o is Map && o['value'] != null) {
-            colors[o['value'].toString()] = (o['bg'] as String?, o['fg'] as String?);
+            colors[o['value'].toString()] = (
+              o['bg'] as String?,
+              o['fg'] as String?,
+            );
           }
         }
       }
       final cm = m['colors'];
       if (cm is Map) {
         cm.forEach((k, v) {
-          if (v is Map) colors[k.toString()] = (v['bg'] as String?, v['fg'] as String?);
+          if (v is Map) {
+            colors[k.toString()] = (v['bg'] as String?, v['fg'] as String?);
+          }
         });
       }
       return _DvInfo(kind, colors: colors);
@@ -410,7 +452,8 @@ final class PrintObjectPlacement {
       return null;
     }
     if (m is! Map) return null;
-    double d(String k, double def) => m is Map && m[k] is num ? (m[k] as num).toDouble() : def;
+    double d(String k, double def) =>
+        m is Map && m[k] is num ? (m[k] as num).toDouble() : def;
     if (m['ownSheet'] == true) {
       return PrintObjectPlacement(
         row: 0,
@@ -441,7 +484,9 @@ final class PrintObjectPlacement {
   }
 
   static String _decodeId(String id) {
-    if (id.length == Base62Uuid.length && !id.contains('-') && Base62Uuid.isValid(id)) {
+    if (id.length == Base62Uuid.length &&
+        !id.contains('-') &&
+        Base62Uuid.isValid(id)) {
       return Base62Uuid.decode(id);
     }
     return id;
@@ -463,7 +508,9 @@ final class PrintObjectPlacement {
     final right = (sheet.columns.isHidden(col) ? 0.0 : dx) + width;
     acc = 0;
     while (c < sheet.columns.length - 1) {
-      final w = sheet.columns.isHidden(c) ? 0.0 : sheet.columns.naturalSizeAt(c);
+      final w = sheet.columns.isHidden(c)
+          ? 0.0
+          : sheet.columns.naturalSizeAt(c);
       if (acc + w >= right) break;
       acc += w;
       c++;

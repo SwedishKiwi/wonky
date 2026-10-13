@@ -20,7 +20,9 @@ final class TestFormatter implements ChartValueFormatter {
   String format(double value, String? numberFormat) {
     if (value.isNaN) return '';
     final p = numberFormat;
-    if (p == null || p == 'preset:automatic' || p.isEmpty) return _general(value);
+    if (p == null || p == 'preset:automatic' || p.isEmpty) {
+      return _general(value);
+    }
     if (ChartFormats.isDateTime(p)) {
       final d = DateSerial.toYmd(value);
       final t = DateSerial.timeOf(value);
@@ -28,7 +30,9 @@ final class TestFormatter implements ChartValueFormatter {
         return '${t.hour}:${'${t.minute}'.padLeft(2, '0')}';
       }
       if (p == 'yyyy') return '${d.year}';
-      if (p.startsWith('mmm yyyy')) return '${d.year}-${'${d.month}'.padLeft(2, '0')}';
+      if (p.startsWith('mmm yyyy')) {
+        return '${d.year}-${'${d.month}'.padLeft(2, '0')}';
+      }
       return '${d.year}-${'${d.month}'.padLeft(2, '0')}-${'${d.day}'.padLeft(2, '0')}';
     }
     final percent = p.contains('%');
@@ -54,7 +58,9 @@ final class TestFormatter implements ChartValueFormatter {
   }
 
   static String _general(double v) {
-    if (v == v.truncateToDouble() && v.abs() < 1e15) return v.toInt().toString();
+    if (v == v.truncateToDouble() && v.abs() < 1e15) {
+      return v.toInt().toString();
+    }
     var s = v.toStringAsPrecision(10);
     if (s.contains('.') && !s.contains('e')) {
       s = s.replaceFirst(RegExp(r'0+$'), '').replaceFirst(RegExp(r'\.$'), '');
@@ -95,8 +101,15 @@ final class FakeCellSource implements CellSource {
       _base.numberFormatAt(sheetId, row, col);
 
   @override
-  bool isHidden(String sheetId, GridDimension dimension, int index, {bool includeFilter = true}) {
-    if (dimension == GridDimension.columns) return hiddenColumns.contains(index);
+  bool isHidden(
+    String sheetId,
+    GridDimension dimension,
+    int index, {
+    bool includeFilter = true,
+  }) {
+    if (dimension == GridDimension.columns) {
+      return hiddenColumns.contains(index);
+    }
     if (hiddenRows.contains(index)) return true;
     return includeFilter && filteredRows.contains(index);
   }
@@ -106,7 +119,11 @@ final class FakeCellSource implements CellSource {
 GridRange rangeOf(WorkbookModel model, String a1) {
   final r = model.parseA1(a1, contextSheetId: model.sheets.first.id);
   final s = model.sheet(r.sheetId)!;
-  return s.gridRange(r.rect, wholeRows: r.wholeRows, wholeColumns: r.wholeColumns);
+  return s.gridRange(
+    r.rect,
+    wholeRows: r.wholeRows,
+    wholeColumns: r.wholeColumns,
+  );
 }
 
 /// Builds a model from row-major [rows] at A1 of `Sheet1`. [columnFormats] maps a column
@@ -126,15 +143,27 @@ GridRange rangeOf(WorkbookModel model, String a1) {
       if (v == null) continue;
       final letter = String.fromCharCode(0x41 + c);
       final f = r > 0 ? columnFormats[letter] : null;
-      b.value('$letter${r + 1}', v, format: f == null ? null : {FormatAttr.numberFormat: f});
+      b.value(
+        '$letter${r + 1}',
+        v,
+        format: f == null ? null : {FormatAttr.numberFormat: f},
+      );
     }
   }
   return (b, b.build());
 }
 
 /// Resolves [spec] against [model] with [TestFormatter].
-ChartData resolveChart(ChartSpec spec, WorkbookModel model, {CellSource? source}) =>
-    ChartDataResolver.resolve(spec, model, source ?? ModelCellSource(model), fmt: const TestFormatter());
+ChartData resolveChart(
+  ChartSpec spec,
+  WorkbookModel model, {
+  CellSource? source,
+}) => ChartDataResolver.resolve(
+  spec,
+  model,
+  source ?? ModelCellSource(model),
+  fmt: const TestFormatter(),
+);
 
 /// A spec over [a1] in [model].
 ChartSpec specFor(
@@ -167,5 +196,9 @@ void expectGoldenJson(String name, Map<String, Object?> actual) {
       ..writeAsStringSync(encoded);
     return;
   }
-  expect(encoded, file.readAsStringSync(), reason: 'scene golden $name differs (UPDATE_GOLDENS=1 to accept)');
+  expect(
+    encoded,
+    file.readAsStringSync(),
+    reason: 'scene golden $name differs (UPDATE_GOLDENS=1 to accept)',
+  );
 }

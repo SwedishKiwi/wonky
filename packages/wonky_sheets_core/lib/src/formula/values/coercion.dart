@@ -9,7 +9,23 @@ import 'numeric.dart';
 /// locale grouping and currency, percent, parenthesized negatives, dates and times.
 abstract final class TextNumberParser {
   static const Set<String> _currencySymbols = {
-    r'$', '€', '£', '¥', '₹', '₩', '₽', '₺', '₪', '฿', '₫', '₴', 'zł', 'kr', 'Kč', 'Ft', r'R$', //
+    r'$',
+    '€',
+    '£',
+    '¥',
+    '₹',
+    '₩',
+    '₽',
+    '₺',
+    '₪',
+    '฿',
+    '₫',
+    '₴',
+    'zł',
+    'kr',
+    'Kč',
+    'Ft',
+    r'R$', //
   };
 
   /// Returns the number and its implied format, or null when [text] is not numeric.
@@ -152,7 +168,8 @@ abstract final class TextNumberParser {
       if (m == null) return null;
       exp = int.parse(rest.startsWith('+') ? rest.substring(1) : rest);
     }
-    final str = '${intPart.isEmpty ? '0' : intPart}.${fracPart.isEmpty ? '0' : fracPart}e$exp';
+    final str =
+        '${intPart.isEmpty ? '0' : intPart}.${fracPart.isEmpty ? '0' : fracPart}e$exp';
     return double.tryParse(str);
   }
 }
@@ -178,18 +195,36 @@ abstract final class Coerce {
       case FText(:final v):
         final p = TextNumberParser.parse(v, locale, currentYear: currentYear);
         if (p == null) {
-          return FError(ErrorKind.value, ErrorMessages.expectsNumber(fn, param, v));
+          return FError(
+            ErrorKind.value,
+            ErrorMessages.expectsNumber(fn, param, v),
+          );
         }
         return p.$1;
       case FError():
         return v;
       case FRich(:final scalar):
-        return toNumber(scalar, locale, fn: fn, param: param, currentYear: currentYear);
+        return toNumber(
+          scalar,
+          locale,
+          fn: fn,
+          param: param,
+          currentYear: currentYear,
+        );
       case FArray():
-        return toNumber(v.topLeft, locale, fn: fn, param: param, currentYear: currentYear);
+        return toNumber(
+          v.topLeft,
+          locale,
+          fn: fn,
+          param: param,
+          currentYear: currentYear,
+        );
       case FRef():
       case FLambda():
-        return FError(ErrorKind.value, ErrorMessages.expectsNumber(fn, param, v.debugText));
+        return FError(
+          ErrorKind.value,
+          ErrorMessages.expectsNumber(fn, param, v.debugText),
+        );
     }
   }
 
@@ -228,7 +263,10 @@ abstract final class Coerce {
         final u = v.trim().toUpperCase();
         if (u == 'TRUE') return true;
         if (u == 'FALSE') return false;
-        return FError(ErrorKind.value, ErrorMessages.expectsBoolean(fn, param, v));
+        return FError(
+          ErrorKind.value,
+          ErrorMessages.expectsBoolean(fn, param, v),
+        );
       case FError():
         return v;
       case FRich(:final scalar):

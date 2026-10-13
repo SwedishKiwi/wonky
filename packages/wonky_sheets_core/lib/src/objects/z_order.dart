@@ -18,7 +18,10 @@ final class ZOrderItem {
 
   @override
   bool operator ==(Object other) =>
-      other is ZOrderItem && other.id == id && other.zIndex == zIndex && other.rect == rect;
+      other is ZOrderItem &&
+      other.id == id &&
+      other.zIndex == zIndex &&
+      other.rect == rect;
 
   @override
   int get hashCode => Object.hash(id, zIndex, rect);
@@ -40,7 +43,10 @@ abstract final class ZOrder {
       ZOrderItem(
         o.id,
         o.zIndex,
-        ObjectAnchor.tryParse(o.anchorJson)?.rectIn(sheet.rows, sheet.columns) ?? ChartRect.zero,
+        ObjectAnchor.tryParse(
+              o.anchorJson,
+            )?.rectIn(sheet.rows, sheet.columns) ??
+            ChartRect.zero,
       ),
   ];
 
@@ -51,7 +57,8 @@ abstract final class ZOrder {
   }
 
   /// Items in paint order, bottom first.
-  static List<ZOrderItem> sorted(Iterable<ZOrderItem> items) => [...items]..sort(compare);
+  static List<ZOrderItem> sorted(Iterable<ZOrderItem> items) =>
+      [...items]..sort(compare);
 
   /// *Bring to front*: `max + 1` (nothing when already on top).
   static Map<String, int> bringToFront(Iterable<ZOrderItem> items, String id) {
@@ -75,7 +82,9 @@ abstract final class ZOrder {
     final i = s.indexWhere((e) => e.id == id);
     if (i < 0) return const {};
     for (var j = i + 1; j < s.length; j++) {
-      if (s[j].rect.overlaps(s[i].rect)) return _swap(s, i, j, raiseLower: true);
+      if (s[j].rect.overlaps(s[i].rect)) {
+        return _swap(s, i, j, raiseLower: true);
+      }
     }
     return const {};
   }
@@ -86,7 +95,9 @@ abstract final class ZOrder {
     final i = s.indexWhere((e) => e.id == id);
     if (i < 0) return const {};
     for (var j = i - 1; j >= 0; j--) {
-      if (s[j].rect.overlaps(s[i].rect)) return _swap(s, j, i, raiseLower: false);
+      if (s[j].rect.overlaps(s[i].rect)) {
+        return _swap(s, j, i, raiseLower: false);
+      }
     }
     return const {};
   }
@@ -99,13 +110,21 @@ abstract final class ZOrder {
 
   /// *Select previous object*: backwards through [selectNext]'s order; the
   /// bottom object when nothing is selected.
-  static String? selectPrevious(Iterable<ZOrderItem> items, String? currentId) =>
-      _cycle(items, currentId, -1);
+  static String? selectPrevious(
+    Iterable<ZOrderItem> items,
+    String? currentId,
+  ) => _cycle(items, currentId, -1);
 
-  static String? _cycle(Iterable<ZOrderItem> items, String? currentId, int dir) {
+  static String? _cycle(
+    Iterable<ZOrderItem> items,
+    String? currentId,
+    int dir,
+  ) {
     final topFirst = sorted(items).reversed.toList();
     if (topFirst.isEmpty) return null;
-    final i = currentId == null ? -1 : topFirst.indexWhere((e) => e.id == currentId);
+    final i = currentId == null
+        ? -1
+        : topFirst.indexWhere((e) => e.id == currentId);
     if (i < 0) return dir > 0 ? topFirst.first.id : topFirst.last.id;
     return topFirst[(i + dir) % topFirst.length].id;
   }
@@ -114,7 +133,12 @@ abstract final class ZOrder {
   /// plain value swap first, then (for equal values) a ±1 step of the moving
   /// object, and falls back to renumbering densely when ties with other
   /// objects make the cheap writes ambiguous.
-  static Map<String, int> _swap(List<ZOrderItem> s, int lo, int hi, {required bool raiseLower}) {
+  static Map<String, int> _swap(
+    List<ZOrderItem> s,
+    int lo,
+    int hi, {
+    required bool raiseLower,
+  }) {
     final a = s[lo];
     final b = s[hi];
     final desired = [for (final e in s) e.id];
@@ -140,8 +164,14 @@ abstract final class ZOrder {
     return out;
   }
 
-  static bool _orderMatches(List<ZOrderItem> s, Map<String, int> changes, List<String> desired) {
-    final next = sorted([for (final e in s) ZOrderItem(e.id, changes[e.id] ?? e.zIndex, e.rect)]);
+  static bool _orderMatches(
+    List<ZOrderItem> s,
+    Map<String, int> changes,
+    List<String> desired,
+  ) {
+    final next = sorted([
+      for (final e in s) ZOrderItem(e.id, changes[e.id] ?? e.zIndex, e.rect),
+    ]);
     for (var k = 0; k < desired.length; k++) {
       if (next[k].id != desired[k]) return false;
     }

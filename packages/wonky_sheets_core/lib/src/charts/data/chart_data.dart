@@ -85,14 +85,19 @@ final class ChartSeries {
   int get length => values.length;
 
   /// Copy with other values (aggregation, reordering).
-  ChartSeries withValues(Float64List values, {List<String>? texts}) => ChartSeries(
-    key: key,
-    name: name,
-    values: values,
-    numberFormat: numberFormat,
-    isPercent: isPercent,
-    texts: texts ?? (this.texts == null || this.texts!.length != values.length ? null : this.texts),
-  );
+  ChartSeries withValues(Float64List values, {List<String>? texts}) =>
+      ChartSeries(
+        key: key,
+        name: name,
+        values: values,
+        numberFormat: numberFormat,
+        isPercent: isPercent,
+        texts:
+            texts ??
+            (this.texts == null || this.texts!.length != values.length
+                ? null
+                : this.texts),
+      );
 }
 
 /// Machine-readable warning codes shown in the chart editor.
@@ -190,7 +195,11 @@ final class ScorecardData {
 /// Columns of a table chart.
 final class ChartTableData {
   /// Creates table data.
-  ChartTableData({required this.headers, required this.texts, required this.values});
+  ChartTableData({
+    required this.headers,
+    required this.texts,
+    required this.values,
+  });
 
   /// Header per column.
   final List<String> headers;
@@ -224,11 +233,12 @@ final class ChartData {
   });
 
   /// Empty data ("No data").
-  factory ChartData.empty({List<ChartWarning> warnings = const []}) => ChartData(
-    domain: ChartDomain.synthetic(0),
-    series: const [],
-    warnings: warnings,
-  );
+  factory ChartData.empty({List<ChartWarning> warnings = const []}) =>
+      ChartData(
+        domain: ChartDomain.synthetic(0),
+        series: const [],
+        warnings: warnings,
+      );
 
   final ChartDomain domain;
   final List<ChartSeries> series;

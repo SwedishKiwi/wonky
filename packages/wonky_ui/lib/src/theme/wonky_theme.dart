@@ -73,7 +73,12 @@ abstract final class WonkyTheme {
   static ShadThemeData _build(Brightness brightness, WonkyThemeConfig config) {
     final tokens = WonkyPalette.tokens(brightness);
     ShadColorScheme scheme = brightness == Brightness.light
-        ? ShadZincColorScheme.light(custom: tokens)
+        ? ShadZincColorScheme.light(
+            // shad's red-600 (#e7000b) under #fafafa is 4.01:1; red-700
+            // reaches WCAG AA for text on destructive buttons (specs/11 §3).
+            destructive: const Color(0xffc10007),
+            custom: tokens,
+          )
         : ShadZincColorScheme.dark(custom: tokens);
     final accent = config.accent;
     if (accent != null && ShadAccentScheme.all.containsKey(accent)) {

@@ -3,7 +3,12 @@ import 'dart:math' as math;
 import '../format/borders.dart';
 
 /// Parsed border edge from CSS.
-typedef CssBorder = ({double? widthPx, String? style, String? color, bool widthInPt});
+typedef CssBorder = ({
+  double? widthPx,
+  String? style,
+  String? color,
+  bool widthInPt,
+});
 
 /// Minimal, tolerant CSS helpers for clipboard HTML (03 §12.5).
 abstract final class Css {
@@ -58,7 +63,8 @@ abstract final class Css {
   static String unescape(String v) {
     var s = v.trim();
     if (s.length >= 2 &&
-        (s.startsWith('"') && s.endsWith('"') || s.startsWith("'") && s.endsWith("'"))) {
+        (s.startsWith('"') && s.endsWith('"') ||
+            s.startsWith("'") && s.endsWith("'"))) {
       s = s.substring(1, s.length - 1);
     }
     if (!s.contains(r'\')) return s;
@@ -99,7 +105,12 @@ abstract final class Css {
     if (value == null) return null;
     final v = value.trim().toLowerCase();
     if (v.isEmpty) return null;
-    if (v == 'windowtext' || v == 'auto' || v == 'currentcolor' || v == 'black') return '#000000';
+    if (v == 'windowtext' ||
+        v == 'auto' ||
+        v == 'currentcolor' ||
+        v == 'black') {
+      return '#000000';
+    }
     if (v.startsWith('#')) {
       final h = v.substring(1);
       if (!RegExp(r'^[0-9a-f]+$').hasMatch(h)) return null;
@@ -156,7 +167,8 @@ abstract final class Css {
   }
 
   static String _hex(double r, double g, double b) {
-    String h(double x) => x.round().clamp(0, 255).toRadixString(16).padLeft(2, '0');
+    String h(double x) =>
+        x.round().clamp(0, 255).toRadixString(16).padLeft(2, '0');
     return '#${h(r)}${h(g)}${h(b)}'.toUpperCase();
   }
 
@@ -182,7 +194,9 @@ abstract final class Css {
   /// px). Null when unparseable.
   static double? lengthPx(String? value, {double emPx = 13.333}) {
     if (value == null) return null;
-    final m = RegExp(r'^\s*(-?\d*\.?\d+)\s*([a-z%]*)\s*$').firstMatch(value.toLowerCase());
+    final m = RegExp(
+      r'^\s*(-?\d*\.?\d+)\s*([a-z%]*)\s*$',
+    ).firstMatch(value.toLowerCase());
     if (m == null) return null;
     final n = double.parse(m.group(1)!);
     return switch (m.group(2)!) {
@@ -343,46 +357,153 @@ abstract final class Css {
   }
 
   static const Map<String, String> _named = {
-    'aliceblue': 'F0F8FF', 'antiquewhite': 'FAEBD7', 'aqua': '00FFFF', 'aquamarine': '7FFFD4',
-    'azure': 'F0FFFF', 'beige': 'F5F5DC', 'bisque': 'FFE4C4', 'blanchedalmond': 'FFEBCD',
-    'blue': '0000FF', 'blueviolet': '8A2BE2', 'brown': 'A52A2A', 'burlywood': 'DEB887',
-    'cadetblue': '5F9EA0', 'chartreuse': '7FFF00', 'chocolate': 'D2691E', 'coral': 'FF7F50',
-    'cornflowerblue': '6495ED', 'cornsilk': 'FFF8DC', 'crimson': 'DC143C', 'cyan': '00FFFF',
-    'darkblue': '00008B', 'darkcyan': '008B8B', 'darkgoldenrod': 'B8860B', 'darkgray': 'A9A9A9',
-    'darkgreen': '006400', 'darkgrey': 'A9A9A9', 'darkkhaki': 'BDB76B', 'darkmagenta': '8B008B',
-    'darkolivegreen': '556B2F', 'darkorange': 'FF8C00', 'darkorchid': '9932CC', 'darkred': '8B0000',
-    'darksalmon': 'E9967A', 'darkseagreen': '8FBC8F', 'darkslateblue': '483D8B',
-    'darkslategray': '2F4F4F', 'darkslategrey': '2F4F4F', 'darkturquoise': '00CED1',
-    'darkviolet': '9400D3', 'deeppink': 'FF1493', 'deepskyblue': '00BFFF', 'dimgray': '696969',
-    'dimgrey': '696969', 'dodgerblue': '1E90FF', 'firebrick': 'B22222', 'floralwhite': 'FFFAF0',
-    'forestgreen': '228B22', 'fuchsia': 'FF00FF', 'gainsboro': 'DCDCDC', 'ghostwhite': 'F8F8FF',
-    'gold': 'FFD700', 'goldenrod': 'DAA520', 'gray': '808080', 'green': '008000',
-    'greenyellow': 'ADFF2F', 'grey': '808080', 'honeydew': 'F0FFF0', 'hotpink': 'FF69B4',
-    'indianred': 'CD5C5C', 'indigo': '4B0082', 'ivory': 'FFFFF0', 'khaki': 'F0E68C',
-    'lavender': 'E6E6FA', 'lavenderblush': 'FFF0F5', 'lawngreen': '7CFC00', 'lemonchiffon': 'FFFACD',
-    'lightblue': 'ADD8E6', 'lightcoral': 'F08080', 'lightcyan': 'E0FFFF',
-    'lightgoldenrodyellow': 'FAFAD2', 'lightgray': 'D3D3D3', 'lightgreen': '90EE90',
-    'lightgrey': 'D3D3D3', 'lightpink': 'FFB6C1', 'lightsalmon': 'FFA07A',
-    'lightseagreen': '20B2AA', 'lightskyblue': '87CEFA', 'lightslategray': '778899',
-    'lightslategrey': '778899', 'lightsteelblue': 'B0C4DE', 'lightyellow': 'FFFFE0',
-    'lime': '00FF00', 'limegreen': '32CD32', 'linen': 'FAF0E6', 'magenta': 'FF00FF',
-    'maroon': '800000', 'mediumaquamarine': '66CDAA', 'mediumblue': '0000CD',
-    'mediumorchid': 'BA55D3', 'mediumpurple': '9370DB', 'mediumseagreen': '3CB371',
-    'mediumslateblue': '7B68EE', 'mediumspringgreen': '00FA9A', 'mediumturquoise': '48D1CC',
-    'mediumvioletred': 'C71585', 'midnightblue': '191970', 'mintcream': 'F5FFFA',
-    'mistyrose': 'FFE4E1', 'moccasin': 'FFE4B5', 'navajowhite': 'FFDEAD', 'navy': '000080',
-    'oldlace': 'FDF5E6', 'olive': '808000', 'olivedrab': '6B8E23', 'orange': 'FFA500',
-    'orangered': 'FF4500', 'orchid': 'DA70D6', 'palegoldenrod': 'EEE8AA', 'palegreen': '98FB98',
-    'paleturquoise': 'AFEEEE', 'palevioletred': 'DB7093', 'papayawhip': 'FFEFD5',
-    'peachpuff': 'FFDAB9', 'peru': 'CD853F', 'pink': 'FFC0CB', 'plum': 'DDA0DD',
-    'powderblue': 'B0E0E6', 'purple': '800080', 'rebeccapurple': '663399', 'red': 'FF0000',
-    'rosybrown': 'BC8F8F', 'royalblue': '4169E1', 'saddlebrown': '8B4513', 'salmon': 'FA8072',
-    'sandybrown': 'F4A460', 'seagreen': '2E8B57', 'seashell': 'FFF5EE', 'sienna': 'A0522D',
-    'silver': 'C0C0C0', 'skyblue': '87CEEB', 'slateblue': '6A5ACD', 'slategray': '708090',
-    'slategrey': '708090', 'snow': 'FFFAFA', 'springgreen': '00FF7F', 'steelblue': '4682B4',
-    'tan': 'D2B48C', 'teal': '008080', 'thistle': 'D8BFD8', 'tomato': 'FF6347',
-    'turquoise': '40E0D0', 'violet': 'EE82EE', 'wheat': 'F5DEB3', 'white': 'FFFFFF',
-    'whitesmoke': 'F5F5F5', 'yellow': 'FFFF00', 'yellowgreen': '9ACD32',
+    'aliceblue': 'F0F8FF',
+    'antiquewhite': 'FAEBD7',
+    'aqua': '00FFFF',
+    'aquamarine': '7FFFD4',
+    'azure': 'F0FFFF',
+    'beige': 'F5F5DC',
+    'bisque': 'FFE4C4',
+    'blanchedalmond': 'FFEBCD',
+    'blue': '0000FF',
+    'blueviolet': '8A2BE2',
+    'brown': 'A52A2A',
+    'burlywood': 'DEB887',
+    'cadetblue': '5F9EA0',
+    'chartreuse': '7FFF00',
+    'chocolate': 'D2691E',
+    'coral': 'FF7F50',
+    'cornflowerblue': '6495ED',
+    'cornsilk': 'FFF8DC',
+    'crimson': 'DC143C',
+    'cyan': '00FFFF',
+    'darkblue': '00008B',
+    'darkcyan': '008B8B',
+    'darkgoldenrod': 'B8860B',
+    'darkgray': 'A9A9A9',
+    'darkgreen': '006400',
+    'darkgrey': 'A9A9A9',
+    'darkkhaki': 'BDB76B',
+    'darkmagenta': '8B008B',
+    'darkolivegreen': '556B2F',
+    'darkorange': 'FF8C00',
+    'darkorchid': '9932CC',
+    'darkred': '8B0000',
+    'darksalmon': 'E9967A',
+    'darkseagreen': '8FBC8F',
+    'darkslateblue': '483D8B',
+    'darkslategray': '2F4F4F',
+    'darkslategrey': '2F4F4F',
+    'darkturquoise': '00CED1',
+    'darkviolet': '9400D3',
+    'deeppink': 'FF1493',
+    'deepskyblue': '00BFFF',
+    'dimgray': '696969',
+    'dimgrey': '696969',
+    'dodgerblue': '1E90FF',
+    'firebrick': 'B22222',
+    'floralwhite': 'FFFAF0',
+    'forestgreen': '228B22',
+    'fuchsia': 'FF00FF',
+    'gainsboro': 'DCDCDC',
+    'ghostwhite': 'F8F8FF',
+    'gold': 'FFD700',
+    'goldenrod': 'DAA520',
+    'gray': '808080',
+    'green': '008000',
+    'greenyellow': 'ADFF2F',
+    'grey': '808080',
+    'honeydew': 'F0FFF0',
+    'hotpink': 'FF69B4',
+    'indianred': 'CD5C5C',
+    'indigo': '4B0082',
+    'ivory': 'FFFFF0',
+    'khaki': 'F0E68C',
+    'lavender': 'E6E6FA',
+    'lavenderblush': 'FFF0F5',
+    'lawngreen': '7CFC00',
+    'lemonchiffon': 'FFFACD',
+    'lightblue': 'ADD8E6',
+    'lightcoral': 'F08080',
+    'lightcyan': 'E0FFFF',
+    'lightgoldenrodyellow': 'FAFAD2',
+    'lightgray': 'D3D3D3',
+    'lightgreen': '90EE90',
+    'lightgrey': 'D3D3D3',
+    'lightpink': 'FFB6C1',
+    'lightsalmon': 'FFA07A',
+    'lightseagreen': '20B2AA',
+    'lightskyblue': '87CEFA',
+    'lightslategray': '778899',
+    'lightslategrey': '778899',
+    'lightsteelblue': 'B0C4DE',
+    'lightyellow': 'FFFFE0',
+    'lime': '00FF00',
+    'limegreen': '32CD32',
+    'linen': 'FAF0E6',
+    'magenta': 'FF00FF',
+    'maroon': '800000',
+    'mediumaquamarine': '66CDAA',
+    'mediumblue': '0000CD',
+    'mediumorchid': 'BA55D3',
+    'mediumpurple': '9370DB',
+    'mediumseagreen': '3CB371',
+    'mediumslateblue': '7B68EE',
+    'mediumspringgreen': '00FA9A',
+    'mediumturquoise': '48D1CC',
+    'mediumvioletred': 'C71585',
+    'midnightblue': '191970',
+    'mintcream': 'F5FFFA',
+    'mistyrose': 'FFE4E1',
+    'moccasin': 'FFE4B5',
+    'navajowhite': 'FFDEAD',
+    'navy': '000080',
+    'oldlace': 'FDF5E6',
+    'olive': '808000',
+    'olivedrab': '6B8E23',
+    'orange': 'FFA500',
+    'orangered': 'FF4500',
+    'orchid': 'DA70D6',
+    'palegoldenrod': 'EEE8AA',
+    'palegreen': '98FB98',
+    'paleturquoise': 'AFEEEE',
+    'palevioletred': 'DB7093',
+    'papayawhip': 'FFEFD5',
+    'peachpuff': 'FFDAB9',
+    'peru': 'CD853F',
+    'pink': 'FFC0CB',
+    'plum': 'DDA0DD',
+    'powderblue': 'B0E0E6',
+    'purple': '800080',
+    'rebeccapurple': '663399',
+    'red': 'FF0000',
+    'rosybrown': 'BC8F8F',
+    'royalblue': '4169E1',
+    'saddlebrown': '8B4513',
+    'salmon': 'FA8072',
+    'sandybrown': 'F4A460',
+    'seagreen': '2E8B57',
+    'seashell': 'FFF5EE',
+    'sienna': 'A0522D',
+    'silver': 'C0C0C0',
+    'skyblue': '87CEEB',
+    'slateblue': '6A5ACD',
+    'slategray': '708090',
+    'slategrey': '708090',
+    'snow': 'FFFAFA',
+    'springgreen': '00FF7F',
+    'steelblue': '4682B4',
+    'tan': 'D2B48C',
+    'teal': '008080',
+    'thistle': 'D8BFD8',
+    'tomato': 'FF6347',
+    'turquoise': '40E0D0',
+    'violet': 'EE82EE',
+    'wheat': 'F5DEB3',
+    'white': 'FFFFFF',
+    'whitesmoke': 'F5F5F5',
+    'yellow': 'FFFF00',
+    'yellowgreen': '9ACD32',
   };
 }
 
@@ -427,10 +548,16 @@ final class CssStyleSheet {
       final decls = Css.parseDeclarations(body);
       for (final sel in selector.split(',')) {
         final s = sel.trim().toLowerCase();
-        final m = RegExp(r'^([a-z][a-z0-9]*)?((?:\.[a-z0-9_-]+)*)$').firstMatch(s);
+        final m = RegExp(
+          r'^([a-z][a-z0-9]*)?((?:\.[a-z0-9_-]+)*)$',
+        ).firstMatch(s);
         if (m == null) continue;
         final tag = m.group(1);
-        final classes = m.group(2)!.split('.').where((c) => c.isNotEmpty).toList();
+        final classes = m
+            .group(2)!
+            .split('.')
+            .where((c) => c.isNotEmpty)
+            .toList();
         if (tag == null && classes.isEmpty) continue;
         rules.add(_CssRule(tag, classes, decls, order++));
       }
@@ -448,16 +575,17 @@ final class CssStyleSheet {
   }) {
     if (_rules.isEmpty) return const {};
     final lower = classes.map((c) => c.toLowerCase()).toSet();
-    final matched = <_CssRule>[
-      for (final r in _rules)
-        if ((r.tag == null || r.tag == tag) &&
-            r.classes.every(lower.contains) &&
-            (includeTagOnly || r.classes.isNotEmpty))
-          r,
-    ]..sort((a, b) {
-      final s = a.specificity.compareTo(b.specificity);
-      return s != 0 ? s : a.order.compareTo(b.order);
-    });
+    final matched =
+        <_CssRule>[
+          for (final r in _rules)
+            if ((r.tag == null || r.tag == tag) &&
+                r.classes.every(lower.contains) &&
+                (includeTagOnly || r.classes.isNotEmpty))
+              r,
+        ]..sort((a, b) {
+          final s = a.specificity.compareTo(b.specificity);
+          return s != 0 ? s : a.order.compareTo(b.order);
+        });
     final out = <String, String>{};
     for (final r in matched) {
       out.addAll(r.declarations);

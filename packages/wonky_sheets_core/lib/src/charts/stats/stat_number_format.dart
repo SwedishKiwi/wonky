@@ -27,7 +27,9 @@ abstract final class StatNumberFormat {
   }
 
   static String _exponentForm(String digits, int exponent) {
-    var mantissa = digits.length == 1 ? digits : '${digits[0]}.${digits.substring(1)}';
+    var mantissa = digits.length == 1
+        ? digits
+        : '${digits[0]}.${digits.substring(1)}';
     mantissa = _stripFraction(mantissa);
     final sign = exponent < 0 ? '-' : '+';
     final e = exponent.abs().toString().padLeft(2, '0');
@@ -41,7 +43,8 @@ abstract final class StatNumberFormat {
     } else if (exponent >= digits.length - 1) {
       text = digits + '0' * (exponent - digits.length + 1);
     } else {
-      text = '${digits.substring(0, exponent + 1)}.${digits.substring(exponent + 1)}';
+      text =
+          '${digits.substring(0, exponent + 1)}.${digits.substring(exponent + 1)}';
     }
     return _stripFraction(text);
   }

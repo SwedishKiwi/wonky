@@ -45,9 +45,18 @@ enum FormatAttr {
   ];
 
   /// Attributes a conditional format may set (06 §15.4).
-  static const conditional = [bold, italic, underline, strikethrough, textColor, fillColor];
+  static const conditional = [
+    bold,
+    italic,
+    underline,
+    strikethrough,
+    textColor,
+    fillColor,
+  ];
 
-  static final Map<String, FormatAttr> _byColumn = {for (final a in values) a.column: a};
+  static final Map<String, FormatAttr> _byColumn = {
+    for (final a in values) a.column: a,
+  };
 
   /// Attribute for a column / JSON key, or null.
   static FormatAttr? byColumn(String column) => _byColumn[column];
@@ -61,9 +70,13 @@ enum FormatAttr {
       case FormatValueType.string:
         return v is String ? v : null;
       case FormatValueType.double:
-        return v is num ? v.toDouble() : (v is String ? double.tryParse(v) : null);
+        return v is num
+            ? v.toDouble()
+            : (v is String ? double.tryParse(v) : null);
       case FormatValueType.bool:
-        return v is bool ? v : (v == 'true' ? true : (v == 'false' ? false : null));
+        return v is bool
+            ? v
+            : (v == 'true' ? true : (v == 'false' ? false : null));
       case FormatValueType.int:
         return v is num ? v.toInt() : (v is String ? int.tryParse(v) : null);
       case FormatValueType.hAlign:

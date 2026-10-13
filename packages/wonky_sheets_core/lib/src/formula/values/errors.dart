@@ -62,7 +62,8 @@ abstract final class ErrorMessages {
   static const String referenceDoesNotExist = 'Reference does not exist.';
   static const String circular =
       'Circular dependency detected. To resolve with iterative calculation, see File > Settings.';
-  static String unresolvedSheet(String name) => "Unresolved sheet name '$name'.";
+  static String unresolvedSheet(String name) =>
+      "Unresolved sheet name '$name'.";
   static String outOfBounds(String a1) => 'Range $a1 is out of bounds.';
   static const String parseError = 'Formula parse error.';
   static String spillBlocked(String a1) =>
@@ -75,7 +76,8 @@ abstract final class ErrorMessages {
       'Formula result is a function; did you forget to call it?';
   static const String recursionLimit = 'Recursion limit exceeded';
   static const String arrayValueNotFound = 'An array value could not be found.';
-  static String arraySizeMismatch(String fn) => 'Array arguments to $fn are of different size.';
+  static String arraySizeMismatch(String fn) =>
+      'Array arguments to $fn are of different size.';
   static String didNotFind(String value, String fn) =>
       "Did not find value '$value' in $fn evaluation.";
   static const String loading = 'Loading…';
@@ -83,10 +85,14 @@ abstract final class ErrorMessages {
   static const String resultTooLarge = 'Result too large';
   static String textTooLong(String fn) =>
       'Text result of $fn is longer than the limit of 50000 characters.';
-  static const String noMatchFilter = 'No matches are found in FILTER evaluation.';
-  static String notAvailableYet(String fn) => "$fn isn't available in Wonky Sheets yet.";
-  static String notAvailable(String fn) => "$fn isn't available in Wonky Sheets.";
-  static const String rangeOperatorRequiresRefs = 'Range operator requires references';
+  static const String noMatchFilter =
+      'No matches are found in FILTER evaluation.';
+  static String notAvailableYet(String fn) =>
+      "$fn isn't available in Wonky Sheets yet.";
+  static String notAvailable(String fn) =>
+      "$fn isn't available in Wonky Sheets.";
+  static const String rangeOperatorRequiresRefs =
+      'Range operator requires references';
   static const String argumentMustBeRange = 'Argument must be a range.';
   static const String tooDeep = 'Formula is too deeply nested';
 }

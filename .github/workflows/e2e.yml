@@ -1,0 +1,92 @@
+name: E2E journeys
+
+# The Write E2E journeys (specs/11 §1.1, specs/15 §9) in
+# wonky_write/integration_test, run on macOS against a development server.
+# Nightly and on demand; they are tagged `e2e` and skipped in the regular
+# test runs. Locally: start `serverpod start`, then
+#   cd wonky_write && flutter test integration_test/<journey>_test.dart -d macos --run-skipped
+# (web: `flutter drive -d chrome --driver=test_driver/integration_test.dart
+#  --target=integration_test/<journey>_test.dart` with a chromedriver on :4444).
+
+on:
+  schedule:
+    - cron: '23 2 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{github.workflow}}-${{github.ref}}
+  cancel-in-progress: true
+
+env:
+  FLUTTER_VERSION: '3.47.5'
+  VERSION: '4.1.0-beta.3'
+
+jobs:
+  write-macos:
+    runs-on: macos-latest
+    timeout-minutes: 60
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: ${{env.FLUTTER_VERSION}}
+          cache: true
+
+      - name: Cache embedded PostgreSQL binaries
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/serverpod/pg-binaries
+          key: serverpod-pg-binaries-${{runner.os}}-${{env.VERSION}}
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      - name: Install Serverpod CLI
+        run: |
+          dart install serverpod_cli@$VERSION
+          echo "${XDG_STATE_HOME:-$HOME/.local/state}/Dart/install/bin" >> "$GITHUB_PATH"
+
+      - name: Run Serverpod generator
+        working-directory: wonky_server
+        run: serverpod generate
+
+      # Throwaway secrets for this run (config/passwords.yaml is not in git).
+      - name: Generate development secrets
+        run: |
+          for key in database redis serviceSecret emailSecretHashPepper \
+              jwtRefreshTokenHashPepper jwtHmacSha512PrivateKey; do
+            echo "SERVERPOD_PASSWORD_$key=$(openssl rand -hex 32)" >> "$GITHUB_ENV"
+          done
+
+      - name: Start the development server
+        working-directory: wonky_server
+        run: |
+          nohup dart bin/main.dart --mode development --apply-migrations \
+            > server.log 2>&1 &
+          for i in $(seq 1 120); do
+            curl -sf http://localhost:8080/livez > /dev/null && exit 0
+            sleep 2
+          done
+          cat server.log
+          exit 1
+
+      - name: Run the journeys
+        working-directory: wonky_write
+        # One file per run: on macOS, several files in one `flutter test` fail
+        # to reattach to the relaunched app ("log reader stopped").
+        run: |
+          status=0
+          for f in integration_test/journey_*_test.dart; do
+            flutter test "$f" -d macos --run-skipped || status=1
+          done
+          exit $status
+
+      - name: Server log
+        if: failure()
+        working-directory: wonky_server
+        run: tail -n 300 server.log

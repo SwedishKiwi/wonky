@@ -4,7 +4,11 @@ import '../format/number_format/locale_data.dart';
 /// A number recognized in typed input (03 §8.6).
 final class NumberInputMatch {
   /// Creates a match.
-  const NumberInputMatch(this.value, this.format, {this.kind = NumberInputKind.plain});
+  const NumberInputMatch(
+    this.value,
+    this.format, {
+    this.kind = NumberInputKind.plain,
+  });
 
   /// The value (percent already divided by 100).
   final double value;
@@ -48,7 +52,21 @@ final class NumberInputRecognizer {
 
   /// Common currency symbols accepted in every locale.
   static const List<String> commonSymbols = [
-    r'$', '€', '£', '¥', '₹', '₩', '₽', '₺', '₪', '₫', '฿', '₴', '₱', '₦', '¢', //
+    r'$',
+    '€',
+    '£',
+    '¥',
+    '₹',
+    '₩',
+    '₽',
+    '₺',
+    '₪',
+    '₫',
+    '฿',
+    '₴',
+    '₱',
+    '₦',
+    '¢', //
   ];
 
   /// Recognizer for [locale].
@@ -141,7 +159,11 @@ final class NumberInputRecognizer {
     if (value == null || !value.isFinite) return null;
     final decimals = core.fracDigits.length;
     if (core.exponent != null) {
-      return NumberInputMatch(value, FormatInference.scientific, kind: NumberInputKind.scientific);
+      return NumberInputMatch(
+        value,
+        FormatInference.scientific,
+        kind: NumberInputKind.scientific,
+      );
     }
     if (percent) {
       return NumberInputMatch(
@@ -153,14 +175,24 @@ final class NumberInputRecognizer {
     if (symbol != null) {
       return NumberInputMatch(
         value,
-        FormatInference.currency(symbol, decimals, before: symbolBefore, spaced: spaced),
+        FormatInference.currency(
+          symbol,
+          decimals,
+          before: symbolBefore,
+          spaced: spaced,
+        ),
         kind: NumberInputKind.currency,
       );
     }
-    return NumberInputMatch(value, core.grouped ? FormatInference.grouped(decimals) : null);
+    return NumberInputMatch(
+      value,
+      core.grouped ? FormatInference.grouped(decimals) : null,
+    );
   }
 
-  ({String intDigits, String fracDigits, int? exponent, bool grouped})? _core(String s) {
+  ({String intDigits, String fracDigits, int? exponent, bool grouped})? _core(
+    String s,
+  ) {
     final dec = locale.decimal;
     var i = 0;
     final n = s.length;
@@ -177,7 +209,10 @@ final class NumberInputRecognizer {
         continue;
       }
       final ch = s[i];
-      if (_groupChars.contains(ch) && ch != dec && i + 1 < n && _isDigit(s.codeUnitAt(i + 1))) {
+      if (_groupChars.contains(ch) &&
+          ch != dec &&
+          i + 1 < n &&
+          _isDigit(s.codeUnitAt(i + 1))) {
         if (run == 0) return null;
         groupLens.add(run);
         run = 0;

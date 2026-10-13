@@ -38,7 +38,13 @@ final class DateInputMatch {
 /// dots), ISO dates, 2-digit years, partial dates, 12/24-hour times with
 /// seconds and fractions.
 final class DateInputRecognizer {
-  DateInputRecognizer._(this.locale, this._months, this._weekdays, this._am, this._pm);
+  DateInputRecognizer._(
+    this.locale,
+    this._months,
+    this._weekdays,
+    this._am,
+    this._pm,
+  );
 
   /// Locale data.
   final LocaleFormatData locale;
@@ -54,11 +60,25 @@ final class DateInputRecognizer {
   static final Map<String, DateInputRecognizer> _cache = {};
 
   static const List<String> _enMonths = [
-    'january', 'february', 'march', 'april', 'may', 'june', 'july', 'august', 'september', //
+    'january',
+    'february',
+    'march',
+    'april',
+    'may',
+    'june',
+    'july',
+    'august',
+    'september', //
     'october', 'november', 'december',
   ];
   static const List<String> _enWeekdays = [
-    'sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', //
+    'sunday',
+    'monday',
+    'tuesday',
+    'wednesday',
+    'thursday',
+    'friday',
+    'saturday', //
   ];
 
   /// Recognizer for [locale].
@@ -103,7 +123,8 @@ final class DateInputRecognizer {
       if (e.value.length == 1) months.putIfAbsent(e.key, () => e.value.first);
     }
     final weekdays = <String>{
-      for (final w in [...l.weekdays, ...l.shortWeekdays, ..._enWeekdays]) _norm(w),
+      for (final w in [...l.weekdays, ...l.shortWeekdays, ..._enWeekdays])
+        _norm(w),
       for (final w in _enWeekdays) w.substring(0, 3),
     };
     final am = {'am', 'a', 'a.m', _norm(l.am)};
@@ -115,9 +136,15 @@ final class DateInputRecognizer {
     r'(?:^|[\sT])(\d+):(\d{1,2})(?::(\d{1,2})(?:[.,](\d+))?)?(?:\s*([^\d\s:][^\s]*))?$',
     unicode: true,
   );
-  static final RegExp _hourAmPmRe = RegExp(r'(?:^|\s)(\d{1,2})\s*([^\d\s:][^\s]*)$', unicode: true);
+  static final RegExp _hourAmPmRe = RegExp(
+    r'(?:^|\s)(\d{1,2})\s*([^\d\s:][^\s]*)$',
+    unicode: true,
+  );
   static final RegExp _isoRe = RegExp(r'^(\d{4})-(\d{1,2})-(\d{1,2})$');
-  static final RegExp _tokenRe = RegExp(r'\d+|[\p{L}\p{M}]+\.?|\S', unicode: true);
+  static final RegExp _tokenRe = RegExp(
+    r'\d+|[\p{L}\p{M}]+\.?|\S',
+    unicode: true,
+  );
 
   static final RegExp _letterStart = RegExp(r'^\p{L}', unicode: true);
 
@@ -144,7 +171,13 @@ final class DateInputRecognizer {
     var isoT = false;
     final tm = _timeRe.firstMatch(text);
     if (tm != null) {
-      final t = _time(tm.group(1)!, tm.group(2)!, tm.group(3), tm.group(4), tm.group(5));
+      final t = _time(
+        tm.group(1)!,
+        tm.group(2)!,
+        tm.group(3),
+        tm.group(4),
+        tm.group(5),
+      );
       if (t != null) {
         time = t;
         final start = tm.start;
@@ -157,7 +190,14 @@ final class DateInputRecognizer {
     if (time == null) {
       final hm = _hourAmPmRe.firstMatch(text);
       if (hm != null) {
-        final t = _time(hm.group(1)!, '0', null, null, hm.group(2), hourOnly: true);
+        final t = _time(
+          hm.group(1)!,
+          '0',
+          null,
+          null,
+          hm.group(2),
+          hourOnly: true,
+        );
         if (t != null) {
           time = t;
           datePart = text.substring(0, hm.start).trim();
@@ -190,7 +230,10 @@ final class DateInputRecognizer {
     final date = _date(datePart, today);
     if (date == null) return null;
     final serial = SerialCalendar.serialOf(date.y, date.m, date.d);
-    if (serial < SerialCalendar.minSerial || serial > SerialCalendar.maxSerial) return null;
+    if (serial < SerialCalendar.minSerial ||
+        serial > SerialCalendar.maxSerial) {
+      return null;
+    }
     if (time == null) {
       return DateInputMatch(
         serial.toDouble(),
@@ -252,7 +295,12 @@ final class DateInputRecognizer {
     return y;
   }
 
-  ({int y, int m, int d, bool iso})? _valid(int y, int m, int d, {bool iso = false}) {
+  ({int y, int m, int d, bool iso})? _valid(
+    int y,
+    int m,
+    int d, {
+    bool iso = false,
+  }) {
     if (m < 1 || m > 12 || d < 1 || y < 1 || y > 9999) return null;
     if (d > SerialCalendar.daysInMonth(y, m)) return null;
     return (y: y, m: m, d: d, iso: iso);
@@ -284,9 +332,13 @@ final class DateInputRecognizer {
     }
     if (sep == null) return null;
     var body = s;
-    if (sep == '.' && body.endsWith('.')) body = body.substring(0, body.length - 1);
+    if (sep == '.' && body.endsWith('.')) {
+      body = body.substring(0, body.length - 1);
+    }
     final parts = body.split(sep).map((p) => p.trim()).toList();
-    if (parts.length < 2 || parts.length > 3 || !parts.every(_allDigits)) return null;
+    if (parts.length < 2 || parts.length > 3 || !parts.every(_allDigits)) {
+      return null;
+    }
     final order = locale.dateOrder;
     if (parts.length == 3) {
       final a = parts[0], b = parts[1], c = parts[2];
@@ -294,15 +346,21 @@ final class DateInputRecognizer {
         if (a.length > 4 || b.length > 2 || c.length > 2) return null;
         return _valid(_year(a), int.parse(b), int.parse(c));
       }
-      if (a.length > 2 || b.length > 2 || c.length > 4 || c.length == 3) return null;
+      if (a.length > 2 || b.length > 2 || c.length > 4 || c.length == 3) {
+        return null;
+      }
       final y = _year(c);
       return order == DatePartOrder.mdy
           ? _valid(y, int.parse(a), int.parse(b))
           : _valid(y, int.parse(b), int.parse(a));
     }
     final a = parts[0], b = parts[1];
-    if (b.length == 4 && a.length <= 2) return _valid(int.parse(b), int.parse(a), 1);
-    if (a.length == 4 && b.length <= 2) return _valid(int.parse(a), int.parse(b), 1);
+    if (b.length == 4 && a.length <= 2) {
+      return _valid(int.parse(b), int.parse(a), 1);
+    }
+    if (a.length == 4 && b.length <= 2) {
+      return _valid(int.parse(a), int.parse(b), 1);
+    }
     if (a.length > 2 || b.length > 2) return null;
     final y = today.year;
     return order == DatePartOrder.dmy

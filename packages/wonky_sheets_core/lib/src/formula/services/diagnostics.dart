@@ -29,25 +29,37 @@ ErrorTooltip? describeError(FValue value) {
     case ErrorKind.parse:
       return ErrorTooltip('Formula parse error', msg);
     case ErrorKind.spill:
-      return ErrorTooltip('Error', msg, const ['sheets.formula.selectSpillBlockers']);
+      return ErrorTooltip('Error', msg, const [
+        'sheets.formula.selectSpillBlockers',
+      ]);
     case ErrorKind.ref:
       if (msg == ErrorMessages.circular) {
-        return ErrorTooltip('Circular dependency', msg, const ['sheets.formula.showCircularPath']);
+        return ErrorTooltip('Circular dependency', msg, const [
+          'sheets.formula.showCircularPath',
+        ]);
       }
       if (msg.startsWith('Result was not automatically expanded')) {
-        return ErrorTooltip('Array result too large', msg, const ['sheets.formula.insertRowsForSpill']);
+        return ErrorTooltip('Array result too large', msg, const [
+          'sheets.formula.insertRowsForSpill',
+        ]);
       }
       if (msg.contains('connect these sheets')) {
-        return ErrorTooltip('Connect sheets', msg, const ['sheets.formula.allowImportRange']);
+        return ErrorTooltip('Connect sheets', msg, const [
+          'sheets.formula.allowImportRange',
+        ]);
       }
       return ErrorTooltip('Error', msg);
     case ErrorKind.na:
       if (msg == ErrorMessages.offline) {
-        return ErrorTooltip('Error', msg, const ['sheets.formula.refreshExternalData']);
+        return ErrorTooltip('Error', msg, const [
+          'sheets.formula.refreshExternalData',
+        ]);
       }
       return ErrorTooltip('Error', msg);
     case ErrorKind.num:
-      if (msg == ErrorMessages.resultTooLarge) return ErrorTooltip('Array result too large', msg);
+      if (msg == ErrorMessages.resultTooLarge) {
+        return ErrorTooltip('Array result too large', msg);
+      }
       return ErrorTooltip('Error', msg);
     default:
       return ErrorTooltip('Error', msg);
@@ -89,7 +101,12 @@ final class FormulaValidation {
 
   Map<String, Object?> toJson() => {
     'ok': ok,
-    if (error != null) 'error': {'offset': error!.offset, 'length': error!.length, 'message': error!.message},
+    if (error != null)
+      'error': {
+        'offset': error!.offset,
+        'length': error!.length,
+        'message': error!.message,
+      },
     'functions_used': functionsUsed,
     'references': references,
     if (unknownFunctions.isNotEmpty) 'unknown_functions': unknownFunctions,
@@ -104,10 +121,19 @@ FormulaValidation validateFormula(
 }) {
   final reg = registry ?? FunctionRegistry.standard;
   final text = formula.startsWith('=') ? formula : '=$formula';
-  final (ast, err) = FormulaParser.tryParse(text, locale: locale, storedForm: false);
+  final (ast, err) = FormulaParser.tryParse(
+    text,
+    locale: locale,
+    storedForm: false,
+  );
   final tokens = FormulaLexer(locale: locale, storedForm: false).tokenize(text);
-  final refs = [for (final t in tokens) if (t.ref?.a1 != null) t.text];
-  if (ast == null) return FormulaValidation(ok: false, error: err, references: refs);
+  final refs = [
+    for (final t in tokens)
+      if (t.ref?.a1 != null) t.text,
+  ];
+  if (ast == null) {
+    return FormulaValidation(ok: false, error: err, references: refs);
+  }
   final used = <String>{};
   final unknown = <String>{};
   void walk(Expr e) {
@@ -146,18 +172,21 @@ String printFormula(Expr e, {String Function(RefNode ref)? renderRef}) {
     StringLit(:final value) => '"${value.replaceAll('"', '""')}"',
     BoolLit(:final value) => value ? 'TRUE' : 'FALSE',
     ErrorLit(:final kind) => kind.literal,
-    ArrayLit(:final rows) => '{${rows.map((r) => r.map(p).join(', ')).join('; ')}}',
+    ArrayLit(:final rows) =>
+      '{${rows.map((r) => r.map(p).join(', ')).join('; ')}}',
     RefExpr(:final ref) => renderRef?.call(ref) ?? ref.toString(),
     NameExpr(:final name) => name,
     CallExpr(:final name, args: final a) => '${name.toUpperCase()}(${args(a)})',
     InvokeExpr(:final callee, args: final a) => '${p(callee)}(${args(a)})',
     UnaryExpr(:final op, :final operand) => '${op.symbol}${p(operand)}',
     PercentExpr(:final operand) => '${p(operand)}%',
-    BinaryExpr(:final op, :final left, :final right) => '${p(left)} ${op.symbol} ${p(right)}',
+    BinaryExpr(:final op, :final left, :final right) =>
+      '${p(left)} ${op.symbol} ${p(right)}',
     RangeOpExpr(:final left, :final right) => '${p(left)}:${p(right)}',
     ParenExpr(:final inner) => '(${p(inner)})',
   };
 }
 
-String _num(double v) =>
-    v == v.truncateToDouble() && v.abs() < 1e15 ? v.toInt().toString() : v.toString();
+String _num(double v) => v == v.truncateToDouble() && v.abs() < 1e15
+    ? v.toInt().toString()
+    : v.toString();

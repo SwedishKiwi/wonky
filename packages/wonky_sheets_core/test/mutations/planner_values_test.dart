@@ -20,27 +20,30 @@ void main() {
     late PlannerHarness h;
     setUp(() => h = _harness());
 
-    test('when typing inputs then contents are parsed and formulas stored by id', () {
-      h.apply(
-        SetCellInputs(
-          sheetId: h.sheetId,
-          row: 0,
-          col: 2,
-          inputs: [
-            [
-              const CellInput.user('42'),
-              const CellInput.user('=A1*2'),
-              const CellInput.user("'007"),
+    test(
+      'when typing inputs then contents are parsed and formulas stored by id',
+      () {
+        h.apply(
+          SetCellInputs(
+            sheetId: h.sheetId,
+            row: 0,
+            col: 2,
+            inputs: [
+              [
+                const CellInput.user('42'),
+                const CellInput.user('=A1*2'),
+                const CellInput.user("'007"),
+              ],
             ],
-          ],
-        ),
-      );
-      expect(h.content('C1'), 'n:42');
-      expect(h.content('D1'), startsWith('='));
-      expect(h.content('D1'), contains('⟦'));
-      expect(h.formulaA1('D1'), '=A1*2');
-      expect(h.content('E1'), 's:007');
-    });
+          ),
+        );
+        expect(h.content('C1'), 'n:42');
+        expect(h.content('D1'), startsWith('='));
+        expect(h.content('D1'), contains('⟦'));
+        expect(h.formulaA1('D1'), '=A1*2');
+        expect(h.content('E1'), 's:007');
+      },
+    );
 
     test('when undoing an edit then the state equals the original', () {
       final before = h.dump();
@@ -60,22 +63,27 @@ void main() {
       expect(h.dump(), before);
     });
 
-    test('when the input extends beyond the grid without growGrid then it is refused', () {
-      expect(
-        () => h.plan(
-          SetCellInputs(
-            sheetId: h.sheetId,
-            row: 19,
-            col: 0,
-            inputs: [
-              [const CellInput.user('1')],
-              [const CellInput.user('2')],
-            ],
+    test(
+      'when the input extends beyond the grid without growGrid then it is refused',
+      () {
+        expect(
+          () => h.plan(
+            SetCellInputs(
+              sheetId: h.sheetId,
+              row: 19,
+              col: 0,
+              inputs: [
+                [const CellInput.user('1')],
+                [const CellInput.user('2')],
+              ],
+            ),
           ),
-        ),
-        throwsA(isA<PlanException>().having((e) => e.code, 'code', 'invalid_range')),
-      );
-    });
+          throwsA(
+            isA<PlanException>().having((e) => e.code, 'code', 'invalid_range'),
+          ),
+        );
+      },
+    );
 
     test('when growGrid is set then rows are appended', () {
       h.apply(
@@ -119,12 +127,15 @@ void main() {
       expect(p.summary.kinds, contains('values'));
     });
 
-    test('when setting a note and then removing it then the cell row disappears', () {
-      h.apply(SetNote(h.sheetId, 5, 5, 'hello'));
-      expect(h.cell('F6')!.note, 'hello');
-      h.apply(SetNote(h.sheetId, 5, 5, null));
-      expect(h.cell('F6'), isNull);
-    });
+    test(
+      'when setting a note and then removing it then the cell row disappears',
+      () {
+        h.apply(SetNote(h.sheetId, 5, 5, 'hello'));
+        expect(h.cell('F6')!.note, 'hello');
+        h.apply(SetNote(h.sheetId, 5, 5, null));
+        expect(h.cell('F6'), isNull);
+      },
+    );
   });
 
   group('Given formatting operations', () {
@@ -144,44 +155,60 @@ void main() {
       },
     );
 
-    test('when bolding a whole column then one column default is written (AC-F2)', () {
-      final s = h.model.sheets.first;
-      final rowId = s.rows.idAt(4);
-      h.apply(
-        SetFormat(
-          [ResolvedRange(s.id, GridRect(4, 0, 4, 5), wholeRows: true)],
-          {FormatAttr.bold: false},
-        ),
-      );
-      final p = h.apply(SetFormat([h.range('B:B')], {FormatAttr.bold: true}));
-      final colChanges = p.changes.where((c) => c.table == SheetsTables.sheetColumn).toList();
-      expect(colChanges, hasLength(1));
-      expect(
-        CellFormat.fromJson(s.columnRecords[s.columns.idAt(1)]!.formatJson)[FormatAttr.bold],
-        true,
-      );
-      expect(h.model.cell(s.id, rowId, s.columns.idAt(1))!.format[FormatAttr.bold], true);
-      expect(p.changes.where((c) => c.table == SheetsTables.cell), hasLength(1));
-    });
+    test(
+      'when bolding a whole column then one column default is written (AC-F2)',
+      () {
+        final s = h.model.sheets.first;
+        final rowId = s.rows.idAt(4);
+        h.apply(
+          SetFormat(
+            [ResolvedRange(s.id, GridRect(4, 0, 4, 5), wholeRows: true)],
+            {FormatAttr.bold: false},
+          ),
+        );
+        final p = h.apply(SetFormat([h.range('B:B')], {FormatAttr.bold: true}));
+        final colChanges = p.changes
+            .where((c) => c.table == SheetsTables.sheetColumn)
+            .toList();
+        expect(colChanges, hasLength(1));
+        expect(
+          CellFormat.fromJson(
+            s.columnRecords[s.columns.idAt(1)]!.formatJson,
+          )[FormatAttr.bold],
+          true,
+        );
+        expect(
+          h.model.cell(s.id, rowId, s.columns.idAt(1))!.format[FormatAttr.bold],
+          true,
+        );
+        expect(
+          p.changes.where((c) => c.table == SheetsTables.cell),
+          hasLength(1),
+        );
+      },
+    );
 
-    test('when applying outer thick red then inner thin then a framed grid results (AC-B1)', () {
-      h.apply(
-        SetBorders(
-          [h.range('B2:D4')],
-          BorderPreset.outer,
-          style: BorderStyle.thick,
-          color: '#FF0000',
-        ),
-      );
-      h.apply(SetBorders([h.range('B2:D4')], BorderPreset.inner));
-      expect(h.cell('B2')!.format[FormatAttr.borderTop], 'thick|#FF0000');
-      expect(h.cell('B2')!.format[FormatAttr.borderBottom], 'thin|auto');
-      expect(h.cell('C3')!.format[FormatAttr.borderRight], 'thin|auto');
-      expect(h.cell('D4')!.format[FormatAttr.borderRight], 'thick|#FF0000');
-      h.undo();
-      expect(h.cell('B2')!.format[FormatAttr.borderBottom], isNull);
-      expect(h.cell('C3'), isNull);
-    });
+    test(
+      'when applying outer thick red then inner thin then a framed grid results (AC-B1)',
+      () {
+        h.apply(
+          SetBorders(
+            [h.range('B2:D4')],
+            BorderPreset.outer,
+            style: BorderStyle.thick,
+            color: '#FF0000',
+          ),
+        );
+        h.apply(SetBorders([h.range('B2:D4')], BorderPreset.inner));
+        expect(h.cell('B2')!.format[FormatAttr.borderTop], 'thick|#FF0000');
+        expect(h.cell('B2')!.format[FormatAttr.borderBottom], 'thin|auto');
+        expect(h.cell('C3')!.format[FormatAttr.borderRight], 'thin|auto');
+        expect(h.cell('D4')!.format[FormatAttr.borderRight], 'thick|#FF0000');
+        h.undo();
+        expect(h.cell('B2')!.format[FormatAttr.borderBottom], isNull);
+        expect(h.cell('C3'), isNull);
+      },
+    );
 
     test(
       'when merging cells with data then the warning is raised and force keeps the top-left (AC-F8)',
@@ -200,7 +227,13 @@ void main() {
         final before = h.dump();
         expect(
           () => h.plan(MergeCells([h.range('B2:C3')])),
-          throwsA(isA<PlanException>().having((e) => e.code, 'code', 'merge_data_loss')),
+          throwsA(
+            isA<PlanException>().having(
+              (e) => e.code,
+              'code',
+              'merge_data_loss',
+            ),
+          ),
         );
         h.apply(MergeCells([h.range('B2:C3')], force: true));
         expect(h.content('B2'), 's:b2');

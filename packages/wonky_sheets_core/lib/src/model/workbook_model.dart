@@ -91,14 +91,16 @@ final class WorkbookModel implements WorkbookReader {
   // Owner lookups for child rows (by id → sheet id).
   final Map<String, String> _ruleOwner = {};
 
-  final StreamController<WorkbookChangeBatch> _controller = StreamController.broadcast(sync: true);
+  final StreamController<WorkbookChangeBatch> _controller =
+      StreamController.broadcast(sync: true);
   final List<void Function(WorkbookChangeBatch)> _listeners = [];
 
   /// Batches of change events, emitted synchronously after each ingestion.
   Stream<WorkbookChangeBatch> get changes => _controller.stream;
 
   /// Adds a synchronous listener.
-  void addListener(void Function(WorkbookChangeBatch batch) listener) => _listeners.add(listener);
+  void addListener(void Function(WorkbookChangeBatch batch) listener) =>
+      _listeners.add(listener);
 
   /// Removes a listener.
   void removeListener(void Function(WorkbookChangeBatch batch) listener) =>
@@ -117,7 +119,8 @@ final class WorkbookModel implements WorkbookReader {
 
   @override
   SpreadsheetRecord get spreadsheet =>
-      _spreadsheet ?? SpreadsheetRecord(id: spreadsheetId, createdAt: kEpochUtc);
+      _spreadsheet ??
+      SpreadsheetRecord(id: spreadsheetId, createdAt: kEpochUtc);
 
   /// Whether the spreadsheet row has been loaded.
   bool get hasSpreadsheetRow => _spreadsheet != null;
@@ -128,7 +131,14 @@ final class WorkbookModel implements WorkbookReader {
       for (final s in _sheets.values)
         if (s.record != null) s,
     ];
-    list.sort((a, b) => FractionalIndex.compare(a.record!.sortKey, a.id, b.record!.sortKey, b.id));
+    list.sort(
+      (a, b) => FractionalIndex.compare(
+        a.record!.sortKey,
+        a.id,
+        b.record!.sortKey,
+        b.id,
+      ),
+    );
     return List<SheetModel>.unmodifiable(list);
   }();
 
@@ -180,7 +190,8 @@ final class WorkbookModel implements WorkbookReader {
   SpreadsheetTheme get theme => SpreadsheetTheme.parse(spreadsheet.themeJson);
 
   /// Records of a generic table.
-  Iterable<GenericRecord> otherRecords(String table) => _other[table]?.values ?? const [];
+  Iterable<GenericRecord> otherRecords(String table) =>
+      _other[table]?.values ?? const [];
 
   @override
   SyncRecord? record(String table, String id) {
@@ -213,7 +224,9 @@ final class WorkbookModel implements WorkbookReader {
         final s = owner == null ? null : _sheets[owner];
         if (s == null) return null;
         return _childMap(s, table)?[id] ??
-            (table == SheetsTables.basicFilter && s.basicFilter?.id == id ? s.basicFilter : null);
+            (table == SheetsTables.basicFilter && s.basicFilter?.id == id
+                ? s.basicFilter
+                : null);
       default:
         return _other[table]?[id];
     }
@@ -224,7 +237,8 @@ final class WorkbookModel implements WorkbookReader {
       _sheets[sheetId]?.cells.at(rowId, colId);
 
   /// Cell at indices.
-  CellRecord? cellAt(String sheetId, int row, int col) => _sheets[sheetId]?.cellAt(row, col);
+  CellRecord? cellAt(String sheetId, int row, int col) =>
+      _sheets[sheetId]?.cellAt(row, col);
 
   @override
   Map<String, Object?>? currentColumns(String table, String rowId) =>
@@ -253,14 +267,21 @@ final class WorkbookModel implements WorkbookReader {
           : text;
       final s = sheetByName(unq);
       if (s != null && s.gridRect != null) {
-        return ResolvedRange(s.id, s.gridRect!, wholeRows: true, wholeColumns: true);
+        return ResolvedRange(
+          s.id,
+          s.gridRect!,
+          wholeRows: true,
+          wholeColumns: true,
+        );
       }
       throw InvalidRangeException('Unable to parse range: $a1');
     }
     SheetModel? s;
     if (area.sheet != null) {
       s = sheetByName(area.sheet!);
-      if (s == null) throw InvalidRangeException('Unknown sheet "${area.sheet}"');
+      if (s == null) {
+        throw InvalidRangeException('Unknown sheet "${area.sheet}"');
+      }
     } else if (contextSheetId != null) {
       s = sheet(contextSheetId);
     } else if (sheets.length == 1) {
@@ -272,8 +293,13 @@ final class WorkbookModel implements WorkbookReader {
     final rowsN = s.rows.length;
     final colsN = s.columns.length;
     final rect = area.toRect(rowsN, colsN);
-    if (rect.top < 0 || rect.left < 0 || rect.bottom >= rowsN || rect.right >= colsN) {
-      throw InvalidRangeException('Range $a1 is outside the grid of "${s.name}"');
+    if (rect.top < 0 ||
+        rect.left < 0 ||
+        rect.bottom >= rowsN ||
+        rect.right >= colsN) {
+      throw InvalidRangeException(
+        'Range $a1 is outside the grid of "${s.name}"',
+      );
     }
     return ResolvedRange(
       s.id,
@@ -310,8 +336,12 @@ final class WorkbookModel implements WorkbookReader {
     final rowId = s.rows.tryIdAt(row);
     final colId = s.columns.tryIdAt(col);
     var f = s.record?.format ?? CellFormat.empty;
-    if (colId != null) f = f.overlay(s.columnRecords[colId]?.format ?? CellFormat.empty);
-    if (rowId != null) f = f.overlay(s.rowRecords[rowId]?.format ?? CellFormat.empty);
+    if (colId != null) {
+      f = f.overlay(s.columnRecords[colId]?.format ?? CellFormat.empty);
+    }
+    if (rowId != null) {
+      f = f.overlay(s.rowRecords[rowId]?.format ?? CellFormat.empty);
+    }
     if (rowId != null && colId != null) {
       f = f.overlay(s.cells.at(rowId, colId)?.format ?? CellFormat.empty);
     }
@@ -324,7 +354,10 @@ final class WorkbookModel implements WorkbookReader {
   /// Applies row changes (local plan, remote merge, load) and emits one batch.
   /// Updates of missing rows are treated as upserts of the given columns;
   /// deletes of missing rows are ignored. With [silent], no event is emitted.
-  WorkbookChangeBatch applyChanges(Iterable<RowChange> changes, {bool silent = false}) {
+  WorkbookChangeBatch applyChanges(
+    Iterable<RowChange> changes, {
+    bool silent = false,
+  }) {
     final b = _BatchBuilder();
     for (final c in changes) {
       switch (c.op) {
@@ -348,17 +381,24 @@ final class WorkbookModel implements WorkbookReader {
   }
 
   /// Applies a plan's changes.
-  WorkbookChangeBatch applyPlan(MutationPlan plan) => applyChanges(plan.changes);
+  WorkbookChangeBatch applyPlan(MutationPlan plan) =>
+      applyChanges(plan.changes);
 
   /// Inserts or updates one row with [columns].
-  WorkbookChangeBatch upsertRow(String table, String id, Map<String, Object?> columns) =>
-      applyChanges([RowChange(table: table, rowId: id, op: RowOp.update, columnsAfter: columns)]);
+  WorkbookChangeBatch upsertRow(
+    String table,
+    String id,
+    Map<String, Object?> columns,
+  ) => applyChanges([
+    RowChange(table: table, rowId: id, op: RowOp.update, columnsAfter: columns),
+  ]);
 
   /// Deletes one row.
   WorkbookChangeBatch deleteRow(String table, String id) =>
       applyChanges([RowChange(table: table, rowId: id, op: RowOp.delete)]);
 
-  SheetModel _sheetFor(String sheetId) => _sheets.putIfAbsent(sheetId, () => SheetModel(sheetId));
+  SheetModel _sheetFor(String sheetId) =>
+      _sheets.putIfAbsent(sheetId, () => SheetModel(sheetId));
 
   void _upsert(
     String table,
@@ -407,12 +447,20 @@ final class WorkbookModel implements WorkbookReader {
         final next = merge(existing) as DimensionRecord;
         recs[id] = next;
         _ruleOwner['$table:$id'] = ownerId;
-        (isRow ? s.rows : s.columns).upsert(id, next.sortKey, size: next.size, hidden: next.hidden);
+        (isRow ? s.rows : s.columns).upsert(
+          id,
+          next.sortKey,
+          size: next.size,
+          hidden: next.hidden,
+        );
         b.structure(
           ownerId,
           isRow ? Dimension.rows : Dimension.columns,
           order: existing == null || existing.sortKey != next.sortKey,
-          sizes: existing == null || existing.size != next.size || existing.hidden != next.hidden,
+          sizes:
+              existing == null ||
+              existing.size != next.size ||
+              existing.hidden != next.hidden,
           formats: existing?.formatJson != next.formatJson,
         );
       case SheetsTables.cell:
@@ -486,12 +534,19 @@ final class WorkbookModel implements WorkbookReader {
         (isRow ? s.rowRecords : s.columnRecords).remove(id);
         (isRow ? s.rows : s.columns).remove(id);
         // Cascade: cells of the row/column.
-        final removed = isRow ? s.cells.removeRow(id) : s.cells.removeColumn(id);
+        final removed = isRow
+            ? s.cells.removeRow(id)
+            : s.cells.removeColumn(id);
         for (final c in removed) {
           _ruleOwner.remove('${SheetsTables.cell}:${c.id}');
           b.cell(ownerId, c, null);
         }
-        b.structure(ownerId, isRow ? Dimension.rows : Dimension.columns, order: true, sizes: true);
+        b.structure(
+          ownerId,
+          isRow ? Dimension.rows : Dimension.columns,
+          order: true,
+          sizes: true,
+        );
       case SheetsTables.cell:
         final ownerId = _ruleOwner.remove('$table:$id');
         if (ownerId == null) return;
@@ -536,20 +591,21 @@ final class WorkbookModel implements WorkbookReader {
     return _ruleOwner['$table:$id'];
   }
 
-  static Map<String, SyncRecord>? _childMap(SheetModel s, String table) => switch (table) {
-    SheetsTables.mergedRange => s.merges,
-    SheetsTables.dimensionGroup => s.groups,
-    SheetsTables.protectedRange => s.protections,
-    SheetsTables.conditionalFormatRule => s.cfRules,
-    SheetsTables.dataValidationRule => s.dvRules,
-    SheetsTables.filterView => s.filterViews,
-    SheetsTables.banding => s.bandings,
-    SheetsTables.embeddedObject => s.objects,
-    SheetsTables.pivotTable => s.pivots,
-    SheetsTables.sheetRow => s.rowRecords,
-    SheetsTables.sheetColumn => s.columnRecords,
-    _ => null,
-  };
+  static Map<String, SyncRecord>? _childMap(SheetModel s, String table) =>
+      switch (table) {
+        SheetsTables.mergedRange => s.merges,
+        SheetsTables.dimensionGroup => s.groups,
+        SheetsTables.protectedRange => s.protections,
+        SheetsTables.conditionalFormatRule => s.cfRules,
+        SheetsTables.dataValidationRule => s.dvRules,
+        SheetsTables.filterView => s.filterViews,
+        SheetsTables.banding => s.bandings,
+        SheetsTables.embeddedObject => s.objects,
+        SheetsTables.pivotTable => s.pivots,
+        SheetsTables.sheetRow => s.rowRecords,
+        SheetsTables.sheetColumn => s.columnRecords,
+        _ => null,
+      };
 
   static RuleKind _kindOf(String table) => switch (table) {
     SheetsTables.mergedRange => RuleKind.merge,
@@ -571,7 +627,9 @@ final class WorkbookModel implements WorkbookReader {
   /// Every synced row currently held, in table dependency order:
   /// `(table, columns)`. Rows of deleted sheets are excluded.
   Iterable<(String table, Map<String, Object?> columns)> allRows() sync* {
-    if (_spreadsheet != null) yield (SheetsTables.spreadsheet, _spreadsheet!.toColumns());
+    if (_spreadsheet != null) {
+      yield (SheetsTables.spreadsheet, _spreadsheet!.toColumns());
+    }
     final live = sheets;
     for (final s in live) {
       yield (SheetsTables.sheet, s.record!.toColumns());
@@ -610,7 +668,9 @@ final class WorkbookModel implements WorkbookReader {
           yield (r.table, r.toColumns());
         }
       }
-      if (s.basicFilter != null) yield (s.basicFilter!.table, s.basicFilter!.toColumns());
+      if (s.basicFilter != null) {
+        yield (s.basicFilter!.table, s.basicFilter!.toColumns());
+      }
       for (final map in [s.filterViews, s.bandings, s.objects, s.pivots]) {
         for (final r in map.values) {
           yield (r.table, r.toColumns());
@@ -662,7 +722,10 @@ final class _BatchBuilder {
     bool sizes = false,
     bool formats = false,
   }) {
-    final e = _structure.putIfAbsent((sheetId, d), () => StructureChanged(sheetId, d));
+    final e = _structure.putIfAbsent((
+      sheetId,
+      d,
+    ), () => StructureChanged(sheetId, d));
     e.order |= order;
     e.sizes |= sizes;
     e.formats |= formats;
@@ -675,10 +738,14 @@ final class _BatchBuilder {
   }
 
   void rules(String sheetId, RuleKind kind, String id) {
-    _rules.putIfAbsent((sheetId, kind), () => RulesChanged(sheetId, kind, {})).ruleIds.add(id);
+    _rules
+        .putIfAbsent((sheetId, kind), () => RulesChanged(sheetId, kind, {}))
+        .ruleIds
+        .add(id);
   }
 
-  void names(Set<String> names) => (_names ??= NamesChanged({})).names.addAll(names);
+  void names(Set<String> names) =>
+      (_names ??= NamesChanged({})).names.addAll(names);
 
   void spreadsheet(Iterable<String> columns) =>
       (_spreadsheet ??= SpreadsheetChanged({})).columns.addAll(columns);

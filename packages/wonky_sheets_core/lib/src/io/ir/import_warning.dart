@@ -30,8 +30,14 @@ final class ImportWarning {
   final int count;
 
   /// Copy with another count.
-  ImportWarning withCount(int count) =>
-      ImportWarning(code: code, message: message, severity: severity, sheet: sheet, range: range, count: count);
+  ImportWarning withCount(int count) => ImportWarning(
+    code: code,
+    message: message,
+    severity: severity,
+    sheet: sheet,
+    range: range,
+    count: count,
+  );
 
   /// JSON.
   Map<String, Object?> toJson() => {
@@ -44,7 +50,8 @@ final class ImportWarning {
   };
 
   @override
-  String toString() => '${severity.name}: $message${count > 1 ? ' ($count)' : ''}';
+  String toString() =>
+      '${severity.name}: $message${count > 1 ? ' ($count)' : ''}';
 }
 
 /// Accumulates warnings, merging repeats of the same (code, sheet, message)
@@ -73,19 +80,34 @@ final class ImportWarnings extends Iterable<ImportWarning> {
     }
     _index[key] = _list.length;
     _list.add(
-      ImportWarning(code: code, message: message, severity: severity, sheet: sheet, range: range, count: count),
+      ImportWarning(
+        code: code,
+        message: message,
+        severity: severity,
+        sheet: sheet,
+        range: range,
+        count: count,
+      ),
     );
   }
 
   /// Adds every warning of [other].
   void addAll(Iterable<ImportWarning> other) {
     for (final w in other) {
-      add(w.code, w.message, severity: w.severity, sheet: w.sheet, range: w.range, count: w.count);
+      add(
+        w.code,
+        w.message,
+        severity: w.severity,
+        sheet: w.sheet,
+        range: w.range,
+        count: w.count,
+      );
     }
   }
 
   /// Warnings with [code].
-  Iterable<ImportWarning> withCode(String code) => _list.where((w) => w.code == code);
+  Iterable<ImportWarning> withCode(String code) =>
+      _list.where((w) => w.code == code);
 
   @override
   Iterator<ImportWarning> get iterator => _list.iterator;

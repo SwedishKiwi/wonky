@@ -29,7 +29,11 @@ final class AutoFixResult {
 
 /// Whether a reference may be inserted at [caret] (point mode, 03 §8.7): after `=`, `(`, a
 /// separator, an operator, `:` or `!`.
-bool refInsertionPoint(String text, int caret, {FormulaLocale locale = FormulaLocale.enUS}) {
+bool refInsertionPoint(
+  String text,
+  int caret, {
+  FormulaLocale locale = FormulaLocale.enUS,
+}) {
   if (!text.startsWith('=') || caret < 1 || caret > text.length) return false;
   final tokens = FormulaLexer(locale: locale, storedForm: false).tokenize(text);
   FormulaToken? prev;
@@ -42,7 +46,10 @@ bool refInsertionPoint(String text, int caret, {FormulaLocale locale = FormulaLo
     if (t.kind != TokenKind.whitespace) prev = t;
   }
   if (prev == null) return false;
-  if (prev.kind == TokenKind.unterminatedString || prev.kind == TokenKind.string) return false;
+  if (prev.kind == TokenKind.unterminatedString ||
+      prev.kind == TokenKind.string) {
+    return false;
+  }
   return switch (prev.kind) {
     TokenKind.operator ||
     TokenKind.openParen ||
@@ -65,12 +72,18 @@ FormulaEdit? cycleAbsolute(
   FormulaLocale locale = FormulaLocale.enUS,
 }) {
   final tokens = FormulaLexer(locale: locale, storedForm: false).tokenize(text);
-  final refs = [for (final t in tokens) if (t.ref?.a1 != null) t];
+  final refs = [
+    for (final t in tokens)
+      if (t.ref?.a1 != null) t,
+  ];
   if (refs.isEmpty) return null;
   final selEnd = selectionEnd ?? caret;
   List<FormulaToken> targets;
   if (selEnd > caret) {
-    targets = [for (final t in refs) if (t.end > caret && t.start < selEnd) t];
+    targets = [
+      for (final t in refs)
+        if (t.end > caret && t.start < selEnd) t,
+    ];
   } else {
     FormulaToken? hit;
     for (final t in refs) {
@@ -122,10 +135,24 @@ A1Area _cycle(A1Area a) {
   switch (a.kind) {
     case A1Kind.columns:
       final abs = !a.absCol1;
-      return A1Area.raw(a.kind, sheet: a.sheet, col1: a.col1, col2: a.col2, absCol1: abs, absCol2: abs);
+      return A1Area.raw(
+        a.kind,
+        sheet: a.sheet,
+        col1: a.col1,
+        col2: a.col2,
+        absCol1: abs,
+        absCol2: abs,
+      );
     case A1Kind.rows:
       final abs = !a.absRow1;
-      return A1Area.raw(a.kind, sheet: a.sheet, row1: a.row1, row2: a.row2, absRow1: abs, absRow2: abs);
+      return A1Area.raw(
+        a.kind,
+        sheet: a.sheet,
+        row1: a.row1,
+        row2: a.row2,
+        absRow1: abs,
+        absRow2: abs,
+      );
     default:
       final (c, r) = next(a.absCol1, a.absRow1);
       return A1Area.raw(
@@ -145,7 +172,10 @@ A1Area _cycle(A1Area a) {
 
 /// Commit auto-fix (05 §4.3, 03 §8.4): appends missing `)` and closing `"`, converts `+A1` to
 /// `=+A1`, trims trailing argument separators.
-AutoFixResult autoFix(String text, {FormulaLocale locale = FormulaLocale.enUS}) {
+AutoFixResult autoFix(
+  String text, {
+  FormulaLocale locale = FormulaLocale.enUS,
+}) {
   var t = text;
   var changed = false;
   if (!t.startsWith('=') && (t.startsWith('+') || t.startsWith('-'))) {
@@ -161,8 +191,11 @@ AutoFixResult autoFix(String text, {FormulaLocale locale = FormulaLocale.enUS}) 
   }
   // trailing separators before the end or before the auto-closed parens
   var trimmed = t.trimRight();
-  while (trimmed.isNotEmpty && (trimmed.endsWith(locale.argSeparator) || trimmed.endsWith(','))) {
-    final sig = FormulaLexer.significant(FormulaLexer(locale: locale, storedForm: true).tokenize(trimmed));
+  while (trimmed.isNotEmpty &&
+      (trimmed.endsWith(locale.argSeparator) || trimmed.endsWith(','))) {
+    final sig = FormulaLexer.significant(
+      FormulaLexer(locale: locale, storedForm: true).tokenize(trimmed),
+    );
     if (sig.isEmpty || sig.last.kind != TokenKind.argSeparator) break;
     trimmed = trimmed.substring(0, sig.last.start).trimRight();
     changed = true;
@@ -171,8 +204,12 @@ AutoFixResult autoFix(String text, {FormulaLocale locale = FormulaLocale.enUS}) 
   tokens = FormulaLexer(locale: locale, storedForm: true).tokenize(t);
   final stack = <TokenKind>[];
   for (final tok in tokens) {
-    if (tok.kind == TokenKind.openParen || tok.kind == TokenKind.openBrace) stack.add(tok.kind);
-    if ((tok.kind == TokenKind.closeParen || tok.kind == TokenKind.closeBrace) && stack.isNotEmpty) {
+    if (tok.kind == TokenKind.openParen || tok.kind == TokenKind.openBrace) {
+      stack.add(tok.kind);
+    }
+    if ((tok.kind == TokenKind.closeParen ||
+            tok.kind == TokenKind.closeBrace) &&
+        stack.isNotEmpty) {
       stack.removeLast();
     }
   }
@@ -192,7 +229,11 @@ AutoFixResult autoFix(String text, {FormulaLocale locale = FormulaLocale.enUS}) 
 String toggleArrayFormula(String text) {
   if (!text.startsWith('=')) return text;
   final body = text.substring(1).trim();
-  final m = RegExp(r'^ARRAYFORMULA\((.*)\)$', caseSensitive: false, dotAll: true).firstMatch(body);
+  final m = RegExp(
+    r'^ARRAYFORMULA\((.*)\)$',
+    caseSensitive: false,
+    dotAll: true,
+  ).firstMatch(body);
   if (m != null) {
     final inner = m.group(1)!;
     // only unwrap when the outer parens match each other

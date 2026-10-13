@@ -40,16 +40,25 @@ enum ChartType {
 
   /// Whether the type has a domain axis and value axes (column, bar, line, …).
   bool get isCartesian => switch (this) {
-    column || bar || line || area || combo || scatter || bubble || histogram => true,
+    column ||
+    bar ||
+    line ||
+    area ||
+    combo ||
+    scatter ||
+    bubble ||
+    histogram => true,
     candlestick || waterfall || ohlc || timeline => true,
     _ => false,
   };
 
   /// Whether `stacking` applies (08 §3.1).
-  bool get supportsStacking => this == column || this == bar || this == area || this == combo;
+  bool get supportsStacking =>
+      this == column || this == bar || this == area || this == combo;
 
   /// Whether trendlines apply (08 §7).
-  bool get supportsTrendlines => this == scatter || this == line || this == column || this == bar;
+  bool get supportsTrendlines =>
+      this == scatter || this == line || this == column || this == bar;
 
   /// Parses a JSON id (null for unknown ids).
   static ChartType? tryParse(Object? id) {
@@ -101,13 +110,30 @@ enum LineDash { solid, dash, dot, dashDot, longDash }
 enum PointShape { circle, triangle, square, diamond, star, polygon }
 
 /// Data label position (08 §3.4).
-enum DataLabelPosition { auto, center, insideEnd, insideBase, outsideEnd, above, below, left, right }
+enum DataLabelPosition {
+  auto,
+  center,
+  insideEnd,
+  insideBase,
+  outsideEnd,
+  above,
+  below,
+  left,
+  right,
+}
 
 /// Data label content.
 enum DataLabelType { value, percent, label, custom }
 
 /// Trendline model (08 §7).
-enum TrendlineType { linear, exponential, polynomial, logarithmic, power, movingAverage }
+enum TrendlineType {
+  linear,
+  exponential,
+  polynomial,
+  logarithmic,
+  power,
+  movingAverage,
+}
 
 /// Trendline label.
 enum TrendlineLabel { none, equation, custom }

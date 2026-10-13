@@ -199,11 +199,15 @@ enum IrFormulaKind {
 final class IrFormat {
   /// Creates a format.
   IrFormat(CellFormat attrs, [Map<String, Object?> extras = const {}])
-    : attrs = attrs.has(FormatAttr.linkUrl) ? attrs.without(const [FormatAttr.linkUrl]) : attrs,
-      extras = Map.unmodifiable(Map.fromEntries(
-        extras.entries.where((e) => e.value != null).toList()
-          ..sort((a, b) => a.key.compareTo(b.key)),
-      ));
+    : attrs = attrs.has(FormatAttr.linkUrl)
+          ? attrs.without(const [FormatAttr.linkUrl])
+          : attrs,
+      extras = Map.unmodifiable(
+        Map.fromEntries(
+          extras.entries.where((e) => e.value != null).toList()
+            ..sort((a, b) => a.key.compareTo(b.key)),
+        ),
+      );
 
   /// The empty format.
   static final IrFormat empty = IrFormat(CellFormat.empty);
@@ -221,7 +225,8 @@ final class IrFormat {
   Object? operator [](FormatAttr a) => attrs[a];
 
   /// Copy with attribute values set (null clears).
-  IrFormat withValues(Map<FormatAttr, Object?> values) => IrFormat(attrs.withValues(values), extras);
+  IrFormat withValues(Map<FormatAttr, Object?> values) =>
+      IrFormat(attrs.withValues(values), extras);
 
   /// Copy with other extras.
   IrFormat withExtras(Map<String, Object?> extras) => IrFormat(attrs, extras);
@@ -230,13 +235,16 @@ final class IrFormat {
 
   @override
   bool operator ==(Object other) =>
-      other is IrFormat && other.attrs == attrs && _eq.equals(other.extras, extras);
+      other is IrFormat &&
+      other.attrs == attrs &&
+      _eq.equals(other.extras, extras);
 
   @override
   int get hashCode => Object.hash(attrs, _eq.hash(extras));
 
   @override
-  String toString() => 'IrFormat(${attrs.toMap()}${extras.isEmpty ? '' : ', $extras'})';
+  String toString() =>
+      'IrFormat(${attrs.toMap()}${extras.isEmpty ? '' : ', $extras'})';
 }
 
 /// The deduplicated format table of a [WorkbookDocument] (like XLSX
@@ -265,7 +273,8 @@ final class IrFormatTable {
   int internAttrs(CellFormat f) => f.isEmpty ? 0 : intern(IrFormat(f));
 
   /// The format at [index] (out of range → empty).
-  IrFormat operator [](int index) => index > 0 && index < _list.length ? _list[index] : IrFormat.empty;
+  IrFormat operator [](int index) =>
+      index > 0 && index < _list.length ? _list[index] : IrFormat.empty;
 
   /// Number of formats (incl. the empty one).
   int get length => _list.length;
@@ -316,7 +325,11 @@ final class IrCell {
 
   /// Whether nothing is set.
   bool get isEmpty =>
-      value == null && formulaA1 == null && format == 0 && note == null && link == null;
+      value == null &&
+      formulaA1 == null &&
+      format == 0 &&
+      note == null &&
+      link == null;
 
   /// Copy with changes.
   IrCell copyWith({
@@ -334,7 +347,9 @@ final class IrCell {
   }) => IrCell(
     value: clearValue ? null : value ?? this.value,
     formulaA1: clearFormula ? null : formulaA1 ?? this.formulaA1,
-    formulaKind: clearFormula ? IrFormulaKind.normal : formulaKind ?? this.formulaKind,
+    formulaKind: clearFormula
+        ? IrFormulaKind.normal
+        : formulaKind ?? this.formulaKind,
     arrayRef: clearFormula ? null : arrayRef ?? this.arrayRef,
     format: format ?? this.format,
     note: clearNote ? null : note ?? this.note,
@@ -355,16 +370,24 @@ final class IrCell {
       other.blockedFormulaA1 == blockedFormulaA1;
 
   @override
-  int get hashCode => Object.hash(value, formulaA1, formulaKind, arrayRef, format, note, link);
+  int get hashCode =>
+      Object.hash(value, formulaA1, formulaKind, arrayRef, format, note, link);
 
   @override
-  String toString() => 'IrCell(${formulaA1 != null ? '=$formulaA1 ' : ''}$value)';
+  String toString() =>
+      'IrCell(${formulaA1 != null ? '=$formulaA1 ' : ''}$value)';
 }
 
 /// Row or column properties.
 final class IrDim {
   /// Creates properties.
-  const IrDim({this.size, this.hidden = false, this.outlineLevel = 0, this.collapsed = false, this.format = 0});
+  const IrDim({
+    this.size,
+    this.hidden = false,
+    this.outlineLevel = 0,
+    this.collapsed = false,
+    this.format = 0,
+  });
 
   /// Height/width in px (null = default/automatic).
   final double? size;
@@ -382,17 +405,24 @@ final class IrDim {
   final int format;
 
   /// Whether every property is default.
-  bool get isDefault => size == null && !hidden && outlineLevel == 0 && !collapsed && format == 0;
+  bool get isDefault =>
+      size == null && !hidden && outlineLevel == 0 && !collapsed && format == 0;
 
   /// Copy with changes.
-  IrDim copyWith({double? size, bool? hidden, int? outlineLevel, bool? collapsed, int? format, bool clearSize = false}) =>
-      IrDim(
-        size: clearSize ? null : size ?? this.size,
-        hidden: hidden ?? this.hidden,
-        outlineLevel: outlineLevel ?? this.outlineLevel,
-        collapsed: collapsed ?? this.collapsed,
-        format: format ?? this.format,
-      );
+  IrDim copyWith({
+    double? size,
+    bool? hidden,
+    int? outlineLevel,
+    bool? collapsed,
+    int? format,
+    bool clearSize = false,
+  }) => IrDim(
+    size: clearSize ? null : size ?? this.size,
+    hidden: hidden ?? this.hidden,
+    outlineLevel: outlineLevel ?? this.outlineLevel,
+    collapsed: collapsed ?? this.collapsed,
+    format: format ?? this.format,
+  );
 
   @override
   bool operator ==(Object other) =>
@@ -404,7 +434,8 @@ final class IrDim {
       other.format == format;
 
   @override
-  int get hashCode => Object.hash(size, hidden, outlineLevel, collapsed, format);
+  int get hashCode =>
+      Object.hash(size, hidden, outlineLevel, collapsed, format);
 }
 
 /// A data validation rule. [criteria] uses the Wonky `criteriaJson` shape
@@ -438,8 +469,12 @@ final class IrDataValidation {
 /// with `=`). Priority = list order in [IrSheet.conditionalFormats].
 final class IrConditionalFormat {
   /// Creates a rule.
-  IrConditionalFormat({required this.ranges, required this.rule, this.enabled = true, Map<String, Object?>? extras})
-    : extras = extras ?? {};
+  IrConditionalFormat({
+    required this.ranges,
+    required this.rule,
+    this.enabled = true,
+    Map<String, Object?>? extras,
+  }) : extras = extras ?? {};
 
   final List<IrRange> ranges;
   final Map<String, Object?> rule;
@@ -455,9 +490,12 @@ final class IrConditionalFormat {
 /// in A1 form relative to the first data cell of the column).
 final class IrFilter {
   /// Creates a filter.
-  IrFilter({required this.range, Map<int, Map<String, Object?>>? criteria, List<Map<String, Object?>>? sort})
-    : criteria = criteria ?? {},
-      sort = sort ?? [];
+  IrFilter({
+    required this.range,
+    Map<int, Map<String, Object?>>? criteria,
+    List<Map<String, Object?>>? sort,
+  }) : criteria = criteria ?? {},
+       sort = sort ?? [];
 
   final IrRange range;
   final Map<int, Map<String, Object?>> criteria;
@@ -469,7 +507,14 @@ final class IrFilter {
 /// A named range or named formula.
 final class IrNamedRange {
   /// Creates a named range.
-  const IrNamedRange({required this.name, this.sheet, this.range, this.formulaA1, this.comment, this.hidden = false});
+  const IrNamedRange({
+    required this.name,
+    this.sheet,
+    this.range,
+    this.formulaA1,
+    this.comment,
+    this.hidden = false,
+  });
 
   final String name;
 
@@ -486,7 +531,14 @@ final class IrNamedRange {
 /// Position and size of an object over the grid (px at 100 %).
 final class IrAnchor {
   /// Creates an anchor.
-  const IrAnchor({required this.row, required this.col, this.dx = 0, this.dy = 0, required this.width, required this.height});
+  const IrAnchor({
+    required this.row,
+    required this.col,
+    this.dx = 0,
+    this.dy = 0,
+    required this.width,
+    required this.height,
+  });
 
   final int row;
   final int col;
@@ -496,13 +548,28 @@ final class IrAnchor {
   final double height;
 
   /// JSON.
-  Map<String, Object?> toJson() => {'row': row, 'col': col, 'dx': dx, 'dy': dy, 'width': width, 'height': height};
+  Map<String, Object?> toJson() => {
+    'row': row,
+    'col': col,
+    'dx': dx,
+    'dy': dy,
+    'width': width,
+    'height': height,
+  };
 }
 
 /// An image over cells.
 final class IrImage {
   /// Creates an image.
-  const IrImage({this.bytes, this.mimeType = 'image/png', required this.anchor, this.altText, this.title, this.fileUuid, this.name});
+  const IrImage({
+    this.bytes,
+    this.mimeType = 'image/png',
+    required this.anchor,
+    this.altText,
+    this.title,
+    this.fileUuid,
+    this.name,
+  });
 
   /// Image bytes (PNG/JPEG/GIF); null when only [fileUuid] is known.
   final Uint8List? bytes;
@@ -521,7 +588,12 @@ final class IrImage {
 /// A chart over cells (ChartSpec-like map, 08 §20).
 final class IrChart {
   /// Creates a chart.
-  const IrChart({required this.anchor, required this.spec, this.title, this.altText});
+  const IrChart({
+    required this.anchor,
+    required this.spec,
+    this.title,
+    this.altText,
+  });
 
   final IrAnchor anchor;
   final Map<String, Object?> spec;
@@ -602,7 +674,12 @@ final class IrSheet {
 /// `accent1`…`accent6`, `link`).
 final class IrTheme {
   /// Creates a theme.
-  const IrTheme({this.name, this.textFont, this.headingFont, this.colors = const {}});
+  const IrTheme({
+    this.name,
+    this.textFont,
+    this.headingFont,
+    this.colors = const {},
+  });
 
   final String? name;
   final String? textFont;

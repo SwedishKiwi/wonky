@@ -48,7 +48,11 @@ final class Stroker {
   }
 
   /// Splits a polyline into dash pieces following [dash] (on, off, …).
-  static List<Float64List> _dashes(Float64List pts, bool closed, List<double> dash) {
+  static List<Float64List> _dashes(
+    Float64List pts,
+    bool closed,
+    List<double> dash,
+  ) {
     final n = pts.length ~/ 2;
     var total = 0.0;
     final segs = closed ? n : n - 1;
@@ -111,7 +115,13 @@ final class Stroker {
     return math.sqrt(dx * dx + dy * dy);
   }
 
-  void _stroke(Float64List raw, bool closed, double hw, SStrokeCap cap, SStrokeJoin join) {
+  void _stroke(
+    Float64List raw,
+    bool closed,
+    double hw,
+    SStrokeCap cap,
+    SStrokeJoin join,
+  ) {
     // Drop repeated points.
     final pts = <double>[];
     for (var i = 0; i + 1 < raw.length; i += 2) {
@@ -138,7 +148,16 @@ final class Stroker {
       if (cap == SStrokeCap.round) {
         _circle(x, y, hw);
       } else if (cap == SStrokeCap.square) {
-        raster.addPolygon([x - hw, y - hw, x + hw, y - hw, x + hw, y + hw, x - hw, y + hw]);
+        raster.addPolygon([
+          x - hw,
+          y - hw,
+          x + hw,
+          y - hw,
+          x + hw,
+          y + hw,
+          x - hw,
+          y + hw,
+        ]);
       }
       return;
     }
@@ -156,7 +175,10 @@ final class Stroker {
     for (var i = 0; i < segs; i++) {
       final j = (i + 1) % n;
       final nx = -uy[i] * hw, ny = ux[i] * hw;
-      final x0 = pts[2 * i], y0 = pts[2 * i + 1], x1 = pts[2 * j], y1 = pts[2 * j + 1];
+      final x0 = pts[2 * i],
+          y0 = pts[2 * i + 1],
+          x1 = pts[2 * j],
+          y1 = pts[2 * j + 1];
       raster.addPolygon([
         x0 + nx,
         y0 + ny,
@@ -215,7 +237,9 @@ final class Stroker {
   ) {
     final cross = ax * by - ay * bx;
     final dot = ax * bx + ay * by;
-    if (cross.abs() < 1e-9 && dot > 0) return; // collinear: segments already meet.
+    if (cross.abs() < 1e-9 && dot > 0) {
+      return; // collinear: segments already meet.
+    }
     if (join == SStrokeJoin.round) {
       _circle(x, y, hw);
       return;
@@ -231,7 +255,16 @@ final class Stroker {
       final m2 = mx * mx + my * my;
       if (m2 > 1e-12 && 2 / math.sqrt(m2) <= RenderGeometry.miterLimit) {
         final k = 2 * hw / m2;
-        raster.addPolygon([x, y, p0x, p0y, x + mx * k, y + my * k, p1x, p1y], positive: true);
+        raster.addPolygon([
+          x,
+          y,
+          p0x,
+          p0y,
+          x + mx * k,
+          y + my * k,
+          p1x,
+          p1y,
+        ], positive: true);
         return;
       }
     }

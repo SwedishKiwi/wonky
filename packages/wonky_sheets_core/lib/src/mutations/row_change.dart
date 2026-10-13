@@ -27,7 +27,11 @@ final class RowChange {
        columnsAfter = Map.unmodifiable(columnsAfter ?? const {});
 
   /// An insert of a full row.
-  factory RowChange.insert(String table, String rowId, Map<String, Object?> columns) => RowChange(
+  factory RowChange.insert(
+    String table,
+    String rowId,
+    Map<String, Object?> columns,
+  ) => RowChange(
     table: table,
     rowId: rowId,
     op: RowOp.insert,
@@ -49,7 +53,11 @@ final class RowChange {
   );
 
   /// A delete with the full previous row.
-  factory RowChange.delete(String table, String rowId, Map<String, Object?> fullRow) => RowChange(
+  factory RowChange.delete(
+    String table,
+    String rowId,
+    Map<String, Object?> fullRow,
+  ) => RowChange(
     table: table,
     rowId: rowId,
     op: RowOp.delete,
@@ -137,7 +145,8 @@ final class RowChange {
     if (raw is! Map) return const {};
     return {
       for (final e in raw.entries)
-        e.key as String: e.value is Map && (e.value as Map).containsKey('\$date')
+        e.key
+            as String: e.value is Map && (e.value as Map).containsKey('\$date')
             ? DateTime.parse((e.value as Map)['\$date'] as String)
             : e.value,
     };
@@ -158,7 +167,8 @@ final class RowChange {
   int get hashCode => Object.hash(table, rowId, op, _eq.hash(columnsAfter));
 
   @override
-  String toString() => 'RowChange(${op.name} $table $rowId ${jsonEncode(toJson()['after'])})';
+  String toString() =>
+      'RowChange(${op.name} $table $rowId ${jsonEncode(toJson()['after'])})';
 }
 
 /// Kinds listed in `ChangeLog.summaryJson.kinds`.
@@ -230,7 +240,9 @@ final class ChangeSummary {
   /// Adds a range (GridRange JSON map).
   void addRange(Map<String, Object?> range) {
     if (ranges.length >= maxRanges) return;
-    if (ranges.any((r) => const DeepCollectionEquality().equals(r, range))) return;
+    if (ranges.any((r) => const DeepCollectionEquality().equals(r, range))) {
+      return;
+    }
     ranges.add(range);
   }
 
@@ -250,13 +262,18 @@ final class ChangeSummary {
   /// Parses `summaryJson`.
   static ChangeSummary parse(String json) {
     final m = jsonDecode(json) as Map<String, Object?>;
-    List<String> strs(Object? v) => v is List ? v.map((e) => e.toString()).toList() : [];
-    Map<String, List<String>> lists(Object? v) =>
-        v is Map ? {for (final e in v.entries) e.key.toString(): strs(e.value)} : {};
+    List<String> strs(Object? v) =>
+        v is List ? v.map((e) => e.toString()).toList() : [];
+    Map<String, List<String>> lists(Object? v) => v is Map
+        ? {for (final e in v.entries) e.key.toString(): strs(e.value)}
+        : {};
     return ChangeSummary(
       sheets: strs(m['sheets']).toSet(),
       ranges: m['ranges'] is List
-          ? [for (final r in m['ranges']! as List) (r as Map).cast<String, Object?>()]
+          ? [
+              for (final r in m['ranges']! as List)
+                (r as Map).cast<String, Object?>(),
+            ]
           : [],
       kinds: strs(m['kinds']).toSet(),
       deleted: lists(m['deleted']),
@@ -267,7 +284,13 @@ final class ChangeSummary {
 }
 
 /// One cell's before/after content in `ChangeLog.detailJson` (≤ 200 cells).
-typedef CellDetail = ({String sheetId, String rowId, String colId, String? before, String? after});
+typedef CellDetail = ({
+  String sheetId,
+  String rowId,
+  String colId,
+  String? before,
+  String? after,
+});
 
 /// A planned transaction: ordered row changes + undo label + change log data.
 final class MutationPlan {
@@ -311,7 +334,10 @@ final class MutationPlan {
   /// The changes split into writer chunks of ≤ [chunkSize] (one undo step).
   List<List<RowChange>> get chunks => [
     for (var i = 0; i < changes.length; i += chunkSize)
-      changes.sublist(i, i + chunkSize > changes.length ? changes.length : i + chunkSize),
+      changes.sublist(
+        i,
+        i + chunkSize > changes.length ? changes.length : i + chunkSize,
+      ),
   ];
 
   /// `ChangeLog.detailJson` string or null.
@@ -345,7 +371,8 @@ final class MutationPlan {
   };
 
   /// Number of distinct cells touched.
-  int get cellCount => changes.where((c) => c.table == SheetsTables.cell).length;
+  int get cellCount =>
+      changes.where((c) => c.table == SheetsTables.cell).length;
 
   @override
   String toString() => 'MutationPlan($label, ${changes.length} changes)';
@@ -396,7 +423,9 @@ abstract final class UndoInverter {
                 after[k] = v;
               }
             });
-            if (after.isNotEmpty) out.add(RowChange.update(c.table, c.rowId, before, after));
+            if (after.isNotEmpty) {
+              out.add(RowChange.update(c.table, c.rowId, before, after));
+            }
           } else {
             out.add(RowChange.insert(c.table, c.rowId, c.columnsBefore));
           }
@@ -417,7 +446,9 @@ abstract final class UndoInverter {
               skipped?.call(c.table, c.rowId, k);
             }
           });
-          if (after.isNotEmpty) out.add(RowChange.update(c.table, c.rowId, before, after));
+          if (after.isNotEmpty) {
+            out.add(RowChange.update(c.table, c.rowId, before, after));
+          }
       }
     }
     return out;

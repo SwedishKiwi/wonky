@@ -29,7 +29,12 @@ final class CellChange {
   final CellChangeKind kind;
 
   /// Compact JSON.
-  Map<String, Object?> toJson() => {'s': sheetId, 'r': rowId, 'c': colId, 'k': kind.name};
+  Map<String, Object?> toJson() => {
+    's': sheetId,
+    'r': rowId,
+    'c': colId,
+    'k': kind.name,
+  };
 
   @override
   bool operator ==(Object other) =>
@@ -59,7 +64,10 @@ final class SheetStructureChange {
 
   /// Whether nothing changed.
   bool get isEmpty =>
-      rowsAdded.isEmpty && rowsRemoved.isEmpty && columnsAdded.isEmpty && columnsRemoved.isEmpty;
+      rowsAdded.isEmpty &&
+      rowsRemoved.isEmpty &&
+      columnsAdded.isEmpty &&
+      columnsRemoved.isEmpty;
 
   /// JSON.
   Map<String, Object?> toJson() => {
@@ -128,8 +136,12 @@ final class SnapshotDiff {
         ),
       );
     }
-    d.sheetsAdded.addAll((m['sheetsAdded'] as List? ?? const []).cast<String>());
-    d.sheetsRemoved.addAll((m['sheetsRemoved'] as List? ?? const []).cast<String>());
+    d.sheetsAdded.addAll(
+      (m['sheetsAdded'] as List? ?? const []).cast<String>(),
+    );
+    d.sheetsRemoved.addAll(
+      (m['sheetsRemoved'] as List? ?? const []).cast<String>(),
+    );
     (m['sheetsRenamed'] as Map? ?? const {}).forEach((k, v) {
       final l = (v as List).cast<String>();
       d.sheetsRenamed[k as String] = (l[0], l[1]);
@@ -152,7 +164,9 @@ final class SnapshotDiff {
 
 /// Computes version diffs and restore plans (10 §5.2–§5.3).
 abstract final class SnapshotDiffer {
-  static final Set<String> _formatColumns = {for (final a in FormatAttr.values) a.column};
+  static final Set<String> _formatColumns = {
+    for (final a in FormatAttr.values) a.column,
+  };
 
   /// Cell-level and structural differences from [previous] to [current].
   static SnapshotDiff diff(Snapshot previous, Snapshot current) =>
@@ -183,7 +197,10 @@ abstract final class SnapshotDiffer {
       if (!sa.containsKey(id)) {
         d.sheetsAdded.add(id);
       } else if (sa[id]![Cols.name] != sb[id]![Cols.name]) {
-        d.sheetsRenamed[id] = (sa[id]![Cols.name] as String, sb[id]![Cols.name] as String);
+        d.sheetsRenamed[id] = (
+          sa[id]![Cols.name] as String,
+          sb[id]![Cols.name] as String,
+        );
       }
     }
     for (final id in sa.keys) {
@@ -205,7 +222,9 @@ abstract final class SnapshotDiffer {
       }
       for (final e in x.entries) {
         if (!y.containsKey(e.key)) {
-          (rows ? sc(e.value).rowsRemoved : sc(e.value).columnsRemoved).add(e.key);
+          (rows ? sc(e.value).rowsRemoved : sc(e.value).columnsRemoved).add(
+            e.key,
+          );
         }
       }
     }
@@ -259,7 +278,8 @@ abstract final class SnapshotDiffer {
       Iterable<(String, Map<String, Object?>)> rows,
     ) => {
       for (final (t, c) in rows)
-        if (!SnapshotCodec.excludedTables.contains(t)) (t, c[Cols.id].toString()): c,
+        if (!SnapshotCodec.excludedTables.contains(t))
+          (t, c[Cols.id].toString()): c,
     };
     final t = index(target);
     final c = index(current);
@@ -287,10 +307,14 @@ abstract final class SnapshotDiffer {
           after[k] = e.value[k];
         }
       }
-      if (after.isNotEmpty) updates.add(RowChange.update(e.key.$1, e.key.$2, before, after));
+      if (after.isNotEmpty) {
+        updates.add(RowChange.update(e.key.$1, e.key.$2, before, after));
+      }
     }
     for (final e in c.entries) {
-      if (!t.containsKey(e.key)) deletes.add(RowChange.delete(e.key.$1, e.key.$2, e.value));
+      if (!t.containsKey(e.key)) {
+        deletes.add(RowChange.delete(e.key.$1, e.key.$2, e.value));
+      }
     }
     int rank(RowChange x) => SheetsTables.rank(x.table);
     deletes.sort((x, y) => rank(y).compareTo(rank(x)));
@@ -319,7 +343,9 @@ abstract final class SnapshotDiffer {
     }
     for (final r in [...inserts, ...updates, ...deletes]) {
       if (r.table == SheetsTables.cell) {
-        final s = (r.columnsAfter[Cols.sheetId] ?? r.columnsBefore[Cols.sheetId]) as String?;
+        final s =
+            (r.columnsAfter[Cols.sheetId] ?? r.columnsBefore[Cols.sheetId])
+                as String?;
         if (s != null) summary.sheets.add(s);
       }
     }
@@ -331,6 +357,7 @@ abstract final class SnapshotDiffer {
   }
 
   /// Records of [rows] converted (helper for tests and UIs).
-  static Iterable<SyncRecord> records(Iterable<(String, Map<String, Object?>)> rows) =>
-      rows.map((r) => recordFromColumns(r.$1, r.$2));
+  static Iterable<SyncRecord> records(
+    Iterable<(String, Map<String, Object?>)> rows,
+  ) => rows.map((r) => recordFromColumns(r.$1, r.$2));
 }

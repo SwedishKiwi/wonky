@@ -24,7 +24,10 @@ final class FrequencyEntry {
 
   @override
   bool operator ==(Object other) =>
-      other is FrequencyEntry && other.text == text && other.count == count && other.share == share;
+      other is FrequencyEntry &&
+      other.text == text &&
+      other.count == count &&
+      other.share == share;
 
   @override
   int get hashCode => Object.hash(text, count, share);
@@ -47,7 +50,11 @@ final class HistogramBucket {
 
   @override
   bool operator ==(Object other) =>
-      other is HistogramBucket && other.start == start && other.end == end && other.count == count && other.label == label;
+      other is HistogramBucket &&
+      other.start == start &&
+      other.end == end &&
+      other.count == count &&
+      other.label == label;
 
   @override
   int get hashCode => Object.hash(start, end, count, label);
@@ -127,7 +134,11 @@ abstract final class ColumnStats {
   /// Computes the stats of a column snapshot: [values] (computed values),
   /// [displayTexts] (same length) and the column's [numberFormat] (dates are
   /// detected from it).
-  static ColumnStatsResult compute(List<CellValue> values, List<String> displayTexts, {String? numberFormat}) {
+  static ColumnStatsResult compute(
+    List<CellValue> values,
+    List<String> displayTexts, {
+    String? numberFormat,
+  }) {
     var empty = 0;
     final counts = <String, int>{};
     final repr = <String, CellValue>{};
@@ -153,16 +164,23 @@ abstract final class ColumnStats {
       }
     }
     final nonEmpty = values.length - empty;
-    final freq = [
-      for (final e in counts.entries) FrequencyEntry(e.key, e.value, nonEmpty == 0 ? 0 : e.value / nonEmpty),
-    ]..sort((a, b) {
-        final c = b.count.compareTo(a.count);
-        if (c != 0) return c;
-        final s = SortKeys.compare(repr[a.text]!, repr[b.text]!);
-        return s != 0 ? s : a.text.compareTo(b.text);
-      });
+    final freq =
+        [
+          for (final e in counts.entries)
+            FrequencyEntry(
+              e.key,
+              e.value,
+              nonEmpty == 0 ? 0 : e.value / nonEmpty,
+            ),
+        ]..sort((a, b) {
+          final c = b.count.compareTo(a.count);
+          if (c != 0) return c;
+          final s = SortKeys.compare(repr[a.text]!, repr[b.text]!);
+          return s != 0 ? s : a.text.compareTo(b.text);
+        });
 
-    final isDate = numberFormat != null && FormatHint.looksLikeDatePattern(numberFormat);
+    final isDate =
+        numberFormat != null && FormatHint.looksLikeDatePattern(numberFormat);
     var kind = ColumnKind.empty;
     if (nonEmpty > 0) {
       var best = 0;
@@ -194,7 +212,9 @@ abstract final class ColumnStats {
         min: sorted.first,
         max: sorted.last,
       );
-      histogram = kind == ColumnKind.date ? dateHistogram(sorted) : numericHistogram(sorted);
+      histogram = kind == ColumnKind.date
+          ? dateHistogram(sorted)
+          : numericHistogram(sorted);
     }
     return ColumnStatsResult(
       kind: kind,
@@ -212,7 +232,13 @@ abstract final class ColumnStats {
   /// Computes the stats of column [col], rows [top]..[bottom] of [sheetId]
   /// (all rows, hidden included). The column format is the first non-empty
   /// cell's number format.
-  static ColumnStatsResult fromSheet(CellTextReader reader, String sheetId, int col, int top, int bottom) {
+  static ColumnStatsResult fromSheet(
+    CellTextReader reader,
+    String sheetId,
+    int col,
+    int top,
+    int bottom,
+  ) {
     final values = <CellValue>[];
     final texts = <String>[];
     String? format;
@@ -254,7 +280,11 @@ abstract final class ColumnStats {
     }
     return [
       for (var i = 0; i < buckets; i++)
-        HistogramBucket(min + i * w, i == buckets - 1 ? max : min + (i + 1) * w, counts[i]),
+        HistogramBucket(
+          min + i * w,
+          i == buckets - 1 ? max : min + (i + 1) * w,
+          counts[i],
+        ),
     ];
   }
 
@@ -277,7 +307,14 @@ abstract final class ColumnStats {
           c++;
           i++;
         }
-        out.add(HistogramBucket(start, end, c, label: '$y-${m.toString().padLeft(2, '0')}'));
+        out.add(
+          HistogramBucket(
+            start,
+            end,
+            c,
+            label: '$y-${m.toString().padLeft(2, '0')}',
+          ),
+        );
         m++;
         if (m > 12) {
           m = 1;

@@ -22,7 +22,8 @@ final class CsvRecord {
 /// [close].
 final class CsvParser {
   /// Creates a parser. [delimiter] may be any non-empty string.
-  CsvParser({this.delimiter = ',', this.maxFieldLength = 50000}) : assert(delimiter.isNotEmpty);
+  CsvParser({this.delimiter = ',', this.maxFieldLength = 50000})
+    : assert(delimiter.isNotEmpty);
 
   /// Field delimiter.
   final String delimiter;
@@ -78,7 +79,11 @@ final class CsvParser {
   }
 
   /// Parses complete [text].
-  static List<CsvRecord> parseAll(String text, {String delimiter = ',', int maxFieldLength = 50000}) {
+  static List<CsvRecord> parseAll(
+    String text, {
+    String delimiter = ',',
+    int maxFieldLength = 50000,
+  }) {
     final p = CsvParser(delimiter: delimiter, maxFieldLength: maxFieldLength);
     return [...p.feed(text), ...p.close()];
   }
@@ -181,7 +186,9 @@ final class CsvParser {
   CsvRecord _emit() {
     var fields = _record;
     // A blank line is a record without fields.
-    if (fields.length == 1 && fields.first.isEmpty && !_recordStarted) fields = const [];
+    if (fields.length == 1 && fields.first.isEmpty && !_recordStarted) {
+      fields = const [];
+    }
     final r = CsvRecord(fields, _recordLine);
     _record = [];
     _recordStarted = false;
@@ -193,7 +200,11 @@ final class CsvParser {
 /// Result of delimiter detection.
 final class DetectedDelimiter {
   /// Creates a result.
-  const DetectedDelimiter(this.delimiter, {this.sepLineLength = 0, this.fromSepLine = false});
+  const DetectedDelimiter(
+    this.delimiter, {
+    this.sepLineLength = 0,
+    this.fromSepLine = false,
+  });
 
   final String delimiter;
 
@@ -209,12 +220,25 @@ abstract final class CsvDelimiterDetector {
   /// Candidate delimiters in tie-break order.
   static const candidates = [',', ';', '\t', '|'];
 
-  static final RegExp _sep = RegExp(r'^"?sep=(.)"?(\r\n|\n|\r|$)', caseSensitive: false);
+  static final RegExp _sep = RegExp(
+    r'^"?sep=(.)"?(\r\n|\n|\r|$)',
+    caseSensitive: false,
+  );
 
   /// Detects the delimiter of [sample] (decoded start of the file).
-  static DetectedDelimiter detect(String sample, {String? fileName, bool decimalCommaLocale = false}) {
+  static DetectedDelimiter detect(
+    String sample, {
+    String? fileName,
+    bool decimalCommaLocale = false,
+  }) {
     final m = _sep.firstMatch(sample);
-    if (m != null) return DetectedDelimiter(m.group(1)!, sepLineLength: m.end, fromSepLine: true);
+    if (m != null) {
+      return DetectedDelimiter(
+        m.group(1)!,
+        sepLineLength: m.end,
+        fromSepLine: true,
+      );
+    }
     final scores = <String, double>{};
     for (final d in candidates) {
       scores[d] = score(sample, d);
@@ -222,10 +246,15 @@ abstract final class CsvDelimiterDetector {
     final best = scores.values.fold<double>(0, (a, b) => b > a ? b : a);
     final isTsv = fileName != null && fileName.toLowerCase().endsWith('.tsv');
     if (best <= 0) return DetectedDelimiter(isTsv ? '\t' : ',');
-    final tied = [for (final d in candidates) if ((scores[d]! - best).abs() < 1e-9) d];
+    final tied = [
+      for (final d in candidates)
+        if ((scores[d]! - best).abs() < 1e-9) d,
+    ];
     if (tied.length == 1) return DetectedDelimiter(tied.single);
     if (isTsv && tied.contains('\t')) return const DetectedDelimiter('\t');
-    if (decimalCommaLocale && tied.contains(';')) return const DetectedDelimiter(';');
+    if (decimalCommaLocale && tied.contains(';')) {
+      return const DetectedDelimiter(';');
+    }
     return DetectedDelimiter(tied.contains(',') ? ',' : tied.first);
   }
 
@@ -247,7 +276,10 @@ abstract final class CsvDelimiterDetector {
     }
     var modal = counts.first;
     for (final e in freq.entries) {
-      if (e.value > freq[modal]! || (e.value == freq[modal]! && e.key > modal)) modal = e.key;
+      if (e.value > freq[modal]! ||
+          (e.value == freq[modal]! && e.key > modal)) {
+        modal = e.key;
+      }
     }
     if (modal < 2) return 0;
     final mean = counts.reduce((a, b) => a + b) / counts.length;

@@ -57,7 +57,9 @@ List<CallFrame> openFrames(List<FormulaToken> tokens, int caret) {
       case TokenKind.arrayRowSep:
         if (stack.isNotEmpty) {
           final f = stack.last;
-          if (f.currentTokens.length == 1 && f.currentTokens.first.isNotEmpty && f.currentTokens.first != ')') {
+          if (f.currentTokens.length == 1 &&
+              f.currentTokens.first.isNotEmpty &&
+              f.currentTokens.first != ')') {
             f.nameArgs[f.argIndex] = f.currentTokens.first;
           }
           f.currentTokens.clear();

@@ -38,7 +38,9 @@ abstract final class WorkbookMaintenance {
           continue;
         }
         final overlaps = kept.any(
-          (k) => s.ruleRects(RuleKind.merge, k).any((r) => r.intersects(rects.first)),
+          (k) => s
+              .ruleRects(RuleKind.merge, k)
+              .any((r) => r.intersects(rects.first)),
         );
         if (overlaps) {
           b.delete(SheetsTables.mergedRange, id);
@@ -50,13 +52,17 @@ abstract final class WorkbookMaintenance {
       final bf = s.basicFilter;
       if (bf != null) {
         final g = GridRange.tryParse(bf.rangeJson);
-        if (g == null || s.resolve(g) == null) b.delete(SheetsTables.basicFilter, bf.id);
+        if (g == null || s.resolve(g) == null) {
+          b.delete(SheetsTables.basicFilter, bf.id);
+        }
       }
       // Pivot anchors on deleted rows/columns move to the nearest survivor
       // (by sort key hint: first row at/after the deleted position).
       for (final p in s.pivots.values) {
         final w = <String, Object?>{};
-        if (!s.rows.contains(p.anchorRowId) && s.rows.length > 0) w['anchorRowId'] = s.rows.idAt(0);
+        if (!s.rows.contains(p.anchorRowId) && s.rows.length > 0) {
+          w['anchorRowId'] = s.rows.idAt(0);
+        }
         if (!s.columns.contains(p.anchorColId) && s.columns.length > 0) {
           w['anchorColId'] = s.columns.idAt(0);
         }
@@ -73,7 +79,9 @@ abstract final class WorkbookMaintenance {
         if (anchor['ownSheet'] == true) continue;
         String? canon(Object? v) {
           if (v is! String) return null;
-          if (!v.contains('-') && Base62Uuid.isValid(v)) return Base62Uuid.decode(v);
+          if (!v.contains('-') && Base62Uuid.isValid(v)) {
+            return Base62Uuid.decode(v);
+          }
           return v;
         }
 
@@ -91,7 +99,9 @@ abstract final class WorkbookMaintenance {
         if (changed) {
           anchor['dx'] = 0.0;
           anchor['dy'] = 0.0;
-          b.update(SheetsTables.embeddedObject, o.id, {'anchorJson': jsonEncode(anchor)});
+          b.update(SheetsTables.embeddedObject, o.id, {
+            'anchorJson': jsonEncode(anchor),
+          });
         }
       }
     }
@@ -133,7 +143,8 @@ abstract final class WorkbookMaintenance {
       if (e.value.length < 2) continue;
       final ids = e.value..sort();
       for (final id in ids.skip(1)) {
-        final base = b.current(SheetsTables.namedRange, id)![Cols.name] as String;
+        final base =
+            b.current(SheetsTables.namedRange, id)![Cols.name] as String;
         var n = 2;
         var name = '${base}_$n';
         while (taken.contains(name.toLowerCase())) {

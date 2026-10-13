@@ -42,7 +42,8 @@ abstract final class ColumnLetters {
   }
 
   /// Whether [c] is an ASCII letter code unit.
-  static bool isLetter(int c) => (c >= 0x41 && c <= 0x5a) || (c >= 0x61 && c <= 0x7a);
+  static bool isLetter(int c) =>
+      (c >= 0x41 && c <= 0x5a) || (c >= 0x61 && c <= 0x7a);
 
   /// Whether [c] is an ASCII digit code unit.
   static bool isDigit(int c) => c >= 0x30 && c <= 0x39;

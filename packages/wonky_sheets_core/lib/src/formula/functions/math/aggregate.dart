@@ -11,7 +11,11 @@ void registerMathAggregate(FunctionRegistryBuilder b) {
     'Returns the sum of a series of numbers and/or cells.',
     [
       P.range('value1', 'The first number or range to add together.'),
-      P.rep('value2', ArgKind.range, 'Additional numbers or ranges to add to value1.'),
+      P.rep(
+        'value2',
+        ArgKind.range,
+        'Additional numbers or ranges to add to value1.',
+      ),
     ],
     (a) {
       final xs = <double>[];
@@ -26,7 +30,10 @@ void registerMathAggregate(FunctionRegistryBuilder b) {
     'PRODUCT',
     'Returns the result of multiplying a series of numbers together.',
     [
-      P.range('factor1', 'The first number or range to calculate for the product.'),
+      P.range(
+        'factor1',
+        'The first number or range to calculate for the product.',
+      ),
       P.rep('factor2', ArgKind.range, 'More numbers or ranges to multiply.'),
     ],
     (a) {
@@ -45,7 +52,10 @@ void registerMathAggregate(FunctionRegistryBuilder b) {
     'SUMSQ',
     'Returns the sum of the squares of a series of numbers and/or cells.',
     [
-      P.range('value1', 'The first number or range whose squares to add together.'),
+      P.range(
+        'value1',
+        'The first number or range whose squares to add together.',
+      ),
       P.rep('value2', ArgKind.range, 'More numbers or ranges.'),
     ],
     (a) => numResult(sumOf(a.numbers().map((x) => x * x))),

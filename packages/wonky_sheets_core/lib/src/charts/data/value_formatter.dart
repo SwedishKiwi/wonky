@@ -33,7 +33,9 @@ abstract final class ChartFormats {
   static bool isDateTime(String? pattern) {
     if (pattern == null || pattern.isEmpty) return false;
     if (pattern.startsWith('preset:')) {
-      return pattern == 'preset:date' || pattern == 'preset:time' || pattern == 'preset:dateTime';
+      return pattern == 'preset:date' ||
+          pattern == 'preset:time' ||
+          pattern == 'preset:dateTime';
     }
     var inQuote = false;
     for (var i = 0; i < pattern.length; i++) {
@@ -51,7 +53,12 @@ abstract final class ChartFormats {
         final end = pattern.indexOf(']', i);
         if (end < 0) return false;
         final inner = pattern.substring(i + 1, end).toLowerCase();
-        if (inner == 'h' || inner == 'hh' || inner == 'm' || inner == 'mm' || inner == 's' || inner == 'ss') {
+        if (inner == 'h' ||
+            inner == 'hh' ||
+            inner == 'm' ||
+            inner == 'mm' ||
+            inner == 's' ||
+            inner == 'ss') {
           return false; // elapsed time
         }
         i = end;

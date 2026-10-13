@@ -228,6 +228,20 @@ endpoints the test tools are regenerated (automatic under `serverpod start`, oth
   app instance plus a scripted second client through the generated client.
 - **Offline**: toggled through the app's connectivity service test hook (driven through the
   UI bridge), not by killing the server.
+- **Write journeys today** (`wonky_write/integration_test/`, tagged `e2e`): 1 sign-up → type →
+  reopen, 2 co-editing + own undo, 5 share/comment/suggest/accept, 6 restore + undo, 8 MCP
+  create/edit (partial). Helpers in `integration_test/support/e2e.dart`: `launchSignedOut`
+  (1440×900 surface, in-memory session via `WonkyClient.sessionStorageOverride`, so runs never
+  touch the OS keychain), `pumpUntil`/`pumpUntilTrue` (real delays: pumping alone does not
+  yield to the event loop on the live binding), `runCommand` (the app's dispatcher), IME
+  typing (`typeImeText` with `testTextInput.register()`), `E2eClient` (second user on the
+  generated client: sign-up via `emailIdp` + `e2eSupport`, `document.connect` ops,
+  sharing, tokens) and `E2eMcp` (JSON-RPC on `/mcp`). End every journey with `endJourney`.
+- **Devices**: `flutter test integration_test/<file>.dart -d macos --run-skipped`, one file per
+  run (several files in one run fail to reattach to the relaunched macOS app; the CI
+  workflow `e2e.yml`, nightly). `flutter test` does not support web devices; on web use
+  `flutter drive -d chrome --driver=test_driver/integration_test.dart --target=…` with a
+  chromedriver on port 4444.
 
 ## 10. Running tests
 
@@ -238,7 +252,7 @@ endpoints the test tools are regenerated (automatic under `serverpod start`, oth
 | Flutter package / app | `flutter test -x golden` locally; CI runs with goldens on Linux |
 | One test | `dart test path/to/file_test.dart --name "when undoing"` |
 | Replay a property failure | `WONKY_SEED=<seed> dart test test/property/<file>` |
-| E2E | `flutter test integration_test/<file>.dart -d <device>` with the server running |
+| E2E | `flutter test integration_test/<file>.dart -d macos --run-skipped` with the server running (web: `flutter drive`, §9) |
 | Coverage | `dart test --coverage=coverage` / `flutter test --coverage` |
 
 CI (`.github/workflows/tests.yml`, see [01 §2](01-architecture.md)) runs every workspace

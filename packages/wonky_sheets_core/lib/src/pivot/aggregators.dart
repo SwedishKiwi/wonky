@@ -90,7 +90,8 @@ final class _Average extends _Numeric {
   }
 
   @override
-  CellValue numeric() => n == 0 ? const ErrorValue(CellErrorKind.div0) : NumberValue(sum / n);
+  CellValue numeric() =>
+      n == 0 ? const ErrorValue(CellErrorKind.div0) : NumberValue(sum / n);
 }
 
 final class _MinMax extends _Numeric {

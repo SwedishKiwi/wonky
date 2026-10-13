@@ -15,16 +15,39 @@ abstract final class P {
     bool opt,
     Object? def,
     bool rep,
-  ) => ArgSpec(name, k, optional: opt || rep, defaultValue: def, repeatable: rep, description: d);
+  ) => ArgSpec(
+    name,
+    k,
+    optional: opt || rep,
+    defaultValue: def,
+    repeatable: rep,
+    description: d,
+  );
 
-  static ArgSpec num(String name, [String d = '', bool opt = false, Object? def]) =>
-      _a(name, ArgKind.number, d, opt, def, false);
-  static ArgSpec text(String name, [String d = '', bool opt = false, Object? def]) =>
-      _a(name, ArgKind.text, d, opt, def, false);
-  static ArgSpec bool_(String name, [String d = '', bool opt = false, Object? def]) =>
-      _a(name, ArgKind.boolean, d, opt, def, false);
-  static ArgSpec scalar(String name, [String d = '', bool opt = false, Object? def]) =>
-      _a(name, ArgKind.scalar, d, opt, def, false);
+  static ArgSpec num(
+    String name, [
+    String d = '',
+    bool opt = false,
+    Object? def,
+  ]) => _a(name, ArgKind.number, d, opt, def, false);
+  static ArgSpec text(
+    String name, [
+    String d = '',
+    bool opt = false,
+    Object? def,
+  ]) => _a(name, ArgKind.text, d, opt, def, false);
+  static ArgSpec bool_(
+    String name, [
+    String d = '',
+    bool opt = false,
+    Object? def,
+  ]) => _a(name, ArgKind.boolean, d, opt, def, false);
+  static ArgSpec scalar(
+    String name, [
+    String d = '',
+    bool opt = false,
+    Object? def,
+  ]) => _a(name, ArgKind.scalar, d, opt, def, false);
   static ArgSpec range(String name, [String d = '', bool opt = false]) =>
       _a(name, ArgKind.range, d, opt, null, false);
   static ArgSpec array(String name, [String d = '', bool opt = false]) =>
@@ -77,7 +100,10 @@ final class FunctionRegistryBuilder {
     final computedMin = params.where((p) => !p.optional).length;
     final computedMax = rs >= 0 ? 255 : params.length;
     final lift =
-        liftable ?? (params.isNotEmpty && params.every((p) => p.kind.isScalarLike) && returns == ReturnKind.scalar);
+        liftable ??
+        (params.isNotEmpty &&
+            params.every((p) => p.kind.isScalarLike) &&
+            returns == ReturnKind.scalar);
     final spec = FunctionSpec(
       name: name,
       aliases: aliases,
@@ -107,7 +133,9 @@ final class FunctionRegistryBuilder {
               p.description,
               optional: p.optional,
               repeatable: p.repeatable,
-              defaultText: p.defaultValue == null ? null : _defaultText(p.defaultValue),
+              defaultText: p.defaultValue == null
+                  ? null
+                  : _defaultText(p.defaultValue),
             ),
         ],
         examples: examples,
@@ -145,7 +173,10 @@ final class FunctionRegistryBuilder {
       implemented: false,
       handlesErrors: true,
       impl: (_) => FError(ErrorKind.name, msg),
-      help: FunctionHelp(summary: summary, syntax: syntax.isEmpty ? '$name(…)' : syntax),
+      help: FunctionHelp(
+        summary: summary,
+        syntax: syntax.isEmpty ? '$name(…)' : syntax,
+      ),
     );
   }
 
@@ -172,7 +203,8 @@ final class FunctionRegistryBuilder {
     return '$name(${parts.join(', ')})';
   }
 
-  FunctionRegistry build() => FunctionRegistry._(Map.of(_specs), Map.of(_aliases));
+  FunctionRegistry build() =>
+      FunctionRegistry._(Map.of(_specs), Map.of(_aliases));
 }
 
 /// Immutable function registry: canonical name and alias lookup (05 §14.2).
@@ -201,10 +233,12 @@ final class FunctionRegistry {
     return a == null ? null : _specs[a];
   }
 
-  bool has(String upperName) => _specs.containsKey(upperName) || _aliases.containsKey(upperName);
+  bool has(String upperName) =>
+      _specs.containsKey(upperName) || _aliases.containsKey(upperName);
 
   /// All canonical specs (sorted by name).
-  List<FunctionSpec> get all => _specs.values.toList()..sort((a, b) => a.name.compareTo(b.name));
+  List<FunctionSpec> get all =>
+      _specs.values.toList()..sort((a, b) => a.name.compareTo(b.name));
 
   /// Alias → canonical name.
   Map<String, String> get aliases => Map.unmodifiable(_aliases);

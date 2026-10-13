@@ -77,13 +77,15 @@ abstract final class DateSerial {
   }
 
   /// Seconds-resolution time fraction.
-  static double timeFraction(int h, int m, num s) => (h * 3600 + m * 60 + s) / 86400.0;
+  static double timeFraction(int h, int m, num s) =>
+      (h * 3600 + m * 60 + s) / 86400.0;
 
   /// Serial (with fraction) of a UTC instant expressed as milliseconds since the Unix epoch.
   static double fromUnixMillis(int ms) => unixEpoch + ms / 86400000.0;
 
   /// Unix milliseconds of a serial interpreted as UTC.
-  static int toUnixMillis(double serial) => ((serial - unixEpoch) * 86400000).round();
+  static int toUnixMillis(double serial) =>
+      ((serial - unixEpoch) * 86400000).round();
 }
 
 /// Result of parsing date/time text.
@@ -91,15 +93,26 @@ final class ParsedDateTime {
   final double serial;
   final bool hasDate;
   final bool hasTime;
-  const ParsedDateTime(this.serial, {required this.hasDate, required this.hasTime});
+  const ParsedDateTime(
+    this.serial, {
+    required this.hasDate,
+    required this.hasTime,
+  });
 }
 
 /// Parses date/time text the way `DATEVALUE`/`TIMEVALUE`/coercion do (05 §6.3, §15.6).
 abstract final class DateTimeParser {
-  static final RegExp _token = RegExp(r"(\d+)|([^\W\d_]+\.?)|(\S)", unicode: true);
+  static final RegExp _token = RegExp(
+    r"(\d+)|([^\W\d_]+\.?)|(\S)",
+    unicode: true,
+  );
 
   /// Parses [text] in [locale]. [currentYear] is used when the year is omitted.
-  static ParsedDateTime? parse(String text, FormulaLocale locale, {int currentYear = 2000}) {
+  static ParsedDateTime? parse(
+    String text,
+    FormulaLocale locale, {
+    int currentYear = 2000,
+  }) {
     final t = text.trim();
     if (t.isEmpty || t.length > 64) return null;
     final iso = _parseIso(t);
@@ -149,9 +162,13 @@ abstract final class DateTimeParser {
     final y = int.parse(m.group(1)!);
     final mo = int.parse(m.group(2)!);
     final d = int.parse(m.group(3)!);
-    if (mo < 1 || mo > 12 || d < 1 || d > DateSerial.daysInMonth(y, mo)) return null;
+    if (mo < 1 || mo > 12 || d < 1 || d > DateSerial.daysInMonth(y, mo)) {
+      return null;
+    }
     final serial = DateSerial.fromYmd(y, mo, d).toDouble();
-    if (m.group(4) == null) return ParsedDateTime(serial, hasDate: true, hasTime: false);
+    if (m.group(4) == null) {
+      return ParsedDateTime(serial, hasDate: true, hasTime: false);
+    }
     final h = int.parse(m.group(4)!);
     final mi = int.parse(m.group(5)!);
     final s = m.group(6) == null ? 0 : int.parse(m.group(6)!);
@@ -164,7 +181,8 @@ abstract final class DateTimeParser {
     );
   }
 
-  static bool _isNum(String s) => s.isNotEmpty && s.codeUnitAt(0) >= 0x30 && s.codeUnitAt(0) <= 0x39;
+  static bool _isNum(String s) =>
+      s.isNotEmpty && s.codeUnitAt(0) >= 0x30 && s.codeUnitAt(0) <= 0x39;
 
   static int? _amPm(String word, FormulaLocale locale) {
     final w = word.toLowerCase().replaceAll('.', '');
@@ -190,8 +208,10 @@ abstract final class DateTimeParser {
           i++;
           continue;
         }
-        if (i + 1 < toks.length && (toks[i] == '.' || toks[i] == locale.decimal) &&
-            _isNum(toks[i + 1]) && nums.length == 3) {
+        if (i + 1 < toks.length &&
+            (toks[i] == '.' || toks[i] == locale.decimal) &&
+            _isNum(toks[i + 1]) &&
+            nums.length == 3) {
           fraction = toks[i + 1];
           i += 2;
         }
@@ -234,7 +254,8 @@ abstract final class DateTimeParser {
     ]) {
       for (var i = 0; i < names.length && i < 12; i++) {
         final n = names[i].toLowerCase().replaceAll('.', '');
-        if (n == w || (w.length >= 3 && n.startsWith(w) && n.length >= w.length)) {
+        if (n == w ||
+            (w.length >= 3 && n.startsWith(w) && n.length >= w.length)) {
           return i + 1;
         }
       }
@@ -264,7 +285,11 @@ abstract final class DateTimeParser {
     return y;
   }
 
-  static int? _parseDate(List<String> toks, FormulaLocale locale, int currentYear) {
+  static int? _parseDate(
+    List<String> toks,
+    FormulaLocale locale,
+    int currentYear,
+  ) {
     final nums = <String>[];
     int? monthWord;
     final seps = <String>{};
@@ -290,9 +315,12 @@ abstract final class DateTimeParser {
       }
     }
     if (hasComma && monthWord == null) return null;
-    if (seps.length > 1 && !(seps.length == 2 && seps.contains('.') && seps.contains(' '))) {
+    if (seps.length > 1 &&
+        !(seps.length == 2 && seps.contains('.') && seps.contains(' '))) {
       // allow "12. Okt. 2026"; otherwise mixed separators are invalid
-      if (!seps.every((s) => s == '.' || s == '-' || s == ' ' || s == '/')) return null;
+      if (!seps.every((s) => s == '.' || s == '-' || s == ' ' || s == '/')) {
+        return null;
+      }
     }
     int y, m, d;
     if (monthWord != null) {

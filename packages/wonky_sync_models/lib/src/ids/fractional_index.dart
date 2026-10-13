@@ -116,17 +116,21 @@ abstract final class FractionalIndex {
         n++;
       }
       if (n > 0) {
-        return b.substring(0, n) + _midpoint(n < a.length ? a.substring(n) : '', b.substring(n));
+        return b.substring(0, n) +
+            _midpoint(n < a.length ? a.substring(n) : '', b.substring(n));
       }
     }
     final digitA = a.isNotEmpty ? base62Value(a.codeUnitAt(0)) : 0;
-    final digitB = b != null && b.isNotEmpty ? base62Value(b.codeUnitAt(0)) : base62Digits.length;
+    final digitB = b != null && b.isNotEmpty
+        ? base62Value(b.codeUnitAt(0))
+        : base62Digits.length;
     if (digitB - digitA > 1) {
       final midDigit = ((digitA + digitB) / 2).round();
       return base62Digits[midDigit];
     }
     if (b != null && b.length > 1) return b.substring(0, 1);
-    return base62Digits[digitA] + _midpoint(a.isEmpty ? '' : a.substring(1), null);
+    return base62Digits[digitA] +
+        _midpoint(a.isEmpty ? '' : a.substring(1), null);
   }
 
   static int _integerLength(String head) {

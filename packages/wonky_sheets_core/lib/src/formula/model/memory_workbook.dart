@@ -13,7 +13,8 @@ abstract final class _Keys {
         n++;
       }
       if (n > 0) {
-        return b.substring(0, n) + midpoint(n < a.length ? a.substring(n) : '', b.substring(n));
+        return b.substring(0, n) +
+            midpoint(n < a.length ? a.substring(n) : '', b.substring(n));
       }
     }
     final da = a.isEmpty ? 0 : digits.indexOf(a[0]);
@@ -51,7 +52,7 @@ abstract final class _Keys {
 final class MemoryIdGenerator {
   int _next;
   final int _prefix;
-  MemoryIdGenerator({int seed = 1, int prefix = 0}) : _next = seed, _prefix = prefix;
+  MemoryIdGenerator({int seed = 1, this._prefix = 0}) : _next = seed;
 
   String next() {
     final n = _next++;
@@ -193,8 +194,13 @@ final class MemorySheet implements SheetView {
   int _usedRows = -1;
   int _usedCols = -1;
 
-  MemorySheet(this.id, this.name, int rowCount, int colCount, MemoryIdGenerator gen)
-    : rows = MemoryAxis(rowCount, gen),
+  MemorySheet(
+    this.id,
+    this.name,
+    int rowCount,
+    int colCount,
+    MemoryIdGenerator gen,
+  ) : rows = MemoryAxis(rowCount, gen),
       columns = MemoryAxis(colCount, gen);
 
   void _invalidate() {
@@ -241,16 +247,23 @@ final class MemorySheet implements SheetView {
 
   @override
   EngineCellInput? inputAt(int row, int col) {
-    if (row < 0 || col < 0 || row >= rows.length || col >= columns.length) return null;
+    if (row < 0 || col < 0 || row >= rows.length || col >= columns.length) {
+      return null;
+    }
     final m = _cells[rows.idAt(row)];
     if (m == null) return null;
     return m[columns.idAt(col)];
   }
 
   @override
-  void forEachInput(GridRect rect, void Function(int row, int col, EngineCellInput input) visit) {
+  void forEachInput(
+    GridRect rect,
+    void Function(int row, int col, EngineCellInput input) visit,
+  ) {
     final r2 = rect.bottom < usedRowCount - 1 ? rect.bottom : usedRowCount - 1;
-    final c2 = rect.right < usedColumnCount - 1 ? rect.right : usedColumnCount - 1;
+    final c2 = rect.right < usedColumnCount - 1
+        ? rect.right
+        : usedColumnCount - 1;
     final r1 = rect.top < 0 ? 0 : rect.top;
     final c1 = rect.left < 0 ? 0 : rect.left;
     if (r1 > r2 || c1 > c2) return;
@@ -309,7 +322,9 @@ final class MemorySheet implements SheetView {
 
   @override
   String? numberFormatAt(int row, int col) {
-    if (row < 0 || col < 0 || row >= rows.length || col >= columns.length) return null;
+    if (row < 0 || col < 0 || row >= rows.length || col >= columns.length) {
+      return null;
+    }
     return _formats[rows.idAt(row)]?[columns.idAt(col)];
   }
 
@@ -335,7 +350,14 @@ final class MemoryNamedRange implements NamedRangeView {
   @override
   String? metaJson;
 
-  MemoryNamedRange(this.id, this.name, {this.range, this.formula, this.comment, this.metaJson});
+  MemoryNamedRange(
+    this.id,
+    this.name, {
+    this.range,
+    this.formula,
+    this.comment,
+    this.metaJson,
+  });
 }
 
 /// In-memory [WorkbookView] for tests, previews and headless use.
@@ -399,13 +421,27 @@ final class MemoryWorkbook implements WorkbookView {
   @override
   Iterable<NamedRangeView> get namedRanges => names;
 
-  MemoryNamedRange addNamedRange(String name, IdRange range, {String? comment}) {
-    final n = MemoryNamedRange(ids.next(), name, range: range, comment: comment);
+  MemoryNamedRange addNamedRange(
+    String name,
+    IdRange range, {
+    String? comment,
+  }) {
+    final n = MemoryNamedRange(
+      ids.next(),
+      name,
+      range: range,
+      comment: comment,
+    );
     names.add(n);
     return n;
   }
 
-  MemoryNamedRange addNamedFunction(String name, String storedFormula, {String? metaJson, String? comment}) {
+  MemoryNamedRange addNamedFunction(
+    String name,
+    String storedFormula, {
+    String? metaJson,
+    String? comment,
+  }) {
     final n = MemoryNamedRange(
       ids.next(),
       name,

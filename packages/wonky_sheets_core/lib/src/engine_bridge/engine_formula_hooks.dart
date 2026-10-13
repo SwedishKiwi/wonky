@@ -35,13 +35,14 @@ final class EngineFormulaHooks implements FormulaHooks {
 
   static const FormulaLexer _stored = FormulaLexer();
 
-  CodecContext _ctx(String sheetId, int row, int col, String locale) => CodecContext(
-    workbook: view,
-    hostSheetId: sheetId,
-    hostRow: row,
-    hostCol: col,
-    locale: FormulaLocale.forId(locale),
-  );
+  CodecContext _ctx(String sheetId, int row, int col, String locale) =>
+      CodecContext(
+        workbook: view,
+        hostSheetId: sheetId,
+        hostRow: row,
+        hostCol: col,
+        locale: FormulaLocale.forId(locale),
+      );
 
   static String _eq(String s) => s.startsWith('=') ? s : '=$s';
 
@@ -130,7 +131,9 @@ final class EngineFormulaHooks implements FormulaHooks {
       bool del(String? id, Set<String> set) => id != null && set.contains(id);
       if (e == null) {
         if (s.isUnbound) return null;
-        if (del(s.rowId, deletedRowIds) || del(s.colId, deletedColIds)) return '#REF!';
+        if (del(s.rowId, deletedRowIds) || del(s.colId, deletedColIds)) {
+          return '#REF!';
+        }
         return null;
       }
       var start = s;
@@ -174,7 +177,12 @@ final class EngineFormulaHooks implements FormulaHooks {
 
   /// Moves deleted endpoints inward to the nearest surviving id; null when no
   /// entry of the span survives. Endpoints that are null stay null.
-  (String?, String?)? _inward(AxisIndex axis, String? a, String? z, Set<String> deleted) {
+  (String?, String?)? _inward(
+    AxisIndex axis,
+    String? a,
+    String? z,
+    Set<String> deleted,
+  ) {
     var i = a == null ? 0 : axis.indexOf(a);
     var j = z == null ? axis.length - 1 : axis.indexOf(z);
     if (i < 0 || j < 0) return (a, z);
@@ -227,7 +235,13 @@ final class EngineFormulaHooks implements FormulaHooks {
     final r1 = idx(sheet.rows, s.rowId, s.rowKey, true, 0);
     final c1 = idx(sheet.columns, s.colId, s.colKey, true, 0);
     final r2 = idx(sheet.rows, e.rowId, e.rowKey, false, sheet.rows.length - 1);
-    final c2 = idx(sheet.columns, e.colId, e.colKey, false, sheet.columns.length - 1);
+    final c2 = idx(
+      sheet.columns,
+      e.colId,
+      e.colKey,
+      false,
+      sheet.columns.length - 1,
+    );
     if (r1 < 0 || c1 < 0 || r2 < 0 || c2 < 0) return null;
     return (sheet, GridRect.normalized(r1, c1, r2, c2));
   }
@@ -352,7 +366,9 @@ final class EngineFormulaHooks implements FormulaHooks {
     if (!stored.contains(RefToken.open)) return false;
     for (final ref in FormulaCodec.references(_eq(stored))) {
       final hit = _rect(ref, hostSheetId);
-      if (hit != null && hit.$1.id == sheetId && hit.$2.intersects(rect)) return true;
+      if (hit != null && hit.$1.id == sheetId && hit.$2.intersects(rect)) {
+        return true;
+      }
     }
     return false;
   }
@@ -369,7 +385,11 @@ final class EngineFormulaHooks implements FormulaHooks {
     final e = engine;
     if (e == null) return const FError(ErrorKind.calc, 'No formula engine');
     return e
-        .compileRelative(stored, sheetId: sheetId, anchor: CellPos(anchorRow, anchorCol))
+        .compileRelative(
+          stored,
+          sheetId: sheetId,
+          anchor: CellPos(anchorRow, anchorCol),
+        )
         .evaluate(row, col);
   }
 }

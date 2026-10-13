@@ -39,17 +39,26 @@ void main() {
       ('0.${'0' * 30}', 1, null, '0.${'0' * 30}'),
     ];
     for (final (pattern, delta, active, expected) in cases) {
-      test('when adjusting "$pattern" by $delta then it becomes "$expected"', () {
-        expect(DecimalsAdjuster.adjust(pattern, delta, activeValue: active), equals(expected));
-      });
+      test(
+        'when adjusting "$pattern" by $delta then it becomes "$expected"',
+        () {
+          expect(
+            DecimalsAdjuster.adjust(pattern, delta, activeValue: active),
+            equals(expected),
+          );
+        },
+      );
     }
 
-    test('when presets are adjusted in de_DE then the locale pattern is the base', () {
-      expect(
-        DecimalsAdjuster.adjust('preset:currency', -1, locale: 'de_DE'),
-        equals(r'#,##0.0 [$€-407]'),
-      );
-    });
+    test(
+      'when presets are adjusted in de_DE then the locale pattern is the base',
+      () {
+        expect(
+          DecimalsAdjuster.adjust('preset:currency', -1, locale: 'de_DE'),
+          equals(r'#,##0.0 [$€-407]'),
+        );
+      },
+    );
 
     test('when adjusting by two steps then two decimals are added', () {
       expect(DecimalsAdjuster.adjust('0', 2), equals('0.00'));

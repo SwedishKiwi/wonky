@@ -116,7 +116,8 @@ final class BandingStyle {
   }
 
   @override
-  bool operator ==(Object other) => other is BandingStyle && other.toJson() == toJson();
+  bool operator ==(Object other) =>
+      other is BandingStyle && other.toJson() == toJson();
 
   @override
   int get hashCode => toJson().hashCode;

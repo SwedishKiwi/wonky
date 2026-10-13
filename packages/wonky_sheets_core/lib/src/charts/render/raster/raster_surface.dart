@@ -5,7 +5,8 @@ import 'package:image/image.dart' as img;
 /// A premultiplied RGBA float buffer (0..1 per channel) with source-over compositing.
 final class RasterSurface {
   /// Creates a transparent surface.
-  RasterSurface(this.width, this.height) : data = Float32List(width * height * 4);
+  RasterSurface(this.width, this.height)
+    : data = Float32List(width * height * 4);
 
   /// Width in px.
   final int width;
@@ -100,7 +101,10 @@ final class RasterSurface {
   void compositeLayer(RasterSurface layer, double opacity) {
     if (layer.isClean || opacity <= 0) return;
     final o = opacity > 1 ? 1.0 : opacity;
-    final x0 = layer._dirtyL, x1 = layer._dirtyR, y0 = layer._dirtyT, y1 = layer._dirtyB;
+    final x0 = layer._dirtyL,
+        x1 = layer._dirtyR,
+        y0 = layer._dirtyT,
+        y1 = layer._dirtyB;
     for (var y = y0; y < y1; y++) {
       _touch(y, x0, x1);
       var i = (y * width + x0) * 4;

@@ -22,17 +22,26 @@ MutationPlan planPaste(PlanBuilder b, PasteClipboard op) {
   final transposed = op.mode == PasteMode.transposed;
   final h = transposed ? w0 : h0;
   final w = transposed ? h0 : w0;
-  final sameSpreadsheet = src.spreadsheetId == null || src.spreadsheetId == b.model.spreadsheetId;
+  final sameSpreadsheet =
+      src.spreadsheetId == null || src.spreadsheetId == b.model.spreadsheetId;
 
   // Paste after cut within the spreadsheet = move.
-  if (src.isCut && sameSpreadsheet && src.sheetId != null && op.mode == PasteMode.all) {
+  if (src.isCut &&
+      sameSpreadsheet &&
+      src.sheetId != null &&
+      op.mode == PasteMode.all) {
     final srcSheet = b.sheetOf(src.sheetId!);
     applyMoveRange(
       b,
       MoveRange(
         ResolvedRange(
           srcSheet.id,
-          GridRect(src.sourceRow, src.sourceCol, src.sourceRow + h0 - 1, src.sourceCol + w0 - 1),
+          GridRect(
+            src.sourceRow,
+            src.sourceCol,
+            src.sourceRow + h0 - 1,
+            src.sourceCol + w0 - 1,
+          ),
         ),
         s.id,
         op.target.rect.top,
@@ -45,12 +54,18 @@ MutationPlan planPaste(PlanBuilder b, PasteClipboard op) {
   // Target rectangle: tile when the selection is an exact multiple.
   final sel = op.target.rect;
   final tile =
-      sel.rowCount % h == 0 && sel.colCount % w == 0 && (sel.rowCount > h || sel.colCount > w);
-  final t = tile ? sel : GridRect(sel.top, sel.left, sel.top + h - 1, sel.left + w - 1);
+      sel.rowCount % h == 0 &&
+      sel.colCount % w == 0 &&
+      (sel.rowCount > h || sel.colCount > w);
+  final t = tile
+      ? sel
+      : GridRect(sel.top, sel.left, sel.top + h - 1, sel.left + w - 1);
   final cells = t.cellCount;
   b.result['range'] = t;
   final (rowIdAt, colIdAt) = ensureGridSize(b, s, t.bottom + 1, t.right + 1);
-  if (t.bottom < s.rows.length && t.right < s.columns.length) checkMergesNotSplit(s, t);
+  if (t.bottom < s.rows.length && t.right < s.columns.length) {
+    checkMergesNotSplit(s, t);
+  }
   final hooks = b.ctx.formulas;
 
   PasteCell? sourceAt(int r, int c) {
@@ -69,13 +84,25 @@ MutationPlan planPaste(PlanBuilder b, PasteClipboard op) {
         : (src.sourceRow + rr, src.sourceCol + cc);
   }
 
-  String? contentFor(PasteCell pc, int tr, int tc, int r, int c, {required bool valuesOnly}) {
+  String? contentFor(
+    PasteCell pc,
+    int tr,
+    int tc,
+    int r,
+    int c, {
+    required bool valuesOnly,
+  }) {
     if (valuesOnly) {
       if (pc.storedFormula != null || pc.formulaA1 != null) {
-        return pc.value == null ? null : CellContent.fromValue(pc.value!)?.encode();
+        return pc.value == null
+            ? null
+            : CellContent.fromValue(pc.value!)?.encode();
       }
     }
-    if (pc.storedFormula != null && sameSpreadsheet && hooks != null && src.sheetId != null) {
+    if (pc.storedFormula != null &&
+        sameSpreadsheet &&
+        hooks != null &&
+        src.sheetId != null) {
       final (sr, sc) = sourcePos(r, c);
       return hooks.translate(
         pc.storedFormula!,
@@ -89,14 +116,30 @@ MutationPlan planPaste(PlanBuilder b, PasteClipboard op) {
     }
     if ((pc.formulaA1 != null || pc.storedFormula != null) && hooks != null) {
       final a1 = pc.formulaA1 ?? pc.storedFormula!;
-      return hooks.toStored(a1, sheetId: s.id, row: tr, col: tc, locale: 'en_US');
+      return hooks.toStored(
+        a1,
+        sheetId: s.id,
+        row: tr,
+        col: tc,
+        locale: 'en_US',
+      );
     }
     if (pc.content != null) return pc.content!.encode();
     if (pc.text != null) {
-      final parsed = InputParser.instance.parse(pc.text!, locale: b.locale, today: b.ctx.now);
+      final parsed = InputParser.instance.parse(
+        pc.text!,
+        locale: b.locale,
+        today: b.ctx.now,
+      );
       if (parsed.isFormula) {
         if (hooks == null) return TextContent(pc.text!).encode();
-        return hooks.toStored(parsed.formulaA1!, sheetId: s.id, row: tr, col: tc, locale: b.locale);
+        return hooks.toStored(
+          parsed.formulaA1!,
+          sheetId: s.id,
+          row: tr,
+          col: tc,
+          locale: b.locale,
+        );
       }
       return parsed.content?.encode();
     }
@@ -125,7 +168,14 @@ MutationPlan planPaste(PlanBuilder b, PasteClipboard op) {
       if (withContent) {
         writes[CellCols.content] = pc == null
             ? null
-            : contentFor(pc, tr, tc, r, c, valuesOnly: op.mode == PasteMode.valuesOnly);
+            : contentFor(
+                pc,
+                tr,
+                tc,
+                r,
+                c,
+                valuesOnly: op.mode == PasteMode.valuesOnly,
+              );
         if (op.mode != PasteMode.valuesOnly && op.mode != PasteMode.formulas) {
           writes[CellCols.note] = pc?.note;
         }
@@ -133,7 +183,10 @@ MutationPlan planPaste(PlanBuilder b, PasteClipboard op) {
       if (withFormat) {
         final f = pc?.format ?? CellFormat.empty;
         for (final a in FormatAttr.values) {
-          if (op.mode == PasteMode.allExceptBorders && borderCols.contains(a.column)) continue;
+          if (op.mode == PasteMode.allExceptBorders &&
+              borderCols.contains(a.column)) {
+            continue;
+          }
           writes[a.column] = a.toColumnValue(f[a]);
         }
       }
@@ -152,11 +205,15 @@ MutationPlan planPaste(PlanBuilder b, PasteClipboard op) {
       if (t.containsRect(m)) b.delete(SheetsTables.mergedRange, id);
     }
   }
-  if (op.mode == PasteMode.all || op.mode == PasteMode.format || op.mode == PasteMode.transposed) {
+  if (op.mode == PasteMode.all ||
+      op.mode == PasteMode.format ||
+      op.mode == PasteMode.transposed) {
     for (var tr = 0; tr < t.rowCount; tr += h) {
       for (var tc = 0; tc < t.colCount; tc += w) {
         for (final m0 in src.merges) {
-          final m = transposed ? GridRect(m0.left, m0.top, m0.right, m0.bottom) : m0;
+          final m = transposed
+              ? GridRect(m0.left, m0.top, m0.right, m0.bottom)
+              : m0;
           final g = GridRect(
             t.top + tr + m.top,
             t.left + tc + m.left,
@@ -180,8 +237,11 @@ MutationPlan planPaste(PlanBuilder b, PasteClipboard op) {
   }
 
   // Data validation.
-  if ((op.mode == PasteMode.all || op.mode == PasteMode.dataValidation) && src.internal) {
-    if (t.bottom < s.rows.length && t.right < s.columns.length) clearValidationIn(b, s, [t]);
+  if ((op.mode == PasteMode.all || op.mode == PasteMode.dataValidation) &&
+      src.internal) {
+    if (t.bottom < s.rows.length && t.right < s.columns.length) {
+      clearValidationIn(b, s, [t]);
+    }
     for (final rule in src.dvRules) {
       final rects = <GridRange>[];
       for (var tr = 0; tr < t.rowCount; tr += h) {
@@ -216,7 +276,9 @@ MutationPlan planPaste(PlanBuilder b, PasteClipboard op) {
   }
 
   // Conditional formatting (identical rules merge their ranges).
-  if ((op.mode == PasteMode.all || op.mode == PasteMode.conditionalFormatting) && src.internal) {
+  if ((op.mode == PasteMode.all ||
+          op.mode == PasteMode.conditionalFormatting) &&
+      src.internal) {
     for (final rule in src.cfRules) {
       final rects = <GridRect>[];
       for (var tr = 0; tr < t.rowCount; tr += h) {
@@ -227,8 +289,14 @@ MutationPlan planPaste(PlanBuilder b, PasteClipboard op) {
           }
         }
       }
-      if (rects.isEmpty || t.bottom >= s.rows.length || t.right >= s.columns.length) continue;
-      final existing = s.cfRules.values.where((x) => x.ruleJson == rule.ruleJson).firstOrNull;
+      if (rects.isEmpty ||
+          t.bottom >= s.rows.length ||
+          t.right >= s.columns.length) {
+        continue;
+      }
+      final existing = s.cfRules.values
+          .where((x) => x.ruleJson == rule.ruleJson)
+          .firstOrNull;
       if (existing != null && sameSpreadsheet) {
         final cur = s.ruleRects(RuleKind.conditionalFormat, existing.id);
         b.update(SheetsTables.conditionalFormatRule, existing.id, {
@@ -243,8 +311,12 @@ MutationPlan planPaste(PlanBuilder b, PasteClipboard op) {
   // Column widths.
   if (op.mode == PasteMode.columnWidths) {
     for (var c = 0; c < t.colCount; c++) {
-      final wpx = c % w < src.columnWidths.length ? src.columnWidths[c % w] : null;
-      b.update(SheetsTables.sheetColumn, colIdAt(t.left + c), {DimCols.width: wpx});
+      final wpx = c % w < src.columnWidths.length
+          ? src.columnWidths[c % w]
+          : null;
+      b.update(SheetsTables.sheetColumn, colIdAt(t.left + c), {
+        DimCols.width: wpx,
+      });
     }
   }
 

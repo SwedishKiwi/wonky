@@ -88,7 +88,10 @@ final class SourceTable {
       final h = values.valueAt(sheet.id, rect.top, c).toCellValue();
       final headerText = h.isBlank()
           ? 'Column ${ColumnLetters.fromIndex(c)}'
-          : displayText.displayText(h, values.numberFormatAt(sheet.id, rect.top, c));
+          : displayText.displayText(
+              h,
+              values.numberFormatAt(sheet.id, rect.top, c),
+            );
       final vs = <CellValue>[];
       final fs = <String?>[];
       for (var i = 0; i < n; i++) {
@@ -96,16 +99,33 @@ final class SourceTable {
         vs.add(values.valueAt(sheet.id, r, c).toCellValue());
         fs.add(values.numberFormatAt(sheet.id, r, c));
       }
-      cols.add(SourceColumn(colId: colId, header: headerText, values: vs, formats: fs, display: displayText, sheetCol: c));
+      cols.add(
+        SourceColumn(
+          colId: colId,
+          header: headerText,
+          values: vs,
+          formats: fs,
+          display: displayText,
+          sheetCol: c,
+        ),
+      );
     }
-    return SourceTable(sheetId: sheet.id, range: rect, columns: cols, display: displayText, rowMask: rowMask);
+    return SourceTable(
+      sheetId: sheet.id,
+      range: rect,
+      columns: cols,
+      display: displayText,
+      rowMask: rowMask,
+    );
   }
 
   /// Open-ended (whole column) sources are clamped to the used range.
   static GridRect _clamp(ResolvedRange r, int? lastUsedRow) {
     final rect = r.rect;
     if (lastUsedRow == null || !r.wholeColumns) return rect;
-    final bottom = lastUsedRow < rect.top + 1 ? rect.top + 1 : (lastUsedRow < rect.bottom ? lastUsedRow : rect.bottom);
+    final bottom = lastUsedRow < rect.top + 1
+        ? rect.top + 1
+        : (lastUsedRow < rect.bottom ? lastUsedRow : rect.bottom);
     return GridRect(rect.top, rect.left, bottom, rect.right);
   }
 
@@ -124,7 +144,9 @@ final class SourceTable {
   final Uint8List? rowMask;
 
   /// Number of data rows.
-  int get rowCount => columns.isEmpty ? (range.rowCount - 1).clamp(0, 1 << 30) : columns.first.values.length;
+  int get rowCount => columns.isEmpty
+      ? (range.rowCount - 1).clamp(0, 1 << 30)
+      : columns.first.values.length;
 
   /// The column with id [colId], or null (fields whose column no longer exists).
   SourceColumn? column(String colId) => _byId[colId];

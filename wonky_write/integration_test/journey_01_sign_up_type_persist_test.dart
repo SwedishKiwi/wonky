@@ -59,8 +59,7 @@ void main() {
     // Create a document and type "Hello **world**".
     await createDocumentWithUi(tester);
     final docUuid = openDocumentUuid(tester);
-    await tester.tap(find.byKey(const ValueKey<String>('write.editor')));
-    await settle(tester, const Duration(milliseconds: 300));
+    await focusEditor(tester);
     await typeInEditor(tester, 'Hello ');
     await runCommand(tester, 'write.format.bold');
     await typeInEditor(tester, 'world');

@@ -17,19 +17,26 @@ import 'helpers.dart';
 String _tableOf(Dimension d) =>
     d == Dimension.rows ? SheetsTables.sheetRow : SheetsTables.sheetColumn;
 
-String _noun(Dimension d, int n) =>
-    d == Dimension.rows ? (n == 1 ? 'row' : 'rows') : (n == 1 ? 'column' : 'columns');
+String _noun(Dimension d, int n) => d == Dimension.rows
+    ? (n == 1 ? 'row' : 'rows')
+    : (n == 1 ? 'column' : 'columns');
 
 /// [InsertDimension] (03 §13.1).
 MutationPlan planInsertDimension(PlanBuilder b, InsertDimension op) {
   final s = b.sheetOf(op.sheetId);
   final axis = s.axis(op.dimension);
-  if (op.count <= 0) throw const PlanException('invalid_argument', 'Count must be positive');
+  if (op.count <= 0) {
+    throw const PlanException('invalid_argument', 'Count must be positive');
+  }
   if (op.at < 0 || op.at > axis.length) {
-    throw const PlanException('invalid_range', 'Insert position is outside the grid');
+    throw const PlanException(
+      'invalid_range',
+      'Insert position is outside the grid',
+    );
   }
   final rows = s.rows.length + (op.dimension == Dimension.rows ? op.count : 0);
-  final cols = s.columns.length + (op.dimension == Dimension.columns ? op.count : 0);
+  final cols =
+      s.columns.length + (op.dimension == Dimension.columns ? op.count : 0);
   b.checkCellLimit(b.gridCellsWith(s.id, rows, cols));
   final prevKey = op.at > 0 ? axis.sortKeyAt(op.at - 1) : null;
   var nextKey = op.at < axis.length ? axis.sortKeyAt(op.at) : null;
@@ -55,7 +62,9 @@ MutationPlan planInsertDimension(PlanBuilder b, InsertDimension op) {
   final table = _tableOf(op.dimension);
   final anchorId = anchor == null ? null : axis.idAt(anchor);
   final anchorRec = anchorId == null ? null : b.current(table, anchorId);
-  final sizeCol = op.dimension == Dimension.rows ? DimCols.height : DimCols.width;
+  final sizeCol = op.dimension == Dimension.rows
+      ? DimCols.height
+      : DimCols.width;
   final newIds = <String>[];
   for (final k in keys) {
     final id = b.ctx.ids.newId();
@@ -113,7 +122,9 @@ MutationPlan planDeleteDimension(PlanBuilder b, DeleteDimension op) {
   final table = _tableOf(op.dimension);
   // Cells of the deleted rows/columns (explicitly, so undo restores them).
   for (final id in ids) {
-    final cells = op.dimension == Dimension.rows ? s.cells.inRow(id) : s.cells.inColumn(id);
+    final cells = op.dimension == Dimension.rows
+        ? s.cells.inRow(id)
+        : s.cells.inColumn(id);
     for (final c in cells.toList()) {
       b.delete(SheetsTables.cell, c.id);
     }
@@ -140,7 +151,8 @@ void repairAfterDelete(
   Set<String> deletedRows,
   Set<String> deletedCols,
 ) {
-  GridRange? repair(GridRange g) => repairGridRange(s, g, deletedRows, deletedCols);
+  GridRange? repair(GridRange g) =>
+      repairGridRange(s, g, deletedRows, deletedCols);
 
   // Merges.
   for (final m in s.merges.values) {
@@ -182,7 +194,9 @@ void repairAfterDelete(
 
   single(SheetsTables.banding, s.bandings.values, Cols.rangeJson);
   single(SheetsTables.filterView, s.filterViews.values, Cols.rangeJson);
-  if (s.basicFilter != null) single(SheetsTables.basicFilter, [s.basicFilter!], Cols.rangeJson);
+  if (s.basicFilter != null) {
+    single(SheetsTables.basicFilter, [s.basicFilter!], Cols.rangeJson);
+  }
   single(
     SheetsTables.protectedRange,
     s.protections.values.where((p) => p.rangeJson != null),
@@ -191,7 +205,9 @@ void repairAfterDelete(
   // Multi-range rules.
   void multi(String table, Iterable<SyncRecord> records) {
     for (final rec in records.toList()) {
-      final ranges = GridRange.parseList(rec.column(Cols.rangesJson) as String?);
+      final ranges = GridRange.parseList(
+        rec.column(Cols.rangesJson) as String?,
+      );
       var changed = false;
       final out = <GridRange>[];
       for (final g in ranges) {
@@ -220,7 +236,9 @@ void repairAfterDelete(
     if (except.isEmpty) continue;
     final out = [for (final g in except) ?repair(g)];
     if (out.length != except.length || !_sameList(out, except)) {
-      b.update(SheetsTables.protectedRange, p.id, {'exceptRangesJson': GridRange.encodeList(out)});
+      b.update(SheetsTables.protectedRange, p.id, {
+        'exceptRangesJson': GridRange.encodeList(out),
+      });
     }
   }
   // Groups: endpoints move inward; empty groups are deleted.
@@ -249,7 +267,9 @@ void repairAfterDelete(
     final g = GridRange.tryParse(n.rangeJson);
     if (g == null || g.sheetId != s.id) continue;
     final r = repair(g);
-    if (r != g && r != null) b.update(SheetsTables.namedRange, n.id, {Cols.rangeJson: r.encode()});
+    if (r != g && r != null) {
+      b.update(SheetsTables.namedRange, n.id, {Cols.rangeJson: r.encode()});
+    }
     // A named range whose rows are all deleted keeps its JSON (shows #REF!).
   }
   // Objects anchored on deleted rows/columns re-anchor; chart data ranges.
@@ -326,7 +346,10 @@ void repairAfterDelete(
     for (final cell in other.cells.all) {
       final content = cell.content;
       if (content == null || !content.startsWith('=')) continue;
-      if (allDeleted.contains(cell.rowId) || allDeleted.contains(cell.columnId)) continue;
+      if (allDeleted.contains(cell.rowId) ||
+          allDeleted.contains(cell.columnId)) {
+        continue;
+      }
       if (!StoredFormula.mayReference(content, allDeleted)) continue;
       final repaired = hooks.repairBoundaries(
         content,
@@ -341,14 +364,24 @@ void repairAfterDelete(
       b,
       other,
       allDeleted,
-      (f) => hooks.repairBoundaries(f, deletedRowIds: deletedRows, deletedColIds: deletedCols),
+      (f) => hooks.repairBoundaries(
+        f,
+        deletedRowIds: deletedRows,
+        deletedColIds: deletedCols,
+      ),
     );
   }
   for (final n in b.model.namedRanges) {
     final f = n.formula;
     if (f == null || !StoredFormula.mayReference(f, allDeleted)) continue;
-    final r = hooks.repairBoundaries(f, deletedRowIds: deletedRows, deletedColIds: deletedCols);
-    if (r != null && r != f) b.update(SheetsTables.namedRange, n.id, {'formula': r});
+    final r = hooks.repairBoundaries(
+      f,
+      deletedRowIds: deletedRows,
+      deletedColIds: deletedCols,
+    );
+    if (r != null && r != f) {
+      b.update(SheetsTables.namedRange, n.id, {'formula': r});
+    }
   }
 }
 
@@ -379,7 +412,9 @@ void _repairRuleFormulas(
   for (final r in s.dvRules.values) {
     apply(SheetsTables.dataValidationRule, r, 'criteriaJson');
   }
-  if (s.basicFilter != null) apply(SheetsTables.basicFilter, s.basicFilter!, 'criteriaJson');
+  if (s.basicFilter != null) {
+    apply(SheetsTables.basicFilter, s.basicFilter!, 'criteriaJson');
+  }
   for (final r in s.filterViews.values) {
     apply(SheetsTables.filterView, r, 'criteriaJson');
   }
@@ -396,7 +431,9 @@ String _nearestSurvivor(List<String> ids, int i, Set<String> deleted) {
 }
 
 String _canonical(String id) =>
-    id.length == Base62Uuid.length && !id.contains('-') && Base62Uuid.isValid(id)
+    id.length == Base62Uuid.length &&
+        !id.contains('-') &&
+        Base62Uuid.isValid(id)
     ? Base62Uuid.decode(id)
     : id;
 
@@ -438,7 +475,13 @@ GridRange? repairGridRange(
   Set<String> deletedCols,
 ) {
   final rows = _repairSpan(s.rows.ids, s.rows.indexOf, g.r1, g.r2, deletedRows);
-  final cols = _repairSpan(s.columns.ids, s.columns.indexOf, g.c1, g.c2, deletedCols);
+  final cols = _repairSpan(
+    s.columns.ids,
+    s.columns.indexOf,
+    g.c1,
+    g.c2,
+    deletedCols,
+  );
   if (rows == null || cols == null) return null;
   final (r1, r2, rowsChanged) = rows;
   final (c1, c2, colsChanged) = cols;
@@ -551,13 +594,24 @@ MutationPlan planMoveDimension(PlanBuilder b, MoveDimension op) {
     for (final id in axis.ids)
       if (!op.ids.contains(id)) id,
   ];
-  final beforeIndex = op.beforeId == null ? rest.length : rest.indexOf(op.beforeId!);
+  final beforeIndex = op.beforeId == null
+      ? rest.length
+      : rest.indexOf(op.beforeId!);
   if (beforeIndex < 0) {
-    throw const PlanException('invalid_argument', 'Move target is one of the moved entries');
+    throw const PlanException(
+      'invalid_argument',
+      'Move target is one of the moved entries',
+    );
   }
-  final prevKey = beforeIndex > 0 ? axis.sortKeyOf(rest[beforeIndex - 1]) : null;
-  var nextKey = beforeIndex < rest.length ? axis.sortKeyOf(rest[beforeIndex]) : null;
-  if (prevKey != null && nextKey != null && prevKey.compareTo(nextKey) >= 0) nextKey = null;
+  final prevKey = beforeIndex > 0
+      ? axis.sortKeyOf(rest[beforeIndex - 1])
+      : null;
+  var nextKey = beforeIndex < rest.length
+      ? axis.sortKeyOf(rest[beforeIndex])
+      : null;
+  if (prevKey != null && nextKey != null && prevKey.compareTo(nextKey) >= 0) {
+    nextKey = null;
+  }
   final keys = FractionalIndex.nBetween(prevKey, nextKey, moving.length);
   final table = _tableOf(op.dimension);
   for (var i = 0; i < moving.length; i++) {
@@ -580,7 +634,12 @@ MutationPlan planSetHidden(PlanBuilder b, SetDimensionHidden op) {
     for (var i = 0; i < axis.length; i++) {
       if (!axis.isUserHidden(i) && !op.ids.contains(axis.idAt(i))) visible++;
     }
-    if (visible == 0) throw const PlanException('invalid_argument', "You can't hide all columns");
+    if (visible == 0) {
+      throw const PlanException(
+        'invalid_argument',
+        "You can't hide all columns",
+      );
+    }
   }
   for (final id in op.ids) {
     if (!axis.contains(id)) continue;
@@ -605,7 +664,10 @@ MutationPlan planResize(PlanBuilder b, ResizeDimension op) {
     b.update(table, id, {col: size});
   }
   b.summary.sheets.add(s.id);
-  return b.build('Resize ${_noun(op.dimension, op.ids.length)}', kinds: [ChangeKinds.structure]);
+  return b.build(
+    'Resize ${_noun(op.dimension, op.ids.length)}',
+    kinds: [ChangeKinds.structure],
+  );
 }
 
 /// [SetFrozen].
@@ -631,7 +693,9 @@ MutationPlan planSetFrozen(PlanBuilder b, SetFrozen op) {
     writes[SheetCols.frozenColumns] = op.columns;
   }
   // Refuse when merges would straddle the new boundary.
-  for (final (_, m) in s.mergesIntersecting(s.gridRect ?? const GridRect(0, 0, 0, 0))) {
+  for (final (_, m) in s.mergesIntersecting(
+    s.gridRect ?? const GridRect(0, 0, 0, 0),
+  )) {
     final fr = op.rows;
     final fc = op.columns;
     if ((fr != null && fr > 0 && m.top < fr && m.bottom >= fr) ||

@@ -36,7 +36,11 @@ enum ConditionUse {
   dataValidation,
 }
 
-const _all = {ConditionUse.filter, ConditionUse.conditionalFormat, ConditionUse.dataValidation};
+const _all = {
+  ConditionUse.filter,
+  ConditionUse.conditionalFormat,
+  ConditionUse.dataValidation,
+};
 const _filterCf = {ConditionUse.filter, ConditionUse.conditionalFormat};
 const _dvOnly = {ConditionUse.dataValidation};
 
@@ -83,7 +87,9 @@ enum ConditionType {
   /// Features that offer the type.
   final Set<ConditionUse> uses;
 
-  static final Map<String, ConditionType> _byId = {for (final t in values) t.id: t};
+  static final Map<String, ConditionType> _byId = {
+    for (final t in values) t.id: t,
+  };
 
   /// The type with JSON id [id], or null.
   static ConditionType? byId(String? id) => id == null ? null : _byId[id];
@@ -146,7 +152,9 @@ sealed class ConditionValue {
 
   /// A literal, or a formula when [text] starts with `=` (stored form).
   factory ConditionValue.text(String text) =>
-      text.length > 1 && text.startsWith('=') ? ConditionFormula(text) : ConditionLiteral(text);
+      text.length > 1 && text.startsWith('=')
+      ? ConditionFormula(text)
+      : ConditionLiteral(text);
 
   /// JSON map.
   Map<String, Object?> toJson();
@@ -164,7 +172,8 @@ final class ConditionLiteral extends ConditionValue {
   Map<String, Object?> toJson() => {'v': text};
 
   @override
-  bool operator ==(Object other) => other is ConditionLiteral && other.text == text;
+  bool operator ==(Object other) =>
+      other is ConditionLiteral && other.text == text;
 
   @override
   int get hashCode => text.hashCode;
@@ -185,7 +194,8 @@ final class ConditionFormula extends ConditionValue {
   Map<String, Object?> toJson() => {'v': stored};
 
   @override
-  bool operator ==(Object other) => other is ConditionFormula && other.stored == stored;
+  bool operator ==(Object other) =>
+      other is ConditionFormula && other.stored == stored;
 
   @override
   int get hashCode => stored.hashCode;
@@ -206,7 +216,8 @@ final class ConditionRelativeDate extends ConditionValue {
   Map<String, Object?> toJson() => {'rel': date.name};
 
   @override
-  bool operator ==(Object other) => other is ConditionRelativeDate && other.date == date;
+  bool operator ==(Object other) =>
+      other is ConditionRelativeDate && other.date == date;
 
   @override
   int get hashCode => date.hashCode;
@@ -225,12 +236,18 @@ sealed class Condition {
   const Condition(this.type, this.values);
 
   /// Creates the condition of [type] with [values].
-  factory Condition.of(ConditionType type, [List<ConditionValue> values = const []]) {
+  factory Condition.of(
+    ConditionType type, [
+    List<ConditionValue> values = const [],
+  ]) {
     switch (type.family) {
       case ConditionFamily.emptiness:
         return EmptinessCondition(type);
       case ConditionFamily.text:
-        return TextCondition(type, values.isEmpty ? const ConditionLiteral('') : values.first);
+        return TextCondition(
+          type,
+          values.isEmpty ? const ConditionLiteral('') : values.first,
+        );
       case ConditionFamily.textPattern:
         return TextPatternCondition(type);
       case ConditionFamily.date:
@@ -285,7 +302,9 @@ sealed class Condition {
       this is CustomFormulaCondition;
 
   /// Whether any value is a formula (or the condition is a custom formula).
-  bool get usesFormulas => this is CustomFormulaCondition || values.any((v) => v is ConditionFormula);
+  bool get usesFormulas =>
+      this is CustomFormulaCondition ||
+      values.any((v) => v is ConditionFormula);
 
   /// JSON map (`values` omitted for types without values).
   Map<String, Object?> toJson() => {
@@ -299,7 +318,9 @@ sealed class Condition {
   /// The first validation error for the editor (07 §1.3 inline messages), or null.
   String? validate() {
     if (values.length < type.arity) {
-      return type.arity == 2 ? 'Please enter two values.' : 'Please enter a value.';
+      return type.arity == 2
+          ? 'Please enter two values.'
+          : 'Please enter a value.';
     }
     for (var i = 0; i < type.arity; i++) {
       final v = values[i];
@@ -312,7 +333,9 @@ sealed class Condition {
           if (!type.acceptsRelativeDates) return 'Please enter a value.';
       }
     }
-    if (this case CustomFormulaCondition(:final formula) when !formula.startsWith('=')) {
+    if (this case CustomFormulaCondition(
+      :final formula,
+    ) when !formula.startsWith('=')) {
       return 'Custom formulas must start with "=".';
     }
     return null;
@@ -348,7 +371,8 @@ final class EmptinessCondition extends Condition {
 /// `textContains`, `textNotContains`, `textStartsWith`, `textEndsWith`, `textEq`.
 final class TextCondition extends Condition {
   /// Creates a text condition.
-  TextCondition(ConditionType type, ConditionValue value) : super(type, [value]);
+  TextCondition(ConditionType type, ConditionValue value)
+    : super(type, [value]);
 
   /// The compared value.
   ConditionValue get value => values.first;
@@ -382,7 +406,8 @@ final class NumberCondition extends Condition {
 /// `customFormula`: truthy result passes (06 §15.3).
 final class CustomFormulaCondition extends Condition {
   /// Creates a custom formula condition; [formula] is in stored form with `=`.
-  CustomFormulaCondition(this.formula) : super(ConditionType.customFormula, [ConditionValue.text(formula)]);
+  CustomFormulaCondition(this.formula)
+    : super(ConditionType.customFormula, [ConditionValue.text(formula)]);
 
   /// The stored formula (with the leading `=`).
   final String formula;

@@ -26,15 +26,24 @@ void main() {
     ];
     for (final (input, locale, format) in cases) {
       test('when inferring "$input" in $locale then the format is $format', () {
-        expect(FormatInference.infer(input, locale: locale, today: today), equals(format));
+        expect(
+          FormatInference.infer(input, locale: locale, today: today),
+          equals(format),
+        );
       });
     }
   });
 
   group('Given the pattern builders', () {
-    test('when building a currency with one typed decimal then two decimals are used', () {
-      expect(FormatInference.currency('€', 1, before: false, spaced: true), r'#,##0.00 [$€]');
-    });
+    test(
+      'when building a currency with one typed decimal then two decimals are used',
+      () {
+        expect(
+          FormatInference.currency('€', 1, before: false, spaced: true),
+          r'#,##0.00 [$€]',
+        );
+      },
+    );
 
     test('when checking applicability then only Automatic targets apply', () {
       expect([

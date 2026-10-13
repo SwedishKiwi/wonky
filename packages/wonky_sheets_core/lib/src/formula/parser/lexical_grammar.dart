@@ -42,13 +42,15 @@ mixin LexicalGrammar on GrammarDefinition<Expr> {
   /// Trims [ws] around [p].
   Parser<T> tok<T>(Parser<T> p) => p.trim(pattern(' \t\r\n'));
 
-  Parser<Expr> numberLiteral() => ScanParser<Expr>(_scanNumber, 'number expected');
+  Parser<Expr> numberLiteral() =>
+      ScanParser<Expr>(_scanNumber, 'number expected');
 
   (Expr, int)? _scanNumber(String s, int i) {
     final n = s.length;
     final dec = locale.decimal.codeUnitAt(0);
     var j = i;
-    bool digit(int k) => k < n && s.codeUnitAt(k) >= 0x30 && s.codeUnitAt(k) <= 0x39;
+    bool digit(int k) =>
+        k < n && s.codeUnitAt(k) >= 0x30 && s.codeUnitAt(k) <= 0x39;
     while (digit(j)) {
       j++;
     }
@@ -83,7 +85,8 @@ mixin LexicalGrammar on GrammarDefinition<Expr> {
     return (NumberLit(v, text: text, span: SourceSpan(i, j)), j);
   }
 
-  Parser<Expr> stringLiteral() => ScanParser<Expr>(_scanString, 'string expected');
+  Parser<Expr> stringLiteral() =>
+      ScanParser<Expr>(_scanString, 'string expected');
 
   (Expr, int)? _scanString(String s, int i) {
     if (i >= s.length || s.codeUnitAt(i) != 0x22) return null;
@@ -105,7 +108,8 @@ mixin LexicalGrammar on GrammarDefinition<Expr> {
     return null;
   }
 
-  Parser<Expr> booleanLiteral() => ScanParser<Expr>(_scanBool, 'boolean expected');
+  Parser<Expr> booleanLiteral() =>
+      ScanParser<Expr>(_scanBool, 'boolean expected');
 
   (Expr, int)? _scanBool(String s, int i) {
     for (final (word, value) in const [('TRUE', true), ('FALSE', false)]) {
@@ -121,14 +125,18 @@ mixin LexicalGrammar on GrammarDefinition<Expr> {
     return null;
   }
 
-  Parser<Expr> errorLiteral() => ScanParser<Expr>(_scanError, 'error literal expected');
+  Parser<Expr> errorLiteral() =>
+      ScanParser<Expr>(_scanError, 'error literal expected');
 
   (Expr, int)? _scanError(String s, int i) {
     if (i >= s.length || s.codeUnitAt(i) != 0x23) return null;
     for (final lit in ErrorKind.literalsLongestFirst) {
       final e = i + lit.length;
       if (e <= s.length && s.substring(i, e).toUpperCase() == lit) {
-        return (ErrorLit(ErrorKind.fromLiteral(lit)!, span: SourceSpan(i, e)), e);
+        return (
+          ErrorLit(ErrorKind.fromLiteral(lit)!, span: SourceSpan(i, e)),
+          e,
+        );
       }
     }
     return null;
@@ -138,7 +146,9 @@ mixin LexicalGrammar on GrammarDefinition<Expr> {
       ScanParser<(String, SourceSpan)>(_scanIdentifier, 'identifier expected');
 
   ((String, SourceSpan), int)? _scanIdentifier(String s, int i) {
-    if (i >= s.length || !FormulaLexer.isIdentStart(s.codeUnitAt(i))) return null;
+    if (i >= s.length || !FormulaLexer.isIdentStart(s.codeUnitAt(i))) {
+      return null;
+    }
     var j = i + 1;
     while (j < s.length && FormulaLexer.isIdentPart(s.codeUnitAt(j))) {
       j++;

@@ -13,7 +13,8 @@ abstract base class SpecNode {
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
-      (other.runtimeType == runtimeType && _eq.equals(toJson(), (other as SpecNode).toJson()));
+      (other.runtimeType == runtimeType &&
+          _eq.equals(toJson(), (other as SpecNode).toJson()));
 
   @override
   int get hashCode => _eq.hash(toJson());
@@ -27,7 +28,9 @@ abstract base class SpecNode {
 final class JsonReader {
   /// Wraps [json] (non-maps read as empty).
   JsonReader(Object? json)
-    : map = json is Map ? json.map((k, v) => MapEntry('$k', v)) : const <String, Object?>{};
+    : map = json is Map
+          ? json.map((k, v) => MapEntry('$k', v))
+          : const <String, Object?>{};
 
   /// The underlying map.
   final Map<String, Object?> map;
@@ -58,7 +61,9 @@ final class JsonReader {
   int? integer(String key) {
     final v = map[key];
     if (v is int) return v;
-    if (v is double && v.isFinite && v == v.truncateToDouble()) return v.toInt();
+    if (v is double && v.isFinite && v == v.truncateToDouble()) {
+      return v.toInt();
+    }
     return null;
   }
 
@@ -90,7 +95,8 @@ final class JsonReader {
   }
 
   /// An enum value by name, else [def].
-  T enumOr<T extends Enum>(String key, List<T> values, T def) => enumOrNull(key, values) ?? def;
+  T enumOr<T extends Enum>(String key, List<T> values, T def) =>
+      enumOrNull(key, values) ?? def;
 
   /// An enum value by name, else null.
   T? enumOrNull<T extends Enum>(String key, List<T> values) {
@@ -111,7 +117,9 @@ final class JsonReader {
 
 /// Deep copy of a JSON value (maps get `String` keys).
 Object? deepCopyJson(Object? v) {
-  if (v is Map) return {for (final e in v.entries) '${e.key}': deepCopyJson(e.value)};
+  if (v is Map) {
+    return {for (final e in v.entries) '${e.key}': deepCopyJson(e.value)};
+  }
   if (v is List) return [for (final x in v) deepCopyJson(x)];
   return v;
 }
@@ -159,7 +167,9 @@ final class JsonWriter {
 }
 
 /// Numbers in JSON: integral doubles become ints.
-Object jsonNum(double v) => v == v.truncateToDouble() && v.abs() < 1e15 ? v.toInt() : v;
+Object jsonNum(double v) =>
+    v == v.truncateToDouble() && v.abs() < 1e15 ? v.toInt() : v;
 
 /// Deep equality of JSON maps.
-bool jsonEquals(Object? a, Object? b) => const DeepCollectionEquality().equals(a, b);
+bool jsonEquals(Object? a, Object? b) =>
+    const DeepCollectionEquality().equals(a, b);

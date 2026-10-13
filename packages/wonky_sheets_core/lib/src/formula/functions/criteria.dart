@@ -95,7 +95,8 @@ final class Criterion {
     final n = TextNumberParser.parse(rest, locale);
     if (n != null) return Criterion._(op, FNumber(n.$1), null, rest);
     RegExp? wc;
-    if ((op == CriterionOp.eq || op == CriterionOp.ne) && (rest.contains('*') || rest.contains('?'))) {
+    if ((op == CriterionOp.eq || op == CriterionOp.ne) &&
+        (rest.contains('*') || rest.contains('?'))) {
       wc = wildcardRegExp(rest);
     }
     return Criterion._(op, FText(rest), wc, rest);
@@ -152,7 +153,8 @@ final class Criterion {
         double? y;
         if (v is FNumber) {
           y = v.v;
-        } else if (v is FText && (_op == CriterionOp.eq || _op == CriterionOp.ne)) {
+        } else if (v is FText &&
+            (_op == CriterionOp.eq || _op == CriterionOp.ne)) {
           // "5" criterion matches text "5"
           final tf = _textForm ?? Numeric.toText(x);
           final same = Compare.fold(v.v.trim()) == Compare.fold(tf);

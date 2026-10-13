@@ -55,11 +55,16 @@ final class FindQuery {
 
   /// Compiles the matcher. Throws [FindPatternException] for invalid patterns.
   FindMatcher compile() {
-    if (query.isEmpty) throw const FindPatternException('Enter something to search for');
+    if (query.isEmpty) {
+      throw const FindPatternException('Enter something to search for');
+    }
     final body = regex ? query : RegExp.escape(query);
     final pattern = entireCell ? '^(?:$body)\$' : body;
     try {
-      return FindMatcher._(RegExp(pattern, caseSensitive: matchCase, unicode: regex), regex: regex);
+      return FindMatcher._(
+        RegExp(pattern, caseSensitive: matchCase, unicode: regex),
+        regex: regex,
+      );
     } on FormatException catch (e) {
       throw FindPatternException('Invalid regular expression: ${e.message}');
     }
@@ -91,7 +96,10 @@ final class FindMatcher {
   /// [text] with every match replaced. In regex mode `$1`…`$99`, `$&` and `$$`
   /// are expanded; otherwise [replacement] is literal. Returns the new text and
   /// the replaced spans `(oldStart, oldEnd, newStart, newEnd)`.
-  (String, List<(int, int, int, int)>) replaceAll(String text, String replacement) {
+  (String, List<(int, int, int, int)>) replaceAll(
+    String text,
+    String replacement,
+  ) {
     final out = StringBuffer();
     final spans = <(int, int, int, int)>[];
     var last = 0;

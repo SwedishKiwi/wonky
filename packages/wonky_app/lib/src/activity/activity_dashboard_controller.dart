@@ -23,6 +23,19 @@ class ActivityDashboardController extends ChangeNotifier {
   bool _savingSetting = false;
   Object? _settingError;
   int _generation = 0;
+  bool _disposed = false;
+
+  @override
+  void notifyListeners() {
+    // Requests finish after the popover/dialog closed.
+    if (!_disposed) super.notifyListeners();
+  }
+
+  @override
+  void dispose() {
+    _disposed = true;
+    super.dispose();
+  }
 
   int get days => _days;
   ActivityDashboard? get dashboard => _dashboard;

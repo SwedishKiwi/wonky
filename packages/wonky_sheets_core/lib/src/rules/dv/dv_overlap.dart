@@ -70,7 +70,11 @@ abstract final class RectCoalescer {
     var changed = true;
     while (changed && list.length > 1) {
       changed = false;
-      list.sort((a, b) => a.top != b.top ? a.top - b.top : (a.bottom != b.bottom ? a.bottom - b.bottom : a.left - b.left));
+      list.sort(
+        (a, b) => a.top != b.top
+            ? a.top - b.top
+            : (a.bottom != b.bottom ? a.bottom - b.bottom : a.left - b.left),
+      );
       final h = <GridRect>[];
       for (final r in list) {
         if (h.isNotEmpty) {
@@ -83,7 +87,11 @@ abstract final class RectCoalescer {
         }
         h.add(r);
       }
-      h.sort((a, b) => a.left != b.left ? a.left - b.left : (a.right != b.right ? a.right - b.right : a.top - b.top));
+      h.sort(
+        (a, b) => a.left != b.left
+            ? a.left - b.left
+            : (a.right != b.right ? a.right - b.right : a.top - b.top),
+      );
       final v = <GridRect>[];
       for (final r in h) {
         if (v.isNotEmpty) {
@@ -105,7 +113,8 @@ abstract final class RectCoalescer {
   /// Reduces [rects] to at most [cap] rectangles by replacing consecutive
   /// groups (in row order) with their bounding boxes.
   static List<GridRect> boundRows(List<GridRect> rects, int cap) {
-    final sorted = List.of(rects)..sort((a, b) => a.top != b.top ? a.top - b.top : a.left - b.left);
+    final sorted = List.of(rects)
+      ..sort((a, b) => a.top != b.top ? a.top - b.top : a.left - b.left);
     final per = (sorted.length / cap).ceil();
     final out = <GridRect>[];
     for (var i = 0; i < sorted.length; i += per) {

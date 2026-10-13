@@ -13,7 +13,8 @@ final class RangeStats {
 
   /// Builds stats from raw numbers (any order).
   factory RangeStats.fromValues(Iterable<double> values) {
-    final list = Float64List.fromList(values.where((v) => v.isFinite).toList())..sort();
+    final list = Float64List.fromList(values.where((v) => v.isFinite).toList())
+      ..sort();
     return RangeStats._(list);
   }
 

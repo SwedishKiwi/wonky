@@ -42,10 +42,14 @@ final class CfThreshold {
   }
 
   /// JSON map.
-  Map<String, Object?> toJson() => {'kind': kind.name, if (value != null) 'value': value};
+  Map<String, Object?> toJson() => {
+    'kind': kind.name,
+    if (value != null) 'value': value,
+  };
 
   @override
-  bool operator ==(Object other) => other is CfThreshold && other.kind == kind && other.value == value;
+  bool operator ==(Object other) =>
+      other is CfThreshold && other.kind == kind && other.value == value;
 
   @override
   int get hashCode => Object.hash(kind, value);
@@ -57,7 +61,8 @@ final class ColorScalePoint {
   const ColorScalePoint(this.threshold, this.color);
 
   /// Shorthand constructor.
-  ColorScalePoint.of(CfValueKind kind, this.color, [String? value]) : threshold = CfThreshold(kind, value);
+  ColorScalePoint.of(CfValueKind kind, this.color, [String? value])
+    : threshold = CfThreshold(kind, value);
 
   /// Threshold.
   final CfThreshold threshold;
@@ -79,7 +84,9 @@ final class ColorScalePoint {
 
   @override
   bool operator ==(Object other) =>
-      other is ColorScalePoint && other.threshold == threshold && other.color == color;
+      other is ColorScalePoint &&
+      other.threshold == threshold &&
+      other.color == color;
 
   @override
   int get hashCode => Object.hash(threshold, color);
@@ -135,13 +142,19 @@ sealed class CfRule {
         return CfColorScaleRule(pts.length > 3 ? pts.sublist(0, 3) : pts);
       case 'dataBar':
         return CfDataBarRule(
-          min: CfThreshold.tryParse(map['min']) ?? const CfThreshold(CfValueKind.min),
-          max: CfThreshold.tryParse(map['max']) ?? const CfThreshold(CfValueKind.max),
+          min:
+              CfThreshold.tryParse(map['min']) ??
+              const CfThreshold(CfValueKind.min),
+          max:
+              CfThreshold.tryParse(map['max']) ??
+              const CfThreshold(CfValueKind.max),
           color: map['color'] as String? ?? '#638EC6',
           negativeColor: map['negativeColor'] as String? ?? '#E06666',
           gradient: map['gradient'] != false,
           axis: DataBarAxis.byName(map['axis']) ?? DataBarAxis.auto,
-          direction: DataBarDirection.byName(map['direction']) ?? DataBarDirection.context,
+          direction:
+              DataBarDirection.byName(map['direction']) ??
+              DataBarDirection.context,
           showValue: map['showValue'] != false,
         );
       case 'iconSet':
@@ -215,7 +228,11 @@ final class CfBooleanRule extends CfRule {
   };
 
   /// Copy with changes.
-  CfBooleanRule copyWith({Condition? condition, CellFormat? format, bool? stopIfTrue}) => CfBooleanRule(
+  CfBooleanRule copyWith({
+    Condition? condition,
+    CellFormat? format,
+    bool? stopIfTrue,
+  }) => CfBooleanRule(
     condition: condition ?? this.condition,
     format: format ?? this.format,
     stopIfTrue: stopIfTrue ?? this.stopIfTrue,
@@ -223,7 +240,8 @@ final class CfBooleanRule extends CfRule {
   );
 
   @override
-  bool operator ==(Object other) => other is CfBooleanRule && other.encode() == encode();
+  bool operator ==(Object other) =>
+      other is CfBooleanRule && other.encode() == encode();
 
   @override
   int get hashCode => encode().hashCode;
@@ -232,7 +250,8 @@ final class CfBooleanRule extends CfRule {
 /// Color scale with 2 or 3 points (min, optional midpoint, max).
 final class CfColorScaleRule extends CfRule {
   /// Creates a color scale.
-  CfColorScaleRule(List<ColorScalePoint> points) : points = List.unmodifiable(points);
+  CfColorScaleRule(List<ColorScalePoint> points)
+    : points = List.unmodifiable(points);
 
   /// The points, lowest first.
   final List<ColorScalePoint> points;
@@ -248,7 +267,8 @@ final class CfColorScaleRule extends CfRule {
   };
 
   @override
-  bool operator ==(Object other) => other is CfColorScaleRule && other.encode() == encode();
+  bool operator ==(Object other) =>
+      other is CfColorScaleRule && other.encode() == encode();
 
   @override
   int get hashCode => encode().hashCode;
@@ -323,7 +343,8 @@ final class CfDataBarRule extends CfRule {
   };
 
   @override
-  bool operator ==(Object other) => other is CfDataBarRule && other.encode() == encode();
+  bool operator ==(Object other) =>
+      other is CfDataBarRule && other.encode() == encode();
 
   @override
   int get hashCode => encode().hashCode;
@@ -381,7 +402,10 @@ final class IconThreshold {
   }
 
   /// JSON map.
-  Map<String, Object?> toJson() => {'op': inclusive ? '>=' : '>', ...threshold.toJson()};
+  Map<String, Object?> toJson() => {
+    'op': inclusive ? '>=' : '>',
+    ...threshold.toJson(),
+  };
 }
 
 /// Icon set rule (P2).

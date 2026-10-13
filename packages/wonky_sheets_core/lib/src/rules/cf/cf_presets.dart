@@ -50,7 +50,9 @@ abstract final class CfPresets {
 
   /// The 9 formatting styles (Default first).
   static const List<CfFormattingStyle> formattingStyles = [
-    CfFormattingStyle('default', 'Default', {FormatAttr.fillColor: defaultFill}),
+    CfFormattingStyle('default', 'Default', {
+      FormatAttr.fillColor: defaultFill,
+    }),
     CfFormattingStyle('greenFill', 'Green fill', {
       FormatAttr.fillColor: '#CEEAD6',
       FormatAttr.textColor: '#137333',
@@ -94,17 +96,35 @@ abstract final class CfPresets {
   ];
 
   /// The 12 color scale presets; the last one derives from the theme's accent 1.
-  static List<ColorScalePreset> colorScales([SpreadsheetTheme theme = SpreadsheetTheme.standard]) {
+  static List<ColorScalePreset> colorScales([
+    SpreadsheetTheme theme = SpreadsheetTheme.standard,
+  ]) {
     final accent = theme.resolveColor('theme:accent1') ?? theme.accents.first;
     return [
       ColorScalePreset('whiteGreen', 'White to green', _two(white, green)),
       ColorScalePreset('greenWhite', 'Green to white', _two(green, white)),
       ColorScalePreset('whiteRed', 'White to red', _two(white, red)),
       ColorScalePreset('redWhite', 'Red to white', _two(red, white)),
-      ColorScalePreset('redWhiteGreen', 'Red to white to green', _three(red, white, green)),
-      ColorScalePreset('greenWhiteRed', 'Green to white to red', _three(green, white, red)),
-      ColorScalePreset('redYellowGreen', 'Red to yellow to green', _three(red, yellow, green)),
-      ColorScalePreset('greenYellowRed', 'Green to yellow to red', _three(green, yellow, red)),
+      ColorScalePreset(
+        'redWhiteGreen',
+        'Red to white to green',
+        _three(red, white, green),
+      ),
+      ColorScalePreset(
+        'greenWhiteRed',
+        'Green to white to red',
+        _three(green, white, red),
+      ),
+      ColorScalePreset(
+        'redYellowGreen',
+        'Red to yellow to green',
+        _three(red, yellow, green),
+      ),
+      ColorScalePreset(
+        'greenYellowRed',
+        'Green to yellow to red',
+        _three(green, yellow, red),
+      ),
       ColorScalePreset('whiteBlue', 'White to blue', _two(white, blue)),
       ColorScalePreset('blueWhite', 'Blue to white', _two(blue, white)),
       ColorScalePreset('yellowGreen', 'Yellow to green', _two(yellow, green)),

@@ -1,8 +1,20 @@
 import 'core.dart';
 
 /// Id-based range JSON for indices [r1]..[r2] × [c1]..[c2] of the current sheet of [b].
-GridRange gridRange(WorkbookBuilder b, String sheetId, int r1, int c1, int r2, int c2) =>
-    GridRange(sheetId: sheetId, r1: b.rowId(r1), r2: b.rowId(r2), c1: b.colId(c1), c2: b.colId(c2));
+GridRange gridRange(
+  WorkbookBuilder b,
+  String sheetId,
+  int r1,
+  int c1,
+  int r2,
+  int c2,
+) => GridRange(
+  sheetId: sheetId,
+  r1: b.rowId(r1),
+  r2: b.rowId(r2),
+  c1: b.colId(c1),
+  c2: b.colId(c2),
+);
 
 /// Adds a CF rule row.
 void addCfRule(
@@ -42,4 +54,5 @@ void addDvRule(
 });
 
 /// Deterministic UUID-like rule id for fixtures (distinct from builder ids).
-String fid(int n) => 'ffffffff-0000-4000-8000-${n.toRadixString(16).padLeft(12, '0')}';
+String fid(int n) =>
+    'ffffffff-0000-4000-8000-${n.toRadixString(16).padLeft(12, '0')}';

@@ -14,7 +14,9 @@ final class Fraction {
       n = -n;
     }
     final g = n.gcd(d);
-    return g == BigInt.zero || g == BigInt.one ? Fraction._(n, d) : Fraction._(n ~/ g, d ~/ g);
+    return g == BigInt.zero || g == BigInt.one
+        ? Fraction._(n, d)
+        : Fraction._(n ~/ g, d ~/ g);
   }
 
   factory Fraction.int(int v) => Fraction(BigInt.from(v));
@@ -38,8 +40,10 @@ final class Fraction {
 
   bool get isZero => num == BigInt.zero;
 
-  Fraction operator +(Fraction o) => Fraction(num * o.den + o.num * den, den * o.den);
-  Fraction operator -(Fraction o) => Fraction(num * o.den - o.num * den, den * o.den);
+  Fraction operator +(Fraction o) =>
+      Fraction(num * o.den + o.num * den, den * o.den);
+  Fraction operator -(Fraction o) =>
+      Fraction(num * o.den - o.num * den, den * o.den);
   Fraction operator *(Fraction o) => Fraction(num * o.num, den * o.den);
   Fraction operator /(Fraction o) => Fraction(num * o.den, den * o.num);
   Fraction operator -() => Fraction._(-num, den);
@@ -73,9 +77,16 @@ final class ExactLinest {
   );
 
   /// Requires full column rank and df > 0.
-  factory ExactLinest.of(List<List<Fraction>> columns, List<Fraction> y, {bool intercept = true}) {
+  factory ExactLinest.of(
+    List<List<Fraction>> columns,
+    List<Fraction> y, {
+    bool intercept = true,
+  }) {
     final n = y.length;
-    final design = [if (intercept) List<Fraction>.filled(n, Fraction.one), ...columns];
+    final design = [
+      if (intercept) List<Fraction>.filled(n, Fraction.one),
+      ...columns,
+    ];
     final p = design.length;
     // Normal matrix XᵀX augmented with identity (for the inverse) and Xᵀy.
     final m = List.generate(p, (i) {
@@ -120,7 +131,9 @@ final class ExactLinest {
     final df = n - p;
     final ssReg = ssTot - ssRes;
     final sigma2 = ssRes / Fraction.int(df);
-    final se = [for (var i = 0; i < p; i++) math.sqrt((sigma2 * m[i][p + i]).toDouble())];
+    final se = [
+      for (var i = 0; i < p; i++) math.sqrt((sigma2 * m[i][p + i]).toDouble()),
+    ];
     final k = columns.length;
     return ExactLinest._(
       [for (var j = 0; j < k; j++) beta[j + (intercept ? 1 : 0)].toDouble()],
@@ -157,7 +170,9 @@ final class ExactLinest {
 }
 
 /// Exact fractions of the given doubles.
-List<Fraction> exact(Iterable<double> values) => [for (final v in values) Fraction.fromDouble(v)];
+List<Fraction> exact(Iterable<double> values) => [
+  for (final v in values) Fraction.fromDouble(v),
+];
 
 /// Matcher: within [rel] relative error of [expected] (absolute [rel] when |expected| < 1).
 Matcher closeToRel(double expected, {double rel = 1e-9}) =>

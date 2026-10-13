@@ -32,7 +32,12 @@ void main() {
       expect(AutomaticFormatter.format(1.5, locale: 'de_DE'), equals('1,5'));
     });
 
-    final decimals = <(double, int)>[(1, 0), (1.25, 2), (1 / 3, 10), (1.5e20, 1)];
+    final decimals = <(double, int)>[
+      (1, 0),
+      (1.25, 2),
+      (1 / 3, 10),
+      (1.5e20, 1),
+    ];
     for (final (value, d) in decimals) {
       test('when counting displayed decimals of $value then it is $d', () {
         expect(AutomaticFormatter.displayedDecimals(value), equals(d));

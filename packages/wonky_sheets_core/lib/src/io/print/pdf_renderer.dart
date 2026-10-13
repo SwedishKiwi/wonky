@@ -34,7 +34,12 @@ import 'print_settings.dart';
 abstract interface class ChartPdfDrawer {
   /// Draws [chart] into [bounds] (PDF points, origin bottom-left). The
   /// graphics state is clipped to the visible part of the chart.
-  void drawChart(PdfDocument doc, PdfGraphics g, EmbeddedObjectRecord chart, PdfRect bounds);
+  void drawChart(
+    PdfDocument doc,
+    PdfGraphics g,
+    EmbeddedObjectRecord chart,
+    PdfRect bounds,
+  );
 }
 
 /// [ChartPdfDrawer] over chart scenes: [sceneFor] lays a chart out at the
@@ -42,14 +47,27 @@ abstract interface class ChartPdfDrawer {
 /// [PdfChartRenderer], scaled to the bounds.
 final class SceneChartPdfDrawer implements ChartPdfDrawer {
   /// Creates the drawer.
-  const SceneChartPdfDrawer(this.sceneFor, {this.renderer = const PdfChartRenderer()});
+  const SceneChartPdfDrawer(
+    this.sceneFor, {
+    this.renderer = const PdfChartRenderer(),
+  });
 
   /// The chart's scene for a size in points; null skips the chart.
-  final ChartScene? Function(EmbeddedObjectRecord chart, double width, double height) sceneFor;
+  final ChartScene? Function(
+    EmbeddedObjectRecord chart,
+    double width,
+    double height,
+  )
+  sceneFor;
   final PdfChartRenderer renderer;
 
   @override
-  void drawChart(PdfDocument doc, PdfGraphics g, EmbeddedObjectRecord chart, PdfRect bounds) {
+  void drawChart(
+    PdfDocument doc,
+    PdfGraphics g,
+    EmbeddedObjectRecord chart,
+    PdfRect bounds,
+  ) {
     final scene = sceneFor(chart, bounds.width, bounds.height);
     if (scene == null || scene.width <= 0) return;
     renderer.draw(
@@ -196,7 +214,11 @@ abstract final class _Ink {
 
   static PdfColor hex(String hex) {
     final v = int.parse(hex.substring(1), radix: 16);
-    return PdfColor(((v >> 16) & 0xff) / 255, ((v >> 8) & 0xff) / 255, (v & 0xff) / 255);
+    return PdfColor(
+      ((v >> 16) & 0xff) / 255,
+      ((v >> 8) & 0xff) / 255,
+      (v & 0xff) / 255,
+    );
   }
 }
 
@@ -258,7 +280,8 @@ final class _Renderer {
   double px(double x) => ox + x * k;
   double py(double y) => pageH - (oy + y * k);
 
-  void rectPx(double x, double y, double w, double h) => g.drawRect(px(x), py(y + h), w * k, h * k);
+  void rectPx(double x, double y, double w, double h) =>
+      g.drawRect(px(x), py(y + h), w * k, h * k);
 
   void drawPage(PdfPage pdfPage, PageSpec s) {
     page = pdfPage;
@@ -304,16 +327,27 @@ final class _Renderer {
     final right = spec.pageWidth - spec.settings.margins.rightPt;
     void band(HeaderFooterSections sec, double topPt, double height) {
       if (sec.isEmpty || height <= 0) return;
-      final baseline = topPt + height / 2 + (measurer.ascent(style) - measurer.descent(style)) / 2;
+      final baseline =
+          topPt +
+          height / 2 +
+          (measurer.ascent(style) - measurer.descent(style)) / 2;
       final y = pageH - baseline;
       final l = HeaderFooterTokens.render(sec.left, ctx);
       final c = HeaderFooterTokens.render(sec.center, ctx);
       final r = HeaderFooterTokens.render(sec.right, ctx);
       if (l.isNotEmpty) _drawPlain(l, style, left, y, _Ink.black);
       if (c.isNotEmpty) {
-        _drawPlain(c, style, (left + right) / 2 - measurer.width(c, style) / 2, y, _Ink.black);
+        _drawPlain(
+          c,
+          style,
+          (left + right) / 2 - measurer.width(c, style) / 2,
+          y,
+          _Ink.black,
+        );
       }
-      if (r.isNotEmpty) _drawPlain(r, style, right - measurer.width(r, style), y, _Ink.black);
+      if (r.isNotEmpty) {
+        _drawPlain(r, style, right - measurer.width(r, style), y, _Ink.black);
+      }
     }
 
     band(hf.effectiveHeader, spec.settings.margins.topPt, spec.headerHeight);
@@ -325,7 +359,13 @@ final class _Renderer {
   }
 
   /// Draws [text] (size in points) at pdf coordinates with glyph fallback.
-  void _drawPlain(String text, CellTextStyle style, double x, double y, PdfColor color) {
+  void _drawPlain(
+    String text,
+    CellTextStyle style,
+    double x,
+    double y,
+    PdfColor color,
+  ) {
     g.setFillColor(color);
     var cx = x;
     for (final run in measurer.runs(text, style)) {
@@ -387,7 +427,9 @@ final class _Renderer {
       final minC = cols.map((c) => c.index).reduce(math.min);
       final maxC = cols.map((c) => c.index).reduce(math.max);
       final seen = <String>{};
-      for (final (id, m) in sheet.mergesIntersecting(GridRect(minR, minC, maxR, maxC))) {
+      for (final (id, m) in sheet.mergesIntersecting(
+        GridRect(minR, minC, maxR, maxC),
+      )) {
         if (!seen.add(id) || m.isSingleCell) continue;
         // Page positions inside the merge, per region (merges don't cross
         // the frozen boundary; take the region with the most cells).
@@ -402,7 +444,8 @@ final class _Renderer {
         if (pr.isEmpty || pc.isEmpty) continue;
         final firstRow = _firstPrinted(sheet, true, m.top, m.bottom);
         final firstCol = _firstPrinted(sheet, false, m.left, m.right);
-        final showContent = rowPos[firstRow] != null && colPos[firstCol] != null;
+        final showContent =
+            rowPos[firstRow] != null && colPos[firstCol] != null;
         for (final i in pr) {
           for (final j in pc) {
             covered.add((i, j));
@@ -457,11 +500,17 @@ final class _Renderer {
       }
       final bar = d.conditional?.dataBarFraction;
       if (bar != null && bar > 0) {
-        final color = model.theme.resolveColor(d.conditional!.dataBarColor) ?? '#638EC6';
+        final color =
+            model.theme.resolveColor(d.conditional!.dataBarColor) ?? '#638EC6';
         g.setFillColor(_Ink.hex(color));
         final start = d.conditional!.dataBarStart.clamp(0.0, 1.0);
         final innerW = r.w - 2;
-        rectPx(r.x + 1 + innerW * start, r.y + 2, innerW * bar.clamp(0.0, 1.0 - start), r.h - 4);
+        rectPx(
+          r.x + 1 + innerW * start,
+          r.y + 2,
+          innerW * bar.clamp(0.0, 1.0 - start),
+          r.h - 4,
+        );
         g.fillPath();
       }
     }
@@ -497,22 +546,38 @@ final class _Renderer {
           final bottom = c.merge!.bottom == rows[c.r1].index
               ? _edgeBelow(sheet.id, c.merge!.bottom, col)
               : null;
-          if (top != null) _hLine(top, cols[j].pos, cols[j].pos + cols[j].size, r.y);
-          if (bottom != null) _hLine(bottom, cols[j].pos, cols[j].pos + cols[j].size, r.y + r.h);
+          if (top != null) {
+            _hLine(top, cols[j].pos, cols[j].pos + cols[j].size, r.y);
+          }
+          if (bottom != null) {
+            _hLine(bottom, cols[j].pos, cols[j].pos + cols[j].size, r.y + r.h);
+          }
         }
         for (var i = c.r0; i <= c.r1; i++) {
           final row = rows[i].index;
-          final left = c.merge!.left == cols[c.c0].index ? _edgeLeft(sheet.id, row, c.merge!.left) : null;
+          final left = c.merge!.left == cols[c.c0].index
+              ? _edgeLeft(sheet.id, row, c.merge!.left)
+              : null;
           final right = c.merge!.right == cols[c.c1].index
               ? _edgeRight(sheet.id, row, c.merge!.right)
               : null;
-          if (left != null) _vLine(left, r.x, rows[i].pos, rows[i].pos + rows[i].size);
-          if (right != null) _vLine(right, r.x + r.w, rows[i].pos, rows[i].pos + rows[i].size);
+          if (left != null) {
+            _vLine(left, r.x, rows[i].pos, rows[i].pos + rows[i].size);
+          }
+          if (right != null) {
+            _vLine(right, r.x + r.w, rows[i].pos, rows[i].pos + rows[i].size);
+          }
         }
         continue;
       }
-      final prevRowAdj = c.r0 > 0 && rows[c.r0 - 1].index == c.row - 1 && !mergedPos.contains((c.r0 - 1, c.c0));
-      final prevColAdj = c.c0 > 0 && cols[c.c0 - 1].index == c.col - 1 && !mergedPos.contains((c.r0, c.c0 - 1));
+      final prevRowAdj =
+          c.r0 > 0 &&
+          rows[c.r0 - 1].index == c.row - 1 &&
+          !mergedPos.contains((c.r0 - 1, c.c0));
+      final prevColAdj =
+          c.c0 > 0 &&
+          cols[c.c0 - 1].index == c.col - 1 &&
+          !mergedPos.contains((c.r0, c.c0 - 1));
       if (!prevRowAdj && e.top != null) _hLine(e.top!, r.x, r.x + r.w, r.y);
       if (!prevColAdj && e.left != null) _vLine(e.left!, r.x, r.y, r.y + r.h);
       if (e.bottom != null) _hLine(e.bottom!, r.x, r.x + r.w, r.y + r.h);
@@ -634,7 +699,8 @@ final class _Renderer {
   }
 
   PdfColor _textColor(CellDisplay d) {
-    final c = d.textColor ?? model.theme.resolveColor('theme:text') ?? '#000000';
+    final c =
+        d.textColor ?? model.theme.resolveColor('theme:text') ?? '#000000';
     return _Ink.hex(c);
   }
 
@@ -689,14 +755,24 @@ final class _Renderer {
     final color = _textColor(d);
     final rotated = layout.angle != 0;
     if (rotated) {
-      final t = Matrix4.translationValues(px(r.x + layout.frameX), py(r.y + layout.frameY), 0)
-        ..rotateZ(layout.angle * math.pi / 180);
+      final t = Matrix4.translationValues(
+        px(r.x + layout.frameX),
+        py(r.y + layout.frameY),
+        0,
+      )..rotateZ(layout.angle * math.pi / 180);
       g.setTransform(t);
     }
     final cf = d.conditional?.format;
     for (final line in layout.lines) {
       var x = line.x;
-      for (final seg in _segments(layout.text, line.start, line.end, spans, base, layout.hashes)) {
+      for (final seg in _segments(
+        layout.text,
+        line.start,
+        line.end,
+        spans,
+        base,
+        layout.hashes,
+      )) {
         final runFmt = seg.format;
         var segColor = color;
         final runColor = runFmt['textColor'];
@@ -720,8 +796,10 @@ final class _Renderer {
           g.drawString(run.font, sizePt, run.text, cx, by);
           cx += run.font.stringMetrics(run.text).advanceWidth * sizePt;
         }
-        final underline = runFmt['underline'] as bool? ?? (d.underline || link != null);
-        final strike = runFmt['strikethrough'] as bool? ?? d.format.strikethrough;
+        final underline =
+            runFmt['underline'] as bool? ?? (d.underline || link != null);
+        final strike =
+            runFmt['strikethrough'] as bool? ?? d.format.strikethrough;
         if (underline || strike) {
           g.setStrokeColor(segColor);
           g.setLineWidth(math.max(0.4, sizePt * 0.06));
@@ -739,7 +817,11 @@ final class _Renderer {
         if (!rotated) {
           final url = link ?? d.linkUrl;
           if (url != null) {
-            _link(url, PdfRect(bx, by - sizePt * 0.25, w * k, sizePt * 1.1), sheet);
+            _link(
+              url,
+              PdfRect(bx, by - sizePt * 0.25, w * k, sizePt * 1.1),
+              sheet,
+            );
           }
         }
         x += w;
@@ -764,7 +846,9 @@ final class _Renderer {
                 ? (run.format['fontSize'] as num).toDouble() * 4 / 3
                 : null,
             bold: cf?[FormatAttr.bold] as bool? ?? run.format['bold'] as bool?,
-            italic: cf?[FormatAttr.italic] as bool? ?? run.format['italic'] as bool?,
+            italic:
+                cf?[FormatAttr.italic] as bool? ??
+                run.format['italic'] as bool?,
           ),
           run.format,
         ),
@@ -805,7 +889,9 @@ final class _Renderer {
   void _link(String url, PdfRect rect, SheetModel sheet) {
     final u = url.trim();
     final lower = u.toLowerCase();
-    if (lower.startsWith('http://') || lower.startsWith('https://') || lower.startsWith('mailto:')) {
+    if (lower.startsWith('http://') ||
+        lower.startsWith('https://') ||
+        lower.startsWith('mailto:')) {
       PdfAnnot(page, PdfAnnotUrlLink(rect: rect, url: u));
       return;
     }
@@ -813,7 +899,9 @@ final class _Renderer {
       PdfAnnot(page, PdfAnnotUrlLink(rect: rect, url: 'https://$u'));
       return;
     }
-    final m = RegExp(r'^#sheet=([^&]+)(?:&range=([A-Za-z$0-9:]+))?').firstMatch(u);
+    final m = RegExp(
+      r'^#sheet=([^&]+)(?:&range=([A-Za-z$0-9:]+))?',
+    ).firstMatch(u);
     if (m == null) return;
     final target = model.sheet(m.group(1)!);
     if (target == null) return;
@@ -829,7 +917,10 @@ final class _Renderer {
       if (row < 0 ||
           ((p.rows.contains(row) || p.repeatRows.contains(row)) &&
               (p.cols.contains(col) || p.repeatCols.contains(col)))) {
-        PdfAnnot(page, PdfAnnotNamedLink(rect: rect, dest: 'wonky-page-${p.pageNumber}'));
+        PdfAnnot(
+          page,
+          PdfAnnotNamedLink(rect: rect, dest: 'wonky-page-${p.pageNumber}'),
+        );
         return;
       }
     }
@@ -855,7 +946,9 @@ final class _Renderer {
     };
     final radius = 2 * k;
     if (d.widget.checked) {
-      g.setFillColor(d.textColor == null ? _Ink.checkbox : _Ink.hex(d.textColor!));
+      g.setFillColor(
+        d.textColor == null ? _Ink.checkbox : _Ink.hex(d.textColor!),
+      );
       g.drawRRect(px(x), py(y + size), size * k, size * k, radius, radius);
       g.fillPath();
       g.setStrokeColor(_Ink.white);
@@ -871,7 +964,14 @@ final class _Renderer {
     } else {
       g.setStrokeColor(_Ink.checkboxOutline);
       g.setLineWidth(1.5 * k);
-      g.drawRRect(px(x + 0.75), py(y + size - 0.75), (size - 1.5) * k, (size - 1.5) * k, radius, radius);
+      g.drawRRect(
+        px(x + 0.75),
+        py(y + size - 0.75),
+        (size - 1.5) * k,
+        (size - 1.5) * k,
+        radius,
+        radius,
+      );
       g.strokePath();
     }
   }
@@ -900,8 +1000,12 @@ final class _Renderer {
       VerticalAlign.middle => r.y + (r.h - h) / 2,
       VerticalAlign.bottom => r.y + r.h - 2 - h,
     };
-    final fill = d.widget.chipFill == null ? _Ink.chipFill : _Ink.hex(d.widget.chipFill!);
-    final fg = d.widget.chipText == null ? _Ink.chipText : _Ink.hex(d.widget.chipText!);
+    final fill = d.widget.chipFill == null
+        ? _Ink.chipFill
+        : _Ink.hex(d.widget.chipFill!);
+    final fg = d.widget.chipText == null
+        ? _Ink.chipText
+        : _Ink.hex(d.widget.chipText!);
     g.setFillColor(fill);
     g.drawRRect(px(x), py(y + h), w * k, h * k, h * k / 2, h * k / 2);
     g.fillPath();
@@ -981,7 +1085,10 @@ final class _Renderer {
     final axis = rows ? s.rows : s.columns;
     var prefix = _prefixCache[key];
     if (prefix == null || prefix.length <= i + 1) {
-      final n = math.max(i + 1, math.min(axis.length, (prefix?.length ?? 0) * 2));
+      final n = math.max(
+        i + 1,
+        math.min(axis.length, (prefix?.length ?? 0) * 2),
+      );
       final p = Float64List(n + 1);
       for (var j = 0; j < n; j++) {
         final size = j >= axis.length || Paginator.hiddenForPrint(axis, j)
@@ -1013,7 +1120,10 @@ final class _Renderer {
         return z != 0 ? z : a.id.compareTo(b.id);
       });
     // Windows: (region rows) × (region cols).
-    List<(double pagePos, double sheetStart, double size)> windows(List<_Slot> slots, bool isRow) {
+    List<(double pagePos, double sheetStart, double size)> windows(
+      List<_Slot> slots,
+      bool isRow,
+    ) {
       final out = <(double, double, double)>[];
       for (final region in const [0, 1]) {
         final s = slots.where((x) => x.region == region).toList();
@@ -1027,24 +1137,37 @@ final class _Renderer {
     final rowWins = windows(rows, true);
     final colWins = windows(cols, false);
     for (final o in objs) {
-      if (o.kind != EmbeddedObjectKind.image && o.kind != EmbeddedObjectKind.chart) continue;
+      if (o.kind != EmbeddedObjectKind.image &&
+          o.kind != EmbeddedObjectKind.chart) {
+        continue;
+      }
       final p = PrintObjectPlacement.of(sheet, o);
       if (p == null || p.ownSheet) continue;
-      final sx = _offset(sheet, false, p.col) +
+      final sx =
+          _offset(sheet, false, p.col) +
           (Paginator.hiddenForPrint(sheet.columns, p.col) ? 0 : p.dx);
-      final sy = _offset(sheet, true, p.row) +
+      final sy =
+          _offset(sheet, true, p.row) +
           (Paginator.hiddenForPrint(sheet.rows, p.row) ? 0 : p.dy);
       for (final (rp, rs, rsize) in rowWins) {
         for (final (cp, cs, csize) in colWins) {
           final x = cp + (sx - cs);
           final y = rp + (sy - rs);
-          if (x >= cp + csize || x + p.width <= cp || y >= rp + rsize || y + p.height <= rp) {
+          if (x >= cp + csize ||
+              x + p.width <= cp ||
+              y >= rp + rsize ||
+              y + p.height <= rp) {
             continue;
           }
           g.saveContext();
           rectPx(cp, rp, csize, rsize);
           g.clipPath();
-          final bounds = PdfRect(px(x), py(y + p.height), p.width * k, p.height * k);
+          final bounds = PdfRect(
+            px(x),
+            py(y + p.height),
+            p.width * k,
+            p.height * k,
+          );
           if (o.kind == EmbeddedObjectKind.image) {
             _image(o, bounds);
           } else {
@@ -1123,11 +1246,16 @@ final class _Renderer {
     for (final line in spec.noteLines) {
       final style = CellTextStyle(
         family: _defaultFamily,
-        size: line.heading ? PrintMetrics.notesHeadingFontPt : PrintMetrics.notesFontPt,
+        size: line.heading
+            ? PrintMetrics.notesHeadingFontPt
+            : PrintMetrics.notesFontPt,
         bold: line.heading,
       );
-      final lh = line.heading ? PrintMetrics.notesHeadingPt : PrintMetrics.notesLinePt;
-      final baseline = y + lh / 2 + (measurer.ascent(style) - measurer.descent(style)) / 2;
+      final lh = line.heading
+          ? PrintMetrics.notesHeadingPt
+          : PrintMetrics.notesLinePt;
+      final baseline =
+          y + lh / 2 + (measurer.ascent(style) - measurer.descent(style)) / 2;
       _drawPlain(
         line.text,
         style,

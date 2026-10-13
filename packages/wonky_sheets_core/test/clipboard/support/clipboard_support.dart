@@ -10,12 +10,22 @@ final class IdentityFormulaHooks implements FormulaHooks {
   const IdentityFormulaHooks();
 
   @override
-  String toStored(String a1Formula, {required String sheetId, required int row, required int col, String locale = 'en_US'}) =>
-      a1Formula;
+  String toStored(
+    String a1Formula, {
+    required String sheetId,
+    required int row,
+    required int col,
+    String locale = 'en_US',
+  }) => a1Formula;
 
   @override
-  String toA1(String stored, {required String sheetId, required int row, required int col, String locale = 'en_US'}) =>
-      stored;
+  String toA1(
+    String stored, {
+    required String sheetId,
+    required int row,
+    required int col,
+    String locale = 'en_US',
+  }) => stored;
 
   @override
   String translate(
@@ -29,8 +39,11 @@ final class IdentityFormulaHooks implements FormulaHooks {
   }) => stored;
 
   @override
-  String? repairBoundaries(String stored, {required Set<String> deletedRowIds, required Set<String> deletedColIds}) =>
-      null;
+  String? repairBoundaries(
+    String stored, {
+    required Set<String> deletedRowIds,
+    required Set<String> deletedColIds,
+  }) => null;
 
   @override
   String? remap(
@@ -57,8 +70,12 @@ final class IdentityFormulaHooks implements FormulaHooks {
   String renameName(String stored, String oldName, String newName) => stored;
 
   @override
-  bool references(String stored, {required String hostSheetId, required String sheetId, required GridRect rect}) =>
-      false;
+  bool references(
+    String stored, {
+    required String hostSheetId,
+    required String sheetId,
+    required GridRect rect,
+  }) => false;
 
   @override
   FValue evaluateRelative(
@@ -89,7 +106,10 @@ void addMerge(WorkbookBuilder b, String sheet, String a1, {String? id}) {
 
 /// A [ModelCellSource] whose formula cells evaluate to [values] (by A1 on the
 /// first sheet).
-ModelCellSource sourceWith(WorkbookModel m, [Map<String, Object> values = const {}]) {
+ModelCellSource sourceWith(
+  WorkbookModel m, [
+  Map<String, Object> values = const {},
+]) {
   final byPos = <(int, int), FValue>{};
   values.forEach((a1, v) {
     final a = A1Area.tryParse(a1)!;

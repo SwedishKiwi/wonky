@@ -319,7 +319,12 @@ final class NfPercent extends NfToken {
 /// [NfDigit]s with [NfDigitRole.exponent].
 final class NfExponent extends NfToken {
   /// Creates an exponent marker.
-  const NfExponent(this.letter, super.start, super.end, {required this.alwaysSign});
+  const NfExponent(
+    this.letter,
+    super.start,
+    super.end, {
+    required this.alwaysSign,
+  });
 
   /// `E` or `e` as typed.
   final String letter;

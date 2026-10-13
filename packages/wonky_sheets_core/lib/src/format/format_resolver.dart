@@ -97,7 +97,8 @@ final class ResolvedFormat {
 
   @override
   bool operator ==(Object other) =>
-      other is ResolvedFormat && FormatAttr.values.every((a) => valueOf(a) == other.valueOf(a));
+      other is ResolvedFormat &&
+      FormatAttr.values.every((a) => valueOf(a) == other.valueOf(a));
 
   @override
   int get hashCode => Object.hashAll(FormatAttr.values.map(valueOf));
@@ -136,8 +137,12 @@ final class EffectiveFormatResolver {
     var f = explicit(sheetId, row, col);
     if (includeBanding && s != null && s.bandings.isNotEmpty) {
       final (fill, bold) = bandingAt(s, row, col);
-      if (fill != null && !f.has(FormatAttr.fillColor)) f = f.withValue(FormatAttr.fillColor, fill);
-      if (bold && !f.has(FormatAttr.bold)) f = f.withValue(FormatAttr.bold, true);
+      if (fill != null && !f.has(FormatAttr.fillColor)) {
+        f = f.withValue(FormatAttr.fillColor, fill);
+      }
+      if (bold && !f.has(FormatAttr.bold)) {
+        f = f.withValue(FormatAttr.bold, true);
+      }
     }
     if (conditional != null && !conditional.isEmpty) {
       final overlay = <FormatAttr, Object?>{
@@ -146,12 +151,16 @@ final class EffectiveFormatResolver {
       };
       f = f.withValues(overlay);
     }
-    final defaultFont = theme.textFont.isNotEmpty ? theme.textFont : spreadsheet.defaultFontFamily;
+    final defaultFont = theme.textFont.isNotEmpty
+        ? theme.textFont
+        : spreadsheet.defaultFontFamily;
     return ResolvedFormat(
-      numberFormat: f[FormatAttr.numberFormat] as String? ?? kAutomaticNumberFormat,
+      numberFormat:
+          f[FormatAttr.numberFormat] as String? ?? kAutomaticNumberFormat,
       numberFormatExplicit: f.has(FormatAttr.numberFormat),
       fontFamily: f[FormatAttr.fontFamily] as String? ?? defaultFont,
-      fontSize: f[FormatAttr.fontSize] as double? ?? spreadsheet.defaultFontSize,
+      fontSize:
+          f[FormatAttr.fontSize] as double? ?? spreadsheet.defaultFontSize,
       bold: f[FormatAttr.bold] as bool? ?? false,
       italic: f[FormatAttr.italic] as bool? ?? false,
       underline: f[FormatAttr.underline] as bool? ?? false,
@@ -176,7 +185,9 @@ final class EffectiveFormatResolver {
     final ids = s.rulesAt(RuleKind.banding, row, col);
     if (ids.isEmpty) return (null, false);
     final b = s.bandings[ids.first]!;
-    final rr = s.resolve(GridRange.tryParse(b.rangeJson) ?? GridRange.sheet(s.id));
+    final rr = s.resolve(
+      GridRange.tryParse(b.rangeJson) ?? GridRange.sheet(s.id),
+    );
     if (rr == null) return (null, false);
     if (s.rows.isHidden(row)) return (null, false);
     final style = BandingStyle.parse(b.styleJson);
@@ -188,14 +199,20 @@ final class EffectiveFormatResolver {
   /// The border drawn on the shared edge below (row, col) — between the cell
   /// and the cell below — resolved per 06 §8.4 (heavier wins, ties: upper).
   BorderSpec? edgeBelow(String sheetId, int row, int col) {
-    final a = BorderSpec.tryParse(explicit(sheetId, row, col)[FormatAttr.borderBottom] as String?);
-    final b = BorderSpec.tryParse(explicit(sheetId, row + 1, col)[FormatAttr.borderTop] as String?);
+    final a = BorderSpec.tryParse(
+      explicit(sheetId, row, col)[FormatAttr.borderBottom] as String?,
+    );
+    final b = BorderSpec.tryParse(
+      explicit(sheetId, row + 1, col)[FormatAttr.borderTop] as String?,
+    );
     return BorderSpec.resolveShared(a, b);
   }
 
   /// The border drawn on the shared edge right of (row, col) (ties: left cell).
   BorderSpec? edgeRight(String sheetId, int row, int col) {
-    final a = BorderSpec.tryParse(explicit(sheetId, row, col)[FormatAttr.borderRight] as String?);
+    final a = BorderSpec.tryParse(
+      explicit(sheetId, row, col)[FormatAttr.borderRight] as String?,
+    );
     final b = BorderSpec.tryParse(
       explicit(sheetId, row, col + 1)[FormatAttr.borderLeft] as String?,
     );
@@ -204,7 +221,9 @@ final class EffectiveFormatResolver {
 
   /// The top edge of a cell in row 0 / the left edge of a cell in column 0.
   BorderSpec? outerEdge(String sheetId, int row, int col, FormatAttr edge) {
-    final spec = BorderSpec.tryParse(explicit(sheetId, row, col)[edge] as String?);
+    final spec = BorderSpec.tryParse(
+      explicit(sheetId, row, col)[edge] as String?,
+    );
     return spec == null || spec.isNone ? null : spec;
   }
 

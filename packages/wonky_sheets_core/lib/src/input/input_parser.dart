@@ -12,7 +12,12 @@ import 'number_input.dart';
 /// Result of parsing typed input.
 final class ParsedInput {
   /// Creates a result.
-  const ParsedInput({this.content, this.formulaA1, this.autoNumberFormat, this.autoLinkUrl});
+  const ParsedInput({
+    this.content,
+    this.formulaA1,
+    this.autoNumberFormat,
+    this.autoLinkUrl,
+  });
 
   /// Literal content to store; null with [formulaA1] null = clear the value.
   final CellContent? content;
@@ -43,7 +48,8 @@ final class ParsedInput {
       other.autoLinkUrl == autoLinkUrl;
 
   @override
-  int get hashCode => Object.hash(content, formulaA1, autoNumberFormat, autoLinkUrl);
+  int get hashCode =>
+      Object.hash(content, formulaA1, autoNumberFormat, autoLinkUrl);
 
   @override
   String toString() =>
@@ -100,7 +106,8 @@ final class RecognizedValue {
   final String? detectedFormat;
 
   @override
-  String toString() => 'RecognizedValue($content, ${kind.name}, $detectedFormat)';
+  String toString() =>
+      'RecognizedValue($content, ${kind.name}, $detectedFormat)';
 }
 
 /// Parses user-entered text like typing into a cell (03 §8.4 classify +
@@ -113,13 +120,21 @@ final class InputParser {
   static final InputParser instance = InputParser();
 
   static const Set<CellErrorKind> _typableErrors = {
-    CellErrorKind.nullRef, CellErrorKind.div0, CellErrorKind.value, CellErrorKind.ref, //
-    CellErrorKind.name, CellErrorKind.num, CellErrorKind.na, CellErrorKind.parse, //
+    CellErrorKind.nullRef,
+    CellErrorKind.div0,
+    CellErrorKind.value,
+    CellErrorKind.ref, //
+    CellErrorKind.name,
+    CellErrorKind.num,
+    CellErrorKind.na,
+    CellErrorKind.parse, //
     CellErrorKind.spill, CellErrorKind.calc,
   };
 
   /// Localized boolean literals accepted in addition to TRUE/FALSE.
-  static const Map<String, (String, String)> localizedBooleans = {'de': ('WAHR', 'FALSCH')};
+  static const Map<String, (String, String)> localizedBooleans = {
+    'de': ('WAHR', 'FALSCH'),
+  };
 
   /// Parses [input] in [locale]. [targetNumberFormat] is the target cell's
   /// effective number format (`@` forces text; non-Automatic formats suppress
@@ -139,9 +154,14 @@ final class InputParser {
   }) {
     if (input.isEmpty) return const ParsedInput();
     if (targetNumberFormat == '@') {
-      return ParsedInput(content: TextContent(input), autoLinkUrl: detectLink(input));
+      return ParsedInput(
+        content: TextContent(input),
+        autoLinkUrl: detectLink(input),
+      );
     }
-    if (input.startsWith("'")) return ParsedInput(content: TextContent(input.substring(1)));
+    if (input.startsWith("'")) {
+      return ParsedInput(content: TextContent(input.substring(1)));
+    }
     if (input.startsWith('=') && input.length > 1) {
       return ParsedInput(formulaA1: closeParentheses(input));
     }
@@ -151,33 +171,51 @@ final class InputParser {
       if (v != null) {
         return ParsedInput(
           content: v.content,
-          autoNumberFormat: FormatInference.appliesTo(targetNumberFormat) ? v.detectedFormat : null,
+          autoNumberFormat: FormatInference.appliesTo(targetNumberFormat)
+              ? v.detectedFormat
+              : null,
         );
       }
-      if ((t.startsWith('+') || t.startsWith('-')) && t.length > 1 && isFormula != null) {
+      if ((t.startsWith('+') || t.startsWith('-')) &&
+          t.length > 1 &&
+          isFormula != null) {
         final f = closeParentheses('=$t');
         if (isFormula(f)) return ParsedInput(formulaA1: f);
       }
     }
-    return ParsedInput(content: TextContent(input), autoLinkUrl: detectLink(input));
+    return ParsedInput(
+      content: TextContent(input),
+      autoLinkUrl: detectLink(input),
+    );
   }
 
   /// Recognizes a non-text value in [text] (already trimmed): boolean,
   /// error literal, number (grouping, percent, currency, scientific,
   /// parentheses), date, time, date time or duration. Null for text.
-  RecognizedValue? parseValue(String text, {String locale = 'en_US', DateTime? today}) {
+  RecognizedValue? parseValue(
+    String text, {
+    String locale = 'en_US',
+    DateTime? today,
+  }) {
     if (text.isEmpty) return null;
     final loc = LocaleFormatData.forId(locale);
     final upper = text.toUpperCase();
-    if (upper == 'TRUE') return const RecognizedValue(BoolContent(true), RecognizedKind.boolean);
-    if (upper == 'FALSE') return const RecognizedValue(BoolContent(false), RecognizedKind.boolean);
+    if (upper == 'TRUE') {
+      return const RecognizedValue(BoolContent(true), RecognizedKind.boolean);
+    }
+    if (upper == 'FALSE') {
+      return const RecognizedValue(BoolContent(false), RecognizedKind.boolean);
+    }
     final localized = localizedBooleans[loc.language];
     if (localized != null) {
       if (upper == localized.$1) {
         return const RecognizedValue(BoolContent(true), RecognizedKind.boolean);
       }
       if (upper == localized.$2) {
-        return const RecognizedValue(BoolContent(false), RecognizedKind.boolean);
+        return const RecognizedValue(
+          BoolContent(false),
+          RecognizedKind.boolean,
+        );
       }
     }
     if (text.startsWith('#')) {
@@ -196,7 +234,9 @@ final class InputParser {
         NumberInputKind.scientific => RecognizedKind.scientific,
       }, n.format);
     }
-    final d = DateInputRecognizer.forLocale(loc).match(text, today ?? clock.now());
+    final d = DateInputRecognizer.forLocale(
+      loc,
+    ).match(text, today ?? clock.now());
     if (d != null) {
       return RecognizedValue(NumberContent(d.serial), switch (d.kind) {
         DateInputKind.date => RecognizedKind.date,
@@ -253,8 +293,14 @@ final class InputParser {
     return formula + ')' * depth;
   }
 
-  static final RegExp _urlRe = RegExp(r'^(?:https?|ftp)://[^\s/$.?#][^\s]*$', caseSensitive: false);
-  static final RegExp _wwwRe = RegExp(r'^www\.[^\s.]+(?:\.[^\s.]+)+[^\s]*$', caseSensitive: false);
+  static final RegExp _urlRe = RegExp(
+    r'^(?:https?|ftp)://[^\s/$.?#][^\s]*$',
+    caseSensitive: false,
+  );
+  static final RegExp _wwwRe = RegExp(
+    r'^www\.[^\s.]+(?:\.[^\s.]+)+[^\s]*$',
+    caseSensitive: false,
+  );
   static final RegExp _mailtoRe = RegExp(
     r'^mailto:[^\s@]+@[^\s@]+\.[^\s@]+$',
     caseSensitive: false,

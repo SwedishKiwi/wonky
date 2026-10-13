@@ -37,7 +37,8 @@ final class NumberLit extends Expr {
 
   /// Source spelling (kept for printing fidelity).
   final String? text;
-  const NumberLit(this.value, {this.text, SourceSpan span = SourceSpan.none}) : super(span);
+  const NumberLit(this.value, {this.text, SourceSpan span = SourceSpan.none})
+    : super(span);
   @override
   Iterable<Expr> get children => const [];
   @override
@@ -50,7 +51,8 @@ final class NumberLit extends Expr {
 
 final class StringLit extends Expr {
   final String value;
-  const StringLit(this.value, {SourceSpan span = SourceSpan.none}) : super(span);
+  const StringLit(this.value, {SourceSpan span = SourceSpan.none})
+    : super(span);
   @override
   Iterable<Expr> get children => const [];
   @override
@@ -139,7 +141,8 @@ final class SlotRefNode extends RefNode {
   final int index;
   const SlotRefNode(this.index);
   @override
-  bool operator ==(Object other) => other is SlotRefNode && other.index == index;
+  bool operator ==(Object other) =>
+      other is SlotRefNode && other.index == index;
   @override
   int get hashCode => index.hashCode;
   @override
@@ -203,12 +206,15 @@ final class CallExpr extends Expr {
 final class InvokeExpr extends Expr {
   final Expr callee;
   final List<Expr?> args;
-  const InvokeExpr(this.callee, this.args, {SourceSpan span = SourceSpan.none}) : super(span);
+  const InvokeExpr(this.callee, this.args, {SourceSpan span = SourceSpan.none})
+    : super(span);
   @override
   Iterable<Expr> get children => [callee, for (final a in args) ?a];
   @override
   bool operator ==(Object other) =>
-      other is InvokeExpr && other.callee == callee && _listEq(other.args, args);
+      other is InvokeExpr &&
+      other.callee == callee &&
+      _listEq(other.args, args);
   @override
   int get hashCode => callee.hashCode;
   @override
@@ -227,7 +233,8 @@ enum UnaryOp {
 final class UnaryExpr extends Expr {
   final UnaryOp op;
   final Expr operand;
-  const UnaryExpr(this.op, this.operand, {SourceSpan span = SourceSpan.none}) : super(span);
+  const UnaryExpr(this.op, this.operand, {SourceSpan span = SourceSpan.none})
+    : super(span);
   @override
   Iterable<Expr> get children => [operand];
   @override
@@ -241,11 +248,13 @@ final class UnaryExpr extends Expr {
 
 final class PercentExpr extends Expr {
   final Expr operand;
-  const PercentExpr(this.operand, {SourceSpan span = SourceSpan.none}) : super(span);
+  const PercentExpr(this.operand, {SourceSpan span = SourceSpan.none})
+    : super(span);
   @override
   Iterable<Expr> get children => [operand];
   @override
-  bool operator ==(Object other) => other is PercentExpr && other.operand == operand;
+  bool operator ==(Object other) =>
+      other is PercentExpr && other.operand == operand;
   @override
   int get hashCode => operand.hashCode;
   @override
@@ -279,13 +288,20 @@ final class BinaryExpr extends Expr {
   final BinaryOp op;
   final Expr left;
   final Expr right;
-  const BinaryExpr(this.op, this.left, this.right, {SourceSpan span = SourceSpan.none})
-    : super(span);
+  const BinaryExpr(
+    this.op,
+    this.left,
+    this.right, {
+    SourceSpan span = SourceSpan.none,
+  }) : super(span);
   @override
   Iterable<Expr> get children => [left, right];
   @override
   bool operator ==(Object other) =>
-      other is BinaryExpr && other.op == op && other.left == left && other.right == right;
+      other is BinaryExpr &&
+      other.op == op &&
+      other.left == left &&
+      other.right == right;
   @override
   int get hashCode => Object.hash(op, left, right);
   @override
@@ -296,7 +312,8 @@ final class BinaryExpr extends Expr {
 final class RangeOpExpr extends Expr {
   final Expr left;
   final Expr right;
-  const RangeOpExpr(this.left, this.right, {SourceSpan span = SourceSpan.none}) : super(span);
+  const RangeOpExpr(this.left, this.right, {SourceSpan span = SourceSpan.none})
+    : super(span);
   @override
   Iterable<Expr> get children => [left, right];
   @override
@@ -311,7 +328,8 @@ final class RangeOpExpr extends Expr {
 /// Parenthesized expression, kept for printing fidelity.
 final class ParenExpr extends Expr {
   final Expr inner;
-  const ParenExpr(this.inner, {SourceSpan span = SourceSpan.none}) : super(span);
+  const ParenExpr(this.inner, {SourceSpan span = SourceSpan.none})
+    : super(span);
   @override
   Iterable<Expr> get children => [inner];
   @override

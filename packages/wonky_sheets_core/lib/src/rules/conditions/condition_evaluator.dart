@@ -48,7 +48,9 @@ final class ConditionEvaluator {
     int anchorCol = 0,
     int? today,
   }) {
-    final t = condition.type.family == ConditionFamily.date ? (today ?? dates.todaySerial()) : 0;
+    final t = condition.type.family == ConditionFamily.date
+        ? (today ?? dates.todaySerial())
+        : 0;
     final decimal = FormulaLocale.forId(locale).decimal;
     return CompiledCondition._(
       condition,
@@ -58,7 +60,10 @@ final class ConditionEvaluator {
       t,
       decimal,
       this,
-      [for (final v in condition.values) _compileOperand(condition.type.family, v, t)],
+      [
+        for (final v in condition.values)
+          _compileOperand(condition.type.family, v, t),
+      ],
     );
   }
 
@@ -79,7 +84,11 @@ final class ConditionEvaluator {
     anchorCol: anchorCol ?? col,
   ).test(value, row: row, col: col, numberFormat: numberFormat);
 
-  _Operand _compileOperand(ConditionFamily family, ConditionValue v, int today) {
+  _Operand _compileOperand(
+    ConditionFamily family,
+    ConditionValue v,
+    int today,
+  ) {
     switch (v) {
       case ConditionFormula(:final stored):
         return _Operand.formula(stored);
@@ -89,10 +98,25 @@ final class ConditionEvaluator {
       case ConditionLiteral(:final text):
         switch (family) {
           case ConditionFamily.number:
-            return _Operand.literal(text: text, number: ValueText.parseNumber(text, locale: locale, parser: _parser));
+            return _Operand.literal(
+              text: text,
+              number: ValueText.parseNumber(
+                text,
+                locale: locale,
+                parser: _parser,
+              ),
+            );
           case ConditionFamily.date:
-            final d = ValueText.parseDate(text, locale: locale, parser: _parser);
-            return _Operand.literal(text: text, number: d?.floorToDouble(), hiDay: d?.floor());
+            final d = ValueText.parseDate(
+              text,
+              locale: locale,
+              parser: _parser,
+            );
+            return _Operand.literal(
+              text: text,
+              number: d?.floorToDouble(),
+              hiDay: d?.floor(),
+            );
           default:
             return _Operand.literal(text: text);
         }
@@ -101,7 +125,8 @@ final class ConditionEvaluator {
 }
 
 final class _Operand {
-  _Operand.literal({required this.text, this.number, this.hiDay}) : formula = null;
+  _Operand.literal({required this.text, this.number, this.hiDay})
+    : formula = null;
   _Operand.formula(this.formula) : text = '', number = null, hiDay = null;
 
   final String? formula;
@@ -157,14 +182,21 @@ final class CompiledCondition {
   /// Whether the cell at ([row], [col]) holding [value] satisfies the
   /// condition. [numberFormat] is the cell's effective number format (used by
   /// `dateIsValid`).
-  bool test(CellValue value, {required int row, required int col, String? numberFormat}) {
+  bool test(
+    CellValue value, {
+    required int row,
+    required int col,
+    String? numberFormat,
+  }) {
     final type = condition.type;
     switch (type.family) {
       case ConditionFamily.emptiness:
         final blank = value.isBlank();
         return type == ConditionType.blank ? blank : !blank;
       case ConditionFamily.text:
-        final hay = ValueText.fold(ValueText.automatic(value, decimal: _decimal));
+        final hay = ValueText.fold(
+          ValueText.automatic(value, decimal: _decimal),
+        );
         final needle = _textOperand(0, row, col);
         if (needle == null) return false;
         return switch (type) {
@@ -177,11 +209,18 @@ final class CompiledCondition {
       case ConditionFamily.textPattern:
         if (value is! TextValue) return false;
         final t = value.text.trim();
-        return type == ConditionType.textIsEmail ? _email.hasMatch(t) : _url.hasMatch(t);
+        return type == ConditionType.textIsEmail
+            ? _email.hasMatch(t)
+            : _url.hasMatch(t);
       case ConditionFamily.dateValidity:
         return switch (value) {
-          NumberValue() => numberFormat != null && FormatHint.looksLikeDatePattern(numberFormat),
-          TextValue(:final text) => ValueText.isDateText(text, locale: _evaluator.locale),
+          NumberValue() =>
+            numberFormat != null &&
+                FormatHint.looksLikeDatePattern(numberFormat),
+          TextValue(:final text) => ValueText.isDateText(
+            text,
+            locale: _evaluator.locale,
+          ),
           _ => false,
         };
       case ConditionFamily.date:
@@ -243,7 +282,9 @@ final class CompiledCondition {
     }
     final r = _eval(f, row, col);
     if (r == null || r is FError) return null;
-    final n = r is FText ? ValueText.parseDate(r.v, locale: _evaluator.locale) : ValueText.numberOf(r);
+    final n = r is FText
+        ? ValueText.parseDate(r.v, locale: _evaluator.locale)
+        : ValueText.numberOf(r);
     if (n == null) return null;
     return (n.floor(), n.floor());
   }
@@ -299,7 +340,8 @@ final class CompiledCondition {
         if (b == null) return false;
         final lo = a < b ? a : b;
         final hi = a < b ? b : a;
-        final inside = Numeric.compare(v, lo) >= 0 && Numeric.compare(v, hi) <= 0;
+        final inside =
+            Numeric.compare(v, lo) >= 0 && Numeric.compare(v, hi) <= 0;
         return type == ConditionType.numberBetween ? inside : !inside;
       default:
         return false;

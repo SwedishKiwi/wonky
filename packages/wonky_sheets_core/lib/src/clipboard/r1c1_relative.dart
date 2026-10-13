@@ -25,7 +25,8 @@ abstract final class R1C1Relative {
         continue;
       }
       final atBoundary = i == 0 || !_isRefPart(s.codeUnitAt(i - 1));
-      if (atBoundary && (c == 0x27 || c == 0x24 || _isIdentStart(c) || _isDigit(c))) {
+      if (atBoundary &&
+          (c == 0x27 || c == 0x24 || _isIdentStart(c) || _isDigit(c))) {
         final m = A1Scanner.scan(s, i);
         if (m != null && _endOk(s, m.end)) {
           b.write(R1C1.format(m.area, hostRow, hostCol));
@@ -60,7 +61,9 @@ abstract final class R1C1Relative {
     return b.toString();
   }
 
-  static final RegExp _cellRe = RegExp(r'[Rr](\[-?\d+\]|\d+)?[Cc](\[-?\d+\]|\d+)?');
+  static final RegExp _cellRe = RegExp(
+    r'[Rr](\[-?\d+\]|\d+)?[Cc](\[-?\d+\]|\d+)?',
+  );
   static final RegExp _rowRe = RegExp(r'[Rr](\[-?\d+\]|\d+)?');
   static final RegExp _colRe = RegExp(r'[Cc](\[-?\d+\]|\d+)?');
 
@@ -139,12 +142,17 @@ abstract final class R1C1Relative {
   static (String, int)? _scanR1C1(String s, int i, int hostRow, int hostCol) {
     (int, bool) part(String? g, int host) {
       if (g == null) return (host, false);
-      if (g.startsWith('[')) return (host + int.parse(g.substring(1, g.length - 1)), false);
+      if (g.startsWith('[')) {
+        return (host + int.parse(g.substring(1, g.length - 1)), false);
+      }
       return (int.parse(g) - 1, true);
     }
 
     bool inRange(int r, int c) =>
-        r >= 0 && c >= 0 && r < ColumnLetters.maxRows && c < ColumnLetters.maxColumns;
+        r >= 0 &&
+        c >= 0 &&
+        r < ColumnLetters.maxRows &&
+        c < ColumnLetters.maxColumns;
 
     final m1 = _cellRe.matchAsPrefix(s, i);
     if (m1 != null) {
@@ -189,7 +197,10 @@ abstract final class R1C1Relative {
       }
       if (_endOk(s, end)) {
         if (!inRange(r1, 0) || !inRange(r2, 0)) return ('#REF!', end);
-        return (A1Area.rows(r1, r2, absRow1: a1, absRow2: a2).formatArea(), end);
+        return (
+          A1Area.rows(r1, r2, absRow1: a1, absRow2: a2).formatArea(),
+          end,
+        );
       }
     }
     final mc = _colRe.matchAsPrefix(s, i);
@@ -207,7 +218,10 @@ abstract final class R1C1Relative {
       }
       if (_endOk(s, end)) {
         if (!inRange(0, c1) || !inRange(0, c2)) return ('#REF!', end);
-        return (A1Area.columns(c1, c2, absCol1: a1, absCol2: a2).formatArea(), end);
+        return (
+          A1Area.columns(c1, c2, absCol1: a1, absCol2: a2).formatArea(),
+          end,
+        );
       }
     }
     return null;
@@ -220,9 +234,12 @@ abstract final class R1C1Relative {
   }
 
   static bool _isDigit(int c) => c >= 0x30 && c <= 0x39;
-  static bool _isIdentStart(int c) => ColumnLetters.isLetter(c) || c == 0x5f || c >= 0xc0;
-  static bool _isIdentPart(int c) => _isIdentStart(c) || _isDigit(c) || c == 0x2e;
-  static bool _isRefPart(int c) => _isIdentPart(c) || c == 0x24 || c == 0x27 || c == 0x5d;
+  static bool _isIdentStart(int c) =>
+      ColumnLetters.isLetter(c) || c == 0x5f || c >= 0xc0;
+  static bool _isIdentPart(int c) =>
+      _isIdentStart(c) || _isDigit(c) || c == 0x2e;
+  static bool _isRefPart(int c) =>
+      _isIdentPart(c) || c == 0x24 || c == 0x27 || c == 0x5d;
 
   static int _skipString(String s, int i) {
     var j = i + 1;
@@ -256,12 +273,16 @@ abstract final class R1C1Relative {
 
   static int _skipNumber(String s, int i) {
     var j = i;
-    while (j < s.length && (_isDigit(s.codeUnitAt(j)) || s.codeUnitAt(j) == 0x2e)) {
+    while (j < s.length &&
+        (_isDigit(s.codeUnitAt(j)) || s.codeUnitAt(j) == 0x2e)) {
       j++;
     }
     if (j < s.length && (s.codeUnitAt(j) | 0x20) == 0x65) {
       var k = j + 1;
-      if (k < s.length && (s.codeUnitAt(k) == 0x2b || s.codeUnitAt(k) == 0x2d)) k++;
+      if (k < s.length &&
+          (s.codeUnitAt(k) == 0x2b || s.codeUnitAt(k) == 0x2d)) {
+        k++;
+      }
       if (k < s.length && _isDigit(s.codeUnitAt(k))) {
         j = k;
         while (j < s.length && _isDigit(s.codeUnitAt(j))) {

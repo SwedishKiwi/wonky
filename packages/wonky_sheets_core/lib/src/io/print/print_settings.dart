@@ -109,7 +109,14 @@ final class PrintMargins {
 
   /// JSON: `{preset}` for presets, all values for custom.
   Map<String, Object?> toJson() => preset == MarginPreset.custom
-      ? {'preset': 'custom', 'top': top, 'bottom': bottom, 'left': left, 'right': right, 'unit': unit}
+      ? {
+          'preset': 'custom',
+          'top': top,
+          'bottom': bottom,
+          'left': left,
+          'right': right,
+          'unit': unit,
+        }
       : {'preset': preset.name};
 
   /// From JSON.
@@ -117,7 +124,8 @@ final class PrintMargins {
     if (m is! Map) return const PrintMargins();
     final p = _enum(MarginPreset.values, m['preset'], MarginPreset.normal);
     if (p != MarginPreset.custom) return PrintMargins.preset(p);
-    double v(String k, double def) => (_d(m[k]) ?? def).clamp(0, 100).toDouble();
+    double v(String k, double def) =>
+        (_d(m[k]) ?? def).clamp(0, 100).toDouble();
     return PrintMargins(
       preset: MarginPreset.custom,
       top: v('top', 0.75),
@@ -133,7 +141,11 @@ final class PrintMargins {
 /// `{pages}`, `{title}`, `{sheet}`, `{date}`, `{time}`).
 final class HeaderFooterSections {
   /// Creates sections.
-  const HeaderFooterSections({this.left = '', this.center = '', this.right = ''});
+  const HeaderFooterSections({
+    this.left = '',
+    this.center = '',
+    this.right = '',
+  });
 
   final String left;
   final String center;
@@ -143,13 +155,24 @@ final class HeaderFooterSections {
   bool get isEmpty => left.isEmpty && center.isEmpty && right.isEmpty;
 
   /// JSON.
-  Map<String, Object?> toJson() => {'left': left, 'center': center, 'right': right};
+  Map<String, Object?> toJson() => {
+    'left': left,
+    'center': center,
+    'right': right,
+  };
 
   /// From JSON.
-  static HeaderFooterSections fromJson(Object? m, {HeaderFooterSections fallback = const HeaderFooterSections()}) {
+  static HeaderFooterSections fromJson(
+    Object? m, {
+    HeaderFooterSections fallback = const HeaderFooterSections(),
+  }) {
     if (m is! Map) return fallback;
     String s(String k) => m[k] is String ? m[k] as String : '';
-    return HeaderFooterSections(left: s('left'), center: s('center'), right: s('right'));
+    return HeaderFooterSections(
+      left: s('left'),
+      center: s('center'),
+      right: s('right'),
+    );
   }
 }
 
@@ -218,8 +241,12 @@ final class HeaderFooter {
     }
 
     return HeaderFooterSections(
-      left: add(header.left, [if (flags.title && !_anywhere('{title}')) '{title}']),
-      center: add(header.center, [if (flags.sheetName && !_anywhere('{sheet}')) '{sheet}']),
+      left: add(header.left, [
+        if (flags.title && !_anywhere('{title}')) '{title}',
+      ]),
+      center: add(header.center, [
+        if (flags.sheetName && !_anywhere('{sheet}')) '{sheet}',
+      ]),
       right: add(header.right, [
         if (flags.date && !_anywhere('{date}')) '{date}',
         if (flags.time && !_anywhere('{time}')) '{time}',
@@ -238,9 +265,14 @@ final class HeaderFooter {
     );
   }
 
-  bool _anywhere(String token) =>
-      [header.left, header.center, header.right, footer.left, footer.center, footer.right]
-          .any((s) => s.contains(token));
+  bool _anywhere(String token) => [
+    header.left,
+    header.center,
+    header.right,
+    footer.left,
+    footer.center,
+    footer.right,
+  ].any((s) => s.contains(token));
 
   /// JSON.
   Map<String, Object?> toJson() => {
@@ -362,7 +394,9 @@ final class PrintSettings {
   /// Parses `printSettingsJson`; null/invalid → defaults for [locale].
   /// Unknown or invalid fields fall back to their defaults.
   static PrintSettings parse(String? json, {String locale = 'en_US'}) {
-    if (json == null || json.trim().isEmpty) return PrintSettings.defaults(locale);
+    if (json == null || json.trim().isEmpty) {
+      return PrintSettings.defaults(locale);
+    }
     Object? m;
     try {
       m = jsonDecode(json);
@@ -374,7 +408,10 @@ final class PrintSettings {
   }
 
   /// From a decoded JSON map.
-  static PrintSettings fromJson(Map<String, Object?> m, {String locale = 'en_US'}) {
+  static PrintSettings fromJson(
+    Map<String, Object?> m, {
+    String locale = 'en_US',
+  }) {
     final scale = m['scale'];
     final align = m['align'];
     final breaks = m['pageBreaks'];
@@ -386,18 +423,34 @@ final class PrintSettings {
     return PrintSettings(
       paper: PaperSize.tryParse(m['paper']) ?? PaperSize.defaultFor(locale),
       customSize: CustomPaperSize.fromJson(m['customSize']),
-      orientation: _enum(PageOrientation.values, m['orientation'], PageOrientation.portrait),
+      orientation: _enum(
+        PageOrientation.values,
+        m['orientation'],
+        PageOrientation.portrait,
+      ),
       scaleMode: scale is Map
           ? _enum(PrintScaleMode.values, scale['mode'], PrintScaleMode.normal)
           : PrintScaleMode.normal,
-      scalePercent: scale is Map ? (_d(scale['percent']) ?? 100).clamp(10, 400).toDouble() : 100,
+      scalePercent: scale is Map
+          ? (_d(scale['percent']) ?? 100).clamp(10, 400).toDouble()
+          : 100,
       margins: PrintMargins.fromJson(m['margins']),
       gridlines: m['gridlines'] == true,
       notes: m['notes'] == true,
-      pageOrder: _enum(PageOrder.values, m['pageOrder'], PageOrder.downThenOver),
-      hAlign: align is Map ? _enum(PrintHAlign.values, align['h'], PrintHAlign.left) : PrintHAlign.left,
-      vAlign: align is Map ? _enum(PrintVAlign.values, align['v'], PrintVAlign.top) : PrintVAlign.top,
-      repeatFrozen: m['repeatFrozen'] is bool ? m['repeatFrozen'] as bool : true,
+      pageOrder: _enum(
+        PageOrder.values,
+        m['pageOrder'],
+        PageOrder.downThenOver,
+      ),
+      hAlign: align is Map
+          ? _enum(PrintHAlign.values, align['h'], PrintHAlign.left)
+          : PrintHAlign.left,
+      vAlign: align is Map
+          ? _enum(PrintVAlign.values, align['v'], PrintVAlign.top)
+          : PrintVAlign.top,
+      repeatFrozen: m['repeatFrozen'] is bool
+          ? m['repeatFrozen'] as bool
+          : true,
       headings: m['headings'] == true,
       repeatRows: IdSpan.fromJson(m['repeatRows']),
       repeatCols: IdSpan.fromJson(m['repeatCols']),
@@ -435,10 +488,15 @@ final class PrintSettings {
   String encode() => jsonEncode(toJson());
 
   /// Applies a JSON merge patch (RFC 7396; `sheets.print.updateSettings`).
-  PrintSettings mergePatch(Map<String, Object?> patch, {String locale = 'en_US'}) {
+  PrintSettings mergePatch(
+    Map<String, Object?> patch, {
+    String locale = 'en_US',
+  }) {
     Object? merge(Object? target, Object? p) {
       if (p is! Map) return p;
-      final t = target is Map ? Map<String, Object?>.from(target) : <String, Object?>{};
+      final t = target is Map
+          ? Map<String, Object?>.from(target)
+          : <String, Object?>{};
       p.forEach((k, v) {
         if (v == null) {
           t.remove(k);
@@ -494,7 +552,8 @@ final class PrintSettings {
   );
 
   @override
-  bool operator ==(Object other) => other is PrintSettings && other.encode() == encode();
+  bool operator ==(Object other) =>
+      other is PrintSettings && other.encode() == encode();
 
   @override
   int get hashCode => encode().hashCode;

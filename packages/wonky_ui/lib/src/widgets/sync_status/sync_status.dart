@@ -273,18 +273,22 @@ class _SyncStatusIndicatorState extends State<SyncStatusIndicator> {
         ],
       ],
     );
-    return Semantics(
-      liveRegion: true,
-      label: label,
-      button: true,
-      child: ShadTooltip(
-        builder: (_) => Text(label),
-        child: ShadButton.ghost(
-          key: const ValueKey<String>('sync.status'),
-          height: 28,
-          padding: const EdgeInsets.symmetric(horizontal: 6),
-          onPressed: () => _showDetails(context),
-          child: ExcludeSemantics(child: content),
+    // Merged so the button's tap target carries the label
+    // (labeledTapTargetGuideline).
+    return MergeSemantics(
+      child: Semantics(
+        liveRegion: true,
+        label: label,
+        button: true,
+        child: ShadTooltip(
+          builder: (_) => Text(label),
+          child: ShadButton.ghost(
+            key: const ValueKey<String>('sync.status'),
+            height: 28,
+            padding: const EdgeInsets.symmetric(horizontal: 6),
+            onPressed: () => _showDetails(context),
+            child: ExcludeSemantics(child: content),
+          ),
         ),
       ),
     );

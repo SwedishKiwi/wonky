@@ -7,7 +7,7 @@ abstract final class Base62Uuid {
   static const String alphabet =
       '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz';
   static const int length = 22;
-  static final BigInt _62 = BigInt.from(62);
+  static final BigInt _base62 = BigInt.from(62);
   static final RegExp _uuid = RegExp(
     r'^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$',
   );
@@ -40,9 +40,9 @@ abstract final class Base62Uuid {
     var n = BigInt.parse(uuid.replaceAll('-', ''), radix: 16);
     final codes = List<int>.filled(length, 0x30);
     for (var i = length - 1; i >= 0 && n > BigInt.zero; i--) {
-      final rem = (n % _62).toInt();
+      final rem = (n % _base62).toInt();
       codes[i] = alphabet.codeUnitAt(rem);
-      n = n ~/ _62;
+      n = n ~/ _base62;
     }
     final s = String.fromCharCodes(codes);
     if (_encodeCache.length > 200000) _encodeCache.clear();
@@ -56,7 +56,7 @@ abstract final class Base62Uuid {
     if (cached != null) return cached;
     var n = BigInt.zero;
     for (var i = 0; i < b62.length; i++) {
-      n = n * _62 + BigInt.from(_digit(b62.codeUnitAt(i)));
+      n = n * _base62 + BigInt.from(_digit(b62.codeUnitAt(i)));
     }
     final hex = n.toRadixString(16).padLeft(32, '0');
     final s =
@@ -72,5 +72,6 @@ abstract final class Base62Uuid {
   static String toToken(String id) => isUuid(id) ? encode(id) : id;
 
   /// Inverse of [toToken].
-  static String fromToken(String token) => isBase62(token) ? decode(token) : token;
+  static String fromToken(String token) =>
+      isBase62(token) ? decode(token) : token;
 }

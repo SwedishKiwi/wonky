@@ -33,8 +33,15 @@ class SheetsAppConfig extends WonkyAppConfig {
     child: Container(
       width: size,
       height: size,
-      decoration: BoxDecoration(color: sheetsBrandColor, borderRadius: BorderRadius.circular(size * 0.24)),
-      child: Icon(LucideIcons.sheet, size: size * 0.58, color: const Color(0xffffffff)),
+      decoration: BoxDecoration(
+        color: sheetsBrandColor,
+        borderRadius: BorderRadius.circular(size * 0.24),
+      ),
+      child: Icon(
+        LucideIcons.sheet,
+        size: size * 0.58,
+        color: const Color(0xffffffff),
+      ),
     ),
   );
 
@@ -46,12 +53,20 @@ class SheetsAppConfig extends WonkyAppConfig {
 
   @override
   Widget buildEditor(BuildContext context, GoRouterState state, String uuid) =>
-      SheetsComingSoon(key: ValueKey<String>('sheets.editor.$uuid'), services: ShellScope.of(context), uuid: uuid);
+      SheetsComingSoon(
+        key: ValueKey<String>('sheets.editor.$uuid'),
+        services: ShellScope.of(context),
+        uuid: uuid,
+      );
 }
 
 /// `/s/:uuid` placeholder.
 class SheetsComingSoon extends StatefulWidget {
-  const SheetsComingSoon({super.key, required this.services, required this.uuid});
+  const SheetsComingSoon({
+    super.key,
+    required this.services,
+    required this.uuid,
+  });
 
   final ShellServices services;
   final String uuid;
@@ -82,7 +97,8 @@ class _SheetsComingSoonState extends State<SheetsComingSoon> {
       key: ValueKey<String>('sheets.comingSoon'),
       illustration: EmptyIllustration.spreadsheets,
       title: 'The spreadsheet editor is coming soon',
-      description: 'Wonky Sheets is still being built. Your spreadsheet is safe in your drive.',
+      description:
+          'Wonky Sheets is still being built. Your spreadsheet is safe in your drive.',
     ),
   );
 }

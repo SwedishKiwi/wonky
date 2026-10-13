@@ -6,7 +6,11 @@ import '../../content/cell_content.dart';
 /// Result of [Dedupe.findDuplicates].
 final class DedupeResult {
   /// Creates a result.
-  const DedupeResult(this.keptRows, this.duplicateRows, {required this.dataRowCount});
+  const DedupeResult(
+    this.keptRows,
+    this.duplicateRows, {
+    required this.dataRowCount,
+  });
 
   /// Rows kept (first occurrences), ascending sheet row indices.
   final Int32List keptRows;
@@ -67,7 +71,9 @@ abstract final class Dedupe {
     bool hasHeader = false,
     bool Function()? isCancelled,
   }) {
-    final keyCols = cols.isEmpty ? [for (var c = rect.left; c <= rect.right; c++) c] : cols;
+    final keyCols = cols.isEmpty
+        ? [for (var c = rect.left; c <= rect.right; c++) c]
+        : cols;
     final top = hasHeader ? rect.top + 1 : rect.top;
     final n = rect.bottom - top + 1 < 0 ? 0 : rect.bottom - top + 1;
     final buckets = <int, List<int>>{};
@@ -108,7 +114,11 @@ abstract final class Dedupe {
         kept.add(r);
       }
     }
-    return DedupeResult(Int32List.fromList(kept), Int32List.fromList(dups), dataRowCount: n);
+    return DedupeResult(
+      Int32List.fromList(kept),
+      Int32List.fromList(dups),
+      dataRowCount: n,
+    );
   }
 
   /// The row-move permutation compacting [result]'s kept rows to the top of

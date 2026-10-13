@@ -22,7 +22,10 @@ abstract final class ListSource {
     void visit(int r, int c) {
       final v = reader.valueAt(sheetId, r, c);
       if (v.isBlank()) return;
-      final t = reader.display.displayText(v, reader.numberFormatAt(sheetId, r, c));
+      final t = reader.display.displayText(
+        v,
+        reader.numberFormatAt(sheetId, r, c),
+      );
       if (t.isEmpty) return;
       if (seen.add(t)) out.add(t);
     }
@@ -44,11 +47,17 @@ abstract final class ListSource {
   }
 
   /// The items of list criteria.
-  static List<String> listItems(DvListCriteria criteria) => [for (final o in criteria.options) o.value];
+  static List<String> listItems(DvListCriteria criteria) => [
+    for (final o in criteria.options) o.value,
+  ];
 
   /// Items of `oneOfRange` criteria resolved against [sheet] (empty when the
   /// range doesn't resolve).
-  static List<String> rangeItems(DvRangeCriteria criteria, SheetModel sheet, CellTextReader reader) {
+  static List<String> rangeItems(
+    DvRangeCriteria criteria,
+    SheetModel sheet,
+    CellTextReader reader,
+  ) {
     final rr = sheet.resolve(criteria.range);
     if (rr == null) return const [];
     return distinctValues(reader, sheet.id, rr.rect, sheet: sheet);
@@ -56,9 +65,16 @@ abstract final class ListSource {
 
   /// Distinct display values of a selection for *Convert to dropdown* (≤ 500,
   /// else null: "Too many distinct values to convert to a dropdown").
-  static List<DvOption>? optionsFromValues(CellTextReader reader, String sheetId, GridRect rect) {
+  static List<DvOption>? optionsFromValues(
+    CellTextReader reader,
+    String sheetId,
+    GridRect rect,
+  ) {
     final values = distinctValues(reader, sheetId, rect, limit: 501);
     if (values.length > 500) return null;
-    return [for (var i = 0; i < values.length; i++) DvOption(values[i], colors: DvChipPalette.at(i))];
+    return [
+      for (var i = 0; i < values.length; i++)
+        DvOption(values[i], colors: DvChipPalette.at(i)),
+    ];
   }
 }

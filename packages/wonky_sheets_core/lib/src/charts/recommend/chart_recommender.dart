@@ -81,7 +81,16 @@ final class SelectionProfile {
     WorkbookModel model,
     CellSource values,
   ) {
-    final cols = <(String key, int range, int offset, List<FValue> cells, List<String?> formats)>[];
+    final cols =
+        <
+          (
+            String key,
+            int range,
+            int offset,
+            List<FValue> cells,
+            List<String?> formats,
+          )
+        >[];
     for (var ri = 0; ri < ranges.length; ri++) {
       final g = ranges[ri];
       final sheet = model.sheet(g.sheetId);
@@ -91,8 +100,12 @@ final class SelectionProfile {
       if (rr.wholeColumns || rr.wholeRows) {
         final used = sheet.usedRect();
         if (used == null) continue;
-        final b = rr.wholeColumns && used.bottom < rect.bottom ? used.bottom : rect.bottom;
-        final r = rr.wholeRows && used.right < rect.right ? used.right : rect.right;
+        final b = rr.wholeColumns && used.bottom < rect.bottom
+            ? used.bottom
+            : rect.bottom;
+        final r = rr.wholeRows && used.right < rect.right
+            ? used.right
+            : rect.right;
         if (b < rect.top || r < rect.left) continue;
         rect = GridRect(rect.top, rect.left, b, r);
       }
@@ -109,7 +122,9 @@ final class SelectionProfile {
           var v = values.valueAt(sheet.id, r, c);
           if (v is FRich) v = v.scalar;
           cells.add(v);
-          formats.add(v is FNumber ? values.numberFormatAt(sheet.id, r, c) : null);
+          formats.add(
+            v is FNumber ? values.numberFormatAt(sheet.id, r, c) : null,
+          );
         }
         cols.add((sheet.columns.idAt(c), ri, k++, cells, formats));
       }
@@ -118,7 +133,9 @@ final class SelectionProfile {
     var rowCount = 0;
     final profiles = <ColumnProfile>[];
     for (final (key, ri, off, cells, formats) in cols) {
-      final header = h > 0 && cells.isNotEmpty && cells[0] is FText ? (cells[0] as FText).v : '';
+      final header = h > 0 && cells.isNotEmpty && cells[0] is FText
+          ? (cells[0] as FText).v
+          : '';
       var count = 0, nums = 0, dates = 0, texts = 0;
       var mono = true, pos = true;
       double? last;
@@ -157,7 +174,12 @@ final class SelectionProfile {
         ),
       );
     }
-    return SelectionProfile(ranges: ranges, columns: profiles, rowCount: rowCount, headerCount: h);
+    return SelectionProfile(
+      ranges: ranges,
+      columns: profiles,
+      rowCount: rowCount,
+      headerCount: h,
+    );
   }
 
   final List<GridRange> ranges;
@@ -173,7 +195,11 @@ final class SelectionProfile {
 /// One suggested chart.
 final class ChartSuggestion {
   /// Creates a suggestion.
-  const ChartSuggestion(this.spec, {required this.label, this.isDefault = false});
+  const ChartSuggestion(
+    this.spec, {
+    required this.label,
+    this.isDefault = false,
+  });
 
   /// The ready-to-insert spec.
   final ChartSpec spec;
@@ -208,7 +234,9 @@ abstract final class ChartRecommender {
       List<ColumnProfile>? series,
       bool treatAsText = false,
     }) {
-      final s = series ?? (domain ? numericRest : cols.where((c) => c.isNumeric).toList());
+      final s =
+          series ??
+          (domain ? numericRest : cols.where((c) => c.isNumeric).toList());
       return ChartSpec(
         type: type,
         stacking: stacking,
@@ -219,11 +247,17 @@ abstract final class ChartRecommender {
           treatLabelsAsText: treatAsText,
           aggregate: aggregate,
           domain: domain
-              ? DomainRef(ref: DataRef(range: first.range, offset: first.offset), key: first.key)
+              ? DomainRef(
+                  ref: DataRef(range: first.range, offset: first.offset),
+                  key: first.key,
+                )
               : null,
           seriesRefs: [
             for (final c in s)
-              SeriesRef(key: c.key, ref: DataRef(range: c.range, offset: c.offset)),
+              SeriesRef(
+                key: c.key,
+                ref: DataRef(range: c.range, offset: c.offset),
+              ),
           ],
         ),
         typeOptions: pieHole > 0 ? {'pieHole': pieHole} : const {},
@@ -237,7 +271,9 @@ abstract final class ChartRecommender {
 
     // Rule 8: single numeric cell.
     if (cols.length == 1 && profile.rowCount <= 1 && first.isNumeric) {
-      return out([(build(ChartType.scorecard, domain: false), 'Scorecard chart')]);
+      return out([
+        (build(ChartType.scorecard, domain: false), 'Scorecard chart'),
+      ]);
     }
     // Rule 1: pie.
     if (first.isText &&
@@ -275,25 +311,35 @@ abstract final class ChartRecommender {
         profile.rowCount > 30 &&
         first.distinctCount * 2 <= first.count) {
       return out([
-        (build(ChartType.column, aggregate: ChartAggregate.sum), 'Column chart'),
+        (
+          build(ChartType.column, aggregate: ChartAggregate.sum),
+          'Column chart',
+        ),
         (build(ChartType.pie, aggregate: ChartAggregate.sum), 'Pie chart'),
         (build(ChartType.table), 'Table chart'),
       ]);
     }
     // Rule 3: categories + values.
-    if (first.isText && numericRest.isNotEmpty && numericRest.length == rest.length) {
+    if (first.isText &&
+        numericRest.isNotEmpty &&
+        numericRest.length == rest.length) {
       if (profile.rowCount <= 30) {
         return out([
           (build(ChartType.column), 'Column chart'),
           (build(ChartType.bar), 'Bar chart'),
-          (build(ChartType.column, stacking: ChartStacking.normal), 'Stacked column chart'),
+          (
+            build(ChartType.column, stacking: ChartStacking.normal),
+            'Stacked column chart',
+          ),
           (build(ChartType.line), 'Line chart'),
         ]);
       }
     }
     // Rule 5: numeric X and Y.
     final numericAll = cols.where((c) => c.isNumeric).toList();
-    if (textCols == 0 && numericAll.length >= 2 && numericAll.length == cols.length) {
+    if (textCols == 0 &&
+        numericAll.length >= 2 &&
+        numericAll.length == cols.length) {
       return out([
         (build(ChartType.scatter), 'Scatter chart'),
         (build(ChartType.line), 'Line chart'),

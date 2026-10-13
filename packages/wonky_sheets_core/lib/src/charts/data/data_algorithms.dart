@@ -87,8 +87,13 @@ abstract final class ChartAggregation {
         return n == 0 ? double.nan : mn;
       case ChartAggregate.median:
         if (n == 0) return double.nan;
-        final s = [for (final v in values) if (!v.isNaN) v]..sort();
-        return s.length.isOdd ? s[s.length ~/ 2] : (s[s.length ~/ 2 - 1] + s[s.length ~/ 2]) / 2;
+        final s = [
+          for (final v in values)
+            if (!v.isNaN) v,
+        ]..sort();
+        return s.length.isOdd
+            ? s[s.length ~/ 2]
+            : (s[s.length ~/ 2 - 1] + s[s.length ~/ 2]) / 2;
     }
   }
 
@@ -125,7 +130,8 @@ abstract final class ChartAggregation {
     final order = List<int>.generate(g, (i) => i);
     if (domain.kind != DomainKind.categorical) {
       order.sort((a, b) {
-        final va = domain.values[firstIndex[a]], vb = domain.values[firstIndex[b]];
+        final va = domain.values[firstIndex[a]],
+            vb = domain.values[firstIndex[b]];
         if (va.isNaN) return vb.isNaN ? 0 : 1;
         if (vb.isNaN) return -1;
         return va.compareTo(vb);
@@ -137,7 +143,9 @@ abstract final class ChartAggregation {
     }
     final newDomain = ChartDomain(
       kind: domain.kind,
-      values: Float64List.fromList([for (final o in order) domain.values[firstIndex[o]]]),
+      values: Float64List.fromList([
+        for (final o in order) domain.values[firstIndex[o]],
+      ]),
       labels: [for (final o in order) domain.labels[firstIndex[o]]],
       name: domain.name,
       key: domain.key,
@@ -200,7 +208,10 @@ abstract final class Lttb {
       var maxArea = -1.0;
       var next = start;
       for (var j = start; j < end && j < n - 1; j++) {
-        final area = ((ax - avgX) * (ys[valid[j]] - ay) - (ax - xs[valid[j]]) * (avgY - ay)).abs();
+        final area =
+            ((ax - avgX) * (ys[valid[j]] - ay) -
+                    (ax - xs[valid[j]]) * (avgY - ay))
+                .abs();
         if (area > maxArea) {
           maxArea = area;
           next = j;
@@ -214,13 +225,16 @@ abstract final class Lttb {
   }
 
   /// Target point count for a plot [plotWidth] px wide (08 §12: `max(2 × width, 2000)`).
-  static int targetFor(double plotWidth) => math.max((2 * plotWidth).ceil(), 2000);
+  static int targetFor(double plotWidth) =>
+      math.max((2 * plotWidth).ceil(), 2000);
 
   /// Min/max per bucket downsampling for sparklines (05 §17): keeps the first, min, max and
   /// last index of each of [buckets] equal-count buckets (ascending, deduplicated).
   static Int32List minMax(Float64List ys, int buckets) {
     final n = ys.length;
-    if (n <= buckets * 2 || buckets < 1) return Int32List.fromList([for (var i = 0; i < n; i++) i]);
+    if (n <= buckets * 2 || buckets < 1) {
+      return Int32List.fromList([for (var i = 0; i < n; i++) i]);
+    }
     final keep = <int>[];
     for (var b = 0; b < buckets; b++) {
       final s = (b * n / buckets).floor();
@@ -232,7 +246,12 @@ abstract final class Lttb {
         if (mn < 0 || v < ys[mn]) mn = i;
         if (mx < 0 || v > ys[mx]) mx = i;
       }
-      final set = <int>{s, ?(mn < 0 ? null : mn), ?(mx < 0 ? null : mx), e - 1}.toList()..sort();
+      final set = <int>{
+        s,
+        ?(mn < 0 ? null : mn),
+        ?(mx < 0 ? null : mx),
+        e - 1,
+      }.toList()..sort();
       keep.addAll(set);
     }
     return Int32List.fromList(keep);
@@ -259,7 +278,12 @@ abstract final class HistogramBuckets {
           if (v.isFinite) v,
     ]..sort();
     if (all.isEmpty) {
-      return HistogramData(start: 0, bucketSize: 1, counts: const [], seriesKeys: const []);
+      return HistogramData(
+        start: 0,
+        bucketSize: 1,
+        counts: const [],
+        seriesKeys: const [],
+      );
     }
     final p = outlierPercentile.clamp(0.0, 25.0);
     final lo = p > 0 ? percentile(all, p / 100) : all.first;
@@ -268,7 +292,9 @@ abstract final class HistogramBuckets {
     final range = hi - lo;
     if (h <= 0) {
       final iqr = percentile(all, 0.75) - percentile(all, 0.25);
-      h = iqr > 0 ? 2 * iqr / math.pow(all.length, 1 / 3) : (range > 0 ? range / math.sqrt(all.length) : 1);
+      h = iqr > 0
+          ? 2 * iqr / math.pow(all.length, 1 / 3)
+          : (range > 0 ? range / math.sqrt(all.length) : 1);
       if (range > 0 && range / h > maxBuckets) h = range / maxBuckets;
       h = niceStep(h);
     }
@@ -356,7 +382,10 @@ abstract final class PieGrouping {
     values[keep.length] = other;
     final d = ChartDomain(
       kind: DomainKind.categorical,
-      values: Float64List.fromList([...keep.map((i) => domain.values[i]), double.nan]),
+      values: Float64List.fromList([
+        ...keep.map((i) => domain.values[i]),
+        double.nan,
+      ]),
       labels: [...keep.map((i) => domain.labels[i]), otherLabel],
       name: domain.name,
       key: domain.key,

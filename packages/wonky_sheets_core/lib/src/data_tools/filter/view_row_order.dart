@@ -20,7 +20,11 @@ final class ViewRowOrder {
 
   /// Computes the order of [table] (the data rows starting at [top]) by
   /// [specs] with the sort comparator (07 §2.3).
-  factory ViewRowOrder.compute(SortTable table, List<SortSpec> specs, {required int top}) {
+  factory ViewRowOrder.compute(
+    SortTable table,
+    List<SortSpec> specs, {
+    required int top,
+  }) {
     final perm = SortPermutation.compute(table, specs);
     return ViewRowOrder._(top, perm, SortPermutation.inverse(perm));
   }

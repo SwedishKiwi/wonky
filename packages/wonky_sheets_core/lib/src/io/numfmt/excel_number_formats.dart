@@ -58,7 +58,11 @@ abstract final class ExcelNumberFormats {
 
   /// Pattern (or `preset:` id, or null for General) of an imported
   /// `numFmtId` with optional custom [custom] format codes.
-  static String? importId(int id, Map<int, String> custom, {void Function(String message)? warn}) {
+  static String? importId(
+    int id,
+    Map<int, String> custom, {
+    void Function(String message)? warn,
+  }) {
     final c = custom[id];
     if (c != null) return importPattern(c, warn: warn);
     final preset = presetIds[id];
@@ -78,7 +82,10 @@ abstract final class ExcelNumberFormats {
   /// Converts an Excel format code: `General` → null; pure locale tags
   /// (`[$-409]`, `[$-F800]`, `[$-x-sysdate]`) are removed; currency tags
   /// (`[$€-407]`) kept; `[DBNum1]`-style tags removed with a warning.
-  static String? importPattern(String code, {void Function(String message)? warn}) {
+  static String? importPattern(
+    String code, {
+    void Function(String message)? warn,
+  }) {
     if (code.trim().isEmpty || code.toLowerCase() == 'general') return null;
     final out = StringBuffer();
     var i = 0;
@@ -102,9 +109,14 @@ abstract final class ExcelNumberFormats {
           final inner = m.group(1)!;
           if (inner.startsWith(r'$')) {
             final dash = inner.indexOf('-');
-            final symbol = dash < 0 ? inner.substring(1) : inner.substring(1, dash);
+            final symbol = dash < 0
+                ? inner.substring(1)
+                : inner.substring(1, dash);
             if (symbol.isNotEmpty) out.write(m.group(0));
-          } else if (RegExp(r'^(DBNum\d|NatNum\d+|ENG|JPN|TWN|KOR|CHN|\$)', caseSensitive: false).hasMatch(inner)) {
+          } else if (RegExp(
+            r'^(DBNum\d|NatNum\d+|ENG|JPN|TWN|KOR|CHN|\$)',
+            caseSensitive: false,
+          ).hasMatch(inner)) {
             warn?.call('Number format tag [$inner] was removed');
           } else {
             out.write(m.group(0));
@@ -131,9 +143,14 @@ abstract final class ExcelNumberFormats {
 
   /// Export: Wonky pattern or preset → (`numFmtId` when built-in, format
   /// code). Automatic → id 0.
-  static ({int? id, String code}) export(String? patternOrPreset, {String locale = 'en_US'}) {
+  static ({int? id, String code}) export(
+    String? patternOrPreset, {
+    String locale = 'en_US',
+  }) {
     final p = patternOrPreset;
-    if (p == null || p == 'preset:automatic' || p.toLowerCase() == 'general') return (id: 0, code: 'General');
+    if (p == null || p == 'preset:automatic' || p.toLowerCase() == 'general') {
+      return (id: 0, code: 'General');
+    }
     for (final e in presetIds.entries) {
       if (e.value == p) return (id: e.key, code: builtIn[e.key]!);
     }
@@ -148,26 +165,42 @@ abstract final class ExcelNumberFormats {
     final lang = locale.split(RegExp('[_-]')).first.toLowerCase();
     final us = locale == 'en_US' || locale == 'en_CA' || locale == 'es_MX';
     final sym = _currencySymbol(locale);
-    final symbolFirst = lang == 'en' || lang == 'ja' || lang == 'zh' || lang == 'ko' || locale == 'nl_NL';
+    final symbolFirst =
+        lang == 'en' ||
+        lang == 'ja' ||
+        lang == 'zh' ||
+        lang == 'ko' ||
+        locale == 'nl_NL';
     String money(String num) => symbolFirst ? '"$sym"$num' : '$num [\$$sym]';
     return switch (preset) {
-      'preset:date' => us ? 'm/d/yyyy' : (lang == 'en' ? 'dd/mm/yyyy' : 'dd.mm.yyyy'),
+      'preset:date' =>
+        us ? 'm/d/yyyy' : (lang == 'en' ? 'dd/mm/yyyy' : 'dd.mm.yyyy'),
       'preset:time' => us || lang == 'en' ? 'h:mm:ss AM/PM' : 'hh:mm:ss',
       'preset:dateTime' => us ? 'm/d/yyyy h:mm:ss' : 'dd.mm.yyyy hh:mm:ss',
       'preset:currency' => money('#,##0.00'),
       'preset:currencyRounded' => money('#,##0'),
-      'preset:accounting' => symbolFirst
-          ? '_("$sym"* #,##0.00_);_("$sym"* \\(#,##0.00\\);_("$sym"* "-"??_);_(@_)'
-          : '_-* #,##0.00 [\$$sym]_-;-* #,##0.00 [\$$sym]_-;_-* "-"?? [\$$sym]_-;_-@_-',
+      'preset:accounting' =>
+        symbolFirst
+            ? '_("$sym"* #,##0.00_);_("$sym"* \\(#,##0.00\\);_("$sym"* "-"??_);_(@_)'
+            : '_-* #,##0.00 [\$$sym]_-;-* #,##0.00 [\$$sym]_-;_-* "-"?? [\$$sym]_-;_-@_-',
       _ => 'General',
     };
   }
 
   static String _currencySymbol(String locale) {
     const m = {
-      'en_US': r'$', 'en_CA': r'$', 'es_MX': r'$', 'en_AU': r'$', 'pt_BR': r'R$', //
+      'en_US': r'$',
+      'en_CA': r'$',
+      'es_MX': r'$',
+      'en_AU': r'$',
+      'pt_BR': r'R$', //
       'en_GB': '£', 'ja_JP': '¥', 'zh_CN': '¥', 'ko_KR': '₩', 'en_IN': '₹', //
-      'sv_SE': 'kr', 'da_DK': 'kr', 'nb_NO': 'kr', 'de_CH': 'CHF', 'pl_PL': 'zł', 'ru_RU': '₽',
+      'sv_SE': 'kr',
+      'da_DK': 'kr',
+      'nb_NO': 'kr',
+      'de_CH': 'CHF',
+      'pl_PL': 'zł',
+      'ru_RU': '₽',
     };
     return m[locale] ?? '€';
   }
@@ -182,7 +215,9 @@ abstract final class ExcelNumberFormats {
     final t = _tokens(pattern);
     if (t.contains('y') || t.contains('d')) return true;
     if (t.contains('m') && !t.contains('h') && !t.contains('s')) return true;
-    if (t.contains('m') && RegExp(r'm{3,}').hasMatch(_stripped(pattern))) return true;
+    if (t.contains('m') && RegExp(r'm{3,}').hasMatch(_stripped(pattern))) {
+      return true;
+    }
     return false;
   }
 

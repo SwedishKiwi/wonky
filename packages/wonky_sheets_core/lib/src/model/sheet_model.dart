@@ -85,7 +85,11 @@ final class SheetModel {
 
   /// Bounding box `A1:<last content cell>` (null when empty).
   GridRect? usedRect({bool includeFormatOnly = false}) {
-    final e = cells.usedExtent(rows, columns, includeFormatOnly: includeFormatOnly);
+    final e = cells.usedExtent(
+      rows,
+      columns,
+      includeFormatOnly: includeFormatOnly,
+    );
     if (e == null) return null;
     return GridRect(0, 0, e.$1, e.$2);
   }
@@ -111,7 +115,13 @@ final class SheetModel {
     );
   }
 
-  static (int, int)? _resolveSpan(AxisIndex axis, String? a, String? b, String? ak, String? bk) {
+  static (int, int)? _resolveSpan(
+    AxisIndex axis,
+    String? a,
+    String? b,
+    String? ak,
+    String? bk,
+  ) {
     final n = axis.length;
     if (n == 0) return null;
     int? start;
@@ -137,7 +147,11 @@ final class SheetModel {
       }
     }
     if (start == null || end == null) return null;
-    if (a != null && b != null && axis.indexOf(a) >= 0 && axis.indexOf(b) >= 0 && start > end) {
+    if (a != null &&
+        b != null &&
+        axis.indexOf(a) >= 0 &&
+        axis.indexOf(b) >= 0 &&
+        start > end) {
       // Endpoints reordered (e.g. moved rows): normalize.
       final t = start;
       start = end;
@@ -149,7 +163,11 @@ final class SheetModel {
 
   /// Builds an id-based range for an index rectangle. [wholeRows] /
   /// [wholeColumns] leave the column / row bounds open.
-  GridRange gridRange(GridRect rect, {bool wholeRows = false, bool wholeColumns = false}) {
+  GridRange gridRange(
+    GridRect rect, {
+    bool wholeRows = false,
+    bool wholeColumns = false,
+  }) {
     String? rid(int i) => rows.tryIdAt(i);
     String? cid(int i) => columns.tryIdAt(i);
     final r1 = wholeColumns ? null : rid(rect.top);
@@ -239,9 +257,13 @@ final class SheetModel {
       case RuleKind.protection:
         final p = protections[ruleId];
         if (p == null) return const [];
-        return p.rangeJson == null ? [GridRange.sheet(id)] : [?one(p.rangeJson)];
+        return p.rangeJson == null
+            ? [GridRange.sheet(id)]
+            : [?one(p.rangeJson)];
       case RuleKind.basicFilter:
-        return basicFilter?.id == ruleId ? [?one(basicFilter!.rangeJson)] : const [];
+        return basicFilter?.id == ruleId
+            ? [?one(basicFilter!.rangeJson)]
+            : const [];
       case RuleKind.filterView:
         return [?one(filterViews[ruleId]?.rangeJson)];
       case RuleKind.banding:
@@ -260,7 +282,8 @@ final class SheetModel {
   }
 
   /// The id-based ranges of a rule (public).
-  List<GridRange> rangesOf(RuleKind kind, String ruleId) => _rangesOf(kind, ruleId);
+  List<GridRange> rangesOf(RuleKind kind, String ruleId) =>
+      _rangesOf(kind, ruleId);
 
   /// The merge covering (row, col) as a rectangle, or null.
   GridRect? mergeAt(int row, int col) {

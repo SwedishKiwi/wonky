@@ -63,6 +63,8 @@ class _LanguageSectionState extends State<LanguageSection> {
           label: l.settingsUiLanguage,
           control: ShadSelect<String>(
             initialValue: me?.locale ?? 'en',
+            // Languages are listed by their own name (endonym), never
+            // translated.
             options: const [ShadOption(value: 'en', child: Text('English'))],
             selectedOptionBuilder: (context, v) => const Text('English'),
             onChanged: (v) => _save(locale: v),
@@ -122,13 +124,12 @@ class WriteDefaultsSection extends StatelessWidget {
               control: ShadSelect<String>(
                 initialValue:
                     p.writeDefaults['exportFormat'] as String? ?? 'md',
-                options: const [
-                  ShadOption(value: 'md', child: Text('Markdown (.md)')),
-                  ShadOption(value: 'html', child: Text('HTML (.html)')),
-                  ShadOption(value: 'pdf', child: Text('PDF (.pdf)')),
-                  ShadOption(value: 'txt', child: Text('Plain text (.txt)')),
+                options: [
+                  for (final f in const ['md', 'html', 'pdf', 'txt'])
+                    ShadOption(value: f, child: Text(_exportFormatLabel(l, f))),
                 ],
-                selectedOptionBuilder: (context, v) => Text(v),
+                selectedOptionBuilder: (context, v) =>
+                    Text(_exportFormatLabel(l, v)),
                 onChanged: (x) => p.setWriteDefault('exportFormat', x),
               ),
             ),
@@ -334,3 +335,11 @@ class AboutSection extends StatelessWidget {
     );
   }
 }
+
+/// The label of a default export format id.
+String _exportFormatLabel(WonkyAppLocalizations l, String id) => switch (id) {
+  'html' => l.exportFormatHtml,
+  'pdf' => l.exportFormatPdf,
+  'txt' => l.exportFormatText,
+  _ => l.exportFormatMarkdown,
+};

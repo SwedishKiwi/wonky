@@ -21,7 +21,9 @@ abstract final class AutomaticFormatter {
   static String formatWith(double value, LocaleFormatData locale) {
     if (!value.isFinite) return '#NUM!';
     if (value == 0) return '0';
-    if (_isScientific(value)) return scientific(value, scientificDecimals, locale);
+    if (_isScientific(value)) {
+      return scientific(value, scientificDecimals, locale);
+    }
     if (value == value.truncateToDouble() && value.abs() < 1e15) {
       return value.toInt().toString();
     }
@@ -40,7 +42,11 @@ abstract final class AutomaticFormatter {
         : d.roundToSignificant(significantDigits);
   }
 
-  static String _plain(DecimalDigits d, bool negative, LocaleFormatData locale) {
+  static String _plain(
+    DecimalDigits d,
+    bool negative,
+    LocaleFormatData locale,
+  ) {
     if (d.isZero) return '0';
     final i = d.integerString();
     final fd = d.fractionDigitCount;
@@ -60,7 +66,9 @@ abstract final class AutomaticFormatter {
   static int displayedDecimals(double value) {
     if (!value.isFinite || value == 0) return 0;
     if (_isScientific(value)) {
-      final m = DecimalDigits.of(value).roundToSignificant(scientificDecimals + 1);
+      final m = DecimalDigits.of(
+        value,
+      ).roundToSignificant(scientificDecimals + 1);
       return m.digits.length - 1;
     }
     if (value == value.truncateToDouble() && value.abs() < 1e15) return 0;
@@ -68,11 +76,16 @@ abstract final class AutomaticFormatter {
   }
 
   /// Whether automatic display of [value] uses scientific notation.
-  static bool isScientificDisplay(double value) => value.isFinite && _isScientific(value);
+  static bool isScientificDisplay(double value) =>
+      value.isFinite && _isScientific(value);
 
   /// [value] in scientific notation with at most [maxDecimals] mantissa
   /// decimals (trailing zeros trimmed) and a two-digit exponent (`1.23E+04`).
-  static String scientific(double value, int maxDecimals, LocaleFormatData locale) {
+  static String scientific(
+    double value,
+    int maxDecimals,
+    LocaleFormatData locale,
+  ) {
     if (value == 0) return '0E+00';
     var m = DecimalDigits.of(value).roundToSignificant(maxDecimals + 1);
     final exp = m.point - 1;

@@ -17,7 +17,8 @@ import 'html_escape.dart';
 
 /// Renders a chart as an SVG document of [width] × [height] px
 /// (`SvgChartRenderer`, 08 §6.2); null skips the chart.
-typedef ChartSvgProvider = String? Function(EmbeddedObjectRecord chart, double width, double height);
+typedef ChartSvgProvider =
+    String? Function(EmbeddedObjectRecord chart, double width, double height);
 
 /// Image bytes of an image object; null skips the image.
 typedef HtmlImageProvider = HtmlImage? Function(EmbeddedObjectRecord image);
@@ -109,7 +110,9 @@ abstract final class HtmlExporter {
       formatter: formatter,
     );
     final out = <String, Uint8List>{};
-    final title = model.spreadsheet.title.isEmpty ? 'Spreadsheet' : model.spreadsheet.title;
+    final title = model.spreadsheet.title.isEmpty
+        ? 'Spreadsheet'
+        : model.spreadsheet.title;
     out['index.html'] = _utf8(_index(title, sheets, names));
     for (final s in sheets) {
       final page = _SheetPage(
@@ -156,14 +159,24 @@ abstract final class HtmlExporter {
       '.obj{position:absolute;display:block}'
       'ul.sheets{font-size:15px;line-height:1.8}';
 
-  static String _index(String title, List<SheetModel> sheets, Map<String, String> names) {
+  static String _index(
+    String title,
+    List<SheetModel> sheets,
+    Map<String, String> names,
+  ) {
     final b = StringBuffer()
       ..write('<!DOCTYPE html><html><head><meta charset="utf-8">')
       ..write('<meta name="generator" content="Wonky Sheets">')
-      ..write('<title>${HtmlText.escape(title)}</title><style>$_css</style></head><body>')
-      ..write('<nav><strong>${HtmlText.escape(title)}</strong></nav><ul class="sheets">');
+      ..write(
+        '<title>${HtmlText.escape(title)}</title><style>$_css</style></head><body>',
+      )
+      ..write(
+        '<nav><strong>${HtmlText.escape(title)}</strong></nav><ul class="sheets">',
+      );
     for (final s in sheets) {
-      b.write('<li><a href="${HtmlText.attr(names[s.id]!)}">${HtmlText.escape(s.name)}</a></li>');
+      b.write(
+        '<li><a href="${HtmlText.attr(names[s.id]!)}">${HtmlText.escape(s.name)}</a></li>',
+      );
     }
     b.write('</ul></body></html>');
     return b.toString();
@@ -193,8 +206,10 @@ final class _SheetPage {
   final HtmlImageProvider? images;
   final Map<String, Uint8List> resources;
 
-  bool _hiddenRow(int r) => !includeHidden && Paginator.hiddenForPrint(sheet.rows, r);
-  bool _hiddenCol(int c) => !includeHidden && Paginator.hiddenForPrint(sheet.columns, c);
+  bool _hiddenRow(int r) =>
+      !includeHidden && Paginator.hiddenForPrint(sheet.rows, r);
+  bool _hiddenCol(int c) =>
+      !includeHidden && Paginator.hiddenForPrint(sheet.columns, c);
 
   String? _href(String url) {
     final m = RegExp(r'^#sheet=([^&]+)').firstMatch(url.trim());
@@ -214,7 +229,9 @@ final class _SheetPage {
       ..write('<a href="index.html">${HtmlText.escape(title)}</a>');
     for (final s in all) {
       final cls = s.id == sheet.id ? ' class="current"' : '';
-      b.write('<a$cls href="${HtmlText.attr(fileNames[s.id]!)}">${HtmlText.escape(s.name)}</a>');
+      b.write(
+        '<a$cls href="${HtmlText.attr(fileNames[s.id]!)}">${HtmlText.escape(s.name)}</a>',
+      );
     }
     b.write('</nav><div class="sheet">');
     if (sheet.record?.kind == SheetKind.chart) {
@@ -257,8 +274,11 @@ final class _SheetPage {
         for (var i = 0; i < cols.length; i++)
           if (cols[i] >= m.left && cols[i] <= m.right) i,
       ];
-      if (pr.isEmpty || pc.isEmpty || (pr.length == 1 && pc.length == 1)) continue;
-      if (spans.containsKey((pr.first, pc.first)) || covered.contains((pr.first, pc.first))) {
+      if (pr.isEmpty || pc.isEmpty || (pr.length == 1 && pc.length == 1)) {
+        continue;
+      }
+      if (spans.containsKey((pr.first, pc.first)) ||
+          covered.contains((pr.first, pc.first))) {
         continue;
       }
       spans[(pr.first, pc.first)] = (pr.length, pc.length, m);
@@ -270,9 +290,13 @@ final class _SheetPage {
     }
     final theme = model.theme;
     final ss = model.spreadsheet;
-    final defaultFont = theme.textFont.isNotEmpty ? theme.textFont : ss.defaultFontFamily;
+    final defaultFont = theme.textFont.isNotEmpty
+        ? theme.textFont
+        : ss.defaultFontFamily;
     final defaultSize = ss.defaultFontSize;
-    final gridline = sheet.record?.showGridlines ?? true ? HtmlExporter.gridlineColor : null;
+    final gridline = sheet.record?.showGridlines ?? true
+        ? HtmlExporter.gridlineColor
+        : null;
     var width = 0.0;
     for (final c in cols) {
       width += sheet.columns.naturalSizeAt(c);
@@ -284,12 +308,16 @@ final class _SheetPage {
       ..write('${HtmlText.attr(HtmlText.cssFontFamily(defaultFont))};')
       ..write('font-size:${HtmlText.num(defaultSize)}pt"><colgroup>');
     for (final c in cols) {
-      b.write('<col style="width:${HtmlText.num(sheet.columns.naturalSizeAt(c))}px">');
+      b.write(
+        '<col style="width:${HtmlText.num(sheet.columns.naturalSizeAt(c))}px">',
+      );
     }
     b.write('</colgroup><tbody>');
     for (var i = 0; i < rows.length; i++) {
       final r = rows[i];
-      b.write('<tr style="height:${HtmlText.num(sheet.rows.naturalSizeAt(r))}px">');
+      b.write(
+        '<tr style="height:${HtmlText.num(sheet.rows.naturalSizeAt(r))}px">',
+      );
       for (var j = 0; j < cols.length; j++) {
         if (covered.contains((i, j))) continue;
         final c = cols[j];
@@ -298,9 +326,18 @@ final class _SheetPage {
         final row = m?.top ?? r;
         final col = m?.left ?? c;
         final d = resolver.display(sheet.id, row, col);
-        final edges = resolver.edges(sheet.id, row, col, bottomRow: m?.bottom, rightCol: m?.right);
+        final edges = resolver.edges(
+          sheet.id,
+          row,
+          col,
+          bottomRow: m?.bottom,
+          rightCol: m?.right,
+        );
         var overflow = false;
-        if (m == null && d.format.wrap == WrapStrategy.overflow && d.text.isNotEmpty && !d.numberLike) {
+        if (m == null &&
+            d.format.wrap == WrapStrategy.overflow &&
+            d.text.isNotEmpty &&
+            !d.numberLike) {
           bool empty(int jj) =>
               jj >= 0 &&
               jj < cols.length &&
@@ -345,7 +382,9 @@ final class _SheetPage {
     var acc = 0.0;
     for (final v in visible) {
       if (v >= index) break;
-      acc += isRow ? sheet.rows.naturalSizeAt(v) : sheet.columns.naturalSizeAt(v);
+      acc += isRow
+          ? sheet.rows.naturalSizeAt(v)
+          : sheet.columns.naturalSizeAt(v);
     }
     return acc;
   }
@@ -368,7 +407,8 @@ final class _SheetPage {
       if (p == null) continue;
       final String style;
       if (chartSheet || p.ownSheet) {
-        style = 'position:relative;width:${HtmlText.num(p.width)}px;height:${HtmlText.num(p.height)}px';
+        style =
+            'position:relative;width:${HtmlText.num(p.width)}px;height:${HtmlText.num(p.height)}px';
       } else {
         final x = _offset(cols, p.col, false) + (_hiddenCol(p.col) ? 0 : p.dx);
         final y = _offset(rows, p.row, true) + (_hiddenRow(p.row) ? 0 : p.dy);
@@ -399,5 +439,6 @@ final class _SheetPage {
     }
   }
 
-  static String _safeId(String id) => id.replaceAll(RegExp(r'[^A-Za-z0-9_-]'), '_');
+  static String _safeId(String id) =>
+      id.replaceAll(RegExp(r'[^A-Za-z0-9_-]'), '_');
 }

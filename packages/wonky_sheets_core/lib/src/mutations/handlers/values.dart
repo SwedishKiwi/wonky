@@ -14,13 +14,22 @@ import 'helpers.dart';
 import 'rules.dart';
 
 /// Effective number format at a cell (overlay-aware for the cell level).
-String? effectiveNumberFormat(PlanBuilder b, SheetModel s, String rowId, String colId) {
+String? effectiveNumberFormat(
+  PlanBuilder b,
+  SheetModel s,
+  String rowId,
+  String colId,
+) {
   final cell = b.currentCell(s.id, rowId, colId);
   final explicit = cell?[CellCols.numberFormat] as String?;
   if (explicit != null) return explicit;
-  final row = b.formatJsonOf(SheetsTables.sheetRow, rowId)[FormatAttr.numberFormat] as String?;
+  final row =
+      b.formatJsonOf(SheetsTables.sheetRow, rowId)[FormatAttr.numberFormat]
+          as String?;
   if (row != null) return row;
-  final col = b.formatJsonOf(SheetsTables.sheetColumn, colId)[FormatAttr.numberFormat] as String?;
+  final col =
+      b.formatJsonOf(SheetsTables.sheetColumn, colId)[FormatAttr.numberFormat]
+          as String?;
   if (col != null) return col;
   return s.record?.format[FormatAttr.numberFormat] as String?;
 }
@@ -70,7 +79,9 @@ Map<String, Object?> inputColumns(
       if (parsed.autoNumberFormat != null && _isAutomatic(fmt)) {
         out[CellCols.numberFormat] = parsed.autoNumberFormat;
       }
-      if (parsed.autoLinkUrl != null) out[CellCols.linkUrl] = parsed.autoLinkUrl;
+      if (parsed.autoLinkUrl != null) {
+        out[CellCols.linkUrl] = parsed.autoLinkUrl;
+      }
       return out;
   }
 }
@@ -90,7 +101,10 @@ MutationPlan planSetCellInputs(PlanBuilder b, SetCellInputs op) {
   final extraCols = <String>[];
   if (needRows > 0 || needCols > 0) {
     if (!op.growGrid) {
-      throw PlanException('invalid_range', 'The values extend beyond the grid of "${s.name}"');
+      throw PlanException(
+        'invalid_range',
+        'The values extend beyond the grid of "${s.name}"',
+      );
     }
     b.checkCellLimit(
       b.gridCellsWith(
@@ -102,9 +116,11 @@ MutationPlan planSetCellInputs(PlanBuilder b, SetCellInputs op) {
     extraRows.addAll(b.appendDimension(s, Dimension.rows, needRows));
     extraCols.addAll(b.appendDimension(s, Dimension.columns, needCols));
   }
-  String rowIdAt(int i) => i < s.rows.length ? s.rows.idAt(i) : extraRows[i - s.rows.length];
-  String colIdAt(int i) =>
-      i < s.columns.length ? s.columns.idAt(i) : extraCols[i - s.columns.length];
+  String rowIdAt(int i) =>
+      i < s.rows.length ? s.rows.idAt(i) : extraRows[i - s.rows.length];
+  String colIdAt(int i) => i < s.columns.length
+      ? s.columns.idAt(i)
+      : extraCols[i - s.columns.length];
   var cells = 0;
   for (var r = 0; r < height; r++) {
     final rowInputs = op.inputs[r];
@@ -128,7 +144,10 @@ MutationPlan planSetCellInputs(PlanBuilder b, SetCellInputs op) {
   b.summary.sheets.add(s.id);
   if (extraRows.isEmpty && extraCols.isEmpty) {
     b.addResolvedRange(
-      ResolvedRange(s.id, GridRect(op.row, op.col, op.row + height - 1, op.col + width - 1)),
+      ResolvedRange(
+        s.id,
+        GridRect(op.row, op.col, op.row + height - 1, op.col + width - 1),
+      ),
     );
   }
   b.result['cells'] = cells;
@@ -146,19 +165,22 @@ MutationPlan planClearRanges(PlanBuilder b, ClearRanges op) {
     b.addResolvedRange(range);
     switch (op.what) {
       case ClearWhat.contents:
-        for (final (_, _, rowId, colId, cur) in b.cellsIn(s, range.rect).toList()) {
+        for (final (_, _, rowId, colId, cur)
+            in b.cellsIn(s, range.rect).toList()) {
           if (cur[CellCols.content] == null) continue;
           b.writeCell(s.id, rowId, colId, {CellCols.content: null});
           cleared++;
         }
       case ClearWhat.notes:
-        for (final (_, _, rowId, colId, cur) in b.cellsIn(s, range.rect).toList()) {
+        for (final (_, _, rowId, colId, cur)
+            in b.cellsIn(s, range.rect).toList()) {
           if (cur[CellCols.note] == null) continue;
           b.writeCell(s.id, rowId, colId, {CellCols.note: null});
           cleared++;
         }
       case ClearWhat.links:
-        for (final (_, _, rowId, colId, cur) in b.cellsIn(s, range.rect).toList()) {
+        for (final (_, _, rowId, colId, cur)
+            in b.cellsIn(s, range.rect).toList()) {
           final writes = <String, Object?>{};
           if (cur[CellCols.linkUrl] != null) writes[CellCols.linkUrl] = null;
           final content = CellContent.decode(cur[CellCols.content] as String?);
@@ -177,7 +199,8 @@ MutationPlan planClearRanges(PlanBuilder b, ClearRanges op) {
       case ClearWhat.validation:
         clearValidationIn(b, s, [range.rect]);
       case ClearWhat.all:
-        for (final (_, _, rowId, colId, _) in b.cellsIn(s, range.rect).toList()) {
+        for (final (_, _, rowId, colId, _)
+            in b.cellsIn(s, range.rect).toList()) {
           b.deleteCell(s.id, rowId, colId);
           cleared++;
         }
@@ -191,7 +214,11 @@ MutationPlan planClearRanges(PlanBuilder b, ClearRanges op) {
     ClearWhat.links => [ChangeKinds.values, ChangeKinds.format],
     ClearWhat.formats => [ChangeKinds.format],
     ClearWhat.validation => [ChangeKinds.rules],
-    ClearWhat.all => [ChangeKinds.values, ChangeKinds.format, ChangeKinds.notes],
+    ClearWhat.all => [
+      ChangeKinds.values,
+      ChangeKinds.format,
+      ChangeKinds.notes,
+    ],
   };
   final label = switch (op.what) {
     ClearWhat.contents => 'Delete values',
@@ -269,7 +296,10 @@ MutationPlan planSetNote(PlanBuilder b, SetNote op) {
   final note = op.note == null || op.note!.isEmpty ? null : op.note;
   b.writeCellAt(s.id, op.row, op.col, {CellCols.note: note});
   b.addResolvedRange(ResolvedRange(s.id, GridRect.cell(op.row, op.col)));
-  return b.build(note == null ? 'Delete note' : 'Edit note', kinds: [ChangeKinds.notes]);
+  return b.build(
+    note == null ? 'Delete note' : 'Edit note',
+    kinds: [ChangeKinds.notes],
+  );
 }
 
 /// [SetLink].
@@ -294,7 +324,10 @@ MutationPlan planSetLink(PlanBuilder b, SetLink op) {
       }
     }
   }
-  return b.build(op.url == null ? 'Remove link' : 'Insert link', kinds: [ChangeKinds.values]);
+  return b.build(
+    op.url == null ? 'Remove link' : 'Insert link',
+    kinds: [ChangeKinds.values],
+  );
 }
 
 /// [RestoreCellValue].
@@ -303,6 +336,8 @@ MutationPlan planRestoreCellValue(PlanBuilder b, RestoreCellValue op) {
   b.writeCell(s.id, op.rowId, op.colId, {CellCols.content: op.content});
   final r = s.rows.indexOf(op.rowId);
   final c = s.columns.indexOf(op.colId);
-  if (r >= 0 && c >= 0) b.addResolvedRange(ResolvedRange(s.id, GridRect.cell(r, c)));
+  if (r >= 0 && c >= 0) {
+    b.addResolvedRange(ResolvedRange(s.id, GridRect.cell(r, c)));
+  }
   return b.build('Restore value', kinds: [ChangeKinds.values]);
 }

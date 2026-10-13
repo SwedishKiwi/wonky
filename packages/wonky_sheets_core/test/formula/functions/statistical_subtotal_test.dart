@@ -59,9 +59,12 @@ void main() {
       });
     }
 
-    test('when reading the stored nested SUBTOTAL then it skips the filtered row', () {
-      expect(t.value('A6'), _value(13));
-    });
+    test(
+      'when reading the stored nested SUBTOTAL then it skips the filtered row',
+      () {
+        expect(t.value('A6'), _value(13));
+      },
+    );
   });
 
   group('Given AGGREGATE with error and visibility options', () {

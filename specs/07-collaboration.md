@@ -125,10 +125,27 @@ fields:
   readAt: DateTime?
 ```
 
-- In-app: account menu shows unread count; **Notifications popover** list with mark-all-read.
-- Live via `NotificationEndpoint.watch()` stream.
-- Email (optional via settings): sent through the Serverpod email provider used for auth,
-  batched digest every 15 min (FutureCall).
+- In-app: the top bar's bell shows the unread count; the **Notifications popover** lists them
+  grouped (Today / Yesterday / Earlier) with the actor, kind icon, comment excerpt or share
+  message, unread dot and time; All / Unread filter, paging (*Load more*), *Mark all as read*,
+  *Notification settings*; opening one marks it read and opens its item. Live via
+  `NotificationEndpoint.watch()`.
+- Settings › Notifications (`UserPreferences.notificationSettings` JSON): per category
+  `inApp` | `email` (in-app and email) | `off` — `mentions` (mentions and assignments),
+  `replies`, `shares` (shares, ownership transfers), `accessRequests` (falls back to `shares`
+  for older settings), `suggestions` (new suggestions on my files, decisions on mine) — plus
+  `digest: bool` (default true). `off` creates no notification.
+- Email: **mentions and assignments** set to email are sent right away (a `FutureCall` without
+  delay, `NotificationEmailFutureCall`); everything else set to email goes into the **digest
+  every 15 min** (`MaintenanceFutureCall.sendDigests`), or one email each when `digest` is
+  false. Only unread, not yet emailed notifications of the last 2 days are sent;
+  `emailedAt` marks them (idempotent; a failed immediate email is retried by the digest). Links
+  point at `<web origin>/write/d/<uuid>` (`/sheets/s/…` for spreadsheets) and the footer at
+  Settings › Notifications.
+- Sending is pluggable (`EmailSender` in `platform/notifications/email/`): the
+  [Resend](https://resend.com) HTTP API when the passwords `resendApiKey` and `emailFrom` are
+  set, otherwise `LoggingEmailSender` logs the email (development; the Serverpod Cloud email
+  service only offers auth templates). Tests install a fake sender.
 
 ## 5. Version history (shared framework)
 
@@ -172,6 +189,17 @@ UI (full-screen route `/…/history`):
   forward edit (collaborators see it live; it is one undo step for the restoring user).
 
 ## 6. Activity dashboard
-*Tools › Activity dashboard* dialog: viewers list (who opened, when — only for Editors+ and only
-for users in the same org/share set), view trend chart, comment trend, privacy setting toggle
-"Show my view history".
+*Tools › Activity dashboard* dialog (`shell.activity.open`, `ActivityEndpoint`): period selector
+(7 / 28 / 90 days) and three tabs:
+- **Viewers** (Editors and Owners only): people in the item's share set (owner and grantees, not
+  link visitors) who opened it in the period, most recent first, with role, "Viewed …" and view
+  count. People who turned their view history off are left out and counted ("2 more people
+  turned off their view history").
+- **Trends**: unique viewers per day and comments + replies per day (bar charts with a
+  semantics summary), for every role.
+- **Activity**: the item's activity feed (same widget as the details panel, with paging).
+
+Views are recorded per user and UTC day (`item_view_day`) whenever the item is opened
+(`DriveService.recordOpen`: `drive.markOpened`, document connect, invite). The privacy toggle
+**"Show my view history"** (`UserActivitySettings.showViewHistory`, default on) is at the bottom
+of the dialog; when off, the user's views still count anonymously in the trends.

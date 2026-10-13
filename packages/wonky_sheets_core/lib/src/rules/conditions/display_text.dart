@@ -33,7 +33,8 @@ final class FunctionDisplayText implements DisplayTextProvider {
   final String Function(CellValue value, String? numberFormat) _format;
 
   @override
-  String displayText(CellValue value, String? numberFormat) => _format(value, numberFormat);
+  String displayText(CellValue value, String? numberFormat) =>
+      _format(value, numberFormat);
 }
 
 /// Reads computed values, number formats and display texts of cells through a
@@ -49,12 +50,16 @@ final class CellTextReader {
   final DisplayTextProvider display;
 
   /// The computed scalar at the cell.
-  CellValue valueAt(String sheetId, int row, int col) => values.valueAt(sheetId, row, col).toCellValue();
+  CellValue valueAt(String sheetId, int row, int col) =>
+      values.valueAt(sheetId, row, col).toCellValue();
 
   /// The cell's number format (explicit, or the result's format hint).
-  String? numberFormatAt(String sheetId, int row, int col) => values.numberFormatAt(sheetId, row, col);
+  String? numberFormatAt(String sheetId, int row, int col) =>
+      values.numberFormatAt(sheetId, row, col);
 
   /// The display text of the cell.
-  String displayTextAt(String sheetId, int row, int col) =>
-      display.displayText(valueAt(sheetId, row, col), numberFormatAt(sheetId, row, col));
+  String displayTextAt(String sheetId, int row, int col) => display.displayText(
+    valueAt(sheetId, row, col),
+    numberFormatAt(sheetId, row, col),
+  );
 }

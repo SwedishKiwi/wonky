@@ -17,7 +17,14 @@ import 'value_formatter.dart';
 
 /// One logical column (row when switched) of the chart's source table.
 final class _Line {
-  _Line(this.key, this.range, this.offset, this.sheetId, this.fixedIndex, this.isRowLine);
+  _Line(
+    this.key,
+    this.range,
+    this.offset,
+    this.sheetId,
+    this.fixedIndex,
+    this.isRowLine,
+  );
 
   /// Column id (row id when switched).
   final String key;
@@ -37,7 +44,8 @@ final class _Line {
 
   int get length => cells.length;
 
-  (int, int) coord(int k) => isRowLine ? (fixedIndex, varIndex[k]) : (varIndex[k], fixedIndex);
+  (int, int) coord(int k) =>
+      isRowLine ? (fixedIndex, varIndex[k]) : (varIndex[k], fixedIndex);
 }
 
 /// Resolves a [ChartSpec]'s ranges into [ChartData] (08 §4.1).
@@ -55,7 +63,12 @@ final class ChartDataResolver {
     CellSource values, {
     String locale = 'en_US',
     ChartValueFormatter? fmt,
-  }) => _Resolution(spec, model, values, fmt ?? DefaultChartValueFormatter(locale: locale)).run();
+  }) => _Resolution(
+    spec,
+    model,
+    values,
+    fmt ?? DefaultChartValueFormatter(locale: locale),
+  ).run();
 }
 
 final class _Resolution {
@@ -75,7 +88,9 @@ final class _Resolution {
     final data = spec.data;
     if (data.ranges.isEmpty) {
       return ChartData.empty(
-        warnings: const [ChartWarning(ChartWarningCode.noData, 'No data range')],
+        warnings: const [
+          ChartWarning(ChartWarningCode.noData, 'No data range'),
+        ],
       );
     }
     final lines = <_Line>[];
@@ -87,7 +102,10 @@ final class _Resolution {
     }
     if (lines.isEmpty || pointCounts.isEmpty) {
       return ChartData.empty(
-        warnings: [...warnings, const ChartWarning(ChartWarningCode.noData, 'No data')],
+        warnings: [
+          ...warnings,
+          const ChartWarning(ChartWarningCode.noData, 'No data'),
+        ],
       );
     }
     var n = 0;
@@ -96,7 +114,10 @@ final class _Resolution {
     }
     if (pointCounts.any((c) => c != n)) {
       warnings.add(
-        const ChartWarning(ChartWarningCode.rangeSizeMismatch, 'Ranges have different sizes'),
+        const ChartWarning(
+          ChartWarningCode.rangeSizeMismatch,
+          'Ranges have different sizes',
+        ),
       );
     }
     for (final l in lines) {
@@ -107,8 +128,10 @@ final class _Resolution {
     }
 
     // Headers.
-    final h = (data.headerCount ?? HeaderDetection.detect([for (final l in lines) l.cells]))
-        .clamp(0, n);
+    final h =
+        (data.headerCount ??
+                HeaderDetection.detect([for (final l in lines) l.cells]))
+            .clamp(0, n);
     final names = [for (final l in lines) _headerName(l, h)];
 
     // Domain.
@@ -190,7 +213,13 @@ final class _Resolution {
     final wantTexts = isTable || spec.type == ChartType.bubble;
     var series = <ChartSeries>[
       for (var s = 0; s < seriesIdx.length; s++)
-        _buildSeries(lines[seriesIdx[s]], seriesKeys[s], names[seriesIdx[s]], h, wantTexts),
+        _buildSeries(
+          lines[seriesIdx[s]],
+          seriesKeys[s],
+          names[seriesIdx[s]],
+          h,
+          wantTexts,
+        ),
     ];
 
     if (spec.data.domain?.reverse ?? false) {
@@ -204,7 +233,11 @@ final class _Resolution {
     }
 
     if (spec.type == ChartType.pie && series.isNotEmpty) {
-      final g = PieGrouping.group(domain, series.first, threshold: spec.pieOptions.otherThreshold);
+      final g = PieGrouping.group(
+        domain,
+        series.first,
+        threshold: spec.pieOptions.otherThreshold,
+      );
       if (g != null) {
         warnings.add(
           ChartWarning(
@@ -214,7 +247,17 @@ final class _Resolution {
           ),
         );
         domain = g.$1;
-        series = [g.$2, ...series.skip(1).map((s) => s.withValues(Float64List(g.$1.length)..fillRange(0, g.$1.length, double.nan)))];
+        series = [
+          g.$2,
+          ...series
+              .skip(1)
+              .map(
+                (s) => s.withValues(
+                  Float64List(g.$1.length)
+                    ..fillRange(0, g.$1.length, double.nan),
+                ),
+              ),
+        ];
       }
     }
 
@@ -258,7 +301,11 @@ final class _Resolution {
     final rr = sheet?.resolve(g);
     if (sheet == null || rr == null) {
       warnings.add(
-        ChartWarning(ChartWarningCode.rangeNotFound, 'Data range not found', count: ri),
+        ChartWarning(
+          ChartWarningCode.rangeNotFound,
+          'Data range not found',
+          count: ri,
+        ),
       );
       return null;
     }
@@ -269,7 +316,9 @@ final class _Resolution {
       rect = GridRect(
         rect.top,
         rect.left,
-        rr.wholeColumns && used.bottom < rect.bottom ? used.bottom : rect.bottom,
+        rr.wholeColumns && used.bottom < rect.bottom
+            ? used.bottom
+            : rect.bottom,
         rr.wholeRows && used.right < rect.right ? used.right : rect.right,
       );
       if (rect.bottom < rect.top || rect.right < rect.left) return null;
@@ -286,7 +335,10 @@ final class _Resolution {
     if (rows.isEmpty || cols.isEmpty) return null;
     if (_cells + rows.length * cols.length > ChartDataResolver.maxSourceCells) {
       warnings.add(
-        const ChartWarning(ChartWarningCode.tooManyCells, 'Too many source cells; data truncated'),
+        const ChartWarning(
+          ChartWarningCode.tooManyCells,
+          'Too many source cells; data truncated',
+        ),
       );
       final budget = ChartDataResolver.maxSourceCells - _cells;
       if (budget <= 0) return null;
@@ -296,7 +348,9 @@ final class _Resolution {
     final first = lines.length;
     if (!switched) {
       for (var k = 0; k < cols.length; k++) {
-        lines.add(_Line(sheet.columns.idAt(cols[k]), ri, k, sheet.id, cols[k], false));
+        lines.add(
+          _Line(sheet.columns.idAt(cols[k]), ri, k, sheet.id, cols[k], false),
+        );
       }
       for (final r in rows) {
         for (var k = 0; k < cols.length; k++) {
@@ -309,7 +363,9 @@ final class _Resolution {
       return rows.length;
     }
     for (var k = 0; k < rows.length; k++) {
-      lines.add(_Line(sheet.rows.idAt(rows[k]), ri, k, sheet.id, rows[k], true));
+      lines.add(
+        _Line(sheet.rows.idAt(rows[k]), ri, k, sheet.id, rows[k], true),
+      );
     }
     for (var k = 0; k < rows.length; k++) {
       final line = lines[first + k];
@@ -381,7 +437,9 @@ final class _Resolution {
       if (t.isNotEmpty) parts.add(t);
     }
     if (parts.isNotEmpty) return parts.join(' ');
-    return l.isRowLine ? 'Row ${l.fixedIndex + 1}' : 'Column ${ColumnLetters.fromIndex(l.fixedIndex)}';
+    return l.isRowLine
+        ? 'Row ${l.fixedIndex + 1}'
+        : 'Column ${ColumnLetters.fromIndex(l.fixedIndex)}';
   }
 
   String? _formatAt(_Line l, int k) {
@@ -457,7 +515,8 @@ final class _Resolution {
         anyNumber = true;
         if (dateLike) {
           final f = _formatAt(l, h + k);
-          dateLike = v.hint.isDateLike ||
+          dateLike =
+              v.hint.isDateLike ||
               v.hint.kind == FormatHintKind.time ||
               ChartFormats.isDateTime(f);
         }
@@ -479,7 +538,13 @@ final class _Resolution {
     );
   }
 
-  ChartSeries _buildSeries(_Line l, String key, String name, int h, bool wantTexts) {
+  ChartSeries _buildSeries(
+    _Line l,
+    String key,
+    String name,
+    int h,
+    bool wantTexts,
+  ) {
     final n = l.length - h;
     final vals = Float64List(n);
     var errors = 0;
@@ -567,7 +632,9 @@ final class _Resolution {
       final s = series.first;
       final vs = s.values.toList();
       final valid = vs.where((v) => !v.isNaN).length;
-      key = valid == 1 ? vs.firstWhere((v) => !v.isNaN) : ChartAggregation.apply(o.aggregate, vs);
+      key = valid == 1
+          ? vs.firstWhere((v) => !v.isNaN)
+          : ChartAggregation.apply(o.aggregate, vs);
       keyFormat = s.numberFormat;
       label = s.name;
     } else {
@@ -588,12 +655,19 @@ final class _Resolution {
       keyValue: key,
       baseline: baseline,
       keyFormat: o.keyFormat ?? keyFormat,
-      baselineFormat: o.baselineFormat ?? baselineFormat ?? o.keyFormat ?? keyFormat,
+      baselineFormat:
+          o.baselineFormat ?? baselineFormat ?? o.keyFormat ?? keyFormat,
       label: label,
     );
   }
 
-  ChartTableData _table(List<_Line> lines, List<String> names, int? domainIdx, List<int> seriesIdx, int h) {
+  ChartTableData _table(
+    List<_Line> lines,
+    List<String> names,
+    int? domainIdx,
+    List<int> seriesIdx,
+    int h,
+  ) {
     final order = <int>[?domainIdx, ...seriesIdx];
     final o = spec.tableOptions;
     final texts = <List<String>>[];
@@ -606,7 +680,9 @@ final class _Resolution {
       for (var k = 0; k < n; k++) {
         final c = l.cells[h + k];
         v[k] = c is FNumber ? c.v : double.nan;
-        t[k] = o.formatFromSource || c is! FNumber ? _text(l, h + k) : fmt.format(c.v, null);
+        t[k] = o.formatFromSource || c is! FNumber
+            ? _text(l, h + k)
+            : fmt.format(c.v, null);
       }
       texts.add(t);
       nums.add(v);
@@ -618,14 +694,20 @@ final class _Resolution {
         nums[i] = Float64List.fromList(nums[i].reversed.toList());
       }
     }
-    return ChartTableData(headers: [for (final i in order) names[i]], texts: texts, values: nums);
+    return ChartTableData(
+      headers: [for (final i in order) names[i]],
+      texts: texts,
+      values: nums,
+    );
   }
 
   // ---------------------------------------------------------------------------
   // Keys.
 
   static String _canon(String key) {
-    if (key.length == Base62Uuid.length && !key.contains('-') && Base62Uuid.isValid(key)) {
+    if (key.length == Base62Uuid.length &&
+        !key.contains('-') &&
+        Base62Uuid.isValid(key)) {
       return Base62Uuid.decode(key);
     }
     return key.toLowerCase();
@@ -637,5 +719,7 @@ final class _Resolution {
 
   static bool _looksLikeId(String key) =>
       _uuid.hasMatch(key) ||
-      (key.length == Base62Uuid.length && !key.contains('-') && Base62Uuid.isValid(key));
+      (key.length == Base62Uuid.length &&
+          !key.contains('-') &&
+          Base62Uuid.isValid(key));
 }

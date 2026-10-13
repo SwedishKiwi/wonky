@@ -110,7 +110,9 @@ final class RichText {
           RichRun(
             s.toInt().clamp(0, t.length),
             e.toInt().clamp(0, t.length),
-            f is Map ? Map<String, Object?>.from(f.cast<String, Object?>()) : const {},
+            f is Map
+                ? Map<String, Object?>.from(f.cast<String, Object?>())
+                : const {},
           ),
         );
       }
@@ -126,7 +128,8 @@ final class RichText {
   };
 
   /// Distinct links in the runs.
-  Iterable<String> get links => runs.map((r) => r.link).whereType<String>().toSet();
+  Iterable<String> get links =>
+      runs.map((r) => r.link).whereType<String>().toSet();
 
   /// The format applying at [offset], or an empty map.
   Map<String, Object?> formatAt(int offset) {
@@ -154,7 +157,9 @@ final class RichText {
       r.format.forEach((k, v) {
         if (v == null) return;
         if (cellFormat.containsKey(k) && cellFormat[k] == v) return;
-        if (v == false && !cellFormat.containsKey(k) && k != RichRunKeys.underline) {
+        if (v == false &&
+            !cellFormat.containsKey(k) &&
+            k != RichRunKeys.underline) {
           // false for bold/italic/strike equals the default.
           return;
         }
@@ -163,7 +168,8 @@ final class RichText {
       if (f.isEmpty) continue;
       if (cleaned.isNotEmpty) {
         final last = cleaned.last;
-        if (last.end == s && const MapEquality<String, Object?>().equals(last.format, f)) {
+        if (last.end == s &&
+            const MapEquality<String, Object?>().equals(last.format, f)) {
           cleaned[cleaned.length - 1] = last.copyWith(end: e);
           continue;
         }
@@ -186,7 +192,10 @@ final class RichText {
   /// Removes [key] from every run (used when a cell-level text format is set, 06 §11).
   RichText withoutKey(String key) => RichText(text, [
     for (final r in runs)
-      if (r.format.containsKey(key)) r.copyWith(format: Map.of(r.format)..remove(key)) else r,
+      if (r.format.containsKey(key))
+        r.copyWith(format: Map.of(r.format)..remove(key))
+      else
+        r,
   ]);
 
   /// Keeps only link keys (clear formatting keeps link runs, 06 §3).
@@ -206,7 +215,8 @@ final class RichText {
         ..add(r.start)
         ..add(r.end);
     }
-    final sorted = bounds.where((b) => b >= 0 && b <= text.length).toList()..sort();
+    final sorted = bounds.where((b) => b >= 0 && b <= text.length).toList()
+      ..sort();
     final out = <RichRun>[];
     for (var i = 0; i + 1 < sorted.length; i++) {
       final s = sorted[i];
@@ -243,7 +253,9 @@ final class RichText {
 
   @override
   bool operator ==(Object other) =>
-      other is RichText && other.text == text && _listEq.equals(other.runs, runs);
+      other is RichText &&
+      other.text == text &&
+      _listEq.equals(other.runs, runs);
 
   @override
   int get hashCode => Object.hash(text, _listEq.hash(runs));

@@ -89,7 +89,8 @@ abstract final class SpaceCopier {
       idMap[id] = ids.newId();
     }
     final b62 = {
-      for (final e in idMap.entries) Base62Uuid.encode(e.key): Base62Uuid.encode(e.value),
+      for (final e in idMap.entries)
+        Base62Uuid.encode(e.key): Base62Uuid.encode(e.value),
     };
     String mapId(String s) => idMap[s] ?? b62[s] ?? s;
     final fieldToken = RegExp('⟦F:([0-9A-Za-z-]+)⟧');
@@ -97,7 +98,10 @@ abstract final class SpaceCopier {
       var out = s;
       if (out.contains('⟦')) {
         out = StoredFormula.remapIds(out, idMap);
-        out = out.replaceAllMapped(fieldToken, (m) => '⟦F:${mapId(m.group(1)!)}⟧');
+        out = out.replaceAllMapped(
+          fieldToken,
+          (m) => '⟦F:${mapId(m.group(1)!)}⟧',
+        );
       }
       return out;
     }
@@ -105,7 +109,11 @@ abstract final class SpaceCopier {
     Object? mapJson(Object? v) {
       if (v is String) return mapText(mapId(v));
       if (v is List) return [for (final e in v) mapJson(e)];
-      if (v is Map) return {for (final e in v.entries) mapId(e.key.toString()): mapJson(e.value)};
+      if (v is Map) {
+        return {
+          for (final e in v.entries) mapId(e.key.toString()): mapJson(e.value),
+        };
+      }
       return v;
     }
 
@@ -125,7 +133,10 @@ abstract final class SpaceCopier {
         if (v is String) {
           if (k.endsWith('Json')) {
             m[k] = mapJsonString(v);
-          } else if (k == Cols.id || k.endsWith('Id') || k == 'startId' || k == 'endId') {
+          } else if (k == Cols.id ||
+              k.endsWith('Id') ||
+              k == 'startId' ||
+              k == 'endId') {
             m[k] = mapId(v);
           } else if (k == CellCols.content || k == 'formula') {
             m[k] = v.startsWith('=') ? mapText(v) : v;
@@ -159,7 +170,9 @@ abstract final class SpaceCopier {
       }
       out.add((t, m));
     }
-    out.sort((x, y) => SheetsTables.rank(x.$1).compareTo(SheetsTables.rank(y.$1)));
+    out.sort(
+      (x, y) => SheetsTables.rank(x.$1).compareTo(SheetsTables.rank(y.$1)),
+    );
     return SpaceCopy(out, idMap);
   }
 }

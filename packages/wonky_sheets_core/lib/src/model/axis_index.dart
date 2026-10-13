@@ -237,7 +237,8 @@ final class AxisIndex {
       final computed = _computed();
       p = Int32List(_ids.length + 1);
       for (var i = 0; i < _ids.length; i++) {
-        p[i + 1] = p[i] + (_userHidden[i] || computed.contains(_ids[i]) ? 0 : 1);
+        p[i + 1] =
+            p[i] + (_userHidden[i] || computed.contains(_ids[i]) ? 0 : 1);
       }
       _visiblePrefix = p;
     }
@@ -279,7 +280,9 @@ final class AxisIndex {
   }
 
   /// Replaces all entries (bulk load).
-  void load(Iterable<(String id, String sortKey, double? size, bool hidden)> entries) {
+  void load(
+    Iterable<(String id, String sortKey, double? size, bool hidden)> entries,
+  ) {
     _pendingUpserts.clear();
     _pendingRemoves.clear();
     final list = [for (final e in entries) _Entry(e.$1, e.$2, e.$3, e.$4)]
@@ -343,7 +346,13 @@ final class AxisIndex {
     while (i < keep.length || j < added.length) {
       if (j >= added.length ||
           (i < keep.length &&
-              FractionalIndex.compare(keep[i].key, keep[i].id, added[j].key, added[j].id) <= 0)) {
+              FractionalIndex.compare(
+                    keep[i].key,
+                    keep[i].id,
+                    added[j].key,
+                    added[j].id,
+                  ) <=
+                  0)) {
         merged.add(keep[i++]);
       } else {
         merged.add(added[j++]);
@@ -379,7 +388,9 @@ final class AxisIndex {
     final c = _computedHidden;
     if (c != null) return c;
     if (_hiddenLayers.isEmpty) return _computedHidden = const {};
-    if (_hiddenLayers.length == 1) return _computedHidden = _hiddenLayers.values.first;
+    if (_hiddenLayers.length == 1) {
+      return _computedHidden = _hiddenLayers.values.first;
+    }
     return _computedHidden = {for (final s in _hiddenLayers.values) ...s};
   }
 

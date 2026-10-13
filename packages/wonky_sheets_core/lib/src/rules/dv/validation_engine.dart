@@ -42,7 +42,9 @@ final class DvRule {
       strict: record.strict,
       helpText: (record.helpText?.isEmpty ?? true) ? null : record.helpText,
       displayStyle: record.displayStyle == null
-          ? (record.showDropdown ? DvDisplayStyle.chip : DvDisplayStyle.plainText)
+          ? (record.showDropdown
+                ? DvDisplayStyle.chip
+                : DvDisplayStyle.plainText)
           : DvDisplayStyle.parse(record.displayStyle),
       createdAt: record.createdAt,
       anchor: rects.isEmpty ? const CellPos(0, 0) : rects.first.topLeft,
@@ -85,13 +87,16 @@ final class ValidationResult {
 
   @override
   bool operator ==(Object other) =>
-      other is ValidationResult && other.valid == valid && other.message == message;
+      other is ValidationResult &&
+      other.valid == valid &&
+      other.message == message;
 
   @override
   int get hashCode => Object.hash(valid, message);
 
   @override
-  String toString() => valid ? 'ValidationResult(valid)' : 'ValidationResult(invalid: $message)';
+  String toString() =>
+      valid ? 'ValidationResult(valid)' : 'ValidationResult(invalid: $message)';
 }
 
 /// Per-cell context of [ValidationEngine.validate].
@@ -127,22 +132,63 @@ final class ValidationEngine {
 
   /// Validates [value] (computed value) with [displayText] (formatted value)
   /// against [rule]. Empty cells are always valid.
-  ValidationResult validate(CellValue value, String displayText, DvRule rule, ValidationContext ctx) {
+  ValidationResult validate(
+    CellValue value,
+    String displayText,
+    DvRule rule,
+    ValidationContext ctx,
+  ) {
     if (value.isBlank()) return ValidationResult.ok;
     final valid = switch (rule.criteria) {
-      final DvListCriteria c => _listMatch(value, displayText, ListSource.listItems(c), c.allowMultiple, ctx),
-      final DvRangeCriteria c => _listMatch(value, displayText, ctx.rangeItems?.call(c) ?? const [], c.allowMultiple, ctx),
-      final DvCheckboxCriteria c => CheckboxValues.of(c, locale: ctx.conditions.locale).stateOf(value) != null,
-      DvConditionCriteria(:final condition) => ctx.conditions
-          .compile(condition, sheetId: ctx.sheetId, anchorRow: rule.anchor.row, anchorCol: rule.anchor.col)
-          .test(value, row: ctx.row, col: ctx.col, numberFormat: ctx.numberFormat),
+      final DvListCriteria c => _listMatch(
+        value,
+        displayText,
+        ListSource.listItems(c),
+        c.allowMultiple,
+        ctx,
+      ),
+      final DvRangeCriteria c => _listMatch(
+        value,
+        displayText,
+        ctx.rangeItems?.call(c) ?? const [],
+        c.allowMultiple,
+        ctx,
+      ),
+      final DvCheckboxCriteria c =>
+        CheckboxValues.of(c, locale: ctx.conditions.locale).stateOf(value) !=
+            null,
+      DvConditionCriteria(:final condition) =>
+        ctx.conditions
+            .compile(
+              condition,
+              sheetId: ctx.sheetId,
+              anchorRow: rule.anchor.row,
+              anchorCol: rule.anchor.col,
+            )
+            .test(
+              value,
+              row: ctx.row,
+              col: ctx.col,
+              numberFormat: ctx.numberFormat,
+            ),
     };
     if (valid) return ValidationResult.ok;
-    final def = defaultMessage(rule.criteria, hooks: ctx.conditions.hooks, sheetId: ctx.sheetId, anchor: rule.anchor);
+    final def = defaultMessage(
+      rule.criteria,
+      hooks: ctx.conditions.hooks,
+      sheetId: ctx.sheetId,
+      anchor: rule.anchor,
+    );
     return ValidationResult(false, rule.helpText ?? def, def);
   }
 
-  bool _listMatch(CellValue value, String display, List<String> items, bool multiple, ValidationContext ctx) {
+  bool _listMatch(
+    CellValue value,
+    String display,
+    List<String> items,
+    bool multiple,
+    ValidationContext ctx,
+  ) {
     if (multiple && value is TextValue) {
       final parts = display.split(', ');
       return parts.every((p) => _itemMatch(TextValue(p), p, items, ctx));
@@ -150,7 +196,12 @@ final class ValidationEngine {
     return _itemMatch(value, display, items, ctx);
   }
 
-  bool _itemMatch(CellValue value, String display, List<String> items, ValidationContext ctx) {
+  bool _itemMatch(
+    CellValue value,
+    String display,
+    List<String> items,
+    ValidationContext ctx,
+  ) {
     for (final item in items) {
       if (item == display) return true;
     }
@@ -165,7 +216,12 @@ final class ValidationEngine {
 
   /// The default invalid message of [criteria] (07 §6.2). Formula values are
   /// shown in A1 form when [hooks] are given.
-  static String defaultMessage(DvCriteria criteria, {FormulaHooks? hooks, String sheetId = '', CellPos anchor = const CellPos(0, 0)}) {
+  static String defaultMessage(
+    DvCriteria criteria, {
+    FormulaHooks? hooks,
+    String sheetId = '',
+    CellPos anchor = const CellPos(0, 0),
+  }) {
     switch (criteria) {
       case DvListCriteria():
       case DvRangeCriteria():
@@ -180,17 +236,27 @@ final class ValidationEngine {
             ConditionLiteral(:final text) => text,
             ConditionRelativeDate(:final date) => date.label,
             ConditionFormula(:final stored) =>
-              hooks?.toA1(stored, sheetId: sheetId, row: anchor.row, col: anchor.col) ?? stored,
+              hooks?.toA1(
+                    stored,
+                    sheetId: sheetId,
+                    row: anchor.row,
+                    col: anchor.col,
+                  ) ??
+                  stored,
           };
         }
 
         return switch (condition.type) {
-          ConditionType.numberBetween => 'Input must be a number between ${v(0)} and ${v(1)}',
-          ConditionType.numberNotBetween => 'Input must be a number not between ${v(0)} and ${v(1)}',
+          ConditionType.numberBetween =>
+            'Input must be a number between ${v(0)} and ${v(1)}',
+          ConditionType.numberNotBetween =>
+            'Input must be a number not between ${v(0)} and ${v(1)}',
           ConditionType.numberGreater => 'Input must be greater than ${v(0)}',
-          ConditionType.numberGreaterEq => 'Input must be greater than or equal to ${v(0)}',
+          ConditionType.numberGreaterEq =>
+            'Input must be greater than or equal to ${v(0)}',
           ConditionType.numberLess => 'Input must be less than ${v(0)}',
-          ConditionType.numberLessEq => 'Input must be less than or equal to ${v(0)}',
+          ConditionType.numberLessEq =>
+            'Input must be less than or equal to ${v(0)}',
           ConditionType.numberEq => 'Input must be equal to ${v(0)}',
           ConditionType.numberNotEq => 'Input must be not equal to ${v(0)}',
           ConditionType.textContains => 'Input must contain "${v(0)}"',
@@ -204,12 +270,18 @@ final class ValidationEngine {
           ConditionType.dateEq => 'Input must be a date on ${v(0)}',
           ConditionType.dateBefore => 'Input must be a date before ${v(0)}',
           ConditionType.dateAfter => 'Input must be a date after ${v(0)}',
-          ConditionType.dateOnOrBefore => 'Input must be a date on or before ${v(0)}',
-          ConditionType.dateOnOrAfter => 'Input must be a date on or after ${v(0)}',
-          ConditionType.dateBetween => 'Input must be a date between ${v(0)} and ${v(1)}',
-          ConditionType.dateNotBetween => 'Input must be a date not between ${v(0)} and ${v(1)}',
-          ConditionType.customFormula => 'Input must satisfy the specified formula',
-          ConditionType.blank || ConditionType.notBlank => 'Input must satisfy the specified condition',
+          ConditionType.dateOnOrBefore =>
+            'Input must be a date on or before ${v(0)}',
+          ConditionType.dateOnOrAfter =>
+            'Input must be a date on or after ${v(0)}',
+          ConditionType.dateBetween =>
+            'Input must be a date between ${v(0)} and ${v(1)}',
+          ConditionType.dateNotBetween =>
+            'Input must be a date not between ${v(0)} and ${v(1)}',
+          ConditionType.customFormula =>
+            'Input must satisfy the specified formula',
+          ConditionType.blank || ConditionType.notBlank =>
+            'Input must satisfy the specified condition',
         };
     }
   }
@@ -238,13 +310,21 @@ abstract final class DvRuleResolver {
   static Set<String> shadowedRuleIds(SheetModel sheet) {
     final out = <String>{};
     final rules = sheet.dvRules.values.toList();
-    final rects = {for (final r in rules) r.id: sheet.ruleRects(RuleKind.dataValidation, r.id)};
+    final rects = {
+      for (final r in rules)
+        r.id: sheet.ruleRects(RuleKind.dataValidation, r.id),
+    };
     for (final a in rules) {
       for (final rect in rects[a.id]!) {
-        for (final id in sheet.rulesIntersecting(RuleKind.dataValidation, rect)) {
+        for (final id in sheet.rulesIntersecting(
+          RuleKind.dataValidation,
+          rect,
+        )) {
           final b = sheet.dvRules[id];
           if (b == null || b.id == a.id) continue;
-          if (_cmp(b, a) > 0 && rects[b.id]!.any((q) => q.intersects(rect))) out.add(a.id);
+          if (_cmp(b, a) > 0 && rects[b.id]!.any((q) => q.intersects(rect))) {
+            out.add(a.id);
+          }
         }
       }
     }

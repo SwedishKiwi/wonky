@@ -20,14 +20,29 @@ abstract final class RenderTestScenes {
     double width = 100,
     double height = 100,
     int background = white,
-  }) => ChartScene(width: width, height: height, background: background, primitives: primitives);
+  }) => ChartScene(
+    width: width,
+    height: height,
+    background: background,
+    primitives: primitives,
+  );
 
   /// A scene using every primitive type, a clip, group opacity, dashes and rotated text.
   static ChartScene kitchenSink() => scene(width: 400, height: 300, [
-    const SRect(ChartRect(10, 10, 80, 50), fill: red, stroke: SStroke(black, width: 2), radius: 6),
+    const SRect(
+      ChartRect(10, 10, 80, 50),
+      fill: red,
+      stroke: SStroke(black, width: 2),
+      radius: 6,
+    ),
     const SRect(ChartRect(50, 30, 80, 50), fill: 0x4D0000FF),
     const SPath(
-      [PMoveTo(10, 100), PLineTo(90, 100), PCubicTo(90, 140, 50, 150, 10, 140), PClose()],
+      [
+        PMoveTo(10, 100),
+        PLineTo(90, 100),
+        PCubicTo(90, 140, 50, 150, 10, 140),
+        PClose(),
+      ],
       fill: 0xFF00AA00,
       stroke: SStroke(black, width: 1, join: SStrokeJoin.bevel),
       evenOdd: true,
@@ -43,7 +58,20 @@ abstract final class RenderTestScenes {
       ),
     ),
     SMarkers(
-      Float64List.fromList([200, 20, 230, 20, 260, 20, 290, 20, 320, 20, 350, 20]),
+      Float64List.fromList([
+        200,
+        20,
+        230,
+        20,
+        260,
+        20,
+        290,
+        20,
+        320,
+        20,
+        350,
+        20,
+      ]),
       MarkerShape.circle,
       10,
       fill: blue,
@@ -52,8 +80,19 @@ abstract final class RenderTestScenes {
       sizes: Float64List.fromList([8, 10, 12, 14, 16, 18]),
     ),
     for (final (i, shape) in MarkerShape.values.indexed)
-      SMarkers(Float64List.fromList([200.0 + i * 30, 50]), shape, 12, fill: 0xFF3949AB),
-    const SArc(ChartPoint(250, 130), 40, -math.pi / 2, math.pi, fill: 0xFFFBBC05),
+      SMarkers(
+        Float64List.fromList([200.0 + i * 30, 50]),
+        shape,
+        12,
+        fill: 0xFF3949AB,
+      ),
+    const SArc(
+      ChartPoint(250, 130),
+      40,
+      -math.pi / 2,
+      math.pi,
+      fill: 0xFFFBBC05,
+    ),
     const SArc(
       ChartPoint(250, 130),
       40,
@@ -63,8 +102,17 @@ abstract final class RenderTestScenes {
       fill: 0xFF4285F4,
       stroke: SStroke(white, width: 1),
     ),
-    const SArc(ChartPoint(340, 130), 30, 0, 2 * math.pi, innerRadius: 15, fill: 0xFFAB47BC),
-    const SClip(ChartRect(200, 200, 50, 30), [SRect(ChartRect(180, 180, 100, 80), fill: red)]),
+    const SArc(
+      ChartPoint(340, 130),
+      30,
+      0,
+      2 * math.pi,
+      innerRadius: 15,
+      fill: 0xFFAB47BC,
+    ),
+    const SClip(ChartRect(200, 200, 50, 30), [
+      SRect(ChartRect(180, 180, 100, 80), fill: red),
+    ]),
     const SGroup([
       SRect(ChartRect(270, 200, 40, 40), fill: blue),
       SRect(ChartRect(290, 220, 40, 40), fill: blue),
@@ -98,9 +146,18 @@ abstract final class RenderTestScenes {
 }
 
 /// Number of pixels in the rectangle that differ from [background] (ARGB).
-int inkCount(img.Image image, int x0, int y0, int x1, int y1, {int background = 0xFFFFFFFF}) {
+int inkCount(
+  img.Image image,
+  int x0,
+  int y0,
+  int x1,
+  int y1, {
+  int background = 0xFFFFFFFF,
+}) {
   var n = 0;
-  final br = Argb.red(background), bg = Argb.green(background), bb = Argb.blue(background);
+  final br = Argb.red(background),
+      bg = Argb.green(background),
+      bb = Argb.blue(background);
   for (var y = math.max(0, y0); y < math.min(image.height, y1); y++) {
     for (var x = math.max(0, x0); x < math.min(image.width, x1); x++) {
       final (r, g, b, _) = rgbaAt(image, x, y);

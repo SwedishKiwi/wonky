@@ -14,7 +14,12 @@ void main() {
       ('"x"', [NfSectionKind.literal]),
       (
         '0;-0;;@',
-        [NfSectionKind.number, NfSectionKind.number, NfSectionKind.empty, NfSectionKind.text],
+        [
+          NfSectionKind.number,
+          NfSectionKind.number,
+          NfSectionKind.empty,
+          NfSectionKind.text,
+        ],
       ),
     ];
     for (final (pattern, kinds) in cases) {
@@ -35,7 +40,11 @@ void main() {
       (
         'yyyy-mm-dd hh:mm',
         [
-          NfDateUnit.year, NfDateUnit.month, NfDateUnit.day, NfDateUnit.hour, NfDateUnit.minute, //
+          NfDateUnit.year,
+          NfDateUnit.month,
+          NfDateUnit.day,
+          NfDateUnit.hour,
+          NfDateUnit.minute, //
         ],
       ),
     ];
@@ -51,30 +60,41 @@ void main() {
 
     test('when [h] precedes mm then mm is minutes', () {
       final s = NumberFormatParser.parse('[h]:mm').sections.single;
-      expect(s.tokens.whereType<NfDatePart>().single.unit, equals(NfDateUnit.minute));
+      expect(
+        s.tokens.whereType<NfDatePart>().single.unit,
+        equals(NfDateUnit.minute),
+      );
     });
   });
 
   group('Given number layouts', () {
-    test('when parsing #,##0.00 then grouping and two decimals are recorded', () {
-      final l = NumberFormatParser.parse('#,##0.00').sections.single.layout!;
-      expect((
-        l.integerPlaceholders,
-        l.decimalPlaceholders,
-        l.grouping,
-        l.scaleExponent,
-      ), equals((4, 2, true, 0)));
-    });
+    test(
+      'when parsing #,##0.00 then grouping and two decimals are recorded',
+      () {
+        final l = NumberFormatParser.parse('#,##0.00').sections.single.layout!;
+        expect((
+          l.integerPlaceholders,
+          l.decimalPlaceholders,
+          l.grouping,
+          l.scaleExponent,
+        ), equals((4, 2, true, 0)));
+      },
+    );
 
     test('when parsing 0.0,,"M" then the scale is 10^-6', () {
       expect(
-        NumberFormatParser.parse('0.0,,"M"').sections.single.layout!.scaleExponent,
+        NumberFormatParser.parse(
+          '0.0,,"M"',
+        ).sections.single.layout!.scaleExponent,
         equals(-6),
       );
     });
 
     test('when parsing 0.00% then the scale is 10^2', () {
-      expect(NumberFormatParser.parse('0.00%').sections.single.layout!.scaleExponent, equals(2));
+      expect(
+        NumberFormatParser.parse('0.00%').sections.single.layout!.scaleExponent,
+        equals(2),
+      );
     });
 
     test('when parsing a fixed denominator then it is recorded', () {
@@ -84,13 +104,18 @@ void main() {
 
     test('when parsing ss.000 then fractional seconds have 3 digits', () {
       final s = NumberFormatParser.parse('ss.000').sections.single;
-      expect(s.tokens.whereType<NfFractionalSeconds>().single.digits, equals(3));
+      expect(
+        s.tokens.whereType<NfFractionalSeconds>().single.digits,
+        equals(3),
+      );
     });
   });
 
   group('Given brackets', () {
     test('when parsing a condition then operator and value are recorded', () {
-      final c = NumberFormatParser.parse('[<=-5.5]0;0').sections.first.condition!;
+      final c = NumberFormatParser.parse(
+        '[<=-5.5]0;0',
+      ).sections.first.condition!;
       expect((c.op, c.value), equals((NfConditionOp.le, -5.5)));
     });
 
@@ -100,17 +125,28 @@ void main() {
       expect((tag.symbol, tag.lcid, s.lcid), equals(('€', 0x407, 0x407)));
     });
 
-    test('when parsing a locale tag without LCID then only the symbol is kept', () {
-      final tag = NumberFormatParser.parse(r'[$USD]0').sections.single.tokens.first as NfLocaleTag;
-      expect((tag.symbol, tag.lcid), equals(('USD', null)));
-    });
+    test(
+      'when parsing a locale tag without LCID then only the symbol is kept',
+      () {
+        final tag =
+            NumberFormatParser.parse(r'[$USD]0').sections.single.tokens.first
+                as NfLocaleTag;
+        expect((tag.symbol, tag.lcid), equals(('USD', null)));
+      },
+    );
 
     test('when parsing [Color56] then the last palette color is used', () {
-      expect(NumberFormatParser.parse('[Color56]0').sections.single.colorArgb, equals(0xFF333333));
+      expect(
+        NumberFormatParser.parse('[Color56]0').sections.single.colorArgb,
+        equals(0xFF333333),
+      );
     });
 
     test('when a section has two conditions then parsing fails', () {
-      expect(() => NumberFormatParser.parse('[>1][<5]0'), throwsA(isA<FormatParseError>()));
+      expect(
+        () => NumberFormatParser.parse('[>1][<5]0'),
+        throwsA(isA<FormatParseError>()),
+      );
     });
   });
 

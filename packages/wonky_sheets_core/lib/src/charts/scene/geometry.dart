@@ -22,7 +22,8 @@ final class ChartPoint {
   ChartPoint translate(double dx, double dy) => ChartPoint(x + dx, y + dy);
 
   @override
-  bool operator ==(Object other) => other is ChartPoint && other.x == x && other.y == y;
+  bool operator ==(Object other) =>
+      other is ChartPoint && other.x == x && other.y == y;
 
   @override
   int get hashCode => Object.hash(x, y);
@@ -37,12 +38,8 @@ final class ChartRect {
   const ChartRect(this.left, this.top, this.width, this.height);
 
   /// Creates a rectangle from its edges (normalized so width/height ≥ 0).
-  factory ChartRect.fromLTRB(double l, double t, double r, double b) => ChartRect(
-    math.min(l, r),
-    math.min(t, b),
-    (r - l).abs(),
-    (b - t).abs(),
-  );
+  factory ChartRect.fromLTRB(double l, double t, double r, double b) =>
+      ChartRect(math.min(l, r), math.min(t, b), (r - l).abs(), (b - t).abs());
 
   /// The empty rectangle at the origin.
   static const zero = ChartRect(0, 0, 0, 0);
@@ -62,7 +59,8 @@ final class ChartRect {
   bool get isEmpty => width <= 0 || height <= 0;
 
   /// Whether ([x], [y]) lies inside (edges inclusive).
-  bool contains(double x, double y) => x >= left && x <= right && y >= top && y <= bottom;
+  bool contains(double x, double y) =>
+      x >= left && x <= right && y >= top && y <= bottom;
 
   /// Grown by [d] on every side (shrunk for negative [d], never below zero size).
   ChartRect inflate(double d) {
@@ -72,16 +70,21 @@ final class ChartRect {
   }
 
   /// Shrunk by the given insets.
-  ChartRect deflate({double left = 0, double top = 0, double right = 0, double bottom = 0}) =>
-      ChartRect(
-        this.left + left,
-        this.top + top,
-        math.max(0.0, width - left - right),
-        math.max(0.0, height - top - bottom),
-      );
+  ChartRect deflate({
+    double left = 0,
+    double top = 0,
+    double right = 0,
+    double bottom = 0,
+  }) => ChartRect(
+    this.left + left,
+    this.top + top,
+    math.max(0.0, width - left - right),
+    math.max(0.0, height - top - bottom),
+  );
 
   /// Translated copy.
-  ChartRect translate(double dx, double dy) => ChartRect(left + dx, top + dy, width, height);
+  ChartRect translate(double dx, double dy) =>
+      ChartRect(left + dx, top + dy, width, height);
 
   /// Whether the rectangles overlap (touching edges do not count).
   bool overlaps(ChartRect o) =>

@@ -10,7 +10,11 @@ void main() {
       ('preset:currency', 'de_DE', r'#,##0.00 [$€-407]'),
       ('preset:currencyRounded', 'en_US', r'"$"#,##0'),
       ('preset:currencyRounded', 'de_DE', r'#,##0 [$€-407]'),
-      ('preset:accounting', 'en_US', r'_("$"* #,##0.00_);_("$"* \(#,##0.00\);_("$"* "-"??_);_(@_)'),
+      (
+        'preset:accounting',
+        'en_US',
+        r'_("$"* #,##0.00_);_("$"* \(#,##0.00\);_("$"* "-"??_);_(@_)',
+      ),
       (
         'preset:accounting',
         'de_DE',
@@ -44,20 +48,62 @@ void main() {
 
   group('Given the 40 most common locales', () {
     const locales = [
-      'en_US', 'en_GB', 'en_CA', 'en_AU', 'en_IN', 'de_DE', 'de_AT', 'de_CH', 'fr_FR', 'fr_CA', //
-      'fr_CH', 'es_ES', 'es_MX', 'it_IT', 'pt_BR', 'pt_PT', 'nl_NL', 'sv_SE', 'nb_NO', 'da_DK', //
-      'fi_FI', 'pl_PL', 'cs_CZ', 'hu_HU', 'ro_RO', 'ru_RU', 'uk_UA', 'tr_TR', 'el_GR', 'he_IL', //
-      'ar_SA', 'hi_IN', 'th_TH', 'vi_VN', 'id_ID', 'ja_JP', 'ko_KR', 'zh_CN', 'zh_TW', 'zh_HK', //
+      'en_US',
+      'en_GB',
+      'en_CA',
+      'en_AU',
+      'en_IN',
+      'de_DE',
+      'de_AT',
+      'de_CH',
+      'fr_FR',
+      'fr_CA', //
+      'fr_CH',
+      'es_ES',
+      'es_MX',
+      'it_IT',
+      'pt_BR',
+      'pt_PT',
+      'nl_NL',
+      'sv_SE',
+      'nb_NO',
+      'da_DK', //
+      'fi_FI',
+      'pl_PL',
+      'cs_CZ',
+      'hu_HU',
+      'ro_RO',
+      'ru_RU',
+      'uk_UA',
+      'tr_TR',
+      'el_GR',
+      'he_IL', //
+      'ar_SA',
+      'hi_IN',
+      'th_TH',
+      'vi_VN',
+      'id_ID',
+      'ja_JP',
+      'ko_KR',
+      'zh_CN',
+      'zh_TW',
+      'zh_HK', //
     ];
     for (final locale in locales) {
-      test('when resolving every preset in $locale then each pattern parses and formats', () {
-        final f = NumberFormatter();
-        for (final id in NumberFormatPresets.presetIds.skip(1)) {
-          final p = NumberFormatPresets.resolve(id, locale)!;
-          expect(NumberFormatParser.validate(p), isNull, reason: '$id → $p');
-          expect(f.formatText(const NumberValue(46307.5), id, locale: locale), isNotEmpty);
-        }
-      });
+      test(
+        'when resolving every preset in $locale then each pattern parses and formats',
+        () {
+          final f = NumberFormatter();
+          for (final id in NumberFormatPresets.presetIds.skip(1)) {
+            final p = NumberFormatPresets.resolve(id, locale)!;
+            expect(NumberFormatParser.validate(p), isNull, reason: '$id → $p');
+            expect(
+              f.formatText(const NumberValue(46307.5), id, locale: locale),
+              isNotEmpty,
+            );
+          }
+        },
+      );
     }
   });
 
@@ -82,7 +128,13 @@ void main() {
       expect(
         NumberFormatPresets.menu.map((m) => m.id),
         equals([
-          'automatic', 'plainText', 'number', 'percent', 'scientific', 'accounting', 'financial', //
+          'automatic',
+          'plainText',
+          'number',
+          'percent',
+          'scientific',
+          'accounting',
+          'financial', //
           'currency', 'currencyRounded', 'date', 'time', 'dateTime', 'duration',
         ]),
       );
@@ -104,7 +156,10 @@ void main() {
       test('when rendering the $id example in en_US then it shows "$text"', () {
         final item = NumberFormatPresets.menu.firstWhere((m) => m.id == id);
         expect(
-          NumberFormatter().formatText(NumberValue(item.exampleValue), item.stored),
+          NumberFormatter().formatText(
+            NumberValue(item.exampleValue),
+            item.stored,
+          ),
           equals(text),
         );
       });
@@ -135,19 +190,25 @@ void main() {
       ('[Colr]0', NumberFormatKind.automatic, 0),
     ];
     for (final (p, kind, decimals) in cases) {
-      test('when classifying $p then it is ${kind.name} with $decimals decimals', () {
-        final info = NumberFormatInfo.of(p);
-        expect((info.kind, info.decimals), equals((kind, decimals)));
-      });
+      test(
+        'when classifying $p then it is ${kind.name} with $decimals decimals',
+        () {
+          final info = NumberFormatInfo.of(p);
+          expect((info.kind, info.decimals), equals((kind, decimals)));
+        },
+      );
     }
 
-    test('when checking helpers then date/time/percent/currency predicates agree', () {
-      expect([
-        NumberFormatInfo.isDatePattern('d.m.yy'),
-        NumberFormatInfo.isTimePattern('[h]:mm'),
-        NumberFormatInfo.isPercentPattern('0%'),
-        NumberFormatInfo.isCurrencyPattern('#,##0'),
-      ], equals([true, true, true, false]));
-    });
+    test(
+      'when checking helpers then date/time/percent/currency predicates agree',
+      () {
+        expect([
+          NumberFormatInfo.isDatePattern('d.m.yy'),
+          NumberFormatInfo.isTimePattern('[h]:mm'),
+          NumberFormatInfo.isPercentPattern('0%'),
+          NumberFormatInfo.isCurrencyPattern('#,##0'),
+        ], equals([true, true, true, false]));
+      },
+    );
   });
 }

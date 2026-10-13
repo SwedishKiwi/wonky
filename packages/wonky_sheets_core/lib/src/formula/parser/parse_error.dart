@@ -18,16 +18,29 @@ final class FormulaParseError implements Exception {
   final ParseErrorKey messageKey;
   final String message;
 
-  const FormulaParseError(this.offset, this.length, this.messageKey, this.message);
+  const FormulaParseError(
+    this.offset,
+    this.length,
+    this.messageKey,
+    this.message,
+  );
 
-  factory FormulaParseError.of(ParseErrorKey key, int offset, [int length = 1]) {
+  factory FormulaParseError.of(
+    ParseErrorKey key,
+    int offset, [
+    int length = 1,
+  ]) {
     final pos = offset + 1;
     final msg = switch (key) {
       ParseErrorKey.unexpectedToken => 'Formula parse error at position $pos.',
-      ParseErrorKey.missingCloseParen => 'Formula parse error: missing closing parenthesis.',
-      ParseErrorKey.unterminatedString => 'Formula parse error: unterminated text at position $pos.',
-      ParseErrorKey.emptyArrayElement => 'Formula parse error: empty array element at position $pos.',
-      ParseErrorKey.invalidReference => 'Formula parse error: invalid reference at position $pos.',
+      ParseErrorKey.missingCloseParen =>
+        'Formula parse error: missing closing parenthesis.',
+      ParseErrorKey.unterminatedString =>
+        'Formula parse error: unterminated text at position $pos.',
+      ParseErrorKey.emptyArrayElement =>
+        'Formula parse error: empty array element at position $pos.',
+      ParseErrorKey.invalidReference =>
+        'Formula parse error: invalid reference at position $pos.',
       ParseErrorKey.tooDeep => 'Formula is too deeply nested',
       ParseErrorKey.trailingInput => 'Formula parse error at position $pos.',
       ParseErrorKey.tooLong => 'Formula is too long',

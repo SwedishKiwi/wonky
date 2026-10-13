@@ -671,17 +671,23 @@ class _EditorScaffoldState extends State<EditorScaffold> {
             const SizedBox(width: 8),
             ListenableBuilder(
               listenable: _comments,
-              builder: (context, _) => ShadTooltip(
-                builder: (_) => Text(l.cmdCommentsPanel),
-                child: ShadButton.ghost(
-                  key: const ValueKey<String>('editor.comments'),
-                  height: 32,
-                  padding: const EdgeInsets.symmetric(horizontal: 8),
-                  leading: const Icon(LucideIcons.messageSquare, size: 18),
-                  onPressed: () => _invoke('shell.comments.togglePanel'),
-                  child: _comments.openCount == 0
-                      ? null
-                      : Text('${_comments.openCount}'),
+              // Merged so the tap target carries the label (and the count).
+              builder: (context, _) => MergeSemantics(
+                child: Semantics(
+                  label: l.cmdCommentsPanel,
+                  child: ShadTooltip(
+                    builder: (_) => Text(l.cmdCommentsPanel),
+                    child: ShadButton.ghost(
+                      key: const ValueKey<String>('editor.comments'),
+                      height: 32,
+                      padding: const EdgeInsets.symmetric(horizontal: 8),
+                      leading: const Icon(LucideIcons.messageSquare, size: 18),
+                      onPressed: () => _invoke('shell.comments.togglePanel'),
+                      child: _comments.openCount == 0
+                          ? null
+                          : Text('${_comments.openCount}'),
+                    ),
+                  ),
                 ),
               ),
             ),

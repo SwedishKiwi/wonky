@@ -83,7 +83,10 @@ final class SparklineSpec {
         }
       case Map<Object?, Object?> m:
         for (final e in m.entries) {
-          pairs.add(('${e.key}', e.value is FValue ? _plain(e.value! as FValue) : e.value));
+          pairs.add((
+            '${e.key}',
+            e.value is FValue ? _plain(e.value! as FValue) : e.value,
+          ));
         }
       default:
         throw SparklineOptionException('$options');
@@ -106,7 +109,15 @@ final class SparklineSpec {
     var lw = 1.0;
     const common = {'charttype', 'empty', 'nan', 'rtl'};
     final allowed = switch (type) {
-      SparklineType.line => {...common, 'xmin', 'xmax', 'ymin', 'ymax', 'color', 'linewidth'},
+      SparklineType.line => {
+        ...common,
+        'xmin',
+        'xmax',
+        'ymin',
+        'ymax',
+        'color',
+        'linewidth',
+      },
       SparklineType.column || SparklineType.winloss => {
         ...common,
         'color',
@@ -183,11 +194,15 @@ final class SparklineSpec {
           if (lw < 0) throw SparklineOptionException(rawKey);
         case 'empty':
           final s = '$v'.toLowerCase();
-          if (s != 'zero' && s != 'ignore') throw SparklineOptionException(rawKey);
+          if (s != 'zero' && s != 'ignore') {
+            throw SparklineOptionException(rawKey);
+          }
           emptyZero = s == 'zero';
         case 'nan':
           final s = '$v'.toLowerCase();
-          if (s != 'convert' && s != 'ignore') throw SparklineOptionException(rawKey);
+          if (s != 'convert' && s != 'ignore') {
+            throw SparklineOptionException(rawKey);
+          }
           nanZero = s == 'convert';
       }
     }
@@ -300,19 +315,58 @@ final class SparklineSpec {
   }
 
   static const _css = <String, int>{
-    'black': 0x000000, 'white': 0xFFFFFF, 'red': 0xFF0000, 'green': 0x008000, 'blue': 0x0000FF,
-    'yellow': 0xFFFF00, 'orange': 0xFFA500, 'purple': 0x800080, 'pink': 0xFFC0CB,
-    'brown': 0xA52A2A, 'gray': 0x808080, 'grey': 0x808080, 'cyan': 0x00FFFF, 'aqua': 0x00FFFF,
-    'magenta': 0xFF00FF, 'fuchsia': 0xFF00FF, 'lime': 0x00FF00, 'navy': 0x000080,
-    'teal': 0x008080, 'maroon': 0x800000, 'olive': 0x808000, 'silver': 0xC0C0C0,
-    'gold': 0xFFD700, 'indigo': 0x4B0082, 'violet': 0xEE82EE, 'darkgreen': 0x006400,
-    'darkblue': 0x00008B, 'darkred': 0x8B0000, 'darkgray': 0xA9A9A9, 'darkgrey': 0xA9A9A9,
-    'lightgray': 0xD3D3D3, 'lightgrey': 0xD3D3D3, 'lightblue': 0xADD8E6,
-    'lightgreen': 0x90EE90, 'coral': 0xFF7F50, 'salmon': 0xFA8072, 'tomato': 0xFF6347,
-    'crimson': 0xDC143C, 'turquoise': 0x40E0D0, 'skyblue': 0x87CEEB, 'steelblue': 0x4682B4,
-    'royalblue': 0x4169E1, 'tan': 0xD2B48C, 'khaki': 0xF0E68C, 'beige': 0xF5F5DC,
-    'chocolate': 0xD2691E, 'orchid': 0xDA70D6, 'plum': 0xDDA0DD, 'slategray': 0x708090,
-    'forestgreen': 0x228B22, 'seagreen': 0x2E8B57, 'firebrick': 0xB22222,
+    'black': 0x000000,
+    'white': 0xFFFFFF,
+    'red': 0xFF0000,
+    'green': 0x008000,
+    'blue': 0x0000FF,
+    'yellow': 0xFFFF00,
+    'orange': 0xFFA500,
+    'purple': 0x800080,
+    'pink': 0xFFC0CB,
+    'brown': 0xA52A2A,
+    'gray': 0x808080,
+    'grey': 0x808080,
+    'cyan': 0x00FFFF,
+    'aqua': 0x00FFFF,
+    'magenta': 0xFF00FF,
+    'fuchsia': 0xFF00FF,
+    'lime': 0x00FF00,
+    'navy': 0x000080,
+    'teal': 0x008080,
+    'maroon': 0x800000,
+    'olive': 0x808000,
+    'silver': 0xC0C0C0,
+    'gold': 0xFFD700,
+    'indigo': 0x4B0082,
+    'violet': 0xEE82EE,
+    'darkgreen': 0x006400,
+    'darkblue': 0x00008B,
+    'darkred': 0x8B0000,
+    'darkgray': 0xA9A9A9,
+    'darkgrey': 0xA9A9A9,
+    'lightgray': 0xD3D3D3,
+    'lightgrey': 0xD3D3D3,
+    'lightblue': 0xADD8E6,
+    'lightgreen': 0x90EE90,
+    'coral': 0xFF7F50,
+    'salmon': 0xFA8072,
+    'tomato': 0xFF6347,
+    'crimson': 0xDC143C,
+    'turquoise': 0x40E0D0,
+    'skyblue': 0x87CEEB,
+    'steelblue': 0x4682B4,
+    'royalblue': 0x4169E1,
+    'tan': 0xD2B48C,
+    'khaki': 0xF0E68C,
+    'beige': 0xF5F5DC,
+    'chocolate': 0xD2691E,
+    'orchid': 0xDA70D6,
+    'plum': 0xDDA0DD,
+    'slategray': 0x708090,
+    'forestgreen': 0x228B22,
+    'seagreen': 0x2E8B57,
+    'firebrick': 0xB22222,
   };
 }
 
@@ -332,7 +386,12 @@ abstract final class SparklineRenderer {
     double padding = 2,
   }) {
     final prims = <ScenePrimitive>[];
-    final r = ChartRect(padding, padding, math.max(0, width - 2 * padding), math.max(0, height - 2 * padding));
+    final r = ChartRect(
+      padding,
+      padding,
+      math.max(0, width - 2 * padding),
+      math.max(0, height - 2 * padding),
+    );
     if (!r.isEmpty && values.length > 0) {
       switch (spec.type) {
         case SparklineType.line:
@@ -343,10 +402,22 @@ abstract final class SparklineRenderer {
           _bar(spec, values.y, r, defaultColor, prims);
       }
     }
-    return ChartScene(width: width, height: height, background: background, primitives: prims, plotArea: r);
+    return ChartScene(
+      width: width,
+      height: height,
+      background: background,
+      primitives: prims,
+      plotArea: r,
+    );
   }
 
-  static void _line(SparklineSpec spec, SparklineData d, ChartRect r, int color, List<ScenePrimitive> out) {
+  static void _line(
+    SparklineSpec spec,
+    SparklineData d,
+    ChartRect r,
+    int color,
+    List<ScenePrimitive> out,
+  ) {
     var ys = d.y;
     var xs = d.x;
     final n = ys.length;
@@ -378,23 +449,47 @@ abstract final class SparklineRenderer {
       return spec.rtl ? r.right - t * r.width : r.left + t * r.width;
     }
 
-    double py(double y) => r.bottom - ((y.clamp(y0, y1) - y0) / (y1 - y0)) * r.height;
-    final stroke = SStroke(spec.color ?? color, width: spec.lineWidth, cap: SStrokeCap.round, join: SStrokeJoin.round);
+    double py(double y) =>
+        r.bottom - ((y.clamp(y0, y1) - y0) / (y1 - y0)) * r.height;
+    final stroke = SStroke(
+      spec.color ?? color,
+      width: spec.lineWidth,
+      cap: SStrokeCap.round,
+      join: SStrokeJoin.round,
+    );
     final run = <double>[];
     final runIdx = <int>[];
     final children = <ScenePrimitive>[];
     void flush() {
       if (run.length >= 4) {
-        children.add(SPolyline(Float64List.fromList(run), stroke, indices: Int32List.fromList(runIdx), tag: const SceneTag(SceneRole.series)));
+        children.add(
+          SPolyline(
+            Float64List.fromList(run),
+            stroke,
+            indices: Int32List.fromList(runIdx),
+            tag: const SceneTag(SceneRole.series),
+          ),
+        );
       } else if (run.length == 2) {
-        children.add(SMarkers(Float64List.fromList(run), MarkerShape.circle, math.max(2, spec.lineWidth * 2), fill: spec.color ?? color, indices: Int32List.fromList(runIdx), tag: const SceneTag(SceneRole.point)));
+        children.add(
+          SMarkers(
+            Float64List.fromList(run),
+            MarkerShape.circle,
+            math.max(2, spec.lineWidth * 2),
+            fill: spec.color ?? color,
+            indices: Int32List.fromList(runIdx),
+            tag: const SceneTag(SceneRole.point),
+          ),
+        );
       }
       run.clear();
       runIdx.clear();
     }
 
     for (final i in idx) {
-      if (ys[i].isNaN || xs[i].isNaN) continue; // ignored values are connected over
+      if (ys[i].isNaN || xs[i].isNaN) {
+        continue; // ignored values are connected over
+      }
       run
         ..add(px(xs[i]))
         ..add(py(ys[i]));
@@ -404,7 +499,13 @@ abstract final class SparklineRenderer {
     if (spec.lineWidth > 0) out.add(SClip(r.inflate(spec.lineWidth), children));
   }
 
-  static void _columns(SparklineSpec spec, Float64List ys, ChartRect r, int color, List<ScenePrimitive> out) {
+  static void _columns(
+    SparklineSpec spec,
+    Float64List ys,
+    ChartRect r,
+    int color,
+    List<ScenePrimitive> out,
+  ) {
     final n = ys.length;
     final winloss = spec.type == SparklineType.winloss;
     var lo = spec.ymin ?? double.infinity, hi = spec.ymax ?? -double.infinity;
@@ -430,7 +531,8 @@ abstract final class SparklineRenderer {
     }
     final step = r.width / n;
     final gap = step > 3 ? math.max(1.0, step * 0.15) : 0.0;
-    double py(double v) => r.bottom - (v.clamp(lo, hi) - lo) / (hi - lo) * r.height;
+    double py(double v) =>
+        r.bottom - (v.clamp(lo, hi) - lo) / (hi - lo) * r.height;
     final zero = py(0);
     for (var i = 0; i < n; i++) {
       final v = ys[i];
@@ -454,15 +556,33 @@ abstract final class SparklineRenderer {
         bottom = math.max(y, zero);
         if (bottom - top < 0.5) bottom = top + 0.5;
       }
-      out.add(SRect(ChartRect(x, top, math.max(0.5, step - gap), bottom - top), fill: c, tag: SceneTag(SceneRole.point, pointIndex: i)));
+      out.add(
+        SRect(
+          ChartRect(x, top, math.max(0.5, step - gap), bottom - top),
+          fill: c,
+          tag: SceneTag(SceneRole.point, pointIndex: i),
+        ),
+      );
     }
     if (spec.axis) {
       final y = winloss ? r.centerY : zero;
-      out.add(SPolyline(Float64List.fromList([r.left, y, r.right, y]), SStroke(spec.axisColor ?? 0xFF000000), tag: const SceneTag(SceneRole.axisLine)));
+      out.add(
+        SPolyline(
+          Float64List.fromList([r.left, y, r.right, y]),
+          SStroke(spec.axisColor ?? 0xFF000000),
+          tag: const SceneTag(SceneRole.axisLine),
+        ),
+      );
     }
   }
 
-  static void _bar(SparklineSpec spec, Float64List ys, ChartRect r, int color, List<ScenePrimitive> out) {
+  static void _bar(
+    SparklineSpec spec,
+    Float64List ys,
+    ChartRect r,
+    int color,
+    List<ScenePrimitive> out,
+  ) {
     final a = ys.isNotEmpty && !ys[0].isNaN ? math.max(0.0, ys[0]) : 0.0;
     final b = ys.length > 1 && !ys[1].isNaN ? math.max(0.0, ys[1]) : 0.0;
     final max = spec.max ?? (a + b);
@@ -472,11 +592,39 @@ abstract final class SparklineRenderer {
     final w1 = r.width * (a / max).clamp(0.0, 1.0);
     final w2 = r.width * (b / max).clamp(0.0, 1.0 - (a / max).clamp(0.0, 1.0));
     if (spec.rtl) {
-      out.add(SRect(ChartRect(r.right - w1, r.top, w1, r.height), fill: c1, tag: const SceneTag(SceneRole.point, pointIndex: 0)));
-      if (w2 > 0) out.add(SRect(ChartRect(r.right - w1 - w2, r.top, w2, r.height), fill: c2, tag: const SceneTag(SceneRole.point, pointIndex: 1)));
+      out.add(
+        SRect(
+          ChartRect(r.right - w1, r.top, w1, r.height),
+          fill: c1,
+          tag: const SceneTag(SceneRole.point, pointIndex: 0),
+        ),
+      );
+      if (w2 > 0) {
+        out.add(
+          SRect(
+            ChartRect(r.right - w1 - w2, r.top, w2, r.height),
+            fill: c2,
+            tag: const SceneTag(SceneRole.point, pointIndex: 1),
+          ),
+        );
+      }
     } else {
-      out.add(SRect(ChartRect(r.left, r.top, w1, r.height), fill: c1, tag: const SceneTag(SceneRole.point, pointIndex: 0)));
-      if (w2 > 0) out.add(SRect(ChartRect(r.left + w1, r.top, w2, r.height), fill: c2, tag: const SceneTag(SceneRole.point, pointIndex: 1)));
+      out.add(
+        SRect(
+          ChartRect(r.left, r.top, w1, r.height),
+          fill: c1,
+          tag: const SceneTag(SceneRole.point, pointIndex: 0),
+        ),
+      );
+      if (w2 > 0) {
+        out.add(
+          SRect(
+            ChartRect(r.left + w1, r.top, w2, r.height),
+            fill: c2,
+            tag: const SceneTag(SceneRole.point, pointIndex: 1),
+          ),
+        );
+      }
     }
   }
 }

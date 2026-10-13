@@ -9,9 +9,14 @@ import 'package:wonky_sheets_core/src/charts/scene/scene.dart';
 
 import 'render_test_scenes.dart';
 
-Future<String> _uncompressed(ChartScene scene, {double margin = 36}) async => latin1.decode(
-  await const PdfChartRenderer().renderDocument(scene, margin: margin, compress: false),
-);
+Future<String> _uncompressed(ChartScene scene, {double margin = 36}) async =>
+    latin1.decode(
+      await const PdfChartRenderer().renderDocument(
+        scene,
+        margin: margin,
+        compress: false,
+      ),
+    );
 
 void main() {
   group('Given the kitchen-sink scene', () {
@@ -21,41 +26,59 @@ void main() {
       final bytes = await const PdfChartRenderer().renderDocument(scene);
 
       expect(latin1.decode(bytes.sublist(0, 5)), equals('%PDF-'));
-      expect(latin1.decode(bytes.sublist(bytes.length - 8)).trim(), endsWith('%%EOF'));
+      expect(
+        latin1.decode(bytes.sublist(bytes.length - 8)).trim(),
+        endsWith('%%EOF'),
+      );
       expect(bytes.length, inInclusiveRange(1000, 200000));
     });
 
-    test('when rendering then the page is the chart plus half-inch margins', () async {
-      final pdf = await _uncompressed(scene);
+    test(
+      'when rendering then the page is the chart plus half-inch margins',
+      () async {
+        final pdf = await _uncompressed(scene);
 
-      expect(pdf, contains('/MediaBox[0 0 472 372]'));
-    });
+        expect(pdf, contains('/MediaBox[0 0 472 372]'));
+      },
+    );
 
-    test('when rendering with a custom margin then the page size follows it', () async {
-      final pdf = await _uncompressed(scene, margin: 0);
+    test(
+      'when rendering with a custom margin then the page size follows it',
+      () async {
+        final pdf = await _uncompressed(scene, margin: 0);
 
-      expect(pdf, contains('/MediaBox[0 0 400 300]'));
-    });
+        expect(pdf, contains('/MediaBox[0 0 400 300]'));
+      },
+    );
 
-    test('when rendering then bold and italic text use the Helvetica variants', () async {
-      final pdf = await _uncompressed(scene);
+    test(
+      'when rendering then bold and italic text use the Helvetica variants',
+      () async {
+        final pdf = await _uncompressed(scene);
 
-      expect(pdf, contains('/Helvetica-Bold'));
-      expect(pdf, contains('/Helvetica-Oblique'));
-    });
+        expect(pdf, contains('/Helvetica-Bold'));
+        expect(pdf, contains('/Helvetica-Oblique'));
+      },
+    );
 
-    test('when rendering then clips, dashes and transparency are emitted', () async {
-      final pdf = await _uncompressed(scene);
+    test(
+      'when rendering then clips, dashes and transparency are emitted',
+      () async {
+        final pdf = await _uncompressed(scene);
 
-      expect(pdf, contains('W n'));
-      expect(pdf, contains('[6 3] 0 d'));
-      expect(pdf, contains('/ca 0.302'));
-      expect(pdf, contains('(Title & <more>)'));
-    });
+        expect(pdf, contains('W n'));
+        expect(pdf, contains('[6 3] 0 d'));
+        expect(pdf, contains('/ca 0.302'));
+        expect(pdf, contains('(Title & <more>)'));
+      },
+    );
 
     test('when compressing then the document is smaller', () async {
       final compressed = await const PdfChartRenderer().renderDocument(scene);
-      final plain = await const PdfChartRenderer().renderDocument(scene, compress: false);
+      final plain = await const PdfChartRenderer().renderDocument(
+        scene,
+        compress: false,
+      );
 
       expect(compressed.length, lessThan(plain.length));
     });
@@ -69,62 +92,77 @@ void main() {
       g = PdfPage(doc, pageFormat: PdfPageFormat.a4).getGraphics();
     });
 
-    test('when drawing with an offset and scale then it completes and saves', () async {
-      const PdfChartRenderer().draw(
-        RenderTestScenes.kitchenSink(),
-        g,
-        offset: const ChartPoint(50, 700),
-        scale: 0.75,
-      );
+    test(
+      'when drawing with an offset and scale then it completes and saves',
+      () async {
+        const PdfChartRenderer().draw(
+          RenderTestScenes.kitchenSink(),
+          g,
+          offset: const ChartPoint(50, 700),
+          scale: 0.75,
+        );
 
-      final pdf = latin1.decode(await doc.save());
-      expect(pdf, contains('0.75 0 0 -0.75 50 700 cm'));
-    });
+        final pdf = latin1.decode(await doc.save());
+        expect(pdf, contains('0.75 0 0 -0.75 50 700 cm'));
+      },
+    );
 
-    test('when drawing with explicit fonts then those fonts are used', () async {
-      final courier = PdfFont.courier(doc);
-      final courierBold = PdfFont.courierBold(doc);
+    test(
+      'when drawing with explicit fonts then those fonts are used',
+      () async {
+        final courier = PdfFont.courier(doc);
+        final courierBold = PdfFont.courierBold(doc);
 
-      const PdfChartRenderer().draw(
-        RenderTestScenes.scene([
-          const SText('plain', ChartPoint(10, 10), RenderTestScenes.text),
-          const SText('bold', ChartPoint(10, 30), TextStyleSpec(bold: true)),
-        ]),
-        g,
-        font: courier,
-        boldFont: courierBold,
-      );
+        const PdfChartRenderer().draw(
+          RenderTestScenes.scene([
+            const SText('plain', ChartPoint(10, 10), RenderTestScenes.text),
+            const SText('bold', ChartPoint(10, 30), TextStyleSpec(bold: true)),
+          ]),
+          g,
+          font: courier,
+          boldFont: courierBold,
+        );
 
-      final pdf = latin1.decode(await doc.save());
-      expect(pdf, contains('/Courier-Bold'));
-      expect(pdf, isNot(contains('/Helvetica-Bold')));
-    });
+        final pdf = latin1.decode(await doc.save());
+        expect(pdf, contains('/Courier-Bold'));
+        expect(pdf, isNot(contains('/Helvetica-Bold')));
+      },
+    );
 
-    test('when text has characters outside the font then drawing does not throw', () async {
-      const PdfChartRenderer().draw(
-        RenderTestScenes.scene([
-          const SText('→ 12 € ✓', ChartPoint(10, 10), RenderTestScenes.text),
-        ]),
-        g,
-      );
+    test(
+      'when text has characters outside the font then drawing does not throw',
+      () async {
+        const PdfChartRenderer().draw(
+          RenderTestScenes.scene([
+            const SText('→ 12 € ✓', ChartPoint(10, 10), RenderTestScenes.text),
+          ]),
+          g,
+        );
 
-      final pdf = latin1.decode(await doc.save());
-      expect(pdf, contains('(? 12 ? ?)'));
-    });
+        final pdf = latin1.decode(await doc.save());
+        expect(pdf, contains('(? 12 ? ?)'));
+      },
+    );
 
-    test('when a group has opacity then it multiplies into the children', () async {
-      const PdfChartRenderer().draw(
-        RenderTestScenes.scene([
-          SGroup([
-            SPolyline(Float64List.fromList([0, 0, 10, 10]), const SStroke(0x80000000, width: 2)),
-          ], opacity: 0.5),
-        ]),
-        g,
-      );
+    test(
+      'when a group has opacity then it multiplies into the children',
+      () async {
+        const PdfChartRenderer().draw(
+          RenderTestScenes.scene([
+            SGroup([
+              SPolyline(
+                Float64List.fromList([0, 0, 10, 10]),
+                const SStroke(0x80000000, width: 2),
+              ),
+            ], opacity: 0.5),
+          ]),
+          g,
+        );
 
-      final pdf = latin1.decode(await doc.save());
-      expect(pdf, contains('/CA 0.251'));
-    });
+        final pdf = latin1.decode(await doc.save());
+        expect(pdf, contains('/CA 0.251'));
+      },
+    );
 
     test('when text is rotated then a rotation matrix precedes it', () async {
       const PdfChartRenderer().draw(

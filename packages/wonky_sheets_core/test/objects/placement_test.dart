@@ -15,109 +15,139 @@ void main() {
       cols = testAxis(List.filled(10, null), defaultSize: 100, ns: 2);
     });
 
-    test('when placing a chart for B3:C10 then it sits right of the region at row 3 + 12 px', () {
-      final a = ObjectPlacement.defaultChartAnchor(
-        dataRegion: const GridRect(2, 1, 9, 2),
-        rows: rows,
-        columns: cols,
-      );
+    test(
+      'when placing a chart for B3:C10 then it sits right of the region at row 3 + 12 px',
+      () {
+        final a = ObjectPlacement.defaultChartAnchor(
+          dataRegion: const GridRect(2, 1, 9, 2),
+          rows: rows,
+          columns: cols,
+        );
 
-      expect(a.colId, cols.idAt(3));
-      expect(a.rowId, rows.idAt(2));
-      expect((a.dx, a.dy), (12, 0));
-      expect((a.width, a.height), (600, 371));
-      expect(a.lockAspect, isFalse);
-    });
+        expect(a.colId, cols.idAt(3));
+        expect(a.rowId, rows.idAt(2));
+        expect((a.dx, a.dy), (12, 0));
+        expect((a.width, a.height), (600, 371));
+        expect(a.lockAspect, isFalse);
+      },
+    );
 
-    test('when the next column is hidden then the first visible column is used', () {
-      cols.upsert(cols.idAt(3), cols.sortKeyAt(3), hidden: true);
+    test(
+      'when the next column is hidden then the first visible column is used',
+      () {
+        cols.upsert(cols.idAt(3), cols.sortKeyAt(3), hidden: true);
 
-      final a = ObjectPlacement.defaultChartAnchor(
-        dataRegion: const GridRect(2, 1, 9, 2),
-        rows: rows,
-        columns: cols,
-      );
+        final a = ObjectPlacement.defaultChartAnchor(
+          dataRegion: const GridRect(2, 1, 9, 2),
+          rows: rows,
+          columns: cols,
+        );
 
-      expect(a.colId, cols.idAt(4));
-      expect(a.dx, 12);
-    });
+        expect(a.colId, cols.idAt(4));
+        expect(a.dx, 12);
+      },
+    );
 
-    test('when the next column is narrower than 12 px then the position is still +12 px', () {
-      cols.upsert(cols.idAt(3), cols.sortKeyAt(3), size: 8);
+    test(
+      'when the next column is narrower than 12 px then the position is still +12 px',
+      () {
+        cols.upsert(cols.idAt(3), cols.sortKeyAt(3), size: 8);
 
-      final a = ObjectPlacement.defaultChartAnchor(
-        dataRegion: const GridRect(0, 0, 3, 2),
-        rows: rows,
-        columns: cols,
-      );
+        final a = ObjectPlacement.defaultChartAnchor(
+          dataRegion: const GridRect(0, 0, 3, 2),
+          rows: rows,
+          columns: cols,
+        );
 
-      expect(a.rectIn(rows, cols)!.left, 312);
-      expect(a.colId, cols.idAt(4));
-    });
+        expect(a.rectIn(rows, cols)!.left, 312);
+        expect(a.colId, cols.idAt(4));
+      },
+    );
 
-    test('when the region ends at the last column then it goes to the viewport + 24 px', () {
-      final a = ObjectPlacement.defaultChartAnchor(
-        dataRegion: const GridRect(0, 5, 3, 9),
-        rows: rows,
-        columns: cols,
-        viewport: const ChartRect(250, 42, 500, 300),
-      );
+    test(
+      'when the region ends at the last column then it goes to the viewport + 24 px',
+      () {
+        final a = ObjectPlacement.defaultChartAnchor(
+          dataRegion: const GridRect(0, 5, 3, 9),
+          rows: rows,
+          columns: cols,
+          viewport: const ChartRect(250, 42, 500, 300),
+        );
 
-      expect(a.rectIn(rows, cols), const ChartRect(274, 66, 600, 371));
-    });
+        expect(a.rectIn(rows, cols), const ChartRect(274, 66, 600, 371));
+      },
+    );
 
-    test('when the next column starts right of the viewport then it goes to the viewport', () {
-      final a = ObjectPlacement.defaultChartAnchor(
-        dataRegion: const GridRect(0, 0, 3, 4),
-        rows: rows,
-        columns: cols,
-        viewport: const ChartRect(0, 0, 500, 300),
-      );
+    test(
+      'when the next column starts right of the viewport then it goes to the viewport',
+      () {
+        final a = ObjectPlacement.defaultChartAnchor(
+          dataRegion: const GridRect(0, 0, 3, 4),
+          rows: rows,
+          columns: cols,
+          viewport: const ChartRect(0, 0, 500, 300),
+        );
 
-      expect(a.rectIn(rows, cols), const ChartRect(24, 24, 600, 371));
-    });
+        expect(a.rectIn(rows, cols), const ChartRect(24, 24, 600, 371));
+      },
+    );
 
-    test('when the next column is inside the viewport then the region rule applies', () {
-      final a = ObjectPlacement.defaultChartAnchor(
-        dataRegion: const GridRect(0, 0, 3, 3),
-        rows: rows,
-        columns: cols,
-        viewport: const ChartRect(0, 0, 500, 300),
-        width: 400,
-        height: 250,
-      );
+    test(
+      'when the next column is inside the viewport then the region rule applies',
+      () {
+        final a = ObjectPlacement.defaultChartAnchor(
+          dataRegion: const GridRect(0, 0, 3, 3),
+          rows: rows,
+          columns: cols,
+          viewport: const ChartRect(0, 0, 500, 300),
+          width: 400,
+          height: 250,
+        );
 
-      expect(a.rectIn(rows, cols), const ChartRect(412, 0, 400, 250));
-    });
+        expect(a.rectIn(rows, cols), const ChartRect(412, 0, 400, 250));
+      },
+    );
 
-    test('when pasting at C5 then the copy keeps size and lock with dx = dy = 0', () {
-      const copied = ObjectAnchor(width: 320, height: 240, lockAspect: true, dx: 9, dy: 9);
+    test(
+      'when pasting at C5 then the copy keeps size and lock with dx = dy = 0',
+      () {
+        const copied = ObjectAnchor(
+          width: 320,
+          height: 240,
+          lockAspect: true,
+          dx: 9,
+          dy: 9,
+        );
 
-      final a = ObjectPlacement.pasteAnchor(
-        row: 4,
-        col: 2,
-        copied: copied,
-        rows: rows,
-        columns: cols,
-      );
+        final a = ObjectPlacement.pasteAnchor(
+          row: 4,
+          col: 2,
+          copied: copied,
+          rows: rows,
+          columns: cols,
+        );
 
-      expect(a.rectIn(rows, cols), const ChartRect(200, 84, 320, 240));
-      expect(a.lockAspect, isTrue);
-    });
+        expect(a.rectIn(rows, cols), const ChartRect(200, 84, 320, 240));
+        expect(a.lockAspect, isTrue);
+      },
+    );
 
-    test('when inserting an image at B2 then it is locked and fits 600 × 400', () {
-      final a = ObjectPlacement.imageAnchor(
-        row: 1,
-        col: 1,
-        naturalWidth: 1200,
-        naturalHeight: 800,
-        rows: rows,
-        columns: cols,
-      );
+    test(
+      'when inserting an image at B2 then it is locked and fits 600 × 400',
+      () {
+        final a = ObjectPlacement.imageAnchor(
+          row: 1,
+          col: 1,
+          naturalWidth: 1200,
+          naturalHeight: 800,
+          rows: rows,
+          columns: cols,
+        );
 
-      expect(a.rectIn(rows, cols), const ChartRect(100, 21, 600, 400));
-      expect(a.lockAspect, isTrue);
-    });
+        expect(a.rectIn(rows, cols), const ChartRect(100, 21, 600, 400));
+        expect(a.lockAspect, isTrue);
+      },
+    );
   });
 
   group('Given image natural sizes', () {
@@ -129,11 +159,14 @@ void main() {
       (10, 10, 20, 20),
       (0, 100, 600, 400),
     ]) {
-      test('when computing the default size of $w × $h then it is $ew × $eh', () {
-        final s = ObjectPlacement.defaultImageSize(w, h);
+      test(
+        'when computing the default size of $w × $h then it is $ew × $eh',
+        () {
+          final s = ObjectPlacement.defaultImageSize(w, h);
 
-        expect((s.width, s.height), (ew, eh));
-      });
+          expect((s.width, s.height), (ew, eh));
+        },
+      );
     }
 
     for (final (w, h, ew, eh) in <(double, double, double, double)>[
@@ -168,18 +201,26 @@ void main() {
       );
     });
 
-    test('when storing the previous anchor then the spec keeps its other keys', () {
-      final spec = ChartSheetAnchors.withPreviousAnchor({'v': 1, 'title': 'Sales'}, previous);
+    test(
+      'when storing the previous anchor then the spec keeps its other keys',
+      () {
+        final spec = ChartSheetAnchors.withPreviousAnchor({
+          'v': 1,
+          'title': 'Sales',
+        }, previous);
 
-      expect(spec, containsPair('title', 'Sales'));
-      expect(ChartSheetAnchors.previousAnchorOf(spec), previous);
-    });
+        expect(spec, containsPair('title', 'Sales'));
+        expect(ChartSheetAnchors.previousAnchorOf(spec), previous);
+      },
+    );
 
     test('when removing the previous anchor then previousAnchorOf is null', () {
       final spec = ChartSheetAnchors.withPreviousAnchor({'v': 1}, previous);
 
       expect(
-        ChartSheetAnchors.previousAnchorOf(ChartSheetAnchors.withoutPreviousAnchor(spec)),
+        ChartSheetAnchors.previousAnchorOf(
+          ChartSheetAnchors.withoutPreviousAnchor(spec),
+        ),
         isNull,
       );
     });
@@ -192,50 +233,65 @@ void main() {
 
       expect(ChartSheetAnchors.previousAnchorOf(spec), previous);
       expect(
-        ChartSheetAnchors.previousAnchorOf(ChartSheetAnchors.withoutPreviousAnchor(spec)),
+        ChartSheetAnchors.previousAnchorOf(
+          ChartSheetAnchors.withoutPreviousAnchor(spec),
+        ),
         isNull,
       );
     });
 
-    test('when moving back to the original sheet then the previous anchor is restored', () {
-      final spec = ChartSheetAnchors.withPreviousAnchor({'v': 1}, previous);
+    test(
+      'when moving back to the original sheet then the previous anchor is restored',
+      () {
+        final spec = ChartSheetAnchors.withPreviousAnchor({'v': 1}, previous);
 
-      final a = ChartSheetAnchors.anchorForMoveToSheet(
-        spec: spec,
-        current: previous.toOwnSheet(),
-        rows: rows,
-        columns: cols,
-      );
+        final a = ChartSheetAnchors.anchorForMoveToSheet(
+          spec: spec,
+          current: previous.toOwnSheet(),
+          rows: rows,
+          columns: cols,
+        );
 
-      expect(a, previous);
-    });
+        expect(a, previous);
+      },
+    );
 
-    test('when moving to another sheet then it goes to A1 with the previous size', () {
-      final spec = ChartSheetAnchors.withPreviousAnchor({'v': 1}, previous);
-      final otherRows = testAxis(List.filled(10, null), ns: 3);
-      final otherCols = testAxis(List.filled(5, null), defaultSize: 100, ns: 4);
+    test(
+      'when moving to another sheet then it goes to A1 with the previous size',
+      () {
+        final spec = ChartSheetAnchors.withPreviousAnchor({'v': 1}, previous);
+        final otherRows = testAxis(List.filled(10, null), ns: 3);
+        final otherCols = testAxis(
+          List.filled(5, null),
+          defaultSize: 100,
+          ns: 4,
+        );
 
-      final a = ChartSheetAnchors.anchorForMoveToSheet(
-        spec: spec,
-        current: previous.toOwnSheet(),
-        rows: otherRows,
-        columns: otherCols,
-      );
+        final a = ChartSheetAnchors.anchorForMoveToSheet(
+          spec: spec,
+          current: previous.toOwnSheet(),
+          rows: otherRows,
+          columns: otherCols,
+        );
 
-      expect(a.rowId, otherRows.idAt(0));
-      expect(a.colId, otherCols.idAt(0));
-      expect((a.dx, a.dy, a.width, a.height), (0, 0, 500, 300));
-    });
+        expect(a.rowId, otherRows.idAt(0));
+        expect(a.colId, otherCols.idAt(0));
+        expect((a.dx, a.dy, a.width, a.height), (0, 0, 500, 300));
+      },
+    );
 
-    test('when no previous anchor is stored then it goes to A1 with the current size', () {
-      final a = ChartSheetAnchors.anchorForMoveToSheet(
-        spec: const {'v': 1},
-        current: const ObjectAnchor.ownSheetAnchor(),
-        rows: rows,
-        columns: cols,
-      );
+    test(
+      'when no previous anchor is stored then it goes to A1 with the current size',
+      () {
+        final a = ChartSheetAnchors.anchorForMoveToSheet(
+          spec: const {'v': 1},
+          current: const ObjectAnchor.ownSheetAnchor(),
+          rows: rows,
+          columns: cols,
+        );
 
-      expect(a.rectIn(rows, cols), const ChartRect(0, 0, 600, 371));
-    });
+        expect(a.rectIn(rows, cols), const ChartRect(0, 0, 600, 371));
+      },
+    );
   });
 }

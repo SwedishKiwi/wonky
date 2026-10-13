@@ -69,7 +69,8 @@ final class DecimalDigits {
   }
 
   /// Multiplies by 10^[n] (exact).
-  DecimalDigits shift(int n) => n == 0 || isZero ? this : DecimalDigits(digits, point + n);
+  DecimalDigits shift(int n) =>
+      n == 0 || isZero ? this : DecimalDigits(digits, point + n);
 
   /// Exponent of the leading digit (`floor(log10(value))`); 0 for zero.
   int get leadingExponent => isZero ? 0 : point - 1;
@@ -162,7 +163,9 @@ final class DecimalDigits {
 
   @override
   bool operator ==(Object other) =>
-      other is DecimalDigits && other.point == point && _listEq(other.digits, digits);
+      other is DecimalDigits &&
+      other.point == point &&
+      _listEq(other.digits, digits);
 
   static bool _listEq(List<int> a, List<int> b) {
     if (a.length != b.length) return false;

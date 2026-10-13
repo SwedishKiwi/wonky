@@ -38,13 +38,22 @@ void main() {
       (0.000123456, 2, '0.00012'),
     ];
     for (final (value, digits, expected) in cases) {
-      test('when formatting $value with $digits digits then the text is "$expected"', () {
-        expect(StatNumberFormat.format(value, significantDigits: digits), expected);
-      });
+      test(
+        'when formatting $value with $digits digits then the text is "$expected"',
+        () {
+          expect(
+            StatNumberFormat.format(value, significantDigits: digits),
+            expected,
+          );
+        },
+      );
     }
 
     test('when the digit count is out of range then it throws', () {
-      expect(() => StatNumberFormat.format(1, significantDigits: 0), throwsRangeError);
+      expect(
+        () => StatNumberFormat.format(1, significantDigits: 0),
+        throwsRangeError,
+      );
     });
   });
 }

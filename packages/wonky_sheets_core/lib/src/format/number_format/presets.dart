@@ -3,7 +3,12 @@ import 'locale_data.dart';
 /// An entry of the Format › Number menu (06 §5.1, 04 §3.5).
 final class NumberFormatMenuItem {
   /// Creates a menu item.
-  const NumberFormatMenuItem(this.id, this.label, this.stored, this.exampleValue);
+  const NumberFormatMenuItem(
+    this.id,
+    this.label,
+    this.stored,
+    this.exampleValue,
+  );
 
   /// Stable id (`number`, `currency`, …).
   final String id;
@@ -80,7 +85,12 @@ abstract final class NumberFormatPresets {
     NumberFormatMenuItem('accounting', 'Accounting', accounting, -1000.12),
     NumberFormatMenuItem('financial', 'Financial', financial, -1000.12),
     NumberFormatMenuItem('currency', 'Currency', currency, 1000.12),
-    NumberFormatMenuItem('currencyRounded', 'Currency rounded', currencyRounded, 1000.12),
+    NumberFormatMenuItem(
+      'currencyRounded',
+      'Currency rounded',
+      currencyRounded,
+      1000.12,
+    ),
     NumberFormatMenuItem('date', 'Date', date, 39717.66597222222),
     NumberFormatMenuItem('time', 'Time', time, 39717.66597222222),
     NumberFormatMenuItem('dateTime', 'Date time', dateTime, 39717.66597222222),
@@ -104,12 +114,16 @@ abstract final class NumberFormatPresets {
   };
 
   /// Whether [format] is a preset id.
-  static bool isPreset(String? format) => format != null && format.startsWith(prefix);
+  static bool isPreset(String? format) =>
+      format != null && format.startsWith(prefix);
 
   /// Whether [format] means Automatic (null, empty, `preset:automatic`,
   /// `General`).
   static bool isAutomatic(String? format) =>
-      format == null || format.isEmpty || format == automatic || format.toLowerCase() == 'general';
+      format == null ||
+      format.isEmpty ||
+      format == automatic ||
+      format.toLowerCase() == 'general';
 
   static final Map<(String, String), String?> _cache = {};
 
@@ -144,10 +158,15 @@ abstract final class NumberFormatPresets {
     return '[\$$sym-${lcid.toRadixString(16).toUpperCase()}]';
   }
 
-  static String _digits(int decimals) => decimals > 0 ? '#,##0.${'0' * decimals}' : '#,##0';
+  static String _digits(int decimals) =>
+      decimals > 0 ? '#,##0.${'0' * decimals}' : '#,##0';
 
   /// Currency pattern of [locale] (symbol position and spacing from CLDR).
-  static String currencyPattern(LocaleFormatData locale, {int decimals = 2, String? symbol}) {
+  static String currencyPattern(
+    LocaleFormatData locale, {
+    int decimals = 2,
+    String? symbol,
+  }) {
     final tok = currencyToken(locale, symbol: symbol);
     final num = _digits(decimals);
     final sp = locale.currencySpaced ? ' ' : '';
@@ -155,7 +174,11 @@ abstract final class NumberFormatPresets {
   }
 
   /// Accounting pattern of [locale].
-  static String accountingPattern(LocaleFormatData locale, {int? decimals, String? symbol}) {
+  static String accountingPattern(
+    LocaleFormatData locale, {
+    int? decimals,
+    String? symbol,
+  }) {
     final d = decimals ?? locale.currencyDecimals;
     final tok = currencyToken(locale, symbol: symbol);
     final num = _digits(d);
@@ -171,10 +194,12 @@ abstract final class NumberFormatPresets {
       icuToPattern(locale.shortDatePattern, fourDigitYear: true);
 
   /// Time preset: the locale's medium time (with seconds).
-  static String timePattern(LocaleFormatData locale) => icuToPattern(locale.mediumTimePattern);
+  static String timePattern(LocaleFormatData locale) =>
+      icuToPattern(locale.mediumTimePattern);
 
   /// Time without seconds (`h:mm AM/PM`, `HH:mm`).
-  static String shortTimePattern(LocaleFormatData locale) => icuToPattern(locale.shortTimePattern);
+  static String shortTimePattern(LocaleFormatData locale) =>
+      icuToPattern(locale.shortTimePattern);
 
   /// Date time preset: date preset + 24-hour medium time.
   static String dateTimePattern(LocaleFormatData locale) =>
@@ -182,7 +207,11 @@ abstract final class NumberFormatPresets {
 
   /// Converts an ICU/CLDR date pattern (`M/d/yy`, `h:mm:ss a`) to the
   /// number-format language.
-  static String icuToPattern(String icu, {bool fourDigitYear = false, bool force24h = false}) {
+  static String icuToPattern(
+    String icu, {
+    bool fourDigitYear = false,
+    bool force24h = false,
+  }) {
     final b = StringBuffer();
     var i = 0;
     while (i < icu.length) {
@@ -217,7 +246,9 @@ abstract final class NumberFormatPresets {
           j++;
         }
         final n = j - i;
-        b.write(_icuField(c, n, fourDigitYear: fourDigitYear, force24h: force24h));
+        b.write(
+          _icuField(c, n, fourDigitYear: fourDigitYear, force24h: force24h),
+        );
         i = j;
         continue;
       }
@@ -240,12 +271,19 @@ abstract final class NumberFormatPresets {
 
   static int _min2(int n) => n > 2 ? 2 : n;
 
-  static String _icuField(String c, int n, {required bool fourDigitYear, required bool force24h}) {
+  static String _icuField(
+    String c,
+    int n, {
+    required bool fourDigitYear,
+    required bool force24h,
+  }) {
     switch (c) {
       case 'y' || 'Y' || 'u':
         return n == 2 && !fourDigitYear ? 'yy' : 'yyyy';
       case 'M' || 'L':
-        return n <= 2 ? 'M' * n : (n == 3 ? 'MMM' : (n == 4 ? 'MMMM' : 'MMMMM'));
+        return n <= 2
+            ? 'M' * n
+            : (n == 3 ? 'MMM' : (n == 4 ? 'MMMM' : 'MMMMM'));
       case 'd':
         return 'd' * _min2(n);
       case 'E' || 'c' || 'e':

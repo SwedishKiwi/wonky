@@ -48,7 +48,9 @@ final class ModelEngineBinding {
     for (final e in batch.events) {
       switch (e) {
         case SpreadsheetChanged(:final columns):
-          if (columns.any(_calcColumns.contains)) engine.settingsChanged(view.settings);
+          if (columns.any(_calcColumns.contains)) {
+            engine.settingsChanged(view.settings);
+          }
         case SheetsChanged():
           engine.sheetsChanged();
           for (final id in e.sheetIds) {
@@ -57,15 +59,27 @@ final class ModelEngineBinding {
               _order.remove((id, Dimension.rows));
               _order.remove((id, Dimension.columns));
             } else {
-              _order.putIfAbsent((id, Dimension.rows), () => List.of(s.rows.ids));
-              _order.putIfAbsent((id, Dimension.columns), () => List.of(s.columns.ids));
+              _order.putIfAbsent((
+                id,
+                Dimension.rows,
+              ), () => List.of(s.rows.ids));
+              _order.putIfAbsent((
+                id,
+                Dimension.columns,
+              ), () => List.of(s.columns.ids));
             }
           }
         case StructureChanged(:final sheetId, :final dimension):
           if (e.order) _axis(sheetId, dimension);
-          if (e.sizes && dimension == Dimension.rows) engine.filterVisibilityChanged(sheetId);
+          if (e.sizes && dimension == Dimension.rows) {
+            engine.filterVisibilityChanged(sheetId);
+          }
           if (e.sizes && dimension == Dimension.columns) {
-            engine.axisChanged(sheetId, GridDimension.columns, const AxisChange.resized());
+            engine.axisChanged(
+              sheetId,
+              GridDimension.columns,
+              const AxisChange.resized(),
+            );
           }
         case CellsChanged(:final sheetId):
           final s = model.sheet(sheetId);
@@ -114,7 +128,11 @@ final class ModelEngineBinding {
     ];
     if (deleted.isNotEmpty) {
       final first = before.indexOf(deleted.first);
-      engine.axisChanged(sheetId, gd, AxisChange.deleted(first, deleted.length, deleted));
+      engine.axisChanged(
+        sheetId,
+        gd,
+        AxisChange.deleted(first, deleted.length, deleted),
+      );
     }
     if (inserted.isNotEmpty) {
       engine.axisChanged(
@@ -129,7 +147,9 @@ final class ModelEngineBinding {
       for (var i = 0; i < now.length; i++) {
         if (oldPos[now[i]] != i) moved.add(now[i]);
       }
-      if (moved.isNotEmpty) engine.axisChanged(sheetId, gd, AxisChange.moved(moved));
+      if (moved.isNotEmpty) {
+        engine.axisChanged(sheetId, gd, AxisChange.moved(moved));
+      }
     }
   }
 }

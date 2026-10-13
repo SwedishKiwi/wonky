@@ -56,19 +56,26 @@ abstract final class SheetsHtmlAttrs {
     if (stripped.contains('%')) return 3;
     if (RegExp(r'[eE][+-]').hasMatch(stripped)) return 8;
     final lower = stripped.toLowerCase();
-    final hasDate = RegExp('[dy]').hasMatch(lower) || RegExp('m{3,}').hasMatch(lower);
+    final hasDate =
+        RegExp('[dy]').hasMatch(lower) || RegExp('m{3,}').hasMatch(lower);
     final hasTime = RegExp('[hs]').hasMatch(lower) || lower.contains('am/pm');
     if (hasDate && hasTime) return 7;
     if (hasDate) return 5;
     if (hasTime) return 6;
-    if (p.contains(r'$') || p.contains('€') || p.contains('£') || p.contains('[\$')) return 4;
+    if (p.contains(r'$') ||
+        p.contains('€') ||
+        p.contains('£') ||
+        p.contains('[\$')) {
+      return 4;
+    }
     return 2;
   }
 
   /// en_US patterns of the locale-dependent presets (06 §5.1), used for the
   /// interchange attribute (other apps don't know `preset:*` ids).
   static const Map<String, String> presetPatterns = {
-    'preset:accounting': r'_("$"* #,##0.00_);_("$"* \(#,##0.00\);_("$"* "-"??_);_(@_)',
+    'preset:accounting':
+        r'_("$"* #,##0.00_);_("$"* \(#,##0.00\);_("$"* "-"??_);_(@_)',
     'preset:currency': r'"$"#,##0.00',
     'preset:currencyRounded': r'"$"#,##0',
     'preset:date': 'M/d/yyyy',

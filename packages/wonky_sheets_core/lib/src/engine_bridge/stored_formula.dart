@@ -91,7 +91,10 @@ abstract final class StoredFormula {
   /// Applies [f] to every string value starting with `=` inside a decoded JSON
   /// structure (CF `ruleJson`, DV `criteriaJson`, filter criteria, pivot
   /// specs). Returns the new structure and whether anything changed.
-  static (Object?, bool) mapJsonFormulas(Object? json, String? Function(String formula) f) {
+  static (Object?, bool) mapJsonFormulas(
+    Object? json,
+    String? Function(String formula) f,
+  ) {
     var changed = false;
     Object? walk(Object? v) {
       if (v is String) {

@@ -43,19 +43,27 @@ final class ModelCellSource implements CellSource {
   @override
   String? numberFormatAt(String sheetId, int row, int col) {
     final explicit =
-        model.explicitFormatChain(sheetId, row, col).toMap()['numberFormat'] as String?;
+        model.explicitFormatChain(sheetId, row, col).toMap()['numberFormat']
+            as String?;
     return explicit ?? _formatHint?.call(sheetId, row, col);
   }
 
   @override
-  bool isHidden(String sheetId, GridDimension dimension, int index, {bool includeFilter = true}) {
+  bool isHidden(
+    String sheetId,
+    GridDimension dimension,
+    int index, {
+    bool includeFilter = true,
+  }) {
     final s = model.sheet(sheetId);
     if (s == null) return false;
     final axis = dimension == GridDimension.rows ? s.rows : s.columns;
     if (index < 0 || index >= axis.length) return false;
     if (axis.isUserHidden(index)) return true;
     if (axis.isHiddenBy('groups', index)) return true;
-    if (includeFilter && (axis.isHiddenBy('filter', index) || axis.isHiddenBy('slicer', index))) {
+    if (includeFilter &&
+        (axis.isHiddenBy('filter', index) ||
+            axis.isHiddenBy('slicer', index))) {
       return true;
     }
     return false;

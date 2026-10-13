@@ -18,8 +18,12 @@ MutationPlan planShiftCells(PlanBuilder b, ShiftCells op) {
   final r = op.range.rect;
   b.checkRect(s, r);
   final used = s.usedRect(includeFormatOnly: true);
-  final lastCol = used == null ? r.right : (used.right > r.right ? used.right : r.right);
-  final lastRow = used == null ? r.bottom : (used.bottom > r.bottom ? used.bottom : r.bottom);
+  final lastCol = used == null
+      ? r.right
+      : (used.right > r.right ? used.right : r.right);
+  final lastRow = used == null
+      ? r.bottom
+      : (used.bottom > r.bottom ? used.bottom : r.bottom);
   // Merges crossing the strip boundary are refused.
   GridRect strip;
   switch (op.direction) {
@@ -42,11 +46,17 @@ MutationPlan planShiftCells(PlanBuilder b, ShiftCells op) {
     case ShiftDirection.right:
       final width = r.colCount;
       if (strip.right >= r.left) {
-        applyMoveRange(b, MoveRange(ResolvedRange(s.id, strip), s.id, r.top, r.left + width));
+        applyMoveRange(
+          b,
+          MoveRange(ResolvedRange(s.id, strip), s.id, r.top, r.left + width),
+        );
       }
     case ShiftDirection.down:
       final height = r.rowCount;
-      applyMoveRange(b, MoveRange(ResolvedRange(s.id, strip), s.id, r.top + height, r.left));
+      applyMoveRange(
+        b,
+        MoveRange(ResolvedRange(s.id, strip), s.id, r.top + height, r.left),
+      );
     case ShiftDirection.left:
       for (final (_, _, rowId, colId, _) in b.cellsIn(s, r).toList()) {
         b.deleteCell(s.id, rowId, colId);
@@ -55,7 +65,10 @@ MutationPlan planShiftCells(PlanBuilder b, ShiftCells op) {
         applyMoveRange(
           b,
           MoveRange(
-            ResolvedRange(s.id, GridRect(r.top, r.right + 1, r.bottom, lastCol)),
+            ResolvedRange(
+              s.id,
+              GridRect(r.top, r.right + 1, r.bottom, lastCol),
+            ),
             s.id,
             r.top,
             r.left,
@@ -70,7 +83,10 @@ MutationPlan planShiftCells(PlanBuilder b, ShiftCells op) {
         applyMoveRange(
           b,
           MoveRange(
-            ResolvedRange(s.id, GridRect(r.bottom + 1, r.left, lastRow, r.right)),
+            ResolvedRange(
+              s.id,
+              GridRect(r.bottom + 1, r.left, lastRow, r.right),
+            ),
             s.id,
             r.top,
             r.left,
@@ -107,7 +123,8 @@ MutationPlan planRandomizeRange(PlanBuilder b, RandomizeRange op) {
   return b.build('Randomize range', kinds: [ChangeKinds.values]);
 }
 
-Never _pending(String what) => throw PlanException('unsupported', '$what is not available yet');
+Never _pending(String what) =>
+    throw PlanException('unsupported', '$what is not available yet');
 
 /// [SortRange].
 MutationPlan planSortRange(PlanBuilder b, SortRange op) => _pending('Sort');
@@ -117,19 +134,24 @@ MutationPlan planRemoveDuplicates(PlanBuilder b, RemoveDuplicates op) =>
     _pending('Remove duplicates');
 
 /// [TrimWhitespace].
-MutationPlan planTrimWhitespace(PlanBuilder b, TrimWhitespace op) => _pending('Trim whitespace');
+MutationPlan planTrimWhitespace(PlanBuilder b, TrimWhitespace op) =>
+    _pending('Trim whitespace');
 
 /// [SplitTextToColumns].
-MutationPlan planSplitTextToColumns(PlanBuilder b, SplitTextToColumns op) => _pending('Split text');
+MutationPlan planSplitTextToColumns(PlanBuilder b, SplitTextToColumns op) =>
+    _pending('Split text');
 
 /// [FindReplace].
-MutationPlan planFindReplace(PlanBuilder b, FindReplace op) => _pending('Find and replace');
+MutationPlan planFindReplace(PlanBuilder b, FindReplace op) =>
+    _pending('Find and replace');
 
 /// [FillSeries].
 MutationPlan planFillSeries(PlanBuilder b, FillSeries op) => _pending('Fill');
 
 /// [AdjustDecimals].
-MutationPlan planAdjustDecimals(PlanBuilder b, AdjustDecimals op) => _pending('Decimals');
+MutationPlan planAdjustDecimals(PlanBuilder b, AdjustDecimals op) =>
+    _pending('Decimals');
 
 /// [GroupOperation].
-MutationPlan planGroupOperation(PlanBuilder b, GroupOperation op) => _pending('Groups');
+MutationPlan planGroupOperation(PlanBuilder b, GroupOperation op) =>
+    _pending('Groups');

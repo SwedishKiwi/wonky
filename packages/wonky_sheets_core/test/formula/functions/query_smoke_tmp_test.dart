@@ -19,7 +19,9 @@ void main() {
     ]) {
       try {
         final r = QueryParser.parse(q);
-        print('OK $q -> sel=${r.select} where=${r.where} gb=${r.groupBy} pv=${r.pivot} ob=${r.orderBy.map((o) => '${o.expr}${o.descending}')} lim=${r.limit} off=${r.offset} lab=${r.labels} fmt=${r.formats} opt=${r.options}');
+        print(
+          'OK $q -> sel=${r.select} where=${r.where} gb=${r.groupBy} pv=${r.pivot} ob=${r.orderBy.map((o) => '${o.expr}${o.descending}')} lim=${r.limit} off=${r.offset} lab=${r.labels} fmt=${r.formats} opt=${r.options}',
+        );
       } on QueryException catch (e) {
         print('ERR $q -> ${e.message}');
       }

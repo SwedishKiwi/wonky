@@ -77,7 +77,12 @@ final class CsvChunk {
 /// Result of [CsvImporter.import].
 final class CsvImportResult {
   /// Creates a result.
-  const CsvImportResult(this.document, this.encoding, this.encodingReason, this.delimiter);
+  const CsvImportResult(
+    this.document,
+    this.encoding,
+    this.encodingReason,
+    this.delimiter,
+  );
 
   final WorkbookDocument document;
   final TextEncoding encoding;
@@ -90,15 +95,26 @@ final class CsvImportResult {
 /// CSV/TSV → IR (11 §4).
 abstract final class CsvImporter {
   /// Imports complete [bytes] into a one-sheet document.
-  static CsvImportResult import(List<int> bytes, [CsvImportOptions options = const CsvImportOptions()]) {
+  static CsvImportResult import(
+    List<int> bytes, [
+    CsvImportOptions options = const CsvImportOptions(),
+  ]) {
     final s = CsvStreamImporter(options, accumulate: true);
     s.add(bytes);
     s.close();
-    return CsvImportResult(s.document, s.encoding!, s.encodingReason!, s.delimiter!);
+    return CsvImportResult(
+      s.document,
+      s.encoding!,
+      s.encodingReason!,
+      s.delimiter!,
+    );
   }
 
   /// Imports text (already decoded).
-  static WorkbookDocument importText(String text, [CsvImportOptions options = const CsvImportOptions()]) {
+  static WorkbookDocument importText(
+    String text, [
+    CsvImportOptions options = const CsvImportOptions(),
+  ]) {
     final s = CsvStreamImporter(options, accumulate: true);
     s.addText(text);
     s.close();
@@ -107,7 +123,10 @@ abstract final class CsvImporter {
 
   /// Streams chunks of IR rows from a byte stream. The importer's document
   /// (formats, warnings, column formats) is complete after the stream ends.
-  static Stream<CsvChunk> stream(Stream<List<int>> bytes, CsvStreamImporter importer) async* {
+  static Stream<CsvChunk> stream(
+    Stream<List<int>> bytes,
+    CsvStreamImporter importer,
+  ) async* {
     await for (final b in bytes) {
       for (final c in importer.add(b)) {
         yield c;
@@ -119,15 +138,27 @@ abstract final class CsvImporter {
   }
 
   /// The first [rows] records of [bytes] as raw fields (dialog preview).
-  static List<List<String>> preview(List<int> bytes, CsvImportOptions options, {int rows = 20}) {
+  static List<List<String>> preview(
+    List<int> bytes,
+    CsvImportOptions options, {
+    int rows = 20,
+  }) {
     final head = bytes.length > 65536 ? bytes.sublist(0, 65536) : bytes;
     final enc = options.encoding ?? EncodingSniffer.sniff(head).encoding;
     final text = enc.decode(head);
-    final d = options.delimiter ??
-        CsvDelimiterDetector.detect(text, fileName: options.fileName, decimalCommaLocale: FormulaDialect.usesDecimalComma(options.locale)).delimiter;
+    final d =
+        options.delimiter ??
+        CsvDelimiterDetector.detect(
+          text,
+          fileName: options.fileName,
+          decimalCommaLocale: FormulaDialect.usesDecimalComma(options.locale),
+        ).delimiter;
     final sep = CsvDelimiterDetector.detect(text).sepLineLength;
     final p = CsvParser(delimiter: d, maxFieldLength: options.maxFieldLength);
-    final out = [...p.feed(text.substring(options.delimiter == null ? sep : 0)), if (head.length == bytes.length) ...p.close()];
+    final out = [
+      ...p.feed(text.substring(options.delimiter == null ? sep : 0)),
+      if (head.length == bytes.length) ...p.close(),
+    ];
     return [for (final r in out.take(rows)) r.fields];
   }
 }
@@ -139,7 +170,10 @@ final class CsvStreamImporter {
   CsvStreamImporter(this.options, {this.accumulate = false}) {
     final name = options.sheetName ?? _sheetNameOf(options.fileName);
     sheet = IrSheet(name);
-    document = WorkbookDocument(title: _titleOf(options.fileName), locale: options.locale)..sheets.add(sheet);
+    document = WorkbookDocument(
+      title: _titleOf(options.fileName),
+      locale: options.locale,
+    )..sheets.add(sheet);
     _dialect = FormulaDialect.forLocale(options.locale);
   }
 
@@ -197,7 +231,9 @@ final class CsvStreamImporter {
   List<CsvChunk> close() {
     final out = <CsvChunk>[];
     if (!_headDone) {
-      out.addAll(_textMode ? _startText(_textHead) : _startFromHead(atEnd: true));
+      out.addAll(
+        _textMode ? _startText(_textHead) : _startFromHead(atEnd: true),
+      );
     } else if (!_textMode) {
       out.addAll(_addText(_decoder!.close()));
     }
@@ -252,7 +288,10 @@ final class CsvStreamImporter {
       delimiter = detected.delimiter;
       if (detected.fromSepLine) t = t.substring(detected.sepLineLength);
     }
-    _parser = CsvParser(delimiter: delimiter!, maxFieldLength: options.maxFieldLength);
+    _parser = CsvParser(
+      delimiter: delimiter!,
+      maxFieldLength: options.maxFieldLength,
+    );
     return _addText(t);
   }
 
@@ -289,7 +328,11 @@ final class CsvStreamImporter {
 
   IrCell? _convert(String field, int row, int col) {
     if (!options.convert) return IrCell(value: IrText(field));
-    final parsed = InputParser.instance.parse(field, locale: options.locale, today: options.today);
+    final parsed = InputParser.instance.parse(
+      field,
+      locale: options.locale,
+      today: options.today,
+    );
     if (parsed.isClear) return null;
     _colNonEmpty[col] = (_colNonEmpty[col] ?? 0) + 1;
     if (parsed.formulaA1 != null) {
@@ -317,7 +360,9 @@ final class CsvStreamImporter {
     if (nf != null) {
       final m = _colFormats.putIfAbsent(col, () => {});
       m[nf] = (m[nf] ?? 0) + 1;
-      format = _formatIndex[nf] ??= document.formats.internAttrs(CellFormat({FormatAttr.numberFormat: nf}));
+      format = _formatIndex[nf] ??= document.formats.internAttrs(
+        CellFormat({FormatAttr.numberFormat: nf}),
+      );
     }
     return IrCell(value: value, format: format, link: parsed.autoLinkUrl);
   }
@@ -332,7 +377,11 @@ final class CsvStreamImporter {
       if (u == 'IMAGE') {
         for (var j = i + 1; j < tokens.length && j < i + 4; j++) {
           final a = tokens[j];
-          if (a.kind == FTok.string && RegExp(r'^"\s*(https?|ftp):', caseSensitive: false).hasMatch(a.text)) {
+          if (a.kind == FTok.string &&
+              RegExp(
+                r'^"\s*(https?|ftp):',
+                caseSensitive: false,
+              ).hasMatch(a.text)) {
             return true;
           }
         }
@@ -355,12 +404,16 @@ final class CsvStreamImporter {
     if (columnFormats.isEmpty) return;
     for (final e in columnFormats.entries) {
       final idx = _formatIndex[e.value]!;
-      sheet.columns[e.key] = (sheet.columns[e.key] ?? const IrDim()).copyWith(format: idx);
+      sheet.columns[e.key] = (sheet.columns[e.key] ?? const IrDim()).copyWith(
+        format: idx,
+      );
     }
     if (!accumulate) return;
     for (final (r, c, cell) in sheet.cells.entries.toList()) {
       final nf = columnFormats[c];
-      if (nf != null && cell.format == _formatIndex[nf]) sheet.cells.set(r, c, cell.copyWith(format: 0));
+      if (nf != null && cell.format == _formatIndex[nf]) {
+        sheet.cells.set(r, c, cell.copyWith(format: 0));
+      }
     }
   }
 
@@ -373,7 +426,9 @@ final class CsvStreamImporter {
 
   static String _sheetNameOf(String? fileName) {
     if (fileName == null || fileName.isEmpty) return 'Sheet1';
-    final t = _titleOf(fileName).replaceAll(RegExp(r"[\[\]\*\?/\\:]"), ' ').trim();
+    final t = _titleOf(
+      fileName,
+    ).replaceAll(RegExp(r"[\[\]\*\?/\\:]"), ' ').trim();
     if (t.isEmpty) return 'Sheet1';
     return t.length > 100 ? t.substring(0, 100) : t;
   }

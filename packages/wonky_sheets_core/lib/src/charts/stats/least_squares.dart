@@ -87,7 +87,11 @@ final class LeastSquaresFit {
   /// Evaluates the fitted model for one row of regressor values ([xs] has one value per column).
   double predict(List<double> xs) {
     if (xs.length != coefficients.length) {
-      throw ArgumentError.value(xs.length, 'xs', 'expected ${coefficients.length} values');
+      throw ArgumentError.value(
+        xs.length,
+        'xs',
+        'expected ${coefficients.length} values',
+      );
     }
     var sum = intercept;
     for (var j = 0; j < coefficients.length; j++) {
@@ -114,7 +118,11 @@ abstract final class LeastSquares {
   /// non-finite are skipped. Returns null when no usable row remains. With [intercept] the
   /// columns and y are centered before the QR decomposition (better conditioning, and constant
   /// columns become exactly dependent on the intercept).
-  static LeastSquaresFit? fit(List<Float64List> xColumns, Float64List y, {bool intercept = true}) {
+  static LeastSquaresFit? fit(
+    List<Float64List> xColumns,
+    Float64List y, {
+    bool intercept = true,
+  }) {
     final total = y.length;
     final k = xColumns.length;
     for (var j = 0; j < k; j++) {
@@ -302,7 +310,13 @@ final class _PivotedQr {
   final Int32List permutation;
 
   /// [a] is column-major `n × p` and is overwritten, as is [b].
-  static _PivotedQr solve(Float64List a, int n, int p, Float64List b, int maxRank) {
+  static _PivotedQr solve(
+    Float64List a,
+    int n,
+    int p,
+    Float64List b,
+    int maxRank,
+  ) {
     final perm = Int32List(p);
     final orig = Float64List(p);
     for (var j = 0; j < p; j++) {
@@ -343,7 +357,8 @@ final class _PivotedQr {
       final kk = k * n + k;
       final akk = a[kk];
       final alpha = akk > 0 ? -bestNorm : bestNorm;
-      a[kk] = akk - alpha; // Householder vector v lives in column k, rows k..n-1.
+      a[kk] =
+          akk - alpha; // Householder vector v lives in column k, rows k..n-1.
       final tau = alpha * (alpha - akk); // vᵀv / 2
       for (var j = k + 1; j < p; j++) {
         _reflect(a, k * n, a, j * n, k, n, tau);
@@ -381,7 +396,15 @@ final class _PivotedQr {
   }
 
   /// Applies `I − v·vᵀ/tau` (v = `v[vOff+k ..]`) to `x[xOff+k ..]`.
-  static void _reflect(Float64List v, int vOff, Float64List x, int xOff, int k, int n, double tau) {
+  static void _reflect(
+    Float64List v,
+    int vOff,
+    Float64List x,
+    int xOff,
+    int k,
+    int n,
+    double tau,
+  ) {
     var s = 0.0;
     for (var i = k; i < n; i++) {
       s += v[vOff + i] * x[xOff + i];

@@ -36,9 +36,7 @@ void main() {
   ];
 
   // Contrast failures of the shared theme (wonky_ui), not of the screens.
-  // TODO(wonky_ui): ShadZincColorScheme.light's destructiveForeground on
-  // destructive (the "Delete account" button) is 4.01:1; needs >= 4.5:1.
-  const themeContrastIssues = {'account/light'};
+  const themeContrastIssues = <String>{};
 
   for (final b in Brightness.values) {
     for (final section in sections) {

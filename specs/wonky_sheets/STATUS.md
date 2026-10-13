@@ -27,6 +27,11 @@ into a running UI yet. Use this file to pick the work back up. The plan to follo
 | Scripting | `packages/wonky_sheets_script/` | **Not started.** |
 | MCP / AI for Sheets | — | **Not started.** |
 
+## Housekeeping done while paused
+
+- `vector_math` added as a declared dependency of `wonky_sheets_core` (it was imported by the PDF print renderer without being declared).
+- All Sheets packages formatted, with `dart fix` applied (curly braces) and the remaining lints fixed. `dart analyze` reports no issues; the repository-wide dependency check (`tool/check_dependencies.dart`) passes.
+
 ## Test status (`dart test -x slow` in `packages/wonky_sheets_core`)
 
 2,956 tests pass and 5 fail. All five failures are in `test/formula/recalc/engine_test.dart`:

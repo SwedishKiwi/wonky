@@ -29,7 +29,9 @@ final class HeaderFooterContext {
 /// Header/footer token rendering: `{page}`, `{pages}`, `{title}`, `{sheet}`,
 /// `{date}`, `{time}`; unknown tokens are kept verbatim.
 abstract final class HeaderFooterTokens {
-  static final RegExp _token = RegExp(r'\{(page|pages|title|sheet|date|time)\}');
+  static final RegExp _token = RegExp(
+    r'\{(page|pages|title|sheet|date|time)\}',
+  );
 
   /// Renders [template].
   static String render(String template, HeaderFooterContext ctx) {
@@ -56,7 +58,10 @@ abstract final class PrintDateTime {
 
   /// UTC offset of [timeZone] (IANA) at [utc]; unknown zones → zero.
   static Duration offset(String? timeZone, DateTime utc) {
-    if (timeZone == null || timeZone.isEmpty || timeZone == 'UTC' || timeZone == 'Etc/UTC') {
+    if (timeZone == null ||
+        timeZone.isEmpty ||
+        timeZone == 'UTC' ||
+        timeZone == 'Etc/UTC') {
       return Duration.zero;
     }
     if (!_tzReady) {

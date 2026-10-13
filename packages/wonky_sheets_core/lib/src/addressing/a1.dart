@@ -95,24 +95,34 @@ final class A1Area {
   }
 
   /// Whole columns `A:C`.
-  const A1Area.columns(int c1, int c2, {this.sheet, this.absCol1 = false, this.absCol2 = false})
-    : kind = A1Kind.columns,
-      row1 = null,
-      row2 = null,
-      col1 = c1,
-      col2 = c2,
-      absRow1 = false,
-      absRow2 = false;
+  const A1Area.columns(
+    int c1,
+    int c2, {
+    this.sheet,
+    this.absCol1 = false,
+    this.absCol2 = false,
+  }) : kind = A1Kind.columns,
+       row1 = null,
+       row2 = null,
+       col1 = c1,
+       col2 = c2,
+       absRow1 = false,
+       absRow2 = false;
 
   /// Whole rows `1:3`.
-  const A1Area.rows(int r1, int r2, {this.sheet, this.absRow1 = false, this.absRow2 = false})
-    : kind = A1Kind.rows,
-      col1 = null,
-      col2 = null,
-      row1 = r1,
-      row2 = r2,
-      absCol1 = false,
-      absCol2 = false;
+  const A1Area.rows(
+    int r1,
+    int r2, {
+    this.sheet,
+    this.absRow1 = false,
+    this.absRow2 = false,
+  }) : kind = A1Kind.rows,
+       col1 = null,
+       col2 = null,
+       row1 = r1,
+       row2 = r2,
+       absCol1 = false,
+       absCol2 = false;
 
   /// Generic constructor used by parsers.
   const A1Area.raw(
@@ -167,7 +177,8 @@ final class A1Area {
 
   /// The area part without sheet prefix.
   String formatArea() {
-    String col(int c, bool abs) => '${abs ? r'$' : ''}${ColumnLetters.fromIndex(c)}';
+    String col(int c, bool abs) =>
+        '${abs ? r'$' : ''}${ColumnLetters.fromIndex(c)}';
     String row(int r, bool abs) => '${abs ? r'$' : ''}${r + 1}';
     switch (kind) {
       case A1Kind.cell:
@@ -241,7 +252,9 @@ final class A1Match {
 /// and address parsing.
 abstract final class A1Scanner {
   static bool _isIdentStart(int c) =>
-      ColumnLetters.isLetter(c) || c == 0x5f || c >= 0xc0 && c != 0x27e6 && c != 0x27e7;
+      ColumnLetters.isLetter(c) ||
+      c == 0x5f ||
+      c >= 0xc0 && c != 0x27e6 && c != 0x27e7;
   static bool _isIdentPart(int c) =>
       _isIdentStart(c) || ColumnLetters.isDigit(c) || c == 0x2e;
 
@@ -276,7 +289,10 @@ abstract final class A1Scanner {
     var j = i + 1;
     while (j < s.length) {
       final d = s.codeUnitAt(j);
-      if (ColumnLetters.isLetter(d) || ColumnLetters.isDigit(d) || d == 0x5f || d >= 0xc0) {
+      if (ColumnLetters.isLetter(d) ||
+          ColumnLetters.isDigit(d) ||
+          d == 0x5f ||
+          d >= 0xc0) {
         j++;
       } else {
         break;
@@ -297,7 +313,9 @@ abstract final class A1Scanner {
       j++;
     }
     final start = j;
-    while (j < s.length && ColumnLetters.isLetter(s.codeUnitAt(j)) && j - start < 4) {
+    while (j < s.length &&
+        ColumnLetters.isLetter(s.codeUnitAt(j)) &&
+        j - start < 4) {
       j++;
     }
     final len = j - start;
@@ -314,11 +332,15 @@ abstract final class A1Scanner {
       j++;
     }
     final start = j;
-    while (j < s.length && ColumnLetters.isDigit(s.codeUnitAt(j)) && j - start < 9) {
+    while (j < s.length &&
+        ColumnLetters.isDigit(s.codeUnitAt(j)) &&
+        j - start < 9) {
       j++;
     }
     if (j == start) return null;
-    if (j < s.length && ColumnLetters.isDigit(s.codeUnitAt(j))) return null; // too long
+    if (j < s.length && ColumnLetters.isDigit(s.codeUnitAt(j))) {
+      return null; // too long
+    }
     if (s.codeUnitAt(start) == 0x30) return null; // leading zero
     final n = int.parse(s.substring(start, j));
     if (n < 1 || n > ColumnLetters.maxRows) return null;

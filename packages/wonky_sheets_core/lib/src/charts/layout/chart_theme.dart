@@ -6,13 +6,25 @@ import '../scene/scene.dart';
 /// App design tokens the editor theme follows (08 §6.4): `card`, `foreground`, `border`.
 final class ChartUiTokens {
   /// Creates tokens (ARGB).
-  const ChartUiTokens({required this.card, required this.foreground, required this.border});
+  const ChartUiTokens({
+    required this.card,
+    required this.foreground,
+    required this.border,
+  });
 
   /// Light defaults (wonky_ui light palette).
-  static const light = ChartUiTokens(card: 0xFFFFFFFF, foreground: 0xFF0A0A0A, border: 0xFFE4E4E7);
+  static const light = ChartUiTokens(
+    card: 0xFFFFFFFF,
+    foreground: 0xFF0A0A0A,
+    border: 0xFFE4E4E7,
+  );
 
   /// Dark defaults (wonky_ui dark palette).
-  static const dark = ChartUiTokens(card: 0xFF18181B, foreground: 0xFFFAFAFA, border: 0xFF3F3F46);
+  static const dark = ChartUiTokens(
+    card: 0xFF18181B,
+    foreground: 0xFFFAFAFA,
+    border: 0xFF3F3F46,
+  );
 
   final int card;
   final int foreground;
@@ -88,7 +100,9 @@ final class ChartTheme {
   /// below [minContrast] against it are darkened (light backgrounds) or lightened (dark ones)
   /// until they reach it.
   static List<int> paletteOf(SpreadsheetTheme theme, {int? background}) {
-    final accents = [for (final a in theme.accents) theme.resolveArgb(a) ?? 0xFF4285F4];
+    final accents = [
+      for (final a in theme.accents) theme.resolveArgb(a) ?? 0xFF4285F4,
+    ];
     final raw = [
       ...accents,
       for (final a in accents) Argb.lerp(a, 0xFFFFFFFF, 0.4),
@@ -100,7 +114,11 @@ final class ChartTheme {
 
   /// [color] mixed towards black or white (away from [background]) until its contrast reaches
   /// [min].
-  static int ensureContrast(int color, int background, {double min = minContrast}) {
+  static int ensureContrast(
+    int color,
+    int background, {
+    double min = minContrast,
+  }) {
     if (contrast(color, background) >= min) return color;
     final target = _luminance(background) > 0.4 ? 0xFF000000 : 0xFFFFFFFF;
     for (var t = 0.05; t <= 1.0001; t += 0.05) {
@@ -155,10 +173,14 @@ final class ChartTheme {
   static double _luminance(int c) {
     double ch(int v) {
       final s = v / 255;
-      return s <= 0.03928 ? s / 12.92 : math.pow((s + 0.055) / 1.055, 2.4).toDouble();
+      return s <= 0.03928
+          ? s / 12.92
+          : math.pow((s + 0.055) / 1.055, 2.4).toDouble();
     }
 
-    return 0.2126 * ch(Argb.red(c)) + 0.7152 * ch(Argb.green(c)) + 0.0722 * ch(Argb.blue(c));
+    return 0.2126 * ch(Argb.red(c)) +
+        0.7152 * ch(Argb.green(c)) +
+        0.0722 * ch(Argb.blue(c));
   }
 
   /// WCAG contrast of two ARGB colors.

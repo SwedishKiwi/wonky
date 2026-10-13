@@ -10,7 +10,15 @@ import 'ooxml.dart';
 /// A font of `styles.xml`.
 final class XlsxFont {
   /// Creates a font.
-  const XlsxFont({this.name, this.size, this.bold = false, this.italic = false, this.underline = false, this.strike = false, this.color});
+  const XlsxFont({
+    this.name,
+    this.size,
+    this.bold = false,
+    this.italic = false,
+    this.underline = false,
+    this.strike = false,
+    this.color,
+  });
 
   final String? name;
   final double? size;
@@ -49,22 +57,27 @@ final class XlsxStylesReader {
       xfs.add(XlsxXf(IrFormat.empty, null, const []));
       return;
     }
-    for (final nf in root.child('numFmts')?.elems('numFmt') ?? const <XmlElement>[]) {
+    for (final nf
+        in root.child('numFmts')?.elems('numFmt') ?? const <XmlElement>[]) {
       final id = nf.intAttr('numFmtId');
       final code = nf.attr('formatCode');
       if (id != null && code != null) customNumFmts[id] = code;
     }
-    for (final f in root.child('fonts')?.elems('font') ?? const <XmlElement>[]) {
+    for (final f
+        in root.child('fonts')?.elems('font') ?? const <XmlElement>[]) {
       fonts.add(_font(f));
     }
-    for (final f in root.child('fills')?.elems('fill') ?? const <XmlElement>[]) {
+    for (final f
+        in root.child('fills')?.elems('fill') ?? const <XmlElement>[]) {
       fills.add(_fill(f));
     }
-    for (final b in root.child('borders')?.elems('border') ?? const <XmlElement>[]) {
+    for (final b
+        in root.child('borders')?.elems('border') ?? const <XmlElement>[]) {
       borders.add(_border(b));
     }
     defaultFont = fonts.isEmpty ? null : fonts.first;
-    for (final xf in root.child('cellXfs')?.elems('xf') ?? const <XmlElement>[]) {
+    for (final xf
+        in root.child('cellXfs')?.elems('xf') ?? const <XmlElement>[]) {
       xfs.add(_xf(xf));
     }
     if (xfs.isEmpty) xfs.add(XlsxXf(IrFormat.empty, null, const []));
@@ -86,11 +99,19 @@ final class XlsxStylesReader {
   final List<String> numberFormatWarnings = [];
 
   /// The xf at [index] (out of range → default).
-  XlsxXf xf(int? index) => index != null && index >= 0 && index < xfs.length ? xfs[index] : xfs.first;
+  XlsxXf xf(int? index) => index != null && index >= 0 && index < xfs.length
+      ? xfs[index]
+      : xfs.first;
 
   String? _color(XmlElement? c) => c == null
       ? null
-      : colors.resolve(rgb: c.attr('rgb'), theme: c.attr('theme'), indexed: c.attr('indexed'), auto: c.attr('auto'), tint: c.attr('tint'));
+      : colors.resolve(
+          rgb: c.attr('rgb'),
+          theme: c.attr('theme'),
+          indexed: c.attr('indexed'),
+          auto: c.attr('auto'),
+          tint: c.attr('tint'),
+        );
 
   XlsxFont _font(XmlElement f) {
     bool flag(String n) {
@@ -135,19 +156,29 @@ final class XlsxStylesReader {
   (String?, List<(String, String)>) _fill(XmlElement f) {
     final p = f.child('patternFill');
     if (p != null) {
-      final type = p.attr('patternType') ?? (p.child('fgColor') != null ? 'solid' : 'none');
+      final type =
+          p.attr('patternType') ??
+          (p.child('fgColor') != null ? 'solid' : 'none');
       if (type == 'none') return (null, const []);
       final fg = _color(p.child('fgColor'));
       final bg = _color(p.child('bgColor'));
       if (type == 'solid') return (fg ?? bg ?? '#000000', const []);
       final density = _patternDensity[type] ?? 0.5;
       final c = density >= 0.5 ? (fg ?? '#000000') : bg;
-      return (c, const [('patternFill', 'Pattern fill approximated as solid color')]);
+      return (
+        c,
+        const [('patternFill', 'Pattern fill approximated as solid color')],
+      );
     }
     final g = f.child('gradientFill');
     if (g != null) {
       final stop = g.elems('stop').firstOrNull;
-      return (_color(stop?.child('color')), const [('gradientFill', 'Gradient fill approximated by its first color')]);
+      return (
+        _color(stop?.child('color')),
+        const [
+          ('gradientFill', 'Gradient fill approximated by its first color'),
+        ],
+      );
     }
     return (null, const []);
   }
@@ -156,7 +187,13 @@ final class XlsxStylesReader {
     'thin' || 'hair' => 'thin',
     'medium' => 'medium',
     'thick' => 'thick',
-    'dashed' || 'mediumDashed' || 'dashDot' || 'mediumDashDot' || 'dashDotDot' || 'mediumDashDotDot' || 'slantDashDot' => 'dashed',
+    'dashed' ||
+    'mediumDashed' ||
+    'dashDot' ||
+    'mediumDashDot' ||
+    'dashDotDot' ||
+    'mediumDashDotDot' ||
+    'slantDashDot' => 'dashed',
     'dotted' => 'dotted',
     'double' => 'double',
     _ => null,
@@ -165,7 +202,13 @@ final class XlsxStylesReader {
   (Map<FormatAttr, String>, List<(String, String)>) _border(XmlElement b) {
     final out = <FormatAttr, String>{};
     void edge(String name, FormatAttr a) {
-      final e = b.child(name) ?? (name == 'left' ? b.child('start') : name == 'right' ? b.child('end') : null);
+      final e =
+          b.child(name) ??
+          (name == 'left'
+              ? b.child('start')
+              : name == 'right'
+              ? b.child('end')
+              : null);
       final st = borderStyle(e?.attr('style'));
       if (e == null || st == null) return;
       out[a] = '$st|${_color(e.child('color')) ?? 'auto'}';
@@ -176,7 +219,9 @@ final class XlsxStylesReader {
     edge('bottom', FormatAttr.borderBottom);
     edge('left', FormatAttr.borderLeft);
     final diag = b.child('diagonal');
-    final hasDiag = (b.boolAttr('diagonalUp') ?? false) || (b.boolAttr('diagonalDown') ?? false);
+    final hasDiag =
+        (b.boolAttr('diagonalUp') ?? false) ||
+        (b.boolAttr('diagonalDown') ?? false);
     final warnings = hasDiag && borderStyle(diag?.attr('style')) != null
         ? const [('diagonalBorder', 'Diagonal borders were not imported')]
         : const <(String, String)>[];
@@ -188,7 +233,11 @@ final class XlsxStylesReader {
     final extras = <String, Object?>{};
     final warnings = <(String, String)>[];
     final nfId = xf.intAttr('numFmtId') ?? 0;
-    final nf = ExcelNumberFormats.importId(nfId, customNumFmts, warn: numberFormatWarnings.add);
+    final nf = ExcelNumberFormats.importId(
+      nfId,
+      customNumFmts,
+      warn: numberFormatWarnings.add,
+    );
     if (nf != null) attrs[FormatAttr.numberFormat] = nf;
     final font = _at(fonts, xf.intAttr('fontId'));
     if (font != null) _fontAttrs(font, attrs);
@@ -213,10 +262,16 @@ final class XlsxStylesReader {
           attrs[FormatAttr.hAlign] = HorizontalAlign.right;
         case 'fill' || 'justify':
           attrs[FormatAttr.hAlign] = HorizontalAlign.left;
-          warnings.add(('alignment', 'Alignment "${al.attr('horizontal')}" approximated'));
+          warnings.add((
+            'alignment',
+            'Alignment "${al.attr('horizontal')}" approximated',
+          ));
         case 'distributed' || 'centerContinuous':
           attrs[FormatAttr.hAlign] = HorizontalAlign.center;
-          warnings.add(('alignment', 'Alignment "${al.attr('horizontal')}" approximated'));
+          warnings.add((
+            'alignment',
+            'Alignment "${al.attr('horizontal')}" approximated',
+          ));
       }
       switch (al.attr('vertical')) {
         case 'top':
@@ -225,12 +280,19 @@ final class XlsxStylesReader {
           attrs[FormatAttr.vAlign] = VerticalAlign.middle;
         case 'justify' || 'distributed':
           attrs[FormatAttr.vAlign] = VerticalAlign.middle;
-          warnings.add(('alignment', 'Vertical alignment "${al.attr('vertical')}" approximated'));
+          warnings.add((
+            'alignment',
+            'Vertical alignment "${al.attr('vertical')}" approximated',
+          ));
       }
-      if (al.boolAttr('wrapText') ?? false) attrs[FormatAttr.wrap] = WrapStrategy.wrap;
+      if (al.boolAttr('wrapText') ?? false) {
+        attrs[FormatAttr.wrap] = WrapStrategy.wrap;
+      }
       final rot = al.intAttr('textRotation');
       if (rot != null && rot != 0) {
-        attrs[FormatAttr.rotation] = rot == 255 ? 255 : (rot > 90 ? -(rot - 90) : rot);
+        attrs[FormatAttr.rotation] = rot == 255
+            ? 255
+            : (rot > 90 ? -(rot - 90) : rot);
       }
       final indent = al.intAttr('indent');
       if (indent != null && indent > 0) extras['indent'] = indent;
@@ -247,13 +309,19 @@ final class XlsxStylesReader {
   /// Adds the attributes of [font] that differ from the workbook default.
   void _fontAttrs(XlsxFont font, Map<FormatAttr, Object?> attrs) {
     final d = defaultFont;
-    if (font.name != null && font.name != d?.name) attrs[FormatAttr.fontFamily] = font.name;
-    if (font.size != null && font.size != d?.size) attrs[FormatAttr.fontSize] = font.size;
+    if (font.name != null && font.name != d?.name) {
+      attrs[FormatAttr.fontFamily] = font.name;
+    }
+    if (font.size != null && font.size != d?.size) {
+      attrs[FormatAttr.fontSize] = font.size;
+    }
     if (font.bold) attrs[FormatAttr.bold] = true;
     if (font.italic) attrs[FormatAttr.italic] = true;
     if (font.underline) attrs[FormatAttr.underline] = true;
     if (font.strike) attrs[FormatAttr.strikethrough] = true;
-    if (font.color != null && font.color != d?.color && font.color != 'theme:text') {
+    if (font.color != null &&
+        font.color != d?.color &&
+        font.color != 'theme:text') {
       attrs[FormatAttr.textColor] = font.color;
     }
   }
@@ -278,14 +346,19 @@ final class XlsxStylesReader {
       if (c != null && p.attr('patternType') != 'none') f['fillColor'] = c;
     }
     final nf = d.child('numFmt');
-    if (nf != null && nf.attr('formatCode') != null) extras['numberFormat'] = nf.attr('formatCode');
+    if (nf != null && nf.attr('formatCode') != null) {
+      extras['numberFormat'] = nf.attr('formatCode');
+    }
     final b = d.child('border');
     if (b != null) {
       final m = _border(b).$1;
-      if (m.isNotEmpty) extras['borders'] = {for (final e in m.entries) e.key.column: e.value};
+      if (m.isNotEmpty) {
+        extras['borders'] = {for (final e in m.entries) e.key.column: e.value};
+      }
     }
     return (f, extras);
   }
 
-  static T? _at<T>(List<T> l, int? i) => i != null && i >= 0 && i < l.length ? l[i] : null;
+  static T? _at<T>(List<T> l, int? i) =>
+      i != null && i >= 0 && i < l.length ? l[i] : null;
 }

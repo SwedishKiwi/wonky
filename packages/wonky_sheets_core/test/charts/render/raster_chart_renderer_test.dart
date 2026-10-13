@@ -13,7 +13,11 @@ import 'render_test_scenes.dart';
 img.Image _render(ChartScene scene, {double scale = 1}) =>
     img.decodePng(const RasterChartRenderer().render(scene, scale: scale))!;
 
-img.Image _one(ScenePrimitive p, {double scale = 1, int background = RenderTestScenes.white}) =>
+img.Image _one(
+  ScenePrimitive p, {
+  double scale = 1,
+  int background = RenderTestScenes.white,
+}) =>
     _render(RenderTestScenes.scene([p], background: background), scale: scale);
 
 const _white = (255, 255, 255, 255);
@@ -35,18 +39,23 @@ void main() {
     final scene = RenderTestScenes.kitchenSink();
 
     for (final scale in [1.0, 2.0, 0.5]) {
-      test('when rendering at scale $scale then the PNG is scene size × scale', () {
-        final image = _render(scene, scale: scale);
+      test(
+        'when rendering at scale $scale then the PNG is scene size × scale',
+        () {
+          final image = _render(scene, scale: scale);
 
-        expect(image.width, equals((400 * scale).round()));
-        expect(image.height, equals((300 * scale).round()));
-      });
+          expect(image.width, equals((400 * scale).round()));
+          expect(image.height, equals((300 * scale).round()));
+        },
+      );
     }
 
     test('when rendering twice then the bytes are identical', () {
       expect(
         const RasterChartRenderer().render(scene),
-        equals(const RasterChartRenderer().render(RenderTestScenes.kitchenSink())),
+        equals(
+          const RasterChartRenderer().render(RenderTestScenes.kitchenSink()),
+        ),
       );
     });
 
@@ -59,7 +68,9 @@ void main() {
   });
 
   group('Given an opaque red rectangle', () {
-    final image = _one(const SRect(ChartRect(20, 20, 40, 30), fill: RenderTestScenes.red));
+    final image = _one(
+      const SRect(ChartRect(20, 20, 40, 30), fill: RenderTestScenes.red),
+    );
 
     test('when rendering then its center is red', () {
       expect(rgbaAt(image, 40, 35), equals(_red));
@@ -70,21 +81,26 @@ void main() {
       expect(rgbaAt(image, 61, 35), equals(_white));
     });
 
-    test('when rendering at scale 2 then the rectangle covers the scaled area', () {
-      final big = _one(
-        const SRect(ChartRect(20, 20, 40, 30), fill: RenderTestScenes.red),
-        scale: 2,
-      );
+    test(
+      'when rendering at scale 2 then the rectangle covers the scaled area',
+      () {
+        final big = _one(
+          const SRect(ChartRect(20, 20, 40, 30), fill: RenderTestScenes.red),
+          scale: 2,
+        );
 
-      expect(rgbaAt(big, 41, 41), equals(_red));
-      expect(rgbaAt(big, 119, 99), equals(_red));
-      expect(rgbaAt(big, 121, 101), equals(_white));
-    });
+        expect(rgbaAt(big, 41, 41), equals(_red));
+        expect(rgbaAt(big, 119, 99), equals(_red));
+        expect(rgbaAt(big, 121, 101), equals(_white));
+      },
+    );
   });
 
   group('Given a 50 % alpha blue fill over white', () {
     test('when rendering then the color blends with the background', () {
-      final image = _one(const SRect(ChartRect(0, 0, 50, 50), fill: 0x800000FF));
+      final image = _one(
+        const SRect(ChartRect(0, 0, 50, 50), fill: 0x800000FF),
+      );
 
       expect(rgbaAt(image, 25, 25), _near((127, 127, 255, 255)));
     });
@@ -101,11 +117,17 @@ void main() {
       expect(rgbaAt(image, 5, 5), equals(_red));
     });
 
-    test('when a translucent fill is drawn then the PNG keeps straight alpha', () {
-      final image = _one(const SRect(ChartRect(0, 0, 10, 10), fill: 0x80FF0000), background: 0);
+    test(
+      'when a translucent fill is drawn then the PNG keeps straight alpha',
+      () {
+        final image = _one(
+          const SRect(ChartRect(0, 0, 10, 10), fill: 0x80FF0000),
+          background: 0,
+        );
 
-      expect(rgbaAt(image, 5, 5), _near((255, 0, 0, 128)));
-    });
+        expect(rgbaAt(image, 5, 5), _near((255, 0, 0, 128)));
+      },
+    );
   });
 
   group('Given a rectangle clipped to a smaller rectangle', () {
@@ -178,7 +200,9 @@ void main() {
     final cases = <(bool, (int, int, int, int))>[(false, _red), (true, _white)];
     for (final (evenOdd, center) in cases) {
       test('when filling with evenOdd=$evenOdd then the center is $center', () {
-        final image = _one(const SPath(cmds, fill: RenderTestScenes.red).copyRule(evenOdd));
+        final image = _one(
+          const SPath(cmds, fill: RenderTestScenes.red).copyRule(evenOdd),
+        );
 
         expect(rgbaAt(image, 50, 50), equals(center));
         expect(rgbaAt(image, 20, 20), equals(_red));
@@ -220,17 +244,20 @@ void main() {
   });
 
   group('Given a translucent self-crossing polyline', () {
-    test('when rendering then the crossing has the same color as the rest of the line', () {
-      final image = _one(
-        SPolyline(
-          Float64List.fromList([10, 10, 90, 90, 90, 10, 10, 90]),
-          const SStroke(0x800000FF, width: 6),
-        ),
-      );
+    test(
+      'when rendering then the crossing has the same color as the rest of the line',
+      () {
+        final image = _one(
+          SPolyline(
+            Float64List.fromList([10, 10, 90, 90, 90, 10, 10, 90]),
+            const SStroke(0x800000FF, width: 6),
+          ),
+        );
 
-      expect(rgbaAt(image, 50, 50), equals(rgbaAt(image, 30, 30)));
-      expect(rgbaAt(image, 30, 30), _near((127, 127, 255, 255)));
-    });
+        expect(rgbaAt(image, 50, 50), equals(rgbaAt(image, 30, 30)));
+        expect(rgbaAt(image, 30, 30), _near((127, 127, 255, 255)));
+      },
+    );
   });
 
   group('Given a line end with each cap', () {
@@ -240,17 +267,20 @@ void main() {
       (SStrokeCap.square, true),
     ];
     for (final (cap, extends_) in cases) {
-      test('when the cap is ${cap.name} then ink past the end is $extends_', () {
-        final image = _one(
-          SPolyline(
-            Float64List.fromList([20, 50, 60, 50]),
-            SStroke(RenderTestScenes.black, width: 10, cap: cap),
-          ),
-        );
+      test(
+        'when the cap is ${cap.name} then ink past the end is $extends_',
+        () {
+          final image = _one(
+            SPolyline(
+              Float64List.fromList([20, 50, 60, 50]),
+              SStroke(RenderTestScenes.black, width: 10, cap: cap),
+            ),
+          );
 
-        expect(inkCount(image, 62, 48, 64, 52) > 0, equals(extends_));
-        expect(rgbaAt(image, 40, 50), equals((0, 0, 0, 255)));
-      });
+          expect(inkCount(image, 62, 48, 64, 52) > 0, equals(extends_));
+          expect(rgbaAt(image, 40, 50), equals((0, 0, 0, 255)));
+        },
+      );
     }
   });
 
@@ -262,17 +292,20 @@ void main() {
       (SStrokeJoin.round, false),
     ];
     for (final (join, tip) in cases) {
-      test('when the join is ${join.name} then the outer corner pixel is inked: $tip', () {
-        final image = _one(
-          SPolyline(
-            Float64List.fromList([10, 20, 50, 20, 50, 80]),
-            SStroke(RenderTestScenes.black, width: 10, join: join),
-          ),
-        );
+      test(
+        'when the join is ${join.name} then the outer corner pixel is inked: $tip',
+        () {
+          final image = _one(
+            SPolyline(
+              Float64List.fromList([10, 20, 50, 20, 50, 80]),
+              SStroke(RenderTestScenes.black, width: 10, join: join),
+            ),
+          );
 
-        expect(inkCount(image, 54, 15, 55, 16) > 0, equals(tip));
-        expect(rgbaAt(image, 50, 20), equals((0, 0, 0, 255)));
-      });
+          expect(inkCount(image, 54, 15, 55, 16) > 0, equals(tip));
+          expect(rgbaAt(image, 50, 20), equals((0, 0, 0, 255)));
+        },
+      );
     }
   });
 
@@ -315,7 +348,10 @@ void main() {
           4,
           fill: RenderTestScenes.black,
           sizes: Float64List.fromList([4, 20]),
-          fills: Int32List.fromList([RenderTestScenes.red, RenderTestScenes.blue]),
+          fills: Int32List.fromList([
+            RenderTestScenes.red,
+            RenderTestScenes.blue,
+          ]),
         ),
       );
 
@@ -328,7 +364,13 @@ void main() {
   group('Given arcs', () {
     test('when rendering a quarter slice then only its sweep is filled', () {
       final image = _one(
-        const SArc(ChartPoint(50, 50), 40, 0, math.pi / 2, fill: RenderTestScenes.red),
+        const SArc(
+          ChartPoint(50, 50),
+          40,
+          0,
+          math.pi / 2,
+          fill: RenderTestScenes.red,
+        ),
       );
 
       expect(
@@ -366,35 +408,46 @@ void main() {
       (TextAnchor.baselineCenter, true, true, false, true),
     ];
     for (final (anchor, right, left, below, above) in cases) {
-      test('when anchored ${anchor.name} then the ink lies on the expected sides', () {
-        final image = _one(
-          SText('HHHH', const ChartPoint(50, 50), const TextStyleSpec(size: 14), anchor: anchor),
-        );
+      test(
+        'when anchored ${anchor.name} then the ink lies on the expected sides',
+        () {
+          final image = _one(
+            SText(
+              'HHHH',
+              const ChartPoint(50, 50),
+              const TextStyleSpec(size: 14),
+              anchor: anchor,
+            ),
+          );
 
-        expect(inkCount(image, 51, 0, 100, 100) > 0, equals(right));
-        expect(inkCount(image, 0, 0, 49, 100) > 0, equals(left));
-        expect(inkCount(image, 0, 51, 100, 100) > 0, equals(below));
-        expect(inkCount(image, 0, 0, 100, 49) > 0, equals(above));
-      });
+          expect(inkCount(image, 51, 0, 100, 100) > 0, equals(right));
+          expect(inkCount(image, 0, 0, 49, 100) > 0, equals(left));
+          expect(inkCount(image, 0, 51, 100, 100) > 0, equals(below));
+          expect(inkCount(image, 0, 0, 100, 49) > 0, equals(above));
+        },
+      );
     }
   });
 
   group('Given text rotated 90° clockwise anchored top-left', () {
-    test('when rendering then the ink runs down and to the left of the anchor', () {
-      final image = _one(
-        const SText(
-          'HHHH',
-          ChartPoint(50, 50),
-          TextStyleSpec(size: 14),
-          anchor: TextAnchor.topLeft,
-          angle: math.pi / 2,
-        ),
-      );
+    test(
+      'when rendering then the ink runs down and to the left of the anchor',
+      () {
+        final image = _one(
+          const SText(
+            'HHHH',
+            ChartPoint(50, 50),
+            TextStyleSpec(size: 14),
+            anchor: TextAnchor.topLeft,
+            angle: math.pi / 2,
+          ),
+        );
 
-      expect(inkCount(image, 30, 51, 50, 100), greaterThan(20));
-      expect(inkCount(image, 51, 0, 100, 100), equals(0));
-      expect(inkCount(image, 0, 0, 100, 49), equals(0));
-    });
+        expect(inkCount(image, 30, 51, 50, 100), greaterThan(20));
+        expect(inkCount(image, 51, 0, 100, 100), equals(0));
+        expect(inkCount(image, 0, 0, 100, 49), equals(0));
+      },
+    );
   });
 
   group('Given styled text', () {
@@ -406,21 +459,35 @@ void main() {
       ('huge', const TextStyleSpec(size: 60)),
     ];
     for (final (name, style) in cases) {
-      test('when drawing $name text then some pixels inside its box are inked', () {
-        final image = _render(
-          RenderTestScenes.scene(width: 300, height: 100, [
-            SText('Ag <~>', const ChartPoint(10, 50), style, anchor: TextAnchor.middleLeft),
-          ]),
-        );
+      test(
+        'when drawing $name text then some pixels inside its box are inked',
+        () {
+          final image = _render(
+            RenderTestScenes.scene(width: 300, height: 100, [
+              SText(
+                'Ag <~>',
+                const ChartPoint(10, 50),
+                style,
+                anchor: TextAnchor.middleLeft,
+              ),
+            ]),
+          );
 
-        expect(inkCount(image, 0, 0, 300, 100), greaterThan(5));
-        expect(inkCount(image, 0, 0, 9, 100), equals(0));
-      });
+          expect(inkCount(image, 0, 0, 300, 100), greaterThan(5));
+          expect(inkCount(image, 0, 0, 9, 100), equals(0));
+        },
+      );
     }
 
     test('when drawing bold text then it has more ink than regular text', () {
       int ink(bool bold) => inkCount(
-        _one(SText('Hello', const ChartPoint(10, 50), TextStyleSpec(size: 14, bold: bold))),
+        _one(
+          SText(
+            'Hello',
+            const ChartPoint(10, 50),
+            TextStyleSpec(size: 14, bold: bold),
+          ),
+        ),
         0,
         0,
         100,
@@ -433,7 +500,11 @@ void main() {
     test('when the text color is translucent then the ink is lighter', () {
       int darkest(int color) {
         final image = _one(
-          SText('HHH', const ChartPoint(10, 50), TextStyleSpec(size: 24, color: color)),
+          SText(
+            'HHH',
+            const ChartPoint(10, 50),
+            TextStyleSpec(size: 24, color: color),
+          ),
         );
         var min = 255;
         for (var y = 0; y < 100; y++) {
@@ -458,7 +529,10 @@ void main() {
       }
       final image = _render(
         RenderTestScenes.scene(width: 600, height: 371, [
-          SPolyline(xy, const SStroke(0xFF4285F4, width: 2, join: SStrokeJoin.round)),
+          SPolyline(
+            xy,
+            const SStroke(0xFF4285F4, width: 2, join: SStrokeJoin.round),
+          ),
         ]),
         scale: 2,
       );
@@ -470,5 +544,6 @@ void main() {
 }
 
 extension on SPath {
-  SPath copyRule(bool evenOdd) => SPath(cmds, fill: fill, stroke: stroke, evenOdd: evenOdd);
+  SPath copyRule(bool evenOdd) =>
+      SPath(cmds, fill: fill, stroke: stroke, evenOdd: evenOdd);
 }

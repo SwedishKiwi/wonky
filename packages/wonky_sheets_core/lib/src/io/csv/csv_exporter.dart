@@ -71,7 +71,9 @@ abstract final class CsvExporter {
     CsvExportOptions options = const CsvExportOptions(),
   }) {
     final sheet = model.sheet(sheetId);
-    if (sheet == null) throw ArgumentError.value(sheetId, 'sheetId', 'Unknown sheet');
+    if (sheet == null) {
+      throw ArgumentError.value(sheetId, 'sheetId', 'Unknown sheet');
+    }
     final locale = options.locale ?? model.spreadsheet.locale;
     final grid = sheet.gridRect;
     if (grid == null) return '';
@@ -83,11 +85,24 @@ abstract final class CsvExporter {
     final rows = <List<String>>[];
     final maxRow = range == null && used != null ? used.bottom : rect.bottom;
     final maxColScan = range == null && used != null ? used.right : rect.right;
-    for (var r = rect.top; r <= (maxRow < rect.bottom ? maxRow : rect.bottom); r++) {
+    for (
+      var r = rect.top;
+      r <= (maxRow < rect.bottom ? maxRow : rect.bottom);
+      r++
+    ) {
       final line = <String>[];
-      for (var c = rect.left; c <= (maxColScan < rect.right ? maxColScan : rect.right); c++) {
+      for (
+        var c = rect.left;
+        c <= (maxColScan < rect.right ? maxColScan : rect.right);
+        c++
+      ) {
         final v = source.valueAt(sheetId, r, c).toCellValue();
-        final text = _text(v, source.numberFormatAt(sheetId, r, c), options, locale);
+        final text = _text(
+          v,
+          source.numberFormatAt(sheetId, r, c),
+          options,
+          locale,
+        );
         line.add(text);
         if (text.isNotEmpty) {
           if (r > lastRow) lastRow = r;
@@ -116,14 +131,23 @@ abstract final class CsvExporter {
     GridRect? range,
     CsvExportOptions options = const CsvExportOptions(),
   }) {
-    final text = exportText(model, source, sheetId: sheetId, range: range, options: options);
+    final text = exportText(
+      model,
+      source,
+      sheetId: sheetId,
+      range: range,
+      options: options,
+    );
     final body = utf8.encode(text);
     if (!options.includeBom) return Uint8List.fromList(body);
     return Uint8List.fromList([0xef, 0xbb, 0xbf, ...body]);
   }
 
   /// Encodes rows of field texts (shared by tests and the property test).
-  static String encodeRows(List<List<String>> rows, [CsvExportOptions options = const CsvExportOptions()]) {
+  static String encodeRows(
+    List<List<String>> rows, [
+    CsvExportOptions options = const CsvExportOptions(),
+  ]) {
     final b = StringBuffer();
     for (final r in rows) {
       for (var j = 0; j < r.length; j++) {
@@ -135,16 +159,28 @@ abstract final class CsvExporter {
     return b.toString();
   }
 
-  static String _text(CellValue v, String? pattern, CsvExportOptions o, String locale) {
+  static String _text(
+    CellValue v,
+    String? pattern,
+    CsvExportOptions o,
+    String locale,
+  ) {
     var s = switch (v) {
       EmptyValue() => '',
       TextValue(:final text) => text,
       BoolValue(:final value) => value ? 'TRUE' : 'FALSE',
       ErrorValue(:final kind) => kind.literal,
       NumberValue(:final number) =>
-        o.values == CsvValueMode.raw ? _rawNumber(number, pattern) : NumberFormatter.instance.formatText(v, pattern, locale: locale),
+        o.values == CsvValueMode.raw
+            ? _rawNumber(number, pattern)
+            : NumberFormatter.instance.formatText(v, pattern, locale: locale),
     };
-    if (o.protectFormulaInjection && v is TextValue && s.isNotEmpty && '=+-@\t\r'.contains(s[0])) s = "'$s";
+    if (o.protectFormulaInjection &&
+        v is TextValue &&
+        s.isNotEmpty &&
+        '=+-@\t\r'.contains(s[0])) {
+      s = "'$s";
+    }
     return s;
   }
 
@@ -154,7 +190,8 @@ abstract final class CsvExporter {
     if (!date) return CellContent.formatNumber(n);
     final ymd = DateSerial.toYmd(n);
     String two(int x) => x.toString().padLeft(2, '0');
-    final d = '${ymd.year.toString().padLeft(4, '0')}-${two(ymd.month)}-${two(ymd.day)}';
+    final d =
+        '${ymd.year.toString().padLeft(4, '0')}-${two(ymd.month)}-${two(ymd.day)}';
     if (!time && n == n.floorToDouble()) return d;
     final t = DateSerial.timeOf(n);
     return '${d}T${two(t.hour)}:${two(t.minute)}:${two(t.second)}';
@@ -162,7 +199,10 @@ abstract final class CsvExporter {
 
   static String _encodeField(String s, CsvExportOptions o) {
     if (o.isTsv) return s.replaceAll(RegExp('\r\n|[\t\r\n]'), ' ');
-    if (s.contains(o.delimiter) || s.contains('"') || s.contains('\r') || s.contains('\n')) {
+    if (s.contains(o.delimiter) ||
+        s.contains('"') ||
+        s.contains('\r') ||
+        s.contains('\n')) {
       return '"${s.replaceAll('"', '""')}"';
     }
     return s;

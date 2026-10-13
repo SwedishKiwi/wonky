@@ -14,7 +14,13 @@ void main() {
         sheetName: 'Q3 plan',
         locale: 'de_DE',
         sourceRect: const GridRect(1, 1, 3, 2),
-        sourceRange: const GridRange(sheetId: 'sheet-1', r1: 'r1', r2: 'r3', c1: 'c1', c2: 'c2'),
+        sourceRange: const GridRange(
+          sheetId: 'sheet-1',
+          r1: 'r1',
+          r2: 'r3',
+          c1: 'c1',
+          c2: 'c2',
+        ),
         rowIndices: const [1, 3],
         colIndices: const [1, 2],
         cells: [
@@ -25,12 +31,23 @@ void main() {
               content: '=SUM(A1:A2)',
               value: const NumberValue(3),
               formulaA1: '=SUM(A1:A2)',
-              format: CellFormat({FormatAttr.bold: true, FormatAttr.linkUrl: 'https://x.test'}),
+              format: CellFormat({
+                FormatAttr.bold: true,
+                FormatAttr.linkUrl: 'https://x.test',
+              }),
               note: 'Total',
             ),
             null,
           ],
-          [null, ClipCell(sourceRow: 3, sourceCol: 2, content: 's:hé "x"', value: const TextValue('hé "x"'))],
+          [
+            null,
+            ClipCell(
+              sourceRow: 3,
+              sourceCol: 2,
+              content: 's:hé "x"',
+              value: const TextValue('hé "x"'),
+            ),
+          ],
         ],
         merges: const [GridRect(0, 0, 0, 1)],
         rules: const [

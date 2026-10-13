@@ -30,7 +30,8 @@ enum CellErrorKind {
   };
 
   /// Parses an error literal (case-insensitive), or null.
-  static CellErrorKind? tryParse(String text) => _byLiteral[text.trim().toUpperCase()];
+  static CellErrorKind? tryParse(String text) =>
+      _byLiteral[text.trim().toUpperCase()];
 }
 
 /// A scalar cell value: what a literal cell holds, or a computed formula result
@@ -102,7 +103,8 @@ final class NumberValue extends CellValue {
   final double number;
 
   @override
-  bool operator ==(Object other) => other is NumberValue && other.number == number;
+  bool operator ==(Object other) =>
+      other is NumberValue && other.number == number;
 
   @override
   int get hashCode => number.hashCode;
@@ -198,7 +200,9 @@ sealed class CellContent {
         case 0x62: // b
           return BoolContent(body == '1' || body.toLowerCase() == 'true');
         case 0x65: // e
-          return ErrorContent(CellErrorKind.tryParse(body) ?? CellErrorKind.value);
+          return ErrorContent(
+            CellErrorKind.tryParse(body) ?? CellErrorKind.value,
+          );
         case 0x72: // r
           final rt = RichText.tryParseJson(body);
           if (rt != null) return RichTextContent(rt);
@@ -265,7 +269,8 @@ final class FormulaContent extends CellContent {
   CellValue get literalValue => const EmptyValue();
 
   @override
-  bool operator ==(Object other) => other is FormulaContent && other.text == text;
+  bool operator ==(Object other) =>
+      other is FormulaContent && other.text == text;
 
   @override
   int get hashCode => text.hashCode;
@@ -289,7 +294,8 @@ final class NumberContent extends CellContent {
   CellValue get literalValue => NumberValue(number);
 
   @override
-  bool operator ==(Object other) => other is NumberContent && other.number == number;
+  bool operator ==(Object other) =>
+      other is NumberContent && other.number == number;
 
   @override
   int get hashCode => number.hashCode;
@@ -337,7 +343,8 @@ final class BoolContent extends CellContent {
   CellValue get literalValue => BoolValue(value);
 
   @override
-  bool operator ==(Object other) => other is BoolContent && other.value == value;
+  bool operator ==(Object other) =>
+      other is BoolContent && other.value == value;
 
   @override
   int get hashCode => value.hashCode;
@@ -385,7 +392,8 @@ final class RichTextContent extends CellContent {
   CellValue get literalValue => TextValue(rich.text);
 
   @override
-  bool operator ==(Object other) => other is RichTextContent && other.rich == rich;
+  bool operator ==(Object other) =>
+      other is RichTextContent && other.rich == rich;
 
   @override
   int get hashCode => rich.hashCode;

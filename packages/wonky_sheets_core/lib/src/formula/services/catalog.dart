@@ -81,7 +81,8 @@ final class CatalogSection {
 /// Function catalog exports for the UI, MCP and the AI assistant (05 §14.3, §18, §20).
 final class FunctionCatalog {
   final FunctionRegistry registry;
-  FunctionCatalog([FunctionRegistry? registry]) : registry = registry ?? FunctionRegistry.standard;
+  FunctionCatalog([FunctionRegistry? registry])
+    : registry = registry ?? FunctionRegistry.standard;
 
   /// Categories in §15 order plus "Named functions" and "Custom functions"; implemented only.
   List<CatalogSection> forUi({
@@ -100,9 +101,16 @@ final class FunctionCatalog {
     final named = [
       for (final n in namedFunctions)
         if (n.formula != null && n.range == null)
-          CatalogEntry(name: n.name, syntax: '${n.name}(…)', summary: n.comment ?? '', source: 'namedFunction'),
+          CatalogEntry(
+            name: n.name,
+            syntax: '${n.name}(…)',
+            summary: n.comment ?? '',
+            source: 'namedFunction',
+          ),
     ];
-    if (named.isNotEmpty) out.add(CatalogSection('Named functions', null, named));
+    if (named.isNotEmpty) {
+      out.add(CatalogSection('Named functions', null, named));
+    }
     if (customFunctions != null) {
       final custom = [
         for (final name in customFunctionNames)
@@ -119,19 +127,29 @@ final class FunctionCatalog {
               );
             }(),
       ];
-      if (custom.isNotEmpty) out.add(CatalogSection('Custom functions', null, custom));
+      if (custom.isNotEmpty) {
+        out.add(CatalogSection('Custom functions', null, custom));
+      }
     }
     return out;
   }
 
   /// MCP `sheets.list_functions {category?, query?, include_unimplemented?}`.
-  List<Map<String, Object?>> list({String? category, String? query, bool includeUnimplemented = false}) {
+  List<Map<String, Object?>> list({
+    String? category,
+    String? query,
+    bool includeUnimplemented = false,
+  }) {
     final q = query?.toLowerCase();
     return [
       for (final s in registry.all)
         if ((includeUnimplemented || s.implemented) &&
-            (category == null || s.category.name == category || s.category.label.toLowerCase() == category.toLowerCase()) &&
-            (q == null || s.name.toLowerCase().contains(q) || s.help.summary.toLowerCase().contains(q)))
+            (category == null ||
+                s.category.name == category ||
+                s.category.label.toLowerCase() == category.toLowerCase()) &&
+            (q == null ||
+                s.name.toLowerCase().contains(q) ||
+                s.help.summary.toLowerCase().contains(q)))
           CatalogEntry.of(s).toSummaryJson(),
     ];
   }
@@ -140,7 +158,10 @@ final class FunctionCatalog {
   Map<String, Object?>? help(String name) {
     final s = registry.lookup(name.toUpperCase());
     if (s == null) return null;
-    return {...CatalogEntry.of(s).toJson(), if (s.aliases.isNotEmpty) 'aliases': s.aliases};
+    return {
+      ...CatalogEntry.of(s).toJson(),
+      if (s.aliases.isNotEmpty) 'aliases': s.aliases,
+    };
   }
 
   /// Compact catalog for the AI assistant system prompt: `NAME(syntax) — summary` per line.
@@ -162,7 +183,8 @@ final class FunctionCatalog {
     for (final s in registry.all) {
       final key = '${s.category.name}/${s.priority.name}';
       final m = out.putIfAbsent(key, () => {'implemented': 0, 'stub': 0});
-      m[s.implemented ? 'implemented' : 'stub'] = m[s.implemented ? 'implemented' : 'stub']! + 1;
+      m[s.implemented ? 'implemented' : 'stub'] =
+          m[s.implemented ? 'implemented' : 'stub']! + 1;
     }
     return out;
   }

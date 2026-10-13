@@ -21,43 +21,10 @@ import '../sync/support/fake_document_server.dart';
 /// The pseudo-locale of specs/11 §4.
 const pseudoLocale = Locale('en', 'XA');
 
-/// Keys of shared (packages/**) controls on the Write screen that currently
-/// have no semantics label: `SyncStatusIndicator` (wonky_ui) puts its label
-/// on a wrapper above the button's own node, and the editor scaffold's
-/// comments button (wonky_app) is icon-only. Remove entries once the shared
-/// widgets are fixed; every Write-owned control must pass.
-const knownUnlabeledSharedControls = {'sync.status', 'editor.comments'};
-
-/// `labeledTapTargetGuideline`, tolerating only the nodes rendered under
-/// [knownUnlabeledSharedControls].
-Future<void> expectLabeledTapTargets(WidgetTester tester) async {
-  final result = await labeledTapTargetGuideline.evaluate(tester);
-  if (result.passed) return;
-  final failing = {
-    for (final m in RegExp(r'SemanticsNode#(\d+)').allMatches(result.reason!))
-      int.parse(m.group(1)!),
-  };
-  final shared = <int>{};
-  for (final key in knownUnlabeledSharedControls) {
-    for (final e in find.byKey(ValueKey<String>(key)).evaluate()) {
-      void collect(Element el) {
-        final id = el.renderObject?.debugSemantics?.id;
-        if (id != null) shared.add(id);
-        el.visitChildren(collect);
-      }
-
-      collect(e);
-      // The node can also come from a wrapper just above the keyed widget.
-      e.visitAncestorElements((a) {
-        final id = a.renderObject?.debugSemantics?.id;
-        if (id != null) shared.add(id);
-        return id == null;
-      });
-    }
-  }
-  final unexpected = failing.difference(shared);
-  expect(unexpected, isEmpty, reason: result.reason);
-}
+/// Every control on the Write screen, shared ones included, carries a
+/// label on its tap target.
+Future<void> expectLabeledTapTargets(WidgetTester tester) =>
+    expectLater(tester, meetsGuideline(labeledTapTargetGuideline));
 
 /// Screen-level accessibility and localization checks for the Write
 /// document screen (specs/15 §7, specs/11 §3–4).

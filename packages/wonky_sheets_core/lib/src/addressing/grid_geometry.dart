@@ -16,10 +16,12 @@ final class CellPos implements Comparable<CellPos> {
   String get a1 => '${ColumnLetters.fromIndex(col)}${row + 1}';
 
   @override
-  int compareTo(CellPos other) => row != other.row ? row - other.row : col - other.col;
+  int compareTo(CellPos other) =>
+      row != other.row ? row - other.row : col - other.col;
 
   @override
-  bool operator ==(Object other) => other is CellPos && other.row == row && other.col == col;
+  bool operator ==(Object other) =>
+      other is CellPos && other.row == row && other.col == col;
 
   @override
   int get hashCode => Object.hash(row, col);

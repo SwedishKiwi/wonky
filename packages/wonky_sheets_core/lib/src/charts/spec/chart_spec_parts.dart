@@ -41,15 +41,20 @@ final class ChartFont extends SpecNode {
   final Map<String, Object?> extras;
 
   /// Copy with changes.
-  ChartFont copyWith({String? family, double? size, bool? bold, bool? italic, String? color}) =>
-      ChartFont(
-        family: family ?? this.family,
-        size: size ?? this.size,
-        bold: bold ?? this.bold,
-        italic: italic ?? this.italic,
-        color: color ?? this.color,
-        extras: extras,
-      );
+  ChartFont copyWith({
+    String? family,
+    double? size,
+    bool? bold,
+    bool? italic,
+    String? color,
+  }) => ChartFont(
+    family: family ?? this.family,
+    size: size ?? this.size,
+    bold: bold ?? this.bold,
+    italic: italic ?? this.italic,
+    color: color ?? this.color,
+    extras: extras,
+  );
 
   @override
   Map<String, Object?> toJson() {
@@ -98,12 +103,13 @@ final class ChartTitle extends SpecNode {
   bool get hasText => text.trim().isNotEmpty;
 
   /// Copy with changes.
-  ChartTitle copyWith({String? text, ChartFont? font, TitleAlign? align}) => ChartTitle(
-    text: text ?? this.text,
-    font: font ?? this.font,
-    align: align ?? this.align,
-    extras: extras,
-  );
+  ChartTitle copyWith({String? text, ChartFont? font, TitleAlign? align}) =>
+      ChartTitle(
+        text: text ?? this.text,
+        font: font ?? this.font,
+        align: align ?? this.align,
+        extras: extras,
+      );
 
   @override
   Map<String, Object?> toJson() {
@@ -141,8 +147,17 @@ final class ChartStyle extends SpecNode {
       maximize: r.boolOr('maximize', false),
       smooth: r.boolOr('smooth', false),
       plotNullValues: r.boolOr('plotNullValues', false),
-      compareMode: r.enumOr('compareMode', CompareMode.values, CompareMode.datum),
-      palette: pal == null ? null : [for (final c in pal) if (c is String) c],
+      compareMode: r.enumOr(
+        'compareMode',
+        CompareMode.values,
+        CompareMode.datum,
+      ),
+      palette: pal == null
+          ? null
+          : [
+              for (final c in pal)
+                if (c is String) c,
+            ],
       extras: r.extras(_keys),
     );
   }
@@ -246,14 +261,18 @@ final class AxisLabels extends SpecNode {
   final Map<String, Object?> extras;
 
   /// Copy with changes.
-  AxisLabels copyWith({bool? show, ChartFont? font, LabelSlant? slant, double? angle}) =>
-      AxisLabels(
-        show: show ?? this.show,
-        font: font ?? this.font,
-        slant: slant ?? this.slant,
-        angle: angle ?? this.angle,
-        extras: extras,
-      );
+  AxisLabels copyWith({
+    bool? show,
+    ChartFont? font,
+    LabelSlant? slant,
+    double? angle,
+  }) => AxisLabels(
+    show: show ?? this.show,
+    font: font ?? this.font,
+    slant: slant ?? this.slant,
+    angle: angle ?? this.angle,
+    extras: extras,
+  );
 
   @override
   Map<String, Object?> toJson() {
@@ -395,8 +414,12 @@ final class ChartAxes extends SpecNode {
   final Map<String, Object?> extras;
 
   /// Copy with changes.
-  ChartAxes copyWith({ChartAxis? h, ChartAxis? v, ChartAxis? v2}) =>
-      ChartAxes(h: h ?? this.h, v: v ?? this.v, v2: v2 ?? this.v2, extras: extras);
+  ChartAxes copyWith({ChartAxis? h, ChartAxis? v, ChartAxis? v2}) => ChartAxes(
+    h: h ?? this.h,
+    v: v ?? this.v,
+    v2: v2 ?? this.v2,
+    extras: extras,
+  );
 
   @override
   Map<String, Object?> toJson() {
@@ -422,9 +445,17 @@ final class ChartLegend extends SpecNode {
   factory ChartLegend.fromJson(Object? json) {
     final r = JsonReader(json);
     return ChartLegend(
-      position: r.enumOr('position', LegendPosition.values, LegendPosition.auto),
+      position: r.enumOr(
+        'position',
+        LegendPosition.values,
+        LegendPosition.auto,
+      ),
       font: ChartFont.fromJson(r.obj('font')),
-      alignment: r.enumOr('alignment', LegendAlignment.values, LegendAlignment.center),
+      alignment: r.enumOr(
+        'alignment',
+        LegendAlignment.values,
+        LegendAlignment.center,
+      ),
       extras: r.extras(const {'position', 'font', 'alignment'}),
     );
   }
@@ -435,13 +466,16 @@ final class ChartLegend extends SpecNode {
   final Map<String, Object?> extras;
 
   /// Copy with changes.
-  ChartLegend copyWith({LegendPosition? position, ChartFont? font, LegendAlignment? alignment}) =>
-      ChartLegend(
-        position: position ?? this.position,
-        font: font ?? this.font,
-        alignment: alignment ?? this.alignment,
-        extras: extras,
-      );
+  ChartLegend copyWith({
+    LegendPosition? position,
+    ChartFont? font,
+    LegendAlignment? alignment,
+  }) => ChartLegend(
+    position: position ?? this.position,
+    font: font ?? this.font,
+    alignment: alignment ?? this.alignment,
+    extras: extras,
+  );
 
   @override
   Map<String, Object?> toJson() {
@@ -457,7 +491,13 @@ final class ChartLegend extends SpecNode {
 final class GridlineSpec extends SpecNode {
   /// Creates gridline settings. [show] null = automatic (major: value axes on, category axes
   /// off; minor: off).
-  const GridlineSpec({this.show, this.count, this.spacing, this.color, this.extras = const {}});
+  const GridlineSpec({
+    this.show,
+    this.count,
+    this.spacing,
+    this.color,
+    this.extras = const {},
+  });
 
   /// Parses JSON leniently.
   factory GridlineSpec.fromJson(Object? json) {
@@ -482,7 +522,12 @@ final class GridlineSpec extends SpecNode {
   final Map<String, Object?> extras;
 
   /// Copy with changes.
-  GridlineSpec copyWith({bool? show, int? count, double? spacing, String? color}) => GridlineSpec(
+  GridlineSpec copyWith({
+    bool? show,
+    int? count,
+    double? spacing,
+    String? color,
+  }) => GridlineSpec(
     show: show ?? this.show,
     count: count ?? this.count,
     spacing: spacing ?? this.spacing,
@@ -504,7 +549,11 @@ final class GridlineSpec extends SpecNode {
 /// Tick marks of one axis.
 final class TickSpec extends SpecNode {
   /// Creates tick settings.
-  const TickSpec({this.major = TickMark.none, this.minor = TickMark.none, this.extras = const {}});
+  const TickSpec({
+    this.major = TickMark.none,
+    this.minor = TickMark.none,
+    this.extras = const {},
+  });
 
   /// Parses JSON leniently.
   factory TickSpec.fromJson(Object? json) {
@@ -556,13 +605,16 @@ final class AxisGridlines extends SpecNode {
   final Map<String, Object?> extras;
 
   /// Copy with changes.
-  AxisGridlines copyWith({GridlineSpec? major, GridlineSpec? minor, TickSpec? ticks}) =>
-      AxisGridlines(
-        major: major ?? this.major,
-        minor: minor ?? this.minor,
-        ticks: ticks ?? this.ticks,
-        extras: extras,
-      );
+  AxisGridlines copyWith({
+    GridlineSpec? major,
+    GridlineSpec? minor,
+    TickSpec? ticks,
+  }) => AxisGridlines(
+    major: major ?? this.major,
+    minor: minor ?? this.minor,
+    ticks: ticks ?? this.ticks,
+    extras: extras,
+  );
 
   @override
   Map<String, Object?> toJson() {

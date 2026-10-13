@@ -43,7 +43,11 @@ abstract final class SeparatorDetector {
     for (final sep in SplitSeparator.values) {
       final counts = <int>[];
       for (final s in sample) {
-        final c = TextSplitter.countSeparators(s, sep.char, quoting: sep.quoting);
+        final c = TextSplitter.countSeparators(
+          s,
+          sep.char,
+          quoting: sep.quoting,
+        );
         if (c > 0) counts.add(c);
       }
       if (counts.isEmpty) continue;
@@ -54,7 +58,8 @@ abstract final class SeparatorDetector {
       }
       variance /= counts.length;
       final cv = mean == 0 ? 0.0 : math.sqrt(variance) / mean;
-      if (counts.length > bestPresent || (counts.length == bestPresent && cv < bestCv - 1e-12)) {
+      if (counts.length > bestPresent ||
+          (counts.length == bestPresent && cv < bestCv - 1e-12)) {
         best = sep;
         bestPresent = counts.length;
         bestCv = cv;
@@ -104,7 +109,9 @@ abstract final class TextSplitter {
     var quotedPart = false;
     void flush() {
       final s = cur.toString();
-      parts.add(trim && !quotedPart ? s.trim() : (trim ? _trimOutsideQuoted(s) : s));
+      parts.add(
+        trim && !quotedPart ? s.trim() : (trim ? _trimOutsideQuoted(s) : s),
+      );
       cur.clear();
       quotedPart = false;
     }
@@ -147,11 +154,16 @@ abstract final class TextSplitter {
 
   /// Splits every text of a column; returns the parts per row and the maximum
   /// part count (number of target columns).
-  static (List<List<String>>, int) splitColumn(Iterable<String?> texts, String separator) {
+  static (List<List<String>>, int) splitColumn(
+    Iterable<String?> texts,
+    String separator,
+  ) {
     final out = <List<String>>[];
     var max = 0;
     for (final t in texts) {
-      final parts = t == null || t.isEmpty ? const <String>[] : split(t, separator);
+      final parts = t == null || t.isEmpty
+          ? const <String>[]
+          : split(t, separator);
       if (parts.length > max) max = parts.length;
       out.add(parts);
     }
@@ -166,5 +178,10 @@ abstract final class TextSplitter {
     String? targetNumberFormat,
     DateTime? today,
     InputParser? parser,
-  }) => (parser ?? InputParser.instance).parse(part, locale: locale, targetNumberFormat: targetNumberFormat, today: today);
+  }) => (parser ?? InputParser.instance).parse(
+    part,
+    locale: locale,
+    targetNumberFormat: targetNumberFormat,
+    today: today,
+  );
 }

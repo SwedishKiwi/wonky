@@ -9,7 +9,8 @@ const String _date = 'preset:date';
 const String _dateTime = 'preset:dateTime';
 
 double _time(int h, int m, [num s = 0]) => (h * 3600 + m * 60 + s) / 86400;
-double _serial(int y, int m, int d) => SerialCalendar.serialOf(y, m, d).toDouble();
+double _serial(int y, int m, int d) =>
+    SerialCalendar.serialOf(y, m, d).toDouble();
 
 /// (input, expected content, expected auto format).
 typedef _Case = (String, CellContent, String?);
@@ -61,8 +62,16 @@ final Map<String, List<_Case>> _tables = {
     ('14:30:15.5', NumberContent(_time(14, 30, 15.5)), 'h:mm:ss.000'),
     ('10/12/2026 14:30', NumberContent(_oct12 + _time(14, 30)), _dateTime),
     ('Oct 12, 2026 2:30 PM', NumberContent(_oct12 + _time(14, 30)), _dateTime),
-    ('2026-10-12 14:30', NumberContent(_oct12 + _time(14, 30)), 'yyyy-mm-dd hh:mm'),
-    ('2026-10-12T14:30:05', NumberContent(_oct12 + _time(14, 30, 5)), 'yyyy-mm-dd hh:mm:ss'),
+    (
+      '2026-10-12 14:30',
+      NumberContent(_oct12 + _time(14, 30)),
+      'yyyy-mm-dd hh:mm',
+    ),
+    (
+      '2026-10-12T14:30:05',
+      NumberContent(_oct12 + _time(14, 30, 5)),
+      'yyyy-mm-dd hh:mm:ss',
+    ),
     ('36:15:00', NumberContent(_time(36, 15)), '[h]:mm:ss'),
     ('36:15', NumberContent(_time(36, 15)), '[h]:mm'),
     ('TRUE', const BoolContent(true), null),
@@ -158,13 +167,16 @@ void main() {
   for (final MapEntry(key: locale, value: cases) in _tables.entries) {
     group('Given the $locale locale and an Automatic target cell', () {
       for (final (input, content, format) in cases) {
-        test('when typing "$input" then it stores $content with format $format', () {
-          final result = parser.parse(input, locale: locale, today: _today);
+        test(
+          'when typing "$input" then it stores $content with format $format',
+          () {
+            final result = parser.parse(input, locale: locale, today: _today);
 
-          expect(result.content, equals(content));
-          expect(result.autoNumberFormat, equals(format));
-          expect(result.formulaA1, isNull);
-        });
+            expect(result.content, equals(content));
+            expect(result.autoNumberFormat, equals(format));
+            expect(result.formulaA1, isNull);
+          },
+        );
       }
     });
   }
@@ -176,14 +188,21 @@ void main() {
       expect(r.autoNumberFormat, isNull);
     });
 
-    test('when typing 5% into a 0.00 cell then the value is 0.05 and no format is detected', () {
-      final r = parser.parse('5%', targetNumberFormat: '0.00', today: _today);
-      expect(r.content, equals(const NumberContent(0.05)));
-      expect(r.autoNumberFormat, isNull);
-    });
+    test(
+      'when typing 5% into a 0.00 cell then the value is 0.05 and no format is detected',
+      () {
+        final r = parser.parse('5%', targetNumberFormat: '0.00', today: _today);
+        expect(r.content, equals(const NumberContent(0.05)));
+        expect(r.autoNumberFormat, isNull);
+      },
+    );
 
     test('when the target is preset:automatic then detection applies', () {
-      final r = parser.parse('5%', targetNumberFormat: 'preset:automatic', today: _today);
+      final r = parser.parse(
+        '5%',
+        targetNumberFormat: 'preset:automatic',
+        today: _today,
+      );
       expect(r.autoNumberFormat, equals('0%'));
     });
 
@@ -195,15 +214,24 @@ void main() {
       expect(parser.parse('').isClear, isTrue);
     });
 
-    test('when typing a formula then it is returned as typed with closed parentheses', () {
-      final r = parser.parse('=SUM(A1,MAX(1,2');
-      expect(r.formulaA1, equals('=SUM(A1,MAX(1,2))'));
-      expect(r.content, isNull);
-    });
+    test(
+      'when typing a formula then it is returned as typed with closed parentheses',
+      () {
+        final r = parser.parse('=SUM(A1,MAX(1,2');
+        expect(r.formulaA1, equals('=SUM(A1,MAX(1,2))'));
+        expect(r.content, isNull);
+      },
+    );
 
-    test('when a formula has parentheses inside strings then they are ignored', () {
-      expect(InputParser.closeParentheses('=CONCAT("(", A1'), equals('=CONCAT("(", A1)'));
-    });
+    test(
+      'when a formula has parentheses inside strings then they are ignored',
+      () {
+        expect(
+          InputParser.closeParentheses('=CONCAT("(", A1'),
+          equals('=CONCAT("(", A1)'),
+        );
+      },
+    );
 
     test('when typing "=" alone then it is text', () {
       expect(parser.parse('=').content, equals(const TextContent('=')));
@@ -220,7 +248,10 @@ void main() {
     });
 
     test('when text keeps surrounding spaces then they are preserved', () {
-      expect(parser.parse(' hello ').content, equals(const TextContent(' hello ')));
+      expect(
+        parser.parse(' hello ').content,
+        equals(const TextContent(' hello ')),
+      );
     });
   });
 
@@ -236,11 +267,14 @@ void main() {
       ('a@b', null),
     ];
     for (final (input, link) in cases) {
-      test('when typing "$input" then the link is $link and the content stays text', () {
-        final r = parser.parse(input);
-        expect(r.autoLinkUrl, equals(link));
-        expect(r.content, equals(TextContent(input)));
-      });
+      test(
+        'when typing "$input" then the link is $link and the content stays text',
+        () {
+          final r = parser.parse(input);
+          expect(r.autoLinkUrl, equals(link));
+          expect(r.content, equals(TextContent(input)));
+        },
+      );
     }
   });
 

@@ -16,7 +16,8 @@ FValue numResult(double v, [FormatHint hint = FormatHint.none]) =>
     v.isFinite ? FNumber(v == 0 ? 0.0 : v, hint) : FError.num;
 
 /// Number result passed through [Numeric.stabilize] (transcendental functions, 05 §12).
-FValue stableResult(double v) => v.isFinite ? FNumber(Numeric.stabilize(v)) : FError.num;
+FValue stableResult(double v) =>
+    v.isFinite ? FNumber(Numeric.stabilize(v)) : FError.num;
 
 FValue boolResult(bool b) => FBool(b);
 
@@ -76,7 +77,9 @@ List<double?> numericCells(Args a, int i) {
 /// Paired numbers of two same-shaped ranges (pairs with any non-number dropped).
 (List<double>, List<double>) pairedNumbers(Args a, int iy, int ix) {
   final ay = a.array(iy), ax = a.array(ix);
-  if (ay.length != ax.length) fail(ErrorKind.na, ErrorMessages.arraySizeMismatch(a.fn));
+  if (ay.length != ax.length) {
+    fail(ErrorKind.na, ErrorMessages.arraySizeMismatch(a.fn));
+  }
   final ys = <double>[], xs = <double>[];
   for (var k = 0; k < ay.length; k++) {
     final y = ay.atIndex(k), x = ax.atIndex(k);
@@ -129,4 +132,5 @@ FArray rowOf(List<FValue> values) => FArray(1, values.length, values);
 int clampInt(int v, int lo, int hi) => math.min(hi, math.max(lo, v));
 
 /// Gets a value of a reference or array argument at position, without materializing.
-FValue elementOf(EvalContext ctx, FValue v, int r, int c) => RangeAccess.elementAt(ctx, v, r, c);
+FValue elementOf(EvalContext ctx, FValue v, int r, int c) =>
+    RangeAccess.elementAt(ctx, v, r, c);
