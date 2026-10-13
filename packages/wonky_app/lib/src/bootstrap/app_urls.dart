@@ -12,14 +12,25 @@ enum WonkyAppKind {
 }
 
 /// Contents of `assets/config.json` (suite 01 §2.4):
-/// `{"apiUrl": "...", "apps": {"write": "...", "sheets": "..."}}`.
+/// `{"apiUrl": "...", "apps": {"write": "...", "sheets": "..."},
+/// "cookieAuth": true}`.
 ///
 /// In production the server's `AppConfigRoute` replaces the bundled file at
 /// runtime; in development the bundled file lists the `flutter run` origins.
 class AppUrls {
-  const AppUrls({required this.apiUrl, required this.apps});
+  const AppUrls({
+    required this.apiUrl,
+    required this.apps,
+    this.cookieAuth = false,
+  });
 
   final String apiUrl;
+
+  /// Whether the API accepts cookie auth (suite 01 §2.5); set by the
+  /// server's `AppConfigRoute` when `authCookie` is configured. When false
+  /// (e.g. Serverpod Cloud), web uses token auth: the session is stored per
+  /// origin, which `/write/` and `/sheets/` share.
+  final bool cookieAuth;
 
   /// Base URL of each app, always ending with `/`.
   final Map<WonkyAppKind, String> apps;
@@ -40,7 +51,11 @@ class AppUrls {
         if (v is String && v.isNotEmpty) apps[k] = _slash(v);
       }
     }
-    return AppUrls(apiUrl: _slash(api), apps: apps);
+    return AppUrls(
+      apiUrl: _slash(api),
+      apps: apps,
+      cookieAuth: json['cookieAuth'] == true,
+    );
   }
 
   static String _slash(String s) => s.endsWith('/') ? s : '$s/';
@@ -61,7 +76,11 @@ class AppUrls {
     final urls = AppUrls.fromJson(json);
     return override.isEmpty
         ? urls
-        : AppUrls(apiUrl: _slash(override), apps: urls.apps);
+        : AppUrls(
+            apiUrl: _slash(override),
+            apps: urls.apps,
+            cookieAuth: urls.cookieAuth,
+          );
   }
 
   /// Absolute URL of [path] (e.g. `/s/<uuid>`) in [app].

@@ -281,12 +281,24 @@ one origin; there is no separate host app.
 
 A user signs in once and stays signed in when switching between Write and Sheets.
 
-- **Web**: both apps live on the same origin and use Serverpod's **cookie auth**:
-  `authCookie` (httpOnly, `path: /`, `secure` in staging/production) plus `allowedOrigins`
-  (the web server origin; in development also both `flutter run` origins) in
-  `config/*.yaml`, and `client.cookieAuth = true` on web. The session cookie is therefore shared
-  by `/write/` and `/sheets/` (and, in development, by both localhost ports — cookies are not
-  port-isolated). Tokens never sit in JavaScript-readable storage.
+- **Web**: both apps live on the same origin, so they share one session in either mode:
+  - **Cookie auth** when the server is configured for it: `authCookie` (httpOnly, `path: /`,
+    `secure` in staging/production) plus `allowedOrigins` (the web server origin; in development
+    also both `flutter run` origins) in `config/*.yaml`. The server's `AppConfigRoute` then
+    serves `cookieAuth: true` in `config.json` and the client sets `client.cookieAuth = true`.
+    The session cookie is shared by `/write/` and `/sheets/` (and, in development, by both
+    localhost ports — cookies are not port-isolated); tokens never sit in JavaScript-readable
+    storage. The bundled development `config.json` sets `cookieAuth: true` to match
+    `development.yaml`.
+  - **Token auth** otherwise (`cookieAuth` false or missing), as in the Serverpod template app.
+    This is the case on **Serverpod Cloud**: it generates the server config (`.scloudignore`
+    excludes `config/production.yaml`), so there is no `authCookie`, the API answers CORS with
+    `Access-Control-Allow-Origin: *`, and browsers reject every credentialed request. The API
+    also runs on its own host (`<project>.api.serverpod.space`, the app on
+    `<project>.serverpod.space`). The session is then kept in the origin's storage, which
+    `/write/` and `/sheets/` share.
+  Cookie auth must never be switched on by the client alone: with a `*` CORS answer the app
+  cannot reach the server at all.
 - Signing out in either app revokes the session for both; the other app notices on its next
   request or auth-state check and shows the sign-in screen (03 §4 *Session expired* flow).
 - **Desktop**: each binary keeps its tokens in secure storage. On macOS both apps share a

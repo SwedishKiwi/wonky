@@ -80,6 +80,7 @@ void _configureWebServer(Serverpod pod) {
       AppConfigRoute(
         apiConfig: pod.config.apiServer,
         webConfig: pod.config.webServer ?? pod.config.apiServer,
+        cookieAuth: pod.config.authCookie != null,
       ),
       '/$app/assets/assets/config.json',
     );

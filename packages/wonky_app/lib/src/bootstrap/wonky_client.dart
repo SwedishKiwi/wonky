@@ -31,9 +31,14 @@ class WonkyClient {
       ..authSessionManager = FlutterAuthSessionManager(
         storage: sessionStorageOverride ?? _desktopSessionStorage(),
       );
-    if (kIsWeb) {
+    if (kIsWeb && u.cookieAuth) {
       // One sign-in for both apps: the session lives in the httpOnly auth
-      // cookie on the shared origin; tokens never sit in JS storage.
+      // cookie on the shared origin; tokens never sit in JS storage. Only
+      // when the server is configured for it (`cookieAuth` in config.json):
+      // without `authCookie`/`allowedOrigins` the API answers CORS with `*`
+      // and browsers block every credentialed request. Otherwise the
+      // session is kept in the origin's storage, shared by /write/ and
+      // /sheets/.
       client.cookieAuth = true;
     }
     // Restores the persisted session (or the cookie session on web). Never
