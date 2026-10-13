@@ -45,8 +45,15 @@ dependencies:
     path: ../packages/wonky_core
   wonky_client:
     path: ../wonky_client
+  wonky_sheets_core:
+    path: ../packages/wonky_sheets_core
+  wonky_sync_models:
+    path: ../packages/wonky_sync_models
   shad: ^0.99.4
   go_router: ^18.0.2
+  clock: ^1.1.3
+  collection: ^1.19.1
+  intl: ^0.20.3
 
 dev_dependencies:
   flutter_test:
