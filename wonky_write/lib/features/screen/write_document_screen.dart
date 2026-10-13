@@ -28,11 +28,8 @@ import '../editor/pagination/pagination.dart';
 import '../editor/plugins/slash_items.dart';
 import '../editor/popovers/editor_popovers.dart';
 import '../editor/ui/wonky_editor.dart';
-import '../editor/view/focus_mode_chrome.dart';
 import '../find_replace/find_panel.dart';
-import '../images/image_services.dart';
 import '../outline/outline_panel.dart';
-import '../suggestions/suggestions_panel.dart';
 import '../themes/document_theme.dart';
 import '../../l10n/write_l10n.dart';
 import 'command_invoke.dart';
@@ -46,8 +43,8 @@ typedef WriteSessionFactory =
     WriteDocumentSession Function(ShellServices services, String itemUuid);
 
 /// The document editor screen `/d/:uuid` (Write 05 §3): the shell's
-/// `EditorScaffold` (title row, menubar, panels, status bar) around the
-/// Write toolbar and document canvas.
+/// `EditorScaffold` (title row, menubar, panels, word count bar) around the
+/// Write toolbar and the document canvas with its comment margin.
 class WriteDocumentScreen extends StatefulWidget {
   const WriteDocumentScreen({
     super.key,
@@ -95,6 +92,8 @@ class _WriteDocumentScreenState extends State<WriteDocumentScreen> {
     doc.revealOffset = _reveal;
     doc.focusToolbar = _toolbar.focus;
     ai = WriteAiController(services: s, session: session, doc: doc);
+    // Comments and suggestions are shown in the margin (Write 05 §10).
+    s.commentsHost = doc.viewPrefs;
     unawaited(session.open());
     session.phase.addListener(_onPhase);
     s.panels.addListener(_onPanels);
@@ -105,6 +104,7 @@ class _WriteDocumentScreenState extends State<WriteDocumentScreen> {
   void dispose() {
     session.phase.removeListener(_onPhase);
     s.panels.removeListener(_onPanels);
+    if (identical(s.commentsHost, doc.viewPrefs)) s.commentsHost = null;
     if (kIsWeb) unawaited(BrowserContextMenu.enableContextMenu());
     if (s.panels.isOpen(WritePanels.find)) s.panels.close(WritePanels.find);
     _pagination?.removeListener(_onPages);
@@ -161,6 +161,13 @@ class _WriteDocumentScreenState extends State<WriteDocumentScreen> {
 
   @override
   Widget build(BuildContext context) {
+    return ListenableBuilder(
+      listenable: doc.viewPrefs,
+      builder: (context, _) => _scaffold(context),
+    );
+  }
+
+  Widget _scaffold(BuildContext context) {
     return EditorScaffold(
       key: ValueKey<String>('write.screen.${widget.itemUuid}'),
       services: s,
@@ -169,13 +176,11 @@ class _WriteDocumentScreenState extends State<WriteDocumentScreen> {
       toolbar: (context) =>
           WriteToolbar(services: s, doc: doc, controller: _toolbar),
       body: (context, item) => _body(context, item),
+      // The bar only shows the word count, when it is turned on (Write 05
+      // §11).
+      showStatusBar: doc.viewPrefs.showWordCount,
       statusLeft: (context) => [WordCountStatus(doc: doc)],
-      statusRight: (context) => [
-        _UploadsStatus(images: doc.images),
-        LayoutStatus(doc: doc),
-        ZoomStatus(doc: doc),
-        ModeStatus(doc: doc),
-      ],
+      commentsInPanel: false,
       panels: [
         SidePanelSpec(
           id: WritePanels.outline,
@@ -207,7 +212,6 @@ class _WriteDocumentScreenState extends State<WriteDocumentScreen> {
             ),
           ),
         ),
-        suggestionsPanelSpec(session),
         writeAssistantPanelSpec(ai),
       ],
     );
@@ -374,15 +378,15 @@ class _WriteDocumentScreenState extends State<WriteDocumentScreen> {
               );
               return LayoutBuilder(
                 builder: (context, c) => ListenableBuilder(
-                  listenable: doc.editor.view,
-                  builder: (context, _) => FocusModeChrome(
-                    enabled: doc.editor.view.focusMode,
-                    setChromeHidden: s.viewState.setFullScreen,
-                    child: _withCue(
-                      context,
-                      _withMargin(context, c, stack),
-                      suggesting: suggesting,
-                    ),
+                  listenable: Listenable.merge([
+                    doc.editor.view,
+                    session.comments,
+                    session.suggestions,
+                  ]),
+                  builder: (context, _) => _withCue(
+                    context,
+                    _withMargin(context, c, stack),
+                    suggesting: suggesting,
                   ),
                 ),
               );
@@ -421,9 +425,11 @@ class _WriteDocumentScreenState extends State<WriteDocumentScreen> {
   /// Width of the comment margin column including its padding.
   static const double _marginColumn = 300 + 8 + 16;
 
-  /// The canvas with the comment margin beside it when there are cards and
-  /// the page (at the current zoom) still fits next to it with gutters —
-  /// otherwise cards live in the panels only (Write 05 §3).
+  /// The canvas with the comment margin (Write 05 §3, 08 §3.2): comments
+  /// and suggestions are shown only there, toggled with the comments button
+  /// (`shell.comments.togglePanel`). It sits beside the page when the page
+  /// (at the current zoom) still fits next to it, and over the canvas's
+  /// right edge otherwise.
   Widget _withMargin(BuildContext context, BoxConstraints c, Widget stack) {
     final theme = doc.documentTheme.editorTheme(
       ShadTheme.of(context).brightness,
@@ -431,30 +437,64 @@ class _WriteDocumentScreenState extends State<WriteDocumentScreen> {
     final view = doc.editor.view;
     final pages = view.layout == LayoutMode.pages;
     final pageWidth = view.pageSetup.size.width * view.zoom;
+    final comments = session.comments;
+    final controller = comments.controller;
     final hasCards =
-        session.comments.anchoredOpenThreads.isNotEmpty ||
-        session.suggestions.pending.isNotEmpty;
-    final margin =
-        hasCards &&
-        doc.viewPrefs.showCommentMargin &&
-        c.maxWidth >= math.max(1080, pageWidth + 2 * 32 + _marginColumn);
-    if (!margin) return stack;
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        Expanded(child: stack),
-        ColoredBox(
-          color: pages ? theme.canvasColor : theme.paperColor,
-          child: Padding(
-            padding: const EdgeInsets.fromLTRB(8, 0, 16, 0),
-            child: CommentMargin(
-              key: const ValueKey<String>('write.commentMargin'),
-              session: session,
-              width: 300,
-              scrollController: _scroll,
+        comments.anchoredOpenThreads.isNotEmpty ||
+        comments.unanchoredThreads.isNotEmpty ||
+        session.suggestions.pending.isNotEmpty ||
+        comments.draftOffset != null;
+    if (controller == null ||
+        !comments.visible ||
+        !hasCards ||
+        !doc.viewPrefs.showCommentMargin ||
+        c.maxWidth < 600) {
+      return stack;
+    }
+    final background = pages ? theme.canvasColor : theme.paperColor;
+    final margin = SizedBox(
+      width: _marginColumn,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Padding(
+            padding: const EdgeInsets.fromLTRB(8, 8, 16, 4),
+            child: ListenableBuilder(
+              listenable: controller,
+              builder: (context, _) =>
+                  CommentsFilterTabs(controller: controller),
             ),
           ),
-        ),
+          Expanded(
+            child: ClipRect(
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(8, 0, 16, 0),
+                child: CommentMargin(
+                  key: const ValueKey<String>('write.commentMargin'),
+                  session: session,
+                  width: 300,
+                  scrollController: _scroll,
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+    final beside = c.maxWidth >= pageWidth + 2 * 32 + _marginColumn;
+    if (beside) {
+      return Row(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Expanded(child: stack),
+          ColoredBox(color: background, child: margin),
+        ],
+      );
+    }
+    return Stack(
+      children: [
+        Positioned.fill(child: stack),
+        Positioned(top: 0, right: 0, bottom: 0, child: margin),
       ],
     );
   }
@@ -580,244 +620,6 @@ class WordCountStatus extends StatelessWidget {
                   style: theme.textTheme.muted.copyWith(fontSize: 12),
                 ),
               ),
-            ),
-          ),
-        );
-      },
-    );
-  }
-}
-
-class _UploadsStatus extends StatelessWidget {
-  const _UploadsStatus({required this.images});
-
-  final WriteImageServices images;
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = ShadTheme.of(context);
-    return ValueListenableBuilder<int>(
-      valueListenable: images.pendingUploads,
-      builder: (context, n, _) => n == 0
-          ? const SizedBox.shrink()
-          : Padding(
-              padding: const EdgeInsets.only(right: 8),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  const SizedBox(
-                    width: 12,
-                    height: 12,
-                    child: ShadSpinner(size: 12),
-                  ),
-                  const SizedBox(width: 6),
-                  Text(
-                    writeL10n(context).screenUploadingImages(n),
-                    style: theme.textTheme.muted.copyWith(fontSize: 12),
-                  ),
-                ],
-              ),
-            ),
-    );
-  }
-}
-
-/// Pages / Pageless toggle (editors) or indicator.
-class LayoutStatus extends StatelessWidget {
-  const LayoutStatus({super.key, required this.doc});
-
-  final WriteDocumentController doc;
-
-  @override
-  Widget build(BuildContext context) {
-    return ListenableBuilder(
-      listenable: doc,
-      builder: (context, _) {
-        final pages = doc.view.layout == LayoutMode.pages;
-        final ui = CommandUi(context, ShellScope.of(context));
-        final l = ui.l;
-        final layout = pages ? l.menuLayoutPages : l.menuLayoutPageless;
-        return WonkyDropdownMenu(
-          anchor: const ShadAnchor(
-            childAlignment: AlignmentDirectional.topEnd,
-            overlayAlignment: AlignmentDirectional.bottomEnd,
-            offset: Offset(0, -4),
-          ),
-          entries: () => [
-            ui.item(
-              'write.doc.setLayout',
-              args: {'layout': 'pages'},
-              label: l.menuLayoutPages,
-              radio: true,
-              keyName: 'layout.pages',
-            ),
-            ui.item(
-              'write.doc.setLayout',
-              args: {'layout': 'pageless'},
-              label: l.menuLayoutPageless,
-              radio: true,
-              keyName: 'layout.pageless',
-            ),
-            const WonkyMenuSeparator(),
-            ui.item('write.doc.pageSetup', label: l.cmdDocPageSetup),
-          ],
-          builder: (context, c) => ShadButton.ghost(
-            key: const ValueKey<String>('write.status.layout'),
-            height: 22,
-            padding: const EdgeInsets.symmetric(horizontal: 6),
-            leading: Icon(
-              pages ? LucideIcons.fileText : LucideIcons.scrollText,
-              size: 13,
-            ),
-            onPressed: c.toggle,
-            child: Text(
-              layout,
-              semanticsLabel: l.screenPageLayout(layout),
-              style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w400),
-            ),
-          ),
-        );
-      },
-    );
-  }
-}
-
-/// − 100% + (Write 05 §11).
-class ZoomStatus extends StatelessWidget {
-  const ZoomStatus({super.key, required this.doc});
-
-  final WriteDocumentController doc;
-
-  @override
-  Widget build(BuildContext context) {
-    return ListenableBuilder(
-      listenable: doc.view,
-      builder: (context, _) {
-        final s = ShellScope.of(context);
-        final ui = CommandUi(context, s);
-        final l = ui.l;
-        final zoom = (doc.view.zoom * 100).round();
-        Widget icon(String key, IconData i, String id, String label) =>
-            ShadTooltip(
-              builder: (_) => ToolbarTooltipContent(
-                label: label,
-                shortcut: s.keymap.labelsOf(id),
-              ),
-              child: ShadIconButton.ghost(
-                key: ValueKey<String>(key),
-                width: 22,
-                height: 22,
-                iconSize: 13,
-                semanticLabel: label,
-                icon: Icon(i),
-                onPressed: () => ui.run(id),
-              ),
-            );
-        return Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            icon(
-              'write.status.zoomOut',
-              LucideIcons.minus,
-              'write.view.zoomOut',
-              l.cmdViewZoomOut,
-            ),
-            WonkyDropdownMenu(
-              anchor: const ShadAnchor(
-                childAlignment: AlignmentDirectional.topCenter,
-                overlayAlignment: AlignmentDirectional.bottomCenter,
-                offset: Offset(0, -4),
-              ),
-              constraints: const BoxConstraints(minWidth: 120),
-              entries: () => [
-                for (final p in zoomPresets)
-                  WonkyMenuRadioItem(
-                    key: ValueKey<String>('menu.statusZoom.$p'),
-                    label: l.screenZoomPercent(p),
-                    selected: p == zoom,
-                    onSelected: () =>
-                        ui.run('write.view.zoomSet', {'percent': p}),
-                  ),
-                const WonkyMenuSeparator(),
-                ui.item(
-                  'write.view.zoomFit',
-                  args: {'mode': 'width'},
-                  label: l.menuFitWidth,
-                  keyName: 'status.fitWidth',
-                ),
-              ],
-              builder: (context, c) => ShadButton.ghost(
-                key: const ValueKey<String>('write.status.zoom'),
-                height: 22,
-                padding: const EdgeInsets.symmetric(horizontal: 6),
-                onPressed: c.toggle,
-                // At least 36 px so the width does not jump between zoom
-                // levels; grows for longer (translated) labels.
-                child: ConstrainedBox(
-                  constraints: const BoxConstraints(minWidth: 36),
-                  child: Text(
-                    l.screenZoomPercent(zoom),
-                    textAlign: TextAlign.center,
-                    semanticsLabel: l.screenZoomLevel(zoom),
-                    style: const TextStyle(
-                      fontSize: 12,
-                      fontWeight: FontWeight.w400,
-                      fontFeatures: [FontFeature.tabularFigures()],
-                    ),
-                  ),
-                ),
-              ),
-            ),
-            icon(
-              'write.status.zoomIn',
-              LucideIcons.plus,
-              'write.view.zoomIn',
-              l.cmdViewZoomIn,
-            ),
-          ],
-        );
-      },
-    );
-  }
-}
-
-/// Mode icon (pencil / suggest / eye) that opens the mode menu.
-class ModeStatus extends StatelessWidget {
-  const ModeStatus({super.key, required this.doc});
-
-  final WriteDocumentController doc;
-
-  @override
-  Widget build(BuildContext context) {
-    return ListenableBuilder(
-      listenable: doc,
-      builder: (context, _) {
-        final ui = CommandUi(context, ShellScope.of(context));
-        final (icon, _, _) = ModeSwitcher.describe(ui.l, doc.editor.mode);
-        final label = ModeSwitcher.modeName(ui.l, doc.editor.mode);
-        final cs = ShadTheme.of(context).colorScheme;
-        return WonkyDropdownMenu(
-          anchor: const ShadAnchor(
-            childAlignment: AlignmentDirectional.topEnd,
-            overlayAlignment: AlignmentDirectional.bottomEnd,
-            offset: Offset(0, -4),
-          ),
-          entries: () => modeEntries(ui, doc),
-          builder: (context, c) => ShadTooltip(
-            builder: (_) => Text(label),
-            child: ShadIconButton.ghost(
-              key: const ValueKey<String>('write.status.mode'),
-              width: 22,
-              height: 22,
-              iconSize: 13,
-              semanticLabel: label,
-              icon: Icon(
-                icon,
-                color: doc.editor.mode == EditorMode.suggesting
-                    ? cs.success
-                    : null,
-              ),
-              onPressed: c.toggle,
             ),
           ),
         );

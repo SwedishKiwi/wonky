@@ -325,18 +325,6 @@ abstract class WonkyUiLocalizations {
   /// **'Close panel'**
   String get panelClose;
 
-  /// No description provided for @panelCollapse.
-  ///
-  /// In en, this message translates to:
-  /// **'Collapse panel'**
-  String get panelCollapse;
-
-  /// No description provided for @panelExpand.
-  ///
-  /// In en, this message translates to:
-  /// **'Expand panel'**
-  String get panelExpand;
-
   /// No description provided for @panelResize.
   ///
   /// In en, this message translates to:

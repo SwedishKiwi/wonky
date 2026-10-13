@@ -268,18 +268,6 @@ abstract class WonkyAppLocalizations {
   /// **'{who} moved this'**
   String activityMoved(String who);
 
-  /// No description provided for @activityPeople.
-  ///
-  /// In en, this message translates to:
-  /// **'People'**
-  String get activityPeople;
-
-  /// No description provided for @activityRecent.
-  ///
-  /// In en, this message translates to:
-  /// **'Recent activity'**
-  String get activityRecent;
-
   /// No description provided for @activityRenamed.
   ///
   /// In en, this message translates to:
@@ -309,12 +297,6 @@ abstract class WonkyAppLocalizations {
   /// In en, this message translates to:
   /// **'Wonky Work'**
   String get activitySystem;
-
-  /// No description provided for @activityTitle.
-  ///
-  /// In en, this message translates to:
-  /// **'Activity on “{name}”'**
-  String activityTitle(String name);
 
   /// No description provided for @activityTrashed.
   ///
@@ -730,12 +712,6 @@ abstract class WonkyAppLocalizations {
   /// **'About'**
   String get cmdAbout;
 
-  /// No description provided for @cmdActivityDashboard.
-  ///
-  /// In en, this message translates to:
-  /// **'Activity dashboard'**
-  String get cmdActivityDashboard;
-
   /// No description provided for @cmdAddShortcut.
   ///
   /// In en, this message translates to:
@@ -795,12 +771,6 @@ abstract class WonkyAppLocalizations {
   /// In en, this message translates to:
   /// **'Comments'**
   String get cmdCommentsPanel;
-
-  /// No description provided for @cmdCompactMode.
-  ///
-  /// In en, this message translates to:
-  /// **'Compact mode'**
-  String get cmdCompactMode;
 
   /// No description provided for @cmdCopy.
   ///
@@ -867,18 +837,6 @@ abstract class WonkyAppLocalizations {
   /// In en, this message translates to:
   /// **'Forward'**
   String get cmdForward;
-
-  /// No description provided for @cmdFullScreen.
-  ///
-  /// In en, this message translates to:
-  /// **'Full screen'**
-  String get cmdFullScreen;
-
-  /// No description provided for @cmdHelpCenter.
-  ///
-  /// In en, this message translates to:
-  /// **'Help center'**
-  String get cmdHelpCenter;
 
   /// No description provided for @cmdHome.
   ///
@@ -1102,12 +1060,6 @@ abstract class WonkyAppLocalizations {
   /// **'Restore this version'**
   String get cmdRestoreVersion;
 
-  /// No description provided for @cmdSearchMenus.
-  ///
-  /// In en, this message translates to:
-  /// **'Search the menus'**
-  String get cmdSearchMenus;
-
   /// No description provided for @cmdSeeVersionHistory.
   ///
   /// In en, this message translates to:
@@ -1137,24 +1089,6 @@ abstract class WonkyAppLocalizations {
   /// In en, this message translates to:
   /// **'Share'**
   String get cmdShare;
-
-  /// No description provided for @cmdShowMenubar.
-  ///
-  /// In en, this message translates to:
-  /// **'Menu bar'**
-  String get cmdShowMenubar;
-
-  /// No description provided for @cmdShowStatusBar.
-  ///
-  /// In en, this message translates to:
-  /// **'Status bar'**
-  String get cmdShowStatusBar;
-
-  /// No description provided for @cmdShowToolbar.
-  ///
-  /// In en, this message translates to:
-  /// **'Toolbar'**
-  String get cmdShowToolbar;
 
   /// No description provided for @cmdSignOut.
   ///
@@ -1366,12 +1300,6 @@ abstract class WonkyAppLocalizations {
   /// **'Show'**
   String get commentShow;
 
-  /// No description provided for @commentsAll.
-  ///
-  /// In en, this message translates to:
-  /// **'All'**
-  String get commentsAll;
-
   /// No description provided for @commentsEmptyBody.
   ///
   /// In en, this message translates to:
@@ -1395,18 +1323,6 @@ abstract class WonkyAppLocalizations {
   /// In en, this message translates to:
   /// **'Open'**
   String get commentsOpen;
-
-  /// No description provided for @commentsResolved.
-  ///
-  /// In en, this message translates to:
-  /// **'Resolved'**
-  String get commentsResolved;
-
-  /// No description provided for @commentsSearch.
-  ///
-  /// In en, this message translates to:
-  /// **'Search comments'**
-  String get commentsSearch;
 
   /// No description provided for @commentsSort.
   ///
@@ -1894,84 +1810,6 @@ abstract class WonkyAppLocalizations {
   /// **'Yesterday'**
   String get groupYesterday;
 
-  /// No description provided for @helpMenu.
-  ///
-  /// In en, this message translates to:
-  /// **'Help'**
-  String get helpMenu;
-
-  /// No description provided for @helpTopicCommentsBody.
-  ///
-  /// In en, this message translates to:
-  /// **'Select text or cells and press Ctrl+Alt+M (⌘⌥M on Mac) to comment. Mention people with @ to notify them. Resolve threads when you\'re done.'**
-  String get helpTopicCommentsBody;
-
-  /// No description provided for @helpTopicCommentsTitle.
-  ///
-  /// In en, this message translates to:
-  /// **'Comments'**
-  String get helpTopicCommentsTitle;
-
-  /// No description provided for @helpTopicDriveBody.
-  ///
-  /// In en, this message translates to:
-  /// **'Your drive holds documents, spreadsheets and folders. Drag files onto folders to move them, star what you use often, and find everything with search.'**
-  String get helpTopicDriveBody;
-
-  /// No description provided for @helpTopicDriveTitle.
-  ///
-  /// In en, this message translates to:
-  /// **'Your drive'**
-  String get helpTopicDriveTitle;
-
-  /// No description provided for @helpTopicHistoryBody.
-  ///
-  /// In en, this message translates to:
-  /// **'Versions are saved automatically while you work. Name important versions and restore any of them from File › Version history.'**
-  String get helpTopicHistoryBody;
-
-  /// No description provided for @helpTopicHistoryTitle.
-  ///
-  /// In en, this message translates to:
-  /// **'Version history'**
-  String get helpTopicHistoryTitle;
-
-  /// No description provided for @helpTopicOfflineBody.
-  ///
-  /// In en, this message translates to:
-  /// **'Recently opened files keep working without a connection. Changes sync when you\'re back online.'**
-  String get helpTopicOfflineBody;
-
-  /// No description provided for @helpTopicOfflineTitle.
-  ///
-  /// In en, this message translates to:
-  /// **'Working offline'**
-  String get helpTopicOfflineTitle;
-
-  /// No description provided for @helpTopicSharingBody.
-  ///
-  /// In en, this message translates to:
-  /// **'Use Share to invite people as viewers, commenters or editors, or turn on link sharing for anyone signed in with the link.'**
-  String get helpTopicSharingBody;
-
-  /// No description provided for @helpTopicSharingTitle.
-  ///
-  /// In en, this message translates to:
-  /// **'Sharing'**
-  String get helpTopicSharingTitle;
-
-  /// No description provided for @helpTopicShortcutsBody.
-  ///
-  /// In en, this message translates to:
-  /// **'Press Ctrl+/ (⌘/ on Mac) to see every shortcut, and Ctrl+Shift+P (⌘⇧P) to run any command by name.'**
-  String get helpTopicShortcutsBody;
-
-  /// No description provided for @helpTopicShortcutsTitle.
-  ///
-  /// In en, this message translates to:
-  /// **'Keyboard shortcuts'**
-  String get helpTopicShortcutsTitle;
-
   /// No description provided for @historyBack.
   ///
   /// In en, this message translates to:
@@ -2163,12 +2001,6 @@ abstract class WonkyAppLocalizations {
   /// In en, this message translates to:
   /// **'Share'**
   String get menuShare;
-
-  /// No description provided for @menuShow.
-  ///
-  /// In en, this message translates to:
-  /// **'Show'**
-  String get menuShow;
 
   /// No description provided for @menuTools.
   ///
@@ -2602,12 +2434,6 @@ abstract class WonkyAppLocalizations {
   /// **'Open file'**
   String get paletteGoToFile;
 
-  /// No description provided for @paletteMenus.
-  ///
-  /// In en, this message translates to:
-  /// **'Menus'**
-  String get paletteMenus;
-
   /// No description provided for @palettePlaceholder.
   ///
   /// In en, this message translates to:
@@ -2619,12 +2445,6 @@ abstract class WonkyAppLocalizations {
   /// In en, this message translates to:
   /// **'Recent'**
   String get paletteRecent;
-
-  /// No description provided for @paletteSearchMenus.
-  ///
-  /// In en, this message translates to:
-  /// **'Search the menus'**
-  String get paletteSearchMenus;
 
   /// No description provided for @panelComments.
   ///
@@ -3255,12 +3075,6 @@ abstract class WonkyAppLocalizations {
   /// In en, this message translates to:
   /// **'Keyboard shortcuts'**
   String get shortcutsTitle;
-
-  /// No description provided for @showMenus.
-  ///
-  /// In en, this message translates to:
-  /// **'Show menus'**
-  String get showMenus;
 
   /// No description provided for @someone.
   ///
@@ -4257,102 +4071,6 @@ abstract class WonkyAppLocalizations {
   /// In en, this message translates to:
   /// **'{kind} {name}'**
   String driveItemLabel(String kind, String name);
-
-  /// No description provided for @activityTabViewers.
-  ///
-  /// In en, this message translates to:
-  /// **'Viewers'**
-  String get activityTabViewers;
-
-  /// No description provided for @activityTabTrends.
-  ///
-  /// In en, this message translates to:
-  /// **'Trends'**
-  String get activityTabTrends;
-
-  /// No description provided for @activityTabActivity.
-  ///
-  /// In en, this message translates to:
-  /// **'Activity'**
-  String get activityTabActivity;
-
-  /// No description provided for @activityPeriodDays.
-  ///
-  /// In en, this message translates to:
-  /// **'Last {days} days'**
-  String activityPeriodDays(int days);
-
-  /// No description provided for @activityShowMyViewHistory.
-  ///
-  /// In en, this message translates to:
-  /// **'Show my view history'**
-  String get activityShowMyViewHistory;
-
-  /// No description provided for @activityShowMyViewHistoryHint.
-  ///
-  /// In en, this message translates to:
-  /// **'When this is off, you\'re not listed as a viewer of any file. Your views are still counted anonymously in the trends.'**
-  String get activityShowMyViewHistoryHint;
-
-  /// No description provided for @activityViewersHidden.
-  ///
-  /// In en, this message translates to:
-  /// **'{count, plural, =1{1 more person turned off their view history} other{{count} more people turned off their view history}}'**
-  String activityViewersHidden(int count);
-
-  /// No description provided for @activityViewersEmpty.
-  ///
-  /// In en, this message translates to:
-  /// **'{days, plural, =1{Nobody with access opened this today} other{Nobody with access opened this in the last {days} days}}'**
-  String activityViewersEmpty(int days);
-
-  /// No description provided for @activityViewersCount.
-  ///
-  /// In en, this message translates to:
-  /// **'{count, plural, =1{1 person with access opened this in the last {days} days} other{{count} people with access opened this in the last {days} days}}'**
-  String activityViewersCount(int count, int days);
-
-  /// No description provided for @activityLastViewed.
-  ///
-  /// In en, this message translates to:
-  /// **'Viewed {time}'**
-  String activityLastViewed(String time);
-
-  /// No description provided for @activityViewCount.
-  ///
-  /// In en, this message translates to:
-  /// **'{count, plural, =1{1 view} other{{count} views}}'**
-  String activityViewCount(int count);
-
-  /// No description provided for @activityChartSummary.
-  ///
-  /// In en, this message translates to:
-  /// **'{title}: {total} in total, at most {peak} on one day'**
-  String activityChartSummary(String title, int total, int peak);
-
-  /// No description provided for @activityViewTrend.
-  ///
-  /// In en, this message translates to:
-  /// **'Views'**
-  String get activityViewTrend;
-
-  /// No description provided for @activityViewTrendHint.
-  ///
-  /// In en, this message translates to:
-  /// **'Unique viewers per day'**
-  String get activityViewTrendHint;
-
-  /// No description provided for @activityCommentTrend.
-  ///
-  /// In en, this message translates to:
-  /// **'Comments'**
-  String get activityCommentTrend;
-
-  /// No description provided for @activityCommentTrendHint.
-  ///
-  /// In en, this message translates to:
-  /// **'Comments and replies per day'**
-  String get activityCommentTrendHint;
 
   /// No description provided for @activityShowMore.
   ///

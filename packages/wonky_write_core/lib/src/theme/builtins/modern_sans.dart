@@ -14,7 +14,7 @@ final Map<String, Object?> modernSansThemeJson = {
   'fonts': {
     'body': 'Work Sans',
     'heading': 'Montserrat',
-    'mono': 'IBM Plex Mono',
+    'mono': 'JetBrains Mono',
   },
   'palette': paletteJson(
     text: '#1c1e21',

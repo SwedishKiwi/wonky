@@ -49,7 +49,12 @@ class UiBridgeEndpoint extends Endpoint {
                 case UiBridgeHello():
                   final previous = window;
                   if (previous != null) UiBridgeHub.unregister(previous);
-                  final w = UiBridgeHub.register(actor.userId, m, send);
+                  final w = UiBridgeHub.register(
+                    session,
+                    actor.userId,
+                    m,
+                    send,
+                  );
                   window = w;
                   send(UiBridgeWelcome(sessionId: w.sessionId));
                 case UiBridgeStatus():

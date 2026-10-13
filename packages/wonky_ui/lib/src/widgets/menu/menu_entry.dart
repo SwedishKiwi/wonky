@@ -18,6 +18,7 @@ class WonkyMenuItem extends WonkyMenuEntry {
     super.key,
     required this.label,
     this.icon,
+    this.leading,
     this.shortcut,
     this.enabled = true,
     this.disabledReason,
@@ -28,6 +29,9 @@ class WonkyMenuItem extends WonkyMenuEntry {
 
   final String label;
   final IconData? icon;
+
+  /// A 16 px widget shown instead of [icon] (e.g. a product icon).
+  final Widget? leading;
 
   /// Key caps of the shortcut (`['⌘', 'B']`), rendered with `ShadKbd`.
   final List<String>? shortcut;
@@ -131,7 +135,7 @@ extension WonkyMenuEntries on List<WonkyMenuEntry> {
   /// Whether any entry needs a leading slot (icon, check or radio).
   bool get hasLeading => any(
     (e) =>
-        (e is WonkyMenuItem && e.icon != null) ||
+        (e is WonkyMenuItem && (e.icon != null || e.leading != null)) ||
         e is WonkyMenuCheckItem ||
         e is WonkyMenuRadioItem ||
         (e is WonkyMenuSubmenu && e.icon != null),

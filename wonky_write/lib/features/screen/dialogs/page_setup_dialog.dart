@@ -103,21 +103,37 @@ class _PageSetupDialogState extends State<PageSetupDialog> {
   late String _tab = widget.initialTab == 1 ? 'headerFooter' : 'page';
   _Unit _unit = _Unit.inches;
 
-  PageSetup get _result => PageSetup(
-    layout: _layout,
-    paper: _paper,
-    customWidthPt: _customW,
-    customHeightPt: _customH,
-    orientation: _orientation,
-    margins: _themeMargins ? null : _margins,
-    header: _header,
-    footer: _footer,
-    differentFirstPage: _differentFirst,
-    firstPageHeader: _firstHeader,
-    firstPageFooter: _firstFooter,
-    pageNumberStart: widget.setup.pageNumberStart,
-    pageNumberFormat: widget.setup.pageNumberFormat,
-  );
+  PageSetup get _result {
+    final m = _themeMargins ? widget.themeMargins : _margins;
+    return PageSetup(
+      layout: _layout,
+      paper: _paper,
+      customWidthPt: _customW,
+      customHeightPt: _customH,
+      orientation: _orientation,
+      margins: _themeMargins ? null : _margins,
+      header: _fit(_header, m.top),
+      footer: _fit(_footer, m.bottom),
+      differentFirstPage: _differentFirst,
+      firstPageHeader: _fit(_firstHeader, m.top),
+      firstPageFooter: _fit(_firstFooter, m.bottom),
+      pageNumberStart: widget.setup.pageNumberStart,
+      pageNumberFormat: widget.setup.pageNumberFormat,
+    );
+  }
+
+  /// [spec] with its distance from the page edge moved inside [margin] when
+  /// a smaller margin (e.g. the Narrow preset) would leave it outside.
+  static HeaderFooterSpec _fit(HeaderFooterSpec spec, double margin) =>
+      spec.distancePt < margin || margin <= 0
+      ? spec
+      : HeaderFooterSpec(
+          enabled: spec.enabled,
+          left: spec.left,
+          center: spec.center,
+          right: spec.right,
+          distancePt: margin / 2,
+        );
 
   double _toUnit(double pt) => _unit == _Unit.inches ? pt / 72 : pt / 72 * 25.4;
   double _fromUnit(num v) => _unit == _Unit.inches ? v * 72.0 : v / 25.4 * 72;
@@ -143,6 +159,10 @@ class _PageSetupDialogState extends State<PageSetupDialog> {
   Widget build(BuildContext context) {
     final l = writeL10n(context);
     final ro = widget.readOnly;
+    final errors = ro
+        ? const <String>[]
+        : _result.validate(themeMargins: widget.themeMargins);
+    final valid = errors.isEmpty;
     return ShadDialog(
       key: const ValueKey<String>('write.dialog.pageSetup'),
       title: Text(l.pageSetupTitle),
@@ -152,9 +172,11 @@ class _PageSetupDialogState extends State<PageSetupDialog> {
         if (!ro)
           ShadButton.ghost(
             key: const ValueKey<String>('write.dialog.pageSetup.default'),
-            onPressed: () => Navigator.of(
-              context,
-            ).pop(PageSetupResult(_result, setAsDefault: true)),
+            onPressed: valid
+                ? () => Navigator.of(
+                    context,
+                  ).pop(PageSetupResult(_result, setAsDefault: true))
+                : null,
             child: Text(l.pageSetupSetAsDefault),
           ),
         ShadButton.outline(
@@ -165,8 +187,9 @@ class _PageSetupDialogState extends State<PageSetupDialog> {
         if (!ro)
           ShadButton(
             key: const ValueKey<String>('write.dialog.pageSetup.ok'),
-            onPressed: () =>
-                Navigator.of(context).pop(PageSetupResult(_result)),
+            onPressed: valid
+                ? () => Navigator.of(context).pop(PageSetupResult(_result))
+                : null,
             child: Text(l.commonOk),
           ),
       ],
@@ -196,9 +219,32 @@ class _PageSetupDialogState extends State<PageSetupDialog> {
             const SizedBox(width: 20),
             Padding(
               padding: const EdgeInsets.only(top: 48),
-              child: _PagePreview(
-                setup: _result,
-                themeMargins: widget.themeMargins,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  _PagePreview(
+                    setup: _result,
+                    themeMargins: widget.themeMargins,
+                  ),
+                  for (final e in errors)
+                    SizedBox(
+                      width: 160,
+                      child: Padding(
+                        padding: const EdgeInsets.only(top: 8),
+                        child: Text(
+                          e,
+                          key: const ValueKey<String>(
+                            'write.dialog.pageSetup.error',
+                          ),
+                          style: ShadTheme.of(context).textTheme.small.copyWith(
+                            color: ShadTheme.of(
+                              context,
+                            ).colorScheme.destructive,
+                          ),
+                        ),
+                      ),
+                    ),
+                ],
               ),
             ),
           ],
@@ -652,19 +698,27 @@ class _PagePreview extends StatelessWidget {
           decoration: BoxDecoration(
             border: Border.all(color: cs.ring.withValues(alpha: 0.5)),
           ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              for (var i = 0; i < 8; i++)
-                Container(
-                  margin: const EdgeInsets.fromLTRB(3, 3, 3, 0),
-                  height: 2,
-                  width: i == 0 ? 30 : null,
-                  color: cs.mutedForeground.withValues(
-                    alpha: i == 0 ? 0.6 : 0.25,
-                  ),
-                ),
-            ],
+          // Clipped: a short custom page has room for fewer lines.
+          child: ClipRect(
+            child: OverflowBox(
+              alignment: Alignment.topLeft,
+              maxHeight: double.infinity,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  for (var i = 0; i < 8; i++)
+                    Container(
+                      margin: const EdgeInsets.fromLTRB(3, 3, 3, 0),
+                      height: 2,
+                      width: i == 0 ? 30 : null,
+                      color: cs.mutedForeground.withValues(
+                        alpha: i == 0 ? 0.6 : 0.25,
+                      ),
+                    ),
+                ],
+              ),
+            ),
           ),
         ),
       ),

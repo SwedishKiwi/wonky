@@ -85,6 +85,12 @@ Ordering guarantee: Redis delivery is best-effort and unordered; each client tra
 `expectedRevision` and on receiving revision `r > expected` buffers it and sends `RequestOps`
 for the gap (the server serves from DB). Duplicates (`r < expected`) are ignored.
 
+Other instances: an instance whose `DocumentSession` only sees a commit as a bus message
+catches up from the op log (coalesced); `RequestOps`, `CursorUpdate` and `HashCheck` first
+catch up to the revision the client names. Rosters (`hello`/`here`/`left`) get a 30 s `beat`
+with 90 s expiry, and the editor limit (§7) is re-checked 2 s after joining once the other
+instances' replies arrived ([13 §4](../13-security-and-operations.md)).
+
 ## 3. Client algorithm (`DocumentSyncController`, `wonky_write/lib/features/sync/`)
 
 States (ot.js): **Synchronized**, **AwaitingAck(inflight)**,

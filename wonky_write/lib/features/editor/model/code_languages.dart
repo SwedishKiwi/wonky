@@ -19,12 +19,47 @@ abstract final class CodeLanguages {
     'rb': 'ruby',
     'rs': 'rust',
     'golang': 'go',
+    'htm': 'html',
+    'mjs': 'javascript',
+    'cjs': 'javascript',
+    'python3': 'python',
+    'py3': 'python',
+    'kts': 'kotlin',
+    'jsonc': 'json',
+    'spy': 'serverpod',
+    'serverpod_protocol': 'serverpod',
     'plain': '',
     'text': '',
     'plaintext': '',
   };
 
-  /// Languages offered by the language picker, with display names.
+  /// Highlighted languages → their `syntax_highlight` grammar (Write 04
+  /// §15.4). The language picker offers exactly these; other languages are
+  /// kept and rendered as plain text.
+  static const grammars = {
+    'css': 'css',
+    'dart': 'dart',
+    'go': 'go',
+    'html': 'html',
+    'java': 'java',
+    'javascript': 'javascript',
+    'json': 'json',
+    'kotlin': 'kotlin',
+    'python': 'python',
+    'rust': 'rust',
+    'serverpod': 'serverpod_protocol',
+    'sql': 'sql',
+    'swift': 'swift',
+    'typescript': 'typescript',
+    'yaml': 'yaml',
+  };
+
+  /// The grammar that highlights [language] (normalised), or `null` when it
+  /// is shown as plain text.
+  static String? grammarFor(String language) => grammars[language];
+
+  /// Display names of languages (chip labels). Includes common languages
+  /// without highlighting so typed fences (```` ```bash ````) get a label.
   static const displayNames = {
     'bash': 'Bash',
     'c': 'C',
@@ -55,6 +90,7 @@ abstract final class CodeLanguages {
     'rust': 'Rust',
     'scala': 'Scala',
     'scss': 'SCSS',
+    'serverpod': 'Serverpod model',
     'sql': 'SQL',
     'swift': 'Swift',
     'toml': 'TOML',

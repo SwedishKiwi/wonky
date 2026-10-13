@@ -2,7 +2,7 @@
 
 Defines every Wonky Write screen and every piece of chrome around the editor: header, menubar
 (every item), toolbar (every control), floating toolbars, context menus, slash/block menus,
-popovers, side panels, status bar, dialogs, document settings, empty/loading/error states,
+popovers, side panels, comment margin, word count bar, dialogs, empty/loading/error states,
 view modes, Pages vs Pageless rendering, responsive behaviour and light/dark rules.
 
 Editing behaviour behind each control is in [04-editor.md](04-editor.md) (command ids are
@@ -32,7 +32,7 @@ every control is a `CommandButton`/`CommandMenuItem` bound to a command id (suit
 | Screen | Route | Owner spec | Notes |
 |--------|-------|-----------|-------|
 | Home / Drive views | `/`, `/drive/:uuid`, `/shared`, `/starred`, `/recent`, `/offline`, `/trash`, `/search` | suite 05 | Filtered to documents by default; Write template strip |
-| Template gallery | `/templates` | suite 05 | Write categories: Personal, Work, Education, Writing (Blank, Meeting notes, Project brief, Letter, Report, README, Blog post, Résumé) |
+| Template gallery | `/templates` | suite 05 §3.1 | Built-in document templates, each with its own Write theme: Meeting notes, Project brief, Letter, Weekly report, Lecture notes, To-do list, Recipe, Story draft (plus Blank) |
 | **Document editor** | `/d/:uuid` (`?heading=`, `?comment=`, `?suggestion=`, `?version=`) | **this spec §3–§19** | Main screen |
 | Version history | `/d/:uuid/history` | [08](08-comments-suggestions-history.md), suite 07 §5 | Full-screen compare; read-only `SuperReader` |
 | Print / PDF preview | `/d/:uuid/print` | [07](07-import-export-print.md) | Full-screen in-app preview |
@@ -51,35 +51,38 @@ every control is a `CommandButton`/`CommandMenuItem` bound to a command id (suit
 │ File  Edit  View  Insert  Format  Tools  Help                                                │ Menubar 32
 │ ↶ ↷ 🖨 │ 100% ▾ │ Normal text ▾ │ B I S <> │ 🔗 💬 🖼▾ ⊞▾ │ • 1. ☑ ⇤ ⇥ │ ❝ {} │ T̸ │ ⋯ ✎Editing▾│ Toolbar 40
 ├──────────────────────────────────────────────────────────────────────┬───────────────────────┤
-│ canvas ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░ │ Side panel (optional) │
-│ ░░  ┌──────────────── page ────────────────┐   ┌ comment card ┐    │ Outline | Comments |  │
-│ ░░  │ header: Q3 planning           p. 1   │   │ (B) Bo  2m   │    │ History | Assistant | │
-│ ░⋮⋮ │ # Q3 planning                        │───│ Shorter?     │    │ Find                  │
+│ canvas ░░░░░░░░░░░░░░░░░░░░░░░░░░░░ [ Open | For you ] ░░░░░░░░░░░░░ │ Side panel (optional) │
+│ ░░  ┌──────────────── page ────────────────┐   ┌ comment card ┐    │ Outline | Find |      │
+│ ░░  │ header: Q3 planning           p. 1   │   │ (B) Bo  2m   │    │ History | Assistant   │
+│ ░⋮⋮ │ # Q3 planning                        │───│ Shorter?     │    │                       │
 │ ░░  │ Body text with a [comment anchor]…   │   │ [Reply…]  ✓  │    │                       │
 │ ░░  │ • bullet          ▏Anna              │   └──────────────┘    │                       │
 │ ░░  └──────────────────────────────────────┘                       │                       │
 │ ░░  ┌──────────────── page 2 ──────────────┐                       │                       │
 ├──────────────────────────────────────────────────────────────────────┴───────────────────────┤
-│ 1,234 words · Page 1 of 4        ● Saved                      Pages ▾  − 100% +  ◐          │ Status bar 24
+│ 1,234 words                                                                                  │ Word count bar 24 (optional)
 └──────────────────────────────────────────────────────────────────────────────────────────────┘
 ```
 
-Region structure (top to bottom): `EditorHeader` (title row, menubar, toolbar) →
-`ShadResizablePanelGroup` [ `DocumentCanvas` | `WonkySplitView` side panel host ] →
-`StatusBar`. Overlays (dialogs, palette, toasts, offline banner, MCP pill) per suite 03 §3.
+Region structure (top to bottom): `EditorHeader` (title row, menubar, toolbar — always shown)
+→ `ShadResizablePanelGroup` [ `DocumentCanvas` with the comment margin | `WonkySplitView` side
+panel host ] → `StatusBar`, shown only when *Display word count while typing* is on (§11).
+Write passes `commentsInPanel: false` to `EditorScaffold` and sets `WriteViewPrefs` as the
+shell's `CommentsHost` (suite 07 §2.3): comments and suggestions are shown only in the margin.
+Overlays (dialogs, palette, toasts, offline banner, MCP pill) per suite 03 §3.
 
 ### 3.2 Title row (48 px)
 
 | Element | Widget | Behaviour |
 |---------|--------|-----------|
-| App icon | `ShadIconButton` (Write logo) | → Home (`shell.nav.home`). Badge dot when offline changes are pending |
+| App icon | `ShadIconButton` (Write product icon, suite 02 §5) | → Home (`shell.nav.home`). Badge dot when offline changes are pending |
 | Title | `DocumentTitleField` | Rename via `shell.drive.rename {uuid, name}` (undoable, domain `drive`). Placeholder "Untitled document". Empty commit reverts. Viewers: plain text |
 | Star | `ShadToggle` (star icon) | `shell.drive.setStarred` |
 | Move | `ShadIconButton` (folder) | `shell.drive.move` → Move dialog (suite 05) |
 | Sync status | `SyncStatusIndicator` | Saved / Saving… / Offline — changes saved on this device / Sync error (click → details) |
 | — spacer — | | |
 | Presence | `PresenceAvatarStack` | Click avatar → `write.nav.goToCollaborator`; ⋮ → Follow (`write.nav.follow`) |
-| Comments | `ShadButton.ghost` (message-square) + badge (open threads) | `shell.comments.togglePanel` |
+| Comments | `ShadButton.ghost` (message-square) + badge (open threads) | `shell.comments.togglePanel`: shows/hides the comment margin (comments and suggestions, §10) |
 | Version history | `ShadIconButton` (history) | `shell.versions.togglePanel` (panel; panel has "Open full history") |
 | Assistant | `ShadIconButton` (sparkles) | `shell.ai.togglePanel` (`Mod+J` outside editor scope); hidden when `!aiOn` |
 | Share | `ShadButton` primary (lock / globe / users icon by link state) | `shell.sharing.open` |
@@ -88,18 +91,22 @@ Region structure (top to bottom): `EditorHeader` (title row, menubar, toolbar) �
 ### 3.3 Menubar row (32 px)
 `WonkyMenubar` with menus File, Edit, View, Insert, Format, Tools, Help (full content §7). On
 macOS desktop with native menus enabled, the row is hidden and `PlatformMenuBar` is generated
-from the same `MenuSpec`. *View › Compact mode* (`shell.view.toggleCompact`, `Mod+Shift+F`)
-hides this row and shows a ☰ button at the left of the toolbar that opens the same menus.
+from the same `MenuSpec`. The menubar and the toolbar are always shown (no compact mode or full
+screen). Only one menu is open at a time (suite 02 §4.2). Every Write command without an
+explicit menu icon gets one from the shared `commandIcons` table
+(`lib/commands/command_icons.dart`), so menus show icons consistently (e.g. *Insert › Image ›
+Upload from computer*).
 
 ### 3.4 Canvas
 `DocumentCanvas` = `WonkyScrollArea` containing a `CustomScrollView` whose sliver child is the
 `SuperEditor`/`SuperReader` (it wraps itself in a `SliverToBoxAdapter`), plus left gutter (block
-handles), right margin (comment cards / suggestion cards) and page chrome underlay. Background
+handles), right margin (comment cards / suggestion cards, §10) and page chrome underlay. Background
 `canvas` token (Pages) or `page` token (Pageless). Details §16.
 
 ## 4. Toolbar
 
-`WonkyToolbar` (40 px; compact density 36 px). Items in order; **Prio** = overflow priority
+`WonkyToolbar` (40 px; compact density 36 px) in the shell's rounded toolbar container (margin
+6 px above, 8 px below). Items in order; **Prio** = overflow priority
 (1 never overflows, larger numbers overflow first into the trailing `⋯` menu, which preserves
 groups). Toggle items show checked state from `isChecked`; all show tooltip = title + `ShadKbd`
 shortcut.
@@ -108,7 +115,6 @@ shortcut.
 |---|-------|---------|------|---------|------|----------------------|
 | 1 | History | Undo | `ToolbarToggleButton` (icon undo-2) — **press-and-hold 500 ms or right-click** opens Undo history popover | `shell.edit.undo` | 1 | stack non-empty; tooltip "Undo Typing (⌘Z)" |
 | 2 | | Redo | button (redo-2) | `shell.edit.redo` | 1 | redo stack non-empty |
-| 3 | | Search the menus | button (search) | `shell.help.searchMenus` (`Alt+/`) | 5 | always |
 | 4 | | Print | button (printer) | `write.file.print` | 4 | `copyAllowed` |
 | 5 | | Spelling | button (spell-check) (P1) | `write.spell.openDialog` | 6 | spellcheck available |
 | 6 | Zoom | Zoom | `ToolbarSelect` (`ShadSelect`): 50…200 %, Fit width, Fit page; editable value | `write.view.zoomSet` / `zoomFit` | 3 | always |
@@ -133,10 +139,12 @@ shortcut.
 | 25 | Theme | Theme | button (palette) → theme picker popover | `write.theme.openPicker` ([06](06-themes.md)) | 5 | role ≥ editor |
 | — | (right, pinned) | `⋯` overflow | dropdown | — | — | shown only when items overflow |
 | — | (right, pinned) | Mode switcher | §15 | `write.mode.set` | 1 | per role |
-| — | (right, pinned) | Collapse header | button (chevron-up) | `shell.view.toggleCompact` | 1 | always |
 
-In **Viewing** mode the toolbar shows only items 1–6 (undo/redo disabled), the mode switcher
-and the collapse button. In **Suggesting** mode Table (15) and Theme (25) are disabled, while
+(Item 3, *Search the menus*, and the *Collapse header* chevron were removed with menu search and
+compact mode; there is no suggestions toggle — suggestions are in the margin, §10.)
+
+In **Viewing** mode the toolbar shows only items 1–6 (undo/redo disabled) and the mode
+switcher. In **Suggesting** mode Table (15) and Theme (25) are disabled, while
 Image (14), Divider (16) and all formatting/list/block controls stay enabled and produce
 suggestions (see 04 §32.1 for non-suggestable actions; disabled tooltips explain why).
 
@@ -196,8 +204,11 @@ Edit table (`write.table.edit`, primary) · Insert row below · Insert column ri
 Copy as TSV · Comment · Delete table.
 
 ### 5.4 Code block chrome (caret in / hover over code block)
-Not floating: rendered inside the block's top-right corner by `WonkyCodeBlockComponentBuilder`:
-language chip (`CodeLanguagePicker`, §9.4) and Copy button (`write.code.copy`).
+Not floating: rendered inside the top-right corner of the block's box (04 §15.1) by
+`WonkyParagraphComponentBuilder`: language chip (`CodeLanguagePicker`, §9.4: Plain text + the 15
+highlighted languages) and Copy button (`write.code.copy`). The chrome shows on hover; it is not
+a hit target while hidden, and its hover region is not opaque, so taps in the block reach the
+editor.
 
 ## 6. Context menus
 
@@ -267,7 +278,6 @@ Write behaviour noted.
 | ─ | | | | |
 | Language… | `write.doc.languageDialog` → `write.doc.setLanguage` | — | — | role ≥ editor |
 | Page setup… | `write.doc.pageSetup` (dialog §12.6) | — | — | role ≥ editor (viewers: read-only view) |
-| Settings… | `write.doc.settings` (dialog §13) | — | — | always |
 | Print *(shell)* | `write.file.print` (→ `/d/:uuid/print`) | ⌘P | Ctrl+P | `copyAllowed` |
 
 ### 7.2 Edit
@@ -303,32 +313,22 @@ Write behaviour noted.
 | Page layout ▸ Pages / Pageless (radio) | `write.doc.setLayout {pages\|pageless}` | — | — | role ≥ editor (others: disabled, shows current) |
 | Suggestions ▸ Show suggestions / Preview accepted / Preview original (radio) | `write.view.suggestionPreview {mode}` | — | — | always |
 | ─ | | | | |
-| Show ▸ Toolbar (check) *(shell)* | `shell.view.toggleToolbar` | — | — | always |
-| Show ▸ Menu bar (check) *(shell)* | `shell.view.toggleCompact` | ⌘⇧F | Ctrl+Shift+F | always |
-| Show ▸ Status bar (check) *(shell)* | `shell.view.toggleStatusBar` | — | — | always |
-| Show ▸ Word count (check) | `write.view.toggleWordCount` | — | — | status bar visible |
-| Show ▸ Comments in margin (check) | `write.view.toggleCommentMargin` | — | — | always |
-| Show ▸ Collaborator cursors (check) | `write.view.toggleRemoteCursors` | — | — | always |
-| Show ▸ Block handles (check) | `write.view.toggleBlockHandles` | — | — | Editing/Suggesting |
-| Show ▸ Spelling underlines (check, P1) | `write.spell.toggle` | — | — | dictionary available |
-| ─ | | | | |
 | Zoom ▸ Zoom in / Zoom out | `write.view.zoomIn` / `zoomOut` | ⌘⌥= / ⌘⌥- (desktop also ⌘= / ⌘-) | Ctrl+Alt+= / Ctrl+Alt+- (desktop also Ctrl+= / Ctrl+-) | not at bound |
 | Zoom ▸ 50 % … 200 % (radio) | `write.view.zoomSet {percent}` | — | — | always |
 | Zoom ▸ Fit width / Fit page | `write.view.zoomFit {width\|page}` | — | — | Fit page: Pages mode |
 | Zoom ▸ Reset to 100 % | `write.view.zoomReset` | desktop ⌘0 | desktop Ctrl+0 | zoom ≠ 100 |
 | ─ | | | | |
 | Panels ▸ Outline (check) | `write.view.toggleOutline` | ⌘⌥⇧O | Ctrl+Alt+Shift+O | always |
-| Panels ▸ Comments (check) | `shell.comments.togglePanel` | — | — | role allows seeing comments |
-| Panels ▸ Suggestions (check) | `write.suggestions.togglePanel` (also a toolbar toggle next to *Add comment*) | — | — | document loaded |
+| Panels ▸ Find and replace (check) | `write.find.open` / `close` | ⌘F | Ctrl+F | always |
 | Panels ▸ Version history (check) | `shell.versions.togglePanel` | — | — | `online` |
 | Panels ▸ Assistant (check) | `shell.ai.togglePanel` | ⌘J (outside editor) | Ctrl+J | `aiOn` |
-| Panels ▸ Find and replace (check) | `write.find.open` / `close` | ⌘F | Ctrl+F | always |
-| ─ | | | | |
-| Focus mode (check, P2) | `write.view.toggleFocusMode` | — | — | not large-doc mode |
-| Typewriter scrolling (check, P2) | `write.view.toggleTypewriter` | — | — | same |
-| Full screen *(shell)* | `shell.view.toggleFullScreen` | ⌃⌘F | F11 | always |
-| Preview theme ▸ Document theme / *built-in themes* (radio) | `write.theme.previewLocal {themeUuid\|null}` (view state, not saved) | — | — | always |
+| Comments and suggestions (check) | `shell.comments.togglePanel` (shows/hides the comment margin, §10) | — | — | role allows seeing comments |
 | App theme ▸ System / Light / Dark (radio) *(shell)* | `shell.appearance.setTheme {mode}` | — | — | always |
+
+There is no *View › Show* submenu, compact mode, full screen, focus mode, typewriter scrolling
+or theme preview: the chrome is always shown and collaborator cursors are always drawn. The word
+count bar is turned on in the word count dialog (§12.5), the selection toolbar in *Tools ›
+Preferences*, spelling underlines in *Tools › Spelling*.
 
 ### 7.4 Insert
 
@@ -385,7 +385,6 @@ Write behaviour noted.
 | Theme ▸ Customize theme… | `write.theme.openEditor` | — | — | always |
 | Theme ▸ Manage themes… | `write.theme.openManager` | — | — | always |
 | Theme ▸ Save as my default theme | `write.theme.setUserDefault` | — | — | always |
-| What formatting is supported? | `write.help.markdownGuide` (opens help route section) | — | — | always |
 
 ### 7.6 Tools
 
@@ -397,7 +396,6 @@ Write behaviour noted.
 | Spelling ▸ Personal dictionary… | `write.spell.personalDictionary` (dialog §12.11) | — | — | always |
 | Word count | `write.tools.wordCount` | ⌘⇧C | Ctrl+Shift+C | always |
 | Language… | `write.doc.languageDialog` | — | — | role ≥ editor |
-| View Markdown source (P1) | `write.tools.viewMarkdown` (dialog §12.12) | — | — | `copyAllowed` |
 | ─ | | | | |
 | Assistant *(shell)* | `shell.ai.togglePanel` | ⌘J | Ctrl+J | `aiOn` |
 | AI ▸ Summarize document | `write.ai.summarizeDocument` | — | — | `aiOn` |
@@ -415,12 +413,11 @@ Write behaviour noted.
 | Accessibility ▸ Announce formatting | `write.a11y.announceFormatting` | ⌘⌥A | Ctrl+Alt+A | screen-reader mode |
 | Accessibility ▸ Settings… *(shell)* | `shell.settings.open {section: appearance}` | — | — | always |
 | Keyboard shortcuts *(shell)* | `shell.help.shortcuts` | ⌘/ | Ctrl+/ | always |
-| Activity dashboard *(shell)* | `shell.activity.open` | — | — | role ≥ editor |
 
 ### 7.7 Help *(shell + Write items)*
-Search the menus (`shell.help.searchMenus`, `Alt+/`) · Help center (`shell.help.open`) ·
-**Markdown & formatting guide** (`write.help.markdownGuide`) · Keyboard shortcuts (⌘/ / Ctrl+/)
-· Report a problem (`shell.help.feedback`) · What's new · About.
+Keyboard shortcuts (⌘/ / Ctrl+/) · **Markdown guide** (`write.help.markdownGuide`, dialog) · ─ ·
+Report a problem (`shell.help.feedback`) · What's new (`shell.help.whatsNew`) · About
+(`shell.help.about`). (No help center, no menu search; the Markdown guide is only in Help.)
 
 ### 7.8 Native macOS menu mapping
 The `MenuSpec` additionally yields: app menu (About, Preferences ⌘,, Hide ⌘H, Quit ⌘Q — OS
@@ -467,7 +464,7 @@ row with `ShadSpinner`; offline → only cached people with note "Offline — sh
 
 ### 9.4 Code language picker (`CodeLanguagePicker`)
 `ShadSelect.withSearch` anchored to the chip: search field, *Plain text*, "Recent" group, "All
-languages" group (display names); selected checked. Applies `write.code.setLanguage`.
+languages" group (the highlighted languages of 04 §15.4, display names); selected checked. Applies `write.code.setLanguage`.
 
 ### 9.5 Emoji picker (`WonkyEmojiPicker`, P1)
 360×360 px: search, category tabs (icons), grid 8 columns (32 px cells), skin-tone selector,
@@ -482,20 +479,22 @@ item below.
 Owned by [06](06-themes.md): grid of theme cards (light+dark preview thumbnails), *Customize…*,
 *Manage themes…*.
 
-## 10. Side panels
+## 10. Side panels and the comment margin
 
-Hosted by `WonkySplitView` (suite 02 §4.5) on the right; one active panel, tab strip of recently
-opened panels (icons); width persisted per panel; `Mod+Alt+Shift+1…5` switches to the n-th tab;
+Hosted by `WonkySplitView` (suite 02 §4.5) on the right; one active panel, shown or hidden (no
+collapsed rail); the header always shows every panel as an icon tab — Outline, Find, History,
+Assistant; width persisted per panel; `Mod+Alt+Shift+1…5` switches to the n-th tab;
 Esc (with focus in panel) closes; below `md` panels open as `ShadSheet` from the right (90 %
-width, max 420). MCP panel ids in parentheses.
+width, max 420). MCP panel ids in parentheses. File › Details (`details`) also opens in the host
+but is not a tab (`showAsTab: false`). There is **no comments panel and no suggestions panel**:
+comments and suggestions are shown only in the comment margin (§10.2).
 
 | Panel | id | Default / min width | Toggle |
 |-------|----|---------------------|--------|
 | Outline | `outline` | 280 / 220 | `write.view.toggleOutline` |
-| Comments | `comments` | 360 / 300 | `shell.comments.togglePanel` |
+| Find and replace | `find` | 340 / 300 | `write.find.open` |
 | Version history | `history` | 320 / 280 | `shell.versions.togglePanel` |
 | Assistant | `assistant` | 400 / 360 (max 640) | `shell.ai.togglePanel` |
-| Find and replace | `find` | 340 / 300 | `write.find.open` |
 
 ### 10.1 Outline panel (`OutlinePanel`)
 - Header: title "Outline", ⋮ (Collapse all, Expand all, Show levels ▸ 1–6 (`write.outline.setMaxLevel`,
@@ -507,12 +506,24 @@ width, max 420). MCP panel ids in parentheses.
 - Footer: "Summarize with AI" ghost button (`write.ai.summarizeDocument`, `aiOn`).
 - Empty state (§14).
 
-### 10.2 Comments panel
-Shared shell widget (suite 07 §2.3) with the Write anchor provider: filter tabs (All / Open /
-Resolved / For you / **Suggestions**), search, sort (Document order / Newest), thread cards
-linking to anchors (`shell.comments.activate`), suggestion cards with Accept/Reject (Editors)
-and "Accept all / Reject all" in the Suggestions tab header (`write.suggestions.acceptAll` /
-`rejectAll`) — card content per [08](08-comments-suggestions-history.md).
+### 10.2 Comment margin (comments and suggestions)
+The only place comments and suggestions are shown (`CommentMargin`, layout in
+[08](08-comments-suggestions-history.md) §3.2). `WriteViewPrefs` is the shell's `CommentsHost`
+(suite 07 §2.3): the title-row 💬 button and *View › Comments and suggestions*
+(`shell.comments.togglePanel`) show/hide the margin (local pref `write.view.commentMargin`,
+default on); `shell.comments.create` and `shell.comments.activate` show it.
+- **Filter** at the top of the margin: `CommentsFilterTabs` **Open** (default) / **For you**
+  (open threads that mention or are assigned to me); pending suggestions show with *Open*.
+  Resolved threads are not shown; there is no search.
+- **Cards**: thread cards (`shell.comments.activate` on click) and suggestion cards with
+  Accept/Reject (Editors) or Withdraw (author) plus the suggestion thread's replies and a reply
+  box (08 §2.5). *Accept all / Reject all* stay available as commands
+  (`write.suggestions.acceptAll` / `rejectAll`: palette, MCP).
+- **New comment**: the composer is a card in the margin at its anchor.
+- **Placement**: beside the page when the page (at the current zoom) still fits next to the
+  margin column with gutters; otherwise the margin overlays the right edge of the canvas. Hidden
+  below 600 px canvas width. Shown only when there are cards (anchored open threads, pending
+  suggestions or a draft).
 
 ### 10.3 Version history panel
 Compact list of versions (named first toggle "Only named versions"), each row: name or
@@ -547,19 +558,19 @@ and flash-highlight the changed range in the editor (1.5 s `findMatchActive` pul
 - Keyboard: Enter / Shift+Enter next/prev, Mod+Alt+Enter replace all, Esc close, Tab order
   find → options → replace → buttons.
 
-## 11. Status bar
+## 11. Status bar (word count)
 
-`StatusBar` (24 px, suite 02 §4.13), hidden with `shell.view.toggleStatusBar`.
+`StatusBar` (24 px, suite 02 §4.13), shown only while **Display word count while typing** is on
+(checkbox in the word count dialog §12.5, `write.view.toggleWordCount`, per-user local pref,
+default **off**). It contains only the word count:
 
 | Slot | Content | Interaction |
 |------|---------|-------------|
-| Left | Word count "1,234 words" / "56 of 1,234 words"; Pages mode: " · Page 2 of 7" (page of caret) | Click → word count dialog; tooltip shows characters & reading time; hidden via `write.view.toggleWordCount` |
-| Left (conditional) | "Large document" badge (04 §36), "Following Anna" chip (04 §34.4) | Tooltip / Stop |
-| Center | `SyncStatusIndicator` (compact) + pending upload count "Uploading 2 images…" | Click → sync details dialog (shell) |
-| Right | Layout toggle `ShadSelect` compact (Pages / Pageless) | `write.doc.setLayout` (editors) |
-| Right | Zoom: − / `ToolbarSelect` % / + | `write.view.zoomOut/zoomSet/zoomIn` |
-| Right | Mode indicator icon (pencil / suggest / eye) | opens mode switcher |
-| Right | App theme cycle ◐ | `shell.appearance.setTheme` |
+| Left | Word count "1,234 words" / "56 of 1,234 words" | Click → word count dialog; tooltip shows characters & reading time |
+
+Layout, zoom, mode, sync and upload status are not in the status bar: layout and zoom are in
+the View menu and toolbar, the mode in the toolbar's mode switcher, the sync status in the title
+row, the app theme in *View › App theme*.
 
 ## 12. Dialogs
 
@@ -574,13 +585,13 @@ below `md` they become full-height sheets. **Dialog id** is the MCP id.
 | 12.3 | **Custom table size** (`write.dialog.tableSize`) | Insert › Table › Custom size… | Rows (`WonkyNumberStepper` 2–2000, default 3, "including header row"), Columns (1–64, default 3) | **Insert** · Cancel → `write.insert.table` |
 | 12.4 | **Special characters** (`write.dialog.specialChars`, custom, P1) | `write.insert.specialCharacter` | Category `ShadSelect`, search input, character grid (virtualized, 40 px cells), recent row, preview pane (glyph 64 px, name, U+code) | Click/Enter inserts (stays open) · **Close** |
 | 12.5 | **Word count** (`write.dialog.wordCount`) | `write.tools.wordCount` | Read-only table: rows Pages, Words, Characters, Characters excluding spaces, Paragraphs, Reading time; columns Document / Selection (when selection); checkbox "Display word count while typing" (`write.view.toggleWordCount`) | **OK** |
-| 12.6 | **Page setup** (`write.dialog.pageSetup`) | `write.doc.pageSetup` | Tabs: **Page** — Layout (radio Pages/Pageless), Paper size (`ShadSelect`: Letter, Legal, Tabloid, A3, A4, A5, B5, Executive, Statement, Custom → width/height), Orientation (Portrait/Landscape toggle group), Margins top/bottom/left/right (`WonkyNumberStepper`, unit select mm/in, presets Normal/Narrow/Wide); **Header & footer** — Header left/center/right inputs, Footer left/center/right inputs, "Insert ▾" token menu ({page}, {pages}, {title}, {date}, {author}), "Different first page" checkbox (+ first-page header/footer fields), "Show page numbers" quick preset; live thumbnail preview (light/dark aware) | **OK** (one undoable meta change `write.doc.setPageSetup {pageSetup}`), **Set as default** (user default, `write.prefs.setDefaultPageSetup`), Cancel. Model & validation in [07](07-import-export-print.md) |
+| 12.6 | **Page setup** (`write.dialog.pageSetup`) | `write.doc.pageSetup` | Tabs: **Page** — Layout (radio Pages/Pageless), Paper size (`ShadSelect`: Letter, Legal, Tabloid, A3, A4, A5, B5, Executive, Statement, Custom → width/height), Orientation (Portrait/Landscape toggle group), Margins top/bottom/left/right (`WonkyNumberStepper`, unit select mm/in, presets Normal/Narrow/Wide); **Header & footer** — Header left/center/right inputs, Footer left/center/right inputs, "Insert ▾" token menu ({page}, {pages}, {title}, {date}, {author}), "Different first page" checkbox (+ first-page header/footer fields), "Show page numbers" quick preset; live thumbnail preview (light/dark aware). When a smaller margin (e.g. the Narrow preset) would leave the header/footer distance outside the margin, the distance moves inside it (half the margin). Validation errors are shown inline in the dialog and disable OK | **OK** (one undoable meta change `write.doc.setPageSetup {pageSetup}` — its args schema accepts the `PageSetup` JSON), **Set as default** (user default, `write.prefs.setDefaultPageSetup`), Cancel. Model & validation in [07](07-import-export-print.md) |
 | 12.7 | **Document language** (`write.dialog.language`) | File/Tools › Language… | Language `ShadSelect.withSearch` (BCP-47 list with native names; dictionaries available marked ✓) | **OK** → `write.doc.setLanguage` · Cancel |
 | 12.8 | **Document details** (`write.dialog.properties`) | File › Details | Read-only: title, location (breadcrumb, click → drive), owner, created, modified (by), size, word count, language, theme, revision; **Front matter** (`ShadTextarea` monospace YAML, validated YAML syntax; editors only) | **Save** (if front matter changed → `write.doc.setFrontMatter`, undoable meta) · Close |
 | 12.9 | **Insert file contents** (`write.dialog.insertFile`, P1) | drop / Insert › From file… | File name, detected format, import warnings preview list | **Insert** · Cancel |
 | 12.10 | **Check spelling** (`write.dialog.spelling`, custom, P1) | `write.spell.openDialog` | Context sentence with error highlighted, editable "Change to" field, suggestions list | **Change**, **Change all**, **Ignore**, **Ignore all**, **Add to dictionary**, **Close**; "No more errors" final state |
 | 12.11 | **Personal dictionary** (`write.dialog.dictionary`) | Tools › Spelling › Personal dictionary… | Search, word list with remove (×), add field | **Done** (each add/remove = `write.spell.addToDictionary` / `removeFromDictionary`) |
-| 12.12 | **Markdown source** (`write.dialog.markdownSource`, P1) | `write.tools.viewMarkdown` | Read-only monospace view of `MarkdownCodec.export` (suggestions: accepted), line numbers, wrap toggle | **Copy** (`write.edit.copyAsMarkdown` all), **Download .md**, **Close** |
+| 12.12 | *(removed: Markdown source dialog, `write.tools.viewMarkdown`; use Edit › Copy as ▸ Markdown or Download ▸ Markdown)* | | | |
 | 12.13 | **Discard table changes?** (`write.dialog.discardTable`, alert) | Esc in dirty table editor | message | **Discard** (destructive) · Keep editing |
 | 12.14 | **Table editor** (`write.dialog.tableEditor`, custom) | `write.table.edit` | 04 §18.4 (popover ≥ md, dialog < md) | **Done** · Cancel |
 | 12.15 | **Lightbox** (custom overlay, `write.dialog.lightbox`) | `write.image.preview` | image, zoom controls, alt caption | Close (Esc), Download |
@@ -596,16 +607,11 @@ palette (suite 08; Write providers: commands, "#" headings, "@" people → menti
 
 ## 13. Document settings
 
-### 13.1 Settings dialog (`write.dialog.documentSettings`, File › Settings…)
-`ShadDialog` (640 px) with vertical `ShadTabs`:
-
-| Tab | Content | Commands |
-|-----|---------|----------|
-| General | Language (as 12.7), Layout (Pages/Pageless), Default view mode for me (Editing/Suggesting/Viewing — local pref) | `write.doc.setLanguage`, `write.doc.setLayout`, `write.prefs.setDefaultMode` |
-| Theme | Current theme card + *Change…* (theme picker) + *Customize…* | `write.theme.*` ([06](06-themes.md)) |
-| Page setup | Summary (paper, margins, header/footer) + *Edit page setup…* | `write.doc.pageSetup` |
-| Markdown | Front matter editor (as 12.8), "Export options" link | `write.doc.setFrontMatter` |
-| Offline | "Make available offline" switch, local storage used by this doc, pending ops/uploads count | `shell.drive.togglePinnedOffline` |
+### 13.1 Document-level settings
+There is no document settings dialog (*File › Settings…* / `write.doc.settings` was removed).
+Each setting has its own entry point: language (File › Language…, §12.7), layout (View › Page
+layout), theme (Format › Theme, [06](06-themes.md)), page setup (File › Page setup…, §12.6),
+front matter (File › Details, §12.8), offline (File › Make available offline).
 
 Document-level settings (language, layout, theme, page setup, front matter) are **meta**
 changes: LWW via `updateMeta`, undoable in domain `write.meta`, broadcast as `MetaChanged`
@@ -613,9 +619,9 @@ changes: LWW via `updateMeta`, undoable in domain `write.meta`, broadcast as `Me
 can change them; others see read-only values.
 
 ### 13.2 Per-user view preferences (local, not undoable, not synced)
-Zoom, mode, panel visibility/width, word count shown, comment margin, block handles,
-collaborator cursors, suggestion preview mode, focus/typewriter — persisted per user (and per
-document for zoom/mode) in local prefs.
+Zoom, mode, panel visibility/width, word count bar shown (default off), comment margin shown
+(default on), selection toolbar, suggestion preview mode — persisted per user (and per document
+for zoom/mode) in local prefs. Collaborator cursors are always shown.
 
 ### 13.3 Settings › Write (user defaults, suite 04 §4.5)
 Default theme, default page setup (and default layout), spellcheck on, personal dictionary,
@@ -635,8 +641,7 @@ a `write.prefs.*` / `shell.settings.*` command.
 | **Trashed document** | Read-only (Viewing) + banner "This document is in the trash." **Restore** (`shell.drive.restore`) |
 | **No access / not found** | Shell page (suite 03 §2) |
 | **Outline empty** | Icon list-tree 24 px, "Headings you add to the document will appear here", button *Learn about headings* (help) |
-| **Comments empty** | "No comments yet. Select text and press ⌘⌥M to comment." (shortcut rendered with `ShadKbd`) |
-| **Suggestions tab empty** | "No suggestions. Switch to Suggesting mode to propose changes." + *Switch* button (if role allows) |
+| **No comments or suggestions** | The comment margin is not shown (§10.2) |
 | **Find: no results** | "No results for 'xyz'" muted; with regex error: destructive "Invalid regular expression" |
 | **Version history: only current** | "No earlier versions yet. Versions are saved automatically as you edit." + *Name current version* |
 | **Assistant empty** | Shell empty state + Write quick prompts |
@@ -660,7 +665,7 @@ shortcuts; rows disabled by role with tooltip ("You need edit access — Request
 | Menus | all | non-suggestable items disabled with reason | editing items disabled |
 | Block handles | yes | yes (Turn into, Comment; no move/duplicate) | no |
 | Comment margin | yes | yes | if role allows |
-| Canvas cue | none | thin 2 px `success` line under toolbar + status bar mode icon | none |
+| Canvas cue | none | thin 2 px `success` line under toolbar | none |
 | Caret | visible | visible (author colour tinted) | selection only |
 
 Switching modes is instant; announcements via `SemanticsService` ("Suggesting mode").
@@ -678,7 +683,7 @@ Switching modes is instant; announcements via `SemanticsService` ("Suggesting mo
 | Header/footer | painted in margins: theme `pageChrome` text style (default: 10 pt, `muted` equivalent of theme text), tokens expanded; double-click → Page setup › Header & footer | none |
 | Page number indicator | on scroll, a floating pill "Page 3 of 7" near the scrollbar thumb for 1 s | none |
 | Block handles | in left margin (≥ 28 px), else overlaid on page edge | 28 px left of column |
-| Comment margin | right of page if ≥ 300 px free | right of column if ≥ 300 px free |
+| Comment margin | right of page if it fits beside it, else overlaying the canvas's right edge (§10.2) | same, relative to the column |
 | Seam (oversized block) | dashed line + "page n" label in gutter (04 §29.3) | n/a |
 | Print preview | same paginator as export, exact ([07](07-import-export-print.md)) | prints using page setup (pageless documents still print on pages) |
 
@@ -686,13 +691,15 @@ Switching modes is instant; announcements via `SemanticsService` ("Suggesting mo
 
 Breakpoints = shad `ShadBreakpoints` (sm 640, md 768, lg 1024, xl 1280, 2xl 1536).
 
-| Width | Header | Toolbar | Canvas | Panels | Status bar |
-|-------|--------|---------|--------|--------|------------|
-| ≥ xl | full title row | all items fit | comment margin when room | docked, resizable | full |
-| lg–xl | full | prio ≥ 5 overflow | comment margin usually hidden → gutter badges | docked (squeezes canvas; Pages mode auto *Fit width* if the page no longer fits and user zoom was 100 %) | full |
-| md–lg | star/move/history move into a ⋮ menu; avatars max 2 | prio ≥ 3 overflow; mode switcher icon-only | badges only | docked min width or overlay if canvas < 480 px | zoom + word count |
-| sm–md | title truncates; Share becomes icon button; menubar collapses to ☰ | prio ≥ 2 overflow | Pages rendered at fit-width zoom (indicator shows effective %) | `ShadSheet` overlay | word count + sync |
-| < sm (≥ 360) | app icon, title, ⋮, Share icon | Undo/Redo, style, B, I, link, list, ⋯ | Pageless-like padding 16 px (Pages still drawn as scaled cards) | full-width sheet | sync only |
+| Width | Header | Toolbar | Canvas | Panels |
+|-------|--------|---------|--------|--------|
+| ≥ xl | full title row | all items fit | comment margin beside the page | docked, resizable |
+| lg–xl | full | prio ≥ 5 overflow | comment margin beside the page or overlaying the canvas's right edge | docked (squeezes canvas; Pages mode auto *Fit width* if the page no longer fits and user zoom was 100 %) |
+| md–lg | star/move/history move into a ⋮ menu; avatars max 2 | prio ≥ 3 overflow; mode switcher icon-only | comment margin overlays the right edge | docked min width or overlay if canvas < 480 px |
+| sm–md | title truncates; Share becomes icon button | prio ≥ 2 overflow | Pages rendered at fit-width zoom (indicator shows effective %); margin overlays (hidden below 600 px canvas) | `ShadSheet` overlay |
+| < sm (≥ 360) | app icon, title, ⋮, Share icon | Undo/Redo, style, B, I, link, list, ⋯ | Pageless-like padding 16 px (Pages still drawn as scaled cards); no margin | full-width sheet |
+
+The word count bar (§11), when on, is the same at every width.
 
 Rules: nothing may overflow at 360 px (golden tests at 360, 768, 1024, 1440); dialogs become
 full-height sheets below md; table editor becomes a full-screen dialog below md; floating
@@ -722,9 +729,9 @@ modes.
 ## 19. Focus regions and keyboard map (chrome)
 
 - Regions in `F6` order: Title row → Menubar → Toolbar → Document → Side panel → Status bar
-  (`Shift+F6` reverse). `shell.focus.nextRegion` / `previousRegion`.
+  (when shown) (`Shift+F6` reverse). `shell.focus.nextRegion` / `previousRegion`.
 - Menubar access: `Alt+F/E/V/I/O/T/H` (Win/Linux) and `Ctrl+Alt+F…` (macOS web) open menus
-  (suite 02 §4.3); `Alt+/` searches menus.
+  (suite 02 §4.3); menu commands are searched in the command palette.
 - Toolbar: `Alt+F10` / `Mod+Alt+.`; floating toolbar: `Alt+F10` when visible (takes precedence).
 - Panels: `Mod+Alt+Shift+1…5` switch; `Esc` closes and returns focus to the document.
 - Title field: no dedicated shortcut (avoids conflicts); reachable via `F6` and *File › Rename*
@@ -737,7 +744,8 @@ modes.
   types), `current_heading`, `word_count`, `page_count`, `find` (`{query, options, count,
   active}`), `participants` (session id, name, actor kind, cursor offsets), `role`, `pending_ops`,
   `pending_uploads`.
-- Panels: ids `outline`, `comments`, `history`, `assistant`, `find` (`ui.open_panel`).
+- Panels: ids `outline`, `history`, `assistant`, `find` (`ui.open_panel`); comments and
+  suggestions are in the margin (`shell.comments.togglePanel`).
 - Dialogs: ids from §12 via `ui.get_dialog` / `ui.fill_dialog` / `ui.press_dialog_button`;
   popovers with fields (`write.popover.link`, `write.popover.mention`) are describable too.
 - `ui.get_menu_tree` returns §7 with enabled/checked; toolbar spec returned by
@@ -765,9 +773,9 @@ modes.
 | `ImageToolbar`, `TableToolbar`, `SelectionToolbar` | app | §5 (built on `WonkyFloatingToolbar`) |
 | `TableEditorPopover` + `TableGridEditor` | app | 04 §18.4 |
 | `DocumentCanvas`, `PageChrome` painter | app | §3.4, §16 |
-| `CommentMargin` host, `GutterBadge` | app | 04 §33 |
+| `CommentMargin` host (with `CommentsFilterTabs` and the composer card) | app | §10.2, 04 §33 |
 | `FindPanel`, `OutlinePanel` | app | §10 |
-| `WordCountDialog`, `PageSetupDialog`, `SpellingDialog`, `SpecialCharactersDialog`, `MarkdownSourceDialog`, `DocumentSettingsDialog`, `DocumentDetailsDialog` | app | §12–13 |
+| `WordCountDialog`, `PageSetupDialog`, `SpellingDialog`, `SpecialCharactersDialog`, `DocumentDetailsDialog`, Markdown guide dialog (`showMarkdownGuide`) | app | §12, §7.7 |
 | `OffscreenPresenceIndicators` | app | 04 §34.2 |
 
 Every widget gets a `previews.dart` preview (light + dark) and widget tests
@@ -801,11 +809,9 @@ The canonical catalog is [suite 08 §5](../08-commands-and-undo.md). Ids used by
 `shell.sharing.requestAccess`, `shell.versions.open`, `shell.versions.togglePanel`,
 `shell.versions.nameCurrent`, `shell.comments.create`, `shell.comments.togglePanel`,
 `shell.comments.activate`, `shell.edit.undo`, `shell.edit.redo`, `shell.edit.undoHistory`,
-`shell.edit.undoTo`, `shell.view.toggleCompact`, `shell.view.toggleToolbar`,
-`shell.view.toggleStatusBar`, `shell.view.toggleFullScreen`, `shell.help.searchMenus`,
-`shell.help.shortcuts`, `shell.help.open`, `shell.help.feedback`, `shell.settings.open`,
-`shell.activity.open`, `shell.focus.nextRegion`, `shell.focus.previousRegion` (existing:
-`shell.ai.togglePanel`, `shell.appearance.setTheme`).
+`shell.edit.undoTo`, `shell.help.shortcuts`, `shell.help.feedback`, `shell.help.whatsNew`,
+`shell.help.about`, `shell.settings.open`, `shell.focus.nextRegion`,
+`shell.focus.previousRegion` (existing: `shell.ai.togglePanel`, `shell.appearance.setTheme`).
 
 ## 24. Chrome-level Write command index
 
@@ -814,29 +820,30 @@ Commands introduced by this spec (editing/content commands are in [04](04-editor
 
 | Command | Args | Role | U | Notes |
 |---------|------|------|---|-------|
-| `write.file.download` | `format` (`md, mdZip, pdf, html, txt, docx, odt, rtf, epub`), `options?` | V (`copyAllowed`) | — | [07](07-import-export-print.md); web: browser download in same tab; desktop: save dialog |
+| `write.file.download` | `format` (`md, mdZip, pdf, html, txt, docx, odt, rtf, epub`), `options?` (open object: the export options JSON) | V (`copyAllowed`) | — | [07](07-import-export-print.md); web: browser download in same tab; desktop: save dialog |
 | `write.file.exportOptions` | — | V | — | Dialog 12.16 |
 | `write.file.print` | — | V (`copyAllowed`) | — | Navigates to `/d/:uuid/print` |
 | `write.insert.fromFile` (P1) | `fileUploadId?` | C* | ✓ (content) | Picker → dialog 12.9 |
 | `write.insert.tableDialog` | — | E | — | Dialog 12.3 |
 | `write.insert.mentionTrigger` | — | C* | — | Inserts `@`, opens picker |
 | `write.doc.pageSetup` | `tab?` | V (edit: E) | — | Dialog 12.6 |
-| `write.doc.setPageSetup` | `pageSetup` | E | ✓ (write.meta) | |
+| `write.doc.setPageSetup` | `pageSetup` (the `PageSetup` JSON; the schema accepts its keys) | E | ✓ (write.meta) | |
 | `write.doc.setLayout` | `layout` | E | ✓ (write.meta) | Also 04 §29.2 |
 | `write.doc.languageDialog` | — | E | — | Dialog 12.7 |
 | `write.doc.setLanguage` | `language` | E | ✓ (write.meta) | |
 | `write.doc.setFrontMatter` | `text` | E | ✓ (write.meta) | YAML validated |
 | `write.doc.properties` | — | V | — | Dialog 12.8 |
-| `write.doc.settings` | `tab?` | V | — | Dialog 13.1 |
+>>>
+
 | `write.theme.openPicker` / `write.theme.edit {section?}` / `write.theme.apply {themeId}` / `write.theme.setUserDefault` | | E (apply/edit) | ✓ (write.meta / write.theme) | Owned by [06](06-themes.md) |
-| `write.view.toggleCommentMargin` | — | V | — | Local pref |
-| `write.view.toggleBlockHandles` | — | V | — | Local pref |
+| `write.view.toggleWordCount` | — | V | — | Local pref (word count bar, §11; default off) |
 | `write.outline.setMaxLevel` | `level` (1–6) | V | — | Local pref |
 | `write.spell.openDialog` (P1) | — | V | — | Dialog 12.10 |
 | `write.spell.personalDictionary` / `removeFromDictionary {word}` (P1) | | V | — | Dialog 12.11; user pref |
-| `write.tools.viewMarkdown` (P1) | — | V (`copyAllowed`) | — | Dialog 12.12 |
+>>>
+
 | `write.prefs.setSelectionToolbar` / `setDefaultMode {mode}` / `setDefaultPageSetup {pageSetup}` | | V | — | User prefs (`writeDefaults`) |
-| `write.help.markdownGuide` | `section?` | V | — | Help route |
+| `write.help.markdownGuide` | `section?` | V | — | Markdown guide dialog (Help menu only) |
 | `write.ai.generateOutline` / `write.ai.proofread` | | E (proofread: V, results as suggestions require C) | ✓ when applied | suite 10 §4 |
 | `write.suggestions.accept {id}` / `reject {id}` / `acceptAll` / `rejectAll` / `next` / `previous` | | E (navigation V) | ✓ | Owned by [08](08-comments-suggestions-history.md) |
 
@@ -845,7 +852,7 @@ All of these appear in `ui.list_commands` with their menu paths from §7.
 ## 25. Implementation notes (iteration 1)
 
 - **Code layout**: screen `lib/features/screen/` (`WriteDocumentScreen`, `WriteToolbar`,
-  `ModeSwitcher`, status bar items, selection toolbar, context menus, dialogs under `dialogs/`);
+  `ModeSwitcher`, word count bar, selection toolbar, context menus, dialogs under `dialogs/`);
   `WriteDocumentController` (`features/screen/write_document_controller.dart`) is the shell's
   `DocumentController`, built on the sync workstream's `WriteDocumentSession`
   (`features/document/`). Commands: `lib/commands/` (`editor_commands.dart` wraps
@@ -855,11 +862,17 @@ All of these appear in `ui.list_commands` with their menu paths from §7.
   `write.mode.set {mode}` stays the MCP/AI entry point.
 - **Popovers opened by commands** (link editor) use an anchored modal route
   (`features/screen/anchored_popover.dart`) positioned at the selection rect; the theme picker,
-  table editor, image dialogs and document settings are `ShadDialog`s.
-- **Comment margin** is shown to the right of the canvas only when there are anchored open
-  threads or pending suggestions and the canvas is ≥ 1080 px wide (`write.view.toggleCommentMargin`).
+  table editor and image dialogs are `ShadDialog`s.
+- **Comment margin** (§10.2) is the only place for comments and suggestions; it is shown when
+  the margin pref is on, there are cards (anchored open threads, pending suggestions or a
+  draft) and the canvas is ≥ 600 px wide — beside the page when it fits, else overlaying the
+  canvas's right edge.
+- **Removed** (no longer part of the product): compact mode, full screen, View › Show, menu
+  search, help center, File › Settings (document settings dialog), View › Preview theme, Format ›
+  "What formatting is supported", Tools › View Markdown source, focus mode and typewriter
+  scrolling, the comments and suggestions side panels, the activity dashboard.
 - **Not built this iteration** (documented as TODO): spelling (§12.10–12.11), emoji/special
   characters (§9.5, §12.4), lightbox (§12.15), export options dialog (§12.16), floating
   image/table toolbars (§5.2–5.3; the context and block menus offer the same commands), drag &
-  drop, AI items, focus/typewriter modes, native macOS menubar, compact-density goldens.
+  drop, AI items, native macOS menubar, compact-density goldens.
 

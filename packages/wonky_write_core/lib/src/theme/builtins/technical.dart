@@ -15,7 +15,7 @@ final Map<String, Object?> technicalThemeJson = {
   'fonts': {
     'body': 'IBM Plex Sans',
     'heading': 'IBM Plex Sans',
-    'mono': 'IBM Plex Mono',
+    'mono': 'JetBrains Mono',
   },
   'palette': paletteJson(
     text: '#161616',

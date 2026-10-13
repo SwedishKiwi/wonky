@@ -49,7 +49,7 @@ WriteDocumentScreen
      ├─ Derived services           ← OutlineController, DocumentStatsService, FindController,
      │                                SpellcheckController, PaginationController,
      │                                CommentAnchorIndex, SuggestionIndex, RemotePresenceModel
-     └─ EditorViewState            ← zoom, layout mode, scroll anchor, focus/typewriter flags
+     └─ EditorViewState            ← zoom, layout mode, scroll anchor
 ```
 
 - `WriteDocumentController` is the only object commands talk to. `CommandContext.document`
@@ -78,6 +78,7 @@ rather than worked around in app code. Planned patches (tracked in
 | **SE-4** | Editable tables: caret and selection inside `TableBlockNode` cells, inline formatting in cells, Tab/Shift+Tab between cells, add/remove/move rows and columns, column alignment; edits reported as events that map to a `table` embed replacement. | In-place table editing (§18.4) | P1 (M5) |
 | **SE-5** | Fixes found by our test suites (IME on web/Windows/Linux, RTL, large-document layout performance, keyboard handling). | All | Ongoing |
 | **SE-6** | Content drag delegate: an app may take over a mouse drag that starts on content (drag and drop of the selection) instead of a new drag selection. | Drag and drop (§24) | P1 |
+| **SE-7** | List markers (bullets, numerals) keep the first character's font, size, weight and color but not its background or decorations, so a comment highlight or suggestion background/strikethrough at the start of a list item doesn't paint the marker. | Comment highlights (§33), suggestions (§32.2) | done |
 
 **Implementation status (M2)** — see `third_party/super_editor/PATCHES.md`:
 - SE-1 done (plus `toQuillDeltas(omitTrailingEmptyParagraph:)`); the mapper serializes through
@@ -145,7 +146,6 @@ SuperEditor(
     CodeHighlightStylePhase(...),   // §15.4
     SpellingAndGrammarStyler(...),  // §28 (super_editor built-in styler)
     FindHighlightStylePhase(...),   // §25 (text color of active match, optional)
-    FocusModeStylePhase(...),       // §30 (P2)
     TextDirectionStylePhase(...),   // §38
   ],
   componentBuilders: [
@@ -379,8 +379,7 @@ undo step.
 - **Arrow into an embed**: ↑/↓/←/→ that would enter an image, divider or table *selects the
   block*. The next press in the same direction moves past it to the adjacent text block.
 - The caret is kept visible. After every keyboard movement or edit, the scroll view reveals the
-  caret rect with a margin of 64 px (Pages mode: also clears the page gap). Typewriter mode
-  overrides this (§30).
+  caret rect with a margin of 64 px (Pages mode: also clears the page gap).
 - Word boundaries use the `characters` package plus a regex for `\p{L}\p{N}_'’` runs.
   Punctuation runs count as separate stops (Google Docs parity).
 - macOS: `super_editor` selector handlers (moveWordLeft:, etc.) are kept, minus undo/redo
@@ -789,14 +788,26 @@ clients.
 - One `ParagraphNode` with blockType `codeAttribution`, text containing `\n`, and node metadata
   `codeLanguage` (custom). Delta: consecutive `code-block: "<lang>"` lines
   ([02](02-document-model.md) §1.2).
+- **Rendered as one box**: the whole block (every line of a ```` ``` ```` fence) sits in a single
+  box with the theme's code background, corner radius, border (`codeBlock.border`, top side used
+  for all four) and inner padding (`codeBlock.padding`, default 12/16 px), at the full content
+  width. `WonkyParagraphComponentBuilder` paints it around the paragraph component: the padding
+  is outside the component's render box, so caret, selection and hit-testing stay aligned with
+  the text; taps in the padding go to the nearest position. The box and the hover chrome are not
+  hit targets (an opaque region in the document layer would hide taps from the interactor).
+  The text is set in the theme's `mono` font (JetBrains Mono in every built-in theme).
+  super_editor adds a block's type to the attributions of every span it styles; for code blocks
+  the component is built without it, so code text never gets the inline-code style.
 - **Language picker**: a chip at the top-right of the block (visible on hover or when the caret
   is in the block) opens `ShadSelect.withSearch`.
-  - Lists: *Plain text*, then recently used (max 5, per user), then all languages supported by
-    the highlighter (§15.4), with display names.
-  - Aliases normalise input: `js`→`javascript`, `ts`→`typescript`, `py`→`python`,
-    `sh`/`shell`/`zsh`→`bash`, `yml`→`yaml`, `md`→`markdown`, `c++`→`cpp`, `c#`→`csharp`,
-    `kt`→`kotlin`, `rb`→`ruby`, `rs`→`rust`, `golang`→`go`.
-  - Unknown languages are kept verbatim (lowercased) and rendered without highlighting.
+  - Lists: *Plain text*, then recently used (max 5, per user), then the 15 languages the
+    highlighter supports (§15.4), with display names (`CodeLanguages.grammars`).
+  - Aliases normalise input: `js`/`jsx`/`mjs`/`cjs`→`javascript`, `ts`/`tsx`→`typescript`,
+    `py`/`py3`/`python3`→`python`, `sh`/`shell`/`zsh`→`bash`, `yml`→`yaml`, `md`→`markdown`,
+    `c++`→`cpp`, `c#`→`csharp`, `kt`/`kts`→`kotlin`, `rb`→`ruby`, `rs`→`rust`, `golang`→`go`,
+    `htm`→`html`, `jsonc`→`json`, `spy`/`serverpod_protocol`→`serverpod`.
+  - Other languages (`bash`, `c`, …, or anything typed) are kept verbatim (lowercased), labelled
+    with their display name when known, and rendered without highlighting.
 - `write.code.setLanguage {language, nodeId?}`. One undo step, "Set code language". Changes
   the `code-block` attribute of every line.
 - **Copy** button next to the chip: `write.code.copy {nodeId?}` copies the code text as
@@ -826,17 +837,31 @@ can invoke them.
   lazy trailing paragraph (§6.5).
 
 ### 15.4 Syntax highlighting (P1)
-- Library: **`highlight` 0.7.0** (pure-Dart port of highlight.js, ~190 languages). It works on
-  web, desktop and server. Grammar registration is lazy, per language on first use, to keep
-  startup cost low.
+- Library: **`syntax_highlight` 0.5.0** (TextMate grammars, Flutter), vendored in
+  `third_party/syntax_highlight` with patches SH-1…SH-5 (its `PATCHES.md`). Languages and their
+  grammar: CSS, Dart, Go, HTML, Java, JavaScript, JSON, Kotlin, Python, Rust, Serverpod models
+  (`serverpod` → `serverpod_protocol`), SQL, Swift, TypeScript, YAML. Each grammar is loaded from
+  the package assets on first use (`CodeHighlighter.load`); until it arrives the block renders
+  plain and the phase is marked dirty when it does. Exports (07) still tokenize with
+  `wonky_write_core`'s pure-Dart `highlight` wrapper (`syntax_highlight` needs Flutter).
 - `CodeHighlightStylePhase extends SingleColumnLayoutStylePhase`:
   - For each code component view model, it overlays **presentation-only**
     `CodeTokenAttribution(tokenClass)` spans on a *copy* of the view-model text. The document
     is never mutated, so no Delta is produced (§2.5).
+  - `CodeHighlighter.tokenForScopes` maps TextMate scopes to token classes: the innermost scope
+    with a rule decides (e.g. `comment.*`→`comment`, `string.*`→`string`,
+    `keyword.operator`→`operator`, `keyword`/`storage`→`keyword`, `constant.numeric`→`number`,
+    `constant`→`literal`, `entity.name.function`→`function`, `entity.name.type`/`support.class`
+    →`type`, `entity.name.tag`→`tag`, `entity.other.attribute-name`→`attribute`,
+    `support.function`→`built_in`, `variable`→`variable`, annotations/preprocessor→`meta`);
+    punctuation is weak (a surrounding string, comment or tag wins); embedded code
+    (`meta.embedded`, template/f-string expressions) does not inherit its string's color.
   - The `inlineTextStyler` maps token classes (`keyword`, `string`, `comment`, `number`,
-    `title`, `built_in`, `literal`, `type`, `attr`, `symbol`, `meta`, `regexp`, `deletion`,
-    `addition`, `variable`, `punctuation`) to the theme's code palette
-    ([06](06-themes.md)). Light and dark variants are separate.
+    `title`/`function`, `built_in`, `literal`, `type`, `attr`/`attribute`, `symbol`, `meta`,
+    `regexp`, `deletion`, `addition`, `variable`, `operator`, `punctuation`, `tag`) to the
+    theme's code palette ([06](06-themes.md)). Light and dark variants are separate.
+  - super_editor disposes style phases when it recreates its presenter and keeps using them, so
+    the phase does not cancel work in `dispose`; the editor calls `close()` when it goes away.
 - Caching and performance:
   - Results are cached per `(nodeId, textHash, language)`.
   - Re-highlighting is debounced 120 ms after an edit. Until then, stale spans are shifted
@@ -903,8 +928,10 @@ inputs and their toasts:
 - Size:
   - Natural width, capped at the content width.
   - Pages mode: height capped at the page content height (scaled down proportionally).
-  - `expectedBitmapSize` comes from a local `ImageSizeCache` (keyed by src) to avoid layout
-    jumps. Before the first load, a 16:9 placeholder is shown at content width.
+  - The natural size of every decoded image is kept in `ImageSizeCache` (in memory, keyed by
+    src, the 512 most recently used). While an image loads, its placeholder has the cached
+    size (capped like the image) to avoid layout jumps and wrong page breaks. Before the first
+    load, a 16:9 placeholder is shown at content width (also capped).
 - Decoding uses `cacheWidth` = displayed width × devicePixelRatio × zoom (rounded up to a
   256-px bucket).
 - States:
@@ -1195,8 +1222,10 @@ undo gives back the paragraph containing `/h2`.
 - `BlockHandleLayerBuilder` (overlay) shows a ⋮⋮ (`LucideIcons.gripVertical`, 16 px, hit
   target 24×24) in the left gutter, vertically centred on the first line of the hovered block.
   Pages mode: inside the left page margin. Pageless: 28 px left of the content column.
-- Shown for the hovered block, or the caret block while typing pauses for 1 s. Hidden while
-  typing, in Viewing mode, and for Commenters (who get only *Comment* through the context
+- Shown for the hovered block, or the caret block while typing pauses for 1 s. It stays visible
+  while the pointer moves from the block into its handle gutter (the 36 px strip left of the
+  block, `blockHandleGutter`), so the handle can be clicked (block menu) and dragged. Hidden
+  while typing, in Viewing mode, and for Commenters (who get only *Comment* through the context
   menu).
 - P1: a **+** button left of the handle inserts an empty paragraph below and opens the slash
   menu.
@@ -1495,8 +1524,9 @@ takes < 100 ms on a 100-page document.
 
 - Counted text = the **visible accepted view**: pending deletions excluded, insertions
   included. This includes table cell text and code, and excludes image alt text and comments.
-- Status bar: "1,234 words", or with a selection "56 of 1,234 words". Click → dialog. Toggle:
-  View › Show word count (`write.view.toggleWordCount`, per-user preference).
+- Status bar (05 §11): "1,234 words", or with a selection "56 of 1,234 words". Click → dialog.
+  Shown only while *Display word count while typing* is on (checkbox in the word count dialog,
+  `write.view.toggleWordCount`, per-user preference, default off).
 - Dialog: `write.tools.wordCount` (⌘⇧C / Ctrl+Shift+C), described in 05 §12.
 - Live updates are throttled to 250 ms (1 s in large-document mode, §36).
 
@@ -1506,7 +1536,7 @@ takes < 100 ms on a 100-page document.
 
 ### 28.1 Language
 - `Document.language` (BCP-47). Defaults to the creator's UI locale at creation.
-- Changed in File › Settings or Tools › Language: `write.doc.setLanguage {language}`. This is
+- Changed in File › Language… or Tools › Language: `write.doc.setLanguage {language}`. This is
   a meta change, undoable in domain `write.meta` (03 §6).
 - It drives: the spellcheck dictionary, smart-quote style (P2), word segmentation hints, the
   export `lang` attribute and PDF metadata, and hyphenation in exports
@@ -1536,6 +1566,9 @@ takes < 100 ms on a 100-page document.
   - Visible blocks first, then the rest at idle. Re-checks changed nodes only.
   - Skipped: code blocks, inline code, links, mentions, URLs, emails, words with digits,
     ALL-CAPS (setting), CamelCase, and words under 2 chars.
+  - Suggestions: a block is checked as it reads with its suggestions accepted — suggested
+    deletions are left out, so `~~qi~~qu` + `ick` is checked as "quick", and struck text is never
+    flagged.
 - **Personal dictionary**: `UserPreferences.writeDefaults.personalDictionary` (synced, max
   10,000 words; Tools › Spelling › Personal dictionary… lists and edits it). *Ignore* applies per
   document for the session (in-memory). The word being typed (caret inside or at its end) is
@@ -1594,25 +1627,38 @@ This is a meta change, undoable (`write.meta`). The page setup model is owned by
 | Header/footer | Rendered from page setup in the margins (non-editable here; double-click opens Page setup › Header & footer) | None |
 | Page numbers | Via tokens `{page}` / `{pages}` in header/footer | None |
 | Images | Capped at content width and content height | Capped at content width |
-| Comments margin | Right of the page if the canvas has ≥ 300 px free | Right of the column if ≥ 300 px free |
+| Comments margin | Right of the page if it fits beside it, else overlaying the canvas's right edge (05 §10.2) | Same, relative to the column |
 
 ### 29.3 Pagination engine (`PaginationController`)
 Pages are **computed, never stored**. Manual page breaks are not supported (01 §4).
 
-1. After each layout (post-frame, coalesced), read every component's **natural height**: the
-   rendered height minus any injected gap. `super_editor` lays out all components (§36), so
-   heights are always available.
+1. After each layout (post-frame, coalesced to one measure per frame), read every block's
+   **natural position**: its laid-out rect (the text box for text blocks, the whole box for
+   images, rules and tables) minus the gaps the layout was actually styled with
+   (`PaginationStylePhase` reports them), so a measure is correct even before the layout picked
+   up newer gaps. `super_editor` lays out all components (§36), so rects are always available.
+   A measure runs after every editor rebuild **and after every layout of the document
+   content**: the page chrome layer is rebuilt after each content layout and schedules it. So
+   heights that change without an editor rebuild (an image that finishes loading, a web font,
+   an upload preview replaced by the uploaded file, a collaborator's edit) are re-measured.
 2. Walk the blocks and fill pages of height `contentH = pageH − marginTop − marginBottom`:
    - A block that fits on the current page is placed there.
-   - **Keep-with-next**: a heading is moved to the next page if the following block doesn't
-     have at least one line (~1.5 × body line height) of room after it.
-   - A block that doesn't fit but has height ≤ `contentH` is pushed to the next page.
+   - A block that would **start** in a page's bottom margin or in the gap between pages (for
+     example because of the spacing above it) starts at the next page's content top.
+   - **Keep-with-next**: a heading is moved to the next page if the first line of the
+     following block (its whole box for an image) doesn't fit after it.
+   - A block that doesn't fit but has height ≤ `contentH` is pushed to the next page. Images
+     are capped at `contentH` (§17.3), so an image never straddles a page boundary.
    - A block taller than `contentH` (very long paragraph, code block or table) starts at the
      current position and **overflows** across page boundaries (see 4).
 3. Gaps are applied by `PaginationStylePhase`. It sets extra top padding on the first block of
    each page: remaining space on the previous page + `marginBottom` + `pageGap` (16 px) +
-   `marginTop`. `PageChromeLayerBuilder` paints the page cards, headers, footers and page
-   numbers in the underlay, at offsets computed by the controller.
+   `marginTop`. The phase lives as long as the editor: `super_editor` disposes its style
+   phases whenever it recreates its layout presenter (on a stylesheet change) and reuses them
+   in the new one, so the phase keeps listening to the controller across that. The Pages
+   stylesheet is memoized so the presenter is not recreated on every keystroke.
+   `PageChromeLayerBuilder` paints the page cards, headers, footers and page numbers in the
+   underlay, at offsets computed by the controller.
 4. **Oversized blocks (v1, P0)**: the page boundary inside the block is drawn as a **seam**.
    The two page cards touch, there is a dashed separator line in the margin areas, and the
    page number label sits in the gutter. Content is never hidden. **P1**:
@@ -1621,12 +1667,14 @@ Pages are **computed, never stored**. Manual page breaks are not supported (01 �
    rects and offsets, and maps hit-testing and `DocumentComponent` geometry (`getRectFor…`,
    `getPositionAtOffset`) across the gap. That gives true line-level splitting for paragraphs
    and code.
-5. Repagination is incremental: it starts from the first page whose blocks changed height. To
-   avoid oscillation it uses natural heights, and it is frame-coalesced. Budget ≤ 2 ms per
-   edit on 100 pages.
+5. Repagination repeats until stable: a measure that changes the gaps re-lays out the
+   document, which measures again. To avoid oscillation it uses natural positions and is
+   frame-coalesced; at most 8 consecutive changing measures run before the next editor
+   rebuild. v1 walks all blocks (one rect query per block); starting from the first page whose
+   blocks changed height is P1. Budget ≤ 2 ms per edit on 100 pages.
 6. **Print and PDF** use the exact line-level paginator in [07](07-import-export-print.md).
-   The editor's page breaks are an approximation, and a status-bar tooltip says so if they
-   differ.
+   The editor's page breaks are an approximation of those (the status bar only shows the word
+   count, so there is no hint when they differ).
 
 **AC-29.1** Switching Pages ⇄ Pageless keeps the caret's block at the same viewport y (±1
 line) and is one undo step.
@@ -1635,18 +1683,11 @@ text.
 **AC-29.3** A heading at the bottom of a page moves to the next page together with its first
 paragraph line.
 
-## 30. Focus mode and typewriter scrolling (P2)
+## 30. Focus mode and typewriter scrolling (removed)
 
-- **Focus mode** (`write.view.toggleFocusMode`): `FocusModeStylePhase` lowers the text colour
-  alpha to 35 % for every block except the caret block (or the blocks touched by the
-  selection; embeds use opacity). The chrome auto-hides through the shell's full-screen state
-  (title row, menubar, toolbar and status bar) and comes back while the pointer is at the top
-  8 px of the canvas, hiding again once it is back in the document (`FocusModeChrome`).
-- **Typewriter scrolling** (`write.view.toggleTypewriter`): on every selection change caused by
-  typing or keyboard navigation, scroll so the caret line sits at 40 % of the viewport height.
-  The scroll is animated 80 ms, or instant with reduce motion. The canvas gets bottom padding
-  of 60 % of the viewport height so the last line can reach that position.
-- Both are per-user view prefs, not undoable.
+Removed from the product: focus mode (`write.view.toggleFocusMode`, `FocusModeStylePhase`,
+`FocusModeChrome`) and typewriter scrolling (`write.view.toggleTypewriter`), with their prefs.
+The editor chrome is always shown (05 §3.3).
 
 ## 31. View modes and read-only rendering
 
@@ -1719,8 +1760,8 @@ only **how editor input turns into `sug_*` attributes**. They are carried by
 ### 32.2 Rendering (style phase + layers)
 | Type | Rendering |
 |------|-----------|
-| `ins` | Text colour = the author's presence colour, 2 px underline in the author colour, `suggestionInsert` background tint |
-| `del` | Strikethrough in the author colour, `suggestionDelete` tint, text 70 % alpha |
+| `ins` | Text colour = `suggestionInsert` (green), no underline, `suggestionInsert` background tint |
+| `del` | Text colour and strikethrough = `suggestionDelete` (red), `suggestionDelete` tint |
 | `fmt` | Dotted underline in the author colour. The new formatting is shown, and the margin card describes it ("Formatted: Bold") |
 | Block `fmt` | Left gutter bar (3 px) in the author colour next to the block |
 
@@ -1737,7 +1778,7 @@ under one suggestion id. Rejecting restores "old" exactly.
 - Creating a comment (`shell.comments.create`, ⌘⌥M / Ctrl+Alt+M) on a selection:
   1. Records a **local pending range** (tracked through remote ops with `transformPosition`,
      drawn with the `commentHighlightActive` color) — no op is sent yet.
-  2. Opens the composer card.
+  2. Shows the margin and opens the composer as a card in the margin at the anchor.
   3. On *Comment* (first save): creates the thread (client-supplied `threadUuid`) and, in the
      same undo step, submits the op adding `cmt_<threadUuid>` to the (transformed) range — a
      retain with only `cmt_*` keys (commenter-allowed shape). On cancel, the pending range is
@@ -1760,9 +1801,9 @@ under one suggestion id. Rejecting restores "old" exactly.
   - That layout stacks cards in the right margin, keeping order by anchor y and avoiding
     overlap. The active card aligns exactly to its anchor and pushes others.
   - Recomputed on layout changes and scroll, for visible threads plus 1 viewport of overscan.
-  - If the margin is narrower than 300 px, cards hide and a speech-bubble badge appears in the
-    right gutter per line with threads. Clicking the badge opens the Comments panel focused on
-    that thread.
+  - The margin is the only place threads and suggestions are shown (05 §10.2): beside the page
+    when it fits, otherwise overlaying the canvas's right edge; hidden below 600 px canvas
+    width. It is shown/hidden with `shell.comments.togglePanel` (Write's `CommentsHost`).
 - Clicking highlighted text activates the thread (the topmost one when overlapping). Keyboard:
   `write.nav.nextComment` / `previousComment` (⌃⌥⇧↓/↑ macOS; Ctrl+Alt+Shift+↓/↑).
 
@@ -1793,8 +1834,8 @@ The user's own other sessions are shown as "You (other tab)".
   frame).
 - Off-screen collaborators: small presence-colour chevrons at the top or bottom edge of the
   canvas with avatar initials. Clicking one scrolls to that cursor.
-- Settings: View › Show ▸ *Collaborator cursors* (`write.view.toggleRemoteCursors`, per user,
-  default on).
+- Remote cursors are always shown (there is no setting; `write.view.toggleRemoteCursors` was
+  removed).
 
 ### 34.3 Local cursor broadcast
 `CursorUpdate` is sent on selection change, throttled to 10/s (03 §1.1), and on focus change.
@@ -1851,7 +1892,7 @@ only components whose view model changed. Mitigations are mandatory:
 
 1. **Stable stylesheet and phases.** Memoise the stylesheet per (theme, brightness, zoom,
    layout). Style phases must mark *only* affected components dirty (per-node caches in
-   highlight, spellcheck, find, focus and pagination phases).
+   highlight, spellcheck, find and pagination phases).
 2. **Layers paint only the viewport.** A cached prefix array of component offsets (updated
    post-layout) answers "nodes in [y0, y1]" by binary search. Remote cursors, find highlights,
    comment bounds and block handles use it.
@@ -1865,9 +1906,7 @@ only components whose view model changed. Mitigations are mandatory:
    documents > 200 KB. On web it runs in 8 ms chunks before first paint, with a progress
    skeleton.
 
-**Large-document mode** applies automatically at > 5,000 nodes or > 500,000 chars. It is shown
-as a subtle status-bar badge with a tooltip. In this mode:
-- focus and typewriter modes are disabled;
+**Large-document mode** applies automatically at > 5,000 nodes or > 500,000 chars. In this mode:
 - stats update every 1 s;
 - syntax highlighting and spellcheck cover the viewport only;
 - remote selections are capped at 20;
@@ -1921,7 +1960,7 @@ feature flag.
 - The block menu opens with Shift+F10 or the context-menu key.
 - Leaving the editor: `Esc` (collapse the selection or select the block), `Esc` again, then
   `Tab` / `Shift+Tab` move focus to the next or previous region. `F6` / `Shift+F6` cycle
-  regions (menubar → toolbar → document → side panel → status bar), owned by shell 05 §19.
+  regions (menubar → toolbar → document → side panel → status bar when shown), owned by 05 §19.
 - Drag operations always have keyboard equivalents: move up/down commands, and the table
   editor move buttons.
 
@@ -2059,9 +2098,7 @@ Settings → Keyboard).
 | `write.view.zoomIn` / `zoomOut` / `zoomSet` / `zoomReset` / `zoomFit` | §29.1 | §29.1 | V | — | — |
 | `write.view.toggleOutline` | — | ⌘⌥⇧O / Ctrl+Alt+Shift+O | V | — | — |
 | `write.view.toggleWordCount` | — | — | V | — | — |
-| `write.view.toggleRemoteCursors` | — | — | V | — | — |
 | `write.view.suggestionPreview` | `mode` | — | V | — | — |
-| `write.view.toggleFocusMode` / `toggleTypewriter` (P2) | — | — | V | — | Not large-doc mode |
 | `write.mode.set` | `mode` | ⌘⌥⇧Z/X/C / Ctrl+Alt+Shift+Z/X/C | V | — | Role allows the mode |
 | `write.prefs.setMarkdownShortcuts` / `setSmartTypography` / `setAutoPair` / `setAutolink` / `setCopyAsMarkdown` | `enabled` | — | V | — | — |
 | `write.a11y.toggleScreenReaderMode` | — | ⌘⌥Z / Ctrl+Alt+Z | V | — | — |
@@ -2156,7 +2193,7 @@ lib/
                                        #   WonkyCodeBlockComponentBuilder, WonkyHintComponentBuilder,
                                        #   SemanticsComponentWrapper, PageSplitTextComponent (P1)
       styles/                          # stylesheet_builder.dart (theme→Stylesheet, 06), ZoomedStylesheetFactory,
-                                       #   inline_text_styler.dart, style phases (code highlight, focus, direction,
+                                       #   inline_text_styler.dart, style phases (code highlight, direction,
                                        #   suggestion preview)
       layers/                          # page_chrome, remote_selection, remote_cursor, find_matches, mention_chip,
                                        #   block_selection, block_handle, comment_anchor_bounds, upload_progress,
@@ -2183,7 +2220,7 @@ lib/
     spellcheck/                        # SpellcheckController, dictionary loader/cache, context-menu glue
     presence/                          # RemotePresenceModel, follow mode, off-screen indicators
     comments/                          # Write anchor provider, CommentMarginLayout, margin cards host (08)
-    suggestions/                       # accept/reject commands & panel (08)
+    suggestions/                       # SuggestionsController, suggestion cards (08; no panel)
     sync/                              # DocumentSyncController, outbox, LocalDocument cache (03, suite 12)
     undo/                              # WriteUndoHandler (write.content), WriteMetaUndoHandler (write.meta)
     special_chars/                     # dialog + bundled name table

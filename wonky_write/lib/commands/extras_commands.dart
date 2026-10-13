@@ -135,31 +135,6 @@ List<Command<CommandArgs>> extrasCommands(ShellServices s) => [
       );
     },
   ),
-  WriteCommand(
-    'write.view.toggleFocusMode',
-    label: (l) => l.cmdViewToggleFocusMode,
-    icon: LucideIcons.focus,
-    categoryName: (l) => l.categoryView,
-    descriptionText: (l) => l.cmdViewToggleFocusModeDescription,
-    checked: (d, a) => d.viewPrefs.focusMode,
-    run: (ctx, d, a) {
-      d.viewPrefs.focusMode = !d.viewPrefs.focusMode;
-      d.focusEditor();
-      return const CommandResult.ok();
-    },
-  ),
-  WriteCommand(
-    'write.view.toggleTypewriter',
-    label: (l) => l.cmdViewToggleTypewriter,
-    categoryName: (l) => l.categoryView,
-    descriptionText: (l) => l.cmdViewToggleTypewriterDescription,
-    checked: (d, a) => d.viewPrefs.typewriter,
-    run: (ctx, d, a) {
-      d.viewPrefs.typewriter = !d.viewPrefs.typewriter;
-      d.focusEditor();
-      return const CommandResult.ok();
-    },
-  ),
 ];
 
 /// Spellcheck commands (Write 04 §28.2).

@@ -67,7 +67,7 @@ final sheetsMenuSpec = MenuSpec.root([
 ┌──────────────────────────────────────────────────────────────────────────────────────────┐
 │ [▦] Q3 Budget ☆ 📁 ☁ Saved            (A)(B)(+2)  💬3  🕘  ✨  [🔒 Share]  (me)          │ row 1 (48)
 │ File Edit View Insert Format Data Tools Extensions Help                                   │ row 2 (32)
-│ 🔍 ↶ ↷ 🖨 🖌 100%▾ │ $ % .0 .00 123▾ │ Inter▾ │ − 10 + │ B I S A │ ◧ ⊞▾ ⊟▾ │ ≡▾ ⊥▾ ↵▾ ⟲▾ │ 🔗 💬 📊 ⏷▾ Σ▾ │ ^ │ row 3 (40)
+│ ↶ ↷ 🖨 🖌 100%▾ │ $ % .0 .00 123▾ │ Inter▾ │ − 10 + │ B I S A │ ◧ ⊞▾ ⊟▾ │ ≡▾ ⊥▾ ↵▾ ⟲▾ │ 🔗 💬 📊 ⏷▾ Σ▾ │     │ row 3 (40)
 ├────────────┬────┬───────────────────────────────────────────────────────────┬────┬───┤
 │ B4       ▾ │ fx │ =SUM(B1:B3)                                                │ ✨ │ ⌄ │ formula bar (30)
 ├───┬────────┴────┴───────────────────────────────────────────────────────────┴────┴───┤──────────────┐
@@ -78,20 +78,17 @@ final sheetsMenuSpec = MenuSpec.root([
 ├───┴────────────────────────────────────────────────────────────────────────────────────┤              │
 │ + ≡ │ Sheet1 ▾ │ Budget ▾ │ ●Data ▾ │ ◂ ▸                     ✨Explore   Sum: 1,234 ▾ │ tab bar (36) │
 ├──────────────────────────────────────────────────────────────────────────────────────────┴──────────────┤
-│ Enter · Sheet1 1,000×26 · 26,000 / 1,000,000 cells     ☁ Saved                     − 100% +  ▣        │ status bar (24)
+│ Enter · Sheet1 1,000×26 · 26,000 / 1,000,000 cells                                 − 100% +  ▣        │ status bar (24)
 └─────────────────────────────────────────────────────────────────────────────────────────────────────────┘
 ```
 
-- Rows 1–3 follow suite 03 §3.1. Title row: app icon (→ Home), `DocumentTitleField`
+- Rows 1–3 follow suite 03 §3.1. Title row: app icon (Sheets product icon, → Home), `DocumentTitleField`
   (rename = `shell.drive.rename`, 1 step on the shell stack), star, move, `SyncStatusIndicator`,
   `PresenceAvatarStack`, comments button (badge = open threads, toggles Comments panel), version
   history button (`sheets.history.open`), ✨ Assistant (`shell.ai.togglePanel`), **Share**,
   account menu.
-- **View modes** (suite 03 §3.1): *Compact* (`sheets.view.toggleCompact`, `Mod+Shift+F`,
-  toolbar `^` button) hides row 2 (menus reachable via a ☰ button at the toolbar start);
-  *Full screen* (`sheets.view.fullScreen`) hides rows 1–3, formula bar and tab bar stays; Esc
-  exits.
-- Viewer/commenter mode: toolbar shows only Search menus, Print, Zoom, Filter views (temporary),
+- Rows 1–3 are always shown (suite 03 §3.1: no compact mode or full screen).
+- Viewer/commenter mode: toolbar shows only Print, Zoom, Filter views (temporary),
   and a `ShadBadge` "View only" (or "Comment only") with *Request edit access*.
 - Side panel host = `WonkySplitView` (suite 02 §4.5); panels in §10.
 - Folder layout:
@@ -200,7 +197,6 @@ No "Email" item (out of scope).
 | Show ▸ Gridlines ✓ | `sheets.view.toggleGridlines` | — | — | edit (sheet property) | 03 §2.4 |
 | Show ▸ Formulas ✓ | `sheets.view.toggleFormulas` | ⌃\` | Ctrl+\` | view | 03 §2.5 |
 | Show ▸ Protected ranges ✓ | `sheets.view.toggleProtectedRanges` | — | — | view | 03 §16 |
-| Show ▸ Toolbar / Menu bar / Status bar ✓ | `shell.view.toggleToolbar` / `…Menubar` / `…StatusBar` | — | — | view | shell 03 |
 | — | | | | | |
 | Freeze ▸ No rows | `sheets.view.freezeRows {count: 0}` | — | — | edit | 03 §4 |
 | Freeze ▸ 1 row / 2 rows | `sheets.view.freezeRows {count: 1\|2}` | — | — | edit | |
@@ -216,8 +212,6 @@ No "Email" item (out of scope).
 | Hidden sheets ({n}) ▸ *each hidden sheet* | `sheets.sheet.unhide {sheetId}` | — | — | edit, n > 0 | §6 |
 | — | | | | | |
 | Zoom ▸ 50 % / 75 % / 90 % / 100 % / 125 % / 150 % / 200 % | `sheets.view.zoom {percent}` | ⌘= / ⌘- (desktop) | Ctrl+= / Ctrl+- (desktop) | view | 03 §2.3 |
-| Compact mode ✓ | `sheets.view.toggleCompact` | ⇧⌘F | Ctrl+Shift+F | view | §2 |
-| Full screen ✓ | `sheets.view.fullScreen` | ⌃⌘F (desktop) | — | view | §2 |
 | Panels ▸ Comments / Assistant / Explore / Named ranges / … | `shell.panels.open {panelId}` | — | — | view | §10 |
 | App theme ▸ System / Light / Dark (radio) | `shell.appearance.setTheme {mode}` | — | — | view | suite 02 §1 |
 | Mode ▸ Editing / Viewing (radio) | `shell.view.setMode {mode}` | — | — | edit for Editing | shell 03 |
@@ -339,7 +333,6 @@ All behaviors in [07-data-tools.md](07-data-tools.md) unless noted.
 | Notification settings ▸ Comment notifications | `sheets.notifications.openSettings {itemUuid}` | — | — | view | 10 |
 | Notification settings ▸ Notification rules (P2) | `sheets.notifications.openRules` | — | — | edit | 10 |
 | Accessibility settings | `shell.settings.accessibility` | — | — | view | shell 03 |
-| Activity dashboard | `shell.activity.open` | — | — | edit | shell 07 §6 |
 | Keyboard shortcuts | `shell.help.shortcuts` | ⌘/ | Ctrl+/ | view | §11.19 |
 | Preferences… | `shell.settings.open {section: sheets}` | ⌘, (desktop) | — | view | §11.24 |
 
@@ -367,12 +360,10 @@ shortcuts use `Alt+Shift+<digit>` (no Ctrl).
 
 | Item | Command id | macOS | Win/Linux |
 |------|-----------|-------|-----------|
-| Search the menus | `shell.help.searchMenus` | ⌥/ | Alt+/ |
-| Help center | `shell.help.center` | — | — |
-| How collaboration works | `shell.help.center {page: sheets-collaboration}` | — | — |
-| Function list | `sheets.help.functionList` | — | — |
 | Keyboard shortcuts | `shell.help.shortcuts` | ⌘/ | Ctrl+/ |
-| Report a problem | `shell.help.reportProblem` | — | — |
+| Function list | `sheets.help.functionList` | — | — |
+| — | | | |
+| Report a problem | `shell.help.feedback` | — | — |
 | What's new | `shell.help.whatsNew` | — | — |
 | About | `shell.help.about` | — | — |
 
@@ -380,6 +371,7 @@ shortcuts use `Alt+Shift+<digit>` (no Ctrl).
 
 - Opening: click, or `Alt+F/E/V/I/O/D/T/N/H` on Win/Linux, `⌃⌥F…` on macOS (suite 02 §4.3);
   Format uses `O`, Extensions `N`. Arrow keys traverse; type-ahead jumps.
+- Only one menu is open at a time (suite 02 §4.2).
 - Disabled items show a reason tooltip on hover (from `Command.isEnabled` reason).
 - Checked items (`isChecked`) render ✓; radio groups render ●.
 - macOS desktop: `PlatformMenuBar` generated from the same spec (suite 03 §6); the in-window
@@ -395,7 +387,8 @@ preserving groups (priority 1 = never hidden).
 
 | # | Control | Widget | Command(s) | Tooltip (shortcut) | Prio |
 |---|---------|--------|-----------|--------------------|------|
-| 1 | Search the menus | `ToolbarToggleButton` (🔍 + "Menus" label when wide) | `shell.help.searchMenus` | Search the menus (Alt+/) | 2 |
+>>>
+
 | 2 | Undo | `ToolbarButton` (long-press → undo history popover) | `sheets.edit.undo` | Undo (⌘Z) | 1 |
 | 3 | Redo | `ToolbarButton` | `sheets.edit.redo` | Redo (⇧⌘Z / Ctrl+Y) | 1 |
 | 4 | Print | `ToolbarButton` | `sheets.print.open` | Print (⌘P) | 6 |
@@ -431,8 +424,8 @@ preserving groups (priority 1 = never hidden).
 | 27 | Insert chart | `ToolbarButton` | `sheets.chart.insert` | Insert chart | 6 |
 | 28 | Create a filter | `ToolbarSplitButton` (funnel; main toggles basic filter) → filter views menu: Create new filter view, *saved views*, None | `sheets.filter.toggle`, `sheets.filterView.*` | Create a filter | 4 |
 | 29 | Functions | `ToolbarDropdownButton` (Σ) → SUM, AVERAGE, COUNT, MAX, MIN, sep, categories ▸ (as Insert › Function) | `sheets.insert.function {name}` | Functions | 5 |
-| — | spacer | | | | |
-| 30 | Hide the menus | `ToolbarButton` (^ / ⌄) | `sheets.view.toggleCompact` | Hide the menus (⇧⌘F) | 1 |
+>>>
+
 
 Toolbar state: toggles reflect the **active cell's** effective format (bold checked if the active
 cell is bold); dropdowns show the active cell's value (font name, size, number format label
@@ -538,10 +531,11 @@ reviving tombstoned ids).
 | Slot | Content |
 |------|---------|
 | Left | Editor mode indicator (Ready / Enter / Edit / Point, if enabled, 03 §8.1) · active sheet name and grid size "1,000 × 26" · **cell count** "26,000 / 1,000,000 cells" (`CellLimitIndicator`, turns `warning` at ≥ 80 %, `destructive` at ≥ 95 % with tooltip "This spreadsheet is close to the cell limit") · calculation status ("Calculating… 42 %" while the engine recalculates > 200 ms) |
-| Center | `SyncStatusIndicator` duplicate for full-screen mode (hidden when the title row is visible) · offline storage warning (suite 12, IndexedDB fallback) |
+| Center | offline storage warning (suite 12, IndexedDB fallback) |
 | Right | Zoom (− [100 %] + and click → zoom menu) · View toggles: gridlines, formulas (icon toggles) |
 
-Hidden via View › Show › Status bar.
+The status bar contains only these Sheets items (suite 02 §4.13; no shell sync indicator or
+theme toggle — the sync status is in the title row) and is always shown.
 
 ---
 
@@ -626,8 +620,9 @@ Paste, Paste special ▸, Clear all formatting, Fit all columns to data, Unhide 
 
 ## 10. Side panels
 
-All panels are `SidePanelSpec`s hosted by `WonkySplitView` (one active, tabs for recently open,
-width persisted per id, Esc closes, `Mod+Alt+Shift+{n}` cycles). Panels operate on the **current
+All panels are `SidePanelSpec`s hosted by `WonkySplitView` (one active, shown or hidden — no
+collapsed rail; the header shows every panel as a tab; width persisted per id, Esc closes,
+`Mod+Alt+Shift+{n}` cycles). Panels operate on the **current
 selection** by default and expose a `RangeInput` (§13) to change it. **Rule editors** (CF, DV,
 banding, protection, named ranges, theme) edit a *draft*: the grid shows a live, non-persisted
 preview, *Done* commits the draft as **one undo step** and *Cancel* discards it. List-level actions
@@ -657,7 +652,7 @@ preview, *Done* commits the draft as **one undo step** and *Cancel* discards it.
 | — | Script editor | full-screen route `/s/:uuid/script` | — | 09 |
 
 Panel chrome: header with title, help (?) link, close ✕; body in `WonkyScrollArea`; footer with
-primary *Done*. At widths < MD (suite 02 §5) panels open as a `ShadSheet` over the grid.
+primary *Done*. At widths < MD (suite 02 §6) panels open as a `ShadSheet` over the grid.
 
 ---
 
@@ -909,12 +904,12 @@ entries (suite 02 §2); the generic `gridLine…`/`selection…`/`fillHandle` to
 | `formulaNumber` / `formulaString` | `#1967D2` / `#188038` | `#8AB4F8` / `#81C995` | Formula syntax |
 
 Rules:
-- **User-set cell colors are absolute** (suite 02 §7): text `#000000` stays black in dark mode. To
+- **User-set cell colors are absolute** (suite 02 §8): text `#000000` stays black in dark mode. To
   keep defaults readable, "Automatic" text/border colors and no-fill backgrounds follow the
   tokens above.
 - P2 view option *View › Show › Dark mode cell colors* (`sheets.view.toggleAdaptiveCellColors`,
   per user): renders explicit colors with lightness inverted in HSL (hue kept) for display only.
-- Printing/PDF/thumbnails always use the light tokens (suite 02 §7).
+- Printing/PDF/thumbnails always use the light tokens (suite 02 §8).
 - Contrast: header labels and selection borders meet ≥ 3:1 against their backgrounds in both
   themes (verified by a token test).
 

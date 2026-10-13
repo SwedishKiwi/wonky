@@ -354,9 +354,6 @@ class WriteLocalizationsEn extends WriteLocalizations {
   String get cmdViewZoomSet => 'Zoom';
 
   @override
-  String get cmdViewToggleRemoteCursors => 'Collaborator cursors';
-
-  @override
   String get cmdViewSuggestionPreview => 'Preview suggestions';
 
   @override
@@ -406,12 +403,6 @@ class WriteLocalizationsEn extends WriteLocalizations {
 
   @override
   String get cmdViewToggleWordCount => 'Word count';
-
-  @override
-  String get cmdViewToggleCommentMargin => 'Comments in margin';
-
-  @override
-  String get cmdViewToggleSelectionToolbar => 'Toolbar on selection';
 
   @override
   String get cmdViewFocusToolbar => 'Focus the toolbar';
@@ -483,9 +474,6 @@ class WriteLocalizationsEn extends WriteLocalizations {
   String get cmdDocProperties => 'Details';
 
   @override
-  String get cmdDocSettings => 'Settings…';
-
-  @override
   String get cmdThemeOpenPicker => 'Choose theme…';
 
   @override
@@ -496,9 +484,6 @@ class WriteLocalizationsEn extends WriteLocalizations {
 
   @override
   String get cmdToolsWordCount => 'Word count';
-
-  @override
-  String get cmdToolsViewMarkdown => 'View Markdown source';
 
   @override
   String get cmdHelpMarkdownGuide => 'Markdown & formatting guide';
@@ -514,12 +499,6 @@ class WriteLocalizationsEn extends WriteLocalizations {
 
   @override
   String get cmdTableEditCell => 'Edit table cell';
-
-  @override
-  String get cmdViewToggleFocusMode => 'Focus mode';
-
-  @override
-  String get cmdViewToggleTypewriter => 'Typewriter scrolling';
 
   @override
   String get cmdSpellToggle => 'Underline spelling errors';
@@ -553,9 +532,6 @@ class WriteLocalizationsEn extends WriteLocalizations {
 
   @override
   String get cmdThemeUseDefault => 'Use my default theme';
-
-  @override
-  String get cmdThemePreviewLocal => 'Preview theme';
 
   @override
   String get cmdThemeCreate => 'New theme';
@@ -669,9 +645,6 @@ class WriteLocalizationsEn extends WriteLocalizations {
   String get cmdSuggestionsReject => 'Reject suggestion';
 
   @override
-  String get cmdSuggestionsTogglePanel => 'Suggestions';
-
-  @override
   String get cmdModeSuggest => 'Suggesting';
 
   @override
@@ -710,14 +683,6 @@ class WriteLocalizationsEn extends WriteLocalizations {
   String get cmdTableEditCellDescription => 'Edit a table cell in place';
 
   @override
-  String get cmdViewToggleFocusModeDescription =>
-      'Dim everything but the paragraph you are writing';
-
-  @override
-  String get cmdViewToggleTypewriterDescription =>
-      'Keep the line you are typing in the middle of the screen';
-
-  @override
   String get cmdInsertFromFileDescription =>
       'Insert a Markdown, text, HTML, Word, OpenDocument or RTF file at the cursor';
 
@@ -727,10 +692,6 @@ class WriteLocalizationsEn extends WriteLocalizations {
   @override
   String get cmdInsertTableDialogDescription =>
       'Insert a table of a custom size';
-
-  @override
-  String get cmdDocSettingsDescription =>
-      'Document language, layout, theme and page setup';
 
   @override
   String get cmdThemeOpenEditorDescription =>
@@ -1131,16 +1092,13 @@ class WriteLocalizationsEn extends WriteLocalizations {
   String get menuShowSuggestions => 'Show suggestions';
 
   @override
+  String get menuShowComments => 'Comments and suggestions';
+
+  @override
   String get menuPreviewAccepted => 'Preview accepted';
 
   @override
   String get menuPreviewOriginal => 'Preview original';
-
-  @override
-  String get menuPreviewTheme => 'Preview theme';
-
-  @override
-  String get menuDocumentTheme => 'Document theme';
 
   @override
   String get menuZoom => 'Zoom';
@@ -1242,9 +1200,6 @@ class WriteLocalizationsEn extends WriteLocalizations {
   String get menuMoreThemes => 'More themes…';
 
   @override
-  String get menuFormattingSupported => 'What formatting is supported?';
-
-  @override
   String screenZoomPercent(int percent) {
     return '$percent%';
   }
@@ -1288,9 +1243,6 @@ class WriteLocalizationsEn extends WriteLocalizations {
 
   @override
   String get toolbarStyles => 'Styles';
-
-  @override
-  String get toolbarSuggestions => 'Suggestions';
 
   @override
   String get toolbarInsertImage => 'Insert image';
@@ -1452,27 +1404,6 @@ class WriteLocalizationsEn extends WriteLocalizations {
   String get screenWordCountHint => 'Open word count';
 
   @override
-  String screenUploadingImages(int count) {
-    String _temp0 = intl.Intl.pluralLogic(
-      count,
-      locale: localeName,
-      other: 'Uploading $count images…',
-      one: 'Uploading 1 image…',
-    );
-    return '$_temp0';
-  }
-
-  @override
-  String screenPageLayout(String layout) {
-    return 'Page layout: $layout';
-  }
-
-  @override
-  String screenZoomLevel(int percent) {
-    return 'Zoom: $percent%';
-  }
-
-  @override
   String screenUnknownFormat(String format) {
     return 'Unknown format “$format”';
   }
@@ -1586,18 +1517,6 @@ class WriteLocalizationsEn extends WriteLocalizations {
   @override
   String get docDialogFrontMatterPlaceholder =>
       'title: My document\ntags: [notes]';
-
-  @override
-  String get docDialogMarkdownSourceTitle => 'Markdown source';
-
-  @override
-  String get docDialogWrapLines => 'Wrap lines';
-
-  @override
-  String get docDialogDownloadMarkdown => 'Download .md';
-
-  @override
-  String get docDialogCopied => 'Copied';
 
   @override
   String get docDialogGoToHeadingTitle => 'Go to heading';
@@ -1854,103 +1773,6 @@ class WriteLocalizationsEn extends WriteLocalizations {
 
   @override
   String get pageSetupFieldRight => 'Right';
-
-  @override
-  String get docSettingsTitle => 'Document settings';
-
-  @override
-  String get docSettingsReadOnly =>
-      'Only editors can change document settings.';
-
-  @override
-  String get docSettingsTabGeneral => 'General';
-
-  @override
-  String get docSettingsTabTheme => 'Theme';
-
-  @override
-  String get docSettingsTabPageSetup => 'Page setup';
-
-  @override
-  String get docSettingsTabMarkdown => 'Markdown';
-
-  @override
-  String docSettingsCurrentTheme(String name) {
-    return 'Current theme: $name';
-  }
-
-  @override
-  String get docSettingsSaveDefaultTheme => 'Save as my default theme';
-
-  @override
-  String get docSettingsCustomizeTheme => 'Customize…';
-
-  @override
-  String get docSettingsNone => 'None';
-
-  @override
-  String get docSettingsLayout => 'Layout';
-
-  @override
-  String get docSettingsPaper => 'Paper';
-
-  @override
-  String docSettingsPaperValue(String paper, String orientation) {
-    return '$paper · $orientation';
-  }
-
-  @override
-  String get docSettingsMargins => 'Margins';
-
-  @override
-  String docSettingsMarginsFromTheme(String margins) {
-    return 'From the theme ($margins)';
-  }
-
-  @override
-  String get docSettingsEditPageSetup => 'Edit page setup…';
-
-  @override
-  String get docSettingsFrontMatterInfo =>
-      'Front matter is YAML metadata at the top of the Markdown file (title, tags, author…). It is kept on import and export.';
-
-  @override
-  String get docSettingsNoFrontMatter => 'No front matter';
-
-  @override
-  String get docSettingsViewDetails => 'View details…';
-
-  @override
-  String get docSettingsEditFrontMatter => 'Edit front matter…';
-
-  @override
-  String get docSettingsViewMarkdownSource => 'View Markdown source';
-
-  @override
-  String get docSettingsLanguage => 'Language';
-
-  @override
-  String get docSettingsChangeLanguage => 'Change…';
-
-  @override
-  String get docSettingsPagelessHint =>
-      'Pageless shows one continuous column, like a web page.';
-
-  @override
-  String get docSettingsDefaultMode => 'Default mode for me';
-
-  @override
-  String get docSettingsModeEditing => 'Editing';
-
-  @override
-  String get docSettingsModeSuggesting => 'Suggesting';
-
-  @override
-  String get docSettingsModeViewing => 'Viewing';
-
-  @override
-  String get docSettingsDefaultModeHint =>
-      'Used when you open documents you can edit.';
 
   @override
   String get wordCountReadingTimeUnderOne => '< 1 min';
@@ -3945,9 +3767,6 @@ class WriteLocalizationsEn extends WriteLocalizations {
   }
 
   @override
-  String get suggestionPanelTitle => 'Suggestions';
-
-  @override
   String get suggestionActionFailed => 'Could not complete the action';
 
   @override
@@ -4010,49 +3829,6 @@ class WriteLocalizationsEn extends WriteLocalizations {
     );
     return '$_temp0';
   }
-
-  @override
-  String get suggestionAcceptAllTitle => 'Accept all suggestions?';
-
-  @override
-  String get suggestionRejectAllTitle => 'Reject all suggestions?';
-
-  @override
-  String suggestionAcceptAllBody(int count) {
-    return 'All $count suggestions will be applied to the document.';
-  }
-
-  @override
-  String suggestionRejectAllBody(int count) {
-    return 'All $count suggestions will be discarded.';
-  }
-
-  @override
-  String get suggestionAcceptAll => 'Accept all';
-
-  @override
-  String get suggestionRejectAll => 'Reject all';
-
-  @override
-  String get suggestionNone => 'No suggestions';
-
-  @override
-  String suggestionCount(int count) {
-    String _temp0 = intl.Intl.pluralLogic(
-      count,
-      locale: localeName,
-      other: '$count suggestions',
-      one: '1 suggestion',
-    );
-    return '$_temp0';
-  }
-
-  @override
-  String get suggestionEmptyHint =>
-      'Switch to Suggesting mode to propose changes.';
-
-  @override
-  String get suggestionSwitchToSuggesting => 'Switch to Suggesting';
 
   @override
   String get commentWholeDocument => 'Whole document';
@@ -4841,9 +4617,6 @@ class WriteLocalizationsEnXa extends WriteLocalizationsEn {
   String get cmdViewZoomSet => '[Žööɱ on]';
 
   @override
-  String get cmdViewToggleRemoteCursors => '[Çöļļåƀöŕåţöŕ çûŕšöŕš one two]';
-
-  @override
   String get cmdViewSuggestionPreview => '[Þŕéṽîéŵ šûĝĝéšţîöñš one two]';
 
   @override
@@ -4893,12 +4666,6 @@ class WriteLocalizationsEnXa extends WriteLocalizationsEn {
 
   @override
   String get cmdViewToggleWordCount => '[Ŵöŕð çöûñţ one]';
-
-  @override
-  String get cmdViewToggleCommentMargin => '[Çöɱɱéñţš îñ ɱåŕĝîñ one tw]';
-
-  @override
-  String get cmdViewToggleSelectionToolbar => '[Ţööļƀåŕ öñ šéļéçţîöñ one two]';
 
   @override
   String get cmdViewFocusToolbar => '[Ƒöçûš ţĥé ţööļƀåŕ one tw]';
@@ -4970,9 +4737,6 @@ class WriteLocalizationsEnXa extends WriteLocalizationsEn {
   String get cmdDocProperties => '[Ðéţåîļš one]';
 
   @override
-  String get cmdDocSettings => '[Šéţţîñĝš… one]';
-
-  @override
   String get cmdThemeOpenPicker => '[Çĥööšé ţĥéɱé… one t]';
 
   @override
@@ -4983,9 +4747,6 @@ class WriteLocalizationsEnXa extends WriteLocalizationsEn {
 
   @override
   String get cmdToolsWordCount => '[Ŵöŕð çöûñţ one]';
-
-  @override
-  String get cmdToolsViewMarkdown => '[Ṽîéŵ Ṁåŕķðöŵñ šöûŕçé one two]';
 
   @override
   String get cmdHelpMarkdownGuide => '[Ṁåŕķðöŵñ & ƒöŕɱåţţîñĝ ĝûîðé one two t]';
@@ -5001,12 +4762,6 @@ class WriteLocalizationsEnXa extends WriteLocalizationsEn {
 
   @override
   String get cmdTableEditCell => '[Éðîţ ţåƀļé çéļļ one t]';
-
-  @override
-  String get cmdViewToggleFocusMode => '[Ƒöçûš ɱöðé one]';
-
-  @override
-  String get cmdViewToggleTypewriter => '[Ţýþéŵŕîţéŕ šçŕöļļîñĝ one two]';
 
   @override
   String get cmdSpellToggle => '[Ûñðéŕļîñé šþéļļîñĝ éŕŕöŕš one two t]';
@@ -5041,9 +4796,6 @@ class WriteLocalizationsEnXa extends WriteLocalizationsEn {
 
   @override
   String get cmdThemeUseDefault => '[Ûšé ɱý ðéƒåûļţ ţĥéɱé one tw]';
-
-  @override
-  String get cmdThemePreviewLocal => '[Þŕéṽîéŵ ţĥéɱé one t]';
 
   @override
   String get cmdThemeCreate => '[Ñéŵ ţĥéɱé one]';
@@ -5160,9 +4912,6 @@ class WriteLocalizationsEnXa extends WriteLocalizationsEn {
   String get cmdSuggestionsReject => '[Ŕéĵéçţ šûĝĝéšţîöñ one tw]';
 
   @override
-  String get cmdSuggestionsTogglePanel => '[Šûĝĝéšţîöñš one]';
-
-  @override
   String get cmdModeSuggest => '[Šûĝĝéšţîñĝ one]';
 
   @override
@@ -5202,14 +4951,6 @@ class WriteLocalizationsEnXa extends WriteLocalizationsEn {
       '[Éðîţ å ţåƀļé çéļļ îñ þļåçé one two]';
 
   @override
-  String get cmdViewToggleFocusModeDescription =>
-      '[Ðîɱ éṽéŕýţĥîñĝ ƀûţ ţĥé þåŕåĝŕåþĥ ýöû åŕé ŵŕîţîñĝ one two three f]';
-
-  @override
-  String get cmdViewToggleTypewriterDescription =>
-      '[Ķééþ ţĥé ļîñé ýöû åŕé ţýþîñĝ îñ ţĥé ɱîððļé öƒ ţĥé šçŕééñ one two three fo]';
-
-  @override
   String get cmdInsertFromFileDescription =>
       '[Îñšéŕţ å Ṁåŕķðöŵñ, ţéẋţ, ĤŢṀĻ, Ŵöŕð, ÖþéñÐöçûɱéñţ öŕ ŔŢƑ ƒîļé åţ ţĥé çûŕšöŕ one two three four five]';
 
@@ -5220,10 +4961,6 @@ class WriteLocalizationsEnXa extends WriteLocalizationsEn {
   @override
   String get cmdInsertTableDialogDescription =>
       '[Îñšéŕţ å ţåƀļé öƒ å çûšţöɱ šîžé one two t]';
-
-  @override
-  String get cmdDocSettingsDescription =>
-      '[Ðöçûɱéñţ ļåñĝûåĝé, ļåýöûţ, ţĥéɱé åñð þåĝé šéţûþ one two three f]';
 
   @override
   String get cmdThemeOpenEditorDescription =>
@@ -5635,16 +5372,13 @@ class WriteLocalizationsEnXa extends WriteLocalizationsEn {
   String get menuShowSuggestions => '[Šĥöŵ šûĝĝéšţîöñš one tw]';
 
   @override
+  String get menuShowComments => '[Çöɱɱéñţš åñð šûĝĝéšţîöñš one two]';
+
+  @override
   String get menuPreviewAccepted => '[Þŕéṽîéŵ åççéþţéð one tw]';
 
   @override
   String get menuPreviewOriginal => '[Þŕéṽîéŵ öŕîĝîñåļ one tw]';
-
-  @override
-  String get menuPreviewTheme => '[Þŕéṽîéŵ ţĥéɱé one t]';
-
-  @override
-  String get menuDocumentTheme => '[Ðöçûɱéñţ ţĥéɱé one t]';
 
   @override
   String get menuZoom => '[Žööɱ on]';
@@ -5746,10 +5480,6 @@ class WriteLocalizationsEnXa extends WriteLocalizationsEn {
   String get menuMoreThemes => '[Ṁöŕé ţĥéɱéš… one]';
 
   @override
-  String get menuFormattingSupported =>
-      '[Ŵĥåţ ƒöŕɱåţţîñĝ îš šûþþöŕţéð? one two th]';
-
-  @override
   String screenZoomPercent(int percent) {
     return '[$percent% o]';
   }
@@ -5795,9 +5525,6 @@ class WriteLocalizationsEnXa extends WriteLocalizationsEn {
 
   @override
   String get toolbarStyles => '[Šţýļéš one]';
-
-  @override
-  String get toolbarSuggestions => '[Šûĝĝéšţîöñš one]';
 
   @override
   String get toolbarInsertImage => '[Îñšéŕţ îɱåĝé one]';
@@ -5960,27 +5687,6 @@ class WriteLocalizationsEnXa extends WriteLocalizationsEn {
   String get screenWordCountHint => '[Öþéñ ŵöŕð çöûñţ one t]';
 
   @override
-  String screenUploadingImages(int count) {
-    String _temp0 = intl.Intl.pluralLogic(
-      count,
-      locale: localeName,
-      other: 'Ûþļöåðîñĝ $count îɱåĝéš…',
-      one: 'Ûþļöåðîñĝ 1 îɱåĝé…',
-    );
-    return '[$_temp0 one two thre]';
-  }
-
-  @override
-  String screenPageLayout(String layout) {
-    return '[Þåĝé ļåýöûţ: $layout one]';
-  }
-
-  @override
-  String screenZoomLevel(int percent) {
-    return '[Žööɱ: $percent% one]';
-  }
-
-  @override
   String screenUnknownFormat(String format) {
     return '[Ûñķñöŵñ ƒöŕɱåţ “$format” one tw]';
   }
@@ -6094,18 +5800,6 @@ class WriteLocalizationsEnXa extends WriteLocalizationsEn {
   @override
   String get docDialogFrontMatterPlaceholder =>
       '[ţîţļé: Ṁý ðöçûɱéñţ\nţåĝš: [ñöţéš] one two th]';
-
-  @override
-  String get docDialogMarkdownSourceTitle => '[Ṁåŕķðöŵñ šöûŕçé one t]';
-
-  @override
-  String get docDialogWrapLines => '[Ŵŕåþ ļîñéš one]';
-
-  @override
-  String get docDialogDownloadMarkdown => '[Ðöŵñļöåð .ɱð one]';
-
-  @override
-  String get docDialogCopied => '[Çöþîéð one]';
 
   @override
   String get docDialogGoToHeadingTitle => '[Ĝö ţö ĥéåðîñĝ one]';
@@ -6364,104 +6058,6 @@ class WriteLocalizationsEnXa extends WriteLocalizationsEn {
 
   @override
   String get pageSetupFieldRight => '[Ŕîĝĥţ on]';
-
-  @override
-  String get docSettingsTitle => '[Ðöçûɱéñţ šéţţîñĝš one tw]';
-
-  @override
-  String get docSettingsReadOnly =>
-      '[Öñļý éðîţöŕš çåñ çĥåñĝé ðöçûɱéñţ šéţţîñĝš. one two three]';
-
-  @override
-  String get docSettingsTabGeneral => '[Ĝéñéŕåļ one]';
-
-  @override
-  String get docSettingsTabTheme => '[Ţĥéɱé on]';
-
-  @override
-  String get docSettingsTabPageSetup => '[Þåĝé šéţûþ one]';
-
-  @override
-  String get docSettingsTabMarkdown => '[Ṁåŕķðöŵñ one]';
-
-  @override
-  String docSettingsCurrentTheme(String name) {
-    return '[Çûŕŕéñţ ţĥéɱé: $name one t]';
-  }
-
-  @override
-  String get docSettingsSaveDefaultTheme =>
-      '[Šåṽé åš ɱý ðéƒåûļţ ţĥéɱé one two]';
-
-  @override
-  String get docSettingsCustomizeTheme => '[Çûšţöɱîžé… one]';
-
-  @override
-  String get docSettingsNone => '[Ñöñé on]';
-
-  @override
-  String get docSettingsLayout => '[Ļåýöûţ one]';
-
-  @override
-  String get docSettingsPaper => '[Þåþéŕ on]';
-
-  @override
-  String docSettingsPaperValue(String paper, String orientation) {
-    return '[$paper · $orientation o]';
-  }
-
-  @override
-  String get docSettingsMargins => '[Ṁåŕĝîñš one]';
-
-  @override
-  String docSettingsMarginsFromTheme(String margins) {
-    return '[Ƒŕöɱ ţĥé ţĥéɱé ($margins) one t]';
-  }
-
-  @override
-  String get docSettingsEditPageSetup => '[Éðîţ þåĝé šéţûþ… one t]';
-
-  @override
-  String get docSettingsFrontMatterInfo =>
-      '[Ƒŕöñţ ɱåţţéŕ îš ÝÅṀĻ ɱéţåðåţå åţ ţĥé ţöþ öƒ ţĥé Ṁåŕķðöŵñ ƒîļé (ţîţļé, ţåĝš, åûţĥöŕ…). Îţ îš ķéþţ öñ îɱþöŕţ åñð éẋþöŕţ. one two three four five six seven]';
-
-  @override
-  String get docSettingsNoFrontMatter => '[Ñö ƒŕöñţ ɱåţţéŕ one t]';
-
-  @override
-  String get docSettingsViewDetails => '[Ṽîéŵ ðéţåîļš… one t]';
-
-  @override
-  String get docSettingsEditFrontMatter => '[Éðîţ ƒŕöñţ ɱåţţéŕ… one tw]';
-
-  @override
-  String get docSettingsViewMarkdownSource => '[Ṽîéŵ Ṁåŕķðöŵñ šöûŕçé one two]';
-
-  @override
-  String get docSettingsLanguage => '[Ļåñĝûåĝé one]';
-
-  @override
-  String get docSettingsChangeLanguage => '[Çĥåñĝé… one]';
-
-  @override
-  String get docSettingsPagelessHint =>
-      '[Þåĝéļéšš šĥöŵš öñé çöñţîñûöûš çöļûɱñ, ļîķé å ŵéƀ þåĝé. one two three fou]';
-
-  @override
-  String get docSettingsDefaultMode => '[Ðéƒåûļţ ɱöðé ƒöŕ ɱé one tw]';
-
-  @override
-  String get docSettingsModeEditing => '[Éðîţîñĝ one]';
-
-  @override
-  String get docSettingsModeSuggesting => '[Šûĝĝéšţîñĝ one]';
-
-  @override
-  String get docSettingsModeViewing => '[Ṽîéŵîñĝ one]';
-
-  @override
-  String get docSettingsDefaultModeHint =>
-      '[Ûšéð ŵĥéñ ýöû öþéñ ðöçûɱéñţš ýöû çåñ éðîţ. one two three]';
 
   @override
   String get wordCountReadingTimeUnderOne => '[< 1 ɱîñ on]';
@@ -8478,9 +8074,6 @@ class WriteLocalizationsEnXa extends WriteLocalizationsEn {
   }
 
   @override
-  String get suggestionPanelTitle => '[Šûĝĝéšţîöñš one]';
-
-  @override
   String get suggestionActionFailed =>
       '[Çöûļð ñöţ çöɱþļéţé ţĥé åçţîöñ one two t]';
 
@@ -8544,49 +8137,6 @@ class WriteLocalizationsEnXa extends WriteLocalizationsEn {
     );
     return '[$_temp0 one two three]';
   }
-
-  @override
-  String get suggestionAcceptAllTitle => '[Åççéþţ åļļ šûĝĝéšţîöñš? one two]';
-
-  @override
-  String get suggestionRejectAllTitle => '[Ŕéĵéçţ åļļ šûĝĝéšţîöñš? one two]';
-
-  @override
-  String suggestionAcceptAllBody(int count) {
-    return '[Åļļ $count šûĝĝéšţîöñš ŵîļļ ƀé åþþļîéð ţö ţĥé ðöçûɱéñţ. one two three f]';
-  }
-
-  @override
-  String suggestionRejectAllBody(int count) {
-    return '[Åļļ $count šûĝĝéšţîöñš ŵîļļ ƀé ðîšçåŕðéð. one two thr]';
-  }
-
-  @override
-  String get suggestionAcceptAll => '[Åççéþţ åļļ one]';
-
-  @override
-  String get suggestionRejectAll => '[Ŕéĵéçţ åļļ one]';
-
-  @override
-  String get suggestionNone => '[Ñö šûĝĝéšţîöñš one t]';
-
-  @override
-  String suggestionCount(int count) {
-    String _temp0 = intl.Intl.pluralLogic(
-      count,
-      locale: localeName,
-      other: '$count šûĝĝéšţîöñš',
-      one: '1 šûĝĝéšţîöñ',
-    );
-    return '[$_temp0 one two]';
-  }
-
-  @override
-  String get suggestionEmptyHint =>
-      '[Šŵîţçĥ ţö Šûĝĝéšţîñĝ ɱöðé ţö þŕöþöšé çĥåñĝéš. one two three]';
-
-  @override
-  String get suggestionSwitchToSuggesting => '[Šŵîţçĥ ţö Šûĝĝéšţîñĝ one two]';
 
   @override
   String get commentWholeDocument => '[Ŵĥöļé ðöçûɱéñţ one t]';

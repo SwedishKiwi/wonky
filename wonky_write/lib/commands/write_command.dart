@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'command_icons.dart';
 import 'package:flutter/widgets.dart';
 import 'package:wonky_app/wonky_app.dart';
 import 'package:wonky_core/wonky_core.dart';
@@ -25,7 +26,7 @@ class WriteCommand extends JsonCommand {
     String id, {
     required this.label,
     required this.run,
-    this.icon,
+    IconData? icon,
     this.categoryName,
     this.descriptionText,
     this.defaultBindings = const [],
@@ -41,7 +42,10 @@ class WriteCommand extends JsonCommand {
     this.reason,
     this.undoLabelOf,
     this.aliasList = const [],
-  }) : id = CommandId(id);
+  }) : id = CommandId(id),
+       // Menus show the command's icon; fall back to the shared table so
+       // every Write command has one (Write 05 §7).
+       icon = icon ?? commandIcons[id];
 
   @override
   final CommandId id;
@@ -143,13 +147,14 @@ class WriteGlobalCommand extends JsonCommand {
     String id, {
     required this.label,
     required this.run,
-    this.icon,
+    IconData? icon,
     this.categoryName,
     this.defaultBindings = const [],
     this.argsSchema = JsonSchema.empty,
     this.checked,
     this.enabled,
-  }) : id = CommandId(id);
+  }) : id = CommandId(id),
+       icon = icon ?? commandIcons[id];
 
   @override
   final CommandId id;

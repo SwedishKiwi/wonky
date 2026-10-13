@@ -403,8 +403,10 @@ List<WonkyMenuEntry> codeLanguageEntries(
   String? nodeId,
 }) {
   final current = doc.block(nodeId)?.blockAttributes?['code-block'];
-  final names = CodeLanguages.displayNames.entries.toList()
-    ..sort((a, b) => a.value.toLowerCase().compareTo(b.value.toLowerCase()));
+  final names = [
+    for (final id in CodeLanguages.grammars.keys)
+      MapEntry(id, CodeLanguages.displayName(id)),
+  ]..sort((a, b) => a.value.toLowerCase().compareTo(b.value.toLowerCase()));
   return [
     WonkyMenuRadioItem(
       key: const ValueKey<String>('menu.code.plain'),

@@ -97,6 +97,35 @@ void main() {
     expect(log, ['save']);
   });
 
+  testWidgets('Given an open dropdown when another menu opens then the first '
+      'one closes', (tester) async {
+    Widget dropdown(String id) => WonkyDropdownMenu(
+      entries: () => [WonkyMenuItem(label: 'Item $id', onSelected: () {})],
+      builder: (context, c) => ShadButton(
+        key: ValueKey('trigger.$id'),
+        onPressed: c.toggle,
+        child: Text('Menu $id'),
+      ),
+    );
+    await pumpWonky(
+      tester,
+      Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [dropdown('a'), const SizedBox(width: 200), dropdown('b')],
+      ),
+      center: true,
+    );
+
+    await tester.tap(find.byKey(const ValueKey('trigger.a')));
+    await tester.pumpAndSettle();
+    expect(find.text('Item a'), findsOneWidget);
+
+    await tester.tap(find.byKey(const ValueKey('trigger.b')));
+    await tester.pumpAndSettle();
+    expect(find.text('Item a'), findsNothing);
+    expect(find.text('Item b'), findsOneWidget);
+  });
+
   for (final b in Brightness.values) {
     testWidgets('Given a dropdown in ${b.name} when opened then entries, '
         'labels and shortcuts render', (tester) async {

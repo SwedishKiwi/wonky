@@ -37,7 +37,6 @@ MenuRoot writeMenus(ShellMenus shell, {WriteLocalizations? l10n}) {
       .insertAfter(ShellMenuIds.fileEndOfVersions, [
         _c('write.doc.languageDialog', label: l.cmdDocLanguageDialog),
         _c('write.doc.pageSetup', label: l.cmdDocPageSetup),
-        _c('write.doc.settings', label: l.cmdDocSettings),
         MenuSpec.separator(),
       ]);
 
@@ -105,44 +104,6 @@ MenuRoot writeMenus(ShellMenus shell, {WriteLocalizations? l10n}) {
             menuId: 'view.suggestions.original',
           ),
         ]),
-        // View-only preview of another theme (Write 06 §5.2).
-        MenuSpec.submenu('view.previewTheme', l.menuPreviewTheme, [
-          _c(
-            'write.theme.previewLocal',
-            label: l.menuDocumentTheme,
-            args: {'themeUuid': null},
-            menuId: 'view.previewTheme.none',
-            radio: true,
-          ),
-          MenuSpec.separator(),
-          for (final b in BuiltinThemes.all)
-            _c(
-              'write.theme.previewLocal',
-              label: b.name,
-              args: {'themeUuid': b.uuid},
-              menuId: 'view.previewTheme.${b.key}',
-              radio: true,
-            ),
-        ]),
-      ])
-      .appendTo(ShellMenuIds.viewShow, [
-        _c('write.view.toggleWordCount', label: l.cmdViewToggleWordCount),
-        _c(
-          'write.view.toggleCommentMargin',
-          label: l.cmdViewToggleCommentMargin,
-        ),
-        _c(
-          'write.view.toggleRemoteCursors',
-          label: l.cmdViewToggleRemoteCursors,
-        ),
-        _c(
-          'write.view.toggleSelectionToolbar',
-          label: l.cmdViewToggleSelectionToolbar,
-        ),
-      ])
-      .insertAfter('view.layout', [
-        _c('write.view.toggleFocusMode', label: l.cmdViewToggleFocusMode),
-        _c('write.view.toggleTypewriter', label: l.cmdViewToggleTypewriter),
       ])
       .replace(ShellMenuIds.viewZoom, [
         MenuSpec.submenu(ShellMenuIds.viewZoom, l.menuZoom, [
@@ -173,21 +134,21 @@ MenuRoot writeMenus(ShellMenus shell, {WriteLocalizations? l10n}) {
           _c('write.view.zoomReset', label: l.menuZoomReset),
         ]),
       ])
-      .insertBefore('shell.comments.togglePanel', [
+      // The side panel shows Outline, Find, History or the Assistant;
+      // comments and suggestions live in the margin (Write 05 §10).
+      .replace('shell.comments.togglePanel', [
         _c('write.view.toggleOutline', label: l.cmdViewToggleOutline),
-      ])
-      .insertAfter('shell.comments.togglePanel', [
-        _c(
-          'write.suggestions.togglePanel',
-          label: l.cmdSuggestionsTogglePanel,
-          menuId: 'view.panels.suggestions',
-        ),
-      ])
-      .appendTo(ShellMenuIds.viewPanels, [
         _c(
           'write.find.open',
           label: l.cmdFindOpenReplace,
           menuId: 'view.panels.find',
+        ),
+      ])
+      .insertAfter(ShellMenuIds.viewPanels, [
+        _c(
+          'shell.comments.togglePanel',
+          label: l.menuShowComments,
+          menuId: 'view.comments',
         ),
       ]);
 
@@ -211,7 +172,6 @@ MenuRoot writeMenus(ShellMenus shell, {WriteLocalizations? l10n}) {
           label: l.cmdDocLanguageDialog,
           menuId: 'tools.language',
         ),
-        _c('write.tools.viewMarkdown', label: l.cmdToolsViewMarkdown),
         MenuSpec.submenu('tools.spelling', l.menuSpelling, [
           _c('write.spell.check', label: l.cmdSpellCheck),
           _c('write.spell.nextError', label: l.menuNextError),
@@ -254,7 +214,9 @@ MenuRoot writeMenus(ShellMenus shell, {WriteLocalizations? l10n}) {
       .remove('tools.preferences');
 
   // ---- Help (§7.7) ----
-  root = root.insertAfter('shell.help.open', [_c('write.help.markdownGuide')]);
+  root = root.insertAfter('shell.help.shortcuts', [
+    _c('write.help.markdownGuide'),
+  ]);
   return root;
 }
 
@@ -387,11 +349,6 @@ MenuSubmenu formatMenu(WriteLocalizations l) =>
         MenuSpec.separator(),
         _c('write.theme.setUserDefault', label: l.cmdThemeSetUserDefault),
       ]),
-      _c(
-        'write.help.markdownGuide',
-        label: l.menuFormattingSupported,
-        menuId: 'format.guide',
-      ),
     ]);
 
 String _heading(WriteLocalizations l, int level) => switch (level) {

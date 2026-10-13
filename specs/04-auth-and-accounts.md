@@ -41,7 +41,7 @@ after re-auth the user continues where they were. Pending offline changes are ke
 
 | Screen | Route | Notes |
 |--------|-------|-------|
-| Sign in | `/signin` | Centered card (max 400 px) on branded background; app logo of the *current* app (Write or Sheets) plus "Wonky Work" wordmark. |
+| Sign in | `/signin` | Centered card (max 400 px) on branded background; app logo of the *current* app (its product icon, [02 §5](02-design-system.md)) plus "Wonky Work" wordmark. |
 | Sign up | `/signup` | Same layout. |
 | Verify email | `/signup/verify` | |
 | Forgot password | `/reset` | |
@@ -117,9 +117,9 @@ Full-screen in-app page with a left nav (shad `ShadTabs` vertical or custom `Set
 3. **Language & region** – UI language, default locale for new spreadsheets (number/date
    formats), time zone.
 4. **Keyboard shortcuts** – see [08-commands-and-undo.md](08-commands-and-undo.md) §1.2.
-5. **Write** – default theme, spellcheck, smart quotes, auto-pair brackets, Markdown shortcuts
-   on/off, default page setup, default export format.
-6. **Sheets** – default font/size, default number locale, formula autocomplete, show formula
+5. **Write** (nav item with the Write product icon) – default theme, spellcheck, smart quotes,
+   auto-pair brackets, Markdown shortcuts on/off, default page setup, default export format.
+6. **Sheets** (nav item with the Sheets product icon) – default font/size, default number locale, formula autocomplete, show formula
    help, iterative calc defaults, enable scripts (per-user kill switch).
 7. **Notifications** – mentions, comment replies, share notifications: in-app / email / off.
 8. **AI** – enable assistant, default model tier (Fast/Balanced/Best — maps to server-side model

@@ -1,6 +1,5 @@
 import 'dart:async';
 
-import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
 import 'package:shad/shad.dart';
 import 'package:wonky_client/wonky_client.dart';
@@ -24,9 +23,9 @@ import '../document/document_controller.dart';
 import 'package:flutter/foundation.dart';
 
 /// The shared editor frame (suite 03 §3.1): title row, menubar, toolbar,
-/// document area with the side panel host, status bar; compact and
-/// full-screen modes. Loads the drive item, joins presence, creates the
-/// comments controller and handles the no-access state.
+/// document area with the side panel host, and an optional status bar.
+/// Loads the drive item, joins presence, creates the comments controller and
+/// handles the no-access state.
 ///
 /// Apps build their editor screen with it:
 ///
@@ -55,6 +54,8 @@ class EditorScaffold extends StatefulWidget {
     this.onItemLoaded,
     this.customMenuItems = const MenuCustomItems(),
     this.syncStatus,
+    this.showStatusBar = true,
+    this.commentsInPanel = true,
   });
 
   final ShellServices services;
@@ -71,7 +72,7 @@ class EditorScaffold extends StatefulWidget {
   final List<Widget> Function(BuildContext context)? statusLeft;
   final List<Widget> Function(BuildContext context)? statusRight;
 
-  /// App panels (outline, …) in addition to comments, history and details.
+  /// App panels (outline, …) in addition to comments and history.
   final List<SidePanelSpec> panels;
 
   /// Extra widgets in the title row before the presence avatars.
@@ -85,6 +86,13 @@ class EditorScaffold extends StatefulWidget {
 
   /// Overrides the controller's sync status.
   final ValueListenable<SyncStatus>? syncStatus;
+
+  /// Whether the status bar ([statusLeft], [statusRight]) is shown.
+  final bool showStatusBar;
+
+  /// Whether comments get the comments side panel. Apps that show comments
+  /// elsewhere (Write's margin) set a `CommentsHost` and pass false.
+  final bool commentsInPanel;
 
   @override
   State<EditorScaffold> createState() => _EditorScaffoldState();
@@ -226,7 +234,6 @@ class _EditorScaffoldState extends State<EditorScaffold> {
       ].contains(f),
     );
     if (s.currentItem.value?.uuid == _uuid) s.currentItem.value = null;
-    s.viewState.setFullScreen(false);
     _comments.dispose();
     _presence.dispose();
     _menubar.dispose();
@@ -307,21 +314,21 @@ class _EditorScaffoldState extends State<EditorScaffold> {
           return KeyEventResult.ignored;
         },
         child: ListenableBuilder(
-          listenable: Listenable.merge([s.viewState, s.registry]),
+          listenable: s.registry,
           builder: (context, _) {
-            final v = s.viewState;
-            final full = v.fullScreen;
-            final compact = v.compact || !v.showMenubar;
+            final statusLeft = widget.statusLeft?.call(context) ?? const [];
+            final statusRight = widget.statusRight?.call(context) ?? const [];
             final panels = [
-              SidePanelSpec(
-                id: ShellPanels.comments,
-                title: l.panelComments,
-                icon: LucideIcons.messageSquare,
-                defaultWidth: 360,
-                minWidth: 300,
-                builder: (_) =>
-                    CommentsPanel(services: s, controller: _comments),
-              ),
+              if (widget.commentsInPanel)
+                SidePanelSpec(
+                  id: ShellPanels.comments,
+                  title: l.panelComments,
+                  icon: LucideIcons.messageSquare,
+                  defaultWidth: 360,
+                  minWidth: 300,
+                  builder: (_) =>
+                      CommentsPanel(services: s, controller: _comments),
+                ),
               SidePanelSpec(
                 id: ShellPanels.history,
                 title: l.panelHistory,
@@ -334,161 +341,81 @@ class _EditorScaffoldState extends State<EditorScaffold> {
                 id: ShellPanels.details,
                 title: l.cmdDetails,
                 icon: LucideIcons.info,
+                // Opened from File › Details, not a tab (Write 05 §10).
+                showAsTab: false,
                 builder: (_) => DriveDetailsPanel(services: s, item: _item),
               ),
               ...widget.panels,
             ];
-            return CallbackShortcuts(
-              bindings: {
-                if (full)
-                  const SingleActivator(LogicalKeyboardKey.escape): () =>
-                      v.setFullScreen(false),
-              },
-              child: ColoredBox(
-                color: theme.colorScheme.background,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    if (!full) _titleRow(context, item),
-                    if (!full && !compact)
-                      Focus(
-                        focusNode: _menubarFocus,
-                        child: Padding(
-                          padding: const EdgeInsets.only(left: 52),
-                          child: WonkyMenubar(
-                            controller: _menubar,
-                            menus: MenuResolver(
-                              s,
-                              custom: _customItems(),
-                            ).menubar(context, s.menuRoot(context)),
-                          ),
-                        ),
-                      ),
-                    if (!full && v.showToolbar && widget.toolbar != null)
-                      Focus(
-                        focusNode: _toolbarFocus,
-                        child: Container(
-                          margin: const EdgeInsets.fromLTRB(8, 2, 8, 4),
-                          decoration: BoxDecoration(
-                            color: theme.colorScheme.muted.withValues(
-                              alpha: 0.6,
-                            ),
-                            borderRadius: BorderRadius.circular(20),
-                          ),
-                          child: Row(
-                            children: [
-                              if (compact)
-                                WonkyDropdownMenu(
-                                  entries: () {
-                                    final r = MenuResolver(
-                                      s,
-                                      custom: _customItems(),
-                                    );
-                                    return [
-                                      for (final m in r.menubar(
-                                        context,
-                                        s.menuRoot(context),
-                                      ))
-                                        WonkyMenuSubmenu(
-                                          label: m.label,
-                                          children: m.entries(),
-                                        ),
-                                    ];
-                                  },
-                                  builder: (context, c) => ShadIconButton.ghost(
-                                    key: const ValueKey<String>('editor.menus'),
-                                    width: 30,
-                                    height: 30,
-                                    iconSize: 16,
-                                    semanticLabel: l.menus,
-                                    icon: const Icon(LucideIcons.menu),
-                                    onPressed: c.toggle,
-                                  ),
-                                ),
-                              Expanded(child: widget.toolbar!(context)),
-                              ShadTooltip(
-                                builder: (_) => Text(
-                                  compact ? l.showMenus : l.cmdCompactMode,
-                                ),
-                                child: ShadIconButton.ghost(
-                                  key: const ValueKey<String>(
-                                    'editor.toggleCompact',
-                                  ),
-                                  width: 30,
-                                  height: 30,
-                                  iconSize: 16,
-                                  semanticLabel: l.cmdCompactMode,
-                                  icon: Icon(
-                                    compact
-                                        ? LucideIcons.chevronDown
-                                        : LucideIcons.chevronUp,
-                                  ),
-                                  onPressed: () =>
-                                      _invoke('shell.view.toggleCompact'),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-                    Expanded(
-                      child: WonkySplitView(
-                        controller: s.panels,
-                        panels: [
-                          for (final p in panels)
-                            SidePanelSpec(
-                              id: p.id,
-                              title: p.title,
-                              icon: p.icon,
-                              minWidth: p.minWidth,
-                              defaultWidth: p.defaultWidth,
-                              maxWidth: p.maxWidth,
-                              headerActions: p.headerActions,
-                              builder: (c) => Focus(
-                                focusNode: _panelFocus,
-                                child: p.builder(c),
-                              ),
-                            ),
-                        ],
-                        child: Focus(
-                          focusNode: _docFocus,
-                          child: item == null || widget.controller == null
-                              ? LoadingShimmer.documentPage()
-                              : _trashedBanner(
-                                  context,
-                                  item,
-                                  widget.body(context, item),
-                                ),
-                        ),
+            return ColoredBox(
+              color: theme.colorScheme.background,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  _titleRow(context, item),
+                  Focus(
+                    focusNode: _menubarFocus,
+                    child: Padding(
+                      padding: const EdgeInsets.only(left: 52),
+                      child: WonkyMenubar(
+                        controller: _menubar,
+                        menus: MenuResolver(
+                          s,
+                          custom: _customItems(),
+                        ).menubar(context, s.menuRoot(context)),
                       ),
                     ),
-                    if (!full && v.showStatusBar)
-                      Focus(
-                        focusNode: _statusFocus,
-                        child: StatusBar(
-                          left: widget.statusLeft?.call(context) ?? const [],
-                          center: [
-                            if (widget.syncStatus ??
-                                    widget.controller?.syncStatus
-                                case final status?)
-                              ValueListenableBuilder<SyncStatus>(
-                                valueListenable: status,
-                                builder: (context, st, _) =>
-                                    SyncStatusIndicator(
-                                      status: st,
-                                      compact: true,
-                                      onRetry: widget.controller?.retrySync,
-                                    ),
-                              ),
-                          ],
-                          right: [
-                            ...?widget.statusRight?.call(context),
-                            ThemeToggleButton(services: s, size: 20),
-                          ],
+                  ),
+                  if (widget.toolbar != null)
+                    Focus(
+                      focusNode: _toolbarFocus,
+                      child: Container(
+                        margin: const EdgeInsets.fromLTRB(8, 6, 8, 8),
+                        decoration: BoxDecoration(
+                          color: theme.colorScheme.muted.withValues(alpha: 0.6),
+                          borderRadius: BorderRadius.circular(20),
                         ),
+                        child: widget.toolbar!(context),
                       ),
-                  ],
-                ),
+                    ),
+                  Expanded(
+                    child: WonkySplitView(
+                      controller: s.panels,
+                      panels: [
+                        for (final p in panels)
+                          SidePanelSpec(
+                            id: p.id,
+                            title: p.title,
+                            icon: p.icon,
+                            minWidth: p.minWidth,
+                            defaultWidth: p.defaultWidth,
+                            maxWidth: p.maxWidth,
+                            headerActions: p.headerActions,
+                            builder: (c) => Focus(
+                              focusNode: _panelFocus,
+                              child: p.builder(c),
+                            ),
+                          ),
+                      ],
+                      child: Focus(
+                        focusNode: _docFocus,
+                        child: item == null || widget.controller == null
+                            ? LoadingShimmer.documentPage()
+                            : _trashedBanner(
+                                context,
+                                item,
+                                widget.body(context, item),
+                              ),
+                      ),
+                    ),
+                  ),
+                  if (widget.showStatusBar &&
+                      (statusLeft.isNotEmpty || statusRight.isNotEmpty))
+                    Focus(
+                      focusNode: _statusFocus,
+                      child: StatusBar(left: statusLeft, right: statusRight),
+                    ),
+                ],
               ),
             );
           },

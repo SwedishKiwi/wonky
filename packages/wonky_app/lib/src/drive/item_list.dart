@@ -4,6 +4,7 @@ import 'package:shad/shad.dart';
 import 'package:wonky_client/wonky_client.dart';
 import 'package:wonky_ui/wonky_ui.dart';
 
+import '../branding/product_icon.dart';
 import '../core/offline_storage.dart';
 import '../data/models_ext.dart';
 import '../l10n/wonky_app_localizations.dart';
@@ -427,7 +428,7 @@ class _ItemShellState extends State<_ItemShell> {
         dragAnchorStrategy: pointerDragAnchorStrategy,
         feedback: _DragChip(
           label: data().uuids.length > 1 ? '${data().uuids.length}' : item.name,
-          icon: kindIcon(item.kind),
+          kind: item.kind,
         ),
         childWhenDragging: Opacity(opacity: 0.5, child: inner),
         child: inner,
@@ -438,10 +439,10 @@ class _ItemShellState extends State<_ItemShell> {
 }
 
 class _DragChip extends StatelessWidget {
-  const _DragChip({required this.label, required this.icon});
+  const _DragChip({required this.label, required this.kind});
 
   final String label;
-  final IconData icon;
+  final DriveItemKind kind;
 
   @override
   Widget build(BuildContext context) {
@@ -461,7 +462,7 @@ class _DragChip extends StatelessWidget {
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(icon, size: 14),
+            DriveKindIcon(kind, size: 16),
             const SizedBox(width: 6),
             Text(label, style: theme.textTheme.small),
           ],
@@ -543,11 +544,7 @@ class _ItemRow extends StatelessWidget {
                   flex: 6,
                   child: Row(
                     children: [
-                      Icon(
-                        kindIcon(item.kind),
-                        size: 18,
-                        color: kindColor(item.kind, c),
-                      ),
+                      DriveKindIcon(item.kind, size: 20),
                       const SizedBox(width: 10),
                       Flexible(
                         child: Text(
@@ -714,24 +711,14 @@ class _ItemCard extends StatelessWidget {
                       color: c.canvas,
                       borderRadius: BorderRadius.circular(6),
                     ),
-                    child: Center(
-                      child: Icon(
-                        kindIcon(item.kind),
-                        size: 40,
-                        color: kindColor(item.kind, c).withValues(alpha: 0.7),
-                      ),
-                    ),
+                    child: Center(child: DriveKindIcon(item.kind, size: 48)),
                   ),
                 ),
                 Padding(
                   padding: const EdgeInsets.fromLTRB(10, 0, 4, 8),
                   child: Row(
                     children: [
-                      Icon(
-                        kindIcon(item.kind),
-                        size: 16,
-                        color: kindColor(item.kind, c),
-                      ),
+                      DriveKindIcon(item.kind, size: 18),
                       const SizedBox(width: 6),
                       Expanded(
                         child: Text(

@@ -10,6 +10,7 @@ import '../auth/auth_controller.dart';
 import '../bootstrap/app_urls.dart';
 import '../bootstrap/cross_app.dart';
 import '../comments/comments_controller.dart';
+import '../comments/comments_host.dart';
 import '../comments/comments_undo.dart';
 import '../versions/versions_undo.dart';
 import '../commands/command_dispatcher.dart';
@@ -19,7 +20,6 @@ import '../config/wonky_app_config.dart';
 import '../core/connectivity_service.dart';
 import '../core/local_store.dart';
 import '../core/preferences_controller.dart';
-import '../core/shell_view_state.dart';
 import '../core/stream_supervisor.dart';
 import '../core/toasts.dart';
 import '../data/collab_repositories.dart';
@@ -105,7 +105,6 @@ class ShellServices implements ActiveDocumentHost {
       device: deviceStore,
       users: repositories.users,
     );
-    viewState = ShellViewState(prefs);
     supervisor = StreamSupervisor(connectivity);
     crossApp = CrossAppNavigator(urls);
     toasts = Toasts(() => navigatorContext);
@@ -135,7 +134,6 @@ class ShellServices implements ActiveDocumentHost {
   late final KeymapService keymap;
   late final UndoService undo;
   late final PreferencesController prefs;
-  late final ShellViewState viewState;
   late final StreamSupervisor supervisor;
   late final CrossAppNavigator crossApp;
   late final Toasts toasts;
@@ -230,6 +228,10 @@ class ShellServices implements ActiveDocumentHost {
 
   /// Comments of the open file (set by the editor scaffold).
   final ValueNotifier<CommentsController?> comments = ValueNotifier(null);
+
+  /// Where the open file's comments are shown when not in the comments side
+  /// panel (set by the app's editor screen, e.g. Write's margin).
+  CommentsHost? commentsHost;
 
   /// Open MCP-describable dialogs, innermost last (`ui.get_dialog`).
   final List<McpDescribableDialog> openDialogs = [];

@@ -4,6 +4,7 @@ import 'package:flutter/widgets.dart';
 import 'package:shad/shad.dart';
 import 'package:wonky_client/wonky_client.dart';
 
+import '../../branding/product_icon.dart';
 import '../../drive/drive_format.dart';
 import '../../l10n/wonky_app_localizations.dart';
 import '../../shell/shell_services.dart';
@@ -91,7 +92,6 @@ class _QuickSwitcherState extends State<_QuickSwitcher> {
   @override
   Widget build(BuildContext context) {
     final l = WonkyAppLocalizations.of(context);
-    final colors = ShadTheme.of(context).colorScheme;
     return PaletteList(
       keyPrefix: 'quickSwitcher',
       placeholder: l.quickSwitcherPlaceholder,
@@ -116,8 +116,7 @@ class _QuickSwitcherState extends State<_QuickSwitcher> {
               id: i.uuid.uuid,
               title: i.name,
               subtitle: '${describeKind(l, i.kind)} · ${i.owner.displayName}',
-              icon: kindIcon(i.kind),
-              iconColor: kindColor(i.kind, colors),
+              leading: DriveKindIcon(i.kind, size: 18),
               section: q.trim().isEmpty
                   ? l.quickSwitcherRecent
                   : l.quickSwitcherResults,

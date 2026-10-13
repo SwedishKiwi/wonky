@@ -6,6 +6,7 @@ import 'package:wonky_server/src/platform/ai/ai_config.dart';
 import 'package:wonky_server/src/platform/ai/ai_usage_service.dart';
 import 'package:wonky_server/src/platform/ai/anthropic/fake_anthropic_client.dart';
 import 'package:wonky_server/src/platform/ai/assistant_service.dart';
+import 'package:wonky_server/src/platform/cluster/cluster.dart';
 import 'package:wonky_server/src/platform/common/models.dart';
 import 'package:wonky_write_core/wonky_write_core.dart';
 
@@ -490,6 +491,119 @@ void main() {
       expect(events.last.type, AssistantEventType.done);
       expect(events.last.errorCode, 'stopped');
       expect(AiUsageService.running(anna.id), 0);
+    });
+
+    group('on several instances (specs/13 §4)', () {
+      setUp(() => Cluster.debugDistributed = true);
+      tearDown(() => Cluster.debugDistributed = null);
+
+      ClusterSignal fromElsewhere(ClusterSignal s) =>
+          s.copyWith(originInstance: 'another-instance');
+
+      test(
+        'when a stop is relayed from another instance then the run ends '
+        'with done(stopped)',
+        () async {
+          fake.beforeResponse = (_) async {
+            final run = AssistantService.runsOf(anna.id).single;
+            await anna.session.messages.postMessage(
+              Cluster.signalChannel,
+              fromElsewhere(
+                Cluster.build(
+                  'assistant.stop',
+                  userId: anna.id,
+                  runId: run.runId,
+                ),
+              ),
+            );
+          };
+          fake.enqueue((SseScript()..text('Long answer')).response);
+
+          final events = await chat('Write a lot').toList();
+
+          expect(events.last.type, AssistantEventType.done);
+          expect(events.last.errorCode, 'stopped');
+        },
+      );
+
+      test(
+        'when a confirmation is relayed from another instance then the run '
+        'continues with it',
+        () async {
+          doc = await TestDrive.document(
+            endpoints,
+            anna,
+            markdown: '# Plan\n\n${'More words. ' * 60}\n',
+          );
+          fake
+            ..enqueue(
+              (SseScript()
+                    ..toolUse('d', 'write_delete_range', {
+                      'range': {'type': 'all'},
+                    })
+                    ..stop('tool_use'))
+                  .response,
+            )
+            ..enqueue((SseScript()..text('Deleted.')).response);
+          final done = Completer<void>();
+          chat('Delete everything').listen((e) {
+            if (e.type == AssistantEventType.confirmationRequired) {
+              unawaited(
+                anna.session.messages.postMessage(
+                  Cluster.signalChannel,
+                  fromElsewhere(
+                    Cluster.build(
+                      'assistant.confirm',
+                      userId: anna.id,
+                      runId: e.runId,
+                      confirmationId: e.confirmationId,
+                      allow: true,
+                    ),
+                  ),
+                ),
+              );
+            }
+          }, onDone: done.complete);
+          await done.future;
+
+          expect(
+            await _markdown(endpoints, anna, doc),
+            isNot(contains('More words')),
+          );
+        },
+      );
+
+      test(
+        'when a run is not on this instance then stop and confirm are '
+        'relayed',
+        () async {
+          final relayed = <ClusterSignal>[];
+          final listener = anna.session;
+          listener.messages.addListener(Cluster.signalChannel, (m) {
+            if (m is ClusterSignal) relayed.add(m);
+          });
+
+          final stopped = await endpoints.assistant.stop(
+            anna.endpointSession,
+            null,
+            'elsewhere',
+          );
+          final confirmed = await endpoints.assistant.confirm(
+            anna.endpointSession,
+            'elsewhere',
+            'c1',
+            true,
+          );
+
+          expect(stopped, isTrue);
+          expect(confirmed, isTrue);
+          expect(relayed.map((s) => (s.kind, s.runId, s.userId)), [
+            ('assistant.stop', 'elsewhere', anna.id),
+            ('assistant.confirm', 'elsewhere', anna.id),
+          ]);
+          await listener.close();
+        },
+      );
     });
 
     test(

@@ -113,6 +113,26 @@ void main() {
       expect(doc.pageSetup.layout.name, target);
     });
 
+    test('when setting a full page setup then it is accepted and undoable '
+        '(the args schema allows every PageSetup key)', () async {
+      final before = doc.pageSetup.paper;
+      final setup = PageSetup(
+        paper: before == PaperSize.a4 ? PaperSize.letter : PaperSize.a4,
+        margins: const PageMargins.all(54),
+      );
+
+      final result = await run('write.doc.setPageSetup', {
+        'pageSetup': setup.toJson(),
+      });
+      await pumpEventQueue();
+      expect(result.isOk, isTrue, reason: '$result');
+      expect(doc.pageSetup.paper, setup.paper);
+
+      await h.undo.undo();
+      await pumpEventQueue();
+      expect(doc.pageSetup.paper, before);
+    });
+
     test(
       'when applying a theme then the editor uses it and undo reverts',
       () async {

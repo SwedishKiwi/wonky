@@ -1,0 +1,179 @@
+{
+  "name": "TypeScript",
+  "version": "1.0.0",
+  "fileTypes": [
+    "ts",
+    "tsx",
+    "mts",
+    "cts"
+  ],
+  "scopeName": "source.ts",
+  "patterns": [
+    {
+      "include": "#main"
+    }
+  ],
+  "repository": {
+    "main": {
+      "patterns": [
+        {
+          "name": "meta.preprocessor.script.ts",
+          "match": "^(#!.*)$"
+        },
+        {
+          "include": "#comments"
+        },
+        {
+          "include": "#strings"
+        },
+        {
+          "name": "string.regexp.ts",
+          "match": "(?<=(?:^|[=(,:;!&|?{}\\[]|return|typeof)\\s*)/(?![/*])(?:\\\\.|\\[(?:\\\\.|[^\\]\\\\\\n])*\\]|[^/\\\\\\n\\[])+/[dgimsuyv]*"
+        },
+        {
+          "name": "keyword.control.ts",
+          "match": "\\b(?:if|else|for|of|in|while|do|switch|case|default|break|continue|return|throw|try|catch|finally|yield|await)\\b"
+        },
+        {
+          "name": "keyword.operator.expression.ts",
+          "match": "\\b(?:instanceof|typeof|delete|void)\\b"
+        },
+        {
+          "match": "\\b(class|interface|enum|type|namespace)\\s+([A-Za-z_$][A-Za-z0-9_$]*)",
+          "captures": {
+            "1": {
+              "name": "storage.type.ts"
+            },
+            "2": {
+              "name": "entity.name.type.ts"
+            }
+          }
+        },
+        {
+          "match": "\\b(function)(\\s*\\*?\\s*)([A-Za-z_$][A-Za-z0-9_$]*)",
+          "captures": {
+            "1": {
+              "name": "storage.type.ts"
+            },
+            "3": {
+              "name": "entity.name.function.ts"
+            }
+          }
+        },
+        {
+          "name": "storage.type.ts",
+          "match": "\\b(?:var|let|const|function|class|extends|implements|new|import|export|from|as|default|get|set|static|async|interface|type|enum|namespace|module|declare|abstract|readonly|public|private|protected|keyof|infer|is|satisfies)\\b"
+        },
+        {
+          "name": "constant.language.ts",
+          "match": "\\b(?:true|false|null|undefined|NaN|Infinity)\\b"
+        },
+        {
+          "name": "variable.language.ts",
+          "match": "\\b(?:this|super|arguments)\\b"
+        },
+        {
+          "name": "support.type.primitive.ts",
+          "match": "\\b(?:string|number|boolean|bigint|symbol|object|unknown|never|any)\\b"
+        },
+        {
+          "name": "storage.type.annotation.ts",
+          "match": "@[A-Za-z_$][A-Za-z0-9_$]*"
+        },
+        {
+          "name": "constant.numeric.ts",
+          "match": "\\b(?:0[xX][0-9A-Fa-f_]+|0[bB][01_]+|0[oO][0-7_]+|\\d[\\d_]*(?:\\.\\d[\\d_]*)?(?:[eE][+-]?\\d+)?)[a-zA-Z0-9_]*\\b"
+        },
+        {
+          "name": "support.class.ts",
+          "match": "\\b[A-Z][A-Za-z0-9_]*\\b"
+        },
+        {
+          "name": "entity.name.function.ts",
+          "match": "\\b[a-z_][A-Za-z0-9_]*(?=\\s*\\()"
+        },
+        {
+          "name": "keyword.operator.ts",
+          "match": "[-+*/%=!<>&|^~?:]+"
+        }
+      ]
+    },
+    "comments": {
+      "patterns": [
+        {
+          "name": "comment.block.ts",
+          "begin": "/\\*",
+          "end": "\\*/"
+        },
+        {
+          "name": "comment.line.double-slash.ts",
+          "match": "//.*$"
+        }
+      ]
+    },
+    "strings": {
+      "patterns": [
+        {
+          "name": "string.quoted.double.ts",
+          "begin": "\"",
+          "end": "\"|$",
+          "patterns": [
+            {
+              "name": "constant.character.escape.ts",
+              "match": "\\\\(?:u\\{[0-9A-Fa-f]+\\}|u[0-9A-Fa-f]{4}|x[0-9A-Fa-f]{2}|.)"
+            }
+          ]
+        },
+        {
+          "name": "string.quoted.single.ts",
+          "begin": "'",
+          "end": "'|$",
+          "patterns": [
+            {
+              "name": "constant.character.escape.ts",
+              "match": "\\\\(?:u\\{[0-9A-Fa-f]+\\}|u[0-9A-Fa-f]{4}|x[0-9A-Fa-f]{2}|.)"
+            }
+          ]
+        },
+        {
+          "name": "string.template.ts",
+          "begin": "`",
+          "end": "`",
+          "patterns": [
+            {
+              "name": "constant.character.escape.ts",
+              "match": "\\\\(?:u\\{[0-9A-Fa-f]+\\}|u[0-9A-Fa-f]{4}|x[0-9A-Fa-f]{2}|.)"
+            },
+            {
+              "include": "#template-substitution"
+            }
+          ]
+        }
+      ]
+    },
+    "template-substitution": {
+      "patterns": [
+        {
+          "name": "meta.template.expression.ts",
+          "begin": "\\$\\{",
+          "end": "\\}",
+          "beginCaptures": {
+            "0": {
+              "name": "punctuation.definition.template-expression.begin.ts"
+            }
+          },
+          "endCaptures": {
+            "0": {
+              "name": "punctuation.definition.template-expression.end.ts"
+            }
+          },
+          "patterns": [
+            {
+              "include": "#main"
+            }
+          ]
+        }
+      ]
+    }
+  }
+}

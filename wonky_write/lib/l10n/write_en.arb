@@ -177,7 +177,6 @@
   "cmdViewZoomOut": "Zoom out",
   "cmdViewZoomReset": "Zoom to 100 %",
   "cmdViewZoomSet": "Zoom",
-  "cmdViewToggleRemoteCursors": "Collaborator cursors",
   "cmdViewSuggestionPreview": "Preview suggestions",
   "cmdModeSet": "Editing mode",
   "cmdNavDocumentStart": "Go to document start",
@@ -195,8 +194,6 @@
   "cmdNavGoToHeading": "Go to heading…",
   "cmdViewToggleOutline": "Outline",
   "cmdViewToggleWordCount": "Word count",
-  "cmdViewToggleCommentMargin": "Comments in margin",
-  "cmdViewToggleSelectionToolbar": "Toolbar on selection",
   "cmdViewFocusToolbar": "Focus the toolbar",
   "cmdViewZoomFit": "Fit",
   "cmdOutlineSetMaxLevel": "Outline levels",
@@ -220,19 +217,15 @@
   "cmdDocSetLanguage": "Change language",
   "cmdDocSetFrontMatter": "Change front matter",
   "cmdDocProperties": "Details",
-  "cmdDocSettings": "Settings…",
   "cmdThemeOpenPicker": "Choose theme…",
   "cmdThemeApply": "Apply theme",
   "cmdThemeSetUserDefault": "Save as my default theme",
   "cmdToolsWordCount": "Word count",
-  "cmdToolsViewMarkdown": "View Markdown source",
   "cmdHelpMarkdownGuide": "Markdown & formatting guide",
   "cmdPrefsSetDefaultMode": "Default mode",
   "cmdInsertEmoji": "Emoji…",
   "cmdImagePreview": "View full size",
   "cmdTableEditCell": "Edit table cell",
-  "cmdViewToggleFocusMode": "Focus mode",
-  "cmdViewToggleTypewriter": "Typewriter scrolling",
   "cmdSpellToggle": "Underline spelling errors",
   "cmdSpellToggleIgnoreUppercase": "Ignore words in UPPERCASE",
   "cmdSpellReplace": "Correct spelling",
@@ -244,7 +237,6 @@
   "cmdThemeOpenEditor": "Customize theme…",
   "cmdThemeOpenManager": "Manage themes…",
   "cmdThemeUseDefault": "Use my default theme",
-  "cmdThemePreviewLocal": "Preview theme",
   "cmdThemeCreate": "New theme",
   "cmdThemeDuplicate": "Duplicate theme",
   "cmdThemeRename": "Rename theme…",
@@ -282,7 +274,6 @@
   "cmdCommentsDeleteThread": "Delete comment thread",
   "cmdSuggestionsAccept": "Accept suggestion",
   "cmdSuggestionsReject": "Reject suggestion",
-  "cmdSuggestionsTogglePanel": "Suggestions",
   "cmdModeSuggest": "Suggesting",
   "cmdPresenceJumpTo": "Go to collaborator",
   "cmdPresenceFollow": "Follow collaborator",
@@ -295,12 +286,9 @@
   "cmdInsertEmojiDescription": "Pick an emoji to insert at the cursor",
   "cmdImagePreviewDescription": "Show the image in a full-screen viewer",
   "cmdTableEditCellDescription": "Edit a table cell in place",
-  "cmdViewToggleFocusModeDescription": "Dim everything but the paragraph you are writing",
-  "cmdViewToggleTypewriterDescription": "Keep the line you are typing in the middle of the screen",
   "cmdInsertFromFileDescription": "Insert a Markdown, text, HTML, Word, OpenDocument or RTF file at the cursor",
   "cmdInsertImageDescription": "Upload images from your computer",
   "cmdInsertTableDialogDescription": "Insert a table of a custom size",
-  "cmdDocSettingsDescription": "Document language, layout, theme and page setup",
   "cmdThemeOpenEditorDescription": "Open the theme editor for the document theme",
   "cmdThemeDuplicateDescription": "Copy a theme into my themes",
   "cmdAiInlineDescription": "Opens the inline AI prompt at the caret (empty paragraph) or for the selection.",
@@ -550,6 +538,10 @@
     "description": "View submenu for how suggested edits are shown."
   },
   "menuShowSuggestions": "Show suggestions",
+  "menuShowComments": "Comments and suggestions",
+  "@menuShowComments": {
+    "description": "View menu toggle that shows or hides the comment and suggestion cards next to the page."
+  },
   "menuPreviewAccepted": "Preview accepted",
   "@menuPreviewAccepted": {
     "description": "Preview the document as if all suggestions were accepted."
@@ -557,11 +549,6 @@
   "menuPreviewOriginal": "Preview original",
   "@menuPreviewOriginal": {
     "description": "Preview the document without any suggestions."
-  },
-  "menuPreviewTheme": "Preview theme",
-  "menuDocumentTheme": "Document theme",
-  "@menuDocumentTheme": {
-    "description": "Preview theme option: the theme the document actually uses."
   },
   "menuZoom": "Zoom",
   "menuFitWidth": "Fit width",
@@ -641,7 +628,6 @@
     "description": "Document theme submenu / toolbar button."
   },
   "menuMoreThemes": "More themes…",
-  "menuFormattingSupported": "What formatting is supported?",
   "screenZoomPercent": "{percent}%",
   "@screenZoomPercent": {
     "description": "Zoom level, e.g. 100%.",
@@ -690,10 +676,6 @@
   "toolbarStyles": "Styles",
   "@toolbarStyles": {
     "description": "Paragraph style dropdown tooltip."
-  },
-  "toolbarSuggestions": "Suggestions",
-  "@toolbarSuggestions": {
-    "description": "Toggles the suggestions panel."
   },
   "toolbarInsertImage": "Insert image",
   "toolbarImageUpload": "Upload from computer",
@@ -804,32 +786,6 @@
   "screenWordCountHint": "Open word count",
   "@screenWordCountHint": {
     "description": "Accessibility hint of the status bar word count."
-  },
-  "screenUploadingImages": "{count, plural, =1{Uploading 1 image…} other{Uploading {count} images…}}",
-  "@screenUploadingImages": {
-    "placeholders": {
-      "count": {
-        "type": "int"
-      }
-    }
-  },
-  "screenPageLayout": "Page layout: {layout}",
-  "@screenPageLayout": {
-    "description": "Accessible name of the status bar layout button.",
-    "placeholders": {
-      "layout": {
-        "type": "String"
-      }
-    }
-  },
-  "screenZoomLevel": "Zoom: {percent}%",
-  "@screenZoomLevel": {
-    "description": "Accessible name of the status bar zoom button.",
-    "placeholders": {
-      "percent": {
-        "type": "int"
-      }
-    }
   },
   "screenUnknownFormat": "Unknown format “{format}”",
   "@screenUnknownFormat": {
@@ -947,10 +903,6 @@
   "@docDialogFrontMatterPlaceholder": {
     "description": "Example YAML front matter; keep the keys \"title\" and \"tags\"."
   },
-  "docDialogMarkdownSourceTitle": "Markdown source",
-  "docDialogWrapLines": "Wrap lines",
-  "docDialogDownloadMarkdown": "Download .md",
-  "docDialogCopied": "Copied",
   "docDialogGoToHeadingTitle": "Go to heading",
   "docDialogSearchHeadings": "Search headings",
   "docDialogNoHeadings": "No headings",
@@ -1123,62 +1075,6 @@
   "@pageSetupFieldRight": {
     "description": "Placeholder: right-aligned header/footer text."
   },
-  "docSettingsTitle": "Document settings",
-  "docSettingsReadOnly": "Only editors can change document settings.",
-  "docSettingsTabGeneral": "General",
-  "docSettingsTabTheme": "Theme",
-  "docSettingsTabPageSetup": "Page setup",
-  "docSettingsTabMarkdown": "Markdown",
-  "docSettingsCurrentTheme": "Current theme: {name}",
-  "@docSettingsCurrentTheme": {
-    "placeholders": {
-      "name": {
-        "type": "String"
-      }
-    }
-  },
-  "docSettingsSaveDefaultTheme": "Save as my default theme",
-  "docSettingsCustomizeTheme": "Customize…",
-  "docSettingsNone": "None",
-  "@docSettingsNone": {
-    "description": "No header or footer."
-  },
-  "docSettingsLayout": "Layout",
-  "docSettingsPaper": "Paper",
-  "docSettingsPaperValue": "{paper} · {orientation}",
-  "@docSettingsPaperValue": {
-    "placeholders": {
-      "paper": {
-        "type": "String"
-      },
-      "orientation": {
-        "type": "String"
-      }
-    }
-  },
-  "docSettingsMargins": "Margins",
-  "docSettingsMarginsFromTheme": "From the theme ({margins})",
-  "@docSettingsMarginsFromTheme": {
-    "placeholders": {
-      "margins": {
-        "type": "String"
-      }
-    }
-  },
-  "docSettingsEditPageSetup": "Edit page setup…",
-  "docSettingsFrontMatterInfo": "Front matter is YAML metadata at the top of the Markdown file (title, tags, author…). It is kept on import and export.",
-  "docSettingsNoFrontMatter": "No front matter",
-  "docSettingsViewDetails": "View details…",
-  "docSettingsEditFrontMatter": "Edit front matter…",
-  "docSettingsViewMarkdownSource": "View Markdown source",
-  "docSettingsLanguage": "Language",
-  "docSettingsChangeLanguage": "Change…",
-  "docSettingsPagelessHint": "Pageless shows one continuous column, like a web page.",
-  "docSettingsDefaultMode": "Default mode for me",
-  "docSettingsModeEditing": "Editing",
-  "docSettingsModeSuggesting": "Suggesting",
-  "docSettingsModeViewing": "Viewing",
-  "docSettingsDefaultModeHint": "Used when you open documents you can edit.",
   "wordCountReadingTimeUnderOne": "< 1 min",
   "wordCountReadingTimeMinutes": "{minutes} min",
   "@wordCountReadingTimeMinutes": {
@@ -2742,7 +2638,6 @@
       }
     }
   },
-  "suggestionPanelTitle": "Suggestions",
   "suggestionActionFailed": "Could not complete the action",
   "suggestionYou": "You",
   "suggestionSomeone": "Someone",
@@ -2790,37 +2685,6 @@
       }
     }
   },
-  "suggestionAcceptAllTitle": "Accept all suggestions?",
-  "suggestionRejectAllTitle": "Reject all suggestions?",
-  "suggestionAcceptAllBody": "All {count} suggestions will be applied to the document.",
-  "@suggestionAcceptAllBody": {
-    "placeholders": {
-      "count": {
-        "type": "int"
-      }
-    }
-  },
-  "suggestionRejectAllBody": "All {count} suggestions will be discarded.",
-  "@suggestionRejectAllBody": {
-    "placeholders": {
-      "count": {
-        "type": "int"
-      }
-    }
-  },
-  "suggestionAcceptAll": "Accept all",
-  "suggestionRejectAll": "Reject all",
-  "suggestionNone": "No suggestions",
-  "suggestionCount": "{count, plural, =1{1 suggestion} other{{count} suggestions}}",
-  "@suggestionCount": {
-    "placeholders": {
-      "count": {
-        "type": "int"
-      }
-    }
-  },
-  "suggestionEmptyHint": "Switch to Suggesting mode to propose changes.",
-  "suggestionSwitchToSuggesting": "Switch to Suggesting",
   "commentWholeDocument": "Whole document",
   "@commentWholeDocument": {
     "description": "Anchor label of a comment on the whole document."

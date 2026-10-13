@@ -57,6 +57,8 @@ class TemplateCard extends StatelessWidget {
     final l = WonkyAppLocalizations.of(context);
     final theme = ShadTheme.of(context);
     final t = template;
+    final style = t?.previewStyle;
+    final dark = theme.brightness == Brightness.dark;
     return SizedBox(
       width: width,
       child: Semantics(
@@ -75,9 +77,11 @@ class TemplateCard extends StatelessWidget {
                 Container(
                   height: width * 1.25,
                   width: width,
-                  padding: const EdgeInsets.all(10),
+                  clipBehavior: Clip.antiAlias,
                   decoration: BoxDecoration(
-                    color: theme.colorScheme.page,
+                    color: style == null
+                        ? theme.colorScheme.page
+                        : _hex(dark ? style.darkPaper : style.paper),
                     border: Border.all(color: theme.colorScheme.border),
                     borderRadius: BorderRadius.circular(6),
                   ),
@@ -89,10 +93,8 @@ class TemplateCard extends StatelessWidget {
                             color: services.config.brandColor,
                           ),
                         )
-                      : SingleChildScrollView(
-                          physics: const NeverScrollableScrollPhysics(),
-                          child: _TemplateThumbnail(text: t.previewText),
-                        ),
+                      // Clipped, not scrolled: a miniature never scrolls.
+                      : _TemplateThumbnail(text: t.previewText, style: style),
                 ),
                 const SizedBox(height: 6),
                 Text(
@@ -114,47 +116,114 @@ class TemplateCard extends StatelessWidget {
   }
 }
 
-/// A miniature of a template's first lines: headings bold, the rest small
-/// (the server sends one line per block, headings prefixed with "#").
+Color _hex(String hex) =>
+    Color(int.parse(hex.replaceFirst('#', ''), radix: 16) | 0xFF000000);
+
+/// A miniature page of a template's first lines (the server sends one line
+/// per block, headings prefixed with "#"), drawn in the colors and with the
+/// traits of the template's theme ([TemplatePreviewStyle]).
 class _TemplateThumbnail extends StatelessWidget {
-  const _TemplateThumbnail({required this.text});
+  const _TemplateThumbnail({required this.text, this.style});
 
   final String text;
+  final TemplatePreviewStyle? style;
 
   @override
   Widget build(BuildContext context) {
     final theme = ShadTheme.of(context);
-    final fg = theme.colorScheme.foreground;
+    final dark = theme.brightness == Brightness.dark;
+    final st = style;
+    final fg = st == null
+        ? theme.colorScheme.mutedForeground
+        : _hex(dark ? st.darkText : st.text);
+    final headingColor = st == null
+        ? theme.colorScheme.foreground
+        : _hex(dark ? st.darkHeading : st.heading);
+    final accent = st == null ? null : _hex(dark ? st.darkAccent : st.accent);
+    final family = switch (st?.fontCategory) {
+      'serif' => const ['EB Garamond', 'Georgia', 'serif'],
+      'mono' => const ['JetBrains Mono', 'Menlo', 'monospace'],
+      _ => null,
+    };
+    final centered = st?.centeredHeadings ?? false;
     final lines = text.split('\n');
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        for (var i = 0; i < lines.length; i++)
-          if (lines[i].startsWith('# '))
-            Padding(
-              padding: EdgeInsets.only(top: i == 0 ? 0 : 4, bottom: 2),
+    var first = true;
+    final children = <Widget>[];
+    for (final line in lines) {
+      if (line.startsWith('# ')) {
+        final label = line.substring(2);
+        children.add(
+          Padding(
+            padding: EdgeInsets.only(top: first ? 0 : 4, bottom: 2),
+            child: SizedBox(
+              width: double.infinity,
               child: Text(
-                lines[i].substring(2),
+                st?.uppercaseHeadings ?? false ? label.toUpperCase() : label,
                 maxLines: 2,
                 overflow: TextOverflow.clip,
+                textAlign: centered ? TextAlign.center : TextAlign.start,
                 style: TextStyle(
-                  fontSize: i == 0 ? 9 : 7.5,
+                  fontSize: first ? 10 : 7.5,
                   height: 1.2,
-                  fontWeight: FontWeight.w600,
-                  color: fg,
+                  fontWeight: FontWeight.w700,
+                  color: headingColor,
+                  fontFamilyFallback: family,
                 ),
               ),
-            )
-          else
-            Text(
-              lines[i],
-              maxLines: 2,
-              overflow: TextOverflow.clip,
-              style: theme.textTheme.muted.copyWith(
-                fontSize: 6.5,
-                height: 1.45,
+            ),
+          ),
+        );
+        if (first && accent != null && !(st?.banner ?? false)) {
+          // A short rule under the title in the accent color.
+          children.add(
+            Align(
+              alignment: centered ? Alignment.center : Alignment.centerLeft,
+              child: Container(
+                width: 18,
+                height: 1.5,
+                margin: const EdgeInsets.only(bottom: 3),
+                color: accent,
               ),
             ),
+          );
+        }
+      } else {
+        children.add(
+          Text(
+            line,
+            maxLines: 2,
+            overflow: TextOverflow.clip,
+            style: TextStyle(
+              fontSize: 6.5,
+              height: 1.45,
+              color: fg.withValues(alpha: st == null ? 1 : 0.85),
+              fontFamilyFallback: family,
+            ),
+          ),
+        );
+      }
+      first = false;
+    }
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        if (st?.banner ?? false) Container(height: 10, color: accent),
+        Expanded(
+          child: ClipRect(
+            child: OverflowBox(
+              alignment: Alignment.topLeft,
+              maxHeight: double.infinity,
+              child: Padding(
+                padding: const EdgeInsets.all(10),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: children,
+                ),
+              ),
+            ),
+          ),
+        ),
       ],
     );
   }

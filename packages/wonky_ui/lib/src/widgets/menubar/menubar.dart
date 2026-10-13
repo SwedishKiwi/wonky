@@ -3,6 +3,7 @@ import 'package:shad/shad.dart';
 
 import '../menu/menu_entry.dart';
 import '../menu/menu_items.dart';
+import '../menu/open_menu.dart';
 
 /// One top-level menu of a [WonkyMenubar].
 class WonkyMenubarMenu {
@@ -82,12 +83,16 @@ class WonkyMenubarController extends ChangeNotifier {
     final c = ShadPopoverController();
     c.addListener(() {
       if (c.isOpen) {
+        OpenMenu.claim(this, close);
         final f = FocusManager.instance.primaryFocus;
         if (_returnFocus == null && f != null && !_isOwn(f)) _returnFocus = f;
         return;
       }
       if (_shad.selectedIndex == i) close();
-      if (_shad.selectedIndex == null) _restoreFocus();
+      if (_shad.selectedIndex == null) {
+        OpenMenu.release(this);
+        _restoreFocus();
+      }
     });
     return c;
   });
@@ -110,6 +115,7 @@ class WonkyMenubarController extends ChangeNotifier {
 
   @override
   void dispose() {
+    OpenMenu.release(this);
     _shad.dispose();
     for (final f in _focus.values) {
       f.dispose();

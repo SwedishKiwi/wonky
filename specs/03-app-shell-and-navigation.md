@@ -3,7 +3,8 @@
 The **app shell** (`packages/wonky_app`) is the shared frame both Flutter apps run inside:
 bootstrapping, auth gate, routing, top-level layout, overlays (dialogs, toasts, command palette),
 connectivity, presence plumbing, MCP UI bridge and settings. Each app provides a `WonkyAppConfig`
-(name, logo, primary file kind, routes, commands, menus, editor screen builder).
+(name, logo — the product icon, [02 §5](02-design-system.md) — primary file kind, routes,
+commands, menus, editor screen builder).
 
 ## 1. Single-window rule
 
@@ -65,7 +66,7 @@ links use the app base URLs from `config.json`; the sign-in session is shared by
 │                 Main content (route)                │  Side panel host    │
 │                                                     │  (WonkySplitView)   │
 ├───────────────────────────────────────────────────────────────────────────┤
-│ StatusBar (editor screens only)                                           │
+│ StatusBar (editor screens only, optional — only the app's items)          │
 └───────────────────────────────────────────────────────────────────────────┘
  Overlays: dialogs · command palette · toasts (bottom-right) · offline banner (top) ·
            MCP control indicator (bottom-left pill when an agent is driving the UI)
@@ -74,41 +75,51 @@ links use the app base URLs from `config.json`; the sign-in session is shared by
 ### 3.1 Editor header (shared structure, app-specific content)
 
 Row 1 (title row, 48 px):
-- App icon (click → Home; with unsaved-offline badge if relevant).
+- App icon (the product icon, click → Home; with unsaved-offline badge if relevant).
 - `DocumentTitleField`.
 - Star toggle, *Move* (folder icon → Move dialog), `SyncStatusIndicator`.
 - Spacer.
 - `PresenceAvatarStack`.
-- Comments button (opens comments panel; badge with open count).
+- Comments button (shows/hides the comments, `shell.comments.togglePanel`; badge with open
+  count). Comments show through the app's `CommentsHost` when it sets one
+  (`ShellServices.commentsHost`; Write: the margin next to the page), otherwise in the comments
+  side panel.
 - Version history button (clock icon).
 - Assistant button (✨).
 - **Share** button (primary; lock/globe icon by link state).
 - Account avatar menu.
 
 Row 2: `WonkyMenubar` (File, Edit, View, Insert, Format, …app menus…, Tools, Extensions (Sheets:
-Scripts), Help). Row 3: `WonkyToolbar`. View › *Compact mode* hides row 2 (menus accessible via
-a ☰ button), View › *Full screen* hides rows 1–3 (Esc to exit).
+Scripts), Help). Row 3: `WonkyToolbar` in a rounded container (margin 8 px left/right, 6 px above,
+8 px below). Everything is always shown: there is no compact mode, full screen or View › Show
+submenu. The status bar below the content is optional (`EditorScaffold.showStatusBar`) and
+contains only what the app passes; the sync status is in the title row and the app theme in
+View › App theme.
 
 ### 3.2 Shared menus (each app extends)
 
 **File** (shared core): New ▸ (Document, Spreadsheet, From template…), Open… (`Mod+O`), Import…,
 Make a copy…, Share ▸ (Share with others, Copy link, Publish settings), Download ▸ (formats),
 Rename, Move…, Add shortcut to Drive, Move to trash, Version history ▸ (Name current version,
-See version history `Mod+Alt+Shift+H`), Make available offline (toggle), Details, Settings
-(document settings: language, Write: theme & page setup / Sheets: locale, time zone, calculation),
-Print (`Mod+P`).
+See version history `Mod+Alt+Shift+H`), Make available offline (toggle), Details, app items
+(Write: Language, Page setup / Sheets: Settings — locale, time zone, calculation), Print (`Mod+P`).
 
 **Edit**: see [08-commands-and-undo.md](08-commands-and-undo.md) §3.5, plus app items.
 
-**View** (shared core): Mode ▸ (Editing / Suggesting (Write) / Viewing), Show ▸ (toolbar, menu
-bar, status bar), Compact mode, Full screen, Zoom ▸, Panels ▸ (Outline, Comments, History,
-Assistant), App theme ▸ (System / Light / Dark).
+**View** (shared core): Mode ▸ (Editing / Suggesting (Write) / Viewing), Zoom ▸, Panels ▸
+(Outline, Comments, History, Assistant — Write replaces Comments with a top-level *Comments and
+suggestions* toggle for its margin), App theme ▸ (System / Light / Dark).
 
 **Tools**: Assistant, Explore (search drive), Preferences…, Keyboard shortcuts (`Mod+/`),
-Activity dashboard, Accessibility settings.
+Accessibility settings.
 
-**Help**: Search the menus (`Alt+/`), Help center (in-app docs route), Keyboard shortcuts,
-Report a problem (in-app dialog → server `feedback` endpoint), What's new, About.
+**Help**: Keyboard shortcuts, app items (Write: Markdown guide; Sheets: Function list),
+separator, Report a problem (in-app dialog → server `feedback` endpoint), What's new, About.
+There is no in-app help center and no menu search (menu commands are found through the command
+palette).
+
+Only one menu is open at a time: opening a menubar menu, dropdown or context menu closes the
+one that was open ([02 §4.2](02-design-system.md)).
 
 ## 4. Global overlays and states
 

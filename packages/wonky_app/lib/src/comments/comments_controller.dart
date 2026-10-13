@@ -8,8 +8,9 @@ import '../data/api.dart';
 import '../shell/shell_services.dart';
 import 'comment_anchor.dart';
 
-/// Filters of the comments panel (suite 07 §2.3).
-enum CommentsFilter { all, open, resolved, forYou }
+/// Filters of the comments (suite 07 §2.3): unresolved threads, or the
+/// unresolved threads that mention or are assigned to the signed-in user.
+enum CommentsFilter { open, forYou }
 
 /// Sort of the comments panel.
 enum CommentsSort { position, date }
@@ -33,9 +34,8 @@ class CommentsController extends ChangeNotifier {
   List<CommentThreadView> _threads = const [];
   bool _loading = true;
   Object? _error;
-  CommentsFilter _filter = CommentsFilter.all;
+  CommentsFilter _filter = CommentsFilter.open;
   CommentsSort _sort = CommentsSort.position;
-  String _query = '';
   NewCommentAnchor? _draft;
   String? _active;
   bool _disposed = false;
@@ -45,7 +45,6 @@ class CommentsController extends ChangeNotifier {
   Object? get error => _error;
   CommentsFilter get filter => _filter;
   CommentsSort get sort => _sort;
-  String get query => _query;
 
   /// The anchor of the composer being written, if any.
   NewCommentAnchor? get draftAnchor => _draft;
@@ -112,24 +111,21 @@ class CommentsController extends ChangeNotifier {
     if (!_disposed) notifyListeners();
   }
 
-  /// Threads after filter, search and sort.
-  List<CommentThreadView> get visible {
+  /// Whether [t] passes the current [filter].
+  bool passesFilter(CommentThreadView t) {
+    // Open includes orphaned threads (unresolved, their text deleted).
+    if (t.status == CommentStatus.resolved) return false;
+    if (_filter == CommentsFilter.open) return true;
     final me = services.me?.id;
-    final q = _query.toLowerCase();
+    return t.assignee?.id == me ||
+        t.comments.any((c) => c.mentions.any((m) => m.id == me));
+  }
+
+  /// Threads after filter and sort.
+  List<CommentThreadView> get visible {
     final out = [
       for (final t in _threads)
-        if (switch (_filter) {
-              CommentsFilter.all => true,
-              CommentsFilter.open => t.status == CommentStatus.open,
-              CommentsFilter.resolved => t.status == CommentStatus.resolved,
-              CommentsFilter.forYou =>
-                t.assignee?.id == me ||
-                    t.comments.any((c) => c.mentions.any((m) => m.id == me)),
-            } &&
-            (q.isEmpty ||
-                (t.quotedText ?? '').toLowerCase().contains(q) ||
-                t.comments.any((c) => c.body.toLowerCase().contains(q))))
-          t,
+        if (passesFilter(t)) t,
     ];
     if (_sort == CommentsSort.date) {
       out.sort((a, b) => b.createdAt.compareTo(a.createdAt));
@@ -151,11 +147,6 @@ class CommentsController extends ChangeNotifier {
 
   void setSort(CommentsSort s) {
     _sort = s;
-    _notify();
-  }
-
-  void setQuery(String q) {
-    _query = q;
     _notify();
   }
 

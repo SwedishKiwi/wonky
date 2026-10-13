@@ -4,7 +4,6 @@ import 'package:intl/intl.dart' as intl;
 import 'package:shad/shad.dart';
 import 'package:wonky_client/wonky_client.dart';
 
-import '../activity/activity_dashboard_dialog.dart';
 import '../bootstrap/platform.dart';
 import '../data/api.dart';
 import '../l10n/wonky_app_localizations.dart';
@@ -203,14 +202,6 @@ Future<void> showWhatsNewDialog(BuildContext context, ShellServices s) {
     ),
   );
 }
-
-/// Tools › Activity dashboard (suite 07 §6): viewers, view and comment
-/// trends, the activity feed and "Show my view history".
-Future<void> showActivityDashboard(
-  BuildContext context,
-  ShellServices s,
-  DriveItemView item,
-) => showActivityDashboardDialog(context, s, item);
 
 /// Human text of an activity event.
 String activityText(WonkyAppLocalizations l, ActivityEventView e) {

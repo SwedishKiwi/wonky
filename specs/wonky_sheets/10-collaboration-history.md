@@ -210,10 +210,10 @@ commenters don't need write access to the space.
   thread in reading order (sheet order, row, column).
 
 ### 3.5 Comments panel (Sheets specifics)
-Suite panel + a scope filter **This sheet / All sheets** (default All), grouped by sheet with
-sheet headers (in tab order), each thread showing the cell reference ("Sheet1!B4" computed
-live from ids) and quoted text. Sort *By position* (sheet order, row, col) or *By date*.
-Additional filter *Orphaned*.
+Suite panel (filters **Open** / **For you**, no search; suite 07 §2.3) + a scope filter **This
+sheet / All sheets** (default All), grouped by sheet with sheet headers (in tab order), each
+thread showing the cell reference ("Sheet1!B4" computed live from ids) and quoted text. Sort
+*By position* (sheet order, row, col) or *By date*. Additional filter *Orphaned* (P2).
 
 ### 3.6 Mentions, assignments, notifications
 Suite §3–4 unchanged. Notification payloads for Sheets include `{sheetName, a1, quotedText}`;
@@ -421,7 +421,7 @@ anchored to the cell:
 
 ## 7. Activity dashboard (Sheets specifics)
 
-*Tools › Activity dashboard* (suite §6) adds a **Changes** tab for Editors+, computed from
+*The suite dashboard UI was removed (suite 07 §6); if it returns,* it adds a **Changes** tab for Editors+, computed from
 `ChangeLog` (30 days) + `ActivityEvent`:
 - Edits per day chart (stacked by user, top 8 + "others", rendered with our chart engine).
 - Contributors table: user, edits, last edit, most edited sheet.

@@ -11,8 +11,10 @@
 
 // ignore_for_file: no_leading_underscores_for_library_prefixes
 import 'package:serverpod/serverpod.dart' as _is;
+import 'package:wonky_server/src/generated/protocol.dart' as _il4umwa0;
 import '../../platform/drive/drive_item_kind.dart' as _i26ubj99;
 import '../../platform/drive/template_category.dart' as _i4yf368z;
+import '../../platform/drive/template_preview_style.dart' as _i23vdgk2;
 
 /// A template in the gallery (`drive.listTemplates`, specs/05 §3.1).
 abstract class TemplateView
@@ -27,6 +29,8 @@ abstract class TemplateView
     required this.builtin,
     required this.previewText,
     this.thumbnailFileId,
+    this.themeKey,
+    this.previewStyle,
   });
 
   factory TemplateView({
@@ -39,6 +43,8 @@ abstract class TemplateView
     required bool builtin,
     required String previewText,
     _is.UuidValue? thumbnailFileId,
+    String? themeKey,
+    _i23vdgk2.TemplatePreviewStyle? previewStyle,
   }) = _TemplateViewImpl;
 
   factory TemplateView.fromJson(Map<String, dynamic> jsonSerialization) {
@@ -59,6 +65,12 @@ abstract class TemplateView
           ? null
           : _is.UuidValueJsonExtension.fromJson(
               jsonSerialization['thumbnailFileId'],
+            ),
+      themeKey: jsonSerialization['themeKey'] as String?,
+      previewStyle: jsonSerialization['previewStyle'] == null
+          ? null
+          : _il4umwa0.Protocol().deserialize<_i23vdgk2.TemplatePreviewStyle>(
+              jsonSerialization['previewStyle'],
             ),
     );
   }
@@ -84,6 +96,13 @@ abstract class TemplateView
 
   _is.UuidValue? thumbnailFileId;
 
+  /// Key of the built-in Write theme a document template creates documents
+  /// with (e.g. "classic-serif"), if any.
+  String? themeKey;
+
+  /// Colors and traits of the card's miniature page; null = neutral page.
+  _i23vdgk2.TemplatePreviewStyle? previewStyle;
+
   /// Returns a shallow copy of this [TemplateView]
   /// with some or all fields replaced by the given arguments.
   @_is.useResult
@@ -97,6 +116,9 @@ abstract class TemplateView
     bool? builtin,
     String? previewText,
     _is.UuidValue? thumbnailFileId = const _is.$UndefinedUuidValue(),
+    String? themeKey,
+    _i23vdgk2.TemplatePreviewStyle? previewStyle =
+        const _UndefinedTemplateView$previewStyle(),
   });
   @override
   Map<String, dynamic> toJson() {
@@ -111,6 +133,8 @@ abstract class TemplateView
       'builtin': builtin,
       'previewText': previewText,
       if (thumbnailFileId != null) 'thumbnailFileId': thumbnailFileId?.toJson(),
+      if (themeKey != null) 'themeKey': themeKey,
+      if (previewStyle != null) 'previewStyle': previewStyle?.toJson(),
     };
   }
 
@@ -127,6 +151,9 @@ abstract class TemplateView
       'builtin': builtin,
       'previewText': previewText,
       if (thumbnailFileId != null) 'thumbnailFileId': thumbnailFileId?.toJson(),
+      if (themeKey != null) 'themeKey': themeKey,
+      if (previewStyle != null)
+        'previewStyle': previewStyle?.toJsonForProtocol(),
     };
   }
 
@@ -137,6 +164,11 @@ abstract class TemplateView
 }
 
 class _Undefined {}
+
+class _UndefinedTemplateView$previewStyle extends _is.UndefinedSentinel
+    implements _i23vdgk2.TemplatePreviewStyle {
+  const _UndefinedTemplateView$previewStyle();
+}
 
 class _TemplateViewImpl extends TemplateView {
   _TemplateViewImpl({
@@ -149,6 +181,8 @@ class _TemplateViewImpl extends TemplateView {
     required bool builtin,
     required String previewText,
     _is.UuidValue? thumbnailFileId,
+    String? themeKey,
+    _i23vdgk2.TemplatePreviewStyle? previewStyle,
   }) : super._(
          uuid: uuid,
          key: key,
@@ -159,6 +193,8 @@ class _TemplateViewImpl extends TemplateView {
          builtin: builtin,
          previewText: previewText,
          thumbnailFileId: thumbnailFileId,
+         themeKey: themeKey,
+         previewStyle: previewStyle,
        );
 
   /// Returns a shallow copy of this [TemplateView]
@@ -175,6 +211,9 @@ class _TemplateViewImpl extends TemplateView {
     bool? builtin,
     String? previewText,
     _is.UuidValue? thumbnailFileId = const _is.$UndefinedUuidValue(),
+    Object? themeKey = _Undefined,
+    _i23vdgk2.TemplatePreviewStyle? previewStyle =
+        const _UndefinedTemplateView$previewStyle(),
   }) {
     return TemplateView(
       uuid: uuid ?? this.uuid,
@@ -188,6 +227,10 @@ class _TemplateViewImpl extends TemplateView {
       thumbnailFileId: thumbnailFileId is _is.UndefinedSentinel
           ? this.thumbnailFileId
           : thumbnailFileId,
+      themeKey: themeKey is String? ? themeKey : this.themeKey,
+      previewStyle: previewStyle is _is.UndefinedSentinel
+          ? this.previewStyle?.copyWith()
+          : previewStyle,
     );
   }
 }

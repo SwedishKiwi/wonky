@@ -262,11 +262,6 @@ class WriteToolbar extends StatelessWidget {
             ? l.toolbarRedo
             : l.toolbarRedoAction(redoLabel),
       ),
-      ui.button(
-        'shell.help.searchMenus',
-        icon: LucideIcons.search,
-        priority: 5,
-      ),
       ui.button('write.file.print', icon: LucideIcons.printer, priority: 4),
     ], id: 'history');
 
@@ -343,12 +338,6 @@ class WriteToolbar extends StatelessWidget {
             'shell.comments.create',
             icon: LucideIcons.messageSquarePlus,
             priority: 2,
-          ),
-          ui.toggle(
-            'write.suggestions.togglePanel',
-            icon: LucideIcons.fileDiff,
-            label: l.toolbarSuggestions,
-            priority: 3,
           ),
           ToolbarSplitButton(
             id: 'write.toolbar.image',

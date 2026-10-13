@@ -16,7 +16,7 @@ final Map<String, Object?> newsletterThemeJson = {
   'fonts': {
     'body': 'Lora',
     'heading': 'Playfair Display',
-    'mono': 'Source Code Pro',
+    'mono': 'JetBrains Mono',
   },
   'palette': paletteJson(
     text: '#2d2a26',

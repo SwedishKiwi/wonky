@@ -131,12 +131,6 @@ class WonkyUiLocalizationsEn extends WonkyUiLocalizations {
   String get panelClose => 'Close panel';
 
   @override
-  String get panelCollapse => 'Collapse panel';
-
-  @override
-  String get panelExpand => 'Expand panel';
-
-  @override
   String get panelResize => 'Resize panel';
 
   @override

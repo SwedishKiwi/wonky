@@ -95,7 +95,7 @@ abstract final class SharedUiTools {
                     },
             },
       'dialog': dialog?.describe()['title'],
-      'panel': s.panels.collapsed ? null : s.panels.activePanelId,
+      'panel': s.panels.activePanelId,
       'theme': s.prefs.appTheme.name,
       'online': s.connectivity.online,
       'undo_label': s.undo.canUndo.value ? s.undo.undoLabel.value : null,

@@ -1,9 +1,11 @@
 import 'dart:async';
 
+import 'package:clock/clock.dart';
 import 'package:serverpod/serverpod.dart';
 import 'package:wonky_core/wonky_core.dart' show Role;
 import 'package:wonky_write_core/wonky_write_core.dart';
 
+import '../../platform/cluster/cluster.dart';
 import '../../platform/common/actor.dart';
 import '../../platform/common/errors.dart';
 import '../../platform/common/models.dart';
@@ -26,7 +28,20 @@ class DocumentConnection {
   static const maxOpsInInit = 1000;
 
   /// Beyond this many editors, new joiners become viewers (Write 03 §7).
-  static const maxEditors = 100;
+  /// Variable for tests, like the durations below.
+  static int maxEditors = 100;
+
+  /// With several instances (specs/13 §4) every session re-announces itself
+  /// this often; participants not heard of for [participantExpiry] are
+  /// dropped (their instance crashed or the `left` message was lost).
+  static Duration heartbeatInterval = const Duration(seconds: 30);
+
+  static Duration get participantExpiry => heartbeatInterval * 3;
+
+  /// With several instances the `here` replies of sessions on other
+  /// instances arrive after Init; the editor limit is re-checked once this
+  /// long after joining.
+  static Duration rosterSettle = const Duration(seconds: 2);
 
   final Session session;
   final Actor actor;
@@ -40,7 +55,13 @@ class DocumentConnection {
   late StreamController<DocServerMessage> _out;
   StreamSubscription<DocClientMessage>? _input;
   final Map<String, Participant> _participants = {};
+  final Map<String, DateTime> _lastSeen = {};
   Participant? _me;
+
+  /// Joined as a viewer because of [maxEditors]; role re-checks keep it.
+  bool _limitedToViewer = false;
+  Timer? _heartbeat;
+  Timer? _settle;
   String? _themeChannel;
   bool _closed = false;
   Future<void> _queue = Future.value();
@@ -117,8 +138,7 @@ class DocumentConnection {
         .where((p) => p.role.index >= AccessRole.editor.index)
         .length;
     if (_role >= Role.editor && editors >= maxEditors) {
-      _role = Role.viewer;
-      _me = _me!.copyWith(role: AccessRole.viewer);
+      _limitToViewer();
     }
     _subscribeTheme(doc.themeId);
 
@@ -151,6 +171,69 @@ class DocumentConnection {
       onError: (Object _) => _close(),
     );
     session.addWillCloseListener((_) => _close());
+    if (Cluster.distributed) {
+      _heartbeat = Timer.periodic(heartbeatInterval, (_) => _beat());
+      if (_role >= Role.editor) {
+        _settle = Timer(rosterSettle, _enforceEditorLimit);
+      }
+    }
+  }
+
+  void _limitToViewer() {
+    _limitedToViewer = true;
+    _role = Role.viewer;
+    _me = _me!.copyWith(role: AccessRole.viewer);
+  }
+
+  /// Re-checks the editor limit once the roster of other instances
+  /// arrived: counts the editors that joined before this session.
+  void _enforceEditorLimit() {
+    final me = _me;
+    if (_closed || me == null || _role < Role.editor) return;
+    bool before(Participant p) {
+      final c = p.joinedAt.compareTo(me.joinedAt);
+      return c < 0 || c == 0 && p.sessionId.compareTo(me.sessionId) < 0;
+    }
+
+    final earlier = _participants.values
+        .where((p) => p.role.index >= AccessRole.editor.index && before(p))
+        .length;
+    if (earlier < maxEditors) return;
+    _limitToViewer();
+    _send(DocRoleChanged(role: AccessRole.viewer));
+  }
+
+  /// Re-announces this session and drops participants that went silent.
+  void _beat() {
+    if (_closed || _me == null) return;
+    unawaited(
+      DocumentBus.post(
+        session,
+        documentUuid,
+        DocBusMessage(
+          type: 'beat',
+          originSessionId: sessionId,
+          participant: _me,
+        ),
+      ).catchError((Object _) {}),
+    );
+    final now = clock.now();
+    final cutoff = now.subtract(participantExpiry);
+    for (final id in _participants.keys.toList()) {
+      final seen = _lastSeen[id];
+      if (seen == null) {
+        _lastSeen[id] = now;
+        continue;
+      }
+      if (seen.isAfter(cutoff)) continue;
+      _participants.remove(id);
+      _lastSeen.remove(id);
+      _send(DocParticipantLeft(sessionId: id));
+    }
+  }
+
+  void _seen(String? id) {
+    if (id != null) _lastSeen[id] = clock.now();
   }
 
   static DocumentMetaView _metaOf(Document d) => DocumentMetaView(
@@ -206,14 +289,35 @@ class DocumentConnection {
   void _onBus(SerializableModel model) {
     if (model is! DocBusMessage || _closed) return;
     final m = model;
+    if (m.originSessionId != sessionId) _seen(m.originSessionId);
     switch (m.type) {
       case 'op':
         final op = m.op;
-        if (op == null || m.originSessionId == sessionId) return;
+        if (op == null) return;
+        // Committed on another instance: keep this instance's state warm,
+        // so cursor transforms and gap fills see the op (specs/13 §4).
+        if (op.revision > _state.revision) {
+          unawaited(
+            _state.ensureAtLeast(session, op.revision).catchError((Object e) {
+              session.log(
+                'Catching up ${documentUuid.uuid} failed: $e',
+                level: LogLevel.warning,
+              );
+            }),
+          );
+        }
+        if (m.originSessionId == sessionId) return;
         _send(op);
       case 'cursor':
         if (m.cursor == null || m.originSessionId == sessionId) return;
         _send(m.cursor!);
+      case 'beat':
+        final p = m.participant;
+        if (p == null || m.originSessionId == sessionId) return;
+        // A participant whose hello this session missed.
+        if (_participants.containsKey(p.sessionId) || !_initSent) return;
+        _participants[p.sessionId] = p;
+        _send(DocParticipantJoined(participant: p));
       case 'hello':
         final p = m.participant;
         if (p == null || m.originSessionId == sessionId) return;
@@ -236,6 +340,7 @@ class DocumentConnection {
       case 'here':
         final p = m.participant;
         if (p == null || m.sessionId != sessionId) return;
+        _seen(p.sessionId);
         if (_participants.containsKey(p.sessionId)) return;
         _participants[p.sessionId] = p;
         // Before Init the roster goes into DocInit.participants.
@@ -244,6 +349,7 @@ class DocumentConnection {
         }
       case 'left':
         final id = m.originSessionId;
+        _lastSeen.remove(id);
         if (id == null || _participants.remove(id) == null) return;
         _send(DocParticipantLeft(sessionId: id));
       case 'meta':
@@ -272,7 +378,7 @@ class DocumentConnection {
   Future<void> _recheckRole() async {
     if (_closed) return;
     final item = await DriveItem.db.findById(session, _item.id!);
-    final role = item == null
+    var role = item == null
         ? null
         : await AccessService.effectiveRole(session, actor.userId, item);
     if (role == null || item!.trashedAt != null && role != Role.owner) {
@@ -283,6 +389,7 @@ class DocumentConnection {
       return;
     }
     _item = item;
+    if (_limitedToViewer && role >= Role.editor) role = Role.viewer;
     if (role != _role) {
       _role = role;
       _send(DocRoleChanged(role: role.access));
@@ -296,6 +403,9 @@ class DocumentConnection {
         case DocSubmitOp():
           await _submit(m);
         case DocCursorUpdate():
+          // The client may have seen ops this instance only knows from the
+          // bus (another instance committed them).
+          await _state.ensureAtLeast(session, m.revision);
           final (a, h) = OtService.transformCursor(
             _state,
             m.revision,
@@ -319,6 +429,7 @@ class DocumentConnection {
             ),
           );
         case DocRequestOps():
+          await _state.ensureAtLeast(session, m.toRevision);
           final from = m.fromRevision < 1 ? 1 : m.fromRevision;
           final to = m.toRevision > _state.revision
               ? _state.revision
@@ -341,6 +452,7 @@ class DocumentConnection {
         case DocPing():
           _send(DocPong(t: m.t));
         case DocHashCheck():
+          await _state.ensureAtLeast(session, m.revision);
           final content = m.revision == _state.revision
               ? _state.content
               : await DocumentStore.contentAt(session, _document, m.revision);
@@ -391,6 +503,8 @@ class DocumentConnection {
   Future<void> _close() async {
     if (_closed) return;
     _closed = true;
+    _heartbeat?.cancel();
+    _settle?.cancel();
     session.messages.removeListener(DocumentBus.channel(documentUuid), _onBus);
     if (_themeChannel != null) {
       session.messages.removeListener(_themeChannel!, _onTheme);

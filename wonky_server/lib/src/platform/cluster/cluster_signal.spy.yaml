@@ -1,0 +1,16 @@
+### Internal session.messages payload between server instances
+### (specs/13 §4): relays unary calls to the instance that holds the
+### in-memory state they act on, and invalidates per-instance caches.
+class: ClusterSignal
+serverOnly: true
+fields:
+  ### assistant.stop, assistant.confirm, user.forget.
+  kind: String
+  ### The instance that posted the signal (it ignores its own signals).
+  originInstance: String
+  userId: int?
+  authUserId: UuidValue?
+  runId: String?
+  threadId: int?
+  confirmationId: String?
+  allow: bool?

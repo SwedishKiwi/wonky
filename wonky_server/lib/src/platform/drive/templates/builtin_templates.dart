@@ -1,4 +1,5 @@
 import 'package:serverpod/serverpod.dart';
+import 'package:wonky_write_core/wonky_write_core.dart' as core;
 
 import '../../common/models.dart';
 
@@ -40,6 +41,12 @@ class BuiltinTemplate {
     this.markdown,
     this.sheets = const [],
     this.inGallery = true,
+    this.themeKey,
+    this.accent,
+    this.banner = false,
+    this.centeredHeadings = false,
+    this.uppercaseHeadings = false,
+    this.accentHeadings = false,
   });
 
   final String key;
@@ -52,6 +59,80 @@ class BuiltinTemplate {
 
   /// Welcome content is created at sign-up but not listed in the gallery.
   final bool inGallery;
+
+  /// The built-in Write theme documents from this template get (and the
+  /// colors of its card), e.g. `classic-serif`.
+  final String? themeKey;
+
+  /// Card accent of templates without a theme (spreadsheets), `#rrggbb`.
+  final String? accent;
+
+  /// Card traits (see [TemplatePreviewStyle]); [accentHeadings] draws the
+  /// headings in the accent color.
+  final bool banner;
+  final bool centeredHeadings;
+  final bool uppercaseHeadings;
+  final bool accentHeadings;
+
+  /// The card's miniature page style (specs/05 §3.1).
+  TemplatePreviewStyle? get previewStyle {
+    final key = themeKey;
+    if (key != null) {
+      final theme = core.BuiltinThemes.byKey(key);
+      if (theme == null) return null;
+      final json = theme.json;
+      final light = (json['palette'] as Map).cast<String, Object?>();
+      final darkJson = (json['dark'] as Map?)?['palette'] as Map?;
+      final dark = darkJson?.cast<String, Object?>() ?? light;
+      String color(Map<String, Object?> palette, String name) {
+        var v = palette[name];
+        // Palette references ("@accent") resolve within the palette.
+        for (var i = 0; i < 4 && v is String && v.startsWith('@'); i++) {
+          v = palette[v.substring(1)];
+        }
+        return v is String && v.startsWith('#') ? v : '#000000';
+      }
+
+      final fonts = (json['fonts'] as Map?)?.cast<String, Object?>() ?? {};
+      final category = core.FontRegistry.lookup(
+        '${fonts['heading'] ?? fonts['body'] ?? ''}',
+      )?.category;
+      return TemplatePreviewStyle(
+        paper: color(light, 'page'),
+        text: color(light, 'text'),
+        heading: color(light, accentHeadings ? 'accent' : 'heading'),
+        accent: color(light, 'accent'),
+        darkPaper: color(dark, 'page'),
+        darkText: color(dark, 'text'),
+        darkHeading: color(dark, accentHeadings ? 'accent' : 'heading'),
+        darkAccent: color(dark, 'accent'),
+        banner: banner,
+        centeredHeadings: centeredHeadings,
+        uppercaseHeadings: uppercaseHeadings,
+        fontCategory: switch (category) {
+          core.FontCategory.serif => 'serif',
+          core.FontCategory.mono => 'mono',
+          _ => 'sans',
+        },
+      );
+    }
+    final a = accent;
+    if (a == null) return null;
+    return TemplatePreviewStyle(
+      paper: '#ffffff',
+      text: '#3f3f46',
+      heading: '#18181b',
+      accent: a,
+      darkPaper: '#1c1c1f',
+      darkText: '#d4d4d8',
+      darkHeading: '#fafafa',
+      darkAccent: a,
+      banner: banner,
+      centeredHeadings: false,
+      uppercaseHeadings: false,
+      fontCategory: 'sans',
+    );
+  }
 
   UuidValue get uuid =>
       const Uuid().v5obj(Namespace.url.value, 'wonky-template:$key');
@@ -94,7 +175,8 @@ class BuiltinTemplate {
   }
 }
 
-/// The built-in template gallery.
+/// The built-in template gallery. Lines ending in two spaces are Markdown
+/// hard line breaks (one block, several lines); keep the trailing spaces.
 abstract final class BuiltinTemplates {
   static const welcomeDocumentKey = 'write.welcome';
   static const welcomeSpreadsheetKey = 'sheets.welcome';
@@ -154,30 +236,35 @@ fonts, colors and spacing — the content stays clean Markdown.
       name: 'Meeting notes',
       description: 'Agenda, notes, decisions and action items.',
       category: TemplateCategory.work,
+      themeKey: 'modern-sans',
+      banner: true,
       markdown: '''
 # Meeting notes
 
-**Date:**
-**Attendees:**
+**Date:** Thursday, 10:00–10:45  
+**Attendees:** Ada, Grace, Linus  
+**Goal:** Agree on the launch plan
 
 ## Agenda
 
-1.
-2.
-3.
+1. Status since last week (5 min)
+2. Launch checklist (20 min)
+3. Open questions (15 min)
 
 ## Notes
 
--
+- The beta has 120 active users; feedback is mostly positive.
+- Onboarding needs one more pass before launch.
 
 ## Decisions
 
--
+- Launch moves to the first Monday of next month.
 
 ## Action items
 
-- [ ] Owner — task — due date
-- [ ] Owner — task — due date
+- [ ] Ada — polish the onboarding flow — Friday
+- [ ] Grace — draft the announcement — Tuesday
+- [ ] Linus — book the retro — next week
 ''',
     ),
     BuiltinTemplate(
@@ -186,61 +273,67 @@ fonts, colors and spacing — the content stays clean Markdown.
       name: 'Project brief',
       description: 'Goals, scope, milestones and risks of a project.',
       category: TemplateCategory.projectManagement,
+      themeKey: 'technical',
       markdown: '''
 # Project brief
 
 ## Summary
 
-One paragraph describing the project and why it matters.
+One paragraph describing the project, who it is for and why it matters now.
 
 ## Goals
 
--
--
+- Ship a first version to ten pilot customers.
+- Cut the time to first value from a day to an hour.
 
 ## Non-goals
 
--
+- A mobile app (planned for later).
 
 ## Scope
 
 | Area | In scope | Notes |
 | --- | --- | --- |
-| | | |
+| Onboarding | Yes | New guided setup |
+| Billing | No | Unchanged |
 
 ## Milestones
 
-1. **Kick-off** —
-2. **First release** —
-3. **Launch** —
+1. **Kick-off** — week 1
+2. **First release** — week 6
+3. **Launch** — week 10
 
 ## Risks
 
 | Risk | Likelihood | Mitigation |
 | --- | --- | --- |
-| | | |
+| Scope creep | Medium | Weekly scope review |
 
 ## Team
 
-- **Lead:**
-- **Contributors:**
+- **Lead:** Your name
+- **Contributors:** Design, engineering, support
 ''',
     ),
     BuiltinTemplate(
       key: 'write.letter',
       kind: DriveItemKind.document,
       name: 'Letter',
-      description: 'A simple formal letter.',
+      description: 'A formal letter with a classic letterhead.',
       category: TemplateCategory.personal,
+      themeKey: 'classic-serif',
+      centeredHeadings: true,
       markdown: '''
-Your name
-Street address
-City, postal code
+# Your Name
 
-Date
+Street address · City, postal code · you@example.com
 
-Recipient name
-Street address
+---
+
+12 March
+
+Recipient name  
+Street address  
 City, postal code
 
 Dear recipient,
@@ -248,42 +341,52 @@ Dear recipient,
 Start your letter here. Keep the first paragraph short and state why you are
 writing.
 
-Use the following paragraphs for the details.
+Use the following paragraphs for the details: what happened, what you would
+like to happen next, and by when.
+
+Thank you for your time and consideration.
 
 Kind regards,
 
-Your name
+Your Name
 ''',
     ),
     BuiltinTemplate(
       key: 'write.weekly-report',
       kind: DriveItemKind.document,
       name: 'Weekly report',
-      description: 'Progress, plans and blockers for the week.',
+      description: 'A newsletter-style update on the week.',
       category: TemplateCategory.work,
+      themeKey: 'newsletter',
+      accentHeadings: true,
       markdown: '''
-# Weekly report
+# This week at the studio
 
-**Week of:**
+*Week 12 · Highlights, progress and what is next*
 
 ## Highlights
 
--
+- The new dashboard is live for every team.
+- Support response time dropped to under two hours.
+
+> "The fastest week we have had this quarter." — the support team
 
 ## Progress
 
 | Workstream | Status | Notes |
 | --- | --- | --- |
-| | On track | |
+| Dashboard | Shipped | Rolled out on Tuesday |
+| Mobile | On track | Beta next week |
+| Billing | At risk | Waiting on legal review |
 
 ## Next week
 
-- [ ]
-- [ ]
+- [ ] Start the mobile beta
+- [ ] Close the billing review
 
 ## Blockers
 
--
+- Legal review of the new terms.
 ''',
     ),
     BuiltinTemplate(
@@ -292,52 +395,119 @@ Your name
       name: 'Lecture notes',
       description: 'Structured notes with key terms and questions.',
       category: TemplateCategory.education,
+      themeKey: 'academic-apa',
+      centeredHeadings: true,
       markdown: '''
 # Lecture notes
 
-**Course:**
-**Date:**
+**Course:** Introduction to Psychology  
+**Lecture:** 4 — Memory  
+**Date:** 3 October
 
 ## Key ideas
 
--
+- Memory is reconstructive, not a recording.
+- Sleep helps consolidate what we learn during the day.
 
 ## Key terms
 
-- **Term** — definition
+- **Encoding** — turning experience into a memory trace.
+- **Retrieval** — bringing a stored memory back to mind.
 
 ## Questions
 
--
+- How does spaced repetition change long-term retention?
 
 ## Summary
 
-Write a short summary in your own words.
+Write a short summary of the lecture in your own words.
 ''',
     ),
     BuiltinTemplate(
       key: 'write.todo',
       kind: DriveItemKind.document,
       name: 'To-do list',
-      description: 'A checklist for the day or the week.',
+      description: 'A plain, focused checklist for the day or the week.',
       category: TemplateCategory.personal,
+      themeKey: 'minimal-mono',
       markdown: '''
 # To-do list
 
 ## Today
 
-- [ ]
-- [ ]
-- [ ]
+- [ ] Reply to the important emails
+- [ ] 30 minutes of deep work on the big task
+- [ ] Walk
 
 ## This week
 
-- [ ]
-- [ ]
+- [ ] Plan the weekend
+- [ ] Call the bank
 
 ## Someday
 
-- [ ]
+- [ ] Learn to bake bread
+''',
+    ),
+    BuiltinTemplate(
+      key: 'write.recipe',
+      kind: DriveItemKind.document,
+      name: 'Recipe',
+      description: 'Ingredients, steps and notes for a favorite dish.',
+      category: TemplateCategory.personal,
+      themeKey: 'wonky-default',
+      banner: true,
+      markdown: '''
+# Lemon pasta 🍋
+
+*Serves 2 · 20 minutes*
+
+## Ingredients
+
+- 200 g spaghetti
+- 1 lemon (zest and juice)
+- 40 g butter
+- 50 g grated parmesan
+- Black pepper
+
+## Steps
+
+1. Cook the pasta in salted water; keep a cup of the water.
+2. Melt the butter with the lemon zest.
+3. Toss the pasta with the butter, juice, cheese and a splash of water.
+4. Season with plenty of pepper and serve right away.
+
+## Notes
+
+> Add a handful of spinach at the end for something green.
+''',
+    ),
+    BuiltinTemplate(
+      key: 'write.story',
+      kind: DriveItemKind.document,
+      name: 'Story draft',
+      description: 'A manuscript page for fiction and creative writing.',
+      category: TemplateCategory.personal,
+      themeKey: 'manuscript',
+      centeredHeadings: true,
+      uppercaseHeadings: true,
+      markdown: '''
+# The lighthouse
+
+*A short story*
+
+## Chapter one
+
+The lamp had not been lit for eleven years when Mara climbed the stairs
+with a box of matches and a borrowed key.
+
+Outside, the sea kept its own time. Inside, the dust settled where it had
+always settled, waiting for someone to disturb it.
+
+---
+
+She counted the steps on the way up. One hundred and twelve. On the way down
+there would be one hundred and thirteen, and she would never find out why.
 ''',
     ),
     BuiltinTemplate(
@@ -370,6 +540,8 @@ Write a short summary in your own words.
       name: 'Monthly budget',
       description: 'Planned and actual income and expenses.',
       category: TemplateCategory.finance,
+      accent: '#16a34a',
+      banner: true,
       sheets: [
         TemplateSheet(
           name: 'Budget',
@@ -396,6 +568,8 @@ Write a short summary in your own words.
       name: 'To-do list',
       description: 'Tasks with due dates and status.',
       category: TemplateCategory.personal,
+      accent: '#2563eb',
+      banner: true,
       sheets: [
         TemplateSheet(
           name: 'Tasks',
@@ -415,6 +589,8 @@ Write a short summary in your own words.
       name: 'Project tracker',
       description: 'Tasks, owners, dates and progress.',
       category: TemplateCategory.projectManagement,
+      accent: '#7c3aed',
+      banner: true,
       sheets: [
         TemplateSheet(
           name: 'Tracker',
@@ -438,6 +614,8 @@ Write a short summary in your own words.
       name: 'Invoice',
       description: 'Line items with quantities, prices and totals.',
       category: TemplateCategory.finance,
+      accent: '#0f766e',
+      banner: true,
       sheets: [
         TemplateSheet(
           name: 'Invoice',
@@ -462,6 +640,8 @@ Write a short summary in your own words.
       name: 'Gradebook',
       description: 'Scores per assignment with averages.',
       category: TemplateCategory.education,
+      accent: '#ea580c',
+      banner: true,
       sheets: [
         TemplateSheet(
           name: 'Grades',
@@ -490,6 +670,8 @@ Write a short summary in your own words.
       name: 'Weekly schedule',
       description: 'Time slots for each day of the week.',
       category: TemplateCategory.personal,
+      accent: '#db2777',
+      banner: true,
       sheets: [
         TemplateSheet(
           name: 'Schedule',

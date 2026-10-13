@@ -41,11 +41,8 @@ class WriteAppConfig extends WonkyAppConfig {
   Color get brandColor => writeBrandColor;
 
   @override
-  Widget logo({double size = 28}) => WonkyAppLogo(
-    color: writeBrandColor,
-    icon: LucideIcons.fileText,
-    size: size,
-  );
+  Widget logo({double size = 28}) =>
+      WonkyProductIcon(WonkyProduct.write, size: size);
 
   @override
   String itemPath(String uuid) => '/d/$uuid';
@@ -184,37 +181,4 @@ class WriteAppConfig extends WonkyAppConfig {
       ),
     ),
   ];
-}
-
-/// The app logo: a rounded tile in the brand color with a white glyph.
-class WonkyAppLogo extends StatelessWidget {
-  const WonkyAppLogo({
-    super.key,
-    required this.color,
-    required this.icon,
-    this.size = 28,
-  });
-
-  final Color color;
-  final IconData icon;
-  final double size;
-
-  @override
-  Widget build(BuildContext context) => Semantics(
-    image: true,
-    label: 'Wonky Write',
-    child: Container(
-      width: size,
-      height: size,
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [Color.lerp(color, const Color(0xffffffff), 0.12)!, color],
-        ),
-        borderRadius: BorderRadius.circular(size * 0.26),
-      ),
-      child: Icon(icon, size: size * 0.56, color: const Color(0xffffffff)),
-    ),
-  );
 }

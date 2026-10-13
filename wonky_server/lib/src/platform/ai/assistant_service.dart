@@ -9,6 +9,7 @@ import 'package:wonky_write_core/wonky_write_core.dart'
 import '../../write/ai/write_context_builder.dart';
 import '../../write/ai/write_prompts.dart';
 import '../../write/mcp/headless_editor.dart';
+import '../cluster/cluster.dart';
 import '../common/actor.dart';
 import '../common/errors.dart';
 import '../common/models.dart';
@@ -143,6 +144,7 @@ abstract final class AssistantService {
     if (busyRun.isNotEmpty) {
       throw Errors.busy('The assistant is still answering in this chat.');
     }
+    if (Cluster.distributed) await _listenForRelays(session);
     final release = AiUsageService.acquire(actor.userId);
     final run = AssistantRun(
       const Uuid().v7(),
@@ -205,13 +207,56 @@ abstract final class AssistantService {
     return out.stream;
   }
 
+  /// Stops and confirmations arrive as unary calls, which the load
+  /// balancer may route to another instance than the one running the chat
+  /// stream: those instances relay them as [ClusterSignal]s (specs/13 §4).
+  static Future<void> _listenForRelays(Session session) => Future.wait([
+    Cluster.on(session, 'assistant.stop', (s) {
+      if (s.userId == null) return;
+      _stopLocal(s.userId!, runId: s.runId, threadId: s.threadId);
+    }),
+    Cluster.on(session, 'assistant.confirm', (s) {
+      if (s.userId == null || s.runId == null || s.confirmationId == null) {
+        return;
+      }
+      _confirmLocal(
+        s.userId!,
+        s.runId!,
+        s.confirmationId!,
+        allow: s.allow ?? false,
+      );
+    }),
+  ]);
+
   static String _title(String message) {
     final line = message.split('\n').first.trim();
     return line.length <= 60 ? line : '${line.substring(0, 57)}…';
   }
 
-  /// Stops the user's run [runId], or every run in [threadId].
-  static bool stop(int userId, {String? runId, int? threadId}) {
+  /// Stops the user's run [runId], or every run in [threadId]. With several
+  /// instances the stop is also relayed to the others (best effort; then
+  /// true means "requested").
+  static Future<bool> stop(
+    Session session,
+    int userId, {
+    String? runId,
+    int? threadId,
+  }) async {
+    final stopped = _stopLocal(userId, runId: runId, threadId: threadId);
+    if (stopped && runId != null || !Cluster.distributed) return stopped;
+    await Cluster.signal(
+      session,
+      Cluster.build(
+        'assistant.stop',
+        userId: userId,
+        runId: runId,
+        threadId: threadId,
+      ),
+    );
+    return true;
+  }
+
+  static bool _stopLocal(int userId, {String? runId, int? threadId}) {
     var stopped = false;
     for (final r in _runs.values.toList()) {
       if (r.userId != userId) continue;
@@ -226,8 +271,32 @@ abstract final class AssistantService {
     return stopped;
   }
 
-  /// Answers a destructive-change confirmation.
-  static bool confirm(
+  /// Answers a destructive-change confirmation (relayed to the instance
+  /// running [runId] when it is not this one).
+  static Future<bool> confirm(
+    Session session,
+    int userId,
+    String runId,
+    String confirmationId, {
+    required bool allow,
+  }) async {
+    if (_runs.containsKey(runId) || !Cluster.distributed) {
+      return _confirmLocal(userId, runId, confirmationId, allow: allow);
+    }
+    await Cluster.signal(
+      session,
+      Cluster.build(
+        'assistant.confirm',
+        userId: userId,
+        runId: runId,
+        confirmationId: confirmationId,
+        allow: allow,
+      ),
+    );
+    return true;
+  }
+
+  static bool _confirmLocal(
     int userId,
     String runId,
     String confirmationId, {
@@ -323,13 +392,13 @@ abstract final class AssistantService {
     int threadId,
   ) async {
     final t = await _own(session, actor, threadId);
-    stop(actor.userId, threadId: threadId);
+    await stop(session, actor.userId, threadId: threadId);
     await AssistantThread.db.deleteRow(session, t);
   }
 
   /// Settings › AI › Clear history: deletes every thread of the user.
   static Future<int> clearHistory(Session session, Actor actor) async {
-    stop(actor.userId);
+    await stop(session, actor.userId);
     final rows = await AssistantThread.db.deleteWhere(
       session,
       where: (t) => t.userId.equals(actor.userId),

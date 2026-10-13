@@ -7,11 +7,11 @@ import 'package:flutter_test_robots/flutter_test_robots.dart';
 import 'package:super_editor/super_editor.dart';
 import 'package:super_editor/super_editor_test.dart';
 import 'package:wonky_write/features/editor/applier/delta_applier.dart';
+import 'package:wonky_write/features/editor/components/editor_services.dart';
 import 'package:wonky_write/features/editor/dnd/drop_indicator.dart';
 import 'package:wonky_write/features/editor/dnd/external_drop.dart';
 import 'package:wonky_write/features/editor/keyboard/editor_keyboard.dart';
 import 'package:wonky_write/features/editor/popovers/editor_popovers.dart';
-import 'package:wonky_write/features/editor/styles/focus_mode.dart';
 import 'package:wonky_write/features/editor/ui/wonky_editor.dart';
 
 import '../support/editor_harness.dart';
@@ -57,6 +57,7 @@ Future<_Pumped> _pump(
   EmojiSuggester? emoji,
   void Function(List<DroppedFile> files, int index)? onDropFiles,
   VoidCallback? onUndo,
+  void Function(String nodeId, Rect rect)? onBlockHandleTap,
 }) async {
   tester.view.physicalSize = const Size(1200, 900);
   tester.view.devicePixelRatio = 1;
@@ -76,6 +77,9 @@ Future<_Pumped> _pump(
           onDropFiles: onDropFiles,
           externalDrops: drops,
           shortcutCallbacks: EditorShortcutCallbacks(onUndo: onUndo),
+          blockCallbacks: EditorBlockCallbacks(
+            onBlockHandleTap: onBlockHandleTap,
+          ),
         ),
       ),
     ),
@@ -305,6 +309,36 @@ void main() {
   });
 
   group('Given blocks (drag to reorder, Write 04 §22.5)', () {
+    testWidgets('when moving the pointer from a paragraph onto its handle '
+        'then the handle stays and a tap opens the block menu', (tester) async {
+      final taps = <String>[];
+      final p = await _pump(
+        tester,
+        Delta()..insert('First paragraph\nSecond paragraph\n'),
+        onBlockHandleTap: (nodeId, _) => taps.add(nodeId),
+      );
+      final first = p.h.controller.document.first.id;
+      final handle = find.byKey(ValueKey('write.editor.blockHandle.$first'));
+      final mouse = await tester.createGesture(kind: PointerDeviceKind.mouse);
+      await mouse.addPointer(location: _center(tester, 'First paragraph'));
+      await mouse.moveTo(
+        _center(tester, 'First paragraph') + const Offset(1, 0),
+      );
+      await tester.pump();
+      expect(handle, findsOneWidget);
+
+      // Off the text, into the gutter where the handle is.
+      await mouse.moveTo(tester.getCenter(handle));
+      await tester.pump();
+      expect(handle, findsOneWidget);
+
+      await mouse.down(tester.getCenter(handle));
+      await mouse.up();
+      await tester.pump();
+      await mouse.removePointer();
+      expect(taps, [first]);
+    });
+
     testWidgets('when dragging a bullet with two children below a paragraph '
         'then all three move in one undo step (AC-22.1)', (tester) async {
       final p = await _pump(
@@ -508,98 +542,6 @@ void main() {
       await tester.pump();
 
       expect(find.byKey(EmojiMenu.menuKey), findsNothing);
-    });
-  });
-
-  group('Given focus mode (Write 04 §30)', () {
-    testWidgets('when it is on then only the caret block keeps full color', (
-      tester,
-    ) async {
-      final p = await _pump(tester, Delta()..insert('One\nTwo\n'));
-      final first = p.h.controller.document.first.id;
-      final phase = FocusModeStylePhase()
-        ..enabled = true
-        ..setFocusedNodes({first});
-      final input = SingleColumnLayoutViewModel(
-        componentViewModels: [
-          for (final node in p.h.controller.document)
-            ParagraphComponentViewModel(
-              nodeId: node.id,
-              createdAt: null,
-              text: (node as TextNode).text,
-              padding: EdgeInsets.zero,
-              textStyleBuilder: (_) =>
-                  const TextStyle(color: Color(0xff000000)),
-              selectionColor: const Color(0x00000000),
-            ),
-        ],
-      );
-
-      final styled = phase.style(p.h.controller.document, input);
-
-      Color? colorOf(int i) =>
-          (styled.componentViewModels[i] as TextComponentViewModel)
-              .textStyleBuilder(const {})
-              .color;
-      expect(colorOf(0)!.a, 1);
-      expect(colorOf(1)!.a, closeTo(0.35, 0.01));
-    });
-
-    testWidgets('when typewriter scrolling is on then pageless documents get '
-        'room below the last line', (tester) async {
-      final p = await _pump(
-        tester,
-        Delta()..insert('${List.filled(40, 'Line').join('\n')}\n'),
-      );
-      ScrollPosition position() => tester
-          .state<ScrollableState>(
-            find
-                .descendant(
-                  of: find.byType(SuperEditor),
-                  matching: find.byType(Scrollable),
-                )
-                .first,
-          )
-          .position;
-      final before = position().maxScrollExtent;
-
-      p.h.controller.view.typewriter = true;
-      await tester.pumpAndSettle();
-
-      expect(position().maxScrollExtent, greaterThan(before + 400));
-    });
-
-    testWidgets('when typing with typewriter scrolling then the caret line '
-        'moves to 40 % of the viewport', (tester) async {
-      final p = await _pump(
-        tester,
-        Delta()..insert('${List.filled(80, 'Line').join('\n')}\n'),
-      );
-      p.h.controller.view.typewriter = true;
-      await tester.pumpAndSettle();
-      await tester.placeCaretInParagraph(p.h.controller.document.first.id, 0);
-      p.h.select(30 * 5 + 4);
-      await tester.pumpAndSettle();
-
-      await tester.typeImeText('!');
-      await tester.sendKeyEvent(LogicalKeyboardKey.arrowDown);
-      await tester.pumpAndSettle();
-
-      final layout = p.h.controller.documentLayout!;
-      final rect = layout.getRectForPosition(
-        p.h.controller.composer.selection!.extent,
-      )!;
-      final scrollable = tester.state<ScrollableState>(
-        find
-            .descendant(
-              of: find.byType(SuperEditor),
-              matching: find.byType(Scrollable),
-            )
-            .first,
-      );
-      final pos = scrollable.position;
-      final caretInViewport = rect.center.dy - pos.pixels;
-      expect(caretInViewport, closeTo(pos.viewportDimension * 0.4, 4));
     });
   });
 }

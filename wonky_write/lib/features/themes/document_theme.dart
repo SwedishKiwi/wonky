@@ -204,7 +204,6 @@ class DocumentThemeController extends ChangeNotifier {
   String? documentUuid;
 
   String? _themeUuid;
-  String? _previewUuid;
   ThemeOption _option = WriteThemeCatalog.builtins.first;
   bool _missing = false;
 
@@ -223,20 +222,8 @@ class DocumentThemeController extends ChangeNotifier {
   set themeUuid(String? uuid) {
     if (uuid == _themeUuid) return;
     _themeUuid = uuid;
-    if (_previewUuid == null) _show(uuid);
+    _show(uuid);
   }
-
-  /// A theme previewed locally (*View › Preview theme*, view state only,
-  /// Write 06 §5.2); null shows the document's theme again.
-  String? get previewUuid => _previewUuid;
-
-  set previewUuid(String? uuid) {
-    if (uuid == _previewUuid) return;
-    _previewUuid = uuid;
-    _show(uuid ?? _themeUuid);
-  }
-
-  String? get _shownUuid => _previewUuid ?? _themeUuid;
 
   void _show(String? uuid) {
     final known = uuid == null ? null : catalog.lookup(uuid);
@@ -247,7 +234,7 @@ class DocumentThemeController extends ChangeNotifier {
     }
     unawaited(
       catalog.load(uuid, viaDocumentUuid: documentUuid).then((t) {
-        if (_shownUuid != uuid) return;
+        if (_themeUuid != uuid) return;
         _missing = t == null;
         _apply(t ?? WriteThemeCatalog.builtins.first);
       }),
@@ -256,7 +243,7 @@ class DocumentThemeController extends ChangeNotifier {
 
   /// A saved theme (here or elsewhere) replaces the cached one.
   void _onCatalog() {
-    final uuid = _shownUuid;
+    final uuid = _themeUuid;
     if (uuid == null) return;
     final t = catalog.lookup(uuid);
     if (t != null && !identical(t, _option)) {

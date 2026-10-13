@@ -12,10 +12,12 @@ import '../model/embeds.dart';
 import '../styles/editor_theme.dart';
 import '../tables/inline_table_editing.dart';
 import 'editor_services.dart';
+import 'image_size_cache.dart';
 
 /// Stable widget keys (specs/15 §7).
 abstract final class WonkyEditorKeys {
   static const editor = ValueKey<String>('write.editor');
+  static const codeBlock = 'write.editor.codeBlock';
   static const codeLanguageChip = 'write.editor.codeLanguage';
   static const codeCopy = 'write.editor.codeCopy';
   static const tableEdit = 'write.editor.tableEdit';
@@ -83,6 +85,7 @@ class WonkyImageComponentBuilder implements ComponentBuilder {
     required this.theme,
     this.callbacks = const EditorBlockCallbacks(),
     this.editable = true,
+    this.maxHeight,
   });
 
   final EditorImageServices services;
@@ -92,6 +95,11 @@ class WonkyImageComponentBuilder implements ComponentBuilder {
   /// In read-only views a click opens the lightbox
   /// ([EditorBlockCallbacks.onImageTap]).
   final bool editable;
+
+  /// The tallest an image is displayed (scaled down, preserving its aspect
+  /// ratio): the page content height in Pages mode, so an image always fits
+  /// on one page (§17.3, §29.3). `null`: unbounded (Pageless).
+  final double? maxHeight;
 
   @override
   SingleColumnLayoutComponentViewModel? createViewModel(
@@ -147,6 +155,7 @@ class WonkyImageComponentBuilder implements ComponentBuilder {
                 services: services,
                 theme: theme,
                 callbacks: callbacks,
+                maxHeight: maxHeight,
               ),
             ),
           ),
@@ -165,6 +174,7 @@ class _WonkyImage extends StatefulWidget {
     required this.services,
     required this.theme,
     required this.callbacks,
+    required this.maxHeight,
   });
 
   final String nodeId;
@@ -174,6 +184,7 @@ class _WonkyImage extends StatefulWidget {
   final EditorImageServices services;
   final EditorTheme theme;
   final EditorBlockCallbacks callbacks;
+  final double? maxHeight;
 
   @override
   State<_WonkyImage> createState() => _WonkyImageState();
@@ -198,9 +209,61 @@ class _WonkyImageState extends State<_WonkyImage> {
     if (oldWidget.src != widget.src || oldWidget.services != widget.services) {
       _upload = widget.services.uploadStatus(widget.src);
       _broken = false;
+      _untrackSize();
       _resolve();
     }
   }
+
+  @override
+  void dispose() {
+    _untrackSize();
+    super.dispose();
+  }
+
+  ImageProvider? _trackedProvider;
+  ImageStream? _sizeStream;
+  ImageStreamListener? _sizeListener;
+
+  /// Records the natural size of [provider]'s image in [ImageSizeCache] once
+  /// it is decoded, for the placeholder size of later loads (§17.3).
+  void _trackSize(BuildContext context, ImageProvider? provider) {
+    if (provider == _trackedProvider) return;
+    _untrackSize();
+    _trackedProvider = provider;
+    if (provider == null) return;
+    final src = widget.src;
+    final listener = ImageStreamListener(
+      (info, _) {
+        ImageSizeCache.instance[src] = Size(
+          info.image.width / info.scale,
+          info.image.height / info.scale,
+        );
+        info.dispose();
+      },
+      // The Image widget reports errors (errorBuilder).
+      onError: (_, _) {},
+    );
+    _sizeStream = provider.resolve(createLocalImageConfiguration(context))
+      ..addListener(listener);
+    _sizeListener = listener;
+  }
+
+  void _untrackSize() {
+    final listener = _sizeListener;
+    if (listener != null) _sizeStream?.removeListener(listener);
+    _sizeStream = null;
+    _sizeListener = null;
+    _trackedProvider = null;
+  }
+
+  /// The loading placeholder's size: the cached natural size if this image
+  /// was loaded before, else 16:9 at the available width; both capped like
+  /// the image.
+  Size _loadingSize(double maxWidth) => ImageSizeCache.fit(
+    ImageSizeCache.instance[widget.src] ?? Size(maxWidth, maxWidth * 9 / 16),
+    maxWidth,
+    widget.maxHeight,
+  );
 
   Future<void> _resolve() async {
     setState(() => _resolving = true);
@@ -235,6 +298,8 @@ class _WonkyImageState extends State<_WonkyImage> {
           valueListenable: _upload,
           builder: (context, upload, _) {
             final provider = upload?.localPreview ?? _provider;
+            _trackSize(context, provider);
+            final maxHeight = widget.maxHeight;
             Widget content;
             if (_broken ||
                 (provider == null && !_resolving && upload == null)) {
@@ -247,6 +312,7 @@ class _WonkyImageState extends State<_WonkyImage> {
             } else if (provider == null) {
               content = _placeholder(
                 maxWidth,
+                size: _loadingSize(maxWidth),
                 icon: Icons.image_outlined,
                 label: upload?.phase == ImageUploadPhase.pending
                     ? 'Waiting for upload${upload?.uploaderName == null ? '' : ' from ${upload!.uploaderName}'}'
@@ -254,7 +320,12 @@ class _WonkyImageState extends State<_WonkyImage> {
               );
             } else {
               content = ConstrainedBox(
-                constraints: BoxConstraints(maxWidth: maxWidth),
+                // Natural size, scaled down (aspect ratio kept) to the
+                // content width and, in Pages mode, the page content height.
+                constraints: BoxConstraints(
+                  maxWidth: maxWidth,
+                  maxHeight: maxHeight ?? double.infinity,
+                ),
                 child: Image(
                   image: provider,
                   fit: BoxFit.contain,
@@ -271,7 +342,9 @@ class _WonkyImageState extends State<_WonkyImage> {
                     );
                   },
                   frameBuilder: (context, child, frame, sync) =>
-                      frame == null && !sync ? _placeholder(maxWidth) : child,
+                      frame == null && !sync
+                      ? _placeholder(maxWidth, size: _loadingSize(maxWidth))
+                      : child,
                 ),
               );
             }
@@ -311,39 +384,50 @@ class _WonkyImageState extends State<_WonkyImage> {
 
   Widget _placeholder(
     double width, {
+    Size? size,
     IconData? icon,
     String? label,
     bool retry = false,
   }) {
     final theme = widget.theme;
+    final box =
+        size ??
+        ImageSizeCache.fit(
+          Size(width, width * 9 / 16),
+          width,
+          widget.maxHeight,
+        );
     return SizedBox(
-      width: width,
-      height: width * 9 / 16,
+      width: box.width,
+      height: box.height,
       child: DecoratedBox(
         decoration: BoxDecoration(
           color: theme.mutedColor.withValues(alpha: 0.12),
           borderRadius: BorderRadius.circular(4),
         ),
         child: Center(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              if (icon != null) Icon(icon, color: theme.mutedColor, size: 32),
-              if (label != null)
-                Padding(
-                  padding: const EdgeInsets.only(top: 8),
-                  child: Text(
-                    label,
-                    style: TextStyle(color: theme.mutedColor, fontSize: 13),
+          child: FittedBox(
+            fit: BoxFit.scaleDown,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                if (icon != null) Icon(icon, color: theme.mutedColor, size: 32),
+                if (label != null)
+                  Padding(
+                    padding: const EdgeInsets.only(top: 8),
+                    child: Text(
+                      label,
+                      style: TextStyle(color: theme.mutedColor, fontSize: 13),
+                    ),
                   ),
-                ),
-              if (retry)
-                TextButton(
-                  key: const ValueKey(WonkyEditorKeys.imageRetry),
-                  onPressed: _retry,
-                  child: const Text('Retry'),
-                ),
-            ],
+                if (retry)
+                  TextButton(
+                    key: const ValueKey(WonkyEditorKeys.imageRetry),
+                    onPressed: _retry,
+                    child: const Text('Retry'),
+                  ),
+              ],
+            ),
           ),
         ),
       ),
@@ -563,9 +647,19 @@ class WonkyParagraphComponentBuilder implements ComponentBuilder {
     SingleColumnLayoutComponentViewModel viewModel,
   ) {
     if (viewModel is! ParagraphComponentViewModel) return null;
-    final component = _inner.createComponent(componentContext, viewModel);
-    if (component == null) return null;
     final blockType = viewModel.blockType;
+    // super_editor adds the block type to the attributions of every span it
+    // styles. For code blocks that is `codeAttribution`, which the inline
+    // styler renders as inline code (pill background, smaller size, one
+    // color over the syntax colors): the block's look comes from the
+    // stylesheet's code rule and the box instead.
+    final component = _inner.createComponent(
+      componentContext,
+      blockType == codeAttribution
+          ? (viewModel.copy()..blockType = null)
+          : viewModel,
+    );
+    if (component == null) return null;
     if (blockType == blockquoteAttribution) {
       return Semantics(
         label: 'quote',
@@ -686,8 +780,48 @@ class _CodeBlockChrome extends StatelessWidget {
             ),
           ],
         ),
-        child: child,
+        child: _box(child),
       ),
+    );
+  }
+
+  /// The whole block as one box: background, rounded corners, border and
+  /// inner padding around the paragraph component. The padding is outside
+  /// the component's render box, so super_editor's hit-testing, caret and
+  /// selection (all relative to that box) stay aligned with the text. The
+  /// box ignores pointers: a hit-testable decoration would pull the
+  /// surrounding content into the hit path and its gesture detectors would
+  /// win taps meant for the editor's interactor.
+  Widget _box(Widget component) {
+    final padding = theme.codeBlockPadding * zoom;
+    final border = theme.codeBlockBorder;
+    return Stack(
+      key: ValueKey('${WonkyEditorKeys.codeBlock}.$nodeId'),
+      children: [
+        Positioned.fill(
+          child: IgnorePointer(
+            child: DecoratedBox(
+              decoration: BoxDecoration(
+                color: theme.codeBlockBackground,
+                borderRadius: BorderRadius.circular(
+                  theme.codeBlockRadius * zoom,
+                ),
+                border: border == BorderSide.none
+                    ? null
+                    : Border.fromBorderSide(
+                        border.copyWith(width: border.width * zoom),
+                      ),
+              ),
+            ),
+          ),
+        ),
+        Padding(
+          padding: border == BorderSide.none
+              ? padding
+              : padding + EdgeInsets.all(border.width * zoom),
+          child: component,
+        ),
+      ],
     );
   }
 }
@@ -716,6 +850,10 @@ class _HoverChromeState extends State<_HoverChrome> {
     final chrome = widget.chrome;
     if (chrome == null) return widget.child;
     return MouseRegion(
+      // Not opaque: an opaque region is a hit target in the document content
+      // layer, which hides the pointer from the editor's interactor below
+      // it, so taps in the block never placed the caret.
+      opaque: false,
       onEnter: (_) => setState(() => _hovered = true),
       onExit: (_) => setState(() => _hovered = false),
       child: Stack(

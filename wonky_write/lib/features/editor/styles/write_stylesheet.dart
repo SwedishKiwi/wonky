@@ -170,12 +170,12 @@ class WriteStylesheetBuilder {
           ),
         };
       }),
+      // Space around the block; the box itself (background, corners, border,
+      // inner padding) is painted by WonkyParagraphComponentBuilder.
       StyleRule(const BlockSelector('code'), (doc, node) {
         return {
           Styles.textStyle: scaled(theme.codeBlock),
           Styles.padding: CascadingPadding.only(top: px(8), bottom: px(8)),
-          Styles.backgroundColor: theme.codeBlockBackground,
-          Styles.borderRadius: BorderRadius.circular(px(theme.codeBlockRadius)),
         };
       }),
       StyleRule(const BlockSelector('listItem'), (doc, node) {
@@ -348,24 +348,26 @@ class WriteInlineStyler {
           }
         }
       } else if (attribution is SuggestionAttribution) {
-        final color = theme.presenceColorFor(attribution.authorUuid ?? '');
+        // Insertions are green, deletions red and struck through (Write 08
+        // §2.5); the author shows on the card, not in the text.
         switch (attribution.type) {
           case SuggestionType.insertion:
             style = style.copyWith(
-              color: color,
+              color: theme.suggestionInsert,
               backgroundColor: theme.suggestionInsert.withValues(alpha: 0.12),
             );
-            decorations.add(TextDecoration.underline);
-            decorationColor = color;
           case SuggestionType.deletion:
             style = style.copyWith(
-              color: (style.color ?? theme.body.color!).withValues(alpha: 0.7),
+              color: theme.suggestionDelete,
+              backgroundColor: theme.suggestionDelete.withValues(alpha: 0.08),
             );
             decorations.add(TextDecoration.lineThrough);
-            decorationColor = color;
+            decorationColor = theme.suggestionDelete;
           case SuggestionType.format:
             decorations.add(TextDecoration.underline);
-            decorationColor = color;
+            decorationColor = theme.presenceColorFor(
+              attribution.authorUuid ?? '',
+            );
             decorationStyle = TextDecorationStyle.dotted;
           case null:
             break;

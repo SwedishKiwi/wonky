@@ -941,18 +941,6 @@ List<EditorCommandSpec> editorCommandCatalog() {
       },
     ),
     EditorCommandSpec(
-      id: 'write.view.toggleRemoteCursors',
-      title: 'Collaborator cursors',
-      requiredRole: Role.viewer,
-      isUndoable: false,
-      checked: (t, _) => t.controller.view.showRemoteCursors,
-      run: (t, _) {
-        t.controller.view.showRemoteCursors =
-            !t.controller.view.showRemoteCursors;
-        return const CommandResult.ok();
-      },
-    ),
-    EditorCommandSpec(
       id: 'write.view.suggestionPreview',
       title: 'Preview suggestions',
       requiredRole: Role.viewer,

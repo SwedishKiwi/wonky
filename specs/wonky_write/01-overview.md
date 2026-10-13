@@ -48,10 +48,10 @@ architecture does not block it.
 
 | Feature | Priority | Spec |
 |---------|----------|------|
-| Create blank / from template / offline (client UUIDv7) | P0 | suite 05, 12 |
+| Create blank / from template (each template with its own built-in theme) / offline (client UUIDv7) | P0 | suite 05, 12 |
 | Inline title editing (`DocumentTitleField`), rename undoable | P0 | 05 |
 | Star, move, make a copy, trash, details, make available offline | P0 | suite 05 |
-| Document settings: theme, page setup, layout mode, language, front matter | P0 | 05, 06, 07 |
+| Document settings: theme, page setup, layout mode, language, front matter (each from its own menu item; no settings dialog) | P0 | 05, 06, 07 |
 | Quick switcher (`Mod+O`), back/forward between files | P0 | suite 03 |
 | Document properties dialog (front matter editor, stats, created/modified) | P1 | 05 |
 
@@ -108,14 +108,12 @@ architecture does not block it.
 | Outline panel (headings tree, click to navigate, live) | P0 |
 | Go to heading (palette `#` provider and dialog) | P0 |
 | Find & replace panel: match case, whole word, regex, replace one/all (one undo step) | P0 |
-| Word count dialog and live status-bar count (document and selection) | P0 |
+| Word count dialog and optional live status-bar count (document and selection; off by default) | P0 |
 | Spellcheck (pure-Dart Hunspell checker, per-document language) | P1 |
 | Document language (BCP-47) for spellcheck, hyphenation and export metadata | P0 (setting) / P1 (use) |
 | Zoom 50–200 % | P0 |
 | Layout modes: **Pages** (paginated print layout) and **Pageless** | P0 |
-| Focus mode (dims all but the active paragraph) | P2 |
-| Typewriter scrolling | P2 |
-| View Markdown source (read-only dialog with Copy) | P1 |
+| ~~Focus mode~~, ~~typewriter scrolling~~, ~~View Markdown source dialog~~ | Removed |
 
 ### 3.6 Collaboration
 
@@ -124,8 +122,8 @@ architecture does not block it.
 | Real-time co-editing (OT), offline outbox, reconnect rebase | P0 | [03-sync-protocol.md](03-sync-protocol.md), suite 12 |
 | Presence avatars, remote cursors and selections with name flags | P0 | 04 §34, suite 07 |
 | Follow a collaborator | P1 | 04 §34.4 |
-| Comments: anchored to text, margin cards, panel, @mentions, resolve | P0 | [08-comments-suggestions-history.md](08-comments-suggestions-history.md) |
-| Suggesting mode (tracked changes), accept/reject, per-author colors | P0 | 08 + 04 §32 |
+| Comments: anchored to text, margin cards (the only place they show; Open / For you filter), @mentions, resolve | P0 | [08-comments-suggestions-history.md](08-comments-suggestions-history.md) |
+| Suggesting mode (tracked changes), accept/reject, per-author colors; suggestion cards with replies in the margin | P0 | 08 + 04 §32 |
 | Version history: list, compare with highlighted changes, restore, name | P0 | 08, suite 07 |
 | View modes: Editing / Suggesting / Viewing; role-driven read-only (`SuperReader`) | P0 | 04 §31, 05 §15 |
 

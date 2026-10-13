@@ -20,7 +20,7 @@ Package ownership:
 | Overlay range index, suggestion rewriter, accept/reject op builders, suggestion views, attributed diff | `wonky_write_core/lib/collab/` (pure Dart, shared by client, server, MCP) |
 | Server overlay tracking, suggestion threads, decisions, restore, diff endpoint | `wonky_server/lib/src/write/collab/`, `…/write/versions/` |
 | Margin, cards, highlights, suggesting-mode reaction, history route, presence layers | `wonky_write/lib/features/{comments,suggestions,history,presence}/` |
-| Shared comment card/composer/panel widgets | `wonky_app` (suite) |
+| Shared comment widgets (`CommentThreadBody`, `CommentsFilterTabs`, `CommentsController`, `CommentsHost`) | `wonky_app` (suite) |
 
 ---
 
@@ -42,8 +42,9 @@ Package ownership:
   *Copy comments* rewrites keys to the new thread UUIDs server-side; without it, `cmt_*` are
   stripped.
 - `document` threads (`anchorKind: document`, "comment on the whole document") have no anchor
-  attribute; they're listed at the top of the comments panel and shown as a card at the top of
-  the margin.
+  attribute; their composer and their cards sit at the top of the margin (Write has no
+  comments panel; the margin lists unresolved document and orphaned threads at the top, before
+  the anchored ones).
 
 ### 1.2 Creating a comment
 
@@ -100,10 +101,10 @@ Transitions are processed after commit:
 | >0 → 0 | if `open` → `orphaned` (system comment "Original content deleted"); resolved threads stay resolved | decision inference (§2.9) → resolve thread with `suggestionAccepted` / `suggestionRejected` / `suggestionWithdrawn` / `suggestionSuperseded` |
 
 Status changes are broadcast through `CommentEndpoint.watch` (`CommentEvent.statusChanged`).
-Orphaned threads appear in the comments panel under their position-less section with the
-quoted text and the label **"Original content deleted"**; they can be resolved, deleted or
-re-anchored by an Editor (*Re-attach to selection*, sets `cmt_*` on the new selection → back to
-`open`).
+Orphaned threads carry the quoted text and the label **"Original content deleted"**; they can be
+resolved, deleted or re-anchored by an Editor (`write.comments.reattach`, *Re-attach to
+selection*, sets `cmt_*` on the new selection → back to `open`). They have no anchor, so the
+margin lists them at its top (§1.1); the *Open* filter includes them.
 
 ### 1.5 Resolve, reopen, delete
 
@@ -131,8 +132,8 @@ re-anchored by an Editor (*Re-attach to selection*, sets `cmt_*` on the new sele
   the mode switcher ([05](05-screens-menus-toolbar.md)), shortcuts `Mod+Alt+Shift+Z` (Editing),
   `Mod+Alt+Shift+X` (Suggesting), `Mod+Alt+Shift+C` (Viewing). The mode is per user per document, stored locally
   (last used), not synced. Commenters see Editing disabled with tooltip.
-- Status bar and the caret flag show "Suggesting" in the user's presence color; the presence
-  roster state includes the mode.
+- The toolbar's mode switcher shows "Suggesting" (with the canvas cue, 05 §15) and the caret
+  flag shows it in the user's presence color; the presence roster state includes the mode.
 
 ### 2.2 Representation (recap + clarifications of [02](02-document-model.md) §1.1)
 
@@ -217,15 +218,16 @@ Constraints are kept valid: e.g. a suggested `code` format still excludes `bold/
 
 | Kind | Rendering (inline styler / layers, [06](06-themes.md) §6.2) |
 |------|----------------------------------------------------------------|
-| `ins` | text in the author's presence color + solid underline; background `suggestionInsert` token at 30 % |
-| `del` | strikethrough in the author's presence color, text at 70 % opacity |
+| `ins` | text in the `suggestionInsert` color (green), no underline; background `suggestionInsert` at 12 % |
+| `del` | text and strikethrough in the `suggestionDelete` color (red); background `suggestionDelete` at 8 % |
 | `fmt` (inline) | the new formatting + dotted underline in the author's color |
 | `fmt` (block) | the new block style + 2 px vertical bar in the author's color in the left margin |
 | `ins`/`del` on `"\n"` | small ¶ glyph at the line end (struck for `del`) drawn by a layer |
 | Embed `ins`/`del` | 2 px outline in the author's color; `del` embeds dimmed with a diagonal hatch |
 
-Presence color = `presence[colorIndex(userUuid)]` from the design system, consistent with
-avatars and cursors.
+Presence color (format suggestions) = `presence[colorIndex(userUuid)]` from the design system,
+consistent with avatars and cursors. Insertions and deletions use fixed green/red so the
+proposed edit reads at a glance; the author is on the margin card.
 
 ### 2.6 Display toggles (View › Preview suggestions ▸, `write.view.suggestionPreview {mode}` from [04](04-editor.md) §31)
 
@@ -248,12 +250,14 @@ avatars and cursors.
   if `via`, a summary — "Add: ‘quarterly’", "Delete: ‘the old plan’", "Replace: ‘red’ with
   ‘blue’", "Format: Bold", "Change paragraph to Heading 2", "Add image", "Insert paragraph break"
   (long texts truncated to 120 chars) — buttons **✓ Accept** / **✗ Reject** (Editor+; the author
-  sees **✗ Withdraw**), ⋮ (Link to suggestion), and a reply box: replies are normal comments in
-  the suggestion thread (mentions/notifications work as usual).
+  sees **✗ Withdraw**), ⋮ (Link to suggestion), then the suggestion thread's **replies** and a
+  reply box (the shared `CommentThreadBody`): replies are normal comments in the suggestion
+  thread (mentions/notifications work as usual).
 - Clicking a card selects/highlights all parts of the suggestion; clicking suggested text
   activates its card.
-- The comments panel has a **Suggestions** filter and a toolbar *Accept all* / *Reject all* (with
-  count; confirm when > 10), also in Tools › Review suggestions ▸.
+- Suggestion cards live only in the margin (there is no Suggestions panel or toolbar toggle);
+  they show with the margin's *Open* filter (§3.2). *Accept all* / *Reject all*
+  (`write.suggestions.acceptAll` / `rejectAll`, confirm when > 10) are commands (palette, MCP).
 
 ### 2.8 Accept / reject operations (`SuggestionOps`, core)
 
@@ -330,6 +334,9 @@ normalizer rewrites it so clients can't backdate).
 | Hover over a card | its anchor gets the active color temporarily |
 | Composer pending range | dashed underline in `primary` |
 
+List markers (bullets, numerals) never take the first character's comment highlight or
+suggestion background/strikethrough (vendored super_editor patch SE-7, [04](04-editor.md) §2.2).
+
 ### 3.2 Margin layout (`CommentMarginLayout`, pure function, unit-tested)
 
 Inputs: visible items (open comment threads + pending suggestions + composer) with `anchorTop`
@@ -355,11 +362,17 @@ else (active index a):
   off with *Reduce motion*).
 - Only cards intersecting the viewport ± 1 viewport height are built; others contribute
   estimated/cached heights.
-- Margin column: 300 px to the right of the page (Pages) or of the content column (Pageless).
-  When the window is too narrow for page + margin (`< page width + 340 px`), the margin collapses
-  to **markers**: a 24 px gutter with comment/suggestion icons (count badges for overlaps) at
-  `anchorTop`; clicking a marker opens the card in a popover anchored to it. The comments panel
-  remains available in all layouts.
+- The margin is the **only** place comments and suggestions are shown (there is no comments
+  side panel or Suggestions panel; [05](05-screens-menus-toolbar.md) §10.2). Write's
+  `WriteViewPrefs` is the shell `CommentsHost`: the title-row 💬 button and *View › Comments and
+  suggestions* (`shell.comments.togglePanel`) show/hide it (local pref `write.view.commentMargin`,
+  default on); creating or activating a comment shows it.
+- Filter at the top of the margin (`CommentsFilterTabs`): **Open** (default; open threads and
+  pending suggestions) / **For you** (open threads that mention or are assigned to me).
+- The new-comment composer is a card in the margin at its anchor (an item of the layout above).
+- Margin column: 300 px (plus gutters) to the right of the page (Pages) or of the content column
+  (Pageless) when the page at the current zoom still fits beside it; otherwise the margin
+  overlays the right edge of the canvas. Below 600 px canvas width it is hidden.
 
 ### 3.3 Interaction
 
@@ -368,8 +381,8 @@ else (active index a):
 - Moving the caret into an anchor (keyboard) **marks** the card (subtle ring) but doesn't
   activate it (no layout jump while typing).
 - Activating a card scrolls its anchor into view if needed; `Esc` deactivates.
-- `?comment=<threadUuid>` deep link activates the thread after load (and opens the panel if the
-  margin is collapsed).
+- `?comment=<threadUuid>` deep link activates the thread after load (and shows the margin if it
+  is hidden).
 - Next/previous comment or suggestion (document order): `Mod+Alt+N` / `Mod+Alt+P` (editor
   scope; on Windows, Ctrl+Alt combos that produce an AltGr character are passed to text input
   instead).
@@ -601,7 +614,7 @@ suggestion was concurrently modified undoes only what it changed.
 | Undo of an accept after the text was further edited | Rebased inverse re-adds the attribute on remaining chars only. |
 | Comment anchor fully inside a suggestion that gets rejected | Thread orphaned ("Original content deleted"); undo of reject un-orphans. |
 | Copy/paste of suggested text | Clipboard uses `SuggestionView.accepted` text; overlays stripped. |
-| Very many comments (> 500 open) | Margin builds only visible cards; panel virtualized; highlights still rendered (inline styler). |
+| Very many comments (> 500 open) | Margin builds only visible cards; highlights still rendered (inline styler). |
 | History diff across a restore | Attributed replay shows the restore op as edits by the restoring user. |
 
 ---

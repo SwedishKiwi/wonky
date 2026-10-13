@@ -15,7 +15,7 @@ final Map<String, Object?> minimalMonoThemeJson = {
   'fonts': {
     'body': 'IBM Plex Mono',
     'heading': 'IBM Plex Mono',
-    'mono': 'IBM Plex Mono',
+    'mono': 'JetBrains Mono',
   },
   'palette': paletteJson(
     text: '#111111',

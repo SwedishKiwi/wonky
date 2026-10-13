@@ -24,7 +24,7 @@ MCP [../09-mcp.md](../09-mcp.md), editor [04-editor.md](04-editor.md), screens
 | **Built-in theme** | Read-only theme shipped with the server (`isBuiltin = true`, `ownerId = null`), stable UUID. Can be duplicated, never edited. |
 | **User theme** | Theme in a user's personal library (`ownerId = me`). Only the owner can edit it. |
 | **Document theme** | `Document.themeId` — the theme assigned to a document. `null` = **"Use my default theme"**: each viewer sees their own default (from `UserPreferences.writeDefaults.defaultThemeId`, falling back to *Wonky Default*). |
-| **Variant** | `light` or `dark`. Chosen by the app theme (system/light/dark) for on-screen rendering; exports/print use `light` unless the user ticks *Use dark theme* ([../02-design-system.md](../02-design-system.md) §7). |
+| **Variant** | `light` or `dark`. Chosen by the app theme (system/light/dark) for on-screen rendering; exports/print use `light` unless the user ticks *Use dark theme* ([../02-design-system.md](../02-design-system.md) §8). |
 | **Theme palette** ("Theme colors") | Named colors (`text`, `accent`, `page`, …) defined per variant. Element styles reference palette entries (`"@accent"`) so a dark variant mostly only redefines the palette. |
 | **Font role** | `body`, `heading`, `mono`. Elements reference roles (`"@heading"`) or a concrete family name from the curated font list (§8). |
 | **Resolved theme** | `ResolvedWriteTheme`: the fully cascaded, unit-normalized, variant-specific style values consumed by renderers. Never persisted. |
@@ -145,10 +145,11 @@ Every element key below is optional; missing properties **inherit** (§3). Prope
 "punctuation", "builtin", "literal", "meta", "tag", "attribute", "regexp", "addition",
 "deletion" }` → `{ "color": ColorRef, "fontStyle"?: "italic", "fontWeight"?: int }`.
 Unlisted tokens render in `codeText`. Dark syntax: derived (§4) unless `dark.syntax` is given.
-Tokenization uses a pure-Dart highlighter in `wonky_write_core/lib/highlight/` (wraps
-`highlight` 0.7.x — `re_highlight` was rejected because it depends on Flutter) so the editor and all
-exporters produce identical token spans. Languages: the 40 most common highlight.js grammars
-(list in code); unknown language → no highlighting.
+Exporters tokenize with a pure-Dart highlighter in `wonky_write_core/lib/highlight/` (wraps
+`highlight` 0.7.x — `re_highlight` was rejected because it depends on Flutter; languages: the 40
+most common highlight.js grammars). The editor uses `syntax_highlight`'s TextMate grammars (15
+languages, [04](04-editor.md) §15.4), mapping scopes to the same token kinds, so colors match
+while token boundaries may differ slightly. Unknown language → no highlighting.
 
 ### 2.6 `overlays` (optional overrides of app tokens)
 
@@ -322,8 +323,9 @@ indexes:
   shows "Anna changed the theme to Classic Serif").
 - Undo: domain `write.meta`, entry `{field: themeId, before, after}` — dropped if the current
   value ≠ `after` (suite rule).
-- Viewers/Commenters cannot change the document theme (Editor+). Anyone can **preview** a
-  different theme locally (*View › Preview theme ▸*), which is view state, not persisted.
+- Viewers/Commenters cannot change the document theme (Editor+). There is no local theme
+  preview in the editor (*View › Preview theme* / `write.theme.previewLocal` was removed); the
+  theme picker and theme editor show previews.
 
 ### 5.3 Live updates
 
@@ -625,19 +627,20 @@ abstract interface class FontProvider {
 
 ## 9. Built-in presets
 
-All built-ins ship explicit dark palettes. Key characteristics (full JSON in
+All built-ins ship explicit dark palettes and use JetBrains Mono for code (the `mono` role).
+Key characteristics (full JSON in
 `wonky_write_core/lib/theme/builtins/`):
 
 | Key | Name | Fonts (body / heading / mono) | Body | Headings | Notable |
 |-----|------|-------------------------------|------|----------|---------|
 | `wonky-default` | Wonky Default | Inter / Inter / JetBrains Mono | 11pt, lh 1.5, after 8pt | 600 weight, H1 24pt … H6 11pt, `@heading` | Accent links, soft code blocks, rounded images |
 | `classic-serif` | Classic Serif | Source Serif 4 / Source Serif 4 / JetBrains Mono | 12pt, lh 1.45, justify | H1 26pt 600, small-caps H3 | Ornament rule `⁂`, italic blockquotes, onum |
-| `modern-sans` | Modern Sans | Work Sans / Montserrat / IBM Plex Mono | 11pt, lh 1.6 | Bold, tight letter spacing (−0.01em), H1 border-bottom | Full-width tables, zebra |
-| `academic-apa` | Academic (APA-like) | Liberation Serif / Liberation Serif / Courier Prime | 12pt, **lh 2.0**, first-line indent 0.5in (P2), no paragraph spacing | All 12pt bold; H1 centered; H3 bold italic | Margins 1in, header: `{title}` right `{page}`; tables `horizontal` borders, no zebra; captions above (P2) |
-| `technical` | Technical | IBM Plex Sans / IBM Plex Sans / IBM Plex Mono | 10.5pt, lh 1.5 | Numbering `outline` H1–H3 | Code blocks with border + line numbers (P2), dense lists |
-| `manuscript` | Manuscript | Courier Prime / Courier Prime / Courier Prime | 12pt, lh 2.0, first-line indent 0.5in (P2) | 12pt, uppercase H1, centered, page break before H1 | Rule = `#` centered; header `{author} / {title} / {page}` |
-| `minimal-mono` | Minimal Mono | IBM Plex Mono / IBM Plex Mono / IBM Plex Mono | 10.5pt, lh 1.6 | Same size as body, weight only; `#` prefix look via numbering off | Monochrome palette, no backgrounds |
-| `newsletter` | Newsletter | Lora / Playfair Display / Source Code Pro | 11.5pt, lh 1.55 | H1 34pt Playfair, accent color | Pageless max width 640px, centered images with captions & shadow, accent quote bar 4px |
+| `modern-sans` | Modern Sans | Work Sans / Montserrat / JetBrains Mono | 11pt, lh 1.6 | Bold, tight letter spacing (−0.01em), H1 border-bottom | Full-width tables, zebra |
+| `academic-apa` | Academic (APA-like) | Liberation Serif / Liberation Serif / JetBrains Mono | 12pt, **lh 2.0**, first-line indent 0.5in (P2), no paragraph spacing | All 12pt bold; H1 centered; H3 bold italic | Margins 1in, header: `{title}` right `{page}`; tables `horizontal` borders, no zebra; captions above (P2) |
+| `technical` | Technical | IBM Plex Sans / IBM Plex Sans / JetBrains Mono | 10.5pt, lh 1.5 | Numbering `outline` H1–H3 | Code blocks with border + line numbers (P2), dense lists |
+| `manuscript` | Manuscript | Courier Prime / Courier Prime / JetBrains Mono | 12pt, lh 2.0, first-line indent 0.5in (P2) | 12pt, uppercase H1, centered, page break before H1 | Rule = `#` centered; header `{author} / {title} / {page}` |
+| `minimal-mono` | Minimal Mono | IBM Plex Mono / IBM Plex Mono / JetBrains Mono | 10.5pt, lh 1.6 | Same size as body, weight only; `#` prefix look via numbering off | Monochrome palette, no backgrounds |
+| `newsletter` | Newsletter | Lora / Playfair Display / JetBrains Mono | 11.5pt, lh 1.55 | H1 34pt Playfair, accent color | Pageless max width 640px, centered images with captions & shadow, accent quote bar 4px |
 
 ---
 
@@ -811,7 +814,8 @@ Exposed to MCP via `write.get_theme` (`contrast_warnings`).
 |------------|------|------|----------|-------|
 | `write.theme.apply` | `{themeId: string\|null}` (alias `themeUuid`) | Editor | ✓ (`write.meta`) | `null` = *Use my default theme* |
 | `write.theme.useDefault` | — | Editor | ✓ | Alias for apply(null), menu item |
-| `write.theme.previewLocal` | `{themeUuid\|null}` | Viewer | — | View-only preview; `null` clears |
+>>>
+
 | `write.theme.openEditor` | `{themeUuid?, element?}` | Viewer | — | Opens `/themes/:uuid?doc=` |
 | `write.theme.openManager` | — | Viewer | — | Opens editor on theme list |
 | `write.theme.create` | `{name, fromThemeUuid?}` | — (own library) | ✓ (`write.theme`) | |

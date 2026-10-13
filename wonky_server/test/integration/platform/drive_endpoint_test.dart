@@ -7,6 +7,7 @@ import 'package:wonky_server/src/platform/drive/drive_service.dart';
 import 'package:wonky_server/src/platform/drive/templates/builtin_templates.dart';
 
 import 'package:wonky_server/src/platform/drive/drive_events.dart';
+import 'package:wonky_server/src/write/themes/builtin_theme_ids.dart';
 
 import '../../support/role_matrix.dart';
 import '../../support/streams.dart';
@@ -117,6 +118,18 @@ void main() {
           null,
         );
         expect(snapshot.deltaJson, contains('Action items'));
+
+        // The template's theme comes along.
+        final session = sessionBuilder.build();
+        final item = await DriveItem.db.findFirstRow(
+          session,
+          where: (t) => t.uuid.equals(doc.uuid),
+        );
+        final row = await Document.db.findFirstRow(
+          session,
+          where: (t) => t.itemId.equals(item!.id),
+        );
+        expect(row!.themeId, BuiltinThemeIds.forKey(template.themeKey!));
       },
     );
 
@@ -134,6 +147,7 @@ void main() {
           isTrue,
         );
         expect(templates.map((t) => t.key), isNot(contains('write.welcome')));
+        expect(templates.every((t) => t.previewStyle != null), isTrue);
       },
     );
 

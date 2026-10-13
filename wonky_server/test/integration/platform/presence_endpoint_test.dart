@@ -2,7 +2,9 @@ import 'dart:async';
 
 import 'package:async/async.dart';
 import 'package:test/test.dart';
+import 'package:wonky_server/src/platform/cluster/cluster.dart';
 import 'package:wonky_server/src/platform/common/models.dart';
+import 'package:wonky_server/src/platform/presence/presence_service.dart';
 
 import '../../support/streams.dart';
 import '../../support/test_drive.dart';
@@ -86,5 +88,62 @@ void main() {
 
       await expectLater(stream.first, throwsA(isA<WonkyException>()));
     });
+  });
+
+  withWonkyServerpod('Given a cluster with Redis', (sessionBuilder, endpoints) {
+    setUp(() {
+      Cluster.debugDistributed = true;
+      PresenceService.heartbeatInterval = const Duration(milliseconds: 40);
+    });
+    tearDown(() {
+      Cluster.debugDistributed = null;
+      PresenceService.heartbeatInterval = const Duration(seconds: 30);
+    });
+
+    test(
+      'when a session of a crashed instance stops beating then it leaves',
+      () async {
+        final anna = await TestUsers.create(sessionBuilder, name: 'Anna');
+        final doc = await TestDrive.document(endpoints, anna);
+        final updates = StreamController<PresenceUpdate>();
+        final events = StreamQueue(
+          endpoints.presence.join(
+            anna.endpointSession,
+            doc.uuid,
+            updates.stream,
+          ),
+        );
+        await nextWhere(events, (e) => e is PresenceRoster);
+
+        await anna.session.messages.postMessage(
+          PresenceService.channel(doc.uuid),
+          PresenceBusMessage(
+            type: 'hello',
+            sessionId: 'ghost',
+            participant: Participant(
+              sessionId: 'ghost',
+              userId: anna.id,
+              userUuid: anna.actor.authUserId,
+              displayName: 'Elsewhere',
+              colorIndex: 0,
+              role: AccessRole.viewer,
+              actorKind: ActorKind.user,
+              state: PresenceState.active,
+              joinedAt: DateTime.now().toUtc(),
+            ),
+          ),
+        );
+        final joined =
+            await nextWhere(events, (e) => e is PresenceJoined)
+                as PresenceJoined;
+        final left =
+            await nextWhere(events, (e) => e is PresenceLeft) as PresenceLeft;
+
+        expect(joined.participant.sessionId, 'ghost');
+        expect(left.sessionId, 'ghost');
+        await updates.close();
+        await events.cancel(immediate: true);
+      },
+    );
   });
 }

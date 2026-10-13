@@ -6,6 +6,7 @@ import 'package:serverpod_auth_idp_server/core.dart'
 import 'package:serverpod_auth_idp_server/providers/email.dart'
     show EmailAccount;
 
+import '../cluster/cluster.dart';
 import '../common/models.dart';
 import '../common/actor.dart';
 import '../common/errors.dart';
@@ -64,12 +65,30 @@ abstract final class UserService {
     final cached = _profileIdByAuthUser[authUserId.uuid];
     if (cached != null) return cached;
     final profile = await ensureProfile(session, authUserId);
+    if (Cluster.distributed) {
+      // Other instances may delete the account (specs/13 §4).
+      await Cluster.on(session, 'user.forget', (s) {
+        if (s.authUserId != null) forget(s.authUserId!);
+      });
+    }
     return _profileIdByAuthUser[authUserId.uuid] = profile.id!;
   }
 
-  /// Forgets cached ids (account deletion, tests).
+  /// Forgets cached ids on this instance (tests).
   static void forget(UuidValue authUserId) =>
       _profileIdByAuthUser.remove(authUserId.uuid);
+
+  /// Forgets cached ids on every instance (account deletion).
+  static Future<void> forgetEverywhere(
+    Session session,
+    UuidValue authUserId,
+  ) async {
+    forget(authUserId);
+    await Cluster.signal(
+      session,
+      Cluster.build('user.forget', authUserId: authUserId),
+    );
+  }
 
   /// Returns the profile of [authUserId], creating it (with preferences) if
   /// it does not exist yet. Pending email invites for the user's address are

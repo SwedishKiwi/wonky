@@ -3,6 +3,7 @@ import 'dart:convert';
 
 import 'package:async/async.dart';
 import 'package:test/test.dart';
+import 'package:wonky_server/src/platform/cluster/cluster.dart';
 import 'package:wonky_server/src/platform/common/models.dart';
 import 'package:wonky_server/src/platform/mcp/tool_support.dart';
 import 'package:wonky_server/src/platform/mcp/ui_bridge/ui_bridge_hub.dart';
@@ -198,6 +199,7 @@ void main() {
       final w = await _FakeWindow.connect(endpoints, anna);
 
       final call = UiBridgeHub.call(
+        anna.session,
         anna.id,
         'ui.get_state',
         const {},
@@ -262,6 +264,143 @@ void main() {
         final e = await mcp.error('ui.write.get_selection');
 
         expect(e['code'], 'no_session');
+        await w.close();
+      },
+    );
+  });
+
+  withWonkyServerpod('Given app windows on several instances', (
+    sessionBuilder,
+    endpoints,
+  ) {
+    late TestUser anna;
+    late McpHarness mcp;
+    setUp(() async {
+      UiBridgeHub.clear();
+      Cluster.debugDistributed = true;
+      UiBridgeHub.remoteListWait = const Duration(milliseconds: 50);
+      anna = await TestUsers.create(sessionBuilder, name: 'Anna');
+      mcp = await McpHarness.forUser(anna);
+    });
+    tearDown(() {
+      Cluster.debugDistributed = null;
+      UiBridgeHub.remoteListWait = const Duration(milliseconds: 300);
+    });
+
+    /// Next [UiBridgeResponse] posted on the reply channel of [requestId].
+    Future<UiBridgeResponse> replyOn(String requestId) {
+      final listener = anna.session;
+      final completer = Completer<UiBridgeResponse>();
+      listener.messages.addListener(UiBridgeHub.replyChannel(requestId), (m) {
+        if (m is UiBridgeResponse && !completer.isCompleted) {
+          completer.complete(m);
+        }
+      });
+      return completer.future
+          .timeout(const Duration(seconds: 5))
+          .whenComplete(listener.close);
+    }
+
+    test(
+      'when the window is on another instance then it is listed and '
+      'receives calls over the bus',
+      () async {
+        // A window connected to "another instance", answering on the bus.
+        final remote = anna.session;
+        final now = DateTime.now().toUtc().toIso8601String();
+        remote.messages.addListener(UiBridgeHub.userChannel(anna.id), (m) {
+          if (m is! UiBridgeRequest) return;
+          unawaited(
+            remote.messages.postMessage(
+              UiBridgeHub.replyChannel(m.requestId),
+              UiBridgeResponse(
+                requestId: m.requestId,
+                ok: true,
+                resultJson: jsonEncode({
+                  'session_id': 'remote-1',
+                  'app': 'write',
+                  'device': 'Other browser',
+                  'platform': 'web',
+                  'route': '/elsewhere',
+                  'focused': true,
+                  'last_focused_at': now,
+                  'connected_at': now,
+                  'tools': ['ui.get_state'],
+                }),
+              ),
+            ),
+          );
+        });
+        final relayed = <UiBridgeRequest>[];
+        remote.messages.addListener(UiBridgeHub.windowChannel('remote-1'), (
+          m,
+        ) {
+          if (m is! UiBridgeRequest) return;
+          relayed.add(m);
+          unawaited(
+            remote.messages.postMessage(
+              UiBridgeHub.replyChannel(m.requestId),
+              UiBridgeResponse(
+                requestId: m.requestId,
+                ok: true,
+                resultJson: jsonEncode({'route': '/elsewhere'}),
+              ),
+            ),
+          );
+        });
+
+        final sessions = await mcp.call('ui.list_sessions');
+        final state = await mcp.call('ui.get_state');
+
+        final listed = (sessions['sessions'] as List).single as Map;
+        expect(listed['session_id'], 'remote-1');
+        expect(listed['route'], '/elsewhere');
+        expect(relayed.single.tool, 'ui.get_state');
+        expect(state['route'], '/elsewhere');
+        expect(state['session_id'], 'remote-1');
+        await remote.close();
+      },
+    );
+
+    test(
+      'when another instance relays a call then the local window executes '
+      'it and the answer goes back over the bus',
+      () async {
+        final w = await _FakeWindow.connect(endpoints, anna, route: '/d/x');
+        final bus = anna.session;
+
+        final listing = replyOn('list-1');
+        await bus.messages.postMessage(
+          UiBridgeHub.userChannel(anna.id),
+          UiBridgeRequest(
+            requestId: 'list-1',
+            tool: UiBridgeHub.listRequest,
+            argsJson: jsonEncode({'origin': 'another-instance'}),
+            timeoutMs: 0,
+          ),
+        );
+        final listed = jsonDecode((await listing).resultJson!) as Map;
+        final answer = replyOn('call-1');
+        await bus.messages.postMessage(
+          UiBridgeHub.windowChannel(w.sessionId),
+          UiBridgeRequest(
+            requestId: 'call-1',
+            tool: 'ui.get_state',
+            argsJson: '{}',
+            agentName: 'Agent elsewhere',
+            timeoutMs: 5000,
+          ),
+        );
+        final req = await w.nextRequest();
+        w.respond(req, {'route': '/d/x'});
+        final response = await answer;
+
+        expect(listed['session_id'], w.sessionId);
+        expect(listed['tools'], contains('ui.get_state'));
+        expect(req.agentName, 'Agent elsewhere');
+        expect(response.ok, isTrue);
+        expect(jsonDecode(response.resultJson!), {'route': '/d/x'});
+        await bus.close();
         await w.close();
       },
     );

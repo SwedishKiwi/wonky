@@ -4,7 +4,6 @@ import 'package:wonky_ui/wonky_ui.dart'
     show RemoteCaret, RemoteSelectionPainter;
 
 import '../controller/write_editor_controller.dart';
-import '../mapping/document_mirror.dart';
 import '../model/document_queries.dart';
 import '../styles/editor_theme.dart';
 import '../view/editor_view_state.dart';
@@ -399,6 +398,10 @@ class _RemoteCaretLayerState
 /// Overlay: the ⋮⋮ block handle left of the hovered or caret block (Write 04
 /// §22.1). Tapping it calls [onTap] with the node id and the handle's global
 /// rect (the host opens the block menu).
+/// Width of the strip left of a block where its handle is shown (the
+/// handle sits 28 px left of the block).
+const double blockHandleGutter = 36;
+
 class WonkyBlockHandleLayerBuilder implements SuperEditorLayerBuilder {
   const WonkyBlockHandleLayerBuilder({
     required this.controller,
@@ -574,14 +577,4 @@ class _BlockHandleLayerState
       ],
     );
   }
-}
-
-/// Finds the block under a document-space y coordinate (block handle hover).
-String? nodeIdAtDocumentOffset(
-  DocumentLayout layout,
-  DocumentMirror mirror,
-  Offset offset,
-) {
-  final position = layout.getDocumentPositionNearestToOffset(offset);
-  return position?.nodeId;
 }

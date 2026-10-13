@@ -37,8 +37,9 @@ Future<void> invokeCollabCommand(
 }
 
 /// A suggestion card (Write 08 §2.7): author, time, ✨ badge for agent
-/// suggestions, the summary ("Replace: ‘red’ with ‘blue’") and *Accept* /
-/// *Reject* (Editors) or *Withdraw* (the author).
+/// suggestions, the summary ("Replace: ‘red’ with ‘blue’"), *Accept* /
+/// *Reject* (Editors) or *Withdraw* (the author), and the replies (comments
+/// in the suggestion's thread) with a reply box.
 class SuggestionCard extends StatelessWidget {
   const SuggestionCard({
     super.key,
@@ -97,6 +98,8 @@ class SuggestionCard extends StatelessWidget {
     final l = writeL10n(context);
     final author = _author(l);
     final via = s.via == 'mcp' ? l.suggestionViaMcp : l.suggestionViaAi;
+    final thread = c.threadOf(s.id);
+    final comments = session.comments.controller;
     final rejectLabel = own && !c.canDecide
         ? l.suggestionWithdraw
         : l.cmdSuggestionsReject;
@@ -205,6 +208,16 @@ class SuggestionCard extends StatelessWidget {
                         ),
                       ),
                   ],
+                ),
+              ],
+              if (thread != null && comments != null) ...[
+                const SizedBox(height: 8),
+                CommentThreadBody(
+                  key: ValueKey<String>('$key.thread'),
+                  services: session.services,
+                  controller: comments,
+                  thread: thread,
+                  canResolve: false,
                 ),
               ],
             ],

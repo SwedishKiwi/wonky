@@ -307,12 +307,27 @@ class WriteSpellcheck extends ChangeNotifier {
       return;
     }
     final text = node.text;
-    final plain = text.toPlainText();
-    final words = engine.words(
-      plain,
-      skipRanges: _skipRanges(text),
-      skipAllCaps: _skipAllCaps,
-    );
+    // Text with suggested deletions accepted, so a suggested replacement is
+    // checked as the edit it proposes and not as old + new text glued
+    // together (Write 04 §28.2).
+    final (plain, toNode) = _acceptedText(text);
+    final words = engine
+        .words(
+          plain,
+          skipRanges: [
+            for (final (start, end) in _skipRanges(text))
+              ?_toProjected(toNode, start, end),
+          ],
+          skipAllCaps: _skipAllCaps,
+        )
+        .map(
+          (w) => (
+            start: toNode[w.start],
+            end: toNode[w.end - 1] + 1,
+            word: w.word,
+            followedByPeriod: w.followedByPeriod,
+          ),
+        );
     final selection = controller.composer.selection;
     final caret =
         selection != null &&
@@ -367,6 +382,45 @@ class WriteSpellcheck extends ChangeNotifier {
       if (a[i] != b[i]) return false;
     }
     return true;
+  }
+
+  /// [text] without its suggested deletions, and for every character of it
+  /// its offset in [text].
+  static (String, List<int>) _acceptedText(AttributedText text) {
+    final plain = text.toPlainText();
+    if (plain.isEmpty) return (plain, const []);
+    final deleted = List<bool>.filled(plain.length, false);
+    for (final span in text.getAttributionSpansInRange(
+      attributionFilter: (a) =>
+          a is SuggestionAttribution && a.type == SuggestionType.deletion,
+      range: SpanRange(0, plain.length - 1),
+    )) {
+      for (var i = span.start; i <= span.end && i < plain.length; i += 1) {
+        deleted[i] = true;
+      }
+    }
+    final buffer = StringBuffer();
+    final toNode = <int>[];
+    for (var i = 0; i < plain.length; i += 1) {
+      if (deleted[i]) continue;
+      buffer.writeCharCode(plain.codeUnitAt(i));
+      toNode.add(i);
+    }
+    return (buffer.toString(), toNode);
+  }
+
+  /// The node range `[start, end)` in the coordinates of [_acceptedText], or
+  /// null when it was deleted entirely.
+  static (int, int)? _toProjected(List<int> toNode, int start, int end) {
+    var from = 0;
+    while (from < toNode.length && toNode[from] < start) {
+      from += 1;
+    }
+    var to = from;
+    while (to < toNode.length && toNode[to] < end) {
+      to += 1;
+    }
+    return to > from ? (from, to) : null;
   }
 
   static List<(int, int)> _skipRanges(AttributedText text) {

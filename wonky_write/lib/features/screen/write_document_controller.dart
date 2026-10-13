@@ -40,53 +40,47 @@ abstract final class WritePanels {
 }
 
 /// Per-user view preferences of the editor screen (Write 05 §13.2): local,
-/// not undoable, not synced.
-class WriteViewPrefs extends ChangeNotifier {
+/// not undoable, not synced. It is also the shell's [CommentsHost]: comments
+/// and suggestions are shown in the margin, not in a side panel.
+class WriteViewPrefs extends ChangeNotifier implements CommentsHost {
   WriteViewPrefs(this._store);
 
   final LocalStore? _store;
 
-  bool _wordCount = true;
+  bool _wordCount = false;
   bool _commentMargin = true;
   bool _blockHandles = true;
   bool _selectionToolbar = true;
-  bool _focusMode = false;
-  bool _typewriter = false;
 
+  /// The word count status bar ("Display word count while typing").
   bool get showWordCount => _wordCount;
   bool get showCommentMargin => _commentMargin;
   bool get showBlockHandles => _blockHandles;
   bool get showSelectionToolbar => _selectionToolbar;
 
-  /// Focus mode and typewriter scrolling (Write 04 §30).
-  bool get focusMode => _focusMode;
-  bool get typewriter => _typewriter;
+  @override
+  bool get isShown => _commentMargin;
+
+  @override
+  set isShown(bool value) {
+    if (value != _commentMargin) showCommentMargin = value;
+  }
 
   Future<void> load() async {
     final s = _store;
     if (s == null) return;
-    Future<bool> b(String k) async {
+    Future<bool> b(String k, {bool fallback = true}) async {
       try {
-        return (await s.read('write.view.$k')) as bool? ?? true;
+        return (await s.read('write.view.$k')) as bool? ?? fallback;
       } catch (_) {
-        return true;
+        return fallback;
       }
     }
 
-    _wordCount = await b('wordCount');
+    _wordCount = await b('wordCount', fallback: false);
     _commentMargin = await b('commentMargin');
     _blockHandles = await b('blockHandles');
     _selectionToolbar = await b('selectionToolbar');
-    Future<bool> off(String k) async {
-      try {
-        return (await s.read('write.view.$k')) as bool? ?? false;
-      } catch (_) {
-        return false;
-      }
-    }
-
-    _focusMode = await off('focusMode');
-    _typewriter = await off('typewriter');
     notifyListeners();
   }
 
@@ -100,8 +94,6 @@ class WriteViewPrefs extends ChangeNotifier {
   set showBlockHandles(bool v) => _set('blockHandles', _blockHandles = v);
   set showSelectionToolbar(bool v) =>
       _set('selectionToolbar', _selectionToolbar = v);
-  set focusMode(bool v) => _set('focusMode', _focusMode = v);
-  set typewriter(bool v) => _set('typewriter', _typewriter = v);
 }
 
 /// The open Write document as the shell sees it (suite 03, Write 04 §2.1):
@@ -148,7 +140,6 @@ class WriteDocumentController extends DocumentController {
     editor.addListener(_onEditor);
     editor.view.addListener(notifyListeners);
     viewPrefs.addListener(notifyListeners);
-    viewPrefs.addListener(_applyViewModes);
     documentTheme.addListener(_onTheme);
     services.prefs.addListener(_onPrefs);
     unawaited(viewPrefs.load());
@@ -335,13 +326,6 @@ class WriteDocumentController extends DocumentController {
         'date': HeaderFooterTokens.mediumDate(DateTime.now(), language ?? 'en'),
       },
     );
-  }
-
-  /// Mirrors the per-user view modes into the editor's view state.
-  void _applyViewModes() {
-    view
-      ..focusMode = viewPrefs.focusMode
-      ..typewriter = viewPrefs.typewriter;
   }
 
   void _onPrefs() {

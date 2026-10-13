@@ -76,6 +76,33 @@ class WriteComments extends ChangeNotifier implements CommentAnchorProvider {
     return list;
   }
 
+  /// Unresolved threads without a place in the text — comments on the whole
+  /// document and threads whose text was deleted (orphaned). The margin
+  /// lists them at the top of the document.
+  List<CommentThreadView> get unanchoredThreads {
+    final c = _controller;
+    if (c == null) return const [];
+    final a = anchors;
+    return [
+      for (final t in c.threads)
+        if (t.suggestionId == null &&
+            (t.status == CommentStatus.open ||
+                t.status == CommentStatus.orphaned) &&
+            !(t.anchorKind == CommentAnchorKind.textRange &&
+                a.containsKey(t.uuid.uuid)))
+          t,
+    ];
+  }
+
+  /// Where the comment being written is anchored (a Delta offset; 0 for a
+  /// comment on the whole document), or null when none is being written.
+  int? get draftOffset {
+    final draft = _controller?.draftAnchor;
+    if (draft == null) return null;
+    if (draft.kind != CommentAnchorKind.textRange) return 0;
+    return _lastRange?.$1 ?? 0;
+  }
+
   /// Whether the user may see comments (Viewers only when the owner allows
   /// it, suite 06).
   bool get visible =>
@@ -400,7 +427,8 @@ class WriteComments extends ChangeNotifier implements CommentAnchorProvider {
   void startDocumentComment() {
     final c = _controller;
     if (c == null || !session.currentRole.canComment) return;
-    session.services.panels.open(ShellPanels.comments);
+    final host = session.services.commentsHost;
+    if (host != null) host.isShown = true;
     c.startDraft(
       NewCommentAnchor(
         kind: CommentAnchorKind.document,

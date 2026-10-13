@@ -28,7 +28,7 @@
 
 ## 3. Operations
 - **Deployment**: Serverpod Cloud (default) or Docker (existing `Dockerfile`); Postgres; Redis
-  required for > 1 instance; cloud storage (Serverpod Cloud storage or S3/GCS) for uploads,
+  required for > 1 instance (§4); cloud storage (Serverpod Cloud storage or S3/GCS) for uploads,
   exports, version snapshots, script bytecode.
 - **Web builds**: both Flutter web apps (`wonky_write`, `wonky_sheets`) built with `--wasm` by
   the server's `flutter_build` script into `wonky_server/web/write` and `wonky_server/web/sheets`
@@ -52,3 +52,57 @@
   (minute resolution), AI usage rollups (hourly), orphan file cleanup (weekly).
 - **Feature flags**: config-driven flags (`features.*`) for AI, scripting, MCP UI bridge,
   experimental chart types — checked server-side and delivered to clients in `meta.getInfo()`.
+
+## 4. Running several instances
+
+The server runs as one instance or as several identical instances behind a load balancer
+(no sticky sessions needed). Several instances **require Redis**: Postgres is the only shared
+state besides Redis, and `session.messages` is global only with Redis.
+
+**Enabling it.** `config/staging.yaml` and `production.yaml` ship with `redis: enabled: false`
+(a single instance, which works wherever no Redis is provisioned). To scale out, enable Redis in the
+config or with `SERVERPOD_REDIS_ENABLED=true`, `SERVERPOD_REDIS_HOST`, `SERVERPOD_REDIS_PORT`
+and `SERVERPOD_REDIS_PASSWORD` (or `redis:` in `passwords.yaml`). Only enable it with a Redis
+that is reachable: in `production` run mode Serverpod does not fall back when Redis is down,
+and every message (also to sessions on the same instance) is then lost. In staging/production
+the server prints a warning at start when Redis is disabled. Development and tests run
+without Redis.
+
+**How the pieces work across instances** (helpers in
+`wonky_server/lib/src/platform/cluster/cluster.dart`: `Cluster.instanceId`,
+`Cluster.distributed` = Redis enabled, `ClusterSignal`s on channel `wonky:cluster`,
+`Cluster.withLock` = Postgres advisory lock):
+
+| Area | Mechanism |
+|------|-----------|
+| Bus channels (`doc:`, `presence:`, `theme:`, drive, comments, notifications, `sheets:merged:`) | `session.messages` with the default `MessageScope.auto`: global via Redis. Listeners receive deserialized copies; delivery is best effort and unordered |
+| Write OT commits | Postgres row lock + catch-up from the op log (Write 03 §2) — correct on any instance |
+| Write in-memory `DocumentState` | Each instance keeps its own. Remote `op` messages make it catch up from the op log (coalesced), and `CursorUpdate`, `RequestOps` and `HashCheck` first catch up to the revision the client names, so gap fills and cursor transforms never use a stale head |
+| Document and presence rosters | `hello`/`here`/`left` plus, with Redis, a `beat` every 30 s; participants not heard of for 90 s are dropped (crashed instance, lost `left`); a `beat` of an unknown participant adds it. MCP/AI agents get a session id derived from user + document + agent, so all instances show one participant, and re-announce while active |
+| Editor limit (Write 03 §7) | Checked at Init and, with Redis, again 2 s later when the `here` replies of other instances arrived (editors that joined earlier count); an over-limit joiner is switched to viewer (`RoleChanged`) |
+| MCP sessions (`Mcp-Session-Id`) | Registered in Redis (`wonky:mcp:session:<id>`, TTL = idle time, refreshed each minute of use). An instance that does not know a session resumes it (replays the stored `initialize`); `DELETE` and expiry apply everywhere; new sessions are marked ready by the server so `notifications/initialized` may land anywhere. The `GET` event stream only carries notifications of the instance serving it |
+| MCP rate limit | Fixed one-minute window per token counted in Redis (`INCR`), so the limit is global (up to 2× at a window boundary); in-memory sliding window without Redis or when Redis fails |
+| MCP UI bridge | Windows are registered on the instance serving their stream and listen on `uibridge:user:<userId>` and `uibridge:window:<id>`. `ui.list_sessions` merges local windows with replies collected for 300 ms; calls to a window elsewhere are relayed and answered on `uibridge:reply:<requestId>` |
+| AI assistant `stop` / `confirm` | Unary calls handled locally when the run is here, else relayed as `ClusterSignal`s to the instance running the chat stream |
+| Profile-id cache (`UserService`) | Account deletion invalidates it on all instances (`user.forget` signal) |
+| Recurring jobs (FutureCalls) | Every instance reconciles the schedule at start under an advisory lock: existing jobs with the same cron are kept, missing ones added, changed or duplicated ones replaced. Serverpod claims each run, so it executes on one instance |
+| Sheets change-log consumer | Exactly once per row via `sheets_change_log_receipt` (insert-or-skip) |
+
+**Accepted per-instance limits** (soft limits; documented, not enforced globally):
+AI concurrency per user (`ai.maxConcurrentRequests`, Suite 10) and export concurrency per user
+are counted per instance; "one run per assistant thread" is checked per instance (the app
+already prevents a second run); the maximum of 20 MCP sessions per user is per instance;
+caches of signed/public URLs and the AI feature fallbacks are per instance. E2E verification
+codes (`platform/e2e/`) are in memory and exist only in development/test, which run one
+instance.
+
+**Known framework caveat.** Serverpod's Redis controller keeps one callback per channel and
+re-subscribing right after the last listener of a channel unsubscribed can lose that
+subscription's messages until the next listener change; our streams subscribe after several
+database round trips, which avoids the race in practice.
+
+**Tests** simulate a cluster on one process: `Cluster.debugDistributed = true` turns on the
+cluster code paths on the local bus, messages from "another instance" are posted with a
+foreign `originInstance` or straight onto the channels, evicting `DocumentCache` gives a
+connection the state another instance would have, and two `McpHttpHandler`s share an
+`InMemoryMcpSessionDirectory`.

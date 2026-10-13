@@ -9,8 +9,10 @@ import '../view/editor_view_state.dart';
 ///
 /// A block that doesn't fit on the current page (and isn't taller than a
 /// page) is pushed to the next page by injecting extra top padding
-/// ([PaginationStylePhase]); headings keep with the next block's first line;
-/// oversized blocks overflow across the page seam.
+/// ([PaginationStylePhase]); a block that would start in a page's bottom
+/// margin or in the gap between pages starts at the next page's content top;
+/// headings keep with the next block's first line; oversized blocks overflow
+/// across the page seam.
 class PaginationController extends ChangeNotifier {
   PaginationController();
 
@@ -19,6 +21,11 @@ class PaginationController extends ChangeNotifier {
 
   /// Extra top padding per node id (scaled pixels).
   Map<String, double> _gaps = const {};
+
+  /// The gaps the last styled layout was built with ([markApplied]). Natural
+  /// positions are measured against these, not against [_gaps]: a [measure]
+  /// that runs before the layout picked up new gaps stays correct.
+  Map<String, double> _applied = const {};
   int _pageCount = 1;
 
   Map<String, double> get gaps => _gaps;
@@ -32,6 +39,17 @@ class PaginationController extends ChangeNotifier {
   /// Page height plus the gap between pages (scaled).
   double get pageStride => (_setup.size.height + _setup.pageGap) * _zoom;
 
+  /// Height of a page's content area (page height minus the top and bottom
+  /// margins, scaled): the tallest block that fits on one page.
+  double get contentHeight => _setup.contentHeight * _zoom;
+
+  /// The top of page [page]'s content area in document-layout coordinates.
+  double contentTopOf(int page) =>
+      page * pageStride + _setup.margins.top * _zoom;
+
+  /// The bottom of page [page]'s content area in document-layout coordinates.
+  double contentBottomOf(int page) => contentTopOf(page) + contentHeight;
+
   void configure(EditorPageSetup setup, double zoom) {
     if (setup == _setup && zoom == _zoom) return;
     _setup = setup;
@@ -40,73 +58,109 @@ class PaginationController extends ChangeNotifier {
     notifyListeners();
   }
 
-  /// Measures the laid-out [document] and recomputes the page breaks.
-  /// Returns whether the injected gaps changed (the layout must be redone).
-  bool measure(DocumentLayout layout, Document document) {
-    final pageHeight = _setup.size.height * _zoom;
-    final marginTop = _setup.margins.top * _zoom;
-    final marginBottom = _setup.margins.bottom * _zoom;
-    final contentHeight = pageHeight - marginTop - marginBottom;
-    final stride = pageStride;
+  /// Records the gaps the document layout was styled with (called by
+  /// [PaginationStylePhase]).
+  void markApplied(Map<String, double> gaps) => _applied = gaps;
 
-    final newGaps = <String, double>{};
-    var previousShift = 0.0;
-    var shift = 0.0;
-    var page = 0;
+  /// Measures the laid-out [document] and recomputes the page breaks.
+  /// Returns whether the injected gaps changed (the layout must be redone and
+  /// measured again).
+  bool measure(DocumentLayout layout, Document document) {
+    final contentHeight = this.contentHeight;
     final nodes = document.toList();
+
+    // Natural rects: the laid-out rects minus every gap applied above them.
+    // For keep-with-next, also the natural bottom of each block's first line.
+    final natural = List<Rect?>.filled(nodes.length, null);
+    final firstLineBottom = List<double?>.filled(nodes.length, null);
+    var appliedShift = 0.0;
     for (var i = 0; i < nodes.length; i += 1) {
       final node = nodes[i];
+      final begin = DocumentPosition(
+        nodeId: node.id,
+        nodePosition: node.beginningPosition,
+      );
       final rect = layout.getRectForSelection(
-        DocumentPosition(nodeId: node.id, nodePosition: node.beginningPosition),
+        begin,
         DocumentPosition(nodeId: node.id, nodePosition: node.endPosition),
       );
       if (rect == null) continue;
-      previousShift += _gaps[node.id] ?? 0;
-      final naturalTop = rect.top - previousShift;
-      final height = rect.height;
-      var top = naturalTop + shift;
-      var bottom = top + height;
+      appliedShift += _applied[node.id] ?? 0;
+      natural[i] = rect.translate(0, -appliedShift);
+      final firstLine = layout.getRectForPosition(begin);
+      firstLineBottom[i] = (firstLine?.bottom ?? rect.bottom) - appliedShift;
+    }
 
-      while (top >= page * stride + pageHeight - marginBottom) {
+    final newGaps = <String, double>{};
+    var shift = 0.0;
+    var page = 0;
+    for (var i = 0; i < nodes.length; i += 1) {
+      final rect = natural[i];
+      if (rect == null) continue;
+      final node = nodes[i];
+      final height = rect.height;
+      var top = rect.top + shift;
+      var bottom = rect.bottom + shift;
+
+      while (top >= contentBottomOf(page)) {
         page += 1;
       }
-      final contentTop = page * stride + marginTop;
-      final contentBottom = contentTop + contentHeight;
+      var gap = 0.0;
+      final contentTop = contentTopOf(page);
+      if (top < contentTop - 0.5) {
+        // The block would start in the bottom margin of the previous page or
+        // in the gap between pages: it starts at this page's content top.
+        gap = contentTop - top;
+        top += gap;
+        bottom += gap;
+      }
 
       var needed = bottom;
       final isHeading =
           node is ParagraphNode &&
           headingLevelOf(node.getMetadataValue(NodeMetadata.blockType)) != null;
-      if (isHeading && i + 1 < nodes.length) {
-        // Keep with next: at least ~1.5 body lines of the next block.
-        needed += 1.5 * 20 * _zoom;
+      if (isHeading) {
+        // Keep with next: the next block's first line must fit, too.
+        final next = _nextLaidOut(natural, i);
+        if (next != null) {
+          final nextLine = firstLineBottom[next]! + shift + gap;
+          if (nextLine > needed) needed = nextLine;
+        }
       }
-      if (needed > contentBottom &&
+      if (needed > contentBottomOf(page) + 0.5 &&
           height <= contentHeight &&
           top > contentTop + 0.5) {
-        final nextContentTop = (page + 1) * stride + marginTop;
-        final gap = nextContentTop - top;
+        final push = contentTopOf(page + 1) - top;
+        gap += push;
+        page += 1;
+        top += push;
+        bottom += push;
+      }
+      if (gap > 0) {
         newGaps[node.id] = gap;
         shift += gap;
-        page += 1;
-        top += gap;
-        bottom += gap;
       }
-      while (bottom > page * stride + pageHeight - marginBottom &&
-          height > contentHeight) {
+      while (bottom > contentBottomOf(page) + 0.5 && height > contentHeight) {
         // Oversized block: it overflows across the seam.
         page += 1;
       }
     }
 
     final changed = !_sameGaps(newGaps, _gaps);
-    _gaps = newGaps;
+    if (changed) _gaps = newGaps;
     final count = page + 1;
     if (changed || count != _pageCount) {
       _pageCount = count;
       notifyListeners();
     }
     return changed;
+  }
+
+  static int? _nextLaidOut(List<Rect?> rects, int index) {
+    for (var j = index + 1; j < rects.length; j += 1) {
+      if (rects[j] != null) return j;
+    }
+    return null;
   }
 
   static bool _sameGaps(Map<String, double> a, Map<String, double> b) {
@@ -121,6 +175,13 @@ class PaginationController extends ChangeNotifier {
 
 /// Injects the page-break gaps of a [PaginationController] as extra top
 /// padding.
+///
+/// The phase lives as long as its [pagination] (both are owned by the editor)
+/// and outlives layout presenters: `super_editor` disposes every style phase
+/// when it recreates its presenter (on any stylesheet or zoom change) and
+/// then hands the same phase to the new presenter. So [dispose] keeps the
+/// pagination listener; otherwise new gaps would never reach the layout
+/// after the first presenter change.
 class PaginationStylePhase extends SingleColumnLayoutStylePhase {
   PaginationStylePhase(this.pagination) {
     pagination.addListener(markDirty);
@@ -128,11 +189,8 @@ class PaginationStylePhase extends SingleColumnLayoutStylePhase {
 
   final PaginationController pagination;
 
-  @override
-  void dispose() {
-    pagination.removeListener(markDirty);
-    super.dispose();
-  }
+  /// Stops listening to [pagination] (when the editor is disposed).
+  void close() => pagination.removeListener(markDirty);
 
   @override
   SingleColumnLayoutViewModel style(
@@ -140,6 +198,7 @@ class PaginationStylePhase extends SingleColumnLayoutStylePhase {
     SingleColumnLayoutViewModel viewModel,
   ) {
     final gaps = pagination.gaps;
+    pagination.markApplied(gaps);
     if (gaps.isEmpty) return viewModel;
     return SingleColumnLayoutViewModel(
       padding: viewModel.padding,

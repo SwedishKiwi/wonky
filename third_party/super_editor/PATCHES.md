@@ -117,6 +117,18 @@ Every change is marked with `// WONKY PATCH <id>` in the code. Tests of our patc
 - **Spec**: Write 04 §24
 - **Upstream**: generally useful; to be proposed.
 
+## SE-7 — List markers don't inherit text highlights
+
+- **Reason**: the default bullet and numeral builders style the marker with the first
+  character's attributions, so a comment highlight or suggestion background/strikethrough on the
+  start of a list item also painted a thin highlighted sliver on the bullet (or the "1.").
+- **Changes**: `_markerStyle` keeps the font, size, weight, color and metrics of that style but
+  drops `background`/`backgroundColor` and decorations.
+- **Files**: `lib/src/default_editor/list_items.dart`
+- **Tests**: `test/wonky_patches/se7_list_marker_style_test.dart`
+- **Spec**: Write 08 §3.1
+- **Upstream**: generally useful; to be proposed.
+
 ## Infra
 
 - `pubspec.yaml`: `dependency_overrides: attributed_text: {path: ../attributed_text}` so the

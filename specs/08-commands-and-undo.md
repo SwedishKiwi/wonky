@@ -110,7 +110,9 @@ any), the current selection, the user's role on the document, the `UndoService`,
 - Opened with `Mod+Shift+P` (`Mod+K` is reserved for *Insert link* in both apps, as in Google
   Docs/Sheets). Built from shad `ShadDialog` + custom
   `CommandPalette` list (see design system).
-- Fuzzy search over title, description, aliases and menu path ("Format › Text › Bold").
+- Fuzzy search over title, description, aliases and menu path ("Format › Text › Bold"). This is
+  also how menu commands are searched (there is no separate "Search the menus" mode).
+- Rows for files show the file's kind icon (`PaletteRow.leading`, `DriveKindIcon`, suite 02 §5).
 - Shows shortcut on the right, disabled commands greyed (with reason tooltip).
 - Sections: *Recent*, *Suggested* (context-dependent), *All commands*. Additional providers:
   "Go to document…" (drive search), "Go to sheet/heading…", "Ask AI: <query>".
@@ -260,12 +262,12 @@ through the active document controller, never re-register these ids):
 | Drive | `shell.drive.newFolder`, `shell.drive.rename`, `shell.drive.move`, `shell.drive.copy`, `shell.drive.addShortcut`, `shell.drive.setStarred`, `shell.drive.togglePinnedOffline`, `shell.drive.trash`, `shell.drive.restore`, `shell.drive.deleteForever`, `shell.drive.emptyTrash`, `shell.drive.upload` |
 | Sharing | `shell.sharing.open`, `shell.sharing.copyLink`, `shell.sharing.requestAccess` |
 | Edit | `shell.edit.undo`, `shell.edit.redo`, `shell.edit.undoHistory`, `shell.edit.undoTo {stepIndex}`, `shell.edit.cut`, `shell.edit.copy`, `shell.edit.paste`, `shell.edit.pasteWithoutFormatting`, `shell.edit.selectAll` |
-| Comments | `shell.comments.create`, `shell.comments.reply`, `shell.comments.resolve`, `shell.comments.reopen`, `shell.comments.delete`, `shell.comments.activate {threadUuid}`, `shell.comments.togglePanel` |
+| Comments | `shell.comments.create`, `shell.comments.reply`, `shell.comments.resolve`, `shell.comments.reopen`, `shell.comments.delete`, `shell.comments.activate {threadUuid}`, `shell.comments.togglePanel` (show through the app's `CommentsHost` when set, else the comments side panel; suite 07 §2.3) |
 | Versions | `shell.versions.open`, `shell.versions.togglePanel`, `shell.versions.nameCurrent`, `shell.versions.restore {versionId}` |
 | Panels | `shell.panels.open {panelId}`, `shell.panels.close {panelId}`, `shell.panels.toggle {panelId}` |
 | MCP | `shell.mcp.copyConnectionInfo`, `shell.mcp.toggleUiBridge`, `shell.mcp.stopControl` |
-| View | `shell.view.toggleCompact`, `shell.view.toggleToolbar`, `shell.view.toggleMenubar`, `shell.view.toggleStatusBar`, `shell.view.toggleFullScreen`, `shell.view.zoom {percent}` |
+| View | `shell.view.zoom {percent}` (the editor chrome is always shown: no compact mode, full screen or show/hide toggles for toolbar, menubar or status bar) |
 | Appearance & settings | `shell.appearance.setTheme {mode}`, `shell.settings.open {section}` |
 | AI | `shell.ai.togglePanel`, `shell.ai.newThread`, `shell.ai.send`, `shell.ai.stop` |
-| Help | `shell.help.searchMenus`, `shell.help.shortcuts`, `shell.help.open`, `shell.help.feedback`, `shell.activity.open` |
+| Help | `shell.help.shortcuts`, `shell.help.feedback`, `shell.help.whatsNew`, `shell.help.about` (no help center or menu search) |
 | Account | `shell.account.signOut`, `shell.account.switchApp {app}` |

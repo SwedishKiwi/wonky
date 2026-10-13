@@ -45,33 +45,9 @@ class CommentsPanel extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  ShadTabs<CommentsFilter>(
-                    value: c.filter,
-                    onChanged: c.setFilter,
-                    tabs: [
-                      for (final f in CommentsFilter.values)
-                        ShadTab(
-                          value: f,
-                          child: Text(switch (f) {
-                            CommentsFilter.all => l.commentsAll,
-                            CommentsFilter.open => l.commentsOpen,
-                            CommentsFilter.resolved => l.commentsResolved,
-                            CommentsFilter.forYou => l.commentsForYou,
-                          }),
-                        ),
-                    ],
-                  ),
-                  const SizedBox(height: 8),
                   Row(
                     children: [
-                      Expanded(
-                        child: ShadInput(
-                          key: const ValueKey<String>('comments.search'),
-                          placeholder: Text(l.commentsSearch),
-                          leading: const Icon(LucideIcons.search, size: 14),
-                          onChanged: c.setQuery,
-                        ),
-                      ),
+                      Expanded(child: CommentsFilterTabs(controller: c)),
                       const SizedBox(width: 6),
                       WonkyDropdownMenu(
                         entries: () => [
@@ -154,6 +130,34 @@ class CommentsPanel extends StatelessWidget {
 
 /// A text box with `@` mention autocomplete. Reports the plain text and
 /// the mentioned user ids.
+/// The Open / For you filter of the comments (suite 07 §2.3), shared by the
+/// comments panel and Write's comment margin.
+class CommentsFilterTabs extends StatelessWidget {
+  const CommentsFilterTabs({super.key, required this.controller});
+
+  final CommentsController controller;
+
+  @override
+  Widget build(BuildContext context) {
+    final l = WonkyAppLocalizations.of(context);
+    return ShadTabs<CommentsFilter>(
+      value: controller.filter,
+      onChanged: controller.setFilter,
+      tabs: [
+        for (final f in CommentsFilter.values)
+          ShadTab(
+            key: ValueKey<String>('comments.filter.${f.name}'),
+            value: f,
+            child: Text(switch (f) {
+              CommentsFilter.open => l.commentsOpen,
+              CommentsFilter.forYou => l.commentsForYou,
+            }),
+          ),
+      ],
+    );
+  }
+}
+
 class MentionField extends StatefulWidget {
   const MentionField({
     super.key,
@@ -393,7 +397,10 @@ class _NewCommentCardState extends State<NewCommentCard> {
   Widget build(BuildContext context) {
     final l = WonkyAppLocalizations.of(context);
     final theme = ShadTheme.of(context);
-    final anchor = widget.controller.draftAnchor!;
+    // The draft can end (posted, cancelled) before a host stops showing
+    // this card.
+    final anchor = widget.controller.draftAnchor;
+    if (anchor == null) return const SizedBox.shrink();
     final me = widget.services.me;
     return ShadCard(
       key: const ValueKey<String>('comments.new'),
@@ -523,21 +530,9 @@ class CommentThreadCard extends StatefulWidget {
 }
 
 class _CommentThreadCardState extends State<CommentThreadCard> {
-  final _reply = TextEditingController();
-  final _field = GlobalKey<MentionFieldState>();
-  bool _replying = false;
   bool _expanded = false;
-  int? _editing;
-  final _edit = TextEditingController();
 
   ShellServices get s => widget.services;
-
-  @override
-  void dispose() {
-    _reply.dispose();
-    _edit.dispose();
-    super.dispose();
-  }
 
   Future<void> _invoke(String id, Map<String, Object?> args) async {
     try {
@@ -550,18 +545,6 @@ class _CommentThreadCardState extends State<CommentThreadCard> {
     }
   }
 
-  Future<void> _sendReply() async {
-    final body = _reply.text.trim();
-    if (body.isEmpty) return;
-    await _invoke('shell.comments.reply', {
-      'threadUuid': widget.thread.uuid.uuid,
-      'body': body,
-      'mentions': _field.currentState?.mentionIds ?? const <int>[],
-    });
-    _reply.clear();
-    setState(() => _replying = false);
-  }
-
   @override
   Widget build(BuildContext context) {
     final l = WonkyAppLocalizations.of(context);
@@ -571,7 +554,6 @@ class _CommentThreadCardState extends State<CommentThreadCard> {
     final active = c.activeThreadUuid == t.uuid.uuid;
     final resolved = t.status == CommentStatus.resolved;
     final orphaned = t.status == CommentStatus.orphaned;
-    final role = s.activeDocument.value?.role ?? Role.viewer;
     final collapsed = resolved && !_expanded && !active;
     final label = c.anchors?.labelFor(t) ?? t.quotedText;
     return GestureDetector(
@@ -633,79 +615,148 @@ class _CommentThreadCardState extends State<CommentThreadCard> {
                   ),
                 ],
               )
-            else ...[
-              for (var i = 0; i < t.comments.length; i++) ...[
-                if (i > 0) const SizedBox(height: 10),
-                _commentRow(
-                  context,
-                  t,
-                  t.comments[i],
-                  first: i == 0,
-                  role: role,
-                ),
-              ],
-              const SizedBox(height: 10),
-              if (role.canComment && !resolved)
-                _replying
-                    ? Column(
-                        crossAxisAlignment: CrossAxisAlignment.stretch,
-                        children: [
-                          MentionField(
-                            key: _field,
-                            fieldKey: 'comments.reply.${t.uuid.uuid}',
-                            services: s,
-                            controller: _reply,
-                            autofocus: true,
-                            placeholder: l.replyPlaceholder,
-                            onSubmit: _sendReply,
-                          ),
-                          const SizedBox(height: 6),
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.end,
-                            children: [
-                              ShadButton.ghost(
-                                size: ShadButtonSize.sm,
-                                onPressed: () =>
-                                    setState(() => _replying = false),
-                                child: Text(l.actionCancel),
-                              ),
-                              const SizedBox(width: 6),
-                              ShadButton(
-                                key: ValueKey<String>(
-                                  'comments.reply.${t.uuid.uuid}.send',
-                                ),
-                                size: ShadButtonSize.sm,
-                                onPressed: _sendReply,
-                                child: Text(l.cmdReply),
-                              ),
-                            ],
-                          ),
-                        ],
-                      )
-                    : GestureDetector(
-                        onTap: () => setState(() => _replying = true),
-                        child: Container(
-                          key: ValueKey<String>(
-                            'comments.reply.${t.uuid.uuid}.open',
-                          ),
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 10,
-                            vertical: 8,
-                          ),
-                          decoration: BoxDecoration(
-                            border: Border.all(color: theme.colorScheme.input),
-                            borderRadius: BorderRadius.circular(18),
-                          ),
-                          child: Text(
-                            l.replyPlaceholder,
-                            style: theme.textTheme.muted,
-                          ),
-                        ),
-                      ),
-            ],
+            else
+              CommentThreadBody(services: s, controller: c, thread: t),
           ],
         ),
       ),
+    );
+  }
+}
+
+/// The comments of a thread and its reply box (shared by
+/// [CommentThreadCard] and app cards such as Write's suggestion cards, whose
+/// replies are comments in the suggestion's thread).
+class CommentThreadBody extends StatefulWidget {
+  const CommentThreadBody({
+    super.key,
+    required this.services,
+    required this.controller,
+    required this.thread,
+    this.canResolve = true,
+  });
+
+  final ShellServices services;
+  final CommentsController controller;
+  final CommentThreadView thread;
+
+  /// Whether the first comment offers Resolve / Reopen.
+  final bool canResolve;
+
+  @override
+  State<CommentThreadBody> createState() => _CommentThreadBodyState();
+}
+
+class _CommentThreadBodyState extends State<CommentThreadBody> {
+  final _reply = TextEditingController();
+  final _field = GlobalKey<MentionFieldState>();
+  bool _replying = false;
+  int? _editing;
+  final _edit = TextEditingController();
+
+  ShellServices get s => widget.services;
+
+  @override
+  void dispose() {
+    _reply.dispose();
+    _edit.dispose();
+    super.dispose();
+  }
+
+  Future<void> _invoke(String id, Map<String, Object?> args) async {
+    try {
+      await s.dispatcher.invoke(id, args: args, source: InvocationSource.ui);
+    } catch (e) {
+      s.toasts.error(
+        s.l10n?.commentFailed ?? 'Error',
+        description: errorMessage(e),
+      );
+    }
+  }
+
+  Future<void> _sendReply() async {
+    final body = _reply.text.trim();
+    if (body.isEmpty) return;
+    await _invoke('shell.comments.reply', {
+      'threadUuid': widget.thread.uuid.uuid,
+      'body': body,
+      'mentions': _field.currentState?.mentionIds ?? const <int>[],
+    });
+    _reply.clear();
+    setState(() => _replying = false);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final l = WonkyAppLocalizations.of(context);
+    final theme = ShadTheme.of(context);
+    final t = widget.thread;
+    final resolved = t.status == CommentStatus.resolved;
+    final role = s.activeDocument.value?.role ?? Role.viewer;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        for (var i = 0; i < t.comments.length; i++) ...[
+          if (i > 0) const SizedBox(height: 10),
+          _commentRow(context, t, t.comments[i], first: i == 0, role: role),
+        ],
+        if (t.comments.isNotEmpty) const SizedBox(height: 10),
+        if (role.canComment && !resolved)
+          _replying
+              ? Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    MentionField(
+                      key: _field,
+                      fieldKey: 'comments.reply.${t.uuid.uuid}',
+                      services: s,
+                      controller: _reply,
+                      autofocus: true,
+                      placeholder: l.replyPlaceholder,
+                      onSubmit: _sendReply,
+                    ),
+                    const SizedBox(height: 6),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.end,
+                      children: [
+                        ShadButton.ghost(
+                          size: ShadButtonSize.sm,
+                          onPressed: () => setState(() => _replying = false),
+                          child: Text(l.actionCancel),
+                        ),
+                        const SizedBox(width: 6),
+                        ShadButton(
+                          key: ValueKey<String>(
+                            'comments.reply.${t.uuid.uuid}.send',
+                          ),
+                          size: ShadButtonSize.sm,
+                          onPressed: _sendReply,
+                          child: Text(l.cmdReply),
+                        ),
+                      ],
+                    ),
+                  ],
+                )
+              : GestureDetector(
+                  onTap: () => setState(() => _replying = true),
+                  child: Container(
+                    key: ValueKey<String>('comments.reply.${t.uuid.uuid}.open'),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 10,
+                      vertical: 8,
+                    ),
+                    decoration: BoxDecoration(
+                      border: Border.all(color: theme.colorScheme.input),
+                      borderRadius: BorderRadius.circular(18),
+                    ),
+                    child: Text(
+                      l.replyPlaceholder,
+                      style: theme.textTheme.muted,
+                    ),
+                  ),
+                ),
+      ],
     );
   }
 
@@ -763,7 +814,7 @@ class _CommentThreadCardState extends State<CommentThreadCard> {
                 ],
               ),
             ),
-            if (first && role.canComment)
+            if (first && role.canComment && widget.canResolve)
               ShadTooltip(
                 builder: (_) => Text(resolved ? l.cmdReopen : l.cmdResolve),
                 child: ShadIconButton.ghost(

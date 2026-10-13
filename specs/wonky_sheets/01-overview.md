@@ -112,7 +112,7 @@ Priority: **P0** = required for the first Sheets release (milestone M3, see
 | Cell/range comments with mentions, assignment | P0 | [10](10-collaboration-history.md) |
 | Version history (snapshots, restore, copy) | P1 | [10](10-collaboration-history.md) |
 | Cell edit history ("Show edit history") | P1 | [10](10-collaboration-history.md) |
-| Notification rules, activity dashboard | P2 | [10](10-collaboration-history.md) |
+| Notification rules, activity dashboard (suite dashboard UI removed; server kept, suite 07 §6) | P2 | [10](10-collaboration-history.md) |
 
 ### 2.8 Import, export, print
 | Feature | Pri | Spec |
@@ -169,8 +169,8 @@ config read at startup and delivered to clients in `ProtocolInfo`.
 
 ## 4. Concurrency semantics (user-facing)
 
-This section is the text that the in-app help page *How collaboration works in Wonky Sheets*
-(Help › Help center) presents. Engineers: the mechanics are in
+This section is the user-facing explanation of how collaboration works in Wonky Sheets (there is
+no in-app help center; it can feed docs or the assistant). Engineers: the mechanics are in
 [02-data-model.md](02-data-model.md) §1 and suite [12](../12-offline-and-sync.md) §2.
 
 1. **Your edits are saved on this device immediately** and sync to others within a couple of

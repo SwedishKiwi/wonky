@@ -592,8 +592,17 @@ abstract final class HeadlessDocumentEditor {
 /// Shows MCP agents as transient participants of a document (Write 08 §5):
 /// one participant per user, document and agent, kept while calls continue
 /// and removed [HeadlessDocumentEditor.presenceTtl] after the last one.
+///
+/// With several instances (specs/13 §4) calls of one agent may land on
+/// different instances: the session id is derived from the user, document
+/// and agent, so every instance announces the same participant, and active
+/// agents re-announce themselves (`beat`) so the documents' heartbeat
+/// expiry keeps them.
 abstract final class AgentPresence {
   static final Map<String, _AgentEntry> _entries = {};
+
+  /// How often an active agent re-announces itself.
+  static Duration get _beatEvery => HeadlessDocumentEditor.presenceTtl ~/ 2;
 
   static String _key(ToolContext ctx, WriteTarget t) =>
       '${ctx.actor.userId}|${t.document.uuid.uuid}|${ctx.agentLabel}';
@@ -604,11 +613,25 @@ abstract final class AgentPresence {
     final existing = _entries[key];
     if (existing != null) {
       existing.touch();
+      final now = clock.now();
+      if (now.difference(existing.announcedAt) >= _beatEvery) {
+        existing.announcedAt = now;
+        await DocumentBus.post(
+          ctx.session,
+          target.document.uuid,
+          DocBusMessage(
+            type: 'beat',
+            originSessionId: existing.sessionId,
+            participant: existing.participant,
+          ),
+        );
+      }
       return existing.sessionId;
     }
     final summary = await UserService.summary(ctx.session, ctx.actor.userId);
     final sessionId =
-        '${ctx.actor.kind == ActorKind.ai ? 'ai' : 'mcp'}-${const Uuid().v4()}';
+        '${ctx.actor.kind == ActorKind.ai ? 'ai' : 'mcp'}-'
+        '${const Uuid().v5(Namespace.url.value, 'wonky:agent:$key')}';
     final participant = Participant(
       sessionId: sessionId,
       userId: ctx.actor.userId,
@@ -621,7 +644,7 @@ abstract final class AgentPresence {
       state: PresenceState.active,
       joinedAt: nowUtc(),
     );
-    final entry = _AgentEntry(sessionId, target.document.uuid);
+    final entry = _AgentEntry(sessionId, target.document.uuid, participant);
     _entries[key] = entry;
     entry.touch(
       onExpire: () {
@@ -682,10 +705,13 @@ abstract final class AgentPresence {
 }
 
 class _AgentEntry {
-  _AgentEntry(this.sessionId, this.documentUuid);
+  _AgentEntry(this.sessionId, this.documentUuid, this.participant)
+    : announcedAt = clock.now();
 
   final String sessionId;
   final UuidValue documentUuid;
+  final Participant participant;
+  DateTime announcedAt;
   Timer? timer;
   void Function()? _onExpire;
 

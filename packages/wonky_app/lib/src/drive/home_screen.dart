@@ -502,8 +502,21 @@ class _Header extends StatelessWidget {
                 LucideIcons.trash2,
                 l.cmdMoveToTrash,
               ),
+              // Only what the icons above don't already offer.
               WonkyDropdownMenu(
-                entries: () => itemMenuEntries(context, services, trash: false),
+                entries: () => itemMenuEntries(
+                  context,
+                  services,
+                  trash: false,
+                  exclude: {
+                    'shell.sharing.open',
+                    'shell.drive.move',
+                    'shell.drive.copy',
+                    'shell.drive.setStarred',
+                    if (sel.length == 1) 'shell.drive.rename',
+                    'shell.drive.trash',
+                  },
+                ),
                 builder: (context, ctl) => ShadIconButton.ghost(
                   width: 32,
                   height: 32,

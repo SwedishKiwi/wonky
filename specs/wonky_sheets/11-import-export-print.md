@@ -532,7 +532,7 @@ arrow or Esc returns to the grid.
 - Settings panel (360 px, `ShadAccordion` for the collapsible sections) on the right; preview
   on the left, scrollable, zoom (fit width / 50–200 %), page navigation, thumbnails strip (P2).
 - The chrome follows the app theme; **pages are always rendered light** (paper). *Export PDF*
-  has an option *Use dark theme* (suite 02 §7).
+  has an option *Use dark theme* (suite 02 §8).
 
 ### 7.2 Settings (`PrintSettings`)
 

@@ -1,9 +1,9 @@
 import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:wonky_client/wonky_client.dart';
+import 'package:wonky_app/wonky_app.dart' show WonkyAppLocalizations;
 import 'package:wonky_ui/testing.dart';
 import 'package:wonky_write/features/suggestions/suggestion_card.dart';
-import 'package:wonky_write/features/suggestions/suggestions_panel.dart';
 import 'package:wonky_write_core/wonky_write_core.dart';
 
 import '../document/support/session_harness.dart';
@@ -117,64 +117,57 @@ void main() {
     });
   });
 
-  group('Given a document without suggestions', () {
-    testWidgets(
-      'when the panel is shown then it offers switching to Suggesting',
-      (tester) async {
-        final h = await _open(tester, Delta()..insert('Hello\n'));
-
-        await pumpWonky(
-          tester,
-          SizedBox(
-            width: 340,
-            height: 500,
-            child: WriteSuggestionsPanel(session: h.session),
-          ),
-        );
-
-        expect(find.text('Switch to Suggesting'), findsOneWidget);
-        await tester.tap(
-          find.byKey(const ValueKey('write.suggestions.switchMode')),
-        );
-        await tester.pump();
-        expect(h.session.suggestions.suggesting, isTrue);
-      },
-    );
-  });
-
-  group('Given several suggestions', () {
-    testWidgets('when rejecting all from the panel then they are all removed', (
+  group('Given a suggestion with a reply in its thread', () {
+    testWidgets('when the card is shown then the reply is on the card', (
       tester,
     ) async {
-      final h = await _open(
-        tester,
-        Delta()
-          ..insert('A', {
-            'sug_a': {'t': 'ins', 'by': _other, 'at': 1},
-          })
-          ..insert('bc')
-          ..insert('d', {
-            'sug_b': {'t': 'del', 'by': _other, 'at': 1},
-          })
-          ..insert('\n'),
+      final server = FakeDocumentServer(initial: _withSuggestion(_other));
+      final h = SessionHarness(server);
+      final threadUuid = UuidValue.fromString(
+        '00000000-0000-7000-8000-0000000000aa',
       );
+      h.comments.threads[threadUuid.uuid] = CommentThreadView(
+        uuid: threadUuid,
+        itemUuid: h.session.itemUuid,
+        anchorKind: CommentAnchorKind.textRange,
+        anchorJson: '{"v":1,"suggestionId":"s1"}',
+        suggestionId: 's1',
+        status: CommentStatus.open,
+        createdBy: userSummary(2),
+        createdAt: DateTime.utc(2026),
+        comments: [
+          CommentView(
+            id: 1,
+            threadUuid: threadUuid,
+            author: userSummary(1),
+            authorKind: ActorKind.user,
+            body: 'Shorter is better here',
+            mentions: const [],
+            reactions: const {},
+            createdAt: DateTime.utc(2026),
+            deleted: false,
+          ),
+        ],
+      );
+      await tester.runAsync(() => h.open(withComments: true));
+      addTearDown(() => tester.runAsync(h.dispose));
+      final s = h.session.suggestions.pending.single;
+
       await pumpWonky(
         tester,
         SizedBox(
-          width: 340,
-          height: 500,
-          child: WriteSuggestionsPanel(session: h.session),
+          width: 300,
+          child: SuggestionCard(session: h.session, suggestion: s),
         ),
+        extraDelegates: const [WonkyAppLocalizations.delegate],
       );
-      expect(find.text('2 suggestions'), findsOneWidget);
 
-      await tester.tap(
-        find.byKey(const ValueKey('write.suggestions.rejectAll')),
+      expect(find.text('Add: ‘there’'), findsOneWidget);
+      expect(find.text('Shorter is better here'), findsOneWidget);
+      expect(
+        find.byKey(const ValueKey('write.suggestion.s1.thread')),
+        findsOneWidget,
       );
-      await tester.pump();
-
-      expect(DeltaUtils.text(h.doc), 'bcd\n');
-      expect(find.text('No suggestions'), findsWidgets);
     });
   });
 }

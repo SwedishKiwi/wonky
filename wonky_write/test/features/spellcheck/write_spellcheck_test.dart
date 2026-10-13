@@ -82,6 +82,36 @@ void main() {
       expect(_flagged(spell), ['Teh', 'borwn']);
     });
 
+    testWidgets('when a suggestion replaces part of a word then the proposed '
+        'word is checked, not the old and new text together', (tester) async {
+      final (_, spell) = await _pump(
+        tester,
+        Delta()
+          ..insert('The ')
+          ..insert('qi', {
+            'sug_s1': {'t': 'del', 'by': 'u1', 'at': 1},
+          })
+          ..insert('qu', {
+            'sug_s1': {'t': 'ins', 'by': 'u1', 'at': 1},
+          })
+          ..insert('ick fox and the ')
+          ..insert('borwn', {
+            'sug_s2': {'t': 'del', 'by': 'u1', 'at': 1},
+          })
+          ..insert(' dog. Teh ')
+          ..insert('cat', {
+            'sug_s3': {'t': 'ins', 'by': 'u1', 'at': 1},
+          })
+          ..insert('x\n'),
+      );
+
+      // "qiquick" -> "quick"; deleted "borwn" is not checked; the inserted
+      // "cat" joins "x" into "catx".
+      expect(_flagged(spell), ['Teh', 'catx']);
+      final catx = spell.errors.last;
+      expect(catx.end - catx.start, 4);
+    });
+
     testWidgets('when typing "teh " then it is underlined within 300 ms and '
         'the first suggestion fixes it in one undo step (AC-28.1)', (
       tester,

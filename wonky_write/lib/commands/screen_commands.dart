@@ -21,7 +21,6 @@ import '../features/import/import_service.dart';
 import '../features/links/link_editor.dart';
 import '../features/screen/anchored_popover.dart';
 import '../features/screen/dialogs/document_dialogs.dart';
-import '../features/screen/dialogs/document_settings_dialog.dart';
 import '../features/screen/dialogs/page_setup_dialog.dart';
 import '../features/screen/write_document_controller.dart';
 import '../features/tables/table_editor.dart';
@@ -149,7 +148,7 @@ List<Command<CommandArgs>> fileCommands(ShellServices s) => [
         'format': JsonSchema.string(
           enumValues: [for (final f in WriteDownloadFormat.values) f.id],
         ),
-        'options': const JsonSchema.object(properties: {}),
+        'options': const JsonSchema.object(additionalProperties: true),
       },
       required: const ['format'],
     ),
@@ -433,27 +432,6 @@ List<Command<CommandArgs>> viewCommands(ShellServices s) => [
     checked: (d, a) => d.viewPrefs.showWordCount,
     run: (ctx, d, a) {
       d.viewPrefs.showWordCount = !d.viewPrefs.showWordCount;
-      return const CommandResult.ok();
-    },
-  ),
-  WriteCommand(
-    'write.view.toggleCommentMargin',
-    label: (l) => l.cmdViewToggleCommentMargin,
-    categoryName: (l) => l.categoryView,
-    checked: (d, a) => d.viewPrefs.showCommentMargin,
-    run: (ctx, d, a) {
-      d.viewPrefs.showCommentMargin = !d.viewPrefs.showCommentMargin;
-      return const CommandResult.ok();
-    },
-  ),
-  WriteCommand(
-    'write.view.toggleSelectionToolbar',
-    label: (l) => l.cmdViewToggleSelectionToolbar,
-    categoryName: (l) => l.categoryView,
-    showInPalette: false,
-    checked: (d, a) => d.viewPrefs.showSelectionToolbar,
-    run: (ctx, d, a) {
-      d.viewPrefs.showSelectionToolbar = !d.viewPrefs.showSelectionToolbar;
       return const CommandResult.ok();
     },
   ),
@@ -1017,7 +995,7 @@ List<Command<CommandArgs>> documentCommands(
     isUndoable: true,
     showInPalette: false,
     argsSchema: const JsonSchema.object(
-      properties: {'pageSetup': JsonSchema.object(properties: {})},
+      properties: {'pageSetup': JsonSchema.object(additionalProperties: true)},
       required: ['pageSetup'],
     ),
     enabled: (d, a) => d.canChangeSettings,
@@ -1173,25 +1151,6 @@ List<Command<CommandArgs>> documentCommands(
     },
   ),
   WriteCommand(
-    'write.doc.settings',
-    label: (l) => l.cmdDocSettings,
-    descriptionText: (l) => l.cmdDocSettingsDescription,
-    categoryName: (l) => l.categoryFile,
-    argsSchema: const JsonSchema.object(
-      properties: {
-        'tab': JsonSchema.string(
-          enumValues: ['general', 'theme', 'pageSetup', 'markdown'],
-        ),
-      },
-    ),
-    run: (ctx, d, a) async {
-      final c = _ctx(ctx);
-      if (c == null) return const CommandResult.failed('No window');
-      await showDocumentSettingsDialog(c, d, tab: a.string('tab'));
-      return const CommandResult.ok();
-    },
-  ),
-  WriteCommand(
     'write.theme.openPicker',
     label: (l) => l.cmdThemeOpenPicker,
     categoryName: (l) => l.categoryFormat,
@@ -1314,26 +1273,6 @@ List<Command<CommandArgs>> documentCommands(
         c,
         d,
         pageCount: d.view.layout == LayoutMode.pages ? d.pageCount.value : null,
-      );
-      return const CommandResult.ok();
-    },
-  ),
-  WriteCommand(
-    'write.tools.viewMarkdown',
-    label: (l) => l.cmdToolsViewMarkdown,
-    categoryName: (l) => l.categoryTools,
-    enabled: (d, a) => d.copyAllowed,
-    run: (ctx, d, a) async {
-      final markdown = const MarkdownCodec().exportMarkdown(
-        d.editor.delta,
-        frontMatter: d.frontMatter,
-      );
-      final c = _ctx(ctx);
-      if (c == null) return CommandResult.ok({'markdown': markdown});
-      await showMarkdownSourceDialog(
-        c,
-        markdown: markdown,
-        onDownload: () => unawaited(d.downloadAs(WriteDownloadFormat.md)),
       );
       return const CommandResult.ok();
     },

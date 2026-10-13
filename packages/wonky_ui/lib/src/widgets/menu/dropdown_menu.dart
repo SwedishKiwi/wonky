@@ -3,6 +3,7 @@ import 'package:shad/shad.dart';
 
 import 'menu_entry.dart';
 import 'menu_items.dart';
+import 'open_menu.dart';
 
 /// Builds the trigger of a [WonkyDropdownMenu].
 typedef WonkyDropdownTriggerBuilder =
@@ -62,6 +63,7 @@ class _WonkyDropdownMenuState extends State<WonkyDropdownMenu> {
 
   @override
   void dispose() {
+    OpenMenu.release(this);
     _controller.removeListener(_onChanged);
     _own?.dispose();
     super.dispose();
@@ -71,6 +73,11 @@ class _WonkyDropdownMenuState extends State<WonkyDropdownMenu> {
     final open = _controller.isOpen;
     if (open != _wasOpen) {
       _wasOpen = open;
+      if (open) {
+        OpenMenu.claim(this, _controller.hide);
+      } else {
+        OpenMenu.release(this);
+      }
       widget.onOpenChanged?.call(open);
     }
     if (mounted) setState(() {});
@@ -159,11 +166,17 @@ class _LazyContextMenuRegionState extends State<_LazyContextMenuRegion> {
   }
 
   void _rebuild() {
+    if (_controller.isOpen) {
+      OpenMenu.claim(this, _controller.hide);
+    } else {
+      OpenMenu.release(this);
+    }
     if (mounted) setState(() {});
   }
 
   @override
   void dispose() {
+    OpenMenu.release(this);
     _controller.dispose();
     super.dispose();
   }

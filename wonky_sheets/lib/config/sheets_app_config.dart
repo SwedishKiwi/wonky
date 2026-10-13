@@ -1,6 +1,5 @@
 import 'package:flutter/widgets.dart';
 import 'package:go_router/go_router.dart';
-import 'package:shad/shad.dart';
 import 'package:wonky_app/wonky_app.dart';
 import 'package:wonky_client/wonky_client.dart';
 import 'package:wonky_ui/wonky_ui.dart';
@@ -27,23 +26,8 @@ class SheetsAppConfig extends WonkyAppConfig {
   Color get brandColor => sheetsBrandColor;
 
   @override
-  Widget logo({double size = 28}) => Semantics(
-    image: true,
-    label: 'Logo',
-    child: Container(
-      width: size,
-      height: size,
-      decoration: BoxDecoration(
-        color: sheetsBrandColor,
-        borderRadius: BorderRadius.circular(size * 0.24),
-      ),
-      child: Icon(
-        LucideIcons.sheet,
-        size: size * 0.58,
-        color: const Color(0xffffffff),
-      ),
-    ),
-  );
+  Widget logo({double size = 28}) =>
+      WonkyProductIcon(WonkyProduct.sheets, size: size);
 
   @override
   String itemPath(String uuid) => '/s/$uuid';

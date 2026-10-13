@@ -15,7 +15,7 @@ final Map<String, Object?> academicApaThemeJson = {
   'fonts': {
     'body': 'Liberation Serif',
     'heading': 'Liberation Serif',
-    'mono': 'Courier Prime',
+    'mono': 'JetBrains Mono',
   },
   'palette': paletteJson(
     text: '#000000',

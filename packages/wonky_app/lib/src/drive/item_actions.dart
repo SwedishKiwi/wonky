@@ -11,20 +11,24 @@ class DriveDragData {
   final List<String> uuids;
 }
 
-/// Context-menu / ⋮ entries for the selection (suite 05 §3.1).
+/// Context-menu / ⋮ entries for the selection (suite 05 §3.1), without the
+/// commands in [exclude] (those the selection bar already shows as icons).
 List<WonkyMenuEntry> itemMenuEntries(
   BuildContext context,
   ShellServices s, {
   required bool trash,
+  Set<String> exclude = const {},
 }) {
   final r = MenuResolver(s);
   WonkyMenuItem? e(String id, [Map<String, Object?> args = const {}]) =>
-      r.commandEntry(
-        context,
-        id,
-        args: args,
-        source: InvocationSource.contextMenu,
-      );
+      exclude.contains(id)
+      ? null
+      : r.commandEntry(
+          context,
+          id,
+          args: args,
+          source: InvocationSource.contextMenu,
+        );
   if (trash) {
     return [?e('shell.drive.restore'), ?e('shell.drive.deleteForever')];
   }

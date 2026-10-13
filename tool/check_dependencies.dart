@@ -265,7 +265,8 @@ const rules = <String, PackageRule>{
     exceptions: {
       ..._appExceptions,
       'dart_quill_delta': 'client side of the Delta OT (A4)',
-      'highlight': 'code block syntax highlighting (same engine as write_core)',
+      'syntax_highlight':
+          'code block syntax highlighting in the editor (vendored, 04 §15.4)',
       'http': 'fetches server-side exports',
       'sqlite_async': 'offline document cache (with wonky_app LocalDatabase)',
     },

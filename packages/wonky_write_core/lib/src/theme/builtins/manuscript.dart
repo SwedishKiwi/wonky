@@ -15,7 +15,7 @@ final Map<String, Object?> manuscriptThemeJson = {
   'fonts': {
     'body': 'Courier Prime',
     'heading': 'Courier Prime',
-    'mono': 'Courier Prime',
+    'mono': 'JetBrains Mono',
   },
   'palette': paletteJson(
     text: '#000000',

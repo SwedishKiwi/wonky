@@ -5,7 +5,6 @@ import 'package:wonky_core/wonky_core.dart';
 import '../../l10n/write_l10n.dart';
 import '../editor/controller/editor_types.dart';
 import '../offline/write_offline.dart';
-import '../suggestions/suggestions_panel.dart';
 import 'write_document_api.dart';
 import 'write_document_session.dart';
 
@@ -243,18 +242,6 @@ List<Command<CommandArgs>> writeCollabCommands(ShellServices services) {
             ? _ok
             : nothing(),
       ),
-    CallbackCommand(
-      id: 'write.suggestions.togglePanel',
-      title: (c) => writeL10n(c).cmdSuggestionsTogglePanel,
-      icon: LucideIcons.fileDiff,
-      category: (c) => writeL10n(c).categorySuggestions,
-      enabled: (ctx, _) => loaded(ctx),
-      checked: (_, _) => services.panels.isOpen(writeSuggestionsPanelId),
-      run: (ctx, _) async {
-        services.panels.toggle(writeSuggestionsPanelId);
-        return _ok;
-      },
-    ),
     CallbackCommand(
       id: 'write.mode.suggest',
       title: (c) => writeL10n(c).cmdModeSuggest,

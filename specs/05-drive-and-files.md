@@ -81,7 +81,7 @@ is a later optimization (it must then also be added to `definition.sql`).
 | `setStarred(uuid, starred)` · `setPinnedOffline(uuid, pinned)` | |
 | `trash(uuids)` · `restore(uuids)` · `deletePermanently(uuids)` · `emptyTrash()` | Trash auto-purges after 30 days (FutureCall `drive.purgeTrash`, daily). |
 | `watch()` | **Stream** of `DriveChange` events for items visible to the user (created/renamed/moved/trashed/shared/modified) so lists update live. |
-| `listTemplates(kind)` | Template gallery: `TemplateView`s of the built-in templates (compiled into the server, stable UUIDv5 ids `wonky-template:<key>`) plus items published with `setTemplate(uuid, category)`. |
+| `listTemplates(kind)` | Template gallery: `TemplateView`s of the built-in templates (compiled into the server, stable UUIDv5 ids `wonky-template:<key>`) plus items published with `setTemplate(uuid, category)`. A `TemplateView` carries `themeKey` (the built-in Write theme a document template creates its document with) and `previewStyle` (`TemplatePreviewStyle`: `paper`/`text`/`heading`/`accent` colors for light and dark, `banner`, `centeredHeadings`, `uppercaseHeadings`, `fontCategory` serif/sans/mono; null = neutral page) for the card's miniature page (§3.1). |
 | `import(uploadId, kind, options: DriveImportOptions)` | Server-side import pipeline (see each app's import spec) returning the new item. |
 | `storageUsage()` | Bytes used by owned items. |
 | `setThumbnail(uuid, uploadedFileUuid)` | Clients render thumbnails (first page / visible grid area, light theme, 400×300 PNG) at most every 10 min while editing and upload them; Editors+ only. |
@@ -98,7 +98,7 @@ Single-window page at `/` (Write) or `/` (Sheets) — layout:
 
 ```
 ┌──────────────────────────────────────────────────────────────────────────────┐
-│ [≡] [App logo] Wonky Write   [ 🔍 Search in Drive…            ]  [◐] [?] [👤] │  ← TopBar
+│ [≡] [App logo] Wonky Write   [ 🔍 Search in Drive…            ]  [◐] [🔔] [👤] │  ← TopBar
 ├───────────────┬──────────────────────────────────────────────────────────────┤
 │ + New         │  Start a new document                                         │
 │               │  [Blank] [Meeting notes] [Project brief] [Letter] [More ▸]    │ ← Template strip
@@ -108,40 +108,54 @@ Single-window page at `/` (Write) or `/` (Sheets) — layout:
 │ ▸ Starred     │  Name                 Owner      Last modified     ⋮          │
 │ ▸ Offline     │  📄 Q3 planning       me         10:42             ⋮          │
 │ ▸ Trash       │  📄 Notes             Anna B.    Yesterday         ⋮          │
-│ ─────────     │  …                                                            │
+│               │  …                                                            │
 │ Storage 12 MB │                                                               │
 └───────────────┴──────────────────────────────────────────────────────────────┘
 ```
 
 ### 3.1 Components
-- **TopBar** (shared `WonkyTopBar`): hamburger (collapses sidebar), app logo + name (click →
-  home), drive search field with suggestions dropdown (recent searches, matching items with
-  icons, "Search for '…'" row, filter chips: type, owner, modified), app theme toggle
-  (light/dark/system cycle), help menu (shortcuts, docs, about), account avatar menu (name,
-  email, Settings, switch app → Wonky Sheets/Write, Sign out).
-- **Sidebar** (`DriveSidebar`): *New* button (dropdown: New document / New spreadsheet / New
-  folder / Upload file… / From template…), nav items (Home, My Drive, Shared with me, Starred,
-  Offline, Trash), collapsible folder tree under My Drive (lazy-loaded, drag-and-drop target),
-  storage usage footer.
+- **TopBar** (shared `WonkyTopBar`): hamburger (collapses sidebar), app logo (the product icon,
+  suite 02 §5) + name (click → home), drive search field with suggestions dropdown (recent
+  searches, matching items with their kind icons, "Search for '…'" row, filter chips: type,
+  owner, modified), app theme toggle (light/dark/system cycle), notifications, account avatar
+  menu (name, email, Settings, switch app → *Open Wonky Sheets/Write* with that product's icon,
+  Sign out). There is no help button (Help lives in the editor's Help menu; there is no help
+  center).
+- **Sidebar** (`DriveSidebar`): *New* button (12 px left of the +; dropdown: New document / New
+  spreadsheet — each with its product icon — / New folder / Upload file… / From template…), nav
+  items (Home, My Drive — with the Drive product icon —, Shared with me, Starred, Offline,
+  Trash), collapsible folder tree under My Drive (lazy-loaded, drag-and-drop target), storage
+  usage footer (no separator above it).
 - **Template strip**: collapsible ("Hide templates"), horizontal list of `TemplateCard`s; *More*
   opens the template gallery page (`/templates`) with categories (Personal, Work, Education,
-  Project management, Finance for Sheets…).
+  Project management, Finance for Sheets…). A card draws a **miniature page** in the template's
+  `previewStyle` (paper, text, heading and accent colors for the current app theme; accent
+  banner, centered or uppercase headings, serif/sans/mono character), clipped to the card (no
+  scroll view, so no scrollbar on hover). Each built-in document template creates its document
+  with its own built-in Write theme and sample content: Meeting notes → *modern-sans* (banner),
+  Project brief → *technical*, Letter → *classic-serif* (centered letterhead), Weekly report →
+  *newsletter* (accent headings), Lecture notes → *academic-apa* (centered), To-do list →
+  *minimal-mono*, Recipe → *wonky-default* (banner), Story draft → *manuscript* (centered
+  uppercase). Spreadsheet templates have an accent color for their card.
 - **Filter bar**: view selector (Recent/Last opened by me/Last modified by me/Last modified),
   owner filter, type filter (Documents, Spreadsheets, Folders, All), grid/list toggle, sort menu
   (Name, Last modified, Last opened by me, Size; asc/desc), folders-on-top toggle.
-- **Item list** (`DriveItemList`, list mode): columns Name (icon, name, shared badge, star,
+- **Item list** (`DriveItemList`, list mode): columns Name (kind icon, name, shared badge, star,
   offline badge), Owner (avatar+name / "me"), Last modified (relative), File size, row ⋮ menu.
-  Grid mode: `DriveItemCard` with thumbnail preview, name, icon, ⋮ menu.
+  Grid mode: `DriveItemCard` with thumbnail preview, name, kind icon, ⋮ menu. Kind icons are
+  `DriveKindIcon` (suite 02 §5: Write icon for documents, Sheets icon for spreadsheets, folder
+  glyph for folders), also on the drag chip.
   Virtualized, infinite scroll, sticky "Today / Yesterday / Earlier this week / Earlier"
   group headers in Recent view.
 - **Selection**: click selects, Mod/Shift-click multi-select, rubber-band selection in grid view,
   Mod+A selects all; a **selection action bar** replaces the filter bar (Share, Move, Copy,
-  Download/Export, Star, Rename (single), Trash, Clear).
+  Download/Export, Star, Rename (single), Trash, Clear). Its ⋮ menu holds the remaining item
+  actions only — it does not repeat the bar's icon actions (`itemMenuEntries(exclude:)`).
 - **Context menu** (right-click / ⋮): Open, Share,
   Copy link, Rename, Move to…, Add shortcut, Star/Unstar, Make available offline, Make a copy,
   Download as ▸ (formats), Version history, Details, Move to trash. In Trash: Restore, Delete
   forever.
-- **Details panel** (toggle `i`): right side panel with thumbnail, type, owner, location,
+- **Details panel** (toggle `i`): right side panel with thumbnail (or the kind icon), type, owner, location,
   sharing summary, created/modified/opened, description (editable), activity feed (who did
   what, from server activity log).
 - **Drag and drop**: items onto folders (sidebar tree or list) moves them (undoable); files

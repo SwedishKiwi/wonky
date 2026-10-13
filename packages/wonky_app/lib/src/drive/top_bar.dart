@@ -5,14 +5,14 @@ import 'package:flutter/widgets.dart';
 import 'package:shad/shad.dart';
 import 'package:wonky_client/wonky_client.dart';
 
+import '../branding/product_icon.dart';
 import '../l10n/wonky_app_localizations.dart';
 import '../notifications/notifications_button.dart';
 import '../shell/account_menu.dart';
 import '../shell/shell_services.dart';
-import 'drive_format.dart';
 
 /// The home top bar (suite 05 §3.1 `WonkyTopBar`): hamburger, logo + name,
-/// drive search with suggestions, theme toggle, help, notifications and the
+/// drive search with suggestions, theme toggle, notifications and the
 /// account menu.
 class WonkyTopBar extends StatelessWidget {
   const WonkyTopBar({
@@ -84,7 +84,6 @@ class WonkyTopBar extends StatelessWidget {
           ),
           const SizedBox(width: 12),
           ThemeToggleButton(services: services),
-          HelpMenuButton(services: services),
           NotificationsButton(services: services),
           const SizedBox(width: 4),
           AccountMenuButton(services: services),
@@ -216,11 +215,7 @@ class _DriveSearchFieldState extends State<DriveSearchField> {
               for (final m in _matches)
                 ShadButton.ghost(
                   mainAxisAlignment: MainAxisAlignment.start,
-                  leading: Icon(
-                    kindIcon(m.kind),
-                    size: 16,
-                    color: kindColor(m.kind, theme.colorScheme),
-                  ),
+                  leading: DriveKindIcon(m.kind, size: 18),
                   onPressed: () {
                     _popover.hide();
                     s.openItem(m);

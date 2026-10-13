@@ -63,8 +63,6 @@
       }
     }
   },
-  "activityPeople": "People",
-  "activityRecent": "Recent activity",
   "activityRenamed": "{who} renamed this",
   "@activityRenamed": {
     "placeholders": {
@@ -98,14 +96,6 @@
     }
   },
   "activitySystem": "Wonky Work",
-  "activityTitle": "Activity on “{name}”",
-  "@activityTitle": {
-    "placeholders": {
-      "name": {
-        "type": "String"
-      }
-    }
-  },
   "activityTrashed": "{who} moved this to the trash",
   "@activityTrashed": {
     "placeholders": {
@@ -210,7 +200,6 @@
   "categoryVersions": "Version history",
   "categoryView": "View",
   "cmdAbout": "About",
-  "cmdActivityDashboard": "Activity dashboard",
   "cmdAddShortcut": "Add shortcut to Drive",
   "cmdAssistant": "Assistant",
   "cmdAssistantNewThread": "New assistant chat",
@@ -221,7 +210,6 @@
   "cmdCommandPalette": "Command palette",
   "cmdComment": "Comment",
   "cmdCommentsPanel": "Comments",
-  "cmdCompactMode": "Compact mode",
   "cmdCopy": "Copy",
   "cmdCopyLink": "Copy link",
   "cmdCopyMcpConfig": "Copy MCP connection settings",
@@ -233,8 +221,6 @@
   "cmdEmptyTrash": "Empty trash",
   "cmdFocusSearch": "Search in Drive",
   "cmdForward": "Forward",
-  "cmdFullScreen": "Full screen",
-  "cmdHelpCenter": "Help center",
   "cmdHome": "Home",
   "cmdImport": "Import…",
   "cmdKeyboardShortcuts": "Keyboard shortcuts",
@@ -279,15 +265,11 @@
   "cmdResolve": "Resolve",
   "cmdRestore": "Restore",
   "cmdRestoreVersion": "Restore this version",
-  "cmdSearchMenus": "Search the menus",
   "cmdSeeVersionHistory": "See version history",
   "cmdSelectAll": "Select all",
   "cmdSetTheme": "App theme",
   "cmdSettings": "Settings",
   "cmdShare": "Share",
-  "cmdShowMenubar": "Menu bar",
-  "cmdShowStatusBar": "Status bar",
-  "cmdShowToolbar": "Toolbar",
   "cmdSignOut": "Sign out",
   "cmdStar": "Star",
   "cmdStopAgent": "Stop agent control",
@@ -344,7 +326,6 @@
   "commentOrphaned": "Original content deleted",
   "commentPlaceholder": "Comment or add others with @",
   "commentShow": "Show",
-  "commentsAll": "All",
   "commentsEmptyBody": "Select content and press {shortcut} to add a comment.",
   "@commentsEmptyBody": {
     "placeholders": {
@@ -356,8 +337,6 @@
   "commentsEmptyTitle": "No comments yet",
   "commentsForYou": "For you",
   "commentsOpen": "Open",
-  "commentsResolved": "Resolved",
-  "commentsSearch": "Search comments",
   "commentsSort": "Sort",
   "commentsSortDate": "Sort by date",
   "commentsSortPosition": "Sort by position",
@@ -480,19 +459,6 @@
   "groupThisWeek": "Earlier this week",
   "groupToday": "Today",
   "groupYesterday": "Yesterday",
-  "helpMenu": "Help",
-  "helpTopicCommentsBody": "Select text or cells and press Ctrl+Alt+M (⌘⌥M on Mac) to comment. Mention people with @ to notify them. Resolve threads when you're done.",
-  "helpTopicCommentsTitle": "Comments",
-  "helpTopicDriveBody": "Your drive holds documents, spreadsheets and folders. Drag files onto folders to move them, star what you use often, and find everything with search.",
-  "helpTopicDriveTitle": "Your drive",
-  "helpTopicHistoryBody": "Versions are saved automatically while you work. Name important versions and restore any of them from File › Version history.",
-  "helpTopicHistoryTitle": "Version history",
-  "helpTopicOfflineBody": "Recently opened files keep working without a connection. Changes sync when you're back online.",
-  "helpTopicOfflineTitle": "Working offline",
-  "helpTopicSharingBody": "Use Share to invite people as viewers, commenters or editors, or turn on link sharing for anyone signed in with the link.",
-  "helpTopicSharingTitle": "Sharing",
-  "helpTopicShortcutsBody": "Press Ctrl+/ (⌘/ on Mac) to see every shortcut, and Ctrl+Shift+P (⌘⇧P) to run any command by name.",
-  "helpTopicShortcutsTitle": "Keyboard shortcuts",
   "historyBack": "Back to editing",
   "historyNoRenderer": "Previews of versions aren't available for this file type.",
   "historyRestoreThis": "Restore this version",
@@ -525,7 +491,6 @@
   "menuPanels": "Panels",
   "menuPreferences": "Preferences",
   "menuShare": "Share",
-  "menuShow": "Show",
   "menuTools": "Tools",
   "menuVersionHistory": "Version history",
   "menuView": "View",
@@ -734,10 +699,8 @@
   "paletteEmpty": "Nothing found",
   "paletteFiles": "Files",
   "paletteGoToFile": "Open file",
-  "paletteMenus": "Menus",
   "palettePlaceholder": "Type a command or search files…",
   "paletteRecent": "Recent",
-  "paletteSearchMenus": "Search the menus",
   "panelComments": "Comments",
   "panelHistory": "Version history",
   "presenceJoined": "{name} joined",
@@ -954,7 +917,6 @@
   "shortcutResetAll": "Reset all",
   "shortcutsSearch": "Search shortcuts",
   "shortcutsTitle": "Keyboard shortcuts",
-  "showMenus": "Show menus",
   "someone": "Someone",
   "sortBy": "Sort: {field}",
   "@sortBy": {
@@ -1281,80 +1243,6 @@
       }
     }
   },
-  "activityTabViewers": "Viewers",
-  "activityTabTrends": "Trends",
-  "activityTabActivity": "Activity",
-  "activityPeriodDays": "Last {days} days",
-  "@activityPeriodDays": {
-    "placeholders": {
-      "days": {
-        "type": "int"
-      }
-    }
-  },
-  "activityShowMyViewHistory": "Show my view history",
-  "activityShowMyViewHistoryHint": "When this is off, you're not listed as a viewer of any file. Your views are still counted anonymously in the trends.",
-  "activityViewersHidden": "{count, plural, =1{1 more person turned off their view history} other{{count} more people turned off their view history}}",
-  "@activityViewersHidden": {
-    "placeholders": {
-      "count": {
-        "type": "int"
-      }
-    }
-  },
-  "activityViewersEmpty": "{days, plural, =1{Nobody with access opened this today} other{Nobody with access opened this in the last {days} days}}",
-  "@activityViewersEmpty": {
-    "placeholders": {
-      "days": {
-        "type": "int"
-      }
-    }
-  },
-  "activityViewersCount": "{count, plural, =1{1 person with access opened this in the last {days} days} other{{count} people with access opened this in the last {days} days}}",
-  "@activityViewersCount": {
-    "placeholders": {
-      "count": {
-        "type": "int"
-      },
-      "days": {
-        "type": "int"
-      }
-    }
-  },
-  "activityLastViewed": "Viewed {time}",
-  "@activityLastViewed": {
-    "placeholders": {
-      "time": {
-        "type": "String"
-      }
-    }
-  },
-  "activityViewCount": "{count, plural, =1{1 view} other{{count} views}}",
-  "@activityViewCount": {
-    "placeholders": {
-      "count": {
-        "type": "int"
-      }
-    }
-  },
-  "activityChartSummary": "{title}: {total} in total, at most {peak} on one day",
-  "@activityChartSummary": {
-    "placeholders": {
-      "title": {
-        "type": "String"
-      },
-      "total": {
-        "type": "int"
-      },
-      "peak": {
-        "type": "int"
-      }
-    }
-  },
-  "activityViewTrend": "Views",
-  "activityViewTrendHint": "Unique viewers per day",
-  "activityCommentTrend": "Comments",
-  "activityCommentTrendHint": "Comments and replies per day",
   "activityShowMore": "Show more",
   "notificationsFilterAll": "All",
   "notificationsFilterUnread": "Unread",

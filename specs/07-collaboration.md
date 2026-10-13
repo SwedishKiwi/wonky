@@ -23,6 +23,9 @@ PresenceEndpoint.join(String itemUuid, Stream<PresenceUpdate> updates) → Strea
   (user|mcp|ai), state }`. The same user in two tabs appears as two sessions, grouped in UI.
 - Idle after 60 s without input, away when the tab/window is hidden. Sessions are dropped 30 s
   after the stream dies.
+- With several instances each session also sends a `beat` every 30 s; sessions not heard of
+  for 90 s leave the roster (their instance crashed or the `bye` was lost;
+  [13 §4](13-security-and-operations.md)).
 - **MCP/AI presence**: when an agent edits headlessly, the server injects a transient
   participant (`actorKind: mcp`, name "Claude via MCP (Anna)") so humans see agent activity.
 
@@ -96,11 +99,20 @@ Editors+ can delete any thread. Viewers see comments only if the owner allows it
 - **Margin threads** (Write) / **cell indicator** triangle (Sheets) for anchors.
 - **Comment card**: avatar, name, relative time, body (Markdown), reactions, ⋮ (Edit, Delete,
   Link to comment, Mark unread), reply box, *Resolve* ✓ button. Active thread expands and
-  aligns next to its anchor.
+  aligns next to its anchor. The comments + reply box part is `CommentThreadBody`, reused by app
+  cards (Write's suggestion cards, whose replies are comments in the suggestion's thread).
 - **New comment**: `Mod+Alt+M` with selection → composer card with mention autocomplete (`@`),
   *Assign to* checkbox when a mention exists, *Comment*/*Cancel*.
-- **Comments panel** (side panel): filters (All / Open / Resolved / For you), search, sort
-  (position / date); each thread links to its anchor; resolved threads collapsed.
+- **Where comments show**: an app may show the open file's comments somewhere other than the
+  side panel by setting a `CommentsHost` (`ShellServices.commentsHost`, a `Listenable` with
+  `isShown`); `shell.comments.togglePanel`, `shell.comments.create` (without a body) and
+  `shell.comments.activate` then show the comments through the host instead of the side panel.
+  Write shows them only in the margin next to the page (Write 05 §10, Write 08 §3.2); Sheets
+  uses the side panel.
+- **Comments panel** (side panel, `EditorScaffold.commentsInPanel`): filter tabs
+  (`CommentsFilterTabs`, shared with Write's margin) **Open** (default) / **For you** (open
+  threads that mention or are assigned to me), sort (position / date); each thread links to its
+  anchor. Resolved threads are not listed; there is no comments search.
 - Notification bell? No — notifications are in the account menu and email (see §4).
 - All comment actions are commands (`shell.comments.*`) and undoable (create → delete, etc.).
 
@@ -188,8 +200,10 @@ UI (full-screen route `/…/history`):
 - Restore creates a `restorePoint` of the current state, then applies the version as a normal
   forward edit (collaborators see it live; it is one undo step for the restoring user).
 
-## 6. Activity dashboard
-*Tools › Activity dashboard* dialog (`shell.activity.open`, `ActivityEndpoint`): period selector
+## 6. Activity dashboard (removed from the UI)
+The *Tools › Activity dashboard* dialog (`shell.activity.open`) was removed; the item's activity
+feed stays in the drive details panel (suite 05 §3.1). The server side below stays
+(`ActivityEndpoint`, view recording) and is kept for a later UI: period selector
 (7 / 28 / 90 days) and three tabs:
 - **Viewers** (Editors and Owners only): people in the item's share set (owner and grantees, not
   link visitors) who opened it in the period, most recent first, with role, "Viewed …" and view
@@ -201,5 +215,6 @@ UI (full-screen route `/…/history`):
 
 Views are recorded per user and UTC day (`item_view_day`) whenever the item is opened
 (`DriveService.recordOpen`: `drive.markOpened`, document connect, invite). The privacy toggle
-**"Show my view history"** (`UserActivitySettings.showViewHistory`, default on) is at the bottom
-of the dialog; when off, the user's views still count anonymously in the trends.
+**"Show my view history"** (`UserActivitySettings.showViewHistory`, default on;
+`ActivityEndpoint.setShowViewHistory`) has no UI while the dialog is gone; when off, the user's
+views still count anonymously in the trends.

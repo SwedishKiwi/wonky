@@ -45,3 +45,7 @@ dev_dependencies:
 
 flutter:
   generate: true
+  # Product icons of the suite (Wonky Work, Drive, Write, Sheets, Slides),
+  # shown by `WonkyProductIcon` (suite 02 §5).
+  assets:
+    - assets/icons/

@@ -98,6 +98,7 @@ import 'platform/drive/import_report_view.dart' as _i68yhxa0;
 import 'platform/drive/import_warning_view.dart' as _i48sm9f2;
 import 'platform/drive/storage_usage.dart' as _i26hsnhw;
 import 'platform/drive/template_category.dart' as _iiedu4vz;
+import 'platform/drive/template_preview_style.dart' as _i6rg3vdh;
 import 'platform/drive/template_view.dart' as _i2ox7ta1;
 import 'platform/feedback/feedback_kind.dart' as _iv1sk0e8;
 import 'platform/feedback/feedback_submission.dart' as _ilhpki98;
@@ -235,6 +236,7 @@ export 'platform/drive/import_report_view.dart';
 export 'platform/drive/import_warning_view.dart';
 export 'platform/drive/storage_usage.dart';
 export 'platform/drive/template_category.dart';
+export 'platform/drive/template_preview_style.dart';
 export 'platform/drive/template_view.dart';
 export 'platform/feedback/feedback_kind.dart';
 export 'platform/feedback/feedback_submission.dart';
@@ -388,6 +390,7 @@ class Protocol extends _isc.SerializationManager
           _isc.getType<_i48sm9f2.ImportWarningView>,
           _isc.getType<_i26hsnhw.StorageUsage>,
           _isc.getType<_iiedu4vz.TemplateCategory>,
+          _isc.getType<_i6rg3vdh.TemplatePreviewStyle>,
           _isc.getType<_i2ox7ta1.TemplateView>,
           _isc.getType<_iv1sk0e8.FeedbackKind>,
           _isc.getType<_ilhpki98.FeedbackSubmission>,
@@ -551,6 +554,7 @@ class Protocol extends _isc.SerializationManager
           _isc.getType<_i48sm9f2.ImportWarningView?>,
           _isc.getType<_i26hsnhw.StorageUsage?>,
           _isc.getType<_iiedu4vz.TemplateCategory?>,
+          _isc.getType<_i6rg3vdh.TemplatePreviewStyle?>,
           _isc.getType<_i2ox7ta1.TemplateView?>,
           _isc.getType<_iv1sk0e8.FeedbackKind?>,
           _isc.getType<_ilhpki98.FeedbackSubmission?>,
@@ -904,6 +908,9 @@ class Protocol extends _isc.SerializationManager
     }
     if (t == _iiedu4vz.TemplateCategory) {
       return _iiedu4vz.TemplateCategory.fromJson(data) as T;
+    }
+    if (t == _i6rg3vdh.TemplatePreviewStyle) {
+      return _i6rg3vdh.TemplatePreviewStyle.fromJson(data) as T;
     }
     if (t == _i2ox7ta1.TemplateView) {
       return _i2ox7ta1.TemplateView.fromJson(data) as T;
@@ -1442,6 +1449,12 @@ class Protocol extends _isc.SerializationManager
     }
     if (t == _isc.getType<_iiedu4vz.TemplateCategory?>()) {
       return (data != null ? _iiedu4vz.TemplateCategory.fromJson(data) : null)
+          as T;
+    }
+    if (t == _isc.getType<_i6rg3vdh.TemplatePreviewStyle?>()) {
+      return (data != null
+              ? _i6rg3vdh.TemplatePreviewStyle.fromJson(data)
+              : null)
           as T;
     }
     if (t == _isc.getType<_i2ox7ta1.TemplateView?>()) {
@@ -2216,6 +2229,7 @@ class Protocol extends _isc.SerializationManager
       _i48sm9f2.ImportWarningView => 'ImportWarningView',
       _i26hsnhw.StorageUsage => 'StorageUsage',
       _iiedu4vz.TemplateCategory => 'TemplateCategory',
+      _i6rg3vdh.TemplatePreviewStyle => 'TemplatePreviewStyle',
       _i2ox7ta1.TemplateView => 'TemplateView',
       _iv1sk0e8.FeedbackKind => 'FeedbackKind',
       _ilhpki98.FeedbackSubmission => 'FeedbackSubmission',
@@ -2448,6 +2462,8 @@ class Protocol extends _isc.SerializationManager
         return 'StorageUsage';
       case _iiedu4vz.TemplateCategory():
         return 'TemplateCategory';
+      case _i6rg3vdh.TemplatePreviewStyle():
+        return 'TemplatePreviewStyle';
       case _i2ox7ta1.TemplateView():
         return 'TemplateView';
       case _iv1sk0e8.FeedbackKind():
@@ -2862,6 +2878,9 @@ class Protocol extends _isc.SerializationManager
     }
     if (dataClassName == 'TemplateCategory') {
       return deserialize<_iiedu4vz.TemplateCategory>(data['data']);
+    }
+    if (dataClassName == 'TemplatePreviewStyle') {
+      return deserialize<_i6rg3vdh.TemplatePreviewStyle>(data['data']);
     }
     if (dataClassName == 'TemplateView') {
       return deserialize<_i2ox7ta1.TemplateView>(data['data']);

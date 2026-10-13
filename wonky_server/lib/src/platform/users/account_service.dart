@@ -146,7 +146,7 @@ abstract final class AccountService {
       session,
       where: (t) => t.id.equals(actor.authUserId),
     );
-    UserService.forget(actor.authUserId);
+    await UserService.forgetEverywhere(session, actor.authUserId);
   }
 
   // ---------------------------------------------------------------- tokens

@@ -13,7 +13,6 @@ abstract final class ShellMenuIds {
   static const edit = 'edit';
   static const view = 'view';
   static const viewMode = 'view.mode';
-  static const viewShow = 'view.show';
   static const viewZoom = 'view.zoom';
   static const viewPanels = 'view.panels';
   static const viewTheme = 'view.theme';
@@ -96,13 +95,6 @@ class ShellMenus {
 
   MenuSubmenu get view => MenuSpec.submenu(ShellMenuIds.view, l10n.menuView, [
     MenuSpec.submenu(ShellMenuIds.viewMode, l10n.menuMode, const []),
-    MenuSpec.submenu(ShellMenuIds.viewShow, l10n.menuShow, [
-      MenuSpec.command('shell.view.toggleToolbar'),
-      MenuSpec.command('shell.view.toggleMenubar'),
-      MenuSpec.command('shell.view.toggleStatusBar'),
-    ]),
-    MenuSpec.command('shell.view.toggleCompact'),
-    MenuSpec.command('shell.view.toggleFullScreen'),
     MenuSpec.separator(),
     MenuSpec.submenu(ShellMenuIds.viewZoom, l10n.menuZoom, [
       for (final p in const [50, 75, 90, 100, 125, 150, 200])
@@ -160,7 +152,6 @@ class ShellMenus {
           id: 'tools.preferences',
         ),
         MenuSpec.command('shell.help.shortcuts', id: 'tools.shortcuts'),
-        MenuSpec.command('shell.activity.open'),
         MenuSpec.command(
           'shell.settings.open',
           label: l10n.menuAccessibility,
@@ -170,8 +161,6 @@ class ShellMenus {
       ]);
 
   MenuSubmenu get help => MenuSpec.submenu(ShellMenuIds.help, l10n.menuHelp, [
-    MenuSpec.command('shell.help.searchMenus'),
-    MenuSpec.command('shell.help.open'),
     MenuSpec.command('shell.help.shortcuts'),
     MenuSpec.separator(),
     MenuSpec.command('shell.help.feedback'),

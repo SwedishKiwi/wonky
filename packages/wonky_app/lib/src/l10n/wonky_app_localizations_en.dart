@@ -103,12 +103,6 @@ class WonkyAppLocalizationsEn extends WonkyAppLocalizations {
   }
 
   @override
-  String get activityPeople => 'People';
-
-  @override
-  String get activityRecent => 'Recent activity';
-
-  @override
   String activityRenamed(String who) {
     return '$who renamed this';
   }
@@ -130,11 +124,6 @@ class WonkyAppLocalizationsEn extends WonkyAppLocalizations {
 
   @override
   String get activitySystem => 'Wonky Work';
-
-  @override
-  String activityTitle(String name) {
-    return 'Activity on “$name”';
-  }
 
   @override
   String activityTrashed(String who) {
@@ -363,9 +352,6 @@ class WonkyAppLocalizationsEn extends WonkyAppLocalizations {
   String get cmdAbout => 'About';
 
   @override
-  String get cmdActivityDashboard => 'Activity dashboard';
-
-  @override
   String get cmdAddShortcut => 'Add shortcut to Drive';
 
   @override
@@ -394,9 +380,6 @@ class WonkyAppLocalizationsEn extends WonkyAppLocalizations {
 
   @override
   String get cmdCommentsPanel => 'Comments';
-
-  @override
-  String get cmdCompactMode => 'Compact mode';
 
   @override
   String get cmdCopy => 'Copy';
@@ -430,12 +413,6 @@ class WonkyAppLocalizationsEn extends WonkyAppLocalizations {
 
   @override
   String get cmdForward => 'Forward';
-
-  @override
-  String get cmdFullScreen => 'Full screen';
-
-  @override
-  String get cmdHelpCenter => 'Help center';
 
   @override
   String get cmdHome => 'Home';
@@ -551,9 +528,6 @@ class WonkyAppLocalizationsEn extends WonkyAppLocalizations {
   String get cmdRestoreVersion => 'Restore this version';
 
   @override
-  String get cmdSearchMenus => 'Search the menus';
-
-  @override
   String get cmdSeeVersionHistory => 'See version history';
 
   @override
@@ -567,15 +541,6 @@ class WonkyAppLocalizationsEn extends WonkyAppLocalizations {
 
   @override
   String get cmdShare => 'Share';
-
-  @override
-  String get cmdShowMenubar => 'Menu bar';
-
-  @override
-  String get cmdShowStatusBar => 'Status bar';
-
-  @override
-  String get cmdShowToolbar => 'Toolbar';
 
   @override
   String get cmdSignOut => 'Sign out';
@@ -689,9 +654,6 @@ class WonkyAppLocalizationsEn extends WonkyAppLocalizations {
   String get commentShow => 'Show';
 
   @override
-  String get commentsAll => 'All';
-
-  @override
   String commentsEmptyBody(String shortcut) {
     return 'Select content and press $shortcut to add a comment.';
   }
@@ -704,12 +666,6 @@ class WonkyAppLocalizationsEn extends WonkyAppLocalizations {
 
   @override
   String get commentsOpen => 'Open';
-
-  @override
-  String get commentsResolved => 'Resolved';
-
-  @override
-  String get commentsSearch => 'Search comments';
 
   @override
   String get commentsSort => 'Sort';
@@ -980,51 +936,6 @@ class WonkyAppLocalizationsEn extends WonkyAppLocalizations {
   String get groupYesterday => 'Yesterday';
 
   @override
-  String get helpMenu => 'Help';
-
-  @override
-  String get helpTopicCommentsBody =>
-      'Select text or cells and press Ctrl+Alt+M (⌘⌥M on Mac) to comment. Mention people with @ to notify them. Resolve threads when you\'re done.';
-
-  @override
-  String get helpTopicCommentsTitle => 'Comments';
-
-  @override
-  String get helpTopicDriveBody =>
-      'Your drive holds documents, spreadsheets and folders. Drag files onto folders to move them, star what you use often, and find everything with search.';
-
-  @override
-  String get helpTopicDriveTitle => 'Your drive';
-
-  @override
-  String get helpTopicHistoryBody =>
-      'Versions are saved automatically while you work. Name important versions and restore any of them from File › Version history.';
-
-  @override
-  String get helpTopicHistoryTitle => 'Version history';
-
-  @override
-  String get helpTopicOfflineBody =>
-      'Recently opened files keep working without a connection. Changes sync when you\'re back online.';
-
-  @override
-  String get helpTopicOfflineTitle => 'Working offline';
-
-  @override
-  String get helpTopicSharingBody =>
-      'Use Share to invite people as viewers, commenters or editors, or turn on link sharing for anyone signed in with the link.';
-
-  @override
-  String get helpTopicSharingTitle => 'Sharing';
-
-  @override
-  String get helpTopicShortcutsBody =>
-      'Press Ctrl+/ (⌘/ on Mac) to see every shortcut, and Ctrl+Shift+P (⌘⇧P) to run any command by name.';
-
-  @override
-  String get helpTopicShortcutsTitle => 'Keyboard shortcuts';
-
-  @override
   String get historyBack => 'Back to editing';
 
   @override
@@ -1121,9 +1032,6 @@ class WonkyAppLocalizationsEn extends WonkyAppLocalizations {
 
   @override
   String get menuShare => 'Share';
-
-  @override
-  String get menuShow => 'Show';
 
   @override
   String get menuTools => 'Tools';
@@ -1404,16 +1312,10 @@ class WonkyAppLocalizationsEn extends WonkyAppLocalizations {
   String get paletteGoToFile => 'Open file';
 
   @override
-  String get paletteMenus => 'Menus';
-
-  @override
   String get palettePlaceholder => 'Type a command or search files…';
 
   @override
   String get paletteRecent => 'Recent';
-
-  @override
-  String get paletteSearchMenus => 'Search the menus';
 
   @override
   String get panelComments => 'Comments';
@@ -1783,9 +1685,6 @@ class WonkyAppLocalizationsEn extends WonkyAppLocalizations {
 
   @override
   String get shortcutsTitle => 'Keyboard shortcuts';
-
-  @override
-  String get showMenus => 'Show menus';
 
   @override
   String get someone => 'Someone';
@@ -2368,93 +2267,6 @@ class WonkyAppLocalizationsEn extends WonkyAppLocalizations {
   }
 
   @override
-  String get activityTabViewers => 'Viewers';
-
-  @override
-  String get activityTabTrends => 'Trends';
-
-  @override
-  String get activityTabActivity => 'Activity';
-
-  @override
-  String activityPeriodDays(int days) {
-    return 'Last $days days';
-  }
-
-  @override
-  String get activityShowMyViewHistory => 'Show my view history';
-
-  @override
-  String get activityShowMyViewHistoryHint =>
-      'When this is off, you\'re not listed as a viewer of any file. Your views are still counted anonymously in the trends.';
-
-  @override
-  String activityViewersHidden(int count) {
-    String _temp0 = intl.Intl.pluralLogic(
-      count,
-      locale: localeName,
-      other: '$count more people turned off their view history',
-      one: '1 more person turned off their view history',
-    );
-    return '$_temp0';
-  }
-
-  @override
-  String activityViewersEmpty(int days) {
-    String _temp0 = intl.Intl.pluralLogic(
-      days,
-      locale: localeName,
-      other: 'Nobody with access opened this in the last $days days',
-      one: 'Nobody with access opened this today',
-    );
-    return '$_temp0';
-  }
-
-  @override
-  String activityViewersCount(int count, int days) {
-    String _temp0 = intl.Intl.pluralLogic(
-      count,
-      locale: localeName,
-      other: '$count people with access opened this in the last $days days',
-      one: '1 person with access opened this in the last $days days',
-    );
-    return '$_temp0';
-  }
-
-  @override
-  String activityLastViewed(String time) {
-    return 'Viewed $time';
-  }
-
-  @override
-  String activityViewCount(int count) {
-    String _temp0 = intl.Intl.pluralLogic(
-      count,
-      locale: localeName,
-      other: '$count views',
-      one: '1 view',
-    );
-    return '$_temp0';
-  }
-
-  @override
-  String activityChartSummary(String title, int total, int peak) {
-    return '$title: $total in total, at most $peak on one day';
-  }
-
-  @override
-  String get activityViewTrend => 'Views';
-
-  @override
-  String get activityViewTrendHint => 'Unique viewers per day';
-
-  @override
-  String get activityCommentTrend => 'Comments';
-
-  @override
-  String get activityCommentTrendHint => 'Comments and replies per day';
-
-  @override
   String get activityShowMore => 'Show more';
 
   @override
@@ -2618,12 +2430,6 @@ class WonkyAppLocalizationsEnXa extends WonkyAppLocalizationsEn {
   }
 
   @override
-  String get activityPeople => '[Þéöþļé one]';
-
-  @override
-  String get activityRecent => '[Ŕéçéñţ åçţîṽîţý one t]';
-
-  @override
   String activityRenamed(String who) {
     return '[$who ŕéñåɱéð ţĥîš one]';
   }
@@ -2645,11 +2451,6 @@ class WonkyAppLocalizationsEnXa extends WonkyAppLocalizationsEn {
 
   @override
   String get activitySystem => '[Ŵöñķý Ŵöŕķ one]';
-
-  @override
-  String activityTitle(String name) {
-    return '[Åçţîṽîţý öñ “$name” one t]';
-  }
 
   @override
   String activityTrashed(String who) {
@@ -2885,9 +2686,6 @@ class WonkyAppLocalizationsEnXa extends WonkyAppLocalizationsEn {
   String get cmdAbout => '[Åƀöûţ on]';
 
   @override
-  String get cmdActivityDashboard => '[Åçţîṽîţý ðåšĥƀöåŕð one tw]';
-
-  @override
   String get cmdAddShortcut => '[Åðð šĥöŕţçûţ ţö Ðŕîṽé one two]';
 
   @override
@@ -2916,9 +2714,6 @@ class WonkyAppLocalizationsEnXa extends WonkyAppLocalizationsEn {
 
   @override
   String get cmdCommentsPanel => '[Çöɱɱéñţš one]';
-
-  @override
-  String get cmdCompactMode => '[Çöɱþåçţ ɱöðé one]';
 
   @override
   String get cmdCopy => '[Çöþý on]';
@@ -2952,12 +2747,6 @@ class WonkyAppLocalizationsEnXa extends WonkyAppLocalizationsEn {
 
   @override
   String get cmdForward => '[Ƒöŕŵåŕð one]';
-
-  @override
-  String get cmdFullScreen => '[Ƒûļļ šçŕééñ one]';
-
-  @override
-  String get cmdHelpCenter => '[Ĥéļþ çéñţéŕ one]';
 
   @override
   String get cmdHome => '[Ĥöɱé on]';
@@ -3073,9 +2862,6 @@ class WonkyAppLocalizationsEnXa extends WonkyAppLocalizationsEn {
   String get cmdRestoreVersion => '[Ŕéšţöŕé ţĥîš ṽéŕšîöñ one two]';
 
   @override
-  String get cmdSearchMenus => '[Šéåŕçĥ ţĥé ɱéñûš one t]';
-
-  @override
   String get cmdSeeVersionHistory => '[Šéé ṽéŕšîöñ ĥîšţöŕý one tw]';
 
   @override
@@ -3089,15 +2875,6 @@ class WonkyAppLocalizationsEnXa extends WonkyAppLocalizationsEn {
 
   @override
   String get cmdShare => '[Šĥåŕé on]';
-
-  @override
-  String get cmdShowMenubar => '[Ṁéñû ƀåŕ one]';
-
-  @override
-  String get cmdShowStatusBar => '[Šţåţûš ƀåŕ one]';
-
-  @override
-  String get cmdShowToolbar => '[Ţööļƀåŕ one]';
 
   @override
   String get cmdSignOut => '[Šîĝñ öûţ one]';
@@ -3212,9 +2989,6 @@ class WonkyAppLocalizationsEnXa extends WonkyAppLocalizationsEn {
   String get commentShow => '[Šĥöŵ on]';
 
   @override
-  String get commentsAll => '[Åļļ on]';
-
-  @override
   String commentsEmptyBody(String shortcut) {
     return '[Šéļéçţ çöñţéñţ åñð þŕéšš $shortcut ţö åðð å çöɱɱéñţ. one two three]';
   }
@@ -3227,12 +3001,6 @@ class WonkyAppLocalizationsEnXa extends WonkyAppLocalizationsEn {
 
   @override
   String get commentsOpen => '[Öþéñ on]';
-
-  @override
-  String get commentsResolved => '[Ŕéšöļṽéð one]';
-
-  @override
-  String get commentsSearch => '[Šéåŕçĥ çöɱɱéñţš one t]';
 
   @override
   String get commentsSort => '[Šöŕţ on]';
@@ -3510,51 +3278,6 @@ class WonkyAppLocalizationsEnXa extends WonkyAppLocalizationsEn {
   String get groupYesterday => '[Ýéšţéŕðåý one]';
 
   @override
-  String get helpMenu => '[Ĥéļþ on]';
-
-  @override
-  String get helpTopicCommentsBody =>
-      '[Šéļéçţ ţéẋţ öŕ çéļļš åñð þŕéšš Çţŕļ+Åļţ+Ṁ (⌘⌥Ṁ öñ Ṁåç) ţö çöɱɱéñţ. Ṁéñţîöñ þéöþļé ŵîţĥ @ ţö ñöţîƒý ţĥéɱ. Ŕéšöļṽé ţĥŕéåðš ŵĥéñ ýöû\'ŕé ðöñé. one two three four five six seven eight n]';
-
-  @override
-  String get helpTopicCommentsTitle => '[Çöɱɱéñţš one]';
-
-  @override
-  String get helpTopicDriveBody =>
-      '[Ýöûŕ ðŕîṽé ĥöļðš ðöçûɱéñţš, šþŕéåðšĥééţš åñð ƒöļðéŕš. Ðŕåĝ ƒîļéš öñţö ƒöļðéŕš ţö ɱöṽé ţĥéɱ, šţåŕ ŵĥåţ ýöû ûšé öƒţéñ, åñð ƒîñð éṽéŕýţĥîñĝ ŵîţĥ šéåŕçĥ. one two three four five six seven eight nine]';
-
-  @override
-  String get helpTopicDriveTitle => '[Ýöûŕ ðŕîṽé one]';
-
-  @override
-  String get helpTopicHistoryBody =>
-      '[Ṽéŕšîöñš åŕé šåṽéð åûţöɱåţîçåļļý ŵĥîļé ýöû ŵöŕķ. Ñåɱé îɱþöŕţåñţ ṽéŕšîöñš åñð ŕéšţöŕé åñý öƒ ţĥéɱ ƒŕöɱ Ƒîļé › Ṽéŕšîöñ ĥîšţöŕý. one two three four five six seven eigh]';
-
-  @override
-  String get helpTopicHistoryTitle => '[Ṽéŕšîöñ ĥîšţöŕý one t]';
-
-  @override
-  String get helpTopicOfflineBody =>
-      '[Ŕéçéñţļý öþéñéð ƒîļéš ķééþ ŵöŕķîñĝ ŵîţĥöûţ å çöññéçţîöñ. Çĥåñĝéš šýñç ŵĥéñ ýöû\'ŕé ƀåçķ öñļîñé. one two three four five six s]';
-
-  @override
-  String get helpTopicOfflineTitle => '[Ŵöŕķîñĝ öƒƒļîñé one t]';
-
-  @override
-  String get helpTopicSharingBody =>
-      '[Ûšé Šĥåŕé ţö îñṽîţé þéöþļé åš ṽîéŵéŕš, çöɱɱéñţéŕš öŕ éðîţöŕš, öŕ ţûŕñ öñ ļîñķ šĥåŕîñĝ ƒöŕ åñýöñé šîĝñéð îñ ŵîţĥ ţĥé ļîñķ. one two three four five six seven e]';
-
-  @override
-  String get helpTopicSharingTitle => '[Šĥåŕîñĝ one]';
-
-  @override
-  String get helpTopicShortcutsBody =>
-      '[Þŕéšš Çţŕļ+/ (⌘/ öñ Ṁåç) ţö šéé éṽéŕý šĥöŕţçûţ, åñð Çţŕļ+Šĥîƒţ+Þ (⌘⇧Þ) ţö ŕûñ åñý çöɱɱåñð ƀý ñåɱé. one two three four five six s]';
-
-  @override
-  String get helpTopicShortcutsTitle => '[Ķéýƀöåŕð šĥöŕţçûţš one tw]';
-
-  @override
   String get historyBack => '[Ɓåçķ ţö éðîţîñĝ one t]';
 
   @override
@@ -3653,9 +3376,6 @@ class WonkyAppLocalizationsEnXa extends WonkyAppLocalizationsEn {
 
   @override
   String get menuShare => '[Šĥåŕé on]';
-
-  @override
-  String get menuShow => '[Šĥöŵ on]';
 
   @override
   String get menuTools => '[Ţööļš on]';
@@ -3939,17 +3659,11 @@ class WonkyAppLocalizationsEnXa extends WonkyAppLocalizationsEn {
   String get paletteGoToFile => '[Öþéñ ƒîļé one]';
 
   @override
-  String get paletteMenus => '[Ṁéñûš on]';
-
-  @override
   String get palettePlaceholder =>
       '[Ţýþé å çöɱɱåñð öŕ šéåŕçĥ ƒîļéš… one two th]';
 
   @override
   String get paletteRecent => '[Ŕéçéñţ one]';
-
-  @override
-  String get paletteSearchMenus => '[Šéåŕçĥ ţĥé ɱéñûš one t]';
 
   @override
   String get panelComments => '[Çöɱɱéñţš one]';
@@ -4325,9 +4039,6 @@ class WonkyAppLocalizationsEnXa extends WonkyAppLocalizationsEn {
 
   @override
   String get shortcutsTitle => '[Ķéýƀöåŕð šĥöŕţçûţš one tw]';
-
-  @override
-  String get showMenus => '[Šĥöŵ ɱéñûš one]';
 
   @override
   String get someone => '[Šöɱéöñé one]';
@@ -4918,94 +4629,6 @@ class WonkyAppLocalizationsEnXa extends WonkyAppLocalizationsEn {
   String driveItemLabel(String kind, String name) {
     return '[$kind $name]';
   }
-
-  @override
-  String get activityTabViewers => '[Ṽîéŵéŕš one]';
-
-  @override
-  String get activityTabTrends => '[Ţŕéñðš one]';
-
-  @override
-  String get activityTabActivity => '[Åçţîṽîţý one]';
-
-  @override
-  String activityPeriodDays(int days) {
-    return '[Ļåšţ $days ðåýš one]';
-  }
-
-  @override
-  String get activityShowMyViewHistory => '[Šĥöŵ ɱý ṽîéŵ ĥîšţöŕý one tw]';
-
-  @override
-  String get activityShowMyViewHistoryHint =>
-      '[Ŵĥéñ ţĥîš îš öƒƒ, ýöû\'ŕé ñöţ ļîšţéð åš å ṽîéŵéŕ öƒ åñý ƒîļé. Ýöûŕ ṽîéŵš åŕé šţîļļ çöûñţéð åñöñýɱöûšļý îñ ţĥé ţŕéñðš. one two three four five six seven]';
-
-  @override
-  String activityViewersHidden(int count) {
-    String _temp0 = intl.Intl.pluralLogic(
-      count,
-      locale: localeName,
-      other: '$count ɱöŕé þéöþļé ţûŕñéð öƒƒ ţĥéîŕ ṽîéŵ ĥîšţöŕý',
-      one: '1 ɱöŕé þéŕšöñ ţûŕñéð öƒƒ ţĥéîŕ ṽîéŵ ĥîšţöŕý',
-    );
-    return '[$_temp0 one two three four five s]';
-  }
-
-  @override
-  String activityViewersEmpty(int days) {
-    String _temp0 = intl.Intl.pluralLogic(
-      days,
-      locale: localeName,
-      other: 'Ñöƀöðý ŵîţĥ åççéšš öþéñéð ţĥîš îñ ţĥé ļåšţ $days ðåýš',
-      one: 'Ñöƀöðý ŵîţĥ åççéšš öþéñéð ţĥîš ţöðåý',
-    );
-    return '[$_temp0 one two three four five s]';
-  }
-
-  @override
-  String activityViewersCount(int count, int days) {
-    String _temp0 = intl.Intl.pluralLogic(
-      count,
-      locale: localeName,
-      other: '$count þéöþļé ŵîţĥ åççéšš öþéñéð ţĥîš îñ ţĥé ļåšţ $days ðåýš',
-      one: '1 þéŕšöñ ŵîţĥ åççéšš öþéñéð ţĥîš îñ ţĥé ļåšţ $days ðåýš',
-    );
-    return '[$_temp0 one two three four five six]';
-  }
-
-  @override
-  String activityLastViewed(String time) {
-    return '[Ṽîéŵéð $time one]';
-  }
-
-  @override
-  String activityViewCount(int count) {
-    String _temp0 = intl.Intl.pluralLogic(
-      count,
-      locale: localeName,
-      other: '$count ṽîéŵš',
-      one: '1 ṽîéŵ',
-    );
-    return '[$_temp0 one]';
-  }
-
-  @override
-  String activityChartSummary(String title, int total, int peak) {
-    return '[$title: $total îñ ţöţåļ, åţ ɱöšţ $peak öñ öñé ðåý one two t]';
-  }
-
-  @override
-  String get activityViewTrend => '[Ṽîéŵš on]';
-
-  @override
-  String get activityViewTrendHint => '[Ûñîǫûé ṽîéŵéŕš þéŕ ðåý one two]';
-
-  @override
-  String get activityCommentTrend => '[Çöɱɱéñţš one]';
-
-  @override
-  String get activityCommentTrendHint =>
-      '[Çöɱɱéñţš åñð ŕéþļîéš þéŕ ðåý one two t]';
 
   @override
   String get activityShowMore => '[Šĥöŵ ɱöŕé one]';

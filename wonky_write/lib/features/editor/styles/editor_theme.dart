@@ -25,6 +25,7 @@ class EditorTheme {
     required this.codeBlockBackground,
     required this.codeBlockPadding,
     required this.codeBlockRadius,
+    this.codeBlockBorder = BorderSide.none,
     required this.inlineCodeColor,
     required this.inlineCodeBackground,
     required this.inlineCodeSizeRatio,
@@ -184,10 +185,14 @@ class EditorTheme {
   final Color quoteBarColor;
   final double quoteBarWidth;
 
+  /// Code block text; the block is drawn as one box (Write 04 §15.1) with
+  /// [codeBlockBackground], [codeBlockRadius], [codeBlockBorder] and
+  /// [codeBlockPadding] between the box edge and the text.
   final TextStyle codeBlock;
   final Color codeBlockBackground;
   final EdgeInsets codeBlockPadding;
   final double codeBlockRadius;
+  final BorderSide codeBlockBorder;
   final Color inlineCodeColor;
   final Color inlineCodeBackground;
   final double inlineCodeSizeRatio;
@@ -213,7 +218,8 @@ class EditorTheme {
   final Color tableHeaderBackground;
   final Color mutedColor;
 
-  /// highlight.js token class → color.
+  /// Syntax token class (`keyword`, `string`, `title`, `built_in`, …; see
+  /// `CodeHighlighter`) → color.
   final Map<String, Color> syntax;
 
   // App overlay tokens (Write 06 §2.6).

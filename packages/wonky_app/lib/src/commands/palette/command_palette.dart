@@ -5,7 +5,7 @@ import 'package:shad/shad.dart';
 import 'package:wonky_client/wonky_client.dart';
 import 'package:wonky_core/wonky_core.dart' hide ActorKind;
 
-import '../../drive/drive_format.dart';
+import '../../branding/product_icon.dart';
 import '../../l10n/wonky_app_localizations.dart';
 import '../../shell/shell_services.dart';
 import '../command.dart';
@@ -13,13 +13,8 @@ import 'palette_list.dart';
 
 /// The command palette (suite 08 §1.3, `Mod+Shift+P`): fuzzy search over
 /// titles, descriptions, aliases and menu paths; sections Recent / All
-/// commands; extra providers "Go to document…" (drive search). With
-/// [menusOnly] it is Help › Search the menus.
-Future<void> showCommandPalette(
-  BuildContext context,
-  ShellServices s, {
-  bool menusOnly = false,
-}) {
+/// commands; extra providers "Go to document…" (drive search).
+Future<void> showCommandPalette(BuildContext context, ShellServices s) {
   final menuPaths = s.menuPaths(context);
   final options = s
       .menuRoot(context)
@@ -38,7 +33,6 @@ Future<void> showCommandPalette(
         width: 600,
         child: _CommandPaletteBody(
           services: s,
-          menusOnly: menusOnly,
           menuPaths: menuPaths,
           options: options,
         ),
@@ -50,13 +44,11 @@ Future<void> showCommandPalette(
 class _CommandPaletteBody extends StatefulWidget {
   const _CommandPaletteBody({
     required this.services,
-    required this.menusOnly,
     required this.menuPaths,
     required this.options,
   });
 
   final ShellServices services;
-  final bool menusOnly;
   final Map<String, List<String>> menuPaths;
 
   /// Menu items with fixed arguments (radio options), searchable as their
@@ -84,7 +76,7 @@ class _CommandPaletteBodyState extends State<_CommandPaletteBody> {
     if (q == _docQuery) return;
     _docQuery = q;
     _debounce?.cancel();
-    if (q.trim().length < 2 || widget.menusOnly) {
+    if (q.trim().length < 2) {
       _docs = const [];
       return;
     }
@@ -110,9 +102,7 @@ class _CommandPaletteBodyState extends State<_CommandPaletteBody> {
     final l = WonkyAppLocalizations.of(context);
     final commands = [
       for (final c in s.registry.all)
-        if (c.showInPalette &&
-            (!widget.menusOnly || widget.menuPaths.containsKey(c.id.value)))
-          c,
+        if (c.showInPalette) c,
     ];
     PaletteRow rowOf(
       Command<CommandArgs> c, {
@@ -186,18 +176,13 @@ class _CommandPaletteBodyState extends State<_CommandPaletteBody> {
     });
     return [
       for (final (c, o) in ranked)
-        rowOf(
-          c,
-          option: o,
-          section: widget.menusOnly ? l.paletteMenus : l.paletteCommands,
-        ),
+        rowOf(c, option: o, section: l.paletteCommands),
       for (final d in _docs)
         PaletteRow(
           id: 'doc.${d.uuid.uuid}',
           title: d.name,
           subtitle: l.paletteGoToFile,
-          icon: kindIcon(d.kind),
-          iconColor: kindColor(d.kind, ShadTheme.of(context).colorScheme),
+          leading: DriveKindIcon(d.kind, size: 18),
           section: l.paletteFiles,
           onSelected: () => s.openItem(d),
         ),
@@ -208,9 +193,7 @@ class _CommandPaletteBodyState extends State<_CommandPaletteBody> {
   Widget build(BuildContext context) {
     final l = WonkyAppLocalizations.of(context);
     return PaletteList(
-      placeholder: widget.menusOnly
-          ? l.paletteSearchMenus
-          : l.palettePlaceholder,
+      placeholder: l.palettePlaceholder,
       emptyText: l.paletteEmpty,
       rows: (q, state) => _rows(context, q, state),
     );

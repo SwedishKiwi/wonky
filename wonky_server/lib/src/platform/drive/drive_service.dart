@@ -12,6 +12,7 @@ import '../../sheets/sync/sync_db.dart';
 import '../../write/content/write_content.dart';
 import '../../write/ot/document_bus.dart';
 import '../../write/ot/document_store.dart';
+import '../../write/themes/builtin_theme_ids.dart';
 import '../activity/activity_service.dart';
 import '../common/actor.dart';
 import '../common/errors.dart';
@@ -562,6 +563,9 @@ abstract final class DriveService {
           throw Errors.invalid('This is not a document template.');
         }
         content = WriteContent.fromMarkdown(builtin.markdown!).delta;
+        if (builtin.themeKey case final key?) {
+          themeId = BuiltinThemeIds.forKey(key);
+        }
         activitySummary = {'template': builtin.key};
       } else {
         final (tplItem, _) = await AccessService.require(
@@ -1722,6 +1726,8 @@ abstract final class DriveService {
             category: t.category,
             builtin: true,
             previewText: t.previewText,
+            themeKey: t.themeKey,
+            previewStyle: t.previewStyle,
           ),
     ];
     final published = await DriveItem.db.find(

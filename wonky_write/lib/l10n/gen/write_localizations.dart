@@ -781,12 +781,6 @@ abstract class WriteLocalizations {
   /// **'Zoom'**
   String get cmdViewZoomSet;
 
-  /// No description provided for @cmdViewToggleRemoteCursors.
-  ///
-  /// In en, this message translates to:
-  /// **'Collaborator cursors'**
-  String get cmdViewToggleRemoteCursors;
-
   /// No description provided for @cmdViewSuggestionPreview.
   ///
   /// In en, this message translates to:
@@ -888,18 +882,6 @@ abstract class WriteLocalizations {
   /// In en, this message translates to:
   /// **'Word count'**
   String get cmdViewToggleWordCount;
-
-  /// No description provided for @cmdViewToggleCommentMargin.
-  ///
-  /// In en, this message translates to:
-  /// **'Comments in margin'**
-  String get cmdViewToggleCommentMargin;
-
-  /// No description provided for @cmdViewToggleSelectionToolbar.
-  ///
-  /// In en, this message translates to:
-  /// **'Toolbar on selection'**
-  String get cmdViewToggleSelectionToolbar;
 
   /// No description provided for @cmdViewFocusToolbar.
   ///
@@ -1039,12 +1021,6 @@ abstract class WriteLocalizations {
   /// **'Details'**
   String get cmdDocProperties;
 
-  /// No description provided for @cmdDocSettings.
-  ///
-  /// In en, this message translates to:
-  /// **'Settings…'**
-  String get cmdDocSettings;
-
   /// No description provided for @cmdThemeOpenPicker.
   ///
   /// In en, this message translates to:
@@ -1068,12 +1044,6 @@ abstract class WriteLocalizations {
   /// In en, this message translates to:
   /// **'Word count'**
   String get cmdToolsWordCount;
-
-  /// No description provided for @cmdToolsViewMarkdown.
-  ///
-  /// In en, this message translates to:
-  /// **'View Markdown source'**
-  String get cmdToolsViewMarkdown;
 
   /// No description provided for @cmdHelpMarkdownGuide.
   ///
@@ -1104,18 +1074,6 @@ abstract class WriteLocalizations {
   /// In en, this message translates to:
   /// **'Edit table cell'**
   String get cmdTableEditCell;
-
-  /// No description provided for @cmdViewToggleFocusMode.
-  ///
-  /// In en, this message translates to:
-  /// **'Focus mode'**
-  String get cmdViewToggleFocusMode;
-
-  /// No description provided for @cmdViewToggleTypewriter.
-  ///
-  /// In en, this message translates to:
-  /// **'Typewriter scrolling'**
-  String get cmdViewToggleTypewriter;
 
   /// No description provided for @cmdSpellToggle.
   ///
@@ -1182,12 +1140,6 @@ abstract class WriteLocalizations {
   /// In en, this message translates to:
   /// **'Use my default theme'**
   String get cmdThemeUseDefault;
-
-  /// No description provided for @cmdThemePreviewLocal.
-  ///
-  /// In en, this message translates to:
-  /// **'Preview theme'**
-  String get cmdThemePreviewLocal;
 
   /// No description provided for @cmdThemeCreate.
   ///
@@ -1411,12 +1363,6 @@ abstract class WriteLocalizations {
   /// **'Reject suggestion'**
   String get cmdSuggestionsReject;
 
-  /// No description provided for @cmdSuggestionsTogglePanel.
-  ///
-  /// In en, this message translates to:
-  /// **'Suggestions'**
-  String get cmdSuggestionsTogglePanel;
-
   /// No description provided for @cmdModeSuggest.
   ///
   /// In en, this message translates to:
@@ -1489,18 +1435,6 @@ abstract class WriteLocalizations {
   /// **'Edit a table cell in place'**
   String get cmdTableEditCellDescription;
 
-  /// No description provided for @cmdViewToggleFocusModeDescription.
-  ///
-  /// In en, this message translates to:
-  /// **'Dim everything but the paragraph you are writing'**
-  String get cmdViewToggleFocusModeDescription;
-
-  /// No description provided for @cmdViewToggleTypewriterDescription.
-  ///
-  /// In en, this message translates to:
-  /// **'Keep the line you are typing in the middle of the screen'**
-  String get cmdViewToggleTypewriterDescription;
-
   /// No description provided for @cmdInsertFromFileDescription.
   ///
   /// In en, this message translates to:
@@ -1518,12 +1452,6 @@ abstract class WriteLocalizations {
   /// In en, this message translates to:
   /// **'Insert a table of a custom size'**
   String get cmdInsertTableDialogDescription;
-
-  /// No description provided for @cmdDocSettingsDescription.
-  ///
-  /// In en, this message translates to:
-  /// **'Document language, layout, theme and page setup'**
-  String get cmdDocSettingsDescription;
 
   /// No description provided for @cmdThemeOpenEditorDescription.
   ///
@@ -2191,6 +2119,12 @@ abstract class WriteLocalizations {
   /// **'Show suggestions'**
   String get menuShowSuggestions;
 
+  /// View menu toggle that shows or hides the comment and suggestion cards next to the page.
+  ///
+  /// In en, this message translates to:
+  /// **'Comments and suggestions'**
+  String get menuShowComments;
+
   /// Preview the document as if all suggestions were accepted.
   ///
   /// In en, this message translates to:
@@ -2202,18 +2136,6 @@ abstract class WriteLocalizations {
   /// In en, this message translates to:
   /// **'Preview original'**
   String get menuPreviewOriginal;
-
-  /// No description provided for @menuPreviewTheme.
-  ///
-  /// In en, this message translates to:
-  /// **'Preview theme'**
-  String get menuPreviewTheme;
-
-  /// Preview theme option: the theme the document actually uses.
-  ///
-  /// In en, this message translates to:
-  /// **'Document theme'**
-  String get menuDocumentTheme;
 
   /// No description provided for @menuZoom.
   ///
@@ -2413,12 +2335,6 @@ abstract class WriteLocalizations {
   /// **'More themes…'**
   String get menuMoreThemes;
 
-  /// No description provided for @menuFormattingSupported.
-  ///
-  /// In en, this message translates to:
-  /// **'What formatting is supported?'**
-  String get menuFormattingSupported;
-
   /// Zoom level, e.g. 100%.
   ///
   /// In en, this message translates to:
@@ -2496,12 +2412,6 @@ abstract class WriteLocalizations {
   /// In en, this message translates to:
   /// **'Styles'**
   String get toolbarStyles;
-
-  /// Toggles the suggestions panel.
-  ///
-  /// In en, this message translates to:
-  /// **'Suggestions'**
-  String get toolbarSuggestions;
 
   /// No description provided for @toolbarInsertImage.
   ///
@@ -2695,24 +2605,6 @@ abstract class WriteLocalizations {
   /// **'Open word count'**
   String get screenWordCountHint;
 
-  /// No description provided for @screenUploadingImages.
-  ///
-  /// In en, this message translates to:
-  /// **'{count, plural, =1{Uploading 1 image…} other{Uploading {count} images…}}'**
-  String screenUploadingImages(int count);
-
-  /// Accessible name of the status bar layout button.
-  ///
-  /// In en, this message translates to:
-  /// **'Page layout: {layout}'**
-  String screenPageLayout(String layout);
-
-  /// Accessible name of the status bar zoom button.
-  ///
-  /// In en, this message translates to:
-  /// **'Zoom: {percent}%'**
-  String screenZoomLevel(int percent);
-
   /// No description provided for @screenUnknownFormat.
   ///
   /// In en, this message translates to:
@@ -2886,30 +2778,6 @@ abstract class WriteLocalizations {
   /// In en, this message translates to:
   /// **'title: My document\ntags: [notes]'**
   String get docDialogFrontMatterPlaceholder;
-
-  /// No description provided for @docDialogMarkdownSourceTitle.
-  ///
-  /// In en, this message translates to:
-  /// **'Markdown source'**
-  String get docDialogMarkdownSourceTitle;
-
-  /// No description provided for @docDialogWrapLines.
-  ///
-  /// In en, this message translates to:
-  /// **'Wrap lines'**
-  String get docDialogWrapLines;
-
-  /// No description provided for @docDialogDownloadMarkdown.
-  ///
-  /// In en, this message translates to:
-  /// **'Download .md'**
-  String get docDialogDownloadMarkdown;
-
-  /// No description provided for @docDialogCopied.
-  ///
-  /// In en, this message translates to:
-  /// **'Copied'**
-  String get docDialogCopied;
 
   /// No description provided for @docDialogGoToHeadingTitle.
   ///
@@ -3408,180 +3276,6 @@ abstract class WriteLocalizations {
   /// In en, this message translates to:
   /// **'Right'**
   String get pageSetupFieldRight;
-
-  /// No description provided for @docSettingsTitle.
-  ///
-  /// In en, this message translates to:
-  /// **'Document settings'**
-  String get docSettingsTitle;
-
-  /// No description provided for @docSettingsReadOnly.
-  ///
-  /// In en, this message translates to:
-  /// **'Only editors can change document settings.'**
-  String get docSettingsReadOnly;
-
-  /// No description provided for @docSettingsTabGeneral.
-  ///
-  /// In en, this message translates to:
-  /// **'General'**
-  String get docSettingsTabGeneral;
-
-  /// No description provided for @docSettingsTabTheme.
-  ///
-  /// In en, this message translates to:
-  /// **'Theme'**
-  String get docSettingsTabTheme;
-
-  /// No description provided for @docSettingsTabPageSetup.
-  ///
-  /// In en, this message translates to:
-  /// **'Page setup'**
-  String get docSettingsTabPageSetup;
-
-  /// No description provided for @docSettingsTabMarkdown.
-  ///
-  /// In en, this message translates to:
-  /// **'Markdown'**
-  String get docSettingsTabMarkdown;
-
-  /// No description provided for @docSettingsCurrentTheme.
-  ///
-  /// In en, this message translates to:
-  /// **'Current theme: {name}'**
-  String docSettingsCurrentTheme(String name);
-
-  /// No description provided for @docSettingsSaveDefaultTheme.
-  ///
-  /// In en, this message translates to:
-  /// **'Save as my default theme'**
-  String get docSettingsSaveDefaultTheme;
-
-  /// No description provided for @docSettingsCustomizeTheme.
-  ///
-  /// In en, this message translates to:
-  /// **'Customize…'**
-  String get docSettingsCustomizeTheme;
-
-  /// No header or footer.
-  ///
-  /// In en, this message translates to:
-  /// **'None'**
-  String get docSettingsNone;
-
-  /// No description provided for @docSettingsLayout.
-  ///
-  /// In en, this message translates to:
-  /// **'Layout'**
-  String get docSettingsLayout;
-
-  /// No description provided for @docSettingsPaper.
-  ///
-  /// In en, this message translates to:
-  /// **'Paper'**
-  String get docSettingsPaper;
-
-  /// No description provided for @docSettingsPaperValue.
-  ///
-  /// In en, this message translates to:
-  /// **'{paper} · {orientation}'**
-  String docSettingsPaperValue(String paper, String orientation);
-
-  /// No description provided for @docSettingsMargins.
-  ///
-  /// In en, this message translates to:
-  /// **'Margins'**
-  String get docSettingsMargins;
-
-  /// No description provided for @docSettingsMarginsFromTheme.
-  ///
-  /// In en, this message translates to:
-  /// **'From the theme ({margins})'**
-  String docSettingsMarginsFromTheme(String margins);
-
-  /// No description provided for @docSettingsEditPageSetup.
-  ///
-  /// In en, this message translates to:
-  /// **'Edit page setup…'**
-  String get docSettingsEditPageSetup;
-
-  /// No description provided for @docSettingsFrontMatterInfo.
-  ///
-  /// In en, this message translates to:
-  /// **'Front matter is YAML metadata at the top of the Markdown file (title, tags, author…). It is kept on import and export.'**
-  String get docSettingsFrontMatterInfo;
-
-  /// No description provided for @docSettingsNoFrontMatter.
-  ///
-  /// In en, this message translates to:
-  /// **'No front matter'**
-  String get docSettingsNoFrontMatter;
-
-  /// No description provided for @docSettingsViewDetails.
-  ///
-  /// In en, this message translates to:
-  /// **'View details…'**
-  String get docSettingsViewDetails;
-
-  /// No description provided for @docSettingsEditFrontMatter.
-  ///
-  /// In en, this message translates to:
-  /// **'Edit front matter…'**
-  String get docSettingsEditFrontMatter;
-
-  /// No description provided for @docSettingsViewMarkdownSource.
-  ///
-  /// In en, this message translates to:
-  /// **'View Markdown source'**
-  String get docSettingsViewMarkdownSource;
-
-  /// No description provided for @docSettingsLanguage.
-  ///
-  /// In en, this message translates to:
-  /// **'Language'**
-  String get docSettingsLanguage;
-
-  /// No description provided for @docSettingsChangeLanguage.
-  ///
-  /// In en, this message translates to:
-  /// **'Change…'**
-  String get docSettingsChangeLanguage;
-
-  /// No description provided for @docSettingsPagelessHint.
-  ///
-  /// In en, this message translates to:
-  /// **'Pageless shows one continuous column, like a web page.'**
-  String get docSettingsPagelessHint;
-
-  /// No description provided for @docSettingsDefaultMode.
-  ///
-  /// In en, this message translates to:
-  /// **'Default mode for me'**
-  String get docSettingsDefaultMode;
-
-  /// No description provided for @docSettingsModeEditing.
-  ///
-  /// In en, this message translates to:
-  /// **'Editing'**
-  String get docSettingsModeEditing;
-
-  /// No description provided for @docSettingsModeSuggesting.
-  ///
-  /// In en, this message translates to:
-  /// **'Suggesting'**
-  String get docSettingsModeSuggesting;
-
-  /// No description provided for @docSettingsModeViewing.
-  ///
-  /// In en, this message translates to:
-  /// **'Viewing'**
-  String get docSettingsModeViewing;
-
-  /// No description provided for @docSettingsDefaultModeHint.
-  ///
-  /// In en, this message translates to:
-  /// **'Used when you open documents you can edit.'**
-  String get docSettingsDefaultModeHint;
 
   /// No description provided for @wordCountReadingTimeUnderOne.
   ///
@@ -7077,12 +6771,6 @@ abstract class WriteLocalizations {
   /// **'Show “{quote}” in the document'**
   String proofreadShowIssue(String quote);
 
-  /// No description provided for @suggestionPanelTitle.
-  ///
-  /// In en, this message translates to:
-  /// **'Suggestions'**
-  String get suggestionPanelTitle;
-
   /// No description provided for @suggestionActionFailed.
   ///
   /// In en, this message translates to:
@@ -7154,66 +6842,6 @@ abstract class WriteLocalizations {
   /// In en, this message translates to:
   /// **'{count, plural, =1{Withdraw suggestion} other{Withdraw {count} suggestions}}'**
   String suggestionUndoWithdraw(int count);
-
-  /// No description provided for @suggestionAcceptAllTitle.
-  ///
-  /// In en, this message translates to:
-  /// **'Accept all suggestions?'**
-  String get suggestionAcceptAllTitle;
-
-  /// No description provided for @suggestionRejectAllTitle.
-  ///
-  /// In en, this message translates to:
-  /// **'Reject all suggestions?'**
-  String get suggestionRejectAllTitle;
-
-  /// No description provided for @suggestionAcceptAllBody.
-  ///
-  /// In en, this message translates to:
-  /// **'All {count} suggestions will be applied to the document.'**
-  String suggestionAcceptAllBody(int count);
-
-  /// No description provided for @suggestionRejectAllBody.
-  ///
-  /// In en, this message translates to:
-  /// **'All {count} suggestions will be discarded.'**
-  String suggestionRejectAllBody(int count);
-
-  /// No description provided for @suggestionAcceptAll.
-  ///
-  /// In en, this message translates to:
-  /// **'Accept all'**
-  String get suggestionAcceptAll;
-
-  /// No description provided for @suggestionRejectAll.
-  ///
-  /// In en, this message translates to:
-  /// **'Reject all'**
-  String get suggestionRejectAll;
-
-  /// No description provided for @suggestionNone.
-  ///
-  /// In en, this message translates to:
-  /// **'No suggestions'**
-  String get suggestionNone;
-
-  /// No description provided for @suggestionCount.
-  ///
-  /// In en, this message translates to:
-  /// **'{count, plural, =1{1 suggestion} other{{count} suggestions}}'**
-  String suggestionCount(int count);
-
-  /// No description provided for @suggestionEmptyHint.
-  ///
-  /// In en, this message translates to:
-  /// **'Switch to Suggesting mode to propose changes.'**
-  String get suggestionEmptyHint;
-
-  /// No description provided for @suggestionSwitchToSuggesting.
-  ///
-  /// In en, this message translates to:
-  /// **'Switch to Suggesting'**
-  String get suggestionSwitchToSuggesting;
 
   /// Anchor label of a comment on the whole document.
   ///

@@ -13,6 +13,10 @@ dependency_overrides:
   # super_editor and super_text_layout.
   attributed_text:
     path: third_party/attributed_text
+  # Vendored with patches SH-1..SH-3 (third_party/syntax_highlight/PATCHES.md):
+  # code block highlighting in Wonky Write.
+  syntax_highlight:
+    path: third_party/syntax_highlight
   flutter_secure_storage: ^10.0.0
   # sqlite3_web 0.9.5 made WorkerDatabase `base`, which breaks the web build of
   # sqlite_async 0.14.5. Keep web/db_worker.js in step with sqlite_async.

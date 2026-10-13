@@ -144,23 +144,6 @@ void main() {
     );
 
     test(
-      'when previewing another theme locally then it shows until cleared',
-      () async {
-        final catalog = WriteThemeCatalog();
-        final c = DocumentThemeController(catalog);
-        c.themeUuid = BuiltinThemes.wonkyDefault.uuid;
-        final serif = BuiltinThemes.byKey('classic-serif')!;
-
-        c.previewUuid = serif.uuid;
-        expect(c.option.uuid, serif.uuid);
-        c.previewUuid = null;
-
-        expect(c.option.uuid, BuiltinThemes.wonkyDefault.uuid);
-        c.dispose();
-      },
-    );
-
-    test(
       'when a theme is put into the catalog then it is listed in my themes',
       () {
         final catalog = WriteThemeCatalog();

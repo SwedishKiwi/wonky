@@ -32,7 +32,9 @@ export 'src/commands/shell_commands/shell_command_base.dart'
     show shellCommand, l10nOf;
 export 'src/commands/shortcuts_help.dart';
 export 'src/comments/comment_anchor.dart';
+export 'src/branding/product_icon.dart';
 export 'src/comments/comments_controller.dart';
+export 'src/comments/comments_host.dart';
 export 'src/comments/comments_panel.dart';
 export 'src/comments/comments_undo.dart';
 export 'src/config/wonky_app_config.dart';
@@ -41,7 +43,6 @@ export 'src/core/local_database.dart';
 export 'src/core/local_store.dart';
 export 'src/core/offline_storage.dart';
 export 'src/core/preferences_controller.dart';
-export 'src/core/shell_view_state.dart';
 export 'src/core/stream_supervisor.dart';
 export 'src/core/toasts.dart';
 export 'src/data/api.dart';

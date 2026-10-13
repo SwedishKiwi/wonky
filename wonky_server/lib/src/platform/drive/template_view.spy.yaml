@@ -13,3 +13,8 @@ fields:
   ### Short plain-text preview for the template card.
   previewText: String
   thumbnailFileId: UuidValue?
+  ### Key of the built-in Write theme a document template creates documents
+  ### with (e.g. "classic-serif"), if any.
+  themeKey: String?
+  ### Colors and traits of the card's miniature page; null = neutral page.
+  previewStyle: TemplatePreviewStyle?

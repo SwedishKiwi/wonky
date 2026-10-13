@@ -14,6 +14,7 @@ export 'src/widgets/font_picker/font_picker.dart';
 export 'src/widgets/menu/dropdown_menu.dart';
 export 'src/widgets/menu/menu_entry.dart';
 export 'src/widgets/menu/menu_items.dart';
+export 'src/widgets/menu/open_menu.dart';
 export 'src/widgets/menubar/menubar.dart';
 export 'src/widgets/number_stepper/number_stepper.dart';
 export 'src/widgets/presence/avatar.dart';

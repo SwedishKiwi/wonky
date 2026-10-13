@@ -29,7 +29,6 @@ import '../plugins/slash_items.dart';
 import '../plugins/trigger_queries.dart';
 import '../popovers/editor_popovers.dart';
 import '../styles/editor_theme.dart';
-import '../styles/focus_mode.dart';
 import '../styles/style_phases.dart';
 import '../styles/write_stylesheet.dart';
 import '../tables/inline_table_editing.dart';
@@ -151,7 +150,6 @@ class WonkyEditorState extends State<WonkyEditor> {
   final _slashPicker = PickerController<SlashItem>();
   final _mentionPicker = PickerController<MentionCandidate>();
   final _emojiPicker = PickerController<EmojiSuggestion>();
-  final _focusPhase = FocusModeStylePhase();
   final _dropIndicator = DropIndicator();
   final _outerFocus = FocusNode(
     debugLabel: 'write-editor-host',
@@ -162,8 +160,6 @@ class WonkyEditorState extends State<WonkyEditor> {
   late BlockDragController _blockDrag;
   late InlineTableEditing _tables;
   ExternalDropSource? _drops;
-  DateTime _lastKeyAt = DateTime.fromMillisecondsSinceEpoch(0);
-  bool _typewriterScheduled = false;
   final _slashItems = defaultSlashItems();
   final _hoveredNode = ValueNotifier<String?>(null);
   final _linkCard = ValueNotifier<LinkRun?>(null);
@@ -236,7 +232,6 @@ class WonkyEditorState extends State<WonkyEditor> {
     controller.tableEditing = _tables;
     controller.addListener(_onControllerChanged);
     controller.view.addListener(_onViewChanged);
-    controller.composer.selectionNotifier.addListener(_onSelection);
     controller.notices.listen(_onNotice);
     _drops = widget.externalDrops ?? ExternalDropSource.platform();
     _drops!.attach(
@@ -258,7 +253,6 @@ class WonkyEditorState extends State<WonkyEditor> {
     _drops?.detach();
     old.removeListener(_onControllerChanged);
     old.view.removeListener(_onViewChanged);
-    old.composer.selectionNotifier.removeListener(_onSelection);
   }
 
   @override
@@ -275,13 +269,12 @@ class WonkyEditorState extends State<WonkyEditor> {
     _detach(controller);
     _hoverTimer?.cancel();
     _previewTimer?.cancel();
-    _paginationPhase.dispose();
-    _codeHighlight.dispose();
+    _paginationPhase.close();
+    _codeHighlight.close();
     _pagination.dispose();
     _slashPicker.dispose();
     _mentionPicker.dispose();
     _emojiPicker.dispose();
-    _focusPhase.dispose();
     _dropIndicator.dispose();
     _outerFocus.dispose();
     _hoveredNode.dispose();
@@ -397,7 +390,6 @@ class WonkyEditorState extends State<WonkyEditor> {
   }
 
   bool _popoverKeys(KeyEvent event) {
-    _lastKeyAt = DateTime.now();
     if (event is KeyDownEvent &&
         event.logicalKey == LogicalKeyboardKey.escape &&
         _textDrag.isDragging) {
@@ -444,7 +436,7 @@ class WonkyEditorState extends State<WonkyEditor> {
   }
 
   // ---------------------------------------------------------------------------
-  // Tables (SE-4), focus mode and typewriter scrolling (§18.4, §30).
+  // Tables (SE-4, §18.4).
 
   /// Enter or F2 on a selected table starts editing its first cell.
   bool _tableKeys(KeyEvent event) {
@@ -469,61 +461,6 @@ class WonkyEditorState extends State<WonkyEditor> {
     final node = controller.document.getNodeById(selection.base.nodeId);
     if (node is! TableBlockNode || !_tables.canEdit(node.id)) return false;
     return _tables.activate(node.id, 0, 0, selectAll: true);
-  }
-
-  void _onSelection() {
-    final view = controller.view;
-    if (view.focusMode) {
-      _focusPhase.setFocusedNodes(
-        FocusModeStylePhase.nodesOf(
-          controller.document,
-          controller.composer.selection,
-        ),
-      );
-    }
-    if (view.typewriter &&
-        DateTime.now().difference(_lastKeyAt) <
-            const Duration(milliseconds: 400) &&
-        !_typewriterScheduled) {
-      _typewriterScheduled = true;
-      // After the editor's own keep-caret-visible scroll (also a post-frame
-      // callback), so typewriter scrolling has the last word.
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        scheduleMicrotask(() {
-          _typewriterScheduled = false;
-          if (mounted) _typewriterScroll();
-        });
-      });
-    }
-  }
-
-  /// Scrolls so that the caret line sits at 40 % of the viewport (§30).
-  void _typewriterScroll() {
-    final layout = controller.documentLayout;
-    final selection = controller.composer.selection;
-    if (layout == null || selection == null || !_scrollController.hasClients) {
-      return;
-    }
-    final rect = layout.getRectForPosition(selection.extent);
-    if (rect == null) return;
-    final position = _scrollController.position;
-    final target = (rect.center.dy - position.viewportDimension * 0.4).clamp(
-      0.0,
-      position.maxScrollExtent,
-    );
-    if ((target - position.pixels).abs() < 1) return;
-    final reduceMotion = MediaQuery.maybeDisableAnimationsOf(context) ?? false;
-    if (reduceMotion) {
-      _scrollController.jumpTo(target);
-    } else {
-      unawaited(
-        _scrollController.animateTo(
-          target,
-          duration: const Duration(milliseconds: 80),
-          curve: Curves.easeOut,
-        ),
-      );
-    }
   }
 
   // ---------------------------------------------------------------------------
@@ -607,13 +544,31 @@ class WonkyEditorState extends State<WonkyEditor> {
     _linkCard.value = inside ? run : null;
   }
 
+  /// The block whose handle gutter (left of the block, Write 04 §22) is at
+  /// [local], so the handle stays while the pointer moves onto it.
+  String? _handleGutterNode(DocumentLayout layout, Offset local) {
+    final nearest = layout.getDocumentPositionNearestToOffset(local);
+    if (nearest == null) return null;
+    final node = controller.document.getNodeById(nearest.nodeId);
+    if (node == null) return null;
+    final box = layout.getRectForSelection(
+      DocumentPosition(nodeId: node.id, nodePosition: node.beginningPosition),
+      DocumentPosition(nodeId: node.id, nodePosition: node.endPosition),
+    );
+    if (box == null) return null;
+    final inGutter =
+        local.dx >= box.left - blockHandleGutter && local.dx <= box.left;
+    final inBlock = local.dy >= box.top - 4 && local.dy <= box.bottom + 4;
+    return inGutter && inBlock ? node.id : null;
+  }
+
   void _onHover(PointerHoverEvent event) {
     if (_blockDrag.isDragging) return;
     final layout = controller.documentLayout;
     if (layout == null) return;
     final local = layout.getDocumentOffsetFromAncestorOffset(event.position);
     final position = layout.getDocumentPositionAtOffset(local);
-    _hoveredNode.value = position?.nodeId;
+    _hoveredNode.value = position?.nodeId ?? _handleGutterNode(layout, local);
     final offset = position == null
         ? null
         : controller.mirror.offsetOf(position);
@@ -718,29 +673,11 @@ class WonkyEditorState extends State<WonkyEditor> {
       focused: controller.focusNode.hasFocus,
     );
     var stylesheet = pages
-        ? style.stylesheet.copyWith(
-            documentPadding: view.pageSetup.margins * (zoom * textScale),
+        ? _pagesStylesheet(
+            style.stylesheet,
+            view.pageSetup.margins * (zoom * textScale),
           )
         : style.stylesheet;
-    if (view.typewriter && !pages) {
-      // Room below the last line so it can reach 40 % of the viewport (§30).
-      final viewport = MediaQuery.sizeOf(context).height;
-      final padding = stylesheet.documentPadding ?? EdgeInsets.zero;
-      stylesheet = stylesheet.copyWith(
-        documentPadding: padding.copyWith(
-          bottom: padding.bottom + viewport * 0.6,
-        ),
-      );
-    }
-    _focusPhase.enabled = view.focusMode && !readOnly;
-    if (view.focusMode) {
-      _focusPhase.setFocusedNodes(
-        FocusModeStylePhase.nodesOf(
-          controller.document,
-          controller.composer.selection,
-        ),
-      );
-    }
     _tables
       ..onUndo = widget.shortcutCallbacks?.onUndo
       ..onRedo = widget.shortcutCallbacks?.onRedo;
@@ -765,7 +702,10 @@ class WonkyEditorState extends State<WonkyEditor> {
           child: SizedBox(width: pageWidth, child: surface),
         ),
       );
-      WidgetsBinding.instance.addPostFrameCallback((_) => _repaginate());
+      // A rebuild (edit, selection, view change) gets a fresh budget of
+      // repagination passes (§29.3).
+      _repaginationPasses = 0;
+      _scheduleRepagination();
     } else {
       surface = ColoredBox(color: theme.paperColor, child: surface);
     }
@@ -797,11 +737,53 @@ class WonkyEditorState extends State<WonkyEditor> {
     );
   }
 
+  /// The Pages stylesheet (page margins as document padding), memoized: a
+  /// new stylesheet makes `super_editor` recreate its layout presenter and
+  /// restyle every block, which must not happen on every keystroke.
+  Stylesheet _pagesStylesheet(Stylesheet base, EdgeInsets margins) {
+    final cached = _pagesSheet;
+    if (cached != null &&
+        identical(cached.base, base) &&
+        cached.margins == margins) {
+      return cached.sheet;
+    }
+    final sheet = base.copyWith(documentPadding: margins);
+    _pagesSheet = (base: base, margins: margins, sheet: sheet);
+    return sheet;
+  }
+
+  ({Stylesheet base, EdgeInsets margins, Stylesheet sheet})? _pagesSheet;
+
+  /// Coalesces repagination to one measure per frame, after layout (§29.3).
+  /// Called after every rebuild in Pages mode and whenever the document's
+  /// content is laid out again (the page chrome layer is rebuilt after each
+  /// content layout), so heights that change without an editor rebuild (an
+  /// image that finishes loading, a web font, an upload preview swapped for
+  /// the uploaded file, a collaborator's edit) are re-measured too.
+  void _scheduleRepagination() {
+    if (_repaginationScheduled) return;
+    _repaginationScheduled = true;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _repaginationScheduled = false;
+      _repaginate();
+    });
+  }
+
+  bool _repaginationScheduled = false;
+
+  /// Consecutive measures that changed the gaps. Each change re-lays out the
+  /// document, which measures again, until the gaps are stable; the bound
+  /// stops a (theoretical) oscillation until the next rebuild.
+  int _repaginationPasses = 0;
+  static const _maxRepaginationPasses = 8;
+
   void _repaginate() {
     if (!mounted || controller.view.layout != LayoutMode.pages) return;
     final layout = controller.documentLayout;
     if (layout == null) return;
-    _pagination.measure(layout, controller.document);
+    if (_repaginationPasses >= _maxRepaginationPasses) return;
+    final changed = _pagination.measure(layout, controller.document);
+    _repaginationPasses = changed ? _repaginationPasses + 1 : 0;
   }
 
   List<ComponentBuilder> _componentBuilders(
@@ -824,6 +806,10 @@ class WonkyEditorState extends State<WonkyEditor> {
         theme: theme,
         callbacks: widget.blockCallbacks,
         editable: editable,
+        // Pages mode: an image always fits on one page (§17.3).
+        maxHeight: controller.view.layout == LayoutMode.pages
+            ? _pagination.contentHeight
+            : null,
       ),
       WonkyTableComponentBuilder(
         theme: theme,
@@ -889,13 +875,16 @@ class WonkyEditorState extends State<WonkyEditor> {
         _codeHighlight,
         _direction,
         ...widget.extraStylePhases,
-        _focusPhase,
       ],
       componentBuilders: _componentBuilders(theme, style.zoom, editable: true),
       contentDragDelegate: _textDrag,
       documentUnderlayBuilders: [
         if (pages)
-          _PageChromeLayerBuilder(pagination: _pagination, theme: theme),
+          _PageChromeLayerBuilder(
+            pagination: _pagination,
+            theme: theme,
+            onContentLayout: _scheduleRepagination,
+          ),
         WonkyHighlightLayerBuilder(controller: controller, theme: theme),
       ],
       documentOverlayBuilders: [
@@ -980,7 +969,11 @@ class WonkyEditorState extends State<WonkyEditor> {
       ),
       documentUnderlayBuilders: [
         if (pages && isMain)
-          _ReaderPageChromeLayerBuilder(pagination: _pagination, theme: theme),
+          _ReaderPageChromeLayerBuilder(
+            pagination: _pagination,
+            theme: theme,
+            onContentLayout: _scheduleRepagination,
+          ),
         if (isMain)
           WonkyReaderHighlightLayerBuilder(
             controller: controller,
@@ -1185,39 +1178,60 @@ class _PageChromeLayerBuilder implements SuperEditorLayerBuilder {
   const _PageChromeLayerBuilder({
     required this.pagination,
     required this.theme,
+    required this.onContentLayout,
   });
 
   final PaginationController pagination;
   final EditorTheme theme;
+  final VoidCallback onContentLayout;
 
   @override
   ContentLayerWidget build(
     BuildContext context,
     SuperEditorContext editContext,
-  ) => _PageChromeLayer(pagination: pagination, theme: theme);
+  ) => _PageChromeLayer(
+    pagination: pagination,
+    theme: theme,
+    onContentLayout: onContentLayout,
+  );
 }
 
 class _ReaderPageChromeLayerBuilder implements SuperReaderDocumentLayerBuilder {
   const _ReaderPageChromeLayerBuilder({
     required this.pagination,
     required this.theme,
+    required this.onContentLayout,
   });
 
   final PaginationController pagination;
   final EditorTheme theme;
+  final VoidCallback onContentLayout;
 
   @override
   ContentLayerWidget build(
     BuildContext context,
     SuperReaderContext readerContext,
-  ) => _PageChromeLayer(pagination: pagination, theme: theme);
+  ) => _PageChromeLayer(
+    pagination: pagination,
+    theme: theme,
+    onContentLayout: onContentLayout,
+  );
 }
 
 class _PageChromeLayer extends ContentLayerStatelessWidget {
-  const _PageChromeLayer({required this.pagination, required this.theme});
+  const _PageChromeLayer({
+    required this.pagination,
+    required this.theme,
+    required this.onContentLayout,
+  });
 
   final PaginationController pagination;
   final EditorTheme theme;
+
+  /// Called on every build of this layer. Content layers are rebuilt after
+  /// each layout of the document content, so this reports every layout:
+  /// block heights may have changed and the pages are re-measured (§29.3).
+  final VoidCallback onContentLayout;
 
   @override
   Widget doBuild(
@@ -1225,6 +1239,7 @@ class _PageChromeLayer extends ContentLayerStatelessWidget {
     Element? contentElement,
     RenderObject? contentLayout,
   ) {
+    onContentLayout();
     return IgnorePointer(
       child: CustomPaint(
         painter: PageChromePainter(

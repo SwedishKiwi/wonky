@@ -232,22 +232,6 @@ List<Command<CommandArgs>> themeCommands(
         return const CommandResult.ok();
       },
     ),
-    WriteCommand(
-      'write.theme.previewLocal',
-      label: (l) => l.cmdThemePreviewLocal,
-      categoryName: (l) => l.categoryView,
-      showInPalette: false,
-      argsSchema: const JsonSchema.object(
-        properties: {'themeUuid': JsonSchema.nullable(JsonSchema.string())},
-      ),
-      checked: (d, a) => a.values.containsKey('themeUuid')
-          ? d.documentTheme.previewUuid == a.string('themeUuid')
-          : null,
-      run: (ctx, d, a) {
-        d.documentTheme.previewUuid = a.string('themeUuid');
-        return const CommandResult.ok();
-      },
-    ),
 
     // --------------------------------------------------------- library
     ThemeCommand(

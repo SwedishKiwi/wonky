@@ -10,6 +10,7 @@ import 'package:serverpod/serverpod.dart';
 
 import '../users/account_service.dart';
 import 'mcp_config.dart';
+import 'mcp_session_directory.dart';
 import 'tool_support.dart';
 import 'wonky_mcp_server.dart';
 
@@ -219,7 +220,8 @@ class McpSession {
     required this.transport,
     required this.server,
     this.clientName,
-  }) : lastUsed = clock.now();
+  }) : lastUsed = clock.now(),
+       publishedAt = clock.now();
 
   final String id;
   final int tokenId;
@@ -228,17 +230,55 @@ class McpSession {
   final mcp.McpServer server;
   String? clientName;
   DateTime lastUsed;
+
+  /// When the [McpSessionDirectory] entry was last refreshed.
+  DateTime publishedAt;
+
+  /// The client's `initialize` parameters (replayed when resuming).
+  Map<String, Object?>? initializeParams;
+
+  McpSessionRecord get record => McpSessionRecord(
+    tokenId: tokenId,
+    userId: userId,
+    clientName: clientName,
+    initializeParams: initializeParams,
+  );
 }
 
 /// The Streamable HTTP endpoint logic of `/mcp` (suite 09 §1–2): host and
 /// origin checks, bearer personal-access-token auth, the stateless MCP
 /// 2026-07-28 profile (one server per request) and initialize-era sessions
 /// keyed by `Mcp-Session-Id`, JSON responses and a `GET` event stream.
+///
+/// With several instances (specs/13 §4) sessions are registered in the
+/// [McpSessionDirectory] (Redis), so any instance can serve them: an
+/// instance that does not know a session resumes it from its record, and a
+/// session deleted or expired in the directory is gone everywhere.
 class McpHttpHandler {
-  McpHttpHandler({McpConfig? config}) : _config = config;
+  McpHttpHandler({McpConfig? config, McpSessionDirectory? directory})
+    : _config = config,
+      _directory = directory;
 
   final McpConfig? _config;
   McpConfig get config => _config ?? McpConfig.current;
+
+  final McpSessionDirectory? _directory;
+  RedisMcpSessionDirectory? _redisDirectory;
+
+  /// The cluster-wide session registry: the injected one, else Redis when
+  /// enabled, else none (a single instance keeps sessions in memory only).
+  McpSessionDirectory? get directory {
+    if (_directory != null) return _directory;
+    final redis = Serverpod.instance.redisController;
+    if (redis == null) return null;
+    if (_redisDirectory?.redis != redis) {
+      _redisDirectory = RedisMcpSessionDirectory(redis);
+    }
+    return _redisDirectory;
+  }
+
+  /// How often a used session refreshes its directory entry.
+  static const publishEvery = Duration(minutes: 1);
 
   final Map<String, McpSession> _sessions = {};
   Timer? _sweeper;
@@ -331,6 +371,41 @@ class McpHttpHandler {
     McpSession? mcpSession;
     if (sessionId != null) {
       mcpSession = _sessions[sessionId];
+      final dir = directory;
+      if (dir != null) {
+        McpSessionRecord? record;
+        var reachable = true;
+        try {
+          record = await dir.get(sessionId);
+        } on Object catch (e) {
+          // Without the directory, trust what this instance knows.
+          reachable = false;
+          session.log(
+            'MCP session directory unavailable: $e',
+            level: LogLevel.warning,
+          );
+        }
+        if (reachable && record == null && mcpSession != null) {
+          // Deleted or expired on another instance.
+          await _close(mcpSession);
+          mcpSession = null;
+        } else if (record != null && mcpSession == null) {
+          if (record.userId != actor.userId || record.tokenId != token.id) {
+            return McpHttpResponse.rpcError(
+              403,
+              -32001,
+              'This session belongs to another access token.',
+              headers: cors,
+            );
+          }
+          mcpSession = await _open(
+            sessionId,
+            record,
+            scopes: token.scopes.toSet(),
+            resumeContext: context(record.clientName),
+          );
+        }
+      }
       if (mcpSession == null) {
         return McpHttpResponse.rpcError(
           404,
@@ -347,7 +422,13 @@ class McpHttpHandler {
           headers: cors,
         );
       }
-      mcpSession.lastUsed = clock.now();
+      final now = clock.now();
+      mcpSession.lastUsed = now;
+      if (dir != null &&
+          now.difference(mcpSession.publishedAt) >= publishEvery) {
+        mcpSession.publishedAt = now;
+        await _publish(session, mcpSession);
+      }
     }
 
     switch (r.method) {
@@ -361,6 +442,14 @@ class McpHttpHandler {
           );
         }
         await _close(mcpSession);
+        try {
+          await directory?.remove(mcpSession.id);
+        } on Object catch (e) {
+          session.log(
+            'MCP session directory unavailable: $e',
+            level: LogLevel.warning,
+          );
+        }
         return McpHttpResponse(200, headers: cors);
       case 'GET':
         if (mcpSession == null) {
@@ -451,6 +540,7 @@ class McpHttpHandler {
     McpExchangeTransport transport;
     String? clientName = mcpSession?.clientName;
     var stateless = false;
+    var created = false;
     if (mcpSession != null) {
       transport = mcpSession.transport;
     } else if (method == mcp.Method.initialize) {
@@ -466,22 +556,21 @@ class McpHttpHandler {
           ? '${params['clientInfo']['name'] ?? ''}'
           : null;
       final newId = const Uuid().v4();
-      transport = McpExchangeTransport(sessionId: newId);
-      final server = WonkyMcpServer.create(
+      final s = await _open(
+        newId,
+        McpSessionRecord(
+          tokenId: token.id!,
+          userId: actor.userId,
+          clientName: clientName,
+          initializeParams: params is Map
+              ? params.cast<String, Object?>()
+              : null,
+        ),
         scopes: token.scopes.toSet(),
-        contextOf: transport.contextFor,
       );
-      await server.connect(transport);
-      final s = McpSession(
-        id: newId,
-        tokenId: token.id!,
-        userId: actor.userId,
-        transport: transport,
-        server: server,
-        clientName: clientName,
-      );
-      _sessions[newId] = s;
-      transport.onclose = () => _sessions.remove(newId);
+      if (directory != null) await _publish(session, s);
+      transport = s.transport;
+      created = true;
       extraHeaders['mcp-session-id'] = newId;
       mcpSession = s;
     } else {
@@ -503,6 +592,12 @@ class McpHttpHandler {
       Map<String, dynamic>? response;
       try {
         response = await transport.deliver(json, context(clientName));
+        // With several instances the client's `notifications/initialized`
+        // may land elsewhere: every instance marks the session ready itself
+        // (the client's own notification is then a harmless duplicate).
+        if (created && directory != null && response?['error'] == null) {
+          await _markReady(transport, context(clientName));
+        }
       } on FormatException catch (e) {
         return McpHttpResponse.rpcError(
           400,
@@ -554,8 +649,74 @@ class McpHttpHandler {
     );
   }
 
+  /// Creates the local state of session [id] (new or resumed).
+  ///
+  /// A resumed session replays the client's `initialize` (with
+  /// [resumeContext]), so the protocol layer is in the same state as on the
+  /// instance that created it.
+  Future<McpSession> _open(
+    String id,
+    McpSessionRecord record, {
+    required Set<String> scopes,
+    ToolContext? resumeContext,
+  }) async {
+    final transport = McpExchangeTransport(sessionId: id);
+    final server = WonkyMcpServer.create(
+      scopes: scopes,
+      contextOf: transport.contextFor,
+    );
+    await server.connect(transport);
+    if (resumeContext != null) {
+      await transport.deliver({
+        'jsonrpc': '2.0',
+        'id': '_wonky_resume',
+        'method': mcp.Method.initialize,
+        'params': record.initializeParams ?? const <String, Object?>{},
+      }, resumeContext);
+      await _markReady(transport, resumeContext);
+    }
+    final s = McpSession(
+      id: id,
+      tokenId: record.tokenId,
+      userId: record.userId,
+      transport: transport,
+      server: server,
+      clientName: record.clientName,
+    )..initializeParams = record.initializeParams;
+    _sessions[id] = s;
+    transport.onclose = () {
+      if (identical(_sessions[id], s)) _sessions.remove(id);
+    };
+    return s;
+  }
+
+  /// Delivers `notifications/initialized` for an initialized session.
+  static Future<void> _markReady(
+    McpExchangeTransport transport,
+    ToolContext context,
+  ) async {
+    // The protocol marks the session initialized after sending the
+    // initialize response; let that settle first.
+    await Future<void>.delayed(Duration.zero);
+    await transport.deliver({
+      'jsonrpc': '2.0',
+      'method': 'notifications/initialized',
+    }, context);
+  }
+
+  Future<void> _publish(Session session, McpSession s) async {
+    try {
+      await directory?.put(s.id, s.record, config.sessionIdle);
+    } on Object catch (e) {
+      session.log(
+        'MCP session directory unavailable: $e',
+        level: LogLevel.warning,
+      );
+    }
+  }
+
   Future<void> _close(McpSession s) async {
-    _sessions.remove(s.id);
+    if (identical(_sessions[s.id], s)) _sessions.remove(s.id);
     await s.transport.close();
   }
 

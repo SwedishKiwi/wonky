@@ -1,6 +1,7 @@
 import 'package:flutter/widgets.dart';
 import 'package:shad/shad.dart';
 
+import '../branding/product_icon.dart';
 import '../config/wonky_app_config.dart';
 import '../l10n/wonky_app_localizations.dart';
 import '../shell/page_frame.dart';
@@ -12,11 +13,14 @@ import 'sections/other_sections.dart';
 
 /// A settings section.
 class _Section {
-  const _Section(this.id, this.title, this.icon, this.builder);
+  const _Section(this.id, this.title, this.icon, this.builder, {this.product});
   final String id;
   final String title;
   final IconData icon;
   final WidgetBuilder builder;
+
+  /// Shown instead of [icon] for the sections of a product.
+  final WonkyProduct? product;
 }
 
 /// `/settings/:section` (suite 04 §4): left nav + section page. Every change
@@ -66,12 +70,14 @@ class SettingsScreen extends StatelessWidget {
         l.settingsWrite,
         LucideIcons.fileText,
         (_) => WriteDefaultsSection(services: s),
+        product: WonkyProduct.write,
       ),
       _Section(
         'sheets',
         l.settingsSheets,
         LucideIcons.sheet,
         (_) => SheetsDefaultsSection(services: s),
+        product: WonkyProduct.sheets,
       ),
       _Section(
         'notifications',
@@ -124,7 +130,9 @@ class SettingsScreen extends StatelessWidget {
               backgroundColor: x.id == current.id
                   ? theme.colorScheme.sidebarAccent
                   : null,
-              leading: Icon(x.icon, size: 16),
+              leading: x.product == null
+                  ? Icon(x.icon, size: 16)
+                  : WonkyProductIcon(x.product!, size: 18, semanticLabel: ''),
               onPressed: () => s.router.go('/settings/${x.id}'),
               child: Flexible(
                 child: Text(x.title, overflow: TextOverflow.ellipsis),

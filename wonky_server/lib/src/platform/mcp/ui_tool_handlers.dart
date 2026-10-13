@@ -18,7 +18,10 @@ abstract final class UiToolHandlers {
   ];
 
   static Future<ToolResult> listSessions(ToolContext ctx, ToolArgs a) async {
-    final windows = UiBridgeHub.windowsOf(ctx.actor.userId);
+    final windows = await UiBridgeHub.listWindows(
+      ctx.session,
+      ctx.actor.userId,
+    );
     return ToolResult(
       {
         'sessions': [for (final w in windows) w.toJson()],
@@ -28,8 +31,8 @@ abstract final class UiToolHandlers {
                 'Settings › Developer › "Allow MCP to control this window".'
           : [
               for (final w in windows)
-                '- ${w.sessionId}: ${w.app} ${w.route ?? ''}'
-                    '${w.focused ? ' (focused)' : ''} — ${w.deviceLabel}',
+                '- ${w.sessionId}: ${w.app} ${w.json['route'] ?? ''}'
+                    '${w.focused ? ' (focused)' : ''} — ${w.json['device']}',
             ].join('\n'),
     );
   }
@@ -37,6 +40,7 @@ abstract final class UiToolHandlers {
   static RegisteredMcpTool _relay(McpToolDefinition d, {String? app}) =>
       RegisteredMcpTool(d, (ctx, a) async {
         final r = await UiBridgeHub.call(
+          ctx.session,
           ctx.actor.userId,
           d.name,
           a.values,

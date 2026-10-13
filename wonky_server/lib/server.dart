@@ -1,10 +1,15 @@
 import 'dart:io';
 
+import 'package:clock/clock.dart';
+import 'package:serverpod/protocol.dart' as sp show FutureCallEntry;
+import 'package:serverpod/serverpod.dart' as sp show Serverpod;
 import 'package:serverpod_auth_idp_server/core.dart';
 import 'package:serverpod_cloud_storage/serverpod_cloud_storage.dart';
 
 import 'src/cache_busting.dart';
+import 'src/generated/future_calls.dart' show FutureCalls;
 import 'src/generated/serverpod.dart';
+import 'src/platform/cluster/cluster.dart';
 import 'src/platform/mcp/mcp_route.dart';
 import 'src/platform/users/email_idp.dart';
 import 'src/platform/versions/version_service.dart';
@@ -48,10 +53,18 @@ void run(List<String> args) async {
   final session = await pod.createSession(enableLogging: false);
   try {
     await ThemeService.upsertBuiltins(session);
+    if (pod.redisController == null &&
+        (pod.runMode == ServerpodRunMode.staging ||
+            pod.runMode == ServerpodRunMode.production)) {
+      stderr.writeln(
+        'WARNING: Redis is disabled: run this server as a single instance. '
+        'Several instances need Redis for global messages (specs/13 §4).',
+      );
+    }
   } finally {
     await session.close();
   }
-  await _scheduleJobs(pod);
+  await scheduleMaintenanceJobs(pod);
 }
 
 /// Registers the per-app version providers (specs/07 §5).
@@ -95,33 +108,60 @@ void _configureWebServer(Serverpod pod) {
   }
 }
 
-/// Recurring maintenance jobs (specs/13 §3). Re-registered on every start
-/// under fixed identifiers.
-Future<void> _scheduleJobs(Serverpod pod) async {
-  final futureCalls = pod.futureCalls;
-  Future<void> every(
-    String id,
-    String cron,
-    Future<void> Function(dynamic recurring) schedule,
-  ) async {
-    await futureCalls.cancel(id);
-    await schedule(futureCalls.callRecurring(identifier: id).cron(cron));
+/// Recurring maintenance jobs (specs/13 §3), registered under fixed
+/// identifiers. Every instance runs this at start; it is idempotent and
+/// serialized across instances (specs/13 §4): a job that is already
+/// scheduled with the same cron is left alone, a missing one is scheduled,
+/// and a changed or duplicated one is replaced. Serverpod's claims make
+/// each scheduled run execute on one instance only.
+Future<void> scheduleMaintenanceJobs(sp.Serverpod pod) async {
+  final session = await pod.createSession(enableLogging: false);
+  try {
+    await Cluster.withLock(session, 'wonky.scheduleJobs', () async {
+      await scheduleRecurringJobs(session, pod.futureCalls);
+    });
+  } finally {
+    await session.close();
   }
+}
 
-  await every(
-    'wonky.captureVersions',
+/// The recurring jobs by identifier: cron and how to schedule them.
+final _jobs = <String, (String, Future<void> Function(dynamic recurring))>{
+  'wonky.captureVersions': (
     '* * * * *',
     (r) => r.maintenance.captureVersions(),
-  );
-  await every(
-    'wonky.sendDigests',
-    '*/15 * * * *',
-    (r) => r.maintenance.sendDigests(),
-  );
-  await every(
-    'wonky.cleanupFiles',
-    '7 * * * *',
-    (r) => r.maintenance.cleanupFiles(),
-  );
-  await every('wonky.daily', '17 3 * * *', (r) => r.maintenance.daily());
+  ),
+  'wonky.sendDigests': ('*/15 * * * *', (r) => r.maintenance.sendDigests()),
+  'wonky.cleanupFiles': ('7 * * * *', (r) => r.maintenance.cleanupFiles()),
+  'wonky.daily': ('17 3 * * *', (r) => r.maintenance.daily()),
+};
+
+/// Brings the scheduled recurring jobs in line with [_jobs] (see
+/// [scheduleMaintenanceJobs]). Returns the identifiers that were (re)scheduled.
+Future<List<String>> scheduleRecurringJobs(
+  Session session,
+  FutureCalls futureCalls,
+) async {
+  final scheduled = <String>[];
+  final now = clock.now().toUtc();
+  for (final MapEntry(key: id, value: (cron, schedule)) in _jobs.entries) {
+    final entries = await sp.FutureCallEntry.db.find(
+      session,
+      where: (t) => t.identifier.equals(id),
+    );
+    final sameCron = entries.every(
+      (e) => switch (e.scheduling) {
+        CronFutureCallScheduling(cron: final c) => c == cron,
+        _ => false,
+      },
+    );
+    // One chain has at most one future run (a running entry inserts its
+    // next run before it executes).
+    final upcoming = entries.where((e) => e.time.isAfter(now)).length;
+    if (entries.isNotEmpty && sameCron && upcoming <= 1) continue;
+    await futureCalls.cancel(id);
+    await schedule(futureCalls.callRecurring(identifier: id).cron(cron));
+    scheduled.add(id);
+  }
+  return scheduled;
 }

@@ -16,6 +16,7 @@ class SidePanelSpec {
     this.defaultWidth = 340,
     this.maxWidth = 720,
     this.headerActions,
+    this.showAsTab = true,
   });
 
   /// Stable id (`comments`, `outline`, `history`, `assistant`, …).
@@ -27,12 +28,16 @@ class SidePanelSpec {
   final double maxWidth;
   final WidgetBuilder builder;
 
-  /// Extra buttons in the panel header (before collapse/close).
+  /// Extra buttons in the panel header (before close).
   final WidgetBuilder? headerActions;
+
+  /// Whether the panel is one of the header tabs that switch between panels
+  /// (false for panels opened only by their command, e.g. file details).
+  final bool showAsTab;
 }
 
-/// State of the panel host: the active panel, recently open panels (tabs),
-/// rail-collapsed state and per-panel widths.
+/// State of the panel host: the active panel (the host is either showing it
+/// or hidden), recently open panels and per-panel widths.
 class WonkySplitViewController extends ChangeNotifier {
   WonkySplitViewController({
     Map<String, double>? widths,
@@ -46,27 +51,22 @@ class WonkySplitViewController extends ChangeNotifier {
   final void Function(String panelId, double width)? onWidthChanged;
 
   String? _active;
-  bool _collapsed = false;
   final List<String> _recent = [];
   final Map<String, double> _widths;
 
   /// The open panel id, or null when the host is closed.
   String? get activePanelId => _active;
 
-  /// Recently open panels, most recent first (shown as header tabs).
+  /// Recently open panels, most recent first.
   List<String> get recentPanelIds => List.unmodifiable(_recent);
 
-  /// Whether the host is collapsed to an icon rail.
-  bool get collapsed => _collapsed;
-
-  bool isOpen(String id) => _active == id && !_collapsed;
+  bool isOpen(String id) => _active == id;
 
   double? widthOf(String id) => _widths[id];
 
-  /// Opens (and expands) [id].
+  /// Opens [id].
   void open(String id) {
     _active = id;
-    _collapsed = false;
     _recent
       ..remove(id)
       ..insert(0, id);
@@ -85,26 +85,11 @@ class WonkySplitViewController extends ChangeNotifier {
     if (_active == null) return;
     _recent.remove(_active);
     _active = null;
-    _collapsed = false;
     notifyListeners();
   }
 
   /// Opens [id], or closes it when it is the open panel.
   void toggle(String id) => isOpen(id) ? close(id) : open(id);
-
-  /// Collapses the host to the icon rail.
-  void collapse() {
-    if (_active == null || _collapsed) return;
-    _collapsed = true;
-    notifyListeners();
-  }
-
-  /// Expands from the rail.
-  void expand() {
-    if (!_collapsed) return;
-    _collapsed = false;
-    notifyListeners();
-  }
 
   /// Moves to the next/previous of the recent panels.
   void cycle(int delta, {List<String>? available}) {
@@ -114,7 +99,6 @@ class WonkySplitViewController extends ChangeNotifier {
     final next = ((current + delta) % ids.length + ids.length) % ids.length;
     final id = ids[next];
     _active = id;
-    _collapsed = false;
     if (!_recent.contains(id)) {
       _recent.insert(0, id);
       if (_recent.length > maxRecent) _recent.removeLast();
@@ -170,14 +154,6 @@ class _WonkySplitViewState extends State<WonkySplitView> {
           final spec = _spec(c.activePanelId);
           final narrow = constraints.maxWidth < widget.narrowBreakpoint;
           if (spec == null) return widget.child;
-          if (c.collapsed && !narrow) {
-            return Row(
-              children: [
-                Expanded(child: widget.child),
-                _Rail(controller: c, panels: widget.panels),
-              ],
-            );
-          }
           final panel = _PanelFrame(
             key: ValueKey<String>('panel.${spec.id}'),
             spec: spec,
@@ -325,10 +301,10 @@ class _PanelFrame extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = ShadTheme.of(context);
     final l10n = WonkyUiLocalizations.of(context);
-    final recent = [
-      for (final id in controller.recentPanelIds)
-        for (final p in panels)
-          if (p.id == id) p,
+    // Every panel is always offered as a tab (suite 02 §4.5).
+    final tabs = [
+      for (final p in panels)
+        if (p.showAsTab) p,
     ];
     final motion = WonkyThemeScope.of(context).motion(context);
     Widget content = Container(
@@ -347,8 +323,8 @@ class _PanelFrame extends StatelessWidget {
               padding: const EdgeInsets.only(left: 12, right: 4),
               child: Row(
                 children: [
-                  if (recent.length > 1)
-                    for (final p in recent)
+                  if (tabs.length > 1)
+                    for (final p in tabs)
                       Padding(
                         padding: const EdgeInsets.only(right: 2),
                         child: ShadTooltip(
@@ -367,7 +343,7 @@ class _PanelFrame extends StatelessWidget {
                           ),
                         ),
                       ),
-                  if (recent.length > 1) const SizedBox(width: 6),
+                  if (tabs.length > 1) const SizedBox(width: 6),
                   Expanded(
                     child: Semantics(
                       header: true,
@@ -381,18 +357,6 @@ class _PanelFrame extends StatelessWidget {
                     ),
                   ),
                   if (spec.headerActions != null) spec.headerActions!(context),
-                  if (!narrow)
-                    ShadTooltip(
-                      builder: (_) => Text(l10n.panelCollapse),
-                      child: ShadIconButton.ghost(
-                        width: 30,
-                        height: 30,
-                        iconSize: 16,
-                        semanticLabel: l10n.panelCollapse,
-                        icon: const Icon(LucideIcons.panelRightClose),
-                        onPressed: controller.collapse,
-                      ),
-                    ),
                   ShadTooltip(
                     builder: (_) => Text(l10n.panelClose),
                     child: ShadIconButton.ghost(
@@ -440,60 +404,5 @@ class _PanelFrame extends StatelessWidget {
         .animate()
         .fadeIn(duration: motion)
         .slideX(begin: 0.04, end: 0, duration: motion, curve: Curves.easeOut);
-  }
-}
-
-class _Rail extends StatelessWidget {
-  const _Rail({required this.controller, required this.panels});
-
-  final WonkySplitViewController controller;
-  final List<SidePanelSpec> panels;
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = ShadTheme.of(context);
-    final l10n = WonkyUiLocalizations.of(context);
-    final ids = controller.recentPanelIds;
-    return Container(
-      width: 44,
-      decoration: BoxDecoration(
-        border: Border(left: BorderSide(color: theme.colorScheme.border)),
-      ),
-      child: Column(
-        children: [
-          const SizedBox(height: 6),
-          ShadTooltip(
-            builder: (_) => Text(l10n.panelExpand),
-            child: ShadIconButton.ghost(
-              width: 32,
-              height: 32,
-              iconSize: 16,
-              semanticLabel: l10n.panelExpand,
-              icon: const Icon(LucideIcons.panelRightOpen),
-              onPressed: controller.expand,
-            ),
-          ),
-          const SizedBox(height: 4),
-          for (final id in ids)
-            for (final p in panels)
-              if (p.id == id)
-                Padding(
-                  padding: const EdgeInsets.only(bottom: 2),
-                  child: ShadTooltip(
-                    builder: (_) => Text(p.title),
-                    child: ShadIconButton.ghost(
-                      key: ValueKey<String>('panel.rail.${p.id}'),
-                      width: 32,
-                      height: 32,
-                      iconSize: 16,
-                      semanticLabel: p.title,
-                      icon: Icon(p.icon),
-                      onPressed: () => controller.open(p.id),
-                    ),
-                  ),
-                ),
-        ],
-      ),
-    );
   }
 }

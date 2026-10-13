@@ -52,6 +52,7 @@ class AssistantEndpoint extends Endpoint {
   Future<bool> stop(Session session, int? threadId, String? runId) async {
     final actor = await UserService.actorOf(session);
     return AssistantService.stop(
+      session,
       actor.userId,
       runId: runId,
       threadId: threadId,
@@ -67,6 +68,7 @@ class AssistantEndpoint extends Endpoint {
   ) async {
     final actor = await UserService.actorOf(session);
     return AssistantService.confirm(
+      session,
       actor.userId,
       runId,
       confirmationId,

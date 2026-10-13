@@ -10,10 +10,13 @@ import 'package:wonky_core/wonky_core.dart' show InvocationSource;
 import 'package:wonky_ui/wonky_ui.dart';
 import 'package:wonky_write/config/write_app_config.dart';
 import 'package:wonky_write/features/document/write_document_session.dart';
+import 'package:wonky_write/features/editor/applier/delta_applier.dart'
+    show DeltaSelection;
 import 'package:wonky_write/features/screen/write_document_screen.dart';
 import 'package:wonky_write/features/sync/connection_keeper.dart';
 import 'package:wonky_write/features/themes/document_theme.dart';
-import 'package:wonky_write_core/wonky_write_core.dart' hide ThemeCatalog;
+import 'package:wonky_write_core/wonky_write_core.dart'
+    hide DeltaSelection, ThemeCatalog;
 
 import '../document/support/session_harness.dart';
 import '../sync/support/fake_document_server.dart';
@@ -98,7 +101,8 @@ void main() {
   });
 
   testWidgets('Given an open document when the screen loads then the '
-      'header, menubar, toolbar, canvas and status bar render', (tester) async {
+      'header, menubar, toolbar and canvas render, and the word count bar '
+      'shows only once it is turned on', (tester) async {
     await pumpScreen(tester);
 
     expect(session.phase.value, WriteSessionPhase.ready);
@@ -110,6 +114,14 @@ void main() {
       find.byKey(const ValueKey('write.toolbar.modeSwitcher')),
       findsOneWidget,
     );
+    expect(find.byType(StatusBar), findsNothing);
+
+    await tester.runAsync(
+      () =>
+          h.invoke('write.view.toggleWordCount', const {}, InvocationSource.ui),
+    );
+    await tester.pump();
+    expect(find.byType(StatusBar), findsOneWidget);
     expect(
       find.byKey(const ValueKey('write.status.wordCount')),
       findsOneWidget,
@@ -159,6 +171,97 @@ void main() {
     expect(
       tester.getTopRight(cue).dx,
       greaterThanOrEqualTo(tester.getTopRight(margin).dx),
+    );
+    await tester.pumpWidget(const SizedBox());
+    await tester.pump(const Duration(seconds: 2));
+  });
+
+  testWidgets('Given a suggestion card in the margin when toggling comments '
+      'then the margin hides and shows again (no comments side panel)', (
+    tester,
+  ) async {
+    await pumpScreen(tester);
+    await h.invoke('write.mode.set', {'mode': 'suggesting'});
+    session.editor.applyLocal(
+      Delta()
+        ..retain(5)
+        ..insert('ned'),
+      label: 'Typing',
+    );
+    for (var i = 0; i < 10; i++) {
+      await tester.runAsync(pumpEventQueue);
+      await tester.pump(const Duration(milliseconds: 50));
+    }
+    final margin = find.byKey(const ValueKey('write.commentMargin'));
+    expect(margin, findsWidgets);
+    expect(find.byKey(const ValueKey('comments.filter.open')), findsOneWidget);
+
+    await tester.runAsync(
+      () =>
+          h.invoke('shell.comments.togglePanel', const {}, InvocationSource.ui),
+    );
+    await tester.pump();
+    expect(margin, findsNothing);
+    expect(find.byType(CommentsPanel), findsNothing);
+
+    await tester.runAsync(
+      () =>
+          h.invoke('shell.comments.togglePanel', const {}, InvocationSource.ui),
+    );
+    await tester.pump();
+    expect(margin, findsWidgets);
+    await tester.pumpWidget(const SizedBox());
+    await tester.pump(const Duration(seconds: 2));
+  });
+
+  testWidgets('Given a selection when starting a comment then the composer '
+      'is a margin card, and ending the draft removes it without errors', (
+    tester,
+  ) async {
+    await pumpScreen(tester);
+    session.editor.select(const DeltaSelection(8, 13));
+    await tester.runAsync(
+      () => h.invoke('shell.comments.create', const {}, InvocationSource.ui),
+    );
+    for (var i = 0; i < 5; i++) {
+      await tester.runAsync(pumpEventQueue);
+      await tester.pump(const Duration(milliseconds: 50));
+    }
+    final draft = find.byKey(const ValueKey('write.margin.draft'));
+    expect(draft, findsOneWidget);
+    expect(h.services.commentsHost?.isShown, isTrue);
+
+    h.services.comments.value!.cancelDraft();
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 50));
+    expect(tester.takeException(), isNull);
+    expect(draft, findsNothing);
+    await tester.pumpWidget(const SizedBox());
+    await tester.pump(const Duration(seconds: 2));
+  });
+
+  testWidgets('Given a comment on the whole document then it is a card at '
+      'the top of the margin', (tester) async {
+    await pumpScreen(tester);
+    await tester.runAsync(
+      () => h.invoke('shell.comments.create', const {
+        'body': 'Looks good overall',
+        'anchorKind': 'document',
+        'anchorJson': '{"v":1}',
+      }, InvocationSource.ui),
+    );
+    for (var i = 0; i < 5; i++) {
+      await tester.runAsync(pumpEventQueue);
+      await tester.pump(const Duration(milliseconds: 50));
+    }
+
+    expect(find.text('Looks good overall'), findsOneWidget);
+    expect(
+      find.descendant(
+        of: find.byKey(const ValueKey('write.commentMargin')).first,
+        matching: find.text('Looks good overall'),
+      ),
+      findsOneWidget,
     );
     await tester.pumpWidget(const SizedBox());
     await tester.pump(const Duration(seconds: 2));

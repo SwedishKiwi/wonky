@@ -52,6 +52,7 @@ wonky/
 ├── specs/                               # suite-level specs (this folder)
 │   ├── wonky_write/                     #   Write app specs
 │   └── wonky_sheets/                    #   Sheets app specs
+├── icons/                               # product icon sources (Work, Drive, Write, Sheets, Slides; 02 §5)
 ├── wonky_server/                        # THE Serverpod server (auth, drive, sharing, Write OT, Sheets sync, MCP, AI,
 │                                        #   and the web server that serves both Flutter web builds — §2.4)
 ├── wonky_client/                        # generated Serverpod client (never edit)
@@ -61,7 +62,8 @@ wonky/
 │   ├── wonky_core/                      # pure Dart: ids, roles, command/undo abstractions, MCP tool schemas, utils
 │   ├── wonky_ui/                        # Flutter: theme + custom shad-style widgets (no server deps)
 │   ├── wonky_app/                       # Flutter: shell (client bootstrap, auth, routing, drive, sharing, comments UI,
-│   │                                    #          history UI, presence, settings, command system, MCP bridge, AI panel)
+│   │                                    #          history UI, presence, settings, command system, MCP bridge, AI panel,
+│   │                                    #          product icons in assets/icons/)
 │   ├── wonky_sync_models/               # Serverpod *shared package*: `database: sync` models for Sheets + id helpers
 │   ├── wonky_write_core/                # pure Dart: Delta schema, Markdown⇄Delta, OT helpers, exporters, theme model
 │   ├── wonky_sheets_core/               # pure Dart: addressing, formula parser/evaluator/functions, number formats,
@@ -172,7 +174,7 @@ packages importing Sheets packages and vice versa; feature code importing genera
 | `wonky_app` | `sqlite_async`, `path_provider` | Offline cache and outbox (`LocalDatabase`, 12) and its file location on desktop |
 | `wonky_write`, `wonky_sheets` | `wonky_core`, `wonky_client`, `shad`, `go_router` | Ids/commands/undo, repositories calling endpoints (never widgets, 11 §6), shad UI (02), routes (A9) |
 | `wonky_write` | `dart_quill_delta` | Client side of the Delta OT (A4) |
-| `wonky_write` | `highlight` | Code block syntax highlighting (same engine as `wonky_write_core`) |
+| `wonky_write` | `syntax_highlight` | Code block syntax highlighting in the editor (TextMate grammars; vendored, see §2.2; exports keep `wonky_write_core`'s `highlight`) |
 | `wonky_write` | `http` | Fetches server-side exports |
 | `wonky_write` | `sqlite_async` | Offline document cache (with `wonky_app`'s `LocalDatabase`) |
 
@@ -190,6 +192,9 @@ packages importing Sheets packages and vice versa; feature code importing genera
   for Serverpod 4.1 compatibility (`watch()`, web transaction deadlock fix) and our helpers
   (U11). Fixes are contributed upstream; overrides are removed when upstream catches up.
 - `dart_eval`: vendored in `third_party/dart_eval` (patches DE-1…DE-3, Sheets 09).
+- `syntax_highlight`: vendored in `third_party/syntax_highlight` (0.5.0, patches SH-1…SH-5:
+  no `CodeEditor`/`super_clipboard`, `(?i)` regexes, rewritten and fixed grammars, scope-level
+  API). Flutter-only, wired through the root `pubspec_overrides.yaml` ([Write 04](wonky_write/04-editor.md) §15.4).
 - `sqlite3_web` pinned to a version compatible with `sqlite_async` (toptap pins 0.9.4).
 - `shad` `^0.99.4`.
 
@@ -393,8 +398,11 @@ scriptTimeoutMs, scriptDailyQuotaMs}`, `write: {snapshotEveryNOps, maxDocumentCh
 (§2.4); the template's commented-out `authCookie` + `allowedOrigins` are enabled (§2.5).
 Secrets in `passwords.yaml`: `anthropicApiKey`, `jwt…` (existing), email provider credentials.
 
-Redis is **required** in staging/production (multiple server instances need global
-`session.messages` for presence, Write op fan-out and UI bridge relays). Development runs
+Redis is **required** as soon as more than one server instance runs (global
+`session.messages` for presence, Write op fan-out, UI bridge and assistant relays, plus the
+MCP session registry and rate counter); how every in-memory service behaves across instances
+is in [13 §4](13-security-and-operations.md). The shipped staging/production configs run one
+instance with Redis disabled; enabling it is a config/env change. Development and tests run
 without Redis (local scope).
 
 ## 7. Protocol versioning

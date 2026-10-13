@@ -57,9 +57,7 @@ void main() {
 
   for (final b in Brightness.values) {
     testWidgets('Given a split view in ${b.name} when a panel opens then it '
-        'shows next to the content with tabs for recent panels', (
-      tester,
-    ) async {
+        'shows next to the content with tabs for the panels', (tester) async {
       final c = WonkySplitViewController();
       await pumpWonky(
         tester,
@@ -118,20 +116,20 @@ void main() {
     expect(c.activePanelId, isNull);
   });
 
-  testWidgets('Given a collapsed panel when shown then the rail expands it', (
-    tester,
-  ) async {
+  testWidgets('Given one open panel when shown then every panel is offered '
+      'as a tab and a tab switches to it', (tester) async {
     final c = WonkySplitViewController()..open('comments');
     await pumpWonky(
       tester,
       WonkySplitView(controller: c, panels: _panels, child: const Text('main')),
     );
-    c.collapse();
     await tester.pumpAndSettle();
-    expect(find.text('comments body'), findsNothing);
-    await tester.tap(find.byKey(const ValueKey('panel.rail.comments')));
+    for (final p in _panels) {
+      expect(find.byKey(ValueKey('panel.tab.${p.id}')), findsOneWidget);
+    }
+    await tester.tap(find.byKey(const ValueKey('panel.tab.outline')));
     await tester.pumpAndSettle();
-    expect(find.text('comments body'), findsOneWidget);
+    expect(c.activePanelId, 'outline');
     await settleTooltips(tester);
   });
 }

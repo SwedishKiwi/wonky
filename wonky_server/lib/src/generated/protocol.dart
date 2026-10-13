@@ -72,6 +72,7 @@ import 'platform/ai/models/inline_ai_event_type.dart' as _i6pcz5z6;
 import 'platform/ai/models/inline_ai_request.dart' as _i4m43iwr;
 import 'platform/ai/models/proofread_event.dart' as _ie0jt2ne;
 import 'platform/ai/models/proofread_issue.dart' as _ivmxemza;
+import 'platform/cluster/cluster_signal.dart' as _ipkzl9y7;
 import 'platform/comments/comment.dart' as _iyixppck;
 import 'platform/comments/comment_anchor_kind.dart' as _iw81twtc;
 import 'platform/comments/comment_event.dart' as _imlsyj2p;
@@ -105,6 +106,7 @@ import 'platform/drive/import_report_view.dart' as _i68yhxa0;
 import 'platform/drive/import_warning_view.dart' as _i48sm9f2;
 import 'platform/drive/storage_usage.dart' as _i26hsnhw;
 import 'platform/drive/template_category.dart' as _iiedu4vz;
+import 'platform/drive/template_preview_style.dart' as _i6rg3vdh;
 import 'platform/drive/template_view.dart' as _i2ox7ta1;
 import 'platform/feedback/feedback_kind.dart' as _iv1sk0e8;
 import 'platform/feedback/feedback_report.dart' as _iu565i0a;
@@ -229,6 +231,7 @@ export 'platform/ai/models/inline_ai_event_type.dart';
 export 'platform/ai/models/inline_ai_request.dart';
 export 'platform/ai/models/proofread_event.dart';
 export 'platform/ai/models/proofread_issue.dart';
+export 'platform/cluster/cluster_signal.dart';
 export 'platform/comments/comment.dart';
 export 'platform/comments/comment_anchor_kind.dart';
 export 'platform/comments/comment_event.dart';
@@ -262,6 +265,7 @@ export 'platform/drive/import_report_view.dart';
 export 'platform/drive/import_warning_view.dart';
 export 'platform/drive/storage_usage.dart';
 export 'platform/drive/template_category.dart';
+export 'platform/drive/template_preview_style.dart';
 export 'platform/drive/template_view.dart';
 export 'platform/feedback/feedback_kind.dart';
 export 'platform/feedback/feedback_report.dart';
@@ -402,6 +406,7 @@ class Protocol extends _is.DatabaseSerializationManager
           _is.getType<_i4m43iwr.InlineAiRequest>,
           _is.getType<_ie0jt2ne.ProofreadEvent>,
           _is.getType<_ivmxemza.ProofreadIssue>,
+          _is.getType<_ipkzl9y7.ClusterSignal>,
           _is.getType<_iyixppck.Comment>,
           _is.getType<_iw81twtc.CommentAnchorKind>,
           _is.getType<_imlsyj2p.CommentEvent>,
@@ -435,6 +440,7 @@ class Protocol extends _is.DatabaseSerializationManager
           _is.getType<_i48sm9f2.ImportWarningView>,
           _is.getType<_i26hsnhw.StorageUsage>,
           _is.getType<_iiedu4vz.TemplateCategory>,
+          _is.getType<_i6rg3vdh.TemplatePreviewStyle>,
           _is.getType<_i2ox7ta1.TemplateView>,
           _is.getType<_iv1sk0e8.FeedbackKind>,
           _is.getType<_iu565i0a.FeedbackReport>,
@@ -586,6 +592,7 @@ class Protocol extends _is.DatabaseSerializationManager
           _is.getType<_i4m43iwr.InlineAiRequest?>,
           _is.getType<_ie0jt2ne.ProofreadEvent?>,
           _is.getType<_ivmxemza.ProofreadIssue?>,
+          _is.getType<_ipkzl9y7.ClusterSignal?>,
           _is.getType<_iyixppck.Comment?>,
           _is.getType<_iw81twtc.CommentAnchorKind?>,
           _is.getType<_imlsyj2p.CommentEvent?>,
@@ -619,6 +626,7 @@ class Protocol extends _is.DatabaseSerializationManager
           _is.getType<_i48sm9f2.ImportWarningView?>,
           _is.getType<_i26hsnhw.StorageUsage?>,
           _is.getType<_iiedu4vz.TemplateCategory?>,
+          _is.getType<_i6rg3vdh.TemplatePreviewStyle?>,
           _is.getType<_i2ox7ta1.TemplateView?>,
           _is.getType<_iv1sk0e8.FeedbackKind?>,
           _is.getType<_iu565i0a.FeedbackReport?>,
@@ -5082,6 +5090,9 @@ class Protocol extends _is.DatabaseSerializationManager
     if (t == _ivmxemza.ProofreadIssue) {
       return _ivmxemza.ProofreadIssue.fromJson(data) as T;
     }
+    if (t == _ipkzl9y7.ClusterSignal) {
+      return _ipkzl9y7.ClusterSignal.fromJson(data) as T;
+    }
     if (t == _iyixppck.Comment) {
       return _iyixppck.Comment.fromJson(data) as T;
     }
@@ -5180,6 +5191,9 @@ class Protocol extends _is.DatabaseSerializationManager
     }
     if (t == _iiedu4vz.TemplateCategory) {
       return _iiedu4vz.TemplateCategory.fromJson(data) as T;
+    }
+    if (t == _i6rg3vdh.TemplatePreviewStyle) {
+      return _i6rg3vdh.TemplatePreviewStyle.fromJson(data) as T;
     }
     if (t == _i2ox7ta1.TemplateView) {
       return _i2ox7ta1.TemplateView.fromJson(data) as T;
@@ -5668,6 +5682,10 @@ class Protocol extends _is.DatabaseSerializationManager
       return (data != null ? _ivmxemza.ProofreadIssue.fromJson(data) : null)
           as T;
     }
+    if (t == _is.getType<_ipkzl9y7.ClusterSignal?>()) {
+      return (data != null ? _ipkzl9y7.ClusterSignal.fromJson(data) : null)
+          as T;
+    }
     if (t == _is.getType<_iyixppck.Comment?>()) {
       return (data != null ? _iyixppck.Comment.fromJson(data) : null) as T;
     }
@@ -5789,6 +5807,12 @@ class Protocol extends _is.DatabaseSerializationManager
     }
     if (t == _is.getType<_iiedu4vz.TemplateCategory?>()) {
       return (data != null ? _iiedu4vz.TemplateCategory.fromJson(data) : null)
+          as T;
+    }
+    if (t == _is.getType<_i6rg3vdh.TemplatePreviewStyle?>()) {
+      return (data != null
+              ? _i6rg3vdh.TemplatePreviewStyle.fromJson(data)
+              : null)
           as T;
     }
     if (t == _is.getType<_i2ox7ta1.TemplateView?>()) {
@@ -6607,6 +6631,7 @@ class Protocol extends _is.DatabaseSerializationManager
       _i4m43iwr.InlineAiRequest => 'InlineAiRequest',
       _ie0jt2ne.ProofreadEvent => 'ProofreadEvent',
       _ivmxemza.ProofreadIssue => 'ProofreadIssue',
+      _ipkzl9y7.ClusterSignal => 'ClusterSignal',
       _iyixppck.Comment => 'Comment',
       _iw81twtc.CommentAnchorKind => 'CommentAnchorKind',
       _imlsyj2p.CommentEvent => 'CommentEvent',
@@ -6640,6 +6665,7 @@ class Protocol extends _is.DatabaseSerializationManager
       _i48sm9f2.ImportWarningView => 'ImportWarningView',
       _i26hsnhw.StorageUsage => 'StorageUsage',
       _iiedu4vz.TemplateCategory => 'TemplateCategory',
+      _i6rg3vdh.TemplatePreviewStyle => 'TemplatePreviewStyle',
       _i2ox7ta1.TemplateView => 'TemplateView',
       _iv1sk0e8.FeedbackKind => 'FeedbackKind',
       _iu565i0a.FeedbackReport => 'FeedbackReport',
@@ -6832,6 +6858,8 @@ class Protocol extends _is.DatabaseSerializationManager
         return 'ProofreadEvent';
       case _ivmxemza.ProofreadIssue():
         return 'ProofreadIssue';
+      case _ipkzl9y7.ClusterSignal():
+        return 'ClusterSignal';
       case _iyixppck.Comment():
         return 'Comment';
       case _iw81twtc.CommentAnchorKind():
@@ -6898,6 +6926,8 @@ class Protocol extends _is.DatabaseSerializationManager
         return 'StorageUsage';
       case _iiedu4vz.TemplateCategory():
         return 'TemplateCategory';
+      case _i6rg3vdh.TemplatePreviewStyle():
+        return 'TemplatePreviewStyle';
       case _i2ox7ta1.TemplateView():
         return 'TemplateView';
       case _iv1sk0e8.FeedbackKind():
@@ -7267,6 +7297,9 @@ class Protocol extends _is.DatabaseSerializationManager
     if (dataClassName == 'ProofreadIssue') {
       return deserialize<_ivmxemza.ProofreadIssue>(data['data']);
     }
+    if (dataClassName == 'ClusterSignal') {
+      return deserialize<_ipkzl9y7.ClusterSignal>(data['data']);
+    }
     if (dataClassName == 'Comment') {
       return deserialize<_iyixppck.Comment>(data['data']);
     }
@@ -7365,6 +7398,9 @@ class Protocol extends _is.DatabaseSerializationManager
     }
     if (dataClassName == 'TemplateCategory') {
       return deserialize<_iiedu4vz.TemplateCategory>(data['data']);
+    }
+    if (dataClassName == 'TemplatePreviewStyle') {
+      return deserialize<_i6rg3vdh.TemplatePreviewStyle>(data['data']);
     }
     if (dataClassName == 'TemplateView') {
       return deserialize<_i2ox7ta1.TemplateView>(data['data']);

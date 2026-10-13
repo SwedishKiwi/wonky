@@ -654,12 +654,37 @@ enum OrderedListNumeralStyle {
 
 typedef UnorderedListItemDotBuilder = Widget Function(BuildContext, UnorderedListItemComponent);
 
+// WONKY PATCH SE-7: [style] without the inline highlight and decorations of
+// the text it was built for, for list markers.
+TextStyle _markerStyle(TextStyle style) {
+  return TextStyle(
+    inherit: style.inherit,
+    color: style.color,
+    fontSize: style.fontSize,
+    fontWeight: style.fontWeight,
+    fontStyle: style.fontStyle,
+    letterSpacing: style.letterSpacing,
+    wordSpacing: style.wordSpacing,
+    textBaseline: style.textBaseline,
+    height: style.height,
+    leadingDistribution: style.leadingDistribution,
+    locale: style.locale,
+    fontFamily: style.fontFamily,
+    fontFamilyFallback: style.fontFamilyFallback,
+    fontFeatures: style.fontFeatures,
+    fontVariations: style.fontVariations,
+    shadows: style.shadows,
+  );
+}
+
 Widget _defaultUnorderedListItemDotBuilder(BuildContext context, UnorderedListItemComponent component) {
   // Usually, the font size is obtained via the stylesheet. But the attributions might
   // also contain a FontSizeAttribution, which overrides the stylesheet. Use the attributions
   // of the first character to determine the text style.
   final attributions = component.text.getAllAttributionsAt(0).toSet();
-  final textStyle = component.styleBuilder(attributions);
+  // WONKY PATCH SE-7: the marker takes the first character's font, not its
+  // highlight (background) or decorations (underline, strikethrough).
+  final textStyle = _markerStyle(component.styleBuilder(attributions));
 
   final dotSize = component.dotStyle?.size ?? const Size(4, 4);
 
@@ -834,7 +859,8 @@ Widget _defaultOrderedListItemNumeralBuilder(BuildContext context, OrderedListIt
   // textStyle with the default textStyle. This might cause it to apply a font family,
   // letter spacing, etc. That might cause the numeral to be misaligned with the
   // list item's text.
-  final textStyle = component.styleBuilder(attributions).copyWith(
+  // WONKY PATCH SE-7: see _markerStyle.
+  final textStyle = _markerStyle(component.styleBuilder(attributions)).copyWith(
         inherit: false,
       );
 

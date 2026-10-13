@@ -75,6 +75,32 @@ class DocumentState {
     ];
   }
 
+  /// The revision a pending [ensureAtLeast] catches up to.
+  int _catchingUpTo = 0;
+  Future<void>? _catchingUp;
+
+  /// Makes sure the state is at [minRevision] or later when the database
+  /// has it: another instance committed ops that this instance only saw on
+  /// the bus (or not at all). Coalesces concurrent calls.
+  Future<void> ensureAtLeast(Session session, int minRevision) {
+    if (minRevision <= revision) return Future.value();
+    final pending = _catchingUp;
+    if (pending != null && minRevision <= _catchingUpTo) return pending;
+    _catchingUpTo = minRevision;
+    late final Future<void> future;
+    future =
+        lock(() async {
+          if (minRevision <= revision) return;
+          final fresh = await Document.db.findById(session, documentId);
+          if (fresh == null) return;
+          await catchUp(session, fresh.headRevision);
+        }).whenComplete(() {
+          if (identical(_catchingUp, future)) _catchingUp = null;
+        });
+    _catchingUp = future;
+    return future;
+  }
+
   /// Brings the state up to [headRevision] from the op log (another
   /// instance committed ops).
   Future<void> catchUp(
@@ -104,6 +130,7 @@ class DocumentState {
         transaction: transaction,
       );
       revision = doc.headRevision;
+      overlays.reset(content);
       recent.clear();
       return;
     }

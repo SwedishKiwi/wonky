@@ -110,7 +110,6 @@ String? editorCommandTitle(WriteLocalizations l, String id) => switch (id) {
   'write.view.zoomOut' => l.cmdViewZoomOut,
   'write.view.zoomReset' => l.cmdViewZoomReset,
   'write.view.zoomSet' => l.cmdViewZoomSet,
-  'write.view.toggleRemoteCursors' => l.cmdViewToggleRemoteCursors,
   'write.view.suggestionPreview' => l.cmdViewSuggestionPreview,
   'write.mode.set' => l.cmdModeSet,
   'write.nav.documentStart' => l.cmdNavDocumentStart,

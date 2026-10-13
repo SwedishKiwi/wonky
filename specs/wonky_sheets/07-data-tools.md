@@ -48,7 +48,7 @@ Global rules for every feature:
   `ui.invoke_command`; dialogs are `WonkyDialogSpec`s (suite 09 §6.2); headless tools are listed
   in §21.
 - **Light & dark**: all panels use shad tokens; data colors chosen by users (chip colors, slicer
-  colors) are absolute like cell colors (suite 02 §7).
+  colors) are absolute like cell colors (suite 02 §8).
 - **Permissions**: mutating commands require Editor (`requiredRole: editor`); viewers/commenters
   get temporary filter views and local slicer state only. Protected ranges are checked by
   `ProtectionGuard` (§10) before any write.

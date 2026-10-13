@@ -639,7 +639,7 @@ List<Command<CommandArgs>> commentCommands(ShellServices s) {
             : ctx.document!.commentAnchors!.anchorForSelection()!;
         final body = a.string('body');
         if (body == null) {
-          s.panels.open(ShellPanels.comments);
+          _showComments(s);
           c.startDraft(anchor);
           return const CommandResult.cancelled();
         }
@@ -806,7 +806,7 @@ List<Command<CommandArgs>> commentCommands(ShellServices s) {
       ),
       enabled: (ctx, a) => comments.value != null,
       run: (ctx, a) async {
-        s.panels.open(ShellPanels.comments);
+        _showComments(s);
         comments.value!.activate(a.requireString('threadUuid'));
         return const CommandResult.ok();
       },
@@ -817,13 +817,30 @@ List<Command<CommandArgs>> commentCommands(ShellServices s) {
       icon: LucideIcons.messageSquare,
       category: (l) => l.categoryComments,
       enabled: (ctx, a) => comments.value != null,
-      checked: (ctx, a) => s.panels.isOpen(ShellPanels.comments),
+      checked: (ctx, a) =>
+          s.commentsHost?.isShown ?? s.panels.isOpen(ShellPanels.comments),
       run: (ctx, a) async {
-        s.panels.toggle(ShellPanels.comments);
+        final host = s.commentsHost;
+        if (host != null) {
+          host.isShown = !host.isShown;
+        } else {
+          s.panels.toggle(ShellPanels.comments);
+        }
         return const CommandResult.ok();
       },
     ),
   ];
+}
+
+/// Shows the open file's comments: through the app's [CommentsHost] when it
+/// has one, otherwise in the comments side panel.
+void _showComments(ShellServices s) {
+  final host = s.commentsHost;
+  if (host != null) {
+    host.isShown = true;
+  } else {
+    s.panels.open(ShellPanels.comments);
+  }
 }
 
 List<Command<CommandArgs>> versionCommands(ShellServices s) {
@@ -987,71 +1004,8 @@ List<Command<CommandArgs>> panelCommands(ShellServices s) {
 }
 
 List<Command<CommandArgs>> viewCommands(ShellServices s) {
-  final v = s.viewState;
   bool editor() => s.activeDocument.value != null;
   return [
-    shellCommand(
-      'shell.view.toggleCompact',
-      title: (l) => l.cmdCompactMode,
-      icon: LucideIcons.chevronsUp,
-      bindings: const [KeyBinding('F', mod: true, shift: true)],
-      category: (l) => l.categoryView,
-      enabled: (ctx, a) => editor(),
-      checked: (ctx, a) => v.compact,
-      run: (ctx, a) async {
-        await v.toggleCompact();
-        return const CommandResult.ok();
-      },
-    ),
-    shellCommand(
-      'shell.view.toggleToolbar',
-      title: (l) => l.cmdShowToolbar,
-      category: (l) => l.categoryView,
-      enabled: (ctx, a) => editor(),
-      checked: (ctx, a) => v.showToolbar,
-      run: (ctx, a) async {
-        await v.toggleToolbar();
-        return const CommandResult.ok();
-      },
-    ),
-    shellCommand(
-      'shell.view.toggleMenubar',
-      title: (l) => l.cmdShowMenubar,
-      category: (l) => l.categoryView,
-      enabled: (ctx, a) => editor(),
-      checked: (ctx, a) => v.showMenubar,
-      run: (ctx, a) async {
-        await v.toggleMenubar();
-        return const CommandResult.ok();
-      },
-    ),
-    shellCommand(
-      'shell.view.toggleStatusBar',
-      title: (l) => l.cmdShowStatusBar,
-      category: (l) => l.categoryView,
-      enabled: (ctx, a) => editor(),
-      checked: (ctx, a) => v.showStatusBar,
-      run: (ctx, a) async {
-        await v.toggleStatusBar();
-        return const CommandResult.ok();
-      },
-    ),
-    shellCommand(
-      'shell.view.toggleFullScreen',
-      title: (l) => l.cmdFullScreen,
-      icon: LucideIcons.maximize,
-      bindings: const [
-        KeyBinding('F', ctrl: true, mod: true, mac: true),
-        KeyBinding('F11', mac: false),
-      ],
-      category: (l) => l.categoryView,
-      enabled: (ctx, a) => editor(),
-      checked: (ctx, a) => v.fullScreen,
-      run: (ctx, a) async {
-        v.setFullScreen(!v.fullScreen);
-        return const CommandResult.ok();
-      },
-    ),
     shellCommand(
       'shell.view.zoom',
       title: (l) => l.cmdZoom,
@@ -1164,19 +1118,6 @@ List<Command<CommandArgs>> miscCommands(ShellServices s) => [
     },
   ),
   shellCommand(
-    'shell.help.searchMenus',
-    title: (l) => l.cmdSearchMenus,
-    icon: LucideIcons.search,
-    bindings: const [KeyBinding('/', alt: true)],
-    category: (l) => l.categoryHelp,
-    run: (ctx, a) async {
-      final c = ctx.dialogContext;
-      if (c == null || !c.mounted) return const CommandResult.cancelled();
-      await showCommandPalette(c, s, menusOnly: true);
-      return const CommandResult.ok();
-    },
-  ),
-  shellCommand(
     'shell.help.shortcuts',
     title: (l) => l.cmdKeyboardShortcuts,
     icon: LucideIcons.keyboard,
@@ -1186,21 +1127,6 @@ List<Command<CommandArgs>> miscCommands(ShellServices s) => [
       final c = ctx.dialogContext;
       if (c == null || !c.mounted) return const CommandResult.cancelled();
       await showShortcutsHelp(c, s);
-      return const CommandResult.ok();
-    },
-  ),
-  shellCommand(
-    'shell.help.open',
-    title: (l) => l.cmdHelpCenter,
-    icon: LucideIcons.circleQuestionMark,
-    category: (l) => l.categoryHelp,
-    args: const JsonSchema.object(properties: {'topic': JsonSchema.string()}),
-    run: (ctx, a) async {
-      s.router.go(
-        a.string('topic') == null
-            ? '/help'
-            : '/help?topic=${Uri.encodeQueryComponent(a.string('topic')!)}',
-      );
       return const CommandResult.ok();
     },
   ),
@@ -1235,20 +1161,6 @@ List<Command<CommandArgs>> miscCommands(ShellServices s) => [
     category: (l) => l.categoryHelp,
     run: (ctx, a) async {
       s.router.go('/settings/about');
-      return const CommandResult.ok();
-    },
-  ),
-  shellCommand(
-    'shell.activity.open',
-    title: (l) => l.cmdActivityDashboard,
-    icon: LucideIcons.chartLine,
-    category: (l) => l.categoryTools,
-    enabled: (ctx, a) => s.currentItem.value?.myRole.canEdit ?? false,
-    run: (ctx, a) async {
-      final c = ctx.dialogContext;
-      final item = s.currentItem.value;
-      if (c == null || item == null) return const CommandResult.cancelled();
-      await showActivityDashboard(c, s, item);
       return const CommandResult.ok();
     },
   ),

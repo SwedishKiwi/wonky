@@ -1,9 +1,11 @@
 import 'dart:async';
 import 'dart:convert';
 
+import 'package:clock/clock.dart';
 import 'package:serverpod/serverpod.dart';
 import 'package:wonky_core/wonky_core.dart' show Role;
 
+import '../cluster/cluster.dart';
 import '../common/actor.dart';
 import '../common/models.dart';
 import '../common/roles.dart';
@@ -14,8 +16,14 @@ import '../users/user_service.dart';
 /// Ephemeral presence (specs/07 §1). Nothing is stored: every joined session
 /// keeps its own view of the roster from the `presence:<itemUuid>` channel
 /// (global with Redis), so it works across server instances. A new session
-/// says `hello`, everyone present answers `here`.
+/// says `hello`, everyone present answers `here`. With several instances
+/// every session also sends a `beat` every [heartbeatInterval]; sessions
+/// not heard of for three intervals leave the roster (their instance
+/// crashed or the `bye` was lost; specs/13 §4).
 abstract final class PresenceService {
+  /// Variable for tests.
+  static Duration heartbeatInterval = const Duration(seconds: 30);
+
   /// Max hint messages per second and cells per message (Sheets 10 §2.1).
   static const maxHintsPerSecond = 20;
   static const maxHintCells = 500;
@@ -32,6 +40,8 @@ abstract final class PresenceService {
     late StreamController<PresenceEvent> out;
     final sessionId = const Uuid().v4();
     final roster = <String, Participant>{};
+    final lastSeen = <String, DateTime>{};
+    Timer? heartbeat;
     final followers = <String, String>{}; // follower → target
     var role = Role.viewer;
     Participant? me;
@@ -55,7 +65,13 @@ abstract final class PresenceService {
       if (model is! PresenceBusMessage || closed) return;
       final m = model;
       if (m.sessionId == sessionId) return;
+      lastSeen[m.sessionId] = clock.now();
       switch (m.type) {
+        case 'beat':
+          final p = m.participant;
+          if (p == null || roster.containsKey(m.sessionId)) return;
+          roster[m.sessionId] = p;
+          emit(PresenceJoined(participant: p));
         case 'hello':
           final p = m.participant;
           if (p == null) return;
@@ -111,6 +127,7 @@ abstract final class PresenceService {
             emitFollowerCount();
           }
         case 'bye':
+          lastSeen.remove(m.sessionId);
           if (roster.remove(m.sessionId) != null) {
             emit(PresenceLeft(sessionId: m.sessionId));
           }
@@ -125,9 +142,40 @@ abstract final class PresenceService {
       }
     }
 
+    void beat() {
+      if (closed || me == null) return;
+      unawaited(
+        session.messages
+            .postMessage(
+              ch,
+              PresenceBusMessage(
+                type: 'beat',
+                sessionId: sessionId,
+                participant: me,
+              ),
+            )
+            .catchError((Object _) => false),
+      );
+      final now = clock.now();
+      final cutoff = now.subtract(heartbeatInterval * 3);
+      for (final id in roster.keys.toList()) {
+        final seen = lastSeen[id];
+        if (seen == null) {
+          lastSeen[id] = now;
+          continue;
+        }
+        if (seen.isAfter(cutoff)) continue;
+        roster.remove(id);
+        lastSeen.remove(id);
+        emit(PresenceLeft(sessionId: id));
+        if (followers.remove(id) == sessionId) emitFollowerCount();
+      }
+    }
+
     Future<void> leave() async {
       if (closed) return;
       closed = true;
+      heartbeat?.cancel();
       session.messages.removeListener(ch, onBus);
       await input?.cancel();
       await session.messages.postMessage(
@@ -236,6 +284,9 @@ abstract final class PresenceService {
         },
       );
       session.addWillCloseListener((_) => leave());
+      if (Cluster.distributed) {
+        heartbeat = Timer.periodic(heartbeatInterval, (_) => beat());
+      }
       if (item.trashedAt != null) {
         emit(PresenceNotice(kind: 'trashed', payloadJson: '{}'));
       }

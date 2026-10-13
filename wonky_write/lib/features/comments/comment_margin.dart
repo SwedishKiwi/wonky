@@ -14,7 +14,9 @@ import 'comment_margin_layout.dart';
 
 /// The comment margin (Write 08 §3.2): open comment threads and pending
 /// suggestions as cards next to their anchors, in document order, never
-/// overlapping; the active card aligns with its anchor.
+/// overlapping; the active card aligns with its anchor. The composer of a new
+/// comment is a card at its anchor too. Threads follow the comments filter
+/// (Open / For you); suggestions show with *Open*.
 ///
 /// Place it to the right of the page (Pages) or content column (Pageless)
 /// — inside the same scroll view as the document, or outside with
@@ -43,13 +45,17 @@ class CommentMargin extends StatefulWidget {
 class _CardItem {
   _CardItem.thread(this.thread, this.offset) : suggestion = null;
   _CardItem.suggestion(this.suggestion, this.offset) : thread = null;
+  _CardItem.draft(this.offset) : thread = null, suggestion = null;
 
   final CommentThreadView? thread;
   final SuggestionInfo? suggestion;
   final int offset;
 
-  String get id =>
-      thread != null ? 'c:${thread!.uuid.uuid}' : 's:${suggestion!.id}';
+  static const draftId = 'draft';
+
+  String get id => thread != null
+      ? 'c:${thread!.uuid.uuid}'
+      : (suggestion != null ? 's:${suggestion!.id}' : draftId);
 }
 
 class _CommentMarginState extends State<CommentMargin> {
@@ -114,12 +120,18 @@ class _CommentMarginState extends State<CommentMargin> {
 
   List<_CardItem> _collect() {
     final comments = s.comments;
-    if (!comments.visible) return const [];
+    final controller = comments.controller;
+    if (!comments.visible || controller == null) return const [];
     final anchors = comments.anchors;
+    final draft = s.currentRole.canComment ? comments.draftOffset : null;
     return [
+      ?draft == null ? null : _CardItem.draft(draft),
+      for (final t in comments.unanchoredThreads)
+        if (controller.passesFilter(t)) _CardItem.thread(t, 0),
       for (final t in comments.anchoredOpenThreads)
-        _CardItem.thread(t, anchors[t.uuid.uuid]!.start),
-      if (widget.showSuggestions)
+        if (controller.passesFilter(t))
+          _CardItem.thread(t, anchors[t.uuid.uuid]!.start),
+      if (widget.showSuggestions && controller.filter == CommentsFilter.open)
         for (final x in s.suggestions.pending) _CardItem.suggestion(x, x.start),
     ];
   }
@@ -148,7 +160,9 @@ class _CommentMarginState extends State<CommentMargin> {
     }
     final activeThread = s.comments.activeThreadUuid;
     final activeSuggestion = s.suggestions.activeId;
-    final active = activeThread != null
+    final active = items.any((i) => i.id == _CardItem.draftId)
+        ? _CardItem.draftId
+        : activeThread != null
         ? 'c:$activeThread'
         : (activeSuggestion != null ? 's:$activeSuggestion' : null);
     final tops = CommentMarginLayout.layout(
@@ -189,12 +203,22 @@ class _CommentMarginState extends State<CommentMargin> {
     for (final item in _items) {
       final top = _tops[item.id];
       if (top == null || controller == null) continue;
+      // Items are collected after the frame; a draft may be gone already.
+      if (item.id == _CardItem.draftId && controller.draftAnchor == null) {
+        continue;
+      }
       height = math.max(
         height,
         top + (_heights[item.id] ?? CommentMarginLayout.estimatedHeight),
       );
       final t = item.thread;
-      final card = t != null
+      final card = item.id == _CardItem.draftId
+          ? NewCommentCard(
+              key: const ValueKey<String>('write.margin.draft'),
+              services: s.services,
+              controller: controller,
+            )
+          : t != null
           ? CommentThreadCard(
               key: ValueKey<String>('write.margin.thread.${t.uuid.uuid}'),
               services: s.services,

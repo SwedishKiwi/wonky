@@ -32,7 +32,9 @@ land on undo stacks as described in [08-commands-and-undo.md](08-commands-and-un
   - **Initialize-era (2025-11-25 and earlier):** `initialize` creates a session
     (`Mcp-Session-Id` response header, in-memory map, 60 min idle expiry, max 20 per user,
     bound to the token that created it); `DELETE` ends it; `GET` opens an event stream
-    (SSE, keep-alive comments) for server notifications.
+    (SSE, keep-alive comments) for server notifications. With several instances the
+    session is also registered in Redis, so any instance can resume it
+    ([13 §4](13-security-and-operations.md)).
   - Responses are `application/json` (SSE only when the client does not accept JSON);
     request-related progress/log notifications are dropped; JSON-RPC batches and
     `subscriptions/listen` are refused.
@@ -61,8 +63,8 @@ land on undo stacks as described in [08-commands-and-undo.md](08-commands-and-un
   `mcp_dart`'s server auth hooks are used so it can be added without changing tools.
 - Every tool call resolves the token → user → effective role on the target item; the tool is
   rejected with an MCP error (`isError: true`, code `forbidden`) if insufficient.
-- Rate limits: 600 tool calls/min per token (`wonky: mcp: rateLimitPerMinute`); large
-  reads paginated.
+- Rate limits: 600 tool calls/min per token (`wonky: mcp: rateLimitPerMinute`; counted in
+  Redis across instances, [13 §4](13-security-and-operations.md)); large reads paginated.
 - `tools/list` only lists the tools the token's scopes allow; `ToolExecutor` checks scopes
   again on every call. The web apps' auth cookie is never accepted on `/mcp`.
 
@@ -135,9 +137,9 @@ UiBridgeEndpoint.connect(Stream<UiBridgeMessage> fromApp) → Stream<UiBridgeMes
 - On connect the app sends `UiBridgeHello {app, deviceLabel, platform, route,
   openItemUuid, title, focused, tools}` and gets `UiBridgeWelcome {sessionId}`; it reports
   route / open item / window focus changes with `UiBridgeStatus` (debounced 200 ms). The
-  `UiBridgeHub` is **in-memory per server instance** (a client reaches the windows
-  connected to the instance serving its `/mcp` requests; cross-instance relay via
-  `session.messages` is a later step).
+  `UiBridgeHub` registers windows in memory on the instance serving their stream; with
+  several instances `ui.*` calls reach windows on other instances over `session.messages`
+  (listing and call relay, [13 §4](13-security-and-operations.md)).
 - MCP tool `ui.*` call → hub picks the target session (explicit `session_id` or the user's
   most recently focused window) → sends `UiBridgeRequest {requestId, tool, args}` → app executes
   → returns `UiBridgeResponse {requestId, result | error}`. Timeout 30 s (configurable per tool,
@@ -163,7 +165,7 @@ UiBridgeEndpoint.connect(Stream<UiBridgeMessage> fromApp) → Stream<UiBridgeMes
 | `ui.get_dialog` | Describes the open dialog: title, fields (id, label, type, value, options), buttons. |
 | `ui.fill_dialog` | `{field_id: value}`; `ui.press_dialog_button(button_id)`. |
 | `ui.close_dialog` | Esc. |
-| `ui.open_panel` / `ui.close_panel` | `panel_id` (outline, comments, history, assistant, …). |
+| `ui.open_panel` / `ui.close_panel` | `panel_id` (outline, find, history, assistant, …; `comments` in Sheets — Write shows comments in its margin, toggled with `shell.comments.togglePanel` via `ui.invoke_command`). |
 | `ui.set_app_theme` | system/light/dark. |
 | `ui.screenshot` | PNG of the window (`RepaintBoundary.toImage`), optional `region`/`scale`; returned as MCP image content. |
 | `ui.get_semantics` | Accessibility tree dump (role, label, value, bounds) for generic inspection. |

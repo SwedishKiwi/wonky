@@ -256,7 +256,10 @@ class _TypeAheadMenuBodyState extends State<_TypeAheadMenuBody> {
                         : null,
                   )
                 : null,
-          _ => lead(e.icon),
+          _ =>
+            e.leading != null && leading
+                ? SizedBox(width: 16, height: 16, child: e.leading)
+                : lead(e.icon),
         };
         final shortcut = e.shortcut;
         Widget item = _stableEnabled(

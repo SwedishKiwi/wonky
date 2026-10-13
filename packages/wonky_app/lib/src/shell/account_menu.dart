@@ -4,6 +4,7 @@ import 'package:wonky_client/wonky_client.dart';
 import 'package:wonky_core/wonky_core.dart' hide ActorKind;
 import 'package:wonky_ui/wonky_ui.dart';
 
+import '../branding/product_icon.dart';
 import '../bootstrap/app_urls.dart';
 import '../drive/drive_format.dart';
 import '../l10n/wonky_app_localizations.dart';
@@ -64,7 +65,13 @@ class AccountMenuButton extends StatelessWidget {
             WonkyMenuItem(
               key: const ValueKey<String>('account.switchApp'),
               label: other,
-              icon: LucideIcons.arrowLeftRight,
+              leading: WonkyProductIcon(
+                services.config.app == WonkyAppKind.write
+                    ? WonkyProduct.sheets
+                    : WonkyProduct.write,
+                size: 16,
+                semanticLabel: '',
+              ),
               onSelected: () =>
                   _invoke(services, context, 'shell.account.switchApp'),
             ),
@@ -145,62 +152,6 @@ class ThemeToggleButton extends StatelessWidget {
           ),
         );
       },
-    );
-  }
-}
-
-/// Help menu (shortcuts, docs, feedback, about).
-class HelpMenuButton extends StatelessWidget {
-  const HelpMenuButton({super.key, required this.services});
-
-  final ShellServices services;
-
-  @override
-  Widget build(BuildContext context) {
-    final l = WonkyAppLocalizations.of(context);
-    return WonkyDropdownMenu(
-      anchor: const ShadAnchor(
-        childAlignment: AlignmentDirectional.bottomEnd,
-        overlayAlignment: AlignmentDirectional.topEnd,
-        offset: Offset(0, 6),
-      ),
-      entries: () => [
-        for (final (id, label, icon) in [
-          ('shell.help.open', l.cmdHelpCenter, LucideIcons.bookOpen),
-          (
-            'shell.help.shortcuts',
-            l.cmdKeyboardShortcuts,
-            LucideIcons.keyboard,
-          ),
-          (
-            'shell.nav.commandPalette',
-            l.cmdCommandPalette,
-            LucideIcons.squareTerminal,
-          ),
-          (
-            'shell.help.feedback',
-            l.cmdReportProblem,
-            LucideIcons.messageCircleWarning,
-          ),
-          ('shell.help.whatsNew', l.cmdWhatsNew, LucideIcons.gift),
-          ('shell.help.about', l.cmdAbout, LucideIcons.info),
-        ])
-          WonkyMenuItem(
-            label: label,
-            icon: icon,
-            shortcut: services.keymap.labelsOf(id),
-            onSelected: () => _invoke(services, context, id),
-          ),
-      ],
-      builder: (context, c) => ShadTooltip(
-        builder: (_) => Text(l.helpMenu),
-        child: ShadIconButton.ghost(
-          key: const ValueKey<String>('shell.help'),
-          semanticLabel: l.helpMenu,
-          icon: const Icon(LucideIcons.circleQuestionMark, size: 18),
-          onPressed: c.toggle,
-        ),
-      ),
     );
   }
 }

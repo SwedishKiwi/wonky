@@ -100,6 +100,7 @@ class EditorThemeAdapter {
           ? fallback.codeBlockPadding
           : edges(t.codeBlock.box.padding),
       codeBlockRadius: px(t.codeBlock.box.borderRadius),
+      codeBlockBorder: _codeBorder(t.codeBlock.box.border, px),
       inlineCodeColor: c(t.inlineCode.color),
       inlineCodeBackground:
           oc(t.inlineCode.background) ?? fallback.inlineCodeBackground,
@@ -137,6 +138,17 @@ class EditorThemeAdapter {
       pagelessPadding: edges(t.page.pagelessPadding),
       contentHash: '${t.contentHash}/${t.variant.name}',
     );
+  }
+
+  /// The code block box border. A rounded box needs one uniform side, so the
+  /// theme's top border is used for all four.
+  static BorderSide _codeBorder(
+    BordersPt border,
+    double Function(double pt) px,
+  ) {
+    final side = border.top;
+    if (!side.isVisible) return BorderSide.none;
+    return BorderSide(color: Color(side.color), width: px(side.width));
   }
 
   static FontWeight _weight(int w) {

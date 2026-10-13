@@ -657,7 +657,11 @@ wrap at the column (words not broken; code not wrapped).
 
 Token help popover lists tokens with a click-to-insert. Units follow the locale (in for US, cm
 otherwise). Pageless disables paper/orientation/margins/header/footer controls (kept for
-export, which always uses pages).
+export, which always uses pages). When a margin change (e.g. the *Narrow* preset) would leave a
+header/footer distance at or beyond its margin, the dialog moves the distance inside it (half
+the margin). `PageSetupValidator` errors are listed inline in the dialog and disable **OK**. The
+dialog applies through `write.doc.setPageSetup {pageSetup}`, whose args schema accepts the
+`PageSetup` JSON (an open object).
 
 ### 6.3 Header/footer tokens
 
@@ -681,8 +685,7 @@ shows headers/footers on page frames (non-editable; double-click opens the page 
 
 The **authoritative, line-level** paginator, used by **PDF, print preview and server-side page
 counts** (with `PdfBlockMeasurer`). The editor's Pages mode uses its own block-level
-approximation ([04-editor.md](04-editor.md) §29.3) and shows a status-bar hint when its page count
-differs from this engine's. The engine is measurer-agnostic (`BlockMeasurer`), so the editor's P1
+approximation ([04-editor.md](04-editor.md) §29.3). The engine is measurer-agnostic (`BlockMeasurer`), so the editor's P1
 line-level splitting (`PageSplitTextComponent`) can reuse it with a Flutter `TextLayout`-based
 measurer to converge on identical breaks.
 

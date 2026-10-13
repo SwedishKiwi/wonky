@@ -10,6 +10,7 @@ class PaletteRow {
     this.subtitle,
     this.icon,
     this.iconColor,
+    this.leading,
     this.shortcut,
     this.enabled = true,
     this.disabledReason,
@@ -22,6 +23,9 @@ class PaletteRow {
   final String? subtitle;
   final IconData? icon;
   final Color? iconColor;
+
+  /// Replaces [icon] (e.g. a product icon for files).
+  final Widget? leading;
   final List<String>? shortcut;
   final bool enabled;
   final String? disabledReason;
@@ -210,9 +214,11 @@ class _Row extends StatelessWidget {
         children: [
           SizedBox(
             width: 24,
-            child: row.icon == null
-                ? null
-                : Icon(row.icon, size: 16, color: row.iconColor ?? fg),
+            child:
+                row.leading ??
+                (row.icon == null
+                    ? null
+                    : Icon(row.icon, size: 16, color: row.iconColor ?? fg)),
           ),
           const SizedBox(width: 6),
           Expanded(

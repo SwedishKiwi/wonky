@@ -124,13 +124,6 @@ GoRouter buildShellRouter(ShellServices s) {
         ),
       ),
       GoRoute(
-        path: '/help',
-        pageBuilder: (c, st) => page(
-          st,
-          HelpPage(services: s, topic: st.uri.queryParameters['topic']),
-        ),
-      ),
-      GoRoute(
         path: '/invite/:token',
         pageBuilder: (c, st) => page(
           st,

@@ -64,7 +64,8 @@ GeistMono (formulas, code, shortcuts). Document fonts (Write themes, Sheets cell
 a curated font list (see each app spec) loaded via bundled assets (no runtime Google Fonts on
 web for privacy/offline; `google_fonts` is used only at build-time to fetch files into assets).
 
-Icons: `LucideIcons.*` only. Icon size 16 in toolbars/menus, 20 in sidebars, 24 in empty states.
+Icons: `LucideIcons.*` only, except the product icons (§5) that stand for a product or one of
+its files. Icon size 16 in toolbars/menus, 20 in sidebars, 24 in empty states.
 
 ## 3. shad components we use (mapping)
 
@@ -114,16 +115,21 @@ Thin wrapper over `ShadContextMenu` (controller + anchor) adding:
   `MenuSeparator`, `MenuLabel` (section header), `MenuCustom` (e.g. color grid, table-size grid).
 - Trailing shortcut rendered with `ShadKbd` (platform glyphs: ⌘ ⌥ ⇧ ⌃ on macOS; Ctrl+Alt+Shift
   elsewhere).
+- `WonkyMenuItem.leading`: a 16 px widget shown instead of the icon (e.g. a product icon, §5).
 - Type-ahead: typing letters jumps to items.
 - Used both in `ShadMenubar` items and standalone dropdowns.
+- **Only one menu is open at a time**: menubar menus, dropdown menus and context menus claim the
+  `OpenMenu` slot when they open, which closes the menu that was open before (shad puts a menu,
+  its trigger and its popover in one tap-region group, so a tap on another menu's trigger would
+  otherwise not close it).
 
 ### 4.3 `WonkyMenubar`
 `ShadMenubar` whose items are built from a declarative `MenuSpec` tree
 (`MenuSpec.command`, `.submenu`, `.separator`, `.custom`) so that the **same spec** generates the
 menubar, the command-palette menu paths and the MCP `ui.get_menu_tree` output. `Alt` (Win/Linux)
 or `Ctrl+F2`-style focus shortcut (`Alt+F` opens File etc. on Win/Linux; on macOS, `Ctrl+Alt+F`)
-to avoid conflicts. Also includes a **menu search** item ("Search the menus (Alt+/)") as in
-Google Docs, which opens the command palette filtered to menu commands.
+to avoid conflicts. Menu commands are found through the command palette (suite 08); there is no
+separate menu search.
 
 ### 4.4 `WonkyColorPicker`
 Popover content used for text color (Sheets), fill color, border color, tab color, chart colors,
@@ -141,9 +147,13 @@ theme colors:
 A right-side **panel host** used by both apps: hosts Outline, Comments, Version history,
 Assistant, Find & replace (Sheets uses a dialog), Script editor sidebar, Named ranges, Data
 validation, Conditional formatting, Chart editor, Pivot editor, etc. Built on
-`ShadResizablePanelGroup`. Behaviors: one active panel at a time (tabs header with icons when >1
-recently open), width persisted per panel id, collapse to icon rail, Esc closes, `Mod+Alt+Shift+[` / `Mod+Alt+Shift+]`
-cycle panels (`Mod+Alt+Shift+0–9` is reserved for Sheets macros). Panels declare `id`, `title`, `icon`, `minWidth`, `defaultWidth`, `builder`.
+`ShadResizablePanelGroup`. Behaviors: one active panel at a time; the host is either showing it
+or hidden (no collapsed icon rail); the header always shows **every** panel as an icon tab (when
+there is more than one) to switch between them, plus the panel's header actions and close ✕;
+width persisted per panel id, Esc closes, `Mod+Alt+Shift+[` / `Mod+Alt+Shift+]`
+cycle panels (`Mod+Alt+Shift+0–9` is reserved for Sheets macros). Panels declare `id`, `title`,
+`icon`, `minWidth`, `defaultWidth`, `builder`, `headerActions` and `showAsTab` (default true;
+false for panels opened only by their command, e.g. File › Details).
 
 ### 4.6 `WonkyTreeView`
 Lazy tree (drive folder tree, document outline, script file tree): expand/collapse, keyboard
@@ -177,8 +187,10 @@ Styled scrollbars (thin, auto-hide, shad colors) used around the editor canvas a
 Includes "scroll shadow" top/bottom edges.
 
 ### 4.13 `StatusBar`
-Bottom bar (24 px) slot used by both apps: left (word count / sum-avg-count of selection),
-center (sync status), right (zoom, view toggles).
+Bottom bar (24 px) slot used by both apps; it contains only the items the app passes (Write: the
+word count; Sheets: sum-avg-count of selection, cell limit, zoom). It has no built-in items: the
+sync status lives in the title row (§4.14) and the app theme in View › App theme. The editor
+scaffold shows it only when the app asks for it (`showStatusBar`).
 
 ### 4.14 `SyncStatusIndicator`
 Icon + label: *Saved*, *Saving…*, *Offline — changes saved on this device*, *Sync error*
@@ -197,7 +209,28 @@ Light/dark-aware SVG illustrations (`flutter_svg`, via shad dep) for empty state
 ### 4.18 `LoadingShimmer` patterns
 Skeleton layouts for drive list, document page, grid (built from `ShadSkeleton`).
 
-## 5. Layout, responsiveness, motion
+## 5. Product icons
+
+Each product has its own icon (a rounded app tile, `packages/wonky_app/assets/icons/*.webp`,
+sources in `/icons`): `WonkyProductIcon(WonkyProduct.work | drive | write | sheets | slides,
+size:)` in `wonky_app` (`branding/product_icon.dart`; semantics label = product name, `''` for
+decorative use). Use it wherever the UI stands for a product or one of its files, instead of a
+generic glyph:
+
+- **App logo** (`WonkyAppConfig.logo`): sign-in card, drive top bar, editor title row, page
+  frames and the boot overlay.
+- **File kind icons**: `DriveKindIcon(kind)` — the Write icon for documents, the Sheets icon for
+  spreadsheets, the Lucide folder glyph for folders. Used in the drive list/grid, details panel,
+  drive search suggestions, quick switcher, command palette rows (`PaletteRow.leading`) and the
+  drag chip.
+- **Menus** (`WonkyMenuItem.leading`, §4.2): *New ▸ Document / Spreadsheet*, the account menu's
+  *Open Write / Open Sheets* switch item; the **My Drive** sidebar item uses the Drive icon;
+  the Settings › Write / Sheets sections.
+- **Platform icons** are generated from the same sources: web `favicon.png` (32 px) and PWA
+  `icons/Icon-192.png` / `Icon-512.png` (no maskable variants), macOS `AppIcon.appiconset`.
+  Write's HTML splash (`web/index.html`) shows the Write icon.
+
+## 6. Layout, responsiveness, motion
 
 - Breakpoints: shad `ShadBreakpoints`. Desktop-first. At `< MD` the sidebar collapses to a drawer
   (`ShadSheet`), side panels open as sheets over content, toolbars overflow aggressively. Nothing
@@ -206,7 +239,7 @@ Skeleton layouts for drive list, document page, grid (built from `ShadSkeleton`)
   `MediaQuery.disableAnimations`.
 - Focus: visible focus ring (`ring` token) on all interactive elements; never remove outlines.
 
-## 6. Accessibility
+## 7. Accessibility
 
 - All interactive widgets have semantics labels; icons-only buttons have tooltips.
 - Contrast ≥ 4.5:1 for text in both themes (verify custom tokens).
@@ -214,7 +247,7 @@ Skeleton layouts for drive list, document page, grid (built from `ShadSkeleton`)
 - Screen-reader announcements (`SemanticsService.announce`) for: undo/redo labels, cell
   navigation (Sheets: "B4, 42, formula =SUM(…)"), remote join/leave, sync errors.
 
-## 7. Theming the document vs. the app
+## 8. Theming the document vs. the app
 
 - **App theme** (light/dark) affects the chrome **and** the default rendering of document
   surfaces (dark page, light text) unless a Write theme explicitly defines dark colors.

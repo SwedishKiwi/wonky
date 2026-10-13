@@ -178,7 +178,8 @@ fields:
   adds `visible`, `replay`, `runId`, `stopReason`; `assistant_thread` adds the last context
   revision/Markdown.
 - **Budget**: input + cache writes + output + cache reads ÷ 10 per UTC day; concurrency per user
-  is in memory per server instance.
+  is in memory per server instance. `stop` and `confirm` reach a run on another instance as
+  relayed signals ([13 §4](13-security-and-operations.md)).
 - **Client**: shared panel in `packages/wonky_app/lib/src/assistant/` (`ShellAssistant`
   implements `AssistantHook`, `AssistantController`, `AssistantPanel`, `AiSettingsSection`,
   `AssistantDocumentAdapter` for app specialization, `FakeAssistantApi` in

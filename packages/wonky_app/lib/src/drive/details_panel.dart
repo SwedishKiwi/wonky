@@ -4,6 +4,7 @@ import 'package:shad/shad.dart';
 import 'package:wonky_client/wonky_client.dart';
 import 'package:wonky_ui/wonky_ui.dart';
 
+import '../branding/product_icon.dart';
 import '../activity/activity_feed.dart';
 import '../data/api.dart';
 import '../data/models_ext.dart';
@@ -98,13 +99,7 @@ class _DriveDetailsPanelState extends State<DriveDetailsPanel> {
             color: theme.colorScheme.canvas,
             borderRadius: BorderRadius.circular(8),
           ),
-          child: Center(
-            child: Icon(
-              kindIcon(item.kind),
-              size: 44,
-              color: kindColor(item.kind, theme.colorScheme),
-            ),
-          ),
+          child: Center(child: DriveKindIcon(item.kind, size: 48)),
         ),
         const SizedBox(height: 12),
         Text(item.name, style: theme.textTheme.large),

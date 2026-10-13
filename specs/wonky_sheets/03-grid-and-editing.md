@@ -576,8 +576,6 @@ Win/Linux; macOS uses ⌘ for Mod and ⌥ for Alt unless a `mac:` override is gi
 | Mod+J | `shell.ai.togglePanel` | Assistant |
 | Alt+Shift+X | `sheets.explore.toggle` | Explore panel |
 | Mod+/ | `shell.help.shortcuts` | Keyboard shortcuts dialog |
-| Alt+/ | `shell.help.searchMenus` | Search the menus |
-| Mod+Shift+F | `sheets.view.toggleCompact` | Hide/show menus |
 
 ### 7.2 Editing
 

@@ -1,0 +1,22 @@
+### How a template card draws its miniature page (specs/05 §3.1): the
+### colors of the template's document theme (light and dark) and a few
+### layout traits, so templates with different themes look different.
+### Colors are "#rrggbb".
+class: TemplatePreviewStyle
+fields:
+  paper: String
+  text: String
+  heading: String
+  accent: String
+  darkPaper: String
+  darkText: String
+  darkHeading: String
+  darkAccent: String
+  ### A band in the accent color across the top of the page.
+  banner: bool
+  ### Headings centered (otherwise start-aligned).
+  centeredHeadings: bool
+  ### Headings in capitals.
+  uppercaseHeadings: bool
+  ### "serif", "sans" or "mono": the character of the theme's fonts.
+  fontCategory: String
