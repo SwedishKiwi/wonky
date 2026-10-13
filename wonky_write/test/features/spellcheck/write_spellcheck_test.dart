@@ -1,0 +1,222 @@
+import 'package:dart_quill_delta/dart_quill_delta.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter_test/flutter_test.dart';
+import 'package:super_editor/super_editor.dart';
+import 'package:super_editor/super_editor_test.dart';
+import 'package:wonky_write/features/editor/applier/delta_applier.dart';
+import 'package:wonky_write/features/editor/commands/write_editor_commands.dart';
+import 'package:wonky_write/features/editor/ui/wonky_editor.dart';
+import 'package:wonky_write/features/spellcheck/dictionaries.dart';
+import 'package:wonky_write/features/spellcheck/spelling_dialogs.dart';
+import 'package:wonky_write/features/spellcheck/write_spellcheck.dart';
+
+import '../editor/support/editor_harness.dart';
+
+Future<(EditorHarness, WriteSpellcheck)> _pump(
+  WidgetTester tester,
+  Delta delta, {
+  bool skipAllCaps = true,
+}) async {
+  tester.view.physicalSize = const Size(1200, 900);
+  tester.view.devicePixelRatio = 1;
+  addTearDown(tester.view.resetPhysicalSize);
+  addTearDown(tester.view.resetDevicePixelRatio);
+  final h = EditorHarness(delta);
+  final spell = WriteSpellcheck(
+    controller: h.controller,
+    dictionaries: _dictionaries,
+  );
+  await tester.pumpWidget(
+    MaterialApp(
+      home: Scaffold(
+        body: WonkyEditor(
+          controller: h.controller,
+          documentTitle: 'Doc',
+          extraStylePhases: [spell.styler],
+        ),
+      ),
+    ),
+  );
+  spell.configure(enabled: true, language: 'en-US', skipAllCaps: skipAllCaps);
+  // Loading the dictionary reads assets (real I/O) and parses in idle slices.
+  for (var i = 0; i < 400 && spell.state == SpellcheckState.loading; i += 1) {
+    await tester.runAsync(() => Future<void>.delayed(const Duration(milliseconds: 5)));
+    await tester.pump(const Duration(milliseconds: 10));
+  }
+  await tester.pump(const Duration(milliseconds: 300));
+  addTearDown(() {
+    spell.dispose();
+    h.dispose();
+  });
+  return (h, spell);
+}
+
+final _dictionaries = SpellDictionaries();
+
+List<String> _flagged(WriteSpellcheck spell) => [
+  for (final e in spell.errors) e.word,
+];
+
+void main() {
+  group('Given the en-US dictionary', () {
+    testWidgets('when a document has misspellings then they are flagged and '
+        'skipped words are not', (tester) async {
+      final (_, spell) = await _pump(
+        tester,
+        Delta()
+          ..insert('Teh quick borwn fox. NASA, iPhone, abc123, ')
+          ..insert('mispeled', {'code': true})
+          ..insert(' see https://exmaple.com\n')
+          ..insert('const teh = 1;')
+          ..insert('\n', {'code-block': 'plain'}),
+      );
+
+      expect(spell.state, SpellcheckState.ready);
+      expect(_flagged(spell), ['Teh', 'borwn']);
+    });
+
+    testWidgets('when typing "teh " then it is underlined within 300 ms and '
+        'the first suggestion fixes it in one undo step (AC-28.1)', (
+      tester,
+    ) async {
+      final (h, spell) = await _pump(tester, Delta()..insert('\n'));
+      await tester.placeCaretInParagraph(h.controller.document.first.id, 0);
+
+      await tester.typeImeText('I saw teh ');
+      await tester.pump(const Duration(milliseconds: 300));
+
+      final error = spell.errorAt(7);
+      expect(error?.word, 'teh');
+      final node = h.controller.document.first.id;
+      expect(spell.styler.getErrorsForNode(node).single.range,
+          const TextRange(start: 6, end: 9));
+      final suggestion = spell.suggestionsFor('teh').first;
+      expect(suggestion, 'the');
+
+      final commands = WriteEditorCommands(h.controller);
+      commands.replaceRangeWithTextLabelled(
+        error!.start,
+        error.length,
+        suggestion,
+        label: 'Correct spelling',
+      );
+      await tester.pump(const Duration(milliseconds: 300));
+
+      expect(h.plainText, 'I saw the \n');
+      expect(h.changes.last.label, 'Correct spelling');
+      expect(spell.errors, isEmpty);
+    });
+
+    testWidgets('when the caret is inside a misspelled word being typed then '
+        'it is not flagged yet', (tester) async {
+      final (h, spell) = await _pump(tester, Delta()..insert('\n'));
+      await tester.placeCaretInParagraph(h.controller.document.first.id, 0);
+
+      await tester.typeImeText('Hello wrld');
+      await tester.pump(const Duration(milliseconds: 300));
+
+      expect(spell.errors, isEmpty);
+    });
+
+    testWidgets('when ignoring a word then all its occurrences are accepted '
+        'for the session', (tester) async {
+      final (_, spell) = await _pump(tester, Delta()..insert('Zorblax and zorblax.\n'));
+      expect(_flagged(spell), ['Zorblax', 'zorblax']);
+
+      spell.ignore('Zorblax');
+      spell.ignore('zorblax');
+      await tester.pump(const Duration(milliseconds: 300));
+
+      expect(spell.errors, isEmpty);
+    });
+
+    testWidgets('when adding a personal word then it is accepted', (tester) async {
+      final (_, spell) = await _pump(tester, Delta()..insert('Wonkyness rules\n'));
+      expect(_flagged(spell), ['Wonkyness']);
+
+      spell.wordAdded('Wonkyness');
+      await tester.pump(const Duration(milliseconds: 300));
+
+      expect(spell.errors, isEmpty);
+    });
+
+    testWidgets('when ALL-CAPS words are not skipped then they are checked',
+        (tester) async {
+      final (_, spell) = await _pump(
+        tester,
+        Delta()..insert('THSI is LOUD\n'),
+        skipAllCaps: false,
+      );
+
+      expect(_flagged(spell), ['THSI']);
+    });
+
+    testWidgets('when using Change all then every occurrence is fixed in one '
+        'undo step', (tester) async {
+      final (h, spell) = await _pump(tester, Delta()..insert('recieve and recieve\n'));
+      expect(_flagged(spell), ['recieve', 'recieve']);
+
+      final count = changeAllSpelling(
+        spell,
+        h.controller,
+        WriteEditorCommands(h.controller),
+        'recieve',
+        'receive',
+      );
+      await tester.pump(const Duration(milliseconds: 300));
+
+      expect(count, 2);
+      expect(h.plainText, 'receive and receive\n');
+      expect(h.changes, hasLength(1));
+      h.undo(h.changes.single);
+      expect(h.plainText, 'recieve and recieve\n');
+    });
+
+    testWidgets('when turning spellcheck off then the underlines go away', (
+      tester,
+    ) async {
+      final (_, spell) = await _pump(tester, Delta()..insert('Teh end\n'));
+      expect(spell.errors, isNotEmpty);
+
+      spell.configure(enabled: false, language: 'en-US');
+      await tester.pump();
+
+      expect(spell.state, SpellcheckState.off);
+      expect(spell.errors, isEmpty);
+    });
+  });
+
+  group('Given document languages', () {
+    const all = [
+      DictionaryInfo(tag: 'en-US', name: 'US', aff: 'a', dic: 'd'),
+      DictionaryInfo(tag: 'en-GB', name: 'GB', aff: 'a', dic: 'd'),
+      DictionaryInfo(tag: 'fr-FR', name: 'FR', aff: 'a', dic: 'd'),
+    ];
+    for (final (language, expected) in [
+      (null, 'en-US'),
+      ('en', 'en-US'),
+      ('en-AU', 'en-GB'),
+      ('en_GB', 'en-GB'),
+      ('en-CA', 'en-US'),
+      ('fr', 'fr-FR'),
+      ('fr-CA', 'fr-FR'),
+      ('de-DE', null),
+    ]) {
+      test('when resolving "$language" then the dictionary is $expected', () {
+        expect(SpellDictionaries.resolve(all, language)?.tag, expected);
+      });
+    }
+  });
+
+  testWidgets('Given a selection on a flagged word when computing errorAt '
+      'then the Delta range is returned', (tester) async {
+    final (h, spell) = await _pump(tester, Delta()..insert('One\nTwo borwn\n'));
+
+    final e = spell.errorAt(10);
+
+    expect(e?.word, 'borwn');
+    expect(e?.start, 8);
+    expect(e?.end, 13);
+    h.controller.select(DeltaSelection(e!.start, e.end));
+  });
+}

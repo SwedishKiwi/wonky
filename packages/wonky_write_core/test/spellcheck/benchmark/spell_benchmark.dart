@@ -48,12 +48,13 @@ void main() {
   final checker = SpellChecker(dict);
   final tokenizer = SpellTokenizer(wordChars: dict.wordChars);
   final words = <String>[];
-  final specs = Directory('${root.path}/specs')
-      .listSync(recursive: true)
-      .whereType<File>()
-      .where((f) => f.path.endsWith('.md'))
-      .toList()
-    ..sort((a, b) => a.path.compareTo(b.path));
+  final specs =
+      Directory('${root.path}/specs')
+          .listSync(recursive: true)
+          .whereType<File>()
+          .where((f) => f.path.endsWith('.md'))
+          .toList()
+        ..sort((a, b) => a.path.compareTo(b.path));
   for (final f in specs) {
     for (final t in tokenizer.tokenize(f.readAsStringSync())) {
       words.add(t.word);

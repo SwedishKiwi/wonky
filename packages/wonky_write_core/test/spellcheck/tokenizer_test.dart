@@ -24,10 +24,16 @@ void main() {
       ('iPhone and JavaScript or McDonald', ['and', 'or']),
       ("O'Brien wrote", ["O'Brien", 'wrote']),
       ('abc123 3rd 2024 snake_case ok', ['ok']),
-      ('see https://example.com/a?b=1 and www.foo.org now', ['see', 'and', 'now']),
-      ('mail viktor@serverpod.dev or mailto:x@y.z today', ['mail', 'or', 'today']),
+      (
+        'see https://example.com/a?b=1 and www.foo.org now',
+        ['see', 'and', 'now'],
+      ),
+      (
+        'mail viktor@serverpod.dev or mailto:x@y.z today',
+        ['mail', 'or', 'today'],
+      ),
       ('naïve café Ελληνικά русский', ['naïve', 'café', 'Ελληνικά', 'русский']),
-      ('café au lait', ['café', 'au', 'lait']),
+      ('cafe\u0301 au lait', ['cafe\u0301', 'au', 'lait']),
       ('hello 👋 world', ['hello', 'world']),
       ('e.g. this', ['this']),
       ('', <String>[]),
@@ -42,7 +48,10 @@ void main() {
   group('Given skipAllCaps is false', () {
     test('when tokenizing an acronym then it is a word', () {
       expect(
-        _words('NASA rocks', tokenizer: const SpellTokenizer(skipAllCaps: false)),
+        _words(
+          'NASA rocks',
+          tokenizer: const SpellTokenizer(skipAllCaps: false),
+        ),
         ['NASA', 'rocks'],
       );
     });
@@ -51,7 +60,10 @@ void main() {
   group('Given dictionary WORDCHARS with punctuation', () {
     test('when tokenizing then the punctuation joins inner word parts', () {
       expect(
-        _words('e.g. and/or x', tokenizer: const SpellTokenizer(wordChars: './')),
+        _words(
+          'e.g. and/or x',
+          tokenizer: const SpellTokenizer(wordChars: './'),
+        ),
         ['e.g', 'and/or'],
       );
     });

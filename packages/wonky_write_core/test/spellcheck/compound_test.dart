@@ -85,17 +85,14 @@ void main() {
   group('Given COMPOUNDPERMITFLAG on one of two suffixes', () {
     late SpellChecker checker;
     setUp(
-      () => checker = checkerFor(
-        '''
+      () => checker = checkerFor('''
 COMPOUNDFLAG X
 COMPOUNDPERMITFLAG P
 SFX S Y 1
 SFX S 0 s .
 SFX T Y 1
 SFX T 0 s/P .
-''',
-        '2\ncar/XS\nkey/XT',
-      ),
+''', '2\ncar/XS\nkey/XT'),
     );
 
     checkVectors(() => checker, [
@@ -114,17 +111,49 @@ SFX T 0 s/P .
       ('', 'fall/X\nlake/X', 'falllake', true),
       ('CHECKCOMPOUNDCASE', 'foo/X\nBar/X', 'fooBar', false),
       ('', 'foo/X\nBar/X', 'fooBar', true),
-      ('CHECKCOMPOUNDPATTERN 1\nCHECKCOMPOUNDPATTERN oo b', 'foo/X\nbar/X', 'foobar', false),
-      ('CHECKCOMPOUNDPATTERN 1\nCHECKCOMPOUNDPATTERN oo b', 'foo/X\nbar/X', 'barfoo', true),
-      ('CHECKCOMPOUNDPATTERN 1\nCHECKCOMPOUNDPATTERN /Y /X', 'foo/XY\nbar/X', 'foobar', false),
-      ('CHECKCOMPOUNDPATTERN 1\nCHECKCOMPOUNDPATTERN /Y /X', 'foo/XY\nbar/X', 'barfoo', true),
+      (
+        'CHECKCOMPOUNDPATTERN 1\nCHECKCOMPOUNDPATTERN oo b',
+        'foo/X\nbar/X',
+        'foobar',
+        false,
+      ),
+      (
+        'CHECKCOMPOUNDPATTERN 1\nCHECKCOMPOUNDPATTERN oo b',
+        'foo/X\nbar/X',
+        'barfoo',
+        true,
+      ),
+      (
+        'CHECKCOMPOUNDPATTERN 1\nCHECKCOMPOUNDPATTERN /Y /X',
+        'foo/XY\nbar/X',
+        'foobar',
+        false,
+      ),
+      (
+        'CHECKCOMPOUNDPATTERN 1\nCHECKCOMPOUNDPATTERN /Y /X',
+        'foo/XY\nbar/X',
+        'barfoo',
+        true,
+      ),
       ('FORCEUCASE U', 'foo/X\nbar/XU', 'foobar', false),
       ('FORCEUCASE U', 'foo/X\nbar/XU', 'Foobar', true),
-      ('CHECKCOMPOUNDREP\nREP 1\nREP f ph', 'phoo\nfoo/X\nbar/X', 'foobar', true),
-      ('CHECKCOMPOUNDREP\nREP 1\nREP oob oo', 'foo/X\nbar/X\nfooar', 'foobar', false),
+      (
+        'CHECKCOMPOUNDREP\nREP 1\nREP f ph',
+        'phoo\nfoo/X\nbar/X',
+        'foobar',
+        true,
+      ),
+      (
+        'CHECKCOMPOUNDREP\nREP 1\nREP oob oo',
+        'foo/X\nbar/X\nfooar',
+        'foobar',
+        false,
+      ),
     ];
     for (final (directives, dic, word, accepted) in cases) {
-      final label = directives.isEmpty ? 'no check' : directives.split('\n').last;
+      final label = directives.isEmpty
+          ? 'no check'
+          : directives.split('\n').last;
       test('when checking "$word" with $label then it is '
           '${accepted ? 'accepted' : 'rejected'}', () {
         final checker = checkerFor('COMPOUNDFLAG X\n$directives', '1\n$dic');

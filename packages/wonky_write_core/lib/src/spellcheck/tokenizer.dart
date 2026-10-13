@@ -137,24 +137,22 @@ final class SpellTokenizer {
     return rest != rest.toLowerCase();
   }
 
-  static RegExp _pattern(String wordChars) => _wordPatterns.putIfAbsent(
-    wordChars,
-    () {
-      final core = StringBuffer(r'\p{L}\p{M}\p{N}_');
-      final join = StringBuffer(r"'\u{2019}\-");
-      final letterLike = RegExp(r'[\p{L}\p{M}\p{N}_]', unicode: true);
-      for (final r in wordChars.runes) {
-        final ch = String.fromCharCode(r);
-        if (ch == "'" || ch == '’' || ch == '-') continue;
-        final escaped = '\\u{${r.toRadixString(16)}}';
-        if (letterLike.hasMatch(ch)) {
-          core.write(escaped);
-        } else if (ch.trim().isNotEmpty) {
-          join.write(escaped);
+  static RegExp _pattern(String wordChars) =>
+      _wordPatterns.putIfAbsent(wordChars, () {
+        final core = StringBuffer(r'\p{L}\p{M}\p{N}_');
+        final join = StringBuffer(r"'\u{2019}\-");
+        final letterLike = RegExp(r'[\p{L}\p{M}\p{N}_]', unicode: true);
+        for (final r in wordChars.runes) {
+          final ch = String.fromCharCode(r);
+          if (ch == "'" || ch == '’' || ch == '-') continue;
+          final escaped = '\\u{${r.toRadixString(16)}}';
+          if (letterLike.hasMatch(ch)) {
+            core.write(escaped);
+          } else if (ch.trim().isNotEmpty) {
+            join.write(escaped);
+          }
         }
-      }
-      final c = '[$core]';
-      return RegExp('$c+(?:[$join]$c+)*', unicode: true);
-    },
-  );
+        final c = '[$core]';
+        return RegExp('$c+(?:[$join]$c+)*', unicode: true);
+      });
 }

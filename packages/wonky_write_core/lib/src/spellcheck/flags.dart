@@ -110,7 +110,9 @@ final class _Flags {
     for (var i = 0; i < ids.length; i++) {
       if (i == 0 || ids[i] != ids[i - 1]) ids[w++] = ids[i];
     }
-    return _FlagSet(w == ids.length ? ids : Uint16List.fromList(ids.sublist(0, w)));
+    return _FlagSet(
+      w == ids.length ? ids : Uint16List.fromList(ids.sublist(0, w)),
+    );
   }
 
   /// Parses a flag field of a `.dic` entry or an affix continuation class,

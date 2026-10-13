@@ -19,7 +19,7 @@ final class _Condition {
     var i = 0;
     while (i < s.length) {
       final c = s.codeUnitAt(i);
-      if (c == 0x5B /* [ */) {
+      if (c == 0x5B /* [ */ ) {
         var close = s.indexOf(']', i + 1);
         if (close < 0) close = s.length;
         var content = s.substring(i + 1, close);
@@ -28,7 +28,7 @@ final class _Condition {
         parts.add(Uint16List.fromList(content.codeUnits));
         negated.add(neg);
         i = close + 1;
-      } else if (c == 0x2E /* . */) {
+      } else if (c == 0x2E /* . */ ) {
         parts.add(null);
         negated.add(false);
         i++;

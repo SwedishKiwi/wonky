@@ -44,6 +44,7 @@ List<Command<CommandArgs>> writeCommands(
 ) => [
   ...editorCommands(s, overrides: {..._overrides(s), ...extrasOverrides(s)}),
   ...extrasCommands(s),
+  ...spellCommands(s),
   ...fileCommands(s),
   ...findCommands(s),
   ...viewCommands(s),

@@ -85,7 +85,10 @@ void main() {
 
     test('when suggesting for a word two edits away then the n-gram pass '
         'finds it', () {
-      expect(checker.suggest('seperete', budget: unlimited), contains('separate'));
+      expect(
+        checker.suggest('seperete', budget: unlimited),
+        contains('separate'),
+      );
     });
 
     test('when suggesting then the input itself is never suggested', () {
@@ -94,15 +97,24 @@ void main() {
 
     test('when suggesting for a correct word then case variants of it are not '
         'suggested', () {
-      expect(checker.suggest('hello', budget: unlimited), isNot(contains('Hello')));
+      expect(
+        checker.suggest('hello', budget: unlimited),
+        isNot(contains('Hello')),
+      );
     });
 
     test('when suggesting near a FORBIDDENWORD then it is not suggested', () {
-      expect(checker.suggest('damm', budget: unlimited), isNot(contains('damn')));
+      expect(
+        checker.suggest('damm', budget: unlimited),
+        isNot(contains('damn')),
+      );
     });
 
     test('when suggesting near a NOSUGGEST word then it is not suggested', () {
-      expect(checker.suggest('shyt', budget: unlimited), isNot(contains('shit')));
+      expect(
+        checker.suggest('shyt', budget: unlimited),
+        isNot(contains('shit')),
+      );
     });
 
     test('when asking for at most 1 then 1 comes back', () {
@@ -122,7 +134,10 @@ void main() {
 
     test('when equally good candidates tie then they are in lexicographic '
         'order', () {
-      expect(checker.suggest('carx', max: 2, budget: unlimited), ['card', 'cart']);
+      expect(checker.suggest('carx', max: 2, budget: unlimited), [
+        'card',
+        'cart',
+      ]);
     });
 
     test('when the stopwatch is already past the budget then there are no '
@@ -149,7 +164,10 @@ void main() {
   group('Given NOSPLITSUGS', () {
     test('when suggesting for two joined words then no split is offered', () {
       final checker = checkerFor('$_aff\nNOSPLITSUGS', _dic);
-      expect(checker.suggest('thecat', budget: unlimited), isNot(contains('the cat')));
+      expect(
+        checker.suggest('thecat', budget: unlimited),
+        isNot(contains('the cat')),
+      );
     });
   });
 

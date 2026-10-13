@@ -2,7 +2,6 @@ import 'dart:typed_data';
 import 'dart:ui' show Offset;
 
 import 'package:dart_quill_delta/dart_quill_delta.dart';
-import 'package:flutter/foundation.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -251,9 +250,6 @@ void main() {
         'paragraph then the text moves in one "Move text" step', (
       tester,
     ) async {
-      // Mouse gestures (desktop / web).
-      debugDefaultTargetPlatformOverride = TargetPlatform.macOS;
-      addTearDown(() => debugDefaultTargetPlatformOverride = null);
       final p = await _pump(tester, Delta()..insert('Hello world\nSecond\n'));
       await tester.placeCaretInParagraph(p.h.controller.document.first.id, 0);
       p.h.select(0, 5);
@@ -279,7 +275,8 @@ void main() {
       expect(p.h.changes.last.label, 'Move text');
       expect(p.h.selection, const DeltaSelection(13, 18));
       expect(p.state.dropIndicator.value, isNull);
-    });
+      await tester.pump(const Duration(seconds: 1));
+    }, variant: TargetPlatformVariant.only(TargetPlatform.macOS));
 
     testWidgets('when dropping with copy then the original stays', (
       tester,

@@ -122,7 +122,9 @@ final class HunspellDictionary {
     if (existing == null) {
       _words[word] = flags;
     } else if (existing is _FlagSet) {
-      if (!identical(existing, flags)) _words[word] = <_FlagSet>[existing, flags];
+      if (!identical(existing, flags)) {
+        _words[word] = <_FlagSet>[existing, flags];
+      }
     } else {
       final list = existing as List<_FlagSet>;
       if (!list.any((f) => identical(f, flags))) list.add(flags);
@@ -183,7 +185,8 @@ final class HunspellDictionary {
 /// ```
 final class HunspellDictionaryLoader {
   /// Creates a loader for [aff] and [dic]; no work is done until [step].
-  HunspellDictionaryLoader(String aff, String dic) : _parser = _Parser(aff, dic);
+  HunspellDictionaryLoader(String aff, String dic)
+    : _parser = _Parser(aff, dic);
 
   final _Parser _parser;
 

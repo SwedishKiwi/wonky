@@ -222,7 +222,9 @@ final class _Suggester {
         if (rep.atStart && rep.atEnd) {
           if (v == from) _try(rep.to, _costRep);
         } else if (rep.atStart) {
-          if (v.startsWith(from)) _try(rep.to + v.substring(from.length), _costRep);
+          if (v.startsWith(from)) {
+            _try(rep.to + v.substring(from.length), _costRep);
+          }
         } else if (v.endsWith(from)) {
           _try(v.substring(0, v.length - from.length) + rep.to, _costRep);
         }
@@ -230,7 +232,10 @@ final class _Suggester {
       }
       var i = v.indexOf(from);
       while (i >= 0) {
-        _try(v.substring(0, i) + rep.to + v.substring(i + from.length), _costRep);
+        _try(
+          v.substring(0, i) + rep.to + v.substring(i + from.length),
+          _costRep,
+        );
         i = v.indexOf(from, i + 1);
       }
     }
@@ -303,7 +308,10 @@ final class _Suggester {
       final doubled =
           (i > 0 && v.codeUnitAt(i - 1) == c) ||
           (i + 1 < v.length && v.codeUnitAt(i + 1) == c);
-      _try(v.substring(0, i) + v.substring(i + 1), doubled ? _costDoubled : _costExtra);
+      _try(
+        v.substring(0, i) + v.substring(i + 1),
+        doubled ? _costDoubled : _costExtra,
+      );
     }
   }
 
@@ -357,13 +365,20 @@ final class _Suggester {
         if (_tick) return;
         if (v[i] != v[j]) {
           _try(
-            v.substring(0, i) + v[j] + v.substring(i + 1, j) + v[i] + v.substring(j + 1),
+            v.substring(0, i) +
+                v[j] +
+                v.substring(i + 1, j) +
+                v[i] +
+                v.substring(j + 1),
             _costMove,
           );
         }
         // Move v[i] behind v[j], and v[j] in front of v[i].
         _try(
-          v.substring(0, i) + v.substring(i + 1, j + 1) + v[i] + v.substring(j + 1),
+          v.substring(0, i) +
+              v.substring(i + 1, j + 1) +
+              v[i] +
+              v.substring(j + 1),
           _costMove,
         );
         _try(
@@ -499,7 +514,9 @@ int _similarity(String a, String b) {
   }
 
   var prefix = 0;
-  while (prefix < a.length && prefix < b.length && a.codeUnitAt(prefix) == b.codeUnitAt(prefix)) {
+  while (prefix < a.length &&
+      prefix < b.length &&
+      a.codeUnitAt(prefix) == b.codeUnitAt(prefix)) {
     prefix++;
   }
   return grams(a, b) + grams(b, a) + prefix - 2 * (a.length - b.length).abs();
@@ -519,7 +536,10 @@ int _distance(String a, String b) {
     cur[0] = i;
     for (var j = 1; j <= m; j++) {
       final cost = a.codeUnitAt(i - 1) == b.codeUnitAt(j - 1) ? 0 : 1;
-      var v = math.min(math.min(prev[j] + 1, cur[j - 1] + 1), prev[j - 1] + cost);
+      var v = math.min(
+        math.min(prev[j] + 1, cur[j - 1] + 1),
+        prev[j - 1] + cost,
+      );
       if (i > 1 &&
           j > 1 &&
           a.codeUnitAt(i - 1) == b.codeUnitAt(j - 2) &&

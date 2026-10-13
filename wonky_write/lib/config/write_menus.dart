@@ -196,6 +196,23 @@ MenuRoot writeMenus(ShellMenus shell) {
           menuId: 'tools.language',
         ),
         _c('write.tools.viewMarkdown', label: 'View Markdown source'),
+        MenuSpec.submenu('tools.spelling', 'Spelling', [
+          _c('write.spell.check', label: 'Check spelling…'),
+          _c('write.spell.nextError', label: 'Next error'),
+          MenuSpec.separator(),
+          _c('write.spell.toggle', label: 'Underline errors'),
+          _c(
+            'write.spell.toggleIgnoreUppercase',
+            label: 'Ignore words in UPPERCASE',
+          ),
+          MenuSpec.separator(),
+          _c('write.spell.personalDictionary', label: 'Personal dictionary…'),
+          _c(
+            'write.doc.languageDialog',
+            label: 'Language…',
+            menuId: 'tools.spelling.language',
+          ),
+        ]),
         MenuSpec.separator(),
       ])
       .insertBefore('tools.preferences', [

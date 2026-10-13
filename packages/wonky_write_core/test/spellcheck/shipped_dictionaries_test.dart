@@ -12,7 +12,18 @@ import 'support/dictionaries.dart';
 const _smoke = <(String, List<String>, List<String>)>[
   (
     'en-US',
-    ['color', 'organize', 'houses', 'unhappiness', "it's", 'don’t', 'mother-in-law', 'The', 'NASA', '21st'],
+    [
+      'color',
+      'organize',
+      'houses',
+      'unhappiness',
+      "it's",
+      'don’t',
+      'mother-in-law',
+      'The',
+      'NASA',
+      '21st',
+    ],
     ['colour', 'teh', 'recieve', 'definately', 'nasa', '21th'],
   ),
   (
@@ -22,7 +33,15 @@ const _smoke = <(String, List<String>, List<String>)>[
   ),
   (
     'fr-FR',
-    ["l'école", 'd’accord', 'peut-être', "aujourd'hui", 'chevaux', 'écrivîmes', 'Français'],
+    [
+      "l'école",
+      'd’accord',
+      'peut-être',
+      "aujourd'hui",
+      'chevaux',
+      'écrivîmes',
+      'Français',
+    ],
     ['bocoup', 'chevals', 'ecole'],
   ),
   (
@@ -32,13 +51,32 @@ const _smoke = <(String, List<String>, List<String>)>[
   ),
   (
     'nl-NL',
-    ['gemeenteraad', 'ziekenhuis', 'mogelijkheden', 'Amsterdam', 'fietsenmaker', 'eenentwintigste'],
+    [
+      'gemeenteraad',
+      'ziekenhuis',
+      'mogelijkheden',
+      'Amsterdam',
+      'fietsenmaker',
+      'eenentwintigste',
+    ],
     ['mogelijkhijd', 'fietsenstaling', 'amsterdam'],
   ),
   (
     'sv-SE',
-    ['flickorna', 'hjärtat', 'Stockholm', 'regeringen', 'kärnkraftverk', 'mjölkpaket'],
+    [
+      'flickorna',
+      'hjärtat',
+      'Stockholm',
+      'regeringen',
+      'kärnkraftverk',
+      'mjölkpaket',
+    ],
     ['regerningen', 'kärlken', 'stockholm'],
+  ),
+  (
+    'da-DK',
+    ['huset', 'husene', 'København', 'bøger', 'sprogværktøjer'],
+    ['hjeem', 'bgoen', 'bøgr', 'husne'],
   ),
 ];
 
@@ -135,9 +173,7 @@ void main() {
       const text =
           'Teh quick brown fox jumps over the lazy dog, recieve it at '
           'https://example.com or mail me@example.com. NASA uses iPhone apps.';
-      final tokenizer = SpellTokenizer(
-        wordChars: checker.dictionary.wordChars,
-      );
+      final tokenizer = SpellTokenizer(wordChars: checker.dictionary.wordChars);
       final flagged = [
         for (final t in tokenizer.tokenize(text))
           if (!checker.checkToken(t)) t.word,

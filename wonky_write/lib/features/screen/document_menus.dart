@@ -4,6 +4,7 @@ import 'package:wonky_ui/wonky_ui.dart';
 
 import '../editor/commands/write_editor_commands.dart';
 import '../editor/controller/editor_types.dart';
+import '../../commands/extras_commands.dart' show spellingMenuEntries;
 import '../editor/model/code_languages.dart';
 import 'write_document_controller.dart';
 import 'write_toolbar.dart';
@@ -140,7 +141,10 @@ List<WonkyMenuEntry> contextMenuEntries(
   final link = doc.commands.linkAt();
   final kind = doc.commands.selectedBlockKind;
   final selected = doc.selectedText;
-  final out = <WonkyMenuEntry>[];
+  final out = <WonkyMenuEntry>[
+    // Suggestions for a misspelled word at the caret (Write 04 §28.2).
+    ...spellingMenuEntries(doc, (id, args) => ui.run(id, args)),
+  ];
 
   WonkyMenuEntry copyAs() => WonkyMenuSubmenu(
     label: 'Copy as',

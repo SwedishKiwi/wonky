@@ -458,7 +458,9 @@ class _MarkdownTableComponentState extends State<MarkdownTableComponent> {
               minWidth: constraints.maxWidth,
               // ^ Expand to fill when the table is narrower than the viewport.
             ),
-            child: _buildTable(context),
+            // WONKY PATCH SE-4: use the given table instead of building
+            // it (and every cell) a second time.
+            child: table,
           ),
         );
       },

@@ -27,7 +27,9 @@ final class _Parser {
   double get progress {
     final total = _aff.length + _dic.length;
     if (done || total == 0) return 1;
-    final p = (math.min(_affPos, _aff.length) + math.min(_dicPos, _dic.length)) / total;
+    final p =
+        (math.min(_affPos, _aff.length) + math.min(_dicPos, _dic.length)) /
+        total;
     return p > 1 ? 1 : p;
   }
 

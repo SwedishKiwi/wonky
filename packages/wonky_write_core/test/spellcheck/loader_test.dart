@@ -38,10 +38,9 @@ void main() {
         progress.add(loader.progress);
       }
       expect(progress.length, greaterThan(10));
-      expect(
-        [for (var i = 1; i < progress.length; i++) progress[i] > progress[i - 1]],
-        everyElement(isTrue),
-      );
+      expect([
+        for (var i = 1; i < progress.length; i++) progress[i] > progress[i - 1],
+      ], everyElement(isTrue));
       expect((loader.isDone, loader.progress), (true, 1.0));
     });
 
@@ -64,31 +63,34 @@ void main() {
     });
   });
 
-  group(
-    'Given the shipped en-US dictionary',
-    () {
-      test('when parsed step-wise then it checks and suggests like a '
-          'synchronous parse', () {
-        final (aff, dic) = readShippedDictionary('en-US');
-        final loader = HunspellDictionaryLoader(aff, dic);
-        while (!loader.step(Duration.zero)) {}
-        final stepwise = SpellChecker(loader.result);
-        final sync = SpellChecker(loadShippedDictionary('en-US'));
-        const words = ['house', 'houses', 'unhappiness', 'teh', 'recieve', '21st'];
-        expect(
-          [
-            loader.result.wordCount,
-            [for (final w in words) stepwise.check(w)],
-            stepwise.suggest('teh', budget: const Duration(minutes: 1)),
-          ],
-          [
-            sync.dictionary.wordCount,
-            [for (final w in words) sync.check(w)],
-            sync.suggest('teh', budget: const Duration(minutes: 1)),
-          ],
-        );
-      });
-    },
-    skip: shippedDictionariesSkipReason,
-  );
+  group('Given the shipped en-US dictionary', () {
+    test('when parsed step-wise then it checks and suggests like a '
+        'synchronous parse', () {
+      final (aff, dic) = readShippedDictionary('en-US');
+      final loader = HunspellDictionaryLoader(aff, dic);
+      while (!loader.step(Duration.zero)) {}
+      final stepwise = SpellChecker(loader.result);
+      final sync = SpellChecker(loadShippedDictionary('en-US'));
+      const words = [
+        'house',
+        'houses',
+        'unhappiness',
+        'teh',
+        'recieve',
+        '21st',
+      ];
+      expect(
+        [
+          loader.result.wordCount,
+          [for (final w in words) stepwise.check(w)],
+          stepwise.suggest('teh', budget: const Duration(minutes: 1)),
+        ],
+        [
+          sync.dictionary.wordCount,
+          [for (final w in words) sync.check(w)],
+          sync.suggest('teh', budget: const Duration(minutes: 1)),
+        ],
+      );
+    });
+  }, skip: shippedDictionariesSkipReason);
 }

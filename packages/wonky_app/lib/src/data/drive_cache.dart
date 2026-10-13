@@ -23,7 +23,6 @@ class DriveCache {
   final Map<String, List<String>> _lists = {};
   final _changes = StreamController<DriveItemView>.broadcast(sync: true);
   Timer? _saveTimer;
-  bool _loaded = false;
 
   /// Items stored or updated (offline availability follows pins).
   Stream<DriveItemView> get changes => _changes.stream;
@@ -40,37 +39,46 @@ class DriveCache {
     _items.clear();
     _seen.clear();
     _lists.clear();
-    _loaded = false;
+    _loading = null;
     await load();
   }
 
-  Future<void> load() async {
-    if (_loaded) return;
-    _loaded = true;
+  Future<void>? _loading;
+
+  /// Loads the stored cache once (concurrent callers share the read).
+  /// Entries put while loading are newer and win over the stored ones.
+  Future<void> load() => _loading ??= _load();
+
+  Future<void> _load() async {
+    Object? raw;
     try {
-      final raw = await _store.read('drive.cache');
-      if (raw is Map) {
-        final items = raw['items'];
-        if (items is List) {
-          for (final j in items) {
-            final v = DriveItemView.fromJson(
-              (j as Map).cast<String, dynamic>(),
-            );
-            _items[v.uuid.uuid] = v;
-            _seen[v.uuid.uuid] = clock.now();
-          }
-        }
-        final lists = raw['lists'];
-        if (lists is Map) {
-          for (final e in lists.entries) {
-            _lists['${e.key}'] = [for (final u in e.value as List) '$u'];
-          }
+      raw = await _store.read('drive.cache');
+    } catch (_) {
+      return;
+    }
+    if (raw is! Map) return;
+    final items = raw['items'];
+    if (items is List) {
+      for (final j in items) {
+        try {
+          final v = DriveItemView.fromJson((j as Map).cast<String, dynamic>());
+          if (_items.containsKey(v.uuid.uuid)) continue;
+          _items[v.uuid.uuid] = v;
+          _seen[v.uuid.uuid] = clock.now();
+        } catch (_) {
+          // A corrupt entry is dropped.
         }
       }
-    } catch (_) {
-      // A corrupt cache is discarded.
-      _items.clear();
-      _lists.clear();
+    }
+    final lists = raw['lists'];
+    if (lists is Map) {
+      for (final e in lists.entries) {
+        if (e.value is! List) continue;
+        _lists.putIfAbsent(
+          '${e.key}',
+          () => [for (final u in e.value as List) '$u'],
+        );
+      }
     }
   }
 
@@ -219,7 +227,6 @@ class PendingDriveOpQueue {
   LocalStore _store;
   String? _user;
   final List<PendingDriveOp> _ops = [];
-  bool _loaded = false;
 
   List<PendingDriveOp> get ops => List.unmodifiable(_ops);
 
@@ -231,7 +238,7 @@ class PendingDriveOpQueue {
     _user = userUuid;
     _store = _base.scoped('u.$userUuid.');
     _ops.clear();
-    _loaded = false;
+    _loading = null;
     await load();
   }
 
@@ -242,17 +249,28 @@ class PendingDriveOpQueue {
     await _persist();
   }
 
-  Future<void> load() async {
-    if (_loaded) return;
-    _loaded = true;
+  Future<void>? _loading;
+
+  /// Loads the stored queue once; operations queued meanwhile follow the
+  /// stored ones.
+  Future<void> load() => _loading ??= _load();
+
+  Future<void> _load() async {
     final raw = await _store.read('drive.pending');
+    final stored = <PendingDriveOp>[];
     if (raw is List) {
       for (final j in raw) {
         try {
-          _ops.add(PendingDriveOp.fromJson((j as Map).cast<String, Object?>()));
+          stored.add(
+            PendingDriveOp.fromJson((j as Map).cast<String, Object?>()),
+          );
         } catch (_) {}
       }
     }
+    if (stored.isEmpty) return;
+    final queued = _ops.isNotEmpty;
+    _ops.insertAll(0, stored.where((o) => !_ops.any((x) => x.id == o.id)));
+    if (queued) await _persist();
   }
 
   Future<void> add(PendingDriveOp op) async {

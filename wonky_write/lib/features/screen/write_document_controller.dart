@@ -27,6 +27,7 @@ import '../export/export_service.dart';
 import '../find_replace/find_controller.dart';
 import '../images/image_services.dart';
 import '../outline/outline_panel.dart';
+import '../spellcheck/write_spellcheck.dart';
 import '../themes/document_theme.dart';
 import '../themes/write_fonts.dart';
 import 'document_insights.dart';
@@ -168,6 +169,9 @@ class WriteDocumentController extends DocumentController {
   late final DocumentThemeController documentTheme;
   final OutlineViewState outlineView = OutlineViewState();
 
+  /// Spellcheck of this document (Write 04 §28.2).
+  late final WriteSpellcheck spellcheck = WriteSpellcheck(controller: editor);
+
   /// Scrolls a Delta offset into view (set by the screen's editor widget).
   void Function(int offset)? revealOffset;
 
@@ -256,7 +260,24 @@ class WriteDocumentController extends DocumentController {
       _applyMeta();
     }
     clipboard.copyAllowed = copyAllowed;
+    _configureSpellcheck();
     notifyListeners();
+  }
+
+  /// Personal dictionary words (`writeDefaults.personalDictionary`).
+  List<String> get personalDictionary {
+    final raw = services.prefs.writeDefaults['personalDictionary'];
+    return raw is List ? [for (final w in raw) if (w is String) w] : const [];
+  }
+
+  void _configureSpellcheck() {
+    final d = services.prefs.writeDefaults;
+    spellcheck.configure(
+      enabled: (d['spellcheck'] as bool? ?? true) && isLoaded,
+      language: language,
+      skipAllCaps: d['spellcheckIgnoreUppercase'] as bool? ?? true,
+      personalWords: personalDictionary,
+    );
   }
 
   void _onTheme() {
@@ -646,6 +667,7 @@ class WriteDocumentController extends DocumentController {
     editor.removeListener(_onEditor);
     editor.view.removeListener(notifyListeners);
     services.prefs.removeListener(_onPrefs);
+    spellcheck.dispose();
     documentTheme.removeListener(_onTheme);
     images.dispose();
     viewPrefs.dispose();

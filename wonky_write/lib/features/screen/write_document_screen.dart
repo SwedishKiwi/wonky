@@ -331,6 +331,7 @@ class _WriteDocumentScreenState extends State<WriteDocumentScreen> {
           ),
           mentionCandidates: _mentionCandidates,
           emojiSuggestions: _emoji,
+          extraStylePhases: [doc.spellcheck.styler],
           onDropFiles: (files, index) => unawaited(
             handleDroppedFiles(s, doc, files, index, context: context),
           ),

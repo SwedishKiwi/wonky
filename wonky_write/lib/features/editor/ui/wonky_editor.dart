@@ -486,9 +486,13 @@ class WonkyEditorState extends State<WonkyEditor> {
             const Duration(milliseconds: 400) &&
         !_typewriterScheduled) {
       _typewriterScheduled = true;
+      // After the editor's own keep-caret-visible scroll (also a post-frame
+      // callback), so typewriter scrolling has the last word.
       WidgetsBinding.instance.addPostFrameCallback((_) {
-        _typewriterScheduled = false;
-        if (mounted) _typewriterScroll();
+        scheduleMicrotask(() {
+          _typewriterScheduled = false;
+          if (mounted) _typewriterScroll();
+        });
       });
     }
   }

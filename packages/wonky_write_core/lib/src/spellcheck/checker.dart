@@ -101,8 +101,7 @@ final class SpellChecker {
   /// Checks a token from `SpellTokenizer`, also trying the abbreviation
   /// with its trailing period (`etc.`) when the token is followed by one.
   bool checkToken(SpellToken token) =>
-      check(token.word) ||
-      (token.followedByPeriod && check('${token.word}.'));
+      check(token.word) || (token.followedByPeriod && check('${token.word}.'));
 
   /// Up to [max] suggestions for [word], best first.
   ///
@@ -243,7 +242,12 @@ final class SpellChecker {
       var i = w.indexOf(b, 1);
       while (i > 0 && i + b.length < w.length) {
         if (_checkPart(w.substring(0, i), depth, forSuggest, compound) &&
-            _checkPart(w.substring(i + b.length), depth, forSuggest, compound)) {
+            _checkPart(
+              w.substring(i + b.length),
+              depth,
+              forSuggest,
+              compound,
+            )) {
           return true;
         }
         i = w.indexOf(b, i + 1);
@@ -404,7 +408,8 @@ final class SpellChecker {
     if (f.contains(d._forbidden)) return false;
     if (ctx.forSuggest && f.contains(d._noSuggest)) return false;
     if (ctx.caseChanged && f.contains(d._keepCase)) return false;
-    if (s != null && !(f.contains(s.flag) || (p != null && p.cont.contains(s.flag)))) {
+    if (s != null &&
+        !(f.contains(s.flag) || (p != null && p.cont.contains(s.flag)))) {
       return false;
     }
     if (p != null &&
@@ -567,7 +572,8 @@ final class SpellChecker {
         if (rep.from.isEmpty) continue;
         var i = w.indexOf(rep.from);
         while (i >= 0) {
-          final cand = w.substring(0, i) + rep.to + w.substring(i + rep.from.length);
+          final cand =
+              w.substring(0, i) + rep.to + w.substring(i + rep.from.length);
           if (_forms(cand, null, plain, null)) {
             bad = true;
             break outer;

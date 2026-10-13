@@ -5,6 +5,7 @@
     {"tag": "fr-FR", "name": "Français (France)", "aff": "fr-FR.aff", "dic": "fr-FR.dic", "license": "MPL-2.0"},
     {"tag": "es-ES", "name": "Español (España)", "aff": "es-ES.aff", "dic": "es-ES.dic", "license": "LGPL-3.0-or-later OR MPL-1.1"},
     {"tag": "nl-NL", "name": "Nederlands", "aff": "nl-NL.aff", "dic": "nl-NL.dic", "license": "BSD-3-Clause"},
-    {"tag": "sv-SE", "name": "Svenska", "aff": "sv-SE.aff", "dic": "sv-SE.dic", "license": "LGPL-3.0"}
+    {"tag": "sv-SE", "name": "Svenska", "aff": "sv-SE.aff", "dic": "sv-SE.dic", "license": "LGPL-3.0"},
+    {"tag": "da-DK", "name": "Dansk", "aff": "da-DK.aff", "dic": "da-DK.dic", "license": "LGPL-2.1 OR MPL-1.1"}
   ]
 }

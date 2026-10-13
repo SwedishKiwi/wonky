@@ -7,16 +7,13 @@ void main() {
   group('Given FLAG long', () {
     late SpellChecker checker;
     setUp(
-      () => checker = checkerFor(
-        '''
+      () => checker = checkerFor('''
 FLAG long
 SFX Aa Y 1
 SFX Aa 0 s .
 PFX Bb Y 1
 PFX Bb 0 un .
-''',
-        '1\ndo/AaBb',
-      ),
+''', '1\ndo/AaBb'),
     );
 
     checkVectors(() => checker, [
@@ -30,8 +27,7 @@ PFX Bb 0 un .
   group('Given FLAG num', () {
     late SpellChecker checker;
     setUp(
-      () => checker = checkerFor(
-        '''
+      () => checker = checkerFor('''
 FLAG num
 SFX 101 Y 1
 SFX 101 0 s .
@@ -39,9 +35,7 @@ SFX 7 Y 1
 SFX 7 0 ed .
 SFX 70 Y 1
 SFX 70 0 ing .
-''',
-        '1\nwalk/101,7',
-      ),
+''', '1\nwalk/101,7'),
     );
 
     checkVectors(() => checker, [
@@ -66,8 +60,7 @@ SFX 70 0 ing .
   group('Given AF flag aliases in the dictionary and in affixes', () {
     late SpellChecker checker;
     setUp(
-      () => checker = checkerFor(
-        '''
+      () => checker = checkerFor('''
 AF 3
 AF AB
 AF B
@@ -78,9 +71,7 @@ SFX B Y 1
 SFX B 0 ed .
 SFX C Y 1
 SFX C 0 er/3 .
-''',
-        '2\njump/1\nhop/2',
-      ),
+''', '2\njump/1\nhop/2'),
     );
 
     checkVectors(() => checker, [
