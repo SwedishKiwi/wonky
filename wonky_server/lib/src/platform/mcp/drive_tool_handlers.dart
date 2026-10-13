@@ -7,8 +7,8 @@ import 'package:wonky_core/wonky_core.dart'
 import 'package:wonky_write_core/wonky_write_core.dart' as core;
 
 import '../../web/routes/app_config_route.dart';
-import '../../write/content/write_content.dart';
 import '../../write/export/write_export_service.dart';
+import '../../write/export/write_import_service.dart';
 import '../../write/mcp/headless_editor.dart';
 import '../common/models.dart';
 import '../drive/drive_service.dart';
@@ -480,59 +480,41 @@ abstract final class DriveToolHandlers {
       );
     }
     final format = a.requireString('format').toLowerCase().replaceAll('.', '');
-    String text;
+    if (!WriteImportService.formats.contains(format)) {
+      throw McpToolException(
+        McpErrorCode.unsupported,
+        'Documents can be imported from '
+        '${WriteImportService.formats.join(', ')}.',
+      );
+    }
+    final Uint8List bytes;
     if (a.has('text')) {
-      text = a.string('text')!;
+      bytes = Uint8List.fromList(utf8.encode(a.string('text')!));
     } else if (a.has('content_base64')) {
-      Uint8List bytes;
       try {
         bytes = base64Decode(a.string('content_base64')!);
       } on FormatException {
         throw McpToolException(McpErrorCode.invalidArgs, 'Invalid base64.');
       }
-      text = utf8.decode(bytes, allowMalformed: true);
     } else {
       throw McpToolException(
         McpErrorCode.invalidArgs,
         'Pass text or content_base64.',
       );
     }
-    final core.Delta delta;
-    String? frontMatter;
-    final warnings = <Map<String, Object?>>[];
-    switch (format) {
-      case 'md' || 'markdown' || 'mdown' || 'mkd':
-        final r = WriteContent.fromMarkdown(text);
-        delta = r.delta;
-        frontMatter = r.frontMatter;
-        warnings.addAll([for (final w in r.warnings) w.toJson()]);
-      case 'txt' || 'text':
-        delta = WriteContent.fromPlainText(text).delta;
-      case 'html' || 'htm':
-        final r = const core.HtmlImporter().importHtml(
-          text,
-          core.ImportOptions(),
-        );
-        delta = r.delta;
-        warnings.addAll([
-          for (final w in r.warnings)
-            {'kind': w.kind.name, 'message': w.message},
-        ]);
-      default:
-        throw McpToolException(
-          McpErrorCode.unsupported,
-          'Documents can be imported from md, txt or html.',
-        );
-    }
-    final view = await DriveService.createDocumentFromContent(
+    final name = a.requireString('name');
+    final report = await WriteImportService.importBytes(
       ctx.session,
       ctx.actor,
-      name: a.requireString('name'),
+      bytes,
+      fileName: '$name.$format',
+      format: format,
+      name: name,
       parentUuid: a.uuid('parent_uuid'),
-      content: delta,
-      frontMatter: frontMatter,
-      activitySummary: {'importedFrom': format, 'via': 'mcp'},
+      activityExtra: const {'via': 'mcp'},
     );
+    final view = report.item;
+    final warnings = [for (final w in report.warnings) w.toJson()];
     return ToolResult({
       'item': itemJson(view),
       'warnings': warnings,

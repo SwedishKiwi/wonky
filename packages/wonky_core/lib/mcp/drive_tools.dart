@@ -280,7 +280,7 @@ abstract final class DriveTools {
     name: 'drive.export',
     title: 'Export an item',
     description:
-        'Exports a document (md, txt, html, docx, odt, pdf, epub) or '
+        'Exports a document (md, txt, html, pdf, docx, odt, rtf, epub) or '
         'spreadsheet (xlsx, ods, csv, pdf). Text formats (md, txt, csv) are '
         'returned inline; others as a signed download_url valid for 15 min.',
     inputSchema: ObjectSchema(
@@ -293,6 +293,7 @@ abstract final class DriveTools {
             'html',
             'docx',
             'odt',
+            'rtf',
             'pdf',
             'epub',
             'xlsx',
@@ -311,8 +312,9 @@ abstract final class DriveTools {
     name: 'drive.import',
     title: 'Import a file',
     description:
-        'Creates a new document or spreadsheet from file content (base64) or '
-        'plain text (md, txt, csv).',
+        'Creates a new document from file content (base64: docx, odt, rtf, '
+        'html, md, txt) or plain text (md, txt, html). Spreadsheets are not '
+        'available yet.',
     inputSchema: ObjectSchema(
       properties: {
         'name': JsonSchema.string(minLength: 1, maxLength: 255),

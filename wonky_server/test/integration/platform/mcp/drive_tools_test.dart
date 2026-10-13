@@ -3,6 +3,8 @@ import 'dart:convert';
 import 'package:test/test.dart';
 import 'package:wonky_core/wonky_core.dart' show McpScope;
 import 'package:wonky_server/src/platform/common/models.dart';
+import 'package:wonky_server/src/write/export/server_fonts.dart';
+import 'package:wonky_write_core/wonky_write_core.dart' as core;
 
 import '../../../support/mcp_harness.dart';
 import '../../../support/test_drive.dart';
@@ -209,6 +211,39 @@ void main() {
         });
         expect((md['item'] as Map)['name'], 'From md');
         expect(doc['content'], contains('There **you**'));
+      },
+    );
+
+    test(
+      'when importing a DOCX file then its content becomes a document',
+      () async {
+        final source = const core.MarkdownCodec()
+            .importMarkdown('# Report\n\nSome **bold** text.')
+            .delta;
+        final docx = await const core.DocxExporter().export(
+          core.ExportInput(
+            document: source,
+            meta: const core.DocMeta(title: 'Report'),
+            theme: core.BuiltinThemes.wonkyDefault.theme,
+            pageSetup: const core.PageSetup(),
+            images: core.MapImageResolver(const {}),
+            fonts: FileSystemFontProvider.instance,
+            now: DateTime.utc(2026),
+          ),
+          const core.OfficeExportOptions(),
+        );
+
+        final imported = await mcp.call('drive.import', {
+          'name': 'From docx',
+          'kind': 'document',
+          'format': 'docx',
+          'content_base64': base64Encode(docx.bytes),
+        });
+        final doc = await mcp.call('write.get_document', {
+          'document_uuid': (imported['item'] as Map)['uuid'],
+        });
+
+        expect(doc['content'], contains('Some **bold** text.'));
       },
     );
 

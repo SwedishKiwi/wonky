@@ -159,17 +159,40 @@ abstract final class WriteImportService {
     Uint8List bytes,
     String format,
     DriveImportOptions options,
-  ) async {
-    final opts = _options(options.optionsJson);
+  ) => importBytes(
+    session,
+    actor,
+    bytes,
+    fileName: file.fileName,
+    format: format,
+    name: options.name,
+    parentUuid: options.parentUuid,
+    options: _options(options.optionsJson),
+  );
+
+  /// Converts [bytes] (any of [formats]) and creates a new document from
+  /// them, storing embedded images and the import warnings. Shared by
+  /// `drive.import` and the MCP `drive.import` tool.
+  static Future<ImportReportView> importBytes(
+    Session session,
+    Actor actor,
+    Uint8List bytes, {
+    required String fileName,
+    required String format,
+    String? name,
+    UuidValue? parentUuid,
+    Map<String, dynamic> options = const {},
+    Map<String, Object?> activityExtra = const {},
+  }) async {
     final converted = await convert(
       bytes,
-      fileName: file.fileName,
+      fileName: fileName,
       format: format,
-      options: opts,
+      options: options,
     );
     final (result, images) = await storeImages(session, actor, converted);
     final warnings = warningsOf(result);
-    final name = _name(options.name, result, file.fileName);
+    final docName = _name(name, result, fileName);
     final setup = result.pageSetup == null
         ? null
         : core.ImportedPageSetups.toPageSetup(result.pageSetup!);
@@ -177,8 +200,8 @@ abstract final class WriteImportService {
     final view = await DriveService.createDocumentFromContent(
       session,
       actor,
-      name: name,
-      parentUuid: options.parentUuid,
+      name: docName,
+      parentUuid: parentUuid,
       content: result.delta,
       frontMatter: result.frontMatter,
       // Carries language and page setup into the new document.
@@ -191,7 +214,10 @@ abstract final class WriteImportService {
         createdAt: now,
         updatedAt: now,
       ),
-      activitySummary: {'importedFrom': _sourceFormat(format, file.fileName)},
+      activitySummary: {
+        'importedFrom': _sourceFormat(format, fileName),
+        ...activityExtra,
+      },
     );
     final doc = await DocumentStore.byUuid(session, view.contentRef!);
     if (doc != null) {
