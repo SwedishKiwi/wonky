@@ -155,10 +155,10 @@ Rules:
 | Names | Display names keep Unicode but lose control characters and bidi overrides (U+202A–U+202E, U+2066–U+2069), so extensions can't be spoofed (Drive 02 §5.1) |
 | Archives | Never extracted or listed on the server (no zip bombs); XLSX/DOCX/ODS imports keep their existing decompressed-size limits |
 | Previews | Generated server-side only for images (re-encoded, metadata stripped — EXIF GPS removed from previews; the original file is unchanged and downloads as uploaded) |
-| Malware | Not scanned in v2: files are private, shared only with signed-in users, and never executed or rendered by Wonky. See the Open question below |
+| Malware | Not scanned in v2: files are private, shared only with signed-in users, and never executed or rendered by Wonky (decided below) |
 | Sharing | No anonymous links (06 §2.2); every byte request is permission-checked; URLs are short-lived and user-bound |
 | Privacy | File contents are never logged; MCP/AI read text files only through permission-checked tools; the legal pages (§5) list uploaded files as stored content (retention: deleted with the item; trash purged after 30 days) |
 
-**Open question (for review) (v2):** scan uploads for malware (e.g. ClamAV in a sidecar,
-quarantining matches)? *Recommendation:* not in M8 — the risk is limited by private storage,
-signed-in sharing and forced downloads; revisit before anonymous or public sharing exists.
+**Decided (v2 review, Q11):** no malware scanning of uploads in M8 (e.g. ClamAV in a sidecar):
+the risk is limited by private storage, signed-in sharing and forced downloads. Revisit before
+anonymous or public sharing exists.

@@ -236,18 +236,18 @@ one deck = one space (`Deck.id` = space UUID = drive item UUID), a per-user repl
 `slidesSync.sync` (for `onMergeSuccess` → the deck change log), subscriptions as membership, the
 pending-change guard, U11-style change journal, recovery export, and the `slides.rows` undo
 domain. The generic client pieces (replica, sync controller, writer, journal, undo inverter)
-are extracted from `wonky_sheets` into a shared package (`wonky_sync_kit`, 01 §2) so both apps
-run the same code.
+are extracted from `wonky_sheets` into the shared packages `wonky_sync_kit` (pure Dart) and
+`wonky_sync_kit_flutter` (client part, 01 §2) so both apps run the same code.
 
 **Every space kind in every replica.** Because a client syncs every space it is a member of
 (§2.1), the Sheets replica would also download decks and the Slides replica spreadsheets once
 decks are spaces. The server tables `SpaceSubscription` and `SpaceReservation` gain
-`kind: SpaceKind { spreadsheet, deck }` (active set limits per kind), and the recommended fix is
-the vendored patch **OS-8** — a per-endpoint space filter
+`kind: SpaceKind { spreadsheet, deck }` (active set limits per kind), and — **decided (v2 review,
+Q19)** — the vendored patch **OS-8** adds a per-endpoint space filter
 (`offlineSync.sync(…, spaceFilter: …)`, `sheetsSync` passes spreadsheet spaces + the personal
-space, `slidesSync` deck spaces + the personal space). It is a first step towards U1. The
-options and the interim behavior are the **Open question** of
-[Slides 02 §9.2](wonky_slides/02-data-model.md). Drive opens no replica.
+space, `slidesSync` deck spaces + the personal space). It is a first step towards U1 and lands
+in M8 wave 1, before any deck space exists (fallback if the patch slips: [Slides 02
+§9.2](wonky_slides/02-data-model.md)). Drive opens no replica.
 
 ## 3. Shell (drive)
 Drive listing cache + `PendingDriveOp` queue (rename, move, star, trash, registerSpreadsheet,

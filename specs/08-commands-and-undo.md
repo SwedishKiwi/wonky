@@ -277,7 +277,7 @@ through the active document controller, never re-register these ids):
 | Panels | `shell.panels.open {panelId}`, `shell.panels.close {panelId}`, `shell.panels.toggle {panelId}` (in the editors, closing collapses the panel to the icon rail, suite 02 §4.5) |
 | MCP | `shell.mcp.copyConnectionInfo`, `shell.mcp.toggleUiBridge`, `shell.mcp.stopControl` |
 | View | `shell.view.zoom {percent}` (the editor chrome is always shown: no compact mode, full screen or show/hide toggles for toolbar, menubar or status bar) |
-| Appearance & settings | `shell.appearance.setTheme {mode}`, `shell.settings.open {section}` (Wonky Works settings; legacy sections `write`/`sheets`/`themes` map to app settings, 04 §4.1), (v2) **`shell.settings.openApp {section?}`** (the current app's settings, `Mod+,` on desktop) |
+| Appearance & settings | `shell.appearance.setTheme {mode}`, `shell.settings.open {section}` (Wonky Work settings; legacy sections `write`/`sheets`/`themes` map to app settings, 04 §4.1), (v2) **`shell.settings.openApp {section?}`** (the current app's settings, `Mod+,` on desktop) |
 | AI | `shell.ai.togglePanel`, `shell.ai.newThread`, `shell.ai.send`, `shell.ai.stop` |
 | Help | `shell.help.shortcuts`, `shell.help.feedback`, `shell.help.whatsNew`, `shell.help.about`, (v2) **`shell.help.reportBug`** (external link to the GitHub issues, 03 §3.4; `requiredRole: viewer`, not undoable) (no help center or menu search) |
 | Account | `shell.account.signOut`, `shell.account.switchApp {app}` ((v2) `app` ∈ `drive`, `write`, `sheets`, `slides`; the left menu's app links) |

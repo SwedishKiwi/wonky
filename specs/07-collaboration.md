@@ -172,7 +172,7 @@ fields:
   `emailedAt` marks them (idempotent; a failed immediate email is retried by the digest). Links
   point at the item's URL by kind (`<web origin>/write/d/<uuid>`, `/sheets/s/…`, (v2)
   `/slides/p/…`, `/drive/file/…`, `WonkyConfig.itemUrl`, 01 §2.4) and the footer at
-  Wonky Works settings › Notifications. (v2) `storage` notifications are in-app only.
+  Wonky Work settings › Notifications. (v2) `storage` notifications are in-app only.
 - Sending is pluggable (`EmailSender` in `platform/notifications/email/`): the
   [Resend](https://resend.com) HTTP API when the passwords `resendApiKey` and `emailFrom` are
   set, otherwise `LoggingEmailSender` logs the email (development; the Serverpod Cloud email

@@ -47,10 +47,10 @@ grid_view,outline_view,menus,toolbar,dialogs,home}/`.
 | `/templates` | Template gallery (presentation categories) | shell | §15 |
 | `/p/:uuid` (`?slide=<slideId>&comment=<threadUuid>`) | **Deck editor** | `DeckEditorScreen` | §2 |
 | `/p/:uuid` while downloading | "Downloading presentation… 42 %" (skeleton navigator + slide) | `DeckLoadingView` | 02 §9.1 |
-| `/p/:uuid/present` (`?slide=&from=start`) | Presenting (audience; presenter view per 10) | `PresentScreen` | [10](10-presenting-and-pdf.md) |
+| `/p/:uuid/present` (`?slide=&from=start`) | Presenting in this window (full screen, or presenter view; audience on other devices/browsers via the presentation session, 10 §5.2) | `PresentScreen` | [10](10-presenting-and-pdf.md) |
 | `/p/:uuid/print` | Print / PDF preview with options | `SlidesPrintPreviewScreen` | [10](10-presenting-and-pdf.md) |
 | `/p/:uuid/history` (`?version=`) | Version history (full-screen) | `SlidesVersionHistoryScreen` | [09 §4](09-collaboration-history.md) |
-| `/settings` | **Wonky Works settings** (suite-level, D4) | shell | suite 04 |
+| `/settings` | **Wonky Work settings** (suite-level, D4) | shell | suite 04 |
 | `/settings/app` | **Slides settings** (D4) | shell page + Slides sections | §13.16 |
 | No access / not found / unavailable offline | shell pages ("This presentation isn't available offline") | shell | suite 03 §4 |
 
@@ -128,9 +128,9 @@ Follows suite 03 §3.1 with Slides additions:
 | `PresenceAvatarStack` | Avatars show "Editing slide 4" / "Presenting" / "Viewing"; ⋮ › *Follow* (09 §1.5) |
 | Comments button | `shell.comments.togglePanel` (badge = open threads) |
 | **Report a bug** | Icon button (Lucide `bug`, tooltip "Report a bug") → `shell.help.reportBug` (D5, external-link confirm) |
-| **Present** split button (primary, before Share) | Main: `slides.present.fromCurrent` (⌘Enter / Ctrl+Enter). Chevron menu: *Present from beginning* (`slides.present.fromStart`, ⇧⌘Enter), *Presenter view* (`slides.present.presenterView`, ⌥⌘Enter / Ctrl+Alt+Enter), *Rehearse* (`slides.present.rehearse`, P1), *Use phone as remote* (`slides.present.remote`, P1), separator, *Presenting settings…* (`shell.settings.openApp {section: presenting}`). While someone presents, the button shows a live dot and *Follow Anna's presentation* (09 §1.6). |
+| **Present** split button (primary, before Share) | Main: `slides.present.fromCurrent` (⌘Enter / Ctrl+Enter). Chevron menu: *Present from beginning* (`slides.present.fromStart`, ⇧⌘Enter), *Presenter view* (`slides.present.presenterView`, ⌥⌘Enter / Ctrl+Alt+Enter; in this window, 10 §5.2), *Open on another device…* (`slides.present.openOnAnotherDevice`), *Rehearse* (`slides.present.rehearse`, P1), *Use phone as remote* (`slides.present.remote`, P1), separator, *Presenting settings…* (`shell.settings.openApp {section: presenting}`). While someone presents, the button shows a live dot and *Follow Anna's presentation* (09 §1.6). |
 | **Share** | Shell |
-| Account avatar | Shell (incl. *Slides settings*, *Wonky Works settings*, D4) |
+| Account avatar | Shell (incl. *Slides settings*, *Wonky Work settings*, D4) |
 
 The Present button needs an app slot in the shell title row
 (`EditorScaffold.titleActions`, suite addition §17).
@@ -363,8 +363,7 @@ No PPTX/Keynote items (non-goal).
 |------|-----------|-------|-----------|
 | Keyboard shortcuts | `shell.help.shortcuts` | ⌘/ | Ctrl+/ |
 | — | | | |
-| Report a bug | `shell.help.reportBug` | — | — |
-| Report a problem | `shell.help.feedback` | — | — |
+| Report a bug | `shell.help.reportBug` (replaces *Report a problem*; `shell.help.feedback` stays in the palette and MCP, suite 03 §3.2) | — | — |
 | What's new | `shell.help.whatsNew` | — | — |
 | About | `shell.help.about` | — | — |
 
@@ -594,14 +593,14 @@ skipped"; "Slide 4 of 24, in group Intro: Our mission, 2 comments, skipped".
 - Viewers/commenters: selection, collapse/expand, copy (if allowed) and present work; drag,
   rename, color, skip, delete and grouping are disabled (reason tooltip).
 
-### 5.12 Open question (for review): nested groups
+### 5.12 Decided (v2 review, Q22): nested groups
 
-D11 allows one level in v1 and lists nesting as P2. The model reserves `SlideGroup.parentId`
-(02 §3.4), so nesting needs no schema change.
+**One level in v1** (option A). D11 lists nesting as P2; the model reserves
+`SlideGroup.parentId` (02 §3.4, always null in v1), so nesting needs no schema change later.
 
 | Option | Pros | Cons |
 |--------|------|------|
-| **A. One level only (v1)** *(recommended)* | Simple mental model (PowerPoint sections, Keynote collapsible groups are one level in practice); clear drop targets; groups map 1:1 to PDF bookmarks and presenter picker sections | Large decks can't express chapters ▸ sections |
+| **A. One level only (v1)** *(chosen)* | Simple mental model (PowerPoint sections, Keynote collapsible groups are one level in practice); clear drop targets; groups map 1:1 to PDF bookmarks and presenter picker sections | Large decks can't express chapters ▸ sections |
 | B. Nesting up to 2 levels (P2) | Chapters with sub-sections (talks with many parts) | More complex drag targets (indent levels), group ops must recurse (skip, duplicate, delete), outline/grid view headers nest |
 | C. Arbitrary depth | Maximum flexibility | Hard to use in a 220 px navigator; deep trees rarely help presentations |
 
@@ -689,15 +688,15 @@ A docked, resizable right column (default 300 px, 260–420 px, device pref
 items (multiple open, open state per user). Every control commits through a command (one undo
 step per committed change; slider drags coalesce into one step on release).
 
-**Open question (for review): docked inspector vs. side panel.** D-brief asks for an inspector
+**Decided (v2 review, Q21): docked inspector, not a side panel.** D-brief asks for an inspector
 with Format / Animate / Slide tabs; 06 specifies the Animate UI as the panel
-`slides.panel.animate`. Recommendation: the **docked inspector** (Keynote/Pitch/Figma: always
+`slides.panel.animate`. The **docked inspector** (Keynote/Pitch/Figma: always
 visible while designing) hosts the Animate UI of 06 §5 as its **Animate tab**, and
 `slides.panel.animate {tab}` is an alias that opens the inspector on that tab (sub-tab
 Transition/Build/Order). The shell side panel host stays free for Comments, Assistant, Layers,
 Themes, Accessibility at the same time. Alternative: inspector as one more `SidePanelSpec` —
 simpler shell integration, but opening Comments or the Assistant hides the inspector, which
-breaks the design flow. Below 1,200 px the docked inspector overlays the canvas (§16).
+breaks the design flow (rejected). Below 1,200 px the docked inspector overlays the canvas (§16).
 
 ### 7.2 Format tab (by selection)
 
@@ -997,7 +996,7 @@ Built as the Slides app's settings sections (`WonkyAppConfig.settingsSections`),
 | Editing | Units (su / px / in / cm, P1), *Smart guides*, *Snap to objects*, *Snap to guides*, *Scroll to change slides* (P1), *Smart quotes*, *Autoformat lists*, *Show collaborator cursors* |
 | Animations | Default transition (effect + duration), default build effect, *Preview animations on hover*, *Reduce motion in the editor* (06 §13) |
 | Code | Default code font size, default code language, *Type-in click sound* (off), default typing speed (07) |
-| Presenting | Presenter-view layout, timer mode (elapsed/countdown), laser pointer color, *Start presenting in full screen*, audience window behavior — stored in `UserPreferences.slidesPresenter` (10 A-10-4); the *This presentation* section edits `Deck.presentJson` (10 §3) |
+| Presenting | Presenter-view layout, timer mode (elapsed/countdown), laser pointer color, *Start presenting in full screen*, *Start with presenter view* — stored in `UserPreferences.slidesPresenter` (10 A-10-4); the *This presentation* section edits `Deck.presentJson` (10 §3) |
 | Charts | *Update linked charts automatically by default* (08) |
 | Spelling | Language default, *Underline spelling errors* |
 
@@ -1018,9 +1017,9 @@ Built as the Slides app's settings sections (`WonkyAppConfig.settingsSections`),
 ## 15. Home screen and templates (Slides variant of the unified Drive, D2)
 
 - `SlidesHomeConfig`: the app home shows **only presentations** (Recent, My files, Shared with
-  me, Starred, Trash) with folders only as navigation (D2; folder visibility rule per the Drive
-  spec's open question). The left menu follows D2: apps section (Drive, Write, Sheets, **Slides**
-  highlighted), the Slides navigation, then *Slides settings*, *Wonky Works settings*, *Report a
+  me, Starred, Trash) with folders only as navigation (D2; only folders that contain a presentation,
+  `kindMask` — decided in the v2 review, Q7, suite 03 §3.3). The left menu follows D2: apps section (Drive, Write, Sheets, **Slides**
+  highlighted), the Slides navigation, then *Slides settings*, *Wonky Work settings*, *Report a
   bug*, storage meter ("12.3 MB of 50 MB"); *Open in Wonky Drive* link.
 - **+ New** → *Presentation* (works offline via reserved spaces, 02 §9.3) and *From template…*.
 - **Template strip**: Blank, Pitch deck, Project kickoff, Quarterly review (with linked-chart

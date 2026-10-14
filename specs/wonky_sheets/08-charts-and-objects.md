@@ -1216,8 +1216,9 @@ slow test/charts/three_d/chart3d_preview_test.dart` writes PNG/SVG previews.
 
 Wonky Slides renders charts too (linked Sheets charts incl. 3D, and native charts —
 [Slides 08](../wonky_slides/08-charts-from-sheets.md)), and app packages may not import each
-other (suite [01 §2.1](../01-architecture.md)). In milestone M8 (Drive 05 WS-D9, before Slides
-needs it in M10) the engine moves into two shared leaf packages **without behavior change**:
+other (suite [01 §2.1](../01-architecture.md)). In milestone M8 (Drive 05 work package D-3, before Slides
+needs it in M10) the engine moves into two shared leaf packages **without behavior change**
+(number formats into `wonky_numfmt` at the same time, [Slides 08 §2.5](../wonky_slides/08-charts-from-sheets.md)):
 
 | From | To | Notes |
 |------|----|-------|

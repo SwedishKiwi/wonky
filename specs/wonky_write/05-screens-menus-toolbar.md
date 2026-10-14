@@ -31,7 +31,7 @@ every control is a `CommandButton`/`CommandMenuItem` bound to a command id (suit
 
 | Screen | Route | Owner spec | Notes |
 |--------|-------|-----------|-------|
-| Home / Drive views | `/`, `/f/:uuid` (v2; `/drive/:uuid` redirects), `/my-files`, `/shared`, `/starred`, `/recent`, `/offline`, `/trash`, `/search` | suite 05 §3, suite 03 §3.3 | (v2) **Only documents** (and folders that contain documents); left menu with the four apps, *Write settings*, *Wonky Works settings*, *Report a bug*, storage meter; *Open in Wonky Drive*; Write template strip; *Import file…* for `.md/.txt/.html/.docx/.odt/.rtf` |
+| Home / Drive views | `/`, `/f/:uuid` (v2; `/drive/:uuid` redirects), `/my-files`, `/shared`, `/starred`, `/recent`, `/offline`, `/trash`, `/search` | suite 05 §3, suite 03 §3.3 | (v2) **Only documents** (and folders that contain documents); left menu with the four apps, *Write settings*, *Wonky Work settings*, *Report a bug*, storage meter; *Open in Wonky Drive*; Write template strip; *Import file…* for `.md/.txt/.html/.docx/.odt/.rtf` |
 | New / import (v2) | `/new?folder=&template=`, `/import?file=<fileItemUuid>` | suite 03 §2, Drive 02 §7.2 | Creates a document (offline-capable) or imports a Drive file with the import dialog (07), then opens the editor |
 | Template gallery | `/templates` | suite 05 §3.1 | Built-in document templates, each with its own Write theme: Meeting notes, Project brief, Letter, Weekly report, Lecture notes, To-do list, Recipe, Story draft (plus Blank) |
 | **Document editor** | `/d/:uuid` (`?heading=`, `?comment=`, `?suggestion=`, `?version=`) | **this spec §3–§19** | Main screen |
@@ -88,7 +88,7 @@ Overlays (dialogs, palette, toasts, offline banner, MCP pill) per suite 03 §3.
 | Presence | `PresenceAvatarStack` | Click avatar → `write.nav.goToCollaborator`; ⋮ → Follow (`write.nav.follow`) |
 | Report a bug (v2) | `ShadIconButton.ghost` (Lucide `bug`, tooltip "Report a bug") | `shell.help.reportBug` — external-link confirm, suite 03 §3.4; hidden below `sm` (still in Help) |
 | Share | `ShadButton` primary (lock / globe / users icon by link state) | `shell.sharing.open` |
-| Account | `ShadAvatar` menu | suite 04; (v2) *Write settings*, *Wonky Works settings*, *Open ▸* the four apps, *Sign out* |
+| Account | `ShadAvatar` menu | suite 04; (v2) *Write settings*, *Wonky Work settings*, *Open ▸* the four apps, *Sign out* |
 
 There are no Version history or Assistant buttons in the title row (and no Assistant button
 group in the toolbar): both panels are icons in the side panel rail (§10), and stay reachable
@@ -416,7 +416,7 @@ Preferences*, spelling underlines in *Tools › Spelling*.
 | Preferences ▸ Copy plain text as Markdown (check) | `write.prefs.setCopyAsMarkdown` | — | — | always |
 | Preferences ▸ Show toolbar on selection (check) | `write.prefs.setSelectionToolbar` | — | — | always |
 | Preferences ▸ Write settings… *(shell, v2)* | `shell.settings.openApp` | ⌘, (desktop) | Ctrl+, (desktop) | always |
-| Preferences ▸ Wonky Works settings… *(shell, v2)* | `shell.settings.open {section: account}` | — | — | always |
+| Preferences ▸ Wonky Work settings… *(shell, v2)* | `shell.settings.open {section: account}` | — | — | always |
 | Accessibility ▸ Screen reader support (check) | `write.a11y.toggleScreenReaderMode` | ⌘⌥Z | Ctrl+Alt+Z | always |
 | Accessibility ▸ Announce formatting | `write.a11y.announceFormatting` | ⌘⌥A | Ctrl+Alt+A | screen-reader mode |
 | Accessibility ▸ Settings… *(shell)* | `shell.settings.open {section: appearance}` | — | — | always |
@@ -424,11 +424,11 @@ Preferences*, spelling underlines in *Tools › Spelling*.
 
 ### 7.7 Help *(shell + Write items)*
 Keyboard shortcuts (⌘/ / Ctrl+/) · **Markdown guide** (`write.help.markdownGuide`, dialog) · ─ ·
-(v2) **Report a bug** (`shell.help.reportBug`; replaces *Report a problem*, see the Open
-question in suite 03 §3.2) · What's new (`shell.help.whatsNew`) · About
+(v2) **Report a bug** (`shell.help.reportBug`; replaces *Report a problem*, decided in
+the v2 review, suite 03 §3.2) · What's new (`shell.help.whatsNew`) · About
 (`shell.help.about`). (No help center, no menu search; the Markdown guide is only in Help.)
 
-### 7.8 Native macOS menu mapping
+### 7.8 Native macOS menu mapping (deferred: v2 is web only, suite 01 A13)
 The `MenuSpec` additionally yields: app menu (About, Preferences ⌘,, Hide ⌘H, Quit ⌘Q — OS
 handled), Window menu (Minimize, Zoom — OS). Edit menu items use native selectors only where
 Flutter requires; all others dispatch commands.
@@ -643,7 +643,7 @@ for zoom/mode) in local prefs. Collaborator cursors are always shown.
 (v2) Write's own settings are the **app settings** of the Write app (`/settings/app/:section`,
 `WriteAppConfig.appSettingsSections`), no longer a section of the shared settings page. They are
 shown only in Write; suite-level settings (account, appearance, language, notifications, AI,
-developer, offline & device data, storage) are under *Wonky Works settings*.
+developer, offline & device data, storage) are under *Wonky Work settings*.
 
 | Section (id) | Settings |
 |--------------|----------|

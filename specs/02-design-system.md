@@ -245,7 +245,7 @@ decorative use). Product icons stand for the **apps** only; files keep plain gly
 - **App menus and settings** (`WonkyMenuItem.leading`, §4.2): the account menu's *Open ▸*
   items, (v2) the app links of every home's left menu (Drive, Write, Sheets, Slides; 03 §3.3)
   and the group headers of the settings screen (the app's icon for *<App> settings*, the Work
-  icon for *Wonky Works settings*, 04 §4.2).
+  icon for *Wonky Work settings*, 04 §4.2).
 - **File kind icons** are not product icons: `DriveKindIcon(kind)` draws the Lucide glyphs
   (folder / file-text / sheet; (v2) presentation for decks and per-category glyphs for uploaded
   files — file-image, file-text (PDF), file-code, file-audio, file-video, file-archive, file —

@@ -1,7 +1,8 @@
 # Wonky Work — Specifications
 
 Specifications for **Wonky Work** (v2: four apps), a collaborative office suite built with
-Flutter (web + desktop) and Serverpod: **Wonky Drive** (the unified drive: all files, uploads,
+Flutter and Serverpod — **v2 targets the web only** (desktop builds keep compiling, desktop
+features are deferred, [01 A13](01-architecture.md)): **Wonky Drive** (the unified drive: all files, uploads,
 storage), **Wonky Write** (Markdown-first documents), **Wonky Sheets** (offline-first
 spreadsheets) and **Wonky Slides** (presentations with animations, code blocks and linked
 charts).
@@ -11,14 +12,17 @@ charts).
   [`/specs/wonky_write`](wonky_write/README.md),
   [`/specs/wonky_sheets`](wonky_sheets/README.md) and
   [`/specs/wonky_slides`](wonky_slides/README.md).
-- **v2 review**: the open questions of the Drive/Slides/suite v2 specs are collected in
-  [v2-review.md](v2-review.md); v2 is specified, not implemented.
+- **v2 review**: the decisions on the 30 review questions of the Drive/Slides/suite v2 specs
+  are recorded in [v2-review.md](v2-review.md); v2 is specified and planned as work packages
+  ([14](14-roadmap.md), [Drive 05](wonky_drive/05-implementation-plan.md),
+  [Slides 12](wonky_slides/12-implementation-plan.md)), not implemented.
 - Code: `wonky_server` (Serverpod server, also serves all four web apps), `wonky_client`
   (generated), the apps `wonky_drive`, `wonky_write`, `wonky_sheets` and `wonky_slides`, shared
   packages in `packages/`, vendored packages in `third_party/` — see [01 §2](01-architecture.md).
 - **v2 changes** (milestones M8–M11, [14](14-roadmap.md)) are marked "(v2)" in the suite
   specs: the unified drive and app homes, the 50 MB storage quota, the settings split, *Report a
-  bug*, Wonky Slides, and the shared packages `wonky_charts*` and `wonky_code*`.
+  bug*, Wonky Slides, and the shared packages (`wonky_charts*`, `wonky_code*`, `wonky_numfmt`,
+  `wonky_rich_text`, `wonky_fonts`, `wonky_spellcheck`, `wonky_sync_kit*`).
 
 ## Reading order
 
@@ -51,8 +55,8 @@ charts).
 | 00 | [Product overview](00-product-overview.md) | Vision, principles, personas, scope/non-goals, glossary |
 | 01 | [Architecture](01-architecture.md) | One server, four Flutter apps served from it, shared sign-in, pure-Dart cores, shared chart/code packages, package layout & rules |
 | 02 | [Design system](02-design-system.md) | `shad` usage, tokens, light/dark, custom widgets (`wonky_ui`) |
-| 03 | [App shell & navigation](03-app-shell-and-navigation.md) | Single-window model (+ presenting exception), routes, homes and the left menu, editor header, shared menus, Report a bug, overlays, desktop specifics |
-| 04 | [Auth & accounts](04-auth-and-accounts.md) | Email/password + Google auth, profile, preferences, settings split (Wonky Works vs app settings), access tokens |
+| 03 | [App shell & navigation](03-app-shell-and-navigation.md) | Single-window model (no presenting exception in v2), routes, homes and the left menu, editor header, shared menus, Report a bug, overlays, desktop specifics |
+| 04 | [Auth & accounts](04-auth-and-accounts.md) | Email/password + Google auth, profile, preferences, settings split (Wonky Work vs app settings), access tokens |
 | 05 | [Drive & files](05-drive-and-files.md) | Unified drive model (folders, documents, spreadsheets, presentations, files), endpoints, app homes vs Wonky Drive, dialogs, activity |
 | 06 | [Sharing & permissions](06-sharing-and-permissions.md) | Roles, ACL, link sharing, enforcement (documents, spreadsheets, presentations, files), share dialog |
 | 07 | [Collaboration](07-collaboration.md) | Presence, comments, mentions, notifications, version history framework |
@@ -62,7 +66,7 @@ charts).
 | 11 | [Quality](11-quality-testing-accessibility.md) | Testing, performance budgets, accessibility, i18n, observability |
 | 12 | [Offline & sync](12-offline-and-sync.md) | Local stores, Write offline, Sheets/Slides spaces and active set, upload queue, upstream requirements, staged limits |
 | 13 | [Security & operations](13-security-and-operations.md) | Threat model, privacy, deployment, scheduled jobs, arbitrary uploads |
-| 14 | [Roadmap](14-roadmap.md) | Milestones M0–M11 (v2: M8 Drive + suite changes, M9–M11 Slides), shared workstreams, risks |
+| 14 | [Roadmap](14-roadmap.md) | Milestones M0–M11 (v2: M8 Drive + suite changes, M9–M11 Slides), how parallel agents execute the work packages, shared workstreams, risks |
 | 15 | [Writing tests](15-writing-tests.md) | How to write tests: layout, naming, helpers, server/widget/golden/property/E2E patterns, determinism, running |
 
 ## Conventions used in all specs
@@ -77,7 +81,8 @@ charts).
 - **Models** are shown as Serverpod `.spy.yaml` sketches; `database: sync` marks offline-synced
   tables (Sheets, Slides).
 - **(v2)** marks sections added or changed for the second iteration (Drive, Slides, suite
-  changes). **Open question (for review)** marks a choice the user decides before
-  implementation, always with a recommendation.
+  changes). **Decided (v2 review, Qn)** marks a choice settled in the [v2 review](v2-review.md).
+  New choices that need the user are marked **Open question (for review)**, always with a
+  recommendation, and added to the review record.
 - Specs describe *what* and *how*; when implementation reveals a better approach, update the
   spec in the same change.

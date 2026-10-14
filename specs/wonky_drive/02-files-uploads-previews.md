@@ -100,7 +100,7 @@ createFileUpload ──► uploading ──(bytes in storage, completeFileUpload
 | *New ▸ File upload* | Drive left menu, Drive empty-area context menu | `shell.drive.upload` |
 | *New ▸ Folder upload* (P1) | same | `drive.upload.folder` |
 | Drag files (or folders, P1) from the OS onto the list, a folder row, a tree node or a breadcrumb | Drive home | — (drop handler → `drive.upload.files {files, parentUuid}`) |
-| Paste files from the clipboard (P1, desktop and browsers that expose files) | Drive home | `shell.edit.paste` (contributed by the home) |
+| Paste files from the clipboard (P1, browsers that expose files) | Drive home | `shell.edit.paste` (contributed by the home) |
 | MCP `drive.upload_file` / `drive.create_upload` | headless | suite 09 §4 |
 
 In app homes, `shell.drive.upload` stays the **import** entry point (label *Import file…*):
@@ -245,7 +245,7 @@ with the shell's `LocalDatabases.open`), with v2 columns:
 | `parentUuid` | target folder |
 | `fileName`, `sizeBytes`, `mimeType`, `lastModified` | |
 | `bytes` | the content (web), or null when `sourcePath` is used |
-| `sourcePath` | desktop: path of the original file (no copy); re-read at upload time, verified by size + modification time; if it changed or vanished the row fails with "The file changed or was moved after you added it." |
+| `sourcePath` | desktop only (deferred in v2, suite 01 A13; always null on web): path of the original file (no copy); re-read at upload time, verified by size + modification time; if it changed or vanished the row fails with "The file changed or was moved after you added it." |
 | `state`, `attempts`, `lastError`, `receivedBytes` | queue state (§3.5), resume offset (§4.3) |
 
 Web storage: bytes up to **5 MB per file** are stored in the local database even on the
@@ -282,10 +282,10 @@ uploads** for files over 8 MB:
   copy) and deletes them.
 - Parts of uploads that never complete are deleted by `drive.expireUploads` after 24 h.
 
-**Open question (for review):** chunked resumable uploads (P1) need our own upload route and a
-server-side concatenation step because Serverpod's upload descriptions are single-request.
-*Recommendation:* ship M8 with whole-file retries (the 50 MB cap keeps a retry cheap) and add
-chunking only if upload failure telemetry shows a need.
+**Decided (v2 review, Q12):** M8 ships **whole-file retries** (the 50 MB cap keeps a retry
+cheap); the chunked route above stays P1 and is built only if upload-failure telemetry shows a
+need (it needs our own route and server-side concatenation because Serverpod's upload
+descriptions are single-request).
 
 ## 5. MIME sniffing and safe types
 
@@ -440,10 +440,9 @@ dropped or picked in Drive are imported (as the app homes do) instead of stored 
 non-convertible files upload normally. The upload panel row then reads "Converted to a
 spreadsheet". Server-side pipeline only (`drive.import` with an `importSource` upload).
 
-**Open question (for review):** should Drive convert by default, like the app homes do today?
-*Recommendation:* no — Drive keeps the original (what users expect from "upload"); converting
-is one click away (*Open with*), and the setting exists for people who want Google's old
-"convert uploads" behavior.
+**Decided (v2 review, Q13):** Drive does **not** convert by default — it keeps the original
+(what users expect from "upload"); converting is one click away (*Open with*), and this setting
+exists for people who want Google's old "convert uploads" behavior.
 
 ## 8. Downloads
 
@@ -488,10 +487,10 @@ indexes:
 - *Manage versions* (details panel) lists versions with Download, *Keep forever*, *Delete*.
   Versions are kept 30 days or 100 versions unless *Keep forever*.
 
-**Open question (for review):** do previous file versions count against the quota (suite
-D3 excludes *version-history snapshots*, which are system-made)? *Recommendation:* yes —
-uploaded versions are user bytes, Google Drive counts them too; the Storage page lists them
-under the file and *Free up space* suggests deleting old ones.
+**Decided (v2 review, Q14):** previous file versions **count** against the quota (suite D3
+excludes only *version-history snapshots*, which are system-made): uploaded versions are user
+bytes, and Google Drive counts them too. The Storage page lists them under the file and *Free
+up space* suggests deleting old ones.
 
 ## 10. Copies, trash and deletion
 

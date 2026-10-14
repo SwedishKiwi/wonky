@@ -876,26 +876,28 @@ update within 200 ms.
 
 Wonky Slides (code elements with line highlighting and type-in, [Slides 07](../wonky_slides/07-code-blocks.md))
 and Wonky Drive (text/code previews, [Drive 02 §6.4](../wonky_drive/02-files-uploads-previews.md))
-use the same languages, token classes and palettes as Write. In M8 (Drive 05 WS-D9) the code
-moves, **without behavior change**, into two shared leaf packages (suite 01 §2.1):
+use the same languages, token classes and palettes as Write. In M8 (Drive 05 work package
+D-2) the code moves, **without behavior change**, into two shared leaf packages (suite 01
+§2.1); the full move list is [Slides 07 §2.1](../wonky_slides/07-code-blocks.md):
 
 | From | To |
 |------|----|
 | `wonky_write/lib/features/editor/model/code_languages.dart` (`CodeLanguages`: aliases, grammar map, picker list) | `packages/wonky_code` (pure Dart) |
-| Token classes and `CodeHighlighter.tokenForScopes` (scope → class rules) | `wonky_code` |
-| The theme code palettes' defaults (light/dark token colors used when a theme doesn't override them, 06) | `wonky_code` (`CodePalette`); Write themes keep their per-theme overrides |
-| `wonky_write_core/lib/src/highlight/` (pure-Dart `highlight` wrapper used by exports) | `wonky_code` (`PlainTokenizer`) |
-| `wonky_write/lib/features/editor/styles/code_highlighter.dart` (`CodeHighlighter`: grammar loading, `tokenize`, caching) | `packages/wonky_code_flutter` (with the vendored `syntax_highlight` dependency) |
-| — (new) | `wonky_code_flutter`: `CodeView` — read-only, highlighted, line numbers, wrap, selection; used by Drive previews and Slides; Write keeps its `CodeHighlightStylePhase` on top of `CodeHighlighter` |
+| Token classes and `CodeHighlighter.tokenForScopes` (scope → class rules) | `wonky_code` (`ScopeClassifier`) |
+| The theme code palettes' defaults (light/dark token colors used when a theme doesn't override them, 06) and `SyntaxToken` | `wonky_code` (`SyntaxPalette`, `SyntaxToken`, re-exported by `wonky_write_core`); Write themes keep their per-theme overrides |
+| `wonky_write_core/lib/src/highlight/` (pure-Dart `highlight` wrapper used by exports) | `wonky_code` (`HighlightJsTokenizer`) |
+| The TextMate engine and grammars of the vendored `syntax_highlight` (patches SH-1…SH-5) | `wonky_code` (`TextMateTokenizer`, grammars embedded as Dart strings — copied, v2 review Q26); `third_party/syntax_highlight` is deleted once Write uses it |
+| — (new) | `wonky_code_flutter`: `CodeView` — read-only, highlighted, line numbers, wrap, selection; `CodeTextStyler`; used by Drive previews and Slides; Write keeps its `CodeHighlightStylePhase`, now on top of `DefaultCodeTokenizer` |
 
 `wonky_write_core` then depends on `wonky_code` instead of `highlight`, and `wonky_write` on
-`wonky_code_flutter`. Line-level diffs for Slides' type-in use `wonky_core/lib/diff.dart`.
+`wonky_code` + `wonky_code_flutter`. Line-level diffs for Slides' type-in use
+`wonky_core/lib/diff.dart` (`SequenceDiff`).
 
-**Open question (for review) (v2):** exports (and Slides' PDF renderer) tokenize with the
-pure-Dart `highlight` package while the editor uses TextMate grammars, so colors can differ
-slightly between screen and PDF. *Recommendation:* accept for M8; later, make the TextMate
-engine of the vendored `syntax_highlight` Flutter-free (patch SH-6: grammar loading through an
-injected loader) and move it into `wonky_code`, so screen and PDF use one tokenizer.
+**Decided (v2 review, Q17/Q25):** until the export switch lands, Write's exports (PDF, HTML,
+DOCX, …) keep tokenizing with highlight.js while the editor uses TextMate, so colors can differ
+slightly between screen and export — accepted. In **M10** Write's exports switch
+to `DefaultCodeTokenizer` (TextMate first, highlight.js fallback) with a golden diff review of
+the Write export corpus; only token colors change.
 
 ## 16. Horizontal rule (divider)
 

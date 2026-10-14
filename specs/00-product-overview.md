@@ -2,8 +2,11 @@
 
 ## 1. Vision
 
-**Wonky Work** is a collaborative office suite built with Flutter (web + desktop) and a single Serverpod backend. It contains
-four applications (v2: Drive and Slides added):
+**Wonky Work** is a collaborative office suite built with Flutter and a single Serverpod backend. It contains
+four applications (v2: Drive and Slides added). **v2 targets the web only**: the desktop targets
+keep compiling, but desktop-only features (native menubar, separate desktop binaries and URL
+schemes, desktop packaging, OS windows, OS drag-and-drop in native builds) are deferred
+([01 §1 A13](01-architecture.md)).
 
 | App | Purpose | Closest analogue | Core tech |
 |-----|---------|------------------|-----------|
@@ -13,7 +16,7 @@ four applications (v2: Drive and Slides added):
 | **Wonky Slides** (`wonky_slides`, v2) | Collaborative, offline-first presentations with Keynote-class animations, code blocks with type-in, linked (3D) charts from Sheets, PDF export | Keynote / Google Slides / Pitch | Offline-first sync like Sheets (one deck = one space), `wonky_slides_core`, shared `wonky_charts` and `wonky_code` |
 
 All apps are served by the same server from one origin (`/drive/`, `/write/`, `/sheets/`,
-`/slides/`; `/` opens Drive) and share one account system and sign-in session, one file system
+`/slides/`; `/` opens Wonky Write's home) and share one account system and sign-in session, one file system
 (**Wonky Drive** — each app's home shows only its own kind, Drive shows everything), one
 storage quota, one sharing model, one design system, one command/undo architecture and one MCP
 (Model Context Protocol) surface. Switching apps is a same-tab navigation from the left menu of
@@ -30,8 +33,9 @@ Guiding principles:
 3. **Single window.** The app never opens new browser tabs or OS windows. Navigation, dialogs,
    side panels and document switching happen inside one window (see
    [03-app-shell-and-navigation.md](03-app-shell-and-navigation.md)); the only exceptions are
-   external links (incl. *Report a bug*), Google's sign-in popup and, under review, the
-   presenter's second screen in Slides (03 §1).
+   external links (incl. *Report a bug*) and Google's sign-in popup (03 §1). Slides presents in
+   one window too: the audience view on a second screen runs on another device or browser
+   joined to the presentation (Slides 10 §5).
 4. **Offline is normal.** Sheets and Slides are offline-first through the sync engine; Write
    queues edits locally and rebases on reconnect; Drive browses from its cache and queues
    uploads (see [12-offline-and-sync.md](12-offline-and-sync.md)).
@@ -65,7 +69,7 @@ Guiding principles:
 - (v2) Wonky Slides: decks with themes/layouts/masters, slide groups, builds and transitions
   incl. Magic Move, code blocks with line highlighting and type-in, linked Sheets charts incl.
   3D, presenting with presenter view, PDF export ([Slides specs](wonky_slides/01-overview.md)).
-- (v2) Suite: settings split into *Wonky Works settings* and per-app settings, *Report a bug*
+- (v2) Suite: settings split into *Wonky Work settings* and per-app settings, *Report a bug*
   in every app.
 - Sharing: per-user roles (Owner, Editor, Commenter, Viewer), link sharing, transfer ownership.
 - Real-time collaboration: presence, remote cursors/selections, live edits.
@@ -86,6 +90,9 @@ Guiding principles:
 ### Non-goals (v1)
 
 - Mobile phone layouts (the app must not break on narrow widths, but mobile UX is not designed).
+- (v2) Desktop-specific features: v2 ships on the web only. Desktop builds must keep compiling
+  (the macOS integration-test job `e2e.yml` keeps building them), but native menubar, desktop binaries/URL schemes/packaging, multi-window
+  and native drag-and-drop are deferred to a later iteration ([01 §1 A13](01-architecture.md)).
 - Forms app. (v2: the presentation app is in scope as Wonky Slides — without PPTX/Keynote/Google
   Slides import or export, and without video.)
 - Third-party sign-in providers (Google/Apple/etc.) — email + password only for now; the auth
@@ -94,11 +101,9 @@ Guiding principles:
 - Public internet publishing/hosting of documents (beyond "anyone with the link").
 - Real-time co-editing of scripts (script files use last-write-wins with conflict warning).
 
-**Open question (for review) (v2):** the decisions for v2 call the suite settings *Wonky Works
-settings*, while the product is named *Wonky Work* everywhere else (sign-in headline,
-`WonkyProduct.work`, wonky.work). *Recommendation:* use one name; the specs use "Wonky Works
-settings" as decided (D4) — if the product is renamed to *Wonky Works*, rename it everywhere in
-one change (product icon label, sign-in headline, legal pages, page titles).
+**Decided (v2 review, Q1):** the suite is named **Wonky Work** everywhere — product icon label,
+sign-in headline, legal pages, page titles, `WonkyProduct.work`, wonky.work — and the suite
+settings are **Wonky Work settings** (D4).
 
 ## 4. Glossary
 

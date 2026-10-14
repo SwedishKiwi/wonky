@@ -23,8 +23,8 @@ cookie on the shared origin; desktop details in [01 §2.5](01-architecture.md).
    built-in default theme (built-in themes are global rows, see Write 06), create a welcome
    document + welcome spreadsheet (from templates; (v2) + a welcome presentation once Slides
    ships, M9 — all small and counted in the new user's 50 MB, Drive 03) → land on **Wonky
-   Drive** (v2; `/` redirects there, 01 §2.4) — or on the app the sign-up started from when
-   `next` points into it.
+   Write's home** (v2; `/` redirects there, 01 §2.4, v2 review Q2) — or on the app the sign-up
+   started from when `next` points into it.
 
 ### 1.2 Sign in
 - *Continue with Google* (web, §1.6) and an "or" divider above the form.
@@ -94,7 +94,7 @@ OAuth2 authorization code + PKCE in a popup (the single-window exception of
 | Sign up | `/signup` | Same layout. |
 | Verify email | `/signup/verify` | |
 | Forgot password | `/reset` | |
-| Wonky Works settings (v2) | `/settings/:section` (default `/settings/account`) | See §4. |
+| Wonky Work settings (v2) | `/settings/:section` (default `/settings/account`) | See §4. |
 | App settings (v2) | `/settings/app`, `/settings/app/:section` | See §4. |
 
 All auth screens support light/dark and are keyboard navigable (Enter submits).
@@ -157,11 +157,11 @@ fields:
   revokedAt: DateTime?
 ```
 
-## 4. Settings (v2: split into Wonky Works settings and app settings)
+## 4. Settings (v2: split into Wonky Work settings and app settings)
 
 Settings are split in two (decision D4):
 
-- **Wonky Works settings** — suite-level, identical in every app, routes `/settings/:section`
+- **Wonky Work settings** — suite-level, identical in every app, routes `/settings/:section`
   (`/settings` → `/settings/account`). Everything about the account, the device and the suite.
 - **<App> settings** — the current app's own preferences, routes `/settings/app` and
   `/settings/app/:section` (first section by default). *Write settings* in Write, *Sheets
@@ -174,23 +174,23 @@ Settings are split in two (decision D4):
 
 | Section before v2 (id) | Content | v2 location (id) |
 |------------------------|---------|------------------|
-| Account (`account`) › Profile | Avatar upload/crop, display name, email (change with verification) | Wonky Works › **Account & profile** (`account`) |
-| Account › Security | Password change, sign out | Wonky Works › **Sign-in & security** (`security`, new id) + Google account link status (linked / *Link Google account*, web), *Sign out of all devices* (P2) |
-| Account › Delete account | Type-to-confirm delete; transfer or delete owned files | Wonky Works › Account & profile (bottom); transfers respect the new owner's quota (Drive 03 §7.3) |
-| Appearance (`appearance`) | App theme (System/Light/Dark with previews), density, reduce motion | Wonky Works › **Appearance** (unchanged; also the target of *Accessibility settings*) |
-| Language & region (`language`) | UI language, time zone | Wonky Works › **Language & region** |
+| Account (`account`) › Profile | Avatar upload/crop, display name, email (change with verification) | Wonky Work › **Account & profile** (`account`) |
+| Account › Security | Password change, sign out | Wonky Work › **Sign-in & security** (`security`, new id) + Google account link status (linked / *Link Google account*, web), *Sign out of all devices* (P2) |
+| Account › Delete account | Type-to-confirm delete; transfer or delete owned files | Wonky Work › Account & profile (bottom); transfers respect the new owner's quota (Drive 03 §7.3) |
+| Appearance (`appearance`) | App theme (System/Light/Dark with previews), density, reduce motion | Wonky Work › **Appearance** (unchanged; also the target of *Accessibility settings*) |
+| Language & region (`language`) | UI language, time zone | Wonky Work › **Language & region** |
 | Language & region › default locale for new spreadsheets | Number/date formats of new spreadsheets | Sheets settings › Defaults (it is a Sheets preference, already stored in `sheetsDefaults`) |
-| Keyboard shortcuts (`keyboard`) | Searchable command table, record bindings, conflicts, reset | Wonky Works › **Keyboard shortcuts** (see Open question below): lists the shell commands and the **current app's** commands, grouped "Shared" / "<App>"; overrides of other apps' commands are kept untouched |
+| Keyboard shortcuts (`keyboard`) | Searchable command table, record bindings, conflicts, reset | Wonky Work › **Keyboard shortcuts** (decided below): lists the shell commands and the **current app's** commands, grouped "Shared" / "<App>"; overrides of other apps' commands are kept untouched |
 | Write (`write`) | Default theme, spellcheck, smart quotes, auto-pair, Markdown shortcuts, pageless, default page setup, default export format | **Write settings** (`/settings/app/…` in Write; sections per Write 05 §13.3: *Editor*, *Page & export*, *Spelling*) |
 | Document themes (`themes`, contributed by Write) | Default theme, theme library | **Write settings › Document themes** (`/settings/app/themes`) |
 | Sheets (`sheets`) + Sheets' custom body | Default locale/time zone/font/size, Enter starts editing, formula autocomplete, formula help, editor mode in status bar, custom fill lists, enable scripts, reduce grid animations | **Sheets settings › Defaults** (`/settings/app/defaults` in Sheets; Sheets 04 §11.24) |
-| Notifications (`notifications`) | Per category in-app / email / off, digest | Wonky Works › **Notifications** (unchanged; categories now cover presentations and files) |
-| AI (`ai`) | Enable assistant, model quality, clear AI history, privacy notice | Wonky Works › **AI** (unchanged) |
-| AI providers (`ai-providers`) | Server provider; user's own key | Wonky Works › **AI providers** (unchanged id, so `shell.settings.open {section: ai-providers}` keeps working) |
-| Developer (`developer`) | Server status (Redis), personal access tokens, MCP connection JSON, UI-bridge switch | Wonky Works › **Developer** (unchanged) |
-| Offline & storage (`offline`) | Files on the device, pinned files, pending changes/uploads, local storage used, *Simulate offline*, *Clear local data* | Wonky Works › **Offline & device data** (same id `offline`, renamed so it isn't confused with the quota): the current app's device data in full, plus one summary row per other app on this device ("Wonky Sheets — 120 MB on this device · Manage in Wonky Sheets") |
-| — (new) | Storage quota | Wonky Works › **Storage** (`storage`): meter, breakdown by kind, "What counts", *Manage storage in Wonky Drive* (Drive 03 §6.5) |
-| About (`about`) | App/server/protocol versions, licenses, links | Wonky Works › **About** (shows the current app's version and the server version; *Report a bug* link) |
+| Notifications (`notifications`) | Per category in-app / email / off, digest | Wonky Work › **Notifications** (unchanged; categories now cover presentations and files) |
+| AI (`ai`) | Enable assistant, model quality, clear AI history, privacy notice | Wonky Work › **AI** (unchanged) |
+| AI providers (`ai-providers`) | Server provider; user's own key | Wonky Work › **AI providers** (unchanged id, so `shell.settings.open {section: ai-providers}` keeps working) |
+| Developer (`developer`) | Server status (Redis), personal access tokens, MCP connection JSON, UI-bridge switch | Wonky Work › **Developer** (unchanged) |
+| Offline & storage (`offline`) | Files on the device, pinned files, pending changes/uploads, local storage used, *Simulate offline*, *Clear local data* | Wonky Work › **Offline & device data** (same id `offline`, renamed so it isn't confused with the quota): the current app's device data in full, plus one summary row per other app on this device ("Wonky Sheets — 120 MB on this device · Manage in Wonky Sheets") |
+| — (new) | Storage quota | Wonky Work › **Storage** (`storage`): meter, breakdown by kind, "What counts", *Manage storage in Wonky Drive* (Drive 03 §6.5) |
+| About (`about`) | App/server/protocol versions, licenses, links | Wonky Work › **About** (shows the current app's version and the server version; *Report a bug* link) |
 | — (new) | Slides preferences | **Slides settings** (`slidesDefaults`; sections per [Slides 04](wonky_slides/04-screens-menus-toolbar.md)): default theme, slide size, presenter-view preferences, animation defaults (incl. reduced motion while presenting), code font size |
 | — (new) | Drive preferences | **Drive settings** (`driveDefaults`; [Drive 04 §8](wonky_drive/04-screens-menus.md)): default layout, sort, folders on top, show file extensions, ask on name conflicts, convert uploads (P1) |
 
@@ -227,13 +227,13 @@ Full-screen in-app page (`SettingsScreen`, shell) with a left nav of **two group
 └──────────────────────────────────────────────────────────────────────────┘
 ```
 
-- Group headers carry the product icon (the app's; the Work icon for Wonky Works) and are
-  `Semantics(header: true)`; the page header reads "Write settings" or "Wonky Works settings"
+- Group headers carry the product icon (the app's; the Work icon for Wonky Work) and are
+  `Semantics(header: true)`; the page header reads "Write settings" or "Wonky Work settings"
   depending on the open section. Narrow widths: the nav becomes a select above the content.
 - Back (←) returns to the previous route (the editor or home the user came from), else home.
-- Entry points: account menu (*<App> settings*, *Wonky Works settings*), the left menu's bottom
+- Entry points: account menu (*<App> settings*, *Wonky Work settings*), the left menu's bottom
   section in homes (03 §3.3), Tools menu in editors, command palette:
-  `shell.settings.open {section}` (Wonky Works) and **`shell.settings.openApp {section?}`**
+  `shell.settings.open {section}` (Wonky Work) and **`shell.settings.openApp {section?}`**
   (app settings), `Mod+,` (desktop) = app settings.
 - The app's sections come from `WonkyAppConfig.appSettingsSections(services)` (list of
   `SettingsSectionSpec`, replacing `settingsSections` and `sheetsSettings`).
@@ -242,12 +242,11 @@ Every setting change is a command (e.g. `shell.settings.setAppTheme`, `write.pre
 `sheets.prefs.*`, `slides.prefs.*`, `drive.prefs.set`) so it is MCP-controllable; settings are
 **not** on the undo stack (they apply immediately and are trivially reversible).
 
-**Open question (for review) (v2):** D4 doesn't place *Keyboard shortcuts*. Overrides are one
-JSON (`keymapOverrides`) covering every app's commands, but each app only knows its own commands.
-*Recommendation:* keep it in Wonky Works settings with two groups (Shared commands, this app's
-commands) — one place to look, and shared shortcuts (palette, undo, quick switcher) stay
-consistent across apps. Alternative: list it in each app's settings (only that app's commands +
-the shared ones).
+**Decided (v2 review, Q10):** *Keyboard shortcuts* live in **Wonky Work settings** with two
+groups — *Shared* (shell commands) and *<App>* (the current app's commands). Overrides are one
+JSON (`keymapOverrides`) covering every app's commands; each app lists only its own and keeps the
+other apps' overrides untouched. One place to look, and shared shortcuts (palette, undo, quick
+switcher) stay consistent across apps.
 
 ## 5. Endpoints
 

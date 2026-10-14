@@ -1,51 +1,76 @@
-# Wonky Works v2 — open questions for review
+# Wonky Work v2 — review decisions
 
-The v2 specs add **Wonky Drive** ([wonky_drive/](wonky_drive/README.md)), **Wonky Slides**
-([wonky_slides/](wonky_slides/README.md)) and suite changes (unified drive, 50 MB quota, settings
-split, *Report a bug*, shared packages; suite specs marked "(v2)"). Nothing of v2 is implemented.
-Each question below is marked **Open question (for review)** in the linked spec with a
-recommendation; answering here (or in the spec) unblocks implementation. Milestones: M8 Drive +
-suite changes → M9 Slides MVP → M10 Slides motion & content → M11 Slides collaboration, MCP & AI
-([14-roadmap.md](14-roadmap.md)).
+Decision record of the v2 review (2026-10) of the **Wonky Drive** ([wonky_drive/](wonky_drive/README.md)),
+**Wonky Slides** ([wonky_slides/](wonky_slides/README.md)) and suite v2 specs (suite specs
+marked "(v2)"). All 30 questions are decided; the specs carry each decision as a
+**Decided (v2 review, Qn)** line where the question used to be. Nothing of v2 is implemented
+yet; the build plan is in [14-roadmap.md](14-roadmap.md) (milestones M8–M11),
+[Drive 05](wonky_drive/05-implementation-plan.md) (work packages D-1…D-18) and
+[Slides 12](wonky_slides/12-implementation-plan.md) (work packages SL-1…SL-45).
+
+## Summary
+
+The user answered three questions directly and accepted the recommendation for all others:
+
+1. **Name** (Q1): the suite is **Wonky Work** everywhere; the suite settings are *Wonky Work
+   settings*.
+2. **Landing page** (Q2): the site root `/` redirects to **Wonky Write's home** (`/write/`, the
+   page with *Recent* and the templates) — not to Drive and not to the last used app. Wonky
+   Drive stays at `/drive/` and is one click away in every home's left menu.
+3. **Web only for now** (affects Q5, Q9, Q29, Q30): v2 is built, tested and shipped for the web.
+   Desktop targets must keep compiling, but desktop-only features are deferred (native
+   menubar, four desktop binaries and URL schemes, desktop packaging, multi-window, desktop
+   printing extras, OS drag-and-drop in native builds) — suite [01 A13](01-architecture.md).
+   Multi-window is off on the web too: **presenting is single-window** — full screen, or the
+   presenter view (current/next slide, notes, timer) in this window, with the **audience view on
+   another device or browser** joined to a presentation session ([Slides 10 §5.2](wonky_slides/10-presenting-and-pdf.md)).
+   A presenting-only second window is recorded as a possible later addition.
+
+Consequences worth knowing before building:
+
+- New shared leaf packages: `wonky_code` + `wonky_code_flutter` (Q3), `wonky_rich_text` (Q4),
+  `wonky_numfmt` (Q27), `wonky_sync_kit` + `wonky_sync_kit_flutter`, `wonky_fonts`,
+  `wonky_spellcheck` (Q23) — all extracted in M8 without behavior change (suite 01 §2.1).
+- The vendored offline-sync patch **OS-8** (space filter per sync endpoint, Q19) lands in M8,
+  before the first deck space exists.
+- Write's exports switch to the shared TextMate tokenizer in M10 (Q17, Q25).
 
 ## Suite and Drive
 
-| # | Question | Recommendation | Spec |
-|---|----------|----------------|------|
-| 1 | Suite name in the UI: "Wonky Works" vs "Wonky Work" | Pick one everywhere | [00](00-product-overview.md) |
-| 2 | `/` always opens Drive, or the last-used app | Always Drive | [01](01-architecture.md) |
-| 3 | Split `wonky_code` into pure-Dart + Flutter packages | Split (`wonky_code`, `wonky_code_flutter`) | [01](01-architecture.md) |
-| 4 | Slides rich text: extract `wonky_rich_text` instead of importing `wonky_write_core` | Extract | [01](01-architecture.md) |
-| 5 | Presenter view: single-window exception (second window) vs second device only | Presenting-only exception + device fallback (see 29) | [03](03-app-shell-and-navigation.md) |
-| 6 | Replace Help › *Report a problem* with *Report a bug* | Yes | [03](03-app-shell-and-navigation.md) |
-| 7 | Folders in app homes | Only folders containing the app's kind (`kindMask`) | [03](03-app-shell-and-navigation.md), [05](05-drive-and-files.md) |
-| 8 | *Report a bug* target | Prefilled "new issue" link (app, version, platform — no user content) | [03](03-app-shell-and-navigation.md) |
-| 9 | Desktop: one combined binary vs four apps | Four | [03](03-app-shell-and-navigation.md) |
-| 10 | Where *Keyboard shortcuts* settings live | Wonky Works settings, split shared/app | [04](04-auth-and-accounts.md) |
-| 11 | Malware scanning of uploads | Not in M8 | [13](13-security-and-operations.md) |
-| 12 | Chunked resumable uploads | Whole-file retry first | [Drive 02](wonky_drive/02-files-uploads-previews.md) |
-| 13 | Convert uploads (CSV/DOCX…) by default | No; a setting | [Drive 02](wonky_drive/02-files-uploads-previews.md) |
-| 14 | Do previous file versions count against the quota | Yes | [Drive 02](wonky_drive/02-files-uploads-previews.md) |
-| 15 | Grace period for users already over 50 MB | None (non-destructive over-quota state + notice) | [Drive 03](wonky_drive/03-storage-quota.md) |
-| 16 | Restore from trash when over quota | Never blocked (trash already counts) | [Drive 03](wonky_drive/03-storage-quota.md) |
-| 17 | Code tokenization in exports differs from the editor | Accept until the shared tokenizer lands (see 25) | [Write 04 §15.5](wonky_write/04-editor.md) |
+| # | Question | Decision | Recorded in |
+|---|----------|----------|-------------|
+| 1 | Suite name in the UI | **User:** "Wonky Work" everywhere; suite settings = *Wonky Work settings* | [00 §3](00-product-overview.md) |
+| 2 | Where `/` lands | **User:** always Wonky Write's home (`/write/`); Drive via the left menu | [01 §2.4](01-architecture.md), [03 §2](03-app-shell-and-navigation.md), [05](05-drive-and-files.md) |
+| 3 | Split `wonky_code` into pure-Dart + Flutter packages | Recommendation accepted: `wonky_code` (pure: tokenizers incl. the copied TextMate engine, languages, palettes, code layout) + `wonky_code_flutter` (`CodeView`, `CodeEditorField`) | [01 §2.1](01-architecture.md) |
+| 4 | Slides rich text: extract `wonky_rich_text` instead of importing `wonky_write_core` | Recommendation accepted: extract; `wonky_write_core` re-exports | [01 §2.1](01-architecture.md) |
+| 5 | Presenter view: single-window exception vs second device only | **User (web only):** no exception in v2 — presenter view in this window, audience on another device or browser; a second window is a possible later addition | [03 §1](03-app-shell-and-navigation.md), [Slides 10 §5.2](wonky_slides/10-presenting-and-pdf.md) |
+| 6 | Replace Help › *Report a problem* with *Report a bug* | Recommendation accepted: replace in the Help menu; `shell.help.feedback` stays registered | [03 §3.2](03-app-shell-and-navigation.md) |
+| 7 | Folders in app homes | Recommendation accepted: only folders containing the app's kind (`kindMask`) | [03 §3.3](03-app-shell-and-navigation.md), [05 §3.2](05-drive-and-files.md) |
+| 8 | *Report a bug* target | Recommendation accepted: prefilled new-issue link (app, version, platform, browser — no user content) | [03 §3.4](03-app-shell-and-navigation.md) |
+| 9 | Desktop: one combined binary vs four apps | **User (web only):** desktop deferred; four binaries remain the plan when desktop work resumes | [03 §6](03-app-shell-and-navigation.md), [01 A13](01-architecture.md) |
+| 10 | Where *Keyboard shortcuts* settings live | Recommendation accepted: Wonky Work settings, groups *Shared* / *<App>* | [04 §4](04-auth-and-accounts.md) |
+| 11 | Malware scanning of uploads | Recommendation accepted: not in M8; revisit before anonymous/public sharing | [13 §6](13-security-and-operations.md) |
+| 12 | Chunked resumable uploads | Recommendation accepted: whole-file retry in M8; chunking only if telemetry needs it | [Drive 02 §4.3](wonky_drive/02-files-uploads-previews.md) |
+| 13 | Convert uploads (CSV/DOCX…) by default | Recommendation accepted: no; a Drive setting (default off) | [Drive 02 §7.3](wonky_drive/02-files-uploads-previews.md) |
+| 14 | Do previous file versions count against the quota | Recommendation accepted: yes | [Drive 02 §9](wonky_drive/02-files-uploads-previews.md) |
+| 15 | Grace period for users already over 50 MB | Recommendation accepted: none (non-destructive over-quota state + notice) | [Drive 03 §9](wonky_drive/03-storage-quota.md) |
+| 16 | Restore from trash when over quota | Recommendation accepted: never blocked (trash already counts) | [Drive 03 §9](wonky_drive/03-storage-quota.md) |
+| 17 | Code tokenization in exports differs from the editor | Recommendation accepted: accepted until the shared tokenizer is used by exports (M10, Q25) | [Write 04 §15.5](wonky_write/04-editor.md) |
 
 ## Slides
 
-| # | Question | Recommendation | Spec |
-|---|----------|----------------|------|
-| 18 | Concurrent text edits in one text box | Soft lock + last-writer-wins per text body in v1; 3-way merge on receive P2 | [02 §4.5](wonky_slides/02-data-model.md) |
-| 19 | Every replica downloads every space kind (decks + spreadsheets) | Vendored offline-sync patch OS-8: space filter per sync endpoint | [02 §9.2](wonky_slides/02-data-model.md), [suite 12 §2.6](12-offline-and-sync.md) |
-| 20 | Text editor for text boxes | super_editor overlay on the edited box; decided by a week-1 spike | [03 §6.1](wonky_slides/03-editor-canvas-and-objects.md) |
-| 22 | Nested slide groups | One level in v1 | [04 §5.12](wonky_slides/04-screens-menus-toolbar.md) |
-| 23 | Shared package names (`wonky_sync_kit`, `wonky_fonts`, shared spell engine) | As proposed | [12 §8](wonky_slides/12-implementation-plan.md) |
-| 24 | What a printed/thumbnail slide shows when it has builds | Authored layout with all content; P1 option: final animation state | [06 §9.6](wonky_slides/06-animations-and-transitions.md) |
-| 25 | Write exports switch to the shared TextMate tokenizer | Yes (only token colors change) | [07 §2.2](wonky_slides/07-code-blocks.md) |
-| 26 | TextMate engine: copy into `wonky_code` vs upstream split | Copy now, propose upstream later | [07 §2.2](wonky_slides/07-code-blocks.md) |
-| 27 | Number formats for charts outside Sheets | Extract `wonky_numfmt` | [08 §2.5](wonky_slides/08-charts-from-sheets.md) |
-| 28 | Linked chart auto-update | Client-side in M10; server reverse index in M11 if needed | [08 §5.5](wonky_slides/08-charts-from-sheets.md) |
-| 29 | Presenter view windows | Second local window by default + audience on another device as fallback, one state model | [10 §5.2](wonky_slides/10-presenting-and-pdf.md) |
-| 30 | Desktop multi-window | Spike Flutter's multi-window API; fallback `desktop_multi_window` | [10 §5.4](wonky_slides/10-presenting-and-pdf.md) |
-
-(21 — where the Animate UI lives — is resolved: the inspector's Animate tab, `slides.panel.animate`
-as an alias.)
+| # | Question | Decision | Recorded in |
+|---|----------|----------|-------------|
+| 18 | Concurrent text edits in one text box | Recommendation accepted: soft lock + LWW per text body in v1; three-way merge on receive P2 | [02 §4.5](wonky_slides/02-data-model.md) |
+| 19 | Every replica downloads every space kind | Recommendation accepted: vendored offline-sync patch OS-8 (space filter per sync endpoint), in M8 | [02 §9.2](wonky_slides/02-data-model.md), [suite 12 §2.6](12-offline-and-sync.md) |
+| 20 | Text editor for text boxes | Recommendation accepted: super_editor overlay, confirmed by a week-1 spike of M9 (SL-4) | [03 §6.1](wonky_slides/03-editor-canvas-and-objects.md) |
+| 21 | Where the Animate UI lives | Resolved before the review: the inspector's Animate tab; `slides.panel.animate` is an alias | [04 §7.1](wonky_slides/04-screens-menus-toolbar.md) |
+| 22 | Nested slide groups | Recommendation accepted: one level in v1; `parentId` reserved | [04 §5.12](wonky_slides/04-screens-menus-toolbar.md) |
+| 23 | Shared package names | Recommendation accepted: `wonky_sync_kit` (+ `wonky_sync_kit_flutter`), `wonky_fonts`, `wonky_spellcheck` (engine; Flutter glue and emoji picker into `wonky_app`) | [01 §2.1](01-architecture.md), [12 §8](wonky_slides/12-implementation-plan.md) |
+| 24 | What a printed/thumbnail slide shows when it has builds | Recommendation accepted: authored layout with all content; P1 option *Show final animation state* | [06 §9.6](wonky_slides/06-animations-and-transitions.md) |
+| 25 | Write exports switch to the shared TextMate tokenizer | Recommendation accepted: yes, in M10 with a golden diff review (only token colors change) | [07 §2.2](wonky_slides/07-code-blocks.md) |
+| 26 | TextMate engine: copy into `wonky_code` vs upstream split | Recommendation accepted: copy now (M8 extraction), propose the upstream split later | [07 §2.2](wonky_slides/07-code-blocks.md) |
+| 27 | Number formats for charts outside Sheets | Recommendation accepted: extract `wonky_numfmt` (M8, with `wonky_charts`) | [08 §2.5](wonky_slides/08-charts-from-sheets.md) |
+| 28 | Linked chart auto-update | Recommendation accepted: client-side in M10; server reverse index in M11 only if needed | [08 §5.5](wonky_slides/08-charts-from-sheets.md) |
+| 29 | Presenter view windows | **User (web only):** single window — presenter view here, audience on another device or browser, one presentation-session state model; no second local window in v2 | [10 §5.2](wonky_slides/10-presenting-and-pdf.md) |
+| 30 | Desktop multi-window | **User (web only):** deferred (no spike in v2); recorded with the possible later second window | [10 §5.3](wonky_slides/10-presenting-and-pdf.md) |

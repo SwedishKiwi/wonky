@@ -92,7 +92,7 @@ in the status bar and a live dot on the Present button: **"Anna is presenting �
 (transitions/builds play locally from the shared timeline, 06), with *Stop following* and *Take
 control* disabled (P2 remote control is 10's phone-remote feature). Followers can't navigate while
 following (arrow keys show "Following Anna — press Esc to stop"). The presentation session itself
-(audience window, phone remote, sync of steps) is specified in 10.
+(audience on other devices or browsers, phone remote, sync of steps) is specified in 10.
 
 ---
 
@@ -410,7 +410,7 @@ The `DeckChangeLog` consumer (exactly-once receipts, `DeckChangeLogReceipt`) pro
 ### 6.4 Offline collaboration scenarios
 
 Anna (A) and Bo (B), both offline, then both reconnect; "later" = later HLC. Every row is a test
-case in the multi-client sync harness ([12 §6.3](12-implementation-plan.md)).
+case in the multi-client sync harness ([12 §7.3](12-implementation-plan.md)).
 
 | # | Scenario | Data-model behavior | Outcome | UX |
 |---|----------|--------------------|---------|----|

@@ -22,7 +22,7 @@ shared by client and server, and an undo domain built on the same per-column ski
 | P2 | **Slides, groups, elements, table rows/columns, builds and code states are rows with stable UUIDs**, ordered by **fractional `sortKey`s** (`FractionalIndex`, ties by `id`). | Insert/move/delete are O(1) writes and merge cleanly with concurrent edits; nothing is renumbered. |
 | P3 | **Properties users change independently are separate columns** (frame `x/y/width/height`, `rotation`, `fillJson`, `strokeJson`, `locked`, `hidden`, `text`, …). | Field-level LWW: Anna moving a shape while Bo recolors it keeps both changes. |
 | P4 | **Coupled values are written together, always.** Columns that only make sense as a set (`groupId` + `sortKey` of a slide; `x` + `y` on move; `x/y/width/height` on resize) are written in the same transaction by every writer that changes any of them. | Two writers that both name the same columns produce one consistent winner per HLC (each column picks the same newest write), so coupled values never tear. |
-| P5 | **Rich text is one column per text body** (`SlideElement.text`, `SlideTableCell.text`, `Slide.notes`) holding a Quill Delta (§4). Concurrent edits of the *same* body resolve LWW; a **soft lock** (§4.4) prevents most such conflicts. | Simple, offline-safe, small rows. Alternatives are an open question (§4.5). |
+| P5 | **Rich text is one column per text body** (`SlideElement.text`, `SlideTableCell.text`, `Slide.notes`) holding a Quill Delta (§4). Concurrent edits of the *same* body resolve LWW; a **soft lock** (§4.4) prevents most such conflicts. | Simple, offline-safe, small rows. Alternatives were weighed in the v2 review (§4.5). |
 | P6 | **Inheritance by null.** A nullable style/geometry column that is `null` inherits (slide ▸ layout ▸ master ▸ theme). | Re-theming and layout edits propagate without rewriting slides. |
 | P7 | **Every update names its columns** (`columnValues:`), enforced by the same repository lint test as Sheets (toptap pattern). | Otherwise the engine marks every field as touched and clobbers concurrent edits. |
 | P8 | **Derived data is never synced**: resolved styles, auto-fit scale, connector routes, slide numbers, thumbnails, the animation timeline. | Sync volume proportional to user edits; every renderer (editor, presenter, PDF, server) derives the same result from the same rows. |
@@ -208,7 +208,7 @@ fields:
   deck: Deck?, relation(onDelete=Cascade, deferred)
   title: String                              # "Intro"; 1–100 chars
   sortKey: String                            # top-level key space (shared with ungrouped slides)
-  parentId: UuidValue?                       # reserved for nested groups (P2, open question in 04 §5.12); always null in v1
+  parentId: UuidValue?                       # reserved for nested groups (P2, decided in 04 §5.12); always null in v1
   color: String?                             # palette token: gray, red, orange, amber, green, teal, blue, violet, pink (04 §5.4)
   skipped: bool                              # skips all its slides when presenting/exporting
   createdAt: DateTime, defaultModel=now
@@ -572,18 +572,20 @@ To make that rare, editing a text body claims it:
 6. Agents: headless writes to a body claimed by a human return `being_edited` unless the tool is
    called with `force: true` (11).
 
-### 4.5 Open question (for review): finer-grained text merging
+### 4.5 Decided (v2 review, Q18): finer-grained text merging
+
+**Decision:** option A (soft lock + LWW per body) ships in M9; option D (three-way merge on
+receive) is a **P2** improvement, built only if users report lost text. The options considered:
 
 | Option | How | Pros | Cons |
 |--------|-----|------|------|
-| **A. Soft lock + LWW per body** *(recommended for v1)* | As §4.4 | Simple; offline-safe; small rows; same machinery as other columns; text bodies on slides are short | Two people typing in one box at once lose work (mitigated by lock, hints and recovery) |
+| **A. Soft lock + LWW per body** *(chosen for v1)* | As §4.4 | Simple; offline-safe; small rows; same machinery as other columns; text bodies on slides are short | Two people typing in one box at once lose work (mitigated by lock, hints and recovery) |
 | B. Per-paragraph rows | `TextParagraph(elementId, sortKey, text, blockAttrsJson)` rows; edits within one paragraph LWW | Different paragraphs of one box merge; offline-friendly | 5–10× more rows; cross-paragraph operations (split/join, multi-paragraph paste, list renumbering) become multi-row plans; same-paragraph conflicts remain; complicates auto-fit/layout ingestion |
 | C. OT per text body | Delta OT over a per-deck collaboration stream (reuse Write's `compose/transform`), LWW snapshot persisted to the row | Character-level real-time merging | Online only (offline falls back to A anyway); a second sync mechanism next to the CRDT; server must hold per-body OT state; much more code |
 | D. Three-way merge on receive | Client keeps the last synced text as base; when a remote write arrives for a body with unsynced local edits, merge base/ours/theirs with `DeltaDiff` and write the result | Recovers most concurrent edits, offline too | Both sides may merge and re-write (needs a deterministic tie rule); rare surprising results |
 
-Recommendation: ship A in M9; add D as a P2 improvement if users report lost text (the
-*Overwritten text* review measures how often it happens: count of recovery offers per 1,000
-editing sessions, logged).
+The *Overwritten text* review measures how often A loses text (count of recovery offers per
+1,000 editing sessions, logged); that metric decides whether D is scheduled.
 
 ---
 
@@ -768,13 +770,13 @@ plan). Groups never hold text.
 ## 7. Local-only client tables
 
 The Slides replica (`slides_<userId>.db`, §9.1) has the generic client tables of the shared sync
-client (12 §4.2): `ReservedSpace`, `DirtySpace`, `RowJournal` / `JournalSpace` (U11 journal),
+client (12 §5.2): `ReservedSpace`, `DirtySpace`, `RowJournal` / `JournalSpace` (U11 journal),
 `LocalUndoStack`. Small per-user state lives in the user's local key-value store (suite 12 §3)
 under `slides.*` keys:
 
 | Key | Content |
 |-----|---------|
-| `slides.view.<deckId>` (`LocalViewState`, newest 200 kept) | current slide id, selection (element ids), zoom/fit, scroll, view mode (`normal`/`grid`/`outline`/`masters`), **collapsed group ids**, navigator width, notes pane height and visibility, inspector tab, open side panel, grid-view thumbnail size, last presented slide, edit state per code element (07 A-07-5). Presenter preferences are per user in `UserPreferences.slidesPresenter` (10 A-10-4); the screen assignment stays device-local (10 §5.3). |
+| `slides.view.<deckId>` (`LocalViewState`, newest 200 kept) | current slide id, selection (element ids), zoom/fit, scroll, view mode (`normal`/`grid`/`outline`/`masters`), **collapsed group ids**, navigator width, notes pane height and visibility, inspector tab, open side panel, grid-view thumbnail size, last presented slide, edit state per code element (07 A-07-5). Presenter preferences are per user in `UserPreferences.slidesPresenter` (10 A-10-4). |
 | `slides.offlineEdits.<deckId>` / `slides.conflicts.<deckId>` | Overwritten-edit tracking and the review list (09 §6.3) |
 | `slides.recentColors`, `slides.recentShapes`, `slides.recentIcons`, `slides.recentLanguages` | Pickers' recents (also in `UserPreferences.slidesDefaults` when online, D4) |
 | `slides.clipboard` | In-app clipboard payload (web) next to the system-clipboard marker (03 §12) |
@@ -788,7 +790,7 @@ Collapsed groups are **per user and device** (D6/D11): never synced.
 
 | Table | Purpose |
 |-------|---------|
-| `SpaceSubscription`, `SpaceReservation` | Shared with Sheets once generalized to space kinds (12 §4.3): `kind: spreadsheet \| deck`, active set per kind. |
+| `SpaceSubscription`, `SpaceReservation` | Shared with Sheets once generalized to space kinds (suite 12 §2.6, Drive 05 D-4): `kind: spreadsheet \| deck`, active set per kind. |
 | `DeckChangeLogReceipt` | Exactly-once consumption of `DeckChangeLog` rows (as `SheetsChangeLogReceipt`). |
 | `SlidesSnapshotIndex` | Per version: slide list (id, title, group, skipped), changed slide/element ids since the previous version with author ids (09 §4.1). |
 | `ItemVersionState` | Shared (suite 07, Sheets A-10-3). |
@@ -803,7 +805,7 @@ Collapsed groups are **per user and device** (D6/D11): never synced.
 
 - One replica per user and app: `slides_<userId>.db` (desktop: app support dir; web: OPFS via
   `sqlite3.wasm` + `db_worker.js`, IndexedDB fallback with a reduced offline cap, suite 12).
-- The Slides app runs the **shared sync client** (12 §4.2: replica, sync controller, writer,
+- The Slides app runs the **shared sync client** (12 §5.2: replica, sync controller, writer,
   change journal, dirty marks, recovery export) with the Slides table set, through a custom sync
   endpoint **`slidesSync.sync`** wrapping `session.offlineSync.sync` so the server receives
   `onMergeSuccess(deckSpace, hlc)` for change-log consumption (suite 12 §2.5).
@@ -812,19 +814,20 @@ Collapsed groups are **per user and device** (D6/D11): never synced.
   (`SlidesEndpoint.spaceStats`). Decks are small (typically < 5,000 rows), so the whole deck loads
   before `DeckReady` (no viewport-first loading in v1).
 
-### 9.2 Open question (for review): one replica syncing every space kind
+### 9.2 Decided (v2 review, Q19): one replica syncing every space kind
 
 The engine syncs **every space the user is a member of** (suite 12 §2.1). Once decks are spaces,
 the Sheets replica would also download decks and the Slides replica spreadsheets.
 
 | Option | Effect |
 |--------|--------|
-| **A. Space filter per sync endpoint** *(recommended)* | Vendored offline-sync patch **OS-8**: `offlineSync.sync(…, spaceFilter: (spaceUuid) → bool)`. `sheetsSync.sync` passes spreadsheet spaces (+ the personal space), `slidesSync.sync` deck spaces (+ personal). The server knows each space's kind from `SpaceReservation`/registration. A step toward upstream U1. |
+| **A. Space filter per sync endpoint** *(chosen)* | Vendored offline-sync patch **OS-8**: `offlineSync.sync(…, spaceFilter: (spaceUuid) → bool)`. `sheetsSync.sync` passes spreadsheet spaces (+ the personal space), `slidesSync.sync` deck spaces (+ personal). The server knows each space's kind from `SpaceReservation`/registration. A step toward upstream U1. |
 | B. Accept double download | No engine change; each replica holds both kinds. Decks are small but a 1M-cell spreadsheet would be downloaded by the Slides app too — unacceptable on web. |
 | C. One shared replica for all apps | Both apps open `wonky_<userId>.db`; avoids duplication but two apps in two tabs contend for the OPFS lock, and a schema bump of one app blocks the other. |
 
-Until OS-8 lands, Slides ships behind option B with the Slides active set limited to decks the
-user opened in the last 30 days.
+**Decision:** option A. OS-8 is an M8 wave-1 work package (Drive 05 D-4), so it lands before the
+first deck space exists. Fallback only if it slips: option B with the Slides active set limited
+to decks the user opened in the last 30 days.
 
 ### 9.3 Creating decks (offline-first)
 
@@ -912,7 +915,7 @@ version views share an in-memory **`DeckModel`** (`wonky_slides_core/lib/src/mod
   queued, patches the model and emits the batch on `DeckSession.remoteBatches`. A property test
   checks that incremental patching equals a full reload.
 
-The Flutter app adds the DB-backed loader, `DeckSession` (12 §3.1) and painters
+The Flutter app adds the DB-backed loader, `DeckSession` (12 §5.3) and painters
 (`wonky_slides/lib/features/model/`).
 
 ---
@@ -923,7 +926,7 @@ The Flutter app adds the DB-backed loader, `DeckSession` (12 §3.1) and painters
 
 All mutations are planned by **`SlidesMutationPlanner`** (core) from a `SlidesOperation` against
 the `DeckModel`, producing a `MutationPlan {label, summary, changes: List<RowChange>, detail?}` —
-the same plan shape as Sheets (generic types extracted to the shared sync kit, 12 §4.1). The
+the same plan shape as Sheets (generic types extracted to the shared sync kit, 12 §5.1). The
 planner is used by the app writer and by `ServerSlidesWriter` (MCP, AI, restore, templates), so
 headless and UI edits are identical.
 

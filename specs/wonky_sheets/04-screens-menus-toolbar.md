@@ -346,7 +346,7 @@ All behaviors in [07-data-tools.md](07-data-tools.md) unless noted.
 | Accessibility settings | `shell.settings.accessibility` | — | — | view | shell 03 |
 | Keyboard shortcuts | `shell.help.shortcuts` | ⌘/ | Ctrl+/ | view | §11.19 |
 | Sheets settings… (v2) | `shell.settings.openApp` | ⌘, (desktop) | — | view | §11.24 |
-| Wonky Works settings… (v2) | `shell.settings.open {section: account}` | — | — | view | suite 04 §4 |
+| Wonky Work settings… (v2) | `shell.settings.open {section: account}` | — | — | view | suite 04 §4 |
 
 ### 3.8 Extensions
 
@@ -389,8 +389,8 @@ shortcuts use `Alt+Shift+<digit>` (no Ctrl).
 - Only one menu is open at a time (suite 02 §4.2).
 - Disabled items show a reason tooltip on hover (from `Command.isEnabled` reason).
 - Checked items (`isChecked`) render ✓; radio groups render ●.
-- macOS desktop: `PlatformMenuBar` generated from the same spec (suite 03 §6); the in-window
-  menubar is hidden when native menus are active.
+- macOS desktop (deferred, v2 is web only): `PlatformMenuBar` generated from the same spec
+  (suite 03 §6); the in-window menubar is hidden when native menus are active.
 
 ---
 
@@ -877,7 +877,7 @@ Drive picker dialog (shell `DrivePickerDialog`, filtered to spreadsheets where u
 
 - (v2) The Sheets home lists **only spreadsheets** (no type filter) and the folders that contain
   spreadsheets (suite 05 §3.2); the left menu (suite 03 §3.3) has the four app links, Recent /
-  My files / Shared with me / Starred / Offline / Trash, then *Sheets settings*, *Wonky Works
+  My files / Shared with me / Starred / Offline / Trash, then *Sheets settings*, *Wonky Work
   settings*, *Report a bug* and the storage meter; folder management and other kinds are in
   Wonky Drive (*Open in Wonky Drive*). Search is filtered to spreadsheets ("Search all of Wonky
   Drive" row).

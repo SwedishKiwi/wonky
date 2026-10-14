@@ -92,16 +92,15 @@ patched) and **highlight.js second** for every other language in §2.4 (broad co
 C, C++, C#, diff, Dockerfile, GraphQL, Markdown, PHP, Ruby, Scala, …), mapping highlight.js
 classes to the same `SyntaxToken`s. Unknown languages render plain.
 
-**Open question (for review) — Write exports.** Should Write's exports switch to the TextMate
-route too (identical colors editor ↔ export, recommended), or keep highlight.js for all
-exports (no change to Write output)? *Recommendation*: switch in the same milestone (M10) with a
-golden diff review of the Write export corpus; the change is limited to token colors.
+**Decided (v2 review, Q25) — Write exports.** Write's exports switch to the TextMate route too
+(identical colors editor ↔ export) in **M10**, with a golden diff review of the Write export
+corpus; the change is limited to token colors. Until then they keep highlight.js (Write 04
+§15.5).
 
-**Open question (for review) — copy vs. upstream split.** Moving the TextMate engine into
-`wonky_code` is a copy of Serverpod-owned code. The alternative is an upstream split of
-`syntax_highlight` into a pure-Dart `syntax_highlight_core` + Flutter wrapper, vendored if
-needed. *Recommendation*: copy now (small, already patched, we own the patches), propose the
-split upstream later and switch back if it lands.
+**Decided (v2 review, Q26) — copy vs. upstream split.** The TextMate engine is **copied** into
+`wonky_code` now (small, already patched, we own the patches) during the M8 extraction; an
+upstream split of `syntax_highlight` into a pure-Dart core + Flutter wrapper is proposed later,
+and we switch back if it lands.
 
 ### 2.3 API (pure Dart, `package:wonky_code/wonky_code.dart`)
 
@@ -240,7 +239,8 @@ dependency for the script editor; P2: Sheets' script editor uses `CodeEditorFiel
    embedded, so the "grammar not yet loaded" state disappears) and styles via `CodeTextStyler`.
 2. `CodeLanguages`, `SyntaxToken` and palettes come from `wonky_code`; Write keeps thin
    re-exports for its public APIs.
-3. Write exporters call the same tokenizer (open question §2.2).
+3. Write exporters call the same tokenizer (M10, decided in §2.2; M8 keeps highlight.js for
+   exports).
 4. Tests: Write 04 AC-15.1/15.2 unchanged; the vendored package's patch tests
    (`wonky_patches_test.dart`) move to `wonky_code/test/textmate/` (every grammar highlights a
    realistic sample and every prefix of it).

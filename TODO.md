@@ -74,7 +74,9 @@ committed and verified).
 10. ☐ **Deployment** (deferred to a later iteration; the release build served at `/write/` already loads and works in development):
     - verify production builds served by the server at `/write/` and `/sheets/` (`serverpod run flutter_build`), with WASM and cross-origin-isolation headers;
     - the sign-in is shared on the single origin; in development the two `flutter run` origins (8101 and 8102) don't share it.
-11. ☐ **Desktop** packaging (deferred to a later iteration) (macOS first): native menubar, keychain sharing between apps, `wonkysheets://` / `wonkywrite://` URL schemes.
+11. ☐ **Desktop** (deferred to a later iteration; v2 is web only, `specs/01-architecture.md` A13 — the desktop targets must keep compiling) (macOS first): packaging, native menubar, keychain sharing between apps, four binaries with `wonkydrive://` / `wonkywrite://` / `wonkysheets://` / `wonkyslides://` URL schemes, OS drag and drop in native builds, desktop printing extras, Slides presenting in native full screen (`window_manager`).
+12. ☐ **Multi-window presenting** (deferred, v2 review Q5/Q29/Q30): a presenting-only second window for Slides' audience view — Window Management API on the web, Flutter multi-window (fallback `desktop_multi_window`) on desktop — reusing the presentation-session messages (`specs/wonky_slides/10-presenting-and-pdf.md` §5.3). v2 presents in one window with the audience on another device or browser.
+13. ☐ **v2** (Drive, Slides, suite changes): specified and planned as work packages — `specs/14-roadmap.md` §2.1–§2.2, `specs/wonky_drive/05-implementation-plan.md` (D-1…D-18), `specs/wonky_slides/12-implementation-plan.md` (SL-1…SL-45); decisions in `specs/v2-review.md`.
 
 ## Known issues
 

@@ -34,7 +34,7 @@ whose sync design Slides mirrors.
 | 09 | [Collaboration & history](09-collaboration-history.md) | Presence, soft locks, hints, follow mode, comments, version history, activity, offline conflict scenarios |
 | 10 | [Presenting & PDF](10-presenting-and-pdf.md) | Present mode, presenter view, remote, rehearse, PDF/PNG export, print |
 | 11 | [MCP & AI](11-mcp-and-ai.md) | Headless `slides.*` tools, `ui.slides.*` bridge, AI features |
-| 12 | [Implementation plan](12-implementation-plan.md) | Milestones M9–M11, workstreams WS-SL0…SL18, contracts, dependency graph, testing, risks, open questions index |
+| 12 | [Implementation plan](12-implementation-plan.md) | Milestones M9–M11 as work packages SL-1…SL-45 in waves, folder ownership, contracts, testing, risks, decisions index |
 
 Authority order when specs disagree: suite specs → 02 (data model) → 04 (command ids) → feature
 specs. Fix the disagreement in the same change that finds it.

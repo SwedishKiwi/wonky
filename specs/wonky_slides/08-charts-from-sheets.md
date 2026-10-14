@@ -121,19 +121,17 @@ Chart axes, data labels, tooltips and table charts format numbers with spreadshe
 patterns (`#,##0.0`, `0%`, `[$€]#,##0`, `yyyy-mm-dd`). The engine lives in
 `wonky_sheets_core/lib/src/format/number_format/` and depends on Sheets cell types.
 
-**Decision (proposed)**: extract the pattern engine into a new pure package
+**Decision** (v2 review, Q27): extract the pattern engine into a new pure package
 **`packages/wonky_numfmt`** — pattern parser/AST, formatter over `double`/date serials, presets,
 locale symbol data, serial calendar (`dates.dart`). Sheets keeps the cell adapters
 (`CellTextFormatter`, value bridges, inference from input). `wonky_charts`'
 `DefaultChartValueFormatter` uses `wonky_numfmt`; Slides native charts (P1) use it for their
 column formats.
 
-**Open question (for review)**: (A) extract `wonky_numfmt` as above (recommended: identical
-labels in Sheets and Slides, server PDF parity, ~5 kLOC moved mechanically); (B) keep the engine
-in Sheets, store **pre-formatted** labels (data labels, category labels, tooltip strings) in the
-snapshot and format axis ticks in Slides with a reduced built-in formatter (`#,##0.##`, `%`,
-currency symbol prefix, ISO dates) — smaller refactor, but tick labels may differ from Sheets for
-exotic formats. If (B) is chosen, §3.4 adds `formattedValues` per series.
+Option (A) was chosen over (B) — keeping the engine in Sheets and storing pre-formatted labels
+in the snapshot with a reduced formatter in Slides — because (A) gives identical labels in Sheets
+and Slides and server PDF parity for ~5 kLOC moved mechanically. The extraction runs in M8
+together with `wonky_charts` (Drive 05 work package D-3).
 
 ### 2.6 Theme boundary
 
@@ -170,7 +168,7 @@ wonky_server          → … + wonky_charts (via the cores)
 `wonky_charts*` are neither Write nor Sheets packages, so Slides may use them. The justified
 exception `wonky_sheets_core → vector_math` moves to `wonky_charts`.
 
-### 2.9 Migration order (M10, before Slides chart work)
+### 2.9 Migration order (M8 wave 1, Drive 05 D-3; step 5 may finish in M10 with the chart element)
 
 1. Create `wonky_numfmt` (move + re-export from Sheets core; Sheets tests green).
 2. Create `wonky_charts` by moving files (git mv), introduce `DataRangeRef`, `ChartThemeSource`,
@@ -425,14 +423,13 @@ undo step (maintenance write, so later checks stay cheap); viewers just cache it
   that user, presence toast "Charts updated from Finance 2026" for 3 s). Two editors applying
   the same update write identical values (LWW-safe). Viewers render the stored snapshot.
 
-**Open question (for review) — server-side auto-update.** Client-side auto-update leaves decks
-that nobody opens stale (e.g. a deck shared by public link or exported via MCP). Alternative: the
-server keeps a reverse index `ChartLinkIndex(spreadsheetUuid → deckUuid, elementId)` (maintained
-from deck merges) and a debounced job updates `autoUpdate` snapshots after spreadsheet merges,
-writing into the deck space as the deck owner. *Recommendation*: client-side in M10 (simple, no
-background writes into other users' spaces); server-side in M11 if usage shows stale public
-decks; MCP `slides.export_pdf` gets `refresh_linked_charts: true` to update right before export
-(editor role required).
+**Decided (v2 review, Q28) — server-side auto-update.** Auto-update is **client-side in M10**
+(simple, no background writes into other users' spaces); MCP `slides.export_pdf` gets
+`refresh_linked_charts: true` to update right before export (editor role required). Client-side
+updates leave decks that nobody opens stale (e.g. exported via MCP); if usage shows that, M11
+adds the server-side variant: a reverse index `ChartLinkIndex(spreadsheetUuid → deckUuid,
+elementId)` maintained from deck merges and a debounced job that updates `autoUpdate` snapshots
+after spreadsheet merges, writing into the deck space as the deck owner.
 
 ---
 

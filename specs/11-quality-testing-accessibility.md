@@ -19,7 +19,7 @@ naming, helpers, determinism, running them) is in [15 · Writing tests](15-writi
 **Contract tests**: every command has an execute→undo→redo test (see 08 §4). Every MCP tool
 has an integration test through `/mcp`. Every endpoint has permission tests for each role.
 
-### 1.1 Critical user journeys (E2E, run on web + macOS in CI)
+### 1.1 Critical user journeys (E2E; journeys 1–10 run on web + macOS in CI, the v2 journeys 11–15 on the web only — 01 A13)
 1. Sign up → verify → create document → type with formatting → reload → content persists.
 2. Two users co-edit the same paragraph; cursors visible; converge; each undoes only own edits.
 3. Go offline, edit document and spreadsheet, go online → changes sync, no data loss.
@@ -31,7 +31,8 @@ has an integration test through `/mcp`. Every endpoint has permission tests for 
    `ui.invoke_command`; Sheets via `sheets.set_values` + `ui.sheets.select_range`.
 9. Theme editor: create theme, apply, verify editor + PDF reflect it in light & dark.
 10. Script: custom function used in a formula; onEdit trigger; time-driven trigger runs on server.
-11. (v2) Drive: sign in lands on `/drive/`; upload files by drag-and-drop, preview image/PDF/code,
+11. (v2) Drive: sign in at `/` lands on Wonky Write's home (`/write/`); the left menu opens
+    Wonky Drive at `/drive/`; upload files by drag-and-drop, preview image/PDF/code,
     *Open with* a CSV in Sheets; app homes show only their kind ([Drive 05 §6](wonky_drive/05-implementation-plan.md)).
 12. (v2) Quota: fill the 50 MB, see the refusal and the banners in every app, empty trash, the
     banner disappears live.

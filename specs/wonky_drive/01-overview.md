@@ -1,6 +1,6 @@
 # Drive 01 · Overview
 
-**Wonky Drive** is where a user manages everything they own or can access in Wonky Works. Until
+**Wonky Drive** is where a user manages everything they own or can access in Wonky Work. Until
 v2 each app showed the shared drive filtered to its own kind, with a "Type: All" toggle; v2
 splits the roles:
 
@@ -17,8 +17,8 @@ limits and the document map.
 
 | Question | Answer |
 |----------|--------|
-| What is it? | A Flutter app (web + desktop) on `wonky_app` that shows the unified Wonky drive — like Google Drive for the Wonky suite. |
-| Who is it for? | Every user: the default landing page (`/` redirects to `/drive/`), the place to organize folders, upload files, free up storage and find anything regardless of kind. |
+| What is it? | A Flutter app (web only in v2; the desktop target compiles, suite 01 A13) on `wonky_app` that shows the unified Wonky drive — like Google Drive for the Wonky suite. |
+| Who is it for? | Every user: one click from every app home's left menu (the site root `/` opens Wonky Write's home, v2 review Q2), the place to organize folders, upload files, free up storage and find anything regardless of kind. |
 | What does it add over the app homes? | All kinds in one list, folder tree and folder management, drag-and-drop moves, uploads of any file type, previews of uploaded files, *Open with* conversions, the Storage page and storage clean-up. |
 | What does it not do? | Edit documents, spreadsheets or presentations (opening one navigates to its app in the same tab), edit uploaded files (no in-browser editors for images, PDFs, text files), host public websites (no anonymous links). |
 | Tech | `wonky_drive` app = a `DriveAppConfig` (`WonkyAppConfig`) plus Drive-only features (upload queue, previews, Storage page). The drive list, sidebar, dialogs, details panel and commands stay in `wonky_app` (`lib/src/drive/`) and are shared with the app homes. Previews: images via Flutter, PDF via `printing`'s rasterizer (spike, 02 §6.3), text/code via `wonky_code_flutter`. |
@@ -50,12 +50,12 @@ release, **P2** designed now, built later.
 
 | Feature | Priority | Spec |
 |---------|----------|------|
-| `wonky_drive` app served at `/drive/`; root `/` redirects to `/drive/` | P0 | suite 01 §2.4 |
-| Left menu: app links (Drive, Write, Sheets, Slides), Drive navigation, Drive settings, Wonky Works settings, Report a bug, storage meter | P0 | 04 §2 |
+| `wonky_drive` app served at `/drive/`, linked from the left menu of every home (root `/` redirects to `/write/`) | P0 | suite 01 §2.4 |
+| Left menu: app links (Drive, Write, Sheets, Slides), Drive navigation, Drive settings, Wonky Work settings, Report a bug, storage meter | P0 | 04 §2 |
 | Views: Home (recent + suggested), My Drive (+ folder tree), Shared with me, Recent, Starred, Trash, Storage | P0 | 04 §3 |
 | Search across all kinds with type/owner/modified chips | P0 | 04 §3.2 |
 | Opening a document/spreadsheet/presentation navigates to its app (same tab); a file opens its in-app preview | P0 | 04 §5 |
-| Desktop app (macOS first) with URL scheme `wonkydrive://` | P1 | suite 03 §6 |
+| Desktop app (macOS first) with URL scheme `wonkydrive://` | Deferred (v2 is web only, suite 01 A13) | suite 03 §6 |
 
 ### 3.2 Items and organization
 

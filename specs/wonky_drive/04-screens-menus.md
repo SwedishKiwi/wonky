@@ -20,7 +20,7 @@ Routes are relative to `/drive/` (suite 03 §2). "Shell" means `packages/wonky_a
 | `/storage` | Storage page | `StorageScreen` (`wonky_drive`) | §7, [03 §6.4](03-storage-quota.md) |
 | `/file/:uuid` | File preview | `FilePreviewScreen` (`wonky_drive`) | §6; `DriveAppConfig.itemPath` |
 | `/templates` | Template gallery with tabs Documents / Spreadsheets / Presentations | shell | creating navigates to the app (§5) |
-| `/settings/:section`, `/settings/app` | Wonky Works settings, Drive settings | shell | §8, suite 04 §4 |
+| `/settings/:section`, `/settings/app` | Wonky Work settings, Drive settings | shell | §8, suite 04 §4 |
 | `/invite/:token`, `/no-access` | Share-link landing, no access | shell | |
 
 There is no *Offline* view in Drive: on-device availability belongs to each app (its local
@@ -51,7 +51,7 @@ and is configured by the app (`WonkyAppConfig.homeNav`, suite 03 §3.3). Drive v
 │                              │  ← flexible space
 │ ──────────────────────────── │
 │ ⚙  Drive settings            │  → /settings/app            (shell.settings.openApp)
-│ [▣] Wonky Works settings     │  → /settings/account        (shell.settings.open)
+│ [▣] Wonky Work settings     │  → /settings/account        (shell.settings.open)
 │ 🐞 Report a bug              │  → github issues            (shell.help.reportBug)
 │ ▬▬▬▬▬▬▬▬▬▬░░░░               │
 │ 12.3 MB of 50 MB used        │  ← StorageMeter (Drive 03 §6.1) → /drive/storage
@@ -66,7 +66,7 @@ and is configured by the app (`WonkyAppConfig.homeNav`, suite 03 §3.3). Drive v
   Storage. App homes use their own list (suite 03 §3.3).
 - **Bottom section** (pinned to the bottom, scrolls with the menu when the window is short):
   *Drive settings* (`settings` icon; app homes: *Write settings*, *Sheets settings*, *Slides
-  settings*), *Wonky Works settings* (Work product icon), *Report a bug* (Lucide `bug`; opens
+  settings*), *Wonky Work settings* (Work product icon), *Report a bug* (Lucide `bug`; opens
   the external-link confirm popover, suite 03 §1), then the `StorageMeter`.
 - Drop targets: *My Drive* (and tree nodes) accept dragged items (move) and OS files (upload
   into that folder); *Trash* accepts dragged items (P1, trash; undoable).
@@ -178,7 +178,7 @@ The same entries appear in the empty-area context menu of the list (plus *Paste*
   descendant, uploading items) show the not-allowed state and don't highlight.
 - OS drag over the content shows the **drop overlay** (dashed `ring`-colored border, centered
   "Drop files to upload to Team"); hovering a folder row highlights it ("Upload to Designs").
-- Web: `DropTarget` via the HTML drop events (`package:web`); desktop: `desktop_drop` (already
+- Web: `DropTarget` via the HTML drop events (`package:web`); desktop (deferred, suite 01 A13): `desktop_drop` (already
   a shell dependency).
 
 ### 3.6 Details panel
@@ -294,7 +294,7 @@ Loading uses `LoadingShimmer` rows/cards (suite 02 §4.18).
 ## 7. Storage page (`/drive/storage`)
 
 Specified in [03 §6.4](03-storage-quota.md). Reached from the left-menu item *Storage*, every
-`StorageMeter`, banners, dialogs (*Manage storage*), Settings › Wonky Works › Storage and
+`StorageMeter`, banners, dialogs (*Manage storage*), Settings › Wonky Work › Storage and
 `shell.storage.open`.
 
 ## 8. Drive settings (`/settings/app`)

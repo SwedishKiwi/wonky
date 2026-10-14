@@ -1,7 +1,8 @@
 # Slides 01 · Overview
 
 **Wonky Slides** is the presentation app of the Wonky Work suite: a collaborative,
-**offline-first** slide editor and presenter for web and desktop, built with Flutter + `shad` on
+**offline-first** slide editor and presenter for the web (v2 is web only; the desktop target
+compiles but desktop features are deferred, suite 01 A13), built with Flutter + `shad` on
 the shared shell (`packages/wonky_app`) and the single Serverpod server. Its storage uses the same
 offline-sync engine as Wonky Sheets (`serverpod_offline_sync`, one deck = one space, decision D6).
 
@@ -17,8 +18,9 @@ offline-sync engine as Wonky Sheets (`serverpod_offline_sync`, one deck = one sp
 | **reveal.js / Slides.com** | Code blocks with syntax highlighting, **line-highlight steps** (`1-3 \| 5`), **type-in code animation**, auto-animate of code between slides, keyboard-first presenting |
 
 And the Wonky principles (suite [00](../00-product-overview.md)): every action is a **command**
-`slides.<area>.<action>` and every change is **undoable**; **single window** (one explicit
-exception for the presenter's audience window, [10-presenting-and-pdf.md](10-presenting-and-pdf.md));
+`slides.<area>.<action>` and every change is **undoable**; **single window**, also when
+presenting (presenter view in this window, the audience on another device or browser,
+[10-presenting-and-pdf.md](10-presenting-and-pdf.md) §5.2);
 UI built with **shad + wonky_ui**; **light and dark**; **keyboard-first**; **offline is normal**;
 **agents are first-class** (MCP + AI).
 
@@ -116,7 +118,7 @@ Priority: **P0** = required for the Slides release of its milestone ([12](12-imp
 | Feature | Pri | Spec |
 |---------|-----|------|
 | Present full screen (same tab), keyboard/clicker, slide picker with groups, black/white screen | P0 | [10](10-presenting-and-pdf.md) |
-| Presenter view (audience window exception), timers, notes | P0 · see 10 open question | 10 |
+| Presenter view in this window, timers, notes; audience view on another device or browser via the presentation session | P0 (decided, v2 review Q29: no second window) | 10 |
 | Laser pointer, pen/highlighter (ephemeral) | P1 | 10 |
 | Rehearse timings | P1 | 10 |
 | Phone as remote | P1 | 10 |
@@ -145,7 +147,7 @@ Priority: **P0** = required for the Slides release of its milestone ([12](12-imp
 | Light/dark app chrome; slides render as designed (deck appearance) | P0 | [04 §16](04-screens-menus-toolbar.md), [05 §2.4](05-themes-layouts-masters.md) |
 | Accessibility: alt text, reading order, keyboard-only editing, accessibility checker | P0 · checker P1 | [03 §17](03-editor-canvas-and-objects.md) |
 | Storage quota (images, deck content count toward 50 MB) | P0 | D3, suite specs |
-| Report a bug, settings split (Slides settings vs Wonky Works settings) | P0 | suite 03/04 (D4, D5) |
+| Report a bug, settings split (Slides settings vs Wonky Work settings) | P0 | suite 03/04 (D4, D5) |
 
 ---
 
@@ -248,8 +250,9 @@ spreadsheet.
 | `packages/wonky_sync_models` (`lib/src/models/slides/`, `lib/src/ids/slides_ids.dart`) | Synced Slides models, enums, `SlidesIds` | 02 |
 | `packages/wonky_slides_core` (pure Dart, **new**) | `DeckModel`, records, indexes, `SlidesMutationPlanner`, text schema + validator + style resolution, theme resolution + built-in themes/layouts, `SlideSceneBuilder`, layout/auto-fit (`TextLayoutEngine` interface), connectors routing, animation **timeline model** (06), code diff/type-in model (07, on `wonky_core/diff.dart`), chart link data (08, on `wonky_charts`), **PDF renderer** (10), snapshot codec + diff (09), `DeckCopier`, clipboard payload codec, headless deck for MCP (11), outline extraction | 02, 03, 05–11 |
 | `packages/wonky_charts`, `packages/wonky_charts_flutter` (**new**, extracted from Sheets, D7) | Chart engine + 3D scene + renderers | 08, suite 01 |
-| `packages/wonky_code` (**new**, extracted from Write, D7) | Tokenizer, language list, code themes, Flutter `CodeView` | 07, suite 01 |
-| Shared sync kit (**new**, 12 §4.2) | Generic `RowChange`/`MutationPlan`/`UndoInverter`, replica + sync controller + writer + change journal extracted from Sheets | 02, 12 |
+| `packages/wonky_code`, `packages/wonky_code_flutter` (**new**, extracted from Write, D7, v2 review Q3) | Pure: tokenizer (TextMate + highlight.js), language list, palettes, code layout/type-in · Flutter: `CodeView`, `CodeEditorField` | 07, suite 01 |
+| `packages/wonky_numfmt`, `wonky_rich_text`, `wonky_fonts`, `wonky_spellcheck` (**new**, v2 review Q4/Q23/Q27) | Number formats (from Sheets) · Delta inline schema + codec (from Write) · font registry + TTFs · Hunspell engine (from Write) | 08, 02, 05, 03 |
+| `packages/wonky_sync_kit` + `wonky_sync_kit_flutter` (**new**, 12 §5.1–5.2) | Pure: `RowChange`/`MutationPlan`/`UndoInverter`/`SyncTxAdapter` · Flutter: replica + sync controller + writer + change journal, extracted from Sheets | 02, 12 |
 | `wonky_slides` (Flutter app, **new**) | Editor, canvas, navigator, inspector, notes, grid/outline views, themes/master editing UI, builds UI, code/chart UI, presenting, print/PDF preview, history, collab, MCP UI tools, AI UI | 03–11 |
 | `wonky_server` `lib/src/slides/` (**new**) | Spaces (deck kind), `slidesSync` endpoint, change-log consumer, versions, chart-link status, exports (PDF), templates, headless + `slides.*` MCP tools, AI | 08–12 |
 
@@ -261,12 +264,13 @@ spreadsheet.
 `find/`, `spellcheck/`, `collab/`, `comments/`, `history/`, `menus/`, `toolbar/`, `dialogs/`,
 `home/`, `assistant/`, `ai/`, `accessibility/`. Each spec lists the folders it owns.
 
-Dependency rules (suite 01 §2.1, updated by the suite agent): `wonky_slides_core` → `wonky_core`,
-`wonky_sync_models` (model types + ids only), shared sync kit, `wonky_charts`, `wonky_code` (pure
-part), `pdf`, `image`, `vector_math`, `crypto`; `wonky_slides` → `wonky_app`, `wonky_ui`,
-`wonky_slides_core`, `wonky_charts_flutter`, `wonky_code`, vendored `super_editor`,
-`super_clipboard`, `printing`, `file_saver`, `file_picker`, `desktop_drop`, `flutter_scene`,
-`wonky_sync_models`, `serverpod_offline_sync_client`, `serverpod_database`. **Slides packages never
+Dependency rules (authoritative list: suite 01 §2.1): `wonky_slides_core` → `wonky_core`,
+`wonky_sync_models` (model types + ids only), `wonky_sync_kit`, `wonky_charts`, `wonky_numfmt`,
+`wonky_code`, `wonky_rich_text`, `wonky_fonts`, `pdf`, `image`, `vector_math`, `crypto`;
+`wonky_slides` → `wonky_app`, `wonky_ui`, `wonky_slides_core`, `wonky_sync_kit_flutter`,
+`wonky_charts_flutter`, `wonky_code_flutter`, vendored `super_editor`, `super_clipboard`,
+`printing`, `file_saver`, `file_picker`, `flutter_scene`, `wonky_sync_models`,
+`serverpod_offline_sync_client`, `serverpod_database`. **Slides packages never
 import Write or Sheets app/core packages** (and vice versa); shared code moves to shared packages.
 
 ---
@@ -297,8 +301,8 @@ import Write or Sheets app/core packages** (and vice versa); shared code moves t
 | [00 · Product overview](../00-product-overview.md) | Principles, personas (Slides added by the suite update). |
 | [01 · Architecture](../01-architecture.md) | Package rules, serving `/slides/`, shared sign-in, dev port 8104 (D1). |
 | [02 · Design system](../02-design-system.md) | `shad`, tokens, `wonky_ui` widgets (`WonkyToolbar`, `WonkyColorPicker`, `FontPicker`, `WonkySplitView`, `WonkyTreeView`, …), product icon `WonkyProduct.slides`. |
-| [03 · App shell](../03-app-shell-and-navigation.md) | Routes, editor header, shared menus, single-window rule and its presenting exception. |
-| [04 · Auth & accounts](../04-auth-and-accounts.md) | Settings split (Slides settings vs Wonky Works settings, D4), `UserPreferences.slidesDefaults`. |
+| [03 · App shell](../03-app-shell-and-navigation.md) | Routes, editor header, shared menus, single-window rule (no presenting exception in v2). |
+| [04 · Auth & accounts](../04-auth-and-accounts.md) | Settings split (Slides settings vs Wonky Work settings, D4), `UserPreferences.slidesDefaults`. |
 | [05 · Drive](../05-drive-and-files.md) and `specs/wonky_drive/` | Unified Drive, `presentation` kind, app home filtered to presentations, quota, templates, thumbnails. |
 | [06 · Sharing](../06-sharing-and-permissions.md) | Roles, space membership mirroring. |
 | [07 · Collaboration](../07-collaboration.md) | Presence protocol, comments, versions framework. |

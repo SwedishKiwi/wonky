@@ -24,7 +24,7 @@ geometry,connectors,clipboard}/`.
 
 | Object | Package | Responsibility |
 |--------|---------|----------------|
-| `DeckSession` | app `features/sync` (contract in [12 §3.1](12-implementation-plan.md)) | `DeckModel`, `execute(op)`, `applyChanges`, remote batches, load state, role |
+| `DeckSession` | app `features/sync` (contract in [12 §5.3](12-implementation-plan.md)) | `DeckModel`, `execute(op)`, `applyChanges`, remote batches, load state, role |
 | `DeckEditorController` (`DocumentController`) | app `features/editor_screen` | Current slide, view mode, active tool, panels; implements shell hooks (cut/copy/paste, selection snapshot, comment anchors, presence cursor JSON) |
 | `CanvasController` | app `features/canvas` | Zoom, fit, scroll offset, su ↔ screen mapping, hit testing, viewport rect |
 | `SelectionController` | app `features/selection` | Selected element ids, focus (canvas/text/table/crop), group entry path, marquee |
@@ -49,7 +49,7 @@ geometry,connectors,clipboard}/`.
 More specific scopes win; contextual bindings (suite 08 §1.2) let one chord mean different
 commands per scope (e.g. Mod+G).
 
-### 1.3 Element kind handler API (contract, [12 §4.3](12-implementation-plan.md))
+### 1.3 Element kind handler API (contract, [12 §5.4](12-implementation-plan.md))
 
 ```dart
 abstract class ElementKindHandler {
@@ -342,11 +342,12 @@ applied via a transform), so the caret and selection align with the static rende
 (non-edited bodies, thumbnails, presenting) is painted by the scene painter from the same resolved
 styles; golden tests assert identical line breaks between both (§22).
 
-Open question (for review): **super_editor vs. a lighter editor.** Recommendation: super_editor
-(vendored, IME/selection/clipboard proven in Write, spellcheck integration exists). Alternative:
-a custom `EditableText`-based rich editor (lighter, fewer dependencies, but IME, multi-paragraph
-selection, lists and RTL would be rebuilt). Decide after an M9 spike measuring
-open-editor latency (< 50 ms target) and the line-break equality test.
+**Decided (v2 review, Q20): super_editor overlay.** The vendored super_editor
+(IME/selection/clipboard proven in Write, spellcheck integration exists) is the text editor of
+text boxes, confirmed by a timeboxed spike at the start of M9 (Slides 12 work package SL-4)
+measuring open-editor latency (< 50 ms target) and the line-break equality test. Only if the
+spike fails both does the fallback — a custom `EditableText`-based rich editor (lighter, but IME,
+multi-paragraph selection, lists and RTL rebuilt) — get a decision record.
 
 **Behavior**:
 
@@ -448,7 +449,7 @@ Text in shapes: double-click/Enter/typing edits; defaults `anchor: middle`, `ali
 | Source | Flow | Command |
 |--------|------|---------|
 | Upload | `file_picker` (png, jpg, jpeg, gif, webp, svg, bmp) → upload | `slides.insert.image {source: upload}` |
-| Drag & drop | From OS onto the canvas (web drop zone / `desktop_drop`); several files insert cascaded | — |
+| Drag & drop | From the OS onto the canvas (web drop zone; `desktop_drop` deferred with desktop, suite 01 A13); several files insert cascaded | — |
 | Paste | Image data from the OS clipboard (§12.5) | `shell.edit.paste` |
 | Wonky Drive | Drive picker filtered to images (D2 `file` kind) → server copies the file into the deck | `slides.insert.image {source: drive, fileItemUuid}` |
 | By URL | URL dialog; fetched through the server image proxy (`files.fetchImage`, generalized from Sheets' `sheets.fetchImage`; SSRF rules of suite 13) and stored as an upload | `slides.insert.image {source: url, url}` |
@@ -544,7 +545,7 @@ the inspector warns), group, lock and z-order like other elements. Content editi
 Inspector › Link (or Mod+K with an element selected): *URL*, *Slide* (picker), *Next slide*,
 *Previous slide*, *First/Last slide*, *End show* → `linkJson`
 (`slides.element.setLink {…}` / `removeLink`). Presenting: clicking the element follows the link
-(external URLs use the external-link confirm of suite 03 §1 — not in the audience window: they
+(external URLs use the external-link confirm of suite 03 §1 — not in an audience view: they
 open on the presenter's screen, 10). The editor shows a small link badge on hover.
 
 ---
@@ -799,8 +800,8 @@ the theme body style.
 
 ## 14. Spell check (P1)
 
-- Uses the suite's shared spell engine (Write's Hunspell-based `SpellEngine`, extracted from
-  `wonky_write/lib/features/spellcheck` into a shared package by the suite update, §20) with the
+- Uses the suite's shared spell engine (Write's Hunspell engine in the pure-Dart
+  `wonky_spellcheck` package and the `SpellEngine` glue in `wonky_app`, extracted in M8, §20) with the
   same dictionaries and the user's personal dictionary (`UserPreferences`).
 - Language: `Deck.language` ?? user locale; per-paragraph `lang` is not supported.
 - Squiggles (token `spellingError`) under misspelled words in the **body being edited**, and on
@@ -935,7 +936,7 @@ by slide with *Fix* actions:
 | A-03-3 | **Suite (files)**: `FileEndpoint.copyToItem(sourceFileUuid, newFileUuid, targetItemUuid)` idempotent on `newFileUuid`, quota-checked (D3); queued offline. Used by cross-deck paste, `DeckCopier`, *Insert image from Drive*. |
 | A-03-4 | **Suite (files)**: generalize Sheets' image proxy `sheets.fetchImage` to `files.fetchImage(url) → fileUuid` for all apps. |
 | A-03-5 | **Sheets 08 §9.5**: the objects clipboard payload carries `spreadsheetItemUuid` and `objectId` so Slides can paste a linked chart. |
-| A-03-6 | **Shared packages**: Write's spell engine and emoji picker move to shared packages (`wonky_app`/`wonky_ui` or a new `wonky_spellcheck`), so Slides doesn't import Write. |
+| A-03-6 | **Shared packages** (decided, v2 review Q23): Write's Hunspell engine moves to the pure-Dart `wonky_spellcheck`; the Flutter glue (`SpellEngine`, dictionary loading, spelling dialogs) and the emoji picker move to `wonky_app`, so Slides doesn't import Write. |
 | A-03-7 | Tokens (registered by `wonky_slides/lib/theme/slides_tokens.dart`, light/dark): `slidesSelection`, `slidesHandleFill`, `slidesAdjustHandle`, `slidesGuide`, `slidesUserGuide`, `slidesTableSelection`, `placeholderBorder`, `slideShadow`, `spellingError`. |
 
 ---

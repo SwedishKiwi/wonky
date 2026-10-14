@@ -2,10 +2,10 @@
 
 This spec defines how a deck is **presented** (full screen, navigation, keyboard and clicker
 map, laser, pen and highlighter, black/white screen, slide picker with groups, skipped slides,
-loop and kiosk mode, rehearsed timings, captions), the **presenter view** and the narrowly scoped
-**exception to the single-window rule** it needs, the **presentation session** that keeps
-audience windows, other devices and a **phone remote** in step, presenting **offline**, and the
-**exports**: PDF (slides, builds as pages, notes pages, handouts, bookmarks, links, embedded
+loop and kiosk mode, rehearsed timings, captions), the **presenter view** in the presenting
+window (single-window model, no second window), the **presentation session** that keeps the
+audience on other devices or browsers, followers and a **phone remote** in step, presenting
+**offline**, and the **exports**: PDF (slides, builds as pages, notes pages, handouts, bookmarks, links, embedded
 fonts), PNG, the print preview route, and where rendering runs (client vs. server/MCP).
 
 No PPTX/Keynote/Google Slides import or export and no video (Drive/Slides decisions D12, D13).
@@ -21,9 +21,10 @@ suite [03-app-shell-and-navigation.md](../03-app-shell-and-navigation.md) §1 (s
 print preview, export endpoint patterns reused here).
 
 Priorities: present mode, keyboard/clicker navigation, black/white, slide picker, skipped
-slides, presenter view on one screen, audience window (Chromium + desktop), PDF slides/builds/
-notes/handouts and print preview are **P0 (M9)**; laser/pen/highlighter and loop/kiosk are
-**P0 (M10)**; rehearse timings, phone remote and followers on other devices **P1** (as in
+slides, presenter view (in this window), the presentation session with the **audience on another
+device or browser** (§5.2), PDF slides/builds/notes/handouts and print preview are **P0 (M9)**;
+laser/pen/highlighter and loop/kiosk are **P0 (M10)**; rehearse timings, phone remote, followers
+and the same-browser fast path **P1** (as in
 [04](04-screens-menus-toolbar.md) §3); PNG export **P1**; captions **P2**. Command ids of the
 entry points are the ones in 04 §3/§4.
 
@@ -36,8 +37,8 @@ entry points are the ones in 04 §3/§4.
 | Route | Screen |
 |-------|--------|
 | `/slides/p/:uuid/present` (+ `?slide=<slideId>&step=<n>`) | Present mode (audience rendering in this window) |
-| `/slides/p/:uuid/present?view=presenter&session=<id>` | Presenter view window (§5) |
-| `/slides/p/:uuid/present?view=audience&session=<id>` | Audience-only window (opened by the presenter view, or on another device) |
+| `/slides/p/:uuid/present?view=presenter&session=<id>` | Presenter view in this window (§5) |
+| `/slides/p/:uuid/present?view=audience&session=<id>` | Audience view on another device or browser (opened by the user from the link/QR or the *Show audience view here* banner, §5.2) |
 | `/slides/p/:uuid/remote?session=<id>&key=<pairingKey>` | Phone remote (P1, §6.4) |
 | `/slides/p/:uuid/print` (+ `?layout=…`) | Print / PDF preview (§12) |
 
@@ -48,18 +49,16 @@ behavior); the editor's own state (selection, panels) is restored when presentin
 
 | Command | Shortcut | Behavior |
 |---------|----------|----------|
-| `slides.present.fromCurrent` | `Mod+Enter` (in text/code edit mode `Mod+Enter` is contextual and leaves edit mode first, suite 08 §1.2); desktop also `Shift+F5` | Presents from the current slide (first non-skipped slide at or after it). |
-| `slides.present.fromStart` | `Mod+Shift+Enter`; desktop also `F5` | From the first non-skipped slide. |
+| `slides.present.fromCurrent` | `Mod+Enter` (in text/code edit mode `Mod+Enter` is contextual and leaves edit mode first, suite 08 §1.2); desktop (deferred) also `Shift+F5` | Presents from the current slide (first non-skipped slide at or after it). |
+| `slides.present.fromStart` | `Mod+Shift+Enter`; desktop (deferred) also `F5` | From the first non-skipped slide. |
 | `slides.present.fromSlide {slideId, step?}` | — | From a given slide (navigator/group context menu "Present from this group"). |
 | `slides.present.presenterView` | `Mod+Alt+Enter` | Presenter view (§5). |
 | `slides.present.rehearse` (P1) | — | Rehearse timings (§10). |
 
 The title row's **Present** split button (04 §3) offers: *Present from current slide*,
 *From beginning*, *Presenter view*, *Rehearse* (P1), *Use phone as remote* (P1), *Presenting
-settings…*. When the browser
-reports an extended display (`window.screen.isExtended`, Chromium) or the desktop app detects a
-second display, the default click is *Presenter view* and the button label says "Present (2
-screens)".
+settings…*. The default click presents from the current slide, or opens the presenter view when
+the user preference *Start with presenter view* is on (§3).
 
 **Pre-flight** (≤ 300 ms, skipped when cached): fonts of the deck loaded, images of the first
 four slides decoded, timelines of the first two slides compiled, the 3D chart GPU backend started
@@ -72,8 +71,8 @@ if the first slides need it. A blocking spinner appears only if it takes longer 
   refused (iframe, policy, Safari restrictions), present mode runs **full window** (all chrome
   hidden) with a hint bar for 4 s: "Press F11 (⌃⌘F on Mac) for full screen" and a *Full screen*
   button.
-- **Desktop**: the window enters native full screen via `window_manager` (new justified
-  dependency of `wonky_slides`, desktop only) and restores the previous size/position on exit.
+- **Desktop** (deferred, suite 01 A13): native full screen via `window_manager` would be a new
+  justified dependency; in v2 desktop builds present full window.
 - Leaving full screen by the browser/OS (Esc handled by the browser, ⌃⌘F, F11) **ends** present
   mode and returns to the editor at the slide/step that was shown (Google Slides behavior);
   `presentJson.keepPresentingOutsideFullscreen` (default false) keeps present mode in a window.
@@ -169,8 +168,8 @@ from a deck by an editor — *This presentation*, which edits `Deck.presentJson`
 
 Per-user presenter preferences (Slides app settings, Drive/suite settings split D4; stored in
 `UserPreferences.slidesPresenter`): presenter view layout preset, notes font size, timer mode
-(elapsed / countdown with target minutes), pen colors and widths last used, *Open presenter view
-by default with two screens* (default on), *Show skipped slides in presenter view*.
+(elapsed / countdown with target minutes), pen colors and widths last used, *Start with presenter view*
+(default off), *Show skipped slides in presenter view*.
 
 ---
 
@@ -181,14 +180,14 @@ by default with two screens* (default on), *Show skipped slides in presenter vie
 Hover the bottom-left area (or press any modifier) → a translucent pill (shad `card` at 85 %,
 blur behind) with: ◀ · "12 / 40" (click = slide picker) · ▶ · laser · pen · highlighter ·
 eraser · clear · black/white · ⋮ (Help, Captions P2, Presenter view, Full screen) · *End*. Auto-
-hides after 2 s; never captured by PDF/screenshots of the audience window (it is present only
-in the window with the mouse).
+hides after 2 s; never captured by PDF/screenshots of an audience view (it is present only
+in the view with the mouse).
 
 ### 4.2 Laser pointer
 
 A glowing dot (12 su core, 40 su glow) in `laserColor` follows the pointer with a short fading
 trail (last 300 ms). Shown in the audience rendering (and mirrored from the presenter view: the
-presenter moves the pointer over the *current slide* preview, §5.2). Followers and remotes receive
+presenter moves the pointer over the *current slide* preview, §5.1). Followers and remotes receive
 laser positions (throttled to 30 Hz, interpolated) through the presentation session (§6).
 
 ### 4.3 Pen, highlighter, eraser (ephemeral ink)
@@ -213,7 +212,7 @@ navigation returns to the slide first (without advancing).
 
 ### 4.5 Slide picker
 
-`G` opens a full-screen overlay (audience window shows it too, unless the presenter view is
+`G` opens a full-screen overlay (audience views show it too, unless the presenter view is
 open — then only the presenter view shows it, the audience keeps the current slide):
 - Grid of thumbnails (edit-frame thumbnails, 06 §9.6), 4–8 columns by width, with **group
   headers** (title, color dot, slide count; collapsed state from the navigator's local view
@@ -233,7 +232,7 @@ open — then only the presenter view shows it, the audience keeps the current s
 ### 5.1 Layout
 
 ```
-┌ Presenter view — Q3 Review ─────────────────────────────────── [Swap] [End] ┐
+┌ Presenter view — Q3 Review ──────────────────────────── [Other device…] [End] ┐
 │ ┌──────────────────────────────────┐  ┌───────────────────────┐  00:12:41 ⏸ ⟲ │
 │ │                                  │  │ Next: build 3 of 5    │  14:32 (clock)│
 │ │        CURRENT (live, step 2/5)  │  │  (next frame preview) │  Slide 12 / 40│
@@ -264,90 +263,46 @@ open — then only the presenter view shows it, the audience keeps the current s
 - **Layout presets** (user preference): *Standard* (above), *Notes focus* (notes take 60 %),
   *Next focus* (current and next side by side, equal size). P2: free arrangement.
 - Light/dark: the presenter view follows the app theme (it is chrome), slides render as authored.
-- All presenter view controls are commands (§14) with the `present` keymap scope plus: `S`
-  swap displays, `T` timer pause, `R` reset timer, `Mod+=`/`Mod+-` notes size.
+- All presenter view controls are commands (§14) with the `present` keymap scope plus: `T`
+  timer pause, `R` reset timer, `Mod+=`/`Mod+-` notes size.
 
-### 5.2 Windows and screens — the single-window exception
+### 5.2 Screens and devices — one window (decided)
 
-The suite rule is one window ([03](../03-app-shell-and-navigation.md) §1). A presenter view is
-only useful when the audience sees a different picture than the presenter, which on one machine
-means **two windows on two screens**.
+**Decided (v2 review, Q5/Q29/Q30):** Wonky Slides opens **no second window** — suite 03 §1 has
+no presenting exception in v2, on the web or on desktop (v2 is web only, suite 01 A13).
+Presenting offers three modes that share one state model, the **presentation session** (§6):
 
-**Open question (for review) — how to show presenter and audience views.**
+| Mode | Where it shows | How |
+|------|----------------|-----|
+| **Present** | This window, full screen (§1) | Laptop + projector: the user mirrors the displays, or moves the browser window to the projector before presenting |
+| **Presenter view** | This window (§5.1): current and next slide, notes, timers, strip | `slides.present.presenterView`. Creates a presentation session; the audience doesn't see this window |
+| **Audience on another device or browser** | Any other device, or another browser window the user opens **by hand** (e.g. on the projector machine, or a window they drag to the external display) | Joins the session as `audience` (§6.3) and renders full screen; the presenter view drives it (~50–300 ms lag over the server) |
 
-| Option | How | Pros | Cons |
-|--------|-----|------|------|
-| **A. Second window on this machine** | Web: Window Management API places the audience in full screen on the external screen and the presenter view in a popup window on the laptop screen (Chromium); plain popup + manual drag elsewhere. Desktop: a second OS window. | Works like Keynote/PowerPoint/Google Slides; zero network latency; works offline | Needs an explicit exception to the single-window rule; Firefox/Safari can't place windows across screens (manual drag); desktop needs multi-window support |
-| **B. No second window** | Presenter view on this device; audience view on another device (or another browser window the user opens by hand on the projector machine) that joins the **presentation session** (§6) over the server | Works in every browser; also enables phone remote and remote followers; no exception needed | Needs network and a second device/session; ~50–300 ms lag; more setup for the common "laptop + projector" case |
+- *Open on another device…* (`slides.present.openOnAnotherDevice`, header of the presenter view
+  and the Present menu) shows the audience link and a QR code
+  (`/slides/p/<uuid>/present?view=audience&session=<id>`) plus *Copy link*. The link is
+  user-bound: only the presenter's own account (or followers per §6.3) can join.
+- When the same user opens the deck anywhere else while a session is live, a banner offers
+  *Show audience view here* (`slides.present.joinAsAudience`) / *Use as remote* (§6.3). Opening
+  a window is always the user's own navigation, never the app's.
+- With an extended display (`window.screen.isExtended`, Chromium) *Presenter view* shows a
+  one-time hint: "To show slides on the projector, open this presentation in a window there and
+  choose *Show audience view here* — or use *Open on another device…*."
+- **Same-browser fast path (P1):** when presenter and audience run in one browser profile, the
+  session messages of §6.2 additionally travel over `BroadcastChannel('wonky-present-<sessionId>')`
+  (no server round trip, ≤ 1 frame lag) and the pair keeps running through connection drops after
+  joining. The server session stays the authority for joining.
+- Single-screen presenting without presenter view creates no session (no network needed).
 
-*Recommendation*: **both, sharing one state model.** The presentation session (§6) is the single
-protocol for any secondary view. Option A is the default local transport when two screens are
-attached (Chromium and desktop: automatic placement; Firefox/Safari: a popup the user drags), with
-the explicit, narrow exception below. Option B is always available ("Open on another device…"
-with a QR/link) and is the fallback when windows can't be opened (popup blocked, kiosk browsers,
-iPad). Single-screen presenting (no presenter view) never opens a window.
+### 5.3 Possible later addition: a presenting-only second window (not in v2)
 
-**Exception to suite 03 §1 (to be added there):** *While presenting with presenter view, Wonky
-Slides may open exactly one additional window of its own origin (the presenter view or audience
-window of the same presentation). It is opened only from an explicit user action, is closed
-automatically when the presentation ends, and never navigates elsewhere.* Desktop: one additional
-OS window under the same rules.
-
-### 5.3 Web: Window Management API flow (Chromium)
-
-1. User picks *Presenter view* (user activation).
-2. If `window.screen.isExtended` and `'getScreenDetails' in window`: query permission
-   `navigator.permissions.query({name: 'window-management'})` (legacy name
-   `window-placement`). If `prompt`, show an in-app explainer first ("To show slides on the
-   projector and your notes here, allow Wonky to manage windows on your displays." *Continue*),
-   then call `window.getScreenDetails()` (browser prompt).
-3. Choose screens: **audience** = the largest screen that is not the current one, preferring
-   `!isInternal`; **presenter** = the current screen. The presenter view remembers the choice per
-   screen label set (local preference) and offers *Swap displays* (`S`).
-4. In the **same** user activation (Chromium allows a fullscreen request on one screen and a
-   popup on another with the window-management permission — the "fullscreen companion window"
-   behavior): the current tab calls `document.documentElement.requestFullscreen({screen:
-   audienceScreen})` and becomes the **audience** view; then
-   `window.open('/slides/p/<uuid>/present?view=presenter&session=<id>', 'wonky-presenter-<deckUuid>',
-   'popup,left=…,top=…,width=…,height=…')` places the **presenter** popup maximized on the
-   presenter screen (it gets keyboard focus).
-5. The two windows talk over `BroadcastChannel('wonky-present-<sessionId>')` with the session
-   messages of §6.2 (same JSON; no server round trip). The audience tab is the renderer of
-   record for animations; the presenter popup drives navigation and mirrors the state.
-6. Closing the presenter popup → the audience tab shows a small "Presenter view closed —
-   Reopen" toast and keeps presenting (single-screen mode). Ending the presentation in either
-   window ends both (`window.close()` on the popup it opened; the audience tab leaves full screen).
-
-**Fallbacks** (Firefox, Safari, permission denied, `isExtended` false but the user still wants
-presenter view):
-- The current tab becomes the **presenter view**, and *Open audience window* opens a popup
-  (`window.open` from the click) with the audience view; the popup shows a centered card "Drag
-  this window to the projector, then click to go full screen" (its first click calls
-  `requestFullscreen()` in the popup). Pop-up blocked → message "Your browser blocked the audience
-  window. Allow pop-ups for this site or use *Open on another device*." with the option B
-  dialog.
-- Rejected: the Presentation API (`PresentationRequest`) — only Cast/2-UA in practice, not wired
-  second screens.
-
-### 5.4 Desktop: second OS window
-
-- Uses Flutter's multi-window API (`RegularWindowController`, experimental in Flutter 3.3x+,
-  enabled for the desktop builds) to create the presenter window on the presenter display and
-  put the main window full screen on the audience display (`window_manager`, displays from
-  `screen_retriever`). Both windows run in the same isolate/engine group, so they share the
-  `PresentationController` directly (no serialization).
-- **Spike (M9)**: verify the API on macOS/Windows/Linux with our Flutter pin. Fallback if it is
-  not usable: `desktop_multi_window` (separate engine per window) with the §6.2 messages over its
-  method channel; last resort: single window with presenter view + option B.
-
-### 5.5 Presenter view on one screen
-
-If only one screen exists, *Presenter view* still works (rehearsing, or mirroring setups where
-the projector shows a duplicate): the presenter view fills the window and the audience view is
-not shown locally; *Open on another device…* (option B) and *Open audience window* (popup,
-§5.3 fallback) are offered in the header.
-
----
+Recorded for a later iteration, not built: *Presenter view* opening the audience view in one
+extra window of its own origin — web via the Window Management API (`getScreenDetails()` +
+fullscreen companion window, Chromium; a popup the user drags elsewhere), desktop via a second OS
+window (Flutter's multi-window API, fallback `desktop_multi_window`; this was the desktop
+multi-window spike, Q30). It would be the only exception to suite 03 §1 (opened only by an
+explicit user action, closed when presenting ends, never navigating elsewhere) and would reuse
+the §6.2 messages over `BroadcastChannel`/in-process, so the state model above doesn't change.
 
 ## 6. Presentation session (followers, other devices, phone remote)
 
@@ -387,7 +342,7 @@ follower's deck revision is older, it waits for sync (spinner "Catching up…").
 
 | Role | Who | How |
 |------|-----|-----|
-| `audience` | The presenter's own account on any device | Presenter view › *Open on another device…* shows a link + QR (`/slides/p/<uuid>/present?view=audience&session=<id>`); also offered automatically: when the same user opens the deck elsewhere while a session is live, a banner "You're presenting on MacBook — *Show audience view here* / *Use as remote*" |
+| `audience` (P0) | The presenter's own account on any device or browser | Presenter view › *Open on another device…* shows a link + QR (`/slides/p/<uuid>/present?view=audience&session=<id>`); also offered automatically: when the same user opens the deck elsewhere while a session is live, a banner "You're presenting on MacBook — *Show audience view here* / *Use as remote*" |
 | `remote` | The presenter's own account, or anyone with a **pairing key** | §6.4 |
 | `follower` (P1) | Users with ≥ viewer access to the deck | "Follow along" link the presenter shares (`?view=follow&session=<id>`) or the header's *Follow Anna's presentation* (04 §3; follow UI in [09](09-collaboration-history.md) §1.6 — this spec owns the protocol); followers can't control; they see laser and ink; they may browse away and *Return to presenter*. P2: anonymous followers for public decks. |
 
@@ -423,9 +378,10 @@ content (only positions and ink). Rate limit: 20 commands/s per remote.
   the local blob cache; the pre-flight (§1.2) checks that all images of the deck are cached and
   otherwise shows "3 images aren't available offline" (*Present anyway* shows placeholders).
 - *File › Make available offline* (suite) pins the deck and prefetches all its images.
-- Audience windows on the same machine (§5.3/§5.4) work offline (BroadcastChannel/in-process).
-  Other devices, phone remote and followers need the server ("Offline — other devices can't
-  join").
+- Present mode and the presenter view in this window work offline. Audience devices or
+  browsers, the phone remote and followers need the server to join ("Offline — other devices
+  can't join"); with the P1 same-browser fast path (§5.2) a joined pair keeps running through
+  connection drops.
 - Linked charts render from snapshots; update checks are skipped (08 §16).
 
 ---
@@ -457,8 +413,9 @@ info screens; still requires sign-in and access).
 
 ## 10. Rehearse timings
 
-`slides.present.rehearse`: present mode (presenter view if two screens, else single screen with a
-timing HUD at the top-left: current step time, slide time, total). Each advance records the
+`slides.present.rehearse`: present mode in this window (presenter view when *Start with presenter
+view* is on, else full screen with a timing HUD at the top-left: current step time, slide time,
+total). Each advance records the
 time spent on the step. At the end (or `Esc`): dialog "Total time 18:42 (40 slides). Keep the
 new timings?" — *Keep* writes `Slide.timingsJson` for every presented slide (one undo step
 "Record timings"), *Discard*. Partial rehearsals keep timings only for slides that were
@@ -672,9 +629,8 @@ viewer unless noted; none are undoable except where marked.
 | `slides.present.clearInk` / `undoInk` | `{slideId?}` | |
 | `slides.present.keepInk` (P2) | — | Editor; ✓ undoable |
 | `slides.present.timer` | `{action: start\|pause\|resume\|reset}` | |
-| `slides.present.swapDisplays` | — | |
-| `slides.present.openAudienceWindow` | — | §5.3 fallback |
-| `slides.present.openOnAnotherDevice` | — | Link + QR dialog (option B) |
+| `slides.present.openOnAnotherDevice` | — | Audience link + QR dialog (§5.2) |
+| `slides.present.joinAsAudience` | `{sessionId}` | *Show audience view here* banner (§5.2, §6.3) |
 | `slides.present.remote` (P1) | — | "Use phone as remote": QR + code (id from 04 §3) |
 | `slides.present.toggleFullscreen` | — | `F` |
 | `slides.present.toggleSkipped` | — | Presenter view |
@@ -712,7 +668,7 @@ Language from the deck's language setting.
 - Present mode exposes the current slide's content to screen readers in reading order
   (placeholders first, then z-order top to bottom) and announces newly built content (06 §17).
 - The presenter view, picker, remote and dialogs are fully keyboard operable; focus never lands
-  in the audience window.
+  in an audience view.
 - Laser and ink don't carry information alone; the help overlay lists every shortcut.
 - Black/white screens and transitions honor reduced motion (fades shortened to 0/100 ms).
 
@@ -722,15 +678,16 @@ Language from the deck's language setting.
 
 1. `Mod+Shift+Enter` presents full screen from the first non-skipped slide; `→`/`PageDown`/
    click step through builds and slides; `Esc` returns to the editor at the shown slide.
-2. A Logitech-style clicker (PageDown/PageUp/B/F5/Esc) drives the whole presentation on web and
-   desktop without triggering browser reloads.
+2. A Logitech-style clicker (PageDown/PageUp/B/F5/Esc) drives the whole presentation on the web
+   without triggering browser reloads.
 3. Clicking during a running build finishes it; `←` jumps to the previous step's end state.
-4. With two screens in Chrome, *Presenter view* (after granting window management once) puts
-   the audience full screen on the external display and the presenter view on the laptop in one
-   click; navigation in either window keeps both in sync within one frame. In Firefox/Safari the
-   fallback popup flow works and is closed when the presentation ends.
+4. *Presenter view* runs in the presenting window; no code path opens a window (test: no
+   `window.open`/Window Management API calls; suite 03 §1). A second browser signed in to the
+   same account opens the audience link (or the *Show audience view here* banner), goes full
+   screen and follows navigation, laser and ink within 300 ms p95 on a LAN; ending the
+   presentation ends the audience view.
 5. The presenter view shows current, next build/slide, notes, timers and pacing against
-   rehearsed timings; *Swap displays* swaps the screens.
+   rehearsed timings.
 6. Laser, pen, highlighter, eraser and clear work on the audience view (and from the presenter
    view's current slide); ink survives navigating away and back and disappears after ending.
 7. The slide picker shows groups and skipped slides; picking a skipped slide shows it; *Next*
@@ -760,8 +717,9 @@ Language from the deck's language setting.
   picker, black/white, ink model, kiosk timers (fake clock), rehearse flow.
 - Presentation session: server tests for join/roles/pairing/expiry/takeover, message relay across
   two instances (bus), rate limits; client tests for follower seek and clock offset.
-- Window management: unit tests of screen choice and the fallback state machine with a fake
-  `ScreenDetails`; manual QA checklist on Chrome (2 screens), Firefox, Safari, macOS desktop.
+- Single window: a test asserts that presenting never calls `window.open` or the Window
+  Management API; manual QA checklist for presenter view + audience in a second browser on
+  Chrome, Firefox and Safari, and with a phone as audience.
 - E2E: present a fixture deck via `flutter_driver`, export PDF and check page count/bookmarks.
 
 ---
@@ -773,8 +731,8 @@ Language from the deck's language setting.
 | A-10-1 | `Deck.presentJson: String?` with the §3 schema (`v`, `mode`, `useRehearsedTimings`, `advanceDuringBuild`, `endBehavior`, `wheelAdvance`, `letterboxColor`, `reduceMotion`, `keepPresentingOutsideFullscreen`, `kiosk {restartAfterIdleSec, exitGesture, allowNavigation}`, `laserColor`, `showCaptionsByDefault`). | §3 |
 | A-10-2 | `Slide.timingsJson: String?` (`v`, `stepsMs`, `totalMs`, `rehearsedAt`, `by`). | §10 |
 | A-10-3 | `Slide.skipped: bool` and `SlideGroup.skipped: bool` semantics as §2.2 (effective skip = slide or its group). | §2.2 |
-| A-10-4 | `UserPreferences.slidesPresenter` (JSON, synced per user): presenter layout preset, notes size, timer mode/target, pen colors/widths, open-presenter-view-by-default, show-skipped-in-presenter; and `slidesExportOptions` (last-used PDF/PNG options). The remembered screen assignment (§5.3) stays device-local (02 §7). | §3, §11.1 |
+| A-10-4 | `UserPreferences.slidesPresenter` (JSON, synced per user): presenter layout preset, notes size, timer mode/target, pen colors/widths, start-with-presenter-view, show-skipped-in-presenter; and `slidesExportOptions` (last-used PDF/PNG options). | §3, §11.1 |
 | A-10-5 | Server (not synced, ephemeral): `PresentationEndpoint` with `PresentationJoin`, `PresentationUpdate`, `PresentationEvent` (sealed: `state`, `laser`, `ink`, `command`, `camera`, `end`, `roster`) models; bus channel `present:<sessionId>`. | §6 |
 | A-10-6 | Server: `SlidesExportEndpoint` + `ExportResultView`/`ExportProgressEvent` reuse (Write's models generalized to `itemUuid`). | §11.5 |
 | A-10-7 | Presence state value `presenting` (suite 07 §1.1). | §8 |
-| A-10-8 | Suite 03 §1: the presenting window exception (§5.2); suite 08: keymap scope `present`; suite 01 §2.1: `wonky_slides` justified exceptions `window_manager`, `screen_retriever` (desktop), `printing`, `pdf`, `archive` (PNG zip). | §5, §2, §12 |
+| A-10-8 | Suite 03 §1: no presenting exception in v2 (§5.2, decided); suite 08: keymap scope `present`; suite 01 §2.1: `wonky_slides` justified exceptions `printing`, `pdf`, `archive` (PNG zip); `window_manager`/`screen_retriever` only when desktop work resumes. | §5, §2, §12 |

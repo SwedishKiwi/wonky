@@ -15,6 +15,8 @@ Wonky Drive is the one file system of the suite. It is implemented once in
   is a full-page navigation **within the same browser tab/window** — never a new window.
 - Every user has **50 MB** of storage, enforced on every byte-adding path
   ([Drive 03](wonky_drive/03-storage-quota.md)).
+- The site root `/` lands on **Wonky Write's home** (`/write/`, v2 review Q2); Wonky Drive is one
+  click away in the left menu of every home (01 §2.4).
 
 ## 1. Data model (server, Postgres — not synced)
 
@@ -165,7 +167,7 @@ Single-window page at `/` of each app — layout:
 │ 🗑 Trash        │                                                              │
 │ ───────────    │                                                              │
 │ ⚙ Write sett…  │                                                              │
-│ ▣ Wonky Works… │      (bottom section: Write settings, Wonky Works settings,  │
+│ ▣ Wonky Work… │      (bottom section: Write settings, Wonky Work settings,  │
 │ 🐞 Report a bug│       Report a bug, storage meter "12.3 MB of 50 MB used")   │
 │ ▬▬▬░ 12.3/50 MB│                                                              │
 └────────────────┴─────────────────────────────────────────────────────────────┘
@@ -179,7 +181,7 @@ Single-window page at `/` of each app — layout:
   suggestions dropdown (recent
   searches, matching items with their kind icons, "Search for '…'" row, filter chips: type,
   owner, modified), app theme toggle (light/dark/system cycle), notifications, account avatar
-  menu (name, email, (v2) *<App> settings*, *Wonky Works settings*, *Open ▸* Drive / Write /
+  menu (name, email, (v2) *<App> settings*, *Wonky Work settings*, *Open ▸* Drive / Write /
   Sheets / Slides with the product icons, Sign out). There is no help button (Help lives in the
   editor's Help menu and *Report a bug* in the left menu; there is no help center). (v2) In app
   homes the search is filtered to the app's kind; its dropdown ends with "Search all of Wonky
@@ -187,7 +189,7 @@ Single-window page at `/` of each app — layout:
 - **Left menu** (v2: `HomeSidebar`, replaces `DriveSidebar`; 03 §3.3, Drive 04 §2): app section
   (four apps), *New* button (12 px left of the +; app homes: New <kind> / From template…), the
   app's nav items (app homes: Recent, My files, Shared with me, Starred, Offline, Trash — no
-  folder tree), bottom section (*<App> settings*, *Wonky Works settings*, *Report a bug*,
+  folder tree), bottom section (*<App> settings*, *Wonky Work settings*, *Report a bug*,
   storage meter "12.3 MB of 50 MB used").
 - **(v2) Folder rule in app homes.** A folder appears in an app home only if it contains —
   recursively, ignoring trashed items — at least one item of the app's kind. The server keeps
@@ -195,7 +197,7 @@ Single-window page at `/` of each app — layout:
   move, trash, restore and delete of a non-folder item, in the same transaction; a nightly job
   recomputes masks) and `list(filter.foldersContaining: k)` returns only folders whose mask has
   `k`. The mask ignores per-user access (a folder whose only document you can't see may show
-  and open empty). See the Open question in 03 §3.3. Moving between folders, creating folders and
+  and open empty). (Decided in the v2 review, Q7; 03 §3.3.) Moving between folders, creating folders and
   uploads happen in Drive (header-row button **Open in Wonky Drive** → the same folder in
   Drive); the per-item *Move to…* dialog stays in app homes and editors.
 - **Template strip**: collapsible ("Hide templates"), 20 px horizontal padding (matching the list

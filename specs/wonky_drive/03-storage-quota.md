@@ -28,7 +28,7 @@ backfill for existing users. It is authoritative for anything that counts or blo
 | Presentation content | ✓ | item owner | Same estimator over the Slides synced tables (Slides 02) | Same cadence (Slides change log) |
 | Uploaded file (`file` kind) | ✓ | item owner (the uploader) | Exact stored size | At `completeFileUpload` (reserved at `createFileUpload`, §5) |
 | Images / attachments in documents, over cells, on slides (`StoredFile.kind == image`) | ✓ | owner of the item they belong to | Exact stored size, summed in `DriveItem.attachmentBytes` | At upload completion (+), when the weekly orphan cleanup deletes an unreferenced image (−) |
-| Previous versions of uploaded files (P2) | ✓ (Open question, 02 §9) | item owner | Exact | At replace / version delete |
+| Previous versions of uploaded files (P2) | ✓ (decided, v2 review Q14; 02 §9) | item owner | Exact | At replace / version delete |
 | Trashed items | ✓ until permanently deleted (30 days) | item owner | As above, shown as *Trash* | — |
 | Imported originals kept for reference | — (none are kept today; if a "keep original" option is added it counts as a `file`) | | | |
 | Version-history snapshots and op logs | ✗ | | | |
@@ -201,7 +201,7 @@ reconciled row equals the maintained one.
 ### 6.1 Storage meter (`StorageMeter`, `wonky_app/lib/src/storage/`)
 
 - In the **bottom section of every home's left menu** (Drive, Write, Sheets, Slides; suite 03
-  §3.3), in Settings › Wonky Works › Storage, and at the top of Drive's Storage page (large).
+  §3.3), in Settings › Wonky Work › Storage, and at the top of Drive's Storage page (large).
 - A 4 px `ShadProgress`-style bar + "12.3 MB of 50 MB used". Color: `primary` below
   `warnAtPercent`, `warning` token from 90 %, `destructive` at ≥ 100 % ("50.4 MB of 50 MB used —
   over quota"). While `calculating`: indeterminate bar + "Calculating storage…".
@@ -286,7 +286,7 @@ leave the image as a placeholder "Not uploaded — out of storage" with *Retry* 
 - **Details panel** (all homes): "Storage used: 6.1 MB" with "Counts against Anna Berg's
   storage" when the viewer isn't the owner; for folders: nothing.
 - **List/grid**: the *File size* column shows the counted size; folders "—".
-- **Settings › Wonky Works › Storage** (`/settings/storage`, suite 04 §4): meter, breakdown,
+- **Settings › Wonky Work › Storage** (`/settings/storage`, suite 04 §4): meter, breakdown,
   "What counts" text, *Manage storage in Wonky Drive* (→ `/drive/storage`).
 - **Upload panel** rows that fail on quota: "Not uploaded — you're out of storage" + *Manage
   storage*.
@@ -393,20 +393,19 @@ of images in a batch); it never reserves.
    shows "Calculating storage…" and enforcement **fails open** (uploads are allowed; the
    reconcile catches up). Expected duration: minutes (the backfill reads each space once).
 3. **Users over 50 MB after the backfill** keep all their data. They get the over-quota
-   banner and one in-app notification (`NotificationKind.storage`, new): "Wonky Works now
+   banner and one in-app notification (`NotificationKind.storage`, new): "Wonky Work now
    includes 50 MB of storage per person. You're using 73.2 MB — you can keep editing, but free
    up space to upload or copy files again. [Manage storage]". No email.
 4. **Release note**: `StorageUsage.bytesUsed` changes meaning (it previously added every
    `StoredFile` the user uploaded, including thumbnails and version snapshots).
 
-**Open question (for review):** grace for existing users who are over the quota after the
-backfill (e.g. quota = their usage rounded up, for 90 days)? *Recommendation:* no — the
-over-quota state is non-destructive and blocks only new bytes; a temporary higher quota adds a
-second rule users must understand.
+**Decided (v2 review, Q15):** **no grace period** for existing users who are over the quota
+after the backfill: the over-quota state is non-destructive and blocks only new bytes; a
+temporary higher quota would add a second rule users must understand.
 
-**Open question (for review):** D3 lists "restore of trashed items" as an enforcement point,
-but trashed items already count, so a restore adds no bytes. *Recommendation:* never block
-restores from trash (§7.2); block only paths that add bytes.
+**Decided (v2 review, Q16):** restores from trash are **never blocked** (§7.2): trashed items
+already count, so a restore adds no bytes. D3's "restore of trashed items" enforcement point is
+dropped; only paths that add bytes are checked.
 
 ## 10. Acceptance criteria
 

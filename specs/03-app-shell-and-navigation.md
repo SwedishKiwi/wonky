@@ -11,7 +11,8 @@ commands, menus, editor screen builder; (v2) `homeScope`, `homeNav`, `appSetting
 ## 1. Single-window rule
 
 - The app **never** opens a new browser tab/window or OS window: no `window.open`, no
-  `url_launcher` with `_blank` for internal content, no multi-window desktop APIs.
+  `url_launcher` with `_blank` for internal content, no multi-window desktop APIs, no Window
+  Management API.
 - Opening a document replaces the current route in the same window. Switching between the
   apps (Drive, Write, Sheets, Slides — the left menu of every home, §3.3, and the account menu)
   is a same-window navigation (web: same tab, full page load to the other app's base path;
@@ -23,37 +24,36 @@ commands, menus, editor screen builder; (v2) `homeScope`, `homeNav`, `appSetting
 - **Exception: Sign in with Google** (web, [04 §1.6](04-auth-and-accounts.md)) runs Google's
   consent page in a short-lived, named OAuth popup that closes itself after `/auth/callback`
   hands the result back. It is Google's page, not Wonky content.
-- **(v2) Exception under review: presenting in Slides.** The presenter view needs the audience
-  view on a second screen. See the Open question at the end of this section.
+- **(v2) No exception for presenting.** Slides presents in the same window (full screen, or the
+  presenter view with current/next slide, notes and timer); the audience view for a projector
+  runs on **another device or browser** joined to the deck's presentation session
+  ([Slides 10 §5](wonky_slides/10-presenting-and-pdf.md)). Joining a session in a second
+  browser is the user's own navigation, not a window the app opens.
 - Dialogs, pickers, previews (print preview, export preview, version compare, (v2) Drive file
   previews) are in-app overlays or full-screen in-app routes with a back/close affordance.
 - **Quick switcher** (`Mod+O`): dialog listing recent files of every kind (v2: incl.
   presentations and uploaded files) + search; Enter opens in the same window (other kinds
   navigate to their app; files open Drive's preview).
-- **Back/forward**: browser history (web) and `Mod+[` / `Mod+]` (desktop) navigate between
-  previously opened files and drive locations.
+- **Back/forward**: browser history (web) and `Mod+[` / `Mod+]` (desktop, deferred) navigate
+  between previously opened files and drive locations.
 - Multi-tab browsing of the *same* app is allowed by the browser, but the app itself is designed
   as one window; two windows of the same user simply appear as two sessions (presence shows
   "You (2 tabs)").
 
-**Open question (for review) (v2, D12): a second window for presenting.** Slides' presenter
-view (current/next slide, notes, timer) belongs on the laptop while the audience sees the slide
-on the projector. Options:
-
-| Option | How | Trade-offs |
-|--------|-----|-----------|
-| **A. Presenting-only exception** *(recommended)* | *Present with presenter view* opens the **audience view** in a second window: web via the Window Management API (`getScreenDetails()` + `window.open` placed fullscreen on the other screen; falls back to a normal popup the user drags), desktop via a second OS window. The window shows only `/slides/p/:uuid/present?role=audience`, is driven by the presenter window (BroadcastChannel on web, in-process on desktop) and closes when presenting ends. Nothing else may open a window. | Matches Keynote/PowerPoint/Google Slides; needs a popup permission on web; a narrow, well-tested exception. |
-| B. Second device | Presenter view on this screen; the audience view runs on another device (or a second browser signed in to the same deck) joined to a **presentation session** synced over the presence stream. | Keeps the single-window rule absolute; awkward for the common laptop + projector case. |
-
-Either way the phone-as-remote (P1) uses the presentation session of option B. The exact
-behavior is specified in [Slides 10](wonky_slides/10-presenting-and-pdf.md).
+**Decided (v2 review, Q5/Q29, D12): no second window in v2.** Presenting is single-window:
+(a) *Present* (full screen in this window), (b) *Presenter view* in this window (current/next
+slide, notes, timer) and (c) the **audience view on another device or browser** joined to a
+**presentation session** relayed by the server (Slides 10 §5.2, §6). The phone-as-remote
+(P1) uses the same session. A presenting-only second window (Window Management API on web, a
+second OS window on desktop) is recorded as a **possible later addition**; it would be the only
+exception and must reuse the presentation-session state model.
 
 ## 2. Routing (`go_router`, URL-based for web)
 
 | Route | Screen |
 |-------|--------|
 | `/signin`, `/signup`, `/signup/verify`, `/reset` | Auth (see 04) |
-| `/` | Home (app homes: Recent of the app's kind + template strip; Drive: Home, all kinds) — (v2) §3.3 |
+| `/` | Home (app homes: Recent of the app's kind + template strip; Drive: Home, all kinds) — (v2) §3.3. The site root (`/` of the origin) redirects to Wonky Write's home (`/write/`) |
 | `/f/:folderUuid` | Folder (v2; the former `/drive/:folderUuid` redirects) |
 | `/my-files` (app homes) · `/my-drive` (Drive) | Root of the user's drive (v2 names; `/my-drive` also redirects to `/my-files` in app homes) |
 | `/shared`, `/starred`, `/recent`, `/offline` (app homes), `/trash` | Drive views |
@@ -61,7 +61,7 @@ behavior is specified in [Slides 10](wonky_slides/10-presenting-and-pdf.md).
 | `/templates` | Template gallery |
 | `/new?folder=&template=` (Write, Sheets, Slides; v2) | Creates an item of the app's kind (offline-first where supported) and replaces the route with its editor; used by Drive's *New* menu and *From template* |
 | `/import?file=<fileItemUuid>` (Write, Sheets; v2) | Imports an uploaded Drive file with the app's import dialog (Drive 02 §7.2) |
-| `/settings/:section` | Wonky Works settings (suite sections, 04 §4) — (v2) |
+| `/settings/:section` | Wonky Work settings (suite sections, 04 §4) — (v2) |
 | `/settings/app`, `/settings/app/:section` | The current app's settings (04 §4) — (v2) |
 | Write: `/d/:uuid` (+ `?heading=…`, `?comment=…`, `?version=…`) | Document editor |
 | Write: `/d/:uuid/history` | Version history (full-screen compare mode) |
@@ -80,7 +80,8 @@ Auth guard redirects to `/signin?next=…`. Unknown/forbidden items show an in-a
 
 Deployment: `wonky_server`'s web server serves the Flutter web builds from one origin:
 `/drive/…`, `/write/…`, `/sheets/…`, `/slides/…` (each built with matching `--base-href`);
-(v2) `/` redirects to `/drive/`. Routes above are relative to the app's base href. Cross-app
+(v2) the origin's `/` redirects to `/write/` (Wonky Write's home; Drive stays at `/drive/`,
+reachable from every home's left menu). Routes above are relative to the app's base href. Cross-app
 links use the app base URLs from `config.json`; the sign-in session is shared by all apps
 (see [01 §2.4–§2.5](01-architecture.md)).
 
@@ -147,7 +148,7 @@ See version history `Mod+Alt+Shift+H`), Make available offline (toggle), Details
 suggestions* toggle for its margin), App theme ▸ (System / Light / Dark).
 
 **Tools**: Assistant, Explore (search drive), (v2) *<App> settings…*
-(`shell.settings.openApp`, `Mod+,` on desktop) and *Wonky Works settings…*
+(`shell.settings.openApp`, `Mod+,` on desktop) and *Wonky Work settings…*
 (`shell.settings.open`), Keyboard shortcuts (`Mod+/`), Accessibility settings.
 
 **Help**: Keyboard shortcuts, app items (Write: Markdown guide; Sheets: Function list; Slides:
@@ -155,11 +156,10 @@ see Slides 04), separator, (v2) **Report a bug** (`shell.help.reportBug`, §3.4)
 About. There is no in-app help center and no menu search (menu commands are found through the
 command palette).
 
-**Open question (for review) (v2):** keep *Report a problem* (`shell.help.feedback`, the in-app
-dialog that posts to the server's `feedback` endpoint) next to *Report a bug*?
-*Recommendation:* replace it in the Help menu with *Report a bug* (one obvious way to report);
-keep `shell.help.feedback` registered (palette, MCP) and keep the error boundary's *Copy error
-details*, which users can paste into the GitHub issue.
+**Decided (v2 review, Q6):** *Report a bug* **replaces** *Report a problem* in the Help menu
+(one obvious way to report). `shell.help.feedback` (the in-app dialog that posts to the server's
+`feedback` endpoint) stays registered for the palette and MCP, and the error boundary keeps
+*Copy error details*, which users can paste into the GitHub issue.
 
 Only one menu is open at a time: opening a menubar menu, dropdown or context menu closes the
 one that was open ([02 §4.2](02-design-system.md)).
@@ -189,19 +189,18 @@ The **left menu** (`HomeSidebar`, Drive 04 §2) is the same widget in every home
    *My files*, *Shared with me*, *Starred*, *Offline* (on-device availability, as today),
    *Trash*; Drive — Home, My Drive (+ folder tree), Shared with me, Recent, Starred, Trash,
    Storage.
-3. **Bottom section** — *<App> settings* (`shell.settings.openApp`), *Wonky Works settings*
+3. **Bottom section** — *<App> settings* (`shell.settings.openApp`), *Wonky Work settings*
    (`shell.settings.open`), *Report a bug* (`shell.help.reportBug`), and the storage meter
    ("12.3 MB of 50 MB used", [Drive 03 §6.1](wonky_drive/03-storage-quota.md)).
 
 The account menu (avatar) in homes and editors lists: name and email, *<App> settings*, *Wonky
-Works settings*, *Open ▸* Wonky Drive / Write / Sheets / Slides (product icons; replaces the
+Work settings*, *Open ▸* Wonky Drive / Write / Sheets / Slides (product icons; replaces the
 former single "Open Wonky Sheets/Write" item), *Sign out*.
 
-**Open question (for review) (v2, D2):** which folders appear in an app home? *Recommendation:*
-only folders that contain — recursively, ignoring trashed items — at least one item of the
-app's kind (maintained as `DriveItem.kindMask`, suite 05 §3.2); empty folders and folders with
-only other kinds are hidden, so an app home never shows dead ends. Alternative: always show all
-folders (simpler, but a Slides user sees every Sheets-only folder).
+**Decided (v2 review, Q7, D2):** an app home shows only folders that contain — recursively,
+ignoring trashed items — at least one item of the app's kind (maintained as
+`DriveItem.kindMask`, suite 05 §3.2); empty folders and folders with only other kinds are
+hidden, so an app home never shows dead ends (folders are managed in Wonky Drive).
 
 ### 3.4 Report a bug (v2)
 
@@ -209,17 +208,16 @@ folders (simpler, but a Slides user sees every Sheets-only folder).
   out too: the sign-in screens show it as a footer link). Entry points: Help menu in every
   editor, the editor title-row icon button (§3.1), the bottom section of every home's left
   menu (§3.3), the command palette, MCP `ui.invoke_command`.
-- It opens `wonky.help.bugReportUrl` (default `https://github.com/serverpod/wonky/issues`) as
-  an **external link** with the confirm popover of §1: "Open external link? github.com — Issues
-  on GitHub are public: don't include private content. [Open] [Copy link]".
-
-**Open question (for review) (v2, D5):** link to the issue list, or to a *new issue* with a
-prefilled body? *Recommendation:* a new-issue deep link
-(`…/issues/new?template=bug_report.yml&app=write&version=2.0.3&platform=web&browser=Chrome%20131`)
-with an issue form in the repository (`.github/ISSUE_TEMPLATE/bug_report.yml`, fields *app*,
-*version*, *platform*, *browser/OS*, *what happened*, *steps*), prefilled with **no user
-content, ids, emails or URLs of documents** — only the app, build version, platform and browser
-family. Fallback to the issue list when the URL would exceed 2,000 characters.
+- It opens a **new-issue deep link** built from `wonky.help.bugReportUrl` (default
+  `https://github.com/serverpod/wonky/issues`) as an **external link** with the confirm popover
+  of §1: "Open external link? github.com — Issues on GitHub are public: don't include private
+  content. [Open] [Copy link]".
+- **Decided (v2 review, Q8, D5):** the link is
+  `…/issues/new?template=bug_report.yml&app=write&version=2.0.3&platform=web&browser=Chrome%20131`
+  with an issue form in the repository (`.github/ISSUE_TEMPLATE/bug_report.yml`, fields *app*,
+  *version*, *platform*, *browser/OS*, *what happened*, *steps*), prefilled with **no user
+  content, ids, emails or URLs of documents** — only the app, build version, platform and
+  browser family. It falls back to the issue list when the URL would exceed 2,000 characters.
 
 ## 4. Global overlays and states
 
@@ -253,7 +251,14 @@ family. Fallback to the issue list when the URL would exceed 2,000 characters.
 - Long-lived services (Connectivity, Presence, UndoService, CommandRegistry, KeymapService,
   McpBridge, Preferences) are created in `WonkyShell` and provided at the top.
 
-## 6. Desktop specifics (macOS first, Windows/Linux supported)
+## 6. Desktop specifics (deferred in v2)
+
+**v2 is web only** ([01 §1 A13](01-architecture.md)): the desktop targets must keep compiling,
+but everything in this section is **deferred** — no native menubar, no desktop binaries with URL
+schemes, no desktop packaging, no file associations. On desktop builds the left menu's app links
+and *Open in …* fall back to the web URL via `url_launcher` (an external app) or are hidden; no
+desktop-only code is written for v2. The rest of this section is the target for a later
+iteration.
 
 - One OS window. Native menubar on macOS mirrors `WonkyMenubar` via `PlatformMenuBar` (generated
   from the same `MenuSpec`); in-window menubar hidden on macOS when native menus are active
@@ -264,10 +269,9 @@ family. Fallback to the issue list when the URL would exceed 2,000 characters.
   other app via its custom URL scheme (`wonkydrive://f/<uuid>`, `wonkywrite://d/<uuid>`,
   `wonkysheets://s/<uuid>`, `wonkyslides://p/<uuid>`) — this is another app, consistent with the
   single-window rule — and fall back to the web URL if not installed.
-- **Open question (for review) (v2):** one desktop binary "Wonky Work" containing all four apps
-  (in-window switching) instead of four binaries? *Recommendation:* keep four binaries for v2
-  (the web build structure maps 1:1, and a combined binary would also combine the four bundles);
-  revisit when desktop packaging (M7 scope) is done.
+- **Decided (v2 review, Q9):** four binaries (the web build structure maps 1:1; a combined
+  binary would also combine the four bundles) — deferred with the rest of this section;
+  revisit when desktop work resumes.
 - Window title = document title + " — Wonky Write"; dirty marker unused (always saved).
 - File associations: `.md` (Write, imports), `.xlsx/.csv` (Sheets, imports); (v2) none for
   Drive or Slides (Slides has no import formats).

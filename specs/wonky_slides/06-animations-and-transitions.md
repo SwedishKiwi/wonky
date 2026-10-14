@@ -736,10 +736,10 @@ diff (`wonky_core` `SequenceDiff.diff<T>`, generalized from `LineDiff` — [07](
 | PDF without builds ([10](10-presenting-and-pdf.md) §11) | **Print frame**: edit frame + content-progressive elements at their final content (code: last state, no highlight dimming; charts fully built; typewriter text complete); elements with out-builds are kept; motion paths and persistent emphasis are **not** applied (objects stay where the author placed them). |
 | PDF with builds as pages | One page per step: `initial` if step 0 is empty and step 1 exists, then `endOfStep(i)` for every step (deduplicated when two steps produce identical frames). |
 
-**Open question (for review) — print frame.** Keynote prints the authored slide; PowerPoint
-prints all objects at their starting positions; some users expect "what the audience saw at
-the end" (final frame). *Recommendation*: the print frame above (authored layout + completed
-content), with a PDF option *Show final animation state* (uses `finalFrame`, P1).
+**Decided (v2 review, Q24) — print frame.** Prints and thumbnails use the print frame above
+(authored layout + completed content), with a P1 PDF option *Show final animation state* (uses
+`finalFrame`). Keynote prints the authored slide too; PowerPoint prints all objects at their
+starting positions, which hides out-built content.
 
 ### 9.7 Performance of the core
 
@@ -845,7 +845,7 @@ when the GPU backend is unavailable.
 ## 13. Reduced motion
 
 Active when any of these is on: the OS/browser setting (`MediaQuery.disableAnimations`), Wonky
-Works settings › Appearance › *Reduce motion* (suite 02 §1), or the present-mode option *Reduce
+Work settings › Appearance › *Reduce motion* (suite 02 §1), or the present-mode option *Reduce
 motion while presenting* ([10](10-presenting-and-pdf.md) §3).
 
 | Animation | Replacement |
