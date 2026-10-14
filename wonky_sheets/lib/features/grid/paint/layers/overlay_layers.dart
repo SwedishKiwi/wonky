@@ -2,7 +2,7 @@ import 'dart:math' as math;
 
 import 'package:flutter/widgets.dart';
 import 'package:wonky_sheets_core/formula.dart'
-    show GridRect, ColumnLetters, FormulaHighlighter, FormulaLocale;
+    show GridRect, ColumnLetters, FormulaHighlighter;
 
 import '../../../sheet_editor/sheet_editor_controller.dart';
 import '../../selection/grid_selection.dart';
@@ -51,7 +51,7 @@ class ReferenceBoxLayer extends GridLayer {
     try {
       refs = FormulaHighlighter.references(
         editor.text.text,
-        locale: FormulaLocale.forId(ctx.controller.locale),
+        locale: ctx.controller.formulaLocale,
       );
     } catch (_) {
       return;
@@ -141,12 +141,24 @@ class SelectionLayer extends GridLayer {
             ..strokeWidth = 1,
         );
       }
+      final groups = <int>{};
+      final activeGroup = sel.activeRange.group;
       for (var i = 0; i < sel.ranges.length; i++) {
         final range = sel.ranges[i];
+        // A display range (sorted filter view, 07 §4.4) is one rectangle on
+        // screen however many model ranges it covers.
+        final shown = range.displayRect;
+        if (shown != null && !groups.add(range.group)) continue;
         final rect = _clip(ctx, range.rect);
-        final r = pane.rangeRect(rect);
-        final isActiveRange = i == sel.activeRangeIndex;
-        final multi = rect.cellCount > 1 && rect != activeRect;
+        final r = shown != null
+            ? pane.displayRangeRect(_clip(ctx, shown))
+            : pane.rangeRect(rect);
+        final isActiveRange = shown != null
+            ? range.group == activeGroup
+            : i == sel.activeRangeIndex;
+        final multi =
+            (shown != null ? shown.cellCount : rect.cellCount) > 1 &&
+            (shown != null || rect != activeRect);
         if (multi || sel.ranges.length > 1) {
           final path = Path()
             ..fillType = PathFillType.evenOdd
@@ -160,7 +172,10 @@ class SelectionLayer extends GridLayer {
       final ar = pane.rangeRect(activeRect);
       canvas.drawRect(ar.deflate(1), active);
       // Fill handle.
-      if (sel.ranges.length == 1 && c.canEdit && !editing) {
+      if (sel.ranges.length == 1 &&
+          c.canEdit &&
+          !editing &&
+          !c.rowsPermuted(sel.ranges.first.rect)) {
         final rr = pane.rangeRect(_clip(ctx, sel.ranges.first.rect));
         final h = Rect.fromCenter(center: rr.bottomRight, width: 7, height: 7);
         canvas.drawRect(h, Paint()..color = tokens.sheetBackground);
@@ -169,9 +184,13 @@ class SelectionLayer extends GridLayer {
       // Copy/cut marching ants and paint-format source.
       final mark = c.clipMark.value;
       if (mark != null && mark.sheetId == ctx.sheetId) {
+        final shown = mark.displayRect;
         drawDashedRect(
           canvas,
-          pane.rangeRect(mark.rect).deflate(1),
+          (shown != null
+                  ? pane.displayRangeRect(shown)
+                  : pane.rangeRect(mark.rect))
+              .deflate(1),
           Paint()
             ..color = tokens.selectionBorder
             ..style = PaintingStyle.stroke
@@ -407,10 +426,11 @@ class HeaderLayer extends GridLayer {
       canvas.clipRect(
         Rect.fromLTRB(0, pane.rect.top, g.rowHeaderWidth, pane.rect.bottom),
       );
-      for (var r = pane.rowStart; r <= pane.rowEnd; r++) {
+      // Display order (a sorted filter view shows model numbers, 07 §4.4).
+      for (final r in pane.rows) {
         if (ctx.sheet.rows.sizeAt(r) <= 0) continue;
         final y0 = pane.y(r);
-        final y1 = pane.y(r + 1);
+        final y1 = pane.bottomOf(r);
         final rect = Rect.fromLTRB(g.rowGutter, y0, g.rowHeaderWidth, y1);
         final full = sameSheet && sel.rowFullySelected(r);
         if (full) {

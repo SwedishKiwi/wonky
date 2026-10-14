@@ -64,6 +64,10 @@ void main() {
           // Deletes skip the FK projection of unreferenced tables (offline-sync
           // patch OS-6): ~0.2 ms per cell instead of ~2.5 ms.
           expect(reverted, lessThan(rows * 20));
+          // Writes and revives are set-based engine writes (patch OS-7):
+          // ~0.2 ms per cell (a 20k-cell redo took ~45 s before).
+          expect(written, lessThan(rows * 20));
+          expect(redone, lessThan(rows * 20));
         },
         timeout: const Timeout(Duration(minutes: 10)),
       );

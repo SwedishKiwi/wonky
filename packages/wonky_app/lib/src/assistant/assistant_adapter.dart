@@ -2,6 +2,7 @@ import 'package:flutter/widgets.dart';
 import 'package:wonky_client/wonky_client.dart';
 import 'package:wonky_core/wonky_core.dart' show Role;
 
+import '../mcp_bridge/ui_tool.dart';
 import 'assistant_models.dart';
 
 /// What an app contributes to the shared assistant panel for its open file
@@ -63,4 +64,35 @@ abstract interface class AssistantRunHooks {
 
   /// Extra widgets under [reply] (null = none).
   Widget? replyFooter(BuildContext context, AssistantReplyEntry reply);
+}
+
+/// Optional texts of an [AssistantDocumentAdapter] whose files are not
+/// "documents" (Wonky Sheets: "this spreadsheet"). An adapter that also
+/// implements this interface replaces the panel's texts; null keeps the
+/// shell's text.
+abstract interface class AssistantPanelTexts {
+  /// The empty state ("Ask about this spreadsheet …").
+  String? get emptyTitle;
+
+  /// The privacy notice; [provider] is the provider's display name (null
+  /// when unknown).
+  String? privacyNotice(String? provider);
+
+  /// Tooltip of *Edit* ("changes go straight into the spreadsheet").
+  String? get modeEditHint;
+
+  /// Tooltip of *Edit* when the user can only suggest.
+  String? get modeEditUnavailable;
+
+  /// Tooltip of *Suggest*.
+  String? get modeSuggestHint;
+}
+
+/// Optional window tools of an [AssistantDocumentAdapter] (Sheets 12
+/// §6.2): the assistant runs these `ui.*` tools in the window the request
+/// came from (relayed as `uiToolCall` events of the chat stream). The
+/// adapter lists them in [AssistantContextHints.uiTools].
+abstract interface class AssistantWindowTools {
+  /// Runs [tool] with [args] in this window; throws [UiToolException].
+  Future<UiToolResult> runWindowTool(String tool, Map<String, Object?> args);
 }

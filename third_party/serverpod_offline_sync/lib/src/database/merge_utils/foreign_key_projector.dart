@@ -432,10 +432,12 @@ class CrdtForeignKeyProjector {
     }
     if (pending.isEmpty) return;
 
+    // OS-7: the fields are read back only to fill the merge cache.
     final insertedFields = await CrdtDataField.db.insert(
       _context.databaseSession,
       [for (final entry in pending) entry.field],
       transaction: transaction,
+      noReturn: mergeCache == null,
     );
     if (mergeCache == null) return;
     for (final (index, field) in insertedFields.indexed) {
@@ -614,6 +616,9 @@ class CrdtForeignKeyProjector {
   }
 
   /// Proves that an ordinary local write leaves the existing projection fixed.
+  /// With `restoring` (OS-7) the candidates are tombstoned rows being
+  /// revived with their supplied values, checked like new rows except that
+  /// their CRDT rows must exist.
   ///
   /// Only new, unreferenced rows and additions to null FKs qualify. All parents
   /// must already be live, no unique claim may be contested, and no authored
@@ -626,6 +631,9 @@ class CrdtForeignKeyProjector {
     required bool inserting,
     bool persisted = true,
     List<Column>? columns,
+    // OS-7: the candidates are tombstoned rows about to be revived (their
+    // CRDT rows exist; see `CrdtMutationRecorder.canReviveWithoutProjection`).
+    bool restoring = false,
   }) async {
     if (candidates.isEmpty) return true;
     final tableName = candidates.first.table.tableName;
@@ -735,6 +743,7 @@ class CrdtForeignKeyProjector {
       referencingColumnsByTable: referencingColumnsByTable,
       uniqueClaims: uniqueClaims,
       transaction: transaction,
+      restoring: restoring,
     );
   }
 

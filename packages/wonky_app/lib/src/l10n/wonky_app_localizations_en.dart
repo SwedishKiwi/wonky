@@ -666,6 +666,9 @@ class WonkyAppLocalizationsEn extends WonkyAppLocalizations {
   String get commentFailed => 'The comment could not be saved';
 
   @override
+  String get commentPending => 'Pending — will be posted when you\'re online';
+
+  @override
   String get commentLink => 'Link to comment';
 
   @override
@@ -3134,6 +3137,10 @@ class WonkyAppLocalizationsEnXa extends WonkyAppLocalizationsEn {
 
   @override
   String get commentFailed => '[Ţĥé çöɱɱéñţ çöûļð ñöţ ƀé šåṽéð one two t]';
+
+  @override
+  String get commentPending =>
+      '[Þéñðîñĝ — ŵîļļ ƀé þöšţéð ŵĥéñ ýöû\'ŕé öñļîñé one two three]';
 
   @override
   String get commentLink => '[Ļîñķ ţö çöɱɱéñţ one t]';

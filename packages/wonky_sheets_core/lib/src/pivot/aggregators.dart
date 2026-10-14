@@ -32,6 +32,15 @@ abstract class Aggregator {
 
   /// The aggregated value.
   CellValue get result;
+
+  /// Whether [remove] can take back source value [v] exactly (incremental
+  /// refresh, 07 §7.10): SUM, AVERAGE, COUNT and COUNTA always (unless an
+  /// error is involved), MIN/MAX unless [v] is the current extreme.
+  bool canRemove(CellValue v) => false;
+
+  /// Takes back one source value added before (check [canRemove] first).
+  void remove(CellValue v) =>
+      throw UnsupportedError('$runtimeType does not support remove');
 }
 
 abstract class _Numeric extends Aggregator {
@@ -65,6 +74,14 @@ final class _Sum extends _Numeric {
   void addNumber(double x) => sum += x;
   @override
   CellValue numeric() => NumberValue(sum);
+
+  @override
+  bool canRemove(CellValue v) => error == null && v is! ErrorValue;
+
+  @override
+  void remove(CellValue v) {
+    if (v is NumberValue) sum -= v.number;
+  }
 }
 
 final class _Product extends _Numeric {
@@ -92,6 +109,16 @@ final class _Average extends _Numeric {
   @override
   CellValue numeric() =>
       n == 0 ? const ErrorValue(CellErrorKind.div0) : NumberValue(sum / n);
+
+  @override
+  bool canRemove(CellValue v) => error == null && v is! ErrorValue;
+
+  @override
+  void remove(CellValue v) {
+    if (v is! NumberValue) return;
+    sum -= v.number;
+    n--;
+  }
 }
 
 final class _MinMax extends _Numeric {
@@ -106,6 +133,15 @@ final class _MinMax extends _Numeric {
 
   @override
   CellValue numeric() => NumberValue(best ?? 0);
+
+  @override
+  bool canRemove(CellValue v) =>
+      error == null &&
+      v is! ErrorValue &&
+      (v is! NumberValue || v.number != best);
+
+  @override
+  void remove(CellValue v) {}
 }
 
 final class _Median extends _Numeric {
@@ -157,6 +193,14 @@ final class _CountA extends Aggregator {
 
   @override
   CellValue get result => NumberValue(n.toDouble());
+
+  @override
+  bool canRemove(CellValue v) => true;
+
+  @override
+  void remove(CellValue v) {
+    if (v is! EmptyValue) n--;
+  }
 }
 
 final class _Count extends Aggregator {
@@ -169,6 +213,14 @@ final class _Count extends Aggregator {
 
   @override
   CellValue get result => NumberValue(n.toDouble());
+
+  @override
+  bool canRemove(CellValue v) => true;
+
+  @override
+  void remove(CellValue v) {
+    if (v is NumberValue) n--;
+  }
 }
 
 final class _CountUnique extends Aggregator {

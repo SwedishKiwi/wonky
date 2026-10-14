@@ -37,8 +37,12 @@ abstract final class ObjectOps {
           if (id is String) ?objs.record(id),
       ];
     }
-    final one = target(ed, args);
-    return one == null ? const [] : [one];
+    final id = args['objectId'];
+    if (id is String && id.isNotEmpty) {
+      final one = objs.record(id);
+      return one == null ? const [] : [one];
+    }
+    return objs.selectedRecords;
   }
 
   /// A normalized anchor with its top-left at sheet px ([x], [y]) on
@@ -81,8 +85,25 @@ abstract final class ObjectOps {
     MutationPlan plan, {
     required String key,
     required String label,
+  }) => recordCoalescedChanges(
+    ctx,
+    ed,
+    plan.changes,
+    key: key,
+    label: label,
+    planLabel: plan.label,
+  );
+
+  /// [recordCoalesced] for changes of several plans (group nudges).
+  static void recordCoalescedChanges(
+    CommandContext ctx,
+    SheetEditorController ed,
+    List<RowChange> changes, {
+    required String key,
+    required String label,
+    String? planLabel,
   }) {
-    if (plan.isEmpty) return;
+    if (changes.isEmpty) return;
     final doc = ctx.document;
     if (doc == null || ctx.transaction == null) return;
     final undo = ed.services.undo;
@@ -102,7 +123,7 @@ abstract final class ObjectOps {
           label: top.label,
           entries: [
             SheetsRowsUndoEntry(
-              mergeChanges(prev.changes, plan.changes),
+              mergeChanges(prev.changes, changes),
               label: prev.label,
             ),
           ],
@@ -121,7 +142,7 @@ abstract final class ObjectOps {
       UndoStep(
         id: ed.services.ids.nextString(),
         label: label,
-        entries: [SheetsRowsUndoEntry(plan.changes, label: plan.label)],
+        entries: [SheetsRowsUndoEntry(changes, label: planLabel ?? label)],
         selectionBefore: ctx.selection,
         source: ctx.source,
         coalesceKey: key,
@@ -138,10 +159,22 @@ abstract final class ObjectOps {
       final i = out.lastIndexWhere(
         (x) => x.table == c.table && x.rowId == c.rowId,
       );
-      if (i >= 0 &&
-          i == out.length - 1 &&
+      // Later changes of other rows don't depend on this row's columns
+      // (object anchors), so an earlier update of the same row merges too.
+      final mergeable =
+          i >= 0 &&
           out[i].op == RowOp.update &&
-          c.op == RowOp.update) {
+          c.op == RowOp.update &&
+          (i == out.length - 1 ||
+              out
+                  .skip(i + 1)
+                  .every(
+                    (x) =>
+                        x.op == RowOp.update &&
+                        x.table == SheetsTables.embeddedObject &&
+                        c.table == SheetsTables.embeddedObject,
+                  ));
+      if (mergeable) {
         final p = out[i];
         final before = {...p.columnsBefore};
         final after = {...p.columnsAfter};

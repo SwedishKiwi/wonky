@@ -35,6 +35,16 @@ final class ImportSheetReport {
     'columns': columns,
     'cells': cells,
   };
+
+  /// Parses [toJson] output.
+  static ImportSheetReport fromJson(Map<String, Object?> j) =>
+      ImportSheetReport(
+        name: j['name'] as String? ?? '',
+        sheetId: j['sheetId'] as String? ?? '',
+        rows: (j['rows'] as num?)?.toInt() ?? 0,
+        columns: (j['columns'] as num?)?.toInt() ?? 0,
+        cells: (j['cells'] as num?)?.toInt() ?? 0,
+      );
 }
 
 /// The import summary (11 §2.3): counts per sheet and the warnings of the
@@ -100,6 +110,19 @@ final class ImportReport {
     'sheets': [for (final s in sheets) s.toJson()],
     'warnings': [for (final w in warnings) w.toJson()],
   };
+
+  /// Parses [toJson] output (server import jobs, 11 §3.3).
+  static ImportReport fromJson(Map<String, Object?> j) => ImportReport(
+    fileName: j['fileName'] as String?,
+    sheets: [
+      for (final s in (j['sheets'] as List?) ?? const [])
+        if (s is Map) ImportSheetReport.fromJson(s.cast<String, Object?>()),
+    ],
+    warnings: [
+      for (final w in (j['warnings'] as List?) ?? const [])
+        if (w is Map) ImportWarning.fromJson(w.cast<String, Object?>()),
+    ],
+  );
 
   static String _grouped(int n) {
     final s = n.toString();

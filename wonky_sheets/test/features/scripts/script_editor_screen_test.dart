@@ -1,6 +1,7 @@
 import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:re_editor/re_editor.dart';
+import 'package:shad/shad.dart';
 import 'package:wonky_sheets/features/scripts/editor/script_editor_screen.dart';
 import 'package:wonky_sheets/features/scripts/script_project.dart';
 
@@ -81,7 +82,7 @@ void main() {
   });
 
   testWidgets('Given an edited file then the dirty dot shows and saving '
-      'clears it', (tester) async {
+      'clears it without a stale-version banner', (tester) async {
     final h = (await tester.runAsync(
       () => ScriptHarness.open({'main.dart': _main}),
     ))!;
@@ -109,5 +110,51 @@ void main() {
       find.byKey(const ValueKey('script.file.main.dart.dirty')),
       findsNothing,
     );
+    // Our own save is not "a newer version saved elsewhere".
+    expect(find.byKey(const ValueKey('script.staleBanner')), findsNothing);
+  });
+
+  testWidgets('Given two runnable functions when another one is picked then '
+      'Run runs the picked function', (tester) async {
+    const src = r'''
+import 'package:wonky/wonky.dart';
+
+void first() {
+  Logger.log('first ran');
+}
+
+void second() {
+  Logger.log('second ran');
+}
+''';
+    final h = (await tester.runAsync(
+      () => ScriptHarness.open({'main.dart': src}),
+    ))!;
+    addTearDown(() => tester.runAsync(h.dispose));
+    await pumpSheets(
+      tester,
+      h.s,
+      size: const Size(1280, 800),
+      child: ScriptEditorScreen(services: h.s.services, itemUuid: testItemUuid),
+    );
+    await tester.pump(const Duration(milliseconds: 50));
+
+    await tester.tap(
+      find.byKey(const ValueKey('script.runPicker.first,second')),
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(find.widgetWithText(ShadOption<String>, 'second'));
+    await tester.pumpAndSettle();
+    expect(h.svc.selectedFunction, 'second');
+    await tester.tap(find.byKey(const ValueKey('script.run')));
+    for (var i = 0; i < 10; i++) {
+      await tester.runAsync(
+        () => Future<void>.delayed(const Duration(milliseconds: 50)),
+      );
+      await tester.pump(const Duration(milliseconds: 200));
+    }
+
+    expect(h.svc.log.map((l) => l.function), contains('second'));
+    expect(h.svc.log.map((l) => l.function), isNot(contains('first')));
   });
 }

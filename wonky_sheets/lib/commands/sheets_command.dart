@@ -6,6 +6,7 @@ import 'package:wonky_core/wonky_core.dart';
 import 'package:wonky_sheets_core/formula.dart' show GridRect;
 import 'package:wonky_sheets_core/model.dart';
 
+import '../features/charts/chart_sheet_rules.dart';
 import '../features/formatting/rich_text_editing.dart';
 import '../features/sheet_editor/sheet_editor_controller.dart';
 import '../features/sheet_editor/sheets_document_controller.dart';
@@ -170,6 +171,8 @@ class SheetsCommand extends JsonCommand {
         RichTextEditing.isCellOnlyFormatting(id.value)) {
       return false;
     }
+    // A chart sheet has no grid (08 §11).
+    if (ChartSheetRules.blocks(ed, id.value)) return false;
     return enabled?.call(ed, args) ?? true;
   }
 
@@ -187,6 +190,7 @@ class SheetsCommand extends JsonCommand {
         RichTextEditing.isCellOnlyFormatting(id.value)) {
       return l.reasonTextSelected;
     }
+    if (ChartSheetRules.blocks(ed, id.value)) return l.reasonChartSheet;
     return null;
   }
 

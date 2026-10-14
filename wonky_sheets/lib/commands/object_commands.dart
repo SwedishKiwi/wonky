@@ -1,5 +1,6 @@
 import 'dart:convert';
 
+import 'package:flutter/foundation.dart' show debugPrint;
 import 'package:shad/shad.dart' show LucideIcons;
 import 'package:wonky_app/wonky_app.dart';
 import 'package:wonky_core/wonky_core.dart';
@@ -7,6 +8,8 @@ import 'package:wonky_sheets_core/formula.dart' show CellPos;
 import 'package:wonky_sheets_core/model.dart';
 
 import '../features/clipboard/system_clipboard.dart';
+import '../features/images/image_clipboard.dart';
+import '../features/objects/object_png.dart';
 import '../features/objects/alt_text_dialog.dart';
 import '../features/objects/object_ops.dart';
 import '../features/objects/objects_controller.dart';
@@ -50,16 +53,42 @@ List<Command<CommandArgs>> objectCommands(ShellServices s) => [
     categoryName: _cat,
     showInPalette: false,
     argsSchema: const JsonSchema.object(
-      properties: {'objectId': JsonSchema.string()},
-      required: ['objectId'],
+      properties: {
+        'objectId': JsonSchema.string(),
+        'objectIds': JsonSchema.array(
+          JsonSchema.string(),
+          description: 'Selects several objects of one sheet.',
+        ),
+        'add': JsonSchema.boolean(
+          description: 'Toggle objectId in the current selection.',
+        ),
+      },
     ),
     run: (ctx, ed, a) {
-      final o = _objs(ed).record(a.requireString('objectId'));
+      final objs = _objs(ed);
+      final ids = a.strings('objectIds');
+      if (ids.isNotEmpty) {
+        final list = [for (final id in ids) ?objs.record(id)];
+        if (list.isEmpty) return CommandResult.failed(_missing(ed)!);
+        final sheet = list.last.sheetId;
+        if (sheet != ed.activeSheetId) ed.activateSheet(sheet);
+        objs.selectAll([
+          for (final o in list)
+            if (o.sheetId == sheet) o.id,
+        ]);
+        revealObject(ed, list.last);
+        return ok({'objectIds': objs.selectedIds});
+      }
+      final o = objs.record(a.string('objectId'));
       if (o == null) return CommandResult.failed(_missing(ed)!);
       if (o.sheetId != ed.activeSheetId) ed.activateSheet(o.sheetId);
-      _objs(ed).select(o.id);
+      if (a.boolean('add') ?? false) {
+        objs.toggleSelect(o.id);
+      } else {
+        objs.select(o.id);
+      }
       revealObject(ed, o);
-      return ok({'objectId': o.id});
+      return ok({'objectId': o.id, 'objectIds': objs.selectedIds});
     },
   ),
   for (final (id, label, fwd) in <(String, SheetsText, bool)>[
@@ -117,6 +146,10 @@ List<Command<CommandArgs>> objectCommands(ShellServices s) => [
     argsSchema: const JsonSchema.object(
       properties: {
         'objectId': JsonSchema.string(),
+        'objectIds': JsonSchema.array(
+          JsonSchema.string(),
+          description: 'Objects moved together with "by" (group move).',
+        ),
         'anchor': JsonSchema.object(
           description: 'New anchor: {cell: A1, dx, dy} (px at 100 % zoom).',
           additionalProperties: true,
@@ -136,6 +169,22 @@ List<Command<CommandArgs>> objectCommands(ShellServices s) => [
       return o != null && !_onChartSheet(ed, o);
     },
     run: (ctx, ed, a) {
+      final v = a.values;
+      // Group move (multi-selection drag): every object by the same offset.
+      final group = a.strings('objectIds');
+      if (group.isNotEmpty && v['by'] is Map) {
+        final by = v['by']! as Map;
+        final ids = <String>[];
+        for (final o in ObjectOps.targets(ed, {'objectIds': group})) {
+          if (_onChartSheet(ed, o)) continue;
+          final anchor = _anchorBy(ed, o, _num(by['x']), _num(by['y']));
+          if (anchor == null) continue;
+          ed.apply(ctx, UpdateObject(o.id, anchorJson: anchor.encode()));
+          ids.add(o.id);
+        }
+        if (ids.isEmpty) return CommandResult.failed(_missing(ed)!);
+        return ok({'objectIds': ids});
+      }
       final o = ObjectOps.target(ed, a.values);
       final sheet = o == null ? null : ed.model.sheet(o.sheetId);
       final base = o == null ? null : _objs(ed).anchorOf(o);
@@ -144,7 +193,6 @@ List<Command<CommandArgs>> objectCommands(ShellServices s) => [
         return CommandResult.failed(_missing(ed)!);
       }
       ObjectAnchor anchor;
-      final v = a.values;
       if (v['anchor'] case final Map<dynamic, dynamic> m) {
         final cell = ed.model.parseA1(
           '${m['cell'] ?? 'A1'}',
@@ -267,57 +315,36 @@ List<Command<CommandArgs>> objectCommands(ShellServices s) => [
     },
     run: (ctx, ed, a) {
       final objs = _objs(ed);
-      final o = objs.selected;
-      final sheet = o == null ? null : ed.model.sheet(o.sheetId);
-      final base = o == null ? null : objs.anchorOf(o);
-      final rect = o == null ? null : objs.rectOf(o, ghost: false);
-      if (o == null || sheet == null || base == null || rect == null) {
-        return const CommandResult.cancelled();
-      }
+      final list = [
+        for (final o in objs.selectedRecords)
+          if (!_onChartSheet(ed, o)) o,
+      ];
+      if (list.isEmpty) return const CommandResult.cancelled();
       final dx = _num(a.values['dx']);
       final dy = _num(a.values['dy']);
-      double x = rect.left + dx;
-      double y = rect.top + dy;
-      if (a.boolean('cells') ?? false) {
-        final cell = objs.anchorCell(o)!;
-        final cols = sheet.columns;
-        final rows = sheet.rows;
-        if (dx != 0) {
-          final c = dx > 0
-              ? (cols.nextVisible(cell.$2 + 1, 1) ?? cell.$2)
-              : (cell.$2 > 0 ? (cols.nextVisible(cell.$2 - 1, -1) ?? 0) : 0);
-          x = cols.offsetOf(c);
-        } else {
-          x = rect.left;
-        }
-        if (dy != 0) {
-          final r = dy > 0
-              ? (rows.nextVisible(cell.$1 + 1, 1) ?? cell.$1)
-              : (cell.$1 > 0 ? (rows.nextVisible(cell.$1 - 1, -1) ?? 0) : 0);
-          y = rows.offsetOf(r);
-        } else {
-          y = rect.top;
-        }
+      final cells = a.boolean('cells') ?? false;
+      final changes = <RowChange>[];
+      String? label;
+      for (final o in list) {
+        final anchor = cells
+            ? _anchorByCells(ed, o, dx, dy)
+            : _anchorBy(ed, o, dx, dy);
+        if (anchor == null) continue;
+        final plan = ed.session.execute(
+          UpdateObject(o.id, anchorJson: anchor.encode()),
+        );
+        changes.addAll(plan.changes);
+        label ??= plan.label;
       }
-      final anchor = ObjectOps.anchorAt(
-        sheet,
-        x,
-        y,
-        width: base.width,
-        height: base.height,
-        base: base,
-      );
-      final plan = ed.session.execute(
-        UpdateObject(o.id, anchorJson: anchor.encode()),
-      );
-      ObjectOps.recordCoalesced(
+      ObjectOps.recordCoalescedChanges(
         ctx,
         ed,
-        plan,
-        key: 'nudge:${o.id}',
+        changes,
+        key: 'nudge:${[for (final o in list) o.id].join(',')}',
         label: ed.l10n.cmdObjectMove,
+        planLabel: label,
       );
-      revealObject(ed, o);
+      revealObject(ed, list.last);
       return ok();
     },
   ),
@@ -343,32 +370,98 @@ List<Command<CommandArgs>> objectCommands(ShellServices s) => [
       _ => l.objectOrderBack,
     },
     enabled: (ed, a) {
-      final o = ObjectOps.target(ed, a.values);
-      if (o == null || _onChartSheet(ed, o)) return false;
-      final items = _objs(ed).zItems(o.sheetId);
-      final z = switch (a.string('op')) {
-        'front' => ZOrder.bringToFront(items, o.id),
-        'forward' => ZOrder.bringForward(items, o.id),
-        'backward' => ZOrder.sendBackward(items, o.id),
-        _ => ZOrder.sendToBack(items, o.id),
-      };
-      return z.isNotEmpty;
+      final list = ObjectOps.targets(ed, a.values);
+      if (list.isEmpty || list.any((o) => _onChartSheet(ed, o))) return false;
+      return list.any(
+        (o) => _zChanges(_objs(ed).zItems(o.sheetId), o.id, a).isNotEmpty,
+      );
     },
     run: (ctx, ed, a) {
-      final o = ObjectOps.target(ed, a.values);
-      if (o == null) return CommandResult.failed(_missing(ed)!);
-      final items = _objs(ed).zItems(o.sheetId);
-      final z = switch (a.string('op')) {
-        'front' => ZOrder.bringToFront(items, o.id),
-        'forward' => ZOrder.bringForward(items, o.id),
-        'backward' => ZOrder.sendBackward(items, o.id),
-        'back' => ZOrder.sendToBack(items, o.id),
-        _ => throw const PlanException('invalid', 'Unknown op'),
-      };
-      for (final e in z.entries) {
-        ed.apply(ctx, UpdateObject(e.key, zIndex: e.value));
+      final list = ObjectOps.targets(ed, a.values);
+      if (list.isEmpty) return CommandResult.failed(_missing(ed)!);
+      if (!const [
+        'front',
+        'forward',
+        'backward',
+        'back',
+      ].contains(a.string('op'))) {
+        throw const PlanException('invalid', 'Unknown op');
       }
-      return ok({'changed': z.length});
+      // Groups keep their relative order: the topmost goes first when
+      // sending backward, the bottommost when bringing forward.
+      final objs = _objs(ed);
+      int zOf(EmbeddedObjectRecord o) => objs.record(o.id)?.zIndex ?? o.zIndex;
+      final up = a.string('op') == 'front' || a.string('op') == 'forward';
+      final ordered = [...list]
+        ..sort((x, y) {
+          final c = zOf(x).compareTo(zOf(y));
+          final r = c != 0 ? c : x.id.compareTo(y.id);
+          return up ? r : -r;
+        });
+      var changed = 0;
+      for (final o in ordered) {
+        final z = _zChanges(objs.zItems(o.sheetId), o.id, a);
+        for (final e in z.entries) {
+          ed.apply(ctx, UpdateObject(e.key, zIndex: e.value));
+        }
+        changed += z.length;
+      }
+      return ok({'changed': changed});
+    },
+  ),
+  SheetsCommand(
+    'sheets.object.align',
+    label: (l) => l.cmdObjectAlign,
+    categoryName: _cat,
+    mutates: true,
+    showInPalette: false,
+    argsSchema: const JsonSchema.object(
+      properties: {
+        'objectIds': JsonSchema.array(
+          JsonSchema.string(),
+          description: 'Objects to align (default: the selection).',
+        ),
+        'op': JsonSchema.string(
+          enumValues: [
+            'left',
+            'center',
+            'right',
+            'top',
+            'middle',
+            'bottom',
+            'distributeHorizontally',
+            'distributeVertically',
+          ],
+        ),
+      },
+      required: ['op'],
+    ),
+    undoLabelOf: (l, a) => l.undoAlignObjects,
+    enabled: (ed, a) {
+      final list = ObjectOps.targets(ed, a.values);
+      final need = (a.string('op') ?? '').startsWith('distribute') ? 3 : 2;
+      return list.length >= need && !list.any((o) => _onChartSheet(ed, o));
+    },
+    run: (ctx, ed, a) {
+      final objs = _objs(ed);
+      final list = ObjectOps.targets(ed, a.values);
+      final rects = <String, ChartRect>{
+        for (final o in list) o.id: ?objs.rectOf(o, ghost: false),
+      };
+      if (rects.length < 2) return CommandResult.failed(_missing(ed)!);
+      final next = ObjectAlign.apply(rects, a.string('op') ?? 'left');
+      var moved = 0;
+      for (final o in list) {
+        final to = next[o.id];
+        final from = rects[o.id];
+        if (to == null || from == null) continue;
+        if (to.left == from.left && to.top == from.top) continue;
+        final anchor = _anchorBy(ed, o, to.left - from.left, to.top - from.top);
+        if (anchor == null) continue;
+        ed.apply(ctx, UpdateObject(o.id, anchorJson: anchor.encode()));
+        moved++;
+      }
+      return ok({'moved': moved});
     },
   ),
   SheetsCommand(
@@ -475,6 +568,7 @@ List<Command<CommandArgs>> objectCommands(ShellServices s) => [
       await ed.clipboard.system.write(
         SystemClipboardData(plainText: clip.marker),
       );
+      await _writePng(ed, list, clip.marker);
       return ok({'count': list.length});
     },
   ),
@@ -498,6 +592,7 @@ List<Command<CommandArgs>> objectCommands(ShellServices s) => [
       await ed.clipboard.system.write(
         SystemClipboardData(plainText: clip.marker),
       );
+      await _writePng(ed, list, clip.marker);
       for (final o in list) {
         ed.apply(ctx, DeleteObject(o.id));
       }
@@ -685,3 +780,93 @@ Map<String, Object?> _describe(
 }
 
 double _num(Object? v) => v is num ? v.toDouble() : 0;
+
+/// Adds a PNG of the primary copied object to the system clipboard next to
+/// the paste marker, so other apps paste a picture (08 §9.5).
+Future<void> _writePng(
+  SheetEditorController ed,
+  List<EmbeddedObjectRecord> list,
+  String marker,
+) async {
+  final clipboard = ImageClipboard.instance;
+  if (!clipboard.supported || list.isEmpty) return;
+  try {
+    final png = await ObjectPng.of(ed, list.last);
+    if (png != null) await clipboard.writePng(png, text: marker);
+  } catch (e) {
+    debugPrint('Copying the object as PNG failed: $e');
+  }
+}
+
+/// The z-order writes of `op` in [a] for [id].
+Map<String, int> _zChanges(List<ZOrderItem> items, String id, JsonArgs a) =>
+    switch (a.string('op')) {
+      'front' => ZOrder.bringToFront(items, id),
+      'forward' => ZOrder.bringForward(items, id),
+      'backward' => ZOrder.sendBackward(items, id),
+      'back' => ZOrder.sendToBack(items, id),
+      _ => const {},
+    };
+
+/// [o]'s anchor moved by ([dx], [dy]) sheet px (normalized), or null.
+ObjectAnchor? _anchorBy(
+  SheetEditorController ed,
+  EmbeddedObjectRecord o,
+  double dx,
+  double dy,
+) {
+  final objs = ObjectsController.of(ed);
+  final sheet = ed.model.sheet(o.sheetId);
+  final base = objs.anchorOf(o);
+  final rect = objs.rectOf(o, ghost: false);
+  if (sheet == null || base == null || rect == null) return null;
+  return ObjectOps.anchorAt(
+    sheet,
+    rect.left + dx,
+    rect.top + dy,
+    width: base.width,
+    height: base.height,
+    base: base,
+  );
+}
+
+/// [o]'s anchor moved by whole visible cells (Alt+arrows, 08 §9.3).
+ObjectAnchor? _anchorByCells(
+  SheetEditorController ed,
+  EmbeddedObjectRecord o,
+  double dx,
+  double dy,
+) {
+  final objs = ObjectsController.of(ed);
+  final sheet = ed.model.sheet(o.sheetId);
+  final base = objs.anchorOf(o);
+  final rect = objs.rectOf(o, ghost: false);
+  final cell = objs.anchorCell(o);
+  if (sheet == null || base == null || rect == null || cell == null) {
+    return null;
+  }
+  final cols = sheet.columns;
+  final rows = sheet.rows;
+  var x = rect.left;
+  var y = rect.top;
+  if (dx != 0) {
+    final c = dx > 0
+        ? (cols.nextVisible(cell.$2 + 1, 1) ?? cell.$2)
+        : (cell.$2 > 0 ? (cols.nextVisible(cell.$2 - 1, -1) ?? 0) : 0);
+    x = cols.offsetOf(c);
+  }
+  if (dy != 0) {
+    final r = dy > 0
+        ? (rows.nextVisible(cell.$1 + 1, 1) ?? cell.$1)
+        : (cell.$1 > 0 ? (rows.nextVisible(cell.$1 - 1, -1) ?? 0) : 0);
+    y = rows.offsetOf(r);
+  }
+  return ObjectOps.anchorAt(
+    sheet,
+    x,
+    y,
+    width: base.width,
+    height: base.height,
+    base: base,
+  );
+}

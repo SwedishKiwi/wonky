@@ -14,7 +14,9 @@ import '../features/clipboard/clipboard_service.dart';
 import '../features/dialogs/sheets_dialogs.dart';
 import '../features/grid/selection/data_edge_finder.dart';
 import '../features/grid/selection/grid_selection.dart';
+import '../features/filters/view_sort_editing.dart';
 import '../features/sheet_editor/sheet_editor_controller.dart';
+import 'image_commands.dart' show pasteClipboardImage;
 import 'sheets_command.dart';
 
 String _edit(SheetsLocalizations l) => l.categoryEditing;
@@ -533,6 +535,8 @@ List<Command<CommandArgs>> cellCommands(ShellServices s) => [
     repeatable: true,
     defaultBindings: const [KeyBinding('D', mod: true)],
     run: (ctx, ed, a) {
+      // A range on screen in a sorted filter view fills in display order.
+      if (ViewSortEditing.fillDown(ctx, ed)) return ok();
       for (final r in ed.selectedRanges) {
         final rect = _clip(ed, r.rect);
         if (rect.rowCount < 2) continue;
@@ -670,7 +674,9 @@ List<Command<CommandArgs>> cellCommands(ShellServices s) => [
     icon: LucideIcons.copy,
     categoryName: _edit,
     defaultBindings: const [KeyBinding('C', mod: true)],
-    enabled: (ed, a) => ed.selection.resolved.ranges.length == 1,
+    enabled: (ed, a) =>
+        ed.selection.resolved.ranges.length == 1 ||
+        ViewSortEditing.isDisplayGroup(ed.selection.resolved),
     run: (ctx, ed, a) async {
       try {
         await ed.clipboard.copy();
@@ -762,6 +768,12 @@ Future<CommandResult> _paste(
   SheetEditorController ed,
   PasteMode mode,
 ) async {
+  // An image (screenshot, copied picture) without text on the system
+  // clipboard goes over cells at the active cell (08 §9.5).
+  if (mode == PasteMode.all) {
+    final image = await pasteClipboardImage(ctx, ed);
+    if (image != null) return image;
+  }
   final sel = ed.selection.resolved;
   final target = ed.activeRange;
   final source = await ed.clipboard.readSource(
@@ -769,8 +781,14 @@ Future<CommandResult> _paste(
     targetCol: target.rect.left,
   );
   if (source == null) {
-    return CommandResult.failed(ed.l10n.toastClipboardEmpty);
+    return CommandResult.failed(
+      ed.clipboard.system.readBlocked
+          ? ed.l10n.toastClipboardBlocked
+          : ed.l10n.toastClipboardEmpty,
+    );
   }
+  // Rows of a sorted filter view take the paste in display order (07 §4.4).
+  if (ViewSortEditing.paste(ctx, ed, source, mode) != null) return ok();
   final plan = ed.apply(
     ctx,
     PasteClipboard(

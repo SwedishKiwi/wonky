@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:clock/clock.dart';
 import 'package:flutter/foundation.dart';
 import 'package:wonky_app/wonky_app.dart';
@@ -12,8 +14,10 @@ import 'version_snapshots.dart';
 /// ids through the core `SpaceCopier` (formulas, ranges, objects remapped)
 /// and are written into a reserved space of the local replica, which is
 /// then registered with the drive — like a new spreadsheet, so it works
-/// with the offline-first data layer. Returns the new item uuid.
-Future<UuidValue?> copyVersionToNewSpreadsheet(
+/// with the offline-first data layer. Returns the new item uuid and the
+/// ids of its sheets, rows and columns by the version's ids (for comment
+/// anchors, see [copyVersionExtras]).
+Future<(UuidValue, Map<String, String>)?> copyVersionToNewSpreadsheet(
   ShellServices services, {
   required SnapshotRows rows,
   required String sourceSpaceId,
@@ -58,5 +62,58 @@ Future<UuidValue?> copyVersionToNewSpreadsheet(
     if (!isOfflineError(e)) rethrow;
   }
   services.refreshDrive();
-  return space;
+  const anchorTables = {
+    SheetsTables.sheet,
+    SheetsTables.sheetRow,
+    SheetsTables.sheetColumn,
+  };
+  return (
+    space,
+    {
+      for (final (t, c) in rows)
+        if (anchorTables.contains(t))
+          c[Cols.id].toString(): ?copy.idMap[c[Cols.id].toString()],
+    },
+  );
+}
+
+/// Overrides the server call of [copyVersionExtras] (tests).
+@visibleForTesting
+Future<void> Function(
+  UuidValue source,
+  UuidValue target,
+  String idMapJson,
+  bool comments,
+  bool sharing,
+)?
+copyVersionExtrasOverride;
+
+/// *Copy comments* / *Share with the same people* of a version copy
+/// (Sheets 10 §5.4): the server copies the source's threads with their
+/// anchors remapped through [idMap] and its sharing. Needs a connection.
+Future<void> copyVersionExtras(
+  ShellServices services, {
+  required UuidValue source,
+  required UuidValue target,
+  required Map<String, String> idMap,
+  required bool comments,
+  required bool sharing,
+}) async {
+  if (!comments && !sharing) return;
+  final json = jsonEncode(idMap);
+  final override = copyVersionExtrasOverride;
+  if (override != null) {
+    return override(source, target, json, comments, sharing);
+  }
+  final client = services.client;
+  if (client == null || Api.simulatedOffline) {
+    throw const OfflineException('offline');
+  }
+  await client.sheetsVersion.copyExtras(
+    source,
+    target,
+    json,
+    comments,
+    sharing,
+  );
 }

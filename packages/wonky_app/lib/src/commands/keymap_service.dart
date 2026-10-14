@@ -209,9 +209,14 @@ class KeymapService extends ChangeNotifier {
 
   /// The chord pressed in [event], or null (modifier-only / unsupported).
   ResolvedChord? chordOf(KeyEvent event) {
-    final name = WonkyKeyNames.nameOf(event.logicalKey);
-    if (name == null) return null;
     final kb = HardwareKeyboard.instance;
+    var name = WonkyKeyNames.nameOf(event.logicalKey);
+    // With Shift or Alt the digit row types symbols on most layouts and on
+    // the web ('!', '¡', '⁄'); digit shortcuts name the key position
+    // (Sheets macros: Mod+Alt+Shift+1…0).
+    final digit = _digitRow[event.physicalKey];
+    if (digit != null && (kb.isShiftPressed || kb.isAltPressed)) name = digit;
+    if (name == null) return null;
     return ResolvedChord(
       key: name,
       control: kb.isControlPressed,
@@ -220,6 +225,19 @@ class KeymapService extends ChangeNotifier {
       shift: kb.isShiftPressed,
     );
   }
+
+  static final _digitRow = <PhysicalKeyboardKey, String>{
+    PhysicalKeyboardKey.digit1: '1',
+    PhysicalKeyboardKey.digit2: '2',
+    PhysicalKeyboardKey.digit3: '3',
+    PhysicalKeyboardKey.digit4: '4',
+    PhysicalKeyboardKey.digit5: '5',
+    PhysicalKeyboardKey.digit6: '6',
+    PhysicalKeyboardKey.digit7: '7',
+    PhysicalKeyboardKey.digit8: '8',
+    PhysicalKeyboardKey.digit9: '9',
+    PhysicalKeyboardKey.digit0: '0',
+  };
 
   /// Handles [event] for [scope]: runs the first enabled command bound to
   /// the chord. Returns whether it was handled.

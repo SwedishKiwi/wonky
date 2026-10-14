@@ -162,6 +162,15 @@ class FakeAssistantApi implements AssistantApi {
     return true;
   }
 
+  /// Answers of `uiToolCall` events, in order.
+  final List<UiBridgeResponse> uiResults = [];
+
+  @override
+  Future<bool> uiToolResult(String runId, UiBridgeResponse response) async {
+    uiResults.add(response);
+    return true;
+  }
+
   @override
   Future<List<AssistantThreadView>> listThreads(UuidValue itemUuid) async => [
     for (final t in threads.values) t.thread,

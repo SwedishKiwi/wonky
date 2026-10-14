@@ -7,6 +7,7 @@ import 'package:wonky_sheets_core/wonky_sheets_core.dart'
 
 import '../../platform/mcp/tool_support.dart';
 import '../headless/sheets_core_internal.dart';
+import 'sheets_changes.dart';
 import 'sheets_mcp_support.dart';
 import 'sheets_value_handlers.dart';
 import 'sheets_writes.dart';
@@ -484,6 +485,161 @@ abstract final class SheetsStructureHandlers {
       o,
       '${hidden ? 'Hid' : 'Showed'} ${d.name} $span of "${s.name}"',
     );
+  }
+
+  /// `sheets.group_dimension` (Sheets 12 §3.4, P2): groups [start, start +
+  /// count) `depth` times (nested), ungroups it, or collapses/expands the
+  /// groups spanning exactly those rows/columns.
+  static Future<ToolResult> groupDimension(ToolContext ctx, ToolArgs a) async {
+    final t = await SheetsMcp.open(ctx, a, min: Role.editor);
+    final d = _dimension(a.string('dimension'));
+    final (s, start, count) = _span(t, a, d);
+    final end = start + count - 1;
+    final action = a.string('action') ?? 'group';
+    final depth = (a.integer('depth') ?? 1).clamp(1, 8);
+    final collapsed = a.boolean('collapsed');
+    final span = _spanA1(d, start, count);
+    final axis = s.axis(d);
+    final startId = axis.idAt(start);
+    final endId = axis.idAt(end);
+    List<String> exact(WorkbookModel m) => [
+      for (final g
+          in m.sheet(s.id)?.groups.values ?? const <DimensionGroupRecord>[])
+        if (g.dimension == d && g.startId == startId && g.endId == endId) g.id,
+    ];
+    final steps = <SheetsPlanStep>[];
+    final created = <String>[];
+    switch (action) {
+      case 'group':
+        for (var i = 0; i < depth; i++) {
+          steps.add((model, pctx) {
+            final plan = SheetsWrites.planner.plan(
+              GroupOperation(
+                s.id,
+                d,
+                GroupAction.group,
+                start: start,
+                end: end,
+              ),
+              model,
+              pctx,
+            );
+            final id = plan.result['groupId'];
+            if (id is String) created.add(id);
+            return plan;
+          });
+        }
+      case 'ungroup':
+        steps.add(
+          _op(
+            () => GroupOperation(
+              s.id,
+              d,
+              GroupAction.ungroup,
+              start: start,
+              end: end,
+            ),
+          ),
+        );
+      case 'collapse' || 'expand':
+        final ids = exact(t.model);
+        if (ids.isEmpty) {
+          throw McpToolException(
+            McpErrorCode.notFound,
+            'No group spans exactly $span of "${s.name}"; group it first.',
+          );
+        }
+        for (final id in ids) {
+          steps.add(
+            _op(
+              () => GroupOperation(
+                s.id,
+                d,
+                action == 'collapse'
+                    ? GroupAction.collapse
+                    : GroupAction.expand,
+                groupId: id,
+              ),
+            ),
+          );
+        }
+      default:
+        throw McpToolException.invalidArgs('Unknown action "$action".');
+    }
+    final label = SheetsMcp.label(
+      ctx,
+      'sheets.group_dimension',
+      '${s.name}!$span',
+    );
+    var o = await SheetsWrites.run(
+      ctx,
+      t,
+      tool: 'sheets.group_dimension',
+      label: label,
+      structural:
+          '${action[0].toUpperCase()}${action.substring(1)} ${d.name} $span',
+      steps: steps,
+    );
+    if (action == 'group' && collapsed == true && created.isNotEmpty) {
+      // Collapsing a group created by this call updates a row inserted in
+      // the same change, which the batched writer applies as a separate
+      // write; both become one composite change (one change_id).
+      final first = o;
+      final second = await SheetsWrites.run(
+        ctx,
+        t,
+        tool: 'sheets.group_dimension',
+        label: label,
+        structural: 'Collapse ${d.name} $span',
+        steps: [
+          _op(
+            () => GroupOperation(
+              s.id,
+              d,
+              GroupAction.collapse,
+              groupId: created.first,
+            ),
+          ),
+        ],
+      );
+      final ids = [
+        for (final x in [first, second])
+          if (x.changeId != null) x.changeId!.uuid,
+      ];
+      final combined = ids.length < 2
+          ? null
+          : await SheetsChanges.composite(
+              ctx.session,
+              actor: ctx.actor,
+              item: t.item,
+              changeIds: ids,
+              label: label,
+            );
+      o = SheetsWriteOutcome(
+        changeId: combined ?? second.changeId ?? first.changeId,
+        plans: [...first.plans, ...second.plans],
+        cellsAffected: first.cellsAffected,
+        warnings: [...first.warnings, ...second.warnings],
+        preview: first.preview,
+        callId: first.callId,
+      );
+    }
+    final verb = switch (action) {
+      'group' => depth > 1 ? 'Grouped ($depth levels)' : 'Grouped',
+      'ungroup' => 'Ungrouped',
+      'collapse' => 'Collapsed the group of',
+      _ => 'Expanded the group of',
+    };
+    return _result(o, '$verb ${d.name} $span of "${s.name}"', {
+      'range': SheetsMcp.a1(
+        t.model,
+        s.id,
+        d == Dimension.rows
+            ? GridRect(start, 0, end, math.max(0, s.columns.length - 1))
+            : GridRect(0, start, math.max(0, s.rows.length - 1), end),
+      ),
+      if (created.isNotEmpty) 'group_ids': created,
+    });
   }
 
   static Future<ToolResult> setFrozen(ToolContext ctx, ToolArgs a) async {

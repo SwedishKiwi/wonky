@@ -1,0 +1,18 @@
+### Progress of a server import job (`sheetsImport.watchImport`, 11 §3.3).
+class: SheetsImportProgress
+fields:
+  jobId: UuidValue
+  status: SheetsImportStatus
+  ### Cells written so far / in total (`writing`).
+  done: int
+  total: int
+  ### Jobs of the same user ahead of this one (`queued`).
+  queuePosition: int
+  ### `ImportReport` JSON (`done`).
+  reportJson: String?
+  ### Undo of the import (`sheets.serverChange`), when done.
+  changeId: UuidValue?
+  ### Ids of the sheets the import created (`done`).
+  sheetIds: List<String>?
+  errorCode: String?
+  error: String?

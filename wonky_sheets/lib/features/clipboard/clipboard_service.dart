@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:wonky_sheets_core/formula.dart' show GridRect;
 import 'package:wonky_sheets_core/model.dart';
 
@@ -30,10 +32,28 @@ class ClipboardService {
   /// Copies (or cuts) the active range. Throws [ClipboardActionException].
   Future<void> copy({bool cut = false}) async {
     final r = host.selection.resolved;
-    if (r.ranges.length != 1) {
+    // Rows selected on screen in a sorted filter view are copied in display
+    // order (07 §4.4): one range on screen, several model ranges.
+    final shown = r.ranges.length > 1 && r.isSingleGroup
+        ? r.activeRange.displayRect
+        : null;
+    if (r.ranges.length != 1 && shown == null) {
       throw ClipboardActionException(host.l10n.toastMultipleSelections);
     }
-    final range = host.activeRange;
+    if (shown != null && cut) {
+      throw ClipboardActionException(host.l10n.viewSortCutUnavailable);
+    }
+    final range = shown == null
+        ? host.activeRange
+        : ResolvedRange(
+            r.sheetId,
+            GridRect(
+              r.ranges.map((x) => x.rect.top).reduce(math.min),
+              shown.left,
+              r.ranges.map((x) => x.rect.bottom).reduce(math.max),
+              shown.right,
+            ),
+          );
     final clipId = '${host.services.ids.nextString()}-${_clipCounter++}';
     final ClipboardContent content;
     try {
@@ -45,13 +65,24 @@ class ClipboardService {
         hooks: host.hooks,
         isCut: cut,
         conditional: host.cells.conditional,
+        rowOrder: shown == null
+            ? null
+            : [
+                for (final x in r.ranges)
+                  for (var row = x.rect.top; row <= x.rect.bottom; row++) row,
+              ],
       );
     } on ClipboardCopyException catch (e) {
       throw ClipboardActionException(e.message);
     }
     last = content.payload;
     _lastTsv = content.tsv;
-    host.clipMark.value = ClipMark(range.sheetId, range.rect, cut: cut);
+    host.clipMark.value = ClipMark(
+      range.sheetId,
+      range.rect,
+      cut: cut,
+      displayRect: shown,
+    );
     await system.write(
       SystemClipboardData(plainText: content.tsv, html: content.html),
     );

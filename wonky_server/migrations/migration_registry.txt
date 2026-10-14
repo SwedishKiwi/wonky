@@ -12,3 +12,6 @@
 20261013142448534-ai-user-key
 20261013223423258-sheets-receipt-completed
 20261013235747399-sheets-scripts
+20261014152733788-sheets-import-jobs
+20261014155607023-sheets-ai-previews-ai-cache
+20261014170811542-script-jobs

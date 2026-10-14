@@ -45,6 +45,7 @@ List<WonkyMenuEntry> objectMenu(
       label: chart ? l.objectMenuCopyChart : null,
       source: source,
     ),
+    if (chart) ui.item('sheets.chart.copyAsImage', args: id, source: source),
     if (chart)
       WonkyMenuSubmenu(
         label: l.objectMenuDownload,
@@ -114,5 +115,77 @@ List<WonkyMenuEntry> objectMenu(
       },
       source: source,
     ),
+  ];
+}
+
+/// Align operations of `sheets.object.align` (multi-selection).
+const objectAlignOps = [
+  'left',
+  'center',
+  'right',
+  'top',
+  'middle',
+  'bottom',
+  'distributeHorizontally',
+  'distributeVertically',
+];
+
+/// The ⋮ / context menu of several selected objects (08 §9.2): align,
+/// z-order, copy, cut, delete.
+List<WonkyMenuEntry> multiObjectMenu(
+  CommandUi ui,
+  SheetEditorController ed,
+  List<String> ids, {
+  InvocationSource source = InvocationSource.contextMenu,
+}) {
+  final l = ui.l;
+  final args = {'objectIds': ids};
+  return [
+    WonkyMenuSubmenu(
+      label: l.objectMenuAlign,
+      children: [
+        for (final op in objectAlignOps)
+          ui.item(
+            'sheets.object.align',
+            args: {...args, 'op': op},
+            label: switch (op) {
+              'left' => l.objectAlignLeft,
+              'center' => l.objectAlignCenter,
+              'right' => l.objectAlignRight,
+              'top' => l.objectAlignTop,
+              'middle' => l.objectAlignMiddle,
+              'bottom' => l.objectAlignBottom,
+              'distributeHorizontally' => l.objectDistributeHorizontally,
+              _ => l.objectDistributeVertically,
+            },
+            keyName: 'object.align.$op',
+            source: source,
+          ),
+      ],
+    ),
+    WonkyMenuSubmenu(
+      label: l.objectMenuOrder,
+      children: [
+        for (final op in objectOrderOps)
+          ui.item(
+            'sheets.object.order',
+            args: {...args, 'op': op},
+            label: switch (op) {
+              'front' => l.objectOrderFront,
+              'forward' => l.objectOrderForward,
+              'backward' => l.objectOrderBackward,
+              _ => l.objectOrderBack,
+            },
+            keyName: 'object.order.$op',
+            source: source,
+          ),
+      ],
+    ),
+    const WonkyMenuSeparator(),
+    ui.item('sheets.object.copy', args: args, source: source),
+    ui.item('sheets.object.cut', args: args, source: source),
+    ui.item('sheets.object.duplicate', args: args, source: source),
+    const WonkyMenuSeparator(),
+    ui.item('sheets.object.delete', args: args, source: source),
   ];
 }

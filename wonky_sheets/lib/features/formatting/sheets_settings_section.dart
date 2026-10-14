@@ -247,6 +247,11 @@ class _SheetsSettingsSectionState extends State<SheetsSettingsSection> {
                     la.sheetsScripts,
                     _d.scriptsEnabled,
                   ),
+                  (
+                    SheetsUserDefaults.keyChartSeriesByPattern,
+                    l.sheetsSettingsChartPatterns,
+                    _d.chartSeriesByPattern,
+                  ),
                 ])
                   SettingsRow(label: label, control: _switch(k, v)),
               ],

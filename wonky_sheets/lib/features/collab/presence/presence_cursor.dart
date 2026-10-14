@@ -91,6 +91,7 @@ class SheetsPresenceCursor {
     this.objectId,
     this.viewport,
     this.following,
+    this.file,
   });
 
   /// Max ranges sent.
@@ -113,6 +114,10 @@ class SheetsPresenceCursor {
   /// The session this participant follows ("Following you").
   final String? following;
 
+  /// The script file open in the script editor (`route == 'script'`,
+  /// Sheets 09 §14.3).
+  final String? file;
+
   bool get hasActiveCell => activeRowId != null && activeColId != null;
 
   Map<String, Object?> toJson() => {
@@ -126,6 +131,7 @@ class SheetsPresenceCursor {
     'objectId': ?objectId,
     if (viewport != null) 'viewport': viewport!.toJson(),
     'following': ?following,
+    'file': ?file,
   };
 
   String encode() => jsonEncode(toJson());
@@ -159,6 +165,7 @@ class SheetsPresenceCursor {
         objectId: j['objectId'] is String ? j['objectId'] as String : null,
         viewport: PresenceViewport.fromJson(j['viewport']),
         following: j['following'] is String ? j['following'] as String : null,
+        file: j['file'] is String ? j['file'] as String : null,
       );
     } on FormatException {
       return null;
@@ -176,7 +183,8 @@ class SheetsPresenceCursor {
       other.editing == editing &&
       other.objectId == objectId &&
       other.viewport == viewport &&
-      other.following == following;
+      other.following == following &&
+      other.file == file;
 
   @override
   int get hashCode => Object.hash(
@@ -189,5 +197,6 @@ class SheetsPresenceCursor {
     objectId,
     viewport,
     following,
+    file,
   );
 }

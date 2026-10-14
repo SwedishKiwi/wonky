@@ -6,8 +6,25 @@ import 'package:shad/shad.dart';
 import 'package:wonky_sheets_core/model.dart';
 
 import '../../../l10n/sheets_l10n.dart';
+import '../../charts3d/chart3d_gpu.dart';
+import '../../charts3d/orbit/chart_orbit.dart';
+import '../../formatting/sheets_user_defaults.dart';
+import '../../objects/objects_controller.dart';
 import '../controller/chart_controller.dart';
 import '../render/chart_painter.dart';
+
+/// When dragging a 3D chart orbits it (08 §23.6).
+enum ChartOrbitMode {
+  /// Only once the chart object is selected (over cells; a drag on an
+  /// unselected chart moves it).
+  whenSelected,
+
+  /// Always (chart sheets).
+  always,
+
+  /// Never (thumbnails, previews).
+  never,
+}
 
 /// A chart over the grid or on a chart sheet (08 §6.5, §9.1): the cached
 /// scene laid out at the logical size and painted scaled by [zoom]; hover
@@ -21,6 +38,7 @@ class ChartObjectView extends StatefulWidget {
     required this.height,
     this.zoom = 1,
     this.interactive = true,
+    this.orbit = ChartOrbitMode.whenSelected,
   });
 
   final ChartController controller;
@@ -30,41 +48,146 @@ class ChartObjectView extends StatefulWidget {
   final double height;
   final double zoom;
   final bool interactive;
+  final ChartOrbitMode orbit;
 
   @override
   State<ChartObjectView> createState() => _ChartObjectViewState();
 }
 
-class _ChartObjectViewState extends State<ChartObjectView> {
+class _ChartObjectViewState extends State<ChartObjectView>
+    with TickerProviderStateMixin {
   SceneHit? _hover;
   Offset? _hoverAt;
   Offset? _down;
+  bool _overPlot = false;
+  int? _orbitPointer;
+  final VelocityTracker _velocity = VelocityTracker.withKind(
+    PointerDeviceKind.mouse,
+  );
+  late final AnimationController _transition = AnimationController(
+    vsync: this,
+    duration: const Duration(milliseconds: 450),
+  )..addListener(() => c.transition3D = _transition.value);
+  late final ChartOrbitGesture _orbit = ChartOrbitGesture(
+    vsync: this,
+    onChanged: (a, e) => c.setOrbit(a, e),
+    onEnd: _commitOrbit,
+  );
 
   ChartController get c => widget.controller;
 
   @override
   void initState() {
     super.initState();
-    c.addListener(_changed);
+    _listen(c);
+    Chart3DBackends.gpu.addListener(_changed);
+  }
+
+  void _listen(ChartController ctl) {
+    ctl.addListener(_changed);
+    ctl.transitionRequests.addListener(_startTransition);
+  }
+
+  void _unlisten(ChartController ctl) {
+    ctl.removeListener(_changed);
+    ctl.transitionRequests.removeListener(_startTransition);
   }
 
   @override
   void didUpdateWidget(ChartObjectView old) {
     super.didUpdateWidget(old);
     if (old.controller != widget.controller) {
-      old.controller.removeListener(_changed);
-      widget.controller.addListener(_changed);
+      _unlisten(old.controller);
+      _listen(widget.controller);
     }
   }
 
   @override
   void dispose() {
-    c.removeListener(_changed);
+    _unlisten(c);
+    Chart3DBackends.gpu.removeListener(_changed);
+    final p = _orbitPointer;
+    if (p != null) ChartPointerClaims.release(p);
+    _orbit.dispose();
+    _transition.dispose();
     super.dispose();
   }
 
   void _changed() {
     if (mounted) setState(() {});
+  }
+
+  bool get _reduceMotion {
+    try {
+      if (SheetsUserDefaults.of(c.editor.services).reduceAnimations) {
+        return true;
+      }
+    } catch (_) {}
+    return MediaQuery.maybeDisableAnimationsOf(context) ?? false;
+  }
+
+  void _startTransition() {
+    if (!mounted) return;
+    if (_reduceMotion) {
+      c.transition3D = 1;
+      return;
+    }
+    _transition.forward(from: 0);
+  }
+
+  // ---------------------------------------------------------------------------
+  // Orbit (08 §23.6).
+
+  bool _canOrbit(ChartScene scene) {
+    if (!widget.interactive || scene.threeD == null) return false;
+    return switch (widget.orbit) {
+      ChartOrbitMode.never => false,
+      ChartOrbitMode.always => true,
+      ChartOrbitMode.whenSelected =>
+        ObjectsController.maybeOf(c.editor)?.isSelected(c.objectId) ?? false,
+    };
+  }
+
+  bool _inPlot(ChartScene scene, Offset local) {
+    final p = local / widget.zoom;
+    final r = scene.plotArea ?? scene.threeD?.viewport;
+    return r != null && r.contains(p.dx, p.dy);
+  }
+
+  void _orbitDown(PointerDownEvent e, ChartScene scene) {
+    if (e.buttons != kPrimaryMouseButton ||
+        !_canOrbit(scene) ||
+        !_inPlot(scene, e.localPosition)) {
+      return;
+    }
+    ChartPointerClaims.claim(e.pointer);
+    _orbitPointer = e.pointer;
+    final cam = scene.threeD!.camera;
+    _velocity.addPosition(e.timeStamp, e.localPosition);
+    _orbit.start(e.localPosition, cam.azimuth, cam.elevation);
+  }
+
+  void _commitOrbit(double azimuth, double elevation) {
+    if (!mounted) return;
+    final az = (ChartThreeD.normalizeAzimuth(azimuth) * 10).round() / 10;
+    final el = (elevation * 10).round() / 10;
+    if (!c.editor.canEdit || c.spec.isFromNewerVersion) {
+      // Viewers look around without changing the chart.
+      c.setOrbit(az, el);
+      return;
+    }
+    c.setOrbit(az, el);
+    c.endOrbit(committed: true);
+    c.editor
+        .invokeCommand('sheets.chart.update', {
+          'objectId': c.objectId,
+          'patch': {
+            'threeD': {'azimuth': az, 'elevation': el},
+          },
+        })
+        .then((ok) {
+          if (!ok) c.endOrbit();
+        });
   }
 
   ChartScene _scene(BuildContext context) => c.sceneFor(
@@ -76,7 +199,15 @@ class _ChartObjectViewState extends State<ChartObjectView> {
 
   void _onHover(PointerHoverEvent e, ChartScene scene) {
     final p = e.localPosition / widget.zoom;
-    final hit = scene.hitTest(p.dx, p.dy);
+    final over = _canOrbit(scene) && _inPlot(scene, e.localPosition);
+    if (over != _overPlot) setState(() => _overPlot = over);
+    final s3 = scene.threeD;
+    final picked = s3?.pick(p.dx, p.dy);
+    // The 3D item under the pointer lights up (both backends, 08 §23.6).
+    if (s3 != null && !_orbit.active) c.hover3D = picked?.tag;
+    final hit = s3 != null
+        ? (picked == null ? null : SceneHit(picked.tag, const SGroup([]), 0))
+        : scene.hitTest(p.dx, p.dy);
     final show =
         hit != null &&
         (hit.tag.role == SceneRole.point || hit.tag.role == SceneRole.series) &&
@@ -92,6 +223,17 @@ class _ChartObjectViewState extends State<ChartObjectView> {
   }
 
   void _onUp(PointerUpEvent e, ChartScene scene) {
+    final orbiting = _orbitPointer == e.pointer;
+    if (orbiting) {
+      _orbitPointer = null;
+      ChartPointerClaims.release(e.pointer);
+      final moved = _orbit.moved;
+      _orbit.end(_velocity.getVelocity().pixelsPerSecond / widget.zoom);
+      if (moved) {
+        _down = null;
+        return;
+      }
+    }
     final d = _down;
     _down = null;
     if (d == null || (e.localPosition - d).distance > 3) return;
@@ -108,26 +250,61 @@ class _ChartObjectViewState extends State<ChartObjectView> {
 
   @override
   Widget build(BuildContext context) {
+    c.animate3D = !_reduceMotion;
     final scene = _scene(context);
+    if (scene.threeD != null) Chart3DBackends.ensureStarted();
     final w = widget.width * widget.zoom;
     final h = widget.height * widget.zoom;
     Widget paint = CustomPaint(
       size: Size(w, h),
-      painter: ChartScenePainter(scene, scale: widget.zoom),
+      painter: ChartScenePainter(
+        scene,
+        scale: widget.zoom,
+        gpu: Chart3DBackends.active,
+        gpuKey: c,
+        devicePixelRatio: MediaQuery.devicePixelRatioOf(context),
+      ),
       isComplex: true,
-      willChange: false,
+      willChange: _orbit.active || _transition.isAnimating,
     );
     if (!widget.interactive) return paint;
     final hover = _hover;
     return Listener(
       behavior: HitTestBehavior.translucent,
-      onPointerDown: (e) => _down = e.localPosition,
+      onPointerDown: (e) {
+        _down = e.localPosition;
+        _orbitDown(e, scene);
+      },
+      onPointerMove: (e) {
+        if (_orbitPointer != e.pointer) return;
+        _velocity.addPosition(e.timeStamp, e.localPosition);
+        _orbit.update(e.localPosition);
+        if (_hover != null) setState(() => _hover = null);
+      },
       onPointerUp: (e) => _onUp(e, scene),
+      onPointerCancel: (e) {
+        if (_orbitPointer != e.pointer) return;
+        _orbitPointer = null;
+        ChartPointerClaims.release(e.pointer);
+        _orbit.cancel();
+        c.endOrbit();
+      },
       child: MouseRegion(
         opaque: false,
+        cursor: _overPlot
+            ? (_orbit.active
+                  ? SystemMouseCursors.grabbing
+                  : SystemMouseCursors.grab)
+            : MouseCursor.defer,
         onHover: (e) => _onHover(e, scene),
         onExit: (_) {
-          if (_hover != null) setState(() => _hover = null);
+          c.hover3D = null;
+          if (_hover != null || _overPlot) {
+            setState(() {
+              _hover = null;
+              _overPlot = false;
+            });
+          }
         },
         child: SizedBox(
           width: w,

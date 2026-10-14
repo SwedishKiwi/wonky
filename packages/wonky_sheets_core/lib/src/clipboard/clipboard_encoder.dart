@@ -58,6 +58,10 @@ abstract final class ClipboardEncoder {
   /// come from [source] formatted with the number formatter in [locale]
   /// (default: the spreadsheet locale). [hooks] converts formulas to A1 for
   /// `data-sheets-formula` and [ClipCell.formulaA1] (omitted without hooks).
+  ///
+  /// [rowOrder] lists the rows to copy in their order (a display order,
+  /// e.g. a sorted filter view, 07 §4.4); rows outside [range] are ignored;
+  /// DV/CF rules are not copied then.
   static ClipboardContent copy(
     WorkbookModel model,
     ResolvedRange range,
@@ -68,6 +72,7 @@ abstract final class ClipboardEncoder {
     bool isCut = false,
     ConditionalOverlayProvider? conditional,
     NumberFormatter? formatter,
+    List<int>? rowOrder,
   }) {
     final sheet = model.sheet(range.sheetId);
     if (sheet == null) throw const ClipboardCopyException('Unknown sheet');
@@ -100,9 +105,14 @@ abstract final class ClipboardEncoder {
     );
     final sheetId = sheet.id;
 
+    // [rowOrder]: the rows in display order (a sorted filter view, 07 §4.4).
     final rowIdx = [
-      for (var r = rect.top; r <= rect.bottom; r++)
-        if (!_hidden(sheet, source, GridDimension.rows, r)) r,
+      for (final r
+          in rowOrder ?? [for (var r = rect.top; r <= rect.bottom; r++) r])
+        if (r >= rect.top &&
+            r <= rect.bottom &&
+            !_hidden(sheet, source, GridDimension.rows, r))
+          r,
     ];
     final colIdx = [
       for (var c = rect.left; c <= rect.right; c++)
@@ -237,8 +247,11 @@ abstract final class ClipboardEncoder {
       }
     }
 
-    addRules(RuleKind.dataValidation);
-    addRules(RuleKind.conditionalFormat);
+    // Rule rectangles can't follow a row order: rules stay behind then.
+    if (rowOrder == null) {
+      addRules(RuleKind.dataValidation);
+      addRules(RuleKind.conditionalFormat);
+    }
 
     final payload = SheetsClipboardPayload(
       clipId: clipId,

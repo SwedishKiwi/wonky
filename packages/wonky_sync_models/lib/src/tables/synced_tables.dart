@@ -1,4 +1,6 @@
 import 'package:serverpod_database/serverpod_database.dart';
+import 'package:serverpod_offline_sync/serverpod_offline_sync.dart'
+    show BulkRowWrite, BulkWriteResult, OfflineSyncDatabase;
 import 'package:serverpod_serialization/serverpod_serialization.dart'
     show UuidValue;
 
@@ -59,7 +61,9 @@ final class SyncedTableSpec<T extends TableRow<UuidValue>> {
 
   /// `columnValues` for an update of exactly [columns] (`id`/`spaceId`
   /// skipped). Throws [ArgumentError] for unknown columns.
-  List<ColumnValue<dynamic, dynamic>> columnValues(Map<String, Object?> columns) => [
+  List<ColumnValue<dynamic, dynamic>> columnValues(
+    Map<String, Object?> columns,
+  ) => [
     for (final e in columns.entries)
       if (e.key != 'id' && e.key != spaceIdColumn)
         () {
@@ -116,9 +120,11 @@ final class SyncedTableSpec<T extends TableRow<UuidValue>> {
     Transaction? transaction,
   }) async {
     if (rows.isEmpty) return;
-    await session.db.insert<T>([
-      for (final r in rows) fromColumns(r),
-    ], transaction: transaction);
+    await session.db.insert<T>(
+      [for (final r in rows) fromColumns(r)],
+      transaction: transaction,
+      noReturn: true,
+    );
   }
 
   /// Updates exactly [columns] of row [id]. Returns false when the row is
@@ -158,6 +164,35 @@ final class SyncedTableSpec<T extends TableRow<UuidValue>> {
     }
   }
 
+  /// Set-based write of rows of this table (offline-sync patch OS-7, see
+  /// `OfflineSyncDatabase.bulkWrite`): inserts of new ids, revives of
+  /// tombstoned ids, updates of visible ids naming exactly their columns.
+  /// Ids must be distinct. Same CRDT records as [insertRows] and
+  /// [updateColumns] per row, in a few batched statements.
+  Future<BulkWriteResult> bulkWrite(
+    DatabaseSession session,
+    List<SyncedRowWrite> writes, {
+    Transaction? transaction,
+  }) {
+    final db = session.db;
+    if (db is! OfflineSyncDatabase) {
+      throw StateError('bulkWrite needs an offline-sync database session');
+    }
+    return db.bulkWrite<T>([
+      for (final w in writes)
+        if (w.isInsert)
+          BulkRowWrite<T>.insert(
+            fromColumns({...w.columns, 'id': w.id.uuid}),
+            columnsIfVisible: [
+              for (final n in w.columnsIfVisible ?? w.columns.keys)
+                if (n != 'id') ?column(n),
+            ],
+          )
+        else
+          BulkRowWrite<T>.updateColumns(w.id, columnValues(w.columns)),
+    ], transaction: transaction);
+  }
+
   /// Max ids per `IN` list.
   static const chunk = 500;
 
@@ -193,6 +228,26 @@ final class SyncedTableSpec<T extends TableRow<UuidValue>> {
       _ => v,
     };
   }
+}
+
+/// One row of [SyncedTableSpec.bulkWrite] (a column map as in
+/// [SyncedTableSpec.toColumns]).
+final class SyncedRowWrite {
+  /// Inserts the full row [columns]; when [id] is visible, updates its
+  /// [columnsIfVisible] (all given columns when null) instead.
+  const SyncedRowWrite.insert(this.id, this.columns, {this.columnsIfVisible})
+    : isInsert = true;
+
+  /// Updates exactly [columns] of the visible row [id] (skipped when the
+  /// row is not visible).
+  const SyncedRowWrite.updateColumns(this.id, this.columns)
+    : isInsert = false,
+      columnsIfVisible = null;
+
+  final UuidValue id;
+  final Map<String, Object?> columns;
+  final Iterable<String>? columnsIfVisible;
+  final bool isInsert;
 }
 
 SyncedTableSpec<T> _spec<T extends TableRow<UuidValue>>(

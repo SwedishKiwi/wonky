@@ -3,8 +3,11 @@ import 'dart:math' as math;
 import 'dart:typed_data';
 import 'dart:ui' as ui;
 
+import 'package:flutter/foundation.dart' show visibleForTesting;
 import 'package:flutter/rendering.dart';
 import 'package:wonky_sheets_core/model.dart';
+
+import '../../charts3d/chart3d_gpu.dart';
 
 /// Font used for chart text when the spec names none (or one that isn't
 /// bundled): the app UI font shipped with `shad`.
@@ -86,12 +89,29 @@ class FlutterTextMeasurer implements TextMeasurer {
   }
 }
 
+/// What [paintChartScene] paints with: text metrics and, for 3D charts, an
+/// optional GPU backend.
+class _Paint {
+  _Paint(this.text, this.scene, this.gpu, this.gpuKey, this.pixelRatio);
+
+  final FlutterTextMeasurer text;
+  final ChartScene scene;
+  final Chart3DGpuRenderer? gpu;
+  final Object? gpuKey;
+  final double pixelRatio;
+}
+
 /// Paints a [ChartScene] (08 §6.3 painting contract) on a Flutter canvas.
-/// Coordinates are scene px; scale the canvas for zoom.
+/// Coordinates are scene px; scale the canvas for zoom. The geometry of a 3D
+/// chart is drawn by [gpu] when given (identified by [gpuKey], rendered at
+/// [pixelRatio] physical px per scene px), else by its software rendering.
 void paintChartScene(
   Canvas canvas,
   ChartScene scene, {
   FlutterTextMeasurer? text,
+  Chart3DGpuRenderer? gpu,
+  Object? gpuKey,
+  double pixelRatio = 1,
 }) {
   final t = text ?? FlutterTextMeasurer.instance;
   if (RenderGeometry.fillVisible(scene.background)) {
@@ -100,14 +120,14 @@ void paintChartScene(
       Paint()..color = Color(scene.background),
     );
   }
-  _paintList(canvas, scene.primitives, t);
+  _paintList(
+    canvas,
+    scene.primitives,
+    _Paint(t, scene, gpuKey == null ? null : gpu, gpuKey, pixelRatio),
+  );
 }
 
-void _paintList(
-  Canvas canvas,
-  List<ScenePrimitive> list,
-  FlutterTextMeasurer t,
-) {
+void _paintList(Canvas canvas, List<ScenePrimitive> list, _Paint t) {
   for (final p in list) {
     _paint(canvas, p, t);
   }
@@ -188,7 +208,7 @@ void _strokePath(Canvas canvas, Path path, SStroke? s) {
   canvas.drawPath(dash == null ? path : _dashed(path, dash), _stroke(s));
 }
 
-void _paint(Canvas canvas, ScenePrimitive p, FlutterTextMeasurer t) {
+void _paint(Canvas canvas, ScenePrimitive p, _Paint t) {
   switch (p) {
     case SRect(:final rect, :final fill, :final stroke, :final radius):
       if (!RenderGeometry.rectFinite(rect)) return;
@@ -213,9 +233,25 @@ void _paint(Canvas canvas, ScenePrimitive p, FlutterTextMeasurer t) {
         }
         _strokePath(canvas, path, stroke);
       }
-    case SPath(:final cmds, :final fill, :final stroke, :final evenOdd):
+    case SPath(
+      :final cmds,
+      :final fill,
+      :final stroke,
+      :final evenOdd,
+      :final gradient,
+    ):
       final path = _path(cmds, evenOdd: evenOdd);
-      if (RenderGeometry.fillVisible(fill)) canvas.drawPath(path, _fill(fill!));
+      if (RenderGeometry.fillVisible(fill)) {
+        final paint = _fill(fill!);
+        if (gradient != null) {
+          paint.shader = ui.Gradient.linear(
+            Offset(gradient.x0, gradient.y0),
+            Offset(gradient.x1, gradient.y1),
+            [Color(gradient.color0), Color(gradient.color1)],
+          );
+        }
+        canvas.drawPath(path, paint);
+      }
       _strokePath(canvas, path, stroke);
     case SPolyline(:final xy, :final stroke):
       if (!RenderGeometry.strokeVisible(stroke)) return;
@@ -236,12 +272,24 @@ void _paint(Canvas canvas, ScenePrimitive p, FlutterTextMeasurer t) {
       if (RenderGeometry.fillVisible(fill)) canvas.drawPath(path, _fill(fill!));
       _strokePath(canvas, path, stroke);
     case SText():
-      _text(canvas, p, t);
+      _text(canvas, p, t.text);
     case SClip(:final rect, :final children):
       canvas.save();
       canvas.clipRect(_rect(rect));
       _paintList(canvas, children, t);
       canvas.restore();
+    case SGroup(:final tag)
+        when tag?.detail == ChartScene.chart3dGroupDetail &&
+            t.gpu != null &&
+            t.scene.threeD != null &&
+            t.gpu!.paint(
+              canvas,
+              t.scene.threeD!,
+              key: t.gpuKey!,
+              pixelRatio: t.pixelRatio,
+            ):
+      // Drawn by the GPU backend.
+      return;
     case SGroup(:final children, :final opacity):
       if (opacity <= 0) return;
       if (opacity < 1) {
@@ -311,10 +359,34 @@ void _text(Canvas canvas, SText s, FlutterTextMeasurer t) {
 /// Paints a scene laid out at logical size, scaled by [scale] (zoom), so
 /// text and lines stay crisp at every zoom level (08 §9.1).
 class ChartScenePainter extends CustomPainter {
-  ChartScenePainter(this.scene, {this.scale = 1, super.repaint});
+  ChartScenePainter(
+    this.scene, {
+    this.scale = 1,
+    this.gpu,
+    this.gpuKey,
+    this.devicePixelRatio = 1,
+    super.repaint,
+  });
 
   final ChartScene? scene;
   final double scale;
+
+  /// GPU backend for the geometry of 3D charts (null = software).
+  final Chart3DGpuRenderer? gpu;
+
+  /// Identity of the chart for the GPU backend's buffers.
+  final Object? gpuKey;
+  final double devicePixelRatio;
+
+  /// Recorded pictures of 2D scenes (08 §12 raster cache): repaints of an
+  /// unchanged chart (hover tooltips, selection frames, zoom-independent
+  /// repaints) replay the picture instead of walking the scene again, which
+  /// matters for charts with many points. Kept while the scene lives.
+  static final Expando<ui.Picture> _pictures = Expando('chartScenePicture');
+
+  /// How many times a scene was walked (tests, benchmarks).
+  @visibleForTesting
+  static int debugSceneWalks = 0;
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -323,13 +395,38 @@ class ChartScenePainter extends CustomPainter {
     canvas.save();
     canvas.clipRect(Offset.zero & size);
     if (scale != 1) canvas.scale(scale);
-    paintChartScene(canvas, s);
+    if (s.threeD != null) {
+      debugSceneWalks++;
+      paintChartScene(
+        canvas,
+        s,
+        gpu: gpu,
+        gpuKey: gpuKey,
+        pixelRatio: devicePixelRatio * scale,
+      );
+    } else {
+      var picture = _pictures[s];
+      if (picture == null) {
+        debugSceneWalks++;
+        final recorder = ui.PictureRecorder();
+        paintChartScene(
+          Canvas(recorder),
+          s,
+          pixelRatio: devicePixelRatio * scale,
+        );
+        picture = _pictures[s] = recorder.endRecording();
+      }
+      canvas.drawPicture(picture);
+    }
     canvas.restore();
   }
 
   @override
   bool shouldRepaint(ChartScenePainter old) =>
-      !identical(old.scene, scene) || old.scale != scale;
+      !identical(old.scene, scene) ||
+      old.scale != scale ||
+      old.gpu != gpu ||
+      old.devicePixelRatio != devicePixelRatio;
 }
 
 /// Renders [scene] to PNG bytes at [pixelRatio] (download, copy as image,

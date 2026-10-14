@@ -43,6 +43,7 @@ final class EditEventData extends ScriptEvent {
     this.oldValue,
     this.triggerUid,
     this.offline = false,
+    this.coalesced = false,
   });
 
   /// Sheet of the edited cells.
@@ -63,6 +64,10 @@ final class EditEventData extends ScriptEvent {
   /// Edit was made offline.
   final bool offline;
 
+  /// Several queued edits were merged into this one (installable triggers
+  /// with more than 100 queued runs; [range] is their bounding box).
+  final bool coalesced;
+
   @override
   Map<String, Object?> toWire(ScriptHost host) => {
     'kind': 'edit',
@@ -72,6 +77,35 @@ final class EditEventData extends ScriptEvent {
     'oldValue': oldValue,
     'triggerUid': triggerUid,
     'offline': offline,
+    'coalesced': coalesced,
+  };
+}
+
+/// `UiEvent`: a button of a script panel was clicked (09 §16.3).
+final class UiEventData extends ScriptEvent {
+  /// Creates the event.
+  const UiEventData({
+    required this.panelId,
+    required this.values,
+    required this.button,
+  });
+
+  /// The panel.
+  final String panelId;
+
+  /// Input values by component id.
+  final Map<String, Object?> values;
+
+  /// Caption of the clicked button.
+  final String button;
+
+  @override
+  Map<String, Object?> toWire(ScriptHost host) => {
+    'kind': 'ui',
+    'user': host.userData(host.context.activeUser),
+    'values': values,
+    'panelId': panelId,
+    'button': button,
   };
 }
 
@@ -279,7 +313,12 @@ Future<ExecutionResult> runScript({
     maxSleepMs: limits.maxSleepMs,
     writeBatchCells: limits.writeBatchCells,
   );
-  final outcome = await runner.runGuest(request, host);
+  final GuestOutcome outcome;
+  try {
+    outcome = await runner.runGuest(request, host);
+  } finally {
+    host.releaseLocks();
+  }
   if (outcome.error != null && outcome.status != ExecutionStatus.completed) {
     host.log(
       ScriptLogLevel.error,

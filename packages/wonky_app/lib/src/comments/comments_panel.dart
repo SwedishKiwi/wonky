@@ -11,6 +11,7 @@ import '../data/api.dart';
 import '../drive/drive_format.dart';
 import '../l10n/wonky_app_localizations.dart';
 import '../shell/shell_services.dart';
+import 'comment_anchor.dart';
 import 'comments_controller.dart';
 
 /// The comments side panel (suite 07 §2.3): filters, search, sort, the
@@ -70,6 +71,10 @@ class CommentsPanel extends StatelessWidget {
                       ),
                     ],
                   ),
+                  if (c.scope != null) ...[
+                    const SizedBox(height: 6),
+                    _ScopeTabs(controller: c),
+                  ],
                 ],
               ),
             ),
@@ -101,7 +106,23 @@ class CommentsPanel extends StatelessWidget {
                                 : null,
                             size: 80,
                           ),
-                        for (final t in threads)
+                        for (final (i, t) in threads.indexed) ...[
+                          if (_header(c, threads, i) case final h?)
+                            Padding(
+                              key: ValueKey<String>('comments.group.$h'),
+                              padding: EdgeInsets.only(
+                                top: i == 0 ? 0 : 6,
+                                bottom: 6,
+                              ),
+                              child: Text(
+                                h,
+                                overflow: TextOverflow.ellipsis,
+                                style: theme.textTheme.small.copyWith(
+                                  fontWeight: FontWeight.w600,
+                                  color: theme.colorScheme.mutedForeground,
+                                ),
+                              ),
+                            ),
                           Padding(
                             padding: const EdgeInsets.only(bottom: 10),
                             child: CommentThreadCard(
@@ -113,6 +134,7 @@ class CommentsPanel extends StatelessWidget {
                               thread: t,
                             ),
                           ),
+                        ],
                         if (c.error != null)
                           Text(
                             errorMessage(c.error!),
@@ -128,8 +150,44 @@ class CommentsPanel extends StatelessWidget {
   }
 }
 
-/// A text box with `@` mention autocomplete. Reports the plain text and
-/// the mentioned user ids.
+/// The group header before `threads[i]` in the position sort (the app's
+/// [CommentPanelOptions.groupOf], e.g. the sheet name), when it starts a
+/// new group.
+String? _header(CommentsController c, List<CommentThreadView> threads, int i) {
+  final a = commentPanelOptionsOf(c.anchors);
+  if (a == null || c.sort != CommentsSort.position) return null;
+  final g = a.groupOf(threads[i]);
+  if (g == null) return null;
+  return i > 0 && a.groupOf(threads[i - 1]) == g ? null : g;
+}
+
+/// The app's scope filter of the comments panel (Sheets: This sheet / All
+/// sheets).
+class _ScopeTabs extends StatelessWidget {
+  const _ScopeTabs({required this.controller});
+
+  final CommentsController controller;
+
+  @override
+  Widget build(BuildContext context) {
+    final scopes =
+        commentPanelOptionsOf(controller.anchors)?.scopes ??
+        const <String, String>{};
+    return ShadTabs<String>(
+      value: controller.scope,
+      onChanged: controller.setScope,
+      tabs: [
+        for (final e in scopes.entries)
+          ShadTab(
+            key: ValueKey<String>('comments.scope.${e.key}'),
+            value: e.key,
+            child: Text(e.value, overflow: TextOverflow.ellipsis),
+          ),
+      ],
+    );
+  }
+}
+
 /// The Open / For you filter of the comments (suite 07 §2.3), shared by the
 /// comments panel and Write's comment margin.
 class CommentsFilterTabs extends StatelessWidget {
@@ -589,6 +647,26 @@ class _CommentThreadCardState extends State<CommentThreadCard> {
             ],
             if (orphaned) ...[
               ShadBadge.outline(child: Text(l.commentOrphaned)),
+              const SizedBox(height: 6),
+            ],
+            if (c.isPending(t.uuid.uuid)) ...[
+              Row(
+                key: const ValueKey<String>('comments.pending'),
+                children: [
+                  Icon(
+                    LucideIcons.cloudOff,
+                    size: 14,
+                    color: theme.colorScheme.mutedForeground,
+                  ),
+                  const SizedBox(width: 6),
+                  Expanded(
+                    child: Text(
+                      l.commentPending,
+                      style: theme.textTheme.muted.copyWith(fontSize: 12),
+                    ),
+                  ),
+                ],
+              ),
               const SizedBox(height: 6),
             ],
             if (collapsed)

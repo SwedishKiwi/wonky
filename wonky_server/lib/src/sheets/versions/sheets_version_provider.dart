@@ -27,6 +27,7 @@ import '../../platform/versions/version_service.dart';
 import '../mcp/sheets_bulk_writer.dart';
 import '../sync/sync_db.dart';
 import '../sync/synced_tables.dart';
+import 'sheets_version_changes.dart';
 
 /// Sheets versions (Sheets 10 §5.1): a gzip NDJSON snapshot of all synced
 /// rows of the space in cloud storage; restore applies the row diff as
@@ -172,7 +173,9 @@ class SheetsVersionProvider implements VersionProvider {
     final file = await FileService.byUuid(session, version.snapshotFileId!);
     if (file == null) return;
     final bytes = await FileService.readBytes(session, file);
-    final rows = decode(bytes.buffer.asUint8List(bytes.offsetInBytes, bytes.lengthInBytes));
+    final rows = decode(
+      bytes.buffer.asUint8List(bytes.offsetInBytes, bytes.lengthInBytes),
+    );
     final sheets = rows[SheetsTables.sheet]?.values ?? const [];
     int countFor(String table, String sheetId) =>
         rows[table]?.values.where((r) => r['sheetId'] == sheetId).length ?? 0;
@@ -191,10 +194,32 @@ class SheetsVersionProvider implements VersionProvider {
               'cells': countFor(SheetsTables.cell, s['id'] as String),
             },
         ]),
-        changedRangesJson: '[]',
+        changedRangesJson: await _changedRanges(session, item, version),
         authorIds: version.authors,
       ),
     );
+  }
+
+  /// `changedRangesJson` of [version]: the ranges of the change log rows
+  /// consumed since the previous capture, with authors (Sheets 10 §5.1.2).
+  static Future<String> _changedRanges(
+    Session session,
+    DriveItem item,
+    ItemVersion version,
+  ) async {
+    try {
+      final (from, to) = await SheetsVersionChanges.windowOf(session, version);
+      final (ranges, approx) = await SheetsVersionChanges.rangesBetween(
+        session,
+        item.contentRef!,
+        from: from,
+        to: to,
+      );
+      return SheetsVersionChanges.encode(ranges, approx: approx);
+    } on Exception catch (e) {
+      session.log('Changed ranges failed: $e', level: LogLevel.warning);
+      return SheetsVersionChanges.encode(const [], approx: true);
+    }
   }
 
   @override
@@ -209,7 +234,9 @@ class SheetsVersionProvider implements VersionProvider {
     final file = await FileService.byUuid(session, fileId);
     if (file == null) throw Errors.expired('The snapshot is no longer stored.');
     final bytes = await FileService.readBytes(session, file);
-    final target = decode(bytes.buffer.asUint8List(bytes.offsetInBytes, bytes.lengthInBytes));
+    final target = decode(
+      bytes.buffer.asUint8List(bytes.offsetInBytes, bytes.lengthInBytes),
+    );
     final current = await readSpace(session, item.contentRef!);
     final changes = diff(current, target);
     final label =
@@ -256,8 +283,7 @@ class SheetsVersionProvider implements VersionProvider {
       SheetsTables.sheet: 'sheets',
     };
     for (final c in changes) {
-      final sheetId =
-          c.columnsAfter['sheetId'] ?? c.columnsBefore['sheetId'];
+      final sheetId = c.columnsAfter['sheetId'] ?? c.columnsBefore['sheetId'];
       if (sheetId != null) s.sheets.add('$sheetId');
       if (c.table == SheetsTables.sheet) s.sheets.add(c.rowId);
       final kind = kinds[c.table];

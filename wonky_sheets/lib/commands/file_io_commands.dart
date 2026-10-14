@@ -1,16 +1,22 @@
+import 'dart:async';
 import 'dart:convert';
 
 import 'package:flutter/foundation.dart' show Uint8List;
 import 'package:flutter/widgets.dart';
 import 'package:shad/shad.dart' show LucideIcons;
 import 'package:wonky_app/wonky_app.dart';
+import 'package:wonky_client/wonky_client.dart' show UuidValue;
 import 'package:wonky_core/wonky_core.dart';
 import 'package:wonky_sheets_core/model.dart';
 
 import '../features/export/sheets_downloads.dart';
 import '../features/import/import_dialog.dart';
 import '../features/import/import_pipeline.dart';
+import '../features/import/server_import.dart';
+import '../features/history/server_change_undo.dart';
+import '../features/sheet_editor/sheet_editor_controller.dart';
 import '../features/import_export/io_report_dialog.dart';
+import '../features/import_export/pending_uploads.dart';
 import '../features/import_export/progress_dialog.dart';
 import '../features/import_export/sheets_io.dart';
 import '../l10n/sheets_l10n.dart';
@@ -66,6 +72,12 @@ const _importSchema = JsonSchema.object(
       additionalProperties: true,
     ),
     'showDialog': JsonSchema.boolean(),
+    'onServer': JsonSchema.boolean(
+      description:
+          'Import into the open spreadsheet with a server job (true) or on '
+          'this device (false). Default: big files on the server while '
+          'online.',
+    ),
   },
 );
 
@@ -91,8 +103,108 @@ Future<void> showImportReport(BuildContext context, ImportReport r) {
   );
 }
 
+/// Keeps [file] for *Recent uploads* of the import dialog.
+void _rememberImport(ShellServices s, ImportFileData file) {
+  final q = SheetsPendingUploads.of(s);
+  if (q != null) unawaited(q.recordRecentImport(file.name, file.bytes));
+}
+
+void _showImportToast(
+  ShellServices s,
+  SheetsLocalizations l,
+  ImportReport report,
+) => s.toasts.show(
+  importSummaryText(l, report),
+  actionLabel: report.warnings.isEmpty ? null : l.importView,
+  onAction: report.warnings.isEmpty
+      ? null
+      : () {
+          final nc = s.navigatorContext;
+          if (nc != null) showImportReport(nc, report);
+        },
+);
+
+/// Imports [file] into the open spreadsheet with a server job (11 §3.3):
+/// progress with cancel, one `sheets.serverChange` undo step. Null when the
+/// server can't be reached (the caller imports on the client).
+Future<CommandResult?> _importOnServer(
+  CommandContext ctx,
+  SheetEditorController ed,
+  ImportFileData file,
+  ImportOptions options,
+) async {
+  final s = ed.services;
+  final l = ed.l10n;
+  Future<ServerImportResult> work(IoProgress p) => runServerImport(
+    ed,
+    file,
+    options,
+    p,
+    uploadingText: l.importPhaseUploading,
+    queuedText: l.importPhaseQueued,
+    readingText: l.importPhaseReading,
+    writingText: l.importPhaseWritingCells,
+    finalizingText: l.importPhaseFinalizing,
+  );
+  final c = ctx.dialogContext;
+  final ServerImportResult? r;
+  try {
+    r = c == null
+        ? await work(IoProgress())
+        : await runWithProgress(
+            c,
+            title: l.importProgressTitle(file.name),
+            work: work,
+          );
+  } on IoCancelled {
+    return const CommandResult.cancelled();
+  } catch (e) {
+    if (isServerUnavailable(e)) return null;
+    showIoError(s, l.importFailed, e);
+    return CommandResult.failed(errorMessage(e));
+  }
+  if (r == null) return const CommandResult.cancelled();
+  if (ctx.transaction != null) {
+    ctx.record(
+      SheetsServerChangeEntry(
+        changeId: r.changeId,
+        label: l.importUndoLabel(file.name),
+      ),
+    );
+  }
+  lastImportReport.value = r.report;
+  _rememberImport(s, file);
+  if (options.location.createsSheets && r.sheetIds.isNotEmpty) {
+    unawaited(activateWhenSynced(ed, r.sheetIds.first));
+  }
+  _showImportToast(s, l, r.report);
+  return CommandResult.ok({
+    ...r.report.toJson(),
+    'server': true,
+    'changeId': r.changeId,
+  });
+}
+
+/// Activates [sheetId] once the sync delivered it (server imports).
+Future<void> activateWhenSynced(
+  SheetEditorController ed,
+  String sheetId, {
+  Duration timeout = const Duration(seconds: 20),
+}) async {
+  final end = DateTime.now().add(timeout);
+  while (DateTime.now().isBefore(end)) {
+    if (ed.model.sheet(sheetId) != null) {
+      ed.activateSheet(sheetId);
+      return;
+    }
+    await Future<void>.delayed(const Duration(milliseconds: 250));
+  }
+}
+
 /// Import, import report and download commands (11 §9, 04 §3.1).
 List<Command<CommandArgs>> fileIoCommands(ShellServices s) {
+  // Durable image uploads of imports (signed-in app only).
+  if (s.client != null) SheetsPendingUploads.install(s);
   Future<CommandResult> createNew(
     CommandContext ctx,
     ImportFileData file,
@@ -128,6 +240,7 @@ List<Command<CommandArgs>> fileIoCommands(ShellServices s) {
     }
     if (r == null) return const CommandResult.cancelled();
     final created = r;
+    _rememberImport(s, file);
     s.toasts.show(
       l.importCreated(created.name),
       description: created.report.warnings.isEmpty
@@ -171,6 +284,7 @@ List<Command<CommandArgs>> fileIoCommands(ShellServices s) {
             canEdit: ed.canEdit,
             spreadsheetLocale: ed.locale,
             activeCell: ed.activeA1,
+            exclude: ed.session.itemUuid,
             estimate: (p, o) => estimateImport(
               p,
               ed.model,
@@ -197,7 +311,11 @@ List<Command<CommandArgs>> fileIoCommands(ShellServices s) {
         if (parsed != null) _parsedByToken[token] = parsed;
         return s.dispatcher.invoke(
           'sheets.file.importData',
-          args: {'fileToken': token, 'options': options.toJson()},
+          args: {
+            'fileToken': token,
+            'options': options.toJson(),
+            'onServer': ?a.boolean('onServer'),
+          },
           source: ctx.source,
           context: ctx.buildContext,
         );
@@ -229,6 +347,19 @@ List<Command<CommandArgs>> fileIoCommands(ShellServices s) {
           );
         }
         var parsed = token == null ? null : _parsedByToken.remove(token);
+        final cells = parsed?.document.sheets.fold<int>(
+          0,
+          (n, sh) => n + sh.cells.length,
+        );
+        // Big files go to a server import job while online (11 §3.1).
+        final onServer = a.boolean('onServer');
+        if (onServer == true && ServerImportApi.of(s) == null) {
+          return const CommandResult.failed('No server connection.');
+        }
+        if (onServer ?? runsOnServer(s, file, cells: cells)) {
+          final served = await _importOnServer(ctx, ed, file, options);
+          if (served != null) return served;
+        }
         Future<IrImportResult> work(IoProgress p) async {
           if (parsed == null) {
             await p.step(l.importPhaseReading);
@@ -239,13 +370,20 @@ List<Command<CommandArgs>> fileIoCommands(ShellServices s) {
             );
           }
           await p.step(l.importPhaseWriting);
-          return applyImport(ed, ctx, parsed!, options, fileName: file.name);
+          return applyImport(
+            ed,
+            ctx,
+            parsed!,
+            options,
+            fileName: file.name,
+            progress: p,
+          );
         }
 
         final c = ctx.dialogContext;
         final IrImportResult? r;
         try {
-          r = c == null
+          r = c == null || !c.mounted
               ? await work(IoProgress())
               : await runWithProgress(
                   c,
@@ -265,17 +403,37 @@ List<Command<CommandArgs>> fileIoCommands(ShellServices s) {
           ed.activateSheet(result.sheetIds.first);
         }
         final report = result.report;
-        s.toasts.show(
-          importSummaryText(l, report),
-          actionLabel: report.warnings.isEmpty ? null : l.importView,
-          onAction: report.warnings.isEmpty
-              ? null
-              : () {
-                  final nc = s.navigatorContext;
-                  if (nc != null) showImportReport(nc, report);
-                },
-        );
+        _rememberImport(s, file);
+        _showImportToast(s, l, report);
         return CommandResult.ok(report.toJson());
+      },
+    ),
+    SheetsCommand(
+      'sheets.file.cancelImport',
+      label: (l) => l.cmdFileCancelImport,
+      icon: LucideIcons.circleX,
+      categoryName: _file,
+      showInPalette: false,
+      argsSchema: const JsonSchema.object(
+        properties: {
+          'jobId': JsonSchema.string(
+            description: 'Server import job (default: the running one).',
+          ),
+        },
+      ),
+      enabled: (ed, a) =>
+          a.string('jobId') != null || runningServerImport.value != null,
+      run: (ctx, ed, a) async {
+        final raw = a.string('jobId');
+        final job = raw == null
+            ? runningServerImport.value
+            : UuidValue.withValidation(raw);
+        final api = ServerImportApi.of(s);
+        if (job == null || api == null) {
+          return const CommandResult.failed('No import is running.');
+        }
+        await api.cancel(job);
+        return CommandResult.ok({'jobId': job.uuid});
       },
     ),
     SheetsCommand(

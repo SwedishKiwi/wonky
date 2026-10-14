@@ -38,8 +38,8 @@ abstract final class FormulaParser {
   /// Maximum A1 formula length.
   static const int maxLength = 32768;
 
-  static Parser<Expr> _parser(FormulaLocale locale, bool storedForm) =>
-      _cache.putIfAbsent('${locale.id}|$storedForm', () {
+  static Parser<Expr> _parser(FormulaLocale locale, bool storedForm) => _cache
+      .putIfAbsent('${locale.id}|${locale.language?.code}|$storedForm', () {
         return FormulaGrammar(locale, storedForm: storedForm).build();
       });
 

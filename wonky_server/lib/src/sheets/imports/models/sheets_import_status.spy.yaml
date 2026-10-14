@@ -1,0 +1,11 @@
+### Status of a server-side spreadsheet import job (Sheets 11 §3.3, A-11-2).
+enum: SheetsImportStatus
+serialized: byName
+values:
+  - queued
+  - parsing
+  - writing
+  - finalizing
+  - done
+  - failed
+  - cancelled

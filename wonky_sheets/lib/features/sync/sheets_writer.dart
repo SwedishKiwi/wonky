@@ -19,6 +19,9 @@ import 'sheets_replica.dart';
 ///   An insert whose row is already visible (two devices creating the same
 ///   deterministic cell id) becomes an update of the given columns.
 /// - Deletes tombstone.
+/// - Consecutive inserts/updates of one table run as one set-based engine
+///   write (`SyncedTableSpec.bulkWrite`, offline-sync patch OS-7): a few
+///   batched statements per run instead of ~6 queries per row.
 /// - The `ChangeLog` row is written in the transaction of the last chunk.
 class SheetsWriter {
   SheetsWriter(this.replica);
@@ -28,11 +31,15 @@ class SheetsWriter {
   /// Max row changes per transaction (02 §7).
   static const chunkSize = MutationPlan.chunkSize;
 
+  /// Max rows per set-based engine write inside a transaction.
+  static const runSize = 1000;
+
   DatabaseSession get _s => replica.session;
 
   /// Writes [changes] into the space [spaceId] with the `ChangeLog` row
   /// ([plan] supplies its summary and detail; without a plan they are
-  /// derived from [changes]).
+  /// derived from [changes]). [onProgress] is called after each stored
+  /// chunk (changes written so far, total).
   Future<void> write({
     required UuidValue spaceId,
     required List<RowChange> changes,
@@ -40,6 +47,7 @@ class SheetsWriter {
     required String label,
     required String actorKind,
     required String sessionId,
+    void Function(int written, int total)? onProgress,
   }) async {
     if (changes.isEmpty) return;
     final summary = plan?.summary ?? summarize(changes);
@@ -69,6 +77,7 @@ class SheetsWriter {
           );
         }
       }, spaceId: spaceId);
+      onProgress?.call(end, changes.length);
     }
     await replica.markDirty(spaceId);
   }
@@ -78,50 +87,60 @@ class SheetsWriter {
     while (i < chunk.length) {
       final c = chunk[i];
       final spec = SyncedTables.of(c.table);
-      if (c.op == RowOp.update) {
-        await spec.updateColumns(
-          _s,
-          UuidValue.fromString(c.rowId),
-          c.columnsAfter,
-          transaction: tx,
-        );
-        i++;
+      var j = i + 1;
+      if (c.op == RowOp.delete) {
+        // A run of deletes of one table is one statement per 500 ids.
+        while (j < chunk.length &&
+            chunk[j].op == RowOp.delete &&
+            chunk[j].table == c.table) {
+          j++;
+        }
+        await spec.deleteByIds(_s, [
+          for (final r in chunk.sublist(i, j)) UuidValue.fromString(r.rowId),
+        ], transaction: tx);
+        i = j;
         continue;
       }
-      // A run of inserts (or deletes) into one table is one statement.
-      var j = i + 1;
+      // A run of inserts and updates of one table with distinct ids is one
+      // set-based engine write (offline-sync patch OS-7). Runs are capped
+      // at [runSize] rows so the Dart-side encoding between two awaits stays
+      // within a frame or two.
+      final ids = {c.rowId};
       while (j < chunk.length &&
-          chunk[j].op == c.op &&
-          chunk[j].table == c.table) {
+          j - i < runSize &&
+          chunk[j].op != RowOp.delete &&
+          chunk[j].table == c.table &&
+          ids.add(chunk[j].rowId)) {
         j++;
       }
-      final run = chunk.sublist(i, j);
+      final writes = [for (final r in chunk.sublist(i, j)) _rowWrite(r)];
+      await spec.bulkWrite(_s, writes, transaction: tx);
       i = j;
-      final ids = [for (final r in run) UuidValue.fromString(r.rowId)];
-      if (c.op == RowOp.delete) {
-        await spec.deleteByIds(_s, ids, transaction: tx);
-        continue;
-      }
-      final visible = {
-        for (final r in await spec.findByIds(_s, ids, transaction: tx))
-          r.id.uuid,
-      };
-      final inserts = <Map<String, Object?>>[];
-      for (final r in run) {
-        if (visible.contains(r.rowId)) {
-          await spec.updateColumns(
-            _s,
-            UuidValue.fromString(r.rowId),
-            {...r.columnsAfter}..remove(Cols.id),
-            transaction: tx,
-          );
-        } else {
-          inserts.add({...r.columnsAfter, Cols.id: r.rowId});
-        }
-      }
-      await spec.insertRows(_s, inserts, transaction: tx);
     }
   }
+
+  /// The engine write of an insert or update. An insert whose row is
+  /// already visible updates the given columns; a cell's foreign keys are
+  /// left out of that update (they are fixed by its deterministic id, and
+  /// rewriting them would force a projection pass).
+  static SyncedRowWrite _rowWrite(RowChange r) {
+    final id = UuidValue.fromString(r.rowId);
+    if (r.op == RowOp.update) {
+      return SyncedRowWrite.updateColumns(id, r.columnsAfter);
+    }
+    return SyncedRowWrite.insert(
+      id,
+      r.columnsAfter,
+      columnsIfVisible: [
+        for (final k in r.columnsAfter.keys)
+          if (k != Cols.id &&
+              !(r.table == SheetsTables.cell && _cellKeys.contains(k)))
+            k,
+      ],
+    );
+  }
+
+  static const _cellKeys = {Cols.sheetId, CellCols.rowId, CellCols.columnId};
 
   static proto.ActorKind _actorKind(String name) {
     for (final k in proto.ActorKind.values) {

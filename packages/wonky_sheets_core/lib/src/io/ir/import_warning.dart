@@ -49,6 +49,19 @@ final class ImportWarning {
     'count': count,
   };
 
+  /// Parses [toJson] output (unknown fields are ignored).
+  static ImportWarning fromJson(Map<String, Object?> j) => ImportWarning(
+    code: j['code'] as String? ?? '',
+    message: j['message'] as String? ?? '',
+    severity: ImportSeverity.values.firstWhere(
+      (e) => e.name == j['severity'],
+      orElse: () => ImportSeverity.warning,
+    ),
+    sheet: j['sheet'] as String?,
+    range: j['range'] as String?,
+    count: (j['count'] as num?)?.toInt() ?? 1,
+  );
+
   @override
   String toString() =>
       '${severity.name}: $message${count > 1 ? ' ($count)' : ''}';

@@ -320,6 +320,146 @@ abstract interface class ScriptUiDelegate {
 
   /// Activates the sheet [sheetId] (`Spreadsheet.activeSheet = …`).
   void activateSheet(String sheetId);
+
+  /// Shows (or replaces) a script sidebar or dialog (P2 UI DSL, 09 §16.3).
+  void showPanel(ScriptPanelRequest request);
+
+  /// Replaces the content of the open panel [panelId] (no-op when closed).
+  void updatePanel(String panelId, Map<String, Object?> panel);
+
+  /// Closes the panel [panelId].
+  void closePanel(String panelId);
+}
+
+/// Where a script panel shows.
+enum ScriptPanelMode { sidebar, dialog }
+
+/// A validated panel of the UI DSL (09 §16.3): `{id, title, children}` with
+/// components `{type, …}` (`text`, `textField`, `textarea`, `select`,
+/// `checkbox`, `radio`, `button`, `row`, `column`, `divider`, `table`,
+/// `progress`).
+final class ScriptPanelRequest {
+  const ScriptPanelRequest({
+    required this.mode,
+    required this.panel,
+    this.dialogTitle,
+  });
+
+  final ScriptPanelMode mode;
+  final Map<String, Object?> panel;
+  final String? dialogTitle;
+
+  /// Panel id.
+  String get id => '${panel['id'] ?? 'main'}';
+}
+
+/// Validation of UI DSL panels (size and shape; button targets).
+abstract final class ScriptPanelSchema {
+  static const maxComponents = 300;
+  static const maxDepth = 6;
+  static const maxText = 20000;
+
+  static const types = {
+    'text',
+    'textField',
+    'textarea',
+    'select',
+    'checkbox',
+    'radio',
+    'button',
+    'row',
+    'column',
+    'divider',
+    'table',
+    'progress',
+  };
+
+  /// A clean copy of [panel]; throws [ArgumentError] with a message for
+  /// scripts when it is malformed. [knownFunctions] are the valid button
+  /// targets (besides `_close`).
+  static Map<String, Object?> validate(
+    Map<Object?, Object?> panel, {
+    Set<String>? knownFunctions,
+  }) {
+    var count = 0;
+    String str(Object? v, String what, {int max = 2000}) {
+      final s = v == null ? '' : '$v';
+      if (s.length > max) {
+        throw ArgumentError('$what is longer than $max characters.');
+      }
+      return s;
+    }
+
+    Map<String, Object?> component(Object? c, int depth) {
+      if (++count > maxComponents) {
+        throw ArgumentError('A panel has at most $maxComponents components.');
+      }
+      if (depth > maxDepth) {
+        throw ArgumentError('Panels can be nested $maxDepth levels deep.');
+      }
+      if (c is! Map) throw ArgumentError('Invalid panel component.');
+      final type = c['type'];
+      if (!types.contains(type)) {
+        throw ArgumentError('Unknown panel component "$type".');
+      }
+      final out = <String, Object?>{'type': type};
+      for (final e in c.entries) {
+        final k = '${e.key}';
+        if (k == 'type') continue;
+        final v = e.value;
+        if (k == 'children') {
+          out[k] = [
+            for (final x in (v as List? ?? const [])) component(x, depth + 1),
+          ];
+        } else if (k == 'options' || k == 'headers') {
+          out[k] = [for (final x in (v as List? ?? const [])) str(x, k)];
+        } else if (k == 'rows') {
+          final rows = (v as List? ?? const []);
+          if (rows.length > 500) {
+            throw ArgumentError('Tables show at most 500 rows.');
+          }
+          out[k] = [
+            for (final r in rows)
+              [for (final x in (r as List)) x == null ? '' : str(x, 'A cell')],
+          ];
+        } else if (v is bool || v is num || v == null) {
+          out[k] = v;
+        } else {
+          out[k] = str(v, k, max: maxText);
+        }
+      }
+      if (type == 'button') {
+        final fn = '${out['onClick'] ?? ''}';
+        if (fn != '_close' &&
+            knownFunctions != null &&
+            !knownFunctions.contains(fn)) {
+          throw ArgumentError(
+            'There is no function named "$fn" for the button.',
+          );
+        }
+      }
+      if (const {
+            'textField',
+            'textarea',
+            'select',
+            'checkbox',
+            'radio',
+          }.contains(type) &&
+          '${out['id'] ?? ''}'.isEmpty) {
+        throw ArgumentError('Inputs need an id.');
+      }
+      return out;
+    }
+
+    return {
+      'id': str(panel['id'] ?? 'main', 'The panel id', max: 100),
+      'title': str(panel['title'], 'The title', max: 200),
+      'children': [
+        for (final c in (panel['children'] as List? ?? const []))
+          component(c, 1),
+      ],
+    };
+  }
 }
 
 /// A key/value property store (09 §6.9).

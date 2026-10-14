@@ -1,0 +1,22 @@
+### Cached results of `=AI(prompt, ranges…)` cells (Sheets 12 §6.8): one
+### row per sha256(model ‖ prompt ‖ canonical JSON of the referenced
+### values). A cell is never recomputed unless its inputs change or the
+### user refreshes it.
+class: AiFunctionCache
+table: ai_function_cache
+serverOnly: true
+fields:
+  key: String
+  spreadsheetUuid: UuidValue
+  model: String
+  value: String
+  ### Set when the model failed (`#AI_ERROR!` with this tooltip).
+  error: String?
+  createdAt: DateTime
+  hits: int, default=0
+indexes:
+  ai_function_cache_key_idx:
+    fields: key
+    unique: true
+  ai_function_cache_sheet_idx:
+    fields: spreadsheetUuid

@@ -536,7 +536,10 @@ activates the view if it exists (else toast "This filter view no longer exists")
   `⋮` menu: Rename, Update range, Duplicate, Copy link, Save view (temporary only; editors), Delete.
   ✕ closes the view (`sheets.filterView.activate {viewId: null}`).
 - Panel `sheets.panel.filterViews` (Data › Change view ▸ Manage): list of saved views of the sheet
-  with search, creator avatar, *Open*, *Duplicate*, *Delete*.
+  with search, creator avatar, *Open*, *Duplicate*, *Delete*. **As built:** the active view's row
+  has a *Range* field (`RangeInput` with picking, 04 §13): selecting on the grid while it is
+  focused writes the range live; `sheets.filterView.setRange` runs when picking ends (saved view:
+  1 step; temporary: local).
 - Filter buttons and column popovers work as for the basic filter but call
   `sheets.filterView.setColumnCriteria {viewId, colId, criteria}` (saved view: synced write, 1 step;
   temporary: local state, not undoable).
@@ -562,6 +565,29 @@ show the **model** row numbers (so users see that rows are reordered); keyboard 
 selection operate in display order; formulas/selections store model positions. Temporary views
 support the same. (Open question §23 if 03 cannot support permutations in M3 — fallback: views
 only filter, sort disabled with tooltip.)
+
+> **As built.** The column popover's *Sort A → Z / Z → A* in a view run
+> `sheets.filterView.sortColumn {viewId, colId?, ascending}` (saved view: `UpdateFilterView
+> {sortJson}`, 1 step; temporary: local; no `colId` clears it; sort by color stays basic-filter
+> only). The view bar shows "Sorted by ‹header› ✕". `FilterController.rowOrder` builds a
+> `ViewRowOrder` (core `ViewRowOrder.forRows`: the sort comparator over computed values; refused
+> over vertical merges) and installs it as `GridHooks.rowOrder`; it is rebuilt when the view, its
+> sort or the rows change and 300 ms after data changes. The grid works in that order:
+> `GridGeometry(rowOrder)` maps display ⇄ model rows (`displayRow`/`modelRow`, display offsets
+> with prefix sums of the permuted sizes, hit testing, `scrollToReveal`); `GridPane` keeps model
+> rows in its API (`y`, `cellRect`, `cellAt`) and adds `rows` (the model rows shown, in display
+> order, used by the gridline/fill/content/border/header/semantics/DV/find/image layers),
+> `isRowShown`, `bottomOf`, `displayRangeRect`; other layers keep `rowStart..rowEnd`, which then
+> bound the model rows shown. Row headers show model numbers. Selecting on screen (drag,
+> Shift+arrows/click, row-header drags) stores **display ranges** (`SelectionRange.display`): they
+> resolve to the model rows shown as several ranges (runs adjacent in both orders, in display
+> order; `ResolvedSelectionRange.displayRect`/`group`, `ResolvedSelection.isSingleGroup`), painted
+> as one rectangle; commands get the model runs. Arrow keys, Enter, PageUp/Down and Mod+↑/↓ (the
+> block's first/last row) follow the screen order. Copy of a display range copies its rows in
+> display order (`ClipboardEncoder.copy(rowOrder:)`, DV/CF rules not carried); paste and
+> Mod+D fill the rows shown below in display order, one undo step (`ViewSortEditing`); cut, the
+> fill handle, moving cells and dragging rows are off inside a sorted block (cut asks to copy;
+> a cut can't be pasted into it). Temporary views' sort isn't kept across reloads.
 
 ### 4.5 Commands
 
@@ -714,7 +740,9 @@ Criteria         [Dropdown ▾]
 > `DvEvaluator.draft` + `CellRenderCache.dvDraft`. Hovering or focusing a rule row outlines its
 > ranges (`RangeHighlightLayer`, Enter edits, Delete removes). Items reorder by dragging the ⠿
 > handle or with Alt+↑/↓ in the item field (screen readers: *Move up/down* actions). Chip colors
-> come from the 10-pair palette popover (+ No color) rather than `WonkyColorPicker`. Strict
+> come from `WonkyColorPicker` (*No color*, the palette, the 10 chip pairs as the "Chip colors"
+> row, custom colors): a pair keeps its text color, any other background gets a readable text
+> color of the same hue (`chipTextColorFor`). Strict
 > rejection runs in the cell editor commit (`CellEditorController.commitCheck`, editor stays
 > open) and as a `SheetEditorController.writeGates` gate on `SetCellInputs` of typed input
 > (agents get `validation: …`); typed **formulas** are checked with their result evaluated
@@ -1071,8 +1099,8 @@ Acceptance:
   number formats; above 100,000 rows a confirm dialog asks first.
 - **Big pivots**: sources with ≥ 100,000 data rows are aggregated in the background — in an
   isolate on native (`compute`), time-sliced on the web and for specs with calculated fields or
-  formula filters (`PivotEngine.computeSliced`, 8 ms slices); the snapshot is taken on the UI
-  thread. Meanwhile the previous output stays, dimmed, with an "Updating…" pill
+  formula filters (`PivotEngine.computeSliced`, 8 ms slices); the source snapshot is read in
+  slices too (see *Big sources* below). Meanwhile the previous output stays, dimmed, with an "Updating…" pill
   (`PivotStaleLayer`); a newer edit cancels and restarts the job.
 - **Show items with no data** (`showEmptyGroups`, panel checkbox under the areas): every item of
   a group under every item of the enclosing group, filtered items included, with empty values.
@@ -1093,7 +1121,18 @@ Acceptance:
   pivot's source range and that apply to pivot tables filter the source for everyone
   (`PivotOverlayService.slicerMask` → `SourceTable.rowMask`; viewers' local overrides don't);
   slicer changes recompute the pivots (debounced). `rowMask` overrides it.
-- Not built: incremental (delta) aggregation for decomposable aggregates (P2).
+- **Incremental refresh** (P2, §7.10): when only source *values* changed (content edits or
+  recalculated cells inside the source, no format/structure/spec/slicer change, no formulas in the
+  source), `PivotOverlayService` updates the previous result in place with
+  `PivotEngine.applyDelta` — old values out of, new values into the affected aggregates, then
+  re-sorted. Decomposable only: SUM, AVERAGE, COUNT, COUNTA, MIN/MAX (unless the extreme is taken
+  out), no pivot filters, calculated fields, histogram groups or slicer masks, unchanged group
+  keys and number formats, no errors to take out, ≤ max(256, rows/10) changed rows; otherwise it
+  computes anew. After 64 deltas a full computation bounds floating-point drift. A text group
+  keeps its first-seen label.
+- **Big sources** (≥ 100k data rows): the source snapshot is read in slices between event-loop
+  turns (`SourceTableBuilder`, 8 ms per turn), then aggregated in an isolate (native) or
+  time-sliced; a source change during the snapshot starts a new job.
 
 ---
 
@@ -1694,8 +1733,8 @@ the shared `Condition` model location is stated in 06 §15; slicers are P2 every
 uses full-row `sortKey` rewrite + re-pinning, partial sorts move contents.
 
 Still open (decide during implementation):
-1. **Filter-view display permutation** (§4.4) needs 03's grid to support a row display mapping;
-   if not available in M3, filter-view sorting is disabled until M5.
+1. ~~**Filter-view display permutation** (§4.4)~~ — built (`ViewRowOrder` in the grid geometry
+   and selection, §4.4 *As built*).
 2. **Basic filter criteria merge granularity** (§3.9): whole-JSON LWW; switch to a per-column
    table if concurrent filter editing proves common.
 3. **Live re-filtering** (§3.4) deliberately differs from Sheets' sticky behavior to keep
@@ -1703,9 +1742,8 @@ Still open (decide during implementation):
 
 ### Implementation notes (app, data tools agent)
 
-- Filter views only filter: the grid has no row display permutation, so view-only sort
-  (§4.4) is disabled (popover sort items disabled with a tooltip in views) — the open question
-  §23.1 fallback.
+- View-only sort in filter views is built (§4.4 *As built*): a row display order in the grid's
+  geometry and selection.
 - While a filter view is active, the basic filter keeps feeding the `filter` hidden layer
   (`SUBTOTAL`) and the layer is **suppressed** on screen (`AxisIndex.setLayerSuppressed`); the
   view's rows are the `filterView` layer.
@@ -1719,10 +1757,16 @@ Still open (decide during implementation):
 - *Freeze row 1 and re-sort* (§2.6): `sheets.data.sortSheet` toasts when row 1 looks like a header
   and nothing is frozen; the action undoes the sort and runs `{freezeHeader: true}` (freeze +
   sort, one step).
-- `DataJobs.run` (`features/data_tools/data_job.dart`): the planner is synchronous, so jobs over
-  ≥ 20,000 rows show a progress toast ("Sorting 412,000 rows…") painted before the work, and run
-  one at a time per spreadsheet ("Waiting for the current operation to finish…"). No percentage,
-  no cancel (would need an async planner).
+- `DataJobs.run` (`features/data_tools/data_job.dart`): jobs over ≥ 20,000 rows show a progress
+  toast (`Toasts.showProgress`: bar, percentage, *Cancel*) and run one at a time per spreadsheet
+  ("Waiting for the current operation to finish…"). Sort, randomize and remove duplicates plan
+  **cooperatively** (compute phase): `SheetsMutationPlanner.steps` yields progress from the row
+  tools (`applyRowPermutationSteps`, every 2,048 rows/formula cells), DataJobs runs ~12 ms of
+  steps per frame; *Cancel* stops with nothing changed (no undo step). The finished plan is handed
+  to the normal write path with `SheetsMutationPlanner.offer(op, model, plan)` (gates, undo, change
+  log unchanged), so the write phase isn't cancellable; the local store writes it in chunks in the
+  background. A remote change while planning restarts it (twice), then the plan is made while
+  applying. Split/trim/cleanup show an indeterminate bar (fast planners).
 - Slicers (§5): `features/slicers/` (`SlicerSpec`, `SlicerController`, `SlicerView` via
   `objectViewBuilders` of the objects layer, `SlicerPanel`), `commands/slicer_commands.dart`.
   Synced criteria → `slicer` layer (formulas/charts); viewers' local overrides → `slicerView`

@@ -97,6 +97,22 @@ class AssistantEndpoint extends Endpoint {
     );
   }
 
+  /// The requesting window's answer to a `uiToolCall` event (Sheets 12
+  /// §6.2): [response].requestId is the event's `toolUseId`.
+  Future<bool> uiToolResult(
+    Session session,
+    String runId,
+    UiBridgeResponse response,
+  ) async {
+    final actor = await UserService.actorOf(session);
+    return AssistantService.uiToolResult(
+      session,
+      actor.userId,
+      runId,
+      response,
+    );
+  }
+
   /// Threads of the user on [itemUuid], newest first.
   Future<List<AssistantThreadView>> listThreads(
     Session session,

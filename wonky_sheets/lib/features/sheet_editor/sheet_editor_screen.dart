@@ -31,6 +31,7 @@ import '../model/workbook_session.dart';
 import '../objects/objects_layer.dart';
 import '../pivot/pivot_controller.dart';
 import '../pivot/ui/pivot_editor_panel.dart';
+import '../scripts/runtime/script_panels.dart';
 import '../scripts/executions_panel.dart';
 import '../status/selection_stats_button.dart';
 import '../sync/sheets_sessions.dart';
@@ -282,6 +283,7 @@ class _SheetEditorScreenState extends State<SheetEditorScreen> {
         if (editor != null) chartEditorPanelSpec(context, s, editor),
         if (editor != null) ...formattingPanelSpecs(context, s, editor),
         if (editor != null) scriptExecutionsPanelSpec(context, editor),
+        if (editor != null) scriptSidebarPanelSpec(context, editor),
         ?sheetsAssistantPanelSpec(s, editor),
       ],
       toolbar: (context) => editor == null

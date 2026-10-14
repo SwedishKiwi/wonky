@@ -145,8 +145,9 @@ records daily.
 
 Common input fields: `spreadsheet` (required): Drive item uuid (as in `/s/<uuid>` URLs); a full
 app URL or the space uuid are also accepted. Common output fields for mutating tools:
-`change_id`, `cells_affected`, `warnings: []`, `summary` (one line, used by assistant chips).
-(`sync_version` is not returned: the server writes have no single HLC to report.)
+`change_id`, `cells_affected`, `warnings: []`, `summary` (one line, used by assistant chips),
+`sync_version` (committed calls only: the id of the call's `ChangeLog` row, a UUID v7; a client
+replica that holds this row has the change — it syncs like every other row).
 
 Schemas: defined once in `wonky_core/lib/mcp/sheets_tools.dart` (JSON Schema, closed objects
 with `additionalProperties: false`; optional properties are omitted when not used, as for the
@@ -154,7 +155,11 @@ with `additionalProperties: false`; optional properties are omitted when not use
 `WonkyMcpServer.executor`, which also serves `drive.create_spreadsheet`). Implemented beyond the
 tables below: `sheets.validate_formula` and `sheets.explain_formula` (05 §20),
 `sheets.delete_named_range`, `sheets.list_filter_views`, `sheets.delete_filter_view`,
-`sheets.unprotect` (the "unprotect" of §3.9). `sheets.group_dimension` (P2) is not implemented.
+`sheets.unprotect` (the "unprotect" of §3.9). `sheets.group_dimension` (P2) takes `action:
+group|ungroup|collapse|expand` (default group), `depth` (nested levels, 1–8) and `collapsed`;
+collapse/expand act on the groups spanning exactly the rows/columns. Grouping collapsed writes the
+groups and the collapse as two server writes combined into one composite change (the batched
+writer applies updates of rows inserted in the same change separately).
 The tables below are concise; each tool's description (for LLMs) includes examples.
 
 ### 3.1 Spreadsheet metadata
@@ -294,7 +299,7 @@ The full A1-form chart spec JSON schema is generated from the Dart `ChartSpec` m
 | Rows/columns inserted per call | 10,000 / 1,000 |
 | `find` matches returned | 1,000 |
 | Output text | 50,000 chars (suite) |
-| Rate | 600 calls/min/token (suite); 60 mutating calls/min per spreadsheet per token |
+| Rate | 600 calls/min/token (suite); 60 mutating calls/min per spreadsheet per token (`ToolExecutor.targetWriteLimiter`, token calls only — the assistant is bounded by its tool rounds; the spreadsheet URL and uuid count as one; error `rate_limited` with `retry_after_ms`) |
 | Wait for write lock | 30 s |
 
 ### 3.15 Error codes (`{code, message, details}`, `isError: true`)
@@ -384,17 +389,26 @@ aren't commands.
 **As built.** Definitions: `UiSheetsTools` in `wonky_core/lib/mcp/ui_sheets_tools.dart` (in
 `McpToolCatalog.sheets`); the server relays them to Sheets windows (`UiToolHandlers`,
 `app: 'sheets'`). Handlers: `UiSheetsToolHandlers` (`wonky_sheets/lib/mcp/ui_sheets_tools.dart`,
-registered through `SheetsAppConfig.mcpUiTools`). All 12 tools are implemented, including the P1
-`highlight_range`; `open_panel` also accepts `explore` and opens a panel through its command
+registered through `SheetsAppConfig.mcpUiTools`). All tools are implemented, including the P1
+`highlight_range` and `describe_panel` / `set_panel_field` plus `ui.sheets.press_panel_button`
+(`PanelDescriber`, `wonky_sheets/lib/mcp/panel_describer.dart`: the open panel's widget tree is
+walked for text inputs, checkboxes, switches and buttons; ids are the widgets' `ValueKey<String>`s,
+else the nearest keyed ancestor's, else positional `text_2`; text is set as typed so the panel's
+`onChanged` runs); `open_panel` also accepts `explore` and opens a panel through its command
 when one is registered (e.g. `sheets.cf.openPanel`), else by panel id. `get_selection` adds
 `min`/`max`/`count_numbers`, `values_truncated` and `can_edit`. `screenshot_range` paints the
-grid's content layers (cells, formats, CF, borders; headers optional) offscreen for the range;
-objects drawn as widgets are not included. **Agent presence highlight**: every `ui.sheets.*`
+grid's content layers (cells, formats, CF, borders; headers optional) offscreen for the range,
+then the charts (chart painter, `ChartController.sceneFor`) and loaded images (a placeholder
+while loading) of the sheet over it. **Agent presence highlight**: every `ui.sheets.*`
 call that targets a range flashes it (violet outline + a tag with the agent's name, 2–5 s;
 `AgentHighlightLayer`), and the ranges written by the user's own assistant run flash with "AI".
 `ui.get_state` includes the document controller's `describeState()` as `document.details`.
-Headless `sheets.*` writes by external MCP clients are not highlighted yet (the client does not
-receive `ChangeLog` actor kinds).
+Headless writes are highlighted too (`ExternalAgentWrites`, `features/ai/`): the `ChangeLog`
+table is synced, so after remote batches the client reads the new rows of the spreadsheet with
+`sessionId` `server:*` and flashes the ranges of `actorKind: mcp` rows (any user) and `ai` rows of
+other users, tagged with the agent participant's name from presence ("Claude Code (MCP)"), else
+"Bo's agent" / "MCP agent" / "AI · Bo"; rows older than 2 minutes (offline writes synced late) are
+not flashed.
 
 ---
 
@@ -446,6 +460,16 @@ injected), and at the end of an Edit-mode run combines the run's records into on
 `SheetsEndpoint.revertChange(changeId)` undoes the whole run. Tool chips (`toolFinished`) carry
 `changeId` (per call), `range` (A1, *Show*) and `objectId` (chart/pivot/rule).
 
+Window tools: the requesting window lists the `ui.*` tools it runs for the assistant in
+`AssistantContextHints.uiTools` (Sheets: `get_selection`, `select_range`, `highlight_range`);
+`AssistantTarget.uiTools(hints)` adds those definitions (`session_id` removed). Calls are relayed
+through the chat stream itself (no MCP bridge or developer setting needed): the run emits
+`AssistantEventType.uiToolCall` (`toolUseId`, `toolName`, `argsJson`), the panel's
+`AssistantController` runs it through the adapter's `AssistantWindowTools`
+(`SheetsAssistantAdapter.runWindowTool` → `UiSheetsToolHandlers`, tagged "AI") and answers with
+`assistant.uiToolResult(runId, UiBridgeResponse)` (relayed on the bus channel
+`assistant:ui:<runId>` when the run lives on another instance; 30 s timeout).
+
 ### 6.3 Apply modes (Sheets)
 - **Edit directly**: tools mutate immediately; tool activity chips ("Wrote 120 cells to
   Sheet1!A1:D30", "Created chart 'Revenue by region'") with *Show* (activates sheet, selects
@@ -464,7 +488,10 @@ injected), and at the end of an Edit-mode run combines the run's records into on
   - Plans expire after 30 min.
   - Implementation: a Suggest-mode run records into a `SheetsShadow` (a private copy of the
     headless model, in memory on the instance that ran it); read tools of the run see the
-    shadow. The run emits `AssistantEventType.previewReady` (and `done.previewId`); the app
+    shadow. At the end of the run the preview (dialog content and the calls' row changes,
+    gzip+base64) is stored in the server table `SheetsAiPreviewRecord` (expires with the
+    preview; expired rows purged on the next save), so any instance can get, apply or discard it
+    (`SheetsAiPreviewStore`; the in-memory shadow is only the fast path). The run emits `AssistantEventType.previewReady` (and `done.previewId`); the app
     calls `sheetsAi.getPreview(previewId)` (calls with before → after cells, ≤ 200 per call),
     `sheetsAi.applyPreview(previewId, callIds?)` (one undo step, per-column skip rule) or
     `sheetsAi.discardPreview(previewId)`.
@@ -547,12 +574,27 @@ Endpoint: `sheetsAi.analyzeChips(itemUuid, range?) → List<String>` (determinis
   clients trigger new evaluations; viewers see cached values or "#LOADING → Waiting for an
   editor to calculate".
 - Offline: cached values only.
+- *As built:* the core's `AI` function asks the engine's `ExternalDataProvider`
+  (`ForwardingExternalDataProvider` on the session, pointed at `AiCellsProvider` by
+  `SheetsAiController`; other external functions keep their offline `#N/A`). Calls are batched
+  (≤ 20, 250 ms) into `sheetsAi.evaluateAiCells(itemUuid, [SheetsAiCellRequest{id, prompt,
+  valuesJson}], refresh) → [SheetsAiCellResult{id, value, error, cached}]`. The cache key is
+  sha256(version ‖ prompt ‖ values) without the model, so viewers using another provider still
+  get cached values; the row records the model. Answers that are plain numbers/TRUE/FALSE become
+  numbers/booleans. Errors show `#N/A` with the reason as tooltip (there is no `#AI_ERROR!`
+  error kind in the engine); viewers' uncached calls stay `#LOADING`. *Refresh AI cells*
+  (`sheets.ai.refreshAiCells`, Extensions › AI) recomputes all calls (`ranges` is accepted but
+  everything is refreshed). Values are not yet persisted in a client `ComputedValueCache`.
 
 ### 6.9 Data cleanup suggestions (P2)
 *Data › Cleanup suggestions* (`sheets.ai.cleanupSuggestions`): deterministic profiling first
 (whitespace, inconsistent capitalization, mixed date formats, duplicate rows, numbers stored
 as text, outliers via IQR), then the model groups and explains them and proposes fixes. The
 side panel lists suggestions with *Preview* (diff) and *Apply* (one undo step each).
+*As built:* `sheets.ai.cleanupSuggestions {range?}` (Data › Data cleanup › *Clean up data with
+AI*) sends the deterministic checks of 07 §12.3 (`CleanupDetector`) to the assistant in Suggest
+mode; its fixes arrive in the AI changes preview (checkboxes per call, one undo step). The
+deterministic cards stay in the *Cleanup suggestions* panel.
 
 ### 6.10 Chart description (P1)
 `sheets.ai.describeChart(objectId)` → alt text proposal from the chart spec and data summary
@@ -621,12 +663,15 @@ select + flash, quick prompts Analyze / Build a chart / Clean data / Write a for
 `analyzeChips` after *Analyze with AI*), `FillWithAiDialog`, `AiPreviewDialog` (both
 `McpDescribableDialog`s), `SheetsAiApi` (fakeable). The shared panel got optional
 `AssistantRunHooks` (wonky_app) for `range`/`objectId` chips, `done.changeId` and
-`previewReady`. One undo step per run/fill/preview: an `UndoStep` "AI: …" with one
+`previewReady`, `AssistantPanelTexts` ("this spreadsheet" in the empty state, privacy notice and
+mode tooltips) and `AssistantWindowTools` (§6.2). At 300–330 px the mode toggle shows icons
+only; tool chips and the reply actions wrap/ellipsize instead of overflowing. One undo step per run/fill/preview: an `UndoStep` "AI: …" with one
 `sheets.serverChange` entry (handler of the history feature, 10 A-10-5). The preview dialog
 opens by itself at the end of a Suggest-mode turn; the reply keeps a *Review suggested changes*
 button until applied or discarded. Explore (`features/explore/`, panel
-`sheets.panel.explore`, ✨ Explore in the tab bar): selection statistics, chart suggestions
-from `ChartRecommender` (insert via `sheets.chart.insert`), *Create a pivot table*, insight chips
+`sheets.panel.explore`, ✨ Explore in the tab bar; titled, scrolls): selection statistics, chart
+suggestions from `ChartRecommender` as thumbnails drawn with the chart painter
+(`ExploreChartThumbnail`, insert via `sheets.chart.insert`), *Create a pivot table*, insight chips
 from `analyzeChips` (hand-off to the assistant) and *Ask a question about this data*.
 
 ---

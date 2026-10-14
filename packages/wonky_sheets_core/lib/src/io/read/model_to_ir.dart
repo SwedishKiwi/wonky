@@ -196,18 +196,28 @@ abstract final class ModelToIr {
   ///   format of their result (dates from `TODAY()`), as displayed.
   /// - [imageBytes]: bytes of a stored image file (null: images are
   ///   exported without data and skipped by the file writers).
+  /// - [chartImage]: PNG of a chart the target format can't hold (11 §6.3
+  ///   fallback); a chart it returns bytes for becomes a picture at the
+  ///   same anchor (report `chartsAsImages`).
   static WorkbookDocument convert(
     WorkbookModel model, {
     IrValueSource? values,
     Iterable<String>? sheetIds,
     bool formatHints = true,
     Uint8List? Function(String fileUuid)? imageBytes,
+    Uint8List? Function(
+      EmbeddedObjectRecord chart,
+      double width,
+      double height,
+    )?
+    chartImage,
   }) => _Converter(
     model,
     values: values,
     sheetIds: sheetIds?.toSet(),
     formatHints: formatHints,
     imageBytes: imageBytes,
+    chartImage: chartImage,
   ).run();
 }
 
@@ -218,6 +228,7 @@ final class _Converter {
     this.sheetIds,
     required this.formatHints,
     this.imageBytes,
+    this.chartImage,
   }) : view = ModelWorkbookView(model);
 
   final WorkbookModel model;
@@ -225,6 +236,7 @@ final class _Converter {
   final Set<String>? sheetIds;
   final bool formatHints;
   final Uint8List? Function(String fileUuid)? imageBytes;
+  final Uint8List? Function(EmbeddedObjectRecord, double, double)? chartImage;
   final ModelWorkbookView view;
   late final WorkbookDocument doc;
 
@@ -664,6 +676,7 @@ final class _Converter {
     final objects = s.objects.values.toList()
       ..sort((a, b) => a.zIndex.compareTo(b.zIndex));
     var missingImages = 0;
+    final asImages = <Object?, int>{};
     for (final o in objects) {
       final anchor = _anchor(s, o.anchorJson);
       if (anchor == null) continue;
@@ -691,6 +704,21 @@ final class _Converter {
             spec = null;
           }
           if (spec is! Map) continue;
+          final png = chartImage?.call(o, anchor.width, anchor.height);
+          if (png != null) {
+            ir.images.add(
+              IrImage(
+                bytes: png,
+                anchor: anchor,
+                altText: o.altText,
+                title: o.title,
+                name: 'chart.png',
+              ),
+            );
+            asImages[spec['type'] ?? 'column'] =
+                (asImages[spec['type'] ?? 'column'] ?? 0) + 1;
+            continue;
+          }
           ir.charts.add(
             IrChart(
               anchor: anchor,
@@ -706,6 +734,14 @@ final class _Converter {
           break;
       }
     }
+    asImages.forEach((type, n) {
+      _warn(
+        'chartsAsImages',
+        'Charts of type $type were exported as pictures (no Excel equivalent)',
+        sheet: s.name,
+        count: n,
+      );
+    });
     if (missingImages > 0) {
       _warn(
         'imageData',

@@ -33,6 +33,20 @@ class ImageObjectView extends StatelessWidget {
       valueListenable: service.image(src),
       builder: (context, s, _) {
         final img = s.image;
+        // Animated GIFs play in the editor (first frame with reduced
+        // motion, in exports and in print; 08 §10.1).
+        final animated = s.animated;
+        if (s.phase == ImageLoadPhase.ready &&
+            animated != null &&
+            !MediaQuery.disableAnimationsOf(context)) {
+          return Image.memory(
+            animated,
+            key: ValueKey<String>('sheets.image.animated.$src'),
+            fit: boxFitOf(spec.fit),
+            filterQuality: FilterQuality.medium,
+            gaplessPlayback: true,
+          );
+        }
         if (s.phase == ImageLoadPhase.ready && img != null) {
           return RawImage(
             image: img,

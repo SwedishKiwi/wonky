@@ -641,6 +641,35 @@ abstract final class SheetsTools {
     scopes: _edit,
   );
 
+  static final groupDimension = McpToolDefinition(
+    name: 'sheets.group_dimension',
+    title: 'Group rows or columns',
+    description:
+        'Groups count rows/columns from start into an outline group (the '
+        '+/- control), depth times nested (default 1, max 8 levels), '
+        'optionally collapsed; or ungroups them (action ungroup), or '
+        'collapses/expands the groups that span exactly those rows/columns. '
+        'Example: {"sheet": "Data", "dimension": "rows", "start": 2, '
+        '"count": 10, "collapsed": true}.$_a1Note',
+    inputSchema: SheetsSchemas.of(
+      {
+        'sheet': SheetsSchemas.sheet,
+        'dimension': SheetsSchemas.dimension,
+        'start': SheetsSchemas.index,
+        'count': const JsonSchema.integer(minimum: 1, defaultValue: 1),
+        'action': const JsonSchema.string(
+          enumValues: ['group', 'ungroup', 'collapse', 'expand'],
+          defaultValue: 'group',
+        ),
+        'depth': const JsonSchema.integer(minimum: 1, maximum: 8),
+        'collapsed': const JsonSchema.boolean(),
+      },
+      required: ['sheet', 'dimension', 'start'],
+    ),
+    outputSchema: SheetsSchemas.mutationResult,
+    scopes: _edit,
+  );
+
   static final setFrozen = McpToolDefinition(
     name: 'sheets.set_frozen',
     title: 'Freeze rows/columns',
@@ -1165,6 +1194,12 @@ abstract final class SheetsTools {
     'histogram',
     'scorecard',
     'table',
+    'column_3d',
+    'bar_3d',
+    'line_3d',
+    'area_3d',
+    'pie_3d',
+    'surface',
   ];
 
   static final createChart = McpToolDefinition(
@@ -1176,7 +1211,11 @@ abstract final class SheetsTools {
         'options: {"title": "Revenue", "subtitle": "…", "stacking": '
         '"normal"|"percent", "legend": "bottom"|"none"|…, '
         '"switch_rows_columns": true, "headers": 1, "x_axis_title": "…", '
-        '"y_axis_title": "…", "aggregate": "sum"}. Placed at anchor_cell '
+        '"y_axis_title": "…", "aggregate": "sum", "threeD": {"enabled": '
+        'true, "azimuth": 20, "elevation": 20, "perspective": 15, "depth": '
+        '100, "lighting": "soft"|"bright"|"flat", "wallsVisible": true, '
+        '"shape": "box"|"cylinder"|"cone"|"pyramid", "explode": 0.1}}. '
+        '3D works for column, bar, line, area and pie. Placed at anchor_cell '
         '(default: right of the data) on sheet, or on its own sheet. Types: '
         '${_chartTypes.join(', ')}.$_a1Note',
     inputSchema: SheetsSchemas.of(
@@ -1596,6 +1635,7 @@ abstract final class SheetsTools {
     moveDimension,
     resizeDimension,
     hideDimension,
+    groupDimension,
     setFrozen,
     addSheet,
     renameSheet,

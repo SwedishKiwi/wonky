@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:wonky_sync_models/ids.dart';
 
 import '../../addressing/grid_geometry.dart';
+import '../../engine_bridge/stored_formula.dart';
 import '../../format/attributes.dart';
 import '../../model/grid_range.dart';
 import '../../model/records.dart';
@@ -181,4 +182,17 @@ extension SheetCells on SheetModel {
       yield* cells.inRow(r);
     }
   }
+}
+
+/// Applies [f] to the formulas (`=…` strings) of a CF/DV JSON; the original
+/// text when nothing changes or the JSON is invalid.
+String mapRuleFormulas(String json, String Function(String) f) {
+  Object? decoded;
+  try {
+    decoded = jsonDecode(json);
+  } on FormatException {
+    return json;
+  }
+  final (out, changed) = StoredFormula.mapJsonFormulas(decoded, f);
+  return changed ? jsonEncode(out) : json;
 }

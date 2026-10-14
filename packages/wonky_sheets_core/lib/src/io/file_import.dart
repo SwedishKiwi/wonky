@@ -3,6 +3,7 @@ import 'dart:typed_data';
 import 'csv/csv_importer.dart';
 import 'csv/encoding.dart';
 import 'ir/workbook_document.dart';
+import 'json/json_workbook.dart';
 import 'ods/ods_importer.dart';
 import 'write/import_options.dart';
 import 'xlsx/ooxml.dart' show XlsxFormatException;
@@ -22,6 +23,9 @@ enum SheetsFileFormat {
   /// OpenDocument spreadsheet.
   ods,
 
+  /// Developer JSON (11 §6.7, `JsonWorkbook`).
+  json,
+
   /// Legacy Excel (BIFF8): recognized but not readable (11 §5.4).
   xls;
 
@@ -29,7 +33,7 @@ enum SheetsFileFormat {
   bool get isText => this == csv || this == tsv;
 
   /// Whether the format is a workbook (sheet list, unsupported formulas).
-  bool get isWorkbook => this == xlsx || this == ods;
+  bool get isWorkbook => this == xlsx || this == ods || this == json;
 }
 
 /// A sheet of a workbook file (import dialog's *Sheets to import*).
@@ -87,7 +91,16 @@ final class ImportFileException implements Exception {
 /// (11 §3). Planning (`IrToRowsPlanner`) and writing stay with the caller.
 abstract final class SheetsFileImporter {
   /// Extensions the import dialog accepts.
-  static const extensions = {'csv', 'tsv', 'txt', 'xlsx', 'xlsm', 'ods', 'xls'};
+  static const extensions = {
+    'csv',
+    'tsv',
+    'txt',
+    'xlsx',
+    'xlsm',
+    'ods',
+    'json',
+    'xls',
+  };
 
   /// The format of [fileName] (by extension; [head] bytes break ties for
   /// unknown extensions: a zip is XLSX, anything else CSV). Null when the
@@ -105,6 +118,8 @@ abstract final class SheetsFileImporter {
         return SheetsFileFormat.xlsx;
       case 'ods':
         return SheetsFileFormat.ods;
+      case 'json':
+        return SheetsFileFormat.json;
       case 'xls':
         return SheetsFileFormat.xls;
     }
@@ -120,6 +135,7 @@ abstract final class SheetsFileImporter {
     SheetsFileFormat.xlsx =>
       'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
     SheetsFileFormat.ods => 'application/vnd.oasis.opendocument.spreadsheet',
+    SheetsFileFormat.json => 'application/json',
     SheetsFileFormat.xls => 'application/vnd.ms-excel',
   };
 
@@ -143,9 +159,15 @@ abstract final class SheetsFileImporter {
           for (final s in OdsImporter.listSheets(bytes))
             ImportFileSheet(s.name, hidden: s.hidden, cells: s.estimatedCells),
         ],
+        SheetsFileFormat.json => [
+          for (final s in JsonWorkbook.import(bytes).sheets)
+            ImportFileSheet(s.name, hidden: s.hidden, cells: s.cells.length),
+        ],
         _ => const [],
       };
     } on XlsxFormatException catch (e) {
+      throw ImportFileException('unreadable', e.message);
+    } on JsonWorkbookException catch (e) {
       throw ImportFileException('unreadable', e.message);
     }
   }
@@ -228,6 +250,15 @@ abstract final class SheetsFileImporter {
             format: f,
           );
         } on XlsxFormatException catch (e) {
+          throw ImportFileException('unreadable', e.message);
+        }
+      case SheetsFileFormat.json:
+        try {
+          return ParsedImportFile(
+            document: JsonWorkbook.import(bytes, fileName: fileName),
+            format: f,
+          );
+        } on JsonWorkbookException catch (e) {
           throw ImportFileException('unreadable', e.message);
         }
     }

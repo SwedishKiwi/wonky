@@ -436,6 +436,24 @@ abstract class SheetsLocalizations {
   /// **'Time zone'**
   String get settingsTimeZone;
 
+  /// No description provided for @settingsDisplayLanguage.
+  ///
+  /// In en, this message translates to:
+  /// **'Function language'**
+  String get settingsDisplayLanguage;
+
+  /// No description provided for @settingsDisplayLanguageEnglish.
+  ///
+  /// In en, this message translates to:
+  /// **'English'**
+  String get settingsDisplayLanguageEnglish;
+
+  /// No description provided for @settingsDisplayLanguageNote.
+  ///
+  /// In en, this message translates to:
+  /// **'Function names and TRUE/FALSE are shown in this language. English names always work, and formulas are saved in English.'**
+  String get settingsDisplayLanguageNote;
+
   /// No description provided for @settingsSearch.
   ///
   /// In en, this message translates to:
@@ -621,6 +639,174 @@ abstract class SheetsLocalizations {
   /// In en, this message translates to:
   /// **'The cell this comment was on was deleted · {quoted}'**
   String commentAnchorDeleted(String quoted);
+
+  /// No description provided for @cmdConflictsReview.
+  ///
+  /// In en, this message translates to:
+  /// **'Review overwritten edits'**
+  String get cmdConflictsReview;
+
+  /// No description provided for @cmdConflictsApplyMine.
+  ///
+  /// In en, this message translates to:
+  /// **'Apply my values again'**
+  String get cmdConflictsApplyMine;
+
+  /// No description provided for @undoApplyMine.
+  ///
+  /// In en, this message translates to:
+  /// **'Apply my values again'**
+  String get undoApplyMine;
+
+  /// No description provided for @cmdHistoryDownload.
+  ///
+  /// In en, this message translates to:
+  /// **'Download version'**
+  String get cmdHistoryDownload;
+
+  /// No description provided for @cmdHistoryToggleShowChanges.
+  ///
+  /// In en, this message translates to:
+  /// **'Show changes'**
+  String get cmdHistoryToggleShowChanges;
+
+  /// No description provided for @commentsScopeSheet.
+  ///
+  /// In en, this message translates to:
+  /// **'This sheet'**
+  String get commentsScopeSheet;
+
+  /// No description provided for @commentsScopeAll.
+  ///
+  /// In en, this message translates to:
+  /// **'All sheets'**
+  String get commentsScopeAll;
+
+  /// No description provided for @commentsOrphanedGroup.
+  ///
+  /// In en, this message translates to:
+  /// **'Orphaned'**
+  String get commentsOrphanedGroup;
+
+  /// No description provided for @conflictsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Overwritten offline edits'**
+  String get conflictsTitle;
+
+  /// No description provided for @conflictsDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Others changed these cells after you edited them offline. Select the values to put back.'**
+  String get conflictsDescription;
+
+  /// No description provided for @conflictsReview.
+  ///
+  /// In en, this message translates to:
+  /// **'Review'**
+  String get conflictsReview;
+
+  /// No description provided for @conflictsApplyMine.
+  ///
+  /// In en, this message translates to:
+  /// **'Apply mine again'**
+  String get conflictsApplyMine;
+
+  /// No description provided for @conflictsDismissAll.
+  ///
+  /// In en, this message translates to:
+  /// **'Dismiss all'**
+  String get conflictsDismissAll;
+
+  /// No description provided for @conflictsEmptyValue.
+  ///
+  /// In en, this message translates to:
+  /// **'(empty)'**
+  String get conflictsEmptyValue;
+
+  /// No description provided for @conflictsSeveralPeople.
+  ///
+  /// In en, this message translates to:
+  /// **'several people'**
+  String get conflictsSeveralPeople;
+
+  /// No description provided for @conflictsRow.
+  ///
+  /// In en, this message translates to:
+  /// **'{cell} — yours: {mine} · now: {theirs} ({name})'**
+  String conflictsRow(String cell, String mine, String theirs, String name);
+
+  /// No description provided for @conflictsYours.
+  ///
+  /// In en, this message translates to:
+  /// **'yours: {value}'**
+  String conflictsYours(String value);
+
+  /// No description provided for @conflictsRowDeletedBy.
+  ///
+  /// In en, this message translates to:
+  /// **'Row deleted by {name}'**
+  String conflictsRowDeletedBy(String name);
+
+  /// No description provided for @conflictsColumnDeletedBy.
+  ///
+  /// In en, this message translates to:
+  /// **'Column deleted by {name}'**
+  String conflictsColumnDeletedBy(String name);
+
+  /// No description provided for @conflictsSheetDeletedBy.
+  ///
+  /// In en, this message translates to:
+  /// **'Sheet deleted by {name}'**
+  String conflictsSheetDeletedBy(String name);
+
+  /// No description provided for @toastConflicts.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 of your offline edits was replaced by a newer edit from {name}} other{{count} of your offline edits were replaced by newer edits from {name}}}'**
+  String toastConflicts(int count, String name);
+
+  /// No description provided for @toastSortReplaced.
+  ///
+  /// In en, this message translates to:
+  /// **'Your sort was replaced by a newer sort from {name}'**
+  String toastSortReplaced(String name);
+
+  /// No description provided for @toastVersionCopyExtrasFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'The copy was made, but its comments and sharing couldn\'t be copied'**
+  String get toastVersionCopyExtrasFailed;
+
+  /// No description provided for @versionCopyTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Make a copy'**
+  String get versionCopyTitle;
+
+  /// No description provided for @versionCopyNameLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Name'**
+  String get versionCopyNameLabel;
+
+  /// No description provided for @versionCopyNameRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter a name'**
+  String get versionCopyNameRequired;
+
+  /// No description provided for @versionCopyComments.
+  ///
+  /// In en, this message translates to:
+  /// **'Copy comments'**
+  String get versionCopyComments;
+
+  /// No description provided for @versionCopySharing.
+  ///
+  /// In en, this message translates to:
+  /// **'Share with the same people'**
+  String get versionCopySharing;
 
   /// No description provided for @commentReplies.
   ///
@@ -5014,6 +5200,12 @@ abstract class SheetsLocalizations {
   /// **'Tab-separated values (.tsv, current sheet)'**
   String get downloadTsv;
 
+  /// No description provided for @downloadJson.
+  ///
+  /// In en, this message translates to:
+  /// **'JSON (.json, values and formulas)'**
+  String get downloadJson;
+
   /// No description provided for @downloadXlsx.
   ///
   /// In en, this message translates to:
@@ -5739,6 +5931,18 @@ abstract class SheetsLocalizations {
   /// In en, this message translates to:
   /// **'The clipboard is empty'**
   String get toastClipboardEmpty;
+
+  /// No description provided for @screenStorageUnavailable.
+  ///
+  /// In en, this message translates to:
+  /// **'The spreadsheet storage on this device didn\'t start. Try again, or reload the page.'**
+  String get screenStorageUnavailable;
+
+  /// No description provided for @toastClipboardBlocked.
+  ///
+  /// In en, this message translates to:
+  /// **'The browser blocked access to the clipboard. Allow clipboard access for this site to paste here.'**
+  String get toastClipboardBlocked;
 
   /// No description provided for @toastCommandFailed.
   ///
@@ -6514,6 +6718,30 @@ abstract class SheetsLocalizations {
   /// **'Insert “{text}” as text'**
   String smartChipAsText(String text);
 
+  /// No description provided for @smartChipOpenFile.
+  ///
+  /// In en, this message translates to:
+  /// **'Open'**
+  String get smartChipOpenFile;
+
+  /// No description provided for @smartChipFiles.
+  ///
+  /// In en, this message translates to:
+  /// **'Files'**
+  String get smartChipFiles;
+
+  /// No description provided for @smartChipFilesEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'No files found'**
+  String get smartChipFilesEmpty;
+
+  /// No description provided for @cmdChipOpenFile.
+  ///
+  /// In en, this message translates to:
+  /// **'Open linked file'**
+  String get cmdChipOpenFile;
+
   /// No description provided for @smartChipCopyEmail.
   ///
   /// In en, this message translates to:
@@ -6537,6 +6765,12 @@ abstract class SheetsLocalizations {
   /// In en, this message translates to:
   /// **'No color'**
   String get dvNoColor;
+
+  /// No description provided for @dvChipColors.
+  ///
+  /// In en, this message translates to:
+  /// **'Chip colors'**
+  String get dvChipColors;
 
   /// No description provided for @dvUseCustomValues.
   ///
@@ -7282,6 +7516,78 @@ abstract class SheetsLocalizations {
   /// **'Large import on this device may take a while.'**
   String get importLargeNote;
 
+  /// No description provided for @importServerNote.
+  ///
+  /// In en, this message translates to:
+  /// **'This large file will be imported on the server.'**
+  String get importServerNote;
+
+  /// No description provided for @importTabUpload.
+  ///
+  /// In en, this message translates to:
+  /// **'Upload'**
+  String get importTabUpload;
+
+  /// No description provided for @importTabRecent.
+  ///
+  /// In en, this message translates to:
+  /// **'Recent uploads'**
+  String get importTabRecent;
+
+  /// No description provided for @importTabRecentShort.
+  ///
+  /// In en, this message translates to:
+  /// **'Recent'**
+  String get importTabRecentShort;
+
+  /// No description provided for @importTabDrive.
+  ///
+  /// In en, this message translates to:
+  /// **'Drive'**
+  String get importTabDrive;
+
+  /// No description provided for @importRecentEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'Files you import on this device appear here.'**
+  String get importRecentEmpty;
+
+  /// No description provided for @importRecentItem.
+  ///
+  /// In en, this message translates to:
+  /// **'{name} · {size} · {date}'**
+  String importRecentItem(String name, String size, String date);
+
+  /// No description provided for @importRecentGone.
+  ///
+  /// In en, this message translates to:
+  /// **'This file is no longer stored on this device.'**
+  String get importRecentGone;
+
+  /// No description provided for @importDriveHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Import the sheets of another spreadsheet in your Drive.'**
+  String get importDriveHint;
+
+  /// No description provided for @importDriveOffline.
+  ///
+  /// In en, this message translates to:
+  /// **'Importing from Drive needs a connection.'**
+  String get importDriveOffline;
+
+  /// No description provided for @importDrivePick.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose a spreadsheet'**
+  String get importDrivePick;
+
+  /// No description provided for @importDrivePickTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Import from Drive'**
+  String get importDrivePickTitle;
+
   /// No description provided for @importPreview.
   ///
   /// In en, this message translates to:
@@ -7395,6 +7701,30 @@ abstract class SheetsLocalizations {
   /// In en, this message translates to:
   /// **'Uploading'**
   String get importPhaseUploading;
+
+  /// No description provided for @importPhaseQueued.
+  ///
+  /// In en, this message translates to:
+  /// **'Waiting for your other import to finish'**
+  String get importPhaseQueued;
+
+  /// No description provided for @importPhaseWritingCells.
+  ///
+  /// In en, this message translates to:
+  /// **'Writing cells ({done} of {total})'**
+  String importPhaseWritingCells(int done, int total);
+
+  /// No description provided for @importPhaseFinalizing.
+  ///
+  /// In en, this message translates to:
+  /// **'Finishing up'**
+  String get importPhaseFinalizing;
+
+  /// No description provided for @cmdFileCancelImport.
+  ///
+  /// In en, this message translates to:
+  /// **'Cancel import'**
+  String get cmdFileCancelImport;
 
   /// No description provided for @importCancel.
   ///
@@ -8353,8 +8683,20 @@ abstract class SheetsLocalizations {
   /// No description provided for @printBreaksHint.
   ///
   /// In en, this message translates to:
-  /// **'Pages break before these rows and columns. Breaks move with their rows and columns.'**
+  /// **'Pages break before these rows and columns. Drag the lines on the grid to move them, drag one off the grid to remove it, or click a row number or column letter to add one.'**
   String get printBreaksHint;
+
+  /// No description provided for @printBreakCanvasLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Page breaks of the current sheet. Dashed lines are automatic breaks, solid lines are custom breaks.'**
+  String get printBreakCanvasLabel;
+
+  /// No description provided for @printDarkTheme.
+  ///
+  /// In en, this message translates to:
+  /// **'Use dark theme for Export PDF'**
+  String get printDarkTheme;
 
   /// No description provided for @printBreakRows.
   ///
@@ -8932,6 +9274,96 @@ abstract class SheetsLocalizations {
   /// **'Insert AI result'**
   String get aiInsertUndo;
 
+  /// No description provided for @cmdAiCleanupSuggestions.
+  ///
+  /// In en, this message translates to:
+  /// **'Clean up data with AI'**
+  String get cmdAiCleanupSuggestions;
+
+  /// No description provided for @cmdAiRefreshAiCells.
+  ///
+  /// In en, this message translates to:
+  /// **'Refresh AI cells'**
+  String get cmdAiRefreshAiCells;
+
+  /// No description provided for @aiCleanupPrompt.
+  ///
+  /// In en, this message translates to:
+  /// **'Clean up the data {scope}. The automatic checks found:\n{findings}\nGroup the problems, explain them briefly and propose fixes as suggested changes I can review.'**
+  String aiCleanupPrompt(String scope, String findings);
+
+  /// No description provided for @aiCleanupScopeRange.
+  ///
+  /// In en, this message translates to:
+  /// **'in {range}'**
+  String aiCleanupScopeRange(String range);
+
+  /// No description provided for @aiCleanupScopeSheet.
+  ///
+  /// In en, this message translates to:
+  /// **'on the sheet \"{name}\"'**
+  String aiCleanupScopeSheet(String name);
+
+  /// No description provided for @aiCleanupNothing.
+  ///
+  /// In en, this message translates to:
+  /// **'- nothing obvious (check the data anyway)'**
+  String get aiCleanupNothing;
+
+  /// No description provided for @aiAgentMcp.
+  ///
+  /// In en, this message translates to:
+  /// **'MCP agent'**
+  String get aiAgentMcp;
+
+  /// No description provided for @aiAgentOf.
+  ///
+  /// In en, this message translates to:
+  /// **'{name}\'s agent'**
+  String aiAgentOf(String name);
+
+  /// No description provided for @aiAgentAiOf.
+  ///
+  /// In en, this message translates to:
+  /// **'AI · {name}'**
+  String aiAgentAiOf(String name);
+
+  /// No description provided for @aiAssistantEmptyTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Ask about this spreadsheet or tell the assistant what to change.'**
+  String get aiAssistantEmptyTitle;
+
+  /// No description provided for @aiAssistantPrivacyNotice.
+  ///
+  /// In en, this message translates to:
+  /// **'The assistant sends this spreadsheet and your messages to the AI provider to generate answers.'**
+  String get aiAssistantPrivacyNotice;
+
+  /// No description provided for @aiAssistantPrivacyNoticeProvider.
+  ///
+  /// In en, this message translates to:
+  /// **'The assistant sends this spreadsheet and your messages to {provider} to generate answers.'**
+  String aiAssistantPrivacyNoticeProvider(String provider);
+
+  /// No description provided for @aiAssistantModeEditHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit directly: changes go straight into the spreadsheet'**
+  String get aiAssistantModeEditHint;
+
+  /// No description provided for @aiAssistantModeEditUnavailable.
+  ///
+  /// In en, this message translates to:
+  /// **'You can only suggest changes in this spreadsheet'**
+  String get aiAssistantModeEditUnavailable;
+
+  /// No description provided for @aiAssistantModeSuggestHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Suggest: changes arrive as a preview to apply or discard'**
+  String get aiAssistantModeSuggestHint;
+
   /// No description provided for @cmdAiSuggestFormulaDescription.
   ///
   /// In en, this message translates to:
@@ -9244,6 +9676,18 @@ abstract class SheetsLocalizations {
   /// **'Waiting for the current operation to finish…'**
   String get dataJobWaiting;
 
+  /// No description provided for @dataJobCancel.
+  ///
+  /// In en, this message translates to:
+  /// **'Cancel'**
+  String get dataJobCancel;
+
+  /// No description provided for @dataJobCancelled.
+  ///
+  /// In en, this message translates to:
+  /// **'Cancelled. Nothing was changed.'**
+  String get dataJobCancelled;
+
   /// No description provided for @dataJobSorting.
   ///
   /// In en, this message translates to:
@@ -9361,8 +9805,38 @@ abstract class SheetsLocalizations {
   /// No description provided for @filterViewSortUnavailable.
   ///
   /// In en, this message translates to:
-  /// **'Sorting inside filter views isn\'t available yet'**
+  /// **'Sort by color isn\'t available in filter views'**
   String get filterViewSortUnavailable;
+
+  /// No description provided for @cmdFilterViewSortColumn.
+  ///
+  /// In en, this message translates to:
+  /// **'Sort filter view'**
+  String get cmdFilterViewSortColumn;
+
+  /// No description provided for @viewSortCutUnavailable.
+  ///
+  /// In en, this message translates to:
+  /// **'Rows in a sorted filter view can\'t be cut together. Copy them instead.'**
+  String get viewSortCutUnavailable;
+
+  /// No description provided for @viewSortCutPasteUnavailable.
+  ///
+  /// In en, this message translates to:
+  /// **'A cut can\'t be pasted into the rows of a sorted filter view. Copy it instead.'**
+  String get viewSortCutPasteUnavailable;
+
+  /// No description provided for @filterViewClearSort.
+  ///
+  /// In en, this message translates to:
+  /// **'Clear view sort'**
+  String get filterViewClearSort;
+
+  /// No description provided for @filterViewSortedBy.
+  ///
+  /// In en, this message translates to:
+  /// **'Sorted by {column}'**
+  String filterViewSortedBy(String column);
 
   /// No description provided for @findNoResults.
   ///
@@ -13143,6 +13617,702 @@ abstract class SheetsLocalizations {
   /// In en, this message translates to:
   /// **'Copy'**
   String get contextMenuDragCopy;
+
+  /// No description provided for @chartGroup3D.
+  ///
+  /// In en, this message translates to:
+  /// **'3D'**
+  String get chartGroup3D;
+
+  /// No description provided for @chartType3DColumn.
+  ///
+  /// In en, this message translates to:
+  /// **'3D column chart'**
+  String get chartType3DColumn;
+
+  /// No description provided for @chartType3DStackedColumn.
+  ///
+  /// In en, this message translates to:
+  /// **'3D stacked column chart'**
+  String get chartType3DStackedColumn;
+
+  /// No description provided for @chartType3DPercentColumn.
+  ///
+  /// In en, this message translates to:
+  /// **'3D 100% stacked column chart'**
+  String get chartType3DPercentColumn;
+
+  /// No description provided for @chartType3DBar.
+  ///
+  /// In en, this message translates to:
+  /// **'3D bar chart'**
+  String get chartType3DBar;
+
+  /// No description provided for @chartType3DStackedBar.
+  ///
+  /// In en, this message translates to:
+  /// **'3D stacked bar chart'**
+  String get chartType3DStackedBar;
+
+  /// No description provided for @chartType3DLine.
+  ///
+  /// In en, this message translates to:
+  /// **'3D line chart'**
+  String get chartType3DLine;
+
+  /// No description provided for @chartType3DArea.
+  ///
+  /// In en, this message translates to:
+  /// **'3D area chart'**
+  String get chartType3DArea;
+
+  /// No description provided for @chartType3DStackedArea.
+  ///
+  /// In en, this message translates to:
+  /// **'3D stacked area chart'**
+  String get chartType3DStackedArea;
+
+  /// No description provided for @chartType3DPie.
+  ///
+  /// In en, this message translates to:
+  /// **'3D pie chart'**
+  String get chartType3DPie;
+
+  /// No description provided for @chartType3DDoughnut.
+  ///
+  /// In en, this message translates to:
+  /// **'3D doughnut chart'**
+  String get chartType3DDoughnut;
+
+  /// No description provided for @chartSection3D.
+  ///
+  /// In en, this message translates to:
+  /// **'3D'**
+  String get chartSection3D;
+
+  /// No description provided for @chartEditor3DEnabled.
+  ///
+  /// In en, this message translates to:
+  /// **'Show in 3D'**
+  String get chartEditor3DEnabled;
+
+  /// No description provided for @chartEditor3DRotation.
+  ///
+  /// In en, this message translates to:
+  /// **'Rotation'**
+  String get chartEditor3DRotation;
+
+  /// No description provided for @chartEditor3DTilt.
+  ///
+  /// In en, this message translates to:
+  /// **'Tilt'**
+  String get chartEditor3DTilt;
+
+  /// No description provided for @chartEditor3DPerspective.
+  ///
+  /// In en, this message translates to:
+  /// **'Perspective'**
+  String get chartEditor3DPerspective;
+
+  /// No description provided for @chartEditor3DDepth.
+  ///
+  /// In en, this message translates to:
+  /// **'Depth'**
+  String get chartEditor3DDepth;
+
+  /// No description provided for @chartEditor3DHeight.
+  ///
+  /// In en, this message translates to:
+  /// **'Height'**
+  String get chartEditor3DHeight;
+
+  /// No description provided for @chartEditor3DGapDepth.
+  ///
+  /// In en, this message translates to:
+  /// **'Gap depth'**
+  String get chartEditor3DGapDepth;
+
+  /// No description provided for @chartEditor3DExplode.
+  ///
+  /// In en, this message translates to:
+  /// **'Pull slices apart'**
+  String get chartEditor3DExplode;
+
+  /// No description provided for @chartEditor3DLighting.
+  ///
+  /// In en, this message translates to:
+  /// **'Lighting'**
+  String get chartEditor3DLighting;
+
+  /// No description provided for @chartLightingSoft.
+  ///
+  /// In en, this message translates to:
+  /// **'Soft'**
+  String get chartLightingSoft;
+
+  /// No description provided for @chartLightingBright.
+  ///
+  /// In en, this message translates to:
+  /// **'Bright'**
+  String get chartLightingBright;
+
+  /// No description provided for @chartLightingFlat.
+  ///
+  /// In en, this message translates to:
+  /// **'Flat'**
+  String get chartLightingFlat;
+
+  /// No description provided for @chartEditor3DShape.
+  ///
+  /// In en, this message translates to:
+  /// **'Shape'**
+  String get chartEditor3DShape;
+
+  /// No description provided for @chartShapeBox.
+  ///
+  /// In en, this message translates to:
+  /// **'Box'**
+  String get chartShapeBox;
+
+  /// No description provided for @chartShapeCylinder.
+  ///
+  /// In en, this message translates to:
+  /// **'Cylinder'**
+  String get chartShapeCylinder;
+
+  /// No description provided for @chartShapeCone.
+  ///
+  /// In en, this message translates to:
+  /// **'Cone'**
+  String get chartShapeCone;
+
+  /// No description provided for @chartShapePyramid.
+  ///
+  /// In en, this message translates to:
+  /// **'Pyramid'**
+  String get chartShapePyramid;
+
+  /// No description provided for @chartEditor3DWalls.
+  ///
+  /// In en, this message translates to:
+  /// **'Floor and walls'**
+  String get chartEditor3DWalls;
+
+  /// No description provided for @chartEditor3DFloorColor.
+  ///
+  /// In en, this message translates to:
+  /// **'Floor color'**
+  String get chartEditor3DFloorColor;
+
+  /// No description provided for @chartEditor3DResetView.
+  ///
+  /// In en, this message translates to:
+  /// **'Reset view'**
+  String get chartEditor3DResetView;
+
+  /// No description provided for @chartEditor3DOrbitHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Drag the selected chart, or press Alt+Shift+arrow keys, to rotate it.'**
+  String get chartEditor3DOrbitHint;
+
+  /// No description provided for @cmdChartToggle3D.
+  ///
+  /// In en, this message translates to:
+  /// **'Show chart in 3D'**
+  String get cmdChartToggle3D;
+
+  /// No description provided for @cmdChartToggle3DDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Draws the selected column, bar, line, area or pie chart in 3D, or flat again.'**
+  String get cmdChartToggle3DDescription;
+
+  /// No description provided for @cmdChartReset3DView.
+  ///
+  /// In en, this message translates to:
+  /// **'Reset 3D chart view'**
+  String get cmdChartReset3DView;
+
+  /// No description provided for @cmdChartRotate3D.
+  ///
+  /// In en, this message translates to:
+  /// **'Rotate 3D chart'**
+  String get cmdChartRotate3D;
+
+  /// No description provided for @cmdObjectAlign.
+  ///
+  /// In en, this message translates to:
+  /// **'Align objects'**
+  String get cmdObjectAlign;
+
+  /// No description provided for @undoAlignObjects.
+  ///
+  /// In en, this message translates to:
+  /// **'Align objects'**
+  String get undoAlignObjects;
+
+  /// No description provided for @objectMenuAlign.
+  ///
+  /// In en, this message translates to:
+  /// **'Align'**
+  String get objectMenuAlign;
+
+  /// No description provided for @objectAlignLeft.
+  ///
+  /// In en, this message translates to:
+  /// **'Left'**
+  String get objectAlignLeft;
+
+  /// No description provided for @objectAlignCenter.
+  ///
+  /// In en, this message translates to:
+  /// **'Center'**
+  String get objectAlignCenter;
+
+  /// No description provided for @objectAlignRight.
+  ///
+  /// In en, this message translates to:
+  /// **'Right'**
+  String get objectAlignRight;
+
+  /// No description provided for @objectAlignTop.
+  ///
+  /// In en, this message translates to:
+  /// **'Top'**
+  String get objectAlignTop;
+
+  /// No description provided for @objectAlignMiddle.
+  ///
+  /// In en, this message translates to:
+  /// **'Middle'**
+  String get objectAlignMiddle;
+
+  /// No description provided for @objectAlignBottom.
+  ///
+  /// In en, this message translates to:
+  /// **'Bottom'**
+  String get objectAlignBottom;
+
+  /// No description provided for @objectDistributeHorizontally.
+  ///
+  /// In en, this message translates to:
+  /// **'Distribute horizontally'**
+  String get objectDistributeHorizontally;
+
+  /// No description provided for @objectDistributeVertically.
+  ///
+  /// In en, this message translates to:
+  /// **'Distribute vertically'**
+  String get objectDistributeVertically;
+
+  /// No description provided for @reasonChartSheet.
+  ///
+  /// In en, this message translates to:
+  /// **'Not available on chart sheets'**
+  String get reasonChartSheet;
+
+  /// No description provided for @imageClipboardEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'There is no image on the clipboard'**
+  String get imageClipboardEmpty;
+
+  /// No description provided for @dialogImagePaste.
+  ///
+  /// In en, this message translates to:
+  /// **'Paste from clipboard'**
+  String get dialogImagePaste;
+
+  /// No description provided for @chartCopyImageFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t put the image on the clipboard'**
+  String get chartCopyImageFailed;
+
+  /// No description provided for @chartCopiedAsImage.
+  ///
+  /// In en, this message translates to:
+  /// **'Chart copied as an image'**
+  String get chartCopiedAsImage;
+
+  /// No description provided for @chartEditorTrendlineCustomLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Custom label'**
+  String get chartEditorTrendlineCustomLabel;
+
+  /// No description provided for @chartEditorTrendlineCustomLabelHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Label text'**
+  String get chartEditorTrendlineCustomLabelHint;
+
+  /// No description provided for @chartEditorErrorBars.
+  ///
+  /// In en, this message translates to:
+  /// **'Error bars'**
+  String get chartEditorErrorBars;
+
+  /// No description provided for @chartEditorErrorBarsType.
+  ///
+  /// In en, this message translates to:
+  /// **'Type'**
+  String get chartEditorErrorBarsType;
+
+  /// No description provided for @chartErrorBarsConstant.
+  ///
+  /// In en, this message translates to:
+  /// **'Constant'**
+  String get chartErrorBarsConstant;
+
+  /// No description provided for @chartErrorBarsPercent.
+  ///
+  /// In en, this message translates to:
+  /// **'Percent'**
+  String get chartErrorBarsPercent;
+
+  /// No description provided for @chartErrorBarsStdev.
+  ///
+  /// In en, this message translates to:
+  /// **'Standard deviation'**
+  String get chartErrorBarsStdev;
+
+  /// No description provided for @chartEditorErrorBarsValue.
+  ///
+  /// In en, this message translates to:
+  /// **'Value'**
+  String get chartEditorErrorBarsValue;
+
+  /// No description provided for @chartEditorFormatDataPoint.
+  ///
+  /// In en, this message translates to:
+  /// **'Format data point'**
+  String get chartEditorFormatDataPoint;
+
+  /// No description provided for @chartEditorPickPoint.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose a point'**
+  String get chartEditorPickPoint;
+
+  /// No description provided for @chartEditorAdd.
+  ///
+  /// In en, this message translates to:
+  /// **'Add'**
+  String get chartEditorAdd;
+
+  /// No description provided for @chartSectionPieSlice.
+  ///
+  /// In en, this message translates to:
+  /// **'Pie slice'**
+  String get chartSectionPieSlice;
+
+  /// No description provided for @chartEditorSlice.
+  ///
+  /// In en, this message translates to:
+  /// **'Slice'**
+  String get chartEditorSlice;
+
+  /// No description provided for @chartEditorSliceColor.
+  ///
+  /// In en, this message translates to:
+  /// **'Slice color'**
+  String get chartEditorSliceColor;
+
+  /// No description provided for @chartEditorSliceDistance.
+  ///
+  /// In en, this message translates to:
+  /// **'Distance from center'**
+  String get chartEditorSliceDistance;
+
+  /// No description provided for @chartEditorSubtotals.
+  ///
+  /// In en, this message translates to:
+  /// **'Subtotals'**
+  String get chartEditorSubtotals;
+
+  /// No description provided for @chartEditorNoSubtotals.
+  ///
+  /// In en, this message translates to:
+  /// **'No subtotals'**
+  String get chartEditorNoSubtotals;
+
+  /// No description provided for @chartEditorSubtotalAfter.
+  ///
+  /// In en, this message translates to:
+  /// **'After {point}'**
+  String chartEditorSubtotalAfter(String point);
+
+  /// No description provided for @chartEditorSubtotalLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Label'**
+  String get chartEditorSubtotalLabel;
+
+  /// No description provided for @chartEditorAddSubtotal.
+  ///
+  /// In en, this message translates to:
+  /// **'Add subtotal'**
+  String get chartEditorAddSubtotal;
+
+  /// No description provided for @chartEditorInvalidCell.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter a cell such as B2 or Sheet1!B2'**
+  String get chartEditorInvalidCell;
+
+  /// No description provided for @chartEditorKeyValueCell.
+  ///
+  /// In en, this message translates to:
+  /// **'Key value cell'**
+  String get chartEditorKeyValueCell;
+
+  /// No description provided for @chartEditorBaselineCell.
+  ///
+  /// In en, this message translates to:
+  /// **'Baseline cell'**
+  String get chartEditorBaselineCell;
+
+  /// No description provided for @chartEditorFromDataRange.
+  ///
+  /// In en, this message translates to:
+  /// **'From the data range'**
+  String get chartEditorFromDataRange;
+
+  /// No description provided for @scriptsDisabled.
+  ///
+  /// In en, this message translates to:
+  /// **'Scripts are turned off on this device (Settings › Sheets).'**
+  String get scriptsDisabled;
+
+  /// No description provided for @scriptsDisabledBanner.
+  ///
+  /// In en, this message translates to:
+  /// **'Scripts are turned off for you. Functions, triggers and custom functions don\'t run.'**
+  String get scriptsDisabledBanner;
+
+  /// No description provided for @scriptsEnable.
+  ///
+  /// In en, this message translates to:
+  /// **'Turn on scripts'**
+  String get scriptsEnable;
+
+  /// No description provided for @scriptConflictBodyBy.
+  ///
+  /// In en, this message translates to:
+  /// **'{user} saved a newer version of {file} ({when}).'**
+  String scriptConflictBodyBy(String user, String file, String when);
+
+  /// No description provided for @scriptCompare.
+  ///
+  /// In en, this message translates to:
+  /// **'Compare'**
+  String get scriptCompare;
+
+  /// No description provided for @scriptHideComparison.
+  ///
+  /// In en, this message translates to:
+  /// **'Hide comparison'**
+  String get scriptHideComparison;
+
+  /// No description provided for @scriptMerge.
+  ///
+  /// In en, this message translates to:
+  /// **'Merge'**
+  String get scriptMerge;
+
+  /// No description provided for @scriptVersionTheirs.
+  ///
+  /// In en, this message translates to:
+  /// **'Saved version'**
+  String get scriptVersionTheirs;
+
+  /// No description provided for @scriptVersionMine.
+  ///
+  /// In en, this message translates to:
+  /// **'Your version'**
+  String get scriptVersionMine;
+
+  /// No description provided for @scriptMergeConflicts.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{The merge has 1 conflict. Resolve the marked lines, then save.} other{The merge has {count} conflicts. Resolve the marked lines, then save.}}'**
+  String scriptMergeConflicts(int count);
+
+  /// No description provided for @scriptMergeConflictProblem.
+  ///
+  /// In en, this message translates to:
+  /// **'Merge conflict: keep your lines, theirs or both, then remove the markers.'**
+  String get scriptMergeConflictProblem;
+
+  /// No description provided for @scriptHistoryTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Local history of {file}'**
+  String scriptHistoryTitle(String file);
+
+  /// No description provided for @scriptHistoryDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Versions saved on this device (the last 20). Restoring puts the version in the editor without saving.'**
+  String get scriptHistoryDescription;
+
+  /// No description provided for @scriptHistoryVersion.
+  ///
+  /// In en, this message translates to:
+  /// **'Version'**
+  String get scriptHistoryVersion;
+
+  /// No description provided for @scriptHistoryRestore.
+  ///
+  /// In en, this message translates to:
+  /// **'Restore'**
+  String get scriptHistoryRestore;
+
+  /// No description provided for @scriptHistoryEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'No versions saved on this device yet.'**
+  String get scriptHistoryEmpty;
+
+  /// No description provided for @scriptHistorySelected.
+  ///
+  /// In en, this message translates to:
+  /// **'Selected version'**
+  String get scriptHistorySelected;
+
+  /// No description provided for @scriptHistoryCurrent.
+  ///
+  /// In en, this message translates to:
+  /// **'Editor'**
+  String get scriptHistoryCurrent;
+
+  /// No description provided for @scriptHistorySaved.
+  ///
+  /// In en, this message translates to:
+  /// **'Saved'**
+  String get scriptHistorySaved;
+
+  /// No description provided for @scriptHistoryDiscarded.
+  ///
+  /// In en, this message translates to:
+  /// **'Discarded in a conflict'**
+  String get scriptHistoryDiscarded;
+
+  /// No description provided for @scriptHistoryOverwritten.
+  ///
+  /// In en, this message translates to:
+  /// **'Replaced by your save'**
+  String get scriptHistoryOverwritten;
+
+  /// No description provided for @scriptHistoryBeforeMerge.
+  ///
+  /// In en, this message translates to:
+  /// **'Before a merge'**
+  String get scriptHistoryBeforeMerge;
+
+  /// No description provided for @scriptLocalHistory.
+  ///
+  /// In en, this message translates to:
+  /// **'Local history'**
+  String get scriptLocalHistory;
+
+  /// No description provided for @scriptRestoredDraft.
+  ///
+  /// In en, this message translates to:
+  /// **'Restored {file} from the local history. Save to keep it.'**
+  String scriptRestoredDraft(String file);
+
+  /// No description provided for @scriptApiReferenceTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Script API reference'**
+  String get scriptApiReferenceTitle;
+
+  /// No description provided for @scriptApiSearch.
+  ///
+  /// In en, this message translates to:
+  /// **'Search classes and members'**
+  String get scriptApiSearch;
+
+  /// No description provided for @scriptApiClass.
+  ///
+  /// In en, this message translates to:
+  /// **'Class'**
+  String get scriptApiClass;
+
+  /// No description provided for @scriptApiNoMatches.
+  ///
+  /// In en, this message translates to:
+  /// **'No classes or members match.'**
+  String get scriptApiNoMatches;
+
+  /// No description provided for @cmdHelpScriptApiReference.
+  ///
+  /// In en, this message translates to:
+  /// **'Script API reference'**
+  String get cmdHelpScriptApiReference;
+
+  /// No description provided for @scriptInScriptEditor.
+  ///
+  /// In en, this message translates to:
+  /// **'In the script editor'**
+  String get scriptInScriptEditor;
+
+  /// No description provided for @scriptFileOpenBy.
+  ///
+  /// In en, this message translates to:
+  /// **'Open by {names}'**
+  String scriptFileOpenBy(String names);
+
+  /// No description provided for @scriptDragToReorder.
+  ///
+  /// In en, this message translates to:
+  /// **'Drag to reorder'**
+  String get scriptDragToReorder;
+
+  /// No description provided for @scriptLoadingCell.
+  ///
+  /// In en, this message translates to:
+  /// **'Loading…'**
+  String get scriptLoadingCell;
+
+  /// No description provided for @sheetsSettingsChartPatterns.
+  ///
+  /// In en, this message translates to:
+  /// **'Distinguish chart series by pattern'**
+  String get sheetsSettingsChartPatterns;
+
+  /// No description provided for @chartViewDataTableAction.
+  ///
+  /// In en, this message translates to:
+  /// **'View data as table'**
+  String get chartViewDataTableAction;
+
+  /// No description provided for @chartType3DSurface.
+  ///
+  /// In en, this message translates to:
+  /// **'3D surface'**
+  String get chartType3DSurface;
+
+  /// No description provided for @chartTypeSurface.
+  ///
+  /// In en, this message translates to:
+  /// **'Surface'**
+  String get chartTypeSurface;
+
+  /// No description provided for @scriptSidebarTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Script sidebar'**
+  String get scriptSidebarTitle;
+
+  /// No description provided for @scriptSidebarEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'No script sidebar is open.'**
+  String get scriptSidebarEmpty;
 }
 
 class _SheetsLocalizationsDelegate

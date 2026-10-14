@@ -78,6 +78,41 @@ RowMoveStrategy applyRowPermutation(
   int? keepCount,
   RowMoveStrategy? strategy,
 }) {
+  final out = RowMoveOutcome();
+  for (final _ in applyRowPermutationSteps(
+    b,
+    s,
+    rect,
+    permutation,
+    out,
+    keepCount: keepCount,
+    strategy: strategy,
+  )) {}
+  return out.strategy!;
+}
+
+/// The strategy [applyRowPermutationSteps] used.
+final class RowMoveOutcome {
+  RowMoveStrategy? strategy;
+}
+
+/// Rows/cells handled between two progress reports of
+/// [applyRowPermutationSteps].
+const int rowMoveStepSize = 2048;
+
+/// [applyRowPermutation] as a cooperative job (07 §1.4): yields its
+/// progress (0–1) every [rowMoveStepSize] rows or formula cells so a
+/// `DataJob` can report it, paint and cancel between steps. The model must
+/// not change while the steps run. Sets [out] when done.
+Iterable<double> applyRowPermutationSteps(
+  PlanBuilder b,
+  SheetModel s,
+  GridRect rect,
+  List<int> permutation,
+  RowMoveOutcome out, {
+  int? keepCount,
+  RowMoveStrategy? strategy,
+}) sync* {
   final n = rect.rowCount;
   assert(permutation.length == n, 'permutation length must match rows');
   final keep = keepCount ?? n;
@@ -88,7 +123,8 @@ RowMoveStrategy applyRowPermutation(
   for (var i = 0; i < n; i++) {
     if (permutation[i] != i) identity = false;
   }
-  if (identity && keep == n) return st;
+  out.strategy = st;
+  if (identity && keep == n) return;
   final hooks = b.ctx.formulas;
   if (st == RowMoveStrategy.contentMove) {
     _moveSingleRowMerges(b, s, rect, permutation, keep);
@@ -96,6 +132,7 @@ RowMoveStrategy applyRowPermutation(
     for (final (r, c, _, _, cur) in b.cellsIn(s, rect)) {
       (snapshot[r - rect.top] ??= {})[c - rect.left] = cellData(cur);
     }
+    yield 0.2;
     for (var i = 0; i < n; i++) {
       final targetRow = rect.top + i;
       final rowId = s.rows.idAt(targetRow);
@@ -111,10 +148,10 @@ RowMoveStrategy applyRowPermutation(
           b.deleteCell(s.id, rowId, colId);
           continue;
         }
-        final out = Map<String, Object?>.of(data);
-        final content = out[CellCols.content] as String?;
+        final data2 = Map<String, Object?>.of(data);
+        final content = data2[CellCols.content] as String?;
         if (content != null && content.startsWith('=') && hooks != null) {
-          out[CellCols.content] = hooks.translate(
+          data2[CellCols.content] = hooks.translate(
             content,
             fromSheetId: s.id,
             fromRow: rect.top + from,
@@ -124,10 +161,11 @@ RowMoveStrategy applyRowPermutation(
             toCol: c,
           );
         }
-        b.writeCell(s.id, rowId, colId, out);
+        b.writeCell(s.id, rowId, colId, data2);
       }
+      if (i % rowMoveStepSize == rowMoveStepSize - 1) yield 0.2 + 0.8 * i / n;
     }
-    return st;
+    return;
   }
   // Row reorder: permute the existing sort keys among the rows.
   final oldIds = [for (var i = 0; i < n; i++) s.rows.idAt(rect.top + i)];
@@ -147,7 +185,9 @@ RowMoveStrategy applyRowPermutation(
   final newIdAt = [for (var i = 0; i < n; i++) oldIds[permutation[i]]];
   for (var i = 0; i < n; i++) {
     b.update(SheetsTables.sheetRow, newIdAt[i], {Cols.sortKey: keys[i]});
+    if (i % rowMoveStepSize == rowMoveStepSize - 1) yield 0.3 * i / n;
   }
+  yield 0.3;
   final oldIndex = {for (var i = 0; i < n; i++) oldIds[i]: rect.top + i};
   String newRowIdAt(int pos) => pos >= rect.top && pos <= rect.bottom
       ? newIdAt[pos - rect.top]
@@ -158,8 +198,13 @@ RowMoveStrategy applyRowPermutation(
   // Formulas: inside moved rows → translate (copy semantics) then re-pin;
   // elsewhere → re-pin references into the block.
   if (hooks != null) {
+    final total = b.model.sheets.fold<int>(0, (a, x) => a + x.cells.count);
+    var seen = 0;
     for (final sheet in b.model.sheets) {
       for (final cell in sheet.cells.all) {
+        if (++seen % rowMoveStepSize == 0 && total > 0) {
+          yield 0.3 + 0.65 * seen / total;
+        }
         final content = cell.content;
         if (content == null || !content.startsWith('=')) continue;
         var f = content;
@@ -219,7 +264,6 @@ RowMoveStrategy applyRowPermutation(
   }
 
   _repinRuleRanges(b, s, repin);
-  return st;
 }
 
 /// Content move: single-row merges inside [rect] travel with their row's

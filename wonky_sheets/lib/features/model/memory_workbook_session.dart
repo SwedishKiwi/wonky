@@ -10,6 +10,7 @@ import 'package:wonky_sheets_core/model.dart';
 import 'package:wonky_ui/wonky_ui.dart' show SyncStatus;
 
 import 'custom_function_forwarder.dart';
+import 'external_data_forwarder.dart';
 import 'workbook_session.dart';
 
 /// Shared implementation of [WorkbookSession]: planning, applying plans to
@@ -32,7 +33,11 @@ abstract class WorkbookSessionBase extends WorkbookSession {
       model,
       engineFactory: (view) =>
           engineFactory?.call(view, customFunctions) ??
-          FormulaEngine(workbook: view, customFunctions: customFunctions),
+          FormulaEngine(
+            workbook: view,
+            customFunctions: customFunctions,
+            external: externalData,
+          ),
     );
   }
 
@@ -41,6 +46,11 @@ abstract class WorkbookSessionBase extends WorkbookSession {
   /// provider when a build is installed (`features/scripts`).
   final ForwardingCustomFunctionProvider customFunctions =
       ForwardingCustomFunctionProvider();
+
+  /// The formula engine's external data hook (`AI()` cells, Sheets 12
+  /// §6.8): the AI feature points it at its provider.
+  final ForwardingExternalDataProvider externalData =
+      ForwardingExternalDataProvider();
 
   @override
   final UuidValue itemUuid;
@@ -153,6 +163,7 @@ abstract class WorkbookSessionBase extends WorkbookSession {
     await flush();
     engine.dispose();
     await customFunctions.dispose();
+    await externalData.dispose();
     await remoteController.close();
     loadStateNotifier.dispose();
     syncStatusNotifier.dispose();

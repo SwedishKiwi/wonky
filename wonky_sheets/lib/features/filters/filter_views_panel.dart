@@ -5,6 +5,7 @@ import 'package:shad/shad.dart';
 import 'package:wonky_ui/wonky_ui.dart';
 
 import '../../l10n/sheets_l10n.dart';
+import '../common/range_input.dart';
 import '../data_tools/data_tools.dart';
 import '../sheet_editor/sheet_editor_controller.dart';
 
@@ -23,6 +24,9 @@ class FilterViewsPanel extends StatefulWidget {
 class _FilterViewsPanelState extends State<FilterViewsPanel> {
   final _scroll = ScrollController();
   final _search = TextEditingController();
+
+  /// The range text while it is being edited or picked (by view id).
+  final _rangeDrafts = <String, String>{};
 
   SheetEditorController get ed => widget.editor;
 
@@ -92,8 +96,10 @@ class _FilterViewsPanelState extends State<FilterViewsPanel> {
                             style: theme.textTheme.muted,
                           ),
                         ),
-                      for (final (id, name, temp, by) in views)
+                      for (final (id, name, temp, by) in views) ...[
                         _row(context, id, name, temp, by, active == id),
+                        if (active == id) _rangeField(context, sid, id, temp),
+                      ],
                       const SizedBox(height: 8),
                       Align(
                         alignment: AlignmentDirectional.centerStart,
@@ -113,6 +119,51 @@ class _FilterViewsPanelState extends State<FilterViewsPanel> {
           ],
         );
       },
+    );
+  }
+
+  /// The active view's range with `RangeInput` picking (04 §13): select on
+  /// the grid while the field is focused (or the ⊞ toggle is on); the range
+  /// is written when picking ends (`sheets.filterView.setRange`).
+  Widget _rangeField(
+    BuildContext context,
+    String sheetId,
+    String id,
+    bool temporary,
+  ) {
+    final l = sheetsL10n(context);
+    final theme = ShadTheme.of(context);
+    final view = DataTools.of(ed).filters.view(sheetId, id);
+    if (view == null) return const SizedBox.shrink();
+    return Padding(
+      key: ValueKey<String>('filterViews.rangeField.$id'),
+      padding: const EdgeInsets.fromLTRB(4, 0, 4, 10),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Text(l.filterViewRange, style: theme.textTheme.small),
+          const SizedBox(height: 4),
+          RangeInput(
+            editor: ed,
+            keyName: 'filterViews.range',
+            multiple: false,
+            value: _rangeDrafts[id] ?? view.range.a1,
+            enabled: temporary || ed.canEdit,
+            onChanged: (text, _) => _rangeDrafts[id] = text,
+            onCommitted: (text, ranges) {
+              _rangeDrafts.remove(id);
+              if (ranges == null || text == view.range.a1) {
+                if (mounted) setState(() {});
+                return;
+              }
+              _invoke('sheets.filterView.setRange', {
+                'viewId': id,
+                'range': text,
+              });
+            },
+          ),
+        ],
+      ),
     );
   }
 

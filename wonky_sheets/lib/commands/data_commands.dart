@@ -51,17 +51,15 @@ List<Command<CommandArgs>> dataCommands(ShellServices s) => [
       final rect = GridRect(fr, 0, used.bottom, sheet.columns.length - 1);
       // Row 1 looks like a header but isn't frozen: offer to fix (07 §2.6).
       final header = fr == 0 && rect.rowCount > 2 && looksLikeHeader(ed, rect);
+      final op = SortRange(ResolvedRange(sheet.id, rect, wholeRows: true), [
+        SortKeySpec(colId, ascending: asc),
+      ]);
       await DataJobs.run(
         ed,
         rows: rect.rowCount,
         label: ed.l10n.dataJobSorting(rect.rowCount),
-        work: () => applyKeepingSelection(
-          ctx,
-          ed,
-          SortRange(ResolvedRange(sheet.id, rect, wholeRows: true), [
-            SortKeySpec(colId, ascending: asc),
-          ]),
-        ),
+        op: op,
+        work: () => applyKeepingSelection(ctx, ed, op),
       );
       if (header && ctx.source != InvocationSource.mcp) {
         final l = ed.l10n;
@@ -114,35 +112,28 @@ List<Command<CommandArgs>> dataCommands(ShellServices s) => [
           a.string('colId') ??
           sheet.columns.idAt(ed.selection.resolved.activeCol);
       final specs = a.values['specs'];
+      final op = SortRange(
+        range,
+        specs is List && specs.isNotEmpty
+            ? [
+                for (final e in specs)
+                  if (e is Map && e['colId'] is String)
+                    SortKeySpec(
+                      e['colId'] as String,
+                      ascending: e['ascending'] != false,
+                      fillColor: e['fillColor'] as String?,
+                      textColor: e['textColor'] as String?,
+                    ),
+              ]
+            : [SortKeySpec(colId, ascending: a.boolean('ascending') ?? true)],
+        hasHeader: a.boolean('hasHeader') ?? false,
+      );
       await DataJobs.run(
         ed,
         rows: range.rect.rowCount,
         label: ed.l10n.dataJobSorting(range.rect.rowCount),
-        work: () => applyKeepingSelection(
-          ctx,
-          ed,
-          SortRange(
-            range,
-            specs is List && specs.isNotEmpty
-                ? [
-                    for (final e in specs)
-                      if (e is Map && e['colId'] is String)
-                        SortKeySpec(
-                          e['colId'] as String,
-                          ascending: e['ascending'] != false,
-                          fillColor: e['fillColor'] as String?,
-                          textColor: e['textColor'] as String?,
-                        ),
-                  ]
-                : [
-                    SortKeySpec(
-                      colId,
-                      ascending: a.boolean('ascending') ?? true,
-                    ),
-                  ],
-            hasHeader: a.boolean('hasHeader') ?? false,
-          ),
-        ),
+        op: op,
+        work: () => applyKeepingSelection(ctx, ed, op),
       );
       return ok();
     },
@@ -159,11 +150,13 @@ List<Command<CommandArgs>> dataCommands(ShellServices s) => [
     enabled: (ed, a) => ed.selection.resolved.ranges.length == 1,
     run: (ctx, ed, a) async {
       final range = rangeArg(ed, a);
+      final op = RandomizeRange(range);
       await DataJobs.run(
         ed,
         rows: range.rect.rowCount,
         label: ed.l10n.dataJobRandomizing(range.rect.rowCount),
-        work: () => applyKeepingSelection(ctx, ed, RandomizeRange(range)),
+        op: op,
+        work: () => applyKeepingSelection(ctx, ed, op),
       );
       return ok();
     },

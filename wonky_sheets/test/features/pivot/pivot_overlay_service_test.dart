@@ -231,8 +231,10 @@ void main() {
       expect(bg.isComputing(id), isFalse);
       expect(text('G2'), 'NumberValue(4.0)');
 
-      put('C2', [
-        ['10'],
+      // A group key change (value-only edits refresh as deltas, see
+      // pivot_incremental_test.dart).
+      put('A2', [
+        ['West'],
       ]);
       bg.flush();
       expect(bg.isComputing(id), isTrue);
@@ -240,7 +242,7 @@ void main() {
       expect(text('G2'), 'NumberValue(4.0)', reason: 'old output stays');
 
       await Future<void>.delayed(const Duration(milliseconds: 50));
-      expect(text('G2'), 'NumberValue(13.0)');
+      expect(text('G2'), 'NumberValue(3.0)');
       expect(bg.byId(id)!.stale, isFalse);
     });
 

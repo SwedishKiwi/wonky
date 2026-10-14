@@ -292,4 +292,50 @@ void main() {
       },
     );
   });
+
+  group('Given 2 frozen rows and 1 frozen column', () {
+    late AxisIndex rows;
+    late AxisIndex cols;
+    setUp(() {
+      rows = testAxis(List.filled(40, null));
+      cols = testAxis(List.filled(10, null), defaultSize: 100, ns: 2);
+    });
+
+    test('when the data starts in the frozen rows then the chart goes to the '
+        'top of the scrolling pane', () {
+      final a = ObjectPlacement.defaultChartAnchor(
+        dataRegion: const GridRect(0, 0, 9, 0),
+        rows: rows,
+        columns: cols,
+        frozenRows: 2,
+        frozenColumns: 1,
+        viewport: ChartRect(100, rows.offsetOf(10), 900, 600),
+      );
+      expect(rows.indexOf(a.rowId!), 10);
+      expect(cols.indexOf(a.colId!), 1);
+    });
+
+    test('when there is no viewport then the first scrolling row is used', () {
+      final a = ObjectPlacement.defaultChartAnchor(
+        dataRegion: const GridRect(1, 0, 9, 0),
+        rows: rows,
+        columns: cols,
+        frozenRows: 2,
+      );
+      expect(rows.indexOf(a.rowId!), 2);
+    });
+
+    test('when the region is right of the frozen columns then nothing '
+        'changes', () {
+      final a = ObjectPlacement.defaultChartAnchor(
+        dataRegion: const GridRect(5, 2, 9, 3),
+        rows: rows,
+        columns: cols,
+        frozenRows: 2,
+        frozenColumns: 1,
+      );
+      expect(rows.indexOf(a.rowId!), 5);
+      expect(cols.indexOf(a.colId!), 4);
+    });
+  });
 }

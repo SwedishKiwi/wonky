@@ -17,6 +17,9 @@ class IoProgress {
   final ValueNotifier<double?> value = ValueNotifier(null);
   bool cancelled = false;
 
+  /// Called on *Cancel* (server jobs cancel themselves on the server).
+  VoidCallback? onCancel;
+
   /// Throws [IoCancelled] when the user cancelled.
   void check() {
     if (cancelled) throw const IoCancelled();
@@ -53,6 +56,7 @@ Future<T?> runWithProgress<T>(
         onCancel: cancellable
             ? () {
                 progress.cancelled = true;
+                progress.onCancel?.call();
                 if (open) {
                   open = false;
                   nav.pop();

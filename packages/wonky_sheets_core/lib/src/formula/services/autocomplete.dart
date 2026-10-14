@@ -251,16 +251,23 @@ CompletionList completionsAt(String text, int caret, CompletionContext ctx) {
 
   for (final spec in ctx.registry.all) {
     if (!spec.implemented) continue;
-    final s = score(spec.name);
+    // Display language (P2): the localized name is listed and inserted;
+    // the English name still matches.
+    final shown = ctx.locale.displayFunction(spec.name);
+    var s = score(shown);
+    if (shown != spec.name) {
+      final en = score(spec.name);
+      if (en != null && (s == null || en > s)) s = en;
+    }
     if (s == null) continue;
     scored.add((
       s * 1000 + popularity(spec.name),
       CompletionItem(
         kind: CompletionKind.builtin,
-        name: spec.name,
+        name: shown,
         summary: spec.help.summary,
-        insertText: '${spec.name}(',
-        matches: matchesOf(spec.name),
+        insertText: '$shown(',
+        matches: matchesOf(shown),
         category: spec.category.label,
       ),
     ));

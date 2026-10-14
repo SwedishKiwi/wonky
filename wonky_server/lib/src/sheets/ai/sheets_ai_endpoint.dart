@@ -119,9 +119,25 @@ class SheetsAiEndpoint extends Endpoint {
     callIds,
   );
 
+  /// Evaluates `=AI()` cells (Sheets 12 §6.8): cached values, new ones for
+  /// Editors; [refresh] recomputes (*Refresh AI cells*).
+  Future<List<SheetsAiCellResult>> evaluateAiCells(
+    Session session,
+    UuidValue itemUuid,
+    List<SheetsAiCellRequest> requests,
+    bool refresh,
+  ) async => SheetsAiService.evaluateAiCells(
+    session,
+    await UserService.actorOf(session),
+    itemUuid,
+    requests,
+    refresh: refresh,
+  );
+
   /// Discards a preview.
   Future<void> discardPreview(Session session, String previewId) async =>
       SheetsAiService.discardPreview(
+        session,
         await UserService.actorOf(session),
         previewId,
       );

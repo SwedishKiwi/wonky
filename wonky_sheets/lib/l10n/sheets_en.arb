@@ -75,6 +75,9 @@
   "settingsLocale": "Locale",
   "settingsLocaleNote": "Formats like 'Currency' and dates will display using the new locale. Existing values are not changed.",
   "settingsTimeZone": "Time zone",
+  "settingsDisplayLanguage": "Function language",
+  "settingsDisplayLanguageEnglish": "English",
+  "settingsDisplayLanguageNote": "Function names and TRUE/FALSE are shown in this language. English names always work, and formulas are saved in English.",
   "settingsSearch": "Search",
   "sheetsSettingsNewHint": "Defaults for new spreadsheets you create. Each spreadsheet keeps its own settings (File › Settings).",
   "sheetsSettingsFont": "Default font",
@@ -155,6 +158,41 @@
       }
     }
   },
+  "cmdConflictsReview": "Review overwritten edits",
+  "cmdConflictsApplyMine": "Apply my values again",
+  "undoApplyMine": "Apply my values again",
+  "cmdHistoryDownload": "Download version",
+  "cmdHistoryToggleShowChanges": "Show changes",
+  "commentsScopeSheet": "This sheet",
+  "commentsScopeAll": "All sheets",
+  "commentsOrphanedGroup": "Orphaned",
+  "conflictsTitle": "Overwritten offline edits",
+  "conflictsDescription": "Others changed these cells after you edited them offline. Select the values to put back.",
+  "conflictsReview": "Review",
+  "conflictsApplyMine": "Apply mine again",
+  "conflictsDismissAll": "Dismiss all",
+  "conflictsEmptyValue": "(empty)",
+  "conflictsSeveralPeople": "several people",
+  "conflictsRow": "{cell} — yours: {mine} · now: {theirs} ({name})",
+  "@conflictsRow": {"placeholders": {"cell": {"type": "String"}, "mine": {"type": "String"}, "theirs": {"type": "String"}, "name": {"type": "String"}}},
+  "conflictsYours": "yours: {value}",
+  "@conflictsYours": {"placeholders": {"value": {"type": "String"}}},
+  "conflictsRowDeletedBy": "Row deleted by {name}",
+  "@conflictsRowDeletedBy": {"placeholders": {"name": {"type": "String"}}},
+  "conflictsColumnDeletedBy": "Column deleted by {name}",
+  "@conflictsColumnDeletedBy": {"placeholders": {"name": {"type": "String"}}},
+  "conflictsSheetDeletedBy": "Sheet deleted by {name}",
+  "@conflictsSheetDeletedBy": {"placeholders": {"name": {"type": "String"}}},
+  "toastConflicts": "{count, plural, =1{1 of your offline edits was replaced by a newer edit from {name}} other{{count} of your offline edits were replaced by newer edits from {name}}}",
+  "@toastConflicts": {"placeholders": {"count": {"type": "int"}, "name": {"type": "String"}}},
+  "toastSortReplaced": "Your sort was replaced by a newer sort from {name}",
+  "@toastSortReplaced": {"placeholders": {"name": {"type": "String"}}},
+  "toastVersionCopyExtrasFailed": "The copy was made, but its comments and sharing couldn't be copied",
+  "versionCopyTitle": "Make a copy",
+  "versionCopyNameLabel": "Name",
+  "versionCopyNameRequired": "Enter a name",
+  "versionCopyComments": "Copy comments",
+  "versionCopySharing": "Share with the same people",
   "commentReplies": "{count, plural, =1{1 reply} other{{count} replies}}",
   "@commentReplies": {
     "placeholders": {
@@ -2082,6 +2120,7 @@
   "downloadOds": "OpenDocument (.ods)",
   "downloadPdf": "PDF (.pdf)",
   "downloadTsv": "Tab-separated values (.tsv, current sheet)",
+  "downloadJson": "JSON (.json, values and formulas)",
   "downloadXlsx": "Microsoft Excel (.xlsx)",
   "downloadingSpreadsheet": "Downloading spreadsheet… {percent}%",
   "@downloadingSpreadsheet": {
@@ -2332,6 +2371,8 @@
   "toastCantDeleteAllRows": "A sheet must have at least one row",
   "toastCantHideAll": "You can’t hide all rows or columns of a sheet",
   "toastClipboardEmpty": "The clipboard is empty",
+  "screenStorageUnavailable": "The spreadsheet storage on this device didn't start. Try again, or reload the page.",
+  "toastClipboardBlocked": "The browser blocked access to the clipboard. Allow clipboard access for this site to paste here.",
   "toastCommandFailed": "That didn’t work",
   "toastEditedRowDeleted": "The cell you were editing was deleted",
   "toastFreezeTooLarge": "The frozen area would be larger than the window. Zoom out or freeze fewer rows.",
@@ -2581,10 +2622,15 @@
       }
     }
   },
+  "smartChipOpenFile": "Open",
+  "smartChipFiles": "Files",
+  "smartChipFilesEmpty": "No files found",
+  "cmdChipOpenFile": "Open linked file",
   "smartChipCopyEmail": "Copy email",
   "smartChipEmailCopied": "Email copied",
   "dvItemDragHint": "Drag to reorder (Alt+↑/↓ in the field)",
   "dvNoColor": "No color",
+  "dvChipColors": "Chip colors",
   "dvUseCustomValues": "Use custom cell values",
   "dvChecked": "Checked",
   "dvUnchecked": "Unchecked",
@@ -2804,6 +2850,25 @@
     }
   },
   "importLargeNote": "Large import on this device may take a while.",
+  "importServerNote": "This large file will be imported on the server.",
+  "importTabUpload": "Upload",
+  "importTabRecent": "Recent uploads",
+  "importTabRecentShort": "Recent",
+  "importTabDrive": "Drive",
+  "importRecentEmpty": "Files you import on this device appear here.",
+  "importRecentItem": "{name} · {size} · {date}",
+  "@importRecentItem": {
+    "placeholders": {
+      "name": {"type": "String"},
+      "size": {"type": "String"},
+      "date": {"type": "String"}
+    }
+  },
+  "importRecentGone": "This file is no longer stored on this device.",
+  "importDriveHint": "Import the sheets of another spreadsheet in your Drive.",
+  "importDriveOffline": "Importing from Drive needs a connection.",
+  "importDrivePick": "Choose a spreadsheet",
+  "importDrivePickTitle": "Import from Drive",
   "importPreview": "Preview (first 20 rows)",
   "importSeparator": "Separator type",
   "importEncoding": "Encoding",
@@ -2858,6 +2923,16 @@
   "importPhaseReading": "Reading the file",
   "importPhaseWriting": "Writing cells",
   "importPhaseUploading": "Uploading",
+  "importPhaseQueued": "Waiting for your other import to finish",
+  "importPhaseWritingCells": "Writing cells ({done} of {total})",
+  "@importPhaseWritingCells": {
+    "placeholders": {
+      "done": {"type": "int", "format": "decimalPattern"},
+      "total": {"type": "int", "format": "decimalPattern"}
+    }
+  },
+  "importPhaseFinalizing": "Finishing up",
+  "cmdFileCancelImport": "Cancel import",
   "importCancel": "Cancel",
   "importToastDone": "{summary}",
   "@importToastDone": {
@@ -3181,7 +3256,9 @@
   "printFieldsHint": "Tokens you can use:",
   "printSetBreaks": "Set custom page breaks",
   "printBreaksTitle": "Custom page breaks",
-  "printBreaksHint": "Pages break before these rows and columns. Breaks move with their rows and columns.",
+  "printBreaksHint": "Pages break before these rows and columns. Drag the lines on the grid to move them, drag one off the grid to remove it, or click a row number or column letter to add one.",
+  "printBreakCanvasLabel": "Page breaks of the current sheet. Dashed lines are automatic breaks, solid lines are custom breaks.",
+  "printDarkTheme": "Use dark theme for Export PDF",
   "printBreakRows": "Breaks before rows",
   "printBreakCols": "Breaks before columns",
   "printAddBreak": "Add",
@@ -3392,6 +3469,66 @@
   },
   "aiDescribeChartResult": "Alt text proposal",
   "aiInsertUndo": "Insert AI result",
+  "cmdAiCleanupSuggestions": "Clean up data with AI",
+  "cmdAiRefreshAiCells": "Refresh AI cells",
+  "aiCleanupPrompt": "Clean up the data {scope}. The automatic checks found:\n{findings}\nGroup the problems, explain them briefly and propose fixes as suggested changes I can review.",
+  "@aiCleanupPrompt": {
+    "placeholders": {
+      "scope": {
+        "type": "String"
+      },
+      "findings": {
+        "type": "String"
+      }
+    }
+  },
+  "aiCleanupScopeRange": "in {range}",
+  "@aiCleanupScopeRange": {
+    "placeholders": {
+      "range": {
+        "type": "String"
+      }
+    }
+  },
+  "aiCleanupScopeSheet": "on the sheet \"{name}\"",
+  "@aiCleanupScopeSheet": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "aiCleanupNothing": "- nothing obvious (check the data anyway)",
+  "aiAgentMcp": "MCP agent",
+  "aiAgentOf": "{name}'s agent",
+  "@aiAgentOf": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "aiAgentAiOf": "AI · {name}",
+  "@aiAgentAiOf": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "aiAssistantEmptyTitle": "Ask about this spreadsheet or tell the assistant what to change.",
+  "aiAssistantPrivacyNotice": "The assistant sends this spreadsheet and your messages to the AI provider to generate answers.",
+  "aiAssistantPrivacyNoticeProvider": "The assistant sends this spreadsheet and your messages to {provider} to generate answers.",
+  "@aiAssistantPrivacyNoticeProvider": {
+    "placeholders": {
+      "provider": {
+        "type": "String"
+      }
+    }
+  },
+  "aiAssistantModeEditHint": "Edit directly: changes go straight into the spreadsheet",
+  "aiAssistantModeEditUnavailable": "You can only suggest changes in this spreadsheet",
+  "aiAssistantModeSuggestHint": "Suggest: changes arrive as a preview to apply or discard",
   "cmdAiSuggestFormulaDescription": "Describe a formula in words and get it written for the active cell",
   "cmdAiFillRangeDescription": "Fill the empty cells of a column from the examples in it",
   "cmdAiDescribeChart": "Describe chart with AI",
@@ -3444,6 +3581,8 @@
   "sortHeaderToastBody": "Row 1 looks like a header row.",
   "sortHeaderToastAction": "Freeze row 1 and re-sort",
   "dataJobWaiting": "Waiting for the current operation to finish…",
+  "dataJobCancel": "Cancel",
+  "dataJobCancelled": "Cancelled. Nothing was changed.",
   "dataJobSorting": "Sorting {count} rows…",
   "@dataJobSorting": {
     "placeholders": {
@@ -3528,7 +3667,15 @@
   },
   "filterBlanks": "(Blanks)",
   "filterViewerHint": "You have view access — use a temporary filter view",
-  "filterViewSortUnavailable": "Sorting inside filter views isn't available yet",
+  "filterViewSortUnavailable": "Sort by color isn't available in filter views",
+  "cmdFilterViewSortColumn": "Sort filter view",
+  "viewSortCutUnavailable": "Rows in a sorted filter view can't be cut together. Copy them instead.",
+  "viewSortCutPasteUnavailable": "A cut can't be pasted into the rows of a sorted filter view. Copy it instead.",
+  "filterViewClearSort": "Clear view sort",
+  "filterViewSortedBy": "Sorted by {column}",
+  "@filterViewSortedBy": {
+    "placeholders": {"column": {"type": "String"}}
+  },
   "findNoResults": "No results",
   "findMatchesCount": "{matches} matches",
   "@findMatchesCount": {
@@ -4474,5 +4621,127 @@
     }
   },
   "a11yLoadingRow": "Loading",
-  "contextMenuDragCopy": "Copy"
+  "contextMenuDragCopy": "Copy",
+  "chartGroup3D": "3D",
+  "chartType3DColumn": "3D column chart",
+  "chartType3DStackedColumn": "3D stacked column chart",
+  "chartType3DPercentColumn": "3D 100% stacked column chart",
+  "chartType3DBar": "3D bar chart",
+  "chartType3DStackedBar": "3D stacked bar chart",
+  "chartType3DLine": "3D line chart",
+  "chartType3DArea": "3D area chart",
+  "chartType3DStackedArea": "3D stacked area chart",
+  "chartType3DPie": "3D pie chart",
+  "chartType3DDoughnut": "3D doughnut chart",
+  "chartSection3D": "3D",
+  "chartEditor3DEnabled": "Show in 3D",
+  "chartEditor3DRotation": "Rotation",
+  "chartEditor3DTilt": "Tilt",
+  "chartEditor3DPerspective": "Perspective",
+  "chartEditor3DDepth": "Depth",
+  "chartEditor3DHeight": "Height",
+  "chartEditor3DGapDepth": "Gap depth",
+  "chartEditor3DExplode": "Pull slices apart",
+  "chartEditor3DLighting": "Lighting",
+  "chartLightingSoft": "Soft",
+  "chartLightingBright": "Bright",
+  "chartLightingFlat": "Flat",
+  "chartEditor3DShape": "Shape",
+  "chartShapeBox": "Box",
+  "chartShapeCylinder": "Cylinder",
+  "chartShapeCone": "Cone",
+  "chartShapePyramid": "Pyramid",
+  "chartEditor3DWalls": "Floor and walls",
+  "chartEditor3DFloorColor": "Floor color",
+  "chartEditor3DResetView": "Reset view",
+  "chartEditor3DOrbitHint": "Drag the selected chart, or press Alt+Shift+arrow keys, to rotate it.",
+  "cmdChartToggle3D": "Show chart in 3D",
+  "cmdChartToggle3DDescription": "Draws the selected column, bar, line, area or pie chart in 3D, or flat again.",
+  "cmdChartReset3DView": "Reset 3D chart view",
+  "cmdChartRotate3D": "Rotate 3D chart",
+  "cmdObjectAlign": "Align objects",
+  "undoAlignObjects": "Align objects",
+  "objectMenuAlign": "Align",
+  "objectAlignLeft": "Left",
+  "objectAlignCenter": "Center",
+  "objectAlignRight": "Right",
+  "objectAlignTop": "Top",
+  "objectAlignMiddle": "Middle",
+  "objectAlignBottom": "Bottom",
+  "objectDistributeHorizontally": "Distribute horizontally",
+  "objectDistributeVertically": "Distribute vertically",
+  "reasonChartSheet": "Not available on chart sheets",
+  "imageClipboardEmpty": "There is no image on the clipboard",
+  "dialogImagePaste": "Paste from clipboard",
+  "chartCopyImageFailed": "Couldn't put the image on the clipboard",
+  "chartCopiedAsImage": "Chart copied as an image",
+  "chartEditorTrendlineCustomLabel": "Custom label",
+  "chartEditorTrendlineCustomLabelHint": "Label text",
+  "chartEditorErrorBars": "Error bars",
+  "chartEditorErrorBarsType": "Type",
+  "chartErrorBarsConstant": "Constant",
+  "chartErrorBarsPercent": "Percent",
+  "chartErrorBarsStdev": "Standard deviation",
+  "chartEditorErrorBarsValue": "Value",
+  "chartEditorFormatDataPoint": "Format data point",
+  "chartEditorPickPoint": "Choose a point",
+  "chartEditorAdd": "Add",
+  "chartSectionPieSlice": "Pie slice",
+  "chartEditorSlice": "Slice",
+  "chartEditorSliceColor": "Slice color",
+  "chartEditorSliceDistance": "Distance from center",
+  "chartEditorSubtotals": "Subtotals",
+  "chartEditorNoSubtotals": "No subtotals",
+  "chartEditorSubtotalAfter": "After {point}",
+  "@chartEditorSubtotalAfter": {"placeholders": {"point": {"type": "String"}}},
+  "chartEditorSubtotalLabel": "Label",
+  "chartEditorAddSubtotal": "Add subtotal",
+  "chartEditorInvalidCell": "Enter a cell such as B2 or Sheet1!B2",
+  "chartEditorKeyValueCell": "Key value cell",
+  "chartEditorBaselineCell": "Baseline cell",
+  "chartEditorFromDataRange": "From the data range",
+  "scriptsDisabled": "Scripts are turned off on this device (Settings › Sheets).",
+  "scriptsDisabledBanner": "Scripts are turned off for you. Functions, triggers and custom functions don't run.",
+  "scriptsEnable": "Turn on scripts",
+  "scriptConflictBodyBy": "{user} saved a newer version of {file} ({when}).",
+  "@scriptConflictBodyBy": {"placeholders": {"user": {"type": "String"}, "file": {"type": "String"}, "when": {"type": "String"}}},
+  "scriptCompare": "Compare",
+  "scriptHideComparison": "Hide comparison",
+  "scriptMerge": "Merge",
+  "scriptVersionTheirs": "Saved version",
+  "scriptVersionMine": "Your version",
+  "scriptMergeConflicts": "{count, plural, =1{The merge has 1 conflict. Resolve the marked lines, then save.} other{The merge has {count} conflicts. Resolve the marked lines, then save.}}",
+  "@scriptMergeConflicts": {"placeholders": {"count": {"type": "int"}}},
+  "scriptMergeConflictProblem": "Merge conflict: keep your lines, theirs or both, then remove the markers.",
+  "scriptHistoryTitle": "Local history of {file}",
+  "@scriptHistoryTitle": {"placeholders": {"file": {"type": "String"}}},
+  "scriptHistoryDescription": "Versions saved on this device (the last 20). Restoring puts the version in the editor without saving.",
+  "scriptHistoryVersion": "Version",
+  "scriptHistoryRestore": "Restore",
+  "scriptHistoryEmpty": "No versions saved on this device yet.",
+  "scriptHistorySelected": "Selected version",
+  "scriptHistoryCurrent": "Editor",
+  "scriptHistorySaved": "Saved",
+  "scriptHistoryDiscarded": "Discarded in a conflict",
+  "scriptHistoryOverwritten": "Replaced by your save",
+  "scriptHistoryBeforeMerge": "Before a merge",
+  "scriptLocalHistory": "Local history",
+  "scriptRestoredDraft": "Restored {file} from the local history. Save to keep it.",
+  "@scriptRestoredDraft": {"placeholders": {"file": {"type": "String"}}},
+  "scriptApiReferenceTitle": "Script API reference",
+  "scriptApiSearch": "Search classes and members",
+  "scriptApiClass": "Class",
+  "scriptApiNoMatches": "No classes or members match.",
+  "cmdHelpScriptApiReference": "Script API reference",
+  "scriptInScriptEditor": "In the script editor",
+  "scriptFileOpenBy": "Open by {names}",
+  "@scriptFileOpenBy": {"placeholders": {"names": {"type": "String"}}},
+  "scriptDragToReorder": "Drag to reorder",
+  "scriptLoadingCell": "Loading…",
+  "sheetsSettingsChartPatterns": "Distinguish chart series by pattern",
+  "chartViewDataTableAction": "View data as table",
+  "chartType3DSurface": "3D surface",
+  "chartTypeSurface": "Surface",
+  "scriptSidebarTitle": "Script sidebar",
+  "scriptSidebarEmpty": "No script sidebar is open."
 }

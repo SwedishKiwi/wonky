@@ -1,7 +1,8 @@
 import 'dart:convert';
 
 import 'package:serverpod/serverpod.dart';
-import 'package:wonky_core/wonky_core.dart' show McpScope, Role;
+import 'package:wonky_core/wonky_core.dart'
+    show McpScope, McpToolDefinition, Role;
 
 import '../../sheets/ai/sheets_assistant_target.dart';
 import '../../write/ai/write_context_builder.dart';
@@ -79,6 +80,11 @@ abstract class AssistantTarget {
 
   /// The tools of the file.
   AssistantToolset toolset(ToolExecutor executor);
+
+  /// `ui.*` tools the requesting window runs for the assistant (Sheets 12
+  /// §6.2), from the window's [AssistantContextHints.uiTools]. They are
+  /// relayed to that window through the chat stream (`uiToolCall`).
+  List<McpToolDefinition> uiTools(AssistantContextHints hints) => const [];
 
   /// The user turn: context blocks (the cached snapshot on the first turn,
   /// a "changed" element later) and the message with the volatile context

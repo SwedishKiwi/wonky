@@ -34,9 +34,28 @@ class SheetsReplica {
       persistentUserId: userUuid,
     );
     final replica = SheetsReplica(session, userUuid: userUuid);
+    await replica._tune();
     await replica.journal.install();
     return replica;
   }
+
+  /// SQLite page cache of the writer connection (KiB). The default 2 MB
+  /// makes big writes spill: the random-UUID indexes of `cell` and
+  /// `crdt_data_rows` outgrow it after ~50k cells and every insert then
+  /// touches uncached pages (Sheets 13 §7.5).
+  static const cacheSizeKiB = 65536;
+
+  Future<void> _tune() => db.transaction((tx) async {
+    await db.unsafeExecute(
+      'PRAGMA cache_size = -$cacheSizeKiB',
+      transaction: tx,
+    );
+    await db.unsafeExecute('PRAGMA temp_store = MEMORY', transaction: tx);
+    await db.unsafeExecute(
+      'PRAGMA wal_autocheckpoint = 20000',
+      transaction: tx,
+    );
+  });
 
   /// `sheets_<userId>.db`.
   static String fileNameFor(String userUuid) => 'sheets_$userUuid.db';

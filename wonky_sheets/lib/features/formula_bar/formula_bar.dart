@@ -10,6 +10,7 @@ import '../formatting/rich_text_editing.dart';
 import '../../l10n/sheets_l10n.dart';
 import '../../theme/sheets_tokens.dart';
 import '../ai/formula_bar_ai_buttons.dart';
+import '../charts/chart_sheet_rules.dart';
 import '../cell_editor/cell_editor_controller.dart';
 import '../grid/selection/grid_selection.dart';
 import '../named_ranges/named_range_menu.dart';
@@ -34,6 +35,31 @@ class FormulaBar extends StatelessWidget {
       builder: (context, _) {
         if (!c.showFormulaBar) return const SizedBox.shrink();
         final expanded = c.formulaBarExpanded;
+        // A chart sheet has no cells: the bar is shown disabled (08 §11).
+        if (ChartSheetRules.onChartSheet(c)) {
+          return Container(
+            key: const ValueKey<String>('sheets.formulaBar.disabled'),
+            height: 30,
+            decoration: BoxDecoration(
+              color: cs.background,
+              border: Border(
+                top: BorderSide(color: cs.border),
+                bottom: BorderSide(color: cs.border),
+              ),
+            ),
+            padding: const EdgeInsets.symmetric(horizontal: 8),
+            alignment: Alignment.centerLeft,
+            child: Text(
+              l.reasonChartSheet,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: theme.textTheme.small.copyWith(
+                color: cs.mutedForeground,
+                fontStyle: FontStyle.italic,
+              ),
+            ),
+          );
+        }
         return Container(
           key: const ValueKey<String>('sheets.formulaBar'),
           height: expanded ? 120 : 30,

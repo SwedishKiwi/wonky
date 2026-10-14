@@ -21,8 +21,18 @@ import 'model_workbook_view.dart';
 /// reference tokens; rule formulas evaluate through [engine] when given.
 final class EngineFormulaHooks implements FormulaHooks {
   /// Creates the hooks. [view] defaults to a [ModelWorkbookView] of [model].
-  EngineFormulaHooks(this.model, {this.engine, ModelWorkbookView? view})
-    : view = view ?? ModelWorkbookView(model);
+  EngineFormulaHooks(
+    this.model, {
+    this.engine,
+    ModelWorkbookView? view,
+    this.displayLanguage = false,
+  }) : view = view ?? ModelWorkbookView(model);
+
+  /// Whether [toA1] renders the spreadsheet's display language
+  /// (`Spreadsheet.displayLanguage`: localized function names and booleans).
+  /// The editor UI turns it on; agents and exports keep English. [toStored]
+  /// accepts localized names either way (English is always accepted).
+  final bool displayLanguage;
 
   /// The model.
   final WorkbookModel model;
@@ -35,14 +45,25 @@ final class EngineFormulaHooks implements FormulaHooks {
 
   static const FormulaLexer _stored = FormulaLexer();
 
-  CodecContext _ctx(String sheetId, int row, int col, String locale) =>
-      CodecContext(
-        workbook: view,
-        hostSheetId: sheetId,
-        hostRow: row,
-        hostCol: col,
-        locale: FormulaLocale.forId(locale),
-      );
+  /// Input ([toStored]) always accepts the display language's names (and
+  /// English); output ([toA1]) is localized only with [displayLanguage].
+  CodecContext _ctx(
+    String sheetId,
+    int row,
+    int col,
+    String locale, {
+    required bool localized,
+  }) => CodecContext(
+    workbook: view,
+    hostSheetId: sheetId,
+    hostRow: row,
+    hostCol: col,
+    locale: localized
+        ? FormulaLocale.forId(
+            locale,
+          ).withLanguage(model.spreadsheet.displayLanguage)
+        : FormulaLocale.forId(locale),
+  );
 
   static String _eq(String s) => s.startsWith('=') ? s : '=$s';
 
@@ -53,7 +74,12 @@ final class EngineFormulaHooks implements FormulaHooks {
     required int row,
     required int col,
     String locale = 'en_US',
-  }) => _eq(FormulaCodec.toStored(a1Formula, _ctx(sheetId, row, col, locale)));
+  }) => _eq(
+    FormulaCodec.toStored(
+      a1Formula,
+      _ctx(sheetId, row, col, locale, localized: true),
+    ),
+  );
 
   @override
   String toA1(
@@ -62,7 +88,12 @@ final class EngineFormulaHooks implements FormulaHooks {
     required int row,
     required int col,
     String locale = 'en_US',
-  }) => _eq(FormulaCodec.toA1(stored, _ctx(sheetId, row, col, locale)));
+  }) => _eq(
+    FormulaCodec.toA1(
+      stored,
+      _ctx(sheetId, row, col, locale, localized: displayLanguage),
+    ),
+  );
 
   @override
   String translate(

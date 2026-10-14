@@ -9,6 +9,7 @@ import 'package:wonky_write_core/wonky_write_core.dart'
 import '../../sheets/mcp/sheets_changes.dart';
 import '../../write/mcp/headless_editor.dart';
 import '../cluster/cluster.dart';
+import '../cluster/cluster_bus.dart';
 import '../common/actor.dart';
 import '../common/errors.dart';
 import '../common/models.dart';
@@ -36,6 +37,27 @@ class AssistantRun {
   final int threadId;
   final AiCancelToken cancel = AiCancelToken();
   final Map<String, Completer<bool>> confirmations = {};
+
+  /// `ui.*` calls waiting for the requesting window (by tool use id).
+  final Map<String, Completer<UiBridgeResponse>> uiCalls = {};
+
+  void failPending() {
+    for (final c in confirmations.values) {
+      if (!c.isCompleted) c.complete(false);
+    }
+    for (final e in uiCalls.entries) {
+      if (!e.value.isCompleted) {
+        e.value.complete(
+          UiBridgeResponse(
+            requestId: e.key,
+            ok: false,
+            errorCode: 'stopped',
+            errorMessage: 'The run stopped.',
+          ),
+        );
+      }
+    }
+  }
 }
 
 /// The assistant agent loop (suite 10 §2): builds the request (tools →
@@ -59,6 +81,13 @@ abstract final class AssistantService {
 
   /// How long a confirmation waits for the user.
   static Duration confirmationTimeout = const Duration(minutes: 10);
+
+  /// How long a `ui.*` call waits for the requesting window.
+  static Duration uiToolTimeout = const Duration(seconds: 30);
+
+  /// The bus channel of a run's `ui.*` results answered on another
+  /// instance (specs/13 §4).
+  static String uiChannel(String runId) => 'assistant:ui:$runId';
 
   /// Tool results are capped at this many characters.
   static const maxToolResultChars = 50000;
@@ -165,9 +194,7 @@ abstract final class AssistantService {
           .whenComplete(() {
             release();
             _runs.remove(run.runId);
-            for (final c in run.confirmations.values) {
-              if (!c.isCompleted) c.complete(false);
-            }
+            run.failPending();
             if (!out.isClosed) unawaited(out.close());
           }),
     );
@@ -230,9 +257,7 @@ abstract final class AssistantService {
       if (runId != null && r.runId != runId) continue;
       if (threadId != null && r.threadId != threadId) continue;
       r.cancel.cancel();
-      for (final c in r.confirmations.values) {
-        if (!c.isCompleted) c.complete(false);
-      }
+      r.failPending();
       stopped = true;
     }
     return stopped;
@@ -260,6 +285,27 @@ abstract final class AssistantService {
         allow: allow,
       ),
     );
+    return true;
+  }
+
+  /// The requesting window answers a `uiToolCall` (Sheets 12 §6.2). When
+  /// the run lives on another instance, the answer is relayed on the bus.
+  static Future<bool> uiToolResult(
+    Session session,
+    int userId,
+    String runId,
+    UiBridgeResponse response,
+  ) async {
+    final r = _runs[runId];
+    if (r != null) {
+      if (r.userId != userId) return false;
+      final c = r.uiCalls[response.requestId];
+      if (c == null || c.isCompleted) return false;
+      c.complete(response);
+      return true;
+    }
+    if (!Cluster.distributed) return false;
+    await ClusterBus.post(session, uiChannel(runId), response);
     return true;
   }
 
@@ -487,7 +533,9 @@ class _Loop {
       return;
     }
     final applyMode = target.applyMode(hints.applyMode);
-    final toolset = target.toolset(executor);
+    final ui = target.uiTools(hints);
+    _uiTools = {for (final d in ui) d.name};
+    final toolset = target.toolset(executor).plus(ui);
     final runner = AssistantToolRunner(
       executor: executor,
       toolset: toolset,
@@ -678,10 +726,86 @@ class _Loop {
       emit: emit,
     );
     emit(done);
+    if (_uiListening) {
+      session.messages.removeListener(
+        AssistantService.uiChannel(ar.runId),
+        _onUiReply,
+      );
+    }
   }
 
   /// `change_id`s of the run's successful tool calls, in order.
   final List<String> _changeIds = [];
+
+  /// `ui.*` tools relayed to the requesting window.
+  Set<String> _uiTools = const {};
+  bool _uiListening = false;
+
+  void _onUiReply(SerializableModel m) {
+    if (m is! UiBridgeResponse) return;
+    final c = ar.uiCalls[m.requestId];
+    if (c != null && !c.isCompleted) c.complete(m);
+  }
+
+  /// Runs [tool] in the requesting window: a `uiToolCall` event, answered
+  /// through `assistant.uiToolResult` (Sheets 12 §6.2).
+  Future<ToolOutcome> _uiCall(
+    String id,
+    String tool,
+    Map<String, Object?> input,
+  ) async {
+    if (Cluster.distributed && !_uiListening) {
+      _uiListening = true;
+      session.messages.addListener(
+        AssistantService.uiChannel(ar.runId),
+        _onUiReply,
+      );
+    }
+    final completer = Completer<UiBridgeResponse>();
+    ar.uiCalls[id] = completer;
+    emit(
+      _ev(AssistantEventType.uiToolCall)
+        ..toolUseId = id
+        ..toolName = tool
+        ..argsJson = jsonEncode(input),
+    );
+    UiBridgeResponse response;
+    try {
+      response = await completer.future.timeout(AssistantService.uiToolTimeout);
+    } on TimeoutException {
+      return ToolOutcome.failure(
+        McpToolException(
+          McpErrorCode.timeout,
+          'The window did not answer $tool in time.',
+        ),
+      );
+    } finally {
+      ar.uiCalls.remove(id);
+    }
+    if (!response.ok) {
+      return ToolOutcome.failure(
+        McpToolException(
+          response.errorCode ?? McpErrorCode.internal,
+          response.errorMessage ?? '$tool failed in the window.',
+        ),
+      );
+    }
+    Object? result;
+    final raw = response.resultJson;
+    if (raw != null) {
+      try {
+        result = jsonDecode(raw);
+      } on FormatException {
+        result = raw;
+      }
+    }
+    return ToolOutcome.success(
+      ToolResult(
+        result is Map ? result.cast<String, Object?>() : {'result': result},
+        text: response.text,
+      ),
+    );
+  }
 
   Future<void> _loadHistory() async {
     final rows = await AssistantMessage.db.find(
@@ -844,12 +968,14 @@ class _Loop {
     }
 
     final input = Map<String, Object?>.of(call.arguments ?? const {});
-    var outcome = await runner.run(
-      _toolContext(),
-      apiName,
-      input,
-      applyMode: applyMode,
-    );
+    var outcome = _uiTools.contains(mcpName)
+        ? await _uiCall(id, mcpName, input)
+        : await runner.run(
+            _toolContext(),
+            apiName,
+            input,
+            applyMode: applyMode,
+          );
     if (outcome.error?.code == 'needs_confirmation') {
       final details = outcome.error!.details;
       final summary = details is Map

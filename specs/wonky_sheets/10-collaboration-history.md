@@ -44,6 +44,11 @@ The suite defines `PresenceCursor` as app-specific JSON. Sheets uses:
   ignored until they arrive. A range with an unknown bound is drawn up to the known bounds.
 - `actorKind: mcp|ai` participants (suite §1.1) send cursors injected by the server: after a
   headless write, the server sets the agent participant's `ranges` to the written ranges for 5 s.
+  Implementation: `AgentCursors` (`wonky_server/lib/src/sheets/changelog/agent_cursors.dart`)
+  runs in the change-log consumer for `mcp`/`ai` rows: one participant per spreadsheet, user and
+  actor kind (`PresenceService.injectAgent` with a reused session id and the cursor JSON built
+  from `summaryJson.ranges`), removed 5 s after its last write. The client labels it "Claude via
+  MCP (Anna)" / "Assistant (Anna)".
 
 ### 1.2 Rendering remote cursors on the grid
 
@@ -56,10 +61,13 @@ active-cell border; see [03-grid-and-editing.md](03-grid-and-editing.md)) using 
 | Remote active cell | 2 px border in the participant's presence color (`presence1…12`), inset 0.5 px so adjacent cursors don't overlap the gridline. |
 | Remote ranges | 1 px border in presence color + fill at 10 % alpha (light) / 16 % (dark). |
 | Name flag | Pill above the active cell's top-left corner (below when at the top edge of the viewport): presence color background, contrasting text (white/black chosen by luminance), 11 px Geist, `displayName` (or "Claude via MCP (Anna)"). Visible for 3 s after the cursor moves, while hovered, and while `editing`. |
-| Editing indicator | When `editing: true`: the border animates (dashed, 1 s march; static dashed with *Reduce motion*) and the flag shows a ✎ icon and "typing…". |
+| Editing indicator | When `editing: true`: the border animates (dashed, 1 s march; static dashed with *Reduce motion* — the OS setting or Settings › Sheets *Reduce animations*) and the flag shows a ✎ icon and "typing…". With a `typing` hint (P2, §2.1) the collaborator's text is drawn over the cell (italic, at most 240 px wide). |
 | Same-cell overlap | Several remote cursors on one cell: stacked flags (max 3, then "+N"). |
 | Agent (MCP/AI) | Same, with a ✨/🤖 glyph in the flag and a dotted border. |
 | Object selection | Outline around the object in presence color (§[08](08-charts-and-objects.md) §9.2). |
+
+Hovering a remote cursor's cell shows its flag too (`SheetsPresenceController.setHover`, from
+the collaboration overlay's hover tracking).
 
 Remote cursors in frozen panes are clipped like local selections. Cursors on hidden rows or
 columns collapse onto the boundary line. Cursors are not drawn for participants in `away`
@@ -177,8 +185,12 @@ commenters don't need write access to the space.
   anchored in the cut source and calls `comment.updateAnchor` for each, mapping offsets to the
   destination (comments move with cut cells, Google behavior). These calls are part of the paste's
   undo step through the `comments` undo domain. Copy & paste never copies comments.
+  Implementation: `CommentAnchorMoves` listens to `SheetEditorController.applyListeners`
+  (called after every applied operation inside the command's transaction) for
+  `PasteClipboard` of a cut with `PasteMode.all`, and records `CommentUndoEntry(op: updateAnchor)`
+  (`previousAnchorJson` ⇄ `anchorJson`). Range anchors move only when the whole range was cut.
 - Range sorts that move **contents** between rows (partial-range sorts, see
-  [07-data-tools.md](07-data-tools.md)) update anchors the same way.
+  [07-data-tools.md](07-data-tools.md)) update anchors the same way (not built yet).
 - **Orphaning**: when the anchor's row, column or sheet is deleted, the thread becomes
   `orphaned`. Detection is **server-side** in the change-log consumer: `ChangeLog.summaryJson`
   lists deleted row/column/sheet ids (Additions A-10-1). For each, the server marks threads
@@ -206,7 +218,10 @@ commenters don't need write access to the space.
 ### 3.4 Creating and working with comments
 - `Mod+Alt+M`, cell context menu *Comment*, *Insert › Comment*, toolbar comment button →
   `shell.comments.create` with the Sheets anchor of the current selection → composer card
-  next to the cell (suite composer with `@` mentions and *Assign to*).
+  next to the cell (suite composer with `@` mentions and *Assign to*). The anchor provider's
+  `CommentPanelOptions.composesInline` keeps the panel closed; the collaboration overlay docks the suite
+  `NewCommentCard` next to the anchor (Esc cancels). With the comments panel open, the composer
+  stays in the panel.
 - Thread cards (suite widget) support reply, edit, delete, reactions, resolve, link to comment
   (`/s/<uuid>?comment=<threadUuid>` → activates sheet, scrolls, opens card).
 - Keyboard: `Mod+Alt+Shift+A` opens the comments panel; inside the grid, `Mod+Alt+N`/`Mod+Alt+P`
@@ -218,6 +233,10 @@ Suite panel (filters **Open** / **For you**, no search; suite 07 §2.3) + a scop
 sheet / All sheets** (default All), grouped by sheet with sheet headers (in tab order), each
 thread showing the cell reference ("Sheet1!B4" computed live from ids) and quoted text. Sort
 *By position* (sheet order, row, col) or *By date*. Additional filter *Orphaned* (P2).
+Implementation: the suite panel shows an app scope filter from `CommentPanelOptions.scopes`
+/ `inScope` (tabs under Open / For you) and group headers from `groupOf` in the position sort;
+Sheets groups by sheet name, unresolvable anchors under "Orphaned". *This sheet* follows the
+active sheet; `sheets.comments.openPanel {scope}` sets it.
 
 ### 3.6 Mentions, assignments, notifications
 Suite §3–4 unchanged. Notification payloads for Sheets include `{sheetName, a1, quotedText}`;
@@ -229,6 +248,12 @@ Comment endpoints are online. Offline, creating/replying/resolving queues the op
 local `PendingCommentOp` table (Additions A-10-4) and shows the card with "Pending — will be
 posted when you're online". Thread/comment UUIDs are client-generated (UUIDv7) and the endpoint
 is idempotent on them. Edits to others' threads while offline are not allowed.
+Implementation: generic in the suite `CommentsController` (`queueOffline`, set by Sheets):
+create, reply, resolve/reopen and anchor moves are queued while offline (or when the call fails
+for lack of a connection) as `PendingCommentOp`s in the user's `LocalStore`
+(`comments.pending.<itemUuid>`), shown optimistically (local comments have negative ids; the
+card shows "Pending — will be posted when you're online") and posted in order when the
+connection is back. Undoing an offline create drops its queued operations.
 
 ---
 
@@ -298,6 +323,9 @@ snapshot.wsv (gzip)
   row/col counts, cell count, kind) and `changedRangesJson` (union of `ChangeLog.summaryJson`
   ranges consumed since the previous version, per sheet, capped at 1,000 ranges then marked
   `"approx": true`). It also stores the author ids.
+  Format: `{"v":1,"approx":false,"ranges":[{"s","r1","c1","r2","c2","u":<user id>}]}`, oldest
+  first; the window is the `ChangeLog` rows whose `SheetsChangeLogReceipt.processedAt` lies
+  between the previous version's capture and this one (`SheetsVersionChanges`).
 - Capture runs in a background isolate on the server, streaming rows (bounded memory). It
   takes < 10 s for 1M cells. Thinning (suite policy) deletes snapshot files of thinned
   versions.
@@ -328,14 +356,22 @@ Route `/s/:uuid/history?version=<itemVersionId>` (suite §5 UI). Sheets-specific
    column/sheet id sets. Strategy:
    - Snapshots with ≤ 500k cells each: client computes the diff (both snapshots are
      downloaded; hash maps by id; < 1 s).
-   - Larger: `VersionEndpoint.diff(itemUuid, versionId, previousVersionId)` computes it
-     server-side once and caches the result as a `StoredFile` (`<versionId>.diff.gz`); the client
-     downloads the compact diff (`[{sheetId,rowId,colId,kind,authorId?}]`).
+   - Larger: `SheetsVersionEndpoint.diff(itemUuid, versionId, previousVersionId)` computes it
+     server-side once and caches the result as a `StoredFile` (`<versionId>.diff.gz`,
+     `SheetsSnapshotIndex.diffFileId`); the client downloads the gzip JSON
+     `{diff: SnapshotDiff JSON, a: [author user id per changed cell, 0 = unknown]}` instead of
+     the previous snapshot.
 5. **Author attribution**: for each changed cell, the author is taken from the `ChangeLog`
    rows (and `CellHistory` for pruned ones) between the two capture times whose `detailJson` or
    ranges include the cell (latest wins). The server returns this as part of the diff (`authorId`).
    Cells changed by bulk operations without details are attributed from `summaryJson.ranges`.
    Agent edits show the agent attribution ("Claude via MCP (Anna)").
+   Implementation: attribution uses the version's changed ranges (latest range containing the
+   cell wins; `SheetsVersionEndpoint.changes` for the client-side diff, the same ranges inside
+   the server diff). Changed cells are drawn in their author's presence color; unattributed
+   cells use the single author's color or the neutral color. The bar shows the authors' colors
+   (legend); `sheets.history.toggleShowChanges` toggles *Show changes*
+   (`VersionHistoryScreen.showChanges`). Charts and images render through `SheetObjectsHost`.
 
 Right panel: suite version list; each Sheets version also shows a size and sheet count tooltip.
 
@@ -385,10 +421,17 @@ orphaning) and up to 200 cell details (cell history), and the server broadcasts 
   new UUIDv7 for all entities; cell ids recomputed with `SheetsIds.cellId`; stored formula
   reference tokens remapped; `GridRange` JSON in rules, objects, pivots, named ranges and comments
   anchors remapped; script files copied (triggers not copied); `ChangeLog` not copied. Options:
-  *Copy comments* (threads with remapped anchors), *Share with the same people*. The same
+  *Copy comments* (threads with remapped anchors), *Share with the same people*. From a version
+  the copy is written on the client; the options are applied by
+  `SheetsVersionEndpoint.copyExtras(source, target, anchorIdMapJson, copyComments, copySharing)`
+  with the sheet/row/column id map of the copy (online only; a toast reports failures). The
+  same
   `SpaceCopier` implements *Copy sheet to another spreadsheet* (single-sheet subset).
 - **Download as…** from a version: XLSX/ODS/CSV/PDF exporters run on the in-memory model of
   the version (client) or server-side for large versions (`drive.export` with `versionId`).
+  Implementation: `sheets.history.download {format}` (XLSX, ODS, CSV, TSV, HTML) runs the
+  client exporters on the version's model; PDF (print route) and server-side exports of
+  versions are not offered yet.
 
 ---
 
@@ -486,6 +529,17 @@ changes are excluded. Users lose rules when they lose access.
   current value, author, with *Apply mine again* per row (writes via `SheetsWriter`, undoable)
   and *Dismiss all*. Cells in deleted rows/sheets appear as "Row deleted by Anna" (no apply).
   Conflicts expire after 7 days.
+  Implementation (`features/history/local_conflicts.dart`, `SheetsConflicts`): cells written
+  while offline are tracked from the applied plans' model batches (`sheets.offlineEdits.<item>`
+  in the user's `LocalStore`; a later online edit of ours drops the entry); after reconnecting,
+  once a sync cycle merged our pending writes, the tracked cells are compared with the model and
+  the winner is looked up in the local `ChangeLog` (details, else ranges; deletions from
+  `summaryJson.deleted`). Conflicts are kept in `sheets.conflicts.<item>`. The review dialog
+  (`WonkyDialogSpec`) has one checkbox per overwritten cell (deleted cells listed in the
+  description); *Apply mine again* runs `sheets.conflicts.applyMine` (one undo step of
+  `RestoreCellValue`s). *Your sort was replaced*: offline sorts record the rows' sortKeys; when
+  most of them changed, the newest `ChangeLog` of another user on that sheet labeled "Sort…"
+  names the winner.
 - **Rejected protected-range edits** (advisory protection): if a merge brings an edit into a
   range the editing user wasn't allowed to change (possible with modified or stale clients),
   nothing is rejected (U9 not available). The range's owner sees a warning badge in the
@@ -546,6 +600,7 @@ Each row of this table is a test case in the multi-client sync harness
 | `sheets.history.restoreVersion` | `{versionId}` | ✓ (`sheets.serverChange`) | Editor |
 | `sheets.history.makeCopy` | `{versionId?, name, folderUuid?, copyComments, copySharing}` | — (Drive) | Viewer+ (if copying allowed) |
 | `sheets.history.toggleShowChanges` | — | — | |
+| `sheets.history.download` | `{format}` | — | Editor+ (history route) |
 | `sheets.history.nextChange` / `previousChange` | — | — | |
 | `sheets.history.showCellHistory` | `{cell?: A1}` | — | Editor |
 | `sheets.history.restoreCellValue` | `{sheetId,rowId,colId,changeLogId}` | ✓ | Editor |
@@ -588,7 +643,7 @@ Each row of this table is a test case in the multi-client sync harness
 | A-10-1 | `ChangeLog.summaryJson` gains `deleted: {rows: [ids], cols: [ids], sheets: [ids]}` and `revived: {…}` (capped at 1,000 ids each; beyond that `structureOverflow: true` makes the server rescan anchors of affected sheets). |
 | A-10-2 | `CommentThread` (suite table) gains `orphanReasonJson: String?` and `statusBeforeOrphan: CommentStatus?` (applied in suite 07 §2.1). |
 | A-10-3 | Server tables `ItemVersionState` (shared by both apps: `itemId, lastEditAt, dirtySince, lastVersionAt, editorsSinceLastVersion: List<int>, lastRevision`; replaces the proposed `SheetsVersionState`) and `SheetsSnapshotIndex(itemVersionId, sheetsJson, changedRangesJson, authorIds: List<int>, diffFileId?)`. |
-| A-10-4 | Local-only tables `PendingCommentOp(opId, threadUuid, kind, payloadJson, createdAt)` and `LocalConflict(id, spreadsheetId, sheetId, rowId, colId, column, myValue, theirValue, theirUserId, changeLogId, detectedAt, dismissed)`. |
+| A-10-4 | Local-only records `PendingCommentOp(opId, threadUuid, kind, payloadJson, createdAt)` and `LocalConflict(id, spreadsheetId, sheetId, rowId, colId, column, myValue, theirValue, theirUserId, changeLogId, detectedAt, dismissed)` — kept as JSON in the user's `LocalStore` (not replica tables). |
 | A-10-5 | New undo domain `sheets.serverChange` (entry = `{changeId}`); undo → `SheetsEndpoint.revertChange`, redo → `reapplyChange`. Shared with MCP-originated changes surfaced in the UI. |
 | A-10-6 | `PresenceUpdate.hints` / `PresenceEvent.Hints` and `FollowerCount` event (suite 07 protocol extension). |
 

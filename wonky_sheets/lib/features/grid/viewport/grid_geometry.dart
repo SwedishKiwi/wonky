@@ -30,15 +30,38 @@ class GridPane {
     if (rect.isEmpty || rows.length == 0 || cols.length == 0) {
       rowStart = 0;
       rowEnd = -1;
+      displayRowStart = 0;
+      displayRowEnd = -1;
       colStart = 0;
       colEnd = -1;
       return;
     }
-    rowStart = math.max(firstRow, rows.indexAtOffset(baseY + scrollY / g.zoom));
-    rowEnd = math.min(
-      lastRowLimit,
-      rows.indexAtOffset(baseY + (scrollY + rect.height) / g.zoom),
+    displayRowStart = math.max(
+      firstRow,
+      g.displayAtOffset(baseY + scrollY / g.zoom),
     );
+    displayRowEnd = math.min(
+      lastRowLimit,
+      g.displayAtOffset(baseY + (scrollY + rect.height) / g.zoom),
+    );
+    final order = g.rowOrder;
+    if (order == null ||
+        displayRowEnd < order.top ||
+        displayRowStart > order.bottom) {
+      rowStart = displayRowStart;
+      rowEnd = displayRowEnd;
+    } else {
+      // The model rows shown span a wider model window in a sorted block.
+      var lo = displayRowStart;
+      var hi = displayRowEnd;
+      for (var d = displayRowStart; d <= displayRowEnd; d++) {
+        final m = order.modelRow(d);
+        if (m < lo) lo = m;
+        if (m > hi) hi = m;
+      }
+      rowStart = lo;
+      rowEnd = hi;
+    }
     colStart = math.max(firstCol, cols.indexAtOffset(baseX + scrollX / g.zoom));
     colEnd = math.min(
       lastColLimit,
@@ -63,11 +86,45 @@ class GridPane {
   final double scrollX;
   final double scrollY;
 
-  /// Visible index window (inclusive; empty when end < start).
+  /// Visible index window (inclusive; empty when end < start). With a row
+  /// display order ([GridGeometry.rowOrder], a sorted filter view) the
+  /// model rows shown may lie anywhere in the sorted block: [rowStart] /
+  /// [rowEnd] then bound them (a superset); iterate [rows] for exactly the
+  /// shown rows.
   late final int rowStart;
   late final int rowEnd;
   late final int colStart;
   late final int colEnd;
+
+  /// Visible display rows (inclusive).
+  late final int displayRowStart;
+  late final int displayRowEnd;
+
+  /// The model rows shown, top to bottom (display order).
+  Iterable<int> get rows {
+    final order = geometry.rowOrder;
+    if (displayRowEnd < displayRowStart) return const [];
+    return order == null
+        ? _IntRange(displayRowStart, displayRowEnd)
+        : [
+            for (var d = displayRowStart; d <= displayRowEnd; d++)
+              order.modelRow(d),
+          ];
+  }
+
+  /// The topmost model row shown.
+  int get firstShownRow =>
+      geometry.rowOrder?.modelRow(displayRowStart) ?? displayRowStart;
+
+  /// Whether model row [row] is shown in this pane.
+  bool isRowShown(int row) {
+    final d = geometry.displayRow(row);
+    return d >= displayRowStart && d <= displayRowEnd;
+  }
+
+  /// Whether model row [row] is inside a sorted display block (its
+  /// neighbours on screen are not its model neighbours).
+  bool isPermuted(int row) => geometry.rowOrder?.contains(row) ?? false;
 
   double _baseX = 0;
   double _baseY = 0;
@@ -85,26 +142,49 @@ class GridPane {
         scrollX,
   );
 
-  /// Top edge of row [row] (snapped).
-  double y(int row) => geometry.snap(
-    rect.top +
-        (geometry.sheet.rows.offsetOf(row) - _baseY) * geometry.zoom -
-        scrollY,
+  /// Top edge of display row [d] (snapped).
+  double yDisplay(int d) => geometry.snap(
+    rect.top + (geometry.displayOffset(d) - _baseY) * geometry.zoom - scrollY,
   );
 
-  /// Screen rectangle of one cell.
-  Rect cellRect(int row, int col) =>
-      Rect.fromLTRB(x(col), y(row), x(col + 1), y(row + 1));
+  /// Top edge of (model) row [row] (snapped).
+  double y(int row) => yDisplay(geometry.displayRow(row));
 
-  /// Screen rectangle of [r] (may extend beyond the pane).
-  Rect rangeRect(GridRect r) =>
-      Rect.fromLTRB(x(r.left), y(r.top), x(r.right + 1), y(r.bottom + 1));
+  /// Bottom edge of (model) row [row] (snapped).
+  double bottomOf(int row) => yDisplay(geometry.displayRow(row) + 1);
+
+  /// Screen rectangle of one cell.
+  Rect cellRect(int row, int col) {
+    final d = geometry.displayRow(row);
+    return Rect.fromLTRB(x(col), yDisplay(d), x(col + 1), yDisplay(d + 1));
+  }
+
+  /// Screen rectangle of [r] (may extend beyond the pane). Inside a sorted
+  /// display block a model range shows scattered: this is its bounding
+  /// rectangle on screen.
+  Rect rangeRect(GridRect r) {
+    final (top, bottom) = geometry.displaySpan(r.top, r.bottom);
+    return Rect.fromLTRB(
+      x(r.left),
+      yDisplay(top),
+      x(r.right + 1),
+      yDisplay(bottom + 1),
+    );
+  }
+
+  /// Screen rectangle of display rows/columns [d] (rows in display order).
+  Rect displayRangeRect(GridRect d) => Rect.fromLTRB(
+    x(d.left),
+    yDisplay(d.top),
+    x(d.right + 1),
+    yDisplay(d.bottom + 1),
+  );
 
   /// The cell under a screen point inside this pane.
   (int, int) cellAt(Offset p) {
     final g = geometry;
-    final row = g.sheet.rows.indexAtOffset(
-      _baseY + (p.dy - rect.top + scrollY) / g.zoom,
+    final row = g.modelRow(
+      g.displayAtOffset(_baseY + (p.dy - rect.top + scrollY) / g.zoom),
     );
     final col = g.sheet.columns.indexAtOffset(
       _baseX + (p.dx - rect.left + scrollX) / g.zoom,
@@ -126,8 +206,18 @@ class GridGeometry {
     this.showHeaders = true,
     this.rowGutter = 0,
     this.colGutter = 0,
+    ViewRowOrder? rowOrder,
   }) {
     final rows = sheet.rows;
+    // A display order applies only below the frozen rows and while it fits
+    // the sheet (07 §4.4).
+    final frozen = sheet.record?.frozenRows ?? 0;
+    this.rowOrder =
+        rowOrder != null &&
+            rowOrder.top >= frozen &&
+            rowOrder.bottom < rows.length
+        ? rowOrder
+        : null;
     final cols = sheet.columns;
     final rec = sheet.record;
     frozenRows = math.min(rec?.frozenRows ?? 0, math.max(0, rows.length - 1));
@@ -206,6 +296,41 @@ class GridGeometry {
   }
 
   final SheetModel sheet;
+
+  /// The row display order of a sorted filter view (07 §4.4), or null.
+  late final ViewRowOrder? rowOrder;
+
+  /// The display row of model row [row].
+  int displayRow(int row) => rowOrder?.displayRow(row) ?? row;
+
+  /// The model row shown at display row [d].
+  int modelRow(int d) => rowOrder?.modelRow(d) ?? d;
+
+  /// Unzoomed offset of display row [d].
+  double displayOffset(int d) =>
+      rowOrder?.displayOffset(sheet.rows, d) ?? sheet.rows.offsetOf(d);
+
+  /// The display row at unzoomed offset [px].
+  int displayAtOffset(double px) =>
+      rowOrder?.displayAtOffset(sheet.rows, px) ?? sheet.rows.indexAtOffset(px);
+
+  /// The display rows `(first, last)` covering model rows [top]..[bottom].
+  (int, int) displaySpan(int top, int bottom) {
+    final o = rowOrder;
+    if (o == null || bottom < o.top || top > o.bottom) return (top, bottom);
+    if (top <= o.top && bottom >= o.bottom) return (top, bottom);
+    var lo = top < o.top ? top : o.displayRow(top);
+    var hi = bottom > o.bottom ? bottom : o.displayRow(bottom);
+    final a = math.max(top, o.top);
+    final b = math.min(bottom, o.bottom);
+    for (var m = a; m <= b; m++) {
+      final d = o.displayRow(m);
+      if (d < lo) lo = d;
+      if (d > hi) hi = d;
+    }
+    return (lo, hi);
+  }
+
   final Size size;
   final double zoom;
   final double scrollX;
@@ -293,9 +418,11 @@ class GridGeometry {
     if (frozenRows > 0 && yy < colHeaderHeight + frozenHeight) {
       return sheet.rows.indexAtOffset((yy - colHeaderHeight) / zoom);
     }
-    return sheet.rows.indexAtOffset(
-      sheet.rows.offsetOf(frozenRows) +
-          (yy - colHeaderHeight - frozenHeight + scrollY) / zoom,
+    return modelRow(
+      displayAtOffset(
+        sheet.rows.offsetOf(frozenRows) +
+            (yy - colHeaderHeight - frozenHeight + scrollY) / zoom,
+      ),
     );
   }
 
@@ -351,7 +478,8 @@ class GridGeometry {
       }
     }
     if (row >= frozenRows) {
-      final top = (rows.offsetOf(row) - rows.offsetOf(frozenRows)) * zoom;
+      final top =
+          (displayOffset(displayRow(row)) - rows.offsetOf(frozenRows)) * zoom;
       final bottom = top + rows.sizeAt(row) * zoom;
       final h = main.rect.height;
       if (top - margin < y) {
@@ -362,5 +490,39 @@ class GridGeometry {
     }
     if (x == scrollX && y == scrollY) return null;
     return (x: x, y: y);
+  }
+}
+
+/// `first..last` (inclusive) without a generator.
+final class _IntRange extends Iterable<int> {
+  const _IntRange(this.first, this.last);
+
+  @override
+  final int first;
+  @override
+  final int last;
+
+  @override
+  int get length => last - first + 1;
+
+  @override
+  Iterator<int> get iterator => _IntRangeIterator(first, last);
+}
+
+final class _IntRangeIterator implements Iterator<int> {
+  _IntRangeIterator(int first, this._last) : _next = first;
+
+  final int _last;
+  int _next;
+  int _current = 0;
+
+  @override
+  int get current => _current;
+
+  @override
+  bool moveNext() {
+    if (_next > _last) return false;
+    _current = _next++;
+    return true;
   }
 }

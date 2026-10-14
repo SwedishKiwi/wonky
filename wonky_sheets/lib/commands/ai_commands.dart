@@ -182,6 +182,35 @@ List<Command<CommandArgs>> aiCommands(ShellServices s) => [
     },
   ),
   SheetsAiCommand(
+    'sheets.ai.cleanupSuggestions',
+    label: (l) => l.cmdAiCleanupSuggestions,
+    icon: LucideIcons.sparkles,
+    argsSchema: const JsonSchema.object(
+      properties: {'range': JsonSchema.string()},
+    ),
+    run: (ctx, ed, a) async {
+      final prompt = await SheetsAiController.of(
+        ed,
+      ).cleanupWithAi(range: a.string('range'));
+      return prompt == null
+          ? const CommandResult.cancelled()
+          : ok({'prompt': prompt});
+    },
+  ),
+  SheetsAiCommand(
+    'sheets.ai.refreshAiCells',
+    label: (l) => l.cmdAiRefreshAiCells,
+    icon: LucideIcons.refreshCw,
+    minRole: Role.editor,
+    argsSchema: const JsonSchema.object(
+      properties: {'ranges': JsonSchema.array(JsonSchema.string())},
+    ),
+    run: (ctx, ed, a) async {
+      SheetsAiController.of(ed).refreshAiCells();
+      return ok();
+    },
+  ),
+  SheetsAiCommand(
     'sheets.ai.describeChart',
     label: (l) => l.cmdAiDescribeChart,
     showInPalette: false,

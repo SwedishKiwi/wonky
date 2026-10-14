@@ -75,11 +75,18 @@ class ViewStateBinding {
     if (sheetId == null || sheetId == editor.activeSheetId) {
       editor.scroll.jumpTo(s.scrollX, s.scrollY);
     }
+    // The side panel (precedence, 02 §4 `LocalViewState`): a panel this
+    // spreadsheet opens while it starts (a `?comment=` deep link, a pivot
+    // or chart editor, …) wins over the saved one; the saved one wins over
+    // a panel still open from the previous document (the shell's panel host
+    // is shared). A saved "no panel" leaves a carried-over panel open.
     final panel = s.panelId;
     final panels = editor.services.panels;
-    if (panel != null && panels.activePanelId == null) {
+    if (panel != null && panels.activePanelId != panel) {
+      final carried = panels.activePanelId;
       WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (!_disposed && panels.activePanelId == null) panels.open(panel);
+        if (_disposed || panels.activePanelId != carried) return;
+        panels.open(panel);
       });
     }
     if (s.temporaryViews.isNotEmpty) {

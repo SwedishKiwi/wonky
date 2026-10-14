@@ -27,8 +27,6 @@ class _PrintSettingsPanelState extends State<PrintSettingsPanel> {
   final _breakRow = TextEditingController();
   final _breakCol = TextEditingController();
   String? _breakError;
-  List<String>? _draftRows;
-  List<String>? _draftCols;
 
   PrintController get c => widget.controller;
 
@@ -308,6 +306,13 @@ class _PrintSettingsPanelState extends State<PrintSettingsPanel> {
                 ),
               ],
             ),
+            const SizedBox(height: 12),
+            ShadCheckbox(
+              key: const ValueKey<String>('print.darkTheme'),
+              value: c.darkTheme,
+              onChanged: (v) => c.darkTheme = v,
+              label: Text(l.printDarkTheme),
+            ),
             const SizedBox(height: 16),
             Wrap(
               spacing: 8,
@@ -320,11 +325,7 @@ class _PrintSettingsPanelState extends State<PrintSettingsPanel> {
                       LucideIcons.separatorHorizontal,
                       size: 16,
                     ),
-                    onPressed: () {
-                      _draftRows = List.of(st.rowBreaks);
-                      _draftCols = List.of(st.colBreaks);
-                      c.breakMode = true;
-                    },
+                    onPressed: () => c.breakMode = true,
                     child: Flexible(
                       child: Text(
                         l.printSetBreaks,
@@ -542,10 +543,8 @@ class _PrintSettingsPanelState extends State<PrintSettingsPanel> {
     final theme = ShadTheme.of(context);
     final sheet = c.model.sheet(c.sheetId);
     if (sheet == null) return const [];
-    final rows = _draftRows ?? List.of(c.settings.rowBreaks);
-    final cols = _draftCols ?? List.of(c.settings.colBreaks);
-    _draftRows = rows;
-    _draftCols = cols;
+    final rows = c.draftRowBreaks;
+    final cols = c.draftColBreaks;
     String rowLabel(String id) {
       final i = sheet.rows.indexOf(id);
       return i < 0 ? '—' : '${i + 1}';
@@ -571,7 +570,14 @@ class _PrintSettingsPanelState extends State<PrintSettingsPanel> {
                       Text(text(id)),
                       const SizedBox(width: 4),
                       GestureDetector(
-                        onTap: () => setState(() => ids.remove(id)),
+                        onTap: () => c.setDraftBreaks(
+                          rows: identical(ids, rows)
+                              ? (rows..remove(id))
+                              : null,
+                          cols: identical(ids, cols)
+                              ? (cols..remove(id))
+                              : null,
+                        ),
                         child: Semantics(
                           button: true,
                           label: l.printRemoveBreak,
@@ -593,12 +599,9 @@ class _PrintSettingsPanelState extends State<PrintSettingsPanel> {
       final id = sheet.rows.idAt(n - 1);
       setState(() {
         _breakError = null;
-        if (!rows.contains(id)) rows.add(id);
-        rows.sort(
-          (a, b) => sheet.rows.indexOf(a).compareTo(sheet.rows.indexOf(b)),
-        );
         _breakRow.clear();
       });
+      c.setDraftBreaks(rows: [...rows, id]);
     }
 
     void addCol() {
@@ -613,13 +616,9 @@ class _PrintSettingsPanelState extends State<PrintSettingsPanel> {
       final id = sheet.columns.idAt(i);
       setState(() {
         _breakError = null;
-        if (!cols.contains(id)) cols.add(id);
-        cols.sort(
-          (a, b) =>
-              sheet.columns.indexOf(a).compareTo(sheet.columns.indexOf(b)),
-        );
         _breakCol.clear();
       });
+      c.setDraftBreaks(cols: [...cols, id]);
     }
 
     Widget adder(
@@ -676,33 +675,17 @@ class _PrintSettingsPanelState extends State<PrintSettingsPanel> {
         children: [
           ShadButton(
             key: const ValueKey<String>('print.confirmBreaks'),
-            onPressed: () async {
-              await c.ed.invokeCommand('sheets.print.setPageBreaks', {
-                'sheetId': c.sheetId,
-                'rows': rows,
-                'cols': cols,
-              });
-              _draftRows = null;
-              _draftCols = null;
-              c.breakMode = false;
-            },
+            onPressed: c.confirmBreaks,
             child: Text(l.printConfirmBreaks),
           ),
           ShadButton.outline(
             key: const ValueKey<String>('print.resetBreaks'),
-            onPressed: () => setState(() {
-              rows.clear();
-              cols.clear();
-            }),
+            onPressed: () => c.setDraftBreaks(rows: const [], cols: const []),
             child: Text(l.printResetBreaks),
           ),
           ShadButton.ghost(
             key: const ValueKey<String>('print.cancelBreaks'),
-            onPressed: () {
-              _draftRows = null;
-              _draftCols = null;
-              c.breakMode = false;
-            },
+            onPressed: () => c.breakMode = false,
             child: Text(l.printCancelBreaks),
           ),
         ],

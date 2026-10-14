@@ -281,10 +281,10 @@ abstract final class DriveTools {
     title: 'Export an item',
     description:
         'Exports a document (md, txt, html, pdf, docx, odt, rtf, epub) or '
-        'spreadsheet (xlsx, ods, csv, tsv, html (zipped), pdf; csv/tsv/pdf '
-        'take an optional sheet name and A1 range). Text formats (md, txt, '
-        'csv, tsv) are returned inline; others as a signed download_url '
-        'valid for 15 min.',
+        'spreadsheet (xlsx, ods, csv, tsv, json, html (zipped), pdf; '
+        'csv/tsv/pdf take an optional sheet name and A1 range; pdf takes '
+        'dark_theme). Text formats (md, txt, csv, tsv, json) are returned '
+        'inline; others as a signed download_url valid for 15 min.',
     inputSchema: ObjectSchema(
       properties: {
         'uuid': McpSchemas.uuid,
@@ -302,14 +302,19 @@ abstract final class DriveTools {
             'ods',
             'csv',
             'tsv',
+            'json',
           ],
         ),
         'sheet': JsonSchema.string(
-          description: 'Spreadsheets: sheet name (csv/tsv/pdf; default the '
+          description:
+              'Spreadsheets: sheet name (csv/tsv/pdf; default the '
               'first visible sheet).',
         ),
         'range': JsonSchema.string(
           description: 'Spreadsheets: A1 range on the sheet (csv/tsv/pdf).',
+        ),
+        'dark_theme': JsonSchema.boolean(
+          description: 'Spreadsheets: dark PDF pages (default false).',
         ),
       },
       required: ['uuid', 'format'],

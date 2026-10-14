@@ -25,6 +25,7 @@ re-exports all of them.
 - `FormulaEngine` is the recalculation facade: values, spills, cycles and iterative calculation.
   - `compileWithBindings` / `evaluateWithBindings` evaluate a formula with named values; pivot calculated fields use them.
 - `FormulaCodec` converts between A1 and the stored form with id tokens. `ReferenceRewriter` rewrites references.
+- `FormulaLocale.forId(id).withLanguage('de')` adds a display language (`FormulaLanguage`: de, fr, es, sv) for function names and booleans in A1 text; the stored form stays English.
 - `FunctionRegistry.standard` holds the functions. `FunctionCatalog` lists them for the function menu and help.
 - Editor services:
   - `completionsAt` (autocomplete)
@@ -38,6 +39,7 @@ re-exports all of them.
 - `WorkbookModel` and `SheetModel` hold the in-memory workbook built from sync rows. `model.applyPlan(plan)` applies a plan; `model.parseA1` parses A1 input.
 - `SheetsMutationPlanner().plan(op, model, PlanContext)` turns a `SheetsOperation` into a `MutationPlan` of `RowChange`s.
   - Every operation in `operations.dart` is planned.
+  - `steps(op, model, ctx)` plans cooperatively (progress values, then the plan; sort, randomize and remove duplicates report progress); `SheetsMutationPlanner.offer(op, model, plan)` hands such a plan to the next `plan` of that op.
   - `UndoInverter.invert(plan, model)` builds the undo plan.
   - `WorkbookMaintenance` repairs invariants such as anchors, group depths and names.
 - Engine bridge:
@@ -62,13 +64,13 @@ re-exports all of them.
 - Conditional formatting: `CfEvaluator` (`evaluate`, `evaluateRect` for the visible window), plus `CfRule` and `CfPresets`.
 - Data validation: `DvEvaluator` returns markers, typed-input checks (accept, warn or reject), dropdown items and checkboxes. `DvCriteria` is the rule model.
 - Conditions: `ConditionEvaluator`, the condition model shared by CF, DV, filters and pivots.
-- Filter: `FilterEngine`, `FilterCriteria`, `ViewRowOrder`.
+- Filter: `FilterEngine`, `FilterCriteria`, `ViewRowOrder` (`forRows` for a sorted filter view; display offsets, hit testing and `modelRuns` for the grid).
 - Find and replace: `FindEngine`, `ReplaceEngine`, `FindQuery`.
 - Sort: `SortSpec`, `SortPermutation`, `SortStrategy`.
 - Cleanup and split: `Dedupe`, `WhitespaceTrimmer`, `TextSplitter`.
 - Other data tools: `ColumnStats`, `GroupLayout`, `NameRules`, `ProtectionGuard`.
 - Pivots:
-  - `PivotEngine().compute(spec, SourceTable, PivotContext)` returns a `PivotResult`.
+  - `PivotEngine().compute(spec, SourceTable, PivotContext)` returns a `PivotResult`; `applyDelta` updates it in place for changed source rows (decomposable aggregates); `SourceTableBuilder` reads a source in slices.
   - `PivotLayout.build(result)` turns it into a `PivotGrid`.
   - `PivotDataLookup.lookup` implements GETPIVOTDATA.
 
@@ -85,21 +87,27 @@ re-exports all of them.
   - `ZOrder` sets stacking order; `AnchorMaintenance` re-anchors objects.
 
 ### Clipboard
-- `ClipboardEncoder.copy` turns a selection into TSV, HTML and a Wonky payload.
+- `ClipboardEncoder.copy` turns a selection into TSV, HTML and a Wonky payload (`rowOrder:` copies rows in a display order).
 - `ClipboardDecoder.decode` turns clipboard HTML or text into a `ClipboardPasteInput`, whose `PasteSource` feeds the `PasteClipboard` operation.
 - Lower-level parts: `TsvCodec`, `HtmlTableCodec`, `PasteTiling`, `R1C1Relative`.
 
 ### Import and export
 All formats go through the intermediate representation (`WorkbookDocument`).
 - Import:
-  - Parse the file into IR with `CsvImporter.import`, `XlsxImporter.import` or `OdsImporter.import`.
+  - Parse the file into IR with `CsvImporter.import`, `XlsxImporter.import`, `OdsImporter.import` or `JsonWorkbook.import` (or `SheetsFileImporter.parse`, which detects the format).
   - `IrToRowsPlanner.estimate` checks the cell limit for the import dialog.
   - `IrToRowsPlanner.plan(doc, model, ctx, options:)` returns an undoable plan and an import report.
+  - Big documents: `IrToRowsPlanner.planChunked(doc, model, ctx, options:, chunkCells: 5000)` returns
+    `IrImportChunks`: apply and write `head` (every row but the cells), then loop
+    `for (var p = chunks.next(); p != null; p = chunks.next())`, applying each plan to the model
+    (`model.applyPlan`, in-place writes read it) and writing it before the next. `progress`,
+    `totalCells`, `sheetIds`, `imageUploads`, `report` and `result` (final report) are on the
+    object; the concatenated plans equal `plan`'s changes (one undo step: keep them together).
 - Export:
-  - `ModelToIr.convert(model, …)` builds the IR, then `XlsxExporter` or `OdsExporter` writes the file.
+  - `ModelToIr.convert(model, …)` builds the IR, then `XlsxExporter`, `OdsExporter` or `JsonWorkbook.export` writes the file (`SheetsWorkbookExporter.toDocument` / `writeDocument`; with `chartSource:` charts Excel can't hold become PNG pictures, `chartPng`).
   - `CsvExporter.export` writes the displayed values.
   - `HtmlExporter.export` writes HTML.
-- Print and PDF: `PrintSettings`, then `Paginator.paginate`, then `SheetsPdfRenderer.render`. Fonts come from `BuiltInPdfFontProvider` or `TtfPdfFontProvider`.
+- Print and PDF: `PrintSettings`, then `Paginator.paginate`, then `SheetsPdfRenderer.render`. Fonts come from `BuiltInPdfFontProvider` or `TtfPdfFontProvider`; `BundledPdfFonts.load` builds the provider of the bundled TTF set (same faces and family mapping in the app and on the server). `darkTheme: true` renders dark pages.
 
 ## Tests
 

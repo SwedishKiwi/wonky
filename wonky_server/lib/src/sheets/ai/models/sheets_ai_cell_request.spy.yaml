@@ -1,0 +1,9 @@
+### One `=AI(prompt, ranges…)` evaluation asked by a client (Sheets 12
+### §6.8).
+class: SheetsAiCellRequest
+fields:
+  ### The client's id of the call (echoed in the result).
+  id: String
+  prompt: String
+  ### The referenced values as canonical JSON (a list of 2-D arrays).
+  valuesJson: String

@@ -4,6 +4,7 @@ import 'package:wonky_client/wonky_client.dart'
     show ScriptExecution, ScriptExecutionStatus, UuidValue;
 import 'package:wonky_core/wonky_core.dart' show Role;
 import 'package:wonky_sheets/features/macros/macro_service.dart';
+import 'package:wonky_sheets/features/scripts/local/script_local_store.dart';
 import 'package:wonky_sheets/features/scripts/runtime/script_runners.dart';
 import 'package:wonky_sheets/features/scripts/script_backend.dart';
 import 'package:wonky_sheets/features/scripts/script_project.dart';
@@ -70,8 +71,11 @@ class FakeScriptBackend implements ScriptBackend {
   ) async => const [];
 
   @override
-  Future<ServerRunResult> runOnServer(UuidValue item, String functionName) =>
-      throw UnimplementedError();
+  Future<ServerRunResult> runOnServer(
+    UuidValue item,
+    String functionName, {
+    void Function(LogEntry entry)? onLog,
+  }) => throw UnimplementedError();
 
   @override
   Future<List<ScriptExecution>> executions(
@@ -122,17 +126,22 @@ class FakeScriptBackend implements ScriptBackend {
 /// A harness with a script project of [files] built and installed (inline
 /// runner, fake backend).
 class ScriptHarness {
-  ScriptHarness._(this.s, this.svc, this.backend);
+  ScriptHarness._(this.s, this.svc, this.backend, this.local);
 
+  /// Opens a spreadsheet with [files]; [local] is the device store (a new
+  /// in-memory one by default; pass one to simulate a reopen).
   static Future<ScriptHarness> open(
     Map<String, String> files, {
     Role role = Role.owner,
+    MemoryScriptLocalStore? local,
   }) async {
     createScriptRunner = InlineScriptRunner.new;
     late SheetsHarness s;
     final fake = FakeScriptBackend(() => s.model);
     ScriptService.backendFactory = (_) => fake;
     s = SheetsHarness.open(role: role);
+    final store = local ?? MemoryScriptLocalStore();
+    ScriptLocalStore.install(s.services, store);
     final svc = ScriptService.of(s.editor);
     // As the editor screen does: dynamic macro commands.
     MacroService.of(s.editor);
@@ -145,14 +154,16 @@ class ScriptHarness {
         w.saveSource(f.id, e.value);
       }
     }
+    await svc.ready;
     await svc.compile();
     await pumpScripts();
-    return ScriptHarness._(s, svc, fake);
+    return ScriptHarness._(s, svc, fake, store);
   }
 
   final SheetsHarness s;
   final ScriptService svc;
   final FakeScriptBackend backend;
+  final MemoryScriptLocalStore local;
 
   Future<void> dispose() => s.dispose();
 }

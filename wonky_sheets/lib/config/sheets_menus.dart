@@ -49,6 +49,7 @@ MenuRoot sheetsMenus(ShellMenus shell, {required SheetsLocalizations l}) {
             ('html', l.downloadHtml),
             ('csv', l.downloadCsv),
             ('tsv', l.downloadTsv),
+            ('json', l.downloadJson),
           ])
             _c(
               'sheets.file.download',
@@ -231,6 +232,7 @@ MenuRoot sheetsMenus(ShellMenus shell, {required SheetsLocalizations l}) {
   // ---- Help (§3.9) ----
   root = root.insertAfter('shell.help.shortcuts', [
     _c('sheets.help.functionList'),
+    _c('sheets.help.scriptApiReference'),
   ]);
   return root;
 }
@@ -477,6 +479,7 @@ MenuSubmenu dataMenu(SheetsLocalizations l) =>
         _c('sheets.cleanup.openSuggestions'),
         _c('sheets.cleanup.openRemoveDuplicates'),
         _c('sheets.cleanup.trimWhitespace'),
+        _c('sheets.ai.cleanupSuggestions'),
       ]),
       _c('sheets.data.splitTextToColumns'),
       _c('sheets.data.extraction'),
@@ -502,6 +505,7 @@ MenuSubmenu extensionsMenu(SheetsLocalizations l) =>
         _c('sheets.ai.explainFormula'),
         _c('sheets.ai.fillRange'),
         _c('sheets.ai.analyze', menuId: 'extensions.ai.analyze'),
+        _c('sheets.ai.refreshAiCells'),
       ]),
       MenuSpec.submenu('extensions.mcp', 'MCP', [
         _c('shell.mcp.copyConnectionInfo'),

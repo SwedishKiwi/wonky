@@ -10,6 +10,7 @@ import 'package:wonky_sheets_core/model.dart';
 
 import '../grid/selection/grid_selection.dart';
 import '../sheet_editor/sheet_editor_controller.dart';
+import 'comment_anchor_moves.dart';
 
 /// A Sheets comment anchor (Sheets 10 §3.1): a cell or a range by ids.
 @immutable
@@ -106,12 +107,33 @@ class PlacedThread {
 /// "Sheet1!B4" computed live from ids, position sort, reveal), and the
 /// index of open threads per sheet for the indicator layer, hover cards,
 /// next/previous and the docked card.
-class SheetsComments extends ChangeNotifier implements CommentAnchorProvider {
+class SheetsComments extends ChangeNotifier
+    implements CommentAnchorProvider, CommentPanelOptions {
   SheetsComments(this.editor) {
     services.comments.addListener(_onControllerChanged);
     editor.model.addListener(_onModel);
+    editor.addListener(_onEditor);
+    _activeSheet = editor.activeSheetId;
     _onControllerChanged();
+    moves = CommentAnchorMoves(this);
   }
+
+  /// Comments moving with cut cells (Sheets 10 §3.2).
+  late final CommentAnchorMoves moves;
+
+  String? _activeSheet;
+
+  /// The *This sheet* scope follows the active sheet.
+  void _onEditor() {
+    if (_activeSheet == editor.activeSheetId) return;
+    _activeSheet = editor.activeSheetId;
+    final c = _controller;
+    if (c != null && c.scope == scopeSheet) c.setScope(scopeSheet);
+  }
+
+  /// Comment panel scopes (Sheets 10 §3.5).
+  static const scopeSheet = 'sheet';
+  static const scopeAll = 'all';
 
   final SheetEditorController editor;
 
@@ -146,7 +168,11 @@ class SheetsComments extends ChangeNotifier implements CommentAnchorProvider {
       _controller?.removeListener(_onThreads);
       _controller = next;
       next?.addListener(_onThreads);
-      if (next != null) next.anchors = this;
+      if (next != null) {
+        next.anchors = this;
+        // Offline comments are queued (Sheets 10 §3.7).
+        next.queueOffline = true;
+      }
     }
     _onThreads();
   }
@@ -307,6 +333,38 @@ class SheetsComments extends ChangeNotifier implements CommentAnchorProvider {
   }
 
   @override
+  bool get composesInline => true;
+
+  @override
+  Map<String, String> get scopes => {
+    scopeSheet: editor.l10n.commentsScopeSheet,
+    scopeAll: editor.l10n.commentsScopeAll,
+  };
+
+  @override
+  String? get defaultScope => scopeAll;
+
+  @override
+  bool inScope(CommentThreadView thread, String scope) {
+    if (scope != scopeSheet) return true;
+    final a = SheetsCommentAnchor.parse(thread.anchorKind, thread.anchorJson);
+    return a != null &&
+        a.sheetId == editor.activeSheetId &&
+        a.resolve(model) != null;
+  }
+
+  @override
+  String? groupOf(CommentThreadView thread) {
+    final a = SheetsCommentAnchor.parse(thread.anchorKind, thread.anchorJson);
+    if (a == null) return null;
+    final sheet = model.sheet(a.sheetId);
+    if (sheet == null || a.resolve(model) == null) {
+      return editor.l10n.commentsOrphanedGroup;
+    }
+    return sheet.name;
+  }
+
+  @override
   void onThreadCreated(CommentThreadView thread) => _onThreads();
 
   @override
@@ -353,6 +411,8 @@ class SheetsComments extends ChangeNotifier implements CommentAnchorProvider {
   @override
   void dispose() {
     _disposed = true;
+    moves.dispose();
+    editor.removeListener(_onEditor);
     services.comments.removeListener(_onControllerChanged);
     editor.model.removeListener(_onModel);
     _controller?.removeListener(_onThreads);

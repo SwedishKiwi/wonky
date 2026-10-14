@@ -11,13 +11,13 @@ import '../formatting/cell_fonts.dart';
 /// faces the preview paints with — so preview and PDF share metrics.
 /// Without the assets (tests) the standard PDF fonts are used.
 class SheetsPdfFonts implements PdfFontProvider {
-  SheetsPdfFonts._(this._ttf);
+  SheetsPdfFonts._(this._provider);
 
-  final PdfFontProvider _ttf;
+  final PdfFontProvider _provider;
 
-  static const sans = CellFonts.openSans;
-  static const serif = CellFonts.ebGaramond;
-  static const mono = CellFonts.jetBrainsMono;
+  static const sans = BundledPdfFonts.sans;
+  static const serif = BundledPdfFonts.serif;
+  static const mono = BundledPdfFonts.mono;
 
   static Future<SheetsPdfFonts>? _instance;
 
@@ -33,85 +33,19 @@ class SheetsPdfFonts implements PdfFontProvider {
       }
     }
 
-    Future<TtfFontFamily?> family(
-      String regular,
-      String bold,
-      String italic,
-      String boldItalic,
-    ) async {
-      final r = await asset(regular);
-      if (r == null) return null;
-      return TtfFontFamily(
-        regular: r,
-        bold: await asset(bold),
-        italic: await asset(italic),
-        boldItalic: await asset(boldItalic),
-      );
+    final provider = await BundledPdfFonts.load(asset);
+    if (provider is! BuiltInPdfFontProvider) {
+      await Future.wait([
+        for (final f in BundledPdfFonts.files.keys) CellFonts.ensureLoaded(f),
+      ]);
     }
-
-    final families = <String, TtfFontFamily>{
-      sans: ?await family(
-        'OpenSans-Regular.ttf',
-        'OpenSans-Bold.ttf',
-        'OpenSans-Italic.ttf',
-        'OpenSans-BoldItalic.ttf',
-      ),
-      serif: ?await family(
-        'EBGaramond-Regular.ttf',
-        'EBGaramond-Bold.ttf',
-        'EBGaramond-Italic.ttf',
-        'EBGaramond-BoldItalic.ttf',
-      ),
-      mono: ?await family(
-        'JetBrainsMono-Regular.ttf',
-        'JetBrainsMono-Bold.ttf',
-        'JetBrainsMono-Italic.ttf',
-        'JetBrainsMono-BoldItalic.ttf',
-      ),
-      CellFonts.roboto: ?await family(
-        'Roboto-Regular.ttf',
-        'Roboto-Bold.ttf',
-        'Roboto-Italic.ttf',
-        'Roboto-BoldItalic.ttf',
-      ),
-      CellFonts.lato: ?await family(
-        'Lato-Regular.ttf',
-        'Lato-Bold.ttf',
-        'Lato-Italic.ttf',
-        'Lato-BoldItalic.ttf',
-      ),
-      CellFonts.robotoMono: ?await family(
-        'RobotoMono-Regular.ttf',
-        'RobotoMono-Bold.ttf',
-        'RobotoMono-Regular.ttf',
-        'RobotoMono-Bold.ttf',
-      ),
-    };
-    if (families.isEmpty) {
-      return SheetsPdfFonts._(const BuiltInPdfFontProvider());
-    }
-    await Future.wait([
-      for (final f in families.keys) CellFonts.ensureLoaded(f),
-    ]);
-    return SheetsPdfFonts._(
-      TtfPdfFontProvider(
-        families: families,
-        defaultFamily: families.containsKey(sans) ? sans : families.keys.first,
-      ),
-    );
+    return SheetsPdfFonts._(provider);
   }
 
   /// The PDF family of a cell family: the static bundled families as
-  /// themselves, others serif/mono by category, every other family sans.
-  static String pdfFamily(String family) {
-    final shown = CellFonts.displayFamily(family);
-    return switch (shown) {
-      CellFonts.roboto || CellFonts.lato || CellFonts.robotoMono => shown,
-      CellFonts.ebGaramond => serif,
-      CellFonts.jetBrainsMono || CellFonts.geistMono => mono,
-      _ => sans,
-    };
-  }
+  /// themselves, others serif/mono by category, every other family sans
+  /// (`BundledPdfFonts.pdfFamily`, the same mapping as server PDFs).
+  static String pdfFamily(String family) => BundledPdfFonts.pdfFamily(family);
 
   /// The Flutter family the preview paints [family] with (the PDF face).
   static String screenFamily(String family) =>
@@ -123,12 +57,12 @@ class SheetsPdfFonts implements PdfFontProvider {
     String family, {
     bool bold = false,
     bool italic = false,
-  }) => _ttf.font(doc, pdfFamily(family), bold: bold, italic: italic);
+  }) => _provider.font(doc, family, bold: bold, italic: italic);
 
   @override
   List<PdfFont> fallbacks(
     PdfDocument doc, {
     bool bold = false,
     bool italic = false,
-  }) => _ttf.fallbacks(doc, bold: bold, italic: italic);
+  }) => _provider.fallbacks(doc, bold: bold, italic: italic);
 }

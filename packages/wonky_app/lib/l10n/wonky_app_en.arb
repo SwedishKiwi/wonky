@@ -344,6 +344,7 @@
   "commentEventReopened": "reopened",
   "commentEventResolved": "marked as resolved",
   "commentFailed": "The comment could not be saved",
+  "commentPending": "Pending — will be posted when you're online",
   "commentLink": "Link to comment",
   "commentOrphaned": "Original content deleted",
   "commentPlaceholder": "Comment or add others with @",

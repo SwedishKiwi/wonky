@@ -3,10 +3,13 @@ import 'dart:async';
 import 'package:flutter/widgets.dart';
 import 'package:shad/shad.dart';
 import 'package:wonky_app/wonky_app.dart';
+import 'package:wonky_sheets_core/formula.dart' show ColumnLetters;
+import 'package:wonky_sheets_core/model.dart' show FValueToCellValue;
 import 'package:wonky_ui/wonky_ui.dart';
 
 import '../../l10n/sheets_l10n.dart';
 import '../data_tools/data_tools.dart';
+import '../grid/paint/grid_layer.dart' show GridHeaderColors;
 import '../sheet_editor/sheet_editor_controller.dart';
 import '../toolbar/command_ui.dart';
 import 'filter_controller.dart';
@@ -80,6 +83,17 @@ class _BarState extends State<_Bar> {
   void _invoke(String id, [Map<String, Object?> args = const {}]) =>
       unawaited(widget.editor.invokeCommand(id, args));
 
+  /// The header text of [colId] in the view's range, else its letter.
+  String _columnName(String colId) {
+    final s = widget.editor.model.sheet(widget.view.sheetId);
+    final c = s?.columns.indexOf(colId) ?? -1;
+    if (s == null || c < 0) return '';
+    final header = widget.editor.engine
+        .valueAt(s.id, widget.view.range.top, c)
+        .toCellValue();
+    return header.isBlank() ? ColumnLetters.fromIndex(c) : '$header';
+  }
+
   @override
   Widget build(BuildContext context) {
     final l = sheetsL10n(context);
@@ -100,8 +114,10 @@ class _BarState extends State<_Bar> {
           const SizedBox(width: 8),
           Text(l.filterViewName, style: label),
           const SizedBox(width: 6),
+          // Shares: name 2, range 3, sort chip 3, gap 1 (the range was
+          // clipped and the chip shrank to its icon at 800 px).
           Flexible(
-            flex: 3,
+            flex: 2,
             child: ConstrainedBox(
               constraints: const BoxConstraints(maxWidth: 220),
               child: ShadInput(
@@ -124,9 +140,9 @@ class _BarState extends State<_Bar> {
           Text(l.filterViewRange, style: label),
           const SizedBox(width: 6),
           Flexible(
-            flex: 2,
+            flex: 3,
             child: ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 160),
+              constraints: const BoxConstraints(maxWidth: 180),
               child: ShadInput(
                 key: const ValueKey<String>('sheets.filterViewBar.range'),
                 controller: _range,
@@ -143,6 +159,20 @@ class _BarState extends State<_Bar> {
               ),
             ),
           ),
+          if (v.sort.isNotEmpty) ...[
+            const SizedBox(width: 10),
+            Flexible(
+              flex: 3,
+              child: _SortChip(
+                label: l.filterViewSortedBy(_columnName(v.sort.first.$1)),
+                ascending: v.sort.first.$2,
+                colors: colors,
+                clearLabel: l.filterViewClearSort,
+                onClear: () =>
+                    _invoke('sheets.filterView.sortColumn', {'viewId': id}),
+              ),
+            ),
+          ],
           if (v.temporary) ...[
             const SizedBox(width: 10),
             Flexible(
@@ -208,6 +238,65 @@ class _BarState extends State<_Bar> {
               onPressed: () =>
                   _invoke('sheets.filterView.activate', {'viewId': null}),
             ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// "Sorted by Region ↑ ✕" on the filter view bar (07 §4.4).
+class _SortChip extends StatelessWidget {
+  const _SortChip({
+    required this.label,
+    required this.ascending,
+    required this.colors,
+    required this.clearLabel,
+    required this.onClear,
+  });
+
+  final String label;
+  final bool ascending;
+  final GridHeaderColors colors;
+  final String clearLabel;
+  final VoidCallback onClear;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = ShadTheme.of(context);
+    return Container(
+      key: const ValueKey<String>('sheets.filterViewBar.sort'),
+      padding: const EdgeInsets.only(left: 8),
+      decoration: BoxDecoration(
+        color: colors.selectedBg,
+        border: Border.all(color: colors.border),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(
+            ascending ? LucideIcons.arrowDownAZ : LucideIcons.arrowDownZA,
+            size: 14,
+            color: colors.fg,
+          ),
+          const SizedBox(width: 4),
+          Flexible(
+            child: Text(
+              label,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: theme.textTheme.small.copyWith(color: colors.fg),
+            ),
+          ),
+          ShadIconButton.ghost(
+            key: const ValueKey<String>('sheets.filterViewBar.clearSort'),
+            width: 24,
+            height: 24,
+            iconSize: 12,
+            semanticLabel: clearLabel,
+            icon: Icon(LucideIcons.x, color: colors.fg),
+            onPressed: onClear,
           ),
         ],
       ),

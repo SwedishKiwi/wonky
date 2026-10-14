@@ -227,8 +227,51 @@ final class _PdfPainter {
           evenOdd: false,
           opacity: opacity,
         );
-      case SPath(:final cmds, :final fill, :final stroke, :final evenOdd):
+      case SPath(
+        :final cmds,
+        :final fill,
+        :final stroke,
+        :final evenOdd,
+        :final gradient,
+      ):
         if (cmds.isEmpty) return;
+        if (gradient != null &&
+            RenderGeometry.fillVisible(fill) &&
+            opacity > 0) {
+          // Axial shading clipped to the path (3D chart faces, 08 §23.5).
+          g.saveContext();
+          g.setGraphicState(
+            PdfGraphicState(fillOpacity: _opacity(fill!, opacity)),
+          );
+          _path(cmds);
+          g.clipPath(evenOdd: evenOdd);
+          final doc = fonts.regular.pdfDocument;
+          g.applyShader(
+            PdfShading(
+              doc,
+              shadingType: PdfShadingType.axial,
+              function: PdfFunction.fromColors(doc, [
+                _color(gradient.color0),
+                _color(gradient.color1),
+              ]),
+              start: PdfPoint(gradient.x0, gradient.y0),
+              end: PdfPoint(gradient.x1, gradient.y1),
+              extendStart: true,
+              extendEnd: true,
+            ),
+          );
+          g.restoreContext();
+          if (stroke != null) {
+            paint(
+              () => _path(cmds),
+              fill: null,
+              stroke: stroke,
+              evenOdd: evenOdd,
+              opacity: opacity,
+            );
+          }
+          return;
+        }
         paint(
           () => _path(cmds),
           fill: fill,

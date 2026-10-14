@@ -490,6 +490,71 @@ class Sheet {
   void sort(int column, {bool ascending = true}) {
     _call(_h, 'sheet.sort', [column, ascending]);
   }
+
+  // ---- Objects & rules (09 §6.3) ----
+
+  /// Charts on this sheet.
+  List<EmbeddedChart> get charts {
+    final out = <EmbeddedChart>[];
+    for (final c in _call(_h, 'sheet.charts', const []) as List) {
+      out.add(_chart(c));
+    }
+    return out;
+  }
+
+  /// Starts a new chart: add ranges, then [insertChart] the built chart.
+  EmbeddedChartBuilder newChart() => EmbeddedChartBuilder._(null);
+
+  /// Inserts a chart built with [newChart] and returns it.
+  EmbeddedChart insertChart(EmbeddedChart chart) =>
+      _chart(_call(_h, 'sheet.insertChart', [null, chart._spec()]));
+
+  /// Applies the changes of a chart built with [EmbeddedChart.modify].
+  EmbeddedChart updateChart(EmbeddedChart chart) =>
+      _chart(_call(_h, 'sheet.insertChart', [chart.id, chart._spec()]));
+
+  /// Removes [chart].
+  void removeChart(EmbeddedChart chart) {
+    _call(_h, 'sheet.removeChart', [chart.id]);
+  }
+
+  /// The basic filter of the sheet, or null.
+  Filter? get filter {
+    final f = _call(_h, 'sheet.filter', const []);
+    return f == null ? null : Filter._(_h);
+  }
+
+  /// Conditional format rules of the sheet, in priority order.
+  List<ConditionalFormatRule> get conditionalFormatRules {
+    final out = <ConditionalFormatRule>[];
+    for (final r in _call(_h, 'sheet.cfRules', const []) as List) {
+      out.add(_cfRule(r));
+    }
+    return out;
+  }
+
+  /// Adds a conditional format rule built with [ConditionalFormatRuleBuilder]
+  /// (lowest priority unless [first]).
+  ConditionalFormatRule addConditionalFormatRule(ConditionalFormatRule rule, {bool first = false}) =>
+      _cfRule(_call(_h, 'sheet.addCfRule', [rule._data(), first]));
+
+  /// Removes the conditional format rule [rule].
+  void removeConditionalFormatRule(ConditionalFormatRule rule) {
+    _call(_h, 'sheet.removeCfRule', [rule.id]);
+  }
+
+  /// Protects the whole sheet (only you and the owner can edit it until you
+  /// add editors).
+  Protection protect() => _protection(_call(_h, 'sheet.protect', const []));
+
+  /// Protected ranges and the sheet protection of this sheet.
+  List<Protection> get protections {
+    final out = <Protection>[];
+    for (final p in _call(_h, 'sheet.protections', const []) as List) {
+      out.add(_protection(p));
+    }
+    return out;
+  }
 }
 
 // ---------------------------------------------------------------------------
@@ -780,6 +845,13 @@ class Range {
   /// Removes duplicate rows; returns the resulting range.
   Range removeDuplicates([List<int>? columnsToCompare]) =>
       Range._(_call(_h, 'range.removeDuplicates', [columnsToCompare]) as int);
+
+  /// Creates the basic filter of the sheet over this range (replaces an
+  /// existing one).
+  Filter createFilter() => Filter._(_call(_h, 'range.createFilter', const []) as int);
+
+  /// Protects this range.
+  Protection protect() => _protection(_call(_h, 'range.protect', const []));
 }
 
 /// Several ranges.
@@ -887,6 +959,18 @@ class Ui {
 
   /// Starts a custom menu.
   Menu createMenu(String caption) => Menu._(caption);
+
+  /// Shows [panel] in the sidebar of the user's window (replaces a script
+  /// sidebar with the same id). Returns at once; buttons start new
+  /// executions with a [UiEvent].
+  void showSidebar(UiPanel panel) {
+    _call(0, 'ui.showPanel', [panel._data(), 'sidebar', null]);
+  }
+
+  /// Shows [panel] as a dialog titled [title].
+  void showModalDialog(UiPanel panel, String title) {
+    _call(0, 'ui.showPanel', [panel._data(), 'dialog', title]);
+  }
 }
 
 /// A custom menu (built in `onOpen`).
@@ -1178,6 +1262,23 @@ class AuthMode {
   String toString() => 'AuthMode.$name';
 }
 
+/// Event of a [UiButton] click (09 §16.3).
+class UiEvent {
+  UiEvent._(this.user, this.values, this.panel, this.button);
+  Spreadsheet get source => const Spreadsheet._();
+  final User user;
+
+  /// Current input values by component id (`String`, `bool` for
+  /// checkboxes).
+  final Map<String, Object?> values;
+
+  /// The panel the button is on.
+  final UiPanelHandle panel;
+
+  /// Caption of the clicked button.
+  final String button;
+}
+
 /// Event of `onOpen`.
 class OpenEvent {
   OpenEvent._(this.user, this.authMode);
@@ -1188,7 +1289,8 @@ class OpenEvent {
 
 /// Event of `onEdit` (simple and installable).
 class EditEvent {
-  EditEvent._(this.range, this.user, this.value, this.oldValue, this.triggerUid, this.offline);
+  EditEvent._(this.range, this.user, this.value, this.oldValue, this.triggerUid, this.offline,
+      this.coalesced);
   Spreadsheet get source => const Spreadsheet._();
 
   /// Bounding box of the changed cells on the first changed sheet.
@@ -1206,6 +1308,10 @@ class EditEvent {
 
   /// The edit was made offline and synced later.
   final bool offline;
+
+  /// Several queued edits were merged into this event (installable
+  /// triggers); [range] is their bounding box.
+  final bool coalesced;
 }
 
 /// Event of `onSelectionChange`.
@@ -1244,9 +1350,13 @@ Object? wonkyEvent(Map<String, Object?>? e) {
   if (kind == 'open') {
     return OpenEvent._(user, e['authMode'] == 'limited' ? AuthMode.limited : AuthMode.full);
   }
+  if (kind == 'ui') {
+    return UiEvent._(user, (e['values'] as Map).cast<String, Object?>(),
+        UiPanelHandle._(e['panelId'] as String), e['button'] as String);
+  }
   if (kind == 'edit') {
     return EditEvent._(Range._(e['range'] as int), user, e['value'], e['oldValue'],
-        e['triggerUid'] as String?, e['offline'] == true);
+        e['triggerUid'] as String?, e['offline'] == true, e['coalesced'] == true);
   }
   if (kind == 'selectionChange') {
     return SelectionChangeEvent._(Range._(e['range'] as int), user);
@@ -1391,5 +1501,751 @@ class SpreadsheetTriggerBuilder {
 
   /// Creates the trigger.
   Trigger create() => _trigger(_call(0, 'triggers.create', [_functionName, _event, null]));
+}
+
+
+Map<String, Object?> _copyMap(Map<String, Object?> m) {
+  final out = <String, Object?>{};
+  out.addAll(m);
+  return out;
+}
+
+List<Range> _copyRanges(List<Range> l) {
+  final out = <Range>[];
+  out.addAll(l);
+  return out;
+}
+
+List<String> _copyStrings(List<String> l) {
+  final out = <String>[];
+  out.addAll(l);
+  return out;
+}
+
+// ---------------------------------------------------------------------------
+// Charts (09 §6.3).
+// ---------------------------------------------------------------------------
+
+EmbeddedChart _chart(Object? data) {
+  final m = data as Map;
+  final ranges = <Range>[];
+  for (final h in m['ranges'] as List) {
+    ranges.add(Range._(h as int));
+  }
+  return EmbeddedChart._(
+    m['id'] as String?,
+    m['type'] as String,
+    m['title'] as String?,
+    ranges,
+    m['row'] as int,
+    m['column'] as int,
+    (m['width'] as num).toDouble(),
+    (m['height'] as num).toDouble(),
+    (m['options'] as Map).cast<String, Object?>(),
+  );
+}
+
+/// A chart on a sheet. Charts made by [EmbeddedChartBuilder.build] have no
+/// [id] until [Sheet.insertChart] inserts them.
+class EmbeddedChart {
+  EmbeddedChart._(this.id, this.chartType, this.title, this.ranges, this.row, this.column,
+      this.width, this.height, this._options);
+
+  /// Object id (null until inserted).
+  final String? id;
+
+  /// `column`, `bar`, `line`, `area`, `combo`, `pie`, `scatter`, `bubble`,
+  /// `histogram`, `candlestick`, `waterfall`, `scorecard`, `table`, `radar`, …
+  final String chartType;
+
+  /// Chart title, or null.
+  final String? title;
+
+  /// The data ranges.
+  final List<Range> ranges;
+
+  /// 1-based row of the anchor cell (top-left corner; 0 = automatic).
+  final int row;
+
+  /// 1-based column of the anchor cell (0 = automatic).
+  final int column;
+
+  /// Width in pixels (0 = default).
+  final double width;
+
+  /// Height in pixels (0 = default).
+  final double height;
+
+  final Map<String, Object?> _options;
+
+  /// A builder with this chart's settings; pass its
+  /// [EmbeddedChartBuilder.build] result to [Sheet.updateChart].
+  EmbeddedChartBuilder modify() => EmbeddedChartBuilder._(this);
+
+  Map<String, Object?> _spec() {
+    final hs = <int>[];
+    for (final r in ranges) {
+      hs.add(r._h);
+    }
+    return {
+      'type': chartType,
+      'title': title,
+      'ranges': hs,
+      'row': row,
+      'column': column,
+      'width': width,
+      'height': height,
+      'options': _options,
+    };
+  }
+}
+
+/// Builds an [EmbeddedChart] ([Sheet.newChart], [EmbeddedChart.modify]).
+class EmbeddedChartBuilder {
+  EmbeddedChartBuilder._(EmbeddedChart? chart) {
+    if (chart != null) {
+      _id = chart.id;
+      _type = chart.chartType;
+      _title = chart.title;
+      _row = chart.row;
+      _column = chart.column;
+      _width = chart.width;
+      _height = chart.height;
+      _ranges.addAll(chart.ranges);
+      _options.addAll(chart._options);
+    }
+  }
+
+  // dart_eval leaves fields without an initializer unset: initialize
+  // nullable fields explicitly.
+  String? _id = null;
+  String _type = '';
+  String? _title = null;
+  int _row = 0;
+  int _column = 0;
+  double _width = 0.0;
+  double _height = 0.0;
+  final List<Range> _ranges = <Range>[];
+  final Map<String, Object?> _options = <String, Object?>{};
+
+  /// The chart type (`column`, `bar`, `line`, `pie`, …); empty = the
+  /// recommended type for the data.
+  EmbeddedChartBuilder setChartType(String type) {
+    _type = type;
+    return this;
+  }
+
+  /// Adds a data range.
+  EmbeddedChartBuilder addRange(Range range) {
+    _ranges.add(range);
+    return this;
+  }
+
+  /// Removes the data ranges with the A1 notation of [range].
+  EmbeddedChartBuilder removeRange(Range range) {
+    final key = range.a1Notation;
+    final keep = <Range>[];
+    for (final r in _ranges) {
+      if (r.a1Notation != key) keep.add(r);
+    }
+    _ranges.clear();
+    _ranges.addAll(keep);
+    return this;
+  }
+
+  /// Removes every data range.
+  EmbeddedChartBuilder clearRanges() {
+    _ranges.clear();
+    return this;
+  }
+
+  /// The chart title (null removes it).
+  EmbeddedChartBuilder setTitle(String? title) {
+    _title = title;
+    return this;
+  }
+
+  /// Anchors the top-left corner at the 1-based cell ([row], [column]).
+  EmbeddedChartBuilder setPosition(int row, int column) {
+    _row = row;
+    _column = column;
+    return this;
+  }
+
+  /// Size in pixels.
+  EmbeddedChartBuilder setSize(double width, double height) {
+    _width = width;
+    _height = height;
+    return this;
+  }
+
+  /// Sets a chart spec option by JSON path, e.g. `legend.position` →
+  /// `bottom`, `stacking` → `stacked`, `axes.vertical.title.text`.
+  EmbeddedChartBuilder setOption(String path, Object? value) {
+    _options[path] = value;
+    return this;
+  }
+
+  /// The chart (not inserted yet).
+  EmbeddedChart build() => EmbeddedChart._(_id, _type, _title, _copyRanges(_ranges), _row,
+      _column, _width, _height, _copyMap(_options));
+}
+
+// ---------------------------------------------------------------------------
+// Filters (09 §6.3).
+// ---------------------------------------------------------------------------
+
+/// The basic filter of a sheet.
+class Filter {
+  Filter._(this._sheet);
+  final int _sheet;
+
+  /// The filtered range.
+  Range get range => Range._(_call(_sheet, 'filter.range', const []) as int);
+
+  /// The criteria of the 1-based sheet [column], or null.
+  FilterCriteria? getColumnFilterCriteria(int column) {
+    final c = _call(_sheet, 'filter.criteria', [column]);
+    return c == null ? null : FilterCriteria._((c as Map).cast<String, Object?>());
+  }
+
+  /// Sets (null removes) the criteria of the 1-based sheet [column].
+  Filter setColumnFilterCriteria(int column, FilterCriteria? criteria) {
+    _call(_sheet, 'filter.setCriteria', [column, criteria == null ? null : criteria._json]);
+    return this;
+  }
+
+  /// Removes the criteria of [column].
+  Filter removeColumnFilterCriteria(int column) => setColumnFilterCriteria(column, null);
+
+  /// Sorts the filtered rows by the 1-based sheet [column].
+  Filter sort(int column, {bool ascending = true}) {
+    _call(_sheet, 'filter.sort', [column, ascending]);
+    return this;
+  }
+
+  /// Removes the filter.
+  void remove() {
+    _call(_sheet, 'filter.remove', const []);
+  }
+}
+
+/// Criteria of one filter column (hidden values and/or a condition).
+class FilterCriteria {
+  FilterCriteria._(this._json);
+  final Map<String, Object?> _json;
+
+  /// Display texts that are hidden (`""` = blanks).
+  List<String> get hiddenValues {
+    final v = _json['hiddenValues'];
+    return v == null ? <String>[] : (v as List).cast<String>();
+  }
+
+  /// Condition type id (`numberGreater`, `textContains`, …), or null.
+  String? get conditionType {
+    final c = _json['condition'];
+    return c == null ? null : (c as Map)['type'] as String?;
+  }
+
+  /// Hides rows whose display text is one of [values].
+  static FilterCriteria hideValues(List<String> values) =>
+      FilterCriteria._(<String, Object?>{'hiddenValues': values});
+
+  /// Shows rows whose cell satisfies the condition [type] with [values]
+  /// (`numberGreater` `[10]`, `textContains` `['x']`, `numberBetween`
+  /// `[1, 5]`, `blank`, `customFormula` `['=B2>0']`, …).
+  static FilterCriteria condition(String type, [List<Object?> values = const []]) =>
+      FilterCriteria._(<String, Object?>{'condition': _condition(type, values)});
+
+  /// Numbers greater than [n].
+  static FilterCriteria whenNumberGreaterThan(num n) => condition('numberGreater', [n]);
+
+  /// Numbers less than [n].
+  static FilterCriteria whenNumberLessThan(num n) => condition('numberLess', [n]);
+
+  /// Numbers between [a] and [b] (inclusive).
+  static FilterCriteria whenNumberBetween(num a, num b) => condition('numberBetween', [a, b]);
+
+  /// Text containing [text].
+  static FilterCriteria whenTextContains(String text) => condition('textContains', [text]);
+
+  /// Text equal to [text].
+  static FilterCriteria whenTextEqualTo(String text) => condition('textEq', [text]);
+
+  /// Empty cells.
+  static FilterCriteria whenCellEmpty() => condition('blank');
+
+  /// Non-empty cells.
+  static FilterCriteria whenCellNotEmpty() => condition('notBlank');
+
+  /// Rows where [formula] (relative to the first data row) is true.
+  static FilterCriteria whenFormulaSatisfied(String formula) => condition('customFormula', [formula]);
+}
+
+Map<String, Object?> _condition(String type, List<Object?> values) {
+  final vs = <Object?>[];
+  for (final v in values) {
+    vs.add(<String, Object?>{'v': v});
+  }
+  return <String, Object?>{'type': type, 'values': vs};
+}
+
+// ---------------------------------------------------------------------------
+// Conditional formatting (09 §6.3).
+// ---------------------------------------------------------------------------
+
+ConditionalFormatRule _cfRule(Object? data) {
+  final m = data as Map;
+  final ranges = <Range>[];
+  for (final h in m['ranges'] as List) {
+    ranges.add(Range._(h as int));
+  }
+  return ConditionalFormatRule._(m['id'] as String?, ranges,
+      (m['rule'] as Map).cast<String, Object?>(), m['enabled'] != false);
+}
+
+/// A conditional format rule.
+class ConditionalFormatRule {
+  ConditionalFormatRule._(this.id, this.ranges, this._rule, this.enabled);
+
+  /// Rule id (null until added).
+  final String? id;
+
+  /// The ranges the rule applies to.
+  final List<Range> ranges;
+
+  /// Whether the rule is enabled.
+  final bool enabled;
+
+  final Map<String, Object?> _rule;
+
+  /// `boolean`, `colorScale`, `dataBar` or `iconSet`.
+  String get type => _rule['type'] as String? ?? '';
+
+  /// Condition type of a `boolean` rule (`numberGreater`, `textContains`,
+  /// `customFormula`, …), or null.
+  String? get conditionType {
+    final c = _rule['condition'];
+    return c == null ? null : (c as Map)['type'] as String?;
+  }
+
+  /// Background color a `boolean` rule applies, or null.
+  String? get background {
+    final f = _rule['format'];
+    return f == null ? null : (f as Map)['fillColor'] as String?;
+  }
+
+  /// Text color a `boolean` rule applies, or null.
+  String? get fontColor {
+    final f = _rule['format'];
+    return f == null ? null : (f as Map)['textColor'] as String?;
+  }
+
+  Map<String, Object?> _data() {
+    final hs = <int>[];
+    for (final r in ranges) {
+      hs.add(r._h);
+    }
+    return <String, Object?>{'ranges': hs, 'rule': _rule};
+  }
+}
+
+/// Builds a [ConditionalFormatRule] for [Sheet.addConditionalFormatRule].
+class ConditionalFormatRuleBuilder {
+  ConditionalFormatRuleBuilder();
+
+  final List<Range> _ranges = <Range>[];
+  Map<String, Object?> _rule = <String, Object?>{'type': 'boolean'};
+  final Map<String, Object?> _format = <String, Object?>{};
+
+  /// The ranges the rule applies to.
+  ConditionalFormatRuleBuilder setRanges(List<Range> ranges) {
+    _ranges.clear();
+    _ranges.addAll(ranges);
+    return this;
+  }
+
+  /// A condition of type [type] with [values] (see
+  /// [FilterCriteria.condition]).
+  ConditionalFormatRuleBuilder whenCondition(String type, [List<Object?> values = const []]) {
+    _rule['type'] = 'boolean';
+    _rule['condition'] = _condition(type, values);
+    return this;
+  }
+
+  /// Numbers greater than [n].
+  ConditionalFormatRuleBuilder whenNumberGreaterThan(num n) => whenCondition('numberGreater', [n]);
+
+  /// Numbers less than [n].
+  ConditionalFormatRuleBuilder whenNumberLessThan(num n) => whenCondition('numberLess', [n]);
+
+  /// Numbers between [a] and [b] (inclusive).
+  ConditionalFormatRuleBuilder whenNumberBetween(num a, num b) =>
+      whenCondition('numberBetween', [a, b]);
+
+  /// Numbers equal to [n].
+  ConditionalFormatRuleBuilder whenNumberEqualTo(num n) => whenCondition('numberEq', [n]);
+
+  /// Text containing [text].
+  ConditionalFormatRuleBuilder whenTextContains(String text) => whenCondition('textContains', [text]);
+
+  /// Text equal to [text].
+  ConditionalFormatRuleBuilder whenTextEqualTo(String text) => whenCondition('textEq', [text]);
+
+  /// Empty cells.
+  ConditionalFormatRuleBuilder whenCellEmpty() => whenCondition('blank');
+
+  /// Non-empty cells.
+  ConditionalFormatRuleBuilder whenCellNotEmpty() => whenCondition('notBlank');
+
+  /// A custom formula relative to the top-left cell, e.g. `=$B2>100`.
+  ConditionalFormatRuleBuilder whenFormulaSatisfied(String formula) =>
+      whenCondition('customFormula', [formula]);
+
+  /// Background color `#RRGGBB`.
+  ConditionalFormatRuleBuilder setBackground(String color) {
+    _format['fillColor'] = color;
+    return this;
+  }
+
+  /// Text color `#RRGGBB`.
+  ConditionalFormatRuleBuilder setFontColor(String color) {
+    _format['textColor'] = color;
+    return this;
+  }
+
+  /// Bold text.
+  ConditionalFormatRuleBuilder setBold(bool bold) {
+    _format['bold'] = bold;
+    return this;
+  }
+
+  /// Italic text.
+  ConditionalFormatRuleBuilder setItalic(bool italic) {
+    _format['italic'] = italic;
+    return this;
+  }
+
+  /// Struck-through text.
+  ConditionalFormatRuleBuilder setStrikethrough(bool strikethrough) {
+    _format['strikethrough'] = strikethrough;
+    return this;
+  }
+
+  /// A two-color scale from the minimum to the maximum (replaces the
+  /// condition).
+  ConditionalFormatRuleBuilder setGradient(String minColor, String maxColor) {
+    _rule = <String, Object?>{'type': 'colorScale'};
+    _rule['points'] = <Object?>[
+      <String, Object?>{'kind': 'min', 'color': minColor},
+      <String, Object?>{'kind': 'max', 'color': maxColor},
+    ];
+    return this;
+  }
+
+  /// The rule (not added yet).
+  ConditionalFormatRule build() {
+    final rule = _copyMap(_rule);
+    if (rule['type'] == 'boolean') {
+      rule['format'] = _copyMap(_format);
+    }
+    return ConditionalFormatRule._(null, _copyRanges(_ranges), rule, true);
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Protection (09 §6.3).
+// ---------------------------------------------------------------------------
+
+Protection _protection(Object? data) {
+  final m = data as Map;
+  final r = m['range'];
+  return Protection._(m['id'] as String, r == null ? null : Range._(r as int));
+}
+
+/// A protected range or sheet.
+class Protection {
+  Protection._(this.id, this.range);
+
+  /// Protection id.
+  final String id;
+
+  /// The protected range, or null for a whole-sheet protection.
+  final Range? range;
+
+  Map<Object?, Object?> _get() => _call(0, 'protection.get', [id]) as Map;
+
+  /// Description.
+  String get description => _get()['description'] as String? ?? '';
+  set description(String value) {
+    _call(0, 'protection.update', [id, <String, Object?>{'description': value}]);
+  }
+
+  /// Whether editing only shows a warning.
+  bool get isWarningOnly => _get()['warningOnly'] == true;
+  set warningOnly(bool value) {
+    _call(0, 'protection.update', [id, <String, Object?>{'warningOnly': value}]);
+  }
+
+  /// User ids that may edit (besides the owner).
+  List<String> get editors => (_get()['editors'] as List).cast<String>();
+
+  /// Allows the user [userId] to edit.
+  Protection addEditor(String userId) {
+    final list = _copyStrings(editors);
+    if (!list.contains(userId)) list.add(userId);
+    _call(0, 'protection.update', [id, <String, Object?>{'editors': list}]);
+    return this;
+  }
+
+  /// Removes the user [userId] from the editors.
+  Protection removeEditor(String userId) {
+    final list = _copyStrings(editors);
+    list.remove(userId);
+    _call(0, 'protection.update', [id, <String, Object?>{'editors': list}]);
+    return this;
+  }
+
+  /// Ranges of a sheet protection that stay editable.
+  set unprotectedRanges(List<Range> ranges) {
+    final hs = <int>[];
+    for (final r in ranges) {
+      hs.add(r._h);
+    }
+    _call(0, 'protection.update', [id, <String, Object?>{'exceptRanges': hs}]);
+  }
+
+  /// Removes the protection.
+  void remove() {
+    _call(0, 'protection.remove', [id]);
+  }
+}
+
+// ---------------------------------------------------------------------------
+// P2 services (09 §6.12): LockService, CacheService.
+// ---------------------------------------------------------------------------
+
+/// Locks that serialize concurrent executions of this spreadsheet's script.
+/// Server executions share real locks; in the app (one window) a lock is
+/// always granted.
+class LockService {
+  /// A lock shared by every execution of this spreadsheet's script.
+  static Lock get documentLock => const Lock._('document');
+
+  /// Alias of [documentLock] (a project is bound to one spreadsheet).
+  static Lock get scriptLock => const Lock._('document');
+
+  /// A lock shared by the executions of the running user.
+  static Lock get userLock => const Lock._('user');
+}
+
+/// A mutual-exclusion lock ([LockService]).
+class Lock {
+  const Lock._(this._scope);
+  final String _scope;
+
+  /// Tries to acquire the lock within [timeoutMs]; returns whether it did.
+  bool tryLock(int timeoutMs) => _call(0, 'lock.acquire', [_scope, timeoutMs]) as bool;
+
+  /// Acquires the lock or throws a [ScriptException] after [timeoutMs].
+  void waitLock(int timeoutMs) {
+    if (!tryLock(timeoutMs)) {
+      throw ScriptException('lock_timeout', 'Could not obtain the lock within $timeoutMs ms.');
+    }
+  }
+
+  /// Whether this execution holds the lock.
+  bool get hasLock => _call(0, 'lock.has', [_scope]) as bool;
+
+  /// Releases the lock (also released when the execution ends).
+  void releaseLock() {
+    _call(0, 'lock.release', [_scope]);
+  }
+}
+
+/// Short-lived string caches (at most 6 hours, 100 KB per value).
+class CacheService {
+  /// A cache shared by every user of this spreadsheet's script.
+  static Cache get documentCache => const Cache._('document');
+
+  /// Alias of [documentCache].
+  static Cache get scriptCache => const Cache._('document');
+
+  /// A cache private to the running user.
+  static Cache get userCache => const Cache._('user');
+}
+
+/// A string cache ([CacheService]).
+class Cache {
+  const Cache._(this._scope);
+  final String _scope;
+
+  /// The value of [key], or null when missing or expired.
+  String? get(String key) {
+    final v = _call(0, 'cache.get', [_scope, key]);
+    return v == null ? null : v as String;
+  }
+
+  /// Values of [keys] that are present.
+  Map<String, String> getAll(List<String> keys) =>
+      (_call(0, 'cache.getAll', [_scope, keys]) as Map).cast<String, String>();
+
+  /// Stores [value] for [ttlSeconds] (default 10 minutes, at most 6 hours).
+  void put(String key, String value, {int ttlSeconds = 600}) {
+    _call(0, 'cache.put', [_scope, <String, String>{key: value}, ttlSeconds]);
+  }
+
+  /// Stores several values.
+  void putAll(Map<String, String> values, {int ttlSeconds = 600}) {
+    _call(0, 'cache.put', [_scope, values, ttlSeconds]);
+  }
+
+  /// Removes [key].
+  void remove(String key) {
+    _call(0, 'cache.remove', [_scope, <String>[key]]);
+  }
+
+  /// Removes [keys].
+  void removeAll(List<String> keys) {
+    _call(0, 'cache.remove', [_scope, keys]);
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Sidebars and dialogs: the declarative UI DSL (09 §16.3, P2).
+// ---------------------------------------------------------------------------
+
+List<Object?> _children(List<UiComponent> children) {
+  final out = <Object?>[];
+  for (final c in children) {
+    out.add(c._data);
+  }
+  return out;
+}
+
+/// A component of a [UiPanel] (rendered with the app's own widgets; no
+/// HTML, no styling beyond `primary`/`destructive` buttons).
+class UiComponent {
+  UiComponent._(this._data);
+  final Map<String, Object?> _data;
+}
+
+/// Text (a Markdown subset: `**bold**`, `*italic*`, `` `code` ``).
+class UiText extends UiComponent {
+  UiText(String text) : super._(<String, Object?>{'type': 'text', 'text': text});
+}
+
+/// A single-line input; [type] is `text`, `number`, `date` or `email`.
+class UiTextField extends UiComponent {
+  UiTextField({required String id, String label = '', String value = '', String placeholder = '',
+      String type = 'text'})
+      : super._(<String, Object?>{
+          'type': 'textField',
+          'id': id,
+          'label': label,
+          'value': value,
+          'placeholder': placeholder,
+          'inputType': type,
+        });
+}
+
+/// A multi-line input.
+class UiTextarea extends UiComponent {
+  UiTextarea({required String id, String label = '', String value = '', int rows = 4})
+      : super._(<String, Object?>{'type': 'textarea', 'id': id, 'label': label, 'value': value, 'rows': rows});
+}
+
+/// A dropdown of [options].
+class UiSelect extends UiComponent {
+  UiSelect({required String id, required List<String> options, String label = '', String? value})
+      : super._(<String, Object?>{'type': 'select', 'id': id, 'label': label, 'options': options, 'value': value});
+}
+
+/// A checkbox.
+class UiCheckbox extends UiComponent {
+  UiCheckbox({required String id, String label = '', bool value = false})
+      : super._(<String, Object?>{'type': 'checkbox', 'id': id, 'label': label, 'value': value});
+}
+
+/// One choice of [options].
+class UiRadioGroup extends UiComponent {
+  UiRadioGroup({required String id, required List<String> options, String label = '', String? value})
+      : super._(<String, Object?>{'type': 'radio', 'id': id, 'label': label, 'options': options, 'value': value});
+}
+
+/// A button that runs the script function [onClick] with a [UiEvent]
+/// (`'_close'` closes the panel instead).
+class UiButton extends UiComponent {
+  UiButton(String caption, {required String onClick, bool primary = false, bool destructive = false})
+      : super._(<String, Object?>{
+          'type': 'button',
+          'caption': caption,
+          'onClick': onClick,
+          'primary': primary,
+          'destructive': destructive,
+        });
+}
+
+/// Components side by side.
+class UiRow extends UiComponent {
+  UiRow({required List<UiComponent> children})
+      : super._(<String, Object?>{'type': 'row', 'children': _children(children)});
+}
+
+/// Components below each other.
+class UiColumn extends UiComponent {
+  UiColumn({required List<UiComponent> children})
+      : super._(<String, Object?>{'type': 'column', 'children': _children(children)});
+}
+
+/// A horizontal line.
+class UiDivider extends UiComponent {
+  UiDivider() : super._(<String, Object?>{'type': 'divider'});
+}
+
+/// A read-only table.
+class UiTable extends UiComponent {
+  UiTable({List<String> headers = const [], required List<List<Object?>> rows})
+      : super._(<String, Object?>{'type': 'table', 'headers': headers, 'rows': rows});
+}
+
+/// A progress bar; [value] from 0 to 1 (null = indeterminate).
+class UiProgress extends UiComponent {
+  UiProgress({double? value, String label = ''})
+      : super._(<String, Object?>{'type': 'progress', 'value': value, 'label': label});
+}
+
+/// A sidebar or dialog ([Ui.showSidebar], [Ui.showModalDialog]).
+class UiPanel {
+  UiPanel({required this.title, required this.children, this.id = 'main'});
+
+  /// Shown in the panel header.
+  final String title;
+  final List<UiComponent> children;
+
+  /// Panel id (one sidebar per id; [UiEvent.panel] updates it).
+  final String id;
+
+  Map<String, Object?> _data() =>
+      <String, Object?>{'id': id, 'title': title, 'children': _children(children)};
+}
+
+/// The panel of a [UiEvent].
+class UiPanelHandle {
+  UiPanelHandle._(this.id);
+
+  /// Panel id.
+  final String id;
+
+  /// Replaces the panel's content (input values typed so far are kept for
+  /// inputs with the same id).
+  void update(UiPanel panel) {
+    _call(0, 'ui.updatePanel', [id, panel._data()]);
+  }
+
+  /// Closes the panel.
+  void close() {
+    _call(0, 'ui.closePanel', [id]);
+  }
 }
 ''';

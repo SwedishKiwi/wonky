@@ -59,6 +59,18 @@ final class SourceColumn {
   final DisplayTextProvider _display;
   final List<String?> _texts;
 
+  /// Replaces data row [i]'s value and number format (incremental pivot
+  /// refresh, 07 §7.10).
+  void setRow(int i, CellValue value, String? format) {
+    values[i] = value;
+    formats[i] = format;
+    _texts[i] = null;
+  }
+
+  /// Display text of [value] with [format] as this column shows it.
+  String displayTextOf(CellValue value, String? format) =>
+      value.isBlank() ? '' : _display.displayText(value, format);
+
   /// Display text of data row [i] (cached).
   String displayText(int i) {
     final v = values[i];
@@ -91,54 +103,16 @@ final class SourceTable {
     Uint8List? rowMask,
     ({String? fill, String? text}) Function(int row, int col)? colorAt,
   }) {
-    final sheet = model.sheet(range.sheetId)!;
-    final rect = _clamp(range, sheet.usedRect()?.bottom);
-    final n = rect.rowCount - 1;
-    final cols = <SourceColumn>[];
-    for (var c = rect.left; c <= rect.right; c++) {
-      final colId = sheet.columns.tryIdAt(c);
-      if (colId == null) continue;
-      final h = values.valueAt(sheet.id, rect.top, c).toCellValue();
-      final headerText = h.isBlank()
-          ? 'Column ${ColumnLetters.fromIndex(c)}'
-          : displayText.displayText(
-              h,
-              values.numberFormatAt(sheet.id, rect.top, c),
-            );
-      final vs = <CellValue>[];
-      final fs = <String?>[];
-      final fills = colorAt == null ? null : <String?>[];
-      final texts = colorAt == null ? null : <String?>[];
-      for (var i = 0; i < n; i++) {
-        final r = rect.top + 1 + i;
-        vs.add(values.valueAt(sheet.id, r, c).toCellValue());
-        fs.add(values.numberFormatAt(sheet.id, r, c));
-        if (colorAt != null) {
-          final colors = colorAt(r, c);
-          fills!.add(colors.fill);
-          texts!.add(colors.text);
-        }
-      }
-      cols.add(
-        SourceColumn(
-          colId: colId,
-          header: headerText,
-          values: vs,
-          formats: fs,
-          display: displayText,
-          sheetCol: c,
-          fillColors: fills,
-          textColors: texts,
-        ),
-      );
-    }
-    return SourceTable(
-      sheetId: sheet.id,
-      range: rect,
-      columns: cols,
-      display: displayText,
+    final b = SourceTableBuilder(
+      model,
+      values,
+      range,
+      displayText,
       rowMask: rowMask,
+      colorAt: colorAt,
     );
+    while (!b.step(1 << 30)) {}
+    return b.build();
   }
 
   /// A table from literal data rows (MCP, previews, tests): column [colIds]
@@ -188,6 +162,10 @@ final class SourceTable {
   }
 
   /// Open-ended (whole column) sources are clamped to the used range.
+  /// [r]'s rectangle clamped to the last used row for whole columns.
+  static GridRect clampToUsed(ResolvedRange r, int? lastUsedRow) =>
+      _clamp(r, lastUsedRow);
+
   static GridRect _clamp(ResolvedRange r, int? lastUsedRow) {
     final rect = r.rect;
     if (lastUsedRow == null || !r.wholeColumns) return rect;
@@ -224,4 +202,133 @@ final class SourceTable {
 
   /// Sheet row of data row [i].
   int sheetRow(int i) => range.top + 1 + i;
+}
+
+/// Builds a [SourceTable] snapshot in slices (07 §7.4 step 7: big pivot
+/// sources are read across frames instead of in one blocking call):
+/// [step] reads up to a number of cells; [build] returns the table once
+/// [isDone]. The model must not change between steps (callers restart on
+/// changes). [SourceTable.fromModel] is the one-shot form.
+final class SourceTableBuilder {
+  /// Starts a snapshot of [range] (header row included).
+  SourceTableBuilder(
+    WorkbookModel model,
+    this._values,
+    ResolvedRange range,
+    this._display, {
+    this.rowMask,
+    this.colorAt,
+  }) {
+    final sheet = model.sheet(range.sheetId)!;
+    _sheetId = sheet.id;
+    rect = SourceTable._clamp(range, sheet.usedRect()?.bottom);
+    _n = rect.rowCount - 1;
+    for (var c = rect.left; c <= rect.right; c++) {
+      final colId = sheet.columns.tryIdAt(c);
+      if (colId != null) _cols.add((c, colId));
+    }
+  }
+
+  final CellSource _values;
+  final DisplayTextProvider _display;
+
+  /// Slicer mask of the data rows (1 = excluded).
+  final Uint8List? rowMask;
+
+  /// Effective colors of data cells (color filters), or null.
+  final ({String? fill, String? text}) Function(int row, int col)? colorAt;
+
+  late final String _sheetId;
+
+  /// The snapshot rectangle (header row first).
+  late final GridRect rect;
+  late final int _n;
+  final List<(int, String)> _cols = [];
+  final List<SourceColumn> _done = [];
+  int _col = 0;
+  int _row = 0;
+  List<CellValue> _vs = [];
+  List<String?> _fs = [];
+  List<String?>? _fills;
+  List<String?>? _texts;
+
+  /// Data rows × columns (the cells [step] reads in total).
+  int get cellCount => _n * _cols.length;
+
+  /// Whether every column was read.
+  bool get isDone => _col >= _cols.length;
+
+  /// Share of the cells read (0–1).
+  double get progress => cellCount == 0
+      ? 1
+      : ((_col * _n + _row) / cellCount).clamp(0.0, 1.0).toDouble();
+
+  /// Reads up to [cells] more cells; returns [isDone].
+  bool step(int cells) {
+    var budget = cells;
+    while (!isDone && budget > 0) {
+      final (c, _) = _cols[_col];
+      if (_row == 0 && _vs.isEmpty) {
+        _fills = colorAt == null ? null : <String?>[];
+        _texts = colorAt == null ? null : <String?>[];
+      }
+      final end = _row + budget < _n ? _row + budget : _n;
+      for (var i = _row; i < end; i++) {
+        final r = rect.top + 1 + i;
+        _vs.add(_values.valueAt(_sheetId, r, c).toCellValue());
+        _fs.add(_values.numberFormatAt(_sheetId, r, c));
+        final at = colorAt;
+        if (at != null) {
+          final colors = at(r, c);
+          _fills!.add(colors.fill);
+          _texts!.add(colors.text);
+        }
+      }
+      budget -= end - _row;
+      _row = end;
+      if (_row >= _n) _finishColumn();
+    }
+    return isDone;
+  }
+
+  void _finishColumn() {
+    final (c, colId) = _cols[_col];
+    final h = _values.valueAt(_sheetId, rect.top, c).toCellValue();
+    final header = h.isBlank()
+        ? 'Column ${ColumnLetters.fromIndex(c)}'
+        : _display.displayText(
+            h,
+            _values.numberFormatAt(_sheetId, rect.top, c),
+          );
+    _done.add(
+      SourceColumn(
+        colId: colId,
+        header: header,
+        values: _vs,
+        formats: _fs,
+        display: _display,
+        sheetCol: c,
+        fillColors: _fills,
+        textColors: _texts,
+      ),
+    );
+    _vs = [];
+    _fs = [];
+    _fills = null;
+    _texts = null;
+    _row = 0;
+    _col++;
+  }
+
+  /// The finished table (call once [isDone]).
+  SourceTable build() {
+    assert(isDone, 'the snapshot is not complete');
+    return SourceTable(
+      sheetId: _sheetId,
+      range: rect,
+      columns: _done,
+      display: _display,
+      rowMask: rowMask,
+    );
+  }
 }

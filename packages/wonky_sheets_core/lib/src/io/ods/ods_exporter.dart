@@ -17,6 +17,7 @@ import '../formula/open_formula_translator.dart';
 import '../ir/import_warning.dart';
 import '../ir/ir_range.dart';
 import '../ir/workbook_document.dart';
+import 'ods_charts.dart';
 import 'ods_styles.dart';
 
 /// Options of an ODS export.
@@ -123,6 +124,12 @@ final class _Writer {
   late final double defaultSize;
   late final OdsStyleWriter styles;
   final OpenFormulaTranslator translator = OpenFormulaTranslator();
+
+  /// `content.xml` of the embedded chart objects (`Object 1` …).
+  final List<String> _chartObjects = [];
+
+  /// IR sheet name → the name written in the file.
+  Map<String, String> _odsNames = const {};
   final NumberFormatter formatter = NumberFormatter.instance;
 
   static const _xmlHeader = '<?xml version="1.0" encoding="UTF-8"?>';
@@ -133,6 +140,9 @@ final class _Writer {
       throw ArgumentError('A workbook needs at least one sheet');
     }
     final names = _sheetNames();
+    _odsNames = {
+      for (var i = 0; i < doc.sheets.length; i++) doc.sheets[i].name: names[i],
+    };
     final tables = StringBuffer();
     for (var i = 0; i < doc.sheets.length; i++) {
       tables.write(_table(doc.sheets[i], names[i]));
@@ -155,6 +165,9 @@ final class _Writer {
     add('styles.xml', _stylesXml());
     add('meta.xml', _metaXml());
     add('settings.xml', _settingsXml(names));
+    for (var i = 0; i < _chartObjects.length; i++) {
+      add('Object ${i + 1}/content.xml', _chartObjects[i]);
+    }
     add('META-INF/manifest.xml', _manifestXml());
     return ZipEncoder().encodeBytes(archive, modified: modified);
   }
@@ -195,6 +208,7 @@ final class _Writer {
       '<table:table table:name="${OdsXml.attr(name)}" '
       'table:style-name="${styles.tableStyle(hidden: s.hidden, rtl: s.rtl, tabColor: s.tabColor, defaultRowHeight: s.defaultRowHeight, defaultColumnWidth: s.defaultColumnWidth)}">',
     );
+    b.write(_shapes(s));
     final nRows = s.usedRows < 1 ? 1 : s.usedRows;
     final nCols = s.usedColumns < 1 ? 1 : s.usedColumns;
     final defaultWidth = s.defaultColumnWidth ?? 100;
@@ -254,6 +268,36 @@ final class _Writer {
     return b.toString();
   }
 
+  /// Charts as embedded ODF chart objects (08 §23, 11 §6.4); charts that
+  /// can't be written are reported.
+  String _shapes(IrSheet s) {
+    if (s.charts.isEmpty) return '';
+    final b = StringBuffer();
+    var skipped = 0;
+    for (final chart in s.charts) {
+      final content = OdsCharts.objectContent(
+        chart,
+        doc,
+        odsSheet: (n) => _odsNames[n] ?? n,
+      );
+      if (content == null) {
+        skipped++;
+        continue;
+      }
+      _chartObjects.add(content);
+      final n = _chartObjects.length;
+      b.write(OdsCharts.frame(chart, s, './Object $n', n));
+    }
+    if (skipped > 0) {
+      report.add(
+        'chart',
+        '$skipped chart(s) of types ODS can\'t hold were not exported to ODS',
+        sheet: s.name,
+      );
+    }
+    return b.isEmpty ? '' : '<table:shapes>$b</table:shapes>';
+  }
+
   void _reportUnsupported(IrSheet s) {
     void warn(bool present, String code, String what) {
       if (present) {
@@ -269,7 +313,6 @@ final class _Writer {
     );
     warn(s.autoFilter != null, 'filter', 'Filters');
     warn(s.images.isNotEmpty, 'image', 'Images');
-    warn(s.charts.isNotEmpty, 'chart', 'Charts');
     warn(
       s.rows.entries.any((e) => e.value.outlineLevel > 0) ||
           s.columns.entries.any((e) => e.value.outlineLevel > 0),
@@ -762,6 +805,7 @@ final class _Writer {
         '${entry('styles.xml', 'text/xml')}'
         '${entry('meta.xml', 'text/xml')}'
         '${entry('settings.xml', 'text/xml')}'
+        '${[for (var i = 1; i <= _chartObjects.length; i++) '${entry('Object $i/', OdsCharts.mediaType)}${entry('Object $i/content.xml', 'text/xml')}'].join()}'
         '</manifest:manifest>';
   }
 }

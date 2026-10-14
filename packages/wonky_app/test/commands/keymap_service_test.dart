@@ -34,6 +34,10 @@ void main() {
             scope: KeyScope.drive,
           ),
           bound('test.plain', const KeyBinding('J')),
+          bound(
+            'test.digit',
+            const KeyBinding('1', mod: true, alt: true, shift: true),
+          ),
         ],
       ),
       registerShellCommands: false,
@@ -90,6 +94,37 @@ void main() {
     await pressCtrl(tester, LogicalKeyboardKey.keyK);
 
     expect(ran, ['test.global']);
+  });
+
+  testWidgets('Given a digit shortcut with Shift when the layout types a '
+      'symbol then the key position matches', (tester) async {
+    await tester.pumpWidget(
+      KeymapScope(
+        scope: KeyScope.global,
+        keymap: keymap,
+        child: const Focus(autofocus: true, child: SizedBox()),
+      ),
+    );
+
+    // The web reports the typed symbol as the logical key.
+    const web = 'web';
+    await tester.sendKeyDownEvent(
+      LogicalKeyboardKey.controlLeft,
+      platform: web,
+    );
+    await tester.sendKeyDownEvent(LogicalKeyboardKey.altLeft, platform: web);
+    await tester.sendKeyDownEvent(LogicalKeyboardKey.shiftLeft, platform: web);
+    await tester.sendKeyEvent(
+      LogicalKeyboardKey.exclamation,
+      physicalKey: PhysicalKeyboardKey.digit1,
+      platform: web,
+    );
+    await tester.sendKeyUpEvent(LogicalKeyboardKey.shiftLeft, platform: web);
+    await tester.sendKeyUpEvent(LogicalKeyboardKey.altLeft, platform: web);
+    await tester.sendKeyUpEvent(LogicalKeyboardKey.controlLeft, platform: web);
+    await tester.pump();
+
+    expect(ran, ['test.digit']);
   });
 
   testWidgets('Given a text field has focus when typing a plain letter then '

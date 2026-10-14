@@ -294,8 +294,10 @@ void main() {
     expect(CellFonts.displayFamily('Roboto'), CellFonts.roboto);
     expect(CellFonts.displayFamily('Lato'), CellFonts.lato);
     expect(CellFonts.displayFamily('Roboto Mono'), CellFonts.robotoMono);
-    expect(CellFonts.displayFamily('Montserrat'), CellFonts.lato);
-    expect(CellFonts.displayFamily('Merriweather'), CellFonts.ebGaramond);
+    expect(CellFonts.displayFamily('Montserrat'), CellFonts.montserrat);
+    expect(CellFonts.displayFamily('Merriweather'), CellFonts.merriweather);
+    expect(CellFonts.displayFamily('Poppins'), CellFonts.lato);
+    expect(CellFonts.displayFamily('Lora'), CellFonts.ebGaramond);
     expect(SheetsPdfFonts.pdfFamily('Roboto'), CellFonts.roboto);
     expect(SheetsPdfFonts.pdfFamily('Inter'), SheetsPdfFonts.sans);
   });

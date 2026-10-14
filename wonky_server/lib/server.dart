@@ -17,6 +17,7 @@ import 'src/platform/users/email_idp.dart';
 import 'src/platform/users/google_idp.dart';
 import 'src/platform/versions/version_service.dart';
 import 'src/sheets/versions/sheets_version_provider.dart';
+import 'src/web/middleware/sqlite_asset_alias.dart';
 import 'src/web/routes/app_config_route.dart';
 import 'src/web/routes/invite_route.dart';
 import 'src/web/routes/root_redirect_route.dart';
@@ -131,6 +132,8 @@ void _configureWebServer(Serverpod pod) {
     if (dir.existsSync()) {
       // Built with --wasm: cross-origin isolation headers (specs/13 §3).
       pod.webServer.addRoute(FlutterRoute(dir), '/$app');
+      // sqlite3.wasm asked for relative to a deep link (`/sheets/s/…`).
+      pod.webServer.addMiddleware(sqliteAssetAlias(app, dir), '/$app');
     } else {
       // Not built yet: explain how to build (`serverpod run flutter_build`).
       pod.webServer.addRoute(StaticRoute.file(fallbackPage), '/$app/**');

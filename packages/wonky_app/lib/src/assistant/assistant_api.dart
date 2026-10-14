@@ -18,6 +18,9 @@ abstract class AssistantApi {
   });
   Future<bool> stop({int? threadId, String? runId});
   Future<bool> confirm(String runId, String confirmationId, bool allow);
+
+  /// Answers a `uiToolCall` event of run [runId] (Sheets 12 §6.2).
+  Future<bool> uiToolResult(String runId, UiBridgeResponse response);
   Future<List<AssistantThreadView>> listThreads(UuidValue itemUuid);
   Future<AssistantThreadDetail> getThread(int threadId);
   Future<void> deleteThread(int threadId);
@@ -67,6 +70,10 @@ class ServerAssistantApi implements AssistantApi {
   @override
   Future<bool> confirm(String runId, String confirmationId, bool allow) =>
       _a.confirm(runId, confirmationId, allow);
+
+  @override
+  Future<bool> uiToolResult(String runId, UiBridgeResponse response) =>
+      _a.uiToolResult(runId, response);
 
   @override
   Future<List<AssistantThreadView>> listThreads(UuidValue itemUuid) =>

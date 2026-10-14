@@ -21,6 +21,7 @@ assistant:
   - chat:
   - stop:
   - confirm:
+  - uiToolResult:
   - listThreads:
   - getThread:
   - deleteThread:
@@ -140,6 +141,7 @@ sheetsAi:
   - describeChart:
   - getPreview:
   - applyPreview:
+  - evaluateAiCells:
   - discardPreview:
 sheets:
   - reserveSpaces:
@@ -156,11 +158,18 @@ sheets:
   - fetchImage:
 sheetsSync:
   - sync:
+sheetsImport:
+  - importInto:
+  - watchImport:
+  - importProgress:
+  - sourceFromDrive:
+  - cancelImport:
 script:
   - compile:
   - analyze:
   - bytecode:
   - run:
+  - runLive:
   - executions:
   - reportExecutions:
   - urlFetch:
@@ -168,6 +177,10 @@ script:
   - authorize:
   - revokeAuthorization:
   - notifyOpen:
+sheetsVersion:
+  - changes:
+  - diff:
+  - copyExtras:
 document:
   - connect:
   - getInfo:

@@ -7,6 +7,7 @@ import 'package:flutter/widgets.dart';
 import 'package:wonky_app/wonky_app.dart';
 import 'package:wonky_client/wonky_client.dart'
     show ScriptExecution, ScriptExecutionKind, ScriptExecutionStatus, UuidValue;
+import 'package:wonky_core/diff.dart';
 import 'package:wonky_core/wonky_core.dart';
 import 'package:wonky_sheets_core/formula.dart' show CellPos, GridRect;
 import 'package:wonky_sheets_core/model.dart';
@@ -17,9 +18,13 @@ import '../model/memory_workbook_session.dart';
 import '../history/server_change_undo.dart' show SheetsServerChangeEntry;
 import '../model/sheets_undo.dart';
 import '../sheet_editor/sheet_editor_controller.dart';
+import '../formatting/sheets_user_defaults.dart';
+import '../protection/file_editors.dart';
 import '../sync/sheets_sessions.dart' show SheetsData;
 import 'authorization_dialog.dart';
 import 'conflict_dialog.dart';
+import 'local/script_local_store.dart';
+import 'runtime/script_panels.dart';
 import 'runtime/script_runners.dart';
 import 'runtime/script_ui.dart';
 import 'runtime/session_workbook_access.dart';
@@ -89,8 +94,8 @@ class ScriptService extends ChangeNotifier {
     return c == null ? null : ServerScriptBackend(c);
   }
 
-  /// Bytecode of recent builds by build hash (offline reopen within the
-  /// app session).
+  /// Bytecode of recent builds by build hash (memory; the persistent copy
+  /// is in [ScriptLocalStore]).
   static final Map<String, Uint8List> _bytecodeCache = {};
 
   final SheetEditorController editor;
@@ -117,6 +122,19 @@ class ScriptService extends ChangeNotifier {
   final Set<String> _running = {};
   ScriptCompileResult? _lastCompile;
   List<ScriptMenu> _menus = const [];
+  ScriptLocalStore? _local;
+  Timer? _draftTimer;
+  bool _enabled = true;
+  final Set<LogEntry> _streamed = Set.identity();
+  Timer? _logNotify;
+  final Completer<void> _ready = Completer();
+
+  /// Completes when drafts are restored and the build is installed (the
+  /// editor opens files after it).
+  Future<void> get ready => _ready.future;
+
+  /// Whether [ready] has completed.
+  bool get isReady => _ready.isCompleted;
 
   /// Build phase shown by the editor.
   ScriptBuildPhase phase = ScriptBuildPhase.none;
@@ -188,9 +206,25 @@ class ScriptService extends ChangeNotifier {
 
   bool get _online => services.connectivity.online;
 
+  /// Settings › Sheets › *Enable scripts* (09 §11.3): when off, no script
+  /// code runs in this client and custom functions show an error.
+  bool get scriptsEnabled => _enabled;
+
+  /// The device-local store (null until opened or without SQLite).
+  ScriptLocalStore? get localStore => _local;
+
+  String get _spreadsheetKey => itemUuid.uuid;
+
   // ---------------------------------------------------------------- start
 
   void _start() {
+    _enabled = SheetsUserDefaults.of(services).scriptsEnabled;
+    // Buttons of script sidebars and dialogs (09 §16.3) run like menu
+    // items: one undo step, with a UiEvent.
+    ScriptPanels.of(editor).onButton = (fn, e) async {
+      await run(fn, kind: ExecutionKind.menu, event: e);
+    };
+    services.prefs.addListener(_onPrefs);
     model.addListener(_onBatch);
     _commands = services.dispatcher.events.listen(_onCommand);
     editor.selection.addListener(_onSelection);
@@ -209,9 +243,15 @@ class ScriptService extends ChangeNotifier {
       debugPrint('Loading script user properties failed: $e');
     }
     if (_disposed) return;
+    _local = await ScriptLocalStore.of(services);
+    if (_disposed) return;
+    await _restoreDrafts();
     await _loadGrant();
     await reloadBuild();
-    if (_disposed || project == null) return;
+    if (!_ready.isCompleted) _ready.complete();
+    if (_disposed) return;
+    unawaited(uploadExecutions());
+    if (project == null) return;
     final b = backend;
     if (b != null && _online) {
       try {
@@ -258,10 +298,19 @@ class ScriptService extends ChangeNotifier {
       return;
     }
     var bytes = _bytecodeCache[hash];
+    final local = _local;
+    if (bytes == null && local != null) {
+      try {
+        bytes = await local.bytecode(hash);
+      } on Object catch (e) {
+        debugPrint('Reading the cached script build failed: $e');
+      }
+    }
     final b = backend;
     if (bytes == null && b != null && _online) {
       try {
         bytes = await b.bytecode(itemUuid);
+        if (bytes != null) _cacheBytecode(hash, bytes);
       } on Object catch (e) {
         debugPrint('Downloading the script build failed: $e');
       }
@@ -281,11 +330,22 @@ class ScriptService extends ChangeNotifier {
     );
   }
 
+  void _cacheBytecode(String hash, Uint8List bytes) {
+    final local = _local;
+    if (local == null) return;
+    unawaited(
+      local.putBytecode(hash, bytes).catchError((Object e) {
+        debugPrint('Caching the script build failed: $e');
+      }),
+    );
+  }
+
   /// Installs [program] (last good build): custom functions, menus
   /// (`onOpen`), macros.
   void installProgram(ScriptProgram program) {
     if (_disposed) return;
     final s = _ensureSession();
+    s.customFunctions.disabledReason = _enabled ? null : l.scriptsDisabled;
     final before = {...?_program?.exports.customFunctions.keys};
     if (!s.setProgram(program)) {
       services.toasts.show(l.scriptNeedsNewerApp);
@@ -306,6 +366,14 @@ class ScriptService extends ChangeNotifier {
     notifyListeners();
     services.registry.notifyStateChanged();
     unawaited(fireOpen());
+  }
+
+  /// Forgets the installed build and the in-memory bytecode (tests of the
+  /// persistent cache).
+  @visibleForTesting
+  void forgetBuild() {
+    _bytecodeCache.clear();
+    _uninstall();
   }
 
   /// The project was deleted: no custom functions, menus or macros.
@@ -333,6 +401,7 @@ class ScriptService extends ChangeNotifier {
         name: me?.displayName ?? '',
       ),
       role: _role(),
+      onLiveLog: _onLiveLog,
       ui: AppScriptUi(editor, onMenu: (_) => _menusChanged()),
       fetcher: _AppFetcher(this),
       userProperties: _userProps ?? MemoryPropertyStore(),
@@ -346,7 +415,39 @@ class ScriptService extends ChangeNotifier {
       ..add(s.executions.listen(_onExecution))
       ..add(s.customFunctionBatches.listen(_onCustomBatch))
       ..add(s.customFunctions.updates.listen((_) => _settleSoon()));
+    s.customFunctions.disabledReason = _enabled ? null : l.scriptsDisabled;
     return _session = s;
+  }
+
+  /// Live log lines while a function runs (09 §14.1 Log panel).
+  void _onLiveLog(String function, LogEntry e) {
+    if (_disposed) return;
+    _streamed.add(e);
+    log.add(ScriptLogLine(function, e));
+    if (log.length > 2000) log.removeRange(0, log.length - 2000);
+    // Coalesce repaints of chatty scripts.
+    _logNotify ??= Timer(const Duration(milliseconds: 50), () {
+      _logNotify = null;
+      if (!_disposed) notifyListeners();
+    });
+  }
+
+  void _onPrefs() {
+    final enabled = SheetsUserDefaults.of(services).scriptsEnabled;
+    if (enabled == _enabled || _disposed) return;
+    _enabled = enabled;
+    final s = _session;
+    if (s != null) {
+      s.customFunctions.disabledReason = enabled ? null : l.scriptsDisabled;
+      s.customFunctions.invalidateAll();
+    }
+    if (enabled) {
+      if (_program != null) unawaited(fireOpen());
+    } else {
+      _session?.menus.clear();
+      _menusChanged();
+    }
+    notifyListeners();
   }
 
   bool _settling = false;
@@ -406,8 +507,13 @@ class ScriptService extends ChangeNotifier {
     String functionName, {
     ExecutionKind kind = ExecutionKind.editor,
     BuildContext? context,
+    ScriptEvent? event,
   }) async {
     final s = _session;
+    if (!_enabled) {
+      services.toasts.show(l.scriptsDisabled);
+      return null;
+    }
     if (s == null || _program == null) {
       services.toasts.show(l.scriptNoBuild);
       return null;
@@ -423,9 +529,13 @@ class ScriptService extends ChangeNotifier {
     _prepare(s);
     _running.add(functionName);
     notifyListeners();
+    // Running `onOpen(OpenEvent e)` by hand (editor, palette) gets the same
+    // event as opening the spreadsheet instead of failing its cast on null.
+    final ev =
+        event ?? (functionName == 'onOpen' ? const OpenEventData() : null);
     final ExecutionResult r;
     try {
-      r = await s.run(functionName, kind: kind);
+      r = await s.run(functionName, kind: kind, event: ev);
     } finally {
       _running.remove(functionName);
       notifyListeners();
@@ -448,7 +558,7 @@ class ScriptService extends ChangeNotifier {
     UndoStep? appendTo,
   }) async {
     final s = _session;
-    if (s == null || _program == null) return null;
+    if (s == null || _program == null || !_enabled) return null;
     _prepare(s);
     final started = clock.now();
     final r = await s.fireSimpleTrigger(kind, event);
@@ -509,6 +619,10 @@ class ScriptService extends ChangeNotifier {
 
   /// *Run on server* (09 §14.5).
   Future<ServerRunResult?> runOnServer(String functionName) async {
+    if (!_enabled) {
+      services.toasts.show(l.scriptsDisabled);
+      return null;
+    }
     final b = backend;
     if (b == null || !_online) {
       services.toasts.show(l.scriptOffline);
@@ -517,8 +631,16 @@ class ScriptService extends ChangeNotifier {
     _running.add(functionName);
     notifyListeners();
     try {
-      final r = await b.runOnServer(itemUuid, functionName);
-      for (final e in r.logs) {
+      var streamed = 0;
+      final r = await b.runOnServer(
+        itemUuid,
+        functionName,
+        onLog: (e) {
+          streamed++;
+          _onLiveLog(functionName, e);
+        },
+      );
+      for (final e in r.logs.skip(streamed)) {
         log.add(ScriptLogLine(functionName, e));
       }
       final change = r.changeId;
@@ -606,11 +728,19 @@ class ScriptService extends ChangeNotifier {
   /// Content hash per file id at load or last save (conflict check).
   final Map<String, String> baseHashes = {};
 
+  /// Source per file id at load or last save (the base of *Merge*).
+  final Map<String, String> baseSources = {};
+
   /// Whether the file [id] has unsaved changes.
   bool isDirty(String id) => drafts.containsKey(id);
 
+  /// Files whose save is being written: the model notifies while the row
+  /// changes but [baseHashes] still holds the old hash, which must not read
+  /// as "saved elsewhere" (09 §14.3).
+  final Set<String> saving = {};
+
   /// Records the editor content of [id] (removes the draft when it equals
-  /// the saved source).
+  /// the saved source). Drafts are persisted 2 s later (09 §14.3).
   void setDraft(String id, String text) {
     final row = ScriptProjectRows.file(model, id);
     final saved = row == null ? null : ScriptProjectRows.sourceOf(row);
@@ -620,13 +750,125 @@ class ScriptService extends ChangeNotifier {
     } else {
       drafts[id] = text;
     }
+    _scheduleDraftSave();
     if (was != drafts.containsKey(id)) notifyListeners();
+  }
+
+  /// Drops the draft of [id] (reload, discard).
+  void clearDraft(String id) {
+    if (drafts.remove(id) != null) {
+      _scheduleDraftSave();
+      notifyListeners();
+    }
   }
 
   /// Notes that the editor shows the saved version of [id].
   void markLoaded(String id) {
     final row = ScriptProjectRows.file(model, id);
-    if (row != null) baseHashes[id] = ScriptProjectRows.hashOf(row);
+    if (row != null) {
+      baseHashes[id] = ScriptProjectRows.hashOf(row);
+      baseSources[id] = ScriptProjectRows.sourceOf(row);
+    }
+  }
+
+  void _scheduleDraftSave() {
+    if (_local == null || _disposed) return;
+    _draftTimer?.cancel();
+    _draftTimer = Timer(
+      const Duration(seconds: 2),
+      () => unawaited(_saveDrafts()),
+    );
+  }
+
+  Future<void> _saveDrafts() async {
+    _draftTimer?.cancel();
+    _draftTimer = null;
+    final local = _local;
+    if (local == null) return;
+    try {
+      await local.saveDrafts(_spreadsheetKey, [
+        for (final e in drafts.entries)
+          ScriptDraft(
+            fileId: e.key,
+            text: e.value,
+            baseHash: baseHashes[e.key] ?? '',
+            baseText: baseSources[e.key] ?? '',
+          ),
+      ]);
+    } on Object catch (e) {
+      debugPrint('Saving script drafts failed: $e');
+    }
+  }
+
+  /// Persists the drafts now (tests; normally 2 s after the last edit).
+  @visibleForTesting
+  Future<void> flushDrafts() => _saveDrafts();
+
+  /// Restores the unsaved drafts of the last session (reload, crash).
+  @visibleForTesting
+  Future<void> restoreDrafts() => _restoreDrafts();
+
+  Future<void> _restoreDrafts() async {
+    final local = _local;
+    if (local == null) return;
+    List<ScriptDraft> saved;
+    try {
+      saved = await local.drafts(_spreadsheetKey);
+    } on Object catch (e) {
+      debugPrint('Reading script drafts failed: $e');
+      return;
+    }
+    var any = false;
+    for (final d in saved) {
+      final row = ScriptProjectRows.file(model, d.fileId);
+      if (row == null || drafts.containsKey(d.fileId)) continue;
+      if (ScriptProjectRows.sourceOf(row) == d.text) continue;
+      drafts[d.fileId] = d.text;
+      baseHashes[d.fileId] = d.baseHash.isEmpty
+          ? ScriptProjectRows.hashOf(row)
+          : d.baseHash;
+      baseSources[d.fileId] = d.baseText;
+      any = true;
+    }
+    if (any) notifyListeners();
+  }
+
+  // -------------------------------------------------------- local history
+
+  /// Saved versions of [fileId] on this device, newest first (09 §14.3
+  /// `LocalScriptHistory`).
+  Future<List<ScriptHistoryEntry>> historyOf(String fileId) async {
+    final local = _local;
+    if (local == null) return const [];
+    try {
+      return await local.history(fileId);
+    } on Object {
+      return const [];
+    }
+  }
+
+  void _keepHistory(String fileId, String source, String note) {
+    final local = _local;
+    if (local == null || source.isEmpty) return;
+    unawaited(
+      local
+          .addHistory(
+            ScriptHistoryEntry(
+              fileId: fileId,
+              savedAt: clock.now(),
+              source: source,
+              note: note,
+            ),
+          )
+          .catchError((Object e) => debugPrint('Script history: $e')),
+    );
+  }
+
+  /// Puts [source] into the editor of [fileId] as an unsaved draft
+  /// (*Restore* of a local history version, *Merge*).
+  void restoreDraft(String fileId, String source) {
+    setDraft(fileId, source);
+    notifyListeners();
   }
 
   /// Saves the draft of [id] (or [source]); returns false when nothing was
@@ -646,24 +888,75 @@ class ScriptService extends ChangeNotifier {
     if (current != base && by != editor.session.userId) {
       final ctx = context ?? services.navigatorContext;
       if (ctx == null || !ctx.mounted) return false;
+      final theirs = ScriptProjectRows.sourceOf(row);
+      final who = await _nameOf(by);
+      if (!ctx.mounted) return false;
       final choice = await showScriptConflictDialog(
         ctx,
         fileName: ScriptProjectRows.nameOf(row),
+        updatedBy: who,
+        updatedAt: row.columns['updatedAt'],
+        mine: text,
+        theirs: theirs,
+        canMerge: baseSources.containsKey(id),
       );
-      if (choice == ScriptConflictChoice.cancel) return false;
-      if (choice == ScriptConflictChoice.discardMine) {
-        drafts.remove(id);
-        baseHashes[id] = current;
-        notifyListeners();
-        return false;
+      switch (choice) {
+        case ScriptConflictChoice.cancel:
+          return false;
+        case ScriptConflictChoice.discardMine:
+          _keepHistory(id, text, 'discarded');
+          drafts.remove(id);
+          baseHashes[id] = current;
+          baseSources[id] = theirs;
+          _scheduleDraftSave();
+          notifyListeners();
+          return false;
+        case ScriptConflictChoice.merge:
+          final merged = LineDiff.merge3(baseSources[id] ?? '', text, theirs);
+          _keepHistory(id, text, 'before merge');
+          baseHashes[id] = current;
+          baseSources[id] = theirs;
+          restoreDraft(id, merged.text);
+          if (merged.hasConflicts) {
+            services.toasts.show(
+              l.scriptMergeConflicts(merged.conflictLines.length),
+            );
+          }
+          return false;
+        case ScriptConflictChoice.overwrite:
+          _keepHistory(id, theirs, 'overwritten');
       }
     }
-    final hash = ScriptProjectWriter(editor).saveSource(id, text);
+    saving.add(id);
+    final String hash;
+    try {
+      hash = ScriptProjectWriter(editor).saveSource(id, text);
+    } finally {
+      saving.remove(id);
+    }
     baseHashes[id] = hash;
+    baseSources[id] = text;
     drafts.remove(id);
+    _keepHistory(id, text, 'saved');
+    _scheduleDraftSave();
     notifyListeners();
     if (compileAfter) unawaited(compile());
     return true;
+  }
+
+  /// Display name of the user [authUserId] (the file's editors; empty
+  /// when unknown).
+  Future<String> _nameOf(String authUserId) async {
+    if (authUserId.isEmpty) return '';
+    try {
+      final list = await FileEditors.load(services, itemUuid);
+      for (final e in list.editors) {
+        if (e.userId == authUserId) return e.label;
+      }
+    } on Object {
+      // Offline: the dialog names nobody.
+    }
+    return '';
   }
 
   /// Saves every draft (*Save all*).
@@ -768,6 +1061,7 @@ class ScriptService extends ChangeNotifier {
         final bytes = await b.bytecode(itemUuid);
         if (bytes != null && !_disposed) {
           _bytecodeCache[r.sourceHash] = bytes;
+          _cacheBytecode(r.sourceHash, bytes);
           installProgram(
             ScriptProgram(
               buildHash: r.sourceHash,
@@ -932,22 +1226,45 @@ class ScriptService extends ChangeNotifier {
     recent.add(r);
     if (recent.length > 200) recent.removeRange(0, recent.length - 200);
     for (final e in r.logs) {
+      // Lines streamed while the function ran are already in the log.
+      if (_streamed.remove(e)) continue;
       log.add(ScriptLogLine(r.functionName, e));
     }
     if (log.length > 2000) log.removeRange(0, log.length - 2000);
-    _pendingReports.add(_toRow(r));
+    _queueReport(_toRow(r));
+    notifyListeners();
+  }
+
+  /// Queues an execution for upload: in the device's
+  /// `LocalScriptExecutionLog` (survives reloads offline), in memory
+  /// without a local store.
+  void _queueReport(ScriptExecution row) {
+    final local = _local;
+    if (local != null) {
+      unawaited(
+        local
+            .queueExecutions(_spreadsheetKey, [row.toJson()])
+            .then((_) => _scheduleUpload())
+            .catchError((Object e) {
+              debugPrint('Queueing a script execution failed: $e');
+              _pendingReports.add(row);
+              _scheduleUpload();
+            }),
+      );
+      return;
+    }
+    _pendingReports.add(row);
     if (_pendingReports.length > 1000) {
       _pendingReports.removeRange(0, _pendingReports.length - 1000);
     }
     _scheduleUpload();
-    notifyListeners();
   }
 
   void _onCustomBatch(CustomFunctionBatchReport b) {
     if (b.calls == 0) return;
     final first = b.results.isEmpty ? null : b.results.first;
     final failed = b.results.where((r) => !r.ok).firstOrNull;
-    _pendingReports.add(
+    _queueReport(
       ScriptExecution(
         uuid: UuidValue.fromString(
           first?.executionId.isNotEmpty == true
@@ -975,7 +1292,6 @@ class ScriptService extends ChangeNotifier {
         callCount: b.calls,
       ),
     );
-    _scheduleUpload();
   }
 
   /// Uploads are batched: at most every 10 s while there are reports.
@@ -1020,14 +1336,38 @@ class ScriptService extends ChangeNotifier {
   /// Uploads finished client executions (best effort; queued offline).
   Future<void> uploadExecutions() async {
     final b = backend;
-    if (b == null || !_online || _pendingReports.isEmpty) return;
-    final batch = List.of(_pendingReports);
+    if (b == null || !_online) return;
+    final local = _local;
+    var stored = const <(int, Map<String, Object?>)>[];
+    if (local != null) {
+      try {
+        stored = await local.pendingExecutions(_spreadsheetKey);
+      } on Object catch (e) {
+        debugPrint('Reading queued script executions failed: $e');
+      }
+    }
+    if (_pendingReports.isEmpty && stored.isEmpty) return;
+    final memory = List.of(_pendingReports);
     _pendingReports.clear();
+    final batch = [...memory, for (final (_, row) in stored) ?_decodeRow(row)];
     try {
-      await b.reportExecutions(itemUuid, batch);
+      if (batch.isNotEmpty) await b.reportExecutions(itemUuid, batch);
+      if (stored.isNotEmpty) {
+        await local!.removeExecutions([for (final (id, _) in stored) id]);
+      }
+      // More than one batch was waiting.
+      if (stored.length >= 200 && !_disposed) _scheduleUpload();
     } on Object {
-      _pendingReports.insertAll(0, batch);
+      _pendingReports.insertAll(0, memory);
       if (!_disposed) _scheduleUpload();
+    }
+  }
+
+  static ScriptExecution? _decodeRow(Map<String, Object?> row) {
+    try {
+      return ScriptExecution.fromJson(row);
+    } on Object {
+      return null;
     }
   }
 
@@ -1073,7 +1413,11 @@ class ScriptService extends ChangeNotifier {
     }
     _uploadTimer?.cancel();
     _selectionTimer?.cancel();
+    _logNotify?.cancel();
+    services.prefs.removeListener(_onPrefs);
+    if (_draftTimer != null) unawaited(_saveDrafts());
     unawaited(uploadExecutions());
+    if (!_ready.isCompleted) _ready.complete();
     final wb = editor.session;
     if (wb is WorkbookSessionBase) wb.customFunctions.target = null;
     final s = _session;

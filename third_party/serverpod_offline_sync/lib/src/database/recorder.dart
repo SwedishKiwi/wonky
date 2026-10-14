@@ -1,3 +1,7 @@
+import 'dart:convert';
+import 'dart:math';
+import 'dart:typed_data';
+
 import 'package:clock/clock.dart';
 import 'package:meta/meta.dart';
 import 'package:serverpod_database/serverpod_database.dart';
@@ -786,6 +790,8 @@ class CrdtMutationRecorder {
         [for (final rowId in rowIds) _newCrdtDataRow(tableId, rowId, hlcManager)],
         transaction: transaction,
         ignoreConflicts: true,
+        // OS-7: the inserted metadata rows are not read back.
+        noReturn: true,
       );
 
       await _foreignKeyProjector.recordInsertAttempts(
@@ -1156,6 +1162,347 @@ class CrdtMutationRecorder {
     }
   }
 
+  // ------------------------------------------------------------------ OS-7
+
+  /// The CRDT rows of [rowIds] of [tableName] in the acting space, with
+  /// their tombstones (set-based writes, patch OS-7).
+  Future<List<CrdtDataRow>> crdtRowsWithTombstones(
+    String tableName,
+    Set<UuidValue> rowIds,
+    Transaction transaction,
+  ) async {
+    if (rowIds.isEmpty) return const [];
+    final pg = _db.dialect == DatabaseDialect.postgres;
+    final (tableId, _) = _context.schema[tableName]!;
+    final spaceId = _context.hlcManagerFor(transaction).normalizedSpaceId;
+    // One raw query per chunk (the ORM include reads the tombstones in a
+    // second query and deserializes every row through JSON).
+    final ids = rowIds.toList();
+    final out = <CrdtDataRow>[];
+    for (var i = 0; i < ids.length; i += _bulkIdChunk) {
+      final part = ids.sublist(i, min(i + _bulkIdChunk, ids.length));
+      final idList = pg
+          ? part.sqlLiteralList()
+          : r'SELECT unhex(value) FROM json_each($1)';
+      final result = await _db.unsafeQuery(
+        'SELECT r."id", r."uuidRowId", r."nodeId", r."hlcDatetime", '
+        'r."hlcCounter", r."visibility", d."id", d."nodeId", d."hlcDatetime", '
+        'd."hlcCounter", d."clFlag", d."reason" '
+        'FROM "crdt_data_rows" r '
+        'LEFT JOIN "crdt_data_tombstone" d ON d."rowId" = r."id" '
+        'WHERE r."spaceId" = $spaceId AND r."tblId" = $tableId '
+        'AND r."uuidRowId" IN ($idList)',
+        parameters: pg
+            ? null
+            : QueryParameters.positional([
+                jsonEncode([
+                  for (final id in part) id.uuid.replaceAll('-', ''),
+                ]),
+              ]),
+        transaction: transaction,
+      );
+      for (final row in result) {
+        final id = row[0]! as int;
+        out.add(
+          CrdtDataRow(
+            id: id,
+            spaceId: spaceId,
+            tblId: tableId,
+            uuidRowId: _uuidOf(row[1]),
+            nodeId: row[2]! as int,
+            hlcDatetime: _dateTimeOf(row[3]),
+            hlcCounter: row[4]! as int,
+            visibility: CrdtDataRowVisibility.fromJson(row[5]! as int),
+            deleted: row[6] == null
+                ? null
+                : CrdtDataDeleted(
+                    id: row[6]! as int,
+                    rowId: id,
+                    nodeId: row[7]! as int,
+                    hlcDatetime: _dateTimeOf(row[8]),
+                    hlcCounter: row[9]! as int,
+                    clFlag: row[10]! as int,
+                    reason: CrdtDataDeletedReason.fromJson(row[11]! as int),
+                  ),
+          ),
+        );
+      }
+    }
+    return out;
+  }
+
+  static UuidValue _uuidOf(Object? v) => switch (v) {
+    UuidValue() => v,
+    List<int>() => UuidValue.fromByteList(Uint8List.fromList(v)),
+    _ => UuidValue.fromString('$v'),
+  };
+
+  static DateTime _dateTimeOf(Object? v) => switch (v) {
+    DateTime() => v.toUtc(),
+    int() => DateTime.fromMillisecondsSinceEpoch(v, isUtc: true),
+    _ => DateTime.parse('$v').toUtc(),
+  };
+
+  static const _bulkIdChunk = 1000;
+
+  /// Whether updating exactly [columnNames] of rows of [tableName] can
+  /// change a foreign key or unique projection (then the set-based update
+  /// falls back to [OfflineSyncDatabase.update]).
+  bool updateNeedsProjection(String tableName, Set<String> columnNames) =>
+      _foreignKeyProjector.needsProjection(tableName, columnNames);
+
+  /// Proves that reviving the tombstoned [rows] (full rows, ids with CRDT
+  /// rows) leaves every projection unchanged: the table has no unique
+  /// indexes, no row references the revived ids, every parent the rows
+  /// name is visible and no attempted value is pending in the table. A
+  /// revive then needs no projection pass (OS-7).
+  Future<bool> canReviveWithoutProjection<T extends TableRow>(
+    List<T> rows,
+    Transaction transaction,
+  ) async {
+    if (rows.isEmpty) return true;
+    final tableName = rows.first.table.tableName;
+    if (_uniqueResolver.tableHasUniqueIndexes(tableName)) return false;
+    return _foreignKeyProjector.canLeaveLocalProjectionUnchanged(
+      rows,
+      transaction,
+      inserting: true,
+      persisted: false,
+      restoring: true,
+    );
+  }
+
+  /// Records a set-based revive of the tombstoned [crdtRows] whose domain
+  /// rows were just rewritten, when [canReviveWithoutProjection] holds: the
+  /// same metadata as [afterReinsert] (new row HLC, `userReinsert`
+  /// visibility and tombstone generation, field records dropped so the
+  /// fields inherit the new insertion HLC) in a few batched statements.
+  Future<void> afterBulkReinsert(
+    List<CrdtDataRow> crdtRows,
+    Transaction transaction,
+  ) async {
+    if (crdtRows.isEmpty) return;
+    final hlcManager = _context.hlcManagerFor(transaction);
+    final touched = [
+      for (final row in crdtRows)
+        _context
+            .withNextHlc(row, hlcManager)
+            .copyWith(visibility: CrdtDataRowVisibility.userReinsert),
+    ];
+    await CrdtDataRow.db.update(
+      _session,
+      touched,
+      columns: (t) => [t.nodeId, t.hlcDatetime, t.hlcCounter, t.visibility],
+      transaction: transaction,
+      noReturn: true,
+    );
+    final tombstones = [
+      for (final row in crdtRows)
+        if (row.deleted case final CrdtDataDeleted tomb)
+          () {
+            final hlc = hlcManager.increment();
+            return tomb.copyWith(
+              nodeId: hlcManager.normalizedNodeId,
+              hlcDatetime: hlc.datetime,
+              hlcCounter: hlc.counter,
+              clFlag: _bulkNextClFlag(tomb.clFlag, isDeleted: false),
+              reason: CrdtDataDeletedReason.userReinsert,
+            );
+          }(),
+    ];
+    if (tombstones.isNotEmpty) {
+      await CrdtDataDeleted.db.update(
+        _session,
+        tombstones,
+        columns: (t) => [
+          t.nodeId,
+          t.hlcDatetime,
+          t.hlcCounter,
+          t.clFlag,
+          t.reason,
+        ],
+        transaction: transaction,
+        noReturn: true,
+      );
+    }
+    final pks = [for (final row in crdtRows) row.id!];
+    for (var i = 0; i < pks.length; i += _bulkIdChunk) {
+      await CrdtDataField.db.deleteWhere(
+        _session,
+        where: (t) =>
+            t.rowId.inSet(pks.sublist(i, min(i + _bulkIdChunk, pks.length)).toSet()),
+        transaction: transaction,
+        noReturn: true,
+      );
+    }
+    await _context.persistCurrentNodeHlc(hlcManager, transaction);
+  }
+
+  /// Inserts new rows (ids without CRDT rows, [rows] stamped with the
+  /// acting space) in three set-based statements when their projection
+  /// provably stays unchanged: the domain rows, their CRDT rows (one HLC
+  /// each) and the field records of their non-null foreign keys are written
+  /// from one JSON parameter each (SQLite `json_each`, PostgreSQL
+  /// `jsonb_array_elements`), so no per-row statement is built, encoded or
+  /// sent. The records equal those of [insert] + [afterInsert] for such
+  /// rows. Returns false (nothing written) when the rows don't qualify (a
+  /// projection to plan, a column type without a JSON encoding, a null
+  /// column with a default); the caller then runs the ordinary insert
+  /// (OS-7).
+  Future<bool> bulkInsertNew<T extends TableRow>(
+    List<T> rows,
+    Transaction transaction,
+  ) async {
+    if (rows.isEmpty) return true;
+    final pg = _db.dialect == DatabaseDialect.postgres;
+    final table = rows.first.table;
+    final tableName = table.tableName;
+    if (!_context.isCrdtTrackedTableName(tableName)) return false;
+    final columns = table.columns;
+    final kinds = <_JsonColumn>[];
+    for (final c in columns) {
+      final kind = _JsonColumn.of(c);
+      if (kind == null) return false;
+      kinds.add(kind);
+    }
+    final data = <List<Object?>>[];
+    final ids = <String>[];
+    for (final row in rows) {
+      if (row.id is! UuidValue) return false;
+      final json = row.toJsonForDatabase() as Map<String, dynamic>;
+      final values = List<Object?>.filled(columns.length, null);
+      for (var i = 0; i < columns.length; i++) {
+        final v = json[columns[i].columnName];
+        if (v == null) {
+          if (columns[i].hasDefault) return false;
+          continue;
+        }
+        final encoded = kinds[i].encode(v, pg: pg);
+        if (identical(encoded, _JsonColumn.unsupported)) return false;
+        values[i] = encoded;
+      }
+      data.add(values);
+      ids.add(_JsonColumn.uuidJson(row.id as UuidValue, pg: pg));
+    }
+    if (_foreignKeyProjector.needsProjection(tableName, null)) {
+      validateAuthoredRows(rows, null);
+      if (!await _foreignKeyProjector.canLeaveLocalProjectionUnchanged(
+        rows,
+        transaction,
+        inserting: true,
+        persisted: false,
+      )) {
+        return false;
+      }
+    }
+
+    // `$1` holds a JSON array; `j.v` is one element.
+    final elements = pg
+        ? r'jsonb_array_elements($1::jsonb) AS j(v)'
+        : r'(SELECT value AS v FROM json_each($1)) j';
+    String at(int i) => pg ? 'j.v->>$i' : "json_extract(j.v, '\$[$i]')";
+    String uuid(String e) => pg ? '($e)::uuid' : 'unhex($e)';
+
+    final names = [
+      for (final c in columns) '"${c.columnName.escapeIdentifier()}"',
+    ];
+    final exprs = [
+      for (var i = 0; i < columns.length; i++) kinds[i].sql(at(i), pg: pg),
+    ];
+    await _db.unsafeExecute(
+      'INSERT INTO "${tableName.escapeIdentifier()}" (${names.join(', ')}) '
+      'SELECT ${exprs.join(', ')} FROM $elements',
+      parameters: QueryParameters.positional([jsonEncode(data)]),
+      transaction: transaction,
+    );
+
+    final hlcManager = _context.hlcManagerFor(transaction);
+    final (tableId, colMap) = _context.schema[tableName]!;
+    final spaceId = hlcManager.normalizedSpaceId;
+    final nodeId = hlcManager.normalizedNodeId;
+    final stamps = [
+      for (final id in ids)
+        () {
+          final hlc = hlcManager.increment();
+          return [
+            id,
+            _JsonColumn.dateTime.encode(hlc.datetime, pg: pg),
+            hlc.counter,
+          ];
+        }(),
+    ];
+    await _db.unsafeExecute(
+      'INSERT INTO "crdt_data_rows" '
+      '("spaceId", "tblId", "uuidRowId", "nodeId", "hlcDatetime", "hlcCounter") '
+      'SELECT $spaceId, $tableId, ${uuid(at(0))}, $nodeId, '
+      '${_JsonColumn.dateTime.sql(at(1), pg: pg)}, '
+      '${_JsonColumn.integer.sql(at(2), pg: pg)} FROM $elements',
+      parameters: QueryParameters.positional([jsonEncode(stamps)]),
+      transaction: transaction,
+    );
+
+    // Field records for the foreign keys holding a value (what
+    // recordInsertAttempts creates for rows without attempts), born at the
+    // row's HLC.
+    final fkColumns = _foreignKeys.foreignKeyColumnsFor(tableName);
+    final selects = [
+      for (final name in fkColumns)
+        if (colMap[name]?.id case final int columnId)
+          'SELECT r."id", $columnId, r."nodeId", r."hlcDatetime", '
+              'r."hlcCounter" FROM ids j '
+              // CROSS JOIN keeps the id list as the outer loop (SQLite's
+              // planner would otherwise scan the space's rows).
+              'CROSS JOIN "crdt_data_rows" r '
+              'CROSS JOIN "${tableName.escapeIdentifier()}" d '
+              'WHERE r."spaceId" = $spaceId AND r."tblId" = $tableId '
+              'AND r."uuidRowId" = j.h AND d."id" = r."uuidRowId" '
+              'AND d."${name.escapeIdentifier()}" IS NOT NULL',
+    ];
+    if (selects.isNotEmpty) {
+      final idList = pg
+          ? r"SELECT (v #>> '{}')::uuid FROM jsonb_array_elements($1::jsonb) AS e(v)"
+          : r'SELECT unhex(value) FROM json_each($1)';
+      await _db.unsafeExecute(
+        'WITH ids(h) AS ($idList) '
+        'INSERT INTO "crdt_data_fields" '
+        '("rowId", "columnId", "nodeId", "hlcDatetime", "hlcCounter") '
+        '${selects.join(' UNION ALL ')}',
+        parameters: QueryParameters.positional([jsonEncode(ids)]),
+        transaction: transaction,
+      );
+    }
+    // No second proof (afterInsert checks again after its write): the
+    // statements above only added the proven rows, visible, so every
+    // condition of the first proof still holds.
+    await _context.persistCurrentNodeHlc(hlcManager, transaction);
+    return true;
+  }
+
+  static int _bulkNextClFlag(int current, {required bool isDeleted}) {
+    var next = current + 1;
+    if (next.isEven != isDeleted) next++;
+    return next;
+  }
+
+  /// Records the field metadata of a set-based update of exactly [columns]
+  /// of [updatedRows] (visible rows, [crdtRows] in any order) when
+  /// [updateNeedsProjection] is false: the same records as [afterUpdate]
+  /// for such a write (one field HLC per written column).
+  Future<void> afterBulkUpdate<T extends TableRow>(
+    List<T> updatedRows,
+    List<CrdtDataRow> crdtRows,
+    List<Column> columns,
+    Transaction transaction,
+  ) async {
+    if (updatedRows.isEmpty) return;
+    validateAuthoredRows(updatedRows, columns);
+    await _recordUpdatedFields(updatedRows, crdtRows, columns, transaction);
+    await _context.persistCurrentNodeHlc(
+      _context.hlcManagerFor(transaction),
+      transaction,
+    );
+  }
+
   /// IDs of the given rows that are soft-deleted.
   Future<Set<UuidValue>> deletedRowIds<T extends TableRow>(
     List<T> rows,
@@ -1180,4 +1527,80 @@ class CrdtMutationRecorder {
         if (row.isHidden) row.uuidRowId,
     };
   }
+}
+
+/// How a domain column travels in the JSON parameter of
+/// [CrdtMutationRecorder.bulkInsertNew]: the value the database stores for
+/// it (as the ORM's bound parameter or literal would) and the SQL that reads
+/// it back (SQLite stores UUIDs as blobs and times as epoch milliseconds;
+/// PostgreSQL casts text to the column type).
+enum _JsonColumn {
+  text,
+  uuid,
+  dateTime,
+  boolean,
+  real,
+  integer;
+
+  static const unsupported = Object();
+
+  static _JsonColumn? of(Column c) => switch (c) {
+    ColumnUuid() => uuid,
+    ColumnDateTime() => dateTime,
+    ColumnBool() => boolean,
+    ColumnDouble() => real,
+    ColumnInt() || ColumnDuration() => integer,
+    ColumnString() => text,
+    ColumnEnumExtended() => switch (c.serialized) {
+      EnumSerialization.byIndex => integer,
+      EnumSerialization.byName => text,
+    },
+    _ => null,
+  };
+
+  static String uuidJson(UuidValue id, {required bool pg}) =>
+      pg ? id.uuid : id.uuid.replaceAll('-', '');
+
+  Object? encode(Object v, {required bool pg}) => switch (this) {
+    uuid => switch (v) {
+      UuidValue() => uuidJson(v, pg: pg),
+      String() => pg ? v : v.replaceAll('-', ''),
+      _ => unsupported,
+    },
+    dateTime => switch (v) {
+      DateTime() => pg ? v.toUtc().toIso8601String() : v.millisecondsSinceEpoch,
+      String() =>
+        pg
+            ? DateTime.parse(v).toUtc().toIso8601String()
+            : DateTime.parse(v).millisecondsSinceEpoch,
+      _ => unsupported,
+    },
+    boolean => pg ? v == true : (v == true ? 1 : 0),
+    real => switch (v) {
+      num() when v.isNaN || v.isInfinite => unsupported,
+      num() => v.toDouble(),
+      _ => unsupported,
+    },
+    integer => switch (v) {
+      int() => v,
+      Duration() => v.inMilliseconds,
+      Enum() => v.index,
+      _ => unsupported,
+    },
+    text => switch (v) {
+      String() => v,
+      Enum() => v.name,
+      _ => unsupported,
+    },
+  };
+
+  String sql(String expr, {required bool pg}) => switch (this) {
+    uuid => pg ? '($expr)::uuid' : 'unhex($expr)',
+    _ when !pg => expr,
+    dateTime => '($expr)::timestamp without time zone',
+    boolean => '($expr)::boolean',
+    real => '($expr)::double precision',
+    integer => '($expr)::bigint',
+    text => expr,
+  };
 }

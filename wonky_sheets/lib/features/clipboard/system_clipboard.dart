@@ -23,6 +23,10 @@ abstract class SystemClipboard {
 
   /// The clipboard content, or null when unavailable or denied.
   Future<SystemClipboardData?> read();
+
+  /// Whether the last [read] was refused by the platform (the browser's
+  /// clipboard permission), as opposed to an empty clipboard.
+  bool get readBlocked => false;
 }
 
 /// An in-memory clipboard (tests, headless use).
@@ -30,6 +34,9 @@ class MemoryClipboard extends SystemClipboard {
   MemoryClipboard();
 
   SystemClipboardData? data;
+
+  @override
+  bool readBlocked = false;
 
   @override
   Future<void> write(SystemClipboardData data) async => this.data = data;

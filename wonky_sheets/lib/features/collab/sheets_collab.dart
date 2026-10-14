@@ -4,12 +4,14 @@ import 'dart:convert';
 import 'package:clock/clock.dart';
 import 'package:flutter/foundation.dart';
 import 'package:wonky_app/wonky_app.dart';
-import 'package:wonky_client/wonky_client.dart' show ChangeLog, PresenceNotice;
+import 'package:wonky_client/wonky_client.dart'
+    show ChangeLog, Participant, PresenceNotice;
 import 'package:wonky_sheets_core/model.dart';
 
 import '../comments/comment_indicator_layer.dart';
 import '../comments/sheets_comments.dart';
 import '../history/cell_history.dart';
+import '../history/local_conflicts.dart';
 import '../sheet_editor/sheet_editor_controller.dart';
 import '../sync/synced_workbook_session.dart';
 import 'hints/commit_hints.dart';
@@ -27,11 +29,14 @@ class SheetsCollab {
     : presence = SheetsPresenceController(editor),
       hints = CommitHints(editor),
       comments = SheetsComments(editor) {
+    conflicts = SheetsConflicts(editor, names: _nameOfUser);
     _presenceLayer = RemotePresenceLayer(
       presence,
       colors,
       typingLabel: () => editor.l10n.presenceTyping,
+      nameOf: (c) => participantLabel(c.participant),
     );
+    hints.onTyping = presence.setTyping;
     _commentLayer = CommentIndicatorLayer(comments);
     _pendingLayer = PendingHintLayer(
       hints,
@@ -101,6 +106,18 @@ class SheetsCollab {
   final CommitHints hints;
   final SheetsComments comments;
 
+  /// Overwritten offline edits (Sheets 10 §9).
+  late final SheetsConflicts conflicts;
+
+  String? _nameOfUser(String userUuid) {
+    for (final p in presence.presence?.participants ?? const <Participant>[]) {
+      if (p.userUuid.uuid == userUuid && p.actorKind.name == 'user') {
+        return p.displayName;
+      }
+    }
+    return null;
+  }
+
   /// Theme colors of the layers (set by the overlay widget on build).
   final CollabPaintColors colors = CollabPaintColors();
 
@@ -120,6 +137,18 @@ class SheetsCollab {
   bool _disposed = false;
 
   ShellServices get services => editor.services;
+
+  /// The display label of a participant: agents (MCP/AI writes) show as
+  /// "Claude via MCP (Anna)" / "Assistant (Anna)" (Sheets 10 §1.2).
+  String participantLabel(Participant p) {
+    final l = editor.l10n;
+    return switch (p.actorKind.name) {
+      'mcp' => l.actorViaMcp(p.displayName),
+      'ai' => l.actorViaAi(p.displayName),
+      'script' => l.actorViaScript(p.displayName),
+      _ => p.displayName,
+    };
+  }
 
   /// Attaches the shell's presence session of the file (null detaches).
   void setPresence(PresenceSession? session) {
@@ -258,6 +287,7 @@ class SheetsCollab {
     presence.dispose();
     hints.dispose();
     comments.dispose();
+    conflicts.dispose();
     cellHistory.value?.dispose();
     cellHistory.dispose();
     dockedDismissed.dispose();

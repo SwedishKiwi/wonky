@@ -33,6 +33,7 @@ class SyncStatus {
     this.reconnectAt,
     this.error,
     this.log = const [],
+    this.progress,
   });
 
   static const saved = SyncStatus(state: SyncState.saved);
@@ -45,6 +46,10 @@ class SyncStatus {
   final String? error;
   final List<SyncLogEntry> log;
 
+  /// Share (0..1) of a big save already stored, shown as *Saving… 42 %*;
+  /// null for ordinary saves.
+  final double? progress;
+
   @override
   bool operator ==(Object other) =>
       other is SyncStatus &&
@@ -52,11 +57,18 @@ class SyncStatus {
       other.pendingChanges == pendingChanges &&
       other.reconnectAt == reconnectAt &&
       other.error == error &&
-      other.log.length == log.length;
+      other.log.length == log.length &&
+      other.progress == progress;
 
   @override
-  int get hashCode =>
-      Object.hash(state, pendingChanges, reconnectAt, error, log.length);
+  int get hashCode => Object.hash(
+    state,
+    pendingChanges,
+    reconnectAt,
+    error,
+    log.length,
+    progress,
+  );
 }
 
 /// Icon + label: *Saved*, *Saving…*, *Offline — changes saved on this
@@ -128,7 +140,13 @@ class _SyncStatusIndicatorState extends State<SyncStatusIndicator> {
     final s = widget.status;
     return switch (s.state) {
       SyncState.saved => (LucideIcons.cloudCheck, l10n.syncSaved, null),
-      SyncState.saving => (LucideIcons.refreshCw, l10n.syncSaving, null),
+      SyncState.saving => (
+        LucideIcons.refreshCw,
+        s.progress == null
+            ? l10n.syncSaving
+            : '${l10n.syncSaving} ${(s.progress!.clamp(0, 1) * 100).floor()} %',
+        null,
+      ),
       SyncState.offline => (LucideIcons.cloudOff, l10n.syncOffline, c.warning),
       SyncState.error => (
         LucideIcons.cloudAlert,

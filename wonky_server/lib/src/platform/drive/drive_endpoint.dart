@@ -112,8 +112,8 @@ class DriveEndpoint extends Endpoint {
     parentUuid: parentUuid,
     name: name,
     templateUuid: templateUuid,
-    locale: locale ?? 'en_US',
-    timeZone: timeZone ?? 'UTC',
+    locale: locale,
+    timeZone: timeZone,
   );
 
   Future<DriveItemView> rename(

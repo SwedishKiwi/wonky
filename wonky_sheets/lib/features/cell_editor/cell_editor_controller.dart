@@ -173,7 +173,7 @@ class CellEditorController extends ChangeNotifier {
       surface: surface,
     );
     final t = initialText ?? original;
-    text.locale = FormulaLocale.forId(host.locale);
+    text.locale = host.formulaLocale;
     // Typing in the ready state already put the text (and an IME
     // composition) into the field: keep it as it is.
     if (text.text != t || initialText == null) {
@@ -340,7 +340,7 @@ class CellEditorController extends ChangeNotifier {
       parseError = null;
       return;
     }
-    final locale = FormulaLocale.forId(host.locale);
+    final locale = host.formulaLocale;
     final prefs = _prefs;
     try {
       if (!prefs.formulaAutocomplete) throw const _Off();
@@ -549,7 +549,7 @@ class CellEditorController extends ChangeNotifier {
       return refInsertionPoint(
         text.text,
         caret,
-        locale: FormulaLocale.forId(host.locale),
+        locale: host.formulaLocale,
       );
     } catch (_) {
       return false;
@@ -594,7 +594,7 @@ class CellEditorController extends ChangeNotifier {
       if (add && span != null) {
         start = span.$2;
         end = span.$2;
-        prefix = FormulaLocale.forId(host.locale).argSeparator;
+        prefix = host.formulaLocale.argSeparator;
       }
     }
     final insert = '$prefix$ref';
@@ -663,7 +663,7 @@ class CellEditorController extends ChangeNotifier {
       text.text,
       caret,
       selectionEnd: sel.isValid && !sel.isCollapsed ? sel.end : null,
-      locale: FormulaLocale.forId(host.locale),
+      locale: host.formulaLocale,
     );
     if (edit == null) return false;
     text.value = TextEditingValue(

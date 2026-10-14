@@ -112,7 +112,12 @@ mixin LexicalGrammar on GrammarDefinition<Expr> {
       ScanParser<Expr>(_scanBool, 'boolean expected');
 
   (Expr, int)? _scanBool(String s, int i) {
-    for (final (word, value) in const [('TRUE', true), ('FALSE', false)]) {
+    final lang = locale.language;
+    for (final (word, value) in [
+      ('TRUE', true),
+      ('FALSE', false),
+      if (lang != null) ...[(lang.trueName, true), (lang.falseName, false)],
+    ]) {
       final e = i + word.length;
       if (e <= s.length && s.substring(i, e).toUpperCase() == word) {
         if (e < s.length) {

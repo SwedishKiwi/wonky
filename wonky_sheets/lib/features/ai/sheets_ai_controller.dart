@@ -10,7 +10,12 @@ import 'package:wonky_sheets_core/model.dart' show InvalidRangeException;
 import '../../l10n/sheets_l10n.dart';
 import '../sheet_editor/sheet_editor_controller.dart';
 import '../sheet_editor/sheets_document_controller.dart';
+import '../model/memory_workbook_session.dart' show WorkbookSessionBase;
+import '../data_tools/cleanup_suggestions.dart' show CleanupKind;
+import '../data_tools/cleanup_suggestions_panel.dart' show cleanupSuggestionsOf;
 import 'agent_highlight_layer.dart';
+import 'ai_cells.dart';
+import 'external_agent_writes.dart';
 import 'ai_cell_popover.dart';
 import 'ai_preview_dialog.dart';
 import 'fill_with_ai_dialog.dart';
@@ -76,6 +81,20 @@ class SheetsAiController extends ChangeNotifier {
   SheetsAiController._(this.editor) {
     adapter = SheetsAssistantAdapter(this);
     editor.layers.add(highlights);
+    final session = editor.session;
+    if (session is WorkbookSessionBase) {
+      session.externalData.attach(aiCells, served: const {'AI'});
+    }
+    externalWrites = ExternalAgentWrites(
+      editor,
+      highlights,
+      labels: AgentLabels(
+        mcp: l10n.aiAgentMcp,
+        of: l10n.aiAgentOf,
+        aiOf: l10n.aiAgentAiOf,
+        someone: l10n.someone,
+      ),
+    );
     final hooks = editor.gridHooks.overlays;
     hooks.value = [...hooks.value, _overlayBuilder];
     editor.onDispose(dispose);
@@ -107,6 +126,15 @@ class SheetsAiController extends ChangeNotifier {
 
   /// The agent presence highlight layer.
   final AgentHighlightLayer highlights = AgentHighlightLayer();
+
+  /// Flashes headless agent writes of other clients (12 §1.4).
+  late final ExternalAgentWrites externalWrites;
+
+  /// `=AI()` cells (12 §6.8).
+  late final AiCellsProvider aiCells = AiCellsProvider(
+    api: () => api,
+    itemUuid: itemUuid,
+  );
 
   /// The AI cell popover (null = closed).
   final ValueNotifier<AiPopoverState?> popover = ValueNotifier(null);
@@ -491,6 +519,42 @@ class SheetsAiController extends ChangeNotifier {
     return editor.selectionA1.first;
   }
 
+  // ------------------------------------------------------ cleanup (P2)
+
+  /// *Clean up data with AI* (12 §6.9): the deterministic cleanup checks
+  /// (07 §12.3) of the sheet are handed to the assistant, which groups and
+  /// explains them and proposes fixes in Suggest mode (the AI changes
+  /// preview applies the checked ones as one undo step). Returns the
+  /// prompt, or null when the assistant can't be used.
+  Future<String?> cleanupWithAi({String? range}) async {
+    final chat = this.chat;
+    final sheet = editor.activeSheet;
+    if (chat == null || !available || sheet == null) return null;
+    final found = cleanupSuggestionsOf(editor);
+    final lines = [
+      for (final f in found.take(20))
+        '- ${f.kind.name}: ${f.count} '
+            '${f.kind == CleanupKind.duplicates || f.kind == CleanupKind.emptyRows ? 'rows' : 'cells'} '
+            'in ${qualifiedA1(sheet.name, rectA1(f.range))}'
+            '${f.preview.isEmpty ? '' : ', e.g. ${f.preview.take(2).map((p) => '"${p.$1}" → "${p.$2}"').join(', ')}'}',
+    ];
+    final prompt = l10n.aiCleanupPrompt(
+      range == null
+          ? l10n.aiCleanupScopeSheet(sheet.name)
+          : l10n.aiCleanupScopeRange(range),
+      lines.isEmpty ? l10n.aiCleanupNothing : lines.join('\n'),
+    );
+    services.panels.open(ShellPanels.assistant);
+    if (chat.applyMode != AiApplyMode.suggest) {
+      chat.setApplyMode(AiApplyMode.suggest);
+    }
+    unawaited(chat.send(prompt));
+    return prompt;
+  }
+
+  /// *Refresh AI cells* (12 §6.8): recomputes every `=AI()` call.
+  void refreshAiCells() => aiCells.refreshAll();
+
   // ------------------------------------------------------- chart alt text
 
   /// An alt-text proposal for chart [objectId] (12 §6.10).
@@ -546,6 +610,13 @@ class SheetsAiController extends ChangeNotifier {
       for (final o in hooks.value)
         if (o != _overlayBuilder) o,
     ];
+    externalWrites.dispose();
+    final session = editor.session;
+    if (session is WorkbookSessionBase &&
+        identical(session.externalData.target, aiCells)) {
+      session.externalData.attach(null);
+    }
+    aiCells.dispose();
     editor.layers.remove(highlights);
     highlights.dispose();
     assistant?.release(adapter);

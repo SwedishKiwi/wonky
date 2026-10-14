@@ -501,7 +501,7 @@ Curated **bundled** cell fonts (no runtime Google Fonts; suite 02 §2), files un
 |-------|-------|
 | Default / UI-like | **Inter** (default, ships with shad), Roboto, Open Sans, Lato, Source Sans 3, Noto Sans, Nunito, Montserrat, Oswald |
 | Serif | Merriweather, Lora, Playfair Display, Noto Serif |
-| Mono | Roboto Mono, Source Code Pro, Courier Prime |
+| Mono | JetBrains Mono, Roboto Mono, Source Code Pro (Courier Prime is not offered: JetBrains Mono is the suite's monospace face) |
 | Handwriting/display | Caveat, Comfortaa |
 | Metric-compatible (XLSX fidelity) | Arimo (≈ Arial/Helvetica), Tinos (≈ Times New Roman), Cousine (≈ Courier New), Carlito (≈ Calibri), Caladea (≈ Cambria), Gelasio (≈ Georgia) |
 
@@ -747,8 +747,8 @@ Stored as content `r:` + JSON (02 §2):
 | Marina | Source Sans 3 | `#00796B #0097A7 #0288D1 #26A69A #80CBC4 #004D40` | `#00796B` |
 | Coral | Nunito | `#FF7043 #FFAB91 #F4511E #FFCCBC #BF360C #FF8A65` | `#D84315` |
 | Forest | Open Sans | `#2E7D32 #66BB6A #A5D6A7 #558B2F #9CCC65 #1B5E20` | `#2E7D32` |
-| Mono | Roboto Mono | `#212121 #424242 #616161 #757575 #9E9E9E #BDBDBD` | `#1A73E8` |
-| Retro | Courier Prime | `#E76F51 #F4A261 #E9C46A #2A9D8F #264653 #8AB17D` | `#264653` |
+| Mono | JetBrains Mono | `#212121 #424242 #616161 #757575 #9E9E9E #BDBDBD` | `#1A73E8` |
+| Retro | JetBrains Mono | `#E76F51 #F4A261 #E9C46A #2A9D8F #264653 #8AB17D` | `#264653` |
 | Ocean | Montserrat | `#023E8A #0077B6 #0096C7 #00B4D8 #48CAE4 #90E0EF` | `#0077B6` |
 
 ### 13.3 Theme panel (`sheets.panel.theme`)
@@ -872,6 +872,12 @@ midnight (volatile, like `TODAY()`).
 - Truthiness: `TRUE`, or a non-zero number → match; `FALSE`, 0, text, empty, errors → no match.
   Array results use the top-left element.
 - Cross-sheet references are allowed (Google requires `INDIRECT`; we allow direct references).
+- **Moves (drag, cut & paste; as built in `mutations/handlers/move.dart`):** the parts of CF and
+  DV ranges inside the moved cells move with them (a CF rule moved only in part is split; the
+  moved part becomes a rule right after it). Rule formulas behave like the moved cells'
+  formulas: references keep their targets, references into the moved cells follow them, and a
+  rule whose first range changes is re-anchored so every cell evaluates the same formula as
+  before. Copies translate like copied cell formulas (paste: 03 §12.4).
 
 ### 15.4 Allowed formats (single color)
 
@@ -1136,18 +1142,26 @@ the same core classes (`FormatWriter` logic is mirrored server-side through the 
   arrive.
 - **Column banding** (P2): `BandingStyle.dimension = columns` (*Alternate columns* in the panel);
   the draft's range is outlined while the panel is open.
-- **Fonts**: bundled Inter, Roboto, Open Sans, Lato, Geist, EB Garamond, Geist Mono, JetBrains Mono,
-  Roboto Mono (Roboto/Roboto Mono Apache 2.0, the others OFL). Geometric/rounded sans names
-  (Montserrat, Nunito, Source Sans 3 …) render with Lato, serif with EB Garamond, mono with
-  JetBrains Mono. The font menu shows "Aa" in each face. PDF: Roboto, Lato and Roboto Mono embed
-  as themselves, other sans as Open Sans. Merriweather, Montserrat, Nunito, Source Sans 3 and
-  Courier Prime are not bundled (substituted).
+- **Fonts**: bundled Inter, Roboto, Open Sans, Lato, Source Sans 3, Nunito, Montserrat, Geist,
+  EB Garamond, Merriweather, Geist Mono, JetBrains Mono, Roboto Mono (Roboto/Roboto Mono Apache
+  2.0, the others OFL; licenses next to the TTFs in `assets/fonts/`). Merriweather, Montserrat and
+  Nunito are the last static TTFs of `google/fonts` (before those families went variable); Source
+  Sans 3 exists there only as a variable font, so `WonkySansThree-*.ttf` are static instances of it
+  (wght 400/700, upright and italic, hinting and variation tables removed), renamed because
+  "Source" is a Reserved Font Name (`OFL-WonkySansThree.txt`). Names matching a bundled family
+  case-insensitively render with it (*Source Sans Pro* with Source Sans 3); other geometric/rounded
+  sans names (Poppins, Raleway …) render with Lato, serif with EB Garamond, mono (Courier Prime,
+  Courier New …) with JetBrains Mono — JetBrains Mono is the suite's monospace face, so the *Mono*
+  and *Retro* presets use it and Courier Prime is not offered. The font menu shows "Aa" in each
+  face. PDF (client and server, `BundledPdfFonts`): Roboto, Lato, Source Sans 3, Nunito,
+  Montserrat, Merriweather and Roboto Mono embed as themselves, other sans as Open Sans, serif as
+  EB Garamond, mono as JetBrains Mono (`web/fonts/` holds the same files).
 - **Rich text** (§11): Mod+K on a text selection in the cell editor links the selection (link run);
   formatting that can't be a run (`sheets.format.*` other than B/I/U/S, colors, font, size) is
   disabled while text is selected ("Not available while text in the cell is selected"); the
   formula bar shows the runs (styles without sizes/families).
 - Custom currency examples are colored by `[Red]`-style sections; currency names come from the
   `currencyName` ICU select (translatable).
-- Not built: spreadsheet display language (P2: needs localized function names and booleans in
-  the engine).
+- Spreadsheet display language (P2, built): function names and booleans in de/fr/es/sv
+  (04 §11.1 *As built*); booleans display translated. Error names stay English.
 

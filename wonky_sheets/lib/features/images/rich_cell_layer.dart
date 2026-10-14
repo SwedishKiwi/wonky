@@ -47,7 +47,7 @@ class RichCellLayer extends GridLayer {
     final rows = sheet.rows;
     final cols = sheet.columns;
     final engine = ctx.controller.engine;
-    for (var r = pane.rowStart; r <= pane.rowEnd; r++) {
+    for (final r in pane.rows) {
       if (rows.sizeAt(r) <= 0) continue;
       final rowId = rows.idAt(r);
       if (sheet.cells.rowCount(rowId) == 0) continue;

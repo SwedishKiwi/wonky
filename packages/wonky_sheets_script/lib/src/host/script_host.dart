@@ -8,14 +8,18 @@ import 'package:crypto/crypto.dart' as crypto;
 import 'package:uuid/uuid.dart';
 import 'package:wonky_core/wonky_core.dart' show Role;
 import 'package:wonky_sheets_core/wonky_sheets_core.dart';
+import 'package:wonky_sync_models/ids.dart' show FractionalIndex;
 
 import '../protocol/messages.dart';
 import '../protocol/values.dart';
 import 'cell_values.dart';
 import 'limits.dart';
+import 'lock_cache.dart';
 import 'model_stores.dart';
 import 'services.dart';
 import 'workbook_access.dart';
+
+part 'script_host_objects.dart';
 
 /// Handles the calls of one execution against a [WorkbookAccess] (09 §8.2.5).
 ///
@@ -39,7 +43,11 @@ final class ScriptHost {
     TimeZoneResolver timeZones = const TzDatabaseResolver(),
     Clock? clock,
     this.onLog,
+    ScriptLockProvider? locks,
+    ScriptCacheStore? cache,
   }) : _clock = clock ?? const Clock(),
+       locks = locks ?? NoopScriptLocks(),
+       cache = cache ?? MemoryScriptCache.shared,
        documentProperties =
            documentProperties ?? ModelDocumentProperties(workbook),
        userProperties = userProperties ?? MemoryPropertyStore(),
@@ -86,6 +94,12 @@ final class ScriptHost {
   /// Called for every log line (live editor console).
   final void Function(LogEntry entry)? onLog;
 
+  /// `LockService` (09 §6.12; no-op in the app, real locks on the server).
+  final ScriptLockProvider locks;
+
+  /// `CacheService` (09 §6.12).
+  final ScriptCacheStore cache;
+
   final Clock _clock;
 
   /// Whether calls that wait asynchronously (alerts, prompts, URL fetches)
@@ -104,6 +118,16 @@ final class ScriptHost {
 
   int _logBytes = 0;
   bool _logTruncated = false;
+
+  final Set<String> _heldLocks = {};
+
+  /// Releases the locks the execution still holds (called when it ends).
+  void releaseLocks() {
+    for (final k in _heldLocks) {
+      locks.release(k, this);
+    }
+    _heldLocks.clear();
+  }
 
   final _handles = <int, _Handle>{};
   final _sheetHandles = <String, int>{};
@@ -194,6 +218,10 @@ final class ScriptHost {
     'props.get',
     'props.all',
     'props.keys',
+    'cache.get',
+    'cache.getAll',
+    'cache.put',
+    'cache.remove',
   };
 
   Object? _dispatch(int target, String method, List<Object?> a) {
@@ -221,6 +249,10 @@ final class ScriptHost {
       'util' => _util(method, a),
       'props' => _props(method, a),
       'triggers' => _triggers(method, a),
+      'filter' => _filterCall(target, method, a),
+      'protection' => _protectionCall(method, a),
+      'lock' => _lockCall(method, a),
+      'cache' => _cacheCall(method, a),
       _ => throw ScriptError('not_found', 'Unknown host method $method'),
     };
   }
@@ -825,7 +857,7 @@ final class ScriptHost {
         );
         return null;
     }
-    throw ScriptError('not_found', 'Unknown host method $method');
+    return _sheetObjects(s, method, a);
   }
 
   GridRect _checkedRect(SheetModel s, int top, int left, int nr, int nc) {
@@ -1080,7 +1112,21 @@ final class ScriptHost {
           ),
           cells: rect.cellCount,
         );
-        return h;
+        // The unique rows move to the top of the range; the rest is cleared.
+        var last = rect.top;
+        for (final (r, _, _) in s.cellsIn(rect, contentOnly: true)) {
+          if (r > last) last = r;
+        }
+        return _rangeHandle(
+          s.id,
+          GridRect(rect.top, rect.left, last, rect.right),
+        );
+      case 'range.createFilter':
+        _requireWrite(s.id, rect);
+        _apply(SetBasicFilter(s.id, rect));
+        return _sheetHandle(s.id);
+      case 'range.protect':
+        return _addProtection(s, rect);
     }
     throw ScriptError('not_found', 'Unknown host method $method');
   }
@@ -1558,6 +1604,37 @@ final class ScriptHost {
           counters.uiWait += _clock.now().difference(started);
           return prompt ? [r.button.name, r.text] : r.button.name;
         });
+      case 'ui.showPanel':
+      case 'ui.updatePanel':
+        if (delegate == null || context.isServer) {
+          throw const ScriptError(
+            'ui_unavailable',
+            'Sidebars and dialogs are not available in this execution.',
+          );
+        }
+        final update = method == 'ui.updatePanel';
+        final panel = ScriptPanelSchema.validate(
+          (a[update ? 1 : 0]! as Map),
+          knownFunctions: knownFunctions,
+        );
+        if (update) {
+          delegate.updatePanel('${a[0]}', panel);
+        } else {
+          delegate.showPanel(
+            ScriptPanelRequest(
+              mode: a[1] == 'dialog'
+                  ? ScriptPanelMode.dialog
+                  : ScriptPanelMode.sidebar,
+              panel: panel,
+              dialogTitle: a[2] as String?,
+            ),
+          );
+        }
+        return null;
+      case 'ui.closePanel':
+        if (delegate == null || context.isServer) return null;
+        delegate.closePanel('${a[0]}');
+        return null;
     }
     throw ScriptError('not_found', 'Unknown host method $method');
   }

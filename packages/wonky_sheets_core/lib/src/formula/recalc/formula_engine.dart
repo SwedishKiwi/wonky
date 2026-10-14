@@ -208,7 +208,9 @@ final class FormulaEngine implements EvalHost, CellSource {
          templateCapacity: config.templateCapacity,
        ),
        _settings = workbook.settings,
-       _locale = FormulaLocale.forId(workbook.settings.locale) {
+       _locale = FormulaLocale.forId(
+         workbook.settings.locale,
+       ).withLanguage(workbook.settings.displayLanguage) {
     final ext = external;
     if (ext != null) {
       _subscriptions.add(ext.updates.listen(_onExternalUpdate));
@@ -966,7 +968,9 @@ final class FormulaEngine implements EvalHost, CellSource {
   void settingsChanged(CalcSettings settings) {
     final old = _settings;
     _settings = settings;
-    _locale = FormulaLocale.forId(settings.locale);
+    _locale = FormulaLocale.forId(
+      settings.locale,
+    ).withLanguage(settings.displayLanguage);
     lookupCache.bumpAll();
     final work = Queue<_Node>();
     if (old.locale != settings.locale ||

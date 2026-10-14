@@ -23,6 +23,8 @@ fields:
   range: String?
   objectId: String?
   previewId: String?
+  ### uiToolCall: the tool's arguments (JSON object).
+  argsJson: String?
   confirmationId: String?
   error: String?
   errorCode: String?

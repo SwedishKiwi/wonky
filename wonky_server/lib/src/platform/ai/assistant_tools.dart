@@ -124,7 +124,11 @@ class AssistantToolset {
           <String, Object?>{};
       final bound = <String>{
         for (final k in props.keys)
-          if (_documentKeys.contains(k) || k == 'mode') k,
+          if (_documentKeys.contains(k) ||
+              k == 'mode' ||
+              // `ui.*` tools run in the requesting window.
+              (k == 'session_id' && d.name.startsWith('ui.')))
+            k,
       };
       for (final k in bound) {
         props.remove(k);
@@ -176,6 +180,15 @@ class AssistantToolset {
 
   /// The API definitions.
   List<AiToolSpec> get apiTools => [for (final t in tools) t.api];
+
+  /// This toolset plus [more] (the window's `ui.*` tools).
+  AssistantToolset plus(List<McpToolDefinition> more) => more.isEmpty
+      ? this
+      : AssistantToolset.of([
+          for (final t in tools) t.definition,
+          for (final d in more)
+            if (!tools.any((t) => t.name == d.name)) d,
+        ]);
 
   AssistantTool? byApiName(String name) => _byApiName[name];
 

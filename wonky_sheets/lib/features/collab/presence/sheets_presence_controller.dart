@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:flutter/foundation.dart' show setEquals;
 import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
 import 'package:wonky_app/wonky_app.dart';
@@ -7,7 +8,9 @@ import 'package:wonky_client/wonky_client.dart' show Participant, PresenceState;
 import 'package:wonky_sheets_core/formula.dart' show CellPos, GridRect;
 import 'package:wonky_sheets_core/model.dart';
 
+import '../../formatting/sheets_user_defaults.dart';
 import '../../grid/selection/grid_selection.dart';
+import '../../objects/objects_controller.dart';
 import '../../sheet_editor/sheet_editor_controller.dart';
 import 'presence_cursor.dart';
 
@@ -31,6 +34,16 @@ class RemoteCursorView {
   bool get isAgent => participant.actorKind.name != 'user';
   String get displayName => participant.displayName;
 }
+
+/// A collaborator's in-progress cell editor text (Sheets 10 §2.1 `typing`
+/// hint, P2).
+typedef TypingPreview = ({
+  String sheetId,
+  String rowId,
+  String colId,
+  String text,
+  DateTime at,
+});
 
 /// Sheets presence (Sheets 10 §1.6): publishes the local selection, editing
 /// state and (while followed) viewport as the `PresenceCursor` JSON through
@@ -72,7 +85,35 @@ class SheetsPresenceController extends ChangeNotifier {
   /// Fires when cursors, flags or the flash change (grid layer repaint).
   final GridSignal repaint = GridSignal();
 
+  /// Dash offset of the marching border of editing collaborators (px).
+  double marchPhase = 0;
+  Timer? _march;
+
+  /// Interval of the marching border animation (one dash period per 1 s).
+  static const marchTick = Duration(milliseconds: 60);
+
+  /// The hovered cell (`sheetId`, row, col): the name flag of a cursor on
+  /// it shows while hovered (Sheets 10 §1.2).
+  (String, int, int)? _hover;
+
+  /// Live typing previews by session id.
+  final Map<String, TypingPreview> typing = {};
+
+  /// How long a typing preview stays without an update.
+  static const typingLifetime = Duration(seconds: 5);
+
   PresenceSession? get presence => _presence;
+
+  String? _scriptFile;
+
+  /// The file open in this window's script editor (null = the grid): the
+  /// cursor then has `route: script` and the file (Sheets 09 §14.3).
+  String? get scriptFileId => _scriptFile;
+  set scriptFileId(String? fileId) {
+    if (fileId == _scriptFile) return;
+    _scriptFile = fileId;
+    _publish();
+  }
 
   String? get selfSessionId => _presence?.sessionId;
 
@@ -100,7 +141,10 @@ class SheetsPresenceController extends ChangeNotifier {
   SheetsPresenceCursor localCursor({bool withViewport = false}) {
     final sel = editor.selection.selection;
     final session = editor.editor.session;
+    final scriptFile = _scriptFile;
     return SheetsPresenceCursor(
+      route: scriptFile == null ? 'grid' : 'script',
+      file: scriptFile,
       sheetId: editor.activeSheetId,
       activeRowId: sel.active.rowId.isEmpty ? null : sel.active.rowId,
       activeColId: sel.active.colId.isEmpty ? null : sel.active.colId,
@@ -122,6 +166,7 @@ class SheetsPresenceController extends ChangeNotifier {
           ),
       ],
       editing: session != null && session.sheetId == editor.activeSheetId,
+      objectId: ObjectsController.maybeOf(editor)?.selectedId,
       viewport: withViewport ? _viewport() : null,
       following: following.value,
     );
@@ -147,6 +192,10 @@ class SheetsPresenceController extends ChangeNotifier {
 
   bool get _followed => (_presence?.followerCount ?? 0) > 0;
 
+  /// Publishes the cursor after the object selection changed (08 §9.2:
+  /// collaborators outline the selected object).
+  void publishObjectSelection() => _publish();
+
   void _publish() {
     final p = _presence;
     if (p == null || _disposed) return;
@@ -169,6 +218,7 @@ class SheetsPresenceController extends ChangeNotifier {
     }
     _lastSelection = editor.selection.selection;
     _publish();
+    _updateMarch();
   }
 
   GridSelection? _lastSelection;
@@ -227,7 +277,9 @@ class SheetsPresenceController extends ChangeNotifier {
         (a, b) => a.participant.joinedAt.compareTo(b.participant.joinedAt),
       );
     cursors.value = list;
+    typing.removeWhere((k, _) => !(_cursors[k]?.cursor.editing ?? false));
     _scheduleFlagExpiry();
+    _updateMarch();
     repaint.fire();
     notifyListeners();
   }
@@ -266,11 +318,113 @@ class SheetsPresenceController extends ChangeNotifier {
   }
 
   /// Whether the name flag of [c] shows (3 s after moving, while editing,
-  /// while flashing).
+  /// while flashing, while its cell is hovered).
   bool flagVisible(RemoteCursorView c, DateTime now) =>
       c.cursor.editing ||
       now.difference(c.movedAt) < flagDuration ||
-      c.sessionId == flashSession;
+      c.sessionId == flashSession ||
+      _hovered(c);
+
+  bool _hovered(RemoteCursorView c) {
+    final h = _hover;
+    if (h == null || h.$1 != c.cursor.sheetId) return false;
+    final sheet = editor.model.sheet(h.$1);
+    if (sheet == null) return false;
+    final a = activeOf(sheet, c.cursor);
+    if (a == null) return false;
+    final m = sheet.mergeAt(a.$1, a.$2);
+    return m == null ? (a.$1 == h.$2 && a.$2 == h.$3) : m.contains(h.$2, h.$3);
+  }
+
+  /// The hovered cell of the grid (null when the pointer left it).
+  void setHover(String? sheetId, int row, int col) {
+    final next = sheetId == null ? null : (sheetId, row, col);
+    if (next == _hover) return;
+    final before = _hovering();
+    _hover = next;
+    // Repaint only when a cursor's flag appears or disappears.
+    if (!setEquals(before, _hovering())) repaint.fire();
+  }
+
+  Set<String> _hovering() {
+    final h = _hover;
+    if (h == null) return const {};
+    return {
+      for (final c in cursorsOn(h.$1))
+        if (_hovered(c)) c.sessionId,
+    };
+  }
+
+  /// Whether grid animations are reduced (Settings › Reduce motion).
+  bool get reduceMotion {
+    try {
+      if (SheetsUserDefaults.of(editor.services).reduceAnimations) return true;
+    } catch (_) {}
+    return WidgetsBinding
+        .instance
+        .platformDispatcher
+        .accessibilityFeatures
+        .disableAnimations;
+  }
+
+  /// Runs the marching border while a collaborator edits a cell on the
+  /// active sheet (static dashes with *Reduce motion*).
+  void _updateMarch() {
+    final needed =
+        !_disposed &&
+        cursorsOn(editor.activeSheetId).any((c) => c.cursor.editing) &&
+        !reduceMotion;
+    if (needed && _march == null) {
+      _march = Timer.periodic(marchTick, (_) {
+        // 8 px dash period per second.
+        marchPhase = (marchPhase + 8 * marchTick.inMilliseconds / 1000) % 8;
+        repaint.fire();
+      });
+    } else if (!needed && _march != null) {
+      _march?.cancel();
+      _march = null;
+    }
+  }
+
+  /// Whether the marching border animation runs (tests).
+  bool get marching => _march != null;
+
+  // ---------------------------------------------------------- typing preview
+
+  /// Applies a `typing` hint of [sessionId] (text null or empty clears).
+  void setTyping(
+    String sessionId, {
+    required String sheetId,
+    required String rowId,
+    required String colId,
+    required String? text,
+  }) {
+    if (text == null || text.isEmpty) {
+      if (typing.remove(sessionId) != null) repaint.fire();
+      return;
+    }
+    typing[sessionId] = (
+      sheetId: sheetId,
+      rowId: rowId,
+      colId: colId,
+      text: text.length > 200 ? text.substring(0, 200) : text,
+      at: DateTime.now(),
+    );
+    repaint.fire();
+  }
+
+  /// The typing preview of [c], when it still edits that cell.
+  TypingPreview? typingOf(RemoteCursorView c, DateTime now) {
+    final t = typing[c.sessionId];
+    if (t == null || !c.cursor.editing) return null;
+    if (t.sheetId != c.cursor.sheetId ||
+        t.rowId != c.cursor.activeRowId ||
+        t.colId != c.cursor.activeColId) {
+      return null;
+    }
+    if (now.difference(t.at) > typingLifetime) return null;
+    return t;
+  }
 
   // ------------------------------------------------------------ id mapping
 
@@ -472,6 +626,7 @@ class SheetsPresenceController extends ChangeNotifier {
     _flash?.cancel();
     _flagTimer?.cancel();
     _viewportTimer?.cancel();
+    _march?.cancel();
     cursors.dispose();
     following.dispose();
     repaint.dispose();

@@ -64,7 +64,7 @@ SignatureInfo? signatureAt(
   for (var i = frames.length - 1; i >= 0; i--) {
     final f = frames[i];
     if (f.name == null) continue;
-    final upper = f.name!.toUpperCase();
+    final upper = locale.canonicalFunction(f.name!);
     final spec = reg.lookup(upper);
     if (spec != null && upper != 'LET' && upper != 'LAMBDA') {
       final rs = spec.repeatStart;
@@ -79,7 +79,7 @@ SignatureInfo? signatureAt(
       }
       if (active >= spec.params.length) active = spec.params.length - 1;
       return SignatureInfo(
-        functionName: spec.name,
+        functionName: locale.displayFunction(spec.name),
         source: SignatureSource.builtin,
         argIndex: f.argIndex,
         activeParam: active,

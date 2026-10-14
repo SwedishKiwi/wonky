@@ -8,13 +8,16 @@ import 'package:flutter/services.dart';
 /// loading of the bundled faces.
 ///
 /// Bundled: Inter, Geist and Geist Mono (shipped with `shad`) and the static
-/// faces of Roboto, Roboto Mono (Apache 2.0), Open Sans, Lato, EB Garamond
-/// and JetBrains Mono (OFL) under `assets/fonts/` (declared as plain
-/// assets, so web doesn't download them at start-up; [ensureLoaded]
-/// registers a family the first time a cell uses it). Every other name
-/// (imports, theme presets, pastes) is stored unchanged and rendered by
-/// category: serif → EB Garamond, mono → JetBrains Mono, geometric/rounded
-/// sans (Montserrat, Nunito, Poppins …) → Lato, other sans → Inter.
+/// faces of Roboto, Roboto Mono (Apache 2.0), Open Sans, Lato, Source Sans 3,
+/// Nunito, Montserrat, EB Garamond, Merriweather and JetBrains Mono (OFL)
+/// under `assets/fonts/` (declared as plain assets, so web doesn't download
+/// them at start-up; [ensureLoaded] registers a family the first time a cell
+/// uses it). Source Sans 3 is shipped as `WonkySansThree-*.ttf`: static
+/// instances of the variable font, renamed because "Source" is a Reserved
+/// Font Name. Every other name (imports, pastes) is stored unchanged and
+/// rendered by category: serif → EB Garamond, mono (Courier Prime, Courier
+/// New …) → JetBrains Mono, geometric/rounded sans (Poppins, Raleway …) →
+/// Lato, other sans → Inter.
 abstract final class CellFonts {
   static const inter = 'Inter';
   static const geist = 'Geist';
@@ -25,6 +28,10 @@ abstract final class CellFonts {
   static const roboto = 'Roboto';
   static const robotoMono = 'Roboto Mono';
   static const lato = 'Lato';
+  static const sourceSans3 = 'Source Sans 3';
+  static const nunito = 'Nunito';
+  static const montserrat = 'Montserrat';
+  static const merriweather = 'Merriweather';
 
   /// The bundled families in picker order.
   static const bundled = [
@@ -32,8 +39,12 @@ abstract final class CellFonts {
     roboto,
     openSans,
     lato,
+    sourceSans3,
+    nunito,
+    montserrat,
     geist,
     ebGaramond,
+    merriweather,
     geistMono,
     jetBrainsMono,
     robotoMono,
@@ -46,6 +57,10 @@ abstract final class CellFonts {
     roboto,
     robotoMono,
     lato,
+    sourceSans3,
+    nunito,
+    montserrat,
+    merriweather,
   };
 
   static const _faces = {
@@ -83,6 +98,30 @@ abstract final class CellFonts {
       'Lato-Bold.ttf',
       'Lato-BoldItalic.ttf',
     ],
+    sourceSans3: [
+      'WonkySansThree-Regular.ttf',
+      'WonkySansThree-Italic.ttf',
+      'WonkySansThree-Bold.ttf',
+      'WonkySansThree-BoldItalic.ttf',
+    ],
+    nunito: [
+      'Nunito-Regular.ttf',
+      'Nunito-Italic.ttf',
+      'Nunito-Bold.ttf',
+      'Nunito-BoldItalic.ttf',
+    ],
+    montserrat: [
+      'Montserrat-Regular.ttf',
+      'Montserrat-Italic.ttf',
+      'Montserrat-Bold.ttf',
+      'Montserrat-BoldItalic.ttf',
+    ],
+    merriweather: [
+      'Merriweather-Regular.ttf',
+      'Merriweather-Italic.ttf',
+      'Merriweather-Bold.ttf',
+      'Merriweather-BoldItalic.ttf',
+    ],
   };
 
   /// The regular face of each asset family (font menu previews, PDF).
@@ -90,15 +129,11 @@ abstract final class CellFonts {
 
   /// Geometric and rounded sans families shown with [lato].
   static const _geometric = {
-    'montserrat',
-    'nunito',
     'nunito sans',
     'poppins',
     'raleway',
     'quicksand',
     'work sans',
-    'source sans 3',
-    'source sans pro',
     'century gothic',
     'futura',
     'avenir',
@@ -107,7 +142,6 @@ abstract final class CellFonts {
   };
 
   static const _serif = {
-    'merriweather',
     'lora',
     'playfair display',
     'noto serif',
@@ -140,6 +174,8 @@ abstract final class CellFonts {
     'lucida console',
   };
 
+  static final _byLowerName = {for (final f in bundled) f.toLowerCase(): f};
+
   /// Whether [family] renders with its own face.
   static bool isBundled(String family) => bundled.contains(family);
 
@@ -147,6 +183,9 @@ abstract final class CellFonts {
   static String displayFamily(String family) {
     if (isBundled(family)) return family;
     final l = family.toLowerCase().trim();
+    final named = _byLowerName[l];
+    if (named != null) return named;
+    if (l == 'source sans pro') return sourceSans3;
     if (_mono.contains(l) || l.contains('mono') || l.contains('courier')) {
       return jetBrainsMono;
     }

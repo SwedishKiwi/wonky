@@ -319,17 +319,15 @@ List<Command<CommandArgs>> filterCommands(ShellServices s) => [
         textColor: fill == null ? text : null,
       );
       if (f.range.rowCount > 2) {
+        final op = SortRange(ResolvedRange(ed.activeSheetId, f.range), [
+          spec,
+        ], hasHeader: true);
         await DataJobs.run(
           ed,
           rows: f.range.rowCount,
           label: ed.l10n.dataJobSorting(f.range.rowCount),
-          work: () => applyKeepingSelection(
-            ctx,
-            ed,
-            SortRange(ResolvedRange(ed.activeSheetId, f.range), [
-              spec,
-            ], hasHeader: true),
-          ),
+          op: op,
+          work: () => applyKeepingSelection(ctx, ed, op),
         );
       }
       ed.apply(
@@ -536,6 +534,45 @@ List<Command<CommandArgs>> filterCommands(ShellServices s) => [
         ed.apply(ctx, UpdateFilterView(id, range: r.rect));
       }
       return ok();
+    },
+  ),
+  // View-only sort (07 §4.4): reorders this view's rows on screen; the data
+  // and other people's screens don't change. No colId clears it.
+  _ViewCommand(
+    'sheets.filterView.sortColumn',
+    label: (l) => l.cmdFilterViewSortColumn,
+    icon: LucideIcons.arrowDownAZ,
+    showInPalette: false,
+    argsSchema: const JsonSchema.object(
+      properties: {
+        'viewId': JsonSchema.string(),
+        'colId': JsonSchema.string(
+          description: 'Column to sort by; omit to clear the view sort.',
+        ),
+        'ascending': JsonSchema.boolean(),
+      },
+    ),
+    run: (ctx, ed, a) {
+      final id = _viewIdArg(ed, a);
+      final colId = a.string('colId');
+      final sort = colId == null
+          ? const <(String, bool)>[]
+          : [(colId, a.boolean('ascending') ?? true)];
+      if (_isTemp(id)) {
+        _filters(ed).updateTemporary(id, sort: sort);
+      } else {
+        _requireEdit(ed);
+        ed.apply(
+          ctx,
+          UpdateFilterView(
+            id,
+            sortJson: jsonEncode([
+              for (final (c, asc) in sort) {'colId': c, 'ascending': asc},
+            ]),
+          ),
+        );
+      }
+      return ok({'sorted': colId != null});
     },
   ),
   _ViewCommand(

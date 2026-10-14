@@ -18,6 +18,7 @@ String downloadFormatLabel(SheetsLocalizations l, SheetsExportFormat f) =>
       SheetsExportFormat.html => l.downloadHtml,
       SheetsExportFormat.csv => l.downloadCsv,
       SheetsExportFormat.tsv => l.downloadTsv,
+      SheetsExportFormat.json => l.downloadJson,
     };
 
 /// Whether the user may download/print the open spreadsheet: editors, or
@@ -56,19 +57,25 @@ Future<SheetsExportArtifact> buildDownload(
   final title = exportTitle(ed);
   final now = clock.now().toUtc();
   Map<String, Uint8List> images = const {};
-  if (format != SheetsExportFormat.csv && format != SheetsExportFormat.tsv) {
+  if (format != SheetsExportFormat.csv &&
+      format != SheetsExportFormat.tsv &&
+      format != SheetsExportFormat.json) {
     if (SheetsWorkbookExporter.imageFiles(model).isNotEmpty) {
       await progress?.step(l.exportPhaseImages);
       images = await fetchImageBytes(ed.services, model);
     }
   }
   switch (format) {
-    case SheetsExportFormat.xlsx || SheetsExportFormat.ods:
+    case SheetsExportFormat.xlsx ||
+        SheetsExportFormat.ods ||
+        SheetsExportFormat.json:
       await progress?.step(l.exportPhasePreparing, 0.2);
       final doc = SheetsWorkbookExporter.toDocument(
         model,
         values: EngineIrValueSource(source),
         imageBytes: (u) => images[u],
+        // Charts without an Excel equivalent become pictures (11 §6.3).
+        chartSource: format == SheetsExportFormat.xlsx ? source : null,
       );
       await progress?.step(l.exportPhaseWriting, 0.5);
       final (bytes, warnings) = await runOffThread(

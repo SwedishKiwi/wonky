@@ -245,7 +245,9 @@ final class FormulaLexer {
         final nextIsParen = j < n && text.codeUnitAt(j) == 0x28;
         if (nextIsParen) {
           add(TokenKind.functionName, i, j);
-        } else if (upper == 'TRUE' || upper == 'FALSE') {
+        } else if (upper == 'TRUE' ||
+            upper == 'FALSE' ||
+            locale.language?.booleanOf(upper) != null) {
           add(TokenKind.boolean, i, j);
         } else {
           add(TokenKind.name, i, j);

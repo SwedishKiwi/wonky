@@ -3,6 +3,8 @@ import 'package:intl/date_symbols.dart';
 import 'package:intl/number_symbols.dart';
 import 'package:intl/number_symbols_data.dart' as number_data;
 
+import 'formula_language.dart';
+
 /// Order of day, month and year in numeric dates of a locale.
 enum DateOrder { mdy, dmy, ymd }
 
@@ -49,6 +51,10 @@ final class FormulaLocale {
   final String currencyCode;
   final String currencySymbol;
 
+  /// Display language of function names and booleans (null = English;
+  /// `Spreadsheet.displayLanguage`, see [withLanguage]).
+  final FormulaLanguage? language;
+
   const FormulaLocale._({
     required this.id,
     required this.decimal,
@@ -64,6 +70,7 @@ final class FormulaLocale {
     required this.amPm,
     required this.currencyCode,
     required this.currencySymbol,
+    this.language,
   });
 
   /// Canonical en_US locale (the stored form always uses these separators).
@@ -211,12 +218,67 @@ final class FormulaLocale {
 
   bool get usesCommaDecimal => decimal == ',';
 
-  @override
-  bool operator ==(Object other) => other is FormulaLocale && other.id == id;
+  static final Map<String, FormulaLocale> _withLanguage = {};
+
+  /// This locale with function names and booleans in display language
+  /// [code] (`Spreadsheet.displayLanguage`: `de`, `fr`, `es`, `sv`; null or
+  /// unsupported = English). The stored form stays English.
+  FormulaLocale withLanguage(String? code) {
+    final lang = FormulaLanguage.forCode(code);
+    if (lang == language) return this;
+    if (lang == null) return forId(id);
+    return _withLanguage['$id|${lang.code}'] ??= FormulaLocale._(
+      id: id,
+      decimal: decimal,
+      group: group,
+      argSeparator: argSeparator,
+      arrayColSeparator: arrayColSeparator,
+      arrayRowSeparator: arrayRowSeparator,
+      dateOrder: dateOrder,
+      months: months,
+      shortMonths: shortMonths,
+      weekdays: weekdays,
+      shortWeekdays: shortWeekdays,
+      amPm: amPm,
+      currencyCode: currencyCode,
+      currencySymbol: currencySymbol,
+      language: lang,
+    );
+  }
+
+  /// The English (stored) name of function [name] typed in this locale:
+  /// a localized name maps to its English name, anything else is upper-cased.
+  String canonicalFunction(String name) =>
+      language?.englishName(name) ?? name.toUpperCase();
+
+  /// The display name of English function [english] in this locale.
+  String displayFunction(String english) =>
+      language?.localName(english) ?? english;
+
+  /// `TRUE`/`FALSE` in this locale's display language.
+  String booleanText(bool value) => language == null
+      ? (value ? 'TRUE' : 'FALSE')
+      : (value ? language!.trueName : language!.falseName);
+
+  /// Whether [word] is a boolean literal here (English always is).
+  bool? booleanOf(String word) {
+    final u = word.toUpperCase();
+    if (u == 'TRUE') return true;
+    if (u == 'FALSE') return false;
+    return language?.booleanOf(u);
+  }
 
   @override
-  int get hashCode => id.hashCode;
+  bool operator ==(Object other) =>
+      other is FormulaLocale &&
+      other.id == id &&
+      other.language?.code == language?.code;
 
   @override
-  String toString() => 'FormulaLocale($id)';
+  int get hashCode => Object.hash(id, language?.code);
+
+  @override
+  String toString() => language == null
+      ? 'FormulaLocale($id)'
+      : 'FormulaLocale($id, ${language!.code})';
 }

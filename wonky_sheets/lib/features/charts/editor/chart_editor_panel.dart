@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:flutter/widgets.dart';
 import 'package:shad/shad.dart';
 import 'package:wonky_app/wonky_app.dart';
@@ -6,6 +8,7 @@ import 'package:wonky_sheets_core/formula.dart' show ColumnLetters;
 import 'package:wonky_sheets_core/model.dart';
 import 'package:wonky_ui/wonky_ui.dart';
 
+import '../../charts3d/editor/chart3d_section.dart';
 import '../../../l10n/sheets_l10n.dart';
 import '../../common/range_input.dart';
 import '../../formatting/panel_widgets.dart';
@@ -16,6 +19,8 @@ import '../chart_insert.dart';
 import '../controller/chart_controller.dart';
 import 'chart_editor_widgets.dart';
 import 'chart_type_picker.dart';
+
+part 'chart_editor_more.dart';
 
 /// The chart editor side panel (08 §8) for the shell's panel host.
 SidePanelSpec chartEditorPanelSpec(
@@ -68,6 +73,16 @@ class _ChartEditorPanelState extends State<ChartEditorPanel> {
   String _rangeText = '';
   String? _rangeFor;
   int _jumpSerial = 0;
+
+  /// The domain point picked in *Format data point*.
+  int? _pointIndex;
+
+  /// The slice shown in *Pie slice*.
+  int _slice = 0;
+
+  void _setPointIndex(int? i) => setState(() => _pointIndex = i);
+
+  void _setSlice(int i) => setState(() => _slice = i);
 
   SheetEditorController get ed => widget.editor;
   ObjectsController get objects => ObjectsController.of(ed);
@@ -846,10 +861,18 @@ class _ChartEditorPanelState extends State<ChartEditorPanel> {
         _gridlines(l, spec, id),
       ],
       if (t == ChartType.pie) _pie(l, spec, id),
+      if (t == ChartType.pie) _pieSlices(l, c, id),
+      if (t.supports3D)
+        _section(
+          'threeD',
+          l.chartSection3D,
+          chart3DControls(l, spec, (p, [k]) => _patch(id, p, k)),
+          onReset: () => _patch(id, {'threeD': null}),
+        ),
       if (t == ChartType.histogram) _histogram(l, spec, id),
-      if (t == ChartType.waterfall) _waterfall(l, spec, id),
+      if (t == ChartType.waterfall) _waterfall(l, spec, id, c),
       if (t == ChartType.candlestick) _candlestick(l, spec, id),
-      if (t == ChartType.scorecard) _scorecard(l, spec, id),
+      if (t == ChartType.scorecard) _scorecard(l, spec, id, c),
       if (t == ChartType.table) _table(l, spec, id),
     ];
   }
@@ -1251,6 +1274,7 @@ class _ChartEditorPanelState extends State<ChartEditorPanel> {
           ),
         ],
       ],
+      ..._seriesExtras(l, c, id, target, style, set),
     ], onReset: () => _patch(id, {'series': null}));
   }
 
@@ -1605,7 +1629,12 @@ class _ChartEditorPanelState extends State<ChartEditorPanel> {
     ], onReset: () => _patch(id, {'typeOptions': null}));
   }
 
-  Widget _waterfall(SheetsLocalizations l, ChartSpec spec, String id) {
+  Widget _waterfall(
+    SheetsLocalizations l,
+    ChartSpec spec,
+    String id,
+    ChartController c,
+  ) {
     final w = spec.waterfallOptions;
     return _section('waterfall', l.chartSectionWaterfall, [
       EditorCheck(
@@ -1655,6 +1684,7 @@ class _ChartEditorPanelState extends State<ChartEditorPanel> {
           onChanged: (v) => _patch(id, _opts({'subtotalColor': v})),
         ),
       ),
+      ..._waterfallSubtotals(l, c, id),
     ], onReset: () => _patch(id, {'typeOptions': null}));
   }
 
@@ -1697,7 +1727,12 @@ class _ChartEditorPanelState extends State<ChartEditorPanel> {
     ], onReset: () => _patch(id, {'typeOptions': null}));
   }
 
-  Widget _scorecard(SheetsLocalizations l, ChartSpec spec, String id) {
+  Widget _scorecard(
+    SheetsLocalizations l,
+    ChartSpec spec,
+    String id,
+    ChartController c,
+  ) {
     final s = spec.scorecardOptions;
     return _section('scorecard', l.chartSectionScorecard, [
       EditorField(
@@ -1753,6 +1788,7 @@ class _ChartEditorPanelState extends State<ChartEditorPanel> {
               _patch(id, _opts({'keyFormat': v.trim().isEmpty ? null : v})),
         ),
       ),
+      ..._scorecardRefs(l, c, id),
     ], onReset: () => _patch(id, {'typeOptions': null}));
   }
 

@@ -1,5 +1,7 @@
 import 'dart:convert';
 
+import 'package:wonky_sync_models/ids.dart';
+
 import '../../addressing/grid_geometry.dart';
 import '../../engine_bridge/formula_hooks.dart';
 import '../../engine_bridge/stored_formula.dart';
@@ -294,7 +296,17 @@ void applyBlockMove(
     }
   }
   for (final (s, d) in blocks) {
-    _moveValidation(b, src, s, dst, d, rowIdAt, colIdAt, copy: false);
+    _moveValidation(
+      b,
+      src,
+      s,
+      dst,
+      d,
+      rowIdAt,
+      colIdAt,
+      copy: false,
+      blocks: blocks,
+    );
   }
   if (hooks != null) _remapReferences(b, src, dst, blocks);
   for (final (s, d) in blocks) {
@@ -396,7 +408,9 @@ void _moveValidation(
   String Function(int) rowIdAt,
   String Function(int) colIdAt, {
   required bool copy,
+  List<(GridRect source, GridRect dest)>? blocks,
 }) {
+  final hooks = b.ctx.formulas;
   final moved =
       <
         (
@@ -414,8 +428,52 @@ void _moveValidation(
         if (r.intersection(s) case final GridRect i) i,
     ];
     if (inside.isEmpty) continue;
+    var criteria = rule.criteriaJson;
+    if (hooks != null && criteria.contains('=')) {
+      // Formulas are written for the rule's anchor (the top-left of its
+      // first range, 06 §15.3); the moved piece gets its own anchor.
+      final a = rects.first;
+      final p = inside.first;
+      final q = p.shift(d.top - s.top, d.left - s.left);
+      criteria = mapRuleFormulas(criteria, (f) {
+        if (copy) {
+          return hooks.translate(
+            f,
+            fromSheetId: src.id,
+            fromRow: a.top,
+            fromCol: a.left,
+            toSheetId: dst.id,
+            toRow: q.top,
+            toCol: q.left,
+          );
+        }
+        // A move keeps every reference (cut semantics, like the cells'
+        // formulas) except those into the moved cells, which follow them.
+        var g = a.top == p.top && a.left == p.left
+            ? f
+            : hooks.translate(
+                f,
+                fromSheetId: src.id,
+                fromRow: a.top,
+                fromCol: a.left,
+                toSheetId: src.id,
+                toRow: p.top,
+                toCol: p.left,
+              );
+        if (dst.id != src.id) g = _pinSheet(g, src.id);
+        return remapBlocks(
+              hooks,
+              g,
+              dst.id,
+              src.id,
+              dst.id,
+              blocks ?? [(s, d)],
+            ) ??
+            g;
+      });
+    }
     moved.add((
-      rule.criteriaJson,
+      criteria,
       rule.strict,
       rule.displayStyle,
       rule.helpText,
@@ -451,6 +509,38 @@ void _moveValidation(
   }
 }
 
+/// The rule JSON [json] (formulas written for the anchor [from]) rewritten
+/// for the anchor [to] on [s], keeping what every cell evaluates; null when
+/// nothing changes.
+String? _reanchored(
+  PlanBuilder b,
+  SheetModel s,
+  String? json,
+  GridRect from,
+  GridRect to,
+) {
+  final hooks = b.ctx.formulas;
+  if (json == null ||
+      hooks == null ||
+      !json.contains('=') ||
+      (from.top == to.top && from.left == to.left)) {
+    return null;
+  }
+  final out = mapRuleFormulas(
+    json,
+    (f) => hooks.translate(
+      f,
+      fromSheetId: s.id,
+      fromRow: from.top,
+      fromCol: from.left,
+      toSheetId: s.id,
+      toRow: to.top,
+      toCol: to.left,
+    ),
+  );
+  return out == json ? null : out;
+}
+
 void _subtractDv(PlanBuilder b, SheetModel s, List<GridRect> rects) {
   for (final rule in s.dvRules.values.toList()) {
     final cur = b.current(SheetsTables.dataValidationRule, rule.id);
@@ -469,6 +559,16 @@ void _subtractDv(PlanBuilder b, SheetModel s, List<GridRect> rects) {
     } else {
       b.update(SheetsTables.dataValidationRule, rule.id, {
         Cols.rangesJson: b.rangesJson(s, remaining),
+        // A new first range moves the formulas' anchor.
+        if (_reanchored(
+              b,
+              s,
+              cur['criteriaJson'] as String?,
+              current.first,
+              remaining.first,
+            )
+            case final String json)
+          'criteriaJson': json,
       });
     }
   }
@@ -524,27 +624,7 @@ void _remapReferences(
       b.update(SheetsTables.namedRange, n.id, {Cols.rangeJson: r.encode()});
     }
   }
-  if (src.id == dst.id) {
-    for (final rule in src.cfRules.values) {
-      final ranges = GridRange.parseList(rule.rangesJson);
-      var changed = false;
-      final out = [
-        for (final g in ranges)
-          if (remapRange(g) case final GridRange r)
-            () {
-              changed = true;
-              return r;
-            }()
-          else
-            g,
-      ];
-      if (changed) {
-        b.update(SheetsTables.conditionalFormatRule, rule.id, {
-          Cols.rangesJson: GridRange.encodeList(out),
-        });
-      }
-    }
-  }
+  _remapRules(b, src, dst, blocks, remapRange);
   for (final sheet in b.model.sheets) {
     for (final o in sheet.objects.values) {
       final spec = PlanBuilderHelpers.decodeMap(o.specJson);
@@ -571,6 +651,122 @@ void _remapReferences(
       if (changed) {
         b.update(SheetsTables.embeddedObject, o.id, {
           'specJson': jsonEncode(out),
+        });
+      }
+    }
+  }
+}
+
+/// Conditional formatting and data validation after a move (06 §15.3):
+/// rule formulas are written for the rule's anchor, the top-left cell of its
+/// first range. A CF rule whose ranges lie inside a moved block moves with
+/// it (a rule moved only in part is split: the moved ranges become a new
+/// rule right after it); every rule keeps its references like the cells'
+/// formulas (cut semantics) except references into moved cells, which
+/// follow them, and a rule whose first range changed is re-anchored.
+void _remapRules(
+  PlanBuilder b,
+  SheetModel src,
+  SheetModel dst,
+  List<(GridRect source, GridRect dest)> blocks,
+  GridRange? Function(GridRange) remapRange,
+) {
+  final hooks = b.formulas;
+  String follow(String json, String host) => mapRuleFormulas(
+    json,
+    (f) => remapBlocks(hooks, f, host, src.id, dst.id, blocks) ?? f,
+  );
+  String translated(String json, GridRect from, GridRect to) =>
+      _reanchored(b, src, json, from, to) ?? json;
+
+  for (final sheet in b.model.sheets) {
+    for (final rule in sheet.cfRules.values) {
+      final cur = b.current(SheetsTables.conditionalFormatRule, rule.id);
+      if (cur == null) continue;
+      final json = cur['ruleJson'] as String;
+      final ranges = GridRange.parseList(cur[Cols.rangesJson] as String?);
+      final moved = <GridRange>[];
+      final kept = <GridRange>[];
+      GridRect? firstMovedSource;
+      if (sheet.id == src.id && src.id == dst.id) {
+        for (final g in ranges) {
+          final rr = src.resolve(g);
+          if (rr == null || rr.wholeRows || rr.wholeColumns) {
+            kept.add(g);
+            continue;
+          }
+          // The part of the range inside a block moves with it; the rest
+          // stays.
+          var rest = [rr.rect];
+          for (final (bs, bd) in blocks) {
+            final i = rr.rect.intersection(bs);
+            if (i == null) continue;
+            final m = i.shift(bd.top - bs.top, bd.left - bs.left);
+            if (m.bottom < dst.rows.length && m.right < dst.columns.length) {
+              moved.add(dst.gridRange(m));
+              firstMovedSource ??= i;
+            }
+            rest = RectSet.subtractAll(rest, bs);
+          }
+          if (rest.length == 1 && rest.single == rr.rect) {
+            kept.add(g);
+          } else {
+            kept.addAll([for (final r in rest) src.gridRange(r)]);
+          }
+        }
+      }
+      if (moved.isEmpty) {
+        final out = follow(json, sheet.id);
+        if (out != json) {
+          b.update(SheetsTables.conditionalFormatRule, rule.id, {
+            'ruleJson': out,
+          });
+        }
+        continue;
+      }
+      final anchor = src.resolve(ranges.first)?.rect;
+      if (anchor == null) continue;
+      if (kept.isEmpty) {
+        // The whole rule moves with its block.
+        b.update(SheetsTables.conditionalFormatRule, rule.id, {
+          Cols.rangesJson: GridRange.encodeList(moved),
+          'ruleJson': follow(json, src.id),
+        });
+        continue;
+      }
+      // Split: the kept ranges stay on the rule (re-anchored when its first
+      // range moved away), the moved ones become a rule of their own.
+      final keptAnchor = src.resolve(kept.first)?.rect ?? anchor;
+      b.update(SheetsTables.conditionalFormatRule, rule.id, {
+        Cols.rangesJson: GridRange.encodeList(kept),
+        'ruleJson': follow(translated(json, anchor, keptAnchor), src.id),
+      });
+      final keys = [
+        for (final r in src.cfRules.values)
+          if (b.current(SheetsTables.conditionalFormatRule, r.id)?[Cols.sortKey]
+              case final String k)
+            k,
+      ]..sort();
+      final key = cur[Cols.sortKey] as String;
+      final next = keys.where((k) => k.compareTo(key) > 0).firstOrNull;
+      b.insert(SheetsTables.conditionalFormatRule, b.ctx.ids.newId(), {
+        Cols.sheetId: src.id,
+        Cols.sortKey: FractionalIndex.between(key, next),
+        Cols.rangesJson: GridRange.encodeList(moved),
+        'ruleJson': follow(translated(json, anchor, firstMovedSource!), src.id),
+        'enabled': cur['enabled'] ?? true,
+      });
+    }
+    // Validation moved with the cells already (_moveValidation); the rules
+    // left behind follow references into the moved cells.
+    for (final rule in sheet.dvRules.values) {
+      final cur = b.current(SheetsTables.dataValidationRule, rule.id);
+      final json = cur?['criteriaJson'] as String?;
+      if (json == null || !json.contains('=')) continue;
+      final out = follow(json, sheet.id);
+      if (out != json) {
+        b.update(SheetsTables.dataValidationRule, rule.id, {
+          'criteriaJson': out,
         });
       }
     }

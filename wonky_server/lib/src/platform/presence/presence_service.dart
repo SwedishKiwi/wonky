@@ -328,17 +328,22 @@ abstract final class PresenceService {
   }
 
   /// Shows an agent (MCP/AI) as a transient participant on [itemUuid] for
-  /// [ttl] (specs/07 §1.1). Returns its session id.
+  /// [ttl] (specs/07 §1.1). Returns its session id. Passing the [sessionId]
+  /// of an earlier call updates that participant (e.g. its [cursorJson],
+  /// Sheets 10 §1.1); a null [ttl] leaves removing it to the caller
+  /// ([removeAgent]).
   static Future<String> injectAgent(
     Session session,
     UuidValue itemUuid, {
     required Actor actor,
     required String displayName,
-    Duration ttl = const Duration(seconds: 30),
+    Duration? ttl = const Duration(seconds: 30),
+    String? sessionId,
+    String? cursorJson,
   }) async {
-    final sessionId = 'agent-${const Uuid().v4()}';
+    final id = sessionId ?? 'agent-${const Uuid().v4()}';
     final participant = Participant(
-      sessionId: sessionId,
+      sessionId: id,
       userId: actor.userId,
       userUuid: actor.authUserId,
       displayName: displayName,
@@ -346,6 +351,8 @@ abstract final class PresenceService {
       role: AccessRole.editor,
       actorKind: actor.kind,
       state: PresenceState.active,
+      mode: 'editing',
+      cursorJson: cursorJson,
       joinedAt: nowUtc(),
     );
     final ch = channel(itemUuid);
@@ -354,20 +361,33 @@ abstract final class PresenceService {
       ch,
       PresenceBusMessage(
         type: 'hello',
-        sessionId: sessionId,
+        sessionId: id,
         participant: participant,
       ),
     );
-    final pod = session.serverpod;
-    Timer(ttl, () {
-      ClusterBus.postOn(
-        pod,
-        ch,
-        PresenceBusMessage(type: 'bye', sessionId: sessionId),
-      );
-    });
-    return sessionId;
+    if (ttl != null) {
+      final pod = session.serverpod;
+      Timer(ttl, () {
+        ClusterBus.postOn(
+          pod,
+          ch,
+          PresenceBusMessage(type: 'bye', sessionId: id),
+        );
+      });
+    }
+    return id;
   }
+
+  /// Removes an agent participant added by [injectAgent].
+  static void removeAgent(
+    Serverpod pod,
+    UuidValue itemUuid,
+    String sessionId,
+  ) => ClusterBus.postOn(
+    pod,
+    channel(itemUuid),
+    PresenceBusMessage(type: 'bye', sessionId: sessionId),
+  );
 
   /// Broadcasts a system notice to everyone on [itemUuid].
   static Future<void> notice(

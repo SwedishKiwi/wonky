@@ -1,15 +1,20 @@
+import 'dart:convert';
 import 'dart:io';
 
 import 'package:serverpod/serverpod.dart';
 import 'package:test/test.dart';
 import 'package:wonky_server/src/platform/common/models.dart';
 import 'package:wonky_server/src/sheets/headless/headless_workbook_provider.dart';
+import 'package:wonky_server/src/sheets/scripts/script_jobs.dart';
 import 'package:wonky_server/src/sheets/scripts/script_service.dart';
 import 'package:wonky_server/src/sheets/scripts/script_triggers.dart';
 import 'package:wonky_server/src/sheets/scripts/url_fetch_proxy.dart';
 import 'package:wonky_server/src/sheets/sync/sync_db.dart';
 import 'package:wonky_sheets_core/model.dart'
     show ChangeSummary, GridRange, ChangeKinds;
+import 'package:wonky_sheets_core/formula.dart' show GridRect;
+import 'package:wonky_sheets_script/wonky_sheets_script.dart'
+    show EditEventData;
 
 import '../../../support/mcp_harness.dart';
 import '../../../support/sheets_fixtures.dart';
@@ -37,6 +42,19 @@ void markEdit(EditEvent e) {
 }
 
 Object? fetchIt(Object? url) => UrlFetchApp.fetch(url as String).contentText;
+
+void say() {
+  Logger.log('a');
+  Logger.log('b');
+}
+
+void installBoom() {
+  ScriptApp.newTrigger('boom').forSpreadsheet().onEdit().create();
+}
+
+void boom(EditEvent e) {
+  throw StateError('kaput');
+}
 ''';
 
 void main() {
@@ -233,6 +251,221 @@ void main() {
         expect(n, 0);
       },
     );
+
+    Future<ChangeLog> userEdit() async {
+      final model = (await HeadlessWorkbookProvider.open(
+        anna.session,
+        item.contentRef!,
+      )).model;
+      final sheet = model.sheetByName('Data')!;
+      final summary = ChangeSummary()
+        ..kinds.add(ChangeKinds.values)
+        ..addRange(
+          GridRange(
+            sheetId: sheet.id,
+            r1: sheet.rows.idAt(1),
+            r2: sheet.rows.idAt(1),
+            c1: sheet.columns.idAt(1),
+            c2: sheet.columns.idAt(1),
+          ).toJson(),
+        );
+      final now = DateTime.now().toUtc();
+      return ChangeLog(
+        spreadsheetId: item.contentRef!,
+        userId: anna.authUserId,
+        actorKind: ActorKind.user,
+        sessionId: 'test',
+        label: 'Edit',
+        summaryJson: summary.encode(),
+        at: now,
+        createdAt: now,
+      );
+    }
+
+    Future<ScriptTrigger> installed(String fn) async {
+      await authorize(anna, ['script.triggers']);
+      await mcp.call('sheets.run_function', {
+        'spreadsheet': ss,
+        'function': fn,
+      });
+      final project = await ScriptService.project(
+        anna.session,
+        item.contentRef!,
+      );
+      return (await ScriptTrigger.db.find(
+        syncSessionOf(anna.session),
+        where: (t) => t.projectId.equals(project!.id),
+      )).single;
+    }
+
+    test('when run live on the server then log lines stream before the '
+        'result', () async {
+      await authorize(anna, ['script.triggers']);
+      final events = await endpoints.script
+          .runLive(anna.endpointSession, uuidOf(ss), 'say', null)
+          .map((e) => jsonDecode(e) as Map)
+          .toList();
+      expect(
+        [
+          for (final e in events)
+            if (e['log'] != null) (e['log'] as Map)['msg'],
+        ],
+        ['a', 'b'],
+      );
+      expect((events.last['result'] as Map)['status'], 'completed');
+    });
+
+    group('and the job queue (09 §8.5)', () {
+      test(
+        'when more than 100 runs queue for a trigger then the overflow is '
+        'coalesced into the newest job with the bounding range',
+        () async {
+          final t = await installed('installEdit');
+          final session = anna.session;
+          for (var i = 0; i < 102; i++) {
+            await ScriptJobQueue.enqueue(
+              session,
+              item: item,
+              trigger: t,
+              kind: ScriptExecutionKind.installableOnEdit,
+              event: EditEventData(
+                sheetId: 's1',
+                range: GridRect(i, 1, i, 1),
+                triggerUid: t.id.uuid,
+              ),
+            );
+          }
+          final jobs = await ScriptJob.db.find(
+            session,
+            where: (j) => j.triggerId.equals(t.id),
+            orderBy: (j) => j.id,
+          );
+          expect(jobs, hasLength(ScriptJobQueue.perTriggerCap));
+          expect(jobs.last.coalesced, 2);
+          final e =
+              ScriptJobEvents.decode(jobs.last.payloadJson) as EditEventData;
+          expect(e.coalesced, isTrue);
+          expect(e.range, const GridRect(99, 1, 101, 1));
+          await ScriptJob.db.deleteWhere(
+            session,
+            where: (j) => j.triggerId.equals(t.id),
+          );
+        },
+      );
+
+      test(
+        'when a run of the trigger is in progress then the next waits, and '
+        'an expired lease is queued again',
+        () async {
+          final t = await installed('installEdit');
+          final session = anna.session;
+          final running = await ScriptJob.db.insertRow(
+            session,
+            ScriptJob(
+              kind: ScriptExecutionKind.installableOnEdit,
+              spreadsheetUuid: item.contentRef!,
+              itemUuid: item.uuid,
+              triggerId: t.id,
+              runAsUserId: anna.id,
+              functionName: 'markEdit',
+              payloadJson: '{"type":"open"}',
+              status: ScriptExecutionStatus.running,
+              enqueuedAt: DateTime.now().toUtc(),
+              leaseOwner: 'elsewhere',
+              leaseUntil: DateTime.now().toUtc().add(const Duration(hours: 1)),
+              attempts: 1,
+            ),
+          );
+          await ScriptJobQueue.enqueue(
+            session,
+            item: item,
+            trigger: t,
+            kind: ScriptExecutionKind.installableOnChange,
+            event: const EditEventData(
+              sheetId: 'x',
+              range: GridRect(0, 0, 0, 0),
+            ),
+          );
+          expect(await ScriptJobQueue.pump(session), 0);
+
+          await ScriptJob.db.updateRow(
+            session,
+            running.copyWith(
+              leaseUntil: DateTime.now().toUtc().subtract(
+                const Duration(minutes: 1),
+              ),
+            ),
+          );
+          expect(await ScriptJobQueue.recoverStale(session), 1);
+          final again = await ScriptJob.db.findById(session, running.id!);
+          expect(again!.status, ScriptExecutionStatus.queued);
+          await ScriptJob.db.deleteWhere(
+            session,
+            where: (j) => j.triggerId.equals(t.id),
+          );
+        },
+      );
+
+      test(
+        'when the installer turned scripts off then the trigger pauses',
+        () async {
+          await installed('installEdit');
+          final prefs = await UserPreferences.db.findFirstRow(
+            anna.session,
+            where: (p) => p.userId.equals(anna.id),
+          );
+          final off = '{"scriptsEnabled": false}';
+          if (prefs == null) {
+            await UserPreferences.db.insertRow(
+              anna.session,
+              UserPreferences(userId: anna.id, sheetsDefaults: off),
+            );
+          } else {
+            await UserPreferences.db.updateRow(
+              anna.session,
+              prefs.copyWith(sheetsDefaults: off),
+            );
+          }
+          final n = await ScriptTriggerService.fireForChange(
+            anna.session,
+            item,
+            await userEdit(),
+          );
+          expect(n, 1);
+          final f2 = await SheetsFixtures.read(mcp, ss, 'Data!F2');
+          expect('$f2', isNot(contains('edited')));
+          final state = (await _states(anna.session, item)).single;
+          expect(state.consecutiveFailures, 0);
+          expect(state.disabledReason, isNull);
+        },
+      );
+
+      test(
+        'when a trigger fails then the installer gets a script failure '
+        'notification once a day',
+        () async {
+          await installed('installBoom');
+          for (var i = 0; i < 2; i++) {
+            await ScriptTriggerService.fireForChange(
+              anna.session,
+              item,
+              await userEdit(),
+            );
+          }
+          final notes = await UserNotification.db.find(
+            anna.session,
+            where: (n) =>
+                n.userId.equals(anna.id) &
+                n.kind.equals(NotificationKind.scriptFailure),
+          );
+          expect(notes, hasLength(1));
+          expect(notes.single.payload, contains('kaput'));
+          final state = (await _states(anna.session, item)).single;
+          expect(state.consecutiveFailures, 2);
+          expect(state.lastNotifiedAt, isNotNull);
+        },
+      );
+    });
 
     group('and a URL to fetch', () {
       late HttpServer server;

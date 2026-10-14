@@ -1,0 +1,38 @@
+### A queued server script execution (Sheets 09 §8.5, §8.7.3): installable
+### triggers are enqueued here and run by instances with the worker role
+### (`sheets.scriptWorker`), at most `scriptUserConcurrency` per run-as
+### user and one per trigger at a time.
+class: ScriptJob
+table: script_job
+serverOnly: true
+fields:
+  kind: ScriptExecutionKind
+  ### The spreadsheet space.
+  spreadsheetUuid: UuidValue
+  ### The drive item of the spreadsheet.
+  itemUuid: UuidValue
+  triggerId: UuidValue?
+  ### Run-as user (UserProfile id).
+  runAsUserId: int
+  functionName: String
+  ### The event (`ScriptJobEvents.encode`).
+  payloadJson: String
+  ### queued, running, completed, failed, skipped.
+  status: ScriptExecutionStatus
+  enqueuedAt: DateTime
+  ### Instance that claimed the job.
+  leaseOwner: String?
+  leaseUntil: DateTime?
+  attempts: int, default=0
+  ### Queued events merged into this one (per-trigger queue cap).
+  coalesced: int, default=0
+  ### `{executionId, status}` of the run.
+  resultJson: String?
+  finishedAt: DateTime?
+indexes:
+  script_job_status_idx:
+    fields: status, enqueuedAt
+  script_job_trigger_idx:
+    fields: triggerId, status
+  script_job_user_idx:
+    fields: runAsUserId, status

@@ -29,7 +29,7 @@ class InvalidMarkerLayer extends GridLayer {
     final s = size * ctx.zoom;
     ctx.forEachPane(canvas, (pane) {
       if (pane.isEmpty) return;
-      for (var r = pane.rowStart; r <= pane.rowEnd; r++) {
+      for (final r in pane.rows) {
         if (sheet.rows.sizeAt(r) <= 0) continue;
         for (var c = pane.colStart; c <= pane.colEnd; c++) {
           if (sheet.columns.sizeAt(c) <= 0) continue;

@@ -47,3 +47,31 @@ abstract class CommentAnchorProvider {
   /// The thread that should be highlighted as active (caret inside anchor).
   String? get activeThreadUuid => null;
 }
+
+/// Optional extras of a [CommentAnchorProvider] (checked with `is`, so
+/// existing providers stay valid): inline composing, a panel scope filter
+/// and group headers (Sheets 10 §3.4–3.5).
+abstract class CommentPanelOptions {
+  /// Whether `shell.comments.create` without a body shows the composer in
+  /// the app next to the anchor (Sheets: next to the cell) instead of
+  /// opening the comments panel.
+  bool get composesInline => false;
+
+  /// An extra scope filter of the comments panel: labels by scope id
+  /// (Sheets: `sheet` → "This sheet", `all` → "All sheets"); empty = none.
+  Map<String, String> get scopes => const {};
+
+  /// The initial scope (default: the first of [scopes]).
+  String? get defaultScope => null;
+
+  /// Whether [thread] is in [scope].
+  bool inScope(CommentThreadView thread, String scope) => true;
+
+  /// The group header of [thread] in the panel's position sort (Sheets:
+  /// the sheet name); null = no headers.
+  String? groupOf(CommentThreadView thread) => null;
+}
+
+/// The [CommentPanelOptions] of [anchors], if it has any.
+CommentPanelOptions? commentPanelOptionsOf(CommentAnchorProvider? anchors) =>
+    anchors is CommentPanelOptions ? anchors as CommentPanelOptions : null;

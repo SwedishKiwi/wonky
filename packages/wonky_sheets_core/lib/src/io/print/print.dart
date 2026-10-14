@@ -2,6 +2,7 @@
 /// cell text layout and the `pdf`-based renderer.
 library;
 
+export 'bundled_pdf_fonts.dart';
 export 'cell_display.dart';
 export 'cell_text_layout.dart';
 export 'header_footer.dart';

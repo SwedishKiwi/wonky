@@ -16,6 +16,7 @@ import '../model/loading_gate.dart';
 import 'remote_patch.dart';
 import 'sheets_replica.dart';
 import 'sheets_session_host.dart';
+import 'sheets_writer.dart';
 
 /// A [WorkbookSession] on the synced local replica (suite 12 §2, Sheets 02
 /// §6–7).
@@ -609,6 +610,10 @@ class SyncedWorkbookSession extends WorkbookSessionBase {
           label: label,
           actorKind: actorKind,
           sessionId: host.sessionId,
+          onProgress: (written, _) {
+            _written = written;
+            _updateStatus();
+          },
         );
         _lastError = null;
         host.kick();
@@ -621,6 +626,7 @@ class SyncedWorkbookSession extends WorkbookSessionBase {
         unawaited(ingestRemote());
       } finally {
         _pending.remove(write);
+        _written = 0;
         _updateStatus();
       }
     });
@@ -640,6 +646,17 @@ class SyncedWorkbookSession extends WorkbookSessionBase {
   /// Number of row changes waiting to be stored.
   int get pendingChanges => _pending.fold(0, (a, w) => a + w.changes.length);
 
+  /// Changes of the write in flight already stored (its finished chunks).
+  int _written = 0;
+
+  /// Share of the queued changes stored, for saves bigger than one writer
+  /// chunk (shown in the sync status); null for ordinary saves.
+  double? get saveProgress {
+    final pending = pendingChanges;
+    if (pending <= SheetsWriter.chunkSize) return null;
+    return _written / pending;
+  }
+
   void _updateStatus() {
     if (_disposed) return;
     final pending = pendingChanges;
@@ -651,7 +668,11 @@ class SyncedWorkbookSession extends WorkbookSessionBase {
         error: '$_lastError',
       );
     } else if (pending > 0) {
-      status = SyncStatus(state: SyncState.saving, pendingChanges: pending);
+      status = SyncStatus(
+        state: SyncState.saving,
+        pendingChanges: pending - _written,
+        progress: saveProgress,
+      );
     } else if (!host.online.value) {
       status = const SyncStatus(state: SyncState.offline);
     } else {

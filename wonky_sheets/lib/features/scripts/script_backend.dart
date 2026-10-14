@@ -55,7 +55,13 @@ abstract class ScriptBackend {
   );
 
   /// *Run on server*.
-  Future<ServerRunResult> runOnServer(UuidValue item, String functionName);
+  /// *Run on server*; [onLog] receives log lines while the function runs
+  /// (09 §14.5; backends without streaming report them with the result).
+  Future<ServerRunResult> runOnServer(
+    UuidValue item,
+    String functionName, {
+    void Function(LogEntry entry)? onLog,
+  });
 
   /// The executions log, newest first.
   Future<List<ScriptExecution>> executions(
@@ -129,9 +135,27 @@ class ServerScriptBackend implements ScriptBackend {
   @override
   Future<ServerRunResult> runOnServer(
     UuidValue item,
-    String functionName,
-  ) async {
-    final r = await _ep.run(item, functionName, null);
+    String functionName, {
+    void Function(LogEntry entry)? onLog,
+  }) async {
+    ScriptRunResponse? r;
+    var events = 0;
+    try {
+      await for (final e in _ep.runLive(item, functionName, null)) {
+        events++;
+        final m = (jsonDecode(e) as Map).cast<String, Object?>();
+        final log = m['log'];
+        if (log is Map) onLog?.call(LogEntry.fromJson(log.cast()));
+        final result = m['result'];
+        if (result is Map) {
+          r = ScriptRunResponse.fromJson(result.cast<String, dynamic>());
+        }
+      }
+    } on Object {
+      // Streaming unavailable (old server, proxy): run without live logs.
+      if (events > 0) rethrow;
+    }
+    r ??= await _ep.run(item, functionName, null);
     final err = r.errorJson;
     return ServerRunResult(
       status: ExecutionStatus.values.byName(

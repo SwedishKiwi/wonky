@@ -5,6 +5,7 @@
 /// analyzer (`tool/check_dependencies.dart` enforces it).
 library;
 
+export 'src/api/api_index_builder.dart';
 export 'src/compiler/diagnostics.dart';
 export 'src/compiler/script_compiler.dart';
 export 'src/compiler/subset_lint.dart' show SubsetLint, allowedDartImports;

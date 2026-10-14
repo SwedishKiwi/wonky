@@ -55,11 +55,12 @@ abstract final class FormulaCodec {
         case TokenKind.rowRange:
           b.write(_encodeA1(t.ref!.a1!, ctx, host));
         case TokenKind.functionName:
-          b.write(_canonicalFunctionName(t.text, ctx.workbook));
+          b.write(_canonicalFunctionName(t.text, ctx.workbook, ctx.locale));
         case TokenKind.name:
           b.write(_canonicalName(t.text, ctx.workbook));
         case TokenKind.boolean:
-          b.write(t.text.toUpperCase());
+          final v = ctx.locale.booleanOf(t.text);
+          b.write(v == null ? t.text.toUpperCase() : (v ? 'TRUE' : 'FALSE'));
         case TokenKind.error:
           b.write(t.text.toUpperCase());
         case TokenKind.number:
@@ -82,13 +83,18 @@ abstract final class FormulaCodec {
 
   static String _withEq(String s) => s.startsWith('=') ? s : '=$s';
 
-  static String _canonicalFunctionName(String name, WorkbookView wb) {
+  static String _canonicalFunctionName(
+    String name,
+    WorkbookView wb,
+    FormulaLocale locale,
+  ) {
     final upper = name.toUpperCase();
     if (FunctionRegistry.standard.has(upper)) return upper;
     for (final n in wb.namedRanges) {
       if (n.name.toUpperCase() == upper) return n.name;
     }
-    return name;
+    // Display language (P2): localized names are stored in English.
+    return locale.language?.englishName(upper) ?? name;
   }
 
   static String _canonicalName(String name, WorkbookView wb) {
@@ -182,6 +188,10 @@ abstract final class FormulaCodec {
           b.write(
             loc.decimal == '.' ? t.text : t.text.replaceAll('.', loc.decimal),
           );
+        case TokenKind.functionName when loc.language != null:
+          b.write(loc.language!.localName(t.text) ?? t.text);
+        case TokenKind.boolean when loc.language != null:
+          b.write(loc.booleanText(t.text.toUpperCase() == 'TRUE'));
         case TokenKind.argSeparator:
           b.write(loc.argSeparator);
         case TokenKind.arrayColSep:

@@ -25,6 +25,9 @@ class SheetsUserDefaults {
   static const keyScriptsEnabled = 'scriptsEnabled';
   static const keyReduceAnimations = 'reduceAnimations';
 
+  /// Chart series also differ by dash pattern and point shape (08 §14).
+  static const keyChartSeriesByPattern = 'chartSeriesByPattern';
+
   /// Column-value autocomplete while typing (03 §8.5, Tools › Autocomplete).
   static const keyColumnAutocomplete = 'autocomplete';
 
@@ -58,6 +61,10 @@ class SheetsUserDefaults {
   /// setting *Reduce motion* implies it.
   bool get reduceAnimations =>
       (_m[keyReduceAnimations] as bool? ?? false) || prefs.reduceMotion;
+
+  /// *Distinguish chart series by pattern* (08 §14, accessibility).
+  bool get chartSeriesByPattern =>
+      _m[keyChartSeriesByPattern] as bool? ?? false;
 
   /// Custom fill lists (each a list of at least two items), used by the
   /// fill handle and series fill before the built-in lists.

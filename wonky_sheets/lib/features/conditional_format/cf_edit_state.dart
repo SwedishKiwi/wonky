@@ -252,12 +252,19 @@ class CfEditState {
 
   /// The first validation problem (06 §15.9 inline errors), or null.
   /// [rangesValid] reflects the *Apply to range* input.
-  CfEditError? validate({required bool rangesValid, String locale = 'en_US'}) {
+  CfEditError? validate({
+    required bool rangesValid,
+    String locale = 'en_US',
+    FormulaLocale? formulaLocale,
+  }) {
     if (!rangesValid) return const CfEditError(CfEditErrorKind.range);
     String? formulaError(String text) {
       final t = text.trim();
       if (!t.startsWith('=')) return null;
-      final v = validateFormula(t, locale: FormulaLocale.forId(locale));
+      final v = validateFormula(
+        t,
+        locale: formulaLocale ?? FormulaLocale.forId(locale),
+      );
       return v.ok ? null : (v.error?.message ?? 'Invalid formula');
     }
 

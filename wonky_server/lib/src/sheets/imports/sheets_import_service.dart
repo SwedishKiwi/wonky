@@ -26,7 +26,7 @@ import '../mcp/sheets_bulk_writer.dart';
 /// spreadsheet (home upload, MCP).
 abstract final class SheetsImportService {
   /// Formats `drive.import` accepts for spreadsheets.
-  static const formats = {'csv', 'tsv', 'txt', 'xlsx', 'xlsm', 'ods'};
+  static const formats = {'csv', 'tsv', 'txt', 'xlsx', 'xlsm', 'ods', 'json'};
 
   /// Files above this size are parsed in a worker isolate.
   static const isolateThreshold = 512 * 1024;
@@ -137,21 +137,25 @@ abstract final class SheetsImportService {
       locale: opts.locale,
       maxCells: WonkyConfig.current.maxCellsPerSpreadsheet,
     );
-    final core.IrImportResult result;
+    // Chunked planning (11 §3.5): the head, then the cells chunk by chunk,
+    // each written before the next is planned (a new spreadsheet: the cells
+    // don't read the model, so the plans are not applied to it).
+    final core.IrImportChunks chunks;
     try {
-      result = core.IrToRowsPlanner.plan(
+      chunks = core.IrToRowsPlanner.planChunked(
         doc,
         model,
         ctx,
         options: opts,
         fileName: fileName,
         label: 'Import $fileName',
+        chunkCells: SheetsBulkWriter.chunkSize,
       );
     } on core.PlanException catch (e) {
       if (e.code == 'cell_limit_exceeded') throw Errors.limit(e.message);
       throw Errors.invalid(e.message);
     }
-    for (final img in result.imageUploads) {
+    for (final img in chunks.imageUploads) {
       await FileService.storeServerFile(
         session,
         ownerId: actor.userId,
@@ -162,15 +166,22 @@ abstract final class SheetsImportService {
         fileUuid: UuidValue.fromString(img.fileUuid),
       );
     }
-    await SheetsBulkWriter.apply(
-      session,
-      actor: actor,
-      spaceUuid: space,
-      changes: result.plan.changes,
-      label: result.plan.label,
-      plans: [result.plan],
-      kinds: const {core.ChangeKinds.import},
-    );
+    for (
+      core.MutationPlan? plan = chunks.head;
+      plan != null;
+      plan = chunks.next()
+    ) {
+      await SheetsBulkWriter.apply(
+        session,
+        actor: actor,
+        spaceUuid: space,
+        changes: plan.changes,
+        label: chunks.head.label,
+        plans: [plan],
+        kinds: const {core.ChangeKinds.import},
+      );
+    }
+    final result = chunks.result;
     final view = await DriveService.registerSpreadsheet(
       session,
       actor,

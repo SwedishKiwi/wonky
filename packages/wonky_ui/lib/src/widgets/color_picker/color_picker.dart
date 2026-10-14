@@ -26,6 +26,7 @@ class WonkyColorPicker extends StatefulWidget {
     required this.onChanged,
     this.value,
     this.themeColors = const [],
+    this.themeColorsLabel,
     this.recentColors = const [],
     this.resetLabel,
     this.resetIcon = LucideIcons.eraser,
@@ -37,6 +38,9 @@ class WonkyColorPicker extends StatefulWidget {
   final WonkyColor? value;
   final ValueChanged<WonkyColor?> onChanged;
   final List<WonkyThemeSwatch> themeColors;
+
+  /// Heading of the [themeColors] row (default "Theme colors").
+  final String? themeColorsLabel;
   final List<WonkyColor> recentColors;
 
   /// "Automatic" / "None"; null hides the reset button.
@@ -246,7 +250,7 @@ class _WonkyColorPickerState extends State<WonkyColorPicker> {
             const SizedBox(height: 6),
             for (var r = 2; r < paletteRows; r++) rowWidget(r),
             if (themeRow != null) ...[
-              sectionLabel(l10n.colorThemeColors),
+              sectionLabel(widget.themeColorsLabel ?? l10n.colorThemeColors),
               rowWidget(themeRow),
             ],
             sectionLabel(l10n.colorRecentColors),

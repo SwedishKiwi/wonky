@@ -34,18 +34,38 @@ abstract final class ObjectPlacement {
     ChartRect? viewport,
     double width = ObjectAnchor.defaultChartWidth,
     double height = ObjectAnchor.defaultChartHeight,
+    int frozenRows = 0,
+    int frozenColumns = 0,
   }) {
     final first = dataRegion.right + 1;
-    final col = first >= 0 && first < columns.length
+    var col = first >= 0 && first < columns.length
         ? columns.nextVisible(first, 1)
         : null;
+    // Never anchor inside frozen columns: the chart starts in the scrolling
+    // pane (objects anchored in frozen panes stay fixed over the scrolling
+    // ones).
+    if (col != null && col < frozenColumns) {
+      final mainLeft = math.max(
+        columns.offsetOf(math.min(frozenColumns, columns.length - 1)),
+        viewport?.left ?? 0,
+      );
+      col = columns.length > frozenColumns
+          ? columns.nextVisible(columns.indexAtOffset(mainLeft), 1)
+          : null;
+    }
     if (col != null) {
       final left = columns.offsetOf(col);
       if (viewport == null || left < viewport.right) {
         final row = dataRegion.top.clamp(0, rows.length - 1);
+        var top = rows.offsetOf(row);
+        // A data region starting in frozen rows: the chart goes to the top
+        // of the scrolling pane's visible area instead.
+        if (row < frozenRows && rows.length > frozenRows) {
+          top = math.max(rows.offsetOf(frozenRows), viewport?.top ?? 0);
+        }
         return ObjectAnchor.normalizeAt(
           left + chartGap,
-          rows.offsetOf(row),
+          top,
           width: width,
           height: height,
           rows: rows,

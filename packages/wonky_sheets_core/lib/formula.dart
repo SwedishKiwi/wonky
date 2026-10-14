@@ -24,6 +24,7 @@ export 'src/formula/functions/text/number_text_formatter.dart';
 export 'src/formula/model/memory_workbook.dart';
 export 'src/formula/model/workbook_view.dart' hide CellInput;
 export 'src/formula/parser/formula_grammar.dart';
+export 'src/formula/parser/formula_language.dart';
 export 'src/formula/parser/formula_locale.dart';
 export 'src/formula/parser/lexer.dart';
 export 'src/formula/parser/parse_error.dart';

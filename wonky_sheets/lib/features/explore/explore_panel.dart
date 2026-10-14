@@ -14,6 +14,7 @@ import '../ai/sheets_ai_controller.dart';
 import '../sheet_editor/sheet_editor_controller.dart';
 import '../status/selection_stats.dart';
 import '../status/selection_stats_button.dart' show statLabel;
+import 'explore_chart_thumbnail.dart';
 
 /// Panel id of Explore (04 §10).
 const explorePanelId = 'sheets.panel.explore';
@@ -237,46 +238,70 @@ class _ExplorePanelState extends State<ExplorePanel> {
       ]),
       builder: (context, _) => WonkyScrollArea(
         controller: _scroll,
-        child: Padding(
-          key: const ValueKey<String>('sheets.explore'),
-          padding: const EdgeInsets.fromLTRB(14, 10, 14, 16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            spacing: 16,
-            children: [
-              if (scope == null)
-                WonkyEmptyState(
-                  key: const ValueKey<String>('sheets.explore.empty'),
-                  illustration: EmptyIllustration.search,
-                  title: l.exploreEmptyTitle,
-                  description: l.exploreEmptyBody,
-                  size: 72,
-                )
-              else ...[
+        child: SingleChildScrollView(
+          controller: _scroll,
+          child: Padding(
+            key: const ValueKey<String>('sheets.explore'),
+            padding: const EdgeInsets.fromLTRB(14, 10, 14, 16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              spacing: 16,
+              children: [
                 Row(
                   children: [
                     Icon(
-                      LucideIcons.squareDashedMousePointer,
-                      size: 14,
-                      color: theme.colorScheme.mutedForeground,
+                      LucideIcons.telescope,
+                      size: 16,
+                      color: theme.colorScheme.primary,
                     ),
-                    const SizedBox(width: 6),
+                    const SizedBox(width: 8),
                     Expanded(
-                      child: Text(
-                        scope.a1(ed),
-                        key: const ValueKey<String>('sheets.explore.scope'),
-                        overflow: TextOverflow.ellipsis,
-                        style: theme.textTheme.small,
+                      child: Semantics(
+                        header: true,
+                        child: Text(
+                          l.explorePanelTitle,
+                          key: const ValueKey<String>('sheets.explore.title'),
+                          overflow: TextOverflow.ellipsis,
+                          style: theme.textTheme.large.copyWith(fontSize: 15),
+                        ),
                       ),
                     ),
                   ],
                 ),
-                if (_stats.count > 0) _statsSection(context),
-                _chartsSection(context, scope),
-                _insightsSection(context, scope),
+                if (scope == null)
+                  WonkyEmptyState(
+                    key: const ValueKey<String>('sheets.explore.empty'),
+                    illustration: EmptyIllustration.search,
+                    title: l.exploreEmptyTitle,
+                    description: l.exploreEmptyBody,
+                    size: 72,
+                  )
+                else ...[
+                  Row(
+                    children: [
+                      Icon(
+                        LucideIcons.squareDashedMousePointer,
+                        size: 14,
+                        color: theme.colorScheme.mutedForeground,
+                      ),
+                      const SizedBox(width: 6),
+                      Expanded(
+                        child: Text(
+                          scope.a1(ed),
+                          key: const ValueKey<String>('sheets.explore.scope'),
+                          overflow: TextOverflow.ellipsis,
+                          style: theme.textTheme.small,
+                        ),
+                      ),
+                    ],
+                  ),
+                  if (_stats.count > 0) _statsSection(context),
+                  _chartsSection(context, scope),
+                  _insightsSection(context, scope),
+                ],
+                _askSection(context),
               ],
-              _askSection(context),
-            ],
+            ),
           ),
         ),
       ),
@@ -367,17 +392,47 @@ class _ExplorePanelState extends State<ExplorePanel> {
           runSpacing: 8,
           children: [
             for (final (i, c) in _charts.indexed)
-              ShadButton.outline(
-                key: ValueKey<String>('sheets.explore.chart.$i'),
-                enabled: canInsert,
-                leading: Icon(_chartIcon(c.type), size: 15),
-                onPressed: () => unawaited(
-                  _run('sheets.chart.insert', {
-                    'ranges': [range],
-                    'type': c.type.name,
-                  }),
+              ShadTooltip(
+                builder: (_) => Text(c.label),
+                child: ShadButton.outline(
+                  key: ValueKey<String>('sheets.explore.chart.$i'),
+                  enabled: canInsert,
+                  width: 148,
+                  height: 124,
+                  padding: const EdgeInsets.all(7),
+                  onPressed: () => unawaited(
+                    _run('sheets.chart.insert', {
+                      'ranges': [range],
+                      'type': c.type.name,
+                    }),
+                  ),
+                  child: SizedBox(
+                    width: 132,
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      spacing: 6,
+                      children: [
+                        ExploreChartThumbnail(editor: ed, spec: c.spec),
+                        Row(
+                          children: [
+                            Icon(_chartIcon(c.type), size: 13),
+                            const SizedBox(width: 5),
+                            Expanded(
+                              child: Text(
+                                c.label,
+                                overflow: TextOverflow.ellipsis,
+                                style: theme.textTheme.small.copyWith(
+                                  fontSize: 12,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
                 ),
-                child: Text(c.label),
               ),
           ],
         ),
@@ -390,7 +445,12 @@ class _ExplorePanelState extends State<ExplorePanel> {
             leading: const Icon(LucideIcons.table2, size: 14),
             onPressed: () =>
                 unawaited(_run('sheets.insert.pivotTable', {'range': range})),
-            child: Text(l.exploreCreatePivot),
+            child: Flexible(
+              child: Text(
+                l.exploreCreatePivot,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
           ),
         ),
     ]);
@@ -427,7 +487,9 @@ class _ExplorePanelState extends State<ExplorePanel> {
                 enabled: reason == null,
                 leading: const Icon(LucideIcons.sparkles, size: 13),
                 onPressed: () => unawaited(_ask(_withScope(c))),
-                child: Text(c),
+                child: Flexible(
+                  child: Text(c, overflow: TextOverflow.ellipsis),
+                ),
               ),
           ],
         ),

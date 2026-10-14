@@ -7,6 +7,7 @@ import '../build/script_exports.dart';
 import '../custom_functions/custom_functions.dart';
 import '../guest/guest_runtime.dart';
 import '../host/limits.dart';
+import '../host/lock_cache.dart';
 import '../host/script_host.dart';
 import '../host/services.dart';
 import '../host/workbook_access.dart';
@@ -40,6 +41,8 @@ final class ScriptSession {
     this.limits = ExecutionLimits.client,
     this.timeZones = const TzDatabaseResolver(),
     this.maxQueued = 10,
+    this.onLiveLog,
+    this.locks,
   }) : pureRunner = pureRunner ?? uiRunner,
        userProperties = userProperties ?? MemoryPropertyStore() {
     customFunctions = ScriptCustomFunctions(
@@ -102,6 +105,14 @@ final class ScriptSession {
   /// Max queued executions (09 §8.4).
   final int maxQueued;
 
+  /// Called for every log line while an execution runs (the editor's live
+  /// Log panel, 09 §14.1); the same entries end up in
+  /// [ExecutionResult.logs].
+  final void Function(String functionName, LogEntry entry)? onLiveLog;
+
+  /// `LockService` backend (default: no-op locks of one window).
+  final ScriptLockProvider? locks;
+
   /// The formula engine's custom function hook.
   late final ScriptCustomFunctions customFunctions;
 
@@ -150,7 +161,11 @@ final class ScriptSession {
     };
   }
 
-  ScriptHost _host(ExecutionKind kind, {required bool limited}) {
+  ScriptHost _host(
+    ExecutionKind kind, {
+    required bool limited,
+    String functionName = '',
+  }) {
     final effectiveLimits = kind == ExecutionKind.onSelectionChange
         ? ExecutionLimits.selectionChange
         : limits;
@@ -176,6 +191,8 @@ final class ScriptSession {
           f.name,
       },
       timeZones: timeZones,
+      locks: locks,
+      onLog: onLiveLog == null ? null : (e) => onLiveLog!(functionName, e),
     );
   }
 
@@ -241,7 +258,7 @@ final class ScriptSession {
           continue;
         }
         final limited = q.kind.isSimpleTrigger && missingScopes().isNotEmpty;
-        final host = _host(q.kind, limited: limited);
+        final host = _host(q.kind, limited: limited, functionName: q.function);
         try {
           final r = await runScript(
             runner: uiRunner,
@@ -325,4 +342,14 @@ final class _MenuCapture implements ScriptUiDelegate {
   @override
   void showToast(String message, {String? title, double timeoutSeconds = 5}) =>
       inner?.showToast(message, title: title, timeoutSeconds: timeoutSeconds);
+
+  @override
+  void showPanel(ScriptPanelRequest request) => _inner.showPanel(request);
+
+  @override
+  void updatePanel(String panelId, Map<String, Object?> panel) =>
+      inner?.updatePanel(panelId, panel);
+
+  @override
+  void closePanel(String panelId) => inner?.closePanel(panelId);
 }

@@ -5,7 +5,7 @@ import 'package:wonky_app/wonky_app.dart';
 import 'package:wonky_client/wonky_client.dart' show UuidValue;
 import 'package:wonky_core/wonky_core.dart';
 import 'package:wonky_sheets_core/formula.dart'
-    show FormulaLocale, FunctionRegistry, validateFormula;
+    show FunctionRegistry, validateFormula;
 import 'package:wonky_sheets_core/model.dart';
 
 import '../features/named_ranges/import_named_functions_dialog.dart';
@@ -486,7 +486,7 @@ String? namedFunctionDefinitionError(
   var body = definition.trim();
   if (body.startsWith('=')) body = body.substring(1);
   final probe = '=LAMBDA(${[...params, body].join(', ')})';
-  final v = validateFormula(probe, locale: FormulaLocale.forId(ed.locale));
+  final v = validateFormula(probe, locale: ed.formulaLocale);
   if (!v.ok) return v.error?.message ?? NameRules.rangeReferences;
   if (v.references.isNotEmpty) return NameRules.rangeReferences;
   return null;

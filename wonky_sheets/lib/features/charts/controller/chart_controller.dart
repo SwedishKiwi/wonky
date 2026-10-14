@@ -2,6 +2,8 @@ import 'package:flutter/widgets.dart';
 import 'package:shad/shad.dart';
 import 'package:wonky_sheets_core/model.dart';
 
+import '../../charts3d/chart3d_gpu.dart';
+import '../../formatting/sheets_user_defaults.dart';
 import '../../sheet_editor/sheet_editor_controller.dart';
 import '../render/chart_painter.dart';
 
@@ -32,6 +34,11 @@ class _SceneKey {
     this.border,
     this.highlight,
     this.page,
+    this.azimuth,
+    this.elevation,
+    this.transition,
+    this.pattern,
+    this.hover,
   );
 
   final double width;
@@ -42,10 +49,17 @@ class _SceneKey {
   final int border;
   final String? highlight;
   final int page;
+  final double? azimuth;
+  final double? elevation;
+  final double transition;
+  final bool pattern;
+  final SceneTag? hover;
 
   @override
   bool operator ==(Object other) =>
       other is _SceneKey &&
+      other.pattern == pattern &&
+      other.hover == hover &&
       other.width == width &&
       other.height == height &&
       other.dark == dark &&
@@ -53,7 +67,10 @@ class _SceneKey {
       other.foreground == foreground &&
       other.border == border &&
       other.highlight == highlight &&
-      other.page == page;
+      other.page == page &&
+      other.azimuth == azimuth &&
+      other.elevation == elevation &&
+      other.transition == transition;
 
   @override
   int get hashCode => Object.hash(
@@ -65,6 +82,11 @@ class _SceneKey {
     border,
     highlight,
     page,
+    azimuth,
+    elevation,
+    transition,
+    pattern,
+    hover,
   );
 }
 
@@ -77,6 +99,22 @@ class _SceneKey {
 class ChartController extends ChangeNotifier {
   ChartController(this.editor, this.objectId, String specJson) {
     _setSpec(specJson);
+    _pattern = _patternPref;
+    editor.services.prefs.addListener(_onPrefs);
+  }
+
+  /// Settings › Sheets › *Distinguish chart series by pattern* (08 §14).
+  bool _pattern = false;
+
+  bool get _patternPref =>
+      SheetsUserDefaults.of(editor.services).chartSeriesByPattern;
+
+  void _onPrefs() {
+    final p = _patternPref;
+    if (p == _pattern) return;
+    _pattern = p;
+    _scene = null;
+    notifyListeners();
   }
 
   final SheetEditorController editor;
@@ -93,8 +131,88 @@ class ChartController extends ChangeNotifier {
   /// Series highlighted from the legend (not persisted, 08 §6.5).
   String? _highlight;
 
+  /// The 3D item under the pointer (drawn lighter, 08 §23.6).
+  SceneTag? _hover3D;
+
+  SceneTag? get hover3D => _hover3D;
+
+  set hover3D(SceneTag? tag) {
+    if (tag == _hover3D) return;
+    _hover3D = tag;
+    notifyListeners();
+  }
+
   /// Page of a paged table chart.
   int tablePage = 0;
+
+  // 3D (08 §23.6): the view angles while the user orbits, and the animated
+  // transition between two data states.
+  double? _orbitAzimuth;
+  double? _orbitElevation;
+  bool _orbitCommitted = false;
+  Chart3DModel? _settled3D;
+  Chart3DModel? _displayed3D;
+  Chart3DModel? _from3D;
+  double _t3D = 1;
+
+  /// Whether data changes of 3D charts animate (off with reduced motion).
+  bool animate3D = true;
+
+  /// Incremented when a 3D transition starts; the view animates
+  /// [transition3D] from 0 to 1.
+  final ValueNotifier<int> transitionRequests = ValueNotifier(0);
+
+  /// The orbit angles shown instead of the spec's (null = the spec's).
+  (double, double)? get orbit =>
+      _orbitAzimuth == null ? null : (_orbitAzimuth!, _orbitElevation!);
+
+  /// Shows the chart from [azimuth]/[elevation] until [endOrbit].
+  void setOrbit(double azimuth, double elevation) {
+    final a = ChartThreeD.normalizeAzimuth(azimuth);
+    final e = elevation.clamp(
+      ChartThreeD.minElevation,
+      ChartThreeD.maxElevation,
+    );
+    if (a == _orbitAzimuth && e == _orbitElevation) return;
+    _orbitAzimuth = a;
+    _orbitElevation = e;
+    _orbitCommitted = false;
+    _scene = null;
+    notifyListeners();
+  }
+
+  /// Ends an orbit. With [committed], the override stays until the spec
+  /// with the committed angles arrives (no flicker), else it is dropped.
+  void endOrbit({bool committed = false}) {
+    if (_orbitAzimuth == null) return;
+    if (committed) {
+      _orbitCommitted = true;
+      return;
+    }
+    _orbitAzimuth = null;
+    _orbitElevation = null;
+    _scene = null;
+    notifyListeners();
+  }
+
+  @override
+  void dispose() {
+    editor.services.prefs.removeListener(_onPrefs);
+    transitionRequests.dispose();
+    Chart3DBackends.gpu.value?.release(this);
+    super.dispose();
+  }
+
+  /// Progress of the running 3D transition (0..1).
+  double get transition3D => _t3D;
+  set transition3D(double t) {
+    final v = t.clamp(0.0, 1.0);
+    if (v == _t3D) return;
+    _t3D = v;
+    if (v >= 1) _from3D = null;
+    _scene = null;
+    notifyListeners();
+  }
 
   ChartSpec get spec => _spec;
   String get specJson => _specJson;
@@ -112,6 +230,11 @@ class ChartController extends ChangeNotifier {
     _spec = ChartSpec.fromJson(json);
     _dirty = true;
     _scene = null;
+    if (_orbitCommitted) {
+      _orbitCommitted = false;
+      _orbitAzimuth = null;
+      _orbitElevation = null;
+    }
   }
 
   /// The stored spec changed (local edit, undo or a collaborator).
@@ -185,6 +308,11 @@ class ChartController extends ChangeNotifier {
       tokens.border,
       export ? null : _highlight,
       tablePage,
+      export ? null : _orbitAzimuth,
+      export ? null : _orbitElevation,
+      export ? 1 : _t3D,
+      !export && _pattern,
+      export ? null : _hover3D,
     );
     if (!export && _scene != null && key == _sceneKey) return _scene!;
     final theme = ChartTheme.from(
@@ -194,19 +322,50 @@ class ChartController extends ChangeNotifier {
       tokens: tokens,
     );
     try {
-      final layout = ChartPipeline.layout(
-        _spec,
-        d,
-        size: ChartSize(width, height),
-        theme: theme,
-        measurer: FlutterTextMeasurer.instance,
-        locale: editor.locale,
-        options: ChartLayoutOptions(
-          highlightSeriesKey: export ? null : _highlight,
-          tablePage: tablePage,
-        ),
-      );
+      ChartLayout run({Chart3DModel? from, double t = 1}) =>
+          ChartPipeline.layout(
+            _spec,
+            d,
+            size: ChartSize(width, height),
+            theme: theme,
+            measurer: FlutterTextMeasurer.instance,
+            locale: editor.locale,
+            options: ChartLayoutOptions(
+              highlightSeriesKey: export ? null : _highlight,
+              tablePage: tablePage,
+              distinguishByPattern: !export && _pattern,
+              hover3D: export ? null : _hover3D,
+              azimuth3D: export ? null : _orbitAzimuth,
+              elevation3D: export ? null : _orbitElevation,
+              transitionFrom3D: from,
+              transition3D: t,
+            ),
+          );
+      var layout = run();
       if (export) return layout.scene;
+      final target = layout.scene.threeD?.model;
+      if (target != null) {
+        final settled = _settled3D;
+        if (animate3D &&
+            _orbitAzimuth == null &&
+            settled != null &&
+            settled.kind == target.kind &&
+            settled.contentHash != target.contentHash) {
+          // Animate from what is on screen now (08 §23.6).
+          _from3D = _displayed3D ?? settled;
+          _t3D = 0;
+          transitionRequests.value++;
+        }
+        _settled3D = target;
+        final from = _from3D;
+        if (from != null && _t3D < 1) {
+          layout = run(from: from, t: Curves.easeOutCubic.transform(_t3D));
+        }
+        _displayed3D = layout.scene.threeD?.model;
+      } else {
+        _settled3D = _displayed3D = _from3D = null;
+        _t3D = 1;
+      }
       _layoutWarnings = layout.warnings;
       _scene = layout.scene;
     } catch (e) {

@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:meta/meta.dart';
 import 'package:serverpod_database/serverpod_database.dart' hide Protocol;
 import 'package:serverpod_serialization/serverpod_serialization.dart';
@@ -205,6 +207,11 @@ class CrdtRecorderContext {
   }
 
   /// Checks local projection dependencies in one database snapshot.
+  ///
+  /// OS-7: the attempted-value checks join from `crdt_data_attempted_value`
+  /// (CROSS JOIN fixes SQLite's join order): attempts are rare, while
+  /// starting from the space's `crdt_data_rows` scanned every row of the
+  /// table on each write (a 1M-cell import slowed down linearly).
   Future<bool> localProjectionDependenciesAreStable({
     required String tableName,
     required Set<UuidValue> rowIds,
@@ -213,15 +220,34 @@ class CrdtRecorderContext {
     required Map<String, Set<String>> referencingColumnsByTable,
     required List<Map<String, Set<Object?>>> uniqueClaims,
     required Transaction transaction,
+    bool restoring = false,
   }) async {
     final (tableId, _) = schema[tableName]!;
     final spaceId = hlcManagerFor(transaction).normalizedSpaceId;
-    final ids = rowIds.sqlLiteralList();
+    // OS-7: on SQLite the id lists travel as JSON parameters; literal lists
+    // of thousands of UUIDs cost more to parse than the query takes.
+    final params = <String, Object?>{};
+    String idList(Iterable<UuidValue> values) {
+      if (database.dialect != DatabaseDialect.sqlite || values.length < 32) {
+        return values.sqlLiteralList();
+      }
+      final name = 'ids${params.length}';
+      params[name] = jsonEncode([
+        for (final id in values) id.uuid.replaceAll('-', ''),
+      ]);
+      return 'SELECT unhex(value) FROM json_each(@$name)';
+    }
+
+    final ids = idList(rowIds);
     final rowPredicate =
         'r."spaceId" = $spaceId AND r."tblId" = $tableId '
         'AND r."uuidRowId" IN ($ids)';
     final conditions = <String>[
-      if (persisted)
+      if (restoring)
+        // OS-7: every revived row has its (tombstoned) CRDT row.
+        '(SELECT COUNT(*) FROM "crdt_data_rows" r WHERE $rowPredicate) = '
+            '${rowIds.length}'
+      else if (persisted)
         '''(SELECT COUNT(*) FROM "crdt_data_rows" r
 LEFT JOIN "crdt_data_tombstone" d ON d."rowId" = r."id"
 WHERE $rowPredicate AND ($_rowVisible)
@@ -231,9 +257,9 @@ WHERE $rowPredicate AND ($_rowVisible)
       // An attempted FK may own a unique fallback different from its authored value.
       '''NOT EXISTS (
 SELECT 1 FROM "crdt_data_attempted_value" a
-JOIN "crdt_data_fields" f ON f."id" = a."fieldId"
-JOIN "crdt_data_rows" r ON r."id" = f."rowId"
-WHERE r."spaceId" = $spaceId AND r."tblId" = $tableId)''',
+CROSS JOIN "crdt_data_fields" f
+CROSS JOIN "crdt_data_rows" r
+WHERE f."id" = a."fieldId" AND r."id" = f."rowId" AND r."spaceId" = $spaceId AND r."tblId" = $tableId)''',
     ];
     for (final MapEntry(key: parentTable, value: parentIds) in parentsByTable.entries) {
       final (parentTableId, _) = schema[parentTable]!;
@@ -242,11 +268,11 @@ FROM "${parentTable.escapeIdentifier()}" p
 JOIN "crdt_data_rows" r ON r."uuidRowId" = p."id"
   AND r."tblId" = $parentTableId AND r."spaceId" = $spaceId
 LEFT JOIN "crdt_data_tombstone" d ON d."rowId" = r."id"
-WHERE p."spaceId" = $spaceId AND p."id" IN (${parentIds.sqlLiteralList()})
+WHERE p."spaceId" = $spaceId AND p."id" IN (${idList(parentIds)})
   AND ($_rowVisible) AND (d."id" IS NULL OR d."clFlag" % 2 = 1)
 ) = ${parentIds.length}''');
     }
-    final encodedIds = {
+    late final encodedIds = {
       for (final id in rowIds)
         ValueEncoder.instance.encodeColumnValue(
           CrdtDataAttemptedValue.t.value,
@@ -256,22 +282,37 @@ WHERE p."spaceId" = $spaceId AND p."id" IN (${parentIds.sqlLiteralList()})
     for (final MapEntry(key: childTable, value: columnNames)
         in referencingColumnsByTable.entries) {
       final predicates = [
-        for (final column in columnNames) '"${column.escapeIdentifier()}" IN ($ids)',
+        for (final column in columnNames) 'c."${column.escapeIdentifier()}" IN ($ids)',
       ].join(' OR ');
-      conditions.add(
-        'NOT EXISTS (SELECT 1 FROM "${childTable.escapeIdentifier()}" '
-        'WHERE $predicates)',
-      );
       final (childTableId, columns) = schema[childTable]!;
+      if (restoring) {
+        // OS-7: children deleted by a user tombstone stay hidden whatever
+        // their parent does (they are revived only explicitly), so only
+        // children that are visible or hidden by projection block a revive.
+        conditions.add('''NOT EXISTS (
+SELECT 1 FROM "${childTable.escapeIdentifier()}" c
+LEFT JOIN "crdt_data_rows" r ON r."uuidRowId" = c."id"
+  AND r."tblId" = $childTableId AND r."spaceId" = $spaceId
+LEFT JOIN "crdt_data_tombstone" d ON d."rowId" = r."id"
+WHERE ($predicates)
+  AND NOT (r."id" IS NOT NULL AND d."id" IS NOT NULL AND d."clFlag" % 2 = 0
+    AND d."reason" IN (${CrdtDataDeletedReason.userDelete.index}, ${CrdtDataDeletedReason.userCascadeDelete.index})
+    AND r."visibility" > $crdtRowLastVisibleVisibilityIndex))''');
+      } else {
+        conditions.add(
+          'NOT EXISTS (SELECT 1 FROM "${childTable.escapeIdentifier()}" c '
+          'WHERE $predicates)',
+        );
+      }
       final columnIds = {
         for (final name in columnNames) ?columns[name]?.id,
       };
       if (columnIds.isEmpty) continue;
       conditions.add('''NOT EXISTS (
 SELECT 1 FROM "crdt_data_attempted_value" a
-JOIN "crdt_data_fields" f ON f."id" = a."fieldId"
-JOIN "crdt_data_rows" r ON r."id" = f."rowId"
-WHERE r."spaceId" = $spaceId AND r."tblId" = $childTableId
+CROSS JOIN "crdt_data_fields" f
+CROSS JOIN "crdt_data_rows" r
+WHERE f."id" = a."fieldId" AND r."id" = f."rowId" AND r."spaceId" = $spaceId AND r."tblId" = $childTableId
   AND f."columnId" IN (${columnIds.join(', ')})
   AND a."value" IN (${encodedIds.join(', ')}))''');
     }
@@ -287,6 +328,7 @@ WHERE r."spaceId" = $spaceId AND r."tblId" = $childTableId
     }
     final result = await database.unsafeQuery(
       'SELECT ${conditions.map((condition) => "($condition)").join(" AND ")}',
+      parameters: params.isEmpty ? null : QueryParameters.named(params),
       transaction: transaction,
     );
     final stable = result.single.first;
@@ -553,9 +595,9 @@ WHERE r."spaceId" = $spaceId AND r."tblId" = $childTableId
       '''
 SELECT DISTINCT r."uuidRowId"
 FROM "crdt_data_attempted_value" a
-JOIN "crdt_data_fields" f ON f."id" = a."fieldId"
-JOIN "crdt_data_rows" r ON r."id" = f."rowId"
-WHERE r."spaceId" = $spaceId
+CROSS JOIN "crdt_data_fields" f
+CROSS JOIN "crdt_data_rows" r
+WHERE f."id" = a."fieldId" AND r."id" = f."rowId" AND r."spaceId" = $spaceId
   AND r."tblId" = $tableId
   AND f."columnId" IN (${columnIds.join(', ')})
   AND a."value" IN (${encodedValues.join(', ')})
@@ -595,9 +637,9 @@ WHERE r."spaceId" = $spaceId
 UNION
 SELECT r."tblId", r."uuidRowId"
 FROM "crdt_data_attempted_value" a
-JOIN "crdt_data_fields" f ON f."id" = a."fieldId"
-JOIN "crdt_data_rows" r ON r."id" = f."rowId"
-WHERE r."spaceId" = $spaceId
+CROSS JOIN "crdt_data_fields" f
+CROSS JOIN "crdt_data_rows" r
+WHERE f."id" = a."fieldId" AND r."id" = f."rowId" AND r."spaceId" = $spaceId
   AND r."tblId" = $childTableId
   AND f."columnId" = $columnId
 ''',

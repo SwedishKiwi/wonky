@@ -1,7 +1,8 @@
-// Tests for the Wonky patches DE-1 … DE-19 (PATCHES.md).
+// Tests for the Wonky patches DE-1 … DE-21 (PATCHES.md).
 import 'package:dart_eval/dart_eval.dart';
 import 'package:dart_eval/dart_eval_bridge.dart';
 import 'package:dart_eval/src/eval/runtime/runtime.dart' show RuntimeException;
+import 'package:dart_eval/src/eval/shared/stdlib/core/type.dart' show $Type;
 import 'package:dart_eval/stdlib/core.dart';
 import 'package:test/test.dart';
 
@@ -173,6 +174,10 @@ void main() {
     );
   });
 
+  test('DE-20 interpolating a null String?', () {
+    expect(run("String main() { String? s; return 'v \$s'; }"), 'v null');
+  });
+
   test('DE-4 static getters of source classes', () {
     expect(run('class A { static int get x => 4; } int main() => A.x;'), 4);
   });
@@ -190,6 +195,13 @@ void main() {
       throwsA(anything),
     );
     expect(runtime.throwScopes!.any((s) => s.startsWith('f()')), isFalse);
+  });
+
+  test('DE-21 \$Type does not implement dart:core Type (dart2wasm)', () {
+    // A second implementation of `Type` makes dart2wasm compile dynamic
+    // closure calls to `unreachable`; keep `$Type` a plain wrapper.
+    expect($Type(int), isNot(isA<Type>()));
+    expect($Type(int).$value, int);
   });
 
   test('DE-19 UncatchableException is exported', () {

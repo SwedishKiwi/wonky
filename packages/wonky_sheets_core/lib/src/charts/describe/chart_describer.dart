@@ -5,7 +5,7 @@ import '../spec/chart_type.dart';
 /// Automatic accessible description of a chart (08 §14), used as the object's semantics label
 /// when its `altText` is empty.
 abstract final class ChartDescriber {
-  /// `<Type> chart: <title>. <n> series: <names>. X axis: <domain name>, <first> to <last>.`
+  /// `[3D ]<Type> chart: <title>. <n> series: <names>. X axis: <domain name>, <first> to <last>.`
   ///
   /// Pie charts list only the series they draw (the first); table charts give their size
   /// instead of series; the X axis part is left out when there is no domain column (or for
@@ -14,7 +14,7 @@ abstract final class ChartDescriber {
     final type = spec.type == ChartType.pie && spec.pieOptions.pieHole > 0
         ? 'Doughnut'
         : spec.type.displayName;
-    final b = StringBuffer('$type chart');
+    final b = StringBuffer('${spec.is3D ? '3D ' : ''}$type chart');
     final title = spec.title.text.trim();
     b.write(title.isEmpty ? '.' : ': $title.');
     if (spec.type == ChartType.table) {

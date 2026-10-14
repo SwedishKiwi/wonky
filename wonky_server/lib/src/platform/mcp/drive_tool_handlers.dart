@@ -422,6 +422,7 @@ abstract final class DriveToolHandlers {
         format,
         sheetName: a.string('sheet'),
         range: a.string('range'),
+        darkTheme: a.boolean('dark_theme') ?? false,
       );
       final inline = r.inlineText;
       return ToolResult(

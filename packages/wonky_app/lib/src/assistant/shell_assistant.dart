@@ -246,6 +246,10 @@ class _UnavailableApi implements AssistantApi {
       false;
 
   @override
+  Future<bool> uiToolResult(String runId, UiBridgeResponse response) async =>
+      false;
+
+  @override
   Future<List<AssistantThreadView>> listThreads(UuidValue itemUuid) async =>
       const [];
 

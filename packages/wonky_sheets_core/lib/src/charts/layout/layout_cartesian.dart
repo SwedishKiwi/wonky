@@ -358,6 +358,16 @@ final class _Cartesian {
           axis.add(t[i]);
           if (stacked) axis.add(b[i]);
         }
+        // Error bars (unstacked series) extend the range.
+        final eb = stacked ? null : _errorBarsOf(s);
+        if (eb != null) {
+          final e = eb.extents(t);
+          for (var i = 0; i < n; i++) {
+            if (e[i].isNaN) continue;
+            axis.add(t[i] + e[i]);
+            axis.add(t[i] - e[i]);
+          }
+        }
         // Trendlines extend the range a little.
       }
     }
@@ -1158,6 +1168,62 @@ final class _Cartesian {
     for (final s in series) {
       _drawTrendline(s, body);
     }
+    for (final s in series) {
+      _drawErrorBars(s, body);
+    }
+  }
+
+  ErrorBarsSpec? _errorBarsOf(_SeriesInfo s) {
+    if (s.mark == _Mark.area) return null;
+    return ErrorBarsSpec.fromJson(s.style.errorBars);
+  }
+
+  /// Error bars (08 §8.2): a whisker with caps at each point of an
+  /// unstacked column, bar, line or scatter series.
+  void _drawErrorBars(_SeriesInfo s, List<ScenePrimitive> body) {
+    final eb = _errorBarsOf(s);
+    if (eb == null) return;
+    final stacking = type.supportsStacking ? spec.stacking : ChartStacking.none;
+    if (stacking != ChartStacking.none &&
+        (s.mark == _Mark.column || s.mark == _Mark.area)) {
+      return;
+    }
+    if (count > 2000) return;
+    final a = s.rightAxis ? right : left;
+    final t = top[s.key] ?? s.series.values;
+    final e = eb.extents(t);
+    final path = PathBuilder();
+    const cap = 4.0;
+    for (var i = 0; i < count; i++) {
+      final v = t[i];
+      if (v.isNaN || e[i].isNaN || e[i] <= 0) continue;
+      final d = s.mark == _Mark.scatter
+          ? domAt(i)
+          : domAt(i) + (slotOffset[s.key] ?? 0);
+      final lo = valuePx(a, v - e[i]);
+      final hi = valuePx(a, v + e[i]);
+      if (lo.isNaN || hi.isNaN || d.isNaN) continue;
+      void seg(double d0, double v0, double d1, double v1) {
+        final (x0, y0) = pt(d0, v0);
+        final (x1, y1) = pt(d1, v1);
+        path
+          ..moveTo(x0, y0)
+          ..lineTo(x1, y1);
+      }
+
+      seg(d, lo, d, hi);
+      seg(d - cap, lo, d + cap, lo);
+      seg(d - cap, hi, d + cap, hi);
+    }
+    if (path.isEmpty) return;
+    final color = c.theme.color(eb.color, c.theme.text);
+    body.add(
+      SPath(
+        path.commands,
+        stroke: SStroke(Argb.withOpacity(color, 0.8)),
+        tag: SceneTag(SceneRole.series, seriesKey: s.key, detail: 'errorBars'),
+      ),
+    );
   }
 
   void _drawColumns(

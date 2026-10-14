@@ -16,6 +16,7 @@ import '../export/sheets_downloads.dart';
 import '../import_export/sheets_io.dart';
 import '../model/workbook_session.dart';
 import '../sheet_editor/sheet_editor_controller.dart';
+import 'page_break_canvas.dart';
 import 'print_controller.dart';
 import 'print_fonts.dart';
 import 'print_page_painter.dart';
@@ -194,7 +195,9 @@ class _SheetsPrintPreviewScreenState extends State<SheetsPrintPreviewScreen> {
   Future<void> _export() async {
     final ed = _c?.ed;
     if (ed == null || !(_c?.canExport ?? false)) return;
-    await ed.invokeCommand('sheets.print.exportPdf');
+    await ed.invokeCommand('sheets.print.exportPdf', {
+      'darkTheme': _c?.darkTheme ?? false,
+    });
   }
 
   // ------------------------------------------------------------ geometry
@@ -413,8 +416,14 @@ class _SheetsPrintPreviewScreenState extends State<SheetsPrintPreviewScreen> {
           key: const ValueKey<String>('print.settings'),
           controller: c,
         );
+        final preview = c.breakMode
+            ? ColoredBox(
+                color: cs.canvas,
+                child: PageBreakCanvas(controller: c),
+              )
+            : _previewArea(context, c);
         if (narrow) {
-          return _showSettings ? settings : _previewArea(context, c);
+          return _showSettings ? settings : preview;
         }
         return Row(
           crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -423,7 +432,7 @@ class _SheetsPrintPreviewScreenState extends State<SheetsPrintPreviewScreen> {
               SizedBox(width: 132, child: _thumbnails(context, c)),
               Container(width: 1, color: cs.border),
             ],
-            Expanded(child: _previewArea(context, c)),
+            Expanded(child: preview),
             Container(width: 1, color: cs.border),
             SizedBox(width: 360, child: settings),
           ],

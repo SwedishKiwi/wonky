@@ -56,6 +56,8 @@ import 'package:wonky_server/src/generated/platform/sharing/item_sharing_setting
     as _i55sl7s1;
 import 'package:wonky_server/src/generated/platform/users/user_preferences_patch.dart'
     as _ingbfbma;
+import 'package:wonky_server/src/generated/sheets/ai/models/sheets_ai_cell_request.dart'
+    as _ifqit8uo;
 import 'package:wonky_server/src/generated/sheets/ai/models/sheets_fill_row.dart'
     as _isuyxaqz;
 import 'package:wonky_server/src/generated/sheets/scripts/models/script_execution.dart'
@@ -87,7 +89,9 @@ import '../platform/versions/version_endpoint.dart' as _im6cm90k;
 import '../sheets/ai/sheets_ai_endpoint.dart' as _i9apq23f;
 import '../sheets/endpoints/sheets_endpoint.dart' as _izrkvdrt;
 import '../sheets/endpoints/sheets_sync_endpoint.dart' as _iijmdr93;
+import '../sheets/imports/sheets_import_endpoint.dart' as _ixh3mo4r;
 import '../sheets/scripts/script_endpoint.dart' as _in9oll5w;
+import '../sheets/versions/sheets_version_endpoint.dart' as _izzz2y3b;
 import '../write/endpoints/document_endpoint.dart' as _iiabxp2u;
 import '../write/endpoints/write_export_endpoint.dart' as _ia4kadx2;
 import '../write/endpoints/write_history_endpoint.dart' as _izdjh3zj;
@@ -224,10 +228,22 @@ class Endpoints extends _is.EndpointDispatch {
           'sheetsSync',
           null,
         ),
+      'sheetsImport': _ixh3mo4r.SheetsImportEndpoint()
+        ..initialize(
+          server,
+          'sheetsImport',
+          null,
+        ),
       'script': _in9oll5w.ScriptEndpoint()
         ..initialize(
           server,
           'script',
+          null,
+        ),
+      'sheetsVersion': _izzz2y3b.SheetsVersionEndpoint()
+        ..initialize(
+          server,
+          'sheetsVersion',
           null,
         ),
       'document': _iiabxp2u.DocumentEndpoint()
@@ -643,6 +659,31 @@ class Endpoints extends _is.EndpointDispatch {
                     params['runId'],
                     params['confirmationId'],
                     params['allow'],
+                  ),
+        ),
+        'uiToolResult': _is.MethodConnector(
+          name: 'uiToolResult',
+          params: {
+            'runId': _is.ParameterDescription(
+              name: 'runId',
+              type: _is.getType<String>(),
+              nullable: false,
+            ),
+            'response': _is.ParameterDescription(
+              name: 'response',
+              type: _is.getType<_is78z0de.UiBridgeResponse>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _is.Session session,
+                Map<String, dynamic> params,
+              ) async => (endpoints['assistant'] as _i8k7ge8b.AssistantEndpoint)
+                  .uiToolResult(
+                    session,
+                    params['runId'],
+                    params['response'],
                   ),
         ),
         'listThreads': _is.MethodConnector(
@@ -3280,6 +3321,37 @@ class Endpoints extends _is.EndpointDispatch {
                     params['callIds'],
                   ),
         ),
+        'evaluateAiCells': _is.MethodConnector(
+          name: 'evaluateAiCells',
+          params: {
+            'itemUuid': _is.ParameterDescription(
+              name: 'itemUuid',
+              type: _is.getType<_is.UuidValue>(),
+              nullable: false,
+            ),
+            'requests': _is.ParameterDescription(
+              name: 'requests',
+              type: _is.getType<List<_ifqit8uo.SheetsAiCellRequest>>(),
+              nullable: false,
+            ),
+            'refresh': _is.ParameterDescription(
+              name: 'refresh',
+              type: _is.getType<bool>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _is.Session session,
+                Map<String, dynamic> params,
+              ) async => (endpoints['sheetsAi'] as _i9apq23f.SheetsAiEndpoint)
+                  .evaluateAiCells(
+                    session,
+                    params['itemUuid'],
+                    params['requests'],
+                    params['refresh'],
+                  ),
+        ),
         'discardPreview': _is.MethodConnector(
           name: 'discardPreview',
           params: {
@@ -3637,6 +3709,132 @@ class Endpoints extends _is.EndpointDispatch {
         ),
       },
     );
+    connectors['sheetsImport'] = _is.EndpointConnector(
+      name: 'sheetsImport',
+      endpoint: endpoints['sheetsImport']!,
+      methodConnectors: {
+        'importInto': _is.MethodConnector(
+          name: 'importInto',
+          params: {
+            'spreadsheetUuid': _is.ParameterDescription(
+              name: 'spreadsheetUuid',
+              type: _is.getType<_is.UuidValue>(),
+              nullable: false,
+            ),
+            'uploadId': _is.ParameterDescription(
+              name: 'uploadId',
+              type: _is.getType<_is.UuidValue>(),
+              nullable: false,
+            ),
+            'optionsJson': _is.ParameterDescription(
+              name: 'optionsJson',
+              type: _is.getType<String>(),
+              nullable: false,
+            ),
+            'activeSheetId': _is.ParameterDescription(
+              name: 'activeSheetId',
+              type: _is.getType<String?>(),
+              nullable: true,
+            ),
+          },
+          call:
+              (
+                _is.Session session,
+                Map<String, dynamic> params,
+              ) async =>
+                  (endpoints['sheetsImport'] as _ixh3mo4r.SheetsImportEndpoint)
+                      .importInto(
+                        session,
+                        params['spreadsheetUuid'],
+                        params['uploadId'],
+                        params['optionsJson'],
+                        params['activeSheetId'],
+                      ),
+        ),
+        'importProgress': _is.MethodConnector(
+          name: 'importProgress',
+          params: {
+            'jobId': _is.ParameterDescription(
+              name: 'jobId',
+              type: _is.getType<_is.UuidValue>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _is.Session session,
+                Map<String, dynamic> params,
+              ) async =>
+                  (endpoints['sheetsImport'] as _ixh3mo4r.SheetsImportEndpoint)
+                      .importProgress(
+                        session,
+                        params['jobId'],
+                      ),
+        ),
+        'sourceFromDrive': _is.MethodConnector(
+          name: 'sourceFromDrive',
+          params: {
+            'itemUuid': _is.ParameterDescription(
+              name: 'itemUuid',
+              type: _is.getType<_is.UuidValue>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _is.Session session,
+                Map<String, dynamic> params,
+              ) async =>
+                  (endpoints['sheetsImport'] as _ixh3mo4r.SheetsImportEndpoint)
+                      .sourceFromDrive(
+                        session,
+                        params['itemUuid'],
+                      ),
+        ),
+        'cancelImport': _is.MethodConnector(
+          name: 'cancelImport',
+          params: {
+            'jobId': _is.ParameterDescription(
+              name: 'jobId',
+              type: _is.getType<_is.UuidValue>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _is.Session session,
+                Map<String, dynamic> params,
+              ) async =>
+                  (endpoints['sheetsImport'] as _ixh3mo4r.SheetsImportEndpoint)
+                      .cancelImport(
+                        session,
+                        params['jobId'],
+                      ),
+        ),
+        'watchImport': _is.MethodStreamConnector(
+          name: 'watchImport',
+          params: {
+            'jobId': _is.ParameterDescription(
+              name: 'jobId',
+              type: _is.getType<_is.UuidValue>(),
+              nullable: false,
+            ),
+          },
+          streamParams: {},
+          returnType: _is.MethodStreamReturnType.streamType,
+          call:
+              (
+                _is.Session session,
+                Map<String, dynamic> params,
+                Map<String, Stream> streamParams,
+              ) => (endpoints['sheetsImport'] as _ixh3mo4r.SheetsImportEndpoint)
+                  .watchImport(
+                    session,
+                    params['jobId'],
+                  ),
+        ),
+      },
+    );
     connectors['script'] = _is.EndpointConnector(
       name: 'script',
       endpoint: endpoints['script']!,
@@ -3920,6 +4118,150 @@ class Endpoints extends _is.EndpointDispatch {
                     session,
                     params['spreadsheetUuid'],
                   ),
+        ),
+        'runLive': _is.MethodStreamConnector(
+          name: 'runLive',
+          params: {
+            'spreadsheetUuid': _is.ParameterDescription(
+              name: 'spreadsheetUuid',
+              type: _is.getType<_is.UuidValue>(),
+              nullable: false,
+            ),
+            'functionName': _is.ParameterDescription(
+              name: 'functionName',
+              type: _is.getType<String>(),
+              nullable: false,
+            ),
+            'argsJson': _is.ParameterDescription(
+              name: 'argsJson',
+              type: _is.getType<String?>(),
+              nullable: true,
+            ),
+          },
+          streamParams: {},
+          returnType: _is.MethodStreamReturnType.streamType,
+          call:
+              (
+                _is.Session session,
+                Map<String, dynamic> params,
+                Map<String, Stream> streamParams,
+              ) => (endpoints['script'] as _in9oll5w.ScriptEndpoint).runLive(
+                session,
+                params['spreadsheetUuid'],
+                params['functionName'],
+                params['argsJson'],
+              ),
+        ),
+      },
+    );
+    connectors['sheetsVersion'] = _is.EndpointConnector(
+      name: 'sheetsVersion',
+      endpoint: endpoints['sheetsVersion']!,
+      methodConnectors: {
+        'changes': _is.MethodConnector(
+          name: 'changes',
+          params: {
+            'itemUuid': _is.ParameterDescription(
+              name: 'itemUuid',
+              type: _is.getType<_is.UuidValue>(),
+              nullable: false,
+            ),
+            'versionId': _is.ParameterDescription(
+              name: 'versionId',
+              type: _is.getType<int>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _is.Session session,
+                Map<String, dynamic> params,
+              ) async =>
+                  (endpoints['sheetsVersion']
+                          as _izzz2y3b.SheetsVersionEndpoint)
+                      .changes(
+                        session,
+                        params['itemUuid'],
+                        params['versionId'],
+                      ),
+        ),
+        'diff': _is.MethodConnector(
+          name: 'diff',
+          params: {
+            'itemUuid': _is.ParameterDescription(
+              name: 'itemUuid',
+              type: _is.getType<_is.UuidValue>(),
+              nullable: false,
+            ),
+            'versionId': _is.ParameterDescription(
+              name: 'versionId',
+              type: _is.getType<int>(),
+              nullable: false,
+            ),
+            'previousVersionId': _is.ParameterDescription(
+              name: 'previousVersionId',
+              type: _is.getType<int?>(),
+              nullable: true,
+            ),
+          },
+          call:
+              (
+                _is.Session session,
+                Map<String, dynamic> params,
+              ) async =>
+                  (endpoints['sheetsVersion']
+                          as _izzz2y3b.SheetsVersionEndpoint)
+                      .diff(
+                        session,
+                        params['itemUuid'],
+                        params['versionId'],
+                        params['previousVersionId'],
+                      ),
+        ),
+        'copyExtras': _is.MethodConnector(
+          name: 'copyExtras',
+          params: {
+            'sourceItemUuid': _is.ParameterDescription(
+              name: 'sourceItemUuid',
+              type: _is.getType<_is.UuidValue>(),
+              nullable: false,
+            ),
+            'targetItemUuid': _is.ParameterDescription(
+              name: 'targetItemUuid',
+              type: _is.getType<_is.UuidValue>(),
+              nullable: false,
+            ),
+            'anchorIdMapJson': _is.ParameterDescription(
+              name: 'anchorIdMapJson',
+              type: _is.getType<String>(),
+              nullable: false,
+            ),
+            'copyComments': _is.ParameterDescription(
+              name: 'copyComments',
+              type: _is.getType<bool>(),
+              nullable: false,
+            ),
+            'copySharing': _is.ParameterDescription(
+              name: 'copySharing',
+              type: _is.getType<bool>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _is.Session session,
+                Map<String, dynamic> params,
+              ) async =>
+                  (endpoints['sheetsVersion']
+                          as _izzz2y3b.SheetsVersionEndpoint)
+                      .copyExtras(
+                        session,
+                        params['sourceItemUuid'],
+                        params['targetItemUuid'],
+                        params['anchorIdMapJson'],
+                        params['copyComments'],
+                        params['copySharing'],
+                      ),
         ),
       },
     );

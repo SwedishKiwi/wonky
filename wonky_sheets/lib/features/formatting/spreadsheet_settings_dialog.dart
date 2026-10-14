@@ -5,7 +5,8 @@ import 'package:shad/shad.dart';
 import 'package:timezone/data/latest_10y.dart' as tzdata;
 import 'package:timezone/timezone.dart' as tz;
 import 'package:wonky_app/wonky_app.dart';
-import 'package:wonky_sheets_core/formula.dart' show FormulaLocale;
+import 'package:wonky_sheets_core/formula.dart'
+    show FormulaLanguage, FormulaLocale;
 import 'package:wonky_sheets_core/model.dart';
 import 'package:wonky_ui/wonky_ui.dart';
 
@@ -121,6 +122,7 @@ class SpreadsheetSettings {
     required this.iterativeCalc,
     required this.maxIterations,
     required this.convergenceThreshold,
+    this.displayLanguage = '',
   });
 
   factory SpreadsheetSettings.of(SpreadsheetRecord r) => SpreadsheetSettings(
@@ -130,6 +132,7 @@ class SpreadsheetSettings {
     iterativeCalc: r.iterativeCalc,
     maxIterations: r.maxIterations,
     convergenceThreshold: r.convergenceThreshold,
+    displayLanguage: FormulaLanguage.forCode(r.displayLanguage)?.code ?? '',
   );
 
   final String locale;
@@ -138,6 +141,9 @@ class SpreadsheetSettings {
   final bool iterativeCalc;
   final int maxIterations;
   final double convergenceThreshold;
+
+  /// Function names and booleans language (`''` = English, 04 §11.1, P2).
+  final String displayLanguage;
 
   /// The `sheets.settings.update` arguments that differ from [old].
   Map<String, Object?> changesFrom(SpreadsheetSettings old) => {
@@ -148,6 +154,8 @@ class SpreadsheetSettings {
     if (maxIterations != old.maxIterations) 'maxIterations': maxIterations,
     if (convergenceThreshold != old.convergenceThreshold)
       'convergenceThreshold': convergenceThreshold,
+    if (displayLanguage != old.displayLanguage)
+      'displayLanguage': displayLanguage,
   };
 }
 
@@ -174,6 +182,7 @@ class SpreadsheetSettingsDialog extends StatefulWidget {
 class _SettingsDialogState extends McpDialogState<SpreadsheetSettingsDialog> {
   late String _locale = widget.initial.locale;
   late String _timeZone = widget.initial.timeZone;
+  late String _language = widget.initial.displayLanguage;
   late String _recalc = widget.initial.recalcMode;
   late bool _iterative = widget.initial.iterativeCalc;
   late int _maxIterations = widget.initial.maxIterations;
@@ -209,6 +218,7 @@ class _SettingsDialogState extends McpDialogState<SpreadsheetSettingsDialog> {
     maxIterations: _maxIterations,
     convergenceThreshold:
         _thresholdValue ?? widget.initial.convergenceThreshold,
+    displayLanguage: _language,
   );
 
   void _save() {
@@ -237,6 +247,13 @@ class _SettingsDialogState extends McpDialogState<SpreadsheetSettingsDialog> {
         'label': 'Time zone',
         'type': 'select',
         'value': _timeZone,
+      },
+      {
+        'id': 'displayLanguage',
+        'label': 'Function language',
+        'type': 'select',
+        'value': _language,
+        'options': ['', for (final x in FormulaLanguage.supported) x.code],
       },
       {
         'id': 'recalcMode',
@@ -278,6 +295,11 @@ class _SettingsDialogState extends McpDialogState<SpreadsheetSettingsDialog> {
       case 'timeZone' when value is String:
         if (!_zones.any((z) => z.$1 == value)) return false;
         setState(() => _timeZone = value);
+      case 'displayLanguage' when value is String:
+        if (value.isNotEmpty && FormulaLanguage.forCode(value) == null) {
+          return false;
+        }
+        setState(() => _language = value);
       case 'recalcMode' when value is String:
         if (!RecalcMode.values.any((m) => m.name == value)) return false;
         setState(() => _recalc = value);
@@ -308,18 +330,19 @@ class _SettingsDialogState extends McpDialogState<SpreadsheetSettingsDialog> {
     return false;
   }
 
-  String _preview(String locale) {
+  String _preview(String locale, [String language = '']) {
     final f = NumberFormatter.instance;
     String fmt(double v, String p) =>
         f.formatText(NumberValue(v), p, locale: locale);
     final date = SerialCalendar.serialOfDateTime(2008, 9, 26, 15, 59);
-    final sep = FormulaLocale.forId(locale).argSeparator;
+    final fl = FormulaLocale.forId(locale).withLanguage(language);
+    final sep = fl.argSeparator;
     return [
       fmt(1234.56, '#,##0.00'),
       fmt(1234.56, NumberFormatPresets.currency),
       fmt(date, NumberFormatPresets.date),
       fmt(date, NumberFormatPresets.time),
-      '=SUM(1$sep 2)',
+      '=${fl.displayFunction('SUM')}(1$sep 2)',
     ].join(' · ');
   }
 
@@ -375,7 +398,7 @@ class _SettingsDialogState extends McpDialogState<SpreadsheetSettingsDialog> {
         ),
         const SizedBox(height: 6),
         Text(
-          _preview(_locale),
+          _preview(_locale, _language),
           key: const ValueKey<String>('dialog.settings.preview'),
           style: theme.textTheme.muted.copyWith(fontSize: 12.5),
         ),
@@ -405,6 +428,34 @@ class _SettingsDialogState extends McpDialogState<SpreadsheetSettingsDialog> {
           onChanged: (v) {
             if (v != null) setState(() => _timeZone = v);
           },
+        ),
+        _label(l.settingsDisplayLanguage),
+        ShadSelect<String>(
+          key: const ValueKey<String>('dialog.settings.displayLanguage'),
+          initialValue: _language,
+          minWidth: 300,
+          options: [
+            ShadOption(
+              value: '',
+              child: Text(l.settingsDisplayLanguageEnglish),
+            ),
+            for (final x in FormulaLanguage.supported)
+              ShadOption(value: x.code, child: Text(x.nativeName)),
+          ],
+          selectedOptionBuilder: (context, v) => Text(
+            FormulaLanguage.forCode(v)?.nativeName ??
+                l.settingsDisplayLanguageEnglish,
+          ),
+          onChanged: (v) {
+            if (v != null) setState(() => _language = v);
+          },
+        ),
+        Padding(
+          padding: const EdgeInsets.only(top: 6),
+          child: Text(
+            l.settingsDisplayLanguageNote,
+            style: theme.textTheme.muted.copyWith(fontSize: 12.5),
+          ),
         ),
       ],
     );

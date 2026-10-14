@@ -174,6 +174,7 @@ class SheetsToolbar extends StatelessWidget {
       ui.button('sheets.format.increaseDecimals', priority: 4),
       ToolbarDropdownButton(
         id: 'sheets.toolbar.moreFormats',
+        enabled: ui.state('sheets.format.numberFormat').enabled,
         priority: 4,
         label: '123',
         tooltip: l.toolbarMoreFormats,
@@ -184,6 +185,7 @@ class SheetsToolbar extends StatelessWidget {
     final font = ToolbarGroup([
       ToolbarDropdownButton(
         id: 'sheets.toolbar.font',
+        enabled: ui.state('sheets.format.fontFamily').enabled,
         priority: 3,
         label: f.fontFamily,
         tooltip: l.toolbarFont,
@@ -192,6 +194,7 @@ class SheetsToolbar extends StatelessWidget {
       ),
       ToolbarNumberField(
         id: 'sheets.toolbar.fontSize',
+        enabled: ui.state('sheets.format.fontSize').enabled,
         priority: 2,
         label: l.toolbarFontSize,
         value: f.fontSize,
@@ -214,6 +217,7 @@ class SheetsToolbar extends StatelessWidget {
       ui.toggle('sheets.format.strikethrough', priority: 2),
       ToolbarSplitButton(
         id: 'sheets.toolbar.textColor',
+        enabled: ui.state('sheets.format.textColor').enabled,
         priority: 2,
         icon: LucideIcons.baseline,
         label: l.toolbarTextColor,
@@ -242,6 +246,7 @@ class SheetsToolbar extends StatelessWidget {
     final cellGroup = ToolbarGroup([
       ToolbarSplitButton(
         id: 'sheets.toolbar.fillColor',
+        enabled: ui.state('sheets.format.fillColor').enabled,
         priority: 2,
         icon: LucideIcons.paintBucket,
         label: l.toolbarFillColor,
@@ -270,6 +275,7 @@ class SheetsToolbar extends StatelessWidget {
       ),
       ToolbarDropdownButton(
         id: 'sheets.toolbar.borders',
+        enabled: ui.state('sheets.format.borders').enabled,
         priority: 3,
         icon: LucideIcons.grid2x2,
         label: '',
@@ -339,6 +345,7 @@ class SheetsToolbar extends StatelessWidget {
     final align = ToolbarGroup([
       ToolbarDropdownButton(
         id: 'sheets.toolbar.hAlign',
+        enabled: ui.state('sheets.format.hAlign').enabled,
         priority: 3,
         icon: hIcon(f.hAlign),
         label: '',
@@ -360,6 +367,7 @@ class SheetsToolbar extends StatelessWidget {
       ),
       ToolbarDropdownButton(
         id: 'sheets.toolbar.vAlign',
+        enabled: ui.state('sheets.format.vAlign').enabled,
         priority: 5,
         icon: switch (f.vAlign) {
           VerticalAlign.top => LucideIcons.alignVerticalJustifyStart,
@@ -385,6 +393,7 @@ class SheetsToolbar extends StatelessWidget {
       ),
       ToolbarDropdownButton(
         id: 'sheets.toolbar.wrap',
+        enabled: ui.state('sheets.format.wrap').enabled,
         priority: 4,
         icon: LucideIcons.wrapText,
         label: '',
@@ -406,6 +415,7 @@ class SheetsToolbar extends StatelessWidget {
       ),
       ToolbarDropdownButton(
         id: 'sheets.toolbar.rotation',
+        enabled: ui.state('sheets.format.rotation').enabled,
         priority: 6,
         icon: LucideIcons.rotateCcw,
         label: '',
@@ -430,6 +440,7 @@ class SheetsToolbar extends StatelessWidget {
       ui.button('sheets.filter.toggle', icon: LucideIcons.funnel, priority: 4),
       ToolbarDropdownButton(
         id: 'sheets.toolbar.functions',
+        enabled: ui.state('sheets.insert.function').enabled,
         priority: 5,
         icon: LucideIcons.sigma,
         label: '',

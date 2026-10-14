@@ -45,6 +45,7 @@ final class _SvgWriter {
   final SvgChartRenderer renderer;
   final StringBuffer _b = StringBuffer();
   int _clipCount = 0;
+  int _gradientCount = 0;
   int _depth = 1;
 
   static String _n(double v) => SvgChartRenderer.formatNumber(v);
@@ -86,7 +87,13 @@ final class _SvgWriter {
     switch (p) {
       case SRect():
         _rect(p);
-      case SPath(:final cmds, :final fill, :final stroke, :final evenOdd):
+      case SPath(
+        :final cmds,
+        :final fill,
+        :final stroke,
+        :final evenOdd,
+        :final gradient,
+      ):
         if (!RenderGeometry.fillVisible(fill) &&
             !RenderGeometry.strokeVisible(stroke)) {
           return;
@@ -94,7 +101,26 @@ final class _SvgWriter {
         final d = _pathData(RenderGeometry.finiteCommands(cmds));
         if (d.isEmpty) return;
         final rule = evenOdd ? ' fill-rule="evenodd"' : '';
-        _line('<path d="$d"$rule${_fill(fill)}${_stroke(stroke)}/>');
+        var fillAttr = _fill(fill);
+        if (gradient != null && RenderGeometry.fillVisible(fill)) {
+          final id = '${renderer.idPrefix}g${_gradientCount++}';
+          String stop(String offset, int c) {
+            final a = Argb.alpha(c);
+            final op = a < 255 ? ' stop-opacity="${_n(a / 255)}"' : '';
+            return '<stop offset="$offset" '
+                'stop-color="${Argb.rgbHex(c).toLowerCase()}"$op/>';
+          }
+
+          _line(
+            '<defs><linearGradient id="$id" gradientUnits="userSpaceOnUse" '
+            'x1="${_n(gradient.x0)}" y1="${_n(gradient.y0)}" '
+            'x2="${_n(gradient.x1)}" y2="${_n(gradient.y1)}">'
+            '${stop('0', gradient.color0)}${stop('1', gradient.color1)}'
+            '</linearGradient></defs>',
+          );
+          fillAttr = ' fill="url(#$id)"';
+        }
+        _line('<path d="$d"$rule$fillAttr${_stroke(stroke)}/>');
       case SPolyline(:final xy, :final stroke):
         // Invisible polylines only serve hit-testing (e.g. under smoothed lines).
         if (xy.length < 2 || !RenderGeometry.strokeVisible(stroke)) return;

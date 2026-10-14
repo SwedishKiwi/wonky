@@ -14,6 +14,42 @@ const String kChartNs =
     'http://schemas.openxmlformats.org/drawingml/2006/chart';
 
 /// One series as stored in a DrawingML chart.
+/// One resolved data line of an IR chart (category or series).
+final class IrChartLine {
+  /// Creates a line.
+  const IrChartLine({
+    required this.sheet,
+    required this.values,
+    required this.cells,
+    this.header,
+    this.name,
+    this.key,
+  });
+
+  final IrSheet sheet;
+
+  /// The value cells (without the header).
+  final GridRect values;
+  final List<IrValue?> cells;
+
+  /// The header cell (series name), if any.
+  final GridRect? header;
+  final String? name;
+
+  /// IR series key (positional).
+  final String? key;
+}
+
+/// The resolved data lines of an IR chart.
+final class IrChartLines {
+  /// Creates lines.
+  const IrChartLines(this.type, this.category, this.series);
+
+  final String type;
+  final IrChartLine? category;
+  final List<IrChartLine> series;
+}
+
 final class _Ser {
   _Ser({
     required this.valRef,
@@ -43,6 +79,7 @@ const Set<String> _exportable = {
   'pie',
   'scatter',
   'radar',
+  'surface',
 };
 
 /// IR charts (`IrChartSpec` convention) ⇄ DrawingML chart parts (11 §5.2
@@ -69,9 +106,30 @@ abstract final class XlsxCharts {
     WorkbookDocument doc, {
     required String Function(String sheetName) excelSheet,
   }) {
+    final type = (chart.spec['type'] as String?) ?? 'column';
+    if (!_exportable.contains(type)) return null;
+    final l = lines(chart, doc);
+    if (l == null) return null;
+    String ref(IrChartLine x, GridRect g) =>
+        IrRange.rect(g).toA1(sheet: excelSheet(x.sheet.name), absolute: true);
+    _Ser ser(IrChartLine x) => _Ser(
+      valRef: ref(x, x.values),
+      values: x.cells,
+      nameRef: x.header == null ? null : ref(x, x.header!),
+      name: x.name,
+      key: x.key,
+    );
+    final cat = l.category;
+    return _ChartWriter(chart.spec, type, cat == null ? null : ser(cat), [
+      for (final s in l.series) ser(s),
+    ]).build();
+  }
+
+  /// The category and series lines of [chart]'s data ranges (null when
+  /// they can't be resolved), shared by the XLSX and ODS chart writers.
+  static IrChartLines? lines(IrChart chart, WorkbookDocument doc) {
     final spec = chart.spec;
     final type = (spec['type'] as String?) ?? 'column';
-    if (!_exportable.contains(type)) return null;
     final data = _map(spec['data']);
     final ranges = <(IrSheet, GridRect, String)>[];
     for (final r in (data['ranges'] as List?) ?? const []) {
@@ -84,7 +142,7 @@ abstract final class XlsxCharts {
         sheet.usedRows < 1 ? 1 : sheet.usedRows,
         sheet.usedColumns < 1 ? 1 : sheet.usedColumns,
       );
-      ranges.add((sheet, rect, excelSheet(sheet.name)));
+      ranges.add((sheet, rect, sheet.name));
     }
     if (ranges.isEmpty) return null;
     final switched = data['switchRowsColumns'] == true;
@@ -133,9 +191,9 @@ abstract final class XlsxCharts {
     }
     if (seriesLines.isEmpty) return null;
 
-    _Ser? line((int, int) l, String? key) {
+    IrChartLine? line((int, int) l, String? key) {
       if (l.$1 >= ranges.length) return null;
-      final (sheet, rect, name) = ranges[l.$1];
+      final (sheet, rect, _) = ranges[l.$1];
       final header = headerCount!;
       final GridRect values;
       final GridRect? head;
@@ -153,17 +211,16 @@ abstract final class XlsxCharts {
       if (values.bottom < values.top || values.right < values.left) {
         return null;
       }
-      String ref(GridRect g) =>
-          IrRange.rect(g).toA1(sheet: name, absolute: true);
       final vals = <IrValue?>[
         for (var r = values.top; r <= values.bottom; r++)
           for (var c = values.left; c <= values.right; c++)
             sheet.cells.get(r, c)?.value,
       ];
-      return _Ser(
-        valRef: ref(values),
-        values: vals,
-        nameRef: head == null ? null : ref(head),
+      return IrChartLine(
+        sheet: sheet,
+        values: values,
+        cells: vals,
+        header: head,
         name: head == null
             ? null
             : sheet.cells.get(head.top, head.left)?.value?.plainText,
@@ -172,13 +229,13 @@ abstract final class XlsxCharts {
     }
 
     final cat = domain == null ? null : line(domain, null);
-    final series = <_Ser>[];
+    final series = <IrChartLine>[];
     for (final (l, key) in seriesLines) {
       final s = line(l, key);
       if (s != null) series.add(s);
     }
     if (series.isEmpty) return null;
-    return _ChartWriter(spec, type, cat, series).build();
+    return IrChartLines(type, cat, series);
   }
 
   static int _detectHeader(
@@ -236,6 +293,61 @@ final class _ChartWriter {
 
   String get _stacking => (spec['stacking'] as String?) ?? 'none';
 
+  Map<String, Object?> get _threeD => _m(spec['threeD']);
+
+  /// Whether the chart is written as an Excel 3-D chart (08 §23.8).
+  bool get _is3d =>
+      type == 'surface' ||
+      (_threeD['enabled'] == true &&
+          const {'column', 'bar', 'line', 'area', 'pie'}.contains(type));
+
+  /// 3-D line and unstacked area charts put each series in its own row (a
+  /// series axis).
+  bool get _rows3d =>
+      _is3d &&
+      (type == 'line' ||
+          type == 'surface' ||
+          (type == 'area' && _stacking == 'none'));
+
+  int _gapDepth() =>
+      ((_threeD['gapDepth'] as num?)?.round() ?? 150).clamp(0, 500);
+
+  /// `c:view3D` plus floor and walls.
+  void _view3D() {
+    final t = _threeD;
+    final pie = type == 'pie';
+    final az = (t['azimuth'] as num?)?.toDouble() ?? (pie ? 0 : 20);
+    final el = (t['elevation'] as num?)?.toDouble() ?? (pie ? 40 : 20);
+    final fov = (t['perspective'] as num?)?.toDouble() ?? 15;
+    final depth = ((t['depth'] as num?)?.round() ?? 100).clamp(20, 2000);
+    final rotY = ((az.round() % 360) + 360) % 360;
+    b.write(
+      '<c:view3D><c:rotX val="${el.round().clamp(pie ? 10 : 0, 90)}"/>'
+      '<c:rotY val="$rotY"/>'
+      '<c:depthPercent val="$depth"/>'
+      '<c:rAngAx val="${fov <= 0 && !pie ? 1 : 0}"/>'
+      '${fov <= 0 ? '' : '<c:perspective val="${(fov * 2).round().clamp(0, 240)}"/>'}'
+      '</c:view3D>',
+    );
+    if (pie) return;
+    final visible = t['wallsVisible'] != false;
+    final floor = _hex(t['floorColor']);
+    String sp(String? fill) {
+      if (!visible) {
+        return '<c:spPr><a:noFill/><a:ln><a:noFill/></a:ln></c:spPr>';
+      }
+      if (fill == null) return '';
+      return '<c:spPr><a:solidFill><a:srgbClr val="$fill"/></a:solidFill>'
+          '</c:spPr>';
+    }
+
+    b.write(
+      '<c:floor><c:thickness val="0"/>${sp(floor)}</c:floor>'
+      '<c:sideWall><c:thickness val="0"/>${sp(null)}</c:sideWall>'
+      '<c:backWall><c:thickness val="0"/>${sp(null)}</c:backWall>',
+    );
+  }
+
   String build() {
     b.write(
       '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n'
@@ -249,9 +361,19 @@ final class _ChartWriter {
     } else {
       b.write('<c:autoTitleDeleted val="1"/>');
     }
+    if (_is3d) _view3D();
     b.write('<c:plotArea><c:layout/>');
     final axes = _groups();
     _axes(axes);
+    if (_rows3d) {
+      b.write(
+        '<c:serAx><c:axId val="5"/><c:scaling><c:orientation val="minMax"/>'
+        '</c:scaling><c:delete val="1"/><c:axPos val="b"/>'
+        '<c:majorTickMark val="none"/><c:minorTickMark val="none"/>'
+        '<c:tickLblPos val="nextTo"/><c:crossAx val="2"/>'
+        '<c:crosses val="autoZero"/></c:serAx>',
+      );
+    }
     b.write('</c:plotArea>');
     _legend();
     b.write('<c:plotVisOnly val="1"/><c:dispBlanksAs val="gap"/></c:chart>');
@@ -274,7 +396,11 @@ final class _ChartWriter {
     switch (type) {
       case 'pie':
         final hole = (_m(spec['typeOptions'])['pieHole'] as num?)?.toDouble();
-        if (hole != null && hole > 0) {
+        if (_is3d && (hole == null || hole <= 0)) {
+          b.write('<c:pie3DChart><c:varyColors val="1"/>');
+          _series(series, 'pie');
+          b.write('</c:pie3DChart>');
+        } else if (hole != null && hole > 0) {
           b.write('<c:doughnutChart><c:varyColors val="1"/>');
           _series(series, 'pie');
           b.write(
@@ -293,6 +419,14 @@ final class _ChartWriter {
         _series(series, 'scatter');
         b.write('<c:axId val="1"/><c:axId val="2"/></c:scatterChart>');
         return (secondary: false, cartesian: true, scatter: true);
+      case 'surface':
+        b.write('<c:surface3DChart><c:wireframe val="0"/>');
+        _series(series, 'surface');
+        b.write(
+          '<c:axId val="1"/><c:axId val="2"/><c:axId val="5"/>'
+          '</c:surface3DChart>',
+        );
+        return (secondary: false, cartesian: true, scatter: false);
       case 'radar':
         b.write(
           '<c:radarChart><c:radarStyle val="marker"/><c:varyColors val="0"/>',
@@ -313,7 +447,7 @@ final class _ChartWriter {
         _ => 'column',
       };
       if (type != 'combo' && type != 'bar') t = type;
-      final right = st['axis'] == 'right';
+      final right = st['axis'] == 'right' && !_is3d;
       (groups[(t, right)] ??= []).add(s);
     }
     var secondary = false;
@@ -324,12 +458,50 @@ final class _ChartWriter {
       if (right) secondary = true;
       final ax = right
           ? '<c:axId val="3"/><c:axId val="4"/>'
+          : _is3d
+          ? '<c:axId val="1"/><c:axId val="2"/>'
+                '<c:axId val="${_rows3d ? 5 : 0}"/>'
           : '<c:axId val="1"/><c:axId val="2"/>';
       final grouping = switch (_stacking) {
         'normal' => 'stacked',
         'percent' => 'percentStacked',
         _ => t == 'column' || t == 'bar' ? 'clustered' : 'standard',
       };
+      if (_is3d) {
+        final shape = switch (_threeD['shape']) {
+          'cylinder' => 'cylinder',
+          'cone' => 'cone',
+          'pyramid' => 'pyramid',
+          _ => 'box',
+        };
+        switch (t) {
+          case 'bar' || 'column':
+            b.write(
+              '<c:bar3DChart><c:barDir val="${t == 'bar' ? 'bar' : 'col'}"/>'
+              '<c:grouping val="$grouping"/><c:varyColors val="0"/>',
+            );
+            _series(groups[key]!, 'bar');
+            b.write(
+              '<c:gapWidth val="150"/><c:gapDepth val="${_gapDepth()}"/>'
+              '<c:shape val="$shape"/>$ax</c:bar3DChart>',
+            );
+          case 'line':
+            b.write(
+              '<c:line3DChart><c:grouping val="standard"/>'
+              '<c:varyColors val="0"/>',
+            );
+            _series(groups[key]!, 'line');
+            b.write('<c:gapDepth val="${_gapDepth()}"/>$ax</c:line3DChart>');
+          default:
+            b.write(
+              '<c:area3DChart><c:grouping val="$grouping"/>'
+              '<c:varyColors val="0"/>',
+            );
+            _series(groups[key]!, 'area');
+            b.write('<c:gapDepth val="${_gapDepth()}"/>$ax</c:area3DChart>');
+        }
+        continue;
+      }
       switch (t) {
         case 'bar' || 'column':
           b.write(
@@ -397,7 +569,9 @@ final class _ChartWriter {
           '<c:showPercent val="0"/><c:showBubbleSize val="0"/></c:dLbls>',
         );
       }
-      if (kind != 'pie' && kind != 'radar') _trendline(_m(st['trendline']));
+      if (kind != 'pie' && kind != 'radar' && kind != 'surface') {
+        _trendline(_m(st['trendline']));
+      }
       final c = cat;
       if (kind == 'scatter') {
         if (c != null) _ref('c:xVal', c, numeric: true);
@@ -633,22 +807,14 @@ final class _ChartReader {
     if (groups.isEmpty) return null;
     for (final g in groups) {
       final n = g.localName;
-      if (n == 'bubbleChart' ||
-          n == 'stockChart' ||
-          n.startsWith('surface') ||
-          n == 'ofPieChart') {
+      if (n == 'bubbleChart' || n == 'stockChart' || n == 'ofPieChart') {
         _skip(n.replaceAll('Chart', ''));
         return null;
       }
     }
-    if (groups.any((g) => g.localName.contains('3D'))) {
-      warnings.add(
-        'chart3d',
-        '3-D charts were imported as flat charts',
-        severity: ImportSeverity.info,
-        sheet: sheet,
-      );
-    }
+    final threeD = groups.any((g) => g.localName.contains('3D'))
+        ? _threeD(chart, groups.firstWhere((g) => g.localName.contains('3D')))
+        : null;
 
     // Types.
     String kind(XmlElement g) => switch (g.localName) {
@@ -658,6 +824,7 @@ final class _ChartReader {
       'areaChart' || 'area3DChart' => 'area',
       'pieChart' || 'pie3DChart' || 'doughnutChart' => 'pie',
       'scatterChart' => 'scatter',
+      'surfaceChart' || 'surface3DChart' => 'surface',
       _ => 'radar',
     };
     final kinds = [for (final g in groups) kind(g)];
@@ -787,7 +954,55 @@ final class _ChartReader {
         ? (groups.first.child('holeSize')?.intAttr('val') ?? 50)
         : null;
     if (hole != null) spec['typeOptions'] = {'pieHole': hole / 100};
+    if (threeD != null) spec['threeD'] = threeD;
     return spec;
+  }
+
+  /// The `threeD` spec section of a 3-D chart (08 §23.8).
+  Map<String, Object?> _threeD(XmlElement chart, XmlElement group) {
+    final out = <String, Object?>{'enabled': true};
+    final pie = group.localName == 'pie3DChart';
+    final v = chart.child('view3D');
+    if (v != null) {
+      final rotX = v.child('rotX')?.doubleAttr('val');
+      final rotY = v.child('rotY')?.doubleAttr('val');
+      final depth = v.child('depthPercent')?.doubleAttr('val');
+      final rAng = v.child('rAngAx')?.attr('val');
+      final persp = v.child('perspective')?.doubleAttr('val');
+      if (rotX != null) out['elevation'] = _num(rotX.clamp(0, 90).toDouble());
+      if (rotY != null) out['azimuth'] = _num(rotY % 360);
+      if (depth != null && depth != 100) {
+        out['depth'] = _num(depth.clamp(20, 2000).toDouble());
+      }
+      final rightAngles =
+          !pie && (rAng == null || rAng == '1' || rAng == 'true');
+      final fov = rightAngles ? 0.0 : (persp ?? 30) / 2;
+      if (fov != 15) out['perspective'] = _num(fov.clamp(0, 60).toDouble());
+    }
+    final gap = group.child('gapDepth')?.doubleAttr('val');
+    if (gap != null && gap != 150) {
+      out['gapDepth'] = _num(gap.clamp(0, 500).toDouble());
+    }
+    final shape = group.child('shape')?.attr('val');
+    if (shape == 'cylinder' || shape == 'cone' || shape == 'pyramid') {
+      out['shape'] = shape;
+    } else if (shape == 'pyramidToMax') {
+      out['shape'] = 'pyramid';
+    } else if (shape == 'coneToMax') {
+      out['shape'] = 'cone';
+    }
+    final floor = chart.child('floor')?.child('spPr');
+    if (floor != null) {
+      if (floor.child('noFill') != null) {
+        out['wallsVisible'] = false;
+      } else {
+        final c = floor.child('solidFill')?.child('srgbClr')?.attr('val');
+        if (c != null && RegExp(r'^[0-9A-Fa-f]{6}$').hasMatch(c)) {
+          out['floorColor'] = '#${c.toUpperCase()}';
+        }
+      }
+    }
+    return out;
   }
 
   /// Ids of value axes that cross at the maximum (secondary axes) and their

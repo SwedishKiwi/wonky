@@ -6,6 +6,7 @@ import 'package:wonky_app/wonky_app.dart';
 import 'package:wonky_client/wonky_client.dart';
 import 'package:wonky_core/wonky_core.dart' hide ActorKind;
 
+import '../../mcp/ui_sheets_tools.dart';
 import 'sheets_a1.dart';
 import 'sheets_ai_controller.dart';
 
@@ -15,7 +16,11 @@ import 'sheets_ai_controller.dart';
 /// per Edit-mode run (`sheets.serverChange`), the Suggest-mode preview
 /// (Review changes), Sheets quick prompts and inserting results as cells.
 class SheetsAssistantAdapter extends ChangeNotifier
-    implements AssistantDocumentAdapter, AssistantRunHooks {
+    implements
+        AssistantDocumentAdapter,
+        AssistantRunHooks,
+        AssistantPanelTexts,
+        AssistantWindowTools {
   SheetsAssistantAdapter(this.ai) {
     ai.editor.selection.addListener(_onSelection);
     ai.editor.addListener(_onSelection);
@@ -41,6 +46,25 @@ class SheetsAssistantAdapter extends ChangeNotifier
 
   @override
   UuidValue get itemUuid => ai.itemUuid;
+
+  // --------------------------------------------------------------- texts
+
+  @override
+  String get emptyTitle => ai.l10n.aiAssistantEmptyTitle;
+
+  @override
+  String privacyNotice(String? provider) => provider == null
+      ? ai.l10n.aiAssistantPrivacyNotice
+      : ai.l10n.aiAssistantPrivacyNoticeProvider(provider);
+
+  @override
+  String get modeEditHint => ai.l10n.aiAssistantModeEditHint;
+
+  @override
+  String get modeEditUnavailable => ai.l10n.aiAssistantModeEditUnavailable;
+
+  @override
+  String get modeSuggestHint => ai.l10n.aiAssistantModeSuggestHint;
 
   @override
   Role get role {
@@ -96,6 +120,39 @@ class SheetsAssistantAdapter extends ChangeNotifier
           : null,
       sheetsActiveCell: ed.activeCellA1,
       sheetsVisibleRange: ed.visibleRangeA1,
+      uiTools: windowTools,
+    );
+  }
+
+  // -------------------------------------------------------- window tools
+
+  /// `ui.sheets.*` tools the assistant runs in this window (Sheets 12
+  /// §6.2): read the live selection, select and point at cells.
+  static const windowTools = [
+    'ui.sheets.get_selection',
+    'ui.sheets.select_range',
+    'ui.sheets.highlight_range',
+  ];
+
+  @override
+  Future<UiToolResult> runWindowTool(String tool, Map<String, Object?> args) {
+    final handler = windowTools.contains(tool)
+        ? UiSheetsToolHandlers.all(ai.services)[tool]
+        : null;
+    if (handler == null) {
+      throw UiToolException(
+        'unsupported',
+        'The assistant cannot run $tool in this window.',
+      );
+    }
+    return handler(
+      UiToolContext(
+        services: ai.services,
+        boundaryKey: GlobalKey(),
+        events: UiEventLog(),
+        agentName: ai.l10n.aiAgentLabel,
+      ),
+      args,
     );
   }
 
@@ -244,7 +301,9 @@ class SheetsAssistantAdapter extends ChangeNotifier
             enabled: !reply.streaming,
             leading: const Icon(LucideIcons.gitCompareArrows, size: 13),
             onPressed: () => unawaited(ai.openPreview(id, context: context)),
-            child: Text(l.aiPreviewReview),
+            child: Flexible(
+              child: Text(l.aiPreviewReview, overflow: TextOverflow.ellipsis),
+            ),
           ),
         );
       },

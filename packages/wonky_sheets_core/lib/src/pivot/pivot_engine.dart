@@ -355,6 +355,168 @@ final class PivotEngine {
     return result!;
   }
 
+  /// Whether [applyDelta] can update a result of [spec] (07 §7.10, P2):
+  /// decomposable aggregates only (SUM, AVERAGE, COUNT, COUNTA, MIN, MAX;
+  /// no calculated fields), no pivot filters and no histogram groups.
+  static bool supportsDelta(PivotSpec spec) {
+    if (spec.filters.any((f) => !f.criteria.isEmpty)) return false;
+    for (final v in spec.values) {
+      if (v.isCalculated) return false;
+      switch (v.summarizeBy) {
+        case PivotSummarize.sum ||
+            PivotSummarize.average ||
+            PivotSummarize.count ||
+            PivotSummarize.counta ||
+            PivotSummarize.min ||
+            PivotSummarize.max:
+          break;
+        default:
+          return false;
+      }
+    }
+    for (final g in [...spec.rows, ...spec.columns]) {
+      if (g.group is PivotHistogramGrouping) return false;
+    }
+    return true;
+  }
+
+  /// Incremental refresh (07 §7.10, P2): updates [previous] **in place**
+  /// for changed source data rows — [rows] maps a data row index to its new
+  /// `(value, number format)` per source column (in `source.columns`
+  /// order) — by taking the old values out of the affected aggregates and
+  /// adding the new ones, then re-sorting. Returns [previous], or null
+  /// (nothing changed) when the update isn't decomposable: see
+  /// [supportsDelta], slicer masks, a changed group key or number format,
+  /// errors, or the extreme of a MIN/MAX taken away. Compute anew then.
+  PivotResult? applyDelta(
+    PivotResult previous,
+    Map<int, List<(CellValue, String?)>> rows,
+    PivotContext ctx,
+  ) {
+    final r = previous;
+    final source = r.source;
+    final n = source.rowCount;
+    if (r.cancelled || source.rowMask != null || !supportsDelta(r.spec)) {
+      return null;
+    }
+    if (rows.isEmpty) return r;
+    final cols = source.columns;
+    final valueCols = [
+      for (final v in r.valueFields)
+        cols.indexOf(source.column(v.spec.source!)!),
+    ];
+    final rowGroupers = [
+      for (final f in r.rowFields)
+        PivotGrouper(f.spec, source.column(f.spec.source)!, locale: ctx.locale),
+    ];
+    final colGroupers = [
+      for (final f in r.columnFields)
+        PivotGrouper(f.spec, source.column(f.spec.source)!, locale: ctx.locale),
+    ];
+    final rowFieldCols = [
+      for (final f in r.rowFields) cols.indexOf(source.column(f.spec.source)!),
+    ];
+    final colFieldCols = [
+      for (final f in r.columnFields)
+        cols.indexOf(source.column(f.spec.source)!),
+    ];
+    List<PivotAxisNode> ancestors(PivotAxisNode leaf) => [
+      for (PivotAxisNode? x = leaf; x != null; x = x.parent) x,
+    ];
+    bool sameKeys(
+      PivotAxisNode leaf,
+      List<PivotGrouper> groupers,
+      List<int> fieldCols,
+      List<(CellValue, String?)> next,
+    ) {
+      final path = leaf.path;
+      if (path.length != groupers.length) return false;
+      for (var d = 0; d < groupers.length; d++) {
+        final c = cols[fieldCols[d]];
+        final (v, f) = next[fieldCols[d]];
+        final k = groupers[d].keyOf(v, c.displayTextOf(v, f));
+        if (k.identity != path[d].identity) return false;
+      }
+      return true;
+    }
+
+    // Check everything before changing anything.
+    final pairs = <int, List<_Cell>>{};
+    for (final MapEntry(key: i, value: next) in rows.entries) {
+      if (i < 0 || i >= n || next.length != cols.length) return null;
+      for (var c = 0; c < cols.length; c++) {
+        if (cols[c].formats[i] != next[c].$2) return null;
+      }
+      final rl = r._rowLeafOf[i];
+      final cl = r._columnLeafOf[i];
+      if (rl < 0 || cl < 0) return null;
+      final rowLeaf = r._rowNodes[rl];
+      final colLeaf = r._columnNodes[cl];
+      if (!sameKeys(rowLeaf, rowGroupers, rowFieldCols, next) ||
+          !sameKeys(colLeaf, colGroupers, colFieldCols, next)) {
+        return null;
+      }
+      final cells = [
+        for (final a in ancestors(rowLeaf))
+          for (final b in ancestors(colLeaf))
+            if (r._cells[PivotResult._pairKey(a.id, b.id)] case final _Cell x)
+              x,
+      ];
+      for (final cell in cells) {
+        for (var j = 0; j < valueCols.length; j++) {
+          if (!cell.aggs[j]!.canRemove(cols[valueCols[j]].values[i])) {
+            return null;
+          }
+        }
+      }
+      pairs[i] = cells;
+    }
+    // Take the old values out, put the new ones in.
+    final touched = <_Cell>{};
+    for (final MapEntry(key: i, value: cells) in pairs.entries) {
+      for (final cell in cells) {
+        for (var j = 0; j < valueCols.length; j++) {
+          cell.aggs[j]!.remove(cols[valueCols[j]].values[i]);
+        }
+        touched.add(cell);
+      }
+    }
+    for (final MapEntry(key: i, value: next) in rows.entries) {
+      for (var c = 0; c < cols.length; c++) {
+        cols[c].setRow(i, next[c].$1, next[c].$2);
+      }
+      for (final cell in pairs[i]!) {
+        for (var j = 0; j < valueCols.length; j++) {
+          cell.aggs[j]!.add(cols[valueCols[j]].values[i]);
+        }
+      }
+    }
+    for (final cell in touched) {
+      cell.results = [for (final a in cell.aggs) a!.result];
+    }
+    final byValue = [
+      ...r.rowFields,
+      ...r.columnFields,
+    ].any((f) => f.spec.sortByValueIndex != null);
+    if (byValue) {
+      _sort(
+        r.rowRoot,
+        r.rowFields,
+        r,
+        (child, j) => r.rawValue(child, r.columnRoot, j),
+      );
+      _sort(
+        r.columnRoot,
+        r.columnFields,
+        r,
+        (child, j) => r.rawValue(r.rowRoot, child, j),
+      );
+      _numberLeaves(r.rowRoot, 0);
+      _numberLeaves(r.columnRoot, 0);
+    }
+    return r;
+  }
+
   /// The computation as checkpoints: `null` every [every] + 1 source rows
   /// (a place to pause), then the result.
   Iterable<PivotResult?> _steps(

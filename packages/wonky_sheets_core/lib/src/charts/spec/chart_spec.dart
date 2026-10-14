@@ -6,6 +6,7 @@ import 'chart_type.dart';
 import 'series_style.dart';
 import 'spec_json.dart';
 import 'spec_schema.dart';
+import 'three_d_options.dart';
 import 'type_options.dart';
 
 /// RFC 7386 JSON merge patch of [target] with [patch] (returns a new value).
@@ -47,6 +48,7 @@ final class ChartSpec extends SpecNode {
     this.gridlines = const ChartGridlines(),
     this.series = const {},
     this.typeOptions = const {},
+    this.threeD = ChartThreeD.none,
     this.extras = const {},
   }) : _rawType = null,
        _newer = null;
@@ -63,6 +65,7 @@ final class ChartSpec extends SpecNode {
     required this.gridlines,
     required this.series,
     required this.typeOptions,
+    this.threeD = ChartThreeD.none,
     required this.extras,
     this._rawType,
     this._newer,
@@ -107,6 +110,7 @@ final class ChartSpec extends SpecNode {
       },
       typeOptions: (deepCopyJson(r.obj('typeOptions') ?? const {})! as Map)
           .cast(),
+      threeD: ChartThreeD.fromJson(r.obj('threeD')),
       extras: r.extras(_keys),
     );
   }
@@ -165,6 +169,7 @@ final class ChartSpec extends SpecNode {
     'gridlines',
     'series',
     'typeOptions',
+    'threeD',
   };
 
   final ChartType type;
@@ -182,6 +187,12 @@ final class ChartSpec extends SpecNode {
 
   /// Type-specific options (raw; see the typed getters).
   final Map<String, Object?> typeOptions;
+
+  /// 3D options (08 §23).
+  final ChartThreeD threeD;
+
+  /// Whether this chart is drawn in 3D (`threeD.enabled` on a type that supports it).
+  bool get is3D => threeD.appliesTo(type);
 
   /// Unknown top-level keys.
   final Map<String, Object?> extras;
@@ -250,7 +261,8 @@ final class ChartSpec extends SpecNode {
             for (final k in keys)
               if (series[k]!.toJson().isNotEmpty) k: series[k]!.toJson(),
           })
-          ..nested('typeOptions', (deepCopyJson(typeOptions)! as Map).cast()))
+          ..nested('typeOptions', (deepCopyJson(typeOptions)! as Map).cast())
+          ..nested('threeD', threeD.toJson()))
         .json;
   }
 
@@ -312,6 +324,7 @@ final class ChartSpec extends SpecNode {
       gridlines: gridlines,
       series: series,
       typeOptions: restored,
+      threeD: threeD,
       extras: newExtras,
     );
   }
@@ -329,6 +342,7 @@ final class ChartSpec extends SpecNode {
     ChartGridlines? gridlines,
     Map<String, SeriesStyle>? series,
     Map<String, Object?>? typeOptions,
+    ChartThreeD? threeD,
     Map<String, Object?>? extras,
   }) => ChartSpec._raw(
     type: type ?? this.type,
@@ -343,6 +357,7 @@ final class ChartSpec extends SpecNode {
     gridlines: gridlines ?? this.gridlines,
     series: series ?? this.series,
     typeOptions: typeOptions ?? this.typeOptions,
+    threeD: threeD ?? this.threeD,
     extras: extras ?? this.extras,
     newer: _newer,
   );

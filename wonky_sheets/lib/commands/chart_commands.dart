@@ -10,9 +10,11 @@ import 'package:wonky_sheets_core/model.dart';
 import '../features/charts/chart_insert.dart';
 import '../features/charts/render/chart_painter.dart';
 import '../features/charts/view/chart_data_table_dialog.dart';
+import '../features/images/image_clipboard.dart';
 import '../features/images/image_io.dart';
 import '../features/images/image_service.dart';
 import '../features/objects/object_ops.dart';
+import '../features/objects/object_png.dart';
 import '../features/objects/objects_controller.dart';
 import '../features/objects/objects_layer.dart' show objectKeyScope;
 import '../features/sheet_editor/sheet_editor_controller.dart';
@@ -136,6 +138,8 @@ List<Command<CommandArgs>> chartCommands(ShellServices s) => [
           rows: sheet.rows,
           columns: sheet.columns,
           viewport: ObjectOps.viewport(ed),
+          frozenRows: sheet.record?.frozenRows ?? 0,
+          frozenColumns: sheet.record?.frozenColumns ?? 0,
         );
       }
       final plan = ed.apply(
@@ -248,6 +252,9 @@ List<Command<CommandArgs>> chartCommands(ShellServices s) => [
         ),
         'pieHole': const JsonSchema.number(),
         'smooth': const JsonSchema.boolean(description: 'Line: curved.'),
+        'threeD': const JsonSchema.boolean(
+          description: 'Column, bar, line, area, pie: draw in 3D.',
+        ),
       },
       required: const ['type'],
     ),
@@ -277,6 +284,10 @@ List<Command<CommandArgs>> chartCommands(ShellServices s) => [
         next = next.copyWith(
           typeOptions: {...next.typeOptions}..remove('pieHole'),
         );
+      }
+      final threeD = a.boolean('threeD');
+      if (threeD != null && type.supports3D && threeD != next.threeD.enabled) {
+        next = next.copyWith(threeD: next.threeD.copyWith(enabled: threeD));
       }
       final smooth = a.boolean('smooth');
       if (smooth != null && smooth != next.style.smooth) {
@@ -555,11 +566,173 @@ List<Command<CommandArgs>> chartCommands(ShellServices s) => [
       return ok();
     },
   ),
-  SheetsCommand.placeholder(
+  ..._chart3DCommands(),
+  SheetsCommand(
     'sheets.chart.copyAsImage',
     label: (l) => l.cmdChartCopyAsImage,
+    icon: LucideIcons.imageDown,
     categoryName: _cat,
+    argsSchema: const JsonSchema.object(
+      properties: {'objectId': _idProp, 'darkTheme': JsonSchema.boolean()},
+    ),
+    enabled: (ed, a) =>
+        _editableChart(ed, a) && ImageClipboard.instance.supported,
+    run: (ctx, ed, a) async {
+      final o = _chart(ed, a);
+      if (o == null) return CommandResult.failed(_missing(ed));
+      final png = await ObjectPng.of(
+        ed,
+        o,
+        dark: a.boolean('darkTheme') ?? false,
+      );
+      if (png == null) return const CommandResult.failed('PNG failed');
+      final done = await ImageClipboard.instance.writePng(png);
+      if (!done) return CommandResult.failed(ed.l10n.chartCopyImageFailed);
+      if (ctx.source != InvocationSource.mcp) {
+        ed.services.toasts.show(ed.l10n.chartCopiedAsImage);
+      }
+      return ok({'objectId': o.id, 'bytes': png.length});
+    },
   ),
 ];
 
 double _num(Object? v, double fallback) => v is num ? v.toDouble() : fallback;
+
+/// The selected chart if it can be drawn in 3D and edited.
+EmbeddedObjectRecord? _chart3D(SheetEditorController ed, JsonArgs a) {
+  final o = _chart(ed, a);
+  if (o == null) return null;
+  final spec = ChartSpec.fromJson(o.specJson);
+  return spec.type.supports3D && !spec.isFromNewerVersion ? o : null;
+}
+
+/// 3D chart commands (08 §23.10): every change is one undo step.
+List<Command<CommandArgs>> _chart3DCommands() => [
+  SheetsCommand(
+    'sheets.chart.toggle3D',
+    label: (l) => l.cmdChartToggle3D,
+    icon: LucideIcons.box,
+    categoryName: _cat,
+    mutates: true,
+    descriptionText: (l) => l.cmdChartToggle3DDescription,
+    undoLabelOf: (l, a) => l.undoEditChart,
+    argsSchema: const JsonSchema.object(
+      properties: {
+        'objectId': _idProp,
+        'enabled': JsonSchema.boolean(
+          description: 'On or off (default: toggle).',
+        ),
+      },
+    ),
+    enabled: (ed, a) {
+      final o = _chart3D(ed, a);
+      return o != null && !ChartSpec.fromJson(o.specJson).type.only3D;
+    },
+    run: (ctx, ed, a) {
+      final o = _chart3D(ed, a);
+      if (o == null) return CommandResult.failed(_missing(ed));
+      final spec = ChartSpec.fromJson(o.specJson);
+      final on = a.boolean('enabled') ?? !spec.threeD.enabled;
+      if (on == spec.threeD.enabled) return ok({'objectId': o.id});
+      _writeSpec(
+        ctx,
+        ed,
+        o,
+        spec.copyWith(threeD: spec.threeD.copyWith(enabled: on)),
+      );
+      return ok({'objectId': o.id, 'threeD': on});
+    },
+  ),
+  SheetsCommand(
+    'sheets.chart.reset3DView',
+    label: (l) => l.cmdChartReset3DView,
+    icon: LucideIcons.rotateCcw,
+    categoryName: _cat,
+    mutates: true,
+    undoLabelOf: (l, a) => l.undoEditChart,
+    argsSchema: const JsonSchema.object(properties: {'objectId': _idProp}),
+    enabled: (ed, a) {
+      final o = _chart3D(ed, a);
+      return o != null && ChartSpec.fromJson(o.specJson).is3D;
+    },
+    run: (ctx, ed, a) {
+      final o = _chart3D(ed, a);
+      if (o == null) return CommandResult.failed(_missing(ed));
+      final spec = ChartSpec.fromJson(o.specJson);
+      _writeSpec(
+        ctx,
+        ed,
+        o,
+        spec.copyWith(
+          threeD: spec.threeD.copyWith(
+            clearAzimuth: true,
+            clearElevation: true,
+          ),
+        ),
+      );
+      return ok({'objectId': o.id});
+    },
+  ),
+  SheetsCommand(
+    'sheets.chart.rotate3D',
+    label: (l) => l.cmdChartRotate3D,
+    categoryName: _cat,
+    mutates: true,
+    showInPalette: false,
+    // Alt+Shift+arrows orbit a selected 3D chart by 5° (08 §23.6).
+    argBindings: [
+      for (final (key, da, de) in const [
+        ('ArrowLeft', -5, 0),
+        ('ArrowRight', 5, 0),
+        ('ArrowUp', 0, 5),
+        ('ArrowDown', 0, -5),
+      ])
+        ArgsKeyBinding(KeyBinding(key, alt: true, shift: true), {
+          'dAzimuth': da,
+          'dElevation': de,
+        }, scope: objectKeyScope),
+    ],
+    undoLabelOf: (l, a) => l.undoEditChart,
+    argsSchema: const JsonSchema.object(
+      properties: {
+        'objectId': _idProp,
+        'azimuth': JsonSchema.number(description: 'Rotation in degrees.'),
+        'elevation': JsonSchema.number(description: 'Tilt, 0–90 degrees.'),
+        'dAzimuth': JsonSchema.number(description: 'Turn by degrees.'),
+        'dElevation': JsonSchema.number(description: 'Tilt by degrees.'),
+      },
+    ),
+    enabled: (ed, a) {
+      final o = _chart3D(ed, a);
+      return o != null && ChartSpec.fromJson(o.specJson).is3D;
+    },
+    run: (ctx, ed, a) {
+      final o = _chart3D(ed, a);
+      if (o == null) return CommandResult.failed(_missing(ed));
+      final spec = ChartSpec.fromJson(o.specJson);
+      final t = spec.threeD;
+      final az =
+          (a.values['azimuth'] as num?)?.toDouble() ??
+          t.azimuthFor(spec.type) +
+              ((a.values['dAzimuth'] as num?)?.toDouble() ?? 0);
+      final el =
+          ((a.values['elevation'] as num?)?.toDouble() ??
+                  t.elevationFor(spec.type) +
+                      ((a.values['dElevation'] as num?)?.toDouble() ?? 0))
+              .clamp(ChartThreeD.minElevation, ChartThreeD.maxElevation);
+      _writeSpec(
+        ctx,
+        ed,
+        o,
+        spec.copyWith(
+          threeD: t.copyWith(
+            azimuth: ChartThreeD.normalizeAzimuth(az),
+            elevation: el,
+          ),
+        ),
+        coalesceKey: 'rotate3D',
+      );
+      return ok({'objectId': o.id, 'azimuth': az, 'elevation': el});
+    },
+  ),
+];

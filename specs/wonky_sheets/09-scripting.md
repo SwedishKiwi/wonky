@@ -387,6 +387,19 @@ abstract class Sheet {
 }
 ```
 
+Built (2026-10-14): `charts`, `newChart()` → `EmbeddedChartBuilder` (`setChartType`,
+`addRange`, `removeRange`, `clearRanges`, `setTitle`, `setPosition(row, column)`,
+`setSize`, `setOption(jsonPath, value)` = a `ChartSpec` patch, `build()`), `insertChart`
+(returns the inserted chart; an empty type picks the recommended chart), `updateChart`
+(for `chart.modify()…build()`), `removeChart`; `filter` → `Filter` (`range`,
+`get/set/removeColumnFilterCriteria`, `sort`, `remove`) and `Range.createFilter()`;
+`FilterCriteria.hideValues/condition/whenNumberGreaterThan/…`; `conditionalFormatRules`,
+`addConditionalFormatRule` (boolean conditions with fill/text color/bold/italic/strikethrough,
+two-color gradients; `ConditionalFormatRuleBuilder`), `removeConditionalFormatRule`;
+`protect()` / `Range.protect()` / `protections` → `Protection` (`description`,
+`warningOnly`, `editors`, `addEditor`, `removeEditor`, `unprotectedRanges`, `remove`). Every
+write is one planner operation of the execution's undo step.
+
 ### 6.4 `Range`
 
 ```dart
@@ -637,6 +650,13 @@ abstract class DriveApp {                                          // scope driv
 }
 ```
 
+Built: `LockService.documentLock/scriptLock/userLock` (`tryLock`, `waitLock`, `hasLock`,
+`releaseLock`; released when the execution ends; no-op locks in the app, process-wide locks
+on the server) and `CacheService.documentCache/scriptCache/userCache` (`get`, `getAll`,
+`put`, `putAll`, `remove`, `removeAll`; TTL ≤ 6 h, values ≤ 100 KB, in-memory per process;
+usable from custom functions). Not built: `DriveApp` (needs cross-spreadsheet workbooks and
+the drive scopes).
+
 ### 6.13 Exceptions
 
 `ScriptException` (base, `code`, `message`) with subclasses `RangeException` (invalid A1,
@@ -862,7 +882,31 @@ abstract interface class SyncChannel {
 | Desktop (macOS/Windows/Linux) | `Isolate.spawn(guestMain, …)` | `package:native_synchronization` **`Mailbox`** (0.3.1, pinned). The guest sends each call through a `SendPort` (no polling) and blocks in `mailbox.take()`; the host answers asynchronously with `mailbox.put(reply)`. On kill the host closes the mailbox first (a guest blocked in a native wait cannot be interrupted by `Isolate.kill`). Implemented as `IsolateScriptRunner` (`native.dart`). |
 | Server | same as desktop, inside a script worker (§8.8) | `Mailbox` |
 | Web (first release) | main thread | **Inline runner** (§8.2.3): `InlineScriptRunner`, host answers synchronously, DE-2 checkpoints enforce the time limit. |
-| Web (later, cross-origin isolated) | `Worker('script_worker.dart.js')` | `SharedArrayBuffer` ring buffer + `Atomics.wait` in the worker, `Atomics.notify` from the main thread. Not built: the suite does not enable COOP/COEP yet (it would break the Google sign-in popup and third-party embeds). The guest code (`GuestRuntime`, `GuestTransport`) is ready to run in a worker. |
+| Web (later, cross-origin isolated) | `Worker('script_worker.dart.js')` | `SharedArrayBuffer` ring buffer + `Atomics.wait` in the worker, `Atomics.notify` from the main thread. Not built (decision below). The guest code (`GuestRuntime`, `GuestTransport`) is ready to run in a worker. |
+
+**Decision (2026-10-14): no cross-origin isolation yet; the web keeps the inline runner and
+*Run on server* (with live logs) for alerts/prompts/fetch.** Investigation:
+- *Google sign-in*: no longer a blocker. The suite's popup flow (`google_popup_web.dart`)
+  already survives `COOP: same-origin`: the server callback `/auth/callback` relays the result
+  through `localStorage` when the popup has no opener, and the opener polls it.
+- *`COEP: require-corp`*: Flutter loads images and fonts with CORS (`fetch`), which satisfies
+  COEP, so the app itself works; but every cross-origin no-cors subresource must send
+  `Cross-Origin-Resource-Policy` (user avatars from identity providers, any future embeds), and
+  cross-origin iframes need COEP themselves. Safe only once all images go through the
+  same-origin `/files/` proxy.
+- *`COEP: credentialless`*: tolerates no-cors subresources (sent without cookies) and is the
+  better fit, but Safari does not implement it — Safari would lose isolation (and the worker)
+  while still paying the restrictions. Per-browser headers are possible (user agent sniffing in
+  the web server) but fragile.
+- Isolation is per document: it can be enabled for `/sheets/` only, leaving `/write/` alone.
+- What it needs besides headers: a separate worker entrypoint compiled with `dart compile js`,
+  the SAB channel, fallbacks when `crossOriginIsolated` is false (snapshot mode or the inline
+  runner), and a cross-browser live check of sign-in, image upload and printing — none of which
+  can be verified without the release web build. Snapshot mode alone does not bring alerts,
+  prompts or synchronous fetch (§8.2.3a), so it was not built either.
+Next step when this is picked up: serve `/sheets/` with `COOP: same-origin` +
+`COEP: credentialless` (Chromium/Firefox), keep Safari on the inline runner, and route avatar
+images through `/files/`.
 
 Requirements on the web deployment: the Sheets web app is served with
 `Cross-Origin-Opener-Policy: same-origin` and `Cross-Origin-Embedder-Policy: require-corp`
@@ -991,6 +1035,17 @@ All fetches go through the server: the client host forwards `fetch` to
 - `Ui` throws `UiUnavailableException`; `toast` is logged and, if the run-as user has an open
   window, relayed as a toast through the presence channel (P1).
 - `activeSheet` = first visible sheet; `activeRange` = A1 of it.
+- **Job queue (built)**: installable triggers are enqueued as `ScriptJob` rows
+  (`ScriptJobQueue`, `wonky_server/lib/src/sheets/scripts/script_jobs.dart`) and run by
+  instances with the worker role (`wonky.sheets.scriptWorker`, default true; instances without
+  it only enqueue). Claims are leases (`FOR UPDATE SKIP LOCKED`, lease = server timeout + 2 min);
+  an expired lease is queued again (3 attempts). At most `wonky.sheets.scriptUserConcurrency`
+  (10) running jobs per run-as user and one per trigger; at most 100 queued per trigger, the
+  overflow is merged into the newest job (`e.coalesced`, bounding range). Finished jobs are
+  pruned after a day (`scriptsPrune`). *Run on server*, MCP `run_function` and AI runs stay
+  synchronous request/response (`ScriptEndpoint.run`; `runLive` streams log lines first).
+- `LockService` uses process-wide locks (`MemoryScriptLocks.shared`); with several worker
+  instances a document lock is per instance (a Redis lock is the follow-up).
 
 ### 8.6 Custom functions
 
@@ -1416,8 +1471,10 @@ Integration (`wonky_sheets/lib/features/scripts/editor/`):
 - **Save** (`sheets.script.saveFile`, Mod+S; *Save all* Mod+Alt+S) writes `ScriptFile.source`,
   `contentHash`, `updatedBy`, `updatedAt` via `SheetsWriter`. Saving is **not** an undo step on
   the spreadsheet stack: text undo/redo is editor-local (`re_editor` history, kept across saves
-  for the session). Unsaved drafts are persisted in `LocalViewState` every 2 s so a reload or
-  crash loses nothing.
+  for the session). Unsaved drafts are persisted every 2 s so a reload or crash loses nothing
+  (built in the device's script store `sheets_scripts_<user>.db`, table `local_script_draft`,
+  next to the bytecode cache and the local history; drafts can be large, so they are not in
+  the small `LocalViewState` JSON).
 - File create/rename/delete/reorder are commands and **are** undo steps on the spreadsheet
   stack (labels "Create script file", "Delete main.dart"…), restoring source on undo.
 - After save: if online, call `compile`; the title row shows "Building…" → "Built 10:42 ✓" or
@@ -1570,6 +1627,16 @@ the side panel host (`WonkySplitView` panel id `scriptSidebar`) or a `ShadDialog
 callbacks start a new execution of the named function with `UiEvent {values, panel}`. No HTML,
 no arbitrary widgets, no script-controlled styling beyond `primary`/`destructive` variants.
 
+Built (2026-10-14): `Ui.showSidebar(panel)`, `Ui.showModalDialog(panel, title)`, components
+`UiText` (bold/italic/code), `UiTextField` (`type` text/number/date/email), `UiTextarea`,
+`UiSelect`, `UiCheckbox`, `UiRadioGroup`, `UiButton` (`onClick` = exported function or
+`_close`), `UiRow` (wraps), `UiColumn`, `UiDivider`, `UiTable` (≤ 500 rows), `UiProgress`;
+`UiEvent {values, panel, button}` with `panel.update(UiPanel)` / `panel.close()`. The host
+validates panels (`ScriptPanelSchema`: ≤ 300 components, depth 6, button targets).
+Sidebars are the side panel `sheets.panel.scriptSidebar`, dialogs a `ShadDialog`; both are
+MCP-operable (fields = inputs, buttons by caption). Button runs are `menu` executions (one undo
+step "Script: fn"). Not built: `UiImage`.
+
 ---
 
 ## 17. Commands
@@ -1598,6 +1665,7 @@ no arbitrary widgets, no script-controlled styling beyond `primary`/`destructive
 | `sheets.macro.manage` | — | — | Editor |
 | `sheets.macro.update` / `delete` | `{macroId, …}` | ✓ | Editor |
 | `sheets.macro.<macroId>` (dynamic) | — | ✓ | Editor |
+| `sheets.help.scriptApiReference` | `{class?}` | — | Viewer+ (headless: lists the classes) |
 
 ---
 
@@ -1630,7 +1698,8 @@ UI bridge: `ui.invoke_command` with the commands above (e.g. `sheets.macro.<id>`
 | A-09-4 | New synced table `ScriptUserProperty` (in the user's **personal space**): `spreadsheetId: UuidValue` (plain), `key: String`, `value: String`, index (spreadsheetId, key). |
 | A-09-5 | `ChangeLog.summaryJson.kinds` uses `scripts` for changes to script tables. |
 | A-09-6 | Server tables: `ScriptExecution` (§13.1); `ScriptQuotaUsage(userId, day: DateTime (UTC date), serverRuntimeMs, clientRuntimeMs, urlFetchCalls, urlFetchBytes, triggerRuns)`; `ScriptAuthorization(userId, spreadsheetUuid, scopes: List<String>, grantedAt, revokedAt?)`; `ScriptTriggerState(triggerId: UuidValue, spreadsheetUuid, nextRunAt?, lastRunAt?, lastStatus?, consecutiveFailures, disabledReason?)`; `ScriptJob(uuid, kind, spreadsheetUuid, runAsUserId, payloadJson, status, enqueuedAt, leaseOwner?, leaseUntil?, attempts, resultJson?)`. |
-| A-09-7 | Local-only client tables: `LocalScriptExecutionLog` (pending uploads), `LocalScriptHistory(fileId, savedAt, source)` (P1, last 20 per file). Bytecode is cached in `LocalBlobCache` (A-08-5). |
+| A-09-7 | Local-only client tables (built in `sheets_scripts_<user>.db`, `features/scripts/local/script_local_store.dart`): `local_script_execution_log` (pending uploads, ≤ 1000 per spreadsheet), `local_script_history(fileId, savedAt, source, note)` (last 20 per file), `local_script_draft(spreadsheet, fileId, text, baseHash, baseText)`, and the bytecode in `local_blob_cache(key, mime, bytes, createdAt)` (last 12 builds; the image cache of A-08-5 can share the table). |
+| A-09-9 | `ScriptTriggerState.lastNotifiedAt` (daily failure notifications); `ScriptJob` gains `itemUuid`, `triggerId`, `functionName`, `coalesced`, `finishedAt` (status reuses `ScriptExecutionStatus`). |
 | A-09-8 | `SpaceSubscription.reason` gains `script` (already listed in suite 12). |
 
 ---
@@ -1741,82 +1810,86 @@ UI bridge: `ui.invoke_command` with the commands above (e.g. `sheets.macro.<id>`
 
 Built (package `wonky_sheets_script`, `third_party/dart_eval`, `wonky_server/lib/src/sheets/scripts`):
 
-- API §6.1–6.11 (P0/P1 members) as interpreted source; runners (isolate, inline); `ScriptHost`
+- API §6.1–6.11 (P0/P1 members) as interpreted source, plus charts, filters, conditional
+  formats (read and write), protections (§6.3), `LockService`/`CacheService` (§6.12) and the
+  UI DSL (§16.3); `api_index.json` (`lib/src/api/api_index_data.dart`, generated by
+  `tool/gen_api_index.dart` from the API source with the analyzer; a test fails when stale) with
+  `ApiIndex` and `ScriptCompletion` (member completion with type inference over expression
+  chains, locals, for-in, project symbols; hover docs). Runners (isolate, inline); `ScriptHost`
   over `WorkbookAccess`; custom functions (§8.6) with cache, batching and `#LOADING`;
-  `ScriptSession` for the app; macro recorder codegen over `SheetsOperation`s (§15); compiler
-  with the subset lint (§9.3), exports (§5.1) and the dispatcher; conformance corpus (~150
-  cases) on inline/isolate runners and on a database-loaded workbook; sandbox escape,
-  time-limit and memory tests.
-- Server: `ScriptEndpoint` (`compile`, `analyze`, `bytecode`, `run`, `executions`,
-  `reportExecutions`, `urlFetch`, `authorization`/`authorize`/`revokeAuthorization`,
-  `notifyOpen`); tables `ScriptExecution`, `ScriptQuotaUsage`, `ScriptAuthorization`,
-  `ScriptTriggerState`; SSRF-safe `UrlFetchProxy`; time-driven scheduler
-  (`wonky.scriptsTick`, every minute) and daily pruning (`wonky.scriptsPrune`); installable
-  onEdit/onChange from change-log processing and installable onOpen via `notifyOpen`;
-  compile-after-sync for script file changes; MCP tools §18; feature flag
-  `wonky.features.scripting` (on in development); config `wonky.sheets.scriptTimeoutMs`
-  (client runs), `scriptServerTimeoutMs`, `scriptDailyQuotaMs`, `scriptAllowHttp`,
-  `scriptPoolSize`; user properties of server runs (`ServerUserProperties`, §6.9).
+  `ScriptSession` (live log callback `onLiveLog`); macro recorder codegen (§15); compiler with
+  the subset lint (§9.3), exports (§5.1) and the dispatcher; conformance corpus (~150 cases) on
+  inline/isolate runners and on a database-loaded workbook; sandbox escape, time-limit and
+  memory tests. `dart_eval` patch DE-20 (interpolating a null `String?`).
+- Server: `ScriptEndpoint` (`compile`, `analyze`, `bytecode`, `run`, `runLive` (log lines
+  streamed before the result), `executions`, `reportExecutions`, `urlFetch`,
+  `authorization`/`authorize`/`revokeAuthorization`, `notifyOpen`); tables `ScriptExecution`,
+  `ScriptQuotaUsage`, `ScriptAuthorization`, `ScriptTriggerState` (+ `lastNotifiedAt`),
+  `ScriptJob`; the job queue and worker role (§8.5: leases, 10 running jobs per user, one per
+  trigger, 100 queued per trigger with coalescing, stale-lease retry, daily pruning); SSRF-safe
+  `UrlFetchProxy` with the 1 h custom-function response cache (`ScriptFetchCache`); compile
+  rate limit 20/h per project and "latest wins" coalescing (`CompileCoalescer`), analysis rate
+  limit 30/min per user (`ScriptRateLimiter`, in-memory per instance); failure notifications
+  (`scriptFailure`: per-trigger `notify` immediately / daily (default, ≤ 1 a day) / never;
+  disabling always notifies); installers with *Enable scripts* off pause (no failure count);
+  time-driven scheduler (`wonky.scriptsTick`) and pruning (`wonky.scriptsPrune`); installable
+  onEdit/onChange from change-log processing, installable onOpen via `notifyOpen`;
+  compile-after-sync; MCP tools §18; config `wonky.features.scripting`,
+  `wonky.sheets.scriptTimeoutMs`, `scriptServerTimeoutMs`, `scriptDailyQuotaMs`,
+  `scriptAllowHttp`, `scriptPoolSize`, `scriptWorker`, `scriptUserConcurrency`; user
+  properties of server runs (`ServerUserProperties`, §6.9).
 - App (`wonky_sheets/lib/features/{scripts,macros}`, `commands/{script,macro}_commands.dart`):
-  - `ScriptService` (one per editor): installs `ScriptBuild.lastGood*` (bytecode from
-    `ScriptEndpoint.bytecode`, cached in memory by build hash), `IsolateScriptRunner` on
-    desktop / `InlineScriptRunner` on web, script writes through the session
-    (`SessionWorkbookAccess`: write gates, actor kind `script`), **one undo step
-    "Script: fn" per execution** (pushed by the service, so menu items, macros and triggers
-    get one too; run commands are not `mutates` for that reason), `onOpen` per window and per
-    new build, `onEdit`/`onChange` from the newest undo step after a person's command (not
-    scripts, agents, undo/redo, remote), `onEdit` writes appended to the triggering step
-    within 2 s (§8.7.2), `onSelectionChange` debounced 300 ms, executions uploaded in 10 s
-    batches, authorization dialog before runs that need scopes, *Stop* = new session.
-  - Custom functions: `WorkbookSessionBase.customFunctions` (`ForwardingCustomFunctionProvider`,
-    optional `engineFactory`) is pointed at the session's provider; results drain the engine
-    so the grid repaints; new custom function names recalculate all formulas once (cells
-    that showed `#NAME?`); formula autocomplete and signature help list them.
-  - Script editor `/s/:uuid/script` (child route of the editor, key scope `scriptEditor`):
-    title row with build status, toolbar (Save, Run + function picker, Run on server, Stop,
-    Triggers, Executions, Settings, Generate with AI, Find), file rail (create/rename/delete,
-    dirty dots) + Functions list (fx, trigger, macro icons; click → declaration), file tabs,
-    `re_editor` with Dart highlighting (`re_highlight`, theme tokens, light/dark), shad find
-    and replace bar, gutter problem markers, bottom panel Problems (live `analyze` for drafts,
-    build diagnostics otherwise; *Fix with AI*) / Log / Executions; narrow (< 900 px) file
-    dropdown; read-only for viewers. Save is not an undo step; conflicts (newer hash by
-    someone else) ask *Overwrite with mine* / *Discard mine*; remote saves reload clean files
-    with a toast or show a *Reload* banner.
-  - Dialogs: authorization, triggers (list, enabled switch, delete; *Add trigger* form as a
-    `WonkyDialogSpec` with time-driven schedules, notify and *fire for MCP*), project settings
-    (name, time zone, URL allowlist, show menus in menubar, revoke, delete project), conflict,
-    script alerts/prompts (`AppScriptUi`, `WonkyDialogSpec`), toasts via the shell.
-  - Executions side panel `sheets.panel.scriptExecutions` (status filter, expandable rows with
-    logs, error card with frames, stats, *Revert changes* for server runs, *Open in editor*).
-  - Custom menus: top-level after *Extensions* (setting) and under *Extensions*, items run
-    `sheets.script.runMenuItem`. *Run on server* writes become a `sheets.serverChange` undo step.
-  - Macros (§15): recording bar (absolute/relative, locked after the first step), recorder as a
-    write gate for person-initiated commands, save → `macros.dart` + `Macro` row in one undo
-    step and a build; dynamic commands **`sheets.macro.m<32 hex digits of the macro id>`**
-    (command id segments can't hold a UUID) with `Mod+Alt+Shift+1…9, 0` (slot 10 = 0); manage
-    and import dialogs.
-  - Commands of §17 except P2; `sheets.script.deleteProject` added. AI commands send a prompt
-    to the assistant.
-  - Client user properties in the personal space (§6.9).
+  - `ScriptService` (one per editor): last good build with the persistent bytecode cache
+    (`ScriptLocalStore`, SQLite `sheets_scripts_<user>.db`: blob cache, execution log queue,
+    local history, drafts; offline reopen installs the cached build), `IsolateScriptRunner` on
+    desktop / `InlineScriptRunner` on web, script writes through the session, **one undo step
+    "Script: fn" per execution**, `onOpen` per window and per build, `onEdit`/`onChange` after a
+    person's command, `onEdit` writes appended within 2 s, `onSelectionChange` debounced 300 ms,
+    executions queued in `local_script_execution_log` and uploaded in 10 s batches (survive
+    reloads offline), authorization dialog, *Stop* = new session; live log lines while a
+    function runs (client and *Run on server*); Settings › Sheets › *Enable scripts* (off: no
+    runs, triggers or menus, custom functions `#ERROR!` "Scripts are turned off…", banner in
+    the editor with *Turn on scripts*).
+  - Custom functions in formulas (+ autocomplete/signature help); `#LOADING` is painted as a
+    muted italic "Loading…" without the error triangle.
+  - Script editor `/s/:uuid/script`: title row with build status and the avatars of
+    collaborators in the script editor (presence cursor `{route: script, file}`; colored dots
+    on file tabs others have open), toolbar (Save, Run + picker, Run on server, Stop, Triggers,
+    Executions, Settings, Generate with AI, Find, *Local history*, *Script API reference*),
+    file rail with drag-reorder (`sheets.script.reorderFile`, one undo step) and Functions,
+    tabs, `re_editor` with Dart highlighting, API autocomplete (popup with kind icons,
+    signatures and docs; Enter accepts), hover docs, squiggle underlines (wavy, by severity)
+    plus gutter markers, find/replace, Problems (live `analyze`, build diagnostics, unresolved
+    merge markers) / Log (live) / Executions; drafts restored after a reload; save conflicts
+    show *Compare* (side-by-side diff ≥ 640 px, unified below; Myers line diff in
+    `package:wonky_core/diff.dart`), *Merge* (3-way with the local base; conflicts marked with
+    `<<<<<<< yours` / `>>>>>>> theirs`), *Discard mine*, *Overwrite with mine*; the local
+    history dialog (last 20 versions per file, also discarded/overwritten text) restores a
+    version as a draft. Narrow (< 900 px) file dropdown; read-only for viewers.
+  - *Help › Script API reference* (`sheets.help.scriptApiReference`): searchable classes and
+    members from `api_index.json` (dialog, two panes ≥ 600 px, stacked below).
+  - Dialogs: authorization, triggers, project settings, conflict, history, API reference,
+    script alerts/prompts, script sidebars/dialogs (UI DSL); toasts via the shell.
+  - Executions side panel, custom menus, macros (§15) with `Mod+Alt+Shift+1…0` — the keymap
+    now matches the digit row by physical key when Shift/Alt change the typed character (web,
+    macOS layouts), covered by a keymap test.
+  - Commands of §17, `sheets.script.deleteProject`, `sheets.help.scriptApiReference`.
 
 Not built yet (gaps):
 
-- Script editor: API autocomplete/hover docs (`api_index.json`, §14.4), conflict *Compare* /
-  *Merge* and `LocalScriptHistory`, drafts in `LocalViewState`, presence, squiggle underlines,
-  live log streaming during a run, drag-reorder of files, *Help › Script API reference*.
-- Persistent bytecode cache (`LocalBlobCache`) and the offline `LocalScriptExecutionLog`
-  (both in memory); per-user *Enable scripts*; the muted "Loading…" rendering of `#LOADING`.
-- Server **job queue and dedicated worker role** (`ScriptJob`, leases, `sheets.scripts.worker`):
-  server executions run in-process in a pool of isolates (`wonky.sheets.scriptPoolSize`).
-  Per-user concurrency limit (10) and trigger queue caps/coalescing (100 per trigger) are not
-  enforced.
-- Web: SharedArrayBuffer worker and snapshot mode (§8.2.1, §8.2.3a); the web uses the inline
-  runner (no alerts/prompts or `UrlFetchApp` there).
-- `api_index.json` (§14.4), live analysis rate limits, compile rate limits (20/h) and
-  "latest wins" coalescing, failure notifications (`scriptFailure`), digest settings,
-  URL-fetch response cache for custom functions, the server-wide denylist config
-  (`UrlFetchProxy.deniedHosts` exists), P1 API members that depend on planner ops still
-  marked unsupported in `wonky_sheets_core` (`SortRange`, `RemoveDuplicates`,
-  `TrimWhitespace`: the API calls them and reports `ScriptException(unsupported)` until the
-  planner implements them), charts/filters/protection/conditional formats API (§6.3 P1),
-  P2 services (§6.12, §16.3).
+- Web: SharedArrayBuffer worker and snapshot mode (decision in §8.2.1: not isolated yet;
+  alerts/prompts/`UrlFetchApp` stay unavailable in the web inline runner, *Run on server*
+  streams its logs instead).
+- `analyzer` 8.x pin: porting `dart_eval` to analyzer 13 (assessed 2026-10-14 against 13.3.0)
+  is 93 compile errors in 23 files of its compiler (NamedExpression → `NamedArgument`,
+  `DefaultFormalParameter`/`SimpleFormalParameter` → `FormalParameterDefaultClause`/
+  `RegularFormalParameter`, class/enum bodies for primary constructors, `DottedName`) plus 15
+  in `wonky_sheets_script` (compiler, subset lint, index builder); it resolves outside the
+  workspace (analyzer 13.3.0, dart_style 3.1.13, test 1.33) but changes the shared lockfile.
+  Deferred to a quiet window: port, run the 435 dart_eval and 440 package tests, bump the lock.
+- Editor: Tab does not accept a completion (Enter does; `re_editor` binds only Enter);
+  signature help while typing arguments; Mod+D; completion/hover in non-active files.
+- Limits are per instance (rate limiters, fetch cache, locks, script cache); a shared Redis
+  store is the multi-instance follow-up. Digest settings beyond the per-trigger `notify`
+  option; the server-wide URL denylist config (`UrlFetchProxy.deniedHosts` exists); `UiImage`;
+  `DriveApp`; `editors` of `Spreadsheet` (P2).

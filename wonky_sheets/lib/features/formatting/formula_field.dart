@@ -103,7 +103,7 @@ class FormulaFieldState extends State<FormulaField> {
     super.dispose();
   }
 
-  FormulaLocale get _locale => FormulaLocale.forId(ed.locale);
+  FormulaLocale get _locale => ed.formulaLocale;
 
   int get _caret =>
       _text.selection.isValid ? _text.selection.baseOffset : _text.text.length;

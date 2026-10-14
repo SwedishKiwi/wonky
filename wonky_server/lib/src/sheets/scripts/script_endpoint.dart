@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 import 'dart:typed_data';
 
@@ -64,6 +65,41 @@ class ScriptEndpoint extends Endpoint {
         ? const []
         : (jsonDecode(argsJson) as List).cast<Object?>(),
   );
+
+  /// *Run on server* with live logs (09 §14.5): JSON events, first
+  /// `{"log": {t, level, msg}}` per log line while the function runs, then
+  /// `{"result": ScriptRunResponse}`.
+  Stream<String> runLive(
+    Session session,
+    UuidValue spreadsheetUuid,
+    String functionName,
+    String? argsJson,
+  ) async* {
+    final actor = await UserService.actorOf(session);
+    final events = StreamController<String>();
+    unawaited(
+      ScriptService.run(
+            session,
+            actor,
+            spreadsheetUuid,
+            functionName,
+            args: argsJson == null
+                ? const []
+                : (jsonDecode(argsJson) as List).cast<Object?>(),
+            onLog: (e) {
+              if (!events.isClosed) {
+                events.add(jsonEncode({'log': e.toJson()}));
+              }
+            },
+          )
+          .then(
+            (r) => events.add(jsonEncode({'result': r.toJson()})),
+            onError: events.addError,
+          )
+          .whenComplete(events.close),
+    );
+    yield* events.stream;
+  }
 
   /// The executions log, newest first (09 §13.3).
   Future<List<ScriptExecution>> executions(

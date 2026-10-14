@@ -15,6 +15,10 @@ enum CommentUndoOp {
   deleteThread,
   deleteComment,
   edit,
+
+  /// The thread moved to a new anchor ([CommentUndoEntry.anchorJson]; the
+  /// old one is [CommentUndoEntry.previousAnchorJson]).
+  updateAnchor,
 }
 
 class CommentUndoEntry extends UndoEntry {
@@ -27,6 +31,7 @@ class CommentUndoEntry extends UndoEntry {
     this.anchorKind,
     this.anchorJson,
     this.quotedText,
+    this.previousAnchorJson,
   });
 
   final CommentUndoOp op;
@@ -41,6 +46,9 @@ class CommentUndoEntry extends UndoEntry {
   final CommentAnchorKind? anchorKind;
   final String? anchorJson;
   final String? quotedText;
+
+  /// For [CommentUndoOp.updateAnchor]: the anchor before the move.
+  final String? previousAnchorJson;
 
   static const domainName = 'comments';
 
@@ -67,6 +75,7 @@ class CommentUndoEntry extends UndoEntry {
         anchorKind: anchorKind,
         anchorJson: anchorJson,
         quotedText: quotedText,
+        previousAnchorJson: previousAnchorJson,
       );
 }
 
@@ -126,6 +135,10 @@ class CommentsUndoHandler extends UndoHandler<CommentUndoEntry> {
           return e;
         case (CommentUndoOp.resolve, false) || (CommentUndoOp.reopen, true):
           await c.resolve(e.threadUuid);
+          return e;
+        case (CommentUndoOp.updateAnchor, _):
+          final json = undo ? e.previousAnchorJson : e.anchorJson;
+          if (json != null) await c.updateAnchor(e.threadUuid, json);
           return e;
         case (CommentUndoOp.edit, _):
           await c.edit(e.commentId!, (undo ? e.previousBody : e.body) ?? '');

@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
+import 'dart:math' as math;
 
 import 'package:flutter/foundation.dart';
 import 'package:wonky_sheets_core/formula.dart'
@@ -187,6 +188,8 @@ class PivotOverlayService extends ChangeNotifier
     this.debounce = const Duration(milliseconds: 300),
     this.backgroundRows = 100000,
     this.useIsolate = !kIsWeb,
+    this.snapshotSlice = 4096,
+    this.snapshotBudget = const Duration(milliseconds: 8),
   });
 
   final WorkbookModel model;
@@ -399,6 +402,7 @@ class PivotOverlayService extends ChangeNotifier
 
   /// Recomputes every pivot now.
   void refreshAll() {
+    _full.addAll(_allRecords().map((r) => r.id));
     _dirty
       ..clear()
       ..addAll(_allRecords().map((r) => r.id))
@@ -408,6 +412,7 @@ class PivotOverlayService extends ChangeNotifier
 
   /// Recomputes [pivotId] now (`sheets.pivot.refresh`).
   void refresh(String pivotId) {
+    _full.add(pivotId);
     _dirty.add(pivotId);
     flush();
   }
@@ -542,11 +547,32 @@ class PivotOverlayService extends ChangeNotifier
     final PivotResult result;
     final PivotGrid grid;
     final bool formulas;
+    final delta = ready == null ? _tryDelta(rec, source, s.id, row, col) : null;
     if (ready != null && identical(ready.record, rec)) {
       result = ready.result;
       grid = ready.grid;
       formulas = ready.sourceHasFormulas;
+      _deltaCount.remove(rec.id);
+    } else if (delta != null) {
+      (result, grid) = delta;
+      formulas = _outputs[rec.id]!.sourceHasFormulas;
     } else {
+      _deltaCount.remove(rec.id);
+      // Big sources are read in slices across frames, then aggregated in
+      // the background (07 §7.4 step 7): nothing big runs on the UI thread.
+      if (_dataRows(source) >= backgroundRows) {
+        _startJob(
+          rec,
+          spec,
+          null,
+          row,
+          col,
+          _hasFormulas(source),
+          s.id,
+          source: source,
+        );
+        return _pending;
+      }
       _computing = rec.id;
       final SourceTable table;
       try {
@@ -621,6 +647,146 @@ class PivotOverlayService extends ChangeNotifier
     };
   }
 
+  /// Source rows (sheet indices) whose values changed since a pivot was
+  /// computed, for an incremental refresh (07 §7.10, P2).
+  final Map<String, Set<int>> _deltaRows = {};
+
+  /// Pivots that changed in a way a delta can't express (structure, spec,
+  /// formats, slicers, placement): computed anew.
+  final Set<String> _full = {};
+
+  /// Deltas applied since the last full computation (a full one follows
+  /// after [maxDeltas] to bound floating-point drift).
+  final Map<String, int> _deltaCount = {};
+
+  /// Deltas in a row before a pivot is computed anew.
+  static const maxDeltas = 64;
+
+  /// Whether the last computation of a pivot was incremental (tests).
+  @visibleForTesting
+  bool lastWasDelta(String id) => (_deltaCount[id] ?? 0) > 0;
+
+  /// The incremental refresh of [rec] when only values of known source rows
+  /// changed and the aggregates are decomposable ([PivotEngine.applyDelta]);
+  /// null computes anew.
+  (PivotResult, PivotGrid)? _tryDelta(
+    PivotTableRecord rec,
+    ResolvedRange source,
+    String sheetId,
+    int row,
+    int col,
+  ) {
+    final rows = _deltaRows.remove(rec.id);
+    final full = _full.remove(rec.id);
+    if (full || rows == null || rows.isEmpty) return null;
+    final old = _outputs[rec.id];
+    final prev = old?.result;
+    if (old == null ||
+        prev == null ||
+        !identical(old.record, rec) ||
+        _jobs.containsKey(rec.id) ||
+        (_deltaCount[rec.id] ?? 0) >= maxDeltas ||
+        prev.source.rowMask != null ||
+        (rowMask ?? slicerMask)(source) != null ||
+        !PivotEngine.supportsDelta(prev.spec)) {
+      return null;
+    }
+    final sheet = model.sheet(source.sheetId);
+    if (sheet == null) return null;
+    final rect = SourceTable.clampToUsed(source, sheet.usedRect()?.bottom);
+    final table = prev.source;
+    if (rect != table.range ||
+        rows.length > math.max(256, table.rowCount ~/ 10)) {
+      return null;
+    }
+    final updates = <int, List<(CellValue, String?)>>{};
+    _computing = rec.id;
+    try {
+      for (final r in rows) {
+        if (r == rect.top) return null; // A header changed (field names).
+        final i = r - rect.top - 1;
+        if (i < 0 || i >= table.rowCount) continue;
+        updates[i] = [
+          for (final c in table.columns)
+            (
+              engine.valueAt(sheet.id, r, c.sheetCol).toCellValue(),
+              engine.numberFormatAt(sheet.id, r, c.sheetCol),
+            ),
+        ];
+      }
+    } finally {
+      _computing = null;
+    }
+    final locale = model.spreadsheet.locale;
+    final out = const PivotEngine().applyDelta(
+      prev,
+      updates,
+      _context(locale, sheetId, row, col),
+    );
+    if (out == null) return null;
+    _deltaCount[rec.id] = (_deltaCount[rec.id] ?? 0) + 1;
+    final display = FormatterDisplayText(locale: locale);
+    return (out, PivotLayout.build(out, labelText: display.displayText));
+  }
+
+  /// Data rows of [source] (clamped to the used rows for whole columns).
+  int _dataRows(ResolvedRange source) {
+    final sheet = model.sheet(source.sheetId);
+    if (sheet == null) return 0;
+    return SourceTable.clampToUsed(source, sheet.usedRect()?.bottom).rowCount -
+        1;
+  }
+
+  /// Cells read per slice of a background snapshot, between budget checks.
+  final int snapshotSlice;
+
+  /// Work per frame of a background snapshot.
+  final Duration snapshotBudget;
+
+  /// Reads [source] in slices (between frames); null when the job was
+  /// cancelled or its source changed meanwhile (a new job follows).
+  Future<SourceTable?> _snapshot(
+    _PivotJob job,
+    PivotSpec spec,
+    ResolvedRange source,
+  ) async {
+    final display = FormatterDisplayText(locale: model.spreadsheet.locale);
+    bool stopped() => _disposed || job.token.isCancelled || job.dirty;
+    final b = SourceTableBuilder(
+      model,
+      engine,
+      source,
+      display,
+      colorAt: _needsColors(spec) ? _colorReader(source.sheetId) : null,
+    );
+    while (true) {
+      final sw = Stopwatch()..start();
+      var done = false;
+      _computing = job.record.id;
+      try {
+        do {
+          done = b.step(snapshotSlice);
+        } while (!done && sw.elapsed < snapshotBudget);
+      } finally {
+        _computing = null;
+      }
+      job.snapshotProgress = b.progress;
+      if (done) break;
+      await Future<void>.delayed(Duration.zero);
+      if (stopped()) return null;
+    }
+    final table = b.build();
+    final mask = (rowMask ?? slicerMask)(source);
+    if (mask == null) return table;
+    return SourceTable(
+      sheetId: table.sheetId,
+      range: table.range,
+      columns: table.columns,
+      display: table.display,
+      rowMask: mask,
+    );
+  }
+
   bool _hasFormulas(ResolvedRange source) {
     final srcSheet = model.sheet(source.sheetId)!;
     for (final (_, _, cell) in srcSheet.cellsIn(
@@ -652,12 +818,13 @@ class PivotOverlayService extends ChangeNotifier
   void _startJob(
     PivotTableRecord rec,
     PivotSpec spec,
-    SourceTable table,
+    SourceTable? table,
     int row,
     int col,
     bool formulas,
-    String sheetId,
-  ) {
+    String sheetId, {
+    ResolvedRange? source,
+  }) {
     final current = _jobs[rec.id];
     if (current != null && identical(current.record, rec) && !current.dirty) {
       return;
@@ -667,12 +834,12 @@ class PivotOverlayService extends ChangeNotifier
     _jobs[rec.id] = job;
     running.value = _jobs.length;
     final locale = model.spreadsheet.locale;
-    final Future<(PivotResult, PivotGrid)> work;
-    if (useIsolate && !_needsEngine(spec)) {
-      work = compute(_isolatePivot, (spec, table, locale));
-    } else {
+    Future<(PivotResult, PivotGrid)> aggregate(SourceTable table) {
+      if (useIsolate && !_needsEngine(spec)) {
+        return compute(_isolatePivot, (spec, table, locale));
+      }
       final display = FormatterDisplayText(locale: locale);
-      work = () async {
+      return () async {
         final r = await const PivotEngine().computeSliced(
           spec,
           table,
@@ -680,6 +847,16 @@ class PivotOverlayService extends ChangeNotifier
           cancel: job.token,
         );
         return (r, PivotLayout.build(r, labelText: display.displayText));
+      }();
+    }
+
+    final Future<(PivotResult, PivotGrid)?> work;
+    if (table != null) {
+      work = aggregate(table);
+    } else {
+      work = () async {
+        final t = await _snapshot(job, spec, source!);
+        return t == null ? null : aggregate(t);
       }();
     }
     unawaited(
@@ -690,7 +867,7 @@ class PivotOverlayService extends ChangeNotifier
           }
           _jobs.remove(rec.id);
           running.value = _jobs.length;
-          if (v.$1.cancelled) return;
+          if (v == null || v.$1.cancelled) return;
           _ready[rec.id] = _Computed(rec, v.$1, v.$2, formulas);
           _dirty.add(rec.id);
           flush();
@@ -885,6 +1062,7 @@ class PivotOverlayService extends ChangeNotifier
   void _onBatch(WorkbookChangeBatch batch) {
     final now = <String>{};
     final later = <String>{};
+    final deltas = <String, Set<int>>{};
     for (final e in batch.events) {
       switch (e) {
         case RulesChanged(:final kind, :final ruleIds)
@@ -907,7 +1085,7 @@ class PivotOverlayService extends ChangeNotifier
           break;
         case CellsChanged(:final sheetId):
           if (e.contentKeys.isEmpty && e.formatKeys.isEmpty) break;
-          _cellsChanged(sheetId, e, later, now);
+          _cellsChanged(sheetId, e, later, now, deltas);
           _formulasTyped(sheetId, e);
         case SpreadsheetChanged():
           later.addAll(_outputs.keys);
@@ -916,6 +1094,14 @@ class PivotOverlayService extends ChangeNotifier
         case OtherRowsChanged():
           break;
       }
+    }
+    // Only pivots whose sole change is source values may refresh
+    // incrementally.
+    for (final id in {...now, ...later}) {
+      if (!deltas.containsKey(id) || now.contains(id)) _full.add(id);
+    }
+    for (final MapEntry(key: id, value: rows) in deltas.entries) {
+      (_deltaRows[id] ??= {}).addAll(rows);
     }
     if (now.isNotEmpty) {
       _dirty.addAll(now);
@@ -985,6 +1171,7 @@ class PivotOverlayService extends ChangeNotifier
     CellsChanged e,
     Set<String> later,
     Set<String> now,
+    Map<String, Set<int>> deltas,
   ) {
     final s = model.sheet(sheetId);
     if (s == null) return;
@@ -992,6 +1179,8 @@ class PivotOverlayService extends ChangeNotifier
     for (final o in _outputs.values) {
       final src = o.source;
       var hit = false;
+      // Content-only edits inside the source are value deltas (07 §7.10).
+      final valuesOnly = e.formatKeys.isEmpty && !o.sourceHasFormulas;
       if (src != null && src.sheetId == sheetId) {
         final rect = src.rect;
         for (final k in keys) {
@@ -999,9 +1188,11 @@ class PivotOverlayService extends ChangeNotifier
           final c = s.columns.indexOf(k.colId);
           if (rect.contains(r, c)) {
             hit = true;
-            break;
+            if (!valuesOnly) break;
+            (deltas[o.id] ??= {}).add(r);
           }
         }
+        if (!valuesOnly) deltas.remove(o.id);
       }
       if (!hit && o.sheetId == sheetId && e.contentKeys.isNotEmpty) {
         // Typing where the output is (or would be) changes collisions.
@@ -1035,7 +1226,8 @@ class PivotOverlayService extends ChangeNotifier
             src.rect.contains(c.row, c.col) &&
             !o.rect.contains(c.row, c.col)) {
           hits.add(o.id);
-          break;
+          // Recalculated source values: a value delta (07 §7.10).
+          (_deltaRows[o.id] ??= {}).add(c.row);
         }
       }
     }
@@ -1052,6 +1244,9 @@ final class _PivotJob {
 
   /// The source changed while it ran: a new job replaces it.
   bool dirty = false;
+
+  /// Share of the source read so far (sliced snapshots).
+  double snapshotProgress = 0;
 }
 
 /// A finished background computation waiting to be placed.

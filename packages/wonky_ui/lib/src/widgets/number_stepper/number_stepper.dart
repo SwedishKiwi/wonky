@@ -130,6 +130,18 @@ class _WonkyNumberStepperState extends State<WonkyNumberStepper> {
     final l10n = WonkyUiLocalizations.of(context);
     final theme = ShadTheme.of(context);
     final height = widget.dense ? 28.0 : 36.0;
+    const suffixGap = 2.0;
+    final suffixStyle = theme.textTheme.muted;
+    var suffixWidth = 0.0;
+    if (widget.suffix case final suffix?) {
+      final painter = TextPainter(
+        text: TextSpan(text: suffix, style: suffixStyle),
+        textDirection: Directionality.of(context),
+        textScaler: MediaQuery.textScalerOf(context),
+      )..layout();
+      suffixWidth = painter.width.ceilToDouble() + suffixGap;
+      painter.dispose();
+    }
     final canDec = widget.enabled && (widget.value ?? widget.max) > widget.min;
     final canInc = widget.enabled && (widget.value ?? widget.min) < widget.max;
     Widget button(IconData icon, String label, bool enabled, int dir) =>
@@ -157,7 +169,9 @@ class _WonkyNumberStepperState extends State<WonkyNumberStepper> {
           children: [
             button(LucideIcons.minus, l10n.stepperDecrease, canDec, -1),
             SizedBox(
-              width: widget.width ?? (widget.dense ? 44 : 64),
+              // A suffix ("%") gets its own room: the digits keep the width
+              // of a field without one ("100 %" fits a dense field).
+              width: widget.width ?? (widget.dense ? 44 : 64) + suffixWidth,
               height: height,
               child: CallbackShortcuts(
                 bindings: {
@@ -182,9 +196,10 @@ class _WonkyNumberStepperState extends State<WonkyNumberStepper> {
                   style: theme.textTheme.small.copyWith(
                     fontWeight: FontWeight.normal,
                   ),
+                  gap: widget.suffix == null ? null : suffixGap,
                   trailing: widget.suffix == null
                       ? null
-                      : Text(widget.suffix!, style: theme.textTheme.muted),
+                      : Text(widget.suffix!, style: suffixStyle),
                   onSubmitted: (_) => _commitText(),
                 ),
               ),

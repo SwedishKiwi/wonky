@@ -1,21 +1,32 @@
 import 'dart:async';
 
+import 'package:flutter/foundation.dart' show listEquals;
 import 'package:flutter/widgets.dart';
 import 'package:wonky_sheets_core/formula.dart' show RecalcBatch;
 import 'package:wonky_sheets_core/model.dart';
 
 import '../charts/controller/chart_controller.dart';
+import '../collab/sheets_collab.dart';
 import '../sheet_editor/sheet_editor_controller.dart';
 
 /// A move or resize in progress (08 §9.3): the live ghost rectangle (sheet
 /// px at 100 % zoom) and the guides to draw.
 @immutable
 class ObjectDrag {
-  const ObjectDrag(this.objectId, this.rect, {this.guides = const []});
+  const ObjectDrag(
+    this.objectId,
+    this.rect, {
+    this.guides = const [],
+    this.group = const {},
+  });
 
   final String objectId;
   final ChartRect rect;
   final List<SnapGuide> guides;
+
+  /// Ghost rectangles of the other selected objects moving along (group
+  /// move of a multi-selection, 08 §9.2).
+  final Map<String, ChartRect> group;
 }
 
 /// A request to show a chart editor section ([section] null = Setup tab).
@@ -40,8 +51,11 @@ class ObjectsController extends ChangeNotifier {
   ObjectsController._(this.editor) {
     editor.model.addListener(_onBatch);
     _recalc = editor.engine.changes.listen(_onRecalc);
+    _remote = editor.session.remoteBatches.listen(_onRemote);
     editor.addListener(_onEditor);
     _sheet = editor.activeSheetId;
+    // Anchors broken while this spreadsheet was closed (08 A-08-4).
+    _scheduleMaintenance();
   }
 
   static final Expando<ObjectsController> _registry = Expando(
@@ -68,8 +82,16 @@ class ObjectsController extends ChangeNotifier {
   );
 
   StreamSubscription<RecalcBatch>? _recalc;
+  StreamSubscription<WorkbookChangeBatch>? _remote;
+  Timer? _maintenance;
   String _sheet = '';
-  String? _selected;
+
+  /// Selected object ids in selection order (the last one is the primary
+  /// selection: handles, ⋮ menu, chart editor).
+  final List<String> _selection = [];
+
+  /// Fired when the object selection changes (presence publishes it).
+  final ValueNotifier<List<String>> selection = ValueNotifier(const []);
   ObjectDrag? _drag;
   bool _disposed = false;
 
@@ -130,7 +152,11 @@ class ObjectsController extends ChangeNotifier {
   /// dragged, null for chart-sheet or broken anchors.
   ChartRect? rectOf(EmbeddedObjectRecord o, {bool ghost = true}) {
     final d = _drag;
-    if (ghost && d != null && d.objectId == o.id) return d.rect;
+    if (ghost && d != null) {
+      if (d.objectId == o.id) return d.rect;
+      final g = d.group[o.id];
+      if (g != null) return g;
+    }
     final s = model.sheet(o.sheetId);
     final a = anchorOf(o);
     if (s == null || a == null) return null;
@@ -158,26 +184,65 @@ class ObjectsController extends ChangeNotifier {
   // ---------------------------------------------------------------------------
   // Selection (08 §9.2).
 
-  String? get selectedId => _selected;
+  /// The primary selected object id.
+  String? get selectedId => _selection.isEmpty ? null : _selection.last;
 
-  EmbeddedObjectRecord? get selected => record(_selected);
+  /// Every selected object id (selection order, the primary last).
+  List<String> get selectedIds => List.unmodifiable(_selection);
 
-  bool isSelected(String id) => _selected == id;
+  /// Whether more than one object is selected (08 §9.2 multi-selection:
+  /// outlines without handles; nudge, delete, align, z-order, copy).
+  bool get isMultiSelection => _selection.length > 1;
 
-  /// Selects [id] (null deselects). Selecting moves keyboard focus to the
-  /// object layer; deselecting returns it to the grid.
+  EmbeddedObjectRecord? get selected => record(selectedId);
+
+  /// The selected objects that still exist.
+  List<EmbeddedObjectRecord> get selectedRecords => [
+    for (final id in _selection) ?record(id),
+  ];
+
+  bool isSelected(String id) => _selection.contains(id);
+
+  /// Selects [id] alone (null deselects). Selecting moves keyboard focus to
+  /// the object layer; deselecting returns it to the grid.
   void select(String? id, {bool focus = true}) {
-    if (id == _selected) {
-      if (id != null && focus) this.focus.requestFocus();
+    _setSelection(id == null ? const [] : [id], focus: focus);
+  }
+
+  /// Adds [id] to the selection or removes it (Shift/Mod-click, 08 §9.2).
+  /// Only objects of the same sheet as the current selection are combined.
+  void toggleSelect(String id, {bool focus = true}) {
+    final o = record(id);
+    if (o == null) return;
+    final next = [
+      for (final s in _selection)
+        if (s != id && record(s)?.sheetId == o.sheetId) s,
+    ];
+    if (!_selection.contains(id)) next.add(id);
+    _setSelection(next, focus: focus);
+  }
+
+  /// Selects [ids] (the last one is the primary selection).
+  void selectAll(List<String> ids, {bool focus = true}) =>
+      _setSelection(ids, focus: focus);
+
+  void _setSelection(List<String> ids, {required bool focus}) {
+    final next = ids.toSet().toList();
+    if (listEquals(next, _selection)) {
+      if (next.isNotEmpty && focus) this.focus.requestFocus();
       return;
     }
-    _selected = id;
-    if (id != null && focus) {
+    _selection
+      ..clear()
+      ..addAll(next);
+    if (next.isNotEmpty && focus) {
       if (editor.editor.isEditing) editor.editor.commitSync();
       this.focus.requestFocus();
-    } else if (id == null && this.focus.hasFocus) {
+    } else if (next.isEmpty && this.focus.hasFocus) {
       editor.gridFocus.requestFocus();
     }
+    selection.value = List.unmodifiable(_selection);
+    SheetsCollab.of(editor)?.presence.publishObjectSelection();
     _changed();
   }
 
@@ -219,6 +284,8 @@ class ObjectsController extends ChangeNotifier {
       _sheet = editor.activeSheetId;
       final sel = selected;
       if (sel != null && sel.sheetId != _sheet) select(null, focus: false);
+      // Remote cursors' object outlines and the anchors of the new sheet.
+      _scheduleMaintenance();
       _changed();
     }
   }
@@ -255,9 +322,12 @@ class ObjectsController extends ChangeNotifier {
       return gone;
     });
     _anchors.removeWhere((id, _) => !alive.contains(id));
-    if (_selected != null && !alive.contains(_selected)) {
-      _selected = null;
-      if (focus.hasFocus) editor.gridFocus.requestFocus();
+    if (_selection.any((id) => !alive.contains(id))) {
+      _selection.removeWhere((id) => !alive.contains(id));
+      selection.value = List.unmodifiable(_selection);
+      if (_selection.isEmpty && focus.hasFocus) {
+        editor.gridFocus.requestFocus();
+      }
     }
     for (final s in model.sheets) {
       for (final o in s.objects.values) {
@@ -265,6 +335,48 @@ class ObjectsController extends ChangeNotifier {
       }
     }
     _changed();
+  }
+
+  // ---------------------------------------------------------------------------
+  // Anchor maintenance (08 §1.2, A-08-4).
+
+  void _onRemote(WorkbookChangeBatch batch) {
+    final relevant = batch.events.any(
+      (e) =>
+          e is StructureChanged ||
+          e is SheetsChanged ||
+          (e is RulesChanged && e.kind == RuleKind.object),
+    );
+    if (relevant) _scheduleMaintenance();
+  }
+
+  void _scheduleMaintenance() {
+    if (_disposed) return;
+    _maintenance?.cancel();
+    _maintenance = Timer(const Duration(milliseconds: 200), runMaintenance);
+  }
+
+  /// Re-anchors objects whose anchor row/column was deleted by a concurrent
+  /// change (the core `AnchorMaintenance`: next surviving row/column,
+  /// `dx = dy = 0`). Idempotent and deterministic, so concurrent fixers
+  /// agree; not an undo step. Returns the number of objects fixed.
+  int runMaintenance() {
+    _maintenance?.cancel();
+    _maintenance = null;
+    if (_disposed || !editor.canEdit) return 0;
+    final changes = <RowChange>[];
+    for (final s in model.sheets) {
+      if (s.objects.isEmpty) continue;
+      changes.addAll(AnchorMaintenance.changes(s));
+    }
+    if (changes.isEmpty) return 0;
+    try {
+      editor.session.applyChanges(changes, label: 'Maintenance');
+    } catch (e) {
+      debugPrint('Object anchor maintenance failed: $e');
+      return 0;
+    }
+    return changes.length;
   }
 
   void _onRecalc(RecalcBatch batch) {
@@ -317,6 +429,9 @@ class ObjectsController extends ChangeNotifier {
   void dispose() {
     _disposed = true;
     _debounce?.cancel();
+    _maintenance?.cancel();
+    unawaited(_remote?.cancel());
+    selection.dispose();
     editor.model.removeListener(_onBatch);
     editor.removeListener(_onEditor);
     unawaited(_recalc?.cancel());

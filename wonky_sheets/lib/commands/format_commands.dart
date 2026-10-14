@@ -56,7 +56,7 @@ const sheetsCellFonts = [
   'Noto Serif',
   'Roboto Mono',
   'Source Code Pro',
-  'Courier Prime',
+  'JetBrains Mono',
   'Caveat',
   'Comfortaa',
   'Arimo',

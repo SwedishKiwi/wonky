@@ -241,6 +241,10 @@ final class CalcSettings {
   final int maxIterations;
   final double convergenceThreshold;
 
+  /// Display language of function names and booleans in A1 text (null =
+  /// English; `Spreadsheet.displayLanguage`). Never affects results.
+  final String? displayLanguage;
+
   const CalcSettings({
     this.locale = 'en_US',
     this.timeZone = 'UTC',
@@ -248,6 +252,7 @@ final class CalcSettings {
     this.iterativeCalc = false,
     this.maxIterations = 50,
     this.convergenceThreshold = 0.05,
+    this.displayLanguage,
   });
 
   CalcSettings copyWith({
@@ -257,6 +262,7 @@ final class CalcSettings {
     bool? iterativeCalc,
     int? maxIterations,
     double? convergenceThreshold,
+    String? displayLanguage,
   }) => CalcSettings(
     locale: locale ?? this.locale,
     timeZone: timeZone ?? this.timeZone,
@@ -264,6 +270,7 @@ final class CalcSettings {
     iterativeCalc: iterativeCalc ?? this.iterativeCalc,
     maxIterations: maxIterations ?? this.maxIterations,
     convergenceThreshold: convergenceThreshold ?? this.convergenceThreshold,
+    displayLanguage: displayLanguage ?? this.displayLanguage,
   );
 
   @override
@@ -274,7 +281,8 @@ final class CalcSettings {
       other.recalcMode == recalcMode &&
       other.iterativeCalc == iterativeCalc &&
       other.maxIterations == maxIterations &&
-      other.convergenceThreshold == convergenceThreshold;
+      other.convergenceThreshold == convergenceThreshold &&
+      other.displayLanguage == displayLanguage;
 
   @override
   int get hashCode => Object.hash(
@@ -284,6 +292,7 @@ final class CalcSettings {
     iterativeCalc,
     maxIterations,
     convergenceThreshold,
+    displayLanguage,
   );
 }
 

@@ -1,5 +1,6 @@
 import 'package:serverpod/serverpod.dart';
 
+import 'script_jobs.dart';
 import 'script_service.dart';
 import 'script_triggers.dart';
 
@@ -24,7 +25,8 @@ class ScriptSchedulerFutureCall extends FutureCall {
   Future<void> prune(Session session) async {
     try {
       final n = await ScriptService.pruneExecutions(session);
-      if (n > 0) session.log('scripts.prune: $n');
+      final jobs = await ScriptJobQueue.prune(session);
+      if (n + jobs > 0) session.log('scripts.prune: $n executions, $jobs jobs');
     } on Exception catch (e, st) {
       session.log(
         'scripts.prune failed: $e',

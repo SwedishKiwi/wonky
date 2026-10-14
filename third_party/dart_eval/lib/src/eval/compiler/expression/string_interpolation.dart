@@ -22,7 +22,9 @@ Variable compileStringInterpolation(
     } else if (element is InterpolationExpression) {
       final V = compileExpression(element.expression, ctx);
       Variable vStr;
-      if (V.type == CoreTypes.string.ref(ctx)) {
+      // WONKY PATCH DE-20: a `String?` may hold null; only non-nullable
+      // strings skip `toString` (DE-5 makes `null.toString()` 'null').
+      if (V.type == CoreTypes.string.ref(ctx) && !V.type.nullable) {
         vStr = V;
       } else {
         vStr = V.invoke(ctx, 'toString', []).result;

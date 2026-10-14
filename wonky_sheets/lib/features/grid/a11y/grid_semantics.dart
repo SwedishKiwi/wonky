@@ -255,14 +255,16 @@ class RenderGridSemantics extends RenderBox {
     final colIdx = <int>{};
     for (final p in g.panes) {
       if (p.isEmpty) continue;
-      for (var r = p.rowStart; r <= p.rowEnd; r++) {
+      for (final r in p.rows) {
         if (sheet.rows.sizeAt(r) > 0) rowIdx.add(r);
       }
       for (var c = p.colStart; c <= p.colEnd; c++) {
         if (sheet.columns.sizeAt(c) > 0) colIdx.add(c);
       }
     }
-    final rowList = rowIdx.toList()..sort();
+    // Screen order (a sorted filter view shows rows in display order).
+    final rowList = rowIdx.toList()
+      ..sort((a, b) => g.displayRow(a).compareTo(g.displayRow(b)));
     final colList = colIdx.toList()..sort();
 
     Rect cellRect(int r, int c) => g.paneFor(r, c).cellRect(r, c);

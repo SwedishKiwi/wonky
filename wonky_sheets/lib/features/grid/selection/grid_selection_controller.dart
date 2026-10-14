@@ -17,9 +17,17 @@ class GridSelectionController extends ChangeNotifier {
   String _sheetId;
   final Map<String, GridSelection> _bySheet = {};
 
+  /// The row display order of a sheet (a sorted filter view, 07 §4.4), or
+  /// null. Selecting on screen then works in display rows: ranges are
+  /// stored as display ranges and resolve to the model rows shown.
+  ViewRowOrder? Function(String sheetId)? rowOrder;
+
+  ViewRowOrder? get _order => rowOrder?.call(_sheetId);
+
   ResolvedSelection? _resolved;
   GridSelection? _resolvedFrom;
   (int, int)? _resolvedGen;
+  ViewRowOrder? _resolvedOrder;
 
   /// Last resolved indices of the active cell (fallback when its ids vanish).
   (int, int) _lastActive = (0, 0);
@@ -100,10 +108,12 @@ class GridSelectionController extends ChangeNotifier {
       );
     }
     final gen = (s.rows.generation, s.columns.generation);
+    final order = _order;
     final cached = _resolved;
     if (cached != null &&
         identical(_resolvedFrom, sel) &&
         _resolvedGen == gen &&
+        identical(_resolvedOrder, order) &&
         cached.sheetId == _sheetId) {
       return cached;
     }
@@ -111,6 +121,7 @@ class GridSelectionController extends ChangeNotifier {
     _resolved = r;
     _resolvedFrom = sel;
     _resolvedGen = gen;
+    _resolvedOrder = order;
     _lastActive = (r.activeRow, r.activeCol);
     return r;
   }
@@ -118,6 +129,7 @@ class GridSelectionController extends ChangeNotifier {
   ResolvedSelection _resolve(SheetModel s, GridSelection sel) {
     final maxR = math.max(0, s.rows.length - 1);
     final maxC = math.max(0, s.columns.length - 1);
+    final order = rowOrder?.call(sel.sheetId);
     int ri(String? id, int fallback) {
       if (id == null) return fallback;
       final i = s.rows.indexOf(id);
@@ -131,7 +143,8 @@ class GridSelectionController extends ChangeNotifier {
     }
 
     final ranges = <ResolvedSelectionRange>[];
-    for (final r in sel.ranges) {
+    for (var g = 0; g < sel.ranges.length; g++) {
+      final r = sel.ranges[g];
       final (top, bottom) = switch (r.kind) {
         SelectionKind.columns || SelectionKind.all => (0, maxR),
         _ => (ri(r.r1, _lastActive.$1), ri(r.r2, _lastActive.$1)),
@@ -140,16 +153,43 @@ class GridSelectionController extends ChangeNotifier {
         SelectionKind.rows || SelectionKind.all => (0, maxC),
         _ => (ci(r.c1, _lastActive.$2), ci(r.c2, _lastActive.$2)),
       };
+      if (r.display &&
+          order != null &&
+          (r.kind == SelectionKind.cells || r.kind == SelectionKind.rows)) {
+        // A range on screen: the model rows shown between its corners.
+        final d1 = order.displayRow(top);
+        final d2 = order.displayRow(bottom);
+        final dt = math.min(d1, d2);
+        final db = math.max(d1, d2);
+        final shown = GridRect(dt, left, db, right);
+        for (final (mt, mb) in order.modelRuns(dt, db)) {
+          ranges.add(
+            ResolvedSelectionRange(
+              r.kind,
+              GridRect(mt, left, mb, right),
+              displayRect: shown,
+              group: g,
+            ),
+          );
+        }
+        continue;
+      }
       ranges.add(
         ResolvedSelectionRange(
           r.kind,
           GridRect.normalized(top, left, bottom, right),
+          group: g,
         ),
       );
     }
-    final ai = sel.activeRangeIndex.clamp(0, ranges.length - 1);
     var ar = ri(sel.active.rowId, _lastActive.$1);
     var ac = ci(sel.active.colId, _lastActive.$2);
+    final group = sel.activeRangeIndex.clamp(0, sel.ranges.length - 1);
+    var ai = ranges.indexWhere(
+      (x) => x.group == group && x.rect.contains(ar, ac),
+    );
+    if (ai < 0) ai = ranges.indexWhere((x) => x.group == group);
+    if (ai < 0) ai = 0;
     final rect = ranges[ai].rect;
     if (!rect.contains(ar, ac)) {
       ar = ar.clamp(rect.top, rect.bottom);
@@ -173,28 +213,35 @@ class GridSelectionController extends ChangeNotifier {
     int activeRow,
     int activeCol,
     int anchorRow,
-    int anchorCol,
-  ) {
+    int anchorCol, {
+    Set<int> display = const {},
+  }) {
     String row(int i) => s.rows.idAt(i.clamp(0, s.rows.length - 1));
     String col(int i) => s.columns.idAt(i.clamp(0, s.columns.length - 1));
+    final order = _order;
+    // Display ranges ([display] indices) hold display rows: their corners
+    // are the model rows shown there.
+    String rowOf(int i, int d) =>
+        display.contains(i) && order != null ? row(order.modelRow(d)) : row(d);
     return GridSelection(
       sheetId: s.id,
       ranges: [
-        for (final (kind, r) in ranges)
+        for (final (i, (kind, r)) in ranges.indexed)
           SelectionRange(
             kind: kind,
             r1: kind == SelectionKind.columns || kind == SelectionKind.all
                 ? null
-                : row(r.top),
+                : rowOf(i, r.top),
             r2: kind == SelectionKind.columns || kind == SelectionKind.all
                 ? null
-                : row(r.bottom),
+                : rowOf(i, r.bottom),
             c1: kind == SelectionKind.rows || kind == SelectionKind.all
                 ? null
                 : col(r.left),
             c2: kind == SelectionKind.rows || kind == SelectionKind.all
                 ? null
                 : col(r.right),
+            display: display.contains(i) && order != null,
           ),
       ],
       activeRangeIndex: activeIndex,
@@ -240,14 +287,49 @@ class GridSelectionController extends ChangeNotifier {
     int? activeCol,
     int? anchorRow,
     int? anchorCol,
+  }) => _setRanges(
+    ranges,
+    activeIndex: activeIndex,
+    activeRow: activeRow,
+    activeCol: activeCol,
+    anchorRow: anchorRow,
+    anchorCol: anchorCol,
+  );
+
+  /// [setRanges] where the ranges at [display] indices have display rows
+  /// (`activeRow`/`anchorRow` are model rows).
+  void _setRanges(
+    List<(SelectionKind, GridRect)> ranges, {
+    int? activeIndex,
+    int? activeRow,
+    int? activeCol,
+    int? anchorRow,
+    int? anchorCol,
+    Set<int> display = const {},
   }) {
     final s = sheet;
     if (s == null || ranges.isEmpty || s.rows.length == 0) return;
     final ai = (activeIndex ?? ranges.length - 1).clamp(0, ranges.length - 1);
     final rect = ranges[ai].$2;
-    final ar = activeRow ?? rect.top;
+    final order = _order;
+    final ar =
+        activeRow ??
+        (display.contains(ai) && order != null
+            ? order.modelRow(rect.top)
+            : rect.top);
     final ac = activeCol ?? rect.left;
-    _set(_build(s, ranges, ai, ar, ac, anchorRow ?? ar, anchorCol ?? ac));
+    _set(
+      _build(
+        s,
+        ranges,
+        ai,
+        ar,
+        ac,
+        anchorRow ?? ar,
+        anchorCol ?? ac,
+        display: display,
+      ),
+    );
   }
 
   /// Selects one cell (its merge when merged).
@@ -255,11 +337,14 @@ class GridSelectionController extends ChangeNotifier {
     final s = sheet;
     if (s == null) return;
     final rect = expandMerges(s, GridRect.cell(row, col));
-    final current = add ? _currentRanges() : <(SelectionKind, GridRect)>[];
-    setRanges(
+    final (current, display) = add
+        ? _currentGroups()
+        : (<(SelectionKind, GridRect)>[], <int>{});
+    _setRanges(
       [...current, (SelectionKind.cells, rect)],
       activeRow: rect.top,
       activeCol: rect.left,
+      display: display,
     );
   }
 
@@ -294,15 +379,34 @@ class GridSelectionController extends ChangeNotifier {
           GridRect.normalized(r.anchorRow, r.anchorCol, row, col),
         );
     }
-    final ranges = _currentRanges();
-    ranges[r.activeRangeIndex] = (kind, rect);
-    setRanges(
+    final (ranges, display) = _currentGroups();
+    final group = r.activeRange.group < 0 ? 0 : r.activeRange.group;
+    final order = _order;
+    final displayed = order != null && kind != SelectionKind.columns;
+    if (displayed) {
+      // On screen (07 §4.4): from the anchor's display row to the target's.
+      final da = order.displayRow(r.anchorRow);
+      final dt = order.displayRow(row);
+      final dRect = GridRect(
+        math.min(da, dt),
+        rect.left,
+        math.max(da, dt),
+        rect.right,
+      );
+      ranges[group] = (kind, dRect);
+      display.add(group);
+    } else {
+      ranges[group] = (kind, rect);
+      display.remove(group);
+    }
+    _setRanges(
       ranges,
-      activeIndex: r.activeRangeIndex,
+      activeIndex: group,
       activeRow: r.activeRow,
       activeCol: r.activeCol,
       anchorRow: r.anchorRow,
       anchorCol: r.anchorCol,
+      display: display,
     );
   }
 
@@ -310,17 +414,25 @@ class GridSelectionController extends ChangeNotifier {
   void selectRows(int r1, int r2, {bool add = false, int? activeCol}) {
     final s = sheet;
     if (s == null) return;
-    final top = math.min(r1, r2);
-    final bottom = math.max(r1, r2);
+    final order = _order;
+    // Header drags in a sorted filter view select display rows (07 §4.4).
+    final d1 = order?.displayRow(r1) ?? r1;
+    final d2 = order?.displayRow(r2) ?? r2;
+    final top = math.min(d1, d2);
+    final bottom = math.max(d1, d2);
     final rect = GridRect(top, 0, bottom, s.columns.length - 1);
-    final current = add ? _currentRanges() : <(SelectionKind, GridRect)>[];
+    final (current, display) = add
+        ? _currentGroups()
+        : (<(SelectionKind, GridRect)>[], <int>{});
+    if (order != null) display.add(current.length);
     final ac = activeCol ?? (s.columns.nextVisible(0, 1) ?? 0);
-    setRanges(
+    _setRanges(
       [...current, (SelectionKind.rows, rect)],
       activeRow: r1,
       activeCol: ac,
       anchorRow: r1,
       anchorCol: ac,
+      display: display,
     );
   }
 
@@ -331,14 +443,17 @@ class GridSelectionController extends ChangeNotifier {
     final left = math.min(c1, c2);
     final right = math.max(c1, c2);
     final rect = GridRect(0, left, s.rows.length - 1, right);
-    final current = add ? _currentRanges() : <(SelectionKind, GridRect)>[];
+    final (current, display) = add
+        ? _currentGroups()
+        : (<(SelectionKind, GridRect)>[], <int>{});
     final ar = activeRow ?? (s.rows.nextVisible(0, 1) ?? 0);
-    setRanges(
+    _setRanges(
       [...current, (SelectionKind.columns, rect)],
       activeRow: ar,
       activeCol: c1,
       anchorRow: ar,
       anchorCol: c1,
+      display: display,
     );
   }
 
@@ -363,19 +478,37 @@ class GridSelectionController extends ChangeNotifier {
   /// the ranges (Enter/Tab cycling).
   void setActiveInSelection(int rangeIndex, int row, int col) {
     final r = resolved;
-    setRanges(
-      [for (final x in r.ranges) (x.kind, x.rect)],
-      activeIndex: rangeIndex,
+    final (ranges, display) = _currentGroups();
+    final g = r.ranges[rangeIndex.clamp(0, r.ranges.length - 1)].group;
+    _setRanges(
+      ranges,
+      activeIndex: g < 0 ? rangeIndex : g,
       activeRow: row,
       activeCol: col,
       anchorRow: row,
       anchorCol: col,
+      display: display,
     );
   }
 
-  List<(SelectionKind, GridRect)> _currentRanges() => [
-    for (final x in resolved.ranges) (x.kind, x.rect),
-  ];
+  /// The selected ranges as [_setRanges] input: one entry per selected
+  /// range (display ranges in display rows, their indices in the set).
+  (List<(SelectionKind, GridRect)>, Set<int>) _currentGroups() {
+    final out = <(SelectionKind, GridRect)>[];
+    final display = <int>{};
+    final seen = <int>{};
+    for (final x in resolved.ranges) {
+      if (x.group >= 0 && !seen.add(x.group)) continue;
+      final d = x.displayRect;
+      if (d != null && _order != null) {
+        display.add(out.length);
+        out.add((x.kind, d));
+      } else {
+        out.add((x.kind, x.rect));
+      }
+    }
+    return (out, display);
+  }
 
   /// The A1 label of the selection ("B4", "A1:C3", "2:5", "B:D").
   String describe() {

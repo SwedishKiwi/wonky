@@ -4,8 +4,11 @@ import 'package:wonky_core/wonky_core.dart';
 import 'package:wonky_sheets_core/formula.dart' show CellPos, FRich, ImageValue;
 import 'package:wonky_sheets_core/model.dart';
 
+import '../features/images/image_blob_cache.dart';
+import '../features/images/image_clipboard.dart';
 import '../features/images/image_dialogs.dart';
 import '../features/images/image_io.dart';
+import '../features/images/image_prepare.dart';
 import '../features/images/image_service.dart';
 import '../features/objects/object_ops.dart';
 import '../features/objects/objects_controller.dart';
@@ -23,14 +26,50 @@ EmbeddedObjectRecord? _image(SheetEditorController ed, JsonArgs a) {
 
 const _sourceProps = {
   'source': JsonSchema.string(
-    enumValues: ['upload', 'url'],
-    description: 'upload (file picker) or url; no source opens the dialog.',
+    enumValues: ['upload', 'url', 'clipboard'],
+    description:
+        'upload (file picker), url or clipboard (an image on the system '
+        'clipboard); no source opens the dialog.',
   ),
   'url': JsonSchema.string(description: 'https image URL (source url).'),
 };
 
-/// A picked/fetched image, or the failure/cancel result.
-typedef _Obtained = ({PickedImage? image, String? url, CommandResult? result});
+/// A picked/fetched image (prepared for upload), or the failure/cancel
+/// result.
+typedef _Obtained = ({
+  PreparedImage? image,
+  String? url,
+  CommandResult? result,
+});
+
+/// Prepares [img] (SVG rasterizing, downscaling, 08 §10.1) as an
+/// [_Obtained].
+Future<_Obtained> _prepared(
+  SheetsLocalizations l,
+  PickedImage img, {
+  String? url,
+}) async {
+  try {
+    final p = await SheetsImagePrep.prepare(img);
+    return (image: p, url: url, result: null);
+  } on ImageRejected catch (e) {
+    return (
+      image: null,
+      url: null,
+      result: CommandResult.failed(_reject(l, e)),
+    );
+  }
+}
+
+/// The image on the system clipboard as a picked image (null when there is
+/// none). Throws [ImageRejected].
+Future<PickedImage?> clipboardImage() async {
+  final c = await ImageClipboard.instance.readImage();
+  if (c == null) return null;
+  final name = 'Pasted image.${c.mimeType.split('/').last}';
+  final mime = SheetsImageRules.validate(name, c.bytes);
+  return PickedImage(name: name, bytes: c.bytes, mimeType: mime);
+}
 
 /// Gets the image of an insert/replace command: from `source` args, or the
 /// insert dialog. With [urlOnly] (in-cell inserts by URL) the URL is
@@ -64,6 +103,8 @@ Future<_Obtained> _obtain(
         );
       case UploadImageChoice():
         source = 'upload';
+      case ClipboardImageChoice():
+        source = 'clipboard';
       case UrlImageChoice(url: final u):
         source = 'url';
         url = u;
@@ -87,10 +128,10 @@ Future<_Obtained> _obtain(
         bytes,
       );
       final name = uri.pathSegments.lastOrNull ?? 'image';
-      return (
-        image: PickedImage(name: name, bytes: bytes, mimeType: mime),
+      return await _prepared(
+        l,
+        PickedImage(name: name, bytes: bytes, mimeType: mime),
         url: u,
-        result: null,
       );
     } on ImageRejected catch (e) {
       return (
@@ -107,11 +148,22 @@ Future<_Obtained> _obtain(
     }
   }
   try {
+    if (source == 'clipboard') {
+      final img = await clipboardImage();
+      if (img == null) {
+        return (
+          image: null,
+          url: null,
+          result: CommandResult.failed(l.imageClipboardEmpty),
+        );
+      }
+      return await _prepared(l, img);
+    }
     final img = await SheetsFileIo.pickImage(l);
     if (img == null) {
       return (image: null, url: null, result: const CommandResult.cancelled());
     }
-    return (image: img, url: null, result: null);
+    return await _prepared(l, img);
   } on ImageRejected catch (e) {
     return (
       image: null,
@@ -134,8 +186,96 @@ String imageFormula(String url, {int? mode}) {
       : '=IMAGE("$quoted", $mode)';
 }
 
+/// Inserts [img] over cells with its top-left at ([row], [col]) of the
+/// active sheet (08 §10.1: natural size scaled to fit 600 × 400 px, aspect
+/// locked), starts its upload and selects it. Returns the object id.
+String insertImageOverCells(
+  CommandContext ctx,
+  SheetEditorController ed,
+  PreparedImage img, {
+  required int row,
+  required int col,
+  String? sourceUrl,
+}) {
+  final sheet = ed.activeSheet!;
+  final uuid = SheetsImageService.of(ed).startUpload(img.image);
+  final anchor = ObjectPlacement.imageAnchor(
+    row: row,
+    col: col,
+    naturalWidth: img.size.width,
+    naturalHeight: img.size.height,
+    rows: sheet.rows,
+    columns: sheet.columns,
+  );
+  final spec = ImageSpec(
+    fileUuid: uuid,
+    mime: img.image.mimeType,
+    naturalWidth: img.size.width.round(),
+    naturalHeight: img.size.height.round(),
+    sourceUrl: sourceUrl,
+  );
+  final plan = ed.apply(
+    ctx,
+    AddObject(
+      sheet.id,
+      EmbeddedObjectKind.image,
+      anchorJson: anchor.encode(),
+      specJson: spec.encode(),
+    ),
+  );
+  final id = plan.result['objectId']! as String;
+  _objs(ed).select(id);
+  return id;
+}
+
+String? _fileOf(SheetEditorController ed, String objectId) {
+  final o = _objs(ed).record(objectId);
+  return o == null ? null : ImageSpec.fromJson(o.specJson).fileUuid;
+}
+
+/// Pastes an image from the system clipboard over cells at the active cell
+/// (08 §9.5: Mod+V in the grid with an image and no text on the
+/// clipboard). Null when the clipboard holds no such image (the cell paste
+/// goes on).
+Future<CommandResult?> pasteClipboardImage(
+  CommandContext ctx,
+  SheetEditorController ed,
+) async {
+  if (!ImageClipboard.instance.supported) return null;
+  final c = await ImageClipboard.instance.readImage();
+  if (c == null || c.hasText) return null;
+  final l = ed.l10n;
+  final PickedImage picked;
+  try {
+    final name = 'Pasted image.${c.mimeType.split('/').last}';
+    picked = PickedImage(
+      name: name,
+      bytes: c.bytes,
+      mimeType: SheetsImageRules.validate(name, c.bytes),
+    );
+  } on ImageRejected catch (e) {
+    return CommandResult.failed(_reject(l, e));
+  }
+  final got = await _prepared(l, picked);
+  if (got.result != null) return got.result;
+  final sel = ed.selection.resolved;
+  final id = insertImageOverCells(
+    ctx,
+    ed,
+    got.image!,
+    row: sel.activeRow,
+    col: sel.activeCol,
+  );
+  return ok({'objectId': id, 'image': true});
+}
+
 /// The image commands (08 §10, §16).
-List<Command<CommandArgs>> imageCommands(ShellServices s) => [
+List<Command<CommandArgs>> imageCommands(ShellServices s) {
+  if (s.client != null) SheetsImageBlobCache.install(s);
+  return _imageCommands(s);
+}
+
+List<Command<CommandArgs>> _imageCommands(ShellServices s) => [
   SheetsCommand(
     'sheets.image.insertOverCells',
     label: (l) => l.cmdImageInsertOverCells,
@@ -156,14 +296,6 @@ List<Command<CommandArgs>> imageCommands(ShellServices s) => [
     run: (ctx, ed, a) async {
       final got = await _obtain(ctx, ed, a, inCell: false);
       if (got.result != null) return got.result!;
-      final img = got.image!;
-      final size = await decodeImageSize(img.bytes);
-      if (size == null) {
-        return CommandResult.failed(ed.l10n.imageRejectedFormat);
-      }
-      if (size.width * size.height > SheetsImageRules.maxPixels) {
-        return CommandResult.failed(ed.l10n.imageRejectedTooLarge);
-      }
       final sheet = ed.activeSheet!;
       var row = ed.selection.resolved.activeRow;
       var col = ed.selection.resolved.activeCol;
@@ -175,34 +307,15 @@ List<Command<CommandArgs>> imageCommands(ShellServices s) => [
         row = c.rect.top;
         col = c.rect.left;
       }
-      final uuid = SheetsImageService.of(ed).startUpload(img);
-      final anchor = ObjectPlacement.imageAnchor(
+      final id = insertImageOverCells(
+        ctx,
+        ed,
+        got.image!,
         row: row,
         col: col,
-        naturalWidth: size.width,
-        naturalHeight: size.height,
-        rows: sheet.rows,
-        columns: sheet.columns,
-      );
-      final spec = ImageSpec(
-        fileUuid: uuid,
-        mime: img.mimeType,
-        naturalWidth: size.width.round(),
-        naturalHeight: size.height.round(),
         sourceUrl: got.url,
       );
-      final plan = ed.apply(
-        ctx,
-        AddObject(
-          sheet.id,
-          EmbeddedObjectKind.image,
-          anchorJson: anchor.encode(),
-          specJson: spec.encode(),
-        ),
-      );
-      final id = plan.result['objectId']! as String;
-      _objs(ed).select(id);
-      return ok({'objectId': id, 'fileUuid': uuid});
+      return ok({'objectId': id, 'fileUuid': _fileOf(ed, id)});
     },
   ),
   SheetsCommand(
@@ -227,7 +340,7 @@ List<Command<CommandArgs>> imageCommands(ShellServices s) => [
       if (got.image != null) {
         src =
             '${SheetsImageService.scheme}'
-            '${SheetsImageService.of(ed).startUpload(got.image!)}';
+            '${SheetsImageService.of(ed).startUpload(got.image!.image)}';
       } else {
         src = got.url!;
       }
@@ -264,11 +377,8 @@ List<Command<CommandArgs>> imageCommands(ShellServices s) => [
       if (o == null) return CommandResult.failed(ed.l10n.objectNotFound);
       final got = await _obtain(ctx, ed, a, inCell: false);
       if (got.result != null) return got.result!;
-      final img = got.image!;
-      final size = await decodeImageSize(img.bytes);
-      if (size == null) {
-        return CommandResult.failed(ed.l10n.imageRejectedFormat);
-      }
+      final img = got.image!.image;
+      final size = got.image!.size;
       final uuid = SheetsImageService.of(ed).startUpload(img);
       final old = ImageSpec.fromJson(o.specJson);
       final spec = ImageSpec(

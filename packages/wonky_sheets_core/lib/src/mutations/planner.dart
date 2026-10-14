@@ -24,8 +24,54 @@ final class SheetsMutationPlanner {
   /// Creates a planner.
   const SheetsMutationPlanner();
 
+  static final Expando<(WorkbookModel, MutationPlan)> _offered = Expando(
+    'SheetsMutationPlanner.offered',
+  );
+
+  /// Hands a plan of [op] computed ahead with [steps] to the next [plan]
+  /// call for this very [op] instance on [model] (a `DataJob` plans
+  /// cooperatively, then applies through the normal write path, 07 §1.4).
+  /// The caller guarantees [model] didn't change since the plan was made.
+  static void offer(
+    SheetsOperation op,
+    WorkbookModel model,
+    MutationPlan plan,
+  ) => _offered[op] = (model, plan);
+
+  /// Plans [op] against [model] as cooperative steps (07 §1.4 compute
+  /// phase): progress values (0–1) and, last, the [MutationPlan]. Sort,
+  /// randomize and remove duplicates report progress; other operations are
+  /// one step. Throws [PlanException] while iterating. The model must not
+  /// change during the iteration.
+  Iterable<Object> steps(
+    SheetsOperation op,
+    WorkbookModel model,
+    PlanContext ctx,
+  ) {
+    final b = PlanBuilder(model, ctx);
+    return switch (op) {
+      SortRange() => planSortRangeSteps(b, op),
+      RandomizeRange() => planRandomizeRangeSteps(b, op),
+      RemoveDuplicates() => planRemoveDuplicatesSteps(b, op),
+      _ => _oneStep(op, model, ctx),
+    };
+  }
+
+  Iterable<Object> _oneStep(
+    SheetsOperation op,
+    WorkbookModel model,
+    PlanContext ctx,
+  ) sync* {
+    yield plan(op, model, ctx);
+  }
+
   /// Plans [op] against [model].
   MutationPlan plan(SheetsOperation op, WorkbookModel model, PlanContext ctx) {
+    final offered = _offered[op];
+    if (offered != null) {
+      _offered[op] = null;
+      if (identical(offered.$1, model)) return offered.$2;
+    }
     final b = PlanBuilder(model, ctx);
     return switch (op) {
       SetCellInputs() => planSetCellInputs(b, op),

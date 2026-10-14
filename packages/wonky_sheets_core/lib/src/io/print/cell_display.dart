@@ -11,6 +11,7 @@ import '../../format/borders.dart';
 import '../../format/format_resolver.dart';
 import '../../format/number_format/number_formatter.dart';
 import '../../formula/model/workbook_view.dart';
+import '../../formula/parser/formula_language.dart';
 import '../../model/events.dart';
 import '../../model/records.dart';
 import '../../model/schema.dart';
@@ -228,7 +229,16 @@ final class CellDisplayResolver {
     final pattern = rf.numberFormatExplicit
         ? rf.numberFormat
         : (source.numberFormatAt(sheetId, row, col) ?? kAutomaticNumberFormat);
-    final formatted = formatter.format(value, pattern, locale: locale);
+    var formatted = formatter.format(value, pattern, locale: locale);
+    if (value is BoolValue) {
+      // Display language (06 §5: booleans are translated, P2).
+      final lang = FormulaLanguage.forCode(model.spreadsheet.displayLanguage);
+      if (lang != null) {
+        formatted = FormattedValue.text(
+          value.value ? lang.trueName : lang.falseName,
+        );
+      }
+    }
     final widget = sheet == null
         ? CellWidgetInfo.none
         : _widget(sheet, row, col, value, formatted);

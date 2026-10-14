@@ -1,4 +1,7 @@
+import 'dart:math';
+
 import 'package:test/test.dart';
+import 'package:uuid/uuid.dart';
 import 'package:wonky_sync_models/ids.dart';
 
 void main() {
@@ -54,6 +57,27 @@ void main() {
         SheetsIds.scriptBuildId(sheet),
         '526a2236-95d2-5d06-8e56-04000974bb39',
       );
+    });
+  });
+
+  group('Given the fast cell id hash', () {
+    test('when hashing many random ids then each equals Uuid.v5 of the same '
+        'name (the synced id format)', () {
+      final ids = SeededIdGenerator(11);
+      final rnd = Random(3);
+      for (var i = 0; i < 2000; i++) {
+        final sheet = ids.newId();
+        final row = rnd.nextBool() ? ids.newId().toUpperCase() : ids.newId();
+        final col = ids.newId();
+        expect(
+          SheetsIds.cellId(sheet, row, col),
+          const Uuid().v5(
+            SheetsIds.cellNamespace,
+            'cell:${sheet.toLowerCase()}:${row.toLowerCase()}:'
+            '${col.toLowerCase()}',
+          ),
+        );
+      }
     });
   });
 

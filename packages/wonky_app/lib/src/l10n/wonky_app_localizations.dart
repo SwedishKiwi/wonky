@@ -1318,6 +1318,12 @@ abstract class WonkyAppLocalizations {
   /// **'The comment could not be saved'**
   String get commentFailed;
 
+  /// No description provided for @commentPending.
+  ///
+  /// In en, this message translates to:
+  /// **'Pending — will be posted when you\'re online'**
+  String get commentPending;
+
   /// No description provided for @commentLink.
   ///
   /// In en, this message translates to:

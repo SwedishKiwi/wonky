@@ -13,7 +13,14 @@ export 'find_replace.dart' show planFindReplace;
 export 'groups.dart' show planGroupOperation;
 export 'paste.dart' show planPaste;
 export 'row_tools.dart'
-    show planRandomizeRange, planRemoveDuplicates, planSortRange;
+    show
+        drainPlanSteps,
+        planRandomizeRange,
+        planRandomizeRangeSteps,
+        planRemoveDuplicates,
+        planRemoveDuplicatesSteps,
+        planSortRange,
+        planSortRangeSteps;
 
 /// [ShiftCells] (03 §13.3): insert cells shifting right/down or delete cells
 /// shifting left/up, implemented as a block move of the affected strip.

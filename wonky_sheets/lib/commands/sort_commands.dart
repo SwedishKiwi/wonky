@@ -113,18 +113,15 @@ List<Command<CommandArgs>> sortCommands(ShellServices s) => [
       );
       if (r == null) return const CommandResult.cancelled();
       ed.selection.setRanges([(SelectionKind.cells, rect)]);
+      final op = SortRange(ResolvedRange(ed.activeSheetId, rect), [
+        for (final k in r.keys) SortKeySpec(k.colId, ascending: k.ascending),
+      ], hasHeader: r.hasHeader);
       await DataJobs.run(
         ed,
         rows: rect.rowCount,
         label: ed.l10n.dataJobSorting(rect.rowCount),
-        work: () => applyKeepingSelection(
-          ctx,
-          ed,
-          SortRange(ResolvedRange(ed.activeSheetId, rect), [
-            for (final k in r.keys)
-              SortKeySpec(k.colId, ascending: k.ascending),
-          ], hasHeader: r.hasHeader),
-        ),
+        op: op,
+        work: () => applyKeepingSelection(ctx, ed, op),
       );
       return ok({
         'range': rect.a1,

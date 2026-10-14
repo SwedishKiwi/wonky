@@ -101,7 +101,13 @@ Produces the row operations for a target location (§2.2). It is used by the cli
   column are written as `SheetColumn.formatJson` (column default) instead of per cell when
   ≥ 90 % of the column's used cells share them (reduces rows).
 - Rules (merges, DV, CF, filter, named ranges, objects) with `GridRange` id JSON.
-- Emits operations in chunks of ≤ 5,000 row changes.
+- Emits operations in chunks of ≤ 5,000 row changes. **Chunked planning (as built):**
+  `IrToRowsPlanner.planChunked` returns an `IrImportChunks`: `head` (every row but the cells),
+  then `next()` plans ≤ `chunkCells` cells per call (apply each plan to the model before the
+  next; in-place writes read it). The client applies and queues each chunk with a frame between
+  chunks (progress, Cancel reverts what was applied; one undo step), the server import jobs and
+  `drive.import` write each chunk before planning the next, so no import holds all its row
+  changes at once. `plan` (all at once) remains for small documents and tests.
 
 ### 1.3 Model → IR (`ModelToIr`)
 Reads any `WorkbookModel` implementation (client live model, read-only snapshot model of a
@@ -129,9 +135,10 @@ computed cells.
 - IR links are `#<A1>` (`#'Sheet 2'!B5`) or `#<name>`; the model stores `#sheet=<id>&range=B5`
   / `#range=<name>` (06 §12).
 - IR chart specs (`IrChartSpec`) are the `ChartSpec` JSON with A1 data ranges and positional
-  series keys `#<range>:<offset>`. Charts other than column/bar/line/area/combo/pie/scatter/
-  radar are reported instead of exported as images (the raster fallback of §6.3 needs the
-  chart renderer at export time; P2). Bubble and stock charts are skipped on import.
+  series keys `#<range>:<offset>`. Charts XLSX can't hold (`XlsxCharts.isExportable`)
+  are exported as PNG pictures when the exporter gets the engine (`toDocument(chartSource:)`,
+  `ModelToIr.convert(chartImage:)`; app and server XLSX downloads), else reported. Bubble and
+  stock charts are skipped on import.
 - Unsupported-function detection uses the catalog's `implemented` flag (stubs such as
   `CUBEVALUE` count as unsupported).
 - Column defaults derived by the planner (§1.2, ≥ 90 %) only use attributes that are invisible
@@ -141,35 +148,54 @@ computed cells.
 
 ### 1.5 As built (app + server, 2026-10-14)
 - Shared entry points in the core: `SheetsFileImporter` (`io/file_import.dart`: format detection,
-  `parse` → IR, `listSheets`) and `SheetsWorkbookExporter` (`io/workbook_export.dart`: IR → XLSX/ODS,
-  CSV/TSV, zipped HTML, paginate + PDF, file names). The app and the server call the same code.
+  `parse` → IR, `listSheets`) and `SheetsWorkbookExporter` (`io/workbook_export.dart`: IR → XLSX/ODS/
+  JSON, CSV/TSV, zipped HTML, paginate + PDF, file names). The app and the server call the same code.
 - **App** (`wonky_sheets/lib/features/{import,export,import_export,print}`, commands in
   `commands/file_io_commands.dart` and `commands/print_commands.dart`):
-  `sheets.file.import` opens the *custom* import dialog (`McpDescribableDialog`; drop zone + *Browse*,
+  `sheets.file.import` opens the *custom* import dialog (`McpDescribableDialog`; source tabs
+  **Upload** (drop zone + *Browse*), **Recent uploads** (the last 8 files ≤ 10 MB imported on this
+  device, kept in the local `sheets_uploads_<user>.db`) and **Drive** (another spreadsheet picked
+  with the spreadsheet picker, fetched as XLSX through `sheetsImport.sourceFromDrive`, online only);
   6 locations, separator/encoding/locale/convert for CSV, sheet checklist + unsupported formulas for
-  XLSX/ODS, 20-row preview, cell-limit check) or runs headless with `fileName` + `contentBase64`/`text`
-  + `options`; imports into the open spreadsheet run `sheets.file.importData` (one `sheets.rows` undo
-  step; plan applied with `session.applyChanges`). *Create new spreadsheet* uses `drive.import` online
-  and a local reserved space offline. Files dropped on the grid open the dialog (*Insert new sheets*).
-  Parsing and file writers run in `compute` on native, inline on web. The home/drive upload uses
-  `SheetsImportHandler` (`SheetsAppConfig.importHandler`).
-- `sheets.file.download {format}`: XLSX/ODS/HTML/CSV/TSV saved with `FilePicker.saveFile` (web:
-  download in the same tab); PDF opens the print route (`?export=1`). Export report toast → report dialog.
+  XLSX/ODS/JSON, 20-row preview, cell-limit check) or runs headless with `fileName` +
+  `contentBase64`/`text` + `options` (+ `onServer`); imports into the open spreadsheet run
+  `sheets.file.importData`: small files on the client (one `sheets.rows` undo step; plan applied with
+  `session.applyChanges`), big files while online as a **server import job** (§3.3; progress dialog
+  with cancel, one `sheets.serverChange` undo step, the new sheet is activated once synced; the
+  dialog says "This large file will be imported on the server"). *Create new spreadsheet* uses
+  `drive.import` online and a local reserved space offline. Files dropped on the grid open the
+  dialog (*Insert new sheets*). Parsing and file writers run in `compute` on native, inline on web.
+  The home/drive upload uses `SheetsImportHandler` (`SheetsAppConfig.importHandler`).
+- **Imported images are durable** (`SheetsPendingUploads`, `features/import_export/pending_uploads.dart`,
+  suite 12 §1.1 `LocalPendingUpload` like Write): the planner's image files are stored in the local
+  `sheets_uploads_<user>.db` before uploading, shown from those bytes (image service, exports,
+  print preview) offline and after a reload, and uploaded with backoff (2 s → 10 min) when online.
+  Images inserted with *Insert › Image* use the same queue.
+- `sheets.file.download {format}`: XLSX/ODS/HTML/CSV/TSV/JSON saved with `FilePicker.saveFile` (web:
+  download in the same tab); PDF opens the print route (`?export=1`). Export report toast → report
+  dialog. XLSX: charts without an Excel equivalent are exported as PNG pictures at their anchor
+  (`SheetsWorkbookExporter.chartPng`, `RasterChartRenderer`, 2×; report `chartsAsImages`).
 - Print route `/s/:uuid/print` is a **child route of the editor** (new shell hook
   `WonkyAppConfig.editorRoutes`), so the open model stays loaded. The preview paints pages with
   `PrintPagePainter` (a Flutter port of `SheetsPdfRenderer` sharing `CellDisplayResolver` and
-  `CellTextLayout` with the PDF's font metrics) — on every platform, not only web. PDF fonts on the
-  client: bundled static TTFs (Open Sans for sans incl. Inter/Geist, EB Garamond, JetBrains Mono)
-  via `SheetsPdfFonts`; the server uses the standard PDF fonts. *Print* on web prints the PDF from
-  a hidden iframe; desktop shows "Printing isn't available here" with *Export PDF* (no `printing`
-  plugin yet). Custom page breaks (P1) are a list editor in the settings panel (rows/columns by
-  number/letter), not draggable lines on a grid.
-- **Server**: `drive.import` with kind spreadsheet → `SheetsImportService` (csv/tsv/txt/xlsx/xlsm/ods,
-  `optionsJson` = ImportOptions, plan with *Create new spreadsheet*, batched writes with
-  `SheetsBulkWriter`, `registerSpreadsheet` ⇒ item UUID = space UUID); MCP `drive.import` accepts
-  spreadsheets and `drive.export` exports spreadsheets (`SheetsExportService`, xlsx/ods/pdf/html/csv/tsv,
-  `sheet`/`range`). Not built: `SheetsImportJob`, `SheetsEndpoint.importInto/watchImport/cancelImport`
-  (imports into an existing spreadsheet always run on the client), JSON export, *Use dark theme* PDF.
+  `CellTextLayout` with the PDF's font metrics) — on every platform, not only web. PDF fonts:
+  `BundledPdfFonts` (core) — Roboto, Lato, Roboto Mono as themselves, Open Sans for other sans incl.
+  Inter/Geist, EB Garamond (serif), JetBrains Mono (mono) — loaded from `assets/fonts/` by the app
+  (`SheetsPdfFonts`) and from `web/fonts/` by the server (server `SheetsPdfFonts`), so both embed the
+  same faces with the same mapping. *Print* on web prints the PDF from a hidden iframe; on desktop
+  the `printing` plugin opens the native print dialog (falls back to the *Export PDF* toast when the
+  plugin or printing is unavailable). *Use dark theme for Export PDF* (settings panel; command arg
+  `darkTheme`; MCP `drive.export dark_theme`) renders dark pages: #1F1F1F page, automatic text and
+  borders light (auto contrast on light fills), dark heading band and gridlines, charts with the
+  dark chart theme; explicit cell colors stay absolute. Custom page breaks: *Set custom page
+  breaks* switches to **break mode** (§7.6): the preview becomes `PageBreakCanvas` (draggable lines)
+  and the panel keeps the list editor (keyboard alternative).
+- **Server**: `drive.import` with kind spreadsheet → `SheetsImportService` (csv/tsv/txt/xlsx/xlsm/
+  ods/json, `optionsJson` = ImportOptions, plan with *Create new spreadsheet*, batched writes with
+  `SheetsBulkWriter`, `registerSpreadsheet` ⇒ item UUID = space UUID); imports into an existing
+  spreadsheet: `SheetsImportJobs` + `SheetsImportEndpoint` (§3.3); MCP `drive.import` accepts
+  spreadsheets and `drive.export` exports spreadsheets (`SheetsExportService`, xlsx/ods/pdf/html/csv/
+  tsv/json, `sheet`/`range`/`dark_theme`).
 
 ---
 
@@ -273,29 +299,44 @@ Cancel (cancelling rolls back already written chunks via the undo step's inverse
 
 ```
 client                                   server
-  │ upload (StoredFile upload description) │
+  │ upload (StoredFile, kind importSource) │
   │──────────────────────────────────────►│
-  │ DriveEndpoint.import(uploadId, kind=spreadsheet, options)   (create new)
-  │ SheetsEndpoint.importInto(spreadsheetUuid, uploadId, options) (into existing)
-  │──────────────────────────────────────►│ create SheetsImportJob (queued) → returns jobId
-  │ SheetsEndpoint.watchImport(jobId) ◄──── Stream<ImportProgress{phase, done, total, warnings}>
-  │                                        │ worker isolate: parse → IR → planner
-  │                                        │ new spreadsheet: spaces.createFor(user), Spreadsheet row,
-  │                                        │   DriveItem (registerSpreadsheet), SpaceSubscription(open)
-  │                                        │ ServerSheetsWriter: transactionForUser(user, space) per chunk
-  │                                        │   + ChangeLog(label "Import <file>") + ServerChangeRecord
-  │◄── done {itemUuid, changeId, report}   │
-  │ (new) navigate to /s/<uuid>; sync downloads rows (progress UI from suite 12 §2.3)
+  │ DriveEndpoint.import(uploadId, kind=spreadsheet, options)            (create new)
+  │ sheetsImport.importInto(spreadsheetUuid, uploadId, optionsJson,
+  │                         activeSheetId)                               (into existing)
+  │──────────────────────────────────────►│ insert SheetsImportJob (queued) → returns jobId
+  │ sheetsImport.watchImport(jobId) ◄────── Stream<SheetsImportProgress{status, done, total,
+  │                                        │   queuePosition, reportJson, changeId, sheetIds, error}>
+  │                                        │ the instance that queued it leases the user's oldest
+  │                                        │   queued job (one running job per user, lease 2 min,
+  │                                        │   renewed per chunk): parse (isolate > 512 KB) → plan on
+  │                                        │   the headless model → SheetsBulkWriter.apply per chunk
+  │                                        │   of ≤ 5,000 row changes (ChangeLog "Import <file>",
+  │                                        │   kinds {import}) → one ServerChangeRecord
+  │◄── done {changeId, report, sheetIds}   │
+  │ undo step sheets.serverChange(changeId); rows arrive through sync
 ```
 
-- Jobs run on script/background workers (the same `ScriptJob`-style lease mechanism; table
-  `SheetsImportJob`, Additions A-11-2), one job per user at a time (others queued).
-- Phases: `uploading` (client), `parsing`, `writing` (done/total cells), `finalizing`
-  (registration, search text, thumbnail), `done` / `failed`.
-- Cancel: `SheetsEndpoint.cancelImport(jobId)`; already written chunks are reverted with the
-  stored inverse; for a new spreadsheet the item is deleted.
-- MCP `drive.import` and `sheets.import_csv` use the same pipeline synchronously (wait ≤ 120 s,
-  then return `job_id` for polling).
+- As built: jobs run in the server process that queued them (no separate worker pool; the lease
+  in the row keeps a second instance from running another job of the same user, and a job whose
+  lease expired — the instance stopped — is reported `failed` "The import was interrupted").
+  `watchImport` polls the row (300 ms) and works across instances.
+- Statuses (`SheetsImportStatus`): `queued`, `parsing`, `writing` (done/total = cells),
+  `finalizing` (change record, merge signal and change-log processing), `done` / `failed` /
+  `cancelled`. Errors: `errorCode` (`limit` for the cell limit, `invalid`, `forbidden`,
+  `unavailable`, `internal`) + message.
+- Cancel: `sheetsImport.cancelImport(jobId)`: a queued job ends at once; a running one stops
+  before its next chunk and the chunks already written are reverted (inverse applied with the
+  per-column skip rule). A failed chunk also reverts the written ones. The upload is deleted when
+  the job ends.
+- The client uses the job (11 §3.1) when online and the file is above the client thresholds
+  (CSV/TSV > 20 MB or > 300k cells; XLSX/ODS > 5 MB or > 200k cells); `sheets.file.import` /
+  `importData` take `onServer: true|false` to force a path. *Replace data at selected cell* sends
+  the active cell as `options.cell`.
+- `sheetsImport.sourceFromDrive(itemUuid)`: the XLSX of another readable spreadsheet (signed URL)
+  for the dialog's *Drive* tab.
+- MCP `drive.import` uses the synchronous create-new pipeline; `sheets.import_csv` writes through
+  the tool pipeline (no job).
 
 ### 3.4 Cell-limit enforcement
 Before writing, compute the resulting grid size (rows × columns per sheet, summed) and compare
@@ -536,13 +577,13 @@ Custom `OdsExporter` writing `mimetype` (stored, first), `META-INF/manifest.xml`
 `content.xml` (streamed), `styles.xml` (automatic styles deduplicated), `meta.xml`,
 `settings.xml` (frozen panes). Formulas via `OpenFormulaTranslator` (`of:=` syntax), cached
 values in `office:value`, repeated empty rows/columns collapsed with `number-*-repeated`.
-Charts → images (P1); notes → annotations; merges; widths/heights; named ranges; DV and CF P2.
+Charts → embedded ODF chart objects (`Object N/content.xml` + `draw:frame` in `table:shapes`, incl. 3D, see 08 §23.8; types without an ODF class are reported); notes → annotations; merges; widths/heights; named ranges; DV and CF P2.
 For lossless re-import into Wonky the writer adds attributes in the foreign namespace
 `urn:wonky:sheets:odf` (ignored by other readers): `wonky:format` (exact cell/run format JSON incl.
 theme colors and `clip` wrapping), `wonky:pattern` (number format), `wonky:value` (exact
 date/time serial) and `wonky:default-row-height`/`-column-width` on table styles; the importer
 prefers them over the ODF properties. `OdsExportOptions.wonkyExtensions: false` writes plain ODF.
-Features ODS can't hold (DV, CF, filters, groups, images, charts, print settings) are listed in
+Features ODS can't hold (DV, CF, filters, groups, images, unsupported chart types, print settings) are listed in
 the export report.
 
 ### 6.5 CSV / TSV export
@@ -567,8 +608,14 @@ images and charts as SVG (`SvgChartRenderer`). Always light theme. Gridlines as 
 `#e0e0e0` borders when the sheet shows gridlines.
 
 ### 6.7 JSON (P2)
-`{"title", "locale", "sheets":[{"name","values":[[…]],"formulas":[[…]]?, "formats"?: …}]}`
-(values unformatted). A full-fidelity IR JSON (for developers/tests) is available via MCP only.
+`{"title", "locale", "sheets":[{"name", "hidden"?, "values":[[…]], "formulas":[[…]]?,
+"numberFormats":[[…]]?}]}` (`JsonWorkbook`, `io/json/json_workbook.dart`): values unformatted
+(numbers, strings, booleans, error literals, null; formula cells hold their cached result),
+`formulas` (`=…`) and `numberFormats` (patterns, null = Automatic) only when a sheet has any;
+trailing empty rows/columns trimmed. Import reads that shape, a bare 2D array (one sheet named after
+the file) and an array of objects (header row from the keys). *File › Download ▸ JSON* and
+`drive.export json` (inline text). A full-fidelity IR JSON (for developers/tests) is available via
+MCP only.
 
 ### 6.8 PDF
 Uses the print pipeline (§7) with the sheet's stored print settings (or defaults); *File ›
@@ -721,10 +768,21 @@ boundary; dragging off the page removes it; *Add break* buttons on row/column he
 `sheets.print.updateSettings`; *Reset breaks* clears them. Breaks referencing deleted rows are
 ignored.
 
+As built: `PageBreakCanvas` (`features/print/page_break_canvas.dart`) shows the print range of the
+current sheet (the rows/columns of its pages) scaled to the width (35–100 %), with row numbers and
+column letters; automatic breaks come from paginating the sheet with the draft breaks, so they
+move as custom breaks are added. Dragging an automatic break turns it into a custom one; dragging
+a break into the header band or off the grid removes it (the line turns red); clicking a row
+number / column letter toggles a break before it (the "add break" buttons). The drafts live in
+`PrintController` (`draftRowBreaks`/`draftColBreaks`, shared with the panel's list editor, which is
+the keyboard alternative); *Confirm breaks* runs `sheets.print.setPageBreaks` (one undo step).
+
 ### 7.7 Print and export actions
 - **Print** (`sheets.print.print`): generates the full PDF (background isolate / chunked on
   web, progress for > 20 pages) and calls `Printing.layoutPdf` (desktop: native print dialog;
-  web: the browser's print dialog for the PDF).
+  web: the browser's print dialog for the PDF). As built: web prints from a hidden iframe in the
+  same tab (no pdf.js); desktop uses `Printing.layoutPdf` (`usePrinterSettings: false`; macOS
+  needs the `com.apple.security.print` entitlement) and falls back to the *Export PDF* toast.
 - **Export PDF** (`sheets.print.exportPdf`): same PDF → `file_saver` as `<title>.pdf`
   (`<title> - <sheet>.pdf` for single-sheet scope).
 - Server-side (`drive.export pdf`, MCP): `SheetsPdfRenderer` on the headless model; charts via
@@ -788,7 +846,7 @@ MCP: `drive.import` (suite) accepts `options: ImportOptions` for spreadsheets; S
 | # | Change |
 |---|--------|
 | A-11-1 | `Sheet` gains `printSettingsJson: String?` (schema §7.2; null = defaults). |
-| A-11-2 | Server table `SheetsImportJob(uuid, userId, spreadsheetUuid?, uploadFileId, fileName, format, optionsJson, status (queued/parsing/writing/finalizing/done/failed/cancelled), progressDone, progressTotal, reportFileId?, changeId?, error?, createdAt, leaseOwner?, leaseUntil?)`. |
+| A-11-2 | Server table `SheetsImportJob(uuid, userId, authUserId, spreadsheetUuid, uploadFileId, fileName, format, optionsJson, activeSheetId?, status (`SheetsImportStatus`: queued/parsing/writing/finalizing/done/failed/cancelled), progressDone, progressTotal, reportJson?, sheetIdsJson?, changeId?, errorCode?, error?, cancelRequested, createdAt, updatedAt, leaseOwner?, leaseUntil?)` (as built: the report is stored inline as JSON, not as a file; jobs only import into existing spreadsheets). Client model `SheetsImportProgress`. |
 | A-11-3 | `ChangeLog.summaryJson.kinds` uses `import` for import writes (label "Import <file>"). |
 
 ---

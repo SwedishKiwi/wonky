@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:math' as math;
 
 import 'package:flutter/gestures.dart';
+import 'package:flutter/semantics.dart';
 import 'package:flutter/widgets.dart';
 import 'package:shad/shad.dart';
 import 'package:wonky_app/wonky_app.dart';
@@ -76,6 +77,11 @@ class _ChartSheetViewState extends State<ChartSheetView> {
       listenable: Listenable.merge([objects, widget.editor.scroll]),
       builder: (context, _) {
         final o = _chart;
+        // The chart stays selected on its sheet (Esc doesn't hand the keys
+        // to the hidden grid).
+        if (o != null && objects.selectedId == null) {
+          WidgetsBinding.instance.addPostFrameCallback((_) => _selectChart());
+        }
         return Container(
           key: const ValueKey<String>('sheets.chartSheet'),
           color: theme.colorScheme.canvas,
@@ -121,6 +127,15 @@ class _ChartSheetViewState extends State<ChartSheetView> {
                 button: true,
                 selected: selected,
                 label: alt.isNotEmpty ? alt : chart.autoDescription,
+                customSemanticsActions: {
+                  CustomSemanticsAction(
+                    label: sheetsL10n(context).chartViewDataTableAction,
+                  ): () => unawaited(
+                    widget.editor.invokeCommand('sheets.chart.viewDataTable', {
+                      'objectId': o.id,
+                    }),
+                  ),
+                },
                 child: Listener(
                   onPointerDown: (e) {
                     objects.select(o.id);

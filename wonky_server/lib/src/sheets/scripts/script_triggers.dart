@@ -10,10 +10,12 @@ import 'package:wonky_sheets_script/wonky_sheets_script.dart';
 
 import '../../platform/common/actor.dart';
 import '../../platform/common/models.dart';
+import '../../platform/notifications/notification_service.dart';
 import '../../platform/sharing/access_service.dart';
 import '../changelog/change_log_consumer.dart';
 import '../headless/headless_workbook_provider.dart';
 import '../sync/sync_db.dart';
+import 'script_jobs.dart';
 import 'script_service.dart';
 
 /// Next run times of time-driven triggers (09 §6.11, §8.7.3).
@@ -202,7 +204,7 @@ abstract final class ScriptTriggerService {
         );
       }
     }
-    var runs = 0;
+    var enqueued = 0;
     for (final (t, state) in due) {
       final item = await DriveItem.db.findFirstRow(
         session,
@@ -213,20 +215,22 @@ abstract final class ScriptTriggerService {
         session,
         state.copyWith(runningSince: now),
       );
-      final r = await runTrigger(
+      await ScriptJobQueue.enqueue(
         session,
-        item,
-        t,
-        ScriptExecutionKind.timeDriven,
-        TimeEventData(
+        item: item,
+        trigger: t,
+        kind: ScriptExecutionKind.timeDriven,
+        event: TimeEventData(
           triggerUid: t.id.uuid,
           scheduledAt: state.nextRunAt!,
-          firedAt: clock.now().toUtc(),
+          firedAt: now,
         ),
       );
-      if (r != null) runs++;
+      enqueued++;
     }
-    return runs;
+    // Leftovers of other instances (no worker role) run here too.
+    final ran = await ScriptJobQueue.kick(session);
+    return runInline ? ran : enqueued;
   }
 
   static bool get _enabled {
@@ -293,12 +297,13 @@ abstract final class ScriptTriggerService {
         ? null
         : await AccessService.effectiveRole(session, profile.id!, item);
     if (profile == null || role == null || role < Role.editor) {
+      final reason =
+          'Trigger ${t.functionName} was disabled because its installer '
+          'no longer has edit access to ${item.name}.';
       await ScriptTriggerState.db.updateRow(
         session,
         state.copyWith(
-          disabledReason:
-              'Trigger ${t.functionName} was disabled because its installer '
-              'no longer has edit access to ${item.name}.',
+          disabledReason: reason,
           nextRunAt: null,
           runningSince: null,
         ),
@@ -306,6 +311,29 @@ abstract final class ScriptTriggerService {
       session.log(
         'Script trigger ${t.id} disabled: installer lost edit access.',
         level: LogLevel.warning,
+      );
+      if (profile != null) {
+        await _notifyFailure(session, profile.id!, item, t, reason);
+      }
+      return null;
+    }
+    // Settings › Sheets › Enable scripts off: the installer's triggers
+    // pause (09 §11.3) without counting as failures.
+    if (!await _scriptsEnabled(session, profile.id!)) {
+      await ScriptTriggerState.db.updateRow(
+        session,
+        state.copyWith(
+          runningSince: null,
+          nextRunAt: kind == ScriptExecutionKind.timeDriven
+              ? await _next(
+                  session,
+                  t,
+                  space,
+                  clock.now().toUtc(),
+                  state.lastRunAt,
+                )
+              : state.nextRunAt,
+        ),
       );
       return null;
     }
@@ -336,6 +364,39 @@ abstract final class ScriptTriggerService {
     final next = kind == ScriptExecutionKind.timeDriven
         ? await _next(session, t, space, now, now)
         : state.nextRunAt;
+    final disabled = failures >= maxFailures
+        ? 'Trigger ${t.functionName} was disabled after $maxFailures '
+              'failures in a row.'
+        : null;
+    // Failure notifications (09 §8.7.3): per the trigger's `notify`
+    // option (immediately, daily = at most one a day, never); disabling
+    // always notifies.
+    var notifiedAt = state.lastNotifiedAt;
+    if (failed) {
+      final mode = _notifyMode(t);
+      final last = state.lastNotifiedAt;
+      final due =
+          disabled != null ||
+          mode == 'immediately' ||
+          (mode == 'daily' &&
+              (last == null ||
+                  now.difference(last) >= const Duration(hours: 24)));
+      if (due) {
+        final message =
+            disabled ??
+            'Trigger ${t.functionName} failed: '
+                '${_errorMessage(response) ?? response?.status.name ?? 'error'}';
+        await _notifyFailure(
+          session,
+          profile.id!,
+          item,
+          t,
+          message,
+          executionId: response?.executionId,
+        );
+        notifiedAt = now;
+      }
+    }
     await ScriptTriggerState.db.updateRow(
       session,
       state.copyWith(
@@ -343,14 +404,77 @@ abstract final class ScriptTriggerService {
         lastStatus: response?.status ?? ScriptExecutionStatus.failed,
         consecutiveFailures: failures,
         runningSince: null,
-        nextRunAt: failures >= maxFailures ? null : next,
-        disabledReason: failures >= maxFailures
-            ? 'Trigger ${t.functionName} was disabled after $maxFailures '
-                  'failures in a row.'
-            : null,
+        nextRunAt: disabled != null ? null : next,
+        disabledReason: disabled,
+        lastNotifiedAt: notifiedAt,
       ),
     );
     return response;
+  }
+
+  static String _notifyMode(ScriptTrigger t) {
+    if (t.optionsJson == null) return 'daily';
+    try {
+      final v = (jsonDecode(t.optionsJson!) as Map)['notify'];
+      return v is String ? v : 'daily';
+    } on FormatException {
+      return 'daily';
+    }
+  }
+
+  static String? _errorMessage(ScriptRunResponse? r) {
+    final e = r?.errorJson;
+    if (e == null) return null;
+    try {
+      return (jsonDecode(e) as Map)['message'] as String?;
+    } on FormatException {
+      return null;
+    }
+  }
+
+  static Future<void> _notifyFailure(
+    Session session,
+    int userId,
+    DriveItem item,
+    ScriptTrigger t,
+    String message, {
+    UuidValue? executionId,
+  }) async {
+    try {
+      await NotificationService.notify(
+        session,
+        userId: userId,
+        kind: NotificationKind.scriptFailure,
+        item: item,
+        payload: {
+          'message': message,
+          'function': t.functionName,
+          'triggerId': t.id.uuid,
+          'executionId': ?executionId?.uuid,
+        },
+      );
+    } on Object catch (e) {
+      session.log(
+        'Script failure notification failed: $e',
+        level: LogLevel.warning,
+      );
+    }
+  }
+
+  /// Settings › Sheets › *Enable scripts* of the user [userId].
+  static Future<bool> _scriptsEnabled(Session session, int userId) async {
+    final prefs = await UserPreferences.db.findFirstRow(
+      session,
+      where: (p) => p.userId.equals(userId),
+    );
+    final raw = prefs?.sheetsDefaults;
+    if (raw == null || raw.isEmpty) return true;
+    try {
+      final m = jsonDecode(raw);
+      return m is! Map || m['scriptsEnabled'] != false;
+    } on FormatException {
+      return true;
+    }
   }
 
   /// Installable triggers of [kind] (`onEdit`, `onChange`,
@@ -379,16 +503,18 @@ abstract final class ScriptTriggerService {
       item,
       TriggerKind.installableOnOpen,
     )) {
-      final r = await runTrigger(
+      await ScriptJobQueue.enqueue(
         session,
-        item,
-        t,
-        ScriptExecutionKind.installableOnOpen,
-        const OpenEventData(),
+        item: item,
+        trigger: t,
+        kind: ScriptExecutionKind.installableOnOpen,
+        event: const OpenEventData(),
       );
-      if (r != null) n++;
+      n++;
     }
-    return n;
+    if (n == 0) return 0;
+    final ran = await ScriptJobQueue.kick(session);
+    return runInline ? ran : n;
   }
 
   static bool _fireFor(ScriptTrigger t, ActorKind actor) {
@@ -439,19 +565,19 @@ abstract final class ScriptTriggerService {
     }
     for (final t in edits) {
       if (editEvent == null || !_fireFor(t, change.actorKind)) continue;
-      final r = await runTrigger(
+      await ScriptJobQueue.enqueue(
         session,
-        item,
-        t,
-        ScriptExecutionKind.installableOnEdit,
-        EditEventData(
+        item: item,
+        trigger: t,
+        kind: ScriptExecutionKind.installableOnEdit,
+        event: EditEventData(
           sheetId: (editEvent as EditEventData).sheetId,
           range: editEvent.range,
           triggerUid: t.id.uuid,
           offline: editEvent.offline,
         ),
       );
-      if (r != null) n++;
+      n++;
     }
     final changeType = summary.kinds.contains(ChangeKinds.structure)
         ? 'OTHER'
@@ -464,16 +590,18 @@ abstract final class ScriptTriggerService {
         : 'OTHER';
     for (final t in changes) {
       if (!_fireFor(t, change.actorKind)) continue;
-      final r = await runTrigger(
+      await ScriptJobQueue.enqueue(
         session,
-        item,
-        t,
-        ScriptExecutionKind.installableOnChange,
-        ChangeEventData(changeType),
+        item: item,
+        trigger: t,
+        kind: ScriptExecutionKind.installableOnChange,
+        event: ChangeEventData(changeType),
       );
-      if (r != null) n++;
+      n++;
     }
-    return n;
+    if (n == 0) return 0;
+    final ran = await ScriptJobQueue.kick(session);
+    return runInline ? ran : n;
   }
 }
 

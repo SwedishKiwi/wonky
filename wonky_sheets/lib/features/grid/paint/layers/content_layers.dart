@@ -63,10 +63,14 @@ class GridlineLayer extends GridLayer {
       final left = pane.rect.left;
       final right = math.min(pane.rect.right, pane.x(pane.colEnd + 1));
       final top = pane.rect.top;
-      final bottom = math.min(pane.rect.bottom, pane.y(pane.rowEnd + 1));
-      for (var r = pane.rowStart; r <= pane.rowEnd; r++) {
+      final bottom = math.min(
+        pane.rect.bottom,
+        pane.yDisplay(pane.displayRowEnd + 1),
+      );
+      // Rows in display order (a sorted filter view, 07 §4.4).
+      for (final r in pane.rows) {
         if (rows.sizeAt(r) <= 0) continue;
-        final y = pane.y(r + 1) - hair;
+        final y = pane.bottomOf(r) - hair;
         canvas.drawRect(Rect.fromLTRB(left, y, right, y + hair), paint);
       }
       for (var c = pane.colStart; c <= pane.colEnd; c++) {
@@ -119,7 +123,7 @@ class CellContentLayer extends GridLayer {
     }
 
     // Fills.
-    for (var r = pane.rowStart; r <= pane.rowEnd; r++) {
+    for (final r in pane.rows) {
       if (rows.sizeAt(r) <= 0) continue;
       for (var c = pane.colStart; c <= pane.colEnd; c++) {
         if (cols.sizeAt(c) <= 0) continue;
@@ -161,7 +165,7 @@ class CellContentLayer extends GridLayer {
 
     // Content.
     final showFormulas = ctx.controller.showFormulas;
-    for (var r = pane.rowStart; r <= pane.rowEnd; r++) {
+    for (final r in pane.rows) {
       if (rows.sizeAt(r) <= 0) continue;
       final candidates = <int>{
         for (var c = pane.colStart; c <= pane.colEnd; c++) c,
@@ -285,19 +289,27 @@ class CellContentLayer extends GridLayer {
     }
     if (f.rotation == 255) text = text.characters.join('\n');
 
+    // `#LOADING` (custom functions, AI cells, rows still streaming in) is
+    // painted as a muted italic "Loading…" (05 §13.6, 09 §8.6).
+    final loading =
+        !showFormulas &&
+        d.value is ErrorValue &&
+        (d.value as ErrorValue).kind == CellErrorKind.loading;
+    if (loading) text = ctx.controller.l10n.scriptLoadingCell;
     final linkColor = d.linkUrl != null && d.textColor == null
         ? tokens.linkText
         : null;
-    final color =
-        linkColor ??
-        hexToColor(d.textColor) ??
-        autoTextOn(tokens, hexToColor(d.fillColor));
+    final color = loading
+        ? tokens.headerFg
+        : linkColor ??
+              hexToColor(d.textColor) ??
+              autoTextOn(tokens, hexToColor(d.fillColor));
     final style = GridTextStyle(
       fontFamily: CellFonts.screenFamily(f.fontFamily),
       fontSize: f.fontSize * kPointToPx * z,
       color: color,
-      bold: f.bold,
-      italic: f.italic,
+      bold: f.bold && !loading,
+      italic: f.italic || loading,
       underline: d.underline,
       strikethrough: f.strikethrough,
       align: switch (align) {
@@ -325,6 +337,7 @@ class CellContentLayer extends GridLayer {
             resolveColor: ctx.model.theme.resolveColor,
             conditional: cfo?.format,
             wrapWidth: wrap ? math.max(1, inner) : null,
+            chipText: neutralChipColors(tokens).fg,
           )
         : ctx.text.layout(
             text,
@@ -419,7 +432,15 @@ class CellContentLayer extends GridLayer {
       canvas.drawParagraph(p, Offset(-width / 2, -height / 2));
       canvas.restore();
     } else {
+      // Smart chip runs (03 §14.3): pills behind, avatars/icons in front.
+      paintRichChipsBehind(
+        canvas,
+        p,
+        Offset(dx, dy),
+        neutralChipColors(tokens).bg,
+      );
       canvas.drawParagraph(p, Offset(dx, dy));
+      paintRichChipsFront(canvas, p, Offset(dx, dy));
     }
     if (needsClip) canvas.restore();
     if (d.widget.kind == CellWidgetKind.dropdownArrow ||
@@ -496,7 +517,7 @@ class BorderLayer extends GridLayer {
     final cols = ctx.sheet.columns;
     ctx.forEachPane(canvas, (pane) {
       if (pane.isEmpty) return;
-      for (var r = pane.rowStart; r <= pane.rowEnd; r++) {
+      for (final r in pane.rows) {
         if (rows.sizeAt(r) <= 0) continue;
         for (var c = pane.colStart; c <= pane.colEnd; c++) {
           if (cols.sizeAt(c) <= 0) continue;
@@ -508,7 +529,8 @@ class BorderLayer extends GridLayer {
           if (e.right != null) {
             _line(ctx, canvas, e.right!, rect.topRight, rect.bottomRight);
           }
-          if (r == pane.rowStart && e.top != null) {
+          if ((r == pane.firstShownRow || pane.isPermuted(r)) &&
+              e.top != null) {
             _line(ctx, canvas, e.top!, rect.topLeft, rect.topRight);
           }
           if (c == pane.colStart && e.left != null) {
@@ -582,7 +604,7 @@ class DecorationLayer extends GridLayer {
     final z = ctx.zoom;
     ctx.forEachPane(canvas, (pane) {
       if (pane.isEmpty) return;
-      for (var r = pane.rowStart; r <= pane.rowEnd; r++) {
+      for (final r in pane.rows) {
         if (rows.sizeAt(r) <= 0) continue;
         for (var c = pane.colStart; c <= pane.colEnd; c++) {
           final d = ctx.cells.displayAt(sid, r, c);
@@ -592,6 +614,7 @@ class DecorationLayer extends GridLayer {
           final error =
               d.isFormula &&
               value is ErrorValue &&
+              value.kind != CellErrorKind.loading &&
               (value.kind != CellErrorKind.na || value.message != null);
           if (!note && !error) continue;
           if (cols.sizeAt(c) <= 0) continue;

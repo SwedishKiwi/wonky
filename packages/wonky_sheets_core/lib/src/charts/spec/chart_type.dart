@@ -17,6 +17,9 @@ enum ChartType {
   scorecard(ChartPriority.p1, 'Scorecard'),
   table(ChartPriority.p1, 'Table'),
   radar(ChartPriority.p1, 'Radar'),
+
+  /// 3D surface over a grid of values (rows × series, 08 §23); always 3D.
+  surface(ChartPriority.p1, 'Surface'),
   ohlc(ChartPriority.p2, 'OHLC'),
   gauge(ChartPriority.p2, 'Gauge'),
   treemap(ChartPriority.p2, 'Tree map'),
@@ -55,6 +58,18 @@ enum ChartType {
   /// Whether `stacking` applies (08 §3.1).
   bool get supportsStacking =>
       this == column || this == bar || this == area || this == combo;
+
+  /// Whether the type can be drawn in 3D (`threeD`, 08 §23).
+  bool get supports3D =>
+      this == column ||
+      this == bar ||
+      this == line ||
+      this == area ||
+      this == pie ||
+      this == surface;
+
+  /// Whether the type only exists in 3D (surface).
+  bool get only3D => this == surface;
 
   /// Whether trendlines apply (08 §7).
   bool get supportsTrendlines =>

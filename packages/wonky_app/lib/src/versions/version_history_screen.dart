@@ -24,6 +24,10 @@ class VersionHistoryScreen extends StatefulWidget {
   final ShellServices services;
   final String itemUuid;
 
+  /// *Show changes* of the history route (on by default); apps' commands
+  /// toggle it (Sheets: `sheets.history.toggleShowChanges`).
+  static final ValueNotifier<bool> showChanges = ValueNotifier(true);
+
   @override
   State<VersionHistoryScreen> createState() => _VersionHistoryScreenState();
 }
@@ -34,8 +38,9 @@ class _VersionHistoryScreenState extends State<VersionHistoryScreen> {
     UuidValue.fromString(widget.itemUuid),
   );
   DriveItemView? _item;
-  bool _showChanges = true;
   Object? _error;
+
+  bool get _showChanges => VersionHistoryScreen.showChanges.value;
 
   ShellServices get s => widget.services;
 
@@ -89,7 +94,10 @@ class _VersionHistoryScreenState extends State<VersionHistoryScreen> {
                 ),
               ),
               child: ListenableBuilder(
-                listenable: c,
+                listenable: Listenable.merge([
+                  c,
+                  VersionHistoryScreen.showChanges,
+                ]),
                 builder: (context, _) {
                   final v = c.selected;
                   return Row(
@@ -115,7 +123,8 @@ class _VersionHistoryScreenState extends State<VersionHistoryScreen> {
                       ),
                       ShadSwitch(
                         value: _showChanges,
-                        onChanged: (x) => setState(() => _showChanges = x),
+                        onChanged: (x) =>
+                            VersionHistoryScreen.showChanges.value = x,
                         label: Text(l.historyShowChanges),
                       ),
                       const SizedBox(width: 12),
@@ -149,7 +158,10 @@ class _VersionHistoryScreenState extends State<VersionHistoryScreen> {
                     child: ColoredBox(
                       color: theme.colorScheme.canvas,
                       child: ListenableBuilder(
-                        listenable: c,
+                        listenable: Listenable.merge([
+                          c,
+                          VersionHistoryScreen.showChanges,
+                        ]),
                         builder: (context, _) {
                           final v = c.selected;
                           if (v == null) {

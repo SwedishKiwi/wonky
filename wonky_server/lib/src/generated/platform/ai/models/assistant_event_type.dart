@@ -34,6 +34,11 @@ enum AssistantEventType implements _is.SerializableModel {
   /// Sheets Suggest mode: the run recorded changes in a preview
   /// (previewId) for the AI changes preview dialog (Sheets 12 §6.3).
   previewReady,
+
+  /// Sheets 12 §6.2: run a `ui.sheets.*` tool (toolName, argsJson) in the
+  /// requesting window; it answers with `assistant.uiToolResult`
+  /// (toolUseId).
+  uiToolCall,
   error,
 
   /// Last event of a run.
@@ -61,6 +66,8 @@ enum AssistantEventType implements _is.SerializableModel {
         return AssistantEventType.refusal;
       case 'previewReady':
         return AssistantEventType.previewReady;
+      case 'uiToolCall':
+        return AssistantEventType.uiToolCall;
       case 'error':
         return AssistantEventType.error;
       case 'done':

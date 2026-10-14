@@ -64,8 +64,9 @@ List<Object?> _list(JsonArgs a, String key) {
 /// settings when the route isn't open (MCP).
 Future<(Uint8List, String)?> _pdf(
   CommandContext ctx,
-  SheetEditorController ed,
-) async {
+  SheetEditorController ed, {
+  bool darkTheme = false,
+}) async {
   final l = ed.l10n;
   final c = ctx.dialogContext;
   var pc = PrintController.current;
@@ -76,11 +77,11 @@ Future<(Uint8List, String)?> _pdf(
   final controller = pc;
   try {
     final bytes = c == null || !c.mounted
-        ? await controller.buildPdf()
+        ? await controller.buildPdf(darkTheme: darkTheme)
         : await runWithProgress(
             c,
             title: l.printPhaseRendering(controller.pages.length),
-            work: (p) => controller.buildPdf(progress: p),
+            work: (p) => controller.buildPdf(progress: p, darkTheme: darkTheme),
           );
     if (bytes == null) return null;
     return (bytes, controller.pdfFileName);
@@ -259,12 +260,23 @@ List<Command<CommandArgs>> printCommands(ShellServices s) => [
     icon: LucideIcons.fileDown,
     categoryName: _file,
     argsSchema: const JsonSchema.object(
-      properties: {'darkTheme': JsonSchema.boolean()},
+      properties: {
+        'darkTheme': JsonSchema.boolean(
+          description: 'Dark pages (default: the print route option).',
+        ),
+      },
     ),
     enabled: (ed, a) => canDownload(ed),
     run: (ctx, ed, a) async {
       final l = ed.l10n;
-      final r = await _pdf(ctx, ed);
+      final r = await _pdf(
+        ctx,
+        ed,
+        darkTheme:
+            a.boolean('darkTheme') ??
+            PrintController.current?.darkTheme ??
+            false,
+      );
       if (r == null) return const CommandResult.cancelled();
       final (bytes, name) = r;
       final saved = await saveBytes(

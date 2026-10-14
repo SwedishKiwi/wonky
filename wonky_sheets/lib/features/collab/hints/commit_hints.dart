@@ -57,6 +57,60 @@ class CommitHints {
     editor.model.addListener(_onBatch);
     _remote = editor.session.remoteBatches.listen(_onRemote);
     editor.cells.hinted = _hintedAt;
+    editor.editor.text.addListener(_onTypingText);
+  }
+
+  /// Receives `typing` hints (live typing preview, Sheets 10 §2.1, P2).
+  void Function(
+    String sessionId, {
+    required String sheetId,
+    required String rowId,
+    required String colId,
+    required String? text,
+  })?
+  onTyping;
+
+  /// Typing previews are sent at most this often (4/s).
+  static const typingInterval = Duration(milliseconds: 250);
+
+  /// Max characters of a typing preview.
+  static const typingMaxChars = 200;
+
+  Timer? _typingTimer;
+  String? _typingSent;
+
+  void _onTypingText() {
+    if (_disposed || _presence == null || !editor.roleCanEdit) return;
+    if (_typingTimer?.isActive ?? false) return;
+    _sendTyping();
+    _typingTimer = Timer(typingInterval, _sendTyping);
+  }
+
+  /// Sends the cell editor's current text as a `typing` hint (when it
+  /// changed since the last one).
+  void _sendTyping() {
+    final p = _presence;
+    final s = editor.editor.session;
+    if (_disposed || p == null || s == null) {
+      _typingSent = null;
+      return;
+    }
+    var text = editor.editor.text.text;
+    if (text.length > typingMaxChars) {
+      text = text.substring(0, typingMaxChars);
+    }
+    final key = '${s.sheetId}|${s.rowId}|${s.colId}|$text';
+    if (key == _typingSent) return;
+    _typingSent = key;
+    p.sendHints([
+      jsonEncode({
+        't': 'typing',
+        'sheetId': s.sheetId,
+        'rowId': s.rowId,
+        'colId': s.colId,
+        'text': text,
+      }),
+    ]);
   }
 
   final SheetEditorController editor;
@@ -265,6 +319,18 @@ class CommitHints {
           for (final c in list.take(maxCells)) {
             if (c is Map) changed |= _put(e.sessionId, sheetId, c, hlc, now);
           }
+        case 'typing':
+          final rowId = j['rowId'];
+          final colId = j['colId'];
+          if (rowId is! String || colId is! String) continue;
+          final text = j['text'];
+          onTyping?.call(
+            e.sessionId,
+            sheetId: sheetId,
+            rowId: rowId,
+            colId: colId,
+            text: text is String ? text : null,
+          );
         case 'pending':
           final r = j['range'];
           if (r is! Map) continue;
@@ -398,6 +464,8 @@ class CommitHints {
 
   void dispose() {
     _disposed = true;
+    _typingTimer?.cancel();
+    editor.editor.text.removeListener(_onTypingText);
     editor.model.removeListener(_onBatch);
     if (editor.cells.hinted == _hintedAt) editor.cells.hinted = null;
     unawaited(_remote?.cancel());

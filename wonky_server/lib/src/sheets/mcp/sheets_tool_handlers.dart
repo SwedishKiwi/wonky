@@ -1,7 +1,9 @@
+import 'package:serverpod/serverpod.dart';
 import 'package:wonky_core/wonky_core.dart'
     show DriveTools, McpToolDefinition, Role, SheetsTools;
 import 'package:wonky_sheets_core/model.dart' show Dimension;
 
+import '../../platform/common/models.dart' show ChangeLog, ServerChangeRecord;
 import '../../platform/drive/drive_service.dart';
 import '../../platform/drive/templates/builtin_templates.dart';
 import '../../platform/mcp/drive_tool_handlers.dart';
@@ -51,6 +53,7 @@ abstract final class SheetsToolHandlers {
     _t(SheetsTools.moveDimension, SheetsStructureHandlers.moveDimension),
     _t(SheetsTools.resizeDimension, SheetsStructureHandlers.resizeDimension),
     _t(SheetsTools.hideDimension, SheetsStructureHandlers.hideDimension),
+    _t(SheetsTools.groupDimension, SheetsStructureHandlers.groupDimension),
     _t(SheetsTools.setFrozen, SheetsStructureHandlers.setFrozen),
     _t(SheetsTools.addSheet, SheetsStructureHandlers.addSheet),
     _t(SheetsTools.renameSheet, SheetsStructureHandlers.renameSheet),
@@ -112,7 +115,57 @@ abstract final class SheetsToolHandlers {
   ];
 
   static RegisteredMcpTool _t(McpToolDefinition d, ToolHandler h) =>
-      RegisteredMcpTool(d, h);
+      RegisteredMcpTool(
+        d,
+        d.annotations.readOnly
+            ? h
+            : (c, a) async => withSyncVersion(c, await h(c, a)),
+      );
+
+  /// Adds `sync_version` to the result of a committed mutating call
+  /// (Sheets 12 §3): the id of the `ChangeLog` row the call wrote (UUID v7).
+  /// A client replica that holds this row (it syncs like every other row)
+  /// has the change.
+  static Future<ToolResult> withSyncVersion(
+    ToolContext ctx,
+    ToolResult r,
+  ) async {
+    final s = r.structured;
+    if (s is! Map || s['change_id'] is! String || s['preview'] == true) {
+      return r;
+    }
+    final version = await syncVersionOf(ctx, '${s['change_id']}');
+    if (version == null) return r;
+    return ToolResult(
+      {...s.cast<String, Object?>(), 'sync_version': version},
+      text: r.text,
+      images: r.images,
+    );
+  }
+
+  /// The `ChangeLog` id of the committed change [changeId] (null when it
+  /// can't be found).
+  static Future<String?> syncVersionOf(ToolContext ctx, String changeId) async {
+    try {
+      final id = UuidValue.withValidation(changeId);
+      final record = await ServerChangeRecord.db.findFirstRow(
+        ctx.session,
+        where: (t) => t.changeId.equals(id),
+      );
+      if (record == null) return null;
+      final log = await ChangeLog.db.findFirstRow(
+        ctx.session,
+        where: (t) =>
+            t.spreadsheetId.equals(record.spreadsheetUuid) &
+            t.userId.equals(ctx.actor.authUserId) &
+            t.sessionId.equals('server:${ctx.actor.kind.name}'),
+        orderBy: (t) => t.at.desc(),
+      );
+      return log?.id.uuid;
+    } on Object {
+      return null;
+    }
+  }
 
   /// `drive.create_spreadsheet` (suite 09 §4): an empty spreadsheet (or a
   /// template copy) whose named sheets are then filled with `values`

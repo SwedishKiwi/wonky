@@ -5,6 +5,8 @@ import 'dart:typed_data';
 import 'package:clock/clock.dart';
 import 'package:serverpod/serverpod.dart';
 import 'package:serverpod_offline_sync_server/serverpod_offline_sync_server.dart';
+import 'package:wonky_sync_models/tables.dart'
+    show SyncedRowWrite, SyncedTables;
 import 'package:wonky_sheets_core/model.dart'
     show
         ChangeKinds,
@@ -22,12 +24,23 @@ import '../sync/server_sheets_writer.dart';
 import '../sync/sync_db.dart';
 import '../sync/synced_tables.dart';
 
+Future<void> _bulkWrite(
+  DatabaseSession db,
+  String table,
+  List<SyncedRowWrite> writes,
+  Transaction tx,
+) async {
+  if (writes.isEmpty) return;
+  await SyncedTables.byName[table]!.bulkWrite(db, writes, transaction: tx);
+}
+
 /// Batched server writes of tool mutations (Sheets 12 §2.4): the same
 /// semantics and records as [ServerSheetsWriter.applyRecorded] (named
 /// columns, `transactionForUser` per chunk of ≤ 5,000 changes with a
 /// `ChangeLog` row, a [ServerChangeRecord] that `changes.revert` and the
 /// `sheets.serverChange` undo domain read), but current rows are read once
-/// per table and new rows are inserted in one CRDT-tracked batch per table,
+/// per table and inserts, revives and updates run as set-based engine
+/// writes per table (`SyncedTableSpec.bulkWrite`, offline-sync patch OS-7),
 /// which makes large writes (50,000 cells) practical.
 abstract final class SheetsBulkWriter {
   static const chunkSize = ServerSheetsWriter.chunkSize;
@@ -178,7 +191,13 @@ abstract final class SheetsBulkWriter {
             final cur = current[key];
             switch (c.op) {
               case RowOp.delete:
-                if (cur == null) continue;
+                if (cur == null) {
+                  // Deleting a row inserted earlier in this chunk cancels
+                  // the pending insert.
+                  final pending = inserts[c.table];
+                  pending?.removeWhere((i) => i.rowId == c.rowId);
+                  continue;
+                }
                 if (skipChanged && c.table == SheetsTables.cell) {
                   // Reverting a cell insert: values others changed since
                   // are kept; only our own columns are cleared.
@@ -243,6 +262,19 @@ abstract final class SheetsBulkWriter {
                   inserts.putIfAbsent(c.table, () => []).add(c);
                 }
               case RowOp.update:
+                // An update of a row inserted earlier in this chunk (one
+                // tool call that adds and then changes a row) is merged into
+                // the pending insert.
+                final pending = cur == null ? inserts[c.table] : null;
+                final at = pending?.indexWhere((i) => i.rowId == c.rowId) ?? -1;
+                if (at >= 0) {
+                  final ins = pending![at];
+                  pending[at] = RowChange.insert(c.table, c.rowId, {
+                    ...ins.columnsAfter,
+                    ...c.columnsAfter,
+                  });
+                  continue;
+                }
                 if (cur == null) {
                   skipped.add(
                     RevertSkip(
@@ -260,19 +292,24 @@ abstract final class SheetsBulkWriter {
           for (final e in deletes.entries) {
             await deleteSyncedRows(db, e.key, e.value, transaction: tx);
           }
+          // Inserts (new and revived rows) in dependency order, one
+          // set-based engine write per table (offline-sync patch OS-7).
           for (final name in SheetsTables.dependencyOrder) {
             final list = inserts[name];
             if (list == null) continue;
-            final table = syncedTablesByName[name]!;
-            await db.db.insert(<TableRow>[
+            await _bulkWrite(db, name, [
               for (final c in list)
-                table.fromJson({
+                SyncedRowWrite.insert(UuidValue.fromString(c.rowId), {
                   for (final e in c.columnsAfter.entries)
                     e.key: _jsonValue(e.value),
                 }),
-            ], transaction: tx);
+            ], tx);
             applied.addAll(list);
           }
+          // Updates naming only their columns, batched per table (a row
+          // updated twice in one chunk starts a new batch).
+          final batches = <String, List<List<SyncedRowWrite>>>{};
+          final batchIds = <String, Set<String>>{};
           for (final (c, cur) in updates) {
             final table = syncedTablesByName[c.table]!;
             final after = <String, Object?>{};
@@ -293,21 +330,31 @@ abstract final class SheetsBulkWriter {
                 );
                 continue;
               }
+              if (table.column(e.key) == null) continue;
               after[e.key] = _jsonValue(e.value);
               before[e.key] = cur[e.key];
             }
-            final columns = [
-              for (final n in after.keys)
-                if (table.column(n) != null) table.column(n)!,
-            ];
-            if (columns.isEmpty) continue;
-            await updateSyncedRow(
-              db,
-              table.fromJson({...cur, ...after}),
-              columns: columns,
-              transaction: tx,
+            if (after.isEmpty) continue;
+            final ids = batchIds.putIfAbsent(c.table, () => {});
+            final tableBatches = batches.putIfAbsent(c.table, () => [[]]);
+            if (!ids.add(c.rowId)) {
+              tableBatches.add([]);
+              ids
+                ..clear()
+                ..add(c.rowId);
+            }
+            tableBatches.last.add(
+              SyncedRowWrite.updateColumns(
+                UuidValue.fromString(c.rowId),
+                after,
+              ),
             );
             applied.add(RowChange.update(c.table, c.rowId, before, after));
+          }
+          for (final e in batches.entries) {
+            for (final batch in e.value) {
+              await _bulkWrite(db, e.key, batch, tx);
+            }
           }
           await ChangeLog.db.insertRow(
             db,

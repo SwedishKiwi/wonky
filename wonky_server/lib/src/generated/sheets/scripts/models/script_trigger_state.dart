@@ -30,6 +30,7 @@ abstract class ScriptTriggerState
     int? consecutiveFailures,
     this.disabledReason,
     this.runningSince,
+    this.lastNotifiedAt,
   }) : consecutiveFailures = consecutiveFailures ?? 0;
 
   factory ScriptTriggerState({
@@ -43,6 +44,7 @@ abstract class ScriptTriggerState
     int? consecutiveFailures,
     String? disabledReason,
     DateTime? runningSince,
+    DateTime? lastNotifiedAt,
   }) = _ScriptTriggerStateImpl;
 
   factory ScriptTriggerState.fromJson(Map<String, dynamic> jsonSerialization) {
@@ -73,6 +75,11 @@ abstract class ScriptTriggerState
           : _is.DateTimeJsonExtension.fromJson(
               jsonSerialization['runningSince'],
             ),
+      lastNotifiedAt: jsonSerialization['lastNotifiedAt'] == null
+          ? null
+          : _is.DateTimeJsonExtension.fromJson(
+              jsonSerialization['lastNotifiedAt'],
+            ),
     );
   }
 
@@ -102,6 +109,9 @@ abstract class ScriptTriggerState
 
   DateTime? runningSince;
 
+  /// Last scriptFailure notification (daily digest of failures).
+  DateTime? lastNotifiedAt;
+
   @override
   _is.Table<int?> get table => t;
 
@@ -119,6 +129,7 @@ abstract class ScriptTriggerState
     int? consecutiveFailures,
     String? disabledReason,
     DateTime? runningSince = const _is.$UndefinedDateTime(),
+    DateTime? lastNotifiedAt = const _is.$UndefinedDateTime(),
   });
   @override
   Map<String, dynamic> toJson() {
@@ -134,6 +145,7 @@ abstract class ScriptTriggerState
       'consecutiveFailures': consecutiveFailures,
       if (disabledReason != null) 'disabledReason': disabledReason,
       if (runningSince != null) 'runningSince': runningSince?.toJson(),
+      if (lastNotifiedAt != null) 'lastNotifiedAt': lastNotifiedAt?.toJson(),
     };
   }
 
@@ -184,6 +196,7 @@ class _ScriptTriggerStateImpl extends ScriptTriggerState {
     int? consecutiveFailures,
     String? disabledReason,
     DateTime? runningSince,
+    DateTime? lastNotifiedAt,
   }) : super._(
          id: id,
          triggerId: triggerId,
@@ -195,6 +208,7 @@ class _ScriptTriggerStateImpl extends ScriptTriggerState {
          consecutiveFailures: consecutiveFailures,
          disabledReason: disabledReason,
          runningSince: runningSince,
+         lastNotifiedAt: lastNotifiedAt,
        );
 
   /// Returns a shallow copy of this [ScriptTriggerState]
@@ -212,6 +226,7 @@ class _ScriptTriggerStateImpl extends ScriptTriggerState {
     int? consecutiveFailures,
     Object? disabledReason = _Undefined,
     DateTime? runningSince = const _is.$UndefinedDateTime(),
+    DateTime? lastNotifiedAt = const _is.$UndefinedDateTime(),
   }) {
     return ScriptTriggerState(
       id: id is int? ? id : this.id,
@@ -234,6 +249,9 @@ class _ScriptTriggerStateImpl extends ScriptTriggerState {
       runningSince: runningSince is _is.UndefinedSentinel
           ? this.runningSince
           : runningSince,
+      lastNotifiedAt: lastNotifiedAt is _is.UndefinedSentinel
+          ? this.lastNotifiedAt
+          : lastNotifiedAt,
     );
   }
 }
@@ -299,6 +317,12 @@ class ScriptTriggerStateUpdateTable
         table.runningSince,
         value,
       );
+
+  _is.ColumnValue<DateTime, DateTime> lastNotifiedAt(DateTime? value) =>
+      _is.ColumnValue(
+        table.lastNotifiedAt,
+        value,
+      );
 }
 
 class ScriptTriggerStateTable extends _is.Table<int?> {
@@ -343,6 +367,10 @@ class ScriptTriggerStateTable extends _is.Table<int?> {
       'runningSince',
       this,
     );
+    lastNotifiedAt = _is.ColumnDateTime(
+      'lastNotifiedAt',
+      this,
+    );
   }
 
   late final ScriptTriggerStateUpdateTable updateTable;
@@ -366,6 +394,9 @@ class ScriptTriggerStateTable extends _is.Table<int?> {
 
   late final _is.ColumnDateTime runningSince;
 
+  /// Last scriptFailure notification (daily digest of failures).
+  late final _is.ColumnDateTime lastNotifiedAt;
+
   @override
   List<_is.Column> get columns => [
     id,
@@ -378,6 +409,7 @@ class ScriptTriggerStateTable extends _is.Table<int?> {
     consecutiveFailures,
     disabledReason,
     runningSince,
+    lastNotifiedAt,
   ];
 }
 

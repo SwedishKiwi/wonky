@@ -14,6 +14,8 @@ fields:
   consecutiveFailures: int, default=0
   disabledReason: String?
   runningSince: DateTime?
+  ### Last scriptFailure notification (daily digest of failures).
+  lastNotifiedAt: DateTime?
 indexes:
   script_trigger_state_id_idx:
     fields: triggerId

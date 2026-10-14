@@ -56,7 +56,12 @@ int columnInRange(SheetModel s, GridRect rect, String colId) {
 /// machinery (strategy per §2.2, copy semantics for formulas §2.5).
 ///
 /// Result: `strategy` (`rowReorder` / `contentMove`) and `movedRows`.
-MutationPlan planSortRange(PlanBuilder b, SortRange op) {
+MutationPlan planSortRange(PlanBuilder b, SortRange op) =>
+    drainPlanSteps(planSortRangeSteps(b, op));
+
+/// [planSortRange] as cooperative steps (progress 0–1, 07 §1.4); the last
+/// element is the plan.
+Iterable<Object> planSortRangeSteps(PlanBuilder b, SortRange op) sync* {
   final label = op.label ?? 'Sort range';
   final s = b.sheetOf(op.range.sheetId);
   final rect = op.range.rect;
@@ -84,7 +89,8 @@ MutationPlan planSortRange(PlanBuilder b, SortRange op) {
   b.addResolvedRange(op.range);
   if (data == null || data.rowCount < 2) {
     b.result['movedRows'] = 0;
-    return b.build(label);
+    yield b.build(label);
+    return;
   }
   checkRowMoveAllowed(b, s, data);
   final table = SortTable.fromSheet(
@@ -100,18 +106,30 @@ MutationPlan planSortRange(PlanBuilder b, SortRange op) {
       );
     },
   );
+  yield 0.1;
   final perm = SortPermutation.compute(table, specs);
-  final st = applyRowPermutation(b, s, data, perm);
-  b.result['strategy'] = st.name;
+  yield 0.15;
+  final out = RowMoveOutcome();
+  for (final p in applyRowPermutationSteps(b, s, data, perm, out)) {
+    yield 0.15 + 0.85 * p;
+  }
+  b.result['strategy'] = out.strategy!.name;
   b.result['movedRows'] = _moved(perm);
-  return b.build(label, kinds: [ChangeKinds.values]);
+  yield b.build(label, kinds: [ChangeKinds.values]);
 }
 
 /// [RandomizeRange] (07 §14): Fisher–Yates over the rows (the context's
 /// [PlanContext.random], else `Random.secure()`), sort machinery.
 ///
 /// Result: `strategy` and `movedRows`.
-MutationPlan planRandomizeRange(PlanBuilder b, RandomizeRange op) {
+MutationPlan planRandomizeRange(PlanBuilder b, RandomizeRange op) =>
+    drainPlanSteps(planRandomizeRangeSteps(b, op));
+
+/// [planRandomizeRange] as cooperative steps (see [planSortRangeSteps]).
+Iterable<Object> planRandomizeRangeSteps(
+  PlanBuilder b,
+  RandomizeRange op,
+) sync* {
   const label = 'Randomize range';
   final s = b.sheetOf(op.range.sheetId);
   final rect = op.range.rect;
@@ -119,17 +137,21 @@ MutationPlan planRandomizeRange(PlanBuilder b, RandomizeRange op) {
   b.addResolvedRange(op.range);
   if (rect.rowCount < 2) {
     b.result['movedRows'] = 0;
-    return b.build(label);
+    yield b.build(label);
+    return;
   }
   checkRowMoveAllowed(b, s, rect);
   final perm = RowShuffle.permutation(
     rect.rowCount,
     b.ctx.random ?? Random.secure(),
   );
-  final st = applyRowPermutation(b, s, rect, perm);
-  b.result['strategy'] = st.name;
+  final out = RowMoveOutcome();
+  for (final p in applyRowPermutationSteps(b, s, rect, perm, out)) {
+    yield p;
+  }
+  b.result['strategy'] = out.strategy!.name;
   b.result['movedRows'] = _moved(perm);
-  return b.build(label, kinds: [ChangeKinds.values]);
+  yield b.build(label, kinds: [ChangeKinds.values]);
 }
 
 /// [RemoveDuplicates] (07 §12.1): keeps the first occurrence of each row
@@ -137,7 +159,14 @@ MutationPlan planRandomizeRange(PlanBuilder b, RandomizeRange op) {
 /// rows upward within the range and clears the vacated rows at the bottom.
 ///
 /// Result: `duplicatesRemoved`, `uniqueRemaining` and the dialog `message`.
-MutationPlan planRemoveDuplicates(PlanBuilder b, RemoveDuplicates op) {
+MutationPlan planRemoveDuplicates(PlanBuilder b, RemoveDuplicates op) =>
+    drainPlanSteps(planRemoveDuplicatesSteps(b, op));
+
+/// [planRemoveDuplicates] as cooperative steps (see [planSortRangeSteps]).
+Iterable<Object> planRemoveDuplicatesSteps(
+  PlanBuilder b,
+  RemoveDuplicates op,
+) sync* {
   const label = 'Remove duplicates';
   final s = b.sheetOf(op.range.sheetId);
   final rect = op.range.rect;
@@ -157,17 +186,41 @@ MutationPlan planRemoveDuplicates(PlanBuilder b, RemoveDuplicates op) {
     b.result['duplicatesRemoved'] = 0;
     b.result['uniqueRemaining'] = 0;
     b.result['message'] = DedupeResult.noDuplicatesMessage;
-    return b.build(label);
+    yield b.build(label);
+    return;
   }
   final result = Dedupe.findDuplicates(valueReader(b, s.id), data, cols: cols);
   b.result['duplicatesRemoved'] = result.duplicateCount;
   b.result['uniqueRemaining'] = result.uniqueCount;
   b.result['message'] = result.message;
-  if (result.duplicateCount == 0) return b.build(label);
+  if (result.duplicateCount == 0) {
+    yield b.build(label);
+    return;
+  }
+  yield 0.05;
   checkRowMoveAllowed(b, s, data);
   final perm = Dedupe.compactPermutation(result, data.top);
-  applyRowPermutation(b, s, data, perm, keepCount: result.uniqueCount);
-  return b.build(label, kinds: [ChangeKinds.values]);
+  final out = RowMoveOutcome();
+  for (final p in applyRowPermutationSteps(
+    b,
+    s,
+    data,
+    perm,
+    out,
+    keepCount: result.uniqueCount,
+  )) {
+    yield 0.05 + 0.95 * p;
+  }
+  yield b.build(label, kinds: [ChangeKinds.values]);
+}
+
+/// Runs plan steps to the end and returns the plan (their last element).
+MutationPlan drainPlanSteps(Iterable<Object> steps) {
+  Object? last;
+  for (final x in steps) {
+    last = x;
+  }
+  return last! as MutationPlan;
 }
 
 int _moved(List<int> perm) {

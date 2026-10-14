@@ -1,10 +1,16 @@
 import 'dart:async';
 
-import 'package:flutter/material.dart' show Material, MaterialType;
+import 'package:flutter/material.dart'
+    show
+        Material,
+        MaterialType,
+        ReorderableListView,
+        ReorderableDragStartListener;
 import 'package:flutter/widgets.dart';
 import 'package:re_editor/re_editor.dart';
 import 'package:shad/shad.dart';
 import 'package:wonky_app/wonky_app.dart';
+import 'package:wonky_client/wonky_client.dart' show Participant, PresenceState;
 import 'package:wonky_core/wonky_core.dart' show InvocationSource;
 import 'package:wonky_sheets_core/model.dart' show GenericRecord;
 import 'package:wonky_sheets_script/wonky_sheets_script.dart';
@@ -13,6 +19,9 @@ import 'package:wonky_ui/wonky_ui.dart';
 import '../../../commands/script_commands.dart' show scriptEditorScope;
 import '../../../commands/sheets_command.dart' show editorOfServices;
 import '../../../l10n/sheets_l10n.dart';
+import '../../collab/presence/presence_cursor.dart';
+import '../../collab/sheets_collab.dart';
+import '../../formatting/sheets_user_defaults.dart';
 import '../../model/workbook_session.dart';
 import '../../sheet_editor/sheet_editor_controller.dart';
 import '../executions_panel.dart';
@@ -20,8 +29,10 @@ import '../script_project.dart';
 import '../script_service.dart';
 import '../script_widgets.dart';
 import 'problems.dart';
+import 'script_assist.dart';
 import 'script_code_theme.dart';
 import 'script_find_panel.dart';
+import 'script_history_dialog.dart';
 
 /// Below this width the file rail collapses into a dropdown (09 §14.1).
 const _narrowWidth = 900.0;
@@ -69,6 +80,16 @@ class _ScriptEditorScreenState extends State<ScriptEditorScreen> {
   Timer? _analyze;
   Timer? _retry;
   final _scope = FocusNode(debugLabel: 'scriptEditor');
+  ScriptCompletion _completion = ScriptCompletion();
+  String? _completionBuild;
+  late final ScriptPromptsBuilder _prompts = ScriptPromptsBuilder(
+    controller: () => _ctl[_active]!,
+    completion: () => _completion,
+  );
+  final Map<String, ScriptSpanDecorator> _decorators = {};
+  final Map<String, String> _problemKeys = {};
+  late final ScriptHoverPopup _hover = ScriptHoverPopup(context);
+  PresenceSession? _presence;
 
   ShellServices get s => widget.services;
 
@@ -85,6 +106,10 @@ class _ScriptEditorScreenState extends State<ScriptEditorScreen> {
     _svc?.removeListener(_onService);
     _analyze?.cancel();
     _retry?.cancel();
+    _hover.dispose();
+    _presence?.removeListener(_onPresence);
+    final ed = _ed;
+    if (ed != null) SheetsCollab.of(ed)?.presence.scriptFileId = null;
     for (final c in _ctl.values) {
       c.dispose();
     }
@@ -113,6 +138,23 @@ class _ScriptEditorScreenState extends State<ScriptEditorScreen> {
       _ed = ed;
       _svc = svc;
     });
+    _presence = SheetsCollab.of(ed)?.presence.presence;
+    _presence?.addListener(_onPresence);
+    // Restored drafts (09 §14.3) must be in before the first controller.
+    if (svc.isReady) {
+      _openInitial(ed, svc);
+    } else {
+      svc.ready.then((_) {
+        if (mounted) _openInitial(ed, svc);
+      });
+    }
+  }
+
+  void _onPresence() {
+    if (mounted) setState(() {});
+  }
+
+  void _openInitial(SheetEditorController ed, ScriptService svc) {
     final files = svc.files;
     final initial =
         (widget.initialFile == null
@@ -133,7 +175,16 @@ class _ScriptEditorScreenState extends State<ScriptEditorScreen> {
     final svc = _svc!;
     final row = ScriptProjectRows.file(_ed!.model, id);
     final saved = row == null ? '' : ScriptProjectRows.sourceOf(row);
-    final c = CodeLineEditingController.fromText(svc.drafts[id] ?? saved);
+    final decorator = _decorators[id] = ScriptSpanDecorator(
+      colors: () => ShadTheme.of(context).colorScheme,
+      problems: () => _problemsByLine(id),
+      onHoverEnter: (line, col, rect) => _onHover(id, line, col, rect),
+      onHoverExit: _hover.leave,
+    );
+    final c = CodeLineEditingController(
+      codeLines: CodeLines.fromText(svc.drafts[id] ?? saved),
+      spanBuilder: decorator.build,
+    );
     if (!svc.drafts.containsKey(id)) svc.markLoaded(id);
     var last = c.text;
     c.addListener(() {
@@ -154,6 +205,7 @@ class _ScriptEditorScreenState extends State<ScriptEditorScreen> {
       _active = id;
     });
     _svc?.activeFileId = id;
+    _publishFile();
     if (line != null && line > 0) {
       final index = (line - 1).clamp(0, c.codeLines.length - 1);
       c.selection = CodeLineSelection.collapsed(index: index, offset: 0);
@@ -174,6 +226,116 @@ class _ScriptEditorScreenState extends State<ScriptEditorScreen> {
       if (_active == id) _active = _open.lastOrNull;
     });
     _svc?.activeFileId = _active;
+    _publishFile();
+  }
+
+  /// Presence: `{route: script, file}` (09 §14.3).
+  void _publishFile() {
+    final ed = _ed;
+    if (ed == null) return;
+    SheetsCollab.of(ed)?.presence.scriptFileId = _active ?? '';
+  }
+
+  /// Other participants in the script editor (title row avatars).
+  List<(Participant, SheetsPresenceCursor)> _scriptPeers() {
+    final p = _presence;
+    if (p == null) return const [];
+    return [
+      for (final x in p.participants)
+        if (x.sessionId != p.sessionId &&
+            x.state != PresenceState.offline &&
+            x.state != PresenceState.away)
+          if (SheetsPresenceCursor.tryParse(x.cursorJson) case final c?
+              when c.route == 'script')
+            (x, c),
+    ];
+  }
+
+  // ------------------------------------------------------------- assist
+
+  ScriptCompletion _completionFor(ScriptService svc) {
+    final key = svc.program?.buildHash;
+    if (key != _completionBuild) {
+      _completionBuild = key;
+      _completion = ScriptCompletion(
+        project: [
+          for (final f in svc.exports.functions)
+            ProjectSymbol(
+              f.name,
+              signature:
+                  '${f.returns} ${f.name}(${f.params.map((p) => '${p.type} ${p.name}').join(', ')})',
+              doc: f.doc ?? '',
+            ),
+        ],
+      );
+    }
+    return _completion;
+  }
+
+  void _onHover(String id, int line, int col, Rect rect) {
+    final c = _ctl[id];
+    if (c == null) return;
+    final lines = c.codeLines;
+    var offset = 0;
+    for (var i = 0; i < line && i < lines.length; i++) {
+      offset += lines[i].text.length + 1;
+    }
+    final info = _completion.hover(c.text, offset + col);
+    if (info == null) return;
+    _hover.schedule(info, rect);
+  }
+
+  /// Problems of [id] by 0-based line (squiggles).
+  Map<int, List<ScriptDiagnostic>> _problemsByLine(String id) {
+    final ed = _ed;
+    final row = ed == null ? null : ScriptProjectRows.file(ed.model, id);
+    if (row == null) return const {};
+    final name = ScriptProjectRows.nameOf(row);
+    final out = <int, List<ScriptDiagnostic>>{};
+    for (final d in _problems()) {
+      if (d.file != name) continue;
+      out.putIfAbsent((d.line ?? 1) - 1, () => []).add(d);
+    }
+    return out;
+  }
+
+  /// Repaints the squiggles of files whose problems changed.
+  void _repaintSquiggles(List<ScriptDiagnostic> problems) {
+    final ed = _ed;
+    if (ed == null) return;
+    for (final id in _open) {
+      final row = ScriptProjectRows.file(ed.model, id);
+      if (row == null) continue;
+      final name = ScriptProjectRows.nameOf(row);
+      final key = [
+        for (final d in problems)
+          if (d.file == name) '${d.line}:${d.column}:${d.severity.name}',
+      ].join('|');
+      if (_problemKeys[id] == key) continue;
+      _problemKeys[id] = key;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) _ctl[id]?.forceRepaint();
+      });
+    }
+  }
+
+  Future<void> _openHistory() async {
+    final ed = _ed, svc = _svc, id = _active;
+    if (ed == null || svc == null || id == null) return;
+    final row = ScriptProjectRows.file(ed.model, id);
+    if (row == null) return;
+    final versions = await svc.historyOf(id);
+    if (!mounted) return;
+    final name = ScriptProjectRows.nameOf(row);
+    final restored = await showScriptHistoryDialog(
+      context,
+      fileName: name,
+      current: _ctl[id]?.text ?? ScriptProjectRows.sourceOf(row),
+      versions: versions,
+    );
+    if (restored == null || !mounted) return;
+    svc.restoreDraft(id, restored);
+    s.toasts.show(sheetsL10n(context).scriptRestoredDraft(name));
   }
 
   void _onService() {
@@ -190,15 +352,21 @@ class _ScriptEditorScreenState extends State<ScriptEditorScreen> {
         if (_active == id) _active = _open.lastOrNull;
         continue;
       }
+      final draft = svc.drafts[id];
+      final c = _ctl[id];
+      if (draft != null && c != null && c.text != draft) {
+        // A restored version or a merge result.
+        c.text = draft;
+      }
       final hash = ScriptProjectRows.hashOf(row);
       final base = svc.baseHashes[id];
-      if (base == null || base == hash) continue;
+      if (base == null || base == hash || svc.saving.contains(id)) continue;
       if (svc.isDirty(id)) {
         _staleRemote.add(id);
       } else {
         // Saved elsewhere and not dirty here: reload silently (09 §14.3).
         _ctl[id]?.text = ScriptProjectRows.sourceOf(row);
-        svc.drafts.remove(id);
+        svc.clearDraft(id);
         svc.markLoaded(id);
         if ('${row.columns['updatedBy']}' != ed.session.userId) {
           s.toasts.show(l.scriptFileUpdated(ScriptProjectRows.nameOf(row)));
@@ -218,9 +386,8 @@ class _ScriptEditorScreenState extends State<ScriptEditorScreen> {
   void _reloadRemote(String id) {
     final row = ScriptProjectRows.file(_ed!.model, id);
     if (row == null) return;
-    _svc!.drafts.remove(id);
     _ctl[id]?.text = ScriptProjectRows.sourceOf(row);
-    _svc!.drafts.remove(id);
+    _svc!.clearDraft(id);
     _svc!.markLoaded(id);
     setState(() => _staleRemote.remove(id));
   }
@@ -279,6 +446,26 @@ class _ScriptEditorScreenState extends State<ScriptEditorScreen> {
       }
     }
     out.addAll(build.where((d) => d.file == null || !names.contains(d.file)));
+    // Unresolved merge markers (09 §14.3 *Merge*).
+    final l = sheetsL10n(context);
+    for (final f in svc.files) {
+      final text = svc.drafts[f.id];
+      if (text == null || !text.contains('<<<<<<< ')) continue;
+      final lines = text.split('\n');
+      for (var i = 0; i < lines.length; i++) {
+        if (!lines[i].startsWith('<<<<<<< ')) continue;
+        out.add(
+          ScriptDiagnostic(
+            severity: DiagnosticSeverity.error,
+            code: 'merge_conflict',
+            message: l.scriptMergeConflictProblem,
+            file: ScriptProjectRows.nameOf(f),
+            line: i + 1,
+            column: 1,
+          ),
+        );
+      }
+    }
     out.sort((a, b) => a.severity.index.compareTo(b.severity.index));
     return out;
   }
@@ -401,6 +588,7 @@ class _ScriptEditorScreenState extends State<ScriptEditorScreen> {
                           const ShadSeparator.horizontal(
                             margin: EdgeInsets.zero,
                           ),
+                          if (!svc.scriptsEnabled) _disabledBanner(context),
                           Expanded(
                             child: Row(
                               crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -489,6 +677,29 @@ class _ScriptEditorScreenState extends State<ScriptEditorScreen> {
               ),
             ],
             const Spacer(),
+            if (_scriptPeers() case final peers when peers.isNotEmpty)
+              Padding(
+                padding: const EdgeInsets.only(right: 10),
+                child: PresenceAvatarStack(
+                  key: const ValueKey<String>('script.presence'),
+                  size: 26,
+                  participants: [
+                    for (final (p, _) in peers)
+                      PresenceParticipant(
+                        sessionId: p.sessionId,
+                        userKey: '${p.userId}',
+                        displayName: p.displayName,
+                        colorIndex: p.colorIndex,
+                        avatarUrl: p.avatarUrl,
+                        isAgent: p.actorKind.name != 'user',
+                        detail: l.scriptInScriptEditor,
+                        activity: p.state == PresenceState.idle
+                            ? PresenceActivity.idle
+                            : PresenceActivity.editing,
+                      ),
+                  ],
+                ),
+              ),
             if (!ed.canEdit)
               Padding(
                 padding: const EdgeInsets.only(right: 8),
@@ -544,6 +755,9 @@ class _ScriptEditorScreenState extends State<ScriptEditorScreen> {
                   key: const ValueKey<String>('script.fileSelect'),
                   initialValue: _active,
                   minWidth: 160,
+                  // No file is open yet on the first frame (the editor opens
+                  // one after it); a select without a value needs this.
+                  placeholder: const SizedBox.shrink(),
                   options: [
                     for (final f in files)
                       ShadOption(
@@ -621,7 +835,9 @@ class _ScriptEditorScreenState extends State<ScriptEditorScreen> {
                   overflow: TextOverflow.ellipsis,
                   style: const TextStyle(fontFamily: WonkyTheme.monoFamily),
                 ),
-                onChanged: (v) => svc.selectedFunction = v,
+                // Rebuild so Run and Run on server use the new pick (they
+                // read `selected` from this build).
+                onChanged: (v) => setState(() => svc.selectedFunction = v),
               ),
             ),
             const SizedBox(width: 4),
@@ -689,6 +905,20 @@ class _ScriptEditorScreenState extends State<ScriptEditorScreen> {
               tooltip: l.scriptFind,
               onPressed: _active == null ? null : _openFind,
             ),
+            scriptIconButton(
+              key: const ValueKey<String>('script.history'),
+              icon: LucideIcons.history,
+              tooltip: l.scriptLocalHistory,
+              onPressed: _active == null || svc.localStore == null
+                  ? null
+                  : _openHistory,
+            ),
+            scriptIconButton(
+              key: const ValueKey<String>('script.apiReference'),
+              icon: LucideIcons.circleQuestionMark,
+              tooltip: l.cmdHelpScriptApiReference,
+              onPressed: () => _invoke('sheets.help.scriptApiReference'),
+            ),
           ],
         ),
       ),
@@ -739,7 +969,34 @@ class _ScriptEditorScreenState extends State<ScriptEditorScreen> {
               onPressed: ed.canEdit ? _newFile : null,
             ),
           ),
-          for (final f in files) _fileRow(context, ed, svc, f),
+          ReorderableListView(
+            key: const ValueKey<String>('script.files'),
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            buildDefaultDragHandles: false,
+            onReorderItem: (from, index) {
+              if (!ed.canEdit || from >= files.length || index == from) {
+                return;
+              }
+              _invoke('sheets.script.reorderFile', {
+                'fileId': files[from].id,
+                'index': index,
+              });
+            },
+            children: [
+              for (var i = 0; i < files.length; i++)
+                ed.canEdit
+                    ? ReorderableDragStartListener(
+                        key: ValueKey<String>('script.fileRow.${files[i].id}'),
+                        index: i,
+                        child: _fileRow(context, ed, svc, files[i]),
+                      )
+                    : KeyedSubtree(
+                        key: ValueKey<String>('script.fileRow.${files[i].id}'),
+                        child: _fileRow(context, ed, svc, files[i]),
+                      ),
+            ],
+          ),
           header(l.scriptFunctions),
           if (functions.isEmpty)
             Padding(
@@ -887,8 +1144,12 @@ class _ScriptEditorScreenState extends State<ScriptEditorScreen> {
       );
     }
     final name = ScriptProjectRows.nameOf(row);
-    final problems = _problems().where((d) => d.file == name).toList();
+    final all = _problems();
+    _repaintSquiggles(all);
+    final problems = all.where((d) => d.file == name).toList();
     final c = _controllerFor(active);
+    _completionFor(svc);
+    _prompts.enabled = ed.canEdit;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
@@ -927,51 +1188,87 @@ class _ScriptEditorScreenState extends State<ScriptEditorScreen> {
             ),
           ),
         Expanded(
-          child: CodeEditor(
-            key: ValueKey<String>('script.code.$active'),
-            controller: c,
-            findController: _find[active],
-            readOnly: !ed.canEdit,
-            wordWrap: false,
-            autofocus: true,
-            style: ScriptCodeTheme.style(cs),
-            findBuilder: (context, controller, readOnly) =>
-                ScriptFindPanel(controller: controller, readOnly: readOnly),
-            shortcutOverrideActions: {
-              CodeShortcutSaveIntent: CallbackAction<CodeShortcutSaveIntent>(
-                onInvoke: (_) {
-                  unawaited(_invoke('sheets.script.saveFile'));
-                  return null;
-                },
+          child: CodeAutocomplete(
+            viewBuilder: (context, notifier, onSelected) =>
+                ScriptCompletionView(
+                  notifier: notifier,
+                  onSelected: onSelected,
+                ),
+            promptsBuilder: _prompts,
+            child: CodeEditor(
+              key: ValueKey<String>('script.code.$active'),
+              controller: c,
+              findController: _find[active],
+              readOnly: !ed.canEdit,
+              wordWrap: false,
+              autofocus: true,
+              style: ScriptCodeTheme.style(cs),
+              findBuilder: (context, controller, readOnly) =>
+                  ScriptFindPanel(controller: controller, readOnly: readOnly),
+              shortcutOverrideActions: {
+                CodeShortcutSaveIntent: CallbackAction<CodeShortcutSaveIntent>(
+                  onInvoke: (_) {
+                    unawaited(_invoke('sheets.script.saveFile'));
+                    return null;
+                  },
+                ),
+              },
+              indicatorBuilder: (context, editing, chunks, notifier) => Row(
+                children: [
+                  DefaultCodeLineNumber(
+                    controller: editing,
+                    notifier: notifier,
+                    textStyle: TextStyle(
+                      fontFamily: WonkyTheme.monoFamily,
+                      fontSize: 12,
+                      color: cs.mutedForeground,
+                    ),
+                    focusedTextStyle: TextStyle(
+                      fontFamily: WonkyTheme.monoFamily,
+                      fontSize: 12,
+                      color: cs.foreground,
+                    ),
+                  ),
+                  ProblemGutter(notifier: notifier, problems: problems),
+                  DefaultCodeChunkIndicator(
+                    width: 14,
+                    controller: chunks,
+                    notifier: notifier,
+                  ),
+                ],
               ),
-            },
-            indicatorBuilder: (context, editing, chunks, notifier) => Row(
-              children: [
-                DefaultCodeLineNumber(
-                  controller: editing,
-                  notifier: notifier,
-                  textStyle: TextStyle(
-                    fontFamily: WonkyTheme.monoFamily,
-                    fontSize: 12,
-                    color: cs.mutedForeground,
-                  ),
-                  focusedTextStyle: TextStyle(
-                    fontFamily: WonkyTheme.monoFamily,
-                    fontSize: 12,
-                    color: cs.foreground,
-                  ),
-                ),
-                ProblemGutter(notifier: notifier, problems: problems),
-                DefaultCodeChunkIndicator(
-                  width: 14,
-                  controller: chunks,
-                  notifier: notifier,
-                ),
-              ],
             ),
           ),
         ),
       ],
+    );
+  }
+
+  Widget _disabledBanner(BuildContext context) {
+    final l = sheetsL10n(context);
+    final theme = ShadTheme.of(context);
+    final cs = theme.colorScheme;
+    return Container(
+      key: const ValueKey<String>('script.disabledBanner'),
+      color: cs.warning.withValues(alpha: 0.12),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+      child: Row(
+        children: [
+          Icon(LucideIcons.circlePause, size: 15, color: cs.warning),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(l.scriptsDisabledBanner, style: theme.textTheme.small),
+          ),
+          ShadButton.outline(
+            key: const ValueKey<String>('script.enableScripts'),
+            size: ShadButtonSize.sm,
+            onPressed: () => SheetsUserDefaults.of(
+              s,
+            ).set(SheetsUserDefaults.keyScriptsEnabled, true),
+            child: Text(l.scriptsEnable),
+          ),
+        ],
+      ),
     );
   }
 
@@ -1004,6 +1301,25 @@ class _ScriptEditorScreenState extends State<ScriptEditorScreen> {
         ),
         child: Row(
           children: [
+            for (final (p, c) in _scriptPeers())
+              if (c.file == f.id)
+                Padding(
+                  padding: const EdgeInsets.only(right: 4),
+                  child: ShadTooltip(
+                    builder: (_) => Text(l.scriptFileOpenBy(p.displayName)),
+                    child: Container(
+                      key: ValueKey<String>(
+                        'script.tab.$name.peer.${p.sessionId}',
+                      ),
+                      width: 8,
+                      height: 8,
+                      decoration: BoxDecoration(
+                        color: cs.presence(p.colorIndex),
+                        shape: BoxShape.circle,
+                      ),
+                    ),
+                  ),
+                ),
             Text(name, style: theme.textTheme.small),
             if (svc.isDirty(f.id))
               Padding(

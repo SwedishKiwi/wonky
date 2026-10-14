@@ -5,6 +5,7 @@ import 'package:wonky_sheets_script/wonky_sheets_script.dart';
 import '../../../l10n/sheets_l10n.dart';
 import '../../grid/selection/grid_selection.dart' show SelectionKind;
 import '../../sheet_editor/sheet_editor_controller.dart';
+import 'script_panels.dart';
 
 /// The UI side of client executions (09 §16): alerts and prompts as
 /// `WonkyDialogSpec` dialogs (MCP-operable), toasts through the shell,
@@ -107,4 +108,15 @@ class AppScriptUi implements ScriptUiDelegate {
 
   @override
   void activateSheet(String sheetId) => editor.activateSheet(sheetId);
+
+  @override
+  void showPanel(ScriptPanelRequest request) =>
+      ScriptPanels.of(editor).show(request);
+
+  @override
+  void updatePanel(String panelId, Map<String, Object?> panel) =>
+      ScriptPanels.of(editor).update(panelId, panel);
+
+  @override
+  void closePanel(String panelId) => ScriptPanels.of(editor).close(panelId);
 }

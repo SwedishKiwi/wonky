@@ -31,6 +31,7 @@ abstract class AssistantContextHints
     this.sheetsSelection,
     this.sheetsActiveCell,
     this.sheetsVisibleRange,
+    this.uiTools,
   }) : includeComments = includeComments ?? false;
 
   factory AssistantContextHints({
@@ -47,6 +48,7 @@ abstract class AssistantContextHints
     List<String>? sheetsSelection,
     String? sheetsActiveCell,
     String? sheetsVisibleRange,
+    List<String>? uiTools,
   }) = _AssistantContextHintsImpl;
 
   factory AssistantContextHints.fromJson(
@@ -76,6 +78,11 @@ abstract class AssistantContextHints
             ),
       sheetsActiveCell: jsonSerialization['sheetsActiveCell'] as String?,
       sheetsVisibleRange: jsonSerialization['sheetsVisibleRange'] as String?,
+      uiTools: jsonSerialization['uiTools'] == null
+          ? null
+          : _i8pkqg1o.Protocol().deserialize<List<String>>(
+              jsonSerialization['uiTools'],
+            ),
     );
   }
 
@@ -113,6 +120,10 @@ abstract class AssistantContextHints
 
   String? sheetsVisibleRange;
 
+  /// `ui.*` tools the requesting window runs for the assistant (Sheets
+  /// 12 §6.2: get_selection, select_range, highlight_range); null = none.
+  List<String>? uiTools;
+
   /// Returns a shallow copy of this [AssistantContextHints]
   /// with some or all fields replaced by the given arguments.
   @_isc.useResult
@@ -130,6 +141,7 @@ abstract class AssistantContextHints
     List<String>? sheetsSelection = const _isc.$UndefinedList<String>(),
     String? sheetsActiveCell,
     String? sheetsVisibleRange,
+    List<String>? uiTools = const _isc.$UndefinedList<String>(),
   });
   @override
   Map<String, dynamic> toJson() {
@@ -148,6 +160,7 @@ abstract class AssistantContextHints
       if (sheetsSelection != null) 'sheetsSelection': sheetsSelection?.toJson(),
       if (sheetsActiveCell != null) 'sheetsActiveCell': sheetsActiveCell,
       if (sheetsVisibleRange != null) 'sheetsVisibleRange': sheetsVisibleRange,
+      if (uiTools != null) 'uiTools': uiTools?.toJson(),
     };
   }
 
@@ -168,6 +181,7 @@ abstract class AssistantContextHints
       if (sheetsSelection != null) 'sheetsSelection': sheetsSelection?.toJson(),
       if (sheetsActiveCell != null) 'sheetsActiveCell': sheetsActiveCell,
       if (sheetsVisibleRange != null) 'sheetsVisibleRange': sheetsVisibleRange,
+      if (uiTools != null) 'uiTools': uiTools?.toJson(),
     };
   }
 
@@ -194,6 +208,7 @@ class _AssistantContextHintsImpl extends AssistantContextHints {
     List<String>? sheetsSelection,
     String? sheetsActiveCell,
     String? sheetsVisibleRange,
+    List<String>? uiTools,
   }) : super._(
          documentSessionId: documentSessionId,
          applyMode: applyMode,
@@ -208,6 +223,7 @@ class _AssistantContextHintsImpl extends AssistantContextHints {
          sheetsSelection: sheetsSelection,
          sheetsActiveCell: sheetsActiveCell,
          sheetsVisibleRange: sheetsVisibleRange,
+         uiTools: uiTools,
        );
 
   /// Returns a shallow copy of this [AssistantContextHints]
@@ -228,6 +244,7 @@ class _AssistantContextHintsImpl extends AssistantContextHints {
     List<String>? sheetsSelection = const _isc.$UndefinedList<String>(),
     Object? sheetsActiveCell = _Undefined,
     Object? sheetsVisibleRange = _Undefined,
+    List<String>? uiTools = const _isc.$UndefinedList<String>(),
   }) {
     return AssistantContextHints(
       documentSessionId: documentSessionId is String?
@@ -261,6 +278,9 @@ class _AssistantContextHintsImpl extends AssistantContextHints {
       sheetsVisibleRange: sheetsVisibleRange is String?
           ? sheetsVisibleRange
           : this.sheetsVisibleRange,
+      uiTools: uiTools is _isc.UndefinedSentinel
+          ? this.uiTools?.map((e0) => e0).toList()
+          : uiTools,
     );
   }
 }

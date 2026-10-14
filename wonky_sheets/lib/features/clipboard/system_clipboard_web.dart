@@ -11,6 +11,10 @@ class _WebClipboard extends SystemClipboard {
   const _WebClipboard();
 
   static SystemClipboardData? _lastWrite;
+  static bool _readBlocked = false;
+
+  @override
+  bool get readBlocked => _readBlocked;
 
   @override
   Future<void> write(SystemClipboardData data) async {
@@ -41,6 +45,7 @@ class _WebClipboard extends SystemClipboard {
   @override
   Future<SystemClipboardData?> read() async {
     final clipboard = web.window.navigator.clipboard;
+    _readBlocked = false;
     try {
       final items = (await clipboard.read().toDart).toDart;
       String? plain;
@@ -65,6 +70,8 @@ class _WebClipboard extends SystemClipboard {
         if (last != null && last.plainText == text) return last;
         return SystemClipboardData(plainText: text);
       } catch (_) {
+        // Both APIs refused: the browser denied clipboard access.
+        _readBlocked = true;
         return _lastWrite;
       }
     }

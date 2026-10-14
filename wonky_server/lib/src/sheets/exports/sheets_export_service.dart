@@ -13,6 +13,7 @@ import '../../platform/common/time.dart';
 import '../../platform/files/file_service.dart';
 import '../../platform/sharing/access_service.dart';
 import '../headless/headless_workbook_provider.dart';
+import 'sheets_pdf_fonts.dart';
 
 /// Server-side spreadsheet exports (Sheets 11 §6.1, `drive.export`): the
 /// same core exporters as the app (`SheetsWorkbookExporter`) on the headless
@@ -25,8 +26,8 @@ abstract final class SheetsExportService {
   static const inlineLimit = 1024 * 1024;
 
   /// Exports the spreadsheet [itemUuid] as [format] (`xlsx`, `ods`, `pdf`,
-  /// `html`, `csv`, `tsv`). [sheetName]/[range] select the sheet (and A1
-  /// range) of CSV/TSV/PDF.
+  /// `html`, `csv`, `tsv`, `json`). [sheetName]/[range] select the sheet
+  /// (and A1 range) of CSV/TSV/PDF; [darkTheme] renders dark PDF pages.
   static Future<ExportResultView> export(
     Session session,
     Actor actor,
@@ -34,6 +35,7 @@ abstract final class SheetsExportService {
     String format, {
     String? sheetName,
     String? range,
+    bool darkTheme = false,
   }) async {
     final (item, role) = await AccessService.require(
       session,
@@ -50,7 +52,7 @@ abstract final class SheetsExportService {
     final fmt = core.SheetsExportFormat.tryParse(format);
     if (fmt == null) {
       throw Errors.invalid(
-        'Spreadsheets export as xlsx, ods, pdf, html, csv or tsv.',
+        'Spreadsheets export as xlsx, ods, pdf, html, csv, tsv or json.',
       );
     }
     final artifact = await exportBytes(
@@ -60,6 +62,7 @@ abstract final class SheetsExportService {
       sheetName: sheetName,
       range: range,
       author: null,
+      darkTheme: darkTheme,
     );
     final expires = nowUtc().add(resultLifetime);
     final file = await FileService.storeServerFile(
@@ -80,7 +83,9 @@ abstract final class SheetsExportService {
       ActivityType.exported,
       summary: {'format': fmt.name},
     );
-    final text = fmt.singleSheet && artifact.bytes.length <= inlineLimit
+    final text =
+        (fmt.singleSheet || fmt == core.SheetsExportFormat.json) &&
+            artifact.bytes.length <= inlineLimit
         ? utf8.decode(artifact.bytes, allowMalformed: true)
         : null;
     return ExportResultView(
@@ -106,6 +111,7 @@ abstract final class SheetsExportService {
     String? sheetName,
     String? range,
     String? author,
+    bool darkTheme = false,
   }) async {
     final wb = await HeadlessWorkbookProvider.open(session, item.contentRef!);
     final model = wb.model;
@@ -113,7 +119,8 @@ abstract final class SheetsExportService {
     final title = item.name.isEmpty ? model.spreadsheet.title : item.name;
     final images = <String, Uint8List>{};
     if (fmt != core.SheetsExportFormat.csv &&
-        fmt != core.SheetsExportFormat.tsv) {
+        fmt != core.SheetsExportFormat.tsv &&
+        fmt != core.SheetsExportFormat.json) {
       for (final uuid in core.SheetsWorkbookExporter.imageFiles(model)) {
         final f = await FileService.byUuid(
           session,
@@ -144,11 +151,14 @@ abstract final class SheetsExportService {
     }
     final now = nowUtc();
     switch (fmt) {
-      case core.SheetsExportFormat.xlsx || core.SheetsExportFormat.ods:
+      case core.SheetsExportFormat.xlsx ||
+          core.SheetsExportFormat.ods ||
+          core.SheetsExportFormat.json:
         final doc = core.SheetsWorkbookExporter.toDocument(
           model,
           values: core.EngineIrValueSource(source),
           imageBytes: (u) => images[u],
+          chartSource: fmt == core.SheetsExportFormat.xlsx ? source : null,
         );
         final (bytes, warnings) = core.SheetsWorkbookExporter.writeDocument(
           doc,
@@ -195,7 +205,13 @@ abstract final class SheetsExportService {
             : sheetName != null
             ? core.PrintJob(sheetId: sheet?.id)
             : const core.PrintJob(scope: core.PrintScope.workbook);
-        final pages = core.SheetsWorkbookExporter.paginate(model, source, job);
+        final fonts = await SheetsPdfFonts.load();
+        final pages = core.SheetsWorkbookExporter.paginate(
+          model,
+          source,
+          job,
+          fonts: fonts,
+        );
         final bytes = await core.SheetsWorkbookExporter.pdf(
           model,
           source,
@@ -204,6 +220,8 @@ abstract final class SheetsExportService {
           author: author,
           title: title,
           imageBytes: (u) => images[u],
+          fonts: fonts,
+          darkTheme: darkTheme,
         );
         return core.SheetsExportArtifact(
           fileName: core.SheetsWorkbookExporter.fileNameFor(

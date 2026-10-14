@@ -127,6 +127,10 @@ import 'package:wonky_client/src/protocol/platform/versions/version_restore_resu
     as _iyei7m5z;
 import 'package:wonky_client/src/protocol/sheets/ai/models/sheets_ai_apply_result.dart'
     as _isefwvgb;
+import 'package:wonky_client/src/protocol/sheets/ai/models/sheets_ai_cell_request.dart'
+    as _ibrzlkni;
+import 'package:wonky_client/src/protocol/sheets/ai/models/sheets_ai_cell_result.dart'
+    as _ivc6ykj9;
 import 'package:wonky_client/src/protocol/sheets/ai/models/sheets_ai_preview.dart'
     as _ijqca8sl;
 import 'package:wonky_client/src/protocol/sheets/ai/models/sheets_fill_proposal.dart'
@@ -135,6 +139,8 @@ import 'package:wonky_client/src/protocol/sheets/ai/models/sheets_fill_row.dart'
     as _i2syfqhi;
 import 'package:wonky_client/src/protocol/sheets/ai/models/sheets_formula_suggestion.dart'
     as _irs9q9tq;
+import 'package:wonky_client/src/protocol/sheets/imports/models/sheets_import_progress.dart'
+    as _in60swvs;
 import 'package:wonky_client/src/protocol/sheets/models/cell_history_page.dart'
     as _i8ap5j9q;
 import 'package:wonky_client/src/protocol/sheets/models/revert_result.dart'
@@ -549,6 +555,20 @@ class EndpointAssistant extends _isc.EndpointRef {
       'runId': runId,
       'confirmationId': confirmationId,
       'allow': allow,
+    },
+  );
+
+  /// The requesting window's answer to a `uiToolCall` event (Sheets 12
+  /// §6.2): [response].requestId is the event's `toolUseId`.
+  _ida.Future<bool> uiToolResult(
+    String runId,
+    _i1yu9qix.UiBridgeResponse response,
+  ) => caller.callServerEndpoint<bool>(
+    'assistant',
+    'uiToolResult',
+    {
+      'runId': runId,
+      'response': response,
     },
   );
 
@@ -1927,6 +1947,22 @@ class EndpointSheetsAi extends _isc.EndpointRef {
     },
   );
 
+  /// Evaluates `=AI()` cells (Sheets 12 §6.8): cached values, new ones for
+  /// Editors; [refresh] recomputes (*Refresh AI cells*).
+  _ida.Future<List<_ivc6ykj9.SheetsAiCellResult>> evaluateAiCells(
+    _isc.UuidValue itemUuid,
+    List<_ibrzlkni.SheetsAiCellRequest> requests,
+    bool refresh,
+  ) => caller.callServerEndpoint<List<_ivc6ykj9.SheetsAiCellResult>>(
+    'sheetsAi',
+    'evaluateAiCells',
+    {
+      'itemUuid': itemUuid,
+      'requests': requests,
+      'refresh': refresh,
+    },
+  );
+
   /// Discards a preview.
   _ida.Future<void> discardPreview(String previewId) =>
       caller.callServerEndpoint<void>(
@@ -2091,6 +2127,79 @@ class EndpointSheetsSync extends _isc.EndpointRef {
       );
 }
 
+/// Server import jobs into an existing spreadsheet (Sheets 11 §3.3): big
+/// files the client should not parse and plan itself. New spreadsheets are
+/// imported with `drive.import`.
+/// {@category Endpoint}
+class EndpointSheetsImport extends _isc.EndpointRef {
+  EndpointSheetsImport(_isc.EndpointCaller caller) : super(caller);
+
+  @override
+  String get name => 'sheetsImport';
+
+  /// Queues the import of the upload [uploadId] (`importSource`) into
+  /// [spreadsheetUuid] with [optionsJson] (`ImportOptions`, 11 §9).
+  /// [activeSheetId] is the target sheet of the in-sheet locations and the
+  /// insert position of new sheets. Returns the job id.
+  _ida.Future<_isc.UuidValue> importInto(
+    _isc.UuidValue spreadsheetUuid,
+    _isc.UuidValue uploadId,
+    String optionsJson,
+    String? activeSheetId,
+  ) => caller.callServerEndpoint<_isc.UuidValue>(
+    'sheetsImport',
+    'importInto',
+    {
+      'spreadsheetUuid': spreadsheetUuid,
+      'uploadId': uploadId,
+      'optionsJson': optionsJson,
+      'activeSheetId': activeSheetId,
+    },
+  );
+
+  /// Progress of [jobId] until it is done, failed or cancelled.
+  _ida.Stream<_in60swvs.SheetsImportProgress> watchImport(
+    _isc.UuidValue jobId,
+  ) =>
+      caller.callStreamingServerEndpoint<
+        _ida.Stream<_in60swvs.SheetsImportProgress>,
+        _in60swvs.SheetsImportProgress
+      >(
+        'sheetsImport',
+        'watchImport',
+        {'jobId': jobId},
+        {},
+      );
+
+  /// The current progress of [jobId].
+  _ida.Future<_in60swvs.SheetsImportProgress> importProgress(
+    _isc.UuidValue jobId,
+  ) => caller.callServerEndpoint<_in60swvs.SheetsImportProgress>(
+    'sheetsImport',
+    'importProgress',
+    {'jobId': jobId},
+  );
+
+  /// Another spreadsheet the caller can read as an XLSX file to import
+  /// (*Import › Drive*, 11 §2.1): a signed download URL (15 min).
+  _ida.Future<_ia6gray1.ExportResultView> sourceFromDrive(
+    _isc.UuidValue itemUuid,
+  ) => caller.callServerEndpoint<_ia6gray1.ExportResultView>(
+    'sheetsImport',
+    'sourceFromDrive',
+    {'itemUuid': itemUuid},
+  );
+
+  /// Cancels [jobId]; written chunks are reverted.
+  _ida.Future<_in60swvs.SheetsImportProgress> cancelImport(
+    _isc.UuidValue jobId,
+  ) => caller.callServerEndpoint<_in60swvs.SheetsImportProgress>(
+    'sheetsImport',
+    'cancelImport',
+    {'jobId': jobId},
+  );
+}
+
 /// Scripts of a spreadsheet (Sheets 09): build, run on server, executions
 /// log, authorization and the URL fetch proxy. `spreadsheetUuid` is the
 /// drive item uuid or the space uuid.
@@ -2146,6 +2255,24 @@ class EndpointScript extends _isc.EndpointRef {
       'functionName': functionName,
       'argsJson': argsJson,
     },
+  );
+
+  /// *Run on server* with live logs (09 §14.5): JSON events, first
+  /// `{"log": {t, level, msg}}` per log line while the function runs, then
+  /// `{"result": ScriptRunResponse}`.
+  _ida.Stream<String> runLive(
+    _isc.UuidValue spreadsheetUuid,
+    String functionName,
+    String? argsJson,
+  ) => caller.callStreamingServerEndpoint<_ida.Stream<String>, String>(
+    'script',
+    'runLive',
+    {
+      'spreadsheetUuid': spreadsheetUuid,
+      'functionName': functionName,
+      'argsJson': argsJson,
+    },
+    {},
   );
 
   /// The executions log, newest first (09 §13.3).
@@ -2234,6 +2361,74 @@ class EndpointScript extends _isc.EndpointRef {
         'notifyOpen',
         {'spreadsheetUuid': spreadsheetUuid},
       );
+}
+
+/// Sheets extensions of version history (Sheets 10 §5.2, §5.4): changed
+/// ranges with authors, the server-side diff of big versions, and the
+/// comments/sharing options of *Make a copy* from a version.
+/// {@category Endpoint}
+class EndpointSheetsVersion extends _isc.EndpointRef {
+  EndpointSheetsVersion(_isc.EndpointCaller caller) : super(caller);
+
+  @override
+  String get name => 'sheetsVersion';
+
+  /// `changedRangesJson` of a version (`{v, approx, ranges: [{s, r1, c1,
+  /// r2, c2, u}]}`, oldest first; `u` = user id of the author). Versions
+  /// captured before the index existed are computed on the fly.
+  _ida.Future<String> changes(
+    _isc.UuidValue itemUuid,
+    int versionId,
+  ) => caller.callServerEndpoint<String>(
+    'sheetsVersion',
+    'changes',
+    {
+      'itemUuid': itemUuid,
+      'versionId': versionId,
+    },
+  );
+
+  /// The diff of [versionId] against [previousVersionId] (default: the
+  /// version before it) computed on the server for versions too big for the
+  /// client (Sheets 10 §5.2 step 4), with the author of every changed cell.
+  /// Cached as `<versionId>.diff.gz`; returns its signed URL (gzip JSON
+  /// `{diff: SnapshotDiff JSON, a: [author user ids, 0 = unknown]}`).
+  _ida.Future<_i4i1hokq.FileUrlView> diff(
+    _isc.UuidValue itemUuid,
+    int versionId,
+    int? previousVersionId,
+  ) => caller.callServerEndpoint<_i4i1hokq.FileUrlView>(
+    'sheetsVersion',
+    'diff',
+    {
+      'itemUuid': itemUuid,
+      'versionId': versionId,
+      'previousVersionId': previousVersionId,
+    },
+  );
+
+  /// The *Copy comments* / *Share with the same people* options of a copy
+  /// made on the client from a version (Sheets 10 §5.4): copies the
+  /// comment threads of [sourceItemUuid] to [targetItemUuid] with anchors
+  /// remapped through [anchorIdMapJson] (`{oldId: newId}`), and the source's
+  /// sharing. The caller must own the target and be able to copy the source.
+  _ida.Future<void> copyExtras(
+    _isc.UuidValue sourceItemUuid,
+    _isc.UuidValue targetItemUuid,
+    String anchorIdMapJson,
+    bool copyComments,
+    bool copySharing,
+  ) => caller.callServerEndpoint<void>(
+    'sheetsVersion',
+    'copyExtras',
+    {
+      'sourceItemUuid': sourceItemUuid,
+      'targetItemUuid': targetItemUuid,
+      'anchorIdMapJson': anchorIdMapJson,
+      'copyComments': copyComments,
+      'copySharing': copySharing,
+    },
+  );
 }
 
 /// Write documents: the OT editing stream and helpers (Write 03 §1).
@@ -2670,7 +2865,9 @@ class Client extends _isc.ServerpodClientShared {
     sheetsAi = EndpointSheetsAi(this);
     sheets = EndpointSheets(this);
     sheetsSync = EndpointSheetsSync(this);
+    sheetsImport = EndpointSheetsImport(this);
     script = EndpointScript(this);
+    sheetsVersion = EndpointSheetsVersion(this);
     document = EndpointDocument(this);
     writeExport = EndpointWriteExport(this);
     writeHistory = EndpointWriteHistory(this);
@@ -2720,7 +2917,11 @@ class Client extends _isc.ServerpodClientShared {
 
   late final EndpointSheetsSync sheetsSync;
 
+  late final EndpointSheetsImport sheetsImport;
+
   late final EndpointScript script;
+
+  late final EndpointSheetsVersion sheetsVersion;
 
   late final EndpointDocument document;
 
@@ -2755,7 +2956,9 @@ class Client extends _isc.ServerpodClientShared {
     'sheetsAi': sheetsAi,
     'sheets': sheets,
     'sheetsSync': sheetsSync,
+    'sheetsImport': sheetsImport,
     'script': script,
+    'sheetsVersion': sheetsVersion,
     'document': document,
     'writeExport': writeExport,
     'writeHistory': writeHistory,

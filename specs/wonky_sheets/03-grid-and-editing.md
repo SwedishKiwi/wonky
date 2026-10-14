@@ -244,6 +244,11 @@ the frozen extent; see §2.3).
 - `AxisIndex` (02 §6) holds a Fenwick tree of 100 %-sizes (hidden and filter-hidden = 0).
   `GridGeometry.rowTop(i) = fenwick.prefix(i) × zoom`; `rowAt(y)` = Fenwick lower-bound
   search on `y / zoom` — both O(log n).
+- **Row display order** (07 §4.4, sorted filter views): `GridGeometry(rowOrder:)` shows a
+  contiguous block of rows below the frozen rows in a permuted order (`ViewRowOrder`, core):
+  positions, hit testing and scrolling work in display rows, the pane API stays in model rows
+  (`GridPane.rows` iterates the rows shown in display order), and selections made on screen are
+  display ranges that resolve to several model ranges (§6.1). Row headers keep model numbers.
 - **Panes** (`PaneLayout`), given `frozenRows = fr`, `frozenColumns = fc`:
 
   | Pane | Rows | Columns | Scrolls |
@@ -392,7 +397,10 @@ viewport at 2 Hz, disabled with Reduce motion). Typing into a not-yet-loaded cel
 > `skeleton` bars of varying width in rows whose cells are not loaded, toggling at 2 Hz (static
 > with the platform's reduce motion), asks the session for the visible rows first and removes
 > itself when loading completes. Blocks are 500 rows (02 §6). The editor's write gate refuses
-> edits there before the cell editor opens.
+> edits there before the cell editor opens. A formula that reads rows not loaded yet (directly,
+> or through single-cell references to such formulas, 4 levels) shows `#LOADING` — the muted
+> italic "Loading…" — instead of a partial value until they arrive
+> (`features/model/loading_formula_source.dart`, the grid's `CellSource` while streaming).
 
 ### 2.9 Grid paint tokens (light/dark)
 
@@ -1237,10 +1245,18 @@ and undo restores both rows and formula text.
   (also Insert › Smart chips and the context menus, `sheets.insert.smartChip` without `kind`):
   a search field continues the text; *People* are the spreadsheet's editors (cached per device
   for offline, `FileEditors`) plus the user; *Date* opens the date picker; *Dropdown* runs
-  `sheets.insert.dropdown`; *Insert "@…" as text* keeps the typed text. ↑/↓/Enter, Esc. People
-  chips are painted by `PersonChipLayer` (pill, avatar initial, name; over the cell's text) and
-  the hover card shows name, email and *Copy email*. Agents pass `kind` (`person` with
-  `email`/`name`/`userId`, `date` with an ISO `date`).
+  `sheets.insert.dropdown`; *Insert "@…" as text* keeps the typed text. ↑/↓/Enter, Esc. The
+  hover card shows name, email and *Copy email*. Agents pass `kind` (`person` with
+  `email`/`name`/`userId`, `file` with `uuid` (+ `name`/`itemKind`), `date` with an ISO `date`).
+  **Chips are rich runs** laid out by the cell layer (`RichTextLayoutCache`: a leading
+  placeholder for the avatar/icon, the label in the neutral chip text color, end padding;
+  `paintRichChipsBehind`/`paintRichChipsFront` draw the pills and avatars around the paragraph),
+  so chips align, wrap and mix with other text and runs ("Owner: @Ann").
+  **File chips**: the menu's *Files* section lists recently opened drive items and drive search
+  results (not this spreadsheet); a chip is `{"chip":{"kind":"file","uuid":…,"itemKind":…}}` on
+  the item's name with a document/spreadsheet/folder icon. Its hover card has *Open*
+  (`sheets.chip.openFile {uuid}`: the item opens in this window, `ShellServices.openItem`). No
+  place chips.
 
 ### 14.4 Hyperlinks
 

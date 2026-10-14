@@ -32,7 +32,7 @@ class FindLayer extends GridLayer {
     final cur = find.currentMatch;
     ctx.forEachPane(canvas, (pane) {
       if (pane.isEmpty) return;
-      for (var r = pane.rowStart; r <= pane.rowEnd; r++) {
+      for (final r in pane.rows) {
         if (ctx.sheet.rows.sizeAt(r) <= 0) continue;
         for (var c = pane.colStart; c <= pane.colEnd; c++) {
           if (!find.isMatch(ctx.sheetId, r, c)) continue;

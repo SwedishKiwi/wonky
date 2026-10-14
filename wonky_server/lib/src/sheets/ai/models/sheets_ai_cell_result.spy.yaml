@@ -1,0 +1,10 @@
+### The value of one `=AI()` call (Sheets 12 §6.8).
+class: SheetsAiCellResult
+fields:
+  id: String
+  ### Text (numbers as text when the prompt asks for a number).
+  value: String?
+  ### Set on failure: `#AI_ERROR!` with this message as tooltip.
+  error: String?
+  ### Whether the value came from the cache.
+  cached: bool

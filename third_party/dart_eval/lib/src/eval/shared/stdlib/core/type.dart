@@ -2,7 +2,11 @@ import 'package:dart_eval/dart_eval_bridge.dart';
 import 'package:dart_eval/stdlib/core.dart';
 
 /// dart_eval [$Value] representation of [Type]
-class $Type implements $Instance, Type {
+// WONKY PATCH DE-21: no longer `implements Type`. A second implementation of
+// dart:core's `Type` changes how dart2wasm represents `Type`, and its dynamic
+// dispatchers then compile every dynamic closure call (`Function f; f()`) to
+// `unreachable` (the Flutter web app crashed on startup in wasm builds).
+class $Type implements $Instance {
   $Type(this.$value) : _superclass = $Object($value);
 
   static const $declaration = BridgeClassDef(

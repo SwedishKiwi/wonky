@@ -4,6 +4,8 @@ import 'dart:math' as math;
 import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
 import 'package:shad/shad.dart';
+import 'package:wonky_app/wonky_app.dart' show DriveKindIcon;
+import 'package:wonky_client/wonky_client.dart' show DriveItemKind;
 
 import 'package:wonky_sheets_core/formula.dart' show CellPos;
 
@@ -28,10 +30,14 @@ class CellInfo {
     this.invalid,
     this.help,
     this.person,
+    this.file,
   });
 
   /// The people smart chip of the cell (03 §14.3).
   final PersonChip? person;
+
+  /// The file smart chip of the cell (03 §14.3).
+  final FileChip? file;
 
   final String sheetId;
   final int row;
@@ -55,7 +61,8 @@ class CellInfo {
       errorTitle == null &&
       invalid == null &&
       help == null &&
-      person == null;
+      person == null &&
+      file == null;
 }
 
 /// Places [child] next to [cell] inside [area] (below, or above when there
@@ -390,6 +397,39 @@ class CellInfoCard extends StatelessWidget {
                   );
                 },
               ),
+            ),
+          ],
+        ),
+      );
+    }
+    final file = info.file;
+    if (file != null) {
+      add(
+        Row(
+          key: const ValueKey<String>('sheets.cellCard.file'),
+          children: [
+            DriveKindIcon(switch (file.itemKind) {
+              'spreadsheet' => DriveItemKind.spreadsheet,
+              'folder' => DriveItemKind.folder,
+              _ => DriveItemKind.document,
+            }, size: 18),
+            const SizedBox(width: 8),
+            Expanded(
+              child: Text(
+                file.name,
+                style: title,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
+            ShadButton.ghost(
+              key: const ValueKey<String>('sheets.cellCard.file.open'),
+              size: ShadButtonSize.sm,
+              onPressed: () => controller.editor.invokeCommand(
+                'sheets.chip.openFile',
+                {'uuid': file.uuid},
+              ),
+              child: Text(l.smartChipOpenFile),
             ),
           ],
         ),

@@ -125,6 +125,26 @@ class FakeSheetsAiApi implements SheetsAiApi {
   Future<void> discardPreview(String previewId) async =>
       discarded.add(previewId);
 
+  /// `AI()` batches: (requests, refresh).
+  final List<(List<SheetsAiCellRequest>, bool)> aiCellCalls = [];
+
+  /// The answer of an `AI()` prompt (default: the prompt upper-cased).
+  String? Function(SheetsAiCellRequest r) aiCellValue = (r) =>
+      r.prompt.toUpperCase();
+
+  @override
+  Future<List<SheetsAiCellResult>> evaluateAiCells(
+    UuidValue itemUuid,
+    List<SheetsAiCellRequest> requests, {
+    bool refresh = false,
+  }) async {
+    aiCellCalls.add((requests, refresh));
+    return [
+      for (final r in requests)
+        SheetsAiCellResult(id: r.id, value: aiCellValue(r), cached: false),
+    ];
+  }
+
   @override
   Future<RevertResult> revertChange(UuidValue changeId) async {
     reverted.add(changeId.uuid);

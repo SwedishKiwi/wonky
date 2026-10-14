@@ -35,6 +35,38 @@ void main() {
         await settleTooltips(tester);
       });
 
+      testWidgets('when a dense stepper has a suffix then the digits keep '
+          'their width', (tester) async {
+        await pumpWonky(
+          tester,
+          Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              WonkyNumberStepper(
+                value: 100,
+                max: 500,
+                dense: true,
+                onChanged: (_) {},
+              ),
+              WonkyNumberStepper(
+                value: 100,
+                max: 500,
+                dense: true,
+                suffix: '%',
+                onChanged: (_) {},
+              ),
+            ],
+          ),
+          brightness: b,
+          center: true,
+        );
+        final fields = find.byType(EditableText);
+        expect(
+          tester.getSize(fields.at(1)).width,
+          closeTo(tester.getSize(fields.at(0)).width, 1),
+        );
+      });
+
       testWidgets('when hovering the table size picker then the label follows '
           'and tap selects', (tester) async {
         (int, int)? picked;
@@ -165,6 +197,26 @@ void main() {
           await tester.tap(find.byKey(const ValueKey('sync.retry')));
           await tester.pumpAndSettle();
           expect(retried, 1);
+          await settleTooltips(tester);
+        },
+      );
+
+      testWidgets(
+        'when a big save reports progress then the label shows the percentage',
+        (tester) async {
+          await pumpWonky(
+            tester,
+            const SyncStatusIndicator(
+              status: SyncStatus(
+                state: SyncState.saving,
+                pendingChanges: 60000,
+                progress: 0.426,
+              ),
+            ),
+            brightness: b,
+            center: true,
+          );
+          expect(find.text('Saving… 42 %'), findsWidgets);
           await settleTooltips(tester);
         },
       );

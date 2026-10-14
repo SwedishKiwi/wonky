@@ -205,15 +205,17 @@ class _GridAreaState extends State<GridArea>
   int? _rowBoundary(double y) {
     final g = _g!;
     final row = g.rowAtY(y);
-    final bottom = g.rowY(row + 1);
+    // Edges on screen (display order in a sorted filter view, 07 §4.4).
+    final d = g.displayRow(row);
+    final bottom = g.rowY(g.modelRow(d + 1));
     final top = g.rowY(row);
     if ((y - bottom).abs() <= 3) return row;
-    if ((y - top).abs() <= 3 && row > 0) {
-      var prev = row - 1;
-      while (prev > 0 && g.sheet.rows.sizeAt(prev) <= 0) {
+    if ((y - top).abs() <= 3 && d > 0) {
+      var prev = d - 1;
+      while (prev > 0 && g.sheet.rows.sizeAt(g.modelRow(prev)) <= 0) {
         prev--;
       }
-      return prev;
+      return g.modelRow(prev);
     }
     return null;
   }
@@ -223,6 +225,7 @@ class _GridAreaState extends State<GridArea>
     if (g == null || !c.canEdit || c.editor.isEditing) return false;
     final sel = c.selection.resolved;
     if (sel.ranges.length != 1) return false;
+    if (c.rowsPermuted(sel.ranges.first.rect)) return false;
     final r = g.rangeRect(_clipRect(sel.ranges.first.rect));
     return (p - r.bottomRight).distance <= 6;
   }
@@ -233,6 +236,7 @@ class _GridAreaState extends State<GridArea>
     final sel = c.selection.resolved;
     if (sel.ranges.length != 1) return false;
     if (sel.activeRange.kind != SelectionKind.cells) return false;
+    if (c.rowsPermuted(sel.ranges.first.rect)) return false;
     final r = g.rangeRect(sel.ranges.first.rect);
     final outer = r.inflate(3);
     final inner = r.deflate(3);
@@ -394,6 +398,7 @@ class _GridAreaState extends State<GridArea>
           c.canEdit &&
           selRows.ranges.length == 1 &&
           selRows.activeRange.kind == SelectionKind.rows &&
+          !c.rowsPermuted(selRows.activeRange.rect) &&
           selRows.rowFullySelected(row)) {
         _drag = _Drag.moveRows;
         _dragSource = selRows.activeRange.rect;

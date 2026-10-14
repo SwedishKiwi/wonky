@@ -3,18 +3,24 @@ import 'dart:async';
 import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart' hide RichText;
 import 'package:shad/shad.dart';
+import 'package:wonky_app/wonky_app.dart' show DriveKindIcon;
+import 'package:wonky_client/wonky_client.dart'
+    show
+        DriveItemView,
+        DriveListFilter,
+        DriveSearchFilters,
+        DriveSort,
+        DriveSortField,
+        DriveView;
 import 'package:wonky_sheets_core/formula.dart' show GridRect;
 import 'package:wonky_sheets_core/model.dart';
 
 import '../../l10n/sheets_l10n.dart';
-import '../formatting/cell_fonts.dart';
-import '../grid/paint/grid_layer.dart';
-import '../grid/paint/text_layout_cache.dart';
+import '../formatting/rich_text_paint.dart' show chipAvatarColor;
 import '../protection/file_editors.dart';
 import '../protection/protection_dialogs.dart' show ProtectionEditorOption;
 import 'cell_cards.dart' show CellPopoverSurface;
 import 'in_cell_controller.dart';
-import 'in_cell_paint.dart' show neutralChipColors;
 
 /// `yyyy-mm-dd` of [d] (typed input that parses as a date everywhere).
 String isoDate(DateTime d) =>
@@ -41,21 +47,25 @@ class PersonChip {
     ]),
   );
 
-  /// The person chip of a cell's content, or null.
+  /// The first person chip run of a cell's content, or null.
   static PersonChip? of(CellContent? content) {
     if (content is! RichTextContent) return null;
     final rich = content.rich;
-    if (rich.runs.length != 1) return null;
-    final chip = rich.runs.single.format[RichRunKeys.chip];
-    if (chip is! Map || chip['kind'] != 'person') return null;
-    final email = chip['email'];
-    if (email is! String) return null;
-    final userId = chip['userId'];
-    return PersonChip(
-      email: email,
-      name: rich.text,
-      userId: userId is String ? userId : null,
-    );
+    for (final run in rich.runs) {
+      final chip = run.format[RichRunKeys.chip];
+      if (chip is! Map || chip['kind'] != 'person') continue;
+      final email = chip['email'];
+      if (email is! String) continue;
+      final userId = chip['userId'];
+      final s = run.start.clamp(0, rich.text.length);
+      final e = run.end.clamp(s, rich.text.length);
+      return PersonChip(
+        email: email,
+        name: rich.text.substring(s, e),
+        userId: userId is String ? userId : null,
+      );
+    }
+    return null;
   }
 
   /// Fast check on stored content (`r:{…"chip"…}`) before decoding.
@@ -70,117 +80,61 @@ class PersonChip {
   int get hashCode => Object.hash(email, name);
 }
 
-/// Avatar colors of person chips (name hash).
-const _avatarColors = [
-  Color(0xFF1A73E8),
-  Color(0xFF188038),
-  Color(0xFFC5221F),
-  Color(0xFFE37400),
-  Color(0xFF9334E6),
-  Color(0xFF007B83),
-  Color(0xFFB80672),
-  Color(0xFF5F6368),
-];
+/// A file smart chip (03 §14.3): a link to a drive item (document,
+/// spreadsheet or folder) as a rich run
+/// `{"chip": {"kind": "file", "uuid": …, "itemKind": …}}` labelled with the
+/// item's name. The hover card opens it in this window.
+@immutable
+class FileChip {
+  const FileChip({
+    required this.uuid,
+    required this.name,
+    required this.itemKind,
+  });
 
-/// Paints people chips (03 §14.3) over their cells: a rounded pill with an
-/// avatar initial and the name, in the neutral chip colors.
-class PersonChipLayer extends GridLayer {
-  const PersonChipLayer();
+  /// The drive item.
+  final String uuid;
+  final String name;
 
-  @override
-  int get zOrder => GridZ.decorations - 10;
+  /// `document`, `spreadsheet` or `folder`.
+  final String itemKind;
 
-  @override
-  void paint(GridPaintContext ctx, Canvas canvas) {
-    final sheet = ctx.sheet;
-    final tokens = ctx.tokens;
-    final z = ctx.zoom;
-    final neutral = neutralChipColors(tokens);
-    ctx.forEachPane(canvas, (pane) {
-      if (pane.isEmpty) return;
-      final window = GridRect(
-        pane.rowStart,
-        pane.colStart,
-        pane.rowEnd,
-        pane.colEnd,
+  /// The cell content of the chip.
+  RichTextContent get content => RichTextContent(
+    RichText(name, [
+      RichRun(0, name.length, {
+        RichRunKeys.chip: {'kind': 'file', 'uuid': uuid, 'itemKind': itemKind},
+      }),
+    ]),
+  );
+
+  /// The first file chip run of a cell's content, or null.
+  static FileChip? of(CellContent? content) {
+    if (content is! RichTextContent) return null;
+    final rich = content.rich;
+    for (final run in rich.runs) {
+      final chip = run.format[RichRunKeys.chip];
+      if (chip is! Map || chip['kind'] != 'file') continue;
+      final uuid = chip['uuid'];
+      if (uuid is! String) continue;
+      final kind = chip['itemKind'];
+      final s = run.start.clamp(0, rich.text.length);
+      final e = run.end.clamp(s, rich.text.length);
+      return FileChip(
+        uuid: uuid,
+        name: rich.text.substring(s, e),
+        itemKind: kind is String ? kind : 'document',
       );
-      for (final (r, c, cell) in sheet.cellsIn(window, contentOnly: true)) {
-        if (!PersonChip.mayBe(cell.content)) continue;
-        final chip = PersonChip.of(cell.decoded);
-        if (chip == null) continue;
-        if (sheet.rows.sizeAt(r) <= 0 || sheet.columns.sizeAt(c) <= 0) {
-          continue;
-        }
-        final m = sheet.mergeAt(r, c);
-        if (m != null && (m.top != r || m.left != c)) continue;
-        final rect = m == null ? pane.cellRect(r, c) : pane.rangeRect(m);
-        final d = ctx.cells.displayAt(sheet.id, r, c);
-        final fill = d?.fillColor;
-        final bg = fill == null ? tokens.sheetBackground : _hex(fill);
-        canvas.save();
-        canvas.clipRect(rect);
-        canvas.drawRect(rect.deflate(1), Paint()..color = bg);
-        final f = d?.format;
-        final style = GridTextStyle(
-          fontFamily: CellFonts.screenFamily(f?.fontFamily ?? CellFonts.inter),
-          fontSize: (f?.fontSize ?? 10) * 4 / 3 * z,
-          color: neutral.fg,
-          bold: f?.bold ?? false,
-          italic: f?.italic ?? false,
-        );
-        final p = ctx.text.layout(chip.name, style);
-        final h = (rect.height - 4 * z).clamp(8.0, 22 * z);
-        final avatar = h - 4 * z;
-        final w = (p.maxIntrinsicWidth + avatar + 14 * z).clamp(
-          0.0,
-          rect.width - 6 * z,
-        );
-        final pill = Rect.fromLTWH(
-          rect.left + 3 * z,
-          rect.center.dy - h / 2,
-          w,
-          h,
-        );
-        canvas.drawRRect(
-          RRect.fromRectAndRadius(pill, Radius.circular(h / 2)),
-          Paint()..color = neutral.bg,
-        );
-        final ac = Offset(pill.left + 2 * z + avatar / 2, pill.center.dy);
-        final color = _avatarColors[chip.email.hashCode.abs() % 8];
-        canvas.drawCircle(ac, avatar / 2, Paint()..color = color);
-        final initial = chip.name.isEmpty
-            ? '?'
-            : String.fromCharCode(chip.name.runes.first).toUpperCase();
-        final ip = ctx.text.layout(
-          initial,
-          GridTextStyle(
-            fontFamily: style.fontFamily,
-            fontSize: avatar * 0.6,
-            color: const Color(0xFFFFFFFF),
-            bold: true,
-          ),
-        );
-        canvas.drawParagraph(
-          ip,
-          Offset(ac.dx - ip.maxIntrinsicWidth / 2, ac.dy - ip.height / 2),
-        );
-        final textLeft = pill.left + avatar + 6 * z;
-        canvas.clipRect(
-          Rect.fromLTRB(textLeft, pill.top, pill.right - 6 * z, pill.bottom),
-        );
-        canvas.drawParagraph(
-          p,
-          Offset(textLeft, pill.center.dy - p.height / 2),
-        );
-        canvas.restore();
-      }
-    });
+    }
+    return null;
   }
 
-  static Color _hex(String hex) {
-    final v = int.tryParse(hex.replaceFirst('#', ''), radix: 16) ?? 0xFFFFFF;
-    return Color(0xFF000000 | v);
-  }
+  @override
+  bool operator ==(Object other) =>
+      other is FileChip && other.uuid == uuid && other.name == name;
+
+  @override
+  int get hashCode => Object.hash(uuid, name);
 }
 
 /// One entry of the smart chip menu.
@@ -191,6 +145,11 @@ sealed class _ChipEntry {
 final class _PersonEntry extends _ChipEntry {
   const _PersonEntry(this.person);
   final ProtectionEditorOption person;
+}
+
+final class _FileEntry extends _ChipEntry {
+  const _FileEntry(this.item);
+  final DriveItemView item;
 }
 
 final class _ActionEntry extends _ChipEntry {
@@ -222,6 +181,10 @@ class _SmartChipMenuState extends State<SmartChipMenu> {
   final _search = TextEditingController();
   final _focus = FocusNode(debugLabel: 'sheets.smartChipMenu');
   List<ProtectionEditorOption> _people = const [];
+  List<DriveItemView> _recentFiles = const [];
+  List<DriveItemView> _foundFiles = const [];
+  String _fileQuery = '';
+  Timer? _fileSearch;
   int _highlight = 0;
 
   InCellController get c => widget.controller;
@@ -229,8 +192,12 @@ class _SmartChipMenuState extends State<SmartChipMenu> {
   @override
   void initState() {
     super.initState();
-    _search.addListener(() => setState(() => _highlight = 0));
+    _search.addListener(() {
+      setState(() => _highlight = 0);
+      _searchFiles();
+    });
     unawaited(_loadPeople());
+    unawaited(_loadRecentFiles());
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) _focus.requestFocus();
     });
@@ -256,8 +223,46 @@ class _SmartChipMenuState extends State<SmartChipMenu> {
     setState(() => _people = people);
   }
 
+  /// Recently opened drive files for file chips (03 §14.3).
+  Future<void> _loadRecentFiles() async {
+    try {
+      final page = await c.editor.services.drive.list(
+        filter: DriveListFilter(view: DriveView.recent),
+        sort: DriveSort(field: DriveSortField.lastOpenedByMe),
+        limit: 12,
+      );
+      if (!mounted) return;
+      setState(() => _recentFiles = page.items);
+    } catch (_) {
+      // Offline: no file suggestions.
+    }
+  }
+
+  void _searchFiles() {
+    final q = _search.text.trim();
+    if (q == _fileQuery) return;
+    _fileQuery = q;
+    _fileSearch?.cancel();
+    if (q.isEmpty) {
+      setState(() => _foundFiles = const []);
+      return;
+    }
+    _fileSearch = Timer(const Duration(milliseconds: 200), () async {
+      try {
+        final page = await c.editor.services.drive.search(
+          q,
+          filters: DriveSearchFilters(),
+          limit: 8,
+        );
+        if (!mounted || q != _fileQuery) return;
+        setState(() => _foundFiles = page.items);
+      } catch (_) {}
+    });
+  }
+
   @override
   void dispose() {
+    _fileSearch?.cancel();
     _search.dispose();
     _focus.dispose();
     super.dispose();
@@ -274,8 +279,16 @@ class _SmartChipMenuState extends State<SmartChipMenu> {
           _PersonEntry(p),
     ].take(6);
     bool match(String label) => q.isEmpty || label.toLowerCase().contains(q);
+    final self = c.editor.session.itemUuid.uuid;
+    final seen = <String>{};
+    final files = [
+      for (final f in [..._recentFiles, ..._foundFiles])
+        if (f.uuid.uuid != self && match(f.name) && seen.add(f.uuid.uuid))
+          _FileEntry(f),
+    ].take(4);
     return [
       ...people,
+      ...files,
       if (match(l.smartChipDate))
         _ActionEntry('date', l.smartChipDate, LucideIcons.calendar),
       if (match(l.smartChipDropdown))
@@ -301,6 +314,14 @@ class _SmartChipMenuState extends State<SmartChipMenu> {
           'email': person.email,
           'name': person.label,
           'userId': person.userId,
+          'cell': cell,
+        });
+      case _FileEntry(:final item):
+        await ed.invokeCommand('sheets.insert.smartChip', {
+          'kind': 'file',
+          'uuid': item.uuid.uuid,
+          'name': item.name,
+          'itemKind': item.kind.name,
           'cell': cell,
         });
       case _ActionEntry(id: 'date'):
@@ -357,6 +378,7 @@ class _SmartChipMenuState extends State<SmartChipMenu> {
     final cs = theme.colorScheme;
     final entries = _entries(l);
     final people = entries.whereType<_PersonEntry>().toList();
+    final files = entries.whereType<_FileEntry>().toList();
     return TapRegion(
       onTapOutside: (_) => c.closePopup(),
       child: Semantics(
@@ -387,7 +409,16 @@ class _SmartChipMenuState extends State<SmartChipMenu> {
                     ),
                   ),
                 for (final (i, e) in entries.indexed) ...[
-                  if (i == people.length && people.isNotEmpty)
+                  if (i == people.length && files.isNotEmpty)
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(8, 6, 8, 2),
+                      child: Text(
+                        l.smartChipFiles,
+                        style: theme.textTheme.muted.copyWith(fontSize: 12),
+                      ),
+                    ),
+                  if (i == people.length + files.length &&
+                      (people.isNotEmpty || files.isNotEmpty))
                     Container(
                       height: 1,
                       margin: const EdgeInsets.symmetric(vertical: 4),
@@ -415,7 +446,7 @@ class _SmartChipMenuState extends State<SmartChipMenu> {
           height: 20,
           alignment: Alignment.center,
           decoration: BoxDecoration(
-            color: _avatarColors[(person.email ?? '').hashCode.abs() % 8],
+            color: chipAvatarColor(person.email ?? ''),
             shape: BoxShape.circle,
           ),
           child: Text(
@@ -429,6 +460,11 @@ class _SmartChipMenuState extends State<SmartChipMenu> {
             ),
           ),
         ),
+      ),
+      _FileEntry(:final item) => (
+        item.name,
+        null,
+        DriveKindIcon(item.kind, size: 18),
       ),
       _ActionEntry(:final label, :final icon) => (
         label,

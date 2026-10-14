@@ -8,6 +8,7 @@ import 'package:wonky_write_core/wonky_write_core.dart' show Delta, DeltaUtils;
 import '../../sheets/spaces/space_copier.dart';
 import '../../sheets/spaces/space_service.dart';
 import '../../sheets/spaces/spreadsheet_factory.dart';
+import '../../sheets/spaces/sheets_create_defaults.dart';
 import '../../sheets/sync/sheets_sync_service.dart';
 import '../../sheets/sync/sync_db.dart';
 import '../../write/content/write_content.dart';
@@ -714,8 +715,8 @@ abstract final class DriveService {
     UuidValue? parentUuid,
     required String name,
     UuidValue? templateUuid,
-    String locale = 'en_US',
-    String timeZone = 'UTC',
+    String? locale,
+    String? timeZone,
   }) async {
     final cleanName = normalizeItemName(name);
     BuiltinTemplate? builtin;
@@ -749,13 +750,18 @@ abstract final class DriveService {
       );
     } else {
       space = await session.offlineSync.spaces.createFor(actor.authUserId);
+      // Settings › Sheets defaults of the creator (04 §11.24); explicit
+      // arguments win.
+      final d = await SheetsCreateDefaults.of(session, actor.userId);
       await SpreadsheetFactory.write(
         session,
         spaceUuid: space,
         authorUuid: actor.authUserId,
         title: cleanName,
-        locale: locale,
-        timeZone: timeZone,
+        locale: locale ?? d.locale ?? 'en_US',
+        timeZone: timeZone ?? d.timeZone ?? 'UTC',
+        fontFamily: d.fontFamily,
+        fontSize: d.fontSize,
         sheets: builtin?.sheets ?? const [],
       );
     }
@@ -807,11 +813,16 @@ abstract final class DriveService {
     final cleanName = normalizeItemName(name);
     await _parentFor(session, actor, parentUuid);
     final space = await session.offlineSync.spaces.createFor(actor.authUserId);
+    final d = await SheetsCreateDefaults.of(session, actor.userId);
     await SpreadsheetFactory.write(
       session,
       spaceUuid: space,
       authorUuid: actor.authUserId,
       title: cleanName,
+      locale: d.locale ?? 'en_US',
+      timeZone: d.timeZone ?? 'UTC',
+      fontFamily: d.fontFamily,
+      fontSize: d.fontSize,
       sheets: sheets,
     );
     final item = await session.db.transaction((tx) async {
@@ -1299,6 +1310,48 @@ abstract final class DriveService {
     return role != null && role >= Role.editor ? parent.uuid : null;
   }
 
+  /// *Share with the same people* of a copy: the direct grants of
+  /// [source] (and its owner as editor) on [copy].
+  static Future<void> copyGrants(
+    Session session,
+    Actor actor,
+    DriveItem source,
+    DriveItem copy,
+  ) async {
+    final grants = await DriveItemPermission.db.find(
+      session,
+      where: (t) =>
+          t.itemId.equals(source.id!) & t.inheritedFromId.equals(null),
+    );
+    final now = nowUtc();
+    final rows = [
+      for (final g in grants)
+        if (g.userId != actor.userId)
+          DriveItemPermission(
+            itemId: copy.id!,
+            userId: g.userId,
+            invitedEmail: g.invitedEmail,
+            role: g.role,
+            grantedById: actor.userId,
+            grantedAt: now,
+            expiresAt: g.expiresAt,
+          ),
+      if (source.ownerId != actor.userId &&
+          !grants.any((g) => g.userId == source.ownerId))
+        DriveItemPermission(
+          itemId: copy.id!,
+          userId: source.ownerId,
+          role: AccessRole.editor,
+          grantedById: actor.userId,
+          grantedAt: now,
+        ),
+    ];
+    if (rows.isNotEmpty) {
+      await DriveItemPermission.db.insert(session, rows);
+    }
+    await AclEvents.changed(session, copy);
+  }
+
   static Future<DriveItemView> _finishCopy(
     Session session,
     Actor actor,
@@ -1306,40 +1359,7 @@ abstract final class DriveService {
     DriveItem copy,
     bool copySharing,
   ) async {
-    if (copySharing) {
-      final grants = await DriveItemPermission.db.find(
-        session,
-        where: (t) =>
-            t.itemId.equals(source.id!) & t.inheritedFromId.equals(null),
-      );
-      final now = nowUtc();
-      final rows = [
-        for (final g in grants)
-          if (g.userId != actor.userId)
-            DriveItemPermission(
-              itemId: copy.id!,
-              userId: g.userId,
-              invitedEmail: g.invitedEmail,
-              role: g.role,
-              grantedById: actor.userId,
-              grantedAt: now,
-              expiresAt: g.expiresAt,
-            ),
-        if (source.ownerId != actor.userId &&
-            !grants.any((g) => g.userId == source.ownerId))
-          DriveItemPermission(
-            itemId: copy.id!,
-            userId: source.ownerId,
-            role: AccessRole.editor,
-            grantedById: actor.userId,
-            grantedAt: now,
-          ),
-      ];
-      if (rows.isNotEmpty) {
-        await DriveItemPermission.db.insert(session, rows);
-      }
-      await AclEvents.changed(session, copy);
-    }
+    if (copySharing) await copyGrants(session, actor, source, copy);
     await _afterCreate(
       session,
       actor,

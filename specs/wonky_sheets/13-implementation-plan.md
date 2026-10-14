@@ -446,6 +446,14 @@ times, edit-to-paint latency, recalculation of 100k dependent formulas, paste 10
 1M rows, CSV/XLSX import/export, PDF of 100 pages, chart with 1M points, headless MCP read of
 100k cells. Run nightly on reference hardware; regressions > 10 % fail the build.
 
+**As built:** `slow`-tagged timings — `wonky_sheets/test/sync/writer_perf_test.dart` (local
+writer: `BLOCKS=20` 100k cells ≈ 8 s, `BLOCKS=200` 1M cells ≈ 2 min on a loaded dev machine,
+5,000 updates ≈ 0.2 s), `test/sync/viewport_loading_test.dart` (200k-cell open),
+`wonky_server/test/integration/sheets/sync/server_writer_perf_test.dart` (`ROWS=2500`: 50k-cell
+`set_values`, revert, redo). Remaining cost at 1M cells: commits of random-UUID index pages
+(cell ids, `crdt_data_rows`), and deleting rows/columns on the server runs the full FK
+projection (~8 s per 500 rows at 50k cells).
+
 ### 7.6 Integration tests
 `flutter_driver`-based app tests (skill `flutter-add-integration-test`) driven through the
 Serverpod MCP and the app's UI bridge: create spreadsheet, type, format, chart, print preview,

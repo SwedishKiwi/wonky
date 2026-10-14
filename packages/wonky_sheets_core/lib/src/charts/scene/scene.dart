@@ -1,6 +1,7 @@
 import 'dart:math' as math;
 import 'dart:typed_data';
 
+import '../three_d/chart3d_scene.dart';
 import 'geometry.dart';
 import 'path.dart';
 
@@ -283,14 +284,37 @@ final class SRect extends ScenePrimitive {
   };
 }
 
+/// A linear gradient fill from ([x0], [y0]) in [color0] to ([x1], [y1]) in [color1] (scene
+/// px; colors are padded beyond the ends). Shaded faces of 3D charts use it (08 §23.5).
+final class SGradient {
+  /// Creates a gradient.
+  const SGradient(this.x0, this.y0, this.x1, this.y1, this.color0, this.color1);
+
+  final double x0;
+  final double y0;
+  final double x1;
+  final double y1;
+  final int color0;
+  final int color1;
+
+  /// Stable JSON.
+  Map<String, Object?> toJson(num Function(double) n) => {
+    'from': [n(x0), n(y0)],
+    'to': [n(x1), n(y1)],
+    'colors': [argbHex(color0), argbHex(color1)],
+  };
+}
+
 /// A general path.
 final class SPath extends ScenePrimitive {
-  /// Creates a path.
+  /// Creates a path. When [gradient] is set, renderers that support gradients fill with it
+  /// instead of [fill] (which stays the flat fallback).
   const SPath(
     this.cmds, {
     this.fill,
     this.stroke,
     this.evenOdd = false,
+    this.gradient,
     super.tag,
   });
 
@@ -302,6 +326,9 @@ final class SPath extends ScenePrimitive {
 
   /// Even-odd fill rule (default non-zero).
   final bool evenOdd;
+
+  /// Optional gradient fill (requires [fill] as the fallback).
+  final SGradient? gradient;
 
   @override
   String get typeId => 'path';
@@ -348,6 +375,7 @@ final class SPath extends ScenePrimitive {
   Map<String, Object?> _body(num Function(double) n) => {
     'cmds': [for (final c in cmds) c.toJson(n)],
     if (fill != null) 'fill': argbHex(fill!),
+    if (gradient != null) 'gradient': gradient!.toJson(n),
     if (stroke != null) 'stroke': stroke!.toJson(n),
     if (evenOdd) 'evenOdd': true,
   };
@@ -713,6 +741,7 @@ final class ChartScene {
     required this.background,
     required this.primitives,
     this.plotArea,
+    this.threeD,
   });
 
   final double width;
@@ -726,6 +755,14 @@ final class ChartScene {
 
   /// The plot rectangle (cartesian/radial charts) or null.
   final ChartRect? plotArea;
+
+  /// The 3D scene of a 3D chart (08 §23), or null. Its software rendering is the [SGroup]
+  /// tagged [chart3dGroupDetail] in [primitives]; GPU backends draw the scene's meshes there
+  /// instead.
+  final Chart3DScene? threeD;
+
+  /// `SceneTag.detail` of the group holding a 3D chart's software-rendered geometry.
+  static const String chart3dGroupDetail = 'chart3d';
 
   /// Stable JSON (numbers rounded to 2 decimals) for scene goldens.
   Map<String, Object?> toJson() => {

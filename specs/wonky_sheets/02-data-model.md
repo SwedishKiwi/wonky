@@ -404,9 +404,9 @@ indexes:
 | `ReservedSpace` | Pool of reserved space UUIDs for offline creation (toptap pattern). |
 | `SheetsDirtySpace` | Spaces with local writes since the last complete sync (pending-change guard, suite 12 §2.3). |
 | `SheetsRowJournal` / `SheetsJournalSpace` | Local change journal of the open spreadsheets (suite 12 §4 U11): trigger-fed `(space, table, row)` entries with a monotonic id. |
-| `ComputedValueCache` | `(cellId, valueJson, formattedText?, engineVersion)` for fast reopen of large sheets; invalidated per engine version. **Deferred:** measured reopen cost is model build and formula compilation, not evaluation (150k formulas: model 2.1 s, first window 1.2 s, the visible window's values a few ms; viewport-first loading spreads the compile over the streamed chunks). It would still help formulas over rows that are streaming in (they show partial values meanwhile). |
+| `ComputedValueCache` | `(cellId, valueJson, formattedText?, engineVersion)` for fast reopen of large sheets; invalidated per engine version. **Deferred:** measured reopen cost is model build and formula compilation, not evaluation (150k formulas: model 2.1 s, first window 1.2 s, the visible window's values a few ms; viewport-first loading spreads the compile over the streamed chunks). Formulas over rows that are still streaming in show `#LOADING` instead of partial values (`LoadingFormulaSource`, 03 §2.8). |
 | `LocalUndoStack` | Serialized undo/redo stacks per spreadsheet (best effort). |
-| `LocalViewState` | Per spreadsheet: active sheet, selection, scroll, zoom, panel states, temporary filter views. **As built:** not a table but small JSON in the user's local key-value store (`sheets.view.<spreadsheetId>`, newest 200 kept, like the shell's per-user data, suite 12 §3); also the viewport hint of viewport-first loading and the "last opened" order of the IndexedDB cell cap. |
+| `LocalViewState` | Per spreadsheet: active sheet, selection, scroll, zoom, panel states, temporary filter views. **As built:** not a table but small JSON in the user's local key-value store (`sheets.view.<spreadsheetId>`, newest 200 kept, like the shell's per-user data, suite 12 §3); also the viewport hint of viewport-first loading and the "last opened" order of the IndexedDB cell cap. Side panel precedence on open: a panel the spreadsheet opens while it starts (`?comment=` deep link, pivot/chart editor) > the saved panel > a panel still open from the previous document (the shell's panel host is shared); a saved "no panel" leaves a carried-over panel open. |
 | ~~`PendingDriveRegistration`~~ | Not a table: offline registrations use the shell's `PendingDriveOp` queue (`registerSpreadsheet`, suite 12 §3). |
 
 ## 5. Server-only tables (Postgres, `database: server`)
@@ -477,6 +477,20 @@ deterministic ids stay valid.
 Bulk operations (paste 100k cells, import, sort) are chunked into transactions of ≤ 5,000 row
 changes while remaining **one undo step** (the step holds the list of chunks); the UI shows
 progress for operations > 20k cells.
+
+**As built (offline-sync patch OS-7):** inside a transaction, consecutive inserts/updates of one
+table (≤ 1,000 rows, distinct ids) are one set-based engine write
+(`SyncedTableSpec.bulkWrite` → `OfflineSyncDatabase.bulkWrite`): new rows are inserted from one
+JSON parameter per statement (domain rows, `crdt_data_rows`, foreign-key field records), updates
+naming the same columns run as one batched update plus one field-HLC upsert, tombstoned ids are
+revived with batched row/tombstone/visibility writes, each after one SQL proof that no foreign-key
+or unique projection changes (otherwise the ordinary planned per-row path runs). The CRDT records
+equal the per-row calls' (`test/sync/bulk_write_test.dart` compares both). Measured (desktop,
+loaded dev machine): new cells ~60–120 µs each (1M-cell import ≈ 2 min, was ~6 min for 200k),
+updates ~40 µs each. The replica runs with a 64 MB page cache, in-memory temp store and a
+20,000-page WAL autocheckpoint. Saves bigger than one chunk report progress in the sync status
+(*Saving… 42 %*). The server's `SheetsBulkWriter` uses the same write (50k-cell `set_values`
+≈ 10 s; redo of a 50k-cell revert ≈ 11 s).
 
 ## 8. Invariants & maintenance (client-side, idempotent)
 

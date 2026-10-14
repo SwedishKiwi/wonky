@@ -312,6 +312,9 @@ const rules = <String, PackageRule>{
       'sqlite3':
           'read-only recovery read of a replica that cannot be opened (12 §2.5)',
       'archive': 'ZIP of the unsynced spreadsheets of that recovery (12 §2.5)',
+      'flutter_svg': 'rasterizing SVG images on insert (Sheets 08 §10.1)',
+      'flutter_scene': 'GPU backend of 3D charts (Sheets 08 §23.7)',
+      'vector_math': 'GPU backend of 3D charts (Sheets 08 §23.7)',
     },
     // The script compiler (and the analyzer) is server only (01 A8, Sheets
     // 09 §3.1): the app only instantiates dart_eval runtimes.

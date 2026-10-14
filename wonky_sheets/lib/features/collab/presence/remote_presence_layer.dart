@@ -26,13 +26,21 @@ class CollabPaintColors {
 /// 2 px active-cell border (dashed while editing, dotted for agents), name
 /// flags (3 s after moving, while editing; stacked, max 3 then "+N").
 class RemotePresenceLayer extends GridLayer {
-  RemotePresenceLayer(this.presence, this.colors, {required this.typingLabel});
+  RemotePresenceLayer(
+    this.presence,
+    this.colors, {
+    required this.typingLabel,
+    String Function(RemoteCursorView c)? nameOf,
+  }) : nameOf = nameOf ?? ((c) => c.displayName);
 
   final SheetsPresenceController presence;
   final CollabPaintColors colors;
 
   /// "typing…" (localized).
   final String Function() typingLabel;
+
+  /// The flag label of a participant ("Claude via MCP (Anna)" for agents).
+  final String Function(RemoteCursorView c) nameOf;
 
   @override
   int get zOrder => GridZ.presence;
@@ -96,7 +104,18 @@ class RemotePresenceLayer extends GridLayer {
           ..style = PaintingStyle.stroke
           ..strokeWidth = flashing && presence.flashOn ? 4 : 2;
         if (c.cursor.editing) {
-          drawDashedRect(canvas, rr, paint, dash: 5, gap: 3);
+          drawDashedRect(
+            canvas,
+            rr,
+            paint,
+            dash: 5,
+            gap: 3,
+            phase: presence.marchPhase,
+          );
+          final t = presence.typingOf(c, now);
+          if (t != null) {
+            _typing(ctx, canvas, pane.rangeRect(cellRect), t.text, color);
+          }
         } else if (c.isAgent) {
           drawDashedRect(canvas, rr, paint, dash: 2, gap: 2);
         } else {
@@ -108,6 +127,51 @@ class RemotePresenceLayer extends GridLayer {
       }
     });
     _flags(ctx, canvas, actives, now);
+  }
+
+  /// The collaborator's in-progress text over their cell (P2 typing
+  /// preview): italic, on the grid background, clipped to the cell (wider
+  /// to the right while the text needs it, like the cell editor).
+  void _typing(
+    GridPaintContext ctx,
+    Canvas canvas,
+    Rect cell,
+    String text,
+    Color color,
+  ) {
+    final tp = TextPainter(
+      text: TextSpan(
+        text: text.replaceAll('\n', ' '),
+        style: TextStyle(
+          fontSize: 12,
+          fontStyle: FontStyle.italic,
+          height: 1.2,
+          color: colors.dark
+              ? const Color(0xFFE5E7EB)
+              : const Color(0xFF1F2937),
+        ),
+      ),
+      textDirection: TextDirection.ltr,
+      maxLines: 1,
+      ellipsis: '…',
+    )..layout(maxWidth: math.max(cell.width, 240) - 8);
+    final w = math.max(cell.width, tp.width + 8);
+    final r = Rect.fromLTWH(cell.left, cell.top, w, cell.height).deflate(2.5);
+    canvas.drawRect(
+      r,
+      Paint()
+        ..color = colors.dark
+            ? const Color(0xFF111827)
+            : const Color(0xFFFFFFFF),
+    );
+    canvas.drawRect(
+      r,
+      Paint()..color = color.withValues(alpha: colors.dark ? 0.16 : 0.10),
+    );
+    canvas.save();
+    canvas.clipRect(r);
+    tp.paint(canvas, Offset(r.left + 3, r.top + (r.height - tp.height) / 2));
+    canvas.restore();
   }
 
   void _flags(
@@ -136,7 +200,7 @@ class RemotePresenceLayer extends GridLayer {
             ? ' +${items.length - 3}'
             : '';
         final label =
-            '${c.isAgent ? '✦ ' : ''}${c.displayName}'
+            '${c.isAgent ? '✦ ' : ''}${nameOf(c)}'
             '${c.cursor.editing ? ' ✎ ${typingLabel()}' : ''}$more';
         final tp = TextPainter(
           text: TextSpan(

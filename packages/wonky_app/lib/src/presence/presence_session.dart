@@ -70,12 +70,16 @@ class PresenceSession extends ChangeNotifier with WidgetsBindingObserver {
         _sessionId = e.sessionId;
         _participants = e.participants;
       case PresenceJoined():
+        // A repeated hello (agent cursor updates) replaces the participant.
+        final known = _participants.any(
+          (p) => p.sessionId == e.participant.sessionId,
+        );
         _participants = [
           for (final p in _participants)
             if (p.sessionId != e.participant.sessionId) p,
           e.participant,
         ];
-        _announce(e.participant.displayName, joined: true);
+        if (!known) _announce(e.participant.displayName, joined: true);
       case PresenceLeft():
         final gone = _participants
             .where((p) => p.sessionId == e.sessionId)

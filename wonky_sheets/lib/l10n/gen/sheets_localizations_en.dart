@@ -237,6 +237,16 @@ class SheetsLocalizationsEn extends SheetsLocalizations {
   String get settingsTimeZone => 'Time zone';
 
   @override
+  String get settingsDisplayLanguage => 'Function language';
+
+  @override
+  String get settingsDisplayLanguageEnglish => 'English';
+
+  @override
+  String get settingsDisplayLanguageNote =>
+      'Function names and TRUE/FALSE are shown in this language. English names always work, and formulas are saved in English.';
+
+  @override
   String get settingsSearch => 'Search';
 
   @override
@@ -352,6 +362,113 @@ class SheetsLocalizationsEn extends SheetsLocalizations {
   String commentAnchorDeleted(String quoted) {
     return 'The cell this comment was on was deleted · $quoted';
   }
+
+  @override
+  String get cmdConflictsReview => 'Review overwritten edits';
+
+  @override
+  String get cmdConflictsApplyMine => 'Apply my values again';
+
+  @override
+  String get undoApplyMine => 'Apply my values again';
+
+  @override
+  String get cmdHistoryDownload => 'Download version';
+
+  @override
+  String get cmdHistoryToggleShowChanges => 'Show changes';
+
+  @override
+  String get commentsScopeSheet => 'This sheet';
+
+  @override
+  String get commentsScopeAll => 'All sheets';
+
+  @override
+  String get commentsOrphanedGroup => 'Orphaned';
+
+  @override
+  String get conflictsTitle => 'Overwritten offline edits';
+
+  @override
+  String get conflictsDescription =>
+      'Others changed these cells after you edited them offline. Select the values to put back.';
+
+  @override
+  String get conflictsReview => 'Review';
+
+  @override
+  String get conflictsApplyMine => 'Apply mine again';
+
+  @override
+  String get conflictsDismissAll => 'Dismiss all';
+
+  @override
+  String get conflictsEmptyValue => '(empty)';
+
+  @override
+  String get conflictsSeveralPeople => 'several people';
+
+  @override
+  String conflictsRow(String cell, String mine, String theirs, String name) {
+    return '$cell — yours: $mine · now: $theirs ($name)';
+  }
+
+  @override
+  String conflictsYours(String value) {
+    return 'yours: $value';
+  }
+
+  @override
+  String conflictsRowDeletedBy(String name) {
+    return 'Row deleted by $name';
+  }
+
+  @override
+  String conflictsColumnDeletedBy(String name) {
+    return 'Column deleted by $name';
+  }
+
+  @override
+  String conflictsSheetDeletedBy(String name) {
+    return 'Sheet deleted by $name';
+  }
+
+  @override
+  String toastConflicts(int count, String name) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other:
+          '$count of your offline edits were replaced by newer edits from $name',
+      one: '1 of your offline edits was replaced by a newer edit from $name',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String toastSortReplaced(String name) {
+    return 'Your sort was replaced by a newer sort from $name';
+  }
+
+  @override
+  String get toastVersionCopyExtrasFailed =>
+      'The copy was made, but its comments and sharing couldn\'t be copied';
+
+  @override
+  String get versionCopyTitle => 'Make a copy';
+
+  @override
+  String get versionCopyNameLabel => 'Name';
+
+  @override
+  String get versionCopyNameRequired => 'Enter a name';
+
+  @override
+  String get versionCopyComments => 'Copy comments';
+
+  @override
+  String get versionCopySharing => 'Share with the same people';
 
   @override
   String commentReplies(int count) {
@@ -2830,6 +2947,9 @@ class SheetsLocalizationsEn extends SheetsLocalizations {
   String get downloadTsv => 'Tab-separated values (.tsv, current sheet)';
 
   @override
+  String get downloadJson => 'JSON (.json, values and formulas)';
+
+  @override
   String get downloadXlsx => 'Microsoft Excel (.xlsx)';
 
   @override
@@ -3280,6 +3400,14 @@ class SheetsLocalizationsEn extends SheetsLocalizations {
   String get toastClipboardEmpty => 'The clipboard is empty';
 
   @override
+  String get screenStorageUnavailable =>
+      'The spreadsheet storage on this device didn\'t start. Try again, or reload the page.';
+
+  @override
+  String get toastClipboardBlocked =>
+      'The browser blocked access to the clipboard. Allow clipboard access for this site to paste here.';
+
+  @override
   String get toastCommandFailed => 'That didn’t work';
 
   @override
@@ -3728,6 +3856,18 @@ class SheetsLocalizationsEn extends SheetsLocalizations {
   }
 
   @override
+  String get smartChipOpenFile => 'Open';
+
+  @override
+  String get smartChipFiles => 'Files';
+
+  @override
+  String get smartChipFilesEmpty => 'No files found';
+
+  @override
+  String get cmdChipOpenFile => 'Open linked file';
+
+  @override
   String get smartChipCopyEmail => 'Copy email';
 
   @override
@@ -3738,6 +3878,9 @@ class SheetsLocalizationsEn extends SheetsLocalizations {
 
   @override
   String get dvNoColor => 'No color';
+
+  @override
+  String get dvChipColors => 'Chip colors';
 
   @override
   String get dvUseCustomValues => 'Use custom cell values';
@@ -4172,6 +4315,48 @@ class SheetsLocalizationsEn extends SheetsLocalizations {
   String get importLargeNote => 'Large import on this device may take a while.';
 
   @override
+  String get importServerNote =>
+      'This large file will be imported on the server.';
+
+  @override
+  String get importTabUpload => 'Upload';
+
+  @override
+  String get importTabRecent => 'Recent uploads';
+
+  @override
+  String get importTabRecentShort => 'Recent';
+
+  @override
+  String get importTabDrive => 'Drive';
+
+  @override
+  String get importRecentEmpty =>
+      'Files you import on this device appear here.';
+
+  @override
+  String importRecentItem(String name, String size, String date) {
+    return '$name · $size · $date';
+  }
+
+  @override
+  String get importRecentGone =>
+      'This file is no longer stored on this device.';
+
+  @override
+  String get importDriveHint =>
+      'Import the sheets of another spreadsheet in your Drive.';
+
+  @override
+  String get importDriveOffline => 'Importing from Drive needs a connection.';
+
+  @override
+  String get importDrivePick => 'Choose a spreadsheet';
+
+  @override
+  String get importDrivePickTitle => 'Import from Drive';
+
+  @override
   String get importPreview => 'Preview (first 20 rows)';
 
   @override
@@ -4237,6 +4422,28 @@ class SheetsLocalizationsEn extends SheetsLocalizations {
 
   @override
   String get importPhaseUploading => 'Uploading';
+
+  @override
+  String get importPhaseQueued => 'Waiting for your other import to finish';
+
+  @override
+  String importPhaseWritingCells(int done, int total) {
+    final intl.NumberFormat doneNumberFormat = intl.NumberFormat.decimalPattern(
+      localeName,
+    );
+    final String doneString = doneNumberFormat.format(done);
+    final intl.NumberFormat totalNumberFormat =
+        intl.NumberFormat.decimalPattern(localeName);
+    final String totalString = totalNumberFormat.format(total);
+
+    return 'Writing cells ($doneString of $totalString)';
+  }
+
+  @override
+  String get importPhaseFinalizing => 'Finishing up';
+
+  @override
+  String get cmdFileCancelImport => 'Cancel import';
 
   @override
   String get importCancel => 'Cancel';
@@ -4798,7 +5005,14 @@ class SheetsLocalizationsEn extends SheetsLocalizations {
 
   @override
   String get printBreaksHint =>
-      'Pages break before these rows and columns. Breaks move with their rows and columns.';
+      'Pages break before these rows and columns. Drag the lines on the grid to move them, drag one off the grid to remove it, or click a row number or column letter to add one.';
+
+  @override
+  String get printBreakCanvasLabel =>
+      'Page breaks of the current sheet. Dashed lines are automatic breaks, solid lines are custom breaks.';
+
+  @override
+  String get printDarkTheme => 'Use dark theme for Export PDF';
 
   @override
   String get printBreakRows => 'Breaks before rows';
@@ -5172,6 +5386,68 @@ class SheetsLocalizationsEn extends SheetsLocalizations {
   String get aiInsertUndo => 'Insert AI result';
 
   @override
+  String get cmdAiCleanupSuggestions => 'Clean up data with AI';
+
+  @override
+  String get cmdAiRefreshAiCells => 'Refresh AI cells';
+
+  @override
+  String aiCleanupPrompt(String scope, String findings) {
+    return 'Clean up the data $scope. The automatic checks found:\n$findings\nGroup the problems, explain them briefly and propose fixes as suggested changes I can review.';
+  }
+
+  @override
+  String aiCleanupScopeRange(String range) {
+    return 'in $range';
+  }
+
+  @override
+  String aiCleanupScopeSheet(String name) {
+    return 'on the sheet \"$name\"';
+  }
+
+  @override
+  String get aiCleanupNothing => '- nothing obvious (check the data anyway)';
+
+  @override
+  String get aiAgentMcp => 'MCP agent';
+
+  @override
+  String aiAgentOf(String name) {
+    return '$name\'s agent';
+  }
+
+  @override
+  String aiAgentAiOf(String name) {
+    return 'AI · $name';
+  }
+
+  @override
+  String get aiAssistantEmptyTitle =>
+      'Ask about this spreadsheet or tell the assistant what to change.';
+
+  @override
+  String get aiAssistantPrivacyNotice =>
+      'The assistant sends this spreadsheet and your messages to the AI provider to generate answers.';
+
+  @override
+  String aiAssistantPrivacyNoticeProvider(String provider) {
+    return 'The assistant sends this spreadsheet and your messages to $provider to generate answers.';
+  }
+
+  @override
+  String get aiAssistantModeEditHint =>
+      'Edit directly: changes go straight into the spreadsheet';
+
+  @override
+  String get aiAssistantModeEditUnavailable =>
+      'You can only suggest changes in this spreadsheet';
+
+  @override
+  String get aiAssistantModeSuggestHint =>
+      'Suggest: changes arrive as a preview to apply or discard';
+
+  @override
   String get cmdAiSuggestFormulaDescription =>
       'Describe a formula in words and get it written for the active cell';
 
@@ -5331,6 +5607,12 @@ class SheetsLocalizationsEn extends SheetsLocalizations {
   String get dataJobWaiting => 'Waiting for the current operation to finish…';
 
   @override
+  String get dataJobCancel => 'Cancel';
+
+  @override
+  String get dataJobCancelled => 'Cancelled. Nothing was changed.';
+
+  @override
   String dataJobSorting(int count) {
     final intl.NumberFormat countNumberFormat =
         intl.NumberFormat.decimalPattern(localeName);
@@ -5430,7 +5712,26 @@ class SheetsLocalizationsEn extends SheetsLocalizations {
 
   @override
   String get filterViewSortUnavailable =>
-      'Sorting inside filter views isn\'t available yet';
+      'Sort by color isn\'t available in filter views';
+
+  @override
+  String get cmdFilterViewSortColumn => 'Sort filter view';
+
+  @override
+  String get viewSortCutUnavailable =>
+      'Rows in a sorted filter view can\'t be cut together. Copy them instead.';
+
+  @override
+  String get viewSortCutPasteUnavailable =>
+      'A cut can\'t be pasted into the rows of a sorted filter view. Copy it instead.';
+
+  @override
+  String get filterViewClearSort => 'Clear view sort';
+
+  @override
+  String filterViewSortedBy(String column) {
+    return 'Sorted by $column';
+  }
 
   @override
   String get findNoResults => 'No results';
@@ -7605,4 +7906,378 @@ class SheetsLocalizationsEn extends SheetsLocalizations {
 
   @override
   String get contextMenuDragCopy => 'Copy';
+
+  @override
+  String get chartGroup3D => '3D';
+
+  @override
+  String get chartType3DColumn => '3D column chart';
+
+  @override
+  String get chartType3DStackedColumn => '3D stacked column chart';
+
+  @override
+  String get chartType3DPercentColumn => '3D 100% stacked column chart';
+
+  @override
+  String get chartType3DBar => '3D bar chart';
+
+  @override
+  String get chartType3DStackedBar => '3D stacked bar chart';
+
+  @override
+  String get chartType3DLine => '3D line chart';
+
+  @override
+  String get chartType3DArea => '3D area chart';
+
+  @override
+  String get chartType3DStackedArea => '3D stacked area chart';
+
+  @override
+  String get chartType3DPie => '3D pie chart';
+
+  @override
+  String get chartType3DDoughnut => '3D doughnut chart';
+
+  @override
+  String get chartSection3D => '3D';
+
+  @override
+  String get chartEditor3DEnabled => 'Show in 3D';
+
+  @override
+  String get chartEditor3DRotation => 'Rotation';
+
+  @override
+  String get chartEditor3DTilt => 'Tilt';
+
+  @override
+  String get chartEditor3DPerspective => 'Perspective';
+
+  @override
+  String get chartEditor3DDepth => 'Depth';
+
+  @override
+  String get chartEditor3DHeight => 'Height';
+
+  @override
+  String get chartEditor3DGapDepth => 'Gap depth';
+
+  @override
+  String get chartEditor3DExplode => 'Pull slices apart';
+
+  @override
+  String get chartEditor3DLighting => 'Lighting';
+
+  @override
+  String get chartLightingSoft => 'Soft';
+
+  @override
+  String get chartLightingBright => 'Bright';
+
+  @override
+  String get chartLightingFlat => 'Flat';
+
+  @override
+  String get chartEditor3DShape => 'Shape';
+
+  @override
+  String get chartShapeBox => 'Box';
+
+  @override
+  String get chartShapeCylinder => 'Cylinder';
+
+  @override
+  String get chartShapeCone => 'Cone';
+
+  @override
+  String get chartShapePyramid => 'Pyramid';
+
+  @override
+  String get chartEditor3DWalls => 'Floor and walls';
+
+  @override
+  String get chartEditor3DFloorColor => 'Floor color';
+
+  @override
+  String get chartEditor3DResetView => 'Reset view';
+
+  @override
+  String get chartEditor3DOrbitHint =>
+      'Drag the selected chart, or press Alt+Shift+arrow keys, to rotate it.';
+
+  @override
+  String get cmdChartToggle3D => 'Show chart in 3D';
+
+  @override
+  String get cmdChartToggle3DDescription =>
+      'Draws the selected column, bar, line, area or pie chart in 3D, or flat again.';
+
+  @override
+  String get cmdChartReset3DView => 'Reset 3D chart view';
+
+  @override
+  String get cmdChartRotate3D => 'Rotate 3D chart';
+
+  @override
+  String get cmdObjectAlign => 'Align objects';
+
+  @override
+  String get undoAlignObjects => 'Align objects';
+
+  @override
+  String get objectMenuAlign => 'Align';
+
+  @override
+  String get objectAlignLeft => 'Left';
+
+  @override
+  String get objectAlignCenter => 'Center';
+
+  @override
+  String get objectAlignRight => 'Right';
+
+  @override
+  String get objectAlignTop => 'Top';
+
+  @override
+  String get objectAlignMiddle => 'Middle';
+
+  @override
+  String get objectAlignBottom => 'Bottom';
+
+  @override
+  String get objectDistributeHorizontally => 'Distribute horizontally';
+
+  @override
+  String get objectDistributeVertically => 'Distribute vertically';
+
+  @override
+  String get reasonChartSheet => 'Not available on chart sheets';
+
+  @override
+  String get imageClipboardEmpty => 'There is no image on the clipboard';
+
+  @override
+  String get dialogImagePaste => 'Paste from clipboard';
+
+  @override
+  String get chartCopyImageFailed => 'Couldn\'t put the image on the clipboard';
+
+  @override
+  String get chartCopiedAsImage => 'Chart copied as an image';
+
+  @override
+  String get chartEditorTrendlineCustomLabel => 'Custom label';
+
+  @override
+  String get chartEditorTrendlineCustomLabelHint => 'Label text';
+
+  @override
+  String get chartEditorErrorBars => 'Error bars';
+
+  @override
+  String get chartEditorErrorBarsType => 'Type';
+
+  @override
+  String get chartErrorBarsConstant => 'Constant';
+
+  @override
+  String get chartErrorBarsPercent => 'Percent';
+
+  @override
+  String get chartErrorBarsStdev => 'Standard deviation';
+
+  @override
+  String get chartEditorErrorBarsValue => 'Value';
+
+  @override
+  String get chartEditorFormatDataPoint => 'Format data point';
+
+  @override
+  String get chartEditorPickPoint => 'Choose a point';
+
+  @override
+  String get chartEditorAdd => 'Add';
+
+  @override
+  String get chartSectionPieSlice => 'Pie slice';
+
+  @override
+  String get chartEditorSlice => 'Slice';
+
+  @override
+  String get chartEditorSliceColor => 'Slice color';
+
+  @override
+  String get chartEditorSliceDistance => 'Distance from center';
+
+  @override
+  String get chartEditorSubtotals => 'Subtotals';
+
+  @override
+  String get chartEditorNoSubtotals => 'No subtotals';
+
+  @override
+  String chartEditorSubtotalAfter(String point) {
+    return 'After $point';
+  }
+
+  @override
+  String get chartEditorSubtotalLabel => 'Label';
+
+  @override
+  String get chartEditorAddSubtotal => 'Add subtotal';
+
+  @override
+  String get chartEditorInvalidCell => 'Enter a cell such as B2 or Sheet1!B2';
+
+  @override
+  String get chartEditorKeyValueCell => 'Key value cell';
+
+  @override
+  String get chartEditorBaselineCell => 'Baseline cell';
+
+  @override
+  String get chartEditorFromDataRange => 'From the data range';
+
+  @override
+  String get scriptsDisabled =>
+      'Scripts are turned off on this device (Settings › Sheets).';
+
+  @override
+  String get scriptsDisabledBanner =>
+      'Scripts are turned off for you. Functions, triggers and custom functions don\'t run.';
+
+  @override
+  String get scriptsEnable => 'Turn on scripts';
+
+  @override
+  String scriptConflictBodyBy(String user, String file, String when) {
+    return '$user saved a newer version of $file ($when).';
+  }
+
+  @override
+  String get scriptCompare => 'Compare';
+
+  @override
+  String get scriptHideComparison => 'Hide comparison';
+
+  @override
+  String get scriptMerge => 'Merge';
+
+  @override
+  String get scriptVersionTheirs => 'Saved version';
+
+  @override
+  String get scriptVersionMine => 'Your version';
+
+  @override
+  String scriptMergeConflicts(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other:
+          'The merge has $count conflicts. Resolve the marked lines, then save.',
+      one: 'The merge has 1 conflict. Resolve the marked lines, then save.',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get scriptMergeConflictProblem =>
+      'Merge conflict: keep your lines, theirs or both, then remove the markers.';
+
+  @override
+  String scriptHistoryTitle(String file) {
+    return 'Local history of $file';
+  }
+
+  @override
+  String get scriptHistoryDescription =>
+      'Versions saved on this device (the last 20). Restoring puts the version in the editor without saving.';
+
+  @override
+  String get scriptHistoryVersion => 'Version';
+
+  @override
+  String get scriptHistoryRestore => 'Restore';
+
+  @override
+  String get scriptHistoryEmpty => 'No versions saved on this device yet.';
+
+  @override
+  String get scriptHistorySelected => 'Selected version';
+
+  @override
+  String get scriptHistoryCurrent => 'Editor';
+
+  @override
+  String get scriptHistorySaved => 'Saved';
+
+  @override
+  String get scriptHistoryDiscarded => 'Discarded in a conflict';
+
+  @override
+  String get scriptHistoryOverwritten => 'Replaced by your save';
+
+  @override
+  String get scriptHistoryBeforeMerge => 'Before a merge';
+
+  @override
+  String get scriptLocalHistory => 'Local history';
+
+  @override
+  String scriptRestoredDraft(String file) {
+    return 'Restored $file from the local history. Save to keep it.';
+  }
+
+  @override
+  String get scriptApiReferenceTitle => 'Script API reference';
+
+  @override
+  String get scriptApiSearch => 'Search classes and members';
+
+  @override
+  String get scriptApiClass => 'Class';
+
+  @override
+  String get scriptApiNoMatches => 'No classes or members match.';
+
+  @override
+  String get cmdHelpScriptApiReference => 'Script API reference';
+
+  @override
+  String get scriptInScriptEditor => 'In the script editor';
+
+  @override
+  String scriptFileOpenBy(String names) {
+    return 'Open by $names';
+  }
+
+  @override
+  String get scriptDragToReorder => 'Drag to reorder';
+
+  @override
+  String get scriptLoadingCell => 'Loading…';
+
+  @override
+  String get sheetsSettingsChartPatterns =>
+      'Distinguish chart series by pattern';
+
+  @override
+  String get chartViewDataTableAction => 'View data as table';
+
+  @override
+  String get chartType3DSurface => '3D surface';
+
+  @override
+  String get chartTypeSurface => 'Surface';
+
+  @override
+  String get scriptSidebarTitle => 'Script sidebar';
+
+  @override
+  String get scriptSidebarEmpty => 'No script sidebar is open.';
 }

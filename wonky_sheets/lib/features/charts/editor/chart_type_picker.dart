@@ -5,6 +5,7 @@ import 'package:shad/shad.dart';
 import 'package:wonky_sheets_core/model.dart';
 
 import '../../../l10n/sheets_l10n.dart';
+import '../../charts3d/icons/chart3d_glyph.dart';
 
 /// A chart type with its preset variant (stacking, doughnut hole, smooth
 /// lines) as offered by the type picker (08 §8.3).
@@ -16,6 +17,7 @@ class ChartVariant {
     this.stacking = ChartStacking.none,
     this.pieHole = 0,
     this.smooth = false,
+    this.threeD = false,
   });
 
   final String id;
@@ -24,9 +26,13 @@ class ChartVariant {
   final double pieHole;
   final bool smooth;
 
+  /// Drawn in 3D (08 §23).
+  final bool threeD;
+
   /// Whether [spec] shows this variant.
   bool matches(ChartSpec spec) =>
       spec.type == type &&
+      spec.is3D == threeD &&
       (!type.supportsStacking || spec.stacking == stacking) &&
       (type != ChartType.pie ||
           (spec.pieOptions.pieHole > 0) == (pieHole > 0)) &&
@@ -39,6 +45,7 @@ class ChartVariant {
     if (type.supportsStacking) 'stacking': stacking.name,
     if (type == ChartType.pie) 'pieHole': pieHole,
     if (type == ChartType.line) 'smooth': smooth,
+    if (type.supports3D && !type.only3D) 'threeD': threeD,
   };
 
   String label(SheetsLocalizations l) => switch (id) {
@@ -64,6 +71,17 @@ class ChartVariant {
     'scorecard' => l.chartTypeScorecard,
     'table' => l.chartTypeTable,
     'radar' => l.chartTypeRadar,
+    'column3d' => l.chartType3DColumn,
+    'stackedColumn3d' => l.chartType3DStackedColumn,
+    'percentColumn3d' => l.chartType3DPercentColumn,
+    'bar3d' => l.chartType3DBar,
+    'stackedBar3d' => l.chartType3DStackedBar,
+    'line3d' => l.chartType3DLine,
+    'area3d' => l.chartType3DArea,
+    'stackedArea3d' => l.chartType3DStackedArea,
+    'pie3d' => l.chartType3DPie,
+    'doughnut3d' => l.chartType3DDoughnut,
+    'surface3d' => l.chartType3DSurface,
     _ => type.displayName,
   };
 }
@@ -110,6 +128,39 @@ const chartVariantGroups = <String, List<ChartVariant>>{
     ChartVariant('scatter', ChartType.scatter),
     ChartVariant('bubble', ChartType.bubble),
   ],
+  '3d': [
+    ChartVariant('column3d', ChartType.column, threeD: true),
+    ChartVariant(
+      'stackedColumn3d',
+      ChartType.column,
+      stacking: ChartStacking.normal,
+      threeD: true,
+    ),
+    ChartVariant(
+      'percentColumn3d',
+      ChartType.column,
+      stacking: ChartStacking.percent,
+      threeD: true,
+    ),
+    ChartVariant('bar3d', ChartType.bar, threeD: true),
+    ChartVariant(
+      'stackedBar3d',
+      ChartType.bar,
+      stacking: ChartStacking.normal,
+      threeD: true,
+    ),
+    ChartVariant('line3d', ChartType.line, threeD: true),
+    ChartVariant('area3d', ChartType.area, threeD: true),
+    ChartVariant(
+      'stackedArea3d',
+      ChartType.area,
+      stacking: ChartStacking.normal,
+      threeD: true,
+    ),
+    ChartVariant('pie3d', ChartType.pie, threeD: true),
+    ChartVariant('doughnut3d', ChartType.pie, pieHole: 0.5, threeD: true),
+    ChartVariant('surface3d', ChartType.surface, threeD: true),
+  ],
   'other': [
     ChartVariant('histogram', ChartType.histogram),
     ChartVariant('candlestick', ChartType.candlestick),
@@ -146,6 +197,7 @@ String _groupLabel(SheetsLocalizations l, String g) => switch (g) {
   'bar' => l.chartGroupBar,
   'pie' => l.chartGroupPie,
   'scatter' => l.chartGroupScatter,
+  '3d' => l.chartGroup3D,
   _ => l.chartGroupOther,
 };
 
@@ -360,6 +412,18 @@ class ChartTypeIcon extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final c = ShadTheme.of(context).colorScheme;
+    if (variant.threeD) {
+      return CustomPaint(
+        painter: Chart3DGlyphPainter(
+          type: variant.type,
+          stacking: variant.stacking,
+          pieHole: variant.pieHole,
+          colors: [c.chart1, c.chart2, c.chart3],
+          floor: Color.lerp(c.background, c.mutedForeground, 0.25)!,
+          background: c.background,
+        ),
+      );
+    }
     return CustomPaint(
       painter: _GlyphPainter(variant, [
         c.chart1,

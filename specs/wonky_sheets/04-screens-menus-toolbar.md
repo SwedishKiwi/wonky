@@ -51,14 +51,15 @@ final sheetsMenuSpec = MenuSpec.root([
 
 | Route (suite 03 §2) | Screen | Class | Notes |
 |---------------------|--------|-------|-------|
-| `/` and drive routes | Home (drive filtered to spreadsheets) | shell `DriveHomeScreen` + `SheetsHomeConfig` | §12 |
+| `/` and drive routes | Home (v2: **only** spreadsheets and folders that contain them) | shell `DriveHomeScreen` with `HomeScope.kind(spreadsheet)` + `SheetsHomeConfig` | §12 |
+| `/new?folder=&template=`, `/import?file=<fileItemUuid>` (v2) | Create a spreadsheet (reserved space, offline-first) / import a Drive file with §11.15 | `SheetsNewRoute`, `SheetsImportRoute` | §12, Drive 02 §7.2 |
 | `/templates` | Template gallery (Sheets categories) | shell | §12 |
 | `/s/:uuid` (`?sheet=&range=&comment=`) | **Spreadsheet editor** | `SheetEditorScreen` | §2 |
 | `/s/:uuid` while downloading | "Downloading spreadsheet… 42 %" progress (suite 12 §2.3) | `SpreadsheetLoadingView` | Skeleton grid + `ShadProgress` |
 | `/s/:uuid/history` | Version history (full-screen) | `SheetsVersionHistoryScreen` | [10](10-collaboration-history.md) |
 | `/s/:uuid/print` | Print / PDF preview | `SheetsPrintPreviewScreen` | [11](11-import-export-print.md) |
 | `/s/:uuid/script` | Script editor (full-screen) | `ScriptEditorScreen` | [09](09-scripting.md) |
-| `/settings/sheets` | Settings › Sheets section (user defaults) | shell settings page section | §11.24 |
+| `/settings/app/defaults` (v2; `/settings/sheets` redirects) | Sheets settings › Defaults (user defaults) | app settings section | §11.24 |
 | No access / not found | shell | shell | |
 
 ## 2. Spreadsheet editor layout
@@ -84,7 +85,8 @@ final sheetsMenuSpec = MenuSpec.root([
 
 - Rows 1–3 follow suite 03 §3.1. Title row: app icon (Sheets product icon, → Home), `DocumentTitleField`
   (rename = `shell.drive.rename`, 1 step on the shell stack), star, move, `SyncStatusIndicator`,
-  `PresenceAvatarStack`, comments button (badge = open threads, toggles Comments panel), **Share**,
+  `PresenceAvatarStack`, (v2) *Report a bug* icon button (`shell.help.reportBug`, suite 03
+  §3.1/§3.4), comments button (badge = open threads, toggles Comments panel), **Share**,
   account menu. No history or ✨ Assistant buttons: those are reached through the side panel
   host's icon rail (suite 03 §3.1) and their commands (`sheets.history.open`,
   `shell.ai.togglePanel`).
@@ -343,7 +345,8 @@ All behaviors in [07-data-tools.md](07-data-tools.md) unless noted.
 | Notification settings ▸ Notification rules (P2) | `sheets.notifications.openRules` | — | — | edit | 10 |
 | Accessibility settings | `shell.settings.accessibility` | — | — | view | shell 03 |
 | Keyboard shortcuts | `shell.help.shortcuts` | ⌘/ | Ctrl+/ | view | §11.19 |
-| Preferences… | `shell.settings.open {section: sheets}` | ⌘, (desktop) | — | view | §11.24 |
+| Sheets settings… (v2) | `shell.settings.openApp` | ⌘, (desktop) | — | view | §11.24 |
+| Wonky Works settings… (v2) | `shell.settings.open {section: account}` | — | — | view | suite 04 §4 |
 
 ### 3.8 Extensions
 
@@ -373,8 +376,9 @@ shortcuts use `Alt+Shift+<digit>` (no Ctrl).
 |------|-----------|-------|-----------|
 | Keyboard shortcuts | `shell.help.shortcuts` | ⌘/ | Ctrl+/ |
 | Function list | `sheets.help.functionList` | — | — |
+| Script API reference | `sheets.help.scriptApiReference` | — | — |
 | — | | | |
-| Report a problem | `shell.help.feedback` | — | — |
+| Report a bug (v2; replaces *Report a problem*, suite 03 §3.2) | `shell.help.reportBug` | — | — |
 | What's new | `shell.help.whatsNew` | — | — |
 | About | `shell.help.about` | — | — |
 
@@ -687,6 +691,15 @@ valid.
   (`ShadSelect.withSearch` of IANA zones with current offset), `displayLanguage` (P2: function
   names & error names language; addition to 02, §15), live preview line: "1,234.56 · $1,234.56 ·
   9/26/2008 · 3:59:00 PM · =SUM(1, 2)" in the selected locale.
+  **As built:** *Function language* (`ShadSelect`: English, Deutsch, Français, Español, Svenska;
+  `sheets.settings.update {displayLanguage}`, `''` = English, MCP field `displayLanguage`). The
+  preview's `SUM` follows it. Core `FormulaLanguage` (`formula/parser/formula_language.dart`)
+  maps ~120 common functions and TRUE/FALSE per language; `FormulaLocale.withLanguage` carries it
+  to the lexer, parser, codec, autocomplete, signature help and validation. The stored form stays
+  English and English names are always accepted (also by agents); only the editor UI renders
+  localized names (`EngineFormulaHooks(displayLanguage: true)`, `SheetEditorController.
+  formulaLocale`); booleans display translated in cells (`CellDisplayResolver`). Error literals
+  stay English; untranslated functions keep their English names.
 - **Calculation**: `recalcMode` (`ShadSelect`: On change / On change and every minute / On change
   and every hour), `iterativeCalc` (`ShadSwitch`), `maxIterations` (`WonkyNumberStepper` 1–1,000,
   default 50; enabled when iterative), `convergenceThreshold` (`ShadInput` numeric ≥ 0, default
@@ -834,14 +847,24 @@ limit of 1,000,000 cells." [OK].
 Executes immediately (Google behavior, 1 step), no confirmation. Formulas in moved rows are
 adjusted exactly like sort (see [07-data-tools.md](07-data-tools.md)).
 
-### 11.24 Settings › Sheets (user defaults; shell settings page section)
+### 11.24 Sheets settings › Defaults (user defaults; v2: app settings)
+
+(v2) The **app settings** of the Sheets app (`/settings/app/defaults`, suite 04 §4), shown only
+in Sheets — no longer a section of the shared settings page, and Write no longer shows Sheets
+toggles. *Default locale for new spreadsheets* moves here from Language & region.
 
 Default locale for new spreadsheets, default time zone, default font/size, *Enter key starts
 editing*, *Formula autocomplete*, *Formula help*, *Show editor mode in status bar*, *Custom fill
 lists* (editable list of lists), *Enable scripts on this device*, *Reduce grid animations*.
 Stored in `UserPreferences.sheetsDefaults` (suite 04). Built as the Sheets app's section
-(`WonkyAppConfig.sheetsSettings`); keys in `SheetsUserDefaults` (06 §20). Custom fill lists are
+(v2: `WonkyAppConfig.appSettingsSections`, replacing `sheetsSettings`); keys in
+`SheetsUserDefaults` (06 §20). Custom fill lists are
 edited as one list per line, items separated by commas. Write shows only the shared toggles.
+The locale, time zone and default font/size also apply to spreadsheets the **server** creates
+(`drive.createSpreadsheet` without a reserved space, built-in templates, imports and MCP
+`drive.create_spreadsheet`): `SheetsCreateDefaults.of(session, userId)` reads the creator's
+`sheetsDefaults`; explicit `locale`/`timeZone` arguments win. Copies of user templates keep the
+template's settings.
 
 ### 11.25 Copy sheet to existing spreadsheet
 
@@ -852,8 +875,14 @@ Drive picker dialog (shell `DrivePickerDialog`, filtered to spreadsheets where u
 
 ## 12. Home screen (Sheets variant of suite 05 §3)
 
-- `SheetsHomeConfig`: default type filter *Spreadsheets*; `+ New` default *Spreadsheet* (works
-  offline via reserved spaces, suite 12 §2.2).
+- (v2) The Sheets home lists **only spreadsheets** (no type filter) and the folders that contain
+  spreadsheets (suite 05 §3.2); the left menu (suite 03 §3.3) has the four app links, Recent /
+  My files / Shared with me / Starred / Offline / Trash, then *Sheets settings*, *Wonky Works
+  settings*, *Report a bug* and the storage meter; folder management and other kinds are in
+  Wonky Drive (*Open in Wonky Drive*). Search is filtered to spreadsheets ("Search all of Wonky
+  Drive" row).
+- `SheetsHomeConfig`: `homeScope = HomeScope.kind(spreadsheet)`; `+ New` = *Spreadsheet* (works
+  offline via reserved spaces, suite 12 §2.2) and *From template…*.
 - **Template strip**: Blank, To-do list, Annual budget, Monthly budget, Schedule, Invoice, Project
   timeline (Gantt via CF), Expense report, Attendance, Team roster. Templates are spreadsheets
   with `DriveItem.templateOf` (suite 05); category "Finance" etc. on `/templates`.
@@ -866,7 +895,10 @@ Drive picker dialog (shell `DrivePickerDialog`, filtered to spreadsheets where u
   rendered region hash is unchanged. Grid view cards show the thumbnail; list view shows the green
   Sheets icon.
 - Drag-and-drop of `.xlsx/.xls/.ods/.csv/.tsv` onto the list imports as new spreadsheets (suite
-  05 §3.1), using the server import pipeline for files > 5 MB (11).
+  05 §3.2), using the server import pipeline for files > 5 MB (11). (v2) Imports and images
+  over cells count against the storage quota (Drive 03 §7.2): a refused import or image shows
+  the *Out of storage* dialog; images queued offline stay placeholders "Not uploaded — out of
+  storage" (08 §10).
 - Offline: spreadsheets in the active set (suite 12 §2.3) are marked available offline; others are
   dimmed when offline.
 

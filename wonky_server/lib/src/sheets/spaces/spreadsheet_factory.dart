@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:serverpod/serverpod.dart';
 import 'package:serverpod_offline_sync_server/serverpod_offline_sync_server.dart';
 import 'package:wonky_sheets_core/wonky_sheets_core.dart'
@@ -20,6 +22,24 @@ abstract final class SpreadsheetFactory {
   static const defaultThemeJson =
       '{"v":1,"name":"Default","fonts":{"text":"Inter"},"colors":{}}';
 
+  /// The text font of a new spreadsheet with default font [fontFamily].
+  static String themeFont(String? fontFamily) {
+    final f = fontFamily?.trim();
+    return f == null || f.isEmpty ? 'Inter' : f;
+  }
+
+  /// [defaultThemeJson] with [fontFamily] as the text font.
+  static String themeJsonFor(String? fontFamily) {
+    final f = themeFont(fontFamily);
+    if (f == 'Inter') return defaultThemeJson;
+    return jsonEncode({
+      'v': 1,
+      'name': 'Default',
+      'fonts': {'text': f},
+      'colors': <String, Object?>{},
+    });
+  }
+
   /// Writes a new spreadsheet into [spaceUuid] as [authorUuid] (who must be a
   /// readWrite member). [sheets] empty = one blank "Sheet1".
   static Future<void> write(
@@ -29,6 +49,8 @@ abstract final class SpreadsheetFactory {
     required String title,
     String locale = 'en_US',
     String timeZone = 'UTC',
+    String? fontFamily,
+    double? fontSize,
     List<TemplateSheet> sheets = const [],
     IdGenerator ids = const UuidV7IdGenerator(),
   }) async {
@@ -58,7 +80,9 @@ abstract final class SpreadsheetFactory {
             title: title,
             locale: locale,
             timeZone: timeZone,
-            themeJson: defaultThemeJson,
+            defaultFontFamily: themeFont(fontFamily),
+            defaultFontSize: fontSize ?? 10.0,
+            themeJson: themeJsonFor(fontFamily),
             createdBy: authorUuid,
             createdAt: now,
           ),

@@ -84,6 +84,13 @@ dependencies:
   # read-only SQLite and the ZIP of the unsynced spreadsheets.
   sqlite3: ^3.7.0
   archive: ^4.0.0
+  # GPU backend of 3D charts on native platforms (08 §23.7, Flutter GPU;
+  # the web uses the software rendering). Meshes are built at runtime.
+  flutter_scene: ^0.24.3
+  flutter_svg: ^2.3.0
+  vector_math: ^2.1.4
+  # Native print dialog on desktop (11 §7.7; web prints from an iframe).
+  printing: ^5.15.1
 
 dev_dependencies:
   flutter_test:
@@ -95,6 +102,8 @@ dev_dependencies:
   # package. See that file for information about deactivating specific lint
   # rules and activating additional ones.
   flutter_driver:
+    sdk: flutter
+  integration_test:
     sdk: flutter
   flutter_lints: '>=3.0.0 <7.0.0'
   provider: ^6.1.5+1

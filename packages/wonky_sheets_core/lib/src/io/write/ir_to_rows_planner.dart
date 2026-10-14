@@ -82,6 +82,45 @@ abstract final class IrToRowsPlanner {
     startCol: startCol,
   ).run();
 
+  /// Plans [doc] like [plan], in chunks (11 §3.5): [IrImportChunks.head]
+  /// holds every row except the cells (spreadsheet, sheets, rows, columns,
+  /// names, merges, rules, objects, print settings), then
+  /// [IrImportChunks.next] plans up to [chunkCells] cells per call, so a
+  /// 1M-cell import never holds all its row changes at once and the caller
+  /// can yield (frames, progress, cancel) between chunks.
+  ///
+  /// Apply each plan to [model] (`model.applyPlan`) and write it before
+  /// asking for the next one: writes into existing cells read the model.
+  /// The concatenated plans equal the changes of [plan] (one undo step:
+  /// keep their changes, or their inverses, together).
+  static IrImportChunks planChunked(
+    WorkbookDocument doc,
+    WorkbookModel model,
+    PlanContext ctx, {
+    ImportOptions options = const ImportOptions(),
+    String? activeSheetId,
+    String? fileName,
+    String? label,
+    int? startRow,
+    int? startCol,
+    int chunkCells = IrImportChunks.defaultChunkCells,
+  }) {
+    final p = _Planner(
+      doc,
+      model,
+      ctx,
+      options,
+      activeSheetId: activeSheetId,
+      fileName: fileName,
+      label: label,
+      startRow: startRow,
+      startCol: startCol,
+      deferCells: true,
+    );
+    final head = p.run();
+    return IrImportChunks._(p, head, chunkCells);
+  }
+
   /// The resulting grid size of importing [doc] (dialog check, 11 §3.4),
   /// computed like [plan] without building rows.
   static ImportSizeEstimate estimate(
@@ -104,6 +143,66 @@ abstract final class IrToRowsPlanner {
     );
     return p.estimate();
   }
+}
+
+/// A chunked import plan ([IrToRowsPlanner.planChunked]).
+final class IrImportChunks {
+  IrImportChunks._(this._p, this._head, this.chunkCells)
+    : totalCells = _p._deferredCellCount;
+
+  /// Cells per chunk by default: ~50 ms of planning and a few hundred ms
+  /// of writing.
+  static const defaultChunkCells = 5000;
+
+  final _Planner _p;
+  final IrImportResult _head;
+
+  /// Max cells per [next] plan.
+  final int chunkCells;
+
+  /// Cells of the file the chunks plan (an upper bound: cells beyond the
+  /// grid or without content and format are skipped).
+  final int totalCells;
+
+  int _planned = 0;
+
+  /// Everything but the cells; apply and write it first.
+  MutationPlan get head => _head.plan;
+
+  /// Ids of the created or written sheets, in tab order.
+  List<String> get sheetIds => _head.sheetIds;
+
+  /// Images to store (the plans reference their UUIDs).
+  List<IrImageUpload> get imageUploads => _head.imageUploads;
+
+  /// Whether every cell is planned.
+  bool get isDone => _p._deferredIndex >= _p._deferred.length;
+
+  /// Share of the cells planned so far (0..1).
+  double get progress =>
+      isDone ? 1 : (totalCells == 0 ? 0 : _planned / totalCells);
+
+  /// The next chunk of cells, or null when all are planned. The previous
+  /// plans must be applied to the model first.
+  MutationPlan? next() {
+    final plan = _p._nextCells(chunkCells, _head.plan.label);
+    if (plan == null) return null;
+    _planned += plan.changes.length;
+    if (_planned > totalCells) _planned = totalCells;
+    return plan;
+  }
+
+  /// The import report (cell counts complete once [isDone]).
+  ImportReport get report => _p._report();
+
+  /// The result as [IrToRowsPlanner.plan] returns it, with [head] as its
+  /// plan and the final report.
+  IrImportResult get result => IrImportResult(
+    plan: head,
+    report: report,
+    sheetIds: sheetIds,
+    imageUploads: imageUploads,
+  );
 }
 
 /// Default grid of a new sheet.
@@ -235,6 +334,14 @@ final class _FreshSink implements _Sink {
     insert(SheetsTables.cell, SheetsIds.cellId(sheetId, rowId, colId), cols);
   }
 
+  /// Forgets the rows of the previous chunk.
+  void reset() {
+    byTable.clear();
+    _positions.clear();
+    details.clear();
+    cellDetails = 0;
+  }
+
   /// All rows in table dependency order.
   List<RowChange> get changes => [
     for (final t in SheetsTables.dependencyOrder) ...?byTable[t],
@@ -246,7 +353,8 @@ final class _FreshSink implements _Sink {
 final class _BuilderSink implements _Sink {
   _BuilderSink(this.b);
 
-  final PlanBuilder b;
+  /// The builder of the plan being built (a new one per chunk).
+  PlanBuilder b;
 
   @override
   bool get inPlace => true;
@@ -323,6 +431,111 @@ final class _Target {
   return (r + 1, c + 1);
 }
 
+/// Plans the cells of one target (the cell loop of `_writeSheet`), all at
+/// once or chunk by chunk.
+final class _CellWriter {
+  _CellWriter(this.p, this.t)
+    : colDefaults = t.full ? p._columnDefaults(t) : const <int, CellFormat>{},
+      colDefaultIdx = p._colDefaultIndex[t] ?? const <int, int>{},
+      rowLimit = t.rows.length - t.rowOffset,
+      colLimit = t.cols.length - t.colOffset {
+    // Values inside array formula ranges are cached results, not content.
+    for (final (r, c, cell) in t.ir.cells.entries) {
+      if (cell.formulaA1 != null &&
+          cell.formulaKind != IrFormulaKind.normal &&
+          cell.arrayRef != null &&
+          !cell.arrayRef!.isSingleCell) {
+        arrays.add((r, c, cell.arrayRef!));
+      }
+    }
+  }
+
+  final _Planner p;
+  final _Target t;
+  final Map<int, CellFormat> colDefaults;
+  final Map<int, int> colDefaultIdx;
+  final int rowLimit;
+  final int colLimit;
+  final Map<int, CellFormat> formatCache = {};
+  final Set<(int, int)> seen = {};
+  final List<(int, int, GridRect)> arrays = [];
+
+  /// The cell cursor of chunked planning.
+  late final Iterator<(int, int, IrCell)> cursor = t.ir.cells.entries.iterator;
+
+  CellFormat fmtOf(int index) => formatCache[index] ??= index == 0
+      ? CellFormat.empty
+      : p._mapFormat(p.doc.formats[index].attrs);
+
+  /// In-sheet writes carry row/column defaults into the cells.
+  CellFormat inheritedOf(int r, int c) {
+    if (t.full) return CellFormat.empty;
+    final ir = t.ir;
+    var f = fmtOf(ir.defaultFormat);
+    final cf = ir.columns[c]?.format ?? 0;
+    if (cf != 0) f = f.overlay(fmtOf(cf));
+    final rf = ir.rows[r]?.format ?? 0;
+    if (rf != 0) f = f.overlay(fmtOf(rf));
+    return f;
+  }
+
+  bool cached(int r, int c) {
+    for (final (ar, ac, rect) in arrays) {
+      if (rect.contains(r, c) && !(r == ar && c == ac)) return true;
+    }
+    return false;
+  }
+
+  /// Plans one cell; returns whether it produced a row change.
+  bool write(int r, int c, IrCell cell) {
+    if (r >= rowLimit || c >= colLimit) return false;
+    if (arrays.isNotEmpty &&
+        cell.formulaA1 == null &&
+        cell.value != null &&
+        cached(r, c)) {
+      cell = cell.copyWith(clearValue: true);
+    }
+    final row = r + t.rowOffset;
+    final col = c + t.colOffset;
+    var fmt = inheritedOf(r, c).overlay(fmtOf(cell.format));
+    final def = colDefaults[c];
+    if (def != null && colDefaultIdx[c] == cell.format) {
+      fmt = fmt.without(def.attrs);
+    }
+    final cols = p._cellColumns(t, cell, row, col, fmt);
+    if (cols == null) return false;
+    if (!t.full && t.sink.inPlace) seen.add((row, col));
+    t.sink.cell(t.id, t.rows.idAt(row), t.cols.idAt(col), cols);
+    if (cols[CellCols.content] != null) t.cells++;
+    return true;
+  }
+
+  /// After the last cell: replace at cell clears the old content of the
+  /// data rectangle the file left empty.
+  void finish() {
+    final ir = t.ir;
+    if (p.options.location == ImportLocation.replaceAtCell) {
+      final (u, uc) = _extent(ir);
+      final s = p.model.sheet(t.id)!;
+      final rect = GridRect(
+        t.rowOffset,
+        t.colOffset,
+        t.rowOffset + u - 1,
+        t.colOffset + uc - 1,
+      );
+      if (u > 0 && uc > 0) {
+        for (final (r, c, cell) in s.cellsIn(rect)) {
+          if (seen.contains((r, c)) || cell.content == null) continue;
+          p.builder.writeCell(t.id, cell.rowId, cell.columnId, {
+            CellCols.content: null,
+          });
+        }
+      }
+    }
+    if (ir.cells.isNotEmpty) p.builder.summary.kinds.add(ChangeKinds.values);
+  }
+}
+
 final class _Planner {
   _Planner(
     this.doc,
@@ -334,6 +547,7 @@ final class _Planner {
     this.label,
     this.startRow,
     this.startCol,
+    this.deferCells = false,
   }) : builder = PlanBuilder(model, ctx),
        fresh = _FreshSink(ctx.now) {
     warnings.addAll(doc.warnings);
@@ -355,8 +569,15 @@ final class _Planner {
   final int? startRow;
   final int? startCol;
 
-  final PlanBuilder builder;
+  PlanBuilder builder;
   final _FreshSink fresh;
+
+  /// Chunked planning: [run] plans everything but the cells, which
+  /// [_nextCells] plans chunk by chunk.
+  final bool deferCells;
+  final List<_CellWriter> _deferred = [];
+  final List<_BuilderSink> _builderSinks = [];
+  var _deferredIndex = 0;
   final ImportWarnings warnings = ImportWarnings();
   late PlannedWorkbookView view;
   final List<_Target> targets = [];
@@ -889,6 +1110,7 @@ final class _Planner {
     final (r0, c0) = _offset(s);
     view = PlannedWorkbookView(model.spreadsheetId, settings: _settings());
     final sink = _BuilderSink(builder);
+    _builderSinks.add(sink);
     PlannedAxis rowAxis;
     PlannedAxis colAxis;
     if (replace) {
@@ -1216,84 +1438,16 @@ final class _Planner {
 
   void _writeSheet(_Target t) {
     final ir = t.ir;
-    final colDefaults = t.full ? _columnDefaults(t) : const <int, CellFormat>{};
-    final colDefaultIdx = _colDefaultIndex[t] ?? const <int, int>{};
-    final formatCache = <int, CellFormat>{};
-    CellFormat fmtOf(int index) => formatCache[index] ??= index == 0
-        ? CellFormat.empty
-        : _mapFormat(doc.formats[index].attrs);
-
-    // In-sheet writes carry row/column defaults into the cells.
-    CellFormat inheritedOf(int r, int c) {
-      if (t.full) return CellFormat.empty;
-      var f = fmtOf(ir.defaultFormat);
-      final cf = ir.columns[c]?.format ?? 0;
-      if (cf != 0) f = f.overlay(fmtOf(cf));
-      final rf = ir.rows[r]?.format ?? 0;
-      if (rf != 0) f = f.overlay(fmtOf(rf));
-      return f;
-    }
-
-    final rowLimit = t.rows.length - t.rowOffset;
-    final colLimit = t.cols.length - t.colOffset;
-    final seen = <(int, int)>{};
-    // Values inside array formula ranges are cached results, not content.
-    final arrays = [
-      for (final (r, c, cell) in ir.cells.entries)
-        if (cell.formulaA1 != null &&
-            cell.formulaKind != IrFormulaKind.normal &&
-            cell.arrayRef != null &&
-            !cell.arrayRef!.isSingleCell)
-          (r, c, cell.arrayRef!),
-    ];
-    bool cached(int r, int c) {
-      for (final (ar, ac, rect) in arrays) {
-        if (rect.contains(r, c) && !(r == ar && c == ac)) return true;
+    final cells = _CellWriter(this, t);
+    if (deferCells) {
+      // Chunked planning: the cells are planned by [_nextCells].
+      _deferred.add(cells);
+    } else {
+      for (final (r, c, cell) in ir.cells.entries) {
+        cells.write(r, c, cell);
       }
-      return false;
+      cells.finish();
     }
-
-    for (var (r, c, cell) in ir.cells.entries) {
-      if (r >= rowLimit || c >= colLimit) continue;
-      if (arrays.isNotEmpty &&
-          cell.formulaA1 == null &&
-          cell.value != null &&
-          cached(r, c)) {
-        cell = cell.copyWith(clearValue: true);
-      }
-      final row = r + t.rowOffset;
-      final col = c + t.colOffset;
-      var fmt = inheritedOf(r, c).overlay(fmtOf(cell.format));
-      final def = colDefaults[c];
-      if (def != null && colDefaultIdx[c] == cell.format) {
-        fmt = fmt.without(def.attrs);
-      }
-      final cols = _cellColumns(t, cell, row, col, fmt);
-      if (cols == null) continue;
-      if (!t.full && t.sink.inPlace) seen.add((row, col));
-      t.sink.cell(t.id, t.rows.idAt(row), t.cols.idAt(col), cols);
-      if (cols[CellCols.content] != null) t.cells++;
-    }
-    // Replace at cell: empty fields of the data rectangle clear old content.
-    if (options.location == ImportLocation.replaceAtCell) {
-      final (u, uc) = _extent(ir);
-      final s = model.sheet(t.id)!;
-      final rect = GridRect(
-        t.rowOffset,
-        t.colOffset,
-        t.rowOffset + u - 1,
-        t.colOffset + uc - 1,
-      );
-      if (u > 0 && uc > 0) {
-        for (final (r, c, cell) in s.cellsIn(rect)) {
-          if (seen.contains((r, c)) || cell.content == null) continue;
-          builder.writeCell(t.id, cell.rowId, cell.columnId, {
-            CellCols.content: null,
-          });
-        }
-      }
-    }
-    if (ir.cells.isNotEmpty) builder.summary.kinds.add(ChangeKinds.values);
 
     // Merges.
     for (final m in ir.merges) {
@@ -1790,6 +1944,70 @@ final class _Planner {
   // ---------------------------------------------------------------------------
   // Result.
 
+  /// Plans the next ≤ [maxCells] deferred cells as one plan (null when all
+  /// cells are planned). In-place writes read the model, so the previous
+  /// plans must be applied to it first.
+  MutationPlan? _nextCells(int maxCells, String label) {
+    if (_deferredIndex >= _deferred.length) return null;
+    builder = PlanBuilder(model, ctx);
+    for (final s in _builderSinks) {
+      s.b = builder;
+    }
+    fresh.reset();
+    var n = 0;
+    while (n < maxCells && _deferredIndex < _deferred.length) {
+      final w = _deferred[_deferredIndex];
+      if (w.cursor.moveNext()) {
+        final (r, c, cell) = w.cursor.current;
+        if (w.write(r, c, cell)) n++;
+        continue;
+      }
+      w.finish();
+      _deferredIndex++;
+    }
+    final built = builder.build(label, kinds: const [ChangeKinds.import]);
+    final freshChanges = fresh.changes;
+    if (built.changes.isEmpty && freshChanges.isEmpty) {
+      return _nextCells(maxCells, label);
+    }
+    final details = [
+      if (built.detail?['cells'] case final List<Object?> l) ...l,
+      ...fresh.details,
+    ];
+    final overflow =
+        fresh.cellDetails > fresh.details.length ||
+        details.length > MutationPlan.maxDetailCells;
+    final summary = built.summary..kinds.add(ChangeKinds.values);
+    for (final w in _deferred) {
+      summary.sheets.add(w.t.id);
+    }
+    return MutationPlan(
+      label: built.label,
+      summary: summary,
+      changes: [...built.changes, ...freshChanges],
+      detail: overflow || details.isEmpty ? null : {'cells': details},
+    );
+  }
+
+  ImportReport _report() => ImportReport(
+    fileName: fileName,
+    sheets: [
+      for (final t in targets)
+        ImportSheetReport(
+          name: t.view.name,
+          sheetId: t.id,
+          rows: t.rows.length,
+          columns: t.cols.length,
+          cells: t.cells,
+        ),
+    ],
+    warnings: warnings,
+  );
+
+  /// Cells of the deferred targets (an upper bound of the chunked work).
+  int get _deferredCellCount =>
+      _deferred.fold(0, (a, w) => a + w.t.ir.cells.length);
+
   IrImportResult _result() {
     final built = builder.build(
       label ?? (fileName == null ? 'Import' : 'Import $fileName'),
@@ -1828,20 +2046,7 @@ final class _Planner {
         if (ids.isNotEmpty) 'sheetId': ids.first,
       },
     );
-    final report = ImportReport(
-      fileName: fileName,
-      sheets: [
-        for (final t in targets)
-          ImportSheetReport(
-            name: t.view.name,
-            sheetId: t.id,
-            rows: t.rows.length,
-            columns: t.cols.length,
-            cells: t.cells,
-          ),
-      ],
-      warnings: warnings,
-    );
+    final report = _report();
     return IrImportResult(
       plan: plan,
       report: report,

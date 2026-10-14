@@ -80,6 +80,7 @@ final class ModelWorkbookView implements WorkbookView {
       iterativeCalc: sp.iterativeCalc,
       maxIterations: sp.maxIterations,
       convergenceThreshold: sp.convergenceThreshold,
+      displayLanguage: sp.displayLanguage,
     );
   }
 }

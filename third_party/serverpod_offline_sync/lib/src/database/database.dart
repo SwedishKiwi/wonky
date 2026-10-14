@@ -20,6 +20,7 @@ import 'recorder.dart';
 import 'session.dart';
 import 'tombstone.dart';
 
+part 'bulk_write.dart';
 part 'space.dart';
 
 /// Map of transaction hashes to the space they are associated with.
@@ -407,6 +408,20 @@ class OfflineSyncDatabase implements Database {
       },
     );
   }
+
+  /// Set-based tracked write of many rows of one table (patch OS-7): new
+  /// ids are inserted, tombstoned ids revived and visible ids updated
+  /// (inserts with their `columnsIfVisible`, updates with exactly their
+  /// columns); updates of ids that are not visible are skipped. Row ids must
+  /// be distinct. The CRDT records equal those of the per-row calls
+  /// ([insert], [updateWhere] by id): per-column field HLCs, tombstone
+  /// generations and visibility; only the statements are batched. Writes
+  /// that may change a foreign key or unique projection take the ordinary
+  /// planned path.
+  Future<BulkWriteResult> bulkWrite<T extends TableRow>(
+    List<BulkRowWrite<T>> writes, {
+    Transaction? transaction,
+  }) => _bulkWrite(writes, transaction);
 
   @override
   Future<T> insertRow<T extends TableRow>(

@@ -84,13 +84,9 @@ class InCellController extends ChangeNotifier {
     editor.scroll.addListener(_onScroll);
     editor.editor.addListener(_onEditing);
     editor.layers.add(_spillBlockers);
-    editor.layers.add(_personChips);
     editor.editor.text.addListener(_onEditorText);
     editor.onDispose(dispose);
   }
-
-  /// People smart chips (03 §14.3).
-  static const _personChips = PersonChipLayer();
 
   /// Typing `@` into an empty cell opens the smart chip menu (03 §14.3):
   /// the edit is dropped and the menu takes over (its search continues the
@@ -269,6 +265,9 @@ class InCellController extends ChangeNotifier {
       person: PersonChip.mayBe(sheet.cellAt(row, col)?.content)
           ? PersonChip.of(sheet.cellAt(row, col)?.decoded)
           : null,
+      file: PersonChip.mayBe(sheet.cellAt(row, col)?.content)
+          ? FileChip.of(sheet.cellAt(row, col)?.decoded)
+          : null,
     );
     return info.isEmpty ? null : info;
   }
@@ -379,7 +378,6 @@ class InCellController extends ChangeNotifier {
     editor.selection.removeListener(_onSelection);
     editor.scroll.removeListener(_onScroll);
     editor.layers.remove(_spillBlockers);
-    editor.layers.remove(_personChips);
     editor.editor.text.removeListener(_onEditorText);
     editor.editor.removeListener(_onEditing);
     popup.dispose();

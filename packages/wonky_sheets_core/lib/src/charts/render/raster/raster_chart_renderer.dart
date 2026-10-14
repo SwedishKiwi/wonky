@@ -87,8 +87,14 @@ final class _RasterContext {
         final r = RenderGeometry.normalize(rect);
         final cmds = RenderGeometry.roundedRect(r, radius);
         _shape(cmds, fill, stroke, false);
-      case SPath(:final cmds, :final fill, :final stroke, :final evenOdd):
-        _shape(cmds, fill, stroke, evenOdd);
+      case SPath(
+        :final cmds,
+        :final fill,
+        :final stroke,
+        :final evenOdd,
+        :final gradient,
+      ):
+        _shape(cmds, fill, stroke, evenOdd, gradient: gradient);
       case SPolyline(:final xy, :final stroke):
         if (!RenderGeometry.strokeVisible(stroke)) return;
         raster.clear();
@@ -178,7 +184,13 @@ final class _RasterContext {
   }
 
   /// Fills and strokes the path [cmds] (scene coordinates).
-  void _shape(List<PathCmd> cmds, int? fill, SStroke? stroke, bool evenOdd) {
+  void _shape(
+    List<PathCmd> cmds,
+    int? fill,
+    SStroke? stroke,
+    bool evenOdd, {
+    SGradient? gradient,
+  }) {
     final doFill = RenderGeometry.fillVisible(fill);
     final doStroke = RenderGeometry.strokeVisible(stroke);
     if ((!doFill && !doStroke) || cmds.isEmpty) return;
@@ -193,7 +205,11 @@ final class _RasterContext {
       for (final (p, _) in scaled) {
         raster.addPolygon(p);
       }
-      _paint(fill!, 1, evenOdd);
+      if (gradient != null) {
+        _paintGradient(gradient, Argb.alpha(fill!) / 255, evenOdd);
+      } else {
+        _paint(fill!, 1, evenOdd);
+      }
     }
     if (doStroke) {
       final s = stroke!;
@@ -233,6 +249,61 @@ final class _RasterContext {
       out[i] = p[i] * scale;
     }
     return out;
+  }
+
+  // Linear gradient of the current fill (3D chart faces, 08 §23.5).
+  double _gx = 0, _gy = 0, _gdx = 0, _gdy = 0, _ginv = 0;
+  double _r0 = 0, _g0 = 0, _b0 = 0, _a0 = 0;
+  double _r1 = 0, _g1 = 0, _b1 = 0, _a1 = 0;
+  late final CoverageSink _gradientSink = _blendGradient;
+
+  void _blendGradient(int y, int x0, int x1, Float32List coverage) {
+    if (x0 < 0) x0 = 0;
+    if (x1 > width) x1 = width;
+    final py = y + 0.5 - _gy;
+    for (var x = x0; x < x1; x++) {
+      final c = coverage[x];
+      if (c <= 0) continue;
+      var t = ((x + 0.5 - _gx) * _gdx + py * _gdy) * _ginv;
+      if (t < 0) t = 0;
+      if (t > 1) t = 1;
+      final a = (_a0 + (_a1 - _a0) * t) * _a;
+      surface.blendPixel(
+        x,
+        y,
+        _r0 + (_r1 - _r0) * t,
+        _g0 + (_g1 - _g0) * t,
+        _b0 + (_b1 - _b0) * t,
+        a * c,
+      );
+    }
+  }
+
+  void _paintGradient(SGradient g, double alphaFactor, bool evenOdd) {
+    _gx = g.x0 * scale;
+    _gy = g.y0 * scale;
+    _gdx = (g.x1 - g.x0) * scale;
+    _gdy = (g.y1 - g.y0) * scale;
+    final len2 = _gdx * _gdx + _gdy * _gdy;
+    _ginv = len2 <= 1e-12 ? 0 : 1 / len2;
+    _r0 = Argb.red(g.color0) / 255;
+    _g0 = Argb.green(g.color0) / 255;
+    _b0 = Argb.blue(g.color0) / 255;
+    _a0 = Argb.alpha(g.color0) / 255;
+    _r1 = Argb.red(g.color1) / 255;
+    _g1 = Argb.green(g.color1) / 255;
+    _b1 = Argb.blue(g.color1) / 255;
+    _a1 = Argb.alpha(g.color1) / 255;
+    _a = alphaFactor;
+    if (_a <= 0) return;
+    raster.fill(
+      _gradientSink,
+      evenOdd: evenOdd,
+      clipLeft: clipL,
+      clipTop: clipT,
+      clipRight: clipR,
+      clipBottom: clipB,
+    );
   }
 
   void _paint(int argb, double alphaFactor, bool evenOdd) {

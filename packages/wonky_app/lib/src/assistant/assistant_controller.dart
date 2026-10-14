@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:convert';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/widgets.dart';
@@ -6,6 +7,7 @@ import 'package:wonky_client/wonky_client.dart';
 import 'package:wonky_core/wonky_core.dart' show Role;
 
 import '../data/api.dart' show errorMessage;
+import '../mcp_bridge/ui_tool.dart';
 import 'assistant_adapter.dart';
 import 'assistant_api.dart';
 import 'assistant_models.dart';
@@ -355,6 +357,9 @@ class AssistantController extends ChangeNotifier {
         );
       case AssistantEventType.usage:
         break;
+      // Sheets 12 §6.2: a `ui.*` tool runs in this (the requesting) window.
+      case AssistantEventType.uiToolCall:
+        unawaited(_runWindowTool(e.runId ?? reply.runId, e));
       // Sheets Suggest-mode previews (Sheets 12 §6.3): the app's
       // [AssistantRunHooks] show the AI changes preview.
       case AssistantEventType.previewReady:
@@ -390,6 +395,55 @@ class AssistantController extends ChangeNotifier {
   }
 
   bool _lastWasTool = false;
+
+  /// Runs a relayed `ui.*` tool through the adapter's
+  /// [AssistantWindowTools] and answers the server.
+  Future<void> _runWindowTool(String? runId, AssistantEvent e) async {
+    final id = e.toolUseId;
+    final tool = e.toolName;
+    if (runId == null || id == null || tool == null) return;
+    UiBridgeResponse response;
+    final a = adapter;
+    try {
+      if (a is! AssistantWindowTools) {
+        throw UiToolException(
+          'unsupported',
+          'This window does not support $tool.',
+        );
+      }
+      final raw = e.argsJson;
+      final args = raw == null
+          ? const <String, Object?>{}
+          : (jsonDecode(raw) as Map).cast<String, Object?>();
+      final r = await (a as AssistantWindowTools).runWindowTool(tool, args);
+      response = UiBridgeResponse(
+        requestId: id,
+        ok: true,
+        resultJson: jsonEncode(r.result, toEncodable: (o) => '$o'),
+        text: r.text,
+      );
+    } on UiToolException catch (x) {
+      response = UiBridgeResponse(
+        requestId: id,
+        ok: false,
+        errorCode: x.code,
+        errorMessage: x.message,
+      );
+    } catch (x) {
+      debugPrint('Assistant window tool $tool failed: $x');
+      response = UiBridgeResponse(
+        requestId: id,
+        ok: false,
+        errorCode: 'internal_error',
+        errorMessage: '$x',
+      );
+    }
+    try {
+      await api.uiToolResult(runId, response);
+    } catch (x) {
+      debugPrint('Answering the assistant window tool $tool failed: $x');
+    }
+  }
 
   /// The adapter's optional server-run hooks (Sheets).
   AssistantRunHooks? get _hooks {

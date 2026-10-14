@@ -1,7 +1,7 @@
 import 'package:shad/shad.dart' show LucideIcons;
 import 'package:wonky_app/wonky_app.dart';
 import 'package:wonky_core/wonky_core.dart';
-import 'package:wonky_sheets_core/formula.dart' show CellPos;
+import 'package:wonky_sheets_core/formula.dart' show CellPos, FormulaLanguage;
 import 'package:wonky_sheets_core/model.dart';
 
 import '../features/formatting/spreadsheet_settings_dialog.dart';
@@ -223,10 +223,16 @@ List<Command<CommandArgs>> formatExtraCommands(ShellServices s) => [
         'iterativeCalc': const JsonSchema.boolean(),
         'maxIterations': const JsonSchema.integer(minimum: 1, maximum: 1000),
         'convergenceThreshold': const JsonSchema.number(minimum: 0),
+        // 04 §11.1 (P2): function names and booleans; '' = English.
+        'displayLanguage': JsonSchema.string(
+          description: 'Function language; empty = English',
+          enumValues: ['', for (final l in FormulaLanguage.supported) l.code],
+        ),
       },
     ),
     run: (ctx, ed, a) {
       final op = SetSpreadsheetProperties(
+        displayLanguage: a.string('displayLanguage'),
         locale: a.string('locale'),
         timeZone: a.string('timeZone'),
         recalcMode: a.string('recalcMode'),

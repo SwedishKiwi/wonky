@@ -138,7 +138,7 @@ FormulaValidation validateFormula(
   final unknown = <String>{};
   void walk(Expr e) {
     if (e is CallExpr) {
-      final u = e.name.toUpperCase();
+      final u = locale.canonicalFunction(e.name);
       final spec = reg.lookup(u);
       if (spec != null) {
         used.add(spec.name);

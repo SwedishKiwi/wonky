@@ -60,6 +60,12 @@ class _CollabGridOverlayState extends State<CollabGridOverlay> {
       final pane = g.paneAt(p);
       if (pane != null) cell = pane.cellAt(p);
     }
+    // Name flags of collaborators show while their cell is hovered.
+    col.presence.setHover(
+      cell == null ? null : c.activeSheetId,
+      cell?.$1 ?? 0,
+      cell?.$2 ?? 0,
+    );
     if (cell != null && !_hasCard(cell)) cell = null;
     if (cell == _hoverCell) return;
     _hoverCell = cell;
@@ -77,6 +83,7 @@ class _CollabGridOverlayState extends State<CollabGridOverlay> {
   }
 
   void _onExit(PointerExitEvent e) {
+    collab?.presence.setHover(null, 0, 0);
     _hoverCell = null;
     _hoverTimer?.cancel();
     _hoverTimer = Timer(const Duration(milliseconds: 250), () {
@@ -132,6 +139,7 @@ class _CollabGridOverlayState extends State<CollabGridOverlay> {
                     clipBehavior: Clip.hardEdge,
                     children: [
                       ..._docked(context, col, box.biggest),
+                      ..._composer(context, col, box.biggest),
                       ..._hover(context, col, box.biggest),
                       ..._history(context, col, box.biggest),
                       ?_followBanner(context, col),
@@ -232,9 +240,54 @@ class _CollabGridOverlayState extends State<CollabGridOverlay> {
 
   // ---------------------------------------------------------- docked card
 
+  /// The composer of a new comment, next to its cell (Sheets 10 §3.4)
+  /// while the comments panel is closed.
+  List<Widget> _composer(BuildContext context, SheetsCollab col, Size area) {
+    final controller = col.comments.controller;
+    final draft = controller?.draftAnchor;
+    if (controller == null ||
+        draft == null ||
+        c.services.panels.isOpen(ShellPanels.comments)) {
+      return const [];
+    }
+    final a = SheetsCommentAnchor.parse(draft.kind, draft.anchorJson);
+    final rect = a == null || a.sheetId != c.activeSheetId
+        ? null
+        : a.resolve(c.model);
+    final cell = rect == null ? null : _cellRect(rect.top, rect.right);
+    if (cell == null) return const [];
+    return [
+      _place(
+        cell,
+        area,
+        width: 320,
+        maxHeight: 360,
+        child: Focus(
+          onKeyEvent: (node, e) {
+            if (e is KeyDownEvent &&
+                e.logicalKey == LogicalKeyboardKey.escape) {
+              controller.cancelDraft();
+              c.gridFocus.requestFocus();
+              return KeyEventResult.handled;
+            }
+            return KeyEventResult.ignored;
+          },
+          child: SingleChildScrollView(
+            child: NewCommentCard(
+              key: const ValueKey<String>('sheets.comments.composer'),
+              services: c.services,
+              controller: controller,
+            ),
+          ),
+        ),
+      ),
+    ];
+  }
+
   List<Widget> _docked(BuildContext context, SheetsCollab col, Size area) {
     final comments = col.comments;
     final controller = comments.controller;
+    if (controller?.draftAnchor != null) return const [];
     if (controller == null ||
         !comments.visible ||
         !comments.indicatorsOn ||

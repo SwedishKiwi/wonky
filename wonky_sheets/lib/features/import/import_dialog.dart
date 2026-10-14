@@ -5,13 +5,17 @@ import 'package:file_picker/file_picker.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
 import 'package:shad/shad.dart';
-import 'package:wonky_app/wonky_app.dart';
+import 'package:wonky_app/wonky_app.dart' hide formatBytes;
+import 'package:wonky_client/wonky_client.dart' show UuidValue;
 import 'package:wonky_sheets_core/formula.dart' show ColumnLetters;
 import 'package:wonky_sheets_core/model.dart';
 import 'package:wonky_ui/wonky_ui.dart';
 
 import '../../l10n/sheets_l10n.dart';
+import '../data_tools/spreadsheet_picker_dialog.dart';
+import '../import_export/pending_uploads.dart';
 import 'import_pipeline.dart';
+import 'server_import.dart';
 
 /// What the import dialog returns.
 class ImportDialogResult {
@@ -57,6 +61,7 @@ Future<ImportDialogResult?> showImportDialog(
   required String spreadsheetLocale,
   String? activeCell,
   ImportEstimator? estimate,
+  UuidValue? exclude,
 }) => showShadDialog<ImportDialogResult>(
   context: context,
   builder: (_) => ImportDialog(
@@ -66,6 +71,7 @@ Future<ImportDialogResult?> showImportDialog(
     spreadsheetLocale: spreadsheetLocale,
     activeCell: activeCell,
     estimate: estimate,
+    exclude: exclude,
   ),
 );
 
@@ -78,6 +84,7 @@ class ImportDialog extends StatefulWidget {
     required this.spreadsheetLocale,
     this.activeCell,
     this.estimate,
+    this.exclude,
   });
 
   final ImportFileData? initialFile;
@@ -86,6 +93,9 @@ class ImportDialog extends StatefulWidget {
   final String spreadsheetLocale;
   final String? activeCell;
   final ImportEstimator? estimate;
+
+  /// The open spreadsheet (not offered in the *Drive* tab).
+  final UuidValue? exclude;
 
   @override
   State<ImportDialog> createState() => _ImportDialogState();
@@ -129,6 +139,19 @@ class _ImportDialogState extends State<ImportDialog>
             : ImportLocation.createNew);
     final f = widget.initialFile;
     if (f != null) _setFile(f, notify: false);
+  }
+
+  /// Whether the import runs as a server job (big file, online; 11 §3.1).
+  bool get _onServer {
+    final s = _registeredIn;
+    final f = _file;
+    if (s == null || f == null) return false;
+    if (_location == ImportLocation.createNew) return false;
+    final cells = _parsed?.document.sheets.fold<int>(
+      0,
+      (n, sh) => n + sh.cells.length,
+    );
+    return runsOnServer(s, f, cells: cells);
   }
 
   @override
@@ -353,6 +376,24 @@ class _ImportDialogState extends State<ImportDialog>
             'error': _fileError,
           },
     'fields': [
+      if (_file == null) ...[
+        {
+          'id': 'tab',
+          'label': 'Source',
+          'type': 'select',
+          'value': _tab,
+          'options': ['upload', 'recent', 'drive'],
+        },
+        if (_tab == 'recent')
+          {
+            'id': 'recentFile',
+            'label': 'Recent uploads',
+            'type': 'select',
+            'value': null,
+            'options': [for (final r in _recent ?? const []) r.id],
+            'labels': [for (final r in _recent ?? const []) r.name],
+          },
+      ],
       {
         'id': 'location',
         'label': 'Import location',
@@ -425,6 +466,8 @@ class _ImportDialogState extends State<ImportDialog>
             'exceedsLimit': _estimate!.exceedsLimit,
           },
     'buttons': [
+      if (_file == null && _tab == 'drive')
+        {'id': 'chooseFromDrive', 'label': 'Choose a spreadsheet'},
       {'id': 'cancel', 'label': 'Cancel'},
       {'id': 'import', 'label': 'Import data', 'enabled': _canImport},
     ],
@@ -433,6 +476,20 @@ class _ImportDialogState extends State<ImportDialog>
   @override
   bool setField(String id, Object? value) {
     switch (id) {
+      case 'tab':
+        if (value is! String ||
+            !{'upload', 'recent', 'drive'}.contains(value)) {
+          return false;
+        }
+        _openTab(value);
+        return true;
+      case 'recentFile':
+        final r = (_recent ?? const <RecentImport>[])
+            .where((e) => e.id == value)
+            .firstOrNull;
+        if (r == null) return false;
+        unawaited(_pickRecent(r));
+        return true;
       case 'location':
         final l = ImportLocation.byName(value);
         if (l == null || !_allowed(l)) return false;
@@ -489,6 +546,10 @@ class _ImportDialogState extends State<ImportDialog>
   @override
   bool press(String buttonId) {
     switch (buttonId) {
+      case 'chooseFromDrive':
+        if (_file != null) return false;
+        unawaited(_pickFromDrive());
+        return true;
       case 'cancel':
         Navigator.of(context).pop();
         return true;
@@ -639,10 +700,214 @@ class _ImportDialogState extends State<ImportDialog>
     );
   }
 
-  Widget _sourceStep(BuildContext context) => Padding(
-    padding: const EdgeInsets.symmetric(vertical: 8),
-    child: _dropZone(context, compact: false),
-  );
+  /// Source tabs (11 §2.1): *Upload* (drop zone + *Browse*), *Recent
+  /// uploads* (files imported on this device) and *Drive* (another
+  /// spreadsheet, fetched as XLSX).
+  Widget _sourceStep(BuildContext context) {
+    final l = sheetsL10n(context);
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 8),
+      child: ShadTabs<String>(
+        key: const ValueKey<String>('dialog.import.tabs'),
+        value: _tab,
+        onChanged: (v) => _openTab(v),
+        tabs: [
+          ShadTab(
+            key: const ValueKey<String>('dialog.import.tab.upload'),
+            value: 'upload',
+            content: Padding(
+              padding: const EdgeInsets.only(top: 8),
+              child: _dropZone(context, compact: false),
+            ),
+            child: Text(l.importTabUpload),
+          ),
+          ShadTab(
+            key: const ValueKey<String>('dialog.import.tab.recent'),
+            value: 'recent',
+            content: _recentTab(context),
+            child: Text(
+              MediaQuery.sizeOf(context).width < 520
+                  ? l.importTabRecentShort
+                  : l.importTabRecent,
+            ),
+          ),
+          ShadTab(
+            key: const ValueKey<String>('dialog.import.tab.drive'),
+            value: 'drive',
+            content: _driveTab(context),
+            child: Text(l.importTabDrive),
+          ),
+        ],
+      ),
+    );
+  }
+
+  String _tab = 'upload';
+  List<RecentImport>? _recent;
+  bool _fetching = false;
+  String? _sourceError;
+
+  void _openTab(String v) {
+    setState(() {
+      _tab = v;
+      _sourceError = null;
+    });
+    if (v == 'recent' && _recent == null) unawaited(_loadRecent());
+  }
+
+  Future<void> _loadRecent() async {
+    final s = _registeredIn;
+    final q = s == null ? null : await SheetsPendingUploads.ready(s);
+    final list = await q?.recentImports() ?? const <RecentImport>[];
+    if (mounted) setState(() => _recent = list);
+  }
+
+  Future<void> _pickRecent(RecentImport r) async {
+    final s = _registeredIn;
+    final q = s == null ? null : SheetsPendingUploads.of(s);
+    final bytes = await q?.recentImportBytes(r.id);
+    if (!mounted) return;
+    if (bytes == null) {
+      setState(() => _sourceError = sheetsL10n(context).importRecentGone);
+      return;
+    }
+    _setFile(ImportFileData(name: r.name, bytes: bytes));
+  }
+
+  Future<void> _pickFromDrive() async {
+    final s = _registeredIn;
+    if (s == null || !s.connectivity.online) return;
+    final api = ServerImportApi.of(s);
+    if (api == null) return;
+    final l = sheetsL10n(context);
+    final item = await showSpreadsheetPickerDialog(
+      context,
+      services: s,
+      title: l.importDrivePickTitle,
+      exclude: widget.exclude,
+    );
+    if (item == null || !mounted) return;
+    setState(() {
+      _fetching = true;
+      _sourceError = null;
+    });
+    try {
+      final f = await api.driveFile(item.uuid, item.name);
+      if (!mounted) return;
+      setState(() => _fetching = false);
+      _setFile(f);
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _fetching = false;
+        _sourceError = errorMessage(e);
+      });
+    }
+  }
+
+  Widget _sourceErrorText(BuildContext context) {
+    final theme = ShadTheme.of(context);
+    final e = _sourceError;
+    if (e == null) return const SizedBox.shrink();
+    return Padding(
+      padding: const EdgeInsets.only(top: 10),
+      child: Text(
+        e,
+        key: const ValueKey<String>('dialog.import.sourceError'),
+        style: theme.textTheme.small.copyWith(
+          color: theme.colorScheme.destructive,
+        ),
+      ),
+    );
+  }
+
+  Widget _recentTab(BuildContext context) {
+    final l = sheetsL10n(context);
+    final theme = ShadTheme.of(context);
+    final list = _recent;
+    if (list == null) {
+      return const SizedBox(height: 160, child: Center(child: ShadSpinner()));
+    }
+    if (list.isEmpty) {
+      return SizedBox(
+        height: 160,
+        child: Center(
+          child: Text(
+            l.importRecentEmpty,
+            key: const ValueKey<String>('dialog.import.recentEmpty'),
+            style: theme.textTheme.muted,
+            textAlign: TextAlign.center,
+          ),
+        ),
+      );
+    }
+    final date = DateFormat.yMMMd(
+      Localizations.localeOf(context).toString(),
+    ).add_jm();
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        const SizedBox(height: 8),
+        for (final r in list)
+          ShadButton.ghost(
+            key: ValueKey<String>('dialog.import.recent.${r.id}'),
+            mainAxisAlignment: MainAxisAlignment.start,
+            leading: const Icon(LucideIcons.fileSpreadsheet, size: 16),
+            onPressed: () => unawaited(_pickRecent(r)),
+            child: Expanded(
+              child: Text(
+                l.importRecentItem(
+                  r.name,
+                  formatBytes(r.size),
+                  date.format(r.importedAt),
+                ),
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
+          ),
+        _sourceErrorText(context),
+      ],
+    );
+  }
+
+  Widget _driveTab(BuildContext context) {
+    final l = sheetsL10n(context);
+    final theme = ShadTheme.of(context);
+    final s = _registeredIn;
+    final online =
+        s != null && s.connectivity.online && ServerImportApi.of(s) != null;
+    return Padding(
+      padding: const EdgeInsets.only(top: 16, bottom: 8),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(
+            LucideIcons.hardDrive,
+            size: 28,
+            color: theme.colorScheme.mutedForeground,
+          ),
+          const SizedBox(height: 10),
+          Text(
+            online ? l.importDriveHint : l.importDriveOffline,
+            style: theme.textTheme.muted,
+            textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: 14),
+          ShadButton(
+            key: const ValueKey<String>('dialog.import.drivePick'),
+            enabled: online && !_fetching,
+            leading: _fetching
+                ? const SizedBox.square(dimension: 16, child: ShadSpinner())
+                : const Icon(LucideIcons.fileSpreadsheet, size: 16),
+            onPressed: () => unawaited(_pickFromDrive()),
+            child: Text(l.importDrivePick),
+          ),
+          _sourceErrorText(context),
+        ],
+      ),
+    );
+  }
 
   Widget _optionsStep(BuildContext context) {
     final l = sheetsL10n(context);
@@ -732,7 +997,14 @@ class _ImportDialogState extends State<ImportDialog>
                   description: Text(l.importLimitBody(est.cells, est.limit)),
                 ),
               ],
-              if (_file != null && ImportThresholds.isLarge(_file!)) ...[
+              if (_file != null && _onServer) ...[
+                const SizedBox(height: 8),
+                Text(
+                  l.importServerNote,
+                  key: const ValueKey<String>('dialog.import.serverNote'),
+                  style: theme.textTheme.muted,
+                ),
+              ] else if (_file != null && ImportThresholds.isLarge(_file!)) ...[
                 const SizedBox(height: 8),
                 Text(l.importLargeNote, style: theme.textTheme.muted),
               ],

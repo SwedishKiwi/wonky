@@ -14,6 +14,7 @@ import '../../platform/drive/drive_events.dart';
 import '../../platform/drive/drive_service.dart';
 import '../../platform/versions/version_service.dart';
 import '../sync/sync_db.dart';
+import 'agent_cursors.dart';
 
 /// A pluggable consumer of synced `ChangeLog` rows (Sheets 13 §4.6), e.g.
 /// script triggers registered by the scripting workstream.
@@ -201,6 +202,7 @@ abstract final class ChangeLogConsumer {
       await _touch(session, item, profile.id!);
       await _history(session, item, change, cells);
       await _orphans(session, item, summary, change);
+      await AgentCursors.show(session, item, actor, summary);
       for (final plugin in plugins) {
         await plugin.consume(session, item, change, actor);
       }

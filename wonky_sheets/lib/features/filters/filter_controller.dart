@@ -18,6 +18,7 @@ class TemporaryFilterView {
     required this.name,
     required this.range,
     FilterCriteria? criteria,
+    this.sort = const [],
   }) : criteria = criteria ?? FilterCriteria();
 
   /// `temp:<n>`.
@@ -26,6 +27,9 @@ class TemporaryFilterView {
   String name;
   GridRange range;
   FilterCriteria criteria;
+
+  /// The view-only sort `(colId, ascending)` (07 §4.4).
+  List<(String, bool)> sort;
 }
 
 /// The filter shown on a sheet: the active filter view, a temporary view or
@@ -120,8 +124,12 @@ class FilterController extends ChangeNotifier {
     if (_started) return;
     _started = true;
     model.addListener(_onBatch);
-    _recalc = ed.engine.changes.listen((_) => _schedule(_formulaSheets()));
+    _recalc = ed.engine.changes.listen((_) {
+      _schedule(_formulaSheets());
+      _resortLater([..._orders.keys]);
+    });
     ed.selection.addListener(_onSelection);
+    ed.gridHooks.rowOrder = rowOrder;
     refreshAll();
   }
 
@@ -133,6 +141,8 @@ class FilterController extends ChangeNotifier {
     }
     unawaited(_recalc?.cancel());
     _debounce?.cancel();
+    _orderTimer?.cancel();
+    if (ed.gridHooks.rowOrder == rowOrder) ed.gridHooks.rowOrder = null;
     popover.dispose();
     super.dispose();
   }
@@ -199,6 +209,7 @@ class FilterController extends ChangeNotifier {
         viewId: temp.id,
         name: temp.name,
         temporary: true,
+        sort: temp.sort,
       );
     }
     final rec = s.filterViews[viewId];
@@ -332,6 +343,8 @@ class FilterController extends ChangeNotifier {
     }
     _draft = null;
     refresh(sheetId, force: true);
+    _orders.remove(sheetId);
+    ed.selection.modelChanged();
     ed.overlaySignal.fire();
     ed.contentSignal.fire();
   }
@@ -362,13 +375,88 @@ class FilterController extends ChangeNotifier {
     FilterCriteria? criteria,
     String? name,
     GridRange? range,
+    List<(String, bool)>? sort,
   }) {
     final v = temporaryView(id);
     if (v == null) return;
     if (criteria != null) v.criteria = criteria;
     if (name != null) v.name = name;
     if (range != null) v.range = range;
+    if (sort != null) v.sort = sort;
     refresh(v.sheetId, force: true);
+    if (sort != null) _orderChanged(v.sheetId);
+  }
+
+  // ---------------------------------------------------------------------------
+  // View-only sort (07 §4.4).
+
+  final Map<String, (String, int, ViewRowOrder?)> _orders = {};
+  final Set<String> _staleOrders = {};
+  Timer? _orderTimer;
+
+  /// How long data changes wait before a sorted view re-sorts (07 §4.4).
+  static const resortDelay = Duration(milliseconds: 300);
+
+  /// The display order of the active filter view of [sheetId] (its
+  /// view-only sort; `GridHooks.rowOrder`), or null. Computed with the sort
+  /// comparator over computed values; recomputed when the view or the rows
+  /// change, and [resortDelay] after data changes.
+  ViewRowOrder? rowOrder(String sheetId) {
+    final f = effective(sheetId);
+    if (f == null || !f.isView || f.sort.isEmpty) return null;
+    final s = model.sheet(sheetId);
+    if (s == null || f.dataTop > f.range.bottom) return null;
+    final key = '${f.viewId}|${f.range}|${f.sort}';
+    final gen = s.rows.generation;
+    final cached = _orders[sheetId];
+    if (cached != null &&
+        cached.$1 == key &&
+        cached.$2 == gen &&
+        !_staleOrders.contains(sheetId)) {
+      return cached.$3;
+    }
+    if (cached != null && cached.$1 == key && cached.$2 == gen) {
+      // Data changed: keep the current order until the re-sort is due.
+      return cached.$3;
+    }
+    final order = ViewRowOrder.forRows(
+      s,
+      ed.engine,
+      GridRect(f.dataTop, f.range.left, f.range.bottom, f.range.right),
+      f.sort,
+    );
+    _orders[sheetId] = (key, gen, order);
+    _staleOrders.remove(sheetId);
+    return order;
+  }
+
+  /// Re-sorts sorted views of [sheetIds] after [resortDelay].
+  void _resortLater(Iterable<String> sheetIds) {
+    var any = false;
+    for (final id in sheetIds) {
+      if (_orders[id]?.$3 != null) {
+        _staleOrders.add(id);
+        any = true;
+      }
+    }
+    if (!any) return;
+    _orderTimer?.cancel();
+    _orderTimer = Timer(resortDelay, () {
+      final ids = {..._staleOrders};
+      for (final id in ids) {
+        _orders.remove(id);
+      }
+      _staleOrders.clear();
+      ids.forEach(_orderChanged);
+    });
+  }
+
+  void _orderChanged(String sheetId) {
+    _orders.remove(sheetId);
+    if (sheetId != ed.activeSheetId) return;
+    ed.selection.modelChanged();
+    ed.contentSignal.fire();
+    ed.overlaySignal.fire();
   }
 
   /// Deletes a temporary view (closing it when active).
@@ -541,6 +629,7 @@ class FilterController extends ChangeNotifier {
 
   void _onBatch(WorkbookChangeBatch batch) {
     _effective.clear();
+    final orderSheets = <String>{};
     final now = <String>{};
     var all = false;
     for (final e in batch.events) {
@@ -548,10 +637,13 @@ class FilterController extends ChangeNotifier {
         case RulesChanged(:final sheetId, :final kind)
             when kind == RuleKind.basicFilter || kind == RuleKind.filterView:
           now.add(sheetId);
+          // A view's sort may have changed (07 §4.4).
+          if (kind == RuleKind.filterView) orderSheets.add(sheetId);
         case CellsChanged(:final sheetId):
           if (effective(sheetId) != null) {
             _stick(sheetId, e);
             now.add(sheetId);
+            if (e.contentKeys.isNotEmpty) _resortLater([sheetId]);
           }
         case StructureChanged(:final sheetId, :final order):
           if (order) now.add(sheetId);
@@ -568,6 +660,7 @@ class FilterController extends ChangeNotifier {
         refresh(id);
       }
     }
+    orderSheets.forEach(_orderChanged);
   }
 
   /// Sticky edit row (07 §3.4): an edited row in the active cell's row stays

@@ -523,6 +523,8 @@ final class ScriptCompiler {
     'SelectionChangeEvent',
     'ChangeEvent',
     'TimeEvent',
+    'UiEvent',
+    'UiEvent?',
     'OpenEvent?',
     'EditEvent?',
     'SelectionChangeEvent?',

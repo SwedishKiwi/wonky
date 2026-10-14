@@ -1,0 +1,45 @@
+### A server-side import into an existing spreadsheet (Sheets 11 §3.3,
+### A-11-2): queued by `sheetsImport.importInto`, run by the instance that
+### leases it, watched with `sheetsImport.watchImport`. One running job per
+### user; others wait queued.
+class: SheetsImportJob
+table: sheets_import_job
+serverOnly: true
+fields:
+  uuid: UuidValue
+  ### UserProfile id and auth user of the importing user.
+  userId: int
+  authUserId: UuidValue
+  ### Drive item (= space) the file is imported into.
+  spreadsheetUuid: UuidValue
+  ### The uploaded source (`StoredFileKind.importSource`), deleted after the job.
+  uploadFileId: UuidValue
+  fileName: String
+  format: String
+  ### `ImportOptions` JSON (11 §9).
+  optionsJson: String
+  ### Target sheet of the in-sheet locations and insert position of new sheets.
+  activeSheetId: String?
+  status: SheetsImportStatus
+  ### Written cells (`writing`) of [progressTotal].
+  progressDone: int
+  progressTotal: int
+  ### `ImportReport` JSON once done.
+  reportJson: String?
+  ### JSON list of the ids of the sheets the import created.
+  sheetIdsJson: String?
+  ### `ServerChangeRecord.changeId` of the import (undo: `sheets.serverChange`).
+  changeId: UuidValue?
+  errorCode: String?
+  error: String?
+  cancelRequested: bool, default=false
+  createdAt: DateTime
+  updatedAt: DateTime
+  leaseOwner: String?
+  leaseUntil: DateTime?
+indexes:
+  sheets_import_job_uuid_idx:
+    fields: uuid
+    unique: true
+  sheets_import_job_user_idx:
+    fields: userId, status

@@ -185,4 +185,8 @@ class GridHooks {
   /// Header colors replacing the tokens (active filter view), or null.
   GridHeaderColors? Function(String sheetId, GridPaintTokens tokens)?
   headerColors;
+
+  /// The row display order of a sheet (a sorted filter view, 07 §4.4), or
+  /// null: the grid paints, hit-tests and navigates in that order.
+  ViewRowOrder? Function(String sheetId)? rowOrder;
 }

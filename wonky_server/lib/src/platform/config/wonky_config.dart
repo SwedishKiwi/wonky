@@ -21,6 +21,8 @@ class WonkyConfig {
     this.scriptServerTimeoutMs = 360000,
     this.scriptAllowHttp = false,
     this.scriptPoolSize = 4,
+    this.scriptWorker = true,
+    this.scriptUserConcurrency = 10,
     this.snapshotEveryNOps = 500,
     this.maxDocumentChars = 2000000,
     this.maxImageUploadBytes = 20 * 1024 * 1024,
@@ -59,6 +61,14 @@ class WonkyConfig {
 
   /// Sandbox isolates per server instance (Sheets 09 §8.8 `poolSize`).
   final int scriptPoolSize;
+
+  /// Whether this instance runs queued server script jobs (the worker
+  /// role, Sheets 09 §8.5 `sheets.scriptWorker`). Instances without it only
+  /// enqueue.
+  final bool scriptWorker;
+
+  /// Server script jobs of one user running at once (Sheets 09 §10).
+  final int scriptUserConcurrency;
   final int snapshotEveryNOps;
   final int maxDocumentChars;
   final int maxImageUploadBytes;
@@ -179,6 +189,8 @@ class WonkyConfig {
       scriptServerTimeoutMs: i('sheets', 'scriptServerTimeoutMs', 360000),
       scriptAllowHttp: b('sheets', 'scriptAllowHttp', false),
       scriptPoolSize: i('sheets', 'scriptPoolSize', 4),
+      scriptWorker: b('sheets', 'scriptWorker', true),
+      scriptUserConcurrency: i('sheets', 'scriptUserConcurrency', 10),
       snapshotEveryNOps: i('write', 'snapshotEveryNOps', 500),
       maxDocumentChars: i('write', 'maxDocumentChars', 2000000),
       maxImageUploadBytes: i('files', 'maxImageUploadBytes', 20 * 1024 * 1024),

@@ -90,13 +90,13 @@ final class SpreadsheetTheme {
     ),
     _preset(
       'Mono',
-      'Roboto Mono',
+      'JetBrains Mono',
       '#212121 #424242 #616161 #757575 #9E9E9E #BDBDBD',
       '#1A73E8',
     ),
     _preset(
       'Retro',
-      'Courier Prime',
+      'JetBrains Mono',
       '#E76F51 #F4A261 #E9C46A #2A9D8F #264653 #8AB17D',
       '#264653',
     ),

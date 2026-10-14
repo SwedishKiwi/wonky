@@ -27,6 +27,7 @@ import '../spaces/space_service.dart';
 import '../sync/server_sheets_writer.dart';
 import '../sync/sync_db.dart';
 import '../sync/synced_tables.dart' show deleteSyncedRow, updateSyncedRow;
+import 'script_limits.dart';
 import 'script_runner_pool.dart';
 import 'url_fetch_proxy.dart';
 
@@ -116,6 +117,22 @@ abstract final class ScriptService {
     final space = item.contentRef!;
     final p = await project(session, space);
     if (p == null) throw Errors.notFound('Script');
+    // "Latest wins" (09 §9.2): saves arriving during a compile share one
+    // follow-up compile of the newest sources.
+    return CompileCoalescer.instance.run(
+      p.id.uuid,
+      () => _compile(session, actor, item, p, force: force),
+    );
+  }
+
+  static Future<ScriptCompileResponse> _compile(
+    Session session,
+    Actor actor,
+    DriveItem item,
+    ScriptProject p, {
+    required bool force,
+  }) async {
+    final space = item.contentRef!;
     final sources = [
       for (final f in await files(session, p.id))
         ScriptSourceFile(f.name, f.source),
@@ -130,6 +147,14 @@ abstract final class ScriptService {
         buildId: existing.id,
         diagnosticsJson: existing.diagnosticsJson,
         exportsJson: existing.exportsJson,
+      );
+    }
+    if (!ScriptRateLimiter.compiles.tryAcquire(p.id.uuid)) {
+      final wait = ScriptRateLimiter.compiles.retryAfter(p.id.uuid);
+      throw Errors.limit(
+        'This script was built 20 times in the last hour; try again in '
+        '${(wait?.inMinutes ?? 0) + 1} min.',
+        detailsJson: jsonEncode({'retryAfterSeconds': wait?.inSeconds ?? 60}),
       );
     }
     final result = await Isolate.run(
@@ -353,6 +378,11 @@ abstract final class ScriptService {
       uuid,
       Role.editor,
     );
+    if (!ScriptRateLimiter.analyses.tryAcquire('${actor.userId}')) {
+      throw Errors.limit(
+        'Too many analysis requests; diagnostics update after the next save.',
+      );
+    }
     final p = await project(session, item.contentRef!);
     final names = p == null
         ? <String>{}
@@ -652,12 +682,19 @@ abstract final class ScriptService {
         code: 'quota_exceeded',
       );
     }
+    final allowlist = _allowlist(p);
+    if (customFunction) {
+      // 09 §8.3 step 8: cached for 1 h (the allowlist still applies).
+      final hit = ScriptFetchCache.instance.get(request);
+      if (hit != null && allowlist.isNotEmpty) return hit;
+    }
     try {
       final r = await proxy.fetch(
         request,
-        allowlist: _allowlist(p),
+        allowlist: allowlist,
         customFunction: customFunction,
       );
+      if (customFunction) ScriptFetchCache.instance.put(request, r);
       await _addUsage(
         session,
         userId,
@@ -746,6 +783,7 @@ abstract final class ScriptService {
     UuidValue? triggerId,
     Duration? timeout,
     bool requireAuthorization = true,
+    void Function(LogEntry entry)? onLog,
   }) async {
     requireEnabled();
     final item = await SheetsService.byItemOrSpace(
@@ -872,6 +910,8 @@ abstract final class ScriptService {
       fetcher: _ServerFetcher(session, actor.userId, p),
       userProperties: userProperties,
       knownFunctions: {for (final f in program.exports.functions) f.name},
+      locks: MemoryScriptLocks.shared,
+      onLog: onLog,
     );
     final ExecutionResult result;
     try {

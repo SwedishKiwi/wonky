@@ -32,6 +32,7 @@ abstract class AssistantEvent
     this.range,
     this.objectId,
     this.previewId,
+    this.argsJson,
     this.confirmationId,
     this.error,
     this.errorCode,
@@ -57,6 +58,7 @@ abstract class AssistantEvent
     String? range,
     String? objectId,
     String? previewId,
+    String? argsJson,
     String? confirmationId,
     String? error,
     String? errorCode,
@@ -87,6 +89,7 @@ abstract class AssistantEvent
       range: jsonSerialization['range'] as String?,
       objectId: jsonSerialization['objectId'] as String?,
       previewId: jsonSerialization['previewId'] as String?,
+      argsJson: jsonSerialization['argsJson'] as String?,
       confirmationId: jsonSerialization['confirmationId'] as String?,
       error: jsonSerialization['error'] as String?,
       errorCode: jsonSerialization['errorCode'] as String?,
@@ -134,6 +137,9 @@ abstract class AssistantEvent
 
   String? previewId;
 
+  /// uiToolCall: the tool's arguments (JSON object).
+  String? argsJson;
+
   String? confirmationId;
 
   String? error;
@@ -167,6 +173,7 @@ abstract class AssistantEvent
     String? range,
     String? objectId,
     String? previewId,
+    String? argsJson,
     String? confirmationId,
     String? error,
     String? errorCode,
@@ -194,6 +201,7 @@ abstract class AssistantEvent
       if (range != null) 'range': range,
       if (objectId != null) 'objectId': objectId,
       if (previewId != null) 'previewId': previewId,
+      if (argsJson != null) 'argsJson': argsJson,
       if (confirmationId != null) 'confirmationId': confirmationId,
       if (error != null) 'error': error,
       if (errorCode != null) 'errorCode': errorCode,
@@ -223,6 +231,7 @@ abstract class AssistantEvent
       if (range != null) 'range': range,
       if (objectId != null) 'objectId': objectId,
       if (previewId != null) 'previewId': previewId,
+      if (argsJson != null) 'argsJson': argsJson,
       if (confirmationId != null) 'confirmationId': confirmationId,
       if (error != null) 'error': error,
       if (errorCode != null) 'errorCode': errorCode,
@@ -258,6 +267,7 @@ class _AssistantEventImpl extends AssistantEvent {
     String? range,
     String? objectId,
     String? previewId,
+    String? argsJson,
     String? confirmationId,
     String? error,
     String? errorCode,
@@ -281,6 +291,7 @@ class _AssistantEventImpl extends AssistantEvent {
          range: range,
          objectId: objectId,
          previewId: previewId,
+         argsJson: argsJson,
          confirmationId: confirmationId,
          error: error,
          errorCode: errorCode,
@@ -310,6 +321,7 @@ class _AssistantEventImpl extends AssistantEvent {
     Object? range = _Undefined,
     Object? objectId = _Undefined,
     Object? previewId = _Undefined,
+    Object? argsJson = _Undefined,
     Object? confirmationId = _Undefined,
     Object? error = _Undefined,
     Object? errorCode = _Undefined,
@@ -334,6 +346,7 @@ class _AssistantEventImpl extends AssistantEvent {
       range: range is String? ? range : this.range,
       objectId: objectId is String? ? objectId : this.objectId,
       previewId: previewId is String? ? previewId : this.previewId,
+      argsJson: argsJson is String? ? argsJson : this.argsJson,
       confirmationId: confirmationId is String?
           ? confirmationId
           : this.confirmationId,

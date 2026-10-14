@@ -20,6 +20,7 @@ import 'format_commands.dart';
 import 'format_extra_commands.dart';
 import 'group_commands.dart';
 import 'history_commands.dart';
+import 'conflict_commands.dart';
 import 'image_commands.dart';
 import 'link_commands.dart';
 import 'macro_commands.dart';
@@ -73,6 +74,7 @@ List<Command<CommandArgs>> sheetsCommands(ShellServices s) => [
   ...collabCommands(s),
   ...commentCommands(s),
   ...historyCommands(s),
+  ...conflictCommands(s),
   ...dvCommands(s),
   ...protectionCommands(s),
   ...linkCommands(s),

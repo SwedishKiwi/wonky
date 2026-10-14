@@ -37,6 +37,10 @@ import 'package:wonky_client/src/protocol/platform/users/user_summary.dart'
     as _iq7femvs;
 import 'package:wonky_client/src/protocol/platform/versions/item_version_view.dart'
     as _itqtmykd;
+import 'package:wonky_client/src/protocol/sheets/ai/models/sheets_ai_cell_request.dart'
+    as _ibrzlkni;
+import 'package:wonky_client/src/protocol/sheets/ai/models/sheets_ai_cell_result.dart'
+    as _ivc6ykj9;
 import 'package:wonky_client/src/protocol/sheets/ai/models/sheets_fill_row.dart'
     as _i2syfqhi;
 import 'package:wonky_client/src/protocol/sheets/scripts/models/script_execution.dart'
@@ -155,12 +159,16 @@ import 'platform/versions/version_kind.dart' as _in0fdl1f;
 import 'platform/versions/version_restore_result.dart' as _in38zbga;
 import 'platform/versions/version_storage.dart' as _i5u6d6t4;
 import 'sheets/ai/models/sheets_ai_apply_result.dart' as _iuzj1jin;
+import 'sheets/ai/models/sheets_ai_cell_request.dart' as _iljqbz3a;
+import 'sheets/ai/models/sheets_ai_cell_result.dart' as _im85lt6z;
 import 'sheets/ai/models/sheets_ai_preview.dart' as _i4t3jyqe;
 import 'sheets/ai/models/sheets_ai_preview_call.dart' as _idzstekp;
 import 'sheets/ai/models/sheets_ai_preview_cell.dart' as _i49726iv;
 import 'sheets/ai/models/sheets_fill_proposal.dart' as _izbpavhd;
 import 'sheets/ai/models/sheets_fill_row.dart' as _i1gi0ui2;
 import 'sheets/ai/models/sheets_formula_suggestion.dart' as _i2bhah0l;
+import 'sheets/imports/models/sheets_import_progress.dart' as _iaf43n69;
+import 'sheets/imports/models/sheets_import_status.dart' as _i8d83qca;
 import 'sheets/models/cell_history_entry.dart' as _ij1xvs09;
 import 'sheets/models/cell_history_page.dart' as _i09xo3k8;
 import 'sheets/models/reserved_space.dart' as _i4tr28q5;
@@ -314,12 +322,16 @@ export 'platform/versions/version_kind.dart';
 export 'platform/versions/version_restore_result.dart';
 export 'platform/versions/version_storage.dart';
 export 'sheets/ai/models/sheets_ai_apply_result.dart';
+export 'sheets/ai/models/sheets_ai_cell_request.dart';
+export 'sheets/ai/models/sheets_ai_cell_result.dart';
 export 'sheets/ai/models/sheets_ai_preview.dart';
 export 'sheets/ai/models/sheets_ai_preview_call.dart';
 export 'sheets/ai/models/sheets_ai_preview_cell.dart';
 export 'sheets/ai/models/sheets_fill_proposal.dart';
 export 'sheets/ai/models/sheets_fill_row.dart';
 export 'sheets/ai/models/sheets_formula_suggestion.dart';
+export 'sheets/imports/models/sheets_import_progress.dart';
+export 'sheets/imports/models/sheets_import_status.dart';
 export 'sheets/models/cell_history_entry.dart';
 export 'sheets/models/cell_history_page.dart';
 export 'sheets/models/reserved_space.dart';
@@ -501,12 +513,16 @@ class Protocol extends _isd.DatabaseSerializationManager
           _isc.getType<_in38zbga.VersionRestoreResult>,
           _isc.getType<_i5u6d6t4.VersionStorage>,
           _isc.getType<_iuzj1jin.SheetsAiApplyResult>,
+          _isc.getType<_iljqbz3a.SheetsAiCellRequest>,
+          _isc.getType<_im85lt6z.SheetsAiCellResult>,
           _isc.getType<_i4t3jyqe.SheetsAiPreview>,
           _isc.getType<_idzstekp.SheetsAiPreviewCall>,
           _isc.getType<_i49726iv.SheetsAiPreviewCell>,
           _isc.getType<_izbpavhd.SheetsFillProposal>,
           _isc.getType<_i1gi0ui2.SheetsFillRow>,
           _isc.getType<_i2bhah0l.SheetsFormulaSuggestion>,
+          _isc.getType<_iaf43n69.SheetsImportProgress>,
+          _isc.getType<_i8d83qca.SheetsImportStatus>,
           _isc.getType<_ij1xvs09.CellHistoryEntry>,
           _isc.getType<_i09xo3k8.CellHistoryPage>,
           _isc.getType<_i4tr28q5.ReservedSpace>,
@@ -686,12 +702,16 @@ class Protocol extends _isd.DatabaseSerializationManager
           _isc.getType<_in38zbga.VersionRestoreResult?>,
           _isc.getType<_i5u6d6t4.VersionStorage?>,
           _isc.getType<_iuzj1jin.SheetsAiApplyResult?>,
+          _isc.getType<_iljqbz3a.SheetsAiCellRequest?>,
+          _isc.getType<_im85lt6z.SheetsAiCellResult?>,
           _isc.getType<_i4t3jyqe.SheetsAiPreview?>,
           _isc.getType<_idzstekp.SheetsAiPreviewCall?>,
           _isc.getType<_i49726iv.SheetsAiPreviewCell?>,
           _isc.getType<_izbpavhd.SheetsFillProposal?>,
           _isc.getType<_i1gi0ui2.SheetsFillRow?>,
           _isc.getType<_i2bhah0l.SheetsFormulaSuggestion?>,
+          _isc.getType<_iaf43n69.SheetsImportProgress?>,
+          _isc.getType<_i8d83qca.SheetsImportStatus?>,
           _isc.getType<_ij1xvs09.CellHistoryEntry?>,
           _isc.getType<_i09xo3k8.CellHistoryPage?>,
           _isc.getType<_i4tr28q5.ReservedSpace?>,
@@ -799,6 +819,8 @@ class Protocol extends _isd.DatabaseSerializationManager
           _isc.getType<List<_itqtmykd.ItemVersionView>>,
           _isc.getType<List<_i2syfqhi.SheetsFillRow>>,
           _isc.getType<List<String>?>,
+          _isc.getType<List<_ivc6ykj9.SheetsAiCellResult>>,
+          _isc.getType<List<_ibrzlkni.SheetsAiCellRequest>>,
           _isc.getType<List<_ijdpewvc.ScriptExecution>>,
           _isc.getType<List<_i8x9070n.DocumentOpView>>,
           _isc.getType<List<_i2zuh8f2.WriteThemeView>>,
@@ -1393,6 +1415,12 @@ class Protocol extends _isd.DatabaseSerializationManager
     if (t == _iuzj1jin.SheetsAiApplyResult) {
       return _iuzj1jin.SheetsAiApplyResult.fromJson(data) as T;
     }
+    if (t == _iljqbz3a.SheetsAiCellRequest) {
+      return _iljqbz3a.SheetsAiCellRequest.fromJson(data) as T;
+    }
+    if (t == _im85lt6z.SheetsAiCellResult) {
+      return _im85lt6z.SheetsAiCellResult.fromJson(data) as T;
+    }
     if (t == _i4t3jyqe.SheetsAiPreview) {
       return _i4t3jyqe.SheetsAiPreview.fromJson(data) as T;
     }
@@ -1410,6 +1438,12 @@ class Protocol extends _isd.DatabaseSerializationManager
     }
     if (t == _i2bhah0l.SheetsFormulaSuggestion) {
       return _i2bhah0l.SheetsFormulaSuggestion.fromJson(data) as T;
+    }
+    if (t == _iaf43n69.SheetsImportProgress) {
+      return _iaf43n69.SheetsImportProgress.fromJson(data) as T;
+    }
+    if (t == _i8d83qca.SheetsImportStatus) {
+      return _i8d83qca.SheetsImportStatus.fromJson(data) as T;
     }
     if (t == _ij1xvs09.CellHistoryEntry) {
       return _ij1xvs09.CellHistoryEntry.fromJson(data) as T;
@@ -2063,6 +2097,16 @@ class Protocol extends _isd.DatabaseSerializationManager
               : null)
           as T;
     }
+    if (t == _isc.getType<_iljqbz3a.SheetsAiCellRequest?>()) {
+      return (data != null
+              ? _iljqbz3a.SheetsAiCellRequest.fromJson(data)
+              : null)
+          as T;
+    }
+    if (t == _isc.getType<_im85lt6z.SheetsAiCellResult?>()) {
+      return (data != null ? _im85lt6z.SheetsAiCellResult.fromJson(data) : null)
+          as T;
+    }
     if (t == _isc.getType<_i4t3jyqe.SheetsAiPreview?>()) {
       return (data != null ? _i4t3jyqe.SheetsAiPreview.fromJson(data) : null)
           as T;
@@ -2091,6 +2135,16 @@ class Protocol extends _isd.DatabaseSerializationManager
       return (data != null
               ? _i2bhah0l.SheetsFormulaSuggestion.fromJson(data)
               : null)
+          as T;
+    }
+    if (t == _isc.getType<_iaf43n69.SheetsImportProgress?>()) {
+      return (data != null
+              ? _iaf43n69.SheetsImportProgress.fromJson(data)
+              : null)
+          as T;
+    }
+    if (t == _isc.getType<_i8d83qca.SheetsImportStatus?>()) {
+      return (data != null ? _i8d83qca.SheetsImportStatus.fromJson(data) : null)
           as T;
     }
     if (t == _isc.getType<_ij1xvs09.CellHistoryEntry?>()) {
@@ -2628,6 +2682,18 @@ class Protocol extends _isd.DatabaseSerializationManager
               : null)
           as T;
     }
+    if (t == List<_ivc6ykj9.SheetsAiCellResult>) {
+      return (data as List)
+              .map((e) => deserialize<_ivc6ykj9.SheetsAiCellResult>(e))
+              .toList()
+          as T;
+    }
+    if (t == List<_ibrzlkni.SheetsAiCellRequest>) {
+      return (data as List)
+              .map((e) => deserialize<_ibrzlkni.SheetsAiCellRequest>(e))
+              .toList()
+          as T;
+    }
     if (t == List<_ijdpewvc.ScriptExecution>) {
       return (data as List)
               .map((e) => deserialize<_ijdpewvc.ScriptExecution>(e))
@@ -2785,12 +2851,16 @@ class Protocol extends _isd.DatabaseSerializationManager
       _in38zbga.VersionRestoreResult => 'VersionRestoreResult',
       _i5u6d6t4.VersionStorage => 'VersionStorage',
       _iuzj1jin.SheetsAiApplyResult => 'SheetsAiApplyResult',
+      _iljqbz3a.SheetsAiCellRequest => 'SheetsAiCellRequest',
+      _im85lt6z.SheetsAiCellResult => 'SheetsAiCellResult',
       _i4t3jyqe.SheetsAiPreview => 'SheetsAiPreview',
       _idzstekp.SheetsAiPreviewCall => 'SheetsAiPreviewCall',
       _i49726iv.SheetsAiPreviewCell => 'SheetsAiPreviewCell',
       _izbpavhd.SheetsFillProposal => 'SheetsFillProposal',
       _i1gi0ui2.SheetsFillRow => 'SheetsFillRow',
       _i2bhah0l.SheetsFormulaSuggestion => 'SheetsFormulaSuggestion',
+      _iaf43n69.SheetsImportProgress => 'SheetsImportProgress',
+      _i8d83qca.SheetsImportStatus => 'SheetsImportStatus',
       _ij1xvs09.CellHistoryEntry => 'CellHistoryEntry',
       _i09xo3k8.CellHistoryPage => 'CellHistoryPage',
       _i4tr28q5.ReservedSpace => 'ReservedSpace',
@@ -3103,6 +3173,10 @@ class Protocol extends _isd.DatabaseSerializationManager
         return 'VersionStorage';
       case _iuzj1jin.SheetsAiApplyResult():
         return 'SheetsAiApplyResult';
+      case _iljqbz3a.SheetsAiCellRequest():
+        return 'SheetsAiCellRequest';
+      case _im85lt6z.SheetsAiCellResult():
+        return 'SheetsAiCellResult';
       case _i4t3jyqe.SheetsAiPreview():
         return 'SheetsAiPreview';
       case _idzstekp.SheetsAiPreviewCall():
@@ -3115,6 +3189,10 @@ class Protocol extends _isd.DatabaseSerializationManager
         return 'SheetsFillRow';
       case _i2bhah0l.SheetsFormulaSuggestion():
         return 'SheetsFormulaSuggestion';
+      case _iaf43n69.SheetsImportProgress():
+        return 'SheetsImportProgress';
+      case _i8d83qca.SheetsImportStatus():
+        return 'SheetsImportStatus';
       case _ij1xvs09.CellHistoryEntry():
         return 'CellHistoryEntry';
       case _i09xo3k8.CellHistoryPage():
@@ -3626,6 +3704,12 @@ class Protocol extends _isd.DatabaseSerializationManager
     if (dataClassName == 'SheetsAiApplyResult') {
       return deserialize<_iuzj1jin.SheetsAiApplyResult>(data['data']);
     }
+    if (dataClassName == 'SheetsAiCellRequest') {
+      return deserialize<_iljqbz3a.SheetsAiCellRequest>(data['data']);
+    }
+    if (dataClassName == 'SheetsAiCellResult') {
+      return deserialize<_im85lt6z.SheetsAiCellResult>(data['data']);
+    }
     if (dataClassName == 'SheetsAiPreview') {
       return deserialize<_i4t3jyqe.SheetsAiPreview>(data['data']);
     }
@@ -3643,6 +3727,12 @@ class Protocol extends _isd.DatabaseSerializationManager
     }
     if (dataClassName == 'SheetsFormulaSuggestion') {
       return deserialize<_i2bhah0l.SheetsFormulaSuggestion>(data['data']);
+    }
+    if (dataClassName == 'SheetsImportProgress') {
+      return deserialize<_iaf43n69.SheetsImportProgress>(data['data']);
+    }
+    if (dataClassName == 'SheetsImportStatus') {
+      return deserialize<_i8d83qca.SheetsImportStatus>(data['data']);
     }
     if (dataClassName == 'CellHistoryEntry') {
       return deserialize<_ij1xvs09.CellHistoryEntry>(data['data']);

@@ -10,13 +10,19 @@ import '../scene/scene.dart';
 import '../spec/chart_spec.dart';
 import '../spec/chart_spec_parts.dart';
 import '../spec/chart_type.dart';
+import '../spec/error_bars.dart';
 import '../spec/series_style.dart';
+import '../spec/three_d_options.dart';
 import '../spec/type_options.dart';
 import '../stats/regression.dart';
+import '../three_d/chart3d_model.dart';
+import '../three_d/chart3d_scene.dart';
+import '../three_d/vec3.dart';
 import 'chart_theme.dart';
 import 'scales.dart';
 import 'text_measurer.dart';
 
+part 'layout_3d.dart';
 part 'layout_cartesian.dart';
 part 'layout_pie.dart';
 part 'layout_radial.dart';
@@ -29,7 +35,15 @@ final class ChartLayoutOptions {
     this.highlightSeriesKey,
     this.tablePage = 0,
     this.distinguishByPattern = false,
+    this.azimuth3D,
+    this.elevation3D,
+    this.transitionFrom3D,
+    this.transition3D = 1,
+    this.hover3D,
   });
+
+  /// The 3D data item under the pointer (lighter in both backends).
+  final SceneTag? hover3D;
 
   /// Series highlighted from the legend (others dim to 30 %, 08 §6.5).
   final String? highlightSeriesKey;
@@ -39,6 +53,14 @@ final class ChartLayoutOptions {
 
   /// Accessibility: series also differ by dash pattern / point shape (08 §14).
   final bool distinguishByPattern;
+
+  /// 3D view angles while the user orbits the chart (degrees; null = the spec's).
+  final double? azimuth3D;
+  final double? elevation3D;
+
+  /// 3D model the chart animates from (data changes, 08 §23.6), at [transition3D] (0..1).
+  final Chart3DModel? transitionFrom3D;
+  final double transition3D;
 }
 
 /// Result of [ChartLayoutEngine.layoutDetailed].
@@ -98,6 +120,7 @@ abstract final class ChartLayoutEngine {
         background: ctx.background,
         primitives: List.unmodifiable(ctx.out),
         plotArea: ctx.plotArea,
+        threeD: ctx.threeD,
       ),
       List.unmodifiable(ctx.warnings),
     );
@@ -172,6 +195,7 @@ final class _Ctx {
   final List<ScenePrimitive> out = [];
   final List<ChartWarning> warnings = [];
   ChartRect? plotArea;
+  Chart3DScene? threeD;
   late final int background = spec.style.background == null
       ? theme.background
       : theme.color(spec.style.background, theme.background);
@@ -371,6 +395,8 @@ final class _Ctx {
       }
     }
     switch (spec.type) {
+      case _ when spec.is3D:
+        _layout3D(this, content);
       case ChartType.pie:
         _layoutPie(this, content);
       case ChartType.radar:
@@ -486,15 +512,20 @@ final class _Ctx {
         if (data.series.length < 2) return entries;
       case ChartType.bubble:
         return bubbleLegend();
+      case ChartType.surface:
+        return surfaceLegend();
       default:
         break;
     }
     for (final s in seriesInfos) {
-      final kind = switch (s.mark) {
-        _Mark.column || _Mark.area => 'box',
-        _Mark.scatter => 'marker',
-        _Mark.line => (s.style.pointSize ?? 0) > 0 ? 'lineMarker' : 'line',
-      };
+      final kind = spec.is3D
+          ? 'box'
+          : switch (s.mark) {
+              _Mark.column || _Mark.area => 'box',
+              _Mark.scatter => 'marker',
+              _Mark.line =>
+                (s.style.pointSize ?? 0) > 0 ? 'lineMarker' : 'line',
+            };
       entries.add(
         _LegendEntry(
           s.series.name,
@@ -629,13 +660,65 @@ final class _Ctx {
     if (p != LegendPosition.auto) return p;
     if (maximize) return LegendPosition.inside;
     return switch (spec.type) {
-      ChartType.pie => LegendPosition.right,
+      ChartType.pie || ChartType.surface => LegendPosition.right,
       ChartType.histogram => LegendPosition.top,
       _ =>
         entries.length > 1 || spec.type == ChartType.bubble
             ? LegendPosition.top
             : LegendPosition.none,
     };
+  }
+
+  /// Value range of a surface chart: its ticks bound the color bands
+  /// (one palette color per band, like Excel); null without values.
+  late final NiceRange? surfaceRange = () {
+    var lo = double.infinity, hi = -double.infinity;
+    for (final s in seriesInfos) {
+      for (final v in s.series.values) {
+        if (!v.isFinite) continue;
+        lo = math.min(lo, v);
+        hi = math.max(hi, v);
+      }
+    }
+    if (!lo.isFinite) return null;
+    final a = spec.axes.v;
+    final g = spec.gridlines.v;
+    return NiceTicks.compute(
+      lo,
+      hi,
+      fixedMin: a.min,
+      fixedMax: a.max,
+      count: g.major.count,
+      spacing: g.major.spacing,
+    );
+  }();
+
+  /// Color band of surface value [v] (0-based).
+  int surfaceBand(double v) {
+    final r = surfaceRange;
+    if (r == null || r.ticks.length < 2) return 0;
+    for (var b = 0; b < r.ticks.length - 1; b++) {
+      if (v <= r.ticks[b + 1]) return b;
+    }
+    return r.ticks.length - 2;
+  }
+
+  /// One legend entry per value band of a surface chart ("10 – 20").
+  List<_LegendEntry> surfaceLegend() {
+    final r = surfaceRange;
+    if (r == null || r.ticks.length < 2) return [];
+    final fmt = seriesInfos.isEmpty
+        ? null
+        : seriesInfos.first.series.numberFormat;
+    return [
+      for (var b = 0; b < r.ticks.length - 1; b++)
+        _LegendEntry(
+          '${formatValue(r.ticks[b], fmt)} – ${formatValue(r.ticks[b + 1], fmt)}',
+          sliceColor(b, null),
+          'box',
+          seriesKey: 'band:$b',
+        ),
+    ];
   }
 
   int sliceColor(int i, String? override) {

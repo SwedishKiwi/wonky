@@ -1,8 +1,11 @@
+import 'dart:convert';
 import 'dart:typed_data';
 
 import '../addressing/grid_geometry.dart';
 import '../charts/chart_pipeline.dart';
 import '../charts/render/svg/svg_chart_renderer.dart';
+import '../charts/scene/geometry.dart' show ChartSize;
+import '../charts/spec/chart_spec.dart';
 import '../charts/spec/image_spec.dart';
 import '../formula/model/workbook_view.dart';
 import '../model/records.dart';
@@ -12,12 +15,14 @@ import 'csv/csv_exporter.dart';
 import 'html/html_exporter.dart';
 import 'ir/import_warning.dart';
 import 'ir/workbook_document.dart';
+import 'json/json_workbook.dart';
 import 'ods/ods_exporter.dart';
 import 'print/cell_display.dart';
 import 'print/paginator.dart';
 import 'print/pdf_fonts.dart';
 import 'print/pdf_renderer.dart';
 import 'read/model_to_ir.dart';
+import 'xlsx/xlsx_charts.dart';
 import 'xlsx/xlsx_exporter.dart';
 
 /// Download formats of a spreadsheet (11 §6.1, *File › Download*,
@@ -31,7 +36,8 @@ enum SheetsExportFormat {
   pdf('pdf', 'application/pdf'),
   html('zip', 'application/zip'),
   csv('csv', 'text/csv'),
-  tsv('tsv', 'text/tab-separated-values');
+  tsv('tsv', 'text/tab-separated-values'),
+  json('json', 'application/json');
 
   const SheetsExportFormat(this.extension, this.mimeType);
 
@@ -40,7 +46,7 @@ enum SheetsExportFormat {
   final String mimeType;
 
   /// Whether the format goes through the IR (`ModelToIr` + a file writer).
-  bool get viaIr => this == xlsx || this == ods;
+  bool get viaIr => this == xlsx || this == ods || this == json;
 
   /// Whether only one sheet is exported (CSV/TSV, Google parity).
   bool get singleSheet => this == csv || this == tsv;
@@ -106,13 +112,56 @@ abstract final class SheetsWorkbookExporter {
     return '$base.${format.extension}';
   }
 
-  /// The IR of [model] for XLSX/ODS (computed values from [values]); image
-  /// objects get their bytes from [imageBytes].
+  /// The IR of [model] for XLSX/ODS/JSON (computed values from [values]);
+  /// image objects get their bytes from [imageBytes]. With [chartSource]
+  /// (the engine) charts without an XLSX equivalent become PNG pictures at
+  /// their anchor (11 §6.3; pass it for XLSX only).
   static WorkbookDocument toDocument(
     WorkbookModel model, {
     IrValueSource? values,
     Uint8List? Function(String fileUuid)? imageBytes,
-  }) => ModelToIr.convert(model, values: values, imageBytes: imageBytes);
+    CellSource? chartSource,
+  }) => ModelToIr.convert(
+    model,
+    values: values,
+    imageBytes: imageBytes,
+    chartImage: chartSource == null
+        ? null
+        : (chart, width, height) =>
+              chartPng(model, chartSource, chart, width, height),
+  );
+
+  /// The PNG fallback of a chart Excel can't hold (null for exportable
+  /// types or when it can't be drawn), rendered at 2× without Flutter.
+  static Uint8List? chartPng(
+    WorkbookModel model,
+    CellSource source,
+    EmbeddedObjectRecord chart,
+    double width,
+    double height,
+  ) {
+    if (!(width > 0) || !(height > 0)) return null;
+    Object? json;
+    try {
+      json = jsonDecode(chart.specJson);
+    } on FormatException {
+      return null;
+    }
+    if (json is! Map || XlsxCharts.isExportable(json.cast<String, Object?>())) {
+      return null;
+    }
+    try {
+      return ChartPipeline.exportPng(
+        spec: ChartSpec.fromJson(chart.specJson),
+        model: model,
+        values: source,
+        size: ChartSize(width, height),
+        scale: 2,
+      );
+    } on Object {
+      return null;
+    }
+  }
 
   /// Writes [doc] as XLSX or ODS. Returns the bytes and the export report
   /// (the document's warnings plus the writer's).
@@ -133,6 +182,7 @@ abstract final class SheetsWorkbookExporter {
         OdsExportOptions(modified: modified),
         report,
       ),
+      SheetsExportFormat.json => JsonWorkbook.export(doc),
       _ => throw ArgumentError.value(format, 'format', 'Not an IR format'),
     };
     return (bytes, report.toList());
@@ -211,16 +261,20 @@ abstract final class SheetsWorkbookExporter {
     Uint8List? Function(String fileUuid)? imageBytes,
     ConditionalOverlayProvider? conditional,
     PdfFontProvider fonts = const BuiltInPdfFontProvider(),
+    bool darkTheme = false,
   }) => SheetsPdfRenderer.render(
     model,
     source,
     pagination,
     now: now,
     fonts: fonts,
+    darkTheme: darkTheme,
     author: author,
     title: title,
     conditional: conditional,
-    charts: SceneChartPdfDrawer(ChartPipeline.printSceneFor(model, source)),
+    charts: SceneChartPdfDrawer(
+      ChartPipeline.printSceneFor(model, source, dark: darkTheme),
+    ),
     images: imageBytes == null
         ? null
         : (EmbeddedObjectRecord o) {

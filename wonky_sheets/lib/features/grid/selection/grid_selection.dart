@@ -43,6 +43,7 @@ class SelectionRange {
     this.r2,
     this.c1,
     this.c2,
+    this.display = false,
   });
 
   final SelectionKind kind;
@@ -51,12 +52,19 @@ class SelectionRange {
   final String? c1;
   final String? c2;
 
+  /// Rows [r1]..[r2] are a range in the **display** order of a sorted
+  /// filter view (07 §4.4: selected on screen); it resolves to the model
+  /// rows shown between them (several ranges). Without a display order it
+  /// is a plain range.
+  final bool display;
+
   Map<String, Object?> toJson() => {
     'k': kind.name,
     'r1': ?r1,
     'r2': ?r2,
     'c1': ?c1,
     'c2': ?c2,
+    if (display) 'd': true,
   };
 
   static SelectionRange? fromJson(Object? json) {
@@ -71,6 +79,7 @@ class SelectionRange {
       r2: json['r2'] as String?,
       c1: json['c1'] as String?,
       c2: json['c2'] as String?,
+      display: json['d'] == true,
     );
   }
 
@@ -81,10 +90,11 @@ class SelectionRange {
       other.r1 == r1 &&
       other.r2 == r2 &&
       other.c1 == c1 &&
-      other.c2 == c2;
+      other.c2 == c2 &&
+      other.display == display;
 
   @override
-  int get hashCode => Object.hash(kind, r1, r2, c1, c2);
+  int get hashCode => Object.hash(kind, r1, r2, c1, c2, display);
 }
 
 /// The selection of one sheet (03 §6.1): ranges by ids, the active range,
@@ -157,10 +167,24 @@ class GridSelection {
 /// A selection range resolved to indices.
 @immutable
 class ResolvedSelectionRange {
-  const ResolvedSelectionRange(this.kind, this.rect);
+  const ResolvedSelectionRange(
+    this.kind,
+    this.rect, {
+    this.displayRect,
+    this.group = -1,
+  });
 
   final SelectionKind kind;
+
+  /// Model rows/columns.
   final GridRect rect;
+
+  /// For a part of a display range (07 §4.4): the whole range in display
+  /// rows (paint it as one rectangle); null for model ranges.
+  final GridRect? displayRect;
+
+  /// Index of the [GridSelection.ranges] entry this range comes from.
+  final int group;
 
   bool get wholeRows => kind == SelectionKind.rows || kind == SelectionKind.all;
   bool get wholeColumns =>
@@ -170,10 +194,11 @@ class ResolvedSelectionRange {
   bool operator ==(Object other) =>
       other is ResolvedSelectionRange &&
       other.kind == kind &&
-      other.rect == rect;
+      other.rect == rect &&
+      other.displayRect == displayRect;
 
   @override
-  int get hashCode => Object.hash(kind, rect);
+  int get hashCode => Object.hash(kind, rect, displayRect);
 }
 
 /// A [GridSelection] in index space (03 §6.1 `ResolvedSelection`).
@@ -205,6 +230,22 @@ class ResolvedSelection {
   /// Whether exactly one cell (or one merge) is selected.
   bool get isSingleCell =>
       ranges.length == 1 && ranges.first.rect.cellCount == 1;
+
+  /// Whether every range comes from one selected range: one rectangle on
+  /// screen, possibly several model ranges in a sorted filter view (07 §4.4).
+  bool get isSingleGroup =>
+      ranges.isNotEmpty && ranges.every((r) => r.group == ranges.first.group);
+
+  /// The ranges of the active range's group (one, or the model parts of a
+  /// display range in display order).
+  List<ResolvedSelectionRange> get activeGroup {
+    final g = activeRange.group;
+    if (g < 0) return [activeRange];
+    return [
+      for (final r in ranges)
+        if (r.group == g) r,
+    ];
+  }
 
   /// The ranges as core [ResolvedRange]s.
   List<ResolvedRange> toResolvedRanges() => [

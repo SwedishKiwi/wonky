@@ -7,6 +7,8 @@
 /// (desktop and server).
 library;
 
+export 'src/api/api_index.dart';
+export 'src/api/script_completion.dart';
 export 'src/api/api_source.dart'
     show wonkyApiVersion, wonkyApiLibrary, wonkyHostLibrary;
 export 'src/build/script_exports.dart';
@@ -22,6 +24,7 @@ export 'src/guest/guest_runtime.dart'
         ScriptStackFrame;
 export 'src/host/cell_values.dart';
 export 'src/host/limits.dart';
+export 'src/host/lock_cache.dart';
 export 'src/host/model_stores.dart';
 export 'src/host/script_host.dart';
 export 'src/host/services.dart';

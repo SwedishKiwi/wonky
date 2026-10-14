@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:wonky_app/wonky_app.dart';
+import 'package:wonky_client/wonky_client.dart' show UuidValue;
 import 'package:wonky_core/wonky_core.dart';
 import 'package:wonky_sheets_core/formula.dart' show CellPos;
 import 'package:wonky_sheets_core/model.dart';
@@ -18,6 +19,7 @@ class _GlobalSheetsCommand extends SheetsCommand {
     required super.label,
     required this.runGlobal,
     this.enabledGlobal,
+    this.checkedGlobal,
     super.icon,
     super.categoryName,
     super.argsSchema,
@@ -27,6 +29,12 @@ class _GlobalSheetsCommand extends SheetsCommand {
   final Future<CommandResult> Function(CommandContext ctx, JsonArgs args)
   runGlobal;
   final bool Function(CommandContext ctx)? enabledGlobal;
+
+  /// Toggle state (menus, palette) of global toggles.
+  final bool Function()? checkedGlobal;
+
+  @override
+  bool? isChecked(CommandContext ctx, JsonArgs args) => checkedGlobal?.call();
 
   static CommandResult _never(CommandContext c, Object e, JsonArgs a) =>
       const CommandResult.failed('unreachable');
@@ -117,7 +125,15 @@ List<Command<CommandArgs>> historyCommands(ShellServices s) {
       icon: LucideIcons.copy,
       categoryName: (l) => l.categoryCollaboration,
       argsSchema: const JsonSchema.object(
-        properties: {'name': JsonSchema.string(minLength: 1, maxLength: 255)},
+        properties: {
+          'name': JsonSchema.string(
+            minLength: 1,
+            maxLength: 255,
+            description: 'Name of the copy. Omit to open the dialog.',
+          ),
+          'copyComments': JsonSchema.boolean(),
+          'copySharing': JsonSchema.boolean(),
+        },
       ),
       enabledGlobal: (_) => view()?.rows != null,
       runGlobal: (ctx, a) async {
@@ -125,10 +141,70 @@ List<Command<CommandArgs>> historyCommands(ShellServices s) {
         if (v == null) {
           return const CommandResult.failed('Open a version first');
         }
-        final id = await v.makeCopy(name: a.string('name'));
+        final c = ctx.dialogContext;
+        final name = a.string('name');
+        final UuidValue? id;
+        if (name == null && c != null && c.mounted) {
+          id = await v.makeCopyWithDialog(c);
+          if (id == null) return const CommandResult.cancelled();
+        } else {
+          id = await v.makeCopy(
+            name: name,
+            copyComments: a.boolean('copyComments') ?? false,
+            copySharing: a.boolean('copySharing') ?? false,
+          );
+        }
         return id == null
             ? const CommandResult.failed('Copy failed')
             : CommandResult.ok({'itemUuid': id.uuid});
+      },
+    ),
+    _GlobalSheetsCommand(
+      'sheets.history.download',
+      label: (l) => l.cmdHistoryDownload,
+      icon: LucideIcons.download,
+      categoryName: (l) => l.categoryCollaboration,
+      argsSchema: JsonSchema.object(
+        properties: {
+          'format': JsonSchema.string(
+            enumValues: [
+              for (final f in SheetsVersionViewState.downloadFormats) f.name,
+            ],
+          ),
+        },
+      ),
+      enabledGlobal: (_) => view()?.editor != null,
+      runGlobal: (ctx, a) async {
+        final v = view();
+        if (v == null) {
+          return const CommandResult.failed('Open a version first');
+        }
+        final format =
+            SheetsExportFormat.tryParse(a.string('format')) ??
+            SheetsExportFormat.xlsx;
+        if (!SheetsVersionViewState.downloadFormats.contains(format)) {
+          return const CommandResult.failed('Unsupported format');
+        }
+        try {
+          final file = await v.download(format);
+          return file == null
+              ? const CommandResult.cancelled()
+              : CommandResult.ok({'fileName': file});
+        } catch (e) {
+          return CommandResult.failed('$e');
+        }
+      },
+    ),
+    _GlobalSheetsCommand(
+      'sheets.history.toggleShowChanges',
+      label: (l) => l.cmdHistoryToggleShowChanges,
+      icon: LucideIcons.highlighter,
+      categoryName: (l) => l.categoryCollaboration,
+      checkedGlobal: () => VersionHistoryScreen.showChanges.value,
+      runGlobal: (ctx, a) async {
+        final n = VersionHistoryScreen.showChanges;
+        n.value = !n.value;
+        return CommandResult.ok({'showChanges': n.value});
       },
     ),
     _GlobalSheetsCommand(

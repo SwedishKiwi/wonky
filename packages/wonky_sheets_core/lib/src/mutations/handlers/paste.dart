@@ -1,8 +1,5 @@
-import 'dart:convert';
-
 import '../../addressing/grid_geometry.dart';
 import '../../content/cell_content.dart';
-import '../../engine_bridge/stored_formula.dart';
 import '../../format/attributes.dart';
 import '../../input/input_parser.dart';
 import '../../model/events.dart';
@@ -262,7 +259,7 @@ MutationPlan planPaste(PlanBuilder b, PasteClipboard op) {
         anchor ??
         (src.sourceRowOf(rules.first.top), src.sourceColOf(rules.first.left));
     final (pr, pc) = sourceOfTarget(first.top, first.left);
-    return _mapRuleFormulas(json, (f) {
+    return mapRuleFormulas(json, (f) {
       var out = f;
       if (a0 != (pr, pc)) {
         out = hooks.translate(
@@ -365,7 +362,7 @@ MutationPlan planPaste(PlanBuilder b, PasteClipboard op) {
       String atAnchorOf(GridRect anchor) =>
           !canTranslate || json == rule.ruleJson
           ? json
-          : _mapRuleFormulas(
+          : mapRuleFormulas(
               json,
               (f) => hooks.translate(
                 f,
@@ -440,17 +437,4 @@ List<(int, int, int)> _runs(int n, int Function(int) sourceOf) {
     out.add((si, i, 1));
   }
   return out;
-}
-
-/// Applies [f] to the formulas (`=…` strings) of a CF/DV JSON; the original
-/// text when nothing changes or the JSON is invalid.
-String _mapRuleFormulas(String json, String Function(String) f) {
-  Object? decoded;
-  try {
-    decoded = jsonDecode(json);
-  } on FormatException {
-    return json;
-  }
-  final (out, changed) = StoredFormula.mapJsonFormulas(decoded, f);
-  return changed ? jsonEncode(out) : json;
 }

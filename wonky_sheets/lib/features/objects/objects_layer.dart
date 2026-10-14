@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:math' as math;
 
 import 'package:flutter/gestures.dart';
+import 'package:flutter/semantics.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
 import 'package:shad/shad.dart';
@@ -10,6 +11,8 @@ import 'package:wonky_core/wonky_core.dart';
 import 'package:wonky_sheets_core/model.dart';
 import 'package:wonky_ui/wonky_ui.dart';
 
+import '../charts3d/orbit/chart_orbit.dart';
+import '../collab/sheets_collab.dart';
 import '../charts/controller/chart_controller.dart';
 import '../charts/view/chart_sheet_view.dart';
 import '../charts/view/chart_view.dart';
@@ -168,6 +171,13 @@ class _ObjectsOverlayState extends State<_ObjectsOverlay> {
   String? _lastDownId;
   Size _size = Size.zero;
 
+  /// Start rectangles of the other selected objects of a group move.
+  Map<String, ChartRect> _groupStart = const {};
+
+  /// A press on a member of a multi-selection selects only it when the
+  /// pointer goes up without dragging.
+  String? _collapseOnUp;
+
   static const double _frame = 8;
 
   bool get _alt => HardwareKeyboard.instance.isAltPressed;
@@ -201,9 +211,22 @@ class _ObjectsOverlayState extends State<_ObjectsOverlay> {
 
   void _downOnObject(EmbeddedObjectRecord o, PointerDownEvent e) {
     consumedPointer = e.pointer;
+    _collapseOnUp = null;
     if (e.buttons == kSecondaryMouseButton) {
-      objects.select(o.id);
+      if (objects.isSelected(o.id)) {
+        objects.focus.requestFocus();
+      } else {
+        objects.select(o.id);
+      }
       _openMenu(o, e.position);
+      return;
+    }
+    final kb = HardwareKeyboard.instance;
+    if (kb.isShiftPressed || kb.isMetaPressed || kb.isControlPressed) {
+      // Shift/Mod-click adds to or removes from the selection (08 §9.2).
+      objects.toggleSelect(o.id);
+      _mode = _Mode.none;
+      _lastDownId = null;
       return;
     }
     final now = DateTime.now();
@@ -213,10 +236,21 @@ class _ObjectsOverlayState extends State<_ObjectsOverlay> {
         now.difference(_lastDown!) < const Duration(milliseconds: 400);
     _lastDown = now;
     _lastDownId = o.id;
-    objects.select(o.id);
+    final inGroup = objects.isMultiSelection && objects.isSelected(o.id);
+    if (inGroup && !dbl) {
+      _collapseOnUp = o.id;
+      objects.focus.requestFocus();
+    } else {
+      objects.select(o.id);
+    }
     if (dbl) {
       _mode = _Mode.none;
       _openEditor(o, e.localPosition);
+      return;
+    }
+    // A selected 3D chart orbits instead of moving (08 §23.6).
+    if (ChartPointerClaims.isClaimed(e.pointer)) {
+      _mode = _Mode.none;
       return;
     }
     if (!ed.canEdit) return;
@@ -247,6 +281,12 @@ class _ObjectsOverlayState extends State<_ObjectsOverlay> {
     _scrollX0 = ed.scroll.x;
     _scrollY0 = ed.scroll.y;
     _pane = g.paneFor(cell.$1, cell.$2).kind;
+    _groupStart = mode == _Mode.pending && objects.isMultiSelection
+        ? {
+            for (final r in objects.selectedRecords)
+              if (r.id != o.id) r.id: ?objects.rectOf(r, ghost: false),
+          }
+        : const {};
   }
 
   void _onMove(PointerMoveEvent e) {
@@ -274,7 +314,8 @@ class _ObjectsOverlayState extends State<_ObjectsOverlay> {
 
   List<ChartRect> _others(String id) => [
     for (final o in objects.activeObjects)
-      if (o.id != id) ?objects.rectOf(o, ghost: false),
+      if (o.id != id && !_groupStart.containsKey(o.id))
+        ?objects.rectOf(o, ghost: false),
   ];
 
   void _apply() {
@@ -321,7 +362,22 @@ class _ObjectsOverlayState extends State<_ObjectsOverlay> {
         guides = snap.guides;
       }
     }
-    objects.drag = ObjectDrag(id, rect, guides: guides);
+    var group = const <String, ChartRect>{};
+    if (_mode == _Mode.move && _groupStart.isNotEmpty) {
+      // The whole selection moves by the primary object's offset, never
+      // past the sheet's top-left.
+      var dx = rect.left - start.left;
+      var dy = rect.top - start.top;
+      for (final r in _groupStart.values) {
+        dx = math.max(dx, -r.left);
+        dy = math.max(dy, -r.top);
+      }
+      rect = start.translate(dx, dy);
+      group = {
+        for (final e in _groupStart.entries) e.key: e.value.translate(dx, dy),
+      };
+    }
+    objects.drag = ObjectDrag(id, rect, guides: guides, group: group);
   }
 
   Future<void> _onUp(PointerEvent e) async {
@@ -332,13 +388,27 @@ class _ObjectsOverlayState extends State<_ObjectsOverlay> {
     final d = objects.drag;
     final id = _dragId;
     _dragId = null;
+    final collapse = _collapseOnUp;
+    _collapseOnUp = null;
+    final group = _groupStart;
+    _groupStart = const {};
     if (d == null || id == null || d.objectId != id) {
       if (objects.drag != null) objects.drag = null;
+      // A click (no drag) on a member of a multi-selection selects it alone.
+      if (collapse != null && mode != _Mode.move) objects.select(collapse);
       return;
     }
     final start = _startRect!;
     final r = d.rect;
-    if (mode == _Mode.move && (r.left != start.left || r.top != start.top)) {
+    if (mode == _Mode.move &&
+        group.isNotEmpty &&
+        (r.left != start.left || r.top != start.top)) {
+      await ed.invokeCommand('sheets.object.move', {
+        'objectIds': [id, ...group.keys],
+        'by': {'x': r.left - start.left, 'y': r.top - start.top},
+      });
+    } else if (mode == _Mode.move &&
+        (r.left != start.left || r.top != start.top)) {
       await ed.invokeCommand('sheets.object.move', {
         'objectId': id,
         'to': {'x': r.left, 'y': r.top},
@@ -409,9 +479,16 @@ class _ObjectsOverlayState extends State<_ObjectsOverlay> {
   // Menus and editors.
 
   void _openMenu(EmbeddedObjectRecord o, Offset global) {
+    final multi = objects.isMultiSelection && objects.isSelected(o.id);
     WonkyPopupMenuHost.maybeOf(context)?.show(
       global,
-      () => objectMenu(CommandUi(context, widget.services), ed, o),
+      () => multi
+          ? multiObjectMenu(
+              CommandUi(context, widget.services),
+              ed,
+              objects.selectedIds,
+            )
+          : objectMenu(CommandUi(context, widget.services), ed, o),
       onClosed: () {
         if (objects.selectedId == o.id) objects.focus.requestFocus();
       },
@@ -480,6 +557,7 @@ class _ObjectsOverlayState extends State<_ObjectsOverlay> {
               objects,
               ed.scroll,
               ed.contentSignal,
+              ?SheetsCollab.of(ed)?.presence.cursors,
             ]),
             builder: (context, _) => _layers(context),
           );
@@ -532,7 +610,58 @@ class _ObjectsOverlayState extends State<_ObjectsOverlay> {
         ),
       );
     }
-    final sel = objects.selected;
+    // Outlines: every object of a multi-selection (no handles), and the
+    // objects collaborators have selected, in their presence color with a
+    // name flag (08 §9.2).
+    final outlines = <String, List<(Color, String?)>>{};
+    if (objects.isMultiSelection) {
+      for (final id in objects.selectedIds) {
+        outlines.putIfAbsent(id, () => []).add((
+          theme.colorScheme.selectionBorder,
+          null,
+        ));
+      }
+    }
+    final presence = SheetsCollab.of(ed)?.presence;
+    if (presence != null) {
+      for (final c in presence.cursorsOn(sheet.id)) {
+        final oid = c.cursor.objectId;
+        if (oid == null) continue;
+        outlines.putIfAbsent(oid, () => []).add((
+          theme.colorScheme.presence(c.colorIndex),
+          c.displayName,
+        ));
+      }
+    }
+    for (final e in outlines.entries) {
+      final o = objects.record(e.key);
+      if (o == null || o.sheetId != sheet.id) continue;
+      final cell = objects.anchorCell(o);
+      final rect = objects.rectOf(o);
+      if (cell == null || rect == null) continue;
+      final pane = g.paneFor(cell.$1, cell.$2);
+      final screen = objectScreenRect(g, pane, rect);
+      for (var i = 0; i < e.value.length; i++) {
+        final (color, name) = e.value[i];
+        final inset = name == null ? 0.0 : 2.0 + 2 * i;
+        byPane
+            .putIfAbsent(pane.kind, () => [])
+            .add(
+              Positioned.fromRect(
+                key: ValueKey<String>(
+                  name == null
+                      ? 'sheets.object.outline.${o.id}'
+                      : 'sheets.object.remote.${o.id}.$i',
+                ),
+                rect: screen.inflate(inset).shift(-pane.rect.topLeft),
+                child: IgnorePointer(
+                  child: _ObjectOutline(color: color, name: name),
+                ),
+              ),
+            );
+      }
+    }
+    final sel = objects.isMultiSelection ? null : objects.selected;
     if (sel != null && sel.sheetId == sheet.id) {
       final cell = objects.anchorCell(sel);
       final rect = objects.rectOf(sel);
@@ -668,11 +797,24 @@ class _ObjectBox extends StatelessWidget {
             : _GenericObjectCard(title: o.title ?? o.kind.name);
         label = o.altText ?? o.title ?? o.kind.name;
     }
+    // Screen readers reach a chart's data as a table (08 §14).
+    final chart = o.kind == EmbeddedObjectKind.chart;
     return Semantics(
       container: true,
       button: true,
       selected: selected,
       label: label,
+      customSemanticsActions: chart
+          ? {
+              CustomSemanticsAction(
+                label: sheetsL10n(context).chartViewDataTableAction,
+              ): () => unawaited(
+                ed.invokeCommand('sheets.chart.viewDataTable', {
+                  'objectId': o.id,
+                }),
+              ),
+            }
+          : null,
       onTap: () => objects.select(o.id),
       child: MouseRegion(
         cursor: ed.canEdit ? SystemMouseCursors.move : SystemMouseCursors.basic,
@@ -692,6 +834,58 @@ class _ObjectBox extends StatelessWidget {
           ),
         ),
       ),
+    );
+  }
+}
+
+/// A selection outline of an object: a member of a multi-selection, or a
+/// collaborator's selection with their name flag above it.
+class _ObjectOutline extends StatelessWidget {
+  const _ObjectOutline({required this.color, this.name});
+
+  final Color color;
+  final String? name;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = ShadTheme.of(context);
+    final n = name;
+    return Stack(
+      clipBehavior: Clip.none,
+      children: [
+        Positioned.fill(
+          child: DecoratedBox(
+            decoration: BoxDecoration(
+              border: Border.all(color: color, width: n == null ? 1 : 2),
+            ),
+          ),
+        ),
+        if (n != null)
+          Positioned(
+            left: -1,
+            top: -18,
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
+              decoration: BoxDecoration(
+                color: color,
+                borderRadius: const BorderRadius.vertical(
+                  top: Radius.circular(3),
+                ),
+              ),
+              child: Text(
+                n,
+                maxLines: 1,
+                style: theme.textTheme.small.copyWith(
+                  fontSize: 11,
+                  height: 1.3,
+                  color: color.computeLuminance() > 0.5
+                      ? const Color(0xFF000000)
+                      : const Color(0xFFFFFFFF),
+                ),
+              ),
+            ),
+          ),
+      ],
     );
   }
 }

@@ -639,7 +639,14 @@ List<Command<CommandArgs>> commentCommands(ShellServices s) {
             : ctx.document!.commentAnchors!.anchorForSelection()!;
         final body = a.string('body');
         if (body == null) {
-          _showComments(s);
+          // Sheets composes next to the cell unless the panel is open.
+          final inline =
+              (commentPanelOptionsOf(
+                    ctx.document?.commentAnchors,
+                  )?.composesInline ??
+                  false) &&
+              !s.panels.isOpen(ShellPanels.comments);
+          if (!inline) _showComments(s);
           c.startDraft(anchor);
           return const CommandResult.cancelled();
         }

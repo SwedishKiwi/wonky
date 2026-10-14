@@ -95,18 +95,17 @@ List<Command<CommandArgs>> cleanupCommands(ShellServices s) => [
           ? ResolvedRange(ed.activeSheetId, dataRangeFor(ed)!)
           : rangeArg(ed, a);
       final ids = a.strings('colIds');
+      final op = RemoveDuplicates(
+        range,
+        hasHeader: a.boolean('hasHeader') ?? false,
+        colIds: ids.isEmpty ? null : ids,
+      );
       final plan = await DataJobs.run(
         ed,
         rows: range.rect.rowCount,
         label: ed.l10n.dataJobDeduping(range.rect.rowCount),
-        work: () => ed.apply(
-          ctx,
-          RemoveDuplicates(
-            range,
-            hasHeader: a.boolean('hasHeader') ?? false,
-            colIds: ids.isEmpty ? null : ids,
-          ),
-        ),
+        op: op,
+        work: () => ed.apply(ctx, op),
       );
       final msg = plan.result['message'] as String? ?? '';
       final context = ctx.dialogContext;

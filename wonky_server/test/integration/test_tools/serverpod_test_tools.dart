@@ -130,6 +130,10 @@ import 'package:wonky_server/src/generated/platform/versions/version_restore_res
     as _i8hd56jb;
 import 'package:wonky_server/src/generated/sheets/ai/models/sheets_ai_apply_result.dart'
     as _irr92qm3;
+import 'package:wonky_server/src/generated/sheets/ai/models/sheets_ai_cell_request.dart'
+    as _ifqit8uo;
+import 'package:wonky_server/src/generated/sheets/ai/models/sheets_ai_cell_result.dart'
+    as _iq57nmvp;
 import 'package:wonky_server/src/generated/sheets/ai/models/sheets_ai_preview.dart'
     as _i5mk43di;
 import 'package:wonky_server/src/generated/sheets/ai/models/sheets_fill_proposal.dart'
@@ -138,6 +142,8 @@ import 'package:wonky_server/src/generated/sheets/ai/models/sheets_fill_row.dart
     as _isuyxaqz;
 import 'package:wonky_server/src/generated/sheets/ai/models/sheets_formula_suggestion.dart'
     as _idbu6x15;
+import 'package:wonky_server/src/generated/sheets/imports/models/sheets_import_progress.dart'
+    as _iatbq4i5;
 import 'package:wonky_server/src/generated/sheets/models/cell_history_page.dart'
     as _ia7wiyaj;
 import 'package:wonky_server/src/generated/sheets/models/revert_result.dart'
@@ -363,7 +369,11 @@ class TestEndpoints {
 
   late final _SheetsSyncEndpoint sheetsSync;
 
+  late final _SheetsImportEndpoint sheetsImport;
+
   late final _ScriptEndpoint script;
+
+  late final _SheetsVersionEndpoint sheetsVersion;
 
   late final _DocumentEndpoint document;
 
@@ -465,7 +475,15 @@ class _InternalTestEndpoints extends TestEndpoints
       endpoints,
       serializationManager,
     );
+    sheetsImport = _SheetsImportEndpoint(
+      endpoints,
+      serializationManager,
+    );
     script = _ScriptEndpoint(
+      endpoints,
+      serializationManager,
+    );
+    sheetsVersion = _SheetsVersionEndpoint(
       endpoints,
       serializationManager,
     );
@@ -1156,6 +1174,41 @@ class _AssistantEndpoint {
             'runId': runId,
             'confirmationId': confirmationId,
             'allow': allow,
+          }),
+          serializationManager: _serializationManager,
+        );
+        var _localReturnValue =
+            await (_localCallContext.method.call(
+                  _localUniqueSession,
+                  _localCallContext.arguments,
+                )
+                as _ida.Future<bool>);
+        return _localReturnValue;
+      } finally {
+        await _localUniqueSession.close();
+      }
+    });
+  }
+
+  _ida.Future<bool> uiToolResult(
+    _ist.TestSessionBuilder sessionBuilder,
+    String runId,
+    _is78z0de.UiBridgeResponse response,
+  ) async {
+    return _ist.callAwaitableFunctionAndHandleExceptions(() async {
+      var _localUniqueSession =
+          (sessionBuilder as _ist.InternalTestSessionBuilder).internalBuild(
+            endpoint: 'assistant',
+            method: 'uiToolResult',
+          );
+      try {
+        var _localCallContext = await _endpointDispatch.getMethodCallContext(
+          createSessionCallback: (_) => _localUniqueSession,
+          endpointPath: 'assistant',
+          methodName: 'uiToolResult',
+          parameters: _ist.testObjectToJson({
+            'runId': runId,
+            'response': response,
           }),
           serializationManager: _serializationManager,
         );
@@ -4881,6 +4934,43 @@ class _SheetsAiEndpoint {
     });
   }
 
+  _ida.Future<List<_iq57nmvp.SheetsAiCellResult>> evaluateAiCells(
+    _ist.TestSessionBuilder sessionBuilder,
+    _is.UuidValue itemUuid,
+    List<_ifqit8uo.SheetsAiCellRequest> requests,
+    bool refresh,
+  ) async {
+    return _ist.callAwaitableFunctionAndHandleExceptions(() async {
+      var _localUniqueSession =
+          (sessionBuilder as _ist.InternalTestSessionBuilder).internalBuild(
+            endpoint: 'sheetsAi',
+            method: 'evaluateAiCells',
+          );
+      try {
+        var _localCallContext = await _endpointDispatch.getMethodCallContext(
+          createSessionCallback: (_) => _localUniqueSession,
+          endpointPath: 'sheetsAi',
+          methodName: 'evaluateAiCells',
+          parameters: _ist.testObjectToJson({
+            'itemUuid': itemUuid,
+            'requests': requests,
+            'refresh': refresh,
+          }),
+          serializationManager: _serializationManager,
+        );
+        var _localReturnValue =
+            await (_localCallContext.method.call(
+                  _localUniqueSession,
+                  _localCallContext.arguments,
+                )
+                as _ida.Future<List<_iq57nmvp.SheetsAiCellResult>>);
+        return _localReturnValue;
+      } finally {
+        await _localUniqueSession.close();
+      }
+    });
+  }
+
   _ida.Future<void> discardPreview(
     _ist.TestSessionBuilder sessionBuilder,
     String previewId,
@@ -5359,6 +5449,182 @@ class _SheetsSyncEndpoint {
   }
 }
 
+class _SheetsImportEndpoint {
+  _SheetsImportEndpoint(
+    this._endpointDispatch,
+    this._serializationManager,
+  );
+
+  final _is.EndpointDispatch _endpointDispatch;
+
+  final _is.SerializationManager _serializationManager;
+
+  _ida.Future<_is.UuidValue> importInto(
+    _ist.TestSessionBuilder sessionBuilder,
+    _is.UuidValue spreadsheetUuid,
+    _is.UuidValue uploadId,
+    String optionsJson,
+    String? activeSheetId,
+  ) async {
+    return _ist.callAwaitableFunctionAndHandleExceptions(() async {
+      var _localUniqueSession =
+          (sessionBuilder as _ist.InternalTestSessionBuilder).internalBuild(
+            endpoint: 'sheetsImport',
+            method: 'importInto',
+          );
+      try {
+        var _localCallContext = await _endpointDispatch.getMethodCallContext(
+          createSessionCallback: (_) => _localUniqueSession,
+          endpointPath: 'sheetsImport',
+          methodName: 'importInto',
+          parameters: _ist.testObjectToJson({
+            'spreadsheetUuid': spreadsheetUuid,
+            'uploadId': uploadId,
+            'optionsJson': optionsJson,
+            'activeSheetId': activeSheetId,
+          }),
+          serializationManager: _serializationManager,
+        );
+        var _localReturnValue =
+            await (_localCallContext.method.call(
+                  _localUniqueSession,
+                  _localCallContext.arguments,
+                )
+                as _ida.Future<_is.UuidValue>);
+        return _localReturnValue;
+      } finally {
+        await _localUniqueSession.close();
+      }
+    });
+  }
+
+  _ida.Stream<_iatbq4i5.SheetsImportProgress> watchImport(
+    _ist.TestSessionBuilder sessionBuilder,
+    _is.UuidValue jobId,
+  ) {
+    var _localTestStreamManager =
+        _ist.TestStreamManager<_iatbq4i5.SheetsImportProgress>();
+    _ist.callStreamFunctionAndHandleExceptions(
+      () async {
+        var _localUniqueSession =
+            (sessionBuilder as _ist.InternalTestSessionBuilder).internalBuild(
+              endpoint: 'sheetsImport',
+              method: 'watchImport',
+            );
+        var _localCallContext = await _endpointDispatch
+            .getMethodStreamCallContext(
+              createSessionCallback: (_) => _localUniqueSession,
+              endpointPath: 'sheetsImport',
+              methodName: 'watchImport',
+              arguments: {'jobId': jobId},
+              requestedInputStreams: [],
+              serializationManager: _serializationManager,
+            );
+        await _localTestStreamManager.callStreamMethod(
+          _localCallContext,
+          _localUniqueSession,
+          {},
+        );
+      },
+      _localTestStreamManager.outputStreamController,
+    );
+    return _localTestStreamManager.outputStreamController.stream;
+  }
+
+  _ida.Future<_iatbq4i5.SheetsImportProgress> importProgress(
+    _ist.TestSessionBuilder sessionBuilder,
+    _is.UuidValue jobId,
+  ) async {
+    return _ist.callAwaitableFunctionAndHandleExceptions(() async {
+      var _localUniqueSession =
+          (sessionBuilder as _ist.InternalTestSessionBuilder).internalBuild(
+            endpoint: 'sheetsImport',
+            method: 'importProgress',
+          );
+      try {
+        var _localCallContext = await _endpointDispatch.getMethodCallContext(
+          createSessionCallback: (_) => _localUniqueSession,
+          endpointPath: 'sheetsImport',
+          methodName: 'importProgress',
+          parameters: _ist.testObjectToJson({'jobId': jobId}),
+          serializationManager: _serializationManager,
+        );
+        var _localReturnValue =
+            await (_localCallContext.method.call(
+                  _localUniqueSession,
+                  _localCallContext.arguments,
+                )
+                as _ida.Future<_iatbq4i5.SheetsImportProgress>);
+        return _localReturnValue;
+      } finally {
+        await _localUniqueSession.close();
+      }
+    });
+  }
+
+  _ida.Future<_ilqg61i8.ExportResultView> sourceFromDrive(
+    _ist.TestSessionBuilder sessionBuilder,
+    _is.UuidValue itemUuid,
+  ) async {
+    return _ist.callAwaitableFunctionAndHandleExceptions(() async {
+      var _localUniqueSession =
+          (sessionBuilder as _ist.InternalTestSessionBuilder).internalBuild(
+            endpoint: 'sheetsImport',
+            method: 'sourceFromDrive',
+          );
+      try {
+        var _localCallContext = await _endpointDispatch.getMethodCallContext(
+          createSessionCallback: (_) => _localUniqueSession,
+          endpointPath: 'sheetsImport',
+          methodName: 'sourceFromDrive',
+          parameters: _ist.testObjectToJson({'itemUuid': itemUuid}),
+          serializationManager: _serializationManager,
+        );
+        var _localReturnValue =
+            await (_localCallContext.method.call(
+                  _localUniqueSession,
+                  _localCallContext.arguments,
+                )
+                as _ida.Future<_ilqg61i8.ExportResultView>);
+        return _localReturnValue;
+      } finally {
+        await _localUniqueSession.close();
+      }
+    });
+  }
+
+  _ida.Future<_iatbq4i5.SheetsImportProgress> cancelImport(
+    _ist.TestSessionBuilder sessionBuilder,
+    _is.UuidValue jobId,
+  ) async {
+    return _ist.callAwaitableFunctionAndHandleExceptions(() async {
+      var _localUniqueSession =
+          (sessionBuilder as _ist.InternalTestSessionBuilder).internalBuild(
+            endpoint: 'sheetsImport',
+            method: 'cancelImport',
+          );
+      try {
+        var _localCallContext = await _endpointDispatch.getMethodCallContext(
+          createSessionCallback: (_) => _localUniqueSession,
+          endpointPath: 'sheetsImport',
+          methodName: 'cancelImport',
+          parameters: _ist.testObjectToJson({'jobId': jobId}),
+          serializationManager: _serializationManager,
+        );
+        var _localReturnValue =
+            await (_localCallContext.method.call(
+                  _localUniqueSession,
+                  _localCallContext.arguments,
+                )
+                as _ida.Future<_iatbq4i5.SheetsImportProgress>);
+        return _localReturnValue;
+      } finally {
+        await _localUniqueSession.close();
+      }
+    });
+  }
+}
+
 class _ScriptEndpoint {
   _ScriptEndpoint(
     this._endpointDispatch,
@@ -5507,6 +5773,44 @@ class _ScriptEndpoint {
         await _localUniqueSession.close();
       }
     });
+  }
+
+  _ida.Stream<String> runLive(
+    _ist.TestSessionBuilder sessionBuilder,
+    _is.UuidValue spreadsheetUuid,
+    String functionName,
+    String? argsJson,
+  ) {
+    var _localTestStreamManager = _ist.TestStreamManager<String>();
+    _ist.callStreamFunctionAndHandleExceptions(
+      () async {
+        var _localUniqueSession =
+            (sessionBuilder as _ist.InternalTestSessionBuilder).internalBuild(
+              endpoint: 'script',
+              method: 'runLive',
+            );
+        var _localCallContext = await _endpointDispatch
+            .getMethodStreamCallContext(
+              createSessionCallback: (_) => _localUniqueSession,
+              endpointPath: 'script',
+              methodName: 'runLive',
+              arguments: {
+                'spreadsheetUuid': spreadsheetUuid,
+                'functionName': functionName,
+                'argsJson': argsJson,
+              },
+              requestedInputStreams: [],
+              serializationManager: _serializationManager,
+            );
+        await _localTestStreamManager.callStreamMethod(
+          _localCallContext,
+          _localUniqueSession,
+          {},
+        );
+      },
+      _localTestStreamManager.outputStreamController,
+    );
+    return _localTestStreamManager.outputStreamController.stream;
   }
 
   _ida.Future<List<_isf59hoo.ScriptExecution>> executions(
@@ -5749,6 +6053,130 @@ class _ScriptEndpoint {
                   _localCallContext.arguments,
                 )
                 as _ida.Future<int>);
+        return _localReturnValue;
+      } finally {
+        await _localUniqueSession.close();
+      }
+    });
+  }
+}
+
+class _SheetsVersionEndpoint {
+  _SheetsVersionEndpoint(
+    this._endpointDispatch,
+    this._serializationManager,
+  );
+
+  final _is.EndpointDispatch _endpointDispatch;
+
+  final _is.SerializationManager _serializationManager;
+
+  _ida.Future<String> changes(
+    _ist.TestSessionBuilder sessionBuilder,
+    _is.UuidValue itemUuid,
+    int versionId,
+  ) async {
+    return _ist.callAwaitableFunctionAndHandleExceptions(() async {
+      var _localUniqueSession =
+          (sessionBuilder as _ist.InternalTestSessionBuilder).internalBuild(
+            endpoint: 'sheetsVersion',
+            method: 'changes',
+          );
+      try {
+        var _localCallContext = await _endpointDispatch.getMethodCallContext(
+          createSessionCallback: (_) => _localUniqueSession,
+          endpointPath: 'sheetsVersion',
+          methodName: 'changes',
+          parameters: _ist.testObjectToJson({
+            'itemUuid': itemUuid,
+            'versionId': versionId,
+          }),
+          serializationManager: _serializationManager,
+        );
+        var _localReturnValue =
+            await (_localCallContext.method.call(
+                  _localUniqueSession,
+                  _localCallContext.arguments,
+                )
+                as _ida.Future<String>);
+        return _localReturnValue;
+      } finally {
+        await _localUniqueSession.close();
+      }
+    });
+  }
+
+  _ida.Future<_i28n3m1r.FileUrlView> diff(
+    _ist.TestSessionBuilder sessionBuilder,
+    _is.UuidValue itemUuid,
+    int versionId,
+    int? previousVersionId,
+  ) async {
+    return _ist.callAwaitableFunctionAndHandleExceptions(() async {
+      var _localUniqueSession =
+          (sessionBuilder as _ist.InternalTestSessionBuilder).internalBuild(
+            endpoint: 'sheetsVersion',
+            method: 'diff',
+          );
+      try {
+        var _localCallContext = await _endpointDispatch.getMethodCallContext(
+          createSessionCallback: (_) => _localUniqueSession,
+          endpointPath: 'sheetsVersion',
+          methodName: 'diff',
+          parameters: _ist.testObjectToJson({
+            'itemUuid': itemUuid,
+            'versionId': versionId,
+            'previousVersionId': previousVersionId,
+          }),
+          serializationManager: _serializationManager,
+        );
+        var _localReturnValue =
+            await (_localCallContext.method.call(
+                  _localUniqueSession,
+                  _localCallContext.arguments,
+                )
+                as _ida.Future<_i28n3m1r.FileUrlView>);
+        return _localReturnValue;
+      } finally {
+        await _localUniqueSession.close();
+      }
+    });
+  }
+
+  _ida.Future<void> copyExtras(
+    _ist.TestSessionBuilder sessionBuilder,
+    _is.UuidValue sourceItemUuid,
+    _is.UuidValue targetItemUuid,
+    String anchorIdMapJson,
+    bool copyComments,
+    bool copySharing,
+  ) async {
+    return _ist.callAwaitableFunctionAndHandleExceptions(() async {
+      var _localUniqueSession =
+          (sessionBuilder as _ist.InternalTestSessionBuilder).internalBuild(
+            endpoint: 'sheetsVersion',
+            method: 'copyExtras',
+          );
+      try {
+        var _localCallContext = await _endpointDispatch.getMethodCallContext(
+          createSessionCallback: (_) => _localUniqueSession,
+          endpointPath: 'sheetsVersion',
+          methodName: 'copyExtras',
+          parameters: _ist.testObjectToJson({
+            'sourceItemUuid': sourceItemUuid,
+            'targetItemUuid': targetItemUuid,
+            'anchorIdMapJson': anchorIdMapJson,
+            'copyComments': copyComments,
+            'copySharing': copySharing,
+          }),
+          serializationManager: _serializationManager,
+        );
+        var _localReturnValue =
+            await (_localCallContext.method.call(
+                  _localUniqueSession,
+                  _localCallContext.arguments,
+                )
+                as _ida.Future<void>);
         return _localReturnValue;
       } finally {
         await _localUniqueSession.close();

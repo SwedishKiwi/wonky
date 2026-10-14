@@ -41,6 +41,11 @@ abstract final class SheetsObjectHandlers {
     'donut': 'pie',
     'stacked_column': 'column',
     'stacked_bar': 'bar',
+    'column_3d': 'column',
+    'bar_3d': 'bar',
+    'line_3d': 'line',
+    'area_3d': 'area',
+    'pie_3d': 'pie',
   };
 
   /// Chart options of the tools → a JSON merge patch on the spec.
@@ -75,6 +80,8 @@ abstract final class SheetsObjectHandlers {
           };
         case 'series':
           patch['series'] = v;
+        case 'three_d' || 'threeD':
+          patch['threeD'] = v is bool ? {'enabled': v} : v;
         default:
           patch[e.key] = v;
       }
@@ -131,6 +138,9 @@ abstract final class SheetsObjectHandlers {
     } else if (type == 'stacked_column' || type == 'stacked_bar') {
       patch['stacking'] = 'normal';
     }
+    if (type.endsWith('_3d')) {
+      patch['threeD'] = {'enabled': true};
+    }
     return _patched(spec, patch);
   }
 
@@ -164,7 +174,11 @@ abstract final class SheetsObjectHandlers {
       for (final s in ChartRecommender.recommend(profile)) {
         if (s.spec.type == id &&
             (type != 'doughnut' || s.spec.typeOptions['pieHole'] != null)) {
-          return s.spec;
+          return type.endsWith('_3d')
+              ? _patched(s.spec, {
+                  'threeD': {'enabled': true},
+                })
+              : s.spec;
         }
       }
     }

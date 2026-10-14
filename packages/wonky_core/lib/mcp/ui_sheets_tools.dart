@@ -137,6 +137,57 @@ abstract final class UiSheetsTools {
     scopes: _scopes,
   );
 
+  static final _panelArg = JsonSchema.string(
+    description:
+        'A panel name of ui.sheets.open_panel, or a panel id; default: the '
+        'open panel.',
+  );
+
+  static final describePanel = McpToolDefinition(
+    name: 'ui.sheets.describe_panel',
+    title: 'Describe the open panel',
+    description:
+        'Lists the fields (text inputs, checkboxes, switches with their '
+        'values) and buttons of the open side panel, like ui.get_dialog for '
+        'dialogs. Use the ids with ui.sheets.set_panel_field and '
+        'ui.sheets.press_panel_button.',
+    inputSchema: _schema({'panel': _panelArg}),
+    annotations: McpToolAnnotations.read,
+    scopes: _scopes,
+  );
+
+  static final setPanelField = McpToolDefinition(
+    name: 'ui.sheets.set_panel_field',
+    title: 'Set a panel field',
+    description:
+        'Sets a field of the open side panel (ids from '
+        'ui.sheets.describe_panel): text as if typed, true/false for '
+        'checkboxes and switches. Panel edits are commands, so they are '
+        'undoable.',
+    inputSchema: _schema(
+      {
+        'panel': _panelArg,
+        'field_id': const JsonSchema.string(minLength: 1),
+        'value': const JsonSchema.any(),
+      },
+      ['field_id', 'value'],
+    ),
+    scopes: _scopes,
+  );
+
+  static final pressPanelButton = McpToolDefinition(
+    name: 'ui.sheets.press_panel_button',
+    title: 'Press a panel button',
+    description:
+        'Presses a button of the open side panel (ids from '
+        'ui.sheets.describe_panel), e.g. "Done" or "Add another rule".',
+    inputSchema: _schema(
+      {'panel': _panelArg, 'button_id': const JsonSchema.string(minLength: 1)},
+      ['button_id'],
+    ),
+    scopes: _scopes,
+  );
+
   static final closePanel = McpToolDefinition(
     name: 'ui.sheets.close_panel',
     title: 'Close a panel',
@@ -190,7 +241,8 @@ abstract final class UiSheetsTools {
     title: 'Screenshot a range',
     description:
         'Returns a PNG of a range as rendered (formats, conditional '
-        'formatting, gridlines), drawn offscreen independent of the scroll '
+        'formatting, gridlines, charts and loaded images over it), drawn '
+        'offscreen independent of the scroll '
         'position; at most 4,000 × 4,000 px. Optional row/column headers.',
     inputSchema: _schema(
       {
@@ -243,6 +295,9 @@ abstract final class UiSheetsTools {
     scrollTo,
     openPanel,
     closePanel,
+    describePanel,
+    setPanelField,
+    pressPanelButton,
     startCellEdit,
     typeInCell,
     screenshotRange,

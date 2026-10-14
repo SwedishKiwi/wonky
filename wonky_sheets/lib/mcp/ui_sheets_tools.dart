@@ -19,11 +19,19 @@ import '../features/grid/paint/layers/content_layers.dart';
 import '../features/grid/paint/layers/overlay_layers.dart' show HeaderLayer;
 import '../features/grid/selection/grid_selection.dart';
 import '../features/grid/viewport/grid_geometry.dart';
+import '../features/charts/controller/chart_controller.dart'
+    show chartDarkOf, chartUiTokensOf;
+import '../features/charts/chart_insert.dart' show chartEditorPanelId;
+import '../features/charts/editor/chart_editor_mcp.dart';
+import '../features/charts/render/chart_painter.dart' show paintChartScene;
+import '../features/images/image_object_view.dart' show boxFitOf;
+import '../features/images/image_service.dart';
 import '../features/objects/objects_controller.dart';
 import '../features/sheet_editor/sheet_editor_controller.dart';
 import '../features/sheet_editor/sheets_document_controller.dart';
 import '../features/status/selection_stats.dart';
 import '../theme/sheets_tokens.dart';
+import 'panel_describer.dart';
 
 /// Wonky Sheets' UI-bridge tools (`ui.sheets.*`, Sheets 12 §5), executed in
 /// the live window on the open spreadsheet. Writes go through commands
@@ -38,6 +46,9 @@ abstract final class UiSheetsToolHandlers {
     'ui.sheets.scroll_to': scrollTo,
     'ui.sheets.open_panel': openPanel,
     'ui.sheets.close_panel': closePanel,
+    'ui.sheets.describe_panel': describePanel,
+    'ui.sheets.set_panel_field': setPanelField,
+    'ui.sheets.press_panel_button': pressPanelButton,
     'ui.sheets.start_cell_edit': startCellEdit,
     'ui.sheets.type_in_cell': typeInCell,
     'ui.sheets.screenshot_range': screenshotRange,
@@ -411,6 +422,117 @@ abstract final class UiSheetsToolHandlers {
     return UiToolResult({'closed': id}, text: 'Closed ${name ?? id ?? '—'}');
   }
 
+  /// The open panel (or `panel`, when it is the open one) for the
+  /// describe/set/press tools.
+  static PanelDescriber _panel(UiToolContext c, Map<String, Object?> a) {
+    _editor(c);
+    final name = a['panel'] as String?;
+    final id = name == null ? null : (panels[name]?.$2 ?? name);
+    final p = PanelDescriber.of(c.services, panelId: id);
+    if (p == null) {
+      throw UiToolException(
+        'not_found',
+        id == null
+            ? 'No side panel is open. Open one with ui.sheets.open_panel.'
+            : 'The panel "$name" is not open. Open it with '
+                  'ui.sheets.open_panel.',
+      );
+    }
+    return p;
+  }
+
+  static String? _panelTitle(UiToolContext c, String id) {
+    for (final e in panels.entries) {
+      if (e.value.$2 == id) return e.key;
+    }
+    return null;
+  }
+
+  /// `ui.sheets.describe_panel` (12 §5, P1).
+  static Future<UiToolResult> describePanel(
+    UiToolContext c,
+    Map<String, Object?> a,
+  ) async {
+    await uiSettle();
+    final p = _panel(c, a);
+    final d = p.describe(title: _panelTitle(c, p.panelId));
+    // The chart editor also describes its fields by spec path (08 §8.4).
+    if (p.panelId == chartEditorPanelId) {
+      final chart = ChartEditorMcp.describe(_editor(c));
+      if (chart != null) d['chart'] = chart;
+    }
+    final fields = (d['fields']! as List).length;
+    final buttons = (d['buttons']! as List).length;
+    return UiToolResult(
+      d,
+      text: 'Panel ${p.panelId}: $fields fields, $buttons buttons',
+    );
+  }
+
+  /// `ui.sheets.set_panel_field` (12 §5, P1).
+  static Future<UiToolResult> setPanelField(
+    UiToolContext c,
+    Map<String, Object?> a,
+  ) async {
+    final p = _panel(c, a);
+    final id = a['field_id']! as String;
+    // Chart editor fields by spec path (`title.text`, `series.<key>.color`,
+    // see `chart.fields` of describe_panel; 08 §8.4).
+    if (p.panelId == chartEditorPanelId) {
+      final ed = _editor(c);
+      final fields = ChartEditorMcp.describe(ed)?['fields'] as List?;
+      if (fields != null && fields.any((f) => (f as Map)['id'] == id)) {
+        final error = await ChartEditorMcp.setField(ed, id, a['value']);
+        if (error != null) {
+          throw UiToolException('invalid_args', error);
+        }
+        await uiSettle();
+        return UiToolResult({
+          'set': id,
+          'chart': ChartEditorMcp.describe(ed),
+        }, text: 'Set $id');
+      }
+    }
+    final error = p.setField(id, a['value']);
+    if (error != null) {
+      throw UiToolException(
+        'invalid_args',
+        error,
+        details: {'panel': p.describe()},
+      );
+    }
+    await uiSettle();
+    final after = PanelDescriber.of(c.services);
+    return UiToolResult({
+      'set': id,
+      'panel': after?.describe(),
+    }, text: 'Set $id');
+  }
+
+  /// `ui.sheets.press_panel_button` (12 §5, P1).
+  static Future<UiToolResult> pressPanelButton(
+    UiToolContext c,
+    Map<String, Object?> a,
+  ) async {
+    final p = _panel(c, a);
+    final id = a['button_id']! as String;
+    final error = p.press(id);
+    if (error != null) {
+      throw UiToolException(
+        'invalid_args',
+        error,
+        details: {'panel': p.describe()},
+      );
+    }
+    await uiSettle();
+    c.events.add('panel', {'pressed': id, 'panel': p.panelId});
+    final after = PanelDescriber.of(c.services);
+    return UiToolResult({
+      'pressed': id,
+      'panel': after?.describe(),
+    }, text: 'Pressed $id');
+  }
+
   // ------------------------------------------------------------- editing
 
   static Future<SheetEditorController> _beginAt(
@@ -516,12 +638,19 @@ abstract final class UiSheetsToolHandlers {
     final sheet = ed.model.sheet(rr.sheetId)!;
     final headers = a['include_headers'] == true;
     final scale = ((a['scale'] as num?) ?? 1).toDouble();
+    final ctx = c.context;
+    final live = ctx != null && ctx.mounted;
     final image = await renderRange(
       ed,
       sheet,
       rect,
       scale: scale,
       includeHeaders: headers,
+      chartTokens: live ? chartUiTokensOf(ctx) : null,
+      dark: live
+          ? chartDarkOf(ctx)
+          : WidgetsBinding.instance.platformDispatcher.platformBrightness ==
+                Brightness.dark,
       tokens: switch (c.context) {
         final BuildContext ctx when ctx.mounted => GridPaintTokens.ofContext(
           ctx,
@@ -547,8 +676,9 @@ abstract final class UiSheetsToolHandlers {
   }
 
   /// Paints [rect] of [sheet] offscreen with the grid's content layers
-  /// (cells, formats, conditional formatting, borders), independent of the
-  /// scroll position; with [includeHeaders], row and column headers too.
+  /// (cells, formats, conditional formatting, borders) and the objects over
+  /// it (charts through the chart painter, loaded images), independent of
+  /// the scroll position; with [includeHeaders], row and column headers too.
   static Future<ui.Image> renderRange(
     SheetEditorController ed,
     SheetModel sheet,
@@ -556,6 +686,8 @@ abstract final class UiSheetsToolHandlers {
     required GridPaintTokens tokens,
     double scale = 1,
     bool includeHeaders = false,
+    ChartUiTokens? chartTokens,
+    bool dark = false,
   }) async {
     final rows = sheet.rows;
     final cols = sheet.columns;
@@ -623,6 +755,22 @@ abstract final class UiSheetsToolHandlers {
     for (final l in layers) {
       l.paint(ctx, canvas);
     }
+    _paintObjects(
+      ed,
+      sheet,
+      canvas,
+      g,
+      scrollX: scrollX,
+      scrollY: scrollY,
+      chartTokens:
+          chartTokens ??
+          ChartUiTokens(
+            card: tokens.sheetBackground.toARGB32(),
+            foreground: tokens.autoText.toARGB32(),
+            border: tokens.gridLine.toARGB32(),
+          ),
+      dark: dark,
+    );
     final frame = rec.endRecording();
 
     final out = ui.PictureRecorder();
@@ -651,6 +799,71 @@ abstract final class UiSheetsToolHandlers {
     picture.dispose();
     frame.dispose();
     return image;
+  }
+
+  /// Paints the charts and images of [sheet] into the offscreen grid frame
+  /// of [g] (objects are widgets on screen, 08 §9).
+  static void _paintObjects(
+    SheetEditorController ed,
+    SheetModel sheet,
+    Canvas canvas,
+    GridGeometry g, {
+    required double scrollX,
+    required double scrollY,
+    required ChartUiTokens chartTokens,
+    required bool dark,
+  }) {
+    final objects = ObjectsController.maybeOf(ed);
+    if (objects == null) return;
+    final frozenX = sheet.columns.offsetOf(sheet.record?.frozenColumns ?? 0);
+    final frozenY = sheet.rows.offsetOf(sheet.record?.frozenRows ?? 0);
+    for (final o in objects.objectsOn(sheet.id)) {
+      final r = objects.rectOf(o, ghost: false);
+      if (r == null || r.width <= 0 || r.height <= 0) continue;
+      final x = g.rowHeaderWidth + r.left - (r.left >= frozenX ? scrollX : 0);
+      final y = g.colHeaderHeight + r.top - (r.top >= frozenY ? scrollY : 0);
+      final box = Rect.fromLTWH(x, y, r.width, r.height);
+      canvas.save();
+      canvas.clipRect(box);
+      try {
+        switch (o.kind) {
+          case EmbeddedObjectKind.chart:
+            final scene = objects
+                .chartOf(o)
+                .sceneFor(r.width, r.height, dark: dark, tokens: chartTokens);
+            canvas.translate(x, y);
+            paintChartScene(canvas, scene);
+          case EmbeddedObjectKind.image:
+            final spec = ImageSpec.fromJson(o.specJson);
+            final src = spec.fileUuid.isNotEmpty
+                ? spec.fileUuid
+                : (spec.sourceUrl ?? '');
+            final img = src.isEmpty
+                ? null
+                : SheetsImageService.of(ed).decoded(src);
+            if (img != null) {
+              paintImage(
+                canvas: canvas,
+                rect: box,
+                image: img,
+                fit: boxFitOf(spec.fit),
+                filterQuality: FilterQuality.medium,
+              );
+            } else {
+              canvas.drawRect(
+                box,
+                Paint()
+                  ..color = Color(chartTokens.border).withValues(alpha: 0.4),
+              );
+            }
+          default:
+            break;
+        }
+      } on Object catch (e) {
+        debugPrint('Screenshot: painting object ${o.id} failed: $e');
+      }
+      canvas.restore();
+    }
   }
 
   // ------------------------------------------------------------- misc

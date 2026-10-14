@@ -1159,7 +1159,11 @@ class _SmallIcon extends StatelessWidget {
   );
 }
 
-/// A swatch button opening the chip palette (10 pairs + "No color").
+/// A swatch button opening a `WonkyColorPicker` for the chip background
+/// (07 §6.3): *No color*, the full palette, the 10 chip pairs as the
+/// "Chip colors" row and custom colors. A pair keeps its text color; any
+/// other background gets a readable text color of the same hue
+/// ([chipTextColorFor]).
 class _ChipColorButton extends StatefulWidget {
   const _ChipColorButton({
     required this.keyName,
@@ -1207,46 +1211,42 @@ class _ChipColorButtonState extends State<_ChipColorButton> {
   @override
   Widget build(BuildContext context) {
     final l = sheetsL10n(context);
-    final cs = ShadTheme.of(context).colorScheme;
-    final choices = [const DvChipColors(), ...DvChipPalette.colors];
+    final ui = WonkyUiLocalizations.of(context);
+    final names = [
+      ui.hueGreen,
+      ui.hueRed,
+      ui.hueYellow,
+      ui.hueBlue,
+      ui.huePurple,
+      ui.hueCornflowerBlue,
+      ui.hueOrange,
+      ui.colorGray,
+      ui.hueCyan,
+      ui.hueMagenta,
+    ];
+    final bg = widget.colors.bg;
     return ShadPopover(
       controller: _popover,
-      popover: (context) => SizedBox(
-        width: 172,
-        child: Wrap(
-          spacing: 6,
-          runSpacing: 6,
-          children: [
-            for (final (i, c) in choices.indexed)
-              Semantics(
-                button: true,
-                selected: c == widget.colors,
-                label: i == 0 ? l.dvNoColor : '${c.bg}',
-                child: GestureDetector(
-                  key: ValueKey<String>('${widget.keyName}.choice.$i'),
-                  onTap: () {
-                    _popover.hide();
-                    widget.onChanged(c);
-                  },
-                  child: MouseRegion(
-                    cursor: SystemMouseCursors.click,
-                    child: Container(
-                      padding: const EdgeInsets.all(2),
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        border: Border.all(
-                          color: c == widget.colors
-                              ? cs.primary
-                              : const Color(0x00000000),
-                          width: 2,
-                        ),
-                      ),
-                      child: _swatch(context, c, size: 22),
-                    ),
-                  ),
-                ),
+      popover: (context) => KeyedSubtree(
+        key: ValueKey<String>('${widget.keyName}.picker'),
+        child: WonkyColorPicker(
+          value: bg == null ? null : WonkyColor.tryParse(bg),
+          resetLabel: l.dvNoColor,
+          resetIcon: LucideIcons.ban,
+          themeColorsLabel: l.dvChipColors,
+          themeColors: [
+            for (final (i, c) in DvChipPalette.colors.indexed)
+              WonkyThemeSwatch(
+                color: WonkyColor.tryParse(c.bg!)!,
+                name: names[i % names.length],
               ),
           ],
+          onChanged: (c) {
+            _popover.hide();
+            widget.onChanged(
+              c == null ? const DvChipColors() : chipColorsFor(c.hex),
+            );
+          },
         ),
       ),
       child: ShadTooltip(
@@ -1262,4 +1262,29 @@ class _ChipColorButtonState extends State<_ChipColorButton> {
       ),
     );
   }
+}
+
+/// The chip colors for background [hex]: a palette pair keeps its text
+/// color, any other background gets [chipTextColorFor].
+DvChipColors chipColorsFor(String hex) {
+  final h = hex.toUpperCase();
+  for (final c in DvChipPalette.colors) {
+    if (c.bg!.toUpperCase() == h) return c;
+  }
+  return DvChipColors(bg: h, fg: chipTextColorFor(h));
+}
+
+/// A readable text color of the same hue for chip background [bgHex]: dark
+/// (lightness 22 %) on light backgrounds, light (94 %) on dark ones.
+String chipTextColorFor(String bgHex) {
+  final c = hexToColor(bgHex) ?? const Color(0xFFE8EAED);
+  final hsl = HSLColor.fromColor(c.withValues(alpha: 1));
+  final dark = c.computeLuminance() > 0.35;
+  final fg = hsl
+      .withSaturation(hsl.saturation.clamp(0, 0.8))
+      .withLightness(dark ? 0.22 : 0.94)
+      .toColor();
+  String h(double v) =>
+      (v * 255).round().toRadixString(16).padLeft(2, '0').toUpperCase();
+  return '#${h(fg.r)}${h(fg.g)}${h(fg.b)}';
 }

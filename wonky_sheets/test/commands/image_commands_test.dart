@@ -11,7 +11,7 @@ import '../support/sheets_harness.dart';
 
 /// A 4×2 px PNG.
 final _png = base64Decode(
-  'iVBORw0KGgoAAAANSUhEUgAAAAQAAAACCAYAAAB/qH1jAAAAEUlEQVR4nGNgYGD4z4AEAAEJAAKkzeEBAAAAAElFTkSuQmCC',
+  'iVBORw0KGgoAAAANSUhEUgAAAAQAAAACCAYAAAB/qH1jAAAAEklEQVR4nGMQ2Nn4HxkzoAsAACylEkmfixcOAAAAAElFTkSuQmCC',
 );
 
 void main() {

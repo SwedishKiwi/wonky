@@ -8,6 +8,8 @@ import 'package:wonky_client/wonky_client.dart'
 import 'package:wonky_core/wonky_core.dart';
 import 'package:wonky_sheets_core/model.dart';
 
+import '../import_export/pending_uploads.dart';
+import '../import_export/progress_dialog.dart';
 import '../import_export/sheets_io.dart';
 import '../model/sheets_undo.dart';
 import '../model/workbook_session.dart';
@@ -60,12 +62,15 @@ abstract final class ImportFileRegistry {
 /// The last import report (`sheets.file.showImportReport`).
 final ValueNotifier<ImportReport?> lastImportReport = ValueNotifier(null);
 
-/// Client limits of 11 §3.1 (larger files use the server for new
-/// spreadsheets; into the open spreadsheet they still import here, with a
-/// "may take a while" note).
+/// Client limits of 11 §3.1: online, larger files are imported by the
+/// server (`drive.import` for new spreadsheets, a server import job into
+/// the open one, `server_import.dart`); offline they import here with a
+/// "may take a while" note.
 abstract final class ImportThresholds {
   static const csvBytes = 20 * 1024 * 1024;
   static const workbookBytes = 5 * 1024 * 1024;
+  static const csvCells = 300000;
+  static const workbookCells = 200000;
 
   static bool isLarge(ImportFileData f) {
     final fmt = f.format;
@@ -167,21 +172,31 @@ ImportSizeEstimate estimateImport(
   startCol: start?.$2,
 );
 
+/// Cells per import chunk (tests make it small).
+int importChunkCells = IrImportChunks.defaultChunkCells;
+
 /// Plans [parsed] into the open spreadsheet of [ed] and applies it as one
-/// `sheets.rows` undo step in [ctx] (11 §2.4). Images of the file are
-/// uploaded in the background (online). Throws `PlanException`.
-IrImportResult applyImport(
+/// `sheets.rows` undo step in [ctx] (11 §2.4). The cells are planned in
+/// chunks (`IrToRowsPlanner.planChunked`, 11 §3.5): each chunk is applied
+/// and queued for the replica at once, and the frames between chunks keep
+/// the UI responsive; [progress] shows the share planned and cancels
+/// (everything applied so far is reverted, then [IoCancelled] is thrown).
+/// Images of the file are uploaded in the background (online). Throws
+/// `PlanException`.
+Future<IrImportResult> applyImport(
   SheetEditorController ed,
   CommandContext? ctx,
   ParsedImportFile parsed,
   ImportOptions options, {
   required String fileName,
-}) {
+  IoProgress? progress,
+  int? chunkCells,
+}) async {
   final session = ed.session;
   final start = options.location == ImportLocation.replaceAtCell
       ? startCellOf(ed, options)
       : null;
-  final result = IrToRowsPlanner.plan(
+  final chunks = IrToRowsPlanner.planChunked(
     parsed.document,
     ed.model,
     session.planContext(),
@@ -190,23 +205,74 @@ IrImportResult applyImport(
     fileName: fileName,
     startRow: start?.$1,
     startCol: start?.$2,
+    chunkCells: chunkCells ?? importChunkCells,
   );
-  final plan = result.plan;
-  if (plan.isEmpty) return result;
-  session.applyChanges(plan.changes, label: plan.label);
+  final label = chunks.head.label;
+  final applied = <RowChange>[];
+  void apply(MutationPlan plan) {
+    if (plan.isEmpty) return;
+    session.applyChanges(plan.changes, label: label);
+    applied.addAll(plan.changes);
+  }
+
+  try {
+    apply(chunks.head);
+    for (var plan = chunks.next(); plan != null; plan = chunks.next()) {
+      apply(plan);
+      progress?.value.value = chunks.progress;
+      // A frame between chunks (and a chance to cancel).
+      await Future<void>.delayed(Duration.zero);
+      progress?.check();
+    }
+  } on Object {
+    if (applied.isNotEmpty) {
+      session.applyChanges([
+        for (final c in applied.reversed) c.inverse(),
+      ], label: label);
+    }
+    rethrow;
+  }
+  final result = chunks.result;
+  if (applied.isEmpty) return result;
   if (ctx?.transaction != null) {
-    ctx!.record(SheetsRowsUndoEntry(plan.changes, label: plan.label));
+    ctx!.record(SheetsRowsUndoEntry(applied, label: label));
   }
   if (result.imageUploads.isNotEmpty) {
-    unawaited(
-      _uploadImages(ed.services, result.imageUploads, session.itemUuid),
-    );
+    _uploadImages(ed.services, result.imageUploads, session.itemUuid);
   }
   lastImportReport.value = result.report;
   return result;
 }
 
-Future<void> _uploadImages(
+/// Queues the image files of an import as durable uploads (the bytes are
+/// stored on the device first, so the images show offline and survive a
+/// reload, then upload when online). Without the queue (tests, no user)
+/// they upload directly.
+void _uploadImages(
+  ShellServices s,
+  List<IrImageUpload> uploads,
+  UuidValue item,
+) {
+  final queue = SheetsPendingUploads.of(s);
+  if (queue == null) {
+    unawaited(_uploadDirectly(s, uploads, item));
+    return;
+  }
+  for (final u in uploads) {
+    // `add` caches the bytes synchronously: the image renders at once.
+    unawaited(
+      queue.add(
+        fileUuid: u.fileUuid,
+        itemUuid: item.uuid,
+        bytes: u.bytes,
+        mimeType: u.mimeType,
+        fileName: u.name ?? 'image',
+      ),
+    );
+  }
+}
+
+Future<void> _uploadDirectly(
   ShellServices s,
   List<IrImageUpload> uploads,
   UuidValue item,
@@ -317,18 +383,26 @@ Future<ImportedSpreadsheet> _importLocally(
   );
   try {
     await _whenReady(session);
-    final result = IrToRowsPlanner.plan(
+    // Chunked (11 §3.5): each chunk is queued for the replica while the
+    // next one is planned; not undoable, so the changes are not kept.
+    final chunks = IrToRowsPlanner.planChunked(
       parsed.document,
       session.model,
       session.planContext(),
       options: options.copyWith(location: ImportLocation.replaceSpreadsheet),
       fileName: file.name,
     );
-    session.applyChanges(result.plan.changes, label: result.plan.label);
+    final label = chunks.head.label;
+    session.applyChanges(chunks.head.changes, label: label);
+    for (var plan = chunks.next(); plan != null; plan = chunks.next()) {
+      session.applyChanges(plan.changes, label: label);
+      await Future<void>.delayed(Duration.zero);
+    }
+    final result = chunks.result;
     await session.flush();
     lastImportReport.value = result.report;
     if (result.imageUploads.isNotEmpty) {
-      unawaited(_uploadImages(s, result.imageUploads, uuid));
+      _uploadImages(s, result.imageUploads, uuid);
     }
     return (
       uuid: uuid,

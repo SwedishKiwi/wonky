@@ -45,8 +45,11 @@ List<Command<CommandArgs>> commentCommands(ShellServices s) {
       ),
       enabled: (ed, _) => SheetsCollab.of(ed)?.comments.visible ?? false,
       run: (ctx, ed, a) {
+        final scope = a.string('scope');
+        final c = SheetsCollab.of(ed)?.comments.controller;
+        if (scope != null) c?.setScope(scope);
         s.panels.open(ShellPanels.comments);
-        return ok();
+        return ok({'scope': ?c?.scope});
       },
     ),
     SheetsCommand(

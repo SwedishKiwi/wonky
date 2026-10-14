@@ -80,6 +80,14 @@ void main() {
       expect([h.s.text('A1'), h.s.text('A2'), h.s.text('A3')], ['', '', '']);
     });
 
+    test('when onOpen is run by hand then it gets an open event instead of '
+        'a TypeError', () async {
+      final r = await h.s.run('sheets.script.run', {'functionName': 'onOpen'});
+
+      expect(r.isOk, isTrue);
+      expect((r.data as Map)['status'], 'completed', reason: '${r.data}');
+    });
+
     test('when a custom menu item runs then it writes like a run', () async {
       final r = await h.s.run('sheets.script.runMenuItem', {
         'functionName': 'fill',

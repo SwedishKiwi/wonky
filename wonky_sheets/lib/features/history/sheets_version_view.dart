@@ -1,23 +1,31 @@
 import 'dart:async';
+import 'dart:convert';
+import 'dart:math' as math;
 
+import 'package:archive/archive.dart' show GZipDecoder;
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart' show Material, MaterialType;
 import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
+import 'package:http/http.dart' as http;
 import 'package:shad/shad.dart';
 import 'package:wonky_app/wonky_app.dart';
 import 'package:wonky_client/wonky_client.dart'
     show ItemVersionView, UuidValue, VersionRestoreResult;
-import 'package:wonky_core/wonky_core.dart' show Role, UndoEntry;
+import 'package:wonky_core/wonky_core.dart'
+    show InvocationSource, Role, UndoEntry;
 import 'package:wonky_sheets_core/formula.dart' show GridRect;
 import 'package:wonky_sheets_core/model.dart';
 import 'package:wonky_ui/wonky_ui.dart';
 
 import '../../l10n/sheets_l10n.dart';
+import '../export/sheets_downloads.dart';
 import '../grid/grid_area.dart';
 import '../grid/paint/grid_layer.dart';
 import '../grid/paint/layers/overlay_layers.dart' show drawDashedRect;
+import '../import_export/sheets_io.dart' show saveBytes;
 import '../model/memory_workbook_session.dart';
+import '../objects/objects_layer.dart' show SheetObjectsHost;
 import '../sheet_editor/sheet_editor_controller.dart';
 import 'server_change_undo.dart';
 import 'version_copy.dart';
@@ -61,12 +69,67 @@ class SheetsVersionRenderer extends VersionRenderer {
 /// One changed cell of a version, resolved for navigation.
 @immutable
 class VersionCellChange {
-  const VersionCellChange(this.sheetId, this.rowId, this.colId, this.kind);
+  const VersionCellChange(
+    this.sheetId,
+    this.rowId,
+    this.colId,
+    this.kind, {
+    this.authorId,
+  });
 
   final String sheetId;
   final String rowId;
   final String colId;
   final CellChangeKind kind;
+
+  /// User id of the author (from the change log, Sheets 10 §5.2 step 5);
+  /// null when unknown.
+  final int? authorId;
+}
+
+/// The changed ranges of a version with their authors
+/// (`SheetsVersionEndpoint.changes`, oldest first): the author of a cell is
+/// the latest range containing it.
+class VersionAttribution {
+  const VersionAttribution(this.ranges, {this.approx = false});
+
+  final List<({Map<String, Object?> range, int userId})> ranges;
+  final bool approx;
+
+  static VersionAttribution parse(String json) {
+    try {
+      final m = jsonDecode(json);
+      if (m is! Map) return const VersionAttribution([]);
+      return VersionAttribution([
+        for (final r in (m['ranges'] as List? ?? const []))
+          if (r is Map && r['u'] is num)
+            (range: r.cast<String, Object?>(), userId: (r['u'] as num).toInt()),
+      ], approx: m['approx'] == true);
+    } on FormatException {
+      return const VersionAttribution([]);
+    }
+  }
+
+  /// The author of the cell (row, col) of [sheet] (null when no range
+  /// covers it).
+  int? authorAt(SheetModel sheet, int row, int col) {
+    bool within(AxisIndex axis, Object? a, Object? b, int i) {
+      final x = a == null ? 0 : axis.indexOf('$a');
+      final y = b == null ? axis.length - 1 : axis.indexOf('$b');
+      if (x < 0 || y < 0) return false;
+      return i >= math.min(x, y) && i <= math.max(x, y);
+    }
+
+    for (final r in ranges.reversed) {
+      final m = r.range;
+      if (m['s'] != sheet.id) continue;
+      if (within(sheet.rows, m['r1'], m['r2'], row) &&
+          within(sheet.columns, m['c1'], m['c2'], col)) {
+        return r.userId;
+      }
+    }
+    return null;
+  }
 }
 
 /// The read-only grid of a version (Sheets 10 §5.2).
@@ -170,39 +233,145 @@ class SheetsVersionViewState extends State<SheetsVersionView> {
     return rows.isEmpty ? '' : '${rows.first.$2[Cols.spreadsheetId] ?? ''}';
   }
 
+  /// Versions with more cells than this get their diff from the server
+  /// (Sheets 10 §5.2 step 4). Variable for tests.
+  static int serverDiffCells = 500000;
+
+  /// Overrides `SheetsVersionEndpoint.changes` (tests).
+  @visibleForTesting
+  static Future<String> Function(UuidValue item, int versionId)? fetchChanges;
+
+  /// Overrides the server diff download (tests): the gzip JSON bytes.
+  @visibleForTesting
+  static Future<List<int>> Function(UuidValue item, int versionId, int? prev)?
+  fetchServerDiff;
+
+  Future<VersionAttribution> _attribution() async {
+    try {
+      final override = fetchChanges;
+      final client = s.client;
+      if (override == null && (client == null || Api.simulatedOffline)) {
+        return const VersionAttribution([]);
+      }
+      final json = override != null
+          ? await override(widget.itemUuid, widget.version.id)
+          : await client!.sheetsVersion.changes(
+              widget.itemUuid,
+              widget.version.id,
+            );
+      return VersionAttribution.parse(json);
+    } catch (e) {
+      debugPrint('Version authors unavailable: $e');
+      return const VersionAttribution([]);
+    }
+  }
+
+  Future<(SnapshotDiff, List<int>)> _serverDiff() async {
+    final prev = widget.previous?.id;
+    final override = fetchServerDiff;
+    List<int> bytes;
+    if (override != null) {
+      bytes = await override(widget.itemUuid, widget.version.id, prev);
+    } else {
+      final client = s.client;
+      if (client == null || Api.simulatedOffline) {
+        throw const OfflineException('offline');
+      }
+      final url = await client.sheetsVersion.diff(
+        widget.itemUuid,
+        widget.version.id,
+        prev,
+      );
+      final r = await http.get(Uri.parse(url.url!));
+      if (r.statusCode != 200) {
+        throw StateError('Diff download failed (${r.statusCode}).');
+      }
+      bytes = r.bodyBytes;
+    }
+    final m = jsonDecode(utf8.decode(const GZipDecoder().decodeBytes(bytes)));
+    return (
+      SnapshotDiff.fromJson(
+        ((m as Map)['diff'] as Map).cast<String, Object?>(),
+      ),
+      [for (final a in (m['a'] as List? ?? const [])) (a as num).toInt()],
+    );
+  }
+
+  int get _cellCount {
+    var n = 0;
+    for (final (t, _) in rows ?? const <(String, Map<String, Object?>)>[]) {
+      if (t == SheetsTables.cell) n++;
+    }
+    return n;
+  }
+
+  /// Whether the diff was computed on the server.
+  bool serverDiff = false;
+
   Future<void> _loadDiff() async {
     final prev = widget.previous;
     final cur = rows;
     if (cur == null) return;
     SnapshotRows before = const [];
-    if (prev != null) {
+    SnapshotDiff d;
+    List<int>? authors;
+    final big = _cellCount > serverDiffCells;
+    if (big) {
       try {
-        before = await VersionSnapshots.load(s, widget.itemUuid, prev.id);
+        (d, authors) = await _serverDiff();
       } catch (e) {
-        debugPrint('Previous version unavailable: $e');
+        debugPrint('Server diff unavailable: $e');
         return;
       }
+    } else {
+      if (prev != null) {
+        try {
+          before = await VersionSnapshots.load(s, widget.itemUuid, prev.id);
+        } catch (e) {
+          debugPrint('Previous version unavailable: $e');
+          return;
+        }
+      }
+      d = SnapshotDiffer.diffRows(before, cur);
     }
+    final attribution = big
+        ? const VersionAttribution([])
+        : await _attribution();
     if (!mounted) return;
-    final d = SnapshotDiffer.diffRows(before, cur);
     final model = editor?.model;
     final order = [
       for (final sh in model?.sheets ?? const <SheetModel>[]) sh.id,
     ];
-    final list = [
-      for (final c in d.cells)
-        VersionCellChange(c.sheetId, c.rowId, c.colId, c.kind),
-    ];
-    int key(VersionCellChange c, int Function(VersionCellChange) f) => f(c);
     int rowOf(VersionCellChange c) =>
         model?.sheet(c.sheetId)?.rows.indexOf(c.rowId) ?? -1;
     int colOf(VersionCellChange c) =>
         model?.sheet(c.sheetId)?.columns.indexOf(c.colId) ?? -1;
+    final list = <VersionCellChange>[];
+    for (final (i, c) in d.cells.indexed) {
+      int? author = authors != null && i < authors.length && authors[i] != 0
+          ? authors[i]
+          : null;
+      final sheet = model?.sheet(c.sheetId);
+      if (author == null && sheet != null) {
+        final r = sheet.rows.indexOf(c.rowId);
+        final col = sheet.columns.indexOf(c.colId);
+        if (r >= 0 && col >= 0) author = attribution.authorAt(sheet, r, col);
+      }
+      list.add(
+        VersionCellChange(
+          c.sheetId,
+          c.rowId,
+          c.colId,
+          c.kind,
+          authorId: author,
+        ),
+      );
+    }
     list.removeWhere((c) => rowOf(c) < 0 || colOf(c) < 0);
     list.sort((a, b) {
       final sa = order.indexOf(a.sheetId).compareTo(order.indexOf(b.sheetId));
       if (sa != 0) return sa;
-      final r = key(a, rowOf).compareTo(key(b, rowOf));
+      final r = rowOf(a).compareTo(rowOf(b));
       return r != 0 ? r : colOf(a).compareTo(colOf(b));
     });
     setState(() {
@@ -210,6 +379,7 @@ class SheetsVersionViewState extends State<SheetsVersionView> {
       diff = d;
       changes = list;
       changeIndex = -1;
+      serverDiff = big;
     });
     _layer.rebuild();
     editor?.contentSignal.fire();
@@ -230,14 +400,24 @@ class SheetsVersionViewState extends State<SheetsVersionView> {
     super.dispose();
   }
 
-  /// The author color of changes: the single author's presence color, or
-  /// a neutral color for several authors.
-  Color changeColor(ShadColorScheme cs) {
+  /// The color of a change: its author's presence color; for unknown
+  /// authors the single author's color, else a neutral color for several
+  /// authors (Sheets 10 §5.2 step 3).
+  Color colorOf(ShadColorScheme cs, VersionCellChange? c) {
     final authors = widget.version.authors;
+    final id = c?.authorId;
+    if (id != null) {
+      for (final a in authors) {
+        if (a.id == id) return cs.presence(a.colorIndex);
+      }
+    }
     return authors.length == 1
         ? cs.presence(authors.single.colorIndex)
         : cs.mutedForeground;
   }
+
+  /// The color of the version's changes as a whole (tab dots, legend).
+  Color changeColor(ShadColorScheme cs) => colorOf(cs, null);
 
   /// Moves to the next/previous changed cell in reading order.
   void step({required bool forward}) {
@@ -258,33 +438,60 @@ class SheetsVersionViewState extends State<SheetsVersionView> {
     ed.revealCell(row, col);
   }
 
-  /// *Make a copy* of this version (Sheets 10 §5.4).
-  Future<UuidValue?> makeCopy({String? name}) async {
+  /// The default name of a copy ("Copy of Budget").
+  String get copyName {
+    final l = sheetsL10nOf(s);
+    return l.versionCopyName(
+      editor?.model.spreadsheet.title.isNotEmpty ?? false
+          ? editor!.model.spreadsheet.title
+          : s.currentItem.value?.name ?? '',
+    );
+  }
+
+  /// *Make a copy* of this version (Sheets 10 §5.4), optionally with the
+  /// spreadsheet's comments and sharing (copied by the server once the copy
+  /// is registered).
+  Future<UuidValue?> makeCopy({
+    String? name,
+    bool copyComments = false,
+    bool copySharing = false,
+  }) async {
     final r = rows;
     if (r == null || _copying) return null;
     final l = sheetsL10nOf(s);
-    final title =
-        name ??
-        l.versionCopyName(
-          editor?.model.spreadsheet.title.isNotEmpty ?? false
-              ? editor!.model.spreadsheet.title
-              : s.currentItem.value?.name ?? '',
-        );
+    final title = name ?? copyName;
     setState(() => _copying = true);
     try {
-      final id = await copyVersionToNewSpreadsheet(
+      final result = await copyVersionToNewSpreadsheet(
         s,
         rows: r,
         sourceSpaceId: _spreadsheetIdOf(r),
         name: title,
       );
-      if (id != null) {
-        s.toasts.show(
-          l.toastVersionCopied(title),
-          actionLabel: l.versionOpenCopy,
-          onAction: () => s.router.go('/s/${id.uuid}'),
-        );
+      if (result == null) return null;
+      final (id, idMap) = result;
+      if (copyComments || copySharing) {
+        try {
+          await copyVersionExtras(
+            s,
+            source: widget.itemUuid,
+            target: id,
+            idMap: idMap,
+            comments: copyComments,
+            sharing: copySharing,
+          );
+        } catch (e) {
+          s.toasts.error(
+            l.toastVersionCopyExtrasFailed,
+            description: errorMessage(e),
+          );
+        }
       }
+      s.toasts.show(
+        l.toastVersionCopied(title),
+        actionLabel: l.versionOpenCopy,
+        onAction: () => s.router.go('/s/${id.uuid}'),
+      );
       return id;
     } catch (e) {
       s.toasts.error(l.toastVersionCopyFailed, description: errorMessage(e));
@@ -293,6 +500,80 @@ class SheetsVersionViewState extends State<SheetsVersionView> {
       if (mounted) setState(() => _copying = false);
     }
   }
+
+  /// *Make a copy* dialog: name, *Copy comments*, *Share with the same
+  /// people* (MCP-operable).
+  Future<UuidValue?> makeCopyWithDialog(BuildContext context) async {
+    final l = sheetsL10n(context);
+    final la = WonkyAppLocalizations.of(context);
+    final r = await showWonkyFormDialog(
+      context,
+      WonkyDialogSpec(
+        title: l.versionCopyTitle,
+        dialogKey: 'dialog.versionCopy',
+        fields: [
+          TextFieldSpec(
+            id: 'name',
+            label: l.versionCopyNameLabel,
+            initial: copyName,
+            selectAll: true,
+            maxLength: 255,
+            validator: (v) =>
+                v.trim().isEmpty ? l.versionCopyNameRequired : null,
+          ),
+          CheckboxFieldSpec(id: 'comments', label: l.versionCopyComments),
+          CheckboxFieldSpec(id: 'sharing', label: l.versionCopySharing),
+        ],
+        buttons: [
+          DialogButtonSpec(id: 'cancel', label: la.actionCancel),
+          DialogButtonSpec(
+            id: 'ok',
+            label: l.cmdHistoryMakeCopy,
+            primary: true,
+            validates: true,
+          ),
+        ],
+      ),
+    );
+    if (r?.buttonId != 'ok') return null;
+    return makeCopy(
+      name: r!.text('name').trim(),
+      copyComments: r.values['comments'] == true,
+      copySharing: r.values['sharing'] == true,
+    );
+  }
+
+  /// *Download as…* from this version (Sheets 10 §5.4): the exporters run
+  /// on the version's in-memory model. Returns the file name (null when
+  /// cancelled).
+  Future<String?> download(SheetsExportFormat format) async {
+    final ed = editor;
+    if (ed == null) return null;
+    final l = sheetsL10nOf(s);
+    try {
+      final artifact = await buildDownload(ed, format);
+      final saved = await saveBytes(
+        artifact.bytes,
+        fileName: artifact.fileName,
+        mimeType: artifact.mimeType,
+        dialogTitle: l.exportSaveDialogTitle(artifact.fileName),
+      );
+      return saved ? artifact.fileName : null;
+    } catch (e) {
+      s.toasts.error(l.exportFailed, description: errorMessage(e));
+      rethrow;
+    }
+  }
+
+  /// Formats offered by *Download* in the history route (PDF goes through
+  /// the print route of the live spreadsheet and is not offered).
+  static const downloadFormats = [
+    SheetsExportFormat.xlsx,
+    SheetsExportFormat.ods,
+    SheetsExportFormat.csv,
+    SheetsExportFormat.tsv,
+    SheetsExportFormat.html,
+  ];
 
   String _summary(SheetsLocalizations l) {
     final d = diff;
@@ -361,7 +642,7 @@ class SheetsVersionViewState extends State<SheetsVersionView> {
         ),
       );
     }
-    _layer.color = changeColor(theme.colorScheme);
+    _layer.colorOf = (c) => colorOf(theme.colorScheme, c);
     _layer.enabled = widget.showChanges;
     return CallbackShortcuts(
       bindings: {
@@ -387,10 +668,15 @@ class SheetsVersionViewState extends State<SheetsVersionView> {
           children: [
             _bar(context, l, theme),
             Expanded(
-              child: GridArea(
-                key: const ValueKey<String>('sheets.version.grid'),
-                controller: ed,
+              // Charts and images render as in the version (read-only).
+              child: SheetObjectsHost(
+                editor: ed,
                 services: s,
+                child: GridArea(
+                  key: const ValueKey<String>('sheets.version.grid'),
+                  controller: ed,
+                  services: s,
+                ),
               ),
             ),
             _VersionTabs(state: this, controller: ed),
@@ -415,14 +701,7 @@ class SheetsVersionViewState extends State<SheetsVersionView> {
       child: Row(
         children: [
           if (widget.showChanges) ...[
-            Container(
-              width: 10,
-              height: 10,
-              decoration: BoxDecoration(
-                color: changeColor(theme.colorScheme),
-                borderRadius: BorderRadius.circular(2),
-              ),
-            ),
+            _AuthorLegend(state: this),
             const SizedBox(width: 8),
           ],
           Expanded(
@@ -469,6 +748,35 @@ class SheetsVersionViewState extends State<SheetsVersionView> {
             ),
           ],
           const SizedBox(width: 4),
+          WonkyDropdownMenu(
+            entries: () => [
+              for (final f in downloadFormats)
+                WonkyMenuItem(
+                  label: downloadFormatLabel(l, f),
+                  onSelected: () => unawaited(
+                    s.dispatcher.invoke(
+                      'sheets.history.download',
+                      args: {'format': f.name},
+                      source: InvocationSource.ui,
+                      context: context,
+                    ),
+                  ),
+                ),
+            ],
+            builder: (context, ctl) => ShadTooltip(
+              builder: (_) => Text(l.cmdHistoryDownload),
+              child: ShadIconButton.ghost(
+                key: const ValueKey<String>('sheets.version.download'),
+                width: 28,
+                height: 28,
+                iconSize: 16,
+                semanticLabel: l.cmdHistoryDownload,
+                icon: const Icon(LucideIcons.download),
+                onPressed: ctl.toggle,
+              ),
+            ),
+          ),
+          const SizedBox(width: 4),
           ShadButton.outline(
             key: const ValueKey<String>('sheets.version.copy'),
             size: ShadButtonSize.sm,
@@ -476,9 +784,56 @@ class SheetsVersionViewState extends State<SheetsVersionView> {
             leading: _copying
                 ? const SizedBox.square(dimension: 14, child: ShadSpinner())
                 : const Icon(LucideIcons.copy, size: 14),
-            onPressed: () => unawaited(makeCopy()),
+            onPressed: () => unawaited(
+              s.dispatcher.invoke(
+                'sheets.history.makeCopy',
+                source: InvocationSource.ui,
+                context: context,
+              ),
+            ),
             child: Text(l.cmdHistoryMakeCopy),
           ),
+        ],
+      ),
+    );
+  }
+}
+
+/// The authors of the shown version with their change colors (Sheets 10
+/// §5.2: cells are outlined in their author's presence color).
+class _AuthorLegend extends StatelessWidget {
+  const _AuthorLegend({required this.state});
+
+  final SheetsVersionViewState state;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = ShadTheme.of(context);
+    final cs = theme.colorScheme;
+    final authors = state.widget.version.authors;
+    final shown = authors.take(3).toList();
+    final names = [for (final a in authors) a.displayName].join(', ');
+    Widget dot(Color c) => Container(
+      width: 10,
+      height: 10,
+      decoration: BoxDecoration(
+        color: c,
+        borderRadius: BorderRadius.circular(2),
+      ),
+    );
+    if (shown.isEmpty) return dot(state.changeColor(cs));
+    return ShadTooltip(
+      builder: (_) => Text(names),
+      child: Row(
+        key: const ValueKey<String>('sheets.version.authors'),
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          for (final a in shown) ...[
+            dot(cs.presence(a.colorIndex)),
+            const SizedBox(width: 3),
+          ],
+          if (authors.length > 3)
+            Text('+${authors.length - 3}', style: theme.textTheme.muted),
         ],
       ),
     );
@@ -583,7 +938,7 @@ class _VersionChangesLayer extends GridLayer {
   _VersionChangesLayer(this.state);
 
   final SheetsVersionViewState state;
-  Color color = const Color(0xFF1A73E8);
+  Color Function(VersionCellChange c) colorOf = (_) => const Color(0xFF1A73E8);
   bool enabled = true;
   Map<String, List<VersionCellChange>> _bySheet = const {};
 
@@ -603,11 +958,6 @@ class _VersionChangesLayer extends GridLayer {
     if (!enabled) return;
     final list = _bySheet[ctx.sheetId];
     if (list == null || list.isEmpty) return;
-    final fill = Paint()..color = color.withValues(alpha: 0.15);
-    final solid = Paint()
-      ..color = color
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 2;
     final active =
         state.changeIndex >= 0 && state.changeIndex < state.changes.length
         ? state.changes[state.changeIndex]
@@ -620,7 +970,12 @@ class _VersionChangesLayer extends GridLayer {
         if (row < pane.rowStart || row > pane.rowEnd) continue;
         if (col < pane.colStart || col > pane.colEnd) continue;
         final rect = pane.rangeRect(GridRect.cell(row, col)).deflate(1);
-        canvas.drawRect(rect, fill);
+        final color = colorOf(c);
+        final solid = Paint()
+          ..color = color
+          ..style = PaintingStyle.stroke
+          ..strokeWidth = 2;
+        canvas.drawRect(rect, Paint()..color = color.withValues(alpha: 0.15));
         if (c.kind == CellChangeKind.format) {
           drawDashedRect(canvas, rect, solid, dash: 4, gap: 3);
         } else {

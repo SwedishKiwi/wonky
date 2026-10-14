@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:math' as math;
 
+import 'package:crypto/crypto.dart';
 import 'package:serverpod/serverpod.dart';
 import 'package:wonky_core/wonky_core.dart' show McpScope, Role;
 import 'package:wonky_sheets_core/wonky_sheets_core.dart'
@@ -26,6 +27,7 @@ import '../mcp/sheets_read_model.dart';
 import '../mcp/sheets_shadow.dart';
 import '../mcp/sheets_value_handlers.dart';
 import '../mcp/sheets_writes.dart';
+import 'sheets_ai_previews.dart';
 
 /// The inline AI features of Wonky Sheets (Sheets 12 §6.3–6.10): formula
 /// suggestion, formula explanation, Fill with AI, analysis prompt chips,
@@ -939,14 +941,234 @@ abstract final class SheetsAiService {
     return text.length <= 300 ? text : '${text.substring(0, 297)}…';
   }
 
+  // ------------------------------------------------------ AI() cells
+
+  /// Per-call batch limit of `evaluateAiCells`.
+  static const aiCellBatch = 20;
+
+  /// Uncached `AI()` evaluations per user and day (Sheets 12 §6.8).
+  static int aiCellsPerUserDay = 500;
+
+  /// Cached `AI()` results per spreadsheet.
+  static int aiCellsPerSpreadsheet = 5000;
+
+  /// The cache key of an `AI()` call: sha256(version ‖ prompt ‖ values).
+  /// The model is not part of the key: viewers of a spreadsheet may use
+  /// other providers and must still see the cached values.
+  static String aiCellKey(String prompt, String valuesJson) => sha256
+      .convert(utf8.encode('ai-v1\u0000$prompt\u0000$valuesJson'))
+      .toString();
+
+  /// Evaluates `=AI(prompt, ranges…)` calls (Sheets 12 §6.8): cached values
+  /// come from [AiFunctionCache] (never recomputed unless the inputs change
+  /// or [refresh]); new ones are computed with the small model for Editors
+  /// only (others get no value: "waiting for an editor").
+  static Future<List<SheetsAiCellResult>> evaluateAiCells(
+    Session session,
+    Actor actor,
+    UuidValue itemUuid,
+    List<SheetsAiCellRequest> requests, {
+    bool refresh = false,
+  }) async {
+    if (requests.length > aiCellBatch) {
+      throw Errors.invalid('At most $aiCellBatch AI cells per request.');
+    }
+    final ctx = _ctx(session, actor);
+    final (item, role) = await _guard(
+      () =>
+          SheetsMcp.resolveItem(session, ctx, itemUuid.uuid, min: Role.viewer),
+    );
+    final space = item.contentRef!;
+    final out = <SheetsAiCellResult>[];
+    final todo = <(SheetsAiCellRequest, String)>[];
+    for (final r in requests) {
+      final key = aiCellKey(r.prompt, r.valuesJson);
+      final hit = refresh && role >= Role.editor
+          ? null
+          : await AiFunctionCache.db.findFirstRow(
+              session,
+              where: (t) => t.key.equals(key),
+            );
+      if (hit != null) {
+        await AiFunctionCache.db.updateRow(
+          session,
+          hit.copyWith(hits: hit.hits + 1),
+        );
+        out.add(
+          SheetsAiCellResult(
+            id: r.id,
+            value: hit.value,
+            error: hit.error,
+            cached: true,
+          ),
+        );
+      } else if (role < Role.editor) {
+        out.add(SheetsAiCellResult(id: r.id, cached: false));
+      } else {
+        todo.add((r, key));
+      }
+    }
+    if (todo.isEmpty) return out;
+
+    String? quotaError;
+    final count = await AiFunctionCache.db.count(
+      session,
+      where: (t) => t.spreadsheetUuid.equals(space),
+    );
+    if (count + todo.length > aiCellsPerSpreadsheet) {
+      quotaError =
+          'This spreadsheet has reached the limit of '
+          '$aiCellsPerSpreadsheet AI cells.';
+    } else {
+      final today = DateTime.now().toUtc();
+      final start = DateTime.utc(today.year, today.month, today.day);
+      final used = await AiUsage.db.count(
+        session,
+        where: (t) =>
+            t.userId.equals(actor.userId) &
+            t.feature.equals('sheets_ai_function') &
+            (t.at >= start),
+      );
+      if (used + todo.length > aiCellsPerUserDay) {
+        quotaError =
+            'You reached the daily limit of $aiCellsPerUserDay AI cell '
+            'calculations. Try again tomorrow.';
+      }
+    }
+    AiBackend? backend;
+    if (quotaError == null) {
+      try {
+        await AiUsageService.requireAvailable(session, actor.userId);
+        await AiUsageService.requireBudget(session, actor.userId);
+        backend = await AiKeys.backendFor(session, actor.userId);
+        if (backend == null) quotaError = AiUsageService.notConfiguredMessage;
+      } on WonkyException catch (e) {
+        quotaError = e.message;
+      }
+    }
+    for (final (r, key) in todo) {
+      if (quotaError != null || backend == null) {
+        out.add(SheetsAiCellResult(id: r.id, error: quotaError, cached: false));
+        continue;
+      }
+      try {
+        final resp = await _send(
+          session,
+          actor,
+          backend,
+          AiRequest(
+            model: backend.model(inlineTier),
+            effort: inlineTier.effort,
+            maxTokens: 1024,
+            system: SheetsPrompts.aiFunction,
+            messages: [
+              ChatMessage.user(
+                '${r.prompt}\n\n<sheet_data>\n'
+                '${_short(r.valuesJson, 20000)}\n</sheet_data>',
+              ),
+            ],
+            userId: 'u${actor.userId}',
+            feature: 'sheets_ai_function',
+          ),
+        );
+        final value = resp.text.trim();
+        final row = AiFunctionCache(
+          key: key,
+          spreadsheetUuid: space,
+          model: resp.model ?? backend.model(inlineTier),
+          value: value,
+          createdAt: DateTime.now().toUtc(),
+        );
+        final old = await AiFunctionCache.db.findFirstRow(
+          session,
+          where: (t) => t.key.equals(key),
+        );
+        if (old == null) {
+          await AiFunctionCache.db.insertRow(session, row);
+        } else {
+          await AiFunctionCache.db.updateRow(
+            session,
+            old.copyWith(value: value, error: null, createdAt: row.createdAt),
+          );
+        }
+        out.add(SheetsAiCellResult(id: r.id, value: value, cached: false));
+      } on WonkyException catch (e) {
+        out.add(SheetsAiCellResult(id: r.id, error: e.message, cached: false));
+      } on Object catch (e) {
+        session.log('AI() evaluation failed: $e', level: LogLevel.warning);
+        out.add(
+          SheetsAiCellResult(
+            id: r.id,
+            error: 'The AI service returned an error.',
+            cached: false,
+          ),
+        );
+      }
+    }
+    return out;
+  }
+
   // ---------------------------------------------------------- previews
 
-  static SheetsShadow _preview(Actor actor, String previewId) {
+  /// The preview [previewId] of [actor]: the in-memory shadow of this
+  /// instance, else the stored copy (any instance, Sheets 12 §6.3).
+  static Future<(SheetsShadow?, StoredAiPreview?)> _preview(
+    Session session,
+    Actor actor,
+    String previewId,
+  ) async {
     final s = SheetsShadows.preview(previewId);
-    if (s == null || s.userId != actor.userId) {
+    if (s != null) {
+      if (s.userId != actor.userId) throw Errors.notFound('Preview');
+      return (s, null);
+    }
+    final stored = await SheetsAiPreviewStore.load(session, previewId);
+    if (stored == null || stored.userId != actor.userId) {
       throw Errors.notFound('Preview');
     }
-    return s;
+    return (null, stored);
+  }
+
+  /// The preview of [shadow] for the dialog.
+  static SheetsAiPreview previewOf(SheetsShadow shadow, UuidValue itemUuid) =>
+      SheetsAiPreview(
+        previewId: shadow.previewId,
+        itemUuid: itemUuid,
+        calls: [
+          for (final c in shadow.calls)
+            SheetsAiPreviewCall(
+              callId: c.callId,
+              toolName: c.toolName,
+              label: c.label,
+              ranges: c.ranges,
+              cellsAffected: c.cellsAffected,
+              structural: c.structural,
+              cells: _previewCells(shadow, c),
+            ),
+        ],
+        expiresAt: shadow.createdAt.add(SheetsShadows.lifetime).toUtc(),
+      );
+
+  /// Stores the preview of a finished Suggest-mode run so every instance
+  /// can serve it (best effort: the in-memory shadow still works).
+  static Future<void> persistPreview(
+    Session session,
+    SheetsShadow shadow,
+    UuidValue itemUuid,
+  ) async {
+    try {
+      await SheetsAiPreviewStore.save(
+        session,
+        shadow,
+        previewOf(shadow, itemUuid),
+      );
+    } on Object catch (e, st) {
+      session.log(
+        'Storing AI preview ${shadow.previewId} failed: $e',
+        level: LogLevel.warning,
+        stackTrace: st,
+      );
+    }
   }
 
   /// The AI changes preview (Sheets 12 §6.3): calls with before → after.
@@ -955,29 +1177,14 @@ abstract final class SheetsAiService {
     Actor actor,
     String previewId,
   ) async {
-    final shadow = _preview(actor, previewId);
+    final (shadow, stored) = await _preview(session, actor, previewId);
+    if (stored != null) return stored.preview;
     final item = await DriveItem.db.findFirstRow(
       session,
-      where: (t) => t.contentRef.equals(shadow.space),
+      where: (t) => t.contentRef.equals(shadow!.space),
     );
     if (item == null) throw Errors.notFound('Spreadsheet');
-    return SheetsAiPreview(
-      previewId: previewId,
-      itemUuid: item.uuid,
-      calls: [
-        for (final c in shadow.calls)
-          SheetsAiPreviewCall(
-            callId: c.callId,
-            toolName: c.toolName,
-            label: c.label,
-            ranges: c.ranges,
-            cellsAffected: c.cellsAffected,
-            structural: c.structural,
-            cells: _previewCells(shadow, c),
-          ),
-      ],
-      expiresAt: shadow.createdAt.add(SheetsShadows.lifetime).toUtc(),
-    );
+    return previewOf(shadow!, item.uuid);
   }
 
   static List<SheetsAiPreviewCell> _previewCells(
@@ -1030,30 +1237,39 @@ abstract final class SheetsAiService {
     String previewId,
     List<String>? callIds,
   ) async {
-    final shadow = _preview(actor, previewId);
+    final (shadow, stored) = await _preview(session, actor, previewId);
+    final space = shadow?.space ?? stored!.space;
     final ctx = _ctx(session, actor);
     final (item, _) = await _guard(
-      () => SheetsMcp.resolveItem(
-        session,
-        ctx,
-        shadow.space.uuid,
-        min: Role.editor,
-      ),
+      () => SheetsMcp.resolveItem(session, ctx, space.uuid, min: Role.editor),
     );
+    final all = <(String, String, List<RowChange>, Set<String>)>[
+      if (shadow != null)
+        for (final c in shadow.calls) (c.callId, c.label, c.changes, c.kinds)
+      else
+        for (final c in stored!.preview.calls)
+          if (stored.calls[c.callId] case final x?)
+            (c.callId, c.label, x.changes, x.kinds),
+    ];
     final selected = [
-      for (final c in shadow.calls)
-        if (callIds == null || callIds.contains(c.callId)) c,
+      for (final c in all)
+        if (callIds == null || callIds.contains(c.$1)) c,
     ];
     final label = selected.length == 1
-        ? selected.single.label
+        ? selected.single.$2
         : 'AI: ${selected.length} changes';
-    if (selected.isEmpty) {
+    Future<void> close() async {
       SheetsShadows.discard(previewId);
+      await SheetsAiPreviewStore.delete(session, previewId);
+    }
+
+    if (selected.isEmpty) {
+      await close();
       return SheetsAiApplyResult(label: label, cellsAffected: 0, skipped: 0);
     }
-    final changes = [for (final c in selected) ...c.changes];
+    final changes = [for (final c in selected) ...c.$3];
     final (changeId, applied) = await HeadlessWorkbookProvider.withWriteLock(
-      shadow.space,
+      space,
       () => SheetsBulkWriter.applyRecorded(
         session,
         actor: actor.copyWith(kind: ActorKind.ai),
@@ -1062,12 +1278,12 @@ abstract final class SheetsAiService {
         label: label,
         plans: const [],
         skipChanged: true,
-        kinds: {for (final c in selected) ...c.kinds},
+        kinds: {for (final c in selected) ...c.$4},
       ),
     );
-    HeadlessWorkbookProvider.markStale(shadow.space);
-    await SheetsWrites.afterCommit(session, shadow.space);
-    SheetsShadows.discard(previewId);
+    HeadlessWorkbookProvider.markStale(space);
+    await SheetsWrites.afterCommit(session, space);
+    await close();
     return SheetsAiApplyResult(
       changeId: changeId,
       label: label,
@@ -1077,8 +1293,13 @@ abstract final class SheetsAiService {
   }
 
   /// Discards a preview.
-  static Future<void> discardPreview(Actor actor, String previewId) async {
-    _preview(actor, previewId);
+  static Future<void> discardPreview(
+    Session session,
+    Actor actor,
+    String previewId,
+  ) async {
+    await _preview(session, actor, previewId);
     SheetsShadows.discard(previewId);
+    await SheetsAiPreviewStore.delete(session, previewId);
   }
 }

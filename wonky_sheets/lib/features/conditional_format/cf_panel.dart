@@ -6,8 +6,7 @@ import 'package:flutter/widgets.dart';
 import 'package:shad/shad.dart';
 import 'package:wonky_app/wonky_app.dart';
 import 'package:wonky_core/wonky_core.dart';
-import 'package:wonky_sheets_core/formula.dart'
-    show FormulaLocale, GridRect, validateFormula;
+import 'package:wonky_sheets_core/formula.dart' show GridRect, validateFormula;
 import 'package:wonky_sheets_core/model.dart';
 
 import '../../l10n/sheets_l10n.dart';
@@ -223,7 +222,11 @@ class _CfPanelState extends State<CfPanel> {
   Future<void> _done() async {
     final st = _edit;
     if (st == null) return;
-    final err = st.validate(rangesValid: _rects != null, locale: ed.locale);
+    final err = st.validate(
+      rangesValid: _rects != null,
+      locale: ed.locale,
+      formulaLocale: ed.formulaLocale,
+    );
     if (err != null) return;
     final rule = st.toRule().toJson();
     final ranges = [for (final r in _rects!) r.a1];
@@ -331,7 +334,11 @@ class _CfPanelState extends State<CfPanel> {
   Widget _editor(BuildContext context, CfEditState st) {
     final l = sheetsL10n(context);
     final la = WonkyAppLocalizations.of(context);
-    final err = st.validate(rangesValid: _rects != null, locale: ed.locale);
+    final err = st.validate(
+      rangesValid: _rects != null,
+      locale: ed.locale,
+      formulaLocale: ed.formulaLocale,
+    );
     final kinds = {
       CfEditKind.single: l.cfTabSingle,
       CfEditKind.colorScale: l.cfTabColorScale,
@@ -439,7 +446,7 @@ class _CfPanelState extends State<CfPanel> {
     final t = v.trim();
     if (!t.startsWith('=') || t == '=') return null;
     try {
-      final r = validateFormula(t, locale: FormulaLocale.forId(ed.locale));
+      final r = validateFormula(t, locale: ed.formulaLocale);
       return r.ok ? null : l.cfErrorFormula(r.error?.message ?? '');
     } catch (_) {
       return null;

@@ -36,10 +36,19 @@ export 'sheets_sync_controller.dart'
 /// and [WorkbookSession].
 Future<WorkbookSession> openWorkbookSession(
   ShellServices services,
-  UuidValue itemUuid,
-) async {
-  final controller = await SheetsData.ready(services);
+  UuidValue itemUuid, {
+  @visibleForTesting Duration readyTimeout = const Duration(seconds: 10),
+}) async {
+  final controller = await SheetsData.ready(services, timeout: readyTimeout);
   if (controller == null) {
+    // Installed but not started (the replica's database failed to open or
+    // is still opening): an empty in-memory spreadsheet would look like the
+    // data is gone and lose every edit; the editor offers *Try again*.
+    if (SheetsData.isInstalled(services)) {
+      throw SheetsDataUnavailableException(
+        sheetsL10nOf(services).screenStorageUnavailable,
+      );
+    }
     return MemoryWorkbookSession.blank(itemUuid: itemUuid);
   }
   DriveItemView? item;
@@ -69,6 +78,19 @@ Future<WorkbookSession> openWorkbookSession(
       .listen((c) => session.updateRole(c.item!.myRole));
   session.addDisposeCallback(sub.cancel);
   return session;
+}
+
+/// The signed-in user's local data layer did not start, so a spreadsheet
+/// can't be opened (see [openWorkbookSession]).
+final class SheetsDataUnavailableException implements Exception {
+  /// Creates the exception with the user-facing [message].
+  const SheetsDataUnavailableException(this.message);
+
+  /// What the editor shows.
+  final String message;
+
+  @override
+  String toString() => message;
 }
 
 /// Installs the Sheets data layer for the signed-in user (suite 12 §2.5):
@@ -113,6 +135,11 @@ abstract final class SheetsData {
 
   /// The controller once open; null when not installed or no user appears
   /// within [timeout].
+  /// Whether the data layer is installed for [services] (signed in), even
+  /// when it has not started yet.
+  static bool isInstalled(ShellServices services) =>
+      _installations[services] != null;
+
   static Future<SheetsSyncController?> ready(
     ShellServices services, {
     Duration timeout = const Duration(seconds: 10),

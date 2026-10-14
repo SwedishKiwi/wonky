@@ -22,6 +22,7 @@ export 'ir/ir_json.dart';
 export 'ir/ir_range.dart';
 export 'ir/sparse_grid.dart';
 export 'ir/workbook_document.dart';
+export 'json/json_workbook.dart';
 export 'numfmt/excel_number_formats.dart';
 export 'ods/ods.dart';
 export 'print/print.dart';

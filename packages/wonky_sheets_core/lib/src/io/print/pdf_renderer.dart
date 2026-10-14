@@ -114,6 +114,7 @@ abstract final class SheetsPdfRenderer {
     ConditionalOverlayProvider? conditional,
     NumberFormatter? formatter,
     bool compress = true,
+    bool darkTheme = false,
   }) {
     final doc = buildDocument(
       model,
@@ -131,6 +132,7 @@ abstract final class SheetsPdfRenderer {
       conditional: conditional,
       formatter: formatter,
       compress: compress,
+      darkTheme: darkTheme,
     );
     return doc.save();
   }
@@ -152,6 +154,7 @@ abstract final class SheetsPdfRenderer {
     ConditionalOverlayProvider? conditional,
     NumberFormatter? formatter,
     bool compress = true,
+    bool darkTheme = false,
   }) {
     final loc = locale ?? model.spreadsheet.locale;
     final docTitle = title ?? model.spreadsheet.title;
@@ -187,6 +190,7 @@ abstract final class SheetsPdfRenderer {
       title: docTitle,
       date: date,
       time: time,
+      ink: darkTheme ? _Ink.darkTheme : _Ink.light,
     );
     final pages = [
       for (final p in pagination.pages)
@@ -203,18 +207,90 @@ abstract final class SheetsPdfRenderer {
   }
 }
 
-/// Visual constants of print (light paper).
-abstract final class _Ink {
-  static const black = PdfColor(0, 0, 0);
-  static const gridline = PdfColor(0xD0 / 255, 0xD0 / 255, 0xD0 / 255);
-  static const headingFill = PdfColor(0xF8 / 255, 0xF9 / 255, 0xFA / 255);
-  static const headingLine = PdfColor(0xC0 / 255, 0xC0 / 255, 0xC0 / 255);
-  static const headingText = PdfColor(0x5F / 255, 0x63 / 255, 0x68 / 255);
+/// Visual constants of print: light paper, or the dark theme of *Export
+/// PDF › Use dark theme* (suite 02 §8; the grid's dark tokens). Explicit
+/// cell colors are absolute in both; automatic text and borders follow the
+/// page.
+final class _Ink {
+  const _Ink._({
+    required this.page,
+    required this.text,
+    required this.gridline,
+    required this.headingFill,
+    required this.headingLine,
+    required this.headingText,
+    required this.checkboxOutline,
+    required this.chipFill,
+    required this.chipText,
+    required this.dark,
+  });
+
+  static const light = _Ink._(
+    page: null,
+    text: PdfColor(0, 0, 0),
+    gridline: PdfColor(0xD0 / 255, 0xD0 / 255, 0xD0 / 255),
+    headingFill: PdfColor(0xF8 / 255, 0xF9 / 255, 0xFA / 255),
+    headingLine: PdfColor(0xC0 / 255, 0xC0 / 255, 0xC0 / 255),
+    headingText: PdfColor(0x5F / 255, 0x63 / 255, 0x68 / 255),
+    checkboxOutline: PdfColor(0x5F / 255, 0x63 / 255, 0x68 / 255),
+    chipFill: PdfColor(0xE8 / 255, 0xEA / 255, 0xED / 255),
+    chipText: PdfColor(0x20 / 255, 0x21 / 255, 0x24 / 255),
+    dark: false,
+  );
+
+  static const darkTheme = _Ink._(
+    page: PdfColor(0x1F / 255, 0x1F / 255, 0x1F / 255),
+    text: PdfColor(0xE8 / 255, 0xEA / 255, 0xED / 255),
+    gridline: PdfColor(0x3A / 255, 0x3A / 255, 0x3A / 255),
+    headingFill: PdfColor(0x26 / 255, 0x26 / 255, 0x26 / 255),
+    headingLine: PdfColor(0x44 / 255, 0x44 / 255, 0x44 / 255),
+    headingText: PdfColor(0xA8 / 255, 0xA8 / 255, 0xA8 / 255),
+    checkboxOutline: PdfColor(0xA8 / 255, 0xA8 / 255, 0xA8 / 255),
+    chipFill: PdfColor(0x3C / 255, 0x40 / 255, 0x43 / 255),
+    chipText: PdfColor(0xE8 / 255, 0xEA / 255, 0xED / 255),
+    dark: true,
+  );
+
+  /// Page background (null: none, white paper).
+  final PdfColor? page;
+
+  /// Automatic text and border color, header/footer and notes text.
+  final PdfColor text;
+  final PdfColor gridline;
+  final PdfColor headingFill;
+  final PdfColor headingLine;
+  final PdfColor headingText;
+  final PdfColor checkboxOutline;
+  final PdfColor chipFill;
+  final PdfColor chipText;
+  final bool dark;
+
   static const checkbox = PdfColor(0x1A / 255, 0x73 / 255, 0xE8 / 255);
-  static const checkboxOutline = PdfColor(0x5F / 255, 0x63 / 255, 0x68 / 255);
-  static const chipFill = PdfColor(0xE8 / 255, 0xEA / 255, 0xED / 255);
-  static const chipText = PdfColor(0x20 / 255, 0x21 / 255, 0x24 / 255);
   static const white = PdfColor(1, 1, 1);
+  static const _nearBlack = PdfColor(0x20 / 255, 0x21 / 255, 0x24 / 255);
+
+  /// The automatic text color on [fill] (hex or null): [text] unless its
+  /// contrast with the fill is poor (a light fill on the dark page), then
+  /// near-black or near-white — the grid's rule (`autoTextOn`).
+  PdfColor autoTextOn(String? fill) {
+    if (fill == null) return text;
+    final bg = hex(fill);
+    if (_contrast(text, bg) >= 3) return text;
+    return _contrast(_nearBlack, bg) >= _contrast(text, bg) ? _nearBlack : text;
+  }
+
+  static double _lum(PdfColor c) {
+    double ch(double v) => v <= 0.03928
+        ? v / 12.92
+        : math.pow((v + 0.055) / 1.055, 2.4).toDouble();
+    return 0.2126 * ch(c.red) + 0.7152 * ch(c.green) + 0.0722 * ch(c.blue);
+  }
+
+  static double _contrast(PdfColor a, PdfColor b) {
+    final la = _lum(a);
+    final lb = _lum(b);
+    return (math.max(la, lb) + 0.05) / (math.min(la, lb) + 0.05);
+  }
 
   static PdfColor hex(String hex) {
     final v = int.parse(hex.substring(1), radix: 16);
@@ -253,8 +329,10 @@ final class _Renderer {
     required this.title,
     required this.date,
     required this.time,
+    this.ink = _Ink.light,
   });
 
+  final _Ink ink;
   final WorkbookModel model;
   final PdfDocument doc;
   final PdfFontProvider fonts;
@@ -294,6 +372,12 @@ final class _Renderer {
     k = 0.75 * s.scale;
     ox = s.originX;
     oy = s.originY;
+    final bg = ink.page;
+    if (bg != null) {
+      g.setFillColor(bg);
+      g.drawRect(0, 0, s.pageWidth, s.pageHeight);
+      g.fillPath();
+    }
     _headerFooter();
     switch (s.kind) {
       case PageKind.cells:
@@ -339,18 +423,18 @@ final class _Renderer {
       final l = HeaderFooterTokens.render(sec.left, ctx);
       final c = HeaderFooterTokens.render(sec.center, ctx);
       final r = HeaderFooterTokens.render(sec.right, ctx);
-      if (l.isNotEmpty) _drawPlain(l, style, left, y, _Ink.black);
+      if (l.isNotEmpty) _drawPlain(l, style, left, y, ink.text);
       if (c.isNotEmpty) {
         _drawPlain(
           c,
           style,
           (left + right) / 2 - measurer.width(c, style) / 2,
           y,
-          _Ink.black,
+          ink.text,
         );
       }
       if (r.isNotEmpty) {
-        _drawPlain(r, style, right - measurer.width(r, style), y, _Ink.black);
+        _drawPlain(r, style, right - measurer.width(r, style), y, ink.text);
       }
     }
 
@@ -521,7 +605,7 @@ final class _Renderer {
 
     // 2. Gridlines (under borders, never across merges).
     if (spec.settings.gridlines) {
-      g.setStrokeColor(_Ink.gridline);
+      g.setStrokeColor(ink.gridline);
       g.setLineWidth(0.5);
       for (final c in cells) {
         final r = rectOf(c);
@@ -647,7 +731,7 @@ final class _Renderer {
 
   void _strokeStyle(BorderSpec b) {
     final color = model.theme.resolveColor(b.color);
-    g.setStrokeColor(color == null ? _Ink.black : _Ink.hex(color));
+    g.setStrokeColor(color == null ? ink.text : _Ink.hex(color));
     g.setLineCap(PdfLineCap.butt);
     switch (b.style!) {
       case BorderStyle.dashed:
@@ -703,9 +787,10 @@ final class _Renderer {
   }
 
   PdfColor _textColor(CellDisplay d) {
-    final c =
-        d.textColor ?? model.theme.resolveColor('theme:text') ?? '#000000';
-    return _Ink.hex(c);
+    final explicit = d.textColor;
+    if (explicit != null) return _Ink.hex(explicit);
+    if (ink.dark) return ink.autoTextOn(d.fillColor);
+    return _Ink.hex(model.theme.resolveColor('theme:text') ?? '#000000');
   }
 
   CellTextStyle _style(CellDisplay d) => CellTextStyle(
@@ -966,7 +1051,7 @@ final class _Renderer {
       g.setLineCap(PdfLineCap.butt);
       g.setLineJoin(PdfLineJoin.miter);
     } else {
-      g.setStrokeColor(_Ink.checkboxOutline);
+      g.setStrokeColor(ink.checkboxOutline);
       g.setLineWidth(1.5 * k);
       g.drawRRect(
         px(x + 0.75),
@@ -1005,10 +1090,10 @@ final class _Renderer {
       VerticalAlign.bottom => r.y + r.h - 2 - h,
     };
     final fill = d.widget.chipFill == null
-        ? _Ink.chipFill
+        ? ink.chipFill
         : _Ink.hex(d.widget.chipFill!);
     final fg = d.widget.chipText == null
-        ? _Ink.chipText
+        ? ink.chipText
         : _Ink.hex(d.widget.chipText!);
     g.setFillColor(fill);
     g.drawRRect(px(x), py(y + h), w * k, h * k, h * k / 2, h * k / 2);
@@ -1046,12 +1131,12 @@ final class _Renderer {
     double totalW,
     double totalH,
   ) {
-    g.setFillColor(_Ink.headingFill);
+    g.setFillColor(ink.headingFill);
     rectPx(0, 0, totalW, headH);
     g.fillPath();
     rectPx(0, 0, headW, totalH);
     g.fillPath();
-    g.setStrokeColor(_Ink.headingLine);
+    g.setStrokeColor(ink.headingLine);
     g.setLineWidth(0.5);
     final style = CellTextStyle(family: _defaultFamily, size: 8 * 4 / 3);
     final asc = measurer.ascent(style);
@@ -1061,7 +1146,7 @@ final class _Renderer {
       g.strokePath();
       final tw = measurer.width(text, style);
       final baseline = y + h / 2 + (asc - desc) / 2;
-      g.setFillColor(_Ink.headingText);
+      g.setFillColor(ink.headingText);
       var cx = px(x + (w - tw) / 2);
       final sizePt = style.size * k;
       for (final run in measurer.runs(text, style)) {
@@ -1265,7 +1350,7 @@ final class _Renderer {
         style,
         spec.printableLeft + (line.continuation ? 12 : 0),
         pageH - baseline,
-        _Ink.black,
+        ink.text,
       );
       y += lh;
     }

@@ -205,10 +205,17 @@ class _FilterColumnPopoverState extends State<FilterColumnPopover> {
     filters.clearDraft();
     widget.onClose();
     unawaited(
-      ed.invokeCommand('sheets.filter.sortColumn', {
-        'colId': widget.colId,
-        'ascending': ascending,
-      }),
+      // In a filter view the sort is view-only (07 §4.4).
+      f.isView
+          ? ed.invokeCommand('sheets.filterView.sortColumn', {
+              'viewId': f.viewId,
+              'colId': widget.colId,
+              'ascending': ascending,
+            })
+          : ed.invokeCommand('sheets.filter.sortColumn', {
+              'colId': widget.colId,
+              'ascending': ascending,
+            }),
     );
   }
 
@@ -249,7 +256,7 @@ class _FilterColumnPopoverState extends State<FilterColumnPopover> {
     final l = sheetsL10n(context);
     final la = WonkyAppLocalizations.of(context);
     final theme = ShadTheme.of(context);
-    final canSort = !f.isView && ed.canEdit;
+    final canSort = f.isView ? (f.temporary || ed.canEdit) : ed.canEdit;
     return Focus(
       onKeyEvent: _keys,
       child: SizedBox(
@@ -266,7 +273,6 @@ class _FilterColumnPopoverState extends State<FilterColumnPopover> {
                 icon: LucideIcons.arrowDownAZ,
                 label: l.sortAtoZ,
                 enabled: canSort,
-                tooltip: f.isView ? l.filterViewSortUnavailable : null,
                 onTap: () => _sort(true),
               ),
               _MenuRow(
@@ -274,7 +280,6 @@ class _FilterColumnPopoverState extends State<FilterColumnPopover> {
                 icon: LucideIcons.arrowDownZA,
                 label: l.sortZtoA,
                 enabled: canSort,
-                tooltip: f.isView ? l.filterViewSortUnavailable : null,
                 onTap: () => _sort(false),
               ),
               _MenuRow(
@@ -283,6 +288,7 @@ class _FilterColumnPopoverState extends State<FilterColumnPopover> {
                 label: l.filterSortByColor,
                 enabled:
                     canSort &&
+                    !f.isView &&
                     (_colors.fills.isNotEmpty || _colors.texts.isNotEmpty),
                 tooltip: f.isView ? l.filterViewSortUnavailable : null,
                 onTap: () => setState(() => _sortColorOpen = !_sortColorOpen),
@@ -294,43 +300,49 @@ class _FilterColumnPopoverState extends State<FilterColumnPopover> {
               Flexible(
                 child: WonkyScrollArea(
                   controller: _scroll,
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      _header(
-                        _Section.color,
-                        l.filterByColor,
-                        active: _fill != null || _text != null,
-                      ),
-                      if (_open == _Section.color) _colorSection(context),
-                      _header(
-                        _Section.condition,
-                        l.filterByCondition,
-                        active: _condition != null,
-                      ),
-                      if (_open == _Section.condition)
-                        Padding(
-                          padding: const EdgeInsets.fromLTRB(12, 4, 12, 8),
-                          child: FilterConditionEditor(
-                            editor: ed,
-                            sheetId: f.sheetId,
-                            anchorRow: f.dataTop,
-                            anchorCol: _col,
-                            initial: _condition,
-                            onChanged: (c) {
-                              _condition = c;
-                              _preview();
-                            },
-                          ),
+                  // The sections scroll (and clip) when they don't fit: the
+                  // value list of a big column overflowed onto the buttons.
+                  child: SingleChildScrollView(
+                    controller: _scroll,
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        _header(
+                          _Section.color,
+                          l.filterByColor,
+                          active: _fill != null || _text != null,
                         ),
-                      _header(
-                        _Section.valueList,
-                        l.filterByValues,
-                        active: _hidden.isNotEmpty,
-                      ),
-                      if (_open == _Section.valueList) _valuesSection(context),
-                    ],
+                        if (_open == _Section.color) _colorSection(context),
+                        _header(
+                          _Section.condition,
+                          l.filterByCondition,
+                          active: _condition != null,
+                        ),
+                        if (_open == _Section.condition)
+                          Padding(
+                            padding: const EdgeInsets.fromLTRB(12, 4, 12, 8),
+                            child: FilterConditionEditor(
+                              editor: ed,
+                              sheetId: f.sheetId,
+                              anchorRow: f.dataTop,
+                              anchorCol: _col,
+                              initial: _condition,
+                              onChanged: (c) {
+                                _condition = c;
+                                _preview();
+                              },
+                            ),
+                          ),
+                        _header(
+                          _Section.valueList,
+                          l.filterByValues,
+                          active: _hidden.isNotEmpty,
+                        ),
+                        if (_open == _Section.valueList)
+                          _valuesSection(context),
+                      ],
+                    ),
                   ),
                 ),
               ),

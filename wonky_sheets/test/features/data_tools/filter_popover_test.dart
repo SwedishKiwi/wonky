@@ -74,4 +74,35 @@ void main() {
       expect(popover.right, closeTo(618, 12));
     });
   }
+
+  testWidgets('Given a short window, when the popover of a long column opens '
+      'then its sections scroll instead of overflowing onto the buttons', (
+    tester,
+  ) async {
+    for (var i = 5; i <= 60; i++) {
+      await s.type('A$i', 'v$i');
+    }
+    await pumpSheets(
+      tester,
+      s,
+      size: const Size(800, 420),
+      child: SizedBox(
+        width: 800,
+        height: 420,
+        child: DataToolsGridOverlay(editor: s.editor),
+      ),
+    );
+    DataTools.of(s.editor).filters.popover.value = FilterPopoverRequest(
+      s.sheetId,
+      s.sheet.columns.idAt(0),
+      const Rect.fromLTWH(90, 0, 18, 20),
+    );
+    await tester.pumpAndSettle();
+
+    expect(tester.takeException(), isNull);
+    final popover = tester.getRect(find.byType(FilterColumnPopover));
+    final ok = tester.getRect(find.byKey(const ValueKey('filter.ok')));
+    expect(ok.bottom, lessThanOrEqualTo(popover.bottom + 0.5));
+    await tester.pump(const Duration(seconds: 2));
+  });
 }

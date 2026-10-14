@@ -2,6 +2,7 @@ import 'package:flutter/widgets.dart';
 import 'package:wonky_app/wonky_app.dart';
 
 import '../../l10n/sheets_l10n.dart';
+import 'image_clipboard.dart';
 
 /// Where an inserted image comes from.
 sealed class ImageSourceChoice {
@@ -11,6 +12,11 @@ sealed class ImageSourceChoice {
 /// Pick a file from the computer.
 class UploadImageChoice extends ImageSourceChoice {
   const UploadImageChoice();
+}
+
+/// The image on the system clipboard.
+class ClipboardImageChoice extends ImageSourceChoice {
+  const ClipboardImageChoice();
 }
 
 /// Fetch an https image (through the server).
@@ -57,12 +63,19 @@ Future<ImageSourceChoice?> showInsertImageDialog(
           label: l.dialogImageUpload,
           validates: false,
         ),
+        if (ImageClipboard.instance.supported)
+          DialogButtonSpec(
+            id: 'paste',
+            label: l.dialogImagePaste,
+            validates: false,
+          ),
         DialogButtonSpec(id: 'ok', label: l.dialogImageInsert, primary: true),
       ],
     ),
   );
   return switch (r?.buttonId) {
     'upload' => const UploadImageChoice(),
+    'paste' => const ClipboardImageChoice(),
     'ok' => UrlImageChoice(r!.text('url').trim()),
     _ => null,
   };

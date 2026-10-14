@@ -1,6 +1,6 @@
 import 'package:serverpod/serverpod.dart';
 import 'package:wonky_core/wonky_core.dart'
-    show McpScope, McpToolDefinition, Role, SheetsTools;
+    show McpScope, McpToolDefinition, Role, SheetsTools, UiSheetsTools;
 
 import '../../platform/ai/assistant_target.dart';
 import '../../platform/ai/assistant_tools.dart';
@@ -15,6 +15,7 @@ import '../headless/headless_workbook.dart';
 import '../headless/headless_workbook_provider.dart';
 import '../mcp/sheets_changes.dart';
 import '../mcp/sheets_shadow.dart';
+import 'sheets_ai_service.dart';
 import 'sheets_context_builder.dart';
 
 /// The assistant bound to a spreadsheet (Sheets 12 §6): `sheets.*` tools
@@ -93,6 +94,23 @@ class SheetsAssistantTarget extends AssistantTarget {
       defs.add(t.definition);
     }
     return AssistantToolset.of(defs);
+  }
+
+  /// `ui.sheets.*` tools the assistant may run in the requesting window
+  /// (Sheets 12 §6.2).
+  static final Set<String> windowTools = {
+    UiSheetsTools.getSelection.name,
+    UiSheetsTools.selectRange.name,
+    UiSheetsTools.highlightRange.name,
+  };
+
+  @override
+  List<McpToolDefinition> uiTools(AssistantContextHints hints) {
+    final offered = hints.uiTools?.toSet() ?? const <String>{};
+    return [
+      for (final d in UiSheetsTools.all)
+        if (windowTools.contains(d.name) && offered.contains(d.name)) d,
+    ];
   }
 
   @override
@@ -206,6 +224,9 @@ class SheetsAssistantTarget extends AssistantTarget {
     'comments.list' => 'Reading comments',
     'comments.create' || 'comments.reply' => 'Commenting',
     'versions.list' => 'Reading the version history',
+    'ui.sheets.get_selection' => 'Looking at your selection',
+    'ui.sheets.select_range' => 'Selecting cells',
+    'ui.sheets.highlight_range' => 'Pointing out cells',
     _ when tool.startsWith('sheets.list_') => 'Reading the spreadsheet',
     _ when tool.startsWith('sheets.') => 'Changing the spreadsheet',
     _ => 'Working',
@@ -265,6 +286,7 @@ class SheetsAssistantTarget extends AssistantTarget {
   }) async {
     final shadow = SheetsShadows.end(runId);
     if (shadow != null) {
+      await SheetsAiService.persistPreview(session, shadow, item.uuid);
       done.previewId = shadow.previewId;
       emit(
         AssistantEvent(

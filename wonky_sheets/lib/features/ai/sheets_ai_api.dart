@@ -45,6 +45,13 @@ abstract class SheetsAiApi {
 
   Future<void> discardPreview(String previewId);
 
+  /// Evaluates `=AI()` calls (Sheets 12 §6.8); [refresh] recomputes.
+  Future<List<SheetsAiCellResult>> evaluateAiCells(
+    UuidValue itemUuid,
+    List<SheetsAiCellRequest> requests, {
+    bool refresh = false,
+  });
+
   /// Undo of a server change (`sheets.serverChange`).
   Future<RevertResult> revertChange(UuidValue changeId);
 
@@ -106,6 +113,13 @@ class ServerSheetsAiApi implements SheetsAiApi {
   @override
   Future<void> discardPreview(String previewId) =>
       _ai.discardPreview(previewId);
+
+  @override
+  Future<List<SheetsAiCellResult>> evaluateAiCells(
+    UuidValue itemUuid,
+    List<SheetsAiCellRequest> requests, {
+    bool refresh = false,
+  }) => _ai.evaluateAiCells(itemUuid, requests, refresh);
 
   @override
   Future<RevertResult> revertChange(UuidValue changeId) =>
@@ -170,6 +184,13 @@ class UnavailableSheetsAiApi implements SheetsAiApi {
 
   @override
   Future<void> discardPreview(String previewId) async {}
+
+  @override
+  Future<List<SheetsAiCellResult>> evaluateAiCells(
+    UuidValue itemUuid,
+    List<SheetsAiCellRequest> requests, {
+    bool refresh = false,
+  }) async => throw _error;
 
   @override
   Future<RevertResult> revertChange(UuidValue changeId) async => throw _error;

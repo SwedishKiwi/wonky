@@ -150,6 +150,19 @@ void main() {
       expect(s.text('B2'), '3');
     });
 
+    test('when the browser blocks reading the clipboard then paste says so '
+        'instead of "empty"', () async {
+      s.clip.readBlocked = true;
+      await s.select('A1');
+
+      final r = await s.run('sheets.edit.paste');
+
+      expect(r.message, s.editor.l10n.toastClipboardBlocked);
+      s.clip.readBlocked = false;
+      final empty = await s.run('sheets.edit.paste');
+      expect(empty.message, s.editor.l10n.toastClipboardEmpty);
+    });
+
     test('when inserting a date then the cell holds a date', () async {
       await s.select('A1');
 

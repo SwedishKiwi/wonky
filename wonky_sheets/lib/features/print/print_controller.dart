@@ -45,6 +45,7 @@ class PrintController extends ChangeNotifier {
   PrintScope _scope;
   bool _applyToAll = true;
   bool _breakMode = false;
+  bool _darkTheme = false;
   final Map<String, PrintSettings> _local = {};
   PaginationResult? _pagination;
   Timer? _debounce;
@@ -57,6 +58,16 @@ class PrintController extends ChangeNotifier {
   PrintScope get scope => _scope;
   bool get applyToAll => _applyToAll;
   bool get breakMode => _breakMode;
+
+  /// *Use dark theme* of *Export PDF* (suite 02 §8; the preview stays
+  /// light paper).
+  bool get darkTheme => _darkTheme;
+  set darkTheme(bool v) {
+    if (v == _darkTheme) return;
+    _darkTheme = v;
+    notifyListeners();
+  }
+
   PaginationResult? get pagination => _pagination;
   List<PageSpec> get pages => _pagination?.pages ?? const [];
   String get sheetId => _sheetId;
@@ -106,7 +117,85 @@ class PrintController extends ChangeNotifier {
   set breakMode(bool v) {
     if (v == _breakMode) return;
     _breakMode = v;
+    if (v) {
+      final st = settings;
+      _draftRows = List.of(st.rowBreaks);
+      _draftCols = List.of(st.colBreaks);
+      _draftPagination = null;
+    } else {
+      _draftRows = null;
+      _draftCols = null;
+      _draftPagination = null;
+    }
     notifyListeners();
+  }
+
+  List<String>? _draftRows;
+  List<String>? _draftCols;
+  PaginationResult? _draftPagination;
+
+  /// Break mode (11 §7.6): the custom breaks being edited (row/column ids,
+  /// break before), shared by the panel's list and the draggable lines.
+  List<String> get draftRowBreaks => _draftRows ?? List.of(settings.rowBreaks);
+  List<String> get draftColBreaks => _draftCols ?? List.of(settings.colBreaks);
+
+  /// Replaces the draft breaks (sorted by position, unknown ids dropped).
+  void setDraftBreaks({List<String>? rows, List<String>? cols}) {
+    final sheet = model.sheet(_sheetId);
+    if (sheet == null) return;
+    List<String> sorted(List<String> ids, AxisIndex axis) {
+      final out = <String>{
+        for (final id in ids)
+          if (axis.indexOf(id) > 0) id,
+      }.toList();
+      out.sort((a, b) => axis.indexOf(a).compareTo(axis.indexOf(b)));
+      return out;
+    }
+
+    if (rows != null) _draftRows = sorted(rows, sheet.rows);
+    if (cols != null) _draftCols = sorted(cols, sheet.columns);
+    _draftPagination = null;
+    notifyListeners();
+  }
+
+  /// The current sheet paginated with the draft breaks (automatic breaks
+  /// of the break canvas).
+  PaginationResult get draftPagination {
+    final cached = _draftPagination;
+    if (cached != null) return cached;
+    final st = settings;
+    final draft = PrintSettings.fromJson({
+      ...st.toJson(),
+      'pageBreaks': {'rows': draftRowBreaks, 'cols': draftColBreaks},
+    }, locale: model.spreadsheet.locale);
+    PaginationResult r;
+    try {
+      r = Paginator.paginate(
+        model,
+        PrintJob(
+          sheetId: _sheetId,
+          settingsBySheet: {..._local, _sheetId: draft},
+        ),
+        source: ed.engine,
+        measurer: textMeasurer,
+      );
+    } catch (e) {
+      debugPrint('Break pagination failed: $e');
+      r = const PaginationResult([], [], requestedPages: 0);
+    }
+    return _draftPagination = r;
+  }
+
+  /// Writes the draft breaks (`sheets.print.setPageBreaks`, one undo step)
+  /// and leaves break mode.
+  Future<void> confirmBreaks() async {
+    await ed.invokeCommand('sheets.print.setPageBreaks', {
+      'sheetId': _sheetId,
+      'rows': draftRowBreaks,
+      'cols': draftColBreaks,
+    });
+    breakMode = false;
+    repaginate(immediate: true);
   }
 
   /// The print job of the current state.
@@ -156,6 +245,7 @@ class PrintController extends ChangeNotifier {
 
   void _onBatch(WorkbookChangeBatch b) {
     contentVersion++;
+    _draftPagination = null;
     repaginate();
   }
 
@@ -189,8 +279,12 @@ class PrintController extends ChangeNotifier {
     notifyListeners();
   }
 
-  /// The PDF of the job.
-  Future<Uint8List> buildPdf({IoProgress? progress}) async {
+  /// The PDF of the job; [darkTheme] renders dark pages (*Use dark
+  /// theme*, suite 02 §8).
+  Future<Uint8List> buildPdf({
+    IoProgress? progress,
+    bool darkTheme = false,
+  }) async {
     final l = ed.l10n;
     _paginate();
     var images = const <String, Uint8List>{};
@@ -210,6 +304,7 @@ class PrintController extends ChangeNotifier {
       imageBytes: (u) => images[u],
       conditional: ed.cells.conditional,
       fonts: fonts,
+      darkTheme: darkTheme,
     );
   }
 

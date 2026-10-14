@@ -8,12 +8,16 @@ import 'package:wonky_ui/wonky_ui.dart';
 
 import '../l10n/wonky_app_localizations.dart';
 import '../shell/shell_services.dart';
-import 'assistant_adapter.dart' show AssistantRunHooks;
+import 'assistant_adapter.dart' show AssistantPanelTexts, AssistantRunHooks;
 import 'assistant_controller.dart';
 import 'assistant_markdown.dart';
 import 'assistant_models.dart';
 import 'shell_assistant.dart'
-    show assistantPrivacyNotice, assistantStatusMessage, openAiProviderSettings;
+    show
+        aiProviderName,
+        assistantPrivacyNotice,
+        assistantStatusMessage,
+        openAiProviderSettings;
 
 /// The assistant side panel (suite 10 §3): thread picker, streaming
 /// Markdown replies with tool chips (Show / Undo), the composer with
@@ -41,6 +45,19 @@ class _AssistantPanelState extends State<AssistantPanel> {
   int _lastLength = 0;
 
   AssistantController get c => widget.controller;
+
+  /// The app's texts ("this spreadsheet"), when its adapter has them.
+  AssistantPanelTexts? get _texts {
+    final a = c.adapter;
+    return a is AssistantPanelTexts ? a as AssistantPanelTexts : null;
+  }
+
+  String _privacyNotice(WonkyAppLocalizations l) {
+    final status = c.status.value;
+    final p = status?.provider;
+    return _texts?.privacyNotice(p == null ? null : aiProviderName(l, p)) ??
+        assistantPrivacyNotice(l, status);
+  }
 
   @override
   void initState() {
@@ -300,7 +317,7 @@ class _AssistantPanelState extends State<AssistantPanel> {
         Icon(LucideIcons.sparkles, size: 28, color: theme.colorScheme.primary),
         const SizedBox(height: 10),
         Text(
-          l.assistantEmptyTitle,
+          _texts?.emptyTitle ?? l.assistantEmptyTitle,
           textAlign: TextAlign.center,
           style: theme.textTheme.small,
         ),
@@ -377,31 +394,38 @@ class _AssistantPanelState extends State<AssistantPanel> {
               placeholder: Text(l.assistantPlaceholder),
             ),
           ),
-          Row(
-            children: [
-              _ModeToggle(controller: c),
-              const Spacer(),
-              if (c.busy)
-                ShadButton.outline(
-                  key: const ValueKey<String>('assistant.stop'),
-                  size: ShadButtonSize.sm,
-                  leading: const Icon(LucideIcons.square, size: 12),
-                  onPressed: () => unawaited(c.stop()),
-                  child: Text(l.actionStop),
-                )
-              else
-                ShadButton(
-                  key: const ValueKey<String>('assistant.send'),
-                  size: ShadButtonSize.sm,
-                  enabled: enabled,
-                  leading: const Icon(LucideIcons.sendHorizontal, size: 13),
-                  onPressed: () => unawaited(_send()),
-                  child: Text(l.actionSend),
+          LayoutBuilder(
+            builder: (context, box) => Row(
+              children: [
+                // Icon-only mode buttons when the panel is narrow (300 px).
+                _ModeToggle(
+                  controller: c,
+                  texts: _texts,
+                  compact: box.maxWidth < 330,
                 ),
-            ],
+                const Spacer(),
+                if (c.busy)
+                  ShadButton.outline(
+                    key: const ValueKey<String>('assistant.stop'),
+                    size: ShadButtonSize.sm,
+                    leading: const Icon(LucideIcons.square, size: 12),
+                    onPressed: () => unawaited(c.stop()),
+                    child: Text(l.actionStop),
+                  )
+                else
+                  ShadButton(
+                    key: const ValueKey<String>('assistant.send'),
+                    size: ShadButtonSize.sm,
+                    enabled: enabled,
+                    leading: const Icon(LucideIcons.sendHorizontal, size: 13),
+                    onPressed: () => unawaited(_send()),
+                    child: Text(l.actionSend),
+                  ),
+              ],
+            ),
           ),
           Text(
-            assistantPrivacyNotice(l, c.status.value),
+            _privacyNotice(l),
             key: const ValueKey<String>('assistant.notice'),
             style: theme.textTheme.muted.copyWith(fontSize: 11),
           ),
@@ -412,9 +436,17 @@ class _AssistantPanelState extends State<AssistantPanel> {
 }
 
 class _ModeToggle extends StatelessWidget {
-  const _ModeToggle({required this.controller});
+  const _ModeToggle({
+    required this.controller,
+    this.texts,
+    this.compact = false,
+  });
 
   final AssistantController controller;
+  final AssistantPanelTexts? texts;
+
+  /// Icons only (the labels are the tooltips' first words).
+  final bool compact;
 
   @override
   Widget build(BuildContext context) {
@@ -423,25 +455,48 @@ class _ModeToggle extends StatelessWidget {
     Widget option(AiApplyMode mode, String label, IconData icon, String tip) {
       final selected = c.applyMode == mode;
       final enabled = mode == AiApplyMode.suggest || c.canEditDirectly;
-      return ShadTooltip(
-        builder: (_) => Text(tip),
-        child: selected
+      final key = ValueKey<String>('assistant.mode.${mode.name}');
+      final Widget button;
+      if (compact) {
+        button = selected
+            ? ShadIconButton.secondary(
+                key: key,
+                width: 30,
+                height: 30,
+                iconSize: 14,
+                semanticLabel: label,
+                icon: Icon(icon),
+                onPressed: () {},
+              )
+            : ShadIconButton.ghost(
+                key: key,
+                width: 30,
+                height: 30,
+                iconSize: 14,
+                enabled: enabled,
+                semanticLabel: label,
+                icon: Icon(icon),
+                onPressed: () => c.setApplyMode(mode),
+              );
+      } else {
+        button = selected
             ? ShadButton.secondary(
-                key: ValueKey<String>('assistant.mode.${mode.name}'),
+                key: key,
                 size: ShadButtonSize.sm,
                 leading: Icon(icon, size: 13),
                 onPressed: () {},
                 child: Text(label),
               )
             : ShadButton.ghost(
-                key: ValueKey<String>('assistant.mode.${mode.name}'),
+                key: key,
                 size: ShadButtonSize.sm,
                 enabled: enabled,
                 leading: Icon(icon, size: 13),
                 onPressed: () => c.setApplyMode(mode),
                 child: Text(label),
-              ),
-      );
+              );
+      }
+      return ShadTooltip(builder: (_) => Text(tip), child: button);
     }
 
     return Row(
@@ -452,14 +507,14 @@ class _ModeToggle extends StatelessWidget {
           l.assistantModeEdit,
           LucideIcons.pencil,
           c.canEditDirectly
-              ? l.assistantModeEditHint
-              : l.assistantModeEditUnavailable,
+              ? texts?.modeEditHint ?? l.assistantModeEditHint
+              : texts?.modeEditUnavailable ?? l.assistantModeEditUnavailable,
         ),
         option(
           AiApplyMode.suggest,
           l.assistantModeSuggest,
           LucideIcons.gitPullRequestArrow,
-          l.assistantModeSuggestHint,
+          texts?.modeSuggestHint ?? l.assistantModeSuggestHint,
         ),
       ],
     );
@@ -607,7 +662,7 @@ class _ReplyView extends StatelessWidget {
             ),
           ),
         if (!r.streaming && r.hasChanges)
-          Row(
+          Wrap(
             children: [
               ShadButton.ghost(
                 key: const ValueKey<String>('assistant.reply.undo'),
@@ -629,7 +684,7 @@ class _ReplyView extends StatelessWidget {
             ],
           )
         else if (!r.streaming && md.isNotEmpty)
-          Row(
+          Wrap(
             children: [
               ShadButton.ghost(
                 key: const ValueKey<String>('assistant.reply.insert'),
@@ -748,12 +803,16 @@ class _ActivityChip extends StatelessWidget {
               color: a.error ? cs.destructive : cs.mutedForeground,
             ),
           const SizedBox(width: 6),
-          ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 200),
-            child: Text(
-              a.summary.isEmpty ? a.toolName : a.summary,
-              overflow: TextOverflow.ellipsis,
-              style: theme.textTheme.small.copyWith(fontSize: 12),
+          // Shrinks (ellipsis) before the chip outgrows a narrow panel.
+          Flexible(
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 200),
+              child: Text(
+                a.summary.isEmpty ? a.toolName : a.summary,
+                overflow: TextOverflow.ellipsis,
+                maxLines: 1,
+                style: theme.textTheme.small.copyWith(fontSize: 12),
+              ),
             ),
           ),
           if (a.hasRange && !a.running)

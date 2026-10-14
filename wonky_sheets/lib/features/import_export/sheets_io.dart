@@ -7,6 +7,8 @@ import 'package:wonky_app/wonky_app.dart';
 import 'package:wonky_client/wonky_client.dart' show UuidValue;
 import 'package:wonky_sheets_core/model.dart';
 
+import 'pending_uploads.dart';
+
 /// Runs CPU-heavy pure work (parsing, file writers) off the UI thread: a
 /// background isolate on native (11 §3.2, §6.1); on web (one thread) after
 /// yielding a frame so progress UI can paint first.
@@ -36,18 +38,29 @@ Future<bool> saveBytes(
   return kIsWeb || uri != null;
 }
 
-/// Bytes of the stored image files of [model] (exports embed them, 11 §6);
-/// files that can't be fetched (offline, deleted) are skipped.
+/// Bytes of the image files of [model] (exports embed them, 11 §6): local
+/// bytes of pending uploads, else the stored files; files that can't be
+/// fetched (offline, deleted) are skipped.
 Future<Map<String, Uint8List>> fetchImageBytes(
   ShellServices s,
   WorkbookModel model,
 ) async {
   final out = <String, Uint8List>{};
   final ids = SheetsWorkbookExporter.imageFiles(model);
-  if (ids.isEmpty || !s.connectivity.online) return out;
+  if (ids.isEmpty) return out;
+  // Images not uploaded yet (imported or inserted on this device).
+  final pending = SheetsPendingUploads.of(s);
+  if (pending != null) {
+    for (final id in ids) {
+      final b = await pending.bytesOf(id);
+      if (b != null) out[id] = b;
+    }
+  }
+  if (!s.connectivity.online) return out;
   final client = http.Client();
   try {
     for (final id in ids) {
+      if (out.containsKey(id)) continue;
       try {
         final v = await s.repositories.files.getUrl(
           UuidValue.withValidation(id),

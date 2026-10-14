@@ -8,6 +8,10 @@ import 'package:wonky_app/wonky_app.dart';
 import 'package:wonky_client/wonky_client.dart'
     show FileUrlView, StoredFileKind, StoredFileStatus, UuidValue;
 
+import 'package:http/http.dart' as http;
+
+import '../import_export/pending_uploads.dart';
+import 'image_blob_cache.dart';
 import '../sheet_editor/sheet_editor_controller.dart';
 
 /// Picked or pasted image bytes.
@@ -43,7 +47,10 @@ abstract final class SheetsImageRules {
   /// 25 megapixels.
   static const maxPixels = 25 * 1000 * 1000;
 
-  static const extensions = ['png', 'jpg', 'jpeg', 'gif', 'webp', 'bmp'];
+  static const extensions = ['png', 'jpg', 'jpeg', 'gif', 'webp', 'bmp', 'svg'];
+
+  /// SVG images are rasterized on insert (08 §10.1).
+  static const svgMime = 'image/svg+xml';
 
   /// The MIME type of [bytes] (sniffed, else by [name]'s extension); throws
   /// [ImageRejected].
@@ -67,6 +74,7 @@ abstract final class SheetsImageRules {
     'gif' => 'image/gif',
     'webp' => 'image/webp',
     'bmp' => 'image/bmp',
+    'svg' => svgMime,
     _ => null,
   };
 
@@ -93,7 +101,18 @@ abstract final class SheetsImageRules {
       return 'image/webp';
     }
     if (_startsWith(b, 'BM')) return 'image/bmp';
+    if (_isSvg(b)) return svgMime;
     return null;
+  }
+
+  /// An SVG document (optional BOM, XML declaration, comments or doctype
+  /// before the `<svg` element).
+  static bool _isSvg(Uint8List b) {
+    final n = b.length < 2048 ? b.length : 2048;
+    final head = String.fromCharCodes(b.sublist(0, n)).trimLeft();
+    final start = head.startsWith('\uFEFF') ? head.substring(1) : head;
+    if (!start.startsWith('<')) return false;
+    return start.startsWith('<svg') || start.contains('<svg');
   }
 }
 
@@ -117,12 +136,17 @@ enum ImageLoadPhase { loading, uploading, ready, failed }
 /// A decoded image (or why there is none yet).
 @immutable
 class LoadedImage {
-  const LoadedImage(this.phase, {this.image});
+  const LoadedImage(this.phase, {this.image, this.animated});
 
   final ImageLoadPhase phase;
 
   /// The decoded first frame (when [phase] is ready).
   final ui.Image? image;
+
+  /// The encoded bytes of an animated image (GIF/WebP with several frames):
+  /// the editor animates it (08 §10.1); exports, print and in-cell images
+  /// use the first frame.
+  final Uint8List? animated;
 }
 
 class _Entry {
@@ -194,6 +218,25 @@ class SheetsImageService {
   String startUpload(PickedImage image) {
     final uuid = _s.ids.nextString();
     _local[uuid] = image.bytes;
+    // Kept after the upload too: the image renders offline and after a
+    // reload (08 §10.1 local blob cache).
+    unawaited(
+      SheetsImageBlobCache.of(_s)?.put(uuid, image.bytes, image.mimeType),
+    );
+    // Durable queue (stored on the device first, uploads when online).
+    final queue = SheetsPendingUploads.of(_s);
+    if (queue != null) {
+      unawaited(
+        queue.add(
+          fileUuid: uuid,
+          itemUuid: editor.session.itemUuid.uuid,
+          bytes: image.bytes,
+          mimeType: image.mimeType,
+          fileName: image.name,
+        ),
+      );
+      return uuid;
+    }
     _uploading.add(uuid);
     unawaited(_upload(uuid, image));
     return uuid;
@@ -228,7 +271,9 @@ class SheetsImageService {
   }
 
   /// Whether [fileUuid] is still uploading from this device.
-  bool isUploading(String fileUuid) => _uploading.contains(fileUuid);
+  bool isUploading(String fileUuid) =>
+      _uploading.contains(fileUuid) ||
+      (SheetsPendingUploads.of(_s)?.contains(fileUuid) ?? false);
 
   /// The load state of [src] (`wonky-file://…`, a file uuid, or `https://…`);
   /// starts loading on first use.
@@ -256,11 +301,13 @@ class SheetsImageService {
     try {
       final source = await _sourceOf(e);
       final ui.Image img;
+      Uint8List? animated;
       switch (source) {
         case ui.Image():
           img = source;
         case Uint8List():
           final codec = await ui.instantiateImageCodec(source);
+          if (codec.frameCount > 1) animated = source;
           final frame = await codec.getNextFrame();
           codec.dispose();
           img = frame.image;
@@ -268,9 +315,13 @@ class SheetsImageService {
           e.state.value = const LoadedImage(ImageLoadPhase.failed);
           return;
       }
-      e.bytes = img.width * img.height * 4;
+      e.bytes = img.width * img.height * 4 + (animated?.length ?? 0);
       _cacheBytes += e.bytes;
-      e.state.value = LoadedImage(ImageLoadPhase.ready, image: img);
+      e.state.value = LoadedImage(
+        ImageLoadPhase.ready,
+        image: img,
+        animated: animated,
+      );
       loaded.value++;
       _evict();
     } catch (err) {
@@ -295,12 +346,25 @@ class SheetsImageService {
     final src = e.src;
     final local = _local[src];
     if (local != null) return local;
+    // Inserted or downloaded on this device before (offline, reloads).
+    final cache = await SheetsImageBlobCache.ready(_s);
+    final cached = await cache?.get(src);
+    if (cached != null) return cached.bytes;
+    // Not uploaded yet (imported or inserted on this device, maybe before a
+    // reload): the bytes kept by the upload queue.
+    final pending = await SheetsPendingUploads.of(_s)?.bytesOf(src);
+    if (pending != null) return pending;
     if (hook != null) return hook(src);
     if (src.startsWith('https://')) {
       final client = _s.client;
       if (client == null) return null;
       final data = await client.sheets.fetchImage(editor.session.itemUuid, src);
-      return data.buffer.asUint8List(data.offsetInBytes, data.lengthInBytes);
+      final bytes = data.buffer.asUint8List(
+        data.offsetInBytes,
+        data.lengthInBytes,
+      );
+      unawaited(cache?.put(src, bytes, SheetsImageRules.sniff(bytes) ?? ''));
+      return bytes;
     }
     final uuid = UuidValue.withValidation(src);
     var delay = const Duration(seconds: 2);
@@ -308,7 +372,14 @@ class SheetsImageService {
     while (true) {
       final FileUrlView view = await _s.repositories.files.getUrl(uuid);
       if (view.status == StoredFileStatus.ready && view.url != null) {
-        return _download(view.url!);
+        final bytes = await _download(view.url!);
+        if (bytes != null) {
+          unawaited(
+            cache?.put(src, bytes, SheetsImageRules.sniff(bytes) ?? ''),
+          );
+          return bytes;
+        }
+        return _downloadDecoded(view.url!);
       }
       if (view.status == StoredFileStatus.failed ||
           DateTime.now().isAfter(deadline)) {
@@ -323,7 +394,20 @@ class SheetsImageService {
     }
   }
 
-  Future<ui.Image?> _download(String url) async {
+  /// The encoded bytes at the signed [url] (null when the request fails,
+  /// for example without CORS on the web).
+  Future<Uint8List?> _download(String url) async {
+    try {
+      final r = await http.get(Uri.parse(url));
+      if (r.statusCode != 200) return null;
+      return r.bodyBytes;
+    } catch (e) {
+      debugPrint('Downloading an image failed: $e');
+      return null;
+    }
+  }
+
+  Future<ui.Image?> _downloadDecoded(String url) async {
     final completer = Completer<ui.Image?>();
     // NetworkImage handles web (fetch) and native (HttpClient).
     final stream = NetworkImage(url).resolve(ImageConfiguration.empty);
@@ -358,12 +442,50 @@ class SheetsImageService {
     return data.buffer.asUint8List(data.offsetInBytes, data.lengthInBytes);
   }
 
-  /// Bytes of [src] for download (local bytes or the loaded image as PNG).
+  /// Bytes of [src] for download (local or cached original bytes, else the
+  /// loaded image as PNG).
   Future<Uint8List?> bytesForDownload(String src) async {
     final key = _key(src);
     final local = _local[key];
     if (local != null) return local;
+    final cached = await (await SheetsImageBlobCache.ready(_s))?.get(key);
+    if (cached != null) return cached.bytes;
     final img = decoded(key);
+    if (img == null) return null;
+    final data = await img.toByteData(format: ui.ImageByteFormat.png);
+    return data?.buffer.asUint8List(data.offsetInBytes, data.lengthInBytes);
+  }
+}
+
+/// Helpers to get PNG bytes of an image source (clipboard copies).
+extension SheetsImagePng on SheetsImageService {
+  /// PNG bytes of [src] (the original when it is a PNG), or null while it
+  /// isn't loaded.
+  Future<Uint8List?> pngOf(String src) async {
+    final bytes = await bytesForDownload(src);
+    if (bytes != null && SheetsImageRules.sniff(bytes) == 'image/png') {
+      return bytes;
+    }
+    var img = decoded(src);
+    if (img == null) {
+      final l = image(src);
+      if (l.value.phase == ImageLoadPhase.loading) {
+        final done = Completer<void>();
+        void on() {
+          if (l.value.phase != ImageLoadPhase.loading && !done.isCompleted) {
+            done.complete();
+          }
+        }
+
+        l.addListener(on);
+        await done.future.timeout(
+          const Duration(seconds: 10),
+          onTimeout: () {},
+        );
+        l.removeListener(on);
+      }
+      img = l.value.image;
+    }
     if (img == null) return null;
     final data = await img.toByteData(format: ui.ImageByteFormat.png);
     return data?.buffer.asUint8List(data.offsetInBytes, data.lengthInBytes);

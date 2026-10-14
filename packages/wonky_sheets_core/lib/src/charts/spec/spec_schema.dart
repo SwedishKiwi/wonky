@@ -1,5 +1,7 @@
 import '../../model/grid_range.dart';
 import 'chart_type.dart';
+import 'error_bars.dart';
+import 'three_d_options.dart';
 
 /// One validation problem of a chart spec JSON.
 final class ChartSpecIssue {
@@ -477,7 +479,12 @@ abstract final class ChartSpecSchema {
       'font': _font,
     }),
     'trendline': _trendline,
-    'errorBars': AnySchema(description: 'P2'),
+    'errorBars': ObjectSchema({
+      'show': BoolSchema(),
+      'type': EnumSchema(ErrorBarType.values),
+      'value': NumSchema(min: 0),
+      'color': StrSchema(color: true),
+    }),
     'points': MapSchema(
       ObjectSchema({'color': StrSchema(color: true)}),
       intKeys: true,
@@ -553,6 +560,42 @@ abstract final class ChartSpecSchema {
     'colorBy': EnumSchema(BubbleColorBy.values),
   });
 
+  static const _threeD = ObjectSchema({
+    'enabled': BoolSchema(
+      description: '3D column, bar, line, area or pie chart.',
+    ),
+    'azimuth': NumSchema(
+      min: -360,
+      max: 360,
+      description: 'Rotation about the vertical axis in degrees.',
+    ),
+    'elevation': NumSchema(
+      min: 0,
+      max: 90,
+      description: 'View angle above the floor in degrees.',
+    ),
+    'perspective': NumSchema(
+      min: 0,
+      max: 60,
+      description: 'Field of view in degrees (0 = no perspective).',
+    ),
+    'depth': NumSchema(
+      min: 20,
+      max: 2000,
+      description: 'Depth in % of the column/row width (pie: height).',
+    ),
+    'gapDepth': NumSchema(min: 0, max: 500),
+    'lighting': EnumSchema(Chart3DLighting.values),
+    'wallsVisible': BoolSchema(),
+    'floorColor': StrSchema(color: true),
+    'shape': EnumSchema(Chart3DShape.values),
+    'explode': NumSchema(
+      min: 0,
+      max: 1,
+      description: 'Pie: pull every slice out by this fraction.',
+    ),
+  });
+
   /// The root schema.
   static const root = ObjectSchema(
     {
@@ -606,6 +649,7 @@ abstract final class ChartSpecSchema {
       'gridlines': ObjectSchema({'h': _axisGridlines, 'v': _axisGridlines}),
       'series': MapSchema(_series),
       'typeOptions': _typeOptions,
+      'threeD': _threeD,
     },
     required: {'v', 'type', 'data'},
     nullable: false,

@@ -5,7 +5,7 @@ import 'package:flutter/widgets.dart';
 import 'package:wonky_app/wonky_app.dart';
 import 'package:wonky_core/wonky_core.dart';
 import 'package:wonky_sheets_core/formula.dart'
-    show FormulaEngine, GridRect, CellPos, ColumnLetters;
+    show FormulaEngine, FormulaLocale, GridRect, CellPos, ColumnLetters;
 import 'package:wonky_sheets_core/model.dart';
 
 import '../../l10n/sheets_l10n.dart';
@@ -20,6 +20,7 @@ import '../grid/selection/grid_selection.dart';
 import '../grid/selection/grid_selection_controller.dart';
 import '../grid/viewport/grid_geometry.dart';
 import '../grid/viewport/grid_scroll_controller.dart';
+import '../model/loading_formula_source.dart';
 import '../model/loading_gate.dart';
 import '../model/sheets_undo.dart';
 import '../model/workbook_session.dart';
@@ -34,11 +35,15 @@ class GridSignal extends ChangeNotifier {
 /// The copied/cut range shown with marching ants (03 §12.2).
 @immutable
 class ClipMark {
-  const ClipMark(this.sheetId, this.rect, {this.cut = false});
+  const ClipMark(this.sheetId, this.rect, {this.cut = false, this.displayRect});
 
   final String sheetId;
   final GridRect rect;
   final bool cut;
+
+  /// The copied rows on screen when they were copied in a sorted filter
+  /// view's display order (07 §4.4), else null.
+  final GridRect? displayRect;
 }
 
 /// Feedback painted while dragging (fill handle, resize, freeze bars, move).
@@ -115,14 +120,27 @@ class SheetEditorController extends ChangeNotifier {
         initialSheetId != null && model.sheet(initialSheetId) != null
         ? initialSheetId
         : first;
-    selection = GridSelectionController(model, sheetId: _activeSheetId);
-    cells = CellRenderCache(model, session.engine.engine);
+    selection = GridSelectionController(model, sheetId: _activeSheetId)
+      ..rowOrder = (sid) => gridHooks.rowOrder?.call(sid);
+    cells = CellRenderCache(
+      model,
+      session.rowLoading.complete
+          ? session.engine.engine
+          : LoadingFormulaSource(
+              session.engine.engine,
+              session.engine.engine,
+              model,
+              session.rowLoading,
+            ),
+    );
     editor = CellEditorController(this);
     this.clipboard = clipboard?.call(this) ?? ClipboardService(this);
     hooks = EngineFormulaHooks(
       model,
       engine: session.engine.engine,
       view: session.engine.view,
+      // Formulas show in the spreadsheet's display language (04 §11.1).
+      displayLanguage: true,
     );
     model.addListener(_onBatch);
     _recalc = engine.changes.listen((_) => _invalidateCells());
@@ -145,6 +163,9 @@ class SheetEditorController extends ChangeNotifier {
       }
     }
 
+    // Formulas reading rows that arrive show "Loading…" until then.
+    loading.addListener(_invalidateCells);
+    _disposers.add(() => loading.removeListener(_invalidateCells));
     layer = LoadingLayer(
       loading,
       onDone: () {
@@ -196,6 +217,13 @@ class SheetEditorController extends ChangeNotifier {
   /// Checks run by [apply] before an operation is written (protected
   /// ranges, data validation of typed input); see [WriteGate].
   final List<WriteGate> writeGates = [];
+
+  /// Called after [apply] wrote an operation, inside the command's undo
+  /// transaction (comments moving with cut cells record their entries).
+  final List<
+    void Function(CommandContext? ctx, SheetsOperation op, MutationPlan plan)
+  >
+  applyListeners = [];
 
   /// Fired when cell content/format/structure changes (content pass).
   final GridSignal contentSignal = GridSignal();
@@ -289,6 +317,12 @@ class SheetEditorController extends ChangeNotifier {
 
   String get locale => model.spreadsheet.locale;
 
+  /// The formula locale of the editor UI: separators of [locale], function
+  /// names and booleans in the display language (04 §11.1, P2).
+  FormulaLocale get formulaLocale => FormulaLocale.forId(
+    locale,
+  ).withLanguage(model.spreadsheet.displayLanguage);
+
   SheetsLocalizations get l10n => sheetsL10nOf(services);
 
   String _firstVisibleSheet() {
@@ -356,6 +390,9 @@ class SheetEditorController extends ChangeNotifier {
     final plan = session.execute(op);
     if (!plan.isEmpty && ctx?.transaction != null) {
       ctx!.record(SheetsRowsUndoEntry(plan.changes, label: plan.label));
+    }
+    for (final l in List.of(applyListeners)) {
+      l(ctx, op, plan);
     }
     return plan;
   }
@@ -513,7 +550,19 @@ class SheetEditorController extends ChangeNotifier {
       devicePixelRatio: dpr,
       rowGutter: gutters?.rows ?? 0,
       colGutter: gutters?.cols ?? 0,
+      rowOrder: gridHooks.rowOrder?.call(s.id),
     );
+  }
+
+  /// The row display order of the active sheet (a sorted filter view,
+  /// 07 §4.4), or null.
+  ViewRowOrder? get rowOrder => gridHooks.rowOrder?.call(_activeSheetId);
+
+  /// Whether rows of [r] are shown in a sorted display order: drags that
+  /// work on model rows (fill handle, move, row reorder) are off there.
+  bool rowsPermuted(GridRect r) {
+    final o = rowOrder;
+    return o != null && r.bottom >= o.top && r.top <= o.bottom;
   }
 
   /// Sets the zoom (50–200 %), keeping the active cell in view.
@@ -569,9 +618,26 @@ class SheetEditorController extends ChangeNotifier {
     // When extending, move the focus corner (opposite the anchor).
     var row = r.activeRow;
     var col = r.activeCol;
+    // A sorted filter view navigates rows in display order (07 §4.4).
+    final order = rowOrder;
     if (extend) {
       final rect = r.activeRange.rect;
-      row = r.anchorRow == rect.top ? rect.bottom : rect.top;
+      final shown = r.activeRange.displayRect;
+      if (order != null) {
+        // The focus corner on screen: the display end away from the anchor.
+        final dRect =
+            shown ??
+            GridRect(
+              order.displayRow(rect.top),
+              rect.left,
+              order.displayRow(rect.bottom),
+              rect.right,
+            );
+        final da = order.displayRow(r.anchorRow);
+        row = order.modelRow(da == dRect.top ? dRect.bottom : dRect.top);
+      } else {
+        row = r.anchorRow == rect.top ? rect.bottom : rect.top;
+      }
       col = r.anchorCol == rect.left ? rect.right : rect.left;
     } else {
       // Step over the merge containing the active cell.
@@ -587,12 +653,27 @@ class SheetEditorController extends ChangeNotifier {
     }
     int nr;
     int nc;
-    if (toEdge) {
+    if (toEdge && order != null && d.vertical && order.contains(row)) {
+      // Inside a sorted block: its first/last row on screen.
+      nc = col;
+      final edge = d.dRow > 0 ? order.bottom : order.top;
+      final dr = s.rows.isHidden(order.modelRow(edge))
+          ? order.nextVisibleDisplay(s.rows, edge, -d.dRow)
+          : edge;
+      nr = dr == null ? row : order.modelRow(dr);
+    } else if (toEdge) {
       (nr, nc) = edgeFinder().next(row, col, d);
     } else {
       nr = row;
       nc = col;
-      if (d.vertical) {
+      if (d.vertical && order != null) {
+        final dn = order.nextVisibleDisplay(
+          s.rows,
+          order.displayRow(row),
+          d.dRow,
+        );
+        if (dn != null) nr = order.modelRow(dn);
+      } else if (d.vertical) {
         final next = row + d.dRow;
         if (next >= 0 && next < s.rows.length) {
           nr = s.rows.nextVisible(next, d.dRow) ?? row;
@@ -635,10 +716,18 @@ class SheetEditorController extends ChangeNotifier {
     final startCol = tabStartCol;
     if (startCol != null && !reverse) {
       tabStartCol = null;
-      final next = s.rows.nextVisible(
-        math.min(s.rows.length - 1, range.bottom + 1),
+      final order = rowOrder;
+      final shownNext = order?.nextVisibleDisplay(
+        s.rows,
+        order.displayRow(range.bottom),
         1,
       );
+      final next = order != null
+          ? (shownNext == null ? null : order.modelRow(shownNext))
+          : s.rows.nextVisible(
+              math.min(s.rows.length - 1, range.bottom + 1),
+              1,
+            );
       final row = next ?? range.bottom;
       selection.selectCell(row, startCol);
       revealCell(row, startCol);
@@ -734,8 +823,16 @@ class SheetEditorController extends ChangeNotifier {
     if (g == null || s == null) return;
     final r = selection.resolved;
     if (d.vertical) {
-      final visible = math.max(1, g.main.rowEnd - g.main.rowStart);
-      final row = (r.activeRow + d.dRow * visible).clamp(0, s.rows.length - 1);
+      final visible = math.max(
+        1,
+        g.main.displayRowEnd - g.main.displayRowStart,
+      );
+      final row = g.modelRow(
+        (g.displayRow(r.activeRow) + d.dRow * visible).clamp(
+          0,
+          s.rows.length - 1,
+        ),
+      );
       scroll.scrollBy(0, d.dRow * g.main.rect.height);
       selection.selectCell(row, r.activeCol);
       revealCell(row, r.activeCol);

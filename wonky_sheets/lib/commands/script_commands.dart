@@ -7,6 +7,7 @@ import 'package:wonky_sheets_core/model.dart' show GenericRecord;
 import 'package:wonky_sheets_script/wonky_sheets_script.dart';
 
 import '../features/scripts/executions_panel.dart';
+import '../features/scripts/script_api_reference.dart';
 import '../features/scripts/script_project.dart';
 import '../features/scripts/script_service.dart';
 import '../features/scripts/settings_dialog.dart';
@@ -530,6 +531,28 @@ List<Command<CommandArgs>> scriptCommands(ShellServices s) => [
     run: (ctx, ed, a) async {
       final done = await _svc(ed).revokeAuthorization();
       return done ? ok() : CommandResult.failed(ed.l10n.scriptOffline);
+    },
+  ),
+  SheetsCommand(
+    'sheets.help.scriptApiReference',
+    label: (l) => l.cmdHelpScriptApiReference,
+    icon: LucideIcons.bookOpen,
+    categoryName: _cat,
+    keyScope: KeyScope.global,
+    argsSchema: const JsonSchema.object(
+      properties: {
+        'class': JsonSchema.string(description: 'Class to show first.'),
+      },
+    ),
+    run: (ctx, ed, a) async {
+      final c = ctx.dialogContext;
+      if (c == null) {
+        return ok({
+          'classes': [for (final k in ApiIndex.standard.classes) k.name],
+        });
+      }
+      await showScriptApiReference(c, initial: a.string('class'));
+      return ok();
     },
   ),
   for (final (id, label, prompt) in <(String, SheetsText, String)>[

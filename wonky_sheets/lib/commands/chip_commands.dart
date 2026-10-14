@@ -1,5 +1,6 @@
 import 'package:shad/shad.dart' show LucideIcons;
 import 'package:wonky_app/wonky_app.dart';
+import 'package:wonky_client/wonky_client.dart' show UuidValue;
 import 'package:wonky_core/wonky_core.dart';
 import 'package:wonky_sheets_core/model.dart';
 
@@ -22,12 +23,21 @@ List<Command<CommandArgs>> chipCommands(ShellServices s) => [
     argsSchema: const JsonSchema.object(
       properties: {
         'kind': JsonSchema.string(
-          enumValues: ['person', 'date', 'dropdown'],
+          enumValues: ['person', 'file', 'date', 'dropdown'],
           description: 'Omit to open the chip menu at the active cell.',
         ),
         'email': JsonSchema.string(description: 'Person chip: e-mail.'),
         'name': JsonSchema.string(description: 'Person chip: display name.'),
         'userId': JsonSchema.string(description: 'Person chip: user UUID.'),
+        'uuid': JsonSchema.string(
+          description:
+              'File chip: drive item UUID (document, spreadsheet, '
+              'folder).',
+        ),
+        'itemKind': JsonSchema.string(
+          enumValues: ['document', 'spreadsheet', 'folder'],
+          description: 'File chip: item kind (default: looked up).',
+        ),
         'date': JsonSchema.string(
           description: 'Date chip: ISO date (default: opens the picker).',
         ),
@@ -79,6 +89,33 @@ List<Command<CommandArgs>> chipCommands(ShellServices s) => [
             ),
           );
           return ok({'chip': 'person', 'email': email});
+        case 'file':
+          final uuid = UuidValue.withValidation(a.string('uuid') ?? '');
+          var name = a.string('name')?.trim();
+          var itemKind = a.string('itemKind');
+          if (name == null || name.isEmpty || itemKind == null) {
+            final item = await ed.services.drive.get(uuid);
+            name = item.name;
+            itemKind = item.kind.name;
+          }
+          final chip = FileChip(
+            uuid: uuid.uuid,
+            name: name,
+            itemKind: itemKind,
+          );
+          await ed.applyConfirmed(
+            ctx,
+            SetCellInputs(
+              sheetId: sid,
+              row: r,
+              col: c,
+              inputs: [
+                [CellInput.content(chip.content)],
+              ],
+              label: ed.l10n.cmdInsertSmartChip,
+            ),
+          );
+          return ok({'chip': 'file', 'uuid': uuid.uuid});
         case 'date':
           final iso = a.string('date');
           if (iso == null) {
@@ -113,6 +150,24 @@ List<Command<CommandArgs>> chipCommands(ShellServices s) => [
         default:
           return CommandResult.failed('Unknown chip kind "$kind"');
       }
+    },
+  ),
+  SheetsCommand(
+    'sheets.chip.openFile',
+    label: (l) => l.cmdChipOpenFile,
+    icon: LucideIcons.externalLink,
+    categoryName: _cat,
+    showInPalette: false,
+    argsSchema: const JsonSchema.object(
+      properties: {'uuid': JsonSchema.string()},
+      required: ['uuid'],
+    ),
+    // A file chip's item opens in this window (suite 03 §1: single window).
+    run: (ctx, ed, a) async {
+      final uuid = UuidValue.withValidation(a.requireString('uuid'));
+      final item = await ed.services.drive.get(uuid);
+      await ed.services.openItem(item);
+      return ok({'kind': item.kind.name});
     },
   ),
 ];

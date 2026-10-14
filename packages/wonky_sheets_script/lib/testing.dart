@@ -123,6 +123,21 @@ final class FakeScriptUi implements ScriptUiDelegate {
   /// Sheets activated.
   final List<String> activatedSheets = [];
 
+  /// Panels shown / updated, and the ids of closed panels.
+  final List<ScriptPanelRequest> panels = [];
+  final List<(String, Map<String, Object?>)> panelUpdates = [];
+  final List<String> closedPanels = [];
+
+  @override
+  void showPanel(ScriptPanelRequest request) => panels.add(request);
+
+  @override
+  void updatePanel(String panelId, Map<String, Object?> panel) =>
+      panelUpdates.add((panelId, panel));
+
+  @override
+  void closePanel(String panelId) => closedPanels.add(panelId);
+
   @override
   Future<ScriptDialogResponse> showDialog(ScriptDialogRequest request) async {
     dialogs.add(request);
