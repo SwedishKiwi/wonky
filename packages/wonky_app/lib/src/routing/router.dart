@@ -153,6 +153,7 @@ GoRouter buildShellRouter(ShellServices s) {
                 ),
               ),
             ),
+          ...s.config.editorRoutes(s),
         ],
       ),
       ...s.config.routes(s),

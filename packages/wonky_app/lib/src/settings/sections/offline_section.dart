@@ -40,6 +40,18 @@ class OfflineSection extends StatelessWidget {
           title: l.settingsOffline,
           description: l.settingsOfflineHint,
           children: [
+            for (final (i, w) in usage.warnings.indexed)
+              Padding(
+                key: ValueKey<String>('settings.offline.warning.$i'),
+                padding: const EdgeInsets.only(bottom: 8),
+                child: ShadAlert(
+                  icon: const Icon(LucideIcons.triangleAlert),
+                  title: Text(w.title),
+                  description: w.description == null
+                      ? null
+                      : Text(w.description!),
+                ),
+              ),
             SettingsRow(
               key: const ValueKey<String>('settings.offline.documents'),
               label: l.offlineDocuments,

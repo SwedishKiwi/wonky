@@ -281,8 +281,10 @@ abstract final class DriveTools {
     title: 'Export an item',
     description:
         'Exports a document (md, txt, html, pdf, docx, odt, rtf, epub) or '
-        'spreadsheet (xlsx, ods, csv, pdf). Text formats (md, txt, csv) are '
-        'returned inline; others as a signed download_url valid for 15 min.',
+        'spreadsheet (xlsx, ods, csv, tsv, html (zipped), pdf; csv/tsv/pdf '
+        'take an optional sheet name and A1 range). Text formats (md, txt, '
+        'csv, tsv) are returned inline; others as a signed download_url '
+        'valid for 15 min.',
     inputSchema: ObjectSchema(
       properties: {
         'uuid': McpSchemas.uuid,
@@ -299,7 +301,15 @@ abstract final class DriveTools {
             'xlsx',
             'ods',
             'csv',
+            'tsv',
           ],
+        ),
+        'sheet': JsonSchema.string(
+          description: 'Spreadsheets: sheet name (csv/tsv/pdf; default the '
+              'first visible sheet).',
+        ),
+        'range': JsonSchema.string(
+          description: 'Spreadsheets: A1 range on the sheet (csv/tsv/pdf).',
         ),
       },
       required: ['uuid', 'format'],
@@ -313,8 +323,10 @@ abstract final class DriveTools {
     title: 'Import a file',
     description:
         'Creates a new document from file content (base64: docx, odt, rtf, '
-        'html, md, txt) or plain text (md, txt, html). Spreadsheets are not '
-        'available yet.',
+        'html, md, txt) or plain text (md, txt, html), or a new spreadsheet '
+        '(kind spreadsheet: base64 xlsx/ods, or csv/tsv as text or base64; '
+        'options = ImportOptions {separator, encoding, locale, convert, '
+        'sheets, unsupportedFormulas}).',
     inputSchema: ObjectSchema(
       properties: {
         'name': JsonSchema.string(minLength: 1, maxLength: 255),
@@ -323,6 +335,10 @@ abstract final class DriveTools {
         'content_base64': JsonSchema.string(),
         'text': JsonSchema.string(),
         'parent_uuid': JsonSchema.nullable(McpSchemas.uuid),
+        'options': JsonSchema.object(
+          description: 'Spreadsheets: ImportOptions (Sheets 11 §9).',
+          additionalProperties: true,
+        ),
       },
       required: ['name', 'kind', 'format'],
     ),

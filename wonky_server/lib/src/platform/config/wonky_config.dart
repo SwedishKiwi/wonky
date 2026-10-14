@@ -18,6 +18,9 @@ class WonkyConfig {
     this.maxSheetsPerSpreadsheet = 200,
     this.scriptTimeoutMs = 30000,
     this.scriptDailyQuotaMs = 5400000,
+    this.scriptServerTimeoutMs = 360000,
+    this.scriptAllowHttp = false,
+    this.scriptPoolSize = 4,
     this.snapshotEveryNOps = 500,
     this.maxDocumentChars = 2000000,
     this.maxImageUploadBytes = 20 * 1024 * 1024,
@@ -41,8 +44,21 @@ class WonkyConfig {
   final int maxCellsPerSpreadsheet;
   final int maxActiveSpacesPerUser;
   final int maxSheetsPerSpreadsheet;
+
+  /// Time limit of client script runs (menus, macros, editor; Sheets 09 §10).
   final int scriptTimeoutMs;
+
+  /// Daily server script runtime per user.
   final int scriptDailyQuotaMs;
+
+  /// Time limit of server script runs (triggers, MCP, Run on server).
+  final int scriptServerTimeoutMs;
+
+  /// Whether `UrlFetchApp` may use plain `http` (Sheets 09 §8.3 rule 1).
+  final bool scriptAllowHttp;
+
+  /// Sandbox isolates per server instance (Sheets 09 §8.8 `poolSize`).
+  final int scriptPoolSize;
   final int snapshotEveryNOps;
   final int maxDocumentChars;
   final int maxImageUploadBytes;
@@ -160,6 +176,9 @@ class WonkyConfig {
       maxSheetsPerSpreadsheet: i('sheets', 'maxSheetsPerSpreadsheet', 200),
       scriptTimeoutMs: i('sheets', 'scriptTimeoutMs', 30000),
       scriptDailyQuotaMs: i('sheets', 'scriptDailyQuotaMs', 5400000),
+      scriptServerTimeoutMs: i('sheets', 'scriptServerTimeoutMs', 360000),
+      scriptAllowHttp: b('sheets', 'scriptAllowHttp', false),
+      scriptPoolSize: i('sheets', 'scriptPoolSize', 4),
       snapshotEveryNOps: i('write', 'snapshotEveryNOps', 500),
       maxDocumentChars: i('write', 'maxDocumentChars', 2000000),
       maxImageUploadBytes: i('files', 'maxImageUploadBytes', 20 * 1024 * 1024),

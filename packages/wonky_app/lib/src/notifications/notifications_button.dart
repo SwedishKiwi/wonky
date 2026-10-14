@@ -77,12 +77,26 @@ class _NotificationsButtonState extends State<NotificationsButton> {
     unawaited(_ctl.markRead(n));
     final uuid = n.itemUuid;
     if (uuid == null) return;
+    final thread = _threadOf(n);
     final path = switch (n.itemKind) {
-      DriveItemKind.spreadsheet => '/s/${uuid.uuid}',
+      // Spreadsheets open the comment's cell (Sheets 10 §3.4).
+      DriveItemKind.spreadsheet =>
+        '/s/${uuid.uuid}${thread == null ? '' : '?comment=$thread'}',
       DriveItemKind.folder => '/drive/${uuid.uuid}',
       _ => '/d/${uuid.uuid}',
     };
     await s.openPath(path);
+  }
+
+  static String? _threadOf(NotificationView n) {
+    try {
+      final p = jsonDecode(n.payload);
+      return p is Map && p['threadUuid'] is String
+          ? p['threadUuid'] as String
+          : null;
+    } on FormatException {
+      return null;
+    }
   }
 
   Future<void> _openSettings() async {

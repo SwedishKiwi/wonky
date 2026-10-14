@@ -11,9 +11,11 @@ import '../../format/attributes.dart';
 import '../formula/excel_formula_translator.dart';
 import '../formula/formula_tokens.dart';
 import '../ir/import_warning.dart';
+import '../ir/ir_formats.dart';
 import '../ir/ir_range.dart';
 import '../ir/workbook_document.dart';
 import 'ooxml.dart';
+import 'xlsx_charts.dart';
 import 'xlsx_parts.dart';
 import 'xlsx_print.dart';
 import 'xlsx_rules.dart';
@@ -109,6 +111,7 @@ final class _Writer {
   final List<String> overrides = [];
   final Set<String> extensions = {};
   bool usesDynamicArrays = false;
+  int _chartCount = 0;
   late final Map<String, String> sheetRenames;
   late final ExcelFormulaTranslator translator;
   final Map<String, int> _googleOnly = {};
@@ -387,22 +390,33 @@ final class _Writer {
       '${maxRowOutline > 0 ? ' outlineLevelRow="${maxRowOutline.clamp(0, 7)}"' : ''}'
       '${maxColOutline > 0 ? ' outlineLevelCol="${maxColOutline.clamp(0, 7)}"' : ''}/>',
     );
-    // cols (runs of identical properties)
-    if (!s.columns.isEmpty) {
+    // cols (runs of identical properties). A sheet default format is
+    // written on every column (styled run up to the last column).
+    final defFmt = doc.formats[s.defaultFormat].attrs;
+    final cols = <int, IrDim>{
+      for (final e in s.columns.entries)
+        if (e.key < Ooxml.maxCols) e.key: e.value,
+    };
+    var lastCol = cols.isEmpty ? -1 : cols.keys.reduce((a, b) => a > b ? a : b);
+    if (!defFmt.isEmpty) {
+      if (maxCol > lastCol) lastCol = maxCol;
+      for (var c = 0; c <= lastCol; c++) {
+        cols.putIfAbsent(c, () => const IrDim());
+      }
+    }
+    if (cols.isNotEmpty || !defFmt.isEmpty) {
       b.write('<cols>');
       int? runStart;
       int? runEnd;
-      IrDim? run;
+      (IrDim, int)? run;
       void flush() {
         if (run == null) return;
-        final d = run;
+        final (d, xf) = run;
         final x = StringBuffer(
           '<col min="${runStart! + 1}" max="${runEnd! + 1}"',
         );
         x.write(' width="${_n(Ooxml.pxToWidth(d.size ?? defCol))}"');
-        if (d.format != 0) {
-          x.write(' style="${styles.xf(doc.formats[d.format])}"');
-        }
+        if (xf != 0) x.write(' style="$xf"');
         if (d.hidden) x.write(' hidden="1"');
         if (d.size != null) x.write(' customWidth="1"');
         if (d.outlineLevel > 0) {
@@ -413,18 +427,27 @@ final class _Writer {
         b.write(x);
       }
 
-      for (final e in s.columns.entries) {
-        if (e.key >= Ooxml.maxCols) break;
-        if (run != null && e.value == run && e.key == runEnd! + 1) {
-          runEnd = e.key;
+      final keys = cols.keys.toList()..sort();
+      for (final k in keys) {
+        final d = cols[k]!;
+        final xf = styles.xf(_dimFormat(defFmt, d.format));
+        if (run != null && run.$1 == d && run.$2 == xf && k == runEnd! + 1) {
+          runEnd = k;
           continue;
         }
         flush();
-        run = e.value;
-        runStart = e.key;
-        runEnd = e.key;
+        run = (d, xf);
+        runStart = k;
+        runEnd = k;
       }
       flush();
+      if (!defFmt.isEmpty && lastCol < Ooxml.maxCols - 1) {
+        b.write(
+          '<col min="${lastCol + 2}" max="${Ooxml.maxCols}" '
+          'width="${_n(Ooxml.pxToWidth(defCol))}" '
+          'style="${styles.xf(_dimFormat(defFmt, 0))}"/>',
+        );
+      }
       b.write('</cols>');
     }
     // filter-hidden rows (values criteria) are written hidden
@@ -443,7 +466,9 @@ final class _Writer {
       final d = s.rows[r];
       final x = StringBuffer('<row r="${r + 1}"');
       if (d != null && d.format != 0) {
-        x.write(' s="${styles.xf(doc.formats[d.format])}" customFormat="1"');
+        x.write(
+          ' s="${styles.xf(_dimFormat(defFmt, d.format))}" customFormat="1"',
+        );
       }
       if (d?.size != null) {
         x.write(' ht="${_n(Ooxml.pxToPt(d!.size!))}" customHeight="1"');
@@ -465,7 +490,7 @@ final class _Writer {
       b.write(x);
       for (final (c, cell) in s.cells.rowEntries(r)) {
         if (c >= Ooxml.maxCols) break;
-        b.write(_cell(r, c, cell, s.name));
+        b.write(_cell(r, c, cell, _cellFormat(s, r, c, cell)));
         if (cell.note != null && cell.note!.isNotEmpty) {
           notes.add((r, c, cell.note!));
         }
@@ -584,20 +609,44 @@ final class _Writer {
         count: s.images.length - images.length,
       );
     }
-    if (s.charts.isNotEmpty) {
+    // charts (DrawingML, 11 §6.3)
+    final charts = <(IrChart, String)>[];
+    final skipped = <String, int>{};
+    for (final c in s.charts) {
+      final xml = XlsxCharts.write(
+        c,
+        doc,
+        excelSheet: (n) => sheetRenames[n] ?? n,
+      );
+      if (xml == null) {
+        final t = '${c.spec['type'] ?? 'column'}';
+        skipped[t] = (skipped[t] ?? 0) + 1;
+      } else {
+        charts.add((c, xml));
+      }
+    }
+    skipped.forEach((t, n) {
       report.add(
         'chartsNotExported',
-        'Charts were not exported',
+        XlsxCharts.isExportable({'type': t})
+            ? 'Charts whose data could not be resolved were not exported'
+            : 'Charts of type $t were not exported (no Excel equivalent)',
         sheet: s.name,
-        count: s.charts.length,
+        count: n,
       );
-    }
-    if (images.isNotEmpty) {
+    });
+    if (images.isNotEmpty || charts.isNotEmpty) {
       final dpath = 'xl/drawings/drawing${index + 1}.xml';
       final drels = <String>[];
       final dx = StringBuffer(
         '${XlsxParts.xmlHeader}<xdr:wsDr xmlns:xdr="${Ooxml.xdr}" xmlns:a="${Ooxml.drawingMl}" xmlns:r="${Ooxml.rel}">',
       );
+      int emu(double px) => (px * Ooxml.emuPerPx).round();
+      String from(IrAnchor a) =>
+          '<xdr:from><xdr:col>${a.col}</xdr:col><xdr:colOff>${emu(a.dx)}</xdr:colOff>'
+          '<xdr:row>${a.row}</xdr:row><xdr:rowOff>${emu(a.dy)}</xdr:rowOff></xdr:from>'
+          '<xdr:ext cx="${emu(a.width)}" cy="${emu(a.height)}"/>';
+      var shapeId = 1;
       for (var k = 0; k < images.length; k++) {
         final img = images[k];
         final ext = switch (img.mimeType) {
@@ -611,22 +660,43 @@ final class _Writer {
         extensions.add(ext);
         final media = 'xl/media/image${index + 1}_${k + 1}.$ext';
         archive.add(ArchiveFile.bytes(media, img.bytes!));
+        final rid = 'rId${drels.length + 1}';
         drels.add(
-          '<Relationship Id="rId${k + 1}" Type="${Ooxml.relImage}" Target="../media/image${index + 1}_${k + 1}.$ext"/>',
+          '<Relationship Id="$rid" Type="${Ooxml.relImage}" Target="../media/image${index + 1}_${k + 1}.$ext"/>',
         );
         final a = img.anchor;
-        int emu(double px) => (px * Ooxml.emuPerPx).round();
         dx.write(
-          '<xdr:oneCellAnchor><xdr:from><xdr:col>${a.col}</xdr:col><xdr:colOff>${emu(a.dx)}</xdr:colOff>'
-          '<xdr:row>${a.row}</xdr:row><xdr:rowOff>${emu(a.dy)}</xdr:rowOff></xdr:from>'
-          '<xdr:ext cx="${emu(a.width)}" cy="${emu(a.height)}"/><xdr:pic><xdr:nvPicPr>'
-          '<xdr:cNvPr id="${k + 2}" name="${Ooxml.attr(img.title ?? 'Picture ${k + 1}')}"'
+          '<xdr:oneCellAnchor>${from(a)}<xdr:pic><xdr:nvPicPr>'
+          '<xdr:cNvPr id="${++shapeId}" name="${Ooxml.attr(img.title ?? 'Picture ${k + 1}')}"'
           '${img.altText != null ? ' descr="${Ooxml.attr(img.altText!)}"' : ''}'
           '${img.title != null ? ' title="${Ooxml.attr(img.title!)}"' : ''}/>'
           '<xdr:cNvPicPr><a:picLocks noChangeAspect="1"/></xdr:cNvPicPr></xdr:nvPicPr>'
-          '<xdr:blipFill><a:blip r:embed="rId${k + 1}"/><a:stretch><a:fillRect/></a:stretch></xdr:blipFill>'
+          '<xdr:blipFill><a:blip r:embed="$rid"/><a:stretch><a:fillRect/></a:stretch></xdr:blipFill>'
           '<xdr:spPr><a:xfrm><a:off x="0" y="0"/><a:ext cx="${emu(a.width)}" cy="${emu(a.height)}"/></a:xfrm>'
           '<a:prstGeom prst="rect"><a:avLst/></a:prstGeom></xdr:spPr></xdr:pic><xdr:clientData/></xdr:oneCellAnchor>',
+        );
+      }
+      for (var k = 0; k < charts.length; k++) {
+        final (chart, xml) = charts[k];
+        final n = ++_chartCount;
+        final cpath = 'xl/charts/chart$n.xml';
+        _add(cpath, xml);
+        _override(cpath, 'officedocument.drawingml.chart+xml');
+        final rid = 'rId${drels.length + 1}';
+        drels.add(
+          '<Relationship Id="$rid" Type="${Ooxml.relChart}" Target="../charts/chart$n.xml"/>',
+        );
+        final name = chart.title ?? 'Chart ${k + 1}';
+        dx.write(
+          '<xdr:oneCellAnchor>${from(chart.anchor)}<xdr:graphicFrame macro="">'
+          '<xdr:nvGraphicFramePr><xdr:cNvPr id="${++shapeId}" name="${Ooxml.attr(name)}"'
+          '${chart.altText != null ? ' descr="${Ooxml.attr(chart.altText!)}"' : ''}'
+          '${chart.title != null ? ' title="${Ooxml.attr(chart.title!)}"' : ''}/>'
+          '<xdr:cNvGraphicFramePr/></xdr:nvGraphicFramePr>'
+          '<xdr:xfrm><a:off x="0" y="0"/><a:ext cx="0" cy="0"/></xdr:xfrm>'
+          '<a:graphic><a:graphicData uri="$kChartNs">'
+          '<c:chart xmlns:c="$kChartNs" r:id="$rid"/></a:graphicData></a:graphic>'
+          '</xdr:graphicFrame><xdr:clientData/></xdr:oneCellAnchor>',
         );
       }
       dx.write('</xdr:wsDr>');
@@ -697,9 +767,31 @@ final class _Writer {
     return out;
   }
 
-  String _cell(int r, int c, IrCell cell, String sheetName) {
+  /// The sheet default overlaid with a row/column format.
+  IrFormat _dimFormat(CellFormat defFmt, int index) {
+    if (index == 0) return defFmt.isEmpty ? IrFormat.empty : IrFormat(defFmt);
+    final f = doc.formats[index];
+    return defFmt.isEmpty ? f : IrFormat(defFmt.overlay(f.attrs), f.extras);
+  }
+
+  final Map<(IrSheet, int, int, int), IrFormat> _effective = {};
+
+  /// The complete format of a cell for its `xf` (an XLSX cell ignores the
+  /// column and row styles): sheet default ▸ column ▸ row ▸ cell.
+  IrFormat _cellFormat(IrSheet s, int r, int c, IrCell cell) {
+    final cf = s.columns[c]?.format ?? 0;
+    final rf = s.rows[r]?.format ?? 0;
+    if (cf == 0 && rf == 0 && s.defaultFormat == 0) {
+      return doc.formats[cell.format];
+    }
+    return _effective[(s, cell.format, cf, rf)] ??= IrFormat(
+      IrFormats.effective(doc, s, r, c, cell),
+      doc.formats[cell.format].extras,
+    );
+  }
+
+  String _cell(int r, int c, IrCell cell, IrFormat format) {
     final ref = _cellRef(r, c);
-    final format = doc.formats[cell.format];
     final xf = styles.xf(format);
     final sAttr = xf == 0 ? '' : ' s="$xf"';
     final v = cell.value;
@@ -707,11 +799,13 @@ final class _Writer {
     if (formula != null) {
       var kind = cell.formulaKind;
       var body = formula;
+      // `ARRAYFORMULA(x)` is written as the array formula `x`: a dynamic
+      // array (`cm="1"`) unless it came from a legacy (CSE) array formula
+      // (11 §5.3).
       final wrapped = _unwrapArrayFormula(body);
-      if (wrapped != null &&
-          (kind == IrFormulaKind.array || kind == IrFormulaKind.normal)) {
+      if (wrapped != null) {
         body = wrapped;
-        kind = IrFormulaKind.array;
+        if (kind == IrFormulaKind.normal) kind = IrFormulaKind.dynamicArray;
       }
       final tr = translator.exportFormula(body);
       for (final g in tr.unsupported) {

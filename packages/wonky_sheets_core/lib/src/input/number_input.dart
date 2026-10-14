@@ -87,10 +87,34 @@ final class NumberInputRecognizer {
 
   static bool _isSpace(String c) => c == ' ' || c == ' ' || c == ' ';
 
+  static final RegExp _mixedFraction = RegExp(
+    r'^([+\-\u2212]?)(\d+) +(\d+)/(\d+)$',
+  );
+
+  /// `0 1/2`, `-1 3/16`: a mixed fraction (03 §8.6; a bare `1/2` is a
+  /// date). The format shows a fraction with as many `?` as the typed
+  /// denominator has digits (`# ?/?`, `# ??/??`).
+  static NumberInputMatch? _fraction(String s) {
+    final m = _mixedFraction.firstMatch(s);
+    if (m == null) return null;
+    final whole = int.parse(m.group(2)!);
+    final num = int.parse(m.group(3)!);
+    final den = int.parse(m.group(4)!);
+    if (den == 0) return null;
+    final v = whole + num / den;
+    final q = '?' * m.group(4)!.length;
+    return NumberInputMatch(
+      m.group(1)!.isEmpty || m.group(1) == '+' ? v : -v,
+      '# $q/$q',
+    );
+  }
+
   /// Recognizes [text] (already trimmed), or returns null.
   NumberInputMatch? match(String text) {
     var s = text;
     if (s.isEmpty) return null;
+    final fraction = _fraction(s);
+    if (fraction != null) return fraction;
     var negative = false;
     if (s.length >= 2 && s.startsWith('(') && s.endsWith(')')) {
       negative = true;

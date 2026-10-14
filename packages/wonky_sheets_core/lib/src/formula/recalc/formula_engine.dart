@@ -16,6 +16,8 @@ import '../functions/text/number_text_formatter.dart';
 import '../graph/range_index.dart';
 import '../model/workbook_view.dart';
 import '../parser/formula_locale.dart';
+import '../parser/lexer.dart';
+import '../parser/parse_error.dart';
 import '../values/errors.dart';
 import '../values/format_hint.dart';
 import '../values/fvalue.dart';
@@ -32,13 +34,6 @@ final class _NeedsPrecedent implements EvaluationInterrupt {
 }
 
 final class _Aborted implements EvaluationInterrupt {}
-
-final class _CycleGroup {
-  _Node root;
-  final Set<_Node> members = {};
-  bool iterating = false;
-  _CycleGroup(this.root);
-}
 
 /// Dependency entry: single cell (by ids) or id-bounded range.
 sealed class _Dep {
@@ -86,7 +81,17 @@ final class _Node {
   bool cyclic = false;
   bool hasValue = false;
   bool removed = false;
-  _CycleGroup? group;
+
+  /// A cycle closed at this node during its evaluation (it was re-entered while on the
+  /// evaluation chain); its strongly connected component is resolved when it completes.
+  bool cycleRoot = false;
+
+  /// Evaluation pass in which the node was last evaluated (bounds the SCC search).
+  int evalPass = -1;
+
+  /// Last clean value before the node became dirty: the start value of iterative
+  /// calculation (05 §9.4). Null when the node had no value.
+  FValue? seed;
 
   // spill
   int spillRows = 0;
@@ -164,6 +169,11 @@ final class FormulaEngine implements EvalHost, CellSource {
   final List<_Node> _evalStack = [];
   final List<_Node> _waitStack = [];
   int _depth = 0;
+  int _pass = 0;
+
+  /// Members of cycles currently being iterated (05 §9.4): re-entering one of them is
+  /// part of the iteration, not a new cycle.
+  final Set<_Node> _iterating = {};
   bool _loaded = false;
   String? _epochOverride;
   int _changeCounter = 0;
@@ -480,6 +490,35 @@ final class FormulaEngine implements EvalHost, CellSource {
     return _computed(node, sheet);
   }
 
+  /// The dynamic-array areas of [sheetId] (05 §7.5): spilled arrays and the
+  /// wanted areas of `#SPILL!` hosts, in row/column order of their anchors.
+  /// Owners of other computed overlays (pivot output) use them to apply the
+  /// earlier-anchor rule; the grid outlines the cells blocking a spill.
+  List<SpillArea> spillAreas(String sheetId) {
+    final sheet = workbook.sheetById(sheetId);
+    final t = _spills[sheetId];
+    if (sheet == null || t == null) return const [];
+    final out = <SpillArea>[];
+    for (final (rect, _) in _spillRects(sheet, t)) {
+      out.add(SpillArea(rect.top, rect.left, rect));
+    }
+    for (final b in t.blocked) {
+      final r = sheet.rows.indexOf(b.rowId);
+      final c = sheet.columns.indexOf(b.colId);
+      if (r < 0 || c < 0 || b.wantRows < 1 || b.wantCols < 1) continue;
+      out.add(
+        SpillArea(
+          r,
+          c,
+          GridRect(r, c, r + b.wantRows - 1, c + b.wantCols - 1),
+          blocked: true,
+        ),
+      );
+    }
+    out.sort((a, b) => a.row != b.row ? a.row - b.row : a.col - b.col);
+    return out;
+  }
+
   /// Spill overlay content at a cell, or null.
   OverlayCell? overlayAt(String sheetId, int row, int col) {
     final sheet = workbook.sheetById(sheetId);
@@ -674,6 +713,15 @@ final class FormulaEngine implements EvalHost, CellSource {
       }
     });
     _dirtyRect(sheet, rect, work);
+    // Overlay cells appeared or went away: spills there may now be blocked
+    // (or fit again).
+    final spills = _spills[sheetId];
+    if (spills != null) {
+      for (final (r, host) in _spillRects(sheet, spills)) {
+        if (r.intersects(rect)) _markDirty(host, work);
+      }
+      _dirtyBlockedIn(sheet, rect, work);
+    }
     _dirtyVolatile(work);
     _propagate(work);
   }
@@ -701,18 +749,26 @@ final class FormulaEngine implements EvalHost, CellSource {
       for (final (r, host) in _spillRects(sheet, t)) {
         if (r.contains(row, col) && host.key != key) _markDirty(host, work);
       }
-      for (final b in t.blocked.toList()) {
-        final br = sheet.rows.indexOf(b.rowId),
-            bc = sheet.columns.indexOf(b.colId);
-        if (br < 0 || bc < 0) continue;
-        if (GridRect(
-          br,
-          bc,
-          br + b.wantRows - 1,
-          bc + b.wantCols - 1,
-        ).contains(row, col)) {
-          _markDirty(b, work);
-        }
+      _dirtyBlockedIn(sheet, GridRect(row, col, row, col), work);
+    }
+  }
+
+  /// Dirties spill hosts showing `#SPILL!` whose wanted area intersects [rect]: content or
+  /// another spill there went away (or appeared), so the spill may now fit.
+  void _dirtyBlockedIn(SheetView sheet, GridRect rect, Queue<_Node> work) {
+    final t = _spills[sheet.id];
+    if (t == null || t.blocked.isEmpty) return;
+    for (final b in t.blocked.toList()) {
+      final br = sheet.rows.indexOf(b.rowId),
+          bc = sheet.columns.indexOf(b.colId);
+      if (br < 0 || bc < 0 || b.wantRows < 1 || b.wantCols < 1) continue;
+      if (GridRect(
+        br,
+        bc,
+        br + b.wantRows - 1,
+        bc + b.wantCols - 1,
+      ).intersects(rect)) {
+        _markDirty(b, work);
       }
     }
   }
@@ -740,34 +796,21 @@ final class FormulaEngine implements EvalHost, CellSource {
           if (deleted.contains(id)) _removeNode(n, work);
         }
       }
-      // single-cell references on deleted ids → #REF!
-      final keys = _cellDepKeysBySheet[sheetId];
-      if (keys != null) {
-        for (final d in keys) {
-          final id = dim == GridDimension.rows ? d.rowId : d.colId;
-          if (deleted.contains(id)) {
-            for (final n in _cellDeps[d.key] ?? const <_Node>{}) {
-              _markDirty(n, work);
-            }
-          }
-        }
-      }
-      // ranges whose endpoint was deleted, or spanning the deletion point
-      final idx = _rangeIndexes[sheetId];
-      if (idx != null) {
-        for (final k in idx.keysWhere((r) {
-          final ids = dim == GridDimension.rows
-              ? [r.rowStart, r.rowEnd]
-              : [r.colStart, r.colEnd];
-          return ids.any((e) => e != null && deleted.contains(e));
-        }).toList()) {
-          for (final n in idx.nodesOf(k) ?? const <_Node>{}) {
-            _markDirty(n, work);
-          }
-        }
-      }
+      // single-cell references on deleted ids → #REF!; ranges whose endpoint was
+      // deleted (evaluation-time fallback, 05 §5.4)
+      _dirtyReferencesOnIds(sheetId, dim, deleted, work);
+      // ranges spanning the deletion point
       _dirtyAxisBand(sheet, dim, change.index - 1, change.index, work);
     } else if (change.kind == AxisChangeKind.inserted) {
+      // Re-inserted ids (undo of a delete) revive references that showed #REF! or
+      // used the endpoint fallback.
+      final axis = dim == GridDimension.rows ? sheet.rows : sheet.columns;
+      final end = change.index + change.count;
+      if (change.index >= 0 && end <= axis.length && change.count > 0) {
+        _dirtyReferencesOnIds(sheetId, dim, {
+          for (var i = change.index; i < end; i++) axis.idAt(i),
+        }, work);
+      }
       _dirtyAxisBand(
         sheet,
         dim,
@@ -791,6 +834,38 @@ final class FormulaEngine implements EvalHost, CellSource {
     }
     _dirtyVolatile(work);
     _propagate(work);
+  }
+
+  /// Dirties formulas with a single-cell reference or a range endpoint on one of [ids].
+  void _dirtyReferencesOnIds(
+    String sheetId,
+    GridDimension dim,
+    Set<String> ids,
+    Queue<_Node> work,
+  ) {
+    final keys = _cellDepKeysBySheet[sheetId];
+    if (keys != null) {
+      for (final d in keys.toList()) {
+        if (ids.contains(dim == GridDimension.rows ? d.rowId : d.colId)) {
+          for (final n in _cellDeps[d.key]?.toList() ?? const <_Node>[]) {
+            _markDirty(n, work);
+          }
+        }
+      }
+    }
+    final idx = _rangeIndexes[sheetId];
+    if (idx != null) {
+      for (final k in idx.keysWhere((r) {
+        final e = dim == GridDimension.rows
+            ? [r.rowStart, r.rowEnd]
+            : [r.colStart, r.colEnd];
+        return e.any((x) => x != null && ids.contains(x));
+      }).toList()) {
+        for (final n in idx.nodesOf(k)?.toList() ?? const <_Node>[]) {
+          _markDirty(n, work);
+        }
+      }
+    }
   }
 
   void _dirtyAxisBand(
@@ -1036,6 +1111,7 @@ final class FormulaEngine implements EvalHost, CellSource {
             );
             _recordSpillChange(n.sheetId, rect);
             _dirtyRect(sheet, rect, work);
+            _dirtyBlockedIn(sheet, rect, work);
           }
         }
       }
@@ -1272,6 +1348,9 @@ final class FormulaEngine implements EvalHost, CellSource {
   void _markDirty(_Node n, [Queue<_Node>? work]) {
     if (n.removed) return;
     if (n.dirty && _dirty.contains(n)) return;
+    // The circular error of a resolved cycle is not a start value for iteration (it
+    // would stick); such members start from zero when iterative calculation is enabled.
+    if (!n.dirty) n.seed = n.hasValue && !n.cyclic ? n.value : null;
     n.dirty = true;
     n.cyclic = false;
     _dirty.add(n);
@@ -1353,49 +1432,24 @@ final class FormulaEngine implements EvalHost, CellSource {
   /// Value of a formula node for a reader; evaluates when dirty.
   FValue _require(_Node p) {
     if (!p.dirty) return p.value;
-    final g = p.group;
-    if (g != null && g.iterating) return p.value;
     if (p.onChain) return _cycle(p);
+    if (_depth == 0) {
+      // A read from outside any evaluation: go through the explicit work stack so that
+      // deep precedent chains cannot overflow the stack.
+      _ensureClean(p);
+      return p.dirty ? _cycle(p) : p.value;
+    }
     if (_depth >= config.maxNestedEvaluation) throw _NeedsPrecedent(p);
     _evaluateNode(p);
     return p.value;
   }
 
+  /// A read of [p] while it is on the evaluation chain: a cycle closes at [p]. The
+  /// reader gets the circular error (or, when iterating, [p]'s previous value) and [p]
+  /// resolves the whole strongly connected component when its evaluation completes.
   FValue _cycle(_Node p) {
-    final members = <_Node>[];
-    final wi = _waitStack.indexOf(p);
-    if (wi >= 0) {
-      members.addAll(_waitStack.sublist(wi));
-      members.addAll(_evalStack);
-    } else {
-      final ei = _evalStack.indexOf(p);
-      if (ei >= 0) members.addAll(_evalStack.sublist(ei));
-    }
-    if (members.isEmpty) members.add(p);
-    if (_policy == CircularPolicy.error) {
-      for (final m in members) {
-        m.cyclic = true;
-      }
-      return _circular;
-    }
-    var group = p.group;
-    for (final m in members) {
-      final mg = m.group;
-      if (mg != null && group != null && !identical(mg, group)) {
-        // merge into the group whose root is earliest on the chain
-        group.members.addAll(mg.members);
-        for (final x in mg.members) {
-          x.group = group;
-        }
-      }
-      group ??= mg;
-    }
-    group ??= _CycleGroup(p);
-    for (final m in members) {
-      m.group = group;
-      group.members.add(m);
-    }
-    if (!group.members.contains(group.root)) group.root = p;
+    if (!_iterating.contains(p)) p.cycleRoot = true;
+    if (_policy == CircularPolicy.error) return _circular;
     return p.hasValue ? p.value : FNumber.zero;
   }
 
@@ -1406,6 +1460,7 @@ final class FormulaEngine implements EvalHost, CellSource {
       _require(root);
       return;
     }
+    if (_waitStack.isEmpty && _evalStack.isEmpty) _pass++;
     final stackBase = _waitStack.length;
     _waitStack.add(root);
     root.waiting = true;
@@ -1425,14 +1480,9 @@ final class FormulaEngine implements EvalHost, CellSource {
           n.waiting = true;
           final p = e.node;
           if (p.onChain) {
-            // cycle through the explicit stack
+            // A cycle through the explicit stack: re-evaluating n now reads p's cycle
+            // value; p resolves the component when it completes.
             _cycle(p);
-            if (_policy == CircularPolicy.error) {
-              p.value = _circular;
-              p.result = _circular;
-              p.dirty = false;
-              _dirty.remove(p);
-            }
             continue;
           }
           p.waiting = true;
@@ -1465,21 +1515,32 @@ final class FormulaEngine implements EvalHost, CellSource {
       slots: n.slots,
     );
     n.evaluating = true;
+    n.evalPass = _pass;
     _evalStack.add(n);
     _depth++;
-    FValue raw;
+    // The result is finalized while the node is still on the evaluation chain: a bare
+    // reference result (`=B1`) reads its target here, and that read must see this node as
+    // evaluating so that cycles through it are detected.
+    FValue result;
     try {
-      raw = n.compiled.root(ctx);
-    } on FormulaError catch (e) {
-      raw = e.error;
+      FValue raw;
+      try {
+        raw = n.compiled.root(ctx);
+      } on FormulaError catch (e) {
+        raw = e.error;
+      }
+      try {
+        result = _finalize(ctx, n, raw);
+      } on FormulaError catch (e) {
+        result = e.error;
+      }
     } on StackOverflowError {
-      raw = const FError(ErrorKind.calc, ErrorMessages.recursionLimit);
+      result = const FError(ErrorKind.calc, ErrorMessages.recursionLimit);
     } finally {
       _depth--;
       _evalStack.removeLast();
       n.evaluating = false;
     }
-    final result = _finalize(ctx, n, raw);
     final deps = ctx.deps;
     final dyn = <_Dep>[];
     for (final a in deps.areas) {
@@ -1500,40 +1561,73 @@ final class FormulaEngine implements EvalHost, CellSource {
     }
     if (deps.volatile && !_volatile.contains(n)) _volatile.add(n);
     _applyResult(n, sheet, row, col, result);
-    if (n.cyclic && _policy == CircularPolicy.error) {
-      _setValue(n, sheet, row, col, _circular, FormatHint.none);
-      n.result = _circular;
-      _clearSpill(n, sheet, row, col);
-    }
     n.dirty = false;
     n.hasValue = true;
     _dirty.remove(n);
-    final g = n.group;
-    if (g != null &&
-        identical(g.root, n) &&
-        !g.iterating &&
-        _policy == CircularPolicy.iterate) {
-      _iterate(g);
-    }
+    if (n.cycleRoot && !_iterating.contains(n)) _resolveCycle(n);
   }
 
-  void _iterate(_CycleGroup g) {
-    g.iterating = true;
-    final members = g.members.toList()
-      ..sort((a, b) {
-        final sa = _sheetOrder(a.sheetId), sb = _sheetOrder(b.sheetId);
-        if (sa != sb) return sa - sb;
-        final s = workbook.sheetById(a.sheetId)!;
-        final ra = s.rows.indexOf(a.rowId), rb = s.rows.indexOf(b.rowId);
-        if (ra != rb) return ra - rb;
-        return s.columns.indexOf(a.colId) - s.columns.indexOf(b.colId);
-      });
-    final maxIter = _settings.maxIterations;
+  // ====================================================================== cycles (05 §9.4)
+
+  /// Resolves the strongly connected component of [root], a node at which a cycle closed
+  /// during its (now completed) evaluation. With iterative calculation off every member
+  /// becomes the circular `#REF!`; with it on the members are recomputed by Gauss–Seidel
+  /// sweeps in position order starting from their previous values. Members' dependents
+  /// outside the component are dirty already (transitive dirty marking) and read the
+  /// resolved values afterwards.
+  void _resolveCycle(_Node root) {
+    final (scc, selfLoop) = _componentOf(root);
+    // A component member still on the evaluation chain (below root) closes the cycle
+    // later; it resolves the whole component when it completes.
+    final pending = [
+      for (final m in scc)
+        if (!identical(m, root) && m.onChain) m,
+    ];
+    if (pending.isNotEmpty) {
+      root.cycleRoot = false;
+      for (final m in pending) {
+        m.cycleRoot = true;
+      }
+      return;
+    }
+    for (final m in scc) {
+      m.cycleRoot = false;
+    }
+    if (scc.length == 1 && !selfLoop) return;
+    final members = scc..sort(_comparePosition);
+    if (_policy == CircularPolicy.error) {
+      for (final m in members) {
+        final sheet = workbook.sheetById(m.sheetId);
+        if (sheet == null) continue;
+        final r = sheet.rows.indexOf(m.rowId),
+            c = sheet.columns.indexOf(m.colId);
+        if (r < 0 || c < 0) continue;
+        m.cyclic = true;
+        _clearSpill(m, sheet, r, c);
+        _setBlocked(m, false);
+        _setValue(m, sheet, r, c, _circular, FormatHint.none);
+        m.result = _circular;
+      }
+      return;
+    }
+    _iterate(root, members);
+  }
+
+  void _iterate(_Node root, List<_Node> members) {
+    final maxIter = _settings.maxIterations < 1 ? 1 : _settings.maxIterations;
     final threshold = _settings.convergenceThreshold;
+    // Every recalculation starts from the values before it (not from the values the
+    // depth-first pass produced), so the result does not depend on which member was
+    // read first.
+    for (final m in members) {
+      m.value = m.seed ?? FNumber.zero;
+    }
+    _iterating.addAll(members);
     try {
-      for (var sweep = 1; sweep < maxIter; sweep++) {
+      for (var sweep = 0; sweep < maxIter; sweep++) {
         var maxDelta = 0.0;
         for (final m in members) {
+          if (m.removed) continue;
           final old = m.value;
           m.dirty = true;
           _dirty.add(m);
@@ -1546,12 +1640,131 @@ final class FormulaEngine implements EvalHost, CellSource {
         }
         if (maxDelta < threshold) break;
       }
-    } finally {
-      g.iterating = false;
+      // Side effects of a sweep (spill changes) may have dirtied a member again.
       for (final m in members) {
-        m.group = null;
+        if (m.dirty && !m.removed) _evaluateNode(m);
+      }
+    } on _NeedsPrecedent {
+      // A precedent outside the component must be evaluated through the work stack
+      // first; the component is resolved again when root is re-evaluated.
+      for (final m in members) {
+        if (m.removed) continue;
+        m.dirty = true;
+        _dirty.add(m);
+      }
+      root.cycleRoot = true;
+      rethrow;
+    } finally {
+      _iterating.removeAll(members);
+    }
+  }
+
+  /// The strongly connected component containing [root] (iterative Tarjan over
+  /// precedent edges) and whether [root] reads itself. Only nodes evaluated in the
+  /// current pass or still on the chain can be members: every member of a component
+  /// with a dirty member is dirty (transitive marking) and is evaluated within the
+  /// evaluation of the node at which the cycle closed.
+  (List<_Node>, bool) _componentOf(_Node root) {
+    final index = <_Node, int>{};
+    final low = <_Node, int>{};
+    final stack = <_Node>[];
+    final onStack = <_Node>{};
+    final frames = <(_Node, Iterator<_Node>)>[];
+    var counter = 0;
+    var selfLoop = false;
+    bool eligible(_Node x) => !x.removed && (x.evalPass == _pass || x.onChain);
+    void push(_Node v) {
+      index[v] = low[v] = counter++;
+      stack.add(v);
+      onStack.add(v);
+      frames.add((v, _precedentNodes(v).iterator));
+    }
+
+    push(root);
+    while (frames.isNotEmpty) {
+      final (v, it) = frames.last;
+      if (it.moveNext()) {
+        final w = it.current;
+        if (identical(w, root) && identical(v, root)) selfLoop = true;
+        if (!eligible(w)) continue;
+        final wi = index[w];
+        if (wi == null) {
+          push(w);
+        } else if (onStack.contains(w) && wi < low[v]!) {
+          low[v] = wi;
+        }
+        continue;
+      }
+      frames.removeLast();
+      if (frames.isNotEmpty) {
+        final u = frames.last.$1;
+        if (low[v]! < low[u]!) low[u] = low[v]!;
+      }
+      if (low[v] == index[v]) {
+        final comp = <_Node>[];
+        _Node w;
+        do {
+          w = stack.removeLast();
+          onStack.remove(w);
+          comp.add(w);
+        } while (!identical(w, v));
+        if (identical(v, root)) return (comp, selfLoop);
       }
     }
+    return ([root], selfLoop);
+  }
+
+  /// Formula nodes [n] reads: formula cells referenced by its static and dynamic
+  /// dependencies, and spill hosts whose overlay area they read.
+  Iterable<_Node> _precedentNodes(_Node n) {
+    final out = <_Node>{};
+    void addCell(SheetView s, int r, int c, EngineCellInput input) {
+      if (!input.isFormula) return;
+      final x =
+          _nodes['${s.id}\u0001${s.rows.idAt(r)}\u0001${s.columns.idAt(c)}'];
+      if (x != null) out.add(x);
+    }
+
+    for (final d in [...n.staticDeps, ...n.dynamicDeps]) {
+      switch (d) {
+        case _CellDep():
+          final s = workbook.sheetById(d.sheetId);
+          if (s == null) continue;
+          final r = s.rows.indexOf(d.rowId), c = s.columns.indexOf(d.colId);
+          if (r < 0 || c < 0) continue;
+          final input = s.inputAt(r, c);
+          if (input != null) {
+            addCell(s, r, c, input);
+          } else {
+            final h = _overlayHost(s, r, c);
+            if (h != null) out.add(h);
+          }
+        case _RangeDep(:final range):
+          final s = workbook.sheetById(range.sheetId);
+          if (s == null) continue;
+          final rect = _resolveIdRange(range);
+          if (rect == null) continue;
+          s.forEachInput(rect, (r, c, input) => addCell(s, r, c, input));
+          final t = _spills[s.id];
+          if (t != null && t.hosts.isNotEmpty) {
+            for (final (hr, h) in _spillRects(s, t)) {
+              if (hr.intersects(rect)) out.add(h);
+            }
+          }
+      }
+    }
+    return out;
+  }
+
+  /// Deterministic position order: sheet order, row index, column index.
+  int _comparePosition(_Node a, _Node b) {
+    final sa = _sheetOrder(a.sheetId), sb = _sheetOrder(b.sheetId);
+    if (sa != sb) return sa - sb;
+    final s = workbook.sheetById(a.sheetId);
+    if (s == null) return 0;
+    final ra = s.rows.indexOf(a.rowId), rb = s.rows.indexOf(b.rowId);
+    if (ra != rb) return ra - rb;
+    return s.columns.indexOf(a.colId) - s.columns.indexOf(b.colId);
   }
 
   int _sheetOrder(String id) {
@@ -1706,6 +1919,7 @@ final class FormulaEngine implements EvalHost, CellSource {
       if (oldRect != null) {
         _recordSpillChange(sheet.id, oldRect);
         _dirtyRect(sheet, oldRect, work);
+        if (changedExtent) _dirtyBlockedIn(sheet, oldRect, work);
       }
       _recordSpillChange(sheet.id, rect);
       _dirtyRect(sheet, rect, work);
@@ -1777,6 +1991,7 @@ final class FormulaEngine implements EvalHost, CellSource {
     }
     _recordSpillChange(sheet.id, rect);
     _dirtyRect(sheet, rect, work);
+    _dirtyBlockedIn(sheet, rect, work);
   }
 
   List<(GridRect, _Node)> _spillRects(SheetView sheet, _SpillTable t) {
@@ -1966,6 +2181,157 @@ final class FormulaEngine implements EvalHost, CellSource {
     anchor,
   );
 
+  /// Compiles [formula] once for evaluation with values bound to [names] (pivot
+  /// calculated fields, 07 §7.4; the binding is LET-like). In the formula a binding is
+  /// written as a plain name (`Quantity`), quoted like a sheet name when it is not a valid
+  /// name (`'Unit price'`, `''` escapes a quote) or as a field token `⟦F:<name>⟧` (pivot
+  /// stored form). Names match case-insensitively and take precedence over named ranges;
+  /// a name that reads as a cell reference (`Q1`) must be quoted.
+  ///
+  /// [formula] (with or without `=`) is A1 text in the spreadsheet locale, or stored text
+  /// when [stored] is true. Other references resolve relative to ([row], [col]) on
+  /// [sheetId].
+  BoundFormula compileWithBindings(
+    String formula,
+    List<String> names, {
+    required String sheetId,
+    int row = 0,
+    int col = 0,
+    bool stored = false,
+  }) {
+    final index = <String, int>{};
+    for (var i = 0; i < names.length; i++) {
+      index.putIfAbsent(names[i].toUpperCase(), () => i);
+    }
+    final text = formula.startsWith('=') ? formula.substring(1) : formula;
+    final out = StringBuffer();
+    final tokens = const FormulaLexer().tokenize(text);
+    for (var k = 0; k < tokens.length; k++) {
+      var t = tokens[k];
+      // A quoted name with a doubled quote ('O''Brien') lexes as adjacent pieces.
+      while (_isQuoted(t) &&
+          k + 1 < tokens.length &&
+          _isQuoted(tokens[k + 1]) &&
+          tokens[k + 1].start == t.end) {
+        final next = tokens[++k];
+        t = FormulaToken(
+          TokenKind.unknown,
+          t.start,
+          next.end,
+          t.text + next.text,
+          t.depth,
+        );
+      }
+      final i = _bindingIndex(t, index);
+      out.write(i == null ? t.text : BoundFormula._nameOf(i));
+    }
+    var body = out.toString();
+    if (!stored && workbook.sheetById(sheetId) != null) {
+      body = FormulaCodec.toStored(
+        body,
+        CodecContext(
+          workbook: workbook,
+          hostSheetId: sheetId,
+          hostRow: row,
+          hostCol: col,
+          locale: _locale,
+        ),
+      );
+      if (body.startsWith('=')) body = body.substring(1);
+    }
+    final (compiled, slots) = compiler.compileStored(body);
+    return BoundFormula._(
+      this,
+      compiled,
+      slots,
+      List.unmodifiable(names),
+      sheetId,
+      row,
+      col,
+    );
+  }
+
+  /// Evaluates [formula] once with [bindings] (name → value); see [compileWithBindings].
+  FValue evaluateWithBindings(
+    String formula,
+    Map<String, FValue> bindings, {
+    required String sheetId,
+    int row = 0,
+    int col = 0,
+    bool stored = false,
+  }) {
+    final names = bindings.keys.toList();
+    return compileWithBindings(
+      formula,
+      names,
+      sheetId: sheetId,
+      row: row,
+      col: col,
+      stored: stored,
+    ).evaluate([for (final n in names) bindings[n]!]);
+  }
+
+  static bool _isQuoted(FormulaToken t) =>
+      t.kind == TokenKind.unknown &&
+      t.text.length >= 2 &&
+      t.text.startsWith("'") &&
+      t.text.endsWith("'");
+
+  static int? _bindingIndex(FormulaToken t, Map<String, int> index) {
+    final s = t.text;
+    switch (t.kind) {
+      case TokenKind.name:
+        return index[s.toUpperCase()];
+      case TokenKind.unknown:
+        if (_isQuoted(t)) {
+          return index[s
+              .substring(1, s.length - 1)
+              .replaceAll("''", "'")
+              .toUpperCase()];
+        }
+        const open = '${RefToken.open}F:';
+        if (s.startsWith(open) && s.endsWith(RefToken.close)) {
+          return index[s
+              .substring(open.length, s.length - RefToken.close.length)
+              .toUpperCase()];
+        }
+        return null;
+      default:
+        return null;
+    }
+  }
+
+  FValue _evaluateBound(BoundFormula f, List<FValue> values) {
+    _ensureLoaded();
+    final sheet = workbook.sheetById(f.sheetId);
+    if (sheet == null) {
+      return const FError(ErrorKind.ref, ErrorMessages.referenceDoesNotExist);
+    }
+    final row = f.row, col = f.col;
+    final ctx = EvalContext(
+      host: this,
+      sheet: sheet,
+      row: row,
+      col: col,
+      rowId: row < sheet.rows.length ? sheet.rows.idAt(row) : '',
+      colId: col < sheet.columns.length ? sheet.columns.idAt(col) : '',
+      slots: f._slots,
+    );
+    ctx.bindings = {
+      for (var i = 0; i < f.names.length; i++)
+        BoundFormula._nameOf(i): i < values.length
+            ? values[i]
+            : FEmpty.instance,
+    };
+    FValue raw;
+    try {
+      raw = _runDetached(() => f._compiled.root(ctx));
+    } on FormulaError catch (e) {
+      raw = e.error;
+    }
+    return _finalizeDetached(ctx, raw);
+  }
+
   // ====================================================================== introspection
 
   /// Evaluation trace of the formula at a cell (Explain formula, MCP), or null.
@@ -2111,6 +2477,41 @@ final class FormulaEngine implements EvalHost, CellSource {
     for (final n in _nodes.values)
       if (n.cyclic) n,
   });
+}
+
+/// A formula compiled once with named bindings ([FormulaEngine.compileWithBindings]).
+final class BoundFormula {
+  final FormulaEngine _engine;
+  final CompiledFormula _compiled;
+  final List<StoredRef> _slots;
+
+  /// Binding names, in the order of the values passed to [evaluate].
+  final List<String> names;
+
+  /// Sheet and position the formula's other references resolve against.
+  final String sheetId;
+  final int row;
+  final int col;
+
+  BoundFormula._(
+    this._engine,
+    this._compiled,
+    this._slots,
+    this.names,
+    this.sheetId,
+    this.row,
+    this.col,
+  );
+
+  /// Parse error of the formula, or null.
+  FormulaParseError? get parseError => _compiled.parseError;
+
+  /// Evaluates with [values] bound to [names] (by position; missing values are empty).
+  /// Values may be scalars or arrays (`FArray`).
+  FValue evaluate(List<FValue> values) => _engine._evaluateBound(this, values);
+
+  // Internal identifier replacing the i-th binding in the formula text.
+  static String _nameOf(int i) => '_WKBIND$i';
 }
 
 /// Whether cycles error or iterate.

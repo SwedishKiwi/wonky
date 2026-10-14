@@ -255,9 +255,19 @@ final class HeaderFooter {
   }
 
   /// The footer with the page-number token added (right) when the flag is
-  /// on and no section contains it.
+  /// on and no section contains it. With the flag off, sections that are
+  /// just the flag's `{page}` token (the default footer) are dropped; custom
+  /// texts such as `Page {page} of {pages}` stay.
   HeaderFooterSections get effectiveFooter {
-    if (!flags.pageNumbers || _anywhere('{page}')) return footer;
+    if (!flags.pageNumbers) {
+      String strip(String s) => s.trim() == '{page}' ? '' : s;
+      return HeaderFooterSections(
+        left: strip(footer.left),
+        center: strip(footer.center),
+        right: strip(footer.right),
+      );
+    }
+    if (_anywhere('{page}')) return footer;
     return HeaderFooterSections(
       left: footer.left,
       center: footer.center,

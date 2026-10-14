@@ -1,6 +1,7 @@
 import '../../addressing/a1.dart';
 import '../../addressing/column_letters.dart';
 import '../../addressing/sheet_names.dart';
+import 'function_map.dart';
 
 /// Token kinds of the IO formula tokenizer.
 enum FTok {
@@ -207,6 +208,20 @@ abstract final class FormulaTokenizer {
         out.add(FToken(FTok.ws, text.substring(i, j)));
         i = j;
         continue;
+      }
+      // Array separators first: `\` (decimal-comma column separator) would
+      // otherwise start an identifier.
+      if (stack.isNotEmpty && stack.last == 0x7b) {
+        if (text.startsWith(dialect.arrayRowSeparator, i)) {
+          out.add(FToken(FTok.rowSep, dialect.arrayRowSeparator));
+          i += dialect.arrayRowSeparator.length;
+          continue;
+        }
+        if (text.startsWith(dialect.arrayColSeparator, i)) {
+          out.add(FToken(FTok.sep, dialect.arrayColSeparator));
+          i += dialect.arrayColSeparator.length;
+          continue;
+        }
       }
       if (c == 0x22) {
         var j = i + 1;
@@ -644,6 +659,49 @@ abstract final class FormulaRewriter {
       }
     }
     return FormulaTokenizer.render(tokens);
+  }
+
+  /// Whether an Excel dynamic-array formula needs Wonky's array mode
+  /// (`ARRAYFORMULA(...)`) to evaluate the same: false when the whole
+  /// formula is one reference, an array literal, or one call of a function
+  /// that returns arrays by itself ([FunctionMap.arrayResult]).
+  static bool needsArrayMode(String formula) {
+    final tokens = [
+      for (final t in FormulaTokenizer.tokenize(formula))
+        if (t.kind != FTok.ws) t,
+    ];
+    if (tokens.isEmpty) return false;
+    if (tokens.length == 1) {
+      return tokens.single.kind != FTok.ref &&
+          tokens.single.kind != FTok.name &&
+          tokens.single.kind != FTok.stored;
+    }
+    final first = tokens.first;
+    if (first.kind == FTok.openBrace) {
+      return _closing(tokens, 0) != tokens.length - 1;
+    }
+    if (first.kind == FTok.func &&
+        tokens[1].kind == FTok.open &&
+        FunctionMap.arrayResult.contains(
+          FunctionMap.stripPrefixes(first.text).toUpperCase(),
+        )) {
+      return _closing(tokens, 1) != tokens.length - 1;
+    }
+    return true;
+  }
+
+  /// Index of the bracket closing the one at [start], or -1.
+  static int _closing(List<FToken> tokens, int start) {
+    var depth = 0;
+    for (var i = start; i < tokens.length; i++) {
+      final k = tokens[i].kind;
+      if (k == FTok.open || k == FTok.openBrace) depth++;
+      if (k == FTok.close || k == FTok.closeBrace) {
+        depth--;
+        if (depth == 0) return i;
+      }
+    }
+    return -1;
   }
 
   /// Function names used in [formula] (upper case).

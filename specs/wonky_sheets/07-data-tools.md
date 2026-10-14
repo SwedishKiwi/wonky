@@ -708,6 +708,19 @@ Criteria         [Dropdown ▾]
 - Rule list rows show the range(s), a criteria summary and chip previews; hovering highlights the
   range on the grid.
 
+> **As built.** The draft is previewed live on the grid (core `DvDraftPreview`: chips,
+> checkboxes and invalid markers of the draft's ranges; an edited rule's other cells show no
+> rule; never written and never enforced) through `DataValidationController.setDraft` →
+> `DvEvaluator.draft` + `CellRenderCache.dvDraft`. Hovering or focusing a rule row outlines its
+> ranges (`RangeHighlightLayer`, Enter edits, Delete removes). Items reorder by dragging the ⠿
+> handle or with Alt+↑/↓ in the item field (screen readers: *Move up/down* actions). Chip colors
+> come from the 10-pair palette popover (+ No color) rather than `WonkyColorPicker`. Strict
+> rejection runs in the cell editor commit (`CellEditorController.commitCheck`, editor stays
+> open) and as a `SheetEditorController.writeGates` gate on `SetCellInputs` of typed input
+> (agents get `validation: …`); typed **formulas** are checked with their result evaluated
+> detached at the cell (`FormulaEngine.evaluateDetached`, 50 ms budget; over budget they are
+> accepted and marked after recalculation).
+
 ### 6.4 Applying a rule — overlap semantics
 
 A cell has at most one effective rule (Sheets). On *Done*:
@@ -921,6 +934,11 @@ final class PivotEngine {
   positions, which render over the computed defaults (formats don't block the overlay; Sheets
   parity — formats stay with positions).
 - Limit: 1M output cells → anchor `#REF!` "Pivot table is too large".
+- Header block (implementation, `PivotLayout`): with column groups, the first header row holds
+  the value name in the corner cell and the column field names; the row field names sit in the
+  last header row above the label columns. Without column groups there is a single header row
+  (row field names, then value names). Calculated fields evaluate through
+  `EnginePivotFormulaEvaluator` (formula engine `compileWithBindings`).
 
 ### 7.6 Overlay, collisions and editing
 
@@ -987,10 +1005,10 @@ up to 4 suggestion chips; *Explore* / AI (12) can contribute more. Clicking appl
 
 ### 7.12 Commands, MCP, acceptance
 
-Commands: `sheets.insert.pivotTable {range?, destination?}`, `sheets.pivot.openEditor {pivotId}`,
+Commands: `sheets.insert.pivotTable {range?, destination?, location?}`, `sheets.pivot.openEditor {pivotId}`,
 `sheets.pivot.update {pivotId, spec? , sourceRange?}` (1 step), `sheets.pivot.delete {pivotId}`,
 `sheets.pivot.refresh {pivotId}`, `sheets.pivot.drillDown {pivotId, cell}`,
-`sheets.pivot.createGroup {pivotId, field, group}`.
+`sheets.pivot.createGroup {pivotId, field, group}`, `sheets.pivot.expandGrid {pivotId}` (§7.13).
 
 Acceptance:
 - [ ] Pivot of 200k sales rows with Rows = Region, Columns = Year (date group), Values = SUM and
@@ -1000,6 +1018,82 @@ Acceptance:
 - [ ] Editing a source value on another client updates the pivot on all clients identically.
 - [ ] `=GETPIVOTDATA("SUM of Revenue", Pivot!A1, "Region", "East")` returns the East total.
 - [ ] Every editor change is a single undo step; undo restores the previous layout.
+
+### 7.13 Implementation notes (app, `wonky_sheets/lib/features/pivot/`)
+
+- **Overlay without a `PivotNode`**: `PivotOverlayService` computes every pivot
+  (`SourceTable.fromModel` over the engine → `PivotEngine` → `PivotLayout`) and serves the output
+  through `ModelWorkbookView.overlays` (`ComputedOverlaySource`, core): the engine reads output
+  cells of empty cells as **literal inputs**, so formulas (`=SUM(Pivot!B2:B9)`, whole columns),
+  the grid painter, Ctrl+arrows and the clipboard see them; copying output copies values. After a
+  recompute the service calls `FormulaEngine.rectChanged` for the old ∪ new rectangle, which
+  dirties dependents incl. `GETPIVOTDATA` (its reference argument points into the output).
+  `engine.pivots` is the service (`PivotDataLookup`). Spill vs pivot follows 05 §7.5's anchor
+  order: blank output cells are inputs too (an array anchored later that would spill into the
+  output shows `#SPILL!`); a dynamic array anchored earlier (core `FormulaEngine.spillAreas`, also
+  a `#SPILL!` array that only the pivot blocks) wins — the pivot shows the collision, or nothing
+  at all when the array covers its anchor (`PivotOutput.yielded`). Typed formulas are evaluated
+  after their batch and the rule re-checked; `FormulaEngine.rectChanged` re-evaluates arrays
+  over the changed rectangle.
+- **Refresh**: `PivotTable` row changes (edit, undo, remote) and anchor moves recompute at once;
+  edits inside the source (local/remote, plus any content edit when the source holds formulas,
+  plus engine recalc batches inside the source) recompute after 300 ms; content typed into the
+  output rectangle (or anywhere on the sheet while it is blocked) re-checks collisions at once.
+  Outputs only change (and dependents only dirty) when the laid-out values differ.
+- **Formats**: bold header/total cells come from `CellRenderCache.computedFormat` (skipped where
+  the user set bold); `pivotHeaderFill` / `pivotTotalFill` are painted by `PivotLayer`
+  (z 90, under explicit fills); the empty-spec message is painted muted/italic, not a value.
+- **Write guard** (a `WriteGate`): typing, paste (except format/CF/DV/widths), fill, sort,
+  randomize, dedupe, trim, split and restore into the output are refused with
+  "You can't edit a pivot table's output. Use the pivot table editor."; the cell editor checks
+  the gate before it opens. Clearing a range that contains a whole output deletes the pivot (same
+  step); a partial clear is refused. A move/cut-paste of a whole output moves the anchor
+  (`UpdatePivotTable`, same step; to another sheet: see *Moving* below).
+- **Create dialog**: `range` is a text field (A1 with sheet) until the shared `RangeInput`
+  exists; `location` is used for *Existing sheet* (default: the active cell). New sheets are named
+  "Pivot table N" (localized).
+- **Editor panel**: `showAsTab: false` (opened by *Edit*, the context menu or the commands; it
+  follows the selection into another pivot while open). The range field commits on Enter/blur.
+  Value cards: Summarize by (all 13; Custom only for calculated fields), Show as, ⋮ › Rename….
+  Group cards: Order, Sort by (label or any value's total), Show totals, Repeat row labels
+  (Rows), ⋮ › Create pivot date group ▸ unit (date/number fields), Create pivot group rule…
+  (histogram dialog), Remove grouping; manual groups only via `sheets.pivot.createGroup`.
+  Calculated fields: name + formula text with source headers as names (`='Unit price' * Qty`),
+  converted to `⟦F:colId⟧` tokens. Filter cards: popover with *Filter by condition* (filter
+  condition types without custom formulas) and *Filter by values* (search, Select all · Clear,
+  counts). Suggestions (P2): up to 3 chips for an empty spec (measure by low-cardinality
+  dimension, date dims grouped by Year-Month, then counts).
+- **Grid edge**: the problem banner offers *Insert rows* (`sheets.pivot.expandGrid {pivotId}`,
+  appends the missing rows/columns) instead of `sheets.formula.insertRowsForSpill`; collisions
+  offer *Select blocking cells*.
+- **Drill-down**: double-click on a value cell (editors) or the context menu *Show details*;
+  the "Details N" sheet gets the header row (bold), the rows as values and the source columns'
+  number formats; above 100,000 rows a confirm dialog asks first.
+- **Big pivots**: sources with ≥ 100,000 data rows are aggregated in the background — in an
+  isolate on native (`compute`), time-sliced on the web and for specs with calculated fields or
+  formula filters (`PivotEngine.computeSliced`, 8 ms slices); the snapshot is taken on the UI
+  thread. Meanwhile the previous output stays, dimmed, with an "Updating…" pill
+  (`PivotStaleLayer`); a newer edit cancels and restarts the job.
+- **Show items with no data** (`showEmptyGroups`, panel checkbox under the areas): every item of
+  a group under every item of the enclosing group, filtered items included, with empty values.
+- **Manual groups from the grid**: selecting row/column labels of one field (not date/histogram
+  grouped) → context menu *Create pivot group* (`sheets.pivot.groupSelection {name?}`, asks the
+  name, default "Group N"); labels that are group names merge their groups.
+- **Filters**: *Filter by condition* includes *Custom formula is* (A1 shown, stored relative to
+  the field's first data cell); *Filter by color* (fill / text color present in the field's
+  cells, `visibleBackgroundColor` / `visibleForegroundColor`; the source snapshot then carries
+  effective colors, core `SourceTable.fromModel(colorAt:)`).
+- **Moving**: cut/paste (and `MoveRange`) of a whole output moves the pivot, to another sheet
+  too (re-created there with the same source and spec in the same step; the editor panel
+  follows).
+- **Export**: XLSX/ODS write pivot output as cells (values, number formats, bold headers and
+  totals) — core `EngineIrValueSource` places pivots with `PivotOutputs` (same placement rules)
+  and implements `IrOverlayFormats`.
+- **Slicer masks**: slicers (objects of kind `slicer`, spec JSON of §5) whose data range is the
+  pivot's source range and that apply to pivot tables filter the source for everyone
+  (`PivotOverlayService.slicerMask` → `SourceTable.rowMask`; viewers' local overrides don't);
+  slicer changes recompute the pivots (debounced). `rowMask` overrides it.
+- Not built: incremental (delta) aggregation for decomposable aggregates (P2).
 
 ---
 
@@ -1119,7 +1213,8 @@ definition}`, `sheets.namedFunctions.update {id, …}`, `sheets.namedFunctions.d
 warningOnly, editorsJson, createdBy}` (02 §3.4).
 
 - Who may edit protected cells: the spreadsheet **owner**, the protection's **creator**, and users
-  in `editorsJson` (user UUIDs). `warningOnly` protections let every editor edit after a warning.
+  in `editorsJson` (user UUIDs). `warningOnly` protections let every editor edit after a warning; the warning shows for
+  everyone, the owner and the creator included (they guard against accidental edits).
 - Who may change/remove a protection: the owner and users allowed to edit it. Others see it
   read-only in the panel (lock icon, "You can't edit this protection").
 - Commenters/viewers can't edit anything anyway (space `readOnly`).
@@ -1153,6 +1248,14 @@ Adding editors who don't have edit access to the file shows "Bo doesn't have edi
 spreadsheet" with a link to the Share dialog (sharing is not part of the undo step). *Done*
 commits the protection (one step).
 
+> **As built.** Emails typed into *Add editors* that aren't file editors open "Share with new
+> editors?" (`dialog.protectionInvite`): *Share and add* shares the spreadsheet with them as
+> editors (`SharingRepository.share`, not undoable) and adds the accounts to the protection;
+> invited people without an account get a toast to add them after they accept. Offline (or when
+> sharing can't be read) the dialog lists the editors last seen on this device
+> (`FileEditors`, user store `sheets.fileEditors.<item>`) with a note, and unknown emails only
+> get the toast with *Share*.
+
 ### 10.3 Enforcement (`ProtectionGuard`, core)
 
 ```dart
@@ -1181,6 +1284,18 @@ per sheet) makes checks O(log n) per rectangle.
   code `protected_range`; warning-only ranges are writable with `warnings` in the result, 03 §16).
 - **Advisory** (suite 06 §3): a modified client could bypass protections; an offline edit made
   before a protection reached the device is not reverted.
+
+> **As built.** Enforcement is a write gate on `SheetEditorController.apply`: the operation is
+> planned without applying and its `WriteIntent`s are derived from the row changes
+> (`features/protection/write_intents.dart`; row/column structure from the operation, inserts count
+> only inside a protection). Blocked → "Protected cell or object" dialog (agents: failed
+> `protected_range: …`); warning-only → "Heads up!" confirm; after OK the command resumes at the
+> blocked write (`applyConfirmed` in commands with dialogs, 03 §16), others rerun. The
+> permissions dialog (`ProtectionPermissionsDialog`, MCP-describable like a `WonkyDialogSpec`:
+> fields `mode`, `who`, `editor:<id>`, `add`) shows *Who can edit* only for *Restrict* and the
+> editor checkboxes and "Add editors" only for *Custom*. Stripes cover every protected cell while
+> the view option is on (Google parity), not only cells the user can't edit; the option is kept
+> per user and spreadsheet in `LocalViewState`.
 
 ### 10.4 Commands and acceptance
 
@@ -1480,7 +1595,7 @@ mutations, viewer otherwise.
 
 | Command id | Args | Shortcut | Undo |
 |------------|------|----------|------|
-| `sheets.data.sortSheet` (04) | `{colId, ascending}` | — | 1 |
+| `sheets.data.sortSheet` (04) | `{colId, ascending, freezeHeader?}` | — | 1 |
 | `sheets.data.sortRange` (04) | `{range, colId?, ascending?, specs?, hasHeader?}` | — | 1 |
 | `sheets.data.openSortDialog` (04) | — | — | — |
 | `sheets.data.randomizeRange` (04) | `{range?}` | — | 1 |
@@ -1492,7 +1607,7 @@ mutations, viewer otherwise.
 | `sheets.filter.openColumnMenu` | `{colId?}` | Mod+Alt+R | — |
 | `sheets.filter.setColumnCriteria` | `{colId, criteria \| null}` | — | 1 |
 | `sheets.filter.clearColumn` / `sheets.filter.clearAll` | `{colId}` / — | — | 1 |
-| `sheets.filter.sortColumn` | `{colId, ascending}` | — | 1 |
+| `sheets.filter.sortColumn` | `{colId, ascending \| fillColor \| textColor}` | — | 1 |
 | `sheets.filter.saveAsFilterView` | — | — | 1 |
 | `sheets.filterView.create` (04) | `{temporary?, fromBasicFilter?}` | — | 1 (saved) / — (temp) |
 | `sheets.filterView.activate` (04) | `{viewId?}` | — | — |
@@ -1505,13 +1620,13 @@ mutations, viewer otherwise.
 | `sheets.insert.pivotTable` (04) | `{range?, destination?}` | — | 1 |
 | `sheets.pivot.openEditor` / `.update` / `.delete` / `.refresh` / `.drillDown` / `.createGroup` | see §7.12 | — | — / 1 / 1 / — / 1 / 1 |
 | `sheets.namedRanges.openPanel` (04), `.add`, `.update`, `.delete`, `.goTo`, `.createFromSelection` (03) | see §8.4 | — | — / 1 / 1 / 1 / — / 1 |
-| `sheets.namedFunctions.openPanel` (04), `.create`, `.update`, `.delete`, `.import` (P2) | see §9.5 | — | — / 1 |
+| `sheets.namedFunctions.openPanel` (04), `.create`, `.update`, `.delete`, `.import {sourceItemUuid?, names?, replace?}` (P2) | see §9.5 | — | — / 1 |
 | `sheets.protect.openPanel` (04), `.add`, `.update`, `.delete` | see §10.4 | — | — / 1 |
 | `sheets.view.toggleProtectedRanges` (03) | — | — | — |
 | `sheets.find.open`, `.openReplace` (04), `.next`, `.previous`, `.replace`, `.replaceAll` | see §11.5 | Mod+F, ⇧⌘H/Ctrl+H, Mod+G, Mod+Shift+G | — / 1 |
 | `sheets.cleanup.openRemoveDuplicates` (04), `sheets.cleanup.removeDuplicates` | `{range, hasHeader, colIds}` | — | — / 1 |
 | `sheets.cleanup.trimWhitespace` (04) | `{range?}` | — | 1 |
-| `sheets.cleanup.openSuggestions` (04, P2), `sheets.cleanup.applySuggestion` | `{suggestionId}` | — | — / 1 |
+| `sheets.cleanup.openSuggestions` (04, P2), `sheets.cleanup.applySuggestion` | `{id}` | — | — / 1 |
 | `sheets.group.groupRows` / `groupColumns` / `ungroupRows` / `ungroupColumns` (04) | `{ids?}` | Alt+Shift+→ / ← | 1 |
 | `sheets.group.toggle`, `.collapseToLevel`, `.expandAll` (04), `.collapseAll` (04), `.removeAll` | see §16.2 | — | 1 |
 | `sheets.format.convertToTable` (04, P2) | `{range?}` | ⌥⌘T / Ctrl+Alt+T | 1 |
@@ -1585,3 +1700,37 @@ Still open (decide during implementation):
    table if concurrent filter editing proves common.
 3. **Live re-filtering** (§3.4) deliberately differs from Sheets' sticky behavior to keep
    `SUBTOTAL` deterministic; validate with users.
+
+### Implementation notes (app, data tools agent)
+
+- Filter views only filter: the grid has no row display permutation, so view-only sort
+  (§4.4) is disabled (popover sort items disabled with a tooltip in views) — the open question
+  §23.1 fallback.
+- While a filter view is active, the basic filter keeps feeding the `filter` hidden layer
+  (`SUBTOTAL`) and the layer is **suppressed** on screen (`AxisIndex.setLayerSuppressed`); the
+  view's rows are the `filterView` layer.
+- A basic filter created from the data region (single active cell) whose region reaches the last
+  used row is stored **open-ended** (`SetBasicFilter {openEnded}`: no `r2`); the app resolves it
+  down to the last used row, so rows typed below join the filter.
+- Sticky edit row (§3.4): dimmed and badged "Hidden by filter" (`StickyRowLayer`) until the
+  selection leaves it.
+- Sort by color (P2): *Sort by color* in the column popover → `sheets.filter.sortColumn
+  {fillColor | textColor}`.
+- *Freeze row 1 and re-sort* (§2.6): `sheets.data.sortSheet` toasts when row 1 looks like a header
+  and nothing is frozen; the action undoes the sort and runs `{freezeHeader: true}` (freeze +
+  sort, one step).
+- `DataJobs.run` (`features/data_tools/data_job.dart`): the planner is synchronous, so jobs over
+  ≥ 20,000 rows show a progress toast ("Sorting 412,000 rows…") painted before the work, and run
+  one at a time per spreadsheet ("Waiting for the current operation to finish…"). No percentage,
+  no cancel (would need an async planner).
+- Slicers (§5): `features/slicers/` (`SlicerSpec`, `SlicerController`, `SlicerView` via
+  `objectViewBuilders` of the objects layer, `SlicerPanel`), `commands/slicer_commands.dart`.
+  Synced criteria → `slicer` layer (formulas/charts); viewers' local overrides → `slicerView`
+  layer with `slicer` suppressed. Pivot tables don't follow slicers yet (`applyToPivotTables` is
+  stored only).
+- Cleanup suggestions (§12.3): `features/data_tools/cleanup_suggestions.dart` (detectors over
+  ≤ 50k rows of the used range), panel `sheets.panel.cleanupSuggestions`, apply = one step,
+  dismiss = this device.
+- Named function import (§9.4): `sheets.namedFunctions.import`, server
+  `SheetsEndpoint.namedFunctions(itemUuid)` (stored-form formulas), dependencies come along, name
+  conflicts skip unless *Replace* is checked (one choice for all).

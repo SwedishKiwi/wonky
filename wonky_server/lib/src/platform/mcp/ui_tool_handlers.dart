@@ -1,20 +1,21 @@
 import 'package:wonky_core/wonky_core.dart'
-    show McpToolDefinition, UiTools, UiWriteTools;
+    show McpToolDefinition, UiSheetsTools, UiTools, UiWriteTools;
 
 import 'tool_executor.dart';
 import 'tool_support.dart';
 import 'ui_bridge/ui_bridge_hub.dart';
 
-/// UI-bridge tools (suite 09 §6, Write 09 §3): `ui.list_sessions` is
-/// answered by the hub; every other `ui.*` tool is relayed to a live window
-/// of the token's user, which executes it (commands run through its
-/// `CommandDispatcher` with source `mcp`).
+/// UI-bridge tools (suite 09 §6, Write 09 §3, Sheets 12 §5):
+/// `ui.list_sessions` is answered by the hub; every other `ui.*` tool is
+/// relayed to a live window of the token's user, which executes it
+/// (commands run through its `CommandDispatcher` with source `mcp`).
 abstract final class UiToolHandlers {
   static List<RegisteredMcpTool> get all => [
     RegisteredMcpTool(UiTools.listSessions, listSessions),
     for (final d in UiTools.all)
       if (d.name != UiTools.listSessions.name) _relay(d),
     for (final d in UiWriteTools.all) _relay(d, app: 'write'),
+    for (final d in UiSheetsTools.all) _relay(d, app: 'sheets'),
   ];
 
   static Future<ToolResult> listSessions(ToolContext ctx, ToolArgs a) async {
@@ -27,7 +28,8 @@ abstract final class UiToolHandlers {
         'sessions': [for (final w in windows) w.toJson()],
       },
       text: windows.isEmpty
-          ? 'No window allows MCP control. Open Wonky Write and enable '
+          ? 'No window allows MCP control. Open Wonky Write or Wonky Sheets '
+                'and enable '
                 'Settings › Developer › "Allow MCP to control this window".'
           : [
               for (final w in windows)

@@ -3,6 +3,8 @@ import 'dart:convert';
 import 'package:wonky_sync_models/ids.dart';
 
 import '../../addressing/grid_geometry.dart';
+import '../../data_tools/protection/protection_guard.dart';
+import '../../data_tools/sort/sort_strategy.dart';
 import '../../engine_bridge/stored_formula.dart';
 import '../../model/grid_range.dart';
 import '../../model/records.dart';
@@ -15,33 +17,51 @@ import 'move.dart';
 /// Physical strategy of a row permutation (07 §2.2).
 enum RowMoveStrategy { rowReorder, contentMove }
 
-/// Chooses the strategy for permuting the rows of [rect]: row-entity reorder
-/// when the rows have no cells outside the rect's columns and no merge spans
-/// several rows; otherwise content move.
-RowMoveStrategy chooseRowMoveStrategy(SheetModel s, GridRect rect) {
-  for (var r = rect.top; r <= rect.bottom; r++) {
-    for (final cell in s.cells.inRow(s.rows.idAt(r))) {
-      final c = s.columns.indexOf(cell.columnId);
-      if (c < rect.left || c > rect.right) return RowMoveStrategy.contentMove;
-    }
-  }
-  for (final (_, m) in s.mergesIntersecting(
-    GridRect(rect.top, 0, rect.bottom, s.columns.length - 1),
-  )) {
-    if (m.rowCount > 1) return RowMoveStrategy.contentMove;
-  }
-  return RowMoveStrategy.rowReorder;
-}
+/// Chooses the strategy for permuting the rows of [rect] (07 §2.2, see
+/// [SortStrategy.choose]): row-entity reorder when the rows have no cells
+/// outside the rect's columns and no merge spans several rows; otherwise
+/// content move.
+RowMoveStrategy chooseRowMoveStrategy(SheetModel s, GridRect rect) =>
+    switch (SortStrategy.choose(s, rect)) {
+      SortStrategyKind.rowReorder => RowMoveStrategy.rowReorder,
+      SortStrategyKind.contentMove => RowMoveStrategy.contentMove,
+    };
 
 /// Refuses permutations over vertical merges (07 §2.4).
 void checkNoVerticalMerges(SheetModel s, GridRect rect) {
-  for (final (_, m) in s.mergesIntersecting(rect)) {
-    if (m.rowCount > 1) {
-      throw const PlanException(
-        'merge_conflict',
-        "Can't sort a range with vertically merged cells",
-      );
-    }
+  if (SortStrategy.hasVerticalMerge(s, rect)) {
+    throw const PlanException(
+      'merge_conflict',
+      SortRefusal.verticalMergeMessage,
+    );
+  }
+}
+
+/// The refusals shared by sort, randomize and remove duplicates (07 §2.4):
+/// vertical merges, spill/pivot output ([PlanContext.overlays]) and cells
+/// the user can't edit (warning-only protections are allowed; the UI asks).
+void checkRowMoveAllowed(PlanBuilder b, SheetModel s, GridRect rect) {
+  checkNoVerticalMerges(s, rect);
+  final overlays = b.ctx.overlays?.call(s.id);
+  if (overlays != null && overlays.any((o) => o.intersects(rect))) {
+    throw const PlanException('overlay_conflict', SortRefusal.overlayMessage);
+  }
+  checkNotProtected(b, s, [rect]);
+}
+
+/// Throws `protected_range` when writing [rects] of [s] is blocked for the
+/// acting user (07 §10.3).
+void checkNotProtected(PlanBuilder b, SheetModel s, List<GridRect> rects) {
+  if (s.protections.isEmpty) return;
+  final g = ProtectionGuard(
+    b.model,
+  ).check(CellWrites(s.id, rects), b.ctx.userId, isOwner: b.ctx.isOwner);
+  if (g.isBlocked) {
+    throw PlanException(
+      'protected_range',
+      GuardResult.blockedMessage,
+      details: {'protectionIds': g.protectionIds.toList()},
+    );
   }
 }
 
@@ -71,6 +91,7 @@ RowMoveStrategy applyRowPermutation(
   if (identity && keep == n) return st;
   final hooks = b.ctx.formulas;
   if (st == RowMoveStrategy.contentMove) {
+    _moveSingleRowMerges(b, s, rect, permutation, keep);
     final snapshot = <int, Map<int, Map<String, Object?>>>{};
     for (final (r, c, _, _, cur) in b.cellsIn(s, rect)) {
       (snapshot[r - rect.top] ??= {})[c - rect.left] = cellData(cur);
@@ -201,6 +222,49 @@ RowMoveStrategy applyRowPermutation(
   return st;
 }
 
+/// Content move: single-row merges inside [rect] travel with their row's
+/// content (07 §2.4); merges of cleared rows (dedupe) are removed. Merges
+/// that only partially overlap the rect's columns are refused.
+void _moveSingleRowMerges(
+  PlanBuilder b,
+  SheetModel s,
+  GridRect rect,
+  List<int> permutation,
+  int keep,
+) {
+  final merges = s.mergesIntersecting(rect);
+  if (merges.isEmpty) return;
+  final dest = List<int>.filled(rect.rowCount, -1);
+  for (var i = 0; i < keep; i++) {
+    dest[permutation[i]] = i;
+  }
+  for (final (id, m) in merges) {
+    if (m.rowCount > 1) {
+      throw const PlanException(
+        'merge_conflict',
+        SortRefusal.verticalMergeMessage,
+      );
+    }
+    if (m.left < rect.left || m.right > rect.right) {
+      throw const PlanException(
+        'merge_conflict',
+        "Can't sort a range that only partially includes merged cells",
+      );
+    }
+    final from = m.top - rect.top;
+    final to = dest[from];
+    if (to == from) continue;
+    if (to < 0) {
+      b.delete(SheetsTables.mergedRange, id);
+      continue;
+    }
+    final row = rect.top + to;
+    b.update(SheetsTables.mergedRange, id, {
+      Cols.rangeJson: s.gridRange(GridRect(row, m.left, row, m.right)).encode(),
+    });
+  }
+}
+
 String? _keyOf(
   SheetModel s,
   String rowId,
@@ -247,7 +311,8 @@ void _repinRuleRanges(
     }
   }
 
-  single(SheetsTables.mergedRange, s.merges.values, Cols.rangeJson);
+  // Merges are single-row here (vertical ones force a content move) and
+  // travel with their row, so they are not re-pinned.
   single(SheetsTables.banding, s.bandings.values, Cols.rangeJson);
   single(SheetsTables.filterView, s.filterViews.values, Cols.rangeJson);
   if (s.basicFilter != null) {

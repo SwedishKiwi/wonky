@@ -1,8 +1,12 @@
-# Wonky Sheets — implementation status (paused)
+# Wonky Sheets — implementation status
 
-Work on Wonky Sheets was **paused** on 2026-10-12 so the first iteration could ship a complete
-Wonky Write. Everything below compiles (`dart analyze` reports 0 errors); nothing is wired
-into a running UI yet. Use this file to pick the work back up. The plan to follow is
+Wonky Sheets was paused on 2026-10-12 and completed for its first iteration on 2026-10-14:
+the app runs on the offline-sync replica with the editor, formulas, formatting, conditional
+formatting, data tools, validation, protection, pivots, charts, import/export/print,
+collaboration and history, the `sheets.*`/`ui.sheets.*` MCP tools and the AI assistant. The
+scripting engine, its server side and the scripting UI are built (09 §23). Deferred
+work is listed in the root `TODO.md` ("Wonky Sheets — open items"); the rows below describe
+each area as built. The plan the work followed is
 [13-implementation-plan.md](13-implementation-plan.md).
 
 ## Summary
@@ -11,59 +15,93 @@ into a running UI yet. Use this file to pick the work back up. The plan to follo
 |------|----------------|-------|
 | Sync models (`database: sync`) | `packages/wonky_sync_models/lib/src/models/*.spy.yaml` | **Done.** All tables of 02 §3 and the feature additions of 02 §9 are defined and generated. They are part of the server migration. |
 | Ids, fractional index, base-62 UUID | `packages/wonky_sync_models/lib/ids.dart` → `lib/src/ids/` | **Done and tested** (`dart test test/ids test/property`). |
-| Formula engine | `packages/wonky_sheets_core/lib/formula.dart` → `lib/src/addressing/`, `lib/src/formula/` | **Mostly done.** Parser (locales), A1 ⇄ stored codec with id tokens, reference rewriter, evaluator, spill, LAMBDA/LET, QUERY, dependency graph and recalculation. About 380 functions registered (catalog target ~480). Services: autocomplete, signature help, highlighter, diagnostics, explain. |
+| Formula engine | `packages/wonky_sheets_core/lib/formula.dart` → `lib/src/addressing/`, `lib/src/formula/` | **Done and tested.** Parser (locales), A1 ⇄ stored codec with id tokens, reference rewriter, evaluator, spill, LAMBDA/LET, QUERY (parser + executor), dependency graph, recalculation with cycle detection and iterative calculation, `compileWithBindings` (pivot calculated fields). Every function of 05 §15 is registered: 517 canonical + 37 aliases; 25 are explained `#NAME?` stubs (GOOGLEFINANCE, BESSEL*, CUBE*, WEBSERVICE, ODDF*/ODDL*, …). Services: autocomplete, signature help, highlighter, diagnostics, explain. |
 | Workbook model | `lib/src/model/`, `lib/src/content/` | **Done and tested.** `WorkbookModel`, `AxisIndex` (Fenwick), `CellStore`, `RectIndex`, `GridRange`, `CellContent` codec, rich text. |
-| Mutation planner + undo | `lib/src/mutations/` | **Mostly done.** `SheetsMutationPlanner().plan(op, model, PlanContext)` returns a `MutationPlan` of `RowChange`s; undo via `UndoInverter.invert`. `WorkbookMaintenance` is in the same folder. |
+| Mutation planner + undo | `lib/src/mutations/` | **Done and tested.** `SheetsMutationPlanner().plan(op, model, PlanContext)` plans every `SheetsOperation` (incl. sort, dedupe, trim, split, find/replace, fill series, decimals, groups, paste with hidden rows and CF/DV re-anchoring); undo via `UndoInverter.invert`. `WorkbookMaintenance` re-anchors to the nearest surviving row/column. Seeded op-sequence property test. |
 | Engine ↔ model bridge | `lib/src/engine_bridge/` | **Done.** `ModelEngineBinding`, `ModelWorkbookView`, `EngineFormulaHooks`, `ModelCellSource`. |
 | Formatting core | `lib/src/format/` | **Done.** Effective-format resolver, themes, banding, borders. |
-| Number formats, input parsing, fill series | `lib/src/format/number_format/`, `lib/src/input/`, `lib/src/fill/` | **Done and tested** (641 tests). Only the contract files are exported from `lib/model.dart` (see open items). |
-| Rules (CF/DV), data tools, pivots | `lib/src/rules/`, `lib/src/data_tools/`, `lib/src/pivot/` | **Partial.** The helper was cut off while writing its cleanup/split/random/stats tests. Not reviewed; not exported. |
-| Charts engine + objects | `lib/src/charts/`, `lib/src/objects/` | **Partial / large** (about 12.6k lines). Cut off while writing test support. Not reviewed; not exported. |
-| CSV/TSV/XLSX/ODS import/export | `lib/src/io/` | **Partial.** In-house OOXML/ODS reader/writer on `archive` + `xml` (no `excel_plus`; spec 11 §5.1 updated). Not reviewed; not exported. |
-| Clipboard codecs, HTML export, print/PDF | `lib/src/clipboard/`, `lib/src/io/html/`, `lib/src/io/print/` | **Partial.** Cut off while writing HTML fixtures and codec tests. |
+| Number formats, input parsing, fill series | `lib/src/format/number_format/`, `lib/src/input/`, `lib/src/fill/` | **Done and tested.** Full barrels exported; `CellTextFormatter` gives a cell's display text; engine hint presets resolve. |
+| Rules (CF/DV), data tools, pivots | `lib/src/rules/`, `lib/src/data_tools/`, `lib/src/pivot/` | **Done and tested.** `CfEvaluator` (incl. `evaluateRect`), `DvEvaluator`, filter/find/sort/cleanup/split/stats engines, `PivotEngine` (+ time-sliced `computeSliced`, `showEmptyGroups`, color filters) + `PivotLayout` + `PivotDataLookup` (GETPIVOTDATA); `PivotOutputs` places pivots headlessly (exports); `FormulaEngine.spillAreas`. |
+| Charts engine + objects | `lib/src/charts/`, `lib/src/objects/` | **Done and tested.** `ChartPipeline` (resolve → layout → `ChartScene`; SVG/PDF/PNG export), recommender, describer, sparklines, smart guides. |
+| CSV/TSV/XLSX/ODS import/export | `lib/src/io/` | **Done and tested.** In-house OOXML/ODS reader/writer on `archive` + `xml`. `IrToRowsPlanner` (IR → undoable plan, all import locations, cell limit) and `ModelToIr`; XLSX charts both ways; round-trip tests. |
+| Clipboard codecs, HTML export, print/PDF | `lib/src/clipboard/`, `lib/src/io/html/`, `lib/src/io/print/` | **Done and tested.** `ClipboardEncoder` / `ClipboardDecoder`, `HtmlExporter`, `Paginator` + `SheetsPdfRenderer`. |
 | Snapshots / version diff, space copy | `lib/src/snapshot/`, `lib/src/copy/` | **Done.** |
-| Server: spaces, sync endpoint, change log, versions | `wonky_server/lib/src/sheets/` | **Partial.** Models and endpoints exist (reserve/subscribe spaces, custom sync endpoint, change-log consumer skeleton); not exercised by a client. Server-side `createSpreadsheet` may be incomplete. |
-| Flutter app | `wonky_sheets/lib/` | **Shell only.** The app boots through `wonky_app` (sign-in, home filtered to spreadsheets). `/s/:uuid` shows a "coming soon" placeholder. No sync controller, grid, menus or panels. |
-| Scripting | `packages/wonky_sheets_script/` | **Not started.** |
-| MCP / AI for Sheets | — | **Not started.** |
+| Server: spaces, sync endpoint, change log, versions | `wonky_server/lib/src/sheets/` | **Done and tested for sync** (`test/integration/sheets/sheets_sync_test.dart`, 14 tests with real client devices in isolates over HTTP). Reserve/subscribe/unsubscribe/ensureSubscribed/spaceStats, custom `sheetsSync.sync` with `onMergeSuccess` (merge marks per stream), `registerSpreadsheet` (idempotent; item uuid = space uuid for every spreadsheet creation path), role mirroring on share/role change/removal/trash, title mirroring both ways, templates and copies. Change-log consumer: claim → consume → complete receipts (exactly once; stale claims retried after 10 min), title mirrored on every change, `modifiedAt`/search text throttled to 10 s with a trailing refresh. `ServerSheetsWriter` (reverts, restores, script writes) runs on the batched `SheetsBulkWriter`; `sync/synced_tables.dart` is a thin adapter over the shared `wonky_sync_models/tables.dart` codec; offline-sync patch OS-6 skips the FK projection when deleting rows of unreferenced tables (cells): a 20k-cell revert takes ~5 s (was ~50 s), `test/integration/sheets/sync/server_writer_perf_test.dart` (`-t slow`). |
+| Sync & data layer (client) | `wonky_sheets/lib/features/sync/`, `features/model/`, `wonky_sync_models/lib/tables.dart` | **Done and tested** (`flutter test test/sync test/model -x slow`, 44 tests incl. a property test and an in-process sync server; `-t slow`: 200k-cell open). `SheetsSyncController` (per user; guard → `syncOnce` → continuous sync on `sheetsSync.sync`, backoff, offline/*Simulate offline*, pause when hidden, reserved-space pool of 3; after each sync the IndexedDB cell cap and the weekly purge of hidden spaces, offline-sync patch OS-5), `SheetsReplica` (`sheets_<userId>.db`, web: `sqlite3.wasm` + `db_worker.js` in `web/`; keyset paging, `loadCells` by row ids), `SheetsWriter` (≤ 5,000-change transactions, `columnValues`, `ChangeLog`; lint test), `SyncedWorkbookSession` (subscribe + download progress, offline open, **viewport-first loading**: metadata + the restored/first window → `WorkbookReady`, the rest streams in 500-row blocks with ≤ 5,000 cells per frame, grid-requested rows first, `rowLoading` + `LoadingGate` refuse writes to rows still loading; 200k cells: ready 0.55 s, complete 8.8 s; incremental remote patches through the U11 change journal, role from subscribe/membership/drive changes), `SheetsData` (install at sign-in, `openWorkbookSession` with the `LocalViewState` viewport hint, offline-first *New spreadsheet*, recovery export of a replica that can't be opened (desktop: "Download unsynced changes" ZIP of XLSX + rows.json), "Offline storage is limited in this browser" (Settings › Offline & storage + one toast) with a 200k-cell cap). `LocalViewState` in the user store (`features/model/local_view_state.dart`, `sheet_editor/view_state_binding.dart`). Drive: "Created offline" badge for queued creations/registrations. Deferred: `ComputedValueCache` (see TODO). |
+| Flutter app (editor UI) | `wonky_sheets/lib/` | **Foundation done and tested** (`flutter test`, editor suites in `test/commands`, `test/features`). `/s/:uuid` is the spreadsheet editor (`SheetEditorScreen` in the shell's `EditorScaffold`): full menubar of 04 §3 (unbuilt features listed as disabled placeholder commands), toolbar of 04 §4 (all formatting backed by planner ops incl. borders picker, colors, number formats, merge, paint format), formula bar + name box, painter-based virtualized grid (frozen panes, headers, gridlines, formats, merges, borders, overflow/wrap/####, rotation, checkboxes, error/note triangles, zoom 50–200 %, hidden rows/cols, resize/auto-fit/freeze drags, `GridLayer` plug-ins), id-based multi-range selection and the 03 §7 keyboard map, cell editor (ready/enter/edit/point modes, syntax colors, reference boxes, F4, autocomplete, signature help, live parse errors, Mod+Enter), clipboard (internal payload + TSV/HTML, paste special), fill handle/series/Mod+D/R, row/column/cell structure commands, sheet tabs (add/rename/delete/duplicate/reorder/color/hide), selection stats, status bar, context menus, light/dark, view mode for viewers, `sheets.rows` undo with the skip rule. See *Editor UI* below. |
+| Pivot tables (app) | `wonky_sheets/lib/features/pivot/`, `commands/pivot_commands.dart` | **Done and tested** (`flutter test test/features/pivot test/commands/pivot_commands_test.dart`). Insert › Pivot table dialog, `sheets.pivot.*` commands, editor panel (rows/columns/values/filters cards, drag & drop, grouping, calculated fields, filters by values/condition/custom formula/color, *Show items with no data*, suggestions), output as engine overlay (`ModelWorkbookView.overlays`) read by formulas/GETPIVOTDATA/clipboard, header/total styling, write guard, *Edit* button, drill-down, debounced refresh; big sources (≥ 100k rows) recompute in an isolate (native) or time-sliced (web) with the stale output dimmed and an "Updating…" pill; spill vs pivot by anchor order; cut/paste moves outputs (also to another sheet); *Create pivot group* from selected labels; XLSX/ODS export writes output as cells. Slicers with *apply to pivot tables* on the same range filter the source. Notes and gaps: 07 §7.13 (delta aggregation P2). |
+| Data tools (app) | `wonky_sheets/lib/features/{data_tools,filters,find,groups,named_ranges,slicers}/`, `commands/{sort,filter,find,cleanup,named,group,slicer}_commands.dart` | **Done and tested** (`flutter test test/commands/{filter,group,find,cleanup_named}_commands_test.dart test/commands/data_tools_phase3_test.dart test/features/data_tools`). Basic filter (header buttons, column popover with sort/sort by color/color/condition/values + live draft preview, green outline/row numbers, `filter`/`filterView` hidden layers → SUBTOTAL, copy visible only, open-ended range from the data region, sticky edit row dimmed + badge), filter views (saved + temporary, dark headers, view bar, panel, Data › Change view, `?fv=`; the basic filter keeps feeding formulas while a view is shown — suppressed layer), sort dialog + multi-key sort, *Freeze row 1 and re-sort* toast, `DataJobs` progress toasts (≥ 20k rows), find bar + Find and replace, remove duplicates, split text, column stats, cleanup suggestions panel, named ranges/functions panels + named function import (server `namedFunctions`), row/column groups, Go to, slicers (object view, values popover, panel, viewer-local overrides). Gaps: view-only sort in filter views (needs a grid row display permutation), DataJob has no %/cancel; slicers filter pivots through `PivotOverlayService.slicerMask` (needs a live check). Notes: 07 *Implementation notes*. |
+| Data validation, in-cell widgets, protection (app) | `wonky_sheets/lib/features/{data_validation,in_cell,protection,links}/`, `commands/{dv,protection,link,note}_commands.dart` | **Done and tested** (`flutter test test/features/data_validation test/features/in_cell test/features/protection test/features/links`). DV panel (all criteria, chip colors, drag/Alt+↑↓ item reorder, advanced options, live grid preview of the draft, hover/focus highlight of a rule's ranges), `DataValidationController` over the core `DvEvaluator` (invalid-marker layer, strict rejection in the cell editor commit and the `writeGates` gate, typed formulas checked with their detached result, *Invalid entry* dialog), Insert › Checkbox/Dropdown, chips, picker popover, date picker, link/note/error/invalid/help hover cards, note popover, link dialog with sheet/named-range search, dashed outline of cells blocking a selected `#SPILL!`; protection panel + permissions dialog (invite non-editors by email, editor list cached for offline), stripes layer (shown/hidden per user in `LocalViewState`), `ProtectionController` gate on every `apply` (blocked dialog / *Heads up!* with 5-min snooze, the command resumes after OK via `applyConfirmed`; agents get `protected_range`). Gaps: see TODO (Sheets › DV/protection). |
+| Charts, images, objects (app) | `wonky_sheets/lib/features/{charts,objects,images}/`, `commands/{chart,object,image}_commands.dart`, server `sheets/images/` | **Done and tested** (`flutter test test/commands/object_chart_commands_test.dart test/commands/image_commands_test.dart test/features/objects test/features/charts`, 60 tests). Objects layer = positioned widgets over the grid (`SheetObjectsHost`, `RepaintBoundary` per object, clipped to the anchor's pane), selection frame + 8 handles + ⋮ menu, drag move/resize with live ghost, Alt grid snapping and smart guides, auto-scroll, nudge (bursts coalesce), z-order, duplicate, copy/cut/paste (in-app clip + system-clipboard marker), alt text dialog, object key scope `sheetsObject`. Charts: Flutter `ChartScenePainter` + `FlutterTextMeasurer`, `ChartController` (debounced re-resolve on local/remote changes), hover tooltips, legend highlight, double-click → editor section, chart editor panel `sheets.panel.chartEditor` (Setup + Customize, type picker with suggestions/`ChartTypeIcon`), download PNG/SVG/PDF, view data table, chart sheets (move to own sheet / back, tab icon). Images: upload/URL insert over cells or in cell, replace, reset size, place in cell / over cells, `IMAGE()` and `SPARKLINE()` painted by `RichCellLayer`, server image proxy `sheets.fetchImage`. Core fix: objects whose `sheetId` changes move between sheet maps. Gaps: see TODO (Sheets › charts/objects). |
+| Formatting UI (06) | `wonky_sheets/lib/features/{formatting,number_format,theme,banding,conditional_format}/`, `commands/{format_extra,cf,banding,theme}_commands.dart` | **Done (phase 3).** CF panel (all 06 §15.2 conditions; custom formulas in `FormulaField` with autocomplete/signature/point mode; exact-date calendar; field errors after interaction), `CfController` (fine-grained invalidation, background `RangeStats` > 100k cells), data bars/icons; alternating colors (rows or columns, range outline while editing); themes panel + *Import theme*; number format dialogs (colored currency examples, translatable currency names); spreadsheet settings; Settings › Sheets user defaults (`SheetsUserDefaults`: locale/time zone/font/size of new spreadsheets, Enter starts editing, autocomplete, editor mode, reduce animations, custom fill lists); cell fonts (9 bundled families incl. Roboto/Lato/Roboto Mono, "Aa" previews, PDF embeds them); rich text runs (B/I/U/S/color/font/size and link runs via Mod+K on a selection, cell-only formatting disabled meanwhile, runs in the formula bar). Tests: `test/commands/{cf,banding_theme}_commands_test.dart`, `test/features/{formatting,number_format}`. Gaps: spreadsheet display language (P2); Merriweather/Montserrat/Nunito/Source Sans 3/Courier Prime not bundled (substituted). Notes: 06 §20. |
+| Import / export / print (app + server) | `wonky_sheets/lib/features/{import,export,import_export,print}`, `commands/{file_io,print}_commands.dart`, `wonky_server/lib/src/sheets/{imports,exports}` | **Done (first iteration)**, see 11 §1.5. Import dialog (6 locations, CSV options, sheet selection, preview, limit check, one undo step), grid drop, home upload handler, downloads (XLSX/ODS/PDF/HTML/CSV/TSV + export report), print route with live preview/thumbnails/settings/page breaks, `SetPrintSettings` undoable; server `drive.import`/`drive.export` for spreadsheets. Tests: `flutter test test/commands/file_io_commands_test.dart test/commands/print_commands_test.dart test/features/print test/features/import_export` (27), server `test/integration/sheets/io` (6). Gaps: server import jobs into existing spreadsheets, desktop printing, JSON, dark PDF, drag-handle break mode. |
+| Scripting | `packages/wonky_sheets_script/`, `third_party/dart_eval/`, `wonky_server/lib/src/sheets/scripts/`, `wonky_sheets/lib/features/{scripts,macros}/`, `commands/{script,macro}_commands.dart` | **Done (first iteration).** Engine (interpreted Wonky Script API over a host bridge, isolate/inline runners, custom functions, macro codegen, compiler with subset lint) and server (compile/run/executions/authorization/URL proxy/triggers/MCP tools, user properties in the personal space). App: `ScriptService` per editor (last good build, one undo step "Script: fn" per run, simple triggers, custom functions in formulas + autocomplete, executions upload), script editor `/s/:uuid/script` on `re_editor` (files, functions, Problems/Log/Executions, run picker, run on server, find/replace, light/dark, narrow dropdown), authorization/triggers/settings/conflict dialogs, executions panel, custom menus, script alerts/prompts/toasts, macros (recording bar, `macros.dart` + `Macro` row, `sheets.macro.m<id>` with Mod+Alt+Shift+1…0, manage/import). Tests: 407 package, 434 dart_eval, 230 server (+3 user properties), app `flutter test test/features/scripts test/features/macros` (36). Gaps: 09 §23. |
+| Collaboration, comments, history (10) | `wonky_sheets/lib/features/{collab,comments,history}/`, `commands/{collab,comment,history}_commands.dart`, `wonky_server/lib/src/sheets/versions/` | **Done (first iteration).** Presence (cursor JSON with ids, remote cursors/ranges/name flags layer, avatar details "Editing Sheet1!B4", sheet-tab dots, jump-to, follow mode with banner + `FollowerCount` viewport), commit hints (sender with computed formula values, overlay through `CellRenderCache.hinted`, 5 s expiry, pending tint), comments (cell/range anchors by ids, indicators, hover card with notes, docked thread card, next/previous, indicator toggle, `?comment=` deep links incl. notification links), version history (`SheetsVersionRenderer`: read-only snapshot grid, changed cells outlined, next/previous change, make a copy from a version via `SpaceCopier`), restore undo through `sheets.serverChange` (`SheetsServerChangeHandler` → `revertChange`), cell edit history popover (local change log + server `CellHistory`, Restore this value), remote "row deleted by …" toast. Server restore uses `SheetsBulkWriter` with deleted/revived summary + cell details and a presence notice. Tests: `flutter test test/features/{collab,comments,history}` (34 + 4 skipped §10 scenarios = sync findings). Open: see `TODO.md` (Sheets collaboration). |
+| MCP / AI for Sheets | `wonky_server/lib/src/sheets/{headless,mcp,ai}/`, `wonky_core/lib/mcp/sheets_tools.dart` | **Server done** (12 §2–4, §6). Headless workbook cache with transaction-watermark patching; 60 `sheets.*` tools + `drive.create_spreadsheet`, resources and prompts; `changes.revert`; assistant bound to spreadsheets (context builder, guard, Suggest-mode previews, one undo step per run); `sheetsAi` endpoint (formula suggestion, explain, fill, chips, chart alt text, previews). Tests: `test/integration/sheets/**`, `test/unit/ai/sheets_context_builder_test.dart`, `test/unit/mcp/sheets_tool_schemas_test.dart`. **App done** (12 §5–7, 04 §7): 12 `ui.sheets.*` bridge tools (`wonky_sheets/lib/mcp/`), assistant panel (Sheets adapter, chips, hints, Show, one undo step per run, Suggest-mode preview dialog), ✨ formula suggestion + Explain card, Fill with AI dialog, Explore panel, agent presence highlight for bridge calls and own AI runs (`features/{ai,assistant,explore}/`, `commands/ai_commands.dart`; tests `test/features/ai`, `test/mcp`). Open: highlight of external headless MCP writes, `ui.sheets.describe_panel`/`set_panel_field` (P1), assistant access to `ui.sheets.*` from the requesting window (12 §6.2), per-spreadsheet mutating rate limit, `AI()` (P2), cleanup suggestions (P2), `group_dimension` (P2), PNG pixel-diff fixtures. |
+| Live verification (release build) | browser pane against `wonky_server/web/sheets` | **Done** (Phase 3, light + dark, 1280 px and ~400 px): typing/formulas/autocomplete, toolbar + Mod+B/Z/⇧Z, number-format dialogs, CF (color scale + custom formula), alternating colors, sort dialog, basic filter + popover (Mod+Alt+R), filter view, find (Mod+F) and Find and replace (⇧⌘H), remove duplicates, split text, named ranges, groups, dropdown chip + picker, checkbox, warning protection, links, notes, pivot create/editor/drill-down, charts (insert/editor/move/resize, chart in frozen rows), print preview, import dialog, comments (Mod+Alt+M), version history name/view/restore, cell edit history, AI not configured + Explore, two-tab collaboration. Fixed: centred context menus (`WonkyPopupMenuHost`), filter popover off-screen for column A, warning-only protections not warning the owner/creator, selection following rows after sort/randomize, versions list not reloading, status bar clipping, left-aligned list texts in ghost buttons, CF kind segments wrapping, empty-pivot *Edit* button over the placeholder. Not driven: file pickers and downloads. Open: `TODO.md` (Sheets items 1, 2, 4–8, 11, 12). |
 
 ## Housekeeping done while paused
 
 - `vector_math` added as a declared dependency of `wonky_sheets_core` (it was imported by the PDF print renderer without being declared).
 - All Sheets packages formatted, with `dart fix` applied (curly braces) and the remaining lints fixed. `dart analyze` reports no issues; the repository-wide dependency check (`tool/check_dependencies.dart`) passes.
 
-## Test status (`dart test -x slow` in `packages/wonky_sheets_core`)
+## Test status (`packages/wonky_sheets_core`)
 
-2,956 tests pass and 5 fail. All five failures are in `test/formula/recalc/engine_test.dart`:
-- moving rows: references don't follow the data;
-- two spills collide: the earlier anchor doesn't win;
-- circular references (three tests): two-cell cycle error propagation, recomputing after the cycle is broken, and iterative convergence.
+`dart analyze` reports no issues. `dart test` (default run, `slow` excluded): **4,827 tests pass**,
+0 fail; `dart test -t property`: 250 pass. No suite is tagged `slow` yet. `wonky_sync_models`:
+67 pass. `test/barrels_test.dart` checks that the main entry points resolve through `model.dart`
++ `formula.dart` without name clashes.
 
-## Open items to finish the core before UI work
+## Open items in the core (minor)
 
-1. **Exports.** Add the helper barrels to `lib/model.dart`:
-   - in place of the contract files: `format/number_format/number_format.dart`, `input/input.dart`, `fill/fill.dart`;
-   - plus `rules`, `data_tools`, `pivot`, `charts`, `objects`, `io`, `clipboard`.
-
-   Review each barrel first and check for export name clashes with `lib/formula.dart`.
-2. **Planner ops** still throw `PlanException('unsupported')` in `lib/src/mutations/handlers/data.dart`:
-   - SortRange, RemoveDuplicates, TrimWhitespace, SplitTextToColumns, FindReplace, FillSeries, AdjustDecimals, GroupOperation.
-
-   The row-permutation machinery is ready in `handlers/row_move.dart`; each op only needs the matching helper engine wired in.
-3. **Tests.** Add `dart_test.yaml` to `wonky_sheets_core` declaring the `property` and `slow` tags. Then fix the five failing engine tests above.
-4. **Function catalog.** Fill the gap from about 380 to the ~480 functions of 05.
-5. **Spec fixes:**
-   - 03 §8.6: change currency detection to match 06 §5.9 (`"$"#,##0`; other symbols `[$€]`).
-   - 06 §5.9: list the time formats `h:mm`, `h:mm AM/PM`, `h:mm:ss.000` as in 03 §8.6.
-   - 01 §2.1 and the vendored-package table: remove `excel_plus`.
-6. **Known limit:** when an anchor id is gone and there's no sort-key hint, `WorkbookMaintenance` re-anchors pivots and objects to the first row/column instead of the nearest one.
+- Charts with no Excel equivalent are listed in the XLSX/ODS export report instead of being
+  exported as images; bubble/stock charts are not imported from XLSX.
+- CSV import plans the whole parsed document (not O(chunk) memory as 11 §4.5 asks); a 1M-cell
+  CSV plans in ~10 s.
+- A plain move (drag/cut without hidden rows) carries CF/DV rules without re-anchoring their
+  relative formulas.
+- The app must invalidate the `CfEvaluator`/`DvEvaluator` caches itself (after recalcs, rule
+  edits, midnight); `WorkbookModel` has no content-generation counter.
+- `tool/check_dependencies.dart` still lists `excel_plus` for `wonky_sheets_core` (01 §2.1 no
+  longer does); remove it there.
 
 ## Next steps (UI, in the order of 13 §6)
 
-Sync controller and `SheetsWriter` (`wonky_sheets/lib/features/sync`, `features/model`) →
-grid rendering → selection/editing/formula bar/clipboard/fill → menus/toolbar/tabs (04) →
-formatting UI → CF/DV/filters → charts → pivots → import/export/print → comments/history →
-MCP/AI → scripting.
+~~Sync controller and `SheetsWriter`~~ (done, `wonky_sheets/lib/features/sync`) →
+~~grid rendering → selection/editing/formula bar/clipboard/fill → menus/toolbar/tabs (04) →
+formatting UI~~ (foundation done, see *Editor UI*) → CF/DV/filters → charts → pivots →
+import/export/print → comments/history → MCP/AI → scripting.
+
+## Editor UI (Flutter app) — how to extend it
+
+- **Commands**: every action is a `SheetsCommand` (`wonky_sheets/lib/commands/`, registered by
+  `sheetsCommands()`); `mutates: true` commands get an undo transaction and record one
+  `sheets.rows` entry per plan through `SheetEditorController.apply(ctx, op)`. Placeholders
+  (`placeholderCommands()` in `data_commands.dart`) keep their id, label and icon: a feature
+  removes its id there and registers the real command (same id) in its own file.
+- **Menus**: `config/sheets_menus.dart` (`MenuSpec` tree; dynamic items through
+  `MenuCustomItems` in `sheet_editor_screen.dart`). **Context menus**:
+  `config/context_menus.dart`. **Toolbar**: `features/toolbar/sheets_toolbar.dart`
+  (`CommandUi.button/toggle/item`).
+- **Grid layers**: implement `GridLayer` (`features/grid/paint/grid_layer.dart`, `GridZ`
+  orders) and `controller.layers.add(layer)`; conditional formatting plugs into
+  `CellRenderCache.conditional`.
+- **Panels**: pass `SidePanelSpec`s to `EditorScaffold.panels` in `SheetEditorScreen.build`
+  (none yet). **Dialogs**: `features/dialogs/sheets_dialogs.dart` (`WonkyDialogSpec`, so MCP
+  can operate them).
+- **Strings**: `lib/l10n/sheets_en.arb` (`flutter gen-l10n`).
+
+Built in phase 3 (`flutter test test/features/{grid,sheet_editor,cell_editor,formula_bar,common}`):
+`LocalViewState` restore (sheet, selection per sheet, scroll, zoom, side panel, temporary
+filter views), Settings › Sheets editing preferences wired (Enter starts editing, formula
+autocomplete/help, column autocomplete + `sheets.tools.toggleAutocomplete`), column
+autocomplete (03 §8.5), live formula result chip (`FormulaPreviewController`, 03 §8.7),
+`GridSemantics` table nodes + `SelectionAnnouncer` (03 §18), drag-copy `+` cursor, context
+menus at the pointer, `RangeInput` picking while focused (also the pivot source range), loading
+skeleton layer, automatic text color by fill contrast, sort undo/redo keeping the selection.
+Known gaps of the editor: no tile cache (direct painting; median 12.6 ms, p95 20 ms per frame at
+1M cells in the debug test VM), bundled cell fonts (families other than the UI fonts fall
+back), named-range dropdown in the name box, remote-edit toasts beyond "row deleted".
 
 The `toptap` project (`~/Projects/toptap`) is a working reference for the offline-sync client
 (`createSyncSession`, `syncContinuously`, web SQLite with `sqlite3.wasm` + `db_worker.js`,
@@ -78,3 +116,7 @@ The `toptap` project (`~/Projects/toptap`) is a working reference for the offlin
 - **A1 input:** `model.parseA1`; failures throw `InvalidRangeException`.
 - **Input parsing:** `+`/`-` input can only become a formula when `isFormula` is passed (for example backed by `FormulaHooks`).
 - **Currency presets:** en_US uses `"$"`; every other locale uses `[$sym-LCID]`.
+- **Clipboard:** use `ClipboardDecoder.decode` (it fills `PasteSource.sourceRowIndices/ColIndices`,
+  `dvAnchors`, `cfAnchors`); `wonky_sheets/lib/features/clipboard/clipboard_service.dart` uses it.
+- **Overlays:** sort/randomize/dedupe refuse overlays only when `PlanContext.overlays` is supplied.
+- **Pivots:** calculated fields: pass `EnginePivotFormulaEvaluator(engine, sheetId:, row:, col:)`.

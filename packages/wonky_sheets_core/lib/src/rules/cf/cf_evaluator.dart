@@ -10,6 +10,7 @@ import '../../model/events.dart';
 import '../../model/grid_range.dart';
 import '../../model/sheet_model.dart';
 import '../../model/workbook_model.dart';
+import '../conditions/condition.dart';
 import '../conditions/condition_evaluator.dart';
 import '../conditions/display_text.dart';
 import '../conditions/relative_dates.dart';
@@ -256,6 +257,16 @@ final class CfEvaluator {
 
   final Map<String, _RuleState> _states = {};
   CfDraft? _draft;
+
+  /// Statistics of large ranges (06 §15.10: computed in the background when
+  /// a rule's ranges cover more than [asyncStatsCells] cells). Returns the
+  /// stats, or null while they are not ready: such rules then render
+  /// nothing and nothing is cached for them. Null = always synchronous.
+  RangeStats? Function(String sheetId, String ruleId, List<GridRect> rects)?
+  asyncStats;
+
+  /// Cells from which [asyncStats] is used.
+  int asyncStatsCells = 100000;
   _RuleState? _draftState;
 
   /// Sets (or clears) the draft rule previewed by the editor.
@@ -313,7 +324,7 @@ final class CfEvaluator {
     if (sheet == null) return RangeStats.empty;
     final st = _ruleState(sheet, ruleId);
     if (st == null) return RangeStats.empty;
-    return _stats(sheet, st);
+    return _statsOrPending(sheet, st) ?? RangeStats.empty;
   }
 
   // ---------------------------------------------------------------------------
@@ -363,7 +374,24 @@ final class CfEvaluator {
   }
 
   RangeStats _stats(SheetModel sheet, _RuleState st) =>
-      st.stats ??= RangeStats.collect(sheet, values, st.rects);
+      _statsOrPending(sheet, st) ?? RangeStats.empty;
+
+  /// The stats of [st], or null while [asyncStats] computes them.
+  RangeStats? _statsOrPending(SheetModel sheet, _RuleState st) {
+    final cached = st.stats;
+    if (cached != null) return cached;
+    final f = asyncStats;
+    if (f != null && st.rule.usesRangeStats) {
+      var cells = 0;
+      for (final r in st.rects) {
+        cells += r.cellCount;
+      }
+      if (cells > asyncStatsCells) {
+        return st.stats = f(sheet.id, st.id, st.rects);
+      }
+    }
+    return st.stats = RangeStats.collect(sheet, values, st.rects);
+  }
 
   /// The rules applying at a cell, in priority order.
   List<_RuleState> _candidates(SheetModel sheet, int row, int col) {
@@ -421,6 +449,9 @@ final class CfEvaluator {
       final Object result;
       if (cached != null) {
         result = cached;
+      } else if (rule.usesRangeStats && _statsOrPending(sheet, st) == null) {
+        // Large-range stats still computing: no scale yet, nothing cached.
+        continue;
       } else {
         result = _evaluateRule(sheet, st, row, col, cellValue()) ?? _noResult;
         (st.results[rowId] ??= {})[colId] = result;
@@ -457,6 +488,44 @@ final class CfEvaluator {
     );
   }
 
+  /// The conditional formatting of every cell of [rect] on [sheetId] that has
+  /// any (06 §15.10 visible-first evaluation: pass the visible window plus
+  /// overscan). Cells without conditional formatting are omitted. Only cells
+  /// covered by a rule (or the draft) are visited.
+  Map<CellPos, CfResult> evaluateRect(String sheetId, GridRect rect) {
+    final sheet = model.sheet(sheetId);
+    if (sheet == null) return const {};
+    final parts = <GridRect>[];
+    for (final id in sheet.rulesIntersecting(
+      RuleKind.conditionalFormat,
+      rect,
+    )) {
+      for (final r in sheet.ruleRects(RuleKind.conditionalFormat, id)) {
+        if (r.intersection(rect) case final GridRect i) parts.add(i);
+      }
+    }
+    final d = _draft;
+    if (d != null && d.sheetId == sheetId) {
+      for (final r in d.ranges) {
+        if (r.intersection(rect) case final GridRect i) parts.add(i);
+      }
+    }
+    if (parts.isEmpty) return const {};
+    final out = <CellPos, CfResult>{};
+    final visited = parts.length > 1 ? <CellPos>{} : null;
+    for (final p in parts) {
+      for (var r = p.top; r <= p.bottom; r++) {
+        for (var c = p.left; c <= p.right; c++) {
+          final pos = CellPos(r, c);
+          if (visited != null && !visited.add(pos)) continue;
+          final res = evaluate(sheetId, r, c);
+          if (!res.isEmpty) out[pos] = res;
+        }
+      }
+    }
+    return out;
+  }
+
   /// Evaluates one rule for a cell: bool (boolean rules), color string,
   /// [DataBarResult] or [IconResult]; null when nothing applies.
   Object? _evaluateRule(
@@ -480,7 +549,11 @@ final class CfEvaluator {
           value,
           row: row,
           col: col,
-          numberFormat: values.numberFormatAt(sheet.id, row, col),
+          // Only `dateIsValid` reads the format; skip the lookup otherwise.
+          numberFormat:
+              rule.condition.type.family == ConditionFamily.dateValidity
+              ? values.numberFormatAt(sheet.id, row, col)
+              : null,
         );
       case CfColorScaleRule():
         if (value is! NumberValue) return null;
@@ -615,6 +688,11 @@ final class CfEvaluator {
         final axis = -min / span;
         final pos = (x - min) / span;
         return negative ? make(pos, axis, axis) : make(axis, pos, axis);
+      case DataBarAxis.auto when max <= 0 && min < 0:
+        // All values negative: the axis sits at the far edge and bars grow
+        // away from it, the most negative value being the longest.
+        if (span <= 0) return make(0, 1, 1);
+        return make((x - min) / span, 1, 1);
       case DataBarAxis.auto:
       case DataBarAxis.none:
         if (span <= 0) return make(0, 1, null);

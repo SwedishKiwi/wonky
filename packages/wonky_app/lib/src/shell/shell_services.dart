@@ -252,6 +252,11 @@ class ShellServices implements ActiveDocumentHost {
   final ValueNotifier<int> driveRefresh = ValueNotifier(0);
   void refreshDrive() => driveRefresh.value++;
 
+  /// Bumped when this client created, renamed or restored a version, so that
+  /// open version lists reload.
+  final ValueNotifier<int> versionsRefresh = ValueNotifier(0);
+  void refreshVersions() => versionsRefresh.value++;
+
   /// Recently invoked command ids (palette "Recent").
   final List<String> recentCommands = [];
 

@@ -89,6 +89,9 @@ wonky:
     maxActiveSpacesPerUser: 30
     scriptTimeoutMs: 30000
     scriptDailyQuotaMs: 5400000
+    scriptServerTimeoutMs: 360000
+    scriptAllowHttp: false
+    scriptPoolSize: 4
   write:
     snapshotEveryNOps: 500
     maxDocumentChars: 2000000

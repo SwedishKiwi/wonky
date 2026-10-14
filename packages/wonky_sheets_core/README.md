@@ -1,0 +1,108 @@
+# wonky_sheets_core
+
+Pure-Dart core of Wonky Sheets: the workbook model, formula engine, mutation planner with undo,
+formatting, data tools, rules, pivots, charts, clipboard and import/export. Used by the Flutter
+app (`wonky_sheets`) and the server (`wonky_server`). Specs: `specs/wonky_sheets/`.
+
+## Barrels
+
+Import the two barrels together; they have no name clashes (`test/barrels_test.dart` checks
+this).
+
+| Import | Contents |
+|--------|----------|
+| `package:wonky_sheets_core/formula.dart` | Addressing (A1), formula parser and locales, A1 ⇄ stored codec, evaluator, ~517 functions, recalculation engine, editor services |
+| `package:wonky_sheets_core/model.dart` | Everything else (table below) |
+| `package:wonky_sheets_core/wonky_sheets_core.dart` | Both of the above |
+| `package:wonky_sheets_core/model_testing.dart` | Test helpers (`WorkbookBuilder`); never import it from `lib/` code |
+
+Each area also has its own barrel under `lib/src/<area>/<area>.dart`, and `model.dart`
+re-exports all of them.
+
+## Main entry points
+
+### Formula (`formula.dart`)
+- `FormulaEngine` is the recalculation facade: values, spills, cycles and iterative calculation.
+  - `compileWithBindings` / `evaluateWithBindings` evaluate a formula with named values; pivot calculated fields use them.
+- `FormulaCodec` converts between A1 and the stored form with id tokens. `ReferenceRewriter` rewrites references.
+- `FunctionRegistry.standard` holds the functions. `FunctionCatalog` lists them for the function menu and help.
+- Editor services:
+  - `completionsAt` (autocomplete)
+  - `signatureAt` (signature help)
+  - `FormulaHighlighter` (token spans and reference colors)
+  - `validateFormula` / `describeError` (diagnostics)
+  - `explainCell` (Explain formula)
+  - `autoFix`, `cycleAbsolute`, `toggleArrayFormula` (editing helpers)
+
+### Model, planner, undo (`model.dart`)
+- `WorkbookModel` and `SheetModel` hold the in-memory workbook built from sync rows. `model.applyPlan(plan)` applies a plan; `model.parseA1` parses A1 input.
+- `SheetsMutationPlanner().plan(op, model, PlanContext)` turns a `SheetsOperation` into a `MutationPlan` of `RowChange`s.
+  - Every operation in `operations.dart` is planned.
+  - `UndoInverter.invert(plan, model)` builds the undo plan.
+  - `WorkbookMaintenance` repairs invariants such as anchors, group depths and names.
+- Engine bridge:
+  - `ModelEngineBinding.create(model)` keeps a `FormulaEngine` in sync with the model.
+  - `EngineFormulaHooks` is the `FormulaHooks` passed in `PlanContext.formulas`.
+  - `ModelWorkbookView` and `ModelCellSource` give read access to the model.
+  - `ModelWorkbookView.overlays` (`ComputedOverlaySource`) layers computed cells (the app's pivot output) under empty cells; the engine reads them as literal inputs.
+  - `EnginePivotFormulaEvaluator` evaluates pivot calculated fields.
+- Snapshots and copies: `SpaceCopier`, `snapshot.dart`, `diff.dart` (version diff).
+
+### Formatting, number formats, input, fill
+- `EffectiveFormatResolver` (in `format_resolver.dart`) works out a cell's effective format; themes, banding and borders sit alongside it.
+- Number formats:
+  - `NumberFormatter` formats a value with a pattern and locale, including section colors.
+  - `CellTextFormatter` gives the display text of a cell's effective value.
+  - `NumberFormatPresets` holds the menu and toolbar presets.
+  - `DecimalsAdjuster` handles the decimal-places steps; `NumberFormatParser` / `NumberFormatInfo` validate and classify patterns.
+- `InputParser.parse` turns typed text into a value or formula plus an inferred format.
+- `SeriesDetector` detects fill and auto-fill series.
+
+### Rules, data tools, pivots
+- Conditional formatting: `CfEvaluator` (`evaluate`, `evaluateRect` for the visible window), plus `CfRule` and `CfPresets`.
+- Data validation: `DvEvaluator` returns markers, typed-input checks (accept, warn or reject), dropdown items and checkboxes. `DvCriteria` is the rule model.
+- Conditions: `ConditionEvaluator`, the condition model shared by CF, DV, filters and pivots.
+- Filter: `FilterEngine`, `FilterCriteria`, `ViewRowOrder`.
+- Find and replace: `FindEngine`, `ReplaceEngine`, `FindQuery`.
+- Sort: `SortSpec`, `SortPermutation`, `SortStrategy`.
+- Cleanup and split: `Dedupe`, `WhitespaceTrimmer`, `TextSplitter`.
+- Other data tools: `ColumnStats`, `GroupLayout`, `NameRules`, `ProtectionGuard`.
+- Pivots:
+  - `PivotEngine().compute(spec, SourceTable, PivotContext)` returns a `PivotResult`.
+  - `PivotLayout.build(result)` turns it into a `PivotGrid`.
+  - `PivotDataLookup.lookup` implements GETPIVOTDATA.
+
+### Charts and objects
+- `ChartPipeline` is the one entry point for charts:
+  - `resolve` turns a spec and data into `ChartData`.
+  - `build` produces a `ChartBuild`: the data plus a `ChartScene` for the Flutter painter.
+  - `exportSvg`, `exportPdf` and `exportPng` export a chart; `printSceneFor` supplies charts to the print renderer.
+- `ChartSpec` and `ChartSpecSchema` (spec and validation), `ChartRecommender`, `ChartDescriber` (accessibility text), `SparklineRenderer`.
+- Renderers: `SvgChartRenderer`, `PdfChartRenderer`, `RasterChartRenderer`. Supply a `TextMeasurer` for layout.
+- Objects:
+  - `ObjectAnchor` and `ObjectPlacement` position objects.
+  - `ObjectGeometry`, `GridSnap` and `SmartGuides` handle move, resize and snapping.
+  - `ZOrder` sets stacking order; `AnchorMaintenance` re-anchors objects.
+
+### Clipboard
+- `ClipboardEncoder.copy` turns a selection into TSV, HTML and a Wonky payload.
+- `ClipboardDecoder.decode` turns clipboard HTML or text into a `ClipboardPasteInput`, whose `PasteSource` feeds the `PasteClipboard` operation.
+- Lower-level parts: `TsvCodec`, `HtmlTableCodec`, `PasteTiling`, `R1C1Relative`.
+
+### Import and export
+All formats go through the intermediate representation (`WorkbookDocument`).
+- Import:
+  - Parse the file into IR with `CsvImporter.import`, `XlsxImporter.import` or `OdsImporter.import`.
+  - `IrToRowsPlanner.estimate` checks the cell limit for the import dialog.
+  - `IrToRowsPlanner.plan(doc, model, ctx, options:)` returns an undoable plan and an import report.
+- Export:
+  - `ModelToIr.convert(model, …)` builds the IR, then `XlsxExporter` or `OdsExporter` writes the file.
+  - `CsvExporter.export` writes the displayed values.
+  - `HtmlExporter.export` writes HTML.
+- Print and PDF: `PrintSettings`, then `Paginator.paginate`, then `SheetsPdfRenderer.render`. Fonts come from `BuiltInPdfFontProvider` or `TtfPdfFontProvider`.
+
+## Tests
+
+`dart test` runs the default suite; `slow` is excluded by `dart_test.yaml`, so use `dart test -P slow`
+for the benchmarks. Property tests (`property` tag) use fixed seeds; replay one with
+`WONKY_SEED=<seed> dart test <file>`. See `specs/15-writing-tests.md`.

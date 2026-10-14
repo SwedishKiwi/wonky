@@ -12,6 +12,7 @@ class OfflineUsage {
     this.pendingChanges = 0,
     this.pendingUploads = 0,
     this.bytes = 0,
+    this.warnings = const [],
   });
 
   static const empty = OfflineUsage();
@@ -31,12 +32,18 @@ class OfflineUsage {
   /// Approximate size of the local data.
   final int bytes;
 
+  /// Limits of this device the user should know about (Sheets: "Offline
+  /// storage is limited in this browser"), shown in Settings › Offline &
+  /// storage.
+  final List<OfflineWarning> warnings;
+
   OfflineUsage operator +(OfflineUsage o) => OfflineUsage(
     documents: documents + o.documents,
     pinned: pinned + o.pinned,
     pendingChanges: pendingChanges + o.pendingChanges,
     pendingUploads: pendingUploads + o.pendingUploads,
     bytes: bytes + o.bytes,
+    warnings: [...warnings, ...o.warnings],
   );
 
   @override
@@ -46,11 +53,36 @@ class OfflineUsage {
       other.pinned == pinned &&
       other.pendingChanges == pendingChanges &&
       other.pendingUploads == pendingUploads &&
-      other.bytes == bytes;
+      other.bytes == bytes &&
+      listEquals(other.warnings, warnings);
 
   @override
-  int get hashCode =>
-      Object.hash(documents, pinned, pendingChanges, pendingUploads, bytes);
+  int get hashCode => Object.hash(
+    documents,
+    pinned,
+    pendingChanges,
+    pendingUploads,
+    bytes,
+    Object.hashAll(warnings),
+  );
+}
+
+/// A storage limit of this device shown in Settings › Offline & storage.
+@immutable
+class OfflineWarning {
+  const OfflineWarning({required this.title, this.description});
+
+  final String title;
+  final String? description;
+
+  @override
+  bool operator ==(Object other) =>
+      other is OfflineWarning &&
+      other.title == title &&
+      other.description == description;
+
+  @override
+  int get hashCode => Object.hash(title, description);
 }
 
 /// Local data an app keeps for offline use (suite 12): Write's document

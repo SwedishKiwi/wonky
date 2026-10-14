@@ -104,6 +104,20 @@ void main() {
             GuardStatus.warnings,
           ),
           (
+            'creator writes into their warning range',
+            (s1, s2) => CellWrites(s1, [GridRect.cell(44, 0)]),
+            creator,
+            false,
+            GuardStatus.warnings,
+          ),
+          (
+            'owner writes into a warning range',
+            (s1, s2) => CellWrites(s1, [GridRect.cell(44, 0)]),
+            editor,
+            true,
+            GuardStatus.warnings,
+          ),
+          (
             'editor writes warning + blocked',
             (s1, s2) =>
                 CellWrites(s1, [GridRect.cell(44, 0), GridRect.cell(4, 5)]),

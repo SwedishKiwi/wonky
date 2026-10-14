@@ -30,6 +30,10 @@ enum AssistantEventType implements _isc.SerializableModel {
   /// The answer was cut off (max_tokens): the panel offers "Continue".
   maxTokens,
   refusal,
+
+  /// Sheets Suggest mode: the run recorded changes in a preview
+  /// (previewId) for the AI changes preview dialog (Sheets 12 §6.3).
+  previewReady,
   error,
 
   /// Last event of a run.
@@ -55,6 +59,8 @@ enum AssistantEventType implements _isc.SerializableModel {
         return AssistantEventType.maxTokens;
       case 'refusal':
         return AssistantEventType.refusal;
+      case 'previewReady':
+        return AssistantEventType.previewReady;
       case 'error':
         return AssistantEventType.error;
       case 'done':

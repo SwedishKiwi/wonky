@@ -178,6 +178,7 @@ class _EditorScaffoldState extends State<EditorScaffold> {
     if (c == null) return;
     s.activate(c);
     _comments.anchors = c.commentAnchors;
+    c.attachPresence(_presence);
   }
 
   @override
@@ -185,6 +186,7 @@ class _EditorScaffoldState extends State<EditorScaffold> {
     super.didUpdateWidget(oldWidget);
     if (oldWidget.controller != widget.controller) {
       final old = oldWidget.controller;
+      old?.attachPresence(null);
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (old != null) s.deactivate(old);
       });
@@ -230,6 +232,7 @@ class _EditorScaffoldState extends State<EditorScaffold> {
         (_) => s.deactivate(controller),
       );
     }
+    controller?.attachPresence(null);
     if (s.comments.value == _comments) s.comments.value = null;
     if (s.startTitleRename == _titleField.startEditing) {
       s.startTitleRename = null;
@@ -602,6 +605,8 @@ class _EditorScaffoldState extends State<EditorScaffold> {
                   p.sessionId,
                   userId: int.tryParse(p.userKey),
                 ),
+                onFollow: (p) =>
+                    widget.controller?.followParticipant(p.sessionId),
               ),
             ),
             const SizedBox(width: 8),

@@ -171,7 +171,9 @@ final class OpenFormulaTranslator {
     String? sheet;
     final cells = <String>[];
     for (final p in parts) {
-      final (sh, cell) = _splitSheet(p);
+      final split = _splitSheet(p);
+      if (split == null) return null;
+      final (sh, cell) = split;
       if (sh != null) sheet ??= sh;
       if (cell.isEmpty || cell.toUpperCase().contains('#REF!')) return '#REF!';
       cells.add(cell);
@@ -198,7 +200,9 @@ final class OpenFormulaTranslator {
     return out;
   }
 
-  static (String?, String) _splitSheet(String p) {
+  /// `(sheet, cell)` of one reference part; null when malformed (an
+  /// unterminated quoted sheet name).
+  static (String?, String)? _splitSheet(String p) {
     var s = p.trim();
     if (s.startsWith(r'$')) s = s.substring(1);
     if (s.startsWith('.')) return (null, s.substring(1));
@@ -214,6 +218,7 @@ final class OpenFormulaTranslator {
         }
         j++;
       }
+      if (j >= s.length) return null;
       final name = s.substring(1, j).replaceAll("''", "'");
       final rest = j + 1 < s.length && s[j + 1] == '.'
           ? s.substring(j + 2)

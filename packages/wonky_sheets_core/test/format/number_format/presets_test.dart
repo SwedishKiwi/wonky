@@ -165,6 +165,16 @@ void main() {
       });
     }
 
+    test('when asking a menu item for its example then it is formatted in '
+        'the locale', () {
+      final currency = NumberFormatPresets.menu.firstWhere(
+        (m) => m.id == 'currency',
+      );
+
+      expect(currency.example(), r'$1,000.12');
+      expect(currency.example(locale: 'de_DE'), '1.000,12 €');
+    });
+
     test('when looking up Mod+Shift+4 then it is the currency preset', () {
       expect(NumberFormatPresets.shortcutFormats[4], equals('preset:currency'));
     });
@@ -210,5 +220,44 @@ void main() {
         ], equals([true, true, true, false]));
       },
     );
+  });
+
+  group('Given the format-hint presets the engine reports', () {
+    final cases = <(String, String, String?)>[
+      ('preset:percent', 'en_US', '0.00%'),
+      ('preset:scientific', 'en_US', '0.00E+00'),
+      ('preset:duration', 'en_US', '[h]:mm:ss'),
+      ('preset:cur', 'en_US', r'"$"#,##0.00'),
+      ('preset:cur', 'de_DE', r'#,##0.00 [$€-407]'),
+      ('preset:cur:EUR', 'de_DE', r'#,##0.00 [$€-407]'),
+      ('preset:cur:EUR', 'en_US', r'[$€-409]#,##0.00'),
+      ('preset:cur:XYZ', 'en_US', r'[$XYZ-409]#,##0.00'),
+      ('preset:unknown', 'en_US', null),
+    ];
+    for (final (id, locale, pattern) in cases) {
+      test('when resolving $id for $locale then the pattern is $pattern', () {
+        expect(NumberFormatPresets.resolve(id, locale), pattern);
+      });
+    }
+
+    test('when formatting with a hint preset then it is not Automatic', () {
+      final f = NumberFormatter();
+
+      expect(f.formatText(const NumberValue(0.5), 'preset:percent'), '50.00%');
+      expect(
+        f.formatText(const NumberValue(1.5), 'preset:duration'),
+        '36:00:00',
+      );
+      expect(
+        f.formatText(const NumberValue(3), 'preset:cur', locale: 'de_DE'),
+        '3,00 €',
+      );
+    });
+
+    test('when looking up currency symbols then ISO codes map to symbols', () {
+      expect(NumberFormatPresets.currencySymbolFor('eur'), '€');
+      expect(NumberFormatter.currencySymbolFor('GBP'), '£');
+      expect(NumberFormatPresets.currencySymbolFor('XYZ'), 'XYZ');
+    });
   });
 }

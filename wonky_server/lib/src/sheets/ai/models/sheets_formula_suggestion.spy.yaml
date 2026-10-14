@@ -1,0 +1,19 @@
+### A formula proposed from natural language (Sheets 12 §6.4): never
+### written by the server; the app inserts it with `sheets.edit.setCellInput`.
+class: SheetsFormulaSuggestion
+fields:
+  ### The formula in English syntax (`=SUMIF(A:A,"x",B:B)`).
+  formula: String
+  ### The formula in the spreadsheet locale (shown in the popover).
+  localizedFormula: String
+  explanation: String
+  ### A1 ranges the formula references.
+  references: List<String>
+  ### The value it evaluates to at the target cell.
+  previewValue: String?
+  ### number, text, bool, error or array.
+  previewType: String?
+  ### Set when the formula does not parse or evaluates to an error.
+  errorMessage: String?
+  ### The formula fetches external data (IMPORTDATA, IMAGE, …).
+  usesExternalData: bool, default=false

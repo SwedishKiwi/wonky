@@ -22,13 +22,19 @@ class StatusBar extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = ShadTheme.of(context);
     final ext = WonkyThemeScope.of(context);
-    Widget group(List<Widget> items, MainAxisAlignment align) => Row(
+    // Side groups hand their items a bounded width (Flexible) so that items
+    // can ellipsize at narrow widths instead of being clipped mid-word.
+    Widget group(
+      List<Widget> items,
+      MainAxisAlignment align, {
+      bool flexible = false,
+    }) => Row(
       mainAxisAlignment: align,
       mainAxisSize: MainAxisSize.min,
       children: [
         for (var i = 0; i < items.length; i++) ...[
           if (i > 0) const SizedBox(width: 12),
-          items[i],
+          if (flexible) Flexible(child: items[i]) else items[i],
         ],
       ],
     );
@@ -55,7 +61,11 @@ class StatusBar extends StatelessWidget {
                   child: Align(
                     alignment: AlignmentDirectional.centerStart,
                     child: ClipRect(
-                      child: group(left, MainAxisAlignment.start),
+                      child: group(
+                        left,
+                        MainAxisAlignment.start,
+                        flexible: true,
+                      ),
                     ),
                   ),
                 ),
@@ -63,7 +73,13 @@ class StatusBar extends StatelessWidget {
                 Expanded(
                   child: Align(
                     alignment: AlignmentDirectional.centerEnd,
-                    child: ClipRect(child: group(right, MainAxisAlignment.end)),
+                    child: ClipRect(
+                      child: group(
+                        right,
+                        MainAxisAlignment.end,
+                        flexible: true,
+                      ),
+                    ),
                   ),
                 ),
               ],

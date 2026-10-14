@@ -480,9 +480,10 @@ extension CrdtMergeRecorderExtension on CrdtMutationRecorder {
     final remoteNode = _requireRemoteNode(remoteNodes, insert.uuidNodeId);
 
     final currentRow = context.rows[rowKey];
-    if (currentRow != null && incomingHlc <= currentRow.hlc) {
-      return;
-    }
+    // WONKY PATCH OS-4 (concurrent inserts merge per column), see PATCHES.md:
+    // an older insert of an existing row still contributes the columns the
+    // newer insert left unset, so it is not dropped here; the per-column
+    // comparison in [_applyMergeInsertForExistingRow] decides.
 
     // Set inside the savepoint and read after it, so a rolled back insert
     // records nothing.
@@ -966,9 +967,24 @@ extension CrdtMergeRecorderExtension on CrdtMutationRecorder {
     }
 
     final (_, columnsByName) = _context.schema[insert.tableName]!;
+    // WONKY PATCH OS-4: a column an insert leaves null is not authored by
+    // it. Without field metadata a null domain value was never authored, so
+    // any non-null value wins it, and an incoming null never overwrites.
+    final domain =
+        (await _context.readDomainColumnValues(
+          insert.tableName,
+          {insert.uuidRowId},
+          [
+            for (final name in columnsByName.keys)
+              if (name != 'id') name,
+          ],
+          transaction,
+        ))[insert.uuidRowId] ??
+        const <String, Object?>{};
     for (final MapEntry(key: columnName, value: schemaColumn)
         in columnsByName.entries) {
       if (columnName == 'id') continue;
+      if (data[columnName] == null) continue;
 
       final shouldApply = await _shouldMergeFieldMetadataIfNewer(
         tableName: insert.tableName,
@@ -980,6 +996,7 @@ extension CrdtMergeRecorderExtension on CrdtMutationRecorder {
         fields: context.fields,
         transaction: transaction,
         schemaColumn: schemaColumn,
+        unauthoredWhenNoField: domain[columnName] == null,
       );
 
       if (!shouldApply) continue;
@@ -1018,6 +1035,7 @@ extension CrdtMergeRecorderExtension on CrdtMutationRecorder {
     required Map<MergeFieldKey, CrdtDataField> fields,
     required Transaction transaction,
     CrdtSchemaColumn? schemaColumn,
+    bool unauthoredWhenNoField = false,
   }) async {
     final resolvedSchemaColumn =
         schemaColumn ?? _context.schemaColumn(tableName, columnName);
@@ -1026,7 +1044,9 @@ extension CrdtMergeRecorderExtension on CrdtMutationRecorder {
     final fieldKey = (tableName, rowId, columnName);
     final currentField = fields[fieldKey];
     final currentHlc = currentField?.hlc ?? row.hlc;
-    if (incomingHlc <= currentHlc) return false;
+    if (incomingHlc <= currentHlc && !(currentField == null && unauthoredWhenNoField)) {
+      return false;
+    }
 
     fields[fieldKey] = await _upsertMergeField(
       row,

@@ -1,8 +1,6 @@
 import 'package:test/test.dart';
 import 'package:wonky_sheets_core/model.dart';
 import 'package:wonky_sheets_core/model_testing.dart';
-import 'package:wonky_sheets_core/src/charts/scene/geometry.dart';
-import 'package:wonky_sheets_core/src/objects/objects.dart';
 
 import 'object_fixtures.dart';
 

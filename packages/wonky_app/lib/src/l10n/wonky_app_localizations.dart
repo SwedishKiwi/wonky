@@ -4419,6 +4419,12 @@ abstract class WonkyAppLocalizations {
   /// In en, this message translates to:
   /// **'Plain text (.txt)'**
   String get exportFormatText;
+
+  /// No description provided for @badgePendingCreate.
+  ///
+  /// In en, this message translates to:
+  /// **'Created offline. It is added to your Drive when you\'re back online.'**
+  String get badgePendingCreate;
 }
 
 class _WonkyAppLocalizationsDelegate

@@ -14,6 +14,8 @@ class AssistantActivity {
     this.rangeStart,
     this.rangeLength,
     this.revision,
+    this.range,
+    this.objectId,
   });
 
   factory AssistantActivity.fromJson(Map<String, Object?> json) =>
@@ -26,6 +28,8 @@ class AssistantActivity {
         rangeStart: (json['rangeStart'] as num?)?.toInt(),
         rangeLength: (json['rangeLength'] as num?)?.toInt(),
         revision: (json['revision'] as num?)?.toInt(),
+        range: json['range'] as String?,
+        objectId: json['objectId'] as String?,
       );
 
   final String toolUseId;
@@ -38,11 +42,17 @@ class AssistantActivity {
   int? rangeLength;
   int? revision;
 
+  /// Sheets: the A1 range the call wrote or read (Show).
+  String? range;
+
+  /// Sheets: the chart, pivot table or rule the call created (Show).
+  String? objectId;
+
   /// Whether the call changed the document (Show / Undo apply).
   bool get changed => changeId != null;
 
-  /// Whether it has a range to reveal.
-  bool get hasRange => rangeStart != null;
+  /// Whether it has a range (or object) to reveal.
+  bool get hasRange => rangeStart != null || range != null || objectId != null;
 }
 
 /// The state of an assistant reply.
@@ -96,6 +106,13 @@ class AssistantReplyEntry extends AssistantEntry {
 
   /// Whether the run's changes were undone from the panel.
   bool undone = false;
+
+  /// Sheets: the server change of an Edit-mode run (`done.changeId`, one
+  /// undo step for the whole run).
+  String? changeId;
+
+  /// Sheets: the AI changes preview of a Suggest-mode run.
+  String? previewId;
 
   String get markdown => _markdown.toString();
 

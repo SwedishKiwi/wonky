@@ -51,6 +51,10 @@ sealed class SchemaNode {
   /// Validates a non-null value.
   void checkValue(String path, Object value, List<ChartSpecIssue> out);
 
+  /// [value] in its stored form when it was written against the strict [jsonSchema]: maps
+  /// sent as key/value pair lists become maps and `null` (= not set) properties are dropped.
+  Object? fromStrict(Object? value) => value;
+
   /// JSON Schema (draft 2020-12) of this node, strict-compatible (`additionalProperties: false`,
   /// all properties listed, optional ones nullable).
   Map<String, Object?> jsonSchema();
@@ -107,6 +111,16 @@ final class ObjectSchema extends SchemaNode {
   }
 
   @override
+  Object? fromStrict(Object? value) {
+    if (value is! Map) return value;
+    return {
+      for (final e in value.entries)
+        if (e.value != null)
+          '${e.key}': fields['${e.key}']?.fromStrict(e.value) ?? e.value,
+    };
+  }
+
+  @override
   Map<String, Object?> jsonSchema() => _wrap({
     'type': 'object',
     'properties': {for (final e in fields.entries) e.key: e.value.jsonSchema()},
@@ -143,6 +157,21 @@ final class MapSchema extends SchemaNode {
       }
       values.check(_join(path, k), e.value, out);
     }
+  }
+
+  @override
+  Object? fromStrict(Object? value) {
+    if (value is Map) {
+      return {
+        for (final e in value.entries) '${e.key}': values.fromStrict(e.value),
+      };
+    }
+    if (value is! List) return value;
+    return {
+      for (final pair in value)
+        if (pair is Map && pair['key'] != null)
+          '${pair['key']}': values.fromStrict(pair['value']),
+    };
   }
 
   @override
@@ -188,6 +217,10 @@ final class ListSchema extends SchemaNode {
       items.check('$path[$i]', value[i], out);
     }
   }
+
+  @override
+  Object? fromStrict(Object? value) =>
+      value is List ? [for (final v in value) items.fromStrict(v)] : value;
 
   @override
   Map<String, Object?> jsonSchema() =>
@@ -626,6 +659,12 @@ abstract final class ChartSpecSchema {
     }
     return out;
   }
+
+  /// A spec JSON written against the strict [jsonSchema] (MCP clients in strict mode) in its
+  /// stored form: key/value pair lists become maps and `null` properties are dropped. Run
+  /// [validate] (or `ChartSpec.parseStrict`) on the result.
+  static Map<String, Object?> fromStrictJson(Map<String, Object?> json) =>
+      (root.fromStrict(json)! as Map).cast();
 
   /// JSON Schema of `ChartSpec` (MCP, 08 §17).
   static Map<String, Object?> jsonSchema() => {

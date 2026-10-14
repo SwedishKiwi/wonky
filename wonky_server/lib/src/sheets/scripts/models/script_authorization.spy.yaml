@@ -1,0 +1,14 @@
+### Scopes a user authorized for the script of a spreadsheet (Sheets 09 §11.2).
+class: ScriptAuthorization
+table: script_authorization
+serverOnly: true
+fields:
+  userId: int
+  spreadsheetUuid: UuidValue
+  scopes: List<String>
+  grantedAt: DateTime
+  revokedAt: DateTime?
+indexes:
+  script_auth_user_sheet_idx:
+    fields: userId, spreadsheetUuid
+    unique: true

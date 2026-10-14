@@ -10,6 +10,7 @@ export 'package:wonky_sheets_core/src/engine_bridge/value_bridge.dart';
 export 'package:wonky_sheets_core/src/format/attributes.dart';
 export 'package:wonky_sheets_core/src/format/format_resolver.dart';
 export 'package:wonky_sheets_core/src/format/theme.dart';
+export 'package:wonky_sheets_core/src/input/input.dart';
 export 'package:wonky_sheets_core/src/formula/model/workbook_view.dart'
     show CellSource;
 export 'package:wonky_sheets_core/src/formula/values/compare.dart';

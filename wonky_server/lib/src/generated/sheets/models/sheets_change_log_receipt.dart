@@ -13,7 +13,10 @@
 import 'dart:async' as _ida;
 import 'package:serverpod/serverpod.dart' as _is;
 
-/// Marks a synced ChangeLog row as consumed (exactly-once processing).
+/// Claims a synced ChangeLog row for processing (exactly-once processing,
+/// Sheets 13 §4.6). The row is claimed (insert, unique on changeLogId)
+/// before its consumers run and completed afterwards; a claim that never
+/// completed (server crash) is retried after a grace period.
 abstract class SheetsChangeLogReceipt
     implements _is.TableRow<int?>, _is.ProtocolSerialization {
   SheetsChangeLogReceipt._({
@@ -21,6 +24,7 @@ abstract class SheetsChangeLogReceipt
     required this.changeLogId,
     required this.spaceUuid,
     required this.processedAt,
+    this.completedAt,
   });
 
   factory SheetsChangeLogReceipt({
@@ -28,6 +32,7 @@ abstract class SheetsChangeLogReceipt
     required _is.UuidValue changeLogId,
     required _is.UuidValue spaceUuid,
     required DateTime processedAt,
+    DateTime? completedAt,
   }) = _SheetsChangeLogReceiptImpl;
 
   factory SheetsChangeLogReceipt.fromJson(
@@ -44,6 +49,11 @@ abstract class SheetsChangeLogReceipt
       processedAt: _is.DateTimeJsonExtension.fromJson(
         jsonSerialization['processedAt'],
       ),
+      completedAt: jsonSerialization['completedAt'] == null
+          ? null
+          : _is.DateTimeJsonExtension.fromJson(
+              jsonSerialization['completedAt'],
+            ),
     );
   }
 
@@ -58,7 +68,11 @@ abstract class SheetsChangeLogReceipt
 
   _is.UuidValue spaceUuid;
 
+  /// When the row was claimed.
   DateTime processedAt;
+
+  /// When every consumer ran; null while processing (or after a crash).
+  DateTime? completedAt;
 
   @override
   _is.Table<int?> get table => t;
@@ -71,6 +85,7 @@ abstract class SheetsChangeLogReceipt
     _is.UuidValue? changeLogId,
     _is.UuidValue? spaceUuid,
     DateTime? processedAt,
+    DateTime? completedAt = const _is.$UndefinedDateTime(),
   });
   @override
   Map<String, dynamic> toJson() {
@@ -80,6 +95,7 @@ abstract class SheetsChangeLogReceipt
       'changeLogId': changeLogId.toJson(),
       'spaceUuid': spaceUuid.toJson(),
       'processedAt': processedAt.toJson(),
+      if (completedAt != null) 'completedAt': completedAt?.toJson(),
     };
   }
 
@@ -124,11 +140,13 @@ class _SheetsChangeLogReceiptImpl extends SheetsChangeLogReceipt {
     required _is.UuidValue changeLogId,
     required _is.UuidValue spaceUuid,
     required DateTime processedAt,
+    DateTime? completedAt,
   }) : super._(
          id: id,
          changeLogId: changeLogId,
          spaceUuid: spaceUuid,
          processedAt: processedAt,
+         completedAt: completedAt,
        );
 
   /// Returns a shallow copy of this [SheetsChangeLogReceipt]
@@ -140,12 +158,16 @@ class _SheetsChangeLogReceiptImpl extends SheetsChangeLogReceipt {
     _is.UuidValue? changeLogId,
     _is.UuidValue? spaceUuid,
     DateTime? processedAt,
+    DateTime? completedAt = const _is.$UndefinedDateTime(),
   }) {
     return SheetsChangeLogReceipt(
       id: id is int? ? id : this.id,
       changeLogId: changeLogId ?? this.changeLogId,
       spaceUuid: spaceUuid ?? this.spaceUuid,
       processedAt: processedAt ?? this.processedAt,
+      completedAt: completedAt is _is.UndefinedSentinel
+          ? this.completedAt
+          : completedAt,
     );
   }
 }
@@ -173,6 +195,12 @@ class SheetsChangeLogReceiptUpdateTable
         table.processedAt,
         value,
       );
+
+  _is.ColumnValue<DateTime, DateTime> completedAt(DateTime? value) =>
+      _is.ColumnValue(
+        table.completedAt,
+        value,
+      );
 }
 
 class SheetsChangeLogReceiptTable extends _is.Table<int?> {
@@ -191,6 +219,10 @@ class SheetsChangeLogReceiptTable extends _is.Table<int?> {
       'processedAt',
       this,
     );
+    completedAt = _is.ColumnDateTime(
+      'completedAt',
+      this,
+    );
   }
 
   late final SheetsChangeLogReceiptUpdateTable updateTable;
@@ -199,7 +231,11 @@ class SheetsChangeLogReceiptTable extends _is.Table<int?> {
 
   late final _is.ColumnUuid spaceUuid;
 
+  /// When the row was claimed.
   late final _is.ColumnDateTime processedAt;
+
+  /// When every consumer ran; null while processing (or after a crash).
+  late final _is.ColumnDateTime completedAt;
 
   @override
   List<_is.Column> get columns => [
@@ -207,6 +243,7 @@ class SheetsChangeLogReceiptTable extends _is.Table<int?> {
     changeLogId,
     spaceUuid,
     processedAt,
+    completedAt,
   ];
 }
 

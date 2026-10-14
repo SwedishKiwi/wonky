@@ -1,0 +1,4478 @@
+{
+  "@@locale": "en",
+  "cmdCellSetRichText": "Set rich text",
+  "fontThemeSection": "Theme font",
+  "fontRecentSection": "Recent",
+  "fontAllSection": "All fonts",
+  "cmdSettingsUpdate": "Update spreadsheet settings",
+  "currencyDialogTitle": "Custom currencies",
+  "currencySearch": "Search currencies",
+  "currencyNoMatch": "No matching currency",
+  "currencyName": "{code, select, USD{US Dollar} EUR{Euro} GBP{British Pound} JPY{Japanese Yen} CNY{Chinese Yuan} INR{Indian Rupee} KRW{South Korean Won} CHF{Swiss Franc} CAD{Canadian Dollar} AUD{Australian Dollar} NZD{New Zealand Dollar} SEK{Swedish Krona} NOK{Norwegian Krone} DKK{Danish Krone} ISK{Icelandic Króna} PLN{Polish Złoty} CZK{Czech Koruna} HUF{Hungarian Forint} RON{Romanian Leu} BGN{Bulgarian Lev} TRY{Turkish Lira} RUB{Russian Ruble} UAH{Ukrainian Hryvnia} ILS{Israeli New Shekel} AED{UAE Dirham} SAR{Saudi Riyal} EGP{Egyptian Pound} ZAR{South African Rand} NGN{Nigerian Naira} KES{Kenyan Shilling} BRL{Brazilian Real} MXN{Mexican Peso} ARS{Argentine Peso} CLP{Chilean Peso} COP{Colombian Peso} PEN{Peruvian Sol} HKD{Hong Kong Dollar} SGD{Singapore Dollar} TWD{New Taiwan Dollar} THB{Thai Baht} VND{Vietnamese Dong} PHP{Philippine Peso} IDR{Indonesian Rupiah} MYR{Malaysian Ringgit} PKR{Pakistani Rupee} BTC{Bitcoin} other{{code}}}",
+  "@currencyName": {
+    "description": "Display name of a currency by ISO code (custom currency dialog).",
+    "placeholders": {
+      "code": {
+        "type": "String"
+      }
+    }
+  },
+  "dtDialogTitle": "Custom date and time formats",
+  "dtAdd": "Add a date or time part",
+  "dtRemove": "Remove",
+  "dtLiteral": "Text",
+  "dtPresets": "Suggestions",
+  "dtDay": "Day",
+  "dtWeekday": "Day of the week",
+  "dtMonth": "Month",
+  "dtYear": "Year",
+  "dtHour": "Hour",
+  "dtMinute": "Minute",
+  "dtSecond": "Second",
+  "dtMillisecond": "Millisecond",
+  "dtAmPm": "AM/PM",
+  "dtElapsedHours": "Elapsed hours",
+  "dtElapsedMinutes": "Elapsed minutes",
+  "dtElapsedSeconds": "Elapsed seconds",
+  "numFmtPreview": "Preview",
+  "numFmtActiveCell": "Selected cell",
+  "numFmtSamplePositive": "Positive",
+  "numFmtSampleNegative": "Negative",
+  "numFmtSampleZero": "Zero",
+  "numFmtSampleText": "Text",
+  "numFmtRecent": "Recently used",
+  "numFmtExamples": "Examples",
+  "numFmtCodesHelp": "Format codes",
+  "numFmtParseError": "Position {position}: {message}",
+  "@numFmtParseError": {
+    "placeholders": {
+      "position": {
+        "type": "int"
+      },
+      "message": {
+        "type": "String"
+      }
+    }
+  },
+  "numFmtCodeZero": "Digit, padded with zeros",
+  "numFmtCodeHash": "Digit, no padding",
+  "numFmtCodeQuestion": "Digit, padded with a space (aligns decimals)",
+  "numFmtCodeSeparators": "Decimal point and thousands separator (locale symbols)",
+  "numFmtCodePercent": "Multiplies by 100 and shows %",
+  "numFmtCodeExponent": "Scientific notation",
+  "numFmtCodeLiteral": "Literal text",
+  "numFmtCodeText": "The cell's text",
+  "numFmtCodeSpacing": "Space as wide as c / repeat c to fill the cell",
+  "numFmtCodeColor": "Text color",
+  "numFmtCodeCondition": "Condition for the section",
+  "numFmtCodeSections": "Positive; negative; zero; text",
+  "numFmtCodeDates": "Day, month (or minute), year, hour, second",
+  "numFmtCodeElapsed": "Elapsed hours, minutes, seconds",
+  "numFmtCodeCurrency": "Currency symbol (and locale)",
+  "settingsDialogTitle": "Settings for this spreadsheet",
+  "settingsGeneral": "General",
+  "settingsCalculation": "Calculation",
+  "settingsLocale": "Locale",
+  "settingsLocaleNote": "Formats like 'Currency' and dates will display using the new locale. Existing values are not changed.",
+  "settingsTimeZone": "Time zone",
+  "settingsSearch": "Search",
+  "sheetsSettingsNewHint": "Defaults for new spreadsheets you create. Each spreadsheet keeps its own settings (File › Settings).",
+  "sheetsSettingsFont": "Default font",
+  "sheetsSettingsEditing": "Editing",
+  "sheetsSettingsEnterStartsEditing": "Enter key starts editing",
+  "sheetsSettingsShowEditorMode": "Show editor mode in status bar",
+  "sheetsSettingsReduceAnimations": "Reduce grid animations",
+  "sheetsSettingsFillLists": "Custom fill lists",
+  "sheetsSettingsFillListsHint": "Dragging the fill handle continues these lists. One list per line, items separated by commas.",
+  "sheetsSettingsFillListsPlaceholder": "Low, Medium, High",
+  "sheetsSettingsFillListsCount": "{count, plural, =0{No custom lists} =1{1 custom list} other{{count} custom lists}}",
+  "@sheetsSettingsFillListsCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "settingsRecalc": "Recalculation",
+  "settingsRecalcOnChange": "On change",
+  "settingsRecalcMinute": "On change and every minute",
+  "settingsRecalcHour": "On change and every hour",
+  "settingsIterative": "Iterative calculation",
+  "settingsIterativeHint": "Allows circular references, recalculated up to the maximum number of iterations.",
+  "settingsMaxIterations": "Max number of iterations",
+  "settingsThreshold": "Threshold",
+  "settingsThresholdInvalid": "Enter a number of 0 or more",
+  "settingsSave": "Save settings",
+  "presenceInScriptEditor": "In script editor",
+  "presenceTypingIn": "Typing in {cell}",
+  "@presenceTypingIn": {
+    "placeholders": {
+      "cell": {
+        "type": "String"
+      }
+    }
+  },
+  "presenceViewingSheet": "Viewing {sheet}",
+  "@presenceViewingSheet": {
+    "placeholders": {
+      "sheet": {
+        "type": "String"
+      }
+    }
+  },
+  "presenceEditingCell": "Editing {cell}",
+  "@presenceEditingCell": {
+    "placeholders": {
+      "cell": {
+        "type": "String"
+      }
+    }
+  },
+  "presenceFollowingYou": "Following you",
+  "presenceTyping": "typing…",
+  "presenceFollowingName": "Following {name}",
+  "@presenceFollowingName": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "presenceStopFollowing": "Stop",
+  "tabPresence": "On this sheet: {names}",
+  "@tabPresence": {
+    "placeholders": {
+      "names": {
+        "type": "String"
+      }
+    }
+  },
+  "commentAnchorDeleted": "The cell this comment was on was deleted · {quoted}",
+  "@commentAnchorDeleted": {
+    "placeholders": {
+      "quoted": {
+        "type": "String"
+      }
+    }
+  },
+  "commentReplies": "{count, plural, =1{1 reply} other{{count} replies}}",
+  "@commentReplies": {
+    "placeholders": {
+      "count": {
+        "type": "int",
+        "format": "decimalPattern"
+      }
+    }
+  },
+  "noteHeading": "Note",
+  "actionClose": "Close",
+  "toastVersionRestoredBy": "{name} restored a previous version",
+  "@toastVersionRestoredBy": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "toastEditedRowDeletedBy": "The row you were editing was deleted by {name}.",
+  "@toastEditedRowDeletedBy": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "someone": "Someone",
+  "versionCopyName": "Copy of {title}",
+  "@versionCopyName": {
+    "placeholders": {
+      "title": {
+        "type": "String"
+      }
+    }
+  },
+  "toastVersionCopied": "Created \"{title}\"",
+  "@toastVersionCopied": {
+    "placeholders": {
+      "title": {
+        "type": "String"
+      }
+    }
+  },
+  "versionOpenCopy": "Open",
+  "toastVersionCopyFailed": "Couldn't make a copy of this version",
+  "versionChangedCells": "{count, plural, =1{1 cell changed} other{{count} cells changed}}",
+  "@versionChangedCells": {
+    "placeholders": {
+      "count": {
+        "type": "int",
+        "format": "decimalPattern"
+      }
+    }
+  },
+  "versionRowsInserted": "{count, plural, =1{1 row inserted} other{{count} rows inserted}}",
+  "@versionRowsInserted": {
+    "placeholders": {
+      "count": {
+        "type": "int",
+        "format": "decimalPattern"
+      }
+    }
+  },
+  "versionRowsDeleted": "{count, plural, =1{1 row deleted} other{{count} rows deleted}}",
+  "@versionRowsDeleted": {
+    "placeholders": {
+      "count": {
+        "type": "int",
+        "format": "decimalPattern"
+      }
+    }
+  },
+  "versionColumnsInserted": "{count, plural, =1{1 column inserted} other{{count} columns inserted}}",
+  "@versionColumnsInserted": {
+    "placeholders": {
+      "count": {
+        "type": "int",
+        "format": "decimalPattern"
+      }
+    }
+  },
+  "versionColumnsDeleted": "{count, plural, =1{1 column deleted} other{{count} columns deleted}}",
+  "@versionColumnsDeleted": {
+    "placeholders": {
+      "count": {
+        "type": "int",
+        "format": "decimalPattern"
+      }
+    }
+  },
+  "versionSheetRenamed": "Sheet \"{before}\" renamed to \"{after}\"",
+  "@versionSheetRenamed": {
+    "placeholders": {
+      "before": {
+        "type": "String"
+      },
+      "after": {
+        "type": "String"
+      }
+    }
+  },
+  "versionSheetsAdded": "{count, plural, =1{1 sheet added} other{{count} sheets added}}",
+  "@versionSheetsAdded": {
+    "placeholders": {
+      "count": {
+        "type": "int",
+        "format": "decimalPattern"
+      }
+    }
+  },
+  "versionSheetsDeleted": "{count, plural, =1{1 sheet deleted} other{{count} sheets deleted}}",
+  "@versionSheetsDeleted": {
+    "placeholders": {
+      "count": {
+        "type": "int",
+        "format": "decimalPattern"
+      }
+    }
+  },
+  "versionNoChanges": "No changes since the previous version",
+  "versionLoadFailed": "Couldn't load this version",
+  "versionLoading": "Loading version…",
+  "versionComputingChanges": "Finding changes…",
+  "versionChangesHidden": "Changes are hidden",
+  "versionSheetDeletedTooltip": "Deleted in this version",
+  "cellHistoryTitle": "Edit history",
+  "cellHistoryNewer": "Newer edit",
+  "cellHistoryOlder": "Older edit",
+  "cellHistoryPosition": "{index} of {count}",
+  "@cellHistoryPosition": {
+    "placeholders": {
+      "index": {
+        "type": "int",
+        "format": "decimalPattern"
+      },
+      "count": {
+        "type": "int",
+        "format": "decimalPattern"
+      }
+    }
+  },
+  "cellHistoryEmpty": "No edits recorded for this cell",
+  "cellHistoryEmptyOffline": "No edits on this device. Older history needs a connection.",
+  "cellHistoryBulk": "Changed as part of \"{label}\"",
+  "@cellHistoryBulk": {
+    "placeholders": {
+      "label": {
+        "type": "String"
+      }
+    }
+  },
+  "cellHistoryChanged": "Changed",
+  "cellHistoryBlank": "(empty)",
+  "cellHistoryVia": "via {label}",
+  "@cellHistoryVia": {
+    "placeholders": {
+      "label": {
+        "type": "String"
+      }
+    }
+  },
+  "cellHistoryRestore": "Restore this value",
+  "actorViaMcp": "Claude via MCP ({name})",
+  "@actorViaMcp": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "actorViaAi": "Assistant ({name})",
+  "@actorViaAi": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "actorViaScript": "Script ({name})",
+  "@actorViaScript": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "cmdPresenceJumpTo": "Go to collaborator",
+  "cmdPresenceFollow": "Follow collaborator",
+  "cmdPresenceUnfollow": "Stop following",
+  "categoryCollaboration": "Collaboration",
+  "cmdCommentsNext": "Next comment",
+  "cmdCommentsPrevious": "Previous comment",
+  "cmdHistoryRestoreVersion": "Restore this version",
+  "cmdHistoryMakeCopy": "Make a copy",
+  "cmdHistoryNextChange": "Next change",
+  "cmdHistoryPreviousChange": "Previous change",
+  "cmdHistoryRestoreCellValue": "Restore value",
+  "undoRestoreValue": "Restore value",
+  "cmdBandingAdd": "Add alternating colors",
+  "cmdBandingUpdate": "Edit alternating colors",
+  "cmdBandingRemove": "Remove alternating colors",
+  "bandingPanelTitle": "Alternating colors",
+  "bandingApplyToRange": "Apply to range",
+  "bandingHeader": "Header",
+  "bandingFooter": "Footer",
+  "bandingColumns": "Alternate columns",
+  "bandingColumnsHint": "Header is the first column, footer the last.",
+  "bandingDefaultStyles": "Default styles",
+  "bandingPresetLabel": "Default style {n}",
+  "@bandingPresetLabel": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
+  "bandingCustomStyles": "Custom styles",
+  "bandingCustomLabel": "Custom style {n}",
+  "@bandingCustomLabel": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
+  "bandingHeaderColor": "Header",
+  "bandingColor1": "Color 1",
+  "bandingColor2": "Color 2",
+  "bandingFooterColor": "Footer",
+  "bandingRemove": "Remove alternating colors",
+  "cmdThemeSet": "Set spreadsheet theme",
+  "themePanelTitle": "Themes",
+  "themeCustomize": "Customize",
+  "themeFont": "Font",
+  "themeResetToPreset": "Reset to preset",
+  "themeImport": "Import theme",
+  "themeImportTitle": "Import a theme from",
+  "pickSpreadsheetOffline": "Importing needs a connection.",
+  "themePresets": "Themes",
+  "themeCurrent": "Current",
+  "themeStandard": "Standard",
+  "themeSimple": "Simple",
+  "themeStreamline": "Streamline",
+  "themePaperback": "Paperback",
+  "themeMarina": "Marina",
+  "themeCoral": "Coral",
+  "themeForest": "Forest",
+  "themeMono": "Mono",
+  "themeRetro": "Retro",
+  "themeOcean": "Ocean",
+  "fontDisplayedAs": "{font} (displayed as {shown})",
+  "@fontDisplayedAs": {
+    "placeholders": {
+      "font": {
+        "type": "String"
+      },
+      "shown": {
+        "type": "String"
+      }
+    }
+  },
+  "panelDone": "Done",
+  "themeColorText": "Text",
+  "themeColorBackground": "Background",
+  "themeColorLink": "Link",
+  "themeColorAccent": "Accent {n}",
+  "@themeColorAccent": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
+  "cmdCfAddRule": "Add conditional format rule",
+  "cmdCfUpdateRule": "Edit conditional format rule",
+  "cmdCfDeleteRule": "Delete conditional format rule",
+  "cmdCfReorder": "Reorder conditional format rules",
+  "cmdCfSetEnabled": "Enable or disable conditional format rule",
+  "cfUndoEnable": "Enable rule",
+  "cfUndoDisable": "Disable rule",
+  "cfPanelTitle": "Conditional format rules",
+  "cfShowRulesFor": "Show rules for",
+  "cfScopeSelection": "Selected range",
+  "cfScopeSheet": "This sheet",
+  "cfNoRules": "No conditional format rules on this sheet yet.",
+  "cfNoRulesInSelection": "No rules apply to the selected range.",
+  "cfAddRule": "Add another rule",
+  "cfLimitReached": "A sheet can have at most 500 rules.",
+  "cfAddRuleTitle": "Add rule",
+  "cfEditRuleTitle": "Edit rule",
+  "cfTabSingle": "Single color",
+  "cfTabColorScale": "Color scale",
+  "cfTabDataBar": "Data bar",
+  "cfTabIconSet": "Icon set",
+  "cfApplyToRange": "Apply to range",
+  "cfFormatCellsIf": "Format cells if…",
+  "cfFormattingStyle": "Formatting style",
+  "cfStyleCustom": "Custom",
+  "cfStyleDefault": "Default",
+  "cfStyleGreenFill": "Green fill",
+  "cfStyleYellowFill": "Yellow fill",
+  "cfStyleRedFill": "Red fill",
+  "cfStyleGreenBold": "Green bold text",
+  "cfStyleRedBold": "Red bold text",
+  "cfStyleBold": "Bold",
+  "cfStyleItalicGrey": "Grey italic",
+  "cfStyleStrikeGrey": "Grey strikethrough",
+  "cfBold": "Bold",
+  "cfItalic": "Italic",
+  "cfUnderline": "Underline",
+  "cfStrikethrough": "Strikethrough",
+  "cfTextColor": "Text color",
+  "cfFillColor": "Fill color",
+  "cfAdvanced": "Advanced",
+  "cfStopIfTrue": "Stop if true",
+  "cfStopIfTrueHint": "Later rules don't apply to cells that match this rule.",
+  "cfGroupEmpty": "Empty",
+  "cfGroupText": "Text",
+  "cfGroupDate": "Date",
+  "cfGroupNumber": "Number",
+  "cfGroupCustom": "Custom",
+  "cfCondBlank": "Is empty",
+  "cfCondNotBlank": "Is not empty",
+  "cfCondTextContains": "Text contains",
+  "cfCondTextNotContains": "Text does not contain",
+  "cfCondTextStartsWith": "Text starts with",
+  "cfCondTextEndsWith": "Text ends with",
+  "cfCondTextEq": "Text is exactly",
+  "cfCondDateEq": "Date is",
+  "cfCondDateBefore": "Date is before",
+  "cfCondDateAfter": "Date is after",
+  "cfCondNumberGreater": "Greater than",
+  "cfCondNumberGreaterEq": "Greater than or equal to",
+  "cfCondNumberLess": "Less than",
+  "cfCondNumberLessEq": "Less than or equal to",
+  "cfCondNumberEq": "Is equal to",
+  "cfCondNumberNotEq": "Is not equal to",
+  "cfCondNumberBetween": "Is between",
+  "cfCondNumberNotBetween": "Is not between",
+  "cfCondCustomFormula": "Custom formula is",
+  "cfDateToday": "Today",
+  "cfDateTomorrow": "Tomorrow",
+  "cfDateYesterday": "Yesterday",
+  "cfDatePastWeek": "In the past week",
+  "cfDatePastMonth": "In the past month",
+  "cfDatePastYear": "In the past year",
+  "cfDateExact": "Exact date",
+  "cfDatePlaceholder": "Date or formula, e.g. 2026-10-14",
+  "cfValuePlaceholder": "Value or formula",
+  "cfPickDate": "Pick a date",
+  "formulaFieldPointHint": "Select cells on the grid to insert a reference.",
+  "cfSummaryTwoValues": "{label} {a} and {b}",
+  "@cfSummaryTwoValues": {
+    "placeholders": {
+      "label": {
+        "type": "String"
+      },
+      "a": {
+        "type": "String"
+      },
+      "b": {
+        "type": "String"
+      }
+    }
+  },
+  "cfKindColorScale": "Color scale",
+  "cfKindDataBar": "Data bar",
+  "cfKindIconSet": "Icon set",
+  "cfKindUnsupported": "Unsupported rule",
+  "cfKindMin": "Min value",
+  "cfKindMax": "Max value",
+  "cfKindNumber": "Number",
+  "cfKindPercent": "Percent",
+  "cfKindPercentile": "Percentile",
+  "cfKindFormula": "Formula",
+  "cfKindNone": "None",
+  "cfPreview": "Preview",
+  "cfScalePreset": "Preset",
+  "cfScaleWhiteGreen": "White to green",
+  "cfScaleGreenWhite": "Green to white",
+  "cfScaleWhiteRed": "White to red",
+  "cfScaleRedWhite": "Red to white",
+  "cfScaleRedWhiteGreen": "Red to white to green",
+  "cfScaleGreenWhiteRed": "Green to white to red",
+  "cfScaleRedYellowGreen": "Red to yellow to green",
+  "cfScaleGreenYellowRed": "Green to yellow to red",
+  "cfScaleWhiteBlue": "White to blue",
+  "cfScaleBlueWhite": "Blue to white",
+  "cfScaleYellowGreen": "Yellow to green",
+  "cfScaleAccent": "Theme accent 1 light to dark",
+  "cfMinpoint": "Minpoint",
+  "cfMidpoint": "Midpoint",
+  "cfMaxpoint": "Maxpoint",
+  "cfPointColor": "{point} color",
+  "@cfPointColor": {
+    "placeholders": {
+      "point": {
+        "type": "String"
+      }
+    }
+  },
+  "cfBarColors": "Bar colors",
+  "cfBarPositive": "Positive",
+  "cfBarNegative": "Negative",
+  "cfBarGradient": "Gradient fill",
+  "cfBarAxis": "Axis",
+  "cfAxisAuto": "Automatic",
+  "cfAxisMiddle": "Cell midpoint",
+  "cfAxisNone": "None",
+  "cfBarDirection": "Bar direction",
+  "cfDirectionContext": "Sheet direction",
+  "cfDirectionLtr": "Left to right",
+  "cfDirectionRtl": "Right to left",
+  "cfShowValue": "Show cell value",
+  "cfIconStyle": "Icon style",
+  "cfIconOtherwise": "Otherwise",
+  "cfIconReverse": "Reverse icon order",
+  "cfIconArrows": "{n} arrows",
+  "@cfIconArrows": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
+  "cfIconArrowsGray": "{n} arrows (gray)",
+  "@cfIconArrowsGray": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
+  "cfIconTriangles": "{n} triangles",
+  "@cfIconTriangles": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
+  "cfIconTrafficLights": "{n} traffic lights",
+  "@cfIconTrafficLights": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
+  "cfIconSigns": "{n} signs",
+  "@cfIconSigns": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
+  "cfIconSymbols": "{n} symbols",
+  "@cfIconSymbols": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
+  "cfIconFlags": "{n} flags",
+  "@cfIconFlags": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
+  "cfIconStars": "{n} stars",
+  "@cfIconStars": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
+  "cfIconRatings": "{n} ratings",
+  "@cfIconRatings": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
+  "cfIconQuarters": "{n} quarters",
+  "@cfIconQuarters": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
+  "cfErrorValue": "Enter a value.",
+  "cfErrorFormula": "Invalid formula: {message}",
+  "@cfErrorFormula": {
+    "placeholders": {
+      "message": {
+        "type": "String"
+      }
+    }
+  },
+  "cfErrorNoFormat": "Choose at least one format.",
+  "cfEnableRule": "Enable rule",
+  "cfDisableRule": "Disable rule",
+  "cfDeleteRule": "Delete rule",
+  "cfRuleHint": "Enter to edit, Alt+arrows to move, Delete to remove",
+  "rangeInputEmpty": "Enter a range",
+  "rangeInputInvalid": "Invalid range",
+  "rangeInputPick": "Select a data range on the grid",
+  "rangeInputPicking": "Select cells on the grid; the range follows your selection.",
+  "addRowsButton": "Add",
+  "addRowsSuffix": "more rows at bottom",
+  "alignBottom": "Bottom",
+  "alignCenter": "Center",
+  "alignLeft": "Left",
+  "alignMiddle": "Middle",
+  "alignRight": "Right",
+  "alignTop": "Top",
+  "badgeCommentOnly": "Comment only",
+  "badgeViewOnly": "View only",
+  "borderAll": "All borders",
+  "borderBottom": "Bottom border",
+  "borderClear": "Clear borders",
+  "borderColor": "Border color",
+  "borderHorizontal": "Horizontal borders",
+  "borderInner": "Inner borders",
+  "borderLeft": "Left border",
+  "borderOuter": "Outer borders",
+  "borderRight": "Right border",
+  "borderStyleDashed": "Dashed",
+  "borderStyleDotted": "Dotted",
+  "borderStyleDouble": "Double",
+  "borderStyleMedium": "Medium",
+  "borderStyleThick": "Thick",
+  "borderStyleThin": "Thin",
+  "borderTop": "Top border",
+  "borderVertical": "Vertical borders",
+  "categoryData": "Data",
+  "@categoryData": {
+    "description": "Command category (palette, keyboard shortcuts help)."
+  },
+  "categoryEditing": "Editing",
+  "@categoryEditing": {
+    "description": "Command category (palette, keyboard shortcuts help)."
+  },
+  "categoryFile": "File",
+  "@categoryFile": {
+    "description": "Command category (palette, keyboard shortcuts help)."
+  },
+  "categoryFormatting": "Formatting",
+  "@categoryFormatting": {
+    "description": "Command category (palette, keyboard shortcuts help)."
+  },
+  "categoryFormulas": "Formulas",
+  "@categoryFormulas": {
+    "description": "Command category (palette, keyboard shortcuts help)."
+  },
+  "categoryInsert": "Insert",
+  "@categoryInsert": {
+    "description": "Command category (palette, keyboard shortcuts help)."
+  },
+  "categoryNavigation": "Navigation",
+  "@categoryNavigation": {
+    "description": "Command category (palette, keyboard shortcuts help)."
+  },
+  "categoryRowsColumns": "Rows & columns",
+  "@categoryRowsColumns": {
+    "description": "Command category (palette, keyboard shortcuts help)."
+  },
+  "categorySheets": "Sheets",
+  "@categorySheets": {
+    "description": "Command category (palette, keyboard shortcuts help)."
+  },
+  "categoryView": "View",
+  "@categoryView": {
+    "description": "Command category (palette, keyboard shortcuts help)."
+  },
+  "cmdAiAnalyze": "Analyze data",
+  "@cmdAiAnalyze": {
+    "description": "Command title (menus, palette, tooltips, undo labels)."
+  },
+  "cmdAiExplainFormula": "Explain formula",
+  "@cmdAiExplainFormula": {
+    "description": "Command title (menus, palette, tooltips, undo labels)."
+  },
+  "cmdAiFillRange": "Fill with AI",
+  "@cmdAiFillRange": {
+    "description": "Command title (menus, palette, tooltips, undo labels)."
+  },
+  "cmdAiSuggestFormula": "Suggest a formula",
+  "@cmdAiSuggestFormula": {
+    "description": "Command title (menus, palette, tooltips, undo labels)."
+  },
+  "cmdBandingOpenPanel": "Alternating colors",
+  "@cmdBandingOpenPanel": {
+    "description": "Command title (menus, palette, tooltips, undo labels)."
+  },
+  "cmdCellCancel": "Cancel editing",
+  "@cmdCellCancel": {
+    "description": "Command title (menus, palette, tooltips, undo labels)."
+  },
+  "cmdCellCommit": "Commit cell",
+  "@cmdCellCommit": {
+    "description": "Command title (menus, palette, tooltips, undo labels)."
+  },
+  "cmdCellCopyLink": "Get link to this range",
+  "@cmdCellCopyLink": {
+    "description": "Command title (menus, palette, tooltips, undo labels)."
+  },
+  "cmdCellEdit": "Edit cell",
+  "@cmdCellEdit": {
+    "description": "Command title (menus, palette, tooltips, undo labels)."
+  },
+  "cmdCellInsertDate": "Insert date",
+  "@cmdCellInsertDate": {
+    "description": "Command title (menus, palette, tooltips, undo labels)."
+  },
+  "cmdCellInsertDateTime": "Insert date and time",
+  "@cmdCellInsertDateTime": {
+    "description": "Command title (menus, palette, tooltips, undo labels)."
+  },
+  "cmdCellInsertNewline": "Insert line break",
+  "@cmdCellInsertNewline": {
+    "description": "Command title (menus, palette, tooltips, undo labels)."
+  },
+  "cmdCellInsertTime": "Insert time",
+  "@cmdCellInsertTime": {
+    "description": "Command title (menus, palette, tooltips, undo labels)."
+  },
+  "cmdCellSetInput": "Set cell input",
+  "@cmdCellSetInput": {
+    "description": "Command title (menus, palette, tooltips, undo labels)."
+  },
+  "cmdCellSetInputForSelection": "Enter in all selected cells",
+  "@cmdCellSetInputForSelection": {
+    "description": "Command title (menus, palette, tooltips, undo labels)."
+  },
+  "cmdCellToggleEditMode": "Toggle Enter/Edit mode",
+  "@cmdCellToggleEditMode": {
+    "description": "Command title (menus, palette, tooltips, undo labels)."
+  },
+  "cmdCellsCopyRange": "Copy range",
+  "@cmdCellsCopyRange": {
+    "description": "Command title (menus, palette, tooltips, undo labels)."
+  },
+  "cmdCellsDeleteShiftLeft": "Delete cells and shift left",
+  "@cmdCellsDeleteShiftLeft": {
+    "description": "Command title (menus, palette, tooltips, undo labels)."
+  },
+  "cmdCellsDeleteShiftUp": "Delete cells and shift up",
+  "@cmdCellsDeleteShiftUp": {
+    "description": "Command title (menus, palette, tooltips, undo labels)."
+  },
+  "cmdCellsInsertShiftDown": "Insert cells and shift down",
+  "@cmdCellsInsertShiftDown": {
+    "description": "Command title (menus, palette, tooltips, undo labels)."
+  },
+  "cmdCellsInsertShiftRight": "Insert cells and shift right",
+  "@cmdCellsInsertShiftRight": {
+    "description": "Command title (menus, palette, tooltips, undo labels)."
+  },
+  "cmdCellsMoveRange": "Move range",
+  "@cmdCellsMoveRange": {
+    "description": "Command title (menus, palette, tooltips, undo labels)."
+  },
+  "cmdCfOpenPanel": "Conditional formatting",
+  "@cmdCfOpenPanel": {
+    "description": "Command title (menus, palette, tooltips, undo labels)."
+  },
+  "cmdChartInsert": "Chart",
+  "@cmdChartInsert": {
+    "description": "Command title (menus, palette, tooltips, undo labels)."
+  },
+  "cmdCleanupOpenRemoveDuplicates": "Remove duplicates",
+  "@cmdCleanupOpenRemoveDuplicates": {
+    "description": "Command title (menus, palette, tooltips, undo labels)."
+  },
+  "cmdCleanupOpenSuggestions": "Cleanup suggestions",
+  "@cmdCleanupOpenSuggestions": {
+    "description": "Command title (menus, palette, tooltips, undo labels)."
+  },
+  "cmdCleanupTrimWhitespace": "Trim whitespace",
+  "@cmdCleanupTrimWhitespace": {
+    "description": "Command title (menus, palette, tooltips, undo labels)."
+  },
+  "cmdClearColumns": "Clear {cols}",
+  "@cmdClearColumns": {
+    "placeholders": {
+      "cols": {
+        "type": "String"
+      }
+    }
+  },
+  "cmdClearRows": "Clear {rows}",
+  "@cmdClearRows": {
+    "placeholders": {
+      "rows": {
+        "type": "String"
+      }
+    }
+  },
+  "cmdColsDelete": "Delete columns",
+  "@cmdColsDelete": {
+    "description": "Command title (menus, palette, tooltips, undo labels)."
+  },
+  "cmdColsHide": "Hide columns",
+  "@cmdColsHide": {
+    "description": "Command title (menus, palette, tooltips, undo labels)."
+  },
+  "cmdColsInsertDialog": "Insert columns…",
+  "@cmdColsInsertDialog": {
+    "description": "Command title (menus, palette, tooltips, undo labels)."
+  },
+  "cmdColsInsertLeft": "Insert column left",
+  "@cmdColsInsertLeft": {
+    "description": "Command title (menus, palette, tooltips, undo labels)."
+  },
+  "cmdColsInsertLeftN": "{n, plural, =1{Insert 1 column left} other{Insert {n} columns left}}",
+  "@cmdColsInsertLeftN": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
+  "cmdColsInsertRight": "Insert column right",
+  "@cmdColsInsertRight": {
+    "description": "Command title (menus, palette, tooltips, undo labels)."
+  },
+  "cmdColsInsertRightN": "{n, plural, =1{Insert 1 column right} other{Insert {n} columns right}}",
+  "@cmdColsInsertRightN": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
+  "cmdColsMove": "Move columns",
+  "@cmdColsMove": {
+    "description": "Command title (menus, palette, tooltips, undo labels)."
+  },
+  "cmdColsMoveLeft": "Move column left",
+  "@cmdColsMoveLeft": {
+    "description": "Command title (menus, palette, tooltips, undo labels)."
+  },
+  "cmdColsMoveRight": "Move column right",
+  "@cmdColsMoveRight": {
+    "description": "Command title (menus, palette, tooltips, undo labels)."
+  },
+  "cmdColsResize": "Resize columns",
+  "@cmdColsResize": {
+    "description": "Command title (menus, palette, tooltips, undo labels)."
+  },
+  "cmdColsResizeDialog": "Resize columns…",
+  "@cmdColsResizeDialog": {
+    "description": "Command title (menus, palette, tooltips, undo labels)."
+  },
+  "cmdColsUnhide": "Unhide columns",
+  "@cmdColsUnhide": {
+    "description": "Command title (menus, palette, tooltips, undo labels)."
+  },
+  "cmdCommentsOpenPanel": "Show all comments",
+  "@cmdCommentsOpenPanel": {
+    "description": "Command title (menus, palette, tooltips, undo labels)."
+  },
+  "cmdContextMenuOpen": "Open context menu",
+  "@cmdContextMenuOpen": {
+    "description": "Command title (menus, palette, tooltips, undo labels)."
+  },
+  "cmdDataColumnStats": "Column stats",
+  "@cmdDataColumnStats": {
+    "description": "Command title (menus, palette, tooltips, undo labels)."
+  },
+  "cmdDataExtraction": "Data extraction",
+  "@cmdDataExtraction": {
+    "description": "Command title (menus, palette, tooltips, undo labels)."
+  },
+  "cmdDataOpenSortDialog": "Advanced range sorting options",
+  "@cmdDataOpenSortDialog": {
+    "description": "Command title (menus, palette, tooltips, undo labels)."
+  },
+  "cmdDataRandomizeRange": "Randomize range",
+  "@cmdDataRandomizeRange": {
+    "description": "Command title (menus, palette, tooltips, undo labels)."
+  },
+  "cmdDataSortRange": "Sort range",
+  "@cmdDataSortRange": {
+    "description": "Command title (menus, palette, tooltips, undo labels)."
+  },
+  "cmdDataSortSheet": "Sort sheet",
+  "@cmdDataSortSheet": {
+    "description": "Command title (menus, palette, tooltips, undo labels)."
+  },
+  "cmdDataSortSheetBy": "Sort sheet by column {col}",
+  "@cmdDataSortSheetBy": {
+    "placeholders": {
+      "col": {
+        "type": "String"
+      }
+    }
+  },
+  "cmdDataSplitTextToColumns": "Split text to columns",
+  "@cmdDataSplitTextToColumns": {
+    "description": "Command title (menus, palette, tooltips, undo labels)."
+  },
+  "cmdDeleteColumnsLabel": "Delete {cols}",
+  "@cmdDeleteColumnsLabel": {
+    "placeholders": {
+      "cols": {
+        "type": "String"
+      }
+    }
+  },
+  "cmdDeleteRowsLabel": "Delete {rows}",
+  "@cmdDeleteRowsLabel": {
+    "placeholders": {
+      "rows": {
+        "type": "String"
+      }
+    }
+  },
+  "cmdDrawingInsert": "Drawing",
+  "@cmdDrawingInsert": {
+    "description": "Command title (menus, palette, tooltips, undo labels)."
+  },
+  "cmdDvOpenDropdown": "Open dropdown",
+  "@cmdDvOpenDropdown": {
+    "description": "Command title (menus, palette, tooltips, undo labels)."
+  },
+  "cmdDvOpenPanel": "Data validation",
+  "@cmdDvOpenPanel": {
+    "description": "Command title (menus, palette, tooltips, undo labels)."
+  },
+  "cmdDvToggleCheckbox": "Toggle checkboxes",
+  "@cmdDvToggleCheckbox": {
+    "description": "Command title (menus, palette, tooltips, undo labels)."
+  },
+  "cmdEditClearAll": "Clear",
+  "@cmdEditClearAll": {
+    "description": "Command title (menus, palette, tooltips, undo labels)."
+  },
+  "cmdEditClearValues": "Delete values",
+  "@cmdEditClearValues": {
+    "description": "Command title (menus, palette, tooltips, undo labels)."
+  },
+  "cmdEditCopy": "Copy",
+  "@cmdEditCopy": {
+    "description": "Command title (menus, palette, tooltips, undo labels)."
+  },
+  "cmdEditCut": "Cut",
+  "@cmdEditCut": {
+    "description": "Command title (menus, palette, tooltips, undo labels)."
+  },
+  "cmdEditPaste": "Paste",
+  "@cmdEditPaste": {
+    "description": "Command title (menus, palette, tooltips, undo labels)."
+  },
+  "cmdEditPasteSpecial": "Paste special",
+  "@cmdEditPasteSpecial": {
+    "description": "Command title (menus, palette, tooltips, undo labels)."
+  },
+  "cmdEditPasteSpecialDialog": "Paste special…",
+  "@cmdEditPasteSpecialDialog": {
+    "description": "Command title (menus, palette, tooltips, undo labels)."
+  },
+  "cmdEditRedo": "Redo",
+  "@cmdEditRedo": {
+    "description": "Command title (menus, palette, tooltips, undo labels)."
+  },
+  "cmdEditRepeatLast": "Repeat last action",
+  "@cmdEditRepeatLast": {
+    "description": "Command title (menus, palette, tooltips, undo labels)."
+  },
+  "cmdEditUndo": "Undo",
+  "@cmdEditUndo": {
+    "description": "Command title (menus, palette, tooltips, undo labels)."
+  },
+  "cmdEditUndoHistory": "Undo history…",
+  "@cmdEditUndoHistory": {
+    "description": "Command title (menus, palette, tooltips, undo labels)."
+  },
+  "cmdExploreToggle": "Explore",
+  "@cmdExploreToggle": {
+    "description": "Command title (menus, palette, tooltips, undo labels)."
+  },
+  "cmdFileDownload": "Download",
+  "@cmdFileDownload": {
+    "description": "Command title (menus, palette, tooltips, undo labels)."
+  },
+  "cmdFileImport": "Import…",
+  "@cmdFileImport": {
+    "description": "Command title (menus, palette, tooltips, undo labels)."
+  },
+  "cmdFileSaveNoop": "Save",
+  "@cmdFileSaveNoop": {
+    "description": "Command title (menus, palette, tooltips, undo labels)."
+  },
+  "cmdFileSettings": "Settings",
+  "@cmdFileSettings": {
+    "description": "Command title (menus, palette, tooltips, undo labels)."
+  },
+  "cmdFillAutoFillDown": "Fill down to the data",
+  "@cmdFillAutoFillDown": {
+    "description": "Command title (menus, palette, tooltips, undo labels)."
+  },
+  "cmdFillDown": "Fill down",
+  "@cmdFillDown": {
+    "description": "Command title (menus, palette, tooltips, undo labels)."
+  },
+  "cmdFillRight": "Fill right",
+  "@cmdFillRight": {
+    "description": "Command title (menus, palette, tooltips, undo labels)."
+  },
+  "cmdFillSelection": "Fill selection",
+  "@cmdFillSelection": {
+    "description": "Command title (menus, palette, tooltips, undo labels)."
+  },
+  "cmdFillSeries": "Fill series",
+  "@cmdFillSeries": {
+    "description": "Command title (menus, palette, tooltips, undo labels)."
+  },
+  "cmdFilterByCellValue": "Filter by cell value",
+  "@cmdFilterByCellValue": {
+    "description": "Command title (menus, palette, tooltips, undo labels)."
+  },
+  "cmdFilterToggle": "Create a filter",
+  "@cmdFilterToggle": {
+    "description": "Command title (menus, palette, tooltips, undo labels)."
+  },
+  "cmdFilterViewActivate": "Change view",
+  "@cmdFilterViewActivate": {
+    "description": "Command title (menus, palette, tooltips, undo labels)."
+  },
+  "cmdFilterViewCreate": "Create filter view",
+  "@cmdFilterViewCreate": {
+    "description": "Command title (menus, palette, tooltips, undo labels)."
+  },
+  "cmdFindOpen": "Find",
+  "@cmdFindOpen": {
+    "description": "Command title (menus, palette, tooltips, undo labels)."
+  },
+  "cmdFindOpenReplace": "Find and replace",
+  "@cmdFindOpenReplace": {
+    "description": "Command title (menus, palette, tooltips, undo labels)."
+  },
+  "cmdFitToData": "Fit to data",
+  "@cmdFitToData": {
+    "description": "Command title (menus, palette, tooltips, undo labels)."
+  },
+  "cmdFormatApplyPaintFormat": "Paint format",
+  "@cmdFormatApplyPaintFormat": {
+    "description": "Command title (menus, palette, tooltips, undo labels)."
+  },
+  "cmdFormatBold": "Bold",
+  "@cmdFormatBold": {
+    "description": "Command title (menus, palette, tooltips, undo labels)."
+  },
+  "cmdFormatBorders": "Borders",
+  "@cmdFormatBorders": {
+    "description": "Command title (menus, palette, tooltips, undo labels)."
+  },
+  "cmdFormatClear": "Clear formatting",
+  "@cmdFormatClear": {
+    "description": "Command title (menus, palette, tooltips, undo labels)."
+  },
+  "cmdFormatConvertToTable": "Convert to table",
+  "@cmdFormatConvertToTable": {
+    "description": "Command title (menus, palette, tooltips, undo labels)."
+  },
+  "cmdFormatDecreaseDecimals": "Decrease decimal places",
+  "@cmdFormatDecreaseDecimals": {
+    "description": "Command title (menus, palette, tooltips, undo labels)."
+  },
+  "cmdFormatDecreaseFontSize": "Decrease font size",
+  "@cmdFormatDecreaseFontSize": {
+    "description": "Command title (menus, palette, tooltips, undo labels)."
+  },
+  "cmdFormatFillColor": "Fill color",
+  "@cmdFormatFillColor": {
+    "description": "Command title (menus, palette, tooltips, undo labels)."
+  },
+  "cmdFormatFontFamily": "Font",
+  "@cmdFormatFontFamily": {
+    "description": "Command title (menus, palette, tooltips, undo labels)."
+  },
+  "cmdFormatFontSize": "Font size",
+  "@cmdFormatFontSize": {
+    "description": "Command title (menus, palette, tooltips, undo labels)."
+  },
+  "cmdFormatHAlign": "Horizontal align",
+  "@cmdFormatHAlign": {
+    "description": "Command title (menus, palette, tooltips, undo labels)."
+  },
+  "cmdFormatIncreaseDecimals": "Increase decimal places",
+  "@cmdFormatIncreaseDecimals": {
+    "description": "Command title (menus, palette, tooltips, undo labels)."
+  },
+  "cmdFormatIncreaseFontSize": "Increase font size",
+  "@cmdFormatIncreaseFontSize": {
+    "description": "Command title (menus, palette, tooltips, undo labels)."
+  },
+  "cmdFormatItalic": "Italic",
+  "@cmdFormatItalic": {
+    "description": "Command title (menus, palette, tooltips, undo labels)."
+  },
+  "cmdFormatMerge": "Merge cells",
+  "@cmdFormatMerge": {
+    "description": "Command title (menus, palette, tooltips, undo labels)."
+  },
+  "cmdFormatNumberFormat": "Number format",
+  "@cmdFormatNumberFormat": {
+    "description": "Command title (menus, palette, tooltips, undo labels)."
+  },
+  "cmdFormatOpenCustomCurrency": "Custom currency",
+  "@cmdFormatOpenCustomCurrency": {
+    "description": "Command title (menus, palette, tooltips, undo labels)."
+  },
+  "cmdFormatOpenCustomDateTime": "Custom date and time",
+  "@cmdFormatOpenCustomDateTime": {
+    "description": "Command title (menus, palette, tooltips, undo labels)."
+  },
+  "cmdFormatOpenCustomNumberFormat": "Custom number format",
+  "@cmdFormatOpenCustomNumberFormat": {
+    "description": "Command title (menus, palette, tooltips, undo labels)."
+  },
+  "cmdFormatPaintFormat": "Paint format",
+  "@cmdFormatPaintFormat": {
+    "description": "Command title (menus, palette, tooltips, undo labels)."
+  },
+  "cmdFormatRotation": "Text rotation",
+  "@cmdFormatRotation": {
+    "description": "Command title (menus, palette, tooltips, undo labels)."
+  },
+  "cmdFormatStrikethrough": "Strikethrough",
+  "@cmdFormatStrikethrough": {
+    "description": "Command title (menus, palette, tooltips, undo labels)."
+  },
+  "cmdFormatTextColor": "Text color",
+  "@cmdFormatTextColor": {
+    "description": "Command title (menus, palette, tooltips, undo labels)."
+  },
+  "cmdFormatUnderline": "Underline",
+  "@cmdFormatUnderline": {
+    "description": "Command title (menus, palette, tooltips, undo labels)."
+  },
+  "cmdFormatUnmerge": "Unmerge",
+  "@cmdFormatUnmerge": {
+    "description": "Command title (menus, palette, tooltips, undo labels)."
+  },
+  "cmdFormatVAlign": "Vertical align",
+  "@cmdFormatVAlign": {
+    "description": "Command title (menus, palette, tooltips, undo labels)."
+  },
+  "cmdFormatWrap": "Text wrapping",
+  "@cmdFormatWrap": {
+    "description": "Command title (menus, palette, tooltips, undo labels)."
+  },
+  "cmdFormulaAcceptCompletion": "Insert suggestion",
+  "@cmdFormulaAcceptCompletion": {
+    "description": "Command title (menus, palette, tooltips, undo labels)."
+  },
+  "cmdFormulaBarToggleExpanded": "Expand formula bar",
+  "@cmdFormulaBarToggleExpanded": {
+    "description": "Command title (menus, palette, tooltips, undo labels)."
+  },
+  "cmdFormulaCycleReferenceType": "Toggle absolute reference",
+  "@cmdFormulaCycleReferenceType": {
+    "description": "Command title (menus, palette, tooltips, undo labels)."
+  },
+  "cmdFormulaDismissCompletion": "Dismiss suggestions",
+  "@cmdFormulaDismissCompletion": {
+    "description": "Command title (menus, palette, tooltips, undo labels)."
+  },
+  "cmdFormulaMovePoint": "Move pointed reference",
+  "@cmdFormulaMovePoint": {
+    "description": "Command title (menus, palette, tooltips, undo labels)."
+  },
+  "cmdFormulaNextCompletion": "Next suggestion",
+  "@cmdFormulaNextCompletion": {
+    "description": "Command title (menus, palette, tooltips, undo labels)."
+  },
+  "cmdFormulaToggleArrayFormula": "Toggle ARRAYFORMULA",
+  "@cmdFormulaToggleArrayFormula": {
+    "description": "Command title (menus, palette, tooltips, undo labels)."
+  },
+  "cmdFormulaToggleHelpCard": "Expand formula help",
+  "@cmdFormulaToggleHelpCard": {
+    "description": "Command title (menus, palette, tooltips, undo labels)."
+  },
+  "cmdFormulaToggleHelpCardVisible": "Show formula help",
+  "@cmdFormulaToggleHelpCardVisible": {
+    "description": "Command title (menus, palette, tooltips, undo labels)."
+  },
+  "cmdGroupCollapseAll": "Collapse all groups",
+  "@cmdGroupCollapseAll": {
+    "description": "Command title (menus, palette, tooltips, undo labels)."
+  },
+  "cmdGroupColumns": "Group columns",
+  "@cmdGroupColumns": {
+    "description": "Command title (menus, palette, tooltips, undo labels)."
+  },
+  "cmdGroupExpandAll": "Expand all groups",
+  "@cmdGroupExpandAll": {
+    "description": "Command title (menus, palette, tooltips, undo labels)."
+  },
+  "cmdGroupRows": "Group rows",
+  "@cmdGroupRows": {
+    "description": "Command title (menus, palette, tooltips, undo labels)."
+  },
+  "cmdHelpFunctionList": "Function list",
+  "@cmdHelpFunctionList": {
+    "description": "Command title (menus, palette, tooltips, undo labels)."
+  },
+  "cmdHideColumnsLabel": "Hide {cols}",
+  "@cmdHideColumnsLabel": {
+    "placeholders": {
+      "cols": {
+        "type": "String"
+      }
+    }
+  },
+  "cmdHideRowsLabel": "Hide {rows}",
+  "@cmdHideRowsLabel": {
+    "placeholders": {
+      "rows": {
+        "type": "String"
+      }
+    }
+  },
+  "cmdHistoryNameCurrentVersion": "Name current version",
+  "@cmdHistoryNameCurrentVersion": {
+    "description": "Command title (menus, palette, tooltips, undo labels)."
+  },
+  "cmdHistoryOpen": "See version history",
+  "@cmdHistoryOpen": {
+    "description": "Command title (menus, palette, tooltips, undo labels)."
+  },
+  "cmdHistoryShowCellHistory": "Show edit history",
+  "@cmdHistoryShowCellHistory": {
+    "description": "Command title (menus, palette, tooltips, undo labels)."
+  },
+  "cmdImageInsertInCell": "Insert image in cell",
+  "@cmdImageInsertInCell": {
+    "description": "Command title (menus, palette, tooltips, undo labels)."
+  },
+  "cmdImageInsertOverCells": "Insert image over cells",
+  "@cmdImageInsertOverCells": {
+    "description": "Command title (menus, palette, tooltips, undo labels)."
+  },
+  "cmdInsertCheckbox": "Checkbox",
+  "@cmdInsertCheckbox": {
+    "description": "Command title (menus, palette, tooltips, undo labels)."
+  },
+  "cmdInsertDropdown": "Dropdown",
+  "@cmdInsertDropdown": {
+    "description": "Command title (menus, palette, tooltips, undo labels)."
+  },
+  "cmdInsertEmoji": "Emoji",
+  "@cmdInsertEmoji": {
+    "description": "Command title (menus, palette, tooltips, undo labels)."
+  },
+  "cmdInsertFunction": "Insert function",
+  "@cmdInsertFunction": {
+    "description": "Command title (menus, palette, tooltips, undo labels)."
+  },
+  "cmdInsertLink": "Insert link",
+  "@cmdInsertLink": {
+    "description": "Command title (menus, palette, tooltips, undo labels)."
+  },
+  "cmdInsertPivotTable": "Pivot table",
+  "@cmdInsertPivotTable": {
+    "description": "Command title (menus, palette, tooltips, undo labels)."
+  },
+  "cmdPivotExpandGrid": "Insert rows for the pivot table",
+  "@cmdPivotExpandGrid": {
+    "description": "Command title (menus, palette, tooltips, undo labels)."
+  },
+  "pivotExpandGrid": "Insert rows",
+  "pivotCondBlank": "Is empty",
+  "pivotCondNotBlank": "Is not empty",
+  "pivotCondTextContains": "Text contains",
+  "pivotCondTextNotContains": "Text does not contain",
+  "pivotCondTextStartsWith": "Text starts with",
+  "pivotCondTextEndsWith": "Text ends with",
+  "pivotCondTextEq": "Text is exactly",
+  "pivotCondDateEq": "Date is",
+  "pivotCondDateBefore": "Date is before",
+  "pivotCondDateAfter": "Date is after",
+  "pivotCondNumberGreater": "Greater than",
+  "pivotCondNumberGreaterEq": "Greater than or equal to",
+  "pivotCondNumberLess": "Less than",
+  "pivotCondNumberLessEq": "Less than or equal to",
+  "pivotCondNumberEq": "Is equal to",
+  "pivotCondNumberNotEq": "Is not equal to",
+  "pivotCondNumberBetween": "Is between",
+  "pivotCondNumberNotBetween": "Is not between",
+  "pivotCondCustomFormula": "Custom formula is",
+  "pivotCondAnd": "and",
+  "pivotApply": "OK",
+  "pivotCancel": "Cancel",
+  "pivotAddCalculatedField": "Add calculated field",
+  "cmdPivotOpenEditor": "Edit pivot table",
+  "@cmdPivotOpenEditor": {
+    "description": "Command title (menus, palette, tooltips, undo labels)."
+  },
+  "cmdPivotUpdate": "Edit pivot table",
+  "@cmdPivotUpdate": {
+    "description": "Command title (menus, palette, tooltips, undo labels)."
+  },
+  "cmdPivotDelete": "Delete pivot table",
+  "@cmdPivotDelete": {
+    "description": "Command title (menus, palette, tooltips, undo labels)."
+  },
+  "cmdPivotRefresh": "Refresh pivot table",
+  "@cmdPivotRefresh": {
+    "description": "Command title (menus, palette, tooltips, undo labels)."
+  },
+  "cmdPivotDrillDown": "Show details",
+  "@cmdPivotDrillDown": {
+    "description": "Command title (menus, palette, tooltips, undo labels)."
+  },
+  "cmdPivotCreateGroup": "Create pivot group",
+  "@cmdPivotCreateGroup": {
+    "description": "Command title (menus, palette, tooltips, undo labels)."
+  },
+  "pivotReadOnlyToast": "You can't edit a pivot table's output. Use the pivot table editor.",
+  "reasonNoPivot": "Select a cell in a pivot table",
+  "pivotNoData": "Select a data range for the pivot table",
+  "pivotNotAValueCell": "Select a value cell of the pivot table",
+  "pivotInvalidGroup": "The grouping is not valid",
+  "pivotFieldNotInRows": "Add the field to Rows or Columns first",
+  "pivotSheetPrefix": "Pivot table",
+  "@pivotSheetPrefix": {
+    "description": "Name of new pivot sheets, followed by a number (\"Pivot table 1\")."
+  },
+  "pivotDetailsSheetPrefix": "Details",
+  "@pivotDetailsSheetPrefix": {
+    "description": "Name of drill-down sheets, followed by a number (\"Details 1\")."
+  },
+  "pivotDrillDownConfirmTitle": "Show {count} rows?",
+  "@pivotDrillDownConfirmTitle": {
+    "placeholders": {
+      "count": {
+        "type": "int",
+        "format": "decimalPattern"
+      }
+    }
+  },
+  "pivotDrillDownConfirmBody": "A new sheet with every source row of this value will be created. Large sheets can be slow.",
+  "pivotEditButton": "Edit",
+  "pivotPanelTitle": "Pivot table editor",
+  "pivotPanelEmpty": "Select a cell in a pivot table to edit it, or insert a new pivot table.",
+  "pivotPanelOptions": "Pivot table options",
+  "pivotRange": "Range",
+  "pivotRangeInvalid": "Enter a valid range, e.g. Sheet1!A1:F100",
+  "pivotSuggested": "Suggested",
+  "pivotSuggestionBy": "{value} by {field}",
+  "@pivotSuggestionBy": {
+    "placeholders": {
+      "value": {
+        "type": "String"
+      },
+      "field": {
+        "type": "String"
+      }
+    }
+  },
+  "pivotSuggestionCount": "Count of {field}",
+  "@pivotSuggestionCount": {
+    "placeholders": {
+      "field": {
+        "type": "String"
+      }
+    }
+  },
+  "pivotRows": "Rows",
+  "pivotColumns": "Columns",
+  "pivotValues": "Values",
+  "pivotFilters": "Filters",
+  "pivotAdd": "Add",
+  "pivotAddTo": "Add field to {area}",
+  "@pivotAddTo": {
+    "placeholders": {
+      "area": {
+        "type": "String"
+      }
+    }
+  },
+  "pivotSearchFields": "Search fields",
+  "pivotNoFields": "No matching fields",
+  "pivotCalculatedField": "Calculated field",
+  "pivotAreaEmpty": "Drop a field here or use Add",
+  "pivotOrder": "Order",
+  "pivotAscending": "Ascending",
+  "pivotDescending": "Descending",
+  "pivotSortBy": "Sort by",
+  "pivotShowTotals": "Show totals",
+  "pivotRepeatLabels": "Repeat row labels",
+  "pivotSummarizeBy": "Summarize by",
+  "pivotSummarizeCustom": "Custom",
+  "pivotShowAs": "Show as",
+  "pivotShowAsDefault": "Default",
+  "pivotShowAsRow": "% of row",
+  "pivotShowAsColumn": "% of column",
+  "pivotShowAsGrandTotal": "% of grand total",
+  "pivotDisplayValuesAs": "Display",
+  "pivotValuesAsColumns": "Columns",
+  "pivotValuesAsRows": "Rows",
+  "pivotFilterStatus": "Status",
+  "pivotFilterAll": "Showing all items",
+  "pivotFilterSome": "Showing {shown} of {total} items",
+  "@pivotFilterSome": {
+    "placeholders": {
+      "shown": {
+        "type": "int",
+        "format": "decimalPattern"
+      },
+      "total": {
+        "type": "int",
+        "format": "decimalPattern"
+      }
+    }
+  },
+  "pivotFilterCondition": "Filtered by condition",
+  "pivotFilterByValues": "Filter by values",
+  "pivotFilterByCondition": "Filter by condition",
+  "pivotSelectAll": "Select all",
+  "pivotClearAll": "Clear",
+  "pivotBlanks": "(Blanks)",
+  "pivotConditionNone": "None",
+  "pivotConditionValue": "Value",
+  "pivotFilterTooMany": "Showing {shown} of {total} values — refine your search",
+  "@pivotFilterTooMany": {
+    "placeholders": {
+      "shown": {
+        "type": "int",
+        "format": "decimalPattern"
+      },
+      "total": {
+        "type": "int",
+        "format": "decimalPattern"
+      }
+    }
+  },
+  "pivotMoveTo": "Move to {area}",
+  "@pivotMoveTo": {
+    "placeholders": {
+      "area": {
+        "type": "String"
+      }
+    }
+  },
+  "pivotMoveUp": "Move up",
+  "pivotMoveDown": "Move down",
+  "pivotRemoveField": "Remove field",
+  "pivotRenameField": "Rename…",
+  "pivotRenameTitle": "Rename value",
+  "pivotRenameLabel": "Name",
+  "pivotFieldOptions": "Options of {field}",
+  "@pivotFieldOptions": {
+    "placeholders": {
+      "field": {
+        "type": "String"
+      }
+    }
+  },
+  "pivotDragHandle": "Drag {field} to another area",
+  "@pivotDragHandle": {
+    "placeholders": {
+      "field": {
+        "type": "String"
+      }
+    }
+  },
+  "pivotFieldMissing": "This field no longer exists in the source range",
+  "pivotDateGroup": "Create pivot date group",
+  "pivotHistogramGroup": "Create pivot group rule…",
+  "pivotRemoveGroup": "Remove grouping",
+  "pivotGroupedBy": "Grouped: {group}",
+  "@pivotGroupedBy": {
+    "placeholders": {
+      "group": {
+        "type": "String"
+      }
+    }
+  },
+  "pivotHistogramLabel": "Intervals of {size}",
+  "@pivotHistogramLabel": {
+    "placeholders": {
+      "size": {
+        "type": "String"
+      }
+    }
+  },
+  "pivotManualGroupLabel": "{count} groups",
+  "@pivotManualGroupLabel": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "pivotHistogramTitle": "Create pivot group rule",
+  "pivotHistogramMin": "Minimum value",
+  "pivotHistogramMax": "Maximum value",
+  "pivotHistogramSize": "Interval size",
+  "pivotHistogramInvalidSize": "Enter a number greater than 0",
+  "pivotHistogramInvalidNumber": "Enter a number or leave it empty",
+  "pivotFormula": "Formula",
+  "pivotFormulaHint": "Use source headers as names, e.g. ='Unit price' * Quantity",
+  "pivotValueName": "Name",
+  "pivotDateSecond": "Second",
+  "pivotDateMinute": "Minute",
+  "pivotDateHour": "Hour",
+  "pivotDateHourMinute": "Hour-Minute",
+  "pivotDateHourMinuteAmPm": "Hour-Minute (AM/PM)",
+  "pivotDateDayOfWeek": "Day of the week",
+  "pivotDateDayOfYear": "Day of the year",
+  "pivotDateDayOfMonth": "Day of the month",
+  "pivotDateDayMonth": "Day-Month",
+  "pivotDateMonth": "Month",
+  "pivotDateQuarter": "Quarter",
+  "pivotDateYear": "Year",
+  "pivotDateYearMonth": "Year-Month",
+  "pivotDateYearQuarter": "Year-Quarter",
+  "pivotDateYearMonthDay": "Year-Month-Day",
+  "pivotSelectBlocking": "Select blocking cells",
+  "pivotStale": "Updating…",
+  "dialogCreatePivotTitle": "Create pivot table",
+  "dialogCreatePivotRange": "Data range",
+  "dialogCreatePivotInsertTo": "Insert to",
+  "dialogCreatePivotNewSheet": "New sheet",
+  "dialogCreatePivotExistingSheet": "Existing sheet",
+  "dialogCreatePivotLocation": "Location (existing sheet)",
+  "dialogCreatePivotCreate": "Create",
+  "dialogCreatePivotInvalidRange": "Enter a valid range, e.g. Sheet1!A1:F100",
+  "dialogCreatePivotInvalidLocation": "Enter a single cell, e.g. Sheet2!H1",
+  "cmdInsertSmartChip": "Smart chips",
+  "@cmdInsertSmartChip": {
+    "description": "Command title (menus, palette, tooltips, undo labels)."
+  },
+  "cmdLinkOpen": "Open link",
+  "@cmdLinkOpen": {
+    "description": "Command title (menus, palette, tooltips, undo labels)."
+  },
+  "cmdLinkRemove": "Remove link",
+  "@cmdLinkRemove": {
+    "description": "Command title (menus, palette, tooltips, undo labels)."
+  },
+  "cmdMacroImport": "Import macro",
+  "@cmdMacroImport": {
+    "description": "Command title (menus, palette, tooltips, undo labels)."
+  },
+  "cmdMacroManage": "Manage macros",
+  "@cmdMacroManage": {
+    "description": "Command title (menus, palette, tooltips, undo labels)."
+  },
+  "cmdMacroRecord": "Record macro",
+  "@cmdMacroRecord": {
+    "description": "Command title (menus, palette, tooltips, undo labels)."
+  },
+  "cmdModeEditing": "Editing",
+  "@cmdModeEditing": {
+    "description": "Command title (menus, palette, tooltips, undo labels)."
+  },
+  "cmdModeViewing": "Viewing",
+  "@cmdModeViewing": {
+    "description": "Command title (menus, palette, tooltips, undo labels)."
+  },
+  "cmdNamedFunctionsOpenPanel": "Named functions",
+  "@cmdNamedFunctionsOpenPanel": {
+    "description": "Command title (menus, palette, tooltips, undo labels)."
+  },
+  "cmdNamedRangesCreateFromSelection": "Create named range",
+  "@cmdNamedRangesCreateFromSelection": {
+    "description": "Command title (menus, palette, tooltips, undo labels)."
+  },
+  "cmdNamedRangesOpenPanel": "Named ranges",
+  "@cmdNamedRangesOpenPanel": {
+    "description": "Command title (menus, palette, tooltips, undo labels)."
+  },
+  "cmdNavEnter": "Move down (Enter)",
+  "@cmdNavEnter": {
+    "description": "Command title (menus, palette, tooltips, undo labels)."
+  },
+  "cmdNavGoTo": "Go to range",
+  "@cmdNavGoTo": {
+    "description": "Command title (menus, palette, tooltips, undo labels)."
+  },
+  "cmdNavMove": "Move active cell",
+  "@cmdNavMove": {
+    "description": "Command title (menus, palette, tooltips, undo labels)."
+  },
+  "cmdNavPage": "Page up/down",
+  "@cmdNavPage": {
+    "description": "Command title (menus, palette, tooltips, undo labels)."
+  },
+  "cmdNavPageHorizontal": "Page left/right",
+  "@cmdNavPageHorizontal": {
+    "description": "Command title (menus, palette, tooltips, undo labels)."
+  },
+  "cmdNavRowEnd": "Go to end of row",
+  "@cmdNavRowEnd": {
+    "description": "Command title (menus, palette, tooltips, undo labels)."
+  },
+  "cmdNavRowStart": "Go to start of row",
+  "@cmdNavRowStart": {
+    "description": "Command title (menus, palette, tooltips, undo labels)."
+  },
+  "cmdNavScrollToActive": "Scroll to active cell",
+  "@cmdNavScrollToActive": {
+    "description": "Command title (menus, palette, tooltips, undo labels)."
+  },
+  "cmdNavSheetEnd": "Go to last used cell",
+  "@cmdNavSheetEnd": {
+    "description": "Command title (menus, palette, tooltips, undo labels)."
+  },
+  "cmdNavSheetStart": "Go to A1",
+  "@cmdNavSheetStart": {
+    "description": "Command title (menus, palette, tooltips, undo labels)."
+  },
+  "cmdNavTab": "Move right (Tab)",
+  "@cmdNavTab": {
+    "description": "Command title (menus, palette, tooltips, undo labels)."
+  },
+  "cmdNotesClear": "Clear notes",
+  "@cmdNotesClear": {
+    "description": "Command title (menus, palette, tooltips, undo labels)."
+  },
+  "cmdNotesInsert": "Note",
+  "@cmdNotesInsert": {
+    "description": "Command title (menus, palette, tooltips, undo labels)."
+  },
+  "cmdNotificationsOpenRules": "Notification rules",
+  "@cmdNotificationsOpenRules": {
+    "description": "Command title (menus, palette, tooltips, undo labels)."
+  },
+  "cmdNotificationsOpenSettings": "Comment notifications",
+  "@cmdNotificationsOpenSettings": {
+    "description": "Command title (menus, palette, tooltips, undo labels)."
+  },
+  "cmdPrintOpen": "Print",
+  "@cmdPrintOpen": {
+    "description": "Command title (menus, palette, tooltips, undo labels)."
+  },
+  "cmdProtectOpenPanel": "Protect sheets and ranges",
+  "@cmdProtectOpenPanel": {
+    "description": "Command title (menus, palette, tooltips, undo labels)."
+  },
+  "cmdResizeColumnsLabel": "Resize {cols}",
+  "@cmdResizeColumnsLabel": {
+    "placeholders": {
+      "cols": {
+        "type": "String"
+      }
+    }
+  },
+  "cmdResizeRowsLabel": "Resize {rows}",
+  "@cmdResizeRowsLabel": {
+    "placeholders": {
+      "rows": {
+        "type": "String"
+      }
+    }
+  },
+  "cmdRowsAddMore": "Add more rows",
+  "@cmdRowsAddMore": {
+    "description": "Command title (menus, palette, tooltips, undo labels)."
+  },
+  "cmdRowsDelete": "Delete rows",
+  "@cmdRowsDelete": {
+    "description": "Command title (menus, palette, tooltips, undo labels)."
+  },
+  "cmdRowsHide": "Hide rows",
+  "@cmdRowsHide": {
+    "description": "Command title (menus, palette, tooltips, undo labels)."
+  },
+  "cmdRowsInsertAbove": "Insert row above",
+  "@cmdRowsInsertAbove": {
+    "description": "Command title (menus, palette, tooltips, undo labels)."
+  },
+  "cmdRowsInsertAboveN": "{n, plural, =1{Insert 1 row above} other{Insert {n} rows above}}",
+  "@cmdRowsInsertAboveN": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
+  "cmdRowsInsertBelow": "Insert row below",
+  "@cmdRowsInsertBelow": {
+    "description": "Command title (menus, palette, tooltips, undo labels)."
+  },
+  "cmdRowsInsertBelowN": "{n, plural, =1{Insert 1 row below} other{Insert {n} rows below}}",
+  "@cmdRowsInsertBelowN": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
+  "cmdRowsInsertDialog": "Insert rows…",
+  "@cmdRowsInsertDialog": {
+    "description": "Command title (menus, palette, tooltips, undo labels)."
+  },
+  "cmdRowsMove": "Move rows",
+  "@cmdRowsMove": {
+    "description": "Command title (menus, palette, tooltips, undo labels)."
+  },
+  "cmdRowsMoveDown": "Move row down",
+  "@cmdRowsMoveDown": {
+    "description": "Command title (menus, palette, tooltips, undo labels)."
+  },
+  "cmdRowsMoveUp": "Move row up",
+  "@cmdRowsMoveUp": {
+    "description": "Command title (menus, palette, tooltips, undo labels)."
+  },
+  "cmdRowsResize": "Resize rows",
+  "@cmdRowsResize": {
+    "description": "Command title (menus, palette, tooltips, undo labels)."
+  },
+  "cmdRowsResizeDialog": "Resize rows…",
+  "@cmdRowsResizeDialog": {
+    "description": "Command title (menus, palette, tooltips, undo labels)."
+  },
+  "cmdRowsUnhide": "Unhide rows",
+  "@cmdRowsUnhide": {
+    "description": "Command title (menus, palette, tooltips, undo labels)."
+  },
+  "cmdScriptOpenEditor": "Open script editor",
+  "@cmdScriptOpenEditor": {
+    "description": "Command title (menus, palette, tooltips, undo labels)."
+  },
+  "cmdScriptOpenExecutions": "Executions",
+  "@cmdScriptOpenExecutions": {
+    "description": "Command title (menus, palette, tooltips, undo labels)."
+  },
+  "cmdScriptOpenTriggers": "Triggers",
+  "@cmdScriptOpenTriggers": {
+    "description": "Command title (menus, palette, tooltips, undo labels)."
+  },
+  "cmdSelectAll": "Select all",
+  "@cmdSelectAll": {
+    "description": "Command title (menus, palette, tooltips, undo labels)."
+  },
+  "cmdSelectColumns": "Select columns",
+  "@cmdSelectColumns": {
+    "description": "Command title (menus, palette, tooltips, undo labels)."
+  },
+  "cmdSelectDataRegion": "Select data region",
+  "@cmdSelectDataRegion": {
+    "description": "Command title (menus, palette, tooltips, undo labels)."
+  },
+  "cmdSelectRange": "Select range",
+  "@cmdSelectRange": {
+    "description": "Command title (menus, palette, tooltips, undo labels)."
+  },
+  "cmdSelectRows": "Select rows",
+  "@cmdSelectRows": {
+    "description": "Command title (menus, palette, tooltips, undo labels)."
+  },
+  "cmdSheetActivate": "Go to sheet",
+  "@cmdSheetActivate": {
+    "description": "Command title (menus, palette, tooltips, undo labels)."
+  },
+  "cmdSheetActivateNext": "Next sheet",
+  "@cmdSheetActivateNext": {
+    "description": "Command title (menus, palette, tooltips, undo labels)."
+  },
+  "cmdSheetActivatePrevious": "Previous sheet",
+  "@cmdSheetActivatePrevious": {
+    "description": "Command title (menus, palette, tooltips, undo labels)."
+  },
+  "cmdSheetAdd": "Add sheet",
+  "@cmdSheetAdd": {
+    "description": "Command title (menus, palette, tooltips, undo labels)."
+  },
+  "cmdSheetCopyToExisting": "Existing spreadsheet…",
+  "@cmdSheetCopyToExisting": {
+    "description": "Command title (menus, palette, tooltips, undo labels)."
+  },
+  "cmdSheetCopyToNew": "New spreadsheet",
+  "@cmdSheetCopyToNew": {
+    "description": "Command title (menus, palette, tooltips, undo labels)."
+  },
+  "cmdSheetDelete": "Delete",
+  "@cmdSheetDelete": {
+    "description": "Command title (menus, palette, tooltips, undo labels)."
+  },
+  "cmdSheetDuplicate": "Duplicate",
+  "@cmdSheetDuplicate": {
+    "description": "Command title (menus, palette, tooltips, undo labels)."
+  },
+  "cmdSheetHide": "Hide sheet",
+  "@cmdSheetHide": {
+    "description": "Command title (menus, palette, tooltips, undo labels)."
+  },
+  "cmdSheetMove": "Move sheet",
+  "@cmdSheetMove": {
+    "description": "Command title (menus, palette, tooltips, undo labels)."
+  },
+  "cmdSheetMoveLeft": "Move left",
+  "@cmdSheetMoveLeft": {
+    "description": "Command title (menus, palette, tooltips, undo labels)."
+  },
+  "cmdSheetMoveRight": "Move right",
+  "@cmdSheetMoveRight": {
+    "description": "Command title (menus, palette, tooltips, undo labels)."
+  },
+  "cmdSheetRename": "Rename",
+  "@cmdSheetRename": {
+    "description": "Command title (menus, palette, tooltips, undo labels)."
+  },
+  "cmdSheetSetColor": "Change color",
+  "@cmdSheetSetColor": {
+    "description": "Command title (menus, palette, tooltips, undo labels)."
+  },
+  "cmdSheetSetRightToLeft": "Right-to-left",
+  "@cmdSheetSetRightToLeft": {
+    "description": "Command title (menus, palette, tooltips, undo labels)."
+  },
+  "cmdSheetUnhide": "Unhide sheet",
+  "@cmdSheetUnhide": {
+    "description": "Command title (menus, palette, tooltips, undo labels)."
+  },
+  "cmdSlicerAdd": "Add a slicer",
+  "slicerUntitled": "Slicer",
+  "slicerAll": "Showing all",
+  "slicerByCondition": "Filtered by condition",
+  "slicerHiddenCount": "{count, plural, =1{1 value hidden} other{{count} values hidden}}",
+  "@slicerHiddenCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "slicerLocal": "{summary} (only you)",
+  "@slicerLocal": {
+    "placeholders": {
+      "summary": {
+        "type": "String"
+      }
+    }
+  },
+  "slicerOpen": "Filter values",
+  "slicerSearch": "Search values",
+  "slicerSelectAll": "Select all",
+  "slicerClear": "Clear",
+  "slicerBlanks": "(Blanks)",
+  "slicerCancel": "Cancel",
+  "slicerOk": "OK",
+  "slicerNone": "Select a slicer to edit it.",
+  "slicerPanelTitle": "Slicer",
+  "slicerDataRange": "Data range",
+  "slicerColumn": "Column",
+  "slicerApplyToPivots": "Apply to pivot tables",
+  "slicerTitle": "Title",
+  "slicerTitlePlaceholder": "Column header",
+  "slicerStyle": "Style",
+  "slicerBackground": "Background color",
+  "slicerTextColor": "Text color",
+  "slicerSetDefault": "Set current filters as default",
+  "slicerReset": "Reset filter",
+  "slicerNeedsData": "Select a range with a header row to add a slicer.",
+  "cmdSlicerEdit": "Edit slicer",
+  "cmdSlicerUpdate": "Update slicer",
+  "cmdSlicerSetCriteria": "Set slicer filter",
+  "cmdSlicerSetDefault": "Set slicer filters as default",
+  "cmdSlicerReset": "Reset slicer",
+  "@cmdSlicerAdd": {
+    "description": "Command title (menus, palette, tooltips, undo labels)."
+  },
+  "cmdStatsSetShown": "Show statistic",
+  "@cmdStatsSetShown": {
+    "description": "Command title (menus, palette, tooltips, undo labels)."
+  },
+  "cmdStructureDeleteBySelection": "Delete rows, columns or cells",
+  "@cmdStructureDeleteBySelection": {
+    "description": "Command title (menus, palette, tooltips, undo labels)."
+  },
+  "cmdStructureInsertBySelection": "Insert rows, columns or cells",
+  "@cmdStructureInsertBySelection": {
+    "description": "Command title (menus, palette, tooltips, undo labels)."
+  },
+  "cmdStructureOpenDeleteDialog": "Delete cells…",
+  "@cmdStructureOpenDeleteDialog": {
+    "description": "Command title (menus, palette, tooltips, undo labels)."
+  },
+  "cmdThemeOpenPanel": "Theme",
+  "@cmdThemeOpenPanel": {
+    "description": "Command title (menus, palette, tooltips, undo labels)."
+  },
+  "cmdToolsPersonalDictionary": "Personal dictionary",
+  "@cmdToolsPersonalDictionary": {
+    "description": "Command title (menus, palette, tooltips, undo labels)."
+  },
+  "cmdToolsSpellCheck": "Spell check",
+  "@cmdToolsSpellCheck": {
+    "description": "Command title (menus, palette, tooltips, undo labels)."
+  },
+  "cmdToolsToggleAutocomplete": "Autocomplete",
+  "@cmdToolsToggleAutocomplete": {
+    "description": "Command title (menus, palette, tooltips, undo labels)."
+  },
+  "cmdToolsToggleFormulaSuggestions": "Formula suggestions",
+  "@cmdToolsToggleFormulaSuggestions": {
+    "description": "Command title (menus, palette, tooltips, undo labels)."
+  },
+  "cmdUngroupColumns": "Ungroup columns",
+  "@cmdUngroupColumns": {
+    "description": "Command title (menus, palette, tooltips, undo labels)."
+  },
+  "cmdUngroupRows": "Ungroup rows",
+  "@cmdUngroupRows": {
+    "description": "Command title (menus, palette, tooltips, undo labels)."
+  },
+  "cmdViewFreezeColumns": "Freeze columns",
+  "@cmdViewFreezeColumns": {
+    "description": "Command title (menus, palette, tooltips, undo labels)."
+  },
+  "cmdViewFreezeRows": "Freeze rows",
+  "@cmdViewFreezeRows": {
+    "description": "Command title (menus, palette, tooltips, undo labels)."
+  },
+  "cmdViewToggleCommentIndicators": "Hide comment indicators",
+  "@cmdViewToggleCommentIndicators": {
+    "description": "Command title (menus, palette, tooltips, undo labels)."
+  },
+  "cmdViewToggleFormulaBar": "Formula bar",
+  "@cmdViewToggleFormulaBar": {
+    "description": "Command title (menus, palette, tooltips, undo labels)."
+  },
+  "cmdViewToggleFormulas": "Formulas",
+  "@cmdViewToggleFormulas": {
+    "description": "Command title (menus, palette, tooltips, undo labels)."
+  },
+  "cmdViewToggleGridlines": "Gridlines",
+  "@cmdViewToggleGridlines": {
+    "description": "Command title (menus, palette, tooltips, undo labels)."
+  },
+  "cmdViewToggleProtectedRanges": "Protected ranges",
+  "@cmdViewToggleProtectedRanges": {
+    "description": "Command title (menus, palette, tooltips, undo labels)."
+  },
+  "cmdViewZoom": "Zoom",
+  "@cmdViewZoom": {
+    "description": "Command title (menus, palette, tooltips, undo labels)."
+  },
+  "cmdViewZoomIn": "Zoom in",
+  "@cmdViewZoomIn": {
+    "description": "Command title (menus, palette, tooltips, undo labels)."
+  },
+  "cmdViewZoomOut": "Zoom out",
+  "@cmdViewZoomOut": {
+    "description": "Command title (menus, palette, tooltips, undo labels)."
+  },
+  "colorAutomatic": "Automatic",
+  "colorNone": "None",
+  "contextDeleteCells": "Delete cells",
+  "contextEditLink": "Edit link",
+  "contextFitAllColumns": "Fit all columns to data",
+  "contextInsertCells": "Insert cells",
+  "contextMoreCellActions": "View more cell actions",
+  "contextMoreColumnActions": "View more column actions",
+  "contextMoreRowActions": "View more row actions",
+  "contextUnhideAllColumns": "Unhide all columns",
+  "contextUnhideAllRows": "Unhide all rows",
+  "dialogApply": "Apply",
+  "dialogCustomNumberFormatTitle": "Custom number format",
+  "dialogDelete": "Delete",
+  "dialogDeleteCellsTitle": "Delete cells",
+  "dialogDeleteSheetBody": "You can undo this.",
+  "dialogDeleteSheetTitle": "Delete “{name}”?",
+  "@dialogDeleteSheetTitle": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "dialogEntireColumn": "Entire column",
+  "dialogEntireRow": "Entire row",
+  "dialogInsert": "Insert",
+  "dialogInsertAbove": "Above",
+  "dialogInsertBelow": "Below",
+  "dialogInsertCellsTitle": "Insert cells",
+  "dialogInsertCount": "Number",
+  "dialogInsertInvalid": "Enter a number from 1 to 10,000",
+  "dialogInsertLeft": "Left",
+  "dialogInsertPosition": "Position",
+  "dialogInsertRight": "Right",
+  "dialogLinkText": "Text",
+  "dialogLinkTitle": "Insert link",
+  "dialogLinkUrl": "Link",
+  "dialogMergeAll": "Merging cells will only preserve the top-leftmost value. Merge anyway?",
+  "dialogMergeHorizontal": "Merging cells will only preserve the leftmost value of each row. Merge anyway?",
+  "dialogMergeTitle": "Merge cells",
+  "dialogMergeVertical": "Merging cells will only preserve the top value of each column. Merge anyway?",
+  "dialogNoteLabel": "Note",
+  "dialogNoteTitle": "Note",
+  "dialogOk": "OK",
+  "dialogPaste": "Paste",
+  "dialogPasteSpecialMode": "Paste",
+  "dialogPasteSpecialTitle": "Paste special",
+  "dialogReplaceDataBody": "Do you want to replace it?",
+  "dialogReplaceDataTitle": "There's already data here",
+  "dialogResizeInvalid": "Enter a size from 2 to 5,000 px",
+  "dialogResizeMode": "Size",
+  "dialogResizeSize": "Size (px)",
+  "dialogResizeSpecifyColumn": "Specify column width",
+  "dialogResizeSpecifyRow": "Specify row height",
+  "dialogRotationLabel": "Angle (degrees)",
+  "dialogRotationTitle": "Custom angle",
+  "dialogSave": "Save",
+  "dialogShiftMode": "Shift",
+  "downloadCsv": "Comma-separated values (.csv, current sheet)",
+  "downloadHtml": "Web page (.html, zipped)",
+  "downloadOds": "OpenDocument (.ods)",
+  "downloadPdf": "PDF (.pdf)",
+  "downloadTsv": "Tab-separated values (.tsv, current sheet)",
+  "downloadXlsx": "Microsoft Excel (.xlsx)",
+  "downloadingSpreadsheet": "Downloading spreadsheet… {percent}%",
+  "@downloadingSpreadsheet": {
+    "placeholders": {
+      "percent": {
+        "type": "int",
+        "format": "decimalPattern"
+      }
+    }
+  },
+  "errorSheetNameEmpty": "A sheet name can’t be empty",
+  "formulaParseError": "{message}",
+  "@formulaParseError": {
+    "placeholders": {
+      "message": {
+        "type": "String"
+      }
+    }
+  },
+  "freezeColumns": "{n, plural, =1{1 column} other{{n} columns}}",
+  "@freezeColumns": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
+  "freezeNoColumns": "No columns",
+  "freezeNoRows": "No rows",
+  "freezeRows": "{n, plural, =1{1 row} other{{n} rows}}",
+  "@freezeRows": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
+  "freezeUpToColumn": "Up to column {col}",
+  "@freezeUpToColumn": {
+    "placeholders": {
+      "col": {
+        "type": "String"
+      }
+    }
+  },
+  "freezeUpToRow": "Up to row {row}",
+  "@freezeUpToRow": {
+    "placeholders": {
+      "row": {
+        "type": "int",
+        "format": "decimalPattern"
+      }
+    }
+  },
+  "gridSemanticsLabel": "{sheet} grid",
+  "@gridSemanticsLabel": {
+    "placeholders": {
+      "sheet": {
+        "type": "String"
+      }
+    }
+  },
+  "labelColumn": "column {col}",
+  "@labelColumn": {
+    "placeholders": {
+      "col": {
+        "type": "String"
+      }
+    }
+  },
+  "labelColumns": "columns {from} – {to}",
+  "@labelColumns": {
+    "placeholders": {
+      "from": {
+        "type": "String"
+      },
+      "to": {
+        "type": "String"
+      }
+    }
+  },
+  "labelRow": "row {row}",
+  "@labelRow": {
+    "placeholders": {
+      "row": {
+        "type": "int",
+        "format": "decimalPattern"
+      }
+    }
+  },
+  "labelRows": "rows {from} – {to}",
+  "@labelRows": {
+    "placeholders": {
+      "from": {
+        "type": "int",
+        "format": "decimalPattern"
+      },
+      "to": {
+        "type": "int",
+        "format": "decimalPattern"
+      }
+    }
+  },
+  "loadingSpreadsheet": "Opening spreadsheet…",
+  "menuAi": "AI",
+  "menuAlignment": "Alignment",
+  "menuCells": "Cells",
+  "menuColumns": "Columns",
+  "menuComments": "Comments",
+  "menuData": "Data",
+  "menuDataCleanup": "Data cleanup",
+  "menuDelete": "Delete",
+  "menuDownload": "Download",
+  "menuExtensions": "Extensions",
+  "menuFontSize": "Font size",
+  "menuFormat": "Format",
+  "menuFreeze": "Freeze",
+  "menuFunction": "Function",
+  "menuGroup": "Group",
+  "menuHiddenSheets": "Hidden sheets",
+  "menuImage": "Image",
+  "menuInsert": "Insert",
+  "menuMacros": "Macros",
+  "menuMergeCells": "Merge cells",
+  "menuMove": "Move",
+  "menuNoHiddenSheets": "No hidden sheets",
+  "menuNotificationSettings": "Notification settings",
+  "menuNumber": "Number",
+  "menuPasteSpecial": "Paste special",
+  "menuRotation": "Rotation",
+  "menuRows": "Rows",
+  "menuScripts": "Scripts",
+  "menuShow": "Show",
+  "menuSortRange": "Sort range",
+  "menuSortSheet": "Sort sheet",
+  "menuSpelling": "Spelling",
+  "menuText": "Text",
+  "menuWrapping": "Wrapping",
+  "menuZoom": "Zoom",
+  "mergeAll": "Merge all",
+  "mergeHorizontally": "Merge horizontally",
+  "mergeVertically": "Merge vertically",
+  "numberFormatAccounting": "Accounting",
+  "numberFormatAutomatic": "Automatic",
+  "numberFormatCurrency": "Currency",
+  "numberFormatCurrencyRounded": "Currency rounded",
+  "numberFormatDate": "Date",
+  "numberFormatDateTime": "Date time",
+  "numberFormatDuration": "Duration",
+  "numberFormatFinancial": "Financial",
+  "numberFormatNumber": "Number",
+  "numberFormatPercent": "Percent",
+  "numberFormatPlainText": "Plain text",
+  "numberFormatScientific": "Scientific",
+  "numberFormatTime": "Time",
+  "pasteAllExceptBorders": "All except borders",
+  "pasteColumnWidthsOnly": "Column widths only",
+  "pasteConditionalFormattingOnly": "Conditional formatting only",
+  "pasteDataValidationOnly": "Data validation only",
+  "pasteFormatOnly": "Format only",
+  "pasteFormulasOnly": "Formula only",
+  "pasteTransposed": "Transposed",
+  "pasteValuesOnly": "Values only",
+  "reasonNotAvailableYet": "Not available yet",
+  "reasonSpreadsheetLoading": "The spreadsheet is still opening",
+  "reasonViewAccess": "You have view access",
+  "reasonViewingMode": "Switch to Editing mode to make changes",
+  "reasonTextSelected": "Not available while text in the cell is selected",
+  "rotationCustom": "Custom angle…",
+  "rotationDown": "Rotate down",
+  "rotationNone": "None",
+  "rotationStack": "Stack vertically",
+  "rotationTiltDown": "Tilt down",
+  "rotationTiltUp": "Tilt up",
+  "rotationUp": "Rotate up",
+  "screenGoHome": "Go to home",
+  "screenOfflineUnavailable": "This spreadsheet isn’t available offline",
+  "screenOpenFailed": "The spreadsheet couldn’t be opened",
+  "screenTryAgain": "Try again",
+  "screenUnavailable": "This spreadsheet isn’t available",
+  "sheetHiddenLabel": "{name} (hidden)",
+  "@sheetHiddenLabel": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "sortAtoZ": "A to Z",
+  "sortSheetAtoZ": "Sort sheet A to Z",
+  "sortSheetZtoA": "Sort sheet Z to A",
+  "sortZtoA": "Z to A",
+  "statAverage": "Average",
+  "statCount": "Count",
+  "statCountNumbers": "Count numbers",
+  "statMax": "Max",
+  "statMin": "Min",
+  "statSum": "Sum",
+  "statusCellCount": "{count} / {max} cells",
+  "@statusCellCount": {
+    "placeholders": {
+      "count": {
+        "type": "int",
+        "format": "decimalPattern"
+      },
+      "max": {
+        "type": "int",
+        "format": "decimalPattern"
+      }
+    }
+  },
+  "statusCellLimitTooltip": "Cells in this spreadsheet (rows × columns of every sheet) and the limit",
+  "statusModeEdit": "Edit",
+  "statusModeEnter": "Enter",
+  "statusModePoint": "Point",
+  "statusModeReady": "Ready",
+  "statusSheetSize": "{name} · {rows} × {cols}",
+  "@statusSheetSize": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      },
+      "rows": {
+        "type": "int",
+        "format": "decimalPattern"
+      },
+      "cols": {
+        "type": "int",
+        "format": "decimalPattern"
+      }
+    }
+  },
+  "tabAllSheets": "All sheets",
+  "tabBarLabel": "Sheet tabs",
+  "tabCopyTo": "Copy to",
+  "tabDuplicateName": "Another sheet has the same name",
+  "tabMenu": "Options for {name}",
+  "@tabMenu": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "tabScrollLeft": "Scroll tabs left",
+  "tabScrollRight": "Scroll tabs right",
+  "toastCantDeleteAllColumns": "A sheet must have at least one column",
+  "toastCantDeleteAllRows": "A sheet must have at least one row",
+  "toastCantHideAll": "You can’t hide all rows or columns of a sheet",
+  "toastClipboardEmpty": "The clipboard is empty",
+  "toastCommandFailed": "That didn’t work",
+  "toastEditedRowDeleted": "The cell you were editing was deleted",
+  "toastFreezeTooLarge": "The frozen area would be larger than the window. Zoom out or freeze fewer rows.",
+  "toastInvalidRange": "“{range}” isn’t a valid range",
+  "@toastInvalidRange": {
+    "placeholders": {
+      "range": {
+        "type": "String"
+      }
+    }
+  },
+  "toastLinkCopied": "Link copied",
+  "toastMultipleSelections": "This action won’t work on multiple selections",
+  "toastNamedRangeCreated": "Named range “{name}” created",
+  "@toastNamedRangeCreated": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "toastSavesAutomatically": "Wonky Sheets saves automatically",
+  "toastTrimmed": "{n, plural, =0{No cells needed trimming} =1{Trimmed 1 cell} other{Trimmed {n} cells}}",
+  "@toastTrimmed": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
+  "toastUndoPartial": "Some changes couldn’t be undone because they were edited by someone else.",
+  "toolbarBorders": "Borders",
+  "toolbarCurrency": "Format as currency",
+  "toolbarFillColor": "Fill color",
+  "toolbarFont": "Font",
+  "toolbarFontSize": "Font size",
+  "toolbarFunctions": "Functions",
+  "toolbarHAlign": "Horizontal align",
+  "toolbarLabel": "Formatting toolbar",
+  "toolbarMerge": "Merge cells",
+  "toolbarMoreFormats": "More formats",
+  "toolbarPercent": "Format as percent",
+  "toolbarRedo": "Redo",
+  "toolbarRedoLabel": "Redo {label}",
+  "@toolbarRedoLabel": {
+    "placeholders": {
+      "label": {
+        "type": "String"
+      }
+    }
+  },
+  "toolbarRotation": "Text rotation",
+  "toolbarTextColor": "Text color",
+  "toolbarUndo": "Undo",
+  "toolbarUndoLabel": "Undo {label}",
+  "@toolbarUndoLabel": {
+    "placeholders": {
+      "label": {
+        "type": "String"
+      }
+    }
+  },
+  "toolbarVAlign": "Vertical align",
+  "toolbarWrap": "Text wrapping",
+  "toolbarZoom": "Zoom",
+  "undoTyping": "Typing",
+  "untitledSpreadsheet": "Untitled spreadsheet",
+  "wrapClip": "Clip",
+  "wrapOverflow": "Overflow",
+  "wrapWrap": "Wrap",
+  "zoomPercent": "{percent}%",
+  "@zoomPercent": {
+    "placeholders": {
+      "percent": {
+        "type": "int",
+        "format": "decimalPattern"
+      }
+    }
+  },
+  "protectBlockedTitle": "Protected cell or object",
+  "protectBlockedBody": "You are trying to edit a protected cell or object. Please contact the spreadsheet owner to remove protection if you need to edit.",
+  "protectWarningTitle": "Heads up!",
+  "protectWarningBody": "Someone has protected part of this sheet to prevent accidental changes. Edit anyway?",
+  "protectWarningSnooze": "Don't show this again for 5 minutes",
+  "protectPanelEmpty": "No protected sheets or ranges",
+  "protectPanelEmptyHint": "Protect a range or a whole sheet so that it isn't changed by accident.",
+  "protectAdd": "Add a sheet or range",
+  "protectTabRange": "Range",
+  "protectTabSheet": "Sheet",
+  "protectDescription": "Description",
+  "protectDescriptionPlaceholder": "Enter a description",
+  "protectRange": "Range",
+  "protectSheet": "Sheet",
+  "protectExceptCells": "Except certain cells",
+  "protectSetPermissions": "Set permissions",
+  "protectOnlyYou": "Only you",
+  "protectRestricted": "Restricted",
+  "protectEditorsCount": "{count, plural, =1{1 editor} other{{count} editors}}",
+  "@protectEditorsCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "protectWarningOnly": "Warning only",
+  "protectSheetName": "Sheet “{name}”",
+  "@protectSheetName": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "protectExceptSummary": "except {ranges}",
+  "@protectExceptSummary": {
+    "placeholders": {
+      "ranges": {
+        "type": "String"
+      }
+    }
+  },
+  "protectCantEdit": "You can't edit this protection",
+  "protectAdvisory": "Protection prevents accidental edits by collaborators.",
+  "protectEdit": "Edit protection",
+  "protectRemove": "Remove protection",
+  "protectYouCanEdit": "You can edit",
+  "protectPermissionsTitleRange": "Range editing permissions",
+  "protectPermissionsTitleSheet": "Sheet editing permissions",
+  "protectPermMode": "When someone edits",
+  "protectPermWarning": "Show a warning when editing this range",
+  "protectPermRestrict": "Restrict who can edit this range",
+  "protectPermWho": "Who can edit",
+  "protectPermOnlyYou": "Only you",
+  "protectPermCustom": "Custom (checked editors)",
+  "protectPermCopy": "Copy permissions from “{name}”",
+  "@protectPermCopy": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "protectPermAddEditors": "Add editors",
+  "protectPermAddEditorsHint": "Emails, separated by commas",
+  "protectPermNoAccess": "{names} doesn't have edit access to the spreadsheet",
+  "@protectPermNoAccess": {
+    "placeholders": {
+      "names": {
+        "type": "String"
+      }
+    }
+  },
+  "protectPermEditorsLoading": "Loading editors…",
+  "protectEditorsOffline": "You're offline: these are the editors known on this device.",
+  "protectInviteTitle": "Share with new editors?",
+  "protectInviteBody": "{names} can't edit the spreadsheet yet. Share it with them as editors so they can edit this range too?",
+  "@protectInviteBody": {
+    "placeholders": {
+      "names": {
+        "type": "String"
+      }
+    }
+  },
+  "protectInviteShare": "Share and add",
+  "protectInviteSkip": "Don't share",
+  "protectInvitePending": "{names} got an invitation. Add them here once they've accepted it.",
+  "@protectInvitePending": {
+    "placeholders": {
+      "names": {
+        "type": "String"
+      }
+    }
+  },
+  "protectSheetProtected": "This sheet is protected",
+  "cmdProtectAdd": "Protect range",
+  "cmdProtectUpdate": "Edit protection",
+  "cmdProtectDelete": "Remove protection",
+  "reasonCantManageProtection": "You can't edit this protection",
+  "dvPanelEmpty": "No data validation rules",
+  "dvPanelEmptyHint": "Add a rule to control what can be entered in cells.",
+  "dvAddRule": "Add rule",
+  "dvRemoveAllInSelection": "Remove all in selection",
+  "dvApplyToRange": "Apply to range",
+  "dvCriteria": "Criteria",
+  "dvAdvanced": "Advanced options",
+  "dvIfInvalid": "If the data is invalid",
+  "dvShowWarning": "Show a warning",
+  "dvRejectInput": "Reject the input",
+  "dvShowHelpText": "Show help text for a selected cell",
+  "dvHelpTextPlaceholder": "Enter help text",
+  "dvDisplayStyle": "Display style",
+  "dvStyleChip": "Chip",
+  "dvStyleArrow": "Arrow",
+  "dvStylePlain": "Plain text",
+  "dvAllowMultiple": "Allow multiple selections",
+  "dvRemoveRule": "Remove rule",
+  "dvAddItem": "Add another item",
+  "dvItemPlaceholder": "Option {n}",
+  "@dvItemPlaceholder": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
+  "dvItemColor": "Color of “{item}”",
+  "@dvItemColor": {
+    "placeholders": {
+      "item": {
+        "type": "String"
+      }
+    }
+  },
+  "dvItemRemove": "Remove “{item}”",
+  "@dvItemRemove": {
+    "placeholders": {
+      "item": {
+        "type": "String"
+      }
+    }
+  },
+  "dvItemMoveUp": "Move up",
+  "dvItemMoveDown": "Move down",
+  "pivotUpdating": "Updating…",
+  "cmdPivotGroupSelection": "Create pivot group",
+  "pivotSelectLabels": "Select row or column labels of one pivot table field",
+  "pivotGroupName": "Group name",
+  "pivotGroupCreate": "Create group",
+  "pivotGroupPrefix": "Group",
+  "pivotGroupNameEmpty": "Enter a name",
+  "pivotShowEmptyGroups": "Show items with no data",
+  "pivotFilterByColor": "Filter by color",
+  "pivotFillColor": "Fill color",
+  "pivotTextColor": "Text color",
+  "pivotNoColorFilter": "Any",
+  "pivotFormulaValue": "=formula, e.g. =C2>100",
+  "smartChipSearch": "Search people, or type…",
+  "smartChipPeople": "People",
+  "smartChipDate": "Date",
+  "smartChipDropdown": "Dropdown",
+  "smartChipAsText": "Insert “{text}” as text",
+  "@smartChipAsText": {
+    "placeholders": {
+      "text": {
+        "type": "String"
+      }
+    }
+  },
+  "smartChipCopyEmail": "Copy email",
+  "smartChipEmailCopied": "Email copied",
+  "dvItemDragHint": "Drag to reorder (Alt+↑/↓ in the field)",
+  "dvNoColor": "No color",
+  "dvUseCustomValues": "Use custom cell values",
+  "dvChecked": "Checked",
+  "dvUnchecked": "Unchecked",
+  "dvValue": "Value",
+  "dvValueMin": "Minimum",
+  "dvValueMax": "Maximum",
+  "dvValueFormula": "Value or =formula",
+  "dvSourceRange": "Range of items",
+  "dvShadowed": "Another rule takes precedence over part of this range",
+  "dvErrorNoItems": "Add at least one item",
+  "dvErrorValue": "Enter a value",
+  "dvErrorNumber": "Enter a number or a formula",
+  "dvErrorDate": "Enter a date or a formula",
+  "dvErrorFormula": "Enter a formula starting with =",
+  "dvErrorRange": "Enter a valid range",
+  "dvCapped": "Some rules were simplified to stay under 1,000 ranges",
+  "dvTooManyValues": "Too many distinct values to convert to a dropdown",
+  "dvRuleCount": "{count, plural, =1{1 rule} other{{count} rules}}",
+  "@dvRuleCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "dvCritDropdown": "Dropdown",
+  "dvCritDropdownRange": "Dropdown (from a range)",
+  "dvCritTextContains": "Text contains",
+  "dvCritTextNotContains": "Text does not contain",
+  "dvCritTextEq": "Text is exactly",
+  "dvCritTextIsEmail": "Text is valid email",
+  "dvCritTextIsUrl": "Text is valid URL",
+  "dvCritDateIsValid": "Is valid date",
+  "dvCritDateEq": "Date is",
+  "dvCritDateBefore": "Date is before",
+  "dvCritDateAfter": "Date is after",
+  "dvCritDateOnOrBefore": "Date is on or before",
+  "dvCritDateOnOrAfter": "Date is on or after",
+  "dvCritDateBetween": "Date is between",
+  "dvCritDateNotBetween": "Date is not between",
+  "dvCritNumberGreater": "Greater than",
+  "dvCritNumberGreaterEq": "Greater than or equal to",
+  "dvCritNumberLess": "Less than",
+  "dvCritNumberLessEq": "Less than or equal to",
+  "dvCritNumberEq": "Is equal to",
+  "dvCritNumberNotEq": "Is not equal to",
+  "dvCritNumberBetween": "Is between",
+  "dvCritNumberNotBetween": "Is not between",
+  "dvCritCheckbox": "Checkbox",
+  "dvCritCustomFormula": "Custom formula is",
+  "dvDateToday": "Today",
+  "dvDateTomorrow": "Tomorrow",
+  "dvDateYesterday": "Yesterday",
+  "dvDatePastWeek": "In the past week",
+  "dvDatePastMonth": "In the past month",
+  "dvDatePastYear": "In the past year",
+  "dvDateExact": "Exact date",
+  "dvInvalidTitle": "Invalid entry",
+  "dvInvalidBody": "The data you entered in cell {cell} violates the data validation rules set on this cell.",
+  "@dvInvalidBody": {
+    "placeholders": {
+      "cell": {
+        "type": "String"
+      }
+    }
+  },
+  "dvInvalidTooltipTitle": "Invalid",
+  "cmdDvSaveRule": "Save data validation rule",
+  "cmdDvDeleteRule": "Remove data validation rule",
+  "cmdDvClearRange": "Remove data validation",
+  "contextEditDropdown": "Edit dropdown",
+  "pickerSearch": "Search",
+  "pickerNoMatches": "No matching items",
+  "pickerNoItems": "This dropdown has no items",
+  "pickerEdit": "Edit dropdown",
+  "pickerClear": "Clear",
+  "pickerLabel": "Dropdown of {cell}",
+  "@pickerLabel": {
+    "placeholders": {
+      "cell": {
+        "type": "String"
+      }
+    }
+  },
+  "datePickerLabel": "Date of {cell}",
+  "@datePickerLabel": {
+    "placeholders": {
+      "cell": {
+        "type": "String"
+      }
+    }
+  },
+  "linkCardCopy": "Copy link",
+  "linkCardEdit": "Edit link",
+  "linkCardRemove": "Remove link",
+  "linkCardInternal": "Range in this spreadsheet",
+  "linkOpenExternalTitle": "Open external link?",
+  "linkOpenExternalConfirm": "Open",
+  "linkSearchPlaceholder": "Paste a link, or search sheets and named ranges",
+  "linkSearchHeading": "Sheets and named ranges",
+  "linkInternalHint": "Links to a place in this spreadsheet",
+  "linkInvalid": "Enter a link (https://…, an email address or #sheet=…&range=…)",
+  "cmdLinkCopy": "Copy link",
+  "notePlaceholder": "Add a note",
+  "noteEditorLabel": "Note of {cell}",
+  "@noteEditorLabel": {
+    "placeholders": {
+      "cell": {
+        "type": "String"
+      }
+    }
+  },
+  "noteEditorHint": "Esc or click outside to save",
+  "errorTooltipTitle": "Error",
+  "errorHintRef": "A reference points to cells that don't exist (deleted rows, columns or sheets).",
+  "errorHintName": "Check the spelling of function, sheet and named range names.",
+  "spillTooltipTitle": "Array result",
+  "cellInfoNote": "Note",
+  "cellInfoHelp": "Help",
+  "ioReportCopied": "Report copied",
+  "ioSeverityInfo": "Info",
+  "ioSeverityWarning": "Warning",
+  "ioSeverityError": "Error",
+  "ioCopyReport": "Copy report",
+  "ioClose": "Close",
+  "ioReportSheets": "Sheets",
+  "ioReportSheetSize": "{rows} × {columns} · {cells} cells",
+  "@ioReportSheetSize": {
+    "placeholders": {
+      "rows": {
+        "type": "int",
+        "format": "decimalPattern"
+      },
+      "columns": {
+        "type": "int",
+        "format": "decimalPattern"
+      },
+      "cells": {
+        "type": "int",
+        "format": "decimalPattern"
+      }
+    }
+  },
+  "ioReportNoWarnings": "No warnings.",
+  "ioReportSeverity": "Severity",
+  "ioReportWhere": "Sheet / cell",
+  "ioReportMessage": "Message",
+  "importDialogTitle": "Import file",
+  "importDialogImport": "Import data",
+  "importLocationCreateNew": "Create new spreadsheet",
+  "importLocationInsertSheets": "Insert new sheet(s)",
+  "importLocationReplaceSpreadsheet": "Replace spreadsheet",
+  "importLocationReplaceSheet": "Replace current sheet",
+  "importLocationAppend": "Append to current sheet",
+  "importLocationReplaceAtCell": "Replace data at selected cell ({cell})",
+  "@importLocationReplaceAtCell": {
+    "placeholders": {
+      "cell": {
+        "type": "String"
+      }
+    }
+  },
+  "importSeparatorAuto": "Detect automatically",
+  "importSeparatorAutoDetected": "Detect automatically ({separator})",
+  "@importSeparatorAutoDetected": {
+    "placeholders": {
+      "separator": {
+        "type": "String"
+      }
+    }
+  },
+  "importSeparatorCustom": "Custom",
+  "importSeparatorTab": "Tab",
+  "importSeparatorComma": "Comma",
+  "importSeparatorSemicolon": "Semicolon",
+  "importSeparatorPipe": "Pipe",
+  "importFileLabel": "{name} ({size})",
+  "@importFileLabel": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      },
+      "size": {
+        "type": "String"
+      }
+    }
+  },
+  "importChangeFile": "Change file",
+  "importDropHere": "Drag a file here",
+  "importSupportedTypes": ".xlsx, .ods, .csv, .tsv or .txt",
+  "importBrowse": "Browse",
+  "importUnsupportedType": "This file type can't be imported. Choose an .xlsx, .ods, .csv, .tsv or .txt file.",
+  "importLegacyXls": "Legacy .xls files can't be imported. Save the file as .xlsx and import it again.",
+  "importEstimate": "About {cells} cells",
+  "@importEstimate": {
+    "placeholders": {
+      "cells": {
+        "type": "int",
+        "format": "decimalPattern"
+      }
+    }
+  },
+  "importLocation": "Import location",
+  "importReplaceSpreadsheetWarning": "All sheets of this spreadsheet will be deleted. Title, sharing and comments stay. You can undo this.",
+  "importLimitTitle": "Too many cells",
+  "importLimitBody": "This import would make the spreadsheet {cells} cells; the limit is {limit}. Import fewer sheets or a smaller file.",
+  "@importLimitBody": {
+    "placeholders": {
+      "cells": {
+        "type": "int",
+        "format": "decimalPattern"
+      },
+      "limit": {
+        "type": "int",
+        "format": "decimalPattern"
+      }
+    }
+  },
+  "importLargeNote": "Large import on this device may take a while.",
+  "importPreview": "Preview (first 20 rows)",
+  "importSeparator": "Separator type",
+  "importEncoding": "Encoding",
+  "importEncodingAuto": "Detect automatically",
+  "importEncodingAutoDetected": "Detect automatically ({encoding})",
+  "@importEncodingAutoDetected": {
+    "placeholders": {
+      "encoding": {
+        "type": "String"
+      }
+    }
+  },
+  "importLocale": "Locale for numbers & dates",
+  "importLocaleSpreadsheet": "Spreadsheet ({locale})",
+  "@importLocaleSpreadsheet": {
+    "placeholders": {
+      "locale": {
+        "type": "String"
+      }
+    }
+  },
+  "importConvert": "Convert text to numbers, dates, and formulas",
+  "importSheets": "Sheets to import",
+  "importSheetHidden": "{name} (hidden)",
+  "@importSheetHidden": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "importUnsupportedFormulas": "Unsupported formulas",
+  "importUnsupportedValue": "Keep last calculated value",
+  "importUnsupportedText": "Keep formula as text",
+  "importParseFailed": "The file could not be read: {error}",
+  "@importParseFailed": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "importPreviewEmpty": "The file has no data.",
+  "importProgressTitle": "Importing {name}…",
+  "@importProgressTitle": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "importPhaseReading": "Reading the file",
+  "importPhaseWriting": "Writing cells",
+  "importPhaseUploading": "Uploading",
+  "importCancel": "Cancel",
+  "importToastDone": "{summary}",
+  "@importToastDone": {
+    "placeholders": {
+      "summary": {
+        "type": "String"
+      }
+    }
+  },
+  "importSummary": "Imported {sheets, plural, =1{1 sheet} other{{sheets} sheets}}, {cells} cells",
+  "@importSummary": {
+    "placeholders": {
+      "sheets": {
+        "type": "int"
+      },
+      "cells": {
+        "type": "int",
+        "format": "decimalPattern"
+      }
+    }
+  },
+  "importSummaryWarnings": "{summary} — {count, plural, =1{1 warning} other{{count} warnings}}",
+  "@importSummaryWarnings": {
+    "placeholders": {
+      "summary": {
+        "type": "String"
+      },
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "importView": "View",
+  "importOpen": "Open",
+  "importCreated": "Imported “{name}”",
+  "@importCreated": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "importFailed": "Import failed",
+  "importSummaryTitle": "Import summary",
+  "importNoReport": "No import report yet.",
+  "importUndoLabel": "Import {name}",
+  "@importUndoLabel": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "importManyFiles": "Imported {count} spreadsheets",
+  "@importManyFiles": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "cmdFileImportData": "Import data into this spreadsheet",
+  "cmdFileShowImportReport": "Show import summary",
+  "cmdFilterRemove": "Remove filter",
+  "cmdFilterSetRange": "Change filter range",
+  "cmdFilterOpenColumnMenu": "Open filter menu",
+  "cmdFilterSetColumnCriteria": "Filter column",
+  "cmdFilterClearColumn": "Clear filter",
+  "cmdFilterClearAll": "Clear all filters",
+  "cmdFilterSortColumn": "Sort filtered column",
+  "filterByValueNoData": "Select a cell inside a table of data first.",
+  "filterByValueHeader": "Select a data cell below the header row.",
+  "cmdFilterSaveAsView": "Save as filter view",
+  "filterViewNone": "No filter view is open.",
+  "filterStickyRowBadge": "Hidden by filter",
+  "filterViewDeletedToast": "This filter view no longer exists",
+  "cmdFilterViewRename": "Rename filter view",
+  "cmdFilterViewSetRange": "Update filter view range",
+  "cmdFilterViewDuplicate": "Duplicate filter view",
+  "filterViewCopyOf": "Copy of {name}",
+  "@filterViewCopyOf": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "cmdFilterViewSave": "Save view",
+  "cmdFilterViewDelete": "Delete filter view",
+  "cmdFilterViewCopyLink": "Copy link to filter view",
+  "cmdFilterViewOpenPanel": "Manage filter views",
+  "cmdGroupColumnsSpan": "Group columns {span}",
+  "@cmdGroupColumnsSpan": {
+    "placeholders": {
+      "span": {
+        "type": "String"
+      }
+    }
+  },
+  "cmdGroupRowsSpan": "Group rows {span}",
+  "@cmdGroupRowsSpan": {
+    "placeholders": {
+      "span": {
+        "type": "String"
+      }
+    }
+  },
+  "cmdUngroupColumnsSpan": "Ungroup columns {span}",
+  "@cmdUngroupColumnsSpan": {
+    "placeholders": {
+      "span": {
+        "type": "String"
+      }
+    }
+  },
+  "cmdUngroupRowsSpan": "Ungroup rows {span}",
+  "@cmdUngroupRowsSpan": {
+    "placeholders": {
+      "span": {
+        "type": "String"
+      }
+    }
+  },
+  "cmdGroupToggle": "Expand or collapse group",
+  "cmdGroupCollapseToLevel": "Show group level",
+  "cmdGroupRemoveAll": "Remove all groups",
+  "menuExpandAllRowGroups": "Expand all row groups",
+  "menuCollapseAllRowGroups": "Collapse all row groups",
+  "menuExpandAllColumnGroups": "Expand all column groups",
+  "menuCollapseAllColumnGroups": "Collapse all column groups",
+  "sortColumnLabel": "Column {col}",
+  "@sortColumnLabel": {
+    "placeholders": {
+      "col": {
+        "type": "String"
+      }
+    }
+  },
+  "sortDialogTitle": "Sort range from {range}",
+  "@sortDialogTitle": {
+    "placeholders": {
+      "range": {
+        "type": "String"
+      }
+    }
+  },
+  "sortDialogHasHeader": "Data has header row",
+  "sortDialogSortBy": "Sort by",
+  "sortDialogThenBy": "then by",
+  "sortDialogOrder": "Order",
+  "sortDialogAddColumn": "Add another sort column",
+  "sortDialogRemoveColumn": "Remove sort column",
+  "sortDialogSort": "Sort",
+  "sortNeedsRows": "Select at least two rows of data to sort.",
+  "cmdFindClose": "Close find",
+  "cmdFindNext": "Find next",
+  "cmdFindPrevious": "Find previous",
+  "cmdFindReplace": "Replace",
+  "cmdFindReplaceAll": "Replace all",
+  "findNoMatches": "No matches",
+  "dedupeTitle": "Remove duplicates",
+  "dedupeRange": "Range {range}",
+  "@dedupeRange": {
+    "placeholders": {
+      "range": {
+        "type": "String"
+      }
+    }
+  },
+  "dedupeSelectAll": "Select all",
+  "dedupeColumns": "Columns to analyze",
+  "dedupeRemove": "Remove duplicates",
+  "dedupeNoData": "Select a range of data first.",
+  "splitSingleColumn": "Please select a single column of data to split.",
+  "splitReplaceTitle": "Do you want to replace existing data?",
+  "splitReplaceBody": "The cells to the right of the column contain data that will be replaced.",
+  "splitReplace": "Replace",
+  "splitNoSeparator": "Couldn't detect a separator",
+  "cmdColumnStatsSelectColumn": "Show column stats for column",
+  "cmdNamedRangesAdd": "Add named range",
+  "cmdNamedRangesUpdate": "Edit named range",
+  "cmdNamedRangesDelete": "Remove named range",
+  "cmdNamedRangesGoTo": "Go to named range",
+  "cmdNamedFunctionsCreate": "Add named function",
+  "cmdNamedFunctionsUpdate": "Edit named function",
+  "cmdNamedFunctionsDelete": "Remove named function",
+  "namedFunctionNeedsDefinition": "Enter a formula definition.",
+  "exportPhaseImages": "Fetching images",
+  "exportPhasePreparing": "Reading the spreadsheet",
+  "exportPhaseWriting": "Writing the file",
+  "exportProgressTitle": "Downloading {format}…",
+  "@exportProgressTitle": {
+    "placeholders": {
+      "format": {
+        "type": "String"
+      }
+    }
+  },
+  "exportFailed": "Download failed",
+  "exportSaveDialogTitle": "Save {fileName}",
+  "@exportSaveDialogTitle": {
+    "placeholders": {
+      "fileName": {
+        "type": "String"
+      }
+    }
+  },
+  "exportDoneWithNotes": "{fileName} — {count, plural, =1{1 feature} other{{count} features}} not exported exactly",
+  "@exportDoneWithNotes": {
+    "placeholders": {
+      "fileName": {
+        "type": "String"
+      },
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "exportReportTitle": "Export report",
+  "exportReportSummary": "Features of this spreadsheet that {fileName} can't hold exactly.",
+  "@exportReportSummary": {
+    "placeholders": {
+      "fileName": {
+        "type": "String"
+      }
+    }
+  },
+  "importWarningsCount": "{count, plural, =1{1 warning} other{{count} warnings}}",
+  "@importWarningsCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "printPhaseRendering": "Rendering {count, plural, =1{1 page} other{{count} pages}}",
+  "@printPhaseRendering": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "printBack": "Back",
+  "printTitle": "Print settings · {name}",
+  "@printTitle": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "printExportPdf": "Export PDF",
+  "printPrint": "Print",
+  "printScope": "Print",
+  "printScopeSheet": "Current sheet",
+  "printScopeWorkbook": "Workbook",
+  "printScopeSelection": "Selected cells ({range})",
+  "@printScopeSelection": {
+    "placeholders": {
+      "range": {
+        "type": "String"
+      }
+    }
+  },
+  "printApplyToAll": "Apply to all sheets",
+  "printPaperSize": "Paper size",
+  "printPaperCustom": "Custom",
+  "printWidth": "Width",
+  "printHeight": "Height",
+  "printUnitIn": "in",
+  "printUnitCm": "cm",
+  "printOrientation": "Page orientation",
+  "printPortrait": "Portrait",
+  "printLandscape": "Landscape",
+  "printScale": "Scale",
+  "printScaleNormal": "Normal (100%)",
+  "printScaleFitWidth": "Fit to width",
+  "printScaleFitHeight": "Fit to height",
+  "printScaleFitPage": "Fit to page",
+  "printScaleCustom": "Custom number",
+  "printScalePercent": "Percent (10–400)",
+  "printMargins": "Margins",
+  "printMarginsNormal": "Normal",
+  "printMarginsNarrow": "Narrow",
+  "printMarginsWide": "Wide",
+  "printMarginsCustom": "Custom",
+  "printMarginTop": "Top",
+  "printMarginBottom": "Bottom",
+  "printMarginLeft": "Left",
+  "printMarginRight": "Right",
+  "printFormatting": "Formatting",
+  "printGridlines": "Show gridlines",
+  "printNotes": "Show notes",
+  "printHeadings": "Show row & column headers",
+  "printRepeatFrozen": "Repeat frozen rows and columns",
+  "printPageOrder": "Page order",
+  "printDownThenOver": "Down, then over",
+  "printOverThenDown": "Over, then down",
+  "printAlignment": "Alignment",
+  "printAlignHorizontal": "Horizontal",
+  "printAlignVertical": "Vertical",
+  "printAlignLeft": "Left",
+  "printAlignCenter": "Center",
+  "printAlignRight": "Right",
+  "printAlignTop": "Top",
+  "printAlignMiddle": "Middle",
+  "printAlignBottom": "Bottom",
+  "printHeadersFooters": "Headers & footers",
+  "printPageNumbers": "Page numbers",
+  "printWorkbookTitle": "Workbook title",
+  "printSheetName": "Sheet name",
+  "printCurrentDate": "Current date",
+  "printCurrentTime": "Current time",
+  "printCustomFields": "Custom fields",
+  "printHeader": "Header",
+  "printFooter": "Footer",
+  "printFieldLeft": "Left",
+  "printFieldCenter": "Center",
+  "printFieldRight": "Right",
+  "printFieldsHint": "Tokens you can use:",
+  "printSetBreaks": "Set custom page breaks",
+  "printBreaksTitle": "Custom page breaks",
+  "printBreaksHint": "Pages break before these rows and columns. Breaks move with their rows and columns.",
+  "printBreakRows": "Breaks before rows",
+  "printBreakCols": "Breaks before columns",
+  "printAddBreak": "Add",
+  "printBreakRowPlaceholder": "Row, e.g. 21",
+  "printBreakColPlaceholder": "Column, e.g. F",
+  "printConfirmBreaks": "Confirm breaks",
+  "printResetBreaks": "Reset breaks",
+  "printCancelBreaks": "Cancel",
+  "printNoBreaks": "None",
+  "printRemoveBreak": "Remove break",
+  "printResetSettings": "Reset to defaults",
+  "printPageOf": "Page {page} of {pages}",
+  "@printPageOf": {
+    "placeholders": {
+      "page": {
+        "type": "int"
+      },
+      "pages": {
+        "type": "int"
+      }
+    }
+  },
+  "printPageCount": "{count, plural, =0{No pages} =1{1 page} other{{count} pages}}",
+  "@printPageCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "printZoomFit": "Fit width",
+  "printZoomIn": "Zoom in",
+  "printZoomOut": "Zoom out",
+  "printPrevPage": "Previous page",
+  "printNextPage": "Next page",
+  "printNothing": "Nothing to print",
+  "printNothingBody": "The sheet is empty or the selection has no visible cells.",
+  "printUnavailableTitle": "Printing isn't available here",
+  "printUnavailableBody": "Export the PDF and print it from your PDF viewer.",
+  "printViewerLocal": "You have view access: these settings apply to this print only.",
+  "printDownloadsDisabledTitle": "Printing is turned off",
+  "printDownloadsDisabledBody": "The owner doesn't allow viewers to print or download this spreadsheet.",
+  "printLoading": "Opening the spreadsheet…",
+  "printFailed": "The PDF could not be created",
+  "printPageLabel": "Page {page}",
+  "@printPageLabel": {
+    "placeholders": {
+      "page": {
+        "type": "int"
+      }
+    }
+  },
+  "printInvalidRow": "Enter a row number between 2 and {max}.",
+  "@printInvalidRow": {
+    "placeholders": {
+      "max": {
+        "type": "int"
+      }
+    }
+  },
+  "printInvalidColumn": "Enter a column letter after A.",
+  "cmdPrintUpdateSettings": "Change print settings",
+  "cmdPrintResetSettings": "Reset print settings",
+  "cmdPrintEnterBreakMode": "Set custom page breaks",
+  "cmdPrintExitBreakMode": "Exit page break mode",
+  "cmdPrintSetPageBreaks": "Set page breaks",
+  "cmdPrintPrint": "Print PDF",
+  "cmdPrintExportPdf": "Export PDF",
+  "categoryAi": "AI",
+  "aiPanelTitle": "Assistant",
+  "aiTurnedOff": "AI is turned off",
+  "aiTurnOnHint": "Turn it on in Settings › AI.",
+  "aiUnavailable": "AI isn't available right now.",
+  "aiAgentLabel": "AI",
+  "aiUndoDefault": "AI edit",
+  "aiUndoLabel": "AI: {summary}",
+  "@aiUndoLabel": {
+    "placeholders": {
+      "summary": {
+        "type": "String"
+      }
+    }
+  },
+  "aiChipSheet": "Sheet: {name}",
+  "@aiChipSheet": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "aiChipRanges": "{first} (+{more})",
+  "@aiChipRanges": {
+    "placeholders": {
+      "first": {
+        "type": "String"
+      },
+      "more": {
+        "type": "int"
+      }
+    }
+  },
+  "aiQuickAnalyze": "Analyze",
+  "aiQuickChart": "Build a chart",
+  "aiQuickClean": "Clean data",
+  "aiQuickFormula": "Write a formula",
+  "aiSuggestTitle": "Suggest a formula",
+  "aiSuggestPlaceholder": "Describe the formula you need",
+  "aiSuggestAsk": "Suggest",
+  "aiSuggestInsert": "Insert",
+  "aiSuggestTryAgain": "Try again",
+  "aiSuggestResult": "Result: {value}",
+  "@aiSuggestResult": {
+    "placeholders": {
+      "value": {
+        "type": "String"
+      }
+    }
+  },
+  "aiSuggestExternal": "This formula fetches data from the internet.",
+  "aiWorking": "Thinking…",
+  "aiExplainTitle": "Explain formula",
+  "aiExplainToPanel": "Open in Assistant",
+  "aiExplainResultTitle": "Explanation of {cell}",
+  "@aiExplainResultTitle": {
+    "placeholders": {
+      "cell": {
+        "type": "String"
+      }
+    }
+  },
+  "aiNoFormula": "The cell has no formula.",
+  "aiFillTitle": "Fill with AI",
+  "aiFillDescription": "Proposals for the empty cells of {range}, learned from the filled ones. Nothing is written until you apply.",
+  "@aiFillDescription": {
+    "placeholders": {
+      "range": {
+        "type": "String"
+      }
+    }
+  },
+  "aiFillInstructionsPlaceholder": "Instructions (optional), e.g. \"Use the ISO country code\"",
+  "aiFillRegenerate": "Regenerate",
+  "aiFillGenerating": "Generating proposals…",
+  "aiFillApply": "{count, plural, =0{Apply} =1{Apply 1 value} other{Apply {count} values}}",
+  "@aiFillApply": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "aiFillSummary": "{count, plural, =1{1 proposal} other{{count} proposals}} from {examples, plural, =1{1 example} other{{examples} examples}}. Low-confidence values are unchecked.",
+  "@aiFillSummary": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      },
+      "examples": {
+        "type": "int"
+      }
+    }
+  },
+  "aiFillTruncated": "Only the first 2,000 empty cells were filled. Run Fill with AI again for the rest.",
+  "aiFillNothing": "Nothing to fill: there are no empty cells next to data in this column.",
+  "aiFillColumnCell": "Cell",
+  "aiFillColumnInputs": "Inputs",
+  "aiFillColumnValue": "Proposed value",
+  "aiFillColumnConfidence": "Confidence",
+  "aiConfidenceHigh": "High",
+  "aiConfidenceMedium": "Medium",
+  "aiConfidenceLow": "Low",
+  "aiPreviewTitle": "AI changes preview",
+  "aiPreviewDescription": "The assistant suggested these changes. Check the ones to apply; they are applied as one undo step.",
+  "aiPreviewApply": "Apply selected",
+  "aiPreviewDiscard": "Discard",
+  "aiPreviewEmpty": "The assistant suggested no changes.",
+  "aiPreviewCells": "{count, plural, =1{1 cell} other{{count} cells}}",
+  "@aiPreviewCells": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "aiPreviewMoreCells": "{count, plural, =1{and 1 more cell} other{and {count} more cells}}",
+  "@aiPreviewMoreCells": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "aiPreviewNoCells": "No cell values change.",
+  "aiPreviewCell": "Cell",
+  "aiPreviewBefore": "Before",
+  "aiPreviewAfter": "After",
+  "aiPreviewReview": "Review suggested changes",
+  "aiPreviewAppliedNote": "Suggested changes applied.",
+  "aiPreviewDiscardedNote": "Suggested changes discarded.",
+  "aiPreviewSkipped": "{count, plural, =1{1 cell was changed by someone else and kept.} other{{count} cells were changed by someone else and kept.}}",
+  "@aiPreviewSkipped": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "aiDescribeChartResult": "Alt text proposal",
+  "aiInsertUndo": "Insert AI result",
+  "cmdAiSuggestFormulaDescription": "Describe a formula in words and get it written for the active cell",
+  "cmdAiFillRangeDescription": "Fill the empty cells of a column from the examples in it",
+  "cmdAiDescribeChart": "Describe chart with AI",
+  "cmdAiApplyPreview": "Apply AI changes",
+  "cmdAiDiscardPreview": "Discard AI changes",
+  "cmdAiInsertResult": "Insert AI result",
+  "explorePanelTitle": "Explore",
+  "exploreEmptyTitle": "Nothing to explore yet",
+  "exploreEmptyBody": "Select cells with data, or click into a table.",
+  "exploreSelectionStats": "Selection",
+  "exploreSuggestedCharts": "Suggested charts",
+  "exploreNoCharts": "No chart fits this data.",
+  "exploreCreatePivot": "Create a pivot table",
+  "exploreInsights": "Insights",
+  "exploreAskTitle": "Ask about this data",
+  "exploreAskPlaceholder": "Ask a question about this data",
+  "exploreAsk": "Ask",
+  "condNone": "None",
+  "condBlank": "Is empty",
+  "condNotBlank": "Is not empty",
+  "condTextContains": "Text contains",
+  "condTextNotContains": "Text does not contain",
+  "condTextStartsWith": "Text starts with",
+  "condTextEndsWith": "Text ends with",
+  "condTextEq": "Text is exactly",
+  "condDateEq": "Date is",
+  "condDateBefore": "Date is before",
+  "condDateAfter": "Date is after",
+  "condNumberGreater": "Greater than",
+  "condNumberGreaterEq": "Greater than or equal to",
+  "condNumberLess": "Less than",
+  "condNumberLessEq": "Less than or equal to",
+  "condNumberEq": "Is equal to",
+  "condNumberNotEq": "Is not equal to",
+  "condNumberBetween": "Is between",
+  "condNumberNotBetween": "Is not between",
+  "condCustomFormula": "Custom formula is",
+  "condExactDate": "Exact date",
+  "condToday": "Today",
+  "condTomorrow": "Tomorrow",
+  "condYesterday": "Yesterday",
+  "condPastWeek": "In the past week",
+  "condPastMonth": "In the past month",
+  "condPastYear": "In the past year",
+  "condValuePlaceholder": "Value or formula",
+  "condFormulaPlaceholder": "=B2>100",
+  "filterByColor": "Filter by color",
+  "filterSortByColor": "Sort by color",
+  "sortHeaderToastTitle": "Sorted including row 1",
+  "sortHeaderToastBody": "Row 1 looks like a header row.",
+  "sortHeaderToastAction": "Freeze row 1 and re-sort",
+  "dataJobWaiting": "Waiting for the current operation to finish…",
+  "dataJobSorting": "Sorting {count} rows…",
+  "@dataJobSorting": {
+    "placeholders": {
+      "count": {
+        "type": "int",
+        "format": "decimalPattern"
+      }
+    }
+  },
+  "dataJobDeduping": "Removing duplicates in {count} rows…",
+  "@dataJobDeduping": {
+    "placeholders": {
+      "count": {
+        "type": "int",
+        "format": "decimalPattern"
+      }
+    }
+  },
+  "dataJobSplitting": "Splitting {count} rows…",
+  "@dataJobSplitting": {
+    "placeholders": {
+      "count": {
+        "type": "int",
+        "format": "decimalPattern"
+      }
+    }
+  },
+  "dataJobTrimming": "Trimming whitespace in {count} rows…",
+  "@dataJobTrimming": {
+    "placeholders": {
+      "count": {
+        "type": "int",
+        "format": "decimalPattern"
+      }
+    }
+  },
+  "dataJobRandomizing": "Randomizing {count} rows…",
+  "dataJobCleaning": "Cleaning up {count} rows…",
+  "@dataJobCleaning": {
+    "placeholders": {
+      "count": {
+        "type": "int",
+        "format": "decimalPattern"
+      }
+    }
+  },
+  "@dataJobRandomizing": {
+    "placeholders": {
+      "count": {
+        "type": "int",
+        "format": "decimalPattern"
+      }
+    }
+  },
+  "filterByCondition": "Filter by condition",
+  "filterByValues": "Filter by values",
+  "filterFillColor": "Fill color",
+  "filterTextColor": "Text color",
+  "filterNoColors": "No colors in this column",
+  "filterHiddenByOthers": "Hidden by other filters",
+  "filterSelectAll": "Select all {count}",
+  "@filterSelectAll": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "filterClear": "Clear",
+  "filterSearch": "Search",
+  "filterNoValues": "No matching values",
+  "filterShowingOf": "Showing {count} of {total} values — refine your search",
+  "@filterShowingOf": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "filterBlanks": "(Blanks)",
+  "filterViewerHint": "You have view access — use a temporary filter view",
+  "filterViewSortUnavailable": "Sorting inside filter views isn't available yet",
+  "findNoResults": "No results",
+  "findMatchesCount": "{matches} matches",
+  "@findMatchesCount": {
+    "placeholders": {
+      "matches": {
+        "type": "String"
+      }
+    }
+  },
+  "findOfCount": "{current} of {matches}",
+  "@findOfCount": {
+    "placeholders": {
+      "current": {
+        "type": "int"
+      },
+      "matches": {
+        "type": "String"
+      }
+    }
+  },
+  "findPlaceholder": "Find in sheet",
+  "findClose": "Close",
+  "findReplaceTitle": "Find and replace",
+  "findLabel": "Find",
+  "replaceLabel": "Replace with",
+  "findSearchIn": "Search",
+  "findRange": "Range",
+  "findButton": "Find",
+  "findMatchCase": "Match case",
+  "findMatchEntireCell": "Match entire cell contents",
+  "findUseRegex": "Search using regular expressions",
+  "findSearchFormulas": "Also search within formulas",
+  "findSearchLinks": "Also search within links",
+  "findAllSheets": "All sheets",
+  "findThisSheet": "This sheet",
+  "findSpecificRange": "Specific range",
+  "splitSeparator": "Separator:",
+  "splitDetect": "Detect automatically",
+  "splitComma": "Comma",
+  "splitSemicolon": "Semicolon",
+  "splitPeriod": "Period",
+  "splitSpace": "Space",
+  "splitCustom": "Custom",
+  "filterViewName": "Name:",
+  "filterViewRange": "Range:",
+  "filterViewTemporary": "Temporary filter view — only you see it",
+  "filterViewClose": "Close",
+  "filterViewOpen": "Open",
+  "filterViewsTitle": "Filter views",
+  "filterViewsEmpty": "No filter views on this sheet yet.",
+  "filterViewTemporaryShort": "Temporary — only you see it",
+  "namedRangesEmpty": "No named ranges yet. Name a range to use it in formulas, e.g. =SUM(Sales).",
+  "namedRangesAdd": "Add a range",
+  "namedRangesRefError": "#REF!",
+  "namedRangesName": "Name",
+  "namedRangesRange": "Range",
+  "namedRangesUseSelection": "Use the current selection",
+  "namedRangesRemove": "Remove",
+  "namedRangesManage": "Manage named ranges",
+  "namedRangesNone": "No named ranges",
+  "namedFunctionsEmpty": "Create custom functions from formulas and use them like built-in functions, for example:",
+  "namedFunctionsAdd": "Add new function",
+  "namedFunctionsImport": "Import function",
+  "cmdNamedFunctionsImport": "Import named functions",
+  "importFunctionsTitle": "Import named functions",
+  "importFunctionsPickSpreadsheet": "Choose the spreadsheet to import from.",
+  "importFunctionsPickFunctions": "Functions in {name}",
+  "@importFunctionsPickFunctions": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "importFunctionsBack": "Back",
+  "importFunctionsImport": "Import",
+  "importFunctionsSearch": "Search spreadsheets",
+  "importFunctionsNoSpreadsheets": "No spreadsheets found",
+  "importFunctionsNone": "This spreadsheet has no named functions.",
+  "importFunctionsDependency": "Imported because a selected function uses it",
+  "importFunctionsReplace": "Replace functions with the same name",
+  "importFunctionsOffline": "Importing functions needs a connection.",
+  "importFunctionsDone": "{imported, plural, =0{No functions imported} =1{1 function imported} other{{imported} functions imported}}{skipped, plural, =0{} =1{ · 1 skipped (name exists)} other{ · {skipped} skipped (names exist)}}",
+  "cmdCleanupApplySuggestion": "Apply cleanup suggestion",
+  "cleanupNumbersAsText": "{count, plural, =1{Convert 1 cell in column {column} to a number} other{Convert {count} cells in column {column} to numbers}}",
+  "@cleanupNumbersAsText": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      },
+      "column": {
+        "type": "String"
+      }
+    }
+  },
+  "cleanupWhitespace": "{count, plural, =1{Trim extra spaces in 1 cell of column {column}} other{Trim extra spaces in {count} cells of column {column}}}",
+  "@cleanupWhitespace": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      },
+      "column": {
+        "type": "String"
+      }
+    }
+  },
+  "cleanupDuplicates": "{count, plural, =1{Remove 1 duplicate row} other{Remove {count} duplicate rows}}",
+  "@cleanupDuplicates": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "cleanupCapitalization": "{count, plural, =1{Make the capitalization of 1 value in column {column} consistent} other{Make the capitalization of {count} values in column {column} consistent}}",
+  "@cleanupCapitalization": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      },
+      "column": {
+        "type": "String"
+      }
+    }
+  },
+  "cleanupEmptyRows": "{count, plural, =1{Delete 1 empty row inside the data} other{Delete {count} empty rows inside the data}}",
+  "@cleanupEmptyRows": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "cleanupMixedTypes": "{count, plural, =1{Column {column} has numbers and 1 text value} other{Column {column} has numbers and {count} text values}}",
+  "@cleanupMixedTypes": {
+    "placeholders": {
+      "column": {
+        "type": "String"
+      },
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "cleanupRow": "Row {row}",
+  "@cleanupRow": {
+    "placeholders": {
+      "row": {
+        "type": "String"
+      }
+    }
+  },
+  "cleanupApply": "Apply",
+  "cleanupDismiss": "Dismiss",
+  "cleanupColumnStats": "Column stats",
+  "cleanupNoneTitle": "Looks clean",
+  "cleanupNoneBody": "No cleanup suggestions for this sheet.",
+  "cleanupGone": "This suggestion no longer applies.",
+  "@importFunctionsDone": {
+    "placeholders": {
+      "imported": {
+        "type": "int"
+      },
+      "skipped": {
+        "type": "int"
+      }
+    }
+  },
+  "namedFunctionsEdit": "Edit",
+  "namedFunctionsArgDescription": "Description of {param}",
+  "@namedFunctionsArgDescription": {
+    "placeholders": {
+      "param": {
+        "type": "String"
+      }
+    }
+  },
+  "namedFunctionsArgExample": "Example value for {param}",
+  "@namedFunctionsArgExample": {
+    "placeholders": {
+      "param": {
+        "type": "String"
+      }
+    }
+  },
+  "namedFunctionsPreview": "Function preview",
+  "namedFunctionsUpdate": "Update",
+  "namedFunctionsName": "Function name",
+  "namedFunctionsDescription": "Function description",
+  "namedFunctionsParams": "Argument placeholders",
+  "namedFunctionsParamHint": "Type an argument name and press Enter",
+  "namedFunctionsDefinition": "Formula definition",
+  "namedFunctionsNext": "Next",
+  "columnStatsIgnoreHeader": "Ignore header row",
+  "columnStatsEmpty": "This column has no data.",
+  "columnStatsCount": "Count",
+  "columnStatsValues": "Values {count}",
+  "@columnStatsValues": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "columnStatsEmptyCount": "Empty {count}",
+  "@columnStatsEmptyCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "columnStatsUnique": "Unique {count}",
+  "@columnStatsUnique": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "columnStatsDistribution": "Distribution",
+  "columnStatsTable": "Table",
+  "columnStatsFrequency": "Frequency",
+  "columnStatsShowMore": "Show more",
+  "columnStatsSummary": "Summary",
+  "columnStatsSum": "Sum",
+  "columnStatsAverage": "Average",
+  "columnStatsMedian": "Median",
+  "columnStatsMin": "Min",
+  "columnStatsMax": "Max",
+  "columnStatsShortest": "Shortest text length",
+  "columnStatsLongest": "Longest text length",
+  "goToTitle": "Go to range",
+  "goToLabel": "Cell, range or named range",
+  "goToInvalid": "Enter a valid cell, range or named range",
+  "goToButton": "Go",
+  "panelChartEditor": "Chart editor",
+  "categoryCharts": "Charts",
+  "categoryImages": "Images",
+  "categoryObjects": "Objects",
+  "chartAggregateAverage": "Average",
+  "chartAggregateCount": "Count",
+  "chartAggregateMax": "Max",
+  "chartAggregateMedian": "Median",
+  "chartAggregateMin": "Min",
+  "chartAggregateSum": "Sum",
+  "chartAlignAuto": "Auto",
+  "chartAlignCenter": "Center",
+  "chartAlignLeft": "Left",
+  "chartAlignRight": "Right",
+  "chartAxisLeft": "Left axis",
+  "chartAxisRight": "Right axis",
+  "chartCompareCategory": "Category",
+  "chartCompareDatum": "Datum",
+  "chartCompareOff": "Off",
+  "chartDashDash": "Dashed",
+  "chartDashDashDot": "Dash-dot",
+  "chartDashDot": "Dotted",
+  "chartDashLong": "Long dash",
+  "chartDashSolid": "Solid",
+  "chartDownloadPdf": "PDF document (.pdf)",
+  "chartDownloadPng": "PNG image (.png)",
+  "chartDownloadSvg": "Scalable vector graphics (.svg)",
+  "chartEditorAddSeries": "Add series",
+  "chartEditorAddXAxis": "Add X-axis",
+  "chartEditorAggregate": "Aggregate",
+  "chartEditorAlign": "Alignment",
+  "chartEditorAllSeries": "Apply to all series",
+  "chartEditorAlternatingColors": "Alternating row colors",
+  "chartEditorAxis": "Axis",
+  "chartEditorBackground": "Background color",
+  "chartEditorBold": "Bold",
+  "chartEditorBorderColor": "Border color",
+  "chartEditorBucketSize": "Bucket size",
+  "chartEditorChartType": "Chart type",
+  "chartEditorCompareMode": "Compare mode",
+  "chartEditorConnectorLines": "Connector lines",
+  "chartEditorCustomize": "Customize",
+  "chartEditorCustomizeSeries": "Format series",
+  "chartEditorDataLabels": "Data labels",
+  "chartEditorDataRange": "Data range",
+  "chartEditorDomainUnnamed": "(Unnamed)",
+  "chartEditorDoughnutHole": "Doughnut hole",
+  "chartEditorEmpty": "Select a chart to edit it",
+  "chartEditorEmptyCells": "Empty cells",
+  "chartEditorFallingColor": "Falling color",
+  "chartEditorFallingFilled": "Fill falling candles",
+  "chartEditorFillColor": "Fill color",
+  "chartEditorFillOpacity": "Fill opacity",
+  "chartEditorFirstValueSubtotal": "Use first value as subtotal",
+  "chartEditorFont": "Font",
+  "chartEditorFontSize": "Font size",
+  "chartEditorFormatFromSource": "Format from source data",
+  "chartEditorGridColor": "Gridline color",
+  "chartEditorGridCount": "Major gridline count",
+  "chartEditorIncludeHidden": "Include hidden and filtered data",
+  "chartEditorItalic": "Italic",
+  "chartEditorItemDividers": "Show item dividers",
+  "chartEditorLineDash": "Line dash",
+  "chartEditorLineThickness": "Line thickness",
+  "chartEditorLogScale": "Log scale",
+  "chartEditorMajorGridlines": "Major gridlines",
+  "chartEditorMajorTicks": "Major ticks",
+  "chartEditorMax": "Max",
+  "chartEditorMaximize": "Maximize",
+  "chartEditorMin": "Min",
+  "chartEditorMinorGridlines": "Minor gridlines",
+  "chartEditorMinorTicks": "Minor ticks",
+  "chartEditorMissingSeries": "Missing series (column deleted)",
+  "chartEditorMoveDown": "Move down",
+  "chartEditorMoveUp": "Move up",
+  "chartEditorNegativeColor": "Negative color",
+  "chartEditorNumberFormat": "Number format",
+  "chartEditorNumberFormatFromSource": "From source data",
+  "chartEditorOutlierPercentile": "Outlier percentile",
+  "chartEditorPageSize": "Page size (0 = no paging)",
+  "chartEditorPlotNullValues": "Plot null values",
+  "chartEditorPointShape": "Point shape",
+  "chartEditorPointSize": "Point size",
+  "chartEditorPosition": "Position",
+  "chartEditorPositiveColor": "Positive color",
+  "chartEditorRemove": "Remove",
+  "chartEditorReset": "Reset",
+  "chartEditorReverseAxis": "Reverse axis order",
+  "chartEditorRisingColor": "Rising color",
+  "chartEditorRisingFilled": "Fill rising candles",
+  "chartEditorRowNumbers": "Show row numbers",
+  "chartEditorSeries": "Series",
+  "chartEditorSeriesTarget": "Series",
+  "chartEditorSeriesType": "Series type",
+  "chartEditorSetup": "Setup",
+  "chartEditorShowAxisLine": "Show axis line",
+  "chartEditorShowLabels": "Show labels",
+  "chartEditorShowR2": "Show R²",
+  "chartEditorSlant": "Slant labels",
+  "chartEditorSliceLabel": "Slice label",
+  "chartEditorSmooth": "Smooth",
+  "chartEditorStacking": "Stacking",
+  "chartEditorSubtotalColor": "Subtotal color",
+  "chartEditorSwitchRowsColumns": "Switch rows / columns",
+  "chartEditorTextColor": "Text color",
+  "chartEditorTitlePlaceholder": "Add a title",
+  "chartEditorTitleTarget": "Title",
+  "chartEditorTitleText": "Title text",
+  "chartEditorTreatLabelsAsText": "Treat labels as text",
+  "chartEditorTrendline": "Trendline",
+  "chartEditorTrendlineColor": "Trendline color",
+  "chartEditorTrendlineDegree": "Polynomial degree",
+  "chartEditorTrendlineLabel": "Label",
+  "chartEditorTrendlinePeriod": "Average of",
+  "chartEditorTrendlineType": "Type",
+  "chartEditorUseColumnAsLabels": "Use column {column} as labels",
+  "@chartEditorUseColumnAsLabels": {
+    "placeholders": {
+      "column": {
+        "type": "String"
+      }
+    }
+  },
+  "chartEditorUseRowAsHeaders": "Use row {row} as headers",
+  "@chartEditorUseRowAsHeaders": {
+    "placeholders": {
+      "row": {
+        "type": "int"
+      }
+    }
+  },
+  "chartEditorUseRowAsLabels": "Use row {row} as labels",
+  "@chartEditorUseRowAsLabels": {
+    "placeholders": {
+      "row": {
+        "type": "int"
+      }
+    }
+  },
+  "chartEditorXAxis": "X-axis",
+  "chartEmptyCellsConnect": "Connect line",
+  "chartEmptyCellsGap": "Show as gaps",
+  "chartEmptyCellsZero": "Show as zero",
+  "chartGroupArea": "Area",
+  "chartGroupBar": "Bar",
+  "chartGroupColumn": "Column",
+  "chartGroupLine": "Line",
+  "chartGroupOther": "Other",
+  "chartGroupPie": "Pie",
+  "chartGroupScatter": "Scatter",
+  "chartGroupSuggested": "Suggested",
+  "chartLabelAbove": "Above",
+  "chartLabelBelow": "Below",
+  "chartLabelInsideBase": "Inside base",
+  "chartLabelInsideEnd": "Inside end",
+  "chartLabelOutsideEnd": "Outside end",
+  "chartLegendAuto": "Auto",
+  "chartLegendBottom": "Bottom",
+  "chartLegendInside": "Inside",
+  "chartLegendLeft": "Left",
+  "chartLegendNone": "None",
+  "chartLegendRight": "Right",
+  "chartLegendTop": "Top",
+  "chartNewerVersion": "This chart was created with a newer version of Wonky Sheets. Reload to edit it.",
+  "chartNoData": "No data",
+  "chartNotFound": "Chart not found",
+  "chartScoreAbsolute": "Absolute change",
+  "chartScorePercent": "Percentage change",
+  "chartSectionCandlestick": "Candlestick",
+  "chartSectionGridlines": "Gridlines and ticks",
+  "chartSectionHAxis": "Horizontal axis",
+  "chartSectionHistogram": "Histogram",
+  "chartSectionLegend": "Legend",
+  "chartSectionPie": "Pie chart",
+  "chartSectionScorecard": "Scorecard",
+  "chartSectionSeries": "Series",
+  "chartSectionStyle": "Chart style",
+  "chartSectionTable": "Table",
+  "chartSectionTitles": "Chart & axis titles",
+  "chartSectionVAxis": "Vertical axis",
+  "chartSectionWaterfall": "Waterfall",
+  "chartShapeCircle": "Circle",
+  "chartShapeDiamond": "Diamond",
+  "chartShapePolygon": "Polygon",
+  "chartShapeSquare": "Square",
+  "chartShapeStar": "Star",
+  "chartShapeTriangle": "Triangle",
+  "chartSheetEmpty": "This chart sheet is empty",
+  "chartSlantCustom": "Custom",
+  "chartSlantNone": "None",
+  "chartSliceLabelBoth": "Value and percentage",
+  "chartSliceLabelLabel": "Label",
+  "chartSliceLabelNone": "None",
+  "chartSliceLabelPercentage": "Percentage",
+  "chartSliceLabelValue": "Value",
+  "chartStackingNone": "None",
+  "chartStackingNormal": "Standard",
+  "chartStackingPercent": "100%",
+  "chartTickInside": "Inside",
+  "chartTickNone": "None",
+  "chartTickOutside": "Outside",
+  "chartTitleChart": "Chart title",
+  "chartTitleHAxis": "Horizontal axis title",
+  "chartTitleSubtitle": "Chart subtitle",
+  "chartTitleV2Axis": "Right vertical axis title",
+  "chartTitleVAxis": "Vertical axis title",
+  "chartTrendExponential": "Exponential",
+  "chartTrendLabelCustom": "Custom",
+  "chartTrendLabelEquation": "Use equation",
+  "chartTrendLabelNone": "None",
+  "chartTrendLinear": "Linear",
+  "chartTrendLogarithmic": "Logarithmic",
+  "chartTrendMovingAverage": "Moving average",
+  "chartTrendPolynomial": "Polynomial",
+  "chartTrendPower": "Power series",
+  "chartTypeArea": "Area chart",
+  "chartTypeBar": "Bar chart",
+  "chartTypeBubble": "Bubble chart",
+  "chartTypeCandlestick": "Candlestick chart",
+  "chartTypeColumn": "Column chart",
+  "chartTypeCombo": "Combo chart",
+  "chartTypeDoughnut": "Doughnut chart",
+  "chartTypeHistogram": "Histogram chart",
+  "chartTypeLine": "Line chart",
+  "chartTypeNoMatch": "No chart type matches",
+  "chartTypePercentArea": "100% stacked area chart",
+  "chartTypePercentBar": "100% stacked bar chart",
+  "chartTypePercentColumn": "100% stacked column chart",
+  "chartTypePie": "Pie chart",
+  "chartTypeRadar": "Radar chart",
+  "chartTypeScatter": "Scatter chart",
+  "chartTypeScorecard": "Scorecard chart",
+  "chartTypeSearch": "Search chart types",
+  "chartTypeSmoothLine": "Smooth line chart",
+  "chartTypeStackedArea": "Stacked area chart",
+  "chartTypeStackedBar": "Stacked bar chart",
+  "chartTypeStackedColumn": "Stacked column chart",
+  "chartTypeTable": "Table chart",
+  "chartTypeWaterfall": "Waterfall chart",
+  "chartWarnLogSkipped": "Log scale ignores {count} non-positive values",
+  "@chartWarnLogSkipped": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "chartWarnNoData": "No data",
+  "chartWarnRangeNotFound": "Data range not found",
+  "chartWarnRangeSizeMismatch": "Ranges have different sizes",
+  "chartWarnTooManyCategories": "Too many categories to show individually",
+  "chartWarnTrendlineIgnored": "Trendline ignores {count} non-positive values",
+  "@chartWarnTrendlineIgnored": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "cmdChartCopyAsImage": "Copy chart as image",
+  "cmdChartDownload": "Download chart",
+  "cmdChartEdit": "Edit chart",
+  "cmdChartInsertDescription": "Insert a chart recommended for the selected data",
+  "cmdChartMoveToOwnSheet": "Move to own sheet",
+  "cmdChartMoveToSheet": "Move chart to sheet",
+  "cmdChartSetDataRanges": "Set chart data range",
+  "cmdChartSetType": "Change chart type",
+  "cmdChartUpdate": "Edit chart",
+  "cmdChartViewDataTable": "View data as table",
+  "cmdImagePlaceInCell": "Place image in selected cell",
+  "cmdImagePlaceOverCells": "Place image over cells",
+  "cmdImageReplace": "Replace image",
+  "cmdImageResetSize": "Reset size",
+  "cmdObjectCopy": "Copy",
+  "cmdObjectCut": "Cut",
+  "cmdObjectDelete": "Delete",
+  "cmdObjectDeselect": "Deselect object",
+  "cmdObjectDuplicate": "Duplicate",
+  "cmdObjectEditAltText": "Alt text",
+  "cmdObjectList": "List objects",
+  "cmdObjectMove": "Move object",
+  "cmdObjectNudge": "Nudge object",
+  "cmdObjectOrder": "Order",
+  "cmdObjectPaste": "Paste object",
+  "cmdObjectResize": "Resize object",
+  "cmdObjectSelect": "Select object",
+  "cmdObjectSelectNext": "Select next object",
+  "cmdObjectSelectPrevious": "Select previous object",
+  "dialogAltTextBody": "Description",
+  "dialogAltTextDescription": "Alt text describes the object for people who use screen readers.",
+  "dialogAltTextName": "Title",
+  "dialogAltTextTitle": "Alt text",
+  "dialogChartDataTitle": "Data of {title}",
+  "@dialogChartDataTitle": {
+    "placeholders": {
+      "title": {
+        "type": "String"
+      }
+    }
+  },
+  "dialogClose": "Close",
+  "dialogDeleteChartSheetBody": "The chart and its chart sheet will be deleted.",
+  "dialogDeleteChartSheetTitle": "Delete chart sheet?",
+  "dialogImageDescription": "Upload an image from your computer or insert one by URL.",
+  "dialogImageInCellTitle": "Insert image in cell",
+  "dialogImageInsert": "Insert",
+  "dialogImageOverCellsTitle": "Insert image over cells",
+  "dialogImageUpload": "Upload from computer…",
+  "dialogImageUrl": "Image URL",
+  "dialogImageUrlInvalid": "Enter an https:// image URL",
+  "dialogImageUrlRequired": "Enter an image URL or upload a file",
+  "downloadSaveTitle": "Save {name}",
+  "@downloadSaveTitle": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "imageFetchFailed": "The image could not be loaded from that URL",
+  "imageLoading": "Loading image…",
+  "imagePickTitle": "Choose an image",
+  "imageRejectedFormat": "Only PNG, JPEG, GIF, WebP and BMP images can be inserted",
+  "imageRejectedTooLarge": "The image is too large (max. 50 MB and 25 megapixels)",
+  "imageUnavailable": "Image unavailable",
+  "imageUploading": "Image uploading…",
+  "objectMenuCopyChart": "Copy chart",
+  "objectMenuDownload": "Download",
+  "objectMenuMoveToSheet": "Move to sheet",
+  "objectMenuOrder": "Order",
+  "objectMoreOptions": "More options",
+  "objectNotFound": "Object not found",
+  "objectOrderBack": "Send to back",
+  "objectOrderBackward": "Send backward",
+  "objectOrderForward": "Bring forward",
+  "objectOrderFront": "Bring to front",
+  "undoEditAltText": "Edit alt text",
+  "undoEditChart": "Edit chart",
+  "undoInsertImage": "Insert image",
+  "dvGroupText": "Text",
+  "dvGroupDate": "Date",
+  "dvGroupNumber": "Number",
+  "dvGroupOther": "Other",
+  "filterViewNoneItem": "None",
+  "recoveryTitle": "Your offline spreadsheet data couldn't be opened",
+  "recoveryDescription": "{count, plural, =1{1 spreadsheet had changes that weren't synced yet. Download them before they're lost.} other{{count} spreadsheets had changes that weren't synced yet. Download them before they're lost.}}",
+  "@recoveryDescription": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "recoveryDownload": "Download unsynced changes",
+  "recoveryFailed": "The unsynced changes could not be exported",
+  "storageLimitedTitle": "Offline storage is limited in this browser",
+  "storageLimitedDescription": "This browser keeps offline spreadsheets in memory. Only about {cells} cells stay available offline; the spreadsheets you opened least recently are removed from this device first.",
+  "@storageLimitedDescription": {
+    "placeholders": {
+      "cells": {
+        "type": "String"
+      }
+    }
+  },
+  "loadingRowsStatus": "Loading… {percent}%",
+  "@loadingRowsStatus": {
+    "placeholders": {
+      "percent": {
+        "type": "int"
+      }
+    }
+  },
+  "categoryScripts": "Scripts",
+  "menuScriptMenus": "Script menus",
+  "cmdMacroCancelRecording": "Cancel macro recording",
+  "cmdMacroDelete": "Remove macro",
+  "cmdMacroRun": "Run macro",
+  "cmdMacroSaveRecording": "Save macro",
+  "cmdMacroUpdate": "Edit macro",
+  "cmdScriptAddTrigger": "Add trigger",
+  "cmdScriptAuthorize": "Authorize script",
+  "cmdScriptCloseEditor": "Close script editor",
+  "cmdScriptCompile": "Build script",
+  "cmdScriptDeleteFile": "Delete script file",
+  "cmdScriptDeleteTrigger": "Delete trigger",
+  "cmdScriptExplainWithAi": "Explain script with AI",
+  "cmdScriptFixErrorWithAi": "Fix script error with AI",
+  "cmdScriptGenerateWithAi": "Generate script with AI",
+  "cmdScriptNewFile": "New script file",
+  "cmdScriptOpenSettings": "Script settings",
+  "cmdScriptRenameFile": "Rename script file",
+  "cmdScriptReorderFile": "Move script file",
+  "cmdScriptRevertExecution": "Revert script changes",
+  "cmdScriptRevokeAuthorization": "Revoke my authorization",
+  "cmdScriptRun": "Run",
+  "cmdScriptRunMenuItem": "Run script menu item",
+  "cmdScriptSaveAll": "Save all script files",
+  "cmdScriptSaveFile": "Save script file",
+  "cmdScriptStop": "Stop",
+  "cmdScriptUpdateSettings": "Change script settings",
+  "cmdScriptUpdateTrigger": "Edit trigger",
+  "execEmpty": "No executions yet.",
+  "execKindCustomFunction": "Custom function",
+  "execKindEditor": "Editor",
+  "execKindInstallable": "Trigger",
+  "execKindMacro": "Macro",
+  "execKindMenu": "Menu",
+  "execKindTimeDriven": "Time-driven",
+  "execLoading": "Loading executions…",
+  "execNoLogs": "No log output.",
+  "execOpenInEditor": "Open in editor",
+  "execRefresh": "Refresh",
+  "execRevert": "Revert changes",
+  "execStatusAll": "All statuses",
+  "execStatusCancelled": "Cancelled",
+  "execStatusCompleted": "Completed",
+  "execStatusFailed": "Failed",
+  "execStatusQuota": "Quota exceeded",
+  "execStatusSkipped": "Skipped",
+  "execStatusTimedOut": "Timed out",
+  "execDuration": "{ms} ms",
+  "@execDuration": {"placeholders": {"ms": {"type": "int", "format": "decimalPattern"}}},
+  "execStats": "{read} cells read · {written} written · {fetches} fetches",
+  "@execStats": {"placeholders": {"read": {"type": "int", "format": "decimalPattern"}, "written": {"type": "int", "format": "decimalPattern"}, "fetches": {"type": "int", "format": "decimalPattern"}}},
+  "macroAbsolute": "Absolute",
+  "macroRelative": "Relative",
+  "macroCancel": "Cancel",
+  "macroEditScript": "Edit script",
+  "macroImportAction": "Import",
+  "macroImportNone": "There are no functions to import. Write a function without parameters in the script editor first.",
+  "macroName": "Name",
+  "macroNameEmpty": "Enter a name.",
+  "macroNameFromFunction": "Same as the function",
+  "macroNotFound": "That macro no longer exists.",
+  "macroRecording": "Recording new macro…",
+  "macroRecordingCount": "Recording new macro… {count} steps",
+  "@macroRecordingCount": {"placeholders": {"count": {"type": "int", "format": "decimalPattern"}}},
+  "macroRemove": "Remove macro",
+  "macroSaveTitle": "Save new macro",
+  "macroShortcut": "Shortcut",
+  "macroShortcutNone": "None",
+  "macroShortcutTaken": "{shortcut} (used by {name})",
+  "@macroShortcutTaken": {"placeholders": {"shortcut": {"type": "String"}, "name": {"type": "String"}}},
+  "macroDefaultName": "Macro {n}",
+  "@macroDefaultName": {"placeholders": {"n": {"type": "int", "format": "decimalPattern"}}},
+  "macrosEmpty": "No macros yet. Record one with Extensions › Macros › Record macro.",
+  "scriptAuthorizeAllow": "Allow",
+  "scriptAuthorizeFailed": "Couldn't authorize the script",
+  "scriptAuthorizeTitle": "Authorization required",
+  "scriptAuthorizeBody": "{project} wants to:",
+  "@scriptAuthorizeBody": {"placeholders": {"project": {"type": "String"}}},
+  "scriptBackToSpreadsheet": "Back to the spreadsheet",
+  "scriptButtonCancel": "Cancel",
+  "scriptButtonNo": "No",
+  "scriptButtonYes": "Yes",
+  "scriptClearLog": "Clear log",
+  "scriptCloseTab": "Close",
+  "scriptCollapse": "Collapse",
+  "scriptExpand": "Expand",
+  "scriptConflictDiscard": "Discard mine",
+  "scriptConflictOverwrite": "Overwrite with mine",
+  "scriptConflictTitle": "Newer version saved",
+  "scriptConflictBody": "Someone else saved a newer version of {file} since you opened it.",
+  "@scriptConflictBody": {"placeholders": {"file": {"type": "String"}}},
+  "scriptCreate": "Create",
+  "scriptDefaultProjectName": "This script",
+  "scriptDeleteProjectTitle": "Delete the script project?",
+  "scriptDeleteProjectBody": "Deletes all script files, triggers and macros of this spreadsheet. You can undo this.",
+  "scriptDialogTitle": "Script",
+  "scriptEditorTitle": "{title} · Script",
+  "@scriptEditorTitle": {"placeholders": {"title": {"type": "String"}}},
+  "scriptErrorToast": "Script error in {function}",
+  "@scriptErrorToast": {"placeholders": {"function": {"type": "String"}}},
+  "scriptFileLimit": "A script can have at most 50 files.",
+  "scriptFileName": "File name",
+  "scriptFileNameDuplicate": "A file with this name already exists.",
+  "scriptFileNameInvalid": "Use lower-case letters, digits and _, ending in .dart (utils.dart).",
+  "scriptFileNotFound": "That script file no longer exists.",
+  "scriptFileUpdated": "{file} was updated by someone else",
+  "@scriptFileUpdated": {"placeholders": {"file": {"type": "String"}}},
+  "scriptFiles": "Files",
+  "scriptFind": "Find",
+  "scriptFindMatchCase": "Match case",
+  "scriptFindNext": "Next match",
+  "scriptFindNoResults": "No results",
+  "scriptFindPlaceholder": "Find",
+  "scriptFindPrevious": "Previous match",
+  "scriptFindRegex": "Regular expression",
+  "scriptFindToggleReplace": "Replace",
+  "scriptFixWithAi": "Fix with AI",
+  "scriptFunctions": "Functions",
+  "scriptGenerate": "Generate",
+  "scriptLog": "Log",
+  "scriptLogEmpty": "Run a function to see its log here.",
+  "scriptNeedsNewerApp": "This script needs a newer version of the app.",
+  "scriptNewerVersion": "A newer version of this file was saved elsewhere.",
+  "scriptNoBuild": "The script hasn't built successfully yet.",
+  "scriptNoFileOpen": "No file open",
+  "scriptNoFunctions": "Functions appear after a successful build.",
+  "scriptNoProblems": "No problems",
+  "scriptNoRunnableFunctions": "No runnable functions",
+  "scriptOffline": "You're offline. Try again when you're connected.",
+  "scriptPickFunction": "Choose a function to run.",
+  "scriptProblems": "Problems {count}",
+  "@scriptProblems": {"placeholders": {"count": {"type": "int", "format": "decimalPattern"}}},
+  "scriptPromptLabel": "Your answer",
+  "scriptReadOnly": "Read-only",
+  "scriptReload": "Reload",
+  "scriptReplace": "Replace",
+  "scriptReplaceAll": "Replace all",
+  "scriptReplacePlaceholder": "Replace with",
+  "scriptRevertLabel": "Revert script: {function}",
+  "@scriptRevertLabel": {"placeholders": {"function": {"type": "String"}}},
+  "scriptRunOnServer": "Run on server",
+  "scriptSave": "Save",
+  "scriptScopeExternalRequest": "Connect to external services",
+  "scriptScopeTriggers": "Run when you're not present (triggers)",
+  "scriptScopeUserEmail": "See your email address",
+  "scriptSettings": "Settings",
+  "scriptSettingsAllowlist": "URL allowlist (hosts, comma separated)",
+  "scriptSettingsApiVersion": "API version {version}",
+  "@scriptSettingsApiVersion": {"placeholders": {"version": {"type": "int", "format": "decimalPattern"}}},
+  "scriptSettingsBuildHash": "Build {hash}",
+  "@scriptSettingsBuildHash": {"placeholders": {"hash": {"type": "String"}}},
+  "scriptSettingsBuiltAt": "Built {time}",
+  "@scriptSettingsBuiltAt": {"placeholders": {"time": {"type": "String"}}},
+  "scriptSettingsDeleteProject": "Delete project",
+  "scriptSettingsName": "Project name",
+  "scriptSettingsNameEmpty": "Enter a name.",
+  "scriptSettingsShowMenus": "Show script menus in the menubar",
+  "scriptSettingsTimeZone": "Time zone",
+  "scriptStatusBuilding": "Building…",
+  "scriptStatusBuilt": "Built {time}",
+  "@scriptStatusBuilt": {"placeholders": {"time": {"type": "String"}}},
+  "scriptStatusFailed": "Build failed ({count} errors)",
+  "@scriptStatusFailed": {"placeholders": {"count": {"type": "int", "format": "decimalPattern"}}},
+  "scriptStatusNotBuilt": "Not built yet",
+  "scriptStatusOffline": "Saved on this device · Will compile when online",
+  "scriptStatusSaved": "Saved",
+  "scriptStatusUnsaved": "Unsaved changes",
+  "scriptUnknownFunction": "There is no function {name} in the script.",
+  "@scriptUnknownFunction": {"placeholders": {"name": {"type": "String"}}},
+  "scriptViewDetails": "View details",
+  "triggerAdd": "Add trigger",
+  "triggerAddTitle": "Add trigger",
+  "triggerAt": "Date and time (once)",
+  "triggerAtHour": "Hour of day (0–23)",
+  "triggerDelete": "Delete trigger",
+  "triggerDisabled": "Disabled",
+  "triggerEnabled": "Enabled",
+  "triggerEvent": "Event",
+  "triggerEventChange": "On change",
+  "triggerEventEdit": "On edit",
+  "triggerEventOpen": "On open",
+  "triggerEventTime": "Time-driven",
+  "triggerEveryDays": "Every {n} day(s) at {hour}:00",
+  "@triggerEveryDays": {"placeholders": {"n": {"type": "int", "format": "decimalPattern"}, "hour": {"type": "int", "format": "decimalPattern"}}},
+  "triggerEveryHours": "Every {n} hour(s)",
+  "@triggerEveryHours": {"placeholders": {"n": {"type": "int", "format": "decimalPattern"}}},
+  "triggerEveryMinutes": "Every {n} minute(s)",
+  "@triggerEveryMinutes": {"placeholders": {"n": {"type": "int", "format": "decimalPattern"}}},
+  "triggerEveryWeeks": "Every {n} week(s) on {weekday} at {hour}:00",
+  "@triggerEveryWeeks": {"placeholders": {"n": {"type": "int", "format": "decimalPattern"}, "weekday": {"type": "String"}, "hour": {"type": "int", "format": "decimalPattern"}}},
+  "triggerMonthly": "Monthly on day {day} at {hour}:00",
+  "@triggerMonthly": {"placeholders": {"day": {"type": "int", "format": "decimalPattern"}, "hour": {"type": "int", "format": "decimalPattern"}}},
+  "triggerOnce": "Once at {at}",
+  "@triggerOnce": {"placeholders": {"at": {"type": "String"}}},
+  "triggerFireForMcp": "Also run for agent (MCP) edits",
+  "triggerFunction": "Function",
+  "triggerInterval": "Every (interval)",
+  "triggerInvalidDate": "Enter a date like 2026-12-24T09:00.",
+  "triggerInvalidNumber": "Enter a number in range.",
+  "triggerMonthDay": "Day of month",
+  "triggerNotFound": "That trigger no longer exists.",
+  "triggerNotYours": "Only the owner can change other people's triggers.",
+  "triggerNotify": "Failure notifications",
+  "triggerNotifyDaily": "Daily digest",
+  "triggerNotifyImmediately": "Immediately",
+  "triggerNotifyNever": "Never",
+  "triggerOwnerOther": "Another user",
+  "triggerScheduleType": "Schedule",
+  "triggerTypeDays": "Daily",
+  "triggerTypeHours": "Hourly",
+  "triggerTypeMinutes": "Every few minutes",
+  "triggerTypeMonthly": "Monthly",
+  "triggerTypeOnce": "Once",
+  "triggerTypeWeeks": "Weekly",
+  "triggerWeekday": "Weekday",
+  "triggersDescription": "Installable triggers run on the server, also when nobody has the spreadsheet open.",
+  "triggersEmpty": "No triggers yet.",
+  "undoCreateScriptFile": "Create script file",
+  "undoDeleteScriptFile": "Delete script file",
+  "weekdayMonday": "Monday",
+  "weekdayTuesday": "Tuesday",
+  "weekdayWednesday": "Wednesday",
+  "weekdayThursday": "Thursday",
+  "weekdayFriday": "Friday",
+  "weekdaySaturday": "Saturday",
+  "weekdaySunday": "Sunday",
+  "macroAbsoluteHint": "Use absolute references (the same cells every time)",
+  "macroRelativeHint": "Use relative references (cells relative to the selection)",
+  "sheetsSettingsColumnAutocomplete": "Autocomplete values from the column",
+  "a11yGridLabel": "{sheet} grid",
+  "@a11yGridLabel": {
+    "placeholders": {
+      "sheet": {
+        "type": "String"
+      }
+    }
+  },
+  "a11yCellEmpty": "{cell}, empty",
+  "@a11yCellEmpty": {
+    "placeholders": {
+      "cell": {
+        "type": "String"
+      }
+    }
+  },
+  "a11yCellValue": "{cell}, {value}",
+  "@a11yCellValue": {
+    "placeholders": {
+      "cell": {
+        "type": "String"
+      },
+      "value": {
+        "type": "String"
+      }
+    }
+  },
+  "a11yCellFormula": "formula {formula}",
+  "@a11yCellFormula": {
+    "placeholders": {
+      "formula": {
+        "type": "String"
+      }
+    }
+  },
+  "a11yCellError": "{cell}, error, {message}",
+  "@a11yCellError": {
+    "placeholders": {
+      "cell": {
+        "type": "String"
+      },
+      "message": {
+        "type": "String"
+      }
+    }
+  },
+  "a11yCheckboxChecked": "checkbox checked",
+  "a11yCheckboxUnchecked": "checkbox unchecked",
+  "a11yLink": "link, {url}",
+  "@a11yLink": {
+    "placeholders": {
+      "url": {
+        "type": "String"
+      }
+    }
+  },
+  "a11yHasNote": "has note",
+  "a11yRangeSelected": "{from} to {to} selected, {count} cells",
+  "@a11yRangeSelected": {
+    "placeholders": {
+      "from": {
+        "type": "String"
+      },
+      "to": {
+        "type": "String"
+      },
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "a11yMerged": "{from} to {to} merged",
+  "@a11yMerged": {
+    "placeholders": {
+      "from": {
+        "type": "String"
+      },
+      "to": {
+        "type": "String"
+      }
+    }
+  },
+  "a11yEditing": "Editing {cell}",
+  "@a11yEditing": {
+    "placeholders": {
+      "cell": {
+        "type": "String"
+      }
+    }
+  },
+  "a11yColumnHeader": "Column {column}",
+  "@a11yColumnHeader": {
+    "placeholders": {
+      "column": {
+        "type": "String"
+      }
+    }
+  },
+  "a11yRowHeader": "Row {row}",
+  "@a11yRowHeader": {
+    "placeholders": {
+      "row": {
+        "type": "String"
+      }
+    }
+  },
+  "a11yLoadingRow": "Loading",
+  "contextMenuDragCopy": "Copy"
+}

@@ -150,7 +150,6 @@ final class HistogramData {
     required this.bucketSize,
     required this.counts,
     required this.seriesKeys,
-    this.items,
   });
 
   /// Lower edge of the first bucket.
@@ -160,9 +159,6 @@ final class HistogramData {
   /// Counts per series (outer) per bucket (inner).
   final List<Int32List> counts;
   final List<String> seriesKeys;
-
-  /// Per series, per bucket the item values in that bucket (for item dividers), or null.
-  final List<List<List<double>>>? items;
 
   /// Number of buckets.
   int get bucketCount => counts.isEmpty ? 0 : counts.first.length;

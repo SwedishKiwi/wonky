@@ -1,3 +1,5 @@
+import '../../format/number_format/presets.dart';
+
 /// Excel number formats ⇄ Wonky patterns (11 §5.2): built-in ids, locale
 /// tags, presets and date detection.
 abstract final class ExcelNumberFormats {
@@ -183,7 +185,7 @@ abstract final class ExcelNumberFormats {
         symbolFirst
             ? '_("$sym"* #,##0.00_);_("$sym"* \\(#,##0.00\\);_("$sym"* "-"??_);_(@_)'
             : '_-* #,##0.00 [\$$sym]_-;-* #,##0.00 [\$$sym]_-;_-* "-"?? [\$$sym]_-;_-@_-',
-      _ => 'General',
+      _ => NumberFormatPresets.resolve(preset, locale) ?? 'General',
     };
   }
 

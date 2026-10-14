@@ -1,0 +1,16 @@
+### Daily script usage per user (Sheets 09 §10); day = UTC date.
+class: ScriptQuotaUsage
+table: script_quota_usage
+serverOnly: true
+fields:
+  userId: int
+  day: DateTime
+  serverRuntimeMs: int, default=0
+  clientRuntimeMs: int, default=0
+  urlFetchCalls: int, default=0
+  urlFetchBytes: int, default=0
+  triggerRuns: int, default=0
+indexes:
+  script_quota_user_day_idx:
+    fields: userId, day
+    unique: true

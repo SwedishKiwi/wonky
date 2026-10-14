@@ -188,12 +188,16 @@ final class ClearFormatting extends SheetsOperation {
 /// Increase/decrease decimals (06 §5.10).
 final class AdjustDecimals extends SheetsOperation {
   /// Creates the operation.
-  const AdjustDecimals(this.ranges, this.delta);
+  const AdjustDecimals(this.ranges, this.delta, {this.active});
 
   final List<ResolvedRange> ranges;
 
   /// +1 increase, −1 decrease.
   final int delta;
+
+  /// The active cell; Automatic cells derive their decimals from its value
+  /// (06 §5.10). Null: the first number among the Automatic cells.
+  final (String sheetId, int row, int col)? active;
 }
 
 /// Increase/decrease font size per cell (06 §6.2).
@@ -378,6 +382,8 @@ final class CreateSpreadsheet extends SheetsOperation {
     this.firstSheetName = 'Sheet1',
     this.rows = 1000,
     this.columns = 26,
+    this.fontFamily,
+    this.fontSize,
   });
 
   final String spreadsheetId;
@@ -387,6 +393,13 @@ final class CreateSpreadsheet extends SheetsOperation {
   final String firstSheetName;
   final int rows;
   final int columns;
+
+  /// Text font of the theme (the user's default, Settings › Sheets); null
+  /// keeps the standard theme's.
+  final String? fontFamily;
+
+  /// `defaultFontSize`; null = 10.
+  final double? fontSize;
 }
 
 /// Adds a sheet at [index] (null = end) with [rows] × [columns].
@@ -632,12 +645,17 @@ final class SetBasicFilter extends SheetsOperation {
     this.range, {
     this.criteriaJson,
     this.sortJson,
+    this.openEnded = false,
   });
 
   final String sheetId;
   final GridRect range;
   final String? criteriaJson;
   final String? sortJson;
+
+  /// Stores the range without its last row so rows appended below are
+  /// included (07 §3.6: the data region reaches the last used row).
+  final bool openEnded;
 }
 
 /// Sets (null removes) one column's criteria of the basic filter.
@@ -1088,12 +1106,16 @@ final class FillSeries extends SheetsOperation {
     this.source,
     this.target, {
     this.mode = FillMode.auto,
+    this.label,
   });
 
   final String sheetId;
   final GridRect source;
   final GridRect target;
   final FillMode mode;
+
+  /// Undo label (default "Fill series", or "Fill" in copy mode).
+  final String? label;
 }
 
 /// Moves (cut/paste, drag-move) or copies a block (03 §11, §12.6).
@@ -1190,6 +1212,10 @@ final class PasteSource {
     this.rowHeights = const [],
     this.isCut = false,
     this.internal = false,
+    this.sourceRowIndices,
+    this.sourceColIndices,
+    this.dvAnchors = const [],
+    this.cfAnchors = const [],
   });
 
   /// Rows × columns (null = empty cell).
@@ -1215,6 +1241,33 @@ final class PasteSource {
 
   /// Whether this came from a Wonky payload (enables CF/DV/widths modes).
   final bool internal;
+
+  /// Source sheet indices of the copied rows / columns when the copy skipped
+  /// hidden ones (source row `i` = `sourceRowIndices[i]`); null = contiguous
+  /// from [sourceRow] / [sourceCol]. A cut of a non-contiguous copy moves only
+  /// the copied (visible) cells (03 §12.6). [PasteCell.storedFormula]s stay
+  /// relative to the contiguous position `sourceRow + i` / `sourceCol + j`.
+  final List<int>? sourceRowIndices;
+  final List<int>? sourceColIndices;
+
+  /// Formula anchors (source sheet indices: top-left of the rule's first
+  /// range, 06 §15.3) of [dvRules] / [cfRules], by position; missing entries
+  /// default to the top-left of the rule's first copied rectangle. Used to
+  /// re-anchor relative references of pasted rule formulas.
+  final List<(int row, int col)?> dvAnchors;
+  final List<(int row, int col)?> cfAnchors;
+
+  /// The source sheet row of payload row [i].
+  int sourceRowOf(int i) {
+    final idx = sourceRowIndices;
+    return idx != null && i < idx.length ? idx[i] : sourceRow + i;
+  }
+
+  /// The source sheet column of payload column [j].
+  int sourceColOf(int j) {
+    final idx = sourceColIndices;
+    return idx != null && j < idx.length ? idx[j] : sourceCol + j;
+  }
 
   /// Height.
   int get rowCount => cells.length;

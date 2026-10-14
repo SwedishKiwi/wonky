@@ -1,0 +1,12 @@
+### Final status of a script execution (Sheets 09 §13.1).
+enum: ScriptExecutionStatus
+serialized: byName
+values:
+  - queued
+  - running
+  - completed
+  - failed
+  - timedOut
+  - cancelled
+  - quotaExceeded
+  - skipped

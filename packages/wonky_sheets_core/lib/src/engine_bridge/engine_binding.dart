@@ -45,6 +45,15 @@ final class ModelEngineBinding {
   void dispose() => model.removeListener(_onBatch);
 
   void _onBatch(WorkbookChangeBatch batch) {
+    // Sheets and axis order first: content positions and the engine's range
+    // index must reflect the new structure before content changes are ingested
+    // (a batch may insert rows and fill them, or undo a delete with its cells).
+    for (final e in batch.events) {
+      if (e is SheetsChanged) _sheets(e);
+    }
+    for (final e in batch.events) {
+      if (e is StructureChanged && e.order) _axis(e.sheetId, e.dimension);
+    }
     for (final e in batch.events) {
       switch (e) {
         case SpreadsheetChanged(:final columns):
@@ -52,25 +61,8 @@ final class ModelEngineBinding {
             engine.settingsChanged(view.settings);
           }
         case SheetsChanged():
-          engine.sheetsChanged();
-          for (final id in e.sheetIds) {
-            final s = model.sheet(id);
-            if (s == null) {
-              _order.remove((id, Dimension.rows));
-              _order.remove((id, Dimension.columns));
-            } else {
-              _order.putIfAbsent((
-                id,
-                Dimension.rows,
-              ), () => List.of(s.rows.ids));
-              _order.putIfAbsent((
-                id,
-                Dimension.columns,
-              ), () => List.of(s.columns.ids));
-            }
-          }
+          break;
         case StructureChanged(:final sheetId, :final dimension):
-          if (e.order) _axis(sheetId, dimension);
           if (e.sizes && dimension == Dimension.rows) {
             engine.filterVisibilityChanged(sheetId);
           }
@@ -100,6 +92,23 @@ final class ModelEngineBinding {
     }
   }
 
+  void _sheets(SheetsChanged e) {
+    engine.sheetsChanged();
+    for (final id in e.sheetIds) {
+      final s = model.sheet(id);
+      if (s == null) {
+        _order.remove((id, Dimension.rows));
+        _order.remove((id, Dimension.columns));
+      } else {
+        _order.putIfAbsent((id, Dimension.rows), () => List.of(s.rows.ids));
+        _order.putIfAbsent((
+          id,
+          Dimension.columns,
+        ), () => List.of(s.columns.ids));
+      }
+    }
+  }
+
   static const _calcColumns = {
     SpreadsheetCols.locale,
     SpreadsheetCols.timeZone,
@@ -109,6 +118,11 @@ final class ModelEngineBinding {
     SpreadsheetCols.convergenceThreshold,
   };
 
+  /// Diffs the axis order against the previous snapshot and reports deletes,
+  /// inserts and moves to the engine. A batch may combine all three (remote
+  /// changes, undo), and deletes or inserts need not be contiguous: every
+  /// contiguous run is reported on its own so that the engine dirties ranges
+  /// spanning each deletion/insertion point.
   void _axis(String sheetId, Dimension d) {
     final s = model.sheet(sheetId);
     if (s == null) return;
@@ -116,40 +130,66 @@ final class ModelEngineBinding {
     final before = _order[(sheetId, d)] ?? const <String>[];
     _order[(sheetId, d)] = now;
     final gd = d == Dimension.rows ? GridDimension.rows : GridDimension.columns;
-    final nowSet = now.toSet();
+    final nowIndex = {for (var i = 0; i < now.length; i++) now[i]: i};
     final beforeSet = before.toSet();
-    final deleted = [
+
+    // Deletes: runs of consecutive deleted ids in the old order. The reported
+    // index is where the gap is in the new order (after the last surviving
+    // predecessor).
+    var i = 0;
+    while (i < before.length) {
+      if (nowIndex.containsKey(before[i])) {
+        i++;
+        continue;
+      }
+      final start = i;
+      while (i < before.length && !nowIndex.containsKey(before[i])) {
+        i++;
+      }
+      var gap = 0;
+      for (var k = start - 1; k >= 0; k--) {
+        final p = nowIndex[before[k]];
+        if (p != null) {
+          gap = p + 1;
+          break;
+        }
+      }
+      engine.axisChanged(
+        sheetId,
+        gd,
+        AxisChange.deleted(gap, i - start, before.sublist(start, i)),
+      );
+    }
+
+    // Inserts: runs of consecutive new ids in the new order.
+    i = 0;
+    while (i < now.length) {
+      if (beforeSet.contains(now[i])) {
+        i++;
+        continue;
+      }
+      final start = i;
+      while (i < now.length && !beforeSet.contains(now[i])) {
+        i++;
+      }
+      engine.axisChanged(sheetId, gd, AxisChange.inserted(start, i - start));
+    }
+
+    // Moves: surviving ids whose relative order changed.
+    final survivedBefore = [
       for (final id in before)
-        if (!nowSet.contains(id)) id,
+        if (nowIndex.containsKey(id)) id,
     ];
-    final inserted = [
-      for (var i = 0; i < now.length; i++)
-        if (!beforeSet.contains(now[i])) i,
+    final survivedNow = [
+      for (final id in now)
+        if (beforeSet.contains(id)) id,
     ];
-    if (deleted.isNotEmpty) {
-      final first = before.indexOf(deleted.first);
-      engine.axisChanged(
-        sheetId,
-        gd,
-        AxisChange.deleted(first, deleted.length, deleted),
-      );
-    }
-    if (inserted.isNotEmpty) {
-      engine.axisChanged(
-        sheetId,
-        gd,
-        AxisChange.inserted(inserted.first, inserted.last - inserted.first + 1),
-      );
-    }
-    if (deleted.isEmpty && inserted.isEmpty) {
-      final moved = <String>[];
-      final oldPos = {for (var i = 0; i < before.length; i++) before[i]: i};
-      for (var i = 0; i < now.length; i++) {
-        if (oldPos[now[i]] != i) moved.add(now[i]);
-      }
-      if (moved.isNotEmpty) {
-        engine.axisChanged(sheetId, gd, AxisChange.moved(moved));
-      }
+    final moved = <String>[
+      for (var k = 0; k < survivedNow.length; k++)
+        if (survivedBefore[k] != survivedNow[k]) survivedNow[k],
+    ];
+    if (moved.isNotEmpty) {
+      engine.axisChanged(sheetId, gd, AxisChange.moved(moved));
     }
   }
 }

@@ -1,8 +1,17 @@
 /// Clipboard formats of Wonky Sheets (03 §12): internal payload, TSV, HTML
 /// tables (Google Sheets / Excel / LibreOffice / web), paste tiling and
 /// R1C1 formula conversion.
+///
+/// Copy: [ClipboardEncoder.copy] → `text/plain` TSV, `text/html` and the
+/// in-memory [SheetsClipboardPayload]. Paste: [ClipboardDecoder.decode] →
+/// [ClipboardPasteInput.source] for a `PasteClipboard` operation.
 library;
 
+import 'clipboard_decoder.dart';
+import 'clipboard_encoder.dart';
+import 'clipboard_payload.dart';
+
+export 'clipboard_decoder.dart';
 export 'clipboard_encoder.dart';
 export 'clipboard_payload.dart';
 export 'clipboard_table.dart';

@@ -85,7 +85,7 @@ class AssistantToolset {
   };
 
   /// Keys bound to the open document.
-  static const _documentKeys = {'document_uuid', 'uuid'};
+  static const _documentKeys = {'document_uuid', 'uuid', 'spreadsheet'};
 
   final List<AssistantTool> tools;
 
@@ -165,7 +165,9 @@ class AssistantToolset {
 
   static String _describe(McpToolDefinition d) {
     final b = StringBuffer(d.description);
-    if (d.inputSchema.properties.containsKey('document_uuid') ||
+    if (d.inputSchema.properties.containsKey('spreadsheet')) {
+      b.write(' Operates on the open spreadsheet.');
+    } else if (d.inputSchema.properties.containsKey('document_uuid') ||
         d.inputSchema.properties.containsKey('uuid')) {
       b.write(' Operates on the open document.');
     }

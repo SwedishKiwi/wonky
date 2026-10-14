@@ -4,6 +4,13 @@ library;
 
 export 'anchor.dart' show ObjectAnchor;
 export 'maintenance.dart' show AnchorMaintenance;
-export 'object_geometry.dart' show GridSnap, ObjectGeometry, ResizeHandle;
+export 'object_geometry.dart'
+    show
+        GridSnap,
+        ObjectGeometry,
+        ResizeHandle,
+        SmartGuides,
+        SmartSnap,
+        SnapGuide;
 export 'placement.dart' show ChartSheetAnchors, ObjectPlacement;
 export 'z_order.dart' show ZOrder, ZOrderItem;

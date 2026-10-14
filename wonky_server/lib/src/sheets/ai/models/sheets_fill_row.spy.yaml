@@ -1,0 +1,13 @@
+### One proposed value of Fill with AI (Sheets 12 §6.6).
+class: SheetsFillRow
+fields:
+  ### The target cell (`Sheet1!C5`).
+  cell: String
+  ### 1-based row number.
+  row: int
+  ### A short summary of the row's input columns.
+  inputs: String
+  ### The proposed value (user-entered text; null = leave empty).
+  value: String?
+  ### low, medium or high.
+  confidence: String

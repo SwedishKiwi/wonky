@@ -21,3 +21,8 @@ dependency_overrides:
   # sqlite3_web 0.9.5 made WorkerDatabase `base`, which breaks the web build of
   # sqlite_async 0.14.5. Keep web/db_worker.js in step with sqlite_async.
   sqlite3_web: 0.9.4
+  # re_editor 0.10.0 (Sheets script editor) pins isolate_manager ^4, whose
+  # isolate_contactor imports dart:html and breaks `flutter build web --wasm`.
+  # 6.x uses package:web and keeps the API re_editor uses (create, compute,
+  # stop). Flutter-only, so it lives here and not in pubspec.yaml.
+  isolate_manager: ^6.3.2

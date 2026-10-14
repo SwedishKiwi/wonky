@@ -406,6 +406,15 @@ final class IconThreshold {
     'op': inclusive ? '>=' : '>',
     ...threshold.toJson(),
   };
+
+  @override
+  bool operator ==(Object other) =>
+      other is IconThreshold &&
+      other.threshold == threshold &&
+      other.inclusive == inclusive;
+
+  @override
+  int get hashCode => Object.hash(threshold, inclusive);
 }
 
 /// Icon set rule (P2).
@@ -435,6 +444,13 @@ final class CfIconSetRule extends CfRule {
     'reverse': reverse,
     'showValue': showValue,
   };
+
+  @override
+  bool operator ==(Object other) =>
+      other is CfIconSetRule && other.encode() == encode();
+
+  @override
+  int get hashCode => encode().hashCode;
 }
 
 /// A rule of an unknown/invalid type (kept verbatim, ignored for rendering).

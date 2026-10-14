@@ -343,7 +343,9 @@ abstract final class ChartRecommender {
       return out([
         (build(ChartType.scatter), 'Scatter chart'),
         (build(ChartType.line), 'Line chart'),
-        if (numericAll.length == 3) (build(ChartType.bubble), 'Bubble chart'),
+        // Bubble: X, Y and size, no label column.
+        if (numericAll.length == 3)
+          (build(ChartType.bubble, domain: false), 'Bubble chart'),
       ]);
     }
     // Rule 6: one numeric column.

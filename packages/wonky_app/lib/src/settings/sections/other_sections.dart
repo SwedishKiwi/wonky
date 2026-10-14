@@ -149,6 +149,8 @@ class SheetsDefaultsSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final custom = services.config.sheetsSettings(context, services);
+    if (custom != null) return custom;
     final l = WonkyAppLocalizations.of(context);
     final p = services.prefs;
     return ListenableBuilder(

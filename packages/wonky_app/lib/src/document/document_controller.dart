@@ -5,6 +5,7 @@ import 'package:wonky_core/wonky_core.dart';
 import 'package:wonky_ui/wonky_ui.dart';
 
 import '../comments/comment_anchor.dart';
+import '../presence/presence_session.dart';
 import '../undo/undo_service.dart';
 
 /// The contract between the shell and an open document (Write's
@@ -109,6 +110,14 @@ abstract class DocumentController extends ChangeNotifier {
   /// document stream's session id; [userId] identifies the participant's
   /// user so the editor can find their caret.
   void revealParticipant(String sessionId, {int? userId}) {}
+
+  /// Follows another participant (avatar long-press / right-click, or its
+  /// tooltip menu); Sheets tracks their sheet and viewport.
+  void followParticipant(String sessionId) {}
+
+  /// The editor scaffold's presence session of this file (null when it
+  /// closes). Sheets sends its cursor and commit hints through it.
+  void attachPresence(PresenceSession? presence) {}
 
   /// Cursor JSON sent with presence updates (Sheets; Write uses its own
   /// document stream).

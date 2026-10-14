@@ -1,0 +1,216 @@
+import 'dart:convert';
+import 'dart:isolate';
+import 'dart:typed_data';
+
+import 'package:serverpod/serverpod.dart';
+import 'package:serverpod_offline_sync_server/serverpod_offline_sync_server.dart';
+import 'package:wonky_sheets_core/model.dart' as core;
+
+import 'package:wonky_core/wonky_core.dart' show Role;
+
+import '../../platform/common/actor.dart';
+import '../../platform/common/errors.dart';
+import '../../platform/common/models.dart';
+import '../../platform/common/names.dart';
+import '../../platform/common/time.dart';
+import '../../platform/config/wonky_config.dart';
+import '../../platform/drive/drive_service.dart';
+import '../../platform/files/file_service.dart';
+import '../../platform/sharing/access_service.dart';
+import '../mcp/sheets_bulk_writer.dart';
+
+/// Server-side spreadsheet imports (Sheets 11 §3.3): CSV/TSV/XLSX/ODS bytes
+/// → IR (`SheetsFileImporter`) → `IrToRowsPlanner` (location *Create new
+/// spreadsheet*) → batched synced-row writes in a new space → drive item
+/// registration (item UUID = space UUID). Used by `drive.import` with kind
+/// spreadsheet (home upload, MCP).
+abstract final class SheetsImportService {
+  /// Formats `drive.import` accepts for spreadsheets.
+  static const formats = {'csv', 'tsv', 'txt', 'xlsx', 'xlsm', 'ods'};
+
+  /// Files above this size are parsed in a worker isolate.
+  static const isolateThreshold = 512 * 1024;
+
+  /// Parses [bytes] (format from [format] or the file name).
+  static Future<core.ParsedImportFile> parse(
+    Uint8List bytes, {
+    required String fileName,
+    String? format,
+    core.ImportOptions options = const core.ImportOptions(),
+    String locale = 'en_US',
+  }) async {
+    final f = format == null
+        ? core.SheetsFileImporter.formatOf(fileName, bytes)
+        : core.SheetsFileImporter.formatOf('x.$format', bytes);
+    core.ParsedImportFile run() => core.SheetsFileImporter.parse(
+      bytes,
+      fileName: fileName,
+      options: options,
+      format: f,
+      spreadsheetLocale: locale,
+      today: nowUtc(),
+    );
+    try {
+      return bytes.length > isolateThreshold ? await Isolate.run(run) : run();
+    } on core.ImportFileException catch (e) {
+      throw Errors.invalid(e.message);
+    }
+  }
+
+  /// The `ImportOptions` of a `DriveImportOptions.optionsJson` (11 §9; the
+  /// legacy keys `delimiter`/`convertNumbers` are understood too).
+  static core.ImportOptions optionsOf(String? json) {
+    Map<String, Object?> m = const {};
+    if (json != null && json.trim().isNotEmpty) {
+      try {
+        final d = jsonDecode(json);
+        if (d is Map) m = d.cast<String, Object?>();
+      } on FormatException {
+        throw Errors.invalid('optionsJson is not valid JSON.');
+      }
+    }
+    var o = core.ImportOptions.fromJson(m);
+    final legacySep = m['delimiter'];
+    if (o.separator == null && legacySep is String && legacySep.isNotEmpty) {
+      o = o.copyWith(separator: legacySep);
+    }
+    if (m['convertNumbers'] == false && m['convert'] == null) {
+      o = o.copyWith(convert: false);
+    }
+    return o.copyWith(location: core.ImportLocation.createNew);
+  }
+
+  /// Imports [bytes] as a new spreadsheet named [name] (default: the file
+  /// name without extension) in [parentUuid].
+  static Future<ImportReportView> importNew(
+    Session session,
+    Actor actor,
+    Uint8List bytes, {
+    required String fileName,
+    String? format,
+    core.ImportOptions options = const core.ImportOptions(),
+    String? name,
+    UuidValue? parentUuid,
+  }) async {
+    final ext = (format ?? _extension(fileName)).toLowerCase();
+    if (!formats.contains(ext)) {
+      throw Errors.invalid(
+        ext == 'xls'
+            ? 'Legacy .xls files cannot be imported. Save the file as .xlsx '
+                  'and import it again.'
+            : 'Files of type "$ext" cannot be imported as spreadsheets.',
+      );
+    }
+    final base = core.SheetsFileImporter.baseName(fileName);
+    final title = normalizeItemName(
+      (name?.trim().isNotEmpty ?? false)
+          ? name!.trim()
+          : (base.isEmpty ? 'Imported spreadsheet' : base),
+    );
+    final opts = options.copyWith(location: core.ImportLocation.createNew);
+    final parsed = await parse(
+      bytes,
+      fileName: fileName,
+      format: ext == 'txt' ? 'csv' : ext,
+      options: opts,
+      locale: opts.locale ?? 'en_US',
+    );
+    final doc = parsed.document..title = title;
+
+    // Validates the folder before a space is created.
+    if (parentUuid != null) {
+      final (parent, _) = await AccessService.require(
+        session,
+        actor,
+        parentUuid,
+        Role.editor,
+      );
+      if (parent.kind != DriveItemKind.folder || parent.trashedAt != null) {
+        throw Errors.invalid('Items can only be created in folders.');
+      }
+    }
+    final space = await session.offlineSync.spaces.createFor(actor.authUserId);
+    final model = core.WorkbookModel(spreadsheetId: space.uuid);
+    final ctx = core.PlanContext(
+      userId: actor.authUserId.uuid,
+      now: nowUtc(),
+      locale: opts.locale,
+      maxCells: WonkyConfig.current.maxCellsPerSpreadsheet,
+    );
+    final core.IrImportResult result;
+    try {
+      result = core.IrToRowsPlanner.plan(
+        doc,
+        model,
+        ctx,
+        options: opts,
+        fileName: fileName,
+        label: 'Import $fileName',
+      );
+    } on core.PlanException catch (e) {
+      if (e.code == 'cell_limit_exceeded') throw Errors.limit(e.message);
+      throw Errors.invalid(e.message);
+    }
+    for (final img in result.imageUploads) {
+      await FileService.storeServerFile(
+        session,
+        ownerId: actor.userId,
+        kind: StoredFileKind.image,
+        fileName: img.name ?? 'image',
+        mimeType: img.mimeType,
+        bytes: img.bytes,
+        fileUuid: UuidValue.fromString(img.fileUuid),
+      );
+    }
+    await SheetsBulkWriter.apply(
+      session,
+      actor: actor,
+      spaceUuid: space,
+      changes: result.plan.changes,
+      label: result.plan.label,
+      plans: [result.plan],
+      kinds: const {core.ChangeKinds.import},
+    );
+    final view = await DriveService.registerSpreadsheet(
+      session,
+      actor,
+      spaceUuid: space,
+      parentUuid: parentUuid,
+      name: title,
+    );
+    if (result.imageUploads.isNotEmpty) {
+      final item = await DriveItem.db.findFirstRow(
+        session,
+        where: (t) => t.uuid.equals(view.uuid),
+      );
+      if (item != null) {
+        for (final img in result.imageUploads) {
+          final f = await FileService.byUuid(
+            session,
+            UuidValue.fromString(img.fileUuid),
+          );
+          if (f != null) await FileService.attachToItem(session, f, item);
+        }
+      }
+    }
+    return ImportReportView(
+      item: view,
+      warnings: [for (final w in result.report.warnings) warningView(w)],
+    );
+  }
+
+  /// A report warning as the drive API's warning view.
+  static ImportWarningView warningView(core.ImportWarning w) {
+    final where = [?w.sheet, ?w.range].join('!');
+    final count = w.count > 1 ? ' (${w.count}×)' : '';
+    return ImportWarningView(
+      kind: w.code,
+      message: '${where.isEmpty ? '' : '$where: '}${w.message}$count',
+    );
+  }
+
+  static String _extension(String fileName) {
+    final dot = fileName.lastIndexOf('.');
+    return dot < 0 ? '' : fileName.substring(dot + 1);
+  }
+}

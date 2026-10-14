@@ -1,7 +1,5 @@
 import 'package:test/test.dart';
 import 'package:wonky_sheets_core/model.dart';
-import 'package:wonky_sheets_core/src/charts/scene/geometry.dart';
-import 'package:wonky_sheets_core/src/objects/objects.dart';
 
 import 'object_fixtures.dart';
 
@@ -279,6 +277,86 @@ void main() {
         final s = ObjectGeometry.constrainSize(10, 10, aspect: 1000);
 
         expect((s.width, s.height), (4000, 20));
+      },
+    );
+  });
+
+  group('Given another object at (100, 100) of 200 × 100 (smart guides)', () {
+    const other = ChartRect(100, 100, 200, 100);
+
+    test(
+      'when a moving left edge is 3 px from its left edge then it snaps',
+      () {
+        final r = SmartGuides.snapMove(const ChartRect(103, 300, 50, 50), [
+          other,
+        ]);
+
+        expect(r.rect, const ChartRect(100, 300, 50, 50));
+        expect(r.guides, [
+          const SnapGuide(vertical: true, position: 100, start: 100, end: 350),
+        ]);
+      },
+    );
+
+    test('when the centers are 2 px apart then the centers align', () {
+      final r = SmartGuides.snapMove(const ChartRect(152, 400, 100, 20), [
+        other,
+      ]);
+
+      expect(r.rect.centerX, 200);
+      expect(
+        r.guides.where((g) => g.vertical).map((g) => g.position),
+        contains(200),
+      );
+    });
+
+    test('when edges are 5 px apart then nothing snaps', () {
+      final r = SmartGuides.snapMove(const ChartRect(105, 305, 50, 50), [
+        other,
+      ]);
+
+      expect(r.rect, const ChartRect(105, 305, 50, 50));
+      expect(r.guides, isEmpty);
+    });
+
+    test(
+      'when a top edge is near its bottom edge then it snaps vertically',
+      () {
+        final r = SmartGuides.snapMove(const ChartRect(400, 198, 50, 50), [
+          other,
+        ]);
+
+        expect(r.rect.top, 200);
+        expect(r.guides.single.vertical, isFalse);
+        expect(r.guides.single.start, 100);
+        expect(r.guides.single.end, 450);
+      },
+    );
+
+    test(
+      'when resizing the right edge near its right edge then only that edge snaps',
+      () {
+        final r = SmartGuides.snapResize(
+          const ChartRect(0, 300, 297, 40),
+          ResizeHandle.right,
+          [other],
+        );
+
+        expect(r.rect, const ChartRect(0, 300, 300, 40));
+      },
+    );
+
+    test(
+      'when snapping would make the object too small then the edge stays',
+      () {
+        final r = SmartGuides.snapResize(
+          const ChartRect(298, 300, 20, 40),
+          ResizeHandle.left,
+          [other],
+        );
+
+        expect(r.rect.left, 298);
+        expect(r.guides, isEmpty);
       },
     );
   });

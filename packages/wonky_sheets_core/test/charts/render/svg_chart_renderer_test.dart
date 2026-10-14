@@ -414,4 +414,16 @@ void main() {
       expect(doc.findAllElements('rect'), isEmpty);
     });
   });
+
+  group('Given a scene with non-finite coordinates', () {
+    test('when rendering SVG then broken geometry is left out', () {
+      final svg = const SvgChartRenderer().render(RenderTestScenes.nonFinite());
+
+      expect(svg, isNot(contains('NaN')));
+      expect(svg, isNot(contains('Infinity')));
+      final doc = XmlDocument.parse(svg);
+      expect(doc.findAllElements('polyline'), hasLength(2));
+      expect(doc.findAllElements('text'), isEmpty);
+    });
+  });
 }

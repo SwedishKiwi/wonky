@@ -18,6 +18,9 @@ final class RangeStats {
     return RangeStats._(list);
   }
 
+  /// Stats from values already sorted ascending (background computation).
+  factory RangeStats.fromSorted(Float64List sorted) => RangeStats._(sorted);
+
   /// Empty stats.
   static final RangeStats empty = RangeStats._(Float64List(0));
 

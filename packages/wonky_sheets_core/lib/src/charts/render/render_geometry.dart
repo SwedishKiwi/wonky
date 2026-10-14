@@ -1,4 +1,5 @@
 import 'dart:math' as math;
+import 'dart:typed_data';
 
 import '../scene/geometry.dart';
 import '../scene/path.dart';
@@ -110,6 +111,71 @@ abstract final class RenderGeometry {
     if (sum <= 0) return null;
     return dash.length.isOdd ? [...dash, ...dash] : dash;
   }
+
+  /// [cmds] without commands that have non-finite coordinates; the command after a dropped
+  /// one starts a new sub-path, so broken geometry never reaches an output format.
+  static List<PathCmd> finiteCommands(List<PathCmd> cmds) {
+    bool ok(double v) => v.isFinite;
+    var clean = true;
+    for (final c in cmds) {
+      if (!_finite(c, ok)) {
+        clean = false;
+        break;
+      }
+    }
+    if (clean) return cmds;
+    final out = <PathCmd>[];
+    var restart = true;
+    for (final c in cmds) {
+      if (!_finite(c, ok)) {
+        restart = true;
+        continue;
+      }
+      switch (c) {
+        case PLineTo(:final x, :final y) when restart:
+          out.add(PMoveTo(x, y));
+        case PCubicTo(:final x, :final y) when restart:
+          out.add(PMoveTo(x, y));
+        case PClose() when restart:
+          break;
+        default:
+          out.add(c);
+      }
+      restart = false;
+    }
+    return out;
+  }
+
+  static bool _finite(PathCmd c, bool Function(double) ok) => switch (c) {
+    PMoveTo(:final x, :final y) ||
+    PLineTo(:final x, :final y) => ok(x) && ok(y),
+    PCubicTo(:final x1, :final y1, :final x2, :final y2, :final x, :final y) =>
+      ok(x1) && ok(y1) && ok(x2) && ok(y2) && ok(x) && ok(y),
+    PClose() => true,
+  };
+
+  /// The runs of consecutive finite vertices of the polyline [xy] (`x0, y0, x1, y1, …`).
+  static List<Float64List> finiteRuns(Float64List xy) {
+    final runs = <Float64List>[];
+    var start = -1;
+    final n = xy.length ~/ 2;
+    for (var k = 0; k <= n; k++) {
+      final ok = k < n && xy[2 * k].isFinite && xy[2 * k + 1].isFinite;
+      if (ok && start < 0) start = k;
+      if (!ok && start >= 0) {
+        runs.add(Float64List.sublistView(xy, 2 * start, 2 * k));
+        start = -1;
+      }
+    }
+    return runs;
+  }
+
+  /// Whether every coordinate of [rect] is finite.
+  static bool rectFinite(ChartRect rect) =>
+      rect.left.isFinite &&
+      rect.top.isFinite &&
+      rect.width.isFinite &&
+      rect.height.isFinite;
 
   /// Whether [stroke] paints anything.
   static bool strokeVisible(SStroke? stroke) =>

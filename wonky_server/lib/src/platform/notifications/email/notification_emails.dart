@@ -22,7 +22,28 @@ class NotificationEmails {
       (_, DriveItemKind.folder) => '/write/drive/$uuid',
       _ => '/write/d/$uuid',
     };
+    // Spreadsheet comments link to their cell (Sheets 10 §3.6).
+    if (n.itemKind == DriveItemKind.spreadsheet) {
+      final thread = _threadUuidOf(n.payload);
+      if (thread != null) {
+        return webOrigin.replace(
+          path: path,
+          queryParameters: {'comment': thread},
+        );
+      }
+    }
     return webOrigin.replace(path: path);
+  }
+
+  static String? _threadUuidOf(String payload) {
+    try {
+      final p = jsonDecode(payload);
+      return p is Map && p['threadUuid'] is String
+          ? p['threadUuid'] as String
+          : null;
+    } on FormatException {
+      return null;
+    }
   }
 
   /// The settings page where notification emails are turned off.

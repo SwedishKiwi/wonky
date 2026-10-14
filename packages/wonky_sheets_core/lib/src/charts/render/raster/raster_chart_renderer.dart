@@ -83,6 +83,7 @@ final class _RasterContext {
   void primitive(ScenePrimitive p) {
     switch (p) {
       case SRect(:final rect, :final fill, :final stroke, :final radius):
+        if (!RenderGeometry.rectFinite(rect)) return;
         final r = RenderGeometry.normalize(rect);
         final cmds = RenderGeometry.roundedRect(r, radius);
         _shape(cmds, fill, stroke, false);
@@ -90,20 +91,19 @@ final class _RasterContext {
         _shape(cmds, fill, stroke, evenOdd);
       case SPolyline(:final xy, :final stroke):
         if (!RenderGeometry.strokeVisible(stroke)) return;
-        final pts = Float64List(xy.length - xy.length % 2);
-        for (var i = 0; i < pts.length; i++) {
-          pts[i] = xy[i] * scale;
-        }
         raster.clear();
         final alpha = _strokeSetup(stroke);
-        stroker.addPolyline(
-          pts,
-          false,
-          _hw,
-          stroke.cap,
-          stroke.join,
-          dash: _dash(stroke),
-        );
+        final dash = _dash(stroke);
+        for (final run in RenderGeometry.finiteRuns(xy)) {
+          stroker.addPolyline(
+            _scaled(run),
+            false,
+            _hw,
+            stroke.cap,
+            stroke.join,
+            dash: dash,
+          );
+        }
         _paint(stroke.color, alpha, false);
       case SMarkers():
         _markers(p);
@@ -182,7 +182,10 @@ final class _RasterContext {
     final doFill = RenderGeometry.fillVisible(fill);
     final doStroke = RenderGeometry.strokeVisible(stroke);
     if ((!doFill && !doStroke) || cmds.isEmpty) return;
-    final polys = PathGeometry.flatten(cmds, tolerance: 0.2 / scale);
+    final polys = PathGeometry.flatten(
+      RenderGeometry.finiteCommands(cmds),
+      tolerance: 0.2 / scale,
+    );
     if (polys.isEmpty) return;
     final scaled = [for (final (p, closed) in polys) (_scaled(p), closed)];
     if (doFill) {

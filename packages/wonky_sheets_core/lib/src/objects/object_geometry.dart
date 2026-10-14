@@ -187,3 +187,199 @@ abstract final class GridSnap {
     return a.abs() <= b.abs() ? a : b;
   }
 }
+
+/// A dashed alignment guide shown while moving or resizing an object (08 §9.3 smart guides),
+/// in sheet px at 100 % zoom.
+final class SnapGuide {
+  /// Creates a guide: a vertical line at x = [position] from [start] to [end] (y), or a
+  /// horizontal one at y = [position] from [start] to [end] (x).
+  const SnapGuide({
+    required this.vertical,
+    required this.position,
+    required this.start,
+    required this.end,
+  });
+
+  /// Whether the guide is a vertical line (it aligns x positions).
+  final bool vertical;
+
+  /// x of a vertical guide, y of a horizontal one.
+  final double position;
+
+  /// Extent along the line.
+  final double start;
+  final double end;
+
+  @override
+  bool operator ==(Object other) =>
+      other is SnapGuide &&
+      other.vertical == vertical &&
+      other.position == position &&
+      other.start == start &&
+      other.end == end;
+
+  @override
+  int get hashCode => Object.hash(vertical, position, start, end);
+
+  @override
+  String toString() =>
+      'SnapGuide(${vertical ? 'x' : 'y'} = $position, $start..$end)';
+}
+
+/// Result of a smart-guide snap: the snapped rectangle and the guides to draw.
+final class SmartSnap {
+  /// Creates a result.
+  const SmartSnap(this.rect, this.guides);
+
+  /// The rectangle after snapping.
+  final ChartRect rect;
+
+  /// Guides through every aligned edge or center (empty when nothing snapped).
+  final List<SnapGuide> guides;
+}
+
+/// Smart guides (08 §9.3, P1): while dragging, an edge or center of the object that comes
+/// within [tolerance] px of another object's edge or center snaps to it, and a guide is shown.
+abstract final class SmartGuides {
+  /// Snap distance in px at 100 % zoom.
+  static const double tolerance = 4;
+
+  /// [moving] (the dragged object's rectangle) translated so its nearest edge or center lines
+  /// up with an edge or center of one of [others], separately on each axis.
+  static SmartSnap snapMove(
+    ChartRect moving,
+    Iterable<ChartRect> others, {
+    double tolerance = SmartGuides.tolerance,
+  }) {
+    final list = others.toList();
+    final dx = _bestDelta(
+      [moving.left, moving.centerX, moving.right],
+      [
+        for (final o in list) ...[o.left, o.centerX, o.right],
+      ],
+      tolerance,
+    );
+    final dy = _bestDelta(
+      [moving.top, moving.centerY, moving.bottom],
+      [
+        for (final o in list) ...[o.top, o.centerY, o.bottom],
+      ],
+      tolerance,
+    );
+    final rect = moving.translate(dx ?? 0, dy ?? 0);
+    return SmartSnap(rect, guidesFor(rect, list));
+  }
+
+  /// [rect] (being resized with [handle]) with its moving edges snapped to the edges and
+  /// centers of [others]. An edge stays unsnapped when snapping would break the size limits
+  /// (20–4000 px).
+  static SmartSnap snapResize(
+    ChartRect rect,
+    ResizeHandle handle,
+    Iterable<ChartRect> others, {
+    double tolerance = SmartGuides.tolerance,
+  }) {
+    final list = others.toList();
+    final xs = [
+      for (final o in list) ...[o.left, o.centerX, o.right],
+    ];
+    final ys = [
+      for (final o in list) ...[o.top, o.centerY, o.bottom],
+    ];
+    var l = rect.left, r = rect.right, t = rect.top, b = rect.bottom;
+    bool ok(double a, double z) =>
+        z - a >= ObjectAnchor.minSize && z - a <= ObjectAnchor.maxSize;
+    if (handle.movesLeft) {
+      final d = _bestDelta([l], xs, tolerance);
+      if (d != null && ok(l + d, r)) l += d;
+    }
+    if (handle.movesRight) {
+      final d = _bestDelta([r], xs, tolerance);
+      if (d != null && ok(l, r + d)) r += d;
+    }
+    if (handle.movesTop) {
+      final d = _bestDelta([t], ys, tolerance);
+      if (d != null && ok(t + d, b)) t += d;
+    }
+    if (handle.movesBottom) {
+      final d = _bestDelta([b], ys, tolerance);
+      if (d != null && ok(t, b + d)) b += d;
+    }
+    final out = ChartRect(l, t, r - l, b - t);
+    return SmartSnap(out, guidesFor(out, list));
+  }
+
+  /// Guides through every edge or center of [rect] that coincides (within 0.5 px) with an
+  /// edge or center of one of [others]; each spans both rectangles. Sorted: vertical first,
+  /// then by position.
+  static List<SnapGuide> guidesFor(ChartRect rect, Iterable<ChartRect> others) {
+    const eps = 0.5;
+    final byKey = <(bool, double), (double, double)>{};
+    void add(bool vertical, double pos, double s, double e) {
+      final k = (vertical, pos);
+      final cur = byKey[k];
+      byKey[k] = cur == null
+          ? (s, e)
+          : (math.min(cur.$1, s), math.max(cur.$2, e));
+    }
+
+    for (final o in others) {
+      for (final x in [rect.left, rect.centerX, rect.right]) {
+        for (final ox in [o.left, o.centerX, o.right]) {
+          if ((x - ox).abs() <= eps) {
+            add(
+              true,
+              x,
+              math.min(rect.top, o.top),
+              math.max(rect.bottom, o.bottom),
+            );
+          }
+        }
+      }
+      for (final y in [rect.top, rect.centerY, rect.bottom]) {
+        for (final oy in [o.top, o.centerY, o.bottom]) {
+          if ((y - oy).abs() <= eps) {
+            add(
+              false,
+              y,
+              math.min(rect.left, o.left),
+              math.max(rect.right, o.right),
+            );
+          }
+        }
+      }
+    }
+    final keys = byKey.keys.toList()
+      ..sort((a, b) {
+        if (a.$1 != b.$1) return a.$1 ? -1 : 1;
+        return a.$2.compareTo(b.$2);
+      });
+    return [
+      for (final k in keys)
+        SnapGuide(
+          vertical: k.$1,
+          position: k.$2,
+          start: byKey[k]!.$1,
+          end: byKey[k]!.$2,
+        ),
+    ];
+  }
+
+  /// The smallest move (by magnitude, ties: the earlier source) that puts one of [sources]
+  /// on one of [targets] within [tolerance], or null.
+  static double? _bestDelta(
+    List<double> sources,
+    List<double> targets,
+    double tolerance,
+  ) {
+    double? best;
+    for (final s in sources) {
+      for (final t in targets) {
+        final d = t - s;
+        if (d.abs() > tolerance) continue;
+        if (best == null || d.abs() < best.abs()) best = d;
+      }
+    }
+    return best;
+  }
+}

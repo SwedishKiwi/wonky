@@ -34,6 +34,23 @@ formats in [06-formatting.md](06-formatting.md), formula semantics in
 
 ## 1. Feature folder layout and class map
 
+> **As built (2026-10-14).** The editor follows this map with these differences:
+> `features/sheet_editor/` holds `SheetEditorController` (the hub of §1.1, also the
+> navigation logic), `SheetsDocumentController` (the shell's `DocumentController`: title,
+> role, undo handler, selection snapshots, Edit-menu contributions) and
+> `sheet_editor_screen.dart` (screen + `SpreadsheetLoadingView`). The grid is
+> `grid/grid_area.dart` (widget + pointer router + scrollbars + "Add rows" footer),
+> `grid/viewport/` (`GridGeometry`/`GridPane`, `GridScrollController`, `GridPass` render
+> object), `grid/paint/` (`GridLayer` API, `CellRenderCache` over the core
+> `CellDisplayResolver`, `TextLayoutCache`, `layers/content_layers.dart`,
+> `layers/overlay_layers.dart`), `grid/selection/` (`GridSelection`,
+> `GridSelectionController`, `DataEdgeFinder`). The cell editor is `cell_editor/`
+> (`CellEditorController`, `CellEditorOverlay`, `FormulaTextController`, `FormulaAssist`).
+> The fill handle, drag-move, resize and freeze drags live in the grid's pointer router;
+> structure operations are plain commands (`commands/structure_commands.dart`); the
+> `sheets.rows` undo adapter is `features/model/sheets_undo.dart`. Colors are in
+> `theme/sheets_tokens.dart` (`GridPaintTokens`).
+
 All paths are in `wonky_sheets/lib/`. Each top-level folder under
 `features/` is independently ownable; dependencies flow downward in this list
 (`model` ← `grid` ← `cell_editor` …). Pure logic that the server/MCP also needs lives in
@@ -191,6 +208,14 @@ Floating objects (charts, images, slicers) and interactive popovers are real wid
 
 ### 2.2 Widget/render tree
 
+> **As built.** Two leaf render objects (`GridPass`, `RenderGridPass`, each a repaint
+> boundary) paint the whole grid: the *content* pass (layers with `zOrder` < 500) and the
+> *overlay* pass (selection, reference boxes, drag feedback, frozen dividers, headers).
+> Scrolling is not built on `TwoDimensionalScrollable`: `GridScrollController` holds the
+> offsets and the grid handles wheel, trackpad pan/zoom (`PointerPanZoom*`), Mod+wheel
+> zoom and draggable scrollbar thumbs itself. The cell editor `EditableText` stays mounted
+> (invisible) above the passes, see §8.3.
+
 ```
 GridArea (Stack, Focus scope "grid")
 ├── CornerHeader                      (select-all button + freeze bar handles)
@@ -332,6 +357,13 @@ class CellRenderInfo {
 
 ### 2.7 Tile cache and frame budget
 
+> **As built.** No tile cache yet: both passes repaint the visible window on scroll, with
+> per-cell render data (`CellRenderCache`, dropped on model batches/recalcs) and laid-out
+> paragraphs (`TextLayoutCache`, LRU 20,000) cached. `test/features/grid/grid_performance_test.dart`
+> (tag `slow`) scrolls a 100k × 10 (1M cells) sheet: median 12.6 ms, p95 20 ms per frame for
+> both passes in the debug test VM (JIT; release builds are faster). Tiles remain the plan if
+> the release build misses the budget.
+
 - Static layers are recorded into `ui.Picture` tiles of 512 × 512 logical px per pane at the
   current zoom/DPR. `TileCache` keyed `(sheetId, pane, tileX, tileY, zoom, dpr, theme)`, max 96
   tiles (LRU). Scrolling only composites cached tiles and records newly exposed ones.
@@ -355,6 +387,12 @@ class CellRenderInfo {
 chunk is not loaded paint `ShadSkeleton`-colored rounded bars (shimmer animated in the overlay
 viewport at 2 Hz, disabled with Reduce motion). Typing into a not-yet-loaded cell shows a toast
 "Still loading this part of the sheet…" and is ignored; navigation works.
+
+> **As built.** `LoadingLayer` (`grid/paint/layers/loading_layer.dart`, overlay pass) paints
+> `skeleton` bars of varying width in rows whose cells are not loaded, toggling at 2 Hz (static
+> with the platform's reduce motion), asks the session for the visible rows first and removes
+> itself when loading completes. Blocks are 500 rows (02 §6). The editor's write gate refuses
+> edits there before the cell editor opens.
 
 ### 2.9 Grid paint tokens (light/dark)
 
@@ -585,7 +623,7 @@ Win/Linux; macOS uses ⌘ for Mod and ⌥ for Alt unless a `mac:` override is gi
 | `=` / `+` / `-` | grid | (starts session) | Enter mode; formula editing if `=` |
 | F2 | grid | `sheets.cell.edit` | Edit mode, caret at end |
 | F2 | cellEditor | (mode toggle) | Toggle enter ⇄ edit |
-| Enter | grid | `sheets.cell.edit` when `UserPreferences.sheetsDefaults.enterStartsEditing` (default **off**, Google moves down) | |
+| Enter | grid | `sheets.cell.edit` when `UserPreferences.sheetsDefaults.enterStartsEditing` (default **off**, Google moves down) and one cell is selected (`sheets.nav.enter`) | |
 | Double-click | grid | `sheets.cell.edit {caretAtPointer}` | |
 | Enter / Shift+Enter | cellEditor | commit, move down/up | |
 | Tab / Shift+Tab | cellEditor | commit, move right/left (or accept autocomplete) | |
@@ -685,6 +723,14 @@ class CellEditorController extends ChangeNotifier {
 
 ### 8.3 Editor overlay
 
+> **As built — "ready" state.** While the grid has focus and the user can edit, the
+> invisible cell editor `EditableText` holds the primary focus (the grid's focus node
+> redirects to it). Typed text — keyboard, IME composition, dictation — arrives through the
+> platform text input and starts the session with that text, so no keystroke is lost and
+> IME works from the first character. Grid shortcuts are handled by a key handler above it
+> that is inactive while a session is open; undo/redo/cut/copy/paste are therefore also bound
+> in the `grid` scope (the shell's global bindings don't apply inside text fields).
+
 - Positioned exactly over the active cell (or merged rect), above all panes; if the cell is in a
   frozen pane, the overlay is clipped/positioned in that pane's coordinates.
 - Font, size × zoom, color, fill and horizontal alignment match the cell; padding matches the
@@ -737,6 +783,11 @@ values with the typed prefix (case-insensitive), and shows the completion as **i
 suggestion. Disabled by Tools › Autocomplete toggle (`sheets.tools.toggleAutocomplete`, per
 user).
 
+> **As built.** `ColumnAutocomplete` (`cell_editor/column_autocomplete.dart`) completes only
+> when exactly one distinct value of the block matches; the completion is inserted selected
+> (typing replaces it, Backspace drops it, Tab/Enter commit it). The preference is
+> `sheetsDefaults.autocomplete` (Settings › Sheets and the Tools toggle).
+
 ### 8.6 Input parsing per locale (`InputParser`)
 
 Locale data comes from `intl` (`NumberSymbols`, `DateSymbols`) for `Spreadsheet.locale`.
@@ -747,15 +798,15 @@ Recognized inputs (en_US / de_DE examples) and the auto-detected format (06 §5.
 | `1234` / `-12.5` / `1,234.5` | `1234` / `-12,5` / `1.234,5` | number | Automatic (`1,234.5` gets `#,##0.0`) |
 | `1.5E3` | `1,5E3` | 1500 | Scientific `0.00E+00` |
 | `12%` / `12.5 %` | `12 %` | 0.12 | `0%` / `0.0%` |
-| `$12` / `-$1,200.50` / `($5)` | `12 €` / `-1.200,50 €` | number | Currency for the symbol (`[$$]#,##0` / `[$€]`), decimals as typed |
+| `$12` / `-$1,200.50` / `($5)` | `12 €` / `-1.200,50 €` | number | Currency for the typed symbol (06 §5.9): `$` → `"$"#,##0` in every locale; other symbols → `[$€]` without LCID, placed where typed (`€12` → `[$€]#,##0`, `12 €` → `#,##0 [$€]`, `12€` → `#,##0[$€]`); decimals as typed (0, else at least 2: `-$1,200.50` → `"$"#,##0.00`). The Format › Number currency presets use `[$sym-LCID]` instead (06 §5.1) |
 | `(123)` | `(123)` | -123 | Automatic |
-| `10/12/2026`, `Oct 12 2026`, `12-Oct-2026`, `2026-10-12` | `12.10.2026`, `12. Okt. 2026`, `2026-10-12` | serial date | Date `M/d/yyyy` (locale short date) |
-| `14:30`, `2:30 PM`, `14:30:15.5` | `14:30` | fraction | Time `h:mm` / `h:mm AM/PM` / `h:mm:ss.000` |
-| `10/12/2026 14:30` | `12.10.2026 14:30` | serial | Date time |
-| `36:15:00` | `36:15:00` | 1.51 | Duration `[h]:mm:ss` |
+| `10/12/2026`, `Oct 12 2026`, `12-Oct-2026`, `2026-10-12` | `12.10.2026`, `12. Okt. 2026`, `2026-10-12` | serial date | Date `preset:date` (locale short date, en_US `M/d/yyyy`); ISO input keeps its shape `yyyy-mm-dd` |
+| `14:30`, `2:30 PM`, `14:30:15`, `14:30:15.5` | `14:30` | fraction | Time `h:mm` / `h:mm AM/PM` / `h:mm:ss` / `h:mm:ss.000` (` AM/PM` appended when typed with AM/PM) |
+| `10/12/2026 14:30` | `12.10.2026 14:30` | serial | Date time `preset:dateTime` (ISO input: `yyyy-mm-dd hh:mm[:ss]`) |
+| `36:15:00` / `36:15` | `36:15:00` | 1.51 | Duration `[h]:mm:ss` / `[h]:mm` |
 | `TRUE` / `false` | `WAHR` / `FALSCH` (when function display language is de, P2; English always accepted) | boolean | — |
 | `#N/A`, `#DIV/0!` … | same | error | — |
-| `1/2` | `1/2` | **date** (Jan 2 current year, Google behavior) | Date; type `0 1/2` for the fraction 0.5 |
+| `1/2` | `1/2` | **date** (Jan 2 current year, Google behavior) | Date; type `0 1/2` for the fraction 0.5 (format `# ?/?`; `1 3/16` → `# ??/??`) |
 | ` 42 ` | ` 42 ` | 42 (trimmed) | — |
 | `00123` | `00123` | **123** (number; Google drops leading zeros) | — |
 | anything else | | text | — |
@@ -819,7 +870,10 @@ background; an unmatched paren is `destructive`.
 evaluated detached (`FormulaEngine.evaluateDetached(a1Text, at: cell)`, ≤ 50 ms budget; skipped
 if exceeded or if the formula references > 1M cells) and a chip above the editor shows the
 formatted result (`= 1,234.50`) or the error with its message (`#REF! — Reference does not
-exist`). Array results show the top-left value + "(3×4 array)".
+exist`). Array results show the top-left value + "(3×4 array)". **As built:** `cell_editor/formula_preview.dart`;
+the chip sits above the in-cell editor (next to the address badge), formatted with the cell's
+explicit number format or the result's hint. Formula autocomplete and signature help follow
+Settings › Sheets (`formulaAutocomplete`, `formulaHelp`).
 
 **Parse errors on commit** are not blocking (§8.4); the cell shows `#ERROR!` and the error
 tooltip shows the parser message ("Formula parse error at position 12").
@@ -939,12 +993,19 @@ filling `=A1*2` from B1 to B2:B4 yields `=A2*2 … =A4*2`.
   location by `ReferenceRewriter.remap` using the engine's dependents index, in the same
   transaction; partially overlapping ranges are unchanged ([05 §5.5](05-formula-engine.md)).
 - Drag across sheets is not supported (use cut/paste).
+- **As built:** the cursor is `grabbing` while moving and `copy` while the modifier is held;
+  pressing or releasing it mid-drag switches without moving the pointer.
 
 ---
 
 ## 12. Clipboard
 
 ### 12.1 Platform integration
+
+> **As built.** `ClipboardService` uses the same approach as Wonky Write instead of
+> `super_clipboard`: the async Clipboard API on web (`text/html` + `text/plain`) and
+> Flutter's plain-text `Clipboard` elsewhere (the HTML of the last copy is kept in memory).
+> Encoding/decoding is the core `ClipboardEncoder` / `ClipboardDecoder`.
 
 `ClipboardService` uses **`super_clipboard`** (add to `wonky_sheets` dependencies; it
 supports multiple formats — `text/plain`, `text/html`, images — on web, macOS, Windows, Linux).
@@ -976,7 +1037,8 @@ unless clipboard read permission was granted).
 
 ### 12.3 Paste (`sheets.edit.paste`, 1 step)
 
-Source resolution order: (a) HTML contains `data-wonky-clip` matching the in-memory payload →
+Source resolution order (`ClipboardDecoder.decode` → `PasteSource`): (a) HTML contains
+`data-wonky-clip` matching the in-memory payload →
 internal payload; (b) HTML contains a `wonky:` comment → decoded payload (other window/app
 instance); (c) HTML with a `<table>` → `HtmlTableCodec.parse` (Google Sheets, Excel, LibreOffice,
 web pages); (d) `text/plain` → TSV (or CSV detection, §12.5); (e) image → insert image over cells
@@ -1006,7 +1068,7 @@ web pages); (d) `text/plain` → TSV (or CSV detection, §12.5); (e) image → i
 | `format` | Mod+Alt+V | Format attributes only (+ merges) |
 | `formulas` | — | Content only (formulas translated, literals as-is), no formats |
 | `conditionalFormatting` | — | Adds CF rules from the source mapped to the target range |
-| `dataValidation` | — | Adds/replaces DV rules on the target |
+| `dataValidation` | — | Adds/replaces DV rules on the target (pasted CF/DV formulas are re-anchored like cell formulas, 06 §15.3) |
 | `columnWidths` | — | Source column widths applied to target columns |
 | `transposed` | — | Everything, rows ⇄ columns (formulas translated with transposed offsets) |
 | `allExceptBorders` | — | Everything except the four border attributes |
@@ -1035,6 +1097,9 @@ From external sources only `values`, `format`, `transposed` and `allExceptBorder
   payload is consumed (the clipboard then holds a normal copy of the moved data).
 - Cut + paste into another spreadsheet = copy + clear source; references elsewhere in the source
   spreadsheet keep pointing at the now-empty source cells (Google behavior).
+- A cut whose copy skipped hidden/filtered rows or columns (§12.2) moves only the copied (visible)
+  cells: they land contiguously at the target, hidden source cells stay untouched, and references
+  follow the moved cells (ranges only when entirely inside one visible block).
 
 **AC**: copy a 3×3 range with a formula, bold and a merge from Wonky to Google Sheets and back
 preserves values, formula, bold and merge; paste into a 6×6 selection tiles four times.
@@ -1167,6 +1232,15 @@ and undo restores both rows and formula text.
   rich run with `{"chip":{"kind":"person","userId":"…","email":"…"}}` (addition to the `r:` run
   format, §20). Hover → person card (avatar, name, email). Date chip → date picker
   (`ShadCalendar`) and stores a date number with a date format.
+- **As built** (`features/in_cell/smart_chips.dart`, `commands/chip_commands.dart`): typing `@`
+  as the first character of a new value drops the edit and opens `SmartChipMenu` at the cell
+  (also Insert › Smart chips and the context menus, `sheets.insert.smartChip` without `kind`):
+  a search field continues the text; *People* are the spreadsheet's editors (cached per device
+  for offline, `FileEditors`) plus the user; *Date* opens the date picker; *Dropdown* runs
+  `sheets.insert.dropdown`; *Insert "@…" as text* keeps the typed text. ↑/↓/Enter, Esc. People
+  chips are painted by `PersonChipLayer` (pill, avatar initial, name; over the cell's text) and
+  the hover card shows name, email and *Copy email*. Agents pass `kind` (`person` with
+  `email`/`name`/`userId`, `date` with an ISO `date`).
 
 ### 14.4 Hyperlinks
 
@@ -1179,6 +1253,13 @@ and undo restores both rows and formula text.
   03 §1). Mod+click on the cell text opens directly (with confirm).
 - `sheets.insert.link` (Mod+K): popover with *Text* (prefilled with cell text) and *Link* input
   (URL, or search sheets/named ranges for internal links) → *Apply* (1 step).
+  *Copy link* is `sheets.link.copy {url?}` (system clipboard, toast; no undo step).
+  **As built** (`features/links/link_dialog.dart`): a dialog (`dialog.link`, MCP-describable with
+  fields `text`/`url` and the current `suggestions`) rather than a cell-anchored popover. Typing
+  in *Link* lists matching sheets, named ranges and — when the text is a range (`B2:C9`,
+  `Sheet2!A1`) — that range (↑/↓, Enter or click picks one). Targets are stored as
+  `#sheet=<id>`, `#range=<name>` (follows the named range) or `#sheet=<id>&range=A1:B2`; an empty
+  cell gets the target's label as text; the link card shows "In this spreadsheet · ‹label›".
 
 ### 14.5 Notes
 
@@ -1207,7 +1288,10 @@ the error carries a message (Google behavior).
   cell is selected, a 1 px `spillFrame` border outlines the spill range.
 - Selecting a spilled (non-anchor) cell shows the anchor's formula greyed in the formula bar.
 - `#SPILL!` at the anchor: tooltip "Array result was not expanded because it would overwrite
-  data in B3."; blocking cells get a dashed `spillFrame` outline while the anchor is selected.
+  data in B3."; blocking cells get a dashed `spillFrame` outline while the anchor is selected
+  (as built: `SpillBlockersLayer`, `features/in_cell/spill_blockers_layer.dart`, over the core
+  `FormulaEngine.spillAreas`: content cells of the wanted area and cells of other arrays or pivot
+  output there, ≤ 500).
 - Typing into a spilled cell writes a literal there (anchor becomes `#SPILL!`).
 
 ### 14.9 Pivot table output
@@ -1215,7 +1299,10 @@ the error carries a message (Google behavior).
 Pivot output (07) renders as read-only overlay values with formats from the pivot spec. Selecting
 a pivot cell shows a floating *Edit* button (✎, top-right of the pivot's anchor area) that opens
 the pivot editor panel. Edits/paste/delete in the pivot area → toast "You can't edit a pivot
-table's output. Use the pivot table editor." Overlays are recomputed locally (02 §3.5).
+table's output. Use the pivot table editor." Overlays are recomputed locally (02 §3.5). Implementation:
+the *Edit* button floats just right of the output's top-right corner (inside the grid when that
+is off-screen); double-clicking a value cell drills down (07 §7.9) instead of editing; Delete over
+the whole output deletes the pivot (07 §7.13).
 
 ### 14.10 Images in cells and sparklines
 
@@ -1261,7 +1348,8 @@ database.
 ## 16. Protected ranges in the grid
 
 - **View › Show › Protected ranges** (`sheets.view.toggleProtectedRanges`, per user, —, default
-  on for editors who can't edit them): diagonal stripes (45°, 1 px lines every 8 px,
+  on for editors who can't edit them; kept per spreadsheet in the user's `LocalViewState`,
+  `prot: false`): diagonal stripes (45°, 1 px lines every 8 px,
   `protectedStripe` token) over protected cells the user **cannot** edit (or all protected cells
   for owners when "show all" is selected).
 - Before any write (`SheetsWriter` pre-check `ProtectionGuard.check(ranges, user)`):
@@ -1270,7 +1358,10 @@ database.
     need to edit." [OK]. Nothing is written (the whole command aborts).
   - **Warning only** → dialog "Heads up! Someone has protected part of this sheet to prevent
     accidental changes. Edit anyway?" with checkbox "Don't show this again for 5 minutes" →
-    [Cancel] [OK].
+    [Cancel] [OK]. After OK the command **resumes** at the blocked write (commands that ask
+    something first — link, alt text, resize, merge, delete sheet, pivot drill-down — apply
+    through `applyConfirmed`, so their dialogs aren't shown again); commands without dialogs
+    simply run again.
 - Commands from MCP/AI/scripts get the same check (tool error `protected_range` for not allowed;
   warning-only ranges are writable for MCP with a `warnings` entry in the result).
 - Protection definitions & panel: [07](07-data-tools.md).
@@ -1320,6 +1411,14 @@ non-release builds) and to MCP `ui.get_state` in debug builds.
 - High-contrast: when the OS requests high contrast, gridlines and selection use stronger tokens.
 - Reduce motion disables marching ants animation (static dashes), skeleton shimmer, smooth scroll
   animations and editing-indicator animation.
+
+> **As built** (`grid/a11y/grid_semantics.dart`): `GridSemantics` is a render object that
+> builds its semantics only while semantics are on: a `table` node, a header `row` of
+> `columnHeader` nodes, and per visible row a `row` node with the row number and the cells
+> (`cell`, label = the 03 §18 description, selected = active cell), capped at 2,500 cells,
+> rebuilt on scroll/content/selection. `SelectionAnnouncer` sends `sendAnnouncement` 100 ms
+> after the selection settles and "Editing B4" when editing starts. Comment presence is not
+> announced yet.
 
 ---
 
@@ -1376,6 +1475,8 @@ editor` if they mutate, `viewer` otherwise. MCP: all are invocable through
 | `sheets.formulaBar.toggleExpanded` | — | — | — | |
 | `sheets.namedRanges.createFromSelection` | `name` | (name box) | 1 | |
 | `sheets.insert.link` / `sheets.link.remove` / `sheets.link.open` | `url?, text?` | Mod+K | 1 / 1 / — | |
+| `sheets.link.copy` | `url?` (default: the active cell's link) | — | — | Link card *Copy link* |
+| `sheets.insert.smartChip` (P2) | `kind` (`person`/`date`/`dropdown`), `email?`, `name?`, `date?` | `@` at the start of a cell | 1 | §14.3 |
 | `sheets.notes.insert` / `sheets.notes.clear` | `cell, text` / `range` | Shift+F2 | 1 | |
 | `sheets.dv.toggleCheckbox` | `cells?` | Space | 1 | |
 | `sheets.dv.openDropdown` | — | Alt+↓ | — | |

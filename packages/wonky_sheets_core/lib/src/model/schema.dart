@@ -39,6 +39,11 @@ abstract final class SheetsTables {
   static const scriptProperty = 'script_property';
   static const changeLog = 'change_log';
 
+  /// Per-user script properties (09 §6.9, A-09-4). Rows live in the user's
+  /// personal space (space UUID = auth user id), never in a spreadsheet's
+  /// space, so the table is not part of [dependencyOrder].
+  static const scriptUserProperty = 'script_user_property';
+
   /// Tables in dependency order (parents first): inserts are applied in this
   /// order, deletes in reverse.
   static const dependencyOrder = [

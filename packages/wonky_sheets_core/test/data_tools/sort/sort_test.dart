@@ -276,6 +276,37 @@ void main() {
       },
     );
 
+    test(
+      'when a vertical merge outside the range spans the rows then content move is chosen',
+      () {
+        b.row(SheetsTables.mergedRange, fid(3), {
+          Cols.sheetId: sid,
+          Cols.rangeJson: gridRange(b, sid, 1, 3, 2, 3).encode(),
+        });
+        final s = b.build().sheets.single;
+        expect(
+          SortStrategy.choose(s, const GridRect(1, 0, 2, 1)),
+          SortStrategyKind.contentMove,
+        );
+        expect(SortStrategy.refusal(s, const GridRect(1, 0, 2, 1)), isNull);
+      },
+    );
+
+    test(
+      'when a single-row merge sits in the rows then rows can still be reordered',
+      () {
+        b.row(SheetsTables.mergedRange, fid(4), {
+          Cols.sheetId: sid,
+          Cols.rangeJson: gridRange(b, sid, 1, 0, 1, 1).encode(),
+        });
+        final s = b.build().sheets.single;
+        expect(
+          SortStrategy.choose(s, const GridRect(1, 0, 2, 1)),
+          SortStrategyKind.rowReorder,
+        );
+      },
+    );
+
     test('when the range contains overlay output then sorting is refused', () {
       final s = b.build().sheets.single;
       expect(

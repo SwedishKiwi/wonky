@@ -695,6 +695,16 @@ final class SceneHit {
 }
 
 /// A laid-out chart: renderer-independent list of primitives (08 §6.3).
+///
+/// Painting contract (shared by the SVG, PDF and raster renderers and the app's Flutter
+/// painter): coordinates are logical px with the origin top-left and y down. Fill the
+/// [background] (ARGB, 0 = transparent), then paint [primitives] in order: [SRect] (optional
+/// rounded corners), [SPath] (non-zero or even-odd fill), [SPolyline] (stroke only), [SMarkers]
+/// (one shape per point, per-marker sizes/fills when given), [SArc] (pie slice or ring segment,
+/// see [SArc.toPath]), [SText] (one line; [SText.anchor] places the box around [SText.at]
+/// before rotating by [SText.angle] about it), [SClip] (children clipped to its rect) and
+/// [SGroup] (children composited with the group opacity). Primitives with neither a visible
+/// fill nor a visible stroke only mark hit regions. Use [hitTest] for hover and double-click.
 final class ChartScene {
   /// Creates a scene.
   const ChartScene({

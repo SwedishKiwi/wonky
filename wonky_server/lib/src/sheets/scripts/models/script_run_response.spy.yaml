@@ -1,0 +1,13 @@
+### Result of a server-side run (Run on server, MCP sheets.run_function).
+class: ScriptRunResponse
+fields:
+  executionId: UuidValue
+  status: ScriptExecutionStatus
+  ### The function's return value as JSON.
+  resultJson: String?
+  ### JSON lines {t, level, msg}.
+  logs: String
+  ### {type, message, code?, frames[]}.
+  errorJson: String?
+  changeId: UuidValue?
+  cellsWritten: int

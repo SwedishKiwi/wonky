@@ -720,5 +720,6 @@
   "exportFormatMarkdown": "[Ṁåŕķðöŵñ (.ɱð) one t]",
   "exportFormatHtml": "[ĤŢṀĻ (.ĥţɱļ) one]",
   "exportFormatPdf": "[ÞÐƑ (.þðƒ) one]",
-  "exportFormatText": "[Þļåîñ ţéẋţ (.ţẋţ) one tw]"
+  "exportFormatText": "[Þļåîñ ţéẋţ (.ţẋţ) one tw]",
+  "badgePendingCreate": "[Çŕéåţéð öƒƒļîñé. Îţ îš åððéð ţö ýöûŕ Ðŕîṽé ŵĥéñ ýöû'ŕé ƀåçķ öñļîñé. one two three four f]"
 }

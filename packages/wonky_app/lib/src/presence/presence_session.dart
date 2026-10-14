@@ -18,7 +18,11 @@ class PresenceSession extends ChangeNotifier with WidgetsBindingObserver {
   String? mode;
 
   final _updates = StreamController<PresenceUpdate>.broadcast();
+  final _hints = StreamController<PresenceHints>.broadcast();
+  final _notices = StreamController<PresenceNotice>.broadcast();
   List<Participant> _participants = const [];
+  int _followers = 0;
+  String? _following;
   String? _sessionId;
   PresenceState _state = PresenceState.active;
   Timer? _idle;
@@ -30,6 +34,22 @@ class PresenceSession extends ChangeNotifier with WidgetsBindingObserver {
   List<Participant> get participants => _participants;
 
   String? get sessionId => _sessionId;
+
+  /// Commit hints relayed from other participants (Sheets 10 §2).
+  Stream<PresenceHints> get hints => _hints.stream;
+
+  /// System notices for everyone on the file ("Anna restored a version").
+  Stream<PresenceNotice> get notices => _notices.stream;
+
+  /// How many sessions follow this one (Sheets 10 §1.5).
+  int get followerCount => _followers;
+
+  /// The session this window follows, or null.
+  String? get following => _following;
+
+  /// App-specific activity text of a participant for the avatar tooltip
+  /// ("Editing Sheet1!B4"); set by the app.
+  String? Function(Participant participant)? detailOf;
 
   String get _key => 'presence:${itemUuid.uuid}';
 
@@ -76,8 +96,14 @@ class PresenceSession extends ChangeNotifier with WidgetsBindingObserver {
                   )
                 : p,
         ];
-      default:
+      case PresenceHints():
+        if (!_hints.isClosed) _hints.add(e);
         return;
+      case PresenceNotice():
+        if (!_notices.isClosed) _notices.add(e);
+        return;
+      case PresenceFollowerCount():
+        _followers = e.count;
     }
     if (!_disposed) notifyListeners();
   }
@@ -96,8 +122,37 @@ class PresenceSession extends ChangeNotifier with WidgetsBindingObserver {
   void _send() {
     if (_updates.isClosed) return;
     _updates.add(
-      PresenceUpdate(state: _state, cursorJson: _pendingCursor, mode: mode),
+      PresenceUpdate(
+        state: _state,
+        cursorJson: _pendingCursor,
+        mode: mode,
+        followingSessionId: _following,
+      ),
     );
+  }
+
+  /// Broadcasts ephemeral commit hints (JSON objects, Sheets 10 §2.1) to
+  /// the other participants; not throttled (the server limits them).
+  void sendHints(List<String> hints) {
+    if (_updates.isClosed || hints.isEmpty) return;
+    _updates.add(
+      PresenceUpdate(
+        state: _state,
+        cursorJson: _pendingCursor,
+        mode: mode,
+        hints: hints,
+        followingSessionId: _following,
+      ),
+    );
+  }
+
+  /// Follows [sessionId] (null stops); the server counts followers so the
+  /// followed window knows to send its viewport.
+  void follow(String? sessionId) {
+    if (_following == sessionId) return;
+    _following = sessionId;
+    _send();
+    if (!_disposed) notifyListeners();
   }
 
   void _setState(PresenceState s) {
@@ -161,6 +216,7 @@ class PresenceSession extends ChangeNotifier with WidgetsBindingObserver {
             p.sessionId == _sessionId ||
             p.userId == services.me?.id && p.sessionId == _sessionId,
         isAgent: p.actorKind.name != 'user',
+        detail: detailOf?.call(p),
         activity: switch (p.state) {
           PresenceState.active =>
             p.mode == 'viewing'
@@ -181,6 +237,8 @@ class PresenceSession extends ChangeNotifier with WidgetsBindingObserver {
     _throttle?.cancel();
     unawaited(services.supervisor.cancel(_key));
     _updates.close();
+    _hints.close();
+    _notices.close();
     super.dispose();
   }
 }

@@ -8,15 +8,23 @@ import 'package:serverpod_offline_sync_server/serverpod_offline_sync_server.dart
 
 import '../../generated/protocol.dart' as gen;
 import 'package:wonky_sheets_core/model.dart'
-    show ChangeKinds, RowChange, SheetsTables;
+    show
+        ChangeKinds,
+        ChangeSummary,
+        MutationPlan,
+        RowChange,
+        RowOp,
+        SheetsTables;
 
 import '../../platform/common/actor.dart';
 import '../../platform/common/errors.dart';
 import '../../platform/common/models.dart';
 import '../../platform/common/time.dart';
 import '../../platform/files/file_service.dart';
+import '../../platform/presence/presence_service.dart';
+import '../../platform/users/user_service.dart';
 import '../../platform/versions/version_service.dart';
-import '../sync/server_sheets_writer.dart';
+import '../mcp/sheets_bulk_writer.dart';
 import '../sync/sync_db.dart';
 import '../sync/synced_tables.dart';
 
@@ -59,7 +67,10 @@ class SheetsVersionProvider implements VersionProvider {
     );
     final byTable = <String, Set<UuidValue>>{};
     for (final row in ids) {
-      byTable.putIfAbsent(row[0] as String, () => {}).add(row[1] as UuidValue);
+      final id = row[1];
+      byTable
+          .putIfAbsent(row[0] as String, () => {})
+          .add(id is UuidValue ? id : UuidValue.fromString('$id'));
     }
     final db = syncSessionOf(session);
     for (final name in SheetsTables.dependencyOrder) {
@@ -161,7 +172,7 @@ class SheetsVersionProvider implements VersionProvider {
     final file = await FileService.byUuid(session, version.snapshotFileId!);
     if (file == null) return;
     final bytes = await FileService.readBytes(session, file);
-    final rows = decode(bytes.buffer.asUint8List(0, bytes.lengthInBytes));
+    final rows = decode(bytes.buffer.asUint8List(bytes.offsetInBytes, bytes.lengthInBytes));
     final sheets = rows[SheetsTables.sheet]?.values ?? const [];
     int countFor(String table, String sheetId) =>
         rows[table]?.values.where((r) => r['sheetId'] == sheetId).length ?? 0;
@@ -198,21 +209,91 @@ class SheetsVersionProvider implements VersionProvider {
     final file = await FileService.byUuid(session, fileId);
     if (file == null) throw Errors.expired('The snapshot is no longer stored.');
     final bytes = await FileService.readBytes(session, file);
-    final target = decode(bytes.buffer.asUint8List(0, bytes.lengthInBytes));
+    final target = decode(bytes.buffer.asUint8List(bytes.offsetInBytes, bytes.lengthInBytes));
     final current = await readSpace(session, item.contentRef!);
     final changes = diff(current, target);
     final label =
         'Restore version "${version.name ?? version.createdAt.toIso8601String()}"';
-    final (changeId, _) = await ServerSheetsWriter.applyRecorded(
+    final (changeId, _) = await SheetsBulkWriter.applyRecorded(
       session,
       actor: actor,
       item: item,
       changes: changes,
       label: label,
+      plans: [
+        MutationPlan(
+          label: label,
+          summary: summarize(changes),
+          changes: const [],
+          detail: detailOf(changes),
+        ),
+      ],
       kinds: {ChangeKinds.restore},
       lifetime: const Duration(days: 7),
     );
+    try {
+      final profile = await UserService.requireProfile(session, actor.userId);
+      final who = await UserService.summaryOf(session, profile);
+      await PresenceService.notice(session, item.uuid, 'versionRestored', {
+        'userId': actor.userId,
+        'name': who.displayName,
+        'versionId': version.id,
+      });
+    } on Exception catch (e) {
+      session.log('Restore notice failed: $e', level: LogLevel.warning);
+    }
     return RestoredVersion(changeId: changeId);
+  }
+
+  /// `ChangeLog.summaryJson` of a restore: touched sheets, deleted and
+  /// revived rows/columns/sheets (comment orphaning, Sheets 10 §3.2) and
+  /// the restore kind.
+  static ChangeSummary summarize(List<RowChange> changes) {
+    final s = ChangeSummary(kinds: {ChangeKinds.restore});
+    const kinds = {
+      SheetsTables.sheetRow: 'rows',
+      SheetsTables.sheetColumn: 'cols',
+      SheetsTables.sheet: 'sheets',
+    };
+    for (final c in changes) {
+      final sheetId =
+          c.columnsAfter['sheetId'] ?? c.columnsBefore['sheetId'];
+      if (sheetId != null) s.sheets.add('$sheetId');
+      if (c.table == SheetsTables.sheet) s.sheets.add(c.rowId);
+      final kind = kinds[c.table];
+      if (kind == null) continue;
+      if (c.op == RowOp.delete) s.addDeleted(kind, c.rowId);
+      if (c.op == RowOp.insert) s.addRevived(kind, c.rowId);
+    }
+    return s;
+  }
+
+  /// `ChangeLog.detailJson` map of a restore's cell content changes (≤ 200
+  /// cells, else null), so cell edit history lists restored values.
+  static Map<String, Object?>? detailOf(List<RowChange> changes) {
+    final cells = <Map<String, Object?>>[];
+    for (final c in changes) {
+      if (c.table != SheetsTables.cell) continue;
+      final before = c.columnsBefore['content'];
+      final after = c.columnsAfter['content'];
+      final touches =
+          c.op != RowOp.update || c.columnsAfter.containsKey('content');
+      if (!touches || before == after) continue;
+      final src = c.op == RowOp.delete ? c.columnsBefore : c.columnsAfter;
+      final sheetId = src['sheetId'] ?? c.columnsBefore['sheetId'];
+      final rowId = src['rowId'] ?? c.columnsBefore['rowId'];
+      final colId = src['columnId'] ?? c.columnsBefore['columnId'];
+      if (sheetId == null || rowId == null || colId == null) continue;
+      if (cells.length >= MutationPlan.maxDetailCells) return null;
+      cells.add({
+        's': '$sheetId',
+        'r': '$rowId',
+        'c': '$colId',
+        'b': before,
+        'a': after,
+      });
+    }
+    return cells.isEmpty ? null : {'cells': cells};
   }
 
   /// Row changes turning [current] into [target]: inserts parents first,

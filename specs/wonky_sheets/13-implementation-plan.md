@@ -40,7 +40,7 @@ M2 is the Write MVP at suite level. Sheets work during M2 is foundational and ru
 
 | WS | Name | Milestone(s) | Depends on (contracts) | Owned folders |
 |----|------|--------------|------------------------|---------------|
-| WS-S1 | Sync models, ids, writer core, lint | M0 | — | `packages/wonky_sync_models/**`, `wonky_sheets_core/lib/mutations/**`, `wonky_sheets/lib/features/model/data/sheets_writer.dart`, `test/lint/` |
+| WS-S1 | Sync models, ids, writer core, lint | M0 | — | `packages/wonky_sync_models/**`, `wonky_sheets_core/lib/mutations/**`, `wonky_sheets/lib/features/sync/sheets_writer.dart`, `wonky_sheets/test/sync/columns_lint_test.dart` |
 | WS-S2 | Sync controller, spaces, subscriptions, custom sync endpoint, change tracking | M0–M1 | S1 | `wonky_server/lib/src/sheets/spaces/**`, `…/sheets/endpoints/sheets_sync_endpoint.dart`, `…/sheets/changelog/**` (consumer skeleton), `wonky_sheets/lib/features/sync/**`, `third_party/serverpod_offline_sync/**` |
 | WS-S3 | WorkbookModel (AxisIndex, CellStore, RuleIndex) | M0–M2 | S1 | `wonky_sheets_core/lib/model/**`, `wonky_sheets/lib/features/model/**` (ingestion) |
 | WS-S4 | Grid rendering | M2–M3 | S3 | `wonky_sheets/lib/features/grid/render/**` |
@@ -307,16 +307,21 @@ abstract interface class CustomFunctionProvider { /* see 09 §8.6 */ }
 ### 4.4 Grid
 
 ```dart
-abstract interface class GridLayer {
-  int get zOrder;                         // cells 100, cf 150, borders 200, objects 400, presence 500, selection 600
-  void paint(GridPaintContext ctx, Canvas canvas, VisibleGridArea area);
-  Listenable get repaint;
+// wonky_sheets/lib/features/grid/paint/grid_layer.dart (as built)
+abstract class GridLayer {
+  int get zOrder;            // GridZ: background 0, gridlines 50, cells 100, cf 150, borders 200,
+                             // decorations 250, objects 400, find 450, presence 500,
+                             // referenceBoxes 550, selection 600, dragFeedback 700, headers 900
+  Listenable? get repaint;   // extra repaint signal (null = repaint with the grid)
+  void paint(GridPaintContext ctx, Canvas canvas);   // ctx.forEachPane(canvas, (pane) {...})
 }
-abstract interface class SelectionModel implements Listenable {
-  String get sheetId; CellRef get active; List<GridRangeIdx> get ranges;
-  void select(List<GridRangeIdx> ranges, {CellRef? active});
-}
+// Layers with zOrder < 500 are painted by the content pass, the others by the overlay pass.
+// Register: SheetEditorController.layers.add(layer) / remove(layer).
+// Conditional formatting plugs into CellRenderCache.conditional (ConditionalOverlayProvider).
 ```
+
+The selection model is `GridSelectionController` (id-based `GridSelection`, resolved to
+`ResolvedSelection`; `setRanges`, `selectCell`, `extendTo`, `selectRows/Columns/All`).
 
 ### 4.5 Scripts, headless, IO
 

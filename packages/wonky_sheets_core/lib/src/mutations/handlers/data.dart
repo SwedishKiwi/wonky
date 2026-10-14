@@ -1,5 +1,3 @@
-import 'dart:math';
-
 import '../../addressing/grid_geometry.dart';
 import '../../model/grid_range.dart';
 import '../operations.dart';
@@ -7,9 +5,15 @@ import '../plan_builder.dart';
 import '../row_change.dart';
 import 'helpers.dart';
 import 'move.dart';
-import 'row_move.dart';
 
+export 'cleanup.dart' show planSplitTextToColumns, planTrimWhitespace;
+export 'decimals.dart' show planAdjustDecimals;
+export 'fill.dart' show planFillSeries;
+export 'find_replace.dart' show planFindReplace;
+export 'groups.dart' show planGroupOperation;
 export 'paste.dart' show planPaste;
+export 'row_tools.dart'
+    show planRandomizeRange, planRemoveDuplicates, planSortRange;
 
 /// [ShiftCells] (03 §13.3): insert cells shifting right/down or delete cells
 /// shifting left/up, implemented as a block move of the affected strip.
@@ -102,56 +106,3 @@ MutationPlan planShiftCells(PlanBuilder b, ShiftCells op) {
   };
   return b.build(label, kinds: [ChangeKinds.values, ChangeKinds.format]);
 }
-
-/// [RandomizeRange] (07 §14): Fisher–Yates over the rows, sort machinery.
-MutationPlan planRandomizeRange(PlanBuilder b, RandomizeRange op) {
-  final s = b.sheetOf(op.range.sheetId);
-  final rect = op.range.rect;
-  b.checkRect(s, rect);
-  if (rect.rowCount < 2) return b.build('Randomize range');
-  checkNoVerticalMerges(s, rect);
-  final random = b.ctx.random ?? Random.secure();
-  final perm = List<int>.generate(rect.rowCount, (i) => i);
-  for (var i = perm.length - 1; i > 0; i--) {
-    final j = random.nextInt(i + 1);
-    final t = perm[i];
-    perm[i] = perm[j];
-    perm[j] = t;
-  }
-  applyRowPermutation(b, s, rect, perm);
-  b.addResolvedRange(op.range);
-  return b.build('Randomize range', kinds: [ChangeKinds.values]);
-}
-
-Never _pending(String what) =>
-    throw PlanException('unsupported', '$what is not available yet');
-
-/// [SortRange].
-MutationPlan planSortRange(PlanBuilder b, SortRange op) => _pending('Sort');
-
-/// [RemoveDuplicates].
-MutationPlan planRemoveDuplicates(PlanBuilder b, RemoveDuplicates op) =>
-    _pending('Remove duplicates');
-
-/// [TrimWhitespace].
-MutationPlan planTrimWhitespace(PlanBuilder b, TrimWhitespace op) =>
-    _pending('Trim whitespace');
-
-/// [SplitTextToColumns].
-MutationPlan planSplitTextToColumns(PlanBuilder b, SplitTextToColumns op) =>
-    _pending('Split text');
-
-/// [FindReplace].
-MutationPlan planFindReplace(PlanBuilder b, FindReplace op) =>
-    _pending('Find and replace');
-
-/// [FillSeries].
-MutationPlan planFillSeries(PlanBuilder b, FillSeries op) => _pending('Fill');
-
-/// [AdjustDecimals].
-MutationPlan planAdjustDecimals(PlanBuilder b, AdjustDecimals op) =>
-    _pending('Decimals');
-
-/// [GroupOperation].
-MutationPlan planGroupOperation(PlanBuilder b, GroupOperation op) =>
-    _pending('Groups');

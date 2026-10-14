@@ -21,6 +21,7 @@ class PresenceParticipant {
     this.avatarUrl,
     this.isSelf = false,
     this.isAgent = false,
+    this.detail,
   });
 
   final String sessionId;
@@ -37,6 +38,9 @@ class PresenceParticipant {
 
   /// MCP / AI participant ("Claude via MCP (Anna)").
   final bool isAgent;
+
+  /// App-specific activity shown under the name ("Editing Sheet1!B4").
+  final String? detail;
 }
 
 /// A user with all their sessions.
@@ -146,11 +150,18 @@ class _PresenceAvatarStackState extends State<PresenceAvatarStack> {
               _name(l10n, g),
               style: const TextStyle(fontWeight: FontWeight.w600),
             ),
-            Text(_activity(l10n, p.activity)),
+            Text(p.detail ?? _activity(l10n, p.activity)),
           ],
         ),
         child: GestureDetector(
           onTap: widget.onJumpTo == null ? null : () => widget.onJumpTo!(p),
+          // Long-press / right-click follows (suite 07 §1.2).
+          onLongPress: widget.onFollow == null || p.isSelf
+              ? null
+              : () => widget.onFollow!(p),
+          onSecondaryTap: widget.onFollow == null || p.isSelf
+              ? null
+              : () => widget.onFollow!(p),
           child: MouseRegion(
             cursor: widget.onJumpTo == null
                 ? MouseCursor.defer

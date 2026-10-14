@@ -9,6 +9,22 @@ import '../model/sheet_model.dart';
 import '../model/workbook_model.dart';
 import 'model_cell_source.dart';
 
+/// Computed cell values layered under empty cells — pivot table output
+/// (07 §7.6). The engine reads them as literal inputs, so formulas, the
+/// grid and the clipboard see them like spilled values. The owner calls
+/// `FormulaEngine.rectChanged` for the rectangles whose values changed.
+abstract interface class ComputedOverlaySource {
+  /// The overlay input at ([row], [col]) of [sheetId], or null. Only asked
+  /// for cells without content.
+  EngineCellInput? inputAt(String sheetId, int row, int col);
+
+  /// The number format of the overlay cell, or null (Automatic).
+  String? numberFormatAt(String sheetId, int row, int col);
+
+  /// The overlay rectangles of [sheetId] (used extent, range scans).
+  Iterable<GridRect> rectsOf(String sheetId);
+}
+
 /// Adapts a [WorkbookModel] to the formula engine's [WorkbookView] (05 §2.1),
 /// used by the client `RecalcHost`, the server `HeadlessWorkbook` and the
 /// planner's formula hooks.
@@ -22,6 +38,9 @@ final class ModelWorkbookView implements WorkbookView {
   /// The model.
   final WorkbookModel model;
 
+  /// Computed overlays (pivot output) shown in empty cells, or null.
+  ComputedOverlaySource? overlays;
+
   final Expando<_SheetView> _views = Expando();
 
   @override
@@ -33,7 +52,7 @@ final class ModelWorkbookView implements WorkbookView {
       if (s.record!.kind == SheetKind.grid) _view(s),
   ];
 
-  _SheetView _view(SheetModel s) => _views[s] ??= _SheetView(s, model);
+  _SheetView _view(SheetModel s) => _views[s] ??= _SheetView(s, model, this);
 
   @override
   SheetView? sheetById(String id) {
@@ -103,12 +122,13 @@ final class _AxisView implements AxisView {
 }
 
 final class _SheetView implements SheetView {
-  _SheetView(this.s, this.model)
+  _SheetView(this.s, this.model, this.owner)
     : rows = _AxisView(s.rows, true),
       columns = _AxisView(s.columns, false);
 
   final SheetModel s;
   final WorkbookModel model;
+  final ModelWorkbookView owner;
 
   @override
   final AxisView rows;
@@ -127,16 +147,53 @@ final class _SheetView implements SheetView {
   String get name => s.name;
 
   @override
-  CellInput? inputAt(int row, int col) => cellInputOf(s.cellAt(row, col));
+  CellInput? inputAt(int row, int col) {
+    final cell = s.cellAt(row, col);
+    final input = cellInputOf(cell);
+    if (input != null) return input;
+    return owner.overlays?.inputAt(s.id, row, col);
+  }
 
   @override
   void forEachInput(
     GridRect rect,
     void Function(int row, int col, CellInput input) visit,
   ) {
+    final o = owner.overlays;
+    final hits = o == null
+        ? const <GridRect>[]
+        : [
+            for (final r in o.rectsOf(s.id))
+              if (r.intersection(rect) case final GridRect i) i,
+          ];
+    if (hits.isEmpty) {
+      for (final (r, c, cell) in s.cellsIn(rect, contentOnly: true)) {
+        final input = cellInputOf(cell);
+        if (input != null) visit(r, c, input);
+      }
+      return;
+    }
+    // Merge content and overlay cells in row-major order.
+    final out = <(int, int, CellInput)>[];
+    final seen = <int>{};
     for (final (r, c, cell) in s.cellsIn(rect, contentOnly: true)) {
       final input = cellInputOf(cell);
-      if (input != null) visit(r, c, input);
+      if (input == null) continue;
+      out.add((r, c, input));
+      seen.add(r * 0x100000 + c);
+    }
+    for (final i in hits) {
+      for (var r = i.top; r <= i.bottom; r++) {
+        for (var c = i.left; c <= i.right; c++) {
+          if (seen.contains(r * 0x100000 + c)) continue;
+          final input = o!.inputAt(s.id, r, c);
+          if (input != null) out.add((r, c, input));
+        }
+      }
+    }
+    out.sort((a, b) => a.$1 != b.$1 ? a.$1 - b.$1 : a.$2 - b.$2);
+    for (final (r, c, input) in out) {
+      visit(r, c, input);
     }
   }
 
@@ -151,13 +208,21 @@ final class _SheetView implements SheetView {
   @override
   int get usedRowCount {
     _computeUsed();
-    return _usedRows;
+    var n = _usedRows;
+    for (final r in owner.overlays?.rectsOf(s.id) ?? const <GridRect>[]) {
+      if (r.bottom + 1 > n) n = r.bottom + 1;
+    }
+    return n;
   }
 
   @override
   int get usedColumnCount {
     _computeUsed();
-    return _usedCols;
+    var n = _usedCols;
+    for (final r in owner.overlays?.rectsOf(s.id) ?? const <GridRect>[]) {
+      if (r.right + 1 > n) n = r.right + 1;
+    }
+    return n;
   }
 
   @override
@@ -165,7 +230,10 @@ final class _SheetView implements SheetView {
     final f =
         model.explicitFormatChain(s.id, row, col)[FormatAttr.numberFormat]
             as String?;
-    return f == 'preset:automatic' ? null : f;
+    if (f != null) return f == 'preset:automatic' ? null : f;
+    final o = owner.overlays;
+    if (o == null || s.cellAt(row, col)?.content != null) return null;
+    return o.numberFormatAt(s.id, row, col);
   }
 
   @override

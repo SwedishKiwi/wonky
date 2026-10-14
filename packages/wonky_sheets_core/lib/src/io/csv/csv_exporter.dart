@@ -6,6 +6,8 @@ import '../../content/cell_content.dart';
 import '../../engine_bridge/value_bridge.dart';
 import '../../format/number_format/number_formatter.dart';
 import '../../formula/model/workbook_view.dart';
+import '../../formula/recalc/formula_engine.dart';
+import '../../model/grid_range.dart';
 import '../../formula/values/dates.dart';
 import '../../model/workbook_model.dart';
 import '../numfmt/excel_number_formats.dart';
@@ -79,8 +81,15 @@ abstract final class CsvExporter {
     if (grid == null) return '';
     var rect = range ?? grid;
     rect = rect.intersection(grid) ?? rect;
-    // Trim to the last row/column with a value (formulas/overlays included).
-    final used = sheet.usedRect();
+    // Trim to the last row/column with a value (spilled arrays included).
+    var used = sheet.usedRect();
+    if (source is FormulaEngine && used != null) {
+      for (final (r, c, cell) in sheet.cellsIn(used, contentOnly: true)) {
+        if (cell.decoded is! FormulaContent) continue;
+        final spill = source.computedAt(sheetId, r, c).spill?.rect;
+        if (spill != null) used = RectSet.bounds([used!, spill]);
+      }
+    }
     var lastRow = -1, lastCol = -1;
     final rows = <List<String>>[];
     final maxRow = range == null && used != null ? used.bottom : rect.bottom;
@@ -167,7 +176,10 @@ abstract final class CsvExporter {
   ) {
     var s = switch (v) {
       EmptyValue() => '',
-      TextValue(:final text) => text,
+      TextValue(:final text) =>
+        o.values == CsvValueMode.raw || pattern == null
+            ? text
+            : NumberFormatter.instance.formatText(v, pattern, locale: locale),
       BoolValue(:final value) => value ? 'TRUE' : 'FALSE',
       ErrorValue(:final kind) => kind.literal,
       NumberValue(:final number) =>

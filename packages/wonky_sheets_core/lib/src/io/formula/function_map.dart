@@ -1,3 +1,5 @@
+import '../../formula/functions/registry.dart';
+
 /// Function name tables for formula translation (11 §5.3).
 abstract final class FunctionMap {
   /// Functions introduced after Excel 2007, written with the `_xlfn.` prefix
@@ -257,6 +259,52 @@ abstract final class FunctionMap {
     'MARGINOFERROR', 'ISBETWEEN', 'GOOGLECLOCK', 'AI',
   };
 
+  /// Functions whose result is an array that spills without ARRAYFORMULA
+  /// (05 §7.4 rule 3): a dynamic-array formula that is a call of one of them
+  /// needs no array mode.
+  static const Set<String> arrayResult = {
+    'ARRAYFORMULA',
+    'FILTER',
+    'SORT',
+    'SORTBY',
+    'SORTN',
+    'UNIQUE',
+    'SEQUENCE',
+    'RANDARRAY',
+    'TRANSPOSE',
+    'MMULT',
+    'MINVERSE',
+    'MUNIT',
+    'FREQUENCY',
+    'LINEST',
+    'LOGEST',
+    'TREND',
+    'GROWTH',
+    'SPLIT',
+    'TEXTSPLIT',
+    'VSTACK',
+    'HSTACK',
+    'TOCOL',
+    'TOROW',
+    'WRAPROWS',
+    'WRAPCOLS',
+    'TAKE',
+    'DROP',
+    'CHOOSECOLS',
+    'CHOOSEROWS',
+    'EXPAND',
+    'MAKEARRAY',
+    'MAP',
+    'SCAN',
+    'BYROW',
+    'BYCOL',
+    'QUERY',
+    'FLATTEN',
+    'IMPORTRANGE',
+    'ARRAY_CONSTRAIN',
+    'XLOOKUP',
+  };
+
   /// Functions reading external data (CSV imports block them, 11 §4.3).
   static const Set<String> externalData = {
     'IMPORTDATA',
@@ -267,6 +315,11 @@ abstract final class FunctionMap {
     'WEBSERVICE', //
     'GOOGLEFINANCE',
   };
+
+  /// Whether the Wonky function catalog implements [upperName] (stubs of
+  /// Excel-only functions do not count).
+  static bool isWonkyFunction(String upperName) =>
+      FunctionRegistry.standard.lookup(upperName)?.implemented ?? false;
 
   /// Prefix of an Excel function name in OOXML storage (`_xlfn.`,
   /// `_xlfn._xlws.` or empty).

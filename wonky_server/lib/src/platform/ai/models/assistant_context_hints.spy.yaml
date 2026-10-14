@@ -16,3 +16,9 @@ fields:
   includeComments: bool, default=false
   ### The user's local date/time ("2026-10-13 14:05 Europe/Stockholm").
   localTime: String?
+  ### Sheets (12 §6.1): the active sheet, the selected A1 ranges, the
+  ### active cell and the visible range of the requesting window.
+  sheetsActiveSheet: String?
+  sheetsSelection: List<String>?
+  sheetsActiveCell: String?
+  sheetsVisibleRange: String?

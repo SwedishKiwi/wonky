@@ -37,6 +37,8 @@ const mcpDefaultScopes = [
   McpScope.driveWrite,
   McpScope.writeRead,
   McpScope.writeEdit,
+  McpScope.sheetsRead,
+  McpScope.sheetsEdit,
   McpScope.uiControl,
 ];
 
@@ -139,7 +141,7 @@ class _McpDeveloperSettingsState extends State<McpDeveloperSettings> {
             validator: (v) => v.trim().isEmpty ? l.tokenNameRequired : null,
           ),
           for (final scope in McpScope.all)
-            if (!scope.startsWith('sheets') && scope != McpScope.scriptsRun)
+            if (scope != McpScope.scriptsRun)
               CheckboxFieldSpec(
                 id: 'scope:$scope',
                 label: mcpScopeLabel(l, scope),

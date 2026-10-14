@@ -171,13 +171,13 @@ void main() {
       },
     );
 
-    test('when listing the catalog then no sheets tools are offered', () {
+    test('when listing the catalog then the sheets tools are offered', () {
       final names = [
         for (final t in WonkyMcpServer.executor.tools) t.definition.name,
       ];
 
-      expect(names.where((n) => n.startsWith('sheets.')), isEmpty);
-      expect(names, isNot(contains('drive.create_spreadsheet')));
+      expect(names, containsAll(['sheets.set_values', 'sheets.get_values']));
+      expect(names, contains('drive.create_spreadsheet'));
       expect(
         names,
         containsAll(['write.insert_markdown', 'ui.invoke_command']),

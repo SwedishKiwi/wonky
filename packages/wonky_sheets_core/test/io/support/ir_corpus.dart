@@ -2,7 +2,6 @@ import 'dart:typed_data';
 
 import 'package:wonky_sheets_core/model.dart';
 import 'package:wonky_sheets_core/src/addressing/grid_geometry.dart';
-import 'package:wonky_sheets_core/src/io/io.dart';
 
 /// A 1×1 transparent PNG.
 final Uint8List kTinyPng = Uint8List.fromList(const [
@@ -487,7 +486,7 @@ abstract final class IrCorpus {
         link: 'https://example.com/a?b=1&c=2',
       ),
     );
-    s.cells.set(7, 1, const IrCell(value: IrText('Go'), link: "#'Lists'!A1"));
+    s.cells.set(7, 1, const IrCell(value: IrText('Go'), link: '#Lists!A1'));
     s.cells.set(
       8,
       0,
@@ -514,7 +513,7 @@ abstract final class IrCorpus {
           dx: 4,
           dy: 2,
           width: 32,
-          height: 16,
+          height: 24,
         ),
         altText: 'dot',
       ),
@@ -554,6 +553,158 @@ abstract final class IrCorpus {
     return d;
   }
 
+  /// Format inheritance: sheet default, column and row formats, cells that
+  /// override inherited attributes.
+  static WorkbookDocument inheritance() {
+    final d = _doc();
+    final s = sheet('Inherit');
+    s.defaultFormat = _fmt(d, {FormatAttr.fontFamily: 'Lato'});
+    s.columns[1] = IrDim(
+      format: _fmt(d, {FormatAttr.bold: true, FormatAttr.numberFormat: '0.00'}),
+    );
+    s.rows[3] = IrDim(format: _fmt(d, {FormatAttr.fillColor: '#EEEEEE'}));
+    s.cells
+      ..set(0, 0, const IrCell(value: IrText('plain')))
+      ..set(0, 1, const IrCell(value: IrNumber(1.5)))
+      ..set(
+        1,
+        1,
+        IrCell(
+          value: const IrNumber(2),
+          format: _fmt(d, {FormatAttr.italic: true}),
+        ),
+      )
+      ..set(
+        2,
+        1,
+        IrCell(
+          value: const IrNumber(3),
+          format: _fmt(d, {FormatAttr.bold: false}),
+        ),
+      )
+      ..set(3, 0, const IrCell(value: IrText('row')))
+      ..set(3, 1, const IrCell(value: IrNumber(4)));
+    d.sheets.add(s);
+    return d;
+  }
+
+  /// Charts of every exportable kind (IR chart spec convention).
+  static WorkbookDocument charts() {
+    final d = _doc();
+    final s = sheet('Sales');
+    final rows = [
+      ['Month', 'North', 'South'],
+      [1, 10, 30],
+      [2, 20, 25],
+      [3, 40, 35],
+    ];
+    for (var r = 0; r < rows.length; r++) {
+      for (var c = 0; c < 3; c++) {
+        final v = rows[r][c];
+        s.cells.set(
+          r,
+          c,
+          IrCell(
+            value: v is String ? IrText(v) : IrNumber((v as int).toDouble()),
+          ),
+        );
+      }
+    }
+    Map<String, Object?> data() => {
+      'ranges': [r'Sales!$A$1:$A$4', r'Sales!$B$1:$B$4', r'Sales!$C$1:$C$4'],
+      'headerCount': 1,
+      'domain': {
+        'ref': {'range': 0, 'offset': 0},
+      },
+      'seriesRefs': [
+        {
+          'key': '#1:0',
+          'ref': {'range': 1, 'offset': 0},
+        },
+        {
+          'key': '#2:0',
+          'ref': {'range': 2, 'offset': 0},
+        },
+      ],
+    };
+    IrAnchor at(int row) =>
+        IrAnchor(row: row, col: 4, dx: 3, dy: 2, width: 480, height: 300);
+    s.charts
+      ..add(
+        IrChart(
+          anchor: at(0),
+          title: 'Sales chart',
+          altText: 'Monthly sales',
+          spec: {
+            'v': 1,
+            'type': 'column',
+            'stacking': 'normal',
+            'data': data(),
+            'title': {'text': 'Sales'},
+            'axes': {
+              'h': {
+                'title': {'text': 'Month'},
+              },
+              'v': {'min': 0, 'max': 100, 'numberFormat': '0'},
+            },
+            'legend': {'position': 'bottom'},
+            'series': {
+              '#1:0': {
+                'color': '#FF0000',
+                'dataLabels': {'show': true},
+              },
+              '#2:0': {
+                'trendline': {'type': 'linear'},
+              },
+            },
+          },
+        ),
+      )
+      ..add(
+        IrChart(
+          anchor: at(20),
+          spec: {
+            'v': 1,
+            'type': 'pie',
+            'data': data(),
+            'legend': {'position': 'none'},
+            'typeOptions': {'pieHole': 0.5},
+          },
+        ),
+      )
+      ..add(
+        IrChart(
+          anchor: at(40),
+          spec: {
+            'v': 1,
+            'type': 'combo',
+            'data': data(),
+            'style': {'smooth': true},
+            'series': {
+              '#1:0': {'type': 'column'},
+              '#2:0': {'type': 'line', 'axis': 'right'},
+            },
+          },
+        ),
+      )
+      ..add(
+        IrChart(
+          anchor: at(60),
+          spec: {
+            'v': 1,
+            'type': 'scatter',
+            'data': data(),
+            'axes': {
+              'h': {'logScale': true},
+            },
+            'legend': {'position': 'top'},
+          },
+        ),
+      );
+    d.sheets.add(s);
+    return d;
+  }
+
   /// All corpus documents by name.
   static Map<String, WorkbookDocument Function()> get all => {
     'typesAndDates': typesAndDates,
@@ -561,5 +712,7 @@ abstract final class IrCorpus {
     'structure': structure,
     'formulas': formulas,
     'rules': rules,
+    'inheritance': inheritance,
+    'charts': charts,
   };
 }

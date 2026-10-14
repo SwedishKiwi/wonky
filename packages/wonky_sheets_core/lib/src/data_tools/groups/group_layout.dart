@@ -1,5 +1,6 @@
 import 'package:wonky_sync_models/ids.dart';
 
+import '../../engine_bridge/model_cell_source.dart' show HiddenLayers;
 import '../../model/axis_index.dart';
 import '../../model/records.dart';
 import '../../model/schema.dart';
@@ -254,6 +255,11 @@ final class GroupLayout {
     }
     return out;
   }
+
+  /// Applies the collapse mask to [axis] as its `groups` hidden layer
+  /// (`GroupCollapseMask`, 07 §16.1); call after group records change.
+  void applyCollapseMask() =>
+      axis.setHiddenLayer(HiddenLayers.groups, collapsedHiddenIds());
 
   /// Merged index ranges hidden by collapsed groups.
   List<(int, int)> collapsedRanges() {

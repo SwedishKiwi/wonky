@@ -1,11 +1,17 @@
-### Marks a synced ChangeLog row as consumed (exactly-once processing).
+### Claims a synced ChangeLog row for processing (exactly-once processing,
+### Sheets 13 §4.6). The row is claimed (insert, unique on changeLogId)
+### before its consumers run and completed afterwards; a claim that never
+### completed (server crash) is retried after a grace period.
 class: SheetsChangeLogReceipt
 table: sheets_change_log_receipt
 serverOnly: true
 fields:
   changeLogId: UuidValue
   spaceUuid: UuidValue
+  ### When the row was claimed.
   processedAt: DateTime
+  ### When every consumer ran; null while processing (or after a crash).
+  completedAt: DateTime?
 indexes:
   sheets_change_log_receipt_idx:
     fields: changeLogId

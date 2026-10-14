@@ -309,7 +309,9 @@ final class IrCell {
   /// Spill/array range of array formulas (anchored at this cell).
   final GridRect? arrayRef;
 
-  /// Index into [WorkbookDocument.formats] (0 = no format).
+  /// Index into [WorkbookDocument.formats] (0 = no format). Formats follow
+  /// the Wonky inheritance: the effective format of a cell is
+  /// sheet default ▸ column ▸ row ▸ cell per attribute (see `IrFormats`).
   final int format;
 
   /// Cell note.
@@ -398,7 +400,10 @@ final class IrDim {
   /// Outline (group) level 0–8.
   final int outlineLevel;
 
-  /// Whether the group ending at this row/column is collapsed.
+  /// Whether the outline group next to this row/column is collapsed (XLSX
+  /// convention: set on the summary row/column after the group, or before
+  /// it when the group ends the outline). Rows/columns inside a collapsed
+  /// group are also [hidden].
   final bool collapsed;
 
   /// Default format (index into [WorkbookDocument.formats]).
@@ -585,7 +590,9 @@ final class IrImage {
   final String? name;
 }
 
-/// A chart over cells (ChartSpec-like map, 08 §20).
+/// A chart over cells. [spec] is the Wonky `ChartSpec` JSON (08 §20) in
+/// the IR convention of `IrChartSpec` (A1 data ranges, positional series
+/// keys).
 final class IrChart {
   /// Creates a chart.
   const IrChart({
@@ -620,6 +627,10 @@ final class IrSheet {
   /// Default sizes in px (null = Wonky defaults).
   double? defaultRowHeight;
   double? defaultColumnWidth;
+
+  /// Sheet-wide default format (index into [WorkbookDocument.formats];
+  /// lowest priority of the format inheritance, `Sheet.formatJson`).
+  int defaultFormat = 0;
 
   /// Row properties.
   final SparseAxis<IrDim> rows = SparseAxis();

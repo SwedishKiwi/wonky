@@ -514,6 +514,55 @@ void main() {
     test('when validating the full example then there are no issues', () {
       expect(ChartSpecSchema.validate(_fullSpec()), isEmpty);
     });
+
+    test(
+      'when a strict client sends maps as pairs and nulls then they are normalized',
+      () {
+        final strict = <String, Object?>{
+          'v': 1,
+          'type': 'line',
+          'stacking': null,
+          'data': {
+            'ranges': [
+              {'s': _sheet, 'r1': _row1, 'r2': _row2, 'c1': _col1, 'c2': _col2},
+            ],
+            'headerCount': null,
+            'seriesRefs': [
+              {
+                'key': _col2,
+                'ref': {'range': 0, 'offset': 1},
+                'hidden': null,
+              },
+            ],
+          },
+          'series': [
+            {
+              'key': _col2,
+              'value': {
+                'color': '#FF0000',
+                'points': [
+                  {
+                    'key': '2',
+                    'value': {'color': '#00FF00'},
+                  },
+                ],
+                'trendline': null,
+              },
+            },
+          ],
+        };
+
+        final normalized = ChartSpecSchema.fromStrictJson(strict);
+        final spec = ChartSpec.parseStrict(normalized);
+
+        expect(normalized['stacking'], isNull);
+        expect(normalized.containsKey('stacking'), isFalse);
+        expect(spec.type, ChartType.line);
+        expect(spec.seriesStyle(_col2).color, '#FF0000');
+        expect(spec.seriesStyle(_col2).points[2]!.color, '#00FF00');
+        expect(spec.data.seriesRefs.single.hidden, isFalse);
+      },
+    );
   });
 
   group('Given an image spec', () {

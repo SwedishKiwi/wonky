@@ -126,6 +126,11 @@ final class EvalContext {
   /// LET/LAMBDA bindings.
   LambdaEnv? env;
 
+  /// Values bound to names for the whole evaluation (upper-case name → value), e.g. pivot
+  /// calculated fields (`FormulaEngine.compileWithBindings`). Consulted before named
+  /// ranges/functions; LET/LAMBDA names shadow them.
+  Map<String, FValue>? bindings;
+
   /// Lambda recursion depth.
   int callDepth = 0;
 

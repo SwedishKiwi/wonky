@@ -8,6 +8,7 @@ import 'package:wonky_ui/wonky_ui.dart';
 
 import '../l10n/wonky_app_localizations.dart';
 import '../shell/shell_services.dart';
+import 'assistant_adapter.dart' show AssistantRunHooks;
 import 'assistant_controller.dart';
 import 'assistant_markdown.dart';
 import 'assistant_models.dart';
@@ -581,6 +582,7 @@ class _ReplyView extends StatelessWidget {
             style: theme.textTheme.muted.copyWith(fontSize: 12),
           ),
         if (r.confirmation != null) _confirmation(context, r.confirmation!),
+        ?_footer(context),
         if (r.status == AssistantReplyStatus.refused)
           _note(
             context,
@@ -650,6 +652,14 @@ class _ReplyView extends StatelessWidget {
           Container(height: 1, color: cs.border.withValues(alpha: 0.5)),
       ],
     );
+  }
+
+  /// The app's widgets under the reply (Sheets: review the AI changes).
+  Widget? _footer(BuildContext context) {
+    final a = controller.adapter;
+    return a is AssistantRunHooks
+        ? (a as AssistantRunHooks).replyFooter(context, reply)
+        : null;
   }
 
   Widget _note(BuildContext context, IconData icon, String text) {

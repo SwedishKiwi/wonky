@@ -1,0 +1,8 @@
+### The AI changes preview of an assistant run in Suggest mode (Sheets 12
+### §6.3): recorded tool calls that the user applies or discards.
+class: SheetsAiPreview
+fields:
+  previewId: String
+  itemUuid: UuidValue
+  calls: List<SheetsAiPreviewCall>
+  expiresAt: DateTime

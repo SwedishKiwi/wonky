@@ -106,7 +106,8 @@ final class XlsxStyleWriter {
   }
 
   int _fill(String? color) {
-    if (color == null) return 0;
+    // `theme:background` is the explicit "no fill" of the IR.
+    if (color == null || color == 'theme:background') return 0;
     final key =
         '<fill><patternFill patternType="solid"><fgColor ${colorAttrs(color)}/><bgColor indexed="64"/></patternFill></fill>';
     return _fillIndex.putIfAbsent(key, () {

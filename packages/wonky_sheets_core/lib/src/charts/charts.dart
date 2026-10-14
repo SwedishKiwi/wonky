@@ -2,6 +2,7 @@
 /// resolution, recommendations, statistics, layout, scene and renderers.
 library;
 
+export 'chart_pipeline.dart';
 export 'data/chart_data.dart';
 export 'data/chart_data_resolver.dart';
 export 'data/data_algorithms.dart';
@@ -18,7 +19,7 @@ export 'scene/path.dart';
 export 'scene/scene.dart';
 export 'sparkline/sparkline.dart';
 export 'spec/chart_data_spec.dart';
-export 'spec/chart_spec.dart';
+export 'spec/chart_spec.dart' show ChartSpec, ChartSpecUpgrade;
 export 'spec/chart_spec_parts.dart';
 export 'spec/chart_type.dart';
 export 'spec/image_spec.dart';

@@ -109,6 +109,68 @@ version, server `HeadlessWorkbook`) including **computed values** from the formu
 (exports write cached results). Pivot tables and array-formula spills are exported as their
 computed cells.
 
+### 1.4 Implementation notes (M3)
+- Code lives in `wonky_sheets_core/lib/src/io/` (barrel `io.dart`, exported from `model.dart`):
+  `read/model_to_ir.dart` (`ModelToIr.convert(model, values: EngineIrValueSource(engine))`),
+  `write/ir_to_rows_planner.dart` (`IrToRowsPlanner.plan(doc, model, ctx, options:)` →
+  `IrImportResult {plan, report, sheetIds, imageUploads}`; `IrToRowsPlanner.estimate` for the
+  §3.4 dialog check), `write/import_options.dart` (`ImportOptions` JSON of §9).
+- **Format inheritance in the IR** follows Wonky: effective = sheet default
+  (`IrSheet.defaultFormat` ↔ `Sheet.formatJson`) ▸ column ▸ row ▸ cell. The XLSX reader makes
+  the complete `xf`s of cells, rows and columns relative (attributes the inheritance already
+  gives are dropped, inherited ones the `xf` lacks get explicit defaults such as `bold: false`,
+  `fillColor: theme:background`); the writer emits each cell's effective format. A styled
+  `<col>` run reaching column XFD is the sheet default.
+- Values inside an array/dynamic-array formula's range (except the anchor) are cached results:
+  the planner does not write them as content.
+- Excel dynamic arrays (`cm="1"`) import as `ARRAYFORMULA(x)` unless `x` is a reference, an
+  array literal or one call of an array-returning function (`SEQUENCE`, `FILTER`, …);
+  `ARRAYFORMULA(x)` exports as the dynamic array `x`.
+- IR links are `#<A1>` (`#'Sheet 2'!B5`) or `#<name>`; the model stores `#sheet=<id>&range=B5`
+  / `#range=<name>` (06 §12).
+- IR chart specs (`IrChartSpec`) are the `ChartSpec` JSON with A1 data ranges and positional
+  series keys `#<range>:<offset>`. Charts other than column/bar/line/area/combo/pie/scatter/
+  radar are reported instead of exported as images (the raster fallback of §6.3 needs the
+  chart renderer at export time; P2). Bubble and stock charts are skipped on import.
+- Unsupported-function detection uses the catalog's `implemented` flag (stubs such as
+  `CUBEVALUE` count as unsupported).
+- Column defaults derived by the planner (§1.2, ≥ 90 %) only use attributes that are invisible
+  on empty cells (number format, font, alignment, wrap, rotation), never fills or borders.
+- Insert/replace-at-cell/append keep the target's theme: `theme:*` colors of the file are
+  resolved to hex with the file's theme; create/replace spreadsheet adopt the file's theme.
+
+### 1.5 As built (app + server, 2026-10-14)
+- Shared entry points in the core: `SheetsFileImporter` (`io/file_import.dart`: format detection,
+  `parse` → IR, `listSheets`) and `SheetsWorkbookExporter` (`io/workbook_export.dart`: IR → XLSX/ODS,
+  CSV/TSV, zipped HTML, paginate + PDF, file names). The app and the server call the same code.
+- **App** (`wonky_sheets/lib/features/{import,export,import_export,print}`, commands in
+  `commands/file_io_commands.dart` and `commands/print_commands.dart`):
+  `sheets.file.import` opens the *custom* import dialog (`McpDescribableDialog`; drop zone + *Browse*,
+  6 locations, separator/encoding/locale/convert for CSV, sheet checklist + unsupported formulas for
+  XLSX/ODS, 20-row preview, cell-limit check) or runs headless with `fileName` + `contentBase64`/`text`
+  + `options`; imports into the open spreadsheet run `sheets.file.importData` (one `sheets.rows` undo
+  step; plan applied with `session.applyChanges`). *Create new spreadsheet* uses `drive.import` online
+  and a local reserved space offline. Files dropped on the grid open the dialog (*Insert new sheets*).
+  Parsing and file writers run in `compute` on native, inline on web. The home/drive upload uses
+  `SheetsImportHandler` (`SheetsAppConfig.importHandler`).
+- `sheets.file.download {format}`: XLSX/ODS/HTML/CSV/TSV saved with `FilePicker.saveFile` (web:
+  download in the same tab); PDF opens the print route (`?export=1`). Export report toast → report dialog.
+- Print route `/s/:uuid/print` is a **child route of the editor** (new shell hook
+  `WonkyAppConfig.editorRoutes`), so the open model stays loaded. The preview paints pages with
+  `PrintPagePainter` (a Flutter port of `SheetsPdfRenderer` sharing `CellDisplayResolver` and
+  `CellTextLayout` with the PDF's font metrics) — on every platform, not only web. PDF fonts on the
+  client: bundled static TTFs (Open Sans for sans incl. Inter/Geist, EB Garamond, JetBrains Mono)
+  via `SheetsPdfFonts`; the server uses the standard PDF fonts. *Print* on web prints the PDF from
+  a hidden iframe; desktop shows "Printing isn't available here" with *Export PDF* (no `printing`
+  plugin yet). Custom page breaks (P1) are a list editor in the settings panel (rows/columns by
+  number/letter), not draggable lines on a grid.
+- **Server**: `drive.import` with kind spreadsheet → `SheetsImportService` (csv/tsv/txt/xlsx/xlsm/ods,
+  `optionsJson` = ImportOptions, plan with *Create new spreadsheet*, batched writes with
+  `SheetsBulkWriter`, `registerSpreadsheet` ⇒ item UUID = space UUID); MCP `drive.import` accepts
+  spreadsheets and `drive.export` exports spreadsheets (`SheetsExportService`, xlsx/ods/pdf/html/csv/tsv,
+  `sheet`/`range`). Not built: `SheetsImportJob`, `SheetsEndpoint.importInto/watchImport/cancelImport`
+  (imports into an existing spreadsheet always run on the client), JSON export, *Use dark theme* PDF.
+
 ---
 
 ## 2. Import UX
@@ -345,7 +407,7 @@ under `third_party/` remains possible without touching code outside `io/xlsx/`.
 | Tables (ListObjects) | P2: banding + filter + named range per table; structured refs → A1 | P2 | P0/P1: values only; structured references in formulas translated to A1 if the table part is readable, else unsupported. |
 | Legacy notes (`comments*.xml`) | `Cell.note` | P0 | Author prefix "Author:\n" removed if it matches. |
 | Threaded comments | Comment threads | P1 | Authors mapped by email to users with access; otherwise body prefixed "[Name]". Requires online (comments in Postgres); offline imports convert them to notes. |
-| Hyperlinks | `linkUrl` / rich-text link | P0 | External → URL; internal `#Sheet2!A1` → `#gid=<sheetId>&range=A1` internal link format ([06](06-formatting.md)). |
+| Hyperlinks | `linkUrl` / rich-text link | P0 | External → URL; internal `#Sheet2!A1` → `#sheet=<sheetId>&range=A1` internal link format ([06](06-formatting.md)). |
 | Images (drawing anchors) | `EmbeddedObject(kind=image)` | P1 | `twoCellAnchor`/`oneCellAnchor` from cell + EMU offsets (px = EMU / 9525); `absoluteAnchor` → A1 + offsets. EMF/WMF → skipped (warning). Images uploaded as `StoredFile` (server-side import) or queued uploads (client). |
 | In-cell pictures (Excel 365 `IMAGE`, rich value images) | `=IMAGE()` / skipped | P2 | |
 | Charts | `EmbeddedObject(kind=chart)` | P1 | Via the OOXML chart parts (`c:chartSpace`): bar/col (clustered/stacked/percent), line (smooth), area, pie, doughnut, scatter, bubble, radar, stock → candlestick; titles, legend position, axis titles/min/max/log/number format, series colors, data labels (basic), trendlines. Unmappable → skipped with warning. |
@@ -475,6 +537,13 @@ Custom `OdsExporter` writing `mimetype` (stored, first), `META-INF/manifest.xml`
 `settings.xml` (frozen panes). Formulas via `OpenFormulaTranslator` (`of:=` syntax), cached
 values in `office:value`, repeated empty rows/columns collapsed with `number-*-repeated`.
 Charts → images (P1); notes → annotations; merges; widths/heights; named ranges; DV and CF P2.
+For lossless re-import into Wonky the writer adds attributes in the foreign namespace
+`urn:wonky:sheets:odf` (ignored by other readers): `wonky:format` (exact cell/run format JSON incl.
+theme colors and `clip` wrapping), `wonky:pattern` (number format), `wonky:value` (exact
+date/time serial) and `wonky:default-row-height`/`-column-width` on table styles; the importer
+prefers them over the ODF properties. `OdsExportOptions.wonkyExtensions: false` writes plain ODF.
+Features ODS can't hold (DV, CF, filters, groups, images, charts, print settings) are listed in
+the export report.
 
 ### 6.5 CSV / TSV export
 - Scope: the **active sheet** (Google parity). MCP and `drive.export` take `sheet` and optional

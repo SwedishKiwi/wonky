@@ -1,0 +1,13 @@
+### One mutating tool call recorded in an AI changes preview (Sheets 12
+### §6.3).
+class: SheetsAiPreviewCall
+fields:
+  callId: String
+  toolName: String
+  label: String
+  ranges: List<String>
+  cellsAffected: int
+  ### Structure changes in words ("Insert 3 rows at 5:7").
+  structural: String?
+  ### Up to 200 changed cells with their values before and after.
+  cells: List<SheetsAiPreviewCell>

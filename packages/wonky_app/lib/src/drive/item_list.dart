@@ -6,6 +6,7 @@ import 'package:wonky_ui/wonky_ui.dart';
 
 import '../branding/product_icon.dart';
 import '../core/offline_storage.dart';
+import '../data/cached_drive_repository.dart';
 import '../data/models_ext.dart';
 import '../l10n/wonky_app_localizations.dart';
 import '../shell/shell_services.dart';
@@ -572,6 +573,8 @@ class _ItemRow extends StatelessWidget {
                       ],
                       if (!item.isFolder && (item.pinnedOffline || available))
                         _OfflineBadge(item: item, available: available),
+                      if (_pendingCreate(services, item))
+                        _PendingCreateBadge(item: item),
                     ],
                   ),
                 ),
@@ -740,6 +743,8 @@ class _ItemCard extends StatelessWidget {
                             services,
                           ).isAvailableOffline(item),
                         ),
+                      if (_pendingCreate(services, item))
+                        _PendingCreateBadge(item: item),
                       WonkyDropdownMenu(
                         entries: () =>
                             itemMenuEntries(context, services, trash: trash),
@@ -782,6 +787,42 @@ class _OfflineDim extends StatelessWidget {
       builder: (_) =>
           Text(WonkyAppLocalizations.of(context).offlineUnavailable),
       child: Opacity(opacity: 0.45, child: child),
+    );
+  }
+}
+
+/// Whether [item] was created offline and its creation (or spreadsheet
+/// registration) still waits in the drive queue.
+bool _pendingCreate(ShellServices services, DriveItemView item) {
+  final d = services.drive;
+  return d is CachedDriveRepository && d.isPendingCreate(item.uuid);
+}
+
+/// "Created offline" badge: the item is on this device but not in the
+/// drive yet (suite 12 §2.2, §3).
+class _PendingCreateBadge extends StatelessWidget {
+  const _PendingCreateBadge({required this.item});
+
+  final DriveItemView item;
+
+  @override
+  Widget build(BuildContext context) {
+    final l = WonkyAppLocalizations.of(context);
+    final c = ShadTheme.of(context).colorScheme;
+    return Padding(
+      padding: const EdgeInsets.only(left: 6),
+      child: ShadTooltip(
+        builder: (_) => Text(l.badgePendingCreate),
+        child: Semantics(
+          label: l.badgePendingCreate,
+          child: Icon(
+            LucideIcons.cloudUpload,
+            key: ValueKey<String>('drive.pendingCreate.${item.uuid.uuid}'),
+            size: 14,
+            color: c.mutedForeground,
+          ),
+        ),
+      ),
     );
   }
 }

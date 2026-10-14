@@ -13,6 +13,7 @@ export 'conditions/relative_dates.dart';
 export 'conditions/value_text.dart';
 export 'dv/checkbox_values.dart';
 export 'dv/dv_criteria.dart';
+export 'dv/dv_evaluator.dart';
 export 'dv/dv_overlap.dart';
 export 'dv/list_source.dart';
 export 'dv/validation_engine.dart';

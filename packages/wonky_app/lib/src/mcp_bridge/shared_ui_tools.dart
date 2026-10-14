@@ -86,6 +86,8 @@ abstract final class SharedUiTools {
               'zoom': doc.zoom,
               'selection': doc.selectionSummary,
               'loaded': doc.isLoaded,
+              // App-specific state (Sheets: active sheet, selection, …).
+              'details': doc.describeState(),
               'sync': sync == null
                   ? null
                   : {

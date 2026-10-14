@@ -34,6 +34,16 @@ final class BitmapTextPainter {
     return _layout(f, text).advance * px / f.size;
   }
 
+  /// Advance width, line height and ascent in px of [text] at [px] size, as [draw] anchors it.
+  static (double width, double height, double ascent) metrics(
+    String text,
+    double px,
+  ) {
+    final f = fontFor(px);
+    final k = px / f.size;
+    return (_layout(f, text).advance * k, f.lineHeight * k, f.base * k);
+  }
+
   /// Draws [t] at [scale] onto [surface], clipped to the device rectangle
   /// ([cl], [ct], [cr], [cb]).
   void draw(
@@ -244,7 +254,61 @@ final class BitmapTextPainter {
         ],
       ],
     ), // ~
+    0xB2: (
+      0.333,
+      [
+        [
+          0.04,
+          0.63,
+          0.09,
+          0.69,
+          0.17,
+          0.71,
+          0.25,
+          0.68,
+          0.28,
+          0.62,
+          0.25,
+          0.56,
+        ],
+        [0.25, 0.56, 0.04, 0.41, 0.3, 0.41],
+      ],
+    ), // ²
+    0x2026: (
+      1.0,
+      [
+        [0.15, 0.0, 0.15, 0.07],
+        [0.5, 0.0, 0.5, 0.07],
+        [0.85, 0.0, 0.85, 0.07],
+      ],
+    ), // …
+    0x2212: (
+      0.584,
+      [
+        [0.07, 0.31, 0.51, 0.31],
+      ],
+    ), // − (minus)
+    0x2014: (
+      1.0,
+      [
+        [0.0, 0.31, 1.0, 0.31],
+      ],
+    ), // — (em dash)
+    0x25B2: (0.7, _triangle(up: true)), // ▲
+    0x25BC: (0.7, _triangle(up: false)), // ▼
   };
+
+  /// Horizontal strokes filling a triangle of width 0.6 em and height 0.55 em, pointing up
+  /// or down.
+  static List<List<double>> _triangle({required bool up}) => [
+    for (var i = 0; i <= 13; i++)
+      () {
+        final f = i / 13;
+        final y = 0.02 + f * 0.53;
+        final half = 0.3 * (up ? 1 - f : f);
+        return [0.35 - half, y, 0.35 + half, y];
+      }(),
+  ];
 
   static _GlyphBitmap? _synthesize(img.BitmapFont font, int rune) {
     final spec = _synthetic[rune];

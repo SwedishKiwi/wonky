@@ -1,5 +1,8 @@
+import 'dart:convert';
+
 import '../../addressing/grid_geometry.dart';
 import '../../content/cell_content.dart';
+import '../../engine_bridge/stored_formula.dart';
 import '../../format/attributes.dart';
 import '../../input/input_parser.dart';
 import '../../model/events.dart';
@@ -25,29 +28,30 @@ MutationPlan planPaste(PlanBuilder b, PasteClipboard op) {
   final sameSpreadsheet =
       src.spreadsheetId == null || src.spreadsheetId == b.model.spreadsheetId;
 
-  // Paste after cut within the spreadsheet = move.
+  // Paste after cut within the spreadsheet = move. A cut whose copy skipped
+  // hidden rows/columns moves only the copied (visible) cells (03 §12.6).
   if (src.isCut &&
       sameSpreadsheet &&
       src.sheetId != null &&
       op.mode == PasteMode.all) {
     final srcSheet = b.sheetOf(src.sheetId!);
-    applyMoveRange(
-      b,
-      MoveRange(
-        ResolvedRange(
-          srcSheet.id,
-          GridRect(
-            src.sourceRow,
-            src.sourceCol,
-            src.sourceRow + h0 - 1,
-            src.sourceCol + w0 - 1,
+    final top = op.target.rect.top;
+    final left = op.target.rect.left;
+    applyBlockMove(b, srcSheet, s, [
+      for (final (sr, pr, rn) in _runs(h0, src.sourceRowOf))
+        for (final (sc, pc, cn) in _runs(w0, src.sourceColOf))
+          (
+            GridRect(sr, sc, sr + rn - 1, sc + cn - 1),
+            GridRect(
+              top + pr,
+              left + pc,
+              top + pr + rn - 1,
+              left + pc + cn - 1,
+            ),
           ),
-        ),
-        s.id,
-        op.target.rect.top,
-        op.target.rect.left,
-      ),
-    );
+    ]);
+    b.result['range'] = GridRect(top, left, top + h0 - 1, left + w0 - 1);
+    b.result['cells'] = h0 * w0;
     return b.build('Paste', kinds: [ChangeKinds.values, ChangeKinds.format]);
   }
 
@@ -236,20 +240,70 @@ MutationPlan planPaste(PlanBuilder b, PasteClipboard op) {
     }
   }
 
+  // Rule formulas are relative to the top-left of the rule's first range
+  // (06 §15.3): re-anchor them from the source anchor to the new one, the
+  // same translation pasted cell formulas get (per tile, since the new rule
+  // spans all tiles from its first rectangle).
+  final canTranslate = sameSpreadsheet && hooks != null && src.sheetId != null;
+  (int, int) sourceOfTarget(int row, int col) {
+    final pr = (row - t.top) % h;
+    final pc = (col - t.left) % w;
+    return (src.sourceRowOf(pr), src.sourceColOf(pc));
+  }
+
+  String reanchor(
+    String json,
+    (int, int)? anchor,
+    List<GridRect> rules,
+    GridRect first,
+  ) {
+    if (!canTranslate || rules.isEmpty || !json.contains('=')) return json;
+    final a0 =
+        anchor ??
+        (src.sourceRowOf(rules.first.top), src.sourceColOf(rules.first.left));
+    final (pr, pc) = sourceOfTarget(first.top, first.left);
+    return _mapRuleFormulas(json, (f) {
+      var out = f;
+      if (a0 != (pr, pc)) {
+        out = hooks.translate(
+          out,
+          fromSheetId: src.sheetId!,
+          fromRow: a0.$1,
+          fromCol: a0.$2,
+          toSheetId: src.sheetId!,
+          toRow: pr,
+          toCol: pc,
+        );
+      }
+      return hooks.translate(
+        out,
+        fromSheetId: src.sheetId!,
+        fromRow: pr,
+        fromCol: pc,
+        toSheetId: s.id,
+        toRow: first.top,
+        toCol: first.left,
+      );
+    });
+  }
+
   // Data validation.
   if ((op.mode == PasteMode.all || op.mode == PasteMode.dataValidation) &&
       src.internal) {
     if (t.bottom < s.rows.length && t.right < s.columns.length) {
       clearValidationIn(b, s, [t]);
     }
-    for (final rule in src.dvRules) {
+    for (var k = 0; k < src.dvRules.length; k++) {
+      final rule = src.dvRules[k];
       final rects = <GridRange>[];
+      GridRect? first;
       for (var tr = 0; tr < t.rowCount; tr += h) {
         for (var tc = 0; tc < t.colCount; tc += w) {
           for (final r0 in rule.rects) {
             final g = r0.shift(t.top + tr, t.left + tc);
             final cl = g.intersection(t);
             if (cl == null) continue;
+            first ??= cl;
             rects.add(
               GridRange(
                 sheetId: s.id,
@@ -266,7 +320,12 @@ MutationPlan planPaste(PlanBuilder b, PasteClipboard op) {
       b.insert(SheetsTables.dataValidationRule, b.ctx.ids.newId(), {
         Cols.sheetId: s.id,
         Cols.rangesJson: GridRange.encodeList(rects),
-        'criteriaJson': rule.criteriaJson,
+        'criteriaJson': reanchor(
+          rule.criteriaJson,
+          k < src.dvAnchors.length ? src.dvAnchors[k] : null,
+          rule.rects,
+          first!,
+        ),
         'strict': rule.strict,
         'showDropdown': rule.displayStyle != 'plainText',
         'displayStyle': rule.displayStyle,
@@ -279,7 +338,8 @@ MutationPlan planPaste(PlanBuilder b, PasteClipboard op) {
   if ((op.mode == PasteMode.all ||
           op.mode == PasteMode.conditionalFormatting) &&
       src.internal) {
-    for (final rule in src.cfRules) {
+    for (var k = 0; k < src.cfRules.length; k++) {
+      final rule = src.cfRules[k];
       final rects = <GridRect>[];
       for (var tr = 0; tr < t.rowCount; tr += h) {
         for (var tc = 0; tc < t.colCount; tc += w) {
@@ -294,16 +354,42 @@ MutationPlan planPaste(PlanBuilder b, PasteClipboard op) {
           t.right >= s.columns.length) {
         continue;
       }
-      final existing = s.cfRules.values
-          .where((x) => x.ruleJson == rule.ruleJson)
-          .firstOrNull;
-      if (existing != null && sameSpreadsheet) {
+      final json = reanchor(
+        rule.ruleJson,
+        k < src.cfAnchors.length ? src.cfAnchors[k] : null,
+        rule.rects,
+        rects.first,
+      );
+      // An identical rule (formulas compared at its own anchor) absorbs the
+      // pasted ranges.
+      String atAnchorOf(GridRect anchor) =>
+          !canTranslate || json == rule.ruleJson
+          ? json
+          : _mapRuleFormulas(
+              json,
+              (f) => hooks.translate(
+                f,
+                fromSheetId: s.id,
+                fromRow: rects.first.top,
+                fromCol: rects.first.left,
+                toSheetId: s.id,
+                toRow: anchor.top,
+                toCol: anchor.left,
+              ),
+            );
+      final existing = sameSpreadsheet
+          ? s.cfRules.values.where((x) {
+              final cur = s.ruleRects(RuleKind.conditionalFormat, x.id);
+              return cur.isNotEmpty && x.ruleJson == atAnchorOf(cur.first);
+            }).firstOrNull
+          : null;
+      if (existing != null) {
         final cur = s.ruleRects(RuleKind.conditionalFormat, existing.id);
         b.update(SheetsTables.conditionalFormatRule, existing.id, {
           Cols.rangesJson: b.rangesJson(s, [...cur, ...rects]),
         });
       } else {
-        planAddCfRule(b, AddCfRule(s.id, rects, rule.ruleJson));
+        planAddCfRule(b, AddCfRule(s.id, rects, json));
       }
     }
   }
@@ -336,4 +422,35 @@ MutationPlan planPaste(PlanBuilder b, PasteClipboard op) {
     PasteMode.allExceptBorders => 'Paste all except borders',
   };
   return b.build(label, kinds: [ChangeKinds.values, ChangeKinds.format]);
+}
+
+/// Maximal runs of consecutive source indices among `0..n-1` mapped by
+/// [sourceOf], as `(source start, payload start, length)`.
+List<(int, int, int)> _runs(int n, int Function(int) sourceOf) {
+  final out = <(int, int, int)>[];
+  for (var i = 0; i < n; i++) {
+    final si = sourceOf(i);
+    if (out.isNotEmpty) {
+      final (s0, p0, len) = out.last;
+      if (s0 + len == si) {
+        out[out.length - 1] = (s0, p0, len + 1);
+        continue;
+      }
+    }
+    out.add((si, i, 1));
+  }
+  return out;
+}
+
+/// Applies [f] to the formulas (`=…` strings) of a CF/DV JSON; the original
+/// text when nothing changes or the JSON is invalid.
+String _mapRuleFormulas(String json, String Function(String) f) {
+  Object? decoded;
+  try {
+    decoded = jsonDecode(json);
+  } on FormatException {
+    return json;
+  }
+  final (out, changed) = StoredFormula.mapJsonFormulas(decoded, f);
+  return changed ? jsonEncode(out) : json;
 }

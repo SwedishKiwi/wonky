@@ -12,6 +12,7 @@ import 'math/aggregate.dart';
 import 'math/basic.dart';
 import 'math/conditional.dart';
 import 'math/misc.dart';
+import 'math/roman.dart';
 import 'math/rounding.dart';
 import 'operator/operator.dart';
 import 'parser/parser.dart';
@@ -28,6 +29,7 @@ void registerBuiltins(FunctionRegistryBuilder b) {
   registerMathAggregate(b);
   registerConditional(b);
   registerMathMisc(b);
+  registerRoman(b);
   registerStatistical(b);
   registerLookup(b);
   registerLogical(b);

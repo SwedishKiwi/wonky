@@ -2,6 +2,7 @@ import 'dart:math';
 
 import 'package:wonky_sync_models/ids.dart';
 
+import '../addressing/grid_geometry.dart';
 import '../engine_bridge/formula_hooks.dart';
 import '../formula/model/workbook_view.dart' show CellSource;
 import '../format/attributes.dart';
@@ -44,6 +45,7 @@ final class PlanContext {
     this.maxCells = 1000000,
     this.isOwner = false,
     this.customLists = const [],
+    this.overlays,
   }) : ids = ids ?? const UuidV7IdGenerator();
 
   /// Acting user (UUID string).
@@ -75,6 +77,11 @@ final class PlanContext {
 
   /// User custom fill lists.
   final List<List<String>> customLists;
+
+  /// Spill and pivot output rectangles of a sheet (from the engine's overlay
+  /// index). Sort, randomize and remove duplicates refuse ranges that
+  /// intersect them (07 §2.3); without it no overlay check is made.
+  final Iterable<GridRect> Function(String sheetId)? overlays;
 }
 
 /// Accumulates row writes against an overlay of the model so later steps of

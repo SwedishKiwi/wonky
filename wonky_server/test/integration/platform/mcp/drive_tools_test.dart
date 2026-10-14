@@ -247,16 +247,19 @@ void main() {
       },
     );
 
-    test('when importing a spreadsheet then it is unsupported', () async {
-      final e = await mcp.error('drive.import', {
-        'name': 'Sheet',
-        'kind': 'spreadsheet',
-        'format': 'csv',
-        'text': 'a,b',
-      });
+    test(
+      'when importing a spreadsheet from markdown then it is unsupported',
+      () async {
+        final e = await mcp.error('drive.import', {
+          'name': 'Sheet',
+          'kind': 'spreadsheet',
+          'format': 'md',
+          'text': 'a,b',
+        });
 
-      expect(e['code'], 'unsupported');
-    });
+        expect(e['code'], 'unsupported');
+      },
+    );
   });
 
   withWonkyServerpod('Given tokens with limited scopes', (
@@ -309,13 +312,20 @@ void main() {
       expect(e['code'], 'not_found');
     });
 
-    test('when calling a sheets tool then it does not exist', () async {
-      final anna = await TestUsers.create(sessionBuilder, name: 'Anna');
-      final mcp = await McpHarness.forUser(anna);
+    test(
+      'when creating a spreadsheet with only sheets scopes then it is '
+      'forbidden',
+      () async {
+        final anna = await TestUsers.create(sessionBuilder, name: 'Anna');
+        final mcp = await McpHarness.forUser(
+          anna,
+          scopes: const [McpScope.sheetsRead, McpScope.sheetsEdit],
+        );
 
-      final e = await mcp.error('drive.create_spreadsheet', {'name': 'S'});
+        final e = await mcp.error('drive.create_spreadsheet', {'name': 'S'});
 
-      expect(e['code'], 'not_found');
-    });
+        expect(e['code'], 'forbidden');
+      },
+    );
   });
 }

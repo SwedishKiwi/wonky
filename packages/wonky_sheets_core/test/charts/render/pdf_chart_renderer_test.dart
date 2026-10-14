@@ -182,4 +182,17 @@ void main() {
       expect(pdf, contains('0 1 1 0 20 20 cm'));
     });
   });
+
+  group('Given a scene with non-finite coordinates', () {
+    test('when rendering PDF then no NaN reaches the document', () async {
+      final bytes = await const PdfChartRenderer().renderDocument(
+        RenderTestScenes.nonFinite(),
+        compress: false,
+      );
+
+      final pdf = latin1.decode(bytes);
+      expect(pdf, isNot(contains('NaN')));
+      expect(pdf, isNot(contains('Infinity')));
+    });
+  });
 }

@@ -13,7 +13,9 @@ import '../shell/shell_services.dart';
 
 /// Loads and caches the versions of one item.
 class VersionsController extends ChangeNotifier {
-  VersionsController(this.services, this.itemUuid);
+  VersionsController(this.services, this.itemUuid) {
+    services.versionsRefresh.addListener(load);
+  }
 
   final ShellServices services;
   final UuidValue itemUuid;
@@ -23,7 +25,10 @@ class VersionsController extends ChangeNotifier {
   bool namedOnly = false;
   int? selectedId;
 
+  bool _disposed = false;
+
   Future<void> load() async {
+    if (_disposed) return;
     loading = true;
     notifyListeners();
     try {
@@ -37,7 +42,7 @@ class VersionsController extends ChangeNotifier {
       error = e;
     } finally {
       loading = false;
-      notifyListeners();
+      if (!_disposed) notifyListeners();
     }
   }
 
@@ -62,6 +67,13 @@ class VersionsController extends ChangeNotifier {
   Future<void> rename(ItemVersionView v, String? name) async {
     await services.repositories.versions.rename(itemUuid, v.id, name);
     await load();
+  }
+
+  @override
+  void dispose() {
+    _disposed = true;
+    services.versionsRefresh.removeListener(load);
+    super.dispose();
   }
 }
 

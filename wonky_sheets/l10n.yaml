@@ -1,0 +1,6 @@
+arb-dir: lib/l10n
+template-arb-file: sheets_en.arb
+output-dir: lib/l10n/gen
+output-localization-file: sheets_localizations.dart
+output-class: SheetsLocalizations
+nullable-getter: false

@@ -145,7 +145,10 @@ abstract final class CsvImporter {
   }) {
     final head = bytes.length > 65536 ? bytes.sublist(0, 65536) : bytes;
     final enc = options.encoding ?? EncodingSniffer.sniff(head).encoding;
-    final text = enc.decode(head);
+    var text = enc.decode(head);
+    if (text.isNotEmpty && text.codeUnitAt(0) == 0xfeff) {
+      text = text.substring(1);
+    }
     final d =
         options.delimiter ??
         CsvDelimiterDetector.detect(
@@ -156,7 +159,7 @@ abstract final class CsvImporter {
     final sep = CsvDelimiterDetector.detect(text).sepLineLength;
     final p = CsvParser(delimiter: d, maxFieldLength: options.maxFieldLength);
     final out = [
-      ...p.feed(text.substring(options.delimiter == null ? sep : 0)),
+      ...p.feed(text.substring(sep)),
       if (head.length == bytes.length) ...p.close(),
     ];
     return [for (final r in out.take(rows)) r.fields];

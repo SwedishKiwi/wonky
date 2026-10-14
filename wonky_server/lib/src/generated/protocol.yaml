@@ -131,18 +131,43 @@ version:
   - rename:
   - restore:
   - getSnapshotUrl:
+sheetsAi:
+  - suggestFormula:
+  - explainFormula:
+  - fillRange:
+  - applyFill:
+  - analyzeChips:
+  - describeChart:
+  - getPreview:
+  - applyPreview:
+  - discardPreview:
 sheets:
   - reserveSpaces:
   - subscribe:
   - unsubscribe:
   - ensureSubscribed:
   - spaceStats:
+  - namedFunctions:
+  - spreadsheetTheme:
   - revertChange:
   - reapplyChange:
   - cellHistory:
   - activitySummary:
+  - fetchImage:
 sheetsSync:
   - sync:
+script:
+  - compile:
+  - analyze:
+  - bytecode:
+  - run:
+  - executions:
+  - reportExecutions:
+  - urlFetch:
+  - authorization:
+  - authorize:
+  - revokeAuthorization:
+  - notifyOpen:
 document:
   - connect:
   - getInfo:

@@ -893,6 +893,7 @@ List<Command<CommandArgs>> versionCommands(ShellServices s) {
           s.currentItem.value!.uuid,
           name,
         );
+        s.refreshVersions();
         s.toasts.show(s.l10n?.toastVersionNamed(name) ?? name);
         return CommandResult.ok({'versionId': v.id});
       },
@@ -930,12 +931,14 @@ List<Command<CommandArgs>> versionCommands(ShellServices s) {
         final versionId = a.integer('versionId')!;
         final r = await s.repositories.versions.restore(item.uuid, versionId);
         ctx.record(
-          VersionRestoreEntry(
-            itemUuid: item.uuid.uuid,
-            versionId: versionId,
-            restorePointId: r.restorePoint.id,
-          ),
+          s.config.versionRenderer?.restoreUndoEntry(item.uuid, versionId, r) ??
+              VersionRestoreEntry(
+                itemUuid: item.uuid.uuid,
+                versionId: versionId,
+                restorePointId: r.restorePoint.id,
+              ),
         );
+        s.refreshVersions();
         s.toasts.show(s.l10n?.toastVersionRestored ?? 'Version restored');
         return CommandResult.ok({'restorePointId': r.restorePoint.id});
       },

@@ -1,0 +1,22 @@
+### Server state of an installable trigger (Sheets 09 §8.7.3); the trigger
+### itself is the synced ScriptTrigger row.
+class: ScriptTriggerState
+table: script_trigger_state
+serverOnly: true
+fields:
+  triggerId: UuidValue
+  spreadsheetUuid: UuidValue
+  ### Signature of the synced row the state was computed from.
+  scheduleJson: String?
+  nextRunAt: DateTime?
+  lastRunAt: DateTime?
+  lastStatus: ScriptExecutionStatus?
+  consecutiveFailures: int, default=0
+  disabledReason: String?
+  runningSince: DateTime?
+indexes:
+  script_trigger_state_id_idx:
+    fields: triggerId
+    unique: true
+  script_trigger_state_due_idx:
+    fields: nextRunAt

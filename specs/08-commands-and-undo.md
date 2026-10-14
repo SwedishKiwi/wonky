@@ -90,6 +90,9 @@ any), the current selection, the user's role on the document, the `UndoService`,
   macOS, Ctrl elsewhere. On web, browser-reserved shortcuts (⌘W, ⌘T, ⌘N, ⌘L) are never bound.
 - Scopes: `global` (app shell), `editor` (Write editor focused), `grid` (Sheets grid focused),
   `cellEditor` (Sheets cell editing), `dialog`. More specific scopes win.
+- **Argument bindings**: `Command.argBindings` binds a chord to fixed arguments, optionally in
+  another scope (`sheets.nav.move {dir: down}` on ↓ in `grid`); menus show the shortcut of a
+  parameterized item through `KeymapService.labelsFor(id, args)`.
 - **Contextual bindings**: a key binding may map to an ordered list of commands within a scope;
   the dispatcher runs the first one whose `isEnabled` is true (e.g. `Tab` = indent list item →
   insert spaces in code block → move focus; `Mod+J` = inline AI prompt when the caret is in an

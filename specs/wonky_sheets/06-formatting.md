@@ -178,7 +178,10 @@ not bold; each is one undo step.
 
 `Cell.numberFormat` (and `formatJson.numberFormat`) holds either a **pattern** or a **preset id**
 `preset:<name>`. Preset ids exist for formats whose pattern depends on the spreadsheet locale, so
-changing the locale re-renders them (Google behavior). `NumberFormatPresets.resolve(id, locale)`:
+changing the locale re-renders them (Google behavior). The formula engine's result
+format hints (05) use the same mechanism: `preset:percent`, `preset:scientific`,
+`preset:duration`, `preset:cur` (locale currency) and `preset:cur:<ISO>` (e.g. `preset:cur:EUR`)
+resolve like the menu presets. `NumberFormatPresets.resolve(id, locale)`:
 
 | Menu item | Stored | Pattern (en_US) | Pattern (de_DE) | Example (en_US) |
 |-----------|--------|-----------------|-----------------|-----------------|
@@ -361,11 +364,13 @@ grouped-number writes `numberFormat` explicitly in the same transaction:
 | Input | Detected pattern |
 |-------|------------------|
 | `12%`, `12.50%` | `0%`, `0.00%` (decimals as typed) |
-| `$1,200`, `$1,200.5` | `"$"#,##0`, `"$"#,##0.00` (currency of the symbol; `€` → `[$€]`…; decimals as typed, min 2 if any) |
+| `$1,200`, `$1,200.5`, `€12`, `12 €` | `"$"#,##0`, `"$"#,##0.00` (`$` in every locale); other symbols as `[$sym]` without LCID where typed: `[$€]#,##0`, `#,##0 [$€]`; decimals as typed (0, else at least 2) |
 | `1,234`, `1,234.5` | `#,##0`, `#,##0.0` |
 | `1.5E3` | `0.00E+00` |
-| dates/times | preset of the locale (`preset:date`, `preset:time` (with or without seconds: `h:mm AM/PM` vs `h:mm:ss AM/PM`), `preset:dateTime`) or the exact typed shape for ISO input (`yyyy-mm-dd`) |
-| `36:15:00` | `[h]:mm:ss` |
+| dates | `preset:date`, date times `preset:dateTime`; ISO input keeps the typed shape (`yyyy-mm-dd`, `yyyy-mm-dd hh:mm[:ss]`) |
+| times (`14:30`, `2:30 PM`, `14:30:15`, `14:30:15.5`) | the typed shape: `h:mm`, `h:mm AM/PM`, `h:mm:ss`, `h:mm:ss.000` (` AM/PM` appended when typed with AM/PM) — as 03 §8.6 |
+| `0 1/2`, `1 3/16` | `# ?/?`, `# ??/??` (mixed fraction; a bare `1/2` is a date) |
+| `36:15:00`, `36:15` | `[h]:mm:ss`, `[h]:mm` |
 
 Detection never overrides an explicit non-Automatic format (typing `5%` into a `0.00` cell stores
 0.05 and keeps `0.00` → shows `0.05`).
@@ -499,6 +504,16 @@ Curated **bundled** cell fonts (no runtime Google Fonts; suite 02 §2), files un
 | Mono | Roboto Mono, Source Code Pro, Courier Prime |
 | Handwriting/display | Caveat, Comfortaa |
 | Metric-compatible (XLSX fidelity) | Arimo (≈ Arial/Helvetica), Tinos (≈ Times New Roman), Cousine (≈ Courier New), Carlito (≈ Calibri), Caladea (≈ Cambria), Gelasio (≈ Georgia) |
+
+> **As built (phase 2).** Bundled: Inter, Geist, Geist Mono (from `shad`) and static OFL faces of
+> Open Sans, EB Garamond and JetBrains Mono (`wonky_sheets/assets/fonts/`, loaded on demand by
+> `CellFonts`, `features/formatting/cell_fonts.dart`). Every other name — including the theme
+> presets' fonts — is stored unchanged and displayed by category (serif → EB Garamond, mono →
+> JetBrains Mono, else Inter); the picker labels it "X (displayed as Y)". The font menu has
+> *Theme font*, *Recent* (session) and *All fonts* sections. Live previews of CF rules,
+> alternating colors and themes go through `WorkbookModel.previewTheme` /
+> `WorkbookModel.bandingPreview` and `CfEvaluator.setDraft`; `RangeInput`'s ⊞ toggles
+> "follow the grid selection" instead of a modal picking card.
 
 - Web: only Inter is in the initial bundle; other families load on first use via `FontLoader`
   from the app's own origin (cached by the service worker for offline); until loaded, cells render
@@ -743,7 +758,9 @@ Stored as content `r:` + JSON (02 §2):
 - *Customize*: text font (`FontPicker`), text color, background, accent 1–6, link color (each a
   `WonkyColorPicker` without theme row), *Reset to preset*.
 - [Done] commits `sheets.theme.set {themeJson}` (1 step); [Cancel] discards.
-- *Import theme* (P2): copy a theme from another spreadsheet (drive picker).
+- *Import theme* (P2): copy a theme from another spreadsheet (drive picker). Built: the panel's
+  *Import theme* previews it until Done; `sheets.theme.import {sourceItemUuid?}` applies it in one
+  step (server `SheetsEndpoint.spreadsheetTheme`).
 
 ---
 
@@ -1094,3 +1111,43 @@ the same core classes (`FormatWriter` logic is mirrored server-side through the 
 | Border color value `auto` | §8.2 |
 | `Banding.styleJson` schema | §14.1 |
 | `Spreadsheet.themeJson` schema (`v`, `name`, `fonts.text`, `colors.*`) and rule "themeJson wins over `defaultFontFamily`" | §13.1 |
+
+## 20. Implementation notes (Phase 3, app)
+
+- **Settings › Sheets** (04 §11.24) is the Sheets app's section (`WonkyAppConfig.sheetsSettings`
+  → `SheetsSettingsSection`); every key goes through `SheetsUserDefaults`
+  (`features/formatting/sheets_user_defaults.dart`). New spreadsheets created on the client get
+  the default locale, time zone, theme font (`CreateSpreadsheet {fontFamily}` writes it into
+  `themeJson.fonts.text`) and size; spreadsheets created on the server (templates, no reserved
+  space) keep the server defaults. Custom fill lists feed `PlanContext.customLists`
+  (`WorkbookSessionBase.customLists`); *Reduce grid animations* stops the marching ants; *Show
+  editor mode* hides the status-bar mode.
+- **Custom formulas** use `FormulaField` (`features/formatting/formula_field.dart`): syntax colors,
+  function autocomplete, signature help, parse errors and point mode (selecting on the grid
+  inserts the reference while the caret is at an insertion point; the next selection replaces
+  it). Used by the CF editor and the filter condition editor. Value errors show under their
+  field once the user changed it; "add a format" under the formatting style. *Exact date* has a
+  calendar (ISO date).
+- **CF caches** (§15.10): recalculations drop only the changed cells' results, rules with range
+  statistics over them and formula rules that may read them (cross-sheet formula rules too);
+  > 20,000 changed cells drop everything. Rules over > 100k cells get `RangeStats` in the
+  background (`CfEvaluator.asyncStats`: values read in chunks between frames, sorted with
+  `compute`); until ready they render nothing, later edits keep the old stats until the new ones
+  arrive.
+- **Column banding** (P2): `BandingStyle.dimension = columns` (*Alternate columns* in the panel);
+  the draft's range is outlined while the panel is open.
+- **Fonts**: bundled Inter, Roboto, Open Sans, Lato, Geist, EB Garamond, Geist Mono, JetBrains Mono,
+  Roboto Mono (Roboto/Roboto Mono Apache 2.0, the others OFL). Geometric/rounded sans names
+  (Montserrat, Nunito, Source Sans 3 …) render with Lato, serif with EB Garamond, mono with
+  JetBrains Mono. The font menu shows "Aa" in each face. PDF: Roboto, Lato and Roboto Mono embed
+  as themselves, other sans as Open Sans. Merriweather, Montserrat, Nunito, Source Sans 3 and
+  Courier Prime are not bundled (substituted).
+- **Rich text** (§11): Mod+K on a text selection in the cell editor links the selection (link run);
+  formatting that can't be a run (`sheets.format.*` other than B/I/U/S, colors, font, size) is
+  disabled while text is selected ("Not available while text in the cell is selected"); the
+  formula bar shows the runs (styles without sizes/families).
+- Custom currency examples are colored by `[Red]`-style sections; currency names come from the
+  `currencyName` ICU select (translatable).
+- Not built: spreadsheet display language (P2: needs localized function names and booleans in
+  the engine).
+

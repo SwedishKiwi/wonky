@@ -50,6 +50,11 @@ abstract class Command<A extends CommandArgs> {
   /// The scope the default bindings live in.
   KeyScope get keyScope => KeyScope.global;
 
+  /// Bindings that invoke the command with fixed arguments, optionally in
+  /// another scope (`sheets.nav.move {dir: down}` on ↓ in the grid scope).
+  /// Not user-overridable.
+  List<ArgsKeyBinding> get argBindings => const [];
+
   /// Minimum role on the active document; checked only when a document is
   /// active (drive commands check per-item roles in [isEnabled]).
   Role get requiredRole => Role.editor;
@@ -77,6 +82,17 @@ abstract class Command<A extends CommandArgs> {
 
   /// Runs the command. Record undo entries with `ctx.record(entry)`.
   Future<CommandResult> execute(CommandContext ctx, A args);
+}
+
+/// A key binding with fixed command arguments ([Command.argBindings]).
+class ArgsKeyBinding {
+  const ArgsKeyBinding(this.binding, this.args, {this.scope});
+
+  final KeyBinding binding;
+  final Map<String, Object?> args;
+
+  /// Scope of the binding; null = the command's [Command.keyScope].
+  final KeyScope? scope;
 }
 
 /// A command whose arguments are a validated JSON map ([JsonArgs]).

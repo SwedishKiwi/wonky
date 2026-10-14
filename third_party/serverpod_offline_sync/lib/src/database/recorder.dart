@@ -1085,12 +1085,16 @@ class CrdtMutationRecorder {
       null,
       CrdtDataDeletedReason.userDelete,
     );
-    await _maybeProject(
-      tableName,
-      deletedRows.uuidRowIds,
-      null,
-      transaction,
-    );
+    // OS-6: deleting rows nothing references (and without unique indexes)
+    // changes no other row's projection.
+    if (_foreignKeyProjector.deleteNeedsProjection(tableName)) {
+      await _maybeProject(
+        tableName,
+        deletedRows.uuidRowIds,
+        null,
+        transaction,
+      );
+    }
     await _context.persistCurrentNodeHlc(
       _context.hlcManagerFor(transaction),
       transaction,

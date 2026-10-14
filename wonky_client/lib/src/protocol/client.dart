@@ -18,6 +18,7 @@ import 'package:serverpod_auth_core_client/serverpod_auth_core_client.dart'
 import 'package:serverpod_auth_idp_client/serverpod_auth_idp_client.dart'
     as _iaic;
 import 'package:serverpod_client/serverpod_client.dart' as _isc;
+import 'package:serverpod_database/serverpod_database.dart' as _isd;
 import 'package:serverpod_offline_sync_client/serverpod_offline_sync_client.dart'
     as _ipulbpi2;
 import 'package:wonky_client/src/protocol/platform/activity/activity_dashboard.dart'
@@ -124,6 +125,16 @@ import 'package:wonky_client/src/protocol/platform/versions/item_version_view.da
     as _itqtmykd;
 import 'package:wonky_client/src/protocol/platform/versions/version_restore_result.dart'
     as _iyei7m5z;
+import 'package:wonky_client/src/protocol/sheets/ai/models/sheets_ai_apply_result.dart'
+    as _isefwvgb;
+import 'package:wonky_client/src/protocol/sheets/ai/models/sheets_ai_preview.dart'
+    as _ijqca8sl;
+import 'package:wonky_client/src/protocol/sheets/ai/models/sheets_fill_proposal.dart'
+    as _i9koccid;
+import 'package:wonky_client/src/protocol/sheets/ai/models/sheets_fill_row.dart'
+    as _i2syfqhi;
+import 'package:wonky_client/src/protocol/sheets/ai/models/sheets_formula_suggestion.dart'
+    as _irs9q9tq;
 import 'package:wonky_client/src/protocol/sheets/models/cell_history_page.dart'
     as _i8ap5j9q;
 import 'package:wonky_client/src/protocol/sheets/models/revert_result.dart'
@@ -134,6 +145,18 @@ import 'package:wonky_client/src/protocol/sheets/models/space_stats.dart'
     as _imzum1ra;
 import 'package:wonky_client/src/protocol/sheets/models/subscribe_result.dart'
     as _ii9ou7kh;
+import 'package:wonky_client/src/protocol/sheets/scripts/models/script_authorization_view.dart'
+    as _i7q8cl7e;
+import 'package:wonky_client/src/protocol/sheets/scripts/models/script_compile_response.dart'
+    as _igk7mjr7;
+import 'package:wonky_client/src/protocol/sheets/scripts/models/script_execution.dart'
+    as _ijdpewvc;
+import 'package:wonky_client/src/protocol/sheets/scripts/models/script_execution_status.dart'
+    as _isizzyyw;
+import 'package:wonky_client/src/protocol/sheets/scripts/models/script_fetch_response.dart'
+    as _iyfk9f1k;
+import 'package:wonky_client/src/protocol/sheets/scripts/models/script_run_response.dart'
+    as _iaw9fhnx;
 import 'package:wonky_client/src/protocol/write/messages/doc_client_message.dart'
     as _isw33y8i;
 import 'package:wonky_client/src/protocol/write/messages/doc_server_message.dart'
@@ -161,6 +184,8 @@ import 'package:wonky_client/src/protocol/write/models/write_theme_view.dart'
 import 'package:wonky_client/src/protocol/write/models/write_version_document.dart'
     as _igd4fcl2;
 import 'protocol.dart' as _il2as5qe;
+import 'sync_tables.dart' as _ii3f3u05;
+import 'package:wonky_client/migrations/migration_registry.dart';
 
 /// By extending [EmailIdpBaseEndpoint], the email identity provider endpoints
 /// are made available on the server and enable the corresponding sign-in widget
@@ -1775,6 +1800,142 @@ class EndpointVersion extends _isc.EndpointRef {
   );
 }
 
+/// The inline AI features of Wonky Sheets (Sheets 12 §6.4–6.10) and the AI
+/// changes preview of Suggest-mode assistant runs (§6.3). The assistant
+/// panel itself uses `assistant.chat` with the spreadsheet's item uuid and
+/// the `sheets*` fields of [AssistantContextHints].
+/// {@category Endpoint}
+class EndpointSheetsAi extends _isc.EndpointRef {
+  EndpointSheetsAi(_isc.EndpointCaller caller) : super(caller);
+
+  @override
+  String get name => 'sheetsAi';
+
+  /// Formula from natural language for [cell] (A1 with sheet). Nothing is
+  /// written; the app inserts the formula with `sheets.edit.setCellInput`.
+  _ida.Future<_irs9q9tq.SheetsFormulaSuggestion> suggestFormula(
+    _isc.UuidValue itemUuid,
+    String cell,
+    String prompt,
+  ) => caller.callServerEndpoint<_irs9q9tq.SheetsFormulaSuggestion>(
+    'sheetsAi',
+    'suggestFormula',
+    {
+      'itemUuid': itemUuid,
+      'cell': cell,
+      'prompt': prompt,
+    },
+  );
+
+  /// Streams a plain-language explanation of the formula in [cell] (the
+  /// assistant panel shows it).
+  _ida.Stream<_ivbb4qsj.InlineAiEvent> explainFormula(
+    _isc.UuidValue itemUuid,
+    String cell,
+  ) =>
+      caller.callStreamingServerEndpoint<
+        _ida.Stream<_ivbb4qsj.InlineAiEvent>,
+        _ivbb4qsj.InlineAiEvent
+      >(
+        'sheetsAi',
+        'explainFormula',
+        {
+          'itemUuid': itemUuid,
+          'cell': cell,
+        },
+        {},
+      );
+
+  /// Fill with AI: proposals for the empty cells of a column [range]
+  /// (examples = its filled cells). Nothing is written.
+  _ida.Future<_i9koccid.SheetsFillProposal> fillRange(
+    _isc.UuidValue itemUuid,
+    String range,
+    String? instructions,
+  ) => caller.callServerEndpoint<_i9koccid.SheetsFillProposal>(
+    'sheetsAi',
+    'fillRange',
+    {
+      'itemUuid': itemUuid,
+      'range': range,
+      'instructions': instructions,
+    },
+  );
+
+  /// Writes the accepted proposals as one undo step "AI: Fill …"
+  /// (`SheetsEndpoint.revertChange(changeId)` undoes it).
+  _ida.Future<_isefwvgb.SheetsAiApplyResult> applyFill(
+    _isc.UuidValue itemUuid,
+    String range,
+    List<_i2syfqhi.SheetsFillRow> rows,
+  ) => caller.callServerEndpoint<_isefwvgb.SheetsAiApplyResult>(
+    'sheetsAi',
+    'applyFill',
+    {
+      'itemUuid': itemUuid,
+      'range': range,
+      'rows': rows,
+    },
+  );
+
+  /// Prompt chips of *Data › Analyze with AI* for [range] (or the first
+  /// table).
+  _ida.Future<List<String>> analyzeChips(
+    _isc.UuidValue itemUuid,
+    String? range,
+  ) => caller.callServerEndpoint<List<String>>(
+    'sheetsAi',
+    'analyzeChips',
+    {
+      'itemUuid': itemUuid,
+      'range': range,
+    },
+  );
+
+  /// An alt-text proposal for a chart.
+  _ida.Future<String> describeChart(
+    _isc.UuidValue itemUuid,
+    String chartId,
+  ) => caller.callServerEndpoint<String>(
+    'sheetsAi',
+    'describeChart',
+    {
+      'itemUuid': itemUuid,
+      'chartId': chartId,
+    },
+  );
+
+  /// The AI changes preview of a Suggest-mode run (`previewId` of the
+  /// `previewReady` / `done` assistant events).
+  _ida.Future<_ijqca8sl.SheetsAiPreview> getPreview(String previewId) =>
+      caller.callServerEndpoint<_ijqca8sl.SheetsAiPreview>(
+        'sheetsAi',
+        'getPreview',
+        {'previewId': previewId},
+      );
+
+  /// Applies the selected calls (null = all) as one undo step.
+  _ida.Future<_isefwvgb.SheetsAiApplyResult> applyPreview(
+    String previewId,
+    List<String>? callIds,
+  ) => caller.callServerEndpoint<_isefwvgb.SheetsAiApplyResult>(
+    'sheetsAi',
+    'applyPreview',
+    {
+      'previewId': previewId,
+      'callIds': callIds,
+    },
+  );
+
+  /// Discards a preview.
+  _ida.Future<void> discardPreview(String previewId) =>
+      caller.callServerEndpoint<void>(
+        'sheetsAi',
+        'discardPreview',
+        {'previewId': previewId},
+      );
+}
+
 /// Online-only Sheets operations (suite 12 §2, Sheets 10, 12 §2.5).
 /// {@category Endpoint}
 class EndpointSheets extends _isc.EndpointRef {
@@ -1824,6 +1985,24 @@ class EndpointSheets extends _isc.EndpointRef {
         {'itemUuid': itemUuid},
       );
 
+  /// Named functions of another spreadsheet for *Import function*
+  /// (Sheets 07 §9.4): JSON list of `{name, formula, comment, metaJson}`.
+  _ida.Future<String> namedFunctions(_isc.UuidValue itemUuid) =>
+      caller.callServerEndpoint<String>(
+        'sheets',
+        'namedFunctions',
+        {'itemUuid': itemUuid},
+      );
+
+  /// The theme JSON of another spreadsheet for *Import theme* (Sheets 06
+  /// §13).
+  _ida.Future<String> spreadsheetTheme(_isc.UuidValue itemUuid) =>
+      caller.callServerEndpoint<String>(
+        'sheets',
+        'spreadsheetTheme',
+        {'itemUuid': itemUuid},
+      );
+
   /// Undo of a server-side change (`sheets.serverChange`).
   _ida.Future<_i107v8u3.RevertResult> revertChange(_isc.UuidValue changeId) =>
       caller.callServerEndpoint<_i107v8u3.RevertResult>(
@@ -1870,6 +2049,21 @@ class EndpointSheets extends _isc.EndpointRef {
       'days': days,
     },
   );
+
+  /// Image proxy for `IMAGE("https://…")` cells and images inserted by URL
+  /// (08 §10): the bytes of the https image [url] (private addresses are
+  /// refused).
+  _ida.Future<_idt.ByteData> fetchImage(
+    _isc.UuidValue itemUuid,
+    String url,
+  ) => caller.callServerEndpoint<_idt.ByteData>(
+    'sheets',
+    'fetchImage',
+    {
+      'itemUuid': itemUuid,
+      'url': url,
+    },
+  );
 }
 
 /// The Sheets sync stream (suite 12 §2.5): `session.offlineSync.sync` with
@@ -1894,6 +2088,151 @@ class EndpointSheetsSync extends _isc.EndpointRef {
         'sync',
         {'once': once},
         {'changes': changes},
+      );
+}
+
+/// Scripts of a spreadsheet (Sheets 09): build, run on server, executions
+/// log, authorization and the URL fetch proxy. `spreadsheetUuid` is the
+/// drive item uuid or the space uuid.
+/// {@category Endpoint}
+class EndpointScript extends _isc.EndpointRef {
+  EndpointScript(_isc.EndpointCaller caller) : super(caller);
+
+  @override
+  String get name => 'script';
+
+  /// Builds the project's current sources (09 §9.1); returns diagnostics.
+  _ida.Future<_igk7mjr7.ScriptCompileResponse> compile(
+    _isc.UuidValue spreadsheetUuid,
+  ) => caller.callServerEndpoint<_igk7mjr7.ScriptCompileResponse>(
+    'script',
+    'compile',
+    {'spreadsheetUuid': spreadsheetUuid},
+  );
+
+  /// Diagnostics for unsaved editor content (09 §9.5); JSON list.
+  _ida.Future<String> analyze(
+    _isc.UuidValue spreadsheetUuid,
+    String fileName,
+    String source,
+  ) => caller.callServerEndpoint<String>(
+    'script',
+    'analyze',
+    {
+      'spreadsheetUuid': spreadsheetUuid,
+      'fileName': fileName,
+      'source': source,
+    },
+  );
+
+  /// EVC bytecode of the last good build (clients cache it by build hash).
+  _ida.Future<_idt.ByteData> bytecode(_isc.UuidValue spreadsheetUuid) =>
+      caller.callServerEndpoint<_idt.ByteData>(
+        'script',
+        'bytecode',
+        {'spreadsheetUuid': spreadsheetUuid},
+      );
+
+  /// *Run on server* (09 §14.5): [argsJson] is a JSON list.
+  _ida.Future<_iaw9fhnx.ScriptRunResponse> run(
+    _isc.UuidValue spreadsheetUuid,
+    String functionName,
+    String? argsJson,
+  ) => caller.callServerEndpoint<_iaw9fhnx.ScriptRunResponse>(
+    'script',
+    'run',
+    {
+      'spreadsheetUuid': spreadsheetUuid,
+      'functionName': functionName,
+      'argsJson': argsJson,
+    },
+  );
+
+  /// The executions log, newest first (09 §13.3).
+  _ida.Future<List<_ijdpewvc.ScriptExecution>> executions(
+    _isc.UuidValue spreadsheetUuid, {
+    String? functionName,
+    _isizzyyw.ScriptExecutionStatus? status,
+    DateTime? before,
+    required int limit,
+  }) => caller.callServerEndpoint<List<_ijdpewvc.ScriptExecution>>(
+    'script',
+    'executions',
+    {
+      'spreadsheetUuid': spreadsheetUuid,
+      'functionName': functionName,
+      'status': status,
+      'before': before,
+      'limit': limit,
+    },
+  );
+
+  /// Uploads client executions (batched, 09 §13.1).
+  _ida.Future<int> reportExecutions(
+    _isc.UuidValue spreadsheetUuid,
+    List<_ijdpewvc.ScriptExecution> executions,
+  ) => caller.callServerEndpoint<int>(
+    'script',
+    'reportExecutions',
+    {
+      'spreadsheetUuid': spreadsheetUuid,
+      'executions': executions,
+    },
+  );
+
+  /// `UrlFetchApp` of client executions (09 §8.3): [requestJson] is a
+  /// `FetchRequestData` JSON object.
+  _ida.Future<_iyfk9f1k.ScriptFetchResponse> urlFetch(
+    _isc.UuidValue spreadsheetUuid,
+    String requestJson, {
+    required bool customFunction,
+  }) => caller.callServerEndpoint<_iyfk9f1k.ScriptFetchResponse>(
+    'script',
+    'urlFetch',
+    {
+      'spreadsheetUuid': spreadsheetUuid,
+      'requestJson': requestJson,
+      'customFunction': customFunction,
+    },
+  );
+
+  /// The caller's granted scopes.
+  _ida.Future<_i7q8cl7e.ScriptAuthorizationView> authorization(
+    _isc.UuidValue spreadsheetUuid,
+  ) => caller.callServerEndpoint<_i7q8cl7e.ScriptAuthorizationView>(
+    'script',
+    'authorization',
+    {'spreadsheetUuid': spreadsheetUuid},
+  );
+
+  /// The authorization dialog's *Allow* (09 §11.2).
+  _ida.Future<_i7q8cl7e.ScriptAuthorizationView> authorize(
+    _isc.UuidValue spreadsheetUuid,
+    List<String> scopes,
+  ) => caller.callServerEndpoint<_i7q8cl7e.ScriptAuthorizationView>(
+    'script',
+    'authorize',
+    {
+      'spreadsheetUuid': spreadsheetUuid,
+      'scopes': scopes,
+    },
+  );
+
+  /// *Revoke my authorization* (09 §11.2).
+  _ida.Future<void> revokeAuthorization(_isc.UuidValue spreadsheetUuid) =>
+      caller.callServerEndpoint<void>(
+        'script',
+        'revokeAuthorization',
+        {'spreadsheetUuid': spreadsheetUuid},
+      );
+
+  /// The app opened the spreadsheet online: runs installable onOpen
+  /// triggers (09 §8.7.3). Returns the number of runs.
+  _ida.Future<int> notifyOpen(_isc.UuidValue spreadsheetUuid) =>
+      caller.callServerEndpoint<int>(
+        'script',
+        'notifyOpen',
+        {'spreadsheetUuid': spreadsheetUuid},
       );
 }
 
@@ -2328,8 +2667,10 @@ class Client extends _isc.ServerpodClientShared {
     googleIdp = EndpointGoogleIdp(this);
     user = EndpointUser(this);
     version = EndpointVersion(this);
+    sheetsAi = EndpointSheetsAi(this);
     sheets = EndpointSheets(this);
     sheetsSync = EndpointSheetsSync(this);
+    script = EndpointScript(this);
     document = EndpointDocument(this);
     writeExport = EndpointWriteExport(this);
     writeHistory = EndpointWriteHistory(this);
@@ -2373,9 +2714,13 @@ class Client extends _isc.ServerpodClientShared {
 
   late final EndpointVersion version;
 
+  late final EndpointSheetsAi sheetsAi;
+
   late final EndpointSheets sheets;
 
   late final EndpointSheetsSync sheetsSync;
+
+  late final EndpointScript script;
 
   late final EndpointDocument document;
 
@@ -2407,8 +2752,10 @@ class Client extends _isc.ServerpodClientShared {
     'googleIdp': googleIdp,
     'user': user,
     'version': version,
+    'sheetsAi': sheetsAi,
     'sheets': sheets,
     'sheetsSync': sheetsSync,
+    'script': script,
     'document': document,
     'writeExport': writeExport,
     'writeHistory': writeHistory,
@@ -2421,4 +2768,57 @@ class Client extends _isc.ServerpodClientShared {
     'offline_sync': modules.offline_sync,
     'serverpod_auth_core': modules.serverpod_auth_core,
   };
+
+  /// Creates a new client-side database session for the given path.
+  ///
+  /// The [path] is the file path to the SQLite database file. Since SQLite uses
+  /// WAL mode, note that `[path]-shm` and `[path]-wal` files might also exist
+  /// transiently for the database while the session is open.
+  ///
+  /// If [runMigrations] is true, pending migrations will be applied when
+  /// opening the database. Be careful when setting this to false, as it might
+  /// lead to inconsistencies between the models and the database.
+  ///
+  /// If [isDebugMode] is true, the database integrity will be verified after
+  /// the migrations are applied to provide feedback of possible issues. On a
+  /// Flutter application, this should be set to [kDebugMode].
+  _ida.Future<_isd.ClientDatabaseSession> createSession(
+    String path, {
+    bool runMigrations = true,
+    bool isDebugMode = false,
+  }) async {
+    return await _isd.ClientDatabaseSession.open(
+      path,
+      _il2as5qe.Protocol(),
+      clientMigrations: MigrationRegistry.migrations,
+      runMigrations: runMigrations,
+      isDebugMode: isDebugMode,
+    );
+  }
+
+  /// Creates a new client-side database session for the given path, wrapped
+  /// with the `serverpod_offline_sync` engine for the tables declared with
+  /// `database: sync`. See [createSession] for the [path], [runMigrations] and
+  /// [isDebugMode] parameters.
+  ///
+  /// The [persistentUserId] is the user all local operations belong to. When
+  /// omitted, the user must be passed through the transaction.
+  _ida.Future<_ipulbpi2.OfflineSyncDatabaseSession> createSyncSession(
+    String path, {
+    bool runMigrations = true,
+    bool isDebugMode = false,
+    _isc.UuidValue? persistentUserId,
+  }) async {
+    final session = _ipulbpi2.OfflineSyncDatabaseSession.wraps(
+      await createSession(
+        path,
+        runMigrations: runMigrations,
+        isDebugMode: isDebugMode,
+      ),
+      syncTables: _ii3f3u05.syncTables,
+      persistentUserId: persistentUserId,
+    );
+    await session.db.initialize();
+    return session;
+  }
 }

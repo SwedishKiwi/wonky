@@ -135,7 +135,9 @@ final class EffectiveFormatResolver {
     final spreadsheet = model.spreadsheet;
     final theme = model.theme;
     var f = explicit(sheetId, row, col);
-    if (includeBanding && s != null && s.bandings.isNotEmpty) {
+    if (includeBanding &&
+        s != null &&
+        (s.bandings.isNotEmpty || model.bandingPreview != null)) {
       final (fill, bold) = bandingAt(s, row, col);
       if (fill != null && !f.has(FormatAttr.fillColor)) {
         f = f.withValue(FormatAttr.fillColor, fill);
@@ -182,6 +184,8 @@ final class EffectiveFormatResolver {
   /// Alternating-colors contribution at a cell: `(fillColor, headerBold)`.
   /// Bands alternate over visible rows (06 §14.1).
   (String?, bool) bandingAt(SheetModel s, int row, int col) {
+    final preview = model.bandingPreview?.call(s, row, col);
+    if (preview != null) return preview;
     final ids = s.rulesAt(RuleKind.banding, row, col);
     if (ids.isEmpty) return (null, false);
     final b = s.bandings[ids.first]!;
@@ -189,11 +193,9 @@ final class EffectiveFormatResolver {
       GridRange.tryParse(b.rangeJson) ?? GridRange.sheet(s.id),
     );
     if (rr == null) return (null, false);
-    if (s.rows.isHidden(row)) return (null, false);
-    final style = BandingStyle.parse(b.styleJson);
-    final visibleIndex = s.rows.visibleCount(rr.rect.top, row) - 1;
-    final visibleCount = s.rows.visibleCount(rr.rect.top, rr.rect.bottom);
-    return style.contributionAt(visibleIndex, visibleCount);
+    return BandingStyle.parse(
+      b.styleJson,
+    ).contributionIn(rr.rect, row, col, rows: s.rows, columns: s.columns);
   }
 
   /// The border drawn on the shared edge below (row, col) — between the cell

@@ -19,6 +19,8 @@ final class SourceColumn {
     required this.formats,
     required DisplayTextProvider display,
     this.sheetCol = 0,
+    this.fillColors,
+    this.textColors,
   }) : _display = display, // ignore: prefer_initializing_formals
        _texts = List<String?>.filled(values.length, null) {
     for (var i = 0; i < values.length; i++) {
@@ -43,6 +45,14 @@ final class SourceColumn {
 
   /// Number formats per data row (explicit or hint).
   final List<String?> formats;
+
+  /// Effective fill colors (`#RRGGBB`, null = none) per data row, when the
+  /// snapshot was taken with colors (pivot color filters, 07 §3.2).
+  final List<String?>? fillColors;
+
+  /// Effective text colors per data row (null = automatic), see
+  /// [fillColors].
+  final List<String?>? textColors;
 
   /// The column's number format (first non-empty cell's), inherited by values.
   String? numberFormat;
@@ -71,12 +81,15 @@ final class SourceTable {
 
   /// Snapshot of [range] (header row included) from computed values.
   /// [rowMask] (1 = excluded, per data row) carries slicer masks.
+  /// [colorAt] adds the effective fill and text colors of the data cells
+  /// (only needed by color filters).
   factory SourceTable.fromModel(
     WorkbookModel model,
     CellSource values,
     ResolvedRange range,
     DisplayTextProvider displayText, {
     Uint8List? rowMask,
+    ({String? fill, String? text}) Function(int row, int col)? colorAt,
   }) {
     final sheet = model.sheet(range.sheetId)!;
     final rect = _clamp(range, sheet.usedRect()?.bottom);
@@ -94,10 +107,17 @@ final class SourceTable {
             );
       final vs = <CellValue>[];
       final fs = <String?>[];
+      final fills = colorAt == null ? null : <String?>[];
+      final texts = colorAt == null ? null : <String?>[];
       for (var i = 0; i < n; i++) {
         final r = rect.top + 1 + i;
         vs.add(values.valueAt(sheet.id, r, c).toCellValue());
         fs.add(values.numberFormatAt(sheet.id, r, c));
+        if (colorAt != null) {
+          final colors = colorAt(r, c);
+          fills!.add(colors.fill);
+          texts!.add(colors.text);
+        }
       }
       cols.add(
         SourceColumn(
@@ -107,6 +127,8 @@ final class SourceTable {
           formats: fs,
           display: displayText,
           sheetCol: c,
+          fillColors: fills,
+          textColors: texts,
         ),
       );
     }
@@ -115,6 +137,52 @@ final class SourceTable {
       range: rect,
       columns: cols,
       display: displayText,
+      rowMask: rowMask,
+    );
+  }
+
+  /// A table from literal data rows (MCP, previews, tests): column [colIds]
+  /// with [headers], [rows] of values (row-major, short rows padded with
+  /// blanks) and optional per-column number formats [columnFormats].
+  factory SourceTable.fromRows({
+    required List<String> colIds,
+    required List<String> headers,
+    required List<List<CellValue>> rows,
+    required DisplayTextProvider display,
+    List<String?>? columnFormats,
+    String sheetId = '',
+    int top = 0,
+    int left = 0,
+    Uint8List? rowMask,
+  }) {
+    final cols = <SourceColumn>[
+      for (var c = 0; c < colIds.length; c++)
+        SourceColumn(
+          colId: colIds[c],
+          header: c < headers.length && headers[c].isNotEmpty
+              ? headers[c]
+              : 'Column ${ColumnLetters.fromIndex(left + c)}',
+          values: [for (final r in rows) c < r.length ? r[c] : CellValue.empty],
+          formats: List<String?>.filled(
+            rows.length,
+            columnFormats != null && c < columnFormats.length
+                ? columnFormats[c]
+                : null,
+          ),
+          display: display,
+          sheetCol: left + c,
+        ),
+    ];
+    return SourceTable(
+      sheetId: sheetId,
+      range: GridRect(
+        top,
+        left,
+        top + rows.length,
+        left + (colIds.isEmpty ? 0 : colIds.length - 1),
+      ),
+      columns: cols,
+      display: display,
       rowMask: rowMask,
     );
   }

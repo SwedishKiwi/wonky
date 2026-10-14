@@ -9,6 +9,7 @@ import '../platform/common/models.dart';
 import '../platform/common/time.dart';
 import '../platform/sharing/access_service.dart';
 import '../platform/users/user_service.dart';
+import 'headless/headless_workbook_provider.dart';
 import 'sync/server_sheets_writer.dart';
 import 'sync/sync_db.dart';
 
@@ -50,6 +51,51 @@ abstract final class SheetsService {
       return item;
     }
     return _spreadsheet(session, actor, uuid, min);
+  }
+
+  /// The named functions of a spreadsheet the caller can view (07 §9.4
+  /// *Import function*): a JSON list of `{name, formula, comment,
+  /// metaJson}` with the formula in stored (locale-independent) form.
+  static Future<String> namedFunctions(
+    Session session,
+    Actor actor,
+    UuidValue itemUuid,
+  ) async {
+    final item = await byItemOrSpace(session, actor, itemUuid, Role.viewer);
+    final space = item.contentRef;
+    if (space == null) throw Errors.notFound('Spreadsheet');
+    final wb = await HeadlessWorkbookProvider.open(session, space);
+    final fns = [
+      for (final n in wb.model.namedRanges)
+        if (n.rangeJson == null &&
+            n.formula != null &&
+            (n.metaJson ?? '').contains('"function"'))
+          n,
+    ]..sort((a, b) => a.name.compareTo(b.name));
+    final list = [
+      for (final n in fns)
+        {
+          'name': n.name,
+          'formula': n.formula,
+          'comment': n.comment,
+          'metaJson': n.metaJson,
+        },
+    ];
+    return jsonEncode(list);
+  }
+
+  /// The theme (`themeJson`) of a spreadsheet the caller can view (06 §13
+  /// *Import theme*).
+  static Future<String> spreadsheetTheme(
+    Session session,
+    Actor actor,
+    UuidValue itemUuid,
+  ) async {
+    final item = await byItemOrSpace(session, actor, itemUuid, Role.viewer);
+    final space = item.contentRef;
+    if (space == null) throw Errors.notFound('Spreadsheet');
+    final wb = await HeadlessWorkbookProvider.open(session, space);
+    return wb.model.spreadsheet.themeJson;
   }
 
   static Future<RevertResult> revertChange(

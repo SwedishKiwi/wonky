@@ -1,7 +1,10 @@
+import 'dart:typed_data';
+
 import 'package:serverpod/serverpod.dart';
 
 import '../../platform/common/models.dart';
 import '../../platform/users/user_service.dart';
+import '../images/sheets_image_proxy.dart';
 import '../sheets_service.dart';
 import '../spaces/space_service.dart';
 
@@ -54,6 +57,24 @@ class SheetsEndpoint extends Endpoint {
         itemUuid,
       );
 
+  /// Named functions of another spreadsheet for *Import function*
+  /// (Sheets 07 §9.4): JSON list of `{name, formula, comment, metaJson}`.
+  Future<String> namedFunctions(Session session, UuidValue itemUuid) async =>
+      SheetsService.namedFunctions(
+        session,
+        await UserService.actorOf(session),
+        itemUuid,
+      );
+
+  /// The theme JSON of another spreadsheet for *Import theme* (Sheets 06
+  /// §13).
+  Future<String> spreadsheetTheme(Session session, UuidValue itemUuid) async =>
+      SheetsService.spreadsheetTheme(
+        session,
+        await UserService.actorOf(session),
+        itemUuid,
+      );
+
   /// Undo of a server-side change (`sheets.serverChange`).
   Future<RevertResult> revertChange(
     Session session,
@@ -101,5 +122,19 @@ class SheetsEndpoint extends Endpoint {
     await UserService.actorOf(session),
     spreadsheetUuid,
     days,
+  );
+
+  /// Image proxy for `IMAGE("https://…")` cells and images inserted by URL
+  /// (08 §10): the bytes of the https image [url] (private addresses are
+  /// refused).
+  Future<ByteData> fetchImage(
+    Session session,
+    UuidValue itemUuid,
+    String url,
+  ) async => SheetsImageProxy.fetch(
+    session,
+    await UserService.actorOf(session),
+    itemUuid,
+    url,
   );
 }

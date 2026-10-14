@@ -236,6 +236,18 @@ void main() {
       );
       expect(s.basicFilter!.criteriaJson, contains('hiddenValues'));
     });
+
+    test('when adding an open-ended basic filter then its range has no last '
+        'row and resolves to the end of the sheet', () {
+      final s = h.model.sheets.first;
+      h.apply(
+        SetBasicFilter(s.id, const GridRect(0, 0, 2, 1), openEnded: true),
+      );
+      final g = GridRange.tryParse(s.basicFilter!.rangeJson)!;
+      expect(g.r1, isNotNull);
+      expect(g.r2, isNull);
+      expect(s.resolve(g)!.rect.bottom, s.rows.length - 1);
+    });
   });
 
   group('Given random operation sequences', () {

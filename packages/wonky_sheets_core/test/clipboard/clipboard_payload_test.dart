@@ -1,7 +1,6 @@
 import 'package:test/test.dart';
 import 'package:wonky_sheets_core/formula.dart';
 import 'package:wonky_sheets_core/model.dart';
-import 'package:wonky_sheets_core/src/clipboard/clipboard.dart';
 
 void main() {
   group('Given a clipboard payload with cells, merges and rules', () {

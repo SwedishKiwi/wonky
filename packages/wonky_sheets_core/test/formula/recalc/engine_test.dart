@@ -122,9 +122,52 @@ void main() {
       },
     );
     test('when moving rows then references follow the data', () {
+      // Row 3 moves to the top; whole rows move, so the formula of C2 travels
+      // with its row to C3 and its reference follows the moved data (A3 → A1).
       t.moveRows(2, 1, 0);
-      expect(t.formula('C2'), '=A1*10');
-      expect(t.value('C2'), const FNumber(30));
+      expect(t.formula('C3'), '=A1*10');
+      expect(t.value('C3'), const FNumber(30));
+    });
+    test(
+      'when a range endpoint row is moved then the coverage follows the endpoint ids',
+      () {
+        expect(t.value('C1'), const FNumber(6));
+        // A3 (the end of A1:A3) moves above A1: the range now spans the moved
+        // row and the old first row only (Excel semantics, 05 §5.5).
+        t.moveRows(2, 1, 0);
+        expect(t.formula('C2'), '=SUM(A1:A2)');
+        expect(t.value('C2'), const FNumber(4));
+        t.moveRows(0, 1, 2);
+        expect(t.formula('C1'), '=SUM(A1:A3)');
+        expect(t.value('C1'), const FNumber(6));
+      },
+    );
+    test(
+      'when a row moves into a range then lookups over the range see the new order',
+      () {
+        t.set('A5', 99);
+        t.set('E1', '=INDEX(A1:A3, 2)');
+        expect(t.value('E1'), const FNumber(2));
+        t.moveRows(4, 1, 1);
+        expect(t.value('E1'), const FNumber(99));
+        expect(t.value('C1'), const FNumber(105));
+      },
+    );
+    test('when moving columns then references follow the data', () {
+      t.set('E1', '=SUM(A1:B1)');
+      t.set('B1', 5);
+      expect(t.value('E1'), const FNumber(6));
+      final s = t.sheet1;
+      final ids = s.columns.move(0, 1, 3);
+      s.structureChanged();
+      t.engine.axisChanged(s.id, GridDimension.columns, AxisChange.moved(ids));
+      // A moved to D: SUM(A1:B1) now runs from D (old A) back to A (old B) and
+      // covers the old C1 (=6) that now sits between them: 5 + 6 + 1.
+      // C2 (=A3*10) is now B2 and reads the moved A3 at D3.
+      expect(t.formula('E1'), '=SUM(A1:D1)');
+      expect(t.value('E1'), const FNumber(12));
+      expect(t.formula('B2'), '=D3*10');
+      expect(t.value('B2'), const FNumber(30));
     });
     test(
       'when inserting a column before the data then formulas move with their ids',
@@ -172,10 +215,54 @@ void main() {
       },
     );
     test('when two spills collide then the earlier anchor wins', () {
+      // Anchors are ordered by (sheet order, row index, column index) (05 §7.5):
+      // B1 (row 1) comes before A2 (row 2), so B1 keeps its spill.
       t.set('A2', '=SEQUENCE(1, 3)');
       t.set('B1', '=SEQUENCE(3)');
+      expect(t.value('B1'), const FNumber(1));
+      expect(t.value('B2'), const FNumber(2));
+      final v = t.value('A2');
+      expect(v, isError('#SPILL!'));
+      expect((v as FError).message, ErrorMessages.spillBlocked('B2'));
+    });
+    test(
+      'when two spills collide then the winner does not depend on evaluation order',
+      () {
+        for (final first in ['A2', 'B1']) {
+          final b = FormulaTestBench();
+          final formulas = {'A2': '=SEQUENCE(1, 3)', 'B1': '=SEQUENCE(3)'};
+          final second = first == 'A2' ? 'B1' : 'A2';
+          b.set(first, formulas[first]);
+          b.value(first);
+          b.set(second, formulas[second]);
+          expect(b.value('B1'), const FNumber(1), reason: '$first first');
+          expect(b.value('B3'), const FNumber(3), reason: '$first first');
+          expect(b.value('A2'), isError('#SPILL!'), reason: '$first first');
+          expect(b.value('C2'), FEmpty.instance, reason: '$first first');
+        }
+      },
+    );
+    test('when the winning spill goes away then the blocked spill appears', () {
+      t.set('A2', '=SEQUENCE(1, 3)');
+      t.set('B1', '=SEQUENCE(3)');
+      expect(t.value('A2'), isError('#SPILL!'));
+      t.set('B1', 5);
       expect(t.value('A2'), const FNumber(1));
-      expect(t.value('B1'), isError('#SPILL!'));
+      expect(t.value('C2'), const FNumber(3));
+      t.set('B1', '=SEQUENCE(2)');
+      expect(t.value('A2'), isError('#SPILL!'));
+      t.set('B1', null);
+      expect(t.value('B2'), const FNumber(2));
+    });
+    test('when the winning spill shrinks then the blocked spill appears', () {
+      t.set('E1', 3);
+      t.set('B1', '=SEQUENCE(E1)');
+      t.set('A2', '=SEQUENCE(1, 3)');
+      expect(t.value('A2'), isError('#SPILL!'));
+      t.set('E1', 1);
+      expect(t.value('B1'), const FNumber(1));
+      expect(t.value('A2'), const FNumber(1));
+      expect(t.value('B2'), const FNumber(2));
     });
     test(
       'when a result does not fit the grid then #REF! asks for more rows',
@@ -253,7 +340,59 @@ void main() {
       t.value('A1');
       t.set('B1', 5);
       expect(t.value('A1'), const FNumber(5));
+      expect(t.engine.circularCells(), isEmpty);
     });
+    test('when an edit closes a cycle then it is detected', () {
+      final t = FormulaTestBench();
+      t.setAll({'A1': '=B1*2', 'B1': 5, 'C1': '=A1+1'});
+      expect(t.value('C1'), const FNumber(11));
+      t.set('B1', '=A1');
+      expect(t.value('C1'), isError('#REF!'));
+      expect(t.value('A1'), isError('#REF!'));
+      expect(t.engine.circularCells().map((c) => CellPos(c.row, c.col).a1), [
+        'A1',
+        'B1',
+      ]);
+    });
+    test(
+      'when a cycle member is reached through an already evaluated member then the whole component is circular',
+      () {
+        // A1 → B1 → A1 closes first; C1 reads B1 after B1 completed, but A1
+        // also reads C1, so C1 is in the same strongly connected component.
+        final t = FormulaTestBench();
+        t.setAll({'A1': '=B1+C1', 'B1': '=A1', 'C1': '=IFERROR(B1, 7)'});
+        expect(t.value('C1'), isError('#REF!'));
+        expect(t.value('A1'), isError('#REF!'));
+        expect(t.engine.circularCells().map((c) => CellPos(c.row, c.col).a1), [
+          'A1',
+          'B1',
+          'C1',
+        ]);
+      },
+    );
+    test(
+      'when the dependent of a cycle is read first then the cycle is still detected',
+      () {
+        final t = FormulaTestBench();
+        t.setAll({'C1': '=A1+1', 'A1': '=B1', 'B1': '=A1'});
+        expect(t.engine.valueAt(t.sheet1.id, 0, 2), isError('#REF!'));
+        expect(t.value('A1'), isError('#REF!'));
+        expect(t.value('B1'), isError('#REF!'));
+      },
+    );
+    test(
+      'when a cycle is longer than the nested evaluation depth then every member is circular',
+      () {
+        final t = FormulaTestBench();
+        t.set('A1', '=A200+1');
+        for (var r = 2; r <= 200; r++) {
+          t.set('A$r', '=A${r - 1}');
+        }
+        t.set('B1', '=A100*2');
+        expect(t.value('B1'), isError('#REF!'));
+        expect(t.engine.circularCells(), hasLength(200));
+      },
+    );
     test(
       'when iterative calculation is enabled then A1=A1+1 increments by max iterations per recalculation',
       () {
@@ -286,6 +425,79 @@ void main() {
         );
         t.setAll({'A1': '=(B1+4)/2', 'B1': '=A1'});
         expect((t.value('A1') as FNumber).v, closeTo(4, 0.001));
+      },
+    );
+    test(
+      'when the change falls below the convergence threshold then iteration stops',
+      () {
+        final t = FormulaTestBench(
+          settings: const CalcSettings(
+            iterativeCalc: true,
+            maxIterations: 100,
+            convergenceThreshold: 0.5,
+          ),
+        );
+        // Sweeps from 0: 2, 3, 3.5, 3.75 (|Δ| = 0.25 < 0.5 stops).
+        t.setAll({'A1': '=(B1+4)/2', 'B1': '=A1'});
+        expect(t.value('A1'), const FNumber(3.75));
+        expect(t.value('B1'), const FNumber(3.75));
+      },
+    );
+    test(
+      'when iterating a cycle then the result does not depend on which member is read first',
+      () {
+        for (final first in [0, 1]) {
+          final t = FormulaTestBench(
+            settings: const CalcSettings(
+              iterativeCalc: true,
+              maxIterations: 10,
+              convergenceThreshold: 0.001,
+            ),
+          );
+          t.setAll({'A1': '=B1+1', 'B1': '=A1+1'});
+          t.engine.valueAt(t.sheet1.id, 0, first);
+          // Gauss–Seidel sweeps in position order: A1 then B1.
+          expect(t.value('A1'), const FNumber(19), reason: 'first $first');
+          expect(t.value('B1'), const FNumber(20), reason: 'first $first');
+        }
+      },
+    );
+    test(
+      'when a cycle is longer than the nested evaluation depth then it iterates',
+      () {
+        final t = FormulaTestBench(
+          settings: const CalcSettings(
+            iterativeCalc: true,
+            maxIterations: 3,
+            convergenceThreshold: 0.001,
+          ),
+        );
+        t.set('A1', '=A200+1');
+        for (var r = 2; r <= 200; r++) {
+          t.set('A$r', '=A${r - 1}');
+        }
+        t.set('B1', '=A100*2');
+        expect(t.value('B1'), const FNumber(6));
+        expect(t.value('A200'), const FNumber(3));
+        expect(t.engine.circularCells(), isEmpty);
+      },
+    );
+    test(
+      'when iterative calculation is switched on and off then the cycle follows the setting',
+      () {
+        final t = FormulaTestBench();
+        t.set('A1', '=A1+1');
+        expect(t.value('A1'), isError('#REF!'));
+        t.updateSettings(
+          const CalcSettings(iterativeCalc: true, maxIterations: 10),
+        );
+        expect(t.value('A1'), const FNumber(10));
+        t.updateSettings(
+          const CalcSettings(iterativeCalc: true, maxIterations: 1),
+        );
+        expect(t.value('A1'), const FNumber(11));
+        t.updateSettings(const CalcSettings());
+        expect(t.value('A1'), isError('#REF!'));
       },
     );
   });

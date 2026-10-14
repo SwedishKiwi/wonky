@@ -27,6 +27,7 @@ void registerConditional(FunctionRegistryBuilder b) {
       ),
     ],
     (a) => _single(a, _Agg.sum, sumIndex: a.has(2) ? 2 : 0),
+    liftable: true,
     priority: Priority.p0,
     examples: ['SUMIF(A1:A10, ">20")', 'SUMIF(A1:A10, "Paid", B1:B10)'],
     seeAlso: ['SUMIFS', 'COUNTIF'],
@@ -45,6 +46,7 @@ void registerConditional(FunctionRegistryBuilder b) {
       P.rep('criterion2', ArgKind.scalar, 'Additional criteria to check.'),
     ],
     (a) => _multi(a, _Agg.sum, valueIndex: 0, first: 1),
+    liftable: true,
     priority: Priority.p0,
     examples: ['SUMIFS(C1:C10, A1:A10, "East", B1:B10, ">100")'],
     seeAlso: ['SUMIF', 'COUNTIFS'],
@@ -58,6 +60,7 @@ void registerConditional(FunctionRegistryBuilder b) {
       P.scalar('criterion', 'The pattern or test to apply to range.'),
     ],
     (a) => _single(a, _Agg.count),
+    liftable: true,
     priority: Priority.p0,
     examples: ['COUNTIF(A1:A10, ">20")', 'COUNTIF(A1:A10, "Paid")'],
     seeAlso: ['COUNTIFS', 'SUMIF'],
@@ -75,6 +78,7 @@ void registerConditional(FunctionRegistryBuilder b) {
       P.rep('criterion2', ArgKind.scalar, 'Additional criteria to check.'),
     ],
     (a) => _multi(a, _Agg.count, valueIndex: -1, first: 0),
+    liftable: true,
     priority: Priority.p0,
     examples: ['COUNTIFS(A1:A10, ">20", B1:B10, "<30")'],
   );
@@ -91,6 +95,7 @@ void registerConditional(FunctionRegistryBuilder b) {
       ),
     ],
     (a) => _single(a, _Agg.average, sumIndex: a.has(2) ? 2 : 0),
+    liftable: true,
     priority: Priority.p0,
     examples: ['AVERAGEIF(A1:A10, ">20")', 'AVERAGEIF(A1:A10, "East", B1:B10)'],
   );
@@ -108,6 +113,7 @@ void registerConditional(FunctionRegistryBuilder b) {
       P.rep('criterion2', ArgKind.scalar, 'Additional criteria to check.'),
     ],
     (a) => _multi(a, _Agg.average, valueIndex: 0, first: 1),
+    liftable: true,
     priority: Priority.p0,
     examples: ['AVERAGEIFS(C1:C10, A1:A10, "East", B1:B10, ">100")'],
   );
@@ -131,6 +137,7 @@ void registerConditional(FunctionRegistryBuilder b) {
       P.rep('criterion2', ArgKind.scalar, 'Additional criteria.'),
     ],
     (a) => _multi(a, _Agg.max, valueIndex: 0, first: 1),
+    liftable: true,
     priority: Priority.p0,
     examples: ['MAXIFS(B1:B10, A1:A10, "East")'],
   );
@@ -154,6 +161,7 @@ void registerConditional(FunctionRegistryBuilder b) {
       P.rep('criterion2', ArgKind.scalar, 'Additional criteria.'),
     ],
     (a) => _multi(a, _Agg.min, valueIndex: 0, first: 1),
+    liftable: true,
     priority: Priority.p0,
     examples: ['MINIFS(B1:B10, A1:A10, "East")'],
   );
@@ -174,15 +182,34 @@ final class _Grid {
       (r < rows && c < cols) ? cells[r * cols + c] : FEmpty.instance;
 }
 
-FRef _rangeArg(Args a, int i) {
-  final v = a[i];
+/// A criteria or value range argument: a reference, or an array (Sheets accepts arrays such
+/// as `COUNTIF({1,2,3}, ">1")` or `COUNTIF(SPLIT(A1, ","), "x")`).
+FValue _rangeArg(Args a, int i) {
+  var v = a[i];
   if (v is FError) throw FormulaError(v);
-  if (v is! FRef) fail(ErrorKind.value, ErrorMessages.argumentMustBeRange);
+  if (v is FRich) v = v.scalar;
+  if (v is! FRef && v is! FArray) {
+    fail(ErrorKind.value, ErrorMessages.argumentMustBeRange);
+  }
   return v;
 }
 
-/// Materializes [ref] resized to (rows × cols) from its top-left, clamped to the used extent.
-_Grid _grid(Args a, FRef ref, int rows, int cols) {
+/// (rows, cols) of a range argument.
+(int, int) _shapeOf(FValue v) =>
+    v is FRef ? (v.area.rows, v.area.cols) : ((v as FArray).rows, v.cols);
+
+/// Materializes [src] resized to (rows × cols) from its top-left; references are clamped to
+/// the used extent.
+_Grid _grid(Args a, FValue src, int rows, int cols) {
+  if (src is FArray) {
+    final cr = math.min(rows, src.rows), cc = math.min(cols, src.cols);
+    final cells = List<FValue>.generate(cr * cc, (i) {
+      final v = src.at(i ~/ cc, i % cc);
+      return v is FRich ? v.scalar : v;
+    });
+    return _Grid(cr, cc, rows, cols, cells);
+  }
+  final ref = src as FRef;
   final ctx = a.ctx;
   final area = ref.area;
   final s = a.sheetOfRef(ref);
@@ -295,8 +322,8 @@ final class _Index {
   }
 }
 
-_Index? _indexFor(Args a, FRef ref, _Grid g) {
-  if (g.rows * g.cols < 256) return null;
+_Index? _indexFor(Args a, FValue ref, _Grid g) {
+  if (ref is! FRef || g.rows * g.cols < 256) return null;
   final area = ref.area;
   final key = 'I|${area.sheetId}|${area.top}|${area.left}|${g.rows}|${g.cols}';
   final stamp = a.ctx.host.lookupCache.stampOf(
@@ -372,7 +399,7 @@ final class _Acc {
 FValue _single(Args a, _Agg agg, {int sumIndex = 0}) {
   final ref = _rangeArg(a, 0);
   final crit = Criterion.of(a.scalar(1), a.locale);
-  final rows = ref.area.rows, cols = ref.area.cols;
+  final (rows, cols) = _shapeOf(ref);
   final g = _grid(a, ref, rows, cols);
   final _Grid values;
   if (agg == _Agg.count) {
@@ -380,10 +407,7 @@ FValue _single(Args a, _Agg agg, {int sumIndex = 0}) {
   } else if (sumIndex == 0) {
     values = g;
   } else {
-    final sv = a[sumIndex];
-    if (sv is FError) throw FormulaError(sv);
-    if (sv is! FRef) fail(ErrorKind.value, ErrorMessages.argumentMustBeRange);
-    values = _grid(a, sv, rows, cols);
+    values = _grid(a, _rangeArg(a, sumIndex), rows, cols);
   }
   final acc = _Acc(agg);
   final idx = _indexFor(a, ref, g);
@@ -420,22 +444,22 @@ FValue _multi(Args a, _Agg agg, {required int valueIndex, required int first}) {
       ErrorMessages.wrongArgCount(a.fn, first + 2, 255, a.length),
     );
   }
-  final refs = <FRef>[];
+  final refs = <FValue>[];
   final crits = <Criterion>[];
   for (var k = 0; k < pairs; k++) {
     refs.add(_rangeArg(a, first + 2 * k));
     crits.add(Criterion.of(a.scalar(first + 2 * k + 1), a.locale));
   }
-  final rows = refs.first.area.rows, cols = refs.first.area.cols;
-  FRef? valueRef;
+  final (rows, cols) = _shapeOf(refs.first);
+  FValue? valueRef;
   if (valueIndex >= 0) {
     valueRef = _rangeArg(a, valueIndex);
-    if (valueRef.area.rows != rows || valueRef.area.cols != cols) {
+    if (_shapeOf(valueRef) != (rows, cols)) {
       fail(ErrorKind.value, ErrorMessages.arraySizeMismatch(a.fn));
     }
   }
   for (final r in refs) {
-    if (r.area.rows != rows || r.area.cols != cols) {
+    if (_shapeOf(r) != (rows, cols)) {
       fail(ErrorKind.value, ErrorMessages.arraySizeMismatch(a.fn));
     }
   }

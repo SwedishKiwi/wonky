@@ -1,0 +1,7 @@
+include: package:lints/recommended.yaml
+
+# WONKY PATCH DE-0: the repository's CI analyzes every workspace member with
+# --fatal-infos; the upstream tests trigger this lint on purpose.
+analyzer:
+  errors:
+    unrelated_type_equality_checks: ignore

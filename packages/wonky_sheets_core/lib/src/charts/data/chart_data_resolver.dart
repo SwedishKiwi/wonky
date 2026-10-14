@@ -49,14 +49,15 @@ final class _Line {
 }
 
 /// Resolves a [ChartSpec]'s ranges into [ChartData] (08 §4.1).
-final class ChartDataResolver {
-  /// Creates a resolver.
-  const ChartDataResolver();
-
+abstract final class ChartDataResolver {
   /// Maximum source cells per chart (08 §12).
   static const maxSourceCells = 1000000;
 
-  /// Resolves [spec] against [model] with computed values from [values].
+  /// Resolves [spec] against [model] with computed values, number formats and hidden state
+  /// from [values] (08 §4.1): ranges → logical table (hidden rows/columns skipped unless
+  /// `includeHidden`) → headers → domain and series → aggregation → pie "Other", histogram
+  /// buckets, scorecard and table data. Labels are formatted with [fmt] (default: the number
+  /// format engine in [locale]). Never throws: problems become `ChartData.warnings`.
   static ChartData resolve(
     ChartSpec spec,
     WorkbookModel model,
@@ -136,7 +137,11 @@ final class _Resolution {
 
     // Domain.
     int? domainIdx;
-    if (data.useFirstColumnAsLabels && spec.type != ChartType.histogram) {
+    // Histograms bucket every column and scorecards aggregate their columns: neither has a
+    // domain (08 §3.7).
+    if (data.useFirstColumnAsLabels &&
+        spec.type != ChartType.histogram &&
+        spec.type != ChartType.scorecard) {
       domainIdx = _findDomain(lines);
     }
     final points = n - h;
@@ -172,10 +177,13 @@ final class _Resolution {
       if (!r.hidden) explicit.add((li, r.key));
     }
     final isTable = spec.type == ChartType.table;
+    // Table charts show every column; bubble charts take a text color-group column
+    // (08 §2: id label, X, Y, color group, size).
+    final keepText = isTable || spec.type == ChartType.bubble;
     // Unreferenced lines (new columns inside the range, or no refs at all) become series.
     final auto = <int>[
       for (var i = 0; i < lines.length; i++)
-        if (!claimed.contains(i) && (isTable || _hasNumber(lines[i], h))) i,
+        if (!claimed.contains(i) && (keepText || _hasNumber(lines[i], h))) i,
     ];
     if (data.seriesRefs.isEmpty) {
       for (final i in auto) {
@@ -268,7 +276,6 @@ final class _Resolution {
         series,
         bucketSize: o.bucketSize,
         outlierPercentile: o.outlierPercentile,
-        collectItems: o.showItemDividers,
       );
     }
 

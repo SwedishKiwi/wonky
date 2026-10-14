@@ -175,6 +175,75 @@ void main() {
     });
   });
 
+  group('Given more values to compare (07 §12.1)', () {
+    test(
+      'when errors, booleans and blanks repeat then they are duplicates',
+      () {
+        final rows = <CellValue>[
+          const ErrorValue(CellErrorKind.na),
+          const ErrorValue(CellErrorKind.na),
+          const ErrorValue(CellErrorKind.div0),
+          const BoolValue(true),
+          const BoolValue(true),
+          CellValue.empty,
+          const TextValue(''),
+          NumberValue(0),
+          NumberValue(-0.0),
+        ];
+        final r = Dedupe.findDuplicates(
+          (row, col) => rows[row],
+          GridRect(0, 0, rows.length - 1, 0),
+        );
+        expect(r.keptRows, [0, 2, 3, 5, 7]);
+        expect(r.duplicateRows, [1, 4, 6, 8]);
+        expect(Dedupe.sameValue(NumberValue(1), const TextValue('1')), isFalse);
+      },
+    );
+
+    test('when a header row is excluded then it is never compared', () {
+      final rows = <CellValue>[
+        const TextValue('x'),
+        const TextValue('x'),
+        const TextValue('x'),
+      ];
+      final r = Dedupe.findDuplicates(
+        (row, col) => rows[row],
+        const GridRect(0, 0, 2, 0),
+        hasHeader: true,
+      );
+      expect(r.keptRows, [1]);
+      expect(r.duplicateRows, [2]);
+      expect(r.dataRowCount, 2);
+      expect(Dedupe.compactPermutation(r, 1), [0, 1]);
+    });
+  });
+
+  group('Given rich text with whitespace (07 §12.2)', () {
+    test('when trimming then the runs follow the text', () {
+      const rich = RichText('  ab   cd ', [
+        RichRun(2, 4, {RichRunKeys.bold: true}),
+        RichRun(7, 9, {RichRunKeys.italic: true}),
+      ]);
+      final out = WhitespaceTrimmer.trimContent(const RichTextContent(rich));
+      expect(out, isA<RichTextContent>());
+      final r = (out! as RichTextContent).rich;
+      expect(r.text, 'ab cd');
+      expect(r.runs, const [
+        RichRun(0, 2, {RichRunKeys.bold: true}),
+        RichRun(3, 5, {RichRunKeys.italic: true}),
+      ]);
+    });
+
+    test('when the content is not text then it is untouched', () {
+      expect(WhitespaceTrimmer.trimContent(const NumberContent(1)), isNull);
+      expect(
+        WhitespaceTrimmer.trimContent(const FormulaContent('= 1 ')),
+        isNull,
+      );
+      expect(WhitespaceTrimmer.trimContent(null), isNull);
+    });
+  });
+
   group('Given randomize range', () {
     test(
       'when shuffling with a seeded random then the result is a deterministic permutation',

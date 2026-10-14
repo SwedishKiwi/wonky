@@ -81,6 +81,13 @@ final class _Cartesian {
   // Waterfall / histogram.
   List<_WaterfallItem> waterfall = const [];
 
+  /// Offset of a column series' slot center from the band center (grouped columns), used
+  /// to place its data labels.
+  final Map<String, double> slotOffset = {};
+
+  /// Trendline equation labels, drawn above the plot body.
+  final List<ScenePrimitive> overlays = [];
+
   late ChartRect plot;
 
   ChartAxis get domainAxisSpec => horizontal ? spec.axes.v : spec.axes.h;
@@ -111,6 +118,7 @@ final class _Cartesian {
     );
     _drawAxes();
     _drawDataLabels();
+    c.out.addAll(overlays);
   }
 
   // ---------------------------------------------------------------------------
@@ -169,9 +177,16 @@ final class _Cartesian {
         lo = 0;
         hi = 1;
       }
+      if (type == ChartType.bubble) (lo, hi) = _bubblePadding(lo, hi);
       domLo = lo;
       domHi = hi;
     }
+  }
+
+  /// [lo]..[hi] grown by 8 % on each side so bubbles at the extremes stay inside the plot.
+  static (double, double) _bubblePadding(double lo, double hi) {
+    final pad = hi > lo ? (hi - lo) * 0.08 : 0.5;
+    return (lo - pad, hi + pad);
   }
 
   void _prepareWaterfall() {
@@ -265,6 +280,12 @@ final class _Cartesian {
             left.add(v);
           }
           left.sourceFormat = data.series[1].numberFormat;
+          if (left.used) {
+            final (lo, hi) = _bubblePadding(left.lo, left.hi);
+            left
+              ..lo = lo
+              ..hi = hi;
+          }
         }
         return;
       default:
@@ -674,10 +695,30 @@ final class _Cartesian {
       ? ChartRect.fromLTRB(v0, dStart, v1, dStart + dWidth)
       : ChartRect.fromLTRB(dStart, v1, dStart + dWidth, v0);
 
-  double valuePx(_ValueAxis a, double v) {
-    final px = a.scale.map(v);
-    if (px.isNaN) return px;
-    return px;
+  /// Value position (px) of [v] on axis [a]; NaN when it can't be shown (NaN, or ≤ 0 on a
+  /// log scale).
+  double valuePx(_ValueAxis a, double v) => a.scale.map(v);
+
+  /// [valuePx] for the ends of bars: values off a log scale sit on its baseline.
+  double extentPx(_ValueAxis a, double v) {
+    final px = valuePx(a, v);
+    return px.isNaN ? baselinePx(a) : px;
+  }
+
+  /// [values] with the points that can't be placed on axis [a] or the domain scale (≤ 0 on a
+  /// log scale) turned into gaps.
+  Float64List _onScale(_ValueAxis a, Float64List values) {
+    final logValue = a.scale is LogScale;
+    final logDomain = !band && domScale is LogScale;
+    if (!logValue && !logDomain) return values;
+    final out = Float64List.fromList(values);
+    for (var i = 0; i < out.length; i++) {
+      if ((logValue && !(out[i] > 0)) ||
+          (logDomain && !(domainValues[i] > 0))) {
+        out[i] = double.nan;
+      }
+    }
+    return out;
   }
 
   /// Baseline px of the value axis (0 clamped into the visible range).
@@ -710,7 +751,9 @@ final class _Cartesian {
       final b = PathBuilder();
       for (final p in pxs) {
         if (p.isNaN) continue;
-        if (alongDomain == horizontal) {
+        // Lines parallel to the domain axis are horizontal in column-style charts and
+        // vertical in bar charts.
+        if (alongDomain != horizontal) {
           // Horizontal line at y = p.
           b
             ..moveTo(plot.left, p)
@@ -1097,7 +1140,9 @@ final class _Cartesian {
         final groupW = bw * (slotKeys.length > 1 ? 0.8 : 0.7);
         final slotW = groupW / math.max(1, slotKeys.length);
         for (final s in columns) {
-          _drawColumns(s, body, slotOf[s.key]!, slotW, groupW);
+          final slot = slotOf[s.key]!;
+          slotOffset[s.key] = -groupW / 2 + (slot + 0.5) * slotW;
+          _drawColumns(s, body, slot, slotW, groupW);
         }
       }
     }
@@ -1131,11 +1176,10 @@ final class _Cartesian {
       if (t[i].isNaN) continue;
       final center = domAt(i);
       final dStart = center - groupW / 2 + slot * slotW;
-      var v0 = valuePx(a, b[i]);
-      var v1 = valuePx(a, t[i]);
-      if (v0.isNaN) v0 = baselinePx(a);
+      final v0 = extentPx(a, b[i]);
+      final v1 = valuePx(a, t[i]);
       if (v1.isNaN) continue;
-      final r = barRect(horizontal ? dStart : dStart, slotW, v0, v1);
+      final r = barRect(dStart, slotW, v0, v1);
       items.add(
         SRect(
           r,
@@ -1201,7 +1245,7 @@ final class _Cartesian {
         }
         final d = start + p + 0.5;
         final vMax = math.max(hi[p], 0.0);
-        final (x, y) = pt(d, valuePx(a, vMax));
+        final (x, y) = pt(d, extentPx(a, vMax));
         if (!open) {
           final (bx, by) = pt(d, basePx);
           b
@@ -1292,7 +1336,7 @@ final class _Cartesian {
 
   void _drawLine(_SeriesInfo s, List<ScenePrimitive> body) {
     final a = s.rightAxis ? right : left;
-    final values = _valuesFor(s);
+    final values = _onScale(a, _valuesFor(s));
     final idx = _visibleIndices(values);
     final width = s.style.lineWidth ?? 2;
     final color = Argb.withOpacity(
@@ -1373,7 +1417,7 @@ final class _Cartesian {
 
   void _drawScatter(_SeriesInfo s, List<ScenePrimitive> body) {
     final a = s.rightAxis ? right : left;
-    final values = s.series.values;
+    final values = _onScale(a, s.series.values);
     final idx = _visibleIndices(values);
     final items = <ScenePrimitive>[];
     final lw = s.style.lineWidth ?? 0;
@@ -1409,7 +1453,7 @@ final class _Cartesian {
 
   void _drawArea(_SeriesInfo s, List<ScenePrimitive> body) {
     final a = s.rightAxis ? right : left;
-    final t = top[s.key]!, b = base[s.key]!;
+    final t = _onScale(a, top[s.key]!), b = base[s.key]!;
     final idx = _visibleIndices(t);
     final items = <ScenePrimitive>[];
     final fill = Argb.withOpacity(
@@ -1544,6 +1588,7 @@ final class _Cartesian {
       for (var i = 0; i < ma.length; i++) {
         if (ma[i].isNaN) continue;
         final (x, y) = pt(dpx(xs[i]), valuePx(a, ma[i]));
+        if (x.isNaN || y.isNaN) continue;
         xy
           ..add(x)
           ..add(y);
@@ -1577,7 +1622,7 @@ final class _Cartesian {
       }
       if (tl.label == TrendlineLabel.equation && xy.length >= 2) {
         final st = c.font(ChartFont.inherit, size: 11, color: color);
-        c.out.add(
+        overlays.add(
           c.text(
             fit.equation(),
             xy[xy.length - 2],
@@ -1618,9 +1663,9 @@ final class _Cartesian {
         final start = math.min(x0, x1) + gap / 2 + si * slotW;
         final r = ChartRect.fromLTRB(
           start,
-          valuePx(left, cnt.toDouble()),
+          extentPx(left, cnt.toDouble()),
           start + slotW,
-          valuePx(left, 0),
+          extentPx(left, 0),
         );
         items.add(
           SRect(
@@ -1669,21 +1714,20 @@ final class _Cartesian {
       final items = <ScenePrimitive>[];
       final wickUp = PathBuilder(), wickDown = PathBuilder();
       for (var i = 0; i < count; i++) {
-        if ([low[i], open[i], close[i], high[i]].any((v) => v.isNaN)) continue;
+        final lowPx = valuePx(left, low[i]), highPx = valuePx(left, high[i]);
+        final bodyLo = valuePx(left, math.min(open[i], close[i]));
+        final bodyHi = valuePx(left, math.max(open[i], close[i]));
+        // Empty cells, or values that a log scale can't show, skip the candle.
+        if ([lowPx, highPx, bodyLo, bodyHi].any((v) => v.isNaN)) continue;
         final center = domAt(i) - bw * 0.3 + (g + 0.5) * bodyW;
         final up = close[i] >= open[i];
         final wick = up ? wickUp : wickDown;
-        final (x0, y0) = pt(center, valuePx(left, low[i]));
-        final (x1, y1) = pt(center, valuePx(left, high[i]));
+        final (x0, y0) = pt(center, lowPx);
+        final (x1, y1) = pt(center, highPx);
         wick
           ..moveTo(x0, y0)
           ..lineTo(x1, y1);
-        final r = barRect(
-          center - bodyW / 2,
-          bodyW,
-          valuePx(left, math.min(open[i], close[i])),
-          valuePx(left, math.max(open[i], close[i])),
-        );
+        final r = barRect(center - bodyW / 2, bodyW, bodyLo, bodyHi);
         final color = up ? rising : falling;
         final filled = up ? o.risingFilled : o.fallingFilled;
         items.add(
@@ -1735,8 +1779,8 @@ final class _Cartesian {
       final r = barRect(
         center - bw / 2,
         bw,
-        valuePx(left, w.from),
-        valuePx(left, w.to),
+        extentPx(left, w.from),
+        extentPx(left, w.to),
       );
       final color = switch (w.kind) {
         'pos' => pos,
@@ -1758,8 +1802,8 @@ final class _Cartesian {
       if (o.connectorShow && i + 1 < waterfall.length) {
         final next = waterfall[i + 1];
         final level = next.kind == 'total' ? w.to : next.from;
-        final (x0, y0) = pt(center + bw / 2, valuePx(left, level));
-        final (x1, y1) = pt(domAt(i + 1) - bw / 2, valuePx(left, level));
+        final (x0, y0) = pt(center + bw / 2, extentPx(left, level));
+        final (x1, y1) = pt(domAt(i + 1) - bw / 2, extentPx(left, level));
         conn
           ..moveTo(x0, y0)
           ..lineTo(x1, y1);
@@ -1782,7 +1826,8 @@ final class _Cartesian {
   void _drawBubbles(List<ScenePrimitive> body) {
     if (data.series.length < 2) return;
     final xs = data.series[0].values, ys = data.series[1].values;
-    final sizes = data.series.length >= 3 ? data.series.last.values : null;
+    final sizeIdx = c.bubbleRoles().size;
+    final sizes = sizeIdx == null ? null : data.series[sizeIdx].values;
     final o = spec.bubbleOptions;
     final groups = c.bubbleGroups();
     var smin = double.infinity, smax = -double.infinity;
@@ -1795,7 +1840,7 @@ final class _Cartesian {
     }
     final order = <int>[
       for (var i = 0; i < count; i++)
-        if (!xs[i].isNaN && !ys[i].isNaN) i,
+        if (!domScale!.map(xs[i]).isNaN && !valuePx(left, ys[i]).isNaN) i,
     ];
     double diameter(int i) {
       if (sizes == null || sizes[i].isNaN || !(smax > smin)) {
@@ -1806,14 +1851,15 @@ final class _Cartesian {
               math.sqrt((sizes[i].abs() - smin) / (smax - smin));
     }
 
-    order.sort((a, b) => diameter(b).compareTo(diameter(a)));
+    order.sort((a, b) {
+      final d = diameter(b).compareTo(diameter(a));
+      return d != 0 ? d : a.compareTo(b);
+    });
     final xy = Float64List(order.length * 2);
     final ds = Float64List(order.length);
     final fills = Int32List(order.length);
     final key = data.series[1].key;
-    final baseColor = c.seriesInfos.length > 1
-        ? c.seriesInfos[1].color
-        : c.theme.seriesColor(0);
+    final baseColor = c.seriesColor(0, spec.seriesStyle(key));
     final style = c.font(ChartFont.inherit, size: 11);
     final labels = <ScenePrimitive>[];
     for (var k = 0; k < order.length; k++) {
@@ -1821,9 +1867,13 @@ final class _Cartesian {
       xy[2 * k] = domScale!.map(xs[i]);
       xy[2 * k + 1] = valuePx(left, ys[i]);
       ds[k] = diameter(i);
-      final color = groups != null && o.colorBy != BubbleColorBy.series
-          ? c.theme.seriesColor(groups.$2[i])
-          : (groups != null ? c.theme.seriesColor(groups.$2[i]) : baseColor);
+      // A color-group column colors by group; without one, `colorBy: category` gives every
+      // bubble its own palette color.
+      final color = groups != null
+          ? c.sliceColor(groups.$2[i], null)
+          : (o.colorBy == BubbleColorBy.category
+                ? c.sliceColor(i, null)
+                : baseColor);
       fills[k] = Argb.withOpacity(color, 0.75);
       final label = data.domain.isSynthetic ? '' : data.domain.labels[i];
       if (label.isNotEmpty && c.measure(label, style).width < ds[k] - 4) {
@@ -1871,7 +1921,7 @@ final class _Cartesian {
       for (var i = 0; i < waterfall.length; i++) {
         final w = waterfall[i];
         final v = w.kind == 'total' ? w.to : w.to - w.from;
-        final (x, y) = pt(domAt(i), valuePx(left, math.max(w.from, w.to)));
+        final (x, y) = pt(domAt(i), extentPx(left, math.max(w.from, w.to)));
         c.out.add(
           c.text(
             c.formatValue(v, s.numberFormat),
@@ -1894,7 +1944,7 @@ final class _Cartesian {
       final dl = s.style.dataLabels;
       if (!dl.show) continue;
       final a = s.rightAxis ? right : left;
-      final t = top[s.key] ?? s.series.values;
+      final t = _onScale(a, top[s.key] ?? s.series.values);
       final b = base[s.key];
       final st = c.font(dl.font, size: 11, color: c.theme.text);
       final items = <ScenePrimitive>[];
@@ -1918,12 +1968,12 @@ final class _Cartesian {
           seriesKey: s.key,
           pointIndex: i,
         );
-        final d = domAt(i);
+        final d = domAt(i) + (slotOffset[s.key] ?? 0);
         final vEnd = valuePx(a, t[i]);
         if (vEnd.isNaN) continue;
         final vStart = b == null || b[i].isNaN
             ? baselinePx(a)
-            : valuePx(a, b[i]);
+            : extentPx(a, b[i]);
         var position = dl.position;
         if (position == DataLabelPosition.auto) {
           position = s.mark == _Mark.column

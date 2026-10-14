@@ -24,9 +24,12 @@ final class DedupeResult {
   int get duplicateCount => duplicateRows.length;
   int get uniqueCount => keptRows.length;
 
+  /// Result dialog text when nothing was found.
+  static const String noDuplicatesMessage = 'No duplicate rows found.';
+
   /// Result dialog text (07 §12.1).
   String get message => duplicateCount == 0
-      ? 'No duplicate rows found.'
+      ? noDuplicatesMessage
       : '$duplicateCount duplicate row${duplicateCount == 1 ? '' : 's'} found and removed. '
             '$uniqueCount unique row${uniqueCount == 1 ? '' : 's'} remain.';
 }

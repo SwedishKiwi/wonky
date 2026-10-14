@@ -11,6 +11,7 @@
 
 // ignore_for_file: no_leading_underscores_for_library_prefixes
 import 'package:serverpod/serverpod.dart' as _is;
+import 'package:wonky_server/src/generated/protocol.dart' as _il4umwa0;
 import '../../../platform/ai/models/ai_apply_mode.dart' as _iinkwvx0;
 
 /// Volatile context of a chat message (Write 09 §5.6).
@@ -26,6 +27,10 @@ abstract class AssistantContextHints
     this.caretHeadingPath,
     bool? includeComments,
     this.localTime,
+    this.sheetsActiveSheet,
+    this.sheetsSelection,
+    this.sheetsActiveCell,
+    this.sheetsVisibleRange,
   }) : includeComments = includeComments ?? false;
 
   factory AssistantContextHints({
@@ -38,6 +43,10 @@ abstract class AssistantContextHints
     String? caretHeadingPath,
     bool? includeComments,
     String? localTime,
+    String? sheetsActiveSheet,
+    List<String>? sheetsSelection,
+    String? sheetsActiveCell,
+    String? sheetsVisibleRange,
   }) = _AssistantContextHintsImpl;
 
   factory AssistantContextHints.fromJson(
@@ -59,6 +68,14 @@ abstract class AssistantContextHints
               jsonSerialization['includeComments'],
             ),
       localTime: jsonSerialization['localTime'] as String?,
+      sheetsActiveSheet: jsonSerialization['sheetsActiveSheet'] as String?,
+      sheetsSelection: jsonSerialization['sheetsSelection'] == null
+          ? null
+          : _il4umwa0.Protocol().deserialize<List<String>>(
+              jsonSerialization['sheetsSelection'],
+            ),
+      sheetsActiveCell: jsonSerialization['sheetsActiveCell'] as String?,
+      sheetsVisibleRange: jsonSerialization['sheetsVisibleRange'] as String?,
     );
   }
 
@@ -86,6 +103,16 @@ abstract class AssistantContextHints
   /// The user's local date/time ("2026-10-13 14:05 Europe/Stockholm").
   String? localTime;
 
+  /// Sheets (12 §6.1): the active sheet, the selected A1 ranges, the
+  /// active cell and the visible range of the requesting window.
+  String? sheetsActiveSheet;
+
+  List<String>? sheetsSelection;
+
+  String? sheetsActiveCell;
+
+  String? sheetsVisibleRange;
+
   /// Returns a shallow copy of this [AssistantContextHints]
   /// with some or all fields replaced by the given arguments.
   @_is.useResult
@@ -99,6 +126,10 @@ abstract class AssistantContextHints
     String? caretHeadingPath,
     bool? includeComments,
     String? localTime,
+    String? sheetsActiveSheet,
+    List<String>? sheetsSelection = const _is.$UndefinedList<String>(),
+    String? sheetsActiveCell,
+    String? sheetsVisibleRange,
   });
   @override
   Map<String, dynamic> toJson() {
@@ -113,6 +144,10 @@ abstract class AssistantContextHints
       if (caretHeadingPath != null) 'caretHeadingPath': caretHeadingPath,
       'includeComments': includeComments,
       if (localTime != null) 'localTime': localTime,
+      if (sheetsActiveSheet != null) 'sheetsActiveSheet': sheetsActiveSheet,
+      if (sheetsSelection != null) 'sheetsSelection': sheetsSelection?.toJson(),
+      if (sheetsActiveCell != null) 'sheetsActiveCell': sheetsActiveCell,
+      if (sheetsVisibleRange != null) 'sheetsVisibleRange': sheetsVisibleRange,
     };
   }
 
@@ -129,6 +164,10 @@ abstract class AssistantContextHints
       if (caretHeadingPath != null) 'caretHeadingPath': caretHeadingPath,
       'includeComments': includeComments,
       if (localTime != null) 'localTime': localTime,
+      if (sheetsActiveSheet != null) 'sheetsActiveSheet': sheetsActiveSheet,
+      if (sheetsSelection != null) 'sheetsSelection': sheetsSelection?.toJson(),
+      if (sheetsActiveCell != null) 'sheetsActiveCell': sheetsActiveCell,
+      if (sheetsVisibleRange != null) 'sheetsVisibleRange': sheetsVisibleRange,
     };
   }
 
@@ -151,6 +190,10 @@ class _AssistantContextHintsImpl extends AssistantContextHints {
     String? caretHeadingPath,
     bool? includeComments,
     String? localTime,
+    String? sheetsActiveSheet,
+    List<String>? sheetsSelection,
+    String? sheetsActiveCell,
+    String? sheetsVisibleRange,
   }) : super._(
          documentSessionId: documentSessionId,
          applyMode: applyMode,
@@ -161,6 +204,10 @@ class _AssistantContextHintsImpl extends AssistantContextHints {
          caretHeadingPath: caretHeadingPath,
          includeComments: includeComments,
          localTime: localTime,
+         sheetsActiveSheet: sheetsActiveSheet,
+         sheetsSelection: sheetsSelection,
+         sheetsActiveCell: sheetsActiveCell,
+         sheetsVisibleRange: sheetsVisibleRange,
        );
 
   /// Returns a shallow copy of this [AssistantContextHints]
@@ -177,6 +224,10 @@ class _AssistantContextHintsImpl extends AssistantContextHints {
     Object? caretHeadingPath = _Undefined,
     bool? includeComments,
     Object? localTime = _Undefined,
+    Object? sheetsActiveSheet = _Undefined,
+    List<String>? sheetsSelection = const _is.$UndefinedList<String>(),
+    Object? sheetsActiveCell = _Undefined,
+    Object? sheetsVisibleRange = _Undefined,
   }) {
     return AssistantContextHints(
       documentSessionId: documentSessionId is String?
@@ -198,6 +249,18 @@ class _AssistantContextHintsImpl extends AssistantContextHints {
           : this.caretHeadingPath,
       includeComments: includeComments ?? this.includeComments,
       localTime: localTime is String? ? localTime : this.localTime,
+      sheetsActiveSheet: sheetsActiveSheet is String?
+          ? sheetsActiveSheet
+          : this.sheetsActiveSheet,
+      sheetsSelection: sheetsSelection is _is.UndefinedSentinel
+          ? this.sheetsSelection?.map((e0) => e0).toList()
+          : sheetsSelection,
+      sheetsActiveCell: sheetsActiveCell is String?
+          ? sheetsActiveCell
+          : this.sheetsActiveCell,
+      sheetsVisibleRange: sheetsVisibleRange is String?
+          ? sheetsVisibleRange
+          : this.sheetsVisibleRange,
     );
   }
 }

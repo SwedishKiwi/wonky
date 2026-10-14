@@ -1,0 +1,350 @@
+{
+ "w": 600,
+ "h": 371,
+ "bg": "#FFFFFFFF",
+ "plot": [
+  97.16,
+  18,
+  335,
+  335
+ ],
+ "p": [
+  {
+   "t": "rect",
+   "r": [
+    0,
+    0,
+    600,
+    371
+   ],
+   "fill": "#FFFFFFFF",
+   "tag": {
+    "role": "background"
+   }
+  },
+  {
+   "t": "arc",
+   "c": [
+    264.66,
+    185.5
+   ],
+   "r": 167.5,
+   "start": -1.57,
+   "sweep": 2.51,
+   "fill": "#FF4285F4",
+   "stroke": {
+    "color": "#FFFFFFFF",
+    "width": 1
+   },
+   "tag": {
+    "role": "point",
+    "series": "00000000-0000-4000-8000-00000000000e",
+    "point": 0
+   }
+  },
+  {
+   "t": "arc",
+   "c": [
+    264.66,
+    185.5
+   ],
+   "r": 167.5,
+   "start": 0.94,
+   "sweep": 1.57,
+   "fill": "#FFEA4335",
+   "stroke": {
+    "color": "#FFFFFFFF",
+    "width": 1
+   },
+   "tag": {
+    "role": "point",
+    "series": "00000000-0000-4000-8000-00000000000e",
+    "point": 1
+   }
+  },
+  {
+   "t": "arc",
+   "c": [
+    264.66,
+    185.5
+   ],
+   "r": 167.5,
+   "start": 2.51,
+   "sweep": 1.26,
+   "fill": "#FFBC8D03",
+   "stroke": {
+    "color": "#FFFFFFFF",
+    "width": 1
+   },
+   "tag": {
+    "role": "point",
+    "series": "00000000-0000-4000-8000-00000000000e",
+    "point": 2
+   }
+  },
+  {
+   "t": "arc",
+   "c": [
+    264.66,
+    185.5
+   ],
+   "r": 167.5,
+   "start": 3.77,
+   "sweep": 0.94,
+   "fill": "#FF34A853",
+   "stroke": {
+    "color": "#FFFFFFFF",
+    "width": 1
+   },
+   "tag": {
+    "role": "point",
+    "series": "00000000-0000-4000-8000-00000000000e",
+    "point": 3
+   }
+  },
+  {
+   "t": "text",
+   "text": "40.0%",
+   "at": [
+    363.43,
+    153.41
+   ],
+   "style": {
+    "family": "Inter",
+    "size": 12,
+    "color": "#FFFFFFFF"
+   },
+   "anchor": "center",
+   "w": 34.02,
+   "h": 14.04,
+   "tag": {
+    "role": "dataLabel",
+    "series": "00000000-0000-4000-8000-00000000000e",
+    "point": 0
+   }
+  },
+  {
+   "t": "text",
+   "text": "25.0%",
+   "at": [
+    248.41,
+    288.07
+   ],
+   "style": {
+    "family": "Inter",
+    "size": 12,
+    "color": "#FFFFFFFF"
+   },
+   "anchor": "center",
+   "w": 34.02,
+   "h": 14.04,
+   "tag": {
+    "role": "dataLabel",
+    "series": "00000000-0000-4000-8000-00000000000e",
+    "point": 1
+   }
+  },
+  {
+   "t": "text",
+   "text": "20.0%",
+   "at": [
+    160.81,
+    185.5
+   ],
+   "style": {
+    "family": "Inter",
+    "size": 12,
+    "color": "#FFFFFFFF"
+   },
+   "anchor": "center",
+   "w": 34.02,
+   "h": 14.04,
+   "tag": {
+    "role": "dataLabel",
+    "series": "00000000-0000-4000-8000-00000000000e",
+    "point": 2
+   }
+  },
+  {
+   "t": "text",
+   "text": "15.0%",
+   "at": [
+    217.51,
+    92.97
+   ],
+   "style": {
+    "family": "Inter",
+    "size": 12,
+    "color": "#FFFFFFFF"
+   },
+   "anchor": "center",
+   "w": 34.02,
+   "h": 14.04,
+   "tag": {
+    "role": "dataLabel",
+    "series": "00000000-0000-4000-8000-00000000000e",
+    "point": 3
+   }
+  },
+  {
+   "t": "rect",
+   "r": [
+    529.32,
+    149.42,
+    54.68,
+    72.16
+   ],
+   "tag": {
+    "role": "legend"
+   }
+  },
+  {
+   "t": "rect",
+   "r": [
+    529.32,
+    152.44,
+    12,
+    12
+   ],
+   "fill": "#FF4285F4",
+   "radius": 2,
+   "tag": {
+    "role": "legendEntry",
+    "series": "0",
+    "detail": "0"
+   }
+  },
+  {
+   "t": "text",
+   "text": "Apples",
+   "at": [
+    547.32,
+    158.44
+   ],
+   "style": {
+    "family": "Inter",
+    "size": 12,
+    "color": "#FF202124"
+   },
+   "anchor": "middleLeft",
+   "w": 36.68,
+   "h": 14.04,
+   "tag": {
+    "role": "legendEntry",
+    "series": "0",
+    "detail": "0"
+   }
+  },
+  {
+   "t": "rect",
+   "r": [
+    529.32,
+    170.48,
+    12,
+    12
+   ],
+   "fill": "#FFEA4335",
+   "radius": 2,
+   "tag": {
+    "role": "legendEntry",
+    "series": "1",
+    "detail": "1"
+   }
+  },
+  {
+   "t": "text",
+   "text": "Pears",
+   "at": [
+    547.32,
+    176.48
+   ],
+   "style": {
+    "family": "Inter",
+    "size": 12,
+    "color": "#FF202124"
+   },
+   "anchor": "middleLeft",
+   "w": 31.34,
+   "h": 14.04,
+   "tag": {
+    "role": "legendEntry",
+    "series": "1",
+    "detail": "1"
+   }
+  },
+  {
+   "t": "rect",
+   "r": [
+    529.32,
+    188.52,
+    12,
+    12
+   ],
+   "fill": "#FFBC8D03",
+   "radius": 2,
+   "tag": {
+    "role": "legendEntry",
+    "series": "2",
+    "detail": "2"
+   }
+  },
+  {
+   "t": "text",
+   "text": "Plums",
+   "at": [
+    547.32,
+    194.52
+   ],
+   "style": {
+    "family": "Inter",
+    "size": 12,
+    "color": "#FF202124"
+   },
+   "anchor": "middleLeft",
+   "w": 33.34,
+   "h": 14.04,
+   "tag": {
+    "role": "legendEntry",
+    "series": "2",
+    "detail": "2"
+   }
+  },
+  {
+   "t": "rect",
+   "r": [
+    529.32,
+    206.56,
+    12,
+    12
+   ],
+   "fill": "#FF34A853",
+   "radius": 2,
+   "tag": {
+    "role": "legendEntry",
+    "series": "3",
+    "detail": "3"
+   }
+  },
+  {
+   "t": "text",
+   "text": "Kiwis",
+   "at": [
+    547.32,
+    212.56
+   ],
+   "style": {
+    "family": "Inter",
+    "size": 12,
+    "color": "#FF202124"
+   },
+   "anchor": "middleLeft",
+   "w": 28,
+   "h": 14.04,
+   "tag": {
+    "role": "legendEntry",
+    "series": "3",
+    "detail": "3"
+   }
+  }
+ ]
+}

@@ -97,6 +97,7 @@ abstract final class SheetsPdfRenderer {
   ///
   /// [now] is the instant for `{date}`/`{time}` and the creation date
   /// (formatted in [timeZone], default the spreadsheet time zone).
+  /// [compress] = false writes uncompressed streams (debugging, tests).
   static Future<Uint8List> render(
     WorkbookModel model,
     CellSource source,
@@ -112,6 +113,7 @@ abstract final class SheetsPdfRenderer {
     PrintImageProvider? images,
     ConditionalOverlayProvider? conditional,
     NumberFormatter? formatter,
+    bool compress = true,
   }) {
     final doc = buildDocument(
       model,
@@ -128,6 +130,7 @@ abstract final class SheetsPdfRenderer {
       images: images,
       conditional: conditional,
       formatter: formatter,
+      compress: compress,
     );
     return doc.save();
   }
@@ -148,10 +151,11 @@ abstract final class SheetsPdfRenderer {
     PrintImageProvider? images,
     ConditionalOverlayProvider? conditional,
     NumberFormatter? formatter,
+    bool compress = true,
   }) {
     final loc = locale ?? model.spreadsheet.locale;
     final docTitle = title ?? model.spreadsheet.title;
-    final doc = PdfDocument();
+    final doc = PdfDocument(compress: compress);
     final info = PdfInfo(
       doc,
       title: docTitle,

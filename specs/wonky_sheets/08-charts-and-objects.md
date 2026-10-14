@@ -117,7 +117,7 @@ created with a newer version of Wonky Sheets — Reload to edit") and editing is
 
 ## 3. Chart spec (`ChartSpec` v1)
 
-Dart model in `wonky_sheets_core/lib/charts/spec/` (pure Dart, JSON round-trip via
+Dart model in `wonky_sheets_core/lib/src/charts/spec/` (pure Dart, JSON round-trip via
 `toJson`/`fromJson`, value equality, `copyWith`, `patch(Map json)` for MCP updates). Unknown
 JSON keys are preserved on round-trip (`extras` map) so newer clients don't lose data
 written by future versions.
@@ -272,7 +272,7 @@ position, and the model maps them to `domain`/`value` internally.
 
 ## 4. Data extraction (`ChartDataResolver`)
 
-Location: `wonky_sheets_core/lib/charts/data/`. Input: `ChartSpec`, a `CellSource` (the same
+Location: `wonky_sheets_core/lib/src/charts/data/`. Input: `ChartSpec`, a `CellSource` (the same
 read interface the formula engine uses; computed values, number formats, hidden/filter state),
 and the locale. Output: `ChartData` (immutable):
 
@@ -387,7 +387,7 @@ visual defaults.
 ### 6.2 Layers
 
 ```
-wonky_sheets_core/lib/charts/
+wonky_sheets_core/lib/src/charts/
   spec/            ChartSpec model, JSON, migrations
   data/            ChartDataResolver, aggregation, histogram buckets, downsampling (LTTB)
   stats/           trendline regressions, R², moving average
@@ -407,9 +407,17 @@ wonky_sheets/lib/features/charts/
 
 `ChartLayoutEngine.layout(spec, data, Size size, ChartTheme theme, TextMeasurer measurer)
 → ChartScene`. The `TextMeasurer` interface hides the platform: Flutter uses `TextPainter`;
-PDF uses the `pdf` font metrics of the embedded font; the server raster renderer uses metrics
-from the bundled Inter/Geist TTF files (parsed with `pdf`'s `TtfParser`), so text layout is
-identical everywhere up to sub-pixel differences.
+PDF uses the `pdf` font metrics of the font it draws with (`PdfTextMeasurer`, Helvetica by
+default); the server raster renderer draws text with the bitmap Arial fonts bundled in
+`package:image` and lays out PNG exports with their metrics (`RasterTextMeasurer`). Text
+layout therefore differs slightly between outputs (label skipping and ellipsis), while the
+geometry of the plot is the same. Tests and scene goldens use the deterministic
+`ApproxTextMeasurer` (Helvetica advance widths).
+
+The entry points the app and server use are in `ChartPipeline` (`charts/chart_pipeline.dart`):
+`resolve` (spec + workbook → `ChartData`), `layout` / `build` (→ `ChartScene` plus warnings),
+`exportSvg` / `exportPdf` / `exportPng` (08 §13) and `printSceneFor` (the chart callback of the
+print renderer, 11 §6.3).
 
 ### 6.3 Scene primitives
 
@@ -476,7 +484,7 @@ first source cell's effective format, in the spreadsheet locale.
   "forward": 0, "backward": 0 }     // P2: extend forecast by n domain units
 ```
 
-Math in `wonky_sheets_core/lib/charts/stats/regression.dart` (shared with the `LINEST`,
+Math in `wonky_sheets_core/lib/src/charts/stats/regression.dart` (shared with the `LINEST`,
 `LOGEST`, `TREND`, `GROWTH` functions in [05-formula-engine.md](05-formula-engine.md)):
 
 | Type | Model | Fit | Valid inputs |
@@ -499,7 +507,7 @@ and, if `label = equation`, also next to the line end.
 
 ## 8. Chart editor side panel
 
-Panel id `chartEditor` in `WonkySplitView` (the shared panel width, suite 02 §4.5). It opens on
+Panel id `sheets.panel.chartEditor` (04 §10; `showAsTab: false`, opened by its commands) in `WonkySplitView` (the shared panel width, suite 02 §4.5). It opens on
 insert, on double-click, from ⋮ › *Edit chart*, and via `sheets.chart.edit`. Header: the host's
 panel icons and collapse (no title). Body: `ShadTabs` with **Setup** and **Customize**. When it is open, the edited
 object stays selected and the panel follows selection: selecting another chart switches the
@@ -588,6 +596,11 @@ fields with ids, values and options; `setField(id, value)`).
 ## 9. Objects on the grid
 
 ### 9.1 Rendering layer
+
+Implementation note: the objects layer is `SheetObjectsHost` (`features/objects/objects_layer.dart`),
+a widget stack over the whole `GridArea`, so objects draw above the selection and the active-cell
+border (as in Google Sheets) rather than below them. Selected objects take keyboard focus in the
+`sheetsObject` key scope; Mod+V in the grid pastes copied objects while they are the newest copy.
 The grid ([03-grid-and-editing.md](03-grid-and-editing.md)) is painted in layers. Objects are
 an `ObjectLayer` **above** cell content, CF, merges and the selection fill, and **below** the
 frozen-pane divider lines, the active-cell border and remote cursors.
@@ -843,7 +856,7 @@ All ids are stable. Args are JSON-schema validated. `requiredRole` is editor unl
 |------------|------|----------|-------|
 | `sheets.chart.insert` | `{ranges?: A1[], type?, spec?: ChartSpec, anchor?: {cell: A1, dx, dy, width, height}}` | ✓ | No args → recommended chart for selection, opens editor. Returns `objectId`. |
 | `sheets.chart.edit` | `{objectId?}` | — | Opens chart editor for the selected/given chart. |
-| `sheets.chart.update` | `{objectId, patch: JsonMergePatch}` | ✓ | RFC 7386 merge patch on `ChartSpec`. Validated after patching. |
+| `sheets.chart.update` | `{objectId, patch: JsonMergePatch, coalesceKey?}` | ✓ | RFC 7386 merge patch on `ChartSpec`. Validated after patching. Edits with the same `coalesceKey` within 1000 ms are one undo step (editor steppers/colors). |
 | `sheets.chart.setType` | `{objectId, type, stacking?}` | ✓ | Convenience. |
 | `sheets.chart.setDataRanges` | `{objectId, ranges: A1[]}` | ✓ | Re-runs header/series detection unless `keepSeries`. |
 | `sheets.chart.download` | `{objectId, format: png\|svg\|pdf, scale?, darkTheme?}` | — | Viewer+ (if export allowed by share settings). |
@@ -860,8 +873,8 @@ All ids are stable. Args are JSON-schema validated. `requiredRole` is editor unl
 | `sheets.object.select` | `{objectId}` | — | Viewer+. |
 | `sheets.object.selectNext` / `selectPrevious` | — | — | `Mod+Alt+Shift+O` / with Shift reversed. |
 | `sheets.object.deselect` | — | — | Esc. |
-| `sheets.object.move` | `{objectId, anchor: {cell: A1, dx, dy}}` or `{objectId, by: {x, y}}` | ✓ | |
-| `sheets.object.resize` | `{objectId, width, height}` | ✓ | |
+| `sheets.object.move` | `{objectId, anchor: {cell: A1, dx, dy}}`, `{objectId, by: {x, y}}` or `{objectId, to: {x, y}}` (sheet px, used by drags) | ✓ | |
+| `sheets.object.resize` | `{objectId, width, height, x?, y?}` (`x`/`y`: new top-left when a left/top handle was dragged) | ✓ | |
 | `sheets.object.nudge` | `{dx, dy}` (selected objects) | ✓ | Coalesces. |
 | `sheets.object.order` | `{objectId?, op: front\|forward\|backward\|back}` | ✓ | |
 | `sheets.object.delete` | `{objectIds?}` | ✓ | Del / Backspace. |
@@ -887,7 +900,9 @@ and the object listing in `sheets.get_spreadsheet`. Requirements this spec puts 
   header name or A1 column (`{"column": "C"}`); the server converts them to GridRange ids.
   The full JSON schema of `ChartSpec` is generated from the Dart model into
   `wonky_core/lib/mcp/schemas/chart_spec.schema.json` (strict-compatible: all properties
-  listed, `additionalProperties: false`, optional fields nullable).
+  listed, `additionalProperties: false`, optional fields nullable). Maps keyed by series key or
+  point index are key/value pair lists in that schema; `ChartSpecSchema.fromStrictJson`
+  turns a strict payload back into the stored form (pairs → maps, `null` → absent).
 - `export_chart_png` returns MCP image content using `RasterChartRenderer`.
 - UI bridge: `ui.sheets.open_panel({panel: "chartEditor", objectId})`, plus
   `ui.invoke_command` with the commands above.
@@ -912,8 +927,8 @@ and the object listing in `sheets.get_spreadsheet`. Requirements this spec puts 
 
 | Location | Content | Owner workstream ([13](13-implementation-plan.md)) |
 |----------|---------|------------------|
-| `wonky_sheets_core/lib/charts/**` | spec, data resolver, stats, layout, scene, SVG/PDF/raster renderers | WS-S13 |
-| `wonky_sheets_core/lib/objects/anchor.dart` | `ObjectAnchor` parse/normalize/re-anchor rules | WS-S13 |
+| `wonky_sheets_core/lib/src/charts/**` | spec, data resolver, stats, layout, scene, SVG/PDF/raster renderers | WS-S13 |
+| `wonky_sheets_core/lib/src/objects/anchor.dart` | `ObjectAnchor` parse/normalize/re-anchor rules | WS-S13 |
 | `wonky_sheets/lib/features/charts/**` | `ChartPainter`, `ChartView`, `ChartController`, editor panel | WS-S13 |
 | `wonky_sheets/lib/features/objects/**` | `ObjectLayer`, `EmbeddedObjectView`, handles, drag/resize, z-order, clipboard, image dialogs | WS-S13 |
 | `wonky_sheets/lib/features/common/range_input.dart` | `RangeInput` | WS-S19 (shared) |

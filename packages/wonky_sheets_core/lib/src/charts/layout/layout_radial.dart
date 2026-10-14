@@ -186,8 +186,15 @@ void _layoutScorecard(_Ctx c, ChartRect r) {
       ? '—'
       : c.formatValue(sd.keyValue, sd.keyFormat);
   var size = math.min(r.height * 0.4, 72.0);
+  // The key value uses the title font's family, style and color, but its own size.
+  final tf = c.spec.title.font;
   var style = c.font(
-    c.spec.title.font.copyWith(size: null),
+    ChartFont(
+      family: tf.family,
+      bold: tf.bold,
+      italic: tf.italic,
+      color: tf.color,
+    ),
     size: size,
     bold: true,
   );

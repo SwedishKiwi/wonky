@@ -269,9 +269,21 @@ MutationPlan planSetBasicFilter(PlanBuilder b, SetBasicFilter op) {
   b.checkRect(s, op.range);
   if (op.criteriaJson != null) _checkJson(op.criteriaJson!, 'criteria');
   final id = SheetsIds.basicFilterId(s.id);
+  final g = s.gridRange(op.range);
+  final range = op.openEnded
+      ? GridRange(
+          sheetId: g.sheetId,
+          r1: g.r1,
+          r1k: g.r1k,
+          c1: g.c1,
+          c2: g.c2,
+          c1k: g.c1k,
+          c2k: g.c2k,
+        )
+      : g;
   final cols = {
     Cols.sheetId: s.id,
-    Cols.rangeJson: b.rangeJson(s, op.range),
+    Cols.rangeJson: range.encode(),
     'criteriaJson': op.criteriaJson ?? '{}',
     'sortJson': op.sortJson,
   };

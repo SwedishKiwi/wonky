@@ -7,12 +7,18 @@ library;
 import 'mcp/comments_tools.dart';
 import 'mcp/drive_tools.dart';
 import 'mcp/mcp_tool.dart';
+import 'mcp/sheets_script_tools.dart';
+import 'mcp/sheets_tools.dart';
+import 'mcp/ui_sheets_tools.dart';
 import 'mcp/ui_tools.dart';
 import 'mcp/write_tools.dart';
 
 export 'mcp/comments_tools.dart';
 export 'mcp/drive_tools.dart';
 export 'mcp/mcp_tool.dart';
+export 'mcp/sheets_script_tools.dart';
+export 'mcp/sheets_tools.dart';
+export 'mcp/ui_sheets_tools.dart';
 export 'mcp/ui_tools.dart';
 export 'mcp/write_tools.dart';
 
@@ -28,16 +34,24 @@ abstract final class McpToolCatalog {
   ];
 
   /// Every tool the Wonky Write server and app offer: the shared tools plus
-  /// `write.*` and `ui.write.*` (Sheets tools are paused).
+  /// `write.*` and `ui.write.*` (the server also offers [sheets]).
   static final List<McpToolDefinition> write = [
     ...shared,
     ...WriteTools.all,
     ...UiWriteTools.all,
   ];
 
+  /// The headless `sheets.*` tools (Sheets 12 §3) and the `ui.sheets.*`
+  /// UI-bridge tools (§5).
+  static final List<McpToolDefinition> sheets = [
+    ...SheetsTools.all,
+    ...SheetsScriptTools.all,
+    ...UiSheetsTools.all,
+  ];
+
   /// Looks up a shared tool by name.
   static McpToolDefinition? byName(String name) {
-    for (final t in write) {
+    for (final t in [...write, ...sheets]) {
       if (t.name == name) return t;
     }
     return null;

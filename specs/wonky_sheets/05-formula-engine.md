@@ -101,14 +101,11 @@ formula/
   functions/
     registry.dart                 # FunctionRegistry, FunctionSpec, ArgSpec (§14)
     builtins.dart                 # registers every category
-    help/                         # generated help metadata (from tool/function_docs/*.yaml)
-      help.g.dart
     math/          statistical/   lookup/        logical/      text/
     date_time/     financial/     info/          array/        database/
     engineering/   parser/        operator/      web/          google/   # QUERY, SPARKLINE, IMAGE…
     lambda_helpers/               # MAP, REDUCE, SCAN, BYROW, BYCOL, MAKEARRAY
-  query/                          # Google Visualization query language for QUERY() (§16)
-    query_grammar.dart, query_ast.dart, query_executor.dart
+    query/                        # Google Visualization query language for QUERY() (§16)
   external/
     external_data.dart            # ExternalDataProvider interface (IMPORTRANGE, IMPORT*, AI, scripts)
     pending.dart                  # pending/async result protocol (§13)
@@ -124,8 +121,6 @@ rules/conditions/                 # Condition model + evaluator shared by CF/DV/
 pivot/                            # pivot engine (see 07 §7)
 data_tools/                       # sort, filter, dedupe, split, stats engines (see 07)
 format/                           # number format engine (owned by 06-formatting)
-tool/function_docs/*.yaml         # source of truth for help metadata (one file per category)
-tool/gen_function_help.dart       # codegen → functions/help/help.g.dart
 bin/compute_worker.dart           # web-worker / isolate entrypoint for offload jobs (§10.3)
 ```
 
@@ -1004,6 +999,11 @@ the same epoch (§12).
 
 - Cycles are detected per drain with Tarjan SCC on the dirty subgraph (plus dynamic edges).
   Self-loops (`A1: =A1+1`) are SCCs of size 1.
+- *Implementation note:* `FormulaEngine` evaluates depth-first with an explicit work stack (no
+  recursion), detects a cycle when a node on the evaluation chain is re-entered, and then runs an
+  iterative Tarjan only over that node's component (static + dynamic precedents, spill hosts,
+  limited to nodes of the current pass). The visible results are those described here; references
+  in untaken branches (`IF(c, ref, …)`) count as edges.
 - `Spreadsheet.iterativeCalc == false`: every node in a cyclic SCC gets `#REF!` "Circular
   dependency detected. To resolve with iterative calculation, see File > Settings." Dependents of
   the SCC receive the error by propagation.
@@ -1329,10 +1329,11 @@ final class FunctionHelp {
   `lib/formula/functions/<category>/<family>.dart` (e.g. `math/rounding.dart` holds ROUND,
   ROUNDUP, ROUNDDOWN, MROUND, CEILING*, FLOOR*, INT, TRUNC, EVEN, ODD), each exporting a
   `void register<Family>(FunctionRegistryBuilder b)`.
-- Help metadata source: `tool/function_docs/<category>.yaml` (one entry per function; reviewed text
-  written for humans **and** LLMs). `dart run tool/gen_function_help.dart` generates
-  `functions/help/help.g.dart` (const `Map<String, FunctionHelp>`); CI fails if the generated file
-  is stale or if a registered function has no help entry (or vice versa).
+- Help metadata (reviewed text written for humans **and** LLMs) is declared **inline** with each
+  registration (summary, syntax, argument descriptions, examples). The YAML + codegen pipeline
+  sketched below was not adopted; instead `test/formula/services/catalog_test.dart` fails if an
+  implemented function lacks complete help, if an example does not parse, or if a §15 name is not
+  registered. The YAML below shows the content each entry carries.
 
 ```yaml
 # tool/function_docs/lookup.yaml
@@ -1961,7 +1962,8 @@ current implemented/stub counts per priority and category (parity dashboard).
 ## 16. QUERY language (P1)
 
 `QUERY(data, query, [headers])` implements the Google Visualization API query language subset
-that Sheets supports. Implementation: `lib/formula/query/` — petitparser grammar (case-insensitive
+that Sheets supports. Implementation: `lib/src/formula/functions/query/` (parser, AST, table, `query_executor.dart`, registration
+in `query_function.dart`) — petitparser grammar (case-insensitive
 keywords), typed AST, executor over a column-typed table built from `data`.
 
 ### 16.1 Grammar (EBNF)
@@ -2175,7 +2177,7 @@ headless Chrome). Regressions > 10% fail the job.
    evaluating a positional A1 oracle that applies Excel's reference-adjustment rules; plus
    `toA1(toStored(x)) == normalize(x)`.
 3. **Function unit tests**: every function ≥ 3 vectors including an error case and an
-   edge case; generated from YAML.
+   edge case (table-driven vectors next to the category tests).
 4. **Golden compatibility vectors**: `test/formula/golden/<category>/*.yaml`:
 
    ```yaml

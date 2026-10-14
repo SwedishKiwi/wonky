@@ -242,10 +242,11 @@ abstract final class PathGeometry {
               ..add(cx)
               ..add(cy);
           }
-          final dd = math.max(
-            _dist(cx, cy, x1, y1) + _dist(x1, y1, x2, y2) + _dist(x2, y2, x, y),
-            1e-9,
-          );
+          final len =
+              _dist(cx, cy, x1, y1) +
+              _dist(x1, y1, x2, y2) +
+              _dist(x2, y2, x, y);
+          final dd = len.isFinite ? math.max(len, 1e-9) : 1e-9;
           final n = math
               .sqrt(dd / math.max(tolerance, 1e-3))
               .ceil()

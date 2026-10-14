@@ -17,6 +17,7 @@ import 'package:serverpod/serverpod.dart' as _is;
 import '../platform/jobs/maintenance_future_call.dart' as _imgsvm9k;
 import '../platform/notifications/notification_email_future_call.dart'
     as _i1dis1nt;
+import '../sheets/scripts/script_scheduler_future_call.dart' as _iq0nfb3f;
 import 'future_calls_generated_models/notification_email_future_call_send_model.dart'
     as _inb6x2l0;
 
@@ -68,6 +69,8 @@ class FutureCalls extends _is.FutureCallDispatch<_FutureCallRef> {
       'MaintenanceCleanupFilesFutureCall': MaintenanceCleanupFilesFutureCall(),
       'MaintenanceDailyFutureCall': MaintenanceDailyFutureCall(),
       'NotificationEmailSendFutureCall': NotificationEmailSendFutureCall(),
+      'ScriptSchedulerTickFutureCall': ScriptSchedulerTickFutureCall(),
+      'ScriptSchedulerPruneFutureCall': ScriptSchedulerPruneFutureCall(),
     };
     _futureCallManager = futureCallManager;
     _serverId = serverId;
@@ -193,6 +196,10 @@ class _FutureCallRef {
   late final notificationEmail = _NotificationEmailFutureCallDispatcher(
     _invokeFutureCall,
   );
+
+  late final scriptScheduler = _ScriptSchedulerFutureCallDispatcher(
+    _invokeFutureCall,
+  );
 }
 
 class _MaintenanceFutureCallDispatcher {
@@ -241,6 +248,26 @@ class _NotificationEmailFutureCallDispatcher {
     return _invokeFutureCall(
       'NotificationEmailSendFutureCall',
       object,
+    );
+  }
+}
+
+class _ScriptSchedulerFutureCallDispatcher {
+  _ScriptSchedulerFutureCallDispatcher(this._invokeFutureCall);
+
+  final _InvokeFutureCall _invokeFutureCall;
+
+  Future<void> tick() {
+    return _invokeFutureCall(
+      'ScriptSchedulerTickFutureCall',
+      null,
+    );
+  }
+
+  Future<void> prune() {
+    return _invokeFutureCall(
+      'ScriptSchedulerPruneFutureCall',
+      null,
     );
   }
 }
@@ -312,5 +339,29 @@ class NotificationEmailSendFutureCall
         object.notificationId,
       );
     }
+  }
+}
+
+/// Every minute: runs due time-driven triggers.
+class ScriptSchedulerTickFutureCall extends _is.FutureCall
+    implements _is.InvokableFutureCall {
+  @override
+  _ida.Future<void> invoke(
+    _is.Session session,
+    _is.SerializableModel? object,
+  ) async {
+    await _iq0nfb3f.ScriptSchedulerFutureCall().tick(session);
+  }
+}
+
+/// Daily: executions older than 30 days or beyond 10,000 per spreadsheet.
+class ScriptSchedulerPruneFutureCall extends _is.FutureCall
+    implements _is.InvokableFutureCall {
+  @override
+  _ida.Future<void> invoke(
+    _is.Session session,
+    _is.SerializableModel? object,
+  ) async {
+    await _iq0nfb3f.ScriptSchedulerFutureCall().prune(session);
   }
 }

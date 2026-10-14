@@ -277,6 +277,11 @@ class AssistantController extends ChangeNotifier {
       a.running = false;
     }
     final runId = reply.runId;
+    final hooks = _hooks;
+    final changeId = reply.changeId;
+    if (hooks != null && changeId != null) {
+      hooks.runCommitted(reply, changeId, _summary(reply));
+    }
     if (runId != null && reply.hasChanges) {
       adapter.runFinished(runId, _summary(reply));
     }
@@ -338,7 +343,10 @@ class AssistantController extends ChangeNotifier {
           ..changeId = e.changeId
           ..rangeStart = e.rangeStart
           ..rangeLength = e.rangeLength
-          ..revision = e.revision;
+          ..revision = e.revision
+          ..range = e.range
+          ..objectId = e.objectId;
+        _hooks?.toolFinished(a);
       case AssistantEventType.confirmationRequired:
         reply.confirmation = AssistantConfirmation(
           runId: e.runId ?? reply.runId ?? '',
@@ -347,6 +355,14 @@ class AssistantController extends ChangeNotifier {
         );
       case AssistantEventType.usage:
         break;
+      // Sheets Suggest-mode previews (Sheets 12 §6.3): the app's
+      // [AssistantRunHooks] show the AI changes preview.
+      case AssistantEventType.previewReady:
+        final id = e.previewId;
+        if (id != null && reply.previewId != id) {
+          reply.previewId = id;
+          _hooks?.previewReady(reply, id);
+        }
       case AssistantEventType.maxTokens:
         reply.status = AssistantReplyStatus.cutOff;
       case AssistantEventType.refusal:
@@ -358,6 +374,12 @@ class AssistantController extends ChangeNotifier {
           ..status = AssistantReplyStatus.failed
           ..error = e.error;
       case AssistantEventType.done:
+        if (e.changeId != null) reply.changeId = e.changeId;
+        final preview = e.previewId;
+        if (preview != null && reply.previewId == null) {
+          reply.previewId = preview;
+          _hooks?.previewReady(reply, preview);
+        }
         if (e.errorCode == 'stopped') {
           reply.status = AssistantReplyStatus.stopped;
         } else if (reply.streaming) {
@@ -368,6 +390,12 @@ class AssistantController extends ChangeNotifier {
   }
 
   bool _lastWasTool = false;
+
+  /// The adapter's optional server-run hooks (Sheets).
+  AssistantRunHooks? get _hooks {
+    final a = adapter;
+    return a is AssistantRunHooks ? a as AssistantRunHooks : null;
+  }
 
   Future<void> _refreshThreads() async {
     try {

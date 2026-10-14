@@ -1,5 +1,7 @@
 import 'dart:convert';
 
+import '../addressing/addressing.dart' show GridRect;
+import '../model/axis_index.dart';
 import 'theme.dart';
 
 /// Alternating colors style (`Banding.styleJson`, 06 §14.1).
@@ -69,6 +71,7 @@ final class BandingStyle {
     String? footer,
     bool? showHeader,
     bool? showFooter,
+    String? dimension,
   }) => BandingStyle(
     header: header ?? this.header,
     firstBand: firstBand ?? this.firstBand,
@@ -76,8 +79,32 @@ final class BandingStyle {
     footer: footer ?? this.footer,
     showHeader: showHeader ?? this.showHeader,
     showFooter: showFooter ?? this.showFooter,
-    dimension: dimension,
+    dimension: dimension ?? this.dimension,
   );
+
+  /// Whether columns alternate instead of rows (P2): the header is the
+  /// first column, the footer the last.
+  bool get byColumns => dimension == 'columns';
+
+  /// The contribution at ([row], [col]) of a banding over [rect] on an
+  /// axis pair, skipping hidden rows (or columns).
+  (String? fill, bool bold) contributionIn(
+    GridRect rect,
+    int row,
+    int col, {
+    required AxisIndex rows,
+    required AxisIndex columns,
+  }) {
+    final axis = byColumns ? columns : rows;
+    final i = byColumns ? col : row;
+    final start = byColumns ? rect.left : rect.top;
+    final end = byColumns ? rect.right : rect.bottom;
+    if (axis.isHidden(i)) return (null, false);
+    return contributionAt(
+      axis.visibleCount(start, i) - 1,
+      axis.visibleCount(start, end),
+    );
+  }
 
   /// The 12 default styles derived from the theme accents (light and medium
   /// variants of accents 1–6, 06 §14.2).

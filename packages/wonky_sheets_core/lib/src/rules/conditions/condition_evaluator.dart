@@ -308,8 +308,10 @@ final class CompiledCondition {
       case ConditionType.dateNotBetween:
         final b = _dayOperand(1, row, col);
         if (b == null) return false;
+        // Inclusive and order-insensitive; relative periods contribute
+        // their whole span.
         final lo = a.$1 < b.$1 ? a.$1 : b.$1;
-        final hi = a.$1 < b.$1 ? b.$1 : a.$1;
+        final hi = a.$2 > b.$2 ? a.$2 : b.$2;
         final inside = day >= lo && day <= hi;
         return type == ConditionType.dateBetween ? inside : !inside;
       default:

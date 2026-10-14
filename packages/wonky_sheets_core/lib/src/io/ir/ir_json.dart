@@ -4,6 +4,7 @@ import '../../addressing/grid_geometry.dart';
 import '../../content/rich_text.dart';
 import '../../format/attributes.dart';
 import '../../model/schema.dart';
+import 'ir_formats.dart';
 import 'workbook_document.dart';
 
 /// Normalized JSON of a [WorkbookDocument] for round-trip goldens and
@@ -92,9 +93,18 @@ abstract final class IrJson {
       return m;
     }
 
+    final inherits =
+        s.defaultFormat != 0 ||
+        s.rows.entries.any((e) => e.value.format != 0) ||
+        s.columns.entries.any((e) => e.value.format != 0);
     final cells = <String, Object?>{};
     for (final (r, c, cell) in s.cells.entries) {
-      final j = cellJson(doc, cell, includeCachedValue: includeCachedValues);
+      final j = cellJson(
+        doc,
+        cell,
+        includeCachedValue: includeCachedValues,
+        effective: inherits ? IrFormats.effective(doc, s, r, c, cell) : null,
+      );
       if (j.isNotEmpty) cells[CellPos(r, c).a1] = j;
     }
     final rows = dims(s.rows.entries);
@@ -111,6 +121,8 @@ abstract final class IrJson {
         'defaultRowHeight': _round(s.defaultRowHeight!),
       if (s.defaultColumnWidth != null)
         'defaultColumnWidth': _round(s.defaultColumnWidth!),
+      if (formatJson(doc, doc.formats[s.defaultFormat]).isNotEmpty)
+        'defaultFmt': formatJson(doc, doc.formats[s.defaultFormat]),
       if (rows.isNotEmpty) 'rows': rows,
       if (cols.isNotEmpty) 'columns': cols,
       if (cells.isNotEmpty) 'cells': cells,
@@ -176,11 +188,13 @@ abstract final class IrJson {
     'height': _round(a.height),
   };
 
-  /// Normalized JSON of one cell.
+  /// Normalized JSON of one cell. With [effective], `fmt` shows the
+  /// effective format (inheritance applied) instead of the cell's own.
   static Map<String, Object?> cellJson(
     WorkbookDocument doc,
     IrCell cell, {
     bool includeCachedValue = true,
+    CellFormat? effective,
   }) {
     final j = <String, Object?>{};
     if (cell.formulaA1 != null) {
@@ -193,7 +207,11 @@ abstract final class IrJson {
     if (cell.value != null && (cell.formulaA1 == null || includeCachedValue)) {
       j['v'] = valueJson(cell.value!);
     }
-    final f = formatJson(doc, doc.formats[cell.format]);
+    final own = doc.formats[cell.format];
+    final f = formatJson(
+      doc,
+      effective == null ? own : IrFormat(effective, own.extras),
+    );
     if (f.isNotEmpty) j['fmt'] = f;
     if (cell.note != null && cell.note!.isNotEmpty) j['note'] = cell.note;
     if (cell.link != null) j['link'] = cell.link;

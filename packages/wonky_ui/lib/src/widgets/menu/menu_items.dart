@@ -271,7 +271,9 @@ class _TypeAheadMenuBodyState extends State<_TypeAheadMenuBody> {
             destructive: e.destructive,
             leading: leadingWidget,
             trailing: shortcut == null || shortcut.isEmpty
-                ? null
+                ? (e.trailing == null
+                      ? null
+                      : ExcludeSemantics(child: e.trailing!))
                 : ExcludeSemantics(
                     child: ShadKbd.group([
                       for (final k in shortcut) keyCapLabel(k),

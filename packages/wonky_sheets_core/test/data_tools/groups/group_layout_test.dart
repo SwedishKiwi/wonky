@@ -70,6 +70,25 @@ void main() {
       expect(layout().collapsedRanges(), [(2, 7)]);
     });
 
+    test(
+      'when applying the collapse mask then collapsed rows are hidden by the groups layer',
+      () {
+        apply(m, layout().collapseToLevel(2));
+        layout().applyCollapseMask();
+        final rows = m.sheets.single.rows;
+        expect(
+          [
+            for (var i = 2; i <= 5; i++)
+              rows.isHiddenBy(HiddenLayers.groups, i),
+          ],
+          [false, true, true, false],
+        );
+        apply(m, layout().expandAll());
+        layout().applyCollapseMask();
+        expect(rows.isHidden(3), isFalse);
+      },
+    );
+
     test('when pressing level 2 then only depth ≥ 2 collapses', () {
       apply(m, layout().collapseToLevel(2));
       expect(spans(), ['3-8:d1', '4-5:d2c']);

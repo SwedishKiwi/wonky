@@ -1,0 +1,12 @@
+### Result of ScriptEndpoint.compile (Sheets 09 §9.1 step 6).
+class: ScriptCompileResponse
+fields:
+  ### Whether the latest sources built without errors.
+  ok: bool
+  ### False when the build for these sources already existed.
+  compiled: bool
+  sourceHash: String
+  buildId: UuidValue?
+  ### Diagnostics (Sheets 09 §9.2).
+  diagnosticsJson: String
+  exportsJson: String?

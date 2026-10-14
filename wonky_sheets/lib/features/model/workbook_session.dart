@@ -4,6 +4,10 @@ import 'package:wonky_core/wonky_core.dart';
 import 'package:wonky_sheets_core/model.dart';
 import 'package:wonky_ui/wonky_ui.dart' show SyncStatus;
 
+import 'row_loading.dart';
+
+export 'row_loading.dart' show WorkbookRowLoading;
+
 /// Loading state of a [WorkbookSession] (suite 12 §2.3: "Downloading
 /// spreadsheet… 42%").
 @immutable
@@ -20,7 +24,10 @@ final class WorkbookLoading extends WorkbookLoadState {
   final String? message;
 }
 
-/// The model is complete and editable (subject to [WorkbookSession.canEdit]).
+/// The model is usable and editable (subject to [WorkbookSession.canEdit]).
+/// Big spreadsheets turn ready once the first visible window is in memory
+/// and stream the remaining rows in afterwards
+/// ([WorkbookSession.rowLoading]).
 final class WorkbookReady extends WorkbookLoadState {
   const WorkbookReady();
 }
@@ -68,6 +75,10 @@ abstract class WorkbookSession {
   ModelEngineBinding get engine;
 
   ValueListenable<WorkbookLoadState> get loadState;
+
+  /// Which rows are in memory after [WorkbookReady] (viewport-first
+  /// loading, 02 §6). Complete for small spreadsheets and memory sessions.
+  WorkbookRowLoading get rowLoading => WorkbookRowLoading.loaded;
 
   /// For the header's sync indicator.
   ValueListenable<SyncStatus> get syncStatus;

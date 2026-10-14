@@ -118,6 +118,19 @@ class KeymapService extends ChangeNotifier {
     return b.isEmpty ? null : b.first.labels(platform);
   }
 
+  /// Key-cap labels of the first argument binding of [commandId] whose
+  /// arguments equal [args] (menus of parameterized items), or null.
+  List<String>? labelsFor(String commandId, Map<String, Object?> args) {
+    if (args.isEmpty) return labelsOf(commandId);
+    for (final e in _entries) {
+      if (e.commandId != commandId || e.args.length != args.length) continue;
+      if (args.entries.every((a) => e.args[a.key] == a.value)) {
+        return e.binding.labels(platform);
+      }
+    }
+    return null;
+  }
+
   /// Human text of the primary binding ("⌘⇧Z" / "Ctrl+Shift+Z").
   String? shortcutTextOf(String commandId) {
     final b = bindingsOf(commandId);
@@ -174,6 +187,18 @@ class KeymapService extends ChangeNotifier {
             commandId: id,
             scope: c.keyScope,
             isOverride: _overrides.containsKey(id),
+          ),
+        );
+      }
+      for (final ab in c.argBindings) {
+        final b = ab.binding;
+        if (!b.appliesTo(platform) || b.isBrowserReserved(platform)) continue;
+        out.add(
+          KeymapEntry(
+            binding: b,
+            commandId: id,
+            scope: ab.scope ?? c.keyScope,
+            args: ab.args,
           ),
         );
       }

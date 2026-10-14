@@ -1369,5 +1369,6 @@
   "exportFormatMarkdown": "Markdown (.md)",
   "exportFormatHtml": "HTML (.html)",
   "exportFormatPdf": "PDF (.pdf)",
-  "exportFormatText": "Plain text (.txt)"
+  "exportFormatText": "Plain text (.txt)",
+  "badgePendingCreate": "Created offline. It is added to your Drive when you're back online."
 }

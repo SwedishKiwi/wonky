@@ -324,6 +324,149 @@ void main() {
     );
 
     test(
+      'when all values are negative then bars grow leftwards from an axis at the right edge',
+      () {
+        b.values('B1', [
+          [-100],
+          [-50],
+          [0],
+        ]);
+        addCfRule(b, sid, fid(1), 'a0', [
+          gridRange(b, sid, 0, 1, 1, 1),
+        ], const CfDataBarRule().encode());
+        final cf = evaluator(b.build());
+
+        final most = cf.evaluate(sid, 0, 1).dataBar!;
+        final least = cf.evaluate(sid, 1, 1).dataBar!;
+
+        expect((most.start, most.end, most.axis), (0.0, 1.0, 1.0));
+        expect((least.start, least.end), (1.0, 1.0));
+        expect(most.negative, isTrue);
+      },
+    );
+
+    test('when the axis is in the middle then bars grow from 50 %', () {
+      b.values('B1', [
+        [-50],
+        [100],
+      ]);
+      addCfRule(b, sid, fid(1), 'a0', [
+        gridRange(b, sid, 0, 1, 1, 1),
+      ], const CfDataBarRule(axis: DataBarAxis.middle).encode());
+      final cf = evaluator(b.build());
+
+      final neg = cf.evaluate(sid, 0, 1).dataBar!;
+      final pos = cf.evaluate(sid, 1, 1).dataBar!;
+
+      expect((neg.start, neg.end, neg.axis), (0.25, 0.5, 0.5));
+      expect((pos.start, pos.end), (0.5, 1.0));
+    });
+
+    test('when the direction is rtl then the bar is mirrored', () {
+      addCfRule(
+        b,
+        sid,
+        fid(1),
+        'a0',
+        [gridRange(b, sid, 0, 0, 4, 0)],
+        const CfDataBarRule(
+          direction: DataBarDirection.rtl,
+          showValue: false,
+        ).encode(),
+      );
+      final bar = evaluator(b.build()).evaluate(sid, 3, 0).dataBar!;
+
+      expect(bar.rightToLeft, isTrue);
+      expect(bar.showValue, isFalse);
+      expect(bar.end, 0.75);
+    });
+
+    test('when an icon set is reversed then the icon order flips', () {
+      final rule = CfIconSetRule(
+        set: IconSetKind.trafficLights3,
+        thresholds: [
+          IconThreshold(const CfThreshold(CfValueKind.number, '60')),
+          IconThreshold(
+            const CfThreshold(CfValueKind.number, '25'),
+            inclusive: false,
+          ),
+        ],
+        reverse: true,
+      );
+      addCfRule(b, sid, fid(1), 'a0', [
+        gridRange(b, sid, 0, 0, 4, 0),
+      ], rule.encode());
+      final cf = evaluator(b.build());
+
+      expect(
+        cf.evaluate(sid, 4, 0).icon,
+        const IconResult(IconSetKind.trafficLights3, 2),
+      );
+      expect(cf.evaluate(sid, 1, 0).icon!.index, 0, reason: '25 is not > 25');
+      expect(cf.evaluate(sid, 2, 0).icon!.index, 1);
+    });
+
+    test(
+      'when evaluating a visible rectangle then only cells with conditional formatting are returned',
+      () {
+        addCfRule(
+          b,
+          sid,
+          fid(1),
+          'a0',
+          [gridRange(b, sid, 0, 0, 4, 0)],
+          boolRule(
+            {
+              'type': 'numberGreater',
+              'values': [
+                {'v': '30'},
+              ],
+            },
+            {'bold': true},
+          ),
+        );
+        addCfRule(b, sid, fid(2), 'a1', [
+          gridRange(b, sid, 3, 0, 9, 2),
+        ], CfPresets.colorScales().first.rule.encode());
+        final cf = evaluator(b.build());
+
+        final out = cf.evaluateRect(sid, const GridRect(0, 0, 19, 5));
+
+        expect(out.keys.toSet(), {
+          const CellPos(2, 0),
+          const CellPos(3, 0),
+          const CellPos(4, 0),
+        });
+        expect(out[const CellPos(3, 0)]!.overlay[FormatAttr.bold], isTrue);
+        expect(out[const CellPos(3, 0)]!.scaleColor, isNotNull);
+        expect(cf.evaluateRect(sid, const GridRect(12, 0, 19, 5)), isEmpty);
+      },
+    );
+
+    test(
+      'when a draft covers the rectangle then the draft is previewed in rectangle results',
+      () {
+        final cf = evaluator(b.build());
+        cf.setDraft(
+          CfDraft(
+            sheetId: sid,
+            ruleId: fid(9),
+            sortKey: 'a0',
+            ranges: const [GridRect(0, 0, 1, 0)],
+            rule: CfBooleanRule(
+              condition: Condition.of(ConditionType.notBlank),
+              format: CellFormat({FormatAttr.italic: true}),
+            ),
+          ),
+        );
+
+        final out = cf.evaluateRect(sid, const GridRect(0, 0, 5, 5));
+
+        expect(out.keys, unorderedEquals(const [CellPos(0, 0), CellPos(1, 0)]));
+      },
+    );
+
+    test(
       'when an icon set has percent thresholds then icons follow top-down evaluation',
       () {
         final rule = CfIconSetRule(

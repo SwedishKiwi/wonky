@@ -4,9 +4,12 @@ import 'package:clock/clock.dart';
 import 'package:flutter/foundation.dart';
 import 'package:wonky_client/wonky_client.dart' show UuidValue;
 import 'package:wonky_core/wonky_core.dart';
+import 'package:wonky_sheets_core/formula.dart'
+    show CustomFunctionProvider, FormulaEngine;
 import 'package:wonky_sheets_core/model.dart';
 import 'package:wonky_ui/wonky_ui.dart' show SyncStatus;
 
+import 'custom_function_forwarder.dart';
 import 'workbook_session.dart';
 
 /// Shared implementation of [WorkbookSession]: planning, applying plans to
@@ -19,9 +22,25 @@ abstract class WorkbookSessionBase extends WorkbookSession {
     required this.model,
     Role role = Role.owner,
     this.maxCells = 1000000,
+    FormulaEngine Function(
+      ModelWorkbookView view,
+      CustomFunctionProvider customFunctions,
+    )?
+    engineFactory,
   }) : _role = ValueNotifier(role) {
-    engine = ModelEngineBinding.create(model);
+    engine = ModelEngineBinding.create(
+      model,
+      engineFactory: (view) =>
+          engineFactory?.call(view, customFunctions) ??
+          FormulaEngine(workbook: view, customFunctions: customFunctions),
+    );
   }
+
+  /// The formula engine's custom function hook (09 §8.6). The engine is
+  /// built with it; the script service points it at the script session's
+  /// provider when a build is installed (`features/scripts`).
+  final ForwardingCustomFunctionProvider customFunctions =
+      ForwardingCustomFunctionProvider();
 
   @override
   final UuidValue itemUuid;
@@ -37,6 +56,9 @@ abstract class WorkbookSessionBase extends WorkbookSession {
 
   /// `sheets.maxCellsPerSpreadsheet`.
   final int maxCells;
+
+  /// The user's custom fill lists (Settings › Sheets), used by fill series.
+  List<List<String>> customLists = const [];
 
   final ValueNotifier<Role> _role;
 
@@ -86,12 +108,14 @@ abstract class WorkbookSessionBase extends WorkbookSession {
     locale: model.spreadsheet.locale,
     maxCells: maxCells,
     isOwner: role.value == Role.owner,
+    customLists: customLists,
   );
 
   @override
   MutationPlan execute(SheetsOperation op, {String actorKind = 'user'}) {
     final plan = _planner.plan(op, model, planContext());
     if (plan.isEmpty) return plan;
+    checkPlan(op, plan);
     model.applyPlan(plan);
     persist(plan.changes, plan: plan, label: plan.label, actorKind: actorKind);
     return plan;
@@ -108,6 +132,12 @@ abstract class WorkbookSessionBase extends WorkbookSession {
     persist(changes, label: label, actorKind: actorKind);
   }
 
+  /// Refuses [plan] of [op] before it is applied by throwing
+  /// `PlanException` (the synced session refuses writes that would touch
+  /// rows still streaming in).
+  @protected
+  void checkPlan(SheetsOperation op, MutationPlan plan) {}
+
   /// Stores [changes] (already applied to [model]). [plan] is set for
   /// planned operations (its summary/detail feed the `ChangeLog` row).
   @protected
@@ -122,6 +152,7 @@ abstract class WorkbookSessionBase extends WorkbookSession {
   Future<void> dispose() async {
     await flush();
     engine.dispose();
+    await customFunctions.dispose();
     await remoteController.close();
     loadStateNotifier.dispose();
     syncStatusNotifier.dispose();

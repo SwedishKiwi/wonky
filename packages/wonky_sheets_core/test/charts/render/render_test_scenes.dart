@@ -137,6 +137,22 @@ abstract final class RenderTestScenes {
       ascent: 12,
     ),
   ]);
+
+  /// A scene whose primitives carry NaN and infinite coordinates.
+  static ChartScene nonFinite() => scene([
+    const SRect(ChartRect(double.nan, 10, 20, 20), fill: red),
+    SPolyline(
+      Float64List.fromList([10, 10, 20, double.nan, 30, 30, 40, 40]),
+      const SStroke(black, width: 2),
+    ),
+    const SPath([
+      PMoveTo(10, 10),
+      PLineTo(double.infinity, 20),
+      PLineTo(50, 50),
+      PClose(),
+    ], fill: blue),
+    const SText('x', ChartPoint(double.nan, 5), text),
+  ]);
 }
 
 /// RGBA of pixel ([x], [y]) of [image].

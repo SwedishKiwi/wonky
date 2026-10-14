@@ -541,6 +541,21 @@ void main() {
       expect(rgbaAt(image, 40, 370), _near((66, 133, 244, 255), tolerance: 8));
     });
   });
+
+  group('Given a scene with non-finite coordinates', () {
+    test(
+      'when rendering PNG then it does not throw and draws the finite parts',
+      () {
+        final image = const RasterChartRenderer().renderImage(
+          RenderTestScenes.nonFinite(),
+        );
+
+        expect(image.width, 100);
+        final p = image.getPixel(35, 35);
+        expect(p.r, lessThan(128));
+      },
+    );
+  });
 }
 
 extension on SPath {

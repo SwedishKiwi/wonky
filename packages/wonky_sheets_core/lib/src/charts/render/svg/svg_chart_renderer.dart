@@ -87,25 +87,32 @@ final class _SvgWriter {
       case SRect():
         _rect(p);
       case SPath(:final cmds, :final fill, :final stroke, :final evenOdd):
-        final d = _pathData(cmds);
+        if (!RenderGeometry.fillVisible(fill) &&
+            !RenderGeometry.strokeVisible(stroke)) {
+          return;
+        }
+        final d = _pathData(RenderGeometry.finiteCommands(cmds));
         if (d.isEmpty) return;
         final rule = evenOdd ? ' fill-rule="evenodd"' : '';
         _line('<path d="$d"$rule${_fill(fill)}${_stroke(stroke)}/>');
       case SPolyline(:final xy, :final stroke):
-        if (xy.length < 2) return;
-        final pts = StringBuffer();
-        for (var i = 0; i + 1 < xy.length; i += 2) {
-          if (i > 0) pts.write(' ');
-          pts
-            ..write(_n(xy[i]))
-            ..write(',')
-            ..write(_n(xy[i + 1]));
+        // Invisible polylines only serve hit-testing (e.g. under smoothed lines).
+        if (xy.length < 2 || !RenderGeometry.strokeVisible(stroke)) return;
+        for (final run in RenderGeometry.finiteRuns(xy)) {
+          final pts = StringBuffer();
+          for (var i = 0; i + 1 < run.length; i += 2) {
+            if (i > 0) pts.write(' ');
+            pts
+              ..write(_n(run[i]))
+              ..write(',')
+              ..write(_n(run[i + 1]));
+          }
+          _line('<polyline points="$pts" fill="none"${_stroke(stroke)}/>');
         }
-        _line('<polyline points="$pts" fill="none"${_stroke(stroke)}/>');
       case SMarkers():
         _markers(p);
       case SArc():
-        final d = _pathData(p.toPath());
+        final d = _pathData(RenderGeometry.finiteCommands(p.toPath()));
         if (d.isEmpty) return;
         final rule = p.isFullCircle && p.innerRadius > 0
             ? ' fill-rule="evenodd"'
@@ -144,6 +151,12 @@ final class _SvgWriter {
   }
 
   void _rect(SRect p) {
+    // Unpainted rectangles only mark hit regions (legend boxes).
+    if ((!RenderGeometry.fillVisible(p.fill) &&
+            !RenderGeometry.strokeVisible(p.stroke)) ||
+        !RenderGeometry.rectFinite(p.rect)) {
+      return;
+    }
     final r = RenderGeometry.normalize(p.rect);
     final radius = RenderGeometry.clampRadius(r, p.radius);
     final rr = radius > 0 ? ' rx="${_n(radius)}" ry="${_n(radius)}"' : '';
@@ -183,7 +196,7 @@ final class _SvgWriter {
 
   void _text(SText p) {
     final text = _escapeText(p.text);
-    if (text.isEmpty) return;
+    if (text.isEmpty || !p.at.x.isFinite || !p.at.y.isFinite) return;
     final s = p.style;
     final attrs = StringBuffer()
       ..write('x="${_n(p.at.x)}" y="${_n(p.at.y)}"')

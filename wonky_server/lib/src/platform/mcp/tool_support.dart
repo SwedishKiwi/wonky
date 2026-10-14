@@ -145,6 +145,7 @@ class ToolContext {
     this.groupId,
     this.onBehalfOfSessionId,
     this.changeGuard,
+    this.guardDestructive = false,
   });
 
   final Session session;
@@ -171,6 +172,11 @@ class ToolContext {
   /// Checks a content change before it is submitted (the AI destructive
   /// guard); throws a [McpToolException] to refuse it.
   void Function(Delta head, Delta change, String toolName)? changeGuard;
+
+  /// AI runs: destructive spreadsheet operations (Sheets 12 §6.13) fail
+  /// with `needs_confirmation` until the user allowed the call (the loop
+  /// then retries with this off).
+  bool guardDestructive;
 
   /// Display label of the agent ("Claude Code (MCP)", "Assistant").
   String get agentLabel {

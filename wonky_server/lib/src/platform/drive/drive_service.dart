@@ -8,6 +8,7 @@ import 'package:wonky_write_core/wonky_write_core.dart' show Delta, DeltaUtils;
 import '../../sheets/spaces/space_copier.dart';
 import '../../sheets/spaces/space_service.dart';
 import '../../sheets/spaces/spreadsheet_factory.dart';
+import '../../sheets/sync/sheets_sync_service.dart';
 import '../../sheets/sync/sync_db.dart';
 import '../../write/content/write_content.dart';
 import '../../write/ot/document_bus.dart';
@@ -452,7 +453,13 @@ abstract final class DriveService {
     final item = await DriveItem.db.insertRow(
       session,
       DriveItem(
-        uuid: uuid ?? const Uuid().v7obj(),
+        // Spreadsheet items share the UUID of their space (Sheets 02 §3.1),
+        // so a spreadsheet created offline opens at `/s/<space>` before
+        // `registerSpreadsheet` reached the server.
+        uuid:
+            uuid ??
+            (kind == DriveItemKind.spreadsheet ? contentRef : null) ??
+            const Uuid().v7obj(),
         kind: kind,
         name: normalizeItemName(name),
         ownerId: actor.userId,
@@ -695,6 +702,8 @@ abstract final class DriveService {
       return item;
     });
     await _afterCreate(session, actor, item);
+    // Change log rows that synced before the registration.
+    await SheetsSyncService.afterRegistration(session, spaceUuid);
     return DriveViews.one(session, actor.userId, item, role: Role.owner);
   }
 

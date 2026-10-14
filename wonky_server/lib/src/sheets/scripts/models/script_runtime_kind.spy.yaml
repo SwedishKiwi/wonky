@@ -1,0 +1,7 @@
+### Where a script execution ran (Sheets 09 §13.1).
+enum: ScriptRuntimeKind
+serialized: byName
+values:
+  - clientWeb
+  - clientDesktop
+  - server

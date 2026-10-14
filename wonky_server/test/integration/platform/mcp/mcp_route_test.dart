@@ -194,7 +194,7 @@ void main() {
             (t as Map)['name'],
         ];
         expect(names, containsAll(['drive.search', 'write.get_document']));
-        expect(names, isNot(contains('drive.create_spreadsheet')));
+        expect(names, contains('drive.create_spreadsheet'));
         expect((edited.json['result'] as Map)['isError'], isNot(true));
         final badResult = bad.json['result'] as Map;
         expect(badResult['isError'], isTrue);

@@ -52,9 +52,15 @@ final class ChartLayout {
   final List<ChartWarning> warnings;
 }
 
-/// Lays out a chart into a renderer-independent [ChartScene] (08 §6.2).
+/// Lays out a chart into a renderer-independent [ChartScene] (08 §6.2). Pure and
+/// deterministic: the same inputs give the same scene (scene goldens rely on it).
 abstract final class ChartLayoutEngine {
-  /// Lays out [spec] with [data] at [size].
+  /// Lays out [spec] with [data] (from `ChartDataResolver`) at [size] logical px. Colors come
+  /// from [theme] (automatic colors, palette), text sizes from [measurer], axis and data
+  /// labels are formatted with [fmt] (the spreadsheet locale's number formats).
+  ///
+  /// Specs from a newer app version, unimplemented (P2) types, missing data and data that
+  /// doesn't fit the type give a scene with an explanatory `SceneRole.emptyState` text.
   static ChartScene layout(
     ChartSpec spec,
     ChartData data,
@@ -348,6 +354,11 @@ final class _Ctx {
     }
     var content = full.deflate(left: pad, top: pad, right: pad, bottom: pad);
     if (!maximize) content = drawTitles(content);
+    final shapeProblem = dataShapeProblem();
+    if (shapeProblem != null) {
+      emptyState(content, shapeProblem);
+      return;
+    }
     final legendEntries = buildLegend();
     final pos = legendPosition(legendEntries);
     final legendPrims = <ScenePrimitive>[];
@@ -385,6 +396,15 @@ final class _Ctx {
       drawTitles(plotArea?.deflate(left: 6, top: 4) ?? content, overlay: true);
     }
   }
+
+  /// Why the data can't be drawn as this chart type (shown instead of the chart), or null.
+  String? dataShapeProblem() => switch (spec.type) {
+    ChartType.candlestick when data.series.length < 4 =>
+      'Candlestick charts need low, open, close and high columns',
+    ChartType.bubble when data.series.length < 2 =>
+      'Bubble charts need X and Y columns',
+    _ => null,
+  };
 
   void emptyState(ChartRect r, String message) {
     final style = TextStyleSpec(
@@ -513,17 +533,34 @@ final class _Ctx {
       for (var i = 0; i < groups.$1.length; i++)
         _LegendEntry(
           groups.$1[i],
-          theme.seriesColor(i),
+          sliceColor(i, null),
           'marker',
           seriesKey: 'group:$i',
         ),
     ];
   }
 
+  /// Roles of the series of a bubble chart (08 §2: X, Y, color group?, size): after X
+  /// (`series[0]`) and Y (`series[1]`), the first series without numbers is the color group
+  /// and the first numeric one the bubble size.
+  ({int? group, int? size}) bubbleRoles() {
+    int? group, size;
+    for (var i = 2; i < data.series.length; i++) {
+      final s = data.series[i];
+      final numeric = s.values.any((v) => !v.isNaN);
+      if (numeric) {
+        size ??= i;
+      } else if (s.texts != null) {
+        group ??= i;
+      }
+    }
+    return (group: group, size: size);
+  }
+
   /// Color groups of a bubble chart (labels, group index per point) or null.
   (List<String>, Int32List)? bubbleGroups() {
-    if (data.series.length < 4) return null;
-    final texts = data.series[2].texts;
+    final g = bubbleRoles().group;
+    final texts = g == null ? null : data.series[g].texts;
     if (texts == null) return null;
     final names = <String>[];
     final index = <String, int>{};

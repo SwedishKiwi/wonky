@@ -1,0 +1,5 @@
+### The caller's script authorization for a spreadsheet.
+class: ScriptAuthorizationView
+fields:
+  scopes: List<String>
+  grantedAt: DateTime?

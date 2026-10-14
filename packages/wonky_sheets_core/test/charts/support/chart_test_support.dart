@@ -3,17 +3,14 @@ import 'dart:io';
 import 'dart:math' as math;
 
 import 'package:test/test.dart';
+import 'package:wonky_sheets_core/formula.dart' hide fail;
 import 'package:wonky_sheets_core/model.dart';
 import 'package:wonky_sheets_core/model_testing.dart';
-import 'package:wonky_sheets_core/src/addressing/grid_geometry.dart';
-import 'package:wonky_sheets_core/src/charts/charts.dart';
-import 'package:wonky_sheets_core/src/formula/model/workbook_view.dart';
-import 'package:wonky_sheets_core/src/formula/values/dates.dart';
-import 'package:wonky_sheets_core/src/formula/values/fvalue.dart';
 
 /// Deterministic number formatter for chart tests (independent of the number-format engine):
 /// honours fraction digits, `#,##0` grouping, `%` and date tokens (rendered as ISO-like text).
 final class TestFormatter implements ChartValueFormatter {
+  /// Creates the formatter.
   const TestFormatter();
 
   @override
@@ -69,8 +66,9 @@ final class TestFormatter implements ChartValueFormatter {
   }
 }
 
-/// A [CellSource] over a model with scripted hidden rows/columns.
+/// A [CellSource] over a model with scripted hidden rows/columns and computed values.
 final class FakeCellSource implements CellSource {
+  /// Creates the source.
   FakeCellSource(
     this.model, {
     this.hiddenRows = const {},
@@ -87,6 +85,8 @@ final class FakeCellSource implements CellSource {
 
   /// Rows hidden by the basic filter (only when `includeFilter`).
   final Set<int> filteredRows;
+
+  /// User-hidden column indices.
   final Set<int> hiddenColumns;
 
   /// Computed overlay values by `(row, col)`.
@@ -126,6 +126,10 @@ GridRange rangeOf(WorkbookModel model, String a1) {
   );
 }
 
+/// The column id of column [letter] on the first sheet of [model].
+String columnKey(WorkbookModel model, String letter) =>
+    model.sheets.first.columns.idAt(letter.codeUnitAt(0) - 0x41);
+
 /// Builds a model from row-major [rows] at A1 of `Sheet1`. [columnFormats] maps a column
 /// letter to the number format of its non-header cells (row 2 on).
 (WorkbookBuilder, WorkbookModel) buildTable(
@@ -152,6 +156,31 @@ GridRange rangeOf(WorkbookModel model, String a1) {
   }
   return (b, b.build());
 }
+
+/// The table of 08 §21 acceptance criterion 1: a header row and 12 months × 3 regions.
+WorkbookModel monthlyRevenue() => buildTable([
+  ['Month', 'North', 'South', 'East'],
+  for (var i = 0; i < 12; i++)
+    [
+      const [
+        'Jan',
+        'Feb',
+        'Mar',
+        'Apr',
+        'May',
+        'Jun',
+        'Jul',
+        'Aug',
+        'Sep',
+        'Oct',
+        'Nov',
+        'Dec',
+      ][i],
+      10 + i * 3,
+      30 - i * 2 + (i % 3) * 4,
+      5 + (i * 7) % 11,
+    ],
+]).$2;
 
 /// Resolves [spec] against [model] with [TestFormatter].
 ChartData resolveChart(
@@ -185,20 +214,90 @@ ChartSpec specFor(
   typeOptions: typeOptions,
 );
 
-/// Compares [actual] JSON against the golden file `test/fixtures/charts/<name>.json`, writing it
-/// when `UPDATE_GOLDENS=1` (or when missing).
-void expectGoldenJson(String name, Map<String, Object?> actual) {
-  final file = File('test/fixtures/charts/$name.json');
-  final encoded = '${const JsonEncoder.withIndent(' ').convert(actual)}\n';
-  if (Platform.environment['UPDATE_GOLDENS'] == '1' || !file.existsSync()) {
+/// Default size of chart tests (08 §5.2: 600 × 371).
+const testChartSize = ChartSize(600, 371);
+
+/// The light export theme of the standard spreadsheet theme.
+final testTheme = ChartTheme.from(SpreadsheetTheme.standard, export: true);
+
+/// Lays out [spec] with [data] deterministically ([ApproxTextMeasurer], [TestFormatter]).
+ChartLayout layoutChart(
+  ChartSpec spec,
+  ChartData data, {
+  ChartSize size = testChartSize,
+  ChartTheme? theme,
+  ChartLayoutOptions options = const ChartLayoutOptions(),
+}) => ChartLayoutEngine.layoutDetailed(
+  spec,
+  data,
+  size,
+  theme ?? testTheme,
+  const ApproxTextMeasurer(),
+  fmt: const TestFormatter(),
+  options: options,
+);
+
+/// Resolves and lays out [spec] over [model].
+ChartScene sceneOf(
+  ChartSpec spec,
+  WorkbookModel model, {
+  ChartSize size = testChartSize,
+  ChartTheme? theme,
+  ChartLayoutOptions options = const ChartLayoutOptions(),
+}) => layoutChart(
+  spec,
+  resolveChart(spec, model),
+  size: size,
+  theme: theme,
+  options: options,
+).scene;
+
+/// The primitives of [scene] (groups and clips expanded) with [role], optionally only those
+/// of type [T] and with [detail].
+List<T> primitivesOf<T extends ScenePrimitive>(
+  ChartScene scene,
+  SceneRole role, {
+  String? detail,
+}) => [
+  for (final p in scene.flattened)
+    if (p is T &&
+        p.tag?.role == role &&
+        (detail == null || p.tag?.detail == detail))
+      p,
+];
+
+/// Texts of the [SText] primitives of [scene] with [role] (and [detail]), in paint order.
+List<String> textsOf(ChartScene scene, SceneRole role, {String? detail}) => [
+  for (final t in primitivesOf<SText>(scene, role, detail: detail)) t.text,
+];
+
+/// Compares [actual] JSON against the golden file `test/fixtures/charts/<name>.json`
+/// (resolved from the package root, where `dart test` runs). Run with `UPDATE_GOLDENS=1` to
+/// write or accept goldens; a missing golden fails otherwise.
+void expectGoldenJson(String name, Map<String, Object?> actual) =>
+    _expectGolden('$name.json', '${_json.convert(actual)}\n');
+
+/// Compares [actual] text against the golden file `test/fixtures/charts/<name>` (see
+/// [expectGoldenJson]).
+void expectGoldenText(String name, String actual) =>
+    _expectGolden(name, actual);
+
+const _json = JsonEncoder.withIndent(' ');
+
+void _expectGolden(String fileName, String actual) {
+  final file = File('test/fixtures/charts/$fileName');
+  if (Platform.environment['UPDATE_GOLDENS'] == '1') {
     file
       ..createSync(recursive: true)
-      ..writeAsStringSync(encoded);
+      ..writeAsStringSync(actual);
     return;
   }
+  if (!file.existsSync()) {
+    fail('Golden ${file.path} is missing (run with UPDATE_GOLDENS=1)');
+  }
   expect(
-    encoded,
+    actual,
     file.readAsStringSync(),
-    reason: 'scene golden $name differs (UPDATE_GOLDENS=1 to accept)',
+    reason: 'golden $fileName differs (run with UPDATE_GOLDENS=1 to accept)',
   );
 }

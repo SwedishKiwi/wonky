@@ -143,6 +143,26 @@ final class AxisIndex {
   /// Ids hidden by [layer].
   Set<String> hiddenLayer(String layer) => _hiddenLayers[layer] ?? const {};
 
+  final Set<String> _suppressed = {};
+
+  /// Suppresses (or restores) computed layer [layer] in the effective
+  /// visibility ([isHidden], sizes) while keeping its ids: [isHiddenBy] and
+  /// [hiddenLayer] still report them (an active filter view replaces the
+  /// basic filter on screen while `SUBTOTAL` keeps using it, 07 §4.3).
+  void setLayerSuppressed(String layer, bool suppressed) {
+    final changed = suppressed
+        ? _suppressed.add(layer)
+        : _suppressed.remove(layer);
+    if (!changed) return;
+    _computedHidden = null;
+    _fenwick = null;
+    _effective = null;
+    _visiblePrefix = null;
+  }
+
+  /// Whether computed layer [layer] is suppressed.
+  bool isLayerSuppressed(String layer) => _suppressed.contains(layer);
+
   /// Sets the measured automatic size of [id] (rows with automatic height).
   void setAutoSize(String id, double? px) {
     if (px == null) {
@@ -387,11 +407,13 @@ final class AxisIndex {
   Set<String> _computed() {
     final c = _computedHidden;
     if (c != null) return c;
-    if (_hiddenLayers.isEmpty) return _computedHidden = const {};
-    if (_hiddenLayers.length == 1) {
-      return _computedHidden = _hiddenLayers.values.first;
-    }
-    return _computedHidden = {for (final s in _hiddenLayers.values) ...s};
+    final layers = [
+      for (final e in _hiddenLayers.entries)
+        if (!_suppressed.contains(e.key)) e.value,
+    ];
+    if (layers.isEmpty) return _computedHidden = const {};
+    if (layers.length == 1) return _computedHidden = layers.first;
+    return _computedHidden = {for (final s in layers) ...s};
   }
 
   double _sizeOf(int i, Set<String> computed) {

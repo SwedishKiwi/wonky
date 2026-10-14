@@ -42,6 +42,37 @@ final class OverlayCell {
   const OverlayCell(this.hostSheetId, this.hostRow, this.hostCol, this.value);
 }
 
+/// The area of a dynamic array (05 §7.5): a spilled array, or the area a
+/// `#SPILL!` host wants ([blocked]). Collision rules between spills and
+/// other computed overlays (pivot output) compare host positions: the
+/// earlier anchor in row/column order wins.
+final class SpillArea {
+  /// Host row and column (the anchor).
+  final int row;
+  final int col;
+
+  /// The spilled (or wanted) rectangle, anchor included.
+  final GridRect rect;
+
+  /// Whether the host shows `#SPILL!` (the array did not fit).
+  final bool blocked;
+  const SpillArea(this.row, this.col, this.rect, {this.blocked = false});
+
+  @override
+  bool operator ==(Object other) =>
+      other is SpillArea &&
+      other.row == row &&
+      other.col == col &&
+      other.rect == rect &&
+      other.blocked == blocked;
+
+  @override
+  int get hashCode => Object.hash(row, col, rect, blocked);
+
+  @override
+  String toString() => 'SpillArea(${rect.a1}${blocked ? ', blocked' : ''})';
+}
+
 /// One changed cell reported in a [RecalcBatch].
 final class ChangedCell {
   final String sheetId;
@@ -88,7 +119,10 @@ enum AxisChangeKind { inserted, deleted, moved, resized }
 final class AxisChange {
   final AxisChangeKind kind;
 
-  /// First affected index (in the new order for inserts, the old order for deletes).
+  /// First affected index. Inserts: the first new index (in the new order). Deletes: the
+  /// position of the gap in the new order (for a single contiguous run that is the first
+  /// deleted index in the old order); report non-contiguous deletes as one change per
+  /// run so that ranges spanning each deletion point are recalculated.
   final int index;
   final int count;
 

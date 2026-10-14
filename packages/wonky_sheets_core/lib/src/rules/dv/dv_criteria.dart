@@ -154,6 +154,18 @@ sealed class DvCriteria {
 
   /// Whether the criteria render a dropdown.
   bool get isDropdown => this is DvListCriteria || this is DvRangeCriteria;
+
+  @override
+  bool operator ==(Object other) =>
+      other is DvCriteria &&
+      other.runtimeType == runtimeType &&
+      other.encode() == encode();
+
+  @override
+  int get hashCode => encode().hashCode;
+
+  @override
+  String toString() => 'DvCriteria(${encode()})';
 }
 
 /// Dropdown of items.
@@ -162,6 +174,7 @@ final class DvListCriteria extends DvCriteria {
   DvListCriteria(List<DvOption> options, {this.allowMultiple = false})
     : options = List.unmodifiable(options);
 
+  /// The items in order.
   final List<DvOption> options;
 
   /// Multi-select (P2): values joined by `", "`.
@@ -192,10 +205,13 @@ final class DvRangeCriteria extends DvCriteria {
     this.allowMultiple = false,
   }) : colors = Map.unmodifiable(colors);
 
+  /// The source range of the items.
   final GridRange range;
 
   /// Item text → chip colors.
   final Map<String, DvChipColors> colors;
+
+  /// Multi-select (P2): values joined by `", "`.
   final bool allowMultiple;
 
   @override
@@ -235,6 +251,7 @@ final class DvConditionCriteria extends DvCriteria {
   /// Creates condition criteria.
   const DvConditionCriteria(this.condition);
 
+  /// The condition.
   final Condition condition;
 
   @override

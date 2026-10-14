@@ -16,6 +16,7 @@ import '../../model/records.dart';
 import '../../model/schema.dart';
 import '../../model/sheet_model.dart';
 import '../../model/workbook_model.dart';
+import '../../rules/dv/validation_engine.dart';
 
 /// Result of conditional formatting for one cell (06 §15): the format
 /// overlay (bold/italic/underline/strikethrough/textColor/fillColor) and an
@@ -27,6 +28,12 @@ final class ConditionalOverlay {
     this.dataBarFraction,
     this.dataBarColor,
     this.dataBarStart = 0,
+    this.dataBarGradient = false,
+    this.dataBarAxis,
+    this.dataBarRightToLeft = false,
+    this.iconSet,
+    this.iconIndex,
+    this.showValue = true,
   });
 
   /// Format attributes that win over everything (06 §1.2).
@@ -40,6 +47,25 @@ final class ConditionalOverlay {
 
   /// Fraction where the bar starts (negative values / axis position).
   final double dataBarStart;
+
+  /// Whether the bar fades to 10 % alpha (06 §15.6).
+  final bool dataBarGradient;
+
+  /// Axis position (fraction of the content box) when an axis is drawn.
+  final double? dataBarAxis;
+
+  /// Whether the bar fractions are measured from the right edge.
+  final bool dataBarRightToLeft;
+
+  /// Icon set id (`3arrows`, …, 06 §15.7) of the icon painted left of the
+  /// text, if any.
+  final String? iconSet;
+
+  /// Index of the icon within [iconSet] (0 = highest threshold).
+  final int? iconIndex;
+
+  /// False when a data bar or icon set hides the cell text.
+  final bool showValue;
 }
 
 /// Supplies conditional formatting results (the CF evaluator adapts to this).
@@ -167,6 +193,7 @@ final class CellDisplayResolver {
     this.conditional,
     NumberFormatter? formatter,
     this.includeBanding = true,
+    this.dvDraft,
   }) : locale = locale ?? model.spreadsheet.locale,
        formatter = formatter ?? NumberFormatter.instance,
        formats = EffectiveFormatResolver(model);
@@ -178,6 +205,9 @@ final class CellDisplayResolver {
   final NumberFormatter formatter;
   final EffectiveFormatResolver formats;
   final bool includeBanding;
+
+  /// The data validation panel's draft rule, previewed (07 §6.3).
+  final DvDraftPreview? dvDraft;
 
   final Map<String, _DvInfo?> _dvCache = {};
 
@@ -328,17 +358,14 @@ final class CellDisplayResolver {
   }
 
   _DvInfo? _dvAt(SheetModel s, int row, int col) {
-    final ids = s.rulesAt(RuleKind.dataValidation, row, col);
-    if (ids.isEmpty) return null;
-    DvRuleRecord? best;
-    for (final id in ids) {
-      final r = s.dvRules[id];
-      if (r == null) continue;
-      if (best == null ||
-          r.createdAt.isAfter(best.createdAt) ||
-          (r.createdAt == best.createdAt && r.id.compareTo(best.id) > 0)) {
-        best = r;
-      }
+    final draft = dvDraft;
+    final DvRuleRecord? best;
+    if (draft != null && draft.affects(s, row, col)) {
+      best = DvRuleResolver.effectiveRuleAt(s, row, col, draft: draft);
+    } else {
+      final ids = s.rulesAt(RuleKind.dataValidation, row, col);
+      if (ids.isEmpty) return null;
+      best = DvRuleResolver.effectiveRuleAt(s, row, col);
     }
     if (best == null) return null;
     final rule = best;

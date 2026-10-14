@@ -1,4 +1,4 @@
-import 'package:flutter/foundation.dart';
+import 'package:flutter/widgets.dart';
 import 'package:wonky_client/wonky_client.dart';
 import 'package:wonky_core/wonky_core.dart' show Role;
 
@@ -43,4 +43,24 @@ abstract class AssistantDocumentAdapter implements Listenable {
   /// Inserts Markdown at the cursor ([atTop]: at the document start) as one
   /// undoable step.
   Future<bool> insertMarkdown(String markdown, {bool atTop = false});
+}
+
+/// Optional hooks of an [AssistantDocumentAdapter] whose AI changes are
+/// server-side change records (Wonky Sheets 12 §6.2–6.3): an adapter that
+/// also implements this interface is told about the run's composite
+/// server change (one undo step), Suggest-mode previews and finished tool
+/// calls, and can add widgets under a reply ("Review changes").
+abstract interface class AssistantRunHooks {
+  /// A tool call finished ([activity] carries `range` / `objectId`).
+  void toolFinished(AssistantActivity activity);
+
+  /// An Edit-mode run committed its changes as one server change
+  /// (`done.changeId`); [summary] is the short label of the run.
+  void runCommitted(AssistantReplyEntry reply, String changeId, String summary);
+
+  /// A Suggest-mode run recorded an AI changes preview (`previewReady`).
+  void previewReady(AssistantReplyEntry reply, String previewId);
+
+  /// Extra widgets under [reply] (null = none).
+  Widget? replyFooter(BuildContext context, AssistantReplyEntry reply);
 }

@@ -3,6 +3,7 @@ import 'dart:typed_data';
 
 import 'package:pdf/pdf.dart';
 
+import '../../layout/text_measurer.dart';
 import '../../scene/geometry.dart';
 import '../../scene/path.dart';
 import '../../scene/scene.dart';
@@ -79,6 +80,59 @@ final class PdfChartRenderer {
   }
 
   static double _finite(double v) => v.isFinite && v > 0 ? v : 0;
+}
+
+/// [TextMeasurer] with the metrics of the PDF fonts [PdfChartRenderer.draw] uses, so charts
+/// printed or exported as PDF lay out text for the embedded font (08 §6.2).
+///
+/// Pass the same fonts as to [PdfChartRenderer.draw]; without [font] it measures with the
+/// standard Helvetica family (the renderer's default).
+final class PdfTextMeasurer implements TextMeasurer {
+  /// Creates a measurer.
+  PdfTextMeasurer({
+    PdfFont? font,
+    PdfFont? boldFont,
+    PdfFont? italicFont,
+    PdfFont? boldItalicFont,
+  }) : _fonts = _Fonts(
+         font ?? PdfFont.helvetica(PdfDocument()),
+         font == null,
+         bold: boldFont,
+         italic: italicFont,
+         boldItalic: boldItalicFont,
+       );
+
+  final _Fonts _fonts;
+
+  @override
+  TextMetrics measure(String text, TextStyleSpec style) {
+    final size = style.size > 0 ? style.size : 0.0;
+    final font = _fonts.pick(style.bold, style.italic);
+    final t = _encodable(text, font);
+    final width = t.isEmpty ? 0.0 : font.stringMetrics(t).advanceWidth * size;
+    return TextMetrics(
+      width,
+      (font.ascent - font.descent) * size,
+      font.ascent * size,
+    );
+  }
+}
+
+/// [text] as a single line with characters [font] cannot show replaced by `?`.
+String _encodable(String text, PdfFont font) {
+  final b = StringBuffer();
+  for (final r in text.runes) {
+    if (r == 0x0A || r == 0x0D || r == 0x09) {
+      b.write(' ');
+    } else if (r < 0x20 || r == 0x7F) {
+      continue;
+    } else if (font.isRuneSupported(r)) {
+      b.writeCharCode(r);
+    } else {
+      b.write('?');
+    }
+  }
+  return b.toString();
 }
 
 final class _Fonts {
@@ -161,6 +215,7 @@ final class _PdfPainter {
   void primitive(ScenePrimitive p, double opacity) {
     switch (p) {
       case SRect(:final rect, :final fill, :final stroke, :final radius):
+        if (!RenderGeometry.rectFinite(rect)) return;
         final r = RenderGeometry.normalize(rect);
         final rr = RenderGeometry.clampRadius(r, radius);
         paint(
@@ -247,7 +302,7 @@ final class _PdfPainter {
   }
 
   void _path(List<PathCmd> cmds) {
-    for (final c in cmds) {
+    for (final c in RenderGeometry.finiteCommands(cmds)) {
       switch (c) {
         case PMoveTo(:final x, :final y):
           g.moveTo(x, y);
@@ -344,23 +399,6 @@ final class _PdfPainter {
       ..setFillColor(_color(style.color))
       ..drawString(font, size, text, 0, 0)
       ..restoreContext();
-  }
-
-  /// [text] as a single line with characters the font cannot show replaced by `?`.
-  static String _encodable(String text, PdfFont font) {
-    final b = StringBuffer();
-    for (final r in text.runes) {
-      if (r == 0x0A || r == 0x0D || r == 0x09) {
-        b.write(' ');
-      } else if (r < 0x20 || r == 0x7F) {
-        continue;
-      } else if (font.isRuneSupported(r)) {
-        b.writeCharCode(r);
-      } else {
-        b.write('?');
-      }
-    }
-    return b.toString();
   }
 
   static PdfColor _color(int argb) => PdfColor(

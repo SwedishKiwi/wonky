@@ -2,12 +2,11 @@ import 'dart:async';
 import 'dart:convert';
 
 import 'package:serverpod/serverpod.dart';
-import 'package:wonky_core/wonky_core.dart' show McpScope, Role;
+import 'package:wonky_core/wonky_core.dart' show McpScope;
 import 'package:wonky_write_core/wonky_write_core.dart'
     show BlockType, Delta, DeltaUtils, WonkyDocument;
 
-import '../../write/ai/write_context_builder.dart';
-import '../../write/ai/write_prompts.dart';
+import '../../sheets/mcp/sheets_changes.dart';
 import '../../write/mcp/headless_editor.dart';
 import '../cluster/cluster.dart';
 import '../common/actor.dart';
@@ -22,6 +21,9 @@ import 'ai_keys.dart';
 import 'ai_models.dart';
 import 'ai_usage_service.dart';
 import 'assistant_history.dart';
+
+export 'assistant_target.dart' show AssistantToolActivity;
+import 'assistant_target.dart';
 import 'assistant_tools.dart';
 import 'llm/ai_client.dart';
 
@@ -34,40 +36,6 @@ class AssistantRun {
   final int threadId;
   final AiCancelToken cancel = AiCancelToken();
   final Map<String, Completer<bool>> confirmations = {};
-}
-
-/// One tool chip of the panel (persisted in `toolCallsJson`).
-class AssistantToolActivity {
-  AssistantToolActivity({
-    required this.toolUseId,
-    required this.toolName,
-    required this.summary,
-    this.error = false,
-    this.changeId,
-    this.rangeStart,
-    this.rangeLength,
-    this.revision,
-  });
-
-  final String toolUseId;
-  final String toolName;
-  String summary;
-  bool error;
-  String? changeId;
-  int? rangeStart;
-  int? rangeLength;
-  int? revision;
-
-  Map<String, Object?> toJson() => {
-    'toolUseId': toolUseId,
-    'toolName': toolName,
-    'summary': summary,
-    if (error) 'error': true,
-    'changeId': ?changeId,
-    'rangeStart': ?rangeStart,
-    'rangeLength': ?rangeLength,
-    'revision': ?revision,
-  };
 }
 
 /// The assistant agent loop (suite 10 §2): builds the request (tools →
@@ -116,11 +84,7 @@ abstract final class AssistantService {
     if (text.isEmpty) throw Errors.invalid('The message is empty.');
     if (text.length > 20000) throw Errors.tooLarge('The message is too long.');
     await AiUsageService.requireAvailable(session, actor.userId);
-    final target = await HeadlessDocumentEditor.resolve(
-      session,
-      actor,
-      itemUuid,
-    );
+    final target = await AssistantTarget.resolve(session, actor, itemUuid);
     AssistantThread thread;
     if (threadId != null) {
       final t = await AssistantThread.db.findById(session, threadId);
@@ -330,11 +294,7 @@ abstract final class AssistantService {
     Actor actor,
     UuidValue itemUuid,
   ) async {
-    final target = await HeadlessDocumentEditor.resolve(
-      session,
-      actor,
-      itemUuid,
-    );
+    final target = await AssistantTarget.resolve(session, actor, itemUuid);
     final rows = await AssistantThread.db.find(
       session,
       where: (t) =>
@@ -415,14 +375,15 @@ abstract final class AssistantService {
     Session session,
     Actor actor,
     String changeId,
-  ) => HeadlessDocumentEditor.revert(
-    ToolContext(
+  ) async {
+    final ctx = ToolContext(
       session: session,
       actor: actor.copyWith(kind: ActorKind.ai),
-      scopes: {McpScope.writeRead, McpScope.writeEdit},
-    ),
-    changeId,
-  );
+      scopes: {McpScope.writeRead, McpScope.writeEdit, McpScope.sheetsEdit},
+    );
+    return await SheetsChanges.tryRevert(ctx, changeId) ??
+        await HeadlessDocumentEditor.revert(ctx, changeId);
+  }
 
   /// The destructive guard of [doc]: refuses a change that deletes more
   /// than [guardChars] characters or [guardFraction] of the document.
@@ -476,36 +437,6 @@ abstract final class AssistantService {
       },
     );
   }
-
-  /// A short "what the tool is doing" label for the panel chip.
-  static String startLabel(String tool) => switch (tool) {
-    'write.get_document' => 'Reading the document',
-    'write.get_outline' => 'Reading the outline',
-    'write.get_stats' => 'Counting words',
-    'write.search' => 'Searching the document',
-    'write.get_page_setup' => 'Reading the page setup',
-    'write.insert_markdown' => 'Adding text',
-    'write.replace_text' => 'Replacing text',
-    'write.replace_range' => 'Rewriting text',
-    'write.delete_range' => 'Deleting text',
-    'write.apply_format' => 'Formatting text',
-    'write.set_block_type' => 'Changing block types',
-    'write.insert_table' => 'Inserting a table',
-    'write.update_table' => 'Editing a table',
-    'write.list_suggestions' => 'Reading suggestions',
-    'write.suggest_edit' => 'Suggesting an edit',
-    'write.accept_suggestion' => 'Accepting suggestions',
-    'write.reject_suggestion' => 'Rejecting suggestions',
-    'comments.list' => 'Reading comments',
-    'comments.create' => 'Adding a comment',
-    'comments.reply' => 'Replying to a comment',
-    'versions.list' => 'Reading the version history',
-    'versions.get' => 'Reading a version',
-    'write.list_themes' => 'Looking at themes',
-    'write.apply_theme' => 'Applying a theme',
-    'write.update_page_setup' => 'Changing the page setup',
-    _ => 'Working',
-  };
 }
 
 /// One run of the loop.
@@ -527,7 +458,7 @@ class _Loop {
   final Actor actor;
   final AssistantRun ar;
   AssistantThread thread;
-  final WriteTarget target;
+  final AssistantTarget target;
   final String message;
   final AssistantContextHints hints;
   final AiQuality quality;
@@ -555,14 +486,8 @@ class _Loop {
       );
       return;
     }
-    final role = target.role;
-    final applyMode = role < Role.editor
-        ? AiApplyMode.suggest
-        : hints.applyMode;
-    final toolset = AssistantToolset.write(
-      executor,
-      canDecideSuggestions: role >= Role.editor,
-    );
+    final applyMode = target.applyMode(hints.applyMode);
+    final toolset = target.toolset(executor);
     final runner = AssistantToolRunner(
       executor: executor,
       toolset: toolset,
@@ -573,6 +498,12 @@ class _Loop {
     await _loadHistory();
     final userMessageId = await _appendUserTurn(applyMode);
     emit(_ev(AssistantEventType.started)..messageId = userMessageId);
+    await target.beginRun(
+      session,
+      actor,
+      runId: ar.runId,
+      applyMode: applyMode,
+    );
 
     final tier = AiTier.chat(quality);
     final client = backend.client;
@@ -594,7 +525,7 @@ class _Loop {
       final request = AiRequest(
         model: backend.model(tier),
         effort: tier.effort,
-        system: WritePrompts.assistant,
+        system: target.system,
         tools: toolset.apiTools,
         messages: List.of(_messages),
         userId: 'u${actor.userId}',
@@ -734,12 +665,23 @@ class _Loop {
     }
     thread = thread.copyWith(updatedAt: nowUtc());
     await AssistantThread.db.updateRow(session, thread);
-    emit(
-      _ev(AssistantEventType.done, text: _answer.toString())
-        ..messageId = _lastAssistantId
-        ..errorCode = ar.cancel.isCancelled ? 'stopped' : null,
+    final done = _ev(AssistantEventType.done, text: _answer.toString())
+      ..messageId = _lastAssistantId
+      ..errorCode = ar.cancel.isCancelled ? 'stopped' : null;
+    await target.endRun(
+      session,
+      actor,
+      runId: ar.runId,
+      changeIds: _changeIds,
+      title: thread.title,
+      done: done,
+      emit: emit,
     );
+    emit(done);
   }
+
+  /// `change_id`s of the run's successful tool calls, in order.
+  final List<String> _changeIds = [];
 
   Future<void> _loadHistory() async {
     final rows = await AssistantMessage.db.find(
@@ -758,64 +700,17 @@ class _Loop {
   /// cached) or a "document updated" element, then the message with the
   /// volatile context at its end.
   Future<int> _appendUserTurn(AiApplyMode applyMode) async {
-    final ctx = await WriteContextBuilder.load(session, target);
-    final selection = WriteContextBuilder.selection(
-      ctx,
-      start: hints.selectionStart,
-      length: hints.selectionLength,
-      text: hints.selectionText,
+    final (blocks, updated) = await target.userTurn(
+      session,
+      thread: thread,
+      first: _messages.isEmpty,
+      message: message,
+      hints: hints,
+      applyMode: applyMode,
+      actor: actor,
+      executor: executor,
     );
-    final blocks = <TextPart>[];
-    final first = _messages.isEmpty;
-    if (first) {
-      blocks.add(
-        TextPart(
-          WriteContextBuilder.snapshot(
-            ctx,
-            focusOffset: selection?.start ?? hints.selectionStart,
-          ),
-        ),
-      );
-    } else if (thread.contextRevision != ctx.revision) {
-      final update = WriteContextBuilder.update(
-        previousMarkdown: thread.contextMarkdown,
-        previousRevision: thread.contextRevision,
-        now: ctx,
-      );
-      if (update != null) blocks.add(TextPart(update));
-    }
-    String? comments;
-    if (hints.includeComments) {
-      final out = await executor.call(
-        ToolContext(
-          session: session,
-          actor: actor.copyWith(kind: ActorKind.ai),
-          scopes: {McpScope.writeRead},
-        ),
-        'comments.list',
-        {'uuid': target.item.uuid.uuid, 'status': 'open'},
-      );
-      comments = out.result?.text;
-    }
-    final caret = hints.selectionStart;
-    blocks.add(
-      TextPart(
-        '$message\n\n${WriteContextBuilder.volatile(
-          c: ctx,
-          applyMode: applyMode,
-          role: target.role.name,
-          selection: selection,
-          caretHeadingPath: hints.caretHeadingPath ?? (caret == null ? null : WriteContextBuilder.headingPath(ctx, caret)),
-          localTime: hints.localTime,
-          comments: comments,
-        )}',
-      ),
-    );
-    thread = thread.copyWith(
-      contextRevision: ctx.revision,
-      contextMarkdown: ctx.markdown,
-      updatedAt: nowUtc(),
-    );
+    thread = updated.copyWith(updatedAt: nowUtc());
     await AssistantThread.db.updateRow(session, thread);
     final userTurn = ChatMessage(role: ChatMessageRole.user, parts: blocks);
     final row = await AssistantMessage.db.insertRow(
@@ -900,19 +795,12 @@ class _Loop {
     bool isError = false,
   }) => ToolPart.result(callId: id, toolName: toolName, result: content);
 
-  ToolContext _toolContext({bool guarded = true}) => ToolContext(
-    session: session,
-    actor: actor.copyWith(kind: ActorKind.ai),
-    scopes: {McpScope.writeRead, McpScope.writeEdit},
-    clientName: 'Assistant',
-    groupId: ar.runId,
-    onBehalfOfSessionId: hints.documentSessionId,
-    changeGuard: guarded
-        ? (head, change, _) {
-            final v = AssistantService.guardViolation(head, change);
-            if (v != null) throw v;
-          }
-        : null,
+  ToolContext _toolContext({bool guarded = true}) => target.toolContext(
+    session,
+    actor,
+    runId: ar.runId,
+    hints: hints,
+    guarded: guarded,
   );
 
   Future<ToolPart> _execute(
@@ -928,7 +816,7 @@ class _Loop {
     final activity = AssistantToolActivity(
       toolUseId: id,
       toolName: mcpName,
-      summary: AssistantService.startLabel(mcpName),
+      summary: target.startLabel(mcpName),
     );
     activities.add(activity);
     emit(
@@ -948,7 +836,9 @@ class _Loop {
           ..changeId = activity.changeId
           ..rangeStart = activity.rangeStart
           ..rangeLength = activity.rangeLength
-          ..revision = activity.revision,
+          ..revision = activity.revision
+          ..range = activity.range
+          ..objectId = activity.objectId,
       );
       return _toolResult(id, apiName, content, isError: error);
     }
@@ -981,7 +871,7 @@ class _Loop {
       );
       ar.confirmations.remove(confirmationId);
       if (!allow) {
-        activity.summary = 'Deletion denied';
+        activity.summary = 'Change denied';
         return finish(
           jsonEncode({
             'code': 'denied_by_user',
@@ -1006,22 +896,10 @@ class _Loop {
     }
     final r = outcome.result!;
     final structured = r.structured;
-    if (structured is Map) {
-      final s = structured['summary'];
-      if (s is String && s.isNotEmpty) activity.summary = s;
-      final change = structured['change_id'];
-      if (change is String) activity.changeId = change;
-      final rev = structured['revision'];
-      if (rev is int) activity.revision = rev;
-      final range = structured['applied_range'];
-      if (range is Map) {
-        activity.rangeStart = (range['start'] as num?)?.toInt();
-        activity.rangeLength = (range['length'] as num?)?.toInt();
-      }
-    }
-    var text = mcpName == 'write.get_document'
-        ? r.text
-        : jsonEncode(_jsonSafe(structured ?? r.text));
+    if (structured is Map) target.annotate(activity, structured);
+    final change = activity.changeId;
+    if (change != null) _changeIds.add(change);
+    var text = target.resultText(mcpName, r);
     if (text.length > AssistantService.maxToolResultChars) {
       text =
           '${text.substring(0, AssistantService.maxToolResultChars)}\n'
@@ -1030,17 +908,6 @@ class _Loop {
     }
     return finish(text, error: false);
   }
-
-  static Object? _jsonSafe(Object? v) => switch (v) {
-    null || String() || num() || bool() => v,
-    Map() => <String, Object?>{
-      for (final e in v.entries) '${e.key}': _jsonSafe(e.value),
-    },
-    Iterable() => [for (final e in v) _jsonSafe(e)],
-    UuidValue() => v.uuid,
-    DateTime() => v.toUtc().toIso8601String(),
-    _ => '$v',
-  };
 }
 
 /// User-facing messages for API failures.

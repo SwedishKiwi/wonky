@@ -1,0 +1,7 @@
+### Response of the URL fetch proxy (Sheets 09 §8.3).
+class: ScriptFetchResponse
+fields:
+  statusCode: int
+  headersJson: String
+  bodyBase64: String
+  contentText: String

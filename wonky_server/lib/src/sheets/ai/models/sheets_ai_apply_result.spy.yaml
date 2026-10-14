@@ -1,0 +1,10 @@
+### The result of applying AI changes (a preview or Fill with AI): one
+### undoable server change (`sheets.serverChange`, `SheetsEndpoint.revertChange`).
+class: SheetsAiApplyResult
+fields:
+  ### Null when nothing changed.
+  changeId: UuidValue?
+  label: String
+  cellsAffected: int
+  ### Columns kept because someone else changed them meanwhile.
+  skipped: int

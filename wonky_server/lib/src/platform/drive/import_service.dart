@@ -1,22 +1,19 @@
-import 'dart:convert';
-
 import 'package:serverpod/serverpod.dart';
 
+import '../../sheets/imports/sheets_import_service.dart';
 import '../../write/export/write_import_service.dart';
 import '../common/actor.dart';
 import '../common/errors.dart';
 import '../common/models.dart';
-import '../config/wonky_config.dart';
 import '../files/file_service.dart';
-import 'drive_service.dart';
-import 'templates/builtin_templates.dart';
 
 /// Server-side imports (`drive.import`, Write 07 §3.2, Sheets 11):
 /// Markdown, text, HTML, DOCX, ODT and RTF become documents
-/// ([WriteImportService]), CSV/TSV become spreadsheets.
+/// ([WriteImportService]), CSV/TSV/XLSX/ODS become spreadsheets
+/// ([SheetsImportService]).
 abstract final class ImportService {
   static Set<String> get documentFormats => WriteImportService.formats;
-  static const spreadsheetFormats = {'csv', 'tsv'};
+  static const spreadsheetFormats = SheetsImportService.formats;
 
   static String _format(StoredFile file, DriveImportOptions options) {
     final explicit = options.format?.toLowerCase().trim();
@@ -34,12 +31,6 @@ abstract final class ImportService {
     };
   }
 
-  static String _baseName(String fileName) {
-    final dot = fileName.lastIndexOf('.');
-    final base = dot > 0 ? fileName.substring(0, dot) : fileName;
-    return base.trim().isEmpty ? 'Imported' : base.trim();
-  }
-
   static Future<ImportReportView> import(
     Session session,
     Actor actor,
@@ -55,10 +46,6 @@ abstract final class ImportService {
     );
     final format = _format(file, options);
     final bytes = await FileService.readBytes(session, file);
-    final text = utf8.decode(
-      bytes.buffer.asUint8List(0, bytes.lengthInBytes),
-      allowMalformed: true,
-    );
     final ImportReportView report;
     switch (kind) {
       case DriveItemKind.document:
@@ -76,101 +63,21 @@ abstract final class ImportService {
           options,
         );
       case DriveItemKind.spreadsheet:
-        if (!spreadsheetFormats.contains(format)) {
-          throw Errors.invalid(
-            'Files of type "$format" cannot be imported as spreadsheets.',
-          );
-        }
-        report = await _spreadsheet(
+        report = await SheetsImportService.importNew(
           session,
           actor,
-          file,
-          format,
-          text,
-          options,
+          bytes.buffer.asUint8List(bytes.offsetInBytes, bytes.lengthInBytes),
+          fileName: file.fileName,
+          format: format,
+          options: SheetsImportService.optionsOf(options.optionsJson),
+          name: options.name,
+          parentUuid: options.parentUuid,
         );
       case DriveItemKind.folder:
         throw Errors.invalid('Folders cannot be imported.');
     }
     await FileService.deleteFile(session, file.fileUuid);
     return report;
-  }
-
-  static Future<ImportReportView> _spreadsheet(
-    Session session,
-    Actor actor,
-    StoredFile file,
-    String format,
-    String text,
-    DriveImportOptions options,
-  ) async {
-    final opts = (jsonDecode(options.optionsJson ?? '{}') as Map)
-        .cast<String, dynamic>();
-    final delimiter =
-        (opts['delimiter'] as String?) ??
-        (format == 'tsv' ? '\t' : _guessDelimiter(text));
-    final rows = parseDelimited(text, delimiter);
-    final columns = rows.fold(0, (m, r) => r.length > m ? r.length : m);
-    final warnings = <ImportWarningView>[];
-    if (columns > 26) {
-      warnings.add(
-        ImportWarningView(
-          kind: 'columnsTruncated',
-          message: 'Only the first 26 columns were imported.',
-        ),
-      );
-    }
-    final cells = rows.length * (columns > 26 ? 26 : columns);
-    if (cells > WonkyConfig.current.maxCellsPerSpreadsheet) {
-      throw Errors.limit(
-        'This file would exceed the limit of '
-        '${WonkyConfig.current.maxCellsPerSpreadsheet} cells.',
-      );
-    }
-    final convert = opts['convertNumbers'] != false;
-    final formulas = opts['formulas'] == true;
-    // A leading apostrophe forces text, as when typing into a cell.
-    final sheetRows = [
-      for (final r in rows)
-        [
-          for (final v in r.take(26))
-            (!convert && double.tryParse(v.trim()) != null) ||
-                    (!formulas && v.startsWith('=')) ||
-                    v.startsWith("'")
-                ? "'$v"
-                : v,
-        ],
-    ];
-    final name = options.name ?? _baseName(file.fileName);
-    final header = opts['headerRow'] == true;
-    final view = await DriveService.createSpreadsheetFromSheets(
-      session,
-      actor,
-      name: name.length > 255 ? name.substring(0, 255) : name,
-      parentUuid: options.parentUuid,
-      sheets: [
-        TemplateSheet(
-          name: 'Sheet1',
-          rows: sheetRows,
-          boldRows: header ? {0} : const {},
-          frozenRows: header ? 1 : 0,
-        ),
-      ],
-      summary: {'importedFrom': format},
-    );
-    return ImportReportView(item: view, warnings: warnings);
-  }
-
-  static String _guessDelimiter(String text) {
-    final firstLine = text.split('\n').first;
-    final candidates = {',': 0, ';': 0, '\t': 0, '|': 0};
-    for (final c in candidates.keys.toList()) {
-      candidates[c] = c.allMatches(firstLine).length;
-    }
-    final best = candidates.entries.reduce(
-      (a, b) => a.value >= b.value ? a : b,
-    );
-    return best.value == 0 ? ',' : best.key;
   }
 
   /// RFC 4180 parsing with [delimiter] (quotes, escaped quotes, CRLF).

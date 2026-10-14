@@ -44,6 +44,7 @@ abstract final class Ooxml {
   static const relVml = '$rel/vmlDrawing';
   static const relDrawing = '$rel/drawing';
   static const relImage = '$rel/image';
+  static const relChart = '$rel/chart';
   static const relSheetMetadata = '$rel/sheetMetadata';
   static const relCoreProps =
       'http://schemas.openxmlformats.org/package/2006/relationships/metadata/core-properties';
@@ -130,14 +131,18 @@ abstract final class Ooxml {
     return b.toString();
   }
 
-  /// Escapes text content for XML.
+  static final RegExp _escChars = RegExp('[&<>\r]');
+
+  /// Escapes text content for XML (CR as a character reference: XML
+  /// parsers normalize literal CR to LF).
   static String esc(String s) {
     final t = encodeEscapes(s);
-    if (!t.contains(RegExp(r'[&<>]'))) return t;
+    if (!t.contains(_escChars)) return t;
     return t
         .replaceAll('&', '&amp;')
         .replaceAll('<', '&lt;')
-        .replaceAll('>', '&gt;');
+        .replaceAll('>', '&gt;')
+        .replaceAll('\r', '&#13;');
   }
 
   /// Escapes an attribute value for XML (double quotes).

@@ -739,6 +739,17 @@ class CrdtForeignKeyProjector {
   }
 
   /// Whether a mutation of [tableName] may require FK or unique projection.
+  /// Whether deleting rows of [tableName] can change any other row's
+  /// projection (OS-6): only when another table references it or it has
+  /// unique indexes. Deleting rows of an unreferenced table without unique
+  /// indexes (Sheets cells) affects no other row: the deleted rows are
+  /// already hidden by their tombstones.
+  bool deleteNeedsProjection(String tableName) {
+    final parentEdges = _foreignKeys.edgesByParentTable[tableName];
+    if (parentEdges != null && parentEdges.isNotEmpty) return true;
+    return _uniqueResolver.tableHasUniqueIndexes(tableName);
+  }
+
   bool needsProjection(String tableName, Set<String>? columnNames) {
     if (_foreignKeys.columnsMayAffectForeignKeys(tableName, columnNames)) {
       return true;

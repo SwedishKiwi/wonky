@@ -2,16 +2,34 @@ import 'package:flutter/widgets.dart';
 import 'package:go_router/go_router.dart';
 import 'package:wonky_app/wonky_app.dart';
 import 'package:wonky_client/wonky_client.dart';
-import 'package:wonky_ui/wonky_ui.dart';
+import 'package:wonky_core/wonky_core.dart';
+
+import '../commands/sheets_commands.dart';
+import '../features/formatting/sheets_settings_section.dart';
+import '../features/history/server_change_undo.dart';
+import '../features/history/sheets_version_view.dart';
+import '../features/import/sheets_import_handler.dart';
+import '../features/print/print_preview_screen.dart';
+import '../features/scripts/editor/script_editor_screen.dart';
+import '../features/scripts/script_menus.dart';
+import '../features/sheet_editor/sheet_editor_screen.dart';
+import '../features/sync/sheets_sessions.dart' show SheetsData;
+import '../l10n/sheets_l10n.dart';
+import '../mcp/ui_sheets_tools.dart';
+import 'sheets_menus.dart';
 
 /// Brand color of Wonky Sheets.
 const sheetsBrandColor = Color(0xff16a34a);
 
-/// Wonky Sheets' description for the shared shell. Sheets features are
-/// frozen in this iteration: opening a spreadsheet shows a "coming soon"
-/// screen inside the shell's editor frame.
+/// Wonky Sheets' description for the shared shell (suite 03, Sheets 04).
+final _versionRenderer = SheetsVersionRenderer();
+
 class SheetsAppConfig extends WonkyAppConfig {
   const SheetsAppConfig();
+
+  /// The full-screen version history (`/s/:uuid/history`, Sheets 10 §5).
+  @override
+  VersionRenderer? get versionRenderer => _versionRenderer;
 
   @override
   WonkyAppKind get app => WonkyAppKind.sheets;
@@ -32,57 +50,114 @@ class SheetsAppConfig extends WonkyAppConfig {
   @override
   String itemPath(String uuid) => '/s/$uuid';
 
+  /// Home/drive uploads and drops of .xlsx/.ods/.csv/.tsv (11 §2.1).
   @override
-  String untitledName(BuildContext context) => 'Untitled spreadsheet';
+  ImportHandler? get importHandler => const SheetsImportHandler();
+
+  /// `/s/:uuid/print` (11 §7.1) under the editor route: the spreadsheet
+  /// stays open underneath the print preview.
+  @override
+  List<RouteBase> editorRoutes(ShellServices services) => [
+    // The script editor (09 §14.1), also a child of the editor route.
+    GoRoute(
+      path: 'script',
+      pageBuilder: (c, st) => NoTransitionPage<void>(
+        key: st.pageKey,
+        child: ScriptEditorScreen(
+          key: ValueKey<String>('sheets.script.${st.pathParameters['uuid']}'),
+          services: services,
+          itemUuid: st.pathParameters['uuid']!,
+          initialFile: st.uri.queryParameters['file'],
+          initialLine: int.tryParse(st.uri.queryParameters['line'] ?? ''),
+        ),
+      ),
+    ),
+    GoRoute(
+      path: 'print',
+      pageBuilder: (c, st) => NoTransitionPage<void>(
+        key: st.pageKey,
+        child: SheetsPrintPreviewScreen(
+          key: ValueKey<String>('sheets.print.${st.pathParameters['uuid']}'),
+          services: services,
+          itemUuid: st.pathParameters['uuid']!,
+          scope: st.uri.queryParameters['scope'],
+          exportMode: st.uri.queryParameters['export'] == '1',
+        ),
+      ),
+    ),
+  ];
 
   @override
-  Widget buildEditor(BuildContext context, GoRouterState state, String uuid) =>
-      SheetsComingSoon(
-        key: ValueKey<String>('sheets.editor.$uuid'),
-        services: ShellScope.of(context),
-        uuid: uuid,
-      );
-}
-
-/// `/s/:uuid` placeholder.
-class SheetsComingSoon extends StatefulWidget {
-  const SheetsComingSoon({
-    super.key,
-    required this.services,
-    required this.uuid,
-  });
-
-  final ShellServices services;
-  final String uuid;
+  String untitledName(BuildContext context) =>
+      sheetsL10n(context).untitledSpreadsheet;
 
   @override
-  State<SheetsComingSoon> createState() => _SheetsComingSoonState();
-}
-
-class _SheetsComingSoonState extends State<SheetsComingSoon> {
-  late final BasicDocumentController _doc = BasicDocumentController(
-    itemUuid: UuidValue.fromString(widget.uuid),
-    kind: DriveItemKind.spreadsheet,
-  );
+  List<LocalizationsDelegate<dynamic>> get localizationsDelegates => const [
+    SheetsLocalizations.delegate,
+  ];
 
   @override
-  void dispose() {
-    _doc.dispose();
-    super.dispose();
+  List<Command<CommandArgs>> commands(ShellServices services) =>
+      sheetsCommands(services);
+
+  @override
+  MenuRoot menus(BuildContext context, ShellMenus shell) =>
+      withScriptMenus(sheetsMenus(shell, l: sheetsL10n(context)), context);
+
+  /// Installs the Sheets data layer (sync controller and replica, suite
+  /// 12 §2.5) for the signed-in user.
+  @override
+  Future<void> onSignedIn(ShellServices services) async {
+    await super.onSignedIn(services);
+    SheetsData.install(services);
+    // Restores (history screen, shell stack) and MCP/AI changes undo on
+    // the server (Sheets 10 A-10-5).
+    services.undo.registerHandler(SheetsServerChangeHandler(services));
+    // The AI assistant (suite 10, Sheets 12 §6).
+    ShellAssistant.install(services);
   }
 
   @override
-  Widget build(BuildContext context) => EditorScaffold(
-    services: widget.services,
-    itemUuid: widget.uuid,
-    controller: _doc,
-    onItemLoaded: (item) => _doc.update(title: item.name, role: item.myRole),
-    body: (context, item) => const WonkyEmptyState(
-      key: ValueKey<String>('sheets.comingSoon'),
-      illustration: EmptyIllustration.spreadsheets,
-      title: 'The spreadsheet editor is coming soon',
-      description:
-          'Wonky Sheets is still being built. Your spreadsheet is safe in your drive.',
-    ),
+  Future<void> onSigningOut(ShellServices services) async {
+    ShellAssistant.uninstall(services);
+    await SheetsData.uninstall(services);
+    await super.onSigningOut(services);
+  }
+
+  /// Settings › Sheets: spreadsheet defaults and editing preferences
+  /// (04 §11.24).
+  @override
+  Widget? sheetsSettings(BuildContext context, ShellServices services) =>
+      SheetsSettingsSection(services: services);
+
+  /// `ui.sheets.*` MCP UI-bridge tools (Sheets 12 §5).
+  @override
+  Map<String, UiToolHandler> mcpUiTools(ShellServices services) =>
+      UiSheetsToolHandlers.all(services);
+
+  /// New spreadsheets are created locally in a reserved space (offline
+  /// first) and registered with the drive.
+  @override
+  Future<UuidValue?> createItem(
+    ShellServices services, {
+    UuidValue? parentUuid,
+    UuidValue? templateUuid,
+    String? name,
+  }) => SheetsData.createSpreadsheet(
+    services,
+    parentUuid: parentUuid,
+    templateUuid: templateUuid,
+    name: name,
   );
+
+  @override
+  Widget buildEditor(BuildContext context, GoRouterState state, String uuid) =>
+      SheetEditorScreen(
+        key: ValueKey<String>('sheets.editor.$uuid'),
+        services: ShellScope.of(context),
+        itemUuid: uuid,
+        initialSheetId: state.uri.queryParameters['sheet'],
+        initialRange: state.uri.queryParameters['range'],
+        initialFilterView: state.uri.queryParameters['fv'],
+      );
 }

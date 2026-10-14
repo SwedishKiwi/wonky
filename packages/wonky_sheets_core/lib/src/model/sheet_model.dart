@@ -46,6 +46,31 @@ final class SheetModel {
   /// The basic filter (max one per sheet).
   FilterRecord? basicFilter;
 
+  final Map<String, String> _removedRowKeys = {};
+  final Map<String, String> _removedColumnKeys = {};
+
+  /// Maximum remembered keys per dimension ([removedSortKey]).
+  static const int maxRemovedKeys = 10000;
+
+  /// The last known sort key of a deleted row/column [id] of this sheet, or
+  /// null. Lets maintenance re-anchor pivots and objects whose anchor was
+  /// deleted to the nearest surviving row/column (02 §8). Bounded to the most
+  /// recent [maxRemovedKeys] deletions per dimension.
+  String? removedSortKey(Dimension d, String id) =>
+      (d == Dimension.rows ? _removedRowKeys : _removedColumnKeys)[id];
+
+  /// Records the sort key of a deleted row/column (model ingestion).
+  void rememberRemoved(Dimension d, String id, String sortKey) {
+    final m = d == Dimension.rows ? _removedRowKeys : _removedColumnKeys;
+    m.remove(id);
+    m[id] = sortKey;
+    if (m.length > maxRemovedKeys) m.remove(m.keys.first);
+  }
+
+  /// Forgets a revived row/column (model ingestion).
+  void forgetRemoved(Dimension d, String id) =>
+      (d == Dimension.rows ? _removedRowKeys : _removedColumnKeys).remove(id);
+
   /// Sheet name ('' while the record is missing).
   String get name => record?.name ?? '';
 

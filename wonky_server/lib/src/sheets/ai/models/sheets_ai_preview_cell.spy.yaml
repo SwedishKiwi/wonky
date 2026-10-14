@@ -1,0 +1,6 @@
+### A cell changed by a previewed AI tool call (before → after).
+class: SheetsAiPreviewCell
+fields:
+  cell: String
+  before: String?
+  after: String?

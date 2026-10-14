@@ -42,6 +42,38 @@ void main() {
       expect(s.objects, hasLength(1));
     });
 
+    test('when an object moves to another sheet then it leaves the old sheet '
+        'and keeps all its columns (08 §11)', () {
+      final id =
+          h
+                  .apply(
+                    AddObject(
+                      h.sheetId,
+                      EmbeddedObjectKind.image,
+                      anchorJson: '{}',
+                      specJson: '{"v":1}',
+                      altText: 'Logo',
+                    ),
+                  )
+                  .result['objectId']!
+              as String;
+      final other =
+          h
+                  .apply(
+                    const AddSheet(name: 'Chart sheet', kind: SheetKind.chart),
+                  )
+                  .result['sheetId']!
+              as String;
+
+      h.apply(UpdateObject(id, sheetId: other, anchorJson: '{"v":1}'));
+
+      expect(h.model.sheet(h.sheetId)!.objects, isEmpty);
+      final moved = h.model.sheet(other)!.objects[id]!;
+      expect(moved.kind, EmbeddedObjectKind.image);
+      expect(moved.altText, 'Logo');
+      expect(moved.title, 'Image 1');
+    });
+
     test(
       'when a row with an object anchor is deleted then the object re-anchors (A-08-4)',
       () {
@@ -185,6 +217,30 @@ void main() {
         expect(m.sheets.single.columns.length, 26);
       },
     );
+
+    test('when creating a spreadsheet with the user defaults then locale, time '
+        'zone, theme font and size are set', () {
+      final m = WorkbookModel(
+        spreadsheetId: '00000000-0000-4000-8000-00000000aaab',
+      );
+      m.applyPlan(
+        const SheetsMutationPlanner().plan(
+          const CreateSpreadsheet(
+            spreadsheetId: '00000000-0000-4000-8000-00000000aaab',
+            locale: 'de_DE',
+            timeZone: 'Europe/Berlin',
+            fontFamily: 'Lato',
+            fontSize: 11,
+          ),
+          m,
+          h.ctx,
+        ),
+      );
+      expect(m.spreadsheet.locale, 'de_DE');
+      expect(m.spreadsheet.timeZone, 'Europe/Berlin');
+      expect(m.theme.textFont, 'Lato');
+      expect(m.spreadsheet.defaultFontSize, 11);
+    });
 
     test('when hiding the only visible sheet then it is refused', () {
       expect(

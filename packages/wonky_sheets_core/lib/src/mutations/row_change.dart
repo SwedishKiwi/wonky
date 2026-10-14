@@ -410,6 +410,34 @@ abstract final class UndoInverter {
         case RowOp.insert:
           // Undo an insert = delete, unless the row is gone already.
           if (now == null) continue;
+          if (c.table == SheetsTables.cell) {
+            // Per-column rule (08 §3.3, Sheets 10 §10 #16): a cell someone
+            // else changed since (value or format) is not deleted; the
+            // columns still holding what the insert wrote are cleared, the
+            // others are skipped.
+            final keys = {...c.columnsAfter.keys, ...now.keys}
+              ..removeAll(_cellIdentity);
+            final changed = {
+              for (final k in keys)
+                if (!_eq(now[k], c.columnsAfter[k])) k,
+            };
+            if (changed.isNotEmpty) {
+              for (final k in changed) {
+                skipped?.call(c.table, c.rowId, k);
+              }
+              final before = <String, Object?>{};
+              final after = <String, Object?>{};
+              for (final k in keys) {
+                if (changed.contains(k) || now[k] == null) continue;
+                before[k] = now[k];
+                after[k] = null;
+              }
+              if (after.isNotEmpty) {
+                out.add(RowChange.update(c.table, c.rowId, before, after));
+              }
+              continue;
+            }
+          }
           out.add(RowChange.delete(c.table, c.rowId, now));
         case RowOp.delete:
           if (now != null) {
@@ -453,6 +481,15 @@ abstract final class UndoInverter {
     }
     return out;
   }
+
+  /// Cell columns that identify the row (never cleared by an undo).
+  static const _cellIdentity = {
+    Cols.id,
+    Cols.sheetId,
+    CellCols.rowId,
+    CellCols.columnId,
+    Cols.createdAt,
+  };
 
   static bool _eq(Object? a, Object? b) {
     if (a is num && b is num) return a.toDouble() == b.toDouble();

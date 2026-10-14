@@ -381,6 +381,10 @@ void main() {
       (ConditionType.dateBefore, RelativeDate.pastMonth, -31, true),
       (ConditionType.dateEq, RelativeDate.pastYear, -365, true),
       (ConditionType.dateBefore, RelativeDate.pastYear, -366, true),
+      (ConditionType.dateOnOrBefore, RelativeDate.yesterday, -1, true),
+      (ConditionType.dateOnOrBefore, RelativeDate.yesterday, 0, false),
+      (ConditionType.dateOnOrAfter, RelativeDate.tomorrow, 1, true),
+      (ConditionType.dateOnOrAfter, RelativeDate.tomorrow, 0, false),
     ];
     for (final (type, r, offset, expected) in cases) {
       test(
@@ -393,6 +397,22 @@ void main() {
         },
       );
     }
+
+    test(
+      'when dateBetween spans a relative period then the whole period is inside',
+      () {
+        final c = Condition.of(ConditionType.dateBetween, [
+          const ConditionRelativeDate(RelativeDate.yesterday),
+          const ConditionRelativeDate(RelativeDate.pastWeek),
+        ]);
+        final notC = Condition.of(ConditionType.dateNotBetween, c.values);
+
+        expect(check(c, NumberValue((today - 7).toDouble())), isTrue);
+        expect(check(c, NumberValue(today.toDouble())), isTrue);
+        expect(check(c, NumberValue((today - 8).toDouble())), isFalse);
+        expect(check(notC, NumberValue((today + 1).toDouble())), isTrue);
+      },
+    );
 
     test(
       'when the time zone is ahead of UTC then today follows the local date',

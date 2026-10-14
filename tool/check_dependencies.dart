@@ -148,7 +148,6 @@ const rules = <String, PackageRule>{
       'archive',
       'xml',
       'csv',
-      'excel_plus',
       'pdf',
       'image',
     },
@@ -166,6 +165,12 @@ const rules = <String, PackageRule>{
       'dart_eval',
       'eval_annotation',
       'native_synchronization',
+    },
+    exceptions: {
+      'wonky_sync_models': 'id generators and table names of the script tables',
+      'crypto': 'source hashes and Utilities.computeDigest/computeHmac',
+      'analyzer':
+          'subset lint and exports of the server-only compiler (compiler.dart)',
     },
   ),
   'wonky_sync_models': PackageRule(
@@ -247,6 +252,7 @@ const rules = <String, PackageRule>{
       'url_launcher': 'opening the other app on desktop, external links',
       'shared_preferences': 'per-device settings (LocalStore)',
       'sqlite_async': 'offline cache and outbox (LocalDatabase, 12)',
+      'crypto': 'PKCE code challenge of Sign in with Google on web (04 §1.6)',
       'path_provider': 'location of the desktop database file',
     },
   ),
@@ -288,7 +294,33 @@ const rules = <String, PackageRule>{
       'file_picker',
       'path_provider',
     },
-    exceptions: _appExceptions,
+    exceptions: {
+      ..._appExceptions,
+      'wonky_sync_models':
+          'synced ORM classes and the table codec of the replica (12 §2)',
+      'serverpod_offline_sync_client':
+          'offline-sync client: sync sessions on the custom endpoint (12 §2.5)',
+      'serverpod_database':
+          'ORM types (Transaction, ColumnValue) of the local replica (12 §2)',
+      'timezone': 'IANA time zone list of the spreadsheet settings (06 §5.8)',
+      'desktop_drop': 'file drops on the grid on desktop (Sheets 11 §2)',
+      'http': 'fetching XLSX images and URL imports (Sheets 11 §2)',
+      'pdf': 'client PDF export and print preview (Sheets 11 §7)',
+      're_highlight':
+          'Dart grammar for the script editor (re_editor, Sheets 09 §14.2)',
+      'crypto': 'ScriptFile.contentHash sha256 (Sheets 09 A-09-2)',
+      'sqlite3':
+          'read-only recovery read of a replica that cannot be opened (12 §2.5)',
+      'archive': 'ZIP of the unsynced spreadsheets of that recovery (12 §2.5)',
+    },
+    // The script compiler (and the analyzer) is server only (01 A8, Sheets
+    // 09 §3.1): the app only instantiates dart_eval runtimes.
+    forbiddenImports: [
+      'package:wonky_sheets_script/compiler.dart',
+      'package:wonky_sheets_script/testing.dart',
+      'package:analyzer',
+      'package:dart_eval/dart_eval.dart',
+    ],
   ),
 };
 
@@ -489,8 +521,8 @@ void _checkFile({
     for (final prefix in rule.forbiddenImports) {
       if (uri.startsWith(prefix)) {
         report(
-          'imports "$uri"; $packageName must not depend on client or '
-          'server code',
+          'imports "$uri", which $packageName must not use (client, '
+          'server or server-only code)',
         );
         break;
       }

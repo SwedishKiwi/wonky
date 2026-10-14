@@ -56,6 +56,12 @@ import 'package:wonky_server/src/generated/platform/sharing/item_sharing_setting
     as _i55sl7s1;
 import 'package:wonky_server/src/generated/platform/users/user_preferences_patch.dart'
     as _ingbfbma;
+import 'package:wonky_server/src/generated/sheets/ai/models/sheets_fill_row.dart'
+    as _isuyxaqz;
+import 'package:wonky_server/src/generated/sheets/scripts/models/script_execution.dart'
+    as _isf59hoo;
+import 'package:wonky_server/src/generated/sheets/scripts/models/script_execution_status.dart'
+    as _icum4fx3;
 import 'package:wonky_server/src/generated/write/messages/doc_client_message.dart'
     as _i64vpekp;
 import 'package:wonky_server/src/generated/write/models/document_meta_patch.dart'
@@ -78,8 +84,10 @@ import '../platform/users/access_token_endpoint.dart' as _iusd4uiv;
 import '../platform/users/google_idp_endpoint.dart' as _i3henulz;
 import '../platform/users/user_endpoint.dart' as _iwtyukq6;
 import '../platform/versions/version_endpoint.dart' as _im6cm90k;
+import '../sheets/ai/sheets_ai_endpoint.dart' as _i9apq23f;
 import '../sheets/endpoints/sheets_endpoint.dart' as _izrkvdrt;
 import '../sheets/endpoints/sheets_sync_endpoint.dart' as _iijmdr93;
+import '../sheets/scripts/script_endpoint.dart' as _in9oll5w;
 import '../write/endpoints/document_endpoint.dart' as _iiabxp2u;
 import '../write/endpoints/write_export_endpoint.dart' as _ia4kadx2;
 import '../write/endpoints/write_history_endpoint.dart' as _izdjh3zj;
@@ -198,6 +206,12 @@ class Endpoints extends _is.EndpointDispatch {
           'version',
           null,
         ),
+      'sheetsAi': _i9apq23f.SheetsAiEndpoint()
+        ..initialize(
+          server,
+          'sheetsAi',
+          null,
+        ),
       'sheets': _izrkvdrt.SheetsEndpoint()
         ..initialize(
           server,
@@ -208,6 +222,12 @@ class Endpoints extends _is.EndpointDispatch {
         ..initialize(
           server,
           'sheetsSync',
+          null,
+        ),
+      'script': _in9oll5w.ScriptEndpoint()
+        ..initialize(
+          server,
+          'script',
           null,
         ),
       'document': _iiabxp2u.DocumentEndpoint()
@@ -3069,6 +3089,246 @@ class Endpoints extends _is.EndpointDispatch {
         ),
       },
     );
+    connectors['sheetsAi'] = _is.EndpointConnector(
+      name: 'sheetsAi',
+      endpoint: endpoints['sheetsAi']!,
+      methodConnectors: {
+        'suggestFormula': _is.MethodConnector(
+          name: 'suggestFormula',
+          params: {
+            'itemUuid': _is.ParameterDescription(
+              name: 'itemUuid',
+              type: _is.getType<_is.UuidValue>(),
+              nullable: false,
+            ),
+            'cell': _is.ParameterDescription(
+              name: 'cell',
+              type: _is.getType<String>(),
+              nullable: false,
+            ),
+            'prompt': _is.ParameterDescription(
+              name: 'prompt',
+              type: _is.getType<String>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _is.Session session,
+                Map<String, dynamic> params,
+              ) async => (endpoints['sheetsAi'] as _i9apq23f.SheetsAiEndpoint)
+                  .suggestFormula(
+                    session,
+                    params['itemUuid'],
+                    params['cell'],
+                    params['prompt'],
+                  ),
+        ),
+        'fillRange': _is.MethodConnector(
+          name: 'fillRange',
+          params: {
+            'itemUuid': _is.ParameterDescription(
+              name: 'itemUuid',
+              type: _is.getType<_is.UuidValue>(),
+              nullable: false,
+            ),
+            'range': _is.ParameterDescription(
+              name: 'range',
+              type: _is.getType<String>(),
+              nullable: false,
+            ),
+            'instructions': _is.ParameterDescription(
+              name: 'instructions',
+              type: _is.getType<String?>(),
+              nullable: true,
+            ),
+          },
+          call:
+              (
+                _is.Session session,
+                Map<String, dynamic> params,
+              ) async => (endpoints['sheetsAi'] as _i9apq23f.SheetsAiEndpoint)
+                  .fillRange(
+                    session,
+                    params['itemUuid'],
+                    params['range'],
+                    params['instructions'],
+                  ),
+        ),
+        'applyFill': _is.MethodConnector(
+          name: 'applyFill',
+          params: {
+            'itemUuid': _is.ParameterDescription(
+              name: 'itemUuid',
+              type: _is.getType<_is.UuidValue>(),
+              nullable: false,
+            ),
+            'range': _is.ParameterDescription(
+              name: 'range',
+              type: _is.getType<String>(),
+              nullable: false,
+            ),
+            'rows': _is.ParameterDescription(
+              name: 'rows',
+              type: _is.getType<List<_isuyxaqz.SheetsFillRow>>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _is.Session session,
+                Map<String, dynamic> params,
+              ) async => (endpoints['sheetsAi'] as _i9apq23f.SheetsAiEndpoint)
+                  .applyFill(
+                    session,
+                    params['itemUuid'],
+                    params['range'],
+                    params['rows'],
+                  ),
+        ),
+        'analyzeChips': _is.MethodConnector(
+          name: 'analyzeChips',
+          params: {
+            'itemUuid': _is.ParameterDescription(
+              name: 'itemUuid',
+              type: _is.getType<_is.UuidValue>(),
+              nullable: false,
+            ),
+            'range': _is.ParameterDescription(
+              name: 'range',
+              type: _is.getType<String?>(),
+              nullable: true,
+            ),
+          },
+          call:
+              (
+                _is.Session session,
+                Map<String, dynamic> params,
+              ) async => (endpoints['sheetsAi'] as _i9apq23f.SheetsAiEndpoint)
+                  .analyzeChips(
+                    session,
+                    params['itemUuid'],
+                    params['range'],
+                  ),
+        ),
+        'describeChart': _is.MethodConnector(
+          name: 'describeChart',
+          params: {
+            'itemUuid': _is.ParameterDescription(
+              name: 'itemUuid',
+              type: _is.getType<_is.UuidValue>(),
+              nullable: false,
+            ),
+            'chartId': _is.ParameterDescription(
+              name: 'chartId',
+              type: _is.getType<String>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _is.Session session,
+                Map<String, dynamic> params,
+              ) async => (endpoints['sheetsAi'] as _i9apq23f.SheetsAiEndpoint)
+                  .describeChart(
+                    session,
+                    params['itemUuid'],
+                    params['chartId'],
+                  ),
+        ),
+        'getPreview': _is.MethodConnector(
+          name: 'getPreview',
+          params: {
+            'previewId': _is.ParameterDescription(
+              name: 'previewId',
+              type: _is.getType<String>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _is.Session session,
+                Map<String, dynamic> params,
+              ) async => (endpoints['sheetsAi'] as _i9apq23f.SheetsAiEndpoint)
+                  .getPreview(
+                    session,
+                    params['previewId'],
+                  ),
+        ),
+        'applyPreview': _is.MethodConnector(
+          name: 'applyPreview',
+          params: {
+            'previewId': _is.ParameterDescription(
+              name: 'previewId',
+              type: _is.getType<String>(),
+              nullable: false,
+            ),
+            'callIds': _is.ParameterDescription(
+              name: 'callIds',
+              type: _is.getType<List<String>?>(),
+              nullable: true,
+            ),
+          },
+          call:
+              (
+                _is.Session session,
+                Map<String, dynamic> params,
+              ) async => (endpoints['sheetsAi'] as _i9apq23f.SheetsAiEndpoint)
+                  .applyPreview(
+                    session,
+                    params['previewId'],
+                    params['callIds'],
+                  ),
+        ),
+        'discardPreview': _is.MethodConnector(
+          name: 'discardPreview',
+          params: {
+            'previewId': _is.ParameterDescription(
+              name: 'previewId',
+              type: _is.getType<String>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _is.Session session,
+                Map<String, dynamic> params,
+              ) async => (endpoints['sheetsAi'] as _i9apq23f.SheetsAiEndpoint)
+                  .discardPreview(
+                    session,
+                    params['previewId'],
+                  ),
+        ),
+        'explainFormula': _is.MethodStreamConnector(
+          name: 'explainFormula',
+          params: {
+            'itemUuid': _is.ParameterDescription(
+              name: 'itemUuid',
+              type: _is.getType<_is.UuidValue>(),
+              nullable: false,
+            ),
+            'cell': _is.ParameterDescription(
+              name: 'cell',
+              type: _is.getType<String>(),
+              nullable: false,
+            ),
+          },
+          streamParams: {},
+          returnType: _is.MethodStreamReturnType.streamType,
+          call:
+              (
+                _is.Session session,
+                Map<String, dynamic> params,
+                Map<String, Stream> streamParams,
+              ) => (endpoints['sheetsAi'] as _i9apq23f.SheetsAiEndpoint)
+                  .explainFormula(
+                    session,
+                    params['itemUuid'],
+                    params['cell'],
+                  ),
+        ),
+      },
+    );
     connectors['sheets'] = _is.EndpointConnector(
       name: 'sheets',
       endpoint: endpoints['sheets']!,
@@ -3164,6 +3424,44 @@ class Endpoints extends _is.EndpointDispatch {
                 Map<String, dynamic> params,
               ) async =>
                   (endpoints['sheets'] as _izrkvdrt.SheetsEndpoint).spaceStats(
+                    session,
+                    params['itemUuid'],
+                  ),
+        ),
+        'namedFunctions': _is.MethodConnector(
+          name: 'namedFunctions',
+          params: {
+            'itemUuid': _is.ParameterDescription(
+              name: 'itemUuid',
+              type: _is.getType<_is.UuidValue>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _is.Session session,
+                Map<String, dynamic> params,
+              ) async => (endpoints['sheets'] as _izrkvdrt.SheetsEndpoint)
+                  .namedFunctions(
+                    session,
+                    params['itemUuid'],
+                  ),
+        ),
+        'spreadsheetTheme': _is.MethodConnector(
+          name: 'spreadsheetTheme',
+          params: {
+            'itemUuid': _is.ParameterDescription(
+              name: 'itemUuid',
+              type: _is.getType<_is.UuidValue>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _is.Session session,
+                Map<String, dynamic> params,
+              ) async => (endpoints['sheets'] as _izrkvdrt.SheetsEndpoint)
+                  .spreadsheetTheme(
                     session,
                     params['itemUuid'],
                   ),
@@ -3274,6 +3572,31 @@ class Endpoints extends _is.EndpointDispatch {
                     params['days'],
                   ),
         ),
+        'fetchImage': _is.MethodConnector(
+          name: 'fetchImage',
+          params: {
+            'itemUuid': _is.ParameterDescription(
+              name: 'itemUuid',
+              type: _is.getType<_is.UuidValue>(),
+              nullable: false,
+            ),
+            'url': _is.ParameterDescription(
+              name: 'url',
+              type: _is.getType<String>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _is.Session session,
+                Map<String, dynamic> params,
+              ) async =>
+                  (endpoints['sheets'] as _izrkvdrt.SheetsEndpoint).fetchImage(
+                    session,
+                    params['itemUuid'],
+                    params['url'],
+                  ),
+        ),
       },
     );
     connectors['sheetsSync'] = _is.EndpointConnector(
@@ -3310,6 +3633,292 @@ class Endpoints extends _is.EndpointDispatch {
                     changes: streamParams['changes']!
                         .cast<_izehhkf5.OfflineSyncStreamEvent>(),
                     once: params['once'],
+                  ),
+        ),
+      },
+    );
+    connectors['script'] = _is.EndpointConnector(
+      name: 'script',
+      endpoint: endpoints['script']!,
+      methodConnectors: {
+        'compile': _is.MethodConnector(
+          name: 'compile',
+          params: {
+            'spreadsheetUuid': _is.ParameterDescription(
+              name: 'spreadsheetUuid',
+              type: _is.getType<_is.UuidValue>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _is.Session session,
+                Map<String, dynamic> params,
+              ) async =>
+                  (endpoints['script'] as _in9oll5w.ScriptEndpoint).compile(
+                    session,
+                    params['spreadsheetUuid'],
+                  ),
+        ),
+        'analyze': _is.MethodConnector(
+          name: 'analyze',
+          params: {
+            'spreadsheetUuid': _is.ParameterDescription(
+              name: 'spreadsheetUuid',
+              type: _is.getType<_is.UuidValue>(),
+              nullable: false,
+            ),
+            'fileName': _is.ParameterDescription(
+              name: 'fileName',
+              type: _is.getType<String>(),
+              nullable: false,
+            ),
+            'source': _is.ParameterDescription(
+              name: 'source',
+              type: _is.getType<String>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _is.Session session,
+                Map<String, dynamic> params,
+              ) async =>
+                  (endpoints['script'] as _in9oll5w.ScriptEndpoint).analyze(
+                    session,
+                    params['spreadsheetUuid'],
+                    params['fileName'],
+                    params['source'],
+                  ),
+        ),
+        'bytecode': _is.MethodConnector(
+          name: 'bytecode',
+          params: {
+            'spreadsheetUuid': _is.ParameterDescription(
+              name: 'spreadsheetUuid',
+              type: _is.getType<_is.UuidValue>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _is.Session session,
+                Map<String, dynamic> params,
+              ) async =>
+                  (endpoints['script'] as _in9oll5w.ScriptEndpoint).bytecode(
+                    session,
+                    params['spreadsheetUuid'],
+                  ),
+        ),
+        'run': _is.MethodConnector(
+          name: 'run',
+          params: {
+            'spreadsheetUuid': _is.ParameterDescription(
+              name: 'spreadsheetUuid',
+              type: _is.getType<_is.UuidValue>(),
+              nullable: false,
+            ),
+            'functionName': _is.ParameterDescription(
+              name: 'functionName',
+              type: _is.getType<String>(),
+              nullable: false,
+            ),
+            'argsJson': _is.ParameterDescription(
+              name: 'argsJson',
+              type: _is.getType<String?>(),
+              nullable: true,
+            ),
+          },
+          call:
+              (
+                _is.Session session,
+                Map<String, dynamic> params,
+              ) async => (endpoints['script'] as _in9oll5w.ScriptEndpoint).run(
+                session,
+                params['spreadsheetUuid'],
+                params['functionName'],
+                params['argsJson'],
+              ),
+        ),
+        'executions': _is.MethodConnector(
+          name: 'executions',
+          params: {
+            'spreadsheetUuid': _is.ParameterDescription(
+              name: 'spreadsheetUuid',
+              type: _is.getType<_is.UuidValue>(),
+              nullable: false,
+            ),
+            'functionName': _is.ParameterDescription(
+              name: 'functionName',
+              type: _is.getType<String?>(),
+              nullable: true,
+            ),
+            'status': _is.ParameterDescription(
+              name: 'status',
+              type: _is.getType<_icum4fx3.ScriptExecutionStatus?>(),
+              nullable: true,
+            ),
+            'before': _is.ParameterDescription(
+              name: 'before',
+              type: _is.getType<DateTime?>(),
+              nullable: true,
+            ),
+            'limit': _is.ParameterDescription(
+              name: 'limit',
+              type: _is.getType<int>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _is.Session session,
+                Map<String, dynamic> params,
+              ) async =>
+                  (endpoints['script'] as _in9oll5w.ScriptEndpoint).executions(
+                    session,
+                    params['spreadsheetUuid'],
+                    functionName: params['functionName'],
+                    status: params['status'],
+                    before: params['before'],
+                    limit: params['limit'],
+                  ),
+        ),
+        'reportExecutions': _is.MethodConnector(
+          name: 'reportExecutions',
+          params: {
+            'spreadsheetUuid': _is.ParameterDescription(
+              name: 'spreadsheetUuid',
+              type: _is.getType<_is.UuidValue>(),
+              nullable: false,
+            ),
+            'executions': _is.ParameterDescription(
+              name: 'executions',
+              type: _is.getType<List<_isf59hoo.ScriptExecution>>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _is.Session session,
+                Map<String, dynamic> params,
+              ) async => (endpoints['script'] as _in9oll5w.ScriptEndpoint)
+                  .reportExecutions(
+                    session,
+                    params['spreadsheetUuid'],
+                    params['executions'],
+                  ),
+        ),
+        'urlFetch': _is.MethodConnector(
+          name: 'urlFetch',
+          params: {
+            'spreadsheetUuid': _is.ParameterDescription(
+              name: 'spreadsheetUuid',
+              type: _is.getType<_is.UuidValue>(),
+              nullable: false,
+            ),
+            'requestJson': _is.ParameterDescription(
+              name: 'requestJson',
+              type: _is.getType<String>(),
+              nullable: false,
+            ),
+            'customFunction': _is.ParameterDescription(
+              name: 'customFunction',
+              type: _is.getType<bool>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _is.Session session,
+                Map<String, dynamic> params,
+              ) async =>
+                  (endpoints['script'] as _in9oll5w.ScriptEndpoint).urlFetch(
+                    session,
+                    params['spreadsheetUuid'],
+                    params['requestJson'],
+                    customFunction: params['customFunction'],
+                  ),
+        ),
+        'authorization': _is.MethodConnector(
+          name: 'authorization',
+          params: {
+            'spreadsheetUuid': _is.ParameterDescription(
+              name: 'spreadsheetUuid',
+              type: _is.getType<_is.UuidValue>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _is.Session session,
+                Map<String, dynamic> params,
+              ) async => (endpoints['script'] as _in9oll5w.ScriptEndpoint)
+                  .authorization(
+                    session,
+                    params['spreadsheetUuid'],
+                  ),
+        ),
+        'authorize': _is.MethodConnector(
+          name: 'authorize',
+          params: {
+            'spreadsheetUuid': _is.ParameterDescription(
+              name: 'spreadsheetUuid',
+              type: _is.getType<_is.UuidValue>(),
+              nullable: false,
+            ),
+            'scopes': _is.ParameterDescription(
+              name: 'scopes',
+              type: _is.getType<List<String>>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _is.Session session,
+                Map<String, dynamic> params,
+              ) async =>
+                  (endpoints['script'] as _in9oll5w.ScriptEndpoint).authorize(
+                    session,
+                    params['spreadsheetUuid'],
+                    params['scopes'],
+                  ),
+        ),
+        'revokeAuthorization': _is.MethodConnector(
+          name: 'revokeAuthorization',
+          params: {
+            'spreadsheetUuid': _is.ParameterDescription(
+              name: 'spreadsheetUuid',
+              type: _is.getType<_is.UuidValue>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _is.Session session,
+                Map<String, dynamic> params,
+              ) async => (endpoints['script'] as _in9oll5w.ScriptEndpoint)
+                  .revokeAuthorization(
+                    session,
+                    params['spreadsheetUuid'],
+                  ),
+        ),
+        'notifyOpen': _is.MethodConnector(
+          name: 'notifyOpen',
+          params: {
+            'spreadsheetUuid': _is.ParameterDescription(
+              name: 'spreadsheetUuid',
+              type: _is.getType<_is.UuidValue>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _is.Session session,
+                Map<String, dynamic> params,
+              ) async =>
+                  (endpoints['script'] as _in9oll5w.ScriptEndpoint).notifyOpen(
+                    session,
+                    params['spreadsheetUuid'],
                   ),
         ),
       },

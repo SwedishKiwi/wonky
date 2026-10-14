@@ -1,4 +1,6 @@
+import '../../content/cell_content.dart';
 import 'locale_data.dart';
+import 'number_formatter.dart';
 
 /// An entry of the Format › Number menu (06 §5.1, 04 §3.5).
 final class NumberFormatMenuItem {
@@ -21,6 +23,14 @@ final class NumberFormatMenuItem {
 
   /// Value used to render the menu's example column.
   final double exampleValue;
+
+  /// The example column text in [locale] (`$1,000.12`, `9/26/2008`).
+  String example({String locale = 'en_US', NumberFormatter? formatter}) =>
+      (formatter ?? NumberFormatter.instance).formatText(
+        NumberValue(exampleValue),
+        stored,
+        locale: locale,
+      );
 }
 
 /// Number format presets and their locale resolution (06 §5.1).
@@ -74,6 +84,22 @@ abstract final class NumberFormatPresets {
   static const List<String> presetIds = [
     automatic, accounting, currency, currencyRounded, date, time, dateTime, //
   ];
+
+  /// Format-hint presets the formula engine reports for formula results with
+  /// Automatic format (`CellSource.numberFormatAt`: `preset:` +
+  /// `FormatHint.code`, 05 §6.2); [date], [time] and [dateTime] are shared.
+  /// Never stored in cells.
+  static const String hintDuration = 'preset:duration';
+
+  /// Percent hint (`=A1*10%`) → [percent].
+  static const String hintPercent = 'preset:percent';
+
+  /// Scientific hint → [scientific].
+  static const String hintScientific = 'preset:scientific';
+
+  /// Currency hint in the locale currency (`preset:cur`), or with an ISO
+  /// code (`preset:cur:EUR`).
+  static const String hintCurrency = 'preset:cur';
 
   /// Format › Number menu, in menu order.
   static const List<NumberFormatMenuItem> menu = [
@@ -142,11 +168,63 @@ abstract final class NumberFormatPresets {
       date => datePattern(loc),
       time => timePattern(loc),
       dateTime => dateTimePattern(loc),
+      hintDuration => duration,
+      hintPercent => percent,
+      hintScientific => scientific,
+      hintCurrency => currencyPattern(loc, decimals: loc.currencyDecimals),
+      _ when format.startsWith('$hintCurrency:') => _currencyOf(
+        format.substring(hintCurrency.length + 1),
+        loc,
+      ),
       _ => null,
     };
     _cache[key] = resolved;
     return resolved;
   }
+
+  static String _currencyOf(String code, LocaleFormatData loc) =>
+      code.isEmpty || code.toUpperCase() == loc.currencyCode
+      ? currencyPattern(loc, decimals: loc.currencyDecimals)
+      : currencyPattern(loc, symbol: currencySymbolFor(code));
+
+  /// Display symbol of an ISO currency code (`EUR` → `€`); the code itself
+  /// when no common symbol exists.
+  static String currencySymbolFor(String code) =>
+      _currencySymbols[code.toUpperCase()] ?? code;
+
+  static const Map<String, String> _currencySymbols = {
+    'USD': r'$',
+    'EUR': '€',
+    'GBP': '£',
+    'JPY': '¥',
+    'CNY': '¥',
+    'INR': '₹',
+    'KRW': '₩',
+    'BRL': r'R$',
+    'RUB': '₽',
+    'CHF': 'CHF',
+    'SEK': 'kr',
+    'NOK': 'kr',
+    'DKK': 'kr',
+    'PLN': 'zł',
+    'CZK': 'Kč',
+    'TRY': '₺',
+    'AUD': r'A$',
+    'CAD': r'CA$',
+    'NZD': r'NZ$',
+    'MXN': r'MX$',
+    'ZAR': 'R',
+    'ILS': '₪',
+    'HUF': 'Ft',
+    'UAH': '₴',
+    'VND': '₫',
+    'THB': '฿',
+    'PHP': '₱',
+    'NGN': '₦',
+    'HKD': r'HK$',
+    'SGD': r'S$',
+    'TWD': r'NT$',
+  };
 
   /// The currency symbol token of [locale] for patterns: `"$"` in en_US,
   /// else `[$sym-LCID]` (`[$€-407]`), or `[$sym]` without a known LCID.

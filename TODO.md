@@ -1,10 +1,11 @@
 # Wonky Work — TODO
 
-The first iteration delivers **Wonky Write**: sign-in, drive, sharing, a real-time
-collaborative editor, comments, suggestions, history, themes, import and export. The
-specs in `specs/` remain the source of truth. This file lists what is not done yet.
-
-**Wonky Sheets is paused.** Its state and how to resume it are in
+The first iteration delivers **Wonky Write** (sign-in, drive, sharing, a real-time
+collaborative editor, comments, suggestions, history, themes, import and export) and
+**Wonky Sheets** (offline-first synced spreadsheets: grid, formulas, formatting,
+conditional formatting, data tools, validation, protection, pivots, charts, import/export/print,
+collaboration and history, MCP and AI). The specs in `specs/` remain the source of truth.
+This file lists what is not done yet; the Sheets state per area is in
 [specs/wonky_sheets/STATUS.md](specs/wonky_sheets/STATUS.md).
 
 Status legend: ☐ open · ◐ in progress · ☑ done (done items are removed once they are
@@ -83,3 +84,97 @@ committed and verified).
 - Search uses no full-text GIN index yet.
 - shad tooltips and popovers swallow Esc; the toolbar works around this with `ToolbarEscapeScope`.
 - PDF exports (client and server) cover Latin, Greek and Cyrillic with the bundled TTFs; CJK, Arabic and emoji fall back to placeholders until the fallback fonts are added.
+
+## Wonky Sheets — open items
+
+Everything below is deferred; the app works without it. Areas are in rough priority order.
+
+1. ☐ **Scripting UI — follow-ups** (Sheets 09 §23; the editor, runtime, triggers, macros
+   and executions are built; `isolate_manager` is overridden to 6.x in `pubspec_overrides.yaml`
+   so `re_editor` compiles to wasm — drop the override when re_editor allows 6.x): script API autocomplete/hover docs (`api_index.json`, 09 §14.4);
+   conflict dialog *Compare*/*Merge* (only Overwrite/Discard) and `LocalScriptHistory`; unsaved
+   drafts in `LocalViewState` (drafts live while the spreadsheet is open); presence in the
+   script editor; squiggle underlines (gutter markers + Problems only); live log streaming
+   while a run is in progress; persistent bytecode cache (`LocalBlobCache`) and the
+   `LocalScriptExecutionLog` offline queue (in memory today); file drag-reorder in the rail
+   (the command exists); *Help › Script API reference*; P2 sidebars/dialog DSL; per-user
+   *Enable scripts* setting; "Loading…" muted-italic rendering of `#LOADING` in the grid;
+   Mod+Alt+Shift+digit on web/mac layouts where Shift changes the logical key (verify live).
+2. ☐ **Live verification leftovers** (the pass itself is done, see STATUS): picking real files
+   (Import CSV/XLSX, image over cells) and the XLSX/PDF downloads, which the automation browser
+   can't drive; a live look at the script editor and macros in the wasm build.
+3. ☐ **Sync / data layer** (viewport-first loading, recovery export, IndexedDB warning + cell
+   cap, weekly purge, offline-created badge, batched server writer and shared codec are done):
+   formula cells that depend on rows still streaming in show partial values until their rows
+   arrive (a `ComputedValueCache` or a "Loading…" marker would fix it; the cache is deferred:
+   reopen cost is formula compilation, not evaluation — 150k formulas: model 2.1 s, first
+   window 1.2 s, evaluation of the visible window a few ms); the local writer is slow for big
+   writes (offline-sync engine inserts ~0.3 ms per cell, growing with the table: a 200k-cell
+   paste/import writes in ~6 min); the server re-applies revived rows one `UPDATE` per row
+   (redo of a 20k-cell revert ~45 s; deletes of rows/columns still run the FK projection); the
+   OPFS/IndexedDB check is a browser-feature heuristic (the SQLite worker doesn't report its
+   choice); recovery export is desktop only (web replicas are emptied, not moved aside).
+4. ☐ **Editor** (LocalViewState, editing preferences, column autocomplete, formula preview,
+   a11y semantics + announcer, context menu position, drag-copy cursor, `RangeInput` picking,
+   dark-mode automatic text, sort undo selection are done): tile cache only if the release
+   build misses the frame budget (VM test at 1M cells: median 12.6 ms, p95 20 ms in debug JIT);
+   `RangeInput` picking in the filter views panel (it has no range field yet); the
+   open side panel is restored only when no other panel is open.
+5. ☐ **Formatting** (the rest is done, see STATUS): spreadsheet display language (P2: needs
+   localized function names/booleans in the engine); Merriweather, Montserrat, Nunito,
+   Source Sans 3 and Courier Prime (theme presets) are not bundled and render substituted
+   (bundle their OFL TTFs into `assets/fonts/` + `CellFonts`/`SheetsPdfFonts`); spreadsheets
+   created on the server (templates, no reserved space) ignore the Settings › Sheets defaults.
+6. ☐ **Data tools** (the rest is done, see STATUS): view-only sort inside filter views (needs a
+   row display permutation in the grid's axis mapping, 07 §4.4); a live check that slicers with
+   *apply to pivot tables* filter pivots (`PivotOverlayService.slicerMask` reads the slicer
+   JSON; both sides were built in parallel); `DataJobs` toasts have no percentage or cancel (the planner is synchronous).
+7. ☐ **Data validation & protection**: dropdown chip colors come from the 10-pair palette
+   (+ No color) instead of `WonkyColorPicker`; smart chips are People/Date/Dropdown only (no
+   file/place chips), and a people chip is painted over the cell text (no rich-run rendering in
+   the cell layer).
+8. ☐ **Pivot tables**: incremental (delta) aggregation for decomposable aggregates (P2); the
+   source snapshot of a big pivot is still taken on the UI thread (only the aggregation runs in
+   the background).
+9. ☐ **Charts, images, objects**: image paste from the OS clipboard, copy chart as PNG
+   (`sheets.chart.copyAsImage` placeholder), PNG of copied objects; durable offline image
+   uploads (retry in memory only), SVG rasterizing, animated GIFs, downscaling > 25 MP;
+   chart editor per-point formatting, pie slices, waterfall subtotals, scorecard refs, error
+   bars, trendline labels, MCP-describable panel; chart sheets don't disable grid commands /
+   toolbar / formula bar; multi-select, remote object selections, running the core
+   `AnchorMaintenance` when an anchor row/column is deleted, screen-reader data-table
+   fallback, series-by-pattern setting; goldens, 50-charts scroll benchmark, raster cache for
+   1M-point charts; default chart placement is anchored at the selection's top-right cell
+   even inside frozen rows (objects there now extend over the scrolling panes).
+10. ☐ **Import / export / print**: server import jobs (`SheetsImportJob`, progress and cancel for
+    imports into an existing spreadsheet), chunked CSV planning (1M cells plan in one go, ~10 s,
+    blocks the UI), desktop printing (`printing` plugin; desktop offers Export PDF),
+    `exportPdf {darkTheme}`, JSON import/export (P2), Drive / Recent uploads tabs in the import
+    dialog (P2), draggable page breaks, server PDF with the bundled fonts, imported XLSX images
+    that fail to upload (offline) are lost, charts without an XLSX equivalent are listed in the
+    export report instead of exported as images.
+11. ☐ **Collaboration & history**: overwritten-offline-edits review (`sheets.conflicts.*`) and
+    "your sort was replaced"; comments scope filter (This sheet / All sheets), moving anchors
+    with cut/paste, offline comment queue, composer next to the cell; version history
+    `sheets.history.toggleShowChanges` command, per-cell author colors, server-side diff for
+    huge sheets, Download as… from a version, copy-comments/share options of Make a copy,
+    `SheetsSnapshotIndex.changedRangesJson`; animated editing border, name flag on hover,
+    typing preview (P2), cursors for headless MCP writes; server tests for capture timing and
+    restore/revert; the version view renders no charts/images.
+12. ☐ **MCP & AI**: assistant panel 1 px overflow at 400 px once a reply shows; highlighting
+    headless MCP writes of other clients (needs ChangeLog actor kinds on the client); the
+    assistant calling `ui.sheets.get_selection/select_range/highlight_range` in the requesting
+    window (12 §6.2); `ui.sheets.describe_panel` / `set_panel_field` (P1); `screenshot_range`
+    omits charts/images; Explore shows chart icons, not thumbnails; per-spreadsheet rate limit
+    for mutating calls (60/min), `sync_version` in results, `group_dimension`, `AI()` cells
+    (P2), cleanup suggestions (P2); suggest-mode previews live in memory on one instance; a
+    live test with a real API key; the Explore panel has no title; the assistant's empty state
+    says "this document" in Sheets.
+13. ☐ **Scripting engine**: server job queue and worker role (`ScriptJob`, per-user concurrency,
+    trigger coalescing); web has no SharedArrayBuffer worker or snapshot mode (alerts/prompts/
+    fetch unavailable in the web inline runner); `api_index.json`, compile/analyze rate limits,
+    failure notifications, custom-function fetch cache, chart/filter/protection/CF API members,
+    P2 services. `dart_eval` pins the workspace to `analyzer` 8.x (porting it to analyzer 13 is
+    ~93 compile errors in its compiler).
+14. ☐ **Core**: chunked CSV planning (`IrToRowsPlanner`), re-anchoring CF/DV relative formulas on
+    plain moves, charts without an Excel equivalent exported as images.

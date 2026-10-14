@@ -109,6 +109,7 @@ final class ValidationContext {
     required this.conditions,
     this.rangeItems,
     this.numberFormat,
+    this.compiled,
   });
 
   final String sheetId;
@@ -123,6 +124,11 @@ final class ValidationContext {
 
   /// The cell's effective number format (for `dateIsValid`).
   final String? numberFormat;
+
+  /// The rule's condition already compiled by [conditions] for the rule's
+  /// anchor (callers validating many cells compile once); compiled on the
+  /// fly when null.
+  final CompiledCondition? compiled;
 }
 
 /// Validates computed values against data validation rules (07 §6.2, §6.5).
@@ -158,13 +164,13 @@ final class ValidationEngine {
         CheckboxValues.of(c, locale: ctx.conditions.locale).stateOf(value) !=
             null,
       DvConditionCriteria(:final condition) =>
-        ctx.conditions
-            .compile(
-              condition,
-              sheetId: ctx.sheetId,
-              anchorRow: rule.anchor.row,
-              anchorCol: rule.anchor.col,
-            )
+        (ctx.compiled ??
+                ctx.conditions.compile(
+                  condition,
+                  sheetId: ctx.sheetId,
+                  anchorRow: rule.anchor.row,
+                  anchorCol: rule.anchor.col,
+                ))
             .test(
               value,
               row: ctx.row,
@@ -287,6 +293,46 @@ final class ValidationEngine {
   }
 }
 
+/// The rule being edited in the data validation panel, previewed on the
+/// grid (07 §6.3): cells inside [rects] follow [record] (chips, checkboxes,
+/// invalid markers), as after *Done* (the new rule wins its ranges); when
+/// an existing rule is edited ([replacesRuleId]) its other cells show no
+/// rule. Never persisted.
+final class DvDraftPreview {
+  /// Creates a preview; [record]'s ranges must resolve to [rects] (the first
+  /// rectangle anchors relative formulas).
+  const DvDraftPreview({
+    required this.record,
+    required this.rects,
+    this.replacesRuleId,
+  });
+
+  /// The draft rule (a record that isn't in the model).
+  final DvRuleRecord record;
+
+  /// The draft's ranges on [sheetId].
+  final List<GridRect> rects;
+
+  /// The rule being edited, or null for a new rule.
+  final String? replacesRuleId;
+
+  /// The sheet of the draft.
+  String get sheetId => record.sheetId;
+
+  /// Whether the draft covers the cell.
+  bool covers(int row, int col) => rects.any((r) => r.contains(row, col));
+
+  /// Whether the draft may change what the cell shows on [sheet]: inside
+  /// the draft, or a cell of the edited rule.
+  bool affects(SheetModel sheet, int row, int col) {
+    if (sheet.id != sheetId) return false;
+    if (covers(row, col)) return true;
+    final id = replacesRuleId;
+    return id != null &&
+        sheet.rulesAt(RuleKind.dataValidation, row, col).contains(id);
+  }
+}
+
 /// Effective rule resolution for overlapping rules (07 §6.4).
 abstract final class DvRuleResolver {
   static int _cmp(DvRuleRecord a, DvRuleRecord b) {
@@ -295,10 +341,21 @@ abstract final class DvRuleResolver {
   }
 
   /// The rule effective at a cell: the containing rule with the greatest
-  /// `(createdAt, id)`, or null.
-  static DvRuleRecord? effectiveRuleAt(SheetModel sheet, int row, int col) {
+  /// `(createdAt, id)`, or null. [draft] (the panel's preview) overrides
+  /// the rules.
+  static DvRuleRecord? effectiveRuleAt(
+    SheetModel sheet,
+    int row,
+    int col, {
+    DvDraftPreview? draft,
+  }) {
+    if (draft != null && draft.sheetId == sheet.id) {
+      if (draft.covers(row, col)) return draft.record;
+    }
+    final skip = draft?.sheetId == sheet.id ? draft?.replacesRuleId : null;
     DvRuleRecord? best;
     for (final id in sheet.rulesAt(RuleKind.dataValidation, row, col)) {
+      if (id == skip) continue;
       final r = sheet.dvRules[id];
       if (r == null) continue;
       if (best == null || _cmp(r, best) > 0) best = r;

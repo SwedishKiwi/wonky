@@ -192,11 +192,23 @@ class OfflineSyncEngine {
       include: OfflineSyncSpaceNode.include(node: CrdtNode.include()),
     );
 
+    // OS-5: a space without any local rows (never synced, or purged by the
+    // app after eviction) asks for everything, including the changes this
+    // node authored earlier; otherwise a purged space would come back
+    // without the rows this device wrote.
+    final hasRows =
+        await CrdtDataRow.db.findFirstRow(
+          session,
+          where: (t) => t.spaceId.equals(space.id),
+        ) !=
+        null;
+
     return OfflineSyncSinceHlc(
       uuidSpaceId: spaceId,
       nodeCheckpoints: [
-        // The local node is always included to avoid collecting its own changes.
-        Hlc.now(localNodeId),
+        // The local node is included to avoid collecting its own changes
+        // (from the start when the space has no local rows, OS-5).
+        hasRows ? Hlc.now(localNodeId) : Hlc.zero(localNodeId),
         for (final spaceNode in spaceNodes)
           spaceNode.lastReceivedHlc ?? Hlc.zero(spaceNode.node!.uuidNodeId),
       ],

@@ -402,10 +402,12 @@ indexes:
 | Table | Purpose |
 |-------|---------|
 | `ReservedSpace` | Pool of reserved space UUIDs for offline creation (toptap pattern). |
-| `ComputedValueCache` | `(cellId, valueJson, formattedText?, engineVersion)` for fast reopen of large sheets; invalidated per engine version. |
+| `SheetsDirtySpace` | Spaces with local writes since the last complete sync (pending-change guard, suite 12 §2.3). |
+| `SheetsRowJournal` / `SheetsJournalSpace` | Local change journal of the open spreadsheets (suite 12 §4 U11): trigger-fed `(space, table, row)` entries with a monotonic id. |
+| `ComputedValueCache` | `(cellId, valueJson, formattedText?, engineVersion)` for fast reopen of large sheets; invalidated per engine version. **Deferred:** measured reopen cost is model build and formula compilation, not evaluation (150k formulas: model 2.1 s, first window 1.2 s, the visible window's values a few ms; viewport-first loading spreads the compile over the streamed chunks). It would still help formulas over rows that are streaming in (they show partial values meanwhile). |
 | `LocalUndoStack` | Serialized undo/redo stacks per spreadsheet (best effort). |
-| `LocalViewState` | Per spreadsheet: active sheet, selection, scroll, zoom, panel states, temporary filter views. |
-| `PendingDriveRegistration` | Spreadsheets created offline awaiting `drive.registerSpreadsheet`. |
+| `LocalViewState` | Per spreadsheet: active sheet, selection, scroll, zoom, panel states, temporary filter views. **As built:** not a table but small JSON in the user's local key-value store (`sheets.view.<spreadsheetId>`, newest 200 kept, like the shell's per-user data, suite 12 §3); also the viewport hint of viewport-first loading and the "last opened" order of the IndexedDB cell cap. |
+| ~~`PendingDriveRegistration`~~ | Not a table: offline registrations use the shell's `PendingDriveOp` queue (`registerSpreadsheet`, suite 12 §3). |
 
 ## 5. Server-only tables (Postgres, `database: server`)
 
@@ -428,7 +430,16 @@ scripts; the Flutter app adds viewport/painter adapters and the DB-backed loader
   O(log n) pixel ↔ index lookups.
 - `CellStore` per sheet: sparse columnar map `rowIndex → colIndex → CellRecord` (content,
   format attribute bitset + value table) loaded at open (viewport-first, then background
-  streaming in chunks of 10k rows).
+  streaming). **As built** (`SyncedWorkbookSession`): every table but `cell` loads first, then
+  the cells of the active sheet's frozen rows and 200 rows from the restored top row
+  (`ViewportHint`: `LocalViewState` or `?gid=`) → `WorkbookReady`; spreadsheets of ≤ 2,000
+  rows load completely first. The rest streams in blocks of 500 rows (cells read through the
+  `(sheetId, rowId)` index, applied ≤ 5,000 per frame, announced on `remoteBatches`), the
+  active sheet first and rows the grid shows first (`WorkbookRowLoading.prioritize`). Streamed
+  rows never overwrite cells written locally or patched from the journal meanwhile; writes
+  that would touch rows still loading — or read whole ranges (sort, find and replace, shift,
+  duplicate sheet) over them — are refused (`LoadingGate`, "Still loading this part of the
+  sheet…").
 - `RuleIndex`: interval trees for CF, DV, merges, protected ranges, filters, banding.
 - **Generic ingestion**: the model holds plain Dart records (`records.dart`), independent of the
   generated Serverpod classes; it ingests `RowChange`s (`table`, `rowId`, column-name maps; UUIDs as
@@ -437,10 +448,14 @@ scripts; the Flutter app adds viewport/painter adapters and the DB-backed loader
   `WorkbookView` and `ModelEngineBinding` forwards change batches to the engine.
 - **Change ingestion**:
   - Local writes update the model synchronously (optimistic) and the DB asynchronously.
-  - Remote writes: after each `onMergeSuccess(spaceUuid, hlc)` the `RemoteChangeTracker` queries
-    the engine metadata for rows changed since the previous HLC (requires a small engine helper
-    `changedRowsSince(spaceUuid, hlc)` — upstream requirement **U11**; until available, the
-    vendored patch adds it) and patches the model. Fallback: viewport-scoped `watch()` queries.
+  - Remote writes: after each `onMergeSuccess(spaceUuid, hlc)` the session reads the rows the
+    local change journal recorded for the space since its cursor (upstream requirement **U11**,
+    implemented app-side with SQLite triggers — suite 12 §4), re-reads them (visible → upsert,
+    gone → delete), overlays local writes still queued for the writer, and patches the model
+    (`RemotePatch`); the patch is emitted on `WorkbookSession.remoteBatches`. Rows equal to the
+    model (the echo of the device's own writes) produce no change. After an error the session
+    falls back to a full diff of the space against the model. A property test checks that the
+    incremental patch equals a full reload.
 - Formula engine (`wonky_sheets_core`) consumes the model through a `CellSource` interface; see
   formula spec for the dependency graph and recalculation.
 

@@ -196,7 +196,9 @@ abstract final class FileService {
         storageId: file.storageId,
         path: file.path,
       );
-      if (sniffImage(bytes.buffer.asUint8List(0, bytes.lengthInBytes)) !=
+      if (sniffImage(
+            bytes.buffer.asUint8List(bytes.offsetInBytes, bytes.lengthInBytes),
+          ) !=
           file.mimeType) {
         status = StoredFileStatus.failed;
         await session.storage.deleteFile(

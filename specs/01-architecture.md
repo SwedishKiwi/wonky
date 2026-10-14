@@ -110,7 +110,7 @@ wonky_core            → (common utilities only, see below)
 wonky_write_core      → wonky_core, dart_quill_delta (9.x by default; see §2.2), markdown, html, pdf,
                         archive, xml, image, crypto, highlight (or re_highlight — spike decides)
 wonky_sheets_core     → wonky_core, wonky_sync_models (model types only), petitparser, intl, timezone, archive, xml, csv,
-                        excel_plus, pdf, image
+                        pdf, image (in-house OOXML/ODS reader and writer on archive + xml — Sheets 11 §5.1)
 wonky_sheets_script   → wonky_core, wonky_sheets_core, dart_eval, eval_annotation, native_synchronization
 wonky_sync_models     → serverpod_database, serverpod_offline_sync, serverpod_serialization, uuid
 wonky_server          → serverpod, serverpod_auth_idp_server, serverpod_offline_sync(_server), serverpod_cloud_storage,
@@ -125,11 +125,16 @@ wonky_app             → wonky_ui, wonky_core, wonky_client, serverpod_flutter,
 wonky_write           → wonky_app, wonky_ui, wonky_write_core, super_editor (vendored), super_clipboard, printing, file_saver,
                         file_picker
 wonky_sheets          → wonky_app, wonky_ui, wonky_sheets_core, wonky_sheets_script, two_dimensional_scrollables (auxiliary
-                        tables only), super_clipboard, re_editor, printing, file_saver, file_picker, path_provider
+                        tables only), super_clipboard, re_editor (+ re_highlight for the Dart grammar),
+                        crypto (script file content hashes), printing, file_saver, file_picker, path_provider,
+                        wonky_sync_models, serverpod_offline_sync_client, serverpod_database (the local replica
+                        and sync client of 12 §2)
                         (charts: own pure-Dart engine in wonky_sheets_core — see Sheets 08)
 ```
 
-Forbidden: any `*_core` importing Flutter; `wonky_ui` importing client/server code; Write
+Forbidden: `wonky_sheets` importing `wonky_sheets_script/compiler.dart`, `testing.dart`,
+`package:analyzer` or `package:dart_eval/dart_eval.dart` (the app only runs scripts, A8);
+any `*_core` importing Flutter; `wonky_ui` importing client/server code; Write
 packages importing Sheets packages and vice versa; feature code importing generated server code.
 
 **What the script checks** (only `dependencies:`, not `dev_dependencies:`; imports in `lib/` and
@@ -160,6 +165,9 @@ packages importing Sheets packages and vice versa; feature code importing genera
 | Package | Dependency | Why |
 |---------|------------|-----|
 | `wonky_write_core` | `diff_match_patch` | Minimal text diffs for overlay-preserving Delta diffs (`DeltaDiff`) |
+| `wonky_sheets_script` | `wonky_sync_models` | Id generators and table names of the script tables |
+| `wonky_sheets_script` | `crypto` | Build source hashes; `Utilities.computeDigest`/`computeHmac` |
+| `wonky_sheets_script` | `analyzer` | Subset lint and exports of the server-only `compiler.dart` (the app must not import it; enforced) |
 | `wonky_sheets_core` | `vector_math` | `Matrix4` for `PdfGraphics.setTransform` in the PDF renderer (already a dependency of `pdf`) |
 | `wonky_server` | `crypto` | Token and content hashes |
 | `wonky_server` | `dart_quill_delta` | Server-authoritative OT over Deltas (A4) |
@@ -173,6 +181,12 @@ packages importing Sheets packages and vice versa; feature code importing genera
 | `wonky_app` | `url_launcher` | Opening the other app on desktop; external links |
 | `wonky_app` | `shared_preferences` | Per-device settings (`LocalStore`) |
 | `wonky_app` | `sqlite_async`, `path_provider` | Offline cache and outbox (`LocalDatabase`, 12) and its file location on desktop |
+| `wonky_app` | `crypto` | PKCE code challenge of Sign in with Google on web (04 §1.6) |
+| `wonky_sheets` | `timezone` | IANA time zone list of the spreadsheet settings dialog (Sheets 06 §5.8) |
+| `wonky_sheets` | `desktop_drop` | Dropping files onto the grid on desktop (Sheets 11 §2) |
+| `wonky_sheets` | `http` | Fetching XLSX images and URL imports (Sheets 11 §2) |
+| `wonky_sheets` | `pdf` | Client PDF export and print preview (Sheets 11 §7) |
+| `wonky_sheets` | `sqlite3`, `archive` | Recovery export of a replica that can't be opened: read-only SQLite read of its unsynced spreadsheets, zipped as XLSX + JSON (suite 12 §2.5) |
 | `wonky_write`, `wonky_sheets` | `wonky_core`, `wonky_client`, `shad`, `go_router` | Ids/commands/undo, repositories calling endpoints (never widgets, 11 §6), shad UI (02), routes (A9) |
 | `wonky_write` | `dart_quill_delta` | Client side of the Delta OT (A4) |
 | `wonky_write` | `syntax_highlight` | Code block syntax highlighting in the editor (TextMate grammars; vendored, see §2.2; exports keep `wonky_write_core`'s `highlight`) |
@@ -243,9 +257,8 @@ Current and candidate vendored packages:
 |---------|--------|-----|
 | `super_editor` | Vendored (M0) | Quill serializer gaps, incremental Delta apply, richer change events, editable table cells, fixes found by our tests (Write 04 §2.2) |
 | `serverpod_offline_sync` (+ `_client`, `_server`) | Vendored (M0) | Serverpod 4.1 compatibility, web deadlock fix, `changedRowsSince` (U11) and other upstream requirements while they land (suite 12 §4) |
-| `dart_eval` | Vendored (M6, spikes earlier) | Source maps, interrupt hook, conformance fixes (Sheets 09) |
+| `dart_eval` | Vendored (0.8.5, workspace member; patches DE-0…DE-19) | Source positions, interrupt hook, conformance fixes (Sheets 09 §2). Pins the workspace to analyzer 8.x. |
 | `dart_quill_delta` | Candidate | Only if OT edge cases or performance require it |
-| `excel_plus` | Candidate | Instead of growing the supplementary OOXML reader if gaps are small (Sheets 11 §5.1) |
 | `docx_creator` | Candidate | If the M5 spike adopts it but finds gaps (Write 07) |
 | `re_editor` | Candidate | Fallback if unmaintained (Sheets 09) |
 | `mcp_dart` | Candidate | If a Relic-native Streamable HTTP transport is better added in the library (suite 09 §1) |

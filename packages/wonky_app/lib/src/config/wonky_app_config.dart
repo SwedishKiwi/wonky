@@ -82,6 +82,11 @@ abstract class WonkyAppConfig {
   /// relative to the app's base href.
   List<RouteBase> routes(ShellServices services) => const [];
 
+  /// Routes nested under the editor route (`print` → `/s/:uuid/print`):
+  /// the editor page stays mounted underneath, so its open document (and
+  /// in-memory model) remains available to the child screen.
+  List<RouteBase> editorRoutes(ShellServices services) => const [];
+
   /// App commands (registered at start-up; shell ids are reserved).
   List<Command<CommandArgs>> commands(ShellServices services) => const [];
 
@@ -139,6 +144,11 @@ abstract class WonkyAppConfig {
   /// Settings sections the app adds after the shared ones.
   List<SettingsSectionSpec> settingsSections(ShellServices services) =>
       const [];
+
+  /// The body of Settings › Sheets when this app offers more than the
+  /// shared toggles (Sheets 04 §11.24: default locale, time zone, font,
+  /// custom fill lists …); null shows the shared toggles.
+  Widget? sheetsSettings(BuildContext context, ShellServices services) => null;
 }
 
 /// An extra settings section.

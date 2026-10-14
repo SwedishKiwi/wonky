@@ -155,6 +155,14 @@ No "Email" item (out of scope).
 
 ### 3.2 Edit
 
+> **As built.** The menubar uses the shell's `shell.edit.undo/redo/cut/copy/paste/selectAll`
+> (suite 08 §5: apps contribute behavior through the document controller, which runs
+> `sheets.edit.cut/copy/paste` and `sheets.select.all`); `sheets.edit.undo/redo` exist as
+> aliases (MCP, and the `grid`-scope Mod+Z/Mod+Shift+Z bindings, 03 §8.3).
+> View › Mode uses `sheets.mode.editing` / `sheets.mode.viewing`. Items of features that are
+> not built yet are registered as disabled placeholder commands
+> (`commands/data_commands.dart` `placeholderCommands`); the feature replaces the handler.
+
 | Item | Command id | macOS | Win/Linux | Enabled | Spec |
 |------|-----------|-------|-----------|---------|------|
 | Undo *label* | `sheets.edit.undo` | ⌘Z | Ctrl+Z | stack non-empty | suite 08 |
@@ -345,9 +353,11 @@ All behaviors in [07-data-tools.md](07-data-tools.md) unless noted.
 | Scripts ▸ Macros ▸ Record macro | `sheets.macro.record` | — | — | edit | 09 |
 | Scripts ▸ Macros ▸ Import macro | `sheets.macro.import` | — | — | edit | 09 |
 | Scripts ▸ Macros ▸ Manage macros | `sheets.macro.manage` | — | — | edit | 09 |
-| Scripts ▸ Macros ▸ *each macro* | `sheets.macro.<macroId>` | ⌥⇧⌘1…0 (slot) | Ctrl+Alt+Shift+1…0 | edit, scripts enabled | 09 |
+| Scripts ▸ Macros ▸ *each macro* | `sheets.macro.m<macroId hex>` | ⌥⇧⌘1…0 (slot) | Ctrl+Alt+Shift+1…0 | edit, scripts enabled | 09 |
 | Scripts ▸ Triggers | `sheets.script.openTriggers` | — | — | edit | 09 |
 | Scripts ▸ Executions | `sheets.script.openExecutions` | — | — | edit | 09 |
+| Scripts ▸ Script settings | `sheets.script.openSettings` | — | — | edit, project | 09 §14.7 |
+| *each script menu* (also top level after Extensions) | `sheets.script.runMenuItem` | — | — | view | 09 §16.1 |
 | AI ▸ Suggest a formula | `sheets.ai.suggestFormula` | — | — | edit, AI | suite 10, 12 |
 | AI ▸ Explain formula | `sheets.ai.explainFormula` | — | — | view, formula cell, AI | 12 |
 | AI ▸ Fill with AI | `sheets.ai.fillRange` | — | — | edit, sel1, AI | 12 |
@@ -567,8 +577,8 @@ All built with `ShadContextMenuRegion` + `WonkyDropdownMenu` items from `context
 | — | | |
 | View more cell actions ▸ Comment | `shell.comments.create` | |
 | ▸ Insert note | `sheets.notes.insert` | |
-| ▸ Insert link | `sheets.insert.link` | |
-| ▸ Smart chips ▸ (P2) | `sheets.insert.smartChip {kind}` | |
+| ▸ Insert link | `sheets.insert.link` | link cells also get *Copy link* `sheets.link.copy` in the link card |
+| ▸ Smart chips (P2) | `sheets.insert.smartChip {kind?}` | as built: one item opening the chip menu at the cell (03 §14.3) |
 | ▸ Explain formula (AI) | `sheets.ai.explainFormula` | formula cells |
 | ▸ Protect range | `sheets.protect.openPanel {range: selection}` | |
 | ▸ Define named range | `sheets.namedRanges.openPanel {create: selection}` | |
@@ -577,7 +587,9 @@ All built with `ShadContextMenuRegion` + `WonkyDropdownMenu` items from `context
 | ▸ Show edit history | `sheets.history.showCellHistory` | [10](10-collaboration-history.md); single cell |
 | ▸ Clear notes | `sheets.notes.clear` | |
 
-Context variants: on a **pivot** cell, the top adds *Edit pivot table*, *Refresh*; on a
+Context variants: on a **pivot** cell, the top adds *Edit pivot table*, *Refresh*, *Show details*
+(`sheets.pivot.drillDown`, value cells), *Create pivot group* (`sheets.pivot.groupSelection`,
+when row/column labels of one field are selected), *Delete pivot table*; on a
 **chart/image**, the object context menu from 08 replaces this one; on a **link** cell, *Open
 link*, *Edit link*, *Remove link* are added at the top; on a **dropdown** cell, *Edit dropdown*.
 
@@ -827,7 +839,9 @@ adjusted exactly like sort (see [07-data-tools.md](07-data-tools.md)).
 Default locale for new spreadsheets, default time zone, default font/size, *Enter key starts
 editing*, *Formula autocomplete*, *Formula help*, *Show editor mode in status bar*, *Custom fill
 lists* (editable list of lists), *Enable scripts on this device*, *Reduce grid animations*.
-Stored in `UserPreferences.sheetsDefaults` (suite 04).
+Stored in `UserPreferences.sheetsDefaults` (suite 04). Built as the Sheets app's section
+(`WonkyAppConfig.sheetsSettings`); keys in `SheetsUserDefaults` (06 §20). Custom fill lists are
+edited as one list per line, items separated by commas. Write shows only the shared toggles.
 
 ### 11.25 Copy sheet to existing spreadsheet
 
@@ -862,7 +876,7 @@ Drive picker dialog (shell `DrivePickerDialog`, filtered to spreadsheets where u
 
 | Widget | Package | Description |
 |--------|---------|-------------|
-| `RangeInput` | `wonky_sheets/lib/features/common/range_input.dart` (app — needs grid) | `ShadInput` for A1 ranges (multiple via `,`) with validation and a ⊞ button that enters **range-picking mode**: the panel/dialog dims, a floating "Select a data range" card appears with the input and [Cancel] [OK]; selecting on the grid (incl. Mod+click multi ranges and switching sheets) updates the input live. Used by CF, DV, protected ranges, named ranges, charts, pivot, find. |
+| `RangeInput` | `wonky_sheets/lib/features/common/range_input.dart` (app — needs grid) | `ShadInput` for A1 ranges (multiple via `,`) with validation and a ⊞ button that enters **range-picking mode**: the panel/dialog dims, a floating "Select a data range" card appears with the input and [Cancel] [OK]; selecting on the grid (incl. Mod+click multi ranges and switching sheets) updates the input live. Used by CF, DV, protected ranges, named ranges, charts, pivot, find. **As built:** no dimming/floating card — picking is on while the input is focused and stays on when focus goes to the grid (ends with an `onCommitted` when focus moves elsewhere or on Enter); the ⊞ toggle keeps it on. Used by CF, DV, banding, protection, chart editor and the pivot editor's source range (written on commit). |
 | `FormulaEditor` | app (`features/cell_editor/formula/formula_field.dart`) | Single-line formula input with highlighting, autocomplete and signature help (03 §8.7) for panels (CF custom formula, DV custom formula, named functions). Supports point mode on the grid like `RangeInput`. |
 | `BorderPicker` | app | §4.1 |
 | `NumberFormatPicker` / `NumberFormatMenu` | app | §4.2, dialogs §11.2–11.4 |
@@ -876,6 +890,9 @@ Drive picker dialog (shell `DrivePickerDialog`, filtered to spreadsheets where u
 ---
 
 ## 14. Light and dark grid colors
+
+> **As built.** The tokens are the constants `GridPaintTokens.light` / `.dark` in
+> `wonky_sheets/lib/theme/sheets_tokens.dart`, chosen by the shad theme brightness.
 
 `wonky_sheets/lib/theme/sheets_tokens.dart` registers these as `ShadColorScheme.custom`
 entries (suite 02 §2); the generic `gridLine…`/`selection…`/`fillHandle` tokens are defined in

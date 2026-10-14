@@ -124,6 +124,61 @@ void main() {
     });
   });
 
+  group('Given columns of other kinds', () {
+    ColumnStatsResult stats(List<CellValue> values, {String? format}) =>
+        ColumnStats.compute(values, [
+          for (final v in values) ValueText.automatic(v),
+        ], numberFormat: format);
+
+    test('when the column is empty then the kind is empty', () {
+      final s = stats([CellValue.empty, const TextValue('')]);
+      expect((s.kind, s.valueCount, s.emptyCount), (ColumnKind.empty, 0, 2));
+      expect(s.frequencies, isEmpty);
+      expect(s.histogram, isEmpty);
+    });
+
+    test('when no type has a majority then the column is mixed', () {
+      final s = stats([
+        NumberValue(1),
+        const TextValue('a'),
+        const BoolValue(true),
+        const TextValue('b'),
+        NumberValue(2),
+      ]);
+      expect(s.kind, ColumnKind.mixed);
+      expect(s.numeric!.count, 2);
+    });
+
+    test('when most values are booleans then the column is boolean', () {
+      final s = stats([const BoolValue(true), const BoolValue(false)]);
+      expect(s.kind, ColumnKind.boolean);
+      expect(s.frequencies.map((f) => f.text), ['FALSE', 'TRUE']);
+    });
+
+    test('when the count is odd then the median is the middle value', () {
+      final s = stats([NumberValue(7), NumberValue(1), NumberValue(3)]);
+      expect(s.numeric!.median, 3);
+    });
+
+    test(
+      'when dates cross a year boundary then month buckets keep counting',
+      () {
+        final dec = DateSerial.fromYmd(2025, 12, 15).toDouble();
+        final jan = DateSerial.fromYmd(2026, 1, 2).toDouble();
+        final s = stats([
+          NumberValue(dec),
+          NumberValue(jan),
+          NumberValue(jan),
+        ], format: 'yyyy-mm-dd');
+        expect(s.kind, ColumnKind.date);
+        expect(
+          [for (final b in s.histogram) (b.label, b.count)],
+          [('2025-12', 1), ('2026-01', 2)],
+        );
+      },
+    );
+  });
+
   group('Given a sheet column', () {
     test(
       'when computing from the sheet then display texts and the column format are used',

@@ -418,6 +418,8 @@ abstract final class Paginator {
     var pages = drafts;
     if (pages.length > PrintMetrics.maxPages) {
       pages = pages.sublist(0, PrintMetrics.maxPages);
+    }
+    if (requested > PrintMetrics.maxPages) {
       warnings.add(
         PrintWarning(
           PrintWarningKind.pageLimit,

@@ -85,28 +85,22 @@ abstract final class SortStrategy {
       sheet.mergesIntersecting(rect).any((m) => m.$2.rowCount > 1);
 
   /// [SortStrategyKind.rowReorder] when the rows of [rect] have no cells
-  /// outside its columns and no vertical merges; else contentMove.
+  /// outside its columns and no merge spanning several rows touches them (in
+  /// any column); else contentMove. Single-row merges move with their row.
   static SortStrategyKind choose(SheetModel sheet, GridRect rect) {
-    if (hasVerticalMerge(sheet, rect)) return SortStrategyKind.contentMove;
     final grid = sheet.gridRect;
-    final fullWidth =
-        grid != null && rect.left <= grid.left && rect.right >= grid.right;
-    if (fullWidth) return SortStrategyKind.rowReorder;
+    if (grid == null) return SortStrategyKind.rowReorder;
+    final rows = GridRect(rect.top, grid.left, rect.bottom, grid.right);
+    if (hasVerticalMerge(sheet, rows)) return SortStrategyKind.contentMove;
+    if (rect.left <= grid.left && rect.right >= grid.right) {
+      return SortStrategyKind.rowReorder;
+    }
     for (var r = rect.top; r <= rect.bottom; r++) {
       final rowId = sheet.rows.tryIdAt(r);
-      if (rowId == null) continue;
-      if (sheet.cells.rowCount(rowId) == 0) continue;
+      if (rowId == null || sheet.cells.rowCount(rowId) == 0) continue;
       for (final cell in sheet.cells.inRow(rowId)) {
         final c = sheet.columns.indexOf(cell.columnId);
         if (c >= 0 && (c < rect.left || c > rect.right)) {
-          return SortStrategyKind.contentMove;
-        }
-      }
-      // Horizontal merges crossing the range edge also pin the row.
-      for (final (_, m) in sheet.mergesIntersecting(
-        GridRect(r, rect.left, r, rect.right),
-      )) {
-        if (m.left < rect.left || m.right > rect.right) {
           return SortStrategyKind.contentMove;
         }
       }

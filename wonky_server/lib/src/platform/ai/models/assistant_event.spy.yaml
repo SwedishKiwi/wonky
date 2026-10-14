@@ -18,6 +18,11 @@ fields:
   rangeStart: int?
   rangeLength: int?
   revision: int?
+  ### Sheets: the A1 range a tool wrote or read (Show), the chart/pivot it
+  ### created, and on done the AI changes preview (Suggest mode).
+  range: String?
+  objectId: String?
+  previewId: String?
   confirmationId: String?
   error: String?
   errorCode: String?

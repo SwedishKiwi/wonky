@@ -7,13 +7,18 @@ import '../../addressing/a1.dart';
 import '../../addressing/grid_geometry.dart';
 import '../../content/cell_content.dart';
 import '../../content/rich_text.dart';
+import '../../format/attributes.dart';
 import '../../formula/values/dates.dart';
 import '../color/excel_colors.dart';
 import '../formula/excel_formula_translator.dart';
+import '../formula/formula_tokens.dart';
+import '../formula/function_map.dart';
 import '../ir/import_warning.dart';
+import '../ir/ir_formats.dart';
 import '../ir/ir_range.dart';
 import '../ir/workbook_document.dart';
 import 'ooxml.dart';
+import 'xlsx_charts.dart';
 import 'xlsx_print.dart';
 import 'xlsx_rules.dart';
 import 'xlsx_styles.dart';
@@ -46,8 +51,8 @@ final class XlsxImportOptions {
   /// file's theme is imported as the spreadsheet theme).
   final bool themeColorReferences;
 
-  /// Whether Wonky implements a function (upper case); defaults to "all but
-  /// the known Excel-only functions".
+  /// Whether Wonky implements a function (upper case); defaults to the
+  /// Wonky function catalog ([FunctionMap.isWonkyFunction]).
   final bool Function(String upperName)? isSupportedFunction;
   final bool includeImages;
 }
@@ -230,6 +235,9 @@ final class _Reader {
 
   final ZipPackage pkg;
   final XlsxImportOptions options;
+
+  bool Function(String) get _supported =>
+      options.isSupportedFunction ?? FunctionMap.isWonkyFunction;
   final WorkbookDocument doc = WorkbookDocument();
   late ColorResolver colors;
   late XlsxStylesReader styles;
@@ -372,7 +380,7 @@ final class _Reader {
         continue;
       }
       final translator = ExcelFormulaTranslator(
-        isSupportedFunction: options.isSupportedFunction,
+        isSupportedFunction: _supported,
         knownNames: knownNames,
         nameRenames: renames[i] ?? const {},
       );
@@ -408,7 +416,7 @@ final class _Reader {
         continue;
       }
       final tr = ExcelFormulaTranslator(
-        isSupportedFunction: options.isSupportedFunction,
+        isSupportedFunction: _supported,
         knownNames: knownNames,
         nameRenames: local == null ? const {} : renames[local] ?? const {},
       );
@@ -474,6 +482,55 @@ final class _Reader {
   static String _identifier(String s) {
     final t = s.replaceAll(RegExp(r'[^A-Za-z0-9_]'), '_');
     return RegExp(r'^[A-Za-z_]').hasMatch(t) ? t : '_$t';
+  }
+
+  /// Makes the complete XLSX styles of columns, rows and cells relative to
+  /// what they inherit in Wonky (sheet default ▸ column ▸ row ▸ cell).
+  void _relativeFormats(IrSheet sheet) {
+    final d = doc.formats[sheet.defaultFormat].attrs;
+    final hasDims =
+        sheet.columns.entries.any((e) => e.value.format != 0) ||
+        sheet.rows.entries.any((e) => e.value.format != 0);
+    if (d.isEmpty && !hasDims) return;
+    final dimCache = <int, int>{};
+    int rel(int index, CellFormat inherited, Map<int, int> cache) {
+      if (index == 0 && inherited.isEmpty) return 0;
+      return cache[index] ??= () {
+        final f = doc.formats[index];
+        final r = IrFormats.relative(f.attrs, inherited, doc);
+        return doc.formats.intern(IrFormat(r, f.extras));
+      }();
+    }
+
+    for (final e in sheet.columns.entries.toList()) {
+      if (e.value.format == 0) continue;
+      sheet.columns[e.key] = e.value.copyWith(
+        format: rel(e.value.format, d, dimCache),
+      );
+    }
+    for (final e in sheet.rows.entries.toList()) {
+      if (e.value.format == 0) continue;
+      sheet.rows[e.key] = e.value.copyWith(
+        format: rel(e.value.format, d, dimCache),
+      );
+    }
+    final cache = <(int, int, int), int>{};
+    for (final (r, c, cell) in sheet.cells.entries.toList()) {
+      final cf = sheet.columns[c]?.format ?? 0;
+      final rf = sheet.rows[r]?.format ?? 0;
+      final key = (cell.format, cf, rf);
+      final idx = cache[key] ??= () {
+        final inherited = IrFormats.inherited(doc, sheet, r, c);
+        if (inherited.isEmpty) return cell.format;
+        final f = doc.formats[cell.format];
+        final x = IrFormats.relative(f.attrs, inherited, doc);
+        return doc.formats.intern(IrFormat(x, f.extras));
+      }();
+      if (idx != cell.format) {
+        final next = cell.copyWith(format: idx);
+        sheet.cells.set(r, c, next.isEmpty ? null : next);
+      }
+    }
   }
 
   void _packageWarnings() {
@@ -547,7 +604,7 @@ final class _Reader {
     var inT = false;
     final buf = StringBuffer();
     try {
-      for (final e in parseEvents(text)) {
+      for (final e in parseEvents(text, validateNesting: true)) {
         if (e is XmlStartElementEvent) {
           switch (_local(e.name)) {
             case 'si':
@@ -716,16 +773,24 @@ final class _Reader {
       }
     }
 
-    // cols (after cells: runs are capped at the used range)
+    // cols (after cells: runs are capped at the used range). A styled run
+    // reaching the last column is the sheet default format.
     final usedCols = sheet.cells.maxCol + 1;
+    final cap = usedCols > 26 ? usedCols - 1 : 25;
     for (final col
         in root.child('cols')?.elems('col') ?? const <XmlElement>[]) {
       final min = (col.intAttr('min') ?? 1) - 1;
       var max = (col.intAttr('max') ?? (min + 1)) - 1;
       final hidden = col.boolAttr('hidden') ?? false;
-      final cap = hidden ? 1023 : (usedCols > 26 ? usedCols - 1 : 25);
+      var format = col.attr('style') != null
+          ? _formatOf(col.intAttr('style'))
+          : 0;
+      if (max >= Ooxml.maxCols - 1 && format != 0 && sheet.defaultFormat == 0) {
+        sheet.defaultFormat = format;
+        format = 0;
+      }
       if (max > cap) max = cap < min ? min : cap;
-      if (max - min > 16384) max = min + 16384;
+      if (min > max) continue;
       final width = col.doubleAttr('width');
       final px = width == null ? null : Ooxml.widthToPx(width);
       final custom =
@@ -736,13 +801,14 @@ final class _Reader {
         hidden: hidden,
         outlineLevel: col.intAttr('outlineLevel') ?? 0,
         collapsed: col.boolAttr('collapsed') ?? false,
-        format: col.attr('style') != null ? _formatOf(col.intAttr('style')) : 0,
+        format: format,
       );
       if (dim.isDefault) continue;
       for (var c = min; c <= max; c++) {
         sheet.columns[c] = dim;
       }
     }
+    _relativeFormats(sheet);
 
     for (final m
         in root.child('mergeCells')?.elems('mergeCell') ??
@@ -765,7 +831,8 @@ final class _Reader {
       if (rel != null && rel.external) {
         link = loc == null || loc.isEmpty ? rel.target : '${rel.target}#$loc';
       } else if (loc != null && loc.isNotEmpty) {
-        link = '#$loc';
+        // Canonical A1 (`'Lists'!A1` → `Lists!A1`); names stay as they are.
+        link = '#${A1Area.tryParse(loc)?.format() ?? loc}';
       }
       if (link == null) continue;
       var n = 0;
@@ -980,7 +1047,6 @@ final class _Reader {
           arrayRef = r != null && r.isBounded
               ? r.rect
               : GridRect.cell(row, col);
-          arrays.add(arrayRef);
         }
       }
       String? note;
@@ -999,8 +1065,14 @@ final class _Reader {
           formula = null;
           kind = IrFormulaKind.normal;
           arrayRef = null;
-        } else if (kind == IrFormulaKind.array) {
-          formula = 'ARRAYFORMULA($formula)';
+        } else {
+          if (kind == IrFormulaKind.array ||
+              (kind == IrFormulaKind.dynamicArray &&
+                  FormulaRewriter.needsArrayMode(formula))) {
+            // Excel evaluates array formulas element-wise (11 §5.2).
+            formula = 'ARRAYFORMULA($formula)';
+          }
+          if (arrayRef != null) arrays.add(arrayRef);
         }
       }
       final cell = IrCell(
@@ -1015,7 +1087,7 @@ final class _Reader {
     }
 
     try {
-      for (final e in parseEvents(data)) {
+      for (final e in parseEvents(data, validateNesting: true)) {
         if (e is XmlStartElementEvent) {
           switch (_local(e.name)) {
             case 'row':
@@ -1234,11 +1306,71 @@ final class _Reader {
   double _rowPx(IrSheet s, int r) =>
       s.rows[r]?.size ?? s.defaultRowHeight ?? 20;
 
+  /// Position and size of a drawing anchor in px.
+  IrAnchor _anchor(XmlElement anchor, IrSheet sheet, XmlElement? xfrmOwner) {
+    final kind = anchor.localName;
+    int row = 0, col = 0;
+    double dx = 0, dy = 0, w = 0, h = 0;
+    double emu(XmlElement? e, String n) =>
+        (double.tryParse(e?.child(n)?.innerText.trim() ?? '') ?? 0) /
+        Ooxml.emuPerPx;
+    final from = anchor.child('from');
+    if (from != null) {
+      col = int.tryParse(from.child('col')?.innerText.trim() ?? '') ?? 0;
+      row = int.tryParse(from.child('row')?.innerText.trim() ?? '') ?? 0;
+      dx = emu(from, 'colOff');
+      dy = emu(from, 'rowOff');
+    }
+    final extEl =
+        anchor.child('ext') ??
+        xfrmOwner?.child('spPr')?.child('xfrm')?.child('ext') ??
+        xfrmOwner?.child('xfrm')?.child('ext');
+    if (kind == 'twoCellAnchor' && anchor.child('to') != null) {
+      final to = anchor.child('to')!;
+      final tc = int.tryParse(to.child('col')?.innerText.trim() ?? '') ?? col;
+      final trw = int.tryParse(to.child('row')?.innerText.trim() ?? '') ?? row;
+      var x = -dx, y = -dy;
+      for (var c = col; c < tc; c++) {
+        x += _colPx(sheet, c);
+      }
+      for (var r = row; r < trw; r++) {
+        y += _rowPx(sheet, r);
+      }
+      w = x + emu(to, 'colOff');
+      h = y + emu(to, 'rowOff');
+    } else if (extEl != null) {
+      w = (extEl.doubleAttr('cx') ?? 0) / Ooxml.emuPerPx;
+      h = (extEl.doubleAttr('cy') ?? 0) / Ooxml.emuPerPx;
+    }
+    if (kind == 'absoluteAnchor') {
+      var x = (anchor.child('pos')?.doubleAttr('x') ?? 0) / Ooxml.emuPerPx;
+      var y = (anchor.child('pos')?.doubleAttr('y') ?? 0) / Ooxml.emuPerPx;
+      col = 0;
+      while (x >= _colPx(sheet, col) && col < 16383) {
+        x -= _colPx(sheet, col++);
+      }
+      row = 0;
+      while (y >= _rowPx(sheet, row) && row < Ooxml.maxRows - 1) {
+        y -= _rowPx(sheet, row++);
+      }
+      dx = x;
+      dy = y;
+    }
+    return IrAnchor(
+      row: row,
+      col: col,
+      dx: _r(dx),
+      dy: _r(dy),
+      width: _r(w),
+      height: _r(h),
+    );
+  }
+
   void _readDrawing(String path, IrSheet sheet) {
     final root = pkg.xml(path)?.rootElement;
     if (root == null) return;
     final rels = pkg.rels(path);
-    var charts = 0, shapes = 0;
+    var shapes = 0;
     for (final anchor in root.childElements) {
       final kind = anchor.localName;
       if (kind != 'twoCellAnchor' &&
@@ -1246,13 +1378,39 @@ final class _Reader {
           kind != 'absoluteAnchor') {
         continue;
       }
+      final frame = anchor.child('graphicFrame');
+      if (frame != null) {
+        final data = frame.child('graphic')?.child('graphicData');
+        final chartEl = data?.child('chart');
+        final rel = rels[chartEl?.attr('id')];
+        final part = rel == null ? null : pkg.xml(rel.target)?.rootElement;
+        final spec = part == null
+            ? null
+            : XlsxCharts.read(part, colors, doc.warnings, sheet: sheet.name);
+        if (spec == null) {
+          if (part == null) {
+            doc.warnings.add(
+              'chartSkipped',
+              'Charts that could not be read were not imported',
+              sheet: sheet.name,
+            );
+          }
+          continue;
+        }
+        final props = frame.child('nvGraphicFramePr')?.child('cNvPr');
+        sheet.charts.add(
+          IrChart(
+            anchor: _anchor(anchor, sheet, frame),
+            spec: spec,
+            title: props?.attr('title'),
+            altText: props?.attr('descr'),
+          ),
+        );
+        continue;
+      }
       final pic = anchor.child('pic');
       if (pic == null) {
-        if (anchor.child('graphicFrame') != null) {
-          charts++;
-        } else {
-          shapes++;
-        }
+        shapes++;
         continue;
       }
       final embed = pic.child('blipFill')?.child('blip')?.attr('embed');
@@ -1278,77 +1436,16 @@ final class _Reader {
       }
       final bytes = pkg.bytes(rel.target);
       if (bytes == null) continue;
-      int row = 0, col = 0;
-      double dx = 0, dy = 0, w = 0, h = 0;
-      double emu(XmlElement? e, String n) =>
-          (double.tryParse(e?.child(n)?.innerText.trim() ?? '') ?? 0) /
-          Ooxml.emuPerPx;
-      final from = anchor.child('from');
-      if (from != null) {
-        col = int.tryParse(from.child('col')?.innerText.trim() ?? '') ?? 0;
-        row = int.tryParse(from.child('row')?.innerText.trim() ?? '') ?? 0;
-        dx = emu(from, 'colOff');
-        dy = emu(from, 'rowOff');
-      }
-      final extEl =
-          anchor.child('ext') ?? pic.child('spPr')?.child('xfrm')?.child('ext');
-      if (kind == 'twoCellAnchor' && anchor.child('to') != null) {
-        final to = anchor.child('to')!;
-        final tc = int.tryParse(to.child('col')?.innerText.trim() ?? '') ?? col;
-        final trw =
-            int.tryParse(to.child('row')?.innerText.trim() ?? '') ?? row;
-        var x = -dx, y = -dy;
-        for (var c = col; c < tc; c++) {
-          x += _colPx(sheet, c);
-        }
-        for (var r = row; r < trw; r++) {
-          y += _rowPx(sheet, r);
-        }
-        w = x + emu(to, 'colOff');
-        h = y + emu(to, 'rowOff');
-      } else if (extEl != null) {
-        w = (extEl.doubleAttr('cx') ?? 0) / Ooxml.emuPerPx;
-        h = (extEl.doubleAttr('cy') ?? 0) / Ooxml.emuPerPx;
-      }
-      if (kind == 'absoluteAnchor') {
-        var x = (anchor.child('pos')?.doubleAttr('x') ?? 0) / Ooxml.emuPerPx;
-        var y = (anchor.child('pos')?.doubleAttr('y') ?? 0) / Ooxml.emuPerPx;
-        col = 0;
-        while (x >= _colPx(sheet, col) && col < 16383) {
-          x -= _colPx(sheet, col++);
-        }
-        row = 0;
-        while (y >= _rowPx(sheet, row) && row < Ooxml.maxRows - 1) {
-          y -= _rowPx(sheet, row++);
-        }
-        dx = x;
-        dy = y;
-      }
       final props = pic.child('nvPicPr')?.child('cNvPr');
       sheet.images.add(
         IrImage(
           bytes: bytes,
           mimeType: mime,
-          anchor: IrAnchor(
-            row: row,
-            col: col,
-            dx: _r(dx),
-            dy: _r(dy),
-            width: _r(w),
-            height: _r(h),
-          ),
+          anchor: _anchor(anchor, sheet, pic),
           altText: props?.attr('descr'),
           title: props?.attr('title'),
           name: rel.target.split('/').last,
         ),
-      );
-    }
-    if (charts > 0) {
-      doc.warnings.add(
-        'charts',
-        'Charts were not imported',
-        sheet: sheet.name,
-        count: charts,
       );
     }
     if (shapes > 0) {

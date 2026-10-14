@@ -1,0 +1,12 @@
+### The result of `sheetsAi.fillRange`: proposals for the empty cells of a
+### column, shown in the Fill with AI preview (Sheets 12 §6.6).
+class: SheetsFillProposal
+fields:
+  range: String
+  ### Header of the target column, when detected.
+  header: String?
+  ### Number of example (already filled) cells used.
+  examples: int
+  rows: List<SheetsFillRow>
+  ### More empty cells exist than were processed (2,000 per run).
+  truncated: bool, default=false

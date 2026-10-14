@@ -1,0 +1,516 @@
+{
+ "w": 600,
+ "h": 371,
+ "bg": "#FFFFFFFF",
+ "plot": [
+  37.34,
+  23.02,
+  538.66,
+  311.94
+ ],
+ "p": [
+  {
+   "t": "rect",
+   "r": [
+    0,
+    0,
+    600,
+    371
+   ],
+   "fill": "#FFFFFFFF",
+   "tag": {
+    "role": "background"
+   }
+  },
+  {
+   "t": "path",
+   "cmds": [
+    [
+     "M",
+     37.34,
+     334.96
+    ],
+    [
+     "L",
+     576,
+     334.96
+    ],
+    [
+     "M",
+     37.34,
+     272.57
+    ],
+    [
+     "L",
+     576,
+     272.57
+    ],
+    [
+     "M",
+     37.34,
+     210.18
+    ],
+    [
+     "L",
+     576,
+     210.18
+    ],
+    [
+     "M",
+     37.34,
+     147.8
+    ],
+    [
+     "L",
+     576,
+     147.8
+    ],
+    [
+     "M",
+     37.34,
+     85.41
+    ],
+    [
+     "L",
+     576,
+     85.41
+    ],
+    [
+     "M",
+     37.34,
+     23.02
+    ],
+    [
+     "L",
+     576,
+     23.02
+    ]
+   ],
+   "stroke": {
+    "color": "#FFE0E0E0",
+    "width": 1
+   },
+   "tag": {
+    "role": "gridline",
+    "detail": "v"
+   }
+  },
+  {
+   "t": "path",
+   "cmds": [
+    [
+     "M",
+     37.34,
+     23.02
+    ],
+    [
+     "L",
+     37.34,
+     334.96
+    ],
+    [
+     "M",
+     145.08,
+     23.02
+    ],
+    [
+     "L",
+     145.08,
+     334.96
+    ],
+    [
+     "M",
+     252.81,
+     23.02
+    ],
+    [
+     "L",
+     252.81,
+     334.96
+    ],
+    [
+     "M",
+     360.54,
+     23.02
+    ],
+    [
+     "L",
+     360.54,
+     334.96
+    ],
+    [
+     "M",
+     468.27,
+     23.02
+    ],
+    [
+     "L",
+     468.27,
+     334.96
+    ],
+    [
+     "M",
+     576,
+     23.02
+    ],
+    [
+     "L",
+     576,
+     334.96
+    ]
+   ],
+   "stroke": {
+    "color": "#FFE0E0E0",
+    "width": 1
+   },
+   "tag": {
+    "role": "gridline",
+    "detail": "h"
+   }
+  },
+  {
+   "t": "clip",
+   "r": [
+    36.34,
+    22.02,
+    540.66,
+    313.94
+   ],
+   "children": [
+    {
+     "t": "markers",
+     "xy": [
+      91.21,
+      297.53,
+      145.08,
+      272.57,
+      198.94,
+      247.62,
+      252.81,
+      222.66,
+      306.67,
+      197.71,
+      360.54,
+      172.75,
+      414.4,
+      147.8,
+      468.27,
+      122.84,
+      522.13,
+      97.89,
+      576,
+      72.93
+     ],
+     "shape": "circle",
+     "size": 7,
+     "fill": "#FF4285F4",
+     "indices": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9
+     ],
+     "tag": {
+      "role": "point",
+      "series": "00000000-0000-4000-8000-000000000014"
+     }
+    }
+   ],
+   "tag": {
+    "role": "plotArea"
+   }
+  },
+  {
+   "t": "polyline",
+   "xy": [
+    37.34,
+    334.96,
+    576,
+    334.96
+   ],
+   "stroke": {
+    "color": "#FF9AA0A6",
+    "width": 1
+   },
+   "tag": {
+    "role": "axisLine",
+    "detail": "h"
+   }
+  },
+  {
+   "t": "text",
+   "text": "0",
+   "at": [
+    37.34,
+    340.96
+   ],
+   "style": {
+    "family": "Inter",
+    "size": 12,
+    "color": "#FF5F6368"
+   },
+   "anchor": "topCenter",
+   "w": 6.67,
+   "h": 14.04,
+   "tag": {
+    "role": "axisLabel",
+    "point": 0,
+    "detail": "h"
+   }
+  },
+  {
+   "t": "text",
+   "text": "2",
+   "at": [
+    145.08,
+    340.96
+   ],
+   "style": {
+    "family": "Inter",
+    "size": 12,
+    "color": "#FF5F6368"
+   },
+   "anchor": "topCenter",
+   "w": 6.67,
+   "h": 14.04,
+   "tag": {
+    "role": "axisLabel",
+    "point": 1,
+    "detail": "h"
+   }
+  },
+  {
+   "t": "text",
+   "text": "4",
+   "at": [
+    252.81,
+    340.96
+   ],
+   "style": {
+    "family": "Inter",
+    "size": 12,
+    "color": "#FF5F6368"
+   },
+   "anchor": "topCenter",
+   "w": 6.67,
+   "h": 14.04,
+   "tag": {
+    "role": "axisLabel",
+    "point": 2,
+    "detail": "h"
+   }
+  },
+  {
+   "t": "text",
+   "text": "6",
+   "at": [
+    360.54,
+    340.96
+   ],
+   "style": {
+    "family": "Inter",
+    "size": 12,
+    "color": "#FF5F6368"
+   },
+   "anchor": "topCenter",
+   "w": 6.67,
+   "h": 14.04,
+   "tag": {
+    "role": "axisLabel",
+    "point": 3,
+    "detail": "h"
+   }
+  },
+  {
+   "t": "text",
+   "text": "8",
+   "at": [
+    468.27,
+    340.96
+   ],
+   "style": {
+    "family": "Inter",
+    "size": 12,
+    "color": "#FF5F6368"
+   },
+   "anchor": "topCenter",
+   "w": 6.67,
+   "h": 14.04,
+   "tag": {
+    "role": "axisLabel",
+    "point": 4,
+    "detail": "h"
+   }
+  },
+  {
+   "t": "text",
+   "text": "10",
+   "at": [
+    576,
+    340.96
+   ],
+   "style": {
+    "family": "Inter",
+    "size": 12,
+    "color": "#FF5F6368"
+   },
+   "anchor": "topCenter",
+   "w": 13.34,
+   "h": 14.04,
+   "tag": {
+    "role": "axisLabel",
+    "point": 5,
+    "detail": "h"
+   }
+  },
+  {
+   "t": "polyline",
+   "xy": [
+    37.34,
+    23.02,
+    37.34,
+    334.96
+   ],
+   "stroke": {
+    "color": "#FF9AA0A6",
+    "width": 1
+   },
+   "tag": {
+    "role": "axisLine",
+    "detail": "v"
+   }
+  },
+  {
+   "t": "text",
+   "text": "0",
+   "at": [
+    29.34,
+    334.96
+   ],
+   "style": {
+    "family": "Inter",
+    "size": 12,
+    "color": "#FF5F6368"
+   },
+   "anchor": "middleRight",
+   "w": 6.67,
+   "h": 14.04,
+   "tag": {
+    "role": "axisLabel",
+    "point": 0,
+    "detail": "v"
+   }
+  },
+  {
+   "t": "text",
+   "text": "5",
+   "at": [
+    29.34,
+    272.57
+   ],
+   "style": {
+    "family": "Inter",
+    "size": 12,
+    "color": "#FF5F6368"
+   },
+   "anchor": "middleRight",
+   "w": 6.67,
+   "h": 14.04,
+   "tag": {
+    "role": "axisLabel",
+    "point": 1,
+    "detail": "v"
+   }
+  },
+  {
+   "t": "text",
+   "text": "10",
+   "at": [
+    29.34,
+    210.18
+   ],
+   "style": {
+    "family": "Inter",
+    "size": 12,
+    "color": "#FF5F6368"
+   },
+   "anchor": "middleRight",
+   "w": 13.34,
+   "h": 14.04,
+   "tag": {
+    "role": "axisLabel",
+    "point": 2,
+    "detail": "v"
+   }
+  },
+  {
+   "t": "text",
+   "text": "15",
+   "at": [
+    29.34,
+    147.8
+   ],
+   "style": {
+    "family": "Inter",
+    "size": 12,
+    "color": "#FF5F6368"
+   },
+   "anchor": "middleRight",
+   "w": 13.34,
+   "h": 14.04,
+   "tag": {
+    "role": "axisLabel",
+    "point": 3,
+    "detail": "v"
+   }
+  },
+  {
+   "t": "text",
+   "text": "20",
+   "at": [
+    29.34,
+    85.41
+   ],
+   "style": {
+    "family": "Inter",
+    "size": 12,
+    "color": "#FF5F6368"
+   },
+   "anchor": "middleRight",
+   "w": 13.34,
+   "h": 14.04,
+   "tag": {
+    "role": "axisLabel",
+    "point": 4,
+    "detail": "v"
+   }
+  },
+  {
+   "t": "text",
+   "text": "25",
+   "at": [
+    29.34,
+    23.02
+   ],
+   "style": {
+    "family": "Inter",
+    "size": 12,
+    "color": "#FF5F6368"
+   },
+   "anchor": "middleRight",
+   "w": 13.34,
+   "h": 14.04,
+   "tag": {
+    "role": "axisLabel",
+    "point": 5,
+    "detail": "v"
+   }
+  }
+ ]
+}

@@ -257,7 +257,10 @@ final class ProtectionGuard {
     final hits = <ProtectionHit>[];
     var blocked = false;
     void hit(_Prot p, GridRect? rect) {
-      final editable = canEdit(p.record, userId, isOwner: isOwner);
+      // Warning-only protections warn everyone, the owner and the creator
+      // included (07 §10.1): they guard against accidental edits.
+      final editable =
+          !p.record.warningOnly && canEdit(p.record, userId, isOwner: isOwner);
       if (editable) return;
       hits.add(
         ProtectionHit(p.record.id, rect, warningOnly: p.record.warningOnly),

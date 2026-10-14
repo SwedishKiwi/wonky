@@ -22,6 +22,8 @@ import 'src/web/routes/invite_route.dart';
 import 'src/web/routes/root_redirect_route.dart';
 import 'src/write/themes/theme_service.dart';
 import 'src/write/versions/write_version_provider.dart';
+import 'src/sheets/changelog/change_log_consumer.dart';
+import 'src/sheets/scripts/script_triggers.dart';
 
 /// The starting point of the Wonky Work server.
 void run(List<String> args) async {
@@ -36,6 +38,7 @@ void run(List<String> args) async {
   );
 
   registerVersionProviders();
+  registerScriptHooks();
   _configureWebServer(pod);
 
   // Cloud storage for uploads, exports and snapshots. Works with Serverpod
@@ -73,6 +76,14 @@ void run(List<String> args) async {
     await session.close();
   }
   await scheduleMaintenanceJobs(pod);
+}
+
+/// Sheets scripts: compile-after-sync and installable triggers run from
+/// change-log processing (Sheets 09 §8.7.3, §9.1).
+void registerScriptHooks() {
+  if (!ChangeLogConsumer.plugins.any((p) => p is ScriptChangeLogPlugin)) {
+    ChangeLogConsumer.plugins.add(ScriptChangeLogPlugin());
+  }
 }
 
 /// Registers the per-app version providers (specs/07 §5).
@@ -153,6 +164,9 @@ final _jobs = <String, (String, Future<void> Function(dynamic recurring))>{
   'wonky.sendDigests': ('*/15 * * * *', (r) => r.maintenance.sendDigests()),
   'wonky.cleanupFiles': ('7 * * * *', (r) => r.maintenance.cleanupFiles()),
   'wonky.daily': ('17 3 * * *', (r) => r.maintenance.daily()),
+  // Sheets scripts (Sheets 09 §8.7.3, §13.1).
+  'wonky.scriptsTick': ('* * * * *', (r) => r.scriptScheduler.tick()),
+  'wonky.scriptsPrune': ('37 3 * * *', (r) => r.scriptScheduler.prune()),
 };
 
 /// Brings the scheduled recurring jobs in line with [_jobs] (see

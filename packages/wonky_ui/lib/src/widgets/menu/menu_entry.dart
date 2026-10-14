@@ -25,10 +25,15 @@ class WonkyMenuItem extends WonkyMenuEntry {
     this.onSelected,
     this.destructive = false,
     this.semanticLabel,
+    this.trailing,
   });
 
   final String label;
   final IconData? icon;
+
+  /// A small widget shown at the end instead of a shortcut (e.g. a font
+  /// preview "Aa").
+  final Widget? trailing;
 
   /// A 16 px widget shown instead of [icon] (e.g. a product icon).
   final Widget? leading;
@@ -71,6 +76,7 @@ class WonkyMenuRadioItem extends WonkyMenuItem {
     super.disabledReason,
     super.onSelected,
     super.semanticLabel,
+    super.trailing,
   });
 
   final bool selected;

@@ -29,6 +29,9 @@ abstract class AssistantEvent
     this.rangeStart,
     this.rangeLength,
     this.revision,
+    this.range,
+    this.objectId,
+    this.previewId,
     this.confirmationId,
     this.error,
     this.errorCode,
@@ -51,6 +54,9 @@ abstract class AssistantEvent
     int? rangeStart,
     int? rangeLength,
     int? revision,
+    String? range,
+    String? objectId,
+    String? previewId,
     String? confirmationId,
     String? error,
     String? errorCode,
@@ -78,6 +84,9 @@ abstract class AssistantEvent
       rangeStart: jsonSerialization['rangeStart'] as int?,
       rangeLength: jsonSerialization['rangeLength'] as int?,
       revision: jsonSerialization['revision'] as int?,
+      range: jsonSerialization['range'] as String?,
+      objectId: jsonSerialization['objectId'] as String?,
+      previewId: jsonSerialization['previewId'] as String?,
       confirmationId: jsonSerialization['confirmationId'] as String?,
       error: jsonSerialization['error'] as String?,
       errorCode: jsonSerialization['errorCode'] as String?,
@@ -117,6 +126,14 @@ abstract class AssistantEvent
 
   int? revision;
 
+  /// Sheets: the A1 range a tool wrote or read (Show), the chart/pivot it
+  /// created, and on done the AI changes preview (Suggest mode).
+  String? range;
+
+  String? objectId;
+
+  String? previewId;
+
   String? confirmationId;
 
   String? error;
@@ -147,6 +164,9 @@ abstract class AssistantEvent
     int? rangeStart,
     int? rangeLength,
     int? revision,
+    String? range,
+    String? objectId,
+    String? previewId,
     String? confirmationId,
     String? error,
     String? errorCode,
@@ -171,6 +191,9 @@ abstract class AssistantEvent
       if (rangeStart != null) 'rangeStart': rangeStart,
       if (rangeLength != null) 'rangeLength': rangeLength,
       if (revision != null) 'revision': revision,
+      if (range != null) 'range': range,
+      if (objectId != null) 'objectId': objectId,
+      if (previewId != null) 'previewId': previewId,
       if (confirmationId != null) 'confirmationId': confirmationId,
       if (error != null) 'error': error,
       if (errorCode != null) 'errorCode': errorCode,
@@ -197,6 +220,9 @@ abstract class AssistantEvent
       if (rangeStart != null) 'rangeStart': rangeStart,
       if (rangeLength != null) 'rangeLength': rangeLength,
       if (revision != null) 'revision': revision,
+      if (range != null) 'range': range,
+      if (objectId != null) 'objectId': objectId,
+      if (previewId != null) 'previewId': previewId,
       if (confirmationId != null) 'confirmationId': confirmationId,
       if (error != null) 'error': error,
       if (errorCode != null) 'errorCode': errorCode,
@@ -229,6 +255,9 @@ class _AssistantEventImpl extends AssistantEvent {
     int? rangeStart,
     int? rangeLength,
     int? revision,
+    String? range,
+    String? objectId,
+    String? previewId,
     String? confirmationId,
     String? error,
     String? errorCode,
@@ -249,6 +278,9 @@ class _AssistantEventImpl extends AssistantEvent {
          rangeStart: rangeStart,
          rangeLength: rangeLength,
          revision: revision,
+         range: range,
+         objectId: objectId,
+         previewId: previewId,
          confirmationId: confirmationId,
          error: error,
          errorCode: errorCode,
@@ -275,6 +307,9 @@ class _AssistantEventImpl extends AssistantEvent {
     Object? rangeStart = _Undefined,
     Object? rangeLength = _Undefined,
     Object? revision = _Undefined,
+    Object? range = _Undefined,
+    Object? objectId = _Undefined,
+    Object? previewId = _Undefined,
     Object? confirmationId = _Undefined,
     Object? error = _Undefined,
     Object? errorCode = _Undefined,
@@ -296,6 +331,9 @@ class _AssistantEventImpl extends AssistantEvent {
       rangeStart: rangeStart is int? ? rangeStart : this.rangeStart,
       rangeLength: rangeLength is int? ? rangeLength : this.rangeLength,
       revision: revision is int? ? revision : this.revision,
+      range: range is String? ? range : this.range,
+      objectId: objectId is String? ? objectId : this.objectId,
+      previewId: previewId is String? ? previewId : this.previewId,
       confirmationId: confirmationId is String?
           ? confirmationId
           : this.confirmationId,

@@ -130,6 +130,10 @@ same item (not persisted, not echoed to the sender).
 { "t": "typing", "sheetId": "…", "rowId": "…", "colId": "…", "text": "Hel" }
 ```
 
+Implementation note: cell and range hints also carry `"v"` — the sender's locally computed value of
+a formula cell in content form (`"n:42"`); receivers show `v` (formulas are not re-evaluated on the
+receiver). Commits made in the same event-loop turn are sent as one `range` hint.
+
 Limits: max 500 cells per message, max 20 hint messages/s per session, max 64 KB per message.
 Larger operations send only a `pending` hint for the bounding range. The server drops hints
 from participants whose role is below Editor.
@@ -358,6 +362,12 @@ Right panel: suite version list; each Sheets version also shows a size and sheet
    restored a previous version" (presence `system` event).
 5. Excluded from restore: `script_trigger`, `script_build`, `change_log`. The current
    spreadsheet title is restored too (mirrored to Drive).
+Implementation note: the restore is written with `SheetsBulkWriter` (one batched writer, same
+`ServerChangeRecord` format); its `ChangeLog` summary lists deleted/revived rows/columns/sheets (comment
+orphaning) and up to 200 cell details (cell history), and the server broadcasts a presence notice
+`versionRestored` that shows the toast. The client records the undo entry through
+`VersionRenderer.restoreUndoEntry` (suite hook) on `shell.versions.restore`.
+
 6. **Undo**: the restore's response contains `changeId`. The client pushes an `UndoStep`
    labelled "Restore version" with one entry in the new undo domain **`sheets.serverChange`**
    (Additions A-10-5): undo calls `SheetsEndpoint.revertChange(changeId)` (server applies the

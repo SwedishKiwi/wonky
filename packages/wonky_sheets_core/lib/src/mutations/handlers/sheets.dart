@@ -132,7 +132,10 @@ String insertSheet(
 
 /// [CreateSpreadsheet].
 MutationPlan planCreateSpreadsheet(PlanBuilder b, CreateSpreadsheet op) {
-  final theme = SpreadsheetTheme.standard;
+  final font = op.fontFamily?.trim();
+  final theme = font == null || font.isEmpty
+      ? SpreadsheetTheme.standard
+      : SpreadsheetTheme.standard.copyWith(textFont: font);
   b.insert(SheetsTables.spreadsheet, op.spreadsheetId, {
     SpreadsheetCols.title: op.title,
     SpreadsheetCols.locale: op.locale,
@@ -142,7 +145,7 @@ MutationPlan planCreateSpreadsheet(PlanBuilder b, CreateSpreadsheet op) {
     SpreadsheetCols.maxIterations: 50,
     SpreadsheetCols.convergenceThreshold: 0.05,
     SpreadsheetCols.defaultFontFamily: theme.textFont,
-    SpreadsheetCols.defaultFontSize: 10.0,
+    SpreadsheetCols.defaultFontSize: op.fontSize ?? 10.0,
     SpreadsheetCols.themeJson: theme.toJson(),
     Cols.createdBy: b.ctx.userId,
   });

@@ -98,7 +98,17 @@ abstract final class PrintDateTime {
       intl_data.initializeDateFormatting();
       _intlReady = true;
     }
-    final loc = DateFormat.localeExists(locale) ? locale : 'en_US';
-    return (DateFormat.yMd(loc).format(wall), DateFormat.jm(loc).format(wall));
+    final loc = Intl.verifiedLocale(
+      locale.replaceAll('-', '_'),
+      DateFormat.localeExists,
+      onFailure: (_) => 'en_US',
+    )!;
+    // CLDR uses (narrow) no-break spaces before AM/PM; PDF base fonts and
+    // plain-text consumers expect ordinary spaces.
+    String plain(String s) => s.replaceAll(RegExp('[\u00A0\u202F]'), ' ');
+    return (
+      plain(DateFormat.yMd(loc).format(wall)),
+      plain(DateFormat.jm(loc).format(wall)),
+    );
   }
 }

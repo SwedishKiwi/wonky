@@ -270,7 +270,6 @@ abstract final class HistogramBuckets {
     List<ChartSeries> series, {
     double? bucketSize,
     double outlierPercentile = 0,
-    bool collectItems = false,
   }) {
     final all = <double>[
       for (final s in series)
@@ -303,27 +302,22 @@ abstract final class HistogramBuckets {
     if (count < 1) count = 1;
     if (count > 10000) count = 10000;
     final counts = <Int32List>[];
-    final items = collectItems ? <List<List<double>>>[] : null;
     for (final s in series) {
       final c = Int32List(count);
-      final it = collectItems ? List.generate(count, (_) => <double>[]) : null;
       for (final v in s.values) {
         if (!v.isFinite) continue;
         var i = ((v - start) / h).floor();
         if (i < 0) i = 0;
         if (i >= count) i = count - 1;
         c[i]++;
-        it?[i].add(v);
       }
       counts.add(c);
-      items?.add(it!);
     }
     return HistogramData(
       start: start,
       bucketSize: h,
       counts: counts,
       seriesKeys: [for (final s in series) s.key],
-      items: items,
     );
   }
 

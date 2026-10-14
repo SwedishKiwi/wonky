@@ -7,6 +7,8 @@ import 'package:wonky_core/wonky_core.dart'
 import 'package:wonky_write_core/wonky_write_core.dart' as core;
 
 import '../config/wonky_config.dart';
+import '../../sheets/exports/sheets_export_service.dart';
+import '../../sheets/imports/sheets_import_service.dart';
 import '../../write/export/write_export_service.dart';
 import '../../write/export/write_import_service.dart';
 import '../../write/mcp/headless_editor.dart';
@@ -411,6 +413,33 @@ abstract final class DriveToolHandlers {
   static Future<ToolResult> export(ToolContext ctx, ToolArgs a) async {
     final uuid = a.requireUuid('uuid');
     final format = a.requireString('format');
+    final kindItem = await DriveService.get(ctx.session, ctx.actor, uuid);
+    if (kindItem.kind == DriveItemKind.spreadsheet) {
+      final r = await SheetsExportService.export(
+        ctx.session,
+        ctx.actor,
+        uuid,
+        format,
+        sheetName: a.string('sheet'),
+        range: a.string('range'),
+      );
+      final inline = r.inlineText;
+      return ToolResult(
+        {
+          'format': format,
+          'file_name': r.fileName,
+          'mime_type': r.mimeType,
+          'size_bytes': r.sizeBytes,
+          'page_count': ?r.pageCount,
+          'content': ?inline,
+          'download_url': r.downloadUrl,
+          'expires_at': r.expiresAt.toIso8601String(),
+          'warnings': [for (final w in r.warnings) w.toJson()],
+        },
+        text:
+            inline ?? 'Download: ${r.downloadUrl} (valid until ${r.expiresAt})',
+      );
+    }
     final target = await HeadlessDocumentEditor.resolve(
       ctx.session,
       ctx.actor,
@@ -471,15 +500,66 @@ abstract final class DriveToolHandlers {
     );
   }
 
-  static Future<ToolResult> import(ToolContext ctx, ToolArgs a) async {
-    final kind = a.requireString('kind');
-    if (kind != 'document') {
+  /// `drive.import` with kind spreadsheet (Sheets 11 §9): the server
+  /// import pipeline ([SheetsImportService]).
+  static Future<ToolResult> _importSpreadsheet(
+    ToolContext ctx,
+    ToolArgs a,
+    String format,
+  ) async {
+    if (!SheetsImportService.formats.contains(format)) {
       throw McpToolException(
         McpErrorCode.unsupported,
-        'Only documents can be imported (Wonky Sheets is not available yet).',
+        'Spreadsheets can be imported from '
+        '${SheetsImportService.formats.join(', ')}.',
       );
     }
+    final Uint8List bytes;
+    if (a.has('content_base64')) {
+      try {
+        bytes = base64Decode(a.string('content_base64')!);
+      } on FormatException {
+        throw McpToolException(McpErrorCode.invalidArgs, 'Invalid base64.');
+      }
+    } else if (a.has('text')) {
+      bytes = Uint8List.fromList(utf8.encode(a.string('text')!));
+    } else {
+      throw McpToolException(
+        McpErrorCode.invalidArgs,
+        'Pass text or content_base64.',
+      );
+    }
+    final raw = a.values['options'];
+    final name = a.requireString('name');
+    final report = await SheetsImportService.importNew(
+      ctx.session,
+      ctx.actor,
+      bytes,
+      fileName: '$name.$format',
+      format: format,
+      options: SheetsImportService.optionsOf(
+        raw is Map ? jsonEncode(raw) : null,
+      ),
+      name: name,
+      parentUuid: a.uuid('parent_uuid'),
+    );
+    final view = report.item;
+    return ToolResult({
+      'item': itemJson(view),
+      'warnings': [for (final w in report.warnings) w.toJson()],
+    }, text: 'Imported "${view.name}" (${view.uuid.uuid})');
+  }
+
+  static Future<ToolResult> import(ToolContext ctx, ToolArgs a) async {
+    final kind = a.requireString('kind');
     final format = a.requireString('format').toLowerCase().replaceAll('.', '');
+    if (kind == 'spreadsheet') return _importSpreadsheet(ctx, a, format);
+    if (kind != 'document') {
+      throw McpToolException(
+        McpErrorCode.invalidArgs,
+        'kind must be document or spreadsheet.',
+      );
+    }
     if (!WriteImportService.formats.contains(format)) {
       throw McpToolException(
         McpErrorCode.unsupported,

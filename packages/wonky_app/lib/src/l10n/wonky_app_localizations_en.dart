@@ -2460,6 +2460,10 @@ class WonkyAppLocalizationsEn extends WonkyAppLocalizations {
 
   @override
   String get exportFormatText => 'Plain text (.txt)';
+
+  @override
+  String get badgePendingCreate =>
+      'Created offline. It is added to your Drive when you\'re back online.';
 }
 
 /// The translations for English (`en_XA`).
@@ -4957,4 +4961,8 @@ class WonkyAppLocalizationsEnXa extends WonkyAppLocalizationsEn {
 
   @override
   String get exportFormatText => '[Þļåîñ ţéẋţ (.ţẋţ) one tw]';
+
+  @override
+  String get badgePendingCreate =>
+      '[Çŕéåţéð öƒƒļîñé. Îţ îš åððéð ţö ýöûŕ Ðŕîṽé ŵĥéñ ýöû\'ŕé ƀåçķ öñļîñé. one two three four f]';
 }

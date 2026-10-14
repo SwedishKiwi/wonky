@@ -2,6 +2,7 @@ import 'package:xml/xml.dart';
 
 import '../numfmt/excel_number_formats.dart';
 import '../xlsx/ooxml.dart';
+import 'ods_styles.dart' show OdsXml;
 
 /// Namespace of Wonky's foreign ODF attributes (ignored by other readers).
 const kWonkyOdfNamespace = 'urn:wonky:sheets:odf';
@@ -24,6 +25,7 @@ abstract final class OdsNumberStyles {
     final kind = style.localName;
     if (kind == 'boolean-style') return null;
     if (kind == 'text-style') return '@';
+    if (kind == 'number-style' && _isGeneral(style)) return null;
     final sections = <String>[];
     if (depth < 4) {
       for (final m in style.elems('map')) {
@@ -60,7 +62,13 @@ abstract final class OdsNumberStyles {
           b.write(_literal(e.innerText, percent: kind == 'percentage-style'));
         case 'currency-symbol':
           final sym = e.innerText;
-          b.write(sym.isEmpty ? '' : '[\$$sym]');
+          b.write(
+            sym.isEmpty
+                ? ''
+                : sym == r'$'
+                ? '"\$"'
+                : '[\$$sym]',
+          );
         case 'day':
           b.write(long ? 'dd' : 'd');
         case 'month':
@@ -102,19 +110,34 @@ abstract final class OdsNumberStyles {
     '#FFFFFF': 'White',
   };
 
+  /// LibreOffice's "General" (`N0`): a single `number:number` without
+  /// decimal places or grouping.
+  static bool _isGeneral(XmlElement style) {
+    final parts = [
+      for (final c in style.childElements)
+        if (c.localName != 'text-properties' && c.localName != 'map') c,
+    ];
+    if (parts.length != 1 || parts.single.localName != 'number') return false;
+    final n = parts.single;
+    return n.attr('decimal-places') == null &&
+        n.attr('min-decimal-places') == null &&
+        !(n.boolAttr('grouping') ?? false) &&
+        style.elems('map').isEmpty;
+  }
+
   static String _number(XmlElement e) {
     final dp = e.intAttr('decimal-places') ?? 0;
-    final minDp = e.intAttr('min-decimal-places') ?? dp;
+    final minDp = (e.intAttr('min-decimal-places') ?? dp).clamp(0, dp);
     final ip = e.intAttr('min-integer-digits') ?? 1;
     final grouping = e.boolAttr('grouping') ?? false;
-    var integer = '0' * ip;
+    String integer;
     if (grouping) {
       integer = ip >= 4
-          ? integer
-          : '#,${'#' * (3 - ip)}$integer'.replaceFirst('#,', '#,');
+          ? '${'0' * (ip - 3)},000'
+          : '#,${'#' * (3 - ip)}${'0' * ip}';
+    } else {
+      integer = ip <= 0 ? '#' : '0' * ip;
     }
-    if (grouping && ip < 4) integer = '#,${'#' * (3 - ip)}${'0' * ip}';
-    if (integer.isEmpty) integer = '#';
     final dec = dp > 0 ? '.${'0' * minDp}${'#' * (dp - minDp)}' : '';
     return '$integer$dec';
   }
@@ -208,7 +231,7 @@ abstract final class OdsNumberStyles {
         : 'number-style';
     final attrs = StringBuffer('style:name="$name"');
     if (fullPattern != null) {
-      attrs.write(' wonky:pattern="${Ooxml.attr(fullPattern)}"');
+      attrs.write(' wonky:pattern="${OdsXml.attr(fullPattern)}"');
     }
     if (kind == 'time-style' && s.contains('[h')) {
       attrs.write(' number:truncate-on-overflow="false"');
@@ -233,17 +256,25 @@ abstract final class OdsNumberStyles {
     );
     for (final (cond, target) in maps) {
       body.write(
-        '<style:map style:condition="${Ooxml.attr(cond)}" style:apply-style-name="$target"/>',
+        '<style:map style:condition="${OdsXml.attr(cond)}" style:apply-style-name="$target"/>',
       );
     }
     return '<number:$kind $attrs>$body</number:$kind>';
   }
 
+  /// [s] without literals and bracket codes (elapsed `[h]`, `[m]`, `[s]`
+  /// are kept as their letters).
   static String _unquoted(String s) =>
-      s.replaceAll(RegExp(r'"[^"]*"|\\.|\[[^\]]*\]'), '');
+      s.replaceAllMapped(RegExp(r'"[^"]*"|\\.|\[([^\]]*)\]'), (m) {
+        final inner = m.group(1);
+        if (inner != null && RegExp(r'^([hH]+|[mM]+|[sS]+)$').hasMatch(inner)) {
+          return inner;
+        }
+        return '';
+      });
 
   static String _text(String t) =>
-      t.isEmpty ? '' : '<number:text>${Ooxml.esc(t)}</number:text>';
+      t.isEmpty ? '' : '<number:text>${OdsXml.esc(t)}</number:text>';
 
   static String _numberElements(String s, String kind) {
     final out = StringBuffer();
@@ -263,7 +294,7 @@ abstract final class OdsNumberStyles {
         if (kind == 'currency-style' && RegExp(r'^[$€£¥]$').hasMatch(t)) {
           flushLit();
           out.write(
-            '<number:currency-symbol>${Ooxml.esc(t)}</number:currency-symbol>',
+            '<number:currency-symbol>${OdsXml.esc(t)}</number:currency-symbol>',
           );
         } else {
           lit.write(t);
@@ -289,7 +320,7 @@ abstract final class OdsNumberStyles {
           final sym = dash < 0 ? inner.substring(1) : inner.substring(1, dash);
           flushLit();
           out.write(
-            '<number:currency-symbol>${Ooxml.esc(sym)}</number:currency-symbol>',
+            '<number:currency-symbol>${OdsXml.esc(sym)}</number:currency-symbol>',
           );
         }
         i = end < 0 ? s.length : end + 1;

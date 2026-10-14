@@ -37,6 +37,10 @@ import 'package:wonky_server/src/generated/platform/users/user_summary.dart'
     as _i8uuoam6;
 import 'package:wonky_server/src/generated/platform/versions/item_version_view.dart'
     as _ir2w0lzm;
+import 'package:wonky_server/src/generated/sheets/ai/models/sheets_fill_row.dart'
+    as _isuyxaqz;
+import 'package:wonky_server/src/generated/sheets/scripts/models/script_execution.dart'
+    as _isf59hoo;
 import 'package:wonky_server/src/generated/write/models/document_op_view.dart'
     as _icjb0pei;
 import 'package:wonky_server/src/generated/write/models/write_theme_revision_view.dart'
@@ -164,22 +168,44 @@ import 'platform/versions/item_version_view.dart' as _ipbapjbz;
 import 'platform/versions/version_kind.dart' as _in0fdl1f;
 import 'platform/versions/version_restore_result.dart' as _in38zbga;
 import 'platform/versions/version_storage.dart' as _i5u6d6t4;
+import 'sheets/ai/models/sheets_ai_apply_result.dart' as _iuzj1jin;
+import 'sheets/ai/models/sheets_ai_preview.dart' as _i4t3jyqe;
+import 'sheets/ai/models/sheets_ai_preview_call.dart' as _idzstekp;
+import 'sheets/ai/models/sheets_ai_preview_cell.dart' as _i49726iv;
+import 'sheets/ai/models/sheets_fill_proposal.dart' as _izbpavhd;
+import 'sheets/ai/models/sheets_fill_row.dart' as _i1gi0ui2;
+import 'sheets/ai/models/sheets_formula_suggestion.dart' as _i2bhah0l;
 import 'sheets/models/cell_history.dart' as _ik5lpvx4;
 import 'sheets/models/cell_history_entry.dart' as _ij1xvs09;
 import 'sheets/models/cell_history_page.dart' as _i09xo3k8;
+import 'sheets/models/reserved_space.dart' as _i4tr28q5;
 import 'sheets/models/revert_result.dart' as _ilv3hlxr;
 import 'sheets/models/revert_skip.dart' as _ipqum05l;
 import 'sheets/models/server_change_record.dart' as _it4o4dd3;
 import 'sheets/models/sheets_activity_summary.dart' as _iaehez21;
 import 'sheets/models/sheets_change_log_receipt.dart' as _i5z6gq3n;
 import 'sheets/models/sheets_contributor_stat.dart' as _i9yjzgjk;
+import 'sheets/models/sheets_dirty_space.dart' as _ign37bwd;
+import 'sheets/models/sheets_journal_space.dart' as _i6vovdef;
 import 'sheets/models/sheets_merged_signal.dart' as _izigafhu;
+import 'sheets/models/sheets_row_journal.dart' as _i09o85d1;
 import 'sheets/models/sheets_snapshot_index.dart' as _iwl8v9t3;
 import 'sheets/models/space_reservation.dart' as _i9g7m0kd;
 import 'sheets/models/space_stats.dart' as _izbczo40;
 import 'sheets/models/space_subscription.dart' as _i1qxq8ae;
 import 'sheets/models/subscribe_result.dart' as _i6dq35xo;
 import 'sheets/models/subscription_reason.dart' as _ic8hyldr;
+import 'sheets/scripts/models/script_authorization.dart' as _ibv2hdjr;
+import 'sheets/scripts/models/script_authorization_view.dart' as _icjzxy6x;
+import 'sheets/scripts/models/script_compile_response.dart' as _iq0xpzf7;
+import 'sheets/scripts/models/script_execution.dart' as _i4bc0fek;
+import 'sheets/scripts/models/script_execution_kind.dart' as _inqz9v2t;
+import 'sheets/scripts/models/script_execution_status.dart' as _ira26pfa;
+import 'sheets/scripts/models/script_fetch_response.dart' as _is04pxv8;
+import 'sheets/scripts/models/script_quota_usage.dart' as _itn7c5zm;
+import 'sheets/scripts/models/script_run_response.dart' as _is0mvar3;
+import 'sheets/scripts/models/script_runtime_kind.dart' as _iy0fj18f;
+import 'sheets/scripts/models/script_trigger_state.dart' as _ixysij0q;
 import 'write/mcp/headless_change.dart' as _iilidizm;
 import 'write/messages/doc_bus_message.dart' as _i8zfu67r;
 import 'write/messages/doc_client_message.dart' as _imbts8if;
@@ -327,22 +353,44 @@ export 'platform/versions/item_version_view.dart';
 export 'platform/versions/version_kind.dart';
 export 'platform/versions/version_restore_result.dart';
 export 'platform/versions/version_storage.dart';
+export 'sheets/ai/models/sheets_ai_apply_result.dart';
+export 'sheets/ai/models/sheets_ai_preview.dart';
+export 'sheets/ai/models/sheets_ai_preview_call.dart';
+export 'sheets/ai/models/sheets_ai_preview_cell.dart';
+export 'sheets/ai/models/sheets_fill_proposal.dart';
+export 'sheets/ai/models/sheets_fill_row.dart';
+export 'sheets/ai/models/sheets_formula_suggestion.dart';
 export 'sheets/models/cell_history.dart';
 export 'sheets/models/cell_history_entry.dart';
 export 'sheets/models/cell_history_page.dart';
+export 'sheets/models/reserved_space.dart';
 export 'sheets/models/revert_result.dart';
 export 'sheets/models/revert_skip.dart';
 export 'sheets/models/server_change_record.dart';
 export 'sheets/models/sheets_activity_summary.dart';
 export 'sheets/models/sheets_change_log_receipt.dart';
 export 'sheets/models/sheets_contributor_stat.dart';
+export 'sheets/models/sheets_dirty_space.dart';
+export 'sheets/models/sheets_journal_space.dart';
 export 'sheets/models/sheets_merged_signal.dart';
+export 'sheets/models/sheets_row_journal.dart';
 export 'sheets/models/sheets_snapshot_index.dart';
 export 'sheets/models/space_reservation.dart';
 export 'sheets/models/space_stats.dart';
 export 'sheets/models/space_subscription.dart';
 export 'sheets/models/subscribe_result.dart';
 export 'sheets/models/subscription_reason.dart';
+export 'sheets/scripts/models/script_authorization.dart';
+export 'sheets/scripts/models/script_authorization_view.dart';
+export 'sheets/scripts/models/script_compile_response.dart';
+export 'sheets/scripts/models/script_execution.dart';
+export 'sheets/scripts/models/script_execution_kind.dart';
+export 'sheets/scripts/models/script_execution_status.dart';
+export 'sheets/scripts/models/script_fetch_response.dart';
+export 'sheets/scripts/models/script_quota_usage.dart';
+export 'sheets/scripts/models/script_run_response.dart';
+export 'sheets/scripts/models/script_runtime_kind.dart';
+export 'sheets/scripts/models/script_trigger_state.dart';
 export 'write/mcp/headless_change.dart';
 export 'write/messages/doc_bus_message.dart';
 export 'write/messages/doc_client_message.dart';
@@ -518,22 +566,44 @@ class Protocol extends _is.DatabaseSerializationManager
           _is.getType<_in0fdl1f.VersionKind>,
           _is.getType<_in38zbga.VersionRestoreResult>,
           _is.getType<_i5u6d6t4.VersionStorage>,
+          _is.getType<_iuzj1jin.SheetsAiApplyResult>,
+          _is.getType<_i4t3jyqe.SheetsAiPreview>,
+          _is.getType<_idzstekp.SheetsAiPreviewCall>,
+          _is.getType<_i49726iv.SheetsAiPreviewCell>,
+          _is.getType<_izbpavhd.SheetsFillProposal>,
+          _is.getType<_i1gi0ui2.SheetsFillRow>,
+          _is.getType<_i2bhah0l.SheetsFormulaSuggestion>,
           _is.getType<_ik5lpvx4.CellHistory>,
           _is.getType<_ij1xvs09.CellHistoryEntry>,
           _is.getType<_i09xo3k8.CellHistoryPage>,
+          _is.getType<_i4tr28q5.ReservedSpace>,
           _is.getType<_ilv3hlxr.RevertResult>,
           _is.getType<_ipqum05l.RevertSkip>,
           _is.getType<_it4o4dd3.ServerChangeRecord>,
           _is.getType<_iaehez21.SheetsActivitySummary>,
           _is.getType<_i5z6gq3n.SheetsChangeLogReceipt>,
           _is.getType<_i9yjzgjk.SheetsContributorStat>,
+          _is.getType<_ign37bwd.SheetsDirtySpace>,
+          _is.getType<_i6vovdef.SheetsJournalSpace>,
           _is.getType<_izigafhu.SheetsMergedSignal>,
+          _is.getType<_i09o85d1.SheetsRowJournal>,
           _is.getType<_iwl8v9t3.SheetsSnapshotIndex>,
           _is.getType<_i9g7m0kd.SpaceReservation>,
           _is.getType<_izbczo40.SpaceStats>,
           _is.getType<_i1qxq8ae.SpaceSubscription>,
           _is.getType<_i6dq35xo.SubscribeResult>,
           _is.getType<_ic8hyldr.SubscriptionReason>,
+          _is.getType<_ibv2hdjr.ScriptAuthorization>,
+          _is.getType<_icjzxy6x.ScriptAuthorizationView>,
+          _is.getType<_iq0xpzf7.ScriptCompileResponse>,
+          _is.getType<_i4bc0fek.ScriptExecution>,
+          _is.getType<_inqz9v2t.ScriptExecutionKind>,
+          _is.getType<_ira26pfa.ScriptExecutionStatus>,
+          _is.getType<_is04pxv8.ScriptFetchResponse>,
+          _is.getType<_itn7c5zm.ScriptQuotaUsage>,
+          _is.getType<_is0mvar3.ScriptRunResponse>,
+          _is.getType<_iy0fj18f.ScriptRuntimeKind>,
+          _is.getType<_ixysij0q.ScriptTriggerState>,
           _is.getType<_iilidizm.HeadlessChange>,
           _is.getType<_icpkpcrn.DocAck>,
           _is.getType<_i8zfu67r.DocBusMessage>,
@@ -708,22 +778,44 @@ class Protocol extends _is.DatabaseSerializationManager
           _is.getType<_in0fdl1f.VersionKind?>,
           _is.getType<_in38zbga.VersionRestoreResult?>,
           _is.getType<_i5u6d6t4.VersionStorage?>,
+          _is.getType<_iuzj1jin.SheetsAiApplyResult?>,
+          _is.getType<_i4t3jyqe.SheetsAiPreview?>,
+          _is.getType<_idzstekp.SheetsAiPreviewCall?>,
+          _is.getType<_i49726iv.SheetsAiPreviewCell?>,
+          _is.getType<_izbpavhd.SheetsFillProposal?>,
+          _is.getType<_i1gi0ui2.SheetsFillRow?>,
+          _is.getType<_i2bhah0l.SheetsFormulaSuggestion?>,
           _is.getType<_ik5lpvx4.CellHistory?>,
           _is.getType<_ij1xvs09.CellHistoryEntry?>,
           _is.getType<_i09xo3k8.CellHistoryPage?>,
+          _is.getType<_i4tr28q5.ReservedSpace?>,
           _is.getType<_ilv3hlxr.RevertResult?>,
           _is.getType<_ipqum05l.RevertSkip?>,
           _is.getType<_it4o4dd3.ServerChangeRecord?>,
           _is.getType<_iaehez21.SheetsActivitySummary?>,
           _is.getType<_i5z6gq3n.SheetsChangeLogReceipt?>,
           _is.getType<_i9yjzgjk.SheetsContributorStat?>,
+          _is.getType<_ign37bwd.SheetsDirtySpace?>,
+          _is.getType<_i6vovdef.SheetsJournalSpace?>,
           _is.getType<_izigafhu.SheetsMergedSignal?>,
+          _is.getType<_i09o85d1.SheetsRowJournal?>,
           _is.getType<_iwl8v9t3.SheetsSnapshotIndex?>,
           _is.getType<_i9g7m0kd.SpaceReservation?>,
           _is.getType<_izbczo40.SpaceStats?>,
           _is.getType<_i1qxq8ae.SpaceSubscription?>,
           _is.getType<_i6dq35xo.SubscribeResult?>,
           _is.getType<_ic8hyldr.SubscriptionReason?>,
+          _is.getType<_ibv2hdjr.ScriptAuthorization?>,
+          _is.getType<_icjzxy6x.ScriptAuthorizationView?>,
+          _is.getType<_iq0xpzf7.ScriptCompileResponse?>,
+          _is.getType<_i4bc0fek.ScriptExecution?>,
+          _is.getType<_inqz9v2t.ScriptExecutionKind?>,
+          _is.getType<_ira26pfa.ScriptExecutionStatus?>,
+          _is.getType<_is04pxv8.ScriptFetchResponse?>,
+          _is.getType<_itn7c5zm.ScriptQuotaUsage?>,
+          _is.getType<_is0mvar3.ScriptRunResponse?>,
+          _is.getType<_iy0fj18f.ScriptRuntimeKind?>,
+          _is.getType<_ixysij0q.ScriptTriggerState?>,
           _is.getType<_iilidizm.HeadlessChange?>,
           _is.getType<_icpkpcrn.DocAck?>,
           _is.getType<_i8zfu67r.DocBusMessage?>,
@@ -769,10 +861,11 @@ class Protocol extends _is.DatabaseSerializationManager
           _is.getType<_is9bkd9t.WriteVersionDocument?>,
           _is.getType<List<_ikcwdr17.ActivityViewer>>,
           _is.getType<List<_ighcq381.ActivityTrendPoint>>,
+          _is.getType<List<String>>,
+          _is.getType<List<String>?>,
           _is.getType<List<_i4rkdm2k.AssistantMessageView>>,
           _is.getType<List<_ivmxemza.ProofreadIssue>>,
           _is.getType<List<_ivmxemza.ProofreadIssue>?>,
-          _is.getType<List<String>>,
           _is.getType<List<int>>,
           _is.getType<List<_i4xrxro7.CommentView>>,
           _is.getType<List<_i6y7tspy.UserSummary>>,
@@ -782,10 +875,12 @@ class Protocol extends _is.DatabaseSerializationManager
           _is.getType<List<_infxyf98.DriveItemView>>,
           _is.getType<List<_i48sm9f2.ImportWarningView>>,
           _is.getType<List<_izfzk9h3.NotificationView>>,
-          _is.getType<List<String>?>,
           _is.getType<List<_iylgyc33.Participant>>,
           _is.getType<List<_iead0ok9.PermissionView>>,
           _is.getType<List<_iimp60a4.AccessRequestView>>,
+          _is.getType<List<_idzstekp.SheetsAiPreviewCall>>,
+          _is.getType<List<_i49726iv.SheetsAiPreviewCell>>,
+          _is.getType<List<_i1gi0ui2.SheetsFillRow>>,
           _is.getType<List<_ij1xvs09.CellHistoryEntry>>,
           _is.getType<List<_ipqum05l.RevertSkip>>,
           _is.getType<Map<String, Map<int, int>>>,
@@ -809,6 +904,9 @@ class Protocol extends _is.DatabaseSerializationManager
           _is.getType<List<_ioyb7a1p.AccessTokenView>>,
           _is.getType<List<_i8uuoam6.UserSummary>>,
           _is.getType<List<_ir2w0lzm.ItemVersionView>>,
+          _is.getType<List<_isuyxaqz.SheetsFillRow>>,
+          _is.getType<List<String>?>,
+          _is.getType<List<_isf59hoo.ScriptExecution>>,
           _is.getType<List<_icjb0pei.DocumentOpView>>,
           _is.getType<List<_ipbzt39t.WriteThemeView>>,
           _is.getType<List<_iu3gmhy1.WriteThemeRevisionView>>,
@@ -3745,6 +3843,448 @@ class Protocol extends _is.DatabaseSerializationManager
       managed: true,
     ),
     _isp.TableDefinition(
+      name: 'script_authorization',
+      dartName: 'ScriptAuthorization',
+      schema: 'public',
+      module: 'wonky',
+      columns: [
+        _isp.ColumnDefinition(
+          name: 'id',
+          columnType: _isp.ColumnType.bigint,
+          isNullable: false,
+          dartType: 'int?',
+          columnDefault: 'serial',
+        ),
+        _isp.ColumnDefinition(
+          name: 'userId',
+          columnType: _isp.ColumnType.bigint,
+          isNullable: false,
+          dartType: 'int',
+        ),
+        _isp.ColumnDefinition(
+          name: 'spreadsheetUuid',
+          columnType: _isp.ColumnType.uuid,
+          isNullable: false,
+          dartType: 'UuidValue',
+        ),
+        _isp.ColumnDefinition(
+          name: 'scopes',
+          columnType: _isp.ColumnType.json,
+          isNullable: false,
+          dartType: 'List<String>',
+        ),
+        _isp.ColumnDefinition(
+          name: 'grantedAt',
+          columnType: _isp.ColumnType.timestampWithoutTimeZone,
+          isNullable: false,
+          dartType: 'DateTime',
+        ),
+        _isp.ColumnDefinition(
+          name: 'revokedAt',
+          columnType: _isp.ColumnType.timestampWithoutTimeZone,
+          isNullable: true,
+          dartType: 'DateTime?',
+        ),
+      ],
+      foreignKeys: [],
+      indexes: [
+        _isp.IndexDefinition(
+          indexName: 'script_auth_user_sheet_idx',
+          tableSpace: null,
+          elements: [
+            _isp.IndexElementDefinition(
+              type: _isp.IndexElementDefinitionType.column,
+              definition: 'userId',
+            ),
+            _isp.IndexElementDefinition(
+              type: _isp.IndexElementDefinitionType.column,
+              definition: 'spreadsheetUuid',
+            ),
+          ],
+          type: 'btree',
+          isUnique: true,
+          isPrimary: false,
+        ),
+      ],
+      managed: true,
+    ),
+    _isp.TableDefinition(
+      name: 'script_execution',
+      dartName: 'ScriptExecution',
+      schema: 'public',
+      module: 'wonky',
+      columns: [
+        _isp.ColumnDefinition(
+          name: 'id',
+          columnType: _isp.ColumnType.bigint,
+          isNullable: false,
+          dartType: 'int?',
+          columnDefault: 'serial',
+        ),
+        _isp.ColumnDefinition(
+          name: 'uuid',
+          columnType: _isp.ColumnType.uuid,
+          isNullable: false,
+          dartType: 'UuidValue',
+        ),
+        _isp.ColumnDefinition(
+          name: 'spreadsheetUuid',
+          columnType: _isp.ColumnType.uuid,
+          isNullable: false,
+          dartType: 'UuidValue',
+        ),
+        _isp.ColumnDefinition(
+          name: 'projectId',
+          columnType: _isp.ColumnType.uuid,
+          isNullable: true,
+          dartType: 'UuidValue?',
+        ),
+        _isp.ColumnDefinition(
+          name: 'functionName',
+          columnType: _isp.ColumnType.text,
+          isNullable: false,
+          dartType: 'String',
+        ),
+        _isp.ColumnDefinition(
+          name: 'kind',
+          columnType: _isp.ColumnType.text,
+          isNullable: false,
+          dartType: 'protocol:ScriptExecutionKind',
+        ),
+        _isp.ColumnDefinition(
+          name: 'triggerId',
+          columnType: _isp.ColumnType.uuid,
+          isNullable: true,
+          dartType: 'UuidValue?',
+        ),
+        _isp.ColumnDefinition(
+          name: 'userId',
+          columnType: _isp.ColumnType.bigint,
+          isNullable: false,
+          dartType: 'int',
+        ),
+        _isp.ColumnDefinition(
+          name: 'runAsUserId',
+          columnType: _isp.ColumnType.bigint,
+          isNullable: false,
+          dartType: 'int',
+        ),
+        _isp.ColumnDefinition(
+          name: 'runtime',
+          columnType: _isp.ColumnType.text,
+          isNullable: false,
+          dartType: 'protocol:ScriptRuntimeKind',
+        ),
+        _isp.ColumnDefinition(
+          name: 'status',
+          columnType: _isp.ColumnType.text,
+          isNullable: false,
+          dartType: 'protocol:ScriptExecutionStatus',
+        ),
+        _isp.ColumnDefinition(
+          name: 'buildSourceHash',
+          columnType: _isp.ColumnType.text,
+          isNullable: false,
+          dartType: 'String',
+        ),
+        _isp.ColumnDefinition(
+          name: 'startedAt',
+          columnType: _isp.ColumnType.timestampWithoutTimeZone,
+          isNullable: false,
+          dartType: 'DateTime',
+        ),
+        _isp.ColumnDefinition(
+          name: 'durationMs',
+          columnType: _isp.ColumnType.bigint,
+          isNullable: false,
+          dartType: 'int',
+        ),
+        _isp.ColumnDefinition(
+          name: 'logs',
+          columnType: _isp.ColumnType.text,
+          isNullable: false,
+          dartType: 'String',
+        ),
+        _isp.ColumnDefinition(
+          name: 'errorMessage',
+          columnType: _isp.ColumnType.text,
+          isNullable: true,
+          dartType: 'String?',
+        ),
+        _isp.ColumnDefinition(
+          name: 'errorStackJson',
+          columnType: _isp.ColumnType.text,
+          isNullable: true,
+          dartType: 'String?',
+        ),
+        _isp.ColumnDefinition(
+          name: 'changeId',
+          columnType: _isp.ColumnType.uuid,
+          isNullable: true,
+          dartType: 'UuidValue?',
+        ),
+        _isp.ColumnDefinition(
+          name: 'cellsRead',
+          columnType: _isp.ColumnType.bigint,
+          isNullable: false,
+          dartType: 'int',
+        ),
+        _isp.ColumnDefinition(
+          name: 'cellsWritten',
+          columnType: _isp.ColumnType.bigint,
+          isNullable: false,
+          dartType: 'int',
+        ),
+        _isp.ColumnDefinition(
+          name: 'fetchCalls',
+          columnType: _isp.ColumnType.bigint,
+          isNullable: false,
+          dartType: 'int',
+        ),
+        _isp.ColumnDefinition(
+          name: 'callCount',
+          columnType: _isp.ColumnType.bigint,
+          isNullable: false,
+          dartType: 'int',
+          columnDefault: '1',
+        ),
+      ],
+      foreignKeys: [],
+      indexes: [
+        _isp.IndexDefinition(
+          indexName: 'script_exec_uuid_idx',
+          tableSpace: null,
+          elements: [
+            _isp.IndexElementDefinition(
+              type: _isp.IndexElementDefinitionType.column,
+              definition: 'uuid',
+            ),
+          ],
+          type: 'btree',
+          isUnique: true,
+          isPrimary: false,
+        ),
+        _isp.IndexDefinition(
+          indexName: 'script_exec_sheet_idx',
+          tableSpace: null,
+          elements: [
+            _isp.IndexElementDefinition(
+              type: _isp.IndexElementDefinitionType.column,
+              definition: 'spreadsheetUuid',
+            ),
+            _isp.IndexElementDefinition(
+              type: _isp.IndexElementDefinitionType.column,
+              definition: 'startedAt',
+            ),
+          ],
+          type: 'btree',
+          isUnique: false,
+          isPrimary: false,
+        ),
+        _isp.IndexDefinition(
+          indexName: 'script_exec_user_idx',
+          tableSpace: null,
+          elements: [
+            _isp.IndexElementDefinition(
+              type: _isp.IndexElementDefinitionType.column,
+              definition: 'userId',
+            ),
+            _isp.IndexElementDefinition(
+              type: _isp.IndexElementDefinitionType.column,
+              definition: 'startedAt',
+            ),
+          ],
+          type: 'btree',
+          isUnique: false,
+          isPrimary: false,
+        ),
+      ],
+      managed: true,
+    ),
+    _isp.TableDefinition(
+      name: 'script_quota_usage',
+      dartName: 'ScriptQuotaUsage',
+      schema: 'public',
+      module: 'wonky',
+      columns: [
+        _isp.ColumnDefinition(
+          name: 'id',
+          columnType: _isp.ColumnType.bigint,
+          isNullable: false,
+          dartType: 'int?',
+          columnDefault: 'serial',
+        ),
+        _isp.ColumnDefinition(
+          name: 'userId',
+          columnType: _isp.ColumnType.bigint,
+          isNullable: false,
+          dartType: 'int',
+        ),
+        _isp.ColumnDefinition(
+          name: 'day',
+          columnType: _isp.ColumnType.timestampWithoutTimeZone,
+          isNullable: false,
+          dartType: 'DateTime',
+        ),
+        _isp.ColumnDefinition(
+          name: 'serverRuntimeMs',
+          columnType: _isp.ColumnType.bigint,
+          isNullable: false,
+          dartType: 'int',
+          columnDefault: '0',
+        ),
+        _isp.ColumnDefinition(
+          name: 'clientRuntimeMs',
+          columnType: _isp.ColumnType.bigint,
+          isNullable: false,
+          dartType: 'int',
+          columnDefault: '0',
+        ),
+        _isp.ColumnDefinition(
+          name: 'urlFetchCalls',
+          columnType: _isp.ColumnType.bigint,
+          isNullable: false,
+          dartType: 'int',
+          columnDefault: '0',
+        ),
+        _isp.ColumnDefinition(
+          name: 'urlFetchBytes',
+          columnType: _isp.ColumnType.bigint,
+          isNullable: false,
+          dartType: 'int',
+          columnDefault: '0',
+        ),
+        _isp.ColumnDefinition(
+          name: 'triggerRuns',
+          columnType: _isp.ColumnType.bigint,
+          isNullable: false,
+          dartType: 'int',
+          columnDefault: '0',
+        ),
+      ],
+      foreignKeys: [],
+      indexes: [
+        _isp.IndexDefinition(
+          indexName: 'script_quota_user_day_idx',
+          tableSpace: null,
+          elements: [
+            _isp.IndexElementDefinition(
+              type: _isp.IndexElementDefinitionType.column,
+              definition: 'userId',
+            ),
+            _isp.IndexElementDefinition(
+              type: _isp.IndexElementDefinitionType.column,
+              definition: 'day',
+            ),
+          ],
+          type: 'btree',
+          isUnique: true,
+          isPrimary: false,
+        ),
+      ],
+      managed: true,
+    ),
+    _isp.TableDefinition(
+      name: 'script_trigger_state',
+      dartName: 'ScriptTriggerState',
+      schema: 'public',
+      module: 'wonky',
+      columns: [
+        _isp.ColumnDefinition(
+          name: 'id',
+          columnType: _isp.ColumnType.bigint,
+          isNullable: false,
+          dartType: 'int?',
+          columnDefault: 'serial',
+        ),
+        _isp.ColumnDefinition(
+          name: 'triggerId',
+          columnType: _isp.ColumnType.uuid,
+          isNullable: false,
+          dartType: 'UuidValue',
+        ),
+        _isp.ColumnDefinition(
+          name: 'spreadsheetUuid',
+          columnType: _isp.ColumnType.uuid,
+          isNullable: false,
+          dartType: 'UuidValue',
+        ),
+        _isp.ColumnDefinition(
+          name: 'scheduleJson',
+          columnType: _isp.ColumnType.text,
+          isNullable: true,
+          dartType: 'String?',
+        ),
+        _isp.ColumnDefinition(
+          name: 'nextRunAt',
+          columnType: _isp.ColumnType.timestampWithoutTimeZone,
+          isNullable: true,
+          dartType: 'DateTime?',
+        ),
+        _isp.ColumnDefinition(
+          name: 'lastRunAt',
+          columnType: _isp.ColumnType.timestampWithoutTimeZone,
+          isNullable: true,
+          dartType: 'DateTime?',
+        ),
+        _isp.ColumnDefinition(
+          name: 'lastStatus',
+          columnType: _isp.ColumnType.text,
+          isNullable: true,
+          dartType: 'protocol:ScriptExecutionStatus?',
+        ),
+        _isp.ColumnDefinition(
+          name: 'consecutiveFailures',
+          columnType: _isp.ColumnType.bigint,
+          isNullable: false,
+          dartType: 'int',
+          columnDefault: '0',
+        ),
+        _isp.ColumnDefinition(
+          name: 'disabledReason',
+          columnType: _isp.ColumnType.text,
+          isNullable: true,
+          dartType: 'String?',
+        ),
+        _isp.ColumnDefinition(
+          name: 'runningSince',
+          columnType: _isp.ColumnType.timestampWithoutTimeZone,
+          isNullable: true,
+          dartType: 'DateTime?',
+        ),
+      ],
+      foreignKeys: [],
+      indexes: [
+        _isp.IndexDefinition(
+          indexName: 'script_trigger_state_id_idx',
+          tableSpace: null,
+          elements: [
+            _isp.IndexElementDefinition(
+              type: _isp.IndexElementDefinitionType.column,
+              definition: 'triggerId',
+            ),
+          ],
+          type: 'btree',
+          isUnique: true,
+          isPrimary: false,
+        ),
+        _isp.IndexDefinition(
+          indexName: 'script_trigger_state_due_idx',
+          tableSpace: null,
+          elements: [
+            _isp.IndexElementDefinition(
+              type: _isp.IndexElementDefinitionType.column,
+              definition: 'nextRunAt',
+            ),
+          ],
+          type: 'btree',
+          isUnique: false,
+          isPrimary: false,
+        ),
+      ],
+      managed: true,
+    ),
+    _isp.TableDefinition(
       name: 'server_change_record',
       dartName: 'ServerChangeRecord',
       schema: 'public',
@@ -3987,6 +4527,12 @@ class Protocol extends _is.DatabaseSerializationManager
           columnType: _isp.ColumnType.timestampWithoutTimeZone,
           isNullable: false,
           dartType: 'DateTime',
+        ),
+        _isp.ColumnDefinition(
+          name: 'completedAt',
+          columnType: _isp.ColumnType.timestampWithoutTimeZone,
+          isNullable: true,
+          dartType: 'DateTime?',
         ),
       ],
       foreignKeys: [],
@@ -5491,6 +6037,27 @@ class Protocol extends _is.DatabaseSerializationManager
     if (t == _i5u6d6t4.VersionStorage) {
       return _i5u6d6t4.VersionStorage.fromJson(data) as T;
     }
+    if (t == _iuzj1jin.SheetsAiApplyResult) {
+      return _iuzj1jin.SheetsAiApplyResult.fromJson(data) as T;
+    }
+    if (t == _i4t3jyqe.SheetsAiPreview) {
+      return _i4t3jyqe.SheetsAiPreview.fromJson(data) as T;
+    }
+    if (t == _idzstekp.SheetsAiPreviewCall) {
+      return _idzstekp.SheetsAiPreviewCall.fromJson(data) as T;
+    }
+    if (t == _i49726iv.SheetsAiPreviewCell) {
+      return _i49726iv.SheetsAiPreviewCell.fromJson(data) as T;
+    }
+    if (t == _izbpavhd.SheetsFillProposal) {
+      return _izbpavhd.SheetsFillProposal.fromJson(data) as T;
+    }
+    if (t == _i1gi0ui2.SheetsFillRow) {
+      return _i1gi0ui2.SheetsFillRow.fromJson(data) as T;
+    }
+    if (t == _i2bhah0l.SheetsFormulaSuggestion) {
+      return _i2bhah0l.SheetsFormulaSuggestion.fromJson(data) as T;
+    }
     if (t == _ik5lpvx4.CellHistory) {
       return _ik5lpvx4.CellHistory.fromJson(data) as T;
     }
@@ -5499,6 +6066,9 @@ class Protocol extends _is.DatabaseSerializationManager
     }
     if (t == _i09xo3k8.CellHistoryPage) {
       return _i09xo3k8.CellHistoryPage.fromJson(data) as T;
+    }
+    if (t == _i4tr28q5.ReservedSpace) {
+      return _i4tr28q5.ReservedSpace.fromJson(data) as T;
     }
     if (t == _ilv3hlxr.RevertResult) {
       return _ilv3hlxr.RevertResult.fromJson(data) as T;
@@ -5518,8 +6088,17 @@ class Protocol extends _is.DatabaseSerializationManager
     if (t == _i9yjzgjk.SheetsContributorStat) {
       return _i9yjzgjk.SheetsContributorStat.fromJson(data) as T;
     }
+    if (t == _ign37bwd.SheetsDirtySpace) {
+      return _ign37bwd.SheetsDirtySpace.fromJson(data) as T;
+    }
+    if (t == _i6vovdef.SheetsJournalSpace) {
+      return _i6vovdef.SheetsJournalSpace.fromJson(data) as T;
+    }
     if (t == _izigafhu.SheetsMergedSignal) {
       return _izigafhu.SheetsMergedSignal.fromJson(data) as T;
+    }
+    if (t == _i09o85d1.SheetsRowJournal) {
+      return _i09o85d1.SheetsRowJournal.fromJson(data) as T;
     }
     if (t == _iwl8v9t3.SheetsSnapshotIndex) {
       return _iwl8v9t3.SheetsSnapshotIndex.fromJson(data) as T;
@@ -5538,6 +6117,39 @@ class Protocol extends _is.DatabaseSerializationManager
     }
     if (t == _ic8hyldr.SubscriptionReason) {
       return _ic8hyldr.SubscriptionReason.fromJson(data) as T;
+    }
+    if (t == _ibv2hdjr.ScriptAuthorization) {
+      return _ibv2hdjr.ScriptAuthorization.fromJson(data) as T;
+    }
+    if (t == _icjzxy6x.ScriptAuthorizationView) {
+      return _icjzxy6x.ScriptAuthorizationView.fromJson(data) as T;
+    }
+    if (t == _iq0xpzf7.ScriptCompileResponse) {
+      return _iq0xpzf7.ScriptCompileResponse.fromJson(data) as T;
+    }
+    if (t == _i4bc0fek.ScriptExecution) {
+      return _i4bc0fek.ScriptExecution.fromJson(data) as T;
+    }
+    if (t == _inqz9v2t.ScriptExecutionKind) {
+      return _inqz9v2t.ScriptExecutionKind.fromJson(data) as T;
+    }
+    if (t == _ira26pfa.ScriptExecutionStatus) {
+      return _ira26pfa.ScriptExecutionStatus.fromJson(data) as T;
+    }
+    if (t == _is04pxv8.ScriptFetchResponse) {
+      return _is04pxv8.ScriptFetchResponse.fromJson(data) as T;
+    }
+    if (t == _itn7c5zm.ScriptQuotaUsage) {
+      return _itn7c5zm.ScriptQuotaUsage.fromJson(data) as T;
+    }
+    if (t == _is0mvar3.ScriptRunResponse) {
+      return _is0mvar3.ScriptRunResponse.fromJson(data) as T;
+    }
+    if (t == _iy0fj18f.ScriptRuntimeKind) {
+      return _iy0fj18f.ScriptRuntimeKind.fromJson(data) as T;
+    }
+    if (t == _ixysij0q.ScriptTriggerState) {
+      return _ixysij0q.ScriptTriggerState.fromJson(data) as T;
     }
     if (t == _iilidizm.HeadlessChange) {
       return _iilidizm.HeadlessChange.fromJson(data) as T;
@@ -6190,6 +6802,42 @@ class Protocol extends _is.DatabaseSerializationManager
       return (data != null ? _i5u6d6t4.VersionStorage.fromJson(data) : null)
           as T;
     }
+    if (t == _is.getType<_iuzj1jin.SheetsAiApplyResult?>()) {
+      return (data != null
+              ? _iuzj1jin.SheetsAiApplyResult.fromJson(data)
+              : null)
+          as T;
+    }
+    if (t == _is.getType<_i4t3jyqe.SheetsAiPreview?>()) {
+      return (data != null ? _i4t3jyqe.SheetsAiPreview.fromJson(data) : null)
+          as T;
+    }
+    if (t == _is.getType<_idzstekp.SheetsAiPreviewCall?>()) {
+      return (data != null
+              ? _idzstekp.SheetsAiPreviewCall.fromJson(data)
+              : null)
+          as T;
+    }
+    if (t == _is.getType<_i49726iv.SheetsAiPreviewCell?>()) {
+      return (data != null
+              ? _i49726iv.SheetsAiPreviewCell.fromJson(data)
+              : null)
+          as T;
+    }
+    if (t == _is.getType<_izbpavhd.SheetsFillProposal?>()) {
+      return (data != null ? _izbpavhd.SheetsFillProposal.fromJson(data) : null)
+          as T;
+    }
+    if (t == _is.getType<_i1gi0ui2.SheetsFillRow?>()) {
+      return (data != null ? _i1gi0ui2.SheetsFillRow.fromJson(data) : null)
+          as T;
+    }
+    if (t == _is.getType<_i2bhah0l.SheetsFormulaSuggestion?>()) {
+      return (data != null
+              ? _i2bhah0l.SheetsFormulaSuggestion.fromJson(data)
+              : null)
+          as T;
+    }
     if (t == _is.getType<_ik5lpvx4.CellHistory?>()) {
       return (data != null ? _ik5lpvx4.CellHistory.fromJson(data) : null) as T;
     }
@@ -6199,6 +6847,10 @@ class Protocol extends _is.DatabaseSerializationManager
     }
     if (t == _is.getType<_i09xo3k8.CellHistoryPage?>()) {
       return (data != null ? _i09xo3k8.CellHistoryPage.fromJson(data) : null)
+          as T;
+    }
+    if (t == _is.getType<_i4tr28q5.ReservedSpace?>()) {
+      return (data != null ? _i4tr28q5.ReservedSpace.fromJson(data) : null)
           as T;
     }
     if (t == _is.getType<_ilv3hlxr.RevertResult?>()) {
@@ -6229,8 +6881,20 @@ class Protocol extends _is.DatabaseSerializationManager
               : null)
           as T;
     }
+    if (t == _is.getType<_ign37bwd.SheetsDirtySpace?>()) {
+      return (data != null ? _ign37bwd.SheetsDirtySpace.fromJson(data) : null)
+          as T;
+    }
+    if (t == _is.getType<_i6vovdef.SheetsJournalSpace?>()) {
+      return (data != null ? _i6vovdef.SheetsJournalSpace.fromJson(data) : null)
+          as T;
+    }
     if (t == _is.getType<_izigafhu.SheetsMergedSignal?>()) {
       return (data != null ? _izigafhu.SheetsMergedSignal.fromJson(data) : null)
+          as T;
+    }
+    if (t == _is.getType<_i09o85d1.SheetsRowJournal?>()) {
+      return (data != null ? _i09o85d1.SheetsRowJournal.fromJson(data) : null)
           as T;
     }
     if (t == _is.getType<_iwl8v9t3.SheetsSnapshotIndex?>()) {
@@ -6256,6 +6920,62 @@ class Protocol extends _is.DatabaseSerializationManager
     }
     if (t == _is.getType<_ic8hyldr.SubscriptionReason?>()) {
       return (data != null ? _ic8hyldr.SubscriptionReason.fromJson(data) : null)
+          as T;
+    }
+    if (t == _is.getType<_ibv2hdjr.ScriptAuthorization?>()) {
+      return (data != null
+              ? _ibv2hdjr.ScriptAuthorization.fromJson(data)
+              : null)
+          as T;
+    }
+    if (t == _is.getType<_icjzxy6x.ScriptAuthorizationView?>()) {
+      return (data != null
+              ? _icjzxy6x.ScriptAuthorizationView.fromJson(data)
+              : null)
+          as T;
+    }
+    if (t == _is.getType<_iq0xpzf7.ScriptCompileResponse?>()) {
+      return (data != null
+              ? _iq0xpzf7.ScriptCompileResponse.fromJson(data)
+              : null)
+          as T;
+    }
+    if (t == _is.getType<_i4bc0fek.ScriptExecution?>()) {
+      return (data != null ? _i4bc0fek.ScriptExecution.fromJson(data) : null)
+          as T;
+    }
+    if (t == _is.getType<_inqz9v2t.ScriptExecutionKind?>()) {
+      return (data != null
+              ? _inqz9v2t.ScriptExecutionKind.fromJson(data)
+              : null)
+          as T;
+    }
+    if (t == _is.getType<_ira26pfa.ScriptExecutionStatus?>()) {
+      return (data != null
+              ? _ira26pfa.ScriptExecutionStatus.fromJson(data)
+              : null)
+          as T;
+    }
+    if (t == _is.getType<_is04pxv8.ScriptFetchResponse?>()) {
+      return (data != null
+              ? _is04pxv8.ScriptFetchResponse.fromJson(data)
+              : null)
+          as T;
+    }
+    if (t == _is.getType<_itn7c5zm.ScriptQuotaUsage?>()) {
+      return (data != null ? _itn7c5zm.ScriptQuotaUsage.fromJson(data) : null)
+          as T;
+    }
+    if (t == _is.getType<_is0mvar3.ScriptRunResponse?>()) {
+      return (data != null ? _is0mvar3.ScriptRunResponse.fromJson(data) : null)
+          as T;
+    }
+    if (t == _is.getType<_iy0fj18f.ScriptRuntimeKind?>()) {
+      return (data != null ? _iy0fj18f.ScriptRuntimeKind.fromJson(data) : null)
+          as T;
+    }
+    if (t == _is.getType<_ixysij0q.ScriptTriggerState?>()) {
+      return (data != null ? _ixysij0q.ScriptTriggerState.fromJson(data) : null)
           as T;
     }
     if (t == _is.getType<_iilidizm.HeadlessChange?>()) {
@@ -6447,6 +7167,15 @@ class Protocol extends _is.DatabaseSerializationManager
               .toList()
           as T;
     }
+    if (t == List<String>) {
+      return (data as List).map((e) => deserialize<String>(e)).toList() as T;
+    }
+    if (t == _is.getType<List<String>?>()) {
+      return (data != null
+              ? (data as List).map((e) => deserialize<String>(e)).toList()
+              : null)
+          as T;
+    }
     if (t == List<_i4rkdm2k.AssistantMessageView>) {
       return (data as List)
               .map((e) => deserialize<_i4rkdm2k.AssistantMessageView>(e))
@@ -6466,9 +7195,6 @@ class Protocol extends _is.DatabaseSerializationManager
                     .toList()
               : null)
           as T;
-    }
-    if (t == List<String>) {
-      return (data as List).map((e) => deserialize<String>(e)).toList() as T;
     }
     if (t == List<int>) {
       return (data as List).map((e) => deserialize<int>(e)).toList() as T;
@@ -6524,12 +7250,6 @@ class Protocol extends _is.DatabaseSerializationManager
               .toList()
           as T;
     }
-    if (t == _is.getType<List<String>?>()) {
-      return (data != null
-              ? (data as List).map((e) => deserialize<String>(e)).toList()
-              : null)
-          as T;
-    }
     if (t == List<_iylgyc33.Participant>) {
       return (data as List)
               .map((e) => deserialize<_iylgyc33.Participant>(e))
@@ -6545,6 +7265,24 @@ class Protocol extends _is.DatabaseSerializationManager
     if (t == List<_iimp60a4.AccessRequestView>) {
       return (data as List)
               .map((e) => deserialize<_iimp60a4.AccessRequestView>(e))
+              .toList()
+          as T;
+    }
+    if (t == List<_idzstekp.SheetsAiPreviewCall>) {
+      return (data as List)
+              .map((e) => deserialize<_idzstekp.SheetsAiPreviewCall>(e))
+              .toList()
+          as T;
+    }
+    if (t == List<_i49726iv.SheetsAiPreviewCell>) {
+      return (data as List)
+              .map((e) => deserialize<_i49726iv.SheetsAiPreviewCell>(e))
+              .toList()
+          as T;
+    }
+    if (t == List<_i1gi0ui2.SheetsFillRow>) {
+      return (data as List)
+              .map((e) => deserialize<_i1gi0ui2.SheetsFillRow>(e))
               .toList()
           as T;
     }
@@ -6683,6 +7421,24 @@ class Protocol extends _is.DatabaseSerializationManager
     if (t == List<_ir2w0lzm.ItemVersionView>) {
       return (data as List)
               .map((e) => deserialize<_ir2w0lzm.ItemVersionView>(e))
+              .toList()
+          as T;
+    }
+    if (t == List<_isuyxaqz.SheetsFillRow>) {
+      return (data as List)
+              .map((e) => deserialize<_isuyxaqz.SheetsFillRow>(e))
+              .toList()
+          as T;
+    }
+    if (t == _is.getType<List<String>?>()) {
+      return (data != null
+              ? (data as List).map((e) => deserialize<String>(e)).toList()
+              : null)
+          as T;
+    }
+    if (t == List<_isf59hoo.ScriptExecution>) {
+      return (data as List)
+              .map((e) => deserialize<_isf59hoo.ScriptExecution>(e))
               .toList()
           as T;
     }
@@ -6850,22 +7606,44 @@ class Protocol extends _is.DatabaseSerializationManager
       _in0fdl1f.VersionKind => 'VersionKind',
       _in38zbga.VersionRestoreResult => 'VersionRestoreResult',
       _i5u6d6t4.VersionStorage => 'VersionStorage',
+      _iuzj1jin.SheetsAiApplyResult => 'SheetsAiApplyResult',
+      _i4t3jyqe.SheetsAiPreview => 'SheetsAiPreview',
+      _idzstekp.SheetsAiPreviewCall => 'SheetsAiPreviewCall',
+      _i49726iv.SheetsAiPreviewCell => 'SheetsAiPreviewCell',
+      _izbpavhd.SheetsFillProposal => 'SheetsFillProposal',
+      _i1gi0ui2.SheetsFillRow => 'SheetsFillRow',
+      _i2bhah0l.SheetsFormulaSuggestion => 'SheetsFormulaSuggestion',
       _ik5lpvx4.CellHistory => 'CellHistory',
       _ij1xvs09.CellHistoryEntry => 'CellHistoryEntry',
       _i09xo3k8.CellHistoryPage => 'CellHistoryPage',
+      _i4tr28q5.ReservedSpace => 'ReservedSpace',
       _ilv3hlxr.RevertResult => 'RevertResult',
       _ipqum05l.RevertSkip => 'RevertSkip',
       _it4o4dd3.ServerChangeRecord => 'ServerChangeRecord',
       _iaehez21.SheetsActivitySummary => 'SheetsActivitySummary',
       _i5z6gq3n.SheetsChangeLogReceipt => 'SheetsChangeLogReceipt',
       _i9yjzgjk.SheetsContributorStat => 'SheetsContributorStat',
+      _ign37bwd.SheetsDirtySpace => 'SheetsDirtySpace',
+      _i6vovdef.SheetsJournalSpace => 'SheetsJournalSpace',
       _izigafhu.SheetsMergedSignal => 'SheetsMergedSignal',
+      _i09o85d1.SheetsRowJournal => 'SheetsRowJournal',
       _iwl8v9t3.SheetsSnapshotIndex => 'SheetsSnapshotIndex',
       _i9g7m0kd.SpaceReservation => 'SpaceReservation',
       _izbczo40.SpaceStats => 'SpaceStats',
       _i1qxq8ae.SpaceSubscription => 'SpaceSubscription',
       _i6dq35xo.SubscribeResult => 'SubscribeResult',
       _ic8hyldr.SubscriptionReason => 'SubscriptionReason',
+      _ibv2hdjr.ScriptAuthorization => 'ScriptAuthorization',
+      _icjzxy6x.ScriptAuthorizationView => 'ScriptAuthorizationView',
+      _iq0xpzf7.ScriptCompileResponse => 'ScriptCompileResponse',
+      _i4bc0fek.ScriptExecution => 'ScriptExecution',
+      _inqz9v2t.ScriptExecutionKind => 'ScriptExecutionKind',
+      _ira26pfa.ScriptExecutionStatus => 'ScriptExecutionStatus',
+      _is04pxv8.ScriptFetchResponse => 'ScriptFetchResponse',
+      _itn7c5zm.ScriptQuotaUsage => 'ScriptQuotaUsage',
+      _is0mvar3.ScriptRunResponse => 'ScriptRunResponse',
+      _iy0fj18f.ScriptRuntimeKind => 'ScriptRuntimeKind',
+      _ixysij0q.ScriptTriggerState => 'ScriptTriggerState',
       _iilidizm.HeadlessChange => 'HeadlessChange',
       _icpkpcrn.DocAck => 'DocAck',
       _i8zfu67r.DocBusMessage => 'DocBusMessage',
@@ -7185,12 +7963,28 @@ class Protocol extends _is.DatabaseSerializationManager
         return 'VersionRestoreResult';
       case _i5u6d6t4.VersionStorage():
         return 'VersionStorage';
+      case _iuzj1jin.SheetsAiApplyResult():
+        return 'SheetsAiApplyResult';
+      case _i4t3jyqe.SheetsAiPreview():
+        return 'SheetsAiPreview';
+      case _idzstekp.SheetsAiPreviewCall():
+        return 'SheetsAiPreviewCall';
+      case _i49726iv.SheetsAiPreviewCell():
+        return 'SheetsAiPreviewCell';
+      case _izbpavhd.SheetsFillProposal():
+        return 'SheetsFillProposal';
+      case _i1gi0ui2.SheetsFillRow():
+        return 'SheetsFillRow';
+      case _i2bhah0l.SheetsFormulaSuggestion():
+        return 'SheetsFormulaSuggestion';
       case _ik5lpvx4.CellHistory():
         return 'CellHistory';
       case _ij1xvs09.CellHistoryEntry():
         return 'CellHistoryEntry';
       case _i09xo3k8.CellHistoryPage():
         return 'CellHistoryPage';
+      case _i4tr28q5.ReservedSpace():
+        return 'ReservedSpace';
       case _ilv3hlxr.RevertResult():
         return 'RevertResult';
       case _ipqum05l.RevertSkip():
@@ -7203,8 +7997,14 @@ class Protocol extends _is.DatabaseSerializationManager
         return 'SheetsChangeLogReceipt';
       case _i9yjzgjk.SheetsContributorStat():
         return 'SheetsContributorStat';
+      case _ign37bwd.SheetsDirtySpace():
+        return 'SheetsDirtySpace';
+      case _i6vovdef.SheetsJournalSpace():
+        return 'SheetsJournalSpace';
       case _izigafhu.SheetsMergedSignal():
         return 'SheetsMergedSignal';
+      case _i09o85d1.SheetsRowJournal():
+        return 'SheetsRowJournal';
       case _iwl8v9t3.SheetsSnapshotIndex():
         return 'SheetsSnapshotIndex';
       case _i9g7m0kd.SpaceReservation():
@@ -7217,6 +8017,28 @@ class Protocol extends _is.DatabaseSerializationManager
         return 'SubscribeResult';
       case _ic8hyldr.SubscriptionReason():
         return 'SubscriptionReason';
+      case _ibv2hdjr.ScriptAuthorization():
+        return 'ScriptAuthorization';
+      case _icjzxy6x.ScriptAuthorizationView():
+        return 'ScriptAuthorizationView';
+      case _iq0xpzf7.ScriptCompileResponse():
+        return 'ScriptCompileResponse';
+      case _i4bc0fek.ScriptExecution():
+        return 'ScriptExecution';
+      case _inqz9v2t.ScriptExecutionKind():
+        return 'ScriptExecutionKind';
+      case _ira26pfa.ScriptExecutionStatus():
+        return 'ScriptExecutionStatus';
+      case _is04pxv8.ScriptFetchResponse():
+        return 'ScriptFetchResponse';
+      case _itn7c5zm.ScriptQuotaUsage():
+        return 'ScriptQuotaUsage';
+      case _is0mvar3.ScriptRunResponse():
+        return 'ScriptRunResponse';
+      case _iy0fj18f.ScriptRuntimeKind():
+        return 'ScriptRuntimeKind';
+      case _ixysij0q.ScriptTriggerState():
+        return 'ScriptTriggerState';
       case _iilidizm.HeadlessChange():
         return 'HeadlessChange';
       case _icpkpcrn.DocAck():
@@ -7736,6 +8558,27 @@ class Protocol extends _is.DatabaseSerializationManager
     if (dataClassName == 'VersionStorage') {
       return deserialize<_i5u6d6t4.VersionStorage>(data['data']);
     }
+    if (dataClassName == 'SheetsAiApplyResult') {
+      return deserialize<_iuzj1jin.SheetsAiApplyResult>(data['data']);
+    }
+    if (dataClassName == 'SheetsAiPreview') {
+      return deserialize<_i4t3jyqe.SheetsAiPreview>(data['data']);
+    }
+    if (dataClassName == 'SheetsAiPreviewCall') {
+      return deserialize<_idzstekp.SheetsAiPreviewCall>(data['data']);
+    }
+    if (dataClassName == 'SheetsAiPreviewCell') {
+      return deserialize<_i49726iv.SheetsAiPreviewCell>(data['data']);
+    }
+    if (dataClassName == 'SheetsFillProposal') {
+      return deserialize<_izbpavhd.SheetsFillProposal>(data['data']);
+    }
+    if (dataClassName == 'SheetsFillRow') {
+      return deserialize<_i1gi0ui2.SheetsFillRow>(data['data']);
+    }
+    if (dataClassName == 'SheetsFormulaSuggestion') {
+      return deserialize<_i2bhah0l.SheetsFormulaSuggestion>(data['data']);
+    }
     if (dataClassName == 'CellHistory') {
       return deserialize<_ik5lpvx4.CellHistory>(data['data']);
     }
@@ -7744,6 +8587,9 @@ class Protocol extends _is.DatabaseSerializationManager
     }
     if (dataClassName == 'CellHistoryPage') {
       return deserialize<_i09xo3k8.CellHistoryPage>(data['data']);
+    }
+    if (dataClassName == 'ReservedSpace') {
+      return deserialize<_i4tr28q5.ReservedSpace>(data['data']);
     }
     if (dataClassName == 'RevertResult') {
       return deserialize<_ilv3hlxr.RevertResult>(data['data']);
@@ -7763,8 +8609,17 @@ class Protocol extends _is.DatabaseSerializationManager
     if (dataClassName == 'SheetsContributorStat') {
       return deserialize<_i9yjzgjk.SheetsContributorStat>(data['data']);
     }
+    if (dataClassName == 'SheetsDirtySpace') {
+      return deserialize<_ign37bwd.SheetsDirtySpace>(data['data']);
+    }
+    if (dataClassName == 'SheetsJournalSpace') {
+      return deserialize<_i6vovdef.SheetsJournalSpace>(data['data']);
+    }
     if (dataClassName == 'SheetsMergedSignal') {
       return deserialize<_izigafhu.SheetsMergedSignal>(data['data']);
+    }
+    if (dataClassName == 'SheetsRowJournal') {
+      return deserialize<_i09o85d1.SheetsRowJournal>(data['data']);
     }
     if (dataClassName == 'SheetsSnapshotIndex') {
       return deserialize<_iwl8v9t3.SheetsSnapshotIndex>(data['data']);
@@ -7783,6 +8638,39 @@ class Protocol extends _is.DatabaseSerializationManager
     }
     if (dataClassName == 'SubscriptionReason') {
       return deserialize<_ic8hyldr.SubscriptionReason>(data['data']);
+    }
+    if (dataClassName == 'ScriptAuthorization') {
+      return deserialize<_ibv2hdjr.ScriptAuthorization>(data['data']);
+    }
+    if (dataClassName == 'ScriptAuthorizationView') {
+      return deserialize<_icjzxy6x.ScriptAuthorizationView>(data['data']);
+    }
+    if (dataClassName == 'ScriptCompileResponse') {
+      return deserialize<_iq0xpzf7.ScriptCompileResponse>(data['data']);
+    }
+    if (dataClassName == 'ScriptExecution') {
+      return deserialize<_i4bc0fek.ScriptExecution>(data['data']);
+    }
+    if (dataClassName == 'ScriptExecutionKind') {
+      return deserialize<_inqz9v2t.ScriptExecutionKind>(data['data']);
+    }
+    if (dataClassName == 'ScriptExecutionStatus') {
+      return deserialize<_ira26pfa.ScriptExecutionStatus>(data['data']);
+    }
+    if (dataClassName == 'ScriptFetchResponse') {
+      return deserialize<_is04pxv8.ScriptFetchResponse>(data['data']);
+    }
+    if (dataClassName == 'ScriptQuotaUsage') {
+      return deserialize<_itn7c5zm.ScriptQuotaUsage>(data['data']);
+    }
+    if (dataClassName == 'ScriptRunResponse') {
+      return deserialize<_is0mvar3.ScriptRunResponse>(data['data']);
+    }
+    if (dataClassName == 'ScriptRuntimeKind') {
+      return deserialize<_iy0fj18f.ScriptRuntimeKind>(data['data']);
+    }
+    if (dataClassName == 'ScriptTriggerState') {
+      return deserialize<_ixysij0q.ScriptTriggerState>(data['data']);
     }
     if (dataClassName == 'HeadlessChange') {
       return deserialize<_iilidizm.HeadlessChange>(data['data']);
@@ -8039,6 +8927,14 @@ class Protocol extends _is.DatabaseSerializationManager
         return _i9g7m0kd.SpaceReservation.t;
       case _i1qxq8ae.SpaceSubscription:
         return _i1qxq8ae.SpaceSubscription.t;
+      case _ibv2hdjr.ScriptAuthorization:
+        return _ibv2hdjr.ScriptAuthorization.t;
+      case _i4bc0fek.ScriptExecution:
+        return _i4bc0fek.ScriptExecution.t;
+      case _itn7c5zm.ScriptQuotaUsage:
+        return _itn7c5zm.ScriptQuotaUsage.t;
+      case _ixysij0q.ScriptTriggerState:
+        return _ixysij0q.ScriptTriggerState.t;
       case _iilidizm.HeadlessChange:
         return _iilidizm.HeadlessChange.t;
       case _i4sx4pml.Document:

@@ -1,6 +1,7 @@
 import 'dart:math' as math;
 import 'dart:typed_data';
 
+import '../../formula/functions/web/rich_values.dart';
 import '../../formula/values/fvalue.dart';
 import '../data/data_algorithms.dart';
 import '../scene/geometry.dart';
@@ -230,6 +231,15 @@ final class SparklineSpec {
     );
   }
 
+  /// The spec of a `SPARKLINE()` formula result (05 §17): its chart type and options. The
+  /// result's values already have `empty`/`nan` applied. Throws [SparklineOptionException]
+  /// for invalid options.
+  factory SparklineSpec.fromValue(SparklineValue value) =>
+      SparklineSpec.fromOptions({
+        ...value.options,
+        'charttype': value.chartType,
+      });
+
   final SparklineType type;
   final double? xmin;
   final double? xmax;
@@ -374,6 +384,38 @@ final class SparklineSpec {
 abstract final class SparklineRenderer {
   /// Data beyond this many points is downsampled (min/max per pixel bucket, 05 §17).
   static const maxPoints = 10000;
+
+  /// Lays out the `SPARKLINE()` formula result [value] (the grid's in-cell painter calls this
+  /// with the cell's inner size). Invalid options lay out an empty scene.
+  static ChartScene layoutValue(
+    SparklineValue value,
+    double width,
+    double height, {
+    int defaultColor = 0xFF4285F4,
+    int background = 0x00000000,
+    double padding = 2,
+  }) {
+    SparklineSpec spec;
+    try {
+      spec = SparklineSpec.fromValue(value);
+    } on SparklineOptionException {
+      return ChartScene(
+        width: width,
+        height: height,
+        background: background,
+        primitives: const [],
+      );
+    }
+    return layout(
+      spec,
+      SparklineData(Float64List.fromList(value.values)),
+      width,
+      height,
+      defaultColor: defaultColor,
+      background: background,
+      padding: padding,
+    );
+  }
 
   /// Lays out [values] at [width] × [height] px. [defaultColor] is the theme `chart1` token.
   static ChartScene layout(

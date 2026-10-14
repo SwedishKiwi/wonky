@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import '../../addressing/grid_geometry.dart';
+import '../../engine_bridge/formula_hooks.dart';
 import '../../engine_bridge/stored_formula.dart';
 import '../../model/events.dart';
 import '../../model/grid_range.dart';
@@ -112,30 +113,14 @@ void applyMoveRange(PlanBuilder b, MoveRange op) {
   if (d.top < 0 || d.left < 0) {
     throw const PlanException('invalid_range', 'Destination outside the grid');
   }
-  if (!op.copy && dst.id == src.id && d == s) return;
-  final (rowIdAt, colIdAt) = ensureGridSize(b, dst, d.bottom + 1, d.right + 1);
-  // Merges moving along.
-  final srcMerges = [
-    for (final (id, m) in src.mergesIntersecting(s))
-      if (s.containsRect(m)) (id, m),
-  ];
-  for (final (_, m) in src.mergesIntersecting(s)) {
-    if (!s.containsRect(m)) {
-      throw const PlanException(
-        'merge_conflict',
-        "You can't move only part of a merged cell",
-      );
-    }
+  if (!op.copy) {
+    applyBlockMove(b, src, dst, [(s, d)]);
+    return;
   }
+  final (rowIdAt, colIdAt) = ensureGridSize(b, dst, d.bottom + 1, d.right + 1);
+  final srcMerges = _mergesInside(src, [s]);
   if (d.bottom < dst.rows.length && d.right < dst.columns.length) {
-    checkMergesNotSplit(
-      dst,
-      d,
-      ignore: {
-        if (!op.copy && dst.id == src.id)
-          for (final (id, _) in srcMerges) id,
-      },
-    );
+    checkMergesNotSplit(dst, d);
   }
   // Snapshot source cells.
   final snapshot = <(int, int), Map<String, Object?>>{};
@@ -143,13 +128,6 @@ void applyMoveRange(PlanBuilder b, MoveRange op) {
     snapshot[(r - s.top, c - s.left)] = cellData(cur);
   }
   final hooks = b.ctx.formulas;
-  // Clear the source (move only) except where the destination overlaps.
-  if (!op.copy) {
-    for (final (r, c, rowId, colId, _) in b.cellsIn(src, s).toList()) {
-      final inDest = dst.id == src.id && d.contains(r, c);
-      if (!inDest) b.deleteCell(src.id, rowId, colId);
-    }
-  }
   // Write the destination.
   for (var r = 0; r < s.rowCount; r++) {
     for (var c = 0; c < s.colCount; c++) {
@@ -163,28 +141,15 @@ void applyMoveRange(PlanBuilder b, MoveRange op) {
       final out = Map<String, Object?>.of(data);
       final content = out[CellCols.content] as String?;
       if (content != null && content.startsWith('=') && hooks != null) {
-        if (op.copy) {
-          out[CellCols.content] = hooks.translate(
-            content,
-            fromSheetId: src.id,
-            fromRow: s.top + r,
-            fromCol: s.left + c,
-            toSheetId: dst.id,
-            toRow: d.top + r,
-            toCol: d.left + c,
-          );
-        } else {
-          out[CellCols.content] =
-              hooks.remap(
-                content,
-                hostSheetId: dst.id,
-                sourceSheetId: src.id,
-                source: s,
-                destSheetId: dst.id,
-                dest: d,
-              ) ??
-              (dst.id == src.id ? content : _pinSheet(content, src.id));
-        }
+        out[CellCols.content] = hooks.translate(
+          content,
+          fromSheetId: src.id,
+          fromRow: s.top + r,
+          fromCol: s.left + c,
+          toSheetId: dst.id,
+          toRow: d.top + r,
+          toCol: d.left + c,
+        );
       }
       b.writeCell(dst.id, rowId, colId, out);
     }
@@ -192,31 +157,133 @@ void applyMoveRange(PlanBuilder b, MoveRange op) {
   // Destination merges overwritten.
   if (d.bottom < dst.rows.length && d.right < dst.columns.length) {
     for (final (id, m) in dst.mergesIntersecting(d)) {
-      if (d.containsRect(m) && !(srcMerges.any((e) => e.$1 == id) && op.copy)) {
+      if (d.containsRect(m) && !srcMerges.any((e) => e.$1 == id)) {
+        b.delete(SheetsTables.mergedRange, id);
+      }
+    }
+  }
+  for (final (_, m) in srcMerges) {
+    final moved = m.shift(d.top - s.top, d.left - s.left);
+    b.insert(SheetsTables.mergedRange, b.ctx.ids.newId(), {
+      Cols.sheetId: dst.id,
+      Cols.rangeJson: _rangeJson(dst.id, moved, rowIdAt, colIdAt),
+    });
+  }
+  _moveValidation(b, src, s, dst, d, rowIdAt, colIdAt, copy: true);
+  b.addResolvedRange(ResolvedRange(src.id, s));
+  if (d.bottom < dst.rows.length && d.right < dst.columns.length) {
+    b.addResolvedRange(ResolvedRange(dst.id, d));
+  }
+}
+
+/// Moves the source rectangles of [blocks] (disjoint, on [src]) to their
+/// destination rectangles (same sizes, on [dst]) as one move (03 §11,
+/// §12.6): cells (content, note, formats), whole merges and validation travel;
+/// formulas inside moved cells and everywhere else follow references (single
+/// cells and ranges entirely inside one block) to the destination. Cells of
+/// the source not in a block (hidden rows of a compacted cut) are untouched,
+/// except where a destination covers them.
+void applyBlockMove(
+  PlanBuilder b,
+  SheetModel src,
+  SheetModel dst,
+  List<(GridRect source, GridRect dest)> blocks,
+) {
+  if (blocks.isEmpty) return;
+  if (dst.id == src.id && blocks.every((e) => e.$1 == e.$2)) return;
+  var bottom = 0;
+  var right = 0;
+  for (final (s, d) in blocks) {
+    b.checkRect(src, s);
+    if (d.top < 0 || d.left < 0) {
+      throw const PlanException(
+        'invalid_range',
+        'Destination outside the grid',
+      );
+    }
+    if (d.bottom > bottom) bottom = d.bottom;
+    if (d.right > right) right = d.right;
+  }
+  final (rowIdAt, colIdAt) = ensureGridSize(b, dst, bottom + 1, right + 1);
+  final sources = [for (final (s, _) in blocks) s];
+  final srcMerges = _mergesInside(src, sources);
+  for (final s in sources) {
+    for (final (_, m) in src.mergesIntersecting(s)) {
+      if (!s.containsRect(m)) {
+        throw const PlanException(
+          'merge_conflict',
+          "You can't move only part of a merged cell",
+        );
+      }
+    }
+  }
+  final ignore = {
+    if (dst.id == src.id)
+      for (final (id, _) in srcMerges) id,
+  };
+  for (final (_, d) in blocks) {
+    if (d.bottom < dst.rows.length && d.right < dst.columns.length) {
+      checkMergesNotSplit(dst, d, ignore: ignore);
+    }
+  }
+  // Snapshot source cells.
+  final snapshot = <(int, int), Map<String, Object?>>{};
+  for (final s in sources) {
+    for (final (r, c, _, _, cur) in b.cellsIn(src, s)) {
+      snapshot[(r, c)] = cellData(cur);
+    }
+  }
+  final hooks = b.ctx.formulas;
+  // Clear the sources; destinations are written below.
+  for (final s in sources) {
+    for (final (_, _, rowId, colId, _) in b.cellsIn(src, s).toList()) {
+      b.deleteCell(src.id, rowId, colId);
+    }
+  }
+  for (final (s, d) in blocks) {
+    for (var r = 0; r < s.rowCount; r++) {
+      for (var c = 0; c < s.colCount; c++) {
+        final rowId = rowIdAt(d.top + r);
+        final colId = colIdAt(d.left + c);
+        final data = snapshot[(s.top + r, s.left + c)];
+        if (data == null) {
+          b.deleteCell(dst.id, rowId, colId);
+          continue;
+        }
+        final out = Map<String, Object?>.of(data);
+        final content = out[CellCols.content] as String?;
+        if (content != null && content.startsWith('=') && hooks != null) {
+          // Same-sheet references are pinned to the source sheet first so
+          // they keep their target when the cell lands on another sheet.
+          final pinned = dst.id == src.id
+              ? content
+              : _pinSheet(content, src.id);
+          out[CellCols.content] =
+              remapBlocks(hooks, pinned, dst.id, src.id, dst.id, blocks) ??
+              pinned;
+        }
+        b.writeCell(dst.id, rowId, colId, out);
+      }
+    }
+  }
+  // Destination merges overwritten.
+  for (final (_, d) in blocks) {
+    if (d.bottom >= dst.rows.length || d.right >= dst.columns.length) continue;
+    for (final (id, m) in dst.mergesIntersecting(d)) {
+      if (d.containsRect(m) && !ignore.contains(id)) {
         b.delete(SheetsTables.mergedRange, id);
       }
     }
   }
   for (final (id, m) in srcMerges) {
-    final moved = GridRect(
-      m.top - s.top + d.top,
-      m.left - s.left + d.left,
-      m.bottom - s.top + d.top,
-      m.right - s.left + d.left,
+    final (s, d) = blocks.firstWhere((e) => e.$1.containsRect(m));
+    final json = _rangeJson(
+      dst.id,
+      m.shift(d.top - s.top, d.left - s.left),
+      rowIdAt,
+      colIdAt,
     );
-    final json = GridRange(
-      sheetId: dst.id,
-      r1: rowIdAt(moved.top),
-      r2: rowIdAt(moved.bottom),
-      c1: colIdAt(moved.left),
-      c2: colIdAt(moved.right),
-    ).encode();
-    if (op.copy) {
-      b.insert(SheetsTables.mergedRange, b.ctx.ids.newId(), {
-        Cols.sheetId: dst.id,
-        Cols.rangeJson: json,
-      });
-    } else if (dst.id == src.id) {
+    if (dst.id == src.id) {
       b.update(SheetsTables.mergedRange, id, {Cols.rangeJson: json});
     } else {
       b.delete(SheetsTables.mergedRange, id);
@@ -226,13 +293,94 @@ void applyMoveRange(PlanBuilder b, MoveRange op) {
       });
     }
   }
-  _moveValidation(b, src, s, dst, d, rowIdAt, colIdAt, copy: op.copy);
-  if (!op.copy && hooks != null) _remapReferences(b, src, s, dst, d);
-  b.addResolvedRange(ResolvedRange(src.id, s));
-  if (d.bottom < dst.rows.length && d.right < dst.columns.length) {
-    b.addResolvedRange(ResolvedRange(dst.id, d));
+  for (final (s, d) in blocks) {
+    _moveValidation(b, src, s, dst, d, rowIdAt, colIdAt, copy: false);
+  }
+  if (hooks != null) _remapReferences(b, src, dst, blocks);
+  for (final (s, d) in blocks) {
+    b.addResolvedRange(ResolvedRange(src.id, s));
+    if (d.bottom < dst.rows.length && d.right < dst.columns.length) {
+      b.addResolvedRange(ResolvedRange(dst.id, d));
+    }
   }
 }
+
+/// Retargets the references of [stored] (hosted on [hostSheetId]) that lie
+/// entirely inside one source rectangle of [blocks] to its destination. Each
+/// reference is mapped at most once, even when a destination overlaps
+/// another block's source. Null when nothing changes.
+String? remapBlocks(
+  FormulaHooks hooks,
+  String stored,
+  String hostSheetId,
+  String sourceSheetId,
+  String destSheetId,
+  List<(GridRect source, GridRect dest)> blocks,
+) {
+  final results = <String>[];
+  for (final (s, d) in blocks) {
+    final r = hooks.remap(
+      stored,
+      hostSheetId: hostSheetId,
+      sourceSheetId: sourceSheetId,
+      source: s,
+      destSheetId: destSheetId,
+      dest: d,
+    );
+    if (r != null && r != stored) results.add(r);
+  }
+  if (results.isEmpty) return null;
+  if (results.length == 1) return results.single;
+  final base = StoredFormula.tokens(stored);
+  final mapped = [for (final r in results) StoredFormula.tokens(r)];
+  if (mapped.any((m) => m.length != base.length)) {
+    // A reference became #REF!: token positions no longer align; map
+    // sequentially (only possible when a destination leaves the grid).
+    var out = stored;
+    for (final (s, d) in blocks) {
+      out =
+          hooks.remap(
+            out,
+            hostSheetId: hostSheetId,
+            sourceSheetId: sourceSheetId,
+            source: s,
+            destSheetId: destSheetId,
+            dest: d,
+          ) ??
+          out;
+    }
+    return out;
+  }
+  final merged = [
+    for (var i = 0; i < base.length; i++)
+      mapped
+              .map((m) => m[i])
+              .where((t) => t.encode() != base[i].encode())
+              .firstOrNull ??
+          base[i],
+  ];
+  var i = 0;
+  return StoredFormula.mapTokens(stored, (_) => merged[i++]);
+}
+
+List<(String, GridRect)> _mergesInside(SheetModel s, List<GridRect> rects) => [
+  for (final r in rects)
+    for (final (id, m) in s.mergesIntersecting(r))
+      if (r.containsRect(m)) (id, m),
+];
+
+String _rangeJson(
+  String sheetId,
+  GridRect r,
+  String Function(int) rowIdAt,
+  String Function(int) colIdAt,
+) => GridRange(
+  sheetId: sheetId,
+  r1: rowIdAt(r.top),
+  r2: rowIdAt(r.bottom),
+  c1: colIdAt(r.left),
+  c2: colIdAt(r.right),
+).encode();
 
 String _pinSheet(String stored, String sheetId) => StoredFormula.mapTokens(
   stored,
@@ -326,18 +474,19 @@ void _subtractDv(PlanBuilder b, SheetModel s, List<GridRect> rects) {
   }
 }
 
-/// Retargets formulas (outside the moved block) and id ranges fully inside the
-/// moved block to the destination (05 §5.5).
+/// Retargets formulas (outside the moved blocks) and id ranges fully inside
+/// one moved block to its destination (05 §5.5).
 void _remapReferences(
   PlanBuilder b,
   SheetModel src,
-  GridRect s,
   SheetModel dst,
-  GridRect d,
+  List<(GridRect source, GridRect dest)> blocks,
 ) {
   final hooks = b.formulas;
-  final srcRowIds = [for (var r = s.top; r <= s.bottom; r++) src.rows.idAt(r)];
-  final destRowIds = <int, String>{};
+  final srcRowIds = <String>{
+    for (final (s, _) in blocks)
+      for (var r = s.top; r <= s.bottom; r++) src.rows.idAt(r),
+  };
   for (final sheet in b.model.sheets) {
     for (final cell in sheet.cells.all) {
       final content = cell.content;
@@ -345,35 +494,26 @@ void _remapReferences(
       // Cells written by this plan were handled above.
       if (b.touched(SheetsTables.cell, cell.id)) continue;
       if (!StoredFormula.mayReference(content, srcRowIds)) continue;
-      final r = hooks.remap(
-        content,
-        hostSheetId: sheet.id,
-        sourceSheetId: src.id,
-        source: s,
-        destSheetId: dst.id,
-        dest: d,
-      );
+      final r = remapBlocks(hooks, content, sheet.id, src.id, dst.id, blocks);
       if (r != null && r != content) {
         b.update(SheetsTables.cell, cell.id, {CellCols.content: r});
       }
     }
   }
-  // Id ranges fully inside the source block (named ranges, CF, chart ranges).
+  // Id ranges fully inside a source block (named ranges, CF, chart ranges).
   GridRange? remapRange(GridRange g) {
     if (g.sheetId != src.id) return null;
     final rr = src.resolve(g);
-    if (rr == null ||
-        !s.containsRect(rr.rect) ||
-        rr.wholeRows ||
-        rr.wholeColumns) {
-      return null;
+    if (rr == null || rr.wholeRows || rr.wholeColumns) return null;
+    for (final (s, d) in blocks) {
+      if (!s.containsRect(rr.rect)) continue;
+      final m = rr.rect.shift(d.top - s.top, d.left - s.left);
+      if (m.bottom >= dst.rows.length || m.right >= dst.columns.length) {
+        return null;
+      }
+      return dst.gridRange(m);
     }
-    final m = rr.rect.shift(d.top - s.top, d.left - s.left);
-    if (m.bottom >= dst.rows.length || m.right >= dst.columns.length) {
-      return null;
-    }
-    destRowIds[m.top] = dst.rows.idAt(m.top);
-    return dst.gridRange(m);
+    return null;
   }
 
   for (final n in b.model.namedRanges) {

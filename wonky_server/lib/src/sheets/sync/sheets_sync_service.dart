@@ -14,7 +14,12 @@ import '../../platform/cluster/cluster_bus.dart';
 abstract final class SheetsSyncService {
   static String mergedChannel(UuidValue space) => 'sheets:merged:${space.uuid}';
 
-  static final Map<String, Hlc> _lastHlc = {};
+  /// High-water marks per sync stream (a device that was offline merges
+  /// changes with *older* HLCs than other devices, so the mark must not be
+  /// shared across streams).
+  static final Expando<Map<String, Hlc>> _lastHlc = Expando(
+    'sheetsLastMergedHlc',
+  );
 
   /// When true (tests), merge processing is awaited inside the sync loop.
   static bool processInline = false;
@@ -32,22 +37,32 @@ abstract final class SheetsSyncService {
     onMergeSuccess: (space, hlc) => onMerged(session, space, hlc),
   );
 
-  /// Called for every space after each sync round; only reacts when the
-  /// space's high-water mark moved.
+  /// Called for every space after each sync round of a stream; only reacts
+  /// when the space's high-water mark moved on that stream.
   static Future<void> onMerged(
     Session session,
     UuidValue space,
     Hlc hlc,
   ) async {
+    final marks = _lastHlc[session] ??= {};
     final key = space.uuid;
-    final last = _lastHlc[key];
+    final last = marks[key];
     if (last != null && hlc.compareTo(last) <= 0) return;
-    _lastHlc[key] = hlc;
+    marks[key] = hlc;
     await ClusterBus.post(
       session,
       mergedChannel(space),
       SheetsMergedSignal(spaceUuid: space, hlc: hlc.toString()),
     );
+    await _process(session, space);
+  }
+
+  /// Processes change log rows that synced before the spreadsheet was
+  /// registered in the drive (`drive.registerSpreadsheet`).
+  static Future<void> afterRegistration(Session session, UuidValue space) =>
+      _process(session, space);
+
+  static Future<void> _process(Session session, UuidValue space) async {
     if (processInline) {
       await ChangeLogConsumer.processSpace(session, space);
       return;

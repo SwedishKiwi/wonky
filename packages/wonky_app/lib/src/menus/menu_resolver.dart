@@ -88,9 +88,9 @@ class MenuResolver {
     final driveOnly =
         command.keyScope == KeyScope.drive &&
         services.activeDocument.value != null;
-    final shortcut = args.isEmpty && !driveOnly
-        ? services.keymap.labelsOf(commandId)
-        : null;
+    final shortcut = driveOnly
+        ? null
+        : services.keymap.labelsFor(commandId, args);
     void run() {
       services.noteRecentCommand(commandId);
       services.dispatcher

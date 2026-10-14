@@ -59,6 +59,11 @@ abstract interface class WorkbookReader implements CurrentRowReader {
   SyncRecord? record(String table, String id);
 }
 
+/// A previewed alternating-colors contribution at a cell of a sheet:
+/// `(fillColor, headerBold)`, or null to use the stored bandings.
+typedef BandingPreview =
+    (String?, bool)? Function(SheetModel sheet, int row, int col);
+
 /// The in-memory workbook (02 §6): built from synced rows, patched by local
 /// plans and remote merges, and read by the grid, the formula engine, MCP
 /// tools, exporters and version history.
@@ -187,7 +192,17 @@ final class WorkbookModel implements WorkbookReader {
   }
 
   @override
-  SpreadsheetTheme get theme => SpreadsheetTheme.parse(spreadsheet.themeJson);
+  SpreadsheetTheme get theme =>
+      previewTheme ?? SpreadsheetTheme.parse(spreadsheet.themeJson);
+
+  /// A theme previewed by the theme panel (06 §13.3): rendering uses it
+  /// instead of `themeJson` while set. Never persisted.
+  SpreadsheetTheme? previewTheme;
+
+  /// Alternating colors previewed by the banding panel (06 §14.2): when set
+  /// and it returns non-null for a cell, that contribution replaces the
+  /// stored bandings' one. Never persisted.
+  BandingPreview? bandingPreview;
 
   /// Records of a generic table.
   Iterable<GenericRecord> otherRecords(String table) =>
@@ -446,6 +461,9 @@ final class WorkbookModel implements WorkbookReader {
         final existing = recs[id];
         final next = merge(existing) as DimensionRecord;
         recs[id] = next;
+        if (existing == null) {
+          s.forgetRemoved(isRow ? Dimension.rows : Dimension.columns, id);
+        }
         _ruleOwner['$table:$id'] = ownerId;
         (isRow ? s.rows : s.columns).upsert(
           id,
@@ -491,13 +509,26 @@ final class WorkbookModel implements WorkbookReader {
         final ownerId = _ownerOf(table, id, columns);
         if (ownerId == null) return;
         final s = _sheetFor(ownerId);
+        final prevOwner = _ruleOwner['$table:$id'];
         _ruleOwner['$table:$id'] = ownerId;
         if (table == SheetsTables.basicFilter) {
           final existing = s.basicFilter?.id == id ? s.basicFilter : null;
           s.basicFilter = merge(existing) as FilterRecord;
         } else {
           final map = _childMap(s, table)!;
-          map[id] = merge(map[id]);
+          var existing = map[id];
+          // A row whose sheetId changed (an object moved to a chart sheet,
+          // 08 §11) moves to its new owner with all its columns.
+          if (existing == null && prevOwner != null && prevOwner != ownerId) {
+            final old = _sheets[prevOwner];
+            if (old != null) {
+              existing = _childMap(old, table)!.remove(id);
+              final k = _kindOf(table);
+              old.invalidateRules(k);
+              b.rules(prevOwner, k, id);
+            }
+          }
+          map[id] = merge(existing);
         }
         final kind = _kindOf(table);
         s.invalidateRules(kind);
@@ -531,7 +562,14 @@ final class WorkbookModel implements WorkbookReader {
         if (ownerId == null) return;
         final s = _sheets[ownerId]!;
         final isRow = table == SheetsTables.sheetRow;
-        (isRow ? s.rowRecords : s.columnRecords).remove(id);
+        final gone = (isRow ? s.rowRecords : s.columnRecords).remove(id);
+        if (gone != null) {
+          s.rememberRemoved(
+            isRow ? Dimension.rows : Dimension.columns,
+            id,
+            gone.sortKey,
+          );
+        }
         (isRow ? s.rows : s.columns).remove(id);
         // Cascade: cells of the row/column.
         final removed = isRow

@@ -275,35 +275,5 @@ final class NumberFormatter {
   /// Display symbol of an ISO currency code (`EUR` → `€`); the code itself
   /// when no common symbol exists.
   static String currencySymbolFor(String code) =>
-      _currencySymbols[code.toUpperCase()] ?? code;
-
-  static const Map<String, String> _currencySymbols = {
-    'USD': r'$',
-    'EUR': '€',
-    'GBP': '£',
-    'JPY': '¥',
-    'CNY': '¥',
-    'INR': '₹',
-    'KRW': '₩', //
-    'BRL': r'R$',
-    'RUB': '₽',
-    'CHF': 'CHF',
-    'SEK': 'kr',
-    'NOK': 'kr',
-    'DKK': 'kr', //
-    'PLN': 'zł',
-    'CZK': 'Kč',
-    'TRY': '₺',
-    'AUD': r'A$',
-    'CAD': r'CA$',
-    'NZD': r'NZ$', //
-    'MXN': r'MX$',
-    'ZAR': 'R',
-    'ILS': '₪',
-    'HUF': 'Ft',
-    'UAH': '₴',
-    'VND': '₫',
-    'THB': '฿', //
-    'PHP': '₱', 'NGN': '₦', 'HKD': r'HK$', 'SGD': r'S$', 'TWD': r'NT$',
-  };
+      NumberFormatPresets.currencySymbolFor(code);
 }

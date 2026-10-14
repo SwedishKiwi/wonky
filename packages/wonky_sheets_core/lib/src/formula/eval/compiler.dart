@@ -667,6 +667,8 @@ final class FormulaCompiler {
 
   /// Named range / named function value resolution (05 §7.6).
   static FValue resolveName(EvalContext ctx, String upper, String display) {
+    final bound = ctx.bindings?[upper];
+    if (bound != null) return bound;
     ctx.deps.names.add(upper);
     final nr = ctx.host.namedRange(upper);
     if (nr != null) {

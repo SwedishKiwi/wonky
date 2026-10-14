@@ -5,6 +5,7 @@ import 'package:wonky_core/wonky_core.dart'
     show ChangesTools, CommentsTools, McpToolDefinition, Role, VersionsTools;
 import 'package:wonky_write_core/wonky_write_core.dart';
 
+import '../../sheets/mcp/sheets_changes.dart';
 import '../../write/mcp/headless_editor.dart';
 import '../../write/ot/document_store.dart';
 import '../comments/comment_service.dart';
@@ -457,9 +458,13 @@ abstract final class CollabToolHandlers {
   // -------------------------------------------------------------- changes
 
   static Future<ToolResult> revert(ToolContext ctx, ToolArgs a) async {
+    final id = a.requireString('change_id');
+    // Spreadsheet changes (Sheets 12 §2.5) first, then Write changes.
+    final sheets = await SheetsChanges.tryRevert(ctx, id);
+    if (sheets != null) return ToolResult(sheets, text: '${sheets['summary']}');
     final r = await HeadlessDocumentEditor.revert(
       ctx,
-      a.requireString('change_id'),
+      id,
     );
     return ToolResult(r, text: '${r['summary']}');
   }
