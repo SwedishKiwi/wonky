@@ -1,0 +1,1034 @@
+# Slides 02 · Data Model (Offline-First Sync)
+
+**Authoritative.** This spec defines how a Wonky Slides presentation ("deck") is stored, synced,
+loaded into memory, mutated and undone. Feature specs (03–11) add fields and tables only through
+§14 *Additions defined in feature specs*; synced-schema changes are lock-step (suite
+[01 §7](../01-architecture.md)), so they are batched into the M9/M10/M11 schema releases
+([12-implementation-plan.md](12-implementation-plan.md) §1).
+
+Read first: suite [12-offline-and-sync.md](../12-offline-and-sync.md) §2 (engine rules) and
+Sheets [02-data-model.md](../wonky_sheets/02-data-model.md) — Slides deliberately mirrors the
+Sheets design (decision D6): **one deck = one space**, field-level LWW, deterministic ids where two
+devices may create "the same" row, fractional `sortKey`s, a synced change log, a mutation planner
+shared by client and server, and an undo domain built on the same per-column skip rule.
+
+---
+
+## 1. Modeling principles
+
+| # | Principle | Why |
+|---|-----------|-----|
+| P1 | **One deck = one space**; `Deck.id` = space UUID = the deck's drive item UUID. | Space is the unit of sharing and replication; the deck URL (`/slides/p/<uuid>`) works the moment a deck is created offline. |
+| P2 | **Slides, groups, elements, table rows/columns, builds and code states are rows with stable UUIDs**, ordered by **fractional `sortKey`s** (`FractionalIndex`, ties by `id`). | Insert/move/delete are O(1) writes and merge cleanly with concurrent edits; nothing is renumbered. |
+| P3 | **Properties users change independently are separate columns** (frame `x/y/width/height`, `rotation`, `fillJson`, `strokeJson`, `locked`, `hidden`, `text`, …). | Field-level LWW: Anna moving a shape while Bo recolors it keeps both changes. |
+| P4 | **Coupled values are written together, always.** Columns that only make sense as a set (`groupId` + `sortKey` of a slide; `x` + `y` on move; `x/y/width/height` on resize) are written in the same transaction by every writer that changes any of them. | Two writers that both name the same columns produce one consistent winner per HLC (each column picks the same newest write), so coupled values never tear. |
+| P5 | **Rich text is one column per text body** (`SlideElement.text`, `SlideTableCell.text`, `Slide.notes`) holding a Quill Delta (§4). Concurrent edits of the *same* body resolve LWW; a **soft lock** (§4.4) prevents most such conflicts. | Simple, offline-safe, small rows. Alternatives are an open question (§4.5). |
+| P6 | **Inheritance by null.** A nullable style/geometry column that is `null` inherits (slide ▸ layout ▸ master ▸ theme). | Re-theming and layout edits propagate without rewriting slides. |
+| P7 | **Every update names its columns** (`columnValues:`), enforced by the same repository lint test as Sheets (toptap pattern). | Otherwise the engine marks every field as touched and clobbers concurrent edits. |
+| P8 | **Derived data is never synced**: resolved styles, auto-fit scale, connector routes, slide numbers, thumbnails, the animation timeline. | Sync volume proportional to user edits; every renderer (editor, presenter, PDF, server) derives the same result from the same rows. |
+| P9 | **A synced `DeckChangeLog` row per undo transaction.** | Substitutes for missing per-change server hooks (suite 12 §4 U7): activity, versions, comment orphaning, MCP revert, linked-chart bookkeeping. |
+| P10 | **No cross-space references by FK.** References outside the deck (drive items, uploaded files, spreadsheets, users) are plain `UuidValue`/`String` columns. | Engine rule (suite 12 §2.1). |
+
+---
+
+## 2. Identifiers, units and encodings
+
+### 2.1 Ids (`wonky_sync_models/lib/src/ids/slides_ids.dart`, pure Dart)
+
+Fresh ids are UUIDv7 from the injected `IdGenerator` (deterministic in tests, suite 15 §4).
+Deterministic ids are UUIDv5 over fixed namespaces (constants, **never change**), exported as
+`SlidesIds` next to `SheetsIds`:
+
+| Helper | Name string | Used for | Why deterministic |
+|--------|-------------|----------|-------------------|
+| `SlidesIds.tableCellId(elementId, rowAxisId, colAxisId)` | `cell:<el>:<row>:<col>` | `SlideTableCell.id` | Two offline users typing into the same table cell write one row (per-column merge), like Sheets cells (S3). |
+| `SlidesIds.placeholderInstanceId(slideId, layoutPlaceholderId)` | `ph:<slide>:<layoutEl>` | The slide's instance of a layout placeholder (`SlideElement`) | Applying the same layout to the same slide on two devices yields the same placeholder rows (no duplicate titles). |
+| `SlidesIds.themeCopyId(deckId, sourceKey)` | `theme:<deck>:<sourceKey>` | `DeckTheme.id` when a built-in or library theme is copied into a deck (`sourceKey` = `builtin:<key>@<version>` or `deck:<itemUuid>:<themeId>`) | Two users applying the same theme offline end up with one theme copy. |
+| `SlidesIds.themePartId(themeId, partKey)` | `part:<theme>:<partKey>` | `SlideMaster`, `SlideLayout` and master/layout `SlideElement` ids inside a copied theme (`partKey` = the source row's id or built-in key, e.g. `master:default`, `layout:titleBody`, `el:titleBody/title`) | Same as above: the whole copied tree merges. |
+| `SlidesIds.chartLinkId(elementId)` | `chartLink:<el>` | `ChartLink.id` (max one per chart element) | One link row per chart even if two devices link it. |
+
+All UUID strings are normalized to lower case before hashing. Inside JSON values, ids are written
+in the 22-char base-62 form (`Base62Uuid`, as Sheets) to keep JSON small.
+
+### 2.2 Slide units and geometry
+
+- **Slide units (su)**: one unit = one point at the deck's design size. A deck's size is
+  `Deck.width × Deck.height` su; the default 16:9 deck is **1920 × 1080 su** (Keynote's
+  convention). Every frame, font size, stroke width and inset is in su. The editor maps
+  su → logical pixels by `zoom × (viewportFit)`; PDF pages are `width/2 × height/2` pt (16:9 →
+  960 × 540 pt = 13.333 × 7.5 in, PowerPoint's widescreen page).
+- **Frame**: `x, y` = top-left of the **unrotated** box, `width, height` > 0; `rotation` in
+  degrees clockwise about the box center (normalized to `[0, 360)`); `flipH`/`flipV` mirror the
+  content inside the box (applied before rotation).
+- **Colors** (`ColorRef`, everywhere): `"#RRGGBB"`, `"#RRGGBBAA"`, `"theme:<key>"` (theme color,
+  [05 §2.2](05-themes-layouts-masters.md): `bg1`, `text1`, `bg2`, `text2`, `accent1`…`accent6`,
+  `link`), optionally with a modifier `"theme:accent1/lum:+0.2"` (lighten/darken in OKLCH,
+  −1…+1) or `"theme:accent1/alpha:0.5"`; `"transparent"`; `null` = inherit.
+- **Font refs**: `"@heading"`, `"@body"`, `"@mono"` (theme font roles) or a family name from the
+  bundled registry ([05 §3](05-themes-layouts-masters.md)).
+- **Lengths in JSON** are plain numbers in su unless a field says otherwise (percent fields are
+  `0..1` fractions).
+
+### 2.3 Fractional indexes
+
+`FractionalIndex.between/before/after/nBetween` and `FractionalIndex.compare(keyA, idA, keyB,
+idB)` from `wonky_sync_models` (Sheets 02 §2). Key spaces in Slides:
+
+| Key | Space (siblings compared) |
+|-----|---------------------------|
+| `SlideGroup.sortKey` and `Slide.sortKey` of **ungrouped** slides | One shared **top-level** key space per deck (§3.4). |
+| `Slide.sortKey` of a **grouped** slide | The key space of its group (`groupId`). |
+| `SlideElement.zKey` | Siblings with the same owner (slide/layout/master) and the same `parent` (element group). |
+| `SlideElement.readingKey` | Same siblings as `zKey` (reading order override). |
+| `SlideTableAxis.sortKey` | Axes of one table and one dimension. |
+| `SlideBuild.sortKey` | Builds of one slide. |
+| `CodeState.sortKey` | States of one code element. |
+| `SlideMaster.sortKey`, `SlideLayout.sortKey` | Masters of a theme / layouts of a master. |
+
+---
+
+## 3. Synced tables
+
+All synced models live in `packages/wonky_sync_models/lib/src/models/slides/` (`database: sync`)
+next to the Sheets models, so server, generated client and apps share them. Every table gets the
+injected `id: UuidValue` and `spaceId`; non-nullable FKs are `deferred`. Field lists omit
+`id`/`spaceId`; every model has `createdAt: DateTime, defaultModel=now` unless noted. Class names
+avoid Flutter clashes (`SlideElement`, not `Element`; `SlideBuild`, not `Build`).
+
+### 3.1 Deck
+
+```yaml
+### A presentation. id == space UUID == drive item UUID (P1).
+class: Deck
+table: deck
+database: sync
+fields:
+  id: UuidValue, defaultModel=random_v7
+  title: String                          # mirrored to DriveItem.name by the server (both ways)
+  width: double                          # su; 1920 for 16:9
+  height: double                         # su; 1080
+  sizePreset: SlideSizePreset            # widescreen16x9, standard4x3, wide16x10, square, portrait9x16, a4, letter, custom
+  themeId: UuidValue?                    # default DeckTheme for new slides (same space; plain UUID, see §3.2)
+  appearance: DeckAppearance             # light, dark — which color scheme of the themes is used (05 §2.4)
+  language: String?                      # BCP-47 for spelling / hyphenation; null = user's locale
+  showSlideNumbers: bool                 # master slide-number placeholders visible
+  hideNumberOnTitle: bool                # no number on slides whose layout key is `title`
+  firstSlideNumber: int                  # default 1
+  footerText: String?                    # master footer placeholders' text; null = hidden
+  defaultsJson: String?                  # {transition, buildDefaults, codeFontSize, …} — keys owned by 06/07 (§14)
+  createdBy: UuidValue                   # user UUID
+  createdAt: DateTime, defaultModel=now
+```
+
+`themeId` is a plain UUID (not an FK) so that deleting an unused theme never cascades into the
+deck row. A missing `themeId` resolves to the theme with the smallest `id` (§10).
+
+### 3.2 Themes, masters, layouts
+
+```yaml
+### A theme copied into the deck (05). A deck has ≥ 1 theme; slides pasted with
+### "keep source formatting" bring their own.
+class: DeckTheme
+table: deck_theme
+database: sync
+fields:
+  id: UuidValue, defaultModel=random_v7      # SlidesIds.themeCopyId for copies (§2.1)
+  deck: Deck?, relation(onDelete=Cascade, deferred)
+  name: String
+  sourceKey: String?                         # provenance: builtin:<key>@<v> | deck:<itemUuid>:<themeId> | null (created here)
+  colorsJson: String                         # {light:{bg1,text1,…,accent1-6,link}, dark:{…}} (05 §2.2)
+  fontsJson: String                          # {heading, body, mono, sizes?} (05 §2.3)
+  textStylesJson: String                     # {title, subtitle, heading, body, body2, caption, quote, attribution, bigNumber, label, code} (05 §2.5)
+  backgroundJson: String                     # default background (05 §2.6)
+  shapeStyleJson: String?                    # default fill/stroke/text of new shapes, lines, text boxes (05 §2.7)
+  tableStyleJson: String?                    # default table style (05 §2.8)
+  codeStyleJson: String?                     # code palettes light/dark + chrome (05 §2.9; behavior 07)
+  chartStyleJson: String?                    # series palette order, fonts, gridlines (05 §2.10; behavior 08)
+  sortKey: String                            # order in the Themes panel
+
+class: SlideMaster
+table: slide_master
+database: sync
+fields:
+  id: UuidValue, defaultModel=random_v7      # SlidesIds.themePartId for copies
+  theme: DeckTheme?, relation(onDelete=Cascade, deferred)
+  name: String
+  sortKey: String
+  backgroundJson: String?                    # null = theme background
+
+class: SlideLayout
+table: slide_layout
+database: sync
+fields:
+  id: UuidValue, defaultModel=random_v7      # SlidesIds.themePartId for copies
+  master: SlideMaster?, relation(onDelete=Cascade, deferred)
+  name: String                               # "Title and content"
+  key: String?                               # built-in layout key (05 §4) — used to map layouts between themes
+  sortKey: String
+  backgroundJson: String?                    # null = master background
+  hideMasterElements: bool                   # don't draw the master's non-placeholder elements
+  hidden: bool                               # not offered in the layout picker
+```
+
+Master and layout content (placeholders, logos, decorations) are `SlideElement` rows owned by the
+master or layout (§3.5).
+
+### 3.3 Slides
+
+```yaml
+class: Slide
+table: slide
+database: sync
+fields:
+  id: UuidValue, defaultModel=random_v7
+  deck: Deck?, relation(onDelete=Cascade, deferred)
+  ### Position: always written together with groupId (P4, §3.4).
+  sortKey: String
+  groupId: UuidValue?                        # SlideGroup id (plain UUID, no FK — §3.4); null = top level
+  layoutId: UuidValue?                       # SlideLayout id (plain UUID); null/missing = fallback (§10)
+  backgroundJson: String?                    # null = layout ▸ master ▸ theme
+  skipped: bool                              # not shown when presenting / exported unless included
+  notes: String?                             # speaker notes, Delta (§4.3); null = empty
+  transitionJson: String?                    # transition INTO this slide; schema in 06 (§14); null = deck default
+  hideMasterElements: bool?                  # null = layout's setting
+  createdAt: DateTime, defaultModel=now
+indexes:
+  slide_order_idx:
+    fields: deckId, sortKey
+```
+
+### 3.4 Slide groups and ordering
+
+```yaml
+class: SlideGroup
+table: slide_group
+database: sync
+fields:
+  id: UuidValue, defaultModel=random_v7
+  deck: Deck?, relation(onDelete=Cascade, deferred)
+  title: String                              # "Intro"; 1–100 chars
+  sortKey: String                            # top-level key space (shared with ungrouped slides)
+  parentId: UuidValue?                       # reserved for nested groups (P2, open question in 04 §5.12); always null in v1
+  color: String?                             # palette token: gray, red, orange, amber, green, teal, blue, violet, pink (04 §5.4)
+  skipped: bool                              # skips all its slides when presenting/exporting
+  createdAt: DateTime, defaultModel=now
+indexes:
+  slide_group_order_idx:
+    fields: deckId, sortKey
+```
+
+**Order model (two levels).** The deck's *presentation order* is a tree flattened depth-first:
+
+1. **Top-level items** = all `SlideGroup`s with `parentId == null` plus all `Slide`s whose
+   `groupId` is null **or points at a group that doesn't exist** (orphans, §10). They are sorted
+   by `(sortKey, id)` in one key space.
+2. A group expands in place to its slides (`Slide.groupId == group.id`) sorted by
+   `(sortKey, id)` in the group's own key space.
+
+Rules:
+
+- A slide's `groupId` and `sortKey` are **always written together** (P4): add to group, remove from
+  group, move inside a group and move to the top level all write both columns.
+- Moving a group writes only `SlideGroup.sortKey` (its slides keep their in-group keys) — one row
+  per moved group regardless of its slide count.
+- **Empty groups are allowed** (they render as a header with a drop zone, 04 §5) and are never
+  deleted by maintenance.
+- **Group skip** is effective skip: a slide is skipped when `slide.skipped || group.skipped`.
+  Toggling a group's skip does not rewrite its slides.
+- Nested groups (P2) use `parentId` with the same rule one level deeper; v1 writers never set it,
+  v1 readers treat a non-null `parentId` whose parent exists as nesting and render it as a
+  top-level group otherwise.
+
+### 3.5 Elements
+
+```yaml
+### Any object on a slide, layout or master. Exactly one owner FK is set.
+class: SlideElement
+table: slide_element
+database: sync
+fields:
+  id: UuidValue, defaultModel=random_v7
+  slide: Slide?, relation(onDelete=Cascade, deferred)
+  layout: SlideLayout?, relation(onDelete=Cascade, deferred)
+  master: SlideMaster?, relation(onDelete=Cascade, deferred)
+  ### Element group this element belongs to (kind = group). Cascade: deleting a group deletes its children.
+  parent: SlideElement?, relation(name=slide_element_children, onDelete=Cascade, deferred)
+  kind: SlideElementKind                     # text, shape, line, image, table, icon, code, chart, group
+  name: String?                              # shown in the Layers panel / animation pane; null = generated ("Shape 3")
+  ### Frame (§2.2). Nullable only on placeholder instances (null = inherit from placeholderOf).
+  x: double?
+  y: double?
+  width: double?
+  height: double?
+  rotation: double?                          # null = 0 (placeholders: inherit)
+  flipH: bool, default=false
+  flipV: bool, default=false
+  zKey: String                               # stacking order among siblings (§2.3)
+  readingKey: String?                        # reading order override (03 §17); null = automatic
+  locked: bool, default=false                # "Lock" — not selectable by click/marquee, can't move (03 §8.2)
+  hidden: bool, default=false                # not drawn (still in Layers panel); hidden in present/PDF
+  ### Placeholders (05 §5)
+  placeholderType: PlaceholderType?          # on layouts/masters: defines a placeholder; on slides: instance
+  placeholderOf: UuidValue?                  # instance → the layout (or master) placeholder element it inherits from
+  ### Magic Move / Smart Animate (06 §8.2): elements with equal matchKey on consecutive slides morph.
+  matchKey: String                           # 22-char key generated on create; kept on slide duplicate and cross-slide paste, regenerated on same-slide duplicate
+  ### Content and style (P3: separate columns)
+  text: String?                              # text/shape/placeholder: rich text Delta (§4); code: null (states are CodeState rows, 07 §3.2)
+  textStyleJson: String?                     # box-level text properties (§5.1)
+  fillJson: String?                          # Fill (§5.2); null = inherit/none per kind
+  strokeJson: String?                        # Stroke (§5.3)
+  effectsJson: String?                       # shadow, glow, blur, reflection (§5.4)
+  opacity: double?                           # 0..1; null = 1
+  dataJson: String?                          # kind-specific payload (§6), always with "v"
+  linkJson: String?                          # click action when presenting: {url} | {slideId} | {action: next|previous|first|last|end} (03 §6.9)
+  altText: String?
+  decorative: bool, default=false            # excluded from alt-text checks and screen readers
+  createdAt: DateTime, defaultModel=now
+indexes:
+  slide_element_slide_idx:
+    fields: slideId, zKey
+  slide_element_layout_idx:
+    fields: layoutId
+  slide_element_master_idx:
+    fields: masterId
+  slide_element_parent_idx:
+    fields: parentId
+```
+
+Owner and parent rules:
+
+- Exactly one of `slide`, `layout`, `master` is set; a child of an element group has the same
+  owner as the group.
+- Children's frames are in the **group's child space** (§6.9), so moving, rotating or resizing a
+  group writes one row.
+- `placeholderOf` points at a placeholder element of the slide's layout (or, for layout
+  placeholders that refine a master placeholder, at the master's). It is a plain UUID: switching a
+  slide's layout re-points instances in the same plan (05 §5.4); a dangling reference makes the
+  instance a regular element in place (§10).
+
+### 3.6 Tables
+
+Table structure and cells are rows (P2/P3), mirroring Sheets' rows/columns/cells so concurrent
+row insertion, column resizing and typing into different cells all merge.
+
+```yaml
+class: SlideTableAxis
+table: slide_table_axis
+database: sync
+fields:
+  id: UuidValue, defaultModel=random_v7
+  element: SlideElement?, relation(onDelete=Cascade, deferred)   # kind = table
+  dimension: TableDimension                  # row, column
+  sortKey: String
+  size: double?                              # su; row: min height (rows grow to fit text); null = even split
+  header: bool, default=false                # header row / first column styling (05 §2.8)
+
+class: SlideTableCell                        # id = SlidesIds.tableCellId(elementId, rowId, colId)
+table: slide_table_cell
+database: sync
+fields:
+  id: UuidValue, defaultModel=random_v7      # always overwritten with the deterministic id
+  element: SlideElement?, relation(onDelete=Cascade, deferred)
+  row: SlideTableAxis?, relation(name=table_row_cells, onDelete=Cascade, deferred)
+  column: SlideTableAxis?, relation(name=table_column_cells, onDelete=Cascade, deferred)
+  text: String?                              # Delta (§4)
+  fill: String?                              # ColorRef
+  borderTop: String?                         # "<width>|<style>|<ColorRef>" style ∈ solid, dashed, dotted, none
+  borderRight: String?
+  borderBottom: String?
+  borderLeft: String?
+  vAlign: String?                            # top, middle, bottom
+  padding: String?                           # "t,r,b,l" su
+  rowSpan: int?                              # merge origin only; null = 1
+  colSpan: int?
+indexes:
+  slide_table_cell_element_idx:
+    fields: elementId
+```
+
+A cell row exists iff at least one field is non-null (as Sheets cells). Merges are stored on the
+top-left cell (`rowSpan/colSpan`); overlapping merges after a concurrent merge resolve by the
+maintenance rule in §10.
+
+### 3.7 Builds (animations)
+
+```yaml
+### One animation step on a slide (behavior and effect catalog: 06).
+class: SlideBuild
+table: slide_build
+database: sync
+fields:
+  id: UuidValue, defaultModel=random_v7
+  slide: Slide?, relation(onDelete=Cascade, deferred)
+  element: SlideElement?, relation(onDelete=Cascade, deferred)   # always set (nullable only by the FK convention)
+  kind: BuildKind                            # buildIn, buildOut, emphasis, motion (06 §2)
+  effect: String                             # e.g. "fade", "moveIn", "typewriter", "codeHighlight" (catalog: 06)
+  sortKey: String                            # order on the slide
+  trigger: BuildTrigger                      # onClick, withPrevious, afterPrevious
+  delayMs: int, default=0
+  durationMs: int                            # effect default from 06
+  easing: String                             # easing expression (06 §4.3): "easeOut", "cubic(0.2,0,0,1)", "spring(0.5,0.25)"
+  optionsJson: String?                       # direction, deliver by (paragraph/word/char/series/…), motion path, code step refs … (06/07/08)
+  createdAt: DateTime, defaultModel=now
+indexes:
+  slide_build_slide_idx:
+    fields: slideId, sortKey
+```
+
+### 3.8 Code states
+
+```yaml
+### One version of a code element's source, for type-in / morph between states (behavior: 07).
+### Every state, including the first, is a row; a code element has ≥ 1 state (07 §3.2).
+class: CodeState
+table: code_state
+database: sync
+fields:
+  id: UuidValue, defaultModel=random_v7
+  element: SlideElement?, relation(onDelete=Cascade, deferred)   # kind = code
+  sortKey: String
+  label: String?                             # "Add caching"
+  code: String                               # full source of this state (whole-value LWW)
+  language: String?                          # null = the element's language (07 A-07-2)
+  title: String?                             # null = the element's title
+  highlight: String?                         # line-highlight steps for this state, e.g. "1-3 | 5" (07 §4.1)
+  annotationsJson: String?                   # per-step callouts (07 §4.4)
+  transitionJson: String?                    # how this state is reached from the previous: mode type | morph | instant + options (07 §5.3)
+  createdAt: DateTime, defaultModel=now
+indexes:
+  code_state_element_idx:
+    fields: elementId, sortKey
+```
+
+### 3.9 Linked charts
+
+```yaml
+### The link of a chart element to a chart in a Wonky Sheets spreadsheet (behavior: 08).
+class: ChartLink                             # id = SlidesIds.chartLinkId(elementId)
+table: chart_link
+database: sync
+fields:
+  id: UuidValue, defaultModel=random_v7
+  element: SlideElement?, relation(onDelete=Cascade, deferred)   # kind = chart
+  spreadsheetItemUuid: UuidValue             # drive item (cross-space: plain UUID)
+  chartObjectId: UuidValue                   # Sheets EmbeddedObject id
+  sourceSpecJson: String                     # the Sheets ChartSpec at last update
+  dataSnapshotJson: String                   # resolved series/categories at last update (renders offline / without access)
+  sourceVersion: String                      # opaque version of the source at last update (08)
+  updatedAt: DateTime                        # when the snapshot was taken
+  updatedBy: UuidValue
+  autoUpdate: bool, default=false            # "Update automatically" (08)
+```
+
+The chart element's own `dataJson` holds the **deck-side style override** (theme palette, fonts,
+3D camera) and is rendered over the link's snapshot (08). *Unlink* deletes the `ChartLink` row and
+moves the snapshot into the element's `dataJson` as a **static** chart (`source: static`, 08 §7).
+
+### 3.10 Change log
+
+```yaml
+### One row per undo transaction, written in the same transaction as the change (P9).
+class: DeckChangeLog
+table: deck_change_log
+database: sync
+fields:
+  id: UuidValue, defaultModel=random_v7
+  deck: Deck?, relation(onDelete=Cascade, deferred)
+  userId: UuidValue
+  actorKind: ActorKind                       # user, mcp, ai, script (shared enum)
+  sessionId: String
+  label: String                              # undo label ("Move 3 slides", "Typing")
+  summaryJson: String                        # §3.10.1
+  detailJson: String?                        # text before/after for ≤ 20 text bodies of ≤ 2,000 chars each; else null
+  at: DateTime
+  createdAt: DateTime, defaultModel=now
+indexes:
+  deck_change_log_at_idx:
+    fields: deckId, at
+```
+
+#### 3.10.1 `summaryJson`
+
+```jsonc
+{
+  "v": 1,
+  "kinds": ["text", "frame", "style", "structure", "order", "theme", "build", "code", "chart", "notes", "deck"],
+  "slides": ["<id>", …],                      // slides touched (≤ 500; then "slidesOverflow": true)
+  "elements": ["<id>", …],                    // elements touched (≤ 1,000; then "elementsOverflow": true)
+  "deleted": { "slides": [], "elements": [], "groups": [], "themes": [] },   // comment orphaning (09 §3.2)
+  "revived": { "slides": [], "elements": [], "groups": [], "themes": [] },
+  "chartLinks": ["<elementId>", …]            // links created/updated/removed (08)
+}
+```
+
+Server consumption after `onMergeSuccess` (§9): `DriveItem.modifiedAt`/search text (slide titles,
+text, notes; throttled 10 s), activity events, comment orphaning/revival, version-state
+bookkeeping (09 §4), headless deck cache invalidation (11), linked-chart statistics (08). Pruned
+after 30 days.
+
+### 3.11 Enums (`wonky_sync_models/lib/src/models/slides/enums/`)
+
+| Enum | Values |
+|------|--------|
+| `SlideSizePreset` | `widescreen16x9`, `standard4x3`, `wide16x10`, `square`, `portrait9x16`, `a4`, `letter`, `custom` |
+| `DeckAppearance` | `light`, `dark` |
+| `SlideElementKind` | `text`, `shape`, `line`, `image`, `table`, `icon`, `code`, `chart`, `group` |
+| `PlaceholderType` | `title`, `subtitle`, `body`, `picture`, `chart`, `table`, `code`, `caption`, `bigNumber`, `quote`, `attribution`, `slideNumber`, `footer`, `date`, `object` |
+| `TableDimension` | `row`, `column` |
+| `BuildKind` | `buildIn`, `buildOut`, `emphasis`, `motion` (append-only; 06 A-06-2) |
+| `BuildTrigger` | `onClick`, `withPrevious`, `afterPrevious` (`onElementClick` reserved, P2) |
+
+Enums are serialized by name. New values are additive and need a lock-step schema release.
+
+---
+
+## 4. Rich text
+
+### 4.1 Wonky Slides Text Schema v1 (Delta)
+
+Text bodies are **Quill Delta documents** (inserts only, ending with `"\n"`), like Write
+([Write 02 §1](../wonky_write/02-document-model.md)), but with **presentation formatting**: Slides
+is not Markdown-bound. One schema serves text boxes, shapes, placeholders and table cells; notes
+use a subset (§4.3). Validator/normalizer: `SlidesDeltaValidator`, `SlidesDeltaNormalizer` in
+`wonky_slides_core/lib/src/text/` (client, server, importers, MCP).
+
+**Inline attributes** (on text inserts):
+
+| Attribute | Value | Notes |
+|-----------|-------|-------|
+| `bold` | `true` | Weight from the theme font (≥ 600) |
+| `italic` | `true` | |
+| `underline` | `true` | |
+| `strike` | `true` | |
+| `code` | `true` | Inline code: `@mono` + `codeStyle.inline` chrome (05 §2.9) |
+| `font` | FontRef | `@heading`/`@body`/`@mono`/family |
+| `weight` | `100`–`900` | Snapped to the family's shipped weights |
+| `size` | number (su) | 6–800 |
+| `color` | ColorRef | |
+| `highlight` | ColorRef | Text background |
+| `script` | `"super"` \| `"sub"` | |
+| `caps` | `"all"` \| `"small"` \| `"title"` | Display transform, text unchanged |
+| `letterSpacing` | number (em, −0.2…1) | |
+| `link` | `https://…` \| `mailto:` \| `slide:<slideId base62>` \| `wonky://…` | Slide links jump when presenting (03 §6.9) |
+
+**Block attributes** (on `"\n"`):
+
+| Attribute | Value | Notes |
+|-----------|-------|-------|
+| `style` | theme text style key: `title`, `subtitle`, `heading`, `body`, `body2`, `caption`, `quote`, `attribution`, `bigNumber`, `label` | null = the box's default style (placeholder type or `body`) |
+| `align` | `left`, `center`, `right`, `justify` | null = text style's |
+| `list` | `bullet`, `ordered`, `check`, `unchecked` | |
+| `listStyle` | bullet glyph key (`disc`, `circle`, `square`, `dash`, `arrow`, `check`, `star`, `emoji:<char>`, `none`) or numbering (`decimal`, `lowerAlpha`, `upperAlpha`, `lowerRoman`, `upperRoman`) | null = theme default per level (05 §2.5) |
+| `listStart` | int ≥ 0 | Ordered lists: first number of the run |
+| `indent` | 0–8 | Lists and plain paragraphs |
+| `lineHeight` | multiplier 0.7–3 | |
+| `spaceBefore`, `spaceAfter` | su 0–400 | |
+| `dir` | `rtl` | Right-to-left paragraph |
+
+No embeds: images, tables, charts, icons and code are **elements**, not inline content. Emoji are
+text. Soft line breaks are U+2028 (as Write).
+
+Constraints (validated before every write, client and server): canonical form (no empty inserts,
+adjacent equal attributes merged, ends with `"\n"`); no control characters except `\n`, U+2028,
+and `\t` (converted to 4 spaces outside lists); unknown attributes dropped; ≤ 20,000 characters
+per body (§13); links restricted to the schemes above.
+
+### 4.2 Effective text style
+
+Per run: **inline attributes** ▸ **paragraph `style`** (theme text style) ▸ **box defaults**
+(`textStyleJson.defaults`, §5.1) ▸ **placeholder chain** (instance ▸ layout placeholder ▸ master
+placeholder `textStyleJson`) ▸ **theme text style** for the box's default style key ▸ theme
+`body`. Resolution is pure Dart (`TextStyleResolver`, core) and memoized per (theme hash,
+appearance, box style hash).
+
+### 4.3 Speaker notes
+
+`Slide.notes` uses the same Delta form restricted to `bold`, `italic`, `underline`, `strike`,
+`link`, `highlight`, `list` (`bullet`/`ordered`), `indent`. Notes render in the app UI font in
+the editor/presenter and in the theme body font in PDF notes pages (10). ≤ 50,000 characters.
+
+### 4.4 Concurrent editing: soft lock (decision D6)
+
+Concurrent edits of the **same** text body resolve last-writer-wins on the whole `text` column.
+To make that rare, editing a text body claims it:
+
+1. Entering text editing in a body (`SlideElement.text`, `SlideTableCell.text`, `Slide.notes`,
+   `CodeState.code`) publishes `editing: {target}` in the user's presence cursor (09 §1.1). The
+   claim is ephemeral (presence only, never synced) and released on exit, on idle (60 s without
+   input) and when the session leaves.
+2. Other participants see the body **soft-locked**: a presence-colored outline with "Anna is
+   editing" (09 §2.3); double-click / Enter shows a popover *"Anna is editing this text."* with
+   **Edit anyway** and **Cancel**. Text commands targeting the body are disabled with the reason
+   "Anna is editing this text"; box-level changes (move, resize, fill, style) remain allowed —
+   they are different columns.
+3. **Edit anyway** enters editing while the other claim exists; both claims show. The later
+   *write* wins the column; the overwritten user's text is kept locally and offered for recovery
+   (*Overwritten text* review, 09 §6.3).
+4. Offline there are no claims: concurrent offline edits of one body resolve LWW on sync, with the
+   same recovery offer.
+5. Live feel: while editing, the editor persists the body after 300 ms of inactivity and on exit
+   (one `slides.rows` undo step per typing burst, suite 08 §3.1 rule 4), and broadcasts
+   **ephemeral text hints** (09 §2.4) so watchers see typing in real time between syncs.
+6. Agents: headless writes to a body claimed by a human return `being_edited` unless the tool is
+   called with `force: true` (11).
+
+### 4.5 Open question (for review): finer-grained text merging
+
+| Option | How | Pros | Cons |
+|--------|-----|------|------|
+| **A. Soft lock + LWW per body** *(recommended for v1)* | As §4.4 | Simple; offline-safe; small rows; same machinery as other columns; text bodies on slides are short | Two people typing in one box at once lose work (mitigated by lock, hints and recovery) |
+| B. Per-paragraph rows | `TextParagraph(elementId, sortKey, text, blockAttrsJson)` rows; edits within one paragraph LWW | Different paragraphs of one box merge; offline-friendly | 5–10× more rows; cross-paragraph operations (split/join, multi-paragraph paste, list renumbering) become multi-row plans; same-paragraph conflicts remain; complicates auto-fit/layout ingestion |
+| C. OT per text body | Delta OT over a per-deck collaboration stream (reuse Write's `compose/transform`), LWW snapshot persisted to the row | Character-level real-time merging | Online only (offline falls back to A anyway); a second sync mechanism next to the CRDT; server must hold per-body OT state; much more code |
+| D. Three-way merge on receive | Client keeps the last synced text as base; when a remote write arrives for a body with unsynced local edits, merge base/ours/theirs with `DeltaDiff` and write the result | Recovers most concurrent edits, offline too | Both sides may merge and re-write (needs a deterministic tie rule); rare surprising results |
+
+Recommendation: ship A in M9; add D as a P2 improvement if users report lost text (the
+*Overwritten text* review measures how often it happens: count of recovery offers per 1,000
+editing sessions, logged).
+
+---
+
+## 5. Common style JSON
+
+All JSON columns carry `"v": 1` and are validated by `SlidesStyleSchemas` (core; JSON-schema
+files exported for MCP). Unknown keys are dropped with a warning.
+
+### 5.1 `textStyleJson` (box-level text)
+
+```jsonc
+{
+  "v": 1,
+  "anchor": "top",                 // top | middle | bottom (vertical alignment in the box)
+  "insets": [24, 24, 24, 24],      // t, r, b, l su
+  "autofit": "shrink",             // none | shrink (shrink text on overflow) | resize (grow box height)
+  "wrap": true,                    // false = single line, box grows horizontally (text boxes)
+  "columns": 1,                    // 1–3 (P2), with "columnGap": 24
+  "defaults": {                    // default run/paragraph attributes for this box (any §4.1 attrs)
+    "style": "body", "font": "@body", "size": 40, "color": "theme:text1", "align": "left"
+  },
+  "verticalText": false            // P2
+}
+```
+
+Auto-fit is **derived** (P8): `shrink` computes a scale in steps of 2.5 % (min 25 %) applied to
+sizes and spacing until the text fits; `resize` grows the effective height (the stored height is
+the minimum). Both are recomputed by every renderer from the same rows (03 §6.4).
+
+### 5.2 Fill (`fillJson`)
+
+```jsonc
+{ "v":1, "type":"solid",    "color":"theme:accent1" }
+{ "v":1, "type":"gradient", "kind":"linear", "angle":135,
+  "stops":[{"at":0,"color":"#4F46E5"},{"at":1,"color":"#EC4899"}] }          // kind: linear | radial
+{ "v":1, "type":"image",    "fileUuid":"…", "fit":"cover", "opacity":1 }     // fit: cover | contain | tile | stretch
+{ "v":1, "type":"none" }
+```
+
+### 5.3 Stroke (`strokeJson`)
+
+```jsonc
+{ "v":1, "color":"theme:text1", "width":4, "dash":"solid",     // solid | dash | dot | dashDot | longDash
+  "cap":"round", "join":"round",                                // butt|round|square ; miter|round|bevel
+  "startArrow":"none", "endArrow":"triangle",                   // lines only: none | triangle | open | stealth | circle | diamond | bar
+  "arrowSize":"m" }                                             // s | m | l
+```
+
+`{"v":1,"type":"none"}` = no stroke.
+
+### 5.4 Effects (`effectsJson`)
+
+```jsonc
+{ "v":1,
+  "shadow": { "color":"#00000040", "blur":24, "dx":0, "dy":12, "spread":0 },   // outer shadow
+  "glow":   { "color":"theme:accent1/alpha:0.6", "radius":16 },                 // P1
+  "blur":   8,                                                                  // layer blur (P1)
+  "reflection": { "opacity":0.3, "distance":0, "size":0.5 },                    // P2
+  "blendMode": "normal" }                                                       // P2
+```
+
+---
+
+## 6. Per-kind `dataJson` schemas
+
+Behavior of each kind is specified in [03](03-editor-canvas-and-objects.md) (and 07/08 for code
+and charts). `dataJson` is whole-value LWW; fields that users change independently and often live
+in columns instead (§3.5).
+
+### 6.1 `text`
+
+Text boxes use `text`, `textStyleJson` (default `autofit: "resize"`, `wrap: true`) and optional
+`fillJson`/`strokeJson`. `dataJson` is null.
+
+### 6.2 `shape`
+
+```jsonc
+{ "v":1,
+  "geometry":"roundRect",          // shape library key (03 §6.3): rect, roundRect, ellipse, triangle, rightTriangle,
+                                   // diamond, pentagon, hexagon, octagon, star5, star8, arrowRight, arrowLeftRight,
+                                   // chevron, callout, speech, cloud, heart, plus, cross, donut, arc, blockArc, frame,
+                                   // cylinder, cube, ribbon, brace, bracket, … | "custom"
+  "adjust": { "radius": 0.12 },    // geometry handles (0..1 of the relevant dimension)
+  "path": null,                    // custom: SVG path data in a 0..1000 box, "fillRule": "nonzero" | "evenOdd"
+  "textBounds": null }             // optional override of the text rectangle inside the geometry
+```
+
+Shapes may hold text (`text`, `textStyleJson`, default `anchor: "middle"`, `align: "center"`).
+
+### 6.3 `line` (lines, arrows, connectors)
+
+```jsonc
+{ "v":1,
+  "routing":"straight",            // straight | elbow | curved
+  "start": { "x":0, "y":0, "connect": { "elementId":"<b62>", "site":"right" } },   // site: top|right|bottom|left|center|<n> (geometry site index)
+  "end":   { "x":1, "y":1, "connect": null },
+  "waypoints": [],                 // elbow/curved user adjustments, normalized 0..1 in the frame
+  "label": null }                  // P2: text on the line
+```
+
+Endpoints are normalized to the frame (0..1). A connected endpoint is **derived** from the
+connected element's current frame at render time (P8): moving a shape never writes its
+connectors; the frame stored on the line is refreshed only when the line itself is edited.
+A dangling `connect` (element deleted) renders at the stored point.
+
+### 6.4 `image`
+
+```jsonc
+{ "v":1,
+  "src":"wonky-file://<fileUuid>",   // uploaded file (suite 12 §1.1); https:// only via the image proxy (03 §6.5)
+  "naturalWidth":3024, "naturalHeight":4032,
+  "crop": { "l":0.1, "t":0, "r":0.05, "b":0.2 },  // fractions of the natural size removed from each side
+  "mask": "ellipse",                 // null | any shape geometry key (§6.2) — mask to shape
+  "maskAdjust": null,
+  "adjust": { "brightness":0, "contrast":0, "saturation":0, "temperature":0,   // −1..1
+              "blur":0, "grayscale":false, "sepia":false, "invert":false },
+  "recolor": null,                   // P2: ColorRef duotone
+  "fileName":"team.jpg", "mimeType":"image/jpeg" }
+```
+
+### 6.5 `table`
+
+```jsonc
+{ "v":1,
+  "style":"theme",                   // table style key from the theme (05 §2.8) or "none"
+  "options": { "headerRow":true, "firstColumn":false, "bandedRows":true, "bandedColumns":false, "totalRow":false },
+  "defaultCellPadding":[12,16,12,16] }
+```
+
+Rows, columns and cells are `SlideTableAxis` / `SlideTableCell` rows (§3.6). The element's
+`height` is the minimum; rows grow to fit their text (derived).
+
+### 6.6 `icon`
+
+```jsonc
+{ "v":1, "set":"lucide", "name":"rocket", "strokeWidth":2 }     // set: lucide | emoji
+{ "v":1, "set":"emoji",  "char":"🚀" }
+```
+
+Lucide icons take their color from `strokeJson.color` (and `fillJson` for filled variants);
+emoji render with the bundled emoji font (color on screen, monochrome Noto Emoji in PDF, 10).
+
+### 6.7 `code` (fields only — behavior in [07](07-code-blocks.md))
+
+```jsonc
+{ "v":1,
+  "language":"dart",                 // Write language list (shared `wonky_code`, D7)
+  "lineNumbers":true, "startLine":1, "wrap":false,
+  "fontSize":null,                   // su; null = auto-fit
+  "title":"main.dart",               // filename tab; null = none
+  "chrome":"window" }                // none | tab | window | caption (07)
+```
+
+`SlideElement.text` is null for code: every state (including the first) is a `CodeState` row
+(§3.8) holding its source and highlight steps. The full field list (palette, fonts, box,
+highlight style, typing defaults, callouts…) is 07 §3.1 (A-07-1).
+
+### 6.8 `chart` (fields only — behavior in [08](08-charts-from-sheets.md))
+
+```jsonc
+{ "v":1,
+  "source":"linked",                 // linked (ChartLink row) | static (unlinked snapshot) | native (08 A-08-1)
+  "spec": null,                      // native: ChartSpec (shared `wonky_charts`, D7); linked: null (spec in ChartLink)
+  "data": null,                      // native: small data table {columns, rows}
+  "style": { "useDeckTheme":true, "palette":null, "font":null },   // deck-side overrides
+  "camera": null }                   // 3D: {azimuth, elevation, perspective} override (animatable, 06/08)
+```
+
+### 6.9 `group`
+
+```jsonc
+{ "v":1, "childBounds": { "x":120, "y":80, "w":640, "h":360 } }
+```
+
+Children's frames live in the group's **child space**; rendering maps `childBounds` onto the
+group's frame (scale + rotation + flip), so resizing a group scales its children without writing
+them (PowerPoint's `chOff/chExt`). *Ungroup* bakes the transform into each child's frame (one
+plan). Groups never hold text.
+
+---
+
+## 7. Local-only client tables
+
+The Slides replica (`slides_<userId>.db`, §9.1) has the generic client tables of the shared sync
+client (12 §4.2): `ReservedSpace`, `DirtySpace`, `RowJournal` / `JournalSpace` (U11 journal),
+`LocalUndoStack`. Small per-user state lives in the user's local key-value store (suite 12 §3)
+under `slides.*` keys:
+
+| Key | Content |
+|-----|---------|
+| `slides.view.<deckId>` (`LocalViewState`, newest 200 kept) | current slide id, selection (element ids), zoom/fit, scroll, view mode (`normal`/`grid`/`outline`/`masters`), **collapsed group ids**, navigator width, notes pane height and visibility, inspector tab, open side panel, grid-view thumbnail size, last presented slide, edit state per code element (07 A-07-5). Presenter preferences are per user in `UserPreferences.slidesPresenter` (10 A-10-4); the screen assignment stays device-local (10 §5.3). |
+| `slides.offlineEdits.<deckId>` / `slides.conflicts.<deckId>` | Overwritten-edit tracking and the review list (09 §6.3) |
+| `slides.recentColors`, `slides.recentShapes`, `slides.recentIcons`, `slides.recentLanguages` | Pickers' recents (also in `UserPreferences.slidesDefaults` when online, D4) |
+| `slides.clipboard` | In-app clipboard payload (web) next to the system-clipboard marker (03 §12) |
+| `comments.pending.<itemUuid>` | Offline comment queue (suite 07 §2.3) |
+
+Collapsed groups are **per user and device** (D6/D11): never synced.
+
+---
+
+## 8. Server-only tables (Postgres)
+
+| Table | Purpose |
+|-------|---------|
+| `SpaceSubscription`, `SpaceReservation` | Shared with Sheets once generalized to space kinds (12 §4.3): `kind: spreadsheet \| deck`, active set per kind. |
+| `DeckChangeLogReceipt` | Exactly-once consumption of `DeckChangeLog` rows (as `SheetsChangeLogReceipt`). |
+| `SlidesSnapshotIndex` | Per version: slide list (id, title, group, skipped), changed slide/element ids since the previous version with author ids (09 §4.1). |
+| `ItemVersionState` | Shared (suite 07, Sheets A-10-3). |
+| `ServerChangeRecord` | Inverse data of server-executed changes (restore, MCP, AI) for `slides.serverChange` undo (shared format with Sheets). |
+| `ChartLinkSourceState` | Cache of each linked spreadsheet chart's current `sourceVersion` for update checks (08). |
+
+---
+
+## 9. Sync, spaces and creation
+
+### 9.1 Replica and sync session
+
+- One replica per user and app: `slides_<userId>.db` (desktop: app support dir; web: OPFS via
+  `sqlite3.wasm` + `db_worker.js`, IndexedDB fallback with a reduced offline cap, suite 12).
+- The Slides app runs the **shared sync client** (12 §4.2: replica, sync controller, writer,
+  change journal, dirty marks, recovery export) with the Slides table set, through a custom sync
+  endpoint **`slidesSync.sync`** wrapping `session.offlineSync.sync` so the server receives
+  `onMergeSuccess(deckSpace, hlc)` for change-log consumption (suite 12 §2.5).
+- Opening a deck calls `SlidesEndpoint.subscribe(itemUuid)` (membership = subscription, mirrored
+  from the ACL) and shows "Downloading presentation… 42 %" until the space arrived
+  (`SlidesEndpoint.spaceStats`). Decks are small (typically < 5,000 rows), so the whole deck loads
+  before `DeckReady` (no viewport-first loading in v1).
+
+### 9.2 Open question (for review): one replica syncing every space kind
+
+The engine syncs **every space the user is a member of** (suite 12 §2.1). Once decks are spaces,
+the Sheets replica would also download decks and the Slides replica spreadsheets.
+
+| Option | Effect |
+|--------|--------|
+| **A. Space filter per sync endpoint** *(recommended)* | Vendored offline-sync patch **OS-8**: `offlineSync.sync(…, spaceFilter: (spaceUuid) → bool)`. `sheetsSync.sync` passes spreadsheet spaces (+ the personal space), `slidesSync.sync` deck spaces (+ personal). The server knows each space's kind from `SpaceReservation`/registration. A step toward upstream U1. |
+| B. Accept double download | No engine change; each replica holds both kinds. Decks are small but a 1M-cell spreadsheet would be downloaded by the Slides app too — unacceptable on web. |
+| C. One shared replica for all apps | Both apps open `wonky_<userId>.db`; avoids duplication but two apps in two tabs contend for the OPFS lock, and a schema bump of one app blocks the other. |
+
+Until OS-8 lands, Slides ships behind option B with the Slides active set limited to decks the
+user opened in the last 30 days.
+
+### 9.3 Creating decks (offline-first)
+
+- **Reserved spaces**: the Slides replica keeps a pool of 3 reserved spaces
+  (`SlidesEndpoint.reserveSpaces(count)`, generalized `SpaceReservation` with `kind: deck`).
+- *New presentation* (`shell.file.new {kind: presentation}`) creates locally in one transaction:
+  `Deck` (id = reserved space), the default theme copy (`DeckTheme`, masters, layouts and their
+  elements with `SlidesIds.themeCopyId/themePartId`), one `Slide` with layout `title` and its
+  placeholder instances, and a `DeckChangeLog` row ("Create presentation"). Then it queues
+  `drive.registerPresentation(spaceUuid, name, parentUuid?)` in the shell's `PendingDriveOp` queue
+  (idempotent). The deck opens at `/slides/p/<space>` at once and keeps that URL.
+- Server creation paths (templates, copies, MCP `drive.create_presentation`, AI "Generate deck")
+  write through `ServerSlidesWriter` (§11) into a server-created space; the drive item UUID is
+  always the space UUID (as Sheets).
+- **Copy** (*Make a copy*, copy from a version, templates): `DeckCopier` (core,
+  `wonky_slides_core/lib/src/copy/`) rewrites every id for the new space (row ids are global):
+  fresh UUIDv7 for every row; deterministic ids recomputed (`tableCellId`, `placeholderInstanceId`,
+  `themeCopyId`/`themePartId` with the new deck id, `chartLinkId`); references remapped
+  (`Slide.groupId/layoutId`, `SlideElement.placeholderOf`, `matchKey` unchanged, `parent`,
+  connector `connect.elementId`, `linkJson.slideId`, text `slide:` links, build `optionsJson`
+  element refs, `Deck.themeId`); uploaded files re-homed (`FileEndpoint.copyToItem`, quota-checked,
+  D3); `DeckChangeLog` not copied; `ChartLink` rows kept (the copy stays linked if the user can
+  read the spreadsheet).
+
+---
+
+## 10. Invariants and maintenance
+
+Run after merges (debounced 1 s) by the first editor client that detects a violation (and by the
+server writer before headless writes). Every rule is deterministic so concurrent fixes converge,
+and fixes are written as normal plans (`actorKind: user`, label "Repair presentation", not on the
+undo stack).
+
+| Violation | Render-time rule (always) | Repair write (editors) |
+|-----------|---------------------------|------------------------|
+| Slide whose `groupId` names a missing group (orphan) | Shown at the **end of the top level** in `(sortKey, id)` order | `groupId = null`, `sortKey = after(last top-level key)` (both columns, P4) |
+| Duplicate keys in a key space | Tie-break by `id` | none |
+| `Slide.layoutId` missing | First layout with the same `key` in the deck's default theme, else the `blank`-key layout, else no layout | none (an explicit layout change writes) |
+| Placeholder instance whose `placeholderOf` is missing | Rendered as a regular element with its last effective frame/style computed from the master placeholder of the same `placeholderType` (else 10 %-inset default frame) | Materialize: write the resolved frame and `textStyleJson`, set `placeholderOf` to the current layout's placeholder of the same type if one exists, else null |
+| Two instances on one slide pointing at the same layout placeholder (should be impossible with deterministic ids; can happen after a layout switch race) | Draw both | Keep the one with the deterministic id; the other gets `placeholderOf = null` and keeps its content |
+| Element-group cycle (`parent` chain loops) | The member with the smallest id is treated as top-level | Set that element's `parent = null` with its frame baked to slide space |
+| Element group with no children | Not drawn | Delete the group row |
+| Child whose `parent` belongs to another owner | Treated as top-level | Re-parent to null with baked frame |
+| `Deck.themeId` missing | Theme with the smallest id | Write `themeId` |
+| No theme / master / layout at all (all deleted concurrently) | Built-in *Wonky* resolved in memory | Copy the built-in default theme (deterministic ids) |
+| Overlapping table merges | Keep the merge whose origin has the smaller id | Clear the other origin's `rowSpan/colSpan` |
+| Table cell whose row/column axis is gone | Hidden (FK repair) | none |
+| Code element with no `CodeState` (concurrent delete of the last state) | Rendered empty | Insert an empty state (07 A-07-2) |
+| Build whose element is gone | Cascade deletes it | — |
+| Deck with zero slides | Shows the empty-deck state (04 §5.11) | none (never auto-creates slides) |
+
+Sheet-like name uniqueness does not apply: groups and slides may share titles.
+
+---
+
+## 11. In-memory model (`wonky_slides_core`, pure Dart)
+
+The replica is the persistence layer; editor, presenter, PDF exporter, server headless tools and
+version views share an in-memory **`DeckModel`** (`wonky_slides_core/lib/src/model/`, exported by
+`lib/model.dart`):
+
+- **Records**: plain Dart records per table (`DeckRec`, `SlideRec`, `SlideGroupRec`,
+  `SlideElementRec`, …) built from generic `RowChange`s (`table`, `rowId`, column maps; UUIDs as
+  strings, enums by name) — independent of generated Serverpod classes, exactly as Sheets
+  (`WorkbookModel.applyChanges`). `DeckModel.applyChanges(List<RowChange>)` is the single
+  ingestion path for local writes, remote patches, snapshots and server writes.
+- **Indexes**: `SlideOrder` (flattened presentation order with group ranges, id → index, effective
+  skip, slide numbers), `ElementTree` per owner (children by `parent`, sorted by `(zKey, id)`),
+  `PlaceholderIndex` (instance → layout → master chains), `TableIndex` (axes by sortKey, cells by
+  `(row, col)`), `BuildIndex`, `CodeStateIndex`, `ThemeIndex`.
+- **Resolution**: `SlideResolver.resolve(slideId, appearance) → ResolvedSlide` — background,
+  master/layout decorations, every element with effective frame, style, text styles (§4.2),
+  derived auto-fit and connector routes — memoized by per-slide revision counters (a change to a
+  layout bumps every slide using it).
+- **Scene**: `SlideSceneBuilder` turns a `ResolvedSlide` into a renderer-independent display list
+  (`SlideScene`: groups, paths, images, text runs laid out through the `TextLayoutEngine`
+  interface, chart sub-scenes, code sub-scenes). Consumers: the Flutter painter, thumbnails, the
+  PDF renderer (10), server PNG/thumbnail rendering, and the animation timeline (06), which
+  animates scene nodes keyed by element id.
+- **Change events**: `DeckChangeEvent` (`SlidesChanged`, `OrderChanged`, `ElementsChanged(slideIds,
+  elementIds)`, `ThemeChanged`, `BuildsChanged`, `DeckChanged`) drive repaint and thumbnail
+  invalidation.
+- **Remote changes**: as Sheets 02 §6: after each `onMergeSuccess` the session reads the rows the
+  local change journal (U11) recorded for the space since its cursor, overlays local writes still
+  queued, patches the model and emits the batch on `DeckSession.remoteBatches`. A property test
+  checks that incremental patching equals a full reload.
+
+The Flutter app adds the DB-backed loader, `DeckSession` (12 §3.1) and painters
+(`wonky_slides/lib/features/model/`).
+
+---
+
+## 12. Writes and undo (`slides.rows` undo domain)
+
+### 12.1 Mutation planner
+
+All mutations are planned by **`SlidesMutationPlanner`** (core) from a `SlidesOperation` against
+the `DeckModel`, producing a `MutationPlan {label, summary, changes: List<RowChange>, detail?}` —
+the same plan shape as Sheets (generic types extracted to the shared sync kit, 12 §4.1). The
+planner is used by the app writer and by `ServerSlidesWriter` (MCP, AI, restore, templates), so
+headless and UI edits are identical.
+
+`SlidesOperation` (sealed; one file per area under `mutations/ops/`):
+
+| Area | Operations |
+|------|------------|
+| Deck | `SetDeckProps` (title, size + scale mode, appearance, numbering, footer, defaults), `SetDeckTheme` |
+| Slides | `AddSlides(layoutId, after, count, inGroup?)`, `DuplicateSlides`, `DeleteSlides`, `MoveSlides(ids, target: TopLevel(before/after) \| InGroup(groupId, before/after))`, `SetSlideProps` (skip, background, layout + placeholder remap, transition, notes, hideMasterElements), `ResetSlideToLayout` |
+| Groups | `CreateGroup(slideIds, title, color)`, `Ungroup(groupId)`, `MoveGroups(ids, before/after)`, `SetGroupProps` (title, color, skipped), `DeleteGroups(ids, withSlides)`, `DuplicateGroups` |
+| Clipboard | `PasteSlides(payload, target, themeMode: keepSource \| useDestination)`, `PasteElements(payload, slideId, at?)` |
+| Elements | `InsertElements`, `UpdateFrames` (move/resize/rotate/flip; names exactly the frame columns it changes), `SetElementProps` (fill, stroke, effects, opacity, locked, hidden, name, alt text, link, matchKey, readingKey), `DeleteElements`, `ReorderZ(op)`, `AlignDistribute`, `GroupElements`, `UngroupElements`, `ReplaceImage`, `SetElementData` (kind payload) |
+| Text | `SetText(target, delta)` (whole body), `FormatText(targets, attrs, range?)`, `SetTextBoxStyle` |
+| Tables | `InsertTableAxes`, `DeleteTableAxes`, `MoveTableAxes`, `ResizeTableAxes`, `SetCells(text/format)`, `MergeCells`, `UnmergeCells`, `SetTableOptions` |
+| Builds | `AddBuilds`, `UpdateBuilds`, `MoveBuilds`, `DeleteBuilds` (details 06) |
+| Code | `SetCode`, `AddCodeStates`, `UpdateCodeState`, `MoveCodeStates`, `DeleteCodeStates` (details 07) |
+| Charts | `LinkChart`, `UpdateChartLink(snapshot)`, `SetChartAutoUpdate`, `UnlinkChart`, `SetChartStyle` (details 08) |
+| Themes | `ImportTheme(themeTree)`, `UpdateTheme(partial)`, `ApplyThemeToSlides(themeId, slideIds, layoutMapping)`, `DeleteTheme`, master/layout CRUD and their elements (05) |
+| Maintenance | `RepairDeck(violations)` (§10) |
+
+Planner rules: plans name exactly the touched columns (P7); coupled columns are always written
+together (P4); deletes of parents list child rows explicitly when the inverse must revive them
+(the engine cascades, but undo needs the full rows); limits (§13) throw
+`PlanException(code: limit, …)` before anything is applied.
+
+### 12.2 Writer and undo
+
+`SlidesWriter` (client; the shared sync kit's writer with the Slides table codec) and
+`ServerSlidesWriter` (server):
+
+1. Open `transactionForUser(userUuid, spaceId: deckId)`.
+2. Apply the plan's `RowChange`s with `columnValues` naming only touched columns (inserts and
+   deletes as whole rows; set-based bulk writes for runs ≥ 50 rows of one table, patch OS-7).
+3. Insert the `DeckChangeLog` row.
+4. Commit. The editor controller pushes an `UndoStep` (domain **`slides.rows`**) with the plan.
+
+Plans are chunked into transactions of ≤ 5,000 row changes (only template/import-scale operations
+reach that) while remaining one undo step.
+
+**Undo/redo** replay `UndoInverter.invert(plan, currentRowReader)` with the suite per-column skip
+rule (suite 08 §3.3): a column whose current value differs from the plan's `columnsAfter` was
+changed by someone else and is skipped; a fully skipped step is a no-op and partial skips show
+*"Some changes couldn't be undone because they were edited by someone else."* Deleted rows are
+restored by re-inserting the same ids (the engine revives tombstones), so references, comment
+anchors, `matchKey`s and deterministic ids stay valid. Coupled-column groups (P4) are skipped as a
+unit: if any column of `{groupId, sortKey}` (or a frame set) was changed by someone else, the
+whole set is skipped, so undo never tears them.
+
+Server-executed changes (version restore, headless MCP/AI runs surfaced in the UI) use the shared
+undo domain **`slides.serverChange`** (`{changeId}` → `SlidesEndpoint.revertChange` /
+`reapplyChange`), mirroring Sheets A-10-5.
+
+Selection (current slide, selected elements, text caret) is captured in
+`SelectionSnapshot`s before/after each step and restored on undo/redo (suite 08 §3.1 rule 5).
+
+---
+
+## 13. Limits
+
+Enforced by the planner (client and server) with the listed message; *config* values come from
+`ProtocolInfo` (`wonky.slides.*`).
+
+| Limit | Value | Behavior when exceeded |
+|-------|-------|------------------------|
+| Slides per deck | 1,000 (*config* `slides.maxSlidesPerDeck`) | *New slide* disabled; paste refused: "A presentation can have at most 1,000 slides." |
+| Slide groups per deck | 200 | "A presentation can have at most 200 groups." |
+| Group nesting depth | 1 (v1; 2 with P2 nesting) | — |
+| Elements per slide / layout / master (incl. group children) | 500 | "This slide can't hold more than 500 objects." |
+| Element group depth | 8 | Group command disabled |
+| Text per body | 20,000 characters | Editor stops input; paste truncates with a toast |
+| Speaker notes per slide | 50,000 characters | Same |
+| Table size | 50 rows × 20 columns | Size picker and insert commands capped |
+| Builds per slide | 200 | *Add animation* disabled |
+| Code: characters / lines per state, states per element | 20,000 / 1,000, 50 | 07 A-07-3 |
+| Themes per deck / masters per theme / layouts per master | 20 / 10 / 50 | Refused with message |
+| Deck size | 320 – 7,680 su per side, aspect 1:4 … 4:1 | Page setup validation |
+| Element frame | 1 – 20,000 su per side; positions ±40,000 su | Clamped |
+| Font size | 6 – 800 su | Clamped |
+| Zoom | 10 % – 400 % | Clamped |
+| Image upload | ≤ remaining storage quota, ≤ 25 MB per image, ≤ 40 MP (downscaled above) | Suite quota dialog (D3) |
+| Undo stack | 500 steps per deck (suite 08) | Oldest dropped |
+| `DeckChangeLog.detailJson` | ≤ 20 bodies × 2,000 chars | Summary only |
+| Deck content (server-estimated serialized size, counts toward the 50 MB quota, D3) | quota | Editing never blocked; copies/imports/uploads blocked when over quota |
+
+---
+
+## 14. Additions defined in feature specs
+
+Feature specs add fields and tables next to the features that need them. They are part of this
+data model and **must be applied together with it** (lock-step synced schema; batch them into
+the M9/M10/M11 releases of [12](12-implementation-plan.md) §1). Each spec lists its additions in
+an "Additions to 02-data-model" section; this table indexes them.
+
+| Spec | Section | Highlights |
+|------|---------|------------|
+| [03 · Editor canvas & objects](03-editor-canvas-and-objects.md) | §20 | Guides (`Deck.guidesJson`), shape library keys, image proxy, `FileEndpoint.copyToItem` |
+| [04 · Screens, menus & toolbar](04-screens-menus-toolbar.md) | §17 | `LocalViewState` keys, `UserPreferences.slidesDefaults`, `drive.registerPresentation`, editor title-row action slot |
+| [05 · Themes, layouts & masters](05-themes-layouts-masters.md) | §10 | Theme JSON schemas, built-in theme/layout keys, font registry additions |
+| [06 · Animations & transitions](06-animations-and-transitions.md) | §20 (A-06-x) | `SlideBuild` fields/enums, `optionsJson` schema, `Slide.transitionJson` schema, `matchKey` semantics, deck motion defaults, cascade/maintenance, build tokens |
+| [07 · Code blocks](07-code-blocks.md) | §17 (A-07-x) | Code `dataJson` fields, every state a `CodeState` row (+ `language`, `title`, `annotationsJson`), code limits, palette pair in the theme |
+| [08 · Charts from Sheets](08-charts-from-sheets.md) | §21 (A-08-x) | Chart `dataJson` (`static` source, overrides, snapshot), `ChartLink.sheetId`, snapshot schemas, maintenance writes, `SlidesChartEndpoint` |
+| [09 · Collaboration & history](09-collaboration-history.md) | §11 | Presence cursor JSON, text hints, `SlidesSnapshotIndex`, comment anchor kinds |
+| [10 · Presenting & PDF](10-presenting-and-pdf.md) | §19 (A-10-x) | `Deck.presentJson`, `Slide.timingsJson`, skip semantics, `UserPreferences.slidesPresenter`, presentation session models, export endpoint |
+| 11 · MCP & AI | (by 11) | Headless deck cache, `being_edited` error, AI preview records |
+
+Known LWW granularity limits (documented, accepted): text bodies (`text`, `notes`, `code`) merge as
+whole values (§4.4); `fillJson`, `strokeJson`, `effectsJson`, `textStyleJson`, `dataJson`,
+`transitionJson`, `optionsJson` and theme JSON columns merge as whole values.

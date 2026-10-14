@@ -11,7 +11,7 @@ Package ownership:
 |-------|---------|
 | `CommandId`, `CommandArgs` schema types, `UndoEntry` abstractions (pure Dart) | `wonky_core` |
 | `CommandRegistry`, `CommandDispatcher`, `KeymapService`, `UndoService`, Command Palette widget | `wonky_app` |
-| App-specific commands | `wonky_write/lib/commands/…`, `wonky_sheets/lib/commands/…` |
+| App-specific commands | `wonky_write/lib/commands/…`, `wonky_sheets/lib/commands/…`, (v2) `wonky_drive/lib/commands/…`, `wonky_slides/lib/commands/…` |
 
 ---
 
@@ -20,7 +20,8 @@ Package ownership:
 ```dart
 /// Stable, dot-separated id. Never rename once shipped (MCP clients depend on it).
 /// Convention: <app|shell>.<area>.<action>, e.g. "write.format.bold",
-/// "sheets.rows.insertAbove", "shell.drive.newFolder".
+/// "sheets.rows.insertAbove", "shell.drive.newFolder"; (v2) app ∈ drive, write, sheets, slides
+/// ("drive.upload.retry", "slides.slide.duplicate").
 extension type const CommandId(String value) {}
 
 abstract class Command<A extends CommandArgs> {
@@ -61,7 +62,7 @@ abstract class Command<A extends CommandArgs> {
 }
 ```
 
-`CommandContext` exposes: the active app (`write`/`sheets`), the active document controller (if
+`CommandContext` exposes: the active app (`drive`/`write`/`sheets`/`slides`, v2), the active document controller (if
 any), the current selection, the user's role on the document, the `UndoService`, the
 `BuildContext` (for dialogs; null when headless), and an `InvocationSource` enum
 (`menu`, `toolbar`, `shortcut`, `contextMenu`, `palette`, `mcp`, `ai`, `script`).
@@ -89,7 +90,10 @@ any), the current selection, the user's role on the document, the `UndoService`,
 - `KeymapService` maps `KeyBinding` → `CommandId` (+ fixed args). Platform-aware: `Mod` = ⌘ on
   macOS, Ctrl elsewhere. On web, browser-reserved shortcuts (⌘W, ⌘T, ⌘N, ⌘L) are never bound.
 - Scopes: `global` (app shell), `editor` (Write editor focused), `grid` (Sheets grid focused),
-  `cellEditor` (Sheets cell editing), `dialog`. More specific scopes win.
+  `cellEditor` (Sheets cell editing), `dialog`; (v2) `driveList` (a home's list/grid focused),
+  `preview` (Drive file preview), and the Slides scopes of
+  [Slides 04](wonky_slides/04-screens-menus-toolbar.md) (canvas, text editing, navigator,
+  presenting). More specific scopes win.
 - **Argument bindings**: `Command.argBindings` binds a chord to fixed arguments, optionally in
   another scope (`sheets.nav.move {dir: down}` on ↓ in `grid`); menus show the shortcut of a
   parameterized item through `KeymapService.labelsFor(id, args)`.
@@ -131,7 +135,8 @@ any), the current selection, the user's role on the document, the `UndoService`,
 | Write metadata | Title rename, theme assignment, theme edits, page setup, document language | Sharing changes |
 | Sheets content | Cell values, formulas, formats, row/col ops, sheet ops, merges, CF/DV rules, filters, sorts, charts, pivots, named ranges, protected ranges | — |
 | Sheets settings | Spreadsheet settings (locale, recalc, iterative calc), sheet properties (name, color, gridlines, frozen panes) | — |
-| Drive | Move, rename, star, trash (undo = restore), create folder | Permanent delete, sharing changes, ownership transfer |
+| Slides content (v2) | Slides, groups, elements, text, styles, builds, transitions, themes/masters/layouts, code states, chart links (update/unlink), notes — through `slides.rows` | — |
+| Drive | Move, rename, star, trash (undo = restore), create folder, (v2) upload batch (undo = trash the uploaded items) | Permanent delete, empty trash, sharing changes, ownership transfer, (v2) downloads, conversions (*Open with* creates a new item you can trash), settings |
 | View state | — | Zoom, scroll, panel visibility, selection (selection is *restored* on undo but isn't an undo step) |
 | Comments | Creating/editing/deleting own comment, resolve/reopen | — |
 
@@ -208,7 +213,9 @@ separator or changing a paste-special mode from the paste chip).
 | `write.theme` | Theme JSON before/after | Save theme `before` | Same as `write.meta` |
 | `sheets.rows` (generic sync rows) | List of `{table, rowId, op: insert/update/delete, columnsBefore, columnsAfter}` | Write inverse via sync DB transaction naming only those columns | Per column: if current value ≠ `after`, that column is skipped ("someone else changed it"). If all columns skipped, the entry is a no-op |
 | `sheets.serverChange` | `{changeId}` of a change executed server-side on the user's behalf (version restore, server import, AI/MCP loops) | `SheetsEndpoint.revertChange(changeId)` (redo: `reapplyChange`) — server applies the per-column skip rule | Server-side, same rule as `sheets.rows` |
-| `drive` | `{itemId, op, before, after}` | Call drive endpoint with `before` | Same as `write.meta` |
+| `slides.rows` (v2) | Same shape as `sheets.rows` over the Slides synced tables (generic `UndoInverter` from the shared sync kit) | Inverse rows via the Slides writer, naming only those columns | Per-column skip rule as `sheets.rows` ([Slides 02](wonky_slides/02-data-model.md)) |
+| `slides.serverChange` (v2) | `{changeId}` of a server-executed Slides change (version restore, MCP/AI) | `SlidesEndpoint.revertChange` / `reapplyChange` | Server-side, same rule |
+| `drive` | `{itemId, op, before, after}`; (v2) `{op: upload, itemUuids}` for an upload batch | Call drive endpoint with `before`; (v2) upload: `drive.trash(itemUuids)` (redo: `restore`) | Same as `write.meta`; items deleted forever meanwhile are skipped |
 | `comments` | Comment snapshot | Restore/delete/edit via endpoint | Drop if the thread was deleted |
 
 When an undo step becomes **partially** no-op due to remote changes, the UI shows a toast:
@@ -220,11 +227,11 @@ When an undo step becomes **partially** no-op due to remote changes, the UI show
   **acting user's** undo stack, labelled with the source ("Undo AI: Rewrite paragraph").
 - A single MCP tool call = one undo step, even if it touches many cells/blocks.
 - MCP exposes `ui.undo`/`ui.redo` (live session) and the headless `write.undo`/`sheets.undo`
-  are **not** offered (headless tools have no client stack). Instead headless tools return a
+  (v2: `slides.undo`) are **not** offered (headless tools have no client stack). Instead headless tools return a
   `changeId`, and headless `*.revert_change(changeId)` reverts that change using the same
   inverse data recorded server-side for 24 hours.
 
-### 3.5 Edit menu contract (both apps)
+### 3.5 Edit menu contract (all editors)
 
 | Item | Shortcut | Notes |
 |------|----------|-------|
@@ -253,16 +260,16 @@ undo per step, executed in order).
 
 ---
 
-## 5. Shell command catalog (shared by both apps)
+## 5. Shell command catalog (shared by all apps)
 
 Canonical ids for commands implemented in `wonky_app` (apps may only *contribute behavior*
 through the active document controller, never re-register these ids):
 
 | Area | Command ids |
 |------|-------------|
-| Navigation | `shell.nav.home`, `shell.nav.back`, `shell.nav.forward`, `shell.nav.quickSwitcher`, `shell.nav.commandPalette`, `shell.focus.nextRegion`, `shell.focus.previousRegion` |
-| File | `shell.file.new {kind}`, `shell.file.newFromTemplate`, `shell.file.open`, `shell.file.import`, `shell.file.print`, `shell.file.download {format}`, `shell.file.details` |
-| Drive | `shell.drive.newFolder`, `shell.drive.rename`, `shell.drive.move`, `shell.drive.copy`, `shell.drive.addShortcut`, `shell.drive.setStarred`, `shell.drive.togglePinnedOffline`, `shell.drive.trash`, `shell.drive.restore`, `shell.drive.deleteForever`, `shell.drive.emptyTrash`, `shell.drive.upload` |
+| Navigation | `shell.nav.home`, `shell.nav.back`, `shell.nav.forward`, `shell.nav.quickSwitcher`, `shell.nav.commandPalette`, `shell.focus.nextRegion`, `shell.focus.previousRegion`, (v2) `shell.nav.openInDrive {folderUuid?}` (app homes: the same folder in Wonky Drive) |
+| File | `shell.file.new {kind}` ((v2) kind adds `presentation`; from another app it navigates to that app's `/new`), `shell.file.newFromTemplate`, `shell.file.open`, `shell.file.import`, `shell.file.print`, `shell.file.download {format}`, `shell.file.details` |
+| Drive | `shell.drive.newFolder`, `shell.drive.rename`, `shell.drive.move`, `shell.drive.copy`, `shell.drive.addShortcut`, `shell.drive.setStarred`, `shell.drive.togglePinnedOffline`, `shell.drive.trash`, `shell.drive.restore`, `shell.drive.deleteForever`, `shell.drive.emptyTrash`, `shell.drive.upload` ((v2) in Drive: upload arbitrary files, undoable batch; in app homes: *Import file…* of the app's convertible types) |
 | Sharing | `shell.sharing.open`, `shell.sharing.copyLink`, `shell.sharing.requestAccess` |
 | Edit | `shell.edit.undo`, `shell.edit.redo`, `shell.edit.undoHistory`, `shell.edit.undoTo {stepIndex}`, `shell.edit.cut`, `shell.edit.copy`, `shell.edit.paste`, `shell.edit.pasteWithoutFormatting`, `shell.edit.selectAll` |
 | Comments | `shell.comments.create`, `shell.comments.reply`, `shell.comments.resolve`, `shell.comments.reopen`, `shell.comments.delete`, `shell.comments.activate {threadUuid}`, `shell.comments.togglePanel` (show through the app's `CommentsHost` when set, else the comments side panel; suite 07 §2.3) |
@@ -270,7 +277,21 @@ through the active document controller, never re-register these ids):
 | Panels | `shell.panels.open {panelId}`, `shell.panels.close {panelId}`, `shell.panels.toggle {panelId}` (in the editors, closing collapses the panel to the icon rail, suite 02 §4.5) |
 | MCP | `shell.mcp.copyConnectionInfo`, `shell.mcp.toggleUiBridge`, `shell.mcp.stopControl` |
 | View | `shell.view.zoom {percent}` (the editor chrome is always shown: no compact mode, full screen or show/hide toggles for toolbar, menubar or status bar) |
-| Appearance & settings | `shell.appearance.setTheme {mode}`, `shell.settings.open {section}` |
+| Appearance & settings | `shell.appearance.setTheme {mode}`, `shell.settings.open {section}` (Wonky Works settings; legacy sections `write`/`sheets`/`themes` map to app settings, 04 §4.1), (v2) **`shell.settings.openApp {section?}`** (the current app's settings, `Mod+,` on desktop) |
 | AI | `shell.ai.togglePanel`, `shell.ai.newThread`, `shell.ai.send`, `shell.ai.stop` |
-| Help | `shell.help.shortcuts`, `shell.help.feedback`, `shell.help.whatsNew`, `shell.help.about` (no help center or menu search) |
-| Account | `shell.account.signOut`, `shell.account.switchApp {app}` |
+| Help | `shell.help.shortcuts`, `shell.help.feedback`, `shell.help.whatsNew`, `shell.help.about`, (v2) **`shell.help.reportBug`** (external link to the GitHub issues, 03 §3.4; `requiredRole: viewer`, not undoable) (no help center or menu search) |
+| Account | `shell.account.signOut`, `shell.account.switchApp {app}` ((v2) `app` ∈ `drive`, `write`, `sheets`, `slides`; the left menu's app links) |
+| Storage (v2) | `shell.storage.open` (Drive's Storage page: in-app in Drive, same-tab cross-app navigation to `/drive/storage` elsewhere; meters, banners, *Manage storage* buttons) |
+
+## 6. App command namespaces (v2)
+
+| Namespace | Registered by | Canonical list | Undo domains |
+|-----------|---------------|----------------|--------------|
+| `write.*` | `wonky_write` | [Write 04 §40](wonky_write/04-editor.md), [Write 05](wonky_write/05-screens-menus-toolbar.md) | `write.content`, `write.meta`, `write.theme` |
+| `sheets.*` | `wonky_sheets` | [Sheets 04](wonky_sheets/04-screens-menus-toolbar.md) | `sheets.rows`, `sheets.serverChange` |
+| `drive.*` | `wonky_drive` | [Drive 04 §9](wonky_drive/04-screens-menus.md): `drive.upload.*` (`folder`, `files`, `cancel`, `cancelAll`, `retry`, `retryAll`, `clearFinished`, `togglePanel`), `drive.file.*` (`preview`, `openWith`, `download`, `uploadNewVersion` P2, `manageVersions` P2), `drive.preview.*`, `drive.view.*`, `drive.prefs.set` | `drive` (shell stack) |
+| `slides.*` | `wonky_slides` | [Slides 04](wonky_slides/04-screens-menus-toolbar.md) (canonical menu registry), [Slides 03](wonky_slides/03-editor-canvas-and-objects.md), [06](wonky_slides/06-animations-and-transitions.md), [07](wonky_slides/07-code-blocks.md), [10](wonky_slides/10-presenting-and-pdf.md) | `slides.rows`, `slides.serverChange` |
+
+Rules: an app registers only its own namespace; `shell.*` ids are reserved for `wonky_app`;
+command ids never change once shipped (MCP clients depend on them). Commands of another app
+are not available (the palette's *Go to …* rows navigate instead).

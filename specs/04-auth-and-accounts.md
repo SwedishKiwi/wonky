@@ -1,11 +1,11 @@
 # 04 · Authentication, Accounts and Preferences
 
-One account works in both apps. Auth is implemented with **Serverpod's built-in IDP**
+One account works in every app (v2: Drive, Write, Sheets, Slides). Auth is implemented with **Serverpod's built-in IDP**
 (`serverpod_auth_idp_server` / `serverpod_auth_idp_flutter`, 4.1.x): email + password, and
 **Sign in with Google** on web (§1.6).
 The scaffolded `JwtConfigFromPasswords()` token manager and `ServerpodCloudEmailIdpConfig` (or
 `EmailIdpConfigFromPasswords` when self-hosting mail) in `wonky_server/lib/server.dart` are
-kept. **One sign-in covers both apps**: on web the session lives in Serverpod's httpOnly auth
+kept. **One sign-in covers all apps**: on web the session lives in Serverpod's httpOnly auth
 cookie on the shared origin; desktop details in [01 §2.5](01-architecture.md).
 
 ## 1. Flows
@@ -21,7 +21,10 @@ cookie on the shared origin; desktop details in [01 §2.5](01-architecture.md).
    *Change email*.
 4. On success → create `UserProfile` (see §3), set `writeDefaults.defaultThemeId` to the
    built-in default theme (built-in themes are global rows, see Write 06), create a welcome
-   document + welcome spreadsheet (from templates) → land on **Home**.
+   document + welcome spreadsheet (from templates; (v2) + a welcome presentation once Slides
+   ships, M9 — all small and counted in the new user's 50 MB, Drive 03) → land on **Wonky
+   Drive** (v2; `/` redirects there, 01 §2.4) — or on the app the sign-up started from when
+   `next` points into it.
 
 ### 1.2 Sign in
 - *Continue with Google* (web, §1.6) and an "or" divider above the form.
@@ -33,7 +36,7 @@ cookie on the shared origin; desktop details in [01 §2.5](01-architecture.md).
 Request (email) → code screen → new password + confirm → signed in.
 
 ### 1.4 Sign out
-Account menu → *Sign out*. Signs out of **both** apps (shared session). Clears tokens, local caches marked user-scoped (Write offline cache,
+Account menu → *Sign out*. Signs out of **all** apps (shared session). Clears tokens, local caches marked user-scoped (Write offline cache,
 Sheets sync DB is **kept** but locked to that user id; signing in as a different user uses a
 different DB file — see offline spec), and in-memory undo stacks.
 
@@ -87,11 +90,12 @@ OAuth2 authorization code + PKCE in a popup (the single-window exception of
 
 | Screen | Route | Notes |
 |--------|-------|-------|
-| Sign in | `/signin` | Centered card (max 400 px) on branded background; the suite icon (Wonky Work product icon, 56 px, [02 §5](02-design-system.md)) and "Wonky Work" as the headline (no app name, no subheadline), left-aligned with the card: one account covers both apps. |
+| Sign in | `/signin` | Centered card (max 400 px) on branded background; the suite icon (Wonky Work product icon, 56 px, [02 §5](02-design-system.md)) and "Wonky Work" as the headline (no app name, no subheadline), left-aligned with the card: one account covers all apps. |
 | Sign up | `/signup` | Same layout. |
 | Verify email | `/signup/verify` | |
 | Forgot password | `/reset` | |
-| Account settings | `/settings/account` | See §4. |
+| Wonky Works settings (v2) | `/settings/:section` (default `/settings/account`) | See §4. |
+| App settings (v2) | `/settings/app`, `/settings/app/:section` | See §4. |
 
 All auth screens support light/dark and are keyboard navigable (Enter submits).
 
@@ -128,6 +132,8 @@ fields:
   keymapOverrides: String        # JSON {commandId: [binding,…]}
   writeDefaults: String          # JSON: default theme id, spellcheck on, smart quotes, etc.
   sheetsDefaults: String         # JSON: default locale for new sheets, default font, etc.
+  slidesDefaults: String         # (v2) JSON: Slides settings (Slides 04: theme, slide size, presenter, animation, code)
+  driveDefaults: String          # (v2) JSON: Drive settings (Drive 04 §8: layout, sort, extensions, uploads)
   notificationSettings: String   # JSON: email digests on/off, mention emails, etc.
   aiEnabled: bool, default=true
 indexes:
@@ -151,43 +157,97 @@ fields:
   revokedAt: DateTime?
 ```
 
-## 4. Settings screen (`/settings/*`)
+## 4. Settings (v2: split into Wonky Works settings and app settings)
 
-Full-screen in-app page with a left nav (shad `ShadTabs` vertical or custom `SettingsNav`):
+Settings are split in two (decision D4):
 
-1. **Account** – avatar upload/crop (circle crop dialog), display name, email (change flow with
-   verification), password change, delete account (type-to-confirm; transfers or deletes owned
-   files — dialog lists counts).
-2. **Appearance** – App theme (System/Light/Dark segmented control with live preview cards),
-   density, reduce motion. (No accent color choice: the app uses the neutral palette; the stored
-   `accentColor` preference is ignored.)
-3. **Language & region** – UI language, default locale for new spreadsheets (number/date
-   formats), time zone.
-4. **Keyboard shortcuts** – see [08-commands-and-undo.md](08-commands-and-undo.md) §1.2.
-5. **Write** (nav item with the Write product icon) – default theme, spellcheck, smart quotes,
-   auto-pair brackets, Markdown shortcuts on/off, default page setup, default export format.
-6. **Sheets** (nav item with the Sheets product icon) – default font/size, default number locale, formula autocomplete, show formula
-   help, iterative calc defaults, enable scripts (per-user kill switch).
-7. **Notifications** – mentions, comment replies, share notifications: in-app / email / off.
-8. **AI** – enable assistant, default model tier (Fast/Balanced/Best — maps to server-side model
-   choice), clear AI history, the privacy notice naming the provider; when AI isn't configured,
-   *Add an API key* links to *AI providers*.
-   **AI providers** (`/settings/ai-providers`, its own nav item after AI) – which provider the
-   server uses; when the server has no key, the user's own key: provider select (OpenAI /
-   Anthropic / Google Gemini), masked key field, *Save key*, and the saved key shown as
-   "OpenAI key ending in abcd" with *Remove key* (confirm). The key is never shown again
-   ([10 §1](10-ai-assistant.md)).
-9. **Developer / MCP** – *Server* status: whether the backend is connected to Redis
-   (*Connected* / *Not reachable* / *Not configured*, from `ProtocolInfo.redisEnabled` /
-   `redisConnected` — `meta.getInfo` pings Redis, 1 s timeout — with a reload button); personal access tokens (list, create with name + scopes + expiry, copy
-   once, revoke), MCP connection instructions (copyable JSON config for Claude Desktop /
-   Claude Code), live UI-bridge status ("This window is controllable by MCP: On/Off").
-10. **Offline & storage** – offline availability toggles (per file pinning list), local storage
-    used, "Clear local data", sync status/errors log.
-11. **About** – versions (app, server, protocol), licenses (`LicensePage` styled), links.
+- **Wonky Works settings** — suite-level, identical in every app, routes `/settings/:section`
+  (`/settings` → `/settings/account`). Everything about the account, the device and the suite.
+- **<App> settings** — the current app's own preferences, routes `/settings/app` and
+  `/settings/app/:section` (first section by default). *Write settings* in Write, *Sheets
+  settings* in Sheets, *Slides settings* in Slides, *Drive settings* in Drive. An app shows only
+  its own app settings (to change Sheets defaults, open Sheets settings — the nav has a link
+  "Settings of other apps ▸" with the three other apps, cross-app navigation to their
+  `/settings/app`).
 
-Every setting change is a command (e.g. `shell.settings.setAppTheme`) so it is MCP-controllable;
-settings are **not** on the undo stack (they apply immediately and are trivially reversible).
+### 4.1 Where every existing section goes
+
+| Section before v2 (id) | Content | v2 location (id) |
+|------------------------|---------|------------------|
+| Account (`account`) › Profile | Avatar upload/crop, display name, email (change with verification) | Wonky Works › **Account & profile** (`account`) |
+| Account › Security | Password change, sign out | Wonky Works › **Sign-in & security** (`security`, new id) + Google account link status (linked / *Link Google account*, web), *Sign out of all devices* (P2) |
+| Account › Delete account | Type-to-confirm delete; transfer or delete owned files | Wonky Works › Account & profile (bottom); transfers respect the new owner's quota (Drive 03 §7.3) |
+| Appearance (`appearance`) | App theme (System/Light/Dark with previews), density, reduce motion | Wonky Works › **Appearance** (unchanged; also the target of *Accessibility settings*) |
+| Language & region (`language`) | UI language, time zone | Wonky Works › **Language & region** |
+| Language & region › default locale for new spreadsheets | Number/date formats of new spreadsheets | Sheets settings › Defaults (it is a Sheets preference, already stored in `sheetsDefaults`) |
+| Keyboard shortcuts (`keyboard`) | Searchable command table, record bindings, conflicts, reset | Wonky Works › **Keyboard shortcuts** (see Open question below): lists the shell commands and the **current app's** commands, grouped "Shared" / "<App>"; overrides of other apps' commands are kept untouched |
+| Write (`write`) | Default theme, spellcheck, smart quotes, auto-pair, Markdown shortcuts, pageless, default page setup, default export format | **Write settings** (`/settings/app/…` in Write; sections per Write 05 §13.3: *Editor*, *Page & export*, *Spelling*) |
+| Document themes (`themes`, contributed by Write) | Default theme, theme library | **Write settings › Document themes** (`/settings/app/themes`) |
+| Sheets (`sheets`) + Sheets' custom body | Default locale/time zone/font/size, Enter starts editing, formula autocomplete, formula help, editor mode in status bar, custom fill lists, enable scripts, reduce grid animations | **Sheets settings › Defaults** (`/settings/app/defaults` in Sheets; Sheets 04 §11.24) |
+| Notifications (`notifications`) | Per category in-app / email / off, digest | Wonky Works › **Notifications** (unchanged; categories now cover presentations and files) |
+| AI (`ai`) | Enable assistant, model quality, clear AI history, privacy notice | Wonky Works › **AI** (unchanged) |
+| AI providers (`ai-providers`) | Server provider; user's own key | Wonky Works › **AI providers** (unchanged id, so `shell.settings.open {section: ai-providers}` keeps working) |
+| Developer (`developer`) | Server status (Redis), personal access tokens, MCP connection JSON, UI-bridge switch | Wonky Works › **Developer** (unchanged) |
+| Offline & storage (`offline`) | Files on the device, pinned files, pending changes/uploads, local storage used, *Simulate offline*, *Clear local data* | Wonky Works › **Offline & device data** (same id `offline`, renamed so it isn't confused with the quota): the current app's device data in full, plus one summary row per other app on this device ("Wonky Sheets — 120 MB on this device · Manage in Wonky Sheets") |
+| — (new) | Storage quota | Wonky Works › **Storage** (`storage`): meter, breakdown by kind, "What counts", *Manage storage in Wonky Drive* (Drive 03 §6.5) |
+| About (`about`) | App/server/protocol versions, licenses, links | Wonky Works › **About** (shows the current app's version and the server version; *Report a bug* link) |
+| — (new) | Slides preferences | **Slides settings** (`slidesDefaults`; sections per [Slides 04](wonky_slides/04-screens-menus-toolbar.md)): default theme, slide size, presenter-view preferences, animation defaults (incl. reduced motion while presenting), code font size |
+| — (new) | Drive preferences | **Drive settings** (`driveDefaults`; [Drive 04 §8](wonky_drive/04-screens-menus.md)): default layout, sort, folders on top, show file extensions, ask on name conflicts, convert uploads (P1) |
+
+Compatibility: old routes redirect — `/settings/write` and `/settings/themes` in Write →
+`/settings/app/editor` and `/settings/app/themes`; `/settings/sheets` in Sheets →
+`/settings/app/defaults`; in another app they navigate to that app (`/write/settings/app`).
+`shell.settings.open {section: write|sheets|themes}` maps to the same targets, so menu
+entries, MCP clients and saved links keep working.
+
+### 4.2 Settings screen
+
+Full-screen in-app page (`SettingsScreen`, shell) with a left nav of **two groups**:
+
+```
+┌ ← Settings ──────────────────────────────────────────────────────────────┐
+│ [▣] WRITE SETTINGS        │  Editor                                       │
+│   Editor                  │  ┌ Typing ─────────────────────────────────┐ │
+│   Page & export           │  │ Markdown shortcuts              [on ]   │ │
+│   Document themes         │  │ Smart quotes and dashes          [on ]   │ │
+│   Spelling                │  └─────────────────────────────────────────┘ │
+│   Settings of other apps ▸│                                               │
+│ [▣] WONKY WORKS SETTINGS  │                                               │
+│   Account & profile       │                                               │
+│   Sign-in & security      │                                               │
+│   Appearance              │                                               │
+│   Language & region       │                                               │
+│   Keyboard shortcuts      │                                               │
+│   Notifications           │                                               │
+│   Storage                 │                                               │
+│   Offline & device data   │                                               │
+│   AI · AI providers       │                                               │
+│   Developer               │                                               │
+│   About                   │                                               │
+└──────────────────────────────────────────────────────────────────────────┘
+```
+
+- Group headers carry the product icon (the app's; the Work icon for Wonky Works) and are
+  `Semantics(header: true)`; the page header reads "Write settings" or "Wonky Works settings"
+  depending on the open section. Narrow widths: the nav becomes a select above the content.
+- Back (←) returns to the previous route (the editor or home the user came from), else home.
+- Entry points: account menu (*<App> settings*, *Wonky Works settings*), the left menu's bottom
+  section in homes (03 §3.3), Tools menu in editors, command palette:
+  `shell.settings.open {section}` (Wonky Works) and **`shell.settings.openApp {section?}`**
+  (app settings), `Mod+,` (desktop) = app settings.
+- The app's sections come from `WonkyAppConfig.appSettingsSections(services)` (list of
+  `SettingsSectionSpec`, replacing `settingsSections` and `sheetsSettings`).
+
+Every setting change is a command (e.g. `shell.settings.setAppTheme`, `write.prefs.*`,
+`sheets.prefs.*`, `slides.prefs.*`, `drive.prefs.set`) so it is MCP-controllable; settings are
+**not** on the undo stack (they apply immediately and are trivially reversible).
+
+**Open question (for review) (v2):** D4 doesn't place *Keyboard shortcuts*. Overrides are one
+JSON (`keymapOverrides`) covering every app's commands, but each app only knows its own commands.
+*Recommendation:* keep it in Wonky Works settings with two groups (Shared commands, this app's
+commands) — one place to look, and shared shortcuts (palette, undo, quick switcher) stay
+consistent across apps. Alternative: list it in each app's settings (only that app's commands +
+the shared ones).
 
 ## 5. Endpoints
 

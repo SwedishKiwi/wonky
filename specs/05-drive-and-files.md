@@ -1,12 +1,20 @@
-# 05 · Wonky Drive — Files, Folders, Home Screen
+# 05 · Wonky Drive — Files, Folders, Homes
 
-Wonky Drive is the shared file system for both apps. It is implemented once in
-`packages/wonky_app` (UI) and `wonky_server/lib/src/platform/drive/` (server). Each app
-shows the same drive, **filtered by default to its own file type** (Write home shows documents,
-Sheets home shows spreadsheets), with a toggle to show everything. Opening an item of the
-*other* type navigates to the other app's URL (same origin when deployed together; see
-architecture spec). This is a full-page navigation **within the same browser tab/window** —
-never a new window.
+Wonky Drive is the one file system of the suite. It is implemented once in
+`packages/wonky_app` (UI: home screen, list/grid, left menu, dialogs, details panel) and
+`wonky_server/lib/src/platform/drive/` (server).
+
+**(v2) One drive, many lenses** (decisions D2/D3):
+
+- The **Wonky Drive app** (`wonky_drive`, `/drive/`) shows the full drive: folders, documents,
+  spreadsheets, presentations and uploaded files, with folder management, uploads, previews and
+  the Storage page. Its own specs are in [`wonky_drive/`](wonky_drive/README.md).
+- Each **app home** (`/write/`, `/sheets/`, `/slides/`) shows **only its own kind** (no "show
+  everything" toggle any more) and links to Drive for everything else (§3.2).
+- Opening an item of another kind navigates to that kind's app URL (same origin; 01 §2.4). This
+  is a full-page navigation **within the same browser tab/window** — never a new window.
+- Every user has **50 MB** of storage, enforced on every byte-adding path
+  ([Drive 03](wonky_drive/03-storage-quota.md)).
 
 ## 1. Data model (server, Postgres — not synced)
 
@@ -15,16 +23,24 @@ never a new window.
 class: DriveItem
 table: drive_item
 fields:
-  uuid: UuidValue, defaultPersist=random_v7   # public id used in URLs: /d/<uuid>, /s/<uuid>
-  kind: DriveItemKind                          # enum: folder, document, spreadsheet
+  uuid: UuidValue, defaultPersist=random_v7   # public id used in URLs: /d/<uuid>, /s/<uuid>, /p/<uuid>, /file/<uuid>
+  kind: DriveItemKind                          # enum: folder, document, spreadsheet, presentation (v2), file (v2)
   name: String
   ownerId: int, relation(parent=user_profile, onDelete=Restrict)
   parentId: int?, relation(parent=drive_item, onDelete=SetNull)   # null = owner's root
   description: String?
-  # For documents: document_id; for spreadsheets: the offline-sync space UUID (= Spreadsheet.id)
+  # Documents: document_id; spreadsheets: the offline-sync space UUID (= Spreadsheet.id);
+  # (v2) presentations: the deck's space UUID (= Deck.id = item uuid); files: StoredFile.fileUuid
   contentRef: UuidValue?
   thumbnailFileId: UuidValue?
-  sizeBytes: int, default=0
+  sizeBytes: int, default=0                    # (v2) counted content size: estimate or file size (Drive 03 §2)
+  attachmentBytes: int, default=0              # (v2) images stored for this item, charged to its owner (Drive 03 §2)
+  kindMask: int, default=0                     # (v2) folders: kinds contained recursively (§3.2)
+  mimeType: String?                            # (v2) files only — and the fields below (Drive 02 §1.1)
+  fileCategory: FileCategory?
+  uploadState: FileUploadState?
+  fileMetaJson: String?
+  previewFileId: UuidValue?
   createdAt: DateTime
   createdById: int
   modifiedAt: DateTime                         # last content modification (any user)
@@ -57,7 +73,19 @@ indexes:
 ```
 
 Sharing tables (`DriveItemPermission`, `ShareLink`) are defined in
-[06-sharing-and-permissions.md](06-sharing-and-permissions.md).
+[06-sharing-and-permissions.md](06-sharing-and-permissions.md). (v2) Storage tables
+(`UserStorage`, `StorageReservation`) are in [Drive 03 §4](wonky_drive/03-storage-quota.md);
+`StoredFileKind` gains `driveFile` and `preview` ([Drive 02 §1.1](wonky_drive/02-files-uploads-previews.md)).
+
+**(v2) Kinds.**
+
+| Kind | App | Content | Created by |
+|------|-----|---------|-----------|
+| `folder` | Drive | — | `createFolder` |
+| `document` | Write | `Document` + op log | `createDocument` (online/offline, client ids) |
+| `spreadsheet` | Sheets | sync space | reserved space + `registerSpreadsheet`, or `createSpreadsheet` |
+| `presentation` | Slides | sync space (one deck = one space) | reserved space + `registerPresentation`, or `createPresentation` ([Slides 02 §9.3](wonky_slides/02-data-model.md)) |
+| `file` | Drive (preview) | `StoredFile` (`driveFile`) | `createFileUpload` + `completeFileUpload` ([Drive 02 §3](wonky_drive/02-files-uploads-previews.md)) |
 
 Full-text search uses Postgres `to_tsvector('simple', …)`/prefix `to_tsquery` computed at query
 time (plus `ILIKE` on the name) over `name`, `description` and an extracted `searchText` field
@@ -69,7 +97,7 @@ is a later optimization (it must then also be added to `definition.sql`).
 
 | Method | Description |
 |--------|-------------|
-| `list(folderUuid?, filter, sort, cursor, limit)` | Children of a folder or a virtual view. `filter`: `kind` set, `ownedByMe`, `sharedWithMe`, `starred`, `recent`, `trash`. Returns `DriveItemView` (item + effective role + user state + owner summary). |
+| `list(folderUuid?, filter, sort, cursor, limit)` | Children of a folder or a virtual view. `filter`: `kind` set, `ownedByMe`, `sharedWithMe`, `starred`, `recent`, `trash`; (v2) `fileCategories` (files only), `foldersContaining` (a kind: folders are returned only if their `kindMask` has it, §3.2; app homes always pass it). Returns `DriveItemView` (item + effective role + user state + owner summary; v2: + the file fields and `countedBytes`). `uploading` files are returned only to their uploader. |
 | `get(uuid)` | Single item view (404 if no access). |
 | `path(uuid)` | Breadcrumb ancestors visible to the user. |
 | `search(query, filters, cursor)` | Full-text + filters (type, owner, modified range, shared). |
@@ -77,43 +105,73 @@ is a later optimization (it must then also be added to `definition.sql`).
 | `createDocument(parentUuid?, name, templateUuid?, initialMarkdown?)` | Creates `DriveItem` + `Document` (see Write data model). |
 | `registerSpreadsheet(spaceUuid, parentUuid?, name)` | Called after a spreadsheet was created locally in a reserved sync space (works offline-first; idempotent). |
 | `createSpreadsheet(parentUuid?, name, templateUuid?)` | Online convenience used by MCP/headless; creates space + rows server-side. |
+| `registerPresentation(spaceUuid, parentUuid?, name)` · `createPresentation(parentUuid?, name, templateUuid?)` | (v2) As for spreadsheets ([Slides 02 §9.3](wonky_slides/02-data-model.md)). |
+| `createFileUpload(request)` · `completeFileUpload(itemUuid)` · `cancelFileUpload(itemUuid)` · `fileUploadStatus(itemUuid)` | (v2) Uploads of `file` items, quota reservation ([Drive 02 §3](wonky_drive/02-files-uploads-previews.md)). |
+| `fileContentUrl(itemUuid, download)` · `updateFileMeta(itemUuid, fileMetaJson)` · `convertFile(fileItemUuid, target, options)` | (v2) Preview/download URLs, client-measured metadata, *Open with* conversion (Drive 02 §6–§8). |
+| `checkRoom(bytes, itemUuid?)` · `listByStorage(filter, cursor)` | (v2) Quota pre-check; owned items by counted size for the Storage page ([Drive 03](wonky_drive/03-storage-quota.md)). |
+| `downloadZip(uuids, formats)` | (v2, P1) ZIP of several items (Drive 02 §8). |
 | `rename(uuid, name)` · `move(uuids, newParentUuid?)` · `copy(uuid, newName, parentUuid?, copyComments, copySharing)` | |
 | `setStarred(uuid, starred)` · `setPinnedOffline(uuid, pinned)` | |
 | `trash(uuids)` · `restore(uuids)` · `deletePermanently(uuids)` · `emptyTrash()` | Trash auto-purges after 30 days (FutureCall `drive.purgeTrash`, daily). |
-| `watch()` | **Stream** of `DriveChange` events for items visible to the user (created/renamed/moved/trashed/shared/modified) so lists update live. |
+| `watch()` | **Stream** of `DriveChange` events for items visible to the user (created/renamed/moved/trashed/shared/modified) so lists update live. (v2) Also `storageChanged` with the caller's new `StorageUsage` (Drive 03 §3). |
 | `listTemplates(kind)` | Template gallery: `TemplateView`s of the built-in templates (compiled into the server, stable UUIDv5 ids `wonky-template:<key>`) plus items published with `setTemplate(uuid, category)`. A `TemplateView` carries `themeKey` (the built-in Write theme a document template creates its document with) and `previewStyle` (`TemplatePreviewStyle`: `paper`/`text`/`heading`/`accent` colors for light and dark, `banner`, `centeredHeadings`, `uppercaseHeadings`, `fontCategory` serif/sans/mono; null = neutral page) for the card's miniature page (§3.1). |
-| `import(uploadId, kind, options: DriveImportOptions)` | Server-side import pipeline (see each app's import spec) returning the new item. |
-| `storageUsage()` | Bytes used by owned items. |
+| `import(uploadId, kind, options: DriveImportOptions)` | Server-side import pipeline (see each app's import spec) returning the new item. (v2) Checks the quota (Drive 03 §7.2). |
+| `storageUsage()` | (v2) `StorageUsage`: quota, counted usage incl. trash, reservations, breakdown by kind ([Drive 03 §3](wonky_drive/03-storage-quota.md)). |
 | `setThumbnail(uuid, uploadedFileUuid)` | Clients render thumbnails (first page / visible grid area, light theme, 400×300 PNG) at most every 10 min while editing and upload them; Editors+ only. |
 
 Server rules:
+- (v2) Every byte-adding method checks the storage quota of the user it charges and throws
+  `quotaExceeded` ([Drive 03 §7](wonky_drive/03-storage-quota.md)); editing content never does.
 - Moving into a folder requires Editor on the target folder and Owner/Editor on the item.
 - Cycles are rejected (`DriveException.cycle`).
 - Names: 1–255 chars, trimmed, no `/`; duplicates allowed (like Google Drive).
 - Trashing a folder trashes descendants (same `trashedAt`); restore restores them together.
 
-## 3. Home screen (each app)
+## 3. Homes
 
-Single-window page at `/` (Write) or `/` (Sheets) — layout:
+### 3.0 Wonky Drive vs app homes (v2)
+
+| | Wonky Drive (`/drive/`) | App home (`/write/`, `/sheets/`, `/slides/`) |
+|-|-------------------------|-----------------------------------------------|
+| Kinds | all | the app's kind only (no type toggle) |
+| Folders | all, with tree and drag-and-drop moves, *New folder* | only folders containing the kind (§3.2), as navigation; *Open in Wonky Drive* |
+| New | folder, document, spreadsheet, presentation, upload, template | the app's kind, template strip |
+| Uploads | any file ([Drive 02](wonky_drive/02-files-uploads-previews.md)) | *Import file…* of the app's convertible types |
+| Views (left menu) | Home, My Drive, Shared with me, Recent, Starred, Trash, Storage | Recent, My files, Shared with me, Starred, Offline, Trash |
+| Spec | [Drive 04](wonky_drive/04-screens-menus.md) | this section + the app's screen spec |
+
+Both are the same shell screen (`DriveHomeScreen`) configured by `WonkyAppConfig.homeScope`
+(03 §3.3). The layout below is an app home (Write); Drive's is in Drive 04 §3.
+
+### 3.1 Layout (app home, v2)
+
+Single-window page at `/` of each app — layout:
 
 ```
 ┌──────────────────────────────────────────────────────────────────────────────┐
-│ [≡] [◆] Write    [ 🔍 Search in Drive…                        ]  [◐] [🔔] [👤] │  ← TopBar
-├───────────────┬──────────────────────────────────────────────────────────────┤
-│ + New         │  Start a new document                                         │
-│               │  [Blank] [Meeting notes] [Project brief] [Letter] [More ▸]    │ ← Template strip
-│ ▸ Home        │──────────────────────────────────────────────────────────────│
-│ ▸ My Drive    │  Recent ▾   Owned by anyone ▾   Type: Documents ▾   [▦|☰] [⇅] │ ← Filter bar
-│ ▸ Shared      │                                                               │
-│ ▸ Starred     │  Name                 Owner      Last modified     ⋮          │
-│ ▸ Offline     │  📄 Q3 planning       me         10:42             ⋮          │
-│ ▸ Trash       │  📄 Notes             Anna B.    Yesterday         ⋮          │
-│               │  …                                                            │
-│ Storage 12 MB │                                                               │
-└───────────────┴──────────────────────────────────────────────────────────────┘
+│ [≡] [◆] Write    [ 🔍 Search documents…                       ]  [◐] [🔔] [👤] │  ← TopBar
+├────────────────┬─────────────────────────────────────────────────────────────┤
+│ ▣ Wonky Drive  │  Start a new document                                        │
+│ ▣ Wonky Write ●│  [Blank] [Meeting notes] [Project brief] [Letter] [More ▸]   │ ← Template strip
+│ ▣ Wonky Sheets │─────────────────────────────────────────────────────────────│
+│ ▣ Wonky Slides │  Recent                          [▣ Open in Wonky Drive]     │ ← header row
+│ ───────────    │  Owned by anyone ▾   Sort ▾   [▦|☰]                           │ ← Filter bar
+│ + New          │  Name                 Owner      Last modified     ⋮         │
+│ 🕘 Recent      │  📄 Q3 planning       me         10:42             ⋮         │
+│ ▤ My files     │  📄 Notes             Anna B.    Yesterday         ⋮         │
+│ 👥 Shared      │  …                                                           │
+│ ☆ Starred      │                                                              │
+│ ⇩ Offline      │                                                              │
+│ 🗑 Trash        │                                                              │
+│ ───────────    │                                                              │
+│ ⚙ Write sett…  │                                                              │
+│ ▣ Wonky Works… │      (bottom section: Write settings, Wonky Works settings,  │
+│ 🐞 Report a bug│       Report a bug, storage meter "12.3 MB of 50 MB used")   │
+│ ▬▬▬░ 12.3/50 MB│                                                              │
+└────────────────┴─────────────────────────────────────────────────────────────┘
 ```
 
-### 3.1 Components
+### 3.2 Components
 - **TopBar** (shared `WonkyTopBar`): hamburger (collapses sidebar), app logo (the product icon,
   suite 02 §5) + short name ("Write" / "Sheets"; click → home), drive search field (while the
   sidebar is open it starts where the page content starts — sidebar 256 px + the 20 px content
@@ -121,14 +179,25 @@ Single-window page at `/` (Write) or `/` (Sheets) — layout:
   suggestions dropdown (recent
   searches, matching items with their kind icons, "Search for '…'" row, filter chips: type,
   owner, modified), app theme toggle (light/dark/system cycle), notifications, account avatar
-  menu (name, email, Settings, switch app → *Open Wonky Sheets/Write* with that product's icon,
-  Sign out). There is no help button (Help lives in the editor's Help menu; there is no help
-  center).
-- **Sidebar** (`DriveSidebar`): *New* button (12 px left of the +; dropdown: New document / New
-  spreadsheet / New folder / Upload file… / From template…), nav
-  items (Home, My Drive, Shared with me, Starred, Offline,
-  Trash), collapsible folder tree under My Drive (lazy-loaded, drag-and-drop target), storage
-  usage footer (no separator above it).
+  menu (name, email, (v2) *<App> settings*, *Wonky Works settings*, *Open ▸* Drive / Write /
+  Sheets / Slides with the product icons, Sign out). There is no help button (Help lives in the
+  editor's Help menu and *Report a bug* in the left menu; there is no help center). (v2) In app
+  homes the search is filtered to the app's kind; its dropdown ends with "Search all of Wonky
+  Drive for '…'" (→ Drive's search, same tab).
+- **Left menu** (v2: `HomeSidebar`, replaces `DriveSidebar`; 03 §3.3, Drive 04 §2): app section
+  (four apps), *New* button (12 px left of the +; app homes: New <kind> / From template…), the
+  app's nav items (app homes: Recent, My files, Shared with me, Starred, Offline, Trash — no
+  folder tree), bottom section (*<App> settings*, *Wonky Works settings*, *Report a bug*,
+  storage meter "12.3 MB of 50 MB used").
+- **(v2) Folder rule in app homes.** A folder appears in an app home only if it contains —
+  recursively, ignoring trashed items — at least one item of the app's kind. The server keeps
+  `DriveItem.kindMask` per folder (bit per kind; updated for all ancestors on create, register,
+  move, trash, restore and delete of a non-folder item, in the same transaction; a nightly job
+  recomputes masks) and `list(filter.foldersContaining: k)` returns only folders whose mask has
+  `k`. The mask ignores per-user access (a folder whose only document you can't see may show
+  and open empty). See the Open question in 03 §3.3. Moving between folders, creating folders and
+  uploads happen in Drive (header-row button **Open in Wonky Drive** → the same folder in
+  Drive); the per-item *Move to…* dialog stays in app homes and editors.
 - **Template strip**: collapsible ("Hide templates"), 20 px horizontal padding (matching the list
   header), horizontal list of `TemplateCard`s; *More*
   opens the template gallery page (`/templates`) with categories (Personal, Work, Education,
@@ -142,8 +211,9 @@ Single-window page at `/` (Write) or `/` (Sheets) — layout:
   *minimal-mono*, Recipe → *wonky-default* (banner), Story draft → *manuscript* (centered
   uppercase). Spreadsheet templates have an accent color for their card.
 - **Filter bar**: view selector (Recent/Last opened by me/Last modified by me/Last modified),
-  owner filter, type filter (Documents, Spreadsheets, Folders, All), grid/list toggle, sort menu
-  (Name, Last modified, Last opened by me, Size; asc/desc), folders-on-top toggle.
+  owner filter, grid/list toggle, sort menu (Name, Last modified, Last opened by me, Size;
+  asc/desc), folders-on-top toggle. (v2) The type filter (Documents, Spreadsheets, Folders,
+  All) exists only in Drive, with presentations and file subtypes (Drive 04 §3.3).
 - **Item list** (`DriveItemList`, list mode): columns Name (kind icon, name, shared badge, star,
   offline badge), Owner (avatar+name / "me"), Last modified (relative), File size, row ⋮ menu.
   Grid mode: `DriveItemCard` with thumbnail preview, name, kind icon, ⋮ menu. Kind icons are
@@ -161,13 +231,18 @@ Single-window page at `/` (Write) or `/` (Sheets) — layout:
 - **Details panel** (toggle `i`): right side panel (`WonkySplitView` with `rail: false`: a close
   button, no icon rail; suite 02 §4.5) with thumbnail (or the kind icon), type, owner, location,
   sharing summary, created/modified/opened, description (editable), activity feed (who did
-  what, from server activity log).
-- **Drag and drop**: items onto folders (sidebar tree or list) moves them (undoable); files
-  from the OS onto the list uploads/imports (`.md/.txt/.html/.docx/.odt/.rtf` → Write;
-  `.xlsx/.xls/.ods/.csv/.tsv` → Sheets) with an upload progress toast list (bottom-right).
+  what, from server activity log). (v2) Also "Storage used" (counted size, with "Counts against
+  <owner>'s storage" for other people's items) and, for files, type/dimensions/pages and *Open
+  with* ([Drive 04 §3.6](wonky_drive/04-screens-menus.md)).
+- **Drag and drop**: (v2) in Drive: items onto folders moves them (undoable), OS files upload
+  as files (Drive 04 §3.5). In app homes: files from the OS onto the list **import** the app's
+  convertible types (`.md/.txt/.html/.docx/.odt/.rtf` → Write; `.xlsx/.xls/.ods/.csv/.tsv` →
+  Sheets; Slides imports nothing) with an upload progress toast list (bottom-right); other files
+  get the toast "Wonky Write can't open "x.zip". Upload it in Wonky Drive instead. [Open Wonky
+  Drive]". Item drags onto folders are Drive-only.
 - **Empty states**: illustrated (light/dark variants) per view ("No starred files yet").
 
-### 3.2 Dialogs
+### 3.3 Dialogs
 - **Rename** (`ShadDialog` with input, Enter to save).
 - **Move to…**: folder browser with breadcrumb, create-new-folder inline, disabled targets where
   user lacks permission.
@@ -176,17 +251,27 @@ Single-window page at `/` (Write) or `/` (Sheets) — layout:
 - **Upload/import options**: for CSV (delimiter, encoding, header row, convert numbers/dates),
   for XLSX (import all sheets / selected sheets), for DOCX (mapping notice: "Formatting not
   supported in Markdown will be removed").
+- (v2) **Out of storage** ([Drive 03 §6.3](wonky_drive/03-storage-quota.md)) and **Upload
+  options** for name conflicts ([Drive 02 §3.2](wonky_drive/02-files-uploads-previews.md)).
 
-### 3.3 Keyboard
+### 3.4 Keyboard
 `/` focus search · `Enter` open · `F2`/`N` rename · `Del` trash · `S` star · `Mod+Alt+N` new
-(app's default type) · `Shift+F` new folder · arrows navigate · `.` share · `i` details.
-All via commands (`shell.drive.*`).
+(app's default type) · `Shift+F` new folder (Drive only, v2) · arrows navigate · `.` share ·
+`i` details. All via commands (`shell.drive.*`); Drive adds `Space` preview and `Shift+U`
+upload (Drive 04 §10).
 
 ## 4. Offline behavior
 
 - The drive list is cached locally (last 500 items + all pinned) for offline browsing. Offline,
   "New spreadsheet" works (reserved space; registered later). "New document" works offline
-  (client generates `documentId` UUIDv7; registration queued; see offline spec).
+  (client generates `documentId` UUIDv7; registration queued; see offline spec). (v2) "New
+  presentation" works offline like spreadsheets (Slides 02 §9.3). In Drive, *New* Wonky items
+  navigate to the app's `/new` route, which creates them offline-first (Drive 04 §5); Drive
+  itself holds no Sheets/Slides replica.
+- (v2) Uploads in Drive are queued while offline and start when the connection returns; the
+  quota applies when they reach the server ([Drive 02 §4](wonky_drive/02-files-uploads-previews.md)).
+  Previews of files are available offline only from the in-memory cache.
+- (v2) The storage meter shows the last known usage while offline.
 - Items not available offline are dimmed with a tooltip when offline.
 - Pending drive operations (rename/move/star/trash) are queued and replayed in order; conflicts
   resolve server-side by "last write wins" per field with a toast if the item no longer exists.
@@ -201,7 +286,9 @@ fields:
   actorId: int?
   actorKind: ActorKind        # enum: user, mcp, ai, script, system
   type: ActivityType          # enum: created, renamed, moved, edited, commented, shared,
-                              #   unshared, restoredVersion, trashed, restored, exported
+                              #   unshared, restoredVersion, trashed, restored, exported,
+                              #   uploaded (v2), newVersionUploaded (v2, P2), converted (v2: the
+                              #   new item's "Created from data.csv")
   summary: String             # JSON payload for rendering
   at: DateTime
 indexes:

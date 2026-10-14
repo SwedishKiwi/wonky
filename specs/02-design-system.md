@@ -224,6 +224,13 @@ Light/dark-aware SVG illustrations (`flutter_svg`, via shad dep) for empty state
 ### 4.18 `LoadingShimmer` patterns
 Skeleton layouts for drive list, document page, grid (built from `ShadSkeleton`).
 
+### 4.19 `WonkyStackedBar` (v2)
+Horizontal stacked bar with a legend (segments with color, label, value; a trailing "free"
+segment in `muted`), 8 px high (4 px compact variant for meters), rounded ends, one
+`Semantics` label listing the segments. Used by the storage meter, the Storage page and
+Settings › Storage ([Drive 03 §6](wonky_drive/03-storage-quota.md)). Colors from `chart1–5`;
+threshold tints (`warning`, `destructive`) are passed in by the caller.
+
 ## 5. Product icons
 
 Each product has its own icon (a rounded app tile, `packages/wonky_app/assets/icons/*.webp`,
@@ -235,10 +242,14 @@ decorative use). Product icons stand for the **apps** only; files keep plain gly
   `WonkyAppConfig.shortAppName`), editor title row, page frames and the boot overlay.
 - **Sign-in screens**: the suite icon (`WonkyProduct.work`) with "Wonky Work" as the headline
   (one sign-in covers the suite).
-- **App menus and settings** (`WonkyMenuItem.leading`, §4.2): the account menu's *Open Write /
-  Open Sheets* switch item and the Settings › Write / Sheets sections.
+- **App menus and settings** (`WonkyMenuItem.leading`, §4.2): the account menu's *Open ▸*
+  items, (v2) the app links of every home's left menu (Drive, Write, Sheets, Slides; 03 §3.3)
+  and the group headers of the settings screen (the app's icon for *<App> settings*, the Work
+  icon for *Wonky Works settings*, 04 §4.2).
 - **File kind icons** are not product icons: `DriveKindIcon(kind)` draws the Lucide glyphs
-  (folder / file-text / sheet) in their kind colors — drive list/grid, details panel, search
+  (folder / file-text / sheet; (v2) presentation for decks and per-category glyphs for uploaded
+  files — file-image, file-text (PDF), file-code, file-audio, file-video, file-archive, file —
+  [Drive 04 §11](wonky_drive/04-screens-menus.md)) in their kind colors — drive list/grid, details panel, search
   suggestions, quick switcher, command palette rows (`PaletteRow.leading`), drag chip. The *New*
   menu and *My Drive* keep their glyphs too.
 - **Platform icons** are generated from the same sources: web `favicon.png` (32 px) and PWA

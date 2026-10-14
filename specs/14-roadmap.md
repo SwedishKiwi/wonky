@@ -2,7 +2,14 @@
 
 This is the suite-level plan. App-level breakdowns:
 [Write implementation plan](wonky_write/10-implementation-plan.md),
-[Sheets implementation plan](wonky_sheets/13-implementation-plan.md).
+[Sheets implementation plan](wonky_sheets/13-implementation-plan.md),
+(v2) [Drive implementation plan](wonky_drive/05-implementation-plan.md),
+[Slides implementation plan](wonky_slides/12-implementation-plan.md).
+
+**Status (v2 planning, 2026-10):** M0–M7 delivered the first iteration of Write (complete) and
+Sheets (complete for its first iteration, `wonky_sheets/STATUS.md`; deferred work in
+`TODO.md`). The second iteration adds Wonky Drive, Wonky Slides and suite changes in
+milestones **M8–M11** (§2.1).
 
 ## 1. Principles
 - **Contract first**: each workstream starts by committing its public Dart interfaces (and
@@ -29,6 +36,19 @@ This is the suite-level plan. App-level breakdowns:
 | **M6 · Agents & Automation** | Complete MCP tool catalogs (headless + UI bridge) for both apps; AI assistant panels & inline AI; Sheets scripting (compile service, runtimes, bridge, editor, triggers, macros). | Journeys 8, 10; MCP integration suite green. |
 | **M7 · Polish & Scale** | Accessibility audit, i18n readiness (pseudo-locales), performance tuning, bundle splitting, error reporting, security review, raise Sheets cell limits as upstream U1–U5 land, desktop packaging (macOS/Windows/Linux). | All budgets in 11 §2 met; a11y checklist complete. |
 
+### 2.1 Second iteration (v2)
+
+| Milestone | Goal | Exit criteria |
+|-----------|------|---------------|
+| **M8 · Drive + suite changes** | `wonky_drive` app at `/drive/` (root redirect), unified drive with kinds `presentation` (model only) and `file`, uploads (queue, offline), MIME sniffing, previews (image, PDF, text/code), *Open with*, downloads; **50 MB quota** (accounting, enforcement on every byte-adding path, meters, banners, dialogs, Storage page, backfill); app homes filtered to their kind with the left menu (app links, settings, *Report a bug*, storage meter); **settings split** (Wonky Works vs app settings); *Report a bug* in every editor; shared-package extraction `wonky_code*`, `wonky_charts*` (no behavior change). [Drive 05](wonky_drive/05-implementation-plan.md) | Journeys 11–13 (11 §1.1); quota enforcement table (Drive 03 §7.2) fully tested; backfill dry run on a production copy; Write/Sheets goldens unchanged after the extractions. |
+| **M9 · Slides MVP** | Slides data model + sync (one deck = one space, space-kind filter OS-8, shared sync kit), editor canvas and core objects (text, shapes, lines, images, tables, groups), themes/layouts/masters, slide navigator with **slide groups**, outline/grid views, speaker notes, presenting (incl. the presenter view decision, 03 §1), PDF export, app home + settings, offline creation. | Journey 14 (without builds/code/charts); offline merge fuzzer for decks green; PDF fidelity suite. |
+| **M10 · Slides motion & content** | Builds and the animation pane, transitions incl. Magic Move, code blocks with line highlighting and type-in/morph (`wonky_code`), linked Sheets charts incl. 3D and camera animation (`wonky_charts`), native charts (P1). | Journey 14 complete; 60 fps budgets of Slides 01 met on the reference machines. |
+| **M11 · Slides collaboration, MCP & AI** | Presence, soft locks, comments on slides/elements, version history, activity; `slides.*` headless and `ui.slides.*` tools; assistant in Slides (generate decks, notes, alt text, code walkthroughs) and in Drive (P1). | Journey 15; MCP integration suite for `slides.*` green. |
+
+The M9–M11 breakdown is in [Slides 12](wonky_slides/12-implementation-plan.md). M8 must land
+the shell changes (scope-aware homes, settings split, `WonkyAppKind` with four apps) before
+Slides UI work starts in M9, and the `wonky_code*`/`wonky_charts*` extractions before M10.
+
 ## 3. Workstreams (suite-level, shared)
 
 | ID | Workstream | Owns | Depends on | Milestone |
@@ -47,8 +67,14 @@ This is the suite-level plan. App-level breakdowns:
 | WS-11 | AI platform: Anthropic client, assistant service/endpoint, shared panel | server `platform/ai`, `wonky_app/lib/assistant` | WS-10 | M6 |
 | WS-12 | Files/uploads/signed URLs | server `platform/files` | WS-4 | M1 |
 | WS-13 | Quality infra: test helpers of 15 (`pumpWonky`, `CommandTestHarness`, `TestUsers`, `forEachRole`, seeded generators, golden script), harnesses, multi-client simulators, perf suite, golden matrix | `tool/`, `benchmark/`, `lib/testing.dart` + `test/support/` of each package | WS-0 | M0 → ongoing |
+| WS-14 (v2) | Drive app, files, uploads, previews (Drive WS-D1, WS-D5, WS-D6, WS-D8) | `wonky_drive/`, server `platform/{drive,files}` | WS-5, WS-12 | M8 |
+| WS-15 (v2) | Storage quota (Drive WS-D2) | server `platform/storage` + hooks | WS-14 | M8 |
+| WS-16 (v2) | Shell v2: scope-aware homes, left menu, `WonkyAppKind` ×4, storage UI, *Report a bug* (Drive WS-D3, WS-D7) | `wonky_app/lib/src/{drive,shell,storage,routing}`, app home configs | WS-3, WS-5 | M8 |
+| WS-17 (v2) | Settings split (Drive WS-D4) | `wonky_app/lib/src/settings`, app settings sections | WS-16 | M8 |
+| WS-18 (v2) | Shared packages: `wonky_code*`, `wonky_charts*` (Drive WS-D9), dependency rules | `packages/wonky_code*`, `packages/wonky_charts*`, `tool/check_dependencies.dart` | — | M8 (before M10) |
+| WS-19 (v2) | Shared sync kit + OS-8 space filter + space kinds | `packages/wonky_sync_kit`, `third_party/serverpod_offline_sync`, server `sheets/spaces` | — | M9 (Slides 12) |
 
-App workstreams: see the two app plans (WS-W*, WS-S*).
+App workstreams: see the app plans (WS-W*, WS-S*, (v2) WS-D*, Slides 12).
 
 ## 4. Dependency graph (simplified)
 
@@ -57,6 +83,9 @@ WS-0 ─┬─ WS-1 ─┬─ WS-3 ─┬─ WS-4 ─ WS-5 ─┬─ WS-6 ─ WS
       │        │        │               ├─ WS-9
       └─ WS-2 ─┘        ├─ WS-7         └─ WS-10 ─ WS-11
                         └─ (Write WS-W*, Sheets WS-S* start after WS-3 contracts exist)
+
+(v2)  WS-14 ─ WS-15            WS-16 ─ WS-17            WS-18 ─────────────┐
+        └──────── M8 exit ─────────┴──────── M8 exit         WS-19 ─ Slides M9 ─ M10 ─ M11
 ```
 
 ## 5. Risks
@@ -70,3 +99,7 @@ WS-0 ─┬─ WS-1 ─┬─ WS-3 ─┬─ WS-4 ─ WS-5 ─┬─ WS-6 ─ WS
 | Formula compatibility | User trust | Differential tests vs LibreOffice; golden vectors |
 | MCP spec evolution | Integration breakage | `mcp_dart` protocol profiles; integration tests per profile |
 | Scope (Google Docs + Sheets parity) | Schedule | P0/P1/P2 priorities in app overviews; milestones deliver usable slices |
+| (v2) Sync engine syncs every member space (decks + spreadsheets in both replicas) | Slides/Sheets download each other's data | OS-8 space filter patch, space kinds (12 §2.6) |
+| (v2) Existing users above the new 50 MB quota | Frustration, support | Non-destructive over-quota state, clear Storage page, one-time notice (Drive 03 §9) |
+| (v2) Shell refactor for four apps collides with app work | Merge conflicts | WS-16 lands first in M8 behind a compatibility default (Drive 05 §4) |
+| (v2) Four web builds | Deploy time, CI minutes | Parallel builds in `flutter_build`; only changed apps rebuilt in CI (01 §2.4) |

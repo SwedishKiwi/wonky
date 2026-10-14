@@ -4,7 +4,9 @@
 |-----|-------------|------------------|-------------|
 | Write | Server-authoritative OT over a Serverpod stream (Quill Delta) | Local op queue + snapshot cache; rebase (transform) on reconnect | SQLite (`sqlite_async`, same infra as Sheets) — `write_cache_<userId>.db` |
 | Sheets | `serverpod_offline_sync` CRDT replication | Native: local SQLite is the primary store | `sheets_<userId>.db` (synced tables + local-only tables) |
-| Shell | RPC + `drive.watch` stream | Cached drive listing + queued drive ops | `shell_<userId>.db` (small) |
+| Slides (v2) | `serverpod_offline_sync` CRDT replication (one deck = one space) | Native, like Sheets (§2.6) | `slides_<userId>.db` |
+| Shell (all homes, incl. Drive) | RPC + `drive.watch` stream | Cached drive listing + queued drive ops + (v2) cached storage usage | device key-value store (§3) |
+| Drive uploads (v2) | `drive.createFileUpload` / storage upload / `completeFileUpload` | Persistent upload queue, started when online | `LocalPendingUpload` in the Drive app's local DB (`drive_<userId>.db`, §1.1) |
 
 All local databases are **per user** (file name includes the user's UUID). Signing out keeps them
 (encrypted at rest on desktop via OS file protection; on web relies on origin storage);
@@ -42,14 +44,17 @@ migrations in `writeCacheMigrations`); the shared opener is `LocalDatabases.open
 | `LocalDocumentOp` | `documentUuid`, `revision`, `deltaJson` — server ops after the snapshot (an op log, so a remote op costs a small insert instead of a snapshot rewrite; folded into the snapshot every 200 ops, after a resync and when the document closes) |
 | `LocalPendingOp` | `documentUuid`, `seq` (local monotonically increasing), `baseRevision`, `deltaJson`, `clientOpId` (UUIDv7), `createdAt`, `kind` (content kinds / `meta`), `inflight` (may have been sent; resent with the same id) |
 | `LocalUndoStack` | `documentUuid`, `stackJson` (serialized undo/redo stacks, best-effort), `docHash` (SHA-256 of the local document the stacks apply to; restored only onto an identical document) |
-| `LocalPendingUpload` | `fileUuid` (client-generated UUIDv7), `itemUuid`, `bytes` (blob), `mimeType`, `fileName`, `createdAt`, `attempts`, `lastError` — shared by both apps (images in documents, images over cells, imports) |
+| `LocalPendingUpload` | `fileUuid` (client-generated UUIDv7), `itemUuid`, `bytes` (blob), `mimeType`, `fileName`, `createdAt`, `attempts`, `lastError` — shared by all apps (images in documents, images over cells, (v2) images on slides, imports); (v2) also `purpose` (`attachment` / `driveFile`), `parentUuid`, `sizeBytes`, `lastModified`, `sourcePath` (desktop: upload from the original path), `state`, `receivedBytes` (resume), `volatile` (web without OPFS, > 5 MB) — [Drive 02 §4.1](wonky_drive/02-files-uploads-previews.md). The Drive app keeps its queue in `drive_<userId>.db` (opened with `LocalDatabases.open`, same migrations helper) |
 
 Consistency: every write stores one consistent capture of the sync state in one transaction — the
 server ops since the last write (or a new snapshot) plus the outbox rows that changed. Outbox ops
 are always expressed against `headRevision`, so a reload restores exactly `server document +
 outbox`. A failed write makes the next one a full rewrite.
 
-**Uploads and the files service.** `FileEndpoint` (server `platform/files`) accepts a
+**Uploads and the files service.** (v2) Every upload is checked against the storage quota of
+the user it is charged to (the item owner for images, the uploader for Drive files); a queued
+upload refused for quota stays queued as failed with *Retry* / *Manage storage*
+([Drive 03 §6.3](wonky_drive/03-storage-quota.md)). `FileEndpoint` (server `platform/files`) accepts a
 **client-supplied `fileUuid`** and is idempotent on it: `createUpload(fileUuid, itemUuid,
 fileName, mimeType, size)` → upload description; `completeUpload(fileUuid)`;
 `getUrl(fileUuid)` → `{status: pending|ready|failed, url?}` (signed, 15 min). Content may
@@ -180,6 +185,10 @@ fields:
   Offline-sync patch **OS-5** makes a space without local rows ask for everything in its
   handshake (also the device's own earlier changes), so a re-granted purged space downloads
   completely.
+- **Bulk local writes (as built, patch OS-7):** `OfflineSyncDatabase.bulkWrite` writes many rows
+  of one table in a few set-based statements (inserts from one JSON parameter, batched updates
+  and revives) when no foreign-key/unique projection can change, with the same CRDT records as
+  the per-row calls; Sheets' `SheetsWriter` and the server's `SheetsBulkWriter` use it.
 
 ### 2.4 Live feel on top of the CRDT loop
 - Local writes are visible instantly (local DB + watch).
@@ -218,9 +227,34 @@ reservations, dirty marks, space loading), `SheetsChangeJournal` (U11 below), `S
 `openWorkbookSession`, `createSpreadsheet`). The generic table codec (table name + column map ⇄
 generated ORM class, typed ORM calls) is `package:wonky_sync_models/tables.dart`.
 
+### 2.6 Slides (v2)
+
+Slides uses the same engine and the same patterns as Sheets ([Slides 02 §9](wonky_slides/02-data-model.md)):
+one deck = one space (`Deck.id` = space UUID = drive item UUID), a per-user replica
+`slides_<userId>.db`, a pool of reserved spaces for offline creation
+(`drive.registerPresentation`, queued in `PendingDriveOp`), a custom sync endpoint
+`slidesSync.sync` (for `onMergeSuccess` → the deck change log), subscriptions as membership, the
+pending-change guard, U11-style change journal, recovery export, and the `slides.rows` undo
+domain. The generic client pieces (replica, sync controller, writer, journal, undo inverter)
+are extracted from `wonky_sheets` into a shared package (`wonky_sync_kit`, 01 §2) so both apps
+run the same code.
+
+**Every space kind in every replica.** Because a client syncs every space it is a member of
+(§2.1), the Sheets replica would also download decks and the Slides replica spreadsheets once
+decks are spaces. The server tables `SpaceSubscription` and `SpaceReservation` gain
+`kind: SpaceKind { spreadsheet, deck }` (active set limits per kind), and the recommended fix is
+the vendored patch **OS-8** — a per-endpoint space filter
+(`offlineSync.sync(…, spaceFilter: …)`, `sheetsSync` passes spreadsheet spaces + the personal
+space, `slidesSync` deck spaces + the personal space). It is a first step towards U1. The
+options and the interim behavior are the **Open question** of
+[Slides 02 §9.2](wonky_slides/02-data-model.md). Drive opens no replica.
+
 ## 3. Shell (drive)
 Drive listing cache + `PendingDriveOp` queue (rename, move, star, trash, registerSpreadsheet,
-createDocument) replayed in order on reconnect. Both are per user (`u.<userUuid>.` keys) in the
+(v2) registerPresentation, createDocument) replayed in order on reconnect. (v2) The cache also
+keeps the last `StorageUsage` (meter offline). Each app caches the items of its home's kind;
+the Drive app caches the last 500 items of any kind plus all pinned items. Drive's upload queue
+is in its own local DB (§1.1), not in the key-value store, because it holds file bytes. Both are per user (`u.<userUuid>.` keys) in the
 device key-value store (`shared_preferences`; the data is small and needs no queries, so the
 shell does not use a separate `shell_<userId>.db`). A queued `createDocument` whose folder is gone
 by the time it replays is created in My Drive instead.
@@ -237,7 +271,7 @@ patch exists. Priority for in-house patches: U11 (M0), U7 and U6 (M3), U1/U2 (M4
 
 | # | Requirement | Workaround until then |
 |---|-------------|----------------------|
-| U1 | Client-selectable space subscriptions (partial sync) per device | Server-managed active set via membership |
+| U1 | Client-selectable space subscriptions (partial sync) per device | Server-managed active set via membership; (v2) patch OS-8 filters spaces per sync endpoint (spreadsheets vs decks, §2.6) |
 | U2 | Local eviction/purge of a space's rows + metadata | Weekly local purge job |
 | U3 | Streaming/bounded outbound capture and inbound merge (no whole-cycle buffering) | Limit cells per spreadsheet (§5) |
 | U4 | HLC-indexed change capture (avoid scanning all metadata each cycle) | — (server CPU budget monitored) |

@@ -5,7 +5,7 @@
 | # | Decision | Rationale |
 |---|----------|-----------|
 | A1 | **One Serverpod server** (`wonky_server`) serves both apps, auth, drive, sharing, comments, MCP, AI, and both Flutter web builds. | One account system, one drive, one MCP endpoint, cross-app features (templates, search, sharing) without service-to-service calls. |
-| A2 | **Two Flutter apps** (`wonky_write`, `wonky_sheets`) sharing packages (`packages/wonky_app` shell, `wonky_ui`, cores), both served by `wonky_server` on one origin (`/write/`, `/sheets/`) with one shared sign-in. | Smaller bundles, independent release cadence, clear ownership; shared shell keeps UX identical; same origin makes the session cookie shared. |
+| A2 | **Four Flutter apps** (v2; `wonky_drive`, `wonky_write`, `wonky_sheets`, `wonky_slides`) sharing packages (`packages/wonky_app` shell, `wonky_ui`, cores), all served by `wonky_server` on one origin (`/drive/`, `/write/`, `/sheets/`, `/slides/`; `/` → `/drive/`) with one shared sign-in. | Smaller bundles, independent release cadence, clear ownership; shared shell keeps UX identical; same origin makes the session cookie shared. |
 | A3 | **Pure-Dart "core" packages** for logic needed on both server and client (Markdown↔Delta, OT helpers, exporters, formula engine, number formats, XLSX/CSV mapping, tool schemas). | Headless MCP tools, server-side export/import, AI tools and version materialization need the same logic as the apps. |
 | A4 | **Write: server-authoritative OT** over Quill Deltas on typed Serverpod streams; op log in Postgres. | Required by the brief; Delta has `compose/transform/invert/transformPosition`. |
 | A5 | **Sheets: Serverpod offline-first sync** (`serverpod_offline_sync`, `database: sync`), one spreadsheet = one space; per-cell rows with deterministic ids; stable row/column ids; formulas stored with id-based references. | Offline-first requirement; field-level LWW merges; concurrent row/column insertion merges without rewriting cells or formulas. |
@@ -13,6 +13,9 @@
 | A7 | **MCP hosted in the server** (`mcp_dart`, Streamable HTTP) + UI bridge relayed over a Serverpod stream. | Works identically for web and desktop clients. |
 | A8 | **Dart scripting via `dart_eval`**: compile on the server, execute bytecode on server (triggers, scheduled jobs) and client (custom functions, macros) inside a sandbox worker. | Keeps the analyzer out of the web bundle; sandboxed by default. |
 | A9 | State management: Flutter's layered architecture, `ChangeNotifier` controllers, `provider` for DI, `go_router`. | Official guidance, low ceremony. |
+| A10 | (v2) **Slides: offline-first sync like Sheets** (`serverpod_offline_sync`, one deck = one space, field-level LWW, `slides.rows` undo) with a pure-Dart `wonky_slides_core`. | Object-based slide content maps onto rows; offline works; reuses the Sheets sync stack ([Slides 02](wonky_slides/02-data-model.md)). |
+| A11 | (v2) **Shared leaf packages** for code highlighting (`wonky_code`, `wonky_code_flutter`, extracted from Write) and charts (`wonky_charts`, `wonky_charts_flutter`, extracted from Sheets), used by Write/Sheets and Slides. | Slides needs both; the app packages still never import each other. |
+| A12 | (v2) **One drive, filtered app homes**: Wonky Drive shows every kind and owns uploads, previews and storage; each app home shows only its kind. A 50 MB per-user quota is enforced server-side. | User requirement; [Drive 01](wonky_drive/01-overview.md), [Drive 03](wonky_drive/03-storage-quota.md). |
 
 ## 2. Repository layout
 
@@ -50,25 +53,37 @@ wonky/
 ├── .mcp.json                            # serverpod MCP → wonky_server; dart MCP
 ├── AGENTS.md                            # agent instructions (project summary, MCP usage, checklist)
 ├── specs/                               # suite-level specs (this folder)
+│   ├── wonky_drive/                     #   Drive app specs (v2)
 │   ├── wonky_write/                     #   Write app specs
-│   └── wonky_sheets/                    #   Sheets app specs
+│   ├── wonky_sheets/                    #   Sheets app specs
+│   └── wonky_slides/                    #   Slides app specs (v2)
 ├── icons/                               # product icon sources (Work, Drive, Write, Sheets, Slides; 02 §5)
-├── wonky_server/                        # THE Serverpod server (auth, drive, sharing, Write OT, Sheets sync, MCP, AI,
-│                                        #   and the web server that serves both Flutter web builds — §2.4)
+├── wonky_server/                        # THE Serverpod server (auth, drive, storage, sharing, Write OT, Sheets/Slides sync,
+│                                        #   MCP, AI, and the web server that serves the four Flutter web builds — §2.4)
 ├── wonky_client/                        # generated Serverpod client (never edit)
+├── wonky_drive/                         # (v2) Flutter app: Wonky Drive (uploads, previews, storage page) — web + desktop
 ├── wonky_write/                         # Flutter app: Wonky Write (super_editor integration, UI) — web + desktop
 ├── wonky_sheets/                        # Flutter app: Wonky Sheets (grid, UI, sync DB, script worker) — web + desktop
+├── wonky_slides/                        # (v2) Flutter app: Wonky Slides (canvas, navigator, builds, presenting, sync DB)
 ├── packages/
 │   ├── wonky_core/                      # pure Dart: ids, roles, command/undo abstractions, MCP tool schemas, utils
 │   ├── wonky_ui/                        # Flutter: theme + custom shad-style widgets (no server deps)
 │   ├── wonky_app/                       # Flutter: shell (client bootstrap, auth, routing, drive, sharing, comments UI,
 │   │                                    #          history UI, presence, settings, command system, MCP bridge, AI panel,
 │   │                                    #          product icons in assets/icons/)
-│   ├── wonky_sync_models/               # Serverpod *shared package*: `database: sync` models for Sheets + id helpers
+│   ├── wonky_sync_models/               # Serverpod *shared package*: `database: sync` models for Sheets + Slides, id helpers
 │   ├── wonky_write_core/                # pure Dart: Delta schema, Markdown⇄Delta, OT helpers, exporters, theme model
 │   ├── wonky_sheets_core/               # pure Dart: addressing, formula parser/evaluator/functions, number formats,
 │   │                                    #   recalculation graph, xlsx/csv/ods mapping, sheet model helpers
 │   ├── wonky_sheets_script/             # pure Dart: dart_eval bridge (Spreadsheet API), compiler & runtime wrappers
+│   ├── wonky_slides_core/               # (v2) pure Dart: deck model, mutation planner, layout/auto-fit, animation timeline,
+│   │                                    #   code type-in model, PDF renderer, headless deck for MCP (Slides 01 §7)
+│   ├── wonky_charts/                    # (v2) pure Dart: chart spec, data model, layout, scene, 3D scene, SVG/PDF/PNG renderers
+│   ├── wonky_charts_flutter/            # (v2) Flutter: chart canvas painter, flutter_scene GPU backend for 3D charts
+│   ├── wonky_code/                      # (v2) pure Dart: language list, token classes, code palettes (light/dark), tokenizer
+│   ├── wonky_code_flutter/              # (v2) Flutter: TextMate highlighter (vendored syntax_highlight), read-only `CodeView`
+│   ├── wonky_sync_kit/                  # (v2, name per Slides 12) generic sync client pieces extracted from Sheets:
+│   │                                    #   row changes, undo inverter, replica/controller/writer/change journal
 │   └── wonky_mcp_stdio/                 # tiny CLI: stdio ↔ Streamable HTTP proxy
 └── third_party/                         # vendored (locally patched) copies of third-party packages — see §2.3
     ├── super_editor/                    #   (+ super_text_layout / attributed_text only if patches need them)
@@ -100,6 +115,14 @@ referred to by package name.
    (§2.1).
 7. Update `AGENTS.md` (app names, `driver.dart` locations, `flutter_apps` aliases).
 
+**(v2) Adding an app (Drive in M8, Slides in M9)** follows the same steps: create the Flutter app
+in the workspace (`resolution: workspace`, `lib/driver.dart`), add its `webApps` entry, its
+`FlutterRoute`, its `flutter_apps` alias and port (§2.4), its origin to `allowedOrigins`, its
+build to `flutter_build`, its CI matrix entry and dependency-rule row (§2.1), its platform icons
+(02 §5), its `WonkyAppKind` value and `config.json` URL, and its lines in `AGENTS.md`. The
+package extractions of A11 (`wonky_code*`, `wonky_charts*`) and the sync kit are moves without
+behavior change, verified by the existing Write/Sheets tests and goldens (Drive 05 WS-D9).
+
 ### 2.1 Package dependency rules (enforced by a CI script)
 
 Enforced by `dart run tool/check_dependencies.dart` (repository root; CI job `dependencies` in
@@ -107,35 +130,67 @@ Enforced by `dart run tool/check_dependencies.dart` (repository root; CI job `de
 
 ```
 wonky_core            → (common utilities only, see below)
-wonky_write_core      → wonky_core, dart_quill_delta (9.x by default; see §2.2), markdown, html, pdf,
-                        archive, xml, image, crypto, highlight (or re_highlight — spike decides)
-wonky_sheets_core     → wonky_core, wonky_sync_models (model types only), petitparser, intl, timezone, archive, xml, csv,
-                        pdf, image (in-house OOXML/ODS reader and writer on archive + xml — Sheets 11 §5.1)
+wonky_code            → (v2) highlight (pure-Dart tokenizer for exports/PDF)            — leaf: no wonky_* except wonky_core
+wonky_code_flutter    → (v2) wonky_code, wonky_ui, syntax_highlight (vendored)           — leaf
+wonky_charts          → (v2) wonky_core, pdf, image, vector_math                         — leaf
+wonky_charts_flutter  → (v2) wonky_charts, wonky_ui, flutter_scene, vector_math          — leaf
+wonky_write_core      → wonky_core, wonky_code (v2; was highlight), dart_quill_delta (9.x by default; see §2.2), markdown,
+                        html, pdf, archive, xml, image, crypto
+wonky_sheets_core     → wonky_core, wonky_charts (v2), wonky_sync_models (model types only), petitparser, intl, timezone,
+                        archive, xml, csv, pdf, image (in-house OOXML/ODS reader and writer on archive + xml — Sheets 11 §5.1)
+wonky_sync_kit        → (v2) wonky_core, wonky_sync_models, serverpod_database, serverpod_offline_sync_client (name and
+                        exact list per Slides 12; Flutter-free)
+wonky_slides_core     → (v2) wonky_core, wonky_sync_models (model types + ids only), wonky_sync_kit (pure part), wonky_charts,
+                        wonky_code, pdf, image, vector_math, crypto
 wonky_sheets_script   → wonky_core, wonky_sheets_core, dart_eval, eval_annotation, native_synchronization
 wonky_sync_models     → serverpod_database, serverpod_offline_sync, serverpod_serialization, uuid
 wonky_server          → serverpod, serverpod_auth_idp_server, serverpod_offline_sync(_server), serverpod_cloud_storage,
-                        wonky_core, wonky_write_core, wonky_sheets_core, wonky_sheets_script, wonky_sync_models, mcp_dart, http,
-                        dartantic_ai (AI providers: OpenAI, Anthropic, Gemini — 10 §1; pure Dart, no Flutter)
+                        wonky_core, wonky_write_core, wonky_sheets_core, wonky_sheets_script, wonky_slides_core (v2),
+                        wonky_charts (v2), wonky_code (v2), wonky_sync_models, mcp_dart, http, mime (v2, upload sniffing,
+                        Drive 02 §5), dartantic_ai (AI providers: OpenAI, Anthropic, Gemini — 10 §1; pure Dart, no Flutter)
 wonky_client          → generated: serverpod_client + module clients (serverpod_auth_idp_client,
                         serverpod_auth_core_client), serverpod_offline_sync_client, serverpod_database,
                         wonky_sync_models
 wonky_mcp_stdio       → args, http
 wonky_ui              → flutter, shad
 wonky_app             → wonky_ui, wonky_core, wonky_client, serverpod_flutter, serverpod_auth_idp_flutter, go_router, provider, mcp_dart
-wonky_write           → wonky_app, wonky_ui, wonky_write_core, super_editor (vendored), super_clipboard, printing, file_saver,
-                        file_picker
+wonky_drive           → (v2) wonky_app, wonky_ui, wonky_core, wonky_client, wonky_code_flutter (text previews), printing (PDF
+                        raster, spike Drive 05 S-D1), file_picker, file_saver, desktop_drop, http
+wonky_write           → wonky_app, wonky_ui, wonky_write_core, wonky_code_flutter (v2), super_editor (vendored), super_clipboard,
+                        printing, file_saver, file_picker
 wonky_sheets          → wonky_app, wonky_ui, wonky_sheets_core, wonky_sheets_script, two_dimensional_scrollables (auxiliary
                         tables only), super_clipboard, re_editor (+ re_highlight for the Dart grammar),
                         crypto (script file content hashes), printing, file_saver, file_picker, path_provider,
                         wonky_sync_models, serverpod_offline_sync_client, serverpod_database (the local replica
-                        and sync client of 12 §2)
-                        (charts: own pure-Dart engine in wonky_sheets_core — see Sheets 08)
+                        and sync client of 12 §2), wonky_charts_flutter (v2), wonky_sync_kit (v2)
+                        (charts: the shared engine in wonky_charts + Sheets data resolution in wonky_sheets_core — Sheets 08 §24)
+wonky_slides          → (v2) wonky_app, wonky_ui, wonky_slides_core, wonky_sync_kit, wonky_charts_flutter, wonky_code_flutter,
+                        super_editor (vendored, if Slides 03 adopts it for text boxes), super_clipboard, printing, file_saver,
+                        file_picker, desktop_drop, flutter_scene, vector_math, wonky_sync_models,
+                        serverpod_offline_sync_client, serverpod_database (Slides 01 §7)
 ```
 
 Forbidden: `wonky_sheets` importing `wonky_sheets_script/compiler.dart`, `testing.dart`,
 `package:analyzer` or `package:dart_eval/dart_eval.dart` (the app only runs scripts, A8);
-any `*_core` importing Flutter; `wonky_ui` importing client/server code; Write
-packages importing Sheets packages and vice versa; feature code importing generated server code.
+any `*_core` importing Flutter; `wonky_ui` importing client/server code; **(v2) any app family
+importing another's packages** — the families are Write (`wonky_write`, `wonky_write_core`),
+Sheets (`wonky_sheets`, `wonky_sheets_core`, `wonky_sheets_script`), Slides (`wonky_slides`,
+`wonky_slides_core`) and Drive (`wonky_drive`); shared code moves into the shared leaf packages
+(`wonky_core`, `wonky_ui`, `wonky_app`, `wonky_code*`, `wonky_charts*`, `wonky_sync_kit`);
+feature code importing generated server code.
+
+**Open question (for review) (v2):** D7 names one code package (`wonky_code`, "pure Dart where
+possible, + a Flutter `CodeView`"). A package is either pure Dart or Flutter for the dependency
+check, and `wonky_slides_core` (PDF renderer) and `wonky_server` need tokenization without
+Flutter. *Recommendation:* two packages like the charts — `wonky_code` (pure Dart: languages,
+token classes, palettes, `highlight`-based tokenizer) and `wonky_code_flutter` (`CodeView`,
+TextMate highlighter on the vendored `syntax_highlight`) — so Slides 01 §7's "`wonky_code`
+(Flutter `CodeView`)" becomes `wonky_code_flutter`.
+
+**Open question (for review) (v2):** Slides text boxes may want Write's Delta inline schema and
+Markdown codec. *Recommendation:* don't let `wonky_slides_core` import `wonky_write_core`; if
+Slides 02/03 reuse those pieces, extract them into a shared `wonky_rich_text` leaf package (same
+treatment as charts and code).
 
 **What the script checks** (only `dependencies:`, not `dev_dependencies:`; imports in `lib/` and
 `bin/`; `third_party/*` are external packages and are not checked):
@@ -143,11 +198,18 @@ packages importing Sheets packages and vice versa; feature code importing genera
 - every dependency is in the package's list above, in the common utilities, or in the justified
   exceptions below;
 - pure-Dart packages (`*_core`, `wonky_sheets_script`, `wonky_sync_models`, `wonky_mcp_stdio`,
-  `wonky_server`, `wonky_client`) neither depend on nor import Flutter or any package that
-  (transitively) depends on it (read from `.dart_tool/package_graph.json`);
+  `wonky_server`, `wonky_client`, and (v2) `wonky_charts`, `wonky_code`, `wonky_sync_kit`) neither
+  depend on nor import Flutter or any package that (transitively) depends on it (read from
+  `.dart_tool/package_graph.json`);
 - `wonky_ui` imports none of `wonky_client`, `wonky_server`, `wonky_app`, `serverpod*`;
-- Write packages (`wonky_write`, `wonky_write_core`) import no Sheets package (`wonky_sheets`,
-  `wonky_sheets_core`, `wonky_sheets_script`) and vice versa;
+- (v2) the app families (Drive, Write, Sheets, Slides — see *Forbidden*) import no package of
+  another family (this generalizes the former Write ⟷ Sheets rule);
+- (v2) the shared leaf packages `wonky_code`, `wonky_code_flutter`, `wonky_charts`,
+  `wonky_charts_flutter` import no app-family package and none of `wonky_app`, `wonky_client`,
+  `wonky_server`, `wonky_sync_models`, `serverpod*` (they are presentation/engine leaves: data
+  comes in through their own types);
+- (v2) the Flutter halves depend on their pure halves, never the other way round
+  (`wonky_code` must not import `wonky_code_flutter`, `wonky_charts` not `wonky_charts_flutter`);
 - nothing outside `wonky_server` imports `package:wonky_server/`, and no relative import leaves
   its package (e.g. into `wonky_server/lib/src/generated`);
 - every imported package is declared under `dependencies:` of the importing package. Two
@@ -187,9 +249,14 @@ packages importing Sheets packages and vice versa; feature code importing genera
 | `wonky_sheets` | `http` | Fetching XLSX images and URL imports (Sheets 11 §2) |
 | `wonky_sheets` | `pdf` | Client PDF export and print preview (Sheets 11 §7) |
 | `wonky_sheets` | `sqlite3`, `archive` | Recovery export of a replica that can't be opened: read-only SQLite read of its unsynced spreadsheets, zipped as XLSX + JSON (suite 12 §2.5) |
-| `wonky_write`, `wonky_sheets` | `wonky_core`, `wonky_client`, `shad`, `go_router` | Ids/commands/undo, repositories calling endpoints (never widgets, 11 §6), shad UI (02), routes (A9) |
+| `wonky_sheets` | `flutter_scene`, `vector_math` | GPU backend of 3D charts (Sheets 08 §23.7) — (v2) moves to `wonky_charts_flutter` with the extraction; listed there |
+| `wonky_sheets` | `flutter_svg` | Rasterizing SVG images on insert (Sheets 08 §10.1) |
+| `wonky_write`, `wonky_sheets` (v2: and `wonky_drive`, `wonky_slides`) | `wonky_core`, `wonky_client`, `shad`, `go_router` | Ids/commands/undo, repositories calling endpoints (never widgets, 11 §6), shad UI (02), routes (A9) |
 | `wonky_write` | `dart_quill_delta` | Client side of the Delta OT (A4) |
-| `wonky_write` | `syntax_highlight` | Code block syntax highlighting in the editor (TextMate grammars; vendored, see §2.2; exports keep `wonky_write_core`'s `highlight`) |
+| `wonky_write` | `syntax_highlight` | Code block syntax highlighting in the editor (TextMate grammars; vendored, see §2.2; exports keep `wonky_write_core`'s `highlight`) — (v2) moves to `wonky_code_flutter`; `wonky_write_core`'s `highlight` moves to `wonky_code` |
+| `wonky_server` | `mime` | (v2) Magic-number sniffing of uploaded files (Drive 02 §5) |
+| `wonky_drive` | `printing` | (v2) PDF page rasterization for previews (Drive 02 §6.3; spike S-D1 may swap it for `pdfrx`) |
+| `wonky_slides` | `flutter_scene`, `vector_math` | (v2) 3D transitions and the chart camera (Slides 06, 08) |
 | `wonky_write` | `http` | Fetches server-side exports |
 | `wonky_write` | `sqlite_async` | Offline document cache (with `wonky_app`'s `LocalDatabase`) |
 
@@ -266,41 +333,67 @@ Current and candidate vendored packages:
 
 ### 2.4 Building and serving the web apps
 
-Both apps are served by **`wonky_server`'s web server** (Relic, port 8082 in development) from
-one origin; there is no separate host app.
+All apps (v2: four) are served by **`wonky_server`'s web server** (Relic, port 8082 in
+development) from one origin; there is no separate host app.
 
 | Path | Served from | Notes |
 |------|-------------|-------|
+| `/drive/…` (v2) | `web/drive/` — `wonky_drive` built with `--base-href /drive/` | `FlutterRoute` (SPA fallback to `index.html`) |
 | `/write/…` | `web/write/` — `wonky_write` built with `--base-href /write/` | `FlutterRoute` (SPA fallback to `index.html`) |
 | `/sheets/…` | `web/sheets/` — `wonky_sheets` built with `--base-href /sheets/` | `FlutterRoute` |
-| `/write/assets/assets/config.json`, `/sheets/assets/assets/config.json` | `AppConfigRoute` | Replaces the bundled `assets/config.json` at runtime: `{apiUrl, webUrl, apps: {write, sheets}, cookieAuth, google?: {clientId, redirectUri}}` (the API URL, the public web origin for the legal pages, the base URL of each app for cross-app links, and Google sign-in, 04 §1.6). The public web origin is `wonky.publicWebUrl` / `WONKY_PUBLIC_WEB_URL`, default `https://wonky.work` in production (Serverpod Cloud generates the server config, so its own `*.serverpod.space` host is never used in links), else the web server's public host; e-mail and MCP links use it too |
+| `/slides/…` (v2) | `web/slides/` — `wonky_slides` built with `--base-href /slides/` | `FlutterRoute` |
+| `/<app>/**/sqlite3.wasm`, `/<app>/**/db_worker.js` (nested paths) | `sqliteAssetAlias` middleware | Serves the app's root copies: when `sqlite3_web` opens a database in the page (its worker failed) it resolves the relative default URIs of `sqlite_async` (set inside `serverpod_database`, not configurable) against the page URL, e.g. `/sheets/s/sqlite3.wasm`, which the SPA fallback answered with `index.html` and the local replica could not open |
+| `/<app>/assets/assets/config.json` (each app) | `AppConfigRoute` | Replaces the bundled `assets/config.json` at runtime: `{apiUrl, webUrl, apps: {drive, write, sheets, slides}, cookieAuth, google?: {clientId, redirectUri}}` (the API URL, the public web origin for the legal pages, the base URL of each app for cross-app links, and Google sign-in, 04 §1.6). The public web origin is `wonky.publicWebUrl` / `WONKY_PUBLIC_WEB_URL`, default `https://wonky.work` in production (Serverpod Cloud generates the server config, so its own `*.serverpod.space` host is never used in links), else the web server's public host; e-mail and MCP links use it too |
 | `/auth/callback` | `FlutterWebAuth2CallbackRoute` | OAuth popup callback for Sign in with Google (04 §1.6) |
 | `/privacy`, `/terms` | `StaticRoute.file` | Privacy policy and terms of service (`web/pages/privacy.html`, `terms.html`; suite 13 §5) |
-| `/` | redirect | To the last used app (`wonky_last_app` cookie set by the apps, default `/write/`) |
-| `/mcp`, `/files/…`, `/invite/:token` | server routes | See 09, 05, 06 |
+| `/` | redirect | (v2) Always to **`/drive/`** (`RootRedirectRoute`). The `wonky_last_app` cookie is still set by the apps (now `drive`/`write`/`sheets`/`slides`) but no longer read here — see the Open question below |
+| `/mcp`, `/files/…`, `/invite/:token` | server routes | See 09, 05, 06; (v2) `/files/d/:fileUuid/:name` downloads and `PUT /files/upload/:fileUuid` token uploads (MCP P0, chunked P1), Drive 02 §3.3, §4.3, §8 |
 | anything else unbuilt | `web/pages/build_flutter_app.html` | Template fallback shown when an app's build folder is missing |
 
 - **Build**: the `flutter_build` script in `wonky_server/pubspec.yaml` (`serverpod run
-  flutter_build`, also run by the Serverpod Cloud pre-deploy hook) builds both apps into
-  `wonky_server/web/write` and `wonky_server/web/sheets` (posix: `flutter build web --wasm
-  --base-href /write/ --output ../wonky_server/web/write`; Windows: build + `xcopy`, as the
-  template does). Build folders are git-ignored. WASM and cross-origin-isolation headers: see
+  flutter_build`, also run by the Serverpod Cloud pre-deploy hook) builds every app into
+  `wonky_server/web/<app>` (`drive`, `write`, `sheets`, `slides`; posix: `flutter build web
+  --wasm --base-href /write/ --output ../wonky_server/web/write`; Windows: build + `xcopy`, as the
+  template does). (v2) With four apps the posix script builds them in parallel (background jobs
+  + `wait`, failing if any fails) to keep the pre-deploy hook short. Build folders are
+  git-ignored. WASM and cross-origin-isolation headers: see
   [13 §3](13-security-and-operations.md).
-- **Development**: `serverpod start` launches both apps through `serverpod: flutter_apps:` in
-  the server pubspec (aliases `write` and `sheets`, `path: ../wonky_write` / `../wonky_sheets`,
+- **Development**: `serverpod start` launches the apps through `serverpod: flutter_apps:` in
+  the server pubspec (aliases `drive`, `write`, `sheets`, `slides`; `path: ../wonky_<app>`,
   `target: lib/driver.dart`, fixed `web-port`s so the origins are stable for
-  `allowedOrigins` and cookie auth). In development each app runs from `flutter run` on its own
-  port at the root path; the bundled `assets/config.json` lists those dev URLs. Production
-  builds always come from the server's `web/` folders.
+  `allowedOrigins` and cookie auth):
+
+  | Alias | Web port | `auto_launch` |
+  |-------|----------|---------------|
+  | `drive` (v2) | 8100 | true |
+  | `write` | 8101 | true |
+  | `sheets` | 8102 | true |
+  | `slides` (v2) | 8104 | true (false while Slides is under construction, to save start-up time) |
+
+  In development each app runs from `flutter run` on its own port at the root path; the bundled
+  `assets/config.json` lists those dev URLs (all four), and `allowedOrigins` in
+  `config/development.yaml` lists all four origins. Production builds always come from the
+  server's `web/` folders.
 - **Routing**: `go_router` paths are relative to the base href (`/d/:uuid` is
-  `/write/d/:uuid` in production). Cross-app navigation (open a spreadsheet from Write, etc.) is
-  a same-tab full page load to `apps.<other>` + path from `config.json`.
-- **Desktop**: Write and Sheets are separate desktop binaries built from the same apps (see
-  [03 §6](03-app-shell-and-navigation.md)).
+  `/write/d/:uuid` in production). Cross-app navigation (open a spreadsheet from Write, the
+  left menu's app links, opening a document from Drive, etc.) is a same-tab full page load to
+  `apps.<other>` + path from `config.json`. (v2) Item paths per kind: documents `/write/d/<uuid>`,
+  spreadsheets `/sheets/s/<uuid>`, presentations `/slides/p/<uuid>` (+ `/present`, `/print`),
+  files `/drive/file/<uuid>`, folders `/drive/f/<uuid>` (`<app>/f/<uuid>` in an app home). The
+  shared helper `AppUrls.itemUrl(kind, uuid)` (`wonky_app`) and the server's
+  `WonkyConfig.itemUrl` (notification e-mails, MCP results) build them.
+- **Desktop**: each app is a separate desktop binary built from the same app (Drive P1, Slides
+  per Slides 12; see [03 §6](03-app-shell-and-navigation.md)).
 
-### 2.5 One sign-in across both apps
+**Open question (for review) (v2):** `/` could keep redirecting to the *last used* app (cookie)
+with Drive as the default instead of always to Drive. *Recommendation:* always Drive — it is the
+hub with the app links, and a predictable landing page is easier to explain; the app homes are
+one click away.
 
-A user signs in once and stays signed in when switching between Write and Sheets.
+### 2.5 One sign-in across all apps
+
+A user signs in once and stays signed in when switching between the apps (v2: Drive, Write,
+Sheets, Slides — all on one origin, so everything below applies to the four of them).
 
 - **Web**: both apps live on the same origin, so they share one session in either mode:
   - **Cookie auth** when the server is configured for it: `authCookie` (httpOnly, `path: /`,
@@ -322,9 +415,9 @@ A user signs in once and stays signed in when switching between Write and Sheets
   cannot reach the server at all.
 - Signing out in either app revokes the session for both; the other app notices on its next
   request or auth-state check and shows the sign-in screen (03 §4 *Session expired* flow).
-- **Desktop**: each binary keeps its tokens in secure storage. On macOS both apps share a
-  keychain access group so one sign-in covers both (P1); elsewhere each desktop app signs in
-  separately (P2: shared credential store).
+- **Desktop**: each binary keeps its tokens in secure storage. On macOS the apps share a
+  keychain access group so one sign-in covers all of them (P1); elsewhere each desktop app signs
+  in separately (P2: shared credential store).
 - `wonky_app` owns the client bootstrap (`WonkyClient.initialize()`: server URL from
   `config.json`, `FlutterConnectivityMonitor`, `FlutterAuthSessionManager`, cookie auth on web),
   so both apps behave identically.
@@ -336,14 +429,17 @@ server.dart                    # Serverpod bootstrap, auth, web routes (both app
 src/
   platform/
     users/                     # UserProfile, UserPreferences, UserEndpoint, AccessTokenEndpoint
-    drive/                     # DriveItem, DriveItemUserState, DriveEndpoint, search, templates, trash purge
+    drive/                     # DriveItem, DriveItemUserState, DriveEndpoint, search, templates, trash purge,
+                               #   (v2) file uploads, conversions, kind masks (Drive 02)
+    storage/                   # (v2) UserStorage, StorageReservation, StorageService, reconcile + backfill (Drive 03)
     sharing/                   # DriveItemPermission, ShareLink, SharingEndpoint, AccessService (role resolution + space membership mirroring)
     comments/                  # CommentThread, Comment, CommentEndpoint
     notifications/             # Notification, NotificationEndpoint, email digests
     presence/                  # PresenceEndpoint (ephemeral)
     versions/                  # ItemVersion, VersionEndpoint, VersionProvider registry, thinning job
     activity/                  # ActivityEvent
-    files/                     # StoredFile (uploads: images, avatars, imports, exports), signed URLs
+    files/                     # StoredFile (uploads: images, avatars, imports, exports, drive files, previews), signed URLs,
+                               #   (v2) FileTypeSniffer, download route, preview generation
     mcp/                       # transport, auth, ToolExecutor, UiBridgeHub, UiBridgeEndpoint
     ai/                        # AiModelClient (dartantic_ai), AiKeys, AssistantService, AssistantEndpoint
     feedback/                  # FeedbackEndpoint
@@ -361,6 +457,8 @@ src/
     versions/                  # SheetsVersionProvider (snapshots to cloud storage)
     imports/                   # xlsx/csv/ods import pipeline (server-side for large files)
     mcp/                       # sheets.* tools
+  slides/                      # (v2) spaces (deck kind), slidesSync endpoint, change log, versions, chart links, PDF
+                               #   exports, templates, slides.* MCP tools, AI (Slides 01 §7)
 ```
 
 Endpoints are thin; business logic lives in services (`*_service.dart`) that are unit-testable
@@ -370,7 +468,7 @@ with `serverpod_test`.
 
 ```
 lib/
-  main.dart                    # WonkyShell(config: WriteAppConfig()) / SheetsAppConfig
+  main.dart                    # WonkyShell(config: WriteAppConfig()) / SheetsAppConfig / DriveAppConfig / SlidesAppConfig
   driver.dart                  # flutter_driver entry for agents/E2E (ported from the template app in M0)
   config/                      # app config, routes, menus (MenuSpec), toolbar spec
   commands/                    # one file per command group; registered in commands.dart
@@ -411,8 +509,13 @@ Feature folders are the unit of parallel work: e.g. Write `features/editor`,
 allowedHosts, allowedOrigins}`, `sheets: {maxCellsPerSpreadsheet, maxActiveSpacesPerUser,
 scriptTimeoutMs, scriptDailyQuotaMs}`, `write: {snapshotEveryNOps, maxDocumentChars}`,
 `cluster: {busFlushMs}` (13 §4, `WONKY_CLUSTER_BUS_FLUSH_MS`), `publicWebUrl`,
-`webApps: {write: {dir: web/write, path: /write/}, sheets: {dir: web/sheets, path: /sheets/}}`
-(§2.4); the template's commented-out `authCookie` + `allowedOrigins` are enabled (§2.5).
+`webApps: {drive: {dir: web/drive, path: /drive/}, write: {dir: web/write, path: /write/},
+sheets: {dir: web/sheets, path: /sheets/}, slides: {dir: web/slides, path: /slides/}}` (§2.4;
+drive and slides v2); (v2) `drive: {quotaBytesPerUser, warnAtPercent, maxPendingUploadsPerUser}`,
+`files: {maxFileUploadBytes, maxImageUploadBytes, maxImportUploadBytes}` (Drive 03 §3),
+`slides: {…}` (Slides 01 limits), `help: {bugReportUrl}` (default
+`https://github.com/serverpod/wonky/issues`, 03 §3.4); the template's commented-out
+`authCookie` + `allowedOrigins` are enabled (§2.5).
 Secrets in `passwords.yaml`: `openaiApiKey` / `anthropicApiKey` / `geminiApiKey` (any or none,
 10 §1), `jwt…` (existing), email provider credentials.
 
@@ -428,7 +531,11 @@ without Redis (local scope).
 - `ProtocolInfo { serverVersion, minClientVersion, syncTablesHash, …, redisEnabled,
   redisConnected }` returned by `meta.getInfo()`; clients check on connect (see shell spec for
   UX). The Redis fields feed Settings › Developer (suite 04 §4).
+- (v2) New values of byName enums that clients deserialize (`DriveItemKind.presentation/file`,
+  `DriveChangeKind.storageChanged`, `NotificationKind.storage`, `WonkyErrorCode.quotaExceeded`)
+  make older clients throw; such releases bump `minClientVersion` so cached web apps reload.
 - Offline-sync schema changes are lock-step (the engine rejects clients with a different
-  `syncTablesHash`). Rule: synced schema changes are batched into releases; clients that fail the
+  `syncTablesHash`). (v2) The Slides synced tables are one such release (M9); Sheets and Slides
+  clients share the hash because all synced models are in one client package. Rule: synced schema changes are batched into releases; clients that fail the
   hash check show a blocking "Update required" screen **after** exporting any pending local
   changes to a recovery file (see offline spec).

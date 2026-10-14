@@ -3,9 +3,9 @@
 Wonky Work is **fully controllable through MCP**. There are two layers, served by **one MCP
 endpoint** on the Serverpod server:
 
-1. **Headless tools** — operate on drive items, documents and spreadsheets directly on the server
-   (no app needs to be open). Namespaces: `drive.*`, `write.*`, `sheets.*`, `comments.*`,
-   `versions.*`.
+1. **Headless tools** — operate on drive items, documents, spreadsheets, (v2) presentations and
+   uploaded files directly on the server (no app needs to be open). Namespaces: `drive.*`,
+   `write.*`, `sheets.*`, `slides.*` (v2), `comments.*`, `versions.*`.
 2. **UI bridge tools** — drive a **live app window** (web or desktop) of the same user:
    navigate, read UI state, invoke any command, operate dialogs, take screenshots. Namespace
    `ui.*`. Tool calls are relayed from the server to the chosen app session over a Serverpod
@@ -54,9 +54,10 @@ land on undo stacks as described in [08-commands-and-undo.md](08-commands-and-un
   wkpat_…`. Tokens have scopes:
   | Scope | Grants |
   |-------|--------|
-  | `drive:read` / `drive:write` | Drive listing/search / create, rename, move, trash, share |
+  | `drive:read` / `drive:write` | Drive listing/search, (v2) file downloads and storage usage / create, rename, move, trash, share, (v2) upload and convert files |
   | `write:read` / `write:edit` | Read documents / edit documents & comments |
   | `sheets:read` / `sheets:edit` | Read spreadsheets / edit spreadsheets |
+  | `slides:read` / `slides:edit` | (v2) Read presentations / edit presentations ([Slides 11](wonky_slides/11-mcp-and-ai.md)) |
   | `scripts:run` | Run Sheets scripts/macros |
   | `ui:control` | Use `ui.*` bridge tools |
 - OAuth 2.1 (authorization code + PKCE, with Protected Resource Metadata) is a later milestone;
@@ -74,9 +75,9 @@ land on undo stacks as described in [08-commands-and-undo.md](08-commands-and-un
 |------------------|---------|
 | `wonky_core/lib/mcp/` | Tool **definitions** (name, description, JSON schema, result schema) shared by server, apps and the AI assistant. One file per namespace. |
 | `wonky_server/lib/src/platform/mcp/` | `McpRoute`/transport, auth, `ToolExecutor` (dispatch by name), `UiBridgeHub` (session registry + relay). |
-| `wonky_server/lib/src/write/mcp/`, `…/sheets/mcp/` | Headless tool **implementations** per app. |
+| `wonky_server/lib/src/write/mcp/`, `…/sheets/mcp/`, (v2) `…/slides/mcp/` | Headless tool **implementations** per app (drive file tools in `platform/mcp/` with the other `drive.*` tools). |
 | `wonky_app/lib/mcp_bridge/` | Client side of the UI bridge (shared `ui.*` tools). |
-| `wonky_write/lib/mcp/`, `wonky_sheets/lib/mcp/` | App-specific `ui.*` extensions (e.g. `ui.write.get_selection`). |
+| `wonky_write/lib/mcp/`, `wonky_sheets/lib/mcp/`, (v2) `wonky_drive/lib/mcp/`, `wonky_slides/lib/mcp/` | App-specific `ui.*` extensions (e.g. `ui.write.get_selection`, `ui.drive.get_selection`). |
 
 Tool naming: `namespace.verb_noun` in snake_case (e.g. `sheets.set_values`). Names are part of
 the public API — never rename; deprecate instead.
@@ -86,22 +87,39 @@ the public API — never rename; deprecate instead.
 ### drive.*
 | Tool | Args | Result |
 |------|------|--------|
-| `drive.search` | `query?, kind?, folder_uuid?, owned_by_me?, shared_with_me?, starred?, modified_after?, limit, cursor` | items |
-| `drive.list_folder` | `folder_uuid?` (null = root), `limit, cursor` | items |
+| `drive.search` | `query?, kind?, folder_uuid?, owned_by_me?, shared_with_me?, starred?, modified_after?, limit, cursor`; (v2) `kind` adds `presentation`, `file`; `file_category?` (`image`, `pdf`, `text`, `audio`, `video`, `archive`, `document`, `spreadsheet`, `presentation`, `other`) | items |
+| `drive.list_folder` | `folder_uuid?` (null = root), `limit, cursor`; (v2) `kinds?`, `file_category?` | items (v2: files carry `mime_type`, `file_category`, `size_bytes`, `upload_state`) |
 | `drive.get_item` | `uuid` | item + role + path + sharing summary |
 | `drive.create_folder` | `name, parent_uuid?` | item |
 | `drive.create_document` | `name, parent_uuid?, markdown?, template_uuid?` | item |
 | `drive.create_spreadsheet` | `name, parent_uuid?, template_uuid?, sheets?: [{name, values?}]` | item |
+| `drive.create_presentation` (v2) | `name, parent_uuid?, template_uuid?, outline?` | item ([Slides 11](wonky_slides/11-mcp-and-ai.md)) |
 | `drive.rename` · `drive.move` · `drive.copy` · `drive.trash` · `drive.restore` · `drive.star` | … | item |
 | `drive.share` | `uuid, email, role, notify?, message?` | permission |
 | `drive.unshare` | `uuid, email` | ok |
 | `drive.set_link_sharing` | `uuid, mode: off|viewer|commenter|editor` | link |
-| `drive.export` | `uuid, format` | `{download_url, expires_at}` (signed, 15 min) — or inline text for md/txt/csv |
-| `drive.import` | `name, kind, format, content_base64 \| text, parent_uuid?` | item |
+| `drive.export` | `uuid, format` | `{download_url, expires_at}` (signed, 15 min) — or inline text for md/txt/csv; (v2) presentations: `pdf` |
+| `drive.import` | `name, kind, format, content_base64 \| text, parent_uuid?` | item (+ `storage`) |
+| `drive.upload_file` (v2) | `name, parent_uuid?, content_base64 \| text, mime_type?` — inline content ≤ 10 MB | file item (+ `storage`); server-sniffed `mime_type` ([Drive 02 §5](wonky_drive/02-files-uploads-previews.md)) |
+| `drive.create_upload` (v2) | `name, size_bytes, parent_uuid?, mime_type?` — for larger files (≤ 50 MB) | `{item_uuid, upload_url, method: PUT, headers, expires_at}` (signed, 15 min; the client PUTs the bytes) |
+| `drive.complete_upload` (v2) | `item_uuid` | file item (+ `storage`) |
+| `drive.download_file` (v2) | `uuid, as?: text \| base64 \| url` (default: `text` for text files ≤ 1 MB, `base64` for other files ≤ 2 MB, else `url`) | `{text}` / `{content_base64, mime_type}` / `{download_url, expires_at}` |
+| `drive.convert_file` (v2) | `uuid, target: document \| spreadsheet, options?` | new item ([Drive 02 §7](wonky_drive/02-files-uploads-previews.md)) |
+| `drive.get_storage` (v2) | — | `{quota_bytes, used_bytes, reserved_bytes, available_bytes, over_quota, by_kind: {documents, spreadsheets, presentations, files, trash}}` |
+
+(v2) **Quota in results and errors.** Every tool that adds bytes (`drive.upload_file`,
+`drive.complete_upload`, `drive.import`, `drive.convert_file`, `drive.copy`, `drive.create_*`
+from a template or with content, `write.insert_image`-style tools, `slides.*` image tools)
+returns `storage: {used_bytes, quota_bytes, available_bytes}`; a refusal is an error with code
+`quota_exceeded` and `details: {needed_bytes, available_bytes, quota_bytes,
+charged_user: {id, name}, reason}` ([Drive 03 §7.1](wonky_drive/03-storage-quota.md)). Tool
+descriptions tell agents to check `drive.get_storage` before large uploads and never to delete
+files to make room without the user asking.
 
 ### comments.*
 `comments.list(uuid, status?)`, `comments.create(uuid, anchor, body)` (anchor formats per app:
-Write `{quote, occurrence?}` or `{start, length}`; Sheets `{sheet, a1}`), `comments.reply`,
+Write `{quote, occurrence?}` or `{start, length}`; Sheets `{sheet, a1}`; (v2) Slides `{slide}`
+or `{slide, element}`, Slides 11), `comments.reply`,
 `comments.resolve`, `comments.reopen`, `comments.delete`.
 
 ### versions.*
@@ -113,13 +131,19 @@ format)` (Write: markdown; Sheets: values JSON for a range), `versions.restore(u
 
 App-specific headless tools are listed in each app's MCP spec:
 [Write 09 · MCP and AI](wonky_write/09-mcp-and-ai.md),
-[Sheets 12 · MCP and AI](wonky_sheets/12-mcp-and-ai.md).
+[Sheets 12 · MCP and AI](wonky_sheets/12-mcp-and-ai.md),
+(v2) [Slides 11 · MCP and AI](wonky_slides/11-mcp-and-ai.md) — the `slides.*` namespace
+(create decks, add/update slides and elements, set text, insert linked Sheets charts, set
+builds and transitions, code states, export PDF, `slides.revert_change`) built on the headless
+deck of `wonky_slides_core`. Drive has no namespace of its own beyond `drive.*` above.
 
 ## 5. Resources & prompts
 
 - Resources: `wonky://drive/recent`, `wonky://doc/<uuid>` (Markdown, `text/markdown`),
   `wonky://sheet/<uuid>/<sheetName>` (CSV of used range, `text/csv`),
-  `wonky://doc/<uuid>/outline`. Resource templates registered for each. Subscriptions emit
+  `wonky://doc/<uuid>/outline`, (v2) `wonky://file/<uuid>` (text files ≤ 1 MB as text, other
+  files ≤ 2 MB as blob), `wonky://deck/<uuid>` (outline of a presentation as Markdown, Slides 11),
+  `wonky://drive/storage` (usage JSON). Resource templates registered for each. Subscriptions emit
   `notifications/resources/updated` when content changes (debounced 2 s) — *not yet
   implemented* (§7).
 - Prompts: `summarize_document`, `review_document`, `analyze_sheet`, `build_dashboard` — thin
@@ -149,7 +173,7 @@ UiBridgeEndpoint.connect(Stream<UiBridgeMessage> fromApp) → Stream<UiBridgeMes
   window for 30 s (`UiBridgeStop {pauseMs}`); a timed-out call sends `UiBridgeCancel`.
 - Errors of `ui.*` calls: `no_session` (no window allows control, or none implements the
   tool), `timeout`, `stopped_by_user`, plus the app's codes (`not_found`, `invalid_args`,
-  `forbidden`, `disabled`, `unsupported`, `no_document`).
+  `forbidden`, `disabled`, `unsupported`, `no_document`, (v2) `quota_exceeded`).
 
 ### 6.2 Shared `ui.*` tools
 
@@ -178,7 +202,9 @@ buttons) rendered by a shared `WonkyFormDialog`; custom dialogs must implement
 `McpDescribableDialog` (`describe()`, `setField()`, `press()`).
 
 App-specific `ui.*` tools (e.g. `ui.write.get_selection`, `ui.write.select_text`,
-`ui.sheets.select_range`, `ui.sheets.get_visible_range`) are listed in each app's MCP spec.
+`ui.sheets.select_range`, `ui.sheets.get_visible_range`, (v2) `ui.slides.*` in Slides 11,
+`ui.drive.*` in [Drive 04 §13](wonky_drive/04-screens-menus.md)) are listed in each app's MCP
+spec. `UiBridgeHello.app` takes `drive`, `write`, `sheets`, `slides`.
 
 ## 7. Conventions for tool implementations
 

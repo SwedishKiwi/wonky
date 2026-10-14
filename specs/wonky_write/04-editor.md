@@ -872,6 +872,31 @@ can invoke them.
 update within 200 ms.
 **AC-15.2** Changing a block from `dart` to `python` re-highlights. One undo restores `dart`.
 
+### 15.5 Shared code packages (v2)
+
+Wonky Slides (code elements with line highlighting and type-in, [Slides 07](../wonky_slides/07-code-blocks.md))
+and Wonky Drive (text/code previews, [Drive 02 §6.4](../wonky_drive/02-files-uploads-previews.md))
+use the same languages, token classes and palettes as Write. In M8 (Drive 05 WS-D9) the code
+moves, **without behavior change**, into two shared leaf packages (suite 01 §2.1):
+
+| From | To |
+|------|----|
+| `wonky_write/lib/features/editor/model/code_languages.dart` (`CodeLanguages`: aliases, grammar map, picker list) | `packages/wonky_code` (pure Dart) |
+| Token classes and `CodeHighlighter.tokenForScopes` (scope → class rules) | `wonky_code` |
+| The theme code palettes' defaults (light/dark token colors used when a theme doesn't override them, 06) | `wonky_code` (`CodePalette`); Write themes keep their per-theme overrides |
+| `wonky_write_core/lib/src/highlight/` (pure-Dart `highlight` wrapper used by exports) | `wonky_code` (`PlainTokenizer`) |
+| `wonky_write/lib/features/editor/styles/code_highlighter.dart` (`CodeHighlighter`: grammar loading, `tokenize`, caching) | `packages/wonky_code_flutter` (with the vendored `syntax_highlight` dependency) |
+| — (new) | `wonky_code_flutter`: `CodeView` — read-only, highlighted, line numbers, wrap, selection; used by Drive previews and Slides; Write keeps its `CodeHighlightStylePhase` on top of `CodeHighlighter` |
+
+`wonky_write_core` then depends on `wonky_code` instead of `highlight`, and `wonky_write` on
+`wonky_code_flutter`. Line-level diffs for Slides' type-in use `wonky_core/lib/diff.dart`.
+
+**Open question (for review) (v2):** exports (and Slides' PDF renderer) tokenize with the
+pure-Dart `highlight` package while the editor uses TextMate grammars, so colors can differ
+slightly between screen and PDF. *Recommendation:* accept for M8; later, make the TextMate
+engine of the vendored `syntax_highlight` Flutter-free (patch SH-6: grammar loading through an
+injected loader) and move it into `wonky_code`, so screen and PDF use one tokenizer.
+
 ## 16. Horizontal rule (divider)
 
 `write.insert.divider`. Slash `/divider`, Insert › Horizontal line, or `---` autoformat.

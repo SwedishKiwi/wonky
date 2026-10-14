@@ -159,6 +159,13 @@ endpoints the test tools are regenerated (automatic under `serverpod start`, oth
 - **Multi-client sync** (Sheets): the isolate-based harness of
   [Sheets 13 §7.3](wonky_sheets/13-implementation-plan.md); Write's in-process
   `WriteSimulator` ([Write 10](wonky_write/10-implementation-plan.md) WS-W0).
+- **(v2) Storage quota**: give the test user a small quota with
+  `StorageTestHelpers.setQuota(session, user, bytes)` (writes `UserStorage.quotaBytesOverride`)
+  instead of uploading 50 MB; assert counters with `StorageService.usage` and, after each test
+  of a byte-adding path, that `StorageReconcile.recompute(user)` equals the maintained row
+  ([Drive 03 §4.3](wonky_drive/03-storage-quota.md)). Upload tests use the in-memory cloud
+  storage of the test config and small byte arrays; sniffing tests read fixtures from
+  `wonky_server/test/fixtures/files/`.
 
 ## 7. Flutter tests (`wonky_ui`, `wonky_app`, apps)
 
@@ -273,5 +280,8 @@ packages report coverage without a gate.
 - [ ] New commands have the execute → undo → redo test; new endpoints the role matrix; new MCP
       tools a `ToolExecutor` test and a `/mcp` test.
 - [ ] New `wonky_ui` widgets have light + dark widget tests and a widget preview.
+- [ ] (v2) New byte-adding paths have a quota test (refusal + counters); shell UI that differs per
+      app is tested for every `HomeScope` (Drive and one app home at least), with
+      `FakeStorage` from `wonky_app/testing.dart`.
 - [ ] No real time, randomness, network or sleeps; seeds and clocks are injected.
 - [ ] Tests pass locally (`dart test` / `flutter test -x golden`) and are tagged if slow.

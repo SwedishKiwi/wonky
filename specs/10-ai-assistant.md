@@ -1,6 +1,7 @@
 # 10 · AI Assistant
 
-Both apps include an **Assistant** side panel powered by a large language model from
+Every app includes an **Assistant** side panel (v2: Write, Sheets, Slides in their editors;
+Drive in its home, P1) powered by a large language model from
 **OpenAI, Anthropic or Google Gemini**. All model calls happen on the **server** (API keys
 never reach clients). The assistant acts on documents through the **same tool layer as MCP**
 ([09-mcp.md](09-mcp.md)), so anything it does is permission-checked, attributed
@@ -83,7 +84,7 @@ Anthropic `baseUrl`, and our own retry policy honouring `retry-after`.
 | `llm/ai_client.dart`, `llm/dartantic_ai_client.dart` | `AiModelClient` interface and its `dartantic_ai` implementation (OpenAI, Anthropic, Gemini), stream accumulation, error mapping. |
 | `ai_config.dart`, `ai_keys.dart` | Config (`wonky: ai:`), server keys, user keys, key resolution (server > user > none). |
 | `assistant_service.dart` | Agent loop: build request, stream, execute tools via `ToolExecutor`, loop until `end_turn`. One loop = one undo transaction for the user ("AI: …"). |
-| `context_builder.dart` | Builds document context: Write → Markdown of doc (or outline + selected sections if > 200k tokens); Sheets → sheet list, used ranges, headers, sample rows, selection values, named ranges. |
+| `context_builder.dart` | Builds document context: Write → Markdown of doc (or outline + selected sections if > 200k tokens); Sheets → sheet list, used ranges, headers, sample rows, selection values, named ranges; (v2) Slides → deck outline (groups, slide titles, text, notes, layouts, builds summary) + the current slide's elements ([Slides 11](wonky_slides/11-mcp-and-ai.md)); Drive → the current folder's listing (names, kinds, sizes, dates), the selection, storage usage (§4 Drive). |
 | `prompts/` | System prompts per app/mode, versioned constants. |
 | `assistant_endpoint.dart` | Endpoint `assistant`: `chat(threadId, message, contextHints)` → `Stream<AssistantEvent>`; `listThreads(itemUuid)`, `getThread`, `deleteThread`, `stop(threadId)`. |
 
@@ -141,6 +142,26 @@ fields:
   arrive as suggestions in suggestion mode; Sheets: changes are previewed in a diff dialog with
   Accept/Reject).
 
+### 3.1 Assistant in Slides and Drive (v2)
+
+- **Slides**: the panel in the editor's side panel rail like Write/Sheets; apply modes *Edit
+  directly* / *Suggest* (Slides previews changes as a diff of slides before applying); tools =
+  `slides.*` headless tools bound to the open deck. Features (generate a deck from a prompt,
+  outline or Write document, rewrite text, design/layout suggestions, speaker notes, alt text,
+  "make it a code walkthrough"): [Slides 11](wonky_slides/11-mcp-and-ai.md).
+- **Drive (P1)**: the Drive home has no editor rail; the assistant opens in the home's right
+  panel host (the one the details panel uses) from a ✨ icon button in the top bar (Drive only),
+  `Mod+J` or *Assistant* in the palette (`shell.ai.togglePanel`). Threads are **drive-scoped**
+  (`AssistantThread.itemId = null`, one list per user). Tools: `drive.search`,
+  `drive.list_folder`, `drive.get_item`, `drive.get_storage`, `drive.download_file` (text
+  only), `drive.create_folder`, `drive.move`, `drive.rename`, `drive.star`, `drive.copy`,
+  `drive.convert_file`, `drive.create_document` / `create_spreadsheet` / `create_presentation`,
+  `drive.trash` (destructive-change confirmation, §1). Never: delete forever, empty trash,
+  sharing (13 §1). Quick prompts: "Find my files about …", "Organize this folder by topic",
+  "Summarize this file" (text files; PDFs P2 — no server-side PDF text extraction yet), "What
+  takes up my storage?", "Make a document from these notes". Each run is one undo step on the
+  shell stack (moves/renames/trash/creations undo together).
+
 ## 4. Inline AI entry points
 
 ### Write
@@ -161,12 +182,23 @@ fields:
 - *Fill with AI*: select a column range with some examples → AI fills the rest (preview first).
 - Script editor: "Generate script", "Explain script", "Fix error".
 
+### Slides (v2)
+Selection toolbar ✨ on text boxes (rewrite, shorten, translate…), *Insert ▸ Generate slides…*,
+*Speaker notes ▸ Generate*, *Alt text ▸ Generate*, layout suggestions — specified in
+[Slides 11](wonky_slides/11-mcp-and-ai.md).
+
+### Drive (v2, P1)
+Item ⋮ ▸ *Ask the assistant about this file* (text files, Wonky items) opens the Drive panel with
+the item as a context chip; Storage page ▸ *Ask the assistant how to free up space* (the
+assistant lists candidates; it never deletes without confirmation).
+
 ## 5. Commands
 
 `shell.ai.togglePanel`, `shell.ai.newThread`, `shell.ai.send`, `shell.ai.stop`,
 `write.ai.rewriteSelection(mode)`, `write.ai.continue`, `write.ai.summarizeDocument`,
 `sheets.ai.suggestFormula`, `sheets.ai.explainFormula`, `sheets.ai.fillRange`,
-`sheets.ai.analyze`.
+`sheets.ai.analyze`, (v2) `slides.ai.*` ([Slides 11](wonky_slides/11-mcp-and-ai.md)),
+`drive.ai.askAboutItem {uuid}` (P1).
 
 ## 6. Implementation notes (as built)
 

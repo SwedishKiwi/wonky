@@ -12,9 +12,25 @@
 `enum Role { viewer, commenter, editor, owner }` (ordered; comparisons with `>=`) lives in
 `wonky_core`.
 
+**(v2) What the roles mean per kind.**
+
+| Kind | Viewer | Commenter | Editor | Owner |
+|------|--------|-----------|--------|-------|
+| Document, spreadsheet | as above | as above | as above | as above |
+| Presentation (Slides) | View and **present** the deck (presenter view included); PDF download if allowed | + comments on slides/elements | + edit slides, notes, groups, builds, themes; update linked charts | + transfer, delete forever (full table: [Slides 01 §6](wonky_slides/01-overview.md)) |
+| File (uploaded) | Preview; download (unless the owner disabled it) | Same as Viewer (comments on files are P2) | + rename, move, trash, upload a new version (P2), *Open with* into their own drive | + transfer, delete forever |
+| Folder | List contents (subject to each item's role) | — | + add/upload items, move items in/out | + transfer |
+
+Converting a file (*Open with*, [Drive 02 §7](wonky_drive/02-files-uploads-previews.md))
+needs Viewer on the file; the new item belongs to the converting user. Linked Sheets charts in
+a deck render from the deck's stored snapshot for people without access to the spreadsheet;
+only users with Viewer+ on the spreadsheet can update them ([Slides 08](wonky_slides/08-charts-from-sheets.md)).
+
 Additional per-item settings (Owner only, in Share dialog ⚙):
 - *Editors can change permissions and share* (default on).
-- *Viewers and commenters can see the option to download, print and copy* (default on).
+- *Viewers and commenters can see the option to download, print and copy* (default on). (v2)
+  For uploaded files this hides *Download*; the preview still receives the bytes, so it is
+  advisory (like protected ranges).
 - *Viewers can see comments* (default off).
 
 ## 2. Data model (server)
@@ -69,7 +85,8 @@ max(direct grants, inherited grants, link role if the user has opened via link, 
 Moving an item out of a shared folder removes inherited grants from that folder.
 
 ### 2.2 Link sharing
-"Anyone with the link" + role. When a signed-in user opens `/d/<uuid>` (or `/invite/<token>`)
+"Anyone with the link" + role. When a signed-in user opens `/d/<uuid>` (v2: or `/s/…`,
+`/slides/p/…`, `/drive/file/…`, or `/invite/<token>`)
 and the item has link sharing, the server records a `DriveItemUserState` (so it appears in
 "Shared with me" after first open) and treats them as having the link role. Anonymous (signed
 out) access is **not** supported in v1 — users must sign in.
@@ -82,7 +99,8 @@ out) access is **not** supported in v1 — users must sign in.
   (ops are validated by kind: commenters may only submit `comment`-attribute or
   suggestion-attribute ops — see Write sync spec). When a role changes, the server pushes a
   `RoleChanged` event on the document stream; downgrade to viewer closes the editing channel.
-- **Sheets**: offline-sync membership enforces read/write at the sync layer.
+- **Sheets** (and (v2) **Slides**, one deck = one space, same mirroring): offline-sync
+  membership enforces read/write at the sync layer.
   `AccessService` **mirrors** effective roles into the space membership of the spreadsheet's
   space (`session.offlineSync.spaces.grant/revoke`), combined with the active-set subscription
   policy (see [12-offline-and-sync.md](12-offline-and-sync.md) §3.3):
@@ -92,6 +110,10 @@ out) access is **not** supported in v1 — users must sign in.
   | Commenter, Viewer | `readOnly` |
   Comments for Sheets live in Postgres (comment endpoints), not in the space, so Commenters
   don't need write access to the space.
+- **(v2) Files**: every file endpoint (`fileContentUrl`, download route, `convertFile`,
+  `updateFileMeta`) checks the effective role through `AccessService`; download URLs are
+  short-lived (15 min) and bound to the requesting user (Drive 02 §8). `uploading` files are
+  visible only to their uploader.
 - **Protected ranges/sheets (Sheets)** are an *advisory* layer enforced in the client and in
   server-side writes (MCP/scripts): the sync engine cannot reject individual writes, so a
   modified client could bypass them. This limitation is documented in the UI ("Protection
@@ -104,7 +126,8 @@ out) access is **not** supported in v1 — users must sign in.
 requests; `share(itemUuid, emails, role, notify, message, expiresAt?)`;
 `updateRole(itemUuid, userId, role)`; `remove(itemUuid, userId)`;
 `transferOwnership(itemUuid, newOwnerUserId)` (new owner must accept → notification; previous
-owner becomes Editor); `setLink(itemUuid, role?)`; `rotateLink(itemUuid)`;
+owner becomes Editor; (v2) refused with `quotaExceeded` when the item's counted size doesn't fit
+the new owner's storage — checked at request and at acceptance, [Drive 03 §7.3](wonky_drive/03-storage-quota.md)); `setLink(itemUuid, role?)`; `rotateLink(itemUuid)`;
 `updateSettings(itemUuid, settings)`; `requestAccess(itemUuid, role, message)`;
 `handleAccessRequest(requestId, approve, role?)`; `resolveInvite(token)` → item uuid + role.
 
@@ -135,3 +158,7 @@ Sharing changes are **not undoable**; destructive ones (remove, transfer) confir
 - Keyboard: Esc closes; Enter in the composer sends.
 - MCP: `drive.share`, `drive.unshare`, `drive.set_link_sharing`; UI bridge can drive the dialog
   via its `WonkyDialogSpec`.
+- (v2) The dialog is the same for every kind; for files the ⚙ settings say "Viewers and
+  commenters can download" instead of "…download, print and copy". Invitation e-mails and the
+  share link use the kind's URL (01 §2.4). The `/invite/:token` landing exists in every app and
+  forwards to the item's app.

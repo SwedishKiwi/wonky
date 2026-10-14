@@ -13,7 +13,10 @@
 | MCP token theft | Tokens hashed (SHA-256), shown once, scoped, expirable, revocable, `lastUsedAt` displayed; rate limits |
 | Prompt injection via document content into AI/MCP | AI tool layer enforces the user's permissions; AI cannot call sharing/permission tools; destructive bulk operations require confirmation; content from documents is placed in user-turn context, never system prompt |
 | CSRF / DNS rebinding on `/mcp` | Bearer auth only (the web apps' auth cookie is ignored on `/mcp`), `allowedHosts`/`allowedOrigins` checks |
-| File upload abuse | Type sniffing, size limits (images 20 MB, imports 100 MB), image re-encoding for thumbnails, private storage with signed URLs (15 min) |
+| File upload abuse | Type sniffing, size limits (images 20 MB, imports 100 MB, (v2) drive files 50 MB and the per-user quota), image re-encoding for thumbnails, private storage with signed URLs (15 min); (v2) arbitrary uploads: §6 |
+| (v2) Uploaded active content (HTML/SVG/JS) executing in the app origin | Never rendered; downloads forced to `attachment` with `nosniff` and `CSP: sandbox` (§6) |
+| (v2) Storage/bandwidth abuse through uploads | 50 MB quota per user, reservations, pending-upload cap, upload rate limits (§6) |
+| (v2) Second presenting window (Slides, if adopted) | Opens only the audience route of the same deck, same origin, no other content; closed with the presentation (03 §1) |
 | Brute-force login | Serverpod IDP rate limiting; generic error messages |
 | Test-support endpoint left open (E2E verification codes, 15 §9) | `e2eSupport` refuses every call outside the `development`/`test` run modes and only serves `@example.test` addresses; a server test asserts the refusal in `staging`/`production` |
 | Session token theft via XSS (web) | Cookie auth: tokens in an httpOnly, `secure`, `SameSite=lax` cookie shared by both apps; `allowedOrigins` restricts credentialed cross-origin calls (01 §2.5) |
@@ -36,15 +39,17 @@
 - **Deployment**: Serverpod Cloud (default) or Docker (existing `Dockerfile`); Postgres; Redis
   required for > 1 instance (§4); cloud storage (Serverpod Cloud storage or S3/GCS) for uploads,
   exports, version snapshots, script bytecode.
-- **Web builds**: both Flutter web apps (`wonky_write`, `wonky_sheets`) built with `--wasm` by
-  the server's `flutter_build` script into `wonky_server/web/write` and `wonky_server/web/sheets`
-  (01 §2.4), served by `FlutterRoute` with WASM headers (`enableWasmHeaders: true`; COOP/COEP required for
+- **Web builds**: all Flutter web apps (`wonky_drive`, `wonky_write`, `wonky_sheets`,
+  `wonky_slides`; v2: four) built with `--wasm` by the server's `flutter_build` script into
+  `wonky_server/web/<app>` (01 §2.4), served by `FlutterRoute` with WASM headers (`enableWasmHeaders: true`; COOP/COEP required for
   `SharedArrayBuffer`/OPFS performance). `sqlite3.wasm` + `db_worker.js` shipped in each app's
   `web/` folder (versions pinned to the `sqlite_async` version). Because both apps are served
   cross-origin-isolated (COOP `same-origin` + COEP `require-corp`, also needed for the Sheets
   script bridge's SharedArrayBuffer), every cross-origin subresource must send CORP/CORS headers:
   external images (Write image-by-URL, Sheets `IMAGE()`) are therefore loaded through the
-  server's image proxy (`/files/proxy?url=…`, SSRF-protected, cached), never directly.
+  server's image proxy (`/files/proxy?url=…`, SSRF-protected, cached), never directly. (v2)
+  Drive's PDF viewer ships pdf.js (or PDFium WASM) from the app's own `web/` folder for the
+  same reason (Drive 02 §6.3).
 - **Script workers**: Sheets scripts (installable/time-driven triggers, MCP `run_function`) run
   on server instances started with the `sheets.scripts.worker: true` role, consuming a job queue
   with an isolate pool (Sheets 09); API instances don't execute scripts. One combined role is
@@ -55,7 +60,11 @@
 - **Scheduled jobs** (Serverpod FutureCalls): trash purge (daily), version capture & thinning
   (every 5 min scan / nightly thinning), op-log pruning (daily), ChangeLog pruning (daily),
   space active-set eviction (daily), email digests (15 min), script time-driven triggers
-  (minute resolution), AI usage rollups (hourly), orphan file cleanup (weekly).
+  (minute resolution), AI usage rollups (hourly), orphan file cleanup (weekly); (v2) storage
+  reconcile (nightly), storage backfill (once, at the M8 deploy), upload expiry
+  (`drive.expireUploads`, daily: uploads not completed in 24 h, reservations, chunk parts),
+  file preview/thumbnail generation (on upload completion), folder `kindMask` recompute
+  (nightly), Slides jobs per Slides 12.
 - **Feature flags**: config-driven flags (`features.*`) for AI, scripting, MCP UI bridge,
   experimental chart types — checked server-side and delivered to clients in `meta.getInfo()`.
 
@@ -126,4 +135,30 @@ Google sign-in requires both: the consent screen links `https://wonky.work/priva
 `https://wonky.work/terms` (04 §1.6). Keep them in step with the product (data collected, AI providers,
 retention — trash is purged after 30 days, `DriveService.trashRetention`) and have changes
 reviewed before publishing; material changes update the effective date and are announced.
+(v2) The M8 release updates both: uploaded files of any type, the 50 MB storage limit and what
+happens over it (Drive 03), acceptable use of uploads (no illegal content, no malware), and the
+public nature of bug reports on GitHub (03 §3.4).
 
+## 6. Arbitrary uploads (v2)
+
+Wonky Drive stores files of any type ([Drive 02](wonky_drive/02-files-uploads-previews.md)).
+Rules:
+
+| Area | Rule |
+|------|------|
+| Limits | One file ≤ min(available quota, `files.maxFileUploadBytes` = 50 MB); 50 MB storage per user ([Drive 03](wonky_drive/03-storage-quota.md)); ≤ 100 open reservations per user; ≤ 500 files per batch (client) |
+| Rate limits | Per user: 200 upload starts per hour and 500 MB of upload traffic per day (`files.uploadsPerHour`, `files.uploadBytesPerDay`; `limitExceeded` "You've uploaded a lot recently. Try again later."); downloads: 2 GB per user per day, counted per instance (soft, §4) |
+| Type detection | Server-side sniffing of the stored bytes (magic numbers, then a UTF-8 text check); the client-declared type and the extension never override a binary signature (Drive 02 §5) |
+| No active content | HTML, SVG, XML, JavaScript and unknown types are never rendered — text types are shown as escaped source in Flutter, others not at all. Images are decoded by Flutter/`package:image` (bounded: ≤ 50 MP, 10 s), PDFs rasterized (no PDF JavaScript, forms or link actions) |
+| Downloads | Served by `GET /files/d/:fileUuid/:name?t=…` (HMAC token: file + user + expiry, 15 min), streamed from private storage with `Content-Disposition: attachment; filename="<ascii>"; filename*=UTF-8''<encoded>`, `Content-Type` = the sniffed type (or `application/octet-stream`), `X-Content-Type-Options: nosniff`, `Content-Security-Policy: sandbox; default-src 'none'`, `Cross-Origin-Resource-Policy: same-origin`, `Cache-Control: private, no-store`. Never inline |
+| Uploads | `PUT /files/upload/:fileUuid` accepts only the declared size (`413` beyond), requires the token or the session; objects go to private storage under `drive/<ownerUuid>/<fileUuid>/` (ASCII-safe names) |
+| Names | Display names keep Unicode but lose control characters and bidi overrides (U+202A–U+202E, U+2066–U+2069), so extensions can't be spoofed (Drive 02 §5.1) |
+| Archives | Never extracted or listed on the server (no zip bombs); XLSX/DOCX/ODS imports keep their existing decompressed-size limits |
+| Previews | Generated server-side only for images (re-encoded, metadata stripped — EXIF GPS removed from previews; the original file is unchanged and downloads as uploaded) |
+| Malware | Not scanned in v2: files are private, shared only with signed-in users, and never executed or rendered by Wonky. See the Open question below |
+| Sharing | No anonymous links (06 §2.2); every byte request is permission-checked; URLs are short-lived and user-bound |
+| Privacy | File contents are never logged; MCP/AI read text files only through permission-checked tools; the legal pages (§5) list uploaded files as stored content (retention: deleted with the item; trash purged after 30 days) |
+
+**Open question (for review) (v2):** scan uploads for malware (e.g. ClamAV in a sidecar,
+quarantining matches)? *Recommendation:* not in M8 — the risk is limited by private storage,
+signed-in sharing and forced downloads; revisit before anonymous or public sharing exists.

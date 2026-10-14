@@ -34,6 +34,13 @@ PresenceEndpoint.join(String itemUuid, Stream<PresenceUpdate> updates) → Strea
   `RemoteCursor`, Write 03 §1) because they must be ordered with ops; the presence stream only
   carries the roster/state for Write.
 - Sheets: `{sheetId, activeCell: {rowId, colId}, ranges: [{r1,c1,r2,c2 as ids}], editing: bool}`.
+- (v2) Slides: `{slideId, selection: [elementId], editingElementId?, textSelection?}` — the
+  current slide (navigator avatars), selected elements (presence-colored outlines) and the text
+  box being edited, which drives the **soft lock** ("Anna is editing" overlay, *Edit anyway*).
+  Exact shape and behavior: [Slides 09](wonky_slides/09-collaboration-history.md). Slides also
+  uses the presence stream for ephemeral hints (live drag positions) and the presentation
+  session (presenter ↔ audience/remote, 03 §1).
+- (v2) Drive: no presence (lists update through `drive.watch`); file previews show no avatars.
 
 ### 1.2 UI
 - `PresenceAvatarStack` in header; follow mode: click an avatar → scroll to their cursor; long-
@@ -51,7 +58,8 @@ table: comment_thread
 fields:
   uuid: UuidValue, defaultPersist=random_v7
   itemId: int, relation(parent=drive_item, onDelete=Cascade)
-  anchorKind: CommentAnchorKind     # enum: textRange (Write), cell (Sheets), range (Sheets), document
+  anchorKind: CommentAnchorKind     # enum: textRange (Write), cell (Sheets), range (Sheets), document,
+                                    #   (v2) slide, element (Slides 09), file (P2: page/region of a file preview)
   anchorJson: String                # app-specific anchor (see app specs)
   quotedText: String?               # snapshot of anchored text/cell value at creation
   status: CommentStatus             # enum: open, resolved, orphaned (anchor deleted)
@@ -108,11 +116,19 @@ Editors+ can delete any thread. Viewers see comments only if the owner allows it
   `isShown`); `shell.comments.togglePanel`, `shell.comments.create` (without a body) and
   `shell.comments.activate` then show the comments through the host instead of the side panel.
   Write shows them only in the margin next to the page (Write 05 §10, Write 08 §3.2); Sheets
-  uses the side panel.
+  uses the side panel; (v2) Slides uses the side panel plus pins on the canvas (Slides 09).
 - **Comments panel** (side panel, `EditorScaffold.commentsInPanel`): filter tabs
   (`CommentsFilterTabs`) **Open** (default) / **For you** (open threads that mention or are
   assigned to me; Write's margin hides the filter and always shows Open), sort (position / date); each thread links to its
-  anchor. Resolved threads are not listed; there is no comments search.
+  anchor. Resolved threads are not listed; there is no comments search. An app's
+  anchor provider may also implement the optional `CommentPanelOptions` (checked with `is`, so
+  existing providers need no change) to add a scope filter (`scopes`/`inScope`, Sheets: This sheet / All
+  sheets) and group headers in the position sort (`groupOf`, Sheets: sheet names), and may
+  compose new comments next to the anchor instead of in the panel (`composesInline`).
+- **Offline** (opt-in per app, `CommentsController.queueOffline`; Sheets 10 §3.7): create,
+  reply, resolve/reopen and anchor moves (`updateAnchor`, undo op `updateAnchor`) are queued in
+  the user's local store while offline, shown with "Pending — will be posted when you're
+  online", and posted in order on reconnect.
 - Notification bell? No — notifications are in the account menu and email (see §4).
 - All comment actions are commands (`shell.comments.*`) and undoable (create → delete, etc.).
 
@@ -130,7 +146,9 @@ class: UserNotification     # named so it does not clash with Flutter's Notifica
 table: notification
 fields:
   userId: int, relation(parent=user_profile, onDelete=Cascade)
-  kind: NotificationKind   # mention, reply, assigned, shared, accessRequest, suggestion, scriptFailure
+  kind: NotificationKind   # mention, reply, assigned, shared, accessRequest, suggestion, scriptFailure,
+                           #   (v2) storage (quota warnings and the one-time v2 notice, Drive 03 §9);
+                           #   Slides adds kinds only through Slides 09
   itemId: int?
   payload: String          # JSON
   createdAt: DateTime
@@ -152,8 +170,9 @@ fields:
   every 15 min** (`MaintenanceFutureCall.sendDigests`), or one email each when `digest` is
   false. Only unread, not yet emailed notifications of the last 2 days are sent;
   `emailedAt` marks them (idempotent; a failed immediate email is retried by the digest). Links
-  point at `<web origin>/write/d/<uuid>` (`/sheets/s/…` for spreadsheets) and the footer at
-  Settings › Notifications.
+  point at the item's URL by kind (`<web origin>/write/d/<uuid>`, `/sheets/s/…`, (v2)
+  `/slides/p/…`, `/drive/file/…`, `WonkyConfig.itemUrl`, 01 §2.4) and the footer at
+  Wonky Works settings › Notifications. (v2) `storage` notifications are in-app only.
 - Sending is pluggable (`EmailSender` in `platform/notifications/email/`): the
   [Resend](https://resend.com) HTTP API when the passwords `resendApiKey` and `emailFrom` are
   set, otherwise `LoggingEmailSender` logs the email (development; the Serverpod Cloud email
@@ -162,7 +181,10 @@ fields:
 ## 5. Version history (shared framework)
 
 Each app implements a `VersionProvider` (server) that can **capture**, **materialize** and
-**restore** a version. Shared models:
+**restore** a version ((v2) Slides: `SlidesVersionProvider`, compressed deck snapshots in
+cloud storage like Sheets, [Slides 09](wonky_slides/09-collaboration-history.md); uploaded
+files have no version history — their P2 *versions* are uploads, Drive 02 §9). Version
+snapshots never count against the storage quota (Drive 03 §2). Shared models:
 
 ```yaml
 class: ItemVersion
@@ -175,7 +197,7 @@ fields:
   authors: List<int>         # users who contributed since previous version
   storageKind: VersionStorage # writeRevision | snapshotFile
   revision: int?             # Write: op-log revision this version represents
-  snapshotFileId: UuidValue? # Sheets: compressed snapshot in cloud storage
+  snapshotFileId: UuidValue? # Sheets, (v2) Slides: compressed snapshot in cloud storage
   sizeBytes: int
 indexes:
   item_version_item_idx: { fields: itemId, createdAt }

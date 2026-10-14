@@ -31,6 +31,15 @@ has an integration test through `/mcp`. Every endpoint has permission tests for 
    `ui.invoke_command`; Sheets via `sheets.set_values` + `ui.sheets.select_range`.
 9. Theme editor: create theme, apply, verify editor + PDF reflect it in light & dark.
 10. Script: custom function used in a formula; onEdit trigger; time-driven trigger runs on server.
+11. (v2) Drive: sign in lands on `/drive/`; upload files by drag-and-drop, preview image/PDF/code,
+    *Open with* a CSV in Sheets; app homes show only their kind ([Drive 05 §6](wonky_drive/05-implementation-plan.md)).
+12. (v2) Quota: fill the 50 MB, see the refusal and the banners in every app, empty trash, the
+    banner disappears live.
+13. (v2) Settings split and *Report a bug* in all four apps.
+14. (v2) Slides: create a deck offline with groups, builds and a code block with type-in;
+    present it; export PDF; insert a linked Sheets chart and update it after the source
+    changed ([Slides 12](wonky_slides/12-implementation-plan.md)).
+15. (v2) Two users co-edit a deck; soft lock on a text box; each undoes only their own edits.
 
 ## 2. Performance budgets (summary; details in app specs)
 
@@ -45,10 +54,14 @@ has an integration test through `/mcp`. Every endpoint has permission tests for 
 | Cell commit (local) | < 16 ms; recalculation of 100k dependents < 1 s native, < 2 s web |
 | Sheets remote change visible | < 300 ms via commit hint; < 3 s via sync |
 | Memory | Web tab < 1.5 GB at 1M cells; desktop < 2 GB |
-| Bundle size (web, per app, compressed) | < 6 MB initial (deferred loading for exporters, charts, script runtime, theme editor) |
+| Bundle size (web, per app, compressed) | < 6 MB initial (deferred loading for exporters, charts, script runtime, theme editor); (v2) Drive < 4 MB initial (PDF and code viewers deferred) |
+| (v2) Drive home | First list paint < 1 s with 1,000 items in the folder (cached: < 300 ms); upload throughput limited only by the network (no client re-encoding) |
+| (v2) Previews | Image (≤ 4 MB) < 500 ms after bytes arrive; first PDF page < 1 s for a 100-page PDF; 1 MB text file highlighted < 300 ms |
+| (v2) Slides | See [Slides 01 §4](wonky_slides/01-overview.md) (60 fps builds and transitions, deck open budgets) |
 
 Use Flutter deferred imports (`deferred as`) for heavy, rarely used features on web: exporters,
-importers, theme editor, chart editor, pivot editor, script editor + runtime, AI panel.
+importers, theme editor, chart editor, pivot editor, script editor + runtime, AI panel; (v2)
+Drive's PDF/text/audio viewers, Slides' presenting, PDF export, 3D charts and code type-in.
 
 ## 3. Accessibility (WCAG 2.2 AA target)
 - Keyboard: every action reachable by keyboard; visible focus; no traps (Esc always exits
@@ -59,6 +72,8 @@ importers, theme editor, chart editor, pivot editor, script editor + runtime, AI
   joins, errors.
 - Contrast ≥ 4.5:1 text, ≥ 3:1 UI components in both themes; theme editor and CF warn on low
   contrast.
+- (v2) Reduce motion also governs Slides builds/transitions (replaced by fades, Slides 06) and
+  Drive's upload/preview animations.
 - Respect OS reduce-motion, text scaling (chrome scales to 200% without overlap; document zoom
   separate), high contrast (Windows) where available.
 - Settings › Accessibility: screen-reader optimizations (e.g. disable remote cursor flags,
@@ -66,7 +81,8 @@ importers, theme editor, chart editor, pivot editor, script editor + runtime, AI
 
 ## 4. Internationalization
 - `flutter_localizations` + `intl` ARB files in `wonky_app/lib/l10n` (shared strings) and per app
-  (`wonky_write/lib/l10n`, `wonky_sheets/lib/l10n`); shad's own
+  (`wonky_write/lib/l10n`, `wonky_sheets/lib/l10n`, (v2) `wonky_drive/lib/l10n`,
+  `wonky_slides/lib/l10n`); shad's own
   `GlobalShadLocalizations` for component strings.
 - v1 ships English; all strings externalized from day one; pseudo-locale (`en_XA`) build for
   testing truncation/RTL (`ar_XB`).
@@ -96,5 +112,8 @@ importers, theme editor, chart editor, pivot editor, script editor + runtime, AI
 - Vendored packages in `third_party/` are changed only with a `PATCHES.md` entry and tests
   (01 §2.3); their own test suites run in CI.
 - Synced-table update lint test (columns named) — fails CI.
-- Package dependency rule check script (01-architecture §2.1) — fails CI.
+- Package dependency rule check script (01-architecture §2.1) — fails CI. (v2) Covers the four
+  app families and the shared leaf packages.
+- (v2) Every byte-adding endpoint has a quota test (Drive 03 §7.2); every file viewer is tested
+  with malformed input (Drive 05 §7).
 - Every public API in `*_core` packages documented.
