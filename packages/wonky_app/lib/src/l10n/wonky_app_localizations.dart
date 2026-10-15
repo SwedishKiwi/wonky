@@ -1876,54 +1876,6 @@ abstract class WonkyAppLocalizations {
   /// **'Open external link?'**
   String get externalLinkTitle;
 
-  /// No description provided for @feedbackDescription.
-  ///
-  /// In en, this message translates to:
-  /// **'Tell us what happened or what you\'d like to see.'**
-  String get feedbackDescription;
-
-  /// No description provided for @feedbackFailed.
-  ///
-  /// In en, this message translates to:
-  /// **'Your report could not be sent'**
-  String get feedbackFailed;
-
-  /// No description provided for @feedbackKind.
-  ///
-  /// In en, this message translates to:
-  /// **'Type'**
-  String get feedbackKind;
-
-  /// No description provided for @feedbackKindIdea.
-  ///
-  /// In en, this message translates to:
-  /// **'Idea'**
-  String get feedbackKindIdea;
-
-  /// No description provided for @feedbackKindProblem.
-  ///
-  /// In en, this message translates to:
-  /// **'Problem'**
-  String get feedbackKindProblem;
-
-  /// No description provided for @feedbackMessage.
-  ///
-  /// In en, this message translates to:
-  /// **'Message'**
-  String get feedbackMessage;
-
-  /// No description provided for @feedbackThanks.
-  ///
-  /// In en, this message translates to:
-  /// **'Thanks for the feedback!'**
-  String get feedbackThanks;
-
-  /// No description provided for @feedbackTitle.
-  ///
-  /// In en, this message translates to:
-  /// **'Report a problem'**
-  String get feedbackTitle;
-
   /// Type filter (Drive): ZIP and other archives.
   ///
   /// In en, this message translates to:
@@ -5415,6 +5367,2322 @@ abstract class WonkyAppLocalizations {
   /// In en, this message translates to:
   /// **'Fit to screen'**
   String get lightboxFit;
+
+  /// Help menu and palette: opens the report dialog (specs/16 §4.1).
+  ///
+  /// In en, this message translates to:
+  /// **'Bugs & Improvements…'**
+  String get cmdBoardReport;
+
+  /// Help menu and palette: opens the Bugs & Improvements board page.
+  ///
+  /// In en, this message translates to:
+  /// **'Browse Bugs & Improvements'**
+  String get cmdBoardOpen;
+
+  /// The product name of the public bug and idea board; title of the report dialog and the entry points.
+  ///
+  /// In en, this message translates to:
+  /// **'Bugs & Improvements'**
+  String get boardReportName;
+
+  /// Report dialog header link to the board page (keeps the draft).
+  ///
+  /// In en, this message translates to:
+  /// **'See all posts'**
+  String get boardReportSeeAll;
+
+  /// No description provided for @boardReportKindLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Kind'**
+  String get boardReportKindLabel;
+
+  /// No description provided for @boardReportKindBug.
+  ///
+  /// In en, this message translates to:
+  /// **'Report a bug'**
+  String get boardReportKindBug;
+
+  /// No description provided for @boardReportKindIdea.
+  ///
+  /// In en, this message translates to:
+  /// **'Suggest an improvement'**
+  String get boardReportKindIdea;
+
+  /// No description provided for @boardReportFieldTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Title'**
+  String get boardReportFieldTitle;
+
+  /// No description provided for @boardReportTitleHintBug.
+  ///
+  /// In en, this message translates to:
+  /// **'Describe the problem in a few words'**
+  String get boardReportTitleHintBug;
+
+  /// No description provided for @boardReportTitleHintIdea.
+  ///
+  /// In en, this message translates to:
+  /// **'Describe your idea in a few words'**
+  String get boardReportTitleHintIdea;
+
+  /// No description provided for @boardReportFieldHappened.
+  ///
+  /// In en, this message translates to:
+  /// **'What happened?'**
+  String get boardReportFieldHappened;
+
+  /// No description provided for @boardReportFieldExpected.
+  ///
+  /// In en, this message translates to:
+  /// **'What did you expect?'**
+  String get boardReportFieldExpected;
+
+  /// No description provided for @boardReportFieldSteps.
+  ///
+  /// In en, this message translates to:
+  /// **'Steps to reproduce'**
+  String get boardReportFieldSteps;
+
+  /// No description provided for @boardReportFieldIdea.
+  ///
+  /// In en, this message translates to:
+  /// **'What would you like?'**
+  String get boardReportFieldIdea;
+
+  /// No description provided for @boardReportFieldWhy.
+  ///
+  /// In en, this message translates to:
+  /// **'Why would it help?'**
+  String get boardReportFieldWhy;
+
+  /// No description provided for @boardReportOptional.
+  ///
+  /// In en, this message translates to:
+  /// **'(optional)'**
+  String get boardReportOptional;
+
+  /// Validation of the post title.
+  ///
+  /// In en, this message translates to:
+  /// **'Use {min} to {max} characters.'**
+  String boardReportTitleLength(int min, int max);
+
+  /// No description provided for @boardReportBodyTooLong.
+  ///
+  /// In en, this message translates to:
+  /// **'The description is too long: at most {max} characters.'**
+  String boardReportBodyTooLong(int max);
+
+  /// No description provided for @boardReportSimilarTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Similar posts'**
+  String get boardReportSimilarTitle;
+
+  /// Semantics label of a similar post's score.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 vote} other{{count} votes}}'**
+  String boardReportSimilarVotes(int count);
+
+  /// No description provided for @boardReportVoteInstead.
+  ///
+  /// In en, this message translates to:
+  /// **'Vote instead'**
+  String get boardReportVoteInstead;
+
+  /// No description provided for @boardReportVoted.
+  ///
+  /// In en, this message translates to:
+  /// **'Voted'**
+  String get boardReportVoted;
+
+  /// Toast after "Vote instead" on an improvement.
+  ///
+  /// In en, this message translates to:
+  /// **'Voted for #{number}'**
+  String boardReportVotedFor(int number);
+
+  /// Toast after "Vote instead" on a bug.
+  ///
+  /// In en, this message translates to:
+  /// **'Added “I hit this too” to #{number}'**
+  String boardReportHitThisToo(int number);
+
+  /// No description provided for @boardReportVoteFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn’t vote: {message}'**
+  String boardReportVoteFailed(String message);
+
+  /// No description provided for @boardReportScreenshot.
+  ///
+  /// In en, this message translates to:
+  /// **'Screenshot'**
+  String get boardReportScreenshot;
+
+  /// No description provided for @boardReportAddScreenshot.
+  ///
+  /// In en, this message translates to:
+  /// **'Add screenshot'**
+  String get boardReportAddScreenshot;
+
+  /// No description provided for @boardReportEditScreenshot.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit'**
+  String get boardReportEditScreenshot;
+
+  /// No description provided for @boardReportRemoveScreenshot.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove'**
+  String get boardReportRemoveScreenshot;
+
+  /// No description provided for @boardReportScreenshotPreview.
+  ///
+  /// In en, this message translates to:
+  /// **'Screenshot preview'**
+  String get boardReportScreenshotPreview;
+
+  /// No description provided for @boardReportScreenshotWarning.
+  ///
+  /// In en, this message translates to:
+  /// **'Screenshots are public. Cover names, emails and document content.'**
+  String get boardReportScreenshotWarning;
+
+  /// No description provided for @boardReportCaptureFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn’t capture the screen'**
+  String get boardReportCaptureFailed;
+
+  /// Collapsed line listing the details a bug report includes.
+  ///
+  /// In en, this message translates to:
+  /// **'Details that will be included: {summary}'**
+  String boardReportDetails(String summary);
+
+  /// No description provided for @boardReportDetailApp.
+  ///
+  /// In en, this message translates to:
+  /// **'App'**
+  String get boardReportDetailApp;
+
+  /// No description provided for @boardReportDetailPlatform.
+  ///
+  /// In en, this message translates to:
+  /// **'Platform'**
+  String get boardReportDetailPlatform;
+
+  /// No description provided for @boardReportDetailTheme.
+  ///
+  /// In en, this message translates to:
+  /// **'Theme'**
+  String get boardReportDetailTheme;
+
+  /// No description provided for @boardReportDetailLocale.
+  ///
+  /// In en, this message translates to:
+  /// **'Language'**
+  String get boardReportDetailLocale;
+
+  /// No description provided for @boardReportDetailWindow.
+  ///
+  /// In en, this message translates to:
+  /// **'Window size'**
+  String get boardReportDetailWindow;
+
+  /// No description provided for @boardReportDetailRoute.
+  ///
+  /// In en, this message translates to:
+  /// **'Page'**
+  String get boardReportDetailRoute;
+
+  /// No description provided for @boardReportDetailError.
+  ///
+  /// In en, this message translates to:
+  /// **'Error'**
+  String get boardReportDetailError;
+
+  /// No description provided for @boardReportThemeLight.
+  ///
+  /// In en, this message translates to:
+  /// **'light theme'**
+  String get boardReportThemeLight;
+
+  /// No description provided for @boardReportThemeDark.
+  ///
+  /// In en, this message translates to:
+  /// **'dark theme'**
+  String get boardReportThemeDark;
+
+  /// Checkbox; age is e.g. "2 min ago".
+  ///
+  /// In en, this message translates to:
+  /// **'Include the last error ({age})'**
+  String boardReportIncludeError(String age);
+
+  /// No description provided for @boardReportErrorAge.
+  ///
+  /// In en, this message translates to:
+  /// **'{minutes, plural, =0{just now} =1{1 min ago} other{{minutes} min ago}}'**
+  String boardReportErrorAge(int minutes);
+
+  /// No description provided for @boardReportErrorAgeHours.
+  ///
+  /// In en, this message translates to:
+  /// **'{hours, plural, =1{1 h ago} other{{hours} h ago}}'**
+  String boardReportErrorAgeHours(int hours);
+
+  /// No description provided for @boardReportAiNotice.
+  ///
+  /// In en, this message translates to:
+  /// **'Posts are public and checked automatically by AI (Jev, Gemini).'**
+  String get boardReportAiNotice;
+
+  /// No description provided for @boardReportPublicNotice.
+  ///
+  /// In en, this message translates to:
+  /// **'Posts are public.'**
+  String get boardReportPublicNotice;
+
+  /// No description provided for @boardReportSecurityNotice.
+  ///
+  /// In en, this message translates to:
+  /// **'Security issue? Don’t post it here: email {contact}'**
+  String boardReportSecurityNotice(String contact);
+
+  /// No description provided for @boardReportPostBug.
+  ///
+  /// In en, this message translates to:
+  /// **'Post bug'**
+  String get boardReportPostBug;
+
+  /// No description provided for @boardReportPostIdea.
+  ///
+  /// In en, this message translates to:
+  /// **'Post improvement'**
+  String get boardReportPostIdea;
+
+  /// No description provided for @boardReportPosted.
+  ///
+  /// In en, this message translates to:
+  /// **'Posted'**
+  String get boardReportPosted;
+
+  /// No description provided for @boardReportPostedChecking.
+  ///
+  /// In en, this message translates to:
+  /// **'Posted. Checking it now…'**
+  String get boardReportPostedChecking;
+
+  /// No description provided for @boardReportPostedHeld.
+  ///
+  /// In en, this message translates to:
+  /// **'Posted. Waiting for review: a moderator will look at it.'**
+  String get boardReportPostedHeld;
+
+  /// No description provided for @boardReportView.
+  ///
+  /// In en, this message translates to:
+  /// **'View'**
+  String get boardReportView;
+
+  /// No description provided for @boardReportRateLimited.
+  ///
+  /// In en, this message translates to:
+  /// **'You’ve posted a lot recently. Please try again later.'**
+  String get boardReportRateLimited;
+
+  /// No description provided for @boardReportBlocked.
+  ///
+  /// In en, this message translates to:
+  /// **'You can’t post on Bugs & Improvements.'**
+  String get boardReportBlocked;
+
+  /// No description provided for @boardReportBlockedReason.
+  ///
+  /// In en, this message translates to:
+  /// **'You can’t post on Bugs & Improvements: {reason}'**
+  String boardReportBlockedReason(String reason);
+
+  /// No description provided for @boardReportPostFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn’t post: {message}'**
+  String boardReportPostFailed(String message);
+
+  /// No description provided for @boardReportUploadFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn’t upload the screenshot: {message}'**
+  String boardReportUploadFailed(String message);
+
+  /// No description provided for @boardReportDiscardTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Discard draft?'**
+  String get boardReportDiscardTitle;
+
+  /// No description provided for @boardReportDiscardBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Your report hasn’t been posted yet.'**
+  String get boardReportDiscardBody;
+
+  /// No description provided for @boardReportDiscard.
+  ///
+  /// In en, this message translates to:
+  /// **'Discard'**
+  String get boardReportDiscard;
+
+  /// No description provided for @boardReportKeepDraft.
+  ///
+  /// In en, this message translates to:
+  /// **'Keep draft'**
+  String get boardReportKeepDraft;
+
+  /// Error card button: opens the report dialog with the error attached.
+  ///
+  /// In en, this message translates to:
+  /// **'Report this bug'**
+  String get errorReportBug;
+
+  /// No description provided for @screenshotEditorTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit screenshot'**
+  String get screenshotEditorTitle;
+
+  /// No description provided for @screenshotEditorWarning.
+  ///
+  /// In en, this message translates to:
+  /// **'This screenshot will be public. Cover anything private: names, emails, document and spreadsheet content you don’t want to share.'**
+  String get screenshotEditorWarning;
+
+  /// No description provided for @screenshotToolsLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Tool'**
+  String get screenshotToolsLabel;
+
+  /// No description provided for @screenshotColorsLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Color'**
+  String get screenshotColorsLabel;
+
+  /// No description provided for @screenshotToolCover.
+  ///
+  /// In en, this message translates to:
+  /// **'Cover'**
+  String get screenshotToolCover;
+
+  /// No description provided for @screenshotToolHighlight.
+  ///
+  /// In en, this message translates to:
+  /// **'Highlight'**
+  String get screenshotToolHighlight;
+
+  /// No description provided for @screenshotToolArrow.
+  ///
+  /// In en, this message translates to:
+  /// **'Arrow'**
+  String get screenshotToolArrow;
+
+  /// No description provided for @screenshotToolPen.
+  ///
+  /// In en, this message translates to:
+  /// **'Pen'**
+  String get screenshotToolPen;
+
+  /// No description provided for @screenshotColorRed.
+  ///
+  /// In en, this message translates to:
+  /// **'Red'**
+  String get screenshotColorRed;
+
+  /// No description provided for @screenshotColorYellow.
+  ///
+  /// In en, this message translates to:
+  /// **'Yellow'**
+  String get screenshotColorYellow;
+
+  /// No description provided for @screenshotColorBlue.
+  ///
+  /// In en, this message translates to:
+  /// **'Blue'**
+  String get screenshotColorBlue;
+
+  /// No description provided for @screenshotUndo.
+  ///
+  /// In en, this message translates to:
+  /// **'Undo'**
+  String get screenshotUndo;
+
+  /// No description provided for @screenshotRedo.
+  ///
+  /// In en, this message translates to:
+  /// **'Redo'**
+  String get screenshotRedo;
+
+  /// No description provided for @screenshotDelete.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete selected'**
+  String get screenshotDelete;
+
+  /// No description provided for @screenshotClear.
+  ///
+  /// In en, this message translates to:
+  /// **'Clear'**
+  String get screenshotClear;
+
+  /// No description provided for @screenshotDone.
+  ///
+  /// In en, this message translates to:
+  /// **'Done'**
+  String get screenshotDone;
+
+  /// Tooltip of an editor tool with its key.
+  ///
+  /// In en, this message translates to:
+  /// **'{label} ({shortcut})'**
+  String screenshotShortcut(String label, String shortcut);
+
+  /// No description provided for @screenshotCanvasLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Screenshot. Drag to draw with the selected tool; click an annotation to select it.'**
+  String get screenshotCanvasLabel;
+
+  /// No description provided for @screenshotEncodeFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn’t prepare the screenshot: {message}'**
+  String screenshotEncodeFailed(String message);
+
+  /// Name of the board (specs/16), page title and command category.
+  ///
+  /// In en, this message translates to:
+  /// **'Bugs & Improvements'**
+  String get boardTitle;
+
+  /// No description provided for @boardReportBug.
+  ///
+  /// In en, this message translates to:
+  /// **'Report a bug'**
+  String get boardReportBug;
+
+  /// No description provided for @boardSuggestImprovement.
+  ///
+  /// In en, this message translates to:
+  /// **'Suggest an improvement'**
+  String get boardSuggestImprovement;
+
+  /// No description provided for @boardSearch.
+  ///
+  /// In en, this message translates to:
+  /// **'Search posts'**
+  String get boardSearch;
+
+  /// No description provided for @boardSignIn.
+  ///
+  /// In en, this message translates to:
+  /// **'Sign in'**
+  String get boardSignIn;
+
+  /// Banner on the board for signed-out visitors.
+  ///
+  /// In en, this message translates to:
+  /// **'Sign in to vote and post.'**
+  String get boardSignInToVote;
+
+  /// No description provided for @boardSignInToComment.
+  ///
+  /// In en, this message translates to:
+  /// **'Sign in to comment'**
+  String get boardSignInToComment;
+
+  /// No description provided for @boardSignInToClaim.
+  ///
+  /// In en, this message translates to:
+  /// **'Sign in to claim this task'**
+  String get boardSignInToClaim;
+
+  /// No description provided for @boardBlocked.
+  ///
+  /// In en, this message translates to:
+  /// **'You can\'t post on Bugs & Improvements.'**
+  String get boardBlocked;
+
+  /// No description provided for @boardContributeLink.
+  ///
+  /// In en, this message translates to:
+  /// **'How to contribute'**
+  String get boardContributeLink;
+
+  /// No description provided for @boardTabImprovements.
+  ///
+  /// In en, this message translates to:
+  /// **'Improvements'**
+  String get boardTabImprovements;
+
+  /// No description provided for @boardTabBugs.
+  ///
+  /// In en, this message translates to:
+  /// **'Bugs'**
+  String get boardTabBugs;
+
+  /// Board tab with the tasks contributors can claim.
+  ///
+  /// In en, this message translates to:
+  /// **'Up for grabs'**
+  String get boardTabTasks;
+
+  /// No description provided for @boardTabDone.
+  ///
+  /// In en, this message translates to:
+  /// **'Done'**
+  String get boardTabDone;
+
+  /// Admins' moderation tab of the board.
+  ///
+  /// In en, this message translates to:
+  /// **'Review'**
+  String get boardTabReview;
+
+  /// No description provided for @boardKindBug.
+  ///
+  /// In en, this message translates to:
+  /// **'Bug'**
+  String get boardKindBug;
+
+  /// No description provided for @boardKindIdea.
+  ///
+  /// In en, this message translates to:
+  /// **'Improvement'**
+  String get boardKindIdea;
+
+  /// No description provided for @boardAreaDrive.
+  ///
+  /// In en, this message translates to:
+  /// **'Drive'**
+  String get boardAreaDrive;
+
+  /// No description provided for @boardAreaWrite.
+  ///
+  /// In en, this message translates to:
+  /// **'Write'**
+  String get boardAreaWrite;
+
+  /// No description provided for @boardAreaSheets.
+  ///
+  /// In en, this message translates to:
+  /// **'Sheets'**
+  String get boardAreaSheets;
+
+  /// No description provided for @boardAreaSlides.
+  ///
+  /// In en, this message translates to:
+  /// **'Slides'**
+  String get boardAreaSlides;
+
+  /// Board area: sign-in, settings, menus shared by all apps.
+  ///
+  /// In en, this message translates to:
+  /// **'Suite'**
+  String get boardAreaSuite;
+
+  /// No description provided for @boardAreaServer.
+  ///
+  /// In en, this message translates to:
+  /// **'Server'**
+  String get boardAreaServer;
+
+  /// No description provided for @boardSizeSmall.
+  ///
+  /// In en, this message translates to:
+  /// **'Small'**
+  String get boardSizeSmall;
+
+  /// No description provided for @boardSizeMedium.
+  ///
+  /// In en, this message translates to:
+  /// **'Medium'**
+  String get boardSizeMedium;
+
+  /// No description provided for @boardSizeLarge.
+  ///
+  /// In en, this message translates to:
+  /// **'Large'**
+  String get boardSizeLarge;
+
+  /// No description provided for @boardStatusOpen.
+  ///
+  /// In en, this message translates to:
+  /// **'Open'**
+  String get boardStatusOpen;
+
+  /// No description provided for @boardStatusPlanned.
+  ///
+  /// In en, this message translates to:
+  /// **'Planned'**
+  String get boardStatusPlanned;
+
+  /// No description provided for @boardStatusDone.
+  ///
+  /// In en, this message translates to:
+  /// **'Done'**
+  String get boardStatusDone;
+
+  /// No description provided for @boardStatusShipped.
+  ///
+  /// In en, this message translates to:
+  /// **'Shipped'**
+  String get boardStatusShipped;
+
+  /// No description provided for @boardStatusDeclined.
+  ///
+  /// In en, this message translates to:
+  /// **'Declined'**
+  String get boardStatusDeclined;
+
+  /// No description provided for @boardStatusDuplicate.
+  ///
+  /// In en, this message translates to:
+  /// **'Duplicate'**
+  String get boardStatusDuplicate;
+
+  /// No description provided for @boardTaskDraft.
+  ///
+  /// In en, this message translates to:
+  /// **'Draft'**
+  String get boardTaskDraft;
+
+  /// No description provided for @boardTaskPublished.
+  ///
+  /// In en, this message translates to:
+  /// **'Published'**
+  String get boardTaskPublished;
+
+  /// No description provided for @boardTaskClaimed.
+  ///
+  /// In en, this message translates to:
+  /// **'Claimed'**
+  String get boardTaskClaimed;
+
+  /// No description provided for @boardTaskInReview.
+  ///
+  /// In en, this message translates to:
+  /// **'In review'**
+  String get boardTaskInReview;
+
+  /// No description provided for @boardTaskCancelled.
+  ///
+  /// In en, this message translates to:
+  /// **'Cancelled'**
+  String get boardTaskCancelled;
+
+  /// No description provided for @boardModerationChecking.
+  ///
+  /// In en, this message translates to:
+  /// **'Checking'**
+  String get boardModerationChecking;
+
+  /// No description provided for @boardModerationVisible.
+  ///
+  /// In en, this message translates to:
+  /// **'Visible'**
+  String get boardModerationVisible;
+
+  /// No description provided for @boardModerationHeld.
+  ///
+  /// In en, this message translates to:
+  /// **'Held'**
+  String get boardModerationHeld;
+
+  /// No description provided for @boardModerationRemoved.
+  ///
+  /// In en, this message translates to:
+  /// **'Removed'**
+  String get boardModerationRemoved;
+
+  /// No description provided for @boardReasonOffensive.
+  ///
+  /// In en, this message translates to:
+  /// **'Offensive'**
+  String get boardReasonOffensive;
+
+  /// No description provided for @boardReasonSpam.
+  ///
+  /// In en, this message translates to:
+  /// **'Spam'**
+  String get boardReasonSpam;
+
+  /// No description provided for @boardReasonPersonalData.
+  ///
+  /// In en, this message translates to:
+  /// **'Personal data'**
+  String get boardReasonPersonalData;
+
+  /// No description provided for @boardReasonSecurity.
+  ///
+  /// In en, this message translates to:
+  /// **'Security issue'**
+  String get boardReasonSecurity;
+
+  /// No description provided for @boardReasonOther.
+  ///
+  /// In en, this message translates to:
+  /// **'Other'**
+  String get boardReasonOther;
+
+  /// No description provided for @boardSortTrending.
+  ///
+  /// In en, this message translates to:
+  /// **'Trending'**
+  String get boardSortTrending;
+
+  /// No description provided for @boardSortTop.
+  ///
+  /// In en, this message translates to:
+  /// **'Top'**
+  String get boardSortTop;
+
+  /// No description provided for @boardSortNew.
+  ///
+  /// In en, this message translates to:
+  /// **'New'**
+  String get boardSortNew;
+
+  /// No description provided for @boardSortDiscussed.
+  ///
+  /// In en, this message translates to:
+  /// **'Most discussed'**
+  String get boardSortDiscussed;
+
+  /// No description provided for @boardSort.
+  ///
+  /// In en, this message translates to:
+  /// **'Sort'**
+  String get boardSort;
+
+  /// No description provided for @boardFilterArea.
+  ///
+  /// In en, this message translates to:
+  /// **'Area'**
+  String get boardFilterArea;
+
+  /// No description provided for @boardFilterSize.
+  ///
+  /// In en, this message translates to:
+  /// **'Size'**
+  String get boardFilterSize;
+
+  /// No description provided for @boardFilterStatus.
+  ///
+  /// In en, this message translates to:
+  /// **'Status'**
+  String get boardFilterStatus;
+
+  /// Board filter: posts I wrote or voted on.
+  ///
+  /// In en, this message translates to:
+  /// **'Mine'**
+  String get boardFilterMine;
+
+  /// No description provided for @boardFilterAny.
+  ///
+  /// In en, this message translates to:
+  /// **'Any'**
+  String get boardFilterAny;
+
+  /// No description provided for @boardSelect.
+  ///
+  /// In en, this message translates to:
+  /// **'Select'**
+  String get boardSelect;
+
+  /// No description provided for @boardSelectDone.
+  ///
+  /// In en, this message translates to:
+  /// **'Done selecting'**
+  String get boardSelectDone;
+
+  /// No description provided for @boardSelected.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} selected'**
+  String boardSelected(int count);
+
+  /// No description provided for @boardCreateTaskFrom.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{Create task from 1 post…} other{Create task from {count} posts…}}'**
+  String boardCreateTaskFrom(int count);
+
+  /// No description provided for @boardCreateTaskHint.
+  ///
+  /// In en, this message translates to:
+  /// **'The draft task gets an AI-written prompt that you review before publishing.'**
+  String get boardCreateTaskHint;
+
+  /// No description provided for @boardAddToTask.
+  ///
+  /// In en, this message translates to:
+  /// **'Add to task'**
+  String get boardAddToTask;
+
+  /// No description provided for @boardAddToTaskEllipsis.
+  ///
+  /// In en, this message translates to:
+  /// **'Add to task…'**
+  String get boardAddToTaskEllipsis;
+
+  /// No description provided for @boardNoOpenTasks.
+  ///
+  /// In en, this message translates to:
+  /// **'There are no draft or published tasks.'**
+  String get boardNoOpenTasks;
+
+  /// No description provided for @boardLoadMore.
+  ///
+  /// In en, this message translates to:
+  /// **'Load more'**
+  String get boardLoadMore;
+
+  /// Under the board list: how many posts are shown.
+  ///
+  /// In en, this message translates to:
+  /// **'{shown} of {total}'**
+  String boardShowing(int shown, int total);
+
+  /// No description provided for @boardLoadFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t load Bugs & Improvements'**
+  String get boardLoadFailed;
+
+  /// No description provided for @boardEmptyIdeas.
+  ///
+  /// In en, this message translates to:
+  /// **'No improvements here yet'**
+  String get boardEmptyIdeas;
+
+  /// No description provided for @boardEmptyBugs.
+  ///
+  /// In en, this message translates to:
+  /// **'No bugs here'**
+  String get boardEmptyBugs;
+
+  /// No description provided for @boardEmptyDone.
+  ///
+  /// In en, this message translates to:
+  /// **'Nothing finished yet'**
+  String get boardEmptyDone;
+
+  /// No description provided for @boardEmptySearch.
+  ///
+  /// In en, this message translates to:
+  /// **'No posts match your search'**
+  String get boardEmptySearch;
+
+  /// No description provided for @boardEmptyHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Change the filters, or be the first to post.'**
+  String get boardEmptyHint;
+
+  /// No description provided for @boardEmptyTasks.
+  ///
+  /// In en, this message translates to:
+  /// **'No tasks up for grabs'**
+  String get boardEmptyTasks;
+
+  /// No description provided for @boardEmptyTasksHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Admins publish tasks from the most wanted posts. Check back soon.'**
+  String get boardEmptyTasksHint;
+
+  /// No description provided for @boardDoneTasks.
+  ///
+  /// In en, this message translates to:
+  /// **'Finished tasks'**
+  String get boardDoneTasks;
+
+  /// Semantics label of the up-vote button.
+  ///
+  /// In en, this message translates to:
+  /// **'Upvote, {score} votes'**
+  String boardUpvoteLabel(int score);
+
+  /// No description provided for @boardDownvoteLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Downvote, {score} votes'**
+  String boardDownvoteLabel(int score);
+
+  /// No description provided for @boardRemoveUpvote.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove upvote'**
+  String get boardRemoveUpvote;
+
+  /// No description provided for @boardRemoveDownvote.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove downvote'**
+  String get boardRemoveDownvote;
+
+  /// No description provided for @boardHitThisToo.
+  ///
+  /// In en, this message translates to:
+  /// **'I hit this too'**
+  String get boardHitThisToo;
+
+  /// No description provided for @boardHitThisTooLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'I hit this too, {score} people'**
+  String boardHitThisTooLabel(int score);
+
+  /// No description provided for @boardHitThisTooRemove.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove I hit this too, {score} people'**
+  String boardHitThisTooRemove(int score);
+
+  /// Marker on labels set by AI and not yet confirmed by an admin.
+  ///
+  /// In en, this message translates to:
+  /// **'AI'**
+  String get boardAiMarker;
+
+  /// No description provided for @boardAiLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'{label}, set by AI'**
+  String boardAiLabel(String label);
+
+  /// No description provided for @boardPlannedIn.
+  ///
+  /// In en, this message translates to:
+  /// **'Planned · T-{number}'**
+  String boardPlannedIn(int number);
+
+  /// No description provided for @boardCommentCount.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 comment} other{{count} comments}}'**
+  String boardCommentCount(int count);
+
+  /// No description provided for @boardHasScreenshot.
+  ///
+  /// In en, this message translates to:
+  /// **'Has a screenshot'**
+  String get boardHasScreenshot;
+
+  /// No description provided for @boardDeletedUser.
+  ///
+  /// In en, this message translates to:
+  /// **'Deleted user'**
+  String get boardDeletedUser;
+
+  /// No description provided for @boardAdmin.
+  ///
+  /// In en, this message translates to:
+  /// **'Admin'**
+  String get boardAdmin;
+
+  /// No description provided for @boardEdited.
+  ///
+  /// In en, this message translates to:
+  /// **'edited {time}'**
+  String boardEdited(String time);
+
+  /// No description provided for @boardCopy.
+  ///
+  /// In en, this message translates to:
+  /// **'Copy'**
+  String get boardCopy;
+
+  /// No description provided for @boardCopied.
+  ///
+  /// In en, this message translates to:
+  /// **'Copied'**
+  String get boardCopied;
+
+  /// No description provided for @boardPromptCopied.
+  ///
+  /// In en, this message translates to:
+  /// **'Prompt copied'**
+  String get boardPromptCopied;
+
+  /// No description provided for @boardFlagged.
+  ///
+  /// In en, this message translates to:
+  /// **'Thanks. A moderator will take a look.'**
+  String get boardFlagged;
+
+  /// No description provided for @boardPostNotFound.
+  ///
+  /// In en, this message translates to:
+  /// **'Post #{number} doesn\'t exist or isn\'t public'**
+  String boardPostNotFound(int number);
+
+  /// No description provided for @boardTaskNotFound.
+  ///
+  /// In en, this message translates to:
+  /// **'Task T-{number} doesn\'t exist'**
+  String boardTaskNotFound(int number);
+
+  /// No description provided for @boardBackToBoard.
+  ///
+  /// In en, this message translates to:
+  /// **'Back to Bugs & Improvements'**
+  String get boardBackToBoard;
+
+  /// Heading of the admin entries in the post's actions menu.
+  ///
+  /// In en, this message translates to:
+  /// **'Admin'**
+  String get boardAdminActions;
+
+  /// No description provided for @boardEditAndApprove.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit and approve…'**
+  String get boardEditAndApprove;
+
+  /// No description provided for @boardActionApprove.
+  ///
+  /// In en, this message translates to:
+  /// **'Approve'**
+  String get boardActionApprove;
+
+  /// No description provided for @boardActionHold.
+  ///
+  /// In en, this message translates to:
+  /// **'Hold'**
+  String get boardActionHold;
+
+  /// No description provided for @boardActionLooksFine.
+  ///
+  /// In en, this message translates to:
+  /// **'Looks fine'**
+  String get boardActionLooksFine;
+
+  /// No description provided for @boardActionRestore.
+  ///
+  /// In en, this message translates to:
+  /// **'Restore'**
+  String get boardActionRestore;
+
+  /// No description provided for @boardActionRemove.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove'**
+  String get boardActionRemove;
+
+  /// No description provided for @boardActionRemoveEllipsis.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove…'**
+  String get boardActionRemoveEllipsis;
+
+  /// No description provided for @boardActionDecline.
+  ///
+  /// In en, this message translates to:
+  /// **'Decline'**
+  String get boardActionDecline;
+
+  /// No description provided for @boardActionMerge.
+  ///
+  /// In en, this message translates to:
+  /// **'Merge'**
+  String get boardActionMerge;
+
+  /// No description provided for @boardActionBlock.
+  ///
+  /// In en, this message translates to:
+  /// **'Block'**
+  String get boardActionBlock;
+
+  /// No description provided for @boardActionCreateTask.
+  ///
+  /// In en, this message translates to:
+  /// **'Create task'**
+  String get boardActionCreateTask;
+
+  /// No description provided for @boardActionAdd.
+  ///
+  /// In en, this message translates to:
+  /// **'Add'**
+  String get boardActionAdd;
+
+  /// No description provided for @boardActionLink.
+  ///
+  /// In en, this message translates to:
+  /// **'Link'**
+  String get boardActionLink;
+
+  /// No description provided for @boardActionSavePublish.
+  ///
+  /// In en, this message translates to:
+  /// **'Save and publish'**
+  String get boardActionSavePublish;
+
+  /// No description provided for @boardSelectForBuilding.
+  ///
+  /// In en, this message translates to:
+  /// **'Select for building'**
+  String get boardSelectForBuilding;
+
+  /// No description provided for @boardDeclineEllipsis.
+  ///
+  /// In en, this message translates to:
+  /// **'Decline…'**
+  String get boardDeclineEllipsis;
+
+  /// No description provided for @boardMergeEllipsis.
+  ///
+  /// In en, this message translates to:
+  /// **'Merge into…'**
+  String get boardMergeEllipsis;
+
+  /// No description provided for @boardBlockEllipsis.
+  ///
+  /// In en, this message translates to:
+  /// **'Block user from the board…'**
+  String get boardBlockEllipsis;
+
+  /// No description provided for @boardEditEllipsis.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit…'**
+  String get boardEditEllipsis;
+
+  /// No description provided for @boardDismiss.
+  ///
+  /// In en, this message translates to:
+  /// **'Dismiss'**
+  String get boardDismiss;
+
+  /// No description provided for @boardApply.
+  ///
+  /// In en, this message translates to:
+  /// **'Apply'**
+  String get boardApply;
+
+  /// No description provided for @boardMergedFromNote.
+  ///
+  /// In en, this message translates to:
+  /// **'#{number} was merged into this post.'**
+  String boardMergedFromNote(int number);
+
+  /// No description provided for @boardPostDeleted.
+  ///
+  /// In en, this message translates to:
+  /// **'This post was deleted.'**
+  String get boardPostDeleted;
+
+  /// No description provided for @boardChecking.
+  ///
+  /// In en, this message translates to:
+  /// **'Checking your post…'**
+  String get boardChecking;
+
+  /// No description provided for @boardWaitingForReview.
+  ///
+  /// In en, this message translates to:
+  /// **'Waiting for review: a moderator will look at it.'**
+  String get boardWaitingForReview;
+
+  /// No description provided for @boardHeldAdmin.
+  ///
+  /// In en, this message translates to:
+  /// **'Held for review. {reason}'**
+  String boardHeldAdmin(String reason);
+
+  /// No description provided for @boardRemovedByModerator.
+  ///
+  /// In en, this message translates to:
+  /// **'Removed by a moderator. {reason}'**
+  String boardRemovedByModerator(String reason);
+
+  /// No description provided for @boardDeclinedNote.
+  ///
+  /// In en, this message translates to:
+  /// **'Declined: {reason}'**
+  String boardDeclinedNote(String reason);
+
+  /// No description provided for @boardMergedInto.
+  ///
+  /// In en, this message translates to:
+  /// **'Merged into #{number}.'**
+  String boardMergedInto(int number);
+
+  /// No description provided for @boardOpenPost.
+  ///
+  /// In en, this message translates to:
+  /// **'Open #{number}'**
+  String boardOpenPost(int number);
+
+  /// No description provided for @boardMovedToIdeas.
+  ///
+  /// In en, this message translates to:
+  /// **'Moved to Improvements'**
+  String get boardMovedToIdeas;
+
+  /// No description provided for @boardMovedToBugs.
+  ///
+  /// In en, this message translates to:
+  /// **'Moved to Bugs'**
+  String get boardMovedToBugs;
+
+  /// No description provided for @boardEditedByModerator.
+  ///
+  /// In en, this message translates to:
+  /// **'Edited by a moderator'**
+  String get boardEditedByModerator;
+
+  /// No description provided for @boardDetails.
+  ///
+  /// In en, this message translates to:
+  /// **'Details'**
+  String get boardDetails;
+
+  /// No description provided for @boardAdminPanel.
+  ///
+  /// In en, this message translates to:
+  /// **'Moderation'**
+  String get boardAdminPanel;
+
+  /// No description provided for @boardTriage.
+  ///
+  /// In en, this message translates to:
+  /// **'Triage: {state}'**
+  String boardTriage(String state);
+
+  /// No description provided for @boardNeedsCheck.
+  ///
+  /// In en, this message translates to:
+  /// **'Check'**
+  String get boardNeedsCheck;
+
+  /// No description provided for @boardNeedsLabels.
+  ///
+  /// In en, this message translates to:
+  /// **'Needs labels'**
+  String get boardNeedsLabels;
+
+  /// No description provided for @boardSuggestedTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Suggested title: {title}'**
+  String boardSuggestedTitle(String title);
+
+  /// No description provided for @boardPossibleDuplicate.
+  ///
+  /// In en, this message translates to:
+  /// **'Possible duplicate of #{number}'**
+  String boardPossibleDuplicate(int number);
+
+  /// No description provided for @boardAiScores.
+  ///
+  /// In en, this message translates to:
+  /// **'AI scores'**
+  String get boardAiScores;
+
+  /// No description provided for @boardFlags.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 flag} other{{count} flags}}: {reasons}'**
+  String boardFlags(int count, String reasons);
+
+  /// No description provided for @boardOpenScreenshot.
+  ///
+  /// In en, this message translates to:
+  /// **'Open screenshot'**
+  String get boardOpenScreenshot;
+
+  /// No description provided for @boardScreenshotAlt.
+  ///
+  /// In en, this message translates to:
+  /// **'Screenshot of post #{number}'**
+  String boardScreenshotAlt(int number);
+
+  /// No description provided for @boardRelations.
+  ///
+  /// In en, this message translates to:
+  /// **'Related'**
+  String get boardRelations;
+
+  /// No description provided for @boardPartOfTask.
+  ///
+  /// In en, this message translates to:
+  /// **'Part of task T-{number}: {title}'**
+  String boardPartOfTask(int number, String title);
+
+  /// No description provided for @boardMergedFrom.
+  ///
+  /// In en, this message translates to:
+  /// **'Duplicates merged into this post:'**
+  String get boardMergedFrom;
+
+  /// No description provided for @boardSimilarPosts.
+  ///
+  /// In en, this message translates to:
+  /// **'Similar posts'**
+  String get boardSimilarPosts;
+
+  /// No description provided for @boardScore.
+  ///
+  /// In en, this message translates to:
+  /// **'{score, plural, =1{1 vote} other{{score} votes}}'**
+  String boardScore(int score);
+
+  /// No description provided for @boardCommentsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Comments ({count})'**
+  String boardCommentsTitle(int count);
+
+  /// No description provided for @boardCommentHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Add a comment'**
+  String get boardCommentHint;
+
+  /// No description provided for @boardCommentHeld.
+  ///
+  /// In en, this message translates to:
+  /// **'Hidden pending review'**
+  String get boardCommentHeld;
+
+  /// No description provided for @boardCommentRemoved.
+  ///
+  /// In en, this message translates to:
+  /// **'Removed by a moderator'**
+  String get boardCommentRemoved;
+
+  /// No description provided for @boardCommentOnPost.
+  ///
+  /// In en, this message translates to:
+  /// **'Comment on #{number}'**
+  String boardCommentOnPost(int number);
+
+  /// No description provided for @boardCommentOnTask.
+  ///
+  /// In en, this message translates to:
+  /// **'Comment on T-{number}'**
+  String boardCommentOnTask(int number);
+
+  /// No description provided for @boardEventClaimed.
+  ///
+  /// In en, this message translates to:
+  /// **'claimed the task'**
+  String get boardEventClaimed;
+
+  /// No description provided for @boardEventReleased.
+  ///
+  /// In en, this message translates to:
+  /// **'released the claim'**
+  String get boardEventReleased;
+
+  /// No description provided for @boardEventExpired.
+  ///
+  /// In en, this message translates to:
+  /// **'The claim expired'**
+  String get boardEventExpired;
+
+  /// No description provided for @boardEventPrLinked.
+  ///
+  /// In en, this message translates to:
+  /// **'linked a pull request: {url}'**
+  String boardEventPrLinked(String url);
+
+  /// No description provided for @boardEventPrUnlinked.
+  ///
+  /// In en, this message translates to:
+  /// **'unlinked the pull request'**
+  String get boardEventPrUnlinked;
+
+  /// No description provided for @boardEventPublished.
+  ///
+  /// In en, this message translates to:
+  /// **'published the task'**
+  String get boardEventPublished;
+
+  /// No description provided for @boardEventDone.
+  ///
+  /// In en, this message translates to:
+  /// **'marked the task done'**
+  String get boardEventDone;
+
+  /// No description provided for @boardEventShipped.
+  ///
+  /// In en, this message translates to:
+  /// **'marked the task shipped'**
+  String get boardEventShipped;
+
+  /// No description provided for @boardEventCancelled.
+  ///
+  /// In en, this message translates to:
+  /// **'cancelled the task'**
+  String get boardEventCancelled;
+
+  /// No description provided for @boardEventMerged.
+  ///
+  /// In en, this message translates to:
+  /// **'merged a duplicate'**
+  String get boardEventMerged;
+
+  /// No description provided for @boardUpForGrabs.
+  ///
+  /// In en, this message translates to:
+  /// **'Up for grabs'**
+  String get boardUpForGrabs;
+
+  /// No description provided for @boardClaimedBy.
+  ///
+  /// In en, this message translates to:
+  /// **'Claimed by {name} · {hours} h left'**
+  String boardClaimedBy(String name, int hours);
+
+  /// No description provided for @boardInReviewBy.
+  ///
+  /// In en, this message translates to:
+  /// **'In review · {name}'**
+  String boardInReviewBy(String name);
+
+  /// No description provided for @boardPostCount.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 post} other{{count} posts}}'**
+  String boardPostCount(int count);
+
+  /// No description provided for @boardClaimTask.
+  ///
+  /// In en, this message translates to:
+  /// **'Claim this task'**
+  String get boardClaimTask;
+
+  /// No description provided for @boardReleaseClaim.
+  ///
+  /// In en, this message translates to:
+  /// **'Release claim'**
+  String get boardReleaseClaim;
+
+  /// No description provided for @boardYourClaimCode.
+  ///
+  /// In en, this message translates to:
+  /// **'Your claim code'**
+  String get boardYourClaimCode;
+
+  /// No description provided for @boardTimeLeft.
+  ///
+  /// In en, this message translates to:
+  /// **'{hours} h left on your claim'**
+  String boardTimeLeft(int hours);
+
+  /// No description provided for @boardClaimCodeHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Put it in the pull request description. Only you can see it.'**
+  String get boardClaimCodeHint;
+
+  /// No description provided for @boardClaimCodePlaceholder.
+  ///
+  /// In en, this message translates to:
+  /// **'<your claim code>'**
+  String get boardClaimCodePlaceholder;
+
+  /// No description provided for @boardDraftNotice.
+  ///
+  /// In en, this message translates to:
+  /// **'Draft: only admins see this task. Review the prompt, then publish it.'**
+  String get boardDraftNotice;
+
+  /// No description provided for @boardTaskCancelledNotice.
+  ///
+  /// In en, this message translates to:
+  /// **'This task was cancelled. Its posts are open again.'**
+  String get boardTaskCancelledNotice;
+
+  /// No description provided for @boardLinkedPosts.
+  ///
+  /// In en, this message translates to:
+  /// **'Linked posts'**
+  String get boardLinkedPosts;
+
+  /// No description provided for @boardNoLinkedPosts.
+  ///
+  /// In en, this message translates to:
+  /// **'No posts are linked to this task.'**
+  String get boardNoLinkedPosts;
+
+  /// No description provided for @boardRemoveFromTask.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove from task'**
+  String get boardRemoveFromTask;
+
+  /// No description provided for @boardAddPosts.
+  ///
+  /// In en, this message translates to:
+  /// **'Add posts…'**
+  String get boardAddPosts;
+
+  /// No description provided for @boardFieldPostNumbers.
+  ///
+  /// In en, this message translates to:
+  /// **'Post numbers'**
+  String get boardFieldPostNumbers;
+
+  /// No description provided for @boardHowToBuild.
+  ///
+  /// In en, this message translates to:
+  /// **'How to build it'**
+  String get boardHowToBuild;
+
+  /// No description provided for @boardStepSetup.
+  ///
+  /// In en, this message translates to:
+  /// **'1. Set up Wonky Work locally'**
+  String get boardStepSetup;
+
+  /// No description provided for @boardFullGuide.
+  ///
+  /// In en, this message translates to:
+  /// **'Read the full guide'**
+  String get boardFullGuide;
+
+  /// No description provided for @boardStepPrompt.
+  ///
+  /// In en, this message translates to:
+  /// **'2. Give your coding agent the prompt'**
+  String get boardStepPrompt;
+
+  /// No description provided for @boardStepPr.
+  ///
+  /// In en, this message translates to:
+  /// **'3. Open a pull request'**
+  String get boardStepPr;
+
+  /// No description provided for @boardPrRules.
+  ///
+  /// In en, this message translates to:
+  /// **'One task per pull request, against main. Put these two lines in its description:'**
+  String get boardPrRules;
+
+  /// No description provided for @boardPullRequest.
+  ///
+  /// In en, this message translates to:
+  /// **'Pull request'**
+  String get boardPullRequest;
+
+  /// No description provided for @boardPrNumber.
+  ///
+  /// In en, this message translates to:
+  /// **'Pull request #{number}'**
+  String boardPrNumber(int number);
+
+  /// No description provided for @boardPrBy.
+  ///
+  /// In en, this message translates to:
+  /// **'by {login}'**
+  String boardPrBy(String login);
+
+  /// No description provided for @boardLatestReview.
+  ///
+  /// In en, this message translates to:
+  /// **'Latest review'**
+  String get boardLatestReview;
+
+  /// No description provided for @boardActivityAndDiscussion.
+  ///
+  /// In en, this message translates to:
+  /// **'Activity and discussion'**
+  String get boardActivityAndDiscussion;
+
+  /// No description provided for @boardContributeTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'How to contribute'**
+  String get boardContributeTitle;
+
+  /// No description provided for @boardContributeIntro.
+  ///
+  /// In en, this message translates to:
+  /// **'Anyone can build a task that is up for grabs. Claim it, let a coding agent do the work with the task\'s prompt, and open a pull request.'**
+  String get boardContributeIntro;
+
+  /// No description provided for @boardContribStep1Title.
+  ///
+  /// In en, this message translates to:
+  /// **'Get the tools'**
+  String get boardContribStep1Title;
+
+  /// No description provided for @boardContribStep1.
+  ///
+  /// In en, this message translates to:
+  /// **'Install Flutter (stable), Docker for the development database, and an AI coding agent that reads AGENTS.md, such as Claude Code.'**
+  String get boardContribStep1;
+
+  /// No description provided for @boardContribStep2Title.
+  ///
+  /// In en, this message translates to:
+  /// **'Install the Serverpod CLI'**
+  String get boardContribStep2Title;
+
+  /// No description provided for @boardContribStep2.
+  ///
+  /// In en, this message translates to:
+  /// **'It runs the server and the apps.'**
+  String get boardContribStep2;
+
+  /// No description provided for @boardContribStep3Title.
+  ///
+  /// In en, this message translates to:
+  /// **'Clone the repository'**
+  String get boardContribStep3Title;
+
+  /// No description provided for @boardContribStep3.
+  ///
+  /// In en, this message translates to:
+  /// **'Then start the development database.'**
+  String get boardContribStep3;
+
+  /// No description provided for @boardContribStep4Title.
+  ///
+  /// In en, this message translates to:
+  /// **'Create your passwords file'**
+  String get boardContribStep4Title;
+
+  /// No description provided for @boardContribStep4.
+  ///
+  /// In en, this message translates to:
+  /// **'The example has development defaults. AI keys are optional.'**
+  String get boardContribStep4;
+
+  /// No description provided for @boardContribStep5Title.
+  ///
+  /// In en, this message translates to:
+  /// **'Start the server'**
+  String get boardContribStep5Title;
+
+  /// No description provided for @boardContribStep5.
+  ///
+  /// In en, this message translates to:
+  /// **'Run it in wonky_server and start an app from its UI. Point your agent at the serverpod MCP server (.mcp.json is in the repository).'**
+  String get boardContribStep5;
+
+  /// No description provided for @boardContribStep6Title.
+  ///
+  /// In en, this message translates to:
+  /// **'Pick a task'**
+  String get boardContribStep6Title;
+
+  /// No description provided for @boardContribStep6.
+  ///
+  /// In en, this message translates to:
+  /// **'Claim a task under Up for grabs, paste its prompt into your agent and review the result.'**
+  String get boardContribStep6;
+
+  /// No description provided for @boardContribStep7Title.
+  ///
+  /// In en, this message translates to:
+  /// **'Open a pull request'**
+  String get boardContribStep7Title;
+
+  /// No description provided for @boardContribStep7.
+  ///
+  /// In en, this message translates to:
+  /// **'One task per pull request. The description contains the Wonky-Task and Wonky-Claim lines from the task page. Pull requests without a valid task are closed after 7 days.'**
+  String get boardContribStep7;
+
+  /// No description provided for @boardContribLicense.
+  ///
+  /// In en, this message translates to:
+  /// **'Contributions are accepted under the repository\'s BSD-3-Clause license. No CLA.'**
+  String get boardContribLicense;
+
+  /// No description provided for @boardContribSecurity.
+  ///
+  /// In en, this message translates to:
+  /// **'Found a security issue? Email {email}. Never post it on the board or in a pull request.'**
+  String boardContribSecurity(String email);
+
+  /// No description provided for @boardContributeGuide.
+  ///
+  /// In en, this message translates to:
+  /// **'Full guide on GitHub'**
+  String get boardContributeGuide;
+
+  /// No description provided for @boardFieldTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Title'**
+  String get boardFieldTitle;
+
+  /// No description provided for @boardTitleLength.
+  ///
+  /// In en, this message translates to:
+  /// **'Use 8 to 120 characters.'**
+  String get boardTitleLength;
+
+  /// No description provided for @boardModeratorEditHint.
+  ///
+  /// In en, this message translates to:
+  /// **'The post shows Edited by a moderator.'**
+  String get boardModeratorEditHint;
+
+  /// No description provided for @boardFieldReason.
+  ///
+  /// In en, this message translates to:
+  /// **'Reason'**
+  String get boardFieldReason;
+
+  /// No description provided for @boardFieldNote.
+  ///
+  /// In en, this message translates to:
+  /// **'Note (optional)'**
+  String get boardFieldNote;
+
+  /// No description provided for @boardFieldNoteForAuthor.
+  ///
+  /// In en, this message translates to:
+  /// **'Message to the author (optional)'**
+  String get boardFieldNoteForAuthor;
+
+  /// No description provided for @boardFlagHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Flagged posts are hidden for review after 3 people flag them.'**
+  String get boardFlagHint;
+
+  /// No description provided for @boardFlagAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Flag'**
+  String get boardFlagAction;
+
+  /// No description provided for @boardRemoveTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove'**
+  String get boardRemoveTitle;
+
+  /// No description provided for @boardDeclineOutOfScope.
+  ///
+  /// In en, this message translates to:
+  /// **'Out of scope'**
+  String get boardDeclineOutOfScope;
+
+  /// No description provided for @boardDeclineAsIntended.
+  ///
+  /// In en, this message translates to:
+  /// **'Works as intended'**
+  String get boardDeclineAsIntended;
+
+  /// No description provided for @boardDeclineWontFix.
+  ///
+  /// In en, this message translates to:
+  /// **'Won\'t fix'**
+  String get boardDeclineWontFix;
+
+  /// No description provided for @boardBlockHint.
+  ///
+  /// In en, this message translates to:
+  /// **'{name} can still read the board but can\'t post, vote or comment.'**
+  String boardBlockHint(String name);
+
+  /// No description provided for @boardMergeHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Votes on #{number} move to the post that remains.'**
+  String boardMergeHint(int number);
+
+  /// No description provided for @boardFieldTargetPost.
+  ///
+  /// In en, this message translates to:
+  /// **'Post that remains'**
+  String get boardFieldTargetPost;
+
+  /// No description provided for @boardInvalidPostNumber.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter a post number'**
+  String get boardInvalidPostNumber;
+
+  /// No description provided for @boardMergeSelf.
+  ///
+  /// In en, this message translates to:
+  /// **'A post can\'t be merged into itself'**
+  String get boardMergeSelf;
+
+  /// No description provided for @boardFieldKind.
+  ///
+  /// In en, this message translates to:
+  /// **'Kind'**
+  String get boardFieldKind;
+
+  /// No description provided for @boardFieldArea.
+  ///
+  /// In en, this message translates to:
+  /// **'Area'**
+  String get boardFieldArea;
+
+  /// No description provided for @boardFieldSize.
+  ///
+  /// In en, this message translates to:
+  /// **'Size'**
+  String get boardFieldSize;
+
+  /// No description provided for @boardNoLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Not set'**
+  String get boardNoLabel;
+
+  /// No description provided for @boardFieldTask.
+  ///
+  /// In en, this message translates to:
+  /// **'Task'**
+  String get boardFieldTask;
+
+  /// No description provided for @boardLinkPrHint.
+  ///
+  /// In en, this message translates to:
+  /// **'A pull request of the repository. Leave it empty to unlink.'**
+  String get boardLinkPrHint;
+
+  /// No description provided for @boardFieldPrUrl.
+  ///
+  /// In en, this message translates to:
+  /// **'Pull request URL'**
+  String get boardFieldPrUrl;
+
+  /// No description provided for @boardInvalidPrUrl.
+  ///
+  /// In en, this message translates to:
+  /// **'Use a github.com pull request URL'**
+  String get boardInvalidPrUrl;
+
+  /// No description provided for @boardRemoveScreenshotHint.
+  ///
+  /// In en, this message translates to:
+  /// **'The screenshot is deleted for good.'**
+  String get boardRemoveScreenshotHint;
+
+  /// No description provided for @boardPromptEditorTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Prompt of T-{number}'**
+  String boardPromptEditorTitle(int number);
+
+  /// No description provided for @boardPromptEditorHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Contributors run this prompt in coding agents. Read it all before publishing.'**
+  String get boardPromptEditorHint;
+
+  /// No description provided for @boardPromptDiffTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Changes from Regenerate'**
+  String get boardPromptDiffTitle;
+
+  /// No description provided for @boardLintTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 unusual instruction} other{{count} unusual instructions}}: check before publishing'**
+  String boardLintTitle(int count);
+
+  /// No description provided for @boardLintCommand.
+  ///
+  /// In en, this message translates to:
+  /// **'Line {line}: command {text}'**
+  String boardLintCommand(int line, String text);
+
+  /// No description provided for @boardLintUrl.
+  ///
+  /// In en, this message translates to:
+  /// **'Line {line}: link outside the repository {text}'**
+  String boardLintUrl(int line, String text);
+
+  /// No description provided for @boardLintWording.
+  ///
+  /// In en, this message translates to:
+  /// **'Line {line}: “{text}”'**
+  String boardLintWording(int line, String text);
+
+  /// No description provided for @boardReviewHeld.
+  ///
+  /// In en, this message translates to:
+  /// **'Held'**
+  String get boardReviewHeld;
+
+  /// No description provided for @boardReviewCheck.
+  ///
+  /// In en, this message translates to:
+  /// **'Check'**
+  String get boardReviewCheck;
+
+  /// No description provided for @boardReviewUnchecked.
+  ///
+  /// In en, this message translates to:
+  /// **'Unchecked'**
+  String get boardReviewUnchecked;
+
+  /// No description provided for @boardReviewDuplicates.
+  ///
+  /// In en, this message translates to:
+  /// **'Possible duplicates'**
+  String get boardReviewDuplicates;
+
+  /// No description provided for @boardReviewBundles.
+  ///
+  /// In en, this message translates to:
+  /// **'Suggested bundles'**
+  String get boardReviewBundles;
+
+  /// No description provided for @boardReviewDrafts.
+  ///
+  /// In en, this message translates to:
+  /// **'Draft tasks'**
+  String get boardReviewDrafts;
+
+  /// No description provided for @boardReviewEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'Nothing to review.'**
+  String get boardReviewEmpty;
+
+  /// No description provided for @cmdBoardVote.
+  ///
+  /// In en, this message translates to:
+  /// **'Vote'**
+  String get cmdBoardVote;
+
+  /// No description provided for @cmdBoardEditPost.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit post'**
+  String get cmdBoardEditPost;
+
+  /// No description provided for @cmdBoardDeletePost.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete post'**
+  String get cmdBoardDeletePost;
+
+  /// No description provided for @cmdBoardRemoveScreenshot.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove screenshot'**
+  String get cmdBoardRemoveScreenshot;
+
+  /// No description provided for @cmdBoardComment.
+  ///
+  /// In en, this message translates to:
+  /// **'Comment'**
+  String get cmdBoardComment;
+
+  /// No description provided for @cmdBoardEditComment.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit comment'**
+  String get cmdBoardEditComment;
+
+  /// No description provided for @cmdBoardDeleteComment.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete comment'**
+  String get cmdBoardDeleteComment;
+
+  /// No description provided for @cmdBoardFlag.
+  ///
+  /// In en, this message translates to:
+  /// **'Flag…'**
+  String get cmdBoardFlag;
+
+  /// No description provided for @cmdBoardClaim.
+  ///
+  /// In en, this message translates to:
+  /// **'Claim task'**
+  String get cmdBoardClaim;
+
+  /// No description provided for @cmdBoardRelease.
+  ///
+  /// In en, this message translates to:
+  /// **'Release'**
+  String get cmdBoardRelease;
+
+  /// No description provided for @cmdBoardCopyPrompt.
+  ///
+  /// In en, this message translates to:
+  /// **'Copy prompt'**
+  String get cmdBoardCopyPrompt;
+
+  /// No description provided for @cmdBoardCopyClaimCode.
+  ///
+  /// In en, this message translates to:
+  /// **'Copy claim code'**
+  String get cmdBoardCopyClaimCode;
+
+  /// No description provided for @cmdBoardModerate.
+  ///
+  /// In en, this message translates to:
+  /// **'Moderate'**
+  String get cmdBoardModerate;
+
+  /// No description provided for @cmdBoardSetLabels.
+  ///
+  /// In en, this message translates to:
+  /// **'Set kind, area and size…'**
+  String get cmdBoardSetLabels;
+
+  /// No description provided for @cmdBoardAdminEdit.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit as moderator…'**
+  String get cmdBoardAdminEdit;
+
+  /// No description provided for @cmdBoardApplyTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Apply suggested title'**
+  String get cmdBoardApplyTitle;
+
+  /// No description provided for @cmdBoardNotDuplicate.
+  ///
+  /// In en, this message translates to:
+  /// **'Not a duplicate'**
+  String get cmdBoardNotDuplicate;
+
+  /// No description provided for @cmdBoardMerge.
+  ///
+  /// In en, this message translates to:
+  /// **'Merge into…'**
+  String get cmdBoardMerge;
+
+  /// No description provided for @cmdBoardUnmerge.
+  ///
+  /// In en, this message translates to:
+  /// **'Unmerge'**
+  String get cmdBoardUnmerge;
+
+  /// No description provided for @cmdBoardDecline.
+  ///
+  /// In en, this message translates to:
+  /// **'Decline'**
+  String get cmdBoardDecline;
+
+  /// No description provided for @cmdBoardReopen.
+  ///
+  /// In en, this message translates to:
+  /// **'Reopen'**
+  String get cmdBoardReopen;
+
+  /// No description provided for @cmdBoardBlock.
+  ///
+  /// In en, this message translates to:
+  /// **'Block user from the board'**
+  String get cmdBoardBlock;
+
+  /// No description provided for @cmdBoardCreateTask.
+  ///
+  /// In en, this message translates to:
+  /// **'Create task'**
+  String get cmdBoardCreateTask;
+
+  /// No description provided for @cmdBoardEditTask.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit task'**
+  String get cmdBoardEditTask;
+
+  /// No description provided for @cmdBoardSetTaskPosts.
+  ///
+  /// In en, this message translates to:
+  /// **'Change the task\'s posts'**
+  String get cmdBoardSetTaskPosts;
+
+  /// No description provided for @cmdBoardRegeneratePrompt.
+  ///
+  /// In en, this message translates to:
+  /// **'Regenerate prompt'**
+  String get cmdBoardRegeneratePrompt;
+
+  /// No description provided for @cmdBoardEditPrompt.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit prompt'**
+  String get cmdBoardEditPrompt;
+
+  /// No description provided for @cmdBoardPublishTask.
+  ///
+  /// In en, this message translates to:
+  /// **'Publish task'**
+  String get cmdBoardPublishTask;
+
+  /// No description provided for @cmdBoardLinkPr.
+  ///
+  /// In en, this message translates to:
+  /// **'Link pull request…'**
+  String get cmdBoardLinkPr;
+
+  /// No description provided for @cmdBoardMarkDone.
+  ///
+  /// In en, this message translates to:
+  /// **'Mark done'**
+  String get cmdBoardMarkDone;
+
+  /// No description provided for @cmdBoardMarkShipped.
+  ///
+  /// In en, this message translates to:
+  /// **'Mark shipped'**
+  String get cmdBoardMarkShipped;
+
+  /// No description provided for @cmdBoardCancelTask.
+  ///
+  /// In en, this message translates to:
+  /// **'Cancel task'**
+  String get cmdBoardCancelTask;
+
+  /// No description provided for @cmdBoardSuggestBundles.
+  ///
+  /// In en, this message translates to:
+  /// **'Suggest bundles'**
+  String get cmdBoardSuggestBundles;
+
+  /// No description provided for @cmdBoardDismissSuggestion.
+  ///
+  /// In en, this message translates to:
+  /// **'Dismiss suggestion'**
+  String get cmdBoardDismissSuggestion;
+
+  /// Notification settings: replies, status changes and claims on the board.
+  ///
+  /// In en, this message translates to:
+  /// **'Bugs & Improvements'**
+  String get notifyBoard;
+
+  /// No description provided for @notifyBoardHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Replies to your posts, status changes and your task claims'**
+  String get notifyBoardHint;
+
+  /// No description provided for @boardEventPrClosed.
+  ///
+  /// In en, this message translates to:
+  /// **'Pull request closed without merge: {url}. The task is open again.'**
+  String boardEventPrClosed(String url);
+
+  /// No description provided for @boardEventPrMerged.
+  ///
+  /// In en, this message translates to:
+  /// **'Pull request merged: {url}'**
+  String boardEventPrMerged(String url);
+
+  /// No description provided for @boardEventPrOpened.
+  ///
+  /// In en, this message translates to:
+  /// **'Pull request opened: {url}'**
+  String boardEventPrOpened(String url);
+
+  /// No description provided for @boardEventDeployed.
+  ///
+  /// In en, this message translates to:
+  /// **'Shipped in deploy {sha}'**
+  String boardEventDeployed(String sha);
+
+  /// No description provided for @boardVerdictMet.
+  ///
+  /// In en, this message translates to:
+  /// **'Met'**
+  String get boardVerdictMet;
+
+  /// No description provided for @boardVerdictPartly.
+  ///
+  /// In en, this message translates to:
+  /// **'Partly'**
+  String get boardVerdictPartly;
+
+  /// No description provided for @boardVerdictNotMet.
+  ///
+  /// In en, this message translates to:
+  /// **'Not met'**
+  String get boardVerdictNotMet;
+
+  /// No description provided for @boardVerdictCantTell.
+  ///
+  /// In en, this message translates to:
+  /// **'Can\'t tell'**
+  String get boardVerdictCantTell;
+
+  /// No description provided for @boardVerdictAdded.
+  ///
+  /// In en, this message translates to:
+  /// **'Added'**
+  String get boardVerdictAdded;
+
+  /// No description provided for @boardVerdictUpdated.
+  ///
+  /// In en, this message translates to:
+  /// **'Updated'**
+  String get boardVerdictUpdated;
+
+  /// No description provided for @boardVerdictMissing.
+  ///
+  /// In en, this message translates to:
+  /// **'Missing'**
+  String get boardVerdictMissing;
+
+  /// No description provided for @boardVerdictNotNeeded.
+  ///
+  /// In en, this message translates to:
+  /// **'Not needed'**
+  String get boardVerdictNotNeeded;
+
+  /// No description provided for @boardReviewTests.
+  ///
+  /// In en, this message translates to:
+  /// **'Tests'**
+  String get boardReviewTests;
+
+  /// No description provided for @boardReviewSpecs.
+  ///
+  /// In en, this message translates to:
+  /// **'Specs'**
+  String get boardReviewSpecs;
+
+  /// No description provided for @boardReviewRisks.
+  ///
+  /// In en, this message translates to:
+  /// **'Risks'**
+  String get boardReviewRisks;
+
+  /// No description provided for @boardReviewUnrelated.
+  ///
+  /// In en, this message translates to:
+  /// **'Changes the task didn\'t ask for'**
+  String get boardReviewUnrelated;
+
+  /// No description provided for @boardReviewedSha.
+  ///
+  /// In en, this message translates to:
+  /// **'Reviewed at {sha}'**
+  String boardReviewedSha(String sha);
 }
 
 class _WonkyAppLocalizationsDelegate

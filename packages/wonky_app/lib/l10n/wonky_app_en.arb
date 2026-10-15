@@ -535,14 +535,6 @@
   "@externalLinkTitle": {
     "description": "Title of the confirm before opening a link outside Wonky Work."
   },
-  "feedbackDescription": "Tell us what happened or what you'd like to see.",
-  "feedbackFailed": "Your report could not be sent",
-  "feedbackKind": "Type",
-  "feedbackKindIdea": "Idea",
-  "feedbackKindProblem": "Problem",
-  "feedbackMessage": "Message",
-  "feedbackThanks": "Thanks for the feedback!",
-  "feedbackTitle": "Report a problem",
   "fileCategoryArchives": "Archives",
   "@fileCategoryArchives": {
     "description": "Type filter (Drive): ZIP and other archives."
@@ -1999,5 +1991,924 @@
   "lightboxLoadFailed": "The image couldn’t be loaded",
   "lightboxZoomIn": "Zoom in",
   "lightboxZoomOut": "Zoom out",
-  "lightboxFit": "Fit to screen"
+  "lightboxFit": "Fit to screen",
+  "cmdBoardReport": "Bugs & Improvements…",
+  "@cmdBoardReport": {
+    "description": "Help menu and palette: opens the report dialog (specs/16 §4.1)."
+  },
+  "cmdBoardOpen": "Browse Bugs & Improvements",
+  "@cmdBoardOpen": {
+    "description": "Help menu and palette: opens the Bugs & Improvements board page."
+  },
+  "boardReportName": "Bugs & Improvements",
+  "@boardReportName": {
+    "description": "The product name of the public bug and idea board; title of the report dialog and the entry points."
+  },
+  "boardReportSeeAll": "See all posts",
+  "@boardReportSeeAll": {
+    "description": "Report dialog header link to the board page (keeps the draft)."
+  },
+  "boardReportKindLabel": "Kind",
+  "boardReportKindBug": "Report a bug",
+  "boardReportKindIdea": "Suggest an improvement",
+  "boardReportFieldTitle": "Title",
+  "boardReportTitleHintBug": "Describe the problem in a few words",
+  "boardReportTitleHintIdea": "Describe your idea in a few words",
+  "boardReportFieldHappened": "What happened?",
+  "boardReportFieldExpected": "What did you expect?",
+  "boardReportFieldSteps": "Steps to reproduce",
+  "boardReportFieldIdea": "What would you like?",
+  "boardReportFieldWhy": "Why would it help?",
+  "boardReportOptional": "(optional)",
+  "boardReportTitleLength": "Use {min} to {max} characters.",
+  "@boardReportTitleLength": {
+    "description": "Validation of the post title.",
+    "placeholders": {
+      "min": {
+        "type": "int"
+      },
+      "max": {
+        "type": "int"
+      }
+    }
+  },
+  "boardReportBodyTooLong": "The description is too long: at most {max} characters.",
+  "@boardReportBodyTooLong": {
+    "placeholders": {
+      "max": {
+        "type": "int"
+      }
+    }
+  },
+  "boardReportSimilarTitle": "Similar posts",
+  "boardReportSimilarVotes": "{count, plural, =1{1 vote} other{{count} votes}}",
+  "@boardReportSimilarVotes": {
+    "description": "Semantics label of a similar post's score.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "boardReportVoteInstead": "Vote instead",
+  "boardReportVoted": "Voted",
+  "boardReportVotedFor": "Voted for #{number}",
+  "@boardReportVotedFor": {
+    "description": "Toast after \"Vote instead\" on an improvement.",
+    "placeholders": {
+      "number": {
+        "type": "int"
+      }
+    }
+  },
+  "boardReportHitThisToo": "Added “I hit this too” to #{number}",
+  "@boardReportHitThisToo": {
+    "description": "Toast after \"Vote instead\" on a bug.",
+    "placeholders": {
+      "number": {
+        "type": "int"
+      }
+    }
+  },
+  "boardReportVoteFailed": "Couldn’t vote: {message}",
+  "@boardReportVoteFailed": {
+    "placeholders": {
+      "message": {
+        "type": "String"
+      }
+    }
+  },
+  "boardReportScreenshot": "Screenshot",
+  "boardReportAddScreenshot": "Add screenshot",
+  "boardReportEditScreenshot": "Edit",
+  "boardReportRemoveScreenshot": "Remove",
+  "boardReportScreenshotPreview": "Screenshot preview",
+  "boardReportScreenshotWarning": "Screenshots are public. Cover names, emails and document content.",
+  "boardReportCaptureFailed": "Couldn’t capture the screen",
+  "boardReportDetails": "Details that will be included: {summary}",
+  "@boardReportDetails": {
+    "description": "Collapsed line listing the details a bug report includes.",
+    "placeholders": {
+      "summary": {
+        "type": "String"
+      }
+    }
+  },
+  "boardReportDetailApp": "App",
+  "boardReportDetailPlatform": "Platform",
+  "boardReportDetailTheme": "Theme",
+  "boardReportDetailLocale": "Language",
+  "boardReportDetailWindow": "Window size",
+  "boardReportDetailRoute": "Page",
+  "boardReportDetailError": "Error",
+  "boardReportThemeLight": "light theme",
+  "boardReportThemeDark": "dark theme",
+  "boardReportIncludeError": "Include the last error ({age})",
+  "@boardReportIncludeError": {
+    "description": "Checkbox; age is e.g. \"2 min ago\".",
+    "placeholders": {
+      "age": {
+        "type": "String"
+      }
+    }
+  },
+  "boardReportErrorAge": "{minutes, plural, =0{just now} =1{1 min ago} other{{minutes} min ago}}",
+  "@boardReportErrorAge": {
+    "placeholders": {
+      "minutes": {
+        "type": "int"
+      }
+    }
+  },
+  "boardReportErrorAgeHours": "{hours, plural, =1{1 h ago} other{{hours} h ago}}",
+  "@boardReportErrorAgeHours": {
+    "placeholders": {
+      "hours": {
+        "type": "int"
+      }
+    }
+  },
+  "boardReportAiNotice": "Posts are public and checked automatically by AI (Jev, Gemini).",
+  "boardReportPublicNotice": "Posts are public.",
+  "boardReportSecurityNotice": "Security issue? Don’t post it here: email {contact}",
+  "@boardReportSecurityNotice": {
+    "placeholders": {
+      "contact": {
+        "type": "String"
+      }
+    }
+  },
+  "boardReportPostBug": "Post bug",
+  "boardReportPostIdea": "Post improvement",
+  "boardReportPosted": "Posted",
+  "boardReportPostedChecking": "Posted. Checking it now…",
+  "boardReportPostedHeld": "Posted. Waiting for review: a moderator will look at it.",
+  "boardReportView": "View",
+  "boardReportRateLimited": "You’ve posted a lot recently. Please try again later.",
+  "boardReportBlocked": "You can’t post on Bugs & Improvements.",
+  "boardReportBlockedReason": "You can’t post on Bugs & Improvements: {reason}",
+  "@boardReportBlockedReason": {
+    "placeholders": {
+      "reason": {
+        "type": "String"
+      }
+    }
+  },
+  "boardReportPostFailed": "Couldn’t post: {message}",
+  "@boardReportPostFailed": {
+    "placeholders": {
+      "message": {
+        "type": "String"
+      }
+    }
+  },
+  "boardReportUploadFailed": "Couldn’t upload the screenshot: {message}",
+  "@boardReportUploadFailed": {
+    "placeholders": {
+      "message": {
+        "type": "String"
+      }
+    }
+  },
+  "boardReportDiscardTitle": "Discard draft?",
+  "boardReportDiscardBody": "Your report hasn’t been posted yet.",
+  "boardReportDiscard": "Discard",
+  "boardReportKeepDraft": "Keep draft",
+  "errorReportBug": "Report this bug",
+  "@errorReportBug": {
+    "description": "Error card button: opens the report dialog with the error attached."
+  },
+  "screenshotEditorTitle": "Edit screenshot",
+  "screenshotEditorWarning": "This screenshot will be public. Cover anything private: names, emails, document and spreadsheet content you don’t want to share.",
+  "screenshotToolsLabel": "Tool",
+  "screenshotColorsLabel": "Color",
+  "screenshotToolCover": "Cover",
+  "screenshotToolHighlight": "Highlight",
+  "screenshotToolArrow": "Arrow",
+  "screenshotToolPen": "Pen",
+  "screenshotColorRed": "Red",
+  "screenshotColorYellow": "Yellow",
+  "screenshotColorBlue": "Blue",
+  "screenshotUndo": "Undo",
+  "screenshotRedo": "Redo",
+  "screenshotDelete": "Delete selected",
+  "screenshotClear": "Clear",
+  "screenshotDone": "Done",
+  "screenshotShortcut": "{label} ({shortcut})",
+  "@screenshotShortcut": {
+    "description": "Tooltip of an editor tool with its key.",
+    "placeholders": {
+      "label": {
+        "type": "String"
+      },
+      "shortcut": {
+        "type": "String"
+      }
+    }
+  },
+  "screenshotCanvasLabel": "Screenshot. Drag to draw with the selected tool; click an annotation to select it.",
+  "screenshotEncodeFailed": "Couldn’t prepare the screenshot: {message}",
+  "@screenshotEncodeFailed": {
+    "placeholders": {
+      "message": {
+        "type": "String"
+      }
+    }
+  },
+  "boardTitle": "Bugs & Improvements",
+  "@boardTitle": {
+    "description": "Name of the board (specs/16), page title and command category."
+  },
+  "boardReportBug": "Report a bug",
+  "boardSuggestImprovement": "Suggest an improvement",
+  "boardSearch": "Search posts",
+  "boardSignIn": "Sign in",
+  "boardSignInToVote": "Sign in to vote and post.",
+  "@boardSignInToVote": {
+    "description": "Banner on the board for signed-out visitors."
+  },
+  "boardSignInToComment": "Sign in to comment",
+  "boardSignInToClaim": "Sign in to claim this task",
+  "boardBlocked": "You can't post on Bugs & Improvements.",
+  "boardContributeLink": "How to contribute",
+  "boardTabImprovements": "Improvements",
+  "boardTabBugs": "Bugs",
+  "boardTabTasks": "Up for grabs",
+  "@boardTabTasks": {
+    "description": "Board tab with the tasks contributors can claim."
+  },
+  "boardTabDone": "Done",
+  "boardTabReview": "Review",
+  "@boardTabReview": {
+    "description": "Admins' moderation tab of the board."
+  },
+  "boardKindBug": "Bug",
+  "boardKindIdea": "Improvement",
+  "boardAreaDrive": "Drive",
+  "boardAreaWrite": "Write",
+  "boardAreaSheets": "Sheets",
+  "boardAreaSlides": "Slides",
+  "boardAreaSuite": "Suite",
+  "@boardAreaSuite": {
+    "description": "Board area: sign-in, settings, menus shared by all apps."
+  },
+  "boardAreaServer": "Server",
+  "boardSizeSmall": "Small",
+  "boardSizeMedium": "Medium",
+  "boardSizeLarge": "Large",
+  "boardStatusOpen": "Open",
+  "boardStatusPlanned": "Planned",
+  "boardStatusDone": "Done",
+  "boardStatusShipped": "Shipped",
+  "boardStatusDeclined": "Declined",
+  "boardStatusDuplicate": "Duplicate",
+  "boardTaskDraft": "Draft",
+  "boardTaskPublished": "Published",
+  "boardTaskClaimed": "Claimed",
+  "boardTaskInReview": "In review",
+  "boardTaskCancelled": "Cancelled",
+  "boardModerationChecking": "Checking",
+  "boardModerationVisible": "Visible",
+  "boardModerationHeld": "Held",
+  "boardModerationRemoved": "Removed",
+  "boardReasonOffensive": "Offensive",
+  "boardReasonSpam": "Spam",
+  "boardReasonPersonalData": "Personal data",
+  "boardReasonSecurity": "Security issue",
+  "boardReasonOther": "Other",
+  "boardSortTrending": "Trending",
+  "boardSortTop": "Top",
+  "boardSortNew": "New",
+  "boardSortDiscussed": "Most discussed",
+  "boardSort": "Sort",
+  "boardFilterArea": "Area",
+  "boardFilterSize": "Size",
+  "boardFilterStatus": "Status",
+  "boardFilterMine": "Mine",
+  "@boardFilterMine": {
+    "description": "Board filter: posts I wrote or voted on."
+  },
+  "boardFilterAny": "Any",
+  "boardSelect": "Select",
+  "boardSelectDone": "Done selecting",
+  "boardSelected": "{count} selected",
+  "@boardSelected": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "boardCreateTaskFrom": "{count, plural, =1{Create task from 1 post…} other{Create task from {count} posts…}}",
+  "@boardCreateTaskFrom": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "boardCreateTaskHint": "The draft task gets an AI-written prompt that you review before publishing.",
+  "boardAddToTask": "Add to task",
+  "boardAddToTaskEllipsis": "Add to task…",
+  "boardNoOpenTasks": "There are no draft or published tasks.",
+  "boardLoadMore": "Load more",
+  "boardShowing": "{shown} of {total}",
+  "@boardShowing": {
+    "description": "Under the board list: how many posts are shown.",
+    "placeholders": {
+      "shown": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "boardLoadFailed": "Couldn't load Bugs & Improvements",
+  "boardEmptyIdeas": "No improvements here yet",
+  "boardEmptyBugs": "No bugs here",
+  "boardEmptyDone": "Nothing finished yet",
+  "boardEmptySearch": "No posts match your search",
+  "boardEmptyHint": "Change the filters, or be the first to post.",
+  "boardEmptyTasks": "No tasks up for grabs",
+  "boardEmptyTasksHint": "Admins publish tasks from the most wanted posts. Check back soon.",
+  "boardDoneTasks": "Finished tasks",
+  "boardUpvoteLabel": "Upvote, {score} votes",
+  "@boardUpvoteLabel": {
+    "description": "Semantics label of the up-vote button.",
+    "placeholders": {
+      "score": {
+        "type": "int"
+      }
+    }
+  },
+  "boardDownvoteLabel": "Downvote, {score} votes",
+  "@boardDownvoteLabel": {
+    "placeholders": {
+      "score": {
+        "type": "int"
+      }
+    }
+  },
+  "boardRemoveUpvote": "Remove upvote",
+  "boardRemoveDownvote": "Remove downvote",
+  "boardHitThisToo": "I hit this too",
+  "boardHitThisTooLabel": "I hit this too, {score} people",
+  "@boardHitThisTooLabel": {
+    "placeholders": {
+      "score": {
+        "type": "int"
+      }
+    }
+  },
+  "boardHitThisTooRemove": "Remove I hit this too, {score} people",
+  "@boardHitThisTooRemove": {
+    "placeholders": {
+      "score": {
+        "type": "int"
+      }
+    }
+  },
+  "boardAiMarker": "AI",
+  "@boardAiMarker": {
+    "description": "Marker on labels set by AI and not yet confirmed by an admin."
+  },
+  "boardAiLabel": "{label}, set by AI",
+  "@boardAiLabel": {
+    "placeholders": {
+      "label": {
+        "type": "String"
+      }
+    }
+  },
+  "boardPlannedIn": "Planned · T-{number}",
+  "@boardPlannedIn": {
+    "placeholders": {
+      "number": {
+        "type": "int"
+      }
+    }
+  },
+  "boardCommentCount": "{count, plural, =1{1 comment} other{{count} comments}}",
+  "@boardCommentCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "boardHasScreenshot": "Has a screenshot",
+  "boardDeletedUser": "Deleted user",
+  "boardAdmin": "Admin",
+  "boardEdited": "edited {time}",
+  "@boardEdited": {
+    "placeholders": {
+      "time": {
+        "type": "String"
+      }
+    }
+  },
+  "boardCopy": "Copy",
+  "boardCopied": "Copied",
+  "boardPromptCopied": "Prompt copied",
+  "boardFlagged": "Thanks. A moderator will take a look.",
+  "boardPostNotFound": "Post #{number} doesn't exist or isn't public",
+  "@boardPostNotFound": {
+    "placeholders": {
+      "number": {
+        "type": "int"
+      }
+    }
+  },
+  "boardTaskNotFound": "Task T-{number} doesn't exist",
+  "@boardTaskNotFound": {
+    "placeholders": {
+      "number": {
+        "type": "int"
+      }
+    }
+  },
+  "boardBackToBoard": "Back to Bugs & Improvements",
+  "boardAdminActions": "Admin",
+  "@boardAdminActions": {
+    "description": "Heading of the admin entries in the post's actions menu."
+  },
+  "boardEditAndApprove": "Edit and approve…",
+  "boardActionApprove": "Approve",
+  "boardActionHold": "Hold",
+  "boardActionLooksFine": "Looks fine",
+  "boardActionRestore": "Restore",
+  "boardActionRemove": "Remove",
+  "boardActionRemoveEllipsis": "Remove…",
+  "boardActionDecline": "Decline",
+  "boardActionMerge": "Merge",
+  "boardActionBlock": "Block",
+  "boardActionCreateTask": "Create task",
+  "boardActionAdd": "Add",
+  "boardActionLink": "Link",
+  "boardActionSavePublish": "Save and publish",
+  "boardSelectForBuilding": "Select for building",
+  "boardDeclineEllipsis": "Decline…",
+  "boardMergeEllipsis": "Merge into…",
+  "boardBlockEllipsis": "Block user from the board…",
+  "boardEditEllipsis": "Edit…",
+  "boardDismiss": "Dismiss",
+  "boardApply": "Apply",
+  "boardMergedFromNote": "#{number} was merged into this post.",
+  "@boardMergedFromNote": {
+    "placeholders": {
+      "number": {
+        "type": "int"
+      }
+    }
+  },
+  "boardPostDeleted": "This post was deleted.",
+  "boardChecking": "Checking your post…",
+  "boardWaitingForReview": "Waiting for review: a moderator will look at it.",
+  "boardHeldAdmin": "Held for review. {reason}",
+  "@boardHeldAdmin": {
+    "placeholders": {
+      "reason": {
+        "type": "String"
+      }
+    }
+  },
+  "boardRemovedByModerator": "Removed by a moderator. {reason}",
+  "@boardRemovedByModerator": {
+    "placeholders": {
+      "reason": {
+        "type": "String"
+      }
+    }
+  },
+  "boardDeclinedNote": "Declined: {reason}",
+  "@boardDeclinedNote": {
+    "placeholders": {
+      "reason": {
+        "type": "String"
+      }
+    }
+  },
+  "boardMergedInto": "Merged into #{number}.",
+  "@boardMergedInto": {
+    "placeholders": {
+      "number": {
+        "type": "int"
+      }
+    }
+  },
+  "boardOpenPost": "Open #{number}",
+  "@boardOpenPost": {
+    "placeholders": {
+      "number": {
+        "type": "int"
+      }
+    }
+  },
+  "boardMovedToIdeas": "Moved to Improvements",
+  "boardMovedToBugs": "Moved to Bugs",
+  "boardEditedByModerator": "Edited by a moderator",
+  "boardDetails": "Details",
+  "boardAdminPanel": "Moderation",
+  "boardTriage": "Triage: {state}",
+  "@boardTriage": {
+    "placeholders": {
+      "state": {
+        "type": "String"
+      }
+    }
+  },
+  "boardNeedsCheck": "Check",
+  "boardNeedsLabels": "Needs labels",
+  "boardSuggestedTitle": "Suggested title: {title}",
+  "@boardSuggestedTitle": {
+    "placeholders": {
+      "title": {
+        "type": "String"
+      }
+    }
+  },
+  "boardPossibleDuplicate": "Possible duplicate of #{number}",
+  "@boardPossibleDuplicate": {
+    "placeholders": {
+      "number": {
+        "type": "int"
+      }
+    }
+  },
+  "boardAiScores": "AI scores",
+  "boardFlags": "{count, plural, =1{1 flag} other{{count} flags}}: {reasons}",
+  "@boardFlags": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      },
+      "reasons": {
+        "type": "String"
+      }
+    }
+  },
+  "boardOpenScreenshot": "Open screenshot",
+  "boardScreenshotAlt": "Screenshot of post #{number}",
+  "@boardScreenshotAlt": {
+    "placeholders": {
+      "number": {
+        "type": "int"
+      }
+    }
+  },
+  "boardRelations": "Related",
+  "boardPartOfTask": "Part of task T-{number}: {title}",
+  "@boardPartOfTask": {
+    "placeholders": {
+      "number": {
+        "type": "int"
+      },
+      "title": {
+        "type": "String"
+      }
+    }
+  },
+  "boardMergedFrom": "Duplicates merged into this post:",
+  "boardSimilarPosts": "Similar posts",
+  "boardScore": "{score, plural, =1{1 vote} other{{score} votes}}",
+  "@boardScore": {
+    "placeholders": {
+      "score": {
+        "type": "int"
+      }
+    }
+  },
+  "boardCommentsTitle": "Comments ({count})",
+  "@boardCommentsTitle": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "boardCommentHint": "Add a comment",
+  "boardCommentHeld": "Hidden pending review",
+  "boardCommentRemoved": "Removed by a moderator",
+  "boardCommentOnPost": "Comment on #{number}",
+  "@boardCommentOnPost": {
+    "placeholders": {
+      "number": {
+        "type": "int"
+      }
+    }
+  },
+  "boardCommentOnTask": "Comment on T-{number}",
+  "@boardCommentOnTask": {
+    "placeholders": {
+      "number": {
+        "type": "int"
+      }
+    }
+  },
+  "boardEventClaimed": "claimed the task",
+  "boardEventReleased": "released the claim",
+  "boardEventExpired": "The claim expired",
+  "boardEventPrLinked": "linked a pull request: {url}",
+  "@boardEventPrLinked": {
+    "placeholders": {
+      "url": {
+        "type": "String"
+      }
+    }
+  },
+  "boardEventPrUnlinked": "unlinked the pull request",
+  "boardEventPublished": "published the task",
+  "boardEventDone": "marked the task done",
+  "boardEventShipped": "marked the task shipped",
+  "boardEventCancelled": "cancelled the task",
+  "boardEventMerged": "merged a duplicate",
+  "boardUpForGrabs": "Up for grabs",
+  "boardClaimedBy": "Claimed by {name} · {hours} h left",
+  "@boardClaimedBy": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      },
+      "hours": {
+        "type": "int"
+      }
+    }
+  },
+  "boardInReviewBy": "In review · {name}",
+  "@boardInReviewBy": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "boardPostCount": "{count, plural, =1{1 post} other{{count} posts}}",
+  "@boardPostCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "boardClaimTask": "Claim this task",
+  "boardReleaseClaim": "Release claim",
+  "boardYourClaimCode": "Your claim code",
+  "boardTimeLeft": "{hours} h left on your claim",
+  "@boardTimeLeft": {
+    "placeholders": {
+      "hours": {
+        "type": "int"
+      }
+    }
+  },
+  "boardClaimCodeHint": "Put it in the pull request description. Only you can see it.",
+  "boardClaimCodePlaceholder": "<your claim code>",
+  "boardDraftNotice": "Draft: only admins see this task. Review the prompt, then publish it.",
+  "boardTaskCancelledNotice": "This task was cancelled. Its posts are open again.",
+  "boardLinkedPosts": "Linked posts",
+  "boardNoLinkedPosts": "No posts are linked to this task.",
+  "boardRemoveFromTask": "Remove from task",
+  "boardAddPosts": "Add posts…",
+  "boardFieldPostNumbers": "Post numbers",
+  "boardHowToBuild": "How to build it",
+  "boardStepSetup": "1. Set up Wonky Work locally",
+  "boardFullGuide": "Read the full guide",
+  "boardStepPrompt": "2. Give your coding agent the prompt",
+  "boardStepPr": "3. Open a pull request",
+  "boardPrRules": "One task per pull request, against main. Put these two lines in its description:",
+  "boardPullRequest": "Pull request",
+  "boardPrNumber": "Pull request #{number}",
+  "@boardPrNumber": {
+    "placeholders": {
+      "number": {
+        "type": "int"
+      }
+    }
+  },
+  "boardPrBy": "by {login}",
+  "@boardPrBy": {
+    "placeholders": {
+      "login": {
+        "type": "String"
+      }
+    }
+  },
+  "boardLatestReview": "Latest review",
+  "boardActivityAndDiscussion": "Activity and discussion",
+  "boardContributeTitle": "How to contribute",
+  "boardContributeIntro": "Anyone can build a task that is up for grabs. Claim it, let a coding agent do the work with the task's prompt, and open a pull request.",
+  "boardContribStep1Title": "Get the tools",
+  "boardContribStep1": "Install Flutter (stable), Docker for the development database, and an AI coding agent that reads AGENTS.md, such as Claude Code.",
+  "boardContribStep2Title": "Install the Serverpod CLI",
+  "boardContribStep2": "It runs the server and the apps.",
+  "boardContribStep3Title": "Clone the repository",
+  "boardContribStep3": "Then start the development database.",
+  "boardContribStep4Title": "Create your passwords file",
+  "boardContribStep4": "The example has development defaults. AI keys are optional.",
+  "boardContribStep5Title": "Start the server",
+  "boardContribStep5": "Run it in wonky_server and start an app from its UI. Point your agent at the serverpod MCP server (.mcp.json is in the repository).",
+  "boardContribStep6Title": "Pick a task",
+  "boardContribStep6": "Claim a task under Up for grabs, paste its prompt into your agent and review the result.",
+  "boardContribStep7Title": "Open a pull request",
+  "boardContribStep7": "One task per pull request. The description contains the Wonky-Task and Wonky-Claim lines from the task page. Pull requests without a valid task are closed after 7 days.",
+  "boardContribLicense": "Contributions are accepted under the repository's BSD-3-Clause license. No CLA.",
+  "boardContribSecurity": "Found a security issue? Email {email}. Never post it on the board or in a pull request.",
+  "@boardContribSecurity": {
+    "placeholders": {
+      "email": {
+        "type": "String"
+      }
+    }
+  },
+  "boardContributeGuide": "Full guide on GitHub",
+  "boardFieldTitle": "Title",
+  "boardTitleLength": "Use 8 to 120 characters.",
+  "boardModeratorEditHint": "The post shows Edited by a moderator.",
+  "boardFieldReason": "Reason",
+  "boardFieldNote": "Note (optional)",
+  "boardFieldNoteForAuthor": "Message to the author (optional)",
+  "boardFlagHint": "Flagged posts are hidden for review after 3 people flag them.",
+  "boardFlagAction": "Flag",
+  "boardRemoveTitle": "Remove",
+  "boardDeclineOutOfScope": "Out of scope",
+  "boardDeclineAsIntended": "Works as intended",
+  "boardDeclineWontFix": "Won't fix",
+  "boardBlockHint": "{name} can still read the board but can't post, vote or comment.",
+  "@boardBlockHint": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "boardMergeHint": "Votes on #{number} move to the post that remains.",
+  "@boardMergeHint": {
+    "placeholders": {
+      "number": {
+        "type": "int"
+      }
+    }
+  },
+  "boardFieldTargetPost": "Post that remains",
+  "boardInvalidPostNumber": "Enter a post number",
+  "boardMergeSelf": "A post can't be merged into itself",
+  "boardFieldKind": "Kind",
+  "boardFieldArea": "Area",
+  "boardFieldSize": "Size",
+  "boardNoLabel": "Not set",
+  "boardFieldTask": "Task",
+  "boardLinkPrHint": "A pull request of the repository. Leave it empty to unlink.",
+  "boardFieldPrUrl": "Pull request URL",
+  "boardInvalidPrUrl": "Use a github.com pull request URL",
+  "boardRemoveScreenshotHint": "The screenshot is deleted for good.",
+  "boardPromptEditorTitle": "Prompt of T-{number}",
+  "@boardPromptEditorTitle": {
+    "placeholders": {
+      "number": {
+        "type": "int"
+      }
+    }
+  },
+  "boardPromptEditorHint": "Contributors run this prompt in coding agents. Read it all before publishing.",
+  "boardPromptDiffTitle": "Changes from Regenerate",
+  "boardLintTitle": "{count, plural, =1{1 unusual instruction} other{{count} unusual instructions}}: check before publishing",
+  "@boardLintTitle": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "boardLintCommand": "Line {line}: command {text}",
+  "@boardLintCommand": {
+    "placeholders": {
+      "line": {
+        "type": "int"
+      },
+      "text": {
+        "type": "String"
+      }
+    }
+  },
+  "boardLintUrl": "Line {line}: link outside the repository {text}",
+  "@boardLintUrl": {
+    "placeholders": {
+      "line": {
+        "type": "int"
+      },
+      "text": {
+        "type": "String"
+      }
+    }
+  },
+  "boardLintWording": "Line {line}: “{text}”",
+  "@boardLintWording": {
+    "placeholders": {
+      "line": {
+        "type": "int"
+      },
+      "text": {
+        "type": "String"
+      }
+    }
+  },
+  "boardReviewHeld": "Held",
+  "boardReviewCheck": "Check",
+  "boardReviewUnchecked": "Unchecked",
+  "boardReviewDuplicates": "Possible duplicates",
+  "boardReviewBundles": "Suggested bundles",
+  "boardReviewDrafts": "Draft tasks",
+  "boardReviewEmpty": "Nothing to review.",
+  "cmdBoardVote": "Vote",
+  "cmdBoardEditPost": "Edit post",
+  "cmdBoardDeletePost": "Delete post",
+  "cmdBoardRemoveScreenshot": "Remove screenshot",
+  "cmdBoardComment": "Comment",
+  "cmdBoardEditComment": "Edit comment",
+  "cmdBoardDeleteComment": "Delete comment",
+  "cmdBoardFlag": "Flag…",
+  "cmdBoardClaim": "Claim task",
+  "cmdBoardRelease": "Release",
+  "cmdBoardCopyPrompt": "Copy prompt",
+  "cmdBoardCopyClaimCode": "Copy claim code",
+  "cmdBoardModerate": "Moderate",
+  "cmdBoardSetLabels": "Set kind, area and size…",
+  "cmdBoardAdminEdit": "Edit as moderator…",
+  "cmdBoardApplyTitle": "Apply suggested title",
+  "cmdBoardNotDuplicate": "Not a duplicate",
+  "cmdBoardMerge": "Merge into…",
+  "cmdBoardUnmerge": "Unmerge",
+  "cmdBoardDecline": "Decline",
+  "cmdBoardReopen": "Reopen",
+  "cmdBoardBlock": "Block user from the board",
+  "cmdBoardCreateTask": "Create task",
+  "cmdBoardEditTask": "Edit task",
+  "cmdBoardSetTaskPosts": "Change the task's posts",
+  "cmdBoardRegeneratePrompt": "Regenerate prompt",
+  "cmdBoardEditPrompt": "Edit prompt",
+  "cmdBoardPublishTask": "Publish task",
+  "cmdBoardLinkPr": "Link pull request…",
+  "cmdBoardMarkDone": "Mark done",
+  "cmdBoardMarkShipped": "Mark shipped",
+  "cmdBoardCancelTask": "Cancel task",
+  "cmdBoardSuggestBundles": "Suggest bundles",
+  "cmdBoardDismissSuggestion": "Dismiss suggestion",
+  "notifyBoard": "Bugs & Improvements",
+  "@notifyBoard": {
+    "description": "Notification settings: replies, status changes and claims on the board."
+  },
+  "notifyBoardHint": "Replies to your posts, status changes and your task claims",
+  "boardEventPrClosed": "Pull request closed without merge: {url}. The task is open again.",
+  "@boardEventPrClosed": {
+    "placeholders": {
+      "url": {
+        "type": "String"
+      }
+    }
+  },
+  "boardEventPrMerged": "Pull request merged: {url}",
+  "@boardEventPrMerged": {
+    "placeholders": {
+      "url": {
+        "type": "String"
+      }
+    }
+  },
+  "boardEventPrOpened": "Pull request opened: {url}",
+  "@boardEventPrOpened": {
+    "placeholders": {
+      "url": {
+        "type": "String"
+      }
+    }
+  },
+  "boardEventDeployed": "Shipped in deploy {sha}",
+  "@boardEventDeployed": {
+    "placeholders": {
+      "sha": {
+        "type": "String"
+      }
+    }
+  },
+  "boardVerdictMet": "Met",
+  "boardVerdictPartly": "Partly",
+  "boardVerdictNotMet": "Not met",
+  "boardVerdictCantTell": "Can't tell",
+  "boardVerdictAdded": "Added",
+  "boardVerdictUpdated": "Updated",
+  "boardVerdictMissing": "Missing",
+  "boardVerdictNotNeeded": "Not needed",
+  "boardReviewTests": "Tests",
+  "boardReviewSpecs": "Specs",
+  "boardReviewRisks": "Risks",
+  "boardReviewUnrelated": "Changes the task didn't ask for",
+  "boardReviewedSha": "Reviewed at {sha}",
+  "@boardReviewedSha": {
+    "placeholders": {
+      "sha": {
+        "type": "String"
+      }
+    }
+  }
 }

@@ -38,6 +38,7 @@ void main() {
       'shares',
       'accessRequests',
       'suggestions',
+      'board',
       'digest',
     ]) {
       expect(

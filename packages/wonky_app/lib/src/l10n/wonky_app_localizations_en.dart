@@ -986,31 +986,6 @@ class WonkyAppLocalizationsEn extends WonkyAppLocalizations {
   String get externalLinkTitle => 'Open external link?';
 
   @override
-  String get feedbackDescription =>
-      'Tell us what happened or what you\'d like to see.';
-
-  @override
-  String get feedbackFailed => 'Your report could not be sent';
-
-  @override
-  String get feedbackKind => 'Type';
-
-  @override
-  String get feedbackKindIdea => 'Idea';
-
-  @override
-  String get feedbackKindProblem => 'Problem';
-
-  @override
-  String get feedbackMessage => 'Message';
-
-  @override
-  String get feedbackThanks => 'Thanks for the feedback!';
-
-  @override
-  String get feedbackTitle => 'Report a problem';
-
-  @override
   String get fileCategoryArchives => 'Archives';
 
   @override
@@ -3067,6 +3042,1373 @@ class WonkyAppLocalizationsEn extends WonkyAppLocalizations {
 
   @override
   String get lightboxFit => 'Fit to screen';
+
+  @override
+  String get cmdBoardReport => 'Bugs & Improvements…';
+
+  @override
+  String get cmdBoardOpen => 'Browse Bugs & Improvements';
+
+  @override
+  String get boardReportName => 'Bugs & Improvements';
+
+  @override
+  String get boardReportSeeAll => 'See all posts';
+
+  @override
+  String get boardReportKindLabel => 'Kind';
+
+  @override
+  String get boardReportKindBug => 'Report a bug';
+
+  @override
+  String get boardReportKindIdea => 'Suggest an improvement';
+
+  @override
+  String get boardReportFieldTitle => 'Title';
+
+  @override
+  String get boardReportTitleHintBug => 'Describe the problem in a few words';
+
+  @override
+  String get boardReportTitleHintIdea => 'Describe your idea in a few words';
+
+  @override
+  String get boardReportFieldHappened => 'What happened?';
+
+  @override
+  String get boardReportFieldExpected => 'What did you expect?';
+
+  @override
+  String get boardReportFieldSteps => 'Steps to reproduce';
+
+  @override
+  String get boardReportFieldIdea => 'What would you like?';
+
+  @override
+  String get boardReportFieldWhy => 'Why would it help?';
+
+  @override
+  String get boardReportOptional => '(optional)';
+
+  @override
+  String boardReportTitleLength(int min, int max) {
+    return 'Use $min to $max characters.';
+  }
+
+  @override
+  String boardReportBodyTooLong(int max) {
+    return 'The description is too long: at most $max characters.';
+  }
+
+  @override
+  String get boardReportSimilarTitle => 'Similar posts';
+
+  @override
+  String boardReportSimilarVotes(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count votes',
+      one: '1 vote',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get boardReportVoteInstead => 'Vote instead';
+
+  @override
+  String get boardReportVoted => 'Voted';
+
+  @override
+  String boardReportVotedFor(int number) {
+    return 'Voted for #$number';
+  }
+
+  @override
+  String boardReportHitThisToo(int number) {
+    return 'Added “I hit this too” to #$number';
+  }
+
+  @override
+  String boardReportVoteFailed(String message) {
+    return 'Couldn’t vote: $message';
+  }
+
+  @override
+  String get boardReportScreenshot => 'Screenshot';
+
+  @override
+  String get boardReportAddScreenshot => 'Add screenshot';
+
+  @override
+  String get boardReportEditScreenshot => 'Edit';
+
+  @override
+  String get boardReportRemoveScreenshot => 'Remove';
+
+  @override
+  String get boardReportScreenshotPreview => 'Screenshot preview';
+
+  @override
+  String get boardReportScreenshotWarning =>
+      'Screenshots are public. Cover names, emails and document content.';
+
+  @override
+  String get boardReportCaptureFailed => 'Couldn’t capture the screen';
+
+  @override
+  String boardReportDetails(String summary) {
+    return 'Details that will be included: $summary';
+  }
+
+  @override
+  String get boardReportDetailApp => 'App';
+
+  @override
+  String get boardReportDetailPlatform => 'Platform';
+
+  @override
+  String get boardReportDetailTheme => 'Theme';
+
+  @override
+  String get boardReportDetailLocale => 'Language';
+
+  @override
+  String get boardReportDetailWindow => 'Window size';
+
+  @override
+  String get boardReportDetailRoute => 'Page';
+
+  @override
+  String get boardReportDetailError => 'Error';
+
+  @override
+  String get boardReportThemeLight => 'light theme';
+
+  @override
+  String get boardReportThemeDark => 'dark theme';
+
+  @override
+  String boardReportIncludeError(String age) {
+    return 'Include the last error ($age)';
+  }
+
+  @override
+  String boardReportErrorAge(int minutes) {
+    String _temp0 = intl.Intl.pluralLogic(
+      minutes,
+      locale: localeName,
+      other: '$minutes min ago',
+      one: '1 min ago',
+      zero: 'just now',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String boardReportErrorAgeHours(int hours) {
+    String _temp0 = intl.Intl.pluralLogic(
+      hours,
+      locale: localeName,
+      other: '$hours h ago',
+      one: '1 h ago',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get boardReportAiNotice =>
+      'Posts are public and checked automatically by AI (Jev, Gemini).';
+
+  @override
+  String get boardReportPublicNotice => 'Posts are public.';
+
+  @override
+  String boardReportSecurityNotice(String contact) {
+    return 'Security issue? Don’t post it here: email $contact';
+  }
+
+  @override
+  String get boardReportPostBug => 'Post bug';
+
+  @override
+  String get boardReportPostIdea => 'Post improvement';
+
+  @override
+  String get boardReportPosted => 'Posted';
+
+  @override
+  String get boardReportPostedChecking => 'Posted. Checking it now…';
+
+  @override
+  String get boardReportPostedHeld =>
+      'Posted. Waiting for review: a moderator will look at it.';
+
+  @override
+  String get boardReportView => 'View';
+
+  @override
+  String get boardReportRateLimited =>
+      'You’ve posted a lot recently. Please try again later.';
+
+  @override
+  String get boardReportBlocked => 'You can’t post on Bugs & Improvements.';
+
+  @override
+  String boardReportBlockedReason(String reason) {
+    return 'You can’t post on Bugs & Improvements: $reason';
+  }
+
+  @override
+  String boardReportPostFailed(String message) {
+    return 'Couldn’t post: $message';
+  }
+
+  @override
+  String boardReportUploadFailed(String message) {
+    return 'Couldn’t upload the screenshot: $message';
+  }
+
+  @override
+  String get boardReportDiscardTitle => 'Discard draft?';
+
+  @override
+  String get boardReportDiscardBody => 'Your report hasn’t been posted yet.';
+
+  @override
+  String get boardReportDiscard => 'Discard';
+
+  @override
+  String get boardReportKeepDraft => 'Keep draft';
+
+  @override
+  String get errorReportBug => 'Report this bug';
+
+  @override
+  String get screenshotEditorTitle => 'Edit screenshot';
+
+  @override
+  String get screenshotEditorWarning =>
+      'This screenshot will be public. Cover anything private: names, emails, document and spreadsheet content you don’t want to share.';
+
+  @override
+  String get screenshotToolsLabel => 'Tool';
+
+  @override
+  String get screenshotColorsLabel => 'Color';
+
+  @override
+  String get screenshotToolCover => 'Cover';
+
+  @override
+  String get screenshotToolHighlight => 'Highlight';
+
+  @override
+  String get screenshotToolArrow => 'Arrow';
+
+  @override
+  String get screenshotToolPen => 'Pen';
+
+  @override
+  String get screenshotColorRed => 'Red';
+
+  @override
+  String get screenshotColorYellow => 'Yellow';
+
+  @override
+  String get screenshotColorBlue => 'Blue';
+
+  @override
+  String get screenshotUndo => 'Undo';
+
+  @override
+  String get screenshotRedo => 'Redo';
+
+  @override
+  String get screenshotDelete => 'Delete selected';
+
+  @override
+  String get screenshotClear => 'Clear';
+
+  @override
+  String get screenshotDone => 'Done';
+
+  @override
+  String screenshotShortcut(String label, String shortcut) {
+    return '$label ($shortcut)';
+  }
+
+  @override
+  String get screenshotCanvasLabel =>
+      'Screenshot. Drag to draw with the selected tool; click an annotation to select it.';
+
+  @override
+  String screenshotEncodeFailed(String message) {
+    return 'Couldn’t prepare the screenshot: $message';
+  }
+
+  @override
+  String get boardTitle => 'Bugs & Improvements';
+
+  @override
+  String get boardReportBug => 'Report a bug';
+
+  @override
+  String get boardSuggestImprovement => 'Suggest an improvement';
+
+  @override
+  String get boardSearch => 'Search posts';
+
+  @override
+  String get boardSignIn => 'Sign in';
+
+  @override
+  String get boardSignInToVote => 'Sign in to vote and post.';
+
+  @override
+  String get boardSignInToComment => 'Sign in to comment';
+
+  @override
+  String get boardSignInToClaim => 'Sign in to claim this task';
+
+  @override
+  String get boardBlocked => 'You can\'t post on Bugs & Improvements.';
+
+  @override
+  String get boardContributeLink => 'How to contribute';
+
+  @override
+  String get boardTabImprovements => 'Improvements';
+
+  @override
+  String get boardTabBugs => 'Bugs';
+
+  @override
+  String get boardTabTasks => 'Up for grabs';
+
+  @override
+  String get boardTabDone => 'Done';
+
+  @override
+  String get boardTabReview => 'Review';
+
+  @override
+  String get boardKindBug => 'Bug';
+
+  @override
+  String get boardKindIdea => 'Improvement';
+
+  @override
+  String get boardAreaDrive => 'Drive';
+
+  @override
+  String get boardAreaWrite => 'Write';
+
+  @override
+  String get boardAreaSheets => 'Sheets';
+
+  @override
+  String get boardAreaSlides => 'Slides';
+
+  @override
+  String get boardAreaSuite => 'Suite';
+
+  @override
+  String get boardAreaServer => 'Server';
+
+  @override
+  String get boardSizeSmall => 'Small';
+
+  @override
+  String get boardSizeMedium => 'Medium';
+
+  @override
+  String get boardSizeLarge => 'Large';
+
+  @override
+  String get boardStatusOpen => 'Open';
+
+  @override
+  String get boardStatusPlanned => 'Planned';
+
+  @override
+  String get boardStatusDone => 'Done';
+
+  @override
+  String get boardStatusShipped => 'Shipped';
+
+  @override
+  String get boardStatusDeclined => 'Declined';
+
+  @override
+  String get boardStatusDuplicate => 'Duplicate';
+
+  @override
+  String get boardTaskDraft => 'Draft';
+
+  @override
+  String get boardTaskPublished => 'Published';
+
+  @override
+  String get boardTaskClaimed => 'Claimed';
+
+  @override
+  String get boardTaskInReview => 'In review';
+
+  @override
+  String get boardTaskCancelled => 'Cancelled';
+
+  @override
+  String get boardModerationChecking => 'Checking';
+
+  @override
+  String get boardModerationVisible => 'Visible';
+
+  @override
+  String get boardModerationHeld => 'Held';
+
+  @override
+  String get boardModerationRemoved => 'Removed';
+
+  @override
+  String get boardReasonOffensive => 'Offensive';
+
+  @override
+  String get boardReasonSpam => 'Spam';
+
+  @override
+  String get boardReasonPersonalData => 'Personal data';
+
+  @override
+  String get boardReasonSecurity => 'Security issue';
+
+  @override
+  String get boardReasonOther => 'Other';
+
+  @override
+  String get boardSortTrending => 'Trending';
+
+  @override
+  String get boardSortTop => 'Top';
+
+  @override
+  String get boardSortNew => 'New';
+
+  @override
+  String get boardSortDiscussed => 'Most discussed';
+
+  @override
+  String get boardSort => 'Sort';
+
+  @override
+  String get boardFilterArea => 'Area';
+
+  @override
+  String get boardFilterSize => 'Size';
+
+  @override
+  String get boardFilterStatus => 'Status';
+
+  @override
+  String get boardFilterMine => 'Mine';
+
+  @override
+  String get boardFilterAny => 'Any';
+
+  @override
+  String get boardSelect => 'Select';
+
+  @override
+  String get boardSelectDone => 'Done selecting';
+
+  @override
+  String boardSelected(int count) {
+    return '$count selected';
+  }
+
+  @override
+  String boardCreateTaskFrom(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Create task from $count posts…',
+      one: 'Create task from 1 post…',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get boardCreateTaskHint =>
+      'The draft task gets an AI-written prompt that you review before publishing.';
+
+  @override
+  String get boardAddToTask => 'Add to task';
+
+  @override
+  String get boardAddToTaskEllipsis => 'Add to task…';
+
+  @override
+  String get boardNoOpenTasks => 'There are no draft or published tasks.';
+
+  @override
+  String get boardLoadMore => 'Load more';
+
+  @override
+  String boardShowing(int shown, int total) {
+    return '$shown of $total';
+  }
+
+  @override
+  String get boardLoadFailed => 'Couldn\'t load Bugs & Improvements';
+
+  @override
+  String get boardEmptyIdeas => 'No improvements here yet';
+
+  @override
+  String get boardEmptyBugs => 'No bugs here';
+
+  @override
+  String get boardEmptyDone => 'Nothing finished yet';
+
+  @override
+  String get boardEmptySearch => 'No posts match your search';
+
+  @override
+  String get boardEmptyHint => 'Change the filters, or be the first to post.';
+
+  @override
+  String get boardEmptyTasks => 'No tasks up for grabs';
+
+  @override
+  String get boardEmptyTasksHint =>
+      'Admins publish tasks from the most wanted posts. Check back soon.';
+
+  @override
+  String get boardDoneTasks => 'Finished tasks';
+
+  @override
+  String boardUpvoteLabel(int score) {
+    return 'Upvote, $score votes';
+  }
+
+  @override
+  String boardDownvoteLabel(int score) {
+    return 'Downvote, $score votes';
+  }
+
+  @override
+  String get boardRemoveUpvote => 'Remove upvote';
+
+  @override
+  String get boardRemoveDownvote => 'Remove downvote';
+
+  @override
+  String get boardHitThisToo => 'I hit this too';
+
+  @override
+  String boardHitThisTooLabel(int score) {
+    return 'I hit this too, $score people';
+  }
+
+  @override
+  String boardHitThisTooRemove(int score) {
+    return 'Remove I hit this too, $score people';
+  }
+
+  @override
+  String get boardAiMarker => 'AI';
+
+  @override
+  String boardAiLabel(String label) {
+    return '$label, set by AI';
+  }
+
+  @override
+  String boardPlannedIn(int number) {
+    return 'Planned · T-$number';
+  }
+
+  @override
+  String boardCommentCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count comments',
+      one: '1 comment',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get boardHasScreenshot => 'Has a screenshot';
+
+  @override
+  String get boardDeletedUser => 'Deleted user';
+
+  @override
+  String get boardAdmin => 'Admin';
+
+  @override
+  String boardEdited(String time) {
+    return 'edited $time';
+  }
+
+  @override
+  String get boardCopy => 'Copy';
+
+  @override
+  String get boardCopied => 'Copied';
+
+  @override
+  String get boardPromptCopied => 'Prompt copied';
+
+  @override
+  String get boardFlagged => 'Thanks. A moderator will take a look.';
+
+  @override
+  String boardPostNotFound(int number) {
+    return 'Post #$number doesn\'t exist or isn\'t public';
+  }
+
+  @override
+  String boardTaskNotFound(int number) {
+    return 'Task T-$number doesn\'t exist';
+  }
+
+  @override
+  String get boardBackToBoard => 'Back to Bugs & Improvements';
+
+  @override
+  String get boardAdminActions => 'Admin';
+
+  @override
+  String get boardEditAndApprove => 'Edit and approve…';
+
+  @override
+  String get boardActionApprove => 'Approve';
+
+  @override
+  String get boardActionHold => 'Hold';
+
+  @override
+  String get boardActionLooksFine => 'Looks fine';
+
+  @override
+  String get boardActionRestore => 'Restore';
+
+  @override
+  String get boardActionRemove => 'Remove';
+
+  @override
+  String get boardActionRemoveEllipsis => 'Remove…';
+
+  @override
+  String get boardActionDecline => 'Decline';
+
+  @override
+  String get boardActionMerge => 'Merge';
+
+  @override
+  String get boardActionBlock => 'Block';
+
+  @override
+  String get boardActionCreateTask => 'Create task';
+
+  @override
+  String get boardActionAdd => 'Add';
+
+  @override
+  String get boardActionLink => 'Link';
+
+  @override
+  String get boardActionSavePublish => 'Save and publish';
+
+  @override
+  String get boardSelectForBuilding => 'Select for building';
+
+  @override
+  String get boardDeclineEllipsis => 'Decline…';
+
+  @override
+  String get boardMergeEllipsis => 'Merge into…';
+
+  @override
+  String get boardBlockEllipsis => 'Block user from the board…';
+
+  @override
+  String get boardEditEllipsis => 'Edit…';
+
+  @override
+  String get boardDismiss => 'Dismiss';
+
+  @override
+  String get boardApply => 'Apply';
+
+  @override
+  String boardMergedFromNote(int number) {
+    return '#$number was merged into this post.';
+  }
+
+  @override
+  String get boardPostDeleted => 'This post was deleted.';
+
+  @override
+  String get boardChecking => 'Checking your post…';
+
+  @override
+  String get boardWaitingForReview =>
+      'Waiting for review: a moderator will look at it.';
+
+  @override
+  String boardHeldAdmin(String reason) {
+    return 'Held for review. $reason';
+  }
+
+  @override
+  String boardRemovedByModerator(String reason) {
+    return 'Removed by a moderator. $reason';
+  }
+
+  @override
+  String boardDeclinedNote(String reason) {
+    return 'Declined: $reason';
+  }
+
+  @override
+  String boardMergedInto(int number) {
+    return 'Merged into #$number.';
+  }
+
+  @override
+  String boardOpenPost(int number) {
+    return 'Open #$number';
+  }
+
+  @override
+  String get boardMovedToIdeas => 'Moved to Improvements';
+
+  @override
+  String get boardMovedToBugs => 'Moved to Bugs';
+
+  @override
+  String get boardEditedByModerator => 'Edited by a moderator';
+
+  @override
+  String get boardDetails => 'Details';
+
+  @override
+  String get boardAdminPanel => 'Moderation';
+
+  @override
+  String boardTriage(String state) {
+    return 'Triage: $state';
+  }
+
+  @override
+  String get boardNeedsCheck => 'Check';
+
+  @override
+  String get boardNeedsLabels => 'Needs labels';
+
+  @override
+  String boardSuggestedTitle(String title) {
+    return 'Suggested title: $title';
+  }
+
+  @override
+  String boardPossibleDuplicate(int number) {
+    return 'Possible duplicate of #$number';
+  }
+
+  @override
+  String get boardAiScores => 'AI scores';
+
+  @override
+  String boardFlags(int count, String reasons) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count flags',
+      one: '1 flag',
+    );
+    return '$_temp0: $reasons';
+  }
+
+  @override
+  String get boardOpenScreenshot => 'Open screenshot';
+
+  @override
+  String boardScreenshotAlt(int number) {
+    return 'Screenshot of post #$number';
+  }
+
+  @override
+  String get boardRelations => 'Related';
+
+  @override
+  String boardPartOfTask(int number, String title) {
+    return 'Part of task T-$number: $title';
+  }
+
+  @override
+  String get boardMergedFrom => 'Duplicates merged into this post:';
+
+  @override
+  String get boardSimilarPosts => 'Similar posts';
+
+  @override
+  String boardScore(int score) {
+    String _temp0 = intl.Intl.pluralLogic(
+      score,
+      locale: localeName,
+      other: '$score votes',
+      one: '1 vote',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String boardCommentsTitle(int count) {
+    return 'Comments ($count)';
+  }
+
+  @override
+  String get boardCommentHint => 'Add a comment';
+
+  @override
+  String get boardCommentHeld => 'Hidden pending review';
+
+  @override
+  String get boardCommentRemoved => 'Removed by a moderator';
+
+  @override
+  String boardCommentOnPost(int number) {
+    return 'Comment on #$number';
+  }
+
+  @override
+  String boardCommentOnTask(int number) {
+    return 'Comment on T-$number';
+  }
+
+  @override
+  String get boardEventClaimed => 'claimed the task';
+
+  @override
+  String get boardEventReleased => 'released the claim';
+
+  @override
+  String get boardEventExpired => 'The claim expired';
+
+  @override
+  String boardEventPrLinked(String url) {
+    return 'linked a pull request: $url';
+  }
+
+  @override
+  String get boardEventPrUnlinked => 'unlinked the pull request';
+
+  @override
+  String get boardEventPublished => 'published the task';
+
+  @override
+  String get boardEventDone => 'marked the task done';
+
+  @override
+  String get boardEventShipped => 'marked the task shipped';
+
+  @override
+  String get boardEventCancelled => 'cancelled the task';
+
+  @override
+  String get boardEventMerged => 'merged a duplicate';
+
+  @override
+  String get boardUpForGrabs => 'Up for grabs';
+
+  @override
+  String boardClaimedBy(String name, int hours) {
+    return 'Claimed by $name · $hours h left';
+  }
+
+  @override
+  String boardInReviewBy(String name) {
+    return 'In review · $name';
+  }
+
+  @override
+  String boardPostCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count posts',
+      one: '1 post',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get boardClaimTask => 'Claim this task';
+
+  @override
+  String get boardReleaseClaim => 'Release claim';
+
+  @override
+  String get boardYourClaimCode => 'Your claim code';
+
+  @override
+  String boardTimeLeft(int hours) {
+    return '$hours h left on your claim';
+  }
+
+  @override
+  String get boardClaimCodeHint =>
+      'Put it in the pull request description. Only you can see it.';
+
+  @override
+  String get boardClaimCodePlaceholder => '<your claim code>';
+
+  @override
+  String get boardDraftNotice =>
+      'Draft: only admins see this task. Review the prompt, then publish it.';
+
+  @override
+  String get boardTaskCancelledNotice =>
+      'This task was cancelled. Its posts are open again.';
+
+  @override
+  String get boardLinkedPosts => 'Linked posts';
+
+  @override
+  String get boardNoLinkedPosts => 'No posts are linked to this task.';
+
+  @override
+  String get boardRemoveFromTask => 'Remove from task';
+
+  @override
+  String get boardAddPosts => 'Add posts…';
+
+  @override
+  String get boardFieldPostNumbers => 'Post numbers';
+
+  @override
+  String get boardHowToBuild => 'How to build it';
+
+  @override
+  String get boardStepSetup => '1. Set up Wonky Work locally';
+
+  @override
+  String get boardFullGuide => 'Read the full guide';
+
+  @override
+  String get boardStepPrompt => '2. Give your coding agent the prompt';
+
+  @override
+  String get boardStepPr => '3. Open a pull request';
+
+  @override
+  String get boardPrRules =>
+      'One task per pull request, against main. Put these two lines in its description:';
+
+  @override
+  String get boardPullRequest => 'Pull request';
+
+  @override
+  String boardPrNumber(int number) {
+    return 'Pull request #$number';
+  }
+
+  @override
+  String boardPrBy(String login) {
+    return 'by $login';
+  }
+
+  @override
+  String get boardLatestReview => 'Latest review';
+
+  @override
+  String get boardActivityAndDiscussion => 'Activity and discussion';
+
+  @override
+  String get boardContributeTitle => 'How to contribute';
+
+  @override
+  String get boardContributeIntro =>
+      'Anyone can build a task that is up for grabs. Claim it, let a coding agent do the work with the task\'s prompt, and open a pull request.';
+
+  @override
+  String get boardContribStep1Title => 'Get the tools';
+
+  @override
+  String get boardContribStep1 =>
+      'Install Flutter (stable), Docker for the development database, and an AI coding agent that reads AGENTS.md, such as Claude Code.';
+
+  @override
+  String get boardContribStep2Title => 'Install the Serverpod CLI';
+
+  @override
+  String get boardContribStep2 => 'It runs the server and the apps.';
+
+  @override
+  String get boardContribStep3Title => 'Clone the repository';
+
+  @override
+  String get boardContribStep3 => 'Then start the development database.';
+
+  @override
+  String get boardContribStep4Title => 'Create your passwords file';
+
+  @override
+  String get boardContribStep4 =>
+      'The example has development defaults. AI keys are optional.';
+
+  @override
+  String get boardContribStep5Title => 'Start the server';
+
+  @override
+  String get boardContribStep5 =>
+      'Run it in wonky_server and start an app from its UI. Point your agent at the serverpod MCP server (.mcp.json is in the repository).';
+
+  @override
+  String get boardContribStep6Title => 'Pick a task';
+
+  @override
+  String get boardContribStep6 =>
+      'Claim a task under Up for grabs, paste its prompt into your agent and review the result.';
+
+  @override
+  String get boardContribStep7Title => 'Open a pull request';
+
+  @override
+  String get boardContribStep7 =>
+      'One task per pull request. The description contains the Wonky-Task and Wonky-Claim lines from the task page. Pull requests without a valid task are closed after 7 days.';
+
+  @override
+  String get boardContribLicense =>
+      'Contributions are accepted under the repository\'s BSD-3-Clause license. No CLA.';
+
+  @override
+  String boardContribSecurity(String email) {
+    return 'Found a security issue? Email $email. Never post it on the board or in a pull request.';
+  }
+
+  @override
+  String get boardContributeGuide => 'Full guide on GitHub';
+
+  @override
+  String get boardFieldTitle => 'Title';
+
+  @override
+  String get boardTitleLength => 'Use 8 to 120 characters.';
+
+  @override
+  String get boardModeratorEditHint => 'The post shows Edited by a moderator.';
+
+  @override
+  String get boardFieldReason => 'Reason';
+
+  @override
+  String get boardFieldNote => 'Note (optional)';
+
+  @override
+  String get boardFieldNoteForAuthor => 'Message to the author (optional)';
+
+  @override
+  String get boardFlagHint =>
+      'Flagged posts are hidden for review after 3 people flag them.';
+
+  @override
+  String get boardFlagAction => 'Flag';
+
+  @override
+  String get boardRemoveTitle => 'Remove';
+
+  @override
+  String get boardDeclineOutOfScope => 'Out of scope';
+
+  @override
+  String get boardDeclineAsIntended => 'Works as intended';
+
+  @override
+  String get boardDeclineWontFix => 'Won\'t fix';
+
+  @override
+  String boardBlockHint(String name) {
+    return '$name can still read the board but can\'t post, vote or comment.';
+  }
+
+  @override
+  String boardMergeHint(int number) {
+    return 'Votes on #$number move to the post that remains.';
+  }
+
+  @override
+  String get boardFieldTargetPost => 'Post that remains';
+
+  @override
+  String get boardInvalidPostNumber => 'Enter a post number';
+
+  @override
+  String get boardMergeSelf => 'A post can\'t be merged into itself';
+
+  @override
+  String get boardFieldKind => 'Kind';
+
+  @override
+  String get boardFieldArea => 'Area';
+
+  @override
+  String get boardFieldSize => 'Size';
+
+  @override
+  String get boardNoLabel => 'Not set';
+
+  @override
+  String get boardFieldTask => 'Task';
+
+  @override
+  String get boardLinkPrHint =>
+      'A pull request of the repository. Leave it empty to unlink.';
+
+  @override
+  String get boardFieldPrUrl => 'Pull request URL';
+
+  @override
+  String get boardInvalidPrUrl => 'Use a github.com pull request URL';
+
+  @override
+  String get boardRemoveScreenshotHint => 'The screenshot is deleted for good.';
+
+  @override
+  String boardPromptEditorTitle(int number) {
+    return 'Prompt of T-$number';
+  }
+
+  @override
+  String get boardPromptEditorHint =>
+      'Contributors run this prompt in coding agents. Read it all before publishing.';
+
+  @override
+  String get boardPromptDiffTitle => 'Changes from Regenerate';
+
+  @override
+  String boardLintTitle(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count unusual instructions',
+      one: '1 unusual instruction',
+    );
+    return '$_temp0: check before publishing';
+  }
+
+  @override
+  String boardLintCommand(int line, String text) {
+    return 'Line $line: command $text';
+  }
+
+  @override
+  String boardLintUrl(int line, String text) {
+    return 'Line $line: link outside the repository $text';
+  }
+
+  @override
+  String boardLintWording(int line, String text) {
+    return 'Line $line: “$text”';
+  }
+
+  @override
+  String get boardReviewHeld => 'Held';
+
+  @override
+  String get boardReviewCheck => 'Check';
+
+  @override
+  String get boardReviewUnchecked => 'Unchecked';
+
+  @override
+  String get boardReviewDuplicates => 'Possible duplicates';
+
+  @override
+  String get boardReviewBundles => 'Suggested bundles';
+
+  @override
+  String get boardReviewDrafts => 'Draft tasks';
+
+  @override
+  String get boardReviewEmpty => 'Nothing to review.';
+
+  @override
+  String get cmdBoardVote => 'Vote';
+
+  @override
+  String get cmdBoardEditPost => 'Edit post';
+
+  @override
+  String get cmdBoardDeletePost => 'Delete post';
+
+  @override
+  String get cmdBoardRemoveScreenshot => 'Remove screenshot';
+
+  @override
+  String get cmdBoardComment => 'Comment';
+
+  @override
+  String get cmdBoardEditComment => 'Edit comment';
+
+  @override
+  String get cmdBoardDeleteComment => 'Delete comment';
+
+  @override
+  String get cmdBoardFlag => 'Flag…';
+
+  @override
+  String get cmdBoardClaim => 'Claim task';
+
+  @override
+  String get cmdBoardRelease => 'Release';
+
+  @override
+  String get cmdBoardCopyPrompt => 'Copy prompt';
+
+  @override
+  String get cmdBoardCopyClaimCode => 'Copy claim code';
+
+  @override
+  String get cmdBoardModerate => 'Moderate';
+
+  @override
+  String get cmdBoardSetLabels => 'Set kind, area and size…';
+
+  @override
+  String get cmdBoardAdminEdit => 'Edit as moderator…';
+
+  @override
+  String get cmdBoardApplyTitle => 'Apply suggested title';
+
+  @override
+  String get cmdBoardNotDuplicate => 'Not a duplicate';
+
+  @override
+  String get cmdBoardMerge => 'Merge into…';
+
+  @override
+  String get cmdBoardUnmerge => 'Unmerge';
+
+  @override
+  String get cmdBoardDecline => 'Decline';
+
+  @override
+  String get cmdBoardReopen => 'Reopen';
+
+  @override
+  String get cmdBoardBlock => 'Block user from the board';
+
+  @override
+  String get cmdBoardCreateTask => 'Create task';
+
+  @override
+  String get cmdBoardEditTask => 'Edit task';
+
+  @override
+  String get cmdBoardSetTaskPosts => 'Change the task\'s posts';
+
+  @override
+  String get cmdBoardRegeneratePrompt => 'Regenerate prompt';
+
+  @override
+  String get cmdBoardEditPrompt => 'Edit prompt';
+
+  @override
+  String get cmdBoardPublishTask => 'Publish task';
+
+  @override
+  String get cmdBoardLinkPr => 'Link pull request…';
+
+  @override
+  String get cmdBoardMarkDone => 'Mark done';
+
+  @override
+  String get cmdBoardMarkShipped => 'Mark shipped';
+
+  @override
+  String get cmdBoardCancelTask => 'Cancel task';
+
+  @override
+  String get cmdBoardSuggestBundles => 'Suggest bundles';
+
+  @override
+  String get cmdBoardDismissSuggestion => 'Dismiss suggestion';
+
+  @override
+  String get notifyBoard => 'Bugs & Improvements';
+
+  @override
+  String get notifyBoardHint =>
+      'Replies to your posts, status changes and your task claims';
+
+  @override
+  String boardEventPrClosed(String url) {
+    return 'Pull request closed without merge: $url. The task is open again.';
+  }
+
+  @override
+  String boardEventPrMerged(String url) {
+    return 'Pull request merged: $url';
+  }
+
+  @override
+  String boardEventPrOpened(String url) {
+    return 'Pull request opened: $url';
+  }
+
+  @override
+  String boardEventDeployed(String sha) {
+    return 'Shipped in deploy $sha';
+  }
+
+  @override
+  String get boardVerdictMet => 'Met';
+
+  @override
+  String get boardVerdictPartly => 'Partly';
+
+  @override
+  String get boardVerdictNotMet => 'Not met';
+
+  @override
+  String get boardVerdictCantTell => 'Can\'t tell';
+
+  @override
+  String get boardVerdictAdded => 'Added';
+
+  @override
+  String get boardVerdictUpdated => 'Updated';
+
+  @override
+  String get boardVerdictMissing => 'Missing';
+
+  @override
+  String get boardVerdictNotNeeded => 'Not needed';
+
+  @override
+  String get boardReviewTests => 'Tests';
+
+  @override
+  String get boardReviewSpecs => 'Specs';
+
+  @override
+  String get boardReviewRisks => 'Risks';
+
+  @override
+  String get boardReviewUnrelated => 'Changes the task didn\'t ask for';
+
+  @override
+  String boardReviewedSha(String sha) {
+    return 'Reviewed at $sha';
+  }
 }
 
 /// The translations for English (`en_XA`).
@@ -4072,31 +5414,6 @@ class WonkyAppLocalizationsEnXa extends WonkyAppLocalizationsEn {
 
   @override
   String get externalLinkTitle => '[Öþéñ éẋţéŕñåļ ļîñķ? one tw]';
-
-  @override
-  String get feedbackDescription =>
-      '[Ţéļļ ûš ŵĥåţ ĥåþþéñéð öŕ ŵĥåţ ýöû\'ð ļîķé ţö šéé. one two three]';
-
-  @override
-  String get feedbackFailed => '[Ýöûŕ ŕéþöŕţ çöûļð ñöţ ƀé šéñţ one two t]';
-
-  @override
-  String get feedbackKind => '[Ţýþé on]';
-
-  @override
-  String get feedbackKindIdea => '[Îðéå on]';
-
-  @override
-  String get feedbackKindProblem => '[Þŕöƀļéɱ one]';
-
-  @override
-  String get feedbackMessage => '[Ṁéššåĝé one]';
-
-  @override
-  String get feedbackThanks => '[Ţĥåñķš ƒöŕ ţĥé ƒééðƀåçķ! one two]';
-
-  @override
-  String get feedbackTitle => '[Ŕéþöŕţ å þŕöƀļéɱ one t]';
 
   @override
   String get fileCategoryArchives => '[Åŕçĥîṽéš one]';
@@ -6185,4 +7502,1392 @@ class WonkyAppLocalizationsEnXa extends WonkyAppLocalizationsEn {
 
   @override
   String get lightboxFit => '[Ƒîţ ţö šçŕééñ one]';
+
+  @override
+  String get cmdBoardReport => '[Ɓûĝš & Îɱþŕöṽéɱéñţš… one two]';
+
+  @override
+  String get cmdBoardOpen => '[Ɓŕöŵšé Ɓûĝš & Îɱþŕöṽéɱéñţš one two t]';
+
+  @override
+  String get boardReportName => '[Ɓûĝš & Îɱþŕöṽéɱéñţš one tw]';
+
+  @override
+  String get boardReportSeeAll => '[Šéé åļļ þöšţš one]';
+
+  @override
+  String get boardReportKindLabel => '[Ķîñð on]';
+
+  @override
+  String get boardReportKindBug => '[Ŕéþöŕţ å ƀûĝ one]';
+
+  @override
+  String get boardReportKindIdea => '[Šûĝĝéšţ åñ îɱþŕöṽéɱéñţ one two]';
+
+  @override
+  String get boardReportFieldTitle => '[Ţîţļé on]';
+
+  @override
+  String get boardReportTitleHintBug =>
+      '[Ðéšçŕîƀé ţĥé þŕöƀļéɱ îñ å ƒéŵ ŵöŕðš one two thr]';
+
+  @override
+  String get boardReportTitleHintIdea =>
+      '[Ðéšçŕîƀé ýöûŕ îðéå îñ å ƒéŵ ŵöŕðš one two th]';
+
+  @override
+  String get boardReportFieldHappened => '[Ŵĥåţ ĥåþþéñéð? one t]';
+
+  @override
+  String get boardReportFieldExpected => '[Ŵĥåţ ðîð ýöû éẋþéçţ? one tw]';
+
+  @override
+  String get boardReportFieldSteps => '[Šţéþš ţö ŕéþŕöðûçé one tw]';
+
+  @override
+  String get boardReportFieldIdea => '[Ŵĥåţ ŵöûļð ýöû ļîķé? one tw]';
+
+  @override
+  String get boardReportFieldWhy => '[Ŵĥý ŵöûļð îţ ĥéļþ? one tw]';
+
+  @override
+  String get boardReportOptional => '[(öþţîöñåļ) one]';
+
+  @override
+  String boardReportTitleLength(int min, int max) {
+    return '[Ûšé $min ţö $max çĥåŕåçţéŕš. one tw]';
+  }
+
+  @override
+  String boardReportBodyTooLong(int max) {
+    return '[Ţĥé ðéšçŕîþţîöñ îš ţöö ļöñĝ: åţ ɱöšţ $max çĥåŕåçţéŕš. one two three f]';
+  }
+
+  @override
+  String get boardReportSimilarTitle => '[Šîɱîļåŕ þöšţš one t]';
+
+  @override
+  String boardReportSimilarVotes(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count ṽöţéš',
+      one: '1 ṽöţé',
+    );
+    return '[$_temp0 one]';
+  }
+
+  @override
+  String get boardReportVoteInstead => '[Ṽöţé îñšţéåð one]';
+
+  @override
+  String get boardReportVoted => '[Ṽöţéð on]';
+
+  @override
+  String boardReportVotedFor(int number) {
+    return '[Ṽöţéð ƒöŕ #$number one]';
+  }
+
+  @override
+  String boardReportHitThisToo(int number) {
+    return '[Åððéð “Î ĥîţ ţĥîš ţöö” ţö #$number one two]';
+  }
+
+  @override
+  String boardReportVoteFailed(String message) {
+    return '[Çöûļðñ’ţ ṽöţé: $message one t]';
+  }
+
+  @override
+  String get boardReportScreenshot => '[Šçŕééñšĥöţ one]';
+
+  @override
+  String get boardReportAddScreenshot => '[Åðð šçŕééñšĥöţ one t]';
+
+  @override
+  String get boardReportEditScreenshot => '[Éðîţ on]';
+
+  @override
+  String get boardReportRemoveScreenshot => '[Ŕéɱöṽé one]';
+
+  @override
+  String get boardReportScreenshotPreview => '[Šçŕééñšĥöţ þŕéṽîéŵ one tw]';
+
+  @override
+  String get boardReportScreenshotWarning =>
+      '[Šçŕééñšĥöţš åŕé þûƀļîç. Çöṽéŕ ñåɱéš, éɱåîļš åñð ðöçûɱéñţ çöñţéñţ. one two three four f]';
+
+  @override
+  String get boardReportCaptureFailed =>
+      '[Çöûļðñ’ţ çåþţûŕé ţĥé šçŕééñ one two t]';
+
+  @override
+  String boardReportDetails(String summary) {
+    return '[Ðéţåîļš ţĥåţ ŵîļļ ƀé îñçļûðéð: $summary one two th]';
+  }
+
+  @override
+  String get boardReportDetailApp => '[Åþþ on]';
+
+  @override
+  String get boardReportDetailPlatform => '[Þļåţƒöŕɱ one]';
+
+  @override
+  String get boardReportDetailTheme => '[Ţĥéɱé on]';
+
+  @override
+  String get boardReportDetailLocale => '[Ļåñĝûåĝé one]';
+
+  @override
+  String get boardReportDetailWindow => '[Ŵîñðöŵ šîžé one]';
+
+  @override
+  String get boardReportDetailRoute => '[Þåĝé on]';
+
+  @override
+  String get boardReportDetailError => '[Éŕŕöŕ on]';
+
+  @override
+  String get boardReportThemeLight => '[ļîĝĥţ ţĥéɱé one]';
+
+  @override
+  String get boardReportThemeDark => '[ðåŕķ ţĥéɱé one]';
+
+  @override
+  String boardReportIncludeError(String age) {
+    return '[Îñçļûðé ţĥé ļåšţ éŕŕöŕ ($age) one two]';
+  }
+
+  @override
+  String boardReportErrorAge(int minutes) {
+    String _temp0 = intl.Intl.pluralLogic(
+      minutes,
+      locale: localeName,
+      other: '$minutes ɱîñ åĝö',
+      one: '1 ɱîñ åĝö',
+      zero: 'ĵûšţ ñöŵ',
+    );
+    return '[$_temp0 one two]';
+  }
+
+  @override
+  String boardReportErrorAgeHours(int hours) {
+    String _temp0 = intl.Intl.pluralLogic(
+      hours,
+      locale: localeName,
+      other: '$hours ĥ åĝö',
+      one: '1 ĥ åĝö',
+    );
+    return '[$_temp0 one]';
+  }
+
+  @override
+  String get boardReportAiNotice =>
+      '[Þöšţš åŕé þûƀļîç åñð çĥéçķéð åûţöɱåţîçåļļý ƀý ÅÎ (Ĵéṽ, Ĝéɱîñî). one two three four]';
+
+  @override
+  String get boardReportPublicNotice => '[Þöšţš åŕé þûƀļîç. one tw]';
+
+  @override
+  String boardReportSecurityNotice(String contact) {
+    return '[Šéçûŕîţý îššûé? Ðöñ’ţ þöšţ îţ ĥéŕé: éɱåîļ $contact one two three]';
+  }
+
+  @override
+  String get boardReportPostBug => '[Þöšţ ƀûĝ one]';
+
+  @override
+  String get boardReportPostIdea => '[Þöšţ îɱþŕöṽéɱéñţ one tw]';
+
+  @override
+  String get boardReportPosted => '[Þöšţéð one]';
+
+  @override
+  String get boardReportPostedChecking => '[Þöšţéð. Çĥéçķîñĝ îţ ñöŵ… one two]';
+
+  @override
+  String get boardReportPostedHeld =>
+      '[Þöšţéð. Ŵåîţîñĝ ƒöŕ ŕéṽîéŵ: å ɱöðéŕåţöŕ ŵîļļ ļööķ åţ îţ. one two three fou]';
+
+  @override
+  String get boardReportView => '[Ṽîéŵ on]';
+
+  @override
+  String get boardReportRateLimited =>
+      '[Ýöû’ṽé þöšţéð å ļöţ ŕéçéñţļý. Þļéåšé ţŕý åĝåîñ ļåţéŕ. one two three fo]';
+
+  @override
+  String get boardReportBlocked =>
+      '[Ýöû çåñ’ţ þöšţ öñ Ɓûĝš & Îɱþŕöṽéɱéñţš. one two thre]';
+
+  @override
+  String boardReportBlockedReason(String reason) {
+    return '[Ýöû çåñ’ţ þöšţ öñ Ɓûĝš & Îɱþŕöṽéɱéñţš: $reason one two thre]';
+  }
+
+  @override
+  String boardReportPostFailed(String message) {
+    return '[Çöûļðñ’ţ þöšţ: $message one t]';
+  }
+
+  @override
+  String boardReportUploadFailed(String message) {
+    return '[Çöûļðñ’ţ ûþļöåð ţĥé šçŕééñšĥöţ: $message one two th]';
+  }
+
+  @override
+  String get boardReportDiscardTitle => '[Ðîšçåŕð ðŕåƒţ? one t]';
+
+  @override
+  String get boardReportDiscardBody =>
+      '[Ýöûŕ ŕéþöŕţ ĥåšñ’ţ ƀééñ þöšţéð ýéţ. one two thr]';
+
+  @override
+  String get boardReportDiscard => '[Ðîšçåŕð one]';
+
+  @override
+  String get boardReportKeepDraft => '[Ķééþ ðŕåƒţ one]';
+
+  @override
+  String get errorReportBug => '[Ŕéþöŕţ ţĥîš ƀûĝ one t]';
+
+  @override
+  String get screenshotEditorTitle => '[Éðîţ šçŕééñšĥöţ one t]';
+
+  @override
+  String get screenshotEditorWarning =>
+      '[Ţĥîš šçŕééñšĥöţ ŵîļļ ƀé þûƀļîç. Çöṽéŕ åñýţĥîñĝ þŕîṽåţé: ñåɱéš, éɱåîļš, ðöçûɱéñţ åñð šþŕéåðšĥééţ çöñţéñţ ýöû ðöñ’ţ ŵåñţ ţö šĥåŕé. one two three four five six seven eight]';
+
+  @override
+  String get screenshotToolsLabel => '[Ţööļ on]';
+
+  @override
+  String get screenshotColorsLabel => '[Çöļöŕ on]';
+
+  @override
+  String get screenshotToolCover => '[Çöṽéŕ on]';
+
+  @override
+  String get screenshotToolHighlight => '[Ĥîĝĥļîĝĥţ one]';
+
+  @override
+  String get screenshotToolArrow => '[Åŕŕöŵ on]';
+
+  @override
+  String get screenshotToolPen => '[Þéñ on]';
+
+  @override
+  String get screenshotColorRed => '[Ŕéð on]';
+
+  @override
+  String get screenshotColorYellow => '[Ýéļļöŵ one]';
+
+  @override
+  String get screenshotColorBlue => '[Ɓļûé on]';
+
+  @override
+  String get screenshotUndo => '[Ûñðö on]';
+
+  @override
+  String get screenshotRedo => '[Ŕéðö on]';
+
+  @override
+  String get screenshotDelete => '[Ðéļéţé šéļéçţéð one t]';
+
+  @override
+  String get screenshotClear => '[Çļéåŕ on]';
+
+  @override
+  String get screenshotDone => '[Ðöñé on]';
+
+  @override
+  String screenshotShortcut(String label, String shortcut) {
+    return '[$label ($shortcut) o]';
+  }
+
+  @override
+  String get screenshotCanvasLabel =>
+      '[Šçŕééñšĥöţ. Ðŕåĝ ţö ðŕåŵ ŵîţĥ ţĥé šéļéçţéð ţööļ; çļîçķ åñ åññöţåţîöñ ţö šéļéçţ îţ. one two three four five s]';
+
+  @override
+  String screenshotEncodeFailed(String message) {
+    return '[Çöûļðñ’ţ þŕéþåŕé ţĥé šçŕééñšĥöţ: $message one two thr]';
+  }
+
+  @override
+  String get boardTitle => '[Ɓûĝš & Îɱþŕöṽéɱéñţš one tw]';
+
+  @override
+  String get boardReportBug => '[Ŕéþöŕţ å ƀûĝ one]';
+
+  @override
+  String get boardSuggestImprovement => '[Šûĝĝéšţ åñ îɱþŕöṽéɱéñţ one two]';
+
+  @override
+  String get boardSearch => '[Šéåŕçĥ þöšţš one]';
+
+  @override
+  String get boardSignIn => '[Šîĝñ îñ one]';
+
+  @override
+  String get boardSignInToVote => '[Šîĝñ îñ ţö ṽöţé åñð þöšţ. one two]';
+
+  @override
+  String get boardSignInToComment => '[Šîĝñ îñ ţö çöɱɱéñţ one tw]';
+
+  @override
+  String get boardSignInToClaim => '[Šîĝñ îñ ţö çļåîɱ ţĥîš ţåšķ one two]';
+
+  @override
+  String get boardBlocked =>
+      '[Ýöû çåñ\'ţ þöšţ öñ Ɓûĝš & Îɱþŕöṽéɱéñţš. one two thre]';
+
+  @override
+  String get boardContributeLink => '[Ĥöŵ ţö çöñţŕîƀûţé one tw]';
+
+  @override
+  String get boardTabImprovements => '[Îɱþŕöṽéɱéñţš one t]';
+
+  @override
+  String get boardTabBugs => '[Ɓûĝš on]';
+
+  @override
+  String get boardTabTasks => '[Ûþ ƒöŕ ĝŕåƀš one]';
+
+  @override
+  String get boardTabDone => '[Ðöñé on]';
+
+  @override
+  String get boardTabReview => '[Ŕéṽîéŵ one]';
+
+  @override
+  String get boardKindBug => '[Ɓûĝ on]';
+
+  @override
+  String get boardKindIdea => '[Îɱþŕöṽéɱéñţ one]';
+
+  @override
+  String get boardAreaDrive => '[Ðŕîṽé on]';
+
+  @override
+  String get boardAreaWrite => '[Ŵŕîţé on]';
+
+  @override
+  String get boardAreaSheets => '[Šĥééţš one]';
+
+  @override
+  String get boardAreaSlides => '[Šļîðéš one]';
+
+  @override
+  String get boardAreaSuite => '[Šûîţé on]';
+
+  @override
+  String get boardAreaServer => '[Šéŕṽéŕ one]';
+
+  @override
+  String get boardSizeSmall => '[Šɱåļļ on]';
+
+  @override
+  String get boardSizeMedium => '[Ṁéðîûɱ one]';
+
+  @override
+  String get boardSizeLarge => '[Ļåŕĝé on]';
+
+  @override
+  String get boardStatusOpen => '[Öþéñ on]';
+
+  @override
+  String get boardStatusPlanned => '[Þļåññéð one]';
+
+  @override
+  String get boardStatusDone => '[Ðöñé on]';
+
+  @override
+  String get boardStatusShipped => '[Šĥîþþéð one]';
+
+  @override
+  String get boardStatusDeclined => '[Ðéçļîñéð one]';
+
+  @override
+  String get boardStatusDuplicate => '[Ðûþļîçåţé one]';
+
+  @override
+  String get boardTaskDraft => '[Ðŕåƒţ on]';
+
+  @override
+  String get boardTaskPublished => '[Þûƀļîšĥéð one]';
+
+  @override
+  String get boardTaskClaimed => '[Çļåîɱéð one]';
+
+  @override
+  String get boardTaskInReview => '[Îñ ŕéṽîéŵ one]';
+
+  @override
+  String get boardTaskCancelled => '[Çåñçéļļéð one]';
+
+  @override
+  String get boardModerationChecking => '[Çĥéçķîñĝ one]';
+
+  @override
+  String get boardModerationVisible => '[Ṽîšîƀļé one]';
+
+  @override
+  String get boardModerationHeld => '[Ĥéļð on]';
+
+  @override
+  String get boardModerationRemoved => '[Ŕéɱöṽéð one]';
+
+  @override
+  String get boardReasonOffensive => '[Öƒƒéñšîṽé one]';
+
+  @override
+  String get boardReasonSpam => '[Šþåɱ on]';
+
+  @override
+  String get boardReasonPersonalData => '[Þéŕšöñåļ ðåţå one t]';
+
+  @override
+  String get boardReasonSecurity => '[Šéçûŕîţý îššûé one t]';
+
+  @override
+  String get boardReasonOther => '[Öţĥéŕ on]';
+
+  @override
+  String get boardSortTrending => '[Ţŕéñðîñĝ one]';
+
+  @override
+  String get boardSortTop => '[Ţöþ on]';
+
+  @override
+  String get boardSortNew => '[Ñéŵ on]';
+
+  @override
+  String get boardSortDiscussed => '[Ṁöšţ ðîšçûššéð one t]';
+
+  @override
+  String get boardSort => '[Šöŕţ on]';
+
+  @override
+  String get boardFilterArea => '[Åŕéå on]';
+
+  @override
+  String get boardFilterSize => '[Šîžé on]';
+
+  @override
+  String get boardFilterStatus => '[Šţåţûš one]';
+
+  @override
+  String get boardFilterMine => '[Ṁîñé on]';
+
+  @override
+  String get boardFilterAny => '[Åñý on]';
+
+  @override
+  String get boardSelect => '[Šéļéçţ one]';
+
+  @override
+  String get boardSelectDone => '[Ðöñé šéļéçţîñĝ one t]';
+
+  @override
+  String boardSelected(int count) {
+    return '[$count šéļéçţéð one]';
+  }
+
+  @override
+  String boardCreateTaskFrom(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Çŕéåţé ţåšķ ƒŕöɱ $count þöšţš…',
+      one: 'Çŕéåţé ţåšķ ƒŕöɱ 1 þöšţ…',
+    );
+    return '[$_temp0 one two three]';
+  }
+
+  @override
+  String get boardCreateTaskHint =>
+      '[Ţĥé ðŕåƒţ ţåšķ ĝéţš åñ ÅÎ-ŵŕîţţéñ þŕöɱþţ ţĥåţ ýöû ŕéṽîéŵ ƀéƒöŕé þûƀļîšĥîñĝ. one two three four five]';
+
+  @override
+  String get boardAddToTask => '[Åðð ţö ţåšķ one]';
+
+  @override
+  String get boardAddToTaskEllipsis => '[Åðð ţö ţåšķ… one]';
+
+  @override
+  String get boardNoOpenTasks =>
+      '[Ţĥéŕé åŕé ñö ðŕåƒţ öŕ þûƀļîšĥéð ţåšķš. one two thre]';
+
+  @override
+  String get boardLoadMore => '[Ļöåð ɱöŕé one]';
+
+  @override
+  String boardShowing(int shown, int total) {
+    return '[$shown öƒ $total o]';
+  }
+
+  @override
+  String get boardLoadFailed =>
+      '[Çöûļðñ\'ţ ļöåð Ɓûĝš & Îɱþŕöṽéɱéñţš one two thr]';
+
+  @override
+  String get boardEmptyIdeas => '[Ñö îɱþŕöṽéɱéñţš ĥéŕé ýéţ one two]';
+
+  @override
+  String get boardEmptyBugs => '[Ñö ƀûĝš ĥéŕé one]';
+
+  @override
+  String get boardEmptyDone => '[Ñöţĥîñĝ ƒîñîšĥéð ýéţ one two]';
+
+  @override
+  String get boardEmptySearch => '[Ñö þöšţš ɱåţçĥ ýöûŕ šéåŕçĥ one two]';
+
+  @override
+  String get boardEmptyHint =>
+      '[Çĥåñĝé ţĥé ƒîļţéŕš, öŕ ƀé ţĥé ƒîŕšţ ţö þöšţ. one two three]';
+
+  @override
+  String get boardEmptyTasks => '[Ñö ţåšķš ûþ ƒöŕ ĝŕåƀš one tw]';
+
+  @override
+  String get boardEmptyTasksHint =>
+      '[Åðɱîñš þûƀļîšĥ ţåšķš ƒŕöɱ ţĥé ɱöšţ ŵåñţéð þöšţš. Çĥéçķ ƀåçķ šööñ. one two three four f]';
+
+  @override
+  String get boardDoneTasks => '[Ƒîñîšĥéð ţåšķš one t]';
+
+  @override
+  String boardUpvoteLabel(int score) {
+    return '[Ûþṽöţé, $score ṽöţéš one t]';
+  }
+
+  @override
+  String boardDownvoteLabel(int score) {
+    return '[Ðöŵñṽöţé, $score ṽöţéš one t]';
+  }
+
+  @override
+  String get boardRemoveUpvote => '[Ŕéɱöṽé ûþṽöţé one t]';
+
+  @override
+  String get boardRemoveDownvote => '[Ŕéɱöṽé ðöŵñṽöţé one t]';
+
+  @override
+  String get boardHitThisToo => '[Î ĥîţ ţĥîš ţöö one]';
+
+  @override
+  String boardHitThisTooLabel(int score) {
+    return '[Î ĥîţ ţĥîš ţöö, $score þéöþļé one two]';
+  }
+
+  @override
+  String boardHitThisTooRemove(int score) {
+    return '[Ŕéɱöṽé Î ĥîţ ţĥîš ţöö, $score þéöþļé one two t]';
+  }
+
+  @override
+  String get boardAiMarker => '[ÅÎ o]';
+
+  @override
+  String boardAiLabel(String label) {
+    return '[$label, šéţ ƀý ÅÎ one]';
+  }
+
+  @override
+  String boardPlannedIn(int number) {
+    return '[Þļåññéð · Ţ-$number one]';
+  }
+
+  @override
+  String boardCommentCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count çöɱɱéñţš',
+      one: '1 çöɱɱéñţ',
+    );
+    return '[$_temp0 one tw]';
+  }
+
+  @override
+  String get boardHasScreenshot => '[Ĥåš å šçŕééñšĥöţ one t]';
+
+  @override
+  String get boardDeletedUser => '[Ðéļéţéð ûšéŕ one]';
+
+  @override
+  String get boardAdmin => '[Åðɱîñ on]';
+
+  @override
+  String boardEdited(String time) {
+    return '[éðîţéð $time one]';
+  }
+
+  @override
+  String get boardCopy => '[Çöþý on]';
+
+  @override
+  String get boardCopied => '[Çöþîéð one]';
+
+  @override
+  String get boardPromptCopied => '[Þŕöɱþţ çöþîéð one t]';
+
+  @override
+  String get boardFlagged =>
+      '[Ţĥåñķš. Å ɱöðéŕåţöŕ ŵîļļ ţåķé å ļööķ. one two thr]';
+
+  @override
+  String boardPostNotFound(int number) {
+    return '[Þöšţ #$number ðöéšñ\'ţ éẋîšţ öŕ îšñ\'ţ þûƀļîç one two thr]';
+  }
+
+  @override
+  String boardTaskNotFound(int number) {
+    return '[Ţåšķ Ţ-$number ðöéšñ\'ţ éẋîšţ one two]';
+  }
+
+  @override
+  String get boardBackToBoard => '[Ɓåçķ ţö Ɓûĝš & Îɱþŕöṽéɱéñţš one two t]';
+
+  @override
+  String get boardAdminActions => '[Åðɱîñ on]';
+
+  @override
+  String get boardEditAndApprove => '[Éðîţ åñð åþþŕöṽé… one tw]';
+
+  @override
+  String get boardActionApprove => '[Åþþŕöṽé one]';
+
+  @override
+  String get boardActionHold => '[Ĥöļð on]';
+
+  @override
+  String get boardActionLooksFine => '[Ļööķš ƒîñé one]';
+
+  @override
+  String get boardActionRestore => '[Ŕéšţöŕé one]';
+
+  @override
+  String get boardActionRemove => '[Ŕéɱöṽé one]';
+
+  @override
+  String get boardActionRemoveEllipsis => '[Ŕéɱöṽé… one]';
+
+  @override
+  String get boardActionDecline => '[Ðéçļîñé one]';
+
+  @override
+  String get boardActionMerge => '[Ṁéŕĝé on]';
+
+  @override
+  String get boardActionBlock => '[Ɓļöçķ on]';
+
+  @override
+  String get boardActionCreateTask => '[Çŕéåţé ţåšķ one]';
+
+  @override
+  String get boardActionAdd => '[Åðð on]';
+
+  @override
+  String get boardActionLink => '[Ļîñķ on]';
+
+  @override
+  String get boardActionSavePublish => '[Šåṽé åñð þûƀļîšĥ one t]';
+
+  @override
+  String get boardSelectForBuilding => '[Šéļéçţ ƒöŕ ƀûîļðîñĝ one tw]';
+
+  @override
+  String get boardDeclineEllipsis => '[Ðéçļîñé… one]';
+
+  @override
+  String get boardMergeEllipsis => '[Ṁéŕĝé îñţö… one]';
+
+  @override
+  String get boardBlockEllipsis => '[Ɓļöçķ ûšéŕ ƒŕöɱ ţĥé ƀöåŕð… one two]';
+
+  @override
+  String get boardEditEllipsis => '[Éðîţ… on]';
+
+  @override
+  String get boardDismiss => '[Ðîšɱîšš one]';
+
+  @override
+  String get boardApply => '[Åþþļý on]';
+
+  @override
+  String boardMergedFromNote(int number) {
+    return '[#$number ŵåš ɱéŕĝéð îñţö ţĥîš þöšţ. one two t]';
+  }
+
+  @override
+  String get boardPostDeleted => '[Ţĥîš þöšţ ŵåš ðéļéţéð. one two]';
+
+  @override
+  String get boardChecking => '[Çĥéçķîñĝ ýöûŕ þöšţ… one tw]';
+
+  @override
+  String get boardWaitingForReview =>
+      '[Ŵåîţîñĝ ƒöŕ ŕéṽîéŵ: å ɱöðéŕåţöŕ ŵîļļ ļööķ åţ îţ. one two three]';
+
+  @override
+  String boardHeldAdmin(String reason) {
+    return '[Ĥéļð ƒöŕ ŕéṽîéŵ. $reason one t]';
+  }
+
+  @override
+  String boardRemovedByModerator(String reason) {
+    return '[Ŕéɱöṽéð ƀý å ɱöðéŕåţöŕ. $reason one two]';
+  }
+
+  @override
+  String boardDeclinedNote(String reason) {
+    return '[Ðéçļîñéð: $reason one]';
+  }
+
+  @override
+  String boardMergedInto(int number) {
+    return '[Ṁéŕĝéð îñţö #$number. one t]';
+  }
+
+  @override
+  String boardOpenPost(int number) {
+    return '[Öþéñ #$number on]';
+  }
+
+  @override
+  String get boardMovedToIdeas => '[Ṁöṽéð ţö Îɱþŕöṽéɱéñţš one two]';
+
+  @override
+  String get boardMovedToBugs => '[Ṁöṽéð ţö Ɓûĝš one]';
+
+  @override
+  String get boardEditedByModerator => '[Éðîţéð ƀý å ɱöðéŕåţöŕ one two]';
+
+  @override
+  String get boardDetails => '[Ðéţåîļš one]';
+
+  @override
+  String get boardAdminPanel => '[Ṁöðéŕåţîöñ one]';
+
+  @override
+  String boardTriage(String state) {
+    return '[Ţŕîåĝé: $state one]';
+  }
+
+  @override
+  String get boardNeedsCheck => '[Çĥéçķ on]';
+
+  @override
+  String get boardNeedsLabels => '[Ñééðš ļåƀéļš one]';
+
+  @override
+  String boardSuggestedTitle(String title) {
+    return '[Šûĝĝéšţéð ţîţļé: $title one tw]';
+  }
+
+  @override
+  String boardPossibleDuplicate(int number) {
+    return '[Þöššîƀļé ðûþļîçåţé öƒ #$number one two]';
+  }
+
+  @override
+  String get boardAiScores => '[ÅÎ šçöŕéš one]';
+
+  @override
+  String boardFlags(int count, String reasons) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count ƒļåĝš',
+      one: '1 ƒļåĝ',
+    );
+    return '[$_temp0: $reasons one]';
+  }
+
+  @override
+  String get boardOpenScreenshot => '[Öþéñ šçŕééñšĥöţ one t]';
+
+  @override
+  String boardScreenshotAlt(int number) {
+    return '[Šçŕééñšĥöţ öƒ þöšţ #$number one tw]';
+  }
+
+  @override
+  String get boardRelations => '[Ŕéļåţéð one]';
+
+  @override
+  String boardPartOfTask(int number, String title) {
+    return '[Þåŕţ öƒ ţåšķ Ţ-$number: $title one t]';
+  }
+
+  @override
+  String get boardMergedFrom =>
+      '[Ðûþļîçåţéš ɱéŕĝéð îñţö ţĥîš þöšţ: one two thr]';
+
+  @override
+  String get boardSimilarPosts => '[Šîɱîļåŕ þöšţš one t]';
+
+  @override
+  String boardScore(int score) {
+    String _temp0 = intl.Intl.pluralLogic(
+      score,
+      locale: localeName,
+      other: '$score ṽöţéš',
+      one: '1 ṽöţé',
+    );
+    return '[$_temp0 one]';
+  }
+
+  @override
+  String boardCommentsTitle(int count) {
+    return '[Çöɱɱéñţš ($count) one]';
+  }
+
+  @override
+  String get boardCommentHint => '[Åðð å çöɱɱéñţ one]';
+
+  @override
+  String get boardCommentHeld => '[Ĥîððéñ þéñðîñĝ ŕéṽîéŵ one two]';
+
+  @override
+  String get boardCommentRemoved => '[Ŕéɱöṽéð ƀý å ɱöðéŕåţöŕ one two]';
+
+  @override
+  String boardCommentOnPost(int number) {
+    return '[Çöɱɱéñţ öñ #$number one]';
+  }
+
+  @override
+  String boardCommentOnTask(int number) {
+    return '[Çöɱɱéñţ öñ Ţ-$number one]';
+  }
+
+  @override
+  String get boardEventClaimed => '[çļåîɱéð ţĥé ţåšķ one t]';
+
+  @override
+  String get boardEventReleased => '[ŕéļéåšéð ţĥé çļåîɱ one tw]';
+
+  @override
+  String get boardEventExpired => '[Ţĥé çļåîɱ éẋþîŕéð one tw]';
+
+  @override
+  String boardEventPrLinked(String url) {
+    return '[ļîñķéð å þûļļ ŕéǫûéšţ: $url one two]';
+  }
+
+  @override
+  String get boardEventPrUnlinked => '[ûñļîñķéð ţĥé þûļļ ŕéǫûéšţ one two]';
+
+  @override
+  String get boardEventPublished => '[þûƀļîšĥéð ţĥé ţåšķ one tw]';
+
+  @override
+  String get boardEventDone => '[ɱåŕķéð ţĥé ţåšķ ðöñé one tw]';
+
+  @override
+  String get boardEventShipped => '[ɱåŕķéð ţĥé ţåšķ šĥîþþéð one two]';
+
+  @override
+  String get boardEventCancelled => '[çåñçéļļéð ţĥé ţåšķ one tw]';
+
+  @override
+  String get boardEventMerged => '[ɱéŕĝéð å ðûþļîçåţé one tw]';
+
+  @override
+  String get boardUpForGrabs => '[Ûþ ƒöŕ ĝŕåƀš one]';
+
+  @override
+  String boardClaimedBy(String name, int hours) {
+    return '[Çļåîɱéð ƀý $name · $hours ĥ ļéƒţ one tw]';
+  }
+
+  @override
+  String boardInReviewBy(String name) {
+    return '[Îñ ŕéṽîéŵ · $name one]';
+  }
+
+  @override
+  String boardPostCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count þöšţš',
+      one: '1 þöšţ',
+    );
+    return '[$_temp0 one]';
+  }
+
+  @override
+  String get boardClaimTask => '[Çļåîɱ ţĥîš ţåšķ one t]';
+
+  @override
+  String get boardReleaseClaim => '[Ŕéļéåšé çļåîɱ one t]';
+
+  @override
+  String get boardYourClaimCode => '[Ýöûŕ çļåîɱ çöðé one t]';
+
+  @override
+  String boardTimeLeft(int hours) {
+    return '[$hours ĥ ļéƒţ öñ ýöûŕ çļåîɱ one tw]';
+  }
+
+  @override
+  String get boardClaimCodeHint =>
+      '[Þûţ îţ îñ ţĥé þûļļ ŕéǫûéšţ ðéšçŕîþţîöñ. Öñļý ýöû çåñ šéé îţ. one two three four]';
+
+  @override
+  String get boardClaimCodePlaceholder => '[<ýöûŕ çļåîɱ çöðé> one tw]';
+
+  @override
+  String get boardDraftNotice =>
+      '[Ðŕåƒţ: öñļý åðɱîñš šéé ţĥîš ţåšķ. Ŕéṽîéŵ ţĥé þŕöɱþţ, ţĥéñ þûƀļîšĥ îţ. one two three four fi]';
+
+  @override
+  String get boardTaskCancelledNotice =>
+      '[Ţĥîš ţåšķ ŵåš çåñçéļļéð. Îţš þöšţš åŕé öþéñ åĝåîñ. one two three f]';
+
+  @override
+  String get boardLinkedPosts => '[Ļîñķéð þöšţš one]';
+
+  @override
+  String get boardNoLinkedPosts =>
+      '[Ñö þöšţš åŕé ļîñķéð ţö ţĥîš ţåšķ. one two th]';
+
+  @override
+  String get boardRemoveFromTask => '[Ŕéɱöṽé ƒŕöɱ ţåšķ one t]';
+
+  @override
+  String get boardAddPosts => '[Åðð þöšţš… one]';
+
+  @override
+  String get boardFieldPostNumbers => '[Þöšţ ñûɱƀéŕš one]';
+
+  @override
+  String get boardHowToBuild => '[Ĥöŵ ţö ƀûîļð îţ one t]';
+
+  @override
+  String get boardStepSetup => '[1. Šéţ ûþ Ŵöñķý Ŵöŕķ ļöçåļļý one two t]';
+
+  @override
+  String get boardFullGuide => '[Ŕéåð ţĥé ƒûļļ ĝûîðé one tw]';
+
+  @override
+  String get boardStepPrompt =>
+      '[2. Ĝîṽé ýöûŕ çöðîñĝ åĝéñţ ţĥé þŕöɱþţ one two thr]';
+
+  @override
+  String get boardStepPr => '[3. Öþéñ å þûļļ ŕéǫûéšţ one two]';
+
+  @override
+  String get boardPrRules =>
+      '[Öñé ţåšķ þéŕ þûļļ ŕéǫûéšţ, åĝåîñšţ ɱåîñ. Þûţ ţĥéšé ţŵö ļîñéš îñ îţš ðéšçŕîþţîöñ: one two three four five]';
+
+  @override
+  String get boardPullRequest => '[Þûļļ ŕéǫûéšţ one]';
+
+  @override
+  String boardPrNumber(int number) {
+    return '[Þûļļ ŕéǫûéšţ #$number one t]';
+  }
+
+  @override
+  String boardPrBy(String login) {
+    return '[ƀý $login o]';
+  }
+
+  @override
+  String get boardLatestReview => '[Ļåţéšţ ŕéṽîéŵ one t]';
+
+  @override
+  String get boardActivityAndDiscussion => '[Åçţîṽîţý åñð ðîšçûššîöñ one two]';
+
+  @override
+  String get boardContributeTitle => '[Ĥöŵ ţö çöñţŕîƀûţé one tw]';
+
+  @override
+  String get boardContributeIntro =>
+      '[Åñýöñé çåñ ƀûîļð å ţåšķ ţĥåţ îš ûþ ƒöŕ ĝŕåƀš. Çļåîɱ îţ, ļéţ å çöðîñĝ åĝéñţ ðö ţĥé ŵöŕķ ŵîţĥ ţĥé ţåšķ\'š þŕöɱþţ, åñð öþéñ å þûļļ ŕéǫûéšţ. one two three four five six seven eigh]';
+
+  @override
+  String get boardContribStep1Title => '[Ĝéţ ţĥé ţööļš one]';
+
+  @override
+  String get boardContribStep1 =>
+      '[Îñšţåļļ Ƒļûţţéŕ (šţåƀļé), Ðöçķéŕ ƒöŕ ţĥé ðéṽéļöþɱéñţ ðåţåƀåšé, åñð åñ ÅÎ çöðîñĝ åĝéñţ ţĥåţ ŕéåðš ÅĜÉÑŢŠ.ɱð, šûçĥ åš Çļåûðé Çöðé. one two three four five six seven eight]';
+
+  @override
+  String get boardContribStep2Title => '[Îñšţåļļ ţĥé Šéŕṽéŕþöð ÇĻÎ one two]';
+
+  @override
+  String get boardContribStep2 =>
+      '[Îţ ŕûñš ţĥé šéŕṽéŕ åñð ţĥé åþþš. one two th]';
+
+  @override
+  String get boardContribStep3Title => '[Çļöñé ţĥé ŕéþöšîţöŕý one two]';
+
+  @override
+  String get boardContribStep3 =>
+      '[Ţĥéñ šţåŕţ ţĥé ðéṽéļöþɱéñţ ðåţåƀåšé. one two thre]';
+
+  @override
+  String get boardContribStep4Title => '[Çŕéåţé ýöûŕ þåššŵöŕðš ƒîļé one two t]';
+
+  @override
+  String get boardContribStep4 =>
+      '[Ţĥé éẋåɱþļé ĥåš ðéṽéļöþɱéñţ ðéƒåûļţš. ÅÎ ķéýš åŕé öþţîöñåļ. one two three four]';
+
+  @override
+  String get boardContribStep5Title => '[Šţåŕţ ţĥé šéŕṽéŕ one t]';
+
+  @override
+  String get boardContribStep5 =>
+      '[Ŕûñ îţ îñ ŵöñķý_šéŕṽéŕ åñð šţåŕţ åñ åþþ ƒŕöɱ îţš ÛÎ. Þöîñţ ýöûŕ åĝéñţ åţ ţĥé šéŕṽéŕþöð ṀÇÞ šéŕṽéŕ (.ɱçþ.ĵšöñ îš îñ ţĥé ŕéþöšîţöŕý). one two three four five six seven eigh]';
+
+  @override
+  String get boardContribStep6Title => '[Þîçķ å ţåšķ one]';
+
+  @override
+  String get boardContribStep6 =>
+      '[Çļåîɱ å ţåšķ ûñðéŕ Ûþ ƒöŕ ĝŕåƀš, þåšţé îţš þŕöɱþţ îñţö ýöûŕ åĝéñţ åñð ŕéṽîéŵ ţĥé ŕéšûļţ. one two three four five si]';
+
+  @override
+  String get boardContribStep7Title => '[Öþéñ å þûļļ ŕéǫûéšţ one tw]';
+
+  @override
+  String get boardContribStep7 =>
+      '[Öñé ţåšķ þéŕ þûļļ ŕéǫûéšţ. Ţĥé ðéšçŕîþţîöñ çöñţåîñš ţĥé Ŵöñķý-Ţåšķ åñð Ŵöñķý-Çļåîɱ ļîñéš ƒŕöɱ ţĥé ţåšķ þåĝé. Þûļļ ŕéǫûéšţš ŵîţĥöûţ å ṽåļîð ţåšķ åŕé çļöšéð åƒţéŕ 7 ðåýš. one two three four five six seven eight nine ten o]';
+
+  @override
+  String get boardContribLicense =>
+      '[Çöñţŕîƀûţîöñš åŕé åççéþţéð ûñðéŕ ţĥé ŕéþöšîţöŕý\'š ƁŠÐ-3-Çļåûšé ļîçéñšé. Ñö ÇĻÅ. one two three four five s]';
+
+  @override
+  String boardContribSecurity(String email) {
+    return '[Ƒöûñð å šéçûŕîţý îššûé? Éɱåîļ $email. Ñéṽéŕ þöšţ îţ öñ ţĥé ƀöåŕð öŕ îñ å þûļļ ŕéǫûéšţ. one two three four five]';
+  }
+
+  @override
+  String get boardContributeGuide => '[Ƒûļļ ĝûîðé öñ ĜîţĤûƀ one tw]';
+
+  @override
+  String get boardFieldTitle => '[Ţîţļé on]';
+
+  @override
+  String get boardTitleLength => '[Ûšé 8 ţö 120 çĥåŕåçţéŕš. one two]';
+
+  @override
+  String get boardModeratorEditHint =>
+      '[Ţĥé þöšţ šĥöŵš Éðîţéð ƀý å ɱöðéŕåţöŕ. one two thr]';
+
+  @override
+  String get boardFieldReason => '[Ŕéåšöñ one]';
+
+  @override
+  String get boardFieldNote => '[Ñöţé (öþţîöñåļ) one t]';
+
+  @override
+  String get boardFieldNoteForAuthor =>
+      '[Ṁéššåĝé ţö ţĥé åûţĥöŕ (öþţîöñåļ) one two th]';
+
+  @override
+  String get boardFlagHint =>
+      '[Ƒļåĝĝéð þöšţš åŕé ĥîððéñ ƒöŕ ŕéṽîéŵ åƒţéŕ 3 þéöþļé ƒļåĝ ţĥéɱ. one two three four]';
+
+  @override
+  String get boardFlagAction => '[Ƒļåĝ on]';
+
+  @override
+  String get boardRemoveTitle => '[Ŕéɱöṽé one]';
+
+  @override
+  String get boardDeclineOutOfScope => '[Öûţ öƒ šçöþé one]';
+
+  @override
+  String get boardDeclineAsIntended => '[Ŵöŕķš åš îñţéñðéð one tw]';
+
+  @override
+  String get boardDeclineWontFix => '[Ŵöñ\'ţ ƒîẋ one]';
+
+  @override
+  String boardBlockHint(String name) {
+    return '[$name çåñ šţîļļ ŕéåð ţĥé ƀöåŕð ƀûţ çåñ\'ţ þöšţ, ṽöţé öŕ çöɱɱéñţ. one two three fou]';
+  }
+
+  @override
+  String boardMergeHint(int number) {
+    return '[Ṽöţéš öñ #$number ɱöṽé ţö ţĥé þöšţ ţĥåţ ŕéɱåîñš. one two thre]';
+  }
+
+  @override
+  String get boardFieldTargetPost => '[Þöšţ ţĥåţ ŕéɱåîñš one tw]';
+
+  @override
+  String get boardInvalidPostNumber => '[Éñţéŕ å þöšţ ñûɱƀéŕ one tw]';
+
+  @override
+  String get boardMergeSelf =>
+      '[Å þöšţ çåñ\'ţ ƀé ɱéŕĝéð îñţö îţšéļƒ one two th]';
+
+  @override
+  String get boardFieldKind => '[Ķîñð on]';
+
+  @override
+  String get boardFieldArea => '[Åŕéå on]';
+
+  @override
+  String get boardFieldSize => '[Šîžé on]';
+
+  @override
+  String get boardNoLabel => '[Ñöţ šéţ one]';
+
+  @override
+  String get boardFieldTask => '[Ţåšķ on]';
+
+  @override
+  String get boardLinkPrHint =>
+      '[Å þûļļ ŕéǫûéšţ öƒ ţĥé ŕéþöšîţöŕý. Ļéåṽé îţ éɱþţý ţö ûñļîñķ. one two three four]';
+
+  @override
+  String get boardFieldPrUrl => '[Þûļļ ŕéǫûéšţ ÛŔĻ one t]';
+
+  @override
+  String get boardInvalidPrUrl =>
+      '[Ûšé å ĝîţĥûƀ.çöɱ þûļļ ŕéǫûéšţ ÛŔĻ one two th]';
+
+  @override
+  String get boardRemoveScreenshotHint =>
+      '[Ţĥé šçŕééñšĥöţ îš ðéļéţéð ƒöŕ ĝööð. one two thr]';
+
+  @override
+  String boardPromptEditorTitle(int number) {
+    return '[Þŕöɱþţ öƒ Ţ-$number one]';
+  }
+
+  @override
+  String get boardPromptEditorHint =>
+      '[Çöñţŕîƀûţöŕš ŕûñ ţĥîš þŕöɱþţ îñ çöðîñĝ åĝéñţš. Ŕéåð îţ åļļ ƀéƒöŕé þûƀļîšĥîñĝ. one two three four five]';
+
+  @override
+  String get boardPromptDiffTitle => '[Çĥåñĝéš ƒŕöɱ Ŕéĝéñéŕåţé one two]';
+
+  @override
+  String boardLintTitle(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count ûñûšûåļ îñšţŕûçţîöñš',
+      one: '1 ûñûšûåļ îñšţŕûçţîöñ',
+    );
+    return '[$_temp0: çĥéçķ ƀéƒöŕé þûƀļîšĥîñĝ one two three four fi]';
+  }
+
+  @override
+  String boardLintCommand(int line, String text) {
+    return '[Ļîñé $line: çöɱɱåñð $text one t]';
+  }
+
+  @override
+  String boardLintUrl(int line, String text) {
+    return '[Ļîñé $line: ļîñķ öûţšîðé ţĥé ŕéþöšîţöŕý $text one two thr]';
+  }
+
+  @override
+  String boardLintWording(int line, String text) {
+    return '[Ļîñé $line: “$text” one]';
+  }
+
+  @override
+  String get boardReviewHeld => '[Ĥéļð on]';
+
+  @override
+  String get boardReviewCheck => '[Çĥéçķ on]';
+
+  @override
+  String get boardReviewUnchecked => '[Ûñçĥéçķéð one]';
+
+  @override
+  String get boardReviewDuplicates => '[Þöššîƀļé ðûþļîçåţéš one two]';
+
+  @override
+  String get boardReviewBundles => '[Šûĝĝéšţéð ƀûñðļéš one tw]';
+
+  @override
+  String get boardReviewDrafts => '[Ðŕåƒţ ţåšķš one]';
+
+  @override
+  String get boardReviewEmpty => '[Ñöţĥîñĝ ţö ŕéṽîéŵ. one tw]';
+
+  @override
+  String get cmdBoardVote => '[Ṽöţé on]';
+
+  @override
+  String get cmdBoardEditPost => '[Éðîţ þöšţ one]';
+
+  @override
+  String get cmdBoardDeletePost => '[Ðéļéţé þöšţ one]';
+
+  @override
+  String get cmdBoardRemoveScreenshot => '[Ŕéɱöṽé šçŕééñšĥöţ one tw]';
+
+  @override
+  String get cmdBoardComment => '[Çöɱɱéñţ one]';
+
+  @override
+  String get cmdBoardEditComment => '[Éðîţ çöɱɱéñţ one]';
+
+  @override
+  String get cmdBoardDeleteComment => '[Ðéļéţé çöɱɱéñţ one t]';
+
+  @override
+  String get cmdBoardFlag => '[Ƒļåĝ… on]';
+
+  @override
+  String get cmdBoardClaim => '[Çļåîɱ ţåšķ one]';
+
+  @override
+  String get cmdBoardRelease => '[Ŕéļéåšé one]';
+
+  @override
+  String get cmdBoardCopyPrompt => '[Çöþý þŕöɱþţ one]';
+
+  @override
+  String get cmdBoardCopyClaimCode => '[Çöþý çļåîɱ çöðé one t]';
+
+  @override
+  String get cmdBoardModerate => '[Ṁöðéŕåţé one]';
+
+  @override
+  String get cmdBoardSetLabels => '[Šéţ ķîñð, åŕéå åñð šîžé… one two]';
+
+  @override
+  String get cmdBoardAdminEdit => '[Éðîţ åš ɱöðéŕåţöŕ… one tw]';
+
+  @override
+  String get cmdBoardApplyTitle => '[Åþþļý šûĝĝéšţéð ţîţļé one two]';
+
+  @override
+  String get cmdBoardNotDuplicate => '[Ñöţ å ðûþļîçåţé one t]';
+
+  @override
+  String get cmdBoardMerge => '[Ṁéŕĝé îñţö… one]';
+
+  @override
+  String get cmdBoardUnmerge => '[Ûñɱéŕĝé one]';
+
+  @override
+  String get cmdBoardDecline => '[Ðéçļîñé one]';
+
+  @override
+  String get cmdBoardReopen => '[Ŕéöþéñ one]';
+
+  @override
+  String get cmdBoardBlock => '[Ɓļöçķ ûšéŕ ƒŕöɱ ţĥé ƀöåŕð one two]';
+
+  @override
+  String get cmdBoardCreateTask => '[Çŕéåţé ţåšķ one]';
+
+  @override
+  String get cmdBoardEditTask => '[Éðîţ ţåšķ one]';
+
+  @override
+  String get cmdBoardSetTaskPosts => '[Çĥåñĝé ţĥé ţåšķ\'š þöšţš one two]';
+
+  @override
+  String get cmdBoardRegeneratePrompt => '[Ŕéĝéñéŕåţé þŕöɱþţ one tw]';
+
+  @override
+  String get cmdBoardEditPrompt => '[Éðîţ þŕöɱþţ one]';
+
+  @override
+  String get cmdBoardPublishTask => '[Þûƀļîšĥ ţåšķ one]';
+
+  @override
+  String get cmdBoardLinkPr => '[Ļîñķ þûļļ ŕéǫûéšţ… one tw]';
+
+  @override
+  String get cmdBoardMarkDone => '[Ṁåŕķ ðöñé one]';
+
+  @override
+  String get cmdBoardMarkShipped => '[Ṁåŕķ šĥîþþéð one]';
+
+  @override
+  String get cmdBoardCancelTask => '[Çåñçéļ ţåšķ one]';
+
+  @override
+  String get cmdBoardSuggestBundles => '[Šûĝĝéšţ ƀûñðļéš one t]';
+
+  @override
+  String get cmdBoardDismissSuggestion => '[Ðîšɱîšš šûĝĝéšţîöñ one tw]';
+
+  @override
+  String get notifyBoard => '[Ɓûĝš & Îɱþŕöṽéɱéñţš one tw]';
+
+  @override
+  String get notifyBoardHint =>
+      '[Ŕéþļîéš ţö ýöûŕ þöšţš, šţåţûš çĥåñĝéš åñð ýöûŕ ţåšķ çļåîɱš one two three four]';
+
+  @override
+  String boardEventPrClosed(String url) {
+    return '[Þûļļ ŕéǫûéšţ çļöšéð ŵîţĥöûţ ɱéŕĝé: $url. Ţĥé ţåšķ îš öþéñ åĝåîñ. one two three four]';
+  }
+
+  @override
+  String boardEventPrMerged(String url) {
+    return '[Þûļļ ŕéǫûéšţ ɱéŕĝéð: $url one two]';
+  }
+
+  @override
+  String boardEventPrOpened(String url) {
+    return '[Þûļļ ŕéǫûéšţ öþéñéð: $url one two]';
+  }
+
+  @override
+  String boardEventDeployed(String sha) {
+    return '[Šĥîþþéð îñ ðéþļöý $sha one tw]';
+  }
+
+  @override
+  String get boardVerdictMet => '[Ṁéţ on]';
+
+  @override
+  String get boardVerdictPartly => '[Þåŕţļý one]';
+
+  @override
+  String get boardVerdictNotMet => '[Ñöţ ɱéţ one]';
+
+  @override
+  String get boardVerdictCantTell => '[Çåñ\'ţ ţéļļ one]';
+
+  @override
+  String get boardVerdictAdded => '[Åððéð on]';
+
+  @override
+  String get boardVerdictUpdated => '[Ûþðåţéð one]';
+
+  @override
+  String get boardVerdictMissing => '[Ṁîššîñĝ one]';
+
+  @override
+  String get boardVerdictNotNeeded => '[Ñöţ ñééðéð one]';
+
+  @override
+  String get boardReviewTests => '[Ţéšţš on]';
+
+  @override
+  String get boardReviewSpecs => '[Šþéçš on]';
+
+  @override
+  String get boardReviewRisks => '[Ŕîšķš on]';
+
+  @override
+  String get boardReviewUnrelated =>
+      '[Çĥåñĝéš ţĥé ţåšķ ðîðñ\'ţ åšķ ƒöŕ one two th]';
+
+  @override
+  String boardReviewedSha(String sha) {
+    return '[Ŕéṽîéŵéð åţ $sha one]';
+  }
 }

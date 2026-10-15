@@ -48,7 +48,19 @@ export 'src/core/offline_storage.dart';
 export 'src/core/preferences_controller.dart';
 export 'src/core/stream_supervisor.dart';
 export 'src/core/toasts.dart';
+export 'src/board/board_commands.dart';
+export 'src/board/board_hub.dart';
 export 'src/board/board_repository.dart';
+export 'src/board/board_undo.dart';
+export 'src/board/pages/board_page.dart' show BoardPage, BoardTab;
+export 'src/board/pages/board_routes.dart';
+export 'src/board/pages/board_widgets.dart'
+    show isBoardLocation, boardBackTarget;
+export 'src/board/pages/contribute_page.dart' show BoardContributePage;
+export 'src/board/pages/post_page.dart';
+export 'src/board/pages/prompt_editor.dart'
+    show lintTaskPrompt, PromptLint, PromptLintKind;
+export 'src/board/pages/task_page.dart';
 export 'src/data/api.dart';
 export 'src/data/cached_drive_repository.dart';
 export 'src/data/collab_repositories.dart';

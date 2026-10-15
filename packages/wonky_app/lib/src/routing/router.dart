@@ -2,6 +2,8 @@ import 'package:flutter/widgets.dart';
 import 'package:go_router/go_router.dart';
 
 import '../auth/auth_controller.dart';
+import '../board/pages/board_routes.dart';
+import '../board/pages/board_widgets.dart' show isBoardLocation;
 import '../config/home_scope.dart';
 import '../auth/screens/reset_password_screen.dart';
 import '../auth/screens/sign_in_screen.dart';
@@ -40,7 +42,8 @@ GoRouter buildShellRouter(ShellServices s) {
         return null; // dialog over the screen
       }
       if (status == AuthStatus.signedOut) {
-        if (isAuth) return null;
+        // Bugs & Improvements is public (specs/16 §4.3).
+        if (isAuth || isBoardLocation(path)) return null;
         final next = state.uri.toString();
         return next == '/'
             ? '/signin'
@@ -163,6 +166,8 @@ GoRouter buildShellRouter(ShellServices s) {
         ),
       // Settings: app settings + Wonky Work settings (suite 04 §4).
       ...settingsRoutes(s, page),
+      // Bugs & Improvements (specs/16 §4.3).
+      ...boardRoutes(s, page),
       GoRoute(
         path: '/invite/:token',
         pageBuilder: (c, st) => page(

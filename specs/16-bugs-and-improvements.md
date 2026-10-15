@@ -238,6 +238,19 @@ The details are public with the post (`contextJson`) and rendered under *Details
 - The post page shows the `checking` state until the triage result arrives (live, §7.6). The
   result is *Your post is live* or *Waiting for review: a moderator will look at it*.
 
+**As built (BI-5):** `wonky_app/lib/src/board/report/` (`showBoardReportDialog`,
+`BoardReportDraftStore` under `board.reportDraft.<app>` in the user store, `BoardIncludedDetails`
+and `stripRouteIds`, `BoardSimilarSearch`, `BoardReportServices` with the last error, the capture,
+the finisher and the upload transport as per-shell seams), `board/screenshot/` (the editor,
+`flattenScreenshot`, the web JPEG encoder behind a conditional import) and
+`board/report_commands.dart` (`shell.board.report {kind?, includeError?}`, `shell.board.open
+{tab?}`, the aliases `shell.help.reportBug` / `shell.help.feedback`, hidden from the palette).
+*Discard draft?* offers *Keep draft* and *Discard*; `Esc` returns to the dialog. The toast says
+*Posted* when the post is visible at once and *Posted. Waiting for review…* when it is held.
+*Vote instead* goes through `shell.board.vote` (undoable) when it is registered. Posting calls
+`board.createPost` directly (no `shell.board.createPost` command yet). `config.json` `board`
+defaults to true when absent.
+
 ### 4.3 Board routes
 
 The board routes are added to every app by `buildShellRouter`, next to `settingsRoutes()`. They are
@@ -1443,10 +1456,18 @@ tools defined in `packages/wonky_core/lib/mcp/board_tools.dart` and handlers in
 | `claim` / `release` | ✓ |
 | `copyClaimCode` | – |
 | `copyPrompt` | – |
-| `admin.moderate` / `setLabels` / `merge` / `decline` / `block` / `createTask` / `setPrompt` / `publishTask` / `linkPullRequest` / `markDone` / `markShipped` / `cancelTask` / `suggestBundles` | ✓ (inverse calls, §9.2), except `suggestBundles` (–) |
+| `removeScreenshot` | – (the bytes are deleted at once; confirmed) |
+| `admin.moderate` / `admin.setLabels` / `admin.editPost` (*Edit and approve*) / `admin.applySuggestedTitle` / `admin.merge` / `admin.unmerge` / `admin.decline` / `admin.reopen` / `admin.block` / `admin.createTask` / `admin.updateTask` / `admin.setTaskPosts` / `admin.regeneratePrompt` / `admin.setPrompt` / `admin.publishTask` / `admin.linkPullRequest` / `admin.markDone` / `admin.markShipped` / `admin.cancelTask` | ✓ (inverse calls, §9.2) |
+| `admin.suggestBundles` / `admin.dismissSuggestion` / `admin.dismissDuplicate` (*Not a duplicate*) | – (no server inverse) |
 
 All have `requiredRole: viewer`, because the board is not a document. Admin commands are
 registered for everyone but disabled (`enabled: false`) unless `board.me().isAdmin`.
+Admin command ids are `shell.board.admin.<name>`. The undo entries (`BoardUndoEntry`, domain
+`board`, shell stack) record what the inverse needs: the previous vote, title and body, labels,
+moderation state (approve ↔ hold, remove ↔ restore), prompt body or task status. Undoing
+`createTask` cancels the draft; redo creates a new one. Undoing `release` re-claims only the
+caller's own claim, and undoing `cancelTask` of a claimed task publishes it (the claim is gone).
+A `notFound`/`conflict` answer makes the step partial (`UndoConflict`).
 
 ## 15. Testing
 

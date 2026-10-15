@@ -110,7 +110,8 @@ class GoogleSignInConfig {
 /// Contents of `assets/config.json` (suite 01 §2.4):
 /// `{"apiUrl": "...", "webUrl": "...", "apps": {"drive": "...", "write":
 /// "...", "sheets": "...", "slides": "..."}, "cookieAuth": true, "google": {"clientId": "...",
-/// "redirectUri": "..."}}`.
+/// "redirectUri": "..."}, "board": false}` (`board` only when Bugs &
+/// Improvements is off).
 ///
 /// In production the server's `AppConfigRoute` replaces the bundled file at
 /// runtime; in development the bundled file lists the `flutter run` origins.
@@ -122,6 +123,7 @@ class AppUrls {
     this.webUrl = fallbackWebUrl,
     this.google,
     this.bugReportUrl = defaultBugReportUrl,
+    this.board = true,
   });
 
   final String apiUrl;
@@ -140,6 +142,11 @@ class AppUrls {
 
   static const defaultBugReportUrl =
       'https://github.com/serverpod/wonky/issues';
+
+  /// Whether the server runs Bugs & Improvements (`board`, specs/16 §4.1;
+  /// true when absent). False: `shell.board.report` falls back to the
+  /// GitHub link of [bugReportUrl].
+  final bool board;
 
   /// The URL of a page on the web server, e.g. `page('terms')`.
   String page(String path) => '$webUrl$path';
@@ -181,6 +188,7 @@ class AppUrls {
       bugReportUrl: bugs is String && bugs.startsWith('https://')
           ? bugs
           : defaultBugReportUrl,
+      board: json['board'] != false,
     );
   }
 
@@ -209,6 +217,7 @@ class AppUrls {
             webUrl: urls.webUrl,
             google: urls.google,
             bugReportUrl: urls.bugReportUrl,
+            board: urls.board,
           );
   }
 

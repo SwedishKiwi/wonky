@@ -631,22 +631,22 @@ class _EditorScaffoldState extends State<EditorScaffold> {
               ),
             ),
             const SizedBox(width: 8),
-            // (v2) *Report a bug* (suite 03 §3.1, §3.4): hidden below `sm`
+            // *Bugs & Improvements* (specs/16 §4.1): hidden below `sm`
             // (still in Help).
             if (MediaQuery.sizeOf(context).width >= 640)
               ShadTooltip(
-                builder: (_) => Text(l.cmdReportBug),
+                builder: (_) => Text(l.boardReportName),
                 child: ShadIconButton.ghost(
-                  key: const ValueKey<String>('editor.reportBug'),
+                  key: const ValueKey<String>('editor.board'),
                   width: 32,
                   height: 32,
                   iconSize: 18,
-                  semanticLabel: l.cmdReportBug,
+                  semanticLabel: l.boardReportName,
                   icon: Icon(
-                    LucideIcons.bug,
+                    LucideIcons.messageSquarePlus,
                     color: theme.colorScheme.mutedForeground,
                   ),
-                  onPressed: () => _invoke('shell.help.reportBug'),
+                  onPressed: () => _invoke('shell.board.report'),
                 ),
               ),
             if (widget.commentsButton)

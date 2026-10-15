@@ -136,6 +136,11 @@ class NotificationsSection extends StatelessWidget {
               control: choice('suggestions'),
             ),
             SettingsRow(
+              label: l.notifyBoard,
+              description: l.notifyBoardHint,
+              control: choice('board'),
+            ),
+            SettingsRow(
               label: l.notifyDigest,
               description: l.notifyDigestHint,
               control: ShadSwitch(
@@ -340,15 +345,15 @@ class AboutSection extends StatelessWidget {
                 ),
                 child: Text(l.aboutLicenses),
               ),
-              // (v2) suite 04 §4.1: *Report a bug* from About.
-              ShadButton.ghost(
-                key: const ValueKey<String>('settings.about.reportBug'),
-                leading: const Icon(LucideIcons.bug, size: 16),
+              // Bugs & Improvements from About (specs/16 §4.1).
+              ShadButton.outline(
+                key: const ValueKey<String>('settings.about.board'),
+                leading: const Icon(LucideIcons.messageSquarePlus, size: 16),
                 onPressed: () => services.dispatcher.invoke(
-                  'shell.help.reportBug',
+                  'shell.board.report',
                   context: context,
                 ),
-                child: Text(l.cmdReportBug),
+                child: Text(l.boardReportName),
               ),
             ],
           ),

@@ -149,7 +149,8 @@ void main() {
     'slides.ai.speakerNotes', 'slides.ai.altText', 'slides.ai.codeWalkthrough',
     'shell.mcp.copyConnectionInfo',
     // Help
-    'shell.help.reportBug', 'shell.help.whatsNew', 'shell.help.about',
+    'shell.board.report', 'shell.board.open', 'shell.help.whatsNew',
+    'shell.help.about',
   };
 
   testWidgets('Given the Slides menubar when it is built then every item '

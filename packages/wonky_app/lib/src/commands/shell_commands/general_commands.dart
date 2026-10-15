@@ -7,6 +7,8 @@ import 'package:shad/shad.dart';
 import 'package:wonky_client/wonky_client.dart';
 import 'package:wonky_core/wonky_core.dart' hide ActorKind;
 
+import '../../board/board_commands.dart';
+import '../../board/report_commands.dart';
 import '../../bootstrap/app_urls.dart';
 import '../../comments/comment_anchor.dart';
 import '../../config/home_scope.dart';
@@ -1217,39 +1219,8 @@ List<Command<CommandArgs>> miscCommands(ShellServices s) => [
       return const CommandResult.ok();
     },
   ),
-  shellCommand(
-    'shell.help.reportBug',
-    title: (l) => l.cmdReportBug,
-    icon: LucideIcons.bug,
-    category: (l) => l.categoryHelp,
-    run: (ctx, a) async {
-      final c = ctx.dialogContext;
-      if (c == null || !c.mounted) return const CommandResult.cancelled();
-      final url = bugReportUrl(s);
-      final choice = await confirmExternalLink(
-        c,
-        s,
-        url: url,
-        note: l10nOf(c).reportBugNote,
-      );
-      if (choice == ExternalLinkChoice.cancel) {
-        return const CommandResult.cancelled();
-      }
-      return CommandResult.ok({'url': url, 'action': choice.name});
-    },
-  ),
-  shellCommand(
-    'shell.help.feedback',
-    title: (l) => l.cmdReportProblem,
-    icon: LucideIcons.messageCircleWarning,
-    category: (l) => l.categoryHelp,
-    run: (ctx, a) async {
-      final c = ctx.dialogContext;
-      if (c == null || !c.mounted) return const CommandResult.cancelled();
-      await showFeedbackDialog(c, s);
-      return const CommandResult.ok();
-    },
-  ),
+  // `shell.help.reportBug` and `shell.help.feedback` are aliases of
+  // `shell.board.report` (board/report_commands.dart, specs/16 §4.1).
   shellCommand(
     'shell.help.whatsNew',
     title: (l) => l.cmdWhatsNew,
@@ -1366,6 +1337,8 @@ String mcpConnectionJson(ShellServices s, {String token = r'${WONKY_TOKEN}'}) {
 List<Command<CommandArgs>> allShellCommands(ShellServices s) => [
   ...driveCommands(s),
   ...generalCommands(s),
+  ...boardReportCommands(s),
+  ...boardCommands(s),
 ];
 
 /// The server's MCP endpoint (`<web server origin>/mcp`). In development the

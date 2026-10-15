@@ -7,6 +7,7 @@ import 'package:wonky_app/wonky_app.dart';
 import 'package:wonky_client/wonky_client.dart';
 import 'package:wonky_ui/testing.dart';
 
+import '../board/report/support/report_fakes.dart' show FakeReportBoard;
 import '../support/screen_pump.dart';
 
 /// Scope-aware homes and the left menu (D-10; suite 03 §3.3, Drive 04 §2):
@@ -25,6 +26,7 @@ void main() {
     final harness = CommandTestHarness(
       config: TestAppConfig(app: app, scope: scope),
       storage: storage,
+      board: FakeReportBoard(),
     );
     harness.services.router = GoRouter(
       routes: [
@@ -148,7 +150,7 @@ void main() {
       expect(find.text('Write settings'), findsNothing);
       expect(find.text('Test settings'), findsOneWidget);
       expect(find.text('Wonky Work settings'), findsOneWidget);
-      expect(key('home.footer.reportBug'), findsOneWidget);
+      expect(key('home.footer.board'), findsOneWidget);
       // The current app is highlighted and not a button.
       expect(
         tester.getSemantics(key('home.app.write')),
@@ -378,7 +380,7 @@ void main() {
       expect(key('drive.openInDrive'), findsNothing);
       // The new left menu: apps and bottom section.
       expect(key('home.app.drive'), findsOneWidget);
-      expect(key('home.footer.reportBug'), findsOneWidget);
+      expect(key('home.footer.board'), findsOneWidget);
       await settleTooltips(tester);
     });
   });
@@ -399,48 +401,17 @@ void main() {
       await settleTooltips(tester);
     });
 
-    testWidgets('when reporting a bug then the external-link confirm shows '
-        'github.com and copies or opens the prefilled link', (tester) async {
+    testWidgets('when opening Bugs & Improvements then the report dialog '
+        'shows', (tester) async {
       h = harness(scope: writeHome);
-      String? copied;
-      tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
-        SystemChannels.platform,
-        (call) async {
-          if (call.method == 'Clipboard.setData') {
-            copied = (call.arguments as Map)['text'] as String?;
-          }
-          return null;
-        },
-      );
-      addTearDown(
-        () => tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
-          SystemChannels.platform,
-          null,
-        ),
-      );
       await pumpScreen(tester, h, home());
 
-      await tester.tap(key('home.footer.reportBug'));
-      await tester.pumpAndSettle();
-      expect(key('dialog.externalLink'), findsOneWidget);
-      expect(find.textContaining('github.com'), findsOneWidget);
-      expect(find.textContaining('public'), findsOneWidget);
-      await tester.tap(find.text('Copy link'));
+      await tester.tap(key('home.footer.board'));
       await tester.pumpAndSettle();
 
-      expect(
-        copied,
-        startsWith('https://github.com/serverpod/wonky/issues/new?'),
-      );
-      expect(copied, contains('app=write'));
-      expect(copied, contains('browser=Chrome%20131'));
+      expect(key('dialog.board.report'), findsOneWidget);
+      expect(find.text('Bugs & Improvements'), findsWidgets);
       expect(h.crossApp.external, isEmpty);
-
-      await tester.tap(key('home.footer.reportBug'));
-      await tester.pumpAndSettle();
-      await tester.tap(find.text('Open'));
-      await tester.pumpAndSettle();
-      expect(h.crossApp.external, [copied]);
       await settleTooltips(tester);
     });
 
@@ -559,18 +530,18 @@ void main() {
       await settleTooltips(tester);
     });
 
-    testWidgets('when reporting a bug from the drawer then the drawer '
-        'closes and the confirm shows', (tester) async {
+    testWidgets('when opening Bugs & Improvements from the drawer then the '
+        'drawer closes and the report dialog shows', (tester) async {
       h = harness(scope: writeHome);
       await pumpScreen(tester, h, home(), size: const Size(600, 800));
       await tester.tap(key('shell.topBar.menu'));
       await tester.pumpAndSettle();
 
-      await tester.tap(key('home.footer.reportBug'));
+      await tester.tap(key('home.footer.board'));
       await tester.pumpAndSettle();
 
       expect(key('home.drawer'), findsNothing);
-      expect(key('dialog.externalLink'), findsOneWidget);
+      expect(key('dialog.board.report'), findsOneWidget);
       await settleTooltips(tester);
     });
 

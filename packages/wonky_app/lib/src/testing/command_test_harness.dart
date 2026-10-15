@@ -105,12 +105,13 @@ class CommandTestHarness {
     UuidV7Generator? ids,
     StorageController? storage,
     CrossAppNavigator? crossApp,
+    AppUrls? urls,
     bool registerShellCommands = true,
   }) : drive = drive ?? FakeDriveRepository(ids: ids),
        users = users ?? FakeUserRepository(),
        authRepository = auth ?? FakeAuthRepository() {
     TestWidgetsFlutterBinding.ensureInitialized();
-    final urls = AppUrls(
+    urls ??= AppUrls(
       apiUrl: 'http://localhost:8080/',
       apps: {for (final k in WonkyAppKind.values) k: k.devOrigin},
     );

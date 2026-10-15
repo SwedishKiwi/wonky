@@ -4,10 +4,11 @@ import 'package:go_router/go_router.dart';
 import 'package:wonky_app/testing.dart';
 import 'package:wonky_app/wonky_app.dart';
 import 'package:wonky_client/wonky_client.dart';
-import 'package:wonky_core/wonky_core.dart' show CommandStatus;
+import 'package:wonky_core/wonky_core.dart' show CommandStatus, MenuRoot;
 
 /// The shell commands of D-10 (suite 08 §5 v2): `shell.nav.openInDrive`,
-/// `shell.settings.openApp`, `shell.storage.open`, `shell.help.reportBug`,
+/// `shell.settings.openApp`, `shell.storage.open`, `shell.help.reportBug`
+/// (an alias of `shell.board.report`),
 /// `shell.account.switchApp {app}` and `shell.file.new` across apps.
 void main() {
   late CommandTestHarness h;
@@ -151,14 +152,22 @@ void main() {
   group('Given the shared Help menu', () {
     setUp(() => h = harness());
 
-    test('then Report a bug replaces Report a problem, which stays '
-        'registered', () async {
+    test('then Bugs & Improvements replaces Report a bug, and the old ids '
+        'stay registered', () async {
       final l = await WonkyAppLocalizations.delegate.load(const Locale('en'));
-      final ids = [for (final c in ShellMenus(l).root.commands) c.commandId];
+      final help = MenuRoot([ShellMenus(l).help]);
+      final ids = [for (final c in help.commands) c.commandId];
 
-      expect(ids, contains('shell.help.reportBug'));
+      expect(
+        ids,
+        containsAllInOrder(['shell.board.report', 'shell.board.open']),
+      );
+      expect(ids, isNot(contains('shell.help.reportBug')));
       expect(ids, isNot(contains('shell.help.feedback')));
+      expect(h.services.registry.byId('shell.help.reportBug'), isNotNull);
       expect(h.services.registry.byId('shell.help.feedback'), isNotNull);
+      expect(l.cmdBoardReport, 'Bugs & Improvements…');
+      expect(l.cmdBoardOpen, 'Browse Bugs & Improvements');
     });
   });
 

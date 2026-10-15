@@ -5,6 +5,7 @@ library;
 
 export 'src/assistant/fake_assistant_api.dart';
 export 'src/testing/command_test_harness.dart';
+export 'src/testing/fake_board_repository.dart';
 export 'src/testing/fake_cross_app.dart';
 export 'src/testing/fake_storage.dart';
 export 'src/testing/fake_repositories.dart'

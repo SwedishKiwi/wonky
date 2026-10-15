@@ -156,7 +156,8 @@ void _configureWebServer(Serverpod pod) {
   }
   // The MCP endpoint (specs/09-mcp.md §1): Streamable HTTP, bearer tokens.
   pod.webServer.addRoute(McpRoute(), '/mcp');
-  // Webhooks of the Bugs & Improvements GitHub App (specs/16 §13.3).
+  // Webhooks of the Bugs & Improvements GitHub App (specs/16 §13.3, README
+  // in lib/src/platform/board/github/).
   pod.webServer.addRoute(GithubWebhookRoute(), '/api/github/webhook');
   // Wonky Drive file bytes (Drive 02 §3.3, §8; suite 13 §6): token-bound
   // downloads with forced headers and the PUT upload route.

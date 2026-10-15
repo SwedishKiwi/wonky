@@ -263,26 +263,45 @@ class MarkdownComposerState extends State<MarkdownComposer> {
               _preview,
               () => _setPreview(true),
             ),
-            const Spacer(),
-            if (!_preview) ...[
-              tool('bold', LucideIcons.bold, l.markdownBold, 'B', () {
-                apply(MarkdownEdits.bold);
-              }),
-              tool('italic', LucideIcons.italic, l.markdownItalic, 'I', () {
-                apply(MarkdownEdits.italic);
-              }),
-              tool('code', LucideIcons.code, l.markdownCode, 'E', () {
-                apply(MarkdownEdits.code);
-              }),
-              tool('link', LucideIcons.link, l.markdownLink, 'K', insertLink),
-              tool(
-                'bullets',
-                LucideIcons.list,
-                l.markdownBulletedList,
-                null,
-                () => apply(MarkdownEdits.bullets),
-              ),
-            ],
+            // The tools wrap (right-aligned) when the box is narrow (360 px).
+            Expanded(
+              child: _preview
+                  ? const SizedBox.shrink()
+                  : Wrap(
+                      alignment: WrapAlignment.end,
+                      children: [
+                        tool('bold', LucideIcons.bold, l.markdownBold, 'B', () {
+                          apply(MarkdownEdits.bold);
+                        }),
+                        tool(
+                          'italic',
+                          LucideIcons.italic,
+                          l.markdownItalic,
+                          'I',
+                          () {
+                            apply(MarkdownEdits.italic);
+                          },
+                        ),
+                        tool('code', LucideIcons.code, l.markdownCode, 'E', () {
+                          apply(MarkdownEdits.code);
+                        }),
+                        tool(
+                          'link',
+                          LucideIcons.link,
+                          l.markdownLink,
+                          'K',
+                          insertLink,
+                        ),
+                        tool(
+                          'bullets',
+                          LucideIcons.list,
+                          l.markdownBulletedList,
+                          null,
+                          () => apply(MarkdownEdits.bullets),
+                        ),
+                      ],
+                    ),
+            ),
           ],
         ),
         const SizedBox(height: 4),

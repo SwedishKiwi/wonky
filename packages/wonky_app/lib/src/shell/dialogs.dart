@@ -7,7 +7,6 @@ import 'package:intl/intl.dart' as intl;
 import 'package:shad/shad.dart';
 import 'package:wonky_client/wonky_client.dart';
 
-import '../bootstrap/platform.dart';
 import '../data/api.dart';
 import '../l10n/wonky_app_localizations.dart';
 import 'form_dialog.dart';
@@ -149,60 +148,6 @@ Future<String?> showNameVersionDialog(
     dialogKey: 'dialog.nameVersion',
     maxLength: 200,
   );
-}
-
-/// Help › Report a problem (in-app dialog → `feedback.submit`).
-Future<void> showFeedbackDialog(BuildContext context, ShellServices s) async {
-  final l = WonkyAppLocalizations.of(context);
-  final r = await showWonkyFormDialog(
-    context,
-    WonkyDialogSpec(
-      title: l.feedbackTitle,
-      description: l.feedbackDescription,
-      dialogKey: 'dialog.feedback',
-      width: 480,
-      fields: [
-        SelectFieldSpec(
-          id: 'kind',
-          label: l.feedbackKind,
-          options: {
-            'problem': l.feedbackKindProblem,
-            'idea': l.feedbackKindIdea,
-          },
-          initial: 'problem',
-        ),
-        TextFieldSpec(
-          id: 'message',
-          label: l.feedbackMessage,
-          multiline: true,
-          maxLength: 4000,
-          validator: (v) => v.trim().isEmpty ? l.errorRequired : null,
-        ),
-      ],
-      buttons: [
-        DialogButtonSpec(id: 'cancel', label: l.actionCancel),
-        DialogButtonSpec(id: 'send', label: l.actionSend, primary: true),
-      ],
-    ),
-  );
-  if (r?.buttonId != 'send') return;
-  try {
-    await s.repositories.meta.submitFeedback(
-      FeedbackSubmission(
-        kind: r!.values['kind'] == 'idea'
-            ? FeedbackKind.idea
-            : FeedbackKind.problem,
-        message: r.text('message'),
-        app: s.config.app.name,
-        appVersion: s.serverInfo.value?.minClientVersion ?? 'dev',
-        platform: platformLabel,
-        route: s.router.state.uri.toString(),
-      ),
-    );
-    s.toasts.show(l.feedbackThanks);
-  } catch (e) {
-    s.toasts.error(l.feedbackFailed, description: errorMessage(e));
-  }
 }
 
 /// Help › What's new.

@@ -22,7 +22,7 @@ import 'item_actions.dart';
 /// section (four apps, the current one highlighted), *+ New* (Drive and v1
 /// homes only: the app homes create from their template strip), the app's
 /// navigation (`WonkyAppConfig.homeNav`, Drive: with the folder tree) and
-/// the bottom section (app settings, Wonky Work settings, *Report a bug*,
+/// the bottom section (app settings, Wonky Work settings, *Bugs & Improvements*,
 /// storage meter). Below `md` it is shown in a drawer ([onNavigate] closes
 /// it after a navigation).
 class HomeSidebar extends StatefulWidget {
@@ -507,7 +507,7 @@ List<WonkyMenuEntry> homeNewMenuEntries(BuildContext context, ShellServices s) {
 }
 
 /// The bottom section of the left menu (Drive 04 §2): the app settings,
-/// *Wonky Work settings*, *Report a bug* and the storage meter.
+/// *Wonky Work settings*, *Bugs & Improvements* and the storage meter.
 class HomeSidebarFooter extends StatelessWidget {
   const HomeSidebarFooter({
     super.key,
@@ -548,10 +548,10 @@ class HomeSidebarFooter extends StatelessWidget {
               onInvoke('shell.settings.open', const {'section': 'account'}),
         ),
         SidebarNavButton(
-          key: const ValueKey<String>('home.footer.reportBug'),
-          icon: LucideIcons.bug,
-          label: l.cmdReportBug,
-          onPressed: () => onInvoke('shell.help.reportBug'),
+          key: const ValueKey<String>('home.footer.board'),
+          icon: LucideIcons.messageSquarePlus,
+          label: l.boardReportName,
+          onPressed: () => onInvoke('shell.board.report'),
         ),
         const SizedBox(height: 8),
         StorageMeterSlot(

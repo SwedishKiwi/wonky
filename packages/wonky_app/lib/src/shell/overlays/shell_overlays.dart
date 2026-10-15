@@ -12,6 +12,7 @@ import '../../auth/auth_controller.dart';
 import '../../auth/screens/session_expired_dialog.dart';
 import '../../l10n/wonky_app_localizations.dart';
 import '../shell_services.dart';
+import '../../board/report/board_report_services.dart';
 
 /// Global overlays (suite 03 §4): offline banner, session-expired dialog,
 /// version mismatch toast, MCP control pill and the error boundary.
@@ -249,12 +250,16 @@ class McpControlPill extends StatelessWidget {
 }
 
 /// Installs the global error boundary: errors are reported to the server
-/// log (`feedback.reportError`) and failed widgets render a recoverable
-/// "Something went wrong" card.
+/// log (`feedback.reportError`, private telemetry), remembered as the last
+/// error for the report dialog (specs/16 §4.2.4) and failed widgets render
+/// a recoverable "Something went wrong" card.
 void installErrorBoundary(ShellServices s) {
   final previous = FlutterError.onError;
   FlutterError.onError = (details) {
     previous?.call(details);
+    BoardReportServices.of(
+      s,
+    ).recordError(details.exceptionAsString(), details.stack);
     _report(s, details.exceptionAsString(), details.stack);
   };
   ErrorWidget.builder = (details) => ErrorCard(details: details, services: s);
@@ -288,7 +293,9 @@ void _report(ShellServices s, String error, StackTrace? stack) {
   );
 }
 
-/// "Something went wrong" card with *Reload* and *Copy error details*.
+/// "Something went wrong" card with *Copy error details*, *Report this bug*
+/// (the report dialog with kind Bug and this error attached, specs/16
+/// §4.1) and *Reload*.
 class ErrorCard extends StatelessWidget {
   const ErrorCard({super.key, required this.details, required this.services});
 
@@ -323,6 +330,20 @@ class ErrorCard extends StatelessWidget {
                   ),
                 ),
                 child: Text(l.errorCopyDetails),
+              ),
+              ShadButton.outline(
+                key: const ValueKey<String>('error.reportBug'),
+                onPressed: () {
+                  BoardReportServices.of(
+                    services,
+                  ).recordError(details.exceptionAsString(), details.stack);
+                  services.dispatcher.invoke(
+                    'shell.board.report',
+                    args: const {'kind': 'bug', 'includeError': true},
+                    context: context,
+                  );
+                },
+                child: Text(l.errorReportBug),
               ),
               ShadButton(
                 onPressed: () {

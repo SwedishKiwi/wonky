@@ -1,6 +1,5 @@
 import 'package:flutter/widgets.dart';
 import 'package:shad/shad.dart';
-import 'package:wonky_core/wonky_core.dart' show InvocationSource;
 import 'package:wonky_ui/wonky_ui.dart';
 
 import '../../branding/product_icon.dart';
@@ -98,21 +97,20 @@ class AuthLayout extends StatelessWidget {
                       const SizedBox(height: 16),
                       footer!,
                     ],
-                    // (v2) *Report a bug* works signed out too (suite 03
-                    // §3.4).
+                    // Bugs & Improvements (specs/16 §4.1): the board page,
+                    // readable signed out (*Report* asks to sign in).
                     const SizedBox(height: 8),
                     Center(
                       child: ShadButton.link(
-                        key: const ValueKey<String>('auth.reportBug'),
+                        key: const ValueKey<String>('auth.board'),
                         size: ShadButtonSize.sm,
                         foregroundColor: theme.colorScheme.mutedForeground,
-                        leading: const Icon(LucideIcons.bug, size: 14),
-                        onPressed: () => services.dispatcher.invoke(
-                          'shell.help.reportBug',
-                          source: InvocationSource.menu,
-                          context: context,
+                        leading: const Icon(
+                          LucideIcons.messageSquarePlus,
+                          size: 14,
                         ),
-                        child: Text(l.cmdReportBug),
+                        onPressed: () => services.router.go('/improvements'),
+                        child: Text(l.boardReportName),
                       ),
                     ),
                   ],
