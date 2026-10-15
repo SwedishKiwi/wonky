@@ -9,7 +9,8 @@ import '../web_apps.dart';
 /// links; all four apps, also before one is built), whether the API
 /// accepts cookie auth (specs/01 §2.5) and, when Google sign-in is
 /// configured, `{clientId, redirectUri}` for the web OAuth flow (specs/04
-/// §1.6).
+/// §1.6), and `board: false` when Bugs & Improvements is turned off
+/// (`board.enabled`, specs/16 §4.1; the apps then link to GitHub issues).
 class AppConfigWidget extends JsonWidget {
   AppConfigWidget({
     required String apiUrl,
@@ -17,6 +18,7 @@ class AppConfigWidget extends JsonWidget {
     required Map<String, String> apps,
     required bool cookieAuth,
     String? googleClientId,
+    bool board = true,
   }) : super(
          object: {
            'apiUrl': apiUrl,
@@ -30,6 +32,7 @@ class AppConfigWidget extends JsonWidget {
                  webUrl,
                ).resolve('/auth/callback').toString(),
              },
+           if (!board) 'board': false,
          },
        );
 }
@@ -49,6 +52,7 @@ class AppConfigRoute extends WidgetRoute {
     required Uri webOrigin,
     required bool cookieAuth,
     String? googleClientId,
+    bool board = true,
   }) : widget = AppConfigWidget(
          apiUrl: apiUrl.toString(),
          webUrl: webOrigin.resolve('/').toString(),
@@ -58,6 +62,7 @@ class AppConfigRoute extends WidgetRoute {
          },
          cookieAuth: cookieAuth,
          googleClientId: googleClientId,
+         board: board,
        );
 
   final AppConfigWidget widget;

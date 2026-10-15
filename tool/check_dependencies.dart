@@ -341,6 +341,7 @@ const rules = <String, PackageRule>{
       'yaml': 'reads the wonky/mcp/ai sections of the config files',
       'image': 'Drive upload previews and thumbnails (Drive 02 §6)',
       'mime': 'MIME sniffing of uploaded files (Drive 02 §5, suite 13 §6)',
+      'dart_jsonwebtoken': 'RS256 JWT of the GitHub App (specs/16 §13.3)',
     },
   ),
   'wonky_client': PackageRule(

@@ -10,6 +10,7 @@ import 'src/cache_busting.dart';
 import 'src/generated/future_calls.dart' show FutureCalls;
 import 'src/generated/serverpod.dart';
 import 'src/platform/board/ai/jev_gemini_board_ai.dart';
+import 'src/platform/board/board_config.dart';
 import 'src/platform/cluster/cluster.dart';
 import 'src/platform/cluster/cluster_bus.dart';
 import 'src/platform/config/wonky_config.dart';
@@ -171,6 +172,7 @@ void _configureWebServer(Serverpod pod) {
         webOrigin: WonkyConfig.current.webOrigin(pod.config),
         cookieAuth: pod.config.authCookie != null,
         googleClientId: googleWebClientId(),
+        board: BoardConfig.current.enabled,
       ),
       '/$app/assets/assets/config.json',
     );
