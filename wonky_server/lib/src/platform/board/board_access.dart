@@ -65,6 +65,22 @@ abstract final class BoardAccess {
     return _callers[session] = result;
   }
 
+  /// Makes [actor] the caller of [session]: MCP tool calls authenticate
+  /// with a personal access token, not the session (specs/16 §14).
+  static Future<BoardCaller> useActor(Session session, Actor actor) async {
+    final profile = await BoardUserProfile.db.findFirstRow(
+      session,
+      where: (t) => t.userId.equals(actor.userId),
+    );
+    final blocked = isBlocked(profile, nowUtc());
+    return _callers[session] = BoardCaller(
+      actor: actor,
+      isAdmin: await BoardAdmins.isAdminUser(session, actor.userId),
+      blocked: blocked,
+      blockedReason: blocked ? profile?.blockedReason : null,
+    );
+  }
+
   /// Forgets the cached caller of [session] (after blocking within one
   /// session, tests).
   static void forget(Session session) => _callers[session] = null;

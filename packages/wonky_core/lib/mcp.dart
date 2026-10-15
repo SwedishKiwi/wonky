@@ -16,6 +16,7 @@ import 'mcp/ui_slides_tools.dart';
 import 'mcp/ui_tools.dart';
 import 'mcp/write_tools.dart';
 
+export 'mcp/board_tools.dart';
 export 'mcp/comments_tools.dart';
 export 'mcp/drive_tools.dart';
 export 'mcp/mcp_tool.dart';

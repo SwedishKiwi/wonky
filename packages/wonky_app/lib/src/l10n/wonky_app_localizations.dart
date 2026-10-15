@@ -4720,6 +4720,12 @@ abstract class WonkyAppLocalizations {
   /// **'Control app windows (ui.* tools)'**
   String get mcpScopeUiControl;
 
+  /// No description provided for @mcpScopeBoard.
+  ///
+  /// In en, this message translates to:
+  /// **'Bugs & Improvements: read, post, vote, claim tasks'**
+  String get mcpScopeBoard;
+
   /// No description provided for @tokenCreateHint.
   ///
   /// In en, this message translates to:

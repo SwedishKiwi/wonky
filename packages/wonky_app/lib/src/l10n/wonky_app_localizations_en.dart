@@ -2648,6 +2648,10 @@ class WonkyAppLocalizationsEn extends WonkyAppLocalizations {
   String get mcpScopeUiControl => 'Control app windows (ui.* tools)';
 
   @override
+  String get mcpScopeBoard =>
+      'Bugs & Improvements: read, post, vote, claim tasks';
+
+  @override
   String get tokenCreateHint =>
       'The token acts as you with the permissions you choose. You can revoke it at any time.';
 
@@ -5756,6 +5760,10 @@ class WonkyAppLocalizationsEnXa extends WonkyAppLocalizationsEn {
   @override
   String get mcpScopeUiControl =>
       '[Çöñţŕöļ åþþ ŵîñðöŵš (ûî.* ţööļš) one two th]';
+
+  @override
+  String get mcpScopeBoard =>
+      '[Ɓûĝš & Îɱþŕöṽéɱéñţš: ŕéåð, þöšţ, ṽöţé, çļåîɱ ţåšķš one two three fo]';
 
   @override
   String get tokenCreateHint =>

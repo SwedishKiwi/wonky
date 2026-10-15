@@ -168,6 +168,8 @@ abstract final class AccountService {
     'slides:edit',
     'scripts:run',
     'ui:control',
+    // Bugs & Improvements (specs/16 §14).
+    'board',
   };
   static const maxTokensPerUser = 50;
   static final _random = Random.secure();

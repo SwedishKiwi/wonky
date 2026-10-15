@@ -30,6 +30,7 @@ String mcpScopeLabel(WonkyAppLocalizations l, String scope) => switch (scope) {
   McpScope.slidesEdit => l.mcpScopeSlidesEdit,
   McpScope.scriptsRun => l.mcpScopeScriptsRun,
   McpScope.uiControl => l.mcpScopeUiControl,
+  McpScope.board => l.mcpScopeBoard,
   _ => scope,
 };
 

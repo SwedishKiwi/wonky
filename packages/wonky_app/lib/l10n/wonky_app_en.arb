@@ -1685,6 +1685,7 @@
   "mcpScopeSlidesEdit": "Presentations: edit",
   "mcpScopeScriptsRun": "Scripts: run",
   "mcpScopeUiControl": "Control app windows (ui.* tools)",
+  "mcpScopeBoard": "Bugs & Improvements: read, post, vote, claim tasks",
   "tokenCreateHint": "The token acts as you with the permissions you choose. You can revoke it at any time.",
   "tokenNameRequired": "Give the token a name.",
   "tokenScopesRequired": "Choose at least one permission.",
