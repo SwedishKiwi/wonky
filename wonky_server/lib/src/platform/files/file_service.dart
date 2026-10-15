@@ -18,6 +18,12 @@ abstract final class FileService {
   static const signedUrlLifetime = Duration(minutes: 15);
   static const importLifetime = Duration(hours: 24);
 
+  /// (specs/16 §5.3) An unattached board screenshot is deleted after this.
+  static const boardScreenshotLifetime = Duration(days: 1);
+
+  /// Board screenshots are PNG or JPEG only (specs/16 §5.3).
+  static const boardScreenshotMimeTypes = {'image/png', 'image/jpeg'};
+
   static const imageMimeTypes = {
     'image/png',
     'image/jpeg',
@@ -48,6 +54,7 @@ abstract final class FileService {
     StoredFileKind.avatar => 5 * 1024 * 1024,
     StoredFileKind.thumbnail => 2 * 1024 * 1024,
     StoredFileKind.importSource => WonkyConfig.current.maxImportUploadBytes,
+    StoredFileKind.boardScreenshot => 5 * 1024 * 1024,
     _ => 0,
   };
 
@@ -92,6 +99,15 @@ abstract final class FileService {
       case StoredFileKind.importSource:
         if (!importMimeTypes.contains(mime)) {
           throw Errors.invalid('Unsupported file type "$mime".');
+        }
+      case StoredFileKind.boardScreenshot:
+        // No item, private storage, owner only until a post attaches it
+        // (specs/16 §5.3); not counted toward the quota (Drive 03).
+        if (!boardScreenshotMimeTypes.contains(mime)) {
+          throw Errors.invalid('Screenshots must be PNG or JPEG.');
+        }
+        if (itemUuid != null) {
+          throw Errors.invalid('Screenshots do not belong to an item.');
         }
       default:
         throw Errors.invalid('Files of this kind cannot be uploaded.');
@@ -150,9 +166,13 @@ abstract final class FileService {
           sizeBytes: size,
           status: StoredFileStatus.pending,
           createdAt: nowUtc(),
-          expiresAt: kind == StoredFileKind.importSource
-              ? nowUtc().add(importLifetime)
-              : null,
+          expiresAt: switch (kind) {
+            StoredFileKind.importSource => nowUtc().add(importLifetime),
+            StoredFileKind.boardScreenshot => nowUtc().add(
+              boardScreenshotLifetime,
+            ),
+            _ => null,
+          },
         ),
         transaction: tx,
       );
@@ -319,6 +339,11 @@ abstract final class FileService {
     }
     return result;
   }
+
+  /// Status and signed URL of [file] without an access check: callers
+  /// check access themselves (board screenshots, specs/16 §5.3).
+  static Future<FileUrlView> viewOf(Session session, StoredFile file) =>
+      _view(session, file);
 
   static Future<FileUrlView> _view(Session session, StoredFile file) async {
     String? url;

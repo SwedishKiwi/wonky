@@ -7,6 +7,9 @@ fields:
   size: BoardSize
   status: BoardTaskStatus
   promptBody: String
+  ### The full contributor prompt: the fixed frame around [promptBody]
+  ### (specs/16 §10.1).
+  prompt: String
   promptGeneratedAt: DateTime?
   promptEditedAt: DateTime?
   promptEditedBy: BoardAuthor?

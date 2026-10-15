@@ -72,6 +72,10 @@ import 'package:wonky_server/src/generated/write/models/write_theme_revision_vie
 import 'package:wonky_server/src/generated/write/models/write_theme_view.dart'
     as _ipbzt39t;
 import 'package:wonky_sync_models/wonky_sync_models.dart' as _i810rwvy;
+import 'future_calls_generated_models/board_future_call_summarize_model.dart'
+    as _icgheary;
+import 'future_calls_generated_models/board_future_call_triage_model.dart'
+    as _if8h900w;
 import 'future_calls_generated_models/file_preview_future_call_generate_model.dart'
     as _ilpvgw0t;
 import 'future_calls_generated_models/notification_email_future_call_send_model.dart'
@@ -639,6 +643,8 @@ class Protocol extends _is.DatabaseSerializationManager
       _is.ProtocolDeserialization.cached(
         this,
         types: const [
+          _is.getType<_icgheary.BoardFutureCallSummarizeModel>,
+          _is.getType<_if8h900w.BoardFutureCallTriageModel>,
           _is.getType<_ilpvgw0t.FilePreviewFutureCallGenerateModel>,
           _is.getType<_inb6x2l0.NotificationEmailFutureCallSendModel>,
           _is.getType<_io4auc29.StorageFutureCallRefreshItemSizeModel>,
@@ -954,6 +960,8 @@ class Protocol extends _is.DatabaseSerializationManager
           _is.getType<_ick3mhj2.WriteThemeRevisionView>,
           _is.getType<_ixbjd26z.WriteThemeView>,
           _is.getType<_is9bkd9t.WriteVersionDocument>,
+          _is.getType<_icgheary.BoardFutureCallSummarizeModel?>,
+          _is.getType<_if8h900w.BoardFutureCallTriageModel?>,
           _is.getType<_ilpvgw0t.FilePreviewFutureCallGenerateModel?>,
           _is.getType<_inb6x2l0.NotificationEmailFutureCallSendModel?>,
           _is.getType<_io4auc29.StorageFutureCallRefreshItemSizeModel?>,
@@ -8489,6 +8497,12 @@ class Protocol extends _is.DatabaseSerializationManager
       }
     }
 
+    if (t == _icgheary.BoardFutureCallSummarizeModel) {
+      return _icgheary.BoardFutureCallSummarizeModel.fromJson(data) as T;
+    }
+    if (t == _if8h900w.BoardFutureCallTriageModel) {
+      return _if8h900w.BoardFutureCallTriageModel.fromJson(data) as T;
+    }
     if (t == _ilpvgw0t.FilePreviewFutureCallGenerateModel) {
       return _ilpvgw0t.FilePreviewFutureCallGenerateModel.fromJson(data) as T;
     }
@@ -9434,6 +9448,18 @@ class Protocol extends _is.DatabaseSerializationManager
     }
     if (t == _is9bkd9t.WriteVersionDocument) {
       return _is9bkd9t.WriteVersionDocument.fromJson(data) as T;
+    }
+    if (t == _is.getType<_icgheary.BoardFutureCallSummarizeModel?>()) {
+      return (data != null
+              ? _icgheary.BoardFutureCallSummarizeModel.fromJson(data)
+              : null)
+          as T;
+    }
+    if (t == _is.getType<_if8h900w.BoardFutureCallTriageModel?>()) {
+      return (data != null
+              ? _if8h900w.BoardFutureCallTriageModel.fromJson(data)
+              : null)
+          as T;
     }
     if (t == _is.getType<_ilpvgw0t.FilePreviewFutureCallGenerateModel?>()) {
       return (data != null
@@ -11243,6 +11269,9 @@ class Protocol extends _is.DatabaseSerializationManager
 
   static String? getClassNameForType(Type type) {
     return switch (type) {
+      _icgheary.BoardFutureCallSummarizeModel =>
+        'BoardFutureCallSummarizeModel',
+      _if8h900w.BoardFutureCallTriageModel => 'BoardFutureCallTriageModel',
       _ilpvgw0t.FilePreviewFutureCallGenerateModel =>
         'FilePreviewFutureCallGenerateModel',
       _inb6x2l0.NotificationEmailFutureCallSendModel =>
@@ -11575,6 +11604,10 @@ class Protocol extends _is.DatabaseSerializationManager
     }
 
     switch (data) {
+      case _icgheary.BoardFutureCallSummarizeModel():
+        return 'BoardFutureCallSummarizeModel';
+      case _if8h900w.BoardFutureCallTriageModel():
+        return 'BoardFutureCallTriageModel';
       case _ilpvgw0t.FilePreviewFutureCallGenerateModel():
         return 'FilePreviewFutureCallGenerateModel';
       case _inb6x2l0.NotificationEmailFutureCallSendModel():
@@ -12242,6 +12275,12 @@ class Protocol extends _is.DatabaseSerializationManager
     var dataClassName = data['className'];
     if (dataClassName is! String) {
       return super.deserializeByClassName(data);
+    }
+    if (dataClassName == 'BoardFutureCallSummarizeModel') {
+      return deserialize<_icgheary.BoardFutureCallSummarizeModel>(data['data']);
+    }
+    if (dataClassName == 'BoardFutureCallTriageModel') {
+      return deserialize<_if8h900w.BoardFutureCallTriageModel>(data['data']);
     }
     if (dataClassName == 'FilePreviewFutureCallGenerateModel') {
       return deserialize<_ilpvgw0t.FilePreviewFutureCallGenerateModel>(

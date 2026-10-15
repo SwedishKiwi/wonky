@@ -9,6 +9,7 @@ import 'package:serverpod_cloud_storage/serverpod_cloud_storage.dart';
 import 'src/cache_busting.dart';
 import 'src/generated/future_calls.dart' show FutureCalls;
 import 'src/generated/serverpod.dart';
+import 'src/platform/board/ai/jev_gemini_board_ai.dart';
 import 'src/platform/cluster/cluster.dart';
 import 'src/platform/cluster/cluster_bus.dart';
 import 'src/platform/config/wonky_config.dart';
@@ -45,6 +46,8 @@ void run(List<String> args) async {
   registerVersionProviders();
   registerScriptHooks();
   registerSlidesHooks();
+  // The board AI (specs/16 §6): Jev and Gemini on internal keys.
+  JevGeminiBoardAi.install();
   _configureWebServer(pod);
 
   // Cloud storage for uploads, exports and snapshots. Works with Serverpod
@@ -206,6 +209,8 @@ final _jobs = <String, (String, Future<void> Function(dynamic recurring))>{
   // Sheets scripts (Sheets 09 §8.7.3, §13.1).
   'wonky.scriptsTick': ('* * * * *', (r) => r.scriptScheduler.tick()),
   'wonky.scriptsPrune': ('37 3 * * *', (r) => r.scriptScheduler.prune()),
+  // Bugs & Improvements: claims, unchecked posts, retention (specs/16 §8.2).
+  'wonky.boardSweep': ('*/10 * * * *', (r) => r.board.sweep()),
 };
 
 /// Brings the scheduled recurring jobs in line with [_jobs] (see

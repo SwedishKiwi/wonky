@@ -14,12 +14,17 @@
 import 'dart:async' as _ida;
 import 'package:clock/clock.dart' as _io0w16m8;
 import 'package:serverpod/serverpod.dart' as _is;
+import '../platform/board/board_future_call.dart' as _i7g7f7wg;
 import '../platform/files/file_preview_future_call.dart' as _iw6v1fyh;
 import '../platform/jobs/maintenance_future_call.dart' as _imgsvm9k;
 import '../platform/notifications/notification_email_future_call.dart'
     as _i1dis1nt;
 import '../platform/storage/storage_future_call.dart' as _iel4dsm1;
 import '../sheets/scripts/script_scheduler_future_call.dart' as _iq0nfb3f;
+import 'future_calls_generated_models/board_future_call_summarize_model.dart'
+    as _icgheary;
+import 'future_calls_generated_models/board_future_call_triage_model.dart'
+    as _if8h900w;
 import 'future_calls_generated_models/file_preview_future_call_generate_model.dart'
     as _ilpvgw0t;
 import 'future_calls_generated_models/notification_email_future_call_send_model.dart'
@@ -69,6 +74,9 @@ class FutureCalls extends _is.FutureCallDispatch<_FutureCallRef> {
     String serverId,
   ) {
     var registeredFutureCalls = <String, _is.InvokableFutureCall>{
+      'BoardTriageFutureCall': BoardTriageFutureCall(),
+      'BoardSummarizeFutureCall': BoardSummarizeFutureCall(),
+      'BoardSweepFutureCall': BoardSweepFutureCall(),
       'FilePreviewGenerateFutureCall': FilePreviewGenerateFutureCall(),
       'MaintenanceCaptureVersionsFutureCall':
           MaintenanceCaptureVersionsFutureCall(),
@@ -201,6 +209,8 @@ class _FutureCallRef {
 
   final _InvokeFutureCall _invokeFutureCall;
 
+  late final board = _BoardFutureCallDispatcher(_invokeFutureCall);
+
   late final filePreview = _FilePreviewFutureCallDispatcher(_invokeFutureCall);
 
   late final maintenance = _MaintenanceFutureCallDispatcher(_invokeFutureCall);
@@ -214,6 +224,35 @@ class _FutureCallRef {
   late final scriptScheduler = _ScriptSchedulerFutureCallDispatcher(
     _invokeFutureCall,
   );
+}
+
+class _BoardFutureCallDispatcher {
+  _BoardFutureCallDispatcher(this._invokeFutureCall);
+
+  final _InvokeFutureCall _invokeFutureCall;
+
+  Future<void> triage(int postId) {
+    var object = _if8h900w.BoardFutureCallTriageModel(postId: postId);
+    return _invokeFutureCall(
+      'BoardTriageFutureCall',
+      object,
+    );
+  }
+
+  Future<void> summarize(int postId) {
+    var object = _icgheary.BoardFutureCallSummarizeModel(postId: postId);
+    return _invokeFutureCall(
+      'BoardSummarizeFutureCall',
+      object,
+    );
+  }
+
+  Future<void> sweep() {
+    return _invokeFutureCall(
+      'BoardSweepFutureCall',
+      null,
+    );
+  }
 }
 
 class _FilePreviewFutureCallDispatcher {
@@ -327,6 +366,52 @@ class _ScriptSchedulerFutureCallDispatcher {
       'ScriptSchedulerPruneFutureCall',
       null,
     );
+  }
+}
+
+class BoardTriageFutureCall
+    extends _is.FutureCall<_if8h900w.BoardFutureCallTriageModel>
+    implements _is.InvokableFutureCall<_if8h900w.BoardFutureCallTriageModel> {
+  @override
+  _ida.Future<void> invoke(
+    _is.Session session,
+    _if8h900w.BoardFutureCallTriageModel? object,
+  ) async {
+    if (object != null) {
+      await _i7g7f7wg.BoardFutureCall().triage(
+        session,
+        object.postId,
+      );
+    }
+  }
+}
+
+class BoardSummarizeFutureCall
+    extends _is.FutureCall<_icgheary.BoardFutureCallSummarizeModel>
+    implements
+        _is.InvokableFutureCall<_icgheary.BoardFutureCallSummarizeModel> {
+  @override
+  _ida.Future<void> invoke(
+    _is.Session session,
+    _icgheary.BoardFutureCallSummarizeModel? object,
+  ) async {
+    if (object != null) {
+      await _i7g7f7wg.BoardFutureCall().summarize(
+        session,
+        object.postId,
+      );
+    }
+  }
+}
+
+class BoardSweepFutureCall extends _is.FutureCall
+    implements _is.InvokableFutureCall {
+  @override
+  _ida.Future<void> invoke(
+    _is.Session session,
+    _is.SerializableModel? object,
+  ) async {
+    await _i7g7f7wg.BoardFutureCall().sweep(session);
   }
 }
 

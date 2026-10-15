@@ -1,209 +1,227 @@
 import 'package:serverpod/serverpod.dart';
 
 import '../common/models.dart';
+import 'board_comments.dart';
+import 'board_live_streams.dart';
+import 'board_moderation.dart';
+import 'board_posts.dart';
+import 'board_tasks.dart';
+import 'board_votes.dart';
 
-/// Facade of Bugs & Improvements (specs/16). Contract stub: the work
-/// packages BI-2 and BI-7 implement it.
+/// Facade of Bugs & Improvements (specs/16): the endpoint delegates here;
+/// the work is split by area (posts, votes, comments and flags,
+/// moderation, tasks and claims, live streams).
 abstract final class BoardService {
-  static Never _todo() => throw UnimplementedError('board: not built yet');
-
-  static Future<BoardMe> me(Session session) async => _todo();
-  static Future<BoardPostPage> list(Session session, BoardListQuery q) async =>
-      _todo();
-  static Future<BoardPostView> getPost(Session session, int number) async =>
-      _todo();
+  static Future<BoardMe> me(Session session) => BoardPosts.me(session);
+  static Future<BoardPostPage> list(Session session, BoardListQuery q) =>
+      BoardPosts.list(session, q);
+  static Future<BoardPostView> getPost(Session session, int number) =>
+      BoardPosts.getPost(session, number);
   static Future<List<BoardCommentView>> listComments(
     Session session, {
     int? postNumber,
     int? taskNumber,
-  }) async => _todo();
+  }) => BoardComments.list(
+    session,
+    postNumber: postNumber,
+    taskNumber: taskNumber,
+  );
   static Future<List<BoardSimilarPost>> similar(
     Session session, {
     required String title,
     required String body,
     BoardPostKind? kind,
-  }) async => _todo();
-  static Future<String?> getScreenshotUrl(Session session, int number) async =>
-      _todo();
+  }) => BoardPosts.similar(session, title: title, body: body, kind: kind);
+  static Future<String?> getScreenshotUrl(Session session, int number) =>
+      BoardPosts.getScreenshotUrl(session, number);
   static Future<BoardTaskPage> listTasks(
     Session session,
     List<BoardTaskStatus> statuses,
     String? cursor,
     int limit,
-  ) async => _todo();
-  static Future<BoardTaskView> getTask(Session session, int number) async =>
-      _todo();
+  ) => BoardTasks.list(session, statuses, cursor, limit);
+  static Future<BoardTaskView> getTask(Session session, int number) =>
+      BoardTasks.get(session, number);
   static Stream<BoardPostEvent> watchPost(Session session, int number) =>
-      _todo();
-  static Stream<BoardPostEvent> watchTasks(Session session) => _todo();
+      BoardStreams.watchPost(session, number);
+  static Stream<BoardPostEvent> watchTasks(Session session) =>
+      BoardStreams.watchTasks(session);
   static Future<FileUploadTicket> createScreenshotUpload(
     Session session,
     UuidValue fileUuid,
     String mimeType,
     int size,
-  ) async => _todo();
+  ) => BoardPosts.createScreenshotUpload(session, fileUuid, mimeType, size);
   static Future<BoardPostView> createPost(
     Session session,
     BoardPostDraft draft,
-  ) async => _todo();
+  ) => BoardPosts.createPost(session, draft);
   static Future<BoardPostView> editPost(
     Session session,
     int number,
     String title,
     String body,
-  ) async => _todo();
-  static Future<void> deletePost(Session session, int number) async => _todo();
-  static Future<BoardPostView> restorePost(Session session, int number) async =>
-      _todo();
+  ) => BoardPosts.editPost(session, number, title, body);
+  static Future<void> deletePost(Session session, int number) =>
+      BoardPosts.deletePost(session, number);
+  static Future<BoardPostView> restorePost(Session session, int number) =>
+      BoardPosts.restorePost(session, number);
   static Future<BoardPostView> removeScreenshot(
     Session session,
     int number,
-  ) async => _todo();
+  ) => BoardPosts.removeScreenshot(session, number);
   static Future<BoardVoteResult> vote(
     Session session,
     int number,
     int value,
-  ) async => _todo();
+  ) => BoardVotes.vote(session, number, value);
   static Future<BoardCommentView> addComment(
     Session session, {
     required UuidValue uuid,
     int? postNumber,
     int? taskNumber,
     required String body,
-  }) async => _todo();
+  }) => BoardComments.add(
+    session,
+    uuid: uuid,
+    postNumber: postNumber,
+    taskNumber: taskNumber,
+    body: body,
+  );
   static Future<BoardCommentView> editComment(
     Session session,
     UuidValue uuid,
     String body,
-  ) async => _todo();
-  static Future<void> deleteComment(Session session, UuidValue uuid) async =>
-      _todo();
+  ) => BoardComments.edit(session, uuid, body);
+  static Future<void> deleteComment(Session session, UuidValue uuid) =>
+      BoardComments.delete(session, uuid);
   static Future<BoardCommentView> restoreComment(
     Session session,
     UuidValue uuid,
-  ) async => _todo();
+  ) => BoardComments.restore(session, uuid);
   static Future<void> flag(
     Session session,
     int? number,
     UuidValue? commentUuid,
     BoardFlagReason reason,
     String? note,
-  ) async => _todo();
+  ) => BoardComments.flag(session, number, commentUuid, reason, note);
   static Future<void> unflag(
     Session session,
     int? number,
     UuidValue? commentUuid,
-  ) async => _todo();
-  static Future<BoardTaskView> claimTask(Session session, int number) async =>
-      _todo();
-  static Future<BoardTaskView> releaseTask(Session session, int number) async =>
-      _todo();
-  static Future<BoardReviewCounts> reviewCounts(Session session) async =>
-      _todo();
+  ) => BoardComments.unflag(session, number, commentUuid);
+  static Future<BoardTaskView> claimTask(Session session, int number) =>
+      BoardTasks.claim(session, number);
+  static Future<BoardTaskView> releaseTask(Session session, int number) =>
+      BoardTasks.release(session, number);
+  static Future<BoardReviewCounts> reviewCounts(Session session) =>
+      BoardModerationService.reviewCounts(session);
   static Future<List<BoardReviewItem>> reviewQueue(
     Session session,
     BoardReviewSection section,
-  ) async => _todo();
+  ) => BoardModerationService.reviewQueue(session, section);
   static Future<BoardPostView> moderatePost(
     Session session,
     int number,
     BoardModerationAction action,
     String? reason,
-  ) async => _todo();
+  ) => BoardModerationService.moderatePost(session, number, action, reason);
   static Future<BoardCommentView> moderateComment(
     Session session,
     UuidValue uuid,
     BoardModerationAction action,
     String? reason,
-  ) async => _todo();
+  ) => BoardModerationService.moderateComment(session, uuid, action, reason);
   static Future<BoardPostView> adminEditPost(
     Session session,
     int number,
     String title,
     String body,
-  ) async => _todo();
+  ) => BoardModerationService.adminEditPost(session, number, title, body);
   static Future<BoardPostView> setLabels(
     Session session,
     int number,
     BoardPostKind kind,
     BoardArea? area,
     BoardSize? size,
-  ) async => _todo();
+  ) => BoardModerationService.setLabels(session, number, kind, area, size);
   static Future<BoardPostView> applySuggestedTitle(
     Session session,
     int number,
-  ) async => _todo();
+  ) => BoardModerationService.applySuggestedTitle(session, number);
   static Future<BoardPostView> dismissDuplicateHint(
     Session session,
     int number,
-  ) async => _todo();
+  ) => BoardModerationService.dismissDuplicateHint(session, number);
   static Future<BoardPostView> merge(
     Session session,
     int source,
     int target,
-  ) async => _todo();
-  static Future<BoardPostView> unmerge(Session session, int source) async =>
-      _todo();
+  ) => BoardModerationService.merge(session, source, target);
+  static Future<BoardPostView> unmerge(Session session, int source) =>
+      BoardModerationService.unmerge(session, source);
   static Future<BoardPostView> decline(
     Session session,
     int number,
     String reason,
-  ) async => _todo();
-  static Future<BoardPostView> reopen(Session session, int number) async =>
-      _todo();
+  ) => BoardModerationService.decline(session, number, reason);
+  static Future<BoardPostView> reopen(Session session, int number) =>
+      BoardModerationService.reopen(session, number);
   static Future<void> blockUser(
     Session session,
     int userId,
     String reason,
     DateTime? until,
-  ) async => _todo();
-  static Future<void> unblockUser(Session session, int userId) async => _todo();
+  ) => BoardModerationService.blockUser(session, userId, reason, until);
+  static Future<void> unblockUser(Session session, int userId) =>
+      BoardModerationService.unblockUser(session, userId);
   static Future<BoardTaskView> createTask(
     Session session,
     List<int> postNumbers,
     String title,
     BoardArea area,
     BoardSize size,
-  ) async => _todo();
+  ) => BoardTasks.create(session, postNumbers, title, area, size);
   static Future<BoardTaskView> updateTask(
     Session session,
     int number,
     String title,
     BoardArea area,
     BoardSize size,
-  ) async => _todo();
+  ) => BoardTasks.update(session, number, title, area, size);
   static Future<BoardTaskView> setTaskPosts(
     Session session,
     int number,
     List<int> postNumbers,
-  ) async => _todo();
+  ) => BoardTasks.setPosts(session, number, postNumbers);
   static Future<BoardTaskView> regeneratePrompt(
     Session session,
     int number,
-  ) async => _todo();
+  ) => BoardTasks.regeneratePrompt(session, number);
   static Future<BoardTaskView> setPrompt(
     Session session,
     int number,
     String body,
-  ) async => _todo();
-  static Future<BoardTaskView> publishTask(Session session, int number) async =>
-      _todo();
+  ) => BoardTasks.setPrompt(session, number, body);
+  static Future<BoardTaskView> publishTask(Session session, int number) =>
+      BoardTasks.publish(session, number);
   static Future<BoardTaskView> setTaskStatus(
     Session session,
     int number,
     BoardTaskStatus status,
-  ) async => _todo();
+  ) => BoardTasks.setStatus(session, number, status);
   static Future<BoardTaskView> linkPullRequest(
     Session session,
     int number,
     String? url,
-  ) async => _todo();
+  ) => BoardTasks.linkPullRequest(session, number, url);
   static Future<List<BoardBundleSuggestionView>> suggestBundles(
     Session session,
-  ) async => _todo();
+  ) => BoardTasks.suggestBundles(session);
   static Future<List<BoardBundleSuggestionView>> listSuggestions(
     Session session,
-  ) async => _todo();
-  static Future<void> dismissSuggestion(Session session, int id) async =>
-      _todo();
+  ) => BoardTasks.listSuggestions(session);
+  static Future<void> dismissSuggestion(Session session, int id) =>
+      BoardTasks.dismissSuggestion(session, id);
 }

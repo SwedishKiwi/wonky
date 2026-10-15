@@ -10,6 +10,7 @@ import 'package:serverpod_offline_sync_server/serverpod_offline_sync_server.dart
 import '../common/actor.dart';
 import '../common/errors.dart';
 import '../common/models.dart';
+import '../board/board_sweep.dart';
 import '../common/time.dart';
 import '../drive/drive_service.dart';
 import '../drive/templates/builtin_templates.dart';
@@ -134,6 +135,9 @@ abstract final class AccountService {
     for (final item in rest) {
       await DriveService.purge(session, item);
     }
+    // Bugs & Improvements (specs/16 §11): posts outside tasks, screenshots
+    // and votes go; comments and posts in tasks stay as "Deleted user".
+    await BoardSweep.deleteUserData(session, actor.userId);
     await OfflineSyncSpaceMember.db.deleteWhere(
       session,
       where: (t) => t.userUuid.equals(actor.authUserId),

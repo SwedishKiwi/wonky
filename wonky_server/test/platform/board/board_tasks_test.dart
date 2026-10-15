@@ -1,0 +1,493 @@
+import 'dart:convert';
+
+import 'package:clock/clock.dart';
+import 'package:test/test.dart';
+import 'package:wonky_server/src/platform/board/ai/board_ai.dart';
+import 'package:wonky_server/src/platform/board/ai/task_prompt_template.dart';
+import 'package:wonky_server/src/platform/board/board_config.dart';
+import 'package:wonky_server/src/platform/board/board_sweep.dart';
+import 'package:wonky_server/src/platform/common/models.dart';
+
+import '../../support/test_users.dart';
+import '../../support/wonky_serverpod.dart';
+import 'support/board_harness.dart';
+
+Matcher _code(WonkyErrorCode code) =>
+    throwsA(isA<WonkyException>().having((e) => e.code, 'code', code));
+
+void main() {
+  withWonkyServerpod('Given posts and an admin', (sessionBuilder, endpoints) {
+    late BoardHarness h;
+    late TestUser anna;
+    late TestUser bo;
+    late TestUser cy;
+    late TestUser admin;
+    late BoardPostView p1;
+    late BoardPostView p2;
+    setUp(() async {
+      h = BoardHarness.install();
+      h.ai.jev = false;
+      anna = await TestUsers.create(sessionBuilder, name: 'Anna');
+      bo = await TestUsers.create(sessionBuilder, name: 'Bo');
+      cy = await TestUsers.create(sessionBuilder, name: 'Cy');
+      admin = await BoardHarness.admin(sessionBuilder);
+      p1 = await BoardHarness.post(endpoints, anna);
+      p2 = await BoardHarness.post(endpoints, anna);
+    });
+    tearDown(() => h.uninstall());
+
+    Future<List<UserNotification>> notes(TestUser who, NotificationKind kind) =>
+        UserNotification.db.find(
+          sessionBuilder.build(),
+          where: (t) => t.userId.equals(who.id) & t.kind.equals(kind),
+          orderBy: (t) => t.id,
+        );
+
+    group('when creating a task', () {
+      test('without Gemini then it is a draft with the blank template and '
+          'the full prompt frames it', () async {
+        final task = await endpoints.board.createTask(
+          admin.endpointSession,
+          [p1.number, p2.number],
+          'Fix the grid',
+          BoardArea.sheets,
+          BoardSize.small,
+        );
+
+        expect(task.status, BoardTaskStatus.draft);
+        expect(task.promptBody, TaskPromptTemplate.blankBody);
+        expect(task.prompt, startsWith('# Wonky task T-${task.number}: '));
+        expect(task.prompt, contains('/improvements/p/${p1.number}'));
+        expect(task.prompt, contains('Wonky-Task: T-${task.number}'));
+        expect(task.posts.map((p) => p.number).toSet(), {
+          p1.number,
+          p2.number,
+        });
+      });
+
+      test('with Gemini then the prompt body is AI-written', () async {
+        h.ai.gemini = true;
+
+        final task = await endpoints.board.createTask(
+          admin.endpointSession,
+          [p1.number],
+          'Fix the grid',
+          BoardArea.sheets,
+          BoardSize.small,
+        );
+
+        expect(task.promptBody, h.ai.prompt);
+        expect(task.promptGeneratedAt, isNotNull);
+      });
+
+      test('then a draft is invisible to others', () async {
+        final task = await endpoints.board.createTask(
+          admin.endpointSession,
+          [p1.number],
+          'Fix the grid',
+          BoardArea.sheets,
+          BoardSize.small,
+        );
+
+        await expectLater(
+          endpoints.board.getTask(bo.endpointSession, task.number),
+          _code(WonkyErrorCode.notFound),
+        );
+      });
+
+      test('with a post that is in another task then it is refused', () async {
+        await endpoints.board.createTask(
+          admin.endpointSession,
+          [p1.number],
+          'First',
+          BoardArea.sheets,
+          BoardSize.small,
+        );
+
+        await expectLater(
+          endpoints.board.createTask(
+            admin.endpointSession,
+            [p1.number],
+            'Second',
+            BoardArea.sheets,
+            BoardSize.small,
+          ),
+          _code(WonkyErrorCode.conflict),
+        );
+      });
+    });
+
+    test('when publishing then the posts are planned and the author and '
+        'voters are notified', () async {
+      await endpoints.board.vote(bo.endpointSession, p1.number, 1);
+
+      final task = await BoardHarness.publishedTask(endpoints, admin, [
+        p1.number,
+      ]);
+      final post = await endpoints.board.getPost(
+        bo.endpointSession,
+        p1.number,
+      );
+      final boNotes = await notes(bo, NotificationKind.boardStatus);
+
+      expect(task.status, BoardTaskStatus.published);
+      expect(post.status, BoardPostStatus.planned);
+      expect(post.task?.number, task.number);
+      expect(
+        jsonDecode(boNotes.single.payload)['line'],
+        startsWith('Planned:'),
+      );
+      expect(await notes(anna, NotificationKind.boardStatus), hasLength(1));
+    });
+
+    test('when setting the prompt then the editor is recorded', () async {
+      final task = await endpoints.board.createTask(
+        admin.endpointSession,
+        [p1.number],
+        'Fix',
+        BoardArea.sheets,
+        BoardSize.small,
+      );
+
+      final updated = await endpoints.board.setPrompt(
+        admin.endpointSession,
+        task.number,
+        '## Goal\nEdited',
+      );
+
+      expect(updated.promptBody, '## Goal\nEdited');
+      expect(updated.promptEditedBy?.id, admin.id);
+    });
+
+    test('when regenerating without Gemini then it is unavailable', () async {
+      final task = await endpoints.board.createTask(
+        admin.endpointSession,
+        [p1.number],
+        'Fix',
+        BoardArea.sheets,
+        BoardSize.small,
+      );
+
+      await expectLater(
+        endpoints.board.regeneratePrompt(admin.endpointSession, task.number),
+        _code(WonkyErrorCode.unavailable),
+      );
+    });
+
+    group('and a published task', () {
+      late BoardTaskView task;
+      setUp(() async {
+        task = await BoardHarness.publishedTask(endpoints, admin, [p1.number]);
+      });
+
+      test(
+        'when claiming then only the claimant gets the claim code',
+        () async {
+          final mine = await endpoints.board.claimTask(
+            bo.endpointSession,
+            task.number,
+          );
+          final theirs = await endpoints.board.getTask(
+            cy.endpointSession,
+            task.number,
+          );
+
+          expect(mine.status, BoardTaskStatus.claimed);
+          expect(mine.claimCode, matches(BoardHarness.claimCode));
+          expect(mine.isMine, isTrue);
+          expect(theirs.claimCode, isNull);
+          expect(theirs.claimedBy?.id, bo.id);
+        },
+      );
+
+      test(
+        'when someone else claims a claimed task then it conflicts',
+        () async {
+          await endpoints.board.claimTask(bo.endpointSession, task.number);
+
+          await expectLater(
+            endpoints.board.claimTask(cy.endpointSession, task.number),
+            _code(WonkyErrorCode.conflict),
+          );
+        },
+      );
+
+      test('when claiming more than the limit then it is refused', () async {
+        BoardConfig.current = BoardConfig(maxActiveClaimsPerUser: 1);
+        final other = await BoardHarness.publishedTask(endpoints, admin, [
+          p2.number,
+        ]);
+        await endpoints.board.claimTask(bo.endpointSession, task.number);
+
+        await expectLater(
+          endpoints.board.claimTask(bo.endpointSession, other.number),
+          _code(WonkyErrorCode.limitExceeded),
+        );
+      });
+
+      test('when the claim time passes then reads show it as up for grabs '
+          'and another user can claim it', () async {
+        final start = DateTime.now().toUtc();
+        await withClock(Clock.fixed(start), () async {
+          await endpoints.board.claimTask(bo.endpointSession, task.number);
+        });
+
+        await withClock(
+          Clock.fixed(start.add(const Duration(hours: 49))),
+          () async {
+            final view = await endpoints.board.getTask(
+              cy.endpointSession,
+              task.number,
+            );
+            expect(view.status, BoardTaskStatus.published);
+            expect(view.claimedBy, isNull);
+
+            final claimed = await endpoints.board.claimTask(
+              cy.endpointSession,
+              task.number,
+            );
+            expect(claimed.claimedBy?.id, cy.id);
+          },
+        );
+        expect(await notes(bo, NotificationKind.boardClaim), hasLength(1));
+      });
+
+      test('when the sweep runs then it warns once and later expires the '
+          'claim with an activity row', () async {
+        final start = DateTime.now().toUtc();
+        await withClock(Clock.fixed(start), () async {
+          await endpoints.board.claimTask(bo.endpointSession, task.number);
+        });
+        final session = sessionBuilder.build();
+
+        await withClock(
+          Clock.fixed(start.add(const Duration(hours: 43))),
+          () async {
+            await BoardSweep.run(session);
+            await BoardSweep.run(session);
+          },
+        );
+        final warned = await notes(bo, NotificationKind.boardClaim);
+        await withClock(
+          Clock.fixed(start.add(const Duration(hours: 48, minutes: 1))),
+          () => BoardSweep.run(session),
+        );
+        final after = await notes(bo, NotificationKind.boardClaim);
+        final activity = await endpoints.board.listTaskComments(
+          cy.endpointSession,
+          task.number,
+        );
+        final row = await BoardTask.db.findById(session, task.number);
+
+        expect(warned, hasLength(1));
+        expect(jsonDecode(warned.single.payload)['line'], contains('5 hours'));
+        expect(after, hasLength(2));
+        expect(jsonDecode(after.last.payload)['line'], contains('expired'));
+        expect(activity.map((a) => a.systemEvent), [
+          'published',
+          'claimed',
+          'expired',
+        ]);
+        expect(row!.status, BoardTaskStatus.published);
+        expect(row.claimCode, isNull);
+      });
+
+      test('when the claimant releases then the task is published again and '
+          'the code is gone', () async {
+        await endpoints.board.claimTask(bo.endpointSession, task.number);
+
+        final released = await endpoints.board.releaseTask(
+          bo.endpointSession,
+          task.number,
+        );
+
+        expect(released.status, BoardTaskStatus.published);
+        expect(released.claimCode, isNull);
+      });
+
+      test('when another user releases then it is refused, an admin may and '
+          'the claimant is told', () async {
+        await endpoints.board.claimTask(bo.endpointSession, task.number);
+
+        await expectLater(
+          endpoints.board.releaseTask(cy.endpointSession, task.number),
+          _code(WonkyErrorCode.forbidden),
+        );
+        await endpoints.board.releaseTask(admin.endpointSession, task.number);
+        expect(await notes(bo, NotificationKind.boardClaim), hasLength(1));
+      });
+
+      test('when me() is asked then the active claims are listed', () async {
+        await endpoints.board.claimTask(bo.endpointSession, task.number);
+
+        final me = await endpoints.board.me(bo.endpointSession);
+
+        expect(me.activeClaims, [task.number]);
+      });
+
+      test(
+        'when linking a PR of another repository then it is refused',
+        () async {
+          await expectLater(
+            endpoints.board.linkPullRequest(
+              admin.endpointSession,
+              task.number,
+              'https://github.com/evil/wonky/pull/3',
+            ),
+            _code(WonkyErrorCode.invalidArgument),
+          );
+        },
+      );
+
+      test('when linking and unlinking a PR then the task goes to review and '
+          'back to its claim', () async {
+        await endpoints.board.claimTask(bo.endpointSession, task.number);
+
+        final linked = await endpoints.board.linkPullRequest(
+          admin.endpointSession,
+          task.number,
+          'https://github.com/serverpod/wonky/pull/345',
+        );
+        final unlinked = await endpoints.board.linkPullRequest(
+          admin.endpointSession,
+          task.number,
+          null,
+        );
+
+        expect(
+          (linked.status, linked.prNumber),
+          (
+            BoardTaskStatus.inReview,
+            345,
+          ),
+        );
+        expect(unlinked.status, BoardTaskStatus.claimed);
+        expect(unlinked.prNumber, isNull);
+      });
+
+      test('when marking done and shipped then the posts follow and voters '
+          'are notified', () async {
+        await endpoints.board.vote(bo.endpointSession, p1.number, 1);
+
+        await endpoints.board.setTaskStatus(
+          admin.endpointSession,
+          task.number,
+          BoardTaskStatus.done,
+        );
+        final done = await endpoints.board.getPost(
+          bo.endpointSession,
+          p1.number,
+        );
+        await endpoints.board.setTaskStatus(
+          admin.endpointSession,
+          task.number,
+          BoardTaskStatus.shipped,
+        );
+        final shipped = await endpoints.board.getPost(
+          bo.endpointSession,
+          p1.number,
+        );
+        final lines = [
+          for (final n in await notes(bo, NotificationKind.boardStatus))
+            jsonDecode(n.payload)['line'] as String,
+        ];
+
+        expect(done.status, BoardPostStatus.done);
+        expect(shipped.status, BoardPostStatus.shipped);
+        expect(lines.last, startsWith('Shipped:'));
+        expect(lines, contains(startsWith('Built:')));
+      });
+
+      test('when cancelling then the posts are open again and can join a new '
+          'task', () async {
+        await endpoints.board.setTaskStatus(
+          admin.endpointSession,
+          task.number,
+          BoardTaskStatus.cancelled,
+        );
+        final post = await endpoints.board.getPost(
+          anna.endpointSession,
+          p1.number,
+        );
+
+        expect(post.status, BoardPostStatus.open);
+        expect(post.task, isNull);
+        await expectLater(
+          endpoints.board.createTask(
+            admin.endpointSession,
+            [p1.number],
+            'Again',
+            BoardArea.sheets,
+            BoardSize.small,
+          ),
+          completes,
+        );
+      });
+
+      test(
+        'when listing tasks then the published task is up for grabs',
+        () async {
+          final page = await endpoints.board.listTasks(
+            TestUsers.unauthenticated(sessionBuilder),
+            const [],
+            null,
+            50,
+          );
+
+          expect(page.items.map((t) => t.number), contains(task.number));
+        },
+      );
+    });
+
+    group('when suggesting bundles', () {
+      bool isOurs(BoardBundleSuggestionView s) =>
+          s.posts.map((p) => p.number).toSet().containsAll([
+            p1.number,
+            p2.number,
+          ]);
+
+      setUp(() async {
+        h.ai.gemini = true;
+        for (final p in [p1, p2]) {
+          await endpoints.board.setLabels(
+            admin.endpointSession,
+            p.number,
+            BoardPostKind.bug,
+            BoardArea.sheets,
+            BoardSize.small,
+          );
+        }
+        h.ai.onBundles = (posts) => [
+          BoardBundleProposal(
+            title: 'Grid fixes',
+            rationale: 'Same code',
+            postIds: [p1.number, p2.number],
+            area: BoardArea.sheets,
+          ),
+        ];
+      });
+
+      test('then the bundle is listed', () async {
+        final list = await endpoints.board.suggestBundles(
+          admin.endpointSession,
+        );
+
+        expect(list.where(isOurs), hasLength(1));
+      });
+
+      test('then a dismissed bundle is not suggested again', () async {
+        final first = await endpoints.board.suggestBundles(
+          admin.endpointSession,
+        );
+        final id = first.firstWhere(isOurs).id;
+        await endpoints.board.dismissSuggestion(admin.endpointSession, id);
+
+        final second = await endpoints.board.suggestBundles(
+          admin.endpointSession,
+        );
+
+        expect(second.where(isOurs), isEmpty);
+      });
+    });
+  });
+}

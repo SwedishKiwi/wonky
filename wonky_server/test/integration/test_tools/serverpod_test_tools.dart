@@ -22,6 +22,10 @@ import 'package:serverpod_offline_sync_server/serverpod_offline_sync_server.dart
     as _izehhkf5;
 import 'package:serverpod_test/serverpod_test.dart' as _ist;
 import 'package:wonky_server/src/generated/future_calls.dart' as _iwslocjr;
+import 'package:wonky_server/src/generated/future_calls_generated_models/board_future_call_summarize_model.dart'
+    as _ied218dm;
+import 'package:wonky_server/src/generated/future_calls_generated_models/board_future_call_triage_model.dart'
+    as _ic65ofts;
 import 'package:wonky_server/src/generated/future_calls_generated_models/file_preview_future_call_generate_model.dart'
     as _ikj8bo9l;
 import 'package:wonky_server/src/generated/future_calls_generated_models/notification_email_future_call_send_model.dart'
@@ -649,6 +653,8 @@ class _InternalTestEndpoints extends TestEndpoints
 }
 
 class _FutureCalls {
+  late final board = _BoardFutureCall();
+
   late final filePreview = _FilePreviewFutureCall();
 
   late final maintenance = _MaintenanceFutureCall();
@@ -10538,6 +10544,55 @@ class _WriteThemeEndpoint {
         await _localUniqueSession.close();
       }
     });
+  }
+}
+
+class _BoardFutureCall {
+  Future<void> triage(
+    _ist.TestSessionBuilder sessionBuilder,
+    int postId,
+  ) async {
+    var object = _ic65ofts.BoardFutureCallTriageModel(postId: postId);
+    var _localUniqueSession =
+        (sessionBuilder as _ist.InternalTestSessionBuilder).internalBuild();
+    try {
+      await _iwslocjr.BoardTriageFutureCall().invoke(
+        _localUniqueSession,
+        object,
+      );
+    } finally {
+      await _localUniqueSession.close();
+    }
+  }
+
+  Future<void> summarize(
+    _ist.TestSessionBuilder sessionBuilder,
+    int postId,
+  ) async {
+    var object = _ied218dm.BoardFutureCallSummarizeModel(postId: postId);
+    var _localUniqueSession =
+        (sessionBuilder as _ist.InternalTestSessionBuilder).internalBuild();
+    try {
+      await _iwslocjr.BoardSummarizeFutureCall().invoke(
+        _localUniqueSession,
+        object,
+      );
+    } finally {
+      await _localUniqueSession.close();
+    }
+  }
+
+  Future<void> sweep(_ist.TestSessionBuilder sessionBuilder) async {
+    var _localUniqueSession =
+        (sessionBuilder as _ist.InternalTestSessionBuilder).internalBuild();
+    try {
+      await _iwslocjr.BoardSweepFutureCall().invoke(
+        _localUniqueSession,
+        null,
+      );
+    } finally {
+      await _localUniqueSession.close();
+    }
   }
 }
 

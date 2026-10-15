@@ -1,0 +1,41 @@
+import 'package:serverpod/serverpod.dart';
+
+import 'board_pipeline.dart';
+import 'board_sweep.dart';
+
+/// Background work of Bugs & Improvements (specs/16 §6.3, §8.2): the
+/// background triage with retries, the writing pass and the recurring
+/// sweep (`wonky.boardSweep`, every 10 minutes).
+class BoardFutureCall extends FutureCall {
+  Future<void> triage(Session session, int postId) =>
+      _run(session, 'triage #$postId', () async {
+        await BoardPipeline.backgroundTriage(session, postId);
+        return 0;
+      });
+
+  Future<void> summarize(Session session, int postId) =>
+      _run(session, 'summarize #$postId', () async {
+        await BoardPipeline.summarize(session, postId);
+        return 0;
+      });
+
+  Future<void> sweep(Session session) =>
+      _run(session, 'sweep', () => BoardSweep.run(session));
+
+  Future<void> _run(
+    Session session,
+    String name,
+    Future<int> Function() job,
+  ) async {
+    try {
+      final count = await job();
+      if (count > 0) session.log('board.$name: $count');
+    } on Exception catch (e, st) {
+      session.log(
+        'board.$name failed: $e',
+        level: LogLevel.error,
+        stackTrace: st,
+      );
+    }
+  }
+}

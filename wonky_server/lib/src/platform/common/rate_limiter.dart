@@ -1,0 +1,117 @@
+import 'package:clock/clock.dart';
+import 'package:serverpod/serverpod.dart';
+
+/// A counter shared by all instances (specs/13 §4).
+abstract interface class RateCounter {
+  /// Increments [key] and returns the new count; the key expires after
+  /// [ttl] (set when it is created). Throws when unreachable.
+  Future<int> increment(String key, Duration ttl);
+}
+
+/// [RateCounter] in Redis (`INCR` + `PEXPIRE`).
+class RedisRateCounter implements RateCounter {
+  RedisRateCounter(this.redis);
+
+  final RedisController redis;
+
+  @override
+  Future<int> increment(String key, Duration ttl) async {
+    final command = await redis.getConnection();
+    if (command == null) throw StateError('Redis is unreachable.');
+    try {
+      final count = await command.send_object(['INCR', key]);
+      if (count is! int) throw StateError('Unexpected INCR reply: $count');
+      if (count == 1) {
+        await command.send_object(['PEXPIRE', key, '${ttl.inMilliseconds}']);
+      }
+      return count;
+    } on Object {
+      // Lets the controller drop a broken connection and reconnect.
+      await redis.ping();
+      rethrow;
+    }
+  }
+}
+
+/// A generic rate limit: at most [limit] calls per key within [window].
+///
+/// On a single instance a sliding window in memory; with several instances
+/// (Redis enabled, specs/13 §4) a fixed window counted in Redis under
+/// `wonky:<name>:rate:<key>:<slot>`, so the limit holds across instances (at
+/// a window boundary up to twice the limit can pass within one window).
+/// When the counter cannot be reached the in-memory window applies.
+///
+/// Used by MCP (per token, specs/09 §2) and the board (per user,
+/// specs/16 §11).
+class RateLimiter {
+  RateLimiter({
+    required this.name,
+    this.limit = 600,
+    this.window = const Duration(minutes: 1),
+    RateCounter? counter,
+    // ignore: prefer_initializing_formals
+  }) : _counter = counter;
+
+  /// Namespace of the shared keys.
+  final String name;
+  final int limit;
+  final Duration window;
+  final Map<Object, List<DateTime>> _calls = {};
+  final RateCounter? _counter;
+  RedisRateCounter? _redisCounter;
+
+  RateCounter? get counter {
+    if (_counter != null) return _counter;
+    RedisController? redis;
+    try {
+      redis = Serverpod.instance.redisController;
+    } on Object {
+      return null;
+    }
+    if (redis == null) return null;
+    if (_redisCounter?.redis != redis) _redisCounter = RedisRateCounter(redis);
+    return _redisCounter;
+  }
+
+  /// Records a call for [key]; returns the retry delay when over the limit
+  /// ([limit] overrides the configured one, e.g. from a reloaded config).
+  Future<Duration?> check(Object key, {int? limit}) async {
+    final max = limit ?? this.limit;
+    final shared = counter;
+    if (shared == null) return hit(key, limit: max);
+    final now = clock.now();
+    final ms = window.inMilliseconds;
+    final slot = now.millisecondsSinceEpoch ~/ ms;
+    try {
+      final count = await shared.increment(
+        'wonky:$name:rate:$key:$slot',
+        window * 2,
+      );
+      if (count <= max) return null;
+      return Duration(
+        milliseconds: (slot + 1) * ms - now.millisecondsSinceEpoch,
+      );
+    } on Object {
+      return hit(key, limit: max);
+    }
+  }
+
+  /// Records a call for [key] in this instance's sliding window; returns
+  /// the retry delay when over the limit.
+  Duration? hit(Object key, {int? limit}) {
+    final max = limit ?? this.limit;
+    final now = clock.now();
+    final list = _calls.putIfAbsent(key, () => []);
+    list.removeWhere((t) => now.difference(t) >= window);
+    if (list.length >= max) {
+      return window - now.difference(list.first);
+    }
+    list.add(now);
+    if (_calls.length > 10000) {
+      _calls.removeWhere((_, v) => v.isEmpty);
+    }
+    return null;
+  }
+
+  void reset() => _calls.clear();
+}

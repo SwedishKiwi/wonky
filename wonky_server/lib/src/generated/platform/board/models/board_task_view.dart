@@ -28,6 +28,7 @@ abstract class BoardTaskView
     required this.size,
     required this.status,
     required this.promptBody,
+    required this.prompt,
     this.promptGeneratedAt,
     this.promptEditedAt,
     this.promptEditedBy,
@@ -54,6 +55,7 @@ abstract class BoardTaskView
     required _ibr3u4cf.BoardSize size,
     required _isr33h3v.BoardTaskStatus status,
     required String promptBody,
+    required String prompt,
     DateTime? promptGeneratedAt,
     DateTime? promptEditedAt,
     _imhv5g8m.BoardAuthor? promptEditedBy,
@@ -83,6 +85,7 @@ abstract class BoardTaskView
         (jsonSerialization['status'] as String),
       ),
       promptBody: jsonSerialization['promptBody'] as String,
+      prompt: jsonSerialization['prompt'] as String,
       promptGeneratedAt: jsonSerialization['promptGeneratedAt'] == null
           ? null
           : _is.DateTimeJsonExtension.fromJson(
@@ -150,6 +153,10 @@ abstract class BoardTaskView
 
   String promptBody;
 
+  /// The full contributor prompt: the fixed frame around [promptBody]
+  /// (specs/16 §10.1).
+  String prompt;
+
   DateTime? promptGeneratedAt;
 
   DateTime? promptEditedAt;
@@ -196,6 +203,7 @@ abstract class BoardTaskView
     _ibr3u4cf.BoardSize? size,
     _isr33h3v.BoardTaskStatus? status,
     String? promptBody,
+    String? prompt,
     DateTime? promptGeneratedAt = const _is.$UndefinedDateTime(),
     DateTime? promptEditedAt = const _is.$UndefinedDateTime(),
     _imhv5g8m.BoardAuthor? promptEditedBy =
@@ -226,6 +234,7 @@ abstract class BoardTaskView
       'size': size.toJson(),
       'status': status.toJson(),
       'promptBody': promptBody,
+      'prompt': prompt,
       if (promptGeneratedAt != null)
         'promptGeneratedAt': promptGeneratedAt?.toJson(),
       if (promptEditedAt != null) 'promptEditedAt': promptEditedAt?.toJson(),
@@ -257,6 +266,7 @@ abstract class BoardTaskView
       'size': size.toJson(),
       'status': status.toJson(),
       'promptBody': promptBody,
+      'prompt': prompt,
       if (promptGeneratedAt != null)
         'promptGeneratedAt': promptGeneratedAt?.toJson(),
       if (promptEditedAt != null) 'promptEditedAt': promptEditedAt?.toJson(),
@@ -300,6 +310,7 @@ class _BoardTaskViewImpl extends BoardTaskView {
     required _ibr3u4cf.BoardSize size,
     required _isr33h3v.BoardTaskStatus status,
     required String promptBody,
+    required String prompt,
     DateTime? promptGeneratedAt,
     DateTime? promptEditedAt,
     _imhv5g8m.BoardAuthor? promptEditedBy,
@@ -324,6 +335,7 @@ class _BoardTaskViewImpl extends BoardTaskView {
          size: size,
          status: status,
          promptBody: promptBody,
+         prompt: prompt,
          promptGeneratedAt: promptGeneratedAt,
          promptEditedAt: promptEditedAt,
          promptEditedBy: promptEditedBy,
@@ -354,6 +366,7 @@ class _BoardTaskViewImpl extends BoardTaskView {
     _ibr3u4cf.BoardSize? size,
     _isr33h3v.BoardTaskStatus? status,
     String? promptBody,
+    String? prompt,
     DateTime? promptGeneratedAt = const _is.$UndefinedDateTime(),
     DateTime? promptEditedAt = const _is.$UndefinedDateTime(),
     _imhv5g8m.BoardAuthor? promptEditedBy =
@@ -381,6 +394,7 @@ class _BoardTaskViewImpl extends BoardTaskView {
       size: size ?? this.size,
       status: status ?? this.status,
       promptBody: promptBody ?? this.promptBody,
+      prompt: prompt ?? this.prompt,
       promptGeneratedAt: promptGeneratedAt is _is.UndefinedSentinel
           ? this.promptGeneratedAt
           : promptGeneratedAt,
