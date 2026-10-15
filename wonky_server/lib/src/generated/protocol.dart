@@ -76,6 +76,10 @@ import 'future_calls_generated_models/board_future_call_summarize_model.dart'
     as _icgheary;
 import 'future_calls_generated_models/board_future_call_triage_model.dart'
     as _if8h900w;
+import 'future_calls_generated_models/board_github_future_call_handle_model.dart'
+    as _ip0bwzb4;
+import 'future_calls_generated_models/board_github_future_call_review_model.dart'
+    as _i5z3lvv6;
 import 'future_calls_generated_models/file_preview_future_call_generate_model.dart'
     as _ilpvgw0t;
 import 'future_calls_generated_models/notification_email_future_call_send_model.dart'
@@ -645,6 +649,8 @@ class Protocol extends _is.DatabaseSerializationManager
         types: const [
           _is.getType<_icgheary.BoardFutureCallSummarizeModel>,
           _is.getType<_if8h900w.BoardFutureCallTriageModel>,
+          _is.getType<_ip0bwzb4.BoardGithubFutureCallHandleModel>,
+          _is.getType<_i5z3lvv6.BoardGithubFutureCallReviewModel>,
           _is.getType<_ilpvgw0t.FilePreviewFutureCallGenerateModel>,
           _is.getType<_inb6x2l0.NotificationEmailFutureCallSendModel>,
           _is.getType<_io4auc29.StorageFutureCallRefreshItemSizeModel>,
@@ -962,6 +968,8 @@ class Protocol extends _is.DatabaseSerializationManager
           _is.getType<_is9bkd9t.WriteVersionDocument>,
           _is.getType<_icgheary.BoardFutureCallSummarizeModel?>,
           _is.getType<_if8h900w.BoardFutureCallTriageModel?>,
+          _is.getType<_ip0bwzb4.BoardGithubFutureCallHandleModel?>,
+          _is.getType<_i5z3lvv6.BoardGithubFutureCallReviewModel?>,
           _is.getType<_ilpvgw0t.FilePreviewFutureCallGenerateModel?>,
           _is.getType<_inb6x2l0.NotificationEmailFutureCallSendModel?>,
           _is.getType<_io4auc29.StorageFutureCallRefreshItemSizeModel?>,
@@ -2548,6 +2556,25 @@ class Protocol extends _is.DatabaseSerializationManager
           isNullable: false,
           dartType: 'DateTime',
         ),
+        _isp.ColumnDefinition(
+          name: 'payload',
+          columnType: _isp.ColumnType.text,
+          isNullable: true,
+          dartType: 'String?',
+        ),
+        _isp.ColumnDefinition(
+          name: 'processedAt',
+          columnType: _isp.ColumnType.timestampWithoutTimeZone,
+          isNullable: true,
+          dartType: 'DateTime?',
+        ),
+        _isp.ColumnDefinition(
+          name: 'attempts',
+          columnType: _isp.ColumnType.bigint,
+          isNullable: false,
+          dartType: 'int',
+          columnDefault: '0',
+        ),
       ],
       foreignKeys: [],
       indexes: [
@@ -3074,6 +3101,18 @@ class Protocol extends _is.DatabaseSerializationManager
           columnType: _isp.ColumnType.text,
           isNullable: true,
           dartType: 'String?',
+        ),
+        _isp.ColumnDefinition(
+          name: 'reviewPendingSha',
+          columnType: _isp.ColumnType.text,
+          isNullable: true,
+          dartType: 'String?',
+        ),
+        _isp.ColumnDefinition(
+          name: 'reviewDueAt',
+          columnType: _isp.ColumnType.timestampWithoutTimeZone,
+          isNullable: true,
+          dartType: 'DateTime?',
         ),
         _isp.ColumnDefinition(
           name: 'createdAt',
@@ -8503,6 +8542,12 @@ class Protocol extends _is.DatabaseSerializationManager
     if (t == _if8h900w.BoardFutureCallTriageModel) {
       return _if8h900w.BoardFutureCallTriageModel.fromJson(data) as T;
     }
+    if (t == _ip0bwzb4.BoardGithubFutureCallHandleModel) {
+      return _ip0bwzb4.BoardGithubFutureCallHandleModel.fromJson(data) as T;
+    }
+    if (t == _i5z3lvv6.BoardGithubFutureCallReviewModel) {
+      return _i5z3lvv6.BoardGithubFutureCallReviewModel.fromJson(data) as T;
+    }
     if (t == _ilpvgw0t.FilePreviewFutureCallGenerateModel) {
       return _ilpvgw0t.FilePreviewFutureCallGenerateModel.fromJson(data) as T;
     }
@@ -9458,6 +9503,18 @@ class Protocol extends _is.DatabaseSerializationManager
     if (t == _is.getType<_if8h900w.BoardFutureCallTriageModel?>()) {
       return (data != null
               ? _if8h900w.BoardFutureCallTriageModel.fromJson(data)
+              : null)
+          as T;
+    }
+    if (t == _is.getType<_ip0bwzb4.BoardGithubFutureCallHandleModel?>()) {
+      return (data != null
+              ? _ip0bwzb4.BoardGithubFutureCallHandleModel.fromJson(data)
+              : null)
+          as T;
+    }
+    if (t == _is.getType<_i5z3lvv6.BoardGithubFutureCallReviewModel?>()) {
+      return (data != null
+              ? _i5z3lvv6.BoardGithubFutureCallReviewModel.fromJson(data)
               : null)
           as T;
     }
@@ -11272,6 +11329,10 @@ class Protocol extends _is.DatabaseSerializationManager
       _icgheary.BoardFutureCallSummarizeModel =>
         'BoardFutureCallSummarizeModel',
       _if8h900w.BoardFutureCallTriageModel => 'BoardFutureCallTriageModel',
+      _ip0bwzb4.BoardGithubFutureCallHandleModel =>
+        'BoardGithubFutureCallHandleModel',
+      _i5z3lvv6.BoardGithubFutureCallReviewModel =>
+        'BoardGithubFutureCallReviewModel',
       _ilpvgw0t.FilePreviewFutureCallGenerateModel =>
         'FilePreviewFutureCallGenerateModel',
       _inb6x2l0.NotificationEmailFutureCallSendModel =>
@@ -11608,6 +11669,10 @@ class Protocol extends _is.DatabaseSerializationManager
         return 'BoardFutureCallSummarizeModel';
       case _if8h900w.BoardFutureCallTriageModel():
         return 'BoardFutureCallTriageModel';
+      case _ip0bwzb4.BoardGithubFutureCallHandleModel():
+        return 'BoardGithubFutureCallHandleModel';
+      case _i5z3lvv6.BoardGithubFutureCallReviewModel():
+        return 'BoardGithubFutureCallReviewModel';
       case _ilpvgw0t.FilePreviewFutureCallGenerateModel():
         return 'FilePreviewFutureCallGenerateModel';
       case _inb6x2l0.NotificationEmailFutureCallSendModel():
@@ -12281,6 +12346,16 @@ class Protocol extends _is.DatabaseSerializationManager
     }
     if (dataClassName == 'BoardFutureCallTriageModel') {
       return deserialize<_if8h900w.BoardFutureCallTriageModel>(data['data']);
+    }
+    if (dataClassName == 'BoardGithubFutureCallHandleModel') {
+      return deserialize<_ip0bwzb4.BoardGithubFutureCallHandleModel>(
+        data['data'],
+      );
+    }
+    if (dataClassName == 'BoardGithubFutureCallReviewModel') {
+      return deserialize<_i5z3lvv6.BoardGithubFutureCallReviewModel>(
+        data['data'],
+      );
     }
     if (dataClassName == 'FilePreviewFutureCallGenerateModel') {
       return deserialize<_ilpvgw0t.FilePreviewFutureCallGenerateModel>(

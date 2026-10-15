@@ -204,6 +204,18 @@ abstract final class BoardTasks {
     return changed;
   }
 
+  /// Hook for status changes outside admin actions (the GitHub App,
+  /// specs/16 §13.6): the task's posts follow [status]. Returns the
+  /// task's posts.
+  static Future<List<BoardPost>> followTaskStatus(
+    Session session,
+    int taskId,
+    BoardTaskStatus status,
+  ) async {
+    await _syncPosts(session, taskId, status);
+    return _postsOf(session, taskId);
+  }
+
   static Future<Map<int, List<BoardComment>>> _commentsFor(
     Session session,
     List<BoardPost> posts,

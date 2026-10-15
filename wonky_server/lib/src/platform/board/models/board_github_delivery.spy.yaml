@@ -6,6 +6,12 @@ fields:
   deliveryId: String
   event: String
   receivedAt: DateTime
+  ### The fields of the payload the handler needs (compact JSON, specs/16
+  ### §13.3); cleared once handled.
+  payload: String?
+  processedAt: DateTime?
+  ### Handler runs so far (retried a few times on errors).
+  attempts: int, default=0
 indexes:
   board_github_delivery_idx:
     fields: deliveryId

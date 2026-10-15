@@ -1,0 +1,24 @@
+{
+  "action": "completed",
+  "workflow_run": {
+    "id": 30433642,
+    "name": "Deploy to Serverpod Cloud",
+    "node_id": "MDEyOldvcmtmbG93IFJ1bjI2OTI4OQ==",
+    "head_branch": "deploy",
+    "head_sha": "d3p10y0000000000000000000000000000000000",
+    "path": ".github/workflows/deploy.yml",
+    "run_number": 562,
+    "event": "push",
+    "status": "completed",
+    "conclusion": "success",
+    "workflow_id": 159038,
+    "url": "https://api.github.com/repos/serverpod/wonky/actions/runs/30433642",
+    "html_url": "https://github.com/serverpod/wonky/actions/runs/30433642",
+    "created_at": "2026-10-16T12:00:00Z",
+    "updated_at": "2026-10-16T12:04:00Z"
+  },
+  "workflow": { "id": 159038, "name": "Deploy to Serverpod Cloud", "path": ".github/workflows/deploy.yml" },
+  "repository": { "id": 777001, "name": "wonky", "full_name": "serverpod/wonky", "private": false },
+  "sender": { "login": "maintainer-ann", "id": 9001, "type": "User" },
+  "installation": { "id": 55500011 }
+}

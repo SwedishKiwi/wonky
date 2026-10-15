@@ -22,6 +22,10 @@ fields:
   reviewDay: String?
   reviewCount: int, default=0
   mergeCommitSha: String?
+  ### The head SHA a review is scheduled for (debounce, budget or daily
+  ### limit postponement; specs/16 §13.5) and when it is due.
+  reviewPendingSha: String?
+  reviewDueAt: DateTime?
   createdAt: DateTime
   updatedAt: DateTime
 indexes:

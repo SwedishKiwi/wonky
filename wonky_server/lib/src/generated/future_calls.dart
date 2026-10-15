@@ -15,6 +15,7 @@ import 'dart:async' as _ida;
 import 'package:clock/clock.dart' as _io0w16m8;
 import 'package:serverpod/serverpod.dart' as _is;
 import '../platform/board/board_future_call.dart' as _i7g7f7wg;
+import '../platform/board/github/board_github_future_call.dart' as _iqmo2xzx;
 import '../platform/files/file_preview_future_call.dart' as _iw6v1fyh;
 import '../platform/jobs/maintenance_future_call.dart' as _imgsvm9k;
 import '../platform/notifications/notification_email_future_call.dart'
@@ -25,6 +26,10 @@ import 'future_calls_generated_models/board_future_call_summarize_model.dart'
     as _icgheary;
 import 'future_calls_generated_models/board_future_call_triage_model.dart'
     as _if8h900w;
+import 'future_calls_generated_models/board_github_future_call_handle_model.dart'
+    as _ip0bwzb4;
+import 'future_calls_generated_models/board_github_future_call_review_model.dart'
+    as _i5z3lvv6;
 import 'future_calls_generated_models/file_preview_future_call_generate_model.dart'
     as _ilpvgw0t;
 import 'future_calls_generated_models/notification_email_future_call_send_model.dart'
@@ -77,6 +82,8 @@ class FutureCalls extends _is.FutureCallDispatch<_FutureCallRef> {
       'BoardTriageFutureCall': BoardTriageFutureCall(),
       'BoardSummarizeFutureCall': BoardSummarizeFutureCall(),
       'BoardSweepFutureCall': BoardSweepFutureCall(),
+      'BoardGithubHandleFutureCall': BoardGithubHandleFutureCall(),
+      'BoardGithubReviewFutureCall': BoardGithubReviewFutureCall(),
       'FilePreviewGenerateFutureCall': FilePreviewGenerateFutureCall(),
       'MaintenanceCaptureVersionsFutureCall':
           MaintenanceCaptureVersionsFutureCall(),
@@ -211,6 +218,8 @@ class _FutureCallRef {
 
   late final board = _BoardFutureCallDispatcher(_invokeFutureCall);
 
+  late final boardGithub = _BoardGithubFutureCallDispatcher(_invokeFutureCall);
+
   late final filePreview = _FilePreviewFutureCallDispatcher(_invokeFutureCall);
 
   late final maintenance = _MaintenanceFutureCallDispatcher(_invokeFutureCall);
@@ -251,6 +260,36 @@ class _BoardFutureCallDispatcher {
     return _invokeFutureCall(
       'BoardSweepFutureCall',
       null,
+    );
+  }
+}
+
+class _BoardGithubFutureCallDispatcher {
+  _BoardGithubFutureCallDispatcher(this._invokeFutureCall);
+
+  final _InvokeFutureCall _invokeFutureCall;
+
+  Future<void> handle(String deliveryId) {
+    var object = _ip0bwzb4.BoardGithubFutureCallHandleModel(
+      deliveryId: deliveryId,
+    );
+    return _invokeFutureCall(
+      'BoardGithubHandleFutureCall',
+      object,
+    );
+  }
+
+  Future<void> review(
+    int prNumber,
+    String headSha,
+  ) {
+    var object = _i5z3lvv6.BoardGithubFutureCallReviewModel(
+      prNumber: prNumber,
+      headSha: headSha,
+    );
+    return _invokeFutureCall(
+      'BoardGithubReviewFutureCall',
+      object,
     );
   }
 }
@@ -412,6 +451,43 @@ class BoardSweepFutureCall extends _is.FutureCall
     _is.SerializableModel? object,
   ) async {
     await _i7g7f7wg.BoardFutureCall().sweep(session);
+  }
+}
+
+class BoardGithubHandleFutureCall
+    extends _is.FutureCall<_ip0bwzb4.BoardGithubFutureCallHandleModel>
+    implements
+        _is.InvokableFutureCall<_ip0bwzb4.BoardGithubFutureCallHandleModel> {
+  @override
+  _ida.Future<void> invoke(
+    _is.Session session,
+    _ip0bwzb4.BoardGithubFutureCallHandleModel? object,
+  ) async {
+    if (object != null) {
+      await _iqmo2xzx.BoardGithubFutureCall().handle(
+        session,
+        object.deliveryId,
+      );
+    }
+  }
+}
+
+class BoardGithubReviewFutureCall
+    extends _is.FutureCall<_i5z3lvv6.BoardGithubFutureCallReviewModel>
+    implements
+        _is.InvokableFutureCall<_i5z3lvv6.BoardGithubFutureCallReviewModel> {
+  @override
+  _ida.Future<void> invoke(
+    _is.Session session,
+    _i5z3lvv6.BoardGithubFutureCallReviewModel? object,
+  ) async {
+    if (object != null) {
+      await _iqmo2xzx.BoardGithubFutureCall().review(
+        session,
+        object.prNumber,
+        object.headSha,
+      );
+    }
   }
 }
 

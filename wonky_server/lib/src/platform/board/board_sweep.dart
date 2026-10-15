@@ -8,6 +8,7 @@ import 'board_common.dart';
 import 'board_pipeline.dart';
 import 'board_tasks.dart';
 import 'board_votes.dart';
+import 'github/board_github.dart';
 
 /// The recurring board job `wonky.boardSweep` (every 10 minutes, specs/16
 /// §8.2, §11): claims, unchecked posts and retention.
@@ -35,6 +36,7 @@ abstract final class BoardSweep {
     await part('warnClaims', () => BoardTasks.warnClaims(session));
     await part('retriage', () => BoardPipeline.retriageUnchecked(session));
     await part('purge', () => purge(session));
+    await part('github', () => BoardGithub.sweep(session));
     return count;
   }
 

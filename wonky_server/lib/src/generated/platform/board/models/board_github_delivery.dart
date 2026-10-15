@@ -21,13 +21,19 @@ abstract class BoardGithubDelivery
     required this.deliveryId,
     required this.event,
     required this.receivedAt,
-  });
+    this.payload,
+    this.processedAt,
+    int? attempts,
+  }) : attempts = attempts ?? 0;
 
   factory BoardGithubDelivery({
     int? id,
     required String deliveryId,
     required String event,
     required DateTime receivedAt,
+    String? payload,
+    DateTime? processedAt,
+    int? attempts,
   }) = _BoardGithubDeliveryImpl;
 
   factory BoardGithubDelivery.fromJson(Map<String, dynamic> jsonSerialization) {
@@ -38,6 +44,13 @@ abstract class BoardGithubDelivery
       receivedAt: _is.DateTimeJsonExtension.fromJson(
         jsonSerialization['receivedAt'],
       ),
+      payload: jsonSerialization['payload'] as String?,
+      processedAt: jsonSerialization['processedAt'] == null
+          ? null
+          : _is.DateTimeJsonExtension.fromJson(
+              jsonSerialization['processedAt'],
+            ),
+      attempts: jsonSerialization['attempts'] as int?,
     );
   }
 
@@ -54,6 +67,15 @@ abstract class BoardGithubDelivery
 
   DateTime receivedAt;
 
+  /// The fields of the payload the handler needs (compact JSON, specs/16
+  /// §13.3); cleared once handled.
+  String? payload;
+
+  DateTime? processedAt;
+
+  /// Handler runs so far (retried a few times on errors).
+  int attempts;
+
   @override
   _is.Table<int?> get table => t;
 
@@ -65,6 +87,9 @@ abstract class BoardGithubDelivery
     String? deliveryId,
     String? event,
     DateTime? receivedAt,
+    String? payload,
+    DateTime? processedAt = const _is.$UndefinedDateTime(),
+    int? attempts,
   });
   @override
   Map<String, dynamic> toJson() {
@@ -74,6 +99,9 @@ abstract class BoardGithubDelivery
       'deliveryId': deliveryId,
       'event': event,
       'receivedAt': receivedAt.toJson(),
+      if (payload != null) 'payload': payload,
+      if (processedAt != null) 'processedAt': processedAt?.toJson(),
+      'attempts': attempts,
     };
   }
 
@@ -118,11 +146,17 @@ class _BoardGithubDeliveryImpl extends BoardGithubDelivery {
     required String deliveryId,
     required String event,
     required DateTime receivedAt,
+    String? payload,
+    DateTime? processedAt,
+    int? attempts,
   }) : super._(
          id: id,
          deliveryId: deliveryId,
          event: event,
          receivedAt: receivedAt,
+         payload: payload,
+         processedAt: processedAt,
+         attempts: attempts,
        );
 
   /// Returns a shallow copy of this [BoardGithubDelivery]
@@ -134,12 +168,20 @@ class _BoardGithubDeliveryImpl extends BoardGithubDelivery {
     String? deliveryId,
     String? event,
     DateTime? receivedAt,
+    Object? payload = _Undefined,
+    DateTime? processedAt = const _is.$UndefinedDateTime(),
+    int? attempts,
   }) {
     return BoardGithubDelivery(
       id: id is int? ? id : this.id,
       deliveryId: deliveryId ?? this.deliveryId,
       event: event ?? this.event,
       receivedAt: receivedAt ?? this.receivedAt,
+      payload: payload is String? ? payload : this.payload,
+      processedAt: processedAt is _is.UndefinedSentinel
+          ? this.processedAt
+          : processedAt,
+      attempts: attempts ?? this.attempts,
     );
   }
 }
@@ -163,6 +205,22 @@ class BoardGithubDeliveryUpdateTable
         table.receivedAt,
         value,
       );
+
+  _is.ColumnValue<String, String> payload(String? value) => _is.ColumnValue(
+    table.payload,
+    value,
+  );
+
+  _is.ColumnValue<DateTime, DateTime> processedAt(DateTime? value) =>
+      _is.ColumnValue(
+        table.processedAt,
+        value,
+      );
+
+  _is.ColumnValue<int, int> attempts(int value) => _is.ColumnValue(
+    table.attempts,
+    value,
+  );
 }
 
 class BoardGithubDeliveryTable extends _is.Table<int?> {
@@ -181,6 +239,19 @@ class BoardGithubDeliveryTable extends _is.Table<int?> {
       'receivedAt',
       this,
     );
+    payload = _is.ColumnString(
+      'payload',
+      this,
+    );
+    processedAt = _is.ColumnDateTime(
+      'processedAt',
+      this,
+    );
+    attempts = _is.ColumnInt(
+      'attempts',
+      this,
+      hasDefault: true,
+    );
   }
 
   late final BoardGithubDeliveryUpdateTable updateTable;
@@ -191,12 +262,24 @@ class BoardGithubDeliveryTable extends _is.Table<int?> {
 
   late final _is.ColumnDateTime receivedAt;
 
+  /// The fields of the payload the handler needs (compact JSON, specs/16
+  /// §13.3); cleared once handled.
+  late final _is.ColumnString payload;
+
+  late final _is.ColumnDateTime processedAt;
+
+  /// Handler runs so far (retried a few times on errors).
+  late final _is.ColumnInt attempts;
+
   @override
   List<_is.Column> get columns => [
     id,
     deliveryId,
     event,
     receivedAt,
+    payload,
+    processedAt,
+    attempts,
   ];
 }
 

@@ -26,6 +26,10 @@ import 'package:wonky_server/src/generated/future_calls_generated_models/board_f
     as _ied218dm;
 import 'package:wonky_server/src/generated/future_calls_generated_models/board_future_call_triage_model.dart'
     as _ic65ofts;
+import 'package:wonky_server/src/generated/future_calls_generated_models/board_github_future_call_handle_model.dart'
+    as _it2ybdc3;
+import 'package:wonky_server/src/generated/future_calls_generated_models/board_github_future_call_review_model.dart'
+    as _iqologas;
 import 'package:wonky_server/src/generated/future_calls_generated_models/file_preview_future_call_generate_model.dart'
     as _ikj8bo9l;
 import 'package:wonky_server/src/generated/future_calls_generated_models/notification_email_future_call_send_model.dart'
@@ -654,6 +658,8 @@ class _InternalTestEndpoints extends TestEndpoints
 
 class _FutureCalls {
   late final board = _BoardFutureCall();
+
+  late final boardGithub = _BoardGithubFutureCall();
 
   late final filePreview = _FilePreviewFutureCall();
 
@@ -10589,6 +10595,48 @@ class _BoardFutureCall {
       await _iwslocjr.BoardSweepFutureCall().invoke(
         _localUniqueSession,
         null,
+      );
+    } finally {
+      await _localUniqueSession.close();
+    }
+  }
+}
+
+class _BoardGithubFutureCall {
+  Future<void> handle(
+    _ist.TestSessionBuilder sessionBuilder,
+    String deliveryId,
+  ) async {
+    var object = _it2ybdc3.BoardGithubFutureCallHandleModel(
+      deliveryId: deliveryId,
+    );
+    var _localUniqueSession =
+        (sessionBuilder as _ist.InternalTestSessionBuilder).internalBuild();
+    try {
+      await _iwslocjr.BoardGithubHandleFutureCall().invoke(
+        _localUniqueSession,
+        object,
+      );
+    } finally {
+      await _localUniqueSession.close();
+    }
+  }
+
+  Future<void> review(
+    _ist.TestSessionBuilder sessionBuilder,
+    int prNumber,
+    String headSha,
+  ) async {
+    var object = _iqologas.BoardGithubFutureCallReviewModel(
+      prNumber: prNumber,
+      headSha: headSha,
+    );
+    var _localUniqueSession =
+        (sessionBuilder as _ist.InternalTestSessionBuilder).internalBuild();
+    try {
+      await _iwslocjr.BoardGithubReviewFutureCall().invoke(
+        _localUniqueSession,
+        object,
       );
     } finally {
       await _localUniqueSession.close();

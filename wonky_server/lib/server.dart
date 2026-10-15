@@ -22,6 +22,8 @@ import 'src/sheets/versions/sheets_version_provider.dart';
 import 'src/slides/versions/slides_version_provider.dart';
 import 'src/web/middleware/sqlite_asset_alias.dart';
 import 'src/web/routes/app_config_route.dart';
+import 'src/web/routes/github_webhook_route.dart';
+import 'src/web/routes/improvements_redirect_route.dart';
 import 'src/web/routes/invite_route.dart';
 import 'src/web/routes/root_redirect_route.dart';
 import 'src/web/web_apps.dart';
@@ -146,8 +148,15 @@ void _configureWebServer(Serverpod pod) {
     );
   }
   pod.webServer.addRoute(InviteRoute(), '/invite/:token');
+  // Bugs & Improvements links (specs/16 §4.3): `/improvements/**` opens
+  // in Drive; `/improvements/p/<n>/screenshot` is the screenshot link.
+  for (final path in const ['/improvements', '/improvements/**']) {
+    pod.webServer.addRoute(ImprovementsRedirectRoute(), path);
+  }
   // The MCP endpoint (specs/09-mcp.md §1): Streamable HTTP, bearer tokens.
   pod.webServer.addRoute(McpRoute(), '/mcp');
+  // Webhooks of the Bugs & Improvements GitHub App (specs/16 §13.3).
+  pod.webServer.addRoute(GithubWebhookRoute(), '/api/github/webhook');
   // Wonky Drive file bytes (Drive 02 §3.3, §8; suite 13 §6): token-bound
   // downloads with forced headers and the PUT upload route.
   FileRoutes.register(pod.webServer);

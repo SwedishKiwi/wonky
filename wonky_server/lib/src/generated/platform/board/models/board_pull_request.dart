@@ -34,6 +34,8 @@ abstract class BoardPullRequest
     this.reviewDay,
     int? reviewCount,
     this.mergeCommitSha,
+    this.reviewPendingSha,
+    this.reviewDueAt,
     required this.createdAt,
     required this.updatedAt,
   }) : reviewCount = reviewCount ?? 0;
@@ -56,6 +58,8 @@ abstract class BoardPullRequest
     String? reviewDay,
     int? reviewCount,
     String? mergeCommitSha,
+    String? reviewPendingSha,
+    DateTime? reviewDueAt,
     required DateTime createdAt,
     required DateTime updatedAt,
   }) = _BoardPullRequestImpl;
@@ -87,6 +91,12 @@ abstract class BoardPullRequest
       reviewDay: jsonSerialization['reviewDay'] as String?,
       reviewCount: jsonSerialization['reviewCount'] as int?,
       mergeCommitSha: jsonSerialization['mergeCommitSha'] as String?,
+      reviewPendingSha: jsonSerialization['reviewPendingSha'] as String?,
+      reviewDueAt: jsonSerialization['reviewDueAt'] == null
+          ? null
+          : _is.DateTimeJsonExtension.fromJson(
+              jsonSerialization['reviewDueAt'],
+            ),
       createdAt: _is.DateTimeJsonExtension.fromJson(
         jsonSerialization['createdAt'],
       ),
@@ -138,6 +148,12 @@ abstract class BoardPullRequest
 
   String? mergeCommitSha;
 
+  /// The head SHA a review is scheduled for (debounce, budget or daily
+  /// limit postponement; specs/16 §13.5) and when it is due.
+  String? reviewPendingSha;
+
+  DateTime? reviewDueAt;
+
   DateTime createdAt;
 
   DateTime updatedAt;
@@ -166,6 +182,8 @@ abstract class BoardPullRequest
     String? reviewDay,
     int? reviewCount,
     String? mergeCommitSha,
+    String? reviewPendingSha,
+    DateTime? reviewDueAt = const _is.$UndefinedDateTime(),
     DateTime? createdAt,
     DateTime? updatedAt,
   });
@@ -191,6 +209,8 @@ abstract class BoardPullRequest
       if (reviewDay != null) 'reviewDay': reviewDay,
       'reviewCount': reviewCount,
       if (mergeCommitSha != null) 'mergeCommitSha': mergeCommitSha,
+      if (reviewPendingSha != null) 'reviewPendingSha': reviewPendingSha,
+      if (reviewDueAt != null) 'reviewDueAt': reviewDueAt?.toJson(),
       'createdAt': createdAt.toJson(),
       'updatedAt': updatedAt.toJson(),
     };
@@ -250,6 +270,8 @@ class _BoardPullRequestImpl extends BoardPullRequest {
     String? reviewDay,
     int? reviewCount,
     String? mergeCommitSha,
+    String? reviewPendingSha,
+    DateTime? reviewDueAt,
     required DateTime createdAt,
     required DateTime updatedAt,
   }) : super._(
@@ -270,6 +292,8 @@ class _BoardPullRequestImpl extends BoardPullRequest {
          reviewDay: reviewDay,
          reviewCount: reviewCount,
          mergeCommitSha: mergeCommitSha,
+         reviewPendingSha: reviewPendingSha,
+         reviewDueAt: reviewDueAt,
          createdAt: createdAt,
          updatedAt: updatedAt,
        );
@@ -296,6 +320,8 @@ class _BoardPullRequestImpl extends BoardPullRequest {
     Object? reviewDay = _Undefined,
     int? reviewCount,
     Object? mergeCommitSha = _Undefined,
+    Object? reviewPendingSha = _Undefined,
+    DateTime? reviewDueAt = const _is.$UndefinedDateTime(),
     DateTime? createdAt,
     DateTime? updatedAt,
   }) {
@@ -329,6 +355,12 @@ class _BoardPullRequestImpl extends BoardPullRequest {
       mergeCommitSha: mergeCommitSha is String?
           ? mergeCommitSha
           : this.mergeCommitSha,
+      reviewPendingSha: reviewPendingSha is String?
+          ? reviewPendingSha
+          : this.reviewPendingSha,
+      reviewDueAt: reviewDueAt is _is.UndefinedSentinel
+          ? this.reviewDueAt
+          : reviewDueAt,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
     );
@@ -424,6 +456,18 @@ class BoardPullRequestUpdateTable
         value,
       );
 
+  _is.ColumnValue<String, String> reviewPendingSha(String? value) =>
+      _is.ColumnValue(
+        table.reviewPendingSha,
+        value,
+      );
+
+  _is.ColumnValue<DateTime, DateTime> reviewDueAt(DateTime? value) =>
+      _is.ColumnValue(
+        table.reviewDueAt,
+        value,
+      );
+
   _is.ColumnValue<DateTime, DateTime> createdAt(DateTime value) =>
       _is.ColumnValue(
         table.createdAt,
@@ -506,6 +550,14 @@ class BoardPullRequestTable extends _is.Table<int?> {
       'mergeCommitSha',
       this,
     );
+    reviewPendingSha = _is.ColumnString(
+      'reviewPendingSha',
+      this,
+    );
+    reviewDueAt = _is.ColumnDateTime(
+      'reviewDueAt',
+      this,
+    );
     createdAt = _is.ColumnDateTime(
       'createdAt',
       this,
@@ -553,6 +605,12 @@ class BoardPullRequestTable extends _is.Table<int?> {
 
   late final _is.ColumnString mergeCommitSha;
 
+  /// The head SHA a review is scheduled for (debounce, budget or daily
+  /// limit postponement; specs/16 §13.5) and when it is due.
+  late final _is.ColumnString reviewPendingSha;
+
+  late final _is.ColumnDateTime reviewDueAt;
+
   late final _is.ColumnDateTime createdAt;
 
   late final _is.ColumnDateTime updatedAt;
@@ -576,6 +634,8 @@ class BoardPullRequestTable extends _is.Table<int?> {
     reviewDay,
     reviewCount,
     mergeCommitSha,
+    reviewPendingSha,
+    reviewDueAt,
     createdAt,
     updatedAt,
   ];

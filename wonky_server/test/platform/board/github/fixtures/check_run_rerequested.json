@@ -1,0 +1,30 @@
+{
+  "action": "rerequested",
+  "check_run": {
+    "id": 128620228,
+    "name": "Wonky task",
+    "node_id": "MDg6Q2hlY2tSdW4xMjg2MjAyMjg=",
+    "head_sha": "6dcb09b5b57875f334f61aebed695e2e4193db5e",
+    "external_id": "",
+    "status": "completed",
+    "conclusion": "failure",
+    "started_at": "2026-10-15T10:00:01Z",
+    "completed_at": "2026-10-15T10:00:01Z",
+    "output": { "title": "No Wonky-Task line", "summary": "…", "text": null },
+    "check_suite": { "id": 118578147, "head_branch": "fix-paste", "head_sha": "6dcb09b5b57875f334f61aebed695e2e4193db5e" },
+    "app": { "id": 4242, "slug": "wonky-work-bot", "name": "Wonky Work bot" },
+    "pull_requests": [
+      {
+        "url": "https://api.github.com/repos/serverpod/wonky/pulls/345",
+        "id": 2048123456,
+        "number": 345,
+        "head": { "ref": "fix-paste", "sha": "6dcb09b5b57875f334f61aebed695e2e4193db5e" },
+        "base": { "ref": "main", "sha": "c0ffee0000000000000000000000000000000000" }
+      }
+    ]
+  },
+  "requested_action": null,
+  "repository": { "id": 777001, "name": "wonky", "full_name": "serverpod/wonky", "private": false },
+  "sender": { "login": "maintainer-ann", "id": 9001, "type": "User" },
+  "installation": { "id": 55500011 }
+}

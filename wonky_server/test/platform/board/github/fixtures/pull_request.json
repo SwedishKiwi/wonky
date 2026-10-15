@@ -1,0 +1,72 @@
+{
+  "action": "opened",
+  "number": 345,
+  "pull_request": {
+    "url": "https://api.github.com/repos/serverpod/wonky/pulls/345",
+    "id": 2048123456,
+    "node_id": "PR_kwDOLx1abc5_kWxA",
+    "html_url": "https://github.com/serverpod/wonky/pull/345",
+    "diff_url": "https://github.com/serverpod/wonky/pull/345.diff",
+    "number": 345,
+    "state": "open",
+    "locked": false,
+    "title": "Keep styles when pasting into merged cells",
+    "user": {
+      "login": "octocat",
+      "id": 583231,
+      "node_id": "MDQ6VXNlcjU4MzIzMQ==",
+      "type": "User",
+      "site_admin": false
+    },
+    "body": "Fixes the paste.\n\nWonky-Task: T-12\nWonky-Claim: 7Q4F-K2M9\n",
+    "created_at": "2026-10-15T10:00:00Z",
+    "updated_at": "2026-10-15T10:00:00Z",
+    "closed_at": null,
+    "merged_at": null,
+    "merge_commit_sha": null,
+    "draft": false,
+    "head": {
+      "label": "octocat:fix-paste",
+      "ref": "fix-paste",
+      "sha": "6dcb09b5b57875f334f61aebed695e2e4193db5e",
+      "repo": {
+        "id": 1296269,
+        "name": "wonky",
+        "full_name": "octocat/wonky",
+        "fork": true
+      }
+    },
+    "base": {
+      "label": "serverpod:main",
+      "ref": "main",
+      "sha": "c0ffee0000000000000000000000000000000000",
+      "repo": {
+        "id": 777001,
+        "name": "wonky",
+        "full_name": "serverpod/wonky",
+        "fork": false
+      }
+    },
+    "author_association": "CONTRIBUTOR",
+    "merged": false,
+    "mergeable": null,
+    "comments": 0,
+    "commits": 1,
+    "additions": 42,
+    "deletions": 3,
+    "changed_files": 2
+  },
+  "repository": {
+    "id": 777001,
+    "node_id": "R_kgDOLx1abc",
+    "name": "wonky",
+    "full_name": "serverpod/wonky",
+    "private": false,
+    "owner": { "login": "serverpod", "id": 1234567, "type": "Organization" },
+    "html_url": "https://github.com/serverpod/wonky",
+    "default_branch": "main"
+  },
+  "organization": { "login": "serverpod", "id": 1234567 },
+  "sender": { "login": "octocat", "id": 583231, "type": "User" },
+  "installation": { "id": 55500011, "node_id": "MDIzOkludGVncmF0aW9uSW5zdGFsbGF0aW9uNTU1MDAwMTE=" }
+}

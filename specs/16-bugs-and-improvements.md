@@ -1280,7 +1280,9 @@ Wonky server (GitHub App) ──► check "Wonky task"         pass ─► task 
 - **Credentials**: the passwords `githubAppPrivateKey` (PEM) and `githubWebhookSecret`. The
   config holds `board.github.appId`. The server signs an RS256 app JWT and exchanges it for an
   installation token (cached for 50 minutes).
-- **Webhook route**: `POST /api/github/webhook`, a Relic route in `wonky_server/lib/src/web/`.
+- **Webhook route**: `POST /api/github/webhook`, a Relic route in `wonky_server/lib/src/web/`,
+  on the web server: the App's webhook URL is `https://wonky.work/api/github/webhook`
+  (`api.wonky.work` is the API server and serves no web routes).
   - It verifies `X-Hub-Signature-256` (HMAC-SHA256 with the webhook secret, constant-time
     compare) and rejects anything else with `401`.
   - It deduplicates on `X-GitHub-Delivery` (table `board_github_delivery`, purged after 7 days).
@@ -1382,6 +1384,22 @@ a check re-run:
 - `board.linkPullRequest` and `board.markDone` stay as admin actions, for when the App is down or
   a PR was opened before the integration existed.
 - `board.markShipped` stays for deploys that don't go through the workflow.
+
+**Implementation notes (BI-11, BI-12; setup steps in
+`wonky_server/lib/src/platform/board/github/README.md`):**
+
+- The route stores only the payload fields the handler needs (`board_github_delivery.payload`,
+  cleared once handled); failed handling is retried twice.
+- The App also needs *Organization → Members: read* for the exemption check.
+- Exactly one line of each: two `Wonky-Task` lines fail even when equal. Lines inside HTML
+  comments (the PR template's hints) are ignored. A task an admin linked to this PR without a
+  claim passes without a code. Draft tasks read as *doesn't exist*.
+- Activity rows: `prLinked` (gate link), `done` (merge), `prClosed` (closed unmerged),
+  `shipped` (deploy); the body is the PR URL or the deploy SHA.
+- Review: pending SHA and due time on the PR row (`reviewPendingSha`, `reviewDueAt`); a
+  review over the daily limit or the AI budget is postponed to the next UTC day and run by the
+  sweep; draft PRs are reviewed once ready. Blocking mode treats unrelated changes over 200
+  changed lines as major. `BoardTaskView.reviewJson` holds the result, the facts and the SHA.
 
 ### 13.7 Security notes
 
