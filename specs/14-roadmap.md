@@ -181,7 +181,8 @@ the first Slides package that needs it (SL-2 needs D-6; SL-5 needs D-4; SL-26/SL
 **Delivered** (BI-1…BI-9 and BI-11, BI-12; BI-10 (P1) not built, open items in
 [16 §17](16-bugs-and-improvements.md)).
 
-**M12 exit checklist** (status from code and tests at BI-9; the browser walkthrough is pending):
+**M12 exit checklist** (checked 2026-10-15: suites, then a browser walkthrough of the Drive release
+build against the live server with the real Jev and Gemini APIs):
 
 - ☑ Server board suites (`wonky_server/test/platform/board/`): access matrix (signed out, signed
   in, author, admin, blocked), posts, votes, comments, claims and sweep, triage bands and
@@ -189,13 +190,17 @@ the first Slides package that needs it (SL-2 needs D-6; SL-5 needs D-4; SL-26/SL
 - ☑ Client suites (`packages/wonky_app/test/board/`: commands with undo, report dialog, board
   pages, review tab, screenshot editor), `WonkyMarkdown`/`MarkdownComposer`, and
   `CommentThreadBody` with both action implementations.
-- ◐ Document comment suites unchanged apart from Markdown rendering: `CommentThreadActions`
-  refactor covered by `test/comments`; the full Write/Sheets/Slides comment suites are re-run
-  by the coordinator.
-- ◐ J-B1: covered piecewise by the server lifecycle and GitHub tests (recorded webhooks) and the
-  client dialog/page tests; the end-to-end browser walkthrough is pending.
-- ◐ Signed-out board in the release build: router test (`/improvements*` public, other routes
-  redirect); release-build check pending.
+- ☑ Document comment suites unchanged apart from Markdown rendering: `test/comments` plus the
+  Write (comments, suggestions, AI, images, offline, document), Sheets (comments, collab, AI) and
+  Slides (present, comments) suites green after the `CommentThreadActions` refactor.
+- ☑ J-B1 walked through in the browser: report from the left menu with a captured, covered and
+  highlighted screenshot; live Jev triage (labels, spam held, duplicate hint, merge); post page
+  (Markdown, screenshot, admin scores, Gemini title); comment; select for building with the
+  prompt written in the background; publish; claim with the claim code. The GitHub side is
+  covered by recorded-webhook tests (the App is not installed yet); keyboard undo could not be
+  driven in the agent's browser pane (command undo tests are green).
+- ☑ Signed-out board in the release build: `/drive/improvements` loads signed out with the
+  sign-in banner; `/improvements/**` redirects to Drive.
 - ☐ Light/dark goldens for the dialog, row, post page and editor — not written.
 - ☐ `CONTRIBUTING.md` fresh-clone dry run — the kit exists (`CONTRIBUTING.md`, `SECURITY.md`,
   `.github/pull_request_template.md`, issue template `config.yml`, `passwords.example.yaml`),
