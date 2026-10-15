@@ -105,10 +105,16 @@ Editors+ can delete any thread. Viewers see comments only if the owner allows it
 
 ### 2.3 UI (shared widgets in `wonky_app`, anchoring per app)
 - **Margin threads** (Write) / **cell indicator** triangle (Sheets) for anchors.
-- **Comment card**: avatar, name, relative time, body (Markdown), reactions, ⋮ (Edit, Delete,
+- **Comment card**: avatar, name, relative time, body (Markdown, rendered by `WonkyMarkdown` with
+  `MarkdownProfile.comment`: inline styles, links, lists, code blocks; M12), reactions, ⋮ (Edit, Delete,
   Link to comment, Mark unread), reply box, *Resolve* ✓ button. Active thread expands and
   aligns next to its anchor. The comments + reply box part is `CommentThreadBody`, reused by app
-  cards (Write's suggestion cards, whose replies are comments in the suggestion's thread).
+  cards (Write's suggestion cards, whose replies are comments in the suggestion's thread). (M12)
+  `CommentThreadBody` works through a `CommentThreadActions` interface (reply, edit, delete,
+  react, per-comment permissions) and `CommentThreadBody.custom(services, actions, comments)`
+  renders `ThreadComment`s. Document comments use `DocumentCommentThreadActions` (the
+  `shell.comments.*` commands, no behavior change); the Bugs & Improvements board uses its own
+  implementation (`shell.board.comment.*`, [16 §7.3](16-bugs-and-improvements.md)).
 - **New comment**: `Mod+Alt+M` with selection → composer card with mention autocomplete (`@`),
   *Assign to* checkbox when a mention exists, *Comment*/*Cancel*.
 - **Where comments show**: an app may show the open file's comments somewhere other than the
@@ -148,6 +154,7 @@ fields:
   userId: int, relation(parent=user_profile, onDelete=Cascade)
   kind: NotificationKind   # mention, reply, assigned, shared, accessRequest, suggestion, scriptFailure,
                            #   (v2) storage (quota warnings and the one-time v2 notice, Drive 03 §9);
+                           #   (M12) boardReply, boardStatus, boardClaim (16 §12);
                            #   Slides adds kinds only through Slides 09
   itemId: int?
   payload: String          # JSON
@@ -163,7 +170,12 @@ fields:
 - Settings › Notifications (`UserPreferences.notificationSettings` JSON): per category
   `inApp` | `email` (in-app and email) | `off` — `mentions` (mentions and assignments),
   `replies`, `shares` (shares, ownership transfers), `accessRequests` (falls back to `shares`
-  for older settings), `suggestions` (new suggestions on my files, decisions on mine) — plus
+  for older settings), `suggestions` (new suggestions on my files, decisions on mine), (M12) `board` (Bugs &
+  Improvements: `boardReply` a comment on a post I wrote or commented on, `boardStatus` a post I
+  wrote or voted on was planned, built, shipped, declined or merged, or my post was held or
+  removed, `boardClaim` claim warnings, expiry and release or PR-closed notices; default
+  in-app + digest email; links `/drive/improvements/p/<n>` and `/t/<n>`,
+  [16 §12](16-bugs-and-improvements.md)) — plus
   `digest: bool` (default true). `off` creates no notification.
 - Email: **mentions and assignments** set to email are sent right away (a `FutureCall` without
   delay, `NotificationEmailFutureCall`); everything else set to email goes into the **digest

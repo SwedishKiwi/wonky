@@ -13,7 +13,7 @@ backfill for existing users. It is authoritative for anything that counts or blo
 | Quota | `wonky.drive.quotaBytesPerUser` (default 52,428,800 = 50 × 1024 × 1024), shown as "50 MB" |
 | Who pays | The **owner** of a drive item, for the item's content and the images stored in it — no matter who added them |
 | What counts | Content of documents, spreadsheets and presentations (server estimate), uploaded files, images/attachments stored in items, trashed items until purged (§2) |
-| What doesn't | Version-history snapshots, thumbnails and previews, exports, import sources, avatars, script bytecode, server caches, local device data |
+| What doesn't | Version-history snapshots, thumbnails and previews, exports, import sources, avatars, board screenshots (`StoredFileKind.boardScreenshot`, [16 §5.3](../16-bugs-and-improvements.md)), script bytecode, server caches, local device data |
 | Blocked when it doesn't fit | Uploads, image inserts, imports and conversions, copies, creation from non-empty templates, ownership transfer to the user (§7) |
 | Never blocked | Editing existing content (typing, cells, slides, formatting), creating blank items, offline sync, version restore, restore from trash, deleting anything |
 | Over quota | Possible (content growth, backfill, estimates): a banner everywhere and every blocked path refuses until usage is back under the quota (§6.2) |
@@ -343,7 +343,7 @@ The client maps it to the dialog variants of §6.3 (`QuotaErrorPresenter`, `wonk
 | `drive.restore` (from trash) | 0 (trash already counts) | — | never refused |
 | `versions.restore` | content change = an edit | owner | never refused |
 | Write OT ops, Sheets/Slides sync, text edits through MCP/AI/scripts | growth via size estimates | owner | **never refused**; may lead to over quota |
-| `drive.setThumbnail`, previews, exports, avatars | not counted | — | existing size caps only |
+| `drive.setThumbnail`, previews, exports, avatars, (M12) board screenshots (`board.createScreenshotUpload`: PNG/JPEG, 5 MB each) | not counted | — | existing size caps only |
 
 `drive.checkRoom(int bytes, UuidValue? itemUuid)` (new, cheap, read-only) lets clients
 pre-check paths where the bytes don't go through an upload (client-side imports, large pastes

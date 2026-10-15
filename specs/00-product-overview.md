@@ -33,7 +33,7 @@ Guiding principles:
 3. **Single window.** The app never opens new browser tabs or OS windows. Navigation, dialogs,
    side panels and document switching happen inside one window (see
    [03-app-shell-and-navigation.md](03-app-shell-and-navigation.md)); the only exceptions are
-   external links (incl. *Report a bug*) and Google's sign-in popup (03 §1). Slides presents in
+   external links (e.g. in documents and help) and Google's sign-in popup (03 §1). Slides presents in
    one window too: the audience view on a second screen runs on another device or browser
    joined to the presentation (Slides 10 §5).
 4. **Offline is normal.** Sheets and Slides are offline-first through the sync engine; Write

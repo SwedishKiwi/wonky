@@ -53,7 +53,7 @@ and is configured by the app (`WonkyAppConfig.homeNav`, suite 03 §3.3). Drive v
 │ ──────────────────────────── │
 │ ⚙  Drive settings            │  → /settings/app            (shell.settings.openApp)
 │ [▣] Wonky Work settings     │  → /settings/account        (shell.settings.open)
-│ 🐞 Report a bug              │  → github issues            (shell.help.reportBug)
+│ 💬 Bugs & Improvements       │  → report dialog            (shell.board.report)
 │ ▬▬▬▬▬▬▬▬▬▬░░░░               │
 │ 12.3 MB of 50 MB used        │  ← StorageMeter (Drive 03 §6.1) → /drive/storage
 └──────────────────────────────┘
@@ -71,8 +71,8 @@ and is configured by the app (`WonkyAppConfig.homeNav`, suite 03 §3.3). Drive v
   Storage. App homes use their own list (suite 03 §3.3).
 - **Bottom section** (pinned to the bottom, scrolls with the menu when the window is short):
   *Drive settings* (`settings` icon; app homes: *Write settings*, *Sheets settings*, *Slides
-  settings*), *Wonky Work settings* (Work product icon), *Report a bug* (Lucide `bug`; opens
-  the external-link confirm popover, suite 03 §1), then the `StorageMeter`.
+  settings*), *Wonky Work settings* (Work product icon), *Bugs & Improvements* (M12, Lucide
+  `messageSquarePlus`; opens the report dialog, suite 16 §4.2; replaced *Report a bug*), then the `StorageMeter`.
 - Drop targets: *My Drive* (and tree nodes) accept dragged items (move) and OS files (upload
   into that folder); *Trash* accepts dragged items (P1, trash; undoable).
 - Collapsing: the top bar's ☰ collapses the menu (state per device); below `md` it becomes a
@@ -368,7 +368,7 @@ Shell commands used (unchanged ids): `shell.drive.newFolder` (`Shift+F`), `renam
 `restore`, `deleteForever`, `emptyTrash`, `shell.file.new {kind}` (`Mod+Alt+N` = new document
 in Drive), `shell.file.newFromTemplate`, `shell.file.details` (`i`), `shell.sharing.open`
 (`.`), `shell.nav.home`, `shell.settings.open`, `shell.settings.openApp`,
-`shell.help.reportBug`, `shell.account.switchApp {app}`, `shell.storage.open`,
+`shell.board.report`, `shell.board.open`, `shell.account.switchApp {app}`, `shell.storage.open`,
 `shell.ai.togglePanel` (Drive assistant, P1, suite 10 §3.1). App homes additionally use
 `shell.nav.openInDrive {folderUuid?}`.
 
@@ -445,7 +445,7 @@ fields), as today.
   overlay text "Upload to Designs"; the upload panel shows progress and completion.
 - **AC-D4.5** `Space` on a PDF opens its preview (the *Download* card); `→` goes to the next file; `Esc` returns with
   the PDF still selected and focused.
-- **AC-D4.6** *Report a bug* in the left menu shows the external-link confirm popover for
-  github.com.
+- **AC-D4.6** *Bugs & Improvements* in the left menu opens the report dialog (with `board: false`:
+  the external-link confirm popover for github.com, suite 03 §3.4).
 - **AC-D4.7** Every screen of this spec passes the golden matrix in light and dark and the
   360 px overflow check.

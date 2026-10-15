@@ -19,7 +19,7 @@ naming, helpers, determinism, running them) is in [15 · Writing tests](15-writi
 **Contract tests**: every command has an execute→undo→redo test (see 08 §4). Every MCP tool
 has an integration test through `/mcp`. Every endpoint has permission tests for each role.
 
-### 1.1 Critical user journeys (E2E; journeys 1–10 run on web + macOS in CI, the v2 journeys 11–15 on the web only — 01 A13)
+### 1.1 Critical user journeys (E2E; journeys 1–10 run on web + macOS in CI, the v2 journeys 11–15 and J-B1 on the web only — 01 A13)
 1. Sign up → verify → create document → type with formatting → reload → content persists.
 2. Two users co-edit the same paragraph; cursors visible; converge; each undoes only own edits.
 3. Go offline, edit document and spreadsheet, go online → changes sync, no data loss.
@@ -36,11 +36,18 @@ has an integration test through `/mcp`. Every endpoint has permission tests for 
     *Open with* a CSV in Sheets; app homes show only their kind ([Drive 05 §6](wonky_drive/05-implementation-plan.md)).
 12. (v2) Quota: fill the 50 MB, see the refusal and the banners in every app, empty trash, the
     banner disappears live.
-13. (v2) Settings split and *Report a bug* in all four apps.
+13. (v2) Settings split and *Report a bug* in all four apps (since M12 the entry opens *Bugs & Improvements*, J-B1).
 14. (v2) Slides: create a deck offline with groups, builds and a code block with type-in;
     present it; export PDF; insert a linked Sheets chart and update it after the source
     changed ([Slides 12](wonky_slides/12-implementation-plan.md)).
 15. (v2) Two users co-edit a deck; soft lock on a text box; each undoes only their own edits.
+16. (M12) **J-B1**, Bugs & Improvements ([16 §15](16-bugs-and-improvements.md)): sign in; open the
+    dialog from the Sheets editor; add a screenshot and cover an area; see a similar post and
+    post anyway; the post is visible (fake triage); a second user votes and comments; an admin
+    (`@serverpod.dev` test account in the `e2eSupport` allowlist) selects it, edits and publishes
+    the prompt; the second user claims it and sees the claim code; a recorded `pull_request`
+    webhook with the code links the PR and a recorded merge marks it done; the voter gets the
+    notification. Also checked: the signed-out board loads in the release build.
 
 ## 2. Performance budgets (summary; details in app specs)
 
@@ -102,7 +109,11 @@ Drive's text/audio viewers, Slides' presenting, PDF export, 3D charts and code t
   metrics (ops/s, transform time, rejections), sync metrics (cycle time, batch sizes,
   violations from `offline_sync_integrity_violations`), MCP/AI usage and errors.
 - Client: error reporting endpoint (`feedback.reportError` with stack, app/build version,
-  route, anonymized state), performance marks (open time, frame drops) sampled.
+  route, anonymized state), performance marks (open time, frame drops) sampled. (M12) Error
+  reports stay **private telemetry**: they are never shown on the public board. They feed the
+  report dialog's *Include the last error* option (the error boundary's last report, shown to
+  the user before posting) and, as P1, the admin *Error reports* view
+  ([16 §12](16-bugs-and-improvements.md)).
 - Health: Serverpod health endpoints (`/livez`, `/readyz`) with custom indicators (DB, Redis,
   AI provider reachability (non-critical), storage).
 

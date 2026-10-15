@@ -19,10 +19,19 @@
 | (v2) Second presenting window (Slides, if adopted) | Opens only the audience route of the same deck, same origin, no other content; closed with the presentation (03 §1) |
 | Brute-force login | Serverpod IDP rate limiting; generic error messages |
 | Test-support endpoint left open (E2E verification codes, 15 §9) | `e2eSupport` refuses every call outside the `development`/`test` run modes and only serves `@example.test` addresses; a server test asserts the refusal in `staging`/`production` |
+| (M12) Security vulnerabilities posted on the public board | The dialog points to `security@serverpod.dev` and `SECURITY.md`; Jev's `security` check holds at ≥ 0.5 and lists at ≥ 0.2 for admins ([16 §11](16-bugs-and-improvements.md)) |
+| (M12) Personal data in board posts and screenshots | Warnings, the cover tool (opaque, flattened on the device), route ids stripped, Jev's `personal_data` check, author can delete and remove screenshots (16 §5, §11) |
+| (M12) Prompt injection into triage, task prompts and PR reviews | Jev returns typed answers only; Gemini gets post and PR text as delimited untrusted data and answers through schemas; task prompts need admin review and sit in a fixed template; PR reviews are advisory and the server never runs PR code (16 §10.2, §13.5) |
+| (M12) Forged GitHub webhooks, claim takeover | HMAC-SHA256 check (`githubWebhookSecret`), delivery dedupe, per-claim codes compared in constant time (16 §13.3, §13.7) |
+| (M12) Runaway AI spend on the board | Separate daily token budgets for Jev and Gemini, per-PR review limits, per-user rate limits (16 §6.1, §11, §13.5) |
 | Session token theft via XSS (web) | Cookie auth: tokens in an httpOnly, `secure`, `SameSite=lax` cookie shared by both apps; `allowedOrigins` restricts credentialed cross-origin calls (01 §2.5) |
 
 ## 2. Privacy
 - Data minimization in logs (no document content in logs; ids only).
+- (M12) **Bugs & Improvements**: posts, comments, task text and screenshots are **public** (readable
+  signed out). They are checked by Jev (TypeSafe) and written about by Gemini (Google, paid-tier
+  key) on internal keys; the dialog names both. The per-user AI opt-out below does **not** apply
+  to board content, because it is public anyway. Details: [16 §6.1, §11](16-bugs-and-improvements.md).
 - AI: opt-out per user and per deployment; notice in panel naming the provider. Provider API
   keys (server passwords `openaiApiKey`, `anthropicApiKey`, `geminiApiKey`, and users' own keys
   in `ai_user_key`) are server-side only. A user's own key is accepted only while the server has
@@ -65,7 +74,15 @@
   reconcile (nightly), storage backfill (once, at the M8 deploy), upload expiry
   (`drive.expireUploads`, daily: uploads not completed in 24 h, reservations, chunk parts),
   file preview/thumbnail generation (on upload completion), folder `kindMask` recompute
-  (nightly), Slides jobs per Slides 12.
+  (nightly), Slides jobs per Slides 12; (M12) **`wonky.boardSweep`** (every 10 minutes: expired
+  and expiring task claims, unchecked-post re-triage, retention of removed board content, and
+  the GitHub part: delivery purge, auto-close of PRs without a valid task, postponed reviews;
+  16 §8.2, §11, §13.4).
+- (M12) **Board secrets and settings**: the passwords `internalJevApiKey`, `internalGeminiApiKey`
+  (board AI, separate from the in-app keys), `githubAppPrivateKey` and `githubWebhookSecret` (the
+  GitHub App; the webhook route is `POST https://wonky.work/api/github/webhook`, setup in
+  `wonky_server/lib/src/platform/board/github/README.md`); config `wonky: board:` (16 §12), the
+  GitHub integration is off until `board.github.enabled` is true.
 - **Feature flags**: config-driven flags (`features.*`) for AI, scripting, MCP UI bridge,
   experimental chart types — checked server-side and delivered to clients in `meta.getInfo()`.
 
@@ -138,7 +155,8 @@ retention — trash is purged after 30 days, `DriveService.trashRetention`) and 
 reviewed before publishing; material changes update the effective date and are announced.
 (v2) The M8 release updates both: uploaded files of any type, the 50 MB storage limit and what
 happens over it (Drive 03), acceptable use of uploads (no illegal content, no malware), and the
-public nature of bug reports on GitHub (03 §3.4).
+public nature of bug reports on GitHub (03 §3.4). (M12) The privacy policy also names the public
+Bugs & Improvements board and the AI checks of its posts ([16](16-bugs-and-improvements.md)).
 
 ## 6. Arbitrary uploads (v2)
 

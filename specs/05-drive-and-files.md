@@ -169,7 +169,7 @@ Single-window page at `/` of each app — layout:
 │ ───────────    │                                                              │
 │ ⚙ Write sett…  │                                                              │
 │ ▣ Wonky Work… │      (bottom section: Write settings, Wonky Work settings,  │
-│ 🐞 Report a bug│       Report a bug, storage meter "12.3 MB of 50 MB used")   │
+│ 💬 Bugs & Impr.│       Bugs & Improvements, storage meter "12.3 MB of 50 MB used")   │
 │ ▬▬▬░ 12.3/50 MB│                                                              │
 └────────────────┴─────────────────────────────────────────────────────────────┘
 ```
@@ -184,13 +184,13 @@ Single-window page at `/` of each app — layout:
   owner, modified), app theme toggle (light/dark/system cycle), notifications, account avatar
   menu (name, email, (v2) *<App> settings*, *Wonky Work settings*, *Open ▸* Drive / Write /
   Sheets / Slides with the product icons, Sign out). There is no help button (Help lives in the
-  editor's Help menu and *Report a bug* in the left menu; there is no help center). (v2) In app
+  editor's Help menu and *Bugs & Improvements* (M12, was *Report a bug*) in the left menu; there is no help center). (v2) In app
   homes the search is filtered to the app's kind; its dropdown ends with "Search all of Wonky
   Drive for '…'" (→ Drive's search, same tab).
 - **Left menu** (v2: `HomeSidebar`, replaces `DriveSidebar`; 03 §3.3, Drive 04 §2): app section
   (four apps), *New* button (12 px left of the +; app homes: New <kind> / From template…), the
   app's nav items (app homes: Recent, My files, Shared with me, Starred, Offline, Trash — no
-  folder tree), bottom section (*<App> settings*, *Wonky Work settings*, *Report a bug*,
+  folder tree), bottom section (*<App> settings*, *Wonky Work settings*, *Bugs & Improvements*,
   storage meter "12.3 MB of 50 MB used").
 - **(v2) Folder rule in app homes.** A folder appears in an app home only if it contains —
   recursively, ignoring trashed items — at least one item of the app's kind. The server keeps

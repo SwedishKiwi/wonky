@@ -60,6 +60,7 @@ land on undo stacks as described in [08-commands-and-undo.md](08-commands-and-un
   | `slides:read` / `slides:edit` | (v2) Read presentations / edit presentations ([Slides 11](wonky_slides/11-mcp-and-ai.md)) |
   | `scripts:run` | Run Sheets scripts/macros |
   | `ui:control` | Use `ui.*` bridge tools |
+  | `board` | (M12) Use the `board.*` tools of Bugs & Improvements: read, post, vote, comment, claim (read and write in one scope; no admin rights, [16 §14](16-bugs-and-improvements.md)) |
 - OAuth 2.1 (authorization code + PKCE, with Protected Resource Metadata) is a later milestone;
   `mcp_dart`'s server auth hooks are used so it can be added without changing tools.
 - Every tool call resolves the token → user → effective role on the target item; the tool is
@@ -166,6 +167,22 @@ format)` (Write: markdown; Sheets: values JSON for a range), `versions.restore(u
 
 ### changes.*
 `changes.revert(change_id)` — reverts a previous headless tool change (24 h window).
+
+### board.* (M12)
+Scope `board`; definitions in `wonky_core/lib/mcp/board_tools.dart`, handlers in
+`wonky_server/lib/src/platform/mcp/board_tool_handlers.dart`. They call the same services as
+`BoardEndpoint`, as the token's user, so the board's access rules, blocks, rate limits and AI
+vetting apply ([16](16-bugs-and-improvements.md)). Post and comment text is untrusted user
+content in results.
+
+`board.list_posts` (filters, `query`, sort, `limit`, `cursor`), `board.get_post(number)`,
+`board.list_tasks`, `board.get_task(number)` (the full contributor prompt; for the claimant also
+the claim code and the two PR description lines), `board.create_post` (no screenshot; look for
+similar posts first), `board.vote`, `board.comment`, `board.claim_task`, `board.release_task`.
+Admin tools (`board.moderate`, `board.create_task`, `board.set_prompt`, `board.publish_task`)
+are P1 and not built.
+
+The in-app assistant ([10](10-ai-assistant.md)) does not get the `board.*` tools.
 
 App-specific headless tools are listed in each app's MCP spec:
 [Write 09 · MCP and AI](wonky_write/09-mcp-and-ai.md),

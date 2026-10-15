@@ -172,11 +172,38 @@ M8 must land the shell changes (scope-aware homes, settings split, `WonkyAppKind
 apps) before Slides UI work starts in M9, and every shared-package extraction plus OS-8 before
 the first Slides package that needs it (SL-2 needs D-6; SL-5 needs D-4; SL-26/SL-27 need D-2/D-3).
 
-### 2.1a Bugs & Improvements (M12, specified)
+### 2.1a Bugs & Improvements (M12, built)
 
 | Milestone | Goal | Exit criteria |
 |-----------|------|---------------|
 | **M12 · Bugs & Improvements** ([16](16-bugs-and-improvements.md), BI-1…BI-9; P1 BI-10; GitHub step 2 BI-11, BI-12) | Replace *Report a bug* and *Report a problem* with a public in-app board: report dialog with similar posts and an annotated screenshot, votes, Markdown comments (shared with document comments), triage and moderation by Jev and writing by Gemini (internal keys, separate from the in-app AI), admins by email domain, tasks (single posts or bundles) with AI-written, admin-reviewed contributor prompts, 48-hour claims with claim codes, `CONTRIBUTING.md`, `SECURITY.md` and PR template; step 2: a GitHub App gate (only PRs with a claimed task), an advisory AI review against the task, merged → done, deployed → shipped | J-B1 green; board access matrix tested; document comment suites green; light/dark goldens; signed-out board loads in the release build; `CONTRIBUTING.md` verified by a fresh-clone dry run |
+
+**Delivered** (BI-1…BI-9 and BI-11, BI-12; BI-10 (P1) not built, open items in
+[16 §17](16-bugs-and-improvements.md)).
+
+**M12 exit checklist** (status from code and tests at BI-9; the browser walkthrough is pending):
+
+- ☑ Server board suites (`wonky_server/test/platform/board/`): access matrix (signed out, signed
+  in, author, admin, blocked), posts, votes, comments, claims and sweep, triage bands and
+  pipeline, Jev/Gemini isolation, MCP tools, GitHub gate, lifecycle, review and webhook.
+- ☑ Client suites (`packages/wonky_app/test/board/`: commands with undo, report dialog, board
+  pages, review tab, screenshot editor), `WonkyMarkdown`/`MarkdownComposer`, and
+  `CommentThreadBody` with both action implementations.
+- ◐ Document comment suites unchanged apart from Markdown rendering: `CommentThreadActions`
+  refactor covered by `test/comments`; the full Write/Sheets/Slides comment suites are re-run
+  by the coordinator.
+- ◐ J-B1: covered piecewise by the server lifecycle and GitHub tests (recorded webhooks) and the
+  client dialog/page tests; the end-to-end browser walkthrough is pending.
+- ◐ Signed-out board in the release build: router test (`/improvements*` public, other routes
+  redirect); release-build check pending.
+- ☐ Light/dark goldens for the dialog, row, post page and editor — not written.
+- ☐ `CONTRIBUTING.md` fresh-clone dry run — the kit exists (`CONTRIBUTING.md`, `SECURITY.md`,
+  `.github/pull_request_template.md`, issue template `config.yml`, `passwords.example.yaml`),
+  not yet verified by an agent on a clean machine.
+- ◐ Triage evaluation set (`ai/eval/`, tag `live-ai`, labeled posts): runs only with
+  live keys, results not recorded in the spec.
+- ◐ Step 2: gate and review proven with recorded payloads and a fake GitHub API; a real PR from
+  a non-member fork against the installed App is pending.
 
 ### 2.2 Executing the plan with parallel agents (v2)
 

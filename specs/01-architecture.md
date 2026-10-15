@@ -591,7 +591,7 @@ sheets: {dir: web/sheets, path: /sheets/}, slides: {dir: web/slides, path: /slid
 drive and slides v2); (v2) `drive: {quotaBytesPerUser, warnAtPercent, maxPendingUploadsPerUser}`,
 `files: {maxFileUploadBytes, maxImageUploadBytes, maxImportUploadBytes}` (Drive 03 §3),
 `slides: {maxActiveSpacesPerUser, …}` (Slides 01 limits; the deck active set, suite 12 §2.6), `help: {bugReportUrl}` (default
-`https://github.com/serverpod/wonky/issues`, 03 §3.4); the template's commented-out
+`https://github.com/serverpod/wonky/issues`, the fallback of 03 §3.4), (M12) `board: {enabled, repository}` in `config.json` (16 §12); the template's commented-out
 `authCookie` + `allowedOrigins` are enabled (§2.5).
 Secrets in `passwords.yaml`: `openaiApiKey` / `anthropicApiKey` / `geminiApiKey` (any or none,
 10 §1), `jwt…` (existing), email provider credentials.

@@ -7,6 +7,13 @@ never reach clients). The assistant acts on documents through the **same tool la
 ([09-mcp.md](09-mcp.md)), so anything it does is permission-checked, attributed
 (`actorKind: ai`) and undoable as one step.
 
+> **Bugs & Improvements has its own AI** (M12): Jev (decisions: vetting, labels, duplicates) and
+> Gemini (writing: titles, summaries, bundles, contributor prompts, PR reviews) run on the
+> internal keys `internalJevApiKey` and `internalGeminiApiKey`, with their own usage table
+> (`board_ai_usage`) and daily budgets. It never uses the keys, budgets or opt-out of the
+> assistant below, and the assistant never uses the internal keys or gets the `board.*` MCP
+> tools ([16 §6](16-bugs-and-improvements.md)).
+
 ## 1. Model and API usage
 
 - The server talks to the providers through **`package:dartantic_ai`** (3.4.x, pure Dart;

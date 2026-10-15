@@ -9,7 +9,7 @@ need a different one.
 
 Behavior of canvas interactions is [03](03-editor-canvas-and-objects.md); storage is
 [02](02-data-model.md). Shared shell pieces (header structure, menu framework, palette, overlays,
-settings split, Report a bug) come from suite [03](../03-app-shell-and-navigation.md),
+settings split, Bugs & Improvements (was Report a bug)) come from suite [03](../03-app-shell-and-navigation.md),
 [02](../02-design-system.md), [04](../04-auth-and-accounts.md) and `specs/wonky_drive/`.
 
 Owned folders: `wonky_slides/lib/config/**` (routes, `MenuSpec`, toolbar spec, panel registry,
@@ -127,7 +127,7 @@ Follows suite 03 §3.1 with Slides additions:
 | Star, Move, `SyncStatusIndicator` | Shell |
 | `PresenceAvatarStack` | Avatars show "Editing slide 4" / "Presenting" / "Viewing"; ⋮ › *Follow* (09 §1.5) |
 | Comments button | `shell.comments.togglePanel` (badge = open threads) |
-| **Report a bug** | Icon button (Lucide `bug`, tooltip "Report a bug") → `shell.help.reportBug` (D5, external-link confirm) |
+| **Bugs & Improvements** (M12) | Icon button (Lucide `messageSquarePlus`, tooltip "Bugs & Improvements") → `shell.board.report` (replaced *Report a bug*, D5) |
 | **Present** split button (primary, before Share) | Main: `slides.present.fromCurrent` (⌘Enter / Ctrl+Enter). Chevron menu: *Present from beginning* (`slides.present.fromStart`, ⇧⌘Enter), *Presenter view* (`slides.present.presenterView`, ⌥⌘Enter / Ctrl+Alt+Enter; in this window, 10 §5.2), *Open on another device…* (`slides.present.openOnAnotherDevice`), *Rehearse* (`slides.present.rehearse`, P1), *Use phone as remote* (`slides.present.remote`, P1), separator, *Presenting settings…* (`shell.settings.openApp {section: presenting}`). While someone presents, the button shows a live dot and *Follow Anna's presentation* (09 §1.6). |
 | **Share** | Shell |
 | Account avatar | Shell (incl. *Slides settings*, *Wonky Work settings*, D4) |
@@ -363,7 +363,8 @@ No PPTX/Keynote items (non-goal).
 |------|-----------|-------|-----------|
 | Keyboard shortcuts | `shell.help.shortcuts` | ⌘/ | Ctrl+/ |
 | — | | | |
-| Report a bug | `shell.help.reportBug` (replaces *Report a problem*; `shell.help.feedback` stays in the palette and MCP, suite 03 §3.2) | — | — |
+| Bugs & Improvements… (M12) | `shell.board.report` (replaces *Report a bug*; `shell.help.reportBug` and `shell.help.feedback` stay as hidden aliases, suite 03 §3.2) | — | — |
+| Browse Bugs & Improvements (M12) | `shell.board.open` | — | — |
 | What's new | `shell.help.whatsNew` | — | — |
 | About | `shell.help.about` | — | — |
 
@@ -1076,8 +1077,8 @@ Built as the Slides app's settings sections (`WonkyAppConfig.settingsSections`),
 - `SlidesAppConfig.homeScope` = `HomeScope.kind(presentation)` (as built in SL-1): the app home shows **only presentations** (Recent, My files, Shared with
   me, Starred, Trash) with folders only as navigation (D2; only folders that contain a presentation,
   `kindMask` — decided in the v2 review, Q7, suite 03 §3.3). The left menu follows D2: apps section (Drive, Write, Sheets, **Slides**
-  highlighted), the Slides navigation, then *Slides settings*, *Wonky Work settings*, *Report a
-  bug*, storage meter ("12.3 MB of 50 MB"); *Open in Wonky Drive* link.
+  highlighted), the Slides navigation, then *Slides settings*, *Wonky Work settings*, *Bugs &
+  Improvements* (M12; was *Report a bug*), storage meter ("12.3 MB of 50 MB"); *Open in Wonky Drive* link.
 - **+ New** → *Presentation* (works offline via reserved spaces, 02 §9.3) and *From template…*.
 - **Template strip**: Blank, Pitch deck, Project kickoff, Quarterly review (with linked-chart
   placeholders), Tech talk (code walkthrough with type-in), Lesson, Product launch, Weekly
@@ -1146,7 +1147,7 @@ Built as the Slides app's settings sections (`WonkyAppConfig.settingsSections`),
 | A-04-1 | `LocalViewState` keys (02 §7): `collapsedGroups`, `navigatorWidth`, `notesHeight`, `notesVisible`, `inspectorVisible`, `inspectorTab`, `inspectorSections`, `viewMode`, `gridThumbSize`. |
 | A-04-2 | `UserPreferences.slidesDefaults` (suite 04, D4): `{defaultThemeKey, defaultAppearance, defaultSize, defaultLanguage, units, smartGuides, snapObjects, snapGuides, scrollChangesSlides, smartQuotes, autoformatLists, showRemoteCursors, defaultTransition, defaultBuild, previewOnHover, reduceEditorMotion, codeFontSize, codeLanguage, typeInSound, typingSpeed, chartsAutoUpdate, underlineSpelling}`; presenter preferences live in `UserPreferences.slidesPresenter` (10 A-10-4). |
 | A-04-3 | **Suite (drive)**: `DriveItemKind.presentation`, `drive.registerPresentation(spaceUuid, name, parentUuid?)` (idempotent, queued offline as a `PendingDriveOp`), `drive.createPresentation` (server path), template category values for presentations, `drive.setThumbnail` reused. |
-| A-04-4 | **Suite (shell)**: `EditorScaffold.titleActions` slot for app buttons in the title row (Present split button); `shell.help.reportBug` header icon (D5) placement before Share. |
+| A-04-4 | **Suite (shell)**: `EditorScaffold.titleActions` slot for app buttons in the title row (Present split button); `shell.board.report` header icon (D5, formerly `shell.help.reportBug`) placement before Share. |
 | A-04-5 | **Suite (comments)**: `CommentAnchorKind` values `slide` and `element` (09 §3.1). |
 | A-04-6 | Tokens: `groupColor.{gray,red,orange,amber,green,teal,blue,violet,pink}` (light/dark), `navigatorBackground`, `thumbnailRing`. |
 

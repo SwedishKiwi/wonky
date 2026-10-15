@@ -31,7 +31,7 @@ every control is a `CommandButton`/`CommandMenuItem` bound to a command id (suit
 
 | Screen | Route | Owner spec | Notes |
 |--------|-------|-----------|-------|
-| Home / Drive views | `/`, `/f/:uuid` (v2; `/drive/:uuid` redirects), `/my-files`, `/shared`, `/starred`, `/recent`, `/offline`, `/trash`, `/search` | suite 05 §3, suite 03 §3.3 | (v2) **Only documents** (and folders that contain documents); left menu with the four apps, *Write settings*, *Wonky Work settings*, *Report a bug*, storage meter; *Open in Wonky Drive*; Write template strip; *Import file…* for `.md/.txt/.html/.docx/.odt/.rtf` |
+| Home / Drive views | `/`, `/f/:uuid` (v2; `/drive/:uuid` redirects), `/my-files`, `/shared`, `/starred`, `/recent`, `/offline`, `/trash`, `/search` | suite 05 §3, suite 03 §3.3 | (v2) **Only documents** (and folders that contain documents); left menu with the four apps, *Write settings*, *Wonky Work settings*, *Bugs & Improvements* (was *Report a bug*), storage meter; *Open in Wonky Drive*; Write template strip; *Import file…* for `.md/.txt/.html/.docx/.odt/.rtf` |
 | New / import (v2) | `/new?folder=&template=`, `/import?file=<fileItemUuid>` | suite 03 §2, Drive 02 §7.2 | Creates a document (offline-capable) or imports a Drive file (07), then opens the editor. As built (D-16): `/import` runs `drive.convertFile` on the stored file (Write has no import options dialog; the import banner shows the warnings when the document opens); Cancel / *Out of storage* go back to Drive (`history.back`), errors stay in Write with a toast (`features/import/import_route.dart`) |
 | Template gallery | `/templates` | suite 05 §3.1 | Built-in document templates, each with its own Write theme: Meeting notes, Project brief, Letter, Weekly report, Lecture notes, To-do list, Recipe, Story draft (plus Blank) |
 | **Document editor** | `/d/:uuid` (`?heading=`, `?comment=`, `?suggestion=`, `?version=`) | **this spec §3–§19** | Main screen |
@@ -86,7 +86,7 @@ Overlays (dialogs, palette, toasts, offline banner, MCP pill) per suite 03 §3.
 | Sync status | `SyncStatusIndicator` | Saved / Saving… / Offline (tooltip and details: "Offline — changes saved on this device") / Sync error (click → details) |
 | — spacer — | | |
 | Presence | `PresenceAvatarStack` | Click avatar → `write.nav.goToCollaborator`; ⋮ → Follow (`write.nav.follow`) |
-| Report a bug (v2) | `ShadIconButton.ghost` (Lucide `bug`, tooltip "Report a bug") | `shell.help.reportBug` — external-link confirm, suite 03 §3.4; hidden below `sm` (still in Help) |
+| Bugs & Improvements (M12) | `ShadIconButton.ghost` (Lucide `messageSquarePlus`, tooltip "Bugs & Improvements"; replaces *Report a bug*) | `shell.board.report` — report dialog, suite 16 §4.2; hidden below 640 px (still in Help) |
 | Share | `ShadButton` primary (lock / globe / users icon by link state) | `shell.sharing.open` |
 | Account | `ShadAvatar` menu | suite 04; (v2) *Write settings*, *Wonky Work settings*, *Open ▸* the four apps, *Sign out* |
 
@@ -425,8 +425,8 @@ Preferences*, spelling underlines in *Tools › Spelling*.
 
 ### 7.7 Help *(shell + Write items)*
 Keyboard shortcuts (⌘/ / Ctrl+/) · **Markdown guide** (`write.help.markdownGuide`, dialog) · ─ ·
-(v2) **Report a bug** (`shell.help.reportBug`; replaces *Report a problem*, decided in
-the v2 review, suite 03 §3.2) · What's new (`shell.help.whatsNew`) · About
+(M12) **Bugs & Improvements…** (`shell.board.report`) · **Browse Bugs & Improvements**
+(`shell.board.open`; replace *Report a bug*, suite 03 §3.2, suite 16 §4.1) · What's new (`shell.help.whatsNew`) · About
 (`shell.help.about`). (No help center, no menu search; the Markdown guide is only in Help.)
 
 ### 7.8 Native macOS menu mapping (deferred: v2 is web only, suite 01 A13)
@@ -848,7 +848,7 @@ The canonical catalog is [suite 08 §5](../08-commands-and-undo.md). Ids used by
 `shell.edit.undoTo`, `shell.help.shortcuts`, `shell.help.feedback`, `shell.help.whatsNew`,
 `shell.help.about`, `shell.settings.open`, `shell.focus.nextRegion`,
 `shell.focus.previousRegion` (existing: `shell.ai.togglePanel`, `shell.appearance.setTheme`);
-(v2) `shell.help.reportBug`, `shell.settings.openApp`, `shell.account.switchApp`,
+(v2) `shell.help.reportBug` (M12: alias of `shell.board.report`; the Help menu shows `shell.board.report` and `shell.board.open`), `shell.settings.openApp`, `shell.account.switchApp`,
 `shell.nav.openInDrive`, `shell.storage.open`.
 
 ## 24. Chrome-level Write command index

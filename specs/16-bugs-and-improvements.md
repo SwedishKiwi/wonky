@@ -14,9 +14,10 @@ AI sorts every post by kind, area and size, and checks that it is a genuine repo
 The decisions are made by [Jev](https://typesafe.ai/) and the writing by Gemini, both with internal keys
 separate from the in-app AI (§6).
 
-Status: **specified, not built** (milestone M12, [14](14-roadmap.md); work packages in §16). On GitHub,
-only PRs linked to a claimed task are accepted, and each PR gets an AI review against its task
-(§13, built in a second step).
+Status: **built** (milestone M12, [14](14-roadmap.md); work packages in §16, step 2 included). The
+open and P1 items are in §17. On GitHub, only PRs linked to a claimed task are accepted, and each
+PR gets an AI review against its task (§13). The integration is built and enabled by config
+(`board.github.enabled`, default false).
 
 ## 1. Goals and principles
 
@@ -493,8 +494,8 @@ used for what it does best:
 ### 6.2 What Jev decides
 
 One Jev request per post, built in `BoardTriageQuestions`. All questions go in one request: Jev
-evaluates them in parallel against the same state. Measured on the evaluation set: p50 265 ms, p95
-443 ms, about 1.8k input tokens per post.
+evaluates them in parallel against the same state. Measured on the evaluation set (the `live-ai` run
+prints p50 and p95): p50 265 ms, p95 443 ms, about 1.8k input tokens per post.
 
 **State** (JSON, only what the questions need; Jev loses accuracy with irrelevant detail):
 
@@ -522,7 +523,10 @@ The included details are left out, except the app.
 | `duplicate_<n>` | Noul (one per candidate, up to 5 from §6.4) | instructions object with `candidate` (title and body excerpt) and the question "Do `post` and `candidate` describe the same problem or the same request?" | Duplicate hint |
 
 **Thresholds** (`board.ai.thresholds`, tuned on the evaluation set, §15). They follow Jev's
-confidence-gated routing: three bands per decision.
+confidence-gated routing: three bands per decision. Config keys: `securityHold` 0.5 /
+`securityReview` 0.2, `harmHold` 0.7 / `harmReview` 0.5 (`offensive`, `personal_data`),
+`junkHold` 0.8 / `junkReview` 0.5 (`spam`, `not_actionable`, `off_topic`), `kindCorrection` 0.8,
+`labelConfidence` 0.5, `duplicate` 0.8 and `rerank` 0.3 (`BoardAiThresholds`).
 
 | Decision | Hold (held, admin first) | Review (visible, in the admin *Check* list) | Otherwise |
 |----------|-------------------------|---------------------------------------------|-----------|
@@ -960,7 +964,8 @@ light and dark, the checklist after changes).
 They are implemented with a generic `RateLimiter` extracted from `McpRateLimiter`
 (`platform/common/rate_limiter.dart`): Redis-backed with a memory fallback. MCP then reuses it.
 
-**Retention**: removed posts and comments are purged after 90 days (`wonky.daily`), along with
+**Retention**: removed posts and comments are purged after 90 days (as built, by
+`wonky.boardSweep`, not `wonky.daily`), along with
 their screenshots. Deleted (by author) posts are purged after 30 days. The moderation log is kept
 for 1 year.
 
@@ -1165,8 +1170,11 @@ fields:
 ```
 
 Views sent to clients: `BoardPostView`, `BoardPostListItem`, `BoardCommentView`, `BoardTaskView`,
-`BoardMe`, `BoardPage<T>`-style pages with a cursor. They include the author display name, avatar
-and an `isAdmin` flag, and never emails.
+`BoardMe`, `BoardPage<T>`-style pages with a cursor (`BoardPostPage`, `BoardTaskPage`). They
+include the author display name, avatar and an `isAdmin` flag, and never emails.
+`BoardTaskView` carries two prompt fields: `promptBody` (the editable AI-written body, §10.2) and
+`prompt` (the full prompt: the fixed template around the body, §10.1, which the task page copies
+and `board.get_task` returns), plus `reviewJson` (§13.5) and, for the claimant only, `claimCode`.
 
 **Feedback fold-in (B9).**
 
@@ -1177,9 +1185,16 @@ and an `isAdmin` flag, and never emails.
 - `FeedbackEndpoint.reportError` (automatic client error reports) stays as private telemetry. It
   feeds the admin *Error reports* view (§9.2, P1) and the dialog's *Include the last error*.
 - `showFeedbackDialog` is deleted; `shell.help.feedback` becomes the alias from §4.1.
+- **As built:** the endpoint and `FeedbackKind.errorReport` are unchanged. The legacy feedback view
+  (P1) is not built.
 
 **Endpoint** `BoardEndpoint` (`board`). `requireLogin` is false: read methods work signed out,
-and write methods call `BoardService.requireWriter(session)` (signed in, not blocked).
+and write methods call `BoardService.requireWriter(session)` (signed in, not blocked). **As built**,
+the method names differ from the groups below in a few places: `listTaskComments`, `unflag`,
+`reviewCounts`, `listSuggestions` and `dismissDuplicateHint` exist besides the listed ones;
+`moderate` is split into `moderatePost` and `moderateComment`; *Edit and approve* is
+`adminEditPost`; and `markDone`, `markShipped` and `cancelTask` are one method,
+`setTaskStatus(number, status)`.
 
 | Group | Methods |
 |-------|---------|
@@ -1419,7 +1434,8 @@ a check re-run:
 - Webhooks are authenticated only by the HMAC signature. Replays are dropped by the delivery id.
 - The App has the minimum permissions listed and access to one repository. Its private key is a
   password and never logged.
-- A claim code is 8 random characters from a 32-letter alphabet, formatted `XXXX-XXXX` (40 bits).
+- A claim code is 8 random characters from the Crockford base32 alphabet (digits and letters
+  without I, L, O, U), formatted `XXXX-XXXX` (40 bits).
   It is per claim, stored server-side only (`serverOnly`), returned only to the claimant, and
   rotated on every new claim. Guessing is bounded by the gate's per-PR re-run limit and the
   claim's lifetime.
@@ -1432,14 +1448,17 @@ a check re-run:
 tools defined in `packages/wonky_core/lib/mcp/board_tools.dart` and handlers in
 `platform/mcp/board_tool_handlers.dart`:
 
-- `board.list_posts`, `board.get_post`, `board.search`, `board.list_tasks`;
+- `board.list_posts` (with a `query` for search), `board.get_post`, `board.list_tasks`;
 - `board.get_task`, which returns the full prompt (and, for the claimant, the claim code and the
   two PR lines), so a contributor's agent can fetch the task by number and fill in the PR
   description;
 - `board.create_post` (no screenshot), `board.vote`, `board.comment`, `board.claim_task`,
   `board.release_task`;
-- admin tools (P1): `board.moderate`, `board.create_task`, `board.set_prompt`,
+- admin tools (P1, not built): `board.moderate`, `board.create_task`, `board.set_prompt`,
   `board.publish_task`.
+
+The tools are read and write in one scope and are not offered to the in-app assistant
+([10](10-ai-assistant.md)). Tests: `wonky_server/test/platform/board/board_mcp_tools_test.dart`.
 
 **Commands** (`shell.board.*`, catalog in [08 §5](08-commands-and-undo.md)):
 
@@ -1460,6 +1479,10 @@ tools defined in `packages/wonky_core/lib/mcp/board_tools.dart` and handlers in
 | `admin.moderate` / `admin.setLabels` / `admin.editPost` (*Edit and approve*) / `admin.applySuggestedTitle` / `admin.merge` / `admin.unmerge` / `admin.decline` / `admin.reopen` / `admin.block` / `admin.createTask` / `admin.updateTask` / `admin.setTaskPosts` / `admin.regeneratePrompt` / `admin.setPrompt` / `admin.publishTask` / `admin.linkPullRequest` / `admin.markDone` / `admin.markShipped` / `admin.cancelTask` | ✓ (inverse calls, §9.2) |
 | `admin.suggestBundles` / `admin.dismissSuggestion` / `admin.dismissDuplicate` (*Not a duplicate*) | – (no server inverse) |
 
+**As built (BI-2…BI-6):** all ids above are registered in `board_commands.dart`
+(`boardCommands`) and `report_commands.dart`, except `createPost`: the report dialog calls
+`board.createPost` directly, so posting is not an undoable command yet (§17).
+
 All have `requiredRole: viewer`, because the board is not a document. Admin commands are
 registered for everyone but disabled (`enabled: false`) unless `board.me().isAdmin`.
 Admin command ids are `shell.board.admin.<name>`. The undo entries (`BoardUndoEntry`, domain
@@ -1473,6 +1496,14 @@ A `notFound`/`conflict` answer makes the step partial (`UndoConflict`).
 
 Following [15](15-writing-tests.md):
 
+- **As built:** server tests in `wonky_server/test/platform/board/` (`board_access_test`,
+  `board_posts_test`, `board_votes_test`, `board_comments_test`, `board_tasks_test`,
+  `board_triage_test`, `board_lifecycle_test`, `board_mcp_tools_test`, `ai/`, `github/`, with
+  `support/board_harness.dart` and `support/fake_board_ai.dart`; the live evaluation set is
+  `ai/eval/`, tag `live-ai`). Client tests in `packages/wonky_app/test/board/`
+  (`commands/`, `pages/`, `report/`, `screenshot/`), `test/markdown/` and
+  `test/comments/comment_thread_body_test.dart`. Light/dark goldens of the dialog, row, post page
+  and editor are not written yet, and J-B1 is a browser walkthrough plus these suites (§17).
 - **Server** (`wonky_server/test/platform/board/`, `withServerpod`, `FakeJevClient`,
   `FakeAiModelClient` for Gemini, fixed clock):
   - endpoint access matrix (§7.1) for signed out, signed in, author, admin and blocked users;
@@ -1527,7 +1558,8 @@ Following [15](15-writing-tests.md):
 
 ## 16. Implementation plan (M12)
 
-Work packages for parallel agents ([14 §1](14-roadmap.md) principles: contract first, ownership by
+**Status:** BI-1…BI-9, BI-11 and BI-12 are built. BI-8 (the contribution kit) is in the
+repository root and `.github/`. BI-10 (P1) is not built (§17). Work packages for parallel agents ([14 §1](14-roadmap.md) principles: contract first, ownership by
 folder). Package BI-1 lands first; then BI-2…BI-6 run in parallel; BI-7…BI-9 follow. Step 2
 (BI-11, BI-12, the GitHub side) starts once the board is live; until then admins link PRs by hand.
 
@@ -1568,3 +1600,27 @@ on a clean machine (an agent following it end to end); the triage evaluation set
 precision for `offensive` and `security`. Step 2 (BI-11, BI-12): a real PR from a non-member fork
 passes the gate with a claim code and gets a review; a PR without one fails and is auto-closed in
 a time-shifted test.
+
+## 17. Open items after M12
+
+Built but not complete, found in the code:
+
+- **Admin: *Remove all posts by this user*** (§9.2) is not built. *Block user* is.
+- **`board.extendClaim`** (§8.1, P1) is not built; a claim cannot be extended.
+- **Flagging a comment** (§7.5): the endpoint (`flag`, `unflag`) and `shell.board.flag` (`commentUuid`) accept a
+  comment target, but the comment thread UI has no *Flag* action yet. Posts can be flagged from
+  the post page.
+- **`createPost` is not an undoable command**: the report dialog calls the endpoint directly
+  (§14).
+- **`reviewQueue(section)` has no paging**: it returns a whole section.
+- **`similar()` is not rate-limited for signed-out callers** (§11 limit applies to signed-in
+  users only).
+- **Gemini thinking tokens** are not counted in `board_ai_usage` or the daily budget (only the
+  reported input and output tokens are).
+- **P1 from BI-10:** image file attachment, the *Error reports* and *Legacy feedback* views,
+  reactions, `CodeView` in Markdown, *Copy setup + prompt*, admin MCP tools (`board.moderate`,
+  `board.create_task`, `board.set_prompt`, `board.publish_task`) and a `board.search` tool (search
+  is the `query` of `board.list_posts`). P2: the Jev screenshot check.
+- **Goldens** for the dialog, row, post page and editor, and the fresh-clone dry run of
+  `CONTRIBUTING.md`, are not done; the browser walkthrough of J-B1 is tracked in
+  [14 §2.1a](14-roadmap.md).

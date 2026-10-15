@@ -17,7 +17,7 @@ commands, menus, editor screen builder; (v2) `homeScope`, `homeNav`, `appSetting
   apps (Drive, Write, Sheets, Slides — the left menu of every home, §3.3, and the account menu)
   is a same-window navigation (web: same tab, full page load to the other app's base path;
   desktop: see §6).
-- External links (in documents, help, *Report a bug* §3.4) open in the system browser only
+- External links (in documents, help, the *Report a bug* GitHub fallback §3.4) open in the system browser only
   after a confirm popover ("Open external link? example.com — Open / Copy link"). On desktop
   this launches the OS browser (that's an external app, not a Wonky window); on web it is a new
   browser tab (`url_launcher` with `_blank`, external content only).
@@ -73,9 +73,11 @@ exception and must reuse the presentation-session state model.
 | Sheets: `/s/:uuid/script` | Script editor (full-screen) |
 | Slides (v2): `/p/:uuid` (+ `?slide=`, `?comment=`) · `/p/:uuid/present` · `/p/:uuid/print` · `/p/:uuid/history` | Deck editor · presenting · PDF/print preview · version history ([Slides 04](wonky_slides/04-screens-menus-toolbar.md)) |
 | Drive (v2): `/file/:uuid` · `/storage` | File preview · Storage page ([Drive 04](wonky_drive/04-screens-menus.md)) |
+| `/improvements`, `/improvements/bugs`, `/improvements/tasks`, `/improvements/done`, `/improvements/p/:number`, `/improvements/t/:number`, `/improvements/contribute` (M12, **public**) · `/improvements/review` (admins) | Bugs & Improvements board pages in every app ([16 §4.3](16-bugs-and-improvements.md)); the server redirects `/improvements/**` to `/drive/improvements/**` |
 | `/invite/:token` | Share-link landing (request access / open) |
 
-Auth guard redirects to `/signin?next=…`. Unknown/forbidden items show an in-app
+Auth guard redirects to `/signin?next=…`, except for the auth routes and the `/improvements`
+routes, which signed-out visitors can read (M12). Unknown/forbidden items show an in-app
 **No access** page with *Request access* (sends a request to the owner) and *Switch account*.
 
 Deployment: `wonky_server`'s web server serves the Flutter web builds from one origin:
@@ -111,8 +113,9 @@ Row 1 (title row, 48 px):
 - Star toggle, *Move* (folder icon → Move dialog), `SyncStatusIndicator`.
 - Spacer.
 - `PresenceAvatarStack`.
-- (v2) **Report a bug** — ghost icon button (Lucide `bug`, 32 px, tooltip "Report a bug",
-  `shell.help.reportBug`, §3.4), muted foreground; hidden below `sm` width (still in Help).
+- (M12) **Bugs & Improvements** — ghost icon button (Lucide `messageSquarePlus`, 32 px, tooltip
+  "Bugs & Improvements", `shell.board.report`, §3.4; key `editor.board`), muted foreground;
+  hidden below 640 px width (still in Help). Replaces the v2 *Report a bug* bug icon.
 - Comments button (shows/hides the comments, `shell.comments.togglePanel`; badge with open
   count). Comments show through the app's `CommentsHost` when it sets one
   (`ShellServices.commentsHost`; Write: the margin next to the page), otherwise in the comments
@@ -152,14 +155,17 @@ suggestions* toggle for its margin), App theme ▸ (System / Light / Dark).
 (`shell.settings.open`), Keyboard shortcuts (`Mod+/`), Accessibility settings.
 
 **Help**: Keyboard shortcuts, app items (Write: Markdown guide; Sheets: Function list; Slides:
-see Slides 04), separator, (v2) **Report a bug** (`shell.help.reportBug`, §3.4), What's new,
-About. There is no in-app help center and no menu search (menu commands are found through the
+see Slides 04), separator, (M12) **Bugs & Improvements…** (`shell.board.report`, opens the
+report dialog) and **Browse Bugs & Improvements** (`shell.board.open`, §3.4), What's new, About. There is no in-app help center and no menu search (menu commands are found through the
 command palette).
 
 **Decided (v2 review, Q6):** *Report a bug* **replaces** *Report a problem* in the Help menu
 (one obvious way to report). `shell.help.feedback` (the in-app dialog that posts to the server's
 `feedback` endpoint) stays registered for the palette and MCP, and the error boundary keeps
-*Copy error details*, which users can paste into the GitHub issue.
+*Copy error details*, which users can paste into the GitHub issue. **M12 replaced both with the
+board** ([16](16-bugs-and-improvements.md)): `shell.help.reportBug` (kind Bug) and
+`shell.help.feedback` are now aliases of `shell.board.report`, hidden from the palette, and the
+error card also offers *Report this bug*.
 
 Only one menu is open at a time: opening a menubar menu, dropdown or context menu closes the
 one that was open ([02 §4.2](02-design-system.md)).
@@ -191,7 +197,8 @@ The **left menu** (`HomeSidebar`, Drive 04 §2) is the same widget in every home
    *Trash*; Drive — Home, My Drive (+ folder tree), Shared with me, Recent, Starred, Trash,
    Storage.
 3. **Bottom section** — *<App> settings* (`shell.settings.openApp`), *Wonky Work settings*
-   (`shell.settings.open`), *Report a bug* (`shell.help.reportBug`), and the storage meter
+   (`shell.settings.open`), (M12) *Bugs & Improvements* (`shell.board.report`; key
+   `home.footer.board`; replaces *Report a bug*), and the storage meter
    ("12.3 MB of 50 MB used", [Drive 03 §6.1](wonky_drive/03-storage-quota.md)).
 
 The account menu (avatar) in homes and editors lists: name and email, *<App> settings*, *Wonky
@@ -230,27 +237,20 @@ history (`CrossAppNavigator.historyBack`, back to Drive after *Open with*), and 
 it stays in the app (home) so the toast is seen. Server-built folder links (MCP results,
 notification emails) are `/drive/f/<uuid>`.
 
-### 3.4 Report a bug (v2)
+### 3.4 Report a bug → Bugs & Improvements (M12)
 
-- Command **`shell.help.reportBug`** (`requiredRole: viewer`, not undoable, available signed
-  out too: the sign-in screens show it as a footer link). Entry points: Help menu in every
-  editor, the editor title-row icon button (§3.1), the bottom section of every home's left
-  menu (§3.3), the command palette, MCP `ui.invoke_command`.
-- It opens a **new-issue deep link** built from `wonky.help.bugReportUrl` (default
-  `https://github.com/serverpod/wonky/issues`) as an **external link** with the confirm popover
-  of §1: "Open external link? github.com — Issues on GitHub are public: don't include private
-  content. [Open] [Copy link]".
-- **Decided (v2 review, Q8, D5):** the link is
-  `…/issues/new?template=bug_report.yml&app=write&version=2.0.3&platform=web&browser=Chrome%20131`
-  with an issue form in the repository (`.github/ISSUE_TEMPLATE/bug_report.yml`, fields *app*,
-  *version*, *platform*, *browser/OS*, *what happened*, *steps*), prefilled with **no user
-  content, ids, emails or URLs of documents** — only the app, build version, platform and
-  browser family. It falls back to the issue list when the URL would exceed 2,000 characters.
-- **As built (D-10):** `BugReportLink.build` + `browserFromUserAgent`
-  (`lib/src/shell/bug_report.dart`); the issue list comes from `config.json`
-  `help.bugReportUrl` (`AppUrls.bugReportUrl`, https only; default above). The confirm is the
-  shared `confirmExternalLink` (`dialog.externalLink`: *Cancel* / *Copy link* / *Open*), also
-  usable for other external links. The auth screens show *Report a bug* below their card.
+M12 replaced *Report a bug* (the GitHub new-issue link, v2) and *Report a problem* with the
+in-app board; the specification is [16](16-bugs-and-improvements.md): entry points (§4.1), the
+report dialog (§4.2), the board routes and pages (§4.3–§4.6). `shell.board.report {kind?}` opens
+the dialog (the board page when signed out), `shell.board.open {tab?}` opens the board, and
+`shell.help.reportBug` and `shell.help.feedback` stay registered as aliases.
+
+**GitHub fallback.** When the server's `config.json` says `board: false`, `shell.board.report`
+falls back to the former behavior: `BugReportLink` builds the prefilled new-issue link
+(`wonky.help.bugReportUrl`, default `https://github.com/serverpod/wonky/issues`; app, build
+version, platform and browser family only, no user content; issue form
+`.github/ISSUE_TEMPLATE/bug_report.yml`; D-10, v2 review Q8) and opens it as an external link
+behind `confirmExternalLink` (§1).
 
 ## 4. Global overlays and states
 

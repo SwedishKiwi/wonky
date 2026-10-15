@@ -55,7 +55,7 @@ charts).
 | 00 | [Product overview](00-product-overview.md) | Vision, principles, personas, scope/non-goals, glossary |
 | 01 | [Architecture](01-architecture.md) | One server, four Flutter apps served from it, shared sign-in, pure-Dart cores, shared chart/code packages, package layout & rules |
 | 02 | [Design system](02-design-system.md) | `shad` usage, tokens, light/dark, custom widgets (`wonky_ui`) |
-| 03 | [App shell & navigation](03-app-shell-and-navigation.md) | Single-window model (no presenting exception in v2), routes, homes and the left menu, editor header, shared menus, Report a bug, overlays, desktop specifics |
+| 03 | [App shell & navigation](03-app-shell-and-navigation.md) | Single-window model (no presenting exception in v2), routes, homes and the left menu, editor header, shared menus, Bugs & Improvements entry (was Report a bug), overlays, desktop specifics |
 | 04 | [Auth & accounts](04-auth-and-accounts.md) | Email/password + Google auth, profile, preferences, settings split (Wonky Work vs app settings), access tokens |
 | 05 | [Drive & files](05-drive-and-files.md) | Unified drive model (folders, documents, spreadsheets, presentations, files), endpoints, app homes vs Wonky Drive, dialogs, activity |
 | 06 | [Sharing & permissions](06-sharing-and-permissions.md) | Roles, ACL, link sharing, enforcement (documents, spreadsheets, presentations, files), share dialog |
@@ -66,9 +66,9 @@ charts).
 | 11 | [Quality](11-quality-testing-accessibility.md) | Testing, performance budgets, accessibility, i18n, observability |
 | 12 | [Offline & sync](12-offline-and-sync.md) | Local stores, Write offline, Sheets/Slides spaces and active set, upload queue, upstream requirements, staged limits |
 | 13 | [Security & operations](13-security-and-operations.md) | Threat model, privacy, deployment, scheduled jobs, arbitrary uploads |
-| 14 | [Roadmap](14-roadmap.md) | Milestones M0–M11 (v2: M8 Drive + suite changes, M9–M11 Slides), how parallel agents execute the work packages, shared workstreams, risks |
+| 14 | [Roadmap](14-roadmap.md) | Milestones M0–M12 (v2: M8 Drive + suite changes, M9–M11 Slides; M12 Bugs & Improvements), how parallel agents execute the work packages, shared workstreams, risks |
 | 15 | [Writing tests](15-writing-tests.md) | How to write tests: layout, naming, helpers, server/widget/golden/property/E2E patterns, determinism, running |
-| 16 | [Bugs & Improvements](16-bugs-and-improvements.md) | Public board for bug reports and improvement ideas: report dialog with annotated screenshots, votes, comments, AI triage and moderation, admins, tasks with contributor prompts, claims, GitHub PR rules (M12, specified) |
+| 16 | [Bugs & Improvements](16-bugs-and-improvements.md) | Public board for bug reports and improvement ideas: report dialog with annotated screenshots, votes, comments, AI triage and moderation, admins, tasks with contributor prompts, claims, GitHub PR rules (M12, built) |
 
 ## Conventions used in all specs
 
