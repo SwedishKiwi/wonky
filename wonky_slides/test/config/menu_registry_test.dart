@@ -294,6 +294,28 @@ void main() {
     }
   });
 
+  testWidgets('Given the menubar and context menus when their items are '
+      'dispatched then their fixed arguments match the commands\' schemas '
+      '(Comment on slide / object passed an unknown "anchor")', (tester) async {
+    final context = await contextOf(tester);
+    final l = slidesL10n(context);
+    final violations = <String>[];
+    final menus = [
+      ...slidesContextMenus(l).children.cast<MenuSubmenu>(),
+      ...d.services.menuRoot(context).children.cast<MenuSubmenu>(),
+    ];
+    for (final m in menus) {
+      for (final c in commandsOf(m.children)) {
+        final command = d.services.registry.byId(c.commandId);
+        if (command == null) continue;
+        for (final v in command.argsSchema.validate(c.args)) {
+          violations.add('${m.id} ${c.commandId}: $v');
+        }
+      }
+    }
+    expect(violations, isEmpty);
+  });
+
   testWidgets('Given every registered Slides command when its title is read '
       'then it is localized and placeholders name their work package', (
     tester,

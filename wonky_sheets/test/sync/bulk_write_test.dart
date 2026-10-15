@@ -157,6 +157,11 @@ void main() {
     'Given the same plans, when written set-based and per row, then the '
     'CRDT records and rows are identical: new cells, value and format '
     'updates, deletes, revives by undo, and a cell under a deleted row',
+    // ~23 s alone: two SQLite replicas, one written row by row on purpose
+    // (the previous writer is the reference). In a whole-suite run under
+    // load it passed the default 30 s and failed; the time is not what is
+    // tested here.
+    timeout: const Timeout(Duration(minutes: 3)),
     () async {
       await apply(
         CreateSpreadsheet(

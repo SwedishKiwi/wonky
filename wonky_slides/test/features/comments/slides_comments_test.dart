@@ -4,7 +4,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:wonky_app/wonky_app.dart';
 import 'package:wonky_client/wonky_client.dart'
     show CommentAnchorKind, CommentStatus;
-import 'package:wonky_core/wonky_core.dart' show Role;
+import 'package:wonky_core/wonky_core.dart' show CommandResult, Role;
 import 'package:wonky_slides/features/clipboard/system_clipboard.dart';
 import 'package:wonky_slides/features/comments/comment_anchor_moves.dart';
 import 'package:wonky_slides/features/comments/slides_comment_anchor.dart';
@@ -86,6 +86,28 @@ void main() {
       expect(t.quotedText, 'Slide 1: Our mission');
       expect(r.comments.groupOf(t), '1 · Our mission');
       expect(r.comments.sectionOf(t), isNull, reason: 'slide 1 is ungrouped');
+    });
+
+    test('when Comment on slide is chosen while an object is selected then '
+        'the thread anchors to the slide; the object menu anchors to the '
+        'object', () async {
+      r.d.editor.selectElements([r.f.box]);
+
+      final onSlide = await r.run('shell.comments.create', {
+        'anchor': 'slide',
+        'body': 'Whole slide',
+      });
+      final onObject = await r.run('shell.comments.create', {
+        'anchor': 'element',
+        'body': 'Just this',
+      });
+
+      expect(onSlide.isOk, isTrue, reason: onSlide.message);
+      expect(onObject.isOk, isTrue, reason: onObject.message);
+      String uuid(CommandResult res) =>
+          (res.data! as Map)['threadUuid'] as String;
+      expect(r.thread(uuid(onSlide)).anchorKind, CommentAnchorKind.slide);
+      expect(r.thread(uuid(onObject)).anchorKind, CommentAnchorKind.element);
     });
 
     test('when a right-click preceded the comment then a slide pin sits at '

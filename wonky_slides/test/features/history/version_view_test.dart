@@ -383,4 +383,40 @@ void main() {
     expect(tester.takeException(), isNull);
     await close(tester, h);
   });
+
+  for (final brightness in Brightness.values) {
+    testWidgets('when the history route opens in a 360 px window '
+        '(${brightness.name}) then the versions list sits under the preview '
+        'instead of squeezing it to 40 px', (tester) async {
+      final h = slidesHarness(
+        versions: _List([_version(2, b.deckId), _version(1, b.deckId)]),
+      );
+      h.drive.seed(
+        name: 'Pitch',
+        uuid: UuidValue.fromString(b.deckId),
+        kind: DriveItemKind.presentation,
+      );
+      await pumpSlides(
+        tester,
+        h,
+        VersionHistoryScreen(services: h.services, itemUuid: b.deckId),
+        brightness: brightness,
+        size: const Size(360, 740),
+      );
+      await tester.runAsync(
+        () => Future<void>.delayed(const Duration(milliseconds: 50)),
+      );
+      await tester.pump();
+      await tester.pump();
+
+      final preview = tester.getRect(find.byType(SlidesVersionView));
+      final list = tester.getRect(
+        find.byKey(const ValueKey<String>('shell.history.list')),
+      );
+      expect(preview.width, greaterThan(300));
+      expect(list.top, greaterThanOrEqualTo(preview.bottom - 1));
+      expect(tester.takeException(), isNull);
+      await close(tester, h);
+    });
+  }
 }

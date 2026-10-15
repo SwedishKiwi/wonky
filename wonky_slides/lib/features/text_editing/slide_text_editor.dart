@@ -531,6 +531,13 @@ class SlideTextEditorOverlay extends StatelessWidget {
       physics: const NeverScrollableScrollPhysics(),
       slivers: [
         SuperEditor(
+          // Keep the selection while the focus is elsewhere (a menu, the
+          // special characters or emoji dialog), like Write: Insert ›
+          // Special characters and the spelling context menu act on it.
+          selectionPolicies: const SuperEditorSelectionPolicies(
+            clearSelectionWhenEditorLosesFocus: false,
+            clearSelectionWhenImeConnectionCloses: false,
+          ),
           key: editorKey,
           editor: controller.editor,
           documentLayoutKey: documentLayoutKey,

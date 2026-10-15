@@ -96,7 +96,7 @@ later (M10/M11)"; evidence in [Slides STATUS](wonky_slides/STATUS.md)):
   features are hidden).
 
 **M10 exit checklist** (checked by SL-36 on 2026-10-15; M10 ends like M9: everything built is
-on, the rest is hidden and listed in `TODO.md` "Wonky Slides — later (M10/M11)"; evidence in
+on, the rest is hidden and listed in `TODO.md` "Wonky Slides — later"; evidence in
 [Slides STATUS](wonky_slides/STATUS.md) and the SL-36 "As built" note):
 
 - ◐ Journey 14 complete and J-S5…J-S7 — walked through by hand in the web release build
@@ -126,6 +126,47 @@ on, the rest is hidden and listed in `TODO.md` "Wonky Slides — later (M10/M11)
 - ☑ Templates 10 of 10 (nine built-ins + Blank) with tests (planner, maintenance, copy,
   contrast/fit in both appearances, timeline warnings, Magic Move matches, accessibility
   checker), on the server (`slides_templates_test`) and in the gallery.
+
+**M11 exit checklist** (checked by SL-45 on 2026-10-15; Wonky Slides is complete for its first
+iteration — everything built is on, SL-41 is on hold by the user's decision, the rest is hidden
+and listed in `TODO.md` "Wonky Slides — later"; evidence in [Slides STATUS](wonky_slides/STATUS.md)
+and the SL-45 "As built" note):
+
+- ◐ Journey 15 and J-S8…J-S10 — walked through by hand in the web release build (`/slides/`,
+  desktop 1280 px and 800 px, 480 px and 400 px, light and dark; two tabs signed in as the same
+  user): **J-S8** comment on an element (toolbar and context menu), docked card with pin and
+  count badge, reply, comments panel with *This slide / All slides* and slide group headers,
+  delete → *Orphaned* with "The commented content was deleted" → undo → the threads are open
+  again (fixed in SL-45); not walked: @mention notifications and the deep link (server and
+  widget tests). **J-S9** name a version, edit and delete a slide, full history with the per-slide
+  change list, ghost row of the deleted slide and the inline text diff, restore (restore point
+  kept, toast), undo of the restore; also at 400 px (fixed layout). **J-S10** headless part: MCP
+  route and tool suites green on the server (`slides.*` 29 + 5 relay); UI-bridge part not walked
+  in the browser (widget tests and the server relay test only; no MCP client against the dev
+  server). **Journey 15** (two editors, soft lock, own undo): live pointer with name tag,
+  selection outline and presence, soft-lock banner and *Edit anyway* popover, live text hint
+  (own-undo per user: widget and sync tests only); follow a presentation (*… is presenting · Follow*, follower
+  view following the presenter, *Stop following*). Also seen: spelling squiggles, right-click
+  suggestions (fixed in SL-45), the Check spelling dialog, Special characters and Emoji typing
+  into text (fixed in SL-45), the assistant panel without a configured provider (the development
+  server has no AI key: banner with *Add an API key*, quick prompts, Edit/Suggest; no AI run was
+  made), Design ideas, an elbow connector glued to two shapes (outline fixed in SL-45),
+  M9/M10 regression (editing, present with builds and code type-in, a linked chart, print preview
+  with a 13-page PDF checked by its bytes). Not walked: AI flows with a real provider, the image
+  adjustment preview and route-handle drags with a real mouse, clipboard paste (the pane can't
+  grant clipboard read), keyboard shortcuts (synthetic Cmd keys), reduced motion, downloads.
+  ☐ Not automated: `integration_test` journeys (no chromedriver).
+- ◐ All §7.3 scenarios: replica-level sync and collab tests, server comment/version/headless
+  integration tests; the scripted `serverpod_test` isolate harness (12 §7.3) is still not built.
+- ☑ MCP integration suite for `slides.*` green (server `test/integration/slides` incl. `mcp/`,
+  `ai/`; platform MCP suites).
+- ◐ a11y checklist: keyboard-operable commands and dialogs, MCP-describable dialogs (04 AC-9),
+  contrast and tap-target guidelines in the screen-level widget tests, light and dark at 360–480
+  px; not done: a screen-reader pass in the browser (the SL-23 finding — canvas text editing
+  with Flutter semantics on — is still open).
+- ◐ No open P0/P1 bugs: the ten bugs found in the walkthrough are fixed with regression tests;
+  open: one `RuntimeError: memory access out of bounds` crash of the wasm build in the agent's
+  pane after many viewport-emulation changes (not reproduced), P1 features listed in `TODO.md`.
 
 M8 must land the shell changes (scope-aware homes, settings split, `WonkyAppKind` with four
 apps) before Slides UI work starts in M9, and every shared-package extraction plus OS-8 before

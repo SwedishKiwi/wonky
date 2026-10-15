@@ -7,6 +7,7 @@ library;
 import 'dart:async';
 
 import 'package:flutter/foundation.dart';
+import 'package:flutter/painting.dart' show PaintingBinding;
 import 'package:flutter/services.dart';
 import 'package:wonky_fonts/wonky_fonts.dart';
 
@@ -34,8 +35,22 @@ class AssetFontRegistry {
   final Map<String, Future<bool>> _loading = {};
   final Set<String> _loaded = {};
 
-  /// Bumped every time a family finished loading.
+  /// Bumped every time a family finished loading — and, once
+  /// [watchEngineFonts] ran, whenever the engine's fonts change.
   final ValueNotifier<int> generation = ValueNotifier(0);
+
+  bool _watchingEngine = false;
+
+  /// Also bumps [generation] when the engine's fonts change: on the web
+  /// the engine downloads fallback fonts (emoji, arrows and other symbols
+  /// the deck's family lacks) after the first layout that needs them, and
+  /// layouts cached before that kept drawing empty boxes (SL-45). Safe to
+  /// call repeatedly; needs the Flutter bindings.
+  void watchEngineFonts() {
+    if (_watchingEngine) return;
+    _watchingEngine = true;
+    PaintingBinding.instance.systemFonts.addListener(() => generation.value++);
+  }
 
   static Future<void> _engineRegister(
     String family,

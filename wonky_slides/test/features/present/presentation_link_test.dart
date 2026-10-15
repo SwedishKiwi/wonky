@@ -7,11 +7,10 @@ import 'package:wonky_slides/features/present/presentation_link.dart';
 import '../../support/deck_screen.dart' show sampleDeck;
 import 'fake_presentation_hub.dart';
 
-Future<void> _flush() async {
-  for (var i = 0; i < 5; i++) {
-    await Future<void>.delayed(Duration.zero);
-  }
-}
+/// Delivers pending stream events. The tests run in `testWidgets`' fake
+/// async zone, so retry timers and the presenter's end delay elapse only
+/// through [WidgetTester.pump] — no real time (specs/15 §4).
+Future<void> _flush(WidgetTester tester) => tester.pump();
 
 /// The presentation session on the client (Slides 10 §6): the presenter
 /// view publishes, an audience view on another device follows (state,
@@ -67,20 +66,20 @@ void main() {
     return (c: c, link: link);
   }
 
-  test(
+  testWidgets(
     'Given a presenter view and an audience device when the presenter '
     'navigates, blanks, points and draws then the audience follows',
-    () async {
+    (tester) async {
       final hub = FakePresentationHub();
       final p = presenter(hub);
       p.link.start();
-      await _flush();
+      await _flush(tester);
       expect(p.link.status, PresentationLinkStatus.connected);
       final sid = p.link.sessionId!;
 
       final a = audience(hub, sid);
       a.link.start();
-      await _flush();
+      await _flush(tester);
 
       expect(a.link.status, PresentationLinkStatus.connected);
       expect(a.link.presenterDevice, 'Laptop');
@@ -89,21 +88,21 @@ void main() {
 
       now += 500;
       p.c.next();
-      await _flush();
+      await _flush(tester);
       expect(a.c.position, p.c.position);
 
       p.c.setBlank(PresentBlank.black);
-      await _flush();
+      await _flush(tester);
       expect(a.c.blank, PresentBlank.black);
       now += 500;
       p.c.next();
-      await _flush();
+      await _flush(tester);
       expect(a.c.blank, PresentBlank.none);
 
       p.c.setTool(PresentTool.laser);
       now += 50;
       p.c.pointerMove(const Offset(300, 200));
-      await _flush();
+      await _flush(tester);
       expect(a.c.laser, const Offset(300, 200));
 
       p.c.setTool(PresentTool.pen);
@@ -111,11 +110,11 @@ void main() {
       now += 16;
       p.c.pointerMove(const Offset(90, 10));
       p.c.pointerUp();
-      await _flush();
+      await _flush(tester);
       final slide = p.c.position!.slideId;
       expect(a.c.ink.strokesOf(slide), hasLength(1));
       p.c.clearInk();
-      await _flush();
+      await _flush(tester);
       expect(a.c.ink.strokesOf(slide), isEmpty);
 
       p.c.dispose();
@@ -125,20 +124,20 @@ void main() {
     },
   );
 
-  test('Given an audience device when its clicker advances then the '
-      'presenter applies the command and the audience follows', () async {
+  testWidgets('Given an audience device when its clicker advances then the '
+      'presenter applies the command and the audience follows', (tester) async {
     final hub = FakePresentationHub();
     final p = presenter(hub);
     p.link.start();
-    await _flush();
+    await _flush(tester);
     final a = audience(hub, p.link.sessionId!);
     a.link.start();
-    await _flush();
+    await _flush(tester);
     final before = p.c.position;
 
     now += 500;
     expect(a.c.next(), isTrue);
-    await _flush();
+    await _flush(tester);
 
     expect(p.c.position, isNot(before));
     expect(a.c.position, p.c.position);
@@ -148,19 +147,19 @@ void main() {
     a.link.dispose();
   });
 
-  test('Given an audience device when the presenter ends then the audience '
-      'session ends', () async {
+  testWidgets('Given an audience device when the presenter ends then the '
+      'audience session ends', (tester) async {
     final hub = FakePresentationHub();
     final p = presenter(hub);
     p.link.start();
-    await _flush();
+    await _flush(tester);
     final a = audience(hub, p.link.sessionId!);
     a.link.start();
-    await _flush();
+    await _flush(tester);
 
     p.c.end();
-    await Future<void>.delayed(const Duration(milliseconds: 80));
-    await _flush();
+    // The presenter lets the end reach the server before closing.
+    await tester.pump(const Duration(milliseconds: 80));
 
     expect(a.link.status, PresentationLinkStatus.ended);
     expect(a.link.endedReason, 'ended');
@@ -170,12 +169,12 @@ void main() {
     p.link.dispose();
   });
 
-  test('Given an unknown session when an audience joins then it ends with '
-      'notFound', () async {
+  testWidgets('Given an unknown session when an audience joins then it ends '
+      'with notFound', (tester) async {
     final hub = FakePresentationHub();
     final a = audience(hub, 'NoSuchSession0000000000');
     a.link.start();
-    await _flush();
+    await _flush(tester);
 
     expect(a.link.status, PresentationLinkStatus.ended);
     expect(a.link.endedReason, 'notFound');
@@ -183,12 +182,14 @@ void main() {
     a.link.dispose();
   });
 
-  test('Given no connection when the presenter view starts then presenting '
-      'works offline and the session joins once online', () async {
+  testWidgets('Given no connection when the presenter view starts then '
+      'presenting works offline and the session joins once online', (
+    tester,
+  ) async {
     final hub = FakePresentationHub()..offline = true;
     final p = presenter(hub);
     p.link.start();
-    await _flush();
+    await _flush(tester);
 
     expect(p.link.status, PresentationLinkStatus.offline);
     now += 500;
@@ -196,8 +197,8 @@ void main() {
     expect(p.c.position, isNotNull);
 
     hub.offline = false;
-    await Future<void>.delayed(const Duration(milliseconds: 30));
-    await _flush();
+    // The next retry (5 ms) joins.
+    await tester.pump(const Duration(milliseconds: 30));
     expect(p.link.status, PresentationLinkStatus.connected);
     // The full state was published after (re)joining.
     expect(

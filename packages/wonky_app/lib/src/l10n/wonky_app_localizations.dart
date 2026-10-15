@@ -1336,6 +1336,24 @@ abstract class WonkyAppLocalizations {
   /// **'assigned the comment'**
   String get commentEventAssigned;
 
+  /// No description provided for @commentEventOrphaned.
+  ///
+  /// In en, this message translates to:
+  /// **'deleted the commented content'**
+  String get commentEventOrphaned;
+
+  /// No description provided for @commentEventOrphanedBySystem.
+  ///
+  /// In en, this message translates to:
+  /// **'The commented content was deleted'**
+  String get commentEventOrphanedBySystem;
+
+  /// No description provided for @commentEventRestoredBySystem.
+  ///
+  /// In en, this message translates to:
+  /// **'The commented content was restored'**
+  String get commentEventRestoredBySystem;
+
   /// No description provided for @commentEventReopened.
   ///
   /// In en, this message translates to:
@@ -1347,6 +1365,36 @@ abstract class WonkyAppLocalizations {
   /// In en, this message translates to:
   /// **'marked as resolved'**
   String get commentEventResolved;
+
+  /// No description provided for @commentEventSuggestionAccepted.
+  ///
+  /// In en, this message translates to:
+  /// **'accepted the suggestion'**
+  String get commentEventSuggestionAccepted;
+
+  /// No description provided for @commentEventSuggestionRejected.
+  ///
+  /// In en, this message translates to:
+  /// **'rejected the suggestion'**
+  String get commentEventSuggestionRejected;
+
+  /// No description provided for @commentEventSuggestionReopened.
+  ///
+  /// In en, this message translates to:
+  /// **'reopened the suggestion'**
+  String get commentEventSuggestionReopened;
+
+  /// No description provided for @commentEventSuggestionSuperseded.
+  ///
+  /// In en, this message translates to:
+  /// **'replaced the suggestion'**
+  String get commentEventSuggestionSuperseded;
+
+  /// No description provided for @commentEventSuggestionWithdrawn.
+  ///
+  /// In en, this message translates to:
+  /// **'withdrew the suggestion'**
+  String get commentEventSuggestionWithdrawn;
 
   /// No description provided for @commentFailed.
   ///

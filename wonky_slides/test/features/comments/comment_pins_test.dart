@@ -2,7 +2,16 @@ import 'package:flutter/gestures.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:wonky_app/testing.dart' show TestUsers;
 import 'package:wonky_app/wonky_app.dart';
+import 'package:wonky_client/wonky_client.dart'
+    show
+        ActorKind,
+        CommentEvent,
+        CommentEventKind,
+        CommentSystemEvent,
+        CommentView,
+        UserSummary;
 import 'package:wonky_slides/features/comments/comment_badge.dart';
 import 'package:wonky_slides/features/comments/comment_pins_layer.dart';
 
@@ -156,6 +165,79 @@ void main() {
 
     expect(r.services.panels.isOpen(ShellPanels.comments), isTrue);
     expect(r.controller.scope, 'slide');
+    await r.close(tester);
+  });
+
+  testWidgets('when a thread was orphaned by the server and revived then its '
+      'history reads as sentences, not "Someone · orphaned"', (tester) async {
+    final r = (await tester.runAsync(CommentsRig.open))!;
+    r.d.editor.selectElements([r.f.box]);
+    final id = (await tester.runAsync(() => r.comment('Check the number')))!;
+    final t = r.repo.threads[id]!;
+    CommentView event(int n, CommentSystemEvent e, {UserSummary? by}) =>
+        CommentView(
+          id: 900 + n,
+          threadUuid: t.uuid,
+          author: by,
+          authorKind: by == null ? ActorKind.system : ActorKind.user,
+          body: '',
+          mentions: const [],
+          reactions: const {},
+          createdAt: DateTime.utc(2026, 10, 2),
+          deleted: false,
+          systemEvent: e,
+        );
+    final revived = r.repo.threads[id] = t.copyWith(
+      comments: [
+        ...t.comments,
+        event(1, CommentSystemEvent.orphaned),
+        event(2, CommentSystemEvent.reopened),
+        event(3, CommentSystemEvent.suggestionAccepted, by: TestUsers.anna),
+      ],
+    );
+    r.repo.events.add(
+      CommentEvent(
+        kind: CommentEventKind.threadUpdated,
+        threadUuid: revived.uuid,
+        thread: revived,
+      ),
+    );
+    await tester.runAsync(() => Future<void>.delayed(Duration.zero));
+    await r.pump(tester);
+
+    await r.run('slides.comments.show', {'threadUuid': id});
+    await tester.pumpAndSettle();
+
+    expect(find.text('The commented content was deleted'), findsOne);
+    expect(find.text('The commented content was restored'), findsOne);
+    expect(
+      find.text('${TestUsers.anna.displayName} · accepted the suggestion'),
+      findsOne,
+    );
+    expect(find.textContaining('orphaned'), findsNothing);
+    expect(find.textContaining('Someone'), findsNothing);
+    await r.close(tester);
+  });
+
+  testWidgets('when Reply is clicked in the docked card then the reply box '
+      'has the keyboard focus (the docked card kept it before)', (
+    tester,
+  ) async {
+    final r = (await tester.runAsync(CommentsRig.open))!;
+    r.d.editor.selectElements([r.f.box]);
+    final id = (await tester.runAsync(() => r.comment('Check')))!;
+    await r.pump(tester);
+    await r.run('slides.comments.show', {'threadUuid': id});
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byKey(ValueKey<String>('comments.reply.$id.open')));
+    await tester.pumpAndSettle();
+
+    final field = find.descendant(
+      of: find.byKey(ValueKey<String>('comments.reply.$id')),
+      matching: find.byType(EditableText),
+    );
+    expect(tester.widget<EditableText>(field).focusNode.hasFocus, isTrue);
     await r.close(tester);
   });
 }

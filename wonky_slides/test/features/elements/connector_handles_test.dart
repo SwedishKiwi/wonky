@@ -113,6 +113,20 @@ void main() {
     for (final p in c.scene!.routes[f.line]!) Offset(p.x, p.y),
   ];
 
+  testWidgets('Given a selected elbow connector then its selection outline '
+      'follows the route, not the box around it (which read as a closed '
+      'route); a selected shape keeps its frame outline', (tester) async {
+    await pump(tester, 'elbow');
+
+    expect(c.selectedLineRoute(f.line), route());
+    expect(c.selectedLineRoute(f.a), isNull);
+    selectionOf(d.editor).select([f.a, f.line]);
+    await tester.pump();
+    expect(c.selectedLineRoute(f.line), route());
+    expect(c.selectedLineRoute(f.a), isNull);
+    expect(tester.takeException(), isNull);
+  });
+
   testWidgets('Given a selected elbow connector when its middle segment '
       'handle is dragged then the segment moves across (one step), the '
       'ends stay glued, and undo restores the automatic route', (tester) async {

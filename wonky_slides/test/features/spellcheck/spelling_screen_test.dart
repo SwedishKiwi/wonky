@@ -3,12 +3,14 @@ import 'package:flutter/rendering.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:super_editor/super_editor.dart' show TextComponent;
+import 'package:wonky_app/special_chars.dart';
 import 'package:wonky_app/spellcheck.dart';
 import 'package:wonky_core/wonky_core.dart' show InvocationSource;
 import 'package:wonky_slides/features/editor_screen/deck_editor_screen.dart';
 import 'package:wonky_slides/features/outline_view/outline_view.dart';
 import 'package:wonky_slides/features/spellcheck/slides_spelling.dart';
 import 'package:wonky_slides/features/spellcheck/spelling_session.dart';
+import 'package:wonky_slides/features/text_editing/text_editing_host.dart';
 import 'package:wonky_slides_core/model.dart';
 import 'package:wonky_slides_core/testing.dart';
 import 'package:wonky_ui/testing.dart';
@@ -222,6 +224,94 @@ void main() {
     await tester.pump(const Duration(milliseconds: 600));
     await tester.pumpAndSettle();
     expect(editable.controller.text, 'hello wrold');
+    await settleTooltips(tester);
+    await r.close(tester);
+  });
+
+  testWidgets('Given the title being edited on the canvas when a misspelled '
+      'word is right-clicked then the context menu offers its suggestions '
+      '(they were lost once the menu took the keyboard focus)', (tester) async {
+    final r = await pumpDeckScreen(tester, fixture: _deck());
+    await SlidesSpelling.of(r.editor).whenSettled();
+    final slide = r.editor.order.entries.first.id;
+    final title = r.session.model
+        .elementsOf(slide)
+        .firstWhere((e) => SlidesText.plainText(e.text).contains('Helo'));
+    await textEditingOf(r.editor).begin(title.id, caretOffset: 10);
+    await tester.pump();
+    await tester.pump();
+    await tester.pump();
+
+    final paragraph = tester.allRenderObjects
+        .whereType<RenderParagraph>()
+        .firstWhere((p) => p.text.toPlainText().startsWith('Helo wrold'));
+    final word = paragraph.localToGlobal(
+      paragraph.getOffsetForCaret(const TextPosition(offset: 2), Rect.zero) +
+          Offset(0, paragraph.size.height / 2),
+    );
+    final g = await tester.createGesture(
+      kind: PointerDeviceKind.mouse,
+      buttons: kSecondaryMouseButton,
+    );
+    await g.down(word);
+    await g.up();
+    await tester.pumpAndSettle();
+
+    expect(_key('menu.slides.spell.suggestion.0'), findsOneWidget);
+    await tester.tap(_key('menu.slides.spell.suggestion.0'));
+    await tester.pumpAndSettle();
+    expect(
+      SlidesText.plainText(r.session.model.element(title.id)!.text).trim(),
+      'hello wrold',
+    );
+    await settleTooltips(tester);
+    await r.close(tester);
+  });
+
+  testWidgets('Given the title being edited when a character is picked in '
+      'the Special characters dialog then it is typed at the caret (the '
+      'editor dropped its selection when the dialog took the focus)', (
+    tester,
+  ) async {
+    final r = await pumpDeckScreen(tester, fixture: _deck());
+    final slide = r.editor.order.entries.first.id;
+    final title = r.session.model
+        .elementsOf(slide)
+        .firstWhere((e) => SlidesText.plainText(e.text).contains('Helo'));
+    await textEditingOf(r.editor).begin(title.id, caretOffset: 4);
+    await tester.pump();
+    await tester.pump();
+
+    final done = r.editor.invokeCommand(
+      'slides.insert.specialCharacter',
+      const {},
+      InvocationSource.menu,
+      tester.element(find.byType(DeckEditorScreen)),
+    );
+    for (var i = 0; i < 5; i++) {
+      await tester.runAsync(() => Future<void>.delayed(Duration.zero));
+      await tester.pump();
+    }
+    await tester.pumpAndSettle();
+    const k = SpecialCharsKeys.slides;
+    await tester.enterText(
+      find.descendant(
+        of: find.byKey(k.search),
+        matching: find.byType(EditableText),
+      ),
+      'rightwards arrow',
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(k.cell(0x2192)));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(k.close));
+    await tester.pumpAndSettle();
+    await done;
+
+    expect(
+      SlidesText.plainText(r.session.model.element(title.id)!.text).trim(),
+      'Helo→ wrold',
+    );
     await settleTooltips(tester);
     await r.close(tester);
   });

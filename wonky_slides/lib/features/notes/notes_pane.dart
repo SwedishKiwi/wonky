@@ -378,6 +378,13 @@ class _NotesPaneState extends State<NotesPane> {
     return KeyedSubtree(
       key: const ValueKey<String>('slides.notes.superEditor'),
       child: SuperEditor(
+        // Keep the selection while the focus is elsewhere (a menu, the
+        // special characters or emoji dialog), like Write: Insert ›
+        // Special characters and the spelling context menu act on it.
+        selectionPolicies: const SuperEditorSelectionPolicies(
+          clearSelectionWhenEditorLosesFocus: false,
+          clearSelectionWhenImeConnectionCloses: false,
+        ),
         key: ValueKey<String>('slides.notes.editor.${edit.slideId}'),
         editor: edit.editor,
         documentLayoutKey: _layoutKey,

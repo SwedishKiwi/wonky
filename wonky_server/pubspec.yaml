@@ -59,8 +59,9 @@ serverpod:
     # (specs/01-architecture.md §2.4): wonky_<app> → web/<app> (/<app>/) for
     # drive, write, sheets and slides; app folders that don't exist yet are
     # skipped. Built with --wasm (cross-origin isolation for
-    # OPFS/SharedArrayBuffer, specs/13 §3). posix builds the apps in
-    # parallel and fails if any build fails.
+    # OPFS/SharedArrayBuffer, specs/13 §3). posix builds the apps one after
+    # another (parallel builds swap on a 16 GB machine) and fails if any build
+    # fails.
     # Windows uses xcopy since flutter's --output flag doesn't work there.
     # See: https://github.com/flutter/flutter/issues/157886
     # On failure, clean and retry once to clear stale Flutter build caches.
@@ -78,31 +79,26 @@ serverpod:
         set -e
         build() {
           out=../wonky_server/web/$1
-          rm -rf "$out"
-          cd "../wonky_$1"
+          rm -rf "$out" || return 1
+          cd "../wonky_$1" || return 1
           set -- web --wasm --base-href "/$1/" --output "$out"
           flutter build "$@" || { flutter clean && flutter build "$@"; }
         }
-        logs=$(mktemp -d)
-        jobs=""
+        failed=""
         for app in drive write sheets slides; do
           [ -f "../wonky_$app/pubspec.yaml" ] || continue
-          ( build "$app" ) > "$logs/$app.log" 2>&1 &
-          jobs="$jobs $!:$app"
-        done
-        failed=0
-        for job in $jobs; do
-          app=${job#*:}
-          if wait "${job%%:*}"; then
+          echo "Building $app..."
+          if ( build "$app" ); then
             echo "Built $app"
           else
-            echo "Building $app failed:"
-            cat "$logs/$app.log"
-            failed=1
+            echo "Building $app failed"
+            failed="$failed $app"
           fi
         done
-        rm -rf "$logs"
-        exit $failed
+        if [ -n "$failed" ]; then
+          echo "Failed:$failed"
+          exit 1
+        fi
 
   # The apps run from their flutter_driver entry point, on fixed ports so
   # their origins are stable for `allowedOrigins` and cookie auth

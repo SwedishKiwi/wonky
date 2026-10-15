@@ -184,6 +184,8 @@ class SlidesVersionProvider implements VersionProvider {
       item: item,
       changes: changes,
       label: label,
+      // Slides and elements deleted since the version come back.
+      revives: true,
       lifetime: const Duration(days: 7),
     );
     try {

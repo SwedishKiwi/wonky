@@ -48,10 +48,14 @@ class SlidesWriter extends SyncWriter {
 
   /// The summary of changes written without a plan (undo/redo, AI,
   /// recovery): kinds, slides, elements and deleted/revived ids (02
-  /// §3.10.1).
+  /// §3.10.1). Inserts here re-create rows that existed before (undo of a
+  /// delete, redo of an insert), so they count as *revived*: the server's
+  /// change-log consumer then revives comment threads orphaned by the
+  /// deletion (09 §3.2) — without it undoing a cut or delete left the
+  /// element's comments orphaned.
   @override
   ChangeSummary summarize(List<RowChange> changes) =>
-      SlidesChangeSummary.of(changes);
+      SlidesChangeSummary.of(changes, wasDeleted: (_, _) => true);
 
   @override
   Iterable<String> columnsIfVisible(RowChange change) => [

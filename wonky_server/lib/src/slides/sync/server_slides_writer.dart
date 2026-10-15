@@ -238,6 +238,11 @@ abstract final class ServerSlidesWriter {
   /// written (`changed_by_other`) — together with its coupled columns
   /// (02 P4) — and a reverted table-cell insert keeps the columns others
   /// changed (column-wise, like Sheets cells).
+  ///
+  /// With [revives] (default: [skipChanged]) inserts re-create rows that
+  /// existed before — reverts, redos and version restores — and the
+  /// change-log summary lists them as *revived*, so comment threads
+  /// orphaned by their deletion come back (09 §3.2).
   static Future<DeckAppliedChanges> apply(
     Session session, {
     required Actor actor,
@@ -245,9 +250,11 @@ abstract final class ServerSlidesWriter {
     required List<RowChange> changes,
     required String label,
     bool skipChanged = false,
+    bool? revives,
     String? detailJson,
     bool consume = true,
   }) async {
+    final revived = revives ?? skipChanged;
     final db = syncSessionOf(session);
     final applied = <RowChange>[];
     final skipped = <RevertSkip>[];
@@ -477,7 +484,10 @@ abstract final class ServerSlidesWriter {
             deckSpace: deckSpace,
             actor: actor,
             label: label,
-            summary: SlidesChangeSummary.of(all),
+            summary: SlidesChangeSummary.of(
+              all,
+              wasDeleted: revived ? (_, _) => true : null,
+            ),
             detailJson: i == 0 ? detailJson : null,
           );
         },
@@ -503,6 +513,7 @@ abstract final class ServerSlidesWriter {
     required String label,
     String? detailJson,
     bool skipChanged = false,
+    bool? revives,
     Duration lifetime = const Duration(hours: 24),
   }) async {
     await SpaceService.ensureWriter(session, actor, item);
@@ -514,6 +525,7 @@ abstract final class ServerSlidesWriter {
       label: label,
       detailJson: detailJson,
       skipChanged: skipChanged,
+      revives: revives,
     );
     if (result.applied.isEmpty) return DeckRecordedWrite(null, result);
     final changeId = await SheetsChangeRecords.store(

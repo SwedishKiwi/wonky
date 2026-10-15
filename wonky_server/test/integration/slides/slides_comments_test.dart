@@ -6,7 +6,10 @@ import 'package:wonky_server/src/platform/common/models.dart';
 import 'package:wonky_server/src/sheets/sync/sync_db.dart';
 import 'package:wonky_server/src/slides/changelog/deck_change_log_processor.dart';
 import 'package:wonky_server/src/slides/changelog/deck_comment_orphans.dart';
+import 'package:wonky_server/src/slides/headless/headless_deck.dart';
+import 'package:wonky_server/src/slides/headless/headless_deck_cache.dart';
 import 'package:wonky_slides_core/interfaces.dart' show DeckChangeLogEntry;
+import 'package:wonky_slides_core/ops.dart' show DeleteElements;
 
 import '../../support/role_matrix.dart';
 import '../../support/test_drive.dart';
@@ -260,6 +263,30 @@ void main() {
       );
       expect(element?.slideId, slide.id);
     });
+
+    test(
+      'when a headless deletion of the element is reverted then the change '
+      'log lists it as revived and the orphaned thread is open again',
+      () async {
+        final t = await create(CommentAnchorKind.element, {
+          'slideId': slideId,
+          'elementId': elementId,
+        });
+        final headless = await const SlidesHeadlessProvider().open(
+          HeadlessDeckContext(anna.session, anna.actor),
+          deck.uuid.uuid,
+        );
+        final w = await headless.write(DeleteElements([elementId]));
+        final orphaned = await reread(t);
+
+        await endpoints.slides.revertChange(anna.endpointSession, w.changeId!);
+        final revived = await reread(t);
+
+        expect(orphaned.status, CommentStatus.orphaned);
+        expect(revived.status, CommentStatus.open);
+        HeadlessDeckCache.clear();
+      },
+    );
 
     test('when a commenter mentions the owner then the notification names '
         'the slide number and title', () async {

@@ -562,6 +562,19 @@ class SlideCanvasController extends ChangeNotifier {
     return ElementFrame.of(FrameTransforms.boundsOf(frames.values)!);
   }
 
+  /// The slide-space route of the selected line or connector [id] (its
+  /// selection outline follows the route — lines show endpoint handles
+  /// instead of a box, 03 §3), or null for other elements and while the
+  /// selection is being transformed (the frame outline follows the drag).
+  List<Offset>? selectedLineRoute(String id) {
+    if (_transform != null) return null;
+    final e = selection.selected.where((x) => x.id == id).firstOrNull;
+    if (e == null || e.record.kind != ElementKind.line) return null;
+    final route = scene?.routes[id];
+    if (route == null || route.length < 2) return null;
+    return [for (final p in route) Offset(p.x, p.y)];
+  }
+
   /// Whether the selection is one line/connector (endpoint handles).
   bool get singleLine {
     final sel = selection.selected;

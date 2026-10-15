@@ -50,7 +50,8 @@ class SlidesComments extends ChangeNotifier
     implements
         CommentAnchorProvider,
         CommentPanelOptions,
-        CommentPanelSections {
+        CommentPanelSections,
+        CommentAnchorScopes {
   SlidesComments._(this.editor) {
     services.comments.addListener(_onControllerChanged);
     editor.addListener(_onEditor);
@@ -299,11 +300,38 @@ class SlidesComments extends ChangeNotifier
     );
   }
 
+  /// `slide`: the current slide (*Comment on slide* in the slide and
+  /// navigator context menus, also while an object is selected);
+  /// `element`: the selection's object or text. The context menus passed
+  /// these scopes to `shell.comments.create`, which refused them as
+  /// unknown arguments until SL-45.
   @override
-  NewCommentAnchor? anchorForSelection() {
+  NewCommentAnchor? anchorForScope(String scope) {
+    if (scope != 'slide') return anchorForSelection();
+    final slide = _commentableSlide();
+    return slide == null ? null : _slideAnchor(slidesL10nOf(services), slide);
+  }
+
+  String? _commentableSlide() {
     if (!canComment || !editor.isReady) return null;
     if (editor.mode == DeckViewMode.masters) return null;
-    final slide = editor.currentSlideId;
+    return editor.currentSlideId;
+  }
+
+  NewCommentAnchor _slideAnchor(SlidesLocalizations l, String slide) {
+    final a = SlidesCommentAnchor.slide(slide, point: _clickPoint(slide, null));
+    final label = slideQuote(l, slide);
+    return NewCommentAnchor(
+      kind: a.kind,
+      anchorJson: a.encode(),
+      quotedText: label,
+      label: label,
+    );
+  }
+
+  @override
+  NewCommentAnchor? anchorForSelection() {
+    final slide = _commentableSlide();
     if (slide == null) return null;
     final l = slidesL10nOf(services);
     // The body being edited: the element, with the selected text quoted.
@@ -322,14 +350,7 @@ class SlidesComments extends ChangeNotifier
     if (ids.isNotEmpty && !editor.notesFocus.hasFocus) {
       return _elementAnchor(l, slide, ids.first);
     }
-    final a = SlidesCommentAnchor.slide(slide, point: _clickPoint(slide, null));
-    final label = slideQuote(l, slide);
-    return NewCommentAnchor(
-      kind: a.kind,
-      anchorJson: a.encode(),
-      quotedText: label,
-      label: label,
-    );
+    return _slideAnchor(l, slide);
   }
 
   NewCommentAnchor? _elementAnchor(

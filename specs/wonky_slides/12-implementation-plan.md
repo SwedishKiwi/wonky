@@ -1198,6 +1198,40 @@ Paths below: `app/` = `wonky_slides/lib/`, `core/` = `packages/wonky_slides_core
 
 **SL-45 · M11 integration and exit** — web-build token
 - Acceptance: the M11 exit gate of §1.
+- As built (2026-10-15): **Wonky Slides is complete for its first iteration.** Full test runs
+  (counts in [STATUS.md](STATUS.md)), two timing-sensitive Slides tests made deterministic
+  (`presentation_link_test` on `testWidgets`' fake clock instead of real delays;
+  `notes_pane_test` failed under load because every editor screen loaded the real Hunspell
+  dictionary — real asset I/O parsed in 8 ms real-time slices, one per frame, so
+  `typeImeText`'s `pumpAndSettle` advanced a load-dependent amount of fake time and split one
+  typing burst into two undo steps; `wonky_slides/test/flutter_test_config.dart` now starts every
+  test without dictionaries, spelling tests install fakes). Sheets' `writer_perf_test` was
+  already tagged `slow`. Browser walkthrough of the release build (Slides, then Write and Sheets
+  for the shared fixes): suite 14 §2.1 "M11 exit checklist". **Bugs found and fixed (each with a
+  regression test):** (1) long context menus ran off the bottom of the window — the shared
+  `WonkyPopupMenuHost` now opens below, above or shifted to fit and scrolls menus taller than
+  the window (all apps); (2) context-menu entries were built again after the menu took the
+  keyboard focus, so Slides' spelling suggestions vanished — entries are built once per opening;
+  (3) Slides' text editors (canvas overlay, notes) dropped their selection when the focus moved,
+  so *Special characters* and *Emoji* typed nothing and the spelling menu lost its word — they
+  keep it like Write (`clearSelectionWhen{EditorLosesFocus,ImeConnectionCloses}: false`);
+  (4) *Comment* / *Comment on slide* in the context menus failed with "unknown property anchor"
+  — `shell.comments.create` takes an `anchor` scope and providers may implement
+  `CommentAnchorScopes` (Slides: `slide`, `element`), and a menu test validates every fixed menu
+  argument against its command's schema; (5) undoing a delete or cut (and server reverts and
+  version restores) didn't revive the comment threads the deletion orphaned — undo/redo writes
+  and `ServerSlidesWriter.apply(revives:)` list re-inserted rows as `revived`; (6) comment
+  system events read "Someone · orphaned" (raw enum names, no author) — localized sentences;
+  (7) the reply box of the docked comment card wasn't focused when opened (autofocus loses to
+  the focused card) — `MentionField` requests focus; (8) the version history route squeezed the
+  preview to 40 px and its header overflowed by 448 px at 360 px — under 640 px the versions
+  list sits under the preview and the header is compact (all apps); (9) emoji and arrows in slide
+  text were drawn as empty boxes after a reload until something else re-laid them out — the
+  font registry's generation also bumps when the engine's fonts change
+  (`AssetFontRegistry.watchEngineFonts`, fallback fonts arrive after the first layout); (10) a
+  selected connector's outline was the box around it (it read as a second, closed route) — the
+  outline follows the route. Leftovers and what wasn't verified: `TODO.md` "Wonky Slides —
+  later".
 
 ---
 

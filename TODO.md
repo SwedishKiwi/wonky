@@ -352,180 +352,47 @@ Everything below is deferred; the app works without it. Areas are in rough prior
   subscriptions for `wonky://file/<uuid>` / `wonky://drive/storage` follow the suite-wide
   subscription work. `wonky://file` lists the 50 most recently modified files only.
 
-## Wonky Slides — later (M10/M11)
+## Wonky Slides — later
 
-M9 (Slides MVP) closed with SL-23 and **M10 (motion & content) closed with SL-36** on
-2026-10-15: Slides **only shows what works**. Everything not yet built below is planned in [specs/wonky_slides/12-implementation-plan.md](specs/wonky_slides/12-implementation-plan.md)
-§4.8–§4.12 and not built (or built only in the core). Per-package leftovers of the built work
-packages are in "Wonky Slides — open items" below (cross-referenced here, not repeated).
+**Wonky Slides is complete for its first iteration** (M9 closed with SL-23, M10 with SL-36, M11
+with SL-45 on 2026-10-15; exit checklists in [specs/14-roadmap.md](specs/14-roadmap.md) §2.1,
+evidence in [specs/wonky_slides/STATUS.md](specs/wonky_slides/STATUS.md)). Slides **only shows
+what works**: what is not built is hidden. Below are the real leftovers of the first iteration —
+hidden features, the on-hold work package SL-41, P1/P2 items and the checks that are still
+missing. Per-package leftovers of the built areas (canvas, text, shapes, images and tables,
+navigator, themes, presenting, PDF, code core, …) are in "Wonky Slides — open items" below.
 
 **How hidden features come back.** `wonky_slides/lib/config/slides_features.dart` has one
-`SlidesFeature` value per hidden area (with its work package) and `SlidesFeatures.enabled`
-(empty for M9). While a feature is off its commands — real ones and the disabled
-`placeholder_commands.dart` entries — are not registered (so menus, toolbar, context menus,
-palette, shortcuts and MCP `ui.*` don't offer them; menus and context menus are pruned with
-`SlidesFeatures.prune`), the shell's comments/versions/assistant commands are left out
-(`WonkyAppConfig.hidesShellCommand`), the inspector drops Format sections without a builder
-and the Animate tab, the status bar/View menu drop the outline and masters modes, settings of
-hidden features are neither shown nor advertised (`offersDefaultsKey`), and Sheets chart pastes
-are refused with a toast. A work package turns its feature on by adding it to
-`SlidesFeatures.enabled`, registering real commands (its placeholders then drop out), giving its
-inspector sections a builder, and updating `test/config/menu_registry_test.dart` (golden ids)
-and the tests that assert the hidden state (`chrome_commands_test`, `deck_editor_screen_test`,
-`slides_settings_test`, `clipboard_commands_test`). Remove a `SlidesFeature` value once its
-feature ships.
+`SlidesFeature` value per hidden area and `SlidesFeatures.shipped`. While a feature is off its
+commands — real ones and the disabled `placeholder_commands.dart` entries — are not registered
+(so menus, toolbar, context menus, palette, shortcuts and MCP `ui.*` don't offer them; menus and
+context menus are pruned with `SlidesFeatures.prune`), the inspector drops its sections, and its
+settings are neither shown nor advertised (`offersDefaultsKey`). A work package turns its feature
+on by adding it to `SlidesFeatures.shipped`, registering real commands (its placeholders then
+drop out), giving its inspector sections a builder, and updating
+`test/config/menu_registry_test.dart` (golden ids) and the tests that assert the hidden state
+(`chrome_commands_test`, `deck_editor_screen_test`, `slides_settings_test`,
+`clipboard_commands_test`). Remove a `SlidesFeature` value once its feature ships.
 
-**Already in place (M10):** builds, transitions incl. 3D and Magic Move, code blocks, linked
-charts, masters and theme editor, PDF builds/PNG, outline view, Layers, accessibility checker,
-10 templates — the entries below list only their leftovers. Also in place for M11: the
-`slidesDefaults` keys for spelling, the history child-route placeholder (`DeckRoutePlaceholder`,
-not routed while hidden), schema S-1/S-2 with every Slides table.
+### Hidden features (still off)
 
-- **SL-25 · Transitions and Magic Move core — done** (06 §9.9; rendered by SL-29). Leftovers:
-  exact glyph boxes through `MagicMoveText.rangeBox` (Flutter `TextPainter`; the core text
-  layout places glyph runs today — pass the stage scenes, as present mode does); (P1, core)
-  interpolate same-type shape adjustments, gradient stops, shadows, corner radius and stroke
-  width (06 §8.4; today stretch or crossfade), glyph runs for shapes with text, table cells by
-  row/column, a persistent transform of an outgoing group composed into its children.
-- **SL-27 · Chart link core and server — done** (08 §2.11, §13 as built). Leftovers: the P1
-  push stream `slidesCharts.watch(deckUuid)` (08 §5.3); native charts (`ChartTable`,
-  `TableChartData.fromTable`, recommender split, the "no ranges" `RangeRefSchema` validator,
-  P1); the scorecard count-up of chart builds (08 §9.1; scorecards fade); token detection misses
-  server writes that bypass the Sheets change log (08 §5.1 as built); server-side auto-update
-  (Q28, M11 only if needed).
-- (SL-28 · Masters, layout editing, theme editor: done, feature `masters` on — leftovers in
-  "Masters and theme editor leftovers (SL-28)" below.)
-- **SL-29 · Motion player and rendering — done** (06 §12.4, 10 §8.1/§9 as built; feature
-  `animations` is on since 2026-10-15, with SL-30). Leftovers: the motion benchmark as a `-t slow` test with
-  `FrameTiming` p95 assertions and its web variant in the E2E job (06 §14; today
-  `wonky_slides/benchmark/motion_bench.dart`, run by hand); a telemetry event for
-  `slides.motion.degraded` (logged only); a dissolve/mask `FragmentProgram` (the noise-image
-  mask works everywhere); the core should carry `dimColor` during the running dim effect (it
-  pops at settle) and a reduced-motion crossfade for "instant" persistent emphasis; screen-reader
-  announcements of built content and code changes while presenting (06 §17, 10 §16); chart hover tooltips and orbit while presenting
-  (`interactive.hoverTooltips/orbitInPresent`); kiosk `allowNavigation` and idle restart (P1);
-  the presenter view's notes auto-scroll per step (P2); GPU 3D transitions on desktop builds
-  (Flutter GPU needs an engine flag; desktop uses the 2D path).
-- **SL-30 · Animate tab, animation pane, transitions UI — done** (06 §5.7); the feature
-  `animations` is on (in `SlidesFeatures.shipped` since SL-29 verified present-mode playback).
-  Leftovers: canvas motion path
-  editing (drag the end dot, vertex edit mode, *Draw path* — `slides.animate.drawMotionPath` /
-  `editMotionPath` are not registered) and the *Set end state* ghost of `moveTo` (numeric fields
-  now); the easing curve editor (*Custom…* Bézier handles and spring sliders; presets only); build
-  tile previews inside the tile on a miniature of the object (they play on the canvas); dragging
-  timing bars, a preview scrubber and presence in the Animate tab header (P1); "double-click keeps
-  the animation painter active"; F2 rename from the Order list; build order badges for group
-  children; writing `Deck.defaultsJson.build` (last quick add; it is read); (the default
-  transition of templates: done in SL-36 — templates carry their own); the navigator's
-  builds/transition glyphs (04 §5, P1); the 06 §14
-  blur-budget warning in the pane; `chartHighlight` targets by point (series only).
-- **SL-31 leftovers (code element UI is built, feature `codeBlocks` on; 07 §2.3 "Status (M10,
-  SL-31)")** — (code builds play while presenting and the present-mode copy button exists since
-  SL-29); the copy button in the shared viewer mode and in the editor with `copyButton: always`; *Build all steps* (`slides.animate.buildAllSteps`) is
-  in Inspector › Animate › Build (SL-30), not in the Code section. Not built: *Pick lines…* canvas mode (07 §7;
-  `slides.code.addStepFromLines` exists), the paste chip *Paste as code block* and
-  ```` ``` ```` + Enter in an empty text box (07 §3.6; *Convert to code block* is in the text
-  box context menu), the language/palette chips inside the box (§3.5), dragging callouts on the
-  canvas and editing them by double-click (§4.4), live auto-size re-fit per keystroke (re-fits
-  on each 300 ms write), source file drop (P1), recent languages shared with Write and per user
-  (per session now), wide-grapheme (CJK) centering in grid cells (§3.3), code-specific canvas
-  semantics ("Code block, Dart, 24 lines…", 07 §13 — the canvas uses the generic element
-  label), type-in sound (P2, setting hidden). Pixel goldens of edit-mode parity (AC 4) need the
-  CI golden container.
-- **SL-32 · Chart element UI — done** (08 §2.12 as built; feature `charts` ships). Leftovers:
-  the link badge on hover (today: the selected chart), the Linked charts panel's rail count
-  badge, *Request access* (no access) and *Open in Drive* (source in trash) actions of 08 §6,
-  dropping overrides that don't apply after relinking to another chart type (kept and ignored
-  by validation today), a list of a chart's camera steps in Inspector › Chart (*Add camera
-  step* exists, with the animations feature), the Sheets route `?object=<id>` (A-08-7: *Open
-  source* passes it, Sheets ignores it), Sheets' Customize tab on the shared `ChartStyleEditor`
-  (Sheets keeps its own sections); hover tooltips and orbit while presenting
-  (`interactive.hoverTooltips/orbitInPresent` are stored; SL-29 leftover). (The 3D GPU prefetch
-  for the next slide is done, SL-29.) Native charts (08 §11, P1): the hidden feature `nativeCharts`
-  (`slides.insert.chart`, the data panel, `convertToNative`).
-- **SL-33 · PDF builds as pages, print frame, PNG export — done, features `printBuilds` and
-  `imageExports` on** (10 §11.3/§13 "As built (SL-33)"). Leftovers: server PNG — the core
-  `SlideRasterRenderer` (10 §13: `wonky_charts` scanline rasterizer + TTF glyph outlines) and
-  `slidesExport` `png`/`pngZip` (still `unavailable`), which MCP `slides.render_slide` /
-  `drive.export png` (SL-40) need; *Copy slide as image* (`slides.slide.copyAsImage`, P1);
-  *Download ▸ Outline as Markdown* (P2, hidden as `markdownExport`); PNG export progress and
-  *Cancel* for large decks (the render is sequential, one picture per image, on the main
-  isolate); running (non-settled) frame states in PDF — blur, wipe/iris clips, dissolves,
-  partial line drawing and code transitions — are not drawn (builds as pages only print settled
-  frames); code callouts in PDF have no drop shadow; PNGs of a deck with images not yet cached
-  offline wait for their downloads (no timeout).
-- **SL-34 · Outline view, Layers panel, accessibility checker — done, features
-  `outlineView`, `layers`, `accessibilityChecker` on** (04 §10, 03 §8.1, §17.4 "As built
-  (SL-34)"). Leftovers:
-  - Outline: (typing claims a soft lock and sends text hints since SL-37); empty slide groups
-    aren't listed; no selection across lines (each line is a field), so copy across lines is the
-    *Copy outline as Markdown* button only; ⌘B/⌘I don't format in outline lines (formatting is
-    shown and kept); *Download ▸ Outline as Markdown* (P2).
-  - Layers: the *Reading order* tab orders the top-level elements only (group children keep
-    their automatic order inside the group); a drag of a multi-selection across parents lands
-    under one parent; rotated or flipped groups aren't refitted after a child moves in or out.
-  - Checker: contrast of table cells, code and chart text isn't checked, nor text over images
-    (only flagged, no sampled average); move
-    `AccessibilityChecker` (pure Dart, `features/accessibility/`) to `wonky_slides_core` when
-    SL-40 adds a headless `slides.check_accessibility` tool.
-  - Not verified in a browser (no web build in SL-34): the outline's keyboard on the web IME
-    (Enter/Tab/Backspace through `slidesOutline` key bindings), drag and drop in the Layers panel
-    with a real mouse, light/dark look of the three surfaces.
-- **SL-36 · Templates 10 of 10, M10 integration and exit — done** (04 §15 "As built (SL-36)",
-  12 SL-36, suite 14 §2.1 "M10 exit checklist"). Leftovers: template charts are static sample
-  snapshots (a linked chart needs the user's spreadsheet; *Relink…* links them) and Portfolio's
-  covers are shapes (images in templates would need bundled uploads and a quota story);
-  template decks are built in English only (no localized template content); the Magic Move pairs
-  repeat their title, which the accessibility checker reports as a duplicate-title warning;
-  the gallery card of a template shows the first slide only (no hover preview of its motion).
-- **M10 exit items not verified by SL-36** (M10 checklist in `specs/14-roadmap.md` §2.1): the
-  `integration_test` journeys J-S5…J-S7 (no chromedriver), 60 fps transition/type-in budgets in
-  Chrome with recorded frame timings (`benchmark/motion_bench.dart` is manual), scripted
-  multi-client scenarios #18–20, 23–25, reduced motion in the browser (the agent's pane can't
-  emulate `prefers-reduced-motion`), laser/pen/kiosk, PNG/PDF downloads (preview and PDF bytes
-  only), auto-update of linked charts while presenting, the PDF pages' look (the pane has no PDF
-  viewer). Seen while walking through: an instantaneous synthetic orbit drag on a 3D chart spins
-  far (velocity inertia from a single move event — check with a real mouse); the type-in of
-  the Tech talk deletes most of the old code before typing (the edit script replaces the whole
-  function — consider `morph` or smaller diffs per line, 07 §5.2).
-- **SL-37 · Live collaboration — done; schema S-3 not cut** (09 §2.6 "As built (SL-37)"; nothing
-  synced was queued, 02 §14.1). Leftovers in "Collaboration leftovers" below.
-- **SL-38 · Comments on slides and elements — done, feature `comments` on** (09 §3, §3.7 "As
-  built (SL-38)"). Leftovers: headless `comments.*` MCP tools with Slides anchors
-  (`{"slide": 4, "element": …}`, results with `slideNumber`/`elementLabel`/`orphaned`, 09 §8)
-  — SL-40; *Comment on presentation* (`document` anchor, P1) has no UI button in the panel;
-  *Re-anchor to selection* for orphaned threads (P2); the navigator row's semantics label
-  doesn't include the comment count (the badge has its own label); the pins, hover card and
-  docked card were not checked in a browser (no web build in SL-38) — check pointer hover,
-  the composer's IME and the light/dark look with the next release build; the scripted
-  scenario 30 of §6.4 (offline comment on an element another user deletes) needs the
-  multi-client harness (12 §7.3).
-- **SL-39 · Version history, overwritten-text review, activity — done, feature
-  `versionHistory` on** (09 §4.7 "As built (SL-39)", §5, §6.3). Leftovers: *Side by side*
-  (`slides.history.toggleSideBySide`, P1); the read-only master/layout view of a theme change
-  and the faint outlines of inherited changes (09 §4.2 table); text diffs show inline in the
-  change list, not as a hover popover; activity shows "3 slides · 1 slide deleted · theme
-  changed · with Claude", not slide numbers and group names ("slides 3–5 in Intro"); MCP
-  `versions.get(format: "outline" | "diff")` for decks (09 §8 — SL-40's tools; the core
-  `DeckDiff`/`SnapshotSlideEntry` and `slidesVersion.changes` are ready); the server diff cache
-  for decks > 20 MB (`SlidesVersionEndpoint.diff`, P2); files referenced only by retained
-  versions are not protected from Drive's garbage collection yet (09 A-09-6 — a version copy
-  whose image is gone keeps the reference, as deck copies); the overwritten-text review does
-  not track code states; the scripted conflict scenarios of 09 §6.4 still need the multi-client
-  harness (12 §7.3); not checked in a browser (no web build in SL-39) — the history route's
-  layout, thumbnails with uploaded images, PDF download and keyboard (Tab into the navigator,
-  arrows, ⌥⌘↓/↑) with the next release build.
-- **SL-40 · MCP headless tools `slides.*` — done** (11 §2.1/§3/§4 "As built (SL-40)"; 47 tools,
-  resources, prompts, `drive.create_presentation`, `drive.export` pdf/md of decks). Leftovers:
-  P1 tools `slides.update_theme`, `slides.copy_slides_to_deck`, `slides.insert_native_chart`,
-  `slides.set_chart_data`; `slides.code_walkthrough_from_diff` (needs `UnifiedDiff`/
-  `WalkthroughBuilder`, 07 §10.2); `slides.render_slide` and `drive.export png` (answer
-  `unsupported` until the server `SlideRasterRenderer`, see SL-33); headless `comments.*` with Slides
-  anchors (see SL-38) and `versions.get` returning the outline (SL-39); a `slides.check_accessibility`
-  tool (see SL-34); tool/command row-parity tests (11 AC 2); `text_overflow` uses the core's
-  approximate metrics (load a `TtfFaceSet` like the PDF export); `https` image URLs through the
-  image proxy (11 §3.8); `==highlight==` Markdown (P1); (client-side agent flash on touched elements: done, SL-42); the conditional server-side chart auto-update
-  index (08 §5.5).
+| `SlidesFeature` | What | Priority / spec |
+|-----------------|------|-----------------|
+| `remoteAndRehearse` | Phone remote, rehearse timings, same-browser fast path, *Freeze audience* | **On hold** (SL-41, below) |
+| `nativeCharts` | *Insert › Chart › Column / Bar / …* from a small data table, the chart data panel, *Convert to native* (`ChartTable`, `TableChartData.fromTable`, recommender split, "no ranges" `RangeRefSchema` validator) | P1, 08 §11 |
+| `importSlides` | *Import slides…* from another deck | P1, 04 §13.9 |
+| `aiCodeWalkthrough` | *Make a code walkthrough…* (needs `UnifiedDiff` / `WalkthroughBuilder`, 07 §10.2; also MCP `slides.code_walkthrough_from_diff`) | 11 §6.9 |
+| `editorPreferences` | Units, scroll changes slides, smart quotes, autoformat lists (SL-13 leftovers) | 04 §13.16 |
+| `notificationSettings` | Slides notification settings | suite 07 |
+| `markdownExport` | *Download ▸ Outline as Markdown* | P2, 04 §10 |
+| `snapGrid` | Snap to grid | P2, 03 §5.3 |
+
+Not a feature switch but also not offered: canvas motion-path editing (drag the end dot, vertex
+edit mode, *Draw path* — `slides.animate.drawMotionPath` / `editMotionPath` are not registered;
+numeric `moveTo` fields only) and the *Set end state* ghost of `moveTo` (06 §5).
+
+### On hold: SL-41
+
 - **SL-41 · Phone remote, rehearse, same-browser fast path — On hold (user decision
   2026-10-15)** (10 §5.2, §6.4, §10; deps SL-19 ✓, SL-29 ✓). Feature `remoteAndRehearse`
   stays **off** (not in `SlidesFeatures.shipped`; *Rehearse* and *Use phone as remote* are
@@ -580,80 +447,147 @@ not routed while hidden), schema S-1/S-2 with every Slides table.
     drop the two placeholders and update `menu_registry_test` / the hidden-feature tests.
   - **Resume:** re-read 10 §5.2/§6.4/§6.6/§10 and the pairing tests; SL-37 added
     `PresentView.follower` to the present controller/screen (keep edits in separate blocks).
-- **SL-42 · UI bridge `ui.slides.*` — done** (11 §5 "As built (SL-42)"; 17 tools, agent flash
-  incl. headless writes, dialog audit). Leftovers:
-  - flutter_driver + MCP checks of every `ui.slides.*` tool against a running app (11 §11 *UI
-    bridge*; covered by widget tests and the server relay test so far) and a browser look at the
-    agent flash and screenshots in a release build.
-  - `ui.slides.describe_panel` / `set_panel_field` read and set only text inputs, checkboxes,
-    switches and buttons (like Sheets): inspector selects, color buttons, sliders and segmented
-    controls need the `slides.*` commands.
-  - Shell dialogs that are still not MCP-describable (suite, Write/Sheets/Drive alike): the share
-    dialog, the command palette / quick switcher, undo history, *Report a bug*, *What's new*, the
-    session-expired dialog.
-  - The server's agent participant (`DeckAgentPresence`) and the client flash may both outline the
-    same elements after a headless write (like Sheets' item 11); a flash for the user's own
-    assistant runs is SL-43's (the AI preview shows them).
-  - Agent steps through `ui.invoke_command` are labelled "AI: …" on the undo stack (shared
-    dispatcher label for every agent source).
-- **SL-43 · AI in Slides — done, feature `assistant` on** (11 §6.12 "As built (SL-43)").
-  Leftovers:
-  - Assistant: `comments.list/create/reply` and `versions.list` in the tool set (need headless
-    `comments.*` with Slides anchors, SL-38/SL-40 leftover); the `ui.slides.*` window tools
-    (`get_selection`, `select`, `highlight_element`, `screenshot_slide`, built by SL-42);
-    *Show differences* (outlined changed elements) in the AI changes preview; the client-side
-    flash on elements the user's own assistant run touched (SL-42 flashes MCP writes and other
-    users' AI runs).
-  - Generate presentation: the *Wonky Write document* source (Drive picker + `write.get_document`,
-    notes citing sections), the *Theme* choice, Home *New ▸ Generate with AI*, drag-reorder in the
-    outline (up/down buttons now), the overflow split into "(cont.)" slides, *Design ideas*
-    after generation; `bigNumber`/`quote` slides get their title as a text box (those layouts
-    have no title placeholder).
-  - Rewrite: the canvas preview overlay with ghosted original and *Show changes* (word diff)
-    (a dialog now), rewriting a selected range, *Translate ▸* submenu with languages (`translate`
-    mode exists, no menu), word-diff keeping of inline styles (`keepFormatting` keeps the first
-    run's style and paragraph attributes).
-  - Design ideas: content arrangements (cards grid, timeline, image left/right/full-bleed with
-    overlay, quote emphasis) — only theme layouts now; hover = live preview on the canvas;
-    `text_tweaks`; the toolbar *Layout ▾* footer "Design ideas…".
-  - Not built: *Code walkthrough* (11 §6.9, hidden as `aiCodeWalkthrough`; needs `UnifiedDiff` /
-    `WalkthroughBuilder`), *Animate this slide* (11 §6.10), §6.11 (proofread, translate,
-    shorten, summarize presentation), the slide image (P1) for design tasks, the nightly eval
-    suite (rewrite fit rate, generation rubric, animation validity).
-  - **Drive assistant (suite 10 §3.1, P1)** — not built: drive-scoped threads
-    (`AssistantThread.itemId = null`), a `DriveAssistantTarget` with the `drive.*` tool set
-    (trash with confirmation, never delete forever/empty trash/sharing), the ✨ button in the
-    Drive top bar + `Mod+J` + palette, one undo step per run on the shell stack (needs server
-    change records for drive ops), quick prompts, *Ask the assistant about this file*.
-  - Not verified in a browser (no web build in SL-43).
-- (SL-44 · Remaining P1 — spelling, presentation language, special characters, emoji in text,
-  image adjustment preview, connector route handles: done, feature `spelling` on; leftovers in
-  "Spelling, special characters, route handles leftovers (SL-44)" below.)
-- **SL-45 · M11 integration and exit** (all M11) — J-S8…J-S10, the MCP suite, a11y checklist.
-- **Other hidden items without a work package:** *Import slides…* (04 §13.9, P1, feature
-  `importSlides`), snap to grid (03 §5.3, P2, `snapGrid`), Slides notification settings
-  (suite 07, `notificationSettings`), editor preferences that do nothing yet — units, scroll
-  changes slides, smart quotes, autoformat lists (04 §13.16, SL-13 leftovers,
-  `editorPreferences`).
-- **Browser findings of SL-23 to look at:** with Flutter semantics enabled (the
-  `flt-semantics-placeholder` click), double-clicking a text element on the canvas doesn't
-  open the text editor (no IME textarea; works without semantics) — check canvas text editing
-  with a screen reader on (03 §17). (The editor loading comment threads while comments
-  were hidden is moot since SL-38 turned comments on.)
-- **M9 exit items not verified by SL-23** (see the M9 checklist in `specs/14-roadmap.md` §2.1):
-  the automated journeys (`wonky_slides/integration_test/` — no chromedriver), the scripted
-  multi-client scenarios of 09 §6.4 with `serverpod_test` isolates (12 §7.3), the offline merge
-  fuzzer for decks, the perf budgets of 03 §18 on the web, the PDF fidelity corpus with
-  `pdftoppm`, and the browser walkthrough (see SL-23 in the Slides STATUS).
+
+### P1 leftovers (marked P1 in the specs)
+
+- **Motion (06, 10):** interpolate same-type shape adjustments, gradient stops, shadows, corner
+  radius and stroke width in Magic Move (06 §8.4; today stretch or crossfade); kiosk
+  `allowNavigation` and idle restart; the navigator's builds/transition glyphs (04 §5); dragging
+  timing bars, a preview scrubber and presence in the Animate tab header.
+- **Code (07):** source file drop onto the canvas.
+- **Charts (08):** the push stream `slidesCharts.watch(deckUuid)` (08 §5.3); native charts (see
+  hidden features).
+- **Export (10):** *Copy slide as image* (`slides.slide.copyAsImage`).
+- **History (09):** *Side by side* (`slides.history.toggleSideBySide`).
+- **MCP (11):** `slides.update_theme`, `slides.copy_slides_to_deck`,
+  `slides.insert_native_chart`, `slides.set_chart_data`; `==highlight==` in the Markdown codec.
+- **AI (11, suite 10):** the **Drive assistant** (suite 10 §3.1) — drive-scoped threads
+  (`AssistantThread.itemId = null`), a `DriveAssistantTarget` with the `drive.*` tool set (trash
+  with confirmation, never delete forever/empty trash/sharing), the ✨ button in the Drive top
+  bar + `Mod+J` + palette, one undo step per run on the shell stack (needs server change records
+  for drive ops), quick prompts, *Ask the assistant about this file*; the slide image for design
+  tasks.
+- **Import slides** (see hidden features).
+
+### P2 leftovers
+
+The presenter view's notes auto-scroll per step; the code type-in sound (setting hidden);
+*Download ▸ Outline as Markdown*; *Re-anchor to selection* for orphaned comment threads; the
+server diff cache for decks > 20 MB (`SlidesVersionEndpoint.diff`); snap to grid; the `date`
+placeholder (05 §4).
+
+### Other leftovers (no priority in the specs)
+
+- **Motion:** exact glyph boxes through `MagicMoveText.rangeBox`; glyph runs for shapes with
+  text, table cells by row/column and a persistent transform of an outgoing group in Magic Move;
+  the core should carry `dimColor` during the running dim effect and a reduced-motion crossfade
+  for "instant" persistent emphasis; screen-reader announcements of built content and code
+  changes while presenting (06 §17, 10 §16); chart hover tooltips and orbit while presenting
+  (`interactive.hoverTooltips/orbitInPresent` are stored); a telemetry event for
+  `slides.motion.degraded`; a dissolve/mask `FragmentProgram`; GPU 3D transitions on desktop
+  builds. Animate tab: the easing curve editor (*Custom…* Bézier handles and spring sliders),
+  build tile previews inside the tile, F2 rename from the Order list, build order badges for
+  group children, writing `Deck.defaultsJson.build`, the 06 §14 blur-budget warning,
+  `chartHighlight` targets by point; "double-click keeps the animation painter active".
+- **Code UI (07 §2.3 "Status (M10, SL-31)"):** *Pick lines…* canvas mode, the paste chip *Paste
+  as code block* and ```` ``` ```` + Enter in an empty text box, language/palette chips inside
+  the box, dragging and double-click editing of callouts on the canvas, live auto-size re-fit per
+  keystroke, recent languages per user (per session now), wide-grapheme (CJK) centering, code
+  canvas semantics ("Code block, Dart, 24 lines…"), the copy button in the shared viewer and with
+  `copyButton: always`; the Tech talk template's type-in deletes most of the old code before
+  typing (smaller edit scripts per line, 07 §5.2).
+- **Charts:** the link badge on hover, the Linked charts panel's rail count badge, *Request
+  access* / *Open in Drive* actions of 08 §6, dropping overrides that don't apply after relinking
+  to another chart type, a list of camera steps in Inspector › Chart, the Sheets route
+  `?object=<id>` (A-08-7), Sheets' Customize tab on the shared `ChartStyleEditor`; the scorecard
+  count-up of chart builds; token detection misses server writes that bypass the Sheets change
+  log; server-side auto-update (Q28, only if needed); template charts are static snapshots.
+- **PDF / PNG:** the server `SlideRasterRenderer` (10 §13) and `slidesExport` `png`/`pngZip` —
+  MCP `slides.render_slide` and `drive.export png` answer `unsupported` until then; PNG export
+  progress and *Cancel*; running (non-settled) frame states in PDF (blur, wipe/iris clips,
+  dissolves, partial line drawing, code transitions); code callout shadows in PDF; PNGs of decks
+  with images not yet cached offline wait for their downloads.
+- **Outline view, Layers, checker (SL-34):** empty slide groups aren't listed in the outline;
+  no selection across outline lines; ⌘B/⌘I don't format in outline lines; the *Reading order*
+  tab orders top-level elements only; a multi-selection dragged across parents lands under one
+  parent; rotated/flipped groups aren't refitted; the checker doesn't check table cells, code,
+  chart text or text over images; move `AccessibilityChecker` to `wonky_slides_core` for a
+  headless `slides.check_accessibility` tool.
+- **Templates:** decks are built in English only; Portfolio's covers are shapes (images would
+  need bundled uploads and a quota story); the Magic Move pairs repeat their title (checker
+  warning); the gallery card shows the first slide only.
+- **Collaboration (09 §2):** see "Collaboration leftovers (SL-21/SL-37)" in the open items.
+- **Comments (09 §3.7):** headless `comments.*` MCP tools with Slides anchors
+  (`{"slide": 4, "element": …}`, results with `slideNumber`/`elementLabel`/`orphaned`, 09 §8);
+  *Comment on presentation* (`document` anchor) has no button in the panel; the navigator row's
+  semantics label doesn't include the comment count; a pin docks the first of its threads only
+  (switch threads in the panel); scenario 30 of 09 §6.4 needs the multi-client harness.
+- **History (09 §4.7):** the read-only master/layout view of a theme change and the faint
+  outlines of inherited changes; text diffs show inline, not as a hover popover; activity says
+  "3 slides · 1 slide deleted · theme changed · with Claude", not slide numbers and group names;
+  MCP `versions.get(format: "outline" | "diff")` for decks (core `DeckDiff`/`SnapshotSlideEntry`
+  and `slidesVersion.changes` are ready); files referenced only by retained versions are not
+  protected from Drive's garbage collection (A-09-6); the overwritten-text review doesn't track
+  code states.
+- **MCP (11 §2–§4):** tool/command row-parity tests (11 AC 2); `text_overflow` uses the core's
+  approximate metrics (load a `TtfFaceSet` like the PDF export); `https` image URLs through the
+  image proxy (11 §3.8); the conditional server-side chart auto-update index (08 §5.5).
+- **UI bridge (11 §5):** `describe_panel`/`set_panel_field` read and set only text inputs,
+  checkboxes, switches and buttons (selects, colors, sliders and segmented controls need the
+  `slides.*` commands); shell dialogs still not MCP-describable (all apps): share dialog,
+  command palette / quick switcher, undo history, *Report a bug*, *What's new*, session expired;
+  the server's agent participant and the client flash may both outline the same elements after a
+  headless write; agent steps through `ui.invoke_command` are labelled "AI: …" on the undo stack.
+- **AI (11 §6.12):** `comments.list/create/reply`, `versions.list` and the `ui.slides.*` window
+  tools in the assistant's tool set; *Show differences* in the AI changes preview; the client
+  flash for the user's own assistant runs; Generate presentation: the *Wonky Write document*
+  source, the *Theme* choice, Home *New ▸ Generate with AI*, drag-reorder in the outline, the
+  "(cont.)" overflow split, *Design ideas* after generation, title text boxes for
+  `bigNumber`/`quote` slides; Rewrite: the canvas preview overlay with *Show changes*, rewriting a
+  selected range, *Translate ▸* languages, word-diff style keeping; Design ideas: content
+  arrangements (cards grid, timeline, image left/right/full-bleed, quote emphasis), live hover
+  preview, `text_tweaks`, the toolbar *Layout ▾* footer; *Animate this slide* (11 §6.10) and §6.11
+  (proofread, translate, shorten, summarize presentation); the nightly eval suite.
+- **Suite (found in the SL-45 walkthrough):** the emoji picker lists Emoji 15.1 sequences
+  (e.g. *head shaking*) that the web engine's emoji fallback font draws as their components —
+  limit the bundled table (`wonky_write/tool/unicode/gen_emoji.py`) to what the fallback font
+  covers; a context menu that is open while a menubar menu opens stays open until the next
+  click on the canvas (shad's shared context-menu tap group).
+
+### Not verified / test infrastructure
+
+- `integration_test` journeys J-S1…J-S10 and journey 15 on the web (no chromedriver on the
+  development machine; runner steps in specs/15 §9).
+- The scripted multi-client harness with `serverpod_test` isolates (12 §7.3) for the 09 §6.4
+  scenarios (today: replica-level sync tests and the collab widget tests), and the offline merge
+  fuzzer for decks.
+- Perf budgets of 03 §18 on the web and 60 fps transitions/type-in with recorded frame timings
+  (`wonky_slides/benchmark/motion_bench.dart` runs by hand; make it a `-t slow` test with
+  `FrameTiming` p95 assertions and a web variant in the E2E job).
+- The PDF raster corpus with `pdftoppm` (needs poppler in CI); pixel goldens of edit-mode parity
+  for code (CI golden container).
+- flutter_driver + MCP checks of every `ui.slides.*` tool against a running app (11 §11).
+- Browser items not walked through in SL-45 (see the M11 checklist): the AI flows with a real
+  provider (none is configured on the development server), clipboard paste in the browser (the
+  agent's pane can't grant clipboard read), keyboard shortcuts (the pane's synthetic Cmd keys),
+  connector route-handle drags and the image adjustment preview with a real mouse, reduced
+  motion, laser/pen/kiosk, PNG/PDF downloads, @mention notifications and comment deep links,
+  the `ui.slides.*` tools through an MCP client, a screen-reader pass.
+- One crash of the Slides wasm build in the agent's Browser pane (`RuntimeError: memory access
+  out of bounds`, the page stopped responding) after many viewport-emulation changes and two
+  rebuilds of the same output folder; not reproduced afterwards — watch for it (a skwasm/engine
+  issue or a renderer leak).
 
 ## Wonky Slides — open items
 
 Status per work package: [specs/wonky_slides/STATUS.md](specs/wonky_slides/STATUS.md).
 
 - **Spelling, special characters, route handles leftovers (SL-44, Slides 03 §14.1):**
-  - Not checked in a browser (no web build in SL-44): squiggles on the canvas, in the text
-    overlay, notes and outline lines; right-click menus with the browser's context menu
-    disabled; squiggles while an IME composes (the outline hides them while composing).
+  - Checked in the SL-45 release build: squiggles on the canvas and in the text overlay, the
+    right-click suggestions on the canvas, the Check spelling dialog (Change, Ignore all, slide
+    navigation), Special characters and Emoji typing into canvas text. Not checked in a browser:
+    squiggles in notes and outline lines, squiggles while an IME composes (the outline hides
+    them while composing).
   - The Check spelling dialog selects the word's object (or opens the notes) instead of
     selecting the word in the text editor (it would take the keyboard from the modal dialog);
     there is no *Next error* shortcut (Write's ⌘') and no *Ignore UPPERCASE* switch (ALL-CAPS
@@ -687,9 +621,12 @@ Status per work package: [specs/wonky_slides/STATUS.md](specs/wonky_slides/STATU
   presence cursor throttle (10/s instead of 20/s) and have no a11y setting of their own ("Reduce
   collaborator cursors" — the View toggle is the switch); the presenter view doesn't count
   followers (the server's roster has them; the device list filters them out); outline claims are
-  always forced (no soft-lock question or race prompt in the outline); not checked in a browser
-  (no web build in SL-37): pointer smoothness with real mouse input, the follower view full
-  screen, the shimmer and the live dot in light/dark.
+  always forced (no soft-lock question or race prompt in the outline); checked in the SL-45
+  release build with two tabs of one user: live pointer with name tag, presence avatar and
+  selection outline, soft-lock banner and *Edit anyway* popover, live text hint, *… is presenting
+  · Follow*, the follower view following the presenter and *Stop following*, the Present live
+  dot (dark, desktop); not checked: pointer smoothness with a real mouse, the follower view full
+  screen, the structure shimmer.
 - **Date placeholder (P2, 05 §4):** the built-in masters have no `date` placeholder yet.
 - **Built-in prompts are English** (`Click to add title`, …) and stored in the copied layout
   rows; localize them when a built-in is copied into a deck (planner `ThemeCopy`), or render prompts of built-in
@@ -701,7 +638,7 @@ Status per work package: [specs/wonky_slides/STATUS.md](specs/wonky_slides/STATU
     SL-34's `OutlineView`); delete `SlidePreview` once nothing uses it. (Navigator, notes and grid: done, SL-16.)
   - (Placeholders: since SL-23 the remaining placeholder commands
     (`commands/placeholder_commands.dart`, each names its WP) and the inspector sections without
-    a `builder` are hidden, not shown disabled — "Wonky Slides — later (M10/M11)" above.)
+    a `builder` are hidden, not shown disabled — "Wonky Slides — later" above.)
   - Home thumbnails (04 §15: first non-skipped slide rendered after an editing session,
     `drive.setThumbnail`) need SL-10's renderer and the files upload — not built.
   - 04 §16 at 1,200–1,440 px: collapsing the docked inspector to a 44 px tab strip while a side

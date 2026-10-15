@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:flutter/widgets.dart';
 import 'package:shad/shad.dart';
 
@@ -25,6 +27,12 @@ class WonkyPopupMenuHostState extends State<WonkyPopupMenuHost> {
   /// Where the user asked for the menu; [_at] is the anchor handed to shad.
   Offset? _requested;
   List<WonkyMenuEntry> Function()? _entries;
+
+  /// The entries of the open menu, built once when it opens: the menu takes
+  /// the keyboard focus, and entries built again after that (the placement
+  /// rebuild) lost state of the focused widget — a text editor clears its
+  /// selection on blur, so Slides' spelling suggestions vanished.
+  List<WonkyMenuEntry>? _built;
   VoidCallback? _onClosed;
   bool _wasOpen = false;
 
@@ -33,6 +41,24 @@ class WonkyPopupMenuHostState extends State<WonkyPopupMenuHost> {
   /// with its top-left corner at the pointer, 03 §10).
   bool _placed = false;
   final _probe = GlobalKey(debugLabel: 'WonkyPopupMenuHost.probe');
+  final _items = GlobalKey(debugLabel: 'WonkyPopupMenuHost.items');
+
+  /// Space kept between the menu and the screen edges.
+  static const _margin = 8.0;
+
+  /// shad's vertical menu padding (4 px top and bottom) plus its 1 px border.
+  static const _chrome = 10.0;
+
+  /// The top of a menu of height [height] asked for at [pointerY] on a screen
+  /// of height [screen] (03 §10): below the pointer when it fits, else ending
+  /// at the pointer, else shifted up just enough to stay on screen (menus
+  /// taller than the screen scroll).
+  @visibleForTesting
+  static double topFor(double pointerY, double height, double screen) {
+    if (pointerY + height <= screen - _margin) return pointerY;
+    if (pointerY - height >= _margin) return pointerY - height;
+    return math.max(_margin, screen - _margin - height);
+  }
 
   @override
   void initState() {
@@ -42,6 +68,7 @@ class WonkyPopupMenuHostState extends State<WonkyPopupMenuHost> {
 
   void _changed() {
     if (_wasOpen && !_controller.isOpen) {
+      _built = null;
       final cb = _onClosed;
       _onClosed = null;
       cb?.call();
@@ -61,6 +88,7 @@ class WonkyPopupMenuHostState extends State<WonkyPopupMenuHost> {
       _requested = position;
       _placed = false;
       _entries = entries;
+      _built = null;
       _onClosed = onClosed;
     });
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -70,7 +98,7 @@ class WonkyPopupMenuHostState extends State<WonkyPopupMenuHost> {
 
   /// After the first layout of the menu: shifts the anchor so that the menu
   /// starts at the pointer (or ends there when there is no room on the
-  /// right), then reveals it.
+  /// right or below), then reveals it.
   void _place() {
     if (!mounted || _placed) return;
     final box = _probe.currentContext?.findRenderObject() as RenderBox?;
@@ -87,13 +115,26 @@ class WonkyPopupMenuHostState extends State<WonkyPopupMenuHost> {
     // half a menu width right of the wanted left edge.
     const border = 1.0;
     final width = box.size.width + 2 * border;
-    final screen = MediaQuery.sizeOf(context).width;
-    final left = want.dx + width + 8 <= screen ? want.dx : want.dx - width;
+    final screen = MediaQuery.sizeOf(context);
+    final left = want.dx + width + _margin <= screen.width
+        ? want.dx
+        : want.dx - width;
+    // shad keeps a menu below its anchor when it fits there and flips it
+    // above otherwise, but never moves it back onto the screen: a long
+    // context menu opened low on the screen ran off the bottom edge.
+    final items = _items.currentContext?.findRenderObject() as RenderBox?;
+    final height = items != null && items.hasSize
+        ? math.min(items.size.height, _maxItemsHeight(screen.height)) + _chrome
+        : 0.0;
+    final top = topFor(want.dy, height, screen.height);
     setState(() {
-      _at = Offset(left + width / 2, at.dy);
+      _at = Offset(left + width / 2, top);
       _placed = true;
     });
   }
+
+  double _maxItemsHeight(double screen) =>
+      math.max(120, screen - 2 * _margin - _chrome);
 
   void hide() => _controller.hide();
 
@@ -131,14 +172,24 @@ class WonkyPopupMenuHostState extends State<WonkyPopupMenuHost> {
                     _PlacementProbe(key: _probe, onLaidOut: _place),
                     Opacity(
                       opacity: _placed ? 1 : 0,
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        mainAxisSize: MainAxisSize.min,
-                        children: buildWonkyMenuItems(
-                          context,
-                          entries(),
-                          onClose: _controller.hide,
-                          requestFocus: true,
+                      child: ConstrainedBox(
+                        constraints: BoxConstraints(
+                          maxHeight: _maxItemsHeight(
+                            MediaQuery.sizeOf(context).height,
+                          ),
+                        ),
+                        child: SingleChildScrollView(
+                          child: Column(
+                            key: _items,
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            mainAxisSize: MainAxisSize.min,
+                            children: buildWonkyMenuItems(
+                              context,
+                              _built ??= entries(),
+                              onClose: _controller.hide,
+                              requestFocus: true,
+                            ),
+                          ),
                         ),
                       ),
                     ),

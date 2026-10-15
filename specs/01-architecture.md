@@ -411,8 +411,8 @@ development) from one origin; there is no separate host app.
   flutter_build`, also run by the Serverpod Cloud pre-deploy hook) builds every app into
   `wonky_server/web/<app>` (`drive`, `write`, `sheets`, `slides`; posix: `flutter build web
   --wasm --base-href /write/ --output ../wonky_server/web/write`; Windows: build + `xcopy`, as the
-  template does). (v2) With four apps the posix script builds them in parallel (background jobs
-  + `wait`, failing if any fails) to keep the pre-deploy hook short. Build folders are
+  template does). (v2) The posix script builds the four apps one after another (four parallel `--wasm`
+  builds swap on a 16 GB machine) and fails if any build fails. Build folders are
   git-ignored. WASM and cross-origin-isolation headers: see
   [13 §3](13-security-and-operations.md).
 - **Development**: the apps are declared in `serverpod: flutter_apps:` in the server pubspec

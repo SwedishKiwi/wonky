@@ -49,6 +49,16 @@ abstract class CommentAnchorProvider {
   String? get activeThreadUuid => null;
 }
 
+/// Optional anchor scopes of a [CommentAnchorProvider] (checked with `is`):
+/// `shell.comments.create` with `anchor: <scope>` asks for the anchor of
+/// that scope instead of the selection's (Slides: *Comment on slide* from
+/// a slide's context menu while an object is selected → `slide`).
+abstract class CommentAnchorScopes {
+  /// The anchor of [scope] (app-specific), or null when there is none;
+  /// unknown scopes fall back to the selection.
+  NewCommentAnchor? anchorForScope(String scope);
+}
+
 /// Optional extras of a [CommentAnchorProvider] (checked with `is`, so
 /// existing providers stay valid): inline composing, a panel scope filter
 /// and group headers (Sheets 10 §3.4–3.5).

@@ -291,10 +291,25 @@ class MentionFieldState extends State<MentionField> {
   int _active = 0;
   Timer? _debounce;
   String? _query;
+  final _focus = FocusNode(debugLabel: 'MentionField');
+
+  @override
+  void initState() {
+    super.initState();
+    // `autofocus` only focuses when nothing in the focus scope is focused;
+    // a reply box opened inside a focused card (Slides' docked comment
+    // card) stayed unfocused and the first keystrokes went nowhere.
+    if (widget.autofocus) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted && !_focus.hasFocus) _focus.requestFocus();
+      });
+    }
+  }
 
   @override
   void dispose() {
     _debounce?.cancel();
+    _focus.dispose();
     super.dispose();
   }
 
@@ -385,6 +400,7 @@ class MentionFieldState extends State<MentionField> {
                 ? null
                 : ValueKey<String>(widget.fieldKey!),
             controller: widget.controller,
+            focusNode: _focus,
             autofocus: widget.autofocus,
             minHeight: 56,
             maxHeight: 200,
@@ -894,14 +910,29 @@ class _CommentThreadBodyState extends State<CommentThreadBody> {
     final theme = ShadTheme.of(context);
     final mine = cm.author?.id == s.me?.id;
     final resolved = t.status == CommentStatus.resolved;
-    if (cm.systemEvent != null) {
+    final event = cm.systemEvent;
+    if (event != null) {
+      final who = cm.author?.displayName;
       return Text(
-        '${cm.author?.displayName ?? l.someone} · ${switch (cm.systemEvent!) {
-          CommentSystemEvent.resolved => l.commentEventResolved,
-          CommentSystemEvent.reopened => l.commentEventReopened,
-          CommentSystemEvent.assigned => l.commentEventAssigned,
-          _ => cm.systemEvent!.name,
-        }}',
+        // Orphaning and reviving are the server's doing (the anchored
+        // content was deleted or came back): no "Someone ·" and no raw
+        // enum name.
+        who == null && event == CommentSystemEvent.orphaned
+            ? l.commentEventOrphanedBySystem
+            : who == null && event == CommentSystemEvent.reopened
+            ? l.commentEventRestoredBySystem
+            : '${who ?? l.someone} · ${switch (event) {
+                CommentSystemEvent.resolved => l.commentEventResolved,
+                CommentSystemEvent.reopened => l.commentEventReopened,
+                CommentSystemEvent.assigned => l.commentEventAssigned,
+                CommentSystemEvent.orphaned => l.commentEventOrphaned,
+                CommentSystemEvent.suggestionAccepted => l.commentEventSuggestionAccepted,
+                CommentSystemEvent.suggestionRejected => l.commentEventSuggestionRejected,
+                CommentSystemEvent.suggestionWithdrawn => l.commentEventSuggestionWithdrawn,
+                CommentSystemEvent.suggestionSuperseded => l.commentEventSuggestionSuperseded,
+                CommentSystemEvent.suggestionReopened => l.commentEventSuggestionReopened,
+              }}',
+        key: ValueKey<String>('comments.event.${cm.id}'),
         style: theme.textTheme.muted.copyWith(fontSize: 12),
       );
     }

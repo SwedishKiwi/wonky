@@ -678,10 +678,36 @@ class WonkyAppLocalizationsEn extends WonkyAppLocalizations {
   String get commentEventAssigned => 'assigned the comment';
 
   @override
+  String get commentEventOrphaned => 'deleted the commented content';
+
+  @override
+  String get commentEventOrphanedBySystem =>
+      'The commented content was deleted';
+
+  @override
+  String get commentEventRestoredBySystem =>
+      'The commented content was restored';
+
+  @override
   String get commentEventReopened => 'reopened';
 
   @override
   String get commentEventResolved => 'marked as resolved';
+
+  @override
+  String get commentEventSuggestionAccepted => 'accepted the suggestion';
+
+  @override
+  String get commentEventSuggestionRejected => 'rejected the suggestion';
+
+  @override
+  String get commentEventSuggestionReopened => 'reopened the suggestion';
+
+  @override
+  String get commentEventSuggestionSuperseded => 'replaced the suggestion';
+
+  @override
+  String get commentEventSuggestionWithdrawn => 'withdrew the suggestion';
 
   @override
   String get commentFailed => 'The comment could not be saved';
@@ -3635,10 +3661,42 @@ class WonkyAppLocalizationsEnXa extends WonkyAppLocalizationsEn {
   String get commentEventAssigned => '[åššîĝñéð ţĥé çöɱɱéñţ one two]';
 
   @override
+  String get commentEventOrphaned =>
+      '[ðéļéţéð ţĥé çöɱɱéñţéð çöñţéñţ one two th]';
+
+  @override
+  String get commentEventOrphanedBySystem =>
+      '[Ţĥé çöɱɱéñţéð çöñţéñţ ŵåš ðéļéţéð one two thr]';
+
+  @override
+  String get commentEventRestoredBySystem =>
+      '[Ţĥé çöɱɱéñţéð çöñţéñţ ŵåš ŕéšţöŕéð one two thr]';
+
+  @override
   String get commentEventReopened => '[ŕéöþéñéð one]';
 
   @override
   String get commentEventResolved => '[ɱåŕķéð åš ŕéšöļṽéð one tw]';
+
+  @override
+  String get commentEventSuggestionAccepted =>
+      '[åççéþţéð ţĥé šûĝĝéšţîöñ one two]';
+
+  @override
+  String get commentEventSuggestionRejected =>
+      '[ŕéĵéçţéð ţĥé šûĝĝéšţîöñ one two]';
+
+  @override
+  String get commentEventSuggestionReopened =>
+      '[ŕéöþéñéð ţĥé šûĝĝéšţîöñ one two]';
+
+  @override
+  String get commentEventSuggestionSuperseded =>
+      '[ŕéþļåçéð ţĥé šûĝĝéšţîöñ one two]';
+
+  @override
+  String get commentEventSuggestionWithdrawn =>
+      '[ŵîţĥðŕéŵ ţĥé šûĝĝéšţîöñ one two]';
 
   @override
   String get commentFailed => '[Ţĥé çöɱɱéñţ çöûļð ñöţ ƀé šåṽéð one two t]';

@@ -28,6 +28,9 @@ class VersionHistoryScreen extends StatefulWidget {
   /// The version selected first (`?version=<id>`; default: the newest).
   final int? initialVersionId;
 
+  /// Below this width the versions list sits under the preview.
+  static const narrowWidth = 640.0;
+
   /// *Show changes* of the history route (on by default); apps' commands
   /// toggle it (Sheets: `sheets.history.toggleShowChanges`).
   static final ValueNotifier<bool> showChanges = ValueNotifier(true);
@@ -104,15 +107,36 @@ class _VersionHistoryScreenState extends State<VersionHistoryScreen> {
                 ]),
                 builder: (context, _) {
                   final v = c.selected;
+                  // Narrow windows: an icon-only Back and an unlabeled
+                  // switch (the row overflowed by 448 px at 360 px).
+                  final narrow =
+                      MediaQuery.sizeOf(context).width <
+                      VersionHistoryScreen.narrowWidth;
                   return Row(
                     children: [
-                      ShadButton.ghost(
-                        key: const ValueKey<String>('history.back'),
-                        leading: const Icon(LucideIcons.arrowLeft, size: 16),
-                        onPressed: _back,
-                        child: Text(l.historyBack),
-                      ),
-                      const SizedBox(width: 12),
+                      if (narrow)
+                        ShadTooltip(
+                          builder: (_) => Text(l.historyBack),
+                          child: ShadIconButton.ghost(
+                            key: const ValueKey<String>('history.back'),
+                            icon: Semantics(
+                              label: l.historyBack,
+                              child: const Icon(
+                                LucideIcons.arrowLeft,
+                                size: 16,
+                              ),
+                            ),
+                            onPressed: _back,
+                          ),
+                        )
+                      else
+                        ShadButton.ghost(
+                          key: const ValueKey<String>('history.back'),
+                          leading: const Icon(LucideIcons.arrowLeft, size: 16),
+                          onPressed: _back,
+                          child: Text(l.historyBack),
+                        ),
+                      SizedBox(width: narrow ? 4 : 12),
                       Expanded(
                         child: Text(
                           v == null
@@ -125,13 +149,16 @@ class _VersionHistoryScreenState extends State<VersionHistoryScreen> {
                           overflow: TextOverflow.ellipsis,
                         ),
                       ),
-                      ShadSwitch(
-                        value: _showChanges,
-                        onChanged: (x) =>
-                            VersionHistoryScreen.showChanges.value = x,
-                        label: Text(l.historyShowChanges),
+                      Semantics(
+                        label: narrow ? l.historyShowChanges : null,
+                        child: ShadSwitch(
+                          value: _showChanges,
+                          onChanged: (x) =>
+                              VersionHistoryScreen.showChanges.value = x,
+                          label: narrow ? null : Text(l.historyShowChanges),
+                        ),
                       ),
-                      const SizedBox(width: 12),
+                      SizedBox(width: narrow ? 8 : 12),
                       ShadButton(
                         key: const ValueKey<String>('history.restore'),
                         enabled:
@@ -147,7 +174,9 @@ class _VersionHistoryScreenState extends State<VersionHistoryScreen> {
                           );
                           await c.load();
                         },
-                        child: Text(l.historyRestoreThis),
+                        child: Text(
+                          narrow ? l.cmdRestore : l.historyRestoreThis,
+                        ),
                       ),
                     ],
                   );
@@ -155,58 +184,79 @@ class _VersionHistoryScreenState extends State<VersionHistoryScreen> {
               ),
             ),
             Expanded(
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  Expanded(
-                    child: ColoredBox(
-                      color: theme.colorScheme.canvas,
-                      child: ListenableBuilder(
-                        listenable: Listenable.merge([
-                          c,
-                          VersionHistoryScreen.showChanges,
-                        ]),
-                        builder: (context, _) {
-                          final v = c.selected;
-                          if (v == null) {
-                            return c.loading
-                                ? const Center(child: ShadSpinner())
-                                : Center(
-                                    child: Text(
-                                      l.versionsEmpty,
-                                      style: theme.textTheme.muted,
-                                    ),
-                                  );
-                          }
-                          if (renderer == null) {
-                            return Center(
-                              child: Text(
-                                l.historyNoRenderer,
-                                style: theme.textTheme.muted,
-                              ),
-                            );
-                          }
-                          return renderer.build(
-                            context,
-                            itemUuid: c.itemUuid,
-                            version: v,
-                            previous: c.previousOf(v),
-                            showChanges: _showChanges,
+              // Narrow windows (< 640 px, 360 px phones) stack the versions
+              // list under the preview: a fixed 320 px column left the
+              // preview 40 px wide at 360 px.
+              child: LayoutBuilder(
+                builder: (context, box) {
+                  final preview = ColoredBox(
+                    color: theme.colorScheme.canvas,
+                    child: ListenableBuilder(
+                      listenable: Listenable.merge([
+                        c,
+                        VersionHistoryScreen.showChanges,
+                      ]),
+                      builder: (context, _) {
+                        final v = c.selected;
+                        if (v == null) {
+                          return c.loading
+                              ? const Center(child: ShadSpinner())
+                              : Center(
+                                  child: Text(
+                                    l.versionsEmpty,
+                                    style: theme.textTheme.muted,
+                                  ),
+                                );
+                        }
+                        if (renderer == null) {
+                          return Center(
+                            child: Text(
+                              l.historyNoRenderer,
+                              style: theme.textTheme.muted,
+                            ),
                           );
-                        },
-                      ),
+                        }
+                        return renderer.build(
+                          context,
+                          itemUuid: c.itemUuid,
+                          version: v,
+                          previous: c.previousOf(v),
+                          showChanges: _showChanges,
+                        );
+                      },
                     ),
-                  ),
-                  Container(
-                    width: 320,
-                    decoration: BoxDecoration(
-                      border: Border(
-                        left: BorderSide(color: theme.colorScheme.border),
+                  );
+                  final border = BorderSide(color: theme.colorScheme.border);
+                  final list = VersionsList(controller: c, selectable: true);
+                  if (box.maxWidth < VersionHistoryScreen.narrowWidth) {
+                    return Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        Expanded(child: preview),
+                        Container(
+                          key: const ValueKey<String>('shell.history.list'),
+                          height: (box.maxHeight * 0.4).clamp(160.0, 320.0),
+                          decoration: BoxDecoration(
+                            border: Border(top: border),
+                          ),
+                          child: list,
+                        ),
+                      ],
+                    );
+                  }
+                  return Row(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      Expanded(child: preview),
+                      Container(
+                        key: const ValueKey<String>('shell.history.list'),
+                        width: 320,
+                        decoration: BoxDecoration(border: Border(left: border)),
+                        child: list,
                       ),
-                    ),
-                    child: VersionsList(controller: c, selectable: true),
-                  ),
-                ],
+                    ],
+                  );
+                },
               ),
             ),
           ],

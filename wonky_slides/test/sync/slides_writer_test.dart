@@ -168,6 +168,36 @@ void main() {
       expect(summary['slides'], contains(slide.rowId));
     });
 
+    test('when an undo re-inserts a deleted slide then the summary lists it '
+        'as revived (the server revives its orphaned comments)', () async {
+      final plan = await createDeck(replica, space);
+      final slide = plan.changes.firstWhere(
+        (c) => c.table == SlidesTables.slide,
+      );
+      final writer = SlidesWriter(replica);
+      final delete = slide.inverse();
+      await writer.write(
+        spaceId: space,
+        changes: [delete],
+        label: 'Delete slide',
+        actorKind: 'user',
+        sessionId: 's',
+      );
+      await writer.write(
+        spaceId: space,
+        changes: [delete.inverse()],
+        label: 'Undo delete',
+        actorKind: 'user',
+        sessionId: 's',
+      );
+
+      final log = (await DeckChangeLog.db.find(
+        replica.session,
+      )).firstWhere((l) => l.label == 'Undo delete');
+      final summary = jsonDecode(log.summaryJson) as Map<String, Object?>;
+      expect((summary['revived'] as Map)['slides'], [slide.rowId]);
+    });
+
     test('when the actor kind is unknown then the log says user', () {
       expect(SlidesWriter.actorKindOf('mcp'), ActorKind.mcp);
       expect(SlidesWriter.actorKindOf('nope'), ActorKind.user);

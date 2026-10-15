@@ -75,7 +75,20 @@ class CanvasOverlayPainter extends CustomPainter {
         : const <String, ElementFrame>{};
     // Text editing: a thin dashed box (03 §3.1).
     final editing = c.editor.textEditing;
-    for (final f in frames.values) {
+    for (final MapEntry(key: id, value: f) in frames.entries) {
+      // Lines and connectors: the outline follows the route (a box around
+      // an elbow connector looked like a second, closed route).
+      final route = c.selectedLineRoute(id);
+      if (route != null) {
+        canvas.drawPath(
+          Path()..addPolygon([for (final p in route) v.toViewport(p)], false),
+          Paint()
+            ..style = PaintingStyle.stroke
+            ..strokeWidth = 1.5
+            ..color = tokens.selection,
+        );
+        continue;
+      }
       _frameOutline(
         canvas,
         f,

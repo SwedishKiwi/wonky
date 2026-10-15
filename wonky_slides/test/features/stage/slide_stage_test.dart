@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:wonky_slides/features/stage/scene_painter.dart';
 import 'package:wonky_slides/features/stage/slide_renderer.dart';
@@ -305,5 +306,29 @@ void main() {
         isTrue,
       );
     });
+  });
+
+  testWidgets('Given a rendered slide when the engine\'s fonts change (a '
+      'fallback font for emoji or arrows arrived) then its scene is rebuilt '
+      'and listeners repaint (the text stayed boxes)', (tester) async {
+    final f = StageFixture();
+    final r = f.renderer();
+    addTearDown(r.dispose);
+    final before = r.revision(f.slideId);
+    final scene = r.scene(f.slideId);
+    var notified = 0;
+    r.addListener(() => notified++);
+
+    await tester.binding.defaultBinaryMessenger.handlePlatformMessage(
+      SystemChannels.system.name,
+      SystemChannels.system.codec.encodeMessage(<String, Object?>{
+        'type': 'fontsChange',
+      }),
+      (_) {},
+    );
+
+    expect(notified, greaterThan(0));
+    expect(r.revision(f.slideId), isNot(before));
+    expect(identical(r.scene(f.slideId), scene), isFalse);
   });
 }

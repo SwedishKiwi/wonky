@@ -1,8 +1,9 @@
 import 'package:flutter/foundation.dart';
 import 'package:wonky_core/wonky_core.dart';
 
-/// A planned Slides feature that is not built for M9 (Slides 12 §4; the
-/// remaining work is in `TODO.md`, "Wonky Slides — later (M10/M11)").
+/// A planned Slides feature, hidden until it is built (Slides 12 §4; what
+/// is still off after the first iteration is in `TODO.md`, "Wonky Slides —
+/// later").
 ///
 /// Slides only shows what works (SL-23): while a feature is off, its
 /// commands are not registered (so no menu, toolbar, context menu, palette

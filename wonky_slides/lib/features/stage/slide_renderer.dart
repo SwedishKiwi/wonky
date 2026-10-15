@@ -22,8 +22,9 @@ import 'slide_image_cache.dart';
 /// share it.
 ///
 /// Listeners are notified when the deck changes and when bundled fonts
-/// finish loading (scenes laid out with fallback metrics are rebuilt, 05
-/// §3.3). Image loads notify [images] instead.
+/// finish loading or the engine's fonts change (scenes laid out with
+/// fallback metrics, or before an emoji/symbol fallback font arrived, are
+/// rebuilt, 05 §3.3). Image loads notify [images] instead.
 class SlideRenderer extends ChangeNotifier {
   SlideRenderer({
     required this.model,
@@ -44,7 +45,9 @@ class SlideRenderer extends ChangeNotifier {
         FlutterTextLayoutEngine(fontGeneration: this.fonts.generation);
     resolver = SlideResolver(model);
     model.addListener(_onBatch);
-    this.fonts.generation.addListener(_onFonts);
+    this.fonts
+      ..watchEngineFonts()
+      ..generation.addListener(_onFonts);
   }
 
   /// The deck.

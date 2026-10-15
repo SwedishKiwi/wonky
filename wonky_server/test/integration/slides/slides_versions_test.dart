@@ -226,6 +226,49 @@ void main() {
       },
     );
 
+    test(
+      'when a version from before an element was deleted is restored '
+      'then the comment thread orphaned by the deletion is open again',
+      () async {
+        final v0 = await endpoints.version.nameCurrent(
+          anna.endpointSession,
+          item.uuid,
+          'Start',
+        );
+        final deck = await open(anna);
+        final thread = await endpoints.comment.createThread(
+          bo.endpointSession,
+          const Uuid().v7obj(),
+          item.uuid,
+          CommentAnchorKind.element,
+          jsonEncode({
+            'v': 1,
+            'slideId': deck.model.slides.single.id,
+            'elementId': box,
+          }),
+          'Hello',
+          'Check this',
+          const [],
+          null,
+        );
+        await deck.write(DeleteElements([box]));
+        final orphaned = await endpoints.comment.getThread(
+          anna.endpointSession,
+          thread.uuid,
+        );
+
+        await endpoints.version.restore(anna.endpointSession, item.uuid, v0.id);
+        final revived = await endpoints.comment.getThread(
+          anna.endpointSession,
+          thread.uuid,
+        );
+
+        expect(orphaned.status, CommentStatus.orphaned);
+        expect(await boxText(), 'Hello');
+        expect(revived.status, CommentStatus.open);
+      },
+    );
+
     test('when Bo edits after Anna restored then undoing the restore keeps '
         "Bo's text", () async {
       final v0 = await endpoints.version.nameCurrent(

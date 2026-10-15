@@ -624,6 +624,13 @@ void _announceUndo(ShellServices s, UndoOutcome? outcome) {
   }
 }
 
+/// The anchor of a new comment: [scope]'s when [anchors] knows scopes
+/// ([CommentAnchorScopes]), else the selection's.
+NewCommentAnchor? _anchorOf(CommentAnchorProvider? anchors, String? scope) =>
+    scope != null && anchors is CommentAnchorScopes
+    ? (anchors as CommentAnchorScopes).anchorForScope(scope)
+    : anchors?.anchorForSelection();
+
 List<Command<CommandArgs>> commentCommands(ShellServices s) {
   final comments = s.comments;
   return [
@@ -655,12 +662,18 @@ List<Command<CommandArgs>> commentCommands(ShellServices s) {
           ),
           'anchorJson': JsonSchema.string(),
           'quotedText': JsonSchema.string(),
+          'anchor': JsonSchema.string(
+            description:
+                'An app-specific anchor scope instead of the selection '
+                '(Slides: slide, element).',
+          ),
         },
       ),
       enabled: (ctx, a) =>
           comments.value != null &&
           (a.string('anchorJson') != null ||
-              ctx.document?.commentAnchors?.anchorForSelection() != null),
+              _anchorOf(ctx.document?.commentAnchors, a.string('anchor')) !=
+                  null),
       run: (ctx, a) async {
         final c = comments.value!;
         final anchor = a.string('anchorJson') != null
@@ -671,7 +684,7 @@ List<Command<CommandArgs>> commentCommands(ShellServices s) {
                 anchorJson: a.string('anchorJson')!,
                 quotedText: a.string('quotedText'),
               )
-            : ctx.document!.commentAnchors!.anchorForSelection()!;
+            : _anchorOf(ctx.document?.commentAnchors, a.string('anchor'))!;
         final body = a.string('body');
         if (body == null) {
           // Sheets composes next to the cell unless the panel is open.
