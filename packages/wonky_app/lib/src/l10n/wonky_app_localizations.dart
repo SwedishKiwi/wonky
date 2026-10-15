@@ -5266,29 +5266,59 @@ abstract class WonkyAppLocalizations {
   /// **'Bulleted list'**
   String get markdownBulletedList;
 
-  /// The tab of the Markdown composer that shows the text field (Write | Preview).
+  /// No description provided for @markdownStrikethrough.
   ///
   /// In en, this message translates to:
-  /// **'Write'**
-  String get markdownWrite;
+  /// **'Strikethrough'**
+  String get markdownStrikethrough;
 
-  /// The tab of the Markdown composer that shows the rendered Markdown (Write | Preview).
+  /// No description provided for @markdownNumberedList.
   ///
   /// In en, this message translates to:
-  /// **'Preview'**
-  String get markdownPreview;
+  /// **'Numbered list'**
+  String get markdownNumberedList;
 
-  /// No description provided for @markdownPreviewEmpty.
+  /// No description provided for @markdownTaskList.
   ///
   /// In en, this message translates to:
-  /// **'Nothing to preview'**
-  String get markdownPreviewEmpty;
+  /// **'Checklist'**
+  String get markdownTaskList;
+
+  /// No description provided for @markdownQuote.
+  ///
+  /// In en, this message translates to:
+  /// **'Quote'**
+  String get markdownQuote;
+
+  /// No description provided for @markdownCodeBlock.
+  ///
+  /// In en, this message translates to:
+  /// **'Code block'**
+  String get markdownCodeBlock;
+
+  /// Screen reader label of the Markdown composer's formatting toolbar.
+  ///
+  /// In en, this message translates to:
+  /// **'Formatting'**
+  String get markdownToolbar;
 
   /// No description provided for @markdownLinkTitle.
   ///
   /// In en, this message translates to:
   /// **'Insert link'**
   String get markdownLinkTitle;
+
+  /// No description provided for @markdownLinkEditTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit link'**
+  String get markdownLinkEditTitle;
+
+  /// No description provided for @markdownLinkRemove.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove link'**
+  String get markdownLinkRemove;
 
   /// No description provided for @markdownLinkUrl.
   ///

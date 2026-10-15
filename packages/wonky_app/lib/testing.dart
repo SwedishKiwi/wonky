@@ -3,6 +3,10 @@
 /// real dispatcher and undo service. Never import from `lib/` code.
 library;
 
+// Typing into Markdown composers (`MarkdownComposer`, specs/16 §7.3).
+export 'package:wonky_rich_editor/testing.dart'
+    show enterMarkdown, richEditorStateOf, selectRichText, typeMarkdown;
+
 export 'src/assistant/fake_assistant_api.dart';
 export 'src/testing/command_test_harness.dart';
 export 'src/testing/fake_board_repository.dart';

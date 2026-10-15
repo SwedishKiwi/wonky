@@ -147,7 +147,8 @@ void main() {
       find.byKey(const ValueKey<String>('board.comments.reply.post-7.bold')),
       findsOneWidget,
     );
-    await tester.enterText(
+    await enterMarkdown(
+      tester,
       find.byKey(const ValueKey<String>('board.comments.reply.post-7')),
       '  Agreed  ',
     );
@@ -168,7 +169,8 @@ void main() {
     await tester.pumpAndSettle();
     await tester.tap(find.text('Edit'));
     await tester.pumpAndSettle();
-    await tester.enterText(
+    await enterMarkdown(
+      tester,
       find.byKey(const ValueKey<String>('board.comments.comment.c2.edit')),
       'Thanks!',
     );

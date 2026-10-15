@@ -279,13 +279,9 @@ void main() {
     expect(find.text('Line 8: “Ignore”'), findsOneWidget);
     expect(find.textContaining('flutter test'), findsWidgets);
 
-    await tester.enterText(
-      find
-          .descendant(
-            of: byKey('dialog.board.prompt.body'),
-            matching: find.byType(EditableText),
-          )
-          .first,
+    await enterMarkdown(
+      tester,
+      byKey('dialog.board.prompt.body'),
       '## Goal\nFix it.',
     );
     await tester.pumpAndSettle();

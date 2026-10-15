@@ -14,6 +14,7 @@ import '../../data/api.dart';
 import '../../l10n/wonky_app_localizations.dart';
 import '../../shell/dialogs.dart';
 import '../../shell/form_dialog.dart';
+import '../../shell/page_frame.dart';
 import '../../shell/shell_services.dart';
 import '../board_commands.dart';
 import '../board_hub.dart';
@@ -355,23 +356,28 @@ class _BoardTaskPageState extends State<BoardTaskPage> {
             ],
           ],
         ),
+        // Like the *Copy this token now* alert of Settings › Developer.
         if (t.isMine && t.claimCode != null)
-          ShadCard(
+          ShadAlert(
             key: const ValueKey<String>('board.task.claimCode'),
-            padding: const EdgeInsets.all(14),
-            child: Column(
+            icon: const Icon(LucideIcons.keyRound, size: 16),
+            titleStyle: theme.textTheme.small,
+            title: Text(l.boardYourClaimCode),
+            description: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
-              spacing: 8,
+              spacing: 6,
               children: [
-                Text(l.boardYourClaimCode, style: theme.textTheme.small),
+                const SizedBox(height: 2),
                 Row(
                   spacing: 8,
                   children: [
-                    Text(
-                      t.claimCode!,
-                      key: const ValueKey<String>('board.task.claimCode.text'),
-                      style: theme.textTheme.h4.copyWith(
-                        fontFamily: 'monospace',
+                    Flexible(
+                      child: Text(
+                        t.claimCode!,
+                        key: const ValueKey<String>(
+                          'board.task.claimCode.text',
+                        ),
+                        style: boardCodeStyle(theme).copyWith(fontSize: 16),
                       ),
                     ),
                     ShadButton.outline(
@@ -388,9 +394,8 @@ class _BoardTaskPageState extends State<BoardTaskPage> {
                     l.boardTimeLeft(
                       until.difference(clock.now()).inHours.clamp(0, 999),
                     ),
-                    style: theme.textTheme.muted,
                   ),
-                Text(l.boardClaimCodeHint, style: theme.textTheme.muted),
+                Text(l.boardClaimCodeHint),
               ],
             ),
           ),
@@ -400,37 +405,17 @@ class _BoardTaskPageState extends State<BoardTaskPage> {
 
   Widget _howTo(WonkyAppLocalizations l, ShadThemeData theme, BoardTaskView t) {
     final code = t.isMine ? t.claimCode : null;
-    final mono = theme.textTheme.small.copyWith(
-      fontFamily: 'monospace',
-      fontWeight: FontWeight.normal,
-    );
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        Semantics(
-          button: true,
-          expanded: _howToOpen,
-          child: GestureDetector(
-            key: const ValueKey<String>('board.task.howTo'),
-            onTap: () => setState(() => _howToOpen = !_howToOpen),
-            child: MouseRegion(
-              cursor: SystemMouseCursors.click,
-              child: Padding(
-                padding: const EdgeInsets.only(top: 20, bottom: 8),
-                child: Row(
-                  spacing: 6,
-                  children: [
-                    Icon(
-                      _howToOpen
-                          ? LucideIcons.chevronDown
-                          : LucideIcons.chevronRight,
-                      size: 18,
-                    ),
-                    Text(l.boardHowToBuild, style: theme.textTheme.h4),
-                  ],
-                ),
-              ),
-            ),
+        Padding(
+          padding: const EdgeInsets.only(top: 20, bottom: 8),
+          child: BoardDisclosure(
+            tapKey: 'board.task.howTo',
+            open: _howToOpen,
+            iconSize: 18,
+            onToggle: () => setState(() => _howToOpen = !_howToOpen),
+            label: Text(l.boardHowToBuild, style: theme.textTheme.h4),
           ),
         ),
         if (_howToOpen)
@@ -470,17 +455,18 @@ class _BoardTaskPageState extends State<BoardTaskPage> {
                   ),
                 ],
               ),
+              // The code block style of BoardCopyLine and the Markdown
+              // code blocks.
               Container(
                 key: const ValueKey<String>('board.task.prompt'),
-                padding: const EdgeInsets.all(12),
+                padding: const EdgeInsets.all(10),
                 constraints: const BoxConstraints(maxHeight: 420),
                 decoration: BoxDecoration(
                   color: theme.colorScheme.muted,
-                  borderRadius: BorderRadius.circular(8),
-                  border: Border.all(color: theme.colorScheme.border),
+                  borderRadius: BorderRadius.circular(6),
                 ),
                 child: SingleChildScrollView(
-                  child: Text(t.prompt, style: mono),
+                  child: Text(t.prompt, style: boardCodeStyle(theme)),
                 ),
               ),
               Text(l.boardStepPr, style: theme.textTheme.small),
@@ -593,11 +579,10 @@ class _BoardTaskPageState extends State<BoardTaskPage> {
   Widget build(BuildContext context) {
     final l = WonkyAppLocalizations.of(context);
     final theme = ShadTheme.of(context);
-    final narrow = MediaQuery.sizeOf(context).width < 600;
     final t = _task;
     Widget body;
     if (_loading && t == null) {
-      body = const Center(child: ShadProgress());
+      body = const Center(child: ShadSpinner());
     } else if (t == null) {
       final notFound =
           _error is WonkyException &&
@@ -620,108 +605,91 @@ class _BoardTaskPageState extends State<BoardTaskPage> {
       final cs = theme.colorScheme;
       final pr = t.pullRequestUrl;
       final admin = hub.isAdmin;
-      body = ListView(
+      body = ShellPageBody(
         key: const ValueKey<String>('board.task'),
-        padding: EdgeInsets.fromLTRB(
-          narrow ? 16 : 24,
-          20,
-          narrow ? 16 : 24,
-          48,
-        ),
+        spacing: 10,
         children: [
-          BoardContent(
-            maxWidth: 820,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              spacing: 10,
+          if (t.status == BoardTaskStatus.draft)
+            BoardNotice(
+              key: const ValueKey<String>('board.task.notice.draft'),
+              icon: LucideIcons.eyeOff,
+              text: l.boardDraftNotice,
+              tone: cs.warning,
+            ),
+          if (t.promptPending && admin)
+            const BoardPromptPendingNotice(
+              key: ValueKey<String>('board.task.notice.promptPending'),
+            )
+          else if (t.promptNote case final note? when admin)
+            BoardNotice(
+              key: const ValueKey<String>('board.task.notice.promptNote'),
+              icon: LucideIcons.triangleAlert,
+              text: l.boardPromptNote(note),
+              tone: cs.warning,
+            ),
+          if (t.status == BoardTaskStatus.cancelled)
+            BoardNotice(
+              icon: LucideIcons.circleX,
+              text: l.boardTaskCancelledNotice,
+              tone: cs.destructive,
+            ),
+          _header(l, theme, t),
+          BoardSectionTitle(l.boardLinkedPosts),
+          for (final p in t.posts)
+            _LinkedPost(
+              services: s,
+              post: p,
+              onRemove:
+                  hub.isAdmin &&
+                      t.posts.length > 1 &&
+                      t.status != BoardTaskStatus.done &&
+                      t.status != BoardTaskStatus.shipped
+                  ? () => _invoke('shell.board.admin.setTaskPosts', {
+                      'taskNumber': n,
+                      'remove': [p.number],
+                    })
+                  : null,
+            ),
+          if (t.posts.isEmpty)
+            Text(l.boardNoLinkedPosts, style: theme.textTheme.muted),
+          _howTo(l, theme, t),
+          if (pr != null) ...[
+            BoardSectionTitle(l.boardPullRequest),
+            Wrap(
+              spacing: 8,
+              crossAxisAlignment: WrapCrossAlignment.center,
               children: [
-                if (t.status == BoardTaskStatus.draft)
-                  BoardNotice(
-                    key: const ValueKey<String>('board.task.notice.draft'),
-                    icon: LucideIcons.eyeOff,
-                    text: l.boardDraftNotice,
-                    tone: cs.warning,
+                ShadButton.link(
+                  key: const ValueKey<String>('board.task.prLink'),
+                  size: ShadButtonSize.sm,
+                  padding: EdgeInsets.zero,
+                  onPressed: () => confirmExternalLink(context, s, url: pr),
+                  child: Text(
+                    t.prNumber == null ? pr : l.boardPrNumber(t.prNumber!),
                   ),
-                if (t.promptPending && admin)
-                  const BoardPromptPendingNotice(
-                    key: ValueKey<String>('board.task.notice.promptPending'),
-                  )
-                else if (t.promptNote case final note? when admin)
-                  BoardNotice(
-                    key: const ValueKey<String>('board.task.notice.promptNote'),
-                    icon: LucideIcons.triangleAlert,
-                    text: l.boardPromptNote(note),
-                    tone: cs.warning,
-                  ),
-                if (t.status == BoardTaskStatus.cancelled)
-                  BoardNotice(
-                    icon: LucideIcons.circleX,
-                    text: l.boardTaskCancelledNotice,
-                    tone: cs.destructive,
-                  ),
-                _header(l, theme, t),
-                BoardSectionTitle(l.boardLinkedPosts),
-                for (final p in t.posts)
-                  _LinkedPost(
-                    services: s,
-                    post: p,
-                    onRemove:
-                        hub.isAdmin &&
-                            t.posts.length > 1 &&
-                            t.status != BoardTaskStatus.done &&
-                            t.status != BoardTaskStatus.shipped
-                        ? () => _invoke('shell.board.admin.setTaskPosts', {
-                            'taskNumber': n,
-                            'remove': [p.number],
-                          })
-                        : null,
-                  ),
-                if (t.posts.isEmpty)
-                  Text(l.boardNoLinkedPosts, style: theme.textTheme.muted),
-                _howTo(l, theme, t),
-                if (pr != null) ...[
-                  BoardSectionTitle(l.boardPullRequest),
-                  Wrap(
-                    spacing: 8,
-                    crossAxisAlignment: WrapCrossAlignment.center,
-                    children: [
-                      ShadButton.link(
-                        key: const ValueKey<String>('board.task.prLink'),
-                        size: ShadButtonSize.sm,
-                        padding: EdgeInsets.zero,
-                        onPressed: () =>
-                            confirmExternalLink(context, s, url: pr),
-                        child: Text(
-                          t.prNumber == null
-                              ? pr
-                              : l.boardPrNumber(t.prNumber!),
-                        ),
-                      ),
-                      if (t.prAuthorLogin != null)
-                        Text(
-                          l.boardPrBy(t.prAuthorLogin!),
-                          style: theme.textTheme.muted,
-                        ),
-                    ],
-                  ),
-                  if (t.reviewJson case final json?) ...[
-                    Text(l.boardLatestReview, style: theme.textTheme.small),
-                    _review(l, theme, json),
-                  ],
-                ],
-                BoardSectionTitle(l.boardActivityAndDiscussion),
-                CommentThreadBody.custom(
-                  key: ValueKey<String>('board.task.comments.$n'),
-                  services: s,
-                  actions: BoardCommentActions(
-                    services: s,
-                    taskNumber: n,
-                    open: t.status != BoardTaskStatus.cancelled,
-                  ),
-                  comments: boardThreadComments(l, _comments),
                 ),
+                if (t.prAuthorLogin != null)
+                  Text(
+                    l.boardPrBy(t.prAuthorLogin!),
+                    style: theme.textTheme.muted,
+                  ),
               ],
             ),
+            if (t.reviewJson case final json?) ...[
+              Text(l.boardLatestReview, style: theme.textTheme.small),
+              _review(l, theme, json),
+            ],
+          ],
+          BoardSectionTitle(l.boardActivityAndDiscussion),
+          CommentThreadBody.custom(
+            key: ValueKey<String>('board.task.comments.$n'),
+            services: s,
+            actions: BoardCommentActions(
+              services: s,
+              taskNumber: n,
+              open: t.status != BoardTaskStatus.cancelled,
+            ),
+            comments: boardThreadComments(l, _comments),
           ),
         ],
       );
@@ -746,11 +714,11 @@ class _LinkedPost extends StatelessWidget {
     final l = WonkyAppLocalizations.of(context);
     final theme = ShadTheme.of(context);
     final p = post;
-    return Container(
-      padding: const EdgeInsets.symmetric(vertical: 6),
-      decoration: BoxDecoration(
-        border: Border(bottom: BorderSide(color: theme.colorScheme.border)),
-      ),
+    return BoardListTile(
+      key: ValueKey<String>('board.task.post.${p.number}'),
+      semanticLabel: '#${p.number} ${p.title}',
+      onTap: () => services.router.go('/improvements/p/${p.number}'),
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
       child: Row(
         spacing: 8,
         children: [
@@ -762,20 +730,10 @@ class _LinkedPost extends StatelessWidget {
             ),
           ),
           Expanded(
-            child: Semantics(
-              link: true,
-              child: GestureDetector(
-                key: ValueKey<String>('board.task.post.${p.number}'),
-                onTap: () => services.router.go('/improvements/p/${p.number}'),
-                child: MouseRegion(
-                  cursor: SystemMouseCursors.click,
-                  child: Text(
-                    '#${p.number} ${p.title}',
-                    style: theme.textTheme.small.copyWith(
-                      color: theme.colorScheme.primary,
-                    ),
-                  ),
-                ),
+            child: Text(
+              '#${p.number} ${p.title}',
+              style: theme.textTheme.small.copyWith(
+                fontWeight: FontWeight.w500,
               ),
             ),
           ),

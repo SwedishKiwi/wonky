@@ -92,6 +92,8 @@ wonky/
 │   ├── wonky_spellcheck/                # (v2) pure Dart: Hunspell engine moved from wonky_write_core + dictionaries as
 │   │                                    #   package assets in dictionaries/ (Slides 03 §14)
 │   ├── wonky_code_flutter/              # (v2) Flutter: `CodeView`, `CodeTextStyler`, `CodeEditorField` (re_editor)
+│   ├── wonky_rich_editor/               # Flutter: lightweight WYSIWYG Markdown editor on super_editor (Markdown ⇄
+│   │                                    #   document codec, `WonkyRichEditor`, toolbar) — the board's composer (16 §7.3)
 │   ├── wonky_sync_kit/                  # (v2) pure Dart, extracted from Sheets: RowChange, MutationPlan, UndoInverter,
 │   │                                    #   SyncTxAdapter (Slides 12 §5.1)
 │   ├── wonky_sync_kit_flutter/          # (v2) Flutter client part: SyncReplica, AppSyncController, SyncWriter,
@@ -146,6 +148,7 @@ Enforced by `dart run tool/check_dependencies.dart` (repository root; CI job `de
 wonky_core            → (common utilities only, see below)
 wonky_code            → (v2) wonky_core, string_scanner, highlight (TextMate engine copied in, Slides 07 §2.2) — leaf
 wonky_code_flutter    → (v2) wonky_code, wonky_ui, shad, re_editor                       — leaf
+wonky_rich_editor     → super_editor (vendored), wonky_rich_text, wonky_ui, shad, markdown — leaf (WYSIWYG Markdown field, 16 §7.3)
 wonky_numfmt          → (v2) intl, petitparser                                           — leaf (Slides 08 §2.5)
 wonky_rich_text       → (v2) wonky_core, dart_quill_delta, markdown                      — leaf (Delta inline schema + codec)
 wonky_fonts           → (v2) (pure-Dart manifest; TTFs as package assets)               — leaf (Slides 05 §3.1)
@@ -176,7 +179,8 @@ wonky_mcp_stdio       → args, http
 wonky_ui              → flutter, shad
 wonky_app             → wonky_ui, wonky_core, wonky_client, serverpod_flutter, serverpod_auth_idp_flutter, go_router, provider, mcp_dart,
                         wonky_spellcheck (v2; spelling glue and dictionaries moved from Write),
-                        wonky_fonts (v2; `AssetFontRegistry` / `BundledAssetFontProvider`, Slides 05 §3.1)
+                        wonky_fonts (v2; `AssetFontRegistry` / `BundledAssetFontProvider`, Slides 05 §3.1),
+                        wonky_rich_editor (the board's WYSIWYG `MarkdownComposer`, 16 §7.3)
 wonky_drive           → (v2) wonky_app, wonky_ui, wonky_core, wonky_client, wonky_code_flutter (text previews), file_picker,
                         file_saver, http (no PDF previews in v2, Drive 02 §6.3)
 wonky_write           → wonky_app, wonky_ui, wonky_write_core, wonky_code + wonky_code_flutter (v2), super_editor (vendored), super_clipboard,
@@ -200,7 +204,7 @@ importing another's packages** — the families are Write (`wonky_write`, `wonky
 Sheets (`wonky_sheets`, `wonky_sheets_core`, `wonky_sheets_script`), Slides (`wonky_slides`,
 `wonky_slides_core`) and Drive (`wonky_drive`); shared code moves into the shared leaf packages
 (`wonky_core`, `wonky_ui`, `wonky_app`, `wonky_code*`, `wonky_charts*`, `wonky_numfmt`,
-`wonky_rich_text`, `wonky_fonts`, `wonky_spellcheck`, `wonky_sync_kit*`);
+`wonky_rich_text`, `wonky_rich_editor`, `wonky_fonts`, `wonky_spellcheck`, `wonky_sync_kit*`);
 feature code importing generated server code.
 
 **Decided (v2 review, Q3):** code highlighting is **two packages** like the charts —
@@ -251,8 +255,8 @@ strings are in the shell's ARB files; each app passes its own widget-key prefix 
 - (v2) the app families (Drive, Write, Sheets, Slides — see *Forbidden*) import no package of
   another family (this generalizes the former Write ⟷ Sheets rule);
 - (v2) the shared leaf packages `wonky_code`, `wonky_code_flutter`, `wonky_charts`,
-  `wonky_charts_flutter`, `wonky_numfmt`, `wonky_rich_text`, `wonky_fonts`, `wonky_spellcheck`
-  import no app-family package and none of `wonky_app`, `wonky_client`,
+  `wonky_charts_flutter`, `wonky_numfmt`, `wonky_rich_text`, `wonky_rich_editor`, `wonky_fonts`,
+  `wonky_spellcheck` import no app-family package and none of `wonky_app`, `wonky_client`,
   `wonky_server`, `wonky_sync_models`, `serverpod*` (they are presentation/engine leaves: data
   comes in through their own types);
 - (v2) the Flutter halves depend on their pure halves, never the other way round
@@ -287,6 +291,7 @@ strings are in the shell's ARB files; each app passes its own widget-key prefix 
 | `wonky_server` | `dart_jsonwebtoken` | RS256 JWT of the Bugs & Improvements GitHub App (specs/16 §13.3) |
 | `wonky_ui` | `flutter_svg` | Empty-state illustrations (already a dependency of `shad`) |
 | `wonky_ui` | `flutter_test` | `pumpWonky` in `lib/testing.dart` (15 §7) |
+| `wonky_rich_editor` | `flutter_test` | `enterMarkdown` / `typeMarkdown` in `lib/testing.dart` (15 §7) |
 | `wonky_app` | `shad` | The shell UI is built with shad (02) |
 | `wonky_app` | `flutter_test` | `pumpShell` / `CommandTestHarness` in `lib/testing.dart` (15 §7) |
 | `wonky_app` | `serverpod_auth_idp_client` | Auth types used by the auth controller |

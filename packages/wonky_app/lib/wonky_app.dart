@@ -83,7 +83,6 @@ export 'src/editor/editor_scaffold.dart';
 export 'src/l10n/wonky_app_localizations.dart';
 export 'src/markdown/markdown_blocks.dart';
 export 'src/markdown/markdown_composer.dart';
-export 'src/markdown/markdown_edits.dart';
 export 'src/markdown/markdown_inline.dart';
 export 'src/markdown/wonky_markdown.dart';
 export 'src/mcp_bridge/app_screenshot.dart';

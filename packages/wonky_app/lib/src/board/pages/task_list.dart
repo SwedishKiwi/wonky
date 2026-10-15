@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:math' as math;
 
 import 'package:clock/clock.dart';
 import 'package:flutter/widgets.dart';
@@ -9,6 +10,7 @@ import 'package:wonky_ui/wonky_ui.dart';
 import '../../core/stream_supervisor.dart';
 import '../../data/api.dart';
 import '../../l10n/wonky_app_localizations.dart';
+import '../../shell/page_frame.dart';
 import '../../shell/shell_services.dart';
 import '../board_hub.dart';
 import 'board_labels.dart';
@@ -42,7 +44,7 @@ class BoardTaskList extends StatefulWidget {
     this.live = false,
     this.compact = false,
     this.title,
-    this.horizontalPadding = 24,
+    this.horizontalPadding,
   });
 
   final ShellServices services;
@@ -52,7 +54,10 @@ class BoardTaskList extends StatefulWidget {
   /// Shrink-wrapped (a section above the Done posts); nothing when empty.
   final bool compact;
   final String? title;
-  final double horizontalPadding;
+
+  /// The list's side padding (default: the page's content column, less
+  /// the rows' own 8 px).
+  final double? horizontalPadding;
 
   @override
   State<BoardTaskList> createState() => _BoardTaskListState();
@@ -118,7 +123,9 @@ class _BoardTaskListState extends State<BoardTaskList> {
   Widget build(BuildContext context) {
     final l = WonkyAppLocalizations.of(context);
     final theme = ShadTheme.of(context);
-    final pad = widget.horizontalPadding;
+    final pad =
+        widget.horizontalPadding ??
+        math.max(0.0, shellPageInset(MediaQuery.sizeOf(context).width) - 8);
     if (widget.compact) {
       if (_items.isEmpty) return const SizedBox.shrink();
       return ListView(
@@ -127,19 +134,27 @@ class _BoardTaskListState extends State<BoardTaskList> {
         children: [
           if (widget.title != null)
             Padding(
-              padding: const EdgeInsets.only(bottom: 4),
-              child: Text(widget.title!, style: theme.textTheme.small),
+              padding: const EdgeInsets.fromLTRB(8, 0, 8, 4),
+              child: Text(
+                widget.title!,
+                style: theme.textTheme.small.copyWith(
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
             ),
           for (final t in _items) BoardTaskRow(services: s, task: t),
         ],
       );
     }
-    if (_loading) return const Center(child: ShadProgress());
+    if (_loading) return const BoardListLoading();
     if (_error != null && _items.isEmpty) {
+      final offline = isOfflineError(_error!);
       return WonkyEmptyState(
-        illustration: EmptyIllustration.error,
-        title: l.boardLoadFailed,
-        description: errorMessage(_error!),
+        illustration: offline
+            ? EmptyIllustration.offline
+            : EmptyIllustration.error,
+        title: offline ? l.driveOfflineTitle : l.boardLoadFailed,
+        description: offline ? null : errorMessage(_error!),
         actions: [
           ShadButton.outline(onPressed: _load, child: Text(l.actionRetry)),
         ],
@@ -154,7 +169,7 @@ class _BoardTaskListState extends State<BoardTaskList> {
       );
     }
     return ListView(
-      padding: EdgeInsets.fromLTRB(pad, 8, pad, 24),
+      padding: EdgeInsets.fromLTRB(pad, 0, pad, 24),
       children: [
         for (final t in _items) BoardTaskRow(services: s, task: t),
         if (_cursor != null)
@@ -187,80 +202,57 @@ class BoardTaskRow extends StatelessWidget {
     final muted = theme.textTheme.muted.copyWith(fontSize: 12);
     final t = task;
     void open() => services.router.go('/improvements/t/${t.number}');
-    return Semantics(
-      button: true,
-      label: 'T-${t.number} ${t.title}, ${boardClaimState(l, t)}',
-      excludeSemantics: true,
-      child: FocusableActionDetector(
-        mouseCursor: SystemMouseCursors.click,
-        actions: {
-          ActivateIntent: CallbackAction<ActivateIntent>(
-            onInvoke: (_) {
-              open();
-              return null;
-            },
-          ),
-        },
-        child: GestureDetector(
-          key: ValueKey<String>('board.task.${t.number}'),
-          behavior: HitTestBehavior.opaque,
-          onTap: open,
-          child: Container(
-            padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 8),
-            decoration: BoxDecoration(
-              border: Border(
-                bottom: BorderSide(color: theme.colorScheme.border),
+    return BoardListTile(
+      key: ValueKey<String>('board.task.${t.number}'),
+      semanticLabel: 'T-${t.number} ${t.title}, ${boardClaimState(l, t)}',
+      onTap: open,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        spacing: 6,
+        children: [
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            spacing: 6,
+            children: [
+              Text('T-${t.number}', style: theme.textTheme.muted),
+              Expanded(
+                child: Text(
+                  t.title,
+                  style: theme.textTheme.small.copyWith(
+                    fontWeight: FontWeight.w500,
+                  ),
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                ),
               ),
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              spacing: 6,
-              children: [
-                Row(
-                  spacing: 6,
-                  children: [
-                    Text('T-${t.number}', style: muted),
-                    Expanded(
-                      child: Text(
-                        t.title,
-                        style: theme.textTheme.p.copyWith(
-                          fontWeight: FontWeight.w500,
-                        ),
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ),
-                  ],
-                ),
-                Wrap(
-                  spacing: 8,
-                  runSpacing: 4,
-                  crossAxisAlignment: WrapCrossAlignment.center,
-                  children: [
-                    ...boardLabelChips(l, area: t.area, size: t.size),
-                    BoardStatusBadge(
-                      status: t.status,
-                      label: l.boardTaskStatusName(t.status),
-                    ),
-                    Text(boardClaimState(l, t), style: muted),
-                    Row(
-                      mainAxisSize: MainAxisSize.min,
-                      spacing: 3,
-                      children: [
-                        Icon(
-                          LucideIcons.layers,
-                          size: 13,
-                          color: theme.colorScheme.mutedForeground,
-                        ),
-                        Text(l.boardPostCount(t.posts.length), style: muted),
-                      ],
-                    ),
-                  ],
-                ),
-              ],
-            ),
+            ],
           ),
-        ),
+          Wrap(
+            spacing: 8,
+            runSpacing: 4,
+            crossAxisAlignment: WrapCrossAlignment.center,
+            children: [
+              ...boardLabelChips(l, area: t.area, size: t.size),
+              BoardStatusBadge(
+                status: t.status,
+                label: l.boardTaskStatusName(t.status),
+              ),
+              Text(boardClaimState(l, t), style: muted),
+              Row(
+                mainAxisSize: MainAxisSize.min,
+                spacing: 3,
+                children: [
+                  Icon(
+                    LucideIcons.layers,
+                    size: 14,
+                    color: theme.colorScheme.mutedForeground,
+                  ),
+                  Text(l.boardPostCount(t.posts.length), style: muted),
+                ],
+              ),
+            ],
+          ),
+        ],
       ),
     );
   }

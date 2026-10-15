@@ -12,6 +12,7 @@ import '../../core/stream_supervisor.dart';
 import '../../data/api.dart';
 import '../../l10n/wonky_app_localizations.dart';
 import '../../markdown/wonky_markdown.dart';
+import '../../shell/page_frame.dart';
 import '../../shell/shell_services.dart';
 import '../../widgets/image_lightbox.dart';
 import '../board_commands.dart';
@@ -431,28 +432,11 @@ class _BoardPostPageState extends State<BoardPostPage> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        Semantics(
-          button: true,
-          expanded: _detailsOpen,
-          child: GestureDetector(
-            key: const ValueKey<String>('board.post.details'),
-            onTap: () => setState(() => _detailsOpen = !_detailsOpen),
-            child: MouseRegion(
-              cursor: SystemMouseCursors.click,
-              child: Row(
-                spacing: 4,
-                children: [
-                  Icon(
-                    _detailsOpen
-                        ? LucideIcons.chevronDown
-                        : LucideIcons.chevronRight,
-                    size: 16,
-                  ),
-                  Text(l.boardDetails, style: theme.textTheme.small),
-                ],
-              ),
-            ),
-          ),
+        BoardDisclosure(
+          tapKey: 'board.post.details',
+          open: _detailsOpen,
+          onToggle: () => setState(() => _detailsOpen = !_detailsOpen),
+          label: Text(l.boardDetails, style: theme.textTheme.small),
         ),
         if (_detailsOpen)
           Padding(
@@ -505,14 +489,18 @@ class _BoardPostPageState extends State<BoardPostPage> {
     }
     final flags = p.flags ?? const [];
     final dup = p.possibleDuplicateOfNumber;
-    return ShadCard(
+    // An admin callout like the app's other `ShadAlert`s (offline warnings,
+    // the trashed-file banner).
+    return ShadAlert(
       key: const ValueKey<String>('board.post.admin'),
-      padding: const EdgeInsets.all(14),
-      child: Column(
+      icon: const Icon(LucideIcons.shieldCheck, size: 16),
+      titleStyle: theme.textTheme.small,
+      title: Text(l.boardAdminPanel),
+      description: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         spacing: 8,
         children: [
-          Text(l.boardAdminPanel, style: theme.textTheme.small),
+          const SizedBox(height: 2),
           Wrap(
             spacing: 8,
             runSpacing: 4,
@@ -599,11 +587,10 @@ class _BoardPostPageState extends State<BoardPostPage> {
   Widget build(BuildContext context) {
     final l = WonkyAppLocalizations.of(context);
     final theme = ShadTheme.of(context);
-    final narrow = MediaQuery.sizeOf(context).width < 600;
     final p = _post;
     Widget body;
     if (_loading && p == null) {
-      body = const Center(child: ShadProgress());
+      body = const Center(child: ShadSpinner());
     } else if (p == null) {
       final notFound =
           _error is WonkyException &&
@@ -630,194 +617,180 @@ class _BoardPostPageState extends State<BoardPostPage> {
       final shot = _screenshotUrl;
       final commentsOpen =
           !p.deleted && p.moderation != BoardModeration.removed;
-      body = ListView(
+      body = ShellPageBody(
         key: const ValueKey<String>('board.post'),
-        padding: EdgeInsets.fromLTRB(
-          narrow ? 16 : 24,
-          20,
-          narrow ? 16 : 24,
-          48,
-        ),
+        spacing: 12,
         children: [
-          BoardContent(
-            maxWidth: 820,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              spacing: 12,
-              children: [
-                ..._notices(l, p),
-                Row(
+          ..._notices(l, p),
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            spacing: 14,
+            children: [
+              BoardVoteControl(
+                number: p.number,
+                kind: p.kind,
+                score: p.score,
+                voteCount: p.voteCount,
+                myVote: p.myVote,
+                large: true,
+                onVote: votingOpen && !p.deleted ? _vote : null,
+              ),
+              Expanded(
+                child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
-                  spacing: 14,
+                  spacing: 8,
                   children: [
-                    BoardVoteControl(
-                      number: p.number,
-                      kind: p.kind,
-                      score: p.score,
-                      voteCount: p.voteCount,
-                      myVote: p.myVote,
-                      large: true,
-                      onVote: votingOpen && !p.deleted ? _vote : null,
-                    ),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        spacing: 8,
-                        children: [
-                          Text('#${p.number}', style: theme.textTheme.muted),
-                          Semantics(
-                            header: true,
-                            child: Text(
-                              p.title,
-                              key: const ValueKey<String>('board.post.title'),
-                              style: theme.textTheme.h3,
-                            ),
-                          ),
-                          Wrap(
-                            spacing: 8,
-                            runSpacing: 4,
-                            crossAxisAlignment: WrapCrossAlignment.center,
-                            children: [
-                              ...boardLabelChips(
-                                l,
-                                kind: p.kind,
-                                area: p.area,
-                                size: p.size,
-                                ai: p.aiLabels,
-                              ),
-                              BoardStatusBadge(
-                                status: p.status,
-                                label: l.boardStatusName(p.status),
-                                onTap: task == null
-                                    ? null
-                                    : () => s.router.go(
-                                        '/improvements/t/${task.number}',
-                                      ),
-                              ),
-                            ],
-                          ),
-                          BoardAuthorLine(
-                            author: p.author,
-                            createdAt: p.createdAt,
-                            editedAt: p.editedAt,
-                          ),
-                        ],
+                    Text('#${p.number}', style: theme.textTheme.muted),
+                    Semantics(
+                      header: true,
+                      child: Text(
+                        p.title,
+                        key: const ValueKey<String>('board.post.title'),
+                        style: theme.textTheme.h3,
                       ),
                     ),
-                    WonkyDropdownMenu(
-                      anchor: const ShadAnchor(
-                        childAlignment: AlignmentDirectional.bottomEnd,
-                        overlayAlignment: AlignmentDirectional.topEnd,
-                      ),
-                      entries: () => _menu(l, p),
-                      builder: (context, ctl) => ShadIconButton.ghost(
-                        key: const ValueKey<String>('board.post.menu'),
-                        semanticLabel: l.moreActions,
-                        icon: const Icon(LucideIcons.ellipsisVertical),
-                        onPressed: ctl.toggle,
-                      ),
-                    ),
-                  ],
-                ),
-                if (hub.isAdmin) _adminPanel(l, theme, p),
-                WonkyMarkdown(
-                  p.body,
-                  key: const ValueKey<String>('board.post.body'),
-                  profile: MarkdownProfile.post,
-                ),
-                if (p.hasScreenshot && shot != null)
-                  Align(
-                    alignment: AlignmentDirectional.centerStart,
-                    child: Semantics(
-                      button: true,
-                      label: l.boardOpenScreenshot,
-                      child: GestureDetector(
-                        key: const ValueKey<String>('board.post.screenshot'),
-                        onTap: () => showImageLightbox(
-                          context,
-                          image: NetworkImage(shot),
-                          alt: l.boardScreenshotAlt(p.number),
-                          title: p.title,
-                        ),
-                        child: MouseRegion(
-                          cursor: SystemMouseCursors.zoomIn,
-                          child: ConstrainedBox(
-                            constraints: const BoxConstraints(
-                              maxWidth: 480,
-                              maxHeight: 320,
-                            ),
-                            child: ClipRRect(
-                              borderRadius: BorderRadius.circular(8),
-                              child: Image.network(
-                                shot,
-                                fit: BoxFit.contain,
-                                semanticLabel: l.boardScreenshotAlt(p.number),
-                                errorBuilder: (context, _, _) => Text(
-                                  l.lightboxLoadFailed,
-                                  style: theme.textTheme.muted,
-                                ),
-                              ),
-                            ),
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
-                if (p.contextJson case final json? when json.isNotEmpty)
-                  _details(l, theme, json),
-                if (task != null ||
-                    p.mergedFrom.isNotEmpty ||
-                    _similar.isNotEmpty) ...[
-                  BoardSectionTitle(l.boardRelations),
-                  if (task != null)
-                    _link(
-                      'task',
-                      l.boardPartOfTask(task.number, task.title),
-                      '/improvements/t/${task.number}',
-                    ),
-                  if (p.mergedFrom.isNotEmpty)
                     Wrap(
-                      spacing: 6,
+                      spacing: 8,
+                      runSpacing: 4,
                       crossAxisAlignment: WrapCrossAlignment.center,
                       children: [
-                        Text(l.boardMergedFrom, style: theme.textTheme.small),
-                        for (final m in p.mergedFrom)
-                          _link('merged.$m', '#$m', '/improvements/p/$m'),
+                        ...boardLabelChips(
+                          l,
+                          kind: p.kind,
+                          area: p.area,
+                          size: p.size,
+                          ai: p.aiLabels,
+                        ),
+                        BoardStatusBadge(
+                          status: p.status,
+                          label: l.boardStatusName(p.status),
+                          onTap: task == null
+                              ? null
+                              : () => s.router.go(
+                                  '/improvements/t/${task.number}',
+                                ),
+                        ),
                       ],
                     ),
-                  if (_similar.isNotEmpty) ...[
-                    Text(l.boardSimilarPosts, style: theme.textTheme.small),
-                    for (final x in _similar)
-                      _link(
-                        'similar.${x.number}',
-                        '#${x.number} ${x.title} (${l.boardScore(x.score)})',
-                        '/improvements/p/${x.number}',
-                      ),
+                    BoardAuthorLine(
+                      author: p.author,
+                      createdAt: p.createdAt,
+                      editedAt: p.editedAt,
+                    ),
                   ],
-                ],
-                BoardSectionTitle(l.boardCommentsTitle(p.commentCount)),
-                CommentThreadBody.custom(
-                  key: ValueKey<String>('board.post.comments.$n'),
-                  services: s,
-                  actions: BoardCommentActions(
-                    services: s,
-                    postNumber: n,
-                    open: commentsOpen,
-                  ),
-                  comments: boardThreadComments(l, _comments),
                 ),
-                if (!s.auth.isSignedIn)
-                  Align(
-                    alignment: AlignmentDirectional.centerStart,
-                    child: ShadButton.outline(
-                      key: const ValueKey<String>('board.post.signInToComment'),
-                      onPressed: () => boardSignIn(s),
-                      child: Text(l.boardSignInToComment),
+              ),
+              WonkyDropdownMenu(
+                anchor: const ShadAnchor(
+                  childAlignment: AlignmentDirectional.bottomEnd,
+                  overlayAlignment: AlignmentDirectional.topEnd,
+                ),
+                entries: () => _menu(l, p),
+                builder: (context, ctl) => ShadIconButton.ghost(
+                  key: const ValueKey<String>('board.post.menu'),
+                  semanticLabel: l.moreActions,
+                  icon: const Icon(LucideIcons.ellipsisVertical),
+                  onPressed: ctl.toggle,
+                ),
+              ),
+            ],
+          ),
+          if (hub.isAdmin) _adminPanel(l, theme, p),
+          WonkyMarkdown(
+            p.body,
+            key: const ValueKey<String>('board.post.body'),
+            profile: MarkdownProfile.post,
+          ),
+          if (p.hasScreenshot && shot != null)
+            Align(
+              alignment: AlignmentDirectional.centerStart,
+              child: Semantics(
+                button: true,
+                label: l.boardOpenScreenshot,
+                child: GestureDetector(
+                  key: const ValueKey<String>('board.post.screenshot'),
+                  onTap: () => showImageLightbox(
+                    context,
+                    image: NetworkImage(shot),
+                    alt: l.boardScreenshotAlt(p.number),
+                    title: p.title,
+                  ),
+                  child: MouseRegion(
+                    cursor: SystemMouseCursors.zoomIn,
+                    child: ConstrainedBox(
+                      constraints: const BoxConstraints(
+                        maxWidth: 480,
+                        maxHeight: 320,
+                      ),
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(8),
+                        child: Image.network(
+                          shot,
+                          fit: BoxFit.contain,
+                          semanticLabel: l.boardScreenshotAlt(p.number),
+                          errorBuilder: (context, _, _) => Text(
+                            l.lightboxLoadFailed,
+                            style: theme.textTheme.muted,
+                          ),
+                        ),
+                      ),
                     ),
                   ),
-              ],
+                ),
+              ),
             ),
+          if (p.contextJson case final json? when json.isNotEmpty)
+            _details(l, theme, json),
+          if (task != null ||
+              p.mergedFrom.isNotEmpty ||
+              _similar.isNotEmpty) ...[
+            BoardSectionTitle(l.boardRelations),
+            if (task != null)
+              _link(
+                'task',
+                l.boardPartOfTask(task.number, task.title),
+                '/improvements/t/${task.number}',
+              ),
+            if (p.mergedFrom.isNotEmpty)
+              Wrap(
+                spacing: 6,
+                crossAxisAlignment: WrapCrossAlignment.center,
+                children: [
+                  Text(l.boardMergedFrom, style: theme.textTheme.small),
+                  for (final m in p.mergedFrom)
+                    _link('merged.$m', '#$m', '/improvements/p/$m'),
+                ],
+              ),
+            if (_similar.isNotEmpty) ...[
+              Text(l.boardSimilarPosts, style: theme.textTheme.small),
+              for (final x in _similar)
+                _link(
+                  'similar.${x.number}',
+                  '#${x.number} ${x.title} (${l.boardScore(x.score)})',
+                  '/improvements/p/${x.number}',
+                ),
+            ],
+          ],
+          BoardSectionTitle(l.boardCommentsTitle(p.commentCount)),
+          CommentThreadBody.custom(
+            key: ValueKey<String>('board.post.comments.$n'),
+            services: s,
+            actions: BoardCommentActions(
+              services: s,
+              postNumber: n,
+              open: commentsOpen,
+            ),
+            comments: boardThreadComments(l, _comments),
           ),
+          if (!s.auth.isSignedIn)
+            Align(
+              alignment: AlignmentDirectional.centerStart,
+              child: ShadButton.outline(
+                key: const ValueKey<String>('board.post.signInToComment'),
+                onPressed: () => boardSignIn(s),
+                child: Text(l.boardSignInToComment),
+              ),
+            ),
         ],
       );
     }

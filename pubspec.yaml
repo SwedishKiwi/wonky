@@ -30,6 +30,7 @@ workspace:
   - packages/wonky_sync_kit
   - packages/wonky_sync_kit_flutter
   - packages/wonky_slides_core
+  - packages/wonky_rich_editor
   # Vendored, patched copy (third_party/serverpod_offline_sync/PATCHES.md). A
   # workspace member, not a path override, so Serverpod Cloud uploads it.
   - third_party/serverpod_offline_sync

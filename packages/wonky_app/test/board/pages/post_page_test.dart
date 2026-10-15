@@ -59,15 +59,7 @@ void main() {
 
     await tester.tap(byKey('board.reply.post-1.open'));
     await tester.pumpAndSettle();
-    await tester.enterText(
-      find
-          .descendant(
-            of: byKey('board.reply.post-1'),
-            matching: find.byType(EditableText),
-          )
-          .first,
-      'I want this too',
-    );
+    await enterMarkdown(tester, byKey('board.reply.post-1'), 'I want this too');
     await tester.tap(byKey('board.reply.post-1.send'));
     await tester.pumpAndSettle();
 

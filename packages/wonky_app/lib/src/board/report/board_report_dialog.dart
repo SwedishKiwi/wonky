@@ -616,6 +616,9 @@ class BoardReportDialogState extends State<BoardReportDialog>
     final cs = theme.colorScheme;
     final size = MediaQuery.sizeOf(context);
     final narrow = size.width < 600;
+    // The surface of `ShadDialog` (the popover color, the dialog border,
+    // radius and shadow of the theme); full screen below 600 px.
+    final dialogTheme = theme.primaryDialogTheme;
     final panel = Container(
       key: const ValueKey<String>(BoardReportKeys.dialog),
       width: narrow ? size.width : 640,
@@ -624,18 +627,12 @@ class BoardReportDialogState extends State<BoardReportDialog>
         maxHeight: narrow ? size.height : size.height - 48,
       ),
       decoration: BoxDecoration(
-        color: cs.background,
-        border: narrow ? null : Border.all(color: cs.border),
-        borderRadius: narrow ? null : theme.radius,
-        boxShadow: narrow
+        color: dialogTheme.backgroundColor ?? cs.popover,
+        border: narrow
             ? null
-            : const [
-                BoxShadow(
-                  color: Color(0x33000000),
-                  blurRadius: 24,
-                  offset: Offset(0, 8),
-                ),
-              ],
+            : (dialogTheme.border ?? Border.all(color: cs.border)),
+        borderRadius: narrow ? null : (dialogTheme.radius ?? theme.radius),
+        boxShadow: narrow ? null : dialogTheme.shadows,
       ),
       clipBehavior: narrow ? Clip.none : Clip.antiAlias,
       child: SafeArea(
@@ -648,7 +645,7 @@ class BoardReportDialogState extends State<BoardReportDialog>
             _header(l, theme),
             Flexible(
               child: SingleChildScrollView(
-                padding: const EdgeInsets.fromLTRB(20, 4, 20, 12),
+                padding: const EdgeInsets.fromLTRB(24, 4, 24, 12),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   mainAxisSize: MainAxisSize.min,
@@ -685,7 +682,7 @@ class BoardReportDialogState extends State<BoardReportDialog>
   }
 
   Widget _header(WonkyAppLocalizations l, ShadThemeData theme) => Padding(
-    padding: const EdgeInsets.fromLTRB(20, 14, 10, 6),
+    padding: const EdgeInsets.fromLTRB(24, 16, 12, 8),
     child: Row(
       children: [
         Expanded(
@@ -693,7 +690,8 @@ class BoardReportDialogState extends State<BoardReportDialog>
             header: true,
             child: Text(
               l.boardReportName,
-              style: theme.textTheme.large,
+              style:
+                  theme.primaryDialogTheme.titleStyle ?? theme.textTheme.large,
               overflow: TextOverflow.ellipsis,
             ),
           ),
@@ -1091,34 +1089,51 @@ class BoardReportDialogState extends State<BoardReportDialog>
     );
   }
 
-  Widget _footer(WonkyAppLocalizations l, ShadThemeData theme) => Padding(
-    padding: const EdgeInsets.fromLTRB(20, 8, 20, 16),
-    child: Row(
-      mainAxisAlignment: MainAxisAlignment.end,
-      children: [
-        ShadButton.outline(
-          key: const ValueKey<String>(BoardReportKeys.cancel),
-          onPressed: _posting ? null : requestClose,
-          child: Text(l.actionCancel),
+  /// The actions as in `ShadDialog` / `WonkyFormDialog`: Cancel, then the
+  /// primary at the end; below shad's `sm` breakpoint (640 px) they stack,
+  /// full width, the primary on top.
+  Widget _footer(WonkyAppLocalizations l, ShadThemeData theme) {
+    final cancel = ShadButton.outline(
+      key: const ValueKey<String>(BoardReportKeys.cancel),
+      width: _stackedActions ? double.infinity : null,
+      onPressed: _posting ? null : requestClose,
+      child: Text(l.actionCancel),
+    );
+    final postButton = ShadButton(
+      key: const ValueKey<String>(BoardReportKeys.post),
+      width: _stackedActions ? double.infinity : null,
+      onPressed: _posting || _me?.blocked == true ? null : post,
+      leading: _posting
+          ? const SizedBox.square(dimension: 14, child: ShadSpinner())
+          : null,
+      child: Flexible(
+        child: Text(
+          _postLabel(l),
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
         ),
-        const SizedBox(width: 8),
-        Flexible(
-          child: ShadButton(
-            key: const ValueKey<String>(BoardReportKeys.post),
-            onPressed: _posting || _me?.blocked == true ? null : post,
-            leading: _posting
-                ? const SizedBox.square(dimension: 14, child: ShadSpinner())
-                : null,
-            child: Text(
-              _postLabel(l),
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
+      ),
+    );
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(24, 8, 24, 24),
+      child: _stackedActions
+          ? Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              spacing: 8,
+              children: [postButton, cancel],
+            )
+          : Row(
+              mainAxisAlignment: MainAxisAlignment.end,
+              spacing: 8,
+              children: [
+                cancel,
+                Flexible(child: postButton),
+              ],
             ),
-          ),
-        ),
-      ],
-    ),
-  );
+    );
+  }
+
+  bool get _stackedActions => MediaQuery.sizeOf(context).width < 640;
 }
 
 class _UploadFailed implements Exception {

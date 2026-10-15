@@ -183,7 +183,11 @@ void main() {
 
       expect(dialog(tester).draft.kind, BoardPostKind.idea);
       expect(find.text('Post improvement'), findsOneWidget);
-      expect(find.text('Dark mode for charts'), findsOneWidget);
+      // The composer draws its text as rich text (WYSIWYG, 16 §7.3).
+      expect(
+        find.text('Dark mode for charts', findRichText: true),
+        findsOneWidget,
+      );
     });
 
     test('then both stay registered but leave the palette', () {

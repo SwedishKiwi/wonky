@@ -238,4 +238,24 @@ void main() {
       expect(span.toPlainText(), '*not italic* snake_case_name a`b');
     });
   });
+
+  group('Given the block parser', () {
+    test('when lists nest under numbers and bullets then the levels follow '
+        'the content columns, as the composer writes them', () {
+      final blocks = MarkdownBlocks.parse(
+        '1. a\n   1. b\n      - c\n- d\n  - e\n    - f\n - g',
+      );
+      expect(blocks.map((b) => b.level), [0, 1, 2, 0, 1, 2, 0]);
+    });
+
+    test('when an item has an indented line then it continues the item', () {
+      final blocks = MarkdownBlocks.parse(
+        '- [ ] first\n  second line\nafter',
+        hardBreaks: true,
+      );
+      expect(blocks.map((b) => b.kind), [MdKind.listItem, MdKind.paragraph]);
+      expect(blocks.first.text, 'first\nsecond line');
+      expect(blocks.first.marker, '☐');
+    });
+  });
 }

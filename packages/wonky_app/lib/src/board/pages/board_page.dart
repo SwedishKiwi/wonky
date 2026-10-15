@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:math' as math;
 
 import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
@@ -8,6 +9,7 @@ import 'package:wonky_ui/wonky_ui.dart';
 
 import '../../data/api.dart';
 import '../../l10n/wonky_app_localizations.dart';
+import '../../shell/page_frame.dart';
 import '../../shell/shell_services.dart';
 import '../board_hub.dart';
 import 'board_labels.dart';
@@ -155,7 +157,9 @@ class _BoardPageState extends State<BoardPage> {
   Widget build(BuildContext context) {
     final l = WonkyAppLocalizations.of(context);
     final theme = ShadTheme.of(context);
-    final narrow = MediaQuery.sizeOf(context).width < 600;
+    final width = MediaQuery.sizeOf(context).width;
+    final narrow = width < 600;
+    final inset = shellPageInset(width);
     final tab = widget.tab == BoardTab.review && !hub.isAdmin
         ? (hub.me.value == null ? BoardTab.review : BoardTab.improvements)
         : widget.tab;
@@ -166,49 +170,56 @@ class _BoardPageState extends State<BoardPage> {
       BoardTab.done,
       if (hub.isAdmin) BoardTab.review,
     ];
+    final buttons = Wrap(
+      spacing: 8,
+      runSpacing: 8,
+      children: [
+        ShadButton(
+          key: const ValueKey<String>('board.reportBug'),
+          leading: const Icon(LucideIcons.bug, size: 16),
+          onPressed: () => boardInvoke(s, 'shell.board.report', {
+            'kind': 'bug',
+          }, context: context),
+          child: Text(l.boardReportBug),
+        ),
+        ShadButton.outline(
+          key: const ValueKey<String>('board.suggest'),
+          leading: const Icon(LucideIcons.lightbulb, size: 16),
+          onPressed: () => boardInvoke(s, 'shell.board.report', {
+            'kind': 'idea',
+          }, context: context),
+          child: Text(l.boardSuggestImprovement),
+        ),
+      ],
+    );
+    final search = ShadInput(
+      key: const ValueKey<String>('board.search'),
+      controller: _search,
+      placeholder: Text(l.boardSearch),
+      leading: const Icon(LucideIcons.search, size: 16),
+      onChanged: _onSearch,
+      onSubmitted: (v) {
+        _debounce?.cancel();
+        setState(() => _query = v.trim());
+      },
+    );
     final header = Padding(
-      padding: EdgeInsets.fromLTRB(narrow ? 16 : 24, 20, narrow ? 16 : 24, 0),
+      padding: EdgeInsets.fromLTRB(inset, 24, inset, 0),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         spacing: 12,
         children: [
-          Wrap(
-            spacing: 8,
-            runSpacing: 8,
-            crossAxisAlignment: WrapCrossAlignment.center,
-            children: [
-              ShadButton(
-                key: const ValueKey<String>('board.reportBug'),
-                leading: const Icon(LucideIcons.bug, size: 16),
-                onPressed: () => boardInvoke(s, 'shell.board.report', {
-                  'kind': 'bug',
-                }, context: context),
-                child: Text(l.boardReportBug),
-              ),
-              ShadButton.outline(
-                key: const ValueKey<String>('board.suggest'),
-                leading: const Icon(LucideIcons.lightbulb, size: 16),
-                onPressed: () => boardInvoke(s, 'shell.board.report', {
-                  'kind': 'idea',
-                }, context: context),
-                child: Text(l.boardSuggestImprovement),
-              ),
-              SizedBox(
-                width: narrow ? double.infinity : 280,
-                child: ShadInput(
-                  key: const ValueKey<String>('board.search'),
-                  controller: _search,
-                  placeholder: Text(l.boardSearch),
-                  leading: const Icon(LucideIcons.search, size: 16),
-                  onChanged: _onSearch,
-                  onSubmitted: (v) {
-                    _debounce?.cancel();
-                    setState(() => _query = v.trim());
-                  },
-                ),
-              ),
-            ],
-          ),
+          if (narrow) ...[
+            buttons,
+            search,
+          ] else
+            Row(
+              children: [
+                Expanded(child: buttons),
+                const SizedBox(width: 12),
+                SizedBox(width: 280, child: search),
+              ],
+            ),
           if (!s.auth.isSignedIn)
             BoardNotice(
               key: const ValueKey<String>('board.signedOutBanner'),
@@ -265,7 +276,7 @@ class _BoardPageState extends State<BoardPage> {
       ),
       BoardTab.review =>
         hub.me.value == null
-            ? const Center(child: ShadProgress())
+            ? const BoardListLoading()
             : BoardReviewTab(services: s),
     };
     return BoardFrame(
@@ -281,15 +292,12 @@ class _BoardPageState extends State<BoardPage> {
             child: Text(l.boardContributeLink),
           ),
       ],
-      child: BoardContent(
-        maxWidth: 1040,
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            header,
-            Expanded(child: body),
-          ],
-        ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          header,
+          Expanded(child: body),
+        ],
       ),
     );
   }
@@ -483,158 +491,231 @@ class _BoardPostListState extends State<BoardPostList> {
     }
   }
 
-  Widget _filters(WonkyAppLocalizations l, ShadThemeData theme) {
+  /// The filter bar: the drive's filter chips (outline buttons with a
+  /// chevron that open a menu; the label names the current value) in one
+  /// horizontally scrolling row.
+  Widget _filters(WonkyAppLocalizations l, double inset) {
     Widget chip(
       String key,
-      String label, {
-      required List<WonkyMenuEntry> Function() entries,
-      bool active = false,
-    }) => WonkyDropdownMenu(
-      entries: entries,
-      builder: (context, ctl) => ShadButton.raw(
-        key: ValueKey<String>('board.filter.$key'),
-        variant: active
-            ? ShadButtonVariant.secondary
-            : ShadButtonVariant.outline,
-        size: ShadButtonSize.sm,
-        trailing: const Icon(LucideIcons.chevronDown, size: 14),
-        onPressed: ctl.toggle,
-        child: Text(label),
+      String label,
+      List<WonkyMenuEntry> Function() entries,
+    ) => Padding(
+      padding: const EdgeInsetsDirectional.only(end: 8),
+      child: WonkyDropdownMenu(
+        entries: entries,
+        builder: (context, ctl) => ShadButton.outline(
+          key: ValueKey<String>('board.filter.$key'),
+          size: ShadButtonSize.sm,
+          trailing: const Icon(LucideIcons.chevronDown, size: 14),
+          onPressed: ctl.toggle,
+          child: Text(label),
+        ),
       ),
     );
 
-    final areaLabel = _areas.isEmpty
-        ? l.boardFilterArea
-        : '${l.boardFilterArea}: ${_areas.map(l.boardAreaName).join(', ')}';
+    String named(String name, Iterable<String> values) =>
+        values.isEmpty ? name : '$name: ${values.join(', ')}';
     final statuses = _done
         ? const [BoardPostStatus.done, BoardPostStatus.shipped]
         : BoardPostStatus.values;
     final hub = this.hub;
-    return Wrap(
-      spacing: 8,
-      runSpacing: 8,
-      crossAxisAlignment: WrapCrossAlignment.center,
-      children: [
-        chip(
-          'area',
-          areaLabel,
-          active: _areas.isNotEmpty,
-          entries: () => [
-            for (final a in BoardArea.values)
-              WonkyMenuCheckItem(
-                key: ValueKey<String>('board.filter.area.${a.name}'),
-                label: l.boardAreaName(a),
-                checked: _areas.contains(a),
-                onSelected: () => _set(
-                  () => _areas = _areas.contains(a)
-                      ? ({..._areas}..remove(a))
-                      : {..._areas, a},
+    return Padding(
+      padding: EdgeInsetsDirectional.fromSTEB(inset, 8, inset, 8),
+      child: SingleChildScrollView(
+        key: const ValueKey<String>('board.filterBar'),
+        scrollDirection: Axis.horizontal,
+        child: Row(
+          children: [
+            chip(
+              'area',
+              named(l.boardFilterArea, [
+                for (final a in BoardArea.values)
+                  if (_areas.contains(a)) l.boardAreaName(a),
+              ]),
+              () => [
+                for (final a in BoardArea.values)
+                  WonkyMenuCheckItem(
+                    key: ValueKey<String>('board.filter.area.${a.name}'),
+                    label: l.boardAreaName(a),
+                    checked: _areas.contains(a),
+                    onSelected: () => _set(
+                      () => _areas = _areas.contains(a)
+                          ? ({..._areas}..remove(a))
+                          : {..._areas, a},
+                    ),
+                  ),
+              ],
+            ),
+            chip(
+              'size',
+              named(l.boardFilterSize, [?_size].map(l.boardSizeName)),
+              () => [
+                WonkyMenuRadioItem(
+                  key: const ValueKey<String>('board.filter.size.any'),
+                  label: l.boardFilterAny,
+                  selected: _size == null,
+                  onSelected: () => _set(() => _size = null),
+                ),
+                for (final x in BoardSize.values)
+                  WonkyMenuRadioItem(
+                    key: ValueKey<String>('board.filter.size.${x.name}'),
+                    label: l.boardSizeName(x),
+                    selected: _size == x,
+                    onSelected: () => _set(() => _size = x),
+                  ),
+              ],
+            ),
+            chip(
+              'status',
+              named(l.boardFilterStatus, [
+                if (!_sameSet(_statuses, _defaultStatuses))
+                  for (final x in statuses)
+                    if (_statuses.contains(x)) l.boardStatusName(x),
+              ]),
+              () => [
+                for (final x in statuses)
+                  WonkyMenuCheckItem(
+                    key: ValueKey<String>('board.filter.status.${x.name}'),
+                    label: l.boardStatusName(x),
+                    checked: _statuses.contains(x),
+                    onSelected: () => _set(() {
+                      final next = _statuses.contains(x)
+                          ? ({..._statuses}..remove(x))
+                          : {..._statuses, x};
+                      _statuses = next.isEmpty ? _defaultStatuses : next;
+                    }),
+                  ),
+              ],
+            ),
+            if (s.auth.isSignedIn)
+              Padding(
+                padding: const EdgeInsetsDirectional.only(end: 8),
+                child: Semantics(
+                  toggled: _mine,
+                  button: true,
+                  child: ShadButton.outline(
+                    key: const ValueKey<String>('board.filter.mine'),
+                    size: ShadButtonSize.sm,
+                    leading: _mine
+                        ? const Icon(LucideIcons.check, size: 14)
+                        : null,
+                    onPressed: () => _set(() => _mine = !_mine),
+                    child: Text(l.boardFilterMine),
+                  ),
                 ),
               ),
-          ],
-        ),
-        chip(
-          'size',
-          _size == null
-              ? l.boardFilterSize
-              : '${l.boardFilterSize}: ${l.boardSizeName(_size!)}',
-          active: _size != null,
-          entries: () => [
-            WonkyMenuRadioItem(
-              key: const ValueKey<String>('board.filter.size.any'),
-              label: l.boardFilterAny,
-              selected: _size == null,
-              onSelected: () => _set(() => _size = null),
+            chip(
+              'sort',
+              l.sortBy(l.boardSortName(_sort)),
+              () => [
+                for (final x in BoardSort.values)
+                  WonkyMenuRadioItem(
+                    key: ValueKey<String>('board.sort.${x.name}'),
+                    label: l.boardSortName(x),
+                    selected: _sort == x,
+                    onSelected: () => _set(() => _sort = x),
+                  ),
+              ],
             ),
-            for (final x in BoardSize.values)
-              WonkyMenuRadioItem(
-                key: ValueKey<String>('board.filter.size.${x.name}'),
-                label: l.boardSizeName(x),
-                selected: _size == x,
-                onSelected: () => _set(() => _size = x),
-              ),
-          ],
-        ),
-        chip(
-          'status',
-          l.boardFilterStatus,
-          active: !_sameSet(_statuses, _defaultStatuses),
-          entries: () => [
-            for (final x in statuses)
-              WonkyMenuCheckItem(
-                key: ValueKey<String>('board.filter.status.${x.name}'),
-                label: l.boardStatusName(x),
-                checked: _statuses.contains(x),
-                onSelected: () => _set(() {
-                  final next = _statuses.contains(x)
-                      ? ({..._statuses}..remove(x))
-                      : {..._statuses, x};
-                  _statuses = next.isEmpty ? _defaultStatuses : next;
+            if (hub.isAdmin && !_done)
+              ShadButton.ghost(
+                key: const ValueKey<String>('board.select'),
+                size: ShadButtonSize.sm,
+                leading: Icon(
+                  _selecting ? LucideIcons.x : LucideIcons.squareCheck,
+                  size: 14,
+                ),
+                onPressed: () => setState(() {
+                  _selecting = !_selecting;
+                  _selected.clear();
                 }),
+                child: Text(_selecting ? l.boardSelectDone : l.boardSelect),
               ),
           ],
         ),
-        if (s.auth.isSignedIn)
-          Semantics(
-            toggled: _mine,
-            button: true,
-            child: ShadButton.raw(
-              key: const ValueKey<String>('board.filter.mine'),
-              variant: _mine
-                  ? ShadButtonVariant.secondary
-                  : ShadButtonVariant.outline,
-              size: ShadButtonSize.sm,
-              leading: _mine ? const Icon(LucideIcons.check, size: 14) : null,
-              onPressed: () => _set(() => _mine = !_mine),
-              child: Text(l.boardFilterMine),
-            ),
-          ),
-        chip(
-          'sort',
-          '${l.boardSort}: ${l.boardSortName(_sort)}',
-          entries: () => [
-            for (final x in BoardSort.values)
-              WonkyMenuRadioItem(
-                key: ValueKey<String>('board.sort.${x.name}'),
-                label: l.boardSortName(x),
-                selected: _sort == x,
-                onSelected: () => _set(() => _sort = x),
-              ),
-          ],
-        ),
-        if (hub.isAdmin && !_done)
-          ShadButton.ghost(
-            key: const ValueKey<String>('board.select'),
-            size: ShadButtonSize.sm,
-            leading: Icon(
-              _selecting ? LucideIcons.x : LucideIcons.squareCheck,
-              size: 14,
-            ),
-            onPressed: () => setState(() {
-              _selecting = !_selecting;
-              _selected.clear();
-            }),
-            child: Text(_selecting ? l.boardSelectDone : l.boardSelect),
-          ),
-      ],
+      ),
     );
   }
+
+  /// The drive's selection bar: a `secondary` pill that replaces the filter
+  /// bar in place (same height, so the rows do not move) with *Clear*, the
+  /// count and the actions.
+  Widget _selectionBar(
+    WonkyAppLocalizations l,
+    ShadThemeData theme,
+    double inset,
+  ) => Container(
+    key: const ValueKey<String>('board.selectionBar'),
+    margin: EdgeInsetsDirectional.fromSTEB(
+      math.max(0, inset - 8),
+      4,
+      math.max(0, inset - 8),
+      4,
+    ),
+    padding: const EdgeInsets.symmetric(horizontal: 8),
+    decoration: BoxDecoration(
+      color: theme.colorScheme.secondary,
+      borderRadius: BorderRadius.circular(22),
+    ),
+    child: SingleChildScrollView(
+      scrollDirection: Axis.horizontal,
+      child: Row(
+        children: [
+          ShadTooltip(
+            builder: (_) => Text(l.actionClear),
+            child: ShadIconButton.ghost(
+              key: const ValueKey<String>('board.selection.clear'),
+              width: 32,
+              height: 32,
+              iconSize: 16,
+              semanticLabel: l.actionClear,
+              icon: const Icon(LucideIcons.x),
+              onPressed: () => setState(() {
+                _selected.clear();
+                _selecting = false;
+              }),
+            ),
+          ),
+          Text(l.boardSelected(_selected.length), style: theme.textTheme.small),
+          const SizedBox(width: 12),
+          ShadButton.ghost(
+            key: const ValueKey<String>('board.selection.createTask'),
+            size: ShadButtonSize.sm,
+            leading: const Icon(LucideIcons.hammer, size: 14),
+            onPressed: _createTask,
+            child: Text(l.boardCreateTaskFrom(_selected.length)),
+          ),
+          ShadButton.ghost(
+            key: const ValueKey<String>('board.selection.addToTask'),
+            size: ShadButtonSize.sm,
+            leading: const Icon(LucideIcons.listPlus, size: 14),
+            onPressed: _addToTask,
+            child: Text(l.boardAddToTaskEllipsis),
+          ),
+        ],
+      ),
+    ),
+  );
 
   @override
   Widget build(BuildContext context) {
     final l = WonkyAppLocalizations.of(context);
     final theme = ShadTheme.of(context);
-    final narrow = MediaQuery.sizeOf(context).width < 600;
-    final pad = narrow ? 16.0 : 24.0;
+    final width = MediaQuery.sizeOf(context).width;
+    final narrow = width < 600;
+    final inset = shellPageInset(width);
     final Widget list;
     if (_loading) {
-      list = const Center(child: ShadProgress(key: ValueKey('board.loading')));
+      list = const BoardListLoading(key: ValueKey('board.loading'));
     } else if (_error != null && _items.isEmpty) {
+      final offline = isOfflineError(_error!);
       list = WonkyEmptyState(
         key: const ValueKey<String>('board.error'),
-        illustration: EmptyIllustration.error,
-        title: l.boardLoadFailed,
-        description: errorMessage(_error!),
+        illustration: offline
+            ? EmptyIllustration.offline
+            : EmptyIllustration.error,
+        title: offline ? l.driveOfflineTitle : l.boardLoadFailed,
+        description: offline ? null : errorMessage(_error!),
         actions: [
           ShadButton.outline(onPressed: _load, child: Text(l.actionRetry)),
         ],
@@ -655,9 +736,12 @@ class _BoardPostListState extends State<BoardPostList> {
         description: widget.query.isNotEmpty || _done ? null : l.boardEmptyHint,
       );
     } else {
+      // Rows are inset by their own 8 px padding: their text lines up with
+      // the header's.
+      final rowInset = math.max(0.0, inset - 8);
       list = ListView.builder(
         key: const ValueKey<String>('board.rows'),
-        padding: EdgeInsets.fromLTRB(pad, 4, pad, 24),
+        padding: EdgeInsets.fromLTRB(rowInset, 0, rowInset, 24),
         itemCount: _items.length + 1,
         itemBuilder: (context, i) {
           if (i == _items.length) {
@@ -675,6 +759,9 @@ class _BoardPostListState extends State<BoardPostList> {
                       child: ShadButton.outline(
                         key: const ValueKey<String>('board.loadMore'),
                         enabled: !_loadingMore,
+                        leading: _loadingMore
+                            ? const ShadSpinner(size: 14)
+                            : null,
                         onPressed: _loadMore,
                         child: Text(l.boardLoadMore),
                       ),
@@ -703,42 +790,15 @@ class _BoardPostListState extends State<BoardPostList> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        Padding(
-          padding: EdgeInsets.fromLTRB(pad, 12, pad, 8),
-          child: _filters(l, theme),
+        SizedBox(
+          height: 48,
+          child: _selecting && _selected.isNotEmpty
+              ? _selectionBar(l, theme, inset)
+              : _filters(l, inset),
         ),
         Expanded(
           child: _done ? _DoneLayout(services: s, posts: list) : list,
         ),
-        if (_selecting && _selected.isNotEmpty)
-          Container(
-            key: const ValueKey<String>('board.selectionBar'),
-            padding: EdgeInsets.symmetric(horizontal: pad, vertical: 10),
-            decoration: BoxDecoration(
-              color: theme.colorScheme.card,
-              border: Border(top: BorderSide(color: theme.colorScheme.border)),
-            ),
-            child: Wrap(
-              spacing: 8,
-              runSpacing: 8,
-              crossAxisAlignment: WrapCrossAlignment.center,
-              children: [
-                Text(l.boardSelected(_selected.length)),
-                ShadButton(
-                  key: const ValueKey<String>('board.selection.createTask'),
-                  size: ShadButtonSize.sm,
-                  onPressed: _createTask,
-                  child: Text(l.boardCreateTaskFrom(_selected.length)),
-                ),
-                ShadButton.outline(
-                  key: const ValueKey<String>('board.selection.addToTask'),
-                  size: ShadButtonSize.sm,
-                  onPressed: _addToTask,
-                  child: Text(l.boardAddToTaskEllipsis),
-                ),
-              ],
-            ),
-          ),
       ],
     );
   }
@@ -757,7 +817,7 @@ class _DoneLayout extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l = WonkyAppLocalizations.of(context);
-    final narrow = MediaQuery.sizeOf(context).width < 600;
+    final inset = shellPageInset(MediaQuery.sizeOf(context).width);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
@@ -769,7 +829,7 @@ class _DoneLayout extends StatelessWidget {
             statuses: const [BoardTaskStatus.done, BoardTaskStatus.shipped],
             compact: true,
             title: l.boardDoneTasks,
-            horizontalPadding: narrow ? 16 : 24,
+            horizontalPadding: math.max(0, inset - 8),
           ),
         ),
         Expanded(child: posts),
@@ -806,9 +866,6 @@ class BoardPostRow extends StatefulWidget {
 }
 
 class _BoardPostRowState extends State<BoardPostRow> {
-  bool _focused = false;
-  bool _hover = false;
-
   BoardPostListItem get item => widget.item;
 
   bool get _votingOpen =>
@@ -839,10 +896,6 @@ class _BoardPostRowState extends State<BoardPostRow> {
         value = bug || item.myVote == -1 ? 0 : -1;
       }
       if (value != item.myVote) widget.onVote(value);
-      return KeyEventResult.handled;
-    }
-    if (k == LogicalKeyboardKey.enter || k == LogicalKeyboardKey.space) {
-      _open();
       return KeyEventResult.handled;
     }
     return KeyEventResult.ignored;
@@ -890,7 +943,7 @@ class _BoardPostRowState extends State<BoardPostRow> {
           children: [
             Icon(
               LucideIcons.messageSquare,
-              size: 13,
+              size: 14,
               color: cs.mutedForeground,
             ),
             Text('${item.commentCount}', style: muted),
@@ -909,88 +962,64 @@ class _BoardPostRowState extends State<BoardPostRow> {
         avatar: false,
       ),
     ];
-    final title = Text(
-      item.title,
-      style: theme.textTheme.p.copyWith(
-        fontWeight: FontWeight.w500,
-        decoration: _hover ? TextDecoration.underline : null,
-      ),
-      maxLines: widget.narrow ? 3 : 2,
-      overflow: TextOverflow.ellipsis,
-    );
     final selected = widget.selected;
     return Focus(
+      canRequestFocus: false,
+      skipTraversal: true,
       onKeyEvent: _onKey,
-      onFocusChange: (f) => setState(() => _focused = f),
-      child: Semantics(
-        container: true,
-        label: '#${item.number} ${item.title}',
-        child: MouseRegion(
-          cursor: SystemMouseCursors.click,
-          onEnter: (_) => setState(() => _hover = true),
-          onExit: (_) => setState(() => _hover = false),
-          child: GestureDetector(
-            behavior: HitTestBehavior.opaque,
-            onTap: _open,
-            child: Container(
-              padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 8),
-              decoration: BoxDecoration(
-                color: _hover || _focused
-                    ? cs.muted.withValues(alpha: 0.5)
-                    : null,
-                border: Border(
-                  bottom: BorderSide(color: cs.border),
-                  left: BorderSide(
-                    color: _focused ? cs.ring : const Color(0x00000000),
-                    width: 2,
-                  ),
+      child: BoardListTile(
+        semanticLabel: '#${item.number} ${item.title}',
+        selected: selected == true,
+        onTap: _open,
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          spacing: 12,
+          children: [
+            if (selected != null)
+              Padding(
+                padding: const EdgeInsets.only(top: 4),
+                child: ShadCheckbox(
+                  key: ValueKey<String>('board.row.${item.number}.select'),
+                  value: selected,
+                  onChanged: widget.onSelected,
                 ),
               ),
-              child: Row(
+            ConstrainedBox(
+              constraints: const BoxConstraints(minWidth: 48),
+              child: Center(widthFactor: 1, child: vote),
+            ),
+            Expanded(
+              child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
-                spacing: 12,
+                spacing: 6,
                 children: [
-                  if (selected != null)
-                    Padding(
-                      padding: const EdgeInsets.only(top: 4),
-                      child: ShadCheckbox(
-                        key: ValueKey<String>(
-                          'board.row.${item.number}.select',
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    spacing: 6,
+                    children: [
+                      Text('#${item.number}', style: theme.textTheme.muted),
+                      Expanded(
+                        child: Text(
+                          item.title,
+                          style: theme.textTheme.small.copyWith(
+                            fontWeight: FontWeight.w500,
+                          ),
+                          maxLines: widget.narrow ? 3 : 2,
+                          overflow: TextOverflow.ellipsis,
                         ),
-                        value: selected,
-                        onChanged: widget.onSelected,
                       ),
-                    ),
-                  ConstrainedBox(
-                    constraints: const BoxConstraints(minWidth: 56),
-                    child: Center(widthFactor: 1, child: vote),
+                    ],
                   ),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      spacing: 6,
-                      children: [
-                        Row(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          spacing: 6,
-                          children: [
-                            Text('#${item.number}', style: muted),
-                            Expanded(child: title),
-                          ],
-                        ),
-                        Wrap(
-                          spacing: 8,
-                          runSpacing: 4,
-                          crossAxisAlignment: WrapCrossAlignment.center,
-                          children: meta,
-                        ),
-                      ],
-                    ),
+                  Wrap(
+                    spacing: 8,
+                    runSpacing: 4,
+                    crossAxisAlignment: WrapCrossAlignment.center,
+                    children: meta,
                   ),
                 ],
               ),
             ),
-          ),
+          ],
         ),
       ),
     );

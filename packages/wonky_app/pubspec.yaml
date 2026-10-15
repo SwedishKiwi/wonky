@@ -40,6 +40,9 @@ dependencies:
     path: ../wonky_core
   wonky_fonts:
     path: ../wonky_fonts
+  # The lightweight WYSIWYG Markdown editor of the composer (specs/16 §7.3).
+  wonky_rich_editor:
+    path: ../wonky_rich_editor
   wonky_spellcheck:
     path: ../wonky_spellcheck
   wonky_ui:

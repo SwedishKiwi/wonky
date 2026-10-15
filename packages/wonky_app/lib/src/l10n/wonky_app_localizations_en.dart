@@ -2982,16 +2982,31 @@ class WonkyAppLocalizationsEn extends WonkyAppLocalizations {
   String get markdownBulletedList => 'Bulleted list';
 
   @override
-  String get markdownWrite => 'Write';
+  String get markdownStrikethrough => 'Strikethrough';
 
   @override
-  String get markdownPreview => 'Preview';
+  String get markdownNumberedList => 'Numbered list';
 
   @override
-  String get markdownPreviewEmpty => 'Nothing to preview';
+  String get markdownTaskList => 'Checklist';
+
+  @override
+  String get markdownQuote => 'Quote';
+
+  @override
+  String get markdownCodeBlock => 'Code block';
+
+  @override
+  String get markdownToolbar => 'Formatting';
 
   @override
   String get markdownLinkTitle => 'Insert link';
+
+  @override
+  String get markdownLinkEditTitle => 'Edit link';
+
+  @override
+  String get markdownLinkRemove => 'Remove link';
 
   @override
   String get markdownLinkUrl => 'URL';
@@ -7456,16 +7471,31 @@ class WonkyAppLocalizationsEnXa extends WonkyAppLocalizationsEn {
   String get markdownBulletedList => '[Ɓûļļéţéð ļîšţ one t]';
 
   @override
-  String get markdownWrite => '[Ŵŕîţé on]';
+  String get markdownStrikethrough => '[Šţŕîķéţĥŕöûĝĥ one t]';
 
   @override
-  String get markdownPreview => '[Þŕéṽîéŵ one]';
+  String get markdownNumberedList => '[Ñûɱƀéŕéð ļîšţ one t]';
 
   @override
-  String get markdownPreviewEmpty => '[Ñöţĥîñĝ ţö þŕéṽîéŵ one tw]';
+  String get markdownTaskList => '[Çĥéçķļîšţ one]';
+
+  @override
+  String get markdownQuote => '[Ǫûöţé on]';
+
+  @override
+  String get markdownCodeBlock => '[Çöðé ƀļöçķ one]';
+
+  @override
+  String get markdownToolbar => '[Ƒöŕɱåţţîñĝ one]';
 
   @override
   String get markdownLinkTitle => '[Îñšéŕţ ļîñķ one]';
+
+  @override
+  String get markdownLinkEditTitle => '[Éðîţ ļîñķ one]';
+
+  @override
+  String get markdownLinkRemove => '[Ŕéɱöṽé ļîñķ one]';
 
   @override
   String get markdownLinkUrl => '[ÛŔĻ on]';

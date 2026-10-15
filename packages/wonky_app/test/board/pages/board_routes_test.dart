@@ -121,7 +121,7 @@ void main() {
     }
     await t().go(tester, '/improvements/p/1');
 
-    await tester.tap(byKey('board.back'));
+    await tester.tap(byKey('shell.page.back'));
     await tester.pumpAndSettle();
 
     expect(t().location, '/recent');

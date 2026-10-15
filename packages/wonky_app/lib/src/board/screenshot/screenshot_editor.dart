@@ -6,7 +6,19 @@ import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
 import 'package:shad/shad.dart';
 import 'package:wonky_core/wonky_core.dart' show KeyBinding;
-import 'package:wonky_ui/wonky_ui.dart' show InkStroke, InkTool, OneEuroFilter;
+import 'package:wonky_ui/wonky_ui.dart'
+    show
+        InkStroke,
+        InkTool,
+        OneEuroFilter,
+        ToolbarButton,
+        ToolbarCustom,
+        ToolbarGroup,
+        ToolbarToggleButton,
+        ToolbarTooltipContent,
+        WonkyColors,
+        WonkyMenuRadioItem,
+        WonkyToolbar;
 
 import '../../bootstrap/platform.dart';
 import '../../core/l10n_or_english.dart';
@@ -526,7 +538,6 @@ class ScreenshotEditorState extends State<ScreenshotEditor>
     final l = WonkyAppLocalizations.of(context);
     final theme = ShadTheme.of(context);
     final cs = theme.colorScheme;
-    final narrow = MediaQuery.sizeOf(context).width < 600;
     return Focus(
       focusNode: _focus,
       autofocus: true,
@@ -546,7 +557,7 @@ class ScreenshotEditorState extends State<ScreenshotEditor>
                 children: [
                   _header(l, theme),
                   _warning(l, theme),
-                  _toolbar(l, theme, narrow),
+                  _toolbar(l, theme),
                   if (_error != null)
                     Padding(
                       padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
@@ -568,12 +579,19 @@ class ScreenshotEditorState extends State<ScreenshotEditor>
     );
   }
 
+  /// The top bar of a full-screen view (the version history's): 56 px, the
+  /// title in `large`, a bottom border, Cancel and the primary *Done*.
   Widget _header(WonkyAppLocalizations l, ShadThemeData theme) {
     final platform = currentKeyPlatform;
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 12, 12, 8),
+    return Container(
+      height: 56,
+      padding: const EdgeInsets.symmetric(horizontal: 12),
+      decoration: BoxDecoration(
+        border: Border(bottom: BorderSide(color: theme.colorScheme.border)),
+      ),
       child: Row(
         children: [
+          const SizedBox(width: 4),
           Expanded(
             child: Semantics(
               header: true,
@@ -591,11 +609,9 @@ class ScreenshotEditorState extends State<ScreenshotEditor>
           ),
           const SizedBox(width: 8),
           ShadTooltip(
-            builder: (_) => Text(
-              l.screenshotShortcut(
-                l.screenshotDone,
-                const KeyBinding('Enter', mod: true).format(platform),
-              ),
+            builder: (_) => ToolbarTooltipContent(
+              label: l.screenshotDone,
+              shortcut: const KeyBinding('Enter', mod: true).labels(platform),
             ),
             child: ShadButton(
               key: const ValueKey<String>(ScreenshotEditorKeys.done),
@@ -611,48 +627,29 @@ class ScreenshotEditorState extends State<ScreenshotEditor>
     );
   }
 
+  /// The public-screenshot warning: a `ShadAlert` like the app's other
+  /// callouts; it cannot be dismissed.
   Widget _warning(WonkyAppLocalizations l, ShadThemeData theme) {
-    final cs = theme.colorScheme;
     return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+      padding: const EdgeInsets.fromLTRB(8, 8, 8, 0),
       child: Semantics(
         container: true,
         liveRegion: true,
-        child: DecoratedBox(
+        child: ShadAlert(
           key: const ValueKey<String>(ScreenshotEditorKeys.warning),
-          decoration: BoxDecoration(
-            color: cs.muted,
-            border: Border.all(color: cs.border),
-            borderRadius: theme.radius,
-          ),
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Padding(
-                  padding: const EdgeInsets.only(top: 2, right: 8),
-                  child: Icon(
-                    LucideIcons.triangleAlert,
-                    size: 16,
-                    color: cs.foreground,
-                  ),
-                ),
-                Expanded(
-                  child: Text(
-                    l.screenshotEditorWarning,
-                    style: theme.textTheme.small,
-                  ),
-                ),
-              ],
-            ),
-          ),
+          icon: const Icon(LucideIcons.triangleAlert, size: 16),
+          iconColor: theme.colorScheme.warning,
+          titleStyle: theme.textTheme.small,
+          title: Text(l.screenshotEditorWarning),
         ),
       ),
     );
   }
 
-  Widget _toolbar(WonkyAppLocalizations l, ShadThemeData theme, bool narrow) {
+  /// The tools in a `WonkyToolbar` (the editors' toolbar: icon toggles with
+  /// tooltips and shortcuts, groups split by separators, overflow into "⋯"),
+  /// in the editors' rounded toolbar strip.
+  Widget _toolbar(WonkyAppLocalizations l, ShadThemeData theme) {
     final cs = theme.colorScheme;
     String toolLabel(ScreenshotTool t) => switch (t) {
       ScreenshotTool.cover => l.screenshotToolCover,
@@ -678,112 +675,113 @@ class ScreenshotEditorState extends State<ScreenshotEditor>
       ScreenshotColor.blue => l.screenshotColorBlue,
     };
     final platform = currentKeyPlatform;
-    Widget iconButton(
-      String key,
-      IconData icon,
-      String label,
-      String? shortcut,
-      VoidCallback? onPressed,
-    ) => ShadTooltip(
-      builder: (_) => Text(
-        shortcut == null ? label : l.screenshotShortcut(label, shortcut),
+    final colorsEnabled = _tool.accent || _selectedIsAccent;
+    return Container(
+      margin: const EdgeInsets.fromLTRB(8, 8, 8, 8),
+      decoration: BoxDecoration(
+        color: cs.muted.withValues(alpha: 0.6),
+        borderRadius: BorderRadius.circular(20),
       ),
-      child: ShadIconButton.ghost(
-        key: ValueKey<String>(key),
-        semanticLabel: label,
-        width: 32,
-        height: 32,
-        iconSize: 16,
-        icon: Icon(icon),
-        onPressed: onPressed,
-      ),
-    );
-    final accentEnabled = _tool.accent;
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(12, 0, 12, 8),
-      child: Wrap(
-        spacing: 4,
-        runSpacing: 4,
-        crossAxisAlignment: WrapCrossAlignment.center,
-        children: [
-          for (final t in ScreenshotTool.values)
-            ShadTooltip(
-              builder: (_) =>
-                  Text(l.screenshotShortcut(toolLabel(t), toolKey(t))),
-              child: MergeSemantics(
-                child: Semantics(
-                  selected: _tool == t,
-                  label: narrow ? toolLabel(t) : null,
-                  child: (_tool == t ? ShadButton.secondary : ShadButton.ghost)(
-                    key: ValueKey<String>(ScreenshotEditorKeys.tool(t)),
-                    size: ShadButtonSize.sm,
-                    leading: Icon(toolIcon(t), size: 16),
-                    onPressed: () => setTool(t),
-                    child: narrow ? null : Text(toolLabel(t)),
-                  ),
-                ),
+      child: WonkyToolbar(
+        semanticLabel: l.screenshotEditorTitle,
+        onEscape: _focus.requestFocus,
+        groups: [
+          ToolbarGroup([
+            for (final t in ScreenshotTool.values)
+              ToolbarToggleButton(
+                id: ScreenshotEditorKeys.tool(t),
+                pinned: true,
+                icon: toolIcon(t),
+                label: toolLabel(t),
+                shortcut: [toolKey(t)],
+                value: _tool == t,
+                onChanged: (_) => setTool(t),
               ),
-            ),
-          const SizedBox(width: 8),
-          for (final (i, c) in ScreenshotColor.values.indexed)
-            ShadTooltip(
-              builder: (_) =>
-                  Text(l.screenshotShortcut(colorLabel(c), '${i + 1}')),
-              child: MergeSemantics(
-                child: Semantics(
-                  selected: _color == c,
-                  child: ShadIconButton.ghost(
-                    key: ValueKey<String>(ScreenshotEditorKeys.color(c)),
-                    semanticLabel: colorLabel(c),
-                    width: 32,
-                    height: 32,
-                    enabled: accentEnabled || _selectedIsAccent,
-                    onPressed: () => setColor(c),
-                    icon: Container(
-                      width: 18,
-                      height: 18,
-                      decoration: BoxDecoration(
-                        color: c.color,
-                        shape: BoxShape.circle,
-                        border: Border.all(
-                          color: _color == c ? cs.foreground : cs.border,
-                          width: _color == c ? 2 : 1,
+          ], id: 'tools'),
+          ToolbarGroup([
+            for (final (i, c) in ScreenshotColor.values.indexed)
+              ToolbarCustom(
+                id: ScreenshotEditorKeys.color(c),
+                priority: 2,
+                overflow: [
+                  WonkyMenuRadioItem(
+                    label: colorLabel(c),
+                    selected: _color == c,
+                    enabled: colorsEnabled,
+                    onSelected: () => setColor(c),
+                  ),
+                ],
+                builder: (context) => ShadTooltip(
+                  builder: (_) => ToolbarTooltipContent(
+                    label: colorLabel(c),
+                    shortcut: ['${i + 1}'],
+                  ),
+                  child: MergeSemantics(
+                    child: Semantics(
+                      selected: _color == c,
+                      child: ShadIconButton.ghost(
+                        key: ValueKey<String>(ScreenshotEditorKeys.color(c)),
+                        semanticLabel: colorLabel(c),
+                        width: 28,
+                        height: 28,
+                        enabled: colorsEnabled,
+                        onPressed: () => setColor(c),
+                        icon: Container(
+                          width: 16,
+                          height: 16,
+                          decoration: BoxDecoration(
+                            color: c.color,
+                            shape: BoxShape.circle,
+                            border: Border.all(
+                              color: _color == c ? cs.foreground : cs.border,
+                              width: _color == c ? 2 : 1,
+                            ),
+                          ),
                         ),
                       ),
                     ),
                   ),
                 ),
               ),
+          ], id: 'colors'),
+          ToolbarGroup([
+            ToolbarButton(
+              id: ScreenshotEditorKeys.undo,
+              pinned: true,
+              icon: LucideIcons.undo2,
+              label: l.screenshotUndo,
+              shortcut: const KeyBinding('Z', mod: true).labels(platform),
+              onPressed: canUndo ? undo : null,
             ),
-          const SizedBox(width: 8),
-          iconButton(
-            ScreenshotEditorKeys.undo,
-            LucideIcons.undo2,
-            l.screenshotUndo,
-            const KeyBinding('Z', mod: true).format(platform),
-            canUndo ? undo : null,
-          ),
-          iconButton(
-            ScreenshotEditorKeys.redo,
-            LucideIcons.redo2,
-            l.screenshotRedo,
-            const KeyBinding('Z', mod: true, shift: true).format(platform),
-            canRedo ? redo : null,
-          ),
-          iconButton(
-            ScreenshotEditorKeys.delete,
-            LucideIcons.trash2,
-            l.screenshotDelete,
-            null,
-            _selected == null ? null : deleteSelected,
-          ),
-          ShadButton.ghost(
-            key: const ValueKey<String>(ScreenshotEditorKeys.clear),
-            size: ShadButtonSize.sm,
-            leading: const Icon(LucideIcons.eraser, size: 16),
-            onPressed: _items.isEmpty ? null : clear,
-            child: Text(l.screenshotClear),
-          ),
+            ToolbarButton(
+              id: ScreenshotEditorKeys.redo,
+              priority: 1,
+              icon: LucideIcons.redo2,
+              label: l.screenshotRedo,
+              shortcut: const KeyBinding(
+                'Z',
+                mod: true,
+                shift: true,
+              ).labels(platform),
+              onPressed: canRedo ? redo : null,
+            ),
+          ], id: 'history'),
+          ToolbarGroup([
+            ToolbarButton(
+              id: ScreenshotEditorKeys.delete,
+              priority: 3,
+              icon: LucideIcons.trash2,
+              label: l.screenshotDelete,
+              onPressed: _selected == null ? null : deleteSelected,
+            ),
+            ToolbarButton(
+              id: ScreenshotEditorKeys.clear,
+              priority: 3,
+              icon: LucideIcons.eraser,
+              label: l.screenshotClear,
+              onPressed: _items.isEmpty ? null : clear,
+            ),
+          ], id: 'edit'),
         ],
       ),
     );
@@ -795,8 +793,10 @@ class ScreenshotEditorState extends State<ScreenshotEditor>
     return _items.any((a) => a.id == id && a.tool.accent);
   }
 
+  // The area around the image is the `canvas` token, like the area behind
+  // a document page.
   Widget _canvas(WonkyAppLocalizations l, ShadColorScheme cs) => ColoredBox(
-    color: cs.muted,
+    color: cs.canvas,
     child: LayoutBuilder(
       builder: (context, constraints) {
         final size = _imageSize;

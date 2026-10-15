@@ -221,6 +221,15 @@ const rules = <String, PackageRule>{
     spec: {'wonky_code', 'wonky_ui', 'shad', 're_editor'},
     forbiddenImports: _sharedLeafForbidden,
   ),
+  // Shared lightweight WYSIWYG Markdown editor (specs/16 §7.3): the
+  // vendored super_editor on the shared inline Markdown codec. A Flutter
+  // leaf below the shell: no app family, shell, client or server code.
+  'wonky_rich_editor': PackageRule(
+    kind: Kind.flutter,
+    spec: {'super_editor', 'wonky_rich_text', 'wonky_ui', 'shad', 'markdown'},
+    exceptions: {'flutter_test': 'enterMarkdown in lib/testing.dart (15 §7)'},
+    forbiddenImports: _sharedLeafForbidden,
+  ),
   // Shared offline-sync kit (v2; Slides 12 §5.1–5.2, suite 12 §2.6, Drive 05
   // D-6), extracted from Sheets: the pure half (row changes, plans, undo)
   // and the client half (replica, journal, writer, sync controller). Below
@@ -382,6 +391,7 @@ const rules = <String, PackageRule>{
       'mcp_dart',
       'wonky_spellcheck',
       'wonky_fonts',
+      'wonky_rich_editor',
     },
     exceptions: {
       'shad': 'UI is built with shad (02)',

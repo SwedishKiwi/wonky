@@ -253,6 +253,12 @@ the screenshot first, then runs `shell.board.createPost` (`report_commands.dart`
 post, redo restores it) and tells open board pages through `BoardHub.changed`, so the lists,
 counts and the Review tab refresh. `config.json` `board` defaults to true when absent.
 
+**Layout (consistency pass):** the panel has `ShadDialog`'s surface — the theme's
+`primaryDialogTheme` (popover color, dialog border, radius and shadow), its `large` title and
+24 px side padding. Full screen without border or radius below 600 px. The actions follow
+`ShadDialog` / `WonkyFormDialog`: *Cancel* then the primary on one row, stacked full width with
+the primary on top below shad's `sm` breakpoint (640 px).
+
 ### 4.3 Board routes
 
 The board routes are added to every app by `buildShellRouter`, next to `settingsRoutes()`. They are
@@ -270,6 +276,16 @@ The board routes are added to every app by `buildShellRouter`, next to `settings
 | `/improvements/contribute` | How to contribute: renders the repo's `CONTRIBUTING.md` summary (§10.3) |
 
 - Back from the board returns to the last non-board route, like `settingsBackTarget`.
+- **Page frame (as built):** every board page (board, post, task, contribute) uses the settings
+  page frame, `ShellPageFrame` (`shell/page_frame.dart`): the 56 px bar with back
+  (`shell.page.back`, to `boardBackTarget`), the app logo, the title in `large`, the page's
+  actions and the account menu; signed out, `ShellPageFrame.signedOutAction` shows *Sign in*
+  (`board.signIn`) in its place. There is no left menu (the board is not a home destination).
+  The content is the settings column: `shellPageMaxWidth` (760 px) centered, 24 px gutters
+  (16 px below `shellPageNarrowWidth`, 760 px), 24 px from the top. The post, task and
+  contribute pages scroll in `ShellPageBody` (shared with Settings); the board page aligns its
+  header, filter bar and list to the same column with `shellPageInset`, so the list's scrollbar
+  stays at the window edge.
 - Shared links use the current app's base (`/sheets/improvements/p/412`). The server's
   `/improvements/*` path redirects to `/drive/improvements/*` for links in emails and PRs.
 
@@ -304,6 +320,17 @@ The board routes are added to every app by `buildShellRouter`, next to `settings
   - a 📷 icon when the post has a screenshot.
 - Paging: 30 rows, *Load more*. Empty states per tab.
 - Width < 600: rows stack, and the vote control moves to the row's start.
+- **As built (consistency pass):** the header row has the two buttons and, at the end, a 280 px
+  search (below 600 px the search goes full width under the buttons). The filters are the
+  drive's filter bar: outline `sm` buttons with a chevron that open a `WonkyDropdownMenu`, the
+  label naming the current value (*Area: Sheets, Write*, *Sort: Trending*), in one horizontally
+  scrolling 48 px row (`board.filterBar`). The admin selection bar is the drive's: a
+  `secondary` pill that replaces the filter bar in place (*Clear*, *N selected*, *Create task
+  from N*, *Add to task…*), so rows never move. Rows (posts, tasks, review items, a task's
+  linked posts) are `BoardListTile`s, styled like the drive rows and the notification rows: a
+  rounded tile, `accent` on hover, `sidebarAccent` when selected, the focus ring, no dividers;
+  titles in `small` medium weight. Loading shows the drive list's `LoadingShimmer`; errors and
+  empty tabs are `WonkyEmptyState`s (the offline illustration when offline).
 
 ### 4.5 Post page
 
@@ -353,8 +380,17 @@ The board routes are added to every app by `buildShellRouter`, next to `settings
 
 ### 4.7 Visual and accessibility notes
 
-- Uses the existing tokens and widgets: `ShadCard`, chips, `WonkyBadge` and the design system's
-  status colors. Status colors are always paired with a text label.
+- Uses the existing tokens and widgets: label chips are `ShadBadge.secondary` (like the comment
+  cards' author badges, also the *Admin* badge), status badges `ShadBadge.outline` with a dot in
+  the design system's status color (`info`, `warning`, `success`, `destructive`). Status colors
+  are always paired with a text label.
+- Notices on posts and tasks (checking, held, removed, declined, merged, draft, prompt pending),
+  the moderation panel and the claim code are `ShadAlert`s like the app's other callouts (the
+  icon in the status color; `ShadAlert.destructive` for removals). Code (setup commands, PR
+  lines, the prompt, the claim code) uses `WonkyTheme.monoFamily` at 12 px on `muted` with a
+  6 px radius, the copy icon at the top end as in Markdown code blocks; copying confirms with
+  the shell toast. *Details* and *How to build it* are keyboard-operable disclosures
+  (`BoardDisclosure`). Section headings are `h4`, page titles (post, task) `h3`.
 - Vote control:
   - two buttons with labels ("Upvote, 14 votes", "Remove upvote") and `aria-pressed`;
   - keyboard: `+`/`-` on a focused row (`shell.board.vote` with up/down).
@@ -407,6 +443,12 @@ The board routes are added to every app by `buildShellRouter`, next to `settings
 | Select / move / delete | click, drag, `Delete` | Shapes stay editable until *Done* |
 | Crop (P1) | `R` | Crop rectangle |
 
+- **Chrome (as built):** the top bar of the full-screen views (the version history's): 56 px with
+  a bottom border, the title in `large`, *Cancel* and *Done*. The warning is a `ShadAlert` (not
+  dismissible). The tools are a `WonkyToolbar` in the editors' rounded toolbar strip: icon
+  toggles with tooltips and shortcuts (`ToolbarToggleButton`), the colors, undo/redo and
+  delete/clear in groups split by separators; tools and undo never overflow into "⋯". The area
+  around the image is the `canvas` token.
 - **Shared ink code**: `InkStroke`, `OneEuroFilter` and the stroke painter move from
   `wonky_slides/lib/features/present/present_ink.dart` into `wonky_ui` (`ink/`: `InkStroke` with
   `InkTool.pen` / `highlighter`, `OneEuroFilter`, `InkStrokePainter` and its static
@@ -666,16 +708,61 @@ renderer.
 - **Document comments** switch from raw text to `WonkyMarkdown` with the comment profile. This is
   a visible improvement for Write, Sheets and Slides comments and matches what [07 §2](07-collaboration.md)
   already promises.
-- **Composer.** `MarkdownComposer`, a `TextField` with:
-  - a small toolbar: Bold `Mod+B`, Italic `Mod+I`, Code `` Mod+E ``, Link `Mod+K`, Bulleted list;
-  - the toolbar wraps the selection with Markdown syntax, the same text transforms as the
-    `InlineMarkdownWriter` conventions in `wonky_rich_text`;
-  - a *Write | Preview* toggle.
-
-  Write's rich editor (`super_editor`) is deliberately **not** reused: it is far heavier than a
-  comment box needs, and the board must also load for signed-out visitors.
-- Spellcheck in the composer: P2, through the existing `wonky_app/spellcheck.dart` glue if it
-  supports plain `TextField`s by then.
+- **Composer (WYSIWYG).** `MarkdownComposer` is a lightweight WYSIWYG Markdown field:
+  `WonkyRichEditor` from the shared package `wonky_rich_editor` (01 §2.1), `super_editor`
+  (vendored, as in Write and Slides) configured lightly, in the spirit of Slides' speaker-notes
+  editor. *Decided:* the board's text fields show formatting as it will be rendered, so the
+  first iteration's `TextField` with a *Write | Preview* toggle is gone.
+  - **Markdown in, Markdown out.** The composer keeps its `TextEditingController` API: the
+    controller's text is the Markdown. `MarkdownDocumentCodec` reads it into a document and
+    writes it back: paragraphs (their lines stay lines, like the renderer's `hardBreaks`),
+    headings 1–6 (drawn at most at h3 size, like posts), bullet and numbered items with levels
+    (nested items at the parent's content column: 2 spaces under `- `, 3 under `1. `), task
+    items (`- [ ]`, `- [x]`, for prompts' acceptance criteria), quotes, fenced code blocks
+    (info string kept), rules, and inline bold, italic, strikethrough, code and links through
+    `wonky_rich_text`'s inline reader and writer (the suite's syntax).
+  - **Nothing is lost.** Tables, HTML, indented code, link reference definitions and any block
+    whose inline content the editor can't represent (images, inline HTML, link titles, links with
+    other schemes, styles across lines, a quote inside a list item …) become a *literal* block,
+    shown as Markdown source in a bordered code box and written back verbatim.
+  - **Untouched text stays as it was.** Until the user edits, the text is exactly what was set;
+    afterwards only the edited blocks are rewritten (each block remembers its source and the
+    Markdown the codec would write for it). The prompt editor's diff and lint therefore keep
+    working on the Markdown and only show real changes.
+  - **Profiles.** The `profile` sets the blocks: comments have no headings, quotes or rules
+    (those lines stay text, as the comment renderer shows them; no Quote button).
+  - **Toolbar** (above the field, wraps at 360 px): Bold, Italic, Strikethrough, Code, Link |
+    Bulleted list, Numbered list, Checklist | Quote, Code block — `ShadToggle`s like Write's
+    toolbar, checked for the selection, tooltips with the shortcut, screen-reader labels.
+  - **Typing** follows Write's autoformat (Write 04 §7): `# ` headings, `- ` `* ` `+ ` bullets,
+    `1. ` numbers, `[] ` `[x] ` tasks, `> ` quotes, ```` ```lang ```` + space or Enter code blocks,
+    `---` rules; `**b**` `__b__`, `*i*` `_i_`, `~~s~~`, `` `c` `` and `[text](url)` convert when
+    the closing delimiter is typed; URLs autolink. Not in code blocks.
+  - **Shortcuts:** `Mod+B` / `I` / `E` (code), `Mod+Shift+X` (strikethrough), `Mod+K` (link
+    dialog `dialog.markdown.link`: http(s) or mailto only, *Remove link* when editing one),
+    `Mod+Shift+7` / `8` / `9` (numbered, bulleted, checklist), `Mod+Shift+.` (quote), `Tab` /
+    `Shift+Tab` (list levels; elsewhere they move the focus like any input), `Mod+Enter` submits,
+    `Esc` is left to the dialog or page.
+  - **Paste:** Markdown is converted into blocks and styles; `Mod+Shift+V` pastes plain text; a
+    URL pasted over a selection makes it a link; code blocks always take plain text.
+  - **Undo:** the field's own history (`Mod+Z`, `Mod+Shift+Z`): typing within a second is one
+    step, every format change, autoformat and paste another; the shell's undo stack is not
+    involved (08: text fields keep their own local undo).
+  - **Look:** the border, radius, padding, focus ring and disabled state of `ShadTextarea`; the
+    text in the renderer's styles (`small`, regular weight, 1.45 line height; code in the
+    monospace style of `WonkyMarkdown`, quotes muted with a bar, code blocks in a muted box). A
+    max length counts the Markdown (counter from 80%; typing and pastes past it are refused).
+  - **Keys:** `<fieldKey>` (the field), `<fieldKey>.bold`, `.italic`, `.strike`, `.code`,
+    `.link`, `.bullets`, `.numbers`, `.tasks`, `.quote`, `.codeBlock`, `<fieldKey>.count`.
+    Removed with the toggle: `<fieldKey>.write`, `.preview`, `.rendered` (and `MarkdownEdits`,
+    the plain-text transforms). Tests type with `enterMarkdown` / `typeMarkdown`
+    (`package:wonky_app/testing.dart`).
+  - **Bundle:** the shell depends on `wonky_rich_editor`, so Drive and Sheets now ship
+    `super_editor` too (Write and Slides already did), also to signed-out board visitors. A
+    deferred import of the editor is a follow-up if the size matters (`TODO.md`).
+- Spellcheck in the composer: P2. `WonkyRichEditor.customStylePhases` takes the spelling
+  squiggles of Slides' `EditorSpelling`; moving that glue (engine, language, context menu) into
+  `wonky_app/spellcheck.dart` is the remaining work.
 
 ### 7.4 Duplicates and merging (admin)
 

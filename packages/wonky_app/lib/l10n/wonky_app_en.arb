@@ -1944,16 +1944,18 @@
   "markdownCode": "Code",
   "markdownLink": "Link",
   "markdownBulletedList": "Bulleted list",
-  "markdownWrite": "Write",
-  "@markdownWrite": {
-    "description": "The tab of the Markdown composer that shows the text field (Write | Preview)."
+  "markdownStrikethrough": "Strikethrough",
+  "markdownNumberedList": "Numbered list",
+  "markdownTaskList": "Checklist",
+  "markdownQuote": "Quote",
+  "markdownCodeBlock": "Code block",
+  "markdownToolbar": "Formatting",
+  "@markdownToolbar": {
+    "description": "Screen reader label of the Markdown composer's formatting toolbar."
   },
-  "markdownPreview": "Preview",
-  "@markdownPreview": {
-    "description": "The tab of the Markdown composer that shows the rendered Markdown (Write | Preview)."
-  },
-  "markdownPreviewEmpty": "Nothing to preview",
   "markdownLinkTitle": "Insert link",
+  "markdownLinkEditTitle": "Edit link",
+  "markdownLinkRemove": "Remove link",
   "markdownLinkUrl": "URL",
   "markdownLinkInsert": "Insert",
   "markdownLinkInvalid": "Enter a web (http or https) or email (mailto) link",

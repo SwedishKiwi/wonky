@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:math' as math;
 
 import 'package:flutter/widgets.dart';
 import 'package:shad/shad.dart';
@@ -8,6 +9,7 @@ import 'package:wonky_ui/wonky_ui.dart';
 
 import '../../data/api.dart';
 import '../../l10n/wonky_app_localizations.dart';
+import '../../shell/page_frame.dart';
 import '../../shell/shell_services.dart';
 import '../board_hub.dart';
 import 'board_labels.dart';
@@ -137,7 +139,7 @@ class _BoardReviewTabState extends State<BoardReviewTab> {
     final theme = ShadTheme.of(context);
     return Padding(
       key: ValueKey<String>('board.review.$key'),
-      padding: const EdgeInsets.only(top: 20, bottom: 8),
+      padding: const EdgeInsets.fromLTRB(8, 20, 8, 8),
       child: Row(
         spacing: 8,
         children: [
@@ -229,25 +231,17 @@ class _BoardReviewTabState extends State<BoardReviewTab> {
     };
     final scores = boardReviewScoresText(p.reviewScores);
     final flags = p.flags ?? const [];
-    return Container(
+    return BoardListTile(
       key: ValueKey<String>('board.review.${section.name}.$n'),
-      padding: const EdgeInsets.symmetric(vertical: 10),
-      decoration: BoxDecoration(
-        border: Border(bottom: BorderSide(color: theme.colorScheme.border)),
-      ),
+      semanticLabel: '#$n ${p.title}',
+      onTap: () => s.router.go('/improvements/p/$n'),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         spacing: 6,
         children: [
-          GestureDetector(
-            onTap: () => s.router.go('/improvements/p/$n'),
-            child: MouseRegion(
-              cursor: SystemMouseCursors.click,
-              child: Text(
-                '#$n ${p.title}',
-                style: theme.textTheme.p.copyWith(fontWeight: FontWeight.w500),
-              ),
-            ),
+          Text(
+            '#$n ${p.title}',
+            style: theme.textTheme.small.copyWith(fontWeight: FontWeight.w500),
           ),
           Wrap(
             spacing: 8,
@@ -293,27 +287,28 @@ class _BoardReviewTabState extends State<BoardReviewTab> {
     final where = c.postNumber != null
         ? '/improvements/p/${c.postNumber}'
         : '/improvements/t/${c.taskNumber}';
-    return Container(
+    return BoardListTile(
       key: ValueKey<String>('board.review.held.comment.$id'),
-      padding: const EdgeInsets.symmetric(vertical: 10),
-      decoration: BoxDecoration(
-        border: Border(bottom: BorderSide(color: theme.colorScheme.border)),
-      ),
+      onTap: () => s.router.go(where),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         spacing: 6,
         children: [
-          GestureDetector(
-            onTap: () => s.router.go(where),
-            child: Text(
-              c.postNumber != null
-                  ? l.boardCommentOnPost(c.postNumber!)
-                  : l.boardCommentOnTask(c.taskNumber ?? 0),
-              style: theme.textTheme.small,
-            ),
+          Text(
+            c.postNumber != null
+                ? l.boardCommentOnPost(c.postNumber!)
+                : l.boardCommentOnTask(c.taskNumber ?? 0),
+            style: theme.textTheme.small.copyWith(fontWeight: FontWeight.w500),
           ),
           BoardAuthorLine(author: c.author, createdAt: c.createdAt),
-          Text(c.body, maxLines: 4, overflow: TextOverflow.ellipsis),
+          Text(
+            c.body,
+            maxLines: 4,
+            overflow: TextOverflow.ellipsis,
+            style: theme.textTheme.small.copyWith(
+              fontWeight: FontWeight.normal,
+            ),
+          ),
           Wrap(
             spacing: 8,
             children: [
@@ -340,19 +335,15 @@ class _BoardReviewTabState extends State<BoardReviewTab> {
     final theme = ShadTheme.of(context);
     final numbers = [for (final p in b.posts) p.number];
     final first = b.posts.isEmpty ? null : b.posts.first;
-    return Container(
+    return BoardListTile(
       key: ValueKey<String>('board.review.bundle.${b.id}'),
-      padding: const EdgeInsets.symmetric(vertical: 10),
-      decoration: BoxDecoration(
-        border: Border(bottom: BorderSide(color: theme.colorScheme.border)),
-      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         spacing: 6,
         children: [
           Text(
             b.title,
-            style: theme.textTheme.p.copyWith(fontWeight: FontWeight.w500),
+            style: theme.textTheme.small.copyWith(fontWeight: FontWeight.w500),
           ),
           Text(b.rationale, style: theme.textTheme.muted),
           for (final p in b.posts)
@@ -409,8 +400,11 @@ class _BoardReviewTabState extends State<BoardReviewTab> {
   Widget build(BuildContext context) {
     final l = WonkyAppLocalizations.of(context);
     final theme = ShadTheme.of(context);
-    final narrow = MediaQuery.sizeOf(context).width < 600;
-    if (_loading) return const Center(child: ShadProgress());
+    final rowInset = math.max(
+      0.0,
+      shellPageInset(MediaQuery.sizeOf(context).width) - 8,
+    );
+    if (_loading) return const BoardListLoading();
     if (_error != null && _counts == null) {
       return WonkyEmptyState(
         illustration: EmptyIllustration.error,
@@ -421,7 +415,10 @@ class _BoardReviewTabState extends State<BoardReviewTab> {
         ],
       );
     }
-    final empty = Text(l.boardReviewEmpty, style: theme.textTheme.muted);
+    final empty = Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 8),
+      child: Text(l.boardReviewEmpty, style: theme.textTheme.muted),
+    );
     final children = <Widget>[];
     for (final x in [
       BoardReviewSection.held,
@@ -475,7 +472,7 @@ class _BoardReviewTabState extends State<BoardReviewTab> {
     // (tests, MCP).
     return SingleChildScrollView(
       key: const ValueKey<String>('board.review'),
-      padding: EdgeInsets.fromLTRB(narrow ? 16 : 24, 0, narrow ? 16 : 24, 32),
+      padding: EdgeInsets.fromLTRB(rowInset, 0, rowInset, 32),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: children,

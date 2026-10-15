@@ -57,8 +57,47 @@ abstract final class MarkdownBlocks {
     final para = <String>[];
     final paraSource = <String>[];
     final joiner = hardBreaks ? '\n' : ' ';
+    // Content columns of the open list items: an item indented to at least
+    // the previous item's content column is its child (CommonMark nesting,
+    // the way the composer writes nested items: 2 spaces under `- `, 3
+    // under `1. `).
+    final stack = <int>[];
+    int level(int indent, int column) {
+      while (stack.isNotEmpty && indent < stack.last) {
+        stack.removeLast();
+      }
+      final l = stack.length;
+      stack.add(column);
+      return l;
+    }
+
+    /// The lines after item line [at] that continue it (indented to its
+    /// content [column], no blank line before): returns the end index.
+    int continuation(int at, int column, List<String> text, List<String> src) {
+      var k = at + 1;
+      while (k < lines.length) {
+        final l = lines[k];
+        final t = l.trimLeft();
+        if (t.isEmpty || l.length - t.length < column) break;
+        if (t.startsWith('```') ||
+            t.startsWith('>') ||
+            t.startsWith('|') ||
+            _heading.hasMatch(t) ||
+            _rule.hasMatch(t) ||
+            _bullet.hasMatch(l) ||
+            _ordered.hasMatch(l)) {
+          break;
+        }
+        text.add(t.trim());
+        src.add(l);
+        k++;
+      }
+      return k;
+    }
+
     void flushPara() {
       if (para.isEmpty) return;
+      stack.clear();
       out.add(
         MdBlock(
           MdKind.paragraph,
@@ -76,6 +115,7 @@ abstract final class MarkdownBlocks {
       final trimmed = line.trimLeft();
       if (trimmed.startsWith('```')) {
         flushPara();
+        stack.clear();
         final info = trimmed.substring(3).trim();
         final code = <String>[];
         final src = <String>[line];
@@ -105,6 +145,7 @@ abstract final class MarkdownBlocks {
       final h = _heading.firstMatch(trimmed);
       if (h != null) {
         flushPara();
+        stack.clear();
         out.add(
           MdBlock(
             MdKind.heading,
@@ -118,6 +159,7 @@ abstract final class MarkdownBlocks {
       }
       if (_rule.hasMatch(trimmed)) {
         flushPara();
+        stack.clear();
         out.add(MdBlock(MdKind.rule, '', source: line));
         i++;
         continue;
@@ -126,35 +168,46 @@ abstract final class MarkdownBlocks {
       if (b != null) {
         flushPara();
         final task = b.group(3);
+        final indent = b.group(1)!.length;
+        final column = indent + 2;
+        final text = [b.group(4)!];
+        final src = [line];
+        final end = continuation(i, column, text, src);
         out.add(
           MdBlock(
             MdKind.listItem,
-            b.group(4)!,
-            level: b.group(1)!.length ~/ 2,
+            text.join(joiner),
+            level: level(indent, column),
             marker: task == null ? '•' : (task == ' ' ? '☐' : '☑'),
-            source: line,
+            source: src.join('\n'),
           ),
         );
-        i++;
+        i = end;
         continue;
       }
       final o = _ordered.firstMatch(line);
       if (o != null) {
         flushPara();
+        final indent = o.group(1)!.length;
+        final column = indent + o.group(2)!.length + 2;
+        final text = [o.group(3)!];
+        final src = [line];
+        final end = continuation(i, column, text, src);
         out.add(
           MdBlock(
             MdKind.listItem,
-            o.group(3)!,
-            level: o.group(1)!.length ~/ 2,
+            text.join(joiner),
+            level: level(indent, column),
             marker: '${o.group(2)}.',
-            source: line,
+            source: src.join('\n'),
           ),
         );
-        i++;
+        i = end;
         continue;
       }
       if (trimmed.startsWith('>')) {
         flushPara();
+        stack.clear();
         final q = <String>[];
         final src = <String>[];
         while (i < lines.length && lines[i].trimLeft().startsWith('>')) {
@@ -167,6 +220,7 @@ abstract final class MarkdownBlocks {
       }
       if (trimmed.startsWith('|')) {
         flushPara();
+        stack.clear();
         final rows = <List<String>>[];
         final src = <String>[];
         while (i < lines.length && lines[i].trimLeft().startsWith('|')) {

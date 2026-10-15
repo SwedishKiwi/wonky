@@ -1,0 +1,30 @@
+name: wonky_rich_editor
+description: "Wonky Work lightweight WYSIWYG Markdown editor (Flutter): a Markdown ⇄ super_editor document codec and the WonkyRichEditor field with its formatting toolbar, shared by the shell (board composer, comments)."
+publish_to: none
+
+environment:
+  sdk: '^3.12.2'
+  flutter: '^3.44.4'
+
+resolution: workspace
+
+dependencies:
+  collection: ^1.19.1
+  flutter:
+    sdk: flutter
+  # enterMarkdown in lib/testing.dart (suite 15 §7).
+  flutter_test:
+    sdk: flutter
+  markdown: ^7.3.1
+  shad: ^0.99.4
+  # The vendored, patched super_editor (pubspec_overrides.yaml at the root).
+  super_editor: ^0.3.0-dev.52
+  wonky_rich_text:
+    path: ../wonky_rich_text
+  wonky_ui:
+    path: ../wonky_ui
+
+dev_dependencies:
+  clock: ^1.1.3
+  flutter_test_robots: ^0.0.24
+  flutter_lints: '>=3.0.0 <7.0.0'

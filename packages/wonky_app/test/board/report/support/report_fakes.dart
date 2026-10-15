@@ -296,11 +296,17 @@ Future<ui.Image> solidImage(
 /// The key finder for `ValueKey<String>(id)`.
 Finder key(String id) => find.byKey(ValueKey<String>(id));
 
-/// Enters [text] into the editable text under the widget keyed [id].
+/// Enters [text] into the field keyed [id]: a text input, or a Markdown
+/// composer (WYSIWYG, specs/16 §7.3) whose Markdown becomes [text].
 Future<void> enterField(WidgetTester tester, String id, String text) async {
-  await tester.enterText(
-    find.descendant(of: key(id), matching: find.byType(EditableText)),
-    text,
+  final editable = find.descendant(
+    of: key(id),
+    matching: find.byType(EditableText),
   );
+  if (editable.evaluate().isEmpty) {
+    await enterMarkdown(tester, key(id), text);
+    return;
+  }
+  await tester.enterText(editable, text);
   await tester.pump();
 }

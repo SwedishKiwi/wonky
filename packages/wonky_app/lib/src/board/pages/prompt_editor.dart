@@ -272,10 +272,7 @@ class _PromptEditorDialogState extends State<PromptEditorDialog> {
     final wide = size.width >= 900;
     final lint = lintTaskPrompt(_body.text);
     final draft = widget.task.status == BoardTaskStatus.draft;
-    final mono = theme.textTheme.small.copyWith(
-      fontFamily: 'monospace',
-      fontWeight: FontWeight.normal,
-    );
+    final mono = boardCodeStyle(theme);
     final pending = _pending;
     final editor = MarkdownComposer(
       fieldKey: 'dialog.board.prompt.body',

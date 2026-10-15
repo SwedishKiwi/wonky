@@ -160,28 +160,17 @@ class SettingsScreen extends StatelessWidget {
     final title = current.area == SettingsArea.app
         ? appTitle
         : l.cmdWorkSettings;
-    final narrow = MediaQuery.sizeOf(context).width < 760;
-    final content = ListView(
+    final narrow = MediaQuery.sizeOf(context).width < shellPageNarrowWidth;
+    final content = ShellPageBody(
       key: ValueKey<String>(current.contentKey),
-      padding: EdgeInsets.fromLTRB(narrow ? 16 : 24, 24, narrow ? 16 : 24, 48),
       children: [
-        Center(
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 760),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                Semantics(
-                  container: true,
-                  header: true,
-                  child: Text(current.title, style: theme.textTheme.h3),
-                ),
-                const SizedBox(height: 20),
-                current.builder(context),
-              ],
-            ),
-          ),
+        Semantics(
+          container: true,
+          header: true,
+          child: Text(current.title, style: theme.textTheme.h3),
         ),
+        const SizedBox(height: 20),
+        current.builder(context),
       ],
     );
     return ShellPageFrame(
