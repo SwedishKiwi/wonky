@@ -409,17 +409,20 @@ development) from one origin; there is no separate host app.
   + `wait`, failing if any fails) to keep the pre-deploy hook short. Build folders are
   git-ignored. WASM and cross-origin-isolation headers: see
   [13 §3](13-security-and-operations.md).
-- **Development**: `serverpod start` launches the apps through `serverpod: flutter_apps:` in
-  the server pubspec (aliases `drive`, `write`, `sheets`, `slides`; `path: ../wonky_<app>`,
+- **Development**: the apps are declared in `serverpod: flutter_apps:` in the server pubspec
+  (aliases `drive`, `write`, `sheets`, `slides`; `path: ../wonky_<app>`,
   `target: lib/driver.dart`, fixed `web-port`s so the origins are stable for
-  `allowedOrigins` and cookie auth):
+  `allowedOrigins` and cookie auth). None is launched automatically (`auto_launch: false`): a
+  debug web app costs a lot of memory, so `serverpod start` starts only the server and the app
+  under test is started on demand (from the `serverpod start` UI or the `spawn_flutter_app` MCP
+  tool):
 
   | Alias | Web port | `auto_launch` |
   |-------|----------|---------------|
-  | `drive` (v2) | 8100 | true |
-  | `write` | 8101 | true |
-  | `sheets` | 8102 | true |
-  | `slides` (v2) | 8104 | true (false while Slides is under construction, to save start-up time) |
+  | `drive` (v2) | 8100 | false |
+  | `write` | 8101 | false |
+  | `sheets` | 8102 | false |
+  | `slides` (v2) | 8104 | false |
 
   In development each app runs from `flutter run` on its own port at the root path; the bundled
   `assets/config.json` lists those dev URLs (all four), and `allowedOrigins` in

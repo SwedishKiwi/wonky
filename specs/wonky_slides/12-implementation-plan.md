@@ -718,7 +718,7 @@ Paths below: `app/` = `wonky_slides/lib/`, `core/` = `packages/wonky_slides_core
 
 **SL-23 · M9 integration and exit** — web-build token
 - Scope: J-S1…J-S4, multi-client scenarios for M9, perf budgets, PDF validation corpus,
-  AGENTS.md (`auto_launch: true` for `slides`), spec touch-ups.
+  AGENTS.md, spec touch-ups (all apps stay `auto_launch: false`, suite 01 §2.4).
 - Owns: `wonky_slides/integration_test/`, `wonky_slides/test/harness/scenarios/`,
   `benchmark/slides/`.
 - Acceptance: the M9 exit gate of §1.
@@ -740,8 +740,8 @@ Paths below: `app/` = `wonky_slides/lib/`, `core/` = `packages/wonky_slides_core
   `CompileOptions(reducedMotion:)`; blank decks take the *New presentations* defaults
   (`newPresentationDefaults`). Not built from the original scope: the `integration_test/`
   journeys, the scripted multi-client scenarios, perf benchmarks and the PDF corpus diff (see
-  the M9 checklist in [suite 14 §2.1](../14-roadmap.md) and `TODO.md`). `auto_launch` for
-  `slides` stays `false` (the user's RAM). Details: [STATUS.md](STATUS.md).
+  the M9 checklist in [suite 14 §2.1](../14-roadmap.md) and `TODO.md`). Like every app,
+  `slides` has `auto_launch: false` (suite 01 §2.4). Details: [STATUS.md](STATUS.md).
 
 ### 4.8 M10 wave 1 — motion, code and chart cores
 

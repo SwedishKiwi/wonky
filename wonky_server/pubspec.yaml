@@ -104,30 +104,31 @@ serverpod:
         rm -rf "$logs"
         exit $failed
 
-  # The apps are launched by `serverpod start` from their flutter_driver
-  # entry point, on fixed ports so their origins are stable for
-  # `allowedOrigins` and cookie auth (specs/01-architecture.md §2.4–2.5).
+  # The apps run from their flutter_driver entry point, on fixed ports so
+  # their origins are stable for `allowedOrigins` and cookie auth
+  # (specs/01-architecture.md §2.4–2.5). None is launched automatically by
+  # `serverpod start` (each debug web app costs a lot of memory): start the
+  # one you need from the `serverpod start` UI or with the `spawn_flutter_app`
+  # MCP tool.
   flutter_apps:
     drive:
       path: ../wonky_drive
       displayName: "Wonky Drive"
-      auto_launch: true
+      auto_launch: false
       target: lib/driver.dart
       web-port: 8100
     write:
       path: ../wonky_write
       displayName: "Wonky Write"
-      auto_launch: true
+      auto_launch: false
       target: lib/driver.dart
       web-port: 8101
     sheets:
       path: ../wonky_sheets
       displayName: "Wonky Sheets"
-      auto_launch: true
+      auto_launch: false
       target: lib/driver.dart
       web-port: 8102
-    # Not launched automatically while Wonky Slides is being built (Slides 12
-    # SL-1); start it with the `spawn_flutter_app` MCP tool.
     slides:
       path: ../wonky_slides
       displayName: "Wonky Slides"

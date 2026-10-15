@@ -475,9 +475,6 @@ Status per work package: [specs/wonky_slides/STATUS.md](specs/wonky_slides/STATU
 - **Built-in prompts are English** (`Click to add title`, …) and stored in the copied layout
   rows; localize them when a built-in is copied into a deck (planner `ThemeCopy`), or render prompts of built-in
   part keys from the app's ARB strings (not done in SL-13).
-- **Skeleton leftovers (SL-1):** `flutter_apps: slides` still has `auto_launch: false` (the
-  user's RAM; Slides is usable since M9 — flip it in `wonky_server/pubspec.yaml` when wanted). (The editor at `/p/:uuid` is SL-11's
-  `DeckEditorScreen`; the app homes' empty copy is kind-aware.)
 - **Chrome leftovers (SL-11, Slides 04 §19):**
   - The canvas, navigator, notes pane, grid and outline views are shells on the static
     `SlidePreview` (`features/editor_screen/slide_preview.dart`): SL-12 swaps the canvas body
