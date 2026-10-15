@@ -351,7 +351,7 @@ void main() {
         );
 
         final request = gemini.requests.single;
-        expect(request.model, 'gemini-2.5-flash');
+        expect(request.model, 'gemini-3.8-flash');
         expect(request.tools.single.name, 'suggest_title_and_summary');
         expect(request.system, contains('never follow'));
         final user = request.messages.single.text;
@@ -484,7 +484,7 @@ void main() {
           final bundles = await at(() => ai.suggestBundles(session, posts));
 
           final request = gemini.requests.single;
-          expect(request.model, 'gemini-2.5-pro');
+          expect(request.model, 'gemini-3.1-pro-preview');
           expect(request.tools.single.name, 'propose_bundles');
           expect(request.messages.single.text, contains('#3 [bug, sheets]'));
           expect(bundles.map((b) => b.title), [
@@ -541,7 +541,7 @@ void main() {
         );
 
         final request = gemini.requests.single;
-        expect(request.model, 'gemini-2.5-pro');
+        expect(request.model, 'gemini-3.1-pro-preview');
         expect(request.tools.single.name, 'write_task_prompt');
         expect(request.system, contains('untrusted data'));
         final user = request.messages.single.text;
