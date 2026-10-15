@@ -125,7 +125,7 @@ void registerVersionProviders() {
 
 /// Web routes (specs/01 §2.4): the Flutter web apps ([webApps]: Drive,
 /// Write, Sheets, Slides) on one origin, their runtime config, the root
-/// redirect to `/write/` and share-link landing.
+/// redirect to `/drive/` and share-link landing.
 void _configureWebServer(Serverpod pod) {
   pod.webServer.addRoute(
     StaticRoute.withCacheBusting(cacheBustingConfig),
@@ -155,7 +155,7 @@ void _configureWebServer(Serverpod pod) {
   for (final app in webApps) {
     pod.webServer.addRoute(
       AppConfigRoute(
-        apiConfig: pod.config.apiServer,
+        apiUrl: WonkyConfig.current.apiUrl(pod.config),
         webOrigin: WonkyConfig.current.webOrigin(pod.config),
         cookieAuth: pod.config.authCookie != null,
         googleClientId: googleWebClientId(),

@@ -12,7 +12,7 @@ Key rules from the specs: every user-visible action is a command and every state
 
 | Path | What |
 |------|------|
-| `wonky_server/` | The Serverpod server. Its web server also serves the Flutter web builds: `/drive/`, `/write/`, `/sheets/` and `/slides/`; `/` redirects to `/write/` (`specs/01-architecture.md` §2.4) |
+| `wonky_server/` | The Serverpod server. Its web server also serves the Flutter web builds: `/drive/`, `/write/`, `/sheets/` and `/slides/`; `/` redirects to `/drive/` (`specs/01-architecture.md` §2.4) |
 | `wonky_client/` | Generated client (never edit) |
 | `wonky_write/` | Flutter app: Wonky Write |
 | `wonky_sheets/` | Flutter app: Wonky Sheets |

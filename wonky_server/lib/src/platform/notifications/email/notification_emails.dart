@@ -14,11 +14,12 @@ class NotificationEmails {
   /// The public web server origin, e.g. `https://wonky.example.com`.
   final Uri webOrigin;
 
-  /// A link to the item of [n], or the Write home when it has no item.
+  /// A link to the item of [n], or the Drive home (the landing app) when it
+  /// has no item.
   Uri linkFor(NotificationView n) {
     final uuid = n.itemUuid?.uuid;
     final path = switch ((uuid, n.itemKind)) {
-      (null, _) => '/write/',
+      (null, _) => '/drive/',
       (_, DriveItemKind.spreadsheet) => '/sheets/s/$uuid',
       (_, DriveItemKind.presentation) => '/slides/p/$uuid',
       // (v2) Folders open in Wonky Drive (suite 03 §2), files in its preview.

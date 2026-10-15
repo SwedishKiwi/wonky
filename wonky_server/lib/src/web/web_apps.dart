@@ -5,6 +5,7 @@
 /// before it exists) answers with `web/pages/build_flutter_app.html`.
 const webApps = ['drive', 'write', 'sheets', 'slides'];
 
-/// Where the site root `/` sends the browser: Wonky Write's home (v2
-/// review Q2; `RootRedirectRoute`).
-const rootRedirectTarget = '/write/';
+/// Where the site root `/` sends the browser: Wonky Drive's home, the
+/// default landing app (v2 review B4, replacing Q2's Write home;
+/// `RootRedirectRoute`).
+const rootRedirectTarget = '/drive/';

@@ -40,16 +40,17 @@ class AppConfigRoute extends WidgetRoute {
   /// generated config) the API answers CORS with `*`, which browsers reject
   /// for credentialed requests, so the apps must use token auth instead.
   ///
-  /// [webOrigin] is where users reach the apps (`WonkyConfig.webOrigin`:
-  /// `https://wonky.work` in production, not the generated Serverpod Cloud
-  /// host).
+  /// [apiUrl] is where the apps call the API (`WonkyConfig.apiUrl`:
+  /// `https://api.wonky.work` in production) and [webOrigin] where users
+  /// reach the apps (`WonkyConfig.webOrigin`: `https://wonky.work`), not
+  /// the generated Serverpod Cloud hosts.
   AppConfigRoute({
-    required ServerConfig apiConfig,
+    required Uri apiUrl,
     required Uri webOrigin,
     required bool cookieAuth,
     String? googleClientId,
   }) : widget = AppConfigWidget(
-         apiUrl: apiConfig.publicUrl.toString(),
+         apiUrl: apiUrl.toString(),
          webUrl: webOrigin.resolve('/').toString(),
          apps: {
            for (final app in webApps)
@@ -63,12 +64,4 @@ class AppConfigRoute extends WidgetRoute {
 
   @override
   Future<WebWidget> build(Session session, Request request) async => widget;
-}
-
-extension ServerConfigPublicUrl on ServerConfig {
-  Uri get publicUrl => Uri(
-    scheme: publicScheme,
-    host: publicHost,
-    port: publicPort,
-  );
 }

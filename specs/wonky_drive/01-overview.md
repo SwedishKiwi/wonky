@@ -50,7 +50,7 @@ release, **P2** designed now, built later.
 
 | Feature | Priority | Spec |
 |---------|----------|------|
-| `wonky_drive` app served at `/drive/`, linked from the left menu of every home (root `/` redirects to `/write/`) | P0 | suite 01 §2.4 |
+| `wonky_drive` app served at `/drive/`, linked from the left menu of every home (root `/` redirects to `/drive/`, the landing app; v2 review B4) | P0 | suite 01 §2.4 |
 | Left menu: app links (Drive, Write, Sheets, Slides), Drive navigation, Drive settings, Wonky Work settings, Report a bug, storage meter | P0 | 04 §2 |
 | Views: Home (recent + suggested), My Drive (+ folder tree), Shared with me, Recent, Starred, Trash, Storage | P0 | 04 §3 |
 | Search across all kinds with type/owner/modified chips | P0 | 04 §3.2 |

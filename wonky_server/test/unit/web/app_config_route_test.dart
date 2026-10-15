@@ -19,7 +19,7 @@ void main() {
       'wonky.work and the Google redirect is its /auth/callback',
       () {
         final route = AppConfigRoute(
-          apiConfig: server('wonkywork.api.serverpod.space'),
+          apiUrl: Uri.parse('https://api.wonky.work'),
           webOrigin: Uri.parse('https://wonky.work'),
           cookieAuth: false,
           googleClientId: 'abc.apps.googleusercontent.com',
@@ -28,7 +28,7 @@ void main() {
         final json = jsonDecode(route.widget.render()) as Map<String, dynamic>;
 
         expect(json, {
-          'apiUrl': 'https://wonkywork.api.serverpod.space',
+          'apiUrl': 'https://api.wonky.work',
           'webUrl': 'https://wonky.work/',
           'apps': {
             'drive': 'https://wonky.work/drive/',
@@ -48,7 +48,7 @@ void main() {
     test('when Google sign-in is not configured then config.json has no '
         'google entry', () {
       final route = AppConfigRoute(
-        apiConfig: server('api.example.com'),
+        apiUrl: Uri.parse('https://api.example.com'),
         webOrigin: Uri.parse('https://app.example.com'),
         cookieAuth: true,
       );
@@ -93,6 +93,42 @@ void main() {
       expect(
         c.webOrigin(config).toString(),
         'https://wonkywork.serverpod.space/',
+      );
+    });
+  });
+
+  group('Given the public API URL', () {
+    final config = ServerpodConfig(
+      apiServer: server('wonkywork.api.serverpod.space'),
+    );
+
+    test('when running in production then it defaults to api.wonky.work', () {
+      final c = WonkyConfig.fromMap(
+        const {},
+        defaultPublicApiUrl: WonkyConfig.productionApiUrl,
+      );
+
+      expect(c.apiUrl(config).toString(), 'https://api.wonky.work');
+    });
+
+    test('when WONKY_PUBLIC_API_URL is set then it wins', () {
+      final c = WonkyConfig.fromMap(
+        const {},
+        environment: const {
+          'WONKY_PUBLIC_API_URL': 'https://api.staging.wonky.work',
+        },
+        defaultPublicApiUrl: WonkyConfig.productionApiUrl,
+      );
+
+      expect(c.apiUrl(config).toString(), 'https://api.staging.wonky.work');
+    });
+
+    test('when nothing is set then the API server public URL is used', () {
+      final c = WonkyConfig.fromMap(const {});
+
+      expect(
+        c.apiUrl(config).toString(),
+        'https://wonkywork.api.serverpod.space',
       );
     });
   });

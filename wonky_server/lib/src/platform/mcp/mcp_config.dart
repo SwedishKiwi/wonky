@@ -3,6 +3,8 @@ import 'dart:io';
 import 'package:serverpod/serverpod.dart';
 import 'package:yaml/yaml.dart';
 
+import '../config/wonky_config.dart';
+
 /// Settings of the `/mcp` endpoint from the `wonky: mcp:` section of
 /// `config/<runMode>.yaml` (suite 09 §1–2):
 ///
@@ -49,6 +51,26 @@ class McpConfig {
   /// Replaces the configuration (tests).
   static set current(McpConfig config) => _current = config;
 
+  /// The hosts `/mcp` answers on without an `allowedHosts` list: loopback,
+  /// the configured web and API servers and the public origins users reach
+  /// (`WonkyConfig.webOrigin`/`apiUrl`: `wonky.work` and `api.wonky.work` in
+  /// production, where Serverpod Cloud's generated config names only its
+  /// own `*.serverpod.space` hosts).
+  static Set<String> defaultAllowedHosts(
+    ServerpodConfig? config,
+    WonkyConfig wonky,
+  ) => {
+    'localhost',
+    '127.0.0.1',
+    '::1',
+    if (config?.webServer?.publicHost case final h?) h.toLowerCase(),
+    if (config != null) ...[
+      config.apiServer.publicHost.toLowerCase(),
+      wonky.webOrigin(config).host.toLowerCase(),
+      wonky.apiUrl(config).host.toLowerCase(),
+    ],
+  };
+
   static McpConfig _load() {
     String runMode;
     ServerpodConfig? config;
@@ -71,13 +93,7 @@ class McpConfig {
         v is List ? {for (final e in v) '$e'.toLowerCase()} : null;
     final hosts =
         strings(section['allowedHosts']) ??
-        {
-          'localhost',
-          '127.0.0.1',
-          '::1',
-          if (config?.webServer?.publicHost case final h?) h.toLowerCase(),
-          config?.apiServer.publicHost.toLowerCase() ?? 'localhost',
-        };
+        defaultAllowedHosts(config, WonkyConfig.current);
     final origins =
         strings(section['allowedOrigins']) ??
         {

@@ -16,7 +16,8 @@ The user answered three questions directly and accepted the recommendation for a
    settings*.
 2. **Landing page** (Q2): the site root `/` redirects to **Wonky Write's home** (`/write/`, the
    page with *Recent* and the templates) — not to Drive and not to the last used app. Wonky
-   Drive stays at `/drive/` and is one click away in every home's left menu.
+   Drive stays at `/drive/` and is one click away in every home's left menu. *Superseded by
+   B4: the landing app is now Wonky Drive.*
 3. **Web only for now** (affects Q5, Q9, Q29, Q30): v2 is built, tested and shipped for the web.
    Desktop targets must keep compiling, but desktop-only features are deferred (native
    menubar, four desktop binaries and URL schemes, desktop packaging, multi-window, desktop
@@ -83,4 +84,5 @@ Decided by the user after the M8 check (D-18), while building M9–M11.
 |---|----------|----------|-------------|
 | B1 | Fetch and self-host pdf.js (~4 MB) for Drive's PDF preview | **User:** "No need for previews" — no PDF previews in v2. PDFs show the *Download* card like every other non-previewable file; the PDF viewer, `tool/fetch_pdfjs.sh`, `dartPdfJsBaseUrl` and `printing` in `wonky_drive` were removed | [Drive 02 §6.3](wonky_drive/02-files-uploads-previews.md), [Drive 05 S-D1](wonky_drive/05-implementation-plan.md) |
 | B2 | Spreadsheet size for the quota: exact stored bytes vs a content estimate | **User:** "an estimate is ok" — count content (non-empty cells, rows/columns with non-default properties, objects at a fixed cost, a small base), not stored rows; a new empty spreadsheet costs a few KB instead of ~80 KB | [Drive 03 §11](wonky_drive/03-storage-quota.md) |
+| B4 | Landing app and the left menu's app order | **User:** Drive is the default landing app (`/` → `/drive/`, replacing Q2) and comes first in the left menu, then a divider, then Write, Sheets, Slides (short names, no "Wonky"); app homes have no *+ New* (they create from the template strip), Drive shows *+ New* in the top bar while its menu is collapsed | [suite 01 §2.4](01-architecture.md), [suite 03](03-app-shell-and-navigation.md), [Drive 04 §2](wonky_drive/04-screens-menus.md) |
 | B3 | Build the phone remote, rehearse timings and the same-browser fast path (SL-41) for M11 | **User:** on hold — the first iteration of Slides ships without them; the server pairing and the fast-path core stay (tested, not wired), the feature `remoteAndRehearse` stays off; presenter view + audience on another device cover presenting | [Slides 12 SL-41](wonky_slides/12-implementation-plan.md), `TODO.md` "Wonky Slides — later" |

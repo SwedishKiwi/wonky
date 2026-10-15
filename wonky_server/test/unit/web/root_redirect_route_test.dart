@@ -38,21 +38,21 @@ void main() {
       return response;
     }
 
-    test('when GET / without cookies then it answers 302 to /write/', () async {
+    test('when GET / without cookies then it answers 302 to /drive/', () async {
       final response = await getRoot();
 
       expect(response.statusCode, HttpStatus.found);
-      expect(response.headers.value(HttpHeaders.locationHeader), '/write/');
+      expect(response.headers.value(HttpHeaders.locationHeader), '/drive/');
     });
 
     test(
       'when GET / with the v1 wonky_last_app=sheets cookie then it still '
-      'answers 302 to /write/',
+      'answers 302 to /drive/',
       () async {
         final response = await getRoot(cookie: 'wonky_last_app=sheets');
 
         expect(response.statusCode, HttpStatus.found);
-        expect(response.headers.value(HttpHeaders.locationHeader), '/write/');
+        expect(response.headers.value(HttpHeaders.locationHeader), '/drive/');
       },
     );
   });

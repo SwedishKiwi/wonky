@@ -53,7 +53,7 @@ exception and must reuse the presentation-session state model.
 | Route | Screen |
 |-------|--------|
 | `/signin`, `/signup`, `/signup/verify`, `/reset` | Auth (see 04) |
-| `/` | Home (app homes: Recent of the app's kind + template strip; Drive: Home, all kinds) — (v2) §3.3. The site root (`/` of the origin) redirects to Wonky Write's home (`/write/`) |
+| `/` | Home (app homes: Recent of the app's kind + template strip; Drive: Home, all kinds) — (v2) §3.3. The site root (`/` of the origin) redirects to Wonky Drive's home (`/drive/`; v2 review B4) |
 | `/f/:folderUuid` | Folder (v2; the former `/drive/:folderUuid` redirects) |
 | `/my-files` (app homes) · `/my-drive` (Drive) | Root of the user's drive (v2 names; `/my-drive` also redirects to `/my-files` in app homes) |
 | `/shared`, `/starred`, `/recent`, `/offline` (app homes), `/trash` | Drive views |
@@ -80,8 +80,8 @@ Auth guard redirects to `/signin?next=…`. Unknown/forbidden items show an in-a
 
 Deployment: `wonky_server`'s web server serves the Flutter web builds from one origin:
 `/drive/…`, `/write/…`, `/sheets/…`, `/slides/…` (each built with matching `--base-href`);
-(v2) the origin's `/` redirects to `/write/` (Wonky Write's home; Drive stays at `/drive/`,
-reachable from every home's left menu). Routes above are relative to the app's base href. Cross-app
+(v2) the origin's `/` redirects to `/drive/` (Wonky Drive's home, the landing app; v2 review B4;
+the editors are reachable from every home's left menu). Routes above are relative to the app's base href. Cross-app
 links use the app base URLs from `config.json`; the sign-in session is shared by all apps
 (see [01 §2.4–§2.5](01-architecture.md)).
 
@@ -182,8 +182,8 @@ Every app has a **home** (its documents view) built from the shell's drive UI
 
 The **left menu** (`HomeSidebar`, Drive 04 §2) is the same widget in every home:
 
-1. **App section** — Write, Sheets, Slides, Drive (short names, in this order) with their
-   product icons; the current app highlighted; the others switch apps in the same tab
+1. **App section** — Drive, a divider, then Write, Sheets, Slides (short names, in this order;
+   v2 review B4) with their product icons; the current app highlighted; the others switch apps in the same tab
    (`shell.account.switchApp {app}`).
 2. **+ New** (Drive only; the app homes create from the template strip's *Blank* card) and the
    app's navigation (`WonkyAppConfig.homeNav`): app homes — *Recent* (`/`),

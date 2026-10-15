@@ -37,6 +37,7 @@ class WonkyConfig {
     this.minClientVersion = '2.0.0',
     this.serverVersion = '2.0.0',
     this.publicWebUrl,
+    this.publicApiUrl,
     this.busFlushMs = 1000,
   });
 
@@ -45,6 +46,13 @@ class WonkyConfig {
   /// `config/*.yaml` is not uploaded (`.scloudignore`), so production
   /// defaults to this in code.
   static const productionWebUrl = 'https://wonky.work';
+
+  /// The public URL of the API in production (`api.wonky.work`, a custom
+  /// domain on Serverpod Cloud). It is on the same site as
+  /// [productionWebUrl], which cookie auth needs: a `SameSite=Lax` refresh
+  /// cookie is not sent from `wonky.work` to the generated
+  /// `*.api.serverpod.space` host (specs/01-architecture.md §2.5).
+  static const productionApiUrl = 'https://api.wonky.work';
 
   final bool aiEnabled;
   final bool scriptingEnabled;
@@ -119,6 +127,11 @@ class WonkyConfig {
   /// emails, MCP links, the legal pages and the Google sign-in redirect.
   final String? publicWebUrl;
 
+  /// The URL the apps call the API on (`publicApiUrl` / env
+  /// `WONKY_PUBLIC_API_URL`), when it differs from the API server's
+  /// configured public host (Serverpod Cloud generates that one).
+  final String? publicApiUrl;
+
   /// How long bus messages wait before they are relayed to the other
   /// instances in one Redis publish (`cluster.busFlushMs`, specs/13 §4).
   final int busFlushMs;
@@ -134,6 +147,19 @@ class WonkyConfig {
       host: server.publicHost,
       port: server.publicPort,
     ).resolve('/');
+  }
+
+  /// [publicApiUrl] or, without it, the API server's public URL in
+  /// [config].
+  Uri apiUrl(ServerpodConfig config) {
+    final url = publicApiUrl;
+    if (url != null && url.isNotEmpty) return Uri.parse(url);
+    final server = config.apiServer;
+    return Uri(
+      scheme: server.publicScheme,
+      host: server.publicHost,
+      port: server.publicPort,
+    );
   }
 
   static WonkyConfig? _current;
@@ -174,6 +200,9 @@ class WonkyConfig {
       defaultPublicWebUrl: runMode == ServerpodRunMode.production
           ? productionWebUrl
           : null,
+      defaultPublicApiUrl: runMode == ServerpodRunMode.production
+          ? productionApiUrl
+          : null,
     );
   }
 
@@ -183,6 +212,7 @@ class WonkyConfig {
     Map<dynamic, dynamic> map, {
     Map<String, String> environment = const {},
     String? defaultPublicWebUrl,
+    String? defaultPublicApiUrl,
   }) {
     Object? read(String section, String key) {
       final envKey = 'WONKY_${section.toUpperCase()}_${_snake(key)}';
@@ -250,6 +280,10 @@ class WonkyConfig {
           environment['WONKY_PUBLIC_WEB_URL'] ??
           (map['publicWebUrl'] as String?) ??
           defaultPublicWebUrl,
+      publicApiUrl:
+          environment['WONKY_PUBLIC_API_URL'] ??
+          (map['publicApiUrl'] as String?) ??
+          defaultPublicApiUrl,
     );
   }
 

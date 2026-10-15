@@ -269,8 +269,9 @@ class _HomeSidebarState extends State<HomeSidebar> {
 /// the app homes create from their template strip's large *Blank* card.
 bool showsSidebarNewButton(HomeScope? scope) => scope == null || scope.isAll;
 
-/// The app section of the left menu (Drive 04 §2): Write, Sheets, Slides
-/// and Drive (short names) with their product icons; the current app is
+/// The app section of the left menu (Drive 04 §2): Drive, a divider, then
+/// Write, Sheets and Slides (short names) with their product icons; the
+/// current app is
 /// highlighted and not clickable, the others switch apps in the same tab
 /// (`shell.account.switchApp {app}`).
 class AppLinksSection extends StatelessWidget {
@@ -289,7 +290,7 @@ class AppLinksSection extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          for (final app in WonkyAppKind.values)
+          for (final app in WonkyAppKind.values) ...[
             SidebarNavButton(
               key: ValueKey<String>('home.app.${app.name}'),
               leading: WonkyProductIcon(
@@ -314,6 +315,14 @@ class AppLinksSection extends StatelessWidget {
                       );
                     },
             ),
+            // Drive (all files) is set apart from the editors.
+            if (app == WonkyAppKind.drive)
+              const Padding(
+                key: ValueKey<String>('home.apps.divider'),
+                padding: EdgeInsets.symmetric(vertical: 4),
+                child: ShadSeparator.horizontal(margin: EdgeInsets.zero),
+              ),
+          ],
         ],
       ),
     );

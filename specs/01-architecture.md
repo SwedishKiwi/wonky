@@ -5,7 +5,7 @@
 | # | Decision | Rationale |
 |---|----------|-----------|
 | A1 | **One Serverpod server** (`wonky_server`) serves both apps, auth, drive, sharing, comments, MCP, AI, and both Flutter web builds. | One account system, one drive, one MCP endpoint, cross-app features (templates, search, sharing) without service-to-service calls. |
-| A2 | **Four Flutter apps** (v2; `wonky_drive`, `wonky_write`, `wonky_sheets`, `wonky_slides`) sharing packages (`packages/wonky_app` shell, `wonky_ui`, cores), all served by `wonky_server` on one origin (`/drive/`, `/write/`, `/sheets/`, `/slides/`; `/` → `/write/`, Wonky Write's home) with one shared sign-in. | Smaller bundles, independent release cadence, clear ownership; shared shell keeps UX identical; same origin makes the session cookie shared. |
+| A2 | **Four Flutter apps** (v2; `wonky_drive`, `wonky_write`, `wonky_sheets`, `wonky_slides`) sharing packages (`packages/wonky_app` shell, `wonky_ui`, cores), all served by `wonky_server` on one origin (`/drive/`, `/write/`, `/sheets/`, `/slides/`; `/` → `/drive/`, Wonky Drive's home, v2 review B4) with one shared sign-in. | Smaller bundles, independent release cadence, clear ownership; shared shell keeps UX identical; same origin makes the session cookie shared. |
 | A3 | **Pure-Dart "core" packages** for logic needed on both server and client (Markdown↔Delta, OT helpers, exporters, formula engine, number formats, XLSX/CSV mapping, tool schemas). | Headless MCP tools, server-side export/import, AI tools and version materialization need the same logic as the apps. |
 | A4 | **Write: server-authoritative OT** over Quill Deltas on typed Serverpod streams; op log in Postgres. | Required by the brief; Delta has `compose/transform/invert/transformPosition`. |
 | A5 | **Sheets: Serverpod offline-first sync** (`serverpod_offline_sync`, `database: sync`), one spreadsheet = one space; per-cell rows with deterministic ids; stable row/column ids; formulas stored with id-based references. | Offline-first requirement; field-level LWW merges; concurrent row/column insertion merges without rewriting cells or formulas. |
@@ -400,7 +400,7 @@ development) from one origin; there is no separate host app.
 | `/sheets/…` | `web/sheets/` — `wonky_sheets` built with `--base-href /sheets/` | `FlutterRoute` |
 | `/slides/…` (v2) | `web/slides/` — `wonky_slides` built with `--base-href /slides/` | `FlutterRoute` |
 | `/<app>/**/sqlite3.wasm`, `/<app>/**/db_worker.js` (nested paths) | `sqliteAssetAlias` middleware | Serves the app's root copies: when `sqlite3_web` opens a database in the page (its worker failed) it resolves the relative default URIs of `sqlite_async` (set inside `serverpod_database`, not configurable) against the page URL, e.g. `/sheets/s/sqlite3.wasm`, which the SPA fallback answered with `index.html` and the local replica could not open |
-| `/<app>/assets/assets/config.json` (each app) | `AppConfigRoute` | Replaces the bundled `assets/config.json` at runtime: `{apiUrl, webUrl, apps: {drive, write, sheets, slides}, cookieAuth, google?: {clientId, redirectUri}}` (the API URL, the public web origin for the legal pages, the base URL of each app for cross-app links, and Google sign-in, 04 §1.6). The public web origin is `wonky.publicWebUrl` / `WONKY_PUBLIC_WEB_URL`, default `https://wonky.work` in production (Serverpod Cloud generates the server config, so its own `*.serverpod.space` host is never used in links), else the web server's public host; e-mail and MCP links use it too |
+| `/<app>/assets/assets/config.json` (each app) | `AppConfigRoute` | Replaces the bundled `assets/config.json` at runtime: `{apiUrl, webUrl, apps: {drive, write, sheets, slides}, cookieAuth, google?: {clientId, redirectUri}}` (the API URL — `wonky.publicApiUrl` / `WONKY_PUBLIC_API_URL`, default `https://api.wonky.work` in production (§2.5), else the API server's public host —, the public web origin for the legal pages, the base URL of each app for cross-app links, and Google sign-in, 04 §1.6). The public web origin is `wonky.publicWebUrl` / `WONKY_PUBLIC_WEB_URL`, default `https://wonky.work` in production (Serverpod Cloud generates the server config, so its own `*.serverpod.space` host is never used in links), else the web server's public host; e-mail and MCP links use it too |
 | `/auth/callback` | `FlutterWebAuth2CallbackRoute` | OAuth popup callback for Sign in with Google (04 §1.6) |
 | `/privacy`, `/terms` | `StaticRoute.file` | Privacy policy and terms of service (`web/pages/privacy.html`, `terms.html`; suite 13 §5) |
 | `/` | redirect | (v2) Always to **`/write/`** — Wonky Write's home (Recent documents with the template strip; `RootRedirectRoute`). The `wonky_last_app` cookie is no longer read (the apps may stop setting it). Wonky Drive stays at `/drive/` and is one click away in every home's left menu |
@@ -445,9 +445,9 @@ development) from one origin; there is no separate host app.
 - **Desktop** (deferred, A13): each app would be a separate desktop binary built from the same
   app ([03 §6](03-app-shell-and-navigation.md)). In v2 the desktop targets only have to compile.
 
-**Decided (v2 review, Q2):** `/` always redirects to **Wonky Write's home** (`/write/`), not to
-the last used app and not to Drive: a predictable landing page with the templates and *Recent*;
-Drive and the other apps are one click away in the left menu.
+**Decided (v2 review B4, replacing Q2):** `/` always redirects to **Wonky Drive's home**
+(`/drive/`), not to the last used app: a predictable landing page with every file; the editors
+are one click away in the left menu. (Q2 had chosen Wonky Write's home.)
 
 ### 2.5 One sign-in across all apps
 
@@ -472,6 +472,21 @@ Sheets, Slides — all on one origin, so everything below applies to the four of
     `/write/` and `/sheets/` share.
   Cookie auth must never be switched on by the client alone: with a `*` CORS answer the app
   cannot reach the server at all.
+  - **Production domains:** the apps are served on `https://wonky.work` and call the API on the
+    custom domain `https://api.wonky.work` (`wonky.publicApiUrl` / `WONKY_PUBLIC_API_URL`,
+    default `WonkyConfig.productionApiUrl` in production; `AppConfigRoute` serves it as
+    `apiUrl`). Both are on the same *site*, so a `SameSite=Lax` refresh cookie set by the API
+    is sent with the apps' requests; the generated `*.api.serverpod.space` host is a different
+    site, where cookie auth cannot work. `/mcp` also answers on both public hosts
+    (`McpConfig.defaultAllowedHosts`).
+  - **Multiple tabs:** refresh tokens rotate and a reused one revokes the session. Cookie mode
+    serializes refreshes across the tabs of one origin (Web Locks); token mode does not, so
+    several tabs refreshing at once (e.g. after the laptop wakes) can sign the user out. To use
+    cookie auth on Serverpod Cloud, set the Serverpod variables (`SERVERPOD_ALLOWED_ORIGINS=
+    https://wonky.work`, `SERVERPOD_AUTH_COOKIE_SECURE=true`, `SERVERPOD_AUTH_COOKIE_SAME_SITE=
+    lax`, `SERVERPOD_AUTH_COOKIE_PATH=/`); `config.json` then serves `cookieAuth: true`. In
+    development, debug apps on ports 8100–8104 and release builds on 8082 are different origins
+    sharing one cookie, so they are not coordinated: don't keep both signed in at once.
 - Signing out in either app revokes the session for both; the other app notices on its next
   request or auth-state check and shows the sign-in screen (03 §4 *Session expired* flow).
 - **Desktop** (deferred in v2, A13): each binary keeps its tokens in secure storage. On macOS

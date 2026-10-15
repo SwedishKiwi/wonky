@@ -33,10 +33,11 @@ and is configured by the app (`WonkyAppConfig.homeNav`, suite 03 §3.3). Drive v
 
 ```
 ┌──────────────────────────────┐
-│ [▣] Write                    │  ← app section: product icons (18 px), current app highlighted
-│ [▣] Sheets                   │     (sidebarAccent pill), click = shell.account.switchApp {app}
+│ [▣] Drive                ●   │  ← app section: product icons (18 px), current app highlighted
+│ ──────────────────────────── │     (sidebarAccent pill), click = shell.account.switchApp {app}
+│ [▣] Write                    │
+│ [▣] Sheets                   │
 │ [▣] Slides                   │
-│ [▣] Drive                ●   │
 │ ──────────────────────────── │
 │ [ + New ]                    │  ← New menu (§3.1; Drive only)
 │ ⌂  Home                      │
@@ -61,8 +62,8 @@ and is configured by the app (`WonkyAppConfig.homeNav`, suite 03 §3.3). Drive v
 - **App section**: four rows (32 px, product icon + "Write" / "Sheets" / "Slides" / "Drive",
   short names without "Wonky"); the current app's row is highlighted and not clickable
   (`Semantics(selected: true)`). Other rows navigate in the same tab to that app's home
-  (`/write/`, …). Section semantics label "Apps". Order is fixed: Write, Sheets, Slides, Drive
-  (the order of `WonkyAppKind`, also used by the account menu's *Open app*).
+  (`/write/`, …). Section semantics label "Apps". Order is fixed: Drive, a divider, then Write, Sheets,
+  Slides (the order of `WonkyAppKind`, also used by the account menu's *Open app*; v2 review B4).
 - ***+ New***: only in Drive (and v1 homes). The app homes (Write, Sheets, Slides) have no *+ New*
   in the left menu: they create from the template strip's large *Blank* card (and the template
   gallery); importing stays reachable as `shell.drive.upload` (⇧U, command palette).
@@ -433,8 +434,8 @@ fields), as today.
 
 ## 15. Acceptance criteria
 
-- **AC-D4.1** The left menu shows the four apps (Write, Sheets, Slides, Drive) with Drive
-  highlighted; *Sheets* opens
+- **AC-D4.1** The left menu shows the four apps (Drive, a divider, Write, Sheets, Slides) with
+  Drive highlighted; *Sheets* opens
   `/sheets/` in the same tab; the menu in the Sheets home shows the same four rows with Sheets
   highlighted.
 - **AC-D4.2** Drive lists folders, documents, spreadsheets, presentations and files together;

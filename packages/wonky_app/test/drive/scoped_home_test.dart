@@ -122,14 +122,16 @@ void main() {
         expect(key('home.app.${app.name}'), findsOneWidget);
         expect(find.text(app.shortName), findsOneWidget);
       }
-      // Write, Sheets, Slides, Drive from top to bottom.
+      // Drive, a divider, then Write, Sheets and Slides from top to bottom.
       final ys = [
         for (final app in WonkyAppKind.values)
           tester.getTopLeft(key('home.app.${app.name}')).dy,
       ];
       expect(ys, [...ys]..sort());
-      expect(WonkyAppKind.values.first, WonkyAppKind.write);
-      expect(WonkyAppKind.values.last, WonkyAppKind.drive);
+      expect(WonkyAppKind.values.first, WonkyAppKind.drive);
+      final divider = tester.getTopLeft(key('home.apps.divider')).dy;
+      expect(divider, greaterThan(ys.first));
+      expect(divider, lessThan(ys[1]));
       for (final d in [
         'recent',
         'myFiles',

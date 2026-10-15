@@ -120,18 +120,18 @@ void main() {
     });
 
     test('when naming apps then product names and editor kinds match', () {
-      // The left menu's order: Write, Sheets, Slides, Drive.
+      // The left menu's order: Drive (the landing app), then the editors.
       expect(WonkyAppKind.values.map((k) => k.productName), [
+        'Wonky Drive',
         'Wonky Write',
         'Wonky Sheets',
         'Wonky Slides',
-        'Wonky Drive',
       ]);
       expect(WonkyAppKind.values.map((k) => k.shortName), [
+        'Drive',
         'Write',
         'Sheets',
         'Slides',
-        'Drive',
       ]);
       expect(WonkyAppKind.drive.editorKind, isNull);
       expect(WonkyAppKind.slides.editorKind, DriveItemKind.presentation);

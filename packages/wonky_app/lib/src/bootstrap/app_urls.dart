@@ -3,13 +3,14 @@ import 'dart:convert';
 import 'package:flutter/services.dart';
 import 'package:wonky_client/wonky_client.dart' show DriveItemKind;
 
-/// The apps of the suite (v2: Write, Sheets, Slides, Drive; suite 01
-/// §2.4). The order is the left menu's order (Drive last, Drive 04 §2).
+/// The apps of the suite (v2: Drive, Write, Sheets, Slides; suite 01
+/// §2.4). The order is the left menu's order: Drive, the landing app,
+/// first, then the editors (Drive 04 §2).
 enum WonkyAppKind {
+  drive,
   write,
   sheets,
-  slides,
-  drive;
+  slides;
 
   /// "Wonky Drive", "Wonky Write", … (product name, not localized).
   String get productName => switch (this) {
