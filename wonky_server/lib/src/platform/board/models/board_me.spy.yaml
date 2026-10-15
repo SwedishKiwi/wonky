@@ -1,0 +1,15 @@
+### The caller's board status (specs/16 §9.1).
+class: BoardMe
+fields:
+  signedIn: bool
+  userId: int?
+  isAdmin: bool
+  blocked: bool
+  blockedReason: String?
+  activeClaims: List<int>
+  githubLogin: String?
+  ### Board AI available (Jev configured): shown in the dialog notice.
+  aiChecks: bool
+  repository: String
+  securityContact: String
+  claimHours: int

@@ -1,0 +1,43 @@
+### A post with everything the post page shows. Admin-only fields are
+### null for everyone else.
+class: BoardPostView
+fields:
+  number: int
+  kind: BoardPostKind
+  reportedKind: BoardPostKind
+  area: BoardArea?
+  size: BoardSize?
+  aiLabels: bool
+  title: String
+  body: String
+  contextJson: String?
+  appHint: String
+  hasScreenshot: bool
+  status: BoardPostStatus
+  moderation: BoardModeration
+  ### For the author (held, removed) and admins.
+  moderationReason: String?
+  editedByModerator: bool
+  triageState: BoardTriageState
+  summary: String?
+  duplicateOfNumber: int?
+  declineReason: String?
+  task: BoardTaskRef?
+  mergedFrom: List<int>
+  score: int
+  voteCount: int
+  commentCount: int
+  myVote: int
+  author: BoardAuthor?
+  isMine: bool
+  ### The author may edit (open, not in a task, not removed).
+  canEdit: bool
+  createdAt: DateTime
+  editedAt: DateTime?
+  deleted: bool
+  ### Admin only.
+  needsCheck: bool
+  suggestedTitle: String?
+  possibleDuplicateOfNumber: int?
+  triageJson: String?
+  flags: List<BoardFlagView>?

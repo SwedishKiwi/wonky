@@ -71,6 +71,9 @@ abstract final class NotificationService {
     NotificationKind.suggestionDecided => 'suggestions',
     NotificationKind.scriptFailure => 'scripts',
     NotificationKind.storage => 'storage',
+    NotificationKind.boardReply => 'board',
+    NotificationKind.boardStatus => 'board',
+    NotificationKind.boardClaim => 'board',
   };
 
   /// Older settings stored access requests under `shares`.

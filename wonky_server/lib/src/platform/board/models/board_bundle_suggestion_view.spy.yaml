@@ -1,0 +1,8 @@
+class: BoardBundleSuggestionView
+fields:
+  id: int
+  title: String
+  rationale: String
+  area: BoardArea?
+  posts: List<BoardPostListItem>
+  createdAt: DateTime

@@ -1,0 +1,11 @@
+### Lifecycle of a task (specs/16 §3.3).
+enum: BoardTaskStatus
+serialized: byName
+values:
+  - draft
+  - published
+  - claimed
+  - inReview
+  - done
+  - shipped
+  - cancelled

@@ -19,6 +19,7 @@ import '../data/sharing_repository.dart';
 import '../shell/shell_services.dart';
 import '../storage/storage_controller.dart';
 import '../undo/undo_service.dart';
+import '../board/board_repository.dart';
 import 'fake_cross_app.dart';
 import 'fake_repositories.dart';
 
@@ -99,6 +100,7 @@ class CommandTestHarness {
     FileRepository? files,
     MetaRepository? meta,
     ActivityRepository? activity,
+    BoardRepository? board,
     LocalStore? store,
     UuidV7Generator? ids,
     StorageController? storage,
@@ -126,6 +128,7 @@ class CommandTestHarness {
         files: files ?? UnfakedFileRepository(),
         meta: meta ?? UnfakedMetaRepository(),
         activity: activity,
+        board: board,
       ),
       urls: urls,
       crossApp: crossApp ?? FakeCrossApp(urls),

@@ -34,7 +34,12 @@ enum StoredFileKind implements _isc.SerializableModel {
 
   /// (v2) Server-made preview image of a file item (Drive 02 §6.2); not
   /// counted, deleted with the item.
-  preview;
+  preview,
+
+  /// Screenshot of a Bugs & Improvements post (specs/16 §5.3); public with
+  /// the post through signed URLs, not counted, no item. Expires after a day
+  /// until a post attaches it.
+  boardScreenshot;
 
   static StoredFileKind fromJson(String name) {
     switch (name) {
@@ -56,6 +61,8 @@ enum StoredFileKind implements _isc.SerializableModel {
         return StoredFileKind.driveFile;
       case 'preview':
         return StoredFileKind.preview;
+      case 'boardScreenshot':
+        return StoredFileKind.boardScreenshot;
       default:
         throw ArgumentError(
           'Value "$name" cannot be converted to "StoredFileKind"',

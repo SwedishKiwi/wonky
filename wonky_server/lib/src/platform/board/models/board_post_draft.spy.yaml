@@ -1,0 +1,9 @@
+### Client payload of `board.createPost`.
+class: BoardPostDraft
+fields:
+  kind: BoardPostKind
+  title: String
+  body: String
+  contextJson: String?
+  appHint: String
+  screenshotFileUuid: UuidValue?

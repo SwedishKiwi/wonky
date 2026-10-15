@@ -1,0 +1,14 @@
+### Board-specific data of a user: GitHub login, blocks.
+class: BoardUserProfile
+table: board_user_profile
+fields:
+  userId: int, relation(parent=user_profile, onDelete=Cascade)
+  githubLogin: String?
+  blockedAt: DateTime?
+  blockedUntil: DateTime?
+  blockedReason: String?
+  blockedById: int?
+indexes:
+  board_user_profile_user_idx:
+    fields: userId
+    unique: true

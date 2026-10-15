@@ -1,0 +1,12 @@
+### GitHub webhook deliveries already handled (dedupe; purged after 7 days).
+class: BoardGithubDelivery
+table: board_github_delivery
+serverOnly: true
+fields:
+  deliveryId: String
+  event: String
+  receivedAt: DateTime
+indexes:
+  board_github_delivery_idx:
+    fields: deliveryId
+    unique: true

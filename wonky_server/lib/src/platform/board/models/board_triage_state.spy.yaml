@@ -1,0 +1,8 @@
+enum: BoardTriageState
+serialized: byName
+values:
+  - pending
+  - done
+  ### No Jev key or budget: published without a check.
+  - unchecked
+  - failed

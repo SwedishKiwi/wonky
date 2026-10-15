@@ -23,6 +23,16 @@ import 'package:wonky_server/src/generated/platform/activity/activity_event_view
     as _iiw0494r;
 import 'package:wonky_server/src/generated/platform/ai/models/assistant_thread_view.dart'
     as _i1372x0g;
+import 'package:wonky_server/src/generated/platform/board/models/board_bundle_suggestion_view.dart'
+    as _i8qikgvy;
+import 'package:wonky_server/src/generated/platform/board/models/board_comment_view.dart'
+    as _ilh4w69x;
+import 'package:wonky_server/src/generated/platform/board/models/board_review_item.dart'
+    as _id1usvpt;
+import 'package:wonky_server/src/generated/platform/board/models/board_similar_post.dart'
+    as _iv1j9wri;
+import 'package:wonky_server/src/generated/platform/board/models/board_task_status.dart'
+    as _ihypagkt;
 import 'package:wonky_server/src/generated/platform/comments/comment_thread_view.dart'
     as _ixzwh8hc;
 import 'package:wonky_server/src/generated/platform/drive/drive_item_view.dart'
@@ -97,6 +107,49 @@ import 'platform/ai/models/inline_ai_event_type.dart' as _i6pcz5z6;
 import 'platform/ai/models/inline_ai_request.dart' as _i4m43iwr;
 import 'platform/ai/models/proofread_event.dart' as _ie0jt2ne;
 import 'platform/ai/models/proofread_issue.dart' as _ivmxemza;
+import 'platform/board/models/board_ai_usage.dart' as _icowsqvh;
+import 'platform/board/models/board_area.dart' as _i0ag0upm;
+import 'platform/board/models/board_author.dart' as _ika8r7fc;
+import 'platform/board/models/board_bundle_suggestion.dart' as _ilo15wk2;
+import 'platform/board/models/board_bundle_suggestion_view.dart' as _iin47lv0;
+import 'platform/board/models/board_comment.dart' as _ijz5flk6;
+import 'platform/board/models/board_comment_view.dart' as _ipkjmsg5;
+import 'platform/board/models/board_event_kind.dart' as _ita8snxr;
+import 'platform/board/models/board_flag.dart' as _i0y7d0xd;
+import 'platform/board/models/board_flag_reason.dart' as _iwc3b6vo;
+import 'platform/board/models/board_flag_view.dart' as _i5pjfe5s;
+import 'platform/board/models/board_github_delivery.dart' as _i5r22jl8;
+import 'platform/board/models/board_list_query.dart' as _igcoqerx;
+import 'platform/board/models/board_me.dart' as _iu9hvv8z;
+import 'platform/board/models/board_moderation.dart' as _in0hwjmy;
+import 'platform/board/models/board_moderation_action.dart' as _i5jfu168;
+import 'platform/board/models/board_moderation_log.dart' as _idxofexa;
+import 'platform/board/models/board_post.dart' as _i7xps6dm;
+import 'platform/board/models/board_post_draft.dart' as _izvgi5ni;
+import 'platform/board/models/board_post_event.dart' as _ibl25moa;
+import 'platform/board/models/board_post_kind.dart' as _iui4x9zg;
+import 'platform/board/models/board_post_list_item.dart' as _iq3f61ec;
+import 'platform/board/models/board_post_page.dart' as _i1stsytz;
+import 'platform/board/models/board_post_status.dart' as _il200dga;
+import 'platform/board/models/board_post_view.dart' as _ijjd81zg;
+import 'platform/board/models/board_pull_request.dart' as _i36hp4a6;
+import 'platform/board/models/board_review_counts.dart' as _im7v2irk;
+import 'platform/board/models/board_review_item.dart' as _id33cro1;
+import 'platform/board/models/board_review_section.dart' as _izs2n8vy;
+import 'platform/board/models/board_signal.dart' as _ieemxbgb;
+import 'platform/board/models/board_similar_post.dart' as _in3cjdcj;
+import 'platform/board/models/board_size.dart' as _ivbgicm7;
+import 'platform/board/models/board_sort.dart' as _itz4727j;
+import 'platform/board/models/board_target_kind.dart' as _i2gir90g;
+import 'platform/board/models/board_task.dart' as _iv26y3a1;
+import 'platform/board/models/board_task_page.dart' as _illpt7x2;
+import 'platform/board/models/board_task_ref.dart' as _idsjzf6h;
+import 'platform/board/models/board_task_status.dart' as _i4a2ekwp;
+import 'platform/board/models/board_task_view.dart' as _ifz7dmuf;
+import 'platform/board/models/board_triage_state.dart' as _iso7mdvm;
+import 'platform/board/models/board_user_profile.dart' as _i516sz1w;
+import 'platform/board/models/board_vote.dart' as _ifuo09i6;
+import 'platform/board/models/board_vote_result.dart' as _ie24iiog;
 import 'platform/cluster/cluster_bus_batch.dart' as _i4piktk8;
 import 'platform/cluster/cluster_signal.dart' as _ipkzl9y7;
 import 'platform/comments/comment.dart' as _iyixppck;
@@ -327,6 +380,49 @@ export 'platform/ai/models/inline_ai_event_type.dart';
 export 'platform/ai/models/inline_ai_request.dart';
 export 'platform/ai/models/proofread_event.dart';
 export 'platform/ai/models/proofread_issue.dart';
+export 'platform/board/models/board_ai_usage.dart';
+export 'platform/board/models/board_area.dart';
+export 'platform/board/models/board_author.dart';
+export 'platform/board/models/board_bundle_suggestion.dart';
+export 'platform/board/models/board_bundle_suggestion_view.dart';
+export 'platform/board/models/board_comment.dart';
+export 'platform/board/models/board_comment_view.dart';
+export 'platform/board/models/board_event_kind.dart';
+export 'platform/board/models/board_flag.dart';
+export 'platform/board/models/board_flag_reason.dart';
+export 'platform/board/models/board_flag_view.dart';
+export 'platform/board/models/board_github_delivery.dart';
+export 'platform/board/models/board_list_query.dart';
+export 'platform/board/models/board_me.dart';
+export 'platform/board/models/board_moderation.dart';
+export 'platform/board/models/board_moderation_action.dart';
+export 'platform/board/models/board_moderation_log.dart';
+export 'platform/board/models/board_post.dart';
+export 'platform/board/models/board_post_draft.dart';
+export 'platform/board/models/board_post_event.dart';
+export 'platform/board/models/board_post_kind.dart';
+export 'platform/board/models/board_post_list_item.dart';
+export 'platform/board/models/board_post_page.dart';
+export 'platform/board/models/board_post_status.dart';
+export 'platform/board/models/board_post_view.dart';
+export 'platform/board/models/board_pull_request.dart';
+export 'platform/board/models/board_review_counts.dart';
+export 'platform/board/models/board_review_item.dart';
+export 'platform/board/models/board_review_section.dart';
+export 'platform/board/models/board_signal.dart';
+export 'platform/board/models/board_similar_post.dart';
+export 'platform/board/models/board_size.dart';
+export 'platform/board/models/board_sort.dart';
+export 'platform/board/models/board_target_kind.dart';
+export 'platform/board/models/board_task.dart';
+export 'platform/board/models/board_task_page.dart';
+export 'platform/board/models/board_task_ref.dart';
+export 'platform/board/models/board_task_status.dart';
+export 'platform/board/models/board_task_view.dart';
+export 'platform/board/models/board_triage_state.dart';
+export 'platform/board/models/board_user_profile.dart';
+export 'platform/board/models/board_vote.dart';
+export 'platform/board/models/board_vote_result.dart';
 export 'platform/cluster/cluster_bus_batch.dart';
 export 'platform/cluster/cluster_signal.dart';
 export 'platform/comments/comment.dart';
@@ -575,6 +671,49 @@ class Protocol extends _is.DatabaseSerializationManager
           _is.getType<_i4m43iwr.InlineAiRequest>,
           _is.getType<_ie0jt2ne.ProofreadEvent>,
           _is.getType<_ivmxemza.ProofreadIssue>,
+          _is.getType<_icowsqvh.BoardAiUsage>,
+          _is.getType<_i0ag0upm.BoardArea>,
+          _is.getType<_ika8r7fc.BoardAuthor>,
+          _is.getType<_ilo15wk2.BoardBundleSuggestion>,
+          _is.getType<_iin47lv0.BoardBundleSuggestionView>,
+          _is.getType<_ijz5flk6.BoardComment>,
+          _is.getType<_ipkjmsg5.BoardCommentView>,
+          _is.getType<_ita8snxr.BoardEventKind>,
+          _is.getType<_i0y7d0xd.BoardFlag>,
+          _is.getType<_iwc3b6vo.BoardFlagReason>,
+          _is.getType<_i5pjfe5s.BoardFlagView>,
+          _is.getType<_i5r22jl8.BoardGithubDelivery>,
+          _is.getType<_igcoqerx.BoardListQuery>,
+          _is.getType<_iu9hvv8z.BoardMe>,
+          _is.getType<_in0hwjmy.BoardModeration>,
+          _is.getType<_i5jfu168.BoardModerationAction>,
+          _is.getType<_idxofexa.BoardModerationLog>,
+          _is.getType<_i7xps6dm.BoardPost>,
+          _is.getType<_izvgi5ni.BoardPostDraft>,
+          _is.getType<_ibl25moa.BoardPostEvent>,
+          _is.getType<_iui4x9zg.BoardPostKind>,
+          _is.getType<_iq3f61ec.BoardPostListItem>,
+          _is.getType<_i1stsytz.BoardPostPage>,
+          _is.getType<_il200dga.BoardPostStatus>,
+          _is.getType<_ijjd81zg.BoardPostView>,
+          _is.getType<_i36hp4a6.BoardPullRequest>,
+          _is.getType<_im7v2irk.BoardReviewCounts>,
+          _is.getType<_id33cro1.BoardReviewItem>,
+          _is.getType<_izs2n8vy.BoardReviewSection>,
+          _is.getType<_ieemxbgb.BoardSignal>,
+          _is.getType<_in3cjdcj.BoardSimilarPost>,
+          _is.getType<_ivbgicm7.BoardSize>,
+          _is.getType<_itz4727j.BoardSort>,
+          _is.getType<_i2gir90g.BoardTargetKind>,
+          _is.getType<_iv26y3a1.BoardTask>,
+          _is.getType<_illpt7x2.BoardTaskPage>,
+          _is.getType<_idsjzf6h.BoardTaskRef>,
+          _is.getType<_i4a2ekwp.BoardTaskStatus>,
+          _is.getType<_ifz7dmuf.BoardTaskView>,
+          _is.getType<_iso7mdvm.BoardTriageState>,
+          _is.getType<_i516sz1w.BoardUserProfile>,
+          _is.getType<_ifuo09i6.BoardVote>,
+          _is.getType<_ie24iiog.BoardVoteResult>,
           _is.getType<_i4piktk8.ClusterBusBatch>,
           _is.getType<_ipkzl9y7.ClusterSignal>,
           _is.getType<_iyixppck.Comment>,
@@ -847,6 +986,49 @@ class Protocol extends _is.DatabaseSerializationManager
           _is.getType<_i4m43iwr.InlineAiRequest?>,
           _is.getType<_ie0jt2ne.ProofreadEvent?>,
           _is.getType<_ivmxemza.ProofreadIssue?>,
+          _is.getType<_icowsqvh.BoardAiUsage?>,
+          _is.getType<_i0ag0upm.BoardArea?>,
+          _is.getType<_ika8r7fc.BoardAuthor?>,
+          _is.getType<_ilo15wk2.BoardBundleSuggestion?>,
+          _is.getType<_iin47lv0.BoardBundleSuggestionView?>,
+          _is.getType<_ijz5flk6.BoardComment?>,
+          _is.getType<_ipkjmsg5.BoardCommentView?>,
+          _is.getType<_ita8snxr.BoardEventKind?>,
+          _is.getType<_i0y7d0xd.BoardFlag?>,
+          _is.getType<_iwc3b6vo.BoardFlagReason?>,
+          _is.getType<_i5pjfe5s.BoardFlagView?>,
+          _is.getType<_i5r22jl8.BoardGithubDelivery?>,
+          _is.getType<_igcoqerx.BoardListQuery?>,
+          _is.getType<_iu9hvv8z.BoardMe?>,
+          _is.getType<_in0hwjmy.BoardModeration?>,
+          _is.getType<_i5jfu168.BoardModerationAction?>,
+          _is.getType<_idxofexa.BoardModerationLog?>,
+          _is.getType<_i7xps6dm.BoardPost?>,
+          _is.getType<_izvgi5ni.BoardPostDraft?>,
+          _is.getType<_ibl25moa.BoardPostEvent?>,
+          _is.getType<_iui4x9zg.BoardPostKind?>,
+          _is.getType<_iq3f61ec.BoardPostListItem?>,
+          _is.getType<_i1stsytz.BoardPostPage?>,
+          _is.getType<_il200dga.BoardPostStatus?>,
+          _is.getType<_ijjd81zg.BoardPostView?>,
+          _is.getType<_i36hp4a6.BoardPullRequest?>,
+          _is.getType<_im7v2irk.BoardReviewCounts?>,
+          _is.getType<_id33cro1.BoardReviewItem?>,
+          _is.getType<_izs2n8vy.BoardReviewSection?>,
+          _is.getType<_ieemxbgb.BoardSignal?>,
+          _is.getType<_in3cjdcj.BoardSimilarPost?>,
+          _is.getType<_ivbgicm7.BoardSize?>,
+          _is.getType<_itz4727j.BoardSort?>,
+          _is.getType<_i2gir90g.BoardTargetKind?>,
+          _is.getType<_iv26y3a1.BoardTask?>,
+          _is.getType<_illpt7x2.BoardTaskPage?>,
+          _is.getType<_idsjzf6h.BoardTaskRef?>,
+          _is.getType<_i4a2ekwp.BoardTaskStatus?>,
+          _is.getType<_ifz7dmuf.BoardTaskView?>,
+          _is.getType<_iso7mdvm.BoardTriageState?>,
+          _is.getType<_i516sz1w.BoardUserProfile?>,
+          _is.getType<_ifuo09i6.BoardVote?>,
+          _is.getType<_ie24iiog.BoardVoteResult?>,
           _is.getType<_i4piktk8.ClusterBusBatch?>,
           _is.getType<_ipkzl9y7.ClusterSignal?>,
           _is.getType<_iyixppck.Comment?>,
@@ -1095,6 +1277,13 @@ class Protocol extends _is.DatabaseSerializationManager
           _is.getType<List<_ivmxemza.ProofreadIssue>>,
           _is.getType<List<_ivmxemza.ProofreadIssue>?>,
           _is.getType<List<int>>,
+          _is.getType<List<_iq3f61ec.BoardPostListItem>>,
+          _is.getType<List<_i5pjfe5s.BoardFlagView>>,
+          _is.getType<List<_i5pjfe5s.BoardFlagView>?>,
+          _is.getType<List<_il200dga.BoardPostStatus>>,
+          _is.getType<List<_i0ag0upm.BoardArea>>,
+          _is.getType<List<_ivbgicm7.BoardSize>>,
+          _is.getType<List<_ifz7dmuf.BoardTaskView>>,
           _is.getType<List<_i4xrxro7.CommentView>>,
           _is.getType<List<_i6y7tspy.UserSummary>>,
           _is.getType<Map<String, List<int>>>,
@@ -1125,8 +1314,13 @@ class Protocol extends _is.DatabaseSerializationManager
           _is.getType<List<_i48sm9f2.ImportWarningView>?>,
           _is.getType<List<_ii88i7dv.WriteDiffAuthor>>,
           _is.getType<List<_i1372x0g.AssistantThreadView>>,
-          _is.getType<List<_ixzwh8hc.CommentThreadView>>,
+          _is.getType<List<_ilh4w69x.BoardCommentView>>,
+          _is.getType<List<_iv1j9wri.BoardSimilarPost>>,
+          _is.getType<List<_ihypagkt.BoardTaskStatus>>,
+          _is.getType<List<_id1usvpt.BoardReviewItem>>,
           _is.getType<List<int>>,
+          _is.getType<List<_i8qikgvy.BoardBundleSuggestionView>>,
+          _is.getType<List<_ixzwh8hc.CommentThreadView>>,
           _is.getType<List<int>?>,
           _is.getType<List<_ily3pmy5.DriveItemView>>,
           _is.getType<List<_is.UuidValue>>,
@@ -1870,6 +2064,1413 @@ class Protocol extends _is.DatabaseSerializationManager
             _isp.IndexElementDefinition(
               type: _isp.IndexElementDefinitionType.column,
               definition: 'updatedAt',
+            ),
+          ],
+          type: 'btree',
+          isUnique: false,
+          isPrimary: false,
+        ),
+      ],
+      managed: true,
+    ),
+    _isp.TableDefinition(
+      name: 'board_ai_usage',
+      dartName: 'BoardAiUsage',
+      schema: 'public',
+      module: 'wonky',
+      columns: [
+        _isp.ColumnDefinition(
+          name: 'id',
+          columnType: _isp.ColumnType.bigint,
+          isNullable: false,
+          dartType: 'int?',
+          columnDefault: 'serial',
+        ),
+        _isp.ColumnDefinition(
+          name: 'day',
+          columnType: _isp.ColumnType.text,
+          isNullable: false,
+          dartType: 'String',
+        ),
+        _isp.ColumnDefinition(
+          name: 'provider',
+          columnType: _isp.ColumnType.text,
+          isNullable: false,
+          dartType: 'String',
+        ),
+        _isp.ColumnDefinition(
+          name: 'model',
+          columnType: _isp.ColumnType.text,
+          isNullable: false,
+          dartType: 'String',
+        ),
+        _isp.ColumnDefinition(
+          name: 'feature',
+          columnType: _isp.ColumnType.text,
+          isNullable: false,
+          dartType: 'String',
+        ),
+        _isp.ColumnDefinition(
+          name: 'requests',
+          columnType: _isp.ColumnType.bigint,
+          isNullable: false,
+          dartType: 'int',
+        ),
+        _isp.ColumnDefinition(
+          name: 'inputTokens',
+          columnType: _isp.ColumnType.bigint,
+          isNullable: false,
+          dartType: 'int',
+        ),
+        _isp.ColumnDefinition(
+          name: 'outputTokens',
+          columnType: _isp.ColumnType.bigint,
+          isNullable: false,
+          dartType: 'int',
+        ),
+      ],
+      foreignKeys: [],
+      indexes: [
+        _isp.IndexDefinition(
+          indexName: 'board_ai_usage_idx',
+          tableSpace: null,
+          elements: [
+            _isp.IndexElementDefinition(
+              type: _isp.IndexElementDefinitionType.column,
+              definition: 'day',
+            ),
+            _isp.IndexElementDefinition(
+              type: _isp.IndexElementDefinitionType.column,
+              definition: 'provider',
+            ),
+            _isp.IndexElementDefinition(
+              type: _isp.IndexElementDefinitionType.column,
+              definition: 'model',
+            ),
+            _isp.IndexElementDefinition(
+              type: _isp.IndexElementDefinitionType.column,
+              definition: 'feature',
+            ),
+          ],
+          type: 'btree',
+          isUnique: true,
+          isPrimary: false,
+        ),
+      ],
+      managed: true,
+    ),
+    _isp.TableDefinition(
+      name: 'board_bundle_suggestion',
+      dartName: 'BoardBundleSuggestion',
+      schema: 'public',
+      module: 'wonky',
+      columns: [
+        _isp.ColumnDefinition(
+          name: 'id',
+          columnType: _isp.ColumnType.bigint,
+          isNullable: false,
+          dartType: 'int?',
+          columnDefault: 'serial',
+        ),
+        _isp.ColumnDefinition(
+          name: 'title',
+          columnType: _isp.ColumnType.text,
+          isNullable: false,
+          dartType: 'String',
+        ),
+        _isp.ColumnDefinition(
+          name: 'rationale',
+          columnType: _isp.ColumnType.text,
+          isNullable: false,
+          dartType: 'String',
+        ),
+        _isp.ColumnDefinition(
+          name: 'area',
+          columnType: _isp.ColumnType.text,
+          isNullable: true,
+          dartType: 'protocol:BoardArea?',
+        ),
+        _isp.ColumnDefinition(
+          name: 'postIds',
+          columnType: _isp.ColumnType.json,
+          isNullable: false,
+          dartType: 'List<int>',
+        ),
+        _isp.ColumnDefinition(
+          name: 'state',
+          columnType: _isp.ColumnType.text,
+          isNullable: false,
+          dartType: 'String',
+        ),
+        _isp.ColumnDefinition(
+          name: 'createdAt',
+          columnType: _isp.ColumnType.timestampWithoutTimeZone,
+          isNullable: false,
+          dartType: 'DateTime',
+        ),
+      ],
+      foreignKeys: [],
+      indexes: [],
+      managed: true,
+    ),
+    _isp.TableDefinition(
+      name: 'board_comment',
+      dartName: 'BoardComment',
+      schema: 'public',
+      module: 'wonky',
+      columns: [
+        _isp.ColumnDefinition(
+          name: 'id',
+          columnType: _isp.ColumnType.bigint,
+          isNullable: false,
+          dartType: 'int?',
+          columnDefault: 'serial',
+        ),
+        _isp.ColumnDefinition(
+          name: 'uuid',
+          columnType: _isp.ColumnType.uuid,
+          isNullable: false,
+          dartType: 'UuidValue',
+        ),
+        _isp.ColumnDefinition(
+          name: 'postId',
+          columnType: _isp.ColumnType.bigint,
+          isNullable: true,
+          dartType: 'int?',
+        ),
+        _isp.ColumnDefinition(
+          name: 'taskId',
+          columnType: _isp.ColumnType.bigint,
+          isNullable: true,
+          dartType: 'int?',
+        ),
+        _isp.ColumnDefinition(
+          name: 'authorId',
+          columnType: _isp.ColumnType.bigint,
+          isNullable: true,
+          dartType: 'int?',
+        ),
+        _isp.ColumnDefinition(
+          name: 'body',
+          columnType: _isp.ColumnType.text,
+          isNullable: false,
+          dartType: 'String',
+        ),
+        _isp.ColumnDefinition(
+          name: 'systemEvent',
+          columnType: _isp.ColumnType.text,
+          isNullable: true,
+          dartType: 'String?',
+        ),
+        _isp.ColumnDefinition(
+          name: 'moderation',
+          columnType: _isp.ColumnType.text,
+          isNullable: false,
+          dartType: 'protocol:BoardModeration',
+        ),
+        _isp.ColumnDefinition(
+          name: 'moderationReason',
+          columnType: _isp.ColumnType.text,
+          isNullable: true,
+          dartType: 'String?',
+        ),
+        _isp.ColumnDefinition(
+          name: 'needsCheck',
+          columnType: _isp.ColumnType.boolean,
+          isNullable: false,
+          dartType: 'bool',
+          columnDefault: 'false',
+        ),
+        _isp.ColumnDefinition(
+          name: 'createdAt',
+          columnType: _isp.ColumnType.timestampWithoutTimeZone,
+          isNullable: false,
+          dartType: 'DateTime',
+        ),
+        _isp.ColumnDefinition(
+          name: 'editedAt',
+          columnType: _isp.ColumnType.timestampWithoutTimeZone,
+          isNullable: true,
+          dartType: 'DateTime?',
+        ),
+        _isp.ColumnDefinition(
+          name: 'deletedAt',
+          columnType: _isp.ColumnType.timestampWithoutTimeZone,
+          isNullable: true,
+          dartType: 'DateTime?',
+        ),
+        _isp.ColumnDefinition(
+          name: 'removedAt',
+          columnType: _isp.ColumnType.timestampWithoutTimeZone,
+          isNullable: true,
+          dartType: 'DateTime?',
+        ),
+      ],
+      foreignKeys: [
+        _isp.ForeignKeyDefinition(
+          constraintName: 'board_comment_fk_0',
+          columns: ['postId'],
+          referenceTable: 'board_post',
+          referenceTableSchema: 'public',
+          referenceColumns: ['id'],
+          onUpdate: _isp.ForeignKeyAction.noAction,
+          onDelete: _isp.ForeignKeyAction.cascade,
+          matchType: null,
+        ),
+        _isp.ForeignKeyDefinition(
+          constraintName: 'board_comment_fk_1',
+          columns: ['taskId'],
+          referenceTable: 'board_task',
+          referenceTableSchema: 'public',
+          referenceColumns: ['id'],
+          onUpdate: _isp.ForeignKeyAction.noAction,
+          onDelete: _isp.ForeignKeyAction.cascade,
+          matchType: null,
+        ),
+        _isp.ForeignKeyDefinition(
+          constraintName: 'board_comment_fk_2',
+          columns: ['authorId'],
+          referenceTable: 'user_profile',
+          referenceTableSchema: 'public',
+          referenceColumns: ['id'],
+          onUpdate: _isp.ForeignKeyAction.noAction,
+          onDelete: _isp.ForeignKeyAction.setNull,
+          matchType: null,
+        ),
+      ],
+      indexes: [
+        _isp.IndexDefinition(
+          indexName: 'board_comment_uuid_idx',
+          tableSpace: null,
+          elements: [
+            _isp.IndexElementDefinition(
+              type: _isp.IndexElementDefinitionType.column,
+              definition: 'uuid',
+            ),
+          ],
+          type: 'btree',
+          isUnique: true,
+          isPrimary: false,
+        ),
+        _isp.IndexDefinition(
+          indexName: 'board_comment_post_idx',
+          tableSpace: null,
+          elements: [
+            _isp.IndexElementDefinition(
+              type: _isp.IndexElementDefinitionType.column,
+              definition: 'postId',
+            ),
+            _isp.IndexElementDefinition(
+              type: _isp.IndexElementDefinitionType.column,
+              definition: 'createdAt',
+            ),
+          ],
+          type: 'btree',
+          isUnique: false,
+          isPrimary: false,
+        ),
+        _isp.IndexDefinition(
+          indexName: 'board_comment_task_idx',
+          tableSpace: null,
+          elements: [
+            _isp.IndexElementDefinition(
+              type: _isp.IndexElementDefinitionType.column,
+              definition: 'taskId',
+            ),
+            _isp.IndexElementDefinition(
+              type: _isp.IndexElementDefinitionType.column,
+              definition: 'createdAt',
+            ),
+          ],
+          type: 'btree',
+          isUnique: false,
+          isPrimary: false,
+        ),
+      ],
+      managed: true,
+    ),
+    _isp.TableDefinition(
+      name: 'board_flag',
+      dartName: 'BoardFlag',
+      schema: 'public',
+      module: 'wonky',
+      columns: [
+        _isp.ColumnDefinition(
+          name: 'id',
+          columnType: _isp.ColumnType.bigint,
+          isNullable: false,
+          dartType: 'int?',
+          columnDefault: 'serial',
+        ),
+        _isp.ColumnDefinition(
+          name: 'postId',
+          columnType: _isp.ColumnType.bigint,
+          isNullable: true,
+          dartType: 'int?',
+        ),
+        _isp.ColumnDefinition(
+          name: 'commentId',
+          columnType: _isp.ColumnType.bigint,
+          isNullable: true,
+          dartType: 'int?',
+        ),
+        _isp.ColumnDefinition(
+          name: 'userId',
+          columnType: _isp.ColumnType.bigint,
+          isNullable: false,
+          dartType: 'int',
+        ),
+        _isp.ColumnDefinition(
+          name: 'reason',
+          columnType: _isp.ColumnType.text,
+          isNullable: false,
+          dartType: 'protocol:BoardFlagReason',
+        ),
+        _isp.ColumnDefinition(
+          name: 'note',
+          columnType: _isp.ColumnType.text,
+          isNullable: true,
+          dartType: 'String?',
+        ),
+        _isp.ColumnDefinition(
+          name: 'createdAt',
+          columnType: _isp.ColumnType.timestampWithoutTimeZone,
+          isNullable: false,
+          dartType: 'DateTime',
+        ),
+      ],
+      foreignKeys: [
+        _isp.ForeignKeyDefinition(
+          constraintName: 'board_flag_fk_0',
+          columns: ['postId'],
+          referenceTable: 'board_post',
+          referenceTableSchema: 'public',
+          referenceColumns: ['id'],
+          onUpdate: _isp.ForeignKeyAction.noAction,
+          onDelete: _isp.ForeignKeyAction.cascade,
+          matchType: null,
+        ),
+        _isp.ForeignKeyDefinition(
+          constraintName: 'board_flag_fk_1',
+          columns: ['commentId'],
+          referenceTable: 'board_comment',
+          referenceTableSchema: 'public',
+          referenceColumns: ['id'],
+          onUpdate: _isp.ForeignKeyAction.noAction,
+          onDelete: _isp.ForeignKeyAction.cascade,
+          matchType: null,
+        ),
+        _isp.ForeignKeyDefinition(
+          constraintName: 'board_flag_fk_2',
+          columns: ['userId'],
+          referenceTable: 'user_profile',
+          referenceTableSchema: 'public',
+          referenceColumns: ['id'],
+          onUpdate: _isp.ForeignKeyAction.noAction,
+          onDelete: _isp.ForeignKeyAction.cascade,
+          matchType: null,
+        ),
+      ],
+      indexes: [
+        _isp.IndexDefinition(
+          indexName: 'board_flag_post_idx',
+          tableSpace: null,
+          elements: [
+            _isp.IndexElementDefinition(
+              type: _isp.IndexElementDefinitionType.column,
+              definition: 'postId',
+            ),
+            _isp.IndexElementDefinition(
+              type: _isp.IndexElementDefinitionType.column,
+              definition: 'userId',
+            ),
+          ],
+          type: 'btree',
+          isUnique: false,
+          isPrimary: false,
+        ),
+        _isp.IndexDefinition(
+          indexName: 'board_flag_comment_idx',
+          tableSpace: null,
+          elements: [
+            _isp.IndexElementDefinition(
+              type: _isp.IndexElementDefinitionType.column,
+              definition: 'commentId',
+            ),
+            _isp.IndexElementDefinition(
+              type: _isp.IndexElementDefinitionType.column,
+              definition: 'userId',
+            ),
+          ],
+          type: 'btree',
+          isUnique: false,
+          isPrimary: false,
+        ),
+      ],
+      managed: true,
+    ),
+    _isp.TableDefinition(
+      name: 'board_github_delivery',
+      dartName: 'BoardGithubDelivery',
+      schema: 'public',
+      module: 'wonky',
+      columns: [
+        _isp.ColumnDefinition(
+          name: 'id',
+          columnType: _isp.ColumnType.bigint,
+          isNullable: false,
+          dartType: 'int?',
+          columnDefault: 'serial',
+        ),
+        _isp.ColumnDefinition(
+          name: 'deliveryId',
+          columnType: _isp.ColumnType.text,
+          isNullable: false,
+          dartType: 'String',
+        ),
+        _isp.ColumnDefinition(
+          name: 'event',
+          columnType: _isp.ColumnType.text,
+          isNullable: false,
+          dartType: 'String',
+        ),
+        _isp.ColumnDefinition(
+          name: 'receivedAt',
+          columnType: _isp.ColumnType.timestampWithoutTimeZone,
+          isNullable: false,
+          dartType: 'DateTime',
+        ),
+      ],
+      foreignKeys: [],
+      indexes: [
+        _isp.IndexDefinition(
+          indexName: 'board_github_delivery_idx',
+          tableSpace: null,
+          elements: [
+            _isp.IndexElementDefinition(
+              type: _isp.IndexElementDefinitionType.column,
+              definition: 'deliveryId',
+            ),
+          ],
+          type: 'btree',
+          isUnique: true,
+          isPrimary: false,
+        ),
+      ],
+      managed: true,
+    ),
+    _isp.TableDefinition(
+      name: 'board_moderation_log',
+      dartName: 'BoardModerationLog',
+      schema: 'public',
+      module: 'wonky',
+      columns: [
+        _isp.ColumnDefinition(
+          name: 'id',
+          columnType: _isp.ColumnType.bigint,
+          isNullable: false,
+          dartType: 'int?',
+          columnDefault: 'serial',
+        ),
+        _isp.ColumnDefinition(
+          name: 'adminId',
+          columnType: _isp.ColumnType.bigint,
+          isNullable: false,
+          dartType: 'int',
+        ),
+        _isp.ColumnDefinition(
+          name: 'action',
+          columnType: _isp.ColumnType.text,
+          isNullable: false,
+          dartType: 'String',
+        ),
+        _isp.ColumnDefinition(
+          name: 'targetKind',
+          columnType: _isp.ColumnType.text,
+          isNullable: false,
+          dartType: 'protocol:BoardTargetKind',
+        ),
+        _isp.ColumnDefinition(
+          name: 'targetId',
+          columnType: _isp.ColumnType.bigint,
+          isNullable: false,
+          dartType: 'int',
+        ),
+        _isp.ColumnDefinition(
+          name: 'beforeJson',
+          columnType: _isp.ColumnType.text,
+          isNullable: true,
+          dartType: 'String?',
+        ),
+        _isp.ColumnDefinition(
+          name: 'afterJson',
+          columnType: _isp.ColumnType.text,
+          isNullable: true,
+          dartType: 'String?',
+        ),
+        _isp.ColumnDefinition(
+          name: 'reason',
+          columnType: _isp.ColumnType.text,
+          isNullable: true,
+          dartType: 'String?',
+        ),
+        _isp.ColumnDefinition(
+          name: 'createdAt',
+          columnType: _isp.ColumnType.timestampWithoutTimeZone,
+          isNullable: false,
+          dartType: 'DateTime',
+        ),
+      ],
+      foreignKeys: [],
+      indexes: [
+        _isp.IndexDefinition(
+          indexName: 'board_moderation_log_target_idx',
+          tableSpace: null,
+          elements: [
+            _isp.IndexElementDefinition(
+              type: _isp.IndexElementDefinitionType.column,
+              definition: 'targetKind',
+            ),
+            _isp.IndexElementDefinition(
+              type: _isp.IndexElementDefinitionType.column,
+              definition: 'targetId',
+            ),
+          ],
+          type: 'btree',
+          isUnique: false,
+          isPrimary: false,
+        ),
+      ],
+      managed: true,
+    ),
+    _isp.TableDefinition(
+      name: 'board_post',
+      dartName: 'BoardPost',
+      schema: 'public',
+      module: 'wonky',
+      columns: [
+        _isp.ColumnDefinition(
+          name: 'id',
+          columnType: _isp.ColumnType.bigint,
+          isNullable: false,
+          dartType: 'int?',
+          columnDefault: 'serial',
+        ),
+        _isp.ColumnDefinition(
+          name: 'authorId',
+          columnType: _isp.ColumnType.bigint,
+          isNullable: true,
+          dartType: 'int?',
+        ),
+        _isp.ColumnDefinition(
+          name: 'kind',
+          columnType: _isp.ColumnType.text,
+          isNullable: false,
+          dartType: 'protocol:BoardPostKind',
+        ),
+        _isp.ColumnDefinition(
+          name: 'reportedKind',
+          columnType: _isp.ColumnType.text,
+          isNullable: false,
+          dartType: 'protocol:BoardPostKind',
+        ),
+        _isp.ColumnDefinition(
+          name: 'area',
+          columnType: _isp.ColumnType.text,
+          isNullable: true,
+          dartType: 'protocol:BoardArea?',
+        ),
+        _isp.ColumnDefinition(
+          name: 'size',
+          columnType: _isp.ColumnType.text,
+          isNullable: true,
+          dartType: 'protocol:BoardSize?',
+        ),
+        _isp.ColumnDefinition(
+          name: 'aiLabels',
+          columnType: _isp.ColumnType.boolean,
+          isNullable: false,
+          dartType: 'bool',
+          columnDefault: 'true',
+        ),
+        _isp.ColumnDefinition(
+          name: 'title',
+          columnType: _isp.ColumnType.text,
+          isNullable: false,
+          dartType: 'String',
+        ),
+        _isp.ColumnDefinition(
+          name: 'body',
+          columnType: _isp.ColumnType.text,
+          isNullable: false,
+          dartType: 'String',
+        ),
+        _isp.ColumnDefinition(
+          name: 'contextJson',
+          columnType: _isp.ColumnType.text,
+          isNullable: true,
+          dartType: 'String?',
+        ),
+        _isp.ColumnDefinition(
+          name: 'appHint',
+          columnType: _isp.ColumnType.text,
+          isNullable: false,
+          dartType: 'String',
+        ),
+        _isp.ColumnDefinition(
+          name: 'screenshotFileId',
+          columnType: _isp.ColumnType.bigint,
+          isNullable: true,
+          dartType: 'int?',
+        ),
+        _isp.ColumnDefinition(
+          name: 'status',
+          columnType: _isp.ColumnType.text,
+          isNullable: false,
+          dartType: 'protocol:BoardPostStatus',
+        ),
+        _isp.ColumnDefinition(
+          name: 'moderation',
+          columnType: _isp.ColumnType.text,
+          isNullable: false,
+          dartType: 'protocol:BoardModeration',
+        ),
+        _isp.ColumnDefinition(
+          name: 'moderationReason',
+          columnType: _isp.ColumnType.text,
+          isNullable: true,
+          dartType: 'String?',
+        ),
+        _isp.ColumnDefinition(
+          name: 'needsCheck',
+          columnType: _isp.ColumnType.boolean,
+          isNullable: false,
+          dartType: 'bool',
+          columnDefault: 'false',
+        ),
+        _isp.ColumnDefinition(
+          name: 'editedByModerator',
+          columnType: _isp.ColumnType.boolean,
+          isNullable: false,
+          dartType: 'bool',
+          columnDefault: 'false',
+        ),
+        _isp.ColumnDefinition(
+          name: 'triageState',
+          columnType: _isp.ColumnType.text,
+          isNullable: false,
+          dartType: 'protocol:BoardTriageState',
+        ),
+        _isp.ColumnDefinition(
+          name: 'triageJson',
+          columnType: _isp.ColumnType.text,
+          isNullable: true,
+          dartType: 'String?',
+        ),
+        _isp.ColumnDefinition(
+          name: 'triageAttempts',
+          columnType: _isp.ColumnType.bigint,
+          isNullable: false,
+          dartType: 'int',
+          columnDefault: '0',
+        ),
+        _isp.ColumnDefinition(
+          name: 'suggestedTitle',
+          columnType: _isp.ColumnType.text,
+          isNullable: true,
+          dartType: 'String?',
+        ),
+        _isp.ColumnDefinition(
+          name: 'summary',
+          columnType: _isp.ColumnType.text,
+          isNullable: true,
+          dartType: 'String?',
+        ),
+        _isp.ColumnDefinition(
+          name: 'duplicateOfId',
+          columnType: _isp.ColumnType.bigint,
+          isNullable: true,
+          dartType: 'int?',
+        ),
+        _isp.ColumnDefinition(
+          name: 'possibleDuplicateOfId',
+          columnType: _isp.ColumnType.bigint,
+          isNullable: true,
+          dartType: 'int?',
+        ),
+        _isp.ColumnDefinition(
+          name: 'duplicateHintDismissed',
+          columnType: _isp.ColumnType.boolean,
+          isNullable: false,
+          dartType: 'bool',
+          columnDefault: 'false',
+        ),
+        _isp.ColumnDefinition(
+          name: 'declineReason',
+          columnType: _isp.ColumnType.text,
+          isNullable: true,
+          dartType: 'String?',
+        ),
+        _isp.ColumnDefinition(
+          name: 'taskId',
+          columnType: _isp.ColumnType.bigint,
+          isNullable: true,
+          dartType: 'int?',
+        ),
+        _isp.ColumnDefinition(
+          name: 'score',
+          columnType: _isp.ColumnType.bigint,
+          isNullable: false,
+          dartType: 'int',
+          columnDefault: '0',
+        ),
+        _isp.ColumnDefinition(
+          name: 'voteCount',
+          columnType: _isp.ColumnType.bigint,
+          isNullable: false,
+          dartType: 'int',
+          columnDefault: '0',
+        ),
+        _isp.ColumnDefinition(
+          name: 'commentCount',
+          columnType: _isp.ColumnType.bigint,
+          isNullable: false,
+          dartType: 'int',
+          columnDefault: '0',
+        ),
+        _isp.ColumnDefinition(
+          name: 'flagCount',
+          columnType: _isp.ColumnType.bigint,
+          isNullable: false,
+          dartType: 'int',
+          columnDefault: '0',
+        ),
+        _isp.ColumnDefinition(
+          name: 'createdAt',
+          columnType: _isp.ColumnType.timestampWithoutTimeZone,
+          isNullable: false,
+          dartType: 'DateTime',
+        ),
+        _isp.ColumnDefinition(
+          name: 'editedAt',
+          columnType: _isp.ColumnType.timestampWithoutTimeZone,
+          isNullable: true,
+          dartType: 'DateTime?',
+        ),
+        _isp.ColumnDefinition(
+          name: 'deletedAt',
+          columnType: _isp.ColumnType.timestampWithoutTimeZone,
+          isNullable: true,
+          dartType: 'DateTime?',
+        ),
+        _isp.ColumnDefinition(
+          name: 'removedAt',
+          columnType: _isp.ColumnType.timestampWithoutTimeZone,
+          isNullable: true,
+          dartType: 'DateTime?',
+        ),
+      ],
+      foreignKeys: [
+        _isp.ForeignKeyDefinition(
+          constraintName: 'board_post_fk_0',
+          columns: ['authorId'],
+          referenceTable: 'user_profile',
+          referenceTableSchema: 'public',
+          referenceColumns: ['id'],
+          onUpdate: _isp.ForeignKeyAction.noAction,
+          onDelete: _isp.ForeignKeyAction.setNull,
+          matchType: null,
+        ),
+        _isp.ForeignKeyDefinition(
+          constraintName: 'board_post_fk_1',
+          columns: ['screenshotFileId'],
+          referenceTable: 'stored_file',
+          referenceTableSchema: 'public',
+          referenceColumns: ['id'],
+          onUpdate: _isp.ForeignKeyAction.noAction,
+          onDelete: _isp.ForeignKeyAction.setNull,
+          matchType: null,
+        ),
+        _isp.ForeignKeyDefinition(
+          constraintName: 'board_post_fk_2',
+          columns: ['taskId'],
+          referenceTable: 'board_task',
+          referenceTableSchema: 'public',
+          referenceColumns: ['id'],
+          onUpdate: _isp.ForeignKeyAction.noAction,
+          onDelete: _isp.ForeignKeyAction.setNull,
+          matchType: null,
+        ),
+      ],
+      indexes: [
+        _isp.IndexDefinition(
+          indexName: 'board_post_list_idx',
+          tableSpace: null,
+          elements: [
+            _isp.IndexElementDefinition(
+              type: _isp.IndexElementDefinitionType.column,
+              definition: 'moderation',
+            ),
+            _isp.IndexElementDefinition(
+              type: _isp.IndexElementDefinitionType.column,
+              definition: 'kind',
+            ),
+            _isp.IndexElementDefinition(
+              type: _isp.IndexElementDefinitionType.column,
+              definition: 'status',
+            ),
+            _isp.IndexElementDefinition(
+              type: _isp.IndexElementDefinitionType.column,
+              definition: 'score',
+            ),
+          ],
+          type: 'btree',
+          isUnique: false,
+          isPrimary: false,
+        ),
+        _isp.IndexDefinition(
+          indexName: 'board_post_author_idx',
+          tableSpace: null,
+          elements: [
+            _isp.IndexElementDefinition(
+              type: _isp.IndexElementDefinitionType.column,
+              definition: 'authorId',
+            ),
+          ],
+          type: 'btree',
+          isUnique: false,
+          isPrimary: false,
+        ),
+        _isp.IndexDefinition(
+          indexName: 'board_post_task_idx',
+          tableSpace: null,
+          elements: [
+            _isp.IndexElementDefinition(
+              type: _isp.IndexElementDefinitionType.column,
+              definition: 'taskId',
+            ),
+          ],
+          type: 'btree',
+          isUnique: false,
+          isPrimary: false,
+        ),
+      ],
+      managed: true,
+    ),
+    _isp.TableDefinition(
+      name: 'board_pull_request',
+      dartName: 'BoardPullRequest',
+      schema: 'public',
+      module: 'wonky',
+      columns: [
+        _isp.ColumnDefinition(
+          name: 'id',
+          columnType: _isp.ColumnType.bigint,
+          isNullable: false,
+          dartType: 'int?',
+          columnDefault: 'serial',
+        ),
+        _isp.ColumnDefinition(
+          name: 'prNumber',
+          columnType: _isp.ColumnType.bigint,
+          isNullable: false,
+          dartType: 'int',
+        ),
+        _isp.ColumnDefinition(
+          name: 'taskId',
+          columnType: _isp.ColumnType.bigint,
+          isNullable: true,
+          dartType: 'int?',
+        ),
+        _isp.ColumnDefinition(
+          name: 'authorLogin',
+          columnType: _isp.ColumnType.text,
+          isNullable: false,
+          dartType: 'String',
+        ),
+        _isp.ColumnDefinition(
+          name: 'headSha',
+          columnType: _isp.ColumnType.text,
+          isNullable: false,
+          dartType: 'String',
+        ),
+        _isp.ColumnDefinition(
+          name: 'state',
+          columnType: _isp.ColumnType.text,
+          isNullable: false,
+          dartType: 'String',
+        ),
+        _isp.ColumnDefinition(
+          name: 'gateState',
+          columnType: _isp.ColumnType.text,
+          isNullable: false,
+          dartType: 'String',
+        ),
+        _isp.ColumnDefinition(
+          name: 'gateReason',
+          columnType: _isp.ColumnType.text,
+          isNullable: true,
+          dartType: 'String?',
+        ),
+        _isp.ColumnDefinition(
+          name: 'gateFirstFailedAt',
+          columnType: _isp.ColumnType.timestampWithoutTimeZone,
+          isNullable: true,
+          dartType: 'DateTime?',
+        ),
+        _isp.ColumnDefinition(
+          name: 'gateCommentId',
+          columnType: _isp.ColumnType.bigint,
+          isNullable: true,
+          dartType: 'int?',
+        ),
+        _isp.ColumnDefinition(
+          name: 'reviewCommentId',
+          columnType: _isp.ColumnType.bigint,
+          isNullable: true,
+          dartType: 'int?',
+        ),
+        _isp.ColumnDefinition(
+          name: 'lastReviewSha',
+          columnType: _isp.ColumnType.text,
+          isNullable: true,
+          dartType: 'String?',
+        ),
+        _isp.ColumnDefinition(
+          name: 'lastReviewJson',
+          columnType: _isp.ColumnType.text,
+          isNullable: true,
+          dartType: 'String?',
+        ),
+        _isp.ColumnDefinition(
+          name: 'lastReviewAt',
+          columnType: _isp.ColumnType.timestampWithoutTimeZone,
+          isNullable: true,
+          dartType: 'DateTime?',
+        ),
+        _isp.ColumnDefinition(
+          name: 'reviewDay',
+          columnType: _isp.ColumnType.text,
+          isNullable: true,
+          dartType: 'String?',
+        ),
+        _isp.ColumnDefinition(
+          name: 'reviewCount',
+          columnType: _isp.ColumnType.bigint,
+          isNullable: false,
+          dartType: 'int',
+          columnDefault: '0',
+        ),
+        _isp.ColumnDefinition(
+          name: 'mergeCommitSha',
+          columnType: _isp.ColumnType.text,
+          isNullable: true,
+          dartType: 'String?',
+        ),
+        _isp.ColumnDefinition(
+          name: 'createdAt',
+          columnType: _isp.ColumnType.timestampWithoutTimeZone,
+          isNullable: false,
+          dartType: 'DateTime',
+        ),
+        _isp.ColumnDefinition(
+          name: 'updatedAt',
+          columnType: _isp.ColumnType.timestampWithoutTimeZone,
+          isNullable: false,
+          dartType: 'DateTime',
+        ),
+      ],
+      foreignKeys: [
+        _isp.ForeignKeyDefinition(
+          constraintName: 'board_pull_request_fk_0',
+          columns: ['taskId'],
+          referenceTable: 'board_task',
+          referenceTableSchema: 'public',
+          referenceColumns: ['id'],
+          onUpdate: _isp.ForeignKeyAction.noAction,
+          onDelete: _isp.ForeignKeyAction.setNull,
+          matchType: null,
+        ),
+      ],
+      indexes: [
+        _isp.IndexDefinition(
+          indexName: 'board_pull_request_number_idx',
+          tableSpace: null,
+          elements: [
+            _isp.IndexElementDefinition(
+              type: _isp.IndexElementDefinitionType.column,
+              definition: 'prNumber',
+            ),
+          ],
+          type: 'btree',
+          isUnique: true,
+          isPrimary: false,
+        ),
+      ],
+      managed: true,
+    ),
+    _isp.TableDefinition(
+      name: 'board_task',
+      dartName: 'BoardTask',
+      schema: 'public',
+      module: 'wonky',
+      columns: [
+        _isp.ColumnDefinition(
+          name: 'id',
+          columnType: _isp.ColumnType.bigint,
+          isNullable: false,
+          dartType: 'int?',
+          columnDefault: 'serial',
+        ),
+        _isp.ColumnDefinition(
+          name: 'title',
+          columnType: _isp.ColumnType.text,
+          isNullable: false,
+          dartType: 'String',
+        ),
+        _isp.ColumnDefinition(
+          name: 'area',
+          columnType: _isp.ColumnType.text,
+          isNullable: false,
+          dartType: 'protocol:BoardArea',
+        ),
+        _isp.ColumnDefinition(
+          name: 'size',
+          columnType: _isp.ColumnType.text,
+          isNullable: false,
+          dartType: 'protocol:BoardSize',
+        ),
+        _isp.ColumnDefinition(
+          name: 'status',
+          columnType: _isp.ColumnType.text,
+          isNullable: false,
+          dartType: 'protocol:BoardTaskStatus',
+        ),
+        _isp.ColumnDefinition(
+          name: 'promptBody',
+          columnType: _isp.ColumnType.text,
+          isNullable: false,
+          dartType: 'String',
+        ),
+        _isp.ColumnDefinition(
+          name: 'promptGeneratedAt',
+          columnType: _isp.ColumnType.timestampWithoutTimeZone,
+          isNullable: true,
+          dartType: 'DateTime?',
+        ),
+        _isp.ColumnDefinition(
+          name: 'promptEditedById',
+          columnType: _isp.ColumnType.bigint,
+          isNullable: true,
+          dartType: 'int?',
+        ),
+        _isp.ColumnDefinition(
+          name: 'promptEditedAt',
+          columnType: _isp.ColumnType.timestampWithoutTimeZone,
+          isNullable: true,
+          dartType: 'DateTime?',
+        ),
+        _isp.ColumnDefinition(
+          name: 'createdById',
+          columnType: _isp.ColumnType.bigint,
+          isNullable: false,
+          dartType: 'int',
+        ),
+        _isp.ColumnDefinition(
+          name: 'publishedAt',
+          columnType: _isp.ColumnType.timestampWithoutTimeZone,
+          isNullable: true,
+          dartType: 'DateTime?',
+        ),
+        _isp.ColumnDefinition(
+          name: 'claimedById',
+          columnType: _isp.ColumnType.bigint,
+          isNullable: true,
+          dartType: 'int?',
+        ),
+        _isp.ColumnDefinition(
+          name: 'claimedAt',
+          columnType: _isp.ColumnType.timestampWithoutTimeZone,
+          isNullable: true,
+          dartType: 'DateTime?',
+        ),
+        _isp.ColumnDefinition(
+          name: 'claimExpiresAt',
+          columnType: _isp.ColumnType.timestampWithoutTimeZone,
+          isNullable: true,
+          dartType: 'DateTime?',
+        ),
+        _isp.ColumnDefinition(
+          name: 'claimWarnedAt',
+          columnType: _isp.ColumnType.timestampWithoutTimeZone,
+          isNullable: true,
+          dartType: 'DateTime?',
+        ),
+        _isp.ColumnDefinition(
+          name: 'claimCode',
+          columnType: _isp.ColumnType.text,
+          isNullable: true,
+          dartType: 'String?',
+        ),
+        _isp.ColumnDefinition(
+          name: 'pullRequestUrl',
+          columnType: _isp.ColumnType.text,
+          isNullable: true,
+          dartType: 'String?',
+        ),
+        _isp.ColumnDefinition(
+          name: 'prNumber',
+          columnType: _isp.ColumnType.bigint,
+          isNullable: true,
+          dartType: 'int?',
+        ),
+        _isp.ColumnDefinition(
+          name: 'prAuthorLogin',
+          columnType: _isp.ColumnType.text,
+          isNullable: true,
+          dartType: 'String?',
+        ),
+        _isp.ColumnDefinition(
+          name: 'mergeCommitSha',
+          columnType: _isp.ColumnType.text,
+          isNullable: true,
+          dartType: 'String?',
+        ),
+        _isp.ColumnDefinition(
+          name: 'doneAt',
+          columnType: _isp.ColumnType.timestampWithoutTimeZone,
+          isNullable: true,
+          dartType: 'DateTime?',
+        ),
+        _isp.ColumnDefinition(
+          name: 'shippedDeploySha',
+          columnType: _isp.ColumnType.text,
+          isNullable: true,
+          dartType: 'String?',
+        ),
+        _isp.ColumnDefinition(
+          name: 'shippedAt',
+          columnType: _isp.ColumnType.timestampWithoutTimeZone,
+          isNullable: true,
+          dartType: 'DateTime?',
+        ),
+        _isp.ColumnDefinition(
+          name: 'createdAt',
+          columnType: _isp.ColumnType.timestampWithoutTimeZone,
+          isNullable: false,
+          dartType: 'DateTime',
+        ),
+      ],
+      foreignKeys: [
+        _isp.ForeignKeyDefinition(
+          constraintName: 'board_task_fk_0',
+          columns: ['claimedById'],
+          referenceTable: 'user_profile',
+          referenceTableSchema: 'public',
+          referenceColumns: ['id'],
+          onUpdate: _isp.ForeignKeyAction.noAction,
+          onDelete: _isp.ForeignKeyAction.setNull,
+          matchType: null,
+        ),
+      ],
+      indexes: [
+        _isp.IndexDefinition(
+          indexName: 'board_task_status_idx',
+          tableSpace: null,
+          elements: [
+            _isp.IndexElementDefinition(
+              type: _isp.IndexElementDefinitionType.column,
+              definition: 'status',
+            ),
+          ],
+          type: 'btree',
+          isUnique: false,
+          isPrimary: false,
+        ),
+        _isp.IndexDefinition(
+          indexName: 'board_task_claim_idx',
+          tableSpace: null,
+          elements: [
+            _isp.IndexElementDefinition(
+              type: _isp.IndexElementDefinitionType.column,
+              definition: 'claimedById',
+            ),
+          ],
+          type: 'btree',
+          isUnique: false,
+          isPrimary: false,
+        ),
+      ],
+      managed: true,
+    ),
+    _isp.TableDefinition(
+      name: 'board_user_profile',
+      dartName: 'BoardUserProfile',
+      schema: 'public',
+      module: 'wonky',
+      columns: [
+        _isp.ColumnDefinition(
+          name: 'id',
+          columnType: _isp.ColumnType.bigint,
+          isNullable: false,
+          dartType: 'int?',
+          columnDefault: 'serial',
+        ),
+        _isp.ColumnDefinition(
+          name: 'userId',
+          columnType: _isp.ColumnType.bigint,
+          isNullable: false,
+          dartType: 'int',
+        ),
+        _isp.ColumnDefinition(
+          name: 'githubLogin',
+          columnType: _isp.ColumnType.text,
+          isNullable: true,
+          dartType: 'String?',
+        ),
+        _isp.ColumnDefinition(
+          name: 'blockedAt',
+          columnType: _isp.ColumnType.timestampWithoutTimeZone,
+          isNullable: true,
+          dartType: 'DateTime?',
+        ),
+        _isp.ColumnDefinition(
+          name: 'blockedUntil',
+          columnType: _isp.ColumnType.timestampWithoutTimeZone,
+          isNullable: true,
+          dartType: 'DateTime?',
+        ),
+        _isp.ColumnDefinition(
+          name: 'blockedReason',
+          columnType: _isp.ColumnType.text,
+          isNullable: true,
+          dartType: 'String?',
+        ),
+        _isp.ColumnDefinition(
+          name: 'blockedById',
+          columnType: _isp.ColumnType.bigint,
+          isNullable: true,
+          dartType: 'int?',
+        ),
+      ],
+      foreignKeys: [
+        _isp.ForeignKeyDefinition(
+          constraintName: 'board_user_profile_fk_0',
+          columns: ['userId'],
+          referenceTable: 'user_profile',
+          referenceTableSchema: 'public',
+          referenceColumns: ['id'],
+          onUpdate: _isp.ForeignKeyAction.noAction,
+          onDelete: _isp.ForeignKeyAction.cascade,
+          matchType: null,
+        ),
+      ],
+      indexes: [
+        _isp.IndexDefinition(
+          indexName: 'board_user_profile_user_idx',
+          tableSpace: null,
+          elements: [
+            _isp.IndexElementDefinition(
+              type: _isp.IndexElementDefinitionType.column,
+              definition: 'userId',
+            ),
+          ],
+          type: 'btree',
+          isUnique: true,
+          isPrimary: false,
+        ),
+      ],
+      managed: true,
+    ),
+    _isp.TableDefinition(
+      name: 'board_vote',
+      dartName: 'BoardVote',
+      schema: 'public',
+      module: 'wonky',
+      columns: [
+        _isp.ColumnDefinition(
+          name: 'id',
+          columnType: _isp.ColumnType.bigint,
+          isNullable: false,
+          dartType: 'int?',
+          columnDefault: 'serial',
+        ),
+        _isp.ColumnDefinition(
+          name: 'postId',
+          columnType: _isp.ColumnType.bigint,
+          isNullable: false,
+          dartType: 'int',
+        ),
+        _isp.ColumnDefinition(
+          name: 'userId',
+          columnType: _isp.ColumnType.bigint,
+          isNullable: false,
+          dartType: 'int',
+        ),
+        _isp.ColumnDefinition(
+          name: 'value',
+          columnType: _isp.ColumnType.bigint,
+          isNullable: false,
+          dartType: 'int',
+        ),
+        _isp.ColumnDefinition(
+          name: 'createdAt',
+          columnType: _isp.ColumnType.timestampWithoutTimeZone,
+          isNullable: false,
+          dartType: 'DateTime',
+        ),
+      ],
+      foreignKeys: [
+        _isp.ForeignKeyDefinition(
+          constraintName: 'board_vote_fk_0',
+          columns: ['postId'],
+          referenceTable: 'board_post',
+          referenceTableSchema: 'public',
+          referenceColumns: ['id'],
+          onUpdate: _isp.ForeignKeyAction.noAction,
+          onDelete: _isp.ForeignKeyAction.cascade,
+          matchType: null,
+        ),
+        _isp.ForeignKeyDefinition(
+          constraintName: 'board_vote_fk_1',
+          columns: ['userId'],
+          referenceTable: 'user_profile',
+          referenceTableSchema: 'public',
+          referenceColumns: ['id'],
+          onUpdate: _isp.ForeignKeyAction.noAction,
+          onDelete: _isp.ForeignKeyAction.cascade,
+          matchType: null,
+        ),
+      ],
+      indexes: [
+        _isp.IndexDefinition(
+          indexName: 'board_vote_unique_idx',
+          tableSpace: null,
+          elements: [
+            _isp.IndexElementDefinition(
+              type: _isp.IndexElementDefinitionType.column,
+              definition: 'postId',
+            ),
+            _isp.IndexElementDefinition(
+              type: _isp.IndexElementDefinitionType.column,
+              definition: 'userId',
+            ),
+          ],
+          type: 'btree',
+          isUnique: true,
+          isPrimary: false,
+        ),
+        _isp.IndexDefinition(
+          indexName: 'board_vote_recent_idx',
+          tableSpace: null,
+          elements: [
+            _isp.IndexElementDefinition(
+              type: _isp.IndexElementDefinitionType.column,
+              definition: 'postId',
+            ),
+            _isp.IndexElementDefinition(
+              type: _isp.IndexElementDefinitionType.column,
+              definition: 'createdAt',
             ),
           ],
           type: 'btree',
@@ -6985,6 +8586,135 @@ class Protocol extends _is.DatabaseSerializationManager
     if (t == _ivmxemza.ProofreadIssue) {
       return _ivmxemza.ProofreadIssue.fromJson(data) as T;
     }
+    if (t == _icowsqvh.BoardAiUsage) {
+      return _icowsqvh.BoardAiUsage.fromJson(data) as T;
+    }
+    if (t == _i0ag0upm.BoardArea) {
+      return _i0ag0upm.BoardArea.fromJson(data) as T;
+    }
+    if (t == _ika8r7fc.BoardAuthor) {
+      return _ika8r7fc.BoardAuthor.fromJson(data) as T;
+    }
+    if (t == _ilo15wk2.BoardBundleSuggestion) {
+      return _ilo15wk2.BoardBundleSuggestion.fromJson(data) as T;
+    }
+    if (t == _iin47lv0.BoardBundleSuggestionView) {
+      return _iin47lv0.BoardBundleSuggestionView.fromJson(data) as T;
+    }
+    if (t == _ijz5flk6.BoardComment) {
+      return _ijz5flk6.BoardComment.fromJson(data) as T;
+    }
+    if (t == _ipkjmsg5.BoardCommentView) {
+      return _ipkjmsg5.BoardCommentView.fromJson(data) as T;
+    }
+    if (t == _ita8snxr.BoardEventKind) {
+      return _ita8snxr.BoardEventKind.fromJson(data) as T;
+    }
+    if (t == _i0y7d0xd.BoardFlag) {
+      return _i0y7d0xd.BoardFlag.fromJson(data) as T;
+    }
+    if (t == _iwc3b6vo.BoardFlagReason) {
+      return _iwc3b6vo.BoardFlagReason.fromJson(data) as T;
+    }
+    if (t == _i5pjfe5s.BoardFlagView) {
+      return _i5pjfe5s.BoardFlagView.fromJson(data) as T;
+    }
+    if (t == _i5r22jl8.BoardGithubDelivery) {
+      return _i5r22jl8.BoardGithubDelivery.fromJson(data) as T;
+    }
+    if (t == _igcoqerx.BoardListQuery) {
+      return _igcoqerx.BoardListQuery.fromJson(data) as T;
+    }
+    if (t == _iu9hvv8z.BoardMe) {
+      return _iu9hvv8z.BoardMe.fromJson(data) as T;
+    }
+    if (t == _in0hwjmy.BoardModeration) {
+      return _in0hwjmy.BoardModeration.fromJson(data) as T;
+    }
+    if (t == _i5jfu168.BoardModerationAction) {
+      return _i5jfu168.BoardModerationAction.fromJson(data) as T;
+    }
+    if (t == _idxofexa.BoardModerationLog) {
+      return _idxofexa.BoardModerationLog.fromJson(data) as T;
+    }
+    if (t == _i7xps6dm.BoardPost) {
+      return _i7xps6dm.BoardPost.fromJson(data) as T;
+    }
+    if (t == _izvgi5ni.BoardPostDraft) {
+      return _izvgi5ni.BoardPostDraft.fromJson(data) as T;
+    }
+    if (t == _ibl25moa.BoardPostEvent) {
+      return _ibl25moa.BoardPostEvent.fromJson(data) as T;
+    }
+    if (t == _iui4x9zg.BoardPostKind) {
+      return _iui4x9zg.BoardPostKind.fromJson(data) as T;
+    }
+    if (t == _iq3f61ec.BoardPostListItem) {
+      return _iq3f61ec.BoardPostListItem.fromJson(data) as T;
+    }
+    if (t == _i1stsytz.BoardPostPage) {
+      return _i1stsytz.BoardPostPage.fromJson(data) as T;
+    }
+    if (t == _il200dga.BoardPostStatus) {
+      return _il200dga.BoardPostStatus.fromJson(data) as T;
+    }
+    if (t == _ijjd81zg.BoardPostView) {
+      return _ijjd81zg.BoardPostView.fromJson(data) as T;
+    }
+    if (t == _i36hp4a6.BoardPullRequest) {
+      return _i36hp4a6.BoardPullRequest.fromJson(data) as T;
+    }
+    if (t == _im7v2irk.BoardReviewCounts) {
+      return _im7v2irk.BoardReviewCounts.fromJson(data) as T;
+    }
+    if (t == _id33cro1.BoardReviewItem) {
+      return _id33cro1.BoardReviewItem.fromJson(data) as T;
+    }
+    if (t == _izs2n8vy.BoardReviewSection) {
+      return _izs2n8vy.BoardReviewSection.fromJson(data) as T;
+    }
+    if (t == _ieemxbgb.BoardSignal) {
+      return _ieemxbgb.BoardSignal.fromJson(data) as T;
+    }
+    if (t == _in3cjdcj.BoardSimilarPost) {
+      return _in3cjdcj.BoardSimilarPost.fromJson(data) as T;
+    }
+    if (t == _ivbgicm7.BoardSize) {
+      return _ivbgicm7.BoardSize.fromJson(data) as T;
+    }
+    if (t == _itz4727j.BoardSort) {
+      return _itz4727j.BoardSort.fromJson(data) as T;
+    }
+    if (t == _i2gir90g.BoardTargetKind) {
+      return _i2gir90g.BoardTargetKind.fromJson(data) as T;
+    }
+    if (t == _iv26y3a1.BoardTask) {
+      return _iv26y3a1.BoardTask.fromJson(data) as T;
+    }
+    if (t == _illpt7x2.BoardTaskPage) {
+      return _illpt7x2.BoardTaskPage.fromJson(data) as T;
+    }
+    if (t == _idsjzf6h.BoardTaskRef) {
+      return _idsjzf6h.BoardTaskRef.fromJson(data) as T;
+    }
+    if (t == _i4a2ekwp.BoardTaskStatus) {
+      return _i4a2ekwp.BoardTaskStatus.fromJson(data) as T;
+    }
+    if (t == _ifz7dmuf.BoardTaskView) {
+      return _ifz7dmuf.BoardTaskView.fromJson(data) as T;
+    }
+    if (t == _iso7mdvm.BoardTriageState) {
+      return _iso7mdvm.BoardTriageState.fromJson(data) as T;
+    }
+    if (t == _i516sz1w.BoardUserProfile) {
+      return _i516sz1w.BoardUserProfile.fromJson(data) as T;
+    }
+    if (t == _ifuo09i6.BoardVote) {
+      return _ifuo09i6.BoardVote.fromJson(data) as T;
+    }
+    if (t == _ie24iiog.BoardVoteResult) {
+      return _ie24iiog.BoardVoteResult.fromJson(data) as T;
+    }
     if (t == _i4piktk8.ClusterBusBatch) {
       return _i4piktk8.ClusterBusBatch.fromJson(data) as T;
     }
@@ -7840,6 +9570,173 @@ class Protocol extends _is.DatabaseSerializationManager
     }
     if (t == _is.getType<_ivmxemza.ProofreadIssue?>()) {
       return (data != null ? _ivmxemza.ProofreadIssue.fromJson(data) : null)
+          as T;
+    }
+    if (t == _is.getType<_icowsqvh.BoardAiUsage?>()) {
+      return (data != null ? _icowsqvh.BoardAiUsage.fromJson(data) : null) as T;
+    }
+    if (t == _is.getType<_i0ag0upm.BoardArea?>()) {
+      return (data != null ? _i0ag0upm.BoardArea.fromJson(data) : null) as T;
+    }
+    if (t == _is.getType<_ika8r7fc.BoardAuthor?>()) {
+      return (data != null ? _ika8r7fc.BoardAuthor.fromJson(data) : null) as T;
+    }
+    if (t == _is.getType<_ilo15wk2.BoardBundleSuggestion?>()) {
+      return (data != null
+              ? _ilo15wk2.BoardBundleSuggestion.fromJson(data)
+              : null)
+          as T;
+    }
+    if (t == _is.getType<_iin47lv0.BoardBundleSuggestionView?>()) {
+      return (data != null
+              ? _iin47lv0.BoardBundleSuggestionView.fromJson(data)
+              : null)
+          as T;
+    }
+    if (t == _is.getType<_ijz5flk6.BoardComment?>()) {
+      return (data != null ? _ijz5flk6.BoardComment.fromJson(data) : null) as T;
+    }
+    if (t == _is.getType<_ipkjmsg5.BoardCommentView?>()) {
+      return (data != null ? _ipkjmsg5.BoardCommentView.fromJson(data) : null)
+          as T;
+    }
+    if (t == _is.getType<_ita8snxr.BoardEventKind?>()) {
+      return (data != null ? _ita8snxr.BoardEventKind.fromJson(data) : null)
+          as T;
+    }
+    if (t == _is.getType<_i0y7d0xd.BoardFlag?>()) {
+      return (data != null ? _i0y7d0xd.BoardFlag.fromJson(data) : null) as T;
+    }
+    if (t == _is.getType<_iwc3b6vo.BoardFlagReason?>()) {
+      return (data != null ? _iwc3b6vo.BoardFlagReason.fromJson(data) : null)
+          as T;
+    }
+    if (t == _is.getType<_i5pjfe5s.BoardFlagView?>()) {
+      return (data != null ? _i5pjfe5s.BoardFlagView.fromJson(data) : null)
+          as T;
+    }
+    if (t == _is.getType<_i5r22jl8.BoardGithubDelivery?>()) {
+      return (data != null
+              ? _i5r22jl8.BoardGithubDelivery.fromJson(data)
+              : null)
+          as T;
+    }
+    if (t == _is.getType<_igcoqerx.BoardListQuery?>()) {
+      return (data != null ? _igcoqerx.BoardListQuery.fromJson(data) : null)
+          as T;
+    }
+    if (t == _is.getType<_iu9hvv8z.BoardMe?>()) {
+      return (data != null ? _iu9hvv8z.BoardMe.fromJson(data) : null) as T;
+    }
+    if (t == _is.getType<_in0hwjmy.BoardModeration?>()) {
+      return (data != null ? _in0hwjmy.BoardModeration.fromJson(data) : null)
+          as T;
+    }
+    if (t == _is.getType<_i5jfu168.BoardModerationAction?>()) {
+      return (data != null
+              ? _i5jfu168.BoardModerationAction.fromJson(data)
+              : null)
+          as T;
+    }
+    if (t == _is.getType<_idxofexa.BoardModerationLog?>()) {
+      return (data != null ? _idxofexa.BoardModerationLog.fromJson(data) : null)
+          as T;
+    }
+    if (t == _is.getType<_i7xps6dm.BoardPost?>()) {
+      return (data != null ? _i7xps6dm.BoardPost.fromJson(data) : null) as T;
+    }
+    if (t == _is.getType<_izvgi5ni.BoardPostDraft?>()) {
+      return (data != null ? _izvgi5ni.BoardPostDraft.fromJson(data) : null)
+          as T;
+    }
+    if (t == _is.getType<_ibl25moa.BoardPostEvent?>()) {
+      return (data != null ? _ibl25moa.BoardPostEvent.fromJson(data) : null)
+          as T;
+    }
+    if (t == _is.getType<_iui4x9zg.BoardPostKind?>()) {
+      return (data != null ? _iui4x9zg.BoardPostKind.fromJson(data) : null)
+          as T;
+    }
+    if (t == _is.getType<_iq3f61ec.BoardPostListItem?>()) {
+      return (data != null ? _iq3f61ec.BoardPostListItem.fromJson(data) : null)
+          as T;
+    }
+    if (t == _is.getType<_i1stsytz.BoardPostPage?>()) {
+      return (data != null ? _i1stsytz.BoardPostPage.fromJson(data) : null)
+          as T;
+    }
+    if (t == _is.getType<_il200dga.BoardPostStatus?>()) {
+      return (data != null ? _il200dga.BoardPostStatus.fromJson(data) : null)
+          as T;
+    }
+    if (t == _is.getType<_ijjd81zg.BoardPostView?>()) {
+      return (data != null ? _ijjd81zg.BoardPostView.fromJson(data) : null)
+          as T;
+    }
+    if (t == _is.getType<_i36hp4a6.BoardPullRequest?>()) {
+      return (data != null ? _i36hp4a6.BoardPullRequest.fromJson(data) : null)
+          as T;
+    }
+    if (t == _is.getType<_im7v2irk.BoardReviewCounts?>()) {
+      return (data != null ? _im7v2irk.BoardReviewCounts.fromJson(data) : null)
+          as T;
+    }
+    if (t == _is.getType<_id33cro1.BoardReviewItem?>()) {
+      return (data != null ? _id33cro1.BoardReviewItem.fromJson(data) : null)
+          as T;
+    }
+    if (t == _is.getType<_izs2n8vy.BoardReviewSection?>()) {
+      return (data != null ? _izs2n8vy.BoardReviewSection.fromJson(data) : null)
+          as T;
+    }
+    if (t == _is.getType<_ieemxbgb.BoardSignal?>()) {
+      return (data != null ? _ieemxbgb.BoardSignal.fromJson(data) : null) as T;
+    }
+    if (t == _is.getType<_in3cjdcj.BoardSimilarPost?>()) {
+      return (data != null ? _in3cjdcj.BoardSimilarPost.fromJson(data) : null)
+          as T;
+    }
+    if (t == _is.getType<_ivbgicm7.BoardSize?>()) {
+      return (data != null ? _ivbgicm7.BoardSize.fromJson(data) : null) as T;
+    }
+    if (t == _is.getType<_itz4727j.BoardSort?>()) {
+      return (data != null ? _itz4727j.BoardSort.fromJson(data) : null) as T;
+    }
+    if (t == _is.getType<_i2gir90g.BoardTargetKind?>()) {
+      return (data != null ? _i2gir90g.BoardTargetKind.fromJson(data) : null)
+          as T;
+    }
+    if (t == _is.getType<_iv26y3a1.BoardTask?>()) {
+      return (data != null ? _iv26y3a1.BoardTask.fromJson(data) : null) as T;
+    }
+    if (t == _is.getType<_illpt7x2.BoardTaskPage?>()) {
+      return (data != null ? _illpt7x2.BoardTaskPage.fromJson(data) : null)
+          as T;
+    }
+    if (t == _is.getType<_idsjzf6h.BoardTaskRef?>()) {
+      return (data != null ? _idsjzf6h.BoardTaskRef.fromJson(data) : null) as T;
+    }
+    if (t == _is.getType<_i4a2ekwp.BoardTaskStatus?>()) {
+      return (data != null ? _i4a2ekwp.BoardTaskStatus.fromJson(data) : null)
+          as T;
+    }
+    if (t == _is.getType<_ifz7dmuf.BoardTaskView?>()) {
+      return (data != null ? _ifz7dmuf.BoardTaskView.fromJson(data) : null)
+          as T;
+    }
+    if (t == _is.getType<_iso7mdvm.BoardTriageState?>()) {
+      return (data != null ? _iso7mdvm.BoardTriageState.fromJson(data) : null)
+          as T;
+    }
+    if (t == _is.getType<_i516sz1w.BoardUserProfile?>()) {
+      return (data != null ? _i516sz1w.BoardUserProfile.fromJson(data) : null)
+          as T;
+    }
+    if (t == _is.getType<_ifuo09i6.BoardVote?>()) {
+      return (data != null ? _ifuo09i6.BoardVote.fromJson(data) : null) as T;
+    }
+    if (t == _is.getType<_ie24iiog.BoardVoteResult?>()) {
+      return (data != null ? _ie24iiog.BoardVoteResult.fromJson(data) : null)
           as T;
     }
     if (t == _is.getType<_i4piktk8.ClusterBusBatch?>()) {
@@ -8923,6 +10820,50 @@ class Protocol extends _is.DatabaseSerializationManager
     if (t == List<int>) {
       return (data as List).map((e) => deserialize<int>(e)).toList() as T;
     }
+    if (t == List<_iq3f61ec.BoardPostListItem>) {
+      return (data as List)
+              .map((e) => deserialize<_iq3f61ec.BoardPostListItem>(e))
+              .toList()
+          as T;
+    }
+    if (t == List<_i5pjfe5s.BoardFlagView>) {
+      return (data as List)
+              .map((e) => deserialize<_i5pjfe5s.BoardFlagView>(e))
+              .toList()
+          as T;
+    }
+    if (t == _is.getType<List<_i5pjfe5s.BoardFlagView>?>()) {
+      return (data != null
+              ? (data as List)
+                    .map((e) => deserialize<_i5pjfe5s.BoardFlagView>(e))
+                    .toList()
+              : null)
+          as T;
+    }
+    if (t == List<_il200dga.BoardPostStatus>) {
+      return (data as List)
+              .map((e) => deserialize<_il200dga.BoardPostStatus>(e))
+              .toList()
+          as T;
+    }
+    if (t == List<_i0ag0upm.BoardArea>) {
+      return (data as List)
+              .map((e) => deserialize<_i0ag0upm.BoardArea>(e))
+              .toList()
+          as T;
+    }
+    if (t == List<_ivbgicm7.BoardSize>) {
+      return (data as List)
+              .map((e) => deserialize<_ivbgicm7.BoardSize>(e))
+              .toList()
+          as T;
+    }
+    if (t == List<_ifz7dmuf.BoardTaskView>) {
+      return (data as List)
+              .map((e) => deserialize<_ifz7dmuf.BoardTaskView>(e))
+              .toList()
+          as T;
+    }
     if (t == List<_i4xrxro7.CommentView>) {
       return (data as List)
               .map((e) => deserialize<_i4xrxro7.CommentView>(e))
@@ -9116,14 +11057,44 @@ class Protocol extends _is.DatabaseSerializationManager
               .toList()
           as T;
     }
-    if (t == List<_ixzwh8hc.CommentThreadView>) {
+    if (t == List<_ilh4w69x.BoardCommentView>) {
       return (data as List)
-              .map((e) => deserialize<_ixzwh8hc.CommentThreadView>(e))
+              .map((e) => deserialize<_ilh4w69x.BoardCommentView>(e))
+              .toList()
+          as T;
+    }
+    if (t == List<_iv1j9wri.BoardSimilarPost>) {
+      return (data as List)
+              .map((e) => deserialize<_iv1j9wri.BoardSimilarPost>(e))
+              .toList()
+          as T;
+    }
+    if (t == List<_ihypagkt.BoardTaskStatus>) {
+      return (data as List)
+              .map((e) => deserialize<_ihypagkt.BoardTaskStatus>(e))
+              .toList()
+          as T;
+    }
+    if (t == List<_id1usvpt.BoardReviewItem>) {
+      return (data as List)
+              .map((e) => deserialize<_id1usvpt.BoardReviewItem>(e))
               .toList()
           as T;
     }
     if (t == List<int>) {
       return (data as List).map((e) => deserialize<int>(e)).toList() as T;
+    }
+    if (t == List<_i8qikgvy.BoardBundleSuggestionView>) {
+      return (data as List)
+              .map((e) => deserialize<_i8qikgvy.BoardBundleSuggestionView>(e))
+              .toList()
+          as T;
+    }
+    if (t == List<_ixzwh8hc.CommentThreadView>) {
+      return (data as List)
+              .map((e) => deserialize<_ixzwh8hc.CommentThreadView>(e))
+              .toList()
+          as T;
     }
     if (t == _is.getType<List<int>?>()) {
       return (data != null
@@ -9307,6 +11278,49 @@ class Protocol extends _is.DatabaseSerializationManager
       _i4m43iwr.InlineAiRequest => 'InlineAiRequest',
       _ie0jt2ne.ProofreadEvent => 'ProofreadEvent',
       _ivmxemza.ProofreadIssue => 'ProofreadIssue',
+      _icowsqvh.BoardAiUsage => 'BoardAiUsage',
+      _i0ag0upm.BoardArea => 'BoardArea',
+      _ika8r7fc.BoardAuthor => 'BoardAuthor',
+      _ilo15wk2.BoardBundleSuggestion => 'BoardBundleSuggestion',
+      _iin47lv0.BoardBundleSuggestionView => 'BoardBundleSuggestionView',
+      _ijz5flk6.BoardComment => 'BoardComment',
+      _ipkjmsg5.BoardCommentView => 'BoardCommentView',
+      _ita8snxr.BoardEventKind => 'BoardEventKind',
+      _i0y7d0xd.BoardFlag => 'BoardFlag',
+      _iwc3b6vo.BoardFlagReason => 'BoardFlagReason',
+      _i5pjfe5s.BoardFlagView => 'BoardFlagView',
+      _i5r22jl8.BoardGithubDelivery => 'BoardGithubDelivery',
+      _igcoqerx.BoardListQuery => 'BoardListQuery',
+      _iu9hvv8z.BoardMe => 'BoardMe',
+      _in0hwjmy.BoardModeration => 'BoardModeration',
+      _i5jfu168.BoardModerationAction => 'BoardModerationAction',
+      _idxofexa.BoardModerationLog => 'BoardModerationLog',
+      _i7xps6dm.BoardPost => 'BoardPost',
+      _izvgi5ni.BoardPostDraft => 'BoardPostDraft',
+      _ibl25moa.BoardPostEvent => 'BoardPostEvent',
+      _iui4x9zg.BoardPostKind => 'BoardPostKind',
+      _iq3f61ec.BoardPostListItem => 'BoardPostListItem',
+      _i1stsytz.BoardPostPage => 'BoardPostPage',
+      _il200dga.BoardPostStatus => 'BoardPostStatus',
+      _ijjd81zg.BoardPostView => 'BoardPostView',
+      _i36hp4a6.BoardPullRequest => 'BoardPullRequest',
+      _im7v2irk.BoardReviewCounts => 'BoardReviewCounts',
+      _id33cro1.BoardReviewItem => 'BoardReviewItem',
+      _izs2n8vy.BoardReviewSection => 'BoardReviewSection',
+      _ieemxbgb.BoardSignal => 'BoardSignal',
+      _in3cjdcj.BoardSimilarPost => 'BoardSimilarPost',
+      _ivbgicm7.BoardSize => 'BoardSize',
+      _itz4727j.BoardSort => 'BoardSort',
+      _i2gir90g.BoardTargetKind => 'BoardTargetKind',
+      _iv26y3a1.BoardTask => 'BoardTask',
+      _illpt7x2.BoardTaskPage => 'BoardTaskPage',
+      _idsjzf6h.BoardTaskRef => 'BoardTaskRef',
+      _i4a2ekwp.BoardTaskStatus => 'BoardTaskStatus',
+      _ifz7dmuf.BoardTaskView => 'BoardTaskView',
+      _iso7mdvm.BoardTriageState => 'BoardTriageState',
+      _i516sz1w.BoardUserProfile => 'BoardUserProfile',
+      _ifuo09i6.BoardVote => 'BoardVote',
+      _ie24iiog.BoardVoteResult => 'BoardVoteResult',
       _i4piktk8.ClusterBusBatch => 'ClusterBusBatch',
       _ipkzl9y7.ClusterSignal => 'ClusterSignal',
       _iyixppck.Comment => 'Comment',
@@ -9625,6 +11639,92 @@ class Protocol extends _is.DatabaseSerializationManager
         return 'ProofreadEvent';
       case _ivmxemza.ProofreadIssue():
         return 'ProofreadIssue';
+      case _icowsqvh.BoardAiUsage():
+        return 'BoardAiUsage';
+      case _i0ag0upm.BoardArea():
+        return 'BoardArea';
+      case _ika8r7fc.BoardAuthor():
+        return 'BoardAuthor';
+      case _ilo15wk2.BoardBundleSuggestion():
+        return 'BoardBundleSuggestion';
+      case _iin47lv0.BoardBundleSuggestionView():
+        return 'BoardBundleSuggestionView';
+      case _ijz5flk6.BoardComment():
+        return 'BoardComment';
+      case _ipkjmsg5.BoardCommentView():
+        return 'BoardCommentView';
+      case _ita8snxr.BoardEventKind():
+        return 'BoardEventKind';
+      case _i0y7d0xd.BoardFlag():
+        return 'BoardFlag';
+      case _iwc3b6vo.BoardFlagReason():
+        return 'BoardFlagReason';
+      case _i5pjfe5s.BoardFlagView():
+        return 'BoardFlagView';
+      case _i5r22jl8.BoardGithubDelivery():
+        return 'BoardGithubDelivery';
+      case _igcoqerx.BoardListQuery():
+        return 'BoardListQuery';
+      case _iu9hvv8z.BoardMe():
+        return 'BoardMe';
+      case _in0hwjmy.BoardModeration():
+        return 'BoardModeration';
+      case _i5jfu168.BoardModerationAction():
+        return 'BoardModerationAction';
+      case _idxofexa.BoardModerationLog():
+        return 'BoardModerationLog';
+      case _i7xps6dm.BoardPost():
+        return 'BoardPost';
+      case _izvgi5ni.BoardPostDraft():
+        return 'BoardPostDraft';
+      case _ibl25moa.BoardPostEvent():
+        return 'BoardPostEvent';
+      case _iui4x9zg.BoardPostKind():
+        return 'BoardPostKind';
+      case _iq3f61ec.BoardPostListItem():
+        return 'BoardPostListItem';
+      case _i1stsytz.BoardPostPage():
+        return 'BoardPostPage';
+      case _il200dga.BoardPostStatus():
+        return 'BoardPostStatus';
+      case _ijjd81zg.BoardPostView():
+        return 'BoardPostView';
+      case _i36hp4a6.BoardPullRequest():
+        return 'BoardPullRequest';
+      case _im7v2irk.BoardReviewCounts():
+        return 'BoardReviewCounts';
+      case _id33cro1.BoardReviewItem():
+        return 'BoardReviewItem';
+      case _izs2n8vy.BoardReviewSection():
+        return 'BoardReviewSection';
+      case _ieemxbgb.BoardSignal():
+        return 'BoardSignal';
+      case _in3cjdcj.BoardSimilarPost():
+        return 'BoardSimilarPost';
+      case _ivbgicm7.BoardSize():
+        return 'BoardSize';
+      case _itz4727j.BoardSort():
+        return 'BoardSort';
+      case _i2gir90g.BoardTargetKind():
+        return 'BoardTargetKind';
+      case _iv26y3a1.BoardTask():
+        return 'BoardTask';
+      case _illpt7x2.BoardTaskPage():
+        return 'BoardTaskPage';
+      case _idsjzf6h.BoardTaskRef():
+        return 'BoardTaskRef';
+      case _i4a2ekwp.BoardTaskStatus():
+        return 'BoardTaskStatus';
+      case _ifz7dmuf.BoardTaskView():
+        return 'BoardTaskView';
+      case _iso7mdvm.BoardTriageState():
+        return 'BoardTriageState';
+      case _i516sz1w.BoardUserProfile():
+        return 'BoardUserProfile';
+      case _ifuo09i6.BoardVote():
+        return 'BoardVote';
+      case _ie24iiog.BoardVoteResult():
+        return 'BoardVoteResult';
       case _i4piktk8.ClusterBusBatch():
         return 'ClusterBusBatch';
       case _ipkzl9y7.ClusterSignal():
@@ -10244,6 +12344,135 @@ class Protocol extends _is.DatabaseSerializationManager
     }
     if (dataClassName == 'ProofreadIssue') {
       return deserialize<_ivmxemza.ProofreadIssue>(data['data']);
+    }
+    if (dataClassName == 'BoardAiUsage') {
+      return deserialize<_icowsqvh.BoardAiUsage>(data['data']);
+    }
+    if (dataClassName == 'BoardArea') {
+      return deserialize<_i0ag0upm.BoardArea>(data['data']);
+    }
+    if (dataClassName == 'BoardAuthor') {
+      return deserialize<_ika8r7fc.BoardAuthor>(data['data']);
+    }
+    if (dataClassName == 'BoardBundleSuggestion') {
+      return deserialize<_ilo15wk2.BoardBundleSuggestion>(data['data']);
+    }
+    if (dataClassName == 'BoardBundleSuggestionView') {
+      return deserialize<_iin47lv0.BoardBundleSuggestionView>(data['data']);
+    }
+    if (dataClassName == 'BoardComment') {
+      return deserialize<_ijz5flk6.BoardComment>(data['data']);
+    }
+    if (dataClassName == 'BoardCommentView') {
+      return deserialize<_ipkjmsg5.BoardCommentView>(data['data']);
+    }
+    if (dataClassName == 'BoardEventKind') {
+      return deserialize<_ita8snxr.BoardEventKind>(data['data']);
+    }
+    if (dataClassName == 'BoardFlag') {
+      return deserialize<_i0y7d0xd.BoardFlag>(data['data']);
+    }
+    if (dataClassName == 'BoardFlagReason') {
+      return deserialize<_iwc3b6vo.BoardFlagReason>(data['data']);
+    }
+    if (dataClassName == 'BoardFlagView') {
+      return deserialize<_i5pjfe5s.BoardFlagView>(data['data']);
+    }
+    if (dataClassName == 'BoardGithubDelivery') {
+      return deserialize<_i5r22jl8.BoardGithubDelivery>(data['data']);
+    }
+    if (dataClassName == 'BoardListQuery') {
+      return deserialize<_igcoqerx.BoardListQuery>(data['data']);
+    }
+    if (dataClassName == 'BoardMe') {
+      return deserialize<_iu9hvv8z.BoardMe>(data['data']);
+    }
+    if (dataClassName == 'BoardModeration') {
+      return deserialize<_in0hwjmy.BoardModeration>(data['data']);
+    }
+    if (dataClassName == 'BoardModerationAction') {
+      return deserialize<_i5jfu168.BoardModerationAction>(data['data']);
+    }
+    if (dataClassName == 'BoardModerationLog') {
+      return deserialize<_idxofexa.BoardModerationLog>(data['data']);
+    }
+    if (dataClassName == 'BoardPost') {
+      return deserialize<_i7xps6dm.BoardPost>(data['data']);
+    }
+    if (dataClassName == 'BoardPostDraft') {
+      return deserialize<_izvgi5ni.BoardPostDraft>(data['data']);
+    }
+    if (dataClassName == 'BoardPostEvent') {
+      return deserialize<_ibl25moa.BoardPostEvent>(data['data']);
+    }
+    if (dataClassName == 'BoardPostKind') {
+      return deserialize<_iui4x9zg.BoardPostKind>(data['data']);
+    }
+    if (dataClassName == 'BoardPostListItem') {
+      return deserialize<_iq3f61ec.BoardPostListItem>(data['data']);
+    }
+    if (dataClassName == 'BoardPostPage') {
+      return deserialize<_i1stsytz.BoardPostPage>(data['data']);
+    }
+    if (dataClassName == 'BoardPostStatus') {
+      return deserialize<_il200dga.BoardPostStatus>(data['data']);
+    }
+    if (dataClassName == 'BoardPostView') {
+      return deserialize<_ijjd81zg.BoardPostView>(data['data']);
+    }
+    if (dataClassName == 'BoardPullRequest') {
+      return deserialize<_i36hp4a6.BoardPullRequest>(data['data']);
+    }
+    if (dataClassName == 'BoardReviewCounts') {
+      return deserialize<_im7v2irk.BoardReviewCounts>(data['data']);
+    }
+    if (dataClassName == 'BoardReviewItem') {
+      return deserialize<_id33cro1.BoardReviewItem>(data['data']);
+    }
+    if (dataClassName == 'BoardReviewSection') {
+      return deserialize<_izs2n8vy.BoardReviewSection>(data['data']);
+    }
+    if (dataClassName == 'BoardSignal') {
+      return deserialize<_ieemxbgb.BoardSignal>(data['data']);
+    }
+    if (dataClassName == 'BoardSimilarPost') {
+      return deserialize<_in3cjdcj.BoardSimilarPost>(data['data']);
+    }
+    if (dataClassName == 'BoardSize') {
+      return deserialize<_ivbgicm7.BoardSize>(data['data']);
+    }
+    if (dataClassName == 'BoardSort') {
+      return deserialize<_itz4727j.BoardSort>(data['data']);
+    }
+    if (dataClassName == 'BoardTargetKind') {
+      return deserialize<_i2gir90g.BoardTargetKind>(data['data']);
+    }
+    if (dataClassName == 'BoardTask') {
+      return deserialize<_iv26y3a1.BoardTask>(data['data']);
+    }
+    if (dataClassName == 'BoardTaskPage') {
+      return deserialize<_illpt7x2.BoardTaskPage>(data['data']);
+    }
+    if (dataClassName == 'BoardTaskRef') {
+      return deserialize<_idsjzf6h.BoardTaskRef>(data['data']);
+    }
+    if (dataClassName == 'BoardTaskStatus') {
+      return deserialize<_i4a2ekwp.BoardTaskStatus>(data['data']);
+    }
+    if (dataClassName == 'BoardTaskView') {
+      return deserialize<_ifz7dmuf.BoardTaskView>(data['data']);
+    }
+    if (dataClassName == 'BoardTriageState') {
+      return deserialize<_iso7mdvm.BoardTriageState>(data['data']);
+    }
+    if (dataClassName == 'BoardUserProfile') {
+      return deserialize<_i516sz1w.BoardUserProfile>(data['data']);
+    }
+    if (dataClassName == 'BoardVote') {
+      return deserialize<_ifuo09i6.BoardVote>(data['data']);
+    }
+    if (dataClassName == 'BoardVoteResult') {
+      return deserialize<_ie24iiog.BoardVoteResult>(data['data']);
     }
     if (dataClassName == 'ClusterBusBatch') {
       return deserialize<_i4piktk8.ClusterBusBatch>(data['data']);
@@ -11047,6 +13276,28 @@ class Protocol extends _is.DatabaseSerializationManager
         return _i8cittxq.AssistantMessage.t;
       case _iaq6rutx.AssistantThread:
         return _iaq6rutx.AssistantThread.t;
+      case _icowsqvh.BoardAiUsage:
+        return _icowsqvh.BoardAiUsage.t;
+      case _ilo15wk2.BoardBundleSuggestion:
+        return _ilo15wk2.BoardBundleSuggestion.t;
+      case _ijz5flk6.BoardComment:
+        return _ijz5flk6.BoardComment.t;
+      case _i0y7d0xd.BoardFlag:
+        return _i0y7d0xd.BoardFlag.t;
+      case _i5r22jl8.BoardGithubDelivery:
+        return _i5r22jl8.BoardGithubDelivery.t;
+      case _idxofexa.BoardModerationLog:
+        return _idxofexa.BoardModerationLog.t;
+      case _i7xps6dm.BoardPost:
+        return _i7xps6dm.BoardPost.t;
+      case _i36hp4a6.BoardPullRequest:
+        return _i36hp4a6.BoardPullRequest.t;
+      case _iv26y3a1.BoardTask:
+        return _iv26y3a1.BoardTask.t;
+      case _i516sz1w.BoardUserProfile:
+        return _i516sz1w.BoardUserProfile.t;
+      case _ifuo09i6.BoardVote:
+        return _ifuo09i6.BoardVote.t;
       case _iyixppck.Comment:
         return _iyixppck.Comment.t;
       case _ijog60vm.CommentThread:

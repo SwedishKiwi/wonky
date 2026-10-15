@@ -23,6 +23,16 @@ import 'package:wonky_client/src/protocol/platform/activity/activity_event_view.
     as _itempttd;
 import 'package:wonky_client/src/protocol/platform/ai/models/assistant_thread_view.dart'
     as _i2rhb3qx;
+import 'package:wonky_client/src/protocol/platform/board/models/board_bundle_suggestion_view.dart'
+    as _i94c7q23;
+import 'package:wonky_client/src/protocol/platform/board/models/board_comment_view.dart'
+    as _iesojpvb;
+import 'package:wonky_client/src/protocol/platform/board/models/board_review_item.dart'
+    as _i3y77bov;
+import 'package:wonky_client/src/protocol/platform/board/models/board_similar_post.dart'
+    as _ikfdrh1p;
+import 'package:wonky_client/src/protocol/platform/board/models/board_task_status.dart'
+    as _i325i6jq;
 import 'package:wonky_client/src/protocol/platform/comments/comment_thread_view.dart'
     as _i2c85fb0;
 import 'package:wonky_client/src/protocol/platform/drive/drive_item_view.dart'
@@ -88,6 +98,45 @@ import 'platform/ai/models/inline_ai_event_type.dart' as _i6pcz5z6;
 import 'platform/ai/models/inline_ai_request.dart' as _i4m43iwr;
 import 'platform/ai/models/proofread_event.dart' as _ie0jt2ne;
 import 'platform/ai/models/proofread_issue.dart' as _ivmxemza;
+import 'platform/board/models/board_area.dart' as _i0ag0upm;
+import 'platform/board/models/board_author.dart' as _ika8r7fc;
+import 'platform/board/models/board_bundle_suggestion.dart' as _ilo15wk2;
+import 'platform/board/models/board_bundle_suggestion_view.dart' as _iin47lv0;
+import 'platform/board/models/board_comment.dart' as _ijz5flk6;
+import 'platform/board/models/board_comment_view.dart' as _ipkjmsg5;
+import 'platform/board/models/board_event_kind.dart' as _ita8snxr;
+import 'platform/board/models/board_flag.dart' as _i0y7d0xd;
+import 'platform/board/models/board_flag_reason.dart' as _iwc3b6vo;
+import 'platform/board/models/board_flag_view.dart' as _i5pjfe5s;
+import 'platform/board/models/board_list_query.dart' as _igcoqerx;
+import 'platform/board/models/board_me.dart' as _iu9hvv8z;
+import 'platform/board/models/board_moderation.dart' as _in0hwjmy;
+import 'platform/board/models/board_moderation_action.dart' as _i5jfu168;
+import 'platform/board/models/board_post.dart' as _i7xps6dm;
+import 'platform/board/models/board_post_draft.dart' as _izvgi5ni;
+import 'platform/board/models/board_post_event.dart' as _ibl25moa;
+import 'platform/board/models/board_post_kind.dart' as _iui4x9zg;
+import 'platform/board/models/board_post_list_item.dart' as _iq3f61ec;
+import 'platform/board/models/board_post_page.dart' as _i1stsytz;
+import 'platform/board/models/board_post_status.dart' as _il200dga;
+import 'platform/board/models/board_post_view.dart' as _ijjd81zg;
+import 'platform/board/models/board_review_counts.dart' as _im7v2irk;
+import 'platform/board/models/board_review_item.dart' as _id33cro1;
+import 'platform/board/models/board_review_section.dart' as _izs2n8vy;
+import 'platform/board/models/board_signal.dart' as _ieemxbgb;
+import 'platform/board/models/board_similar_post.dart' as _in3cjdcj;
+import 'platform/board/models/board_size.dart' as _ivbgicm7;
+import 'platform/board/models/board_sort.dart' as _itz4727j;
+import 'platform/board/models/board_target_kind.dart' as _i2gir90g;
+import 'platform/board/models/board_task.dart' as _iv26y3a1;
+import 'platform/board/models/board_task_page.dart' as _illpt7x2;
+import 'platform/board/models/board_task_ref.dart' as _idsjzf6h;
+import 'platform/board/models/board_task_status.dart' as _i4a2ekwp;
+import 'platform/board/models/board_task_view.dart' as _ifz7dmuf;
+import 'platform/board/models/board_triage_state.dart' as _iso7mdvm;
+import 'platform/board/models/board_user_profile.dart' as _i516sz1w;
+import 'platform/board/models/board_vote.dart' as _ifuo09i6;
+import 'platform/board/models/board_vote_result.dart' as _ie24iiog;
 import 'platform/comments/comment.dart' as _iyixppck;
 import 'platform/comments/comment_anchor_kind.dart' as _iw81twtc;
 import 'platform/comments/comment_event.dart' as _imlsyj2p;
@@ -283,6 +332,45 @@ export 'platform/ai/models/inline_ai_event_type.dart';
 export 'platform/ai/models/inline_ai_request.dart';
 export 'platform/ai/models/proofread_event.dart';
 export 'platform/ai/models/proofread_issue.dart';
+export 'platform/board/models/board_area.dart';
+export 'platform/board/models/board_author.dart';
+export 'platform/board/models/board_bundle_suggestion.dart';
+export 'platform/board/models/board_bundle_suggestion_view.dart';
+export 'platform/board/models/board_comment.dart';
+export 'platform/board/models/board_comment_view.dart';
+export 'platform/board/models/board_event_kind.dart';
+export 'platform/board/models/board_flag.dart';
+export 'platform/board/models/board_flag_reason.dart';
+export 'platform/board/models/board_flag_view.dart';
+export 'platform/board/models/board_list_query.dart';
+export 'platform/board/models/board_me.dart';
+export 'platform/board/models/board_moderation.dart';
+export 'platform/board/models/board_moderation_action.dart';
+export 'platform/board/models/board_post.dart';
+export 'platform/board/models/board_post_draft.dart';
+export 'platform/board/models/board_post_event.dart';
+export 'platform/board/models/board_post_kind.dart';
+export 'platform/board/models/board_post_list_item.dart';
+export 'platform/board/models/board_post_page.dart';
+export 'platform/board/models/board_post_status.dart';
+export 'platform/board/models/board_post_view.dart';
+export 'platform/board/models/board_review_counts.dart';
+export 'platform/board/models/board_review_item.dart';
+export 'platform/board/models/board_review_section.dart';
+export 'platform/board/models/board_signal.dart';
+export 'platform/board/models/board_similar_post.dart';
+export 'platform/board/models/board_size.dart';
+export 'platform/board/models/board_sort.dart';
+export 'platform/board/models/board_target_kind.dart';
+export 'platform/board/models/board_task.dart';
+export 'platform/board/models/board_task_page.dart';
+export 'platform/board/models/board_task_ref.dart';
+export 'platform/board/models/board_task_status.dart';
+export 'platform/board/models/board_task_view.dart';
+export 'platform/board/models/board_triage_state.dart';
+export 'platform/board/models/board_user_profile.dart';
+export 'platform/board/models/board_vote.dart';
+export 'platform/board/models/board_vote_result.dart';
 export 'platform/comments/comment.dart';
 export 'platform/comments/comment_anchor_kind.dart';
 export 'platform/comments/comment_event.dart';
@@ -494,6 +582,45 @@ class Protocol extends _isd.DatabaseSerializationManager
           _isc.getType<_i4m43iwr.InlineAiRequest>,
           _isc.getType<_ie0jt2ne.ProofreadEvent>,
           _isc.getType<_ivmxemza.ProofreadIssue>,
+          _isc.getType<_i0ag0upm.BoardArea>,
+          _isc.getType<_ika8r7fc.BoardAuthor>,
+          _isc.getType<_ilo15wk2.BoardBundleSuggestion>,
+          _isc.getType<_iin47lv0.BoardBundleSuggestionView>,
+          _isc.getType<_ijz5flk6.BoardComment>,
+          _isc.getType<_ipkjmsg5.BoardCommentView>,
+          _isc.getType<_ita8snxr.BoardEventKind>,
+          _isc.getType<_i0y7d0xd.BoardFlag>,
+          _isc.getType<_iwc3b6vo.BoardFlagReason>,
+          _isc.getType<_i5pjfe5s.BoardFlagView>,
+          _isc.getType<_igcoqerx.BoardListQuery>,
+          _isc.getType<_iu9hvv8z.BoardMe>,
+          _isc.getType<_in0hwjmy.BoardModeration>,
+          _isc.getType<_i5jfu168.BoardModerationAction>,
+          _isc.getType<_i7xps6dm.BoardPost>,
+          _isc.getType<_izvgi5ni.BoardPostDraft>,
+          _isc.getType<_ibl25moa.BoardPostEvent>,
+          _isc.getType<_iui4x9zg.BoardPostKind>,
+          _isc.getType<_iq3f61ec.BoardPostListItem>,
+          _isc.getType<_i1stsytz.BoardPostPage>,
+          _isc.getType<_il200dga.BoardPostStatus>,
+          _isc.getType<_ijjd81zg.BoardPostView>,
+          _isc.getType<_im7v2irk.BoardReviewCounts>,
+          _isc.getType<_id33cro1.BoardReviewItem>,
+          _isc.getType<_izs2n8vy.BoardReviewSection>,
+          _isc.getType<_ieemxbgb.BoardSignal>,
+          _isc.getType<_in3cjdcj.BoardSimilarPost>,
+          _isc.getType<_ivbgicm7.BoardSize>,
+          _isc.getType<_itz4727j.BoardSort>,
+          _isc.getType<_i2gir90g.BoardTargetKind>,
+          _isc.getType<_iv26y3a1.BoardTask>,
+          _isc.getType<_illpt7x2.BoardTaskPage>,
+          _isc.getType<_idsjzf6h.BoardTaskRef>,
+          _isc.getType<_i4a2ekwp.BoardTaskStatus>,
+          _isc.getType<_ifz7dmuf.BoardTaskView>,
+          _isc.getType<_iso7mdvm.BoardTriageState>,
+          _isc.getType<_i516sz1w.BoardUserProfile>,
+          _isc.getType<_ifuo09i6.BoardVote>,
+          _isc.getType<_ie24iiog.BoardVoteResult>,
           _isc.getType<_iyixppck.Comment>,
           _isc.getType<_iw81twtc.CommentAnchorKind>,
           _isc.getType<_imlsyj2p.CommentEvent>,
@@ -728,6 +855,45 @@ class Protocol extends _isd.DatabaseSerializationManager
           _isc.getType<_i4m43iwr.InlineAiRequest?>,
           _isc.getType<_ie0jt2ne.ProofreadEvent?>,
           _isc.getType<_ivmxemza.ProofreadIssue?>,
+          _isc.getType<_i0ag0upm.BoardArea?>,
+          _isc.getType<_ika8r7fc.BoardAuthor?>,
+          _isc.getType<_ilo15wk2.BoardBundleSuggestion?>,
+          _isc.getType<_iin47lv0.BoardBundleSuggestionView?>,
+          _isc.getType<_ijz5flk6.BoardComment?>,
+          _isc.getType<_ipkjmsg5.BoardCommentView?>,
+          _isc.getType<_ita8snxr.BoardEventKind?>,
+          _isc.getType<_i0y7d0xd.BoardFlag?>,
+          _isc.getType<_iwc3b6vo.BoardFlagReason?>,
+          _isc.getType<_i5pjfe5s.BoardFlagView?>,
+          _isc.getType<_igcoqerx.BoardListQuery?>,
+          _isc.getType<_iu9hvv8z.BoardMe?>,
+          _isc.getType<_in0hwjmy.BoardModeration?>,
+          _isc.getType<_i5jfu168.BoardModerationAction?>,
+          _isc.getType<_i7xps6dm.BoardPost?>,
+          _isc.getType<_izvgi5ni.BoardPostDraft?>,
+          _isc.getType<_ibl25moa.BoardPostEvent?>,
+          _isc.getType<_iui4x9zg.BoardPostKind?>,
+          _isc.getType<_iq3f61ec.BoardPostListItem?>,
+          _isc.getType<_i1stsytz.BoardPostPage?>,
+          _isc.getType<_il200dga.BoardPostStatus?>,
+          _isc.getType<_ijjd81zg.BoardPostView?>,
+          _isc.getType<_im7v2irk.BoardReviewCounts?>,
+          _isc.getType<_id33cro1.BoardReviewItem?>,
+          _isc.getType<_izs2n8vy.BoardReviewSection?>,
+          _isc.getType<_ieemxbgb.BoardSignal?>,
+          _isc.getType<_in3cjdcj.BoardSimilarPost?>,
+          _isc.getType<_ivbgicm7.BoardSize?>,
+          _isc.getType<_itz4727j.BoardSort?>,
+          _isc.getType<_i2gir90g.BoardTargetKind?>,
+          _isc.getType<_iv26y3a1.BoardTask?>,
+          _isc.getType<_illpt7x2.BoardTaskPage?>,
+          _isc.getType<_idsjzf6h.BoardTaskRef?>,
+          _isc.getType<_i4a2ekwp.BoardTaskStatus?>,
+          _isc.getType<_ifz7dmuf.BoardTaskView?>,
+          _isc.getType<_iso7mdvm.BoardTriageState?>,
+          _isc.getType<_i516sz1w.BoardUserProfile?>,
+          _isc.getType<_ifuo09i6.BoardVote?>,
+          _isc.getType<_ie24iiog.BoardVoteResult?>,
           _isc.getType<_iyixppck.Comment?>,
           _isc.getType<_iw81twtc.CommentAnchorKind?>,
           _isc.getType<_imlsyj2p.CommentEvent?>,
@@ -944,6 +1110,13 @@ class Protocol extends _isd.DatabaseSerializationManager
           _isc.getType<List<_ivmxemza.ProofreadIssue>>,
           _isc.getType<List<_ivmxemza.ProofreadIssue>?>,
           _isc.getType<List<int>>,
+          _isc.getType<List<_iq3f61ec.BoardPostListItem>>,
+          _isc.getType<List<_i5pjfe5s.BoardFlagView>>,
+          _isc.getType<List<_i5pjfe5s.BoardFlagView>?>,
+          _isc.getType<List<_il200dga.BoardPostStatus>>,
+          _isc.getType<List<_i0ag0upm.BoardArea>>,
+          _isc.getType<List<_ivbgicm7.BoardSize>>,
+          _isc.getType<List<_ifz7dmuf.BoardTaskView>>,
           _isc.getType<List<_i4xrxro7.CommentView>>,
           _isc.getType<List<_i6y7tspy.UserSummary>>,
           _isc.getType<Map<String, List<int>>>,
@@ -974,8 +1147,13 @@ class Protocol extends _isd.DatabaseSerializationManager
           _isc.getType<List<_i48sm9f2.ImportWarningView>?>,
           _isc.getType<List<_ii88i7dv.WriteDiffAuthor>>,
           _isc.getType<List<_i2rhb3qx.AssistantThreadView>>,
-          _isc.getType<List<_i2c85fb0.CommentThreadView>>,
+          _isc.getType<List<_iesojpvb.BoardCommentView>>,
+          _isc.getType<List<_ikfdrh1p.BoardSimilarPost>>,
+          _isc.getType<List<_i325i6jq.BoardTaskStatus>>,
+          _isc.getType<List<_i3y77bov.BoardReviewItem>>,
           _isc.getType<List<int>>,
+          _isc.getType<List<_i94c7q23.BoardBundleSuggestionView>>,
+          _isc.getType<List<_i2c85fb0.CommentThreadView>>,
           _isc.getType<List<int>?>,
           _isc.getType<List<_iatsgjjq.DriveItemView>>,
           _isc.getType<List<_isc.UuidValue>>,
@@ -1309,6 +1487,123 @@ class Protocol extends _isd.DatabaseSerializationManager
     }
     if (t == _ivmxemza.ProofreadIssue) {
       return _ivmxemza.ProofreadIssue.fromJson(data) as T;
+    }
+    if (t == _i0ag0upm.BoardArea) {
+      return _i0ag0upm.BoardArea.fromJson(data) as T;
+    }
+    if (t == _ika8r7fc.BoardAuthor) {
+      return _ika8r7fc.BoardAuthor.fromJson(data) as T;
+    }
+    if (t == _ilo15wk2.BoardBundleSuggestion) {
+      return _ilo15wk2.BoardBundleSuggestion.fromJson(data) as T;
+    }
+    if (t == _iin47lv0.BoardBundleSuggestionView) {
+      return _iin47lv0.BoardBundleSuggestionView.fromJson(data) as T;
+    }
+    if (t == _ijz5flk6.BoardComment) {
+      return _ijz5flk6.BoardComment.fromJson(data) as T;
+    }
+    if (t == _ipkjmsg5.BoardCommentView) {
+      return _ipkjmsg5.BoardCommentView.fromJson(data) as T;
+    }
+    if (t == _ita8snxr.BoardEventKind) {
+      return _ita8snxr.BoardEventKind.fromJson(data) as T;
+    }
+    if (t == _i0y7d0xd.BoardFlag) {
+      return _i0y7d0xd.BoardFlag.fromJson(data) as T;
+    }
+    if (t == _iwc3b6vo.BoardFlagReason) {
+      return _iwc3b6vo.BoardFlagReason.fromJson(data) as T;
+    }
+    if (t == _i5pjfe5s.BoardFlagView) {
+      return _i5pjfe5s.BoardFlagView.fromJson(data) as T;
+    }
+    if (t == _igcoqerx.BoardListQuery) {
+      return _igcoqerx.BoardListQuery.fromJson(data) as T;
+    }
+    if (t == _iu9hvv8z.BoardMe) {
+      return _iu9hvv8z.BoardMe.fromJson(data) as T;
+    }
+    if (t == _in0hwjmy.BoardModeration) {
+      return _in0hwjmy.BoardModeration.fromJson(data) as T;
+    }
+    if (t == _i5jfu168.BoardModerationAction) {
+      return _i5jfu168.BoardModerationAction.fromJson(data) as T;
+    }
+    if (t == _i7xps6dm.BoardPost) {
+      return _i7xps6dm.BoardPost.fromJson(data) as T;
+    }
+    if (t == _izvgi5ni.BoardPostDraft) {
+      return _izvgi5ni.BoardPostDraft.fromJson(data) as T;
+    }
+    if (t == _ibl25moa.BoardPostEvent) {
+      return _ibl25moa.BoardPostEvent.fromJson(data) as T;
+    }
+    if (t == _iui4x9zg.BoardPostKind) {
+      return _iui4x9zg.BoardPostKind.fromJson(data) as T;
+    }
+    if (t == _iq3f61ec.BoardPostListItem) {
+      return _iq3f61ec.BoardPostListItem.fromJson(data) as T;
+    }
+    if (t == _i1stsytz.BoardPostPage) {
+      return _i1stsytz.BoardPostPage.fromJson(data) as T;
+    }
+    if (t == _il200dga.BoardPostStatus) {
+      return _il200dga.BoardPostStatus.fromJson(data) as T;
+    }
+    if (t == _ijjd81zg.BoardPostView) {
+      return _ijjd81zg.BoardPostView.fromJson(data) as T;
+    }
+    if (t == _im7v2irk.BoardReviewCounts) {
+      return _im7v2irk.BoardReviewCounts.fromJson(data) as T;
+    }
+    if (t == _id33cro1.BoardReviewItem) {
+      return _id33cro1.BoardReviewItem.fromJson(data) as T;
+    }
+    if (t == _izs2n8vy.BoardReviewSection) {
+      return _izs2n8vy.BoardReviewSection.fromJson(data) as T;
+    }
+    if (t == _ieemxbgb.BoardSignal) {
+      return _ieemxbgb.BoardSignal.fromJson(data) as T;
+    }
+    if (t == _in3cjdcj.BoardSimilarPost) {
+      return _in3cjdcj.BoardSimilarPost.fromJson(data) as T;
+    }
+    if (t == _ivbgicm7.BoardSize) {
+      return _ivbgicm7.BoardSize.fromJson(data) as T;
+    }
+    if (t == _itz4727j.BoardSort) {
+      return _itz4727j.BoardSort.fromJson(data) as T;
+    }
+    if (t == _i2gir90g.BoardTargetKind) {
+      return _i2gir90g.BoardTargetKind.fromJson(data) as T;
+    }
+    if (t == _iv26y3a1.BoardTask) {
+      return _iv26y3a1.BoardTask.fromJson(data) as T;
+    }
+    if (t == _illpt7x2.BoardTaskPage) {
+      return _illpt7x2.BoardTaskPage.fromJson(data) as T;
+    }
+    if (t == _idsjzf6h.BoardTaskRef) {
+      return _idsjzf6h.BoardTaskRef.fromJson(data) as T;
+    }
+    if (t == _i4a2ekwp.BoardTaskStatus) {
+      return _i4a2ekwp.BoardTaskStatus.fromJson(data) as T;
+    }
+    if (t == _ifz7dmuf.BoardTaskView) {
+      return _ifz7dmuf.BoardTaskView.fromJson(data) as T;
+    }
+    if (t == _iso7mdvm.BoardTriageState) {
+      return _iso7mdvm.BoardTriageState.fromJson(data) as T;
+    }
+    if (t == _i516sz1w.BoardUserProfile) {
+      return _i516sz1w.BoardUserProfile.fromJson(data) as T;
+    }
+    if (t == _ifuo09i6.BoardVote) {
+      return _ifuo09i6.BoardVote.fromJson(data) as T;
+    }
+    if (t == _ie24iiog.BoardVoteResult) {
+      return _ie24iiog.BoardVoteResult.fromJson(data) as T;
     }
     if (t == _iyixppck.Comment) {
       return _iyixppck.Comment.fromJson(data) as T;
@@ -2039,6 +2334,156 @@ class Protocol extends _isd.DatabaseSerializationManager
     }
     if (t == _isc.getType<_ivmxemza.ProofreadIssue?>()) {
       return (data != null ? _ivmxemza.ProofreadIssue.fromJson(data) : null)
+          as T;
+    }
+    if (t == _isc.getType<_i0ag0upm.BoardArea?>()) {
+      return (data != null ? _i0ag0upm.BoardArea.fromJson(data) : null) as T;
+    }
+    if (t == _isc.getType<_ika8r7fc.BoardAuthor?>()) {
+      return (data != null ? _ika8r7fc.BoardAuthor.fromJson(data) : null) as T;
+    }
+    if (t == _isc.getType<_ilo15wk2.BoardBundleSuggestion?>()) {
+      return (data != null
+              ? _ilo15wk2.BoardBundleSuggestion.fromJson(data)
+              : null)
+          as T;
+    }
+    if (t == _isc.getType<_iin47lv0.BoardBundleSuggestionView?>()) {
+      return (data != null
+              ? _iin47lv0.BoardBundleSuggestionView.fromJson(data)
+              : null)
+          as T;
+    }
+    if (t == _isc.getType<_ijz5flk6.BoardComment?>()) {
+      return (data != null ? _ijz5flk6.BoardComment.fromJson(data) : null) as T;
+    }
+    if (t == _isc.getType<_ipkjmsg5.BoardCommentView?>()) {
+      return (data != null ? _ipkjmsg5.BoardCommentView.fromJson(data) : null)
+          as T;
+    }
+    if (t == _isc.getType<_ita8snxr.BoardEventKind?>()) {
+      return (data != null ? _ita8snxr.BoardEventKind.fromJson(data) : null)
+          as T;
+    }
+    if (t == _isc.getType<_i0y7d0xd.BoardFlag?>()) {
+      return (data != null ? _i0y7d0xd.BoardFlag.fromJson(data) : null) as T;
+    }
+    if (t == _isc.getType<_iwc3b6vo.BoardFlagReason?>()) {
+      return (data != null ? _iwc3b6vo.BoardFlagReason.fromJson(data) : null)
+          as T;
+    }
+    if (t == _isc.getType<_i5pjfe5s.BoardFlagView?>()) {
+      return (data != null ? _i5pjfe5s.BoardFlagView.fromJson(data) : null)
+          as T;
+    }
+    if (t == _isc.getType<_igcoqerx.BoardListQuery?>()) {
+      return (data != null ? _igcoqerx.BoardListQuery.fromJson(data) : null)
+          as T;
+    }
+    if (t == _isc.getType<_iu9hvv8z.BoardMe?>()) {
+      return (data != null ? _iu9hvv8z.BoardMe.fromJson(data) : null) as T;
+    }
+    if (t == _isc.getType<_in0hwjmy.BoardModeration?>()) {
+      return (data != null ? _in0hwjmy.BoardModeration.fromJson(data) : null)
+          as T;
+    }
+    if (t == _isc.getType<_i5jfu168.BoardModerationAction?>()) {
+      return (data != null
+              ? _i5jfu168.BoardModerationAction.fromJson(data)
+              : null)
+          as T;
+    }
+    if (t == _isc.getType<_i7xps6dm.BoardPost?>()) {
+      return (data != null ? _i7xps6dm.BoardPost.fromJson(data) : null) as T;
+    }
+    if (t == _isc.getType<_izvgi5ni.BoardPostDraft?>()) {
+      return (data != null ? _izvgi5ni.BoardPostDraft.fromJson(data) : null)
+          as T;
+    }
+    if (t == _isc.getType<_ibl25moa.BoardPostEvent?>()) {
+      return (data != null ? _ibl25moa.BoardPostEvent.fromJson(data) : null)
+          as T;
+    }
+    if (t == _isc.getType<_iui4x9zg.BoardPostKind?>()) {
+      return (data != null ? _iui4x9zg.BoardPostKind.fromJson(data) : null)
+          as T;
+    }
+    if (t == _isc.getType<_iq3f61ec.BoardPostListItem?>()) {
+      return (data != null ? _iq3f61ec.BoardPostListItem.fromJson(data) : null)
+          as T;
+    }
+    if (t == _isc.getType<_i1stsytz.BoardPostPage?>()) {
+      return (data != null ? _i1stsytz.BoardPostPage.fromJson(data) : null)
+          as T;
+    }
+    if (t == _isc.getType<_il200dga.BoardPostStatus?>()) {
+      return (data != null ? _il200dga.BoardPostStatus.fromJson(data) : null)
+          as T;
+    }
+    if (t == _isc.getType<_ijjd81zg.BoardPostView?>()) {
+      return (data != null ? _ijjd81zg.BoardPostView.fromJson(data) : null)
+          as T;
+    }
+    if (t == _isc.getType<_im7v2irk.BoardReviewCounts?>()) {
+      return (data != null ? _im7v2irk.BoardReviewCounts.fromJson(data) : null)
+          as T;
+    }
+    if (t == _isc.getType<_id33cro1.BoardReviewItem?>()) {
+      return (data != null ? _id33cro1.BoardReviewItem.fromJson(data) : null)
+          as T;
+    }
+    if (t == _isc.getType<_izs2n8vy.BoardReviewSection?>()) {
+      return (data != null ? _izs2n8vy.BoardReviewSection.fromJson(data) : null)
+          as T;
+    }
+    if (t == _isc.getType<_ieemxbgb.BoardSignal?>()) {
+      return (data != null ? _ieemxbgb.BoardSignal.fromJson(data) : null) as T;
+    }
+    if (t == _isc.getType<_in3cjdcj.BoardSimilarPost?>()) {
+      return (data != null ? _in3cjdcj.BoardSimilarPost.fromJson(data) : null)
+          as T;
+    }
+    if (t == _isc.getType<_ivbgicm7.BoardSize?>()) {
+      return (data != null ? _ivbgicm7.BoardSize.fromJson(data) : null) as T;
+    }
+    if (t == _isc.getType<_itz4727j.BoardSort?>()) {
+      return (data != null ? _itz4727j.BoardSort.fromJson(data) : null) as T;
+    }
+    if (t == _isc.getType<_i2gir90g.BoardTargetKind?>()) {
+      return (data != null ? _i2gir90g.BoardTargetKind.fromJson(data) : null)
+          as T;
+    }
+    if (t == _isc.getType<_iv26y3a1.BoardTask?>()) {
+      return (data != null ? _iv26y3a1.BoardTask.fromJson(data) : null) as T;
+    }
+    if (t == _isc.getType<_illpt7x2.BoardTaskPage?>()) {
+      return (data != null ? _illpt7x2.BoardTaskPage.fromJson(data) : null)
+          as T;
+    }
+    if (t == _isc.getType<_idsjzf6h.BoardTaskRef?>()) {
+      return (data != null ? _idsjzf6h.BoardTaskRef.fromJson(data) : null) as T;
+    }
+    if (t == _isc.getType<_i4a2ekwp.BoardTaskStatus?>()) {
+      return (data != null ? _i4a2ekwp.BoardTaskStatus.fromJson(data) : null)
+          as T;
+    }
+    if (t == _isc.getType<_ifz7dmuf.BoardTaskView?>()) {
+      return (data != null ? _ifz7dmuf.BoardTaskView.fromJson(data) : null)
+          as T;
+    }
+    if (t == _isc.getType<_iso7mdvm.BoardTriageState?>()) {
+      return (data != null ? _iso7mdvm.BoardTriageState.fromJson(data) : null)
+          as T;
+    }
+    if (t == _isc.getType<_i516sz1w.BoardUserProfile?>()) {
+      return (data != null ? _i516sz1w.BoardUserProfile.fromJson(data) : null)
+          as T;
+    }
+    if (t == _isc.getType<_ifuo09i6.BoardVote?>()) {
+      return (data != null ? _ifuo09i6.BoardVote.fromJson(data) : null) as T;
+    }
+    if (t == _isc.getType<_ie24iiog.BoardVoteResult?>()) {
+      return (data != null ? _ie24iiog.BoardVoteResult.fromJson(data) : null)
           as T;
     }
     if (t == _isc.getType<_iyixppck.Comment?>()) {
@@ -2979,6 +3424,50 @@ class Protocol extends _isd.DatabaseSerializationManager
     if (t == List<int>) {
       return (data as List).map((e) => deserialize<int>(e)).toList() as T;
     }
+    if (t == List<_iq3f61ec.BoardPostListItem>) {
+      return (data as List)
+              .map((e) => deserialize<_iq3f61ec.BoardPostListItem>(e))
+              .toList()
+          as T;
+    }
+    if (t == List<_i5pjfe5s.BoardFlagView>) {
+      return (data as List)
+              .map((e) => deserialize<_i5pjfe5s.BoardFlagView>(e))
+              .toList()
+          as T;
+    }
+    if (t == _isc.getType<List<_i5pjfe5s.BoardFlagView>?>()) {
+      return (data != null
+              ? (data as List)
+                    .map((e) => deserialize<_i5pjfe5s.BoardFlagView>(e))
+                    .toList()
+              : null)
+          as T;
+    }
+    if (t == List<_il200dga.BoardPostStatus>) {
+      return (data as List)
+              .map((e) => deserialize<_il200dga.BoardPostStatus>(e))
+              .toList()
+          as T;
+    }
+    if (t == List<_i0ag0upm.BoardArea>) {
+      return (data as List)
+              .map((e) => deserialize<_i0ag0upm.BoardArea>(e))
+              .toList()
+          as T;
+    }
+    if (t == List<_ivbgicm7.BoardSize>) {
+      return (data as List)
+              .map((e) => deserialize<_ivbgicm7.BoardSize>(e))
+              .toList()
+          as T;
+    }
+    if (t == List<_ifz7dmuf.BoardTaskView>) {
+      return (data as List)
+              .map((e) => deserialize<_ifz7dmuf.BoardTaskView>(e))
+              .toList()
+          as T;
+    }
     if (t == List<_i4xrxro7.CommentView>) {
       return (data as List)
               .map((e) => deserialize<_i4xrxro7.CommentView>(e))
@@ -3172,14 +3661,44 @@ class Protocol extends _isd.DatabaseSerializationManager
               .toList()
           as T;
     }
-    if (t == List<_i2c85fb0.CommentThreadView>) {
+    if (t == List<_iesojpvb.BoardCommentView>) {
       return (data as List)
-              .map((e) => deserialize<_i2c85fb0.CommentThreadView>(e))
+              .map((e) => deserialize<_iesojpvb.BoardCommentView>(e))
+              .toList()
+          as T;
+    }
+    if (t == List<_ikfdrh1p.BoardSimilarPost>) {
+      return (data as List)
+              .map((e) => deserialize<_ikfdrh1p.BoardSimilarPost>(e))
+              .toList()
+          as T;
+    }
+    if (t == List<_i325i6jq.BoardTaskStatus>) {
+      return (data as List)
+              .map((e) => deserialize<_i325i6jq.BoardTaskStatus>(e))
+              .toList()
+          as T;
+    }
+    if (t == List<_i3y77bov.BoardReviewItem>) {
+      return (data as List)
+              .map((e) => deserialize<_i3y77bov.BoardReviewItem>(e))
               .toList()
           as T;
     }
     if (t == List<int>) {
       return (data as List).map((e) => deserialize<int>(e)).toList() as T;
+    }
+    if (t == List<_i94c7q23.BoardBundleSuggestionView>) {
+      return (data as List)
+              .map((e) => deserialize<_i94c7q23.BoardBundleSuggestionView>(e))
+              .toList()
+          as T;
+    }
+    if (t == List<_i2c85fb0.CommentThreadView>) {
+      return (data as List)
+              .map((e) => deserialize<_i2c85fb0.CommentThreadView>(e))
+              .toList()
+          as T;
     }
     if (t == _isc.getType<List<int>?>()) {
       return (data != null
@@ -3354,6 +3873,45 @@ class Protocol extends _isd.DatabaseSerializationManager
       _i4m43iwr.InlineAiRequest => 'InlineAiRequest',
       _ie0jt2ne.ProofreadEvent => 'ProofreadEvent',
       _ivmxemza.ProofreadIssue => 'ProofreadIssue',
+      _i0ag0upm.BoardArea => 'BoardArea',
+      _ika8r7fc.BoardAuthor => 'BoardAuthor',
+      _ilo15wk2.BoardBundleSuggestion => 'BoardBundleSuggestion',
+      _iin47lv0.BoardBundleSuggestionView => 'BoardBundleSuggestionView',
+      _ijz5flk6.BoardComment => 'BoardComment',
+      _ipkjmsg5.BoardCommentView => 'BoardCommentView',
+      _ita8snxr.BoardEventKind => 'BoardEventKind',
+      _i0y7d0xd.BoardFlag => 'BoardFlag',
+      _iwc3b6vo.BoardFlagReason => 'BoardFlagReason',
+      _i5pjfe5s.BoardFlagView => 'BoardFlagView',
+      _igcoqerx.BoardListQuery => 'BoardListQuery',
+      _iu9hvv8z.BoardMe => 'BoardMe',
+      _in0hwjmy.BoardModeration => 'BoardModeration',
+      _i5jfu168.BoardModerationAction => 'BoardModerationAction',
+      _i7xps6dm.BoardPost => 'BoardPost',
+      _izvgi5ni.BoardPostDraft => 'BoardPostDraft',
+      _ibl25moa.BoardPostEvent => 'BoardPostEvent',
+      _iui4x9zg.BoardPostKind => 'BoardPostKind',
+      _iq3f61ec.BoardPostListItem => 'BoardPostListItem',
+      _i1stsytz.BoardPostPage => 'BoardPostPage',
+      _il200dga.BoardPostStatus => 'BoardPostStatus',
+      _ijjd81zg.BoardPostView => 'BoardPostView',
+      _im7v2irk.BoardReviewCounts => 'BoardReviewCounts',
+      _id33cro1.BoardReviewItem => 'BoardReviewItem',
+      _izs2n8vy.BoardReviewSection => 'BoardReviewSection',
+      _ieemxbgb.BoardSignal => 'BoardSignal',
+      _in3cjdcj.BoardSimilarPost => 'BoardSimilarPost',
+      _ivbgicm7.BoardSize => 'BoardSize',
+      _itz4727j.BoardSort => 'BoardSort',
+      _i2gir90g.BoardTargetKind => 'BoardTargetKind',
+      _iv26y3a1.BoardTask => 'BoardTask',
+      _illpt7x2.BoardTaskPage => 'BoardTaskPage',
+      _idsjzf6h.BoardTaskRef => 'BoardTaskRef',
+      _i4a2ekwp.BoardTaskStatus => 'BoardTaskStatus',
+      _ifz7dmuf.BoardTaskView => 'BoardTaskView',
+      _iso7mdvm.BoardTriageState => 'BoardTriageState',
+      _i516sz1w.BoardUserProfile => 'BoardUserProfile',
+      _ifuo09i6.BoardVote => 'BoardVote',
+      _ie24iiog.BoardVoteResult => 'BoardVoteResult',
       _iyixppck.Comment => 'Comment',
       _iw81twtc.CommentAnchorKind => 'CommentAnchorKind',
       _imlsyj2p.CommentEvent => 'CommentEvent',
@@ -3628,6 +4186,84 @@ class Protocol extends _isd.DatabaseSerializationManager
         return 'ProofreadEvent';
       case _ivmxemza.ProofreadIssue():
         return 'ProofreadIssue';
+      case _i0ag0upm.BoardArea():
+        return 'BoardArea';
+      case _ika8r7fc.BoardAuthor():
+        return 'BoardAuthor';
+      case _ilo15wk2.BoardBundleSuggestion():
+        return 'BoardBundleSuggestion';
+      case _iin47lv0.BoardBundleSuggestionView():
+        return 'BoardBundleSuggestionView';
+      case _ijz5flk6.BoardComment():
+        return 'BoardComment';
+      case _ipkjmsg5.BoardCommentView():
+        return 'BoardCommentView';
+      case _ita8snxr.BoardEventKind():
+        return 'BoardEventKind';
+      case _i0y7d0xd.BoardFlag():
+        return 'BoardFlag';
+      case _iwc3b6vo.BoardFlagReason():
+        return 'BoardFlagReason';
+      case _i5pjfe5s.BoardFlagView():
+        return 'BoardFlagView';
+      case _igcoqerx.BoardListQuery():
+        return 'BoardListQuery';
+      case _iu9hvv8z.BoardMe():
+        return 'BoardMe';
+      case _in0hwjmy.BoardModeration():
+        return 'BoardModeration';
+      case _i5jfu168.BoardModerationAction():
+        return 'BoardModerationAction';
+      case _i7xps6dm.BoardPost():
+        return 'BoardPost';
+      case _izvgi5ni.BoardPostDraft():
+        return 'BoardPostDraft';
+      case _ibl25moa.BoardPostEvent():
+        return 'BoardPostEvent';
+      case _iui4x9zg.BoardPostKind():
+        return 'BoardPostKind';
+      case _iq3f61ec.BoardPostListItem():
+        return 'BoardPostListItem';
+      case _i1stsytz.BoardPostPage():
+        return 'BoardPostPage';
+      case _il200dga.BoardPostStatus():
+        return 'BoardPostStatus';
+      case _ijjd81zg.BoardPostView():
+        return 'BoardPostView';
+      case _im7v2irk.BoardReviewCounts():
+        return 'BoardReviewCounts';
+      case _id33cro1.BoardReviewItem():
+        return 'BoardReviewItem';
+      case _izs2n8vy.BoardReviewSection():
+        return 'BoardReviewSection';
+      case _ieemxbgb.BoardSignal():
+        return 'BoardSignal';
+      case _in3cjdcj.BoardSimilarPost():
+        return 'BoardSimilarPost';
+      case _ivbgicm7.BoardSize():
+        return 'BoardSize';
+      case _itz4727j.BoardSort():
+        return 'BoardSort';
+      case _i2gir90g.BoardTargetKind():
+        return 'BoardTargetKind';
+      case _iv26y3a1.BoardTask():
+        return 'BoardTask';
+      case _illpt7x2.BoardTaskPage():
+        return 'BoardTaskPage';
+      case _idsjzf6h.BoardTaskRef():
+        return 'BoardTaskRef';
+      case _i4a2ekwp.BoardTaskStatus():
+        return 'BoardTaskStatus';
+      case _ifz7dmuf.BoardTaskView():
+        return 'BoardTaskView';
+      case _iso7mdvm.BoardTriageState():
+        return 'BoardTriageState';
+      case _i516sz1w.BoardUserProfile():
+        return 'BoardUserProfile';
+      case _ifuo09i6.BoardVote():
+        return 'BoardVote';
+      case _ie24iiog.BoardVoteResult():
+        return 'BoardVoteResult';
       case _iyixppck.Comment():
         return 'Comment';
       case _iw81twtc.CommentAnchorKind():
@@ -4155,6 +4791,123 @@ class Protocol extends _isd.DatabaseSerializationManager
     }
     if (dataClassName == 'ProofreadIssue') {
       return deserialize<_ivmxemza.ProofreadIssue>(data['data']);
+    }
+    if (dataClassName == 'BoardArea') {
+      return deserialize<_i0ag0upm.BoardArea>(data['data']);
+    }
+    if (dataClassName == 'BoardAuthor') {
+      return deserialize<_ika8r7fc.BoardAuthor>(data['data']);
+    }
+    if (dataClassName == 'BoardBundleSuggestion') {
+      return deserialize<_ilo15wk2.BoardBundleSuggestion>(data['data']);
+    }
+    if (dataClassName == 'BoardBundleSuggestionView') {
+      return deserialize<_iin47lv0.BoardBundleSuggestionView>(data['data']);
+    }
+    if (dataClassName == 'BoardComment') {
+      return deserialize<_ijz5flk6.BoardComment>(data['data']);
+    }
+    if (dataClassName == 'BoardCommentView') {
+      return deserialize<_ipkjmsg5.BoardCommentView>(data['data']);
+    }
+    if (dataClassName == 'BoardEventKind') {
+      return deserialize<_ita8snxr.BoardEventKind>(data['data']);
+    }
+    if (dataClassName == 'BoardFlag') {
+      return deserialize<_i0y7d0xd.BoardFlag>(data['data']);
+    }
+    if (dataClassName == 'BoardFlagReason') {
+      return deserialize<_iwc3b6vo.BoardFlagReason>(data['data']);
+    }
+    if (dataClassName == 'BoardFlagView') {
+      return deserialize<_i5pjfe5s.BoardFlagView>(data['data']);
+    }
+    if (dataClassName == 'BoardListQuery') {
+      return deserialize<_igcoqerx.BoardListQuery>(data['data']);
+    }
+    if (dataClassName == 'BoardMe') {
+      return deserialize<_iu9hvv8z.BoardMe>(data['data']);
+    }
+    if (dataClassName == 'BoardModeration') {
+      return deserialize<_in0hwjmy.BoardModeration>(data['data']);
+    }
+    if (dataClassName == 'BoardModerationAction') {
+      return deserialize<_i5jfu168.BoardModerationAction>(data['data']);
+    }
+    if (dataClassName == 'BoardPost') {
+      return deserialize<_i7xps6dm.BoardPost>(data['data']);
+    }
+    if (dataClassName == 'BoardPostDraft') {
+      return deserialize<_izvgi5ni.BoardPostDraft>(data['data']);
+    }
+    if (dataClassName == 'BoardPostEvent') {
+      return deserialize<_ibl25moa.BoardPostEvent>(data['data']);
+    }
+    if (dataClassName == 'BoardPostKind') {
+      return deserialize<_iui4x9zg.BoardPostKind>(data['data']);
+    }
+    if (dataClassName == 'BoardPostListItem') {
+      return deserialize<_iq3f61ec.BoardPostListItem>(data['data']);
+    }
+    if (dataClassName == 'BoardPostPage') {
+      return deserialize<_i1stsytz.BoardPostPage>(data['data']);
+    }
+    if (dataClassName == 'BoardPostStatus') {
+      return deserialize<_il200dga.BoardPostStatus>(data['data']);
+    }
+    if (dataClassName == 'BoardPostView') {
+      return deserialize<_ijjd81zg.BoardPostView>(data['data']);
+    }
+    if (dataClassName == 'BoardReviewCounts') {
+      return deserialize<_im7v2irk.BoardReviewCounts>(data['data']);
+    }
+    if (dataClassName == 'BoardReviewItem') {
+      return deserialize<_id33cro1.BoardReviewItem>(data['data']);
+    }
+    if (dataClassName == 'BoardReviewSection') {
+      return deserialize<_izs2n8vy.BoardReviewSection>(data['data']);
+    }
+    if (dataClassName == 'BoardSignal') {
+      return deserialize<_ieemxbgb.BoardSignal>(data['data']);
+    }
+    if (dataClassName == 'BoardSimilarPost') {
+      return deserialize<_in3cjdcj.BoardSimilarPost>(data['data']);
+    }
+    if (dataClassName == 'BoardSize') {
+      return deserialize<_ivbgicm7.BoardSize>(data['data']);
+    }
+    if (dataClassName == 'BoardSort') {
+      return deserialize<_itz4727j.BoardSort>(data['data']);
+    }
+    if (dataClassName == 'BoardTargetKind') {
+      return deserialize<_i2gir90g.BoardTargetKind>(data['data']);
+    }
+    if (dataClassName == 'BoardTask') {
+      return deserialize<_iv26y3a1.BoardTask>(data['data']);
+    }
+    if (dataClassName == 'BoardTaskPage') {
+      return deserialize<_illpt7x2.BoardTaskPage>(data['data']);
+    }
+    if (dataClassName == 'BoardTaskRef') {
+      return deserialize<_idsjzf6h.BoardTaskRef>(data['data']);
+    }
+    if (dataClassName == 'BoardTaskStatus') {
+      return deserialize<_i4a2ekwp.BoardTaskStatus>(data['data']);
+    }
+    if (dataClassName == 'BoardTaskView') {
+      return deserialize<_ifz7dmuf.BoardTaskView>(data['data']);
+    }
+    if (dataClassName == 'BoardTriageState') {
+      return deserialize<_iso7mdvm.BoardTriageState>(data['data']);
+    }
+    if (dataClassName == 'BoardUserProfile') {
+      return deserialize<_i516sz1w.BoardUserProfile>(data['data']);
+    }
+    if (dataClassName == 'BoardVote') {
+      return deserialize<_ifuo09i6.BoardVote>(data['data']);
+    }
+    if (dataClassName == 'BoardVoteResult') {
+      return deserialize<_ie24iiog.BoardVoteResult>(data['data']);
     }
     if (dataClassName == 'Comment') {
       return deserialize<_iyixppck.Comment>(data['data']);

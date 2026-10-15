@@ -1,0 +1,35 @@
+### A unit of work selected by admins: one post or a bundle (specs/16 §8).
+### The public number (T-12) is the row id.
+class: BoardTask
+table: board_task
+fields:
+  title: String
+  area: BoardArea
+  size: BoardSize
+  status: BoardTaskStatus
+  ### The contributor prompt body (AI-written, admin-edited).
+  promptBody: String
+  promptGeneratedAt: DateTime?
+  promptEditedById: int?
+  promptEditedAt: DateTime?
+  createdById: int
+  publishedAt: DateTime?
+  claimedById: int?, relation(parent=user_profile, onDelete=SetNull)
+  claimedAt: DateTime?
+  claimExpiresAt: DateTime?
+  claimWarnedAt: DateTime?
+  ### Per-claim code for the PR description (specs/16 §13.7).
+  claimCode: String?
+  pullRequestUrl: String?
+  prNumber: int?
+  prAuthorLogin: String?
+  mergeCommitSha: String?
+  doneAt: DateTime?
+  shippedDeploySha: String?
+  shippedAt: DateTime?
+  createdAt: DateTime
+indexes:
+  board_task_status_idx:
+    fields: status
+  board_task_claim_idx:
+    fields: claimedById

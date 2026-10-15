@@ -6,6 +6,7 @@ import 'package:flutter/foundation.dart';
 import 'package:wonky_client/wonky_client.dart';
 import 'package:wonky_core/wonky_core.dart' hide ActorKind;
 
+import '../board/board_repository.dart';
 import '../auth/auth_repository.dart';
 import '../data/collab_repositories.dart';
 import '../data/drive_repository.dart';
@@ -885,3 +886,5 @@ class UnfakedVersionRepository with _NotFaked implements VersionRepository {}
 class UnfakedFileRepository with _NotFaked implements FileRepository {}
 
 class UnfakedMetaRepository with _NotFaked implements MetaRepository {}
+
+class UnfakedBoardRepository with _NotFaked implements BoardRepository {}

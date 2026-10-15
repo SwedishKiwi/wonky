@@ -1,0 +1,5 @@
+### Live change of a post (`board.watchPost`).
+class: BoardPostEvent
+fields:
+  kind: BoardEventKind
+  number: int

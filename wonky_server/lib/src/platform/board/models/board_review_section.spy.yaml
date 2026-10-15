@@ -1,0 +1,9 @@
+### Sections of the admin Review tab (specs/16 §9.2).
+enum: BoardReviewSection
+serialized: byName
+values:
+  - held
+  - check
+  - unchecked
+  - duplicates
+  - drafts

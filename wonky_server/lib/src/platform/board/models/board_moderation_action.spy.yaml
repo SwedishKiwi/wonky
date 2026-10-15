@@ -1,0 +1,11 @@
+### Admin moderation actions (specs/16 §9.2).
+enum: BoardModerationAction
+serialized: byName
+values:
+  - approve
+  - hold
+  - remove
+  - restore
+  - removeScreenshot
+  ### Clears the "check" list entry without changing visibility.
+  - markChecked

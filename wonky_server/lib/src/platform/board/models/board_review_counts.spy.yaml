@@ -1,0 +1,8 @@
+class: BoardReviewCounts
+fields:
+  held: int
+  check: int
+  unchecked: int
+  duplicates: int
+  drafts: int
+  suggestions: int

@@ -52,6 +52,48 @@ import 'package:wonky_server/src/generated/platform/ai/models/inline_ai_request.
     as _i4c3y8bm;
 import 'package:wonky_server/src/generated/platform/ai/models/proofread_event.dart'
     as _ib6yu876;
+import 'package:wonky_server/src/generated/platform/board/models/board_area.dart'
+    as _i2y7swbd;
+import 'package:wonky_server/src/generated/platform/board/models/board_bundle_suggestion_view.dart'
+    as _i8qikgvy;
+import 'package:wonky_server/src/generated/platform/board/models/board_comment_view.dart'
+    as _ilh4w69x;
+import 'package:wonky_server/src/generated/platform/board/models/board_flag_reason.dart'
+    as _i0z7k09i;
+import 'package:wonky_server/src/generated/platform/board/models/board_list_query.dart'
+    as _i6z8cjbe;
+import 'package:wonky_server/src/generated/platform/board/models/board_me.dart'
+    as _imb1vxwh;
+import 'package:wonky_server/src/generated/platform/board/models/board_moderation_action.dart'
+    as _iqqjetoq;
+import 'package:wonky_server/src/generated/platform/board/models/board_post_draft.dart'
+    as _i6ub5i5f;
+import 'package:wonky_server/src/generated/platform/board/models/board_post_event.dart'
+    as _igl1sayy;
+import 'package:wonky_server/src/generated/platform/board/models/board_post_kind.dart'
+    as _i5noao4s;
+import 'package:wonky_server/src/generated/platform/board/models/board_post_page.dart'
+    as _imlue0yd;
+import 'package:wonky_server/src/generated/platform/board/models/board_post_view.dart'
+    as _ir7e9zc6;
+import 'package:wonky_server/src/generated/platform/board/models/board_review_counts.dart'
+    as _iuafg5le;
+import 'package:wonky_server/src/generated/platform/board/models/board_review_item.dart'
+    as _id1usvpt;
+import 'package:wonky_server/src/generated/platform/board/models/board_review_section.dart'
+    as _i6ojypp7;
+import 'package:wonky_server/src/generated/platform/board/models/board_similar_post.dart'
+    as _iv1j9wri;
+import 'package:wonky_server/src/generated/platform/board/models/board_size.dart'
+    as _ikq67o57;
+import 'package:wonky_server/src/generated/platform/board/models/board_task_page.dart'
+    as _i84zsqgv;
+import 'package:wonky_server/src/generated/platform/board/models/board_task_status.dart'
+    as _ihypagkt;
+import 'package:wonky_server/src/generated/platform/board/models/board_task_view.dart'
+    as _ia65vc34;
+import 'package:wonky_server/src/generated/platform/board/models/board_vote_result.dart'
+    as _inylym64;
 import 'package:wonky_server/src/generated/platform/comments/comment_anchor_kind.dart'
     as _i384cqmz;
 import 'package:wonky_server/src/generated/platform/comments/comment_event.dart'
@@ -381,6 +423,8 @@ class TestEndpoints {
 
   late final _AssistantEndpoint assistant;
 
+  late final _BoardEndpoint board;
+
   late final _CommentEndpoint comment;
 
   late final _DriveEndpoint drive;
@@ -466,6 +510,10 @@ class _InternalTestEndpoints extends TestEndpoints
       serializationManager,
     );
     assistant = _AssistantEndpoint(
+      endpoints,
+      serializationManager,
+    );
+    board = _BoardEndpoint(
       endpoints,
       serializationManager,
     );
@@ -1549,6 +1597,1721 @@ class _AssistantEndpoint {
       _localTestStreamManager.outputStreamController,
     );
     return _localTestStreamManager.outputStreamController.stream;
+  }
+}
+
+class _BoardEndpoint {
+  _BoardEndpoint(
+    this._endpointDispatch,
+    this._serializationManager,
+  );
+
+  final _is.EndpointDispatch _endpointDispatch;
+
+  final _is.SerializationManager _serializationManager;
+
+  _ida.Future<_imb1vxwh.BoardMe> me(
+    _ist.TestSessionBuilder sessionBuilder,
+  ) async {
+    return _ist.callAwaitableFunctionAndHandleExceptions(() async {
+      var _localUniqueSession =
+          (sessionBuilder as _ist.InternalTestSessionBuilder).internalBuild(
+            endpoint: 'board',
+            method: 'me',
+          );
+      try {
+        var _localCallContext = await _endpointDispatch.getMethodCallContext(
+          createSessionCallback: (_) => _localUniqueSession,
+          endpointPath: 'board',
+          methodName: 'me',
+          parameters: _ist.testObjectToJson({}),
+          serializationManager: _serializationManager,
+        );
+        var _localReturnValue =
+            await (_localCallContext.method.call(
+                  _localUniqueSession,
+                  _localCallContext.arguments,
+                )
+                as _ida.Future<_imb1vxwh.BoardMe>);
+        return _localReturnValue;
+      } finally {
+        await _localUniqueSession.close();
+      }
+    });
+  }
+
+  _ida.Future<_imlue0yd.BoardPostPage> list(
+    _ist.TestSessionBuilder sessionBuilder,
+    _i6z8cjbe.BoardListQuery query,
+  ) async {
+    return _ist.callAwaitableFunctionAndHandleExceptions(() async {
+      var _localUniqueSession =
+          (sessionBuilder as _ist.InternalTestSessionBuilder).internalBuild(
+            endpoint: 'board',
+            method: 'list',
+          );
+      try {
+        var _localCallContext = await _endpointDispatch.getMethodCallContext(
+          createSessionCallback: (_) => _localUniqueSession,
+          endpointPath: 'board',
+          methodName: 'list',
+          parameters: _ist.testObjectToJson({'query': query}),
+          serializationManager: _serializationManager,
+        );
+        var _localReturnValue =
+            await (_localCallContext.method.call(
+                  _localUniqueSession,
+                  _localCallContext.arguments,
+                )
+                as _ida.Future<_imlue0yd.BoardPostPage>);
+        return _localReturnValue;
+      } finally {
+        await _localUniqueSession.close();
+      }
+    });
+  }
+
+  _ida.Future<_ir7e9zc6.BoardPostView> getPost(
+    _ist.TestSessionBuilder sessionBuilder,
+    int number,
+  ) async {
+    return _ist.callAwaitableFunctionAndHandleExceptions(() async {
+      var _localUniqueSession =
+          (sessionBuilder as _ist.InternalTestSessionBuilder).internalBuild(
+            endpoint: 'board',
+            method: 'getPost',
+          );
+      try {
+        var _localCallContext = await _endpointDispatch.getMethodCallContext(
+          createSessionCallback: (_) => _localUniqueSession,
+          endpointPath: 'board',
+          methodName: 'getPost',
+          parameters: _ist.testObjectToJson({'number': number}),
+          serializationManager: _serializationManager,
+        );
+        var _localReturnValue =
+            await (_localCallContext.method.call(
+                  _localUniqueSession,
+                  _localCallContext.arguments,
+                )
+                as _ida.Future<_ir7e9zc6.BoardPostView>);
+        return _localReturnValue;
+      } finally {
+        await _localUniqueSession.close();
+      }
+    });
+  }
+
+  _ida.Future<List<_ilh4w69x.BoardCommentView>> listComments(
+    _ist.TestSessionBuilder sessionBuilder,
+    int number,
+  ) async {
+    return _ist.callAwaitableFunctionAndHandleExceptions(() async {
+      var _localUniqueSession =
+          (sessionBuilder as _ist.InternalTestSessionBuilder).internalBuild(
+            endpoint: 'board',
+            method: 'listComments',
+          );
+      try {
+        var _localCallContext = await _endpointDispatch.getMethodCallContext(
+          createSessionCallback: (_) => _localUniqueSession,
+          endpointPath: 'board',
+          methodName: 'listComments',
+          parameters: _ist.testObjectToJson({'number': number}),
+          serializationManager: _serializationManager,
+        );
+        var _localReturnValue =
+            await (_localCallContext.method.call(
+                  _localUniqueSession,
+                  _localCallContext.arguments,
+                )
+                as _ida.Future<List<_ilh4w69x.BoardCommentView>>);
+        return _localReturnValue;
+      } finally {
+        await _localUniqueSession.close();
+      }
+    });
+  }
+
+  _ida.Future<List<_ilh4w69x.BoardCommentView>> listTaskComments(
+    _ist.TestSessionBuilder sessionBuilder,
+    int number,
+  ) async {
+    return _ist.callAwaitableFunctionAndHandleExceptions(() async {
+      var _localUniqueSession =
+          (sessionBuilder as _ist.InternalTestSessionBuilder).internalBuild(
+            endpoint: 'board',
+            method: 'listTaskComments',
+          );
+      try {
+        var _localCallContext = await _endpointDispatch.getMethodCallContext(
+          createSessionCallback: (_) => _localUniqueSession,
+          endpointPath: 'board',
+          methodName: 'listTaskComments',
+          parameters: _ist.testObjectToJson({'number': number}),
+          serializationManager: _serializationManager,
+        );
+        var _localReturnValue =
+            await (_localCallContext.method.call(
+                  _localUniqueSession,
+                  _localCallContext.arguments,
+                )
+                as _ida.Future<List<_ilh4w69x.BoardCommentView>>);
+        return _localReturnValue;
+      } finally {
+        await _localUniqueSession.close();
+      }
+    });
+  }
+
+  _ida.Future<List<_iv1j9wri.BoardSimilarPost>> similar(
+    _ist.TestSessionBuilder sessionBuilder,
+    String title,
+    String body,
+    _i5noao4s.BoardPostKind? kind,
+  ) async {
+    return _ist.callAwaitableFunctionAndHandleExceptions(() async {
+      var _localUniqueSession =
+          (sessionBuilder as _ist.InternalTestSessionBuilder).internalBuild(
+            endpoint: 'board',
+            method: 'similar',
+          );
+      try {
+        var _localCallContext = await _endpointDispatch.getMethodCallContext(
+          createSessionCallback: (_) => _localUniqueSession,
+          endpointPath: 'board',
+          methodName: 'similar',
+          parameters: _ist.testObjectToJson({
+            'title': title,
+            'body': body,
+            'kind': kind,
+          }),
+          serializationManager: _serializationManager,
+        );
+        var _localReturnValue =
+            await (_localCallContext.method.call(
+                  _localUniqueSession,
+                  _localCallContext.arguments,
+                )
+                as _ida.Future<List<_iv1j9wri.BoardSimilarPost>>);
+        return _localReturnValue;
+      } finally {
+        await _localUniqueSession.close();
+      }
+    });
+  }
+
+  _ida.Future<String?> getScreenshotUrl(
+    _ist.TestSessionBuilder sessionBuilder,
+    int number,
+  ) async {
+    return _ist.callAwaitableFunctionAndHandleExceptions(() async {
+      var _localUniqueSession =
+          (sessionBuilder as _ist.InternalTestSessionBuilder).internalBuild(
+            endpoint: 'board',
+            method: 'getScreenshotUrl',
+          );
+      try {
+        var _localCallContext = await _endpointDispatch.getMethodCallContext(
+          createSessionCallback: (_) => _localUniqueSession,
+          endpointPath: 'board',
+          methodName: 'getScreenshotUrl',
+          parameters: _ist.testObjectToJson({'number': number}),
+          serializationManager: _serializationManager,
+        );
+        var _localReturnValue =
+            await (_localCallContext.method.call(
+                  _localUniqueSession,
+                  _localCallContext.arguments,
+                )
+                as _ida.Future<String?>);
+        return _localReturnValue;
+      } finally {
+        await _localUniqueSession.close();
+      }
+    });
+  }
+
+  _ida.Future<_i84zsqgv.BoardTaskPage> listTasks(
+    _ist.TestSessionBuilder sessionBuilder,
+    List<_ihypagkt.BoardTaskStatus> statuses,
+    String? cursor,
+    int limit,
+  ) async {
+    return _ist.callAwaitableFunctionAndHandleExceptions(() async {
+      var _localUniqueSession =
+          (sessionBuilder as _ist.InternalTestSessionBuilder).internalBuild(
+            endpoint: 'board',
+            method: 'listTasks',
+          );
+      try {
+        var _localCallContext = await _endpointDispatch.getMethodCallContext(
+          createSessionCallback: (_) => _localUniqueSession,
+          endpointPath: 'board',
+          methodName: 'listTasks',
+          parameters: _ist.testObjectToJson({
+            'statuses': statuses,
+            'cursor': cursor,
+            'limit': limit,
+          }),
+          serializationManager: _serializationManager,
+        );
+        var _localReturnValue =
+            await (_localCallContext.method.call(
+                  _localUniqueSession,
+                  _localCallContext.arguments,
+                )
+                as _ida.Future<_i84zsqgv.BoardTaskPage>);
+        return _localReturnValue;
+      } finally {
+        await _localUniqueSession.close();
+      }
+    });
+  }
+
+  _ida.Future<_ia65vc34.BoardTaskView> getTask(
+    _ist.TestSessionBuilder sessionBuilder,
+    int number,
+  ) async {
+    return _ist.callAwaitableFunctionAndHandleExceptions(() async {
+      var _localUniqueSession =
+          (sessionBuilder as _ist.InternalTestSessionBuilder).internalBuild(
+            endpoint: 'board',
+            method: 'getTask',
+          );
+      try {
+        var _localCallContext = await _endpointDispatch.getMethodCallContext(
+          createSessionCallback: (_) => _localUniqueSession,
+          endpointPath: 'board',
+          methodName: 'getTask',
+          parameters: _ist.testObjectToJson({'number': number}),
+          serializationManager: _serializationManager,
+        );
+        var _localReturnValue =
+            await (_localCallContext.method.call(
+                  _localUniqueSession,
+                  _localCallContext.arguments,
+                )
+                as _ida.Future<_ia65vc34.BoardTaskView>);
+        return _localReturnValue;
+      } finally {
+        await _localUniqueSession.close();
+      }
+    });
+  }
+
+  _ida.Stream<_igl1sayy.BoardPostEvent> watchPost(
+    _ist.TestSessionBuilder sessionBuilder,
+    int number,
+  ) {
+    var _localTestStreamManager =
+        _ist.TestStreamManager<_igl1sayy.BoardPostEvent>();
+    _ist.callStreamFunctionAndHandleExceptions(
+      () async {
+        var _localUniqueSession =
+            (sessionBuilder as _ist.InternalTestSessionBuilder).internalBuild(
+              endpoint: 'board',
+              method: 'watchPost',
+            );
+        var _localCallContext = await _endpointDispatch
+            .getMethodStreamCallContext(
+              createSessionCallback: (_) => _localUniqueSession,
+              endpointPath: 'board',
+              methodName: 'watchPost',
+              arguments: {'number': number},
+              requestedInputStreams: [],
+              serializationManager: _serializationManager,
+            );
+        await _localTestStreamManager.callStreamMethod(
+          _localCallContext,
+          _localUniqueSession,
+          {},
+        );
+      },
+      _localTestStreamManager.outputStreamController,
+    );
+    return _localTestStreamManager.outputStreamController.stream;
+  }
+
+  _ida.Stream<_igl1sayy.BoardPostEvent> watchTasks(
+    _ist.TestSessionBuilder sessionBuilder,
+  ) {
+    var _localTestStreamManager =
+        _ist.TestStreamManager<_igl1sayy.BoardPostEvent>();
+    _ist.callStreamFunctionAndHandleExceptions(
+      () async {
+        var _localUniqueSession =
+            (sessionBuilder as _ist.InternalTestSessionBuilder).internalBuild(
+              endpoint: 'board',
+              method: 'watchTasks',
+            );
+        var _localCallContext = await _endpointDispatch
+            .getMethodStreamCallContext(
+              createSessionCallback: (_) => _localUniqueSession,
+              endpointPath: 'board',
+              methodName: 'watchTasks',
+              arguments: {},
+              requestedInputStreams: [],
+              serializationManager: _serializationManager,
+            );
+        await _localTestStreamManager.callStreamMethod(
+          _localCallContext,
+          _localUniqueSession,
+          {},
+        );
+      },
+      _localTestStreamManager.outputStreamController,
+    );
+    return _localTestStreamManager.outputStreamController.stream;
+  }
+
+  _ida.Future<_i3u7lvch.FileUploadTicket> createScreenshotUpload(
+    _ist.TestSessionBuilder sessionBuilder,
+    _is.UuidValue fileUuid,
+    String mimeType,
+    int size,
+  ) async {
+    return _ist.callAwaitableFunctionAndHandleExceptions(() async {
+      var _localUniqueSession =
+          (sessionBuilder as _ist.InternalTestSessionBuilder).internalBuild(
+            endpoint: 'board',
+            method: 'createScreenshotUpload',
+          );
+      try {
+        var _localCallContext = await _endpointDispatch.getMethodCallContext(
+          createSessionCallback: (_) => _localUniqueSession,
+          endpointPath: 'board',
+          methodName: 'createScreenshotUpload',
+          parameters: _ist.testObjectToJson({
+            'fileUuid': fileUuid,
+            'mimeType': mimeType,
+            'size': size,
+          }),
+          serializationManager: _serializationManager,
+        );
+        var _localReturnValue =
+            await (_localCallContext.method.call(
+                  _localUniqueSession,
+                  _localCallContext.arguments,
+                )
+                as _ida.Future<_i3u7lvch.FileUploadTicket>);
+        return _localReturnValue;
+      } finally {
+        await _localUniqueSession.close();
+      }
+    });
+  }
+
+  _ida.Future<_ir7e9zc6.BoardPostView> createPost(
+    _ist.TestSessionBuilder sessionBuilder,
+    _i6ub5i5f.BoardPostDraft draft,
+  ) async {
+    return _ist.callAwaitableFunctionAndHandleExceptions(() async {
+      var _localUniqueSession =
+          (sessionBuilder as _ist.InternalTestSessionBuilder).internalBuild(
+            endpoint: 'board',
+            method: 'createPost',
+          );
+      try {
+        var _localCallContext = await _endpointDispatch.getMethodCallContext(
+          createSessionCallback: (_) => _localUniqueSession,
+          endpointPath: 'board',
+          methodName: 'createPost',
+          parameters: _ist.testObjectToJson({'draft': draft}),
+          serializationManager: _serializationManager,
+        );
+        var _localReturnValue =
+            await (_localCallContext.method.call(
+                  _localUniqueSession,
+                  _localCallContext.arguments,
+                )
+                as _ida.Future<_ir7e9zc6.BoardPostView>);
+        return _localReturnValue;
+      } finally {
+        await _localUniqueSession.close();
+      }
+    });
+  }
+
+  _ida.Future<_ir7e9zc6.BoardPostView> editPost(
+    _ist.TestSessionBuilder sessionBuilder,
+    int number,
+    String title,
+    String body,
+  ) async {
+    return _ist.callAwaitableFunctionAndHandleExceptions(() async {
+      var _localUniqueSession =
+          (sessionBuilder as _ist.InternalTestSessionBuilder).internalBuild(
+            endpoint: 'board',
+            method: 'editPost',
+          );
+      try {
+        var _localCallContext = await _endpointDispatch.getMethodCallContext(
+          createSessionCallback: (_) => _localUniqueSession,
+          endpointPath: 'board',
+          methodName: 'editPost',
+          parameters: _ist.testObjectToJson({
+            'number': number,
+            'title': title,
+            'body': body,
+          }),
+          serializationManager: _serializationManager,
+        );
+        var _localReturnValue =
+            await (_localCallContext.method.call(
+                  _localUniqueSession,
+                  _localCallContext.arguments,
+                )
+                as _ida.Future<_ir7e9zc6.BoardPostView>);
+        return _localReturnValue;
+      } finally {
+        await _localUniqueSession.close();
+      }
+    });
+  }
+
+  _ida.Future<void> deletePost(
+    _ist.TestSessionBuilder sessionBuilder,
+    int number,
+  ) async {
+    return _ist.callAwaitableFunctionAndHandleExceptions(() async {
+      var _localUniqueSession =
+          (sessionBuilder as _ist.InternalTestSessionBuilder).internalBuild(
+            endpoint: 'board',
+            method: 'deletePost',
+          );
+      try {
+        var _localCallContext = await _endpointDispatch.getMethodCallContext(
+          createSessionCallback: (_) => _localUniqueSession,
+          endpointPath: 'board',
+          methodName: 'deletePost',
+          parameters: _ist.testObjectToJson({'number': number}),
+          serializationManager: _serializationManager,
+        );
+        var _localReturnValue =
+            await (_localCallContext.method.call(
+                  _localUniqueSession,
+                  _localCallContext.arguments,
+                )
+                as _ida.Future<void>);
+        return _localReturnValue;
+      } finally {
+        await _localUniqueSession.close();
+      }
+    });
+  }
+
+  _ida.Future<_ir7e9zc6.BoardPostView> restorePost(
+    _ist.TestSessionBuilder sessionBuilder,
+    int number,
+  ) async {
+    return _ist.callAwaitableFunctionAndHandleExceptions(() async {
+      var _localUniqueSession =
+          (sessionBuilder as _ist.InternalTestSessionBuilder).internalBuild(
+            endpoint: 'board',
+            method: 'restorePost',
+          );
+      try {
+        var _localCallContext = await _endpointDispatch.getMethodCallContext(
+          createSessionCallback: (_) => _localUniqueSession,
+          endpointPath: 'board',
+          methodName: 'restorePost',
+          parameters: _ist.testObjectToJson({'number': number}),
+          serializationManager: _serializationManager,
+        );
+        var _localReturnValue =
+            await (_localCallContext.method.call(
+                  _localUniqueSession,
+                  _localCallContext.arguments,
+                )
+                as _ida.Future<_ir7e9zc6.BoardPostView>);
+        return _localReturnValue;
+      } finally {
+        await _localUniqueSession.close();
+      }
+    });
+  }
+
+  _ida.Future<_ir7e9zc6.BoardPostView> removeScreenshot(
+    _ist.TestSessionBuilder sessionBuilder,
+    int number,
+  ) async {
+    return _ist.callAwaitableFunctionAndHandleExceptions(() async {
+      var _localUniqueSession =
+          (sessionBuilder as _ist.InternalTestSessionBuilder).internalBuild(
+            endpoint: 'board',
+            method: 'removeScreenshot',
+          );
+      try {
+        var _localCallContext = await _endpointDispatch.getMethodCallContext(
+          createSessionCallback: (_) => _localUniqueSession,
+          endpointPath: 'board',
+          methodName: 'removeScreenshot',
+          parameters: _ist.testObjectToJson({'number': number}),
+          serializationManager: _serializationManager,
+        );
+        var _localReturnValue =
+            await (_localCallContext.method.call(
+                  _localUniqueSession,
+                  _localCallContext.arguments,
+                )
+                as _ida.Future<_ir7e9zc6.BoardPostView>);
+        return _localReturnValue;
+      } finally {
+        await _localUniqueSession.close();
+      }
+    });
+  }
+
+  _ida.Future<_inylym64.BoardVoteResult> vote(
+    _ist.TestSessionBuilder sessionBuilder,
+    int number,
+    int value,
+  ) async {
+    return _ist.callAwaitableFunctionAndHandleExceptions(() async {
+      var _localUniqueSession =
+          (sessionBuilder as _ist.InternalTestSessionBuilder).internalBuild(
+            endpoint: 'board',
+            method: 'vote',
+          );
+      try {
+        var _localCallContext = await _endpointDispatch.getMethodCallContext(
+          createSessionCallback: (_) => _localUniqueSession,
+          endpointPath: 'board',
+          methodName: 'vote',
+          parameters: _ist.testObjectToJson({
+            'number': number,
+            'value': value,
+          }),
+          serializationManager: _serializationManager,
+        );
+        var _localReturnValue =
+            await (_localCallContext.method.call(
+                  _localUniqueSession,
+                  _localCallContext.arguments,
+                )
+                as _ida.Future<_inylym64.BoardVoteResult>);
+        return _localReturnValue;
+      } finally {
+        await _localUniqueSession.close();
+      }
+    });
+  }
+
+  _ida.Future<_ilh4w69x.BoardCommentView> addComment(
+    _ist.TestSessionBuilder sessionBuilder,
+    _is.UuidValue uuid,
+    int? postNumber,
+    int? taskNumber,
+    String body,
+  ) async {
+    return _ist.callAwaitableFunctionAndHandleExceptions(() async {
+      var _localUniqueSession =
+          (sessionBuilder as _ist.InternalTestSessionBuilder).internalBuild(
+            endpoint: 'board',
+            method: 'addComment',
+          );
+      try {
+        var _localCallContext = await _endpointDispatch.getMethodCallContext(
+          createSessionCallback: (_) => _localUniqueSession,
+          endpointPath: 'board',
+          methodName: 'addComment',
+          parameters: _ist.testObjectToJson({
+            'uuid': uuid,
+            'postNumber': postNumber,
+            'taskNumber': taskNumber,
+            'body': body,
+          }),
+          serializationManager: _serializationManager,
+        );
+        var _localReturnValue =
+            await (_localCallContext.method.call(
+                  _localUniqueSession,
+                  _localCallContext.arguments,
+                )
+                as _ida.Future<_ilh4w69x.BoardCommentView>);
+        return _localReturnValue;
+      } finally {
+        await _localUniqueSession.close();
+      }
+    });
+  }
+
+  _ida.Future<_ilh4w69x.BoardCommentView> editComment(
+    _ist.TestSessionBuilder sessionBuilder,
+    _is.UuidValue uuid,
+    String body,
+  ) async {
+    return _ist.callAwaitableFunctionAndHandleExceptions(() async {
+      var _localUniqueSession =
+          (sessionBuilder as _ist.InternalTestSessionBuilder).internalBuild(
+            endpoint: 'board',
+            method: 'editComment',
+          );
+      try {
+        var _localCallContext = await _endpointDispatch.getMethodCallContext(
+          createSessionCallback: (_) => _localUniqueSession,
+          endpointPath: 'board',
+          methodName: 'editComment',
+          parameters: _ist.testObjectToJson({
+            'uuid': uuid,
+            'body': body,
+          }),
+          serializationManager: _serializationManager,
+        );
+        var _localReturnValue =
+            await (_localCallContext.method.call(
+                  _localUniqueSession,
+                  _localCallContext.arguments,
+                )
+                as _ida.Future<_ilh4w69x.BoardCommentView>);
+        return _localReturnValue;
+      } finally {
+        await _localUniqueSession.close();
+      }
+    });
+  }
+
+  _ida.Future<void> deleteComment(
+    _ist.TestSessionBuilder sessionBuilder,
+    _is.UuidValue uuid,
+  ) async {
+    return _ist.callAwaitableFunctionAndHandleExceptions(() async {
+      var _localUniqueSession =
+          (sessionBuilder as _ist.InternalTestSessionBuilder).internalBuild(
+            endpoint: 'board',
+            method: 'deleteComment',
+          );
+      try {
+        var _localCallContext = await _endpointDispatch.getMethodCallContext(
+          createSessionCallback: (_) => _localUniqueSession,
+          endpointPath: 'board',
+          methodName: 'deleteComment',
+          parameters: _ist.testObjectToJson({'uuid': uuid}),
+          serializationManager: _serializationManager,
+        );
+        var _localReturnValue =
+            await (_localCallContext.method.call(
+                  _localUniqueSession,
+                  _localCallContext.arguments,
+                )
+                as _ida.Future<void>);
+        return _localReturnValue;
+      } finally {
+        await _localUniqueSession.close();
+      }
+    });
+  }
+
+  _ida.Future<_ilh4w69x.BoardCommentView> restoreComment(
+    _ist.TestSessionBuilder sessionBuilder,
+    _is.UuidValue uuid,
+  ) async {
+    return _ist.callAwaitableFunctionAndHandleExceptions(() async {
+      var _localUniqueSession =
+          (sessionBuilder as _ist.InternalTestSessionBuilder).internalBuild(
+            endpoint: 'board',
+            method: 'restoreComment',
+          );
+      try {
+        var _localCallContext = await _endpointDispatch.getMethodCallContext(
+          createSessionCallback: (_) => _localUniqueSession,
+          endpointPath: 'board',
+          methodName: 'restoreComment',
+          parameters: _ist.testObjectToJson({'uuid': uuid}),
+          serializationManager: _serializationManager,
+        );
+        var _localReturnValue =
+            await (_localCallContext.method.call(
+                  _localUniqueSession,
+                  _localCallContext.arguments,
+                )
+                as _ida.Future<_ilh4w69x.BoardCommentView>);
+        return _localReturnValue;
+      } finally {
+        await _localUniqueSession.close();
+      }
+    });
+  }
+
+  _ida.Future<void> flag(
+    _ist.TestSessionBuilder sessionBuilder,
+    int? number,
+    _is.UuidValue? commentUuid,
+    _i0z7k09i.BoardFlagReason reason,
+    String? note,
+  ) async {
+    return _ist.callAwaitableFunctionAndHandleExceptions(() async {
+      var _localUniqueSession =
+          (sessionBuilder as _ist.InternalTestSessionBuilder).internalBuild(
+            endpoint: 'board',
+            method: 'flag',
+          );
+      try {
+        var _localCallContext = await _endpointDispatch.getMethodCallContext(
+          createSessionCallback: (_) => _localUniqueSession,
+          endpointPath: 'board',
+          methodName: 'flag',
+          parameters: _ist.testObjectToJson({
+            'number': number,
+            'commentUuid': commentUuid,
+            'reason': reason,
+            'note': note,
+          }),
+          serializationManager: _serializationManager,
+        );
+        var _localReturnValue =
+            await (_localCallContext.method.call(
+                  _localUniqueSession,
+                  _localCallContext.arguments,
+                )
+                as _ida.Future<void>);
+        return _localReturnValue;
+      } finally {
+        await _localUniqueSession.close();
+      }
+    });
+  }
+
+  _ida.Future<void> unflag(
+    _ist.TestSessionBuilder sessionBuilder,
+    int? number,
+    _is.UuidValue? commentUuid,
+  ) async {
+    return _ist.callAwaitableFunctionAndHandleExceptions(() async {
+      var _localUniqueSession =
+          (sessionBuilder as _ist.InternalTestSessionBuilder).internalBuild(
+            endpoint: 'board',
+            method: 'unflag',
+          );
+      try {
+        var _localCallContext = await _endpointDispatch.getMethodCallContext(
+          createSessionCallback: (_) => _localUniqueSession,
+          endpointPath: 'board',
+          methodName: 'unflag',
+          parameters: _ist.testObjectToJson({
+            'number': number,
+            'commentUuid': commentUuid,
+          }),
+          serializationManager: _serializationManager,
+        );
+        var _localReturnValue =
+            await (_localCallContext.method.call(
+                  _localUniqueSession,
+                  _localCallContext.arguments,
+                )
+                as _ida.Future<void>);
+        return _localReturnValue;
+      } finally {
+        await _localUniqueSession.close();
+      }
+    });
+  }
+
+  _ida.Future<_ia65vc34.BoardTaskView> claimTask(
+    _ist.TestSessionBuilder sessionBuilder,
+    int number,
+  ) async {
+    return _ist.callAwaitableFunctionAndHandleExceptions(() async {
+      var _localUniqueSession =
+          (sessionBuilder as _ist.InternalTestSessionBuilder).internalBuild(
+            endpoint: 'board',
+            method: 'claimTask',
+          );
+      try {
+        var _localCallContext = await _endpointDispatch.getMethodCallContext(
+          createSessionCallback: (_) => _localUniqueSession,
+          endpointPath: 'board',
+          methodName: 'claimTask',
+          parameters: _ist.testObjectToJson({'number': number}),
+          serializationManager: _serializationManager,
+        );
+        var _localReturnValue =
+            await (_localCallContext.method.call(
+                  _localUniqueSession,
+                  _localCallContext.arguments,
+                )
+                as _ida.Future<_ia65vc34.BoardTaskView>);
+        return _localReturnValue;
+      } finally {
+        await _localUniqueSession.close();
+      }
+    });
+  }
+
+  _ida.Future<_ia65vc34.BoardTaskView> releaseTask(
+    _ist.TestSessionBuilder sessionBuilder,
+    int number,
+  ) async {
+    return _ist.callAwaitableFunctionAndHandleExceptions(() async {
+      var _localUniqueSession =
+          (sessionBuilder as _ist.InternalTestSessionBuilder).internalBuild(
+            endpoint: 'board',
+            method: 'releaseTask',
+          );
+      try {
+        var _localCallContext = await _endpointDispatch.getMethodCallContext(
+          createSessionCallback: (_) => _localUniqueSession,
+          endpointPath: 'board',
+          methodName: 'releaseTask',
+          parameters: _ist.testObjectToJson({'number': number}),
+          serializationManager: _serializationManager,
+        );
+        var _localReturnValue =
+            await (_localCallContext.method.call(
+                  _localUniqueSession,
+                  _localCallContext.arguments,
+                )
+                as _ida.Future<_ia65vc34.BoardTaskView>);
+        return _localReturnValue;
+      } finally {
+        await _localUniqueSession.close();
+      }
+    });
+  }
+
+  _ida.Future<_iuafg5le.BoardReviewCounts> reviewCounts(
+    _ist.TestSessionBuilder sessionBuilder,
+  ) async {
+    return _ist.callAwaitableFunctionAndHandleExceptions(() async {
+      var _localUniqueSession =
+          (sessionBuilder as _ist.InternalTestSessionBuilder).internalBuild(
+            endpoint: 'board',
+            method: 'reviewCounts',
+          );
+      try {
+        var _localCallContext = await _endpointDispatch.getMethodCallContext(
+          createSessionCallback: (_) => _localUniqueSession,
+          endpointPath: 'board',
+          methodName: 'reviewCounts',
+          parameters: _ist.testObjectToJson({}),
+          serializationManager: _serializationManager,
+        );
+        var _localReturnValue =
+            await (_localCallContext.method.call(
+                  _localUniqueSession,
+                  _localCallContext.arguments,
+                )
+                as _ida.Future<_iuafg5le.BoardReviewCounts>);
+        return _localReturnValue;
+      } finally {
+        await _localUniqueSession.close();
+      }
+    });
+  }
+
+  _ida.Future<List<_id1usvpt.BoardReviewItem>> reviewQueue(
+    _ist.TestSessionBuilder sessionBuilder,
+    _i6ojypp7.BoardReviewSection section,
+  ) async {
+    return _ist.callAwaitableFunctionAndHandleExceptions(() async {
+      var _localUniqueSession =
+          (sessionBuilder as _ist.InternalTestSessionBuilder).internalBuild(
+            endpoint: 'board',
+            method: 'reviewQueue',
+          );
+      try {
+        var _localCallContext = await _endpointDispatch.getMethodCallContext(
+          createSessionCallback: (_) => _localUniqueSession,
+          endpointPath: 'board',
+          methodName: 'reviewQueue',
+          parameters: _ist.testObjectToJson({'section': section}),
+          serializationManager: _serializationManager,
+        );
+        var _localReturnValue =
+            await (_localCallContext.method.call(
+                  _localUniqueSession,
+                  _localCallContext.arguments,
+                )
+                as _ida.Future<List<_id1usvpt.BoardReviewItem>>);
+        return _localReturnValue;
+      } finally {
+        await _localUniqueSession.close();
+      }
+    });
+  }
+
+  _ida.Future<_ir7e9zc6.BoardPostView> moderatePost(
+    _ist.TestSessionBuilder sessionBuilder,
+    int number,
+    _iqqjetoq.BoardModerationAction action,
+    String? reason,
+  ) async {
+    return _ist.callAwaitableFunctionAndHandleExceptions(() async {
+      var _localUniqueSession =
+          (sessionBuilder as _ist.InternalTestSessionBuilder).internalBuild(
+            endpoint: 'board',
+            method: 'moderatePost',
+          );
+      try {
+        var _localCallContext = await _endpointDispatch.getMethodCallContext(
+          createSessionCallback: (_) => _localUniqueSession,
+          endpointPath: 'board',
+          methodName: 'moderatePost',
+          parameters: _ist.testObjectToJson({
+            'number': number,
+            'action': action,
+            'reason': reason,
+          }),
+          serializationManager: _serializationManager,
+        );
+        var _localReturnValue =
+            await (_localCallContext.method.call(
+                  _localUniqueSession,
+                  _localCallContext.arguments,
+                )
+                as _ida.Future<_ir7e9zc6.BoardPostView>);
+        return _localReturnValue;
+      } finally {
+        await _localUniqueSession.close();
+      }
+    });
+  }
+
+  _ida.Future<_ilh4w69x.BoardCommentView> moderateComment(
+    _ist.TestSessionBuilder sessionBuilder,
+    _is.UuidValue uuid,
+    _iqqjetoq.BoardModerationAction action,
+    String? reason,
+  ) async {
+    return _ist.callAwaitableFunctionAndHandleExceptions(() async {
+      var _localUniqueSession =
+          (sessionBuilder as _ist.InternalTestSessionBuilder).internalBuild(
+            endpoint: 'board',
+            method: 'moderateComment',
+          );
+      try {
+        var _localCallContext = await _endpointDispatch.getMethodCallContext(
+          createSessionCallback: (_) => _localUniqueSession,
+          endpointPath: 'board',
+          methodName: 'moderateComment',
+          parameters: _ist.testObjectToJson({
+            'uuid': uuid,
+            'action': action,
+            'reason': reason,
+          }),
+          serializationManager: _serializationManager,
+        );
+        var _localReturnValue =
+            await (_localCallContext.method.call(
+                  _localUniqueSession,
+                  _localCallContext.arguments,
+                )
+                as _ida.Future<_ilh4w69x.BoardCommentView>);
+        return _localReturnValue;
+      } finally {
+        await _localUniqueSession.close();
+      }
+    });
+  }
+
+  _ida.Future<_ir7e9zc6.BoardPostView> adminEditPost(
+    _ist.TestSessionBuilder sessionBuilder,
+    int number,
+    String title,
+    String body,
+  ) async {
+    return _ist.callAwaitableFunctionAndHandleExceptions(() async {
+      var _localUniqueSession =
+          (sessionBuilder as _ist.InternalTestSessionBuilder).internalBuild(
+            endpoint: 'board',
+            method: 'adminEditPost',
+          );
+      try {
+        var _localCallContext = await _endpointDispatch.getMethodCallContext(
+          createSessionCallback: (_) => _localUniqueSession,
+          endpointPath: 'board',
+          methodName: 'adminEditPost',
+          parameters: _ist.testObjectToJson({
+            'number': number,
+            'title': title,
+            'body': body,
+          }),
+          serializationManager: _serializationManager,
+        );
+        var _localReturnValue =
+            await (_localCallContext.method.call(
+                  _localUniqueSession,
+                  _localCallContext.arguments,
+                )
+                as _ida.Future<_ir7e9zc6.BoardPostView>);
+        return _localReturnValue;
+      } finally {
+        await _localUniqueSession.close();
+      }
+    });
+  }
+
+  _ida.Future<_ir7e9zc6.BoardPostView> setLabels(
+    _ist.TestSessionBuilder sessionBuilder,
+    int number,
+    _i5noao4s.BoardPostKind kind,
+    _i2y7swbd.BoardArea? area,
+    _ikq67o57.BoardSize? size,
+  ) async {
+    return _ist.callAwaitableFunctionAndHandleExceptions(() async {
+      var _localUniqueSession =
+          (sessionBuilder as _ist.InternalTestSessionBuilder).internalBuild(
+            endpoint: 'board',
+            method: 'setLabels',
+          );
+      try {
+        var _localCallContext = await _endpointDispatch.getMethodCallContext(
+          createSessionCallback: (_) => _localUniqueSession,
+          endpointPath: 'board',
+          methodName: 'setLabels',
+          parameters: _ist.testObjectToJson({
+            'number': number,
+            'kind': kind,
+            'area': area,
+            'size': size,
+          }),
+          serializationManager: _serializationManager,
+        );
+        var _localReturnValue =
+            await (_localCallContext.method.call(
+                  _localUniqueSession,
+                  _localCallContext.arguments,
+                )
+                as _ida.Future<_ir7e9zc6.BoardPostView>);
+        return _localReturnValue;
+      } finally {
+        await _localUniqueSession.close();
+      }
+    });
+  }
+
+  _ida.Future<_ir7e9zc6.BoardPostView> applySuggestedTitle(
+    _ist.TestSessionBuilder sessionBuilder,
+    int number,
+  ) async {
+    return _ist.callAwaitableFunctionAndHandleExceptions(() async {
+      var _localUniqueSession =
+          (sessionBuilder as _ist.InternalTestSessionBuilder).internalBuild(
+            endpoint: 'board',
+            method: 'applySuggestedTitle',
+          );
+      try {
+        var _localCallContext = await _endpointDispatch.getMethodCallContext(
+          createSessionCallback: (_) => _localUniqueSession,
+          endpointPath: 'board',
+          methodName: 'applySuggestedTitle',
+          parameters: _ist.testObjectToJson({'number': number}),
+          serializationManager: _serializationManager,
+        );
+        var _localReturnValue =
+            await (_localCallContext.method.call(
+                  _localUniqueSession,
+                  _localCallContext.arguments,
+                )
+                as _ida.Future<_ir7e9zc6.BoardPostView>);
+        return _localReturnValue;
+      } finally {
+        await _localUniqueSession.close();
+      }
+    });
+  }
+
+  _ida.Future<_ir7e9zc6.BoardPostView> dismissDuplicateHint(
+    _ist.TestSessionBuilder sessionBuilder,
+    int number,
+  ) async {
+    return _ist.callAwaitableFunctionAndHandleExceptions(() async {
+      var _localUniqueSession =
+          (sessionBuilder as _ist.InternalTestSessionBuilder).internalBuild(
+            endpoint: 'board',
+            method: 'dismissDuplicateHint',
+          );
+      try {
+        var _localCallContext = await _endpointDispatch.getMethodCallContext(
+          createSessionCallback: (_) => _localUniqueSession,
+          endpointPath: 'board',
+          methodName: 'dismissDuplicateHint',
+          parameters: _ist.testObjectToJson({'number': number}),
+          serializationManager: _serializationManager,
+        );
+        var _localReturnValue =
+            await (_localCallContext.method.call(
+                  _localUniqueSession,
+                  _localCallContext.arguments,
+                )
+                as _ida.Future<_ir7e9zc6.BoardPostView>);
+        return _localReturnValue;
+      } finally {
+        await _localUniqueSession.close();
+      }
+    });
+  }
+
+  _ida.Future<_ir7e9zc6.BoardPostView> merge(
+    _ist.TestSessionBuilder sessionBuilder,
+    int source,
+    int target,
+  ) async {
+    return _ist.callAwaitableFunctionAndHandleExceptions(() async {
+      var _localUniqueSession =
+          (sessionBuilder as _ist.InternalTestSessionBuilder).internalBuild(
+            endpoint: 'board',
+            method: 'merge',
+          );
+      try {
+        var _localCallContext = await _endpointDispatch.getMethodCallContext(
+          createSessionCallback: (_) => _localUniqueSession,
+          endpointPath: 'board',
+          methodName: 'merge',
+          parameters: _ist.testObjectToJson({
+            'source': source,
+            'target': target,
+          }),
+          serializationManager: _serializationManager,
+        );
+        var _localReturnValue =
+            await (_localCallContext.method.call(
+                  _localUniqueSession,
+                  _localCallContext.arguments,
+                )
+                as _ida.Future<_ir7e9zc6.BoardPostView>);
+        return _localReturnValue;
+      } finally {
+        await _localUniqueSession.close();
+      }
+    });
+  }
+
+  _ida.Future<_ir7e9zc6.BoardPostView> unmerge(
+    _ist.TestSessionBuilder sessionBuilder,
+    int source,
+  ) async {
+    return _ist.callAwaitableFunctionAndHandleExceptions(() async {
+      var _localUniqueSession =
+          (sessionBuilder as _ist.InternalTestSessionBuilder).internalBuild(
+            endpoint: 'board',
+            method: 'unmerge',
+          );
+      try {
+        var _localCallContext = await _endpointDispatch.getMethodCallContext(
+          createSessionCallback: (_) => _localUniqueSession,
+          endpointPath: 'board',
+          methodName: 'unmerge',
+          parameters: _ist.testObjectToJson({'source': source}),
+          serializationManager: _serializationManager,
+        );
+        var _localReturnValue =
+            await (_localCallContext.method.call(
+                  _localUniqueSession,
+                  _localCallContext.arguments,
+                )
+                as _ida.Future<_ir7e9zc6.BoardPostView>);
+        return _localReturnValue;
+      } finally {
+        await _localUniqueSession.close();
+      }
+    });
+  }
+
+  _ida.Future<_ir7e9zc6.BoardPostView> decline(
+    _ist.TestSessionBuilder sessionBuilder,
+    int number,
+    String reason,
+  ) async {
+    return _ist.callAwaitableFunctionAndHandleExceptions(() async {
+      var _localUniqueSession =
+          (sessionBuilder as _ist.InternalTestSessionBuilder).internalBuild(
+            endpoint: 'board',
+            method: 'decline',
+          );
+      try {
+        var _localCallContext = await _endpointDispatch.getMethodCallContext(
+          createSessionCallback: (_) => _localUniqueSession,
+          endpointPath: 'board',
+          methodName: 'decline',
+          parameters: _ist.testObjectToJson({
+            'number': number,
+            'reason': reason,
+          }),
+          serializationManager: _serializationManager,
+        );
+        var _localReturnValue =
+            await (_localCallContext.method.call(
+                  _localUniqueSession,
+                  _localCallContext.arguments,
+                )
+                as _ida.Future<_ir7e9zc6.BoardPostView>);
+        return _localReturnValue;
+      } finally {
+        await _localUniqueSession.close();
+      }
+    });
+  }
+
+  _ida.Future<_ir7e9zc6.BoardPostView> reopen(
+    _ist.TestSessionBuilder sessionBuilder,
+    int number,
+  ) async {
+    return _ist.callAwaitableFunctionAndHandleExceptions(() async {
+      var _localUniqueSession =
+          (sessionBuilder as _ist.InternalTestSessionBuilder).internalBuild(
+            endpoint: 'board',
+            method: 'reopen',
+          );
+      try {
+        var _localCallContext = await _endpointDispatch.getMethodCallContext(
+          createSessionCallback: (_) => _localUniqueSession,
+          endpointPath: 'board',
+          methodName: 'reopen',
+          parameters: _ist.testObjectToJson({'number': number}),
+          serializationManager: _serializationManager,
+        );
+        var _localReturnValue =
+            await (_localCallContext.method.call(
+                  _localUniqueSession,
+                  _localCallContext.arguments,
+                )
+                as _ida.Future<_ir7e9zc6.BoardPostView>);
+        return _localReturnValue;
+      } finally {
+        await _localUniqueSession.close();
+      }
+    });
+  }
+
+  _ida.Future<void> blockUser(
+    _ist.TestSessionBuilder sessionBuilder,
+    int userId,
+    String reason,
+    DateTime? until,
+  ) async {
+    return _ist.callAwaitableFunctionAndHandleExceptions(() async {
+      var _localUniqueSession =
+          (sessionBuilder as _ist.InternalTestSessionBuilder).internalBuild(
+            endpoint: 'board',
+            method: 'blockUser',
+          );
+      try {
+        var _localCallContext = await _endpointDispatch.getMethodCallContext(
+          createSessionCallback: (_) => _localUniqueSession,
+          endpointPath: 'board',
+          methodName: 'blockUser',
+          parameters: _ist.testObjectToJson({
+            'userId': userId,
+            'reason': reason,
+            'until': until,
+          }),
+          serializationManager: _serializationManager,
+        );
+        var _localReturnValue =
+            await (_localCallContext.method.call(
+                  _localUniqueSession,
+                  _localCallContext.arguments,
+                )
+                as _ida.Future<void>);
+        return _localReturnValue;
+      } finally {
+        await _localUniqueSession.close();
+      }
+    });
+  }
+
+  _ida.Future<void> unblockUser(
+    _ist.TestSessionBuilder sessionBuilder,
+    int userId,
+  ) async {
+    return _ist.callAwaitableFunctionAndHandleExceptions(() async {
+      var _localUniqueSession =
+          (sessionBuilder as _ist.InternalTestSessionBuilder).internalBuild(
+            endpoint: 'board',
+            method: 'unblockUser',
+          );
+      try {
+        var _localCallContext = await _endpointDispatch.getMethodCallContext(
+          createSessionCallback: (_) => _localUniqueSession,
+          endpointPath: 'board',
+          methodName: 'unblockUser',
+          parameters: _ist.testObjectToJson({'userId': userId}),
+          serializationManager: _serializationManager,
+        );
+        var _localReturnValue =
+            await (_localCallContext.method.call(
+                  _localUniqueSession,
+                  _localCallContext.arguments,
+                )
+                as _ida.Future<void>);
+        return _localReturnValue;
+      } finally {
+        await _localUniqueSession.close();
+      }
+    });
+  }
+
+  _ida.Future<_ia65vc34.BoardTaskView> createTask(
+    _ist.TestSessionBuilder sessionBuilder,
+    List<int> postNumbers,
+    String title,
+    _i2y7swbd.BoardArea area,
+    _ikq67o57.BoardSize size,
+  ) async {
+    return _ist.callAwaitableFunctionAndHandleExceptions(() async {
+      var _localUniqueSession =
+          (sessionBuilder as _ist.InternalTestSessionBuilder).internalBuild(
+            endpoint: 'board',
+            method: 'createTask',
+          );
+      try {
+        var _localCallContext = await _endpointDispatch.getMethodCallContext(
+          createSessionCallback: (_) => _localUniqueSession,
+          endpointPath: 'board',
+          methodName: 'createTask',
+          parameters: _ist.testObjectToJson({
+            'postNumbers': postNumbers,
+            'title': title,
+            'area': area,
+            'size': size,
+          }),
+          serializationManager: _serializationManager,
+        );
+        var _localReturnValue =
+            await (_localCallContext.method.call(
+                  _localUniqueSession,
+                  _localCallContext.arguments,
+                )
+                as _ida.Future<_ia65vc34.BoardTaskView>);
+        return _localReturnValue;
+      } finally {
+        await _localUniqueSession.close();
+      }
+    });
+  }
+
+  _ida.Future<_ia65vc34.BoardTaskView> updateTask(
+    _ist.TestSessionBuilder sessionBuilder,
+    int number,
+    String title,
+    _i2y7swbd.BoardArea area,
+    _ikq67o57.BoardSize size,
+  ) async {
+    return _ist.callAwaitableFunctionAndHandleExceptions(() async {
+      var _localUniqueSession =
+          (sessionBuilder as _ist.InternalTestSessionBuilder).internalBuild(
+            endpoint: 'board',
+            method: 'updateTask',
+          );
+      try {
+        var _localCallContext = await _endpointDispatch.getMethodCallContext(
+          createSessionCallback: (_) => _localUniqueSession,
+          endpointPath: 'board',
+          methodName: 'updateTask',
+          parameters: _ist.testObjectToJson({
+            'number': number,
+            'title': title,
+            'area': area,
+            'size': size,
+          }),
+          serializationManager: _serializationManager,
+        );
+        var _localReturnValue =
+            await (_localCallContext.method.call(
+                  _localUniqueSession,
+                  _localCallContext.arguments,
+                )
+                as _ida.Future<_ia65vc34.BoardTaskView>);
+        return _localReturnValue;
+      } finally {
+        await _localUniqueSession.close();
+      }
+    });
+  }
+
+  _ida.Future<_ia65vc34.BoardTaskView> setTaskPosts(
+    _ist.TestSessionBuilder sessionBuilder,
+    int number,
+    List<int> postNumbers,
+  ) async {
+    return _ist.callAwaitableFunctionAndHandleExceptions(() async {
+      var _localUniqueSession =
+          (sessionBuilder as _ist.InternalTestSessionBuilder).internalBuild(
+            endpoint: 'board',
+            method: 'setTaskPosts',
+          );
+      try {
+        var _localCallContext = await _endpointDispatch.getMethodCallContext(
+          createSessionCallback: (_) => _localUniqueSession,
+          endpointPath: 'board',
+          methodName: 'setTaskPosts',
+          parameters: _ist.testObjectToJson({
+            'number': number,
+            'postNumbers': postNumbers,
+          }),
+          serializationManager: _serializationManager,
+        );
+        var _localReturnValue =
+            await (_localCallContext.method.call(
+                  _localUniqueSession,
+                  _localCallContext.arguments,
+                )
+                as _ida.Future<_ia65vc34.BoardTaskView>);
+        return _localReturnValue;
+      } finally {
+        await _localUniqueSession.close();
+      }
+    });
+  }
+
+  _ida.Future<_ia65vc34.BoardTaskView> regeneratePrompt(
+    _ist.TestSessionBuilder sessionBuilder,
+    int number,
+  ) async {
+    return _ist.callAwaitableFunctionAndHandleExceptions(() async {
+      var _localUniqueSession =
+          (sessionBuilder as _ist.InternalTestSessionBuilder).internalBuild(
+            endpoint: 'board',
+            method: 'regeneratePrompt',
+          );
+      try {
+        var _localCallContext = await _endpointDispatch.getMethodCallContext(
+          createSessionCallback: (_) => _localUniqueSession,
+          endpointPath: 'board',
+          methodName: 'regeneratePrompt',
+          parameters: _ist.testObjectToJson({'number': number}),
+          serializationManager: _serializationManager,
+        );
+        var _localReturnValue =
+            await (_localCallContext.method.call(
+                  _localUniqueSession,
+                  _localCallContext.arguments,
+                )
+                as _ida.Future<_ia65vc34.BoardTaskView>);
+        return _localReturnValue;
+      } finally {
+        await _localUniqueSession.close();
+      }
+    });
+  }
+
+  _ida.Future<_ia65vc34.BoardTaskView> setPrompt(
+    _ist.TestSessionBuilder sessionBuilder,
+    int number,
+    String body,
+  ) async {
+    return _ist.callAwaitableFunctionAndHandleExceptions(() async {
+      var _localUniqueSession =
+          (sessionBuilder as _ist.InternalTestSessionBuilder).internalBuild(
+            endpoint: 'board',
+            method: 'setPrompt',
+          );
+      try {
+        var _localCallContext = await _endpointDispatch.getMethodCallContext(
+          createSessionCallback: (_) => _localUniqueSession,
+          endpointPath: 'board',
+          methodName: 'setPrompt',
+          parameters: _ist.testObjectToJson({
+            'number': number,
+            'body': body,
+          }),
+          serializationManager: _serializationManager,
+        );
+        var _localReturnValue =
+            await (_localCallContext.method.call(
+                  _localUniqueSession,
+                  _localCallContext.arguments,
+                )
+                as _ida.Future<_ia65vc34.BoardTaskView>);
+        return _localReturnValue;
+      } finally {
+        await _localUniqueSession.close();
+      }
+    });
+  }
+
+  _ida.Future<_ia65vc34.BoardTaskView> publishTask(
+    _ist.TestSessionBuilder sessionBuilder,
+    int number,
+  ) async {
+    return _ist.callAwaitableFunctionAndHandleExceptions(() async {
+      var _localUniqueSession =
+          (sessionBuilder as _ist.InternalTestSessionBuilder).internalBuild(
+            endpoint: 'board',
+            method: 'publishTask',
+          );
+      try {
+        var _localCallContext = await _endpointDispatch.getMethodCallContext(
+          createSessionCallback: (_) => _localUniqueSession,
+          endpointPath: 'board',
+          methodName: 'publishTask',
+          parameters: _ist.testObjectToJson({'number': number}),
+          serializationManager: _serializationManager,
+        );
+        var _localReturnValue =
+            await (_localCallContext.method.call(
+                  _localUniqueSession,
+                  _localCallContext.arguments,
+                )
+                as _ida.Future<_ia65vc34.BoardTaskView>);
+        return _localReturnValue;
+      } finally {
+        await _localUniqueSession.close();
+      }
+    });
+  }
+
+  _ida.Future<_ia65vc34.BoardTaskView> setTaskStatus(
+    _ist.TestSessionBuilder sessionBuilder,
+    int number,
+    _ihypagkt.BoardTaskStatus status,
+  ) async {
+    return _ist.callAwaitableFunctionAndHandleExceptions(() async {
+      var _localUniqueSession =
+          (sessionBuilder as _ist.InternalTestSessionBuilder).internalBuild(
+            endpoint: 'board',
+            method: 'setTaskStatus',
+          );
+      try {
+        var _localCallContext = await _endpointDispatch.getMethodCallContext(
+          createSessionCallback: (_) => _localUniqueSession,
+          endpointPath: 'board',
+          methodName: 'setTaskStatus',
+          parameters: _ist.testObjectToJson({
+            'number': number,
+            'status': status,
+          }),
+          serializationManager: _serializationManager,
+        );
+        var _localReturnValue =
+            await (_localCallContext.method.call(
+                  _localUniqueSession,
+                  _localCallContext.arguments,
+                )
+                as _ida.Future<_ia65vc34.BoardTaskView>);
+        return _localReturnValue;
+      } finally {
+        await _localUniqueSession.close();
+      }
+    });
+  }
+
+  _ida.Future<_ia65vc34.BoardTaskView> linkPullRequest(
+    _ist.TestSessionBuilder sessionBuilder,
+    int number,
+    String? url,
+  ) async {
+    return _ist.callAwaitableFunctionAndHandleExceptions(() async {
+      var _localUniqueSession =
+          (sessionBuilder as _ist.InternalTestSessionBuilder).internalBuild(
+            endpoint: 'board',
+            method: 'linkPullRequest',
+          );
+      try {
+        var _localCallContext = await _endpointDispatch.getMethodCallContext(
+          createSessionCallback: (_) => _localUniqueSession,
+          endpointPath: 'board',
+          methodName: 'linkPullRequest',
+          parameters: _ist.testObjectToJson({
+            'number': number,
+            'url': url,
+          }),
+          serializationManager: _serializationManager,
+        );
+        var _localReturnValue =
+            await (_localCallContext.method.call(
+                  _localUniqueSession,
+                  _localCallContext.arguments,
+                )
+                as _ida.Future<_ia65vc34.BoardTaskView>);
+        return _localReturnValue;
+      } finally {
+        await _localUniqueSession.close();
+      }
+    });
+  }
+
+  _ida.Future<List<_i8qikgvy.BoardBundleSuggestionView>> suggestBundles(
+    _ist.TestSessionBuilder sessionBuilder,
+  ) async {
+    return _ist.callAwaitableFunctionAndHandleExceptions(() async {
+      var _localUniqueSession =
+          (sessionBuilder as _ist.InternalTestSessionBuilder).internalBuild(
+            endpoint: 'board',
+            method: 'suggestBundles',
+          );
+      try {
+        var _localCallContext = await _endpointDispatch.getMethodCallContext(
+          createSessionCallback: (_) => _localUniqueSession,
+          endpointPath: 'board',
+          methodName: 'suggestBundles',
+          parameters: _ist.testObjectToJson({}),
+          serializationManager: _serializationManager,
+        );
+        var _localReturnValue =
+            await (_localCallContext.method.call(
+                  _localUniqueSession,
+                  _localCallContext.arguments,
+                )
+                as _ida.Future<List<_i8qikgvy.BoardBundleSuggestionView>>);
+        return _localReturnValue;
+      } finally {
+        await _localUniqueSession.close();
+      }
+    });
+  }
+
+  _ida.Future<List<_i8qikgvy.BoardBundleSuggestionView>> listSuggestions(
+    _ist.TestSessionBuilder sessionBuilder,
+  ) async {
+    return _ist.callAwaitableFunctionAndHandleExceptions(() async {
+      var _localUniqueSession =
+          (sessionBuilder as _ist.InternalTestSessionBuilder).internalBuild(
+            endpoint: 'board',
+            method: 'listSuggestions',
+          );
+      try {
+        var _localCallContext = await _endpointDispatch.getMethodCallContext(
+          createSessionCallback: (_) => _localUniqueSession,
+          endpointPath: 'board',
+          methodName: 'listSuggestions',
+          parameters: _ist.testObjectToJson({}),
+          serializationManager: _serializationManager,
+        );
+        var _localReturnValue =
+            await (_localCallContext.method.call(
+                  _localUniqueSession,
+                  _localCallContext.arguments,
+                )
+                as _ida.Future<List<_i8qikgvy.BoardBundleSuggestionView>>);
+        return _localReturnValue;
+      } finally {
+        await _localUniqueSession.close();
+      }
+    });
+  }
+
+  _ida.Future<void> dismissSuggestion(
+    _ist.TestSessionBuilder sessionBuilder,
+    int id,
+  ) async {
+    return _ist.callAwaitableFunctionAndHandleExceptions(() async {
+      var _localUniqueSession =
+          (sessionBuilder as _ist.InternalTestSessionBuilder).internalBuild(
+            endpoint: 'board',
+            method: 'dismissSuggestion',
+          );
+      try {
+        var _localCallContext = await _endpointDispatch.getMethodCallContext(
+          createSessionCallback: (_) => _localUniqueSession,
+          endpointPath: 'board',
+          methodName: 'dismissSuggestion',
+          parameters: _ist.testObjectToJson({'id': id}),
+          serializationManager: _serializationManager,
+        );
+        var _localReturnValue =
+            await (_localCallContext.method.call(
+                  _localUniqueSession,
+                  _localCallContext.arguments,
+                )
+                as _ida.Future<void>);
+        return _localReturnValue;
+      } finally {
+        await _localUniqueSession.close();
+      }
+    });
   }
 }
 

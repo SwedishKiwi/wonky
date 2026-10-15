@@ -1,0 +1,9 @@
+### Public author info on the board: never the email (specs/16 §11).
+class: BoardAuthor
+fields:
+  id: int
+  displayName: String
+  avatarUrl: String?
+  avatarColor: String
+  colorIndex: int
+  isAdmin: bool

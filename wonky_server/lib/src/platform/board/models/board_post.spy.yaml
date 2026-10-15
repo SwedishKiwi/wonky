@@ -1,0 +1,59 @@
+### A bug report or improvement idea on the public board (specs/16 §12).
+### The public number (#123) is the row id.
+class: BoardPost
+table: board_post
+fields:
+  authorId: int?, relation(parent=user_profile, onDelete=SetNull)
+  kind: BoardPostKind
+  ### What the author picked (triage may correct [kind]).
+  reportedKind: BoardPostKind
+  area: BoardArea?
+  size: BoardSize?
+  ### The labels come from AI and are not confirmed by an admin yet.
+  aiLabels: bool, default=true
+  title: String
+  ### Markdown.
+  body: String
+  ### Included details (app, version, browser, route…), JSON; public.
+  contextJson: String?
+  ### The app the post was written in (drive, write, sheets, slides).
+  appHint: String
+  screenshotFileId: int?, relation(parent=stored_file, onDelete=SetNull)
+  status: BoardPostStatus
+  moderation: BoardModeration
+  ### Shown to the author when held or removed.
+  moderationReason: String?
+  ### Listed in the admin "check" section (a score in the review band).
+  needsCheck: bool, default=false
+  editedByModerator: bool, default=false
+  triageState: BoardTriageState
+  ### The last triage answers (admins only).
+  triageJson: String?
+  triageAttempts: int, default=0
+  suggestedTitle: String?
+  summary: String?
+  ### Set when merged into another post (status duplicate).
+  duplicateOfId: int?
+  ### AI hint for admins.
+  possibleDuplicateOfId: int?
+  ### Admin dismissed the duplicate hint.
+  duplicateHintDismissed: bool, default=false
+  declineReason: String?
+  taskId: int?, relation(parent=board_task, onDelete=SetNull)
+  score: int, default=0
+  voteCount: int, default=0
+  commentCount: int, default=0
+  flagCount: int, default=0
+  createdAt: DateTime
+  editedAt: DateTime?
+  ### Soft delete by the author.
+  deletedAt: DateTime?
+  ### When moderation became removed (purged after 90 days).
+  removedAt: DateTime?
+indexes:
+  board_post_list_idx:
+    fields: moderation, kind, status, score
+  board_post_author_idx:
+    fields: authorId
+  board_post_task_idx:
+    fields: taskId

@@ -75,6 +75,12 @@ class _NotificationsButtonState extends State<NotificationsButton> {
   Future<void> _open(NotificationView n) async {
     _popover.hide();
     unawaited(_ctl.markRead(n));
+    // Bugs & Improvements (specs/16 §12): posts and tasks on the board.
+    final board = _boardPathOf(n);
+    if (board != null) {
+      await s.openPath(board);
+      return;
+    }
     final uuid = n.itemUuid;
     if (uuid == null) return;
     final thread = _threadOf(n);
@@ -89,6 +95,13 @@ class _NotificationsButtonState extends State<NotificationsButton> {
       _ => '/d/${uuid.uuid}',
     };
     await s.openPath(path);
+  }
+
+  static String? _boardPathOf(NotificationView n) {
+    final p = _payload(n);
+    if (p['taskNumber'] is int) return '/improvements/t/${p['taskNumber']}';
+    if (p['postNumber'] is int) return '/improvements/p/${p['postNumber']}';
+    return null;
   }
 
   static String? _threadOf(NotificationView n) {
@@ -439,6 +452,15 @@ String notificationText(WonkyAppLocalizations l, NotificationView n) {
       final String m when m.isNotEmpty => m,
       _ => l.notifStorage,
     },
+    NotificationKind.boardReply => l.notifBoardReply(
+      who,
+      '${_payload(n)['title'] ?? ''}',
+    ),
+    NotificationKind.boardStatus ||
+    NotificationKind.boardClaim => switch (_payload(n)['line']) {
+      final String m when m.isNotEmpty => m,
+      _ => l.notifBoardUpdate('${_payload(n)['title'] ?? ''}'),
+    },
   };
 }
 
@@ -471,6 +493,9 @@ IconData _kindIcon(NotificationKind k) => switch (k) {
   NotificationKind.ownershipTransfer => LucideIcons.crown,
   NotificationKind.scriptFailure => LucideIcons.triangleAlert,
   NotificationKind.storage => LucideIcons.hardDrive,
+  NotificationKind.boardReply => LucideIcons.messageSquareReply,
+  NotificationKind.boardStatus => LucideIcons.messageSquarePlus,
+  NotificationKind.boardClaim => LucideIcons.hand,
 };
 
 /// One notification row: avatar with the kind icon, text, excerpt, time and

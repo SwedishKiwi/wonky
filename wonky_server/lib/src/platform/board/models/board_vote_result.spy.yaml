@@ -1,0 +1,6 @@
+class: BoardVoteResult
+fields:
+  number: int
+  score: int
+  voteCount: int
+  myVote: int

@@ -1,0 +1,11 @@
+### Who sees a post or comment (specs/16 §3.2).
+enum: BoardModeration
+serialized: byName
+values:
+  ### Author only, triage running.
+  - checking
+  - visible
+  ### Author and admins, waiting for review.
+  - held
+  ### Admins only; the author sees the reason.
+  - removed

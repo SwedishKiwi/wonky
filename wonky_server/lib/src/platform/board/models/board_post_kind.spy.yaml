@@ -1,0 +1,6 @@
+### Bug report or improvement idea (specs/16 §2).
+enum: BoardPostKind
+serialized: byName
+values:
+  - bug
+  - idea

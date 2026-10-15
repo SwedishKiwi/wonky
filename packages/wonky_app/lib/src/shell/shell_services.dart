@@ -34,6 +34,7 @@ import '../l10n/wonky_app_localizations.dart';
 import '../mcp_bridge/mcp_control.dart';
 import '../storage/storage_controller.dart';
 import '../storage/quota_error_presenter.dart';
+import '../board/board_repository.dart';
 import '../storage/storage_checks.dart';
 import '../menus/shell_menus.dart';
 import '../undo/drive_undo.dart';
@@ -66,7 +67,9 @@ class ShellRepositories {
     required this.files,
     required this.meta,
     ActivityRepository? activity,
-  }) : _activity = activity; // ignore: prefer_initializing_formals
+    BoardRepository? board,
+  }) : _activity = activity, // ignore: prefer_initializing_formals
+       _board = board; // ignore: prefer_initializing_formals
 
   final DriveRepository drive;
   final UserRepository users;
@@ -78,6 +81,12 @@ class ShellRepositories {
   final FileRepository files;
   final MetaRepository meta;
   final ActivityRepository? _activity;
+  final BoardRepository? _board;
+
+  /// Bugs & Improvements (specs/16); throws when the shell was built
+  /// without one.
+  BoardRepository get board =>
+      _board ?? (throw StateError('No BoardRepository installed.'));
 
   /// The activity dashboard; throws when the shell was built without one.
   ActivityRepository get activity =>

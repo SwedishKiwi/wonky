@@ -17,6 +17,9 @@ class NotificationEmails {
   /// A link to the item of [n], or the Drive home (the landing app) when it
   /// has no item.
   Uri linkFor(NotificationView n) {
+    // Bugs & Improvements (specs/16 §12): posts and tasks on Drive's board.
+    final board = boardPathOf(n.payload);
+    if (board != null) return webOrigin.replace(path: '/drive$board');
     final uuid = n.itemUuid?.uuid;
     final path = switch ((uuid, n.itemKind)) {
       (null, _) => '/drive/',
@@ -40,6 +43,15 @@ class NotificationEmails {
       }
     }
     return webOrigin.replace(path: path);
+  }
+
+  /// The board path of a board notification (`/improvements/p/412` or
+  /// `/improvements/t/12`), from the payload's `postNumber`/`taskNumber`.
+  static String? boardPathOf(String payload) {
+    final p = decodeObject(payload);
+    if (p['taskNumber'] is int) return '/improvements/t/${p['taskNumber']}';
+    if (p['postNumber'] is int) return '/improvements/p/${p['postNumber']}';
+    return null;
   }
 
   static String? _threadUuidOf(String payload) {
@@ -84,6 +96,12 @@ class NotificationEmails {
         p['message'] is String
             ? '${p['message']}'
             : 'Your Wonky Work storage needs attention',
+      NotificationKind.boardReply =>
+        '$who commented on “${p['title'] ?? 'a post'}”',
+      NotificationKind.boardStatus || NotificationKind.boardClaim =>
+        p['line'] is String
+            ? '${p['line']}'
+            : 'Update on “${p['title'] ?? 'Bugs & Improvements'}”',
     };
   }
 

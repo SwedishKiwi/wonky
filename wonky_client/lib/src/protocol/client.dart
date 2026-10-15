@@ -45,6 +45,48 @@ import 'package:wonky_client/src/protocol/platform/ai/models/inline_ai_request.d
     as _i31mo4jy;
 import 'package:wonky_client/src/protocol/platform/ai/models/proofread_event.dart'
     as _irtrv5vw;
+import 'package:wonky_client/src/protocol/platform/board/models/board_area.dart'
+    as _ix53eas0;
+import 'package:wonky_client/src/protocol/platform/board/models/board_bundle_suggestion_view.dart'
+    as _i94c7q23;
+import 'package:wonky_client/src/protocol/platform/board/models/board_comment_view.dart'
+    as _iesojpvb;
+import 'package:wonky_client/src/protocol/platform/board/models/board_flag_reason.dart'
+    as _iqqu23qj;
+import 'package:wonky_client/src/protocol/platform/board/models/board_list_query.dart'
+    as _izlc75ds;
+import 'package:wonky_client/src/protocol/platform/board/models/board_me.dart'
+    as _ighx6l3o;
+import 'package:wonky_client/src/protocol/platform/board/models/board_moderation_action.dart'
+    as _i4jpdiaw;
+import 'package:wonky_client/src/protocol/platform/board/models/board_post_draft.dart'
+    as _if6vkyrg;
+import 'package:wonky_client/src/protocol/platform/board/models/board_post_event.dart'
+    as _i0ceh4xz;
+import 'package:wonky_client/src/protocol/platform/board/models/board_post_kind.dart'
+    as _im2wvmm2;
+import 'package:wonky_client/src/protocol/platform/board/models/board_post_page.dart'
+    as _i9sq2gre;
+import 'package:wonky_client/src/protocol/platform/board/models/board_post_view.dart'
+    as _ichg96zd;
+import 'package:wonky_client/src/protocol/platform/board/models/board_review_counts.dart'
+    as _iwnb6fq4;
+import 'package:wonky_client/src/protocol/platform/board/models/board_review_item.dart'
+    as _i3y77bov;
+import 'package:wonky_client/src/protocol/platform/board/models/board_review_section.dart'
+    as _ijn6o8ui;
+import 'package:wonky_client/src/protocol/platform/board/models/board_similar_post.dart'
+    as _ikfdrh1p;
+import 'package:wonky_client/src/protocol/platform/board/models/board_size.dart'
+    as _iky4nxq3;
+import 'package:wonky_client/src/protocol/platform/board/models/board_task_page.dart'
+    as _i5hp59xb;
+import 'package:wonky_client/src/protocol/platform/board/models/board_task_status.dart'
+    as _i325i6jq;
+import 'package:wonky_client/src/protocol/platform/board/models/board_task_view.dart'
+    as _icqm1m07;
+import 'package:wonky_client/src/protocol/platform/board/models/board_vote_result.dart'
+    as _isrr2fx2;
 import 'package:wonky_client/src/protocol/platform/comments/comment_anchor_kind.dart'
     as _i8agtv5a;
 import 'package:wonky_client/src/protocol/platform/comments/comment_event.dart'
@@ -686,6 +728,558 @@ class EndpointAssistant extends _isc.EndpointRef {
           'length': length,
         },
         {},
+      );
+}
+
+/// Bugs & Improvements (specs/16 §12). Read methods work signed out; write
+/// methods need a signed-in user who is not blocked; admin methods need an
+/// admin (specs/16 §9.1). Posts and tasks are addressed by their public
+/// number (the row id), for example #123 and T-12.
+/// {@category Endpoint}
+class EndpointBoard extends _isc.EndpointRef {
+  EndpointBoard(_isc.EndpointCaller caller) : super(caller);
+
+  @override
+  String get name => 'board';
+
+  /// The caller's board status (signed out works).
+  _ida.Future<_ighx6l3o.BoardMe> me() =>
+      caller.callServerEndpoint<_ighx6l3o.BoardMe>(
+        'board',
+        'me',
+        {},
+      );
+
+  _ida.Future<_i9sq2gre.BoardPostPage> list(_izlc75ds.BoardListQuery query) =>
+      caller.callServerEndpoint<_i9sq2gre.BoardPostPage>(
+        'board',
+        'list',
+        {'query': query},
+      );
+
+  _ida.Future<_ichg96zd.BoardPostView> getPost(int number) =>
+      caller.callServerEndpoint<_ichg96zd.BoardPostView>(
+        'board',
+        'getPost',
+        {'number': number},
+      );
+
+  /// Comments of a post, oldest first.
+  _ida.Future<List<_iesojpvb.BoardCommentView>> listComments(int number) =>
+      caller.callServerEndpoint<List<_iesojpvb.BoardCommentView>>(
+        'board',
+        'listComments',
+        {'number': number},
+      );
+
+  /// Discussion and activity rows of a task, oldest first.
+  _ida.Future<List<_iesojpvb.BoardCommentView>> listTaskComments(int number) =>
+      caller.callServerEndpoint<List<_iesojpvb.BoardCommentView>>(
+        'board',
+        'listTaskComments',
+        {'number': number},
+      );
+
+  /// Up to 5 visible posts similar to a draft (specs/16 §6.4).
+  _ida.Future<List<_ikfdrh1p.BoardSimilarPost>> similar(
+    String title,
+    String body,
+    _im2wvmm2.BoardPostKind? kind,
+  ) => caller.callServerEndpoint<List<_ikfdrh1p.BoardSimilarPost>>(
+    'board',
+    'similar',
+    {
+      'title': title,
+      'body': body,
+      'kind': kind,
+    },
+  );
+
+  /// A short-lived URL of a post's screenshot, or null.
+  _ida.Future<String?> getScreenshotUrl(int number) =>
+      caller.callServerEndpoint<String?>(
+        'board',
+        'getScreenshotUrl',
+        {'number': number},
+      );
+
+  /// Tasks with [statuses] (empty: published, claimed and inReview).
+  _ida.Future<_i5hp59xb.BoardTaskPage> listTasks(
+    List<_i325i6jq.BoardTaskStatus> statuses,
+    String? cursor,
+    int limit,
+  ) => caller.callServerEndpoint<_i5hp59xb.BoardTaskPage>(
+    'board',
+    'listTasks',
+    {
+      'statuses': statuses,
+      'cursor': cursor,
+      'limit': limit,
+    },
+  );
+
+  _ida.Future<_icqm1m07.BoardTaskView> getTask(int number) =>
+      caller.callServerEndpoint<_icqm1m07.BoardTaskView>(
+        'board',
+        'getTask',
+        {'number': number},
+      );
+
+  /// Live changes of a post: votes, comments, moderation, status.
+  _ida.Stream<_i0ceh4xz.BoardPostEvent> watchPost(int number) =>
+      caller.callStreamingServerEndpoint<
+        _ida.Stream<_i0ceh4xz.BoardPostEvent>,
+        _i0ceh4xz.BoardPostEvent
+      >(
+        'board',
+        'watchPost',
+        {'number': number},
+        {},
+      );
+
+  /// Live task changes (claims, status) for the Up for grabs tab.
+  _ida.Stream<_i0ceh4xz.BoardPostEvent> watchTasks() =>
+      caller.callStreamingServerEndpoint<
+        _ida.Stream<_i0ceh4xz.BoardPostEvent>,
+        _i0ceh4xz.BoardPostEvent
+      >(
+        'board',
+        'watchTasks',
+        {},
+        {},
+      );
+
+  /// Where to upload a screenshot (PNG or JPEG, ≤ 5 MB); finish with
+  /// `file.completeUpload`, then pass the uuid to [createPost].
+  _ida.Future<_ilpm2pjc.FileUploadTicket> createScreenshotUpload(
+    _isc.UuidValue fileUuid,
+    String mimeType,
+    int size,
+  ) => caller.callServerEndpoint<_ilpm2pjc.FileUploadTicket>(
+    'board',
+    'createScreenshotUpload',
+    {
+      'fileUuid': fileUuid,
+      'mimeType': mimeType,
+      'size': size,
+    },
+  );
+
+  _ida.Future<_ichg96zd.BoardPostView> createPost(
+    _if6vkyrg.BoardPostDraft draft,
+  ) => caller.callServerEndpoint<_ichg96zd.BoardPostView>(
+    'board',
+    'createPost',
+    {'draft': draft},
+  );
+
+  /// The author edits their post (open, not in a task).
+  _ida.Future<_ichg96zd.BoardPostView> editPost(
+    int number,
+    String title,
+    String body,
+  ) => caller.callServerEndpoint<_ichg96zd.BoardPostView>(
+    'board',
+    'editPost',
+    {
+      'number': number,
+      'title': title,
+      'body': body,
+    },
+  );
+
+  /// Soft delete by the author (or an admin).
+  _ida.Future<void> deletePost(int number) => caller.callServerEndpoint<void>(
+    'board',
+    'deletePost',
+    {'number': number},
+  );
+
+  /// Undo of [deletePost].
+  _ida.Future<_ichg96zd.BoardPostView> restorePost(int number) =>
+      caller.callServerEndpoint<_ichg96zd.BoardPostView>(
+        'board',
+        'restorePost',
+        {'number': number},
+      );
+
+  /// Deletes the screenshot bytes (author or admin); not undoable.
+  _ida.Future<_ichg96zd.BoardPostView> removeScreenshot(int number) =>
+      caller.callServerEndpoint<_ichg96zd.BoardPostView>(
+        'board',
+        'removeScreenshot',
+        {'number': number},
+      );
+
+  /// Votes -1, 0 (remove) or +1; -1 only on ideas.
+  _ida.Future<_isrr2fx2.BoardVoteResult> vote(
+    int number,
+    int value,
+  ) => caller.callServerEndpoint<_isrr2fx2.BoardVoteResult>(
+    'board',
+    'vote',
+    {
+      'number': number,
+      'value': value,
+    },
+  );
+
+  /// Adds a comment to a post or a task; idempotent on [uuid].
+  _ida.Future<_iesojpvb.BoardCommentView> addComment(
+    _isc.UuidValue uuid,
+    int? postNumber,
+    int? taskNumber,
+    String body,
+  ) => caller.callServerEndpoint<_iesojpvb.BoardCommentView>(
+    'board',
+    'addComment',
+    {
+      'uuid': uuid,
+      'postNumber': postNumber,
+      'taskNumber': taskNumber,
+      'body': body,
+    },
+  );
+
+  _ida.Future<_iesojpvb.BoardCommentView> editComment(
+    _isc.UuidValue uuid,
+    String body,
+  ) => caller.callServerEndpoint<_iesojpvb.BoardCommentView>(
+    'board',
+    'editComment',
+    {
+      'uuid': uuid,
+      'body': body,
+    },
+  );
+
+  _ida.Future<void> deleteComment(_isc.UuidValue uuid) =>
+      caller.callServerEndpoint<void>(
+        'board',
+        'deleteComment',
+        {'uuid': uuid},
+      );
+
+  /// Undo of [deleteComment].
+  _ida.Future<_iesojpvb.BoardCommentView> restoreComment(_isc.UuidValue uuid) =>
+      caller.callServerEndpoint<_iesojpvb.BoardCommentView>(
+        'board',
+        'restoreComment',
+        {'uuid': uuid},
+      );
+
+  /// Flags a post ([number]) or a comment ([commentUuid]).
+  _ida.Future<void> flag(
+    int? number,
+    _isc.UuidValue? commentUuid,
+    _iqqu23qj.BoardFlagReason reason,
+    String? note,
+  ) => caller.callServerEndpoint<void>(
+    'board',
+    'flag',
+    {
+      'number': number,
+      'commentUuid': commentUuid,
+      'reason': reason,
+      'note': note,
+    },
+  );
+
+  /// Undo of [flag].
+  _ida.Future<void> unflag(
+    int? number,
+    _isc.UuidValue? commentUuid,
+  ) => caller.callServerEndpoint<void>(
+    'board',
+    'unflag',
+    {
+      'number': number,
+      'commentUuid': commentUuid,
+    },
+  );
+
+  /// Claims a published task for `board.claimHours` (specs/16 §8.1).
+  _ida.Future<_icqm1m07.BoardTaskView> claimTask(int number) =>
+      caller.callServerEndpoint<_icqm1m07.BoardTaskView>(
+        'board',
+        'claimTask',
+        {'number': number},
+      );
+
+  /// Releases a claim (the claimant or an admin).
+  _ida.Future<_icqm1m07.BoardTaskView> releaseTask(int number) =>
+      caller.callServerEndpoint<_icqm1m07.BoardTaskView>(
+        'board',
+        'releaseTask',
+        {'number': number},
+      );
+
+  _ida.Future<_iwnb6fq4.BoardReviewCounts> reviewCounts() =>
+      caller.callServerEndpoint<_iwnb6fq4.BoardReviewCounts>(
+        'board',
+        'reviewCounts',
+        {},
+      );
+
+  _ida.Future<List<_i3y77bov.BoardReviewItem>> reviewQueue(
+    _ijn6o8ui.BoardReviewSection section,
+  ) => caller.callServerEndpoint<List<_i3y77bov.BoardReviewItem>>(
+    'board',
+    'reviewQueue',
+    {'section': section},
+  );
+
+  _ida.Future<_ichg96zd.BoardPostView> moderatePost(
+    int number,
+    _i4jpdiaw.BoardModerationAction action,
+    String? reason,
+  ) => caller.callServerEndpoint<_ichg96zd.BoardPostView>(
+    'board',
+    'moderatePost',
+    {
+      'number': number,
+      'action': action,
+      'reason': reason,
+    },
+  );
+
+  _ida.Future<_iesojpvb.BoardCommentView> moderateComment(
+    _isc.UuidValue uuid,
+    _i4jpdiaw.BoardModerationAction action,
+    String? reason,
+  ) => caller.callServerEndpoint<_iesojpvb.BoardCommentView>(
+    'board',
+    'moderateComment',
+    {
+      'uuid': uuid,
+      'action': action,
+      'reason': reason,
+    },
+  );
+
+  /// Edit and approve (e.g. removing personal data).
+  _ida.Future<_ichg96zd.BoardPostView> adminEditPost(
+    int number,
+    String title,
+    String body,
+  ) => caller.callServerEndpoint<_ichg96zd.BoardPostView>(
+    'board',
+    'adminEditPost',
+    {
+      'number': number,
+      'title': title,
+      'body': body,
+    },
+  );
+
+  /// Sets kind, area and size (confirms the AI labels; null clears).
+  _ida.Future<_ichg96zd.BoardPostView> setLabels(
+    int number,
+    _im2wvmm2.BoardPostKind kind,
+    _ix53eas0.BoardArea? area,
+    _iky4nxq3.BoardSize? size,
+  ) => caller.callServerEndpoint<_ichg96zd.BoardPostView>(
+    'board',
+    'setLabels',
+    {
+      'number': number,
+      'kind': kind,
+      'area': area,
+      'size': size,
+    },
+  );
+
+  _ida.Future<_ichg96zd.BoardPostView> applySuggestedTitle(int number) =>
+      caller.callServerEndpoint<_ichg96zd.BoardPostView>(
+        'board',
+        'applySuggestedTitle',
+        {'number': number},
+      );
+
+  _ida.Future<_ichg96zd.BoardPostView> dismissDuplicateHint(int number) =>
+      caller.callServerEndpoint<_ichg96zd.BoardPostView>(
+        'board',
+        'dismissDuplicateHint',
+        {'number': number},
+      );
+
+  _ida.Future<_ichg96zd.BoardPostView> merge(
+    int source,
+    int target,
+  ) => caller.callServerEndpoint<_ichg96zd.BoardPostView>(
+    'board',
+    'merge',
+    {
+      'source': source,
+      'target': target,
+    },
+  );
+
+  /// Undo of [merge].
+  _ida.Future<_ichg96zd.BoardPostView> unmerge(int source) =>
+      caller.callServerEndpoint<_ichg96zd.BoardPostView>(
+        'board',
+        'unmerge',
+        {'source': source},
+      );
+
+  _ida.Future<_ichg96zd.BoardPostView> decline(
+    int number,
+    String reason,
+  ) => caller.callServerEndpoint<_ichg96zd.BoardPostView>(
+    'board',
+    'decline',
+    {
+      'number': number,
+      'reason': reason,
+    },
+  );
+
+  /// Undo of [decline].
+  _ida.Future<_ichg96zd.BoardPostView> reopen(int number) =>
+      caller.callServerEndpoint<_ichg96zd.BoardPostView>(
+        'board',
+        'reopen',
+        {'number': number},
+      );
+
+  _ida.Future<void> blockUser(
+    int userId,
+    String reason,
+    DateTime? until,
+  ) => caller.callServerEndpoint<void>(
+    'board',
+    'blockUser',
+    {
+      'userId': userId,
+      'reason': reason,
+      'until': until,
+    },
+  );
+
+  _ida.Future<void> unblockUser(int userId) => caller.callServerEndpoint<void>(
+    'board',
+    'unblockUser',
+    {'userId': userId},
+  );
+
+  /// Creates a draft task from posts and generates its prompt.
+  _ida.Future<_icqm1m07.BoardTaskView> createTask(
+    List<int> postNumbers,
+    String title,
+    _ix53eas0.BoardArea area,
+    _iky4nxq3.BoardSize size,
+  ) => caller.callServerEndpoint<_icqm1m07.BoardTaskView>(
+    'board',
+    'createTask',
+    {
+      'postNumbers': postNumbers,
+      'title': title,
+      'area': area,
+      'size': size,
+    },
+  );
+
+  _ida.Future<_icqm1m07.BoardTaskView> updateTask(
+    int number,
+    String title,
+    _ix53eas0.BoardArea area,
+    _iky4nxq3.BoardSize size,
+  ) => caller.callServerEndpoint<_icqm1m07.BoardTaskView>(
+    'board',
+    'updateTask',
+    {
+      'number': number,
+      'title': title,
+      'area': area,
+      'size': size,
+    },
+  );
+
+  _ida.Future<_icqm1m07.BoardTaskView> setTaskPosts(
+    int number,
+    List<int> postNumbers,
+  ) => caller.callServerEndpoint<_icqm1m07.BoardTaskView>(
+    'board',
+    'setTaskPosts',
+    {
+      'number': number,
+      'postNumbers': postNumbers,
+    },
+  );
+
+  _ida.Future<_icqm1m07.BoardTaskView> regeneratePrompt(int number) =>
+      caller.callServerEndpoint<_icqm1m07.BoardTaskView>(
+        'board',
+        'regeneratePrompt',
+        {'number': number},
+      );
+
+  _ida.Future<_icqm1m07.BoardTaskView> setPrompt(
+    int number,
+    String body,
+  ) => caller.callServerEndpoint<_icqm1m07.BoardTaskView>(
+    'board',
+    'setPrompt',
+    {
+      'number': number,
+      'body': body,
+    },
+  );
+
+  _ida.Future<_icqm1m07.BoardTaskView> publishTask(int number) =>
+      caller.callServerEndpoint<_icqm1m07.BoardTaskView>(
+        'board',
+        'publishTask',
+        {'number': number},
+      );
+
+  /// Sets a task's status directly (undo of publish, done, shipped, cancel;
+  /// admin fallbacks).
+  _ida.Future<_icqm1m07.BoardTaskView> setTaskStatus(
+    int number,
+    _i325i6jq.BoardTaskStatus status,
+  ) => caller.callServerEndpoint<_icqm1m07.BoardTaskView>(
+    'board',
+    'setTaskStatus',
+    {
+      'number': number,
+      'status': status,
+    },
+  );
+
+  /// Admin fallback when the GitHub App is not available (specs/16 §8.3).
+  _ida.Future<_icqm1m07.BoardTaskView> linkPullRequest(
+    int number,
+    String? url,
+  ) => caller.callServerEndpoint<_icqm1m07.BoardTaskView>(
+    'board',
+    'linkPullRequest',
+    {
+      'number': number,
+      'url': url,
+    },
+  );
+
+  _ida.Future<List<_i94c7q23.BoardBundleSuggestionView>> suggestBundles() =>
+      caller.callServerEndpoint<List<_i94c7q23.BoardBundleSuggestionView>>(
+        'board',
+        'suggestBundles',
+        {},
+      );
+
+  _ida.Future<List<_i94c7q23.BoardBundleSuggestionView>> listSuggestions() =>
+      caller.callServerEndpoint<List<_i94c7q23.BoardBundleSuggestionView>>(
+        'board',
+        'listSuggestions',
+        {},
+      );
+
+  _ida.Future<void> dismissSuggestion(int id) =>
+      caller.callServerEndpoint<void>(
+        'board',
+        'dismissSuggestion',
+        {'id': id},
       );
 }
 
@@ -3557,6 +4151,7 @@ class Client extends _isc.ServerpodClientShared {
     jwtRefresh = EndpointJwtRefresh(this);
     activity = EndpointActivity(this);
     assistant = EndpointAssistant(this);
+    board = EndpointBoard(this);
     comment = EndpointComment(this);
     drive = EndpointDrive(this);
     e2eSupport = EndpointE2eSupport(this);
@@ -3599,6 +4194,8 @@ class Client extends _isc.ServerpodClientShared {
   late final EndpointActivity activity;
 
   late final EndpointAssistant assistant;
+
+  late final EndpointBoard board;
 
   late final EndpointComment comment;
 
@@ -3672,6 +4269,7 @@ class Client extends _isc.ServerpodClientShared {
     'jwtRefresh': jwtRefresh,
     'activity': activity,
     'assistant': assistant,
+    'board': board,
     'comment': comment,
     'drive': drive,
     'e2eSupport': e2eSupport,

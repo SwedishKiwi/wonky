@@ -1,0 +1,14 @@
+### Filters of `board.list` (specs/16 §4.4).
+class: BoardListQuery
+fields:
+  kind: BoardPostKind?
+  ### Empty = open and planned.
+  statuses: List<BoardPostStatus>
+  areas: List<BoardArea>
+  sizes: List<BoardSize>
+  sort: BoardSort
+  query: String?
+  ### Posts I wrote or voted on.
+  mine: bool
+  cursor: String?
+  limit: int

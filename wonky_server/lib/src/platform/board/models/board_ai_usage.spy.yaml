@@ -1,0 +1,18 @@
+### Daily usage of the board AI (Jev, Gemini), separate from `ai_usage`.
+class: BoardAiUsage
+table: board_ai_usage
+serverOnly: true
+fields:
+  ### yyyy-mm-dd (UTC).
+  day: String
+  ### jev | gemini
+  provider: String
+  model: String
+  feature: String
+  requests: int
+  inputTokens: int
+  outputTokens: int
+indexes:
+  board_ai_usage_idx:
+    fields: day, provider, model, feature
+    unique: true

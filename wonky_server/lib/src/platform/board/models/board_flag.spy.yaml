@@ -1,0 +1,15 @@
+### A user's flag on a post or comment (specs/16 §7.5).
+class: BoardFlag
+table: board_flag
+fields:
+  postId: int?, relation(parent=board_post, onDelete=Cascade)
+  commentId: int?, relation(parent=board_comment, onDelete=Cascade)
+  userId: int, relation(parent=user_profile, onDelete=Cascade)
+  reason: BoardFlagReason
+  note: String?
+  createdAt: DateTime
+indexes:
+  board_flag_post_idx:
+    fields: postId, userId
+  board_flag_comment_idx:
+    fields: commentId, userId

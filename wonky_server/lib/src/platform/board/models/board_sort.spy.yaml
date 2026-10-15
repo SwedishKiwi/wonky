@@ -1,0 +1,8 @@
+enum: BoardSort
+serialized: byName
+values:
+  ### Votes in the last 14 days, then score.
+  - trending
+  - top
+  - newest
+  - discussed

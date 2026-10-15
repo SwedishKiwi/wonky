@@ -1,0 +1,22 @@
+### A row of the board list.
+class: BoardPostListItem
+fields:
+  number: int
+  kind: BoardPostKind
+  area: BoardArea?
+  size: BoardSize?
+  aiLabels: bool
+  title: String
+  status: BoardPostStatus
+  moderation: BoardModeration
+  needsCheck: bool
+  score: int
+  voteCount: int
+  commentCount: int
+  ### The caller's vote: -1, 0 or 1.
+  myVote: int
+  author: BoardAuthor?
+  isMine: bool
+  hasScreenshot: bool
+  task: BoardTaskRef?
+  createdAt: DateTime

@@ -1,0 +1,7 @@
+### An entry of the admin Review tab.
+class: BoardReviewItem
+fields:
+  section: BoardReviewSection
+  post: BoardPostView?
+  comment: BoardCommentView?
+  task: BoardTaskView?

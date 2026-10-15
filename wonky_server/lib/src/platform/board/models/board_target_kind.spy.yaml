@@ -1,0 +1,7 @@
+enum: BoardTargetKind
+serialized: byName
+values:
+  - post
+  - comment
+  - task
+  - user

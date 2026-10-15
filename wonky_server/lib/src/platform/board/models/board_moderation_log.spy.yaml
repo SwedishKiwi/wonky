@@ -1,0 +1,16 @@
+### Audit log of admin actions (specs/16 §9.2).
+class: BoardModerationLog
+table: board_moderation_log
+serverOnly: true
+fields:
+  adminId: int
+  action: String
+  targetKind: BoardTargetKind
+  targetId: int
+  beforeJson: String?
+  afterJson: String?
+  reason: String?
+  createdAt: DateTime
+indexes:
+  board_moderation_log_target_idx:
+    fields: targetKind, targetId

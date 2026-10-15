@@ -1,0 +1,12 @@
+### Where a post belongs (specs/16 §2).
+enum: BoardArea
+serialized: byName
+values:
+  - drive
+  - write
+  - sheets
+  - slides
+  ### Shell, sign-in, settings, cross-app.
+  - suite
+  ### Performance, sync, email; not visible UI.
+  - server

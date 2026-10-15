@@ -1,0 +1,14 @@
+### One vote per user and post: +1, or -1 (ideas only).
+class: BoardVote
+table: board_vote
+fields:
+  postId: int, relation(parent=board_post, onDelete=Cascade)
+  userId: int, relation(parent=user_profile, onDelete=Cascade)
+  value: int
+  createdAt: DateTime
+indexes:
+  board_vote_unique_idx:
+    fields: postId, userId
+    unique: true
+  board_vote_recent_idx:
+    fields: postId, createdAt

@@ -1,0 +1,8 @@
+enum: BoardFlagReason
+serialized: byName
+values:
+  - offensive
+  - spam
+  - personalData
+  - security
+  - other

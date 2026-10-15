@@ -764,6 +764,19 @@
     }
   },
   "notifStorage": "Your Wonky Work storage needs attention",
+  "notifBoardReply": "{who} commented on “{title}”",
+  "@notifBoardReply": {
+    "placeholders": {
+      "who": {"type": "String"},
+      "title": {"type": "String"}
+    }
+  },
+  "notifBoardUpdate": "Update on “{title}”",
+  "@notifBoardUpdate": {
+    "placeholders": {
+      "title": {"type": "String"}
+    }
+  },
   "notifSuggestion": "{who} suggested an edit in {item}",
   "@notifSuggestion": {
     "placeholders": {

@@ -1,0 +1,10 @@
+### Public lifecycle of a post (specs/16 §3.1).
+enum: BoardPostStatus
+serialized: byName
+values:
+  - open
+  - planned
+  - done
+  - shipped
+  - declined
+  - duplicate

@@ -1307,6 +1307,16 @@ class WonkyAppLocalizationsEn extends WonkyAppLocalizations {
   String get notifStorage => 'Your Wonky Work storage needs attention';
 
   @override
+  String notifBoardReply(String who, String title) {
+    return '$who commented on “$title”';
+  }
+
+  @override
+  String notifBoardUpdate(String title) {
+    return 'Update on “$title”';
+  }
+
+  @override
   String notifSuggestion(String who, String item) {
     return '$who suggested an edit in $item';
   }
@@ -4306,6 +4316,16 @@ class WonkyAppLocalizationsEnXa extends WonkyAppLocalizationsEn {
   @override
   String get notifStorage =>
       '[Ýöûŕ Ŵöñķý Ŵöŕķ šţöŕåĝé ñééðš åţţéñţîöñ one two thre]';
+
+  @override
+  String notifBoardReply(String who, String title) {
+    return '[$who çöɱɱéñţéð öñ “$title” one t]';
+  }
+
+  @override
+  String notifBoardUpdate(String title) {
+    return '[Ûþðåţé öñ “$title” one]';
+  }
 
   @override
   String notifSuggestion(String who, String item) {

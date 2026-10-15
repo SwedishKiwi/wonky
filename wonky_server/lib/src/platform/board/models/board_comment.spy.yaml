@@ -1,0 +1,29 @@
+### A comment on a post, or discussion and activity rows on a task.
+class: BoardComment
+table: board_comment
+fields:
+  ### Client-supplied; idempotent create.
+  uuid: UuidValue
+  postId: int?, relation(parent=board_post, onDelete=Cascade)
+  taskId: int?, relation(parent=board_task, onDelete=Cascade)
+  ### Null for system rows and deleted users.
+  authorId: int?, relation(parent=user_profile, onDelete=SetNull)
+  ### Markdown, at most 10,000 chars.
+  body: String
+  ### claimed, released, expired, prLinked, prClosed, done, shipped, merged…
+  systemEvent: String?
+  moderation: BoardModeration
+  moderationReason: String?
+  needsCheck: bool, default=false
+  createdAt: DateTime
+  editedAt: DateTime?
+  deletedAt: DateTime?
+  removedAt: DateTime?
+indexes:
+  board_comment_uuid_idx:
+    fields: uuid
+    unique: true
+  board_comment_post_idx:
+    fields: postId, createdAt
+  board_comment_task_idx:
+    fields: taskId, createdAt

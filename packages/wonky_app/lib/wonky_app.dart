@@ -47,6 +47,7 @@ export 'src/core/offline_storage.dart';
 export 'src/core/preferences_controller.dart';
 export 'src/core/stream_supervisor.dart';
 export 'src/core/toasts.dart';
+export 'src/board/board_repository.dart';
 export 'src/data/api.dart';
 export 'src/data/cached_drive_repository.dart';
 export 'src/data/collab_repositories.dart';

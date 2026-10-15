@@ -31,6 +31,7 @@ import '../l10n/wonky_app_localizations.dart';
 import '../mcp_bridge/mcp_bridge_scope.dart';
 import '../routing/router.dart';
 import '../storage/live_storage_controller.dart';
+import '../board/board_repository.dart';
 import 'overlays/shell_overlays.dart';
 import 'shell_services.dart';
 import '../undo/undo_service.dart';
@@ -139,6 +140,7 @@ class WonkyShell extends StatefulWidget {
         files: ServerFileRepository(api),
         meta: ServerMetaRepository(api),
         activity: ServerActivityRepository(api),
+        board: ServerBoardRepository(api),
       ),
       urls: wc.urls,
       connectivity: connectivity,

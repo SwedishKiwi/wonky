@@ -1,0 +1,28 @@
+### A task as the task page shows it (specs/16 §4.6).
+class: BoardTaskView
+fields:
+  number: int
+  title: String
+  area: BoardArea
+  size: BoardSize
+  status: BoardTaskStatus
+  promptBody: String
+  promptGeneratedAt: DateTime?
+  promptEditedAt: DateTime?
+  promptEditedBy: BoardAuthor?
+  posts: List<BoardPostListItem>
+  claimedBy: BoardAuthor?
+  claimedAt: DateTime?
+  claimExpiresAt: DateTime?
+  ### Only for the claimant.
+  claimCode: String?
+  isMine: bool
+  pullRequestUrl: String?
+  prNumber: int?
+  prAuthorLogin: String?
+  ### The latest PR review (specs/16 §13.5), JSON.
+  reviewJson: String?
+  publishedAt: DateTime?
+  doneAt: DateTime?
+  shippedAt: DateTime?
+  createdAt: DateTime

@@ -1,0 +1,30 @@
+### Every PR the GitHub App has seen (specs/16 §13).
+class: BoardPullRequest
+table: board_pull_request
+serverOnly: true
+fields:
+  prNumber: int
+  taskId: int?, relation(parent=board_task, onDelete=SetNull)
+  authorLogin: String
+  headSha: String
+  ### open | closed | merged
+  state: String
+  ### pending | passed | failed | exempt
+  gateState: String
+  gateReason: String?
+  gateFirstFailedAt: DateTime?
+  gateCommentId: int?
+  reviewCommentId: int?
+  lastReviewSha: String?
+  lastReviewJson: String?
+  lastReviewAt: DateTime?
+  ### yyyy-mm-dd of [reviewCount].
+  reviewDay: String?
+  reviewCount: int, default=0
+  mergeCommitSha: String?
+  createdAt: DateTime
+  updatedAt: DateTime
+indexes:
+  board_pull_request_number_idx:
+    fields: prNumber
+    unique: true

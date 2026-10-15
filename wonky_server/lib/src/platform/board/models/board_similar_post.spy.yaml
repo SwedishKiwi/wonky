@@ -1,0 +1,8 @@
+class: BoardSimilarPost
+fields:
+  number: int
+  kind: BoardPostKind
+  title: String
+  status: BoardPostStatus
+  score: int
+  myVote: int

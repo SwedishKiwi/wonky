@@ -26,6 +26,24 @@ import 'package:wonky_server/src/generated/platform/ai/models/assistant_context_
     as _ixc2f7d5;
 import 'package:wonky_server/src/generated/platform/ai/models/inline_ai_request.dart'
     as _i4c3y8bm;
+import 'package:wonky_server/src/generated/platform/board/models/board_area.dart'
+    as _i2y7swbd;
+import 'package:wonky_server/src/generated/platform/board/models/board_flag_reason.dart'
+    as _i0z7k09i;
+import 'package:wonky_server/src/generated/platform/board/models/board_list_query.dart'
+    as _i6z8cjbe;
+import 'package:wonky_server/src/generated/platform/board/models/board_moderation_action.dart'
+    as _iqqjetoq;
+import 'package:wonky_server/src/generated/platform/board/models/board_post_draft.dart'
+    as _i6ub5i5f;
+import 'package:wonky_server/src/generated/platform/board/models/board_post_kind.dart'
+    as _i5noao4s;
+import 'package:wonky_server/src/generated/platform/board/models/board_review_section.dart'
+    as _i6ojypp7;
+import 'package:wonky_server/src/generated/platform/board/models/board_size.dart'
+    as _ikq67o57;
+import 'package:wonky_server/src/generated/platform/board/models/board_task_status.dart'
+    as _ihypagkt;
 import 'package:wonky_server/src/generated/platform/comments/comment_anchor_kind.dart'
     as _i384cqmz;
 import 'package:wonky_server/src/generated/platform/comments/comment_filter.dart'
@@ -86,6 +104,7 @@ import '../auth/email_idp_endpoint.dart' as _iuc1hd5t;
 import '../auth/jwt_refresh_endpoint.dart' as _inwq3ztq;
 import '../platform/activity/activity_endpoint.dart' as _id6etezj;
 import '../platform/ai/assistant_endpoint.dart' as _i8k7ge8b;
+import '../platform/board/board_endpoint.dart' as _itoz815u;
 import '../platform/comments/comment_endpoint.dart' as _iuwjzuw0;
 import '../platform/drive/drive_endpoint.dart' as _ijanxtjh;
 import '../platform/e2e/e2e_support_endpoint.dart' as _iqj5xom6;
@@ -146,6 +165,12 @@ class Endpoints extends _is.EndpointDispatch {
         ..initialize(
           server,
           'assistant',
+          null,
+        ),
+      'board': _itoz815u.BoardEndpoint()
+        ..initialize(
+          server,
+          'board',
           null,
         ),
       'comment': _iuwjzuw0.CommentEndpoint()
@@ -936,6 +961,1176 @@ class Endpoints extends _is.EndpointDispatch {
                     params['start'],
                     params['length'],
                   ),
+        ),
+      },
+    );
+    connectors['board'] = _is.EndpointConnector(
+      name: 'board',
+      endpoint: endpoints['board']!,
+      methodConnectors: {
+        'me': _is.MethodConnector(
+          name: 'me',
+          params: {},
+          call:
+              (
+                _is.Session session,
+                Map<String, dynamic> params,
+              ) async =>
+                  (endpoints['board'] as _itoz815u.BoardEndpoint).me(session),
+        ),
+        'list': _is.MethodConnector(
+          name: 'list',
+          params: {
+            'query': _is.ParameterDescription(
+              name: 'query',
+              type: _is.getType<_i6z8cjbe.BoardListQuery>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _is.Session session,
+                Map<String, dynamic> params,
+              ) async => (endpoints['board'] as _itoz815u.BoardEndpoint).list(
+                session,
+                params['query'],
+              ),
+        ),
+        'getPost': _is.MethodConnector(
+          name: 'getPost',
+          params: {
+            'number': _is.ParameterDescription(
+              name: 'number',
+              type: _is.getType<int>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _is.Session session,
+                Map<String, dynamic> params,
+              ) async =>
+                  (endpoints['board'] as _itoz815u.BoardEndpoint).getPost(
+                    session,
+                    params['number'],
+                  ),
+        ),
+        'listComments': _is.MethodConnector(
+          name: 'listComments',
+          params: {
+            'number': _is.ParameterDescription(
+              name: 'number',
+              type: _is.getType<int>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _is.Session session,
+                Map<String, dynamic> params,
+              ) async =>
+                  (endpoints['board'] as _itoz815u.BoardEndpoint).listComments(
+                    session,
+                    params['number'],
+                  ),
+        ),
+        'listTaskComments': _is.MethodConnector(
+          name: 'listTaskComments',
+          params: {
+            'number': _is.ParameterDescription(
+              name: 'number',
+              type: _is.getType<int>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _is.Session session,
+                Map<String, dynamic> params,
+              ) async => (endpoints['board'] as _itoz815u.BoardEndpoint)
+                  .listTaskComments(
+                    session,
+                    params['number'],
+                  ),
+        ),
+        'similar': _is.MethodConnector(
+          name: 'similar',
+          params: {
+            'title': _is.ParameterDescription(
+              name: 'title',
+              type: _is.getType<String>(),
+              nullable: false,
+            ),
+            'body': _is.ParameterDescription(
+              name: 'body',
+              type: _is.getType<String>(),
+              nullable: false,
+            ),
+            'kind': _is.ParameterDescription(
+              name: 'kind',
+              type: _is.getType<_i5noao4s.BoardPostKind?>(),
+              nullable: true,
+            ),
+          },
+          call:
+              (
+                _is.Session session,
+                Map<String, dynamic> params,
+              ) async =>
+                  (endpoints['board'] as _itoz815u.BoardEndpoint).similar(
+                    session,
+                    params['title'],
+                    params['body'],
+                    params['kind'],
+                  ),
+        ),
+        'getScreenshotUrl': _is.MethodConnector(
+          name: 'getScreenshotUrl',
+          params: {
+            'number': _is.ParameterDescription(
+              name: 'number',
+              type: _is.getType<int>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _is.Session session,
+                Map<String, dynamic> params,
+              ) async => (endpoints['board'] as _itoz815u.BoardEndpoint)
+                  .getScreenshotUrl(
+                    session,
+                    params['number'],
+                  ),
+        ),
+        'listTasks': _is.MethodConnector(
+          name: 'listTasks',
+          params: {
+            'statuses': _is.ParameterDescription(
+              name: 'statuses',
+              type: _is.getType<List<_ihypagkt.BoardTaskStatus>>(),
+              nullable: false,
+            ),
+            'cursor': _is.ParameterDescription(
+              name: 'cursor',
+              type: _is.getType<String?>(),
+              nullable: true,
+            ),
+            'limit': _is.ParameterDescription(
+              name: 'limit',
+              type: _is.getType<int>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _is.Session session,
+                Map<String, dynamic> params,
+              ) async =>
+                  (endpoints['board'] as _itoz815u.BoardEndpoint).listTasks(
+                    session,
+                    params['statuses'],
+                    params['cursor'],
+                    params['limit'],
+                  ),
+        ),
+        'getTask': _is.MethodConnector(
+          name: 'getTask',
+          params: {
+            'number': _is.ParameterDescription(
+              name: 'number',
+              type: _is.getType<int>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _is.Session session,
+                Map<String, dynamic> params,
+              ) async =>
+                  (endpoints['board'] as _itoz815u.BoardEndpoint).getTask(
+                    session,
+                    params['number'],
+                  ),
+        ),
+        'createScreenshotUpload': _is.MethodConnector(
+          name: 'createScreenshotUpload',
+          params: {
+            'fileUuid': _is.ParameterDescription(
+              name: 'fileUuid',
+              type: _is.getType<_is.UuidValue>(),
+              nullable: false,
+            ),
+            'mimeType': _is.ParameterDescription(
+              name: 'mimeType',
+              type: _is.getType<String>(),
+              nullable: false,
+            ),
+            'size': _is.ParameterDescription(
+              name: 'size',
+              type: _is.getType<int>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _is.Session session,
+                Map<String, dynamic> params,
+              ) async => (endpoints['board'] as _itoz815u.BoardEndpoint)
+                  .createScreenshotUpload(
+                    session,
+                    params['fileUuid'],
+                    params['mimeType'],
+                    params['size'],
+                  ),
+        ),
+        'createPost': _is.MethodConnector(
+          name: 'createPost',
+          params: {
+            'draft': _is.ParameterDescription(
+              name: 'draft',
+              type: _is.getType<_i6ub5i5f.BoardPostDraft>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _is.Session session,
+                Map<String, dynamic> params,
+              ) async =>
+                  (endpoints['board'] as _itoz815u.BoardEndpoint).createPost(
+                    session,
+                    params['draft'],
+                  ),
+        ),
+        'editPost': _is.MethodConnector(
+          name: 'editPost',
+          params: {
+            'number': _is.ParameterDescription(
+              name: 'number',
+              type: _is.getType<int>(),
+              nullable: false,
+            ),
+            'title': _is.ParameterDescription(
+              name: 'title',
+              type: _is.getType<String>(),
+              nullable: false,
+            ),
+            'body': _is.ParameterDescription(
+              name: 'body',
+              type: _is.getType<String>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _is.Session session,
+                Map<String, dynamic> params,
+              ) async =>
+                  (endpoints['board'] as _itoz815u.BoardEndpoint).editPost(
+                    session,
+                    params['number'],
+                    params['title'],
+                    params['body'],
+                  ),
+        ),
+        'deletePost': _is.MethodConnector(
+          name: 'deletePost',
+          params: {
+            'number': _is.ParameterDescription(
+              name: 'number',
+              type: _is.getType<int>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _is.Session session,
+                Map<String, dynamic> params,
+              ) async =>
+                  (endpoints['board'] as _itoz815u.BoardEndpoint).deletePost(
+                    session,
+                    params['number'],
+                  ),
+        ),
+        'restorePost': _is.MethodConnector(
+          name: 'restorePost',
+          params: {
+            'number': _is.ParameterDescription(
+              name: 'number',
+              type: _is.getType<int>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _is.Session session,
+                Map<String, dynamic> params,
+              ) async =>
+                  (endpoints['board'] as _itoz815u.BoardEndpoint).restorePost(
+                    session,
+                    params['number'],
+                  ),
+        ),
+        'removeScreenshot': _is.MethodConnector(
+          name: 'removeScreenshot',
+          params: {
+            'number': _is.ParameterDescription(
+              name: 'number',
+              type: _is.getType<int>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _is.Session session,
+                Map<String, dynamic> params,
+              ) async => (endpoints['board'] as _itoz815u.BoardEndpoint)
+                  .removeScreenshot(
+                    session,
+                    params['number'],
+                  ),
+        ),
+        'vote': _is.MethodConnector(
+          name: 'vote',
+          params: {
+            'number': _is.ParameterDescription(
+              name: 'number',
+              type: _is.getType<int>(),
+              nullable: false,
+            ),
+            'value': _is.ParameterDescription(
+              name: 'value',
+              type: _is.getType<int>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _is.Session session,
+                Map<String, dynamic> params,
+              ) async => (endpoints['board'] as _itoz815u.BoardEndpoint).vote(
+                session,
+                params['number'],
+                params['value'],
+              ),
+        ),
+        'addComment': _is.MethodConnector(
+          name: 'addComment',
+          params: {
+            'uuid': _is.ParameterDescription(
+              name: 'uuid',
+              type: _is.getType<_is.UuidValue>(),
+              nullable: false,
+            ),
+            'postNumber': _is.ParameterDescription(
+              name: 'postNumber',
+              type: _is.getType<int?>(),
+              nullable: true,
+            ),
+            'taskNumber': _is.ParameterDescription(
+              name: 'taskNumber',
+              type: _is.getType<int?>(),
+              nullable: true,
+            ),
+            'body': _is.ParameterDescription(
+              name: 'body',
+              type: _is.getType<String>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _is.Session session,
+                Map<String, dynamic> params,
+              ) async =>
+                  (endpoints['board'] as _itoz815u.BoardEndpoint).addComment(
+                    session,
+                    params['uuid'],
+                    params['postNumber'],
+                    params['taskNumber'],
+                    params['body'],
+                  ),
+        ),
+        'editComment': _is.MethodConnector(
+          name: 'editComment',
+          params: {
+            'uuid': _is.ParameterDescription(
+              name: 'uuid',
+              type: _is.getType<_is.UuidValue>(),
+              nullable: false,
+            ),
+            'body': _is.ParameterDescription(
+              name: 'body',
+              type: _is.getType<String>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _is.Session session,
+                Map<String, dynamic> params,
+              ) async =>
+                  (endpoints['board'] as _itoz815u.BoardEndpoint).editComment(
+                    session,
+                    params['uuid'],
+                    params['body'],
+                  ),
+        ),
+        'deleteComment': _is.MethodConnector(
+          name: 'deleteComment',
+          params: {
+            'uuid': _is.ParameterDescription(
+              name: 'uuid',
+              type: _is.getType<_is.UuidValue>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _is.Session session,
+                Map<String, dynamic> params,
+              ) async =>
+                  (endpoints['board'] as _itoz815u.BoardEndpoint).deleteComment(
+                    session,
+                    params['uuid'],
+                  ),
+        ),
+        'restoreComment': _is.MethodConnector(
+          name: 'restoreComment',
+          params: {
+            'uuid': _is.ParameterDescription(
+              name: 'uuid',
+              type: _is.getType<_is.UuidValue>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _is.Session session,
+                Map<String, dynamic> params,
+              ) async => (endpoints['board'] as _itoz815u.BoardEndpoint)
+                  .restoreComment(
+                    session,
+                    params['uuid'],
+                  ),
+        ),
+        'flag': _is.MethodConnector(
+          name: 'flag',
+          params: {
+            'number': _is.ParameterDescription(
+              name: 'number',
+              type: _is.getType<int?>(),
+              nullable: true,
+            ),
+            'commentUuid': _is.ParameterDescription(
+              name: 'commentUuid',
+              type: _is.getType<_is.UuidValue?>(),
+              nullable: true,
+            ),
+            'reason': _is.ParameterDescription(
+              name: 'reason',
+              type: _is.getType<_i0z7k09i.BoardFlagReason>(),
+              nullable: false,
+            ),
+            'note': _is.ParameterDescription(
+              name: 'note',
+              type: _is.getType<String?>(),
+              nullable: true,
+            ),
+          },
+          call:
+              (
+                _is.Session session,
+                Map<String, dynamic> params,
+              ) async => (endpoints['board'] as _itoz815u.BoardEndpoint).flag(
+                session,
+                params['number'],
+                params['commentUuid'],
+                params['reason'],
+                params['note'],
+              ),
+        ),
+        'unflag': _is.MethodConnector(
+          name: 'unflag',
+          params: {
+            'number': _is.ParameterDescription(
+              name: 'number',
+              type: _is.getType<int?>(),
+              nullable: true,
+            ),
+            'commentUuid': _is.ParameterDescription(
+              name: 'commentUuid',
+              type: _is.getType<_is.UuidValue?>(),
+              nullable: true,
+            ),
+          },
+          call:
+              (
+                _is.Session session,
+                Map<String, dynamic> params,
+              ) async => (endpoints['board'] as _itoz815u.BoardEndpoint).unflag(
+                session,
+                params['number'],
+                params['commentUuid'],
+              ),
+        ),
+        'claimTask': _is.MethodConnector(
+          name: 'claimTask',
+          params: {
+            'number': _is.ParameterDescription(
+              name: 'number',
+              type: _is.getType<int>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _is.Session session,
+                Map<String, dynamic> params,
+              ) async =>
+                  (endpoints['board'] as _itoz815u.BoardEndpoint).claimTask(
+                    session,
+                    params['number'],
+                  ),
+        ),
+        'releaseTask': _is.MethodConnector(
+          name: 'releaseTask',
+          params: {
+            'number': _is.ParameterDescription(
+              name: 'number',
+              type: _is.getType<int>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _is.Session session,
+                Map<String, dynamic> params,
+              ) async =>
+                  (endpoints['board'] as _itoz815u.BoardEndpoint).releaseTask(
+                    session,
+                    params['number'],
+                  ),
+        ),
+        'reviewCounts': _is.MethodConnector(
+          name: 'reviewCounts',
+          params: {},
+          call:
+              (
+                _is.Session session,
+                Map<String, dynamic> params,
+              ) async => (endpoints['board'] as _itoz815u.BoardEndpoint)
+                  .reviewCounts(session),
+        ),
+        'reviewQueue': _is.MethodConnector(
+          name: 'reviewQueue',
+          params: {
+            'section': _is.ParameterDescription(
+              name: 'section',
+              type: _is.getType<_i6ojypp7.BoardReviewSection>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _is.Session session,
+                Map<String, dynamic> params,
+              ) async =>
+                  (endpoints['board'] as _itoz815u.BoardEndpoint).reviewQueue(
+                    session,
+                    params['section'],
+                  ),
+        ),
+        'moderatePost': _is.MethodConnector(
+          name: 'moderatePost',
+          params: {
+            'number': _is.ParameterDescription(
+              name: 'number',
+              type: _is.getType<int>(),
+              nullable: false,
+            ),
+            'action': _is.ParameterDescription(
+              name: 'action',
+              type: _is.getType<_iqqjetoq.BoardModerationAction>(),
+              nullable: false,
+            ),
+            'reason': _is.ParameterDescription(
+              name: 'reason',
+              type: _is.getType<String?>(),
+              nullable: true,
+            ),
+          },
+          call:
+              (
+                _is.Session session,
+                Map<String, dynamic> params,
+              ) async =>
+                  (endpoints['board'] as _itoz815u.BoardEndpoint).moderatePost(
+                    session,
+                    params['number'],
+                    params['action'],
+                    params['reason'],
+                  ),
+        ),
+        'moderateComment': _is.MethodConnector(
+          name: 'moderateComment',
+          params: {
+            'uuid': _is.ParameterDescription(
+              name: 'uuid',
+              type: _is.getType<_is.UuidValue>(),
+              nullable: false,
+            ),
+            'action': _is.ParameterDescription(
+              name: 'action',
+              type: _is.getType<_iqqjetoq.BoardModerationAction>(),
+              nullable: false,
+            ),
+            'reason': _is.ParameterDescription(
+              name: 'reason',
+              type: _is.getType<String?>(),
+              nullable: true,
+            ),
+          },
+          call:
+              (
+                _is.Session session,
+                Map<String, dynamic> params,
+              ) async => (endpoints['board'] as _itoz815u.BoardEndpoint)
+                  .moderateComment(
+                    session,
+                    params['uuid'],
+                    params['action'],
+                    params['reason'],
+                  ),
+        ),
+        'adminEditPost': _is.MethodConnector(
+          name: 'adminEditPost',
+          params: {
+            'number': _is.ParameterDescription(
+              name: 'number',
+              type: _is.getType<int>(),
+              nullable: false,
+            ),
+            'title': _is.ParameterDescription(
+              name: 'title',
+              type: _is.getType<String>(),
+              nullable: false,
+            ),
+            'body': _is.ParameterDescription(
+              name: 'body',
+              type: _is.getType<String>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _is.Session session,
+                Map<String, dynamic> params,
+              ) async =>
+                  (endpoints['board'] as _itoz815u.BoardEndpoint).adminEditPost(
+                    session,
+                    params['number'],
+                    params['title'],
+                    params['body'],
+                  ),
+        ),
+        'setLabels': _is.MethodConnector(
+          name: 'setLabels',
+          params: {
+            'number': _is.ParameterDescription(
+              name: 'number',
+              type: _is.getType<int>(),
+              nullable: false,
+            ),
+            'kind': _is.ParameterDescription(
+              name: 'kind',
+              type: _is.getType<_i5noao4s.BoardPostKind>(),
+              nullable: false,
+            ),
+            'area': _is.ParameterDescription(
+              name: 'area',
+              type: _is.getType<_i2y7swbd.BoardArea?>(),
+              nullable: true,
+            ),
+            'size': _is.ParameterDescription(
+              name: 'size',
+              type: _is.getType<_ikq67o57.BoardSize?>(),
+              nullable: true,
+            ),
+          },
+          call:
+              (
+                _is.Session session,
+                Map<String, dynamic> params,
+              ) async =>
+                  (endpoints['board'] as _itoz815u.BoardEndpoint).setLabels(
+                    session,
+                    params['number'],
+                    params['kind'],
+                    params['area'],
+                    params['size'],
+                  ),
+        ),
+        'applySuggestedTitle': _is.MethodConnector(
+          name: 'applySuggestedTitle',
+          params: {
+            'number': _is.ParameterDescription(
+              name: 'number',
+              type: _is.getType<int>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _is.Session session,
+                Map<String, dynamic> params,
+              ) async => (endpoints['board'] as _itoz815u.BoardEndpoint)
+                  .applySuggestedTitle(
+                    session,
+                    params['number'],
+                  ),
+        ),
+        'dismissDuplicateHint': _is.MethodConnector(
+          name: 'dismissDuplicateHint',
+          params: {
+            'number': _is.ParameterDescription(
+              name: 'number',
+              type: _is.getType<int>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _is.Session session,
+                Map<String, dynamic> params,
+              ) async => (endpoints['board'] as _itoz815u.BoardEndpoint)
+                  .dismissDuplicateHint(
+                    session,
+                    params['number'],
+                  ),
+        ),
+        'merge': _is.MethodConnector(
+          name: 'merge',
+          params: {
+            'source': _is.ParameterDescription(
+              name: 'source',
+              type: _is.getType<int>(),
+              nullable: false,
+            ),
+            'target': _is.ParameterDescription(
+              name: 'target',
+              type: _is.getType<int>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _is.Session session,
+                Map<String, dynamic> params,
+              ) async => (endpoints['board'] as _itoz815u.BoardEndpoint).merge(
+                session,
+                params['source'],
+                params['target'],
+              ),
+        ),
+        'unmerge': _is.MethodConnector(
+          name: 'unmerge',
+          params: {
+            'source': _is.ParameterDescription(
+              name: 'source',
+              type: _is.getType<int>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _is.Session session,
+                Map<String, dynamic> params,
+              ) async =>
+                  (endpoints['board'] as _itoz815u.BoardEndpoint).unmerge(
+                    session,
+                    params['source'],
+                  ),
+        ),
+        'decline': _is.MethodConnector(
+          name: 'decline',
+          params: {
+            'number': _is.ParameterDescription(
+              name: 'number',
+              type: _is.getType<int>(),
+              nullable: false,
+            ),
+            'reason': _is.ParameterDescription(
+              name: 'reason',
+              type: _is.getType<String>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _is.Session session,
+                Map<String, dynamic> params,
+              ) async =>
+                  (endpoints['board'] as _itoz815u.BoardEndpoint).decline(
+                    session,
+                    params['number'],
+                    params['reason'],
+                  ),
+        ),
+        'reopen': _is.MethodConnector(
+          name: 'reopen',
+          params: {
+            'number': _is.ParameterDescription(
+              name: 'number',
+              type: _is.getType<int>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _is.Session session,
+                Map<String, dynamic> params,
+              ) async => (endpoints['board'] as _itoz815u.BoardEndpoint).reopen(
+                session,
+                params['number'],
+              ),
+        ),
+        'blockUser': _is.MethodConnector(
+          name: 'blockUser',
+          params: {
+            'userId': _is.ParameterDescription(
+              name: 'userId',
+              type: _is.getType<int>(),
+              nullable: false,
+            ),
+            'reason': _is.ParameterDescription(
+              name: 'reason',
+              type: _is.getType<String>(),
+              nullable: false,
+            ),
+            'until': _is.ParameterDescription(
+              name: 'until',
+              type: _is.getType<DateTime?>(),
+              nullable: true,
+            ),
+          },
+          call:
+              (
+                _is.Session session,
+                Map<String, dynamic> params,
+              ) async =>
+                  (endpoints['board'] as _itoz815u.BoardEndpoint).blockUser(
+                    session,
+                    params['userId'],
+                    params['reason'],
+                    params['until'],
+                  ),
+        ),
+        'unblockUser': _is.MethodConnector(
+          name: 'unblockUser',
+          params: {
+            'userId': _is.ParameterDescription(
+              name: 'userId',
+              type: _is.getType<int>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _is.Session session,
+                Map<String, dynamic> params,
+              ) async =>
+                  (endpoints['board'] as _itoz815u.BoardEndpoint).unblockUser(
+                    session,
+                    params['userId'],
+                  ),
+        ),
+        'createTask': _is.MethodConnector(
+          name: 'createTask',
+          params: {
+            'postNumbers': _is.ParameterDescription(
+              name: 'postNumbers',
+              type: _is.getType<List<int>>(),
+              nullable: false,
+            ),
+            'title': _is.ParameterDescription(
+              name: 'title',
+              type: _is.getType<String>(),
+              nullable: false,
+            ),
+            'area': _is.ParameterDescription(
+              name: 'area',
+              type: _is.getType<_i2y7swbd.BoardArea>(),
+              nullable: false,
+            ),
+            'size': _is.ParameterDescription(
+              name: 'size',
+              type: _is.getType<_ikq67o57.BoardSize>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _is.Session session,
+                Map<String, dynamic> params,
+              ) async =>
+                  (endpoints['board'] as _itoz815u.BoardEndpoint).createTask(
+                    session,
+                    params['postNumbers'],
+                    params['title'],
+                    params['area'],
+                    params['size'],
+                  ),
+        ),
+        'updateTask': _is.MethodConnector(
+          name: 'updateTask',
+          params: {
+            'number': _is.ParameterDescription(
+              name: 'number',
+              type: _is.getType<int>(),
+              nullable: false,
+            ),
+            'title': _is.ParameterDescription(
+              name: 'title',
+              type: _is.getType<String>(),
+              nullable: false,
+            ),
+            'area': _is.ParameterDescription(
+              name: 'area',
+              type: _is.getType<_i2y7swbd.BoardArea>(),
+              nullable: false,
+            ),
+            'size': _is.ParameterDescription(
+              name: 'size',
+              type: _is.getType<_ikq67o57.BoardSize>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _is.Session session,
+                Map<String, dynamic> params,
+              ) async =>
+                  (endpoints['board'] as _itoz815u.BoardEndpoint).updateTask(
+                    session,
+                    params['number'],
+                    params['title'],
+                    params['area'],
+                    params['size'],
+                  ),
+        ),
+        'setTaskPosts': _is.MethodConnector(
+          name: 'setTaskPosts',
+          params: {
+            'number': _is.ParameterDescription(
+              name: 'number',
+              type: _is.getType<int>(),
+              nullable: false,
+            ),
+            'postNumbers': _is.ParameterDescription(
+              name: 'postNumbers',
+              type: _is.getType<List<int>>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _is.Session session,
+                Map<String, dynamic> params,
+              ) async =>
+                  (endpoints['board'] as _itoz815u.BoardEndpoint).setTaskPosts(
+                    session,
+                    params['number'],
+                    params['postNumbers'],
+                  ),
+        ),
+        'regeneratePrompt': _is.MethodConnector(
+          name: 'regeneratePrompt',
+          params: {
+            'number': _is.ParameterDescription(
+              name: 'number',
+              type: _is.getType<int>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _is.Session session,
+                Map<String, dynamic> params,
+              ) async => (endpoints['board'] as _itoz815u.BoardEndpoint)
+                  .regeneratePrompt(
+                    session,
+                    params['number'],
+                  ),
+        ),
+        'setPrompt': _is.MethodConnector(
+          name: 'setPrompt',
+          params: {
+            'number': _is.ParameterDescription(
+              name: 'number',
+              type: _is.getType<int>(),
+              nullable: false,
+            ),
+            'body': _is.ParameterDescription(
+              name: 'body',
+              type: _is.getType<String>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _is.Session session,
+                Map<String, dynamic> params,
+              ) async =>
+                  (endpoints['board'] as _itoz815u.BoardEndpoint).setPrompt(
+                    session,
+                    params['number'],
+                    params['body'],
+                  ),
+        ),
+        'publishTask': _is.MethodConnector(
+          name: 'publishTask',
+          params: {
+            'number': _is.ParameterDescription(
+              name: 'number',
+              type: _is.getType<int>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _is.Session session,
+                Map<String, dynamic> params,
+              ) async =>
+                  (endpoints['board'] as _itoz815u.BoardEndpoint).publishTask(
+                    session,
+                    params['number'],
+                  ),
+        ),
+        'setTaskStatus': _is.MethodConnector(
+          name: 'setTaskStatus',
+          params: {
+            'number': _is.ParameterDescription(
+              name: 'number',
+              type: _is.getType<int>(),
+              nullable: false,
+            ),
+            'status': _is.ParameterDescription(
+              name: 'status',
+              type: _is.getType<_ihypagkt.BoardTaskStatus>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _is.Session session,
+                Map<String, dynamic> params,
+              ) async =>
+                  (endpoints['board'] as _itoz815u.BoardEndpoint).setTaskStatus(
+                    session,
+                    params['number'],
+                    params['status'],
+                  ),
+        ),
+        'linkPullRequest': _is.MethodConnector(
+          name: 'linkPullRequest',
+          params: {
+            'number': _is.ParameterDescription(
+              name: 'number',
+              type: _is.getType<int>(),
+              nullable: false,
+            ),
+            'url': _is.ParameterDescription(
+              name: 'url',
+              type: _is.getType<String?>(),
+              nullable: true,
+            ),
+          },
+          call:
+              (
+                _is.Session session,
+                Map<String, dynamic> params,
+              ) async => (endpoints['board'] as _itoz815u.BoardEndpoint)
+                  .linkPullRequest(
+                    session,
+                    params['number'],
+                    params['url'],
+                  ),
+        ),
+        'suggestBundles': _is.MethodConnector(
+          name: 'suggestBundles',
+          params: {},
+          call:
+              (
+                _is.Session session,
+                Map<String, dynamic> params,
+              ) async => (endpoints['board'] as _itoz815u.BoardEndpoint)
+                  .suggestBundles(session),
+        ),
+        'listSuggestions': _is.MethodConnector(
+          name: 'listSuggestions',
+          params: {},
+          call:
+              (
+                _is.Session session,
+                Map<String, dynamic> params,
+              ) async => (endpoints['board'] as _itoz815u.BoardEndpoint)
+                  .listSuggestions(session),
+        ),
+        'dismissSuggestion': _is.MethodConnector(
+          name: 'dismissSuggestion',
+          params: {
+            'id': _is.ParameterDescription(
+              name: 'id',
+              type: _is.getType<int>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _is.Session session,
+                Map<String, dynamic> params,
+              ) async => (endpoints['board'] as _itoz815u.BoardEndpoint)
+                  .dismissSuggestion(
+                    session,
+                    params['id'],
+                  ),
+        ),
+        'watchPost': _is.MethodStreamConnector(
+          name: 'watchPost',
+          params: {
+            'number': _is.ParameterDescription(
+              name: 'number',
+              type: _is.getType<int>(),
+              nullable: false,
+            ),
+          },
+          streamParams: {},
+          returnType: _is.MethodStreamReturnType.streamType,
+          call:
+              (
+                _is.Session session,
+                Map<String, dynamic> params,
+                Map<String, Stream> streamParams,
+              ) => (endpoints['board'] as _itoz815u.BoardEndpoint).watchPost(
+                session,
+                params['number'],
+              ),
+        ),
+        'watchTasks': _is.MethodStreamConnector(
+          name: 'watchTasks',
+          params: {},
+          streamParams: {},
+          returnType: _is.MethodStreamReturnType.streamType,
+          call:
+              (
+                _is.Session session,
+                Map<String, dynamic> params,
+                Map<String, Stream> streamParams,
+              ) => (endpoints['board'] as _itoz815u.BoardEndpoint).watchTasks(
+                session,
+              ),
         ),
       },
     );

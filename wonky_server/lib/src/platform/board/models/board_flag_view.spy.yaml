@@ -1,0 +1,7 @@
+### A flag as admins see it.
+class: BoardFlagView
+fields:
+  reason: BoardFlagReason
+  note: String?
+  by: BoardAuthor?
+  createdAt: DateTime

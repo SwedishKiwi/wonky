@@ -29,6 +29,58 @@ assistant:
   - revertChange:
   - inline:
   - proofread:
+board:
+  - me:
+  - list:
+  - getPost:
+  - listComments:
+  - listTaskComments:
+  - similar:
+  - getScreenshotUrl:
+  - listTasks:
+  - getTask:
+  - watchPost:
+  - watchTasks:
+  - createScreenshotUpload:
+  - createPost:
+  - editPost:
+  - deletePost:
+  - restorePost:
+  - removeScreenshot:
+  - vote:
+  - addComment:
+  - editComment:
+  - deleteComment:
+  - restoreComment:
+  - flag:
+  - unflag:
+  - claimTask:
+  - releaseTask:
+  - reviewCounts:
+  - reviewQueue:
+  - moderatePost:
+  - moderateComment:
+  - adminEditPost:
+  - setLabels:
+  - applySuggestedTitle:
+  - dismissDuplicateHint:
+  - merge:
+  - unmerge:
+  - decline:
+  - reopen:
+  - blockUser:
+  - unblockUser:
+  - createTask:
+  - updateTask:
+  - setTaskPosts:
+  - regeneratePrompt:
+  - setPrompt:
+  - publishTask:
+  - setTaskStatus:
+  - linkPullRequest:
+  - suggestBundles:
+  - listSuggestions:
+  - dismissSuggestion:
 comment:
   - listThreads:
   - getThread:

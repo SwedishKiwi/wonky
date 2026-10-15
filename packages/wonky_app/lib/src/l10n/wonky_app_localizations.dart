@@ -2470,6 +2470,18 @@ abstract class WonkyAppLocalizations {
   /// **'Your Wonky Work storage needs attention'**
   String get notifStorage;
 
+  /// No description provided for @notifBoardReply.
+  ///
+  /// In en, this message translates to:
+  /// **'{who} commented on “{title}”'**
+  String notifBoardReply(String who, String title);
+
+  /// No description provided for @notifBoardUpdate.
+  ///
+  /// In en, this message translates to:
+  /// **'Update on “{title}”'**
+  String notifBoardUpdate(String title);
+
   /// No description provided for @notifSuggestion.
   ///
   /// In en, this message translates to:

@@ -1,0 +1,11 @@
+### An AI-suggested group of small posts (specs/16 §9.3).
+class: BoardBundleSuggestion
+table: board_bundle_suggestion
+fields:
+  title: String
+  rationale: String
+  area: BoardArea?
+  postIds: List<int>
+  ### pending | accepted | dismissed
+  state: String
+  createdAt: DateTime

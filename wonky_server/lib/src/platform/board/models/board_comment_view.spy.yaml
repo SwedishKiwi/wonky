@@ -1,0 +1,18 @@
+class: BoardCommentView
+fields:
+  uuid: UuidValue
+  postNumber: int?
+  taskNumber: int?
+  author: BoardAuthor?
+  ### Empty when deleted or removed (except for admins and the author).
+  body: String
+  systemEvent: String?
+  moderation: BoardModeration
+  moderationReason: String?
+  isMine: bool
+  createdAt: DateTime
+  editedAt: DateTime?
+  deleted: bool
+  ### Admin only.
+  needsCheck: bool
+  flags: List<BoardFlagView>?

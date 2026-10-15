@@ -1,0 +1,5 @@
+### Internal bus message on `board:post:<id>` and `board:tasks`.
+class: BoardSignal
+fields:
+  kind: BoardEventKind
+  number: int

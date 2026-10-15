@@ -24,7 +24,18 @@ enum NotificationKind implements _is.SerializableModel {
   scriptFailure,
 
   /// (v2) Storage notice, e.g. over quota after the backfill (Drive 03 §9).
-  storage;
+  storage,
+
+  /// Bugs & Improvements (specs/16 §12): a comment on my post or one I
+  /// commented on.
+  boardReply,
+
+  /// A post I wrote or voted on changed status (planned, done, shipped,
+  /// declined, duplicate), or my post was held or removed.
+  boardStatus,
+
+  /// My claim: warning, expiry, released, PR closed.
+  boardClaim;
 
   static NotificationKind fromJson(String name) {
     switch (name) {
@@ -48,6 +59,12 @@ enum NotificationKind implements _is.SerializableModel {
         return NotificationKind.scriptFailure;
       case 'storage':
         return NotificationKind.storage;
+      case 'boardReply':
+        return NotificationKind.boardReply;
+      case 'boardStatus':
+        return NotificationKind.boardStatus;
+      case 'boardClaim':
+        return NotificationKind.boardClaim;
       default:
         throw ArgumentError(
           'Value "$name" cannot be converted to "NotificationKind"',

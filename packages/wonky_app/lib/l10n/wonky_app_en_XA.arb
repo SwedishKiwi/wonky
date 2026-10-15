@@ -396,6 +396,8 @@
   "notifScriptFailure": "[Å šçŕîþţ ƒåîļéð îñ {item} one tw]",
   "notifShared": "[{who} šĥåŕéð {item} ŵîţĥ ýöû one t]",
   "notifStorage": "[Ýöûŕ Ŵöñķý Ŵöŕķ šţöŕåĝé ñééðš åţţéñţîöñ one two thre]",
+  "notifBoardReply": "[{who} çöɱɱéñţéð öñ “{title}” one t]",
+  "notifBoardUpdate": "[Ûþðåţé öñ “{title}” one]",
   "notifSuggestion": "[{who} šûĝĝéšţéð åñ éðîţ îñ {item} one tw]",
   "notifSuggestionDecided": "[{who} ŕéṽîéŵéð ýöûŕ šûĝĝéšţîöñ îñ {item} one two t]",
   "notificationsEmpty": "[Ýöû'ŕé åļļ çåûĝĥţ ûþ one tw]",

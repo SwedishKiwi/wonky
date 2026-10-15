@@ -1,0 +1,7 @@
+enum: BoardEventKind
+serialized: byName
+values:
+  - postChanged
+  - commentsChanged
+  - postRemoved
+  - taskChanged

@@ -1,0 +1,7 @@
+### Estimated work (specs/16 §2).
+enum: BoardSize
+serialized: byName
+values:
+  - small
+  - medium
+  - large

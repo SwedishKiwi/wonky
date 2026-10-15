@@ -1,0 +1,5 @@
+class: BoardTaskRef
+fields:
+  number: int
+  title: String
+  status: BoardTaskStatus

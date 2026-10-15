@@ -1,0 +1,423 @@
+/* AUTOMATICALLY GENERATED CODE DO NOT MODIFY */
+/*   To generate run: "serverpod generate"    */
+
+// ignore_for_file: implementation_imports
+// ignore_for_file: library_private_types_in_public_api
+// ignore_for_file: non_constant_identifier_names
+// ignore_for_file: public_member_api_docs
+// ignore_for_file: type_literal_in_constant_pattern
+// ignore_for_file: use_super_parameters
+// ignore_for_file: invalid_use_of_internal_member
+
+// ignore_for_file: no_leading_underscores_for_library_prefixes
+import 'package:serverpod_client/serverpod_client.dart' as _isc;
+import 'package:wonky_client/src/protocol/protocol.dart' as _i8pkqg1o;
+import '../../../platform/board/models/board_area.dart' as _iknrpzcb;
+import '../../../platform/board/models/board_author.dart' as _imhv5g8m;
+import '../../../platform/board/models/board_post_list_item.dart' as _i20hkddq;
+import '../../../platform/board/models/board_size.dart' as _ibr3u4cf;
+import '../../../platform/board/models/board_task_status.dart' as _isr33h3v;
+
+/// A task as the task page shows it (specs/16 §4.6).
+abstract class BoardTaskView
+    implements _isc.SerializableModel, _isc.ProtocolSerialization {
+  BoardTaskView._({
+    required this.number,
+    required this.title,
+    required this.area,
+    required this.size,
+    required this.status,
+    required this.promptBody,
+    this.promptGeneratedAt,
+    this.promptEditedAt,
+    this.promptEditedBy,
+    required this.posts,
+    this.claimedBy,
+    this.claimedAt,
+    this.claimExpiresAt,
+    this.claimCode,
+    required this.isMine,
+    this.pullRequestUrl,
+    this.prNumber,
+    this.prAuthorLogin,
+    this.reviewJson,
+    this.publishedAt,
+    this.doneAt,
+    this.shippedAt,
+    required this.createdAt,
+  });
+
+  factory BoardTaskView({
+    required int number,
+    required String title,
+    required _iknrpzcb.BoardArea area,
+    required _ibr3u4cf.BoardSize size,
+    required _isr33h3v.BoardTaskStatus status,
+    required String promptBody,
+    DateTime? promptGeneratedAt,
+    DateTime? promptEditedAt,
+    _imhv5g8m.BoardAuthor? promptEditedBy,
+    required List<_i20hkddq.BoardPostListItem> posts,
+    _imhv5g8m.BoardAuthor? claimedBy,
+    DateTime? claimedAt,
+    DateTime? claimExpiresAt,
+    String? claimCode,
+    required bool isMine,
+    String? pullRequestUrl,
+    int? prNumber,
+    String? prAuthorLogin,
+    String? reviewJson,
+    DateTime? publishedAt,
+    DateTime? doneAt,
+    DateTime? shippedAt,
+    required DateTime createdAt,
+  }) = _BoardTaskViewImpl;
+
+  factory BoardTaskView.fromJson(Map<String, dynamic> jsonSerialization) {
+    return BoardTaskView(
+      number: jsonSerialization['number'] as int,
+      title: jsonSerialization['title'] as String,
+      area: _iknrpzcb.BoardArea.fromJson((jsonSerialization['area'] as String)),
+      size: _ibr3u4cf.BoardSize.fromJson((jsonSerialization['size'] as String)),
+      status: _isr33h3v.BoardTaskStatus.fromJson(
+        (jsonSerialization['status'] as String),
+      ),
+      promptBody: jsonSerialization['promptBody'] as String,
+      promptGeneratedAt: jsonSerialization['promptGeneratedAt'] == null
+          ? null
+          : _isc.DateTimeJsonExtension.fromJson(
+              jsonSerialization['promptGeneratedAt'],
+            ),
+      promptEditedAt: jsonSerialization['promptEditedAt'] == null
+          ? null
+          : _isc.DateTimeJsonExtension.fromJson(
+              jsonSerialization['promptEditedAt'],
+            ),
+      promptEditedBy: jsonSerialization['promptEditedBy'] == null
+          ? null
+          : _i8pkqg1o.Protocol().deserialize<_imhv5g8m.BoardAuthor>(
+              jsonSerialization['promptEditedBy'],
+            ),
+      posts: _i8pkqg1o.Protocol()
+          .deserialize<List<_i20hkddq.BoardPostListItem>>(
+            jsonSerialization['posts'],
+          ),
+      claimedBy: jsonSerialization['claimedBy'] == null
+          ? null
+          : _i8pkqg1o.Protocol().deserialize<_imhv5g8m.BoardAuthor>(
+              jsonSerialization['claimedBy'],
+            ),
+      claimedAt: jsonSerialization['claimedAt'] == null
+          ? null
+          : _isc.DateTimeJsonExtension.fromJson(jsonSerialization['claimedAt']),
+      claimExpiresAt: jsonSerialization['claimExpiresAt'] == null
+          ? null
+          : _isc.DateTimeJsonExtension.fromJson(
+              jsonSerialization['claimExpiresAt'],
+            ),
+      claimCode: jsonSerialization['claimCode'] as String?,
+      isMine: _isc.BoolJsonExtension.fromJson(jsonSerialization['isMine']),
+      pullRequestUrl: jsonSerialization['pullRequestUrl'] as String?,
+      prNumber: jsonSerialization['prNumber'] as int?,
+      prAuthorLogin: jsonSerialization['prAuthorLogin'] as String?,
+      reviewJson: jsonSerialization['reviewJson'] as String?,
+      publishedAt: jsonSerialization['publishedAt'] == null
+          ? null
+          : _isc.DateTimeJsonExtension.fromJson(
+              jsonSerialization['publishedAt'],
+            ),
+      doneAt: jsonSerialization['doneAt'] == null
+          ? null
+          : _isc.DateTimeJsonExtension.fromJson(jsonSerialization['doneAt']),
+      shippedAt: jsonSerialization['shippedAt'] == null
+          ? null
+          : _isc.DateTimeJsonExtension.fromJson(jsonSerialization['shippedAt']),
+      createdAt: _isc.DateTimeJsonExtension.fromJson(
+        jsonSerialization['createdAt'],
+      ),
+    );
+  }
+
+  int number;
+
+  String title;
+
+  _iknrpzcb.BoardArea area;
+
+  _ibr3u4cf.BoardSize size;
+
+  _isr33h3v.BoardTaskStatus status;
+
+  String promptBody;
+
+  DateTime? promptGeneratedAt;
+
+  DateTime? promptEditedAt;
+
+  _imhv5g8m.BoardAuthor? promptEditedBy;
+
+  List<_i20hkddq.BoardPostListItem> posts;
+
+  _imhv5g8m.BoardAuthor? claimedBy;
+
+  DateTime? claimedAt;
+
+  DateTime? claimExpiresAt;
+
+  /// Only for the claimant.
+  String? claimCode;
+
+  bool isMine;
+
+  String? pullRequestUrl;
+
+  int? prNumber;
+
+  String? prAuthorLogin;
+
+  /// The latest PR review (specs/16 §13.5), JSON.
+  String? reviewJson;
+
+  DateTime? publishedAt;
+
+  DateTime? doneAt;
+
+  DateTime? shippedAt;
+
+  DateTime createdAt;
+
+  /// Returns a shallow copy of this [BoardTaskView]
+  /// with some or all fields replaced by the given arguments.
+  @_isc.useResult
+  BoardTaskView copyWith({
+    int? number,
+    String? title,
+    _iknrpzcb.BoardArea? area,
+    _ibr3u4cf.BoardSize? size,
+    _isr33h3v.BoardTaskStatus? status,
+    String? promptBody,
+    DateTime? promptGeneratedAt = const _isc.$UndefinedDateTime(),
+    DateTime? promptEditedAt = const _isc.$UndefinedDateTime(),
+    _imhv5g8m.BoardAuthor? promptEditedBy =
+        const _UndefinedBoardTaskView$promptEditedBy(),
+    List<_i20hkddq.BoardPostListItem>? posts,
+    _imhv5g8m.BoardAuthor? claimedBy =
+        const _UndefinedBoardTaskView$promptEditedBy(),
+    DateTime? claimedAt = const _isc.$UndefinedDateTime(),
+    DateTime? claimExpiresAt = const _isc.$UndefinedDateTime(),
+    String? claimCode,
+    bool? isMine,
+    String? pullRequestUrl,
+    int? prNumber,
+    String? prAuthorLogin,
+    String? reviewJson,
+    DateTime? publishedAt = const _isc.$UndefinedDateTime(),
+    DateTime? doneAt = const _isc.$UndefinedDateTime(),
+    DateTime? shippedAt = const _isc.$UndefinedDateTime(),
+    DateTime? createdAt,
+  });
+  @override
+  Map<String, dynamic> toJson() {
+    return {
+      '__className__': 'BoardTaskView',
+      'number': number,
+      'title': title,
+      'area': area.toJson(),
+      'size': size.toJson(),
+      'status': status.toJson(),
+      'promptBody': promptBody,
+      if (promptGeneratedAt != null)
+        'promptGeneratedAt': promptGeneratedAt?.toJson(),
+      if (promptEditedAt != null) 'promptEditedAt': promptEditedAt?.toJson(),
+      if (promptEditedBy != null) 'promptEditedBy': promptEditedBy?.toJson(),
+      'posts': posts.toJson(valueToJson: (v) => v.toJson()),
+      if (claimedBy != null) 'claimedBy': claimedBy?.toJson(),
+      if (claimedAt != null) 'claimedAt': claimedAt?.toJson(),
+      if (claimExpiresAt != null) 'claimExpiresAt': claimExpiresAt?.toJson(),
+      if (claimCode != null) 'claimCode': claimCode,
+      'isMine': isMine,
+      if (pullRequestUrl != null) 'pullRequestUrl': pullRequestUrl,
+      if (prNumber != null) 'prNumber': prNumber,
+      if (prAuthorLogin != null) 'prAuthorLogin': prAuthorLogin,
+      if (reviewJson != null) 'reviewJson': reviewJson,
+      if (publishedAt != null) 'publishedAt': publishedAt?.toJson(),
+      if (doneAt != null) 'doneAt': doneAt?.toJson(),
+      if (shippedAt != null) 'shippedAt': shippedAt?.toJson(),
+      'createdAt': createdAt.toJson(),
+    };
+  }
+
+  @override
+  Map<String, dynamic> toJsonForProtocol() {
+    return {
+      '__className__': 'BoardTaskView',
+      'number': number,
+      'title': title,
+      'area': area.toJson(),
+      'size': size.toJson(),
+      'status': status.toJson(),
+      'promptBody': promptBody,
+      if (promptGeneratedAt != null)
+        'promptGeneratedAt': promptGeneratedAt?.toJson(),
+      if (promptEditedAt != null) 'promptEditedAt': promptEditedAt?.toJson(),
+      if (promptEditedBy != null)
+        'promptEditedBy': promptEditedBy?.toJsonForProtocol(),
+      'posts': posts.toJson(valueToJson: (v) => v.toJsonForProtocol()),
+      if (claimedBy != null) 'claimedBy': claimedBy?.toJsonForProtocol(),
+      if (claimedAt != null) 'claimedAt': claimedAt?.toJson(),
+      if (claimExpiresAt != null) 'claimExpiresAt': claimExpiresAt?.toJson(),
+      if (claimCode != null) 'claimCode': claimCode,
+      'isMine': isMine,
+      if (pullRequestUrl != null) 'pullRequestUrl': pullRequestUrl,
+      if (prNumber != null) 'prNumber': prNumber,
+      if (prAuthorLogin != null) 'prAuthorLogin': prAuthorLogin,
+      if (reviewJson != null) 'reviewJson': reviewJson,
+      if (publishedAt != null) 'publishedAt': publishedAt?.toJson(),
+      if (doneAt != null) 'doneAt': doneAt?.toJson(),
+      if (shippedAt != null) 'shippedAt': shippedAt?.toJson(),
+      'createdAt': createdAt.toJson(),
+    };
+  }
+
+  @override
+  String toString() {
+    return _isc.SerializationManager.encode(this);
+  }
+}
+
+class _Undefined {}
+
+class _UndefinedBoardTaskView$promptEditedBy extends _isc.UndefinedSentinel
+    implements _imhv5g8m.BoardAuthor {
+  const _UndefinedBoardTaskView$promptEditedBy();
+}
+
+class _BoardTaskViewImpl extends BoardTaskView {
+  _BoardTaskViewImpl({
+    required int number,
+    required String title,
+    required _iknrpzcb.BoardArea area,
+    required _ibr3u4cf.BoardSize size,
+    required _isr33h3v.BoardTaskStatus status,
+    required String promptBody,
+    DateTime? promptGeneratedAt,
+    DateTime? promptEditedAt,
+    _imhv5g8m.BoardAuthor? promptEditedBy,
+    required List<_i20hkddq.BoardPostListItem> posts,
+    _imhv5g8m.BoardAuthor? claimedBy,
+    DateTime? claimedAt,
+    DateTime? claimExpiresAt,
+    String? claimCode,
+    required bool isMine,
+    String? pullRequestUrl,
+    int? prNumber,
+    String? prAuthorLogin,
+    String? reviewJson,
+    DateTime? publishedAt,
+    DateTime? doneAt,
+    DateTime? shippedAt,
+    required DateTime createdAt,
+  }) : super._(
+         number: number,
+         title: title,
+         area: area,
+         size: size,
+         status: status,
+         promptBody: promptBody,
+         promptGeneratedAt: promptGeneratedAt,
+         promptEditedAt: promptEditedAt,
+         promptEditedBy: promptEditedBy,
+         posts: posts,
+         claimedBy: claimedBy,
+         claimedAt: claimedAt,
+         claimExpiresAt: claimExpiresAt,
+         claimCode: claimCode,
+         isMine: isMine,
+         pullRequestUrl: pullRequestUrl,
+         prNumber: prNumber,
+         prAuthorLogin: prAuthorLogin,
+         reviewJson: reviewJson,
+         publishedAt: publishedAt,
+         doneAt: doneAt,
+         shippedAt: shippedAt,
+         createdAt: createdAt,
+       );
+
+  /// Returns a shallow copy of this [BoardTaskView]
+  /// with some or all fields replaced by the given arguments.
+  @_isc.useResult
+  @override
+  BoardTaskView copyWith({
+    int? number,
+    String? title,
+    _iknrpzcb.BoardArea? area,
+    _ibr3u4cf.BoardSize? size,
+    _isr33h3v.BoardTaskStatus? status,
+    String? promptBody,
+    DateTime? promptGeneratedAt = const _isc.$UndefinedDateTime(),
+    DateTime? promptEditedAt = const _isc.$UndefinedDateTime(),
+    _imhv5g8m.BoardAuthor? promptEditedBy =
+        const _UndefinedBoardTaskView$promptEditedBy(),
+    List<_i20hkddq.BoardPostListItem>? posts,
+    _imhv5g8m.BoardAuthor? claimedBy =
+        const _UndefinedBoardTaskView$promptEditedBy(),
+    DateTime? claimedAt = const _isc.$UndefinedDateTime(),
+    DateTime? claimExpiresAt = const _isc.$UndefinedDateTime(),
+    Object? claimCode = _Undefined,
+    bool? isMine,
+    Object? pullRequestUrl = _Undefined,
+    Object? prNumber = _Undefined,
+    Object? prAuthorLogin = _Undefined,
+    Object? reviewJson = _Undefined,
+    DateTime? publishedAt = const _isc.$UndefinedDateTime(),
+    DateTime? doneAt = const _isc.$UndefinedDateTime(),
+    DateTime? shippedAt = const _isc.$UndefinedDateTime(),
+    DateTime? createdAt,
+  }) {
+    return BoardTaskView(
+      number: number ?? this.number,
+      title: title ?? this.title,
+      area: area ?? this.area,
+      size: size ?? this.size,
+      status: status ?? this.status,
+      promptBody: promptBody ?? this.promptBody,
+      promptGeneratedAt: promptGeneratedAt is _isc.UndefinedSentinel
+          ? this.promptGeneratedAt
+          : promptGeneratedAt,
+      promptEditedAt: promptEditedAt is _isc.UndefinedSentinel
+          ? this.promptEditedAt
+          : promptEditedAt,
+      promptEditedBy: promptEditedBy is _isc.UndefinedSentinel
+          ? this.promptEditedBy?.copyWith()
+          : promptEditedBy,
+      posts: posts ?? this.posts.map((e0) => e0.copyWith()).toList(),
+      claimedBy: claimedBy is _isc.UndefinedSentinel
+          ? this.claimedBy?.copyWith()
+          : claimedBy,
+      claimedAt: claimedAt is _isc.UndefinedSentinel
+          ? this.claimedAt
+          : claimedAt,
+      claimExpiresAt: claimExpiresAt is _isc.UndefinedSentinel
+          ? this.claimExpiresAt
+          : claimExpiresAt,
+      claimCode: claimCode is String? ? claimCode : this.claimCode,
+      isMine: isMine ?? this.isMine,
+      pullRequestUrl: pullRequestUrl is String?
+          ? pullRequestUrl
+          : this.pullRequestUrl,
+      prNumber: prNumber is int? ? prNumber : this.prNumber,
+      prAuthorLogin: prAuthorLogin is String?
+          ? prAuthorLogin
+          : this.prAuthorLogin,
+      reviewJson: reviewJson is String? ? reviewJson : this.reviewJson,
+      publishedAt: publishedAt is _isc.UndefinedSentinel
+          ? this.publishedAt
+          : publishedAt,
+      doneAt: doneAt is _isc.UndefinedSentinel ? this.doneAt : doneAt,
+      shippedAt: shippedAt is _isc.UndefinedSentinel
+          ? this.shippedAt
+          : shippedAt,
+      createdAt: createdAt ?? this.createdAt,
+    );
+  }
+}
