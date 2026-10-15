@@ -309,6 +309,7 @@ class _DriveHomeScreenState extends State<DriveHomeScreen> {
                 // Search starts where the content does (sidebar + the
                 // content's 20 px inset).
                 contentStart: sidebarVisible ? HomeSidebar.width + 20 : null,
+                showNewButton: !sidebarVisible && showsSidebarNewButton(scope),
               ),
             ),
             // Drive 03 §6.2: ≥ 90 % and over quota (not dismissible here).

@@ -33,12 +33,12 @@ and is configured by the app (`WonkyAppConfig.homeNav`, suite 03 §3.3). Drive v
 
 ```
 ┌──────────────────────────────┐
-│ [▣] Wonky Drive          ●   │  ← app section: product icons (18 px), current app highlighted
-│ [▣] Wonky Write              │     (sidebarAccent pill), click = shell.account.switchApp {app}
-│ [▣] Wonky Sheets             │
-│ [▣] Wonky Slides             │
+│ [▣] Write                    │  ← app section: product icons (18 px), current app highlighted
+│ [▣] Sheets                   │     (sidebarAccent pill), click = shell.account.switchApp {app}
+│ [▣] Slides                   │
+│ [▣] Drive                ●   │
 │ ──────────────────────────── │
-│ [ + New ]                    │  ← New menu (§3.1)
+│ [ + New ]                    │  ← New menu (§3.1; Drive only)
 │ ⌂  Home                      │
 │ ▤  My Drive              ▸   │  ← chevron toggles the lazy folder tree (drop targets)
 │      ▸ Finance               │
@@ -58,10 +58,14 @@ and is configured by the app (`WonkyAppConfig.homeNav`, suite 03 §3.3). Drive v
 └──────────────────────────────┘
 ```
 
-- **App section**: four rows (32 px, product icon + "Wonky Drive" / "Wonky Write" / "Wonky
-  Sheets" / "Wonky Slides"); the current app's row is highlighted and not clickable
+- **App section**: four rows (32 px, product icon + "Write" / "Sheets" / "Slides" / "Drive",
+  short names without "Wonky"); the current app's row is highlighted and not clickable
   (`Semantics(selected: true)`). Other rows navigate in the same tab to that app's home
-  (`/write/`, …). Section semantics label "Apps". Order is fixed (Drive first).
+  (`/write/`, …). Section semantics label "Apps". Order is fixed: Write, Sheets, Slides, Drive
+  (the order of `WonkyAppKind`, also used by the account menu's *Open app*).
+- ***+ New***: only in Drive (and v1 homes). The app homes (Write, Sheets, Slides) have no *+ New*
+  in the left menu: they create from the template strip's large *Blank* card (and the template
+  gallery); importing stays reachable as `shell.drive.upload` (⇧U, command palette).
 - **Navigation** (Drive): Home, My Drive (+ tree), Shared with me, Recent, Starred, Trash,
   Storage. App homes use their own list (suite 03 §3.3).
 - **Bottom section** (pinned to the bottom, scrolls with the menu when the window is short):
@@ -71,7 +75,9 @@ and is configured by the app (`WonkyAppConfig.homeNav`, suite 03 §3.3). Drive v
 - Drop targets: *My Drive* (and tree nodes) accept dragged items (move) and OS files (upload
   into that folder); *Trash* accepts dragged items (P1, trash; undoable).
 - Collapsing: the top bar's ☰ collapses the menu (state per device); below `md` it becomes a
-  drawer (`ShadSheet`, left) opened by ☰.
+  drawer (`ShadSheet`, left) opened by ☰. While the menu is collapsed (or a drawer), Drive's
+  top bar shows *+ New* (outline button, icon only below 640 px; same New menu) between the
+  logo and the search field.
 
 ## 3. Drive home
 
@@ -427,7 +433,8 @@ fields), as today.
 
 ## 15. Acceptance criteria
 
-- **AC-D4.1** The left menu shows the four apps with Drive highlighted; *Wonky Sheets* opens
+- **AC-D4.1** The left menu shows the four apps (Write, Sheets, Slides, Drive) with Drive
+  highlighted; *Sheets* opens
   `/sheets/` in the same tab; the menu in the Sheets home shows the same four rows with Sheets
   highlighted.
 - **AC-D4.2** Drive lists folders, documents, spreadsheets, presentations and files together;

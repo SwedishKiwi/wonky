@@ -14,11 +14,11 @@ import 'package:serverpod/serverpod.dart' as _is;
 import 'package:wonky_server/src/generated/protocol.dart' as _il4umwa0;
 import '../../../protocol.dart' as _i26f4ubs;
 import 'presentation_state.dart' as _i4sa9kmk;
-part 'presentation_ink_update.dart';
-part 'presentation_state_update.dart';
 part 'presentation_command_update.dart';
-part 'presentation_laser_update.dart';
 part 'presentation_end_update.dart';
+part 'presentation_ink_update.dart';
+part 'presentation_laser_update.dart';
+part 'presentation_state_update.dart';
 
 /// Client → server messages of a presentation session (Slides 10 §6.2).
 /// Only the presenter sends state, laser, ink and end; audiences and

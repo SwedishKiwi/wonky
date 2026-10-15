@@ -11,10 +11,11 @@ import '../l10n/wonky_app_localizations.dart';
 import '../notifications/notifications_button.dart';
 import '../shell/account_menu.dart';
 import '../shell/shell_services.dart';
+import 'home_sidebar.dart' show HomeNewButton;
 
 /// The home top bar (suite 05 §3.1 `WonkyTopBar`): hamburger, logo + name,
-/// drive search with suggestions, theme toggle, notifications and the
-/// account menu.
+/// *+ New* while the left menu is collapsed ([showNewButton]), drive search
+/// with suggestions, theme toggle, notifications and the account menu.
 class WonkyTopBar extends StatelessWidget {
   const WonkyTopBar({
     super.key,
@@ -23,6 +24,7 @@ class WonkyTopBar extends StatelessWidget {
     required this.searchFocus,
     this.initialQuery,
     this.contentStart,
+    this.showNewButton = false,
   });
 
   final ShellServices services;
@@ -34,6 +36,10 @@ class WonkyTopBar extends StatelessWidget {
   /// open: the search field starts there too, aligned with the content
   /// below. Null: right after the logo.
   final double? contentStart;
+
+  /// Shows *+ New* before the search field (Drive with the left menu
+  /// collapsed or in a drawer, Drive 04 §2).
+  final bool showNewButton;
 
   @override
   Widget build(BuildContext context) {
@@ -89,7 +95,11 @@ class WonkyTopBar extends StatelessWidget {
             )
           else ...[
             leading,
-            const SizedBox(width: 24),
+            SizedBox(width: showNewButton ? 16 : 24),
+          ],
+          if (showNewButton) ...[
+            HomeNewButton(services: services, compact: true),
+            const SizedBox(width: 12),
           ],
           Expanded(
             child: Align(

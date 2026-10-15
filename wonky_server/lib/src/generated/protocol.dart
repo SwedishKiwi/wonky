@@ -696,11 +696,11 @@ class Protocol extends _is.DatabaseSerializationManager
           _is.getType<_ijdad65m.PresentationEndUpdate>,
           _is.getType<_iz9vxb2f.PresentationEndedEvent>,
           _is.getType<_iz9vxb2f.PresentationInkEvent>,
+          _is.getType<_iz9vxb2f.PresentationLaserEvent>,
+          _is.getType<_iz9vxb2f.PresentationPresenterEvent>,
+          _is.getType<_iz9vxb2f.PresentationRosterEvent>,
           _is.getType<_iz9vxb2f.PresentationStateEvent>,
           _is.getType<_iz9vxb2f.PresentationWelcome>,
-          _is.getType<_iz9vxb2f.PresentationPresenterEvent>,
-          _is.getType<_iz9vxb2f.PresentationLaserEvent>,
-          _is.getType<_iz9vxb2f.PresentationRosterEvent>,
           _is.getType<_ijdad65m.PresentationInkUpdate>,
           _is.getType<_ih25cwup.PresentationJoin>,
           _is.getType<_ijdad65m.PresentationLaserUpdate>,
@@ -949,11 +949,11 @@ class Protocol extends _is.DatabaseSerializationManager
           _is.getType<_ijdad65m.PresentationEndUpdate?>,
           _is.getType<_iz9vxb2f.PresentationEndedEvent?>,
           _is.getType<_iz9vxb2f.PresentationInkEvent?>,
+          _is.getType<_iz9vxb2f.PresentationLaserEvent?>,
+          _is.getType<_iz9vxb2f.PresentationPresenterEvent?>,
+          _is.getType<_iz9vxb2f.PresentationRosterEvent?>,
           _is.getType<_iz9vxb2f.PresentationStateEvent?>,
           _is.getType<_iz9vxb2f.PresentationWelcome?>,
-          _is.getType<_iz9vxb2f.PresentationPresenterEvent?>,
-          _is.getType<_iz9vxb2f.PresentationLaserEvent?>,
-          _is.getType<_iz9vxb2f.PresentationRosterEvent?>,
           _is.getType<_ijdad65m.PresentationInkUpdate?>,
           _is.getType<_ih25cwup.PresentationJoin?>,
           _is.getType<_ijdad65m.PresentationLaserUpdate?>,
@@ -7324,20 +7324,20 @@ class Protocol extends _is.DatabaseSerializationManager
     if (t == _iz9vxb2f.PresentationInkEvent) {
       return _iz9vxb2f.PresentationInkEvent.fromJson(data) as T;
     }
+    if (t == _iz9vxb2f.PresentationLaserEvent) {
+      return _iz9vxb2f.PresentationLaserEvent.fromJson(data) as T;
+    }
+    if (t == _iz9vxb2f.PresentationPresenterEvent) {
+      return _iz9vxb2f.PresentationPresenterEvent.fromJson(data) as T;
+    }
+    if (t == _iz9vxb2f.PresentationRosterEvent) {
+      return _iz9vxb2f.PresentationRosterEvent.fromJson(data) as T;
+    }
     if (t == _iz9vxb2f.PresentationStateEvent) {
       return _iz9vxb2f.PresentationStateEvent.fromJson(data) as T;
     }
     if (t == _iz9vxb2f.PresentationWelcome) {
       return _iz9vxb2f.PresentationWelcome.fromJson(data) as T;
-    }
-    if (t == _iz9vxb2f.PresentationPresenterEvent) {
-      return _iz9vxb2f.PresentationPresenterEvent.fromJson(data) as T;
-    }
-    if (t == _iz9vxb2f.PresentationLaserEvent) {
-      return _iz9vxb2f.PresentationLaserEvent.fromJson(data) as T;
-    }
-    if (t == _iz9vxb2f.PresentationRosterEvent) {
-      return _iz9vxb2f.PresentationRosterEvent.fromJson(data) as T;
     }
     if (t == _ijdad65m.PresentationInkUpdate) {
       return _ijdad65m.PresentationInkUpdate.fromJson(data) as T;
@@ -8324,15 +8324,9 @@ class Protocol extends _is.DatabaseSerializationManager
               : null)
           as T;
     }
-    if (t == _is.getType<_iz9vxb2f.PresentationStateEvent?>()) {
+    if (t == _is.getType<_iz9vxb2f.PresentationLaserEvent?>()) {
       return (data != null
-              ? _iz9vxb2f.PresentationStateEvent.fromJson(data)
-              : null)
-          as T;
-    }
-    if (t == _is.getType<_iz9vxb2f.PresentationWelcome?>()) {
-      return (data != null
-              ? _iz9vxb2f.PresentationWelcome.fromJson(data)
+              ? _iz9vxb2f.PresentationLaserEvent.fromJson(data)
               : null)
           as T;
     }
@@ -8342,15 +8336,21 @@ class Protocol extends _is.DatabaseSerializationManager
               : null)
           as T;
     }
-    if (t == _is.getType<_iz9vxb2f.PresentationLaserEvent?>()) {
-      return (data != null
-              ? _iz9vxb2f.PresentationLaserEvent.fromJson(data)
-              : null)
-          as T;
-    }
     if (t == _is.getType<_iz9vxb2f.PresentationRosterEvent?>()) {
       return (data != null
               ? _iz9vxb2f.PresentationRosterEvent.fromJson(data)
+              : null)
+          as T;
+    }
+    if (t == _is.getType<_iz9vxb2f.PresentationStateEvent?>()) {
+      return (data != null
+              ? _iz9vxb2f.PresentationStateEvent.fromJson(data)
+              : null)
+          as T;
+    }
+    if (t == _is.getType<_iz9vxb2f.PresentationWelcome?>()) {
+      return (data != null
+              ? _iz9vxb2f.PresentationWelcome.fromJson(data)
               : null)
           as T;
     }
@@ -9124,11 +9124,11 @@ class Protocol extends _is.DatabaseSerializationManager
       _ijdad65m.PresentationEndUpdate => 'PresentationEndUpdate',
       _iz9vxb2f.PresentationEndedEvent => 'PresentationEndedEvent',
       _iz9vxb2f.PresentationInkEvent => 'PresentationInkEvent',
+      _iz9vxb2f.PresentationLaserEvent => 'PresentationLaserEvent',
+      _iz9vxb2f.PresentationPresenterEvent => 'PresentationPresenterEvent',
+      _iz9vxb2f.PresentationRosterEvent => 'PresentationRosterEvent',
       _iz9vxb2f.PresentationStateEvent => 'PresentationStateEvent',
       _iz9vxb2f.PresentationWelcome => 'PresentationWelcome',
-      _iz9vxb2f.PresentationPresenterEvent => 'PresentationPresenterEvent',
-      _iz9vxb2f.PresentationLaserEvent => 'PresentationLaserEvent',
-      _iz9vxb2f.PresentationRosterEvent => 'PresentationRosterEvent',
       _ijdad65m.PresentationInkUpdate => 'PresentationInkUpdate',
       _ih25cwup.PresentationJoin => 'PresentationJoin',
       _ijdad65m.PresentationLaserUpdate => 'PresentationLaserUpdate',
@@ -9588,16 +9588,16 @@ class Protocol extends _is.DatabaseSerializationManager
         return 'PresentationEndedEvent';
       case _iz9vxb2f.PresentationInkEvent():
         return 'PresentationInkEvent';
+      case _iz9vxb2f.PresentationLaserEvent():
+        return 'PresentationLaserEvent';
+      case _iz9vxb2f.PresentationPresenterEvent():
+        return 'PresentationPresenterEvent';
+      case _iz9vxb2f.PresentationRosterEvent():
+        return 'PresentationRosterEvent';
       case _iz9vxb2f.PresentationStateEvent():
         return 'PresentationStateEvent';
       case _iz9vxb2f.PresentationWelcome():
         return 'PresentationWelcome';
-      case _iz9vxb2f.PresentationPresenterEvent():
-        return 'PresentationPresenterEvent';
-      case _iz9vxb2f.PresentationLaserEvent():
-        return 'PresentationLaserEvent';
-      case _iz9vxb2f.PresentationRosterEvent():
-        return 'PresentationRosterEvent';
       case _ijdad65m.PresentationInkUpdate():
         return 'PresentationInkUpdate';
       case _ih25cwup.PresentationJoin():
@@ -10335,20 +10335,20 @@ class Protocol extends _is.DatabaseSerializationManager
     if (dataClassName == 'PresentationInkEvent') {
       return deserialize<_iz9vxb2f.PresentationInkEvent>(data['data']);
     }
+    if (dataClassName == 'PresentationLaserEvent') {
+      return deserialize<_iz9vxb2f.PresentationLaserEvent>(data['data']);
+    }
+    if (dataClassName == 'PresentationPresenterEvent') {
+      return deserialize<_iz9vxb2f.PresentationPresenterEvent>(data['data']);
+    }
+    if (dataClassName == 'PresentationRosterEvent') {
+      return deserialize<_iz9vxb2f.PresentationRosterEvent>(data['data']);
+    }
     if (dataClassName == 'PresentationStateEvent') {
       return deserialize<_iz9vxb2f.PresentationStateEvent>(data['data']);
     }
     if (dataClassName == 'PresentationWelcome') {
       return deserialize<_iz9vxb2f.PresentationWelcome>(data['data']);
-    }
-    if (dataClassName == 'PresentationPresenterEvent') {
-      return deserialize<_iz9vxb2f.PresentationPresenterEvent>(data['data']);
-    }
-    if (dataClassName == 'PresentationLaserEvent') {
-      return deserialize<_iz9vxb2f.PresentationLaserEvent>(data['data']);
-    }
-    if (dataClassName == 'PresentationRosterEvent') {
-      return deserialize<_iz9vxb2f.PresentationRosterEvent>(data['data']);
     }
     if (dataClassName == 'PresentationInkUpdate') {
       return deserialize<_ijdad65m.PresentationInkUpdate>(data['data']);

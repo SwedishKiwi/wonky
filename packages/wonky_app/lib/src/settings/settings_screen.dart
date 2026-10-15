@@ -38,8 +38,7 @@ class _Section {
 }
 
 /// The short name of [app] ("Sheets" of "Wonky Sheets").
-String _shortName(WonkyAppKind app) =>
-    app.productName.replaceFirst(RegExp(r'^Wonky '), '');
+String _shortName(WonkyAppKind app) => app.shortName;
 
 /// The settings screen (suite 04 §4.2): a left nav with two groups — the
 /// current app's settings (`/settings/app/:section`,

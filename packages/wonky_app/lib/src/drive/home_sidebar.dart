@@ -19,7 +19,8 @@ import 'drive_location.dart';
 import 'item_actions.dart';
 
 /// The left menu of every home (suite 03 §3.3, Drive 04 §2): the app
-/// section (four apps, the current one highlighted), *+ New*, the app's
+/// section (four apps, the current one highlighted), *+ New* (Drive and v1
+/// homes only: the app homes create from their template strip), the app's
 /// navigation (`WonkyAppConfig.homeNav`, Drive: with the folder tree) and
 /// the bottom section (app settings, Wonky Work settings, *Report a bug*,
 /// storage meter). Below `md` it is shown in a drawer ([onNavigate] closes
@@ -185,7 +186,10 @@ class _HomeSidebarState extends State<HomeSidebar> {
         padding: EdgeInsets.symmetric(vertical: 8),
         child: ShadSeparator.horizontal(margin: EdgeInsets.zero),
       ),
-      HomeNewButton(services: s, onNavigate: widget.onNavigate),
+      if (showsSidebarNewButton(scope))
+        HomeNewButton(services: s, onNavigate: widget.onNavigate)
+      else
+        const SizedBox(height: 4),
       for (final item in nav.items) ...[
         navRow(item),
         if (_treeOpen &&
@@ -261,8 +265,12 @@ class _HomeSidebarState extends State<HomeSidebar> {
   HomeNavDestination.storage => (LucideIcons.chartPie, l.navStorage),
 };
 
-/// The app section of the left menu (Drive 04 §2): Wonky Drive, Write,
-/// Sheets and Slides with their product icons; the current app is
+/// Whether the home of [scope] has a *+ New* button: Drive and v1 homes;
+/// the app homes create from their template strip's large *Blank* card.
+bool showsSidebarNewButton(HomeScope? scope) => scope == null || scope.isAll;
+
+/// The app section of the left menu (Drive 04 §2): Write, Sheets, Slides
+/// and Drive (short names) with their product icons; the current app is
 /// highlighted and not clickable, the others switch apps in the same tab
 /// (`shell.account.switchApp {app}`).
 class AppLinksSection extends StatelessWidget {
@@ -289,7 +297,7 @@ class AppLinksSection extends StatelessWidget {
                 size: 18,
                 semanticLabel: '',
               ),
-              label: app.productName,
+              label: app.shortName,
               height: 32,
               active: app == services.config.app,
               onPressed: app == services.config.app
@@ -317,15 +325,43 @@ class AppLinksSection extends StatelessWidget {
 /// presentation, template; app homes — their kind and *From template…*;
 /// v1 homes — as in v1.
 class HomeNewButton extends StatelessWidget {
-  const HomeNewButton({super.key, required this.services, this.onNavigate});
+  const HomeNewButton({
+    super.key,
+    required this.services,
+    this.onNavigate,
+    this.compact = false,
+  });
 
   final ShellServices services;
   final VoidCallback? onNavigate;
+
+  /// The top bar's variant while the left menu is collapsed (Drive 04 §2):
+  /// a regular-height button, icon only below 640 px.
+  final bool compact;
 
   @override
   Widget build(BuildContext context) {
     final l = WonkyAppLocalizations.of(context);
     final theme = ShadTheme.of(context);
+    if (compact) {
+      final iconOnly = MediaQuery.sizeOf(context).width < 640;
+      return WonkyDropdownMenu(
+        entries: () => homeNewMenuEntries(context, services),
+        builder: (context, c) => iconOnly
+            ? ShadIconButton.outline(
+                key: const ValueKey<String>('drive.new.topBar'),
+                semanticLabel: l.newButton,
+                icon: const Icon(LucideIcons.plus, size: 18),
+                onPressed: c.toggle,
+              )
+            : ShadButton.outline(
+                key: const ValueKey<String>('drive.new.topBar'),
+                leading: const Icon(LucideIcons.plus, size: 18),
+                onPressed: c.toggle,
+                child: Text(l.newButton),
+              ),
+      );
+    }
     return WonkyDropdownMenu(
       entries: () =>
           _closingFirst(homeNewMenuEntries(context, services), onNavigate),

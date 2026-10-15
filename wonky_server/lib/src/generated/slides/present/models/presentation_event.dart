@@ -16,14 +16,14 @@ import '../../../protocol.dart' as _i26f4ubs;
 import 'presentation_participant.dart' as _ib4fvwj1;
 import 'presentation_role.dart' as _ia2cflib;
 import 'presentation_state.dart' as _i4sa9kmk;
-part 'presentation_ink_event.dart';
 part 'presentation_command_event.dart';
-part 'presentation_state_event.dart';
 part 'presentation_ended_event.dart';
-part 'presentation_welcome.dart';
-part 'presentation_presenter_event.dart';
+part 'presentation_ink_event.dart';
 part 'presentation_laser_event.dart';
+part 'presentation_presenter_event.dart';
 part 'presentation_roster_event.dart';
+part 'presentation_state_event.dart';
+part 'presentation_welcome.dart';
 
 /// Server → client messages of a presentation session (sealed; Slides 10
 /// §6.2). Every event carries the server time it was sent at (epoch ms),

@@ -182,10 +182,11 @@ Every app has a **home** (its documents view) built from the shell's drive UI
 
 The **left menu** (`HomeSidebar`, Drive 04 §2) is the same widget in every home:
 
-1. **App section** — Wonky Drive, Wonky Write, Wonky Sheets, Wonky Slides with their product
-   icons; the current app highlighted; the others switch apps in the same tab
+1. **App section** — Write, Sheets, Slides, Drive (short names, in this order) with their
+   product icons; the current app highlighted; the others switch apps in the same tab
    (`shell.account.switchApp {app}`).
-2. **+ New** and the app's navigation (`WonkyAppConfig.homeNav`): app homes — *Recent* (`/`),
+2. **+ New** (Drive only; the app homes create from the template strip's *Blank* card) and the
+   app's navigation (`WonkyAppConfig.homeNav`): app homes — *Recent* (`/`),
    *My files*, *Shared with me*, *Starred*, *Offline* (on-device availability, as today),
    *Trash*; Drive — Home, My Drive (+ folder tree), Shared with me, Recent, Starred, Trash,
    Storage.
@@ -217,8 +218,10 @@ on the server. Below 768 px the left menu is a `ShadSheet` drawer; the template 
 skipped when the content area is shorter than 560 px.
 
 **As built (D-16):** Write and Sheets are flipped (`HomeScope.kind(document)` /
-`HomeScope.kind(spreadsheet)`); their homes' *+ New* lists the kind, *From template…* and
-*Import file…* (`shell.drive.upload` with the app's convertible types); the empty home reads
+`HomeScope.kind(spreadsheet)`); their homes' *+ New* listed the kind, *From template…* and
+*Import file…* (`shell.drive.upload` with the app's convertible types) — since removed from the
+app homes (the template strip's *Blank* card creates; importing stays on `shell.drive.upload`,
+⇧U and the command palette); the empty home reads
 "Welcome to <App>" / "Create a <kind> or open one shared with you." (Drive: "…document,
 spreadsheet or presentation, or upload files."). File › New in every editor has *Presentation*
 (`shell.file.new {kind: presentation}` → Slides' `/new`). The `/new` and `/import` route page

@@ -86,7 +86,10 @@ void main() {
     journeyStep('reopening');
     // "Reload": back to the drive and open the document again.
     services(tester).router.go('/');
-    await pumpUntil(tester, find.byKey(const ValueKey<String>('drive.new')));
+    await pumpUntil(
+      tester,
+      find.byKey(const ValueKey<String>('drive.template.blank')),
+    );
     services(tester).router.go('/d/${docUuid.uuid}');
     await waitForEditor(tester);
     await pumpUntil(

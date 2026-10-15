@@ -4,7 +4,7 @@
     "start_url": ".",
     "display": "standalone",
     "background_color": "#fafafa",
-    "theme_color": "#0284c7",
+    "theme_color": "#6a5cb3",
     "description": "Wonky Drive: every file of Wonky Work in one place.",
     "orientation": "portrait-primary",
     "prefer_related_applications": false,

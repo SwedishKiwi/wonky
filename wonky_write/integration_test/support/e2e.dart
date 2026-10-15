@@ -161,13 +161,12 @@ Future<void> signInWithUi(
   );
 }
 
-/// Creates a blank document from the drive's New menu and waits for the
-/// editor.
+/// Creates a blank document from the home's template strip (the *Blank*
+/// card; app homes have no *+ New*) and waits for the editor.
 Future<void> createDocumentWithUi(WidgetTester tester) async {
-  await tester.tap(find.byKey(const ValueKey<String>('drive.new')));
-  await settle(tester, const Duration(milliseconds: 300));
-  await pumpUntil(tester, find.text(shellL10n(tester).menuNewDocument));
-  await tester.tap(find.text(shellL10n(tester).menuNewDocument).last);
+  final blank = find.byKey(const ValueKey<String>('drive.template.blank'));
+  await pumpUntil(tester, blank);
+  await tester.tap(blank);
   await waitForEditor(tester);
 }
 

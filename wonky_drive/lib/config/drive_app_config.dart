@@ -18,9 +18,8 @@ import '../features/uploads/upload_panel.dart';
 import '../l10n/drive_l10n.dart';
 import '../mcp/ui_drive_tools.dart';
 
-/// Brand color of Wonky Drive (the sky blue of its product icon, darkened
-/// for contrast on light surfaces).
-const driveBrandColor = Color(0xff0284c7);
+/// Brand color of Wonky Drive (the purple of its product icon).
+const driveBrandColor = Color(0xff6a5cb3);
 
 /// Wonky Drive's description for the shared shell (suite 03, Drive 05 §1):
 /// the unified drive with every kind (`HomeScope.all()`), no editor of its

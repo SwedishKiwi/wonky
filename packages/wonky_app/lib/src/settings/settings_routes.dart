@@ -111,7 +111,7 @@ class _SettingsHandoffPageState extends State<SettingsHandoffPage> {
   Widget build(BuildContext context) {
     final l = WonkyAppLocalizations.of(context);
     final theme = ShadTheme.of(context);
-    final name = widget.app.productName.replaceFirst(RegExp(r'^Wonky '), '');
+    final name = widget.app.shortName;
     return ColoredBox(
       color: theme.colorScheme.background,
       child: Center(

@@ -300,7 +300,7 @@ v2 review Q27)
   builds them one after another with the same guard. `flutter_apps: drive` (8100); `slides`
   joins with SL-1. `allowedOrigins` (and `wonky.mcp.allowedOrigins`) list 8082 + the four dev
   ports; the bundled `assets/config.json` of Drive, Write and Sheets list all four apps.
-  `wonky_drive`: `DriveAppConfig` (brand `#0284c7`, `WonkyProduct.drive` logo,
+  `wonky_drive`: `DriveAppConfig` (brand `#6a5cb3`, was `#0284c7` before the new icon; `WonkyProduct.drive` logo,
   `HomeScope.all()`, `/file/:uuid` → `FilePreviewScreen` placeholder, `/storage` →
   `StorageScreen` placeholder, both a `DrivePendingPage` with *Back to Drive* =
   `shell.nav.home`), ARB l10n (`DriveLocalizations`, `en` + generated `en_XA`), web folder with

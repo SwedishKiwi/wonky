@@ -120,8 +120,16 @@ void main() {
 
       for (final app in WonkyAppKind.values) {
         expect(key('home.app.${app.name}'), findsOneWidget);
-        expect(find.text(app.productName), findsOneWidget);
+        expect(find.text(app.shortName), findsOneWidget);
       }
+      // Write, Sheets, Slides, Drive from top to bottom.
+      final ys = [
+        for (final app in WonkyAppKind.values)
+          tester.getTopLeft(key('home.app.${app.name}')).dy,
+      ];
+      expect(ys, [...ys]..sort());
+      expect(WonkyAppKind.values.first, WonkyAppKind.write);
+      expect(WonkyAppKind.values.last, WonkyAppKind.drive);
       for (final d in [
         'recent',
         'myFiles',
@@ -143,7 +151,7 @@ void main() {
       expect(
         tester.getSemantics(key('home.app.write')),
         matchesSemantics(
-          label: 'Wonky Write',
+          label: 'Write',
           hasSelectedState: true,
           isSelected: true,
         ),
@@ -165,19 +173,25 @@ void main() {
       await settleTooltips(tester);
     });
 
-    testWidgets('when + New opens then it offers the kind and templates only', (
-      tester,
-    ) async {
+    testWidgets('when the home shows then it has no + New (the template '
+        'strip creates), also with the left menu collapsed', (tester) async {
       await pumpScreen(tester, h, home());
 
-      await tester.tap(key('drive.new'));
+      expect(key('drive.new'), findsNothing);
+      expect(key('drive.template.blank'), findsOneWidget);
+
+      await tester.tap(key('shell.topBar.menu'));
       await tester.pumpAndSettle();
 
-      expect(find.text('Document'), findsOneWidget);
-      expect(find.text('Spreadsheet'), findsNothing);
-      expect(find.text('New folder'), findsNothing);
-      expect(find.textContaining('template'), findsWidgets);
+      expect(key('home.sidebar'), findsNothing);
+      expect(key('drive.new.topBar'), findsNothing);
       await settleTooltips(tester);
+    });
+
+    test('when deciding on + New then only Drive and v1 homes have it', () {
+      expect(showsSidebarNewButton(writeHome), isFalse);
+      expect(showsSidebarNewButton(const HomeScope.all()), isTrue);
+      expect(showsSidebarNewButton(null), isTrue);
     });
 
     testWidgets('when in a folder then Open in Wonky Drive shows that folder '
@@ -262,11 +276,39 @@ void main() {
       expect(
         tester.getSemantics(key('home.app.drive')),
         matchesSemantics(
-          label: 'Wonky Drive',
+          label: 'Drive',
           hasSelectedState: true,
           isSelected: true,
         ),
       );
+      await settleTooltips(tester);
+    });
+
+    testWidgets('when the left menu is collapsed then + New shows in the top '
+        'bar before the search field', (tester) async {
+      await pumpScreen(tester, h, home());
+      expect(key('drive.new'), findsOneWidget);
+      expect(key('drive.new.topBar'), findsNothing);
+
+      await tester.tap(key('shell.topBar.menu'));
+      await tester.pumpAndSettle();
+
+      expect(key('drive.new'), findsNothing);
+      expect(key('drive.new.topBar'), findsOneWidget);
+      expect(
+        tester.getTopLeft(key('drive.new.topBar')).dx,
+        lessThan(tester.getTopLeft(key('drive.search')).dx),
+      );
+      await tester.tap(key('drive.new.topBar'));
+      await tester.pumpAndSettle();
+      expect(find.text('New folder'), findsOneWidget);
+      expect(find.text('Presentation'), findsOneWidget);
+      await tester.sendKeyEvent(LogicalKeyboardKey.escape);
+      await tester.pumpAndSettle();
+
+      await tester.tap(key('shell.topBar.menu'));
+      await tester.pumpAndSettle();
+      expect(key('drive.new.topBar'), findsNothing);
       await settleTooltips(tester);
     });
 
