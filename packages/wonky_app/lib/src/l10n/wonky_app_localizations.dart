@@ -5277,6 +5277,138 @@ abstract class WonkyAppLocalizations {
   /// In en, this message translates to:
   /// **'with Claude'**
   String get activityDetailAgent;
+
+  /// No description provided for @markdownBold.
+  ///
+  /// In en, this message translates to:
+  /// **'Bold'**
+  String get markdownBold;
+
+  /// No description provided for @markdownItalic.
+  ///
+  /// In en, this message translates to:
+  /// **'Italic'**
+  String get markdownItalic;
+
+  /// No description provided for @markdownCode.
+  ///
+  /// In en, this message translates to:
+  /// **'Code'**
+  String get markdownCode;
+
+  /// No description provided for @markdownLink.
+  ///
+  /// In en, this message translates to:
+  /// **'Link'**
+  String get markdownLink;
+
+  /// No description provided for @markdownBulletedList.
+  ///
+  /// In en, this message translates to:
+  /// **'Bulleted list'**
+  String get markdownBulletedList;
+
+  /// The tab of the Markdown composer that shows the text field (Write | Preview).
+  ///
+  /// In en, this message translates to:
+  /// **'Write'**
+  String get markdownWrite;
+
+  /// The tab of the Markdown composer that shows the rendered Markdown (Write | Preview).
+  ///
+  /// In en, this message translates to:
+  /// **'Preview'**
+  String get markdownPreview;
+
+  /// No description provided for @markdownPreviewEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'Nothing to preview'**
+  String get markdownPreviewEmpty;
+
+  /// No description provided for @markdownLinkTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Insert link'**
+  String get markdownLinkTitle;
+
+  /// No description provided for @markdownLinkUrl.
+  ///
+  /// In en, this message translates to:
+  /// **'URL'**
+  String get markdownLinkUrl;
+
+  /// No description provided for @markdownLinkInsert.
+  ///
+  /// In en, this message translates to:
+  /// **'Insert'**
+  String get markdownLinkInsert;
+
+  /// No description provided for @markdownLinkInvalid.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter a web (http or https) or email (mailto) link'**
+  String get markdownLinkInvalid;
+
+  /// The character counter of the Markdown composer.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} / {max}'**
+  String markdownLength(int count, int max);
+
+  /// No description provided for @commentAddReaction.
+  ///
+  /// In en, this message translates to:
+  /// **'Add reaction'**
+  String get commentAddReaction;
+
+  /// Semantics label of a reaction chip on a comment.
+  ///
+  /// In en, this message translates to:
+  /// **'{emoji} {count, plural, =1{1 reaction} other{{count} reactions}}'**
+  String commentReaction(String emoji, int count);
+
+  /// Semantics label of the image lightbox when the image has no alt text.
+  ///
+  /// In en, this message translates to:
+  /// **'Image'**
+  String get lightboxImage;
+
+  /// No description provided for @lightboxClose.
+  ///
+  /// In en, this message translates to:
+  /// **'Close (Esc)'**
+  String get lightboxClose;
+
+  /// No description provided for @lightboxCloseImage.
+  ///
+  /// In en, this message translates to:
+  /// **'Close image'**
+  String get lightboxCloseImage;
+
+  /// No description provided for @lightboxLoadFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'The image couldn’t be loaded'**
+  String get lightboxLoadFailed;
+
+  /// No description provided for @lightboxZoomIn.
+  ///
+  /// In en, this message translates to:
+  /// **'Zoom in'**
+  String get lightboxZoomIn;
+
+  /// No description provided for @lightboxZoomOut.
+  ///
+  /// In en, this message translates to:
+  /// **'Zoom out'**
+  String get lightboxZoomOut;
+
+  /// No description provided for @lightboxFit.
+  ///
+  /// In en, this message translates to:
+  /// **'Fit to screen'**
+  String get lightboxFit;
 }
 
 class _WonkyAppLocalizationsDelegate

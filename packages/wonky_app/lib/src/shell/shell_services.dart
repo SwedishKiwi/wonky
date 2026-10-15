@@ -177,6 +177,13 @@ class ShellServices implements ActiveDocumentHost {
     debugLabel: 'shell',
   );
 
+  /// The `RepaintBoundary` around the whole app (built by `McpBridgeScope`):
+  /// `captureAppScreenshot` and the `ui.screenshot` MCP tool capture it
+  /// (specs/16 §5.1).
+  final GlobalKey screenshotBoundary = GlobalKey(
+    debugLabel: 'shell.screenshot',
+  );
+
   /// The active editor's controller.
   final ValueNotifier<DocumentController?> activeDocument = ValueNotifier(null);
 

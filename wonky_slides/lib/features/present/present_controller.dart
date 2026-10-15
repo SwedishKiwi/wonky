@@ -1001,7 +1001,7 @@ class PresentController extends ChangeNotifier {
         _filter = OneEuroFilter();
         _drawing = InkStroke(
           id: '$_inkPrefix-${_inkSeq++}',
-          tool: _tool,
+          tool: _tool.inkTool!,
           color: penColor,
           width: hl ? InkColors.highlighterWidth : penWidth,
           points: [_filter!.filter(su, _now())],

@@ -6,17 +6,27 @@ import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
 import 'package:shad/shad.dart';
 
+import '../l10n/wonky_app_localizations.dart';
+import '../l10n/wonky_app_localizations_en.dart';
+
 /// Stable keys of the lightbox (specs/15 §7).
 abstract final class LightboxKeys {
-  static const overlay = ValueKey<String>('write.lightbox');
-  static const close = ValueKey<String>('write.lightbox.close');
-  static const zoomIn = ValueKey<String>('write.lightbox.zoomIn');
-  static const zoomOut = ValueKey<String>('write.lightbox.zoomOut');
-  static const fit = ValueKey<String>('write.lightbox.fit');
-  static const zoomLabel = ValueKey<String>('write.lightbox.zoom');
+  static const overlay = ValueKey<String>('shell.lightbox');
+  static const close = ValueKey<String>('shell.lightbox.close');
+  static const zoomIn = ValueKey<String>('shell.lightbox.zoomIn');
+  static const zoomOut = ValueKey<String>('shell.lightbox.zoomOut');
+  static const fit = ValueKey<String>('shell.lightbox.fit');
+  static const zoomLabel = ValueKey<String>('shell.lightbox.zoom');
 }
 
-/// Shows [image] full screen inside the app (Write 04 §17.4): zoom 25–400 %
+/// The lightbox's strings (English when the shell's localizations are not
+/// installed, e.g. in an app's widget tests).
+WonkyAppLocalizations _l10n(BuildContext context) =>
+    Localizations.of<WonkyAppLocalizations>(context, WonkyAppLocalizations) ??
+    WonkyAppLocalizationsEn();
+
+/// Shows [image] full screen inside the app (Write 04 §17.4, shared with the
+/// board's screenshots, specs/16 §4.5): zoom 25–400 %
 /// (buttons, Mod +/−/0, wheel or pinch), pan by dragging, Esc or the close
 /// button (or a click on the backdrop) closes it. It never opens a tab.
 Future<void> showImageLightbox(
@@ -28,7 +38,7 @@ Future<void> showImageLightbox(
   return showGeneralDialog<void>(
     context: context,
     barrierDismissible: true,
-    barrierLabel: 'Close image',
+    barrierLabel: _l10n(context).lightboxCloseImage,
     barrierColor: const Color(0xe6000000),
     transitionDuration: MediaQuery.maybeDisableAnimationsOf(context) == true
         ? Duration.zero
@@ -63,7 +73,7 @@ class ImageLightbox extends StatefulWidget {
 
 class ImageLightboxState extends State<ImageLightbox> {
   final _transform = TransformationController();
-  final _focus = FocusNode(debugLabel: 'write-lightbox');
+  final _focus = FocusNode(debugLabel: 'lightbox');
   ImageStream? _stream;
   ImageStreamListener? _listener;
   Size? _natural;
@@ -196,7 +206,8 @@ class ImageLightboxState extends State<ImageLightbox> {
   @override
   Widget build(BuildContext context) {
     final theme = ShadTheme.of(context);
-    final label = widget.alt.isEmpty ? 'Image' : widget.alt;
+    final l = _l10n(context);
+    final label = widget.alt.isEmpty ? l.lightboxImage : widget.alt;
     return Focus(
       key: LightboxKeys.overlay,
       focusNode: _focus,
@@ -229,7 +240,7 @@ class ImageLightboxState extends State<ImageLightbox> {
                       child: Center(
                         child: _failed
                             ? Text(
-                                'The image couldn’t be loaded',
+                                l.lightboxLoadFailed,
                                 style: theme.textTheme.p.copyWith(
                                   color: const Color(0xffffffff),
                                 ),
@@ -258,7 +269,7 @@ class ImageLightboxState extends State<ImageLightbox> {
                     child: _Button(
                       key: LightboxKeys.close,
                       icon: LucideIcons.x,
-                      label: 'Close (Esc)',
+                      label: l.lightboxClose,
                       onPressed: () => Navigator.of(context).maybePop(),
                     ),
                   ),
@@ -278,6 +289,7 @@ class ImageLightboxState extends State<ImageLightbox> {
   }
 
   Widget _toolbar(BuildContext context) {
+    final l = _l10n(context);
     final caption = widget.title?.isNotEmpty == true
         ? widget.title!
         : widget.alt;
@@ -294,7 +306,7 @@ class ImageLightboxState extends State<ImageLightbox> {
             _Button(
               key: LightboxKeys.zoomOut,
               icon: LucideIcons.zoomOut,
-              label: 'Zoom out',
+              label: l.lightboxZoomOut,
               onPressed: zoom <= ImageLightbox.minZoom + 0.001
                   ? null
                   : () => _zoomBy(0.8),
@@ -315,7 +327,7 @@ class ImageLightboxState extends State<ImageLightbox> {
             _Button(
               key: LightboxKeys.zoomIn,
               icon: LucideIcons.zoomIn,
-              label: 'Zoom in',
+              label: l.lightboxZoomIn,
               onPressed: zoom >= ImageLightbox.maxZoom - 0.001
                   ? null
                   : () => _zoomBy(1.25),
@@ -323,7 +335,7 @@ class ImageLightboxState extends State<ImageLightbox> {
             _Button(
               key: LightboxKeys.fit,
               icon: LucideIcons.minimize,
-              label: 'Fit to screen',
+              label: l.lightboxFit,
               onPressed: fit,
             ),
             if (caption.isNotEmpty) ...[
@@ -380,7 +392,8 @@ class _Button extends StatelessWidget {
   }
 }
 
-/// Resolves an image source and shows the lightbox (`write.image.preview`).
+/// Resolves an image source and shows the lightbox (Write's
+/// `write.image.preview`).
 Future<bool> openLightbox(
   BuildContext context, {
   required FutureOr<ImageProvider?> Function() resolve,

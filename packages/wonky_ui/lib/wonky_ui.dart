@@ -2,6 +2,9 @@
 /// shad-style widgets. Pure presentation — no Serverpod or feature imports.
 library;
 
+export 'src/ink/ink_painter.dart';
+export 'src/ink/ink_stroke.dart';
+export 'src/ink/one_euro_filter.dart';
 export 'src/keys/key_names.dart';
 export 'src/l10n/wonky_ui_localizations.dart';
 export 'src/theme/wonky_colors.dart';

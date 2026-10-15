@@ -14,7 +14,6 @@ import '../features/editor/dnd/external_drop.dart';
 import '../features/editor/popovers/editor_popovers.dart';
 import '../features/images/image_services.dart';
 import '../features/import/import_service.dart';
-import '../features/lightbox/image_lightbox.dart';
 import '../features/screen/write_document_controller.dart';
 import '../features/special_chars/special_chars_dialog.dart';
 import '../features/spellcheck/spelling_dialogs.dart';

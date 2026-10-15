@@ -14,6 +14,7 @@ import 'package:flutter/scheduler.dart';
 
 import '../commands/command.dart';
 import '../bootstrap/app_urls.dart';
+import 'app_screenshot.dart';
 import 'ui_tool.dart';
 
 /// The shared `ui.*` tools (suite 09 §6.2), executed in this window. Every
@@ -383,12 +384,15 @@ abstract final class SharedUiTools {
     }
     await uiSettle();
     final size = object.size;
-    var scale = (a['scale'] as num?)?.toDouble() ?? 1.0;
     // Keep messages reasonable (≤ ~4 megapixels).
-    const maxPixels = 4000000;
-    final pixels = size.width * size.height * scale * scale;
-    if (pixels > maxPixels) scale *= maxPixels / pixels;
-    var image = await object.toImage(pixelRatio: scale);
+    final captured = await captureRepaintBoundary(
+      c.boundaryKey,
+      pixelRatio: (a['scale'] as num?)?.toDouble() ?? 1.0,
+    );
+    if (captured == null) {
+      throw const UiToolException('unavailable', 'Capturing failed.');
+    }
+    var (image, scale) = captured;
     final region = a['region'];
     if (region is Map) {
       final r = Rect.fromLTWH(

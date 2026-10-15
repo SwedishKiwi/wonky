@@ -2986,6 +2986,83 @@ class WonkyAppLocalizationsEn extends WonkyAppLocalizations {
 
   @override
   String get activityDetailAgent => 'with Claude';
+
+  @override
+  String get markdownBold => 'Bold';
+
+  @override
+  String get markdownItalic => 'Italic';
+
+  @override
+  String get markdownCode => 'Code';
+
+  @override
+  String get markdownLink => 'Link';
+
+  @override
+  String get markdownBulletedList => 'Bulleted list';
+
+  @override
+  String get markdownWrite => 'Write';
+
+  @override
+  String get markdownPreview => 'Preview';
+
+  @override
+  String get markdownPreviewEmpty => 'Nothing to preview';
+
+  @override
+  String get markdownLinkTitle => 'Insert link';
+
+  @override
+  String get markdownLinkUrl => 'URL';
+
+  @override
+  String get markdownLinkInsert => 'Insert';
+
+  @override
+  String get markdownLinkInvalid =>
+      'Enter a web (http or https) or email (mailto) link';
+
+  @override
+  String markdownLength(int count, int max) {
+    return '$count / $max';
+  }
+
+  @override
+  String get commentAddReaction => 'Add reaction';
+
+  @override
+  String commentReaction(String emoji, int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count reactions',
+      one: '1 reaction',
+    );
+    return '$emoji $_temp0';
+  }
+
+  @override
+  String get lightboxImage => 'Image';
+
+  @override
+  String get lightboxClose => 'Close (Esc)';
+
+  @override
+  String get lightboxCloseImage => 'Close image';
+
+  @override
+  String get lightboxLoadFailed => 'The image couldn’t be loaded';
+
+  @override
+  String get lightboxZoomIn => 'Zoom in';
+
+  @override
+  String get lightboxZoomOut => 'Zoom out';
+
+  @override
+  String get lightboxFit => 'Fit to screen';
 }
 
 /// The translations for English (`en_XA`).
@@ -6023,4 +6100,81 @@ class WonkyAppLocalizationsEnXa extends WonkyAppLocalizationsEn {
 
   @override
   String get activityDetailAgent => '[ŵîţĥ Çļåûðé one]';
+
+  @override
+  String get markdownBold => '[Ɓöļð on]';
+
+  @override
+  String get markdownItalic => '[Îţåļîç one]';
+
+  @override
+  String get markdownCode => '[Çöðé on]';
+
+  @override
+  String get markdownLink => '[Ļîñķ on]';
+
+  @override
+  String get markdownBulletedList => '[Ɓûļļéţéð ļîšţ one t]';
+
+  @override
+  String get markdownWrite => '[Ŵŕîţé on]';
+
+  @override
+  String get markdownPreview => '[Þŕéṽîéŵ one]';
+
+  @override
+  String get markdownPreviewEmpty => '[Ñöţĥîñĝ ţö þŕéṽîéŵ one tw]';
+
+  @override
+  String get markdownLinkTitle => '[Îñšéŕţ ļîñķ one]';
+
+  @override
+  String get markdownLinkUrl => '[ÛŔĻ on]';
+
+  @override
+  String get markdownLinkInsert => '[Îñšéŕţ one]';
+
+  @override
+  String get markdownLinkInvalid =>
+      '[Éñţéŕ å ŵéƀ (ĥţţþ öŕ ĥţţþš) öŕ éɱåîļ (ɱåîļţö) ļîñķ one two three f]';
+
+  @override
+  String markdownLength(int count, int max) {
+    return '[$count / $max o]';
+  }
+
+  @override
+  String get commentAddReaction => '[Åðð ŕéåçţîöñ one]';
+
+  @override
+  String commentReaction(String emoji, int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count ŕéåçţîöñš',
+      one: '1 ŕéåçţîöñ',
+    );
+    return '[$emoji $_temp0 one two]';
+  }
+
+  @override
+  String get lightboxImage => '[Îɱåĝé on]';
+
+  @override
+  String get lightboxClose => '[Çļöšé (Éšç) one]';
+
+  @override
+  String get lightboxCloseImage => '[Çļöšé îɱåĝé one]';
+
+  @override
+  String get lightboxLoadFailed => '[Ţĥé îɱåĝé çöûļðñ’ţ ƀé ļöåðéð one two t]';
+
+  @override
+  String get lightboxZoomIn => '[Žööɱ îñ one]';
+
+  @override
+  String get lightboxZoomOut => '[Žööɱ öûţ one]';
+
+  @override
+  String get lightboxFit => '[Ƒîţ ţö šçŕééñ one]';
 }

@@ -12,7 +12,8 @@ final Expando<McpBridgeClient> _bridges = Expando('mcpBridge');
 McpBridgeClient? mcpBridgeOf(ShellServices services) => _bridges[services];
 
 /// Hosts the MCP UI bridge for the whole window (suite 09 §6): wraps the app
-/// in the `RepaintBoundary` used by `ui.screenshot`, runs the bridge while
+/// in the `RepaintBoundary` ([ShellServices.screenshotBoundary]) used by
+/// `ui.screenshot` and `captureAppScreenshot`, runs the bridge while
 /// the user is signed in and "Allow MCP to control this window" is on (and
 /// the server enables the bridge), and reports route, open item and window
 /// focus changes to the hub.
@@ -35,7 +36,6 @@ class McpBridgeScope extends StatefulWidget {
 }
 
 class _McpBridgeScopeState extends State<McpBridgeScope> {
-  final GlobalKey _boundary = GlobalKey(debugLabel: 'mcp.screenshot');
   late final McpBridgeClient _bridge;
   late final AppLifecycleListener _lifecycle;
 
@@ -46,7 +46,7 @@ class _McpBridgeScopeState extends State<McpBridgeScope> {
     super.initState();
     _bridge = McpBridgeClient(
       s,
-      boundaryKey: _boundary,
+      boundaryKey: s.screenshotBoundary,
       appTools: widget.appTools,
     );
     _bridges[s] = _bridge;
@@ -111,5 +111,5 @@ class _McpBridgeScopeState extends State<McpBridgeScope> {
 
   @override
   Widget build(BuildContext context) =>
-      RepaintBoundary(key: _boundary, child: widget.child);
+      RepaintBoundary(key: s.screenshotBoundary, child: widget.child);
 }

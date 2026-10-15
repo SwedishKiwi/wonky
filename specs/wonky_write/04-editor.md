@@ -1005,7 +1005,7 @@ inputs and their toasts:
   - Comment
   - Delete
 - Double-click (or a click in Viewing mode, or *View full size*, `write.image.preview {nodeId?}`)
-  opens the **lightbox** (`features/lightbox/`): an in-app full-screen overlay with zoom 25–400 %
+  opens the **lightbox** (`showImageLightbox` in `wonky_app`, shared with the board): an in-app full-screen overlay with zoom 25–400 %
   of the natural size (buttons, +/−/0 keys, wheel, pinch), pan, a caption with the alt text or
   title, and Esc / the close button / a backdrop click to close. It never opens a new tab.
 - **Alt text dialog**: Alt text (textarea, 0–500 chars, with a hint about describing the

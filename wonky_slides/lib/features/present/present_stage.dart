@@ -124,10 +124,11 @@ class PresentStage extends StatelessWidget {
                     height: h,
                     child: IgnorePointer(
                       child: CustomPaint(
-                        painter: _InkPainter(
+                        painter: InkStrokePainter(
                           strokes: [...c.ink.strokesOf(p.slideId), ?c.drawing],
                           scale: scale,
-                          darkSlide: dark,
+                          darkBackground: dark,
+                          highlighterOpacity: InkColors.highlighterOpacity,
                         ),
                       ),
                     ),
@@ -396,59 +397,6 @@ class _PointerInputState extends State<_PointerInput> {
       child: widget.child,
     ),
   );
-}
-
-class _InkPainter extends CustomPainter {
-  _InkPainter({
-    required this.strokes,
-    required this.scale,
-    required this.darkSlide,
-  });
-
-  final List<InkStroke> strokes;
-  final double scale;
-  final bool darkSlide;
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    if (strokes.isEmpty) return;
-    canvas.save();
-    canvas.clipRect(Offset.zero & size);
-    canvas.scale(scale);
-    for (final s in strokes) {
-      final hl = s.tool == PresentTool.highlighter;
-      final paint = Paint()
-        ..style = PaintingStyle.stroke
-        ..strokeWidth = s.width
-        ..strokeCap = StrokeCap.round
-        ..strokeJoin = StrokeJoin.round
-        ..isAntiAlias = true
-        ..color = Color(
-          s.color,
-        ).withValues(alpha: hl ? InkColors.highlighterOpacity : 1);
-      // The highlighter multiplies on light slides and screens on dark
-      // ones (10 §4.3), so text stays readable underneath.
-      if (hl) {
-        paint.blendMode = darkSlide ? BlendMode.screen : BlendMode.multiply;
-      }
-      canvas.drawPath(s.path(), paint);
-    }
-    canvas.restore();
-  }
-
-  @override
-  bool shouldRepaint(_InkPainter old) =>
-      old.scale != scale ||
-      old.darkSlide != darkSlide ||
-      old.strokes.length != strokes.length ||
-      !_same(old.strokes, strokes);
-
-  static bool _same(List<InkStroke> a, List<InkStroke> b) {
-    for (var i = 0; i < a.length; i++) {
-      if (!identical(a[i], b[i])) return false;
-    }
-    return true;
-  }
 }
 
 class _LaserPainter extends CustomPainter {

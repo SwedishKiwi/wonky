@@ -1945,5 +1945,58 @@
   "activityDetailAgent": "with Claude",
   "@activityDetailAgent": {
     "description": "Detail of an edit event made through MCP or the assistant."
-  }
+  },
+  "markdownBold": "Bold",
+  "markdownItalic": "Italic",
+  "markdownCode": "Code",
+  "markdownLink": "Link",
+  "markdownBulletedList": "Bulleted list",
+  "markdownWrite": "Write",
+  "@markdownWrite": {
+    "description": "The tab of the Markdown composer that shows the text field (Write | Preview)."
+  },
+  "markdownPreview": "Preview",
+  "@markdownPreview": {
+    "description": "The tab of the Markdown composer that shows the rendered Markdown (Write | Preview)."
+  },
+  "markdownPreviewEmpty": "Nothing to preview",
+  "markdownLinkTitle": "Insert link",
+  "markdownLinkUrl": "URL",
+  "markdownLinkInsert": "Insert",
+  "markdownLinkInvalid": "Enter a web (http or https) or email (mailto) link",
+  "markdownLength": "{count} / {max}",
+  "@markdownLength": {
+    "description": "The character counter of the Markdown composer.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      },
+      "max": {
+        "type": "int"
+      }
+    }
+  },
+  "commentAddReaction": "Add reaction",
+  "commentReaction": "{emoji} {count, plural, =1{1 reaction} other{{count} reactions}}",
+  "@commentReaction": {
+    "description": "Semantics label of a reaction chip on a comment.",
+    "placeholders": {
+      "emoji": {
+        "type": "String"
+      },
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "lightboxImage": "Image",
+  "@lightboxImage": {
+    "description": "Semantics label of the image lightbox when the image has no alt text."
+  },
+  "lightboxClose": "Close (Esc)",
+  "lightboxCloseImage": "Close image",
+  "lightboxLoadFailed": "The image couldn’t be loaded",
+  "lightboxZoomIn": "Zoom in",
+  "lightboxZoomOut": "Zoom out",
+  "lightboxFit": "Fit to screen"
 }

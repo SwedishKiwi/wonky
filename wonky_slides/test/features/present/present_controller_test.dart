@@ -410,7 +410,7 @@ void main() {
         'and it parses back', () {
       final s = InkStroke(
         id: 'a',
-        tool: PresentTool.pen,
+        tool: InkTool.pen,
         color: 0xffef4444,
         width: 8,
         points: const [Offset(1.26, 2.74), Offset(10, 10)],

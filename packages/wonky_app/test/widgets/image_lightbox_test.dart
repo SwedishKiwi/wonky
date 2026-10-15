@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shad/shad.dart';
-import 'package:wonky_write/features/lightbox/image_lightbox.dart';
+import 'package:wonky_app/wonky_app.dart';
 
 /// A 1×1 transparent PNG.
 final _png = Uint8List.fromList(const [

@@ -11,7 +11,10 @@ import '../data/api.dart';
 import '../drive/drive_format.dart';
 import '../l10n/wonky_app_localizations.dart';
 import '../shell/shell_services.dart';
+import '../markdown/markdown_composer.dart';
+import '../markdown/wonky_markdown.dart';
 import 'comment_anchor.dart';
+import 'comment_thread_actions.dart';
 import 'comments_controller.dart';
 
 /// The comments side panel (suite 07 §2.3): filters, search, sort, the
@@ -764,23 +767,46 @@ class _CommentThreadCardState extends State<CommentThreadCard> {
 }
 
 /// The comments of a thread and its reply box (shared by
-/// [CommentThreadCard] and app cards such as Write's suggestion cards, whose
-/// replies are comments in the suggestion's thread).
+/// [CommentThreadCard], app cards such as Write's suggestion cards, whose
+/// replies are comments in the suggestion's thread, and the board).
+///
+/// The default constructor renders a document thread with
+/// [DocumentCommentThreadActions] (`shell.comments.*`);
+/// [CommentThreadBody.custom] renders [comments] whose actions go to
+/// [actions] (specs/16 §7.3). Bodies render as Markdown
+/// ([MarkdownProfile.comment]).
 class CommentThreadBody extends StatefulWidget {
   const CommentThreadBody({
     super.key,
     required this.services,
-    required this.controller,
-    required this.thread,
+    required CommentsController this.controller,
+    required CommentThreadView this.thread,
     this.canResolve = true,
-  });
+  }) : actions = null,
+       comments = null;
+
+  /// A thread whose comments and actions come from elsewhere (the board).
+  const CommentThreadBody.custom({
+    super.key,
+    required this.services,
+    required CommentThreadActions this.actions,
+    required List<ThreadComment> this.comments,
+  }) : controller = null,
+       thread = null,
+       canResolve = false;
 
   final ShellServices services;
-  final CommentsController controller;
-  final CommentThreadView thread;
+  final CommentsController? controller;
+  final CommentThreadView? thread;
 
-  /// Whether the first comment offers Resolve / Reopen.
+  /// Whether the first comment offers Resolve / Reopen (document threads).
   final bool canResolve;
+
+  /// The actions of a [CommentThreadBody.custom] thread.
+  final CommentThreadActions? actions;
+
+  /// The comments of a [CommentThreadBody.custom] thread, oldest first.
+  final List<ThreadComment>? comments;
 
   @override
   State<CommentThreadBody> createState() => _CommentThreadBodyState();
@@ -790,10 +816,19 @@ class _CommentThreadBodyState extends State<CommentThreadBody> {
   final _reply = TextEditingController();
   final _field = GlobalKey<MentionFieldState>();
   bool _replying = false;
-  int? _editing;
+  String? _editing;
   final _edit = TextEditingController();
 
   ShellServices get s => widget.services;
+
+  CommentThreadActions get _actions =>
+      widget.actions ??
+      DocumentCommentThreadActions(
+        services: s,
+        controller: widget.controller!,
+        thread: widget.thread!,
+        resolvable: widget.canResolve,
+      );
 
   @override
   void dispose() {
@@ -802,9 +837,9 @@ class _CommentThreadBodyState extends State<CommentThreadBody> {
     super.dispose();
   }
 
-  Future<void> _invoke(String id, Map<String, Object?> args) async {
+  Future<void> _run(Future<void> Function() action) async {
     try {
-      await s.dispatcher.invoke(id, args: args, source: InvocationSource.ui);
+      await action();
     } catch (e) {
       s.toasts.error(
         s.l10n?.commentFailed ?? 'Error',
@@ -813,48 +848,65 @@ class _CommentThreadBodyState extends State<CommentThreadBody> {
     }
   }
 
-  Future<void> _sendReply() async {
+  Future<void> _sendReply(CommentThreadActions a) async {
     final body = _reply.text.trim();
     if (body.isEmpty) return;
-    await _invoke('shell.comments.reply', {
-      'threadUuid': widget.thread.uuid.uuid,
-      'body': body,
-      'mentions': _field.currentState?.mentionIds ?? const <int>[],
-    });
+    final mentions = _field.currentState?.mentionIds ?? const <int>[];
+    await _run(() => a.reply(body, mentions: mentions));
     _reply.clear();
-    setState(() => _replying = false);
+    if (mounted) setState(() => _replying = false);
   }
 
   @override
   Widget build(BuildContext context) {
     final l = WonkyAppLocalizations.of(context);
     final theme = ShadTheme.of(context);
-    final t = widget.thread;
-    final resolved = t.status == CommentStatus.resolved;
-    final role = s.activeDocument.value?.role ?? Role.viewer;
+    final a = _actions;
+    final comments =
+        widget.comments ??
+        [
+          for (final cm in widget.thread!.comments)
+            ThreadComment.fromCommentView(cm, l),
+        ];
+    final p = a.keyPrefix;
+    final id = a.threadId;
+    final hint =
+        a.replyHint(l) ?? (a.mentions ? l.replyPlaceholder : l.cmdReply);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       mainAxisSize: MainAxisSize.min,
       children: [
-        for (var i = 0; i < t.comments.length; i++) ...[
+        for (var i = 0; i < comments.length; i++) ...[
           if (i > 0) const SizedBox(height: 10),
-          _commentRow(context, t, t.comments[i], first: i == 0, role: role),
+          _commentRow(context, a, comments[i], first: i == 0),
         ],
-        if (t.comments.isNotEmpty) const SizedBox(height: 10),
-        if (role.canComment && !resolved)
+        if (comments.isNotEmpty) const SizedBox(height: 10),
+        if (a.canReply)
           _replying
               ? Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    MentionField(
-                      key: _field,
-                      fieldKey: 'comments.reply.${t.uuid.uuid}',
-                      services: s,
-                      controller: _reply,
-                      autofocus: true,
-                      placeholder: l.replyPlaceholder,
-                      onSubmit: _sendReply,
-                    ),
+                    if (a.mentions)
+                      MentionField(
+                        key: _field,
+                        fieldKey: '$p.reply.$id',
+                        services: s,
+                        controller: _reply,
+                        autofocus: true,
+                        placeholder: hint,
+                        onSubmit: () => _sendReply(a),
+                      )
+                    else
+                      MarkdownComposer(
+                        fieldKey: '$p.reply.$id',
+                        controller: _reply,
+                        autofocus: true,
+                        hint: hint,
+                        minLines: 2,
+                        maxLines: 10,
+                        maxLength: a.maxLength,
+                        onSubmit: () => _sendReply(a),
+                      ),
                     const SizedBox(height: 6),
                     Row(
                       mainAxisAlignment: MainAxisAlignment.end,
@@ -866,32 +918,43 @@ class _CommentThreadBodyState extends State<CommentThreadBody> {
                         ),
                         const SizedBox(width: 6),
                         ShadButton(
-                          key: ValueKey<String>(
-                            'comments.reply.${t.uuid.uuid}.send',
-                          ),
+                          key: ValueKey<String>('$p.reply.$id.send'),
                           size: ShadButtonSize.sm,
-                          onPressed: _sendReply,
+                          onPressed: () => _sendReply(a),
                           child: Text(l.cmdReply),
                         ),
                       ],
                     ),
                   ],
                 )
-              : GestureDetector(
-                  onTap: () => setState(() => _replying = true),
-                  child: Container(
-                    key: ValueKey<String>('comments.reply.${t.uuid.uuid}.open'),
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 10,
-                      vertical: 8,
-                    ),
-                    decoration: BoxDecoration(
-                      border: Border.all(color: theme.colorScheme.input),
-                      borderRadius: BorderRadius.circular(18),
-                    ),
-                    child: Text(
-                      l.replyPlaceholder,
-                      style: theme.textTheme.muted,
+              : Semantics(
+                  button: true,
+                  label: hint,
+                  excludeSemantics: true,
+                  child: GestureDetector(
+                    onTap: () => setState(() => _replying = true),
+                    child: FocusableActionDetector(
+                      actions: {
+                        ActivateIntent: CallbackAction<ActivateIntent>(
+                          onInvoke: (_) {
+                            setState(() => _replying = true);
+                            return null;
+                          },
+                        ),
+                      },
+                      mouseCursor: SystemMouseCursors.text,
+                      child: Container(
+                        key: ValueKey<String>('$p.reply.$id.open'),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 10,
+                          vertical: 8,
+                        ),
+                        decoration: BoxDecoration(
+                          border: Border.all(color: theme.colorScheme.input),
+                          borderRadius: BorderRadius.circular(18),
+                        ),
+                        child: Text(hint, style: theme.textTheme.muted),
+                      ),
                     ),
                   ),
                 ),
@@ -901,41 +964,26 @@ class _CommentThreadBodyState extends State<CommentThreadBody> {
 
   Widget _commentRow(
     BuildContext context,
-    CommentThreadView t,
-    CommentView cm, {
+    CommentThreadActions a,
+    ThreadComment cm, {
     required bool first,
-    required Role role,
   }) {
     final l = WonkyAppLocalizations.of(context);
     final theme = ShadTheme.of(context);
-    final mine = cm.author?.id == s.me?.id;
-    final resolved = t.status == CommentStatus.resolved;
-    final event = cm.systemEvent;
-    if (event != null) {
-      final who = cm.author?.displayName;
+    final p = a.keyPrefix;
+    final system = cm.systemText;
+    if (system != null) {
       return Text(
-        // Orphaning and reviving are the server's doing (the anchored
-        // content was deleted or came back): no "Someone ·" and no raw
-        // enum name.
-        who == null && event == CommentSystemEvent.orphaned
-            ? l.commentEventOrphanedBySystem
-            : who == null && event == CommentSystemEvent.reopened
-            ? l.commentEventRestoredBySystem
-            : '${who ?? l.someone} · ${switch (event) {
-                CommentSystemEvent.resolved => l.commentEventResolved,
-                CommentSystemEvent.reopened => l.commentEventReopened,
-                CommentSystemEvent.assigned => l.commentEventAssigned,
-                CommentSystemEvent.orphaned => l.commentEventOrphaned,
-                CommentSystemEvent.suggestionAccepted => l.commentEventSuggestionAccepted,
-                CommentSystemEvent.suggestionRejected => l.commentEventSuggestionRejected,
-                CommentSystemEvent.suggestionWithdrawn => l.commentEventSuggestionWithdrawn,
-                CommentSystemEvent.suggestionSuperseded => l.commentEventSuggestionSuperseded,
-                CommentSystemEvent.suggestionReopened => l.commentEventSuggestionReopened,
-              }}',
-        key: ValueKey<String>('comments.event.${cm.id}'),
+        system,
+        key: ValueKey<String>('$p.event.${cm.id}'),
         style: theme.textTheme.muted.copyWith(fontSize: 12),
       );
     }
+    final canEdit = !cm.deleted && a.canEdit(cm);
+    final canDelete = !cm.deleted && a.canDelete(cm);
+    final resolved = a.resolved;
+    final copyLink = a.copyLink;
+    final react = a.react;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       mainAxisSize: MainAxisSize.min,
@@ -943,12 +991,12 @@ class _CommentThreadBodyState extends State<CommentThreadBody> {
         Row(
           children: [
             WonkyAvatar(
-              name: cm.author?.displayName ?? '?',
-              color: cm.author == null
+              name: cm.authorName ?? '?',
+              color: cm.authorColor == null
                   ? theme.colorScheme.muted
-                  : parseHexColor(cm.author!.avatarColor),
-              imageUrl: cm.author?.avatarUrl,
-              icon: cm.authorKind.name == 'user' ? null : LucideIcons.bot,
+                  : parseHexColor(cm.authorColor!),
+              imageUrl: cm.authorAvatarUrl,
+              icon: cm.authorIsAgent ? LucideIcons.bot : null,
               size: 26,
             ),
             const SizedBox(width: 8),
@@ -956,10 +1004,29 @@ class _CommentThreadBodyState extends State<CommentThreadBody> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    cm.author?.displayName ?? l.someone,
-                    style: theme.textTheme.small,
-                    overflow: TextOverflow.ellipsis,
+                  Row(
+                    children: [
+                      Flexible(
+                        child: Text(
+                          cm.authorName ?? l.someone,
+                          style: theme.textTheme.small,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                      if (cm.authorBadge != null) ...[
+                        const SizedBox(width: 6),
+                        ShadBadge.secondary(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 6,
+                            vertical: 0,
+                          ),
+                          child: Text(
+                            cm.authorBadge!,
+                            style: const TextStyle(fontSize: 11),
+                          ),
+                        ),
+                      ],
+                    ],
                   ),
                   Text(
                     '${timeAgo(l, cm.createdAt)}${cm.editedAt != null ? ' · ${l.commentEdited}' : ''}',
@@ -968,12 +1035,12 @@ class _CommentThreadBodyState extends State<CommentThreadBody> {
                 ],
               ),
             ),
-            if (first && role.canComment && widget.canResolve)
+            if (first && a.canResolve)
               ShadTooltip(
                 builder: (_) => Text(resolved ? l.cmdReopen : l.cmdResolve),
                 child: ShadIconButton.ghost(
                   key: ValueKey<String>(
-                    'comments.thread.${t.uuid.uuid}.${resolved ? 'reopen' : 'resolve'}',
+                    '$p.thread.${a.threadId}.${resolved ? 'reopen' : 'resolve'}',
                   ),
                   width: 28,
                   height: 28,
@@ -982,22 +1049,17 @@ class _CommentThreadBodyState extends State<CommentThreadBody> {
                   icon: Icon(
                     resolved ? LucideIcons.rotateCcw : LucideIcons.check,
                   ),
-                  onPressed: () => _invoke(
-                    resolved
-                        ? 'shell.comments.reopen'
-                        : 'shell.comments.resolve',
-                    {'threadUuid': t.uuid.uuid},
-                  ),
+                  onPressed: () => _run(() => a.setResolved(!resolved)),
                 ),
               ),
-            if (!cm.deleted && (mine || role.canEdit))
+            if (canEdit || canDelete)
               WonkyDropdownMenu(
                 anchor: const ShadAnchor(
                   childAlignment: AlignmentDirectional.bottomEnd,
                   overlayAlignment: AlignmentDirectional.topEnd,
                 ),
                 entries: () => [
-                  if (mine)
+                  if (canEdit)
                     WonkyMenuItem(
                       label: l.commentEdit,
                       icon: LucideIcons.pencil,
@@ -1006,29 +1068,24 @@ class _CommentThreadBodyState extends State<CommentThreadBody> {
                         _edit.text = cm.body;
                       }),
                     ),
-                  WonkyMenuItem(
-                    label: first ? l.commentDeleteThread : l.commentDelete,
-                    icon: LucideIcons.trash2,
-                    destructive: true,
-                    onSelected: () => _invoke('shell.comments.delete', {
-                      'threadUuid': t.uuid.uuid,
-                      if (!first) 'commentId': cm.id,
-                    }),
-                  ),
-                  WonkyMenuItem(
-                    label: l.commentLink,
-                    icon: LucideIcons.link,
-                    onSelected: () {
-                      final item = s.currentItem.value;
-                      if (item == null) return;
-                      final url =
-                          '${s.urls.urlFor(s.config.app, s.config.itemPath(item.uuid.uuid))}?comment=${t.uuid.uuid}';
-                      Clipboard.setData(ClipboardData(text: url));
-                      s.toasts.show(l.toastLinkCopied);
-                    },
-                  ),
+                  if (canDelete)
+                    WonkyMenuItem(
+                      label: a.deletesThread(cm)
+                          ? l.commentDeleteThread
+                          : l.commentDelete,
+                      icon: LucideIcons.trash2,
+                      destructive: true,
+                      onSelected: () => _run(() => a.delete(cm)),
+                    ),
+                  if (copyLink != null)
+                    WonkyMenuItem(
+                      label: l.commentLink,
+                      icon: LucideIcons.link,
+                      onSelected: () => copyLink(cm),
+                    ),
                 ],
                 builder: (context, ctl) => ShadIconButton.ghost(
+                  key: ValueKey<String>('$p.comment.${cm.id}.menu'),
                   width: 28,
                   height: 28,
                   iconSize: 16,
@@ -1044,7 +1101,17 @@ class _CommentThreadBodyState extends State<CommentThreadBody> {
           Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              ShadTextarea(controller: _edit, minHeight: 56),
+              if (a.mentions)
+                ShadTextarea(controller: _edit, minHeight: 56)
+              else
+                MarkdownComposer(
+                  fieldKey: '$p.comment.${cm.id}.edit',
+                  controller: _edit,
+                  autofocus: true,
+                  minLines: 2,
+                  maxLines: 10,
+                  maxLength: a.maxLength,
+                ),
               const SizedBox(height: 6),
               Row(
                 mainAxisAlignment: MainAxisAlignment.end,
@@ -1055,12 +1122,13 @@ class _CommentThreadBodyState extends State<CommentThreadBody> {
                     child: Text(l.actionCancel),
                   ),
                   ShadButton(
+                    key: ValueKey<String>('$p.comment.${cm.id}.save'),
                     size: ShadButtonSize.sm,
                     onPressed: () async {
                       final body = _edit.text.trim();
                       setState(() => _editing = null);
                       if (body.isNotEmpty && body != cm.body) {
-                        await widget.controller.edit(cm.id, body);
+                        await _run(() => a.edit(cm, body));
                       }
                     },
                     child: Text(l.actionSave),
@@ -1069,14 +1137,83 @@ class _CommentThreadBodyState extends State<CommentThreadBody> {
               ),
             ],
           )
+        else if (cm.deleted)
+          Text(l.commentDeleted, style: theme.textTheme.muted)
         else
-          Text(
-            cm.deleted ? l.commentDeleted : cm.body,
-            style: cm.deleted
-                ? theme.textTheme.muted
-                : theme.textTheme.small.copyWith(fontWeight: FontWeight.normal),
+          WonkyMarkdown(
+            cm.body,
+            key: ValueKey<String>('$p.comment.${cm.id}.body'),
+            profile: MarkdownProfile.comment,
+            style: theme.textTheme.small.copyWith(
+              fontWeight: FontWeight.normal,
+            ),
           ),
+        if (react != null && !cm.deleted) _reactions(context, a, cm, react),
       ],
+    );
+  }
+
+  static const _quickReactions = ['👍', '❤️', '🎉', '😄', '👀', '🚀'];
+
+  Widget _reactions(
+    BuildContext context,
+    CommentThreadActions a,
+    ThreadComment cm,
+    Future<void> Function(ThreadComment c, String emoji) react,
+  ) {
+    final l = WonkyAppLocalizations.of(context);
+    final theme = ShadTheme.of(context);
+    final cs = theme.colorScheme;
+    final p = a.keyPrefix;
+    final me = a.meId;
+    return Padding(
+      padding: const EdgeInsets.only(top: 6),
+      child: Wrap(
+        spacing: 4,
+        runSpacing: 4,
+        crossAxisAlignment: WrapCrossAlignment.center,
+        children: [
+          for (final e in cm.reactions.entries)
+            if (e.value.isNotEmpty)
+              Semantics(
+                button: true,
+                toggled: me != null && e.value.contains(me),
+                label: l.commentReaction(e.key, e.value.length),
+                excludeSemantics: true,
+                child: ShadButton.outline(
+                  key: ValueKey<String>(
+                    '$p.comment.${cm.id}.reaction.${e.key}',
+                  ),
+                  size: ShadButtonSize.sm,
+                  height: 24,
+                  padding: const EdgeInsets.symmetric(horizontal: 8),
+                  backgroundColor: me != null && e.value.contains(me)
+                      ? cs.accent
+                      : null,
+                  onPressed: () => _run(() => react(cm, e.key)),
+                  child: Text('${e.key} ${e.value.length}'),
+                ),
+              ),
+          WonkyDropdownMenu(
+            entries: () => [
+              for (final emoji in _quickReactions)
+                WonkyMenuItem(
+                  label: emoji,
+                  onSelected: () => _run(() => react(cm, emoji)),
+                ),
+            ],
+            builder: (context, ctl) => ShadIconButton.ghost(
+              key: ValueKey<String>('$p.comment.${cm.id}.react'),
+              width: 24,
+              height: 24,
+              iconSize: 14,
+              semanticLabel: l.commentAddReaction,
+              icon: const Icon(LucideIcons.smilePlus),
+              onPressed: ctl.toggle,
+            ),
+          ),
+        ],
+      ),
     );
   }
 }
