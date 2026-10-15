@@ -45,6 +45,16 @@ import 'package:wonky_server/src/generated/sheets/ai/models/sheets_fill_row.dart
     as _isuyxaqz;
 import 'package:wonky_server/src/generated/sheets/scripts/models/script_execution.dart'
     as _isf59hoo;
+import 'package:wonky_server/src/generated/slides/ai/models/slides_ai_alt_text.dart'
+    as _iqoob7q4;
+import 'package:wonky_server/src/generated/slides/ai/models/slides_ai_design_rank.dart'
+    as _ixtuoo5p;
+import 'package:wonky_server/src/generated/slides/ai/models/slides_ai_note.dart'
+    as _iug1yx01;
+import 'package:wonky_server/src/generated/slides/charts/models/chart_link_probe.dart'
+    as _izmhos0v;
+import 'package:wonky_server/src/generated/slides/charts/models/chart_link_status.dart'
+    as _imx2esrl;
 import 'package:wonky_server/src/generated/write/models/document_op_view.dart'
     as _icjb0pei;
 import 'package:wonky_server/src/generated/write/models/write_theme_revision_view.dart'
@@ -233,6 +243,21 @@ import 'sheets/scripts/models/script_quota_usage.dart' as _itn7c5zm;
 import 'sheets/scripts/models/script_run_response.dart' as _is0mvar3;
 import 'sheets/scripts/models/script_runtime_kind.dart' as _iy0fj18f;
 import 'sheets/scripts/models/script_trigger_state.dart' as _ixysij0q;
+import 'slides/ai/models/slides_ai_alt_text.dart' as _iwj0qehd;
+import 'slides/ai/models/slides_ai_apply_result.dart' as _ix6z7bmu;
+import 'slides/ai/models/slides_ai_build_result.dart' as _isdksxfl;
+import 'slides/ai/models/slides_ai_design_rank.dart' as _i154xjj9;
+import 'slides/ai/models/slides_ai_note.dart' as _itoukaix;
+import 'slides/ai/models/slides_ai_outline_request.dart' as _i225jf90;
+import 'slides/ai/models/slides_ai_preview.dart' as _ioipp9xy;
+import 'slides/ai/models/slides_ai_preview_call.dart' as _iuzye628;
+import 'slides/ai/models/slides_ai_rewrite_request.dart' as _ixaahmd2;
+import 'slides/charts/models/chart_link_probe.dart' as _i7q1o3oi;
+import 'slides/charts/models/chart_link_state.dart' as _i3ysrjbx;
+import 'slides/charts/models/chart_link_status.dart' as _is6z3tpy;
+import 'slides/charts/models/chart_snapshot_view.dart' as _iua8dx49;
+import 'slides/charts/models/chart_source_list.dart' as _iq1h9id2;
+import 'slides/charts/models/chart_source_summary.dart' as _inygrvyi;
 import 'slides/models/deck_change_log_receipt.dart' as _ircoml6y;
 import 'slides/present/models/presentation_bus_message.dart' as _ildgqgkz;
 import 'slides/present/models/presentation_event.dart' as _iz9vxb2f;
@@ -242,6 +267,7 @@ import 'slides/present/models/presentation_role.dart' as _i4d7um9r;
 import 'slides/present/models/presentation_session_info.dart' as _ig7ln54r;
 import 'slides/present/models/presentation_state.dart' as _i95fngt4;
 import 'slides/present/models/presentation_update.dart' as _ijdad65m;
+import 'slides/versions/slides_snapshot_index.dart' as _iy6ry83r;
 import 'write/mcp/headless_change.dart' as _iilidizm;
 import 'write/messages/doc_bus_message.dart' as _i8zfu67r;
 import 'write/messages/doc_client_message.dart' as _imbts8if;
@@ -446,6 +472,21 @@ export 'sheets/scripts/models/script_quota_usage.dart';
 export 'sheets/scripts/models/script_run_response.dart';
 export 'sheets/scripts/models/script_runtime_kind.dart';
 export 'sheets/scripts/models/script_trigger_state.dart';
+export 'slides/ai/models/slides_ai_alt_text.dart';
+export 'slides/ai/models/slides_ai_apply_result.dart';
+export 'slides/ai/models/slides_ai_build_result.dart';
+export 'slides/ai/models/slides_ai_design_rank.dart';
+export 'slides/ai/models/slides_ai_note.dart';
+export 'slides/ai/models/slides_ai_outline_request.dart';
+export 'slides/ai/models/slides_ai_preview.dart';
+export 'slides/ai/models/slides_ai_preview_call.dart';
+export 'slides/ai/models/slides_ai_rewrite_request.dart';
+export 'slides/charts/models/chart_link_probe.dart';
+export 'slides/charts/models/chart_link_state.dart';
+export 'slides/charts/models/chart_link_status.dart';
+export 'slides/charts/models/chart_snapshot_view.dart';
+export 'slides/charts/models/chart_source_list.dart';
+export 'slides/charts/models/chart_source_summary.dart';
 export 'slides/models/deck_change_log_receipt.dart';
 export 'slides/present/models/presentation_bus_message.dart';
 export 'slides/present/models/presentation_event.dart';
@@ -455,6 +496,7 @@ export 'slides/present/models/presentation_role.dart';
 export 'slides/present/models/presentation_session_info.dart';
 export 'slides/present/models/presentation_state.dart';
 export 'slides/present/models/presentation_update.dart';
+export 'slides/versions/slides_snapshot_index.dart';
 export 'write/mcp/headless_change.dart';
 export 'write/messages/doc_bus_message.dart';
 export 'write/messages/doc_client_message.dart';
@@ -689,6 +731,21 @@ class Protocol extends _is.DatabaseSerializationManager
           _is.getType<_is0mvar3.ScriptRunResponse>,
           _is.getType<_iy0fj18f.ScriptRuntimeKind>,
           _is.getType<_ixysij0q.ScriptTriggerState>,
+          _is.getType<_iwj0qehd.SlidesAiAltText>,
+          _is.getType<_ix6z7bmu.SlidesAiApplyResult>,
+          _is.getType<_isdksxfl.SlidesAiBuildResult>,
+          _is.getType<_i154xjj9.SlidesAiDesignRank>,
+          _is.getType<_itoukaix.SlidesAiNote>,
+          _is.getType<_i225jf90.SlidesAiOutlineRequest>,
+          _is.getType<_ioipp9xy.SlidesAiPreview>,
+          _is.getType<_iuzye628.SlidesAiPreviewCall>,
+          _is.getType<_ixaahmd2.SlidesAiRewriteRequest>,
+          _is.getType<_i7q1o3oi.ChartLinkProbe>,
+          _is.getType<_i3ysrjbx.ChartLinkState>,
+          _is.getType<_is6z3tpy.ChartLinkStatus>,
+          _is.getType<_iua8dx49.ChartSnapshotView>,
+          _is.getType<_iq1h9id2.ChartSourceList>,
+          _is.getType<_inygrvyi.ChartSourceSummary>,
           _is.getType<_ircoml6y.DeckChangeLogReceipt>,
           _is.getType<_ildgqgkz.PresentationBusMessage>,
           _is.getType<_iz9vxb2f.PresentationCommandEvent>,
@@ -709,6 +766,7 @@ class Protocol extends _is.DatabaseSerializationManager
           _is.getType<_ig7ln54r.PresentationSessionInfo>,
           _is.getType<_i95fngt4.PresentationState>,
           _is.getType<_ijdad65m.PresentationStateUpdate>,
+          _is.getType<_iy6ry83r.SlidesSnapshotIndex>,
           _is.getType<_iilidizm.HeadlessChange>,
           _is.getType<_icpkpcrn.DocAck>,
           _is.getType<_i8zfu67r.DocBusMessage>,
@@ -942,6 +1000,21 @@ class Protocol extends _is.DatabaseSerializationManager
           _is.getType<_is0mvar3.ScriptRunResponse?>,
           _is.getType<_iy0fj18f.ScriptRuntimeKind?>,
           _is.getType<_ixysij0q.ScriptTriggerState?>,
+          _is.getType<_iwj0qehd.SlidesAiAltText?>,
+          _is.getType<_ix6z7bmu.SlidesAiApplyResult?>,
+          _is.getType<_isdksxfl.SlidesAiBuildResult?>,
+          _is.getType<_i154xjj9.SlidesAiDesignRank?>,
+          _is.getType<_itoukaix.SlidesAiNote?>,
+          _is.getType<_i225jf90.SlidesAiOutlineRequest?>,
+          _is.getType<_ioipp9xy.SlidesAiPreview?>,
+          _is.getType<_iuzye628.SlidesAiPreviewCall?>,
+          _is.getType<_ixaahmd2.SlidesAiRewriteRequest?>,
+          _is.getType<_i7q1o3oi.ChartLinkProbe?>,
+          _is.getType<_i3ysrjbx.ChartLinkState?>,
+          _is.getType<_is6z3tpy.ChartLinkStatus?>,
+          _is.getType<_iua8dx49.ChartSnapshotView?>,
+          _is.getType<_iq1h9id2.ChartSourceList?>,
+          _is.getType<_inygrvyi.ChartSourceSummary?>,
           _is.getType<_ircoml6y.DeckChangeLogReceipt?>,
           _is.getType<_ildgqgkz.PresentationBusMessage?>,
           _is.getType<_iz9vxb2f.PresentationCommandEvent?>,
@@ -962,6 +1035,7 @@ class Protocol extends _is.DatabaseSerializationManager
           _is.getType<_ig7ln54r.PresentationSessionInfo?>,
           _is.getType<_i95fngt4.PresentationState?>,
           _is.getType<_ijdad65m.PresentationStateUpdate?>,
+          _is.getType<_iy6ry83r.SlidesSnapshotIndex?>,
           _is.getType<_iilidizm.HeadlessChange?>,
           _is.getType<_icpkpcrn.DocAck?>,
           _is.getType<_i8zfu67r.DocBusMessage?>,
@@ -1035,6 +1109,8 @@ class Protocol extends _is.DatabaseSerializationManager
           _is.getType<Map<int, int>>,
           _is.getType<List<_i9yjzgjk.SheetsContributorStat>>,
           _is.getType<Map<String, int>>,
+          _is.getType<List<_iuzye628.SlidesAiPreviewCall>>,
+          _is.getType<List<_inygrvyi.ChartSourceSummary>>,
           _is.getType<List<_ijgt5qi7.PresentationParticipant>>,
           _is.getType<List<_issmv319.DocumentOpView>>,
           _is.getType<List<_issmv319.DocumentOpView>?>,
@@ -1058,6 +1134,11 @@ class Protocol extends _is.DatabaseSerializationManager
           _is.getType<List<_iq57nmvp.SheetsAiCellResult>>,
           _is.getType<List<_ifqit8uo.SheetsAiCellRequest>>,
           _is.getType<List<_isf59hoo.ScriptExecution>>,
+          _is.getType<List<_iug1yx01.SlidesAiNote>>,
+          _is.getType<List<_iqoob7q4.SlidesAiAltText>>,
+          _is.getType<List<_ixtuoo5p.SlidesAiDesignRank>>,
+          _is.getType<List<_imx2esrl.ChartLinkStatus>>,
+          _is.getType<List<_izmhos0v.ChartLinkProbe>>,
           _is.getType<List<_icjb0pei.DocumentOpView>>,
           _is.getType<List<_ipbzt39t.WriteThemeView>>,
           _is.getType<List<_iu3gmhy1.WriteThemeRevisionView>>,
@@ -5460,6 +5541,73 @@ class Protocol extends _is.DatabaseSerializationManager
       managed: true,
     ),
     _isp.TableDefinition(
+      name: 'slides_snapshot_index',
+      dartName: 'SlidesSnapshotIndex',
+      schema: 'public',
+      module: 'wonky',
+      columns: [
+        _isp.ColumnDefinition(
+          name: 'id',
+          columnType: _isp.ColumnType.bigint,
+          isNullable: false,
+          dartType: 'int?',
+          columnDefault: 'serial',
+        ),
+        _isp.ColumnDefinition(
+          name: 'itemVersionId',
+          columnType: _isp.ColumnType.bigint,
+          isNullable: false,
+          dartType: 'int',
+        ),
+        _isp.ColumnDefinition(
+          name: 'slidesJson',
+          columnType: _isp.ColumnType.text,
+          isNullable: false,
+          dartType: 'String',
+        ),
+        _isp.ColumnDefinition(
+          name: 'changesJson',
+          columnType: _isp.ColumnType.text,
+          isNullable: false,
+          dartType: 'String',
+        ),
+        _isp.ColumnDefinition(
+          name: 'authorIds',
+          columnType: _isp.ColumnType.json,
+          isNullable: false,
+          dartType: 'List<int>',
+        ),
+      ],
+      foreignKeys: [
+        _isp.ForeignKeyDefinition(
+          constraintName: 'slides_snapshot_index_fk_0',
+          columns: ['itemVersionId'],
+          referenceTable: 'item_version',
+          referenceTableSchema: 'public',
+          referenceColumns: ['id'],
+          onUpdate: _isp.ForeignKeyAction.noAction,
+          onDelete: _isp.ForeignKeyAction.cascade,
+          matchType: null,
+        ),
+      ],
+      indexes: [
+        _isp.IndexDefinition(
+          indexName: 'slides_snapshot_index_version_idx',
+          tableSpace: null,
+          elements: [
+            _isp.IndexElementDefinition(
+              type: _isp.IndexElementDefinitionType.column,
+              definition: 'itemVersionId',
+            ),
+          ],
+          type: 'btree',
+          isUnique: true,
+          isPrimary: false,
+        ),
+      ],
+      managed: true,
+    ),
+    _isp.TableDefinition(
       name: 'space_reservation',
       dartName: 'SpaceReservation',
       schema: 'public',
@@ -7303,6 +7451,51 @@ class Protocol extends _is.DatabaseSerializationManager
     if (t == _ixysij0q.ScriptTriggerState) {
       return _ixysij0q.ScriptTriggerState.fromJson(data) as T;
     }
+    if (t == _iwj0qehd.SlidesAiAltText) {
+      return _iwj0qehd.SlidesAiAltText.fromJson(data) as T;
+    }
+    if (t == _ix6z7bmu.SlidesAiApplyResult) {
+      return _ix6z7bmu.SlidesAiApplyResult.fromJson(data) as T;
+    }
+    if (t == _isdksxfl.SlidesAiBuildResult) {
+      return _isdksxfl.SlidesAiBuildResult.fromJson(data) as T;
+    }
+    if (t == _i154xjj9.SlidesAiDesignRank) {
+      return _i154xjj9.SlidesAiDesignRank.fromJson(data) as T;
+    }
+    if (t == _itoukaix.SlidesAiNote) {
+      return _itoukaix.SlidesAiNote.fromJson(data) as T;
+    }
+    if (t == _i225jf90.SlidesAiOutlineRequest) {
+      return _i225jf90.SlidesAiOutlineRequest.fromJson(data) as T;
+    }
+    if (t == _ioipp9xy.SlidesAiPreview) {
+      return _ioipp9xy.SlidesAiPreview.fromJson(data) as T;
+    }
+    if (t == _iuzye628.SlidesAiPreviewCall) {
+      return _iuzye628.SlidesAiPreviewCall.fromJson(data) as T;
+    }
+    if (t == _ixaahmd2.SlidesAiRewriteRequest) {
+      return _ixaahmd2.SlidesAiRewriteRequest.fromJson(data) as T;
+    }
+    if (t == _i7q1o3oi.ChartLinkProbe) {
+      return _i7q1o3oi.ChartLinkProbe.fromJson(data) as T;
+    }
+    if (t == _i3ysrjbx.ChartLinkState) {
+      return _i3ysrjbx.ChartLinkState.fromJson(data) as T;
+    }
+    if (t == _is6z3tpy.ChartLinkStatus) {
+      return _is6z3tpy.ChartLinkStatus.fromJson(data) as T;
+    }
+    if (t == _iua8dx49.ChartSnapshotView) {
+      return _iua8dx49.ChartSnapshotView.fromJson(data) as T;
+    }
+    if (t == _iq1h9id2.ChartSourceList) {
+      return _iq1h9id2.ChartSourceList.fromJson(data) as T;
+    }
+    if (t == _inygrvyi.ChartSourceSummary) {
+      return _inygrvyi.ChartSourceSummary.fromJson(data) as T;
+    }
     if (t == _ircoml6y.DeckChangeLogReceipt) {
       return _ircoml6y.DeckChangeLogReceipt.fromJson(data) as T;
     }
@@ -7362,6 +7555,9 @@ class Protocol extends _is.DatabaseSerializationManager
     }
     if (t == _ijdad65m.PresentationStateUpdate) {
       return _ijdad65m.PresentationStateUpdate.fromJson(data) as T;
+    }
+    if (t == _iy6ry83r.SlidesSnapshotIndex) {
+      return _iy6ry83r.SlidesSnapshotIndex.fromJson(data) as T;
     }
     if (t == _iilidizm.HeadlessChange) {
       return _iilidizm.HeadlessChange.fromJson(data) as T;
@@ -8282,6 +8478,75 @@ class Protocol extends _is.DatabaseSerializationManager
       return (data != null ? _ixysij0q.ScriptTriggerState.fromJson(data) : null)
           as T;
     }
+    if (t == _is.getType<_iwj0qehd.SlidesAiAltText?>()) {
+      return (data != null ? _iwj0qehd.SlidesAiAltText.fromJson(data) : null)
+          as T;
+    }
+    if (t == _is.getType<_ix6z7bmu.SlidesAiApplyResult?>()) {
+      return (data != null
+              ? _ix6z7bmu.SlidesAiApplyResult.fromJson(data)
+              : null)
+          as T;
+    }
+    if (t == _is.getType<_isdksxfl.SlidesAiBuildResult?>()) {
+      return (data != null
+              ? _isdksxfl.SlidesAiBuildResult.fromJson(data)
+              : null)
+          as T;
+    }
+    if (t == _is.getType<_i154xjj9.SlidesAiDesignRank?>()) {
+      return (data != null ? _i154xjj9.SlidesAiDesignRank.fromJson(data) : null)
+          as T;
+    }
+    if (t == _is.getType<_itoukaix.SlidesAiNote?>()) {
+      return (data != null ? _itoukaix.SlidesAiNote.fromJson(data) : null) as T;
+    }
+    if (t == _is.getType<_i225jf90.SlidesAiOutlineRequest?>()) {
+      return (data != null
+              ? _i225jf90.SlidesAiOutlineRequest.fromJson(data)
+              : null)
+          as T;
+    }
+    if (t == _is.getType<_ioipp9xy.SlidesAiPreview?>()) {
+      return (data != null ? _ioipp9xy.SlidesAiPreview.fromJson(data) : null)
+          as T;
+    }
+    if (t == _is.getType<_iuzye628.SlidesAiPreviewCall?>()) {
+      return (data != null
+              ? _iuzye628.SlidesAiPreviewCall.fromJson(data)
+              : null)
+          as T;
+    }
+    if (t == _is.getType<_ixaahmd2.SlidesAiRewriteRequest?>()) {
+      return (data != null
+              ? _ixaahmd2.SlidesAiRewriteRequest.fromJson(data)
+              : null)
+          as T;
+    }
+    if (t == _is.getType<_i7q1o3oi.ChartLinkProbe?>()) {
+      return (data != null ? _i7q1o3oi.ChartLinkProbe.fromJson(data) : null)
+          as T;
+    }
+    if (t == _is.getType<_i3ysrjbx.ChartLinkState?>()) {
+      return (data != null ? _i3ysrjbx.ChartLinkState.fromJson(data) : null)
+          as T;
+    }
+    if (t == _is.getType<_is6z3tpy.ChartLinkStatus?>()) {
+      return (data != null ? _is6z3tpy.ChartLinkStatus.fromJson(data) : null)
+          as T;
+    }
+    if (t == _is.getType<_iua8dx49.ChartSnapshotView?>()) {
+      return (data != null ? _iua8dx49.ChartSnapshotView.fromJson(data) : null)
+          as T;
+    }
+    if (t == _is.getType<_iq1h9id2.ChartSourceList?>()) {
+      return (data != null ? _iq1h9id2.ChartSourceList.fromJson(data) : null)
+          as T;
+    }
+    if (t == _is.getType<_inygrvyi.ChartSourceSummary?>()) {
+      return (data != null ? _inygrvyi.ChartSourceSummary.fromJson(data) : null)
+          as T;
+    }
     if (t == _is.getType<_ircoml6y.DeckChangeLogReceipt?>()) {
       return (data != null
               ? _ircoml6y.DeckChangeLogReceipt.fromJson(data)
@@ -8393,6 +8658,12 @@ class Protocol extends _is.DatabaseSerializationManager
     if (t == _is.getType<_ijdad65m.PresentationStateUpdate?>()) {
       return (data != null
               ? _ijdad65m.PresentationStateUpdate.fromJson(data)
+              : null)
+          as T;
+    }
+    if (t == _is.getType<_iy6ry83r.SlidesSnapshotIndex?>()) {
+      return (data != null
+              ? _iy6ry83r.SlidesSnapshotIndex.fromJson(data)
               : null)
           as T;
     }
@@ -8758,6 +9029,18 @@ class Protocol extends _is.DatabaseSerializationManager
           )
           as T;
     }
+    if (t == List<_iuzye628.SlidesAiPreviewCall>) {
+      return (data as List)
+              .map((e) => deserialize<_iuzye628.SlidesAiPreviewCall>(e))
+              .toList()
+          as T;
+    }
+    if (t == List<_inygrvyi.ChartSourceSummary>) {
+      return (data as List)
+              .map((e) => deserialize<_inygrvyi.ChartSourceSummary>(e))
+              .toList()
+          as T;
+    }
     if (t == List<_ijgt5qi7.PresentationParticipant>) {
       return (data as List)
               .map((e) => deserialize<_ijgt5qi7.PresentationParticipant>(e))
@@ -8889,6 +9172,36 @@ class Protocol extends _is.DatabaseSerializationManager
     if (t == List<_isf59hoo.ScriptExecution>) {
       return (data as List)
               .map((e) => deserialize<_isf59hoo.ScriptExecution>(e))
+              .toList()
+          as T;
+    }
+    if (t == List<_iug1yx01.SlidesAiNote>) {
+      return (data as List)
+              .map((e) => deserialize<_iug1yx01.SlidesAiNote>(e))
+              .toList()
+          as T;
+    }
+    if (t == List<_iqoob7q4.SlidesAiAltText>) {
+      return (data as List)
+              .map((e) => deserialize<_iqoob7q4.SlidesAiAltText>(e))
+              .toList()
+          as T;
+    }
+    if (t == List<_ixtuoo5p.SlidesAiDesignRank>) {
+      return (data as List)
+              .map((e) => deserialize<_ixtuoo5p.SlidesAiDesignRank>(e))
+              .toList()
+          as T;
+    }
+    if (t == List<_imx2esrl.ChartLinkStatus>) {
+      return (data as List)
+              .map((e) => deserialize<_imx2esrl.ChartLinkStatus>(e))
+              .toList()
+          as T;
+    }
+    if (t == List<_izmhos0v.ChartLinkProbe>) {
+      return (data as List)
+              .map((e) => deserialize<_izmhos0v.ChartLinkProbe>(e))
               .toList()
           as T;
     }
@@ -9117,6 +9430,21 @@ class Protocol extends _is.DatabaseSerializationManager
       _is0mvar3.ScriptRunResponse => 'ScriptRunResponse',
       _iy0fj18f.ScriptRuntimeKind => 'ScriptRuntimeKind',
       _ixysij0q.ScriptTriggerState => 'ScriptTriggerState',
+      _iwj0qehd.SlidesAiAltText => 'SlidesAiAltText',
+      _ix6z7bmu.SlidesAiApplyResult => 'SlidesAiApplyResult',
+      _isdksxfl.SlidesAiBuildResult => 'SlidesAiBuildResult',
+      _i154xjj9.SlidesAiDesignRank => 'SlidesAiDesignRank',
+      _itoukaix.SlidesAiNote => 'SlidesAiNote',
+      _i225jf90.SlidesAiOutlineRequest => 'SlidesAiOutlineRequest',
+      _ioipp9xy.SlidesAiPreview => 'SlidesAiPreview',
+      _iuzye628.SlidesAiPreviewCall => 'SlidesAiPreviewCall',
+      _ixaahmd2.SlidesAiRewriteRequest => 'SlidesAiRewriteRequest',
+      _i7q1o3oi.ChartLinkProbe => 'ChartLinkProbe',
+      _i3ysrjbx.ChartLinkState => 'ChartLinkState',
+      _is6z3tpy.ChartLinkStatus => 'ChartLinkStatus',
+      _iua8dx49.ChartSnapshotView => 'ChartSnapshotView',
+      _iq1h9id2.ChartSourceList => 'ChartSourceList',
+      _inygrvyi.ChartSourceSummary => 'ChartSourceSummary',
       _ircoml6y.DeckChangeLogReceipt => 'DeckChangeLogReceipt',
       _ildgqgkz.PresentationBusMessage => 'PresentationBusMessage',
       _iz9vxb2f.PresentationCommandEvent => 'PresentationCommandEvent',
@@ -9137,6 +9465,7 @@ class Protocol extends _is.DatabaseSerializationManager
       _ig7ln54r.PresentationSessionInfo => 'PresentationSessionInfo',
       _i95fngt4.PresentationState => 'PresentationState',
       _ijdad65m.PresentationStateUpdate => 'PresentationStateUpdate',
+      _iy6ry83r.SlidesSnapshotIndex => 'SlidesSnapshotIndex',
       _iilidizm.HeadlessChange => 'HeadlessChange',
       _icpkpcrn.DocAck => 'DocAck',
       _i8zfu67r.DocBusMessage => 'DocBusMessage',
@@ -9574,6 +9903,36 @@ class Protocol extends _is.DatabaseSerializationManager
         return 'ScriptRuntimeKind';
       case _ixysij0q.ScriptTriggerState():
         return 'ScriptTriggerState';
+      case _iwj0qehd.SlidesAiAltText():
+        return 'SlidesAiAltText';
+      case _ix6z7bmu.SlidesAiApplyResult():
+        return 'SlidesAiApplyResult';
+      case _isdksxfl.SlidesAiBuildResult():
+        return 'SlidesAiBuildResult';
+      case _i154xjj9.SlidesAiDesignRank():
+        return 'SlidesAiDesignRank';
+      case _itoukaix.SlidesAiNote():
+        return 'SlidesAiNote';
+      case _i225jf90.SlidesAiOutlineRequest():
+        return 'SlidesAiOutlineRequest';
+      case _ioipp9xy.SlidesAiPreview():
+        return 'SlidesAiPreview';
+      case _iuzye628.SlidesAiPreviewCall():
+        return 'SlidesAiPreviewCall';
+      case _ixaahmd2.SlidesAiRewriteRequest():
+        return 'SlidesAiRewriteRequest';
+      case _i7q1o3oi.ChartLinkProbe():
+        return 'ChartLinkProbe';
+      case _i3ysrjbx.ChartLinkState():
+        return 'ChartLinkState';
+      case _is6z3tpy.ChartLinkStatus():
+        return 'ChartLinkStatus';
+      case _iua8dx49.ChartSnapshotView():
+        return 'ChartSnapshotView';
+      case _iq1h9id2.ChartSourceList():
+        return 'ChartSourceList';
+      case _inygrvyi.ChartSourceSummary():
+        return 'ChartSourceSummary';
       case _ircoml6y.DeckChangeLogReceipt():
         return 'DeckChangeLogReceipt';
       case _ildgqgkz.PresentationBusMessage():
@@ -9614,6 +9973,8 @@ class Protocol extends _is.DatabaseSerializationManager
         return 'PresentationState';
       case _ijdad65m.PresentationStateUpdate():
         return 'PresentationStateUpdate';
+      case _iy6ry83r.SlidesSnapshotIndex():
+        return 'SlidesSnapshotIndex';
       case _iilidizm.HeadlessChange():
         return 'HeadlessChange';
       case _icpkpcrn.DocAck():
@@ -10314,6 +10675,51 @@ class Protocol extends _is.DatabaseSerializationManager
     if (dataClassName == 'ScriptTriggerState') {
       return deserialize<_ixysij0q.ScriptTriggerState>(data['data']);
     }
+    if (dataClassName == 'SlidesAiAltText') {
+      return deserialize<_iwj0qehd.SlidesAiAltText>(data['data']);
+    }
+    if (dataClassName == 'SlidesAiApplyResult') {
+      return deserialize<_ix6z7bmu.SlidesAiApplyResult>(data['data']);
+    }
+    if (dataClassName == 'SlidesAiBuildResult') {
+      return deserialize<_isdksxfl.SlidesAiBuildResult>(data['data']);
+    }
+    if (dataClassName == 'SlidesAiDesignRank') {
+      return deserialize<_i154xjj9.SlidesAiDesignRank>(data['data']);
+    }
+    if (dataClassName == 'SlidesAiNote') {
+      return deserialize<_itoukaix.SlidesAiNote>(data['data']);
+    }
+    if (dataClassName == 'SlidesAiOutlineRequest') {
+      return deserialize<_i225jf90.SlidesAiOutlineRequest>(data['data']);
+    }
+    if (dataClassName == 'SlidesAiPreview') {
+      return deserialize<_ioipp9xy.SlidesAiPreview>(data['data']);
+    }
+    if (dataClassName == 'SlidesAiPreviewCall') {
+      return deserialize<_iuzye628.SlidesAiPreviewCall>(data['data']);
+    }
+    if (dataClassName == 'SlidesAiRewriteRequest') {
+      return deserialize<_ixaahmd2.SlidesAiRewriteRequest>(data['data']);
+    }
+    if (dataClassName == 'ChartLinkProbe') {
+      return deserialize<_i7q1o3oi.ChartLinkProbe>(data['data']);
+    }
+    if (dataClassName == 'ChartLinkState') {
+      return deserialize<_i3ysrjbx.ChartLinkState>(data['data']);
+    }
+    if (dataClassName == 'ChartLinkStatus') {
+      return deserialize<_is6z3tpy.ChartLinkStatus>(data['data']);
+    }
+    if (dataClassName == 'ChartSnapshotView') {
+      return deserialize<_iua8dx49.ChartSnapshotView>(data['data']);
+    }
+    if (dataClassName == 'ChartSourceList') {
+      return deserialize<_iq1h9id2.ChartSourceList>(data['data']);
+    }
+    if (dataClassName == 'ChartSourceSummary') {
+      return deserialize<_inygrvyi.ChartSourceSummary>(data['data']);
+    }
     if (dataClassName == 'DeckChangeLogReceipt') {
       return deserialize<_ircoml6y.DeckChangeLogReceipt>(data['data']);
     }
@@ -10373,6 +10779,9 @@ class Protocol extends _is.DatabaseSerializationManager
     }
     if (dataClassName == 'PresentationStateUpdate') {
       return deserialize<_ijdad65m.PresentationStateUpdate>(data['data']);
+    }
+    if (dataClassName == 'SlidesSnapshotIndex') {
+      return deserialize<_iy6ry83r.SlidesSnapshotIndex>(data['data']);
     }
     if (dataClassName == 'HeadlessChange') {
       return deserialize<_iilidizm.HeadlessChange>(data['data']);
@@ -10651,6 +11060,8 @@ class Protocol extends _is.DatabaseSerializationManager
         return _ixysij0q.ScriptTriggerState.t;
       case _ircoml6y.DeckChangeLogReceipt:
         return _ircoml6y.DeckChangeLogReceipt.t;
+      case _iy6ry83r.SlidesSnapshotIndex:
+        return _iy6ry83r.SlidesSnapshotIndex.t;
       case _iilidizm.HeadlessChange:
         return _iilidizm.HeadlessChange.t;
       case _i4sx4pml.Document:

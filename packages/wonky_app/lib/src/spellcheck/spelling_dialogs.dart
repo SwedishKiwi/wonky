@@ -2,8 +2,53 @@ import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
 import 'package:shad/shad.dart';
 
-/// Stable keys (specs/15 §7).
+import '../core/l10n_or_english.dart';
+
+/// The stable widget keys of the spelling dialogs of one app (specs/15
+/// §7): `<app>.dialog.spelling…` and `<app>.dialog.dictionary…`.
+@immutable
+final class SpellingKeySet {
+  const SpellingKeySet(this.app);
+
+  /// The key prefix (`write`, `slides`).
+  final String app;
+
+  ValueKey<String> get dialog => ValueKey<String>('$app.dialog.spelling');
+  ValueKey<String> get word => ValueKey<String>('$app.dialog.spelling.word');
+  ValueKey<String> get change =>
+      ValueKey<String>('$app.dialog.spelling.change');
+  ValueKey<String> get changeAll =>
+      ValueKey<String>('$app.dialog.spelling.changeAll');
+  ValueKey<String> get ignore =>
+      ValueKey<String>('$app.dialog.spelling.ignore');
+  ValueKey<String> get ignoreAll =>
+      ValueKey<String>('$app.dialog.spelling.ignoreAll');
+  ValueKey<String> get add => ValueKey<String>('$app.dialog.spelling.add');
+  ValueKey<String> get done => ValueKey<String>('$app.dialog.spelling.done');
+  ValueKey<String> get dictionary => ValueKey<String>('$app.dialog.dictionary');
+
+  ValueKey<String> suggestion(int i) =>
+      ValueKey<String>('$app.dialog.spelling.suggestion.$i');
+
+  ValueKey<String> remove(String word) =>
+      ValueKey<String>('$app.dialog.dictionary.remove.$word');
+
+  @override
+  bool operator ==(Object other) => other is SpellingKeySet && other.app == app;
+
+  @override
+  int get hashCode => app.hashCode;
+}
+
+/// Stable keys (specs/15 §7): Write's (`write.dialog.spelling…`, the
+/// default of the dialogs) and Slides' ([slides]).
 abstract final class SpellingKeys {
+  /// Write's keys (the dialogs' default).
+  static const write = SpellingKeySet('write');
+
+  /// Slides' keys (`slides.dialog.spelling…`).
+  static const slides = SpellingKeySet('slides');
+
   static const dialog = ValueKey<String>('write.dialog.spelling');
   static const word = ValueKey<String>('write.dialog.spelling.word');
   static const change = ValueKey<String>('write.dialog.spelling.change');
@@ -14,11 +59,9 @@ abstract final class SpellingKeys {
   static const done = ValueKey<String>('write.dialog.spelling.done');
   static const dictionary = ValueKey<String>('write.dialog.dictionary');
 
-  static ValueKey<String> suggestion(int i) =>
-      ValueKey<String>('write.dialog.spelling.suggestion.$i');
+  static ValueKey<String> suggestion(int i) => write.suggestion(i);
 
-  static ValueKey<String> remove(String word) =>
-      ValueKey<String>('write.dialog.dictionary.remove.$word');
+  static ValueKey<String> remove(String word) => write.remove(word);
 }
 
 /// A flagged word in an editor's text, with UTF-16 offsets `[start, end)`.
@@ -87,18 +130,27 @@ abstract class SpellingSession {
 /// Tools › Spelling › Check spelling… (Write 05 §12): walks the flagged
 /// words from the caret with Change, Change all, Ignore, Ignore all and Add
 /// to dictionary.
+/// [keys] names the app's widget keys (Write's by default).
 Future<void> showSpellingDialog(
   BuildContext context, {
   required SpellingSession session,
+  SpellingKeySet keys = SpellingKeys.write,
 }) => showShadDialog<void>(
   context: context,
-  builder: (_) => SpellingDialog(session: session),
+  builder: (_) => SpellingDialog(session: session, keys: keys),
 );
 
 class SpellingDialog extends StatefulWidget {
-  const SpellingDialog({super.key, required this.session});
+  const SpellingDialog({
+    super.key,
+    required this.session,
+    this.keys = SpellingKeys.write,
+  });
 
   final SpellingSession session;
+
+  /// The app's widget keys.
+  final SpellingKeySet keys;
 
   @override
   State<SpellingDialog> createState() => _SpellingDialogState();
@@ -188,16 +240,18 @@ class _SpellingDialogState extends State<SpellingDialog> {
   @override
   Widget build(BuildContext context) {
     final theme = ShadTheme.of(context);
+    final l = wonkyAppL10nOrEnglish(context);
+    final k = widget.keys;
     final e = _current;
     return ShadDialog(
-      key: SpellingKeys.dialog,
-      title: const Text('Spelling'),
+      key: k.dialog,
+      title: Text(l.spellingTitle),
       constraints: const BoxConstraints(maxWidth: 440),
       actions: [
         ShadButton(
-          key: SpellingKeys.done,
+          key: k.done,
           onPressed: () => Navigator.of(context).pop(),
-          child: const Text('Done'),
+          child: Text(l.spellingDone),
         ),
       ],
       child: e == null
@@ -205,8 +259,8 @@ class _SpellingDialogState extends State<SpellingDialog> {
               padding: const EdgeInsets.symmetric(vertical: 16),
               child: Text(
                 widget.session.isAvailable
-                    ? 'No spelling errors found.'
-                    : 'Spellcheck isn’t available for this document’s language.',
+                    ? l.spellingNoErrors
+                    : l.spellingUnavailable,
                 style: theme.textTheme.muted,
               ),
             )
@@ -214,24 +268,24 @@ class _SpellingDialogState extends State<SpellingDialog> {
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                Text('Not in dictionary', style: theme.textTheme.small),
+                Text(l.spellingNotInDictionary, style: theme.textTheme.small),
                 const SizedBox(height: 4),
                 Text(
                   e.word,
-                  key: SpellingKeys.word,
+                  key: k.word,
                   style: theme.textTheme.large.copyWith(
                     color: theme.colorScheme.destructive,
                   ),
                 ),
                 const SizedBox(height: 12),
-                Text('Suggestions', style: theme.textTheme.small),
+                Text(l.spellingSuggestions, style: theme.textTheme.small),
                 const SizedBox(height: 4),
                 if (_suggestions.isEmpty)
-                  Text('No suggestions', style: theme.textTheme.muted)
+                  Text(l.spellingNoSuggestions, style: theme.textTheme.muted)
                 else
                   for (var i = 0; i < _suggestions.length; i += 1)
                     ShadButton.ghost(
-                      key: SpellingKeys.suggestion(i),
+                      key: k.suggestion(i),
                       mainAxisAlignment: MainAxisAlignment.start,
                       backgroundColor: i == _chosen
                           ? theme.colorScheme.accent
@@ -246,31 +300,31 @@ class _SpellingDialogState extends State<SpellingDialog> {
                   runSpacing: 8,
                   children: [
                     ShadButton.secondary(
-                      key: SpellingKeys.change,
+                      key: k.change,
                       enabled: _replacement != null,
                       onPressed: _change,
-                      child: const Text('Change'),
+                      child: Text(l.spellingChange),
                     ),
                     ShadButton.outline(
-                      key: SpellingKeys.changeAll,
+                      key: k.changeAll,
                       enabled: _replacement != null,
                       onPressed: _changeAll,
-                      child: const Text('Change all'),
+                      child: Text(l.spellingChangeAll),
                     ),
                     ShadButton.outline(
-                      key: SpellingKeys.ignore,
+                      key: k.ignore,
                       onPressed: _ignore,
-                      child: const Text('Ignore'),
+                      child: Text(l.spellingIgnore),
                     ),
                     ShadButton.outline(
-                      key: SpellingKeys.ignoreAll,
+                      key: k.ignoreAll,
                       onPressed: _ignoreAll,
-                      child: const Text('Ignore all'),
+                      child: Text(l.spellingIgnoreAll),
                     ),
                     ShadButton.outline(
-                      key: SpellingKeys.add,
+                      key: k.add,
                       onPressed: _add,
-                      child: const Text('Add to dictionary'),
+                      child: Text(l.spellingAddToDictionary),
                     ),
                   ],
                 ),
@@ -286,10 +340,15 @@ Future<void> showPersonalDictionaryDialog(
   required List<String> Function() words,
   required Future<void> Function(String word) onRemove,
   required Future<void> Function(String word) onAdd,
+  SpellingKeySet keys = SpellingKeys.write,
 }) => showShadDialog<void>(
   context: context,
-  builder: (_) =>
-      _PersonalDictionaryDialog(words: words, onRemove: onRemove, onAdd: onAdd),
+  builder: (_) => _PersonalDictionaryDialog(
+    words: words,
+    onRemove: onRemove,
+    onAdd: onAdd,
+    keys: keys,
+  ),
 );
 
 class _PersonalDictionaryDialog extends StatefulWidget {
@@ -297,8 +356,10 @@ class _PersonalDictionaryDialog extends StatefulWidget {
     required this.words,
     required this.onRemove,
     required this.onAdd,
+    required this.keys,
   });
 
+  final SpellingKeySet keys;
   final List<String> Function() words;
   final Future<void> Function(String word) onRemove;
   final Future<void> Function(String word) onAdd;
@@ -328,19 +389,18 @@ class _PersonalDictionaryDialogState extends State<_PersonalDictionaryDialog> {
   @override
   Widget build(BuildContext context) {
     final theme = ShadTheme.of(context);
+    final l = wonkyAppL10nOrEnglish(context);
     final words = [...widget.words()]
       ..sort((a, b) => a.toLowerCase().compareTo(b.toLowerCase()));
     return ShadDialog(
-      key: SpellingKeys.dictionary,
-      title: const Text('Personal dictionary'),
-      description: const Text(
-        'Words you added are never marked as misspelled, in any document.',
-      ),
+      key: widget.keys.dictionary,
+      title: Text(l.spellingPersonalDictionary),
+      description: Text(l.spellingPersonalDictionaryHint),
       constraints: const BoxConstraints(maxWidth: 420),
       actions: [
         ShadButton(
           onPressed: () => Navigator.of(context).pop(),
-          child: const Text('Done'),
+          child: Text(l.spellingDone),
         ),
       ],
       child: Column(
@@ -352,7 +412,7 @@ class _PersonalDictionaryDialogState extends State<_PersonalDictionaryDialog> {
               Expanded(
                 child: ShadInput(
                   controller: _field,
-                  placeholder: const Text('Add a word'),
+                  placeholder: Text(l.spellingAddWord),
                   onSubmitted: (_) => _add(),
                   inputFormatters: [
                     FilteringTextInputFormatter.deny(RegExp(r'\s')),
@@ -360,14 +420,14 @@ class _PersonalDictionaryDialogState extends State<_PersonalDictionaryDialog> {
                 ),
               ),
               const SizedBox(width: 8),
-              ShadButton.outline(onPressed: _add, child: const Text('Add')),
+              ShadButton.outline(onPressed: _add, child: Text(l.spellingAdd)),
             ],
           ),
           const SizedBox(height: 12),
           ConstrainedBox(
             constraints: const BoxConstraints(maxHeight: 280),
             child: words.isEmpty
-                ? Text('No words yet.', style: theme.textTheme.muted)
+                ? Text(l.spellingNoWords, style: theme.textTheme.muted)
                 : ListView(
                     shrinkWrap: true,
                     children: [
@@ -376,11 +436,11 @@ class _PersonalDictionaryDialogState extends State<_PersonalDictionaryDialog> {
                           children: [
                             Expanded(child: Text(w)),
                             ShadIconButton.ghost(
-                              key: SpellingKeys.remove(w),
+                              key: widget.keys.remove(w),
                               width: 28,
                               height: 28,
                               iconSize: 14,
-                              semanticLabel: 'Remove $w',
+                              semanticLabel: l.spellingRemoveWord(w),
                               icon: const Icon(LucideIcons.x),
                               onPressed: () async {
                                 await widget.onRemove(w);

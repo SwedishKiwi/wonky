@@ -18,6 +18,7 @@ import 'package:wonky_sync_kit_flutter/wonky_sync_kit_flutter.dart'
         SyncConnectivity,
         offlineStorageLimited;
 
+import '../../config/slides_features.dart';
 import '../../l10n/slides_l10n.dart';
 import '../model/deck_session.dart';
 import '../model/memory_deck_session.dart';
@@ -217,6 +218,7 @@ abstract final class SlidesData {
         themeKey: d.themeKey,
         size: d.size,
         appearance: d.appearance,
+        defaultsJson: d.defaultsJson,
       );
     } on NoReservedSpaceException {
       if (services.connectivity.online) return onServer();
@@ -241,8 +243,15 @@ abstract final class SlidesData {
 
 /// The user's *New presentations* settings (Slides 04 §13.16) for a blank
 /// deck: the default theme, slide size and — only when the user chose one —
-/// appearance (otherwise the theme's own).
-({String themeKey, SlideSize? size, SlideAppearance? appearance})
+/// appearance (otherwise the theme's own); and the *Animations* settings'
+/// default transition as the deck's `defaultsJson` (06 A-06-7; null for
+/// none).
+({
+  String themeKey,
+  SlideSize? size,
+  SlideAppearance? appearance,
+  String? defaultsJson,
+})
 newPresentationDefaults(ShellServices services) {
   final d = SlidesUserDefaults.of(services);
   final size = d.string(SlidesUserDefaults.keyDefaultSize);
@@ -258,6 +267,10 @@ newPresentationDefaults(ShellServices services) {
     ].firstOrNull,
     appearance: chosen
         ? SlideAppearance.values.where((a) => a.name == appearance).firstOrNull
+        : null,
+    // Only while transitions are offered (SL-30).
+    defaultsJson: SlidesFeatures.isOn(SlidesFeature.animations)
+        ? SlidesUserDefaults.deckDefaultsJson(d)
         : null,
   );
 }

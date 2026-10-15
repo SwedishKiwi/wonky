@@ -3,6 +3,8 @@
 library;
 
 export 'pdf/pdf_chart_renderer.dart' show PdfChartRenderer, PdfTextMeasurer;
+export 'pdf/ttf_chart_text_measurer.dart'
+    show TtfChartFace, TtfChartFamily, TtfChartTextMeasurer;
 export 'raster/raster_chart_renderer.dart' show RasterChartRenderer;
 export 'raster/raster_text_measurer.dart' show RasterTextMeasurer;
 export 'render_geometry.dart' show RenderGeometry;

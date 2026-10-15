@@ -221,6 +221,129 @@ generic `ChartPipeline`) is SL-27 (M10). Differences from the plan above:
   describer, recommender and resolver tests build their data from workbooks and stay in
   `wonky_sheets_core/test/charts` with the scene JSON goldens (unchanged, byte-identical).
 
+### 2.11 As built (SL-27, M10)
+
+The §2.7 APIs exist, with these names and additions:
+
+- **Snapshot** (`wonky_charts/lib/src/snapshot/`): `ChartData.toJson`/`fromJson`
+  (`ChartDataCodec`: numeric arrays as base64 little-endian doubles, single numbers as JSON
+  numbers or `"NaN"`/`"Infinity"`, `dataVersion` as a decimal string because 64-bit hashes
+  don't fit JavaScript numbers, `domain.length` for the timeline); `ChartDataSnapshot`
+  (`dataSnapshotJson`, §3.4, with `ChartSourceTheme` — accents, text font **and the named
+  theme colors** — and `ChartSourceInfo`); **`ChartSourceSnapshot`** is the in-memory pair the
+  spec calls `ChartSnapshot` (the core's operations already export a `ChartSnapshot`: the
+  column values of a link update); `ChartSnapshotColumns` (`gz:` + base64 gzip beyond 32 KB
+  via `package:archive`, 512 KB limit); `ChartSourceVersion` (token parse/format);
+  `ChartSnapshotLimits` (§3.4 downsampling; `preview` = 200 points).
+- **Reveal**: **`ChartReveal`** (the spec's `ChartRevealState`; that name is the timeline's
+  per-element state in `wonky_slides_core/motion.dart`). It is applied as a transform of the
+  laid-out 2D scene (`applyTo`), so the Flutter painter and the PDF/SVG/raster renderers honor
+  it unchanged, and to the 3D model (`applyTo3D`: `collapsed.lerpTo(item, grow)`, fades toward
+  the chart background, hidden items left out; `Chart3DItem.withColor`). Bars grow from the
+  edge nearest the zero line (the most common bar edge), horizontal for `bar`; lines draw on
+  by arc length (category/point deliveries follow the revealed prefix) with markers popping in
+  when reached; areas clip to the revealed x extent; radar shapes scale from the center; pie
+  wedges sweep; data labels appear in the last 20 % of their part; scorecards fade (no
+  count-up yet). `ChartPipeline.layout(reveal:)` applies both.
+- **Morph**: `ChartSceneMorph` + `OkLab` as §9.4 (keys = tag + type + order; < 50 % matched
+  data primitives → crossfade); 3D groups crossfade (3D morphs go through
+  `ChartLayoutOptions.transitionFrom3D` and `Chart3DView.lerp`).
+- **Camera**: `Chart3DView` (`lerp` with `Chart3DTurn` `shortest|cw|ccw` and `turns`,
+  `presets`/`piePresets` of §10.2, `of(spec)`, `applyTo(ChartThreeD)`, JSON), plus
+  `ChartLayoutOptions.perspective3D` and **`fitViews3D`** (§10.3 union fit: the zoom is the
+  smallest fit of the listed views, compared in px per world unit).
+- **Text**: **`TtfChartTextMeasurer`** (`TtfChartFace`/`TtfChartFamily`; the core's text
+  layout already has a `TtfTextMeasurer`): advances equal `PdfTtfFont.stringMetrics`, missing
+  glyphs measure as `?` like the PDF draws them.
+- Not built: `ChartTable` + `TableChartData.fromTable` and the recommender split (native charts,
+  P1), the "no ranges" `RangeRefSchema` validator for native specs (P1), `ChartView`/
+  `ChartStyleEditor`/`ChartDataTableDialog` in `wonky_charts_flutter` (SL-32), the scorecard
+  count-up of §9.1.
+
+**Core** (`package:wonky_slides_core/charts.dart`, `lib/src/charts/`): `ChartElementData`
+(§3.2; `background` null = the style mode's default — transparent with *Match theme*, the
+sheet's background, white by default, with *Keep source style*; reads the pre-SL-27 static
+forms `spec`/`spec`+`data`), `ChartOverrides` (§8.2 allowlist, `rejectedPaths`, `filter`,
+`merge`, `unusedSeries`), `SlideChartSpec.effective` → `SlideChartLook {spec, theme, locale,
+warnings}` (§3.5; the color behind the chart decides light/dark text), `SlideChartLayout`
+(the slide scene's `ChartSceneSource`; charts are laid out at the frame size ÷ `suPerPx` = 2,
+so text keeps its Sheets proportions, and `ChartNode` scales the scene into the frame;
+`ChartSceneSource.chartScene` gained `background`), `SlideChartMotion` (`shapes(deck)` for
+`SlideMotionInput.fromDeck(chartShapeOf:)` incl. `gz:` columns, pie and 3D flags; `reveal`,
+`view`, `fitViews` from a frame's `ChartRevealState`), `ChartLinkService` (§5.6 client
+contract) and `ChartLinkOps` (`link`, `update`, `refreshToken`, `probesOf`). The planner
+stores `gz:` columns (validated by decoding), unlink writes `dataJson.snapshot`
+`{sourceSpec, dataSnapshot}` (§3.2), and `SetChartStyle` refuses keys outside the allowlist and
+the `source`/`snapshot`/`spec`/`data` keys of non-native charts (`invalid_argument`).
+
+
+### 2.12 As built (SL-32, M10)
+
+The chart element UI is in `wonky_slides/lib/features/elements/chart/` and
+`wonky_slides/lib/commands/chart_commands.dart`; feature `charts` ships (native charts are the
+separate hidden feature `nativeCharts`, P1).
+
+- **`wonky_charts_flutter`** gained the shared widgets of §2.2: `ChartView` (spec + data + theme,
+  hover tooltips, legend highlight, optional GPU key; the insert dialog's previews), the data
+  table dialog (`showChartDataTableDialog`, `ChartDataTableDialog`, `chartDataRows`,
+  `chartDataJson`; texts passed as `ChartDataTableStrings`), `ChartTypeIcon` (moved from Sheets;
+  `ChartTypeIcon.of(spec)`), the hover tooltip (`ChartTooltip`, `chartTooltipLines`) and
+  **`ChartStyleEditor`** (full mode, or override mode with `allows` = the §8.2 allowlist, a dot
+  and a per-field reset on overridden fields; edits are merge patches through
+  `onPatch(patch, {coalesceKey})`; texts through `ChartStyleEditorStrings`). Sheets uses the
+  moved data table, icon and tooltip; its Customize tab stays its own (it edits more than the
+  allowlist and is wired to Sheets commands) — the shared editor is new, not a move.
+  `FlutterTextMeasurer` takes `familyOf` (Slides maps deck fonts registered at runtime) and
+  `clear()`; `ChartScenePainter`/`chartSceneToPng` take the measurer. New dependencies: `shad`,
+  `wonky_ui` (both in §2.8).
+- **Stage**: `SlideRenderer.charts` defaults to `SlideChartLayout(measurer:
+  SlidesChartText.measurer)` (one shared measurer for layout and paint; deck fonts load on demand
+  and clear the chart layouts); chart text families are preloaded like slide text.
+  `ScenePaintOptions.gpuCharts`/`chartGpu`: live stages (`SlideStage`) draw 3D charts with the
+  `flutter_scene` backend (started by the first 3D chart; `main.dart` registers the starter),
+  pictures (thumbnails, PNG) stay software.
+- **Insert** (§4): `showChartInsertDialog` — step 1 lists spreadsheets (tabs Recent, My files =
+  the root folder, Shared with me, Starred; search; spreadsheets the user may not copy from are
+  disabled with the export message), step 2 the charts by sheet with `ChartView` previews in the
+  deck theme (or the source look), badges (3D, chart sheet, newer version), Mod-click for several,
+  *Link to spreadsheet*, *Match presentation theme* and the data notice; MCP-operable (fields
+  `search`, `tab`, `spreadsheet` / `search`, `chart`, `link`, `matchTheme`; buttons `cancel`,
+  `back`, `insert`). New charts use a 600 × 371 aspect (the snapshot has no Sheets anchor size);
+  a selected empty chart placeholder is filled in place. Alt text = `ChartDescriber` (regenerated
+  on update/relink while it still looks generated). Paste (§4.4) resolves the snapshot before
+  the paste: linked pastes carry their data, *Paste chart unlinked* gives a static chart with its
+  frozen snapshot; offline, links get their first snapshot at the next check.
+- **Updates** (§5): `ChartLinks` (per open deck) checks on open, on resume after ≥ 60 s
+  (`AppLifecycleListener`), every 5 min and once when presenting starts; after a presentation a
+  toast offers *Update all*. Statuses are derived from the stored token (an undone *Update* shows
+  *Update* again). Editors write token refreshes, auto-updates (toast "Charts updated from …") and
+  first snapshots of pasted links as maintenance writes. The canvas badge shows for the
+  **selected** linked chart (not on hover): "Linked", the §6 states, "(offline)", or the primary
+  *Update* button with the summary tooltip; viewers see none. Applied updates morph on the canvas
+  with `ChartSceneMorph` (450 ms; off with *Reduce editor motion*). The **Linked charts** panel
+  (`slides.panel.linkedObjects`, View › Panels and Tools) lists links by spreadsheet with status,
+  slide number (click selects), *Update* and *Update all* (one step), *Check now*.
+- **Inspector › Chart** (§8.1, §10.2): source path + *Open*, status, *Update*, *Auto-update*,
+  *Unlink*, *Change linked chart…*, style mode, background (default, transparent, slide color,
+  white), 3D view (presets, rotation/tilt/perspective sliders, *Reset view*, *Add camera step*
+  when animations are on), presenting options (`interactive.hoverTooltips/orbitInPresent`),
+  Customize (`ChartStyleEditor` in override mode, unused series overrides with *Clean up*,
+  invalid-override warning, *Reset style overrides*, *View data as table*). Toolbar: *Update*,
+  *Open source*, *3D view ▾*, *Style ▾*. Format › Chart and the chart context menu carry the same
+  commands.
+- **Commands** (§14) as specified, with: `slides.chart.updateStyle {patch (overrides), options
+  (background | interactive | style.palette/font), coalesceKey}`; `slides.chart.setCamera`
+  also takes `deltaAzimuth`/`deltaElevation` (Alt+Shift+arrows, 5°) and `reset`, and always
+  coalesces per chart within the undo window (drags, keys, sliders); `slides.chart.addCameraStep`
+  (a `chartCamera` emphasis build of the current view; registered only with the animations
+  feature); `slides.chart.copyAsImage` (PNG via the image clipboard). Orbit: dragging the plot of
+  the selected 3D chart orbits it live (`ChartOrbitGesture`) and commits one `setCamera`.
+- Not built: the hover badge, the panel's rail count badge, *Request access* / *Open in Drive*
+  actions of §6, dropping overrides that don't apply after relinking to another type (they are
+  kept and ignored by validation), a list of existing camera steps in the section, hover tooltips
+  and orbit while presenting (the flags are stored; the player is SL-29's), `watch` (P1), native
+  charts (P1), the scorecard count-up.
+
 ---
 
 ## 3. The chart element
@@ -404,6 +527,11 @@ offers *Keep source formatting* and *Paste unlinked*. Desktop apps use the same 
   (Sheets 02; cheap "anything changed?" check);
 - `specHash` — SHA-256 (first 16 hex) of the chart's `specJson` (canonical JSON);
 - `dataVersion` — `ChartData.dataVersion` (hash of all source values, Sheets 08 §4).
+
+*As built (SL-27):* the first part is `<newest ChangeLog id>.<ChangeLog row count>` (newest
+by `at`): the count also changes when an offline client merges changes with older timestamps,
+and the 30-day change-log retention only causes one extra (unchanged) resolve. Server writes
+that bypass the change log are not detected by the cheap comparison.
 
 ### 5.2 Checking (server, `slidesCharts.checkLinks`)
 
@@ -704,7 +832,7 @@ More…* creates a `native` chart with sample data and opens the **data editor**
 
 ---
 
-## 13. Server endpoints (`SlidesChartEndpoint`, `slidesCharts`)
+## 13. Server endpoints (`SlidesChartsEndpoint`, `slidesCharts`)
 
 Location: `wonky_server/lib/src/slides/charts/` (service `SlidesChartService`; uses
 `HeadlessWorkbookCache` and `SheetsChartPipeline` from the Sheets server modules — server code may
@@ -724,6 +852,22 @@ use both cores).
   resolves/min per user.
 - MCP uses the same service ([11](11-mcp-and-ai.md): `slides.list_sheet_charts`,
   `slides.insert_linked_chart`, `slides.refresh_linked_charts`).
+
+*As built (SL-27):* `wonky_server/lib/src/slides/charts/` — `SlidesChartsEndpoint` (class name
+gives the `slidesCharts` client name) over `SlidesChartService`; models `ChartSourceList`,
+`ChartSourceSummary` (+ `unsupported`), `ChartSnapshotView` (+ `spreadsheetUuid`,
+`chartObjectId`, `sheetId`; plain JSON columns — the client stores them with `gz:`),
+`ChartLinkProbe`, `ChartLinkStatus`, `ChartLinkState` (no table, no migration). Errors are
+`WonkyException`s with `detailsJson {"reason"}` = the §4.3 codes: `no_access` / `spreadsheet_trashed`
+/ `chart_not_found` (notFound), `export_disabled` (forbidden), `unsupported_spec`
+(invalidArgument), `chart_too_large` (tooLarge); rate limits (60 resolves, 30 checks, 30 lists
+per minute and user) give `limitExceeded`. `listCharts` is viewer+: without the right to copy
+data the charts are listed **without previews** and `exportAllowed: false` (titles are visible
+to viewers anyway). `checkLinks` checks the role before the trash state, so callers without
+access learn nothing but `noAccess`; a missing item is `spreadsheetDeleted`. The token cache
+(`ChartLinkSourceState` of §5.2) is in memory per instance, keyed by the change-log marker
+(no merge-signal subscription needed); resolved snapshots are cached 10 min per token.
+`watch` (P1) is not built.
 
 ---
 

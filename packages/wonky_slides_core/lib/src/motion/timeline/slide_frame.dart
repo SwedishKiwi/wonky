@@ -160,6 +160,7 @@ final class TextPartState {
     this.caret = false,
     this.dim = 1,
     this.dimColor,
+    this.color,
   }) : transform = transform ?? Matrix4.identity();
 
   /// Character range `[start, end)` in the body's plain text.
@@ -186,6 +187,10 @@ final class TextPartState {
   /// After-build dim color (ARGB), or null.
   final int? dimColor;
 
+  /// Text color morph of the part's glyphs (Magic Move glyph runs, 06
+  /// §8.4: the renderer blends in OKLab), or null = the laid-out colors.
+  final ColorOverride? color;
+
   /// Canonical JSON.
   Map<String, Object?> toJson() => {
     'range': [start, end],
@@ -198,6 +203,7 @@ final class TextPartState {
     if (caret) 'caret': true,
     if (dim != 1) 'dim': _r(dim),
     if (dimColor != null) 'dimColor': dimColor,
+    if (color != null) 'color': color!.toJson(),
   };
 }
 
@@ -415,7 +421,9 @@ final class ElementVisualState {
 
   final bool visible;
 
-  /// 0..1, multiplied with the element's own opacity.
+  /// Multiplied with the element's own opacity: 0..1 for builds; Magic
+  /// Move (SL-25) may go above 1 so that the product interpolates between
+  /// two elements' opacities — renderers clamp the product to 0..1.
   final double opacity;
 
   /// 4×4 slide-space transform (su, incl. perspective), pre-multiplied
@@ -516,6 +524,9 @@ final class BackgroundState {
 
   /// 0..1.
   final double opacity;
+
+  /// Canonical JSON.
+  Map<String, Object?> toJson() => {'opacity': _r(opacity)};
 }
 
 /// One frame of a slide: element states (absent = edit state).
@@ -540,10 +551,12 @@ final class SlideFrame {
   /// Whether every element is in its edit state.
   bool get isEdit => elements.values.every((s) => s.isEdit);
 
-  /// Canonical JSON: element ids sorted, edit states omitted.
+  /// Canonical JSON: element ids sorted, edit states omitted; a changed
+  /// background (Magic Move crossfade) under `@background`.
   Map<String, Object?> toJson() {
     final ids = elements.keys.toList()..sort();
     return {
+      if (background.opacity != 1) '@background': background.toJson(),
       for (final id in ids)
         if (!elements[id]!.isEdit) id: elements[id]!.toJson(),
     };

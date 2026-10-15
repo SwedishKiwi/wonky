@@ -11,11 +11,10 @@ import 'write_stylesheet.dart';
 /// Overlays presentation-only [CodeTokenAttribution]s on code block view
 /// models (Write 04 §15.4). The document is never changed.
 ///
-/// Tokens come from the shared [TextMateTokenizer] (`wonky_code`, Write 04
-/// §15.5). Its grammars are embedded, so blocks are highlighted on their
-/// first frame. Languages without a TextMate grammar
-/// ([CodeLanguages.grammarFor]) stay plain until the editor switches to
-/// `DefaultCodeTokenizer` together with the exports (M10).
+/// Tokens come from the shared [DefaultCodeTokenizer] (`wonky_code`, Write
+/// 04 §15.5): TextMate grammars first (embedded, so blocks are highlighted
+/// on their first frame), highlight.js for the other languages — the same
+/// tokenizer as Write's exports and Wonky Slides (M10, v2 review Q25).
 ///
 /// Results are cached per (node, text, language). Large blocks are tokenized
 /// after a debounce so that typing stays responsive; until then the block
@@ -70,7 +69,7 @@ class CodeHighlightStylePhase extends SingleColumnLayoutStylePhase {
     if (model is! TextComponentViewModel) return model;
     final node = document.getNodeById(model.nodeId);
     if (node == null || !isCodeBlockNode(node)) return model;
-    final language = codeLanguageOf(node);
+    final language = CodeLanguages.normalize(codeLanguageOf(node));
     if (!_tokenizer.supports(language)) return model;
     final text = model.text;
     final plain = text.toPlainText(includePlaceholders: false);
@@ -116,10 +115,10 @@ class CodeHighlightStylePhase extends SingleColumnLayoutStylePhase {
     });
   }
 
-  static const CodeTokenizer _tokenizer = TextMateTokenizer.instance;
+  static const CodeTokenizer _tokenizer = DefaultCodeTokenizer.instance;
 
   /// Token spans `(start, end, class)` of [code] in [language] (a
-  /// normalised language id); empty when the language has no grammar. The
+  /// normalised language id); empty for plain text and unknown languages. The
   /// class is the key of the token's color in `EditorTheme.syntax`.
   static List<(int, int, String)> tokenize(String code, String language) => [
     for (final token in _tokenizer.tokenize(code, language))

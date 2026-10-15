@@ -1,3 +1,4 @@
+import '../../motion/builds/transition_spec.dart';
 import '../slides_template.dart';
 import '../template_text.dart';
 import 'parts.dart';
@@ -10,6 +11,7 @@ final SlidesTemplate pitchDeckTemplate = SlidesTemplate(
   description: 'Tell investors your story: problem, solution, traction, ask.',
   category: 'work',
   themeKey: 'aurora',
+  defaultTransition: TransitionSpec.of('fade'),
   subtitle: 'Real-time energy insights for every building',
   script: (b) {
     b.slide(

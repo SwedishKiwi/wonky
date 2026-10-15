@@ -37,8 +37,15 @@ class DeckHarness {
     SlidesMutationPlanner planner = const SlidesPlanner(),
     StorageController? storage,
     PresenceRepository? presence,
+    CommentRepository? comments,
+    VersionRepository? versions,
   }) {
-    final h = slidesHarness(storage: storage, presence: presence);
+    final h = slidesHarness(
+      storage: storage,
+      presence: presence,
+      comments: comments,
+      versions: versions,
+    );
     final b =
         fixture ?? (DeckBuilder()..slide(layoutKey: 'title', title: 'Hi'));
     final uuid = UuidValue.fromString(b.deckId);

@@ -5,6 +5,7 @@ import 'package:wonky_core/wonky_core.dart'
     show McpScope, McpToolDefinition, Role;
 
 import '../../sheets/ai/sheets_assistant_target.dart';
+import '../../slides/ai/slides_assistant_target.dart';
 import '../../write/ai/write_context_builder.dart';
 import '../../write/ai/write_prompts.dart';
 import '../../write/mcp/headless_editor.dart';
@@ -165,6 +166,9 @@ abstract class AssistantTarget {
     final item = await AccessService.findItem(session, itemUuid);
     if (item != null && item.kind == DriveItemKind.spreadsheet) {
       return SheetsAssistantTarget.resolve(session, actor, item);
+    }
+    if (item != null && item.kind == DriveItemKind.presentation) {
+      return SlidesAssistantTarget.resolve(session, actor, item);
     }
     return WriteAssistantTarget(
       await HeadlessDocumentEditor.resolve(session, actor, itemUuid),

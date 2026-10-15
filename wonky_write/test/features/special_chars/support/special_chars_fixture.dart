@@ -2,7 +2,8 @@ import 'dart:convert';
 
 import 'package:wonky_write/features/special_chars/special_chars_catalog.dart';
 
-/// A small table in the asset format of `assets/unicode/special_chars.json`.
+/// A small table in the asset format of `wonky_app`'s
+/// `assets/unicode/special_chars.json`.
 final specialCharsFixtureJson = jsonEncode({
   'unicode': '16.0.0',
   'categories': ['Punctuation', 'Arrows', 'Latin'],

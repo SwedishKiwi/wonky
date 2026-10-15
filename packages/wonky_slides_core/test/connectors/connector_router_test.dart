@@ -177,6 +177,103 @@ void main() {
       expect(r.endDirection.y, -1);
     });
 
+    test(
+      'when a curved connector has a bend point then the curve passes '
+      'through it at its middle and still leaves along the sites (SL-44)',
+      () {
+        final plain = routeOf(
+          f,
+          f.line(
+            0,
+            0,
+            10,
+            10,
+            routing: 'curved',
+            startGlue: (a, 'right'),
+            endGlue: (b, 'left'),
+          ),
+        );
+        final line = f.line(
+          0,
+          0,
+          2000,
+          1000,
+          routing: 'curved',
+          startGlue: (a, 'right'),
+          endGlue: (b, 'left'),
+          waypoints: const [(700, 800)],
+        );
+
+        final r = routeOf(f, line);
+
+        final m = ConnectorRouter.curveMidpoint(r.points);
+        expect(m.x, closeTo(700, 1e-6));
+        expect(m.y, closeTo(800, 1e-6));
+        expect(r.start, plain.start);
+        expect(r.end, plain.end);
+        expect(
+          ConnectorRouter.curveMidpoint(plain.points),
+          isNot(ConnectorRouter.curveMidpoint(r.points)),
+        );
+      },
+    );
+
+    test('when an elbow route\'s corners are stored as waypoints then the '
+        'same route comes back, and a moved middle segment moves the route '
+        '(SL-44 segment handles)', () {
+      final plain = routeOf(
+        f,
+        f.line(
+          0,
+          0,
+          10,
+          10,
+          routing: 'elbow',
+          startGlue: (a, 'right'),
+          endGlue: (b, 'left'),
+        ),
+      );
+      final inner = plain.points.sublist(1, plain.points.length - 1);
+      final same = routeOf(
+        f,
+        f.line(
+          0,
+          0,
+          2000,
+          1000,
+          routing: 'elbow',
+          startGlue: (a, 'right'),
+          endGlue: (b, 'left'),
+          waypoints: [for (final p in inner) (p.x, p.y)],
+        ),
+      );
+      expect(same.points, plain.points);
+
+      // The vertical middle segment moves 100 su right.
+      expect(plain.points.length, 4);
+      final moved = routeOf(
+        f,
+        f.line(
+          0,
+          0,
+          2000,
+          1000,
+          routing: 'elbow',
+          startGlue: (a, 'right'),
+          endGlue: (b, 'left'),
+          waypoints: [for (final p in inner) (p.x + 100, p.y)],
+        ),
+      );
+      expect(moved.points.first, plain.points.first);
+      expect(moved.points.last, plain.points.last);
+      expect(moved.points[1].x, plain.points[1].x + 100);
+      expect(moved.points[2].x, plain.points[2].x + 100);
+      for (var i = 1; i < moved.points.length; i++) {
+        final p = moved.points[i - 1], q = moved.points[i];
+        expect(p.x == q.x || p.y == q.y, isTrue, reason: '$p → $q');
+      }
+    });
+
     test('when the glued shape is rotated then the site rotates with it', () {
       f = SceneFixture();
       final c = f.element(

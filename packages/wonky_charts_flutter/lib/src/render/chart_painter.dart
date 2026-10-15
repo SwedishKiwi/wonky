@@ -26,6 +26,10 @@ const Set<String> _bundled = {
   'packages/shad/GeistMono',
 };
 
+/// The bundled Flutter family chart text of family [f] is drawn with
+/// (unknown families fall back to [kChartDefaultFont]).
+String chartDefaultFamily(String? f) => _family(f);
+
 String _family(String? f) {
   if (f == null || f.isEmpty) return kChartDefaultFont;
   if (_bundled.contains(f)) return f;
@@ -37,9 +41,14 @@ String _family(String? f) {
   };
 }
 
-/// The Flutter text style of a scene text style.
-TextStyle chartTextStyle(TextStyleSpec s) => TextStyle(
-  fontFamily: _family(s.family),
+/// The Flutter text style of a scene text style; [familyOf] maps the
+/// spec's family to a registered Flutter family (default:
+/// [chartDefaultFamily]).
+TextStyle chartTextStyle(
+  TextStyleSpec s, {
+  String Function(String? family)? familyOf,
+}) => TextStyle(
+  fontFamily: (familyOf ?? _family)(s.family),
   fontFamilyFallback: _fallbackFonts,
   fontSize: s.size,
   fontWeight: s.bold ? FontWeight.w600 : FontWeight.w400,
@@ -50,13 +59,30 @@ TextStyle chartTextStyle(TextStyleSpec s) => TextStyle(
 
 /// `TextPainter`-backed [TextMeasurer] (08 §6.2) with an LRU cache of laid
 /// out painters, shared by layout and painting so both agree on metrics.
+///
+/// [familyOf] maps a spec family to the Flutter family the text is measured
+/// and drawn with (Slides maps deck fonts registered at runtime; default:
+/// the bundled UI fonts, [chartDefaultFamily]). Pass the same measurer to
+/// [paintChartScene] as to the layout.
 class FlutterTextMeasurer implements TextMeasurer {
-  FlutterTextMeasurer({this.capacity = 2000});
+  FlutterTextMeasurer({this.capacity = 2000, this.familyOf});
 
   /// Shared instance of the editor.
   static final FlutterTextMeasurer instance = FlutterTextMeasurer();
 
   final int capacity;
+
+  /// Spec family → Flutter family (null = [chartDefaultFamily]).
+  final String Function(String? family)? familyOf;
+
+  /// Drops the cached painters (fonts were registered).
+  void clear() {
+    for (final tp in _cache.values) {
+      tp.dispose();
+    }
+    _cache.clear();
+  }
+
   final LinkedHashMap<(String, TextStyleSpec), TextPainter> _cache =
       LinkedHashMap();
 
@@ -69,7 +95,10 @@ class FlutterTextMeasurer implements TextMeasurer {
       return hit;
     }
     final tp = TextPainter(
-      text: TextSpan(text: text, style: chartTextStyle(style)),
+      text: TextSpan(
+        text: text,
+        style: chartTextStyle(style, familyOf: familyOf),
+      ),
       textDirection: TextDirection.ltr,
       maxLines: 1,
     )..layout();
@@ -365,11 +394,16 @@ class ChartScenePainter extends CustomPainter {
     this.gpu,
     this.gpuKey,
     this.devicePixelRatio = 1,
+    this.text,
     super.repaint,
   });
 
   final ChartScene? scene;
   final double scale;
+
+  /// Text metrics the scene was laid out with (null = the shared
+  /// [FlutterTextMeasurer.instance]).
+  final FlutterTextMeasurer? text;
 
   /// GPU backend for the geometry of 3D charts (null = software).
   final Chart3DGpuRenderer? gpu;
@@ -400,6 +434,7 @@ class ChartScenePainter extends CustomPainter {
       paintChartScene(
         canvas,
         s,
+        text: text,
         gpu: gpu,
         gpuKey: gpuKey,
         pixelRatio: devicePixelRatio * scale,
@@ -412,6 +447,7 @@ class ChartScenePainter extends CustomPainter {
         paintChartScene(
           Canvas(recorder),
           s,
+          text: text,
           pixelRatio: devicePixelRatio * scale,
         );
         picture = _pictures[s] = recorder.endRecording();
@@ -426,6 +462,7 @@ class ChartScenePainter extends CustomPainter {
       !identical(old.scene, scene) ||
       old.scale != scale ||
       old.gpu != gpu ||
+      !identical(old.text, text) ||
       old.devicePixelRatio != devicePixelRatio;
 }
 
@@ -434,11 +471,12 @@ class ChartScenePainter extends CustomPainter {
 Future<Uint8List?> chartSceneToPng(
   ChartScene scene, {
   double pixelRatio = 2,
+  FlutterTextMeasurer? text,
 }) async {
   final recorder = ui.PictureRecorder();
   final canvas = Canvas(recorder);
   canvas.scale(pixelRatio);
-  paintChartScene(canvas, scene);
+  paintChartScene(canvas, scene, text: text);
   final picture = recorder.endRecording();
   final w = math.max(1, (scene.width * pixelRatio).ceil());
   final h = math.max(1, (scene.height * pixelRatio).ceil());

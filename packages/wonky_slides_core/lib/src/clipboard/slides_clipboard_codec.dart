@@ -100,7 +100,8 @@ abstract final class SlidesClipboardCodec {
     for (final r in roots) {
       collect(r);
     }
-    final slideId = selected.first.slideId;
+    // The owner: a slide, or a layout/master in master mode (SL-28).
+    final slideId = selected.first.slideId ?? selected.first.ownerId;
     final ids = {for (final e in elements) e.id};
     final payload = _empty(deck, kindElements, sourceItemUuid)
       ..['sourceSlideId'] = slideId

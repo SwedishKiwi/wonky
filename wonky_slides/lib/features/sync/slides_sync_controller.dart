@@ -83,6 +83,7 @@ class SlidesSyncController
     SlideSize? size,
     SlideAppearance? appearance,
     SlidesTemplate? template,
+    String? defaultsJson,
   }) => createInReservedSpace((space) async {
     final now = clock.now().toUtc();
     if (template != null) {
@@ -108,6 +109,7 @@ class SlidesSyncController
         themeKey: themeKey,
         size: size,
         appearance: appearance,
+        defaultsJson: defaultsJson,
       ),
       DeckModel(deckId: space.uuid),
       SlidesPlanContext(userId: replica.userUuid.uuid, now: now, isOwner: true),

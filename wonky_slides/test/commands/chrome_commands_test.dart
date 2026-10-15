@@ -51,13 +51,15 @@ void main() {
       expect(stored, contains('"inspectorVisible":false'));
     });
 
-    test('when View › Show toggles run then rulers and guides flip, and '
-        'comment pins are not offered before comments (SL-38)', () async {
+    test('when View › Show toggles run then rulers, guides and comment '
+        'pins (SL-38) flip', () async {
       await d.run('slides.view.toggleRulers');
       await d.run('slides.view.toggleGuides');
+      await d.run('slides.view.toggleCommentPins');
       expect(ed().rulers, isTrue);
       expect(ed().guides, isFalse);
-      expect(d.services.registry.byId('slides.view.toggleCommentPins'), isNull);
+      expect(ed().commentPins, isFalse);
+      expect(state('slides.view.toggleCommentPins').checked, isFalse);
     });
 
     test('when the snapping toggles run then the synced Slides settings '
@@ -102,30 +104,26 @@ void main() {
       expect(ed().inspectorTab, InspectorTab.format);
       expect(ed().inspectorSection, 'arrange');
 
-      // The Animate tab (SL-30) is hidden: no alias command, and a stored
-      // Animate tab reads as Format.
-      expect(d.services.registry.byId('slides.panel.animate'), isNull);
-      await expectLater(
-        d.run('slides.inspector.open', {'tab': 'animate'}),
-        throwsA(isA<Object>()),
-      );
+      // The Animate tab (SL-30) ships: alias command and tab.
+      expect(d.services.registry.byId('slides.panel.animate'), isNotNull);
+      await d.run('slides.inspector.open', {'tab': 'animate'});
+      expect(ed().inspectorTab, InspectorTab.animate);
       ed().openInspector(InspectorTab.animate);
-      expect(ed().inspectorTab, InspectorTab.format);
+      expect(ed().inspectorTab, InspectorTab.animate);
     });
 
-    test('when hidden view modes are asked for then they are refused and '
-        'the mode stays (outline SL-34, masters SL-28)', () async {
-      for (final mode in ['outline', 'masters']) {
-        final st = state('slides.view.setMode', {'mode': mode});
-        expect(st.enabled, isFalse, reason: mode);
-        ed().setMode(DeckViewMode.fromName(mode)!);
-        expect(ed().mode, DeckViewMode.normal, reason: mode);
-      }
+    test('when the outline view and masters mode are asked for then both are '
+        'offered and the mode switches (SL-34, SL-28)', () async {
+      final st = state('slides.view.setMode', {'mode': 'outline'});
+      expect(st.enabled, isTrue);
+      await d.run('slides.view.setMode', {'mode': 'outline'});
+      expect(ed().mode, DeckViewMode.outline);
+      expect(state('slides.view.setMode', {'mode': 'masters'}).enabled, isTrue);
       final schema = d.services.registry
           .byId('slides.view.setMode')!
           .argsSchema
           .toJson();
-      expect('$schema', isNot(contains('outline')));
+      expect('$schema', contains('outline'));
     });
 
     test('when navigating then previous/next/go-to move the current slide '

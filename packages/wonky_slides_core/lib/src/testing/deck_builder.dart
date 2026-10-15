@@ -288,6 +288,57 @@ final class DeckBuilder {
     columns: {SlidesCols.text: deltaOf(text)},
   );
 
+  /// Adds a code element (07) with one `CodeState` per entry of [states]
+  /// (code text; at least one, `''` by default) and [data] as `dataJson`.
+  /// [highlights], [labels] and [transitions] (JSON strings) set the
+  /// states' columns by index. Returns `(elementId, stateIds)` (SL-31).
+  (String, List<String>) codeBlock(
+    String slideId, {
+    List<String> states = const [''],
+    Map<String, Object?> data = const {'v': 1, 'language': 'dart'},
+    List<String?> highlights = const [],
+    List<String?> labels = const [],
+    List<String?> transitions = const [],
+    List<String?> annotations = const [],
+    double x = 160,
+    double y = 140,
+    double width = 1600,
+    double height = 800,
+  }) {
+    final id = element(
+      slideId,
+      ElementKind.code,
+      x: x,
+      y: y,
+      width: width,
+      height: height,
+      columns: {ElementCols.dataJson: jsonEncode(data)},
+    );
+    String? at(List<String?> l, int i) => i < l.length ? l[i] : null;
+    final stateIds = <String>[];
+    for (final (i, code) in (states.isEmpty ? const [''] : states).indexed) {
+      final sid = ids.newId();
+      stateIds.add(sid);
+      _rows.add((
+        SlidesTables.codeState,
+        {
+          for (final c in SlidesTables.columns[SlidesTables.codeState]!)
+            c: null,
+          SlidesCols.id: sid,
+          SlidesCols.elementId: id,
+          SlidesCols.sortKey: nextKey('code:$id'),
+          CodeStateCols.code: code,
+          CodeStateCols.highlight: at(highlights, i),
+          SlidesCols.label: at(labels, i),
+          SlidesCols.transitionJson: at(transitions, i),
+          CodeStateCols.annotationsJson: at(annotations, i),
+          SlidesCols.createdAt: now,
+        },
+      ));
+    }
+    return (id, stateIds);
+  }
+
   /// Adds an element group of [childIds] (already added with [parentId] =
   /// the returned id; use [groupId] to preset the id).
   String elementGroup(
@@ -407,6 +458,38 @@ final class DeckBuilder {
         BuildCols.durationMs: durationMs,
         BuildCols.easing: easing,
         BuildCols.optionsJson: optionsJson,
+        SlidesCols.createdAt: now,
+      },
+    ));
+    return id;
+  }
+
+  /// Links chart element [elementId] (a `chart_link` row, Slides 08 §3.3).
+  String chartLink(
+    String elementId, {
+    required String sourceSpecJson,
+    required String dataSnapshotJson,
+    String sourceVersion = '',
+    String spreadsheetItemUuid = '00000000-0000-4000-8000-000000000c01',
+    String chartObjectId = '00000000-0000-4000-8000-000000000c02',
+    String? sheetId,
+    bool autoUpdate = false,
+  }) {
+    final id = SlidesIds.chartLinkId(elementId);
+    _rows.add((
+      SlidesTables.chartLink,
+      {
+        SlidesCols.id: id,
+        SlidesCols.elementId: elementId,
+        ChartLinkCols.spreadsheetItemUuid: spreadsheetItemUuid,
+        ChartLinkCols.chartObjectId: chartObjectId,
+        ChartLinkCols.sheetId: sheetId,
+        ChartLinkCols.sourceSpecJson: sourceSpecJson,
+        ChartLinkCols.dataSnapshotJson: dataSnapshotJson,
+        ChartLinkCols.sourceVersion: sourceVersion,
+        ChartLinkCols.updatedAt: now,
+        ChartLinkCols.updatedBy: userId,
+        ChartLinkCols.autoUpdate: autoUpdate,
         SlidesCols.createdAt: now,
       },
     ));

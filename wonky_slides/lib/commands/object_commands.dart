@@ -5,7 +5,8 @@ import 'dart:math' as math;
 import 'package:flutter/semantics.dart' show SemanticsService;
 import 'package:flutter/widgets.dart' show Directionality, View;
 import 'package:shad/shad.dart' show LucideIcons;
-import 'package:wonky_app/emoji.dart' show showEmojiPickerDialog;
+import 'package:wonky_app/emoji.dart'
+    show EmojiPickerKeys, showEmojiPickerDialog;
 import 'package:wonky_app/wonky_app.dart';
 import 'package:wonky_core/wonky_core.dart';
 import 'package:wonky_slides_core/icons.dart';
@@ -24,6 +25,8 @@ import '../features/elements/shape/shape_gallery.dart';
 import '../features/elements/shape/shape_tool.dart';
 import '../features/elements/style/element_style.dart';
 import '../features/format_painter/format_painter.dart';
+import '../features/spellcheck/text_inserts.dart';
+import '../features/text_editing/text_editing_host.dart' show textEditingOf;
 import '../l10n/slides_l10n.dart';
 import 'slides_command.dart';
 
@@ -62,7 +65,7 @@ List<Command<CommandArgs>> objectCommands(ShellServices s) {
           ),
         },
       ),
-      enabled: (ed, a) => ed.currentSlideId != null,
+      enabled: (ed, a) => ed.surfaceId != null,
       reason: (l, ed) => l.reasonNoSlides,
       run: (ctx, ed, a) async {
         var geometry = a.string('geometry');
@@ -121,7 +124,7 @@ List<Command<CommandArgs>> objectCommands(ShellServices s) {
           'end': _endpointSchema,
         },
       ),
-      enabled: (ed, a) => ed.currentSlideId != null,
+      enabled: (ed, a) => ed.surfaceId != null,
       reason: (l, ed) => l.reasonNoSlides,
       run: (ctx, ed, a) {
         final routing = a.string('routing') ?? _lastLine.$1;
@@ -164,7 +167,7 @@ List<Command<CommandArgs>> objectCommands(ShellServices s) {
           'size': JsonSchema.number(),
         },
       ),
-      enabled: (ed, a) => ed.currentSlideId != null,
+      enabled: (ed, a) => ed.surfaceId != null,
       reason: (l, ed) => l.reasonNoSlides,
       run: (ctx, ed, a) async {
         var name = a.string('name');
@@ -231,7 +234,7 @@ List<Command<CommandArgs>> objectCommands(ShellServices s) {
           'size': JsonSchema.number(),
         },
       ),
-      enabled: (ed, a) => ed.currentSlideId != null,
+      enabled: (ed, a) => ed.surfaceId != null,
       reason: (l, ed) => l.reasonNoSlides,
       run: (ctx, ed, a) async {
         var char = a.string('char');
@@ -243,17 +246,27 @@ List<Command<CommandArgs>> objectCommands(ShellServices s) {
           final done = Completer<String?>();
           await showEmojiPickerDialog(
             dc,
+            prefs: slidesEmojiPrefs(ed.services),
+            keys: EmojiPickerKeys.slides,
             onSelected: (e) {
               if (!done.isCompleted) done.complete(e);
             },
           );
           if (!done.isCompleted) done.complete(null);
           char = await done.future;
-          if (char == null) return const CommandResult.cancelled();
+          if (char == null) {
+            if (isEditingText(ed)) {
+              textEditingOf(ed).editorFocus.requestFocus();
+            }
+            return const CommandResult.cancelled();
+          }
         }
         if (char.runes.length > 16) {
           return const CommandResult.failed('One emoji is expected');
         }
+        // While text is edited the emoji is typed into it (it stays text,
+        // 03 §6.7; SL-44); otherwise it becomes an emoji object.
+        if (insertIntoEditedText(ed, char)) return ok();
         final size = _num(a, 'size') ?? 240;
         final box = _placed(ed, _num(a, 'x'), _num(a, 'y'), size, size);
         return _insert(
@@ -824,9 +837,12 @@ CommandResult _insert(
   DeckEditorController ed,
   ElementSpec spec,
 ) {
-  final slide = ed.currentSlideId;
+  final slide = ed.surfaceId;
   if (slide == null) return const CommandResult.failed('No slide');
-  final plan = ed.apply(ctx, InsertElements(slide, [spec]));
+  final plan = ed.apply(
+    ctx,
+    InsertElements(slide, [spec], ownerKind: ed.surfaceKind),
+  );
   final ids = plan.result['elementIds'];
   ed.armTool(null);
   if (ids is List && ids.isNotEmpty) {

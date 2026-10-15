@@ -7,5 +7,6 @@ library;
 
 export 'src/spellcheck/dictionaries.dart';
 export 'src/spellcheck/hunspell_engine.dart' show createHunspellEngine;
+export 'src/spellcheck/personal_dictionary.dart';
 export 'src/spellcheck/spell_engine.dart';
 export 'src/spellcheck/spelling_dialogs.dart';

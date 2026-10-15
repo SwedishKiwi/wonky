@@ -50,6 +50,7 @@ final class Chart3DCamera {
     required double fovDeg,
     required ChartRect viewport,
     Iterable<Vec3> extraPoints = const [],
+    double? maxScale,
   }) {
     final az = azimuthDeg * math.pi / 180;
     final el = elevationDeg.clamp(0.0, 89.0) * math.pi / 180;
@@ -79,7 +80,8 @@ final class Chart3DCamera {
       y1 = math.max(y1, yt);
     }
     final bw = math.max(x1 - x0, 1e-9), bh = math.max(y1 - y0, 1e-9);
-    final s = math.min(viewport.width / bw, viewport.height / bh);
+    var s = math.min(viewport.width / bw, viewport.height / bh);
+    if (maxScale != null && maxScale > 0 && maxScale < s) s = maxScale;
     final ox = (x0 + x1) / 2, oy = (y0 + y1) / 2;
     final cx = viewport.left + viewport.width / 2;
     final cy = viewport.top + viewport.height / 2;
@@ -131,6 +133,9 @@ final class Chart3DCamera {
 
   /// Vertical field of view (radians) of the GPU camera.
   final double gpuFovY;
+
+  /// Scene px per tangent-space unit of the fit (the camera's zoom).
+  double get scale => _s;
 
   /// Unit vector to the right of the view.
   Vec3 get right => _r;

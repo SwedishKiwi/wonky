@@ -1,0 +1,18 @@
+### *Rewrite text* (Slides 11 §6.5): the element's text as Markdown and
+### what to do with it.
+class: SlidesAiRewriteRequest
+fields:
+  ### shorter | longer | clearer | formal | grammar | punchier | bullets |
+  ### paragraph | translate | custom.
+  mode: String
+  instruction: String?
+  ### Target language of translate.
+  language: String?
+  markdown: String
+  slideTitle: String?
+  ### The element's placeholder role (title, body, …) or null.
+  role: String?
+  ### Characters that fit the box at ≥ 80 % of the current size.
+  capacityChars: int?
+  ### The previous result to refine ("even shorter").
+  previous: String?

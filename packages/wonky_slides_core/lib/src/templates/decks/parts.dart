@@ -4,6 +4,9 @@
 /// both appearances.
 library;
 
+import '../../model/api/kinds.dart';
+import '../../motion/builds/build_edits.dart';
+import '../../motion/builds/build_options.dart';
 import '../../ops/operations.dart';
 import '../../theme/model/common.dart';
 import '../template_builder.dart';
@@ -293,3 +296,67 @@ List<ElementSpec> flow(
   }
   return out;
 }
+
+/// A build in (06 §3.1) of [elementId] with the catalog defaults; the
+/// first build of a click is [SlideBuildTrigger.onClick], the rest join it
+/// (`withPrevious`) or follow it (`afterPrevious`).
+BuildSpec buildIn(
+  String elementId,
+  String effect, {
+  SlideBuildTrigger trigger = SlideBuildTrigger.onClick,
+  Map<String, Object?>? params,
+  BuildDelivery? delivery,
+  AfterBuild? afterBuild,
+  int delayMs = 0,
+  int? durationMs,
+}) => BuildEdits.spec(
+  elementId: elementId,
+  kind: SlideBuildKind.buildIn,
+  effect: effect,
+  trigger: trigger,
+  params: params,
+  delivery: delivery,
+  afterBuild: afterBuild,
+  delayMs: delayMs,
+  durationMs: durationMs,
+);
+
+/// An emphasis build (06 §3.3) of [elementId] (code steps and states,
+/// chart cameras, …) with the catalog defaults.
+BuildSpec emphasis(
+  String elementId,
+  String effect, {
+  Map<String, Object?>? params,
+  SlideBuildTrigger trigger = SlideBuildTrigger.onClick,
+}) => BuildEdits.spec(
+  elementId: elementId,
+  kind: SlideBuildKind.emphasis,
+  effect: effect,
+  trigger: trigger,
+  params: params,
+);
+
+/// One click that builds [elementIds] in together with [effect] (the first
+/// on click — or with the previous build when [auto] — the rest with it).
+List<BuildSpec> buildTogether(
+  List<String> elementIds,
+  String effect, {
+  bool auto = false,
+  Map<String, Object?>? params,
+}) => [
+  for (final (i, id) in elementIds.indexed)
+    buildIn(
+      id,
+      effect,
+      params: params,
+      trigger: i == 0 && !auto
+          ? SlideBuildTrigger.onClick
+          : SlideBuildTrigger.withPrevious,
+    ),
+];
+
+/// [ids] split into consecutive chunks of [size] (the elements of one
+/// card, stat or milestone of a composition).
+List<List<String>> chunks(List<String> ids, int size) => [
+  for (var i = 0; i < ids.length; i += size) ids.sublist(i, i + size),
+];

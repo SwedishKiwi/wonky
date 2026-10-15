@@ -1,0 +1,7 @@
+### The charts of a spreadsheet (Slides 08 §4.2, §13 `listCharts`).
+class: ChartSourceList
+fields:
+  spreadsheetTitle: String
+  charts: List<ChartSourceSummary>
+  ### Whether the caller may copy charts (editor+, or `nonEditorsCanExport`).
+  exportAllowed: bool

@@ -117,7 +117,9 @@ final class AddLayout extends SlidesOperation {
   String get name => 'AddLayout';
 }
 
-/// Updates master/layout columns (`name`, `backgroundJson`, `hidden`, …).
+/// Updates master/layout columns (`name`, `backgroundJson`, `hidden`, …;
+/// SL-28: `sortKey` moves a layout among its master's layouts or a master
+/// among its theme's masters).
 final class UpdateMasterOrLayout extends SlidesOperation {
   const UpdateMasterOrLayout(this.id, this.columns);
 

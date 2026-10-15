@@ -34,6 +34,7 @@ class _Charts implements ChartSceneSource {
     ResolvedTheme theme, {
     required double width,
     required double height,
+    int? background,
   }) => ChartScene(width: width, height: height, background: 0, primitives: []);
 }
 

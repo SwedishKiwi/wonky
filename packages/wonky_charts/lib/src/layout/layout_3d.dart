@@ -24,6 +24,8 @@ void _layout3D(_Ctx c, ChartRect r) {
   if (from != null && c.options.transition3D < 1 && from.kind == model.kind) {
     model = Chart3DModel.lerp(from, model, c.options.transition3D);
   }
+  final transform = c.options.transform3D;
+  if (transform != null) model = transform(model);
   final fit = body.deflate(
     left: b.marginLeft,
     top: b.marginTop,
@@ -31,7 +33,12 @@ void _layout3D(_Ctx c, ChartRect r) {
     bottom: b.marginBottom,
   );
   if (fit.isEmpty) return;
-  final scene = Chart3DScene(model, fit, hover: c.options.hover3D);
+  final scene = Chart3DScene(
+    model,
+    fit,
+    hover: c.options.hover3D,
+    fitViews: c.options.fitViews3D,
+  );
   c.threeD = scene;
   c.plotArea = body;
   c.out.add(
@@ -235,7 +242,7 @@ final class _Chart3DBuilder {
     bounds: bounds,
     azimuth: azimuth,
     elevation: elevation,
-    fov: t3.perspective,
+    fov: c.options.perspective3D ?? t3.perspective,
     lighting: t3.lighting,
     background: c.background,
     floorY: 0,

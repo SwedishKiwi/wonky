@@ -1824,5 +1824,105 @@
   "driveItemUploading": "Uploading…",
   "@driveItemUploading": {
     "description": "Last-modified column of a file that is still uploading."
+  },
+  "spellingTitle": "Spelling",
+  "@spellingTitle": {
+    "description": "Title of the Check spelling dialog (Write, Slides)."
+  },
+  "spellingDone": "Done",
+  "spellingNoErrors": "No spelling errors found.",
+  "spellingUnavailable": "Spellcheck isn’t available for this document’s language.",
+  "spellingNotInDictionary": "Not in dictionary",
+  "@spellingNotInDictionary": {
+    "description": "Label above the flagged word in the Check spelling dialog."
+  },
+  "spellingSuggestions": "Suggestions",
+  "spellingNoSuggestions": "No suggestions",
+  "spellingChange": "Change",
+  "spellingChangeAll": "Change all",
+  "spellingIgnore": "Ignore",
+  "spellingIgnoreAll": "Ignore all",
+  "spellingAddToDictionary": "Add to dictionary",
+  "spellingPersonalDictionary": "Personal dictionary",
+  "spellingPersonalDictionaryHint": "Words you added are never marked as misspelled, in any document.",
+  "spellingAddWord": "Add a word",
+  "@spellingAddWord": {
+    "description": "Placeholder of the word field in the Personal dictionary dialog."
+  },
+  "spellingAdd": "Add",
+  "spellingNoWords": "No words yet.",
+  "spellingRemoveWord": "Remove {word}",
+  "@spellingRemoveWord": {
+    "description": "Screen reader label of the remove button of a personal dictionary word.",
+    "placeholders": {
+      "word": {
+        "type": "String"
+      }
+    }
+  },
+  "emojiPickerClose": "Close emoji picker",
+  "emojiDialogLabel": "Emoji",
+  "emojiPickerLabel": "Emoji picker",
+  "emojiSearch": "Search emoji",
+  "emojiRecentlyUsed": "Recently used",
+  "emojiLoadFailed": "Emoji could not be loaded",
+  "emojiNoneFound": "No emoji found",
+  "emojiNone": "No emoji",
+  "emojiSearchResults": "Search results",
+  "emojiPickAnEmoji": "Pick an emoji",
+  "emojiSkinToneOption": "{tone} skin tone",
+  "@emojiSkinToneOption": {
+    "placeholders": {
+      "tone": {
+        "type": "String"
+      }
+    }
+  },
+  "emojiSkinToneCurrent": "Skin tone: {tone}",
+  "@emojiSkinToneCurrent": {
+    "placeholders": {
+      "tone": {
+        "type": "String"
+      }
+    }
+  },
+  "emojiSkinToneDefault": "Default",
+  "emojiSkinToneLight": "Light",
+  "emojiSkinToneMediumLight": "Medium-light",
+  "emojiSkinToneMedium": "Medium",
+  "emojiSkinToneMediumDark": "Medium-dark",
+  "emojiSkinToneDark": "Dark",
+  "specialCharsTitle": "Special characters",
+  "specialCharsClose": "Close",
+  "specialCharsSearch": "Search by name or code (U+2192)",
+  "specialCharsRecent": "Recent",
+  "specialCharsLoadFailed": "Characters could not be loaded",
+  "specialCharsNoneFound": "No characters found",
+  "specialCharsSearchResults": "Search results",
+  "activityDetailSlides": "{count, plural, =1{1 slide} other{{count} slides}}",
+  "@activityDetailSlides": {
+    "description": "Detail of a presentation edit event in the activity feed: how many slides were edited.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "activityDetailSlidesDeleted": "{count, plural, =1{1 slide deleted} other{{count} slides deleted}}",
+  "@activityDetailSlidesDeleted": {
+    "description": "Detail of a presentation edit event: slides deleted.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "activityDetailTheme": "theme changed",
+  "@activityDetailTheme": {
+    "description": "Detail of a presentation edit event: the theme changed."
+  },
+  "activityDetailAgent": "with Claude",
+  "@activityDetailAgent": {
+    "description": "Detail of an edit event made through MCP or the assistant."
   }
 }

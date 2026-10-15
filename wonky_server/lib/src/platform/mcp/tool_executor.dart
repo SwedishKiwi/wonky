@@ -136,13 +136,14 @@ class ToolExecutor {
   final McpRateLimiter rateLimiter;
 
   /// Mutating calls per minute per token and target file (Sheets 12 §3.14:
-  /// 60 per spreadsheet), on top of the per-token limit.
+  /// 60 per spreadsheet; Slides 11 §3.13: 60 per deck), on top of the
+  /// per-token limit.
   final McpRateLimiter targetWriteLimiter;
 
   static const targetWriteLimit = 60;
 
   /// Argument keys naming the file a mutating call writes to.
-  static const _targetKeys = ['spreadsheet'];
+  static const _targetKeys = ['spreadsheet', 'deck'];
   static final _uuid = RegExp(
     '[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}',
   );

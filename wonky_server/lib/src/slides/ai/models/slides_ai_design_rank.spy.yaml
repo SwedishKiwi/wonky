@@ -1,0 +1,6 @@
+### One ranked design idea (Slides 11 §6.6 `rank_designs`).
+class: SlidesAiDesignRank
+fields:
+  candidateId: String
+  score: double
+  reason: String?

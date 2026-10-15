@@ -26,11 +26,25 @@ dependencies:
   shad: ^0.99.4
   wonky_app:
     path: ../packages/wonky_app
-  # Chart scene painter of chart elements (features/stage, SL-10).
+  # 3D slide transitions on the GPU (features/transitions/gpu, SL-29;
+  # Slides 06 §12.3): Flutter GPU / WebGL2 through flutter_scene (already in
+  # the workspace via wonky_charts_flutter) and its 32-bit vector_math.
+  flutter_scene: ^0.24.3
+  vector_math: ^2.1.4
+  # Chart elements (features/stage, SL-10; features/elements/chart, SL-32):
+  # the engine types (snapshots, specs, morphs, 3D views) and the Flutter
+  # painter, ChartView, data table dialog, type icons and ChartStyleEditor.
+  wonky_charts:
+    path: ../packages/wonky_charts
   wonky_charts_flutter:
     path: ../packages/wonky_charts_flutter
   wonky_client:
     path: ../wonky_client
+  # Code elements (features/elements/code, SL-31): the in-place editor
+  # (`CodeEditorField`, re_editor) and the shared tokenizer, languages and
+  # palettes of `wonky_code` (re-exported).
+  wonky_code_flutter:
+    path: ../packages/wonky_code_flutter
   wonky_core:
     path: ../packages/wonky_core
   wonky_slides_core:

@@ -181,6 +181,11 @@ const rules = <String, PackageRule>{
   'wonky_charts': PackageRule(
     kind: Kind.pureDart,
     spec: {'wonky_core', 'wonky_numfmt', 'pdf', 'image', 'vector_math'},
+    exceptions: {
+      'archive':
+          'gzip of large chart snapshot columns (Slides 08 §3.3, SL-27); '
+          'already resolved through image',
+    },
   ),
   'wonky_charts_flutter': PackageRule(
     kind: Kind.flutter,
@@ -276,6 +281,11 @@ const rules = <String, PackageRule>{
       // Clipboard HTML: tables and rich text pasted from other apps
       // (Slides 03 §12.5, SL-18).
       'html',
+    },
+    exceptions: {
+      'archive':
+          'gzip NDJSON version snapshots shared by server and client '
+          '(Slides 09 §4.1, SL-39); already resolved through image',
     },
   ),
   'wonky_sheets_script': PackageRule(
@@ -432,6 +442,7 @@ const rules = <String, PackageRule>{
       'wonky_slides_core',
       'wonky_sync_kit',
       'wonky_sync_kit_flutter',
+      'wonky_charts',
       'wonky_charts_flutter',
       'wonky_code_flutter',
       'wonky_rich_text',

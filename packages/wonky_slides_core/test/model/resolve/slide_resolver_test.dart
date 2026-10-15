@@ -139,6 +139,83 @@ void main() {
     });
   });
 
+  group('Given a layout or master edited in master mode (05 §8.1, SL-28)', () {
+    late DeckModel m;
+    late SlideResolver resolver;
+    setUp(() {
+      m = f.session().model;
+      resolver = SlideResolver(m);
+    });
+
+    test('when resolving a layout id then its placeholders are editable '
+        'elements and the master decorations are drawn behind them', () {
+      final layoutId = f.layouts['titleBody']!;
+
+      final r = resolver.resolve(layoutId)!;
+
+      expect(r.surface, ElementOwnerKind.layout);
+      expect(r.isSurface, isTrue);
+      expect(r.slide.id, layoutId);
+      expect(r.layout!.id, layoutId);
+      expect(r.master!.id, f.masterId);
+      expect(
+        r.elements.map((e) => e.placeholderType),
+        containsAll([SlidePlaceholderType.title, SlidePlaceholderType.body]),
+      );
+      expect(r.elements.every((e) => !e.inherited), isTrue);
+      expect(r.elements.every((e) => e.record.layoutId == layoutId), isTrue);
+      expect(r.layoutElements, isEmpty);
+      expect(r.masterElements.every((e) => e.inherited), isTrue);
+      expect(
+        r.masterElements.any(
+          (e) => e.placeholderType == SlidePlaceholderType.title,
+        ),
+        isFalse,
+        reason: 'master title/body placeholders are style sources only',
+      );
+    });
+
+    test('when resolving a master id then its own placeholders, including '
+        'the slide number field, are the elements', () {
+      final r = resolver.resolve(f.masterId)!;
+
+      expect(r.surface, ElementOwnerKind.master);
+      expect(r.layout, isNull);
+      expect(r.masterElements, isEmpty);
+      final number = r.elements.firstWhere(
+        (e) => e.placeholderType == SlidePlaceholderType.slideNumber,
+      );
+      expect(number.fieldText, '‹#›');
+    });
+
+    test('when a layout placeholder moves then the layout surface and every '
+        'slide inheriting it re-resolve (05 AC 4)', () {
+      final deck = f.session();
+      final r2 = SlideResolver(deck.model);
+      final layoutId = f.layouts['titleBody']!;
+      final title = deck.model
+          .elementsOf(layoutId)
+          .firstWhere((e) => e.placeholderType == SlidePlaceholderType.title);
+      final before = r2.resolve(layoutId)!;
+
+      deck.execute(UpdateFrames([FrameUpdate(title.id, x: 300, y: 40)]));
+
+      final after = r2.resolve(layoutId)!;
+      expect(identical(after, before), isFalse);
+      expect(after.element(title.id)!.frame.x, 300);
+      final instance = r2
+          .resolve(f.g1)!
+          .elements
+          .firstWhere((e) => e.placeholderType == SlidePlaceholderType.title);
+      expect(instance.frame.x, 300);
+    });
+
+    test('when the id is neither a slide, a layout nor a master then nothing '
+        'resolves', () {
+      expect(resolver.resolve('00000000-0000-4000-8000-00000000dead'), isNull);
+    });
+  });
+
   group('Given text style resolution', () {
     test(
       'when a run is bold in a quote paragraph then the quote style and a '

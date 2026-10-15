@@ -348,12 +348,34 @@ extension _MotionPart on _Planner {
     return e;
   }
 
+  /// A snapshot column: a JSON object, or its `gz:` storage form (08 §3.3),
+  /// validated by decoding.
+  String _snapshotColumn(String value, String column) {
+    if (!ChartSnapshotColumns.isCompressed(value)) {
+      return jsonObject(value, column)!;
+    }
+    final json = ChartSnapshotColumns.decode(value);
+    if (json == '{}') invalid('$column is not a valid gz: value');
+    jsonObject(json, column);
+    return value;
+  }
+
+  /// The JSON object stored in a snapshot column (`gz:` decoded).
+  static JsonMap? _columnObject(String value) {
+    try {
+      final v = jsonDecode(ChartSnapshotColumns.decode(value));
+      return v is Map<String, Object?> ? v : null;
+    } on FormatException {
+      return null;
+    }
+  }
+
   Map<String, Object?> _snapshot(ChartSnapshot s) => {
-    ChartLinkCols.sourceSpecJson: jsonObject(
+    ChartLinkCols.sourceSpecJson: _snapshotColumn(
       s.sourceSpecJson,
       ChartLinkCols.sourceSpecJson,
     ),
-    ChartLinkCols.dataSnapshotJson: jsonObject(
+    ChartLinkCols.dataSnapshotJson: _snapshotColumn(
       s.dataSnapshotJson,
       ChartLinkCols.dataSnapshotJson,
     ),
@@ -391,9 +413,11 @@ extension _MotionPart on _Planner {
         SlidesCols.createdAt: ctx.now,
       });
     }
+    // A relinked static chart drops its frozen snapshot (SL-32).
     final data = mergePatch(decodeMap(e.dataJson), {
       'v': 1,
       'source': 'linked',
+      'snapshot': null,
       'spec': null,
       'data': null,
     });
@@ -425,12 +449,18 @@ extension _MotionPart on _Planner {
   String unlinkChart(UnlinkChart op) {
     final link = _link(op.elementId);
     final e = elementOf(op.elementId);
+    // The snapshot moves into `dataJson.snapshot` (08 §3.2, §7).
     final data = mergePatch(decodeMap(e.dataJson), {
       'v': 1,
       'source': 'static',
-      'spec': decodeMap(link.sourceSpecJson),
-      'data': decodeMap(link.dataSnapshotJson),
+      'snapshot': null,
+      'spec': null,
+      'data': null,
     });
+    data['snapshot'] = {
+      'sourceSpec': _columnObject(link.sourceSpecJson) ?? const {'v': 1},
+      'dataSnapshot': _columnObject(link.dataSnapshotJson) ?? const {'v': 1},
+    };
     b.set(e, {ElementCols.dataJson: jsonEncode(data)});
     b.remove(link);
     return 'Unlink chart';
@@ -438,6 +468,28 @@ extension _MotionPart on _Planner {
 
   String setChartStyle(SetChartStyle op) {
     final e = _chartElement(op.elementId);
+    // Deck-side keys only; overrides within the allowlist (08 §8.2, §14).
+    final native = decodeMap(e.dataJson)?['source'] == 'native';
+    for (final k in op.patch.keys) {
+      if (!native && const {'source', 'snapshot', 'spec', 'data'}.contains(k)) {
+        invalid('Chart "$k" is changed by linking, updating or unlinking', {
+          'key': k,
+        });
+      }
+    }
+    final overrides = op.patch['overrides'];
+    if (overrides is Map && !native) {
+      final rejected = ChartOverrides.rejectedPaths(
+        overrides.cast<String, Object?>(),
+      );
+      if (rejected.isNotEmpty) {
+        invalid(
+          'Edit ${rejected.join(', ')} in Wonky Sheets: Slides only overrides '
+          'the presentation of linked charts',
+          {'paths': rejected},
+        );
+      }
+    }
     final data = mergePatch(decodeMap(e.dataJson), op.patch);
     data['v'] ??= 1;
     b.set(e, {ElementCols.dataJson: jsonEncode(data)});

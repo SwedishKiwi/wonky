@@ -844,8 +844,11 @@ can invoke them.
   Java, JavaScript, JSON, Kotlin, Python, Rust, Serverpod models (`serverpod` →
   `serverpod_protocol`), SQL, Swift, TypeScript, YAML. Grammars are embedded Dart strings parsed
   on first use, so a block is highlighted on its first frame (before v2 they loaded from Flutter
-  assets and the block showed plain until then). Exports (07) still tokenize with highlight.js
-  (`HighlightJsTokenizer`, re-exported by `wonky_write_core` as `SyntaxHighlighter`) until M10.
+  assets and the block showed plain until then). Since M10 (SL-35) the editor tokenizes through
+  `DefaultCodeTokenizer`: languages without a grammar (bash, C, Ruby, …) are highlighted by
+  highlight.js, exactly like the exports (07) and Wonky Slides. The block's language is
+  normalized (`CodeLanguages.normalize`) before tokenizing. The language picker still offers the
+  15 TextMate languages (`CodeLanguages.pickerLanguages`: `TODO.md`).
 - `CodeHighlightStylePhase extends SingleColumnLayoutStylePhase`:
   - For each code component view model, it overlays **presentation-only**
     `CodeTokenAttribution(tokenClass)` spans on a *copy* of the view-model text. The document
@@ -911,6 +914,14 @@ DOCX, …) keep tokenizing with highlight.js while the editor uses TextMate, so 
 slightly between screen and export — accepted. In **M10** Write's exports switch
 to `DefaultCodeTokenizer` (TextMate first, highlight.js fallback) with a golden diff review of
 the Write export corpus; only token colors change.
+
+**Status (M10, Slides SL-35, done):** the exports (PDF and print, HTML, EPUB, DOCX, ODT, RTF)
+and the editor tokenize with `DefaultCodeTokenizer`; `wonky_write_core`'s `SyntaxHighlighter`
+is now the exporters' cached front for it (no longer an alias of `HighlightJsTokenizer`).
+Screen and export colors match. The diff review is a test
+(`wonky_write_core/test/export/code_tokenizer_switch_test.dart`); it led to TextMate patch SH-7
+(capture offsets: `function f` had its name scoped on the keyword) and to PDF code lines
+wrapping at spaces regardless of token boundaries (07 §5.2).
 
 ## 16. Horizontal rule (divider)
 
@@ -1199,7 +1210,7 @@ Insert › Special characters…: `write.insert.specialCharacter` with no args o
 With `{char}` it inserts directly.
 - Category select: Punctuation, Arrows, Math, Currency, Latin, Greek, Cyrillic, Symbols,
   Technical, Box drawing.
-- Search by Unicode name, from a bundled name table (`assets/unicode/special_chars.json`, 6,365
+- Search by Unicode name, from a bundled name table (`packages/wonky_app/assets/unicode/special_chars.json`, shared with Slides since SL-44, 6,365
   characters, generated from Unicode 16 names by `tool/unicode/gen_special_chars.py`). Exact code
   point input (`U+2192` or `2192`) is also accepted.
 - A recent row, and a large preview with name and code point on hover or focus.

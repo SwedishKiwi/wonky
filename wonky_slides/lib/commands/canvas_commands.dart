@@ -705,10 +705,14 @@ List<Command<CommandArgs>> canvasCommands(ShellServices s) => [
       icon: lock ? LucideIcons.lock : LucideIcons.lockOpen,
       categoryOf: SlidesCategory.arrange,
       mutates: true,
-      enabled: (ed, a) => ed.selectedElementIds.isNotEmpty,
+      // `ids`: the Layers panel's lock toggles (SL-34).
+      argsSchema: const JsonSchema.object(
+        properties: {'ids': JsonSchema.array(JsonSchema.string())},
+      ),
+      enabled: (ed, a) => _ids(ed, a).isNotEmpty,
       reason: (l, ed) => l.reasonSelectObject,
       run: (ctx, ed, a) {
-        _apply(ctx, ed, SetElementProps(ed.selectedElementIds, locked: lock));
+        _apply(ctx, ed, SetElementProps(_ids(ed, a), locked: lock));
         return ok();
       },
     ),
@@ -953,9 +957,7 @@ String? _groupArg(DeckEditorController ed, JsonArgs a) {
       (ed.selectedElementIds.length == 1 ? ed.selectedElementIds.single : null);
   if (id == null) return null;
   final e = ed.model.element(id);
-  return e != null &&
-          e.kind == ElementKind.group &&
-          e.slideId == ed.currentSlideId
+  return e != null && e.kind == ElementKind.group && e.ownerId == ed.surfaceId
       ? id
       : null;
 }
@@ -1106,7 +1108,7 @@ CommandResult _duplicate(
   double? dx,
   double? dy,
 }) {
-  final slideId = ed.currentSlideId;
+  final slideId = ed.surfaceId;
   if (slideId == null) return const CommandResult.failed('No slide');
   final payload = SlidesClipboardCodec.copyElements(ed.model, ids);
   double? atX, atY;
@@ -1124,7 +1126,13 @@ CommandResult _duplicate(
   final plan = _apply(
     ctx,
     ed,
-    PasteElements(payload, slideId, atX: atX, atY: atY),
+    PasteElements(
+      payload,
+      slideId,
+      atX: atX,
+      atY: atY,
+      ownerKind: ed.surfaceKind,
+    ),
   );
   final created = (plan.result['elementIds'] as List? ?? const [])
       .whereType<String>()
@@ -1156,7 +1164,8 @@ Map<String, Object?> _decode(String? json) {
 
 /// Writes a line's endpoints (slide space) as its frame (the endpoints'
 /// bounding box, rotation and flips cleared) and `dataJson.start/end`
-/// (normalized positions, glue to connection sites, 02 §6.3) — one step.
+/// (normalized positions, glue to connection sites, 02 §6.3; edited route
+/// waypoints are cleared, SL-44) — one step.
 CommandResult _setLineEnds(
   CommandContext ctx,
   DeckEditorController ed,
@@ -1227,6 +1236,10 @@ CommandResult _setLineEnds(
         ...data,
         'start': end(s, sx, sy),
         'end': end(e, ex, ey),
+        // Moving an end re-routes the connector automatically: route
+        // handle edits (waypoints, SL-44) are relative to the old ends.
+        if (data['waypoints'] is List && (data['waypoints'] as List).isNotEmpty)
+          'waypoints': const <Object?>[],
       }),
     ),
   );
@@ -1253,6 +1266,15 @@ void _announceMove(DeckEditorController ed, List<String> ids) {
     Directionality.of(c),
   );
 }
+
+/// [_recordCoalesced] for other command files (outline typing, SL-34).
+void recordCoalescedStep(
+  CommandContext ctx,
+  DeckEditorController ed,
+  List<RowChange> changes, {
+  required String key,
+  required String label,
+}) => _recordCoalesced(ctx, ed, changes, key: key, label: label);
 
 /// Records [changes] as one undo step, merged into the previous step with
 /// the same [key] within the coalesce window (nudge bursts, 03 §4.4; the

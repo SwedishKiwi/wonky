@@ -305,7 +305,11 @@ final class BuiltInThemeDef {
       }
     }
     putIfNotNull(defaults, 'align', p.align);
-    putIfNotNull(defaults, 'list', p.list);
+    if (p.list == PlaceholderDef.noList) {
+      defaults['listStyle'] = 'none';
+    } else {
+      putIfNotNull(defaults, 'list', p.list);
+    }
     putIfNotNull(defaults, 'spaceAfter', p.spaceAfter);
     putIfNotNull(defaults, 'color', p.color);
     final holdsText = p.type.holdsText;

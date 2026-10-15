@@ -1,4 +1,11 @@
 import 'package:wonky_app/wonky_app.dart';
+import 'package:wonky_slides_core/motion.dart'
+    show
+        DeckMotionDefaults,
+        EffectCatalog,
+        EffectTarget,
+        TransitionInfo,
+        TransitionSpec;
 import 'package:wonky_slides_core/themes.dart'
     show BuiltInThemes, SlideSizeKind;
 
@@ -71,8 +78,19 @@ class SlidesUserDefaults {
       if (k != SlideSizeKind.custom) k.name,
   ];
 
-  static const transitions = ['none', 'fade', 'push', 'wipe', 'dissolve'];
-  static const builds = ['appear', 'fade', 'flyIn', 'zoom'];
+  /// *Default transition* choices (06 §7.2; Magic Move only makes sense
+  /// between prepared slides).
+  static final List<String> transitions = [
+    for (final t in TransitionInfo.all)
+      if (t.id != 'magicMove') t.id,
+  ];
+
+  /// *Default build* choices: the build-in effects for every kind of
+  /// object (06 §3.1).
+  static final List<String> builds = [
+    for (final e in EffectCatalog.buildIn)
+      if (e.available && e.target == EffectTarget.visual) e.id,
+  ];
   static const typingSpeeds = ['slow', 'normal', 'fast'];
   static const presenterLayouts = ['standard', 'notesFocus', 'nextLarge'];
   static const laserColors = ['red', 'green', 'blue', 'amber'];
@@ -170,6 +188,22 @@ class SlidesUserDefaults {
       return v is double && v == v.roundToDouble() ? v.toInt() : v;
     }
     return defaults[key]!;
+  }
+
+  /// The `Deck.defaultsJson` of a blank presentation (06 A-06-7): the
+  /// *Default transition* with its duration, or null for none.
+  static String? deckDefaultsJson(SlidesUserDefaults d) {
+    final type = d.string(keyDefaultTransition);
+    if (type == 'none' || TransitionInfo.of(type) == null) return null;
+    final base = TransitionSpec.of(type);
+    final spec = TransitionSpec(
+      type: type,
+      durationMs: d.integer(keyDefaultTransitionMs),
+      easing: base.easing,
+      params: base.params,
+      magicMove: base.magicMove,
+    );
+    return DeckMotionDefaults.withTransition(null, spec);
   }
 
   bool flag(String key) => value(key) == true;

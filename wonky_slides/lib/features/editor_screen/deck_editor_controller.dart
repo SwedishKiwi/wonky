@@ -32,7 +32,10 @@ enum DeckViewMode {
 enum InspectorTab {
   format,
   animate,
-  slide;
+  slide,
+
+  /// The theme editor (masters mode only, 05 §8.4; SL-28).
+  theme;
 
   static InspectorTab? fromName(Object? name) {
     for (final t in values) {
@@ -114,6 +117,7 @@ class DeckEditorController extends ChangeNotifier {
     if (value == _itemRole) return;
     _itemRole = value;
     if (!roleCanEdit) _viewMode = false;
+    _leaveMastersIfReadOnly();
     notifyListeners();
   }
 
@@ -136,6 +140,7 @@ class DeckEditorController extends ChangeNotifier {
   void setViewMode(bool viewing) {
     if (viewing == _viewMode || (!viewing && !roleCanEdit)) return;
     _viewMode = viewing;
+    _leaveMastersIfReadOnly();
     notifyListeners();
   }
 
@@ -144,7 +149,17 @@ class DeckEditorController extends ChangeNotifier {
 
   void _onRole() {
     if (!roleCanEdit) _viewMode = false;
+    _leaveMastersIfReadOnly();
     notifyListeners();
+  }
+
+  /// Masters mode edits layouts: viewers and Viewing mode leave it (05 §8).
+  void _leaveMastersIfReadOnly() {
+    if (_mode == DeckViewMode.masters && (!roleCanEdit || _viewMode)) {
+      _mode = DeckViewMode.normal;
+      _selectedElementIds.clear();
+      textEditing = false;
+    }
   }
 
   // --------------------------------------------------------- current slide
@@ -299,10 +314,95 @@ class DeckEditorController extends ChangeNotifier {
     _ => true,
   };
 
-  void setMode(DeckViewMode mode) {
+  /// Switches the view mode. Entering masters mode edits [masterTarget]
+  /// (a layout or master id), else the current slide's layout (05 §8.1).
+  void setMode(DeckViewMode mode, {String? masterTarget}) {
+    if (mode == DeckViewMode.masters &&
+        _mode == DeckViewMode.masters &&
+        masterTarget != null) {
+      setMasterTarget(masterTarget);
+      return;
+    }
     if (mode == _mode || !offersMode(mode)) return;
+    // Masters mode edits layouts: editors in Editing mode only (05 §8).
+    if (mode == DeckViewMode.masters && (!roleCanEdit || _viewMode)) return;
+    final leaving = _mode == DeckViewMode.masters;
     _mode = mode;
+    if (mode == DeckViewMode.masters) {
+      _masterTargetId =
+          _validTarget(masterTarget) ??
+          _defaultTarget() ??
+          _validTarget(_masterTargetId);
+      _selectedElementIds.clear();
+      textEditing = false;
+    } else if (leaving) {
+      _selectedElementIds.clear();
+      textEditing = false;
+    }
     notifyListeners();
+  }
+
+  // ---------------------------------------------------- masters (SL-28)
+
+  String? _masterTargetId;
+
+  /// The layout or master edited in masters mode (05 §8.1), kept while
+  /// the mode is left so returning shows it again.
+  String? get masterTargetId => _masterTargetId;
+
+  /// The surface the canvas shows and edits: the current slide, or in
+  /// masters mode the layout or master being edited (null when there is
+  /// nothing to show).
+  String? get surfaceId => _mode == DeckViewMode.masters
+      ? _validTarget(_masterTargetId)
+      : _currentSlideId;
+
+  /// The owner kind of [surfaceId] (inserted elements are owned by it).
+  ElementOwnerKind get surfaceKind {
+    if (_mode != DeckViewMode.masters) return ElementOwnerKind.slide;
+    final id = _masterTargetId;
+    if (id != null && model.layout(id) != null) return ElementOwnerKind.layout;
+    return ElementOwnerKind.master;
+  }
+
+  /// Whether the canvas edits a layout or master (masters mode).
+  bool get editsMasters => _mode == DeckViewMode.masters;
+
+  /// Makes layout or master [id] the edited surface (the selection is
+  /// cleared). Ignored for unknown ids.
+  void setMasterTarget(String id) {
+    if (_validTarget(id) == null) return;
+    if (id == _masterTargetId) return;
+    _masterTargetId = id;
+    if (_mode == DeckViewMode.masters) {
+      _selectedElementIds.clear();
+      textEditing = false;
+    }
+    notifyListeners();
+  }
+
+  String? _validTarget(String? id) =>
+      id != null && (model.layout(id) != null || model.master(id) != null)
+      ? id
+      : null;
+
+  /// The current slide's layout, else the first layout (or master) of the
+  /// default theme.
+  String? _defaultTarget() {
+    final slide = _currentSlideId == null
+        ? null
+        : model.slide(_currentSlideId!);
+    final layout = slide == null
+        ? null
+        : model.indexes.themes.effectiveLayout(slide);
+    if (layout != null) return layout.id;
+    final theme = model.defaultTheme ?? model.themes.firstOrNull;
+    if (theme == null) return null;
+    for (final m in model.mastersOf(theme.id)) {
+      final layouts = model.layoutsOf(m.id);
+      return layouts.isEmpty ? m.id : layouts.first.id;
+    }
+    return null;
   }
 
   // ----------------------------------------------------------------- panes
@@ -350,13 +450,19 @@ class DeckEditorController extends ChangeNotifier {
   bool get notesVisible => _notesTransient ? _notesOpen : _prefs.notesVisible;
 
   /// The inspector tab (a stored Animate tab reads as Format while
-  /// animations are hidden, SL-23).
+  /// animations are hidden, SL-23; the Theme tab as Slide outside masters
+  /// mode, SL-28).
   InspectorTab get inspectorTab {
     final t = InspectorTab.fromName(_prefs.inspectorTab) ?? InspectorTab.format;
-    return t == InspectorTab.animate &&
-            !SlidesFeatures.isOn(SlidesFeature.animations)
-        ? InspectorTab.format
-        : t;
+    if (t == InspectorTab.animate &&
+        !SlidesFeatures.isOn(SlidesFeature.animations)) {
+      return InspectorTab.format;
+    }
+    // The Theme tab exists in masters mode only (05 §8.1).
+    if (t == InspectorTab.theme && _mode != DeckViewMode.masters) {
+      return InspectorTab.slide;
+    }
+    return t;
   }
 
   double get navigatorWidth => _prefs.navigatorWidth;
@@ -542,9 +648,19 @@ class DeckEditorController extends ChangeNotifier {
       ctx.transaction?.record(
         SlidesRowsUndoEntry(plan.changes, label: plan.label),
       );
+      for (final l in List.of(applyListeners)) {
+        l(ctx, op, plan);
+      }
     }
     return plan;
   }
+
+  /// Called after every non-empty [apply], in the command's transaction
+  /// (SL-38: comments move with cut & pasted elements, 09 §3.2).
+  final List<
+    void Function(CommandContext ctx, SlidesOperation op, SlidesPlan plan)
+  >
+  applyListeners = [];
 
   /// Invokes command [id] (dispatcher, with the editor's services).
   Future<CommandResult> invokeCommand(
@@ -579,6 +695,11 @@ class DeckEditorController extends ChangeNotifier {
     }
     _selectedGroupIds.removeWhere((id) => model.group(id) == null);
     _selectedElementIds.removeWhere((id) => model.element(id) == null);
+    final target = _masterTargetId;
+    if (target != null && _validTarget(target) == null) {
+      // The edited layout/master was deleted (here or remotely).
+      _masterTargetId = _mode == DeckViewMode.masters ? _defaultTarget() : null;
+    }
     notifyListeners();
   }
 
@@ -589,6 +710,7 @@ class DeckEditorController extends ChangeNotifier {
   /// The selection restored by undo/redo (current slide + elements).
   SelectionSnapshot captureSelection() => SelectionSnapshot('slides.editor', {
     'slideId': _currentSlideId,
+    if (_mode == DeckViewMode.masters) 'masterTargetId': _masterTargetId,
     'elementIds': [..._selectedElementIds],
   });
 
@@ -598,8 +720,21 @@ class DeckEditorController extends ChangeNotifier {
     if (slide is String && order.entry(slide) != null) {
       setCurrentSlide(slide);
     }
+    final target = s.data['masterTargetId'];
+    if (_mode == DeckViewMode.masters && target is String) {
+      setMasterTarget(target);
+    }
     final ids = s.data['elementIds'];
-    if (ids is List) selectElements(ids.whereType<String>());
+    // Only elements of the surface the canvas shows (an undo of a layout
+    // edit in Normal view doesn't select layout elements, SL-28).
+    final surface = surfaceId;
+    if (ids is List) {
+      selectElements(
+        ids.whereType<String>().where(
+          (id) => model.element(id)?.ownerId == surface,
+        ),
+      );
+    }
   }
 
   /// "Slide 4 of 24" or "2 objects on slide 4" (MCP `ui.get_state`).
@@ -622,6 +757,10 @@ class DeckEditorController extends ChangeNotifier {
     'role': role.name,
     'mode': viewMode ? 'viewing' : 'editing',
     'viewMode': _mode.name,
+    if (_mode == DeckViewMode.masters) ...{
+      'masterTargetId': surfaceId,
+      'masterTargetKind': surfaceKind.name,
+    },
     'slideCount': order.length,
     'currentSlideId': _currentSlideId,
     'currentSlideIndex': _currentSlideId == null

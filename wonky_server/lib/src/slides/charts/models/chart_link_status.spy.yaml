@@ -1,0 +1,10 @@
+### The result of checking one link (Slides 08 §5.2).
+class: ChartLinkStatus
+fields:
+  elementId: String
+  status: ChartLinkState
+  ### The current token: `upToDate` with a newer change log (store it as a
+  ### maintenance write) or `changed`.
+  newVersion: String?
+  ### "Data changed", "Chart style changed" or "Data and style changed".
+  summary: String?

@@ -2785,6 +2785,171 @@ class WonkyAppLocalizationsEn extends WonkyAppLocalizations {
 
   @override
   String get driveItemUploading => 'Uploading…';
+
+  @override
+  String get spellingTitle => 'Spelling';
+
+  @override
+  String get spellingDone => 'Done';
+
+  @override
+  String get spellingNoErrors => 'No spelling errors found.';
+
+  @override
+  String get spellingUnavailable =>
+      'Spellcheck isn’t available for this document’s language.';
+
+  @override
+  String get spellingNotInDictionary => 'Not in dictionary';
+
+  @override
+  String get spellingSuggestions => 'Suggestions';
+
+  @override
+  String get spellingNoSuggestions => 'No suggestions';
+
+  @override
+  String get spellingChange => 'Change';
+
+  @override
+  String get spellingChangeAll => 'Change all';
+
+  @override
+  String get spellingIgnore => 'Ignore';
+
+  @override
+  String get spellingIgnoreAll => 'Ignore all';
+
+  @override
+  String get spellingAddToDictionary => 'Add to dictionary';
+
+  @override
+  String get spellingPersonalDictionary => 'Personal dictionary';
+
+  @override
+  String get spellingPersonalDictionaryHint =>
+      'Words you added are never marked as misspelled, in any document.';
+
+  @override
+  String get spellingAddWord => 'Add a word';
+
+  @override
+  String get spellingAdd => 'Add';
+
+  @override
+  String get spellingNoWords => 'No words yet.';
+
+  @override
+  String spellingRemoveWord(String word) {
+    return 'Remove $word';
+  }
+
+  @override
+  String get emojiPickerClose => 'Close emoji picker';
+
+  @override
+  String get emojiDialogLabel => 'Emoji';
+
+  @override
+  String get emojiPickerLabel => 'Emoji picker';
+
+  @override
+  String get emojiSearch => 'Search emoji';
+
+  @override
+  String get emojiRecentlyUsed => 'Recently used';
+
+  @override
+  String get emojiLoadFailed => 'Emoji could not be loaded';
+
+  @override
+  String get emojiNoneFound => 'No emoji found';
+
+  @override
+  String get emojiNone => 'No emoji';
+
+  @override
+  String get emojiSearchResults => 'Search results';
+
+  @override
+  String get emojiPickAnEmoji => 'Pick an emoji';
+
+  @override
+  String emojiSkinToneOption(String tone) {
+    return '$tone skin tone';
+  }
+
+  @override
+  String emojiSkinToneCurrent(String tone) {
+    return 'Skin tone: $tone';
+  }
+
+  @override
+  String get emojiSkinToneDefault => 'Default';
+
+  @override
+  String get emojiSkinToneLight => 'Light';
+
+  @override
+  String get emojiSkinToneMediumLight => 'Medium-light';
+
+  @override
+  String get emojiSkinToneMedium => 'Medium';
+
+  @override
+  String get emojiSkinToneMediumDark => 'Medium-dark';
+
+  @override
+  String get emojiSkinToneDark => 'Dark';
+
+  @override
+  String get specialCharsTitle => 'Special characters';
+
+  @override
+  String get specialCharsClose => 'Close';
+
+  @override
+  String get specialCharsSearch => 'Search by name or code (U+2192)';
+
+  @override
+  String get specialCharsRecent => 'Recent';
+
+  @override
+  String get specialCharsLoadFailed => 'Characters could not be loaded';
+
+  @override
+  String get specialCharsNoneFound => 'No characters found';
+
+  @override
+  String get specialCharsSearchResults => 'Search results';
+
+  @override
+  String activityDetailSlides(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count slides',
+      one: '1 slide',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String activityDetailSlidesDeleted(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count slides deleted',
+      one: '1 slide deleted',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get activityDetailTheme => 'theme changed';
+
+  @override
+  String get activityDetailAgent => 'with Claude';
 }
 
 /// The translations for English (`en_XA`).
@@ -5613,4 +5778,171 @@ class WonkyAppLocalizationsEnXa extends WonkyAppLocalizationsEn {
 
   @override
   String get driveItemUploading => '[Ûþļöåðîñĝ… one]';
+
+  @override
+  String get spellingTitle => '[Šþéļļîñĝ one]';
+
+  @override
+  String get spellingDone => '[Ðöñé on]';
+
+  @override
+  String get spellingNoErrors => '[Ñö šþéļļîñĝ éŕŕöŕš ƒöûñð. one two]';
+
+  @override
+  String get spellingUnavailable =>
+      '[Šþéļļçĥéçķ îšñ’ţ åṽåîļåƀļé ƒöŕ ţĥîš ðöçûɱéñţ’š ļåñĝûåĝé. one two three four]';
+
+  @override
+  String get spellingNotInDictionary => '[Ñöţ îñ ðîçţîöñåŕý one tw]';
+
+  @override
+  String get spellingSuggestions => '[Šûĝĝéšţîöñš one]';
+
+  @override
+  String get spellingNoSuggestions => '[Ñö šûĝĝéšţîöñš one t]';
+
+  @override
+  String get spellingChange => '[Çĥåñĝé one]';
+
+  @override
+  String get spellingChangeAll => '[Çĥåñĝé åļļ one]';
+
+  @override
+  String get spellingIgnore => '[Îĝñöŕé one]';
+
+  @override
+  String get spellingIgnoreAll => '[Îĝñöŕé åļļ one]';
+
+  @override
+  String get spellingAddToDictionary => '[Åðð ţö ðîçţîöñåŕý one tw]';
+
+  @override
+  String get spellingPersonalDictionary => '[Þéŕšöñåļ ðîçţîöñåŕý one two]';
+
+  @override
+  String get spellingPersonalDictionaryHint =>
+      '[Ŵöŕðš ýöû åððéð åŕé ñéṽéŕ ɱåŕķéð åš ɱîššþéļļéð, îñ åñý ðöçûɱéñţ. one two three four]';
+
+  @override
+  String get spellingAddWord => '[Åðð å ŵöŕð one]';
+
+  @override
+  String get spellingAdd => '[Åðð on]';
+
+  @override
+  String get spellingNoWords => '[Ñö ŵöŕðš ýéţ. one]';
+
+  @override
+  String spellingRemoveWord(String word) {
+    return '[Ŕéɱöṽé $word one]';
+  }
+
+  @override
+  String get emojiPickerClose => '[Çļöšé éɱöĵî þîçķéŕ one tw]';
+
+  @override
+  String get emojiDialogLabel => '[Éɱöĵî on]';
+
+  @override
+  String get emojiPickerLabel => '[Éɱöĵî þîçķéŕ one]';
+
+  @override
+  String get emojiSearch => '[Šéåŕçĥ éɱöĵî one]';
+
+  @override
+  String get emojiRecentlyUsed => '[Ŕéçéñţļý ûšéð one t]';
+
+  @override
+  String get emojiLoadFailed => '[Éɱöĵî çöûļð ñöţ ƀé ļöåðéð one two]';
+
+  @override
+  String get emojiNoneFound => '[Ñö éɱöĵî ƒöûñð one t]';
+
+  @override
+  String get emojiNone => '[Ñö éɱöĵî one]';
+
+  @override
+  String get emojiSearchResults => '[Šéåŕçĥ ŕéšûļţš one t]';
+
+  @override
+  String get emojiPickAnEmoji => '[Þîçķ åñ éɱöĵî one]';
+
+  @override
+  String emojiSkinToneOption(String tone) {
+    return '[$tone šķîñ ţöñé one]';
+  }
+
+  @override
+  String emojiSkinToneCurrent(String tone) {
+    return '[Šķîñ ţöñé: $tone one]';
+  }
+
+  @override
+  String get emojiSkinToneDefault => '[Ðéƒåûļţ one]';
+
+  @override
+  String get emojiSkinToneLight => '[Ļîĝĥţ on]';
+
+  @override
+  String get emojiSkinToneMediumLight => '[Ṁéðîûɱ-ļîĝĥţ one t]';
+
+  @override
+  String get emojiSkinToneMedium => '[Ṁéðîûɱ one]';
+
+  @override
+  String get emojiSkinToneMediumDark => '[Ṁéðîûɱ-ðåŕķ one]';
+
+  @override
+  String get emojiSkinToneDark => '[Ðåŕķ on]';
+
+  @override
+  String get specialCharsTitle => '[Šþéçîåļ çĥåŕåçţéŕš one tw]';
+
+  @override
+  String get specialCharsClose => '[Çļöšé on]';
+
+  @override
+  String get specialCharsSearch =>
+      '[Šéåŕçĥ ƀý ñåɱé öŕ çöðé (Û+2192) one two th]';
+
+  @override
+  String get specialCharsRecent => '[Ŕéçéñţ one]';
+
+  @override
+  String get specialCharsLoadFailed =>
+      '[Çĥåŕåçţéŕš çöûļð ñöţ ƀé ļöåðéð one two th]';
+
+  @override
+  String get specialCharsNoneFound => '[Ñö çĥåŕåçţéŕš ƒöûñð one tw]';
+
+  @override
+  String get specialCharsSearchResults => '[Šéåŕçĥ ŕéšûļţš one t]';
+
+  @override
+  String activityDetailSlides(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count šļîðéš',
+      one: '1 šļîðé',
+    );
+    return '[$_temp0 one t]';
+  }
+
+  @override
+  String activityDetailSlidesDeleted(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count šļîðéš ðéļéţéð',
+      one: '1 šļîðé ðéļéţéð',
+    );
+    return '[$_temp0 one two th]';
+  }
+
+  @override
+  String get activityDetailTheme => '[ţĥéɱé çĥåñĝéð one t]';
+
+  @override
+  String get activityDetailAgent => '[ŵîţĥ Çļåûðé one]';
 }

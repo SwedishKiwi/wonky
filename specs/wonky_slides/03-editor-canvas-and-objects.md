@@ -645,7 +645,11 @@ Text in shapes: double-click/Enter/typing edits; defaults `anchor: middle`, `ali
   site. Glued endpoints follow the shape when it moves (derived routing, 02 §6.3); selection shows
   glued endpoints as filled green dots, free ones as hollow.
 - **Elbow routing**: orthogonal path avoiding the two connected shapes' boxes with 24 su clearance;
-  a midpoint handle per segment moves it (stored as `waypoints`).
+  a midpoint handle per inner segment moves it across its direction (stored as `waypoints`: the
+  route's corners). **Curved** connectors have one bend handle at the curve's middle; dragging it
+  bends the curve through the pointer (`waypoints: [bend]`). Both write
+  `slides.line.setWaypoints {id, waypoints}` (one step; `[]` restores the automatic route);
+  moving an endpoint re-routes automatically (waypoints cleared). As built: SL-44, §14.1.
 - Endpoint handles replace the resize box for single lines; rotation handle hidden (angle comes
   from endpoints).
 - Arrowheads, width, dash, color, cap in toolbar/inspector (`slides.line.setArrow {end, style}`,
@@ -699,9 +703,10 @@ to reposition it inside the frame, aspect presets in a floating bar (Free, Origi
 #### 6.5.5 Adjustments (P1)
 
 Inspector › Image: sliders Brightness, Contrast, Saturation, Temperature (−100…100), Blur (0…40),
-toggles Grayscale/Sepia/Invert; *Reset adjustments*. Live preview while dragging; written on
-release (`slides.image.adjust {…}`); applied with a `ColorFilter` matrix on screen and baked into
-PDF images by the core renderer (same matrix math, 10).
+toggles Grayscale/Sepia/Invert; *Reset adjustments*. Live preview while dragging (the canvas
+redraws the image with the dragged value, nothing written — `ImageAdjustPreview`, SL-44); written
+on release (`slides.image.adjust {…}`); applied with a `ColorFilter` matrix on screen and baked
+into PDF images by the core renderer (same matrix math, 10).
 
 #### 6.5.6 Other
 
@@ -739,7 +744,9 @@ Alt text (§17.1), transparency (`opacity`), shadow/border via common style, *Do
   as a 160 × 160 su `icon` element (aspect locked), stroke color `theme:text1` by default.
 - **Emoji** (P1): emoji picker (shared widget, extracted from Write's emoji feature to
   `wonky_ui`, suite agent) → `slides.insert.emoji {char}` as an `icon` element with `set: emoji`
-  (240 su). Emoji typed inside text stay text.
+  (240 su). Emoji typed inside text stay text: while a body is edited, *Insert › Emoji* types the
+  picked emoji at the caret (SL-44; the picker is `package:wonky_app/emoji.dart` with Slides' key
+  prefix).
 - Double-click an icon → picker to replace (keeps frame, color, builds).
 
 ### 6.8 Code and charts (object behavior)
@@ -1010,6 +1017,24 @@ Rows are drag-reorderable (`slides.arrange.setZ {id, before|after}`), nested und
 (dragging into/out of a group regroups, one step). Clicking selects (also locked/hidden
 elements). A collapsed section *From layout* lists layout/master elements read-only with
 *Edit layout* link. A tab **Reading order** (P1) shows the reading order list (§17.2).
+
+**As built (SL-34).** `features/layers/` (`LayersPanel`), feature `layers`. In masters mode the
+panel lists the edited layout or master. Rows: click selects (Shift extends among siblings, Mod
+toggles; the canvas selection is the same), a second click within the double-tap time renames
+inline, eye and lock call `slides.element.hide`/`show` and `slides.element.lock`/`unlock` with
+`ids`. Drag and drop: upper/lower half of a row = in front of / behind it, the middle half of a
+group row = into the group, below the last row = to the back; `slides.arrange.setZ {ids?,
+aboveId | belowId | groupId}` plans **`MoveElementsZ`** (new core operation): siblings keep their
+relative order, re-parenting maps frames through the group child spaces (`GroupSpace.toChild`,
+the inverse of `toParent`) so nothing moves on the slide, the opacity of groups left is multiplied
+in, groups left empty are deleted and unrotated, unflipped groups are refitted to their children
+(frame and `childBounds` together); placeholders can't move into groups. Keyboard: ↑/↓ select
+the next row, Shift extends, Alt+Shift+↑/↓ move the selection one row, Enter/F2 rename, ←/→
+collapse/expand a group. *From layout (n)* lists the layout and master elements; *Edit layout*
+opens masters mode on the slide's layout. The *Reading order* tab lists the current reading order
+(decorative and hidden objects excluded); drag or the ↑/↓ buttons write
+`slides.a11y.setReadingOrder {ids}` (**`SetReadingOrder`**: ascending `readingKey`s for the
+listed elements, every other key cleared), *Reset to automatic* `slides.a11y.resetReadingOrder`.
 
 ### 8.2 Lock and hide
 
@@ -1340,6 +1365,69 @@ master editing (SL-28), highlights inside the notes pane.
 - *Tools › Spelling › Check spelling* (`slides.spelling.check`): steps through errors deck-wide in
   a small dialog (Change / Change all / Ignore / Ignore all / Add) — one undo step per change.
 
+### 14.1 As built (SL-44): spelling, language, special characters, emoji, route handles
+
+- **Code.** `wonky_slides/lib/features/spellcheck/` — `SlidesSpelling` (per open deck,
+  `SlidesSpelling.of(editor)`: the engine of the presentation language from
+  `SpellDictionaries`, the synced personal dictionary `PersonalDictionary` — the list Write
+  already kept in `writeDefaults.personalDictionary`, now shared through
+  `package:wonky_app/spellcheck.dart` — and the session's ignored words; checks plain text or a
+  stored body (links and inline code skipped, results cached per body JSON) and the whole deck in
+  `DeckFind.bodies` order), `EditorSpelling` (squiggles of a super_editor document through
+  `SpellingAndGrammarStyler`: the canvas text overlay — boxes, shapes, placeholders, table cells —
+  and the speaker notes), `SpellingCanvasLayer` (a `CanvasInteraction` painting the squiggles of
+  the current slide's visible text from the stage scene's own paragraph boxes, token
+  `spellingError`), `SlidesSpellingSession` (the shell's Check spelling dialog over the deck),
+  `spelling_actions.dart` (replacements, the context-menu section), `text_inserts.dart`;
+  `commands/spelling_commands.dart`. Hooks added for it: `SlideTextEditAddon` with
+  `SlideTextEditing.addonFactories` / `NotesPane.addonFactories` (per-session style phases),
+  `SlideTextEditing.prepareContextMenu` (a right-click outside the selection moves the caret
+  there), `NotesPane.contextMenuEntries`, the outline's `_RunsController` squiggles, the
+  `context.text.spelling` custom slot first in the text context menu.
+- **Language.** `Deck.language` (File › Language ▸ = `slides.file.setLanguage {language}`,
+  undoable, radio-checked), else the user's *Language* for new presentations
+  (`slidesDefaults.defaultLanguage`, now shown in Settings), else the device locale. Regional
+  fallbacks of the shared glue (en → en-US, en-AU → en-GB, any dictionary of the language); a
+  language without a bundled dictionary turns checking off (the dialog says so; agents get
+  `available: false`). Per-paragraph language is not supported (spec).
+- **Squiggles.** Under misspelled words of the body being edited and, with *Underline errors* on
+  (`slides.spelling.toggleUnderline`, `slidesDefaults.underlineSpelling`, Settings › Editing ›
+  Spelling), of every visible text of the current slide (not while objects are dragged), the
+  notes being edited and the outline lines. A misspelled word is held back while it is being
+  typed and flagged once the caret leaves it; moving the caret into a flagged word keeps it
+  flagged (for its menu). *Underline errors* off hides every squiggle; Check spelling still works.
+- **Context menus.** Right-click a flagged word in the canvas text, the notes or an outline line:
+  up to five suggestions (`slides.spelling.replace {elementId[, rowId, columnId] | notesSlideId,
+  start, length, word?, replacement}`, one step "Correct spelling"; in the outline the line is
+  edited like typing), *Ignore* (`slides.spelling.ignore`, this session) and *Add "word" to
+  dictionary* (`slides.spelling.addToDictionary`, synced, max 10,000 words).
+- **Check spelling.** Tools › Spelling › *Check spelling…* opens the shell's dialog (keys
+  `slides.dialog.spelling…`) over every body of the deck end to end, from the caret or the
+  current slide; showing a word makes its slide current and selects the object (or opens the
+  notes) — the text editor isn't started under the modal dialog (deviation: Google selects the
+  word). *Change* and *Change all* (`slides.spelling.replaceAll {word, replacement}` for agents)
+  are one step each; bodies another participant is editing are skipped. For agents the command
+  returns `{language, dictionary, available, count, issues: [{slideId, elementId | rowId,
+  columnId | notesSlideId, start, length, word, suggestions}]}` instead of the dialog. Tools ›
+  Spelling › *Personal dictionary…* (`slides.spelling.personalDictionary`, agents: `{add, remove}`
+  → `words`).
+- **Special characters and emoji.** *Insert › Special characters…*
+  (`slides.insert.specialCharacter {char?}`, enabled while text is edited) opens the special
+  characters dialog moved from Write to `package:wonky_app/special_chars.dart` (keys
+  `slides.dialog.specialChars…`; recents shared with Write) and types each pick at the caret;
+  *Insert › Emoji* types the emoji while text is edited (else an emoji object). Both are typing
+  steps of the body.
+- **Image adjustments.** The sliders preview live on the canvas (`ImageAdjustPreview`, the
+  stage's image node gets the dragged matrix/blur; nothing written until release). Thumbnails and
+  PDF already drew adjustments (SL-15/SL-20).
+- **Connectors.** Route handles of a single selected top-level elbow (inner segments) or curved
+  (bend) connector (`elements/line/connector_handles.dart`, `ConnectorHandles`), previewed on the
+  overlay while dragged, written by `slides.line.setWaypoints` (`commands/connector_commands.dart`):
+  the frame becomes the box of the current endpoints and waypoints (rotation/flips cleared),
+  waypoints normalized in it. Core: a curved route with a waypoint bends through it at t = ½
+  (`ConnectorRouter.curveMidpoint`).
+- **Not built:** see `TODO.md` "Spelling, special characters, route handles leftovers (SL-44)".
+
 ---
 
 ## 15. Undo granularity summary
@@ -1419,6 +1507,24 @@ by slide with *Fix* actions:
 | Reading order differs strongly from visual order (custom order) | Info | Reading order tab |
 | Table without header row | Warning | Toggle header row |
 
+**As built (SL-34).** `features/accessibility/` (pure-Dart `AccessibilityChecker` + `A11yFixes`,
+`AccessibilityPanel`), feature `accessibilityChecker`. Two rules were added: **text over an image**
+(an image element or image fill/background behind the text: *warning*, check by eye — the
+"sampled average" isn't computed) and **empty placeholders** (body, subtitle, picture, …; *tip*,
+fix *Remove placeholder*). Contrast: each non-blank run's resolved color (inline ▸ paragraph style
+▸ box defaults ▸ theme style, element opacity applied) against the element's own fill, else the
+topmost filled element behind its center, else the slide background — all resolved for the deck's
+appearance, so a dark deck is checked with its dark scheme; large = ≥ 40 su or ≥ 32 su bold. The
+reading-order rule fires when a custom order doesn't read the title first or swaps more than a
+third of the element pairs (*tip*). Skipped slides aren't checked; table cells, code and chart
+text aren't checked yet. Commands: `slides.tools.accessibilityCheck {slideIds?}` (report JSON for
+MCP; opens the panel from the UI), `slides.a11y.goTo {slideId, elementId?}`, `slides.a11y.fix
+{rule, slideId, elementId?, altText?, decorative?}` — fixes: alt text (dialog, or the given text)
+and *Mark decorative*; contrast → the first of `text1`, `bg1`, `text2`, `bg2`, black, white that
+meets 4.5:1; small text → the small runs set to 18; reading order → reset; table → header row on;
+empty placeholder → removed; slide titles and text over images have *Go to* only. The panel
+re-checks 400 ms after each change while open.
+
 ---
 
 ## 18. Performance budgets
@@ -1452,7 +1558,7 @@ by slide with *Fix* actions:
 | Guides | `slides.guides.add`, `…move`, `…delete`, `…clear` |
 | Edit | `slides.edit.delete`, `slides.edit.duplicate`, `slides.edit.pasteSpecial {mode: keepSource\|useDestination\|unlinked}` |
 | Find/spelling | `slides.find.open`, `…openReplace`, `…next`, `…previous`, `…replace`, `…replaceAll`; `slides.spelling.check`, `…toggleUnderline`, `…addToDictionary` |
-| Accessibility | `slides.a11y.setReadingOrder`, `…resetReadingOrder`, `slides.tools.accessibilityCheck` |
+| Accessibility | `slides.a11y.setReadingOrder`, `…resetReadingOrder`, `…goTo`, `…fix`, `slides.tools.accessibilityCheck` (SL-34) |
 
 ---
 

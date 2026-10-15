@@ -4935,6 +4935,288 @@ abstract class WonkyAppLocalizations {
   /// In en, this message translates to:
   /// **'Uploading…'**
   String get driveItemUploading;
+
+  /// Title of the Check spelling dialog (Write, Slides).
+  ///
+  /// In en, this message translates to:
+  /// **'Spelling'**
+  String get spellingTitle;
+
+  /// No description provided for @spellingDone.
+  ///
+  /// In en, this message translates to:
+  /// **'Done'**
+  String get spellingDone;
+
+  /// No description provided for @spellingNoErrors.
+  ///
+  /// In en, this message translates to:
+  /// **'No spelling errors found.'**
+  String get spellingNoErrors;
+
+  /// No description provided for @spellingUnavailable.
+  ///
+  /// In en, this message translates to:
+  /// **'Spellcheck isn’t available for this document’s language.'**
+  String get spellingUnavailable;
+
+  /// Label above the flagged word in the Check spelling dialog.
+  ///
+  /// In en, this message translates to:
+  /// **'Not in dictionary'**
+  String get spellingNotInDictionary;
+
+  /// No description provided for @spellingSuggestions.
+  ///
+  /// In en, this message translates to:
+  /// **'Suggestions'**
+  String get spellingSuggestions;
+
+  /// No description provided for @spellingNoSuggestions.
+  ///
+  /// In en, this message translates to:
+  /// **'No suggestions'**
+  String get spellingNoSuggestions;
+
+  /// No description provided for @spellingChange.
+  ///
+  /// In en, this message translates to:
+  /// **'Change'**
+  String get spellingChange;
+
+  /// No description provided for @spellingChangeAll.
+  ///
+  /// In en, this message translates to:
+  /// **'Change all'**
+  String get spellingChangeAll;
+
+  /// No description provided for @spellingIgnore.
+  ///
+  /// In en, this message translates to:
+  /// **'Ignore'**
+  String get spellingIgnore;
+
+  /// No description provided for @spellingIgnoreAll.
+  ///
+  /// In en, this message translates to:
+  /// **'Ignore all'**
+  String get spellingIgnoreAll;
+
+  /// No description provided for @spellingAddToDictionary.
+  ///
+  /// In en, this message translates to:
+  /// **'Add to dictionary'**
+  String get spellingAddToDictionary;
+
+  /// No description provided for @spellingPersonalDictionary.
+  ///
+  /// In en, this message translates to:
+  /// **'Personal dictionary'**
+  String get spellingPersonalDictionary;
+
+  /// No description provided for @spellingPersonalDictionaryHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Words you added are never marked as misspelled, in any document.'**
+  String get spellingPersonalDictionaryHint;
+
+  /// Placeholder of the word field in the Personal dictionary dialog.
+  ///
+  /// In en, this message translates to:
+  /// **'Add a word'**
+  String get spellingAddWord;
+
+  /// No description provided for @spellingAdd.
+  ///
+  /// In en, this message translates to:
+  /// **'Add'**
+  String get spellingAdd;
+
+  /// No description provided for @spellingNoWords.
+  ///
+  /// In en, this message translates to:
+  /// **'No words yet.'**
+  String get spellingNoWords;
+
+  /// Screen reader label of the remove button of a personal dictionary word.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove {word}'**
+  String spellingRemoveWord(String word);
+
+  /// No description provided for @emojiPickerClose.
+  ///
+  /// In en, this message translates to:
+  /// **'Close emoji picker'**
+  String get emojiPickerClose;
+
+  /// No description provided for @emojiDialogLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Emoji'**
+  String get emojiDialogLabel;
+
+  /// No description provided for @emojiPickerLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Emoji picker'**
+  String get emojiPickerLabel;
+
+  /// No description provided for @emojiSearch.
+  ///
+  /// In en, this message translates to:
+  /// **'Search emoji'**
+  String get emojiSearch;
+
+  /// No description provided for @emojiRecentlyUsed.
+  ///
+  /// In en, this message translates to:
+  /// **'Recently used'**
+  String get emojiRecentlyUsed;
+
+  /// No description provided for @emojiLoadFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Emoji could not be loaded'**
+  String get emojiLoadFailed;
+
+  /// No description provided for @emojiNoneFound.
+  ///
+  /// In en, this message translates to:
+  /// **'No emoji found'**
+  String get emojiNoneFound;
+
+  /// No description provided for @emojiNone.
+  ///
+  /// In en, this message translates to:
+  /// **'No emoji'**
+  String get emojiNone;
+
+  /// No description provided for @emojiSearchResults.
+  ///
+  /// In en, this message translates to:
+  /// **'Search results'**
+  String get emojiSearchResults;
+
+  /// No description provided for @emojiPickAnEmoji.
+  ///
+  /// In en, this message translates to:
+  /// **'Pick an emoji'**
+  String get emojiPickAnEmoji;
+
+  /// No description provided for @emojiSkinToneOption.
+  ///
+  /// In en, this message translates to:
+  /// **'{tone} skin tone'**
+  String emojiSkinToneOption(String tone);
+
+  /// No description provided for @emojiSkinToneCurrent.
+  ///
+  /// In en, this message translates to:
+  /// **'Skin tone: {tone}'**
+  String emojiSkinToneCurrent(String tone);
+
+  /// No description provided for @emojiSkinToneDefault.
+  ///
+  /// In en, this message translates to:
+  /// **'Default'**
+  String get emojiSkinToneDefault;
+
+  /// No description provided for @emojiSkinToneLight.
+  ///
+  /// In en, this message translates to:
+  /// **'Light'**
+  String get emojiSkinToneLight;
+
+  /// No description provided for @emojiSkinToneMediumLight.
+  ///
+  /// In en, this message translates to:
+  /// **'Medium-light'**
+  String get emojiSkinToneMediumLight;
+
+  /// No description provided for @emojiSkinToneMedium.
+  ///
+  /// In en, this message translates to:
+  /// **'Medium'**
+  String get emojiSkinToneMedium;
+
+  /// No description provided for @emojiSkinToneMediumDark.
+  ///
+  /// In en, this message translates to:
+  /// **'Medium-dark'**
+  String get emojiSkinToneMediumDark;
+
+  /// No description provided for @emojiSkinToneDark.
+  ///
+  /// In en, this message translates to:
+  /// **'Dark'**
+  String get emojiSkinToneDark;
+
+  /// No description provided for @specialCharsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Special characters'**
+  String get specialCharsTitle;
+
+  /// No description provided for @specialCharsClose.
+  ///
+  /// In en, this message translates to:
+  /// **'Close'**
+  String get specialCharsClose;
+
+  /// No description provided for @specialCharsSearch.
+  ///
+  /// In en, this message translates to:
+  /// **'Search by name or code (U+2192)'**
+  String get specialCharsSearch;
+
+  /// No description provided for @specialCharsRecent.
+  ///
+  /// In en, this message translates to:
+  /// **'Recent'**
+  String get specialCharsRecent;
+
+  /// No description provided for @specialCharsLoadFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Characters could not be loaded'**
+  String get specialCharsLoadFailed;
+
+  /// No description provided for @specialCharsNoneFound.
+  ///
+  /// In en, this message translates to:
+  /// **'No characters found'**
+  String get specialCharsNoneFound;
+
+  /// No description provided for @specialCharsSearchResults.
+  ///
+  /// In en, this message translates to:
+  /// **'Search results'**
+  String get specialCharsSearchResults;
+
+  /// Detail of a presentation edit event in the activity feed: how many slides were edited.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 slide} other{{count} slides}}'**
+  String activityDetailSlides(int count);
+
+  /// Detail of a presentation edit event: slides deleted.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 slide deleted} other{{count} slides deleted}}'**
+  String activityDetailSlidesDeleted(int count);
+
+  /// Detail of a presentation edit event: the theme changed.
+  ///
+  /// In en, this message translates to:
+  /// **'theme changed'**
+  String get activityDetailTheme;
+
+  /// Detail of an edit event made through MCP or the assistant.
+  ///
+  /// In en, this message translates to:
+  /// **'with Claude'**
+  String get activityDetailAgent;
 }
 
 class _WonkyAppLocalizationsDelegate

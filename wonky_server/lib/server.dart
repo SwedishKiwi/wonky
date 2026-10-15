@@ -18,6 +18,7 @@ import 'src/platform/users/email_idp.dart';
 import 'src/platform/users/google_idp.dart';
 import 'src/platform/versions/version_service.dart';
 import 'src/sheets/versions/sheets_version_provider.dart';
+import 'src/slides/versions/slides_version_provider.dart';
 import 'src/web/middleware/sqlite_asset_alias.dart';
 import 'src/web/routes/app_config_route.dart';
 import 'src/web/routes/invite_route.dart';
@@ -119,6 +120,7 @@ void registerSlidesHooks() => SlidesServer.ensureRegistered();
 void registerVersionProviders() {
   VersionService.register(const WriteVersionProvider());
   VersionService.register(const SheetsVersionProvider());
+  VersionService.register(const SlidesVersionProvider());
 }
 
 /// Web routes (specs/01 §2.4): the Flutter web apps ([webApps]: Drive,

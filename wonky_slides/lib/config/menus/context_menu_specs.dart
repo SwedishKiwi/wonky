@@ -19,6 +19,12 @@ abstract final class SlidesContextMenuIds {
   static const navigatorGroup = 'context.navigatorGroup';
   static const navigatorEmpty = 'context.navigatorEmpty';
 
+  /// A layout row of the masters navigator (05 §8.2, SL-28).
+  static const mastersLayout = 'context.mastersLayout';
+
+  /// A master row of the masters navigator (SL-28).
+  static const mastersMaster = 'context.mastersMaster';
+
   static const all = [
     slide,
     element,
@@ -27,6 +33,8 @@ abstract final class SlidesContextMenuIds {
     navigatorSlide,
     navigatorGroup,
     navigatorEmpty,
+    mastersLayout,
+    mastersMaster,
   ];
 }
 
@@ -58,6 +66,8 @@ List<MenuSpec> _items(SlidesLocalizations l, String id) => switch (id) {
   SlidesContextMenuIds.navigatorSlide => _navigatorSlide(l),
   SlidesContextMenuIds.navigatorGroup => _navigatorGroup(l),
   SlidesContextMenuIds.navigatorEmpty => _navigatorEmpty(l),
+  SlidesContextMenuIds.mastersLayout => _mastersLayout(l),
+  SlidesContextMenuIds.mastersMaster => _mastersMaster(l),
   _ => const [],
 };
 
@@ -74,6 +84,7 @@ List<MenuSpec> contextMenuFor(
   bool keep(MenuSpec m) => switch (m.effectiveId) {
     'context.element.image' => kind == DeckSelectionKind.image,
     'context.element.code' => kind == DeckSelectionKind.code,
+    'context.element.convertToCode' => kind == DeckSelectionKind.text,
     'context.element.chart' => kind == DeckSelectionKind.chart,
     'context.element.enterGroup' => kind == DeckSelectionKind.group,
     'context.element.shape' => kind == DeckSelectionKind.shape,
@@ -162,11 +173,31 @@ List<MenuSpec> _element(SlidesLocalizations l) => [
     _c('slides.code.edit', menuId: 'context.element.code.edit'),
     _c('slides.code.setLanguage', menuId: 'context.element.code.language'),
     _c('slides.code.addState', menuId: 'context.element.code.addState'),
+    _c('slides.code.copy', menuId: 'context.element.code.copy'),
   ]),
+  _c('slides.code.convertFromText', menuId: 'context.element.convertToCode'),
   MenuSpec.submenu('context.element.chart', l.menuChart, [
     _c('slides.chart.update', menuId: 'context.element.chart.update'),
     _c('slides.chart.openSource', menuId: 'context.element.chart.source'),
+    _c(
+      'slides.chart.setAutoUpdate',
+      menuId: 'context.element.chart.autoUpdate',
+    ),
     _c('slides.chart.unlink', menuId: 'context.element.chart.unlink'),
+    _c('slides.chart.relink', menuId: 'context.element.chart.relink'),
+    _c(
+      'slides.chart.setUseDeckTheme',
+      label: l.chartMatchThemeShort,
+      args: const {'useDeckTheme': true},
+      menuId: 'context.element.chart.matchTheme',
+    ),
+    _c(
+      'slides.chart.setUseDeckTheme',
+      label: l.chartKeepSource,
+      args: const {'useDeckTheme': false},
+      menuId: 'context.element.chart.keepSource',
+    ),
+    _c('slides.chart.viewDataTable', menuId: 'context.element.chart.dataTable'),
     _c('slides.chart.copyAsImage', menuId: 'context.element.chart.copyImage'),
   ]),
   _c('slides.select.enterGroup', menuId: 'context.element.enterGroup'),
@@ -277,8 +308,10 @@ List<MenuSpec> _element(SlidesLocalizations l) => [
   ),
 ];
 
-// §11.3 Text editing.
+// §11.3 Text editing. First: the suggestions for a misspelled word at
+// the caret (03 §14; empty otherwise, SL-44).
 List<MenuSpec> _text(SlidesLocalizations l) => [
+  MenuSpec.custom(SlidesMenuIds.spellingSuggestions),
   _c('shell.edit.cut', menuId: 'context.text.cut'),
   _c('shell.edit.copy', menuId: 'context.text.copy'),
   _c('shell.edit.paste', menuId: 'context.text.paste'),
@@ -455,4 +488,44 @@ List<MenuSpec> _navigatorEmpty(SlidesLocalizations l) => [
   ),
   _c('slides.group.collapseAll', menuId: 'context.navEmpty.collapseAll'),
   _c('slides.group.expandAll', menuId: 'context.navEmpty.expandAll'),
+];
+
+// Masters navigator rows (05 §8.2, SL-28): they act on the edited layout or
+// master (the row is selected before the menu opens).
+List<MenuSpec> _mastersLayout(SlidesLocalizations l) => [
+  _c('slides.layout.add', menuId: 'context.mastersLayout.add'),
+  _c('slides.layout.duplicate', menuId: 'context.mastersLayout.duplicate'),
+  _c('slides.layout.rename', menuId: 'context.mastersLayout.rename'),
+  MenuSpec.separator(),
+  _c(
+    'slides.layout.move',
+    label: l.mastersMoveUp,
+    args: const {'direction': 'up'},
+    menuId: 'context.mastersLayout.moveUp',
+  ),
+  _c(
+    'slides.layout.move',
+    label: l.mastersMoveDown,
+    args: const {'direction': 'down'},
+    menuId: 'context.mastersLayout.moveDown',
+  ),
+  MenuSpec.separator(),
+  _c('slides.layout.toggleHidden', menuId: 'context.mastersLayout.hidden'),
+  _c(
+    'slides.layout.setHideMasterElements',
+    menuId: 'context.mastersLayout.hideMaster',
+  ),
+  MenuSpec.separator(),
+  _c('slides.layout.delete', menuId: 'context.mastersLayout.delete'),
+];
+
+List<MenuSpec> _mastersMaster(SlidesLocalizations l) => [
+  _c('slides.layout.add', menuId: 'context.mastersMaster.addLayout'),
+  _c('slides.master.add', menuId: 'context.mastersMaster.add'),
+  _c('slides.master.duplicate', menuId: 'context.mastersMaster.duplicate'),
+  _c('slides.master.rename', menuId: 'context.mastersMaster.rename'),
+  MenuSpec.separator(),
+  _c('slides.theme.edit', menuId: 'context.mastersMaster.editTheme'),
+  MenuSpec.separator(),
+  _c('slides.master.delete', menuId: 'context.mastersMaster.delete'),
 ];

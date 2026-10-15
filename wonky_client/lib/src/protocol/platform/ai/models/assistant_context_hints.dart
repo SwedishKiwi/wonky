@@ -31,6 +31,9 @@ abstract class AssistantContextHints
     this.sheetsSelection,
     this.sheetsActiveCell,
     this.sheetsVisibleRange,
+    this.slidesCurrentSlide,
+    this.slidesSelectedSlides,
+    this.slidesSelectedElements,
     this.uiTools,
   }) : includeComments = includeComments ?? false;
 
@@ -48,6 +51,9 @@ abstract class AssistantContextHints
     List<String>? sheetsSelection,
     String? sheetsActiveCell,
     String? sheetsVisibleRange,
+    String? slidesCurrentSlide,
+    List<String>? slidesSelectedSlides,
+    List<String>? slidesSelectedElements,
     List<String>? uiTools,
   }) = _AssistantContextHintsImpl;
 
@@ -78,6 +84,18 @@ abstract class AssistantContextHints
             ),
       sheetsActiveCell: jsonSerialization['sheetsActiveCell'] as String?,
       sheetsVisibleRange: jsonSerialization['sheetsVisibleRange'] as String?,
+      slidesCurrentSlide: jsonSerialization['slidesCurrentSlide'] as String?,
+      slidesSelectedSlides: jsonSerialization['slidesSelectedSlides'] == null
+          ? null
+          : _i8pkqg1o.Protocol().deserialize<List<String>>(
+              jsonSerialization['slidesSelectedSlides'],
+            ),
+      slidesSelectedElements:
+          jsonSerialization['slidesSelectedElements'] == null
+          ? null
+          : _i8pkqg1o.Protocol().deserialize<List<String>>(
+              jsonSerialization['slidesSelectedElements'],
+            ),
       uiTools: jsonSerialization['uiTools'] == null
           ? null
           : _i8pkqg1o.Protocol().deserialize<List<String>>(
@@ -120,6 +138,14 @@ abstract class AssistantContextHints
 
   String? sheetsVisibleRange;
 
+  /// Slides (11 §6.2): the current slide, the selected slides and the
+  /// selected elements of the requesting window.
+  String? slidesCurrentSlide;
+
+  List<String>? slidesSelectedSlides;
+
+  List<String>? slidesSelectedElements;
+
   /// `ui.*` tools the requesting window runs for the assistant (Sheets
   /// 12 §6.2: get_selection, select_range, highlight_range); null = none.
   List<String>? uiTools;
@@ -141,6 +167,9 @@ abstract class AssistantContextHints
     List<String>? sheetsSelection = const _isc.$UndefinedList<String>(),
     String? sheetsActiveCell,
     String? sheetsVisibleRange,
+    String? slidesCurrentSlide,
+    List<String>? slidesSelectedSlides = const _isc.$UndefinedList<String>(),
+    List<String>? slidesSelectedElements = const _isc.$UndefinedList<String>(),
     List<String>? uiTools = const _isc.$UndefinedList<String>(),
   });
   @override
@@ -160,6 +189,11 @@ abstract class AssistantContextHints
       if (sheetsSelection != null) 'sheetsSelection': sheetsSelection?.toJson(),
       if (sheetsActiveCell != null) 'sheetsActiveCell': sheetsActiveCell,
       if (sheetsVisibleRange != null) 'sheetsVisibleRange': sheetsVisibleRange,
+      if (slidesCurrentSlide != null) 'slidesCurrentSlide': slidesCurrentSlide,
+      if (slidesSelectedSlides != null)
+        'slidesSelectedSlides': slidesSelectedSlides?.toJson(),
+      if (slidesSelectedElements != null)
+        'slidesSelectedElements': slidesSelectedElements?.toJson(),
       if (uiTools != null) 'uiTools': uiTools?.toJson(),
     };
   }
@@ -181,6 +215,11 @@ abstract class AssistantContextHints
       if (sheetsSelection != null) 'sheetsSelection': sheetsSelection?.toJson(),
       if (sheetsActiveCell != null) 'sheetsActiveCell': sheetsActiveCell,
       if (sheetsVisibleRange != null) 'sheetsVisibleRange': sheetsVisibleRange,
+      if (slidesCurrentSlide != null) 'slidesCurrentSlide': slidesCurrentSlide,
+      if (slidesSelectedSlides != null)
+        'slidesSelectedSlides': slidesSelectedSlides?.toJson(),
+      if (slidesSelectedElements != null)
+        'slidesSelectedElements': slidesSelectedElements?.toJson(),
       if (uiTools != null) 'uiTools': uiTools?.toJson(),
     };
   }
@@ -208,6 +247,9 @@ class _AssistantContextHintsImpl extends AssistantContextHints {
     List<String>? sheetsSelection,
     String? sheetsActiveCell,
     String? sheetsVisibleRange,
+    String? slidesCurrentSlide,
+    List<String>? slidesSelectedSlides,
+    List<String>? slidesSelectedElements,
     List<String>? uiTools,
   }) : super._(
          documentSessionId: documentSessionId,
@@ -223,6 +265,9 @@ class _AssistantContextHintsImpl extends AssistantContextHints {
          sheetsSelection: sheetsSelection,
          sheetsActiveCell: sheetsActiveCell,
          sheetsVisibleRange: sheetsVisibleRange,
+         slidesCurrentSlide: slidesCurrentSlide,
+         slidesSelectedSlides: slidesSelectedSlides,
+         slidesSelectedElements: slidesSelectedElements,
          uiTools: uiTools,
        );
 
@@ -244,6 +289,9 @@ class _AssistantContextHintsImpl extends AssistantContextHints {
     List<String>? sheetsSelection = const _isc.$UndefinedList<String>(),
     Object? sheetsActiveCell = _Undefined,
     Object? sheetsVisibleRange = _Undefined,
+    Object? slidesCurrentSlide = _Undefined,
+    List<String>? slidesSelectedSlides = const _isc.$UndefinedList<String>(),
+    List<String>? slidesSelectedElements = const _isc.$UndefinedList<String>(),
     List<String>? uiTools = const _isc.$UndefinedList<String>(),
   }) {
     return AssistantContextHints(
@@ -278,6 +326,15 @@ class _AssistantContextHintsImpl extends AssistantContextHints {
       sheetsVisibleRange: sheetsVisibleRange is String?
           ? sheetsVisibleRange
           : this.sheetsVisibleRange,
+      slidesCurrentSlide: slidesCurrentSlide is String?
+          ? slidesCurrentSlide
+          : this.slidesCurrentSlide,
+      slidesSelectedSlides: slidesSelectedSlides is _isc.UndefinedSentinel
+          ? this.slidesSelectedSlides?.map((e0) => e0).toList()
+          : slidesSelectedSlides,
+      slidesSelectedElements: slidesSelectedElements is _isc.UndefinedSentinel
+          ? this.slidesSelectedElements?.map((e0) => e0).toList()
+          : slidesSelectedElements,
       uiTools: uiTools is _isc.UndefinedSentinel
           ? this.uiTools?.map((e0) => e0).toList()
           : uiTools,

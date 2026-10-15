@@ -10,6 +10,8 @@ import 'package:wonky_slides_core/themes.dart' show SlidePlaceholderType;
 /// the slide height form a row; rows top → bottom, left → right inside a
 /// row; right → left with [rtl]), slide number/footer/date last. Hidden
 /// elements are excluded, decorative ones too unless [includeDecorative].
+/// With [custom] false the `readingKey`s are ignored (the automatic order,
+/// for the accessibility checker's comparison, SL-34).
 abstract final class ReadingOrder {
   static int _rank(ResolvedElement e) => switch (e.placeholderType) {
     SlidePlaceholderType.title => 0,
@@ -26,6 +28,7 @@ abstract final class ReadingOrder {
     required double slideHeight,
     bool rtl = false,
     bool includeDecorative = true,
+    bool custom = true,
   }) {
     final visible = [
       for (final e in elements)
@@ -33,11 +36,11 @@ abstract final class ReadingOrder {
     ];
     final keyed = [
       for (final e in visible)
-        if (e.record.readingKey != null) e,
+        if (custom && e.record.readingKey != null) e,
     ]..sort((a, b) => a.record.readingKey!.compareTo(b.record.readingKey!));
     final rest = [
       for (final e in visible)
-        if (e.record.readingKey == null) e,
+        if (!custom || e.record.readingKey == null) e,
     ];
     return [...keyed, ..._automatic(rest, slideHeight, rtl)];
   }

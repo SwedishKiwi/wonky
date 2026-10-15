@@ -80,7 +80,15 @@ class FlutterTextLayoutEngine implements TextLayoutEngine {
       final text = p.isEmpty ? '​' : p.text;
       final para = _paragraph(p, text)
         ..layout(ui.ParagraphConstraints(width: avail));
-      placed.add(PlacedParagraph(para, p.textIndent, y));
+      placed.add(
+        PlacedParagraph(
+          para,
+          p.textIndent,
+          y,
+          start: p.start,
+          length: p.isEmpty ? 0 : text.length,
+        ),
+      );
       final metrics = para.computeLineMetrics();
       final ranges = _lineRanges(para, text, metrics.length);
       for (var li = 0; li < metrics.length; li++) {
@@ -99,6 +107,8 @@ class FlutterTextLayoutEngine implements TextLayoutEngine {
               mp,
               p.markerX,
               y + m.baseline - mp.alphabeticBaseline,
+              start: p.start,
+              marker: true,
             ),
           );
           bullet = p.marker!.box(
@@ -251,11 +261,30 @@ class FlutterTextLayoutEngine implements TextLayoutEngine {
 /// A paragraph placed in a text layout (element-local su, relative to the
 /// text node's origin).
 class PlacedParagraph {
-  PlacedParagraph(this.paragraph, this.dx, this.dy);
+  PlacedParagraph(
+    this.paragraph,
+    this.dx,
+    this.dy, {
+    this.start = 0,
+    this.length = 0,
+    this.marker = false,
+  });
 
   final ui.Paragraph paragraph;
   final double dx;
   final double dy;
+
+  /// Offset of the paragraph's first character in the body's plain text
+  /// (text part runs and highlights, 06 §12.1); a list [marker] carries
+  /// its paragraph's start.
+  final int start;
+
+  /// Characters of the paragraph's text (0 for markers and empty
+  /// paragraphs).
+  final int length;
+
+  /// Whether this is a list marker (bullet or number).
+  final bool marker;
 }
 
 /// The paragraphs (and list markers) of a Flutter text layout.

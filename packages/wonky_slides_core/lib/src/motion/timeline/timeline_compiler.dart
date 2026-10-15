@@ -569,7 +569,10 @@ final class _Compiler {
           codeCursor[el.id] = (0, null);
           final len = el.codeStates.isEmpty ? 0 : el.codeStates.first.length;
           if (reduced == null) {
-            bound = BoundEasing(MotionEasing.linear, _typeMs(len));
+            bound = BoundEasing(
+              MotionEasing.linear,
+              el.codeTimings?.typeInMs() ?? _typeMs(len),
+            );
           }
         case 'codeHighlight':
           final step = (params['step'] as num? ?? 1).round();
@@ -604,11 +607,23 @@ final class _Compiler {
           if (reduced != null) codeMode = 'crossfade';
           codeCursor[el.id] = (target, null);
           if (reduced == null) {
+            // Derived from the element's typing script / morph settings
+            // (07 §5.3, §5.6; SL-31); estimates without a model.
+            final derived = el.codeTimings?.transitionMs(
+              cur.$1,
+              target,
+              codeMode,
+            );
             final delta = (states[target].length - states[cur.$1].length).abs();
             bound = switch (codeMode) {
-              'type' => BoundEasing(MotionEasing.linear, _typeMs(delta + 10)),
-              'instant' => BoundEasing(MotionEasing.linear, 0),
-              _ => easingExpr.bind(durationMs > 0 ? durationMs : 800),
+              'type' => BoundEasing(
+                MotionEasing.linear,
+                derived ?? _typeMs(delta + 10),
+              ),
+              'instant' => BoundEasing(MotionEasing.linear, derived ?? 0),
+              _ => easingExpr.bind(
+                derived ?? (durationMs > 0 ? durationMs : 800),
+              ),
             };
           }
       }

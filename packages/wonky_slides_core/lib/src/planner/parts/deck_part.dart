@@ -33,6 +33,8 @@ extension _DeckPart on _Planner {
       DeckCols.showSlideNumbers: false,
       DeckCols.hideNumberOnTitle: true,
       DeckCols.firstSlideNumber: 1,
+      if (op.defaultsJson != null)
+        DeckCols.defaultsJson: _defaults(op.defaultsJson),
       DeckCols.createdBy: ctx.userId,
       SlidesCols.createdAt: ctx.now,
     });

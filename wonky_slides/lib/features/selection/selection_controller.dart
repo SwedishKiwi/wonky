@@ -34,7 +34,7 @@ enum CanvasFocus {
 /// never undoable, but undo/redo restore it through the editor's snapshots.
 class SelectionController extends ChangeNotifier {
   SelectionController(this.editor) {
-    _slideId = editor.currentSlideId;
+    _slideId = editor.surfaceId;
     _lastIds = editor.selectedElementIds;
     editor.addListener(_onEditor);
   }
@@ -56,9 +56,10 @@ class SelectionController extends ChangeNotifier {
   /// Whether nothing is selected.
   bool get isEmpty => ids.isEmpty;
 
-  /// The resolved current slide, or null in an empty deck.
+  /// The resolved current slide (or the layout/master edited in masters
+  /// mode, SL-28), or null in an empty deck.
   ResolvedSlide? get slide {
-    final id = editor.currentSlideId;
+    final id = editor.surfaceId;
     return id == null ? null : editor.resolver.resolve(id);
   }
 
@@ -209,7 +210,7 @@ class SelectionController extends ChangeNotifier {
 
   void _onEditor() {
     if (_disposed) return;
-    final cur = editor.currentSlideId;
+    final cur = editor.surfaceId;
     if (cur != _slideId) {
       final old = _slideId;
       if (old != null) _memory[old] = (_lastIds, _entered);

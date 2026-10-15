@@ -36,7 +36,7 @@ class AssistantTool {
 /// Delta / whole-document replacement, URL images, `changes.revert`,
 /// theme-library mutations and `ui.*` are never exposed (13 §1).
 class AssistantToolset {
-  AssistantToolset._(this.tools);
+  AssistantToolset._(this.tools, {this.bindMode = true, this.strip = const {}});
 
   /// Write 09 §5.2 allowlist (tools that are not registered are skipped).
   static const writeAllowlist = [
@@ -84,8 +84,13 @@ class AssistantToolset {
     'write.update_theme',
   };
 
-  /// Keys bound to the open document.
-  static const _documentKeys = {'document_uuid', 'uuid', 'spreadsheet'};
+  /// Keys bound to the open document (`deck`: Slides 11 §6.3).
+  static const _documentKeys = {
+    'document_uuid',
+    'uuid',
+    'spreadsheet',
+    'deck',
+  };
 
   final List<AssistantTool> tools;
 
@@ -114,8 +119,15 @@ class AssistantToolset {
   }
 
   /// A toolset of [definitions] (sorted by API name: a deterministic order
-  /// keeps provider-side prompt caches warm).
-  factory AssistantToolset.of(List<McpToolDefinition> definitions) {
+  /// keeps provider-side prompt caches warm). [bindMode] binds a top-level
+  /// `mode` argument to the apply mode (Write); Slides passes false, its
+  /// `mode` arguments are the tools' own (replace/append). [strip] removes
+  /// arguments the assistant may never pass (Slides: `force`, 11 §6.3).
+  factory AssistantToolset.of(
+    List<McpToolDefinition> definitions, {
+    bool bindMode = true,
+    Set<String> strip = const {},
+  }) {
     final tools = <AssistantTool>[];
     for (final d in definitions) {
       final schema = jsonDecode(jsonEncode(d.inputSchema.toJson())) as Map;
@@ -125,7 +137,8 @@ class AssistantToolset {
       final bound = <String>{
         for (final k in props.keys)
           if (_documentKeys.contains(k) ||
-              k == 'mode' ||
+              (bindMode && k == 'mode') ||
+              strip.contains(k) ||
               // `ui.*` tools run in the requesting window.
               (k == 'session_id' && d.name.startsWith('ui.')))
             k,
@@ -159,8 +172,14 @@ class AssistantToolset {
       );
     }
     tools.sort((a, b) => a.apiName.compareTo(b.apiName));
-    return AssistantToolset._(tools);
+    return AssistantToolset._(tools, bindMode: bindMode, strip: strip);
   }
+
+  /// Whether a top-level `mode` argument follows the apply mode.
+  final bool bindMode;
+
+  /// Arguments removed from every schema (never passed by the model).
+  final Set<String> strip;
 
   /// `write.get_document` → `write_get_document` (API tool names allow
   /// `[a-zA-Z0-9_-]` only).
@@ -171,6 +190,8 @@ class AssistantToolset {
     final b = StringBuffer(d.description);
     if (d.inputSchema.properties.containsKey('spreadsheet')) {
       b.write(' Operates on the open spreadsheet.');
+    } else if (d.inputSchema.properties.containsKey('deck')) {
+      b.write(' Operates on the open presentation.');
     } else if (d.inputSchema.properties.containsKey('document_uuid') ||
         d.inputSchema.properties.containsKey('uuid')) {
       b.write(' Operates on the open document.');
@@ -184,11 +205,15 @@ class AssistantToolset {
   /// This toolset plus [more] (the window's `ui.*` tools).
   AssistantToolset plus(List<McpToolDefinition> more) => more.isEmpty
       ? this
-      : AssistantToolset.of([
-          for (final t in tools) t.definition,
-          for (final d in more)
-            if (!tools.any((t) => t.name == d.name)) d,
-        ]);
+      : AssistantToolset.of(
+          [
+            for (final t in tools) t.definition,
+            for (final d in more)
+              if (!tools.any((t) => t.name == d.name)) d,
+          ],
+          bindMode: bindMode,
+          strip: strip,
+        );
 
   AssistantTool? byApiName(String name) => _byApiName[name];
 

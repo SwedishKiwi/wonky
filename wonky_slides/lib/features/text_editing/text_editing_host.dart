@@ -202,6 +202,16 @@ class SlideTextEditing extends ChangeNotifier {
   )?
   onCellExit;
 
+  /// Additions to every editing session (SL-44: spelling squiggles),
+  /// registered by other features; each may return null.
+  static final List<
+    SlideTextEditAddon? Function(
+      SlideTextEditing host,
+      SlideTextEditController c,
+    )
+  >
+  addonFactories = [];
+
   /// The active cell of a selected table that typing edits (SL-15), or
   /// null. Set by the table feature.
   static ({String rowId, String columnId})? Function(
@@ -216,9 +226,10 @@ class SlideTextEditing extends ChangeNotifier {
       e.textStyles != null &&
       (e.record.kind == ElementKind.text || e.record.kind == ElementKind.shape);
 
-  /// The resolved element [id] of the current slide.
+  /// The resolved element [id] of the current slide (or edited layout or
+  /// master, SL-28).
   ResolvedElement? element(String id) {
-    final s = editor.currentSlideId;
+    final s = editor.surfaceId;
     if (s == null) return null;
     final slide = editor.resolver.resolve(s);
     return slide == null ? null : SlideElements.of(slide)[id];
@@ -285,7 +296,7 @@ class SlideTextEditing extends ChangeNotifier {
     if (!(allowed is bool ? allowed : await allowed)) return false;
     if (!canEdit(id, cell: cell != null) || isEditing) return false;
     final canvas = SlideCanvasController.of(editor)!;
-    final slideId = editor.currentSlideId!;
+    final slideId = editor.surfaceId!;
     final l = slidesL10nOf(editor.services);
     late final SlideTextEditController c;
     c = SlideTextEditController(
@@ -303,6 +314,10 @@ class SlideTextEditing extends ChangeNotifier {
         label: l.undoTyping,
       ),
     );
+    for (final f in addonFactories) {
+      final a = f(this, c);
+      if (a != null) c.addons.add(a);
+    }
     c.addListener(_onGeometry);
     c.composer.selectionNotifier.addListener(_notify);
     c.composer.preferences.addListener(_notify);
@@ -372,6 +387,27 @@ class SlideTextEditing extends ChangeNotifier {
       ),
     ]);
     return true;
+  }
+
+  /// Before the context menu of a right-click at slide point [p]: a click
+  /// outside the selected text puts the caret there (so the menu's
+  /// spelling suggestions are those of the word under the pointer, SL-44);
+  /// a click inside a selection keeps it.
+  void prepareContextMenu(Offset p) {
+    final c = _active;
+    final layout = _layoutKey.currentState;
+    if (c == null || layout is! DocumentLayout) return;
+    final inv = Matrix4.tryInvert(c.geometry.textToSlide);
+    if (inv == null) return;
+    final local = MatrixUtils.transformPoint(inv, p);
+    final pos = (layout as DocumentLayout).getDocumentPositionNearestToOffset(
+      local,
+    );
+    final range = c.selectionRange;
+    if (pos == null || range == null) return;
+    final at = c.offsetOf(pos);
+    if (range.$1 != range.$2 && at >= range.$1 && at <= range.$2) return;
+    placeCaretAt(p);
   }
 
   /// Called after the overlay was laid out: focuses the editor and applies
@@ -512,7 +548,7 @@ class SlideTextEditing extends ChangeNotifier {
     if (c == null) return;
     if (!editor.textEditing ||
         !editor.canEdit ||
-        editor.currentSlideId != c.slideId ||
+        editor.surfaceId != c.slideId ||
         !editor.selectedElementIds.contains(c.elementId) ||
         editor.model.element(c.elementId) == null) {
       end(select: false);

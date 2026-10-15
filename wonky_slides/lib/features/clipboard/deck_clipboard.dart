@@ -24,6 +24,7 @@ import '../elements/image/image_rules.dart' show PickedImage;
 import '../elements/table/table_cells.dart';
 import '../navigator/navigator_clipboard.dart';
 import '../text_editing/slide_text_editor.dart';
+import '../elements/chart/chart_paste.dart';
 import '../text_editing/text_editing_host.dart';
 import '../uploads/slides_image_service.dart';
 import 'paste_options.dart';
@@ -809,7 +810,7 @@ abstract final class DeckClipboard {
     Map<String, Object?> payload,
   ) async {
     final l = slidesL10nOf(ed.services);
-    final slideId = ed.currentSlideId;
+    final slideId = ed.surfaceId;
     if (slideId == null) return CommandResult.failed(l.reasonNoSlides);
     final source =
         (payload['sourceItemUuid'] ?? payload['sourceDeckId']) as String?;
@@ -843,7 +844,10 @@ abstract final class DeckClipboard {
         atY = box.y + off;
       }
     }
-    final plan = ed.apply(ctx, PasteElements(p, slideId, atX: atX, atY: atY));
+    final plan = ed.apply(
+      ctx,
+      PasteElements(p, slideId, atX: atX, atY: atY, ownerKind: ed.surfaceKind),
+    );
     final created = (plan.result['elementIds'] as List? ?? const [])
         .whereType<String>()
         .toList();
@@ -884,12 +888,15 @@ abstract final class DeckClipboard {
     required String origin,
   }) async {
     final l = slidesL10nOf(ed.services);
-    final slideId = ed.currentSlideId;
+    final slideId = ed.surfaceId;
     if (slideId == null) return CommandResult.failed(l.reasonNoSlides);
     if (r.elements.isEmpty) return CommandResult.failed(l.toastClipboardEmpty);
     final p = await prepareFiles(ctx, ed, r.payload);
     if (p == null) return const CommandResult.cancelled();
-    final plan = ed.apply(ctx, PasteElements(p, slideId));
+    final plan = ed.apply(
+      ctx,
+      PasteElements(p, slideId, ownerKind: ed.surfaceKind),
+    );
     final created = (plan.result['elementIds'] as List? ?? const [])
         .whereType<String>()
         .toList();
@@ -957,11 +964,12 @@ abstract final class DeckClipboard {
     bool unlinked = false,
   }) async {
     final l = slidesL10nOf(ed.services);
-    final slideId = ed.currentSlideId;
+    final slideId = ed.surfaceId;
     if (slideId == null) return CommandResult.failed(l.reasonNoSlides);
     final ids = ed.session.planContext().ids;
     final created = <String>[];
     var charts = 0;
+    var unresolved = 0;
     SuRect? bounds;
     for (final (i, item) in items.indexed) {
       final r = SlidesPasteMappers.sheetsObject(
@@ -973,8 +981,20 @@ abstract final class DeckClipboard {
         unlinked: unlinked,
       );
       if (r.elements.isEmpty) continue;
-      if (item['kind'] == 'chart') charts++;
-      final p = await prepareFiles(ctx, ed, r.payload);
+      var payload = r.payload;
+      if (item['kind'] == 'chart') {
+        charts++;
+        // The chart's data comes with the paste (SL-32).
+        final c = await ChartPaste.withSnapshot(
+          ed,
+          item,
+          payload,
+          unlinked: unlinked,
+        );
+        payload = c.payload;
+        if (!c.resolved && unlinked) unresolved++;
+      }
+      final p = await prepareFiles(ctx, ed, payload);
       if (p == null) return const CommandResult.cancelled();
       final box = _boundsOf(p);
       final plan = ed.apply(
@@ -984,6 +1004,7 @@ abstract final class DeckClipboard {
           slideId,
           atX: box == null ? null : box.x + 32.0 * i,
           atY: box == null ? null : box.y + 32.0 * i,
+          ownerKind: ed.surfaceKind,
         ),
       );
       created.addAll(
@@ -1000,6 +1021,9 @@ abstract final class DeckClipboard {
     }
     if (created.isEmpty) return CommandResult.failed(l.toastClipboardEmpty);
     selectionOf(ed).select(created);
+    if (unresolved > 0 && !ctx.source.isAgent) {
+      ed.services.toasts.show(l.chartPasteNoData);
+    }
     final linkable = items.any(
       (i) =>
           i['kind'] == 'chart' &&

@@ -8,6 +8,8 @@ environment:
 resolution: workspace
 
 dependencies:
+  # gzip of large snapshot columns (`gz:`, Slides 08 §3.3); already resolved through `image`.
+  archive: ^4.5.1
   collection: ^1.19.1
   image: ^4.5.4
   pdf: ^3.13.1

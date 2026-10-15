@@ -108,6 +108,26 @@ void main() {
       );
     });
 
+    test('when pasting elements and slides then the plans map old to new '
+        'ids (comments follow cut objects, 09 §3.2)', () {
+      final p = SlidesClipboardCodec.copyElements(deck.model, [f.shape]);
+      final plan = deck.execute(PasteElements(p, f.s3));
+      final pasted = (plan.result['elementIds']! as List).single as String;
+
+      expect(plan.result['elementIdMap'], {f.shape: pasted});
+
+      final s = SlidesClipboardCodec.copySlides(deck.model, slideIds: [f.s3]);
+      final slides = deck.execute(PasteSlides(s));
+      final newSlide = (slides.result['slideIds']! as List).single as String;
+      final elementMap = slides.result['elementIdMap']! as Map;
+      expect(slides.result['slideIdMap'], {f.s3: newSlide});
+      expect(elementMap[f.shape], isNotNull);
+      expect(
+        deck.model.element(elementMap[f.shape] as String)!.slideId,
+        newSlide,
+      );
+    });
+
     test(
       'when a placeholder instance without a frame is copied then the '
       'payload carries its effective frame and pastes in place elsewhere',

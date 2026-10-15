@@ -7,9 +7,9 @@ import 'textmate/textmate_tokenizer.dart';
 /// quality), **highlight.js second** for every other known language.
 /// Unknown languages render plain.
 ///
-/// Write's editor uses [TextMateTokenizer] directly and Write's exports
-/// [HighlightJsTokenizer] until both switch to this facade in M10 (Write 04
-/// §15.5, v2 review Q17/Q25).
+/// Write's editor and exports use it too since M10 (Write 04 §15.5, v2
+/// review Q17/Q25; Slides SL-35), so code has the same colors on screen, in
+/// Slides and in every export.
 final class DefaultCodeTokenizer implements CodeTokenizer {
   const DefaultCodeTokenizer._();
 

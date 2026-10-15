@@ -10,6 +10,7 @@ import 'package:wonky_core/wonky_core.dart';
 import 'package:wonky_ui/wonky_ui.dart';
 
 import '../collab/presence_widgets.dart' show SlidePresenceDots;
+import '../comments/comment_badge.dart';
 import '../../commands/navigator_commands.dart' show navMoveTo;
 import '../../commands/slides_command.dart' show SlidesKeyScopes;
 import '../../config/menus/context_menu_specs.dart';
@@ -365,6 +366,12 @@ class _SlideNavigatorState extends State<SlideNavigator> {
               bottom: 2,
               child: SlidePresenceDots(editor: ed, slideId: e.id),
             ),
+            // Open comments on this slide (SL-38, 04 §5.2).
+            Positioned(
+              left: 2,
+              bottom: 2,
+              child: SlideCommentBadge(editor: ed, slideId: e.id),
+            ),
             if (hover)
               Positioned(
                 right: 2,
@@ -522,6 +529,12 @@ class _SlideNavigatorState extends State<SlideNavigator> {
           ),
         // Collaborators inside a collapsed group (SL-21, 09 §1.2).
         if (r.collapsed) SlidePresenceDots(editor: ed, groupId: g.id),
+        // Open comments inside a collapsed group (SL-38, 09 §3.3).
+        if (r.collapsed)
+          Padding(
+            padding: const EdgeInsets.only(left: 4),
+            child: SlideCommentBadge(editor: ed, groupId: g.id),
+          ),
         const SizedBox(width: 6),
         Text(
           '${range.length}',

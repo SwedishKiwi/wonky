@@ -23,7 +23,13 @@ enum CommentAnchorKind implements _is.SerializableModel {
   range,
 
   /// The whole item.
-  document;
+  document,
+
+  /// (v2) Slides: a slide (`{v, slideId, point?}`, Slides 09 §3.1).
+  slide,
+
+  /// (v2) Slides: an element on a slide (`{v, slideId, elementId, point?}`).
+  element;
 
   static CommentAnchorKind fromJson(String name) {
     switch (name) {
@@ -35,6 +41,10 @@ enum CommentAnchorKind implements _is.SerializableModel {
         return CommentAnchorKind.range;
       case 'document':
         return CommentAnchorKind.document;
+      case 'slide':
+        return CommentAnchorKind.slide;
+      case 'element':
+        return CommentAnchorKind.element;
       default:
         throw ArgumentError(
           'Value "$name" cannot be converted to "CommentAnchorKind"',

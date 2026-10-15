@@ -49,8 +49,8 @@ abstract final class CodeLanguages {
   };
 
   /// Languages with a TextMate grammar → their grammar id (Write 04 §15.4,
-  /// `TextMateTokenizer`). Write's editor highlights exactly these and its
-  /// language picker offers them.
+  /// `TextMateTokenizer`). Write's language picker offers these (its editor
+  /// also highlights the highlight.js languages, `DefaultCodeTokenizer`).
   static const grammars = {
     'css': 'css',
     'dart': 'dart',

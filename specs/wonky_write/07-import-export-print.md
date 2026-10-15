@@ -143,7 +143,9 @@ wonky_write_core/lib/
                  docx/ (ooxml_writer.dart, styles_xml.dart, numbering_xml.dart, document_xml.dart),
                  odt/, rtf/, epub/ (opf.dart, nav.dart, xhtml_writer.dart), zip.dart (deterministic zips)
   layout/        page_setup.dart, pagination_engine.dart, block_metrics.dart, header_footer_tokens.dart
-  highlight/     (shared syntax tokenizer, 06-themes §2.5)
+  highlight/     (`SyntaxHighlighter`: the exporters' cached front for `wonky_code`'s
+                 `DefaultCodeTokenizer` — the editor's and Slides' tokenizer, Write 04 §15.5;
+                 06-themes §2.5)
 ```
 
 New pure-Dart dependencies for `wonky_write_core` (add to the dependency rules in
@@ -412,6 +414,8 @@ only).
   rect (`soft`/`strong`); caption below.
 - Code blocks: background box per page slice (rounded corners only on the true start/end
   slices), highlighted token spans, long lines wrap with a `↪` continuation marker in `muted`.
+  Wrapping ignores the token runs (a word continues across syntax tokens), so a line wraps at
+  the same spaces whatever the highlighting (SL-35).
 - Tables: our table layout (column widths: proportional to max content width, min 2 em, capped
   to content width), header row repeated on each continuation page.
 - Task checkboxes drawn as vector boxes/checkmarks (theme `task.checkbox`).

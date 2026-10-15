@@ -1,0 +1,10 @@
+### The result of building an AI outline (Slides 11 §6.4 step 2).
+class: SlidesAiBuildResult
+fields:
+  ### The new presentation (new deck) or the deck the slides went into.
+  itemUuid: UuidValue
+  ### The server change of an insert into an open deck (one undo step
+  ### "AI: Generate slides"); null for a new presentation.
+  changeId: String?
+  slideIds: List<String>
+  warnings: List<String>

@@ -171,9 +171,24 @@ void main() {
     );
   });
 
-  testWidgets('Given a code block in a language without a grammar then it '
-      'renders plain in the box', (tester) async {
+  testWidgets('Given a bash block (no TextMate grammar) then highlight.js '
+      'colors it like the exports', (tester) async {
     final h = await _pump(tester, _codeBlock('bash', ['echo "hi" # c']));
+    final nodeId = _codeNodeId(h);
+
+    expect(
+      _spans(tester, nodeId),
+      contains(
+        isA<TextSpan>()
+            .having((s) => s.text, 'text', '# c')
+            .having((s) => s.style?.color, 'color', theme.syntax['comment']),
+      ),
+    );
+  });
+
+  testWidgets('Given a code block in an unknown language then it renders '
+      'plain in the box', (tester) async {
+    final h = await _pump(tester, _codeBlock('cobol', ['echo "hi" # c']));
     final nodeId = _codeNodeId(h);
 
     expect(_box(nodeId), findsOneWidget);

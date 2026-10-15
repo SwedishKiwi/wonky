@@ -1,0 +1,19 @@
+### A resolved chart snapshot (Slides 08 §3.3–§3.4, §13 `resolveSnapshot`):
+### the column values of a `ChartLink` (plain JSON; the client compresses
+### large values with the `gz:` prefix when it stores them).
+class: ChartSnapshotView
+fields:
+  spreadsheetUuid: UuidValue
+  chartObjectId: String
+  ### Sheet the chart is on (display only).
+  sheetId: String?
+  ### The source `ChartSpec` JSON.
+  sourceSpecJson: String
+  ### `ChartDataSnapshot` JSON: resolved series only, theme, locale, source info.
+  dataSnapshotJson: String
+  ### `<changeLog>:<specHash>:<dataVersion>` (08 §5.1).
+  sourceVersion: String
+  ### When the snapshot was resolved (server time).
+  updatedAt: DateTime
+  ### English data warnings (downsampled, …).
+  warnings: List<String>

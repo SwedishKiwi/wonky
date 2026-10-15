@@ -6,7 +6,8 @@ import 'package:wonky_app/wonky_app.dart';
 import 'package:wonky_core/wonky_core.dart';
 import 'package:wonky_sheets_core/formula.dart' show GridRect;
 import 'package:wonky_sheets_core/model.dart';
-import 'package:wonky_charts_flutter/wonky_charts_flutter.dart';
+import 'package:wonky_charts_flutter/wonky_charts_flutter.dart'
+    hide showChartDataTableDialog;
 
 import '../features/charts/chart_insert.dart';
 import '../features/charts/view/chart_data_table_dialog.dart';

@@ -1,5 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:wonky_write/features/editor/model/code_languages.dart';
+import 'package:wonky_code/wonky_code.dart';
 import 'package:wonky_write/features/editor/styles/style_phases.dart';
 
 /// `(language, code, token text, expected class)`: one sample per supported
@@ -31,8 +31,8 @@ void main() {
     );
   });
 
-  group('Given a language without a TextMate grammar', () {
-    for (final language in ['bash', 'cobol', '']) {
+  group('Given plain text or an unknown language', () {
+    for (final language in ['cobol', '']) {
       test('when tokenizing "$language" then there are no tokens', () {
         expect(
           CodeHighlightStylePhase.tokenize('echo "hi"', language),
@@ -40,6 +40,22 @@ void main() {
         );
       });
     }
+  });
+
+  group('Given a language without a TextMate grammar', () {
+    test('when tokenizing bash then highlight.js colors it like the '
+        'exports (DefaultCodeTokenizer, Write 04 §15.5)', () {
+      const code = 'echo "hi" # note';
+
+      final spans = CodeHighlightStylePhase.tokenize(code, 'bash');
+
+      expect(spans, [
+        for (final t in DefaultCodeTokenizer.instance.tokenize(code, 'bash'))
+          (t.start, t.end, CodeHighlightStylePhase.syntaxClassOf(t.token)),
+      ]);
+      final comment = code.indexOf('# note');
+      expect(spans, contains((comment, code.length, 'comment')));
+    });
   });
 
   group('Given a supported language', () {

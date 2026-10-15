@@ -17,6 +17,7 @@ import '../features/canvas/canvas_interactions.dart';
 import '../features/canvas/slide_canvas_controller.dart';
 import '../features/editor_screen/deck_editor_controller.dart';
 import '../features/elements/element_activation.dart';
+import '../features/elements/image/image_adjust_preview.dart';
 import '../features/elements/image/crop_mode.dart';
 import '../features/elements/image/image_canvas.dart';
 import '../features/elements/image/image_clipboard.dart';
@@ -39,6 +40,8 @@ List<Command<CommandArgs>> imageCommands(ShellServices s) {
   if (s.client != null) SlidesPendingUploads.install(s);
   CanvasInteractions.register(ImageCropMode.new);
   CanvasInteractions.register(ImageCanvasLayer.new);
+  // The live preview of the adjustment sliders (SL-44).
+  CanvasInteractions.register(ImageAdjustPreview.new);
   ElementActivations.register(_imageActivation);
   return [
     SlidesCommand(
@@ -48,7 +51,7 @@ List<Command<CommandArgs>> imageCommands(ShellServices s) {
       categoryOf: SlidesCategory.insert,
       mutates: true,
       argsSchema: _sourceSchema,
-      enabled: (ed, a) => ed.currentSlideId != null,
+      enabled: (ed, a) => ed.surfaceId != null,
       reason: (l, ed) => l.reasonNoSlides,
       run: (ctx, ed, a) async {
         final got = await _obtain(ctx, ed, a, multiple: true);
@@ -423,7 +426,7 @@ double? _num(JsonArgs a, String k) {
 
 /// The image element of [a] (`id`) or the single selected image.
 ResolvedElement? _image(DeckEditorController ed, JsonArgs a) {
-  final slide = ed.currentSlideId;
+  final slide = ed.surfaceId;
   if (slide == null) return null;
   final resolved = ed.resolver.resolve(slide);
   if (resolved == null) return null;
@@ -703,7 +706,7 @@ CommandResult _place(
   JsonArgs a,
   List<_Ready> images,
 ) {
-  final slide = ed.currentSlideId;
+  final slide = ed.surfaceId;
   if (slide == null) return const CommandResult.failed('No slide');
   final x = _num(a, 'x'), y = _num(a, 'y');
   final target = _placeholderTarget(ed, x, y);
@@ -737,7 +740,10 @@ CommandResult _place(
       ),
     );
   }
-  final plan = ed.apply(ctx, InsertElements(slide, specs));
+  final plan = ed.apply(
+    ctx,
+    InsertElements(slide, specs, ownerKind: ed.surfaceKind),
+  );
   final ids = plan.result['elementIds'];
   ed.armTool(null);
   if (ids is List && ids.isNotEmpty) {
@@ -757,7 +763,8 @@ ResolvedElement? _placeholderTarget(
   double? x,
   double? y,
 ) {
-  final slide = ed.currentSlideId;
+  // Layout and master placeholders are definitions, not filled (SL-28).
+  final slide = ed.editsMasters ? null : ed.currentSlideId;
   final resolved = slide == null ? null : ed.resolver.resolve(slide);
   if (resolved == null) return null;
   if (x != null && y != null) {

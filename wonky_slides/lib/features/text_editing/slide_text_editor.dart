@@ -18,6 +18,17 @@ import 'slides_text_components.dart';
 import 'slides_text_reactions.dart';
 import 'text_edit_geometry.dart';
 
+/// A per-session addition to a text editor (SL-44: the spelling
+/// squiggles of `features/spellcheck/`): an extra style phase of the
+/// editor, disposed with the session's controller.
+abstract class SlideTextEditAddon {
+  /// An extra style phase of the editor's layout, or null.
+  SingleColumnLayoutStylePhase? get stylePhase => null;
+
+  /// Releases the addon (the session ended).
+  void dispose() {}
+}
+
 /// One text editing session over one text-capable element (03 §6.1): the
 /// super_editor document of the body, its editor and composer, the
 /// overlay's style phase, the live geometry (from the scene builder) and
@@ -126,6 +137,10 @@ class SlideTextEditController extends ChangeNotifier {
   late final MutableDocumentComposer composer;
   late final Editor editor;
   late final SlidesTextStylePhase stylePhase;
+
+  /// Additions of other features (SL-44: spelling), added by the host when
+  /// the session starts and disposed with it.
+  final List<SlideTextEditAddon> addons = [];
 
   /// The undo coalescing key of this body's typing.
   String get coalesceKey => isCell
@@ -398,6 +413,10 @@ class SlideTextEditController extends ChangeNotifier {
   void dispose() {
     close();
     _timer?.cancel();
+    for (final a in addons) {
+      a.dispose();
+    }
+    addons.clear();
     editor.dispose();
     super.dispose();
   }
@@ -520,7 +539,10 @@ class SlideTextEditorOverlay extends StatelessWidget {
           inputSource: TextInputSource.ime,
           gestureMode: DocumentGestureMode.mouse,
           stylesheet: _stylesheet,
-          customStylePhases: [controller.stylePhase],
+          customStylePhases: [
+            controller.stylePhase,
+            for (final a in controller.addons) ?a.stylePhase,
+          ],
           componentBuilders: const [SlidesTextComponentBuilder()],
           selectionStyle: SelectionStyles(selectionColor: selectionColor),
           documentOverlayBuilders: [

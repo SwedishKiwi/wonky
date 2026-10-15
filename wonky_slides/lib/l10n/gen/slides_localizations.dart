@@ -1747,24 +1747,6 @@ abstract class SlidesLocalizations {
   /// **'Order'**
   String get animateTabOrder;
 
-  /// Inspector › Animate › Transition placeholder text.
-  ///
-  /// In en, this message translates to:
-  /// **'Slide transitions arrive here soon: effects, duration and how the slide advances.'**
-  String get animateTransitionEmpty;
-
-  /// Inspector › Animate › Build placeholder text.
-  ///
-  /// In en, this message translates to:
-  /// **'Builds arrive here soon: select an object to animate it in, out or in place.'**
-  String get animateBuildEmpty;
-
-  /// Inspector › Animate › Order placeholder text.
-  ///
-  /// In en, this message translates to:
-  /// **'The build order of this slide will be listed here.'**
-  String get animateOrderEmpty;
-
   /// Deck appearance option.
   ///
   /// In en, this message translates to:
@@ -1842,24 +1824,6 @@ abstract class SlidesLocalizations {
   /// In en, this message translates to:
   /// **'Viewing'**
   String get badgeViewing;
-
-  /// Build effect.
-  ///
-  /// In en, this message translates to:
-  /// **'Appear'**
-  String get buildAppear;
-
-  /// Build effect.
-  ///
-  /// In en, this message translates to:
-  /// **'Fly in'**
-  String get buildFlyIn;
-
-  /// Build effect.
-  ///
-  /// In en, this message translates to:
-  /// **'Zoom'**
-  String get buildZoom;
 
   /// Empty deck action.
   ///
@@ -2068,13 +2032,13 @@ abstract class SlidesLocalizations {
   /// File › Download format.
   ///
   /// In en, this message translates to:
-  /// **'PNG image (current slide)'**
+  /// **'PNG image (current slide)…'**
   String get downloadPng;
 
   /// File › Download format.
   ///
   /// In en, this message translates to:
-  /// **'PNG images (all slides, .zip)'**
+  /// **'PNG images (all slides, .zip)…'**
   String get downloadPngZip;
 
   /// File › Download format.
@@ -2316,18 +2280,6 @@ abstract class SlidesLocalizations {
   /// In en, this message translates to:
   /// **'List options…'**
   String get listOptions;
-
-  /// Masters mode placeholder title.
-  ///
-  /// In en, this message translates to:
-  /// **'Editing masters and layouts is coming soon'**
-  String get mastersSoonTitle;
-
-  /// Masters mode placeholder description.
-  ///
-  /// In en, this message translates to:
-  /// **'You’ll edit the theme’s masters and layouts here. Your slides are unchanged.'**
-  String get mastersSoonBody;
 
   /// Menu or submenu label (Slides 04 §4).
   ///
@@ -2845,12 +2797,6 @@ abstract class SlidesLocalizations {
   /// **'(no title)'**
   String get outlineNoTitle;
 
-  /// Outline view note.
-  ///
-  /// In en, this message translates to:
-  /// **'Outline view shows each slide’s title and main text. Editing here comes soon.'**
-  String get outlineReadOnlyNote;
-
   /// Paste special option.
   ///
   /// In en, this message translates to:
@@ -3334,7 +3280,7 @@ abstract class SlidesLocalizations {
   /// Slides settings (Slides 04 §13.16).
   ///
   /// In en, this message translates to:
-  /// **'Code font size'**
+  /// **'Largest code font size'**
   String get settingsCodeFontSize;
 
   /// Slides settings (Slides 04 §13.16).
@@ -3726,36 +3672,6 @@ abstract class SlidesLocalizations {
   /// In en, this message translates to:
   /// **'Transition'**
   String get toolbarTransition;
-
-  /// Transition effect.
-  ///
-  /// In en, this message translates to:
-  /// **'None'**
-  String get transitionNone;
-
-  /// Transition effect.
-  ///
-  /// In en, this message translates to:
-  /// **'Fade'**
-  String get transitionFade;
-
-  /// Transition effect.
-  ///
-  /// In en, this message translates to:
-  /// **'Push'**
-  String get transitionPush;
-
-  /// Transition effect.
-  ///
-  /// In en, this message translates to:
-  /// **'Wipe'**
-  String get transitionWipe;
-
-  /// Transition effect.
-  ///
-  /// In en, this message translates to:
-  /// **'Dissolve'**
-  String get transitionDissolve;
 
   /// Units option.
   ///
@@ -4368,6 +4284,114 @@ abstract class SlidesLocalizations {
   /// In en, this message translates to:
   /// **'Print each build stage'**
   String get printBuilds;
+
+  /// Print setting (P1): print each slide as it looks after its last build instead of the authored layout
+  ///
+  /// In en, this message translates to:
+  /// **'Show final animation state'**
+  String get printFinalState;
+
+  /// Title of the PNG export dialog (File › Download ▸ PNG)
+  ///
+  /// In en, this message translates to:
+  /// **'Download PNG'**
+  String get pngDialogTitle;
+
+  /// Description of the PNG export dialog
+  ///
+  /// In en, this message translates to:
+  /// **'Several images download as one .zip file.'**
+  String get pngDialogHint;
+
+  /// PNG export: which slides
+  ///
+  /// In en, this message translates to:
+  /// **'Slides'**
+  String get pngSlides;
+
+  /// PNG export range
+  ///
+  /// In en, this message translates to:
+  /// **'Current slide'**
+  String get pngSlidesCurrent;
+
+  /// PNG export range
+  ///
+  /// In en, this message translates to:
+  /// **'Selected slides'**
+  String get pngSlidesSelection;
+
+  /// PNG export range
+  ///
+  /// In en, this message translates to:
+  /// **'All slides'**
+  String get pngSlidesAll;
+
+  /// PNG export: image size
+  ///
+  /// In en, this message translates to:
+  /// **'Size'**
+  String get pngSize;
+
+  /// PNG export size choice
+  ///
+  /// In en, this message translates to:
+  /// **'{scale}× · {width} × {height} px'**
+  String pngSizeOption(int scale, int width, int height);
+
+  /// PNG export: which build state the images show
+  ///
+  /// In en, this message translates to:
+  /// **'Builds'**
+  String get pngFrames;
+
+  /// PNG export: the print frame
+  ///
+  /// In en, this message translates to:
+  /// **'All content (as printed)'**
+  String get pngFramesPrint;
+
+  /// PNG export: the final frame
+  ///
+  /// In en, this message translates to:
+  /// **'After the last build'**
+  String get pngFramesFinal;
+
+  /// PNG export: one image per build step
+  ///
+  /// In en, this message translates to:
+  /// **'Each build stage (one image per step)'**
+  String get pngFramesBuilds;
+
+  /// PNG export option
+  ///
+  /// In en, this message translates to:
+  /// **'Transparent background'**
+  String get pngTransparent;
+
+  /// PNG export dialog button
+  ///
+  /// In en, this message translates to:
+  /// **'Download'**
+  String get pngDownload;
+
+  /// File name of one slide's image in a PNG ZIP (number is zero-padded)
+  ///
+  /// In en, this message translates to:
+  /// **'Slide {number}'**
+  String pngEntrySlide(String number);
+
+  /// File name of one build step's image in a PNG ZIP
+  ///
+  /// In en, this message translates to:
+  /// **'Slide {number}, step {step}'**
+  String pngEntryStep(String number, int step);
+
+  /// PNG export with an empty range
+  ///
+  /// In en, this message translates to:
+  /// **'There are no slides to export'**
+  String get pngNothingToExport;
 
   /// Print setting
   ///
@@ -6678,6 +6702,18 @@ abstract class SlidesLocalizations {
   /// **'End of presentation — click to exit'**
   String get presentEndScreen;
 
+  /// Kiosk mode: shown with a progress ring while Esc is held to end the presentation (Slides 10 §9).
+  ///
+  /// In en, this message translates to:
+  /// **'Keep holding Esc to exit'**
+  String get presentKioskExitHold;
+
+  /// Presenter view indicator: the running animation was too slow for this device and plays as a crossfade (Slides 06 §14).
+  ///
+  /// In en, this message translates to:
+  /// **'Reduced effects'**
+  String get presenterReducedEffects;
+
   /// Audience view while the presenter's slide is still syncing.
   ///
   /// In en, this message translates to:
@@ -7433,6 +7469,5389 @@ abstract class SlidesLocalizations {
   /// In en, this message translates to:
   /// **'{name} is editing this text'**
   String toastFindBodyLocked(String name);
+
+  /// Title of the command `slides.layout.add` (menus, palette, tooltips, undo).
+  ///
+  /// In en, this message translates to:
+  /// **'New layout'**
+  String get cmdLayoutAdd;
+
+  /// Title of the command `slides.layout.duplicate` (menus, palette, tooltips, undo).
+  ///
+  /// In en, this message translates to:
+  /// **'Duplicate layout'**
+  String get cmdLayoutDuplicate;
+
+  /// Title of the command `slides.layout.rename` (menus, palette, tooltips, undo).
+  ///
+  /// In en, this message translates to:
+  /// **'Rename layout…'**
+  String get cmdLayoutRename;
+
+  /// Title of the command `slides.layout.move` (menus, palette, tooltips, undo).
+  ///
+  /// In en, this message translates to:
+  /// **'Move layout'**
+  String get cmdLayoutMove;
+
+  /// Title of the command `slides.layout.delete` (menus, palette, tooltips, undo).
+  ///
+  /// In en, this message translates to:
+  /// **'Delete layout'**
+  String get cmdLayoutDelete;
+
+  /// Title of the command `slides.layout.setBackground` (menus, palette, tooltips, undo).
+  ///
+  /// In en, this message translates to:
+  /// **'Layout background'**
+  String get cmdLayoutSetBackground;
+
+  /// Title of the command `slides.layout.setHideMasterElements` (menus, palette, tooltips, undo).
+  ///
+  /// In en, this message translates to:
+  /// **'Hide master objects'**
+  String get cmdLayoutSetHideMasterElements;
+
+  /// Title of the command `slides.layout.toggleHidden` (menus, palette, tooltips, undo).
+  ///
+  /// In en, this message translates to:
+  /// **'Hide in layout picker'**
+  String get cmdLayoutToggleHidden;
+
+  /// Title of the command `slides.master.add` (menus, palette, tooltips, undo).
+  ///
+  /// In en, this message translates to:
+  /// **'New master'**
+  String get cmdMasterAdd;
+
+  /// Title of the command `slides.master.duplicate` (menus, palette, tooltips, undo).
+  ///
+  /// In en, this message translates to:
+  /// **'Duplicate master'**
+  String get cmdMasterDuplicate;
+
+  /// Title of the command `slides.master.rename` (menus, palette, tooltips, undo).
+  ///
+  /// In en, this message translates to:
+  /// **'Rename master…'**
+  String get cmdMasterRename;
+
+  /// Title of the command `slides.master.delete` (menus, palette, tooltips, undo).
+  ///
+  /// In en, this message translates to:
+  /// **'Delete master'**
+  String get cmdMasterDelete;
+
+  /// Title of the command `slides.master.setBackground` (menus, palette, tooltips, undo).
+  ///
+  /// In en, this message translates to:
+  /// **'Master background'**
+  String get cmdMasterSetBackground;
+
+  /// Title of the command `slides.masters.exit` (menus, palette, tooltips, undo).
+  ///
+  /// In en, this message translates to:
+  /// **'Close masters view'**
+  String get cmdMastersExit;
+
+  /// Title of the command `slides.theme.update` (menus, palette, tooltips, undo).
+  ///
+  /// In en, this message translates to:
+  /// **'Edit theme'**
+  String get cmdThemeUpdate;
+
+  /// Title of the command `slides.theme.deriveDarkColors` (menus, palette, tooltips, undo).
+  ///
+  /// In en, this message translates to:
+  /// **'Derive dark colors'**
+  String get cmdThemeDeriveDarkColors;
+
+  /// Title of the command `slides.theme.resetToBuiltIn` (menus, palette, tooltips, undo).
+  ///
+  /// In en, this message translates to:
+  /// **'Reset to built-in theme'**
+  String get cmdThemeResetToBuiltIn;
+
+  /// Disabled reason: no layout to act on.
+  ///
+  /// In en, this message translates to:
+  /// **'Select a layout'**
+  String get reasonNoLayout;
+
+  /// Disabled reason: no master to act on.
+  ///
+  /// In en, this message translates to:
+  /// **'Select a master'**
+  String get reasonNoMaster;
+
+  /// Disabled reason of Delete layout for the last layout of a master.
+  ///
+  /// In en, this message translates to:
+  /// **'A master needs at least one layout'**
+  String get reasonLastLayout;
+
+  /// Disabled reason of Delete master for the last master of a theme.
+  ///
+  /// In en, this message translates to:
+  /// **'A theme needs at least one master'**
+  String get reasonLastMaster;
+
+  /// A layout used by slides can't be deleted.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{Used by 1 slide — apply another layout first} other{Used by {count} slides — apply another layout first}}'**
+  String reasonLayoutUsed(int count);
+
+  /// A master whose layouts slides use can't be deleted.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{Used by 1 slide — apply another layout first} other{Used by {count} slides — apply another layout first}}'**
+  String reasonMasterUsed(int count);
+
+  /// Disabled reason of Insert › Placeholder outside masters mode.
+  ///
+  /// In en, this message translates to:
+  /// **'Open Edit masters and layouts first'**
+  String get reasonMastersOnly;
+
+  /// Disabled reason of Reset to built-in theme.
+  ///
+  /// In en, this message translates to:
+  /// **'This theme isn’t based on a built-in theme'**
+  String get reasonNotBuiltInTheme;
+
+  /// Name of a new layout.
+  ///
+  /// In en, this message translates to:
+  /// **'Layout {n}'**
+  String layoutDefaultName(int n);
+
+  /// Name of a new master.
+  ///
+  /// In en, this message translates to:
+  /// **'Master {n}'**
+  String masterDefaultName(int n);
+
+  /// Title of the rename layout dialog.
+  ///
+  /// In en, this message translates to:
+  /// **'Rename layout'**
+  String get layoutRenameTitle;
+
+  /// Title of the rename master dialog.
+  ///
+  /// In en, this message translates to:
+  /// **'Rename master'**
+  String get masterRenameTitle;
+
+  /// Title of the delete layout dialog for a used layout.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete layout?'**
+  String get layoutDeleteTitle;
+
+  /// Body of the delete layout dialog.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 slide uses “{name}”. Apply “{replacement}” to it and delete the layout?} other{{count} slides use “{name}”. Apply “{replacement}” to them and delete the layout?}}'**
+  String layoutDeleteUsedBody(int count, String name, String replacement);
+
+  /// Confirm button of the delete layout dialog.
+  ///
+  /// In en, this message translates to:
+  /// **'Apply and delete'**
+  String get layoutDeleteApplyAndDelete;
+
+  /// Prompt text of a new placeholder of a type (shown on empty slide instances).
+  ///
+  /// In en, this message translates to:
+  /// **'{type, select, title{Click to add title} subtitle{Click to add subtitle} body{Click to add text} picture{Click to add a picture} chart{Click to add a chart} table{Click to add a table} code{Click to add code} caption{Click to add a caption} bigNumber{100%} quote{Click to add a quote} attribution{Name, role} object{Click to add an object} other{Click to add text}}'**
+  String placeholderPrompt(String type);
+
+  /// Inspector tab in masters mode while a layout is edited.
+  ///
+  /// In en, this message translates to:
+  /// **'Layout'**
+  String get inspectorLayout;
+
+  /// Inspector tab in masters mode while a master is edited.
+  ///
+  /// In en, this message translates to:
+  /// **'Master'**
+  String get inspectorMaster;
+
+  /// Inspector tab of the theme editor (masters mode).
+  ///
+  /// In en, this message translates to:
+  /// **'Theme'**
+  String get inspectorTheme;
+
+  /// Title and accessibility label of the masters navigator.
+  ///
+  /// In en, this message translates to:
+  /// **'Masters and layouts'**
+  String get mastersNavigatorLabel;
+
+  /// A master row in the masters navigator.
+  ///
+  /// In en, this message translates to:
+  /// **'Master · {name}'**
+  String mastersMasterName(String name);
+
+  /// A layout hidden from the layout gallery.
+  ///
+  /// In en, this message translates to:
+  /// **'Hidden in layout picker'**
+  String get mastersHiddenInPicker;
+
+  /// Context menu: move the layout up.
+  ///
+  /// In en, this message translates to:
+  /// **'Move up'**
+  String get mastersMoveUp;
+
+  /// Context menu: move the layout down.
+  ///
+  /// In en, this message translates to:
+  /// **'Move down'**
+  String get mastersMoveDown;
+
+  /// Banner of masters mode while a layout is edited.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =0{Editing layout “{name}” of theme {theme} — no slides use it yet} =1{Editing layout “{name}” of theme {theme} — changes apply to 1 slide} other{Editing layout “{name}” of theme {theme} — changes apply to {count} slides}}'**
+  String mastersBannerLayout(String name, String theme, int count);
+
+  /// Banner of masters mode while a master is edited.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =0{Editing master “{name}” of theme {theme} — no slides use it yet} =1{Editing master “{name}” of theme {theme} — changes apply to 1 slide} other{Editing master “{name}” of theme {theme} — changes apply to {count} slides}}'**
+  String mastersBannerMaster(String name, String theme, int count);
+
+  /// Banner of masters mode without a layout or master.
+  ///
+  /// In en, this message translates to:
+  /// **'This presentation has no layouts to edit'**
+  String get mastersBannerNone;
+
+  /// Button leaving masters mode.
+  ///
+  /// In en, this message translates to:
+  /// **'Done'**
+  String get mastersDone;
+
+  /// Accessibility label of the canvas editing a layout.
+  ///
+  /// In en, this message translates to:
+  /// **'Layout {name}'**
+  String mastersLayoutSemantics(String name);
+
+  /// Accessibility label of the canvas editing a master.
+  ///
+  /// In en, this message translates to:
+  /// **'Master {name}'**
+  String mastersMasterSemantics(String name);
+
+  /// Inspector section of the edited layout or master.
+  ///
+  /// In en, this message translates to:
+  /// **'Properties'**
+  String get mastersSectionProperties;
+
+  /// Inspector section listing the placeholders of the edited layout or master.
+  ///
+  /// In en, this message translates to:
+  /// **'Placeholders'**
+  String get mastersSectionPlaceholders;
+
+  /// Placeholders section without placeholders.
+  ///
+  /// In en, this message translates to:
+  /// **'No placeholders yet'**
+  String get mastersNoPlaceholders;
+
+  /// Placeholder of the insert placeholder select.
+  ///
+  /// In en, this message translates to:
+  /// **'Add…'**
+  String get mastersChoosePlaceholder;
+
+  /// The theme of the edited layout or master.
+  ///
+  /// In en, this message translates to:
+  /// **'Theme {name}'**
+  String mastersOfTheme(String name);
+
+  /// Resets a layout background.
+  ///
+  /// In en, this message translates to:
+  /// **'Use master background'**
+  String get mastersBackgroundUseMaster;
+
+  /// Resets a master background.
+  ///
+  /// In en, this message translates to:
+  /// **'Use theme background'**
+  String get mastersBackgroundUseTheme;
+
+  /// Theme editor section.
+  ///
+  /// In en, this message translates to:
+  /// **'Colors'**
+  String get themeSectionColors;
+
+  /// Theme editor section.
+  ///
+  /// In en, this message translates to:
+  /// **'Fonts'**
+  String get themeSectionFonts;
+
+  /// Theme editor section.
+  ///
+  /// In en, this message translates to:
+  /// **'Text styles'**
+  String get themeSectionTextStyles;
+
+  /// Theme editor section (default object styles).
+  ///
+  /// In en, this message translates to:
+  /// **'Objects'**
+  String get themeSectionObjects;
+
+  /// Theme editor section.
+  ///
+  /// In en, this message translates to:
+  /// **'Tables'**
+  String get themeSectionTables;
+
+  /// Theme editor section.
+  ///
+  /// In en, this message translates to:
+  /// **'Charts'**
+  String get themeSectionCharts;
+
+  /// Theme editor without a theme.
+  ///
+  /// In en, this message translates to:
+  /// **'This presentation has no theme'**
+  String get themeEditorNoTheme;
+
+  /// The built-in a theme was copied from.
+  ///
+  /// In en, this message translates to:
+  /// **'Based on {name}'**
+  String themeEditorBasedOn(String name);
+
+  /// A contrast pair of theme colors.
+  ///
+  /// In en, this message translates to:
+  /// **'{foreground} on {background}'**
+  String themeContrastPair(String foreground, String background);
+
+  /// Tooltip of a passing contrast badge.
+  ///
+  /// In en, this message translates to:
+  /// **'{pair}: contrast {ratio} (needs {required}:1)'**
+  String themeContrastPasses(String pair, String ratio, String required);
+
+  /// Tooltip of a failing contrast badge.
+  ///
+  /// In en, this message translates to:
+  /// **'{pair}: contrast {ratio} is too low (needs {required}:1)'**
+  String themeContrastFails(String pair, String ratio, String required);
+
+  /// Theme editor: custom colors list.
+  ///
+  /// In en, this message translates to:
+  /// **'Custom colors'**
+  String get themeEditorCustomColors;
+
+  /// Accessibility label of a custom color name field.
+  ///
+  /// In en, this message translates to:
+  /// **'Custom color name'**
+  String get themeEditorCustomColorName;
+
+  /// Name of a new custom color.
+  ///
+  /// In en, this message translates to:
+  /// **'Custom {n}'**
+  String themeEditorCustomColorDefault(int n);
+
+  /// Theme editor button.
+  ///
+  /// In en, this message translates to:
+  /// **'Add custom color'**
+  String get themeEditorAddCustomColor;
+
+  /// Accessibility label of the remove button of a custom color.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove {name}'**
+  String themeEditorRemoveCustomColor(String name);
+
+  /// A font weight.
+  ///
+  /// In en, this message translates to:
+  /// **'{weight, select, 300{Light} 400{Regular} 500{Medium} 600{Semibold} 700{Bold} 800{Extra bold} other{{weight}}}'**
+  String themeEditorWeight(String weight);
+
+  /// Theme font that is not bundled.
+  ///
+  /// In en, this message translates to:
+  /// **'{family} isn’t available; {fallback} is used'**
+  String themeEditorFontFallback(String family, String fallback);
+
+  /// Theme editor: italic switch.
+  ///
+  /// In en, this message translates to:
+  /// **'Italic'**
+  String get themeEditorItalic;
+
+  /// Theme editor: letter spacing (em).
+  ///
+  /// In en, this message translates to:
+  /// **'Letter spacing'**
+  String get themeEditorLetterSpacing;
+
+  /// Theme editor: caps transform.
+  ///
+  /// In en, this message translates to:
+  /// **'Capitals'**
+  String get themeEditorCaps;
+
+  /// Theme editor: list markers.
+  ///
+  /// In en, this message translates to:
+  /// **'Lists'**
+  String get themeEditorLists;
+
+  /// Theme editor: list level row.
+  ///
+  /// In en, this message translates to:
+  /// **'Level {n}'**
+  String themeEditorListLevel(int n);
+
+  /// Theme editor: list bullet color.
+  ///
+  /// In en, this message translates to:
+  /// **'Bullet color'**
+  String get themeEditorBulletColor;
+
+  /// Theme editor: list indentation.
+  ///
+  /// In en, this message translates to:
+  /// **'Indent per level'**
+  String get themeEditorIndent;
+
+  /// Theme editor: non-solid background note.
+  ///
+  /// In en, this message translates to:
+  /// **'The background is a gradient or an image; picking a color replaces it.'**
+  String get themeEditorBackgroundNotSolid;
+
+  /// Theme editor: dark background override switch.
+  ///
+  /// In en, this message translates to:
+  /// **'Different in dark appearance'**
+  String get themeEditorDarkBackground;
+
+  /// Theme editor: default text box style.
+  ///
+  /// In en, this message translates to:
+  /// **'Text boxes'**
+  String get themeEditorTextBoxes;
+
+  /// Theme editor: default shape style.
+  ///
+  /// In en, this message translates to:
+  /// **'Shapes'**
+  String get themeEditorShapes;
+
+  /// Theme editor: default line style.
+  ///
+  /// In en, this message translates to:
+  /// **'Lines'**
+  String get themeEditorLines;
+
+  /// Theme editor: default icon style.
+  ///
+  /// In en, this message translates to:
+  /// **'Icons'**
+  String get themeEditorIcons;
+
+  /// Theme editor: text color.
+  ///
+  /// In en, this message translates to:
+  /// **'Text color'**
+  String get themeEditorTextColor;
+
+  /// Theme editor: default shadow blur.
+  ///
+  /// In en, this message translates to:
+  /// **'Blur'**
+  String get themeEditorShadowBlur;
+
+  /// Theme editor: default shadow vertical offset.
+  ///
+  /// In en, this message translates to:
+  /// **'Offset'**
+  String get themeEditorShadowOffset;
+
+  /// Theme editor: the 8 shape quick styles.
+  ///
+  /// In en, this message translates to:
+  /// **'Quick styles'**
+  String get themeEditorQuickStyles;
+
+  /// Theme editor: one quick style.
+  ///
+  /// In en, this message translates to:
+  /// **'Style {n}'**
+  String themeEditorQuickStyle(int n);
+
+  /// Theme editor: table header fill.
+  ///
+  /// In en, this message translates to:
+  /// **'Header fill'**
+  String get themeEditorHeaderFill;
+
+  /// Theme editor: table header text color.
+  ///
+  /// In en, this message translates to:
+  /// **'Header text'**
+  String get themeEditorHeaderText;
+
+  /// Theme editor: table body fill.
+  ///
+  /// In en, this message translates to:
+  /// **'Body fill'**
+  String get themeEditorBodyFill;
+
+  /// Theme editor: table band fill.
+  ///
+  /// In en, this message translates to:
+  /// **'Banded rows'**
+  String get themeEditorBandFill;
+
+  /// Theme editor: corner radius.
+  ///
+  /// In en, this message translates to:
+  /// **'Corner radius'**
+  String get themeEditorCornerRadius;
+
+  /// Theme editor: code palette on light backgrounds.
+  ///
+  /// In en, this message translates to:
+  /// **'Light palette'**
+  String get themeEditorLightPalette;
+
+  /// Theme editor: code palette on dark backgrounds.
+  ///
+  /// In en, this message translates to:
+  /// **'Dark palette'**
+  String get themeEditorDarkPalette;
+
+  /// Theme editor: default code block chrome.
+  ///
+  /// In en, this message translates to:
+  /// **'Chrome'**
+  String get themeEditorWindowChrome;
+
+  /// Code chrome: a title tab.
+  ///
+  /// In en, this message translates to:
+  /// **'Tab'**
+  String get themeEditorChromeTab;
+
+  /// Code chrome: a window bar.
+  ///
+  /// In en, this message translates to:
+  /// **'Window'**
+  String get themeEditorChromeWindow;
+
+  /// Code chrome: a caption.
+  ///
+  /// In en, this message translates to:
+  /// **'Caption'**
+  String get themeEditorChromeCaption;
+
+  /// Shadow strength.
+  ///
+  /// In en, this message translates to:
+  /// **'Soft'**
+  String get themeEditorShadowSoft;
+
+  /// Shadow strength.
+  ///
+  /// In en, this message translates to:
+  /// **'Strong'**
+  String get themeEditorShadowStrong;
+
+  /// Theme editor: chart series color.
+  ///
+  /// In en, this message translates to:
+  /// **'Series {n}'**
+  String themeEditorSeries(int n);
+
+  /// Theme editor: chart gridline color.
+  ///
+  /// In en, this message translates to:
+  /// **'Gridlines'**
+  String get themeEditorGridlines;
+
+  /// Theme editor: chart axis color.
+  ///
+  /// In en, this message translates to:
+  /// **'Axis'**
+  String get themeEditorAxis;
+
+  /// Theme editor: chart 3D lighting.
+  ///
+  /// In en, this message translates to:
+  /// **'3D lighting'**
+  String get themeEditorLighting;
+
+  /// 3D lighting preset.
+  ///
+  /// In en, this message translates to:
+  /// **'Soft'**
+  String get themeEditorLightingSoft;
+
+  /// 3D lighting preset.
+  ///
+  /// In en, this message translates to:
+  /// **'Studio'**
+  String get themeEditorLightingStudio;
+
+  /// 3D lighting preset.
+  ///
+  /// In en, this message translates to:
+  /// **'Flat'**
+  String get themeEditorLightingFlat;
+
+  /// Description of `slides.insert.code` (palette).
+  ///
+  /// In en, this message translates to:
+  /// **'Insert a code block with syntax highlighting, line steps and type-in states'**
+  String get cmdInsertCodeDescription;
+
+  /// Title of the command `slides.code.setPalette`.
+  ///
+  /// In en, this message translates to:
+  /// **'Code color theme'**
+  String get cmdCodeSetPalette;
+
+  /// Title of the command `slides.code.setText` (MCP, undo).
+  ///
+  /// In en, this message translates to:
+  /// **'Set code'**
+  String get cmdCodeSetText;
+
+  /// Description of `slides.code.addState`.
+  ///
+  /// In en, this message translates to:
+  /// **'Adds a copy of the selected state after it: change the code there to animate the change'**
+  String get cmdCodeAddStateDescription;
+
+  /// Title of the command `slides.code.duplicateState`.
+  ///
+  /// In en, this message translates to:
+  /// **'Duplicate state'**
+  String get cmdCodeDuplicateState;
+
+  /// Title of the command `slides.code.deleteState`.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete state'**
+  String get cmdCodeDeleteState;
+
+  /// Title of the command `slides.code.moveState`.
+  ///
+  /// In en, this message translates to:
+  /// **'Move state'**
+  String get cmdCodeMoveState;
+
+  /// Title of the command `slides.code.selectState` (Alt+Shift+←/→).
+  ///
+  /// In en, this message translates to:
+  /// **'Show code state'**
+  String get cmdCodeSelectState;
+
+  /// Title of the command `slides.code.setStateLabel`.
+  ///
+  /// In en, this message translates to:
+  /// **'Rename state'**
+  String get cmdCodeSetStateLabel;
+
+  /// Title of the command `slides.code.setStateTransition` (how the code arrives at a state).
+  ///
+  /// In en, this message translates to:
+  /// **'State arrival'**
+  String get cmdCodeSetStateTransition;
+
+  /// Title of the command `slides.code.setCallout`.
+  ///
+  /// In en, this message translates to:
+  /// **'Step callout'**
+  String get cmdCodeSetCallout;
+
+  /// Title of the command `slides.code.addStepFromLines`.
+  ///
+  /// In en, this message translates to:
+  /// **'Add line step'**
+  String get cmdCodeAddStepFromLines;
+
+  /// Title of the command `slides.code.previewStep`.
+  ///
+  /// In en, this message translates to:
+  /// **'Preview line step'**
+  String get cmdCodePreviewStep;
+
+  /// Title of the command `slides.code.preview` (plays the type-in or change into the selected state on the canvas).
+  ///
+  /// In en, this message translates to:
+  /// **'Preview code animation'**
+  String get cmdCodePreview;
+
+  /// Title of the command `slides.code.toggleDiffGutter`.
+  ///
+  /// In en, this message translates to:
+  /// **'Show code changes'**
+  String get cmdCodeToggleDiffGutter;
+
+  /// Title of the command `slides.code.copy`.
+  ///
+  /// In en, this message translates to:
+  /// **'Copy code'**
+  String get cmdCodeCopy;
+
+  /// Title of the command `slides.code.convertFromText`.
+  ///
+  /// In en, this message translates to:
+  /// **'Convert to code block'**
+  String get cmdCodeConvertFromText;
+
+  /// Why a code command is disabled.
+  ///
+  /// In en, this message translates to:
+  /// **'Select a code block'**
+  String get reasonSelectCode;
+
+  /// Why *Delete state* is disabled.
+  ///
+  /// In en, this message translates to:
+  /// **'A code block keeps at least one state'**
+  String get reasonLastCodeState;
+
+  /// Why *Convert to code block* is disabled.
+  ///
+  /// In en, this message translates to:
+  /// **'Select a text box with text'**
+  String get reasonSelectTextBox;
+
+  /// Toast after *Copy code*.
+  ///
+  /// In en, this message translates to:
+  /// **'Code copied'**
+  String get toastCodeCopied;
+
+  /// Undo label of code block options.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit code block'**
+  String get undoEditCodeBlock;
+
+  /// Undo label of a state's label or arrival.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit code state'**
+  String get undoEditCodeState;
+
+  /// Undo label of highlight steps.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit line steps'**
+  String get undoEditLineSteps;
+
+  /// Undo label of a step callout.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit callout'**
+  String get undoEditCallout;
+
+  /// Code section / dialog label.
+  ///
+  /// In en, this message translates to:
+  /// **'Language'**
+  String get codeLanguageLabel;
+
+  /// Title of the language dialog.
+  ///
+  /// In en, this message translates to:
+  /// **'Code language'**
+  String get codeLanguageDialogTitle;
+
+  /// Title of the language dialog when inserting.
+  ///
+  /// In en, this message translates to:
+  /// **'Insert code block'**
+  String get codeInsertDialogTitle;
+
+  /// Code section label of the syntax palette.
+  ///
+  /// In en, this message translates to:
+  /// **'Colors'**
+  String get codePaletteLabel;
+
+  /// Palette option: light or dark by the background.
+  ///
+  /// In en, this message translates to:
+  /// **'Auto'**
+  String get codePaletteAuto;
+
+  /// Palette option with the palette in use.
+  ///
+  /// In en, this message translates to:
+  /// **'Auto ({name})'**
+  String codePaletteAutoNamed(String name);
+
+  /// Palette option: the deck theme's light code palette.
+  ///
+  /// In en, this message translates to:
+  /// **'Theme light'**
+  String get codePaletteLight;
+
+  /// Palette option: the deck theme's dark code palette.
+  ///
+  /// In en, this message translates to:
+  /// **'Theme dark'**
+  String get codePaletteDark;
+
+  /// Code section label.
+  ///
+  /// In en, this message translates to:
+  /// **'Font size'**
+  String get codeFontSize;
+
+  /// Font size option: fit the box.
+  ///
+  /// In en, this message translates to:
+  /// **'Auto'**
+  String get codeFontSizeAuto;
+
+  /// Code section label of the auto-size bounds.
+  ///
+  /// In en, this message translates to:
+  /// **'Min – max'**
+  String get codeFontSizeRange;
+
+  /// Code section label of the first line number.
+  ///
+  /// In en, this message translates to:
+  /// **'Start at'**
+  String get codeStartLine;
+
+  /// Code section toggle.
+  ///
+  /// In en, this message translates to:
+  /// **'Wrap lines'**
+  String get codeWrap;
+
+  /// Code section toggle.
+  ///
+  /// In en, this message translates to:
+  /// **'Ligatures'**
+  String get codeLigatures;
+
+  /// Code section label of the chrome (tab, window bar, caption).
+  ///
+  /// In en, this message translates to:
+  /// **'Frame'**
+  String get codeChrome;
+
+  /// Chrome option.
+  ///
+  /// In en, this message translates to:
+  /// **'Theme default'**
+  String get codeChromeTheme;
+
+  /// Chrome option.
+  ///
+  /// In en, this message translates to:
+  /// **'None'**
+  String get codeChromeNone;
+
+  /// Chrome option.
+  ///
+  /// In en, this message translates to:
+  /// **'File tab'**
+  String get codeChromeTab;
+
+  /// Chrome option (title bar with three dots).
+  ///
+  /// In en, this message translates to:
+  /// **'Window'**
+  String get codeChromeWindow;
+
+  /// Chrome option (label above the box).
+  ///
+  /// In en, this message translates to:
+  /// **'Caption'**
+  String get codeChromeCaption;
+
+  /// Code section label (file name).
+  ///
+  /// In en, this message translates to:
+  /// **'Title'**
+  String get codeTitle;
+
+  /// Code section toggle.
+  ///
+  /// In en, this message translates to:
+  /// **'Language badge'**
+  String get codeShowLanguage;
+
+  /// Code section label.
+  ///
+  /// In en, this message translates to:
+  /// **'Copy button'**
+  String get codeCopyButton;
+
+  /// Copy button option.
+  ///
+  /// In en, this message translates to:
+  /// **'Never'**
+  String get codeCopyNever;
+
+  /// Copy button option.
+  ///
+  /// In en, this message translates to:
+  /// **'In presentations'**
+  String get codeCopyPresent;
+
+  /// Copy button option.
+  ///
+  /// In en, this message translates to:
+  /// **'Always'**
+  String get codeCopyAlways;
+
+  /// Code section header of the state strip.
+  ///
+  /// In en, this message translates to:
+  /// **'States'**
+  String get codeStatesHeader;
+
+  /// Semantics/tooltip of a state chip.
+  ///
+  /// In en, this message translates to:
+  /// **'State {index}'**
+  String codeStateChip(int index);
+
+  /// Semantics/tooltip of a named state chip.
+  ///
+  /// In en, this message translates to:
+  /// **'State {index}: {label}'**
+  String codeStateChipNamed(int index, String label);
+
+  /// Info line of the first state.
+  ///
+  /// In en, this message translates to:
+  /// **'State {index} · {lines, plural, =1{1 line} other{{lines} lines}}'**
+  String codeStateInfoFirst(int index, int lines);
+
+  /// Info line of a state (lines added, changed, removed).
+  ///
+  /// In en, this message translates to:
+  /// **'State {index} · {lines, plural, =1{1 line} other{{lines} lines}} · +{added} ~{changed} −{removed} vs. state {previous}'**
+  String codeStateInfo(
+    int index,
+    int lines,
+    int added,
+    int changed,
+    int removed,
+    int previous,
+  );
+
+  /// Tooltip.
+  ///
+  /// In en, this message translates to:
+  /// **'Move state earlier'**
+  String get codeMoveStateLeft;
+
+  /// Tooltip.
+  ///
+  /// In en, this message translates to:
+  /// **'Move state later'**
+  String get codeMoveStateRight;
+
+  /// Tooltip of ▶ on the first state.
+  ///
+  /// In en, this message translates to:
+  /// **'Preview the type-in'**
+  String get codePreviewTypeIn;
+
+  /// Tooltip of ▶.
+  ///
+  /// In en, this message translates to:
+  /// **'Preview the change into this state'**
+  String get codePreviewChange;
+
+  /// Code section label of a state's name.
+  ///
+  /// In en, this message translates to:
+  /// **'Name'**
+  String get codeStateLabel;
+
+  /// Placeholder of a state's name.
+  ///
+  /// In en, this message translates to:
+  /// **'e.g. Add caching'**
+  String get codeStateLabelHint;
+
+  /// Code section toggle of the diff gutter.
+  ///
+  /// In en, this message translates to:
+  /// **'Show changes'**
+  String get codeShowChanges;
+
+  /// Header of the first state's typing settings.
+  ///
+  /// In en, this message translates to:
+  /// **'Type-in'**
+  String get codeTypeInHeader;
+
+  /// Header of how the code arrives at the selected state.
+  ///
+  /// In en, this message translates to:
+  /// **'Arrival'**
+  String get codeArrivalHeader;
+
+  /// Code section label.
+  ///
+  /// In en, this message translates to:
+  /// **'Arrives by'**
+  String get codeArrivesBy;
+
+  /// Arrival mode.
+  ///
+  /// In en, this message translates to:
+  /// **'Typing'**
+  String get codeModeType;
+
+  /// Arrival mode.
+  ///
+  /// In en, this message translates to:
+  /// **'Morph'**
+  String get codeModeMorph;
+
+  /// Arrival mode.
+  ///
+  /// In en, this message translates to:
+  /// **'Instant'**
+  String get codeModeInstant;
+
+  /// Estimated duration of a typed change.
+  ///
+  /// In en, this message translates to:
+  /// **'≈ {seconds} s (typed)'**
+  String codeDurationTyped(String seconds);
+
+  /// Duration of a morph.
+  ///
+  /// In en, this message translates to:
+  /// **'≈ {seconds} s (morph)'**
+  String codeDurationMorph(String seconds);
+
+  /// Duration of an instant change.
+  ///
+  /// In en, this message translates to:
+  /// **'≈ {seconds} s (crossfade)'**
+  String codeDurationInstant(String seconds);
+
+  /// Opens all typing settings.
+  ///
+  /// In en, this message translates to:
+  /// **'More…'**
+  String get codeMore;
+
+  /// Header of the line steps.
+  ///
+  /// In en, this message translates to:
+  /// **'Line steps (state {index})'**
+  String codeLineStepsHeader(int index);
+
+  /// Hint when a state has no line steps.
+  ///
+  /// In en, this message translates to:
+  /// **'No steps: every line shows normally.'**
+  String get codeStepsEmpty;
+
+  /// A step that highlights nothing ("*").
+  ///
+  /// In en, this message translates to:
+  /// **'All lines'**
+  String get codeStepAll;
+
+  /// Semantics of a step row.
+  ///
+  /// In en, this message translates to:
+  /// **'Step {index}: {lines}'**
+  String codeStepRow(int index, String lines);
+
+  /// Tooltip of the callout button of a step.
+  ///
+  /// In en, this message translates to:
+  /// **'Callout'**
+  String get codeEditCallout;
+
+  /// Tooltip.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove step'**
+  String get codeRemoveStep;
+
+  /// Code section label of the highlight style.
+  ///
+  /// In en, this message translates to:
+  /// **'Highlight'**
+  String get codeHighlightStyle;
+
+  /// Highlight style.
+  ///
+  /// In en, this message translates to:
+  /// **'Dim others'**
+  String get codeStyleDim;
+
+  /// Highlight style.
+  ///
+  /// In en, this message translates to:
+  /// **'Blur others'**
+  String get codeStyleBlur;
+
+  /// Highlight style.
+  ///
+  /// In en, this message translates to:
+  /// **'Dim and blur'**
+  String get codeStyleDimBlur;
+
+  /// Highlight style.
+  ///
+  /// In en, this message translates to:
+  /// **'Bar'**
+  String get codeStyleBar;
+
+  /// Highlight style.
+  ///
+  /// In en, this message translates to:
+  /// **'Box'**
+  String get codeStyleBox;
+
+  /// Highlight style.
+  ///
+  /// In en, this message translates to:
+  /// **'None'**
+  String get codeStyleNone;
+
+  /// Code section label (keep highlighted lines in view).
+  ///
+  /// In en, this message translates to:
+  /// **'Focus'**
+  String get codeFocus;
+
+  /// Focus option.
+  ///
+  /// In en, this message translates to:
+  /// **'Scroll'**
+  String get codeFocusScroll;
+
+  /// Focus option.
+  ///
+  /// In en, this message translates to:
+  /// **'Zoom'**
+  String get codeFocusZoom;
+
+  /// Focus option.
+  ///
+  /// In en, this message translates to:
+  /// **'None'**
+  String get codeFocusNone;
+
+  /// Code section toggle (auto size fits the largest state).
+  ///
+  /// In en, this message translates to:
+  /// **'Same size in all states'**
+  String get codeFitAcrossStates;
+
+  /// Title of the line steps dialog.
+  ///
+  /// In en, this message translates to:
+  /// **'Line steps'**
+  String get codeStepsDialogTitle;
+
+  /// Help of the line steps dialog.
+  ///
+  /// In en, this message translates to:
+  /// **'One step per click, separated by |: lines (5), ranges (1-3, 7-), lists (2,4); * shows all lines.'**
+  String get codeStepsHint;
+
+  /// Field label.
+  ///
+  /// In en, this message translates to:
+  /// **'Steps'**
+  String get codeStepsLabel;
+
+  /// A syntax issue of a step.
+  ///
+  /// In en, this message translates to:
+  /// **'Step {index}: use a line, a range like 3-5 or 7-, or 4:2-9'**
+  String codeStepIssueSyntax(int index);
+
+  /// A step with lines that don't exist.
+  ///
+  /// In en, this message translates to:
+  /// **'Step {index} points past the end of the code'**
+  String codeStepIssuePastEnd(int index);
+
+  /// Issue.
+  ///
+  /// In en, this message translates to:
+  /// **'Step {index}: a range was reversed'**
+  String codeStepIssueReversed(int index);
+
+  /// Issue.
+  ///
+  /// In en, this message translates to:
+  /// **'Step {index}: columns start at 1'**
+  String codeStepIssueColumns(int index);
+
+  /// Title of the callout dialog.
+  ///
+  /// In en, this message translates to:
+  /// **'Callout of step {index}'**
+  String codeCalloutDialogTitle(int index);
+
+  /// Help of the callout dialog.
+  ///
+  /// In en, this message translates to:
+  /// **'Shown next to the step\'s lines. **Bold**, *italic* and `code` work.'**
+  String get codeCalloutHint;
+
+  /// Field label.
+  ///
+  /// In en, this message translates to:
+  /// **'Text'**
+  String get codeCalloutText;
+
+  /// Field label.
+  ///
+  /// In en, this message translates to:
+  /// **'Side'**
+  String get codeCalloutSide;
+
+  /// Callout side.
+  ///
+  /// In en, this message translates to:
+  /// **'Automatic'**
+  String get codeSideAuto;
+
+  /// Callout side.
+  ///
+  /// In en, this message translates to:
+  /// **'Right'**
+  String get codeSideRight;
+
+  /// Callout side.
+  ///
+  /// In en, this message translates to:
+  /// **'Left'**
+  String get codeSideLeft;
+
+  /// Callout side.
+  ///
+  /// In en, this message translates to:
+  /// **'Above'**
+  String get codeSideAbove;
+
+  /// Callout side.
+  ///
+  /// In en, this message translates to:
+  /// **'Below'**
+  String get codeSideBelow;
+
+  /// Field label.
+  ///
+  /// In en, this message translates to:
+  /// **'Style'**
+  String get codeCalloutStyle;
+
+  /// Callout style option.
+  ///
+  /// In en, this message translates to:
+  /// **'Default'**
+  String get codeCalloutStyleDefault;
+
+  /// Callout style.
+  ///
+  /// In en, this message translates to:
+  /// **'Bubble'**
+  String get codeCalloutBubble;
+
+  /// Callout style.
+  ///
+  /// In en, this message translates to:
+  /// **'Label'**
+  String get codeCalloutLabel;
+
+  /// Callout style.
+  ///
+  /// In en, this message translates to:
+  /// **'Pill'**
+  String get codeCalloutPill;
+
+  /// Dialog button.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove callout'**
+  String get codeCalloutRemove;
+
+  /// Title of the typing settings dialog.
+  ///
+  /// In en, this message translates to:
+  /// **'Typing settings'**
+  String get codeTypingDialogTitle;
+
+  /// Typing speed.
+  ///
+  /// In en, this message translates to:
+  /// **'Speed (chars/s)'**
+  String get codeTypingCps;
+
+  /// Typing jitter (0 = even, 1 = very uneven).
+  ///
+  /// In en, this message translates to:
+  /// **'Rhythm'**
+  String get codeTypingRhythm;
+
+  /// How deletions are animated.
+  ///
+  /// In en, this message translates to:
+  /// **'Deletions'**
+  String get codeTypingDeletions;
+
+  /// Deletion mode.
+  ///
+  /// In en, this message translates to:
+  /// **'Automatic'**
+  String get codeDeleteAuto;
+
+  /// Deletion mode.
+  ///
+  /// In en, this message translates to:
+  /// **'Backspace'**
+  String get codeDeleteBackspace;
+
+  /// Deletion mode.
+  ///
+  /// In en, this message translates to:
+  /// **'Select and delete'**
+  String get codeDeleteSelect;
+
+  /// Automatic deletions up to this length are backspaced.
+  ///
+  /// In en, this message translates to:
+  /// **'Backspace up to (chars)'**
+  String get codeTypingBackspaceMax;
+
+  /// Field label.
+  ///
+  /// In en, this message translates to:
+  /// **'Backspace speed (chars/s)'**
+  String get codeTypingDeleteCps;
+
+  /// Field label.
+  ///
+  /// In en, this message translates to:
+  /// **'Caret glide (ms)'**
+  String get codeTypingCaretGlide;
+
+  /// Field label.
+  ///
+  /// In en, this message translates to:
+  /// **'Order'**
+  String get codeTypingOrder;
+
+  /// Typing order.
+  ///
+  /// In en, this message translates to:
+  /// **'Top to bottom'**
+  String get codeOrderDocument;
+
+  /// Typing order.
+  ///
+  /// In en, this message translates to:
+  /// **'Bottom to top'**
+  String get codeOrderReverse;
+
+  /// Insertions with this many lines appear as a paste.
+  ///
+  /// In en, this message translates to:
+  /// **'Paste from (lines)'**
+  String get codeTypingPasteLines;
+
+  /// Longer typing speeds up to fit.
+  ///
+  /// In en, this message translates to:
+  /// **'Longest (ms)'**
+  String get codeTypingMaxDuration;
+
+  /// Field label.
+  ///
+  /// In en, this message translates to:
+  /// **'Caret'**
+  String get codeTypingCaret;
+
+  /// Caret style.
+  ///
+  /// In en, this message translates to:
+  /// **'Bar'**
+  String get codeCaretBar;
+
+  /// Caret style.
+  ///
+  /// In en, this message translates to:
+  /// **'Block'**
+  String get codeCaretBlock;
+
+  /// Caret style.
+  ///
+  /// In en, this message translates to:
+  /// **'Underline'**
+  String get codeCaretUnderline;
+
+  /// Checkbox.
+  ///
+  /// In en, this message translates to:
+  /// **'Auto-indent new lines'**
+  String get codeTypingAutoIndent;
+
+  /// Checkbox.
+  ///
+  /// In en, this message translates to:
+  /// **'Scroll to the caret'**
+  String get codeTypingScrollFollow;
+
+  /// Checkbox.
+  ///
+  /// In en, this message translates to:
+  /// **'Show step 1 when typed'**
+  String get codeTypingHighlightOnArrive;
+
+  /// Field label.
+  ///
+  /// In en, this message translates to:
+  /// **'Morph duration (ms)'**
+  String get codeMorphDuration;
+
+  /// Field label.
+  ///
+  /// In en, this message translates to:
+  /// **'Morph stagger per line (ms)'**
+  String get codeMorphStagger;
+
+  /// Validation message.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter a number from {min} to {max}'**
+  String codeNumberRange(String min, String max);
+
+  /// Semantics label of the in-place code editor.
+  ///
+  /// In en, this message translates to:
+  /// **'Code editor, {language}'**
+  String codeEditorSemantics(String language);
+
+  /// Overflow badge of a code block.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 line hidden} other{{count} lines hidden}}'**
+  String codeLinesHidden(int count);
+
+  /// Tooltip of the overflow badge.
+  ///
+  /// In en, this message translates to:
+  /// **'Enlarge the box, lower the minimum size or turn on wrap'**
+  String get codeOverflowHint;
+
+  /// Title of `slides.chart.update` with several charts selected.
+  ///
+  /// In en, this message translates to:
+  /// **'Update charts'**
+  String get cmdChartUpdateMany;
+
+  /// Title of the command `slides.chart.relink`.
+  ///
+  /// In en, this message translates to:
+  /// **'Change linked chart…'**
+  String get cmdChartRelink;
+
+  /// Title of the command `slides.chart.setUseDeckTheme`.
+  ///
+  /// In en, this message translates to:
+  /// **'Match presentation theme'**
+  String get cmdChartSetUseDeckTheme;
+
+  /// Title of the command `slides.chart.updateStyle`.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit chart style'**
+  String get cmdChartUpdateStyle;
+
+  /// Title of the command `slides.chart.resetOverrides`.
+  ///
+  /// In en, this message translates to:
+  /// **'Reset style overrides'**
+  String get cmdChartResetOverrides;
+
+  /// Title of the command `slides.chart.setCamera`.
+  ///
+  /// In en, this message translates to:
+  /// **'Rotate 3D chart'**
+  String get cmdChartSetCamera;
+
+  /// Title of `slides.chart.addCameraStep`: a build that rotates the 3D chart to its current view.
+  ///
+  /// In en, this message translates to:
+  /// **'Add camera step'**
+  String get cmdChartAddCameraStep;
+
+  /// Title of the command `slides.chart.viewDataTable`.
+  ///
+  /// In en, this message translates to:
+  /// **'View data as table'**
+  String get cmdChartViewDataTable;
+
+  /// Title of the command `slides.chart.checkUpdates`.
+  ///
+  /// In en, this message translates to:
+  /// **'Check linked charts for updates'**
+  String get cmdChartCheckUpdates;
+
+  /// Palette description of `slides.insert.chartFromSheets`.
+  ///
+  /// In en, this message translates to:
+  /// **'Insert a chart from a Wonky Sheets spreadsheet, linked so it can be updated.'**
+  String get cmdInsertChartFromSheetsDescription;
+
+  /// Disabled reason of chart commands.
+  ///
+  /// In en, this message translates to:
+  /// **'Select a chart'**
+  String get reasonSelectChart;
+
+  /// Disabled reason of link commands.
+  ///
+  /// In en, this message translates to:
+  /// **'Select a chart linked to a spreadsheet'**
+  String get reasonSelectLinkedChart;
+
+  /// Disabled reason of camera commands.
+  ///
+  /// In en, this message translates to:
+  /// **'Select a 3D chart'**
+  String get reasonSelect3DChart;
+
+  /// Disabled reason of Reset style overrides.
+  ///
+  /// In en, this message translates to:
+  /// **'The chart has no style overrides'**
+  String get reasonChartNoOverrides;
+
+  /// Undo label.
+  ///
+  /// In en, this message translates to:
+  /// **'Insert chart'**
+  String get undoInsertChart;
+
+  /// Undo label.
+  ///
+  /// In en, this message translates to:
+  /// **'Update chart'**
+  String get undoUpdateChart;
+
+  /// Undo label.
+  ///
+  /// In en, this message translates to:
+  /// **'Unlink chart'**
+  String get undoUnlinkChart;
+
+  /// Undo label.
+  ///
+  /// In en, this message translates to:
+  /// **'Change linked chart'**
+  String get undoRelinkChart;
+
+  /// Undo label.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit chart style'**
+  String get undoEditChartStyle;
+
+  /// Undo label.
+  ///
+  /// In en, this message translates to:
+  /// **'Rotate chart'**
+  String get undoRotateChart;
+
+  /// Chart error offline (08 §4.3).
+  ///
+  /// In en, this message translates to:
+  /// **'You\'re offline. Connect to insert or update charts from Sheets.'**
+  String get chartErrOffline;
+
+  /// Chart error no_access.
+  ///
+  /// In en, this message translates to:
+  /// **'You don\'t have access to this spreadsheet anymore.'**
+  String get chartErrNoAccess;
+
+  /// Chart error spreadsheet_trashed.
+  ///
+  /// In en, this message translates to:
+  /// **'This spreadsheet is in the trash.'**
+  String get chartErrTrashed;
+
+  /// Chart error export_disabled; also the tooltip of disabled spreadsheets.
+  ///
+  /// In en, this message translates to:
+  /// **'The owner doesn\'t allow viewers to copy charts from this spreadsheet.'**
+  String get chartErrExportDisabled;
+
+  /// Chart error chart_not_found.
+  ///
+  /// In en, this message translates to:
+  /// **'This chart was deleted. Pick another one.'**
+  String get chartErrNotFound;
+
+  /// Chart error chart_too_large.
+  ///
+  /// In en, this message translates to:
+  /// **'This chart has too much data to place in a presentation. Reduce its range in Sheets.'**
+  String get chartErrTooLarge;
+
+  /// Chart error unsupported_spec.
+  ///
+  /// In en, this message translates to:
+  /// **'This chart was made with a newer version of Wonky Sheets. Reload to insert it.'**
+  String get chartErrUnsupported;
+
+  /// Chart error quota_exceeded.
+  ///
+  /// In en, this message translates to:
+  /// **'There isn\'t enough storage for this chart.'**
+  String get chartErrQuota;
+
+  /// Chart error limitExceeded.
+  ///
+  /// In en, this message translates to:
+  /// **'Too many chart requests. Try again in a minute.'**
+  String get chartErrRateLimited;
+
+  /// Chart error, other failures.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t get the chart. Try again.'**
+  String get chartErrFailed;
+
+  /// Title of the insert dialog, step 1.
+  ///
+  /// In en, this message translates to:
+  /// **'Insert chart from Wonky Sheets'**
+  String get chartInsertDialogTitle;
+
+  /// Title of the insert dialog, step 2.
+  ///
+  /// In en, this message translates to:
+  /// **'Insert chart from \"{title}\"'**
+  String chartInsertFromTitle(String title);
+
+  /// Title of the insert dialog when relinking.
+  ///
+  /// In en, this message translates to:
+  /// **'Change linked chart'**
+  String get chartRelinkTitle;
+
+  /// Search field of the insert dialog.
+  ///
+  /// In en, this message translates to:
+  /// **'Search spreadsheets'**
+  String get chartSearchSpreadsheets;
+
+  /// MCP field label of the spreadsheet list.
+  ///
+  /// In en, this message translates to:
+  /// **'Spreadsheet'**
+  String get chartSpreadsheetsLabel;
+
+  /// Tab of the spreadsheet list.
+  ///
+  /// In en, this message translates to:
+  /// **'Recent'**
+  String get chartTabRecent;
+
+  /// Tab of the spreadsheet list.
+  ///
+  /// In en, this message translates to:
+  /// **'My files'**
+  String get chartTabMine;
+
+  /// Tab of the spreadsheet list.
+  ///
+  /// In en, this message translates to:
+  /// **'Shared with me'**
+  String get chartTabShared;
+
+  /// Tab of the spreadsheet list.
+  ///
+  /// In en, this message translates to:
+  /// **'Starred'**
+  String get chartTabStarred;
+
+  /// Empty spreadsheet list.
+  ///
+  /// In en, this message translates to:
+  /// **'No spreadsheets found'**
+  String get chartNoSpreadsheets;
+
+  /// Loading the list failed.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t load the list. Try again.'**
+  String get chartListFailed;
+
+  /// Back to step 1.
+  ///
+  /// In en, this message translates to:
+  /// **'Back'**
+  String get chartBack;
+
+  /// Search field of step 2.
+  ///
+  /// In en, this message translates to:
+  /// **'Search charts'**
+  String get chartSearchCharts;
+
+  /// MCP field label of the chart tiles.
+  ///
+  /// In en, this message translates to:
+  /// **'Chart'**
+  String get chartPickChart;
+
+  /// Empty chart list.
+  ///
+  /// In en, this message translates to:
+  /// **'This spreadsheet has no charts. Create one in Wonky Sheets.'**
+  String get chartNoCharts;
+
+  /// Button of the empty chart list.
+  ///
+  /// In en, this message translates to:
+  /// **'Open in Sheets'**
+  String get chartOpenInSheets;
+
+  /// Checkbox of the insert dialog.
+  ///
+  /// In en, this message translates to:
+  /// **'Link to spreadsheet'**
+  String get chartLinkToSpreadsheet;
+
+  /// Checkbox of the insert dialog.
+  ///
+  /// In en, this message translates to:
+  /// **'Match presentation theme'**
+  String get chartMatchTheme;
+
+  /// Notice in the insert dialog (08 §6).
+  ///
+  /// In en, this message translates to:
+  /// **'Anyone with access to this presentation will see this chart\'s data.'**
+  String get chartDataNotice;
+
+  /// Badge of a chart made with a newer Sheets.
+  ///
+  /// In en, this message translates to:
+  /// **'Needs a newer version'**
+  String get chartNewerVersion;
+
+  /// Badge of a chart on its own chart sheet.
+  ///
+  /// In en, this message translates to:
+  /// **'Chart sheet'**
+  String get chartSheetBadge;
+
+  /// Badge of a 3D chart.
+  ///
+  /// In en, this message translates to:
+  /// **'3D'**
+  String get chart3DBadge;
+
+  /// Chart without a title.
+  ///
+  /// In en, this message translates to:
+  /// **'Untitled chart'**
+  String get chartUntitled;
+
+  /// Update button of linked charts.
+  ///
+  /// In en, this message translates to:
+  /// **'Update'**
+  String get chartUpdateAction;
+
+  /// Tooltip of the Update badge; summary is " (Data changed)" etc. or empty.
+  ///
+  /// In en, this message translates to:
+  /// **'{source} changed{summary}. Update to show the latest version.'**
+  String chartUpdateTooltip(String source, String summary);
+
+  /// Badge of a linked chart.
+  ///
+  /// In en, this message translates to:
+  /// **'Linked'**
+  String get chartStatusLinked;
+
+  /// Status of a changed link.
+  ///
+  /// In en, this message translates to:
+  /// **'Linked · Source changed'**
+  String get chartStatusChanged;
+
+  /// Status when the user cannot open the spreadsheet.
+  ///
+  /// In en, this message translates to:
+  /// **'Linked · No access'**
+  String get chartStatusNoAccess;
+
+  /// Status when the chart was deleted in Sheets.
+  ///
+  /// In en, this message translates to:
+  /// **'Source chart deleted'**
+  String get chartStatusChartDeleted;
+
+  /// Status when the spreadsheet is in the trash.
+  ///
+  /// In en, this message translates to:
+  /// **'Source in trash'**
+  String get chartStatusTrashed;
+
+  /// Status when the spreadsheet was deleted forever.
+  ///
+  /// In en, this message translates to:
+  /// **'Source deleted'**
+  String get chartStatusDeleted;
+
+  /// Status of a newer chart spec.
+  ///
+  /// In en, this message translates to:
+  /// **'Linked · Needs a newer version'**
+  String get chartStatusUnsupported;
+
+  /// Status shown offline (last known).
+  ///
+  /// In en, this message translates to:
+  /// **'{status} (offline)'**
+  String chartStatusOffline(String status);
+
+  /// Status after a check.
+  ///
+  /// In en, this message translates to:
+  /// **'Linked · Up to date ({when})'**
+  String chartStatusUpToDate(String when);
+
+  /// Toast after presenting.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 chart has newer data} other{{count} charts have newer data}}'**
+  String chartNewerDataToast(int count);
+
+  /// Toast after automatic updates.
+  ///
+  /// In en, this message translates to:
+  /// **'Charts updated from {sources}'**
+  String chartAutoUpdatedToast(String sources);
+
+  /// Toast after an unlinked chart paste without data.
+  ///
+  /// In en, this message translates to:
+  /// **'The chart\'s data couldn\'t be copied. Paste it again when you\'re online.'**
+  String get chartPasteNoData;
+
+  /// Toast after Copy chart as image.
+  ///
+  /// In en, this message translates to:
+  /// **'Chart copied'**
+  String get chartCopied;
+
+  /// Copy chart as image failed.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t copy the chart.'**
+  String get chartCopyFailed;
+
+  /// Title of the data table dialog.
+  ///
+  /// In en, this message translates to:
+  /// **'Data of {title}'**
+  String chartDataTableTitle(String title);
+
+  /// Data table without data.
+  ///
+  /// In en, this message translates to:
+  /// **'No data'**
+  String get chartNoData;
+
+  /// Chart section of an empty chart.
+  ///
+  /// In en, this message translates to:
+  /// **'This chart has no data yet.'**
+  String get chartNoDataYet;
+
+  /// Chart section of a static chart.
+  ///
+  /// In en, this message translates to:
+  /// **'Not linked: shows a copy of the data.'**
+  String get chartNotLinked;
+
+  /// Checkbox Update automatically in the chart section.
+  ///
+  /// In en, this message translates to:
+  /// **'Auto-update'**
+  String get chartAutoShort;
+
+  /// Unlink button in the chart section.
+  ///
+  /// In en, this message translates to:
+  /// **'Unlink'**
+  String get chartUnlinkShort;
+
+  /// Header of the style mode.
+  ///
+  /// In en, this message translates to:
+  /// **'Style'**
+  String get chartStyleMode;
+
+  /// Style mode option.
+  ///
+  /// In en, this message translates to:
+  /// **'Match theme'**
+  String get chartMatchThemeShort;
+
+  /// Style mode option.
+  ///
+  /// In en, this message translates to:
+  /// **'Keep source style'**
+  String get chartKeepSource;
+
+  /// Chart background row.
+  ///
+  /// In en, this message translates to:
+  /// **'Background'**
+  String get chartBackground;
+
+  /// Background option.
+  ///
+  /// In en, this message translates to:
+  /// **'Default'**
+  String get chartBackgroundDefault;
+
+  /// Background option.
+  ///
+  /// In en, this message translates to:
+  /// **'Transparent'**
+  String get chartBackgroundTransparent;
+
+  /// Background option.
+  ///
+  /// In en, this message translates to:
+  /// **'Slide background color'**
+  String get chartBackgroundTheme;
+
+  /// Background option.
+  ///
+  /// In en, this message translates to:
+  /// **'White'**
+  String get chartBackgroundWhite;
+
+  /// Header of the camera controls.
+  ///
+  /// In en, this message translates to:
+  /// **'3D view'**
+  String get chartCamera;
+
+  /// Camera preset row.
+  ///
+  /// In en, this message translates to:
+  /// **'View'**
+  String get chartCameraPreset;
+
+  /// Placeholder when no preset matches.
+  ///
+  /// In en, this message translates to:
+  /// **'Custom'**
+  String get chartCameraCustom;
+
+  /// Camera azimuth slider.
+  ///
+  /// In en, this message translates to:
+  /// **'Rotation'**
+  String get chartCameraRotation;
+
+  /// Camera elevation slider.
+  ///
+  /// In en, this message translates to:
+  /// **'Tilt'**
+  String get chartCameraTilt;
+
+  /// Camera field-of-view slider.
+  ///
+  /// In en, this message translates to:
+  /// **'Perspective'**
+  String get chartCameraPerspective;
+
+  /// Reset the camera to the source view.
+  ///
+  /// In en, this message translates to:
+  /// **'Reset view'**
+  String get chartCameraReset;
+
+  /// Hint below the camera controls.
+  ///
+  /// In en, this message translates to:
+  /// **'Drag the selected chart to orbit it. Alt+Shift+arrows rotate 5°.'**
+  String get chartCameraHint;
+
+  /// Camera preset.
+  ///
+  /// In en, this message translates to:
+  /// **'Default'**
+  String get chartPresetDefault;
+
+  /// Camera preset.
+  ///
+  /// In en, this message translates to:
+  /// **'Front'**
+  String get chartPresetFront;
+
+  /// Camera preset.
+  ///
+  /// In en, this message translates to:
+  /// **'Isometric'**
+  String get chartPresetIsometric;
+
+  /// Camera preset.
+  ///
+  /// In en, this message translates to:
+  /// **'Top-down'**
+  String get chartPresetTopDown;
+
+  /// Camera preset.
+  ///
+  /// In en, this message translates to:
+  /// **'Low angle'**
+  String get chartPresetLowAngle;
+
+  /// Camera preset.
+  ///
+  /// In en, this message translates to:
+  /// **'Side'**
+  String get chartPresetSide;
+
+  /// Camera preset.
+  ///
+  /// In en, this message translates to:
+  /// **'Dramatic'**
+  String get chartPresetDramatic;
+
+  /// Pie camera preset.
+  ///
+  /// In en, this message translates to:
+  /// **'Flat'**
+  String get chartPresetFlat;
+
+  /// Pie camera preset.
+  ///
+  /// In en, this message translates to:
+  /// **'Tilted'**
+  String get chartPresetTilted;
+
+  /// Pie camera preset.
+  ///
+  /// In en, this message translates to:
+  /// **'Steep'**
+  String get chartPresetSteep;
+
+  /// Header of the presenting options.
+  ///
+  /// In en, this message translates to:
+  /// **'Presenting'**
+  String get chartPresenting;
+
+  /// Show values on hover when presenting.
+  ///
+  /// In en, this message translates to:
+  /// **'Hover values'**
+  String get chartHoverTooltips;
+
+  /// Let the presenter orbit a 3D chart.
+  ///
+  /// In en, this message translates to:
+  /// **'Drag to orbit'**
+  String get chartOrbitInPresent;
+
+  /// Header of the style editor.
+  ///
+  /// In en, this message translates to:
+  /// **'Customize'**
+  String get chartCustomize;
+
+  /// Unused overrides notice.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{Overrides of 1 series that no longer exists} other{Overrides of {count} series that no longer exist}}'**
+  String chartUnusedOverrides(int count);
+
+  /// Remove unused overrides.
+  ///
+  /// In en, this message translates to:
+  /// **'Clean up'**
+  String get chartCleanUp;
+
+  /// Warning of invalid overrides.
+  ///
+  /// In en, this message translates to:
+  /// **'Some style overrides are invalid and were ignored.'**
+  String get chartInvalidOverrides;
+
+  /// Update all button of the Linked charts panel.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =0{Update all} other{Update all ({count})}}'**
+  String chartUpdateAll(int count);
+
+  /// While checking links.
+  ///
+  /// In en, this message translates to:
+  /// **'Checking…'**
+  String get chartChecking;
+
+  /// Empty Linked charts panel.
+  ///
+  /// In en, this message translates to:
+  /// **'This presentation has no linked charts.'**
+  String get chartNoLinkedCharts;
+
+  /// Slide number of a linked chart.
+  ///
+  /// In en, this message translates to:
+  /// **'Slide {number}'**
+  String chartOnSlide(int number);
+
+  /// Chart style editor (shared ChartStyleEditor).
+  ///
+  /// In en, this message translates to:
+  /// **'Chart & axis titles'**
+  String get chartStyleTitles;
+
+  /// Chart style editor (shared ChartStyleEditor).
+  ///
+  /// In en, this message translates to:
+  /// **'Legend'**
+  String get chartStyleLegend;
+
+  /// Chart style editor (shared ChartStyleEditor).
+  ///
+  /// In en, this message translates to:
+  /// **'Series'**
+  String get chartStyleSeries;
+
+  /// Chart style editor (shared ChartStyleEditor).
+  ///
+  /// In en, this message translates to:
+  /// **'Axes'**
+  String get chartStyleAxes;
+
+  /// Chart style editor (shared ChartStyleEditor).
+  ///
+  /// In en, this message translates to:
+  /// **'Gridlines'**
+  String get chartStyleGridlines;
+
+  /// Chart style editor (shared ChartStyleEditor).
+  ///
+  /// In en, this message translates to:
+  /// **'Pie chart'**
+  String get chartStylePie;
+
+  /// Chart style editor (shared ChartStyleEditor).
+  ///
+  /// In en, this message translates to:
+  /// **'3D'**
+  String get chartStyle3D;
+
+  /// Chart style editor (shared ChartStyleEditor).
+  ///
+  /// In en, this message translates to:
+  /// **'Layout'**
+  String get chartStyleLayout;
+
+  /// Chart style editor (shared ChartStyleEditor).
+  ///
+  /// In en, this message translates to:
+  /// **'Chart title'**
+  String get chartStyleChartTitle;
+
+  /// Chart style editor (shared ChartStyleEditor).
+  ///
+  /// In en, this message translates to:
+  /// **'Subtitle'**
+  String get chartStyleSubtitle;
+
+  /// Chart style editor (shared ChartStyleEditor).
+  ///
+  /// In en, this message translates to:
+  /// **'Horizontal axis title'**
+  String get chartStyleHAxisTitle;
+
+  /// Chart style editor (shared ChartStyleEditor).
+  ///
+  /// In en, this message translates to:
+  /// **'Vertical axis title'**
+  String get chartStyleVAxisTitle;
+
+  /// Chart style editor (shared ChartStyleEditor).
+  ///
+  /// In en, this message translates to:
+  /// **'Position'**
+  String get chartStyleLegendPosition;
+
+  /// Chart style editor (shared ChartStyleEditor).
+  ///
+  /// In en, this message translates to:
+  /// **'Color'**
+  String get chartStyleColor;
+
+  /// Chart style editor (shared ChartStyleEditor).
+  ///
+  /// In en, this message translates to:
+  /// **'Line width'**
+  String get chartStyleLineWidth;
+
+  /// Chart style editor (shared ChartStyleEditor).
+  ///
+  /// In en, this message translates to:
+  /// **'Point size'**
+  String get chartStylePointSize;
+
+  /// Chart style editor (shared ChartStyleEditor).
+  ///
+  /// In en, this message translates to:
+  /// **'Data labels'**
+  String get chartStyleDataLabels;
+
+  /// Chart style editor (shared ChartStyleEditor).
+  ///
+  /// In en, this message translates to:
+  /// **'Horizontal axis line'**
+  String get chartStyleHAxisLine;
+
+  /// Chart style editor (shared ChartStyleEditor).
+  ///
+  /// In en, this message translates to:
+  /// **'Vertical axis line'**
+  String get chartStyleVAxisLine;
+
+  /// Chart style editor (shared ChartStyleEditor).
+  ///
+  /// In en, this message translates to:
+  /// **'Number format'**
+  String get chartStyleNumberFormat;
+
+  /// Chart style editor (shared ChartStyleEditor).
+  ///
+  /// In en, this message translates to:
+  /// **'Horizontal axis gridlines'**
+  String get chartStyleHGridlines;
+
+  /// Chart style editor (shared ChartStyleEditor).
+  ///
+  /// In en, this message translates to:
+  /// **'Vertical axis gridlines'**
+  String get chartStyleVGridlines;
+
+  /// Chart style editor (shared ChartStyleEditor).
+  ///
+  /// In en, this message translates to:
+  /// **'Maximize'**
+  String get chartStyleMaximize;
+
+  /// Chart style editor (shared ChartStyleEditor).
+  ///
+  /// In en, this message translates to:
+  /// **'Donut hole'**
+  String get chartStyleDonutHole;
+
+  /// Chart style editor (shared ChartStyleEditor).
+  ///
+  /// In en, this message translates to:
+  /// **'Slice labels'**
+  String get chartStyleSliceLabels;
+
+  /// Chart style editor (shared ChartStyleEditor).
+  ///
+  /// In en, this message translates to:
+  /// **'Start angle'**
+  String get chartStyleStartAngle;
+
+  /// Chart style editor (shared ChartStyleEditor).
+  ///
+  /// In en, this message translates to:
+  /// **'Lighting'**
+  String get chartStyleLighting;
+
+  /// Chart style editor (shared ChartStyleEditor).
+  ///
+  /// In en, this message translates to:
+  /// **'Walls and floor'**
+  String get chartStyleWalls;
+
+  /// Chart style editor (shared ChartStyleEditor).
+  ///
+  /// In en, this message translates to:
+  /// **'Depth'**
+  String get chartStyleDepth;
+
+  /// Chart style editor (shared ChartStyleEditor).
+  ///
+  /// In en, this message translates to:
+  /// **'Gap depth'**
+  String get chartStyleGapDepth;
+
+  /// Chart style editor (shared ChartStyleEditor).
+  ///
+  /// In en, this message translates to:
+  /// **'Shape'**
+  String get chartStyleShape;
+
+  /// Chart style editor (shared ChartStyleEditor).
+  ///
+  /// In en, this message translates to:
+  /// **'Explode'**
+  String get chartStyleExplode;
+
+  /// Chart style editor (shared ChartStyleEditor).
+  ///
+  /// In en, this message translates to:
+  /// **'Automatic'**
+  String get chartStyleAutomatic;
+
+  /// Chart style editor (shared ChartStyleEditor).
+  ///
+  /// In en, this message translates to:
+  /// **'None'**
+  String get chartStyleNone;
+
+  /// Chart style editor (shared ChartStyleEditor).
+  ///
+  /// In en, this message translates to:
+  /// **'Reset to the spreadsheet\'s value'**
+  String get chartStyleResetField;
+
+  /// Chart style editor (shared ChartStyleEditor).
+  ///
+  /// In en, this message translates to:
+  /// **'Changed in this presentation'**
+  String get chartStyleChangedHere;
+
+  /// Chart style editor (shared ChartStyleEditor).
+  ///
+  /// In en, this message translates to:
+  /// **'Top'**
+  String get chartStyleLegendTop;
+
+  /// Chart style editor (shared ChartStyleEditor).
+  ///
+  /// In en, this message translates to:
+  /// **'Bottom'**
+  String get chartStyleLegendBottom;
+
+  /// Chart style editor (shared ChartStyleEditor).
+  ///
+  /// In en, this message translates to:
+  /// **'Left'**
+  String get chartStyleLegendLeft;
+
+  /// Chart style editor (shared ChartStyleEditor).
+  ///
+  /// In en, this message translates to:
+  /// **'Right'**
+  String get chartStyleLegendRight;
+
+  /// Chart style editor (shared ChartStyleEditor).
+  ///
+  /// In en, this message translates to:
+  /// **'Inside'**
+  String get chartStyleLegendInside;
+
+  /// Chart style editor (shared ChartStyleEditor).
+  ///
+  /// In en, this message translates to:
+  /// **'Label'**
+  String get chartStyleSliceLabel;
+
+  /// Chart style editor (shared ChartStyleEditor).
+  ///
+  /// In en, this message translates to:
+  /// **'Value'**
+  String get chartStyleSliceValue;
+
+  /// Chart style editor (shared ChartStyleEditor).
+  ///
+  /// In en, this message translates to:
+  /// **'Percentage'**
+  String get chartStyleSlicePercent;
+
+  /// Chart style editor (shared ChartStyleEditor).
+  ///
+  /// In en, this message translates to:
+  /// **'Value and percentage'**
+  String get chartStyleSliceValuePercent;
+
+  /// Chart style editor (shared ChartStyleEditor).
+  ///
+  /// In en, this message translates to:
+  /// **'Soft'**
+  String get chartStyleLightingSoft;
+
+  /// Chart style editor (shared ChartStyleEditor).
+  ///
+  /// In en, this message translates to:
+  /// **'Bright'**
+  String get chartStyleLightingBright;
+
+  /// Chart style editor (shared ChartStyleEditor).
+  ///
+  /// In en, this message translates to:
+  /// **'Flat'**
+  String get chartStyleLightingFlat;
+
+  /// Chart style editor (shared ChartStyleEditor).
+  ///
+  /// In en, this message translates to:
+  /// **'Box'**
+  String get chartStyleShapeBox;
+
+  /// Chart style editor (shared ChartStyleEditor).
+  ///
+  /// In en, this message translates to:
+  /// **'Cylinder'**
+  String get chartStyleShapeCylinder;
+
+  /// Chart style editor (shared ChartStyleEditor).
+  ///
+  /// In en, this message translates to:
+  /// **'Cone'**
+  String get chartStyleShapeCone;
+
+  /// Chart style editor (shared ChartStyleEditor).
+  ///
+  /// In en, this message translates to:
+  /// **'Pyramid'**
+  String get chartStyleShapePyramid;
+
+  /// Name of a build effect (06 §3), by effect id.
+  ///
+  /// In en, this message translates to:
+  /// **'{id, select, appear{Appear} fade{Fade} rise{Rise} moveIn{Move in} scale{Scale} pop{Pop} zoom{Zoom} blur{Blur} wipe{Wipe} iris{Iris} dissolve{Dissolve} drop{Drop} flip{Flip} rotate{Rotate} typewriter{Typewriter} lineDraw{Draw line} chartGrow{Grow} codeType{Type code} shimmer{Shimmer} disappear{Disappear} fadeOut{Fade out} sink{Sink} moveOut{Move out} scaleOut{Scale out} popOut{Pop out} zoomOut{Zoom out} blurOut{Blur out} wipeOut{Wipe out} irisOut{Iris out} dissolveOut{Dissolve out} fall{Fall} flipOut{Flip out} rotateOut{Rotate out} eraseText{Erase text} lineErase{Erase line} chartShrink{Shrink} pulse{Pulse} bounce{Bounce} shake{Shake} blink{Blink} spin{Spin} grow{Grow / shrink} opacityTo{Transparency} colorChange{Color change} highlight{Highlight} chartHighlight{Highlight series} chartHighlightClear{Clear highlight} chartOrbit{Orbit} chartCamera{Rotate to angle} codeHighlight{Highlight lines} codeState{Next code state} path{Motion path} moveTo{Transform} other{}}'**
+  String animateEffectName(String id);
+
+  /// One-line description of a build effect (tile tooltip, accessible description).
+  ///
+  /// In en, this message translates to:
+  /// **'{id, select, appear{The object appears at once.} fade{The object fades in.} rise{The object moves up a short distance while fading in.} moveIn{The object moves in from a side or from off the slide.} scale{The object grows to its size while fading in.} pop{The object pops in with a little bounce.} zoom{The object comes toward its place from in front of the viewer.} blur{The object comes into focus.} wipe{A soft edge sweeps across and reveals the object.} iris{A growing circle, square or diamond reveals the object.} dissolve{The object appears through a grain of random cells.} drop{The object falls into place and bounces.} flip{The object flips into view like a card.} rotate{The object turns into place.} typewriter{The text is typed character by character.} lineDraw{The outline draws itself, then the fill fades in.} chartGrow{Bars grow, lines draw on and wedges sweep in.} codeType{The code is typed into the block.} shimmer{Particles condense into the text.} disappear{The object disappears at once.} fadeOut{The object fades out.} sink{The object moves down a short distance while fading out.} moveOut{The object moves out to a side or off the slide.} scaleOut{The object shrinks while fading out.} popOut{The object grows a little, then collapses.} zoomOut{The object moves toward the viewer and fades away.} blurOut{The object goes out of focus.} wipeOut{A soft edge sweeps across and hides the object.} irisOut{A shrinking circle, square or diamond hides the object.} dissolveOut{The object disappears into a grain of random cells.} fall{The object falls off the slide.} flipOut{The object flips away like a card.} rotateOut{The object turns away.} eraseText{The text is erased from the end, like backspacing.} lineErase{The outline erases itself.} chartShrink{Bars shrink, lines erase and wedges sweep out.} pulse{The object briefly grows and returns.} bounce{The object jumps up and lands.} shake{The object shakes from side to side.} blink{The object blinks.} spin{The object spins and keeps its new angle.} grow{The object changes its size and keeps it.} opacityTo{The object becomes more or less transparent.} colorChange{The fill, border or text changes color.} highlight{A marker sweeps behind the text.} chartHighlight{One series stands out; the rest dims.} chartHighlightClear{Every series is shown normally again.} chartOrbit{The 3D chart turns around.} chartCamera{The 3D chart turns to a new view.} codeHighlight{The next highlight step of the code is shown.} codeState{The code changes to its next state.} path{The object moves along a path.} moveTo{The object moves, resizes, turns or fades to an end state.} other{An animation from a newer version.}}'**
+  String animateEffectDescription(String id);
+
+  /// Name of a slide transition (06 §7.2), by id.
+  ///
+  /// In en, this message translates to:
+  /// **'{id, select, none{None} fade{Fade} dissolve{Dissolve} push{Push} slide{Slide in} cover{Cover} uncover{Uncover} wipe{Wipe} iris{Iris} zoom{Zoom} flip{Flip} cube{Cube} doorway{Doorway} swap{Swap} revolve{Revolve} magicMove{Magic Move} other{Transition}}'**
+  String animateTransitionName(String id);
+
+  /// One-line description of a slide transition.
+  ///
+  /// In en, this message translates to:
+  /// **'{id, select, none{The new slide replaces the old one at once.} fade{The new slide fades in over the old one, or both fade through a color.} dissolve{The new slide appears through a grain of random cells.} push{The new slide pushes the old one off the screen.} slide{The new slide slides in over the old one.} cover{The new slide slides over the old one, which dims.} uncover{The old slide slides away and reveals the new one.} wipe{A soft edge sweeps across and reveals the new slide.} iris{A growing circle, square or diamond reveals the new slide.} zoom{The new slide grows in, or the old one shrinks away.} flip{The slide flips over like a card; the new slide is on its back.} cube{Both slides are faces of a cube that turns a quarter turn.} doorway{The old slide opens like double doors; the new one comes forward.} swap{The slides swap places, front and back, on an arc.} revolve{The old slide swings away on its edge like a door.} magicMove{Objects on both slides morph into each other; the rest fades.} other{}}'**
+  String animateTransitionDescription(String id);
+
+  /// Label of an effect or transition parameter.
+  ///
+  /// In en, this message translates to:
+  /// **'{key, select, distance{Distance} fade{Fade} direction{Direction} from{From} to{To} origin{Origin} bounce{Bounce} softness{Softness} shape{Shape} cell{Grain} height{Height} bounces{Bounces} axis{Axis} perspective{Perspective} angle{Angle} scale{Scale} cps{Characters/s} caret{Caret} jitter{Jitter} fillDelay{Fill delay} count{Times} amplitude{Amplitude} opacity{Opacity} property{Property} color{Color} style{Style} target{Series} dimOthers{Dim others} azimuth{Azimuth} elevation{Elevation} step{Step} state{State} mode{Mode} path{Path} preset{Preset} orientToPath{Orient to path} relativeEnd{Relative end} anticipation{Anticipation} rotation{Rotation} through{Through color} persist{Keep end state} other{Option}}'**
+  String animateParamName(String key);
+
+  /// Label of a parameter value (directions, anchors, shapes, modes).
+  ///
+  /// In en, this message translates to:
+  /// **'{value, select, left{Left} right{Right} top{Top} bottom{Bottom} up{Up} down{Down} topLeft{Top left} topRight{Top right} bottomLeft{Bottom left} bottomRight{Bottom right} center{Center} circle{Circle} rect{Square} diamond{Diamond} x{Horizontal} y{Vertical} forward{Forward} backward{Backward} in{In} out{Out} baseline{Baseline} fill{Fill} stroke{Border} text{Text} marker{Marker} underline{Underline} box{Box} type{Type} morph{Morph} instant{Instant} line{Line} arc{Arc} curve{Curve} zigzag{Zigzag} custom{Custom} object{Object} word{Word} character{Character} shortest{Shortest} literal{As set} other{—}}'**
+  String animateChoiceName(String value);
+
+  /// Why an effect tile is disabled for the selected object.
+  ///
+  /// In en, this message translates to:
+  /// **'{target, select, text{{effect} works on text only} stroke{{effect} works on shapes, lines and icons} colorable{{effect} works on shapes, text, lines and icons} chart{{effect} works on charts only} chart3d{{effect} works on 3D charts only} code{{effect} works on code blocks only} other{{effect} doesn\'t work on this object}}'**
+  String animateTargetReason(String effect, String target);
+
+  /// Build trigger (06 §4.1).
+  ///
+  /// In en, this message translates to:
+  /// **'{trigger, select, onClick{On click} withPrevious{With previous} afterPrevious{After previous} other{On click of an object}}'**
+  String animateTriggerName(String trigger);
+
+  /// Delivery of a build (06 §2.3).
+  ///
+  /// In en, this message translates to:
+  /// **'{by, select, all{All at once} paragraph{By paragraph} paragraphGroup{By paragraph group} line{By line} word{By word} character{By character} series{By series} category{By category} point{By point} chartElement{By chart element} other{All at once}}'**
+  String animateDeliveryName(String by);
+
+  /// Order of a build's parts.
+  ///
+  /// In en, this message translates to:
+  /// **'{order, select, forward{Forward} backward{Backward} center{From the center} edges{From the edges} random{Random} other{Forward}}'**
+  String animateOrderName(String order);
+
+  /// What happens to earlier parts after the next part builds.
+  ///
+  /// In en, this message translates to:
+  /// **'{mode, select, none{Keep} dim{Dim} hide{Hide} other{Keep}}'**
+  String animateAfterBuildName(String mode);
+
+  /// Easing preset (06 §4.3).
+  ///
+  /// In en, this message translates to:
+  /// **'{preset, select, smooth{Smooth} snappy{Snappy} bouncy{Bouncy} gentle{Gentle} linear{Linear} easeIn{Ease in} easeOut{Ease out} custom{Custom} other{Custom}}'**
+  String animateEasingName(String preset);
+
+  /// Heading of a group of effect or transition tiles.
+  ///
+  /// In en, this message translates to:
+  /// **'{group, select, basic{Basic} exciting{Exciting} emphasis{Emphasis} text{Text} shape{Shape} motion{Motion} chart{Chart} code{Code} threeD{3D} magic{Magic Move} other{More}}'**
+  String animateGroupName(String group);
+
+  /// Build tab sub-tab (In / Action / Out).
+  ///
+  /// In en, this message translates to:
+  /// **'{tab, select, buildIn{In} action{Action} buildOut{Out} other{In}}'**
+  String animateKindTab(String tab);
+
+  /// Magic Move: when unmatched objects fade.
+  ///
+  /// In en, this message translates to:
+  /// **'{mode, select, together{Fade with the move} before{Fade out first} after{Fade in after} other{Fade with the move}}'**
+  String animateUnmatchedName(String mode);
+
+  /// Order tab ⚙ menu item.
+  ///
+  /// In en, this message translates to:
+  /// **'{option, select, autoPreview{Auto-preview changes} includeTransition{Include transition in preview} fullMotion{Preview full motion} other{Option}}'**
+  String animatePreviewOption(String option);
+
+  /// Warning of a build in the Order list and Build tab (06 §2.4).
+  ///
+  /// In en, this message translates to:
+  /// **'{code, select, elementMissing{The object no longer exists.} alreadyVisible{The object is already visible: this build is skipped.} alreadyHidden{The object is already hidden: this build is skipped.} hiddenTarget{The object is hidden at this point: this build is skipped.} unsupportedEffect{Effect not supported by this version: plays as a fade.} wrongElementKind{This effect doesn\'t work on this object: it is skipped.} unsupportedTrigger{This trigger isn\'t supported yet: the build is skipped.} invalidOptions{Some options are invalid and use their defaults.} invalidEasing{The easing is invalid and plays as ease out.} deliveryFallback{This object can\'t be built in these parts: it builds as a whole.} codeStepMissing{The code has no such highlight step.} codeStateMissing{The code has no such state.} flashLimit{Blinking is slowed to at most 3 flashes per second.} other{This build plays differently than set.}}'**
+  String animateWarning(String code);
+
+  /// Build tab: adds a second build of the same kind.
+  ///
+  /// In en, this message translates to:
+  /// **'Add another build'**
+  String get animateAddAnother;
+
+  /// Transition tab: how the slide advances.
+  ///
+  /// In en, this message translates to:
+  /// **'Advance'**
+  String get animateAdvance;
+
+  /// Transition tab: delay before advancing automatically.
+  ///
+  /// In en, this message translates to:
+  /// **'After'**
+  String get animateAdvanceAfter;
+
+  /// Transition tab: advance automatically.
+  ///
+  /// In en, this message translates to:
+  /// **'Automatically'**
+  String get animateAdvanceAuto;
+
+  /// Transition tab: advance on click.
+  ///
+  /// In en, this message translates to:
+  /// **'On click'**
+  String get animateAdvanceClick;
+
+  /// Build tab: what happens to earlier parts.
+  ///
+  /// In en, this message translates to:
+  /// **'After build'**
+  String get animateAfterBuild;
+
+  /// Build tab with nothing selected: list heading.
+  ///
+  /// In en, this message translates to:
+  /// **'Animated objects'**
+  String get animateAnimatedObjects;
+
+  /// Transition tab: auto-advance also plays click builds.
+  ///
+  /// In en, this message translates to:
+  /// **'Play builds automatically'**
+  String get animateAutoBuilds;
+
+  /// Build tab: repeat option.
+  ///
+  /// In en, this message translates to:
+  /// **'Play back and forth'**
+  String get animateAutoReverse;
+
+  /// Transition tab: delay before each automatic build.
+  ///
+  /// In en, this message translates to:
+  /// **'Between builds'**
+  String get animateBuildDelay;
+
+  /// Build tab: timing field.
+  ///
+  /// In en, this message translates to:
+  /// **'Delay'**
+  String get animateDelay;
+
+  /// Build tab: delivery heading.
+  ///
+  /// In en, this message translates to:
+  /// **'Parts'**
+  String get animateDelivery;
+
+  /// Build tab: delivery select label.
+  ///
+  /// In en, this message translates to:
+  /// **'Build'**
+  String get animateDeliveryLabel;
+
+  /// Build tab: dim opacity.
+  ///
+  /// In en, this message translates to:
+  /// **'Dim to'**
+  String get animateDimTo;
+
+  /// Timing field.
+  ///
+  /// In en, this message translates to:
+  /// **'Duration'**
+  String get animateDuration;
+
+  /// Duration of effects that compute their own length.
+  ///
+  /// In en, this message translates to:
+  /// **'Automatic'**
+  String get animateDurationAutomatic;
+
+  /// Timing field.
+  ///
+  /// In en, this message translates to:
+  /// **'Easing'**
+  String get animateEasing;
+
+  /// An effect id from a newer version.
+  ///
+  /// In en, this message translates to:
+  /// **'Effect not supported by this version'**
+  String get animateEffectUnsupported;
+
+  /// Transform effect: the end frame.
+  ///
+  /// In en, this message translates to:
+  /// **'End state'**
+  String get animateEndState;
+
+  /// Transform effect: end height.
+  ///
+  /// In en, this message translates to:
+  /// **'Height'**
+  String get animateHeight;
+
+  /// Magic Move: hides the match outlines on the canvas.
+  ///
+  /// In en, this message translates to:
+  /// **'Hide matches'**
+  String get animateHideMatches;
+
+  /// Magic Move on the first slide.
+  ///
+  /// In en, this message translates to:
+  /// **'The first slide has nothing to morph from.'**
+  String get animateMagicMoveFirstSlide;
+
+  /// Magic Move without matches.
+  ///
+  /// In en, this message translates to:
+  /// **'No objects match the previous slide: plays as a crossfade.'**
+  String get animateMagicMoveNoMatches;
+
+  /// Magic Move option.
+  ///
+  /// In en, this message translates to:
+  /// **'Match identical content'**
+  String get animateMatchByContent;
+
+  /// Magic Move option.
+  ///
+  /// In en, this message translates to:
+  /// **'Match text by'**
+  String get animateMatchTextBy;
+
+  /// Order list: a build whose object is gone.
+  ///
+  /// In en, this message translates to:
+  /// **'Deleted object'**
+  String get animateMissingObject;
+
+  /// Order list context menu.
+  ///
+  /// In en, this message translates to:
+  /// **'Move down'**
+  String get animateMoveDown;
+
+  /// Order list context menu.
+  ///
+  /// In en, this message translates to:
+  /// **'Move up'**
+  String get animateMoveUp;
+
+  /// Order list: drop indicator on a step header.
+  ///
+  /// In en, this message translates to:
+  /// **'New click'**
+  String get animateNewClick;
+
+  /// Animate tab without a slide (or in masters mode).
+  ///
+  /// In en, this message translates to:
+  /// **'Animations apply to slides.'**
+  String get animateNoSlide;
+
+  /// Distance parameter: off slide.
+  ///
+  /// In en, this message translates to:
+  /// **'From off the slide'**
+  String get animateOffSlide;
+
+  /// Accessible label of the Order list.
+  ///
+  /// In en, this message translates to:
+  /// **'Build order'**
+  String get animateOrderListLabel;
+
+  /// Order tab empty state.
+  ///
+  /// In en, this message translates to:
+  /// **'No animations on this slide yet. Select an object and pick an effect on the Build tab.'**
+  String get animateOrderNone;
+
+  /// Build tab: part order.
+  ///
+  /// In en, this message translates to:
+  /// **'Order'**
+  String get animatePartOrder;
+
+  /// Build tab: how parts after the first start.
+  ///
+  /// In en, this message translates to:
+  /// **'Each part'**
+  String get animatePartStart;
+
+  /// Build tab: first part to build.
+  ///
+  /// In en, this message translates to:
+  /// **'Parts'**
+  String get animatePartsFrom;
+
+  /// Build tab: last part to build.
+  ///
+  /// In en, this message translates to:
+  /// **'to'**
+  String get animatePartsTo;
+
+  /// Motion path preset.
+  ///
+  /// In en, this message translates to:
+  /// **'Path'**
+  String get animatePathPreset;
+
+  /// Order tab footer.
+  ///
+  /// In en, this message translates to:
+  /// **'Play from selected'**
+  String get animatePlayFromSelected;
+
+  /// Plays the animation on the canvas.
+  ///
+  /// In en, this message translates to:
+  /// **'Preview'**
+  String get animatePreview;
+
+  /// Order list context menu.
+  ///
+  /// In en, this message translates to:
+  /// **'Preview from here'**
+  String get animatePreviewFromHere;
+
+  /// Reduce motion banner: preview without reduced motion.
+  ///
+  /// In en, this message translates to:
+  /// **'Preview full motion'**
+  String get animatePreviewFullMotion;
+
+  /// Accessible label of the Order tab ⚙ menu.
+  ///
+  /// In en, this message translates to:
+  /// **'Preview options'**
+  String get animatePreviewOptions;
+
+  /// Floating bar while a preview plays.
+  ///
+  /// In en, this message translates to:
+  /// **'Previewing animations'**
+  String get animatePreviewPlaying;
+
+  /// Reduce motion banner: back to reduced previews.
+  ///
+  /// In en, this message translates to:
+  /// **'Preview reduced motion'**
+  String get animatePreviewReduced;
+
+  /// Stops the preview (Esc).
+  ///
+  /// In en, this message translates to:
+  /// **'Stop'**
+  String get animatePreviewStop;
+
+  /// Animate tab banner (06 §13).
+  ///
+  /// In en, this message translates to:
+  /// **'Reduce motion is on — animations play as fades.'**
+  String get animateReducedMotionOn;
+
+  /// Opens the reduce motion setting.
+  ///
+  /// In en, this message translates to:
+  /// **'Settings'**
+  String get animateReducedMotionSettings;
+
+  /// Transition tab: removes the transition (cut).
+  ///
+  /// In en, this message translates to:
+  /// **'Remove'**
+  String get animateRemoveTransition;
+
+  /// Build tab heading.
+  ///
+  /// In en, this message translates to:
+  /// **'Repeat'**
+  String get animateRepeat;
+
+  /// Build tab: repeat count.
+  ///
+  /// In en, this message translates to:
+  /// **'Times'**
+  String get animateRepeatCount;
+
+  /// Build tab: a persistent emphasis returns at its end.
+  ///
+  /// In en, this message translates to:
+  /// **'Return to the start'**
+  String get animateReturnToStart;
+
+  /// Transition tab option.
+  ///
+  /// In en, this message translates to:
+  /// **'Play backwards when going back'**
+  String get animateReverseOnBack;
+
+  /// Magic Move option.
+  ///
+  /// In en, this message translates to:
+  /// **'Rotation'**
+  String get animateRotation;
+
+  /// Build tab search field placeholder.
+  ///
+  /// In en, this message translates to:
+  /// **'Search effects'**
+  String get animateSearchEffects;
+
+  /// Build tab empty state.
+  ///
+  /// In en, this message translates to:
+  /// **'Select an object to animate it.'**
+  String get animateSelectObject;
+
+  /// Order list context menu.
+  ///
+  /// In en, this message translates to:
+  /// **'Select object'**
+  String get animateSelectObjectItem;
+
+  /// Order list context menu: submenu of triggers.
+  ///
+  /// In en, this message translates to:
+  /// **'Start'**
+  String get animateSetTrigger;
+
+  /// Magic Move: shows the match outlines on the canvas.
+  ///
+  /// In en, this message translates to:
+  /// **'Show matches'**
+  String get animateShowMatches;
+
+  /// Order list: expands a build's parts.
+  ///
+  /// In en, this message translates to:
+  /// **'Show parts'**
+  String get animateShowParts;
+
+  /// Magic Move option: delay between pairs.
+  ///
+  /// In en, this message translates to:
+  /// **'Stagger'**
+  String get animateStagger;
+
+  /// Build tab: gap between part starts.
+  ///
+  /// In en, this message translates to:
+  /// **'Stagger'**
+  String get animateStaggerParts;
+
+  /// Build tab: trigger.
+  ///
+  /// In en, this message translates to:
+  /// **'Start'**
+  String get animateStart;
+
+  /// Order list: step 0 header.
+  ///
+  /// In en, this message translates to:
+  /// **'Automatic'**
+  String get animateStepAutomatic;
+
+  /// Build tab heading.
+  ///
+  /// In en, this message translates to:
+  /// **'Timing'**
+  String get animateTiming;
+
+  /// Transition tab: the slide has no own transition.
+  ///
+  /// In en, this message translates to:
+  /// **'Uses the presentation\'s default transition.'**
+  String get animateTransitionInherited;
+
+  /// Magic Move option: unmatched objects.
+  ///
+  /// In en, this message translates to:
+  /// **'Unmatched'**
+  String get animateUnmatched;
+
+  /// Build tab: repeat option.
+  ///
+  /// In en, this message translates to:
+  /// **'Until the next click'**
+  String get animateUntilNextClick;
+
+  /// Transform effect: end width.
+  ///
+  /// In en, this message translates to:
+  /// **'Width'**
+  String get animateWidth;
+
+  /// Title of the command `slides.animate.buildAllSteps`.
+  ///
+  /// In en, this message translates to:
+  /// **'Build all steps'**
+  String get cmdAnimateBuildAllSteps;
+
+  /// Title of the command `slides.animate.moveBuilds`.
+  ///
+  /// In en, this message translates to:
+  /// **'Reorder animations'**
+  String get cmdAnimateMoveBuilds;
+
+  /// Title of the command `slides.animate.selectBuilds`.
+  ///
+  /// In en, this message translates to:
+  /// **'Select animations'**
+  String get cmdAnimateSelectBuilds;
+
+  /// Title of the command `slides.animate.setMotionPath`.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit motion path'**
+  String get cmdAnimateSetMotionPath;
+
+  /// Title of the command `slides.animate.setTransformTarget`.
+  ///
+  /// In en, this message translates to:
+  /// **'Set end state'**
+  String get cmdAnimateSetTransformTarget;
+
+  /// Title of the command `slides.animate.setTrigger`.
+  ///
+  /// In en, this message translates to:
+  /// **'Set animation start'**
+  String get cmdAnimateSetTrigger;
+
+  /// Title of the command `slides.animate.stopPreview`.
+  ///
+  /// In en, this message translates to:
+  /// **'Stop preview'**
+  String get cmdAnimateStopPreview;
+
+  /// Title of the command `slides.animate.togglePreviewOption`.
+  ///
+  /// In en, this message translates to:
+  /// **'Preview option'**
+  String get cmdAnimateTogglePreviewOption;
+
+  /// Title of the command `slides.animate.updateBuild`.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit animation'**
+  String get cmdAnimateUpdateBuild;
+
+  /// Title of the command `slides.element.setMatchKey`.
+  ///
+  /// In en, this message translates to:
+  /// **'Set Magic Move ID'**
+  String get cmdElementSetMatchKey;
+
+  /// Title of the command `slides.transition.applyToAll`.
+  ///
+  /// In en, this message translates to:
+  /// **'Apply transition to all slides'**
+  String get cmdTransitionApplyToAll;
+
+  /// Title of the command `slides.transition.preview`.
+  ///
+  /// In en, this message translates to:
+  /// **'Preview transition'**
+  String get cmdTransitionPreview;
+
+  /// Title of the command `slides.transition.remove`.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove transition'**
+  String get cmdTransitionRemove;
+
+  /// Title of the command `slides.transition.set`.
+  ///
+  /// In en, this message translates to:
+  /// **'Set transition'**
+  String get cmdTransitionSet;
+
+  /// Title of the command `slides.transition.setAdvance`.
+  ///
+  /// In en, this message translates to:
+  /// **'Set slide advance'**
+  String get cmdTransitionSetAdvance;
+
+  /// Disabled reason.
+  ///
+  /// In en, this message translates to:
+  /// **'This slide has no animations'**
+  String get reasonNoBuilds;
+
+  /// Disabled reason of Paste animation.
+  ///
+  /// In en, this message translates to:
+  /// **'Copy an animation first'**
+  String get reasonNoBuildsCopied;
+
+  /// Disabled reason.
+  ///
+  /// In en, this message translates to:
+  /// **'No preview is playing'**
+  String get reasonNotPreviewing;
+
+  /// Disabled reason of Copy animation.
+  ///
+  /// In en, this message translates to:
+  /// **'Select one animated object'**
+  String get reasonObjectNoBuilds;
+
+  /// Disabled reason.
+  ///
+  /// In en, this message translates to:
+  /// **'Select an animation'**
+  String get reasonSelectBuild;
+
+  /// Disabled reason of Build all steps.
+  ///
+  /// In en, this message translates to:
+  /// **'Select a code block with steps or a chart'**
+  String get reasonSelectCodeOrChart;
+
+  /// Undo label.
+  ///
+  /// In en, this message translates to:
+  /// **'Add Magic Move slide'**
+  String get undoAddMagicMoveSlide;
+
+  /// Undo label.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove animation'**
+  String get undoRemoveAnimation;
+
+  /// Build order badge tooltip.
+  ///
+  /// In en, this message translates to:
+  /// **'{name}: step {steps}'**
+  String animateBadgeTooltip(String name, String steps);
+
+  /// Several selected builds.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} animations'**
+  String animateBuildsSelected(int count);
+
+  /// Several selected objects.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} objects'**
+  String animateObjectsSelected(int count);
+
+  /// Magic Move match count.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 object matches the previous slide} other{{count} objects match the previous slide}}'**
+  String animateMagicMoveMatches(int count);
+
+  /// Magic Move match badge tooltip.
+  ///
+  /// In en, this message translates to:
+  /// **'Matches “{name}” on slide {number}'**
+  String animateMatchTooltip(String name, int number);
+
+  /// Order tab summary.
+  ///
+  /// In en, this message translates to:
+  /// **'{clicks, plural, =0{No clicks} =1{1 click} other{{clicks} clicks}} · {seconds} s'**
+  String animateOrderSummary(int clicks, String seconds);
+
+  /// Order list: a part of a build.
+  ///
+  /// In en, this message translates to:
+  /// **'Part {index}: {text}'**
+  String animatePartLabel(int index, String text);
+
+  /// Order list: number of parts.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} parts'**
+  String animatePartsCount(int count);
+
+  /// Settle time of a spring easing.
+  ///
+  /// In en, this message translates to:
+  /// **'≈ {seconds} s'**
+  String animateSettles(String seconds);
+
+  /// Order list: step header.
+  ///
+  /// In en, this message translates to:
+  /// **'Click {index}'**
+  String animateStepClick(int index);
+
+  /// Transition tab header.
+  ///
+  /// In en, this message translates to:
+  /// **'Transition into slide {number}'**
+  String animateTransitionForSlide(int number);
+
+  /// Transition tab header with several slides selected.
+  ///
+  /// In en, this message translates to:
+  /// **'Transition into {count} slides'**
+  String animateTransitionForSlides(int count);
+
+  /// Inspector › Arrange: the Magic Move ID field (06 §8.2).
+  ///
+  /// In en, this message translates to:
+  /// **'Magic Move ID'**
+  String get arrangeLabelMatchKey;
+
+  /// Title of the command `slides.outline.setTitle` (menus, palette, tooltips, undo).
+  ///
+  /// In en, this message translates to:
+  /// **'Edit slide title'**
+  String get cmdOutlineSetTitle;
+
+  /// Title of the command `slides.outline.setBody` (menus, palette, tooltips, undo).
+  ///
+  /// In en, this message translates to:
+  /// **'Edit slide text'**
+  String get cmdOutlineSetBody;
+
+  /// Title of the command `slides.outline.newSlideAfter` (menus, palette, tooltips, undo).
+  ///
+  /// In en, this message translates to:
+  /// **'New slide after this one'**
+  String get cmdOutlineNewSlideAfter;
+
+  /// Title of the command `slides.outline.newLine` (menus, palette, tooltips, undo).
+  ///
+  /// In en, this message translates to:
+  /// **'New bullet'**
+  String get cmdOutlineNewLine;
+
+  /// Title of the command `slides.outline.focusBody` (menus, palette, tooltips, undo).
+  ///
+  /// In en, this message translates to:
+  /// **'Go to the slide’s bullets'**
+  String get cmdOutlineFocusBody;
+
+  /// Title of the command `slides.outline.indent` (menus, palette, tooltips, undo).
+  ///
+  /// In en, this message translates to:
+  /// **'Indent (demote)'**
+  String get cmdOutlineIndent;
+
+  /// Title of the command `slides.outline.outdent` (menus, palette, tooltips, undo).
+  ///
+  /// In en, this message translates to:
+  /// **'Outdent (promote)'**
+  String get cmdOutlineOutdent;
+
+  /// Title of the command `slides.outline.moveUp` (menus, palette, tooltips, undo).
+  ///
+  /// In en, this message translates to:
+  /// **'Move up'**
+  String get cmdOutlineMoveUp;
+
+  /// Title of the command `slides.outline.moveDown` (menus, palette, tooltips, undo).
+  ///
+  /// In en, this message translates to:
+  /// **'Move down'**
+  String get cmdOutlineMoveDown;
+
+  /// Title of the command `slides.outline.joinLine` (menus, palette, tooltips, undo).
+  ///
+  /// In en, this message translates to:
+  /// **'Join with the line above'**
+  String get cmdOutlineJoinLine;
+
+  /// Title of the command `slides.outline.copyMarkdown` (menus, palette, tooltips, undo).
+  ///
+  /// In en, this message translates to:
+  /// **'Copy outline as Markdown'**
+  String get cmdOutlineCopyMarkdown;
+
+  /// Title of the command `slides.arrange.setZ` (menus, palette, tooltips, undo).
+  ///
+  /// In en, this message translates to:
+  /// **'Reorder'**
+  String get cmdArrangeSetZ;
+
+  /// Title of the command `slides.a11y.setReadingOrder` (menus, palette, tooltips, undo).
+  ///
+  /// In en, this message translates to:
+  /// **'Reading order'**
+  String get cmdA11ySetReadingOrder;
+
+  /// Title of the command `slides.a11y.resetReadingOrder` (menus, palette, tooltips, undo).
+  ///
+  /// In en, this message translates to:
+  /// **'Reset to automatic'**
+  String get cmdA11yResetReadingOrder;
+
+  /// Title of the command `slides.a11y.goTo` (menus, palette, tooltips, undo).
+  ///
+  /// In en, this message translates to:
+  /// **'Go to issue'**
+  String get cmdA11yGoTo;
+
+  /// Title of the command `slides.a11y.fix` (menus, palette, tooltips, undo).
+  ///
+  /// In en, this message translates to:
+  /// **'Fix accessibility issue'**
+  String get cmdA11yFix;
+
+  /// Disabled reason of outline commands.
+  ///
+  /// In en, this message translates to:
+  /// **'Place the cursor in an outline line'**
+  String get reasonOutlineLine;
+
+  /// Disabled reason: the slide can't get a title.
+  ///
+  /// In en, this message translates to:
+  /// **'This slide’s layout has no title'**
+  String get reasonOutlineNoTitle;
+
+  /// Disabled reason: the slide has no body placeholder.
+  ///
+  /// In en, this message translates to:
+  /// **'This slide has no text placeholder'**
+  String get reasonOutlineNoBody;
+
+  /// Disabled reason of Reset to automatic.
+  ///
+  /// In en, this message translates to:
+  /// **'The reading order is already automatic'**
+  String get reasonReadingOrderAutomatic;
+
+  /// Disabled reason of the accessibility quick fix.
+  ///
+  /// In en, this message translates to:
+  /// **'This issue has no automatic fix'**
+  String get reasonA11yNoFix;
+
+  /// Outline view: keyboard hint in the top bar.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter: new slide or bullet · Tab: indent · Shift+Tab: outdent'**
+  String get outlineHint;
+
+  /// Outline view: hint for viewers.
+  ///
+  /// In en, this message translates to:
+  /// **'View only'**
+  String get outlineReadOnlyHint;
+
+  /// Outline view: semantics label of a slide number.
+  ///
+  /// In en, this message translates to:
+  /// **'Slide {number}'**
+  String outlineSlideNumber(int number);
+
+  /// Outline view: semantics label of a title line.
+  ///
+  /// In en, this message translates to:
+  /// **'Title of slide {number}'**
+  String outlineTitleLabel(int number);
+
+  /// Outline view: semantics label of a bullet line.
+  ///
+  /// In en, this message translates to:
+  /// **'Slide {slide}, bullet {bullet}, level {level}'**
+  String outlineBulletLabel(int slide, int bullet, int level);
+
+  /// Outline view: summary of a slide's other objects ("+ image, 2 × shape").
+  ///
+  /// In en, this message translates to:
+  /// **'+ {objects}'**
+  String outlineOthers(String objects);
+
+  /// Outline view: tooltip of a collaborator's caret bar.
+  ///
+  /// In en, this message translates to:
+  /// **'{name} is editing'**
+  String outlineEditing(String name);
+
+  /// Toast after Copy outline as Markdown.
+  ///
+  /// In en, this message translates to:
+  /// **'Outline copied as Markdown'**
+  String get outlineCopied;
+
+  /// Undo label of typing in the outline view.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit outline'**
+  String get outlineTypingUndo;
+
+  /// Title of the Layers side panel.
+  ///
+  /// In en, this message translates to:
+  /// **'Layers'**
+  String get layersPanelTitle;
+
+  /// Layers panel tab.
+  ///
+  /// In en, this message translates to:
+  /// **'Layers'**
+  String get layersTabLayers;
+
+  /// Layers panel tab.
+  ///
+  /// In en, this message translates to:
+  /// **'Reading order'**
+  String get layersTabReadingOrder;
+
+  /// Layers panel: empty slide.
+  ///
+  /// In en, this message translates to:
+  /// **'No objects on this slide'**
+  String get layersEmpty;
+
+  /// Layers panel: semantics state of a hidden object.
+  ///
+  /// In en, this message translates to:
+  /// **'hidden'**
+  String get layersHidden;
+
+  /// Layers panel: semantics state of a locked object.
+  ///
+  /// In en, this message translates to:
+  /// **'locked'**
+  String get layersLocked;
+
+  /// Layers panel: placeholder of the rename field.
+  ///
+  /// In en, this message translates to:
+  /// **'Name'**
+  String get layersRenameHint;
+
+  /// Layers panel: drag feedback of several objects.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} objects'**
+  String layersDragMany(int count);
+
+  /// Layers panel: the section of layout and master objects.
+  ///
+  /// In en, this message translates to:
+  /// **'From layout ({count})'**
+  String layersFromLayout(int count);
+
+  /// Layers panel: link to masters mode.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit layout'**
+  String get layersEditLayout;
+
+  /// Layers panel › Reading order: explanation.
+  ///
+  /// In en, this message translates to:
+  /// **'Automatic: title first, then top to bottom, left to right.'**
+  String get layersOrderAutomatic;
+
+  /// Layers panel › Reading order: explanation.
+  ///
+  /// In en, this message translates to:
+  /// **'Custom order. Screen readers and Tab follow this list.'**
+  String get layersOrderCustom;
+
+  /// Layers panel › Reading order: move up button.
+  ///
+  /// In en, this message translates to:
+  /// **'Read earlier'**
+  String get layersOrderEarlier;
+
+  /// Layers panel › Reading order: move down button.
+  ///
+  /// In en, this message translates to:
+  /// **'Read later'**
+  String get layersOrderLater;
+
+  /// Title of the Accessibility side panel.
+  ///
+  /// In en, this message translates to:
+  /// **'Accessibility'**
+  String get a11yPanelTitle;
+
+  /// Description of the accessibility check command.
+  ///
+  /// In en, this message translates to:
+  /// **'Checks alt text, contrast, titles, text size, reading order and tables'**
+  String get a11yCheckDescription;
+
+  /// Accessibility panel: refresh button.
+  ///
+  /// In en, this message translates to:
+  /// **'Check again'**
+  String get a11yCheckAgain;
+
+  /// Accessibility panel: summary.
+  ///
+  /// In en, this message translates to:
+  /// **'{errors, plural, =1{1 error} other{{errors} errors}} · {warnings, plural, =1{1 warning} other{{warnings} warnings}} · {info, plural, =1{1 tip} other{{info} tips}}'**
+  String a11ySummary(int errors, int warnings, int info);
+
+  /// Accessibility panel: empty state title.
+  ///
+  /// In en, this message translates to:
+  /// **'No accessibility issues found'**
+  String get a11yNoIssues;
+
+  /// Accessibility panel: empty state body.
+  ///
+  /// In en, this message translates to:
+  /// **'Alt text, contrast, titles, text size, reading order and tables look good.'**
+  String get a11yNoIssuesBody;
+
+  /// Accessibility panel: heading of a slide's issues ("Slide 4 · Our mission").
+  ///
+  /// In en, this message translates to:
+  /// **'Slide {label}'**
+  String a11ySlideHeading(String label);
+
+  /// Accessibility issue severity.
+  ///
+  /// In en, this message translates to:
+  /// **'Error'**
+  String get a11ySeverityError;
+
+  /// Accessibility issue severity.
+  ///
+  /// In en, this message translates to:
+  /// **'Warning'**
+  String get a11ySeverityWarning;
+
+  /// Accessibility issue severity.
+  ///
+  /// In en, this message translates to:
+  /// **'Tip'**
+  String get a11ySeverityInfo;
+
+  /// Accessibility issue.
+  ///
+  /// In en, this message translates to:
+  /// **'Missing alt text'**
+  String get a11yMissingAltText;
+
+  /// Accessibility issue.
+  ///
+  /// In en, this message translates to:
+  /// **'Low text contrast ({ratio}:1, needs {required}:1)'**
+  String a11yLowContrast(String ratio, String required);
+
+  /// Accessibility issue.
+  ///
+  /// In en, this message translates to:
+  /// **'Text over an image: check that it is readable'**
+  String get a11yContrastOverImage;
+
+  /// Accessibility issue.
+  ///
+  /// In en, this message translates to:
+  /// **'Slide has no title'**
+  String get a11yMissingTitle;
+
+  /// Accessibility issue.
+  ///
+  /// In en, this message translates to:
+  /// **'Another slide has the same title “{title}”'**
+  String a11yDuplicateTitle(String title);
+
+  /// Accessibility issue.
+  ///
+  /// In en, this message translates to:
+  /// **'Text smaller than {min} ({size})'**
+  String a11ySmallText(int size, int min);
+
+  /// Accessibility issue.
+  ///
+  /// In en, this message translates to:
+  /// **'The custom reading order differs from the layout'**
+  String get a11yReadingOrder;
+
+  /// Accessibility issue.
+  ///
+  /// In en, this message translates to:
+  /// **'Table has no header row'**
+  String get a11yTableHeader;
+
+  /// Accessibility issue.
+  ///
+  /// In en, this message translates to:
+  /// **'Empty placeholder'**
+  String get a11yEmptyPlaceholder;
+
+  /// Accessibility panel: button showing the issue.
+  ///
+  /// In en, this message translates to:
+  /// **'Go to'**
+  String get a11yGoTo;
+
+  /// Accessibility quick fix.
+  ///
+  /// In en, this message translates to:
+  /// **'Add alt text…'**
+  String get a11yFixAltText;
+
+  /// Accessibility quick fix.
+  ///
+  /// In en, this message translates to:
+  /// **'Mark decorative'**
+  String get a11yFixDecorative;
+
+  /// Accessibility quick fix.
+  ///
+  /// In en, this message translates to:
+  /// **'Use a contrasting color'**
+  String get a11yFixContrast;
+
+  /// Accessibility quick fix.
+  ///
+  /// In en, this message translates to:
+  /// **'Enlarge to {size}'**
+  String a11yFixTextSize(int size);
+
+  /// Accessibility quick fix.
+  ///
+  /// In en, this message translates to:
+  /// **'Reset to automatic'**
+  String get a11yFixReadingOrder;
+
+  /// Accessibility quick fix.
+  ///
+  /// In en, this message translates to:
+  /// **'Turn on header row'**
+  String get a11yFixTableHeader;
+
+  /// Accessibility quick fix.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove placeholder'**
+  String get a11yFixRemovePlaceholder;
+
+  /// Accessibility panel: opens Layers › Reading order.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit reading order'**
+  String get a11yEditReadingOrder;
+
+  /// Toast when a collaborator changes the previewed slide (06 §11).
+  ///
+  /// In en, this message translates to:
+  /// **'The animations changed — Preview again'**
+  String get animatePreviewChanged;
+
+  /// Button of the Linked charts panel: check the links now.
+  ///
+  /// In en, this message translates to:
+  /// **'Check now'**
+  String get chartCheckNow;
+
+  /// Title of the command `slides.comments.next` (09 §3.4).
+  ///
+  /// In en, this message translates to:
+  /// **'Next comment'**
+  String get cmdCommentsNext;
+
+  /// Title of the command `slides.comments.previous` (09 §3.4).
+  ///
+  /// In en, this message translates to:
+  /// **'Previous comment'**
+  String get cmdCommentsPrevious;
+
+  /// Title of the command `slides.comments.openPanel` (09 §3.5).
+  ///
+  /// In en, this message translates to:
+  /// **'Open comments'**
+  String get cmdCommentsOpenPanel;
+
+  /// Comments panel scope: threads of the current slide.
+  ///
+  /// In en, this message translates to:
+  /// **'This slide'**
+  String get commentsScopeSlide;
+
+  /// Comments panel scope: every thread.
+  ///
+  /// In en, this message translates to:
+  /// **'All slides'**
+  String get commentsScopeAll;
+
+  /// Comments panel header of threads whose slide or object was deleted.
+  ///
+  /// In en, this message translates to:
+  /// **'Orphaned'**
+  String get commentsOrphanedGroup;
+
+  /// Comments panel header of a slide's threads.
+  ///
+  /// In en, this message translates to:
+  /// **'{number} · {title}'**
+  String commentsSlideHeader(int number, String title);
+
+  /// Quoted text of a comment on a slide (stored with the thread).
+  ///
+  /// In en, this message translates to:
+  /// **'Slide {number}: {title}'**
+  String commentSlideQuote(int number, String title);
+
+  /// Label of a comment whose slide or object was deleted.
+  ///
+  /// In en, this message translates to:
+  /// **'The object this comment was on was deleted'**
+  String get commentAnchorDeleted;
+
+  /// Label of a comment whose slide or object was deleted, with its quoted text.
+  ///
+  /// In en, this message translates to:
+  /// **'{quote} — the object this comment was on was deleted'**
+  String commentAnchorDeletedQuote(String quote);
+
+  /// Semantics label of a comment pin on the canvas.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{Comment by {name}} other{{count} comments, first by {name}}}'**
+  String commentPinLabel(int count, String name);
+
+  /// Reply count in a comment hover card.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 reply} other{{count} replies}}'**
+  String commentReplies(int count);
+
+  /// Semantics and tooltip of the open-comment badge of a slide.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 comment} other{{count} comments}}'**
+  String commentsBadge(int count);
+
+  /// Disabled reason of next/previous comment.
+  ///
+  /// In en, this message translates to:
+  /// **'No comments'**
+  String get reasonNoComments;
+
+  /// Close button of the comment card docked at a pin.
+  ///
+  /// In en, this message translates to:
+  /// **'Close'**
+  String get commentsDockedClose;
+
+  /// No description provided for @cmdSpellingCheckDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Walk through the misspelled words of the whole presentation'**
+  String get cmdSpellingCheckDescription;
+
+  /// No description provided for @cmdSpellingReplace.
+  ///
+  /// In en, this message translates to:
+  /// **'Correct spelling'**
+  String get cmdSpellingReplace;
+
+  /// No description provided for @cmdSpellingReplaceAll.
+  ///
+  /// In en, this message translates to:
+  /// **'Correct spelling everywhere'**
+  String get cmdSpellingReplaceAll;
+
+  /// No description provided for @cmdSpellingIgnore.
+  ///
+  /// In en, this message translates to:
+  /// **'Ignore'**
+  String get cmdSpellingIgnore;
+
+  /// No description provided for @cmdSpellingAddToDictionary.
+  ///
+  /// In en, this message translates to:
+  /// **'Add to dictionary'**
+  String get cmdSpellingAddToDictionary;
+
+  /// No description provided for @cmdSpellingPersonalDictionary.
+  ///
+  /// In en, this message translates to:
+  /// **'Personal dictionary…'**
+  String get cmdSpellingPersonalDictionary;
+
+  /// No description provided for @undoCorrectSpelling.
+  ///
+  /// In en, this message translates to:
+  /// **'Correct spelling'**
+  String get undoCorrectSpelling;
+
+  /// No description provided for @undoSetLanguage.
+  ///
+  /// In en, this message translates to:
+  /// **'Set language'**
+  String get undoSetLanguage;
+
+  /// Disabled row of the context menu on a misspelled word without suggestions.
+  ///
+  /// In en, this message translates to:
+  /// **'No suggestions'**
+  String get spellingNoSuggestions;
+
+  /// No description provided for @spellingAddWordToDictionary.
+  ///
+  /// In en, this message translates to:
+  /// **'Add “{word}” to dictionary'**
+  String spellingAddWordToDictionary(String word);
+
+  /// No description provided for @toastPersonalDictionaryFull.
+  ///
+  /// In en, this message translates to:
+  /// **'Your personal dictionary is full ({max} words).'**
+  String toastPersonalDictionaryFull(int max);
+
+  /// No description provided for @reasonSpellingTextGone.
+  ///
+  /// In en, this message translates to:
+  /// **'This text is no longer there'**
+  String get reasonSpellingTextGone;
+
+  /// Title of `slides.history.restoreVersion`.
+  ///
+  /// In en, this message translates to:
+  /// **'Restore this version'**
+  String get cmdHistoryRestoreVersion;
+
+  /// Title of `slides.history.makeCopy` (a copy of the shown version).
+  ///
+  /// In en, this message translates to:
+  /// **'Make a copy'**
+  String get cmdHistoryMakeCopy;
+
+  /// Title of `slides.history.download` (the shown version as PDF).
+  ///
+  /// In en, this message translates to:
+  /// **'Download as PDF'**
+  String get cmdHistoryDownload;
+
+  /// Title of the toggle `slides.history.toggleShowChanges`.
+  ///
+  /// In en, this message translates to:
+  /// **'Show changes'**
+  String get cmdHistoryToggleShowChanges;
+
+  /// Title of the toggle `slides.history.toggleShowRemoved` (dashed outlines of deleted objects).
+  ///
+  /// In en, this message translates to:
+  /// **'Show removed objects'**
+  String get cmdHistoryToggleShowRemoved;
+
+  /// Title of `slides.history.nextChange`.
+  ///
+  /// In en, this message translates to:
+  /// **'Next change'**
+  String get cmdHistoryNextChange;
+
+  /// Title of `slides.history.previousChange`.
+  ///
+  /// In en, this message translates to:
+  /// **'Previous change'**
+  String get cmdHistoryPreviousChange;
+
+  /// Title of `slides.conflicts.review`.
+  ///
+  /// In en, this message translates to:
+  /// **'Review overwritten text'**
+  String get cmdConflictsReview;
+
+  /// Title of `slides.conflicts.restoreMine` (also the undo label).
+  ///
+  /// In en, this message translates to:
+  /// **'Restore my text'**
+  String get cmdConflictsRestoreMine;
+
+  /// Disabled reason of version commands outside the history route.
+  ///
+  /// In en, this message translates to:
+  /// **'Open a version first'**
+  String get reasonNoVersionShown;
+
+  /// Disabled reason of next/previous change.
+  ///
+  /// In en, this message translates to:
+  /// **'This version has no changes'**
+  String get reasonNoChanges;
+
+  /// Disabled reason of the overwritten-text review.
+  ///
+  /// In en, this message translates to:
+  /// **'None of your text was overwritten'**
+  String get reasonNoConflicts;
+
+  /// Spinner text of the version view.
+  ///
+  /// In en, this message translates to:
+  /// **'Loading this version…'**
+  String get versionLoading;
+
+  /// Error title of the version view.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn’t load this version'**
+  String get versionLoadFailed;
+
+  /// Summary while the diff is computed.
+  ///
+  /// In en, this message translates to:
+  /// **'Finding changes…'**
+  String get versionComputingChanges;
+
+  /// Summary when Show changes is off.
+  ///
+  /// In en, this message translates to:
+  /// **'Changes are hidden'**
+  String get versionChangesHidden;
+
+  /// Summary of a version without changes.
+  ///
+  /// In en, this message translates to:
+  /// **'No changes since the previous version'**
+  String get versionNoChanges;
+
+  /// Part of the version summary.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 slide added} other{{count} slides added}}'**
+  String versionSlidesAdded(int count);
+
+  /// Part of the version summary.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 slide changed} other{{count} slides changed}}'**
+  String versionSlidesChanged(int count);
+
+  /// Part of the version summary.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 slide moved} other{{count} slides moved}}'**
+  String versionSlidesMoved(int count);
+
+  /// Part of the version summary.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 slide deleted} other{{count} slides deleted}}'**
+  String versionSlidesDeleted(int count);
+
+  /// Version summary and the change list row of theme, master or layout changes.
+  ///
+  /// In en, this message translates to:
+  /// **'Theme changed'**
+  String get versionThemeChanged;
+
+  /// Change list row when the deck row (title, size, numbering) changed.
+  ///
+  /// In en, this message translates to:
+  /// **'Presentation settings changed'**
+  String get versionDeckChanged;
+
+  /// Navigator tag of a slide or group added in this version.
+  ///
+  /// In en, this message translates to:
+  /// **'New'**
+  String get versionTagNew;
+
+  /// Navigator tag of a slide reordered or regrouped in this version.
+  ///
+  /// In en, this message translates to:
+  /// **'Moved'**
+  String get versionTagMoved;
+
+  /// Navigator tag of a renamed group.
+  ///
+  /// In en, this message translates to:
+  /// **'Renamed'**
+  String get versionTagRenamed;
+
+  /// Navigator tag of a slide deleted in this version (ghost row).
+  ///
+  /// In en, this message translates to:
+  /// **'Deleted'**
+  String get versionTagDeleted;
+
+  /// Semantics label and tooltip of a ghost row.
+  ///
+  /// In en, this message translates to:
+  /// **'Deleted slide: {title}'**
+  String versionDeletedSlide(String title);
+
+  /// Header of the change list.
+  ///
+  /// In en, this message translates to:
+  /// **'Changes on this slide'**
+  String get versionChangesOnSlide;
+
+  /// Empty change list.
+  ///
+  /// In en, this message translates to:
+  /// **'Nothing changed on this slide'**
+  String get versionNoChangesOnSlide;
+
+  /// A change list row: what changed and who did it.
+  ///
+  /// In en, this message translates to:
+  /// **'{what} — {who}'**
+  String versionChangeBy(String what, String who);
+
+  /// Author of changes an agent made through MCP for a user.
+  ///
+  /// In en, this message translates to:
+  /// **'Claude via MCP ({name})'**
+  String versionAgentMcp(String name);
+
+  /// Author of changes the assistant made for a user.
+  ///
+  /// In en, this message translates to:
+  /// **'Claude ({name})'**
+  String versionAgentAi(String name);
+
+  /// A changed object: its label and the kinds of change.
+  ///
+  /// In en, this message translates to:
+  /// **'{element}: {what}'**
+  String versionElementChange(String element, String what);
+
+  /// A changed object that is new.
+  ///
+  /// In en, this message translates to:
+  /// **'{element} added'**
+  String versionElementAdded(String element);
+
+  /// An object deleted in this version.
+  ///
+  /// In en, this message translates to:
+  /// **'{element} deleted'**
+  String versionElementRemoved(String element);
+
+  /// Kind of change of an object.
+  ///
+  /// In en, this message translates to:
+  /// **'text edited'**
+  String get versionKindText;
+
+  /// Kind of change of an object.
+  ///
+  /// In en, this message translates to:
+  /// **'moved or resized'**
+  String get versionKindFrame;
+
+  /// Kind of change of an object.
+  ///
+  /// In en, this message translates to:
+  /// **'restyled'**
+  String get versionKindStyle;
+
+  /// Kind of change of an object.
+  ///
+  /// In en, this message translates to:
+  /// **'content changed'**
+  String get versionKindData;
+
+  /// Kind of change of an object.
+  ///
+  /// In en, this message translates to:
+  /// **'order changed'**
+  String get versionKindOrder;
+
+  /// Kind of change of an object.
+  ///
+  /// In en, this message translates to:
+  /// **'shown, hidden or locked'**
+  String get versionKindVisibility;
+
+  /// Kind of change of an object.
+  ///
+  /// In en, this message translates to:
+  /// **'animation changed'**
+  String get versionKindAnimation;
+
+  /// Change list row.
+  ///
+  /// In en, this message translates to:
+  /// **'Slide added'**
+  String get versionSlideAdded;
+
+  /// Change list row.
+  ///
+  /// In en, this message translates to:
+  /// **'Slide moved'**
+  String get versionSlideMoved;
+
+  /// Change list row.
+  ///
+  /// In en, this message translates to:
+  /// **'Slide skipped or unskipped'**
+  String get versionSlideSkipToggled;
+
+  /// Change list row of a ghost slide.
+  ///
+  /// In en, this message translates to:
+  /// **'Slide deleted'**
+  String get versionSlideDeleted;
+
+  /// Change list row.
+  ///
+  /// In en, this message translates to:
+  /// **'Background changed'**
+  String get versionSlideBackground;
+
+  /// Change list row.
+  ///
+  /// In en, this message translates to:
+  /// **'Layout changed'**
+  String get versionSlideLayout;
+
+  /// Change list row.
+  ///
+  /// In en, this message translates to:
+  /// **'Transition changed'**
+  String get versionSlideTransition;
+
+  /// Change list row.
+  ///
+  /// In en, this message translates to:
+  /// **'Speaker notes edited'**
+  String get versionSlideNotes;
+
+  /// Change list row.
+  ///
+  /// In en, this message translates to:
+  /// **'Timings changed'**
+  String get versionSlideTimings;
+
+  /// Change list row.
+  ///
+  /// In en, this message translates to:
+  /// **'Master objects shown or hidden'**
+  String get versionSlideMasters;
+
+  /// Change list row of build changes.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 animation changed} other{{count} animations changed}}'**
+  String versionAnimations(int count);
+
+  /// Change list row (top) of a new group.
+  ///
+  /// In en, this message translates to:
+  /// **'Section “{title}” added'**
+  String versionGroupAdded(String title);
+
+  /// Change list row (top) of a deleted group.
+  ///
+  /// In en, this message translates to:
+  /// **'Section “{title}” deleted'**
+  String versionGroupRemoved(String title);
+
+  /// Change list row (top) of a renamed, recolored or moved group.
+  ///
+  /// In en, this message translates to:
+  /// **'Section “{title}” changed'**
+  String versionGroupChanged(String title);
+
+  /// Position in the changes (next/previous).
+  ///
+  /// In en, this message translates to:
+  /// **'{index} of {count}'**
+  String versionChangeCounter(int index, int count);
+
+  /// Title of the Make a copy dialog.
+  ///
+  /// In en, this message translates to:
+  /// **'Copy this version'**
+  String get versionCopyTitle;
+
+  /// Name field of the Make a copy dialog.
+  ///
+  /// In en, this message translates to:
+  /// **'Name'**
+  String get versionCopyNameLabel;
+
+  /// Default name of a copy.
+  ///
+  /// In en, this message translates to:
+  /// **'Copy of {title}'**
+  String versionCopyName(String title);
+
+  /// Validation of the copy name.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter a name'**
+  String get versionCopyNameRequired;
+
+  /// Checkbox of the Make a copy dialog.
+  ///
+  /// In en, this message translates to:
+  /// **'Copy comments'**
+  String get versionCopyComments;
+
+  /// Checkbox of the Make a copy dialog.
+  ///
+  /// In en, this message translates to:
+  /// **'Share with the same people'**
+  String get versionCopySharing;
+
+  /// Toast action that opens the copy.
+  ///
+  /// In en, this message translates to:
+  /// **'Open'**
+  String get versionOpenCopy;
+
+  /// Toast after a version copy.
+  ///
+  /// In en, this message translates to:
+  /// **'Created “{name}”'**
+  String toastVersionCopied(String name);
+
+  /// Error toast.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn’t copy this version'**
+  String get toastVersionCopyFailed;
+
+  /// Error toast.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn’t download this version'**
+  String get toastVersionDownloadFailed;
+
+  /// Title of the overwritten-text review.
+  ///
+  /// In en, this message translates to:
+  /// **'Your text was replaced'**
+  String get conflictsTitle;
+
+  /// Description of the overwritten-text review.
+  ///
+  /// In en, this message translates to:
+  /// **'Newer edits from collaborators replaced text you edited while offline. Choose the texts to put back.'**
+  String get conflictsDescription;
+
+  /// A checkbox of the review.
+  ///
+  /// In en, this message translates to:
+  /// **'{where} — yours: {mine} · now: {theirs} ({who})'**
+  String conflictsRow(String where, String mine, String theirs, String who);
+
+  /// A line of the review for deleted targets.
+  ///
+  /// In en, this message translates to:
+  /// **'{where} was deleted by {who} · yours: {mine}'**
+  String conflictsDeletedBy(String where, String who, String mine);
+
+  /// Where an overwritten text is.
+  ///
+  /// In en, this message translates to:
+  /// **'Slide {number}, {element}'**
+  String conflictsSlideTarget(int number, String element);
+
+  /// Where overwritten notes are.
+  ///
+  /// In en, this message translates to:
+  /// **'Slide {number}, speaker notes'**
+  String conflictsNotesTarget(int number);
+
+  /// Where an overwritten table cell is.
+  ///
+  /// In en, this message translates to:
+  /// **'Slide {number}, table cell'**
+  String conflictsCellTarget(int number);
+
+  /// Where an overwritten text was (target gone).
+  ///
+  /// In en, this message translates to:
+  /// **'A deleted slide'**
+  String get conflictsGoneTarget;
+
+  /// An empty text in the review.
+  ///
+  /// In en, this message translates to:
+  /// **'(empty)'**
+  String get conflictsEmptyValue;
+
+  /// Primary button of the overwritten-text review: puts the checked texts of yours back.
+  ///
+  /// In en, this message translates to:
+  /// **'Restore'**
+  String get conflictsRestoreMine;
+
+  /// Button of the overwritten-text review: copies your texts to the clipboard.
+  ///
+  /// In en, this message translates to:
+  /// **'Copy'**
+  String get conflictsCopyMine;
+
+  /// Button of the review.
+  ///
+  /// In en, this message translates to:
+  /// **'Dismiss all'**
+  String get conflictsDismissAll;
+
+  /// Toast action that opens the review.
+  ///
+  /// In en, this message translates to:
+  /// **'Review'**
+  String get conflictsReview;
+
+  /// Who replaced the texts when several did.
+  ///
+  /// In en, this message translates to:
+  /// **'several people'**
+  String get conflictsSeveralPeople;
+
+  /// Toast after a sync replaced offline text edits.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 of your text edits was} other{{count} of your text edits were}} replaced by newer edits from {who}'**
+  String toastConflicts(int count, String who);
+
+  /// Toast after Copy mine.
+  ///
+  /// In en, this message translates to:
+  /// **'Copied your text'**
+  String get toastConflictsCopied;
+
+  /// Toast when a collaborator restored a version.
+  ///
+  /// In en, this message translates to:
+  /// **'{name} restored a previous version'**
+  String toastVersionRestoredBy(String name);
+
+  /// Undo label of dragging an elbow segment or the bend of a curved connector.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit connector route'**
+  String get cmdLineSetWaypoints;
+
+  /// Title of the assistant side panel (suite 10 §3).
+  ///
+  /// In en, this message translates to:
+  /// **'Assistant'**
+  String get aiPanelTitle;
+
+  /// Wonky Slides AI (Slides 11 §6; SL-43).
+  ///
+  /// In en, this message translates to:
+  /// **'Ask about this presentation, or ask for changes'**
+  String get aiAssistantEmptyTitle;
+
+  /// Wonky Slides AI (Slides 11 §6; SL-43).
+  ///
+  /// In en, this message translates to:
+  /// **'Your messages and this presentation\'s content are sent to an AI provider.'**
+  String get aiAssistantPrivacyNotice;
+
+  /// Wonky Slides AI (Slides 11 §6; SL-43).
+  ///
+  /// In en, this message translates to:
+  /// **'Your messages and this presentation\'s content are sent to {provider}.'**
+  String aiAssistantPrivacyNoticeProvider(String provider);
+
+  /// Wonky Slides AI (Slides 11 §6; SL-43).
+  ///
+  /// In en, this message translates to:
+  /// **'Changes go straight into the presentation'**
+  String get aiAssistantModeEditHint;
+
+  /// Wonky Slides AI (Slides 11 §6; SL-43).
+  ///
+  /// In en, this message translates to:
+  /// **'You can only suggest changes in this presentation'**
+  String get aiAssistantModeEditUnavailable;
+
+  /// Wonky Slides AI (Slides 11 §6; SL-43).
+  ///
+  /// In en, this message translates to:
+  /// **'Changes are previewed before anything is applied'**
+  String get aiAssistantModeSuggestHint;
+
+  /// Wonky Slides AI (Slides 11 §6; SL-43).
+  ///
+  /// In en, this message translates to:
+  /// **'AI isn\'t available'**
+  String get aiUnavailable;
+
+  /// Wonky Slides AI (Slides 11 §6; SL-43).
+  ///
+  /// In en, this message translates to:
+  /// **'AI is turned off'**
+  String get aiTurnedOff;
+
+  /// Wonky Slides AI (Slides 11 §6; SL-43).
+  ///
+  /// In en, this message translates to:
+  /// **'Turn it on in Settings › AI.'**
+  String get aiTurnOnHint;
+
+  /// Context chip of the assistant: the current slide.
+  ///
+  /// In en, this message translates to:
+  /// **'Slide {position}'**
+  String aiChipSlide(int position);
+
+  /// Wonky Slides AI (Slides 11 §6; SL-43).
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 selected object} other{{count} selected objects}}'**
+  String aiChipObjects(int count);
+
+  /// Wonky Slides AI (Slides 11 §6; SL-43).
+  ///
+  /// In en, this message translates to:
+  /// **'Improve this slide'**
+  String get aiQuickImproveSlide;
+
+  /// Wonky Slides AI (Slides 11 §6; SL-43).
+  ///
+  /// In en, this message translates to:
+  /// **'Write speaker notes'**
+  String get aiQuickNotes;
+
+  /// Wonky Slides AI (Slides 11 §6; SL-43).
+  ///
+  /// In en, this message translates to:
+  /// **'Summarize the presentation'**
+  String get aiQuickSummarize;
+
+  /// Wonky Slides AI (Slides 11 §6; SL-43).
+  ///
+  /// In en, this message translates to:
+  /// **'Add an agenda slide'**
+  String get aiQuickAgenda;
+
+  /// Wonky Slides AI (Slides 11 §6; SL-43).
+  ///
+  /// In en, this message translates to:
+  /// **'Check titles and wording'**
+  String get aiQuickConsistency;
+
+  /// Wonky Slides AI (Slides 11 §6; SL-43).
+  ///
+  /// In en, this message translates to:
+  /// **'Generate a presentation…'**
+  String get aiQuickNewDeck;
+
+  /// Undo label of AI changes ("AI: Shorten text").
+  ///
+  /// In en, this message translates to:
+  /// **'AI: {summary}'**
+  String aiUndoLabel(String summary);
+
+  /// Wonky Slides AI (Slides 11 §6; SL-43).
+  ///
+  /// In en, this message translates to:
+  /// **'Assistant changes'**
+  String get aiUndoDefault;
+
+  /// Wonky Slides AI (Slides 11 §6; SL-43).
+  ///
+  /// In en, this message translates to:
+  /// **'The AI request failed'**
+  String get aiFailed;
+
+  /// Wonky Slides AI (Slides 11 §6; SL-43).
+  ///
+  /// In en, this message translates to:
+  /// **'Review changes'**
+  String get aiPreviewReview;
+
+  /// Wonky Slides AI (Slides 11 §6; SL-43).
+  ///
+  /// In en, this message translates to:
+  /// **'Suggested changes applied'**
+  String get aiPreviewAppliedNote;
+
+  /// Wonky Slides AI (Slides 11 §6; SL-43).
+  ///
+  /// In en, this message translates to:
+  /// **'Suggested changes discarded'**
+  String get aiPreviewDiscardedNote;
+
+  /// Wonky Slides AI (Slides 11 §6; SL-43).
+  ///
+  /// In en, this message translates to:
+  /// **'Suggested changes'**
+  String get aiPreviewTitle;
+
+  /// Wonky Slides AI (Slides 11 §6; SL-43).
+  ///
+  /// In en, this message translates to:
+  /// **'Choose the changes to apply. Nothing changes until you apply them.'**
+  String get aiPreviewDescription;
+
+  /// Wonky Slides AI (Slides 11 §6; SL-43).
+  ///
+  /// In en, this message translates to:
+  /// **'Apply selected'**
+  String get aiPreviewApply;
+
+  /// Wonky Slides AI (Slides 11 §6; SL-43).
+  ///
+  /// In en, this message translates to:
+  /// **'Discard'**
+  String get aiPreviewDiscard;
+
+  /// Wonky Slides AI (Slides 11 §6; SL-43).
+  ///
+  /// In en, this message translates to:
+  /// **'Before'**
+  String get aiPreviewBefore;
+
+  /// Wonky Slides AI (Slides 11 §6; SL-43).
+  ///
+  /// In en, this message translates to:
+  /// **'After'**
+  String get aiPreviewAfter;
+
+  /// Wonky Slides AI (Slides 11 §6; SL-43).
+  ///
+  /// In en, this message translates to:
+  /// **'New slide'**
+  String get aiPreviewNewSlide;
+
+  /// Wonky Slides AI (Slides 11 §6; SL-43).
+  ///
+  /// In en, this message translates to:
+  /// **'Deleted'**
+  String get aiPreviewDeletedSlide;
+
+  /// Wonky Slides AI (Slides 11 §6; SL-43).
+  ///
+  /// In en, this message translates to:
+  /// **'Slide {position}'**
+  String aiPreviewSlide(int position);
+
+  /// Wonky Slides AI (Slides 11 §6; SL-43).
+  ///
+  /// In en, this message translates to:
+  /// **'These changes don\'t change a slide\'s look.'**
+  String get aiPreviewNoSlides;
+
+  /// Wonky Slides AI (Slides 11 §6; SL-43).
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 value someone changed meanwhile was kept} other{{count} values someone changed meanwhile were kept}}'**
+  String aiPreviewSkipped(int count);
+
+  /// Wonky Slides AI (Slides 11 §6; SL-43).
+  ///
+  /// In en, this message translates to:
+  /// **'Apply suggested changes'**
+  String get aiPreviewApplyAll;
+
+  /// Wonky Slides AI (Slides 11 §6; SL-43).
+  ///
+  /// In en, this message translates to:
+  /// **'Generate presentation'**
+  String get aiGenerateTitle;
+
+  /// Wonky Slides AI (Slides 11 §6; SL-43).
+  ///
+  /// In en, this message translates to:
+  /// **'Source'**
+  String get aiGenerateSource;
+
+  /// Wonky Slides AI (Slides 11 §6; SL-43).
+  ///
+  /// In en, this message translates to:
+  /// **'Prompt'**
+  String get aiGenerateSourcePrompt;
+
+  /// Wonky Slides AI (Slides 11 §6; SL-43).
+  ///
+  /// In en, this message translates to:
+  /// **'Outline'**
+  String get aiGenerateSourceOutline;
+
+  /// Wonky Slides AI (Slides 11 §6; SL-43).
+  ///
+  /// In en, this message translates to:
+  /// **'What is the presentation about?'**
+  String get aiGeneratePromptLabel;
+
+  /// Wonky Slides AI (Slides 11 §6; SL-43).
+  ///
+  /// In en, this message translates to:
+  /// **'Quarterly review of the Serverpod Cloud launch for the board…'**
+  String get aiGeneratePromptHint;
+
+  /// Wonky Slides AI (Slides 11 §6; SL-43).
+  ///
+  /// In en, this message translates to:
+  /// **'Your outline'**
+  String get aiGenerateOutlineLabel;
+
+  /// Wonky Slides AI (Slides 11 §6; SL-43).
+  ///
+  /// In en, this message translates to:
+  /// **'Paste bullets or Markdown with one heading per slide'**
+  String get aiGenerateOutlineHint;
+
+  /// Wonky Slides AI (Slides 11 §6; SL-43).
+  ///
+  /// In en, this message translates to:
+  /// **'Slides'**
+  String get aiGenerateSlides;
+
+  /// Wonky Slides AI (Slides 11 §6; SL-43).
+  ///
+  /// In en, this message translates to:
+  /// **'Auto'**
+  String get aiGenerateSlidesAuto;
+
+  /// Wonky Slides AI (Slides 11 §6; SL-43).
+  ///
+  /// In en, this message translates to:
+  /// **'Audience'**
+  String get aiGenerateAudience;
+
+  /// Wonky Slides AI (Slides 11 §6; SL-43).
+  ///
+  /// In en, this message translates to:
+  /// **'Tone'**
+  String get aiGenerateTone;
+
+  /// Wonky Slides AI (Slides 11 §6; SL-43).
+  ///
+  /// In en, this message translates to:
+  /// **'Language'**
+  String get aiGenerateLanguage;
+
+  /// Wonky Slides AI (Slides 11 §6; SL-43).
+  ///
+  /// In en, this message translates to:
+  /// **'Same as the text'**
+  String get aiGenerateLanguageAuto;
+
+  /// Wonky Slides AI (Slides 11 §6; SL-43).
+  ///
+  /// In en, this message translates to:
+  /// **'Speaker notes'**
+  String get aiGenerateNotes;
+
+  /// Wonky Slides AI (Slides 11 §6; SL-43).
+  ///
+  /// In en, this message translates to:
+  /// **'Group into sections'**
+  String get aiGenerateGroups;
+
+  /// Wonky Slides AI (Slides 11 §6; SL-43).
+  ///
+  /// In en, this message translates to:
+  /// **'Keep my wording'**
+  String get aiGenerateKeepWording;
+
+  /// Wonky Slides AI (Slides 11 §6; SL-43).
+  ///
+  /// In en, this message translates to:
+  /// **'Insert'**
+  String get aiGenerateInsert;
+
+  /// Wonky Slides AI (Slides 11 §6; SL-43).
+  ///
+  /// In en, this message translates to:
+  /// **'New presentation'**
+  String get aiGenerateInsertNew;
+
+  /// Wonky Slides AI (Slides 11 §6; SL-43).
+  ///
+  /// In en, this message translates to:
+  /// **'After slide {position}'**
+  String aiGenerateInsertAfter(int position);
+
+  /// Wonky Slides AI (Slides 11 §6; SL-43).
+  ///
+  /// In en, this message translates to:
+  /// **'At the end'**
+  String get aiGenerateInsertEnd;
+
+  /// Wonky Slides AI (Slides 11 §6; SL-43).
+  ///
+  /// In en, this message translates to:
+  /// **'Create outline'**
+  String get aiGenerateCreateOutline;
+
+  /// Wonky Slides AI (Slides 11 §6; SL-43).
+  ///
+  /// In en, this message translates to:
+  /// **'Planning the outline…'**
+  String get aiGeneratePlanning;
+
+  /// Wonky Slides AI (Slides 11 §6; SL-43).
+  ///
+  /// In en, this message translates to:
+  /// **'Review the outline'**
+  String get aiGenerateOutlineTitle;
+
+  /// Wonky Slides AI (Slides 11 §6; SL-43).
+  ///
+  /// In en, this message translates to:
+  /// **'Edit titles and roles, reorder or delete slides, then create them.'**
+  String get aiGenerateOutlineDescription;
+
+  /// Wonky Slides AI (Slides 11 §6; SL-43).
+  ///
+  /// In en, this message translates to:
+  /// **'Create slides'**
+  String get aiGenerateBuild;
+
+  /// Wonky Slides AI (Slides 11 §6; SL-43).
+  ///
+  /// In en, this message translates to:
+  /// **'Back'**
+  String get aiGenerateBack;
+
+  /// Wonky Slides AI (Slides 11 §6; SL-43).
+  ///
+  /// In en, this message translates to:
+  /// **'Regenerate'**
+  String get aiGenerateRegenerate;
+
+  /// Wonky Slides AI (Slides 11 §6; SL-43).
+  ///
+  /// In en, this message translates to:
+  /// **'Regenerate this slide'**
+  String get aiGenerateRegenerateSlide;
+
+  /// Wonky Slides AI (Slides 11 §6; SL-43).
+  ///
+  /// In en, this message translates to:
+  /// **'What should change? (optional)'**
+  String get aiGenerateRegenerateHint;
+
+  /// Wonky Slides AI (Slides 11 §6; SL-43).
+  ///
+  /// In en, this message translates to:
+  /// **'Add slide'**
+  String get aiGenerateAddSlide;
+
+  /// Wonky Slides AI (Slides 11 §6; SL-43).
+  ///
+  /// In en, this message translates to:
+  /// **'Delete slide'**
+  String get aiGenerateDeleteSlide;
+
+  /// Wonky Slides AI (Slides 11 §6; SL-43).
+  ///
+  /// In en, this message translates to:
+  /// **'Move up'**
+  String get aiGenerateMoveUp;
+
+  /// Wonky Slides AI (Slides 11 §6; SL-43).
+  ///
+  /// In en, this message translates to:
+  /// **'Move down'**
+  String get aiGenerateMoveDown;
+
+  /// Wonky Slides AI (Slides 11 §6; SL-43).
+  ///
+  /// In en, this message translates to:
+  /// **'Slide title'**
+  String get aiGenerateSlideTitle;
+
+  /// Wonky Slides AI (Slides 11 §6; SL-43).
+  ///
+  /// In en, this message translates to:
+  /// **'Bullets (one per line)'**
+  String get aiGenerateBullets;
+
+  /// Wonky Slides AI (Slides 11 §6; SL-43).
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 slide} other{{count} slides}}'**
+  String aiGenerateSlideCount(int count);
+
+  /// Wonky Slides AI (Slides 11 §6; SL-43).
+  ///
+  /// In en, this message translates to:
+  /// **'Role'**
+  String get aiGenerateRole;
+
+  /// Wonky Slides AI (Slides 11 §6; SL-43).
+  ///
+  /// In en, this message translates to:
+  /// **'Creating slides…'**
+  String get aiGenerateBuilding;
+
+  /// Wonky Slides AI (Slides 11 §6; SL-43).
+  ///
+  /// In en, this message translates to:
+  /// **'Generate slides'**
+  String get aiGenerateUndo;
+
+  /// Wonky Slides AI (Slides 11 §6; SL-43).
+  ///
+  /// In en, this message translates to:
+  /// **'New slide'**
+  String get aiGenerateNewSlide;
+
+  /// Wonky Slides AI (Slides 11 §6; SL-43).
+  ///
+  /// In en, this message translates to:
+  /// **'Describe the presentation first.'**
+  String get aiGenerateEmpty;
+
+  /// Wonky Slides AI (Slides 11 §6; SL-43).
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{Added 1 slide} other{Added {count} slides}}'**
+  String aiGenerateDone(int count);
+
+  /// Wonky Slides AI (Slides 11 §6; SL-43).
+  ///
+  /// In en, this message translates to:
+  /// **'Presentation created'**
+  String get aiGenerateCreated;
+
+  /// Wonky Slides AI (Slides 11 §6; SL-43).
+  ///
+  /// In en, this message translates to:
+  /// **'Title'**
+  String get aiRoleTitle;
+
+  /// Wonky Slides AI (Slides 11 §6; SL-43).
+  ///
+  /// In en, this message translates to:
+  /// **'Section'**
+  String get aiRoleSection;
+
+  /// Wonky Slides AI (Slides 11 §6; SL-43).
+  ///
+  /// In en, this message translates to:
+  /// **'Agenda'**
+  String get aiRoleAgenda;
+
+  /// Wonky Slides AI (Slides 11 §6; SL-43).
+  ///
+  /// In en, this message translates to:
+  /// **'Bullets'**
+  String get aiRoleBullets;
+
+  /// Wonky Slides AI (Slides 11 §6; SL-43).
+  ///
+  /// In en, this message translates to:
+  /// **'Two columns'**
+  String get aiRoleTwoColumn;
+
+  /// Wonky Slides AI (Slides 11 §6; SL-43).
+  ///
+  /// In en, this message translates to:
+  /// **'Quote'**
+  String get aiRoleQuote;
+
+  /// Wonky Slides AI (Slides 11 §6; SL-43).
+  ///
+  /// In en, this message translates to:
+  /// **'Big number'**
+  String get aiRoleBigNumber;
+
+  /// Wonky Slides AI (Slides 11 §6; SL-43).
+  ///
+  /// In en, this message translates to:
+  /// **'Image and text'**
+  String get aiRoleImageText;
+
+  /// Wonky Slides AI (Slides 11 §6; SL-43).
+  ///
+  /// In en, this message translates to:
+  /// **'Code'**
+  String get aiRoleCode;
+
+  /// Wonky Slides AI (Slides 11 §6; SL-43).
+  ///
+  /// In en, this message translates to:
+  /// **'Chart'**
+  String get aiRoleChartPlaceholder;
+
+  /// Wonky Slides AI (Slides 11 §6; SL-43).
+  ///
+  /// In en, this message translates to:
+  /// **'Closing'**
+  String get aiRoleClosing;
+
+  /// Wonky Slides AI (Slides 11 §6; SL-43).
+  ///
+  /// In en, this message translates to:
+  /// **'General'**
+  String get aiAudienceGeneral;
+
+  /// Wonky Slides AI (Slides 11 §6; SL-43).
+  ///
+  /// In en, this message translates to:
+  /// **'Board'**
+  String get aiAudienceBoard;
+
+  /// Wonky Slides AI (Slides 11 §6; SL-43).
+  ///
+  /// In en, this message translates to:
+  /// **'Team'**
+  String get aiAudienceTeam;
+
+  /// Wonky Slides AI (Slides 11 §6; SL-43).
+  ///
+  /// In en, this message translates to:
+  /// **'Customers'**
+  String get aiAudienceCustomers;
+
+  /// Wonky Slides AI (Slides 11 §6; SL-43).
+  ///
+  /// In en, this message translates to:
+  /// **'Students'**
+  String get aiAudienceStudents;
+
+  /// Wonky Slides AI (Slides 11 §6; SL-43).
+  ///
+  /// In en, this message translates to:
+  /// **'Developers'**
+  String get aiAudienceDevelopers;
+
+  /// Wonky Slides AI (Slides 11 §6; SL-43).
+  ///
+  /// In en, this message translates to:
+  /// **'Professional'**
+  String get aiToneProfessional;
+
+  /// Wonky Slides AI (Slides 11 §6; SL-43).
+  ///
+  /// In en, this message translates to:
+  /// **'Friendly'**
+  String get aiToneFriendly;
+
+  /// Wonky Slides AI (Slides 11 §6; SL-43).
+  ///
+  /// In en, this message translates to:
+  /// **'Inspiring'**
+  String get aiToneInspiring;
+
+  /// Wonky Slides AI (Slides 11 §6; SL-43).
+  ///
+  /// In en, this message translates to:
+  /// **'Technical'**
+  String get aiToneTechnical;
+
+  /// Wonky Slides AI (Slides 11 §6; SL-43).
+  ///
+  /// In en, this message translates to:
+  /// **'Concise'**
+  String get aiToneConcise;
+
+  /// Wonky Slides AI (Slides 11 §6; SL-43).
+  ///
+  /// In en, this message translates to:
+  /// **'Rewrite text'**
+  String get aiRewriteTitle;
+
+  /// Wonky Slides AI (Slides 11 §6; SL-43).
+  ///
+  /// In en, this message translates to:
+  /// **'Writing…'**
+  String get aiRewriteWorking;
+
+  /// Wonky Slides AI (Slides 11 §6; SL-43).
+  ///
+  /// In en, this message translates to:
+  /// **'Replace'**
+  String get aiRewriteReplace;
+
+  /// Wonky Slides AI (Slides 11 §6; SL-43).
+  ///
+  /// In en, this message translates to:
+  /// **'Try again'**
+  String get aiRewriteTryAgain;
+
+  /// Wonky Slides AI (Slides 11 §6; SL-43).
+  ///
+  /// In en, this message translates to:
+  /// **'Discard'**
+  String get aiRewriteDiscard;
+
+  /// Wonky Slides AI (Slides 11 §6; SL-43).
+  ///
+  /// In en, this message translates to:
+  /// **'Refine, e.g. even shorter'**
+  String get aiRewriteRefineHint;
+
+  /// Wonky Slides AI (Slides 11 §6; SL-43).
+  ///
+  /// In en, this message translates to:
+  /// **'Refine'**
+  String get aiRewriteRefine;
+
+  /// Wonky Slides AI (Slides 11 §6; SL-43).
+  ///
+  /// In en, this message translates to:
+  /// **'Original'**
+  String get aiRewriteOriginal;
+
+  /// Wonky Slides AI (Slides 11 §6; SL-43).
+  ///
+  /// In en, this message translates to:
+  /// **'Suggestion'**
+  String get aiRewriteResult;
+
+  /// Wonky Slides AI (Slides 11 §6; SL-43).
+  ///
+  /// In en, this message translates to:
+  /// **'The text changed meanwhile. Copy the suggestion or try again.'**
+  String get aiRewriteChanged;
+
+  /// Wonky Slides AI (Slides 11 §6; SL-43).
+  ///
+  /// In en, this message translates to:
+  /// **'Copy'**
+  String get aiRewriteCopy;
+
+  /// Wonky Slides AI (Slides 11 §6; SL-43).
+  ///
+  /// In en, this message translates to:
+  /// **'Copied'**
+  String get aiRewriteCopied;
+
+  /// Wonky Slides AI (Slides 11 §6; SL-43).
+  ///
+  /// In en, this message translates to:
+  /// **'How should the text change?'**
+  String get aiRewriteCustomLabel;
+
+  /// Wonky Slides AI (Slides 11 §6; SL-43).
+  ///
+  /// In en, this message translates to:
+  /// **'Make it sound more confident'**
+  String get aiRewriteCustomHint;
+
+  /// Wonky Slides AI (Slides 11 §6; SL-43).
+  ///
+  /// In en, this message translates to:
+  /// **'Rewrite text'**
+  String get aiRewriteUndo;
+
+  /// Wonky Slides AI (Slides 11 §6; SL-43).
+  ///
+  /// In en, this message translates to:
+  /// **'Select a text box with text'**
+  String get aiRewriteNoText;
+
+  /// Wonky Slides AI (Slides 11 §6; SL-43).
+  ///
+  /// In en, this message translates to:
+  /// **'Punchier'**
+  String get rewritePunchier;
+
+  /// Wonky Slides AI (Slides 11 §6; SL-43).
+  ///
+  /// In en, this message translates to:
+  /// **'Make bullets'**
+  String get rewriteBullets;
+
+  /// Wonky Slides AI (Slides 11 §6; SL-43).
+  ///
+  /// In en, this message translates to:
+  /// **'Make a paragraph'**
+  String get rewriteParagraph;
+
+  /// Wonky Slides AI (Slides 11 §6; SL-43).
+  ///
+  /// In en, this message translates to:
+  /// **'Write speaker notes'**
+  String get aiNotesTitle;
+
+  /// Wonky Slides AI (Slides 11 §6; SL-43).
+  ///
+  /// In en, this message translates to:
+  /// **'Slides'**
+  String get aiNotesScope;
+
+  /// Wonky Slides AI (Slides 11 §6; SL-43).
+  ///
+  /// In en, this message translates to:
+  /// **'Current slide'**
+  String get aiNotesScopeCurrent;
+
+  /// Wonky Slides AI (Slides 11 §6; SL-43).
+  ///
+  /// In en, this message translates to:
+  /// **'Selected slides'**
+  String get aiNotesScopeSelected;
+
+  /// Wonky Slides AI (Slides 11 §6; SL-43).
+  ///
+  /// In en, this message translates to:
+  /// **'All slides'**
+  String get aiNotesScopeAll;
+
+  /// Wonky Slides AI (Slides 11 §6; SL-43).
+  ///
+  /// In en, this message translates to:
+  /// **'Length'**
+  String get aiNotesLength;
+
+  /// Wonky Slides AI (Slides 11 §6; SL-43).
+  ///
+  /// In en, this message translates to:
+  /// **'Brief'**
+  String get aiNotesLengthBrief;
+
+  /// Wonky Slides AI (Slides 11 §6; SL-43).
+  ///
+  /// In en, this message translates to:
+  /// **'Standard'**
+  String get aiNotesLengthStandard;
+
+  /// Wonky Slides AI (Slides 11 §6; SL-43).
+  ///
+  /// In en, this message translates to:
+  /// **'Detailed'**
+  String get aiNotesLengthDetailed;
+
+  /// Wonky Slides AI (Slides 11 §6; SL-43).
+  ///
+  /// In en, this message translates to:
+  /// **'Style'**
+  String get aiNotesStyle;
+
+  /// Wonky Slides AI (Slides 11 §6; SL-43).
+  ///
+  /// In en, this message translates to:
+  /// **'Script'**
+  String get aiNotesStyleScript;
+
+  /// Wonky Slides AI (Slides 11 §6; SL-43).
+  ///
+  /// In en, this message translates to:
+  /// **'Bullet points'**
+  String get aiNotesStyleBullets;
+
+  /// Wonky Slides AI (Slides 11 §6; SL-43).
+  ///
+  /// In en, this message translates to:
+  /// **'Existing notes'**
+  String get aiNotesMode;
+
+  /// Wonky Slides AI (Slides 11 §6; SL-43).
+  ///
+  /// In en, this message translates to:
+  /// **'Only write empty notes'**
+  String get aiNotesModeFillEmpty;
+
+  /// Wonky Slides AI (Slides 11 §6; SL-43).
+  ///
+  /// In en, this message translates to:
+  /// **'Add to them'**
+  String get aiNotesModeAppend;
+
+  /// Wonky Slides AI (Slides 11 §6; SL-43).
+  ///
+  /// In en, this message translates to:
+  /// **'Replace them'**
+  String get aiNotesModeReplace;
+
+  /// Wonky Slides AI (Slides 11 §6; SL-43).
+  ///
+  /// In en, this message translates to:
+  /// **'Write notes'**
+  String get aiNotesGenerate;
+
+  /// Wonky Slides AI (Slides 11 §6; SL-43).
+  ///
+  /// In en, this message translates to:
+  /// **'Writing notes…'**
+  String get aiNotesWorking;
+
+  /// Wonky Slides AI (Slides 11 §6; SL-43).
+  ///
+  /// In en, this message translates to:
+  /// **'Review speaker notes'**
+  String get aiNotesReviewTitle;
+
+  /// Wonky Slides AI (Slides 11 §6; SL-43).
+  ///
+  /// In en, this message translates to:
+  /// **'Apply'**
+  String get aiNotesApply;
+
+  /// Wonky Slides AI (Slides 11 §6; SL-43).
+  ///
+  /// In en, this message translates to:
+  /// **'No slide needs notes.'**
+  String get aiNotesNone;
+
+  /// Wonky Slides AI (Slides 11 §6; SL-43).
+  ///
+  /// In en, this message translates to:
+  /// **'Current notes'**
+  String get aiNotesExisting;
+
+  /// Wonky Slides AI (Slides 11 §6; SL-43).
+  ///
+  /// In en, this message translates to:
+  /// **'Write speaker notes'**
+  String get aiNotesUndo;
+
+  /// Wonky Slides AI (Slides 11 §6; SL-43).
+  ///
+  /// In en, this message translates to:
+  /// **'Generate alt text'**
+  String get aiAltTitle;
+
+  /// Wonky Slides AI (Slides 11 §6; SL-43).
+  ///
+  /// In en, this message translates to:
+  /// **'Describing objects…'**
+  String get aiAltWorking;
+
+  /// Wonky Slides AI (Slides 11 §6; SL-43).
+  ///
+  /// In en, this message translates to:
+  /// **'Apply'**
+  String get aiAltApply;
+
+  /// Wonky Slides AI (Slides 11 §6; SL-43).
+  ///
+  /// In en, this message translates to:
+  /// **'Nothing needs alt text.'**
+  String get aiAltNone;
+
+  /// Wonky Slides AI (Slides 11 §6; SL-43).
+  ///
+  /// In en, this message translates to:
+  /// **'This kind of object can\'t be described.'**
+  String get aiAltSkippedUnsupported;
+
+  /// Wonky Slides AI (Slides 11 §6; SL-43).
+  ///
+  /// In en, this message translates to:
+  /// **'No description was proposed.'**
+  String get aiAltSkippedEmpty;
+
+  /// Wonky Slides AI (Slides 11 §6; SL-43).
+  ///
+  /// In en, this message translates to:
+  /// **'Generate alt text'**
+  String get aiAltUndo;
+
+  /// Wonky Slides AI (Slides 11 §6; SL-43).
+  ///
+  /// In en, this message translates to:
+  /// **'{kind} on slide {position}'**
+  String aiAltObject(String kind, int position);
+
+  /// Wonky Slides AI (Slides 11 §6; SL-43).
+  ///
+  /// In en, this message translates to:
+  /// **'Generate with AI'**
+  String get a11yGenerateAlt;
+
+  /// Wonky Slides AI (Slides 11 §6; SL-43).
+  ///
+  /// In en, this message translates to:
+  /// **'Generate missing alt text'**
+  String get a11yGenerateMissingAlt;
+
+  /// Wonky Slides AI (Slides 11 §6; SL-43).
+  ///
+  /// In en, this message translates to:
+  /// **'Design ideas'**
+  String get aiDesignTitle;
+
+  /// Wonky Slides AI (Slides 11 §6; SL-43).
+  ///
+  /// In en, this message translates to:
+  /// **'No ideas for this slide — add some content'**
+  String get aiDesignEmpty;
+
+  /// Wonky Slides AI (Slides 11 §6; SL-43).
+  ///
+  /// In en, this message translates to:
+  /// **'Select a slide to see design ideas'**
+  String get aiDesignNoSlide;
+
+  /// Wonky Slides AI (Slides 11 §6; SL-43).
+  ///
+  /// In en, this message translates to:
+  /// **'Refresh'**
+  String get aiDesignRefresh;
+
+  /// Wonky Slides AI (Slides 11 §6; SL-43).
+  ///
+  /// In en, this message translates to:
+  /// **'More ideas'**
+  String get aiDesignMore;
+
+  /// Wonky Slides AI (Slides 11 §6; SL-43).
+  ///
+  /// In en, this message translates to:
+  /// **'Ranking with AI…'**
+  String get aiDesignRanking;
+
+  /// Wonky Slides AI (Slides 11 §6; SL-43).
+  ///
+  /// In en, this message translates to:
+  /// **'Layout ideas for this slide'**
+  String get aiDesignLayoutIdeas;
+
+  /// Wonky Slides AI (Slides 11 §6; SL-43).
+  ///
+  /// In en, this message translates to:
+  /// **'Ranked by AI for this slide'**
+  String get aiDesignAiRanked;
+
+  /// Wonky Slides AI (Slides 11 §6; SL-43).
+  ///
+  /// In en, this message translates to:
+  /// **'Apply design idea'**
+  String get aiDesignUndo;
+
+  /// Wonky Slides AI (Slides 11 §6; SL-43).
+  ///
+  /// In en, this message translates to:
+  /// **'Apply {name}'**
+  String aiDesignApply(String name);
+
+  /// Wonky Slides AI (Slides 11 §6; SL-43).
+  ///
+  /// In en, this message translates to:
+  /// **'Apply design idea'**
+  String get cmdAiApplyDesignIdea;
+
+  /// Wonky Slides AI (Slides 11 §6; SL-43).
+  ///
+  /// In en, this message translates to:
+  /// **'Design ideas'**
+  String get cmdPanelDesignIdeas;
+
+  /// Wonky Slides AI (Slides 11 §6; SL-43).
+  ///
+  /// In en, this message translates to:
+  /// **'Apply suggested changes'**
+  String get cmdAiApplyPreview;
+
+  /// Wonky Slides AI (Slides 11 §6; SL-43).
+  ///
+  /// In en, this message translates to:
+  /// **'Discard suggested changes'**
+  String get cmdAiDiscardPreview;
+
+  /// Wonky Slides AI (Slides 11 §6; SL-43).
+  ///
+  /// In en, this message translates to:
+  /// **'Assistant: edit or suggest'**
+  String get cmdAiSetApplyMode;
+
+  /// Wonky Slides AI (Slides 11 §6; SL-43).
+  ///
+  /// In en, this message translates to:
+  /// **'AI isn\'t available'**
+  String get reasonAiUnavailable;
+
+  /// Wonky Slides AI (Slides 11 §6; SL-43).
+  ///
+  /// In en, this message translates to:
+  /// **'Select a text box with text'**
+  String get reasonNoTextToRewrite;
+
+  /// Wonky Slides AI (Slides 11 §6; SL-43).
+  ///
+  /// In en, this message translates to:
+  /// **'No suggested changes to review'**
+  String get reasonNoPreview;
 }
 
 class _SlidesLocalizationsDelegate

@@ -2,9 +2,12 @@ import 'dart:convert';
 import 'dart:math' as math;
 
 import 'package:test/test.dart';
+import 'package:wonky_slides_core/charts.dart';
+import 'package:wonky_code/wonky_code.dart' show HighlightSteps;
 import 'package:wonky_slides_core/copy.dart';
 import 'package:wonky_slides_core/maintenance.dart';
 import 'package:wonky_slides_core/model.dart';
+import 'package:wonky_slides_core/motion.dart';
 import 'package:wonky_slides_core/ops.dart' show SlidesPlanContext;
 import 'package:wonky_slides_core/scene.dart';
 import 'package:wonky_slides_core/schema.dart';
@@ -145,17 +148,22 @@ List<String> _textChecks(SlideScene scene, int base, String label) {
 }
 
 void main() {
-  test('Given the registry then it holds the five M9 templates with unique '
-      'keys, uuids, categories and themes', () {
+  test('Given the registry then it holds the nine templates of the gallery '
+      'strip (with Blank, ten) in strip order with unique keys, uuids, '
+      'categories and themes', () {
     final keys = [for (final t in SlidesTemplates.all) t.key];
     expect(keys, [
       'slides.pitch-deck',
       'slides.project-kickoff',
-      'slides.weekly-update',
+      'slides.quarterly-review',
+      'slides.tech-talk',
       'slides.lesson',
+      'slides.product-launch',
+      'slides.weekly-update',
+      'slides.portfolio',
       'slides.workshop',
     ]);
-    expect({for (final t in SlidesTemplates.all) t.uuid}, hasLength(5));
+    expect({for (final t in SlidesTemplates.all) t.uuid}, hasLength(9));
     for (final t in SlidesTemplates.all) {
       expect(BuiltInThemes.byKey(t.themeKey), isNotNull, reason: t.key);
       expect({
@@ -168,8 +176,8 @@ void main() {
       expect(SlidesTemplates.byUuid(t.uuid.toUpperCase()), same(t));
       expect(SlidesTemplates.byKey(t.key), same(t));
     }
-    // Five different themes: five different looks in the gallery.
-    expect({for (final t in SlidesTemplates.all) t.themeKey}, hasLength(5));
+    // Nine different themes: nine different looks in the gallery.
+    expect({for (final t in SlidesTemplates.all) t.themeKey}, hasLength(9));
   });
 
   test('Given a key when deriving the gallery uuid then it is UUIDv5 of '
@@ -255,6 +263,163 @@ void main() {
     );
   });
 
+  for (final theme in ['wonky', 'paper', 'studio']) {
+    test('Given a statement slide on $theme when it is laid out then its '
+        'sentence has no bullet (the layout turns the master body\'s list '
+        'off, SL-36 regression)', () {
+      final b = TemplateDeckBuilder(
+        deckId: _deckId,
+        title: 'Statement',
+        themeKey: theme,
+        ctx: SlidesPlanContext(
+          userId: _userId,
+          now: _now,
+          ids: SequentialIdGenerator(1),
+        ),
+      );
+      final id = b.slide('statement', text: {'body': 'One clear sentence.'});
+      final bullets = b.slide(
+        'titleBody',
+        text: {'title': 'List', 'body': 'Still a bullet'},
+      );
+      List<String?> lists(String slideId) {
+        final slide = SlideResolver(b.model).resolve(slideId)!;
+        return [
+          for (final e in slide.elements)
+            if (e.placeholderType != SlidePlaceholderType.title)
+              for (final p in TextParagraphs.build(
+                TextBody.fromJson(e.record.text),
+                TextStyleResolver().resolve(
+                  slide.theme,
+                  box: e.textStyle,
+                  defaultStyle: 'body',
+                ),
+              ))
+                p.list,
+        ];
+      }
+
+      expect(lists(id), [null]);
+      expect(lists(bullets), ['bullet']);
+    });
+  }
+
+  group('Given the M10 templates (SL-36)', () {
+    SlidesTemplateDeck build(String key) => _build(SlidesTemplates.byKey(key)!);
+
+    test('when counting their motion then together they use builds, 3D '
+        'transitions, Magic Move, code steps with type-in and charts', () {
+      final types = <String>{};
+      final effects = <String>{};
+      var builds = 0;
+      for (final key in [
+        'slides.quarterly-review',
+        'slides.tech-talk',
+        'slides.product-launch',
+        'slides.portfolio',
+      ]) {
+        final m = build(key).model;
+        for (final s in m.slides) {
+          types.add(TransitionSpec.effective(s.transitionJson, null).type);
+          for (final b in m.buildsOf(s.id)) {
+            builds++;
+            effects.add(b.effect);
+          }
+        }
+      }
+      expect(builds, greaterThan(30));
+      expect(types, containsAll(['magicMove', 'cube', 'doorway', 'flip']));
+      expect(
+        effects,
+        containsAll([
+          'chartGrow',
+          'chartCamera',
+          'codeState',
+          'codeHighlight',
+          'lineDraw',
+          'pop',
+          'rise',
+        ]),
+      );
+    });
+
+    for (final (key, title) in [
+      ('slides.tech-talk', 'A stream of clicks'),
+      ('slides.product-launch', 'Meet Orbit'),
+      ('slides.portfolio', 'Harbor'),
+    ]) {
+      test('when $key enters its Magic Move slide "$title" then the keyed '
+          'objects of the previous slide match', () {
+        final m = build(key).model;
+        final to = m.slides.lastWhere((s) {
+          final t = TransitionSpec.effective(s.transitionJson, null);
+          return t.type == 'magicMove';
+        });
+        final from = m.slides[m.slides.indexOf(to) - 1];
+        final plan = TransitionCompiler.between(
+          m,
+          fromSlideId: from.id,
+          toSlideId: to.id,
+        );
+        expect(plan.type, 'magicMove');
+        expect(plan.magicMove!.hasMatches, isTrue);
+        final keyed = {
+          for (final e in m.allElementsOf(to.id))
+            if (e.matchKey.startsWith(key.substring(7))) e.id,
+        };
+        expect(keyed, isNotEmpty);
+        expect({
+          for (final p in plan.magicMove!.matches.pairs) p.to.id,
+        }, containsAll(keyed));
+      });
+    }
+
+    test('when the tech talk types its second code state then the code '
+        'builds play a type-in and three highlight steps', () {
+      final m = build('slides.tech-talk').model;
+      final slide = m.slides.firstWhere(
+        (s) => m.buildsOf(s.id).any((b) => b.effect == 'codeState'),
+      );
+      final code = m
+          .allElementsOf(slide.id)
+          .firstWhere((e) => e.kind == ElementKind.code);
+      final states = m.codeStatesOf(code.id);
+      expect(states, hasLength(2));
+      expect(HighlightSteps.count(states[1].highlight), 3);
+      final t = SlideTimelineCompiler.compile(
+        SlideMotionInput.fromDeck(m, slide.id),
+      );
+      expect(t.warnings, isEmpty);
+      expect(t.stepCount, 4);
+      // The type-in is brisk enough for a talk (07 §5.3 maxDurationMs).
+      expect(t.steps[1].durationMs, inInclusiveRange(1000, 5000));
+    });
+
+    test('when the quarterly review builds its charts then they are static '
+        'sample snapshots, one in 3D, that grow by series', () {
+      final m = build('slides.quarterly-review').model;
+      final charts = [
+        for (final s in m.slides)
+          for (final e in m.allElementsOf(s.id))
+            if (e.kind == ElementKind.chart) e,
+      ];
+      expect(charts, hasLength(2));
+      for (final c in charts) {
+        final d = ChartElementData.fromJson(c.dataJson);
+        expect(d.source, SlideChartSource.static);
+        expect(d.style.useDeckTheme, isTrue);
+        expect(d.snapshot!.dataSnapshot.data.series, hasLength(2));
+      }
+      expect(
+        [
+          for (final c in charts)
+            ChartElementData.fromJson(c.dataJson).snapshot!.spec.is3D,
+        ],
+        [false, true],
+      );
+    });
+  });
+
   for (final t in SlidesTemplates.all) {
     group('Given template ${t.key}', () {
       late SlidesTemplateDeck built;
@@ -265,6 +430,28 @@ void main() {
         expect(built.warnings, isEmpty);
         expect(DeckMaintenance.detect(built.model), isEmpty);
         expect(DeckMaintenance.repairOp(built.model), isNull);
+      });
+
+      test('when built then it carries its default transition and every '
+          'slide\'s builds compile without a timeline warning', () {
+        final m = built.model;
+        final defaults = DeckMotionDefaults.decode(m.deck!.defaultsJson);
+        expect(defaults.transition, isNotNull);
+        expect(defaults.transition!.isNone, isFalse);
+        final warnings = <String>[];
+        for (final s in m.slides) {
+          final t = SlideTimelineCompiler.compile(
+            SlideMotionInput.fromDeck(
+              m,
+              s.id,
+              chartShapeOf: SlideChartMotion.shapes(m),
+            ),
+          );
+          for (final w in t.warnings) {
+            warnings.add('slide ${m.slides.indexOf(s) + 1}: ${w.code}');
+          }
+        }
+        expect(warnings, isEmpty);
       });
 
       test('when built then it has a title slide, 8+ slides, its theme and '
@@ -287,8 +474,16 @@ void main() {
         for (final e in _slideElements(m)) {
           if (e.placeholderType != null) {
             if (e.kind == ElementKind.code) {
-              expect(m.codeStatesOf(e.id), hasLength(1));
-              expect(m.codeStatesOf(e.id).single.code, isNotEmpty);
+              expect(m.codeStatesOf(e.id), isNotEmpty);
+              for (final st in m.codeStatesOf(e.id)) {
+                expect(st.code, isNotEmpty);
+              }
+            } else if (e.kind == ElementKind.chart) {
+              expect(
+                ChartElementData.fromJson(e.dataJson).snapshot,
+                isNotNull,
+                reason: 'chart placeholder on ${e.slideId}',
+              );
             } else {
               expect(
                 SlidesText.plainText(e.text).trim(),

@@ -11,6 +11,7 @@ import 'package:wonky_slides_core/pdf.dart';
 import 'package:wonky_ui/wonky_ui.dart';
 
 import '../../commands/slides_command.dart' show editorOfServices;
+import '../../config/slides_features.dart';
 import '../../l10n/slides_l10n.dart';
 import '../editor_screen/deck_editor_controller.dart';
 import 'pdf_view.dart';
@@ -450,7 +451,7 @@ class _PrintPreviewScreenState extends State<PrintPreviewScreen>
     if (c == null) return const SizedBox.shrink();
     return PrintSettingsPanel(
       controller: c,
-      canPrintBuilds: false,
+      canPrintBuilds: SlidesFeatures.isOn(SlidesFeature.printBuilds),
       hasSelection: (_editor?.selectedSlideIds.length ?? 0) > 1,
     );
   }

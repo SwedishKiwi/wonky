@@ -886,18 +886,6 @@ class SlidesLocalizationsEn extends SlidesLocalizations {
   String get animateTabOrder => 'Order';
 
   @override
-  String get animateTransitionEmpty =>
-      'Slide transitions arrive here soon: effects, duration and how the slide advances.';
-
-  @override
-  String get animateBuildEmpty =>
-      'Builds arrive here soon: select an object to animate it in, out or in place.';
-
-  @override
-  String get animateOrderEmpty =>
-      'The build order of this slide will be listed here.';
-
-  @override
   String get appearanceLight => 'Light';
 
   @override
@@ -935,15 +923,6 @@ class SlidesLocalizationsEn extends SlidesLocalizations {
 
   @override
   String get badgeViewing => 'Viewing';
-
-  @override
-  String get buildAppear => 'Appear';
-
-  @override
-  String get buildFlyIn => 'Fly in';
-
-  @override
-  String get buildZoom => 'Zoom';
 
   @override
   String get canvasChooseLayout => 'Choose a layout';
@@ -1053,10 +1032,10 @@ class SlidesLocalizationsEn extends SlidesLocalizations {
   String get downloadPdf => 'PDF document (.pdf)';
 
   @override
-  String get downloadPng => 'PNG image (current slide)';
+  String get downloadPng => 'PNG image (current slide)…';
 
   @override
-  String get downloadPngZip => 'PNG images (all slides, .zip)';
+  String get downloadPngZip => 'PNG images (all slides, .zip)…';
 
   @override
   String get downloadMarkdown => 'Outline as Markdown (.md)';
@@ -1181,13 +1160,6 @@ class SlidesLocalizationsEn extends SlidesLocalizations {
 
   @override
   String get listOptions => 'List options…';
-
-  @override
-  String get mastersSoonTitle => 'Editing masters and layouts is coming soon';
-
-  @override
-  String get mastersSoonBody =>
-      'You’ll edit the theme’s masters and layouts here. Your slides are unchanged.';
 
   @override
   String get menuAddToGroup => 'Add to group';
@@ -1458,10 +1430,6 @@ class SlidesLocalizationsEn extends SlidesLocalizations {
   String get outlineNoTitle => '(no title)';
 
   @override
-  String get outlineReadOnlyNote =>
-      'Outline view shows each slide’s title and main text. Editing here comes soon.';
-
-  @override
   String get pasteKeepSource => 'Keep source formatting';
 
   @override
@@ -1705,7 +1673,7 @@ class SlidesLocalizationsEn extends SlidesLocalizations {
   String get settingsCode => 'Code';
 
   @override
-  String get settingsCodeFontSize => 'Code font size';
+  String get settingsCodeFontSize => 'Largest code font size';
 
   @override
   String get settingsCodeLanguage => 'Default code language';
@@ -1911,21 +1879,6 @@ class SlidesLocalizationsEn extends SlidesLocalizations {
 
   @override
   String get toolbarTransition => 'Transition';
-
-  @override
-  String get transitionNone => 'None';
-
-  @override
-  String get transitionFade => 'Fade';
-
-  @override
-  String get transitionPush => 'Push';
-
-  @override
-  String get transitionWipe => 'Wipe';
-
-  @override
-  String get transitionDissolve => 'Dissolve';
 
   @override
   String get unitsSu => 'Slide units';
@@ -2269,6 +2222,66 @@ class SlidesLocalizationsEn extends SlidesLocalizations {
 
   @override
   String get printBuilds => 'Print each build stage';
+
+  @override
+  String get printFinalState => 'Show final animation state';
+
+  @override
+  String get pngDialogTitle => 'Download PNG';
+
+  @override
+  String get pngDialogHint => 'Several images download as one .zip file.';
+
+  @override
+  String get pngSlides => 'Slides';
+
+  @override
+  String get pngSlidesCurrent => 'Current slide';
+
+  @override
+  String get pngSlidesSelection => 'Selected slides';
+
+  @override
+  String get pngSlidesAll => 'All slides';
+
+  @override
+  String get pngSize => 'Size';
+
+  @override
+  String pngSizeOption(int scale, int width, int height) {
+    return '$scale× · $width × $height px';
+  }
+
+  @override
+  String get pngFrames => 'Builds';
+
+  @override
+  String get pngFramesPrint => 'All content (as printed)';
+
+  @override
+  String get pngFramesFinal => 'After the last build';
+
+  @override
+  String get pngFramesBuilds => 'Each build stage (one image per step)';
+
+  @override
+  String get pngTransparent => 'Transparent background';
+
+  @override
+  String get pngDownload => 'Download';
+
+  @override
+  String pngEntrySlide(String number) {
+    return 'Slide $number';
+  }
+
+  @override
+  String pngEntryStep(String number, int step) {
+    return 'Slide $number, step $step';
+  }
+
+  @override
+  String get pngNothingToExport => 'There are no slides to export';
 
   @override
   String get printSkipped => 'Include skipped slides';
@@ -3772,6 +3785,12 @@ class SlidesLocalizationsEn extends SlidesLocalizations {
   String get presentEndScreen => 'End of presentation — click to exit';
 
   @override
+  String get presentKioskExitHold => 'Keep holding Esc to exit';
+
+  @override
+  String get presenterReducedEffects => 'Reduced effects';
+
+  @override
   String get presentCatchingUp => 'Catching up…';
 
   @override
@@ -4237,6 +4256,3574 @@ class SlidesLocalizationsEn extends SlidesLocalizations {
   String toastFindBodyLocked(String name) {
     return '$name is editing this text';
   }
+
+  @override
+  String get cmdLayoutAdd => 'New layout';
+
+  @override
+  String get cmdLayoutDuplicate => 'Duplicate layout';
+
+  @override
+  String get cmdLayoutRename => 'Rename layout…';
+
+  @override
+  String get cmdLayoutMove => 'Move layout';
+
+  @override
+  String get cmdLayoutDelete => 'Delete layout';
+
+  @override
+  String get cmdLayoutSetBackground => 'Layout background';
+
+  @override
+  String get cmdLayoutSetHideMasterElements => 'Hide master objects';
+
+  @override
+  String get cmdLayoutToggleHidden => 'Hide in layout picker';
+
+  @override
+  String get cmdMasterAdd => 'New master';
+
+  @override
+  String get cmdMasterDuplicate => 'Duplicate master';
+
+  @override
+  String get cmdMasterRename => 'Rename master…';
+
+  @override
+  String get cmdMasterDelete => 'Delete master';
+
+  @override
+  String get cmdMasterSetBackground => 'Master background';
+
+  @override
+  String get cmdMastersExit => 'Close masters view';
+
+  @override
+  String get cmdThemeUpdate => 'Edit theme';
+
+  @override
+  String get cmdThemeDeriveDarkColors => 'Derive dark colors';
+
+  @override
+  String get cmdThemeResetToBuiltIn => 'Reset to built-in theme';
+
+  @override
+  String get reasonNoLayout => 'Select a layout';
+
+  @override
+  String get reasonNoMaster => 'Select a master';
+
+  @override
+  String get reasonLastLayout => 'A master needs at least one layout';
+
+  @override
+  String get reasonLastMaster => 'A theme needs at least one master';
+
+  @override
+  String reasonLayoutUsed(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Used by $count slides — apply another layout first',
+      one: 'Used by 1 slide — apply another layout first',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String reasonMasterUsed(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Used by $count slides — apply another layout first',
+      one: 'Used by 1 slide — apply another layout first',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get reasonMastersOnly => 'Open Edit masters and layouts first';
+
+  @override
+  String get reasonNotBuiltInTheme =>
+      'This theme isn’t based on a built-in theme';
+
+  @override
+  String layoutDefaultName(int n) {
+    return 'Layout $n';
+  }
+
+  @override
+  String masterDefaultName(int n) {
+    return 'Master $n';
+  }
+
+  @override
+  String get layoutRenameTitle => 'Rename layout';
+
+  @override
+  String get masterRenameTitle => 'Rename master';
+
+  @override
+  String get layoutDeleteTitle => 'Delete layout?';
+
+  @override
+  String layoutDeleteUsedBody(int count, String name, String replacement) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other:
+          '$count slides use “$name”. Apply “$replacement” to them and delete the layout?',
+      one:
+          '1 slide uses “$name”. Apply “$replacement” to it and delete the layout?',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get layoutDeleteApplyAndDelete => 'Apply and delete';
+
+  @override
+  String placeholderPrompt(String type) {
+    String _temp0 = intl.Intl.selectLogic(type, {
+      'title': 'Click to add title',
+      'subtitle': 'Click to add subtitle',
+      'body': 'Click to add text',
+      'picture': 'Click to add a picture',
+      'chart': 'Click to add a chart',
+      'table': 'Click to add a table',
+      'code': 'Click to add code',
+      'caption': 'Click to add a caption',
+      'bigNumber': '100%',
+      'quote': 'Click to add a quote',
+      'attribution': 'Name, role',
+      'object': 'Click to add an object',
+      'other': 'Click to add text',
+    });
+    return '$_temp0';
+  }
+
+  @override
+  String get inspectorLayout => 'Layout';
+
+  @override
+  String get inspectorMaster => 'Master';
+
+  @override
+  String get inspectorTheme => 'Theme';
+
+  @override
+  String get mastersNavigatorLabel => 'Masters and layouts';
+
+  @override
+  String mastersMasterName(String name) {
+    return 'Master · $name';
+  }
+
+  @override
+  String get mastersHiddenInPicker => 'Hidden in layout picker';
+
+  @override
+  String get mastersMoveUp => 'Move up';
+
+  @override
+  String get mastersMoveDown => 'Move down';
+
+  @override
+  String mastersBannerLayout(String name, String theme, int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other:
+          'Editing layout “$name” of theme $theme — changes apply to $count slides',
+      one: 'Editing layout “$name” of theme $theme — changes apply to 1 slide',
+      zero: 'Editing layout “$name” of theme $theme — no slides use it yet',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String mastersBannerMaster(String name, String theme, int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other:
+          'Editing master “$name” of theme $theme — changes apply to $count slides',
+      one: 'Editing master “$name” of theme $theme — changes apply to 1 slide',
+      zero: 'Editing master “$name” of theme $theme — no slides use it yet',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get mastersBannerNone => 'This presentation has no layouts to edit';
+
+  @override
+  String get mastersDone => 'Done';
+
+  @override
+  String mastersLayoutSemantics(String name) {
+    return 'Layout $name';
+  }
+
+  @override
+  String mastersMasterSemantics(String name) {
+    return 'Master $name';
+  }
+
+  @override
+  String get mastersSectionProperties => 'Properties';
+
+  @override
+  String get mastersSectionPlaceholders => 'Placeholders';
+
+  @override
+  String get mastersNoPlaceholders => 'No placeholders yet';
+
+  @override
+  String get mastersChoosePlaceholder => 'Add…';
+
+  @override
+  String mastersOfTheme(String name) {
+    return 'Theme $name';
+  }
+
+  @override
+  String get mastersBackgroundUseMaster => 'Use master background';
+
+  @override
+  String get mastersBackgroundUseTheme => 'Use theme background';
+
+  @override
+  String get themeSectionColors => 'Colors';
+
+  @override
+  String get themeSectionFonts => 'Fonts';
+
+  @override
+  String get themeSectionTextStyles => 'Text styles';
+
+  @override
+  String get themeSectionObjects => 'Objects';
+
+  @override
+  String get themeSectionTables => 'Tables';
+
+  @override
+  String get themeSectionCharts => 'Charts';
+
+  @override
+  String get themeEditorNoTheme => 'This presentation has no theme';
+
+  @override
+  String themeEditorBasedOn(String name) {
+    return 'Based on $name';
+  }
+
+  @override
+  String themeContrastPair(String foreground, String background) {
+    return '$foreground on $background';
+  }
+
+  @override
+  String themeContrastPasses(String pair, String ratio, String required) {
+    return '$pair: contrast $ratio (needs $required:1)';
+  }
+
+  @override
+  String themeContrastFails(String pair, String ratio, String required) {
+    return '$pair: contrast $ratio is too low (needs $required:1)';
+  }
+
+  @override
+  String get themeEditorCustomColors => 'Custom colors';
+
+  @override
+  String get themeEditorCustomColorName => 'Custom color name';
+
+  @override
+  String themeEditorCustomColorDefault(int n) {
+    return 'Custom $n';
+  }
+
+  @override
+  String get themeEditorAddCustomColor => 'Add custom color';
+
+  @override
+  String themeEditorRemoveCustomColor(String name) {
+    return 'Remove $name';
+  }
+
+  @override
+  String themeEditorWeight(String weight) {
+    String _temp0 = intl.Intl.selectLogic(weight, {
+      '300': 'Light',
+      '400': 'Regular',
+      '500': 'Medium',
+      '600': 'Semibold',
+      '700': 'Bold',
+      '800': 'Extra bold',
+      'other': '$weight',
+    });
+    return '$_temp0';
+  }
+
+  @override
+  String themeEditorFontFallback(String family, String fallback) {
+    return '$family isn’t available; $fallback is used';
+  }
+
+  @override
+  String get themeEditorItalic => 'Italic';
+
+  @override
+  String get themeEditorLetterSpacing => 'Letter spacing';
+
+  @override
+  String get themeEditorCaps => 'Capitals';
+
+  @override
+  String get themeEditorLists => 'Lists';
+
+  @override
+  String themeEditorListLevel(int n) {
+    return 'Level $n';
+  }
+
+  @override
+  String get themeEditorBulletColor => 'Bullet color';
+
+  @override
+  String get themeEditorIndent => 'Indent per level';
+
+  @override
+  String get themeEditorBackgroundNotSolid =>
+      'The background is a gradient or an image; picking a color replaces it.';
+
+  @override
+  String get themeEditorDarkBackground => 'Different in dark appearance';
+
+  @override
+  String get themeEditorTextBoxes => 'Text boxes';
+
+  @override
+  String get themeEditorShapes => 'Shapes';
+
+  @override
+  String get themeEditorLines => 'Lines';
+
+  @override
+  String get themeEditorIcons => 'Icons';
+
+  @override
+  String get themeEditorTextColor => 'Text color';
+
+  @override
+  String get themeEditorShadowBlur => 'Blur';
+
+  @override
+  String get themeEditorShadowOffset => 'Offset';
+
+  @override
+  String get themeEditorQuickStyles => 'Quick styles';
+
+  @override
+  String themeEditorQuickStyle(int n) {
+    return 'Style $n';
+  }
+
+  @override
+  String get themeEditorHeaderFill => 'Header fill';
+
+  @override
+  String get themeEditorHeaderText => 'Header text';
+
+  @override
+  String get themeEditorBodyFill => 'Body fill';
+
+  @override
+  String get themeEditorBandFill => 'Banded rows';
+
+  @override
+  String get themeEditorCornerRadius => 'Corner radius';
+
+  @override
+  String get themeEditorLightPalette => 'Light palette';
+
+  @override
+  String get themeEditorDarkPalette => 'Dark palette';
+
+  @override
+  String get themeEditorWindowChrome => 'Chrome';
+
+  @override
+  String get themeEditorChromeTab => 'Tab';
+
+  @override
+  String get themeEditorChromeWindow => 'Window';
+
+  @override
+  String get themeEditorChromeCaption => 'Caption';
+
+  @override
+  String get themeEditorShadowSoft => 'Soft';
+
+  @override
+  String get themeEditorShadowStrong => 'Strong';
+
+  @override
+  String themeEditorSeries(int n) {
+    return 'Series $n';
+  }
+
+  @override
+  String get themeEditorGridlines => 'Gridlines';
+
+  @override
+  String get themeEditorAxis => 'Axis';
+
+  @override
+  String get themeEditorLighting => '3D lighting';
+
+  @override
+  String get themeEditorLightingSoft => 'Soft';
+
+  @override
+  String get themeEditorLightingStudio => 'Studio';
+
+  @override
+  String get themeEditorLightingFlat => 'Flat';
+
+  @override
+  String get cmdInsertCodeDescription =>
+      'Insert a code block with syntax highlighting, line steps and type-in states';
+
+  @override
+  String get cmdCodeSetPalette => 'Code color theme';
+
+  @override
+  String get cmdCodeSetText => 'Set code';
+
+  @override
+  String get cmdCodeAddStateDescription =>
+      'Adds a copy of the selected state after it: change the code there to animate the change';
+
+  @override
+  String get cmdCodeDuplicateState => 'Duplicate state';
+
+  @override
+  String get cmdCodeDeleteState => 'Delete state';
+
+  @override
+  String get cmdCodeMoveState => 'Move state';
+
+  @override
+  String get cmdCodeSelectState => 'Show code state';
+
+  @override
+  String get cmdCodeSetStateLabel => 'Rename state';
+
+  @override
+  String get cmdCodeSetStateTransition => 'State arrival';
+
+  @override
+  String get cmdCodeSetCallout => 'Step callout';
+
+  @override
+  String get cmdCodeAddStepFromLines => 'Add line step';
+
+  @override
+  String get cmdCodePreviewStep => 'Preview line step';
+
+  @override
+  String get cmdCodePreview => 'Preview code animation';
+
+  @override
+  String get cmdCodeToggleDiffGutter => 'Show code changes';
+
+  @override
+  String get cmdCodeCopy => 'Copy code';
+
+  @override
+  String get cmdCodeConvertFromText => 'Convert to code block';
+
+  @override
+  String get reasonSelectCode => 'Select a code block';
+
+  @override
+  String get reasonLastCodeState => 'A code block keeps at least one state';
+
+  @override
+  String get reasonSelectTextBox => 'Select a text box with text';
+
+  @override
+  String get toastCodeCopied => 'Code copied';
+
+  @override
+  String get undoEditCodeBlock => 'Edit code block';
+
+  @override
+  String get undoEditCodeState => 'Edit code state';
+
+  @override
+  String get undoEditLineSteps => 'Edit line steps';
+
+  @override
+  String get undoEditCallout => 'Edit callout';
+
+  @override
+  String get codeLanguageLabel => 'Language';
+
+  @override
+  String get codeLanguageDialogTitle => 'Code language';
+
+  @override
+  String get codeInsertDialogTitle => 'Insert code block';
+
+  @override
+  String get codePaletteLabel => 'Colors';
+
+  @override
+  String get codePaletteAuto => 'Auto';
+
+  @override
+  String codePaletteAutoNamed(String name) {
+    return 'Auto ($name)';
+  }
+
+  @override
+  String get codePaletteLight => 'Theme light';
+
+  @override
+  String get codePaletteDark => 'Theme dark';
+
+  @override
+  String get codeFontSize => 'Font size';
+
+  @override
+  String get codeFontSizeAuto => 'Auto';
+
+  @override
+  String get codeFontSizeRange => 'Min – max';
+
+  @override
+  String get codeStartLine => 'Start at';
+
+  @override
+  String get codeWrap => 'Wrap lines';
+
+  @override
+  String get codeLigatures => 'Ligatures';
+
+  @override
+  String get codeChrome => 'Frame';
+
+  @override
+  String get codeChromeTheme => 'Theme default';
+
+  @override
+  String get codeChromeNone => 'None';
+
+  @override
+  String get codeChromeTab => 'File tab';
+
+  @override
+  String get codeChromeWindow => 'Window';
+
+  @override
+  String get codeChromeCaption => 'Caption';
+
+  @override
+  String get codeTitle => 'Title';
+
+  @override
+  String get codeShowLanguage => 'Language badge';
+
+  @override
+  String get codeCopyButton => 'Copy button';
+
+  @override
+  String get codeCopyNever => 'Never';
+
+  @override
+  String get codeCopyPresent => 'In presentations';
+
+  @override
+  String get codeCopyAlways => 'Always';
+
+  @override
+  String get codeStatesHeader => 'States';
+
+  @override
+  String codeStateChip(int index) {
+    return 'State $index';
+  }
+
+  @override
+  String codeStateChipNamed(int index, String label) {
+    return 'State $index: $label';
+  }
+
+  @override
+  String codeStateInfoFirst(int index, int lines) {
+    String _temp0 = intl.Intl.pluralLogic(
+      lines,
+      locale: localeName,
+      other: '$lines lines',
+      one: '1 line',
+    );
+    return 'State $index · $_temp0';
+  }
+
+  @override
+  String codeStateInfo(
+    int index,
+    int lines,
+    int added,
+    int changed,
+    int removed,
+    int previous,
+  ) {
+    String _temp0 = intl.Intl.pluralLogic(
+      lines,
+      locale: localeName,
+      other: '$lines lines',
+      one: '1 line',
+    );
+    return 'State $index · $_temp0 · +$added ~$changed −$removed vs. state $previous';
+  }
+
+  @override
+  String get codeMoveStateLeft => 'Move state earlier';
+
+  @override
+  String get codeMoveStateRight => 'Move state later';
+
+  @override
+  String get codePreviewTypeIn => 'Preview the type-in';
+
+  @override
+  String get codePreviewChange => 'Preview the change into this state';
+
+  @override
+  String get codeStateLabel => 'Name';
+
+  @override
+  String get codeStateLabelHint => 'e.g. Add caching';
+
+  @override
+  String get codeShowChanges => 'Show changes';
+
+  @override
+  String get codeTypeInHeader => 'Type-in';
+
+  @override
+  String get codeArrivalHeader => 'Arrival';
+
+  @override
+  String get codeArrivesBy => 'Arrives by';
+
+  @override
+  String get codeModeType => 'Typing';
+
+  @override
+  String get codeModeMorph => 'Morph';
+
+  @override
+  String get codeModeInstant => 'Instant';
+
+  @override
+  String codeDurationTyped(String seconds) {
+    return '≈ $seconds s (typed)';
+  }
+
+  @override
+  String codeDurationMorph(String seconds) {
+    return '≈ $seconds s (morph)';
+  }
+
+  @override
+  String codeDurationInstant(String seconds) {
+    return '≈ $seconds s (crossfade)';
+  }
+
+  @override
+  String get codeMore => 'More…';
+
+  @override
+  String codeLineStepsHeader(int index) {
+    return 'Line steps (state $index)';
+  }
+
+  @override
+  String get codeStepsEmpty => 'No steps: every line shows normally.';
+
+  @override
+  String get codeStepAll => 'All lines';
+
+  @override
+  String codeStepRow(int index, String lines) {
+    return 'Step $index: $lines';
+  }
+
+  @override
+  String get codeEditCallout => 'Callout';
+
+  @override
+  String get codeRemoveStep => 'Remove step';
+
+  @override
+  String get codeHighlightStyle => 'Highlight';
+
+  @override
+  String get codeStyleDim => 'Dim others';
+
+  @override
+  String get codeStyleBlur => 'Blur others';
+
+  @override
+  String get codeStyleDimBlur => 'Dim and blur';
+
+  @override
+  String get codeStyleBar => 'Bar';
+
+  @override
+  String get codeStyleBox => 'Box';
+
+  @override
+  String get codeStyleNone => 'None';
+
+  @override
+  String get codeFocus => 'Focus';
+
+  @override
+  String get codeFocusScroll => 'Scroll';
+
+  @override
+  String get codeFocusZoom => 'Zoom';
+
+  @override
+  String get codeFocusNone => 'None';
+
+  @override
+  String get codeFitAcrossStates => 'Same size in all states';
+
+  @override
+  String get codeStepsDialogTitle => 'Line steps';
+
+  @override
+  String get codeStepsHint =>
+      'One step per click, separated by |: lines (5), ranges (1-3, 7-), lists (2,4); * shows all lines.';
+
+  @override
+  String get codeStepsLabel => 'Steps';
+
+  @override
+  String codeStepIssueSyntax(int index) {
+    return 'Step $index: use a line, a range like 3-5 or 7-, or 4:2-9';
+  }
+
+  @override
+  String codeStepIssuePastEnd(int index) {
+    return 'Step $index points past the end of the code';
+  }
+
+  @override
+  String codeStepIssueReversed(int index) {
+    return 'Step $index: a range was reversed';
+  }
+
+  @override
+  String codeStepIssueColumns(int index) {
+    return 'Step $index: columns start at 1';
+  }
+
+  @override
+  String codeCalloutDialogTitle(int index) {
+    return 'Callout of step $index';
+  }
+
+  @override
+  String get codeCalloutHint =>
+      'Shown next to the step\'s lines. **Bold**, *italic* and `code` work.';
+
+  @override
+  String get codeCalloutText => 'Text';
+
+  @override
+  String get codeCalloutSide => 'Side';
+
+  @override
+  String get codeSideAuto => 'Automatic';
+
+  @override
+  String get codeSideRight => 'Right';
+
+  @override
+  String get codeSideLeft => 'Left';
+
+  @override
+  String get codeSideAbove => 'Above';
+
+  @override
+  String get codeSideBelow => 'Below';
+
+  @override
+  String get codeCalloutStyle => 'Style';
+
+  @override
+  String get codeCalloutStyleDefault => 'Default';
+
+  @override
+  String get codeCalloutBubble => 'Bubble';
+
+  @override
+  String get codeCalloutLabel => 'Label';
+
+  @override
+  String get codeCalloutPill => 'Pill';
+
+  @override
+  String get codeCalloutRemove => 'Remove callout';
+
+  @override
+  String get codeTypingDialogTitle => 'Typing settings';
+
+  @override
+  String get codeTypingCps => 'Speed (chars/s)';
+
+  @override
+  String get codeTypingRhythm => 'Rhythm';
+
+  @override
+  String get codeTypingDeletions => 'Deletions';
+
+  @override
+  String get codeDeleteAuto => 'Automatic';
+
+  @override
+  String get codeDeleteBackspace => 'Backspace';
+
+  @override
+  String get codeDeleteSelect => 'Select and delete';
+
+  @override
+  String get codeTypingBackspaceMax => 'Backspace up to (chars)';
+
+  @override
+  String get codeTypingDeleteCps => 'Backspace speed (chars/s)';
+
+  @override
+  String get codeTypingCaretGlide => 'Caret glide (ms)';
+
+  @override
+  String get codeTypingOrder => 'Order';
+
+  @override
+  String get codeOrderDocument => 'Top to bottom';
+
+  @override
+  String get codeOrderReverse => 'Bottom to top';
+
+  @override
+  String get codeTypingPasteLines => 'Paste from (lines)';
+
+  @override
+  String get codeTypingMaxDuration => 'Longest (ms)';
+
+  @override
+  String get codeTypingCaret => 'Caret';
+
+  @override
+  String get codeCaretBar => 'Bar';
+
+  @override
+  String get codeCaretBlock => 'Block';
+
+  @override
+  String get codeCaretUnderline => 'Underline';
+
+  @override
+  String get codeTypingAutoIndent => 'Auto-indent new lines';
+
+  @override
+  String get codeTypingScrollFollow => 'Scroll to the caret';
+
+  @override
+  String get codeTypingHighlightOnArrive => 'Show step 1 when typed';
+
+  @override
+  String get codeMorphDuration => 'Morph duration (ms)';
+
+  @override
+  String get codeMorphStagger => 'Morph stagger per line (ms)';
+
+  @override
+  String codeNumberRange(String min, String max) {
+    return 'Enter a number from $min to $max';
+  }
+
+  @override
+  String codeEditorSemantics(String language) {
+    return 'Code editor, $language';
+  }
+
+  @override
+  String codeLinesHidden(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count lines hidden',
+      one: '1 line hidden',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get codeOverflowHint =>
+      'Enlarge the box, lower the minimum size or turn on wrap';
+
+  @override
+  String get cmdChartUpdateMany => 'Update charts';
+
+  @override
+  String get cmdChartRelink => 'Change linked chart…';
+
+  @override
+  String get cmdChartSetUseDeckTheme => 'Match presentation theme';
+
+  @override
+  String get cmdChartUpdateStyle => 'Edit chart style';
+
+  @override
+  String get cmdChartResetOverrides => 'Reset style overrides';
+
+  @override
+  String get cmdChartSetCamera => 'Rotate 3D chart';
+
+  @override
+  String get cmdChartAddCameraStep => 'Add camera step';
+
+  @override
+  String get cmdChartViewDataTable => 'View data as table';
+
+  @override
+  String get cmdChartCheckUpdates => 'Check linked charts for updates';
+
+  @override
+  String get cmdInsertChartFromSheetsDescription =>
+      'Insert a chart from a Wonky Sheets spreadsheet, linked so it can be updated.';
+
+  @override
+  String get reasonSelectChart => 'Select a chart';
+
+  @override
+  String get reasonSelectLinkedChart =>
+      'Select a chart linked to a spreadsheet';
+
+  @override
+  String get reasonSelect3DChart => 'Select a 3D chart';
+
+  @override
+  String get reasonChartNoOverrides => 'The chart has no style overrides';
+
+  @override
+  String get undoInsertChart => 'Insert chart';
+
+  @override
+  String get undoUpdateChart => 'Update chart';
+
+  @override
+  String get undoUnlinkChart => 'Unlink chart';
+
+  @override
+  String get undoRelinkChart => 'Change linked chart';
+
+  @override
+  String get undoEditChartStyle => 'Edit chart style';
+
+  @override
+  String get undoRotateChart => 'Rotate chart';
+
+  @override
+  String get chartErrOffline =>
+      'You\'re offline. Connect to insert or update charts from Sheets.';
+
+  @override
+  String get chartErrNoAccess =>
+      'You don\'t have access to this spreadsheet anymore.';
+
+  @override
+  String get chartErrTrashed => 'This spreadsheet is in the trash.';
+
+  @override
+  String get chartErrExportDisabled =>
+      'The owner doesn\'t allow viewers to copy charts from this spreadsheet.';
+
+  @override
+  String get chartErrNotFound => 'This chart was deleted. Pick another one.';
+
+  @override
+  String get chartErrTooLarge =>
+      'This chart has too much data to place in a presentation. Reduce its range in Sheets.';
+
+  @override
+  String get chartErrUnsupported =>
+      'This chart was made with a newer version of Wonky Sheets. Reload to insert it.';
+
+  @override
+  String get chartErrQuota => 'There isn\'t enough storage for this chart.';
+
+  @override
+  String get chartErrRateLimited =>
+      'Too many chart requests. Try again in a minute.';
+
+  @override
+  String get chartErrFailed => 'Couldn\'t get the chart. Try again.';
+
+  @override
+  String get chartInsertDialogTitle => 'Insert chart from Wonky Sheets';
+
+  @override
+  String chartInsertFromTitle(String title) {
+    return 'Insert chart from \"$title\"';
+  }
+
+  @override
+  String get chartRelinkTitle => 'Change linked chart';
+
+  @override
+  String get chartSearchSpreadsheets => 'Search spreadsheets';
+
+  @override
+  String get chartSpreadsheetsLabel => 'Spreadsheet';
+
+  @override
+  String get chartTabRecent => 'Recent';
+
+  @override
+  String get chartTabMine => 'My files';
+
+  @override
+  String get chartTabShared => 'Shared with me';
+
+  @override
+  String get chartTabStarred => 'Starred';
+
+  @override
+  String get chartNoSpreadsheets => 'No spreadsheets found';
+
+  @override
+  String get chartListFailed => 'Couldn\'t load the list. Try again.';
+
+  @override
+  String get chartBack => 'Back';
+
+  @override
+  String get chartSearchCharts => 'Search charts';
+
+  @override
+  String get chartPickChart => 'Chart';
+
+  @override
+  String get chartNoCharts =>
+      'This spreadsheet has no charts. Create one in Wonky Sheets.';
+
+  @override
+  String get chartOpenInSheets => 'Open in Sheets';
+
+  @override
+  String get chartLinkToSpreadsheet => 'Link to spreadsheet';
+
+  @override
+  String get chartMatchTheme => 'Match presentation theme';
+
+  @override
+  String get chartDataNotice =>
+      'Anyone with access to this presentation will see this chart\'s data.';
+
+  @override
+  String get chartNewerVersion => 'Needs a newer version';
+
+  @override
+  String get chartSheetBadge => 'Chart sheet';
+
+  @override
+  String get chart3DBadge => '3D';
+
+  @override
+  String get chartUntitled => 'Untitled chart';
+
+  @override
+  String get chartUpdateAction => 'Update';
+
+  @override
+  String chartUpdateTooltip(String source, String summary) {
+    return '$source changed$summary. Update to show the latest version.';
+  }
+
+  @override
+  String get chartStatusLinked => 'Linked';
+
+  @override
+  String get chartStatusChanged => 'Linked · Source changed';
+
+  @override
+  String get chartStatusNoAccess => 'Linked · No access';
+
+  @override
+  String get chartStatusChartDeleted => 'Source chart deleted';
+
+  @override
+  String get chartStatusTrashed => 'Source in trash';
+
+  @override
+  String get chartStatusDeleted => 'Source deleted';
+
+  @override
+  String get chartStatusUnsupported => 'Linked · Needs a newer version';
+
+  @override
+  String chartStatusOffline(String status) {
+    return '$status (offline)';
+  }
+
+  @override
+  String chartStatusUpToDate(String when) {
+    return 'Linked · Up to date ($when)';
+  }
+
+  @override
+  String chartNewerDataToast(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count charts have newer data',
+      one: '1 chart has newer data',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String chartAutoUpdatedToast(String sources) {
+    return 'Charts updated from $sources';
+  }
+
+  @override
+  String get chartPasteNoData =>
+      'The chart\'s data couldn\'t be copied. Paste it again when you\'re online.';
+
+  @override
+  String get chartCopied => 'Chart copied';
+
+  @override
+  String get chartCopyFailed => 'Couldn\'t copy the chart.';
+
+  @override
+  String chartDataTableTitle(String title) {
+    return 'Data of $title';
+  }
+
+  @override
+  String get chartNoData => 'No data';
+
+  @override
+  String get chartNoDataYet => 'This chart has no data yet.';
+
+  @override
+  String get chartNotLinked => 'Not linked: shows a copy of the data.';
+
+  @override
+  String get chartAutoShort => 'Auto-update';
+
+  @override
+  String get chartUnlinkShort => 'Unlink';
+
+  @override
+  String get chartStyleMode => 'Style';
+
+  @override
+  String get chartMatchThemeShort => 'Match theme';
+
+  @override
+  String get chartKeepSource => 'Keep source style';
+
+  @override
+  String get chartBackground => 'Background';
+
+  @override
+  String get chartBackgroundDefault => 'Default';
+
+  @override
+  String get chartBackgroundTransparent => 'Transparent';
+
+  @override
+  String get chartBackgroundTheme => 'Slide background color';
+
+  @override
+  String get chartBackgroundWhite => 'White';
+
+  @override
+  String get chartCamera => '3D view';
+
+  @override
+  String get chartCameraPreset => 'View';
+
+  @override
+  String get chartCameraCustom => 'Custom';
+
+  @override
+  String get chartCameraRotation => 'Rotation';
+
+  @override
+  String get chartCameraTilt => 'Tilt';
+
+  @override
+  String get chartCameraPerspective => 'Perspective';
+
+  @override
+  String get chartCameraReset => 'Reset view';
+
+  @override
+  String get chartCameraHint =>
+      'Drag the selected chart to orbit it. Alt+Shift+arrows rotate 5°.';
+
+  @override
+  String get chartPresetDefault => 'Default';
+
+  @override
+  String get chartPresetFront => 'Front';
+
+  @override
+  String get chartPresetIsometric => 'Isometric';
+
+  @override
+  String get chartPresetTopDown => 'Top-down';
+
+  @override
+  String get chartPresetLowAngle => 'Low angle';
+
+  @override
+  String get chartPresetSide => 'Side';
+
+  @override
+  String get chartPresetDramatic => 'Dramatic';
+
+  @override
+  String get chartPresetFlat => 'Flat';
+
+  @override
+  String get chartPresetTilted => 'Tilted';
+
+  @override
+  String get chartPresetSteep => 'Steep';
+
+  @override
+  String get chartPresenting => 'Presenting';
+
+  @override
+  String get chartHoverTooltips => 'Hover values';
+
+  @override
+  String get chartOrbitInPresent => 'Drag to orbit';
+
+  @override
+  String get chartCustomize => 'Customize';
+
+  @override
+  String chartUnusedOverrides(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Overrides of $count series that no longer exist',
+      one: 'Overrides of 1 series that no longer exists',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get chartCleanUp => 'Clean up';
+
+  @override
+  String get chartInvalidOverrides =>
+      'Some style overrides are invalid and were ignored.';
+
+  @override
+  String chartUpdateAll(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Update all ($count)',
+      zero: 'Update all',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get chartChecking => 'Checking…';
+
+  @override
+  String get chartNoLinkedCharts => 'This presentation has no linked charts.';
+
+  @override
+  String chartOnSlide(int number) {
+    return 'Slide $number';
+  }
+
+  @override
+  String get chartStyleTitles => 'Chart & axis titles';
+
+  @override
+  String get chartStyleLegend => 'Legend';
+
+  @override
+  String get chartStyleSeries => 'Series';
+
+  @override
+  String get chartStyleAxes => 'Axes';
+
+  @override
+  String get chartStyleGridlines => 'Gridlines';
+
+  @override
+  String get chartStylePie => 'Pie chart';
+
+  @override
+  String get chartStyle3D => '3D';
+
+  @override
+  String get chartStyleLayout => 'Layout';
+
+  @override
+  String get chartStyleChartTitle => 'Chart title';
+
+  @override
+  String get chartStyleSubtitle => 'Subtitle';
+
+  @override
+  String get chartStyleHAxisTitle => 'Horizontal axis title';
+
+  @override
+  String get chartStyleVAxisTitle => 'Vertical axis title';
+
+  @override
+  String get chartStyleLegendPosition => 'Position';
+
+  @override
+  String get chartStyleColor => 'Color';
+
+  @override
+  String get chartStyleLineWidth => 'Line width';
+
+  @override
+  String get chartStylePointSize => 'Point size';
+
+  @override
+  String get chartStyleDataLabels => 'Data labels';
+
+  @override
+  String get chartStyleHAxisLine => 'Horizontal axis line';
+
+  @override
+  String get chartStyleVAxisLine => 'Vertical axis line';
+
+  @override
+  String get chartStyleNumberFormat => 'Number format';
+
+  @override
+  String get chartStyleHGridlines => 'Horizontal axis gridlines';
+
+  @override
+  String get chartStyleVGridlines => 'Vertical axis gridlines';
+
+  @override
+  String get chartStyleMaximize => 'Maximize';
+
+  @override
+  String get chartStyleDonutHole => 'Donut hole';
+
+  @override
+  String get chartStyleSliceLabels => 'Slice labels';
+
+  @override
+  String get chartStyleStartAngle => 'Start angle';
+
+  @override
+  String get chartStyleLighting => 'Lighting';
+
+  @override
+  String get chartStyleWalls => 'Walls and floor';
+
+  @override
+  String get chartStyleDepth => 'Depth';
+
+  @override
+  String get chartStyleGapDepth => 'Gap depth';
+
+  @override
+  String get chartStyleShape => 'Shape';
+
+  @override
+  String get chartStyleExplode => 'Explode';
+
+  @override
+  String get chartStyleAutomatic => 'Automatic';
+
+  @override
+  String get chartStyleNone => 'None';
+
+  @override
+  String get chartStyleResetField => 'Reset to the spreadsheet\'s value';
+
+  @override
+  String get chartStyleChangedHere => 'Changed in this presentation';
+
+  @override
+  String get chartStyleLegendTop => 'Top';
+
+  @override
+  String get chartStyleLegendBottom => 'Bottom';
+
+  @override
+  String get chartStyleLegendLeft => 'Left';
+
+  @override
+  String get chartStyleLegendRight => 'Right';
+
+  @override
+  String get chartStyleLegendInside => 'Inside';
+
+  @override
+  String get chartStyleSliceLabel => 'Label';
+
+  @override
+  String get chartStyleSliceValue => 'Value';
+
+  @override
+  String get chartStyleSlicePercent => 'Percentage';
+
+  @override
+  String get chartStyleSliceValuePercent => 'Value and percentage';
+
+  @override
+  String get chartStyleLightingSoft => 'Soft';
+
+  @override
+  String get chartStyleLightingBright => 'Bright';
+
+  @override
+  String get chartStyleLightingFlat => 'Flat';
+
+  @override
+  String get chartStyleShapeBox => 'Box';
+
+  @override
+  String get chartStyleShapeCylinder => 'Cylinder';
+
+  @override
+  String get chartStyleShapeCone => 'Cone';
+
+  @override
+  String get chartStyleShapePyramid => 'Pyramid';
+
+  @override
+  String animateEffectName(String id) {
+    String _temp0 = intl.Intl.selectLogic(id, {
+      'appear': 'Appear',
+      'fade': 'Fade',
+      'rise': 'Rise',
+      'moveIn': 'Move in',
+      'scale': 'Scale',
+      'pop': 'Pop',
+      'zoom': 'Zoom',
+      'blur': 'Blur',
+      'wipe': 'Wipe',
+      'iris': 'Iris',
+      'dissolve': 'Dissolve',
+      'drop': 'Drop',
+      'flip': 'Flip',
+      'rotate': 'Rotate',
+      'typewriter': 'Typewriter',
+      'lineDraw': 'Draw line',
+      'chartGrow': 'Grow',
+      'codeType': 'Type code',
+      'shimmer': 'Shimmer',
+      'disappear': 'Disappear',
+      'fadeOut': 'Fade out',
+      'sink': 'Sink',
+      'moveOut': 'Move out',
+      'scaleOut': 'Scale out',
+      'popOut': 'Pop out',
+      'zoomOut': 'Zoom out',
+      'blurOut': 'Blur out',
+      'wipeOut': 'Wipe out',
+      'irisOut': 'Iris out',
+      'dissolveOut': 'Dissolve out',
+      'fall': 'Fall',
+      'flipOut': 'Flip out',
+      'rotateOut': 'Rotate out',
+      'eraseText': 'Erase text',
+      'lineErase': 'Erase line',
+      'chartShrink': 'Shrink',
+      'pulse': 'Pulse',
+      'bounce': 'Bounce',
+      'shake': 'Shake',
+      'blink': 'Blink',
+      'spin': 'Spin',
+      'grow': 'Grow / shrink',
+      'opacityTo': 'Transparency',
+      'colorChange': 'Color change',
+      'highlight': 'Highlight',
+      'chartHighlight': 'Highlight series',
+      'chartHighlightClear': 'Clear highlight',
+      'chartOrbit': 'Orbit',
+      'chartCamera': 'Rotate to angle',
+      'codeHighlight': 'Highlight lines',
+      'codeState': 'Next code state',
+      'path': 'Motion path',
+      'moveTo': 'Transform',
+      'other': '',
+    });
+    return '$_temp0';
+  }
+
+  @override
+  String animateEffectDescription(String id) {
+    String _temp0 = intl.Intl.selectLogic(id, {
+      'appear': 'The object appears at once.',
+      'fade': 'The object fades in.',
+      'rise': 'The object moves up a short distance while fading in.',
+      'moveIn': 'The object moves in from a side or from off the slide.',
+      'scale': 'The object grows to its size while fading in.',
+      'pop': 'The object pops in with a little bounce.',
+      'zoom': 'The object comes toward its place from in front of the viewer.',
+      'blur': 'The object comes into focus.',
+      'wipe': 'A soft edge sweeps across and reveals the object.',
+      'iris': 'A growing circle, square or diamond reveals the object.',
+      'dissolve': 'The object appears through a grain of random cells.',
+      'drop': 'The object falls into place and bounces.',
+      'flip': 'The object flips into view like a card.',
+      'rotate': 'The object turns into place.',
+      'typewriter': 'The text is typed character by character.',
+      'lineDraw': 'The outline draws itself, then the fill fades in.',
+      'chartGrow': 'Bars grow, lines draw on and wedges sweep in.',
+      'codeType': 'The code is typed into the block.',
+      'shimmer': 'Particles condense into the text.',
+      'disappear': 'The object disappears at once.',
+      'fadeOut': 'The object fades out.',
+      'sink': 'The object moves down a short distance while fading out.',
+      'moveOut': 'The object moves out to a side or off the slide.',
+      'scaleOut': 'The object shrinks while fading out.',
+      'popOut': 'The object grows a little, then collapses.',
+      'zoomOut': 'The object moves toward the viewer and fades away.',
+      'blurOut': 'The object goes out of focus.',
+      'wipeOut': 'A soft edge sweeps across and hides the object.',
+      'irisOut': 'A shrinking circle, square or diamond hides the object.',
+      'dissolveOut': 'The object disappears into a grain of random cells.',
+      'fall': 'The object falls off the slide.',
+      'flipOut': 'The object flips away like a card.',
+      'rotateOut': 'The object turns away.',
+      'eraseText': 'The text is erased from the end, like backspacing.',
+      'lineErase': 'The outline erases itself.',
+      'chartShrink': 'Bars shrink, lines erase and wedges sweep out.',
+      'pulse': 'The object briefly grows and returns.',
+      'bounce': 'The object jumps up and lands.',
+      'shake': 'The object shakes from side to side.',
+      'blink': 'The object blinks.',
+      'spin': 'The object spins and keeps its new angle.',
+      'grow': 'The object changes its size and keeps it.',
+      'opacityTo': 'The object becomes more or less transparent.',
+      'colorChange': 'The fill, border or text changes color.',
+      'highlight': 'A marker sweeps behind the text.',
+      'chartHighlight': 'One series stands out; the rest dims.',
+      'chartHighlightClear': 'Every series is shown normally again.',
+      'chartOrbit': 'The 3D chart turns around.',
+      'chartCamera': 'The 3D chart turns to a new view.',
+      'codeHighlight': 'The next highlight step of the code is shown.',
+      'codeState': 'The code changes to its next state.',
+      'path': 'The object moves along a path.',
+      'moveTo': 'The object moves, resizes, turns or fades to an end state.',
+      'other': 'An animation from a newer version.',
+    });
+    return '$_temp0';
+  }
+
+  @override
+  String animateTransitionName(String id) {
+    String _temp0 = intl.Intl.selectLogic(id, {
+      'none': 'None',
+      'fade': 'Fade',
+      'dissolve': 'Dissolve',
+      'push': 'Push',
+      'slide': 'Slide in',
+      'cover': 'Cover',
+      'uncover': 'Uncover',
+      'wipe': 'Wipe',
+      'iris': 'Iris',
+      'zoom': 'Zoom',
+      'flip': 'Flip',
+      'cube': 'Cube',
+      'doorway': 'Doorway',
+      'swap': 'Swap',
+      'revolve': 'Revolve',
+      'magicMove': 'Magic Move',
+      'other': 'Transition',
+    });
+    return '$_temp0';
+  }
+
+  @override
+  String animateTransitionDescription(String id) {
+    String _temp0 = intl.Intl.selectLogic(id, {
+      'none': 'The new slide replaces the old one at once.',
+      'fade':
+          'The new slide fades in over the old one, or both fade through a color.',
+      'dissolve': 'The new slide appears through a grain of random cells.',
+      'push': 'The new slide pushes the old one off the screen.',
+      'slide': 'The new slide slides in over the old one.',
+      'cover': 'The new slide slides over the old one, which dims.',
+      'uncover': 'The old slide slides away and reveals the new one.',
+      'wipe': 'A soft edge sweeps across and reveals the new slide.',
+      'iris': 'A growing circle, square or diamond reveals the new slide.',
+      'zoom': 'The new slide grows in, or the old one shrinks away.',
+      'flip': 'The slide flips over like a card; the new slide is on its back.',
+      'cube': 'Both slides are faces of a cube that turns a quarter turn.',
+      'doorway':
+          'The old slide opens like double doors; the new one comes forward.',
+      'swap': 'The slides swap places, front and back, on an arc.',
+      'revolve': 'The old slide swings away on its edge like a door.',
+      'magicMove':
+          'Objects on both slides morph into each other; the rest fades.',
+      'other': '',
+    });
+    return '$_temp0';
+  }
+
+  @override
+  String animateParamName(String key) {
+    String _temp0 = intl.Intl.selectLogic(key, {
+      'distance': 'Distance',
+      'fade': 'Fade',
+      'direction': 'Direction',
+      'from': 'From',
+      'to': 'To',
+      'origin': 'Origin',
+      'bounce': 'Bounce',
+      'softness': 'Softness',
+      'shape': 'Shape',
+      'cell': 'Grain',
+      'height': 'Height',
+      'bounces': 'Bounces',
+      'axis': 'Axis',
+      'perspective': 'Perspective',
+      'angle': 'Angle',
+      'scale': 'Scale',
+      'cps': 'Characters/s',
+      'caret': 'Caret',
+      'jitter': 'Jitter',
+      'fillDelay': 'Fill delay',
+      'count': 'Times',
+      'amplitude': 'Amplitude',
+      'opacity': 'Opacity',
+      'property': 'Property',
+      'color': 'Color',
+      'style': 'Style',
+      'target': 'Series',
+      'dimOthers': 'Dim others',
+      'azimuth': 'Azimuth',
+      'elevation': 'Elevation',
+      'step': 'Step',
+      'state': 'State',
+      'mode': 'Mode',
+      'path': 'Path',
+      'preset': 'Preset',
+      'orientToPath': 'Orient to path',
+      'relativeEnd': 'Relative end',
+      'anticipation': 'Anticipation',
+      'rotation': 'Rotation',
+      'through': 'Through color',
+      'persist': 'Keep end state',
+      'other': 'Option',
+    });
+    return '$_temp0';
+  }
+
+  @override
+  String animateChoiceName(String value) {
+    String _temp0 = intl.Intl.selectLogic(value, {
+      'left': 'Left',
+      'right': 'Right',
+      'top': 'Top',
+      'bottom': 'Bottom',
+      'up': 'Up',
+      'down': 'Down',
+      'topLeft': 'Top left',
+      'topRight': 'Top right',
+      'bottomLeft': 'Bottom left',
+      'bottomRight': 'Bottom right',
+      'center': 'Center',
+      'circle': 'Circle',
+      'rect': 'Square',
+      'diamond': 'Diamond',
+      'x': 'Horizontal',
+      'y': 'Vertical',
+      'forward': 'Forward',
+      'backward': 'Backward',
+      'in': 'In',
+      'out': 'Out',
+      'baseline': 'Baseline',
+      'fill': 'Fill',
+      'stroke': 'Border',
+      'text': 'Text',
+      'marker': 'Marker',
+      'underline': 'Underline',
+      'box': 'Box',
+      'type': 'Type',
+      'morph': 'Morph',
+      'instant': 'Instant',
+      'line': 'Line',
+      'arc': 'Arc',
+      'curve': 'Curve',
+      'zigzag': 'Zigzag',
+      'custom': 'Custom',
+      'object': 'Object',
+      'word': 'Word',
+      'character': 'Character',
+      'shortest': 'Shortest',
+      'literal': 'As set',
+      'other': '—',
+    });
+    return '$_temp0';
+  }
+
+  @override
+  String animateTargetReason(String effect, String target) {
+    String _temp0 = intl.Intl.selectLogic(target, {
+      'text': '$effect works on text only',
+      'stroke': '$effect works on shapes, lines and icons',
+      'colorable': '$effect works on shapes, text, lines and icons',
+      'chart': '$effect works on charts only',
+      'chart3d': '$effect works on 3D charts only',
+      'code': '$effect works on code blocks only',
+      'other': '$effect doesn\'t work on this object',
+    });
+    return '$_temp0';
+  }
+
+  @override
+  String animateTriggerName(String trigger) {
+    String _temp0 = intl.Intl.selectLogic(trigger, {
+      'onClick': 'On click',
+      'withPrevious': 'With previous',
+      'afterPrevious': 'After previous',
+      'other': 'On click of an object',
+    });
+    return '$_temp0';
+  }
+
+  @override
+  String animateDeliveryName(String by) {
+    String _temp0 = intl.Intl.selectLogic(by, {
+      'all': 'All at once',
+      'paragraph': 'By paragraph',
+      'paragraphGroup': 'By paragraph group',
+      'line': 'By line',
+      'word': 'By word',
+      'character': 'By character',
+      'series': 'By series',
+      'category': 'By category',
+      'point': 'By point',
+      'chartElement': 'By chart element',
+      'other': 'All at once',
+    });
+    return '$_temp0';
+  }
+
+  @override
+  String animateOrderName(String order) {
+    String _temp0 = intl.Intl.selectLogic(order, {
+      'forward': 'Forward',
+      'backward': 'Backward',
+      'center': 'From the center',
+      'edges': 'From the edges',
+      'random': 'Random',
+      'other': 'Forward',
+    });
+    return '$_temp0';
+  }
+
+  @override
+  String animateAfterBuildName(String mode) {
+    String _temp0 = intl.Intl.selectLogic(mode, {
+      'none': 'Keep',
+      'dim': 'Dim',
+      'hide': 'Hide',
+      'other': 'Keep',
+    });
+    return '$_temp0';
+  }
+
+  @override
+  String animateEasingName(String preset) {
+    String _temp0 = intl.Intl.selectLogic(preset, {
+      'smooth': 'Smooth',
+      'snappy': 'Snappy',
+      'bouncy': 'Bouncy',
+      'gentle': 'Gentle',
+      'linear': 'Linear',
+      'easeIn': 'Ease in',
+      'easeOut': 'Ease out',
+      'custom': 'Custom',
+      'other': 'Custom',
+    });
+    return '$_temp0';
+  }
+
+  @override
+  String animateGroupName(String group) {
+    String _temp0 = intl.Intl.selectLogic(group, {
+      'basic': 'Basic',
+      'exciting': 'Exciting',
+      'emphasis': 'Emphasis',
+      'text': 'Text',
+      'shape': 'Shape',
+      'motion': 'Motion',
+      'chart': 'Chart',
+      'code': 'Code',
+      'threeD': '3D',
+      'magic': 'Magic Move',
+      'other': 'More',
+    });
+    return '$_temp0';
+  }
+
+  @override
+  String animateKindTab(String tab) {
+    String _temp0 = intl.Intl.selectLogic(tab, {
+      'buildIn': 'In',
+      'action': 'Action',
+      'buildOut': 'Out',
+      'other': 'In',
+    });
+    return '$_temp0';
+  }
+
+  @override
+  String animateUnmatchedName(String mode) {
+    String _temp0 = intl.Intl.selectLogic(mode, {
+      'together': 'Fade with the move',
+      'before': 'Fade out first',
+      'after': 'Fade in after',
+      'other': 'Fade with the move',
+    });
+    return '$_temp0';
+  }
+
+  @override
+  String animatePreviewOption(String option) {
+    String _temp0 = intl.Intl.selectLogic(option, {
+      'autoPreview': 'Auto-preview changes',
+      'includeTransition': 'Include transition in preview',
+      'fullMotion': 'Preview full motion',
+      'other': 'Option',
+    });
+    return '$_temp0';
+  }
+
+  @override
+  String animateWarning(String code) {
+    String _temp0 = intl.Intl.selectLogic(code, {
+      'elementMissing': 'The object no longer exists.',
+      'alreadyVisible': 'The object is already visible: this build is skipped.',
+      'alreadyHidden': 'The object is already hidden: this build is skipped.',
+      'hiddenTarget':
+          'The object is hidden at this point: this build is skipped.',
+      'unsupportedEffect':
+          'Effect not supported by this version: plays as a fade.',
+      'wrongElementKind':
+          'This effect doesn\'t work on this object: it is skipped.',
+      'unsupportedTrigger':
+          'This trigger isn\'t supported yet: the build is skipped.',
+      'invalidOptions': 'Some options are invalid and use their defaults.',
+      'invalidEasing': 'The easing is invalid and plays as ease out.',
+      'deliveryFallback':
+          'This object can\'t be built in these parts: it builds as a whole.',
+      'codeStepMissing': 'The code has no such highlight step.',
+      'codeStateMissing': 'The code has no such state.',
+      'flashLimit': 'Blinking is slowed to at most 3 flashes per second.',
+      'other': 'This build plays differently than set.',
+    });
+    return '$_temp0';
+  }
+
+  @override
+  String get animateAddAnother => 'Add another build';
+
+  @override
+  String get animateAdvance => 'Advance';
+
+  @override
+  String get animateAdvanceAfter => 'After';
+
+  @override
+  String get animateAdvanceAuto => 'Automatically';
+
+  @override
+  String get animateAdvanceClick => 'On click';
+
+  @override
+  String get animateAfterBuild => 'After build';
+
+  @override
+  String get animateAnimatedObjects => 'Animated objects';
+
+  @override
+  String get animateAutoBuilds => 'Play builds automatically';
+
+  @override
+  String get animateAutoReverse => 'Play back and forth';
+
+  @override
+  String get animateBuildDelay => 'Between builds';
+
+  @override
+  String get animateDelay => 'Delay';
+
+  @override
+  String get animateDelivery => 'Parts';
+
+  @override
+  String get animateDeliveryLabel => 'Build';
+
+  @override
+  String get animateDimTo => 'Dim to';
+
+  @override
+  String get animateDuration => 'Duration';
+
+  @override
+  String get animateDurationAutomatic => 'Automatic';
+
+  @override
+  String get animateEasing => 'Easing';
+
+  @override
+  String get animateEffectUnsupported => 'Effect not supported by this version';
+
+  @override
+  String get animateEndState => 'End state';
+
+  @override
+  String get animateHeight => 'Height';
+
+  @override
+  String get animateHideMatches => 'Hide matches';
+
+  @override
+  String get animateMagicMoveFirstSlide =>
+      'The first slide has nothing to morph from.';
+
+  @override
+  String get animateMagicMoveNoMatches =>
+      'No objects match the previous slide: plays as a crossfade.';
+
+  @override
+  String get animateMatchByContent => 'Match identical content';
+
+  @override
+  String get animateMatchTextBy => 'Match text by';
+
+  @override
+  String get animateMissingObject => 'Deleted object';
+
+  @override
+  String get animateMoveDown => 'Move down';
+
+  @override
+  String get animateMoveUp => 'Move up';
+
+  @override
+  String get animateNewClick => 'New click';
+
+  @override
+  String get animateNoSlide => 'Animations apply to slides.';
+
+  @override
+  String get animateOffSlide => 'From off the slide';
+
+  @override
+  String get animateOrderListLabel => 'Build order';
+
+  @override
+  String get animateOrderNone =>
+      'No animations on this slide yet. Select an object and pick an effect on the Build tab.';
+
+  @override
+  String get animatePartOrder => 'Order';
+
+  @override
+  String get animatePartStart => 'Each part';
+
+  @override
+  String get animatePartsFrom => 'Parts';
+
+  @override
+  String get animatePartsTo => 'to';
+
+  @override
+  String get animatePathPreset => 'Path';
+
+  @override
+  String get animatePlayFromSelected => 'Play from selected';
+
+  @override
+  String get animatePreview => 'Preview';
+
+  @override
+  String get animatePreviewFromHere => 'Preview from here';
+
+  @override
+  String get animatePreviewFullMotion => 'Preview full motion';
+
+  @override
+  String get animatePreviewOptions => 'Preview options';
+
+  @override
+  String get animatePreviewPlaying => 'Previewing animations';
+
+  @override
+  String get animatePreviewReduced => 'Preview reduced motion';
+
+  @override
+  String get animatePreviewStop => 'Stop';
+
+  @override
+  String get animateReducedMotionOn =>
+      'Reduce motion is on — animations play as fades.';
+
+  @override
+  String get animateReducedMotionSettings => 'Settings';
+
+  @override
+  String get animateRemoveTransition => 'Remove';
+
+  @override
+  String get animateRepeat => 'Repeat';
+
+  @override
+  String get animateRepeatCount => 'Times';
+
+  @override
+  String get animateReturnToStart => 'Return to the start';
+
+  @override
+  String get animateReverseOnBack => 'Play backwards when going back';
+
+  @override
+  String get animateRotation => 'Rotation';
+
+  @override
+  String get animateSearchEffects => 'Search effects';
+
+  @override
+  String get animateSelectObject => 'Select an object to animate it.';
+
+  @override
+  String get animateSelectObjectItem => 'Select object';
+
+  @override
+  String get animateSetTrigger => 'Start';
+
+  @override
+  String get animateShowMatches => 'Show matches';
+
+  @override
+  String get animateShowParts => 'Show parts';
+
+  @override
+  String get animateStagger => 'Stagger';
+
+  @override
+  String get animateStaggerParts => 'Stagger';
+
+  @override
+  String get animateStart => 'Start';
+
+  @override
+  String get animateStepAutomatic => 'Automatic';
+
+  @override
+  String get animateTiming => 'Timing';
+
+  @override
+  String get animateTransitionInherited =>
+      'Uses the presentation\'s default transition.';
+
+  @override
+  String get animateUnmatched => 'Unmatched';
+
+  @override
+  String get animateUntilNextClick => 'Until the next click';
+
+  @override
+  String get animateWidth => 'Width';
+
+  @override
+  String get cmdAnimateBuildAllSteps => 'Build all steps';
+
+  @override
+  String get cmdAnimateMoveBuilds => 'Reorder animations';
+
+  @override
+  String get cmdAnimateSelectBuilds => 'Select animations';
+
+  @override
+  String get cmdAnimateSetMotionPath => 'Edit motion path';
+
+  @override
+  String get cmdAnimateSetTransformTarget => 'Set end state';
+
+  @override
+  String get cmdAnimateSetTrigger => 'Set animation start';
+
+  @override
+  String get cmdAnimateStopPreview => 'Stop preview';
+
+  @override
+  String get cmdAnimateTogglePreviewOption => 'Preview option';
+
+  @override
+  String get cmdAnimateUpdateBuild => 'Edit animation';
+
+  @override
+  String get cmdElementSetMatchKey => 'Set Magic Move ID';
+
+  @override
+  String get cmdTransitionApplyToAll => 'Apply transition to all slides';
+
+  @override
+  String get cmdTransitionPreview => 'Preview transition';
+
+  @override
+  String get cmdTransitionRemove => 'Remove transition';
+
+  @override
+  String get cmdTransitionSet => 'Set transition';
+
+  @override
+  String get cmdTransitionSetAdvance => 'Set slide advance';
+
+  @override
+  String get reasonNoBuilds => 'This slide has no animations';
+
+  @override
+  String get reasonNoBuildsCopied => 'Copy an animation first';
+
+  @override
+  String get reasonNotPreviewing => 'No preview is playing';
+
+  @override
+  String get reasonObjectNoBuilds => 'Select one animated object';
+
+  @override
+  String get reasonSelectBuild => 'Select an animation';
+
+  @override
+  String get reasonSelectCodeOrChart =>
+      'Select a code block with steps or a chart';
+
+  @override
+  String get undoAddMagicMoveSlide => 'Add Magic Move slide';
+
+  @override
+  String get undoRemoveAnimation => 'Remove animation';
+
+  @override
+  String animateBadgeTooltip(String name, String steps) {
+    return '$name: step $steps';
+  }
+
+  @override
+  String animateBuildsSelected(int count) {
+    return '$count animations';
+  }
+
+  @override
+  String animateObjectsSelected(int count) {
+    return '$count objects';
+  }
+
+  @override
+  String animateMagicMoveMatches(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count objects match the previous slide',
+      one: '1 object matches the previous slide',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String animateMatchTooltip(String name, int number) {
+    return 'Matches “$name” on slide $number';
+  }
+
+  @override
+  String animateOrderSummary(int clicks, String seconds) {
+    String _temp0 = intl.Intl.pluralLogic(
+      clicks,
+      locale: localeName,
+      other: '$clicks clicks',
+      one: '1 click',
+      zero: 'No clicks',
+    );
+    return '$_temp0 · $seconds s';
+  }
+
+  @override
+  String animatePartLabel(int index, String text) {
+    return 'Part $index: $text';
+  }
+
+  @override
+  String animatePartsCount(int count) {
+    return '$count parts';
+  }
+
+  @override
+  String animateSettles(String seconds) {
+    return '≈ $seconds s';
+  }
+
+  @override
+  String animateStepClick(int index) {
+    return 'Click $index';
+  }
+
+  @override
+  String animateTransitionForSlide(int number) {
+    return 'Transition into slide $number';
+  }
+
+  @override
+  String animateTransitionForSlides(int count) {
+    return 'Transition into $count slides';
+  }
+
+  @override
+  String get arrangeLabelMatchKey => 'Magic Move ID';
+
+  @override
+  String get cmdOutlineSetTitle => 'Edit slide title';
+
+  @override
+  String get cmdOutlineSetBody => 'Edit slide text';
+
+  @override
+  String get cmdOutlineNewSlideAfter => 'New slide after this one';
+
+  @override
+  String get cmdOutlineNewLine => 'New bullet';
+
+  @override
+  String get cmdOutlineFocusBody => 'Go to the slide’s bullets';
+
+  @override
+  String get cmdOutlineIndent => 'Indent (demote)';
+
+  @override
+  String get cmdOutlineOutdent => 'Outdent (promote)';
+
+  @override
+  String get cmdOutlineMoveUp => 'Move up';
+
+  @override
+  String get cmdOutlineMoveDown => 'Move down';
+
+  @override
+  String get cmdOutlineJoinLine => 'Join with the line above';
+
+  @override
+  String get cmdOutlineCopyMarkdown => 'Copy outline as Markdown';
+
+  @override
+  String get cmdArrangeSetZ => 'Reorder';
+
+  @override
+  String get cmdA11ySetReadingOrder => 'Reading order';
+
+  @override
+  String get cmdA11yResetReadingOrder => 'Reset to automatic';
+
+  @override
+  String get cmdA11yGoTo => 'Go to issue';
+
+  @override
+  String get cmdA11yFix => 'Fix accessibility issue';
+
+  @override
+  String get reasonOutlineLine => 'Place the cursor in an outline line';
+
+  @override
+  String get reasonOutlineNoTitle => 'This slide’s layout has no title';
+
+  @override
+  String get reasonOutlineNoBody => 'This slide has no text placeholder';
+
+  @override
+  String get reasonReadingOrderAutomatic =>
+      'The reading order is already automatic';
+
+  @override
+  String get reasonA11yNoFix => 'This issue has no automatic fix';
+
+  @override
+  String get outlineHint =>
+      'Enter: new slide or bullet · Tab: indent · Shift+Tab: outdent';
+
+  @override
+  String get outlineReadOnlyHint => 'View only';
+
+  @override
+  String outlineSlideNumber(int number) {
+    return 'Slide $number';
+  }
+
+  @override
+  String outlineTitleLabel(int number) {
+    return 'Title of slide $number';
+  }
+
+  @override
+  String outlineBulletLabel(int slide, int bullet, int level) {
+    return 'Slide $slide, bullet $bullet, level $level';
+  }
+
+  @override
+  String outlineOthers(String objects) {
+    return '+ $objects';
+  }
+
+  @override
+  String outlineEditing(String name) {
+    return '$name is editing';
+  }
+
+  @override
+  String get outlineCopied => 'Outline copied as Markdown';
+
+  @override
+  String get outlineTypingUndo => 'Edit outline';
+
+  @override
+  String get layersPanelTitle => 'Layers';
+
+  @override
+  String get layersTabLayers => 'Layers';
+
+  @override
+  String get layersTabReadingOrder => 'Reading order';
+
+  @override
+  String get layersEmpty => 'No objects on this slide';
+
+  @override
+  String get layersHidden => 'hidden';
+
+  @override
+  String get layersLocked => 'locked';
+
+  @override
+  String get layersRenameHint => 'Name';
+
+  @override
+  String layersDragMany(int count) {
+    return '$count objects';
+  }
+
+  @override
+  String layersFromLayout(int count) {
+    return 'From layout ($count)';
+  }
+
+  @override
+  String get layersEditLayout => 'Edit layout';
+
+  @override
+  String get layersOrderAutomatic =>
+      'Automatic: title first, then top to bottom, left to right.';
+
+  @override
+  String get layersOrderCustom =>
+      'Custom order. Screen readers and Tab follow this list.';
+
+  @override
+  String get layersOrderEarlier => 'Read earlier';
+
+  @override
+  String get layersOrderLater => 'Read later';
+
+  @override
+  String get a11yPanelTitle => 'Accessibility';
+
+  @override
+  String get a11yCheckDescription =>
+      'Checks alt text, contrast, titles, text size, reading order and tables';
+
+  @override
+  String get a11yCheckAgain => 'Check again';
+
+  @override
+  String a11ySummary(int errors, int warnings, int info) {
+    String _temp0 = intl.Intl.pluralLogic(
+      errors,
+      locale: localeName,
+      other: '$errors errors',
+      one: '1 error',
+    );
+    String _temp1 = intl.Intl.pluralLogic(
+      warnings,
+      locale: localeName,
+      other: '$warnings warnings',
+      one: '1 warning',
+    );
+    String _temp2 = intl.Intl.pluralLogic(
+      info,
+      locale: localeName,
+      other: '$info tips',
+      one: '1 tip',
+    );
+    return '$_temp0 · $_temp1 · $_temp2';
+  }
+
+  @override
+  String get a11yNoIssues => 'No accessibility issues found';
+
+  @override
+  String get a11yNoIssuesBody =>
+      'Alt text, contrast, titles, text size, reading order and tables look good.';
+
+  @override
+  String a11ySlideHeading(String label) {
+    return 'Slide $label';
+  }
+
+  @override
+  String get a11ySeverityError => 'Error';
+
+  @override
+  String get a11ySeverityWarning => 'Warning';
+
+  @override
+  String get a11ySeverityInfo => 'Tip';
+
+  @override
+  String get a11yMissingAltText => 'Missing alt text';
+
+  @override
+  String a11yLowContrast(String ratio, String required) {
+    return 'Low text contrast ($ratio:1, needs $required:1)';
+  }
+
+  @override
+  String get a11yContrastOverImage =>
+      'Text over an image: check that it is readable';
+
+  @override
+  String get a11yMissingTitle => 'Slide has no title';
+
+  @override
+  String a11yDuplicateTitle(String title) {
+    return 'Another slide has the same title “$title”';
+  }
+
+  @override
+  String a11ySmallText(int size, int min) {
+    return 'Text smaller than $min ($size)';
+  }
+
+  @override
+  String get a11yReadingOrder =>
+      'The custom reading order differs from the layout';
+
+  @override
+  String get a11yTableHeader => 'Table has no header row';
+
+  @override
+  String get a11yEmptyPlaceholder => 'Empty placeholder';
+
+  @override
+  String get a11yGoTo => 'Go to';
+
+  @override
+  String get a11yFixAltText => 'Add alt text…';
+
+  @override
+  String get a11yFixDecorative => 'Mark decorative';
+
+  @override
+  String get a11yFixContrast => 'Use a contrasting color';
+
+  @override
+  String a11yFixTextSize(int size) {
+    return 'Enlarge to $size';
+  }
+
+  @override
+  String get a11yFixReadingOrder => 'Reset to automatic';
+
+  @override
+  String get a11yFixTableHeader => 'Turn on header row';
+
+  @override
+  String get a11yFixRemovePlaceholder => 'Remove placeholder';
+
+  @override
+  String get a11yEditReadingOrder => 'Edit reading order';
+
+  @override
+  String get animatePreviewChanged => 'The animations changed — Preview again';
+
+  @override
+  String get chartCheckNow => 'Check now';
+
+  @override
+  String get cmdCommentsNext => 'Next comment';
+
+  @override
+  String get cmdCommentsPrevious => 'Previous comment';
+
+  @override
+  String get cmdCommentsOpenPanel => 'Open comments';
+
+  @override
+  String get commentsScopeSlide => 'This slide';
+
+  @override
+  String get commentsScopeAll => 'All slides';
+
+  @override
+  String get commentsOrphanedGroup => 'Orphaned';
+
+  @override
+  String commentsSlideHeader(int number, String title) {
+    return '$number · $title';
+  }
+
+  @override
+  String commentSlideQuote(int number, String title) {
+    return 'Slide $number: $title';
+  }
+
+  @override
+  String get commentAnchorDeleted =>
+      'The object this comment was on was deleted';
+
+  @override
+  String commentAnchorDeletedQuote(String quote) {
+    return '$quote — the object this comment was on was deleted';
+  }
+
+  @override
+  String commentPinLabel(int count, String name) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count comments, first by $name',
+      one: 'Comment by $name',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String commentReplies(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count replies',
+      one: '1 reply',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String commentsBadge(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count comments',
+      one: '1 comment',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get reasonNoComments => 'No comments';
+
+  @override
+  String get commentsDockedClose => 'Close';
+
+  @override
+  String get cmdSpellingCheckDescription =>
+      'Walk through the misspelled words of the whole presentation';
+
+  @override
+  String get cmdSpellingReplace => 'Correct spelling';
+
+  @override
+  String get cmdSpellingReplaceAll => 'Correct spelling everywhere';
+
+  @override
+  String get cmdSpellingIgnore => 'Ignore';
+
+  @override
+  String get cmdSpellingAddToDictionary => 'Add to dictionary';
+
+  @override
+  String get cmdSpellingPersonalDictionary => 'Personal dictionary…';
+
+  @override
+  String get undoCorrectSpelling => 'Correct spelling';
+
+  @override
+  String get undoSetLanguage => 'Set language';
+
+  @override
+  String get spellingNoSuggestions => 'No suggestions';
+
+  @override
+  String spellingAddWordToDictionary(String word) {
+    return 'Add “$word” to dictionary';
+  }
+
+  @override
+  String toastPersonalDictionaryFull(int max) {
+    return 'Your personal dictionary is full ($max words).';
+  }
+
+  @override
+  String get reasonSpellingTextGone => 'This text is no longer there';
+
+  @override
+  String get cmdHistoryRestoreVersion => 'Restore this version';
+
+  @override
+  String get cmdHistoryMakeCopy => 'Make a copy';
+
+  @override
+  String get cmdHistoryDownload => 'Download as PDF';
+
+  @override
+  String get cmdHistoryToggleShowChanges => 'Show changes';
+
+  @override
+  String get cmdHistoryToggleShowRemoved => 'Show removed objects';
+
+  @override
+  String get cmdHistoryNextChange => 'Next change';
+
+  @override
+  String get cmdHistoryPreviousChange => 'Previous change';
+
+  @override
+  String get cmdConflictsReview => 'Review overwritten text';
+
+  @override
+  String get cmdConflictsRestoreMine => 'Restore my text';
+
+  @override
+  String get reasonNoVersionShown => 'Open a version first';
+
+  @override
+  String get reasonNoChanges => 'This version has no changes';
+
+  @override
+  String get reasonNoConflicts => 'None of your text was overwritten';
+
+  @override
+  String get versionLoading => 'Loading this version…';
+
+  @override
+  String get versionLoadFailed => 'Couldn’t load this version';
+
+  @override
+  String get versionComputingChanges => 'Finding changes…';
+
+  @override
+  String get versionChangesHidden => 'Changes are hidden';
+
+  @override
+  String get versionNoChanges => 'No changes since the previous version';
+
+  @override
+  String versionSlidesAdded(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count slides added',
+      one: '1 slide added',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String versionSlidesChanged(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count slides changed',
+      one: '1 slide changed',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String versionSlidesMoved(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count slides moved',
+      one: '1 slide moved',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String versionSlidesDeleted(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count slides deleted',
+      one: '1 slide deleted',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get versionThemeChanged => 'Theme changed';
+
+  @override
+  String get versionDeckChanged => 'Presentation settings changed';
+
+  @override
+  String get versionTagNew => 'New';
+
+  @override
+  String get versionTagMoved => 'Moved';
+
+  @override
+  String get versionTagRenamed => 'Renamed';
+
+  @override
+  String get versionTagDeleted => 'Deleted';
+
+  @override
+  String versionDeletedSlide(String title) {
+    return 'Deleted slide: $title';
+  }
+
+  @override
+  String get versionChangesOnSlide => 'Changes on this slide';
+
+  @override
+  String get versionNoChangesOnSlide => 'Nothing changed on this slide';
+
+  @override
+  String versionChangeBy(String what, String who) {
+    return '$what — $who';
+  }
+
+  @override
+  String versionAgentMcp(String name) {
+    return 'Claude via MCP ($name)';
+  }
+
+  @override
+  String versionAgentAi(String name) {
+    return 'Claude ($name)';
+  }
+
+  @override
+  String versionElementChange(String element, String what) {
+    return '$element: $what';
+  }
+
+  @override
+  String versionElementAdded(String element) {
+    return '$element added';
+  }
+
+  @override
+  String versionElementRemoved(String element) {
+    return '$element deleted';
+  }
+
+  @override
+  String get versionKindText => 'text edited';
+
+  @override
+  String get versionKindFrame => 'moved or resized';
+
+  @override
+  String get versionKindStyle => 'restyled';
+
+  @override
+  String get versionKindData => 'content changed';
+
+  @override
+  String get versionKindOrder => 'order changed';
+
+  @override
+  String get versionKindVisibility => 'shown, hidden or locked';
+
+  @override
+  String get versionKindAnimation => 'animation changed';
+
+  @override
+  String get versionSlideAdded => 'Slide added';
+
+  @override
+  String get versionSlideMoved => 'Slide moved';
+
+  @override
+  String get versionSlideSkipToggled => 'Slide skipped or unskipped';
+
+  @override
+  String get versionSlideDeleted => 'Slide deleted';
+
+  @override
+  String get versionSlideBackground => 'Background changed';
+
+  @override
+  String get versionSlideLayout => 'Layout changed';
+
+  @override
+  String get versionSlideTransition => 'Transition changed';
+
+  @override
+  String get versionSlideNotes => 'Speaker notes edited';
+
+  @override
+  String get versionSlideTimings => 'Timings changed';
+
+  @override
+  String get versionSlideMasters => 'Master objects shown or hidden';
+
+  @override
+  String versionAnimations(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count animations changed',
+      one: '1 animation changed',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String versionGroupAdded(String title) {
+    return 'Section “$title” added';
+  }
+
+  @override
+  String versionGroupRemoved(String title) {
+    return 'Section “$title” deleted';
+  }
+
+  @override
+  String versionGroupChanged(String title) {
+    return 'Section “$title” changed';
+  }
+
+  @override
+  String versionChangeCounter(int index, int count) {
+    return '$index of $count';
+  }
+
+  @override
+  String get versionCopyTitle => 'Copy this version';
+
+  @override
+  String get versionCopyNameLabel => 'Name';
+
+  @override
+  String versionCopyName(String title) {
+    return 'Copy of $title';
+  }
+
+  @override
+  String get versionCopyNameRequired => 'Enter a name';
+
+  @override
+  String get versionCopyComments => 'Copy comments';
+
+  @override
+  String get versionCopySharing => 'Share with the same people';
+
+  @override
+  String get versionOpenCopy => 'Open';
+
+  @override
+  String toastVersionCopied(String name) {
+    return 'Created “$name”';
+  }
+
+  @override
+  String get toastVersionCopyFailed => 'Couldn’t copy this version';
+
+  @override
+  String get toastVersionDownloadFailed => 'Couldn’t download this version';
+
+  @override
+  String get conflictsTitle => 'Your text was replaced';
+
+  @override
+  String get conflictsDescription =>
+      'Newer edits from collaborators replaced text you edited while offline. Choose the texts to put back.';
+
+  @override
+  String conflictsRow(String where, String mine, String theirs, String who) {
+    return '$where — yours: $mine · now: $theirs ($who)';
+  }
+
+  @override
+  String conflictsDeletedBy(String where, String who, String mine) {
+    return '$where was deleted by $who · yours: $mine';
+  }
+
+  @override
+  String conflictsSlideTarget(int number, String element) {
+    return 'Slide $number, $element';
+  }
+
+  @override
+  String conflictsNotesTarget(int number) {
+    return 'Slide $number, speaker notes';
+  }
+
+  @override
+  String conflictsCellTarget(int number) {
+    return 'Slide $number, table cell';
+  }
+
+  @override
+  String get conflictsGoneTarget => 'A deleted slide';
+
+  @override
+  String get conflictsEmptyValue => '(empty)';
+
+  @override
+  String get conflictsRestoreMine => 'Restore';
+
+  @override
+  String get conflictsCopyMine => 'Copy';
+
+  @override
+  String get conflictsDismissAll => 'Dismiss all';
+
+  @override
+  String get conflictsReview => 'Review';
+
+  @override
+  String get conflictsSeveralPeople => 'several people';
+
+  @override
+  String toastConflicts(int count, String who) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count of your text edits were',
+      one: '1 of your text edits was',
+    );
+    return '$_temp0 replaced by newer edits from $who';
+  }
+
+  @override
+  String get toastConflictsCopied => 'Copied your text';
+
+  @override
+  String toastVersionRestoredBy(String name) {
+    return '$name restored a previous version';
+  }
+
+  @override
+  String get cmdLineSetWaypoints => 'Edit connector route';
+
+  @override
+  String get aiPanelTitle => 'Assistant';
+
+  @override
+  String get aiAssistantEmptyTitle =>
+      'Ask about this presentation, or ask for changes';
+
+  @override
+  String get aiAssistantPrivacyNotice =>
+      'Your messages and this presentation\'s content are sent to an AI provider.';
+
+  @override
+  String aiAssistantPrivacyNoticeProvider(String provider) {
+    return 'Your messages and this presentation\'s content are sent to $provider.';
+  }
+
+  @override
+  String get aiAssistantModeEditHint =>
+      'Changes go straight into the presentation';
+
+  @override
+  String get aiAssistantModeEditUnavailable =>
+      'You can only suggest changes in this presentation';
+
+  @override
+  String get aiAssistantModeSuggestHint =>
+      'Changes are previewed before anything is applied';
+
+  @override
+  String get aiUnavailable => 'AI isn\'t available';
+
+  @override
+  String get aiTurnedOff => 'AI is turned off';
+
+  @override
+  String get aiTurnOnHint => 'Turn it on in Settings › AI.';
+
+  @override
+  String aiChipSlide(int position) {
+    return 'Slide $position';
+  }
+
+  @override
+  String aiChipObjects(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count selected objects',
+      one: '1 selected object',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get aiQuickImproveSlide => 'Improve this slide';
+
+  @override
+  String get aiQuickNotes => 'Write speaker notes';
+
+  @override
+  String get aiQuickSummarize => 'Summarize the presentation';
+
+  @override
+  String get aiQuickAgenda => 'Add an agenda slide';
+
+  @override
+  String get aiQuickConsistency => 'Check titles and wording';
+
+  @override
+  String get aiQuickNewDeck => 'Generate a presentation…';
+
+  @override
+  String aiUndoLabel(String summary) {
+    return 'AI: $summary';
+  }
+
+  @override
+  String get aiUndoDefault => 'Assistant changes';
+
+  @override
+  String get aiFailed => 'The AI request failed';
+
+  @override
+  String get aiPreviewReview => 'Review changes';
+
+  @override
+  String get aiPreviewAppliedNote => 'Suggested changes applied';
+
+  @override
+  String get aiPreviewDiscardedNote => 'Suggested changes discarded';
+
+  @override
+  String get aiPreviewTitle => 'Suggested changes';
+
+  @override
+  String get aiPreviewDescription =>
+      'Choose the changes to apply. Nothing changes until you apply them.';
+
+  @override
+  String get aiPreviewApply => 'Apply selected';
+
+  @override
+  String get aiPreviewDiscard => 'Discard';
+
+  @override
+  String get aiPreviewBefore => 'Before';
+
+  @override
+  String get aiPreviewAfter => 'After';
+
+  @override
+  String get aiPreviewNewSlide => 'New slide';
+
+  @override
+  String get aiPreviewDeletedSlide => 'Deleted';
+
+  @override
+  String aiPreviewSlide(int position) {
+    return 'Slide $position';
+  }
+
+  @override
+  String get aiPreviewNoSlides =>
+      'These changes don\'t change a slide\'s look.';
+
+  @override
+  String aiPreviewSkipped(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count values someone changed meanwhile were kept',
+      one: '1 value someone changed meanwhile was kept',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get aiPreviewApplyAll => 'Apply suggested changes';
+
+  @override
+  String get aiGenerateTitle => 'Generate presentation';
+
+  @override
+  String get aiGenerateSource => 'Source';
+
+  @override
+  String get aiGenerateSourcePrompt => 'Prompt';
+
+  @override
+  String get aiGenerateSourceOutline => 'Outline';
+
+  @override
+  String get aiGeneratePromptLabel => 'What is the presentation about?';
+
+  @override
+  String get aiGeneratePromptHint =>
+      'Quarterly review of the Serverpod Cloud launch for the board…';
+
+  @override
+  String get aiGenerateOutlineLabel => 'Your outline';
+
+  @override
+  String get aiGenerateOutlineHint =>
+      'Paste bullets or Markdown with one heading per slide';
+
+  @override
+  String get aiGenerateSlides => 'Slides';
+
+  @override
+  String get aiGenerateSlidesAuto => 'Auto';
+
+  @override
+  String get aiGenerateAudience => 'Audience';
+
+  @override
+  String get aiGenerateTone => 'Tone';
+
+  @override
+  String get aiGenerateLanguage => 'Language';
+
+  @override
+  String get aiGenerateLanguageAuto => 'Same as the text';
+
+  @override
+  String get aiGenerateNotes => 'Speaker notes';
+
+  @override
+  String get aiGenerateGroups => 'Group into sections';
+
+  @override
+  String get aiGenerateKeepWording => 'Keep my wording';
+
+  @override
+  String get aiGenerateInsert => 'Insert';
+
+  @override
+  String get aiGenerateInsertNew => 'New presentation';
+
+  @override
+  String aiGenerateInsertAfter(int position) {
+    return 'After slide $position';
+  }
+
+  @override
+  String get aiGenerateInsertEnd => 'At the end';
+
+  @override
+  String get aiGenerateCreateOutline => 'Create outline';
+
+  @override
+  String get aiGeneratePlanning => 'Planning the outline…';
+
+  @override
+  String get aiGenerateOutlineTitle => 'Review the outline';
+
+  @override
+  String get aiGenerateOutlineDescription =>
+      'Edit titles and roles, reorder or delete slides, then create them.';
+
+  @override
+  String get aiGenerateBuild => 'Create slides';
+
+  @override
+  String get aiGenerateBack => 'Back';
+
+  @override
+  String get aiGenerateRegenerate => 'Regenerate';
+
+  @override
+  String get aiGenerateRegenerateSlide => 'Regenerate this slide';
+
+  @override
+  String get aiGenerateRegenerateHint => 'What should change? (optional)';
+
+  @override
+  String get aiGenerateAddSlide => 'Add slide';
+
+  @override
+  String get aiGenerateDeleteSlide => 'Delete slide';
+
+  @override
+  String get aiGenerateMoveUp => 'Move up';
+
+  @override
+  String get aiGenerateMoveDown => 'Move down';
+
+  @override
+  String get aiGenerateSlideTitle => 'Slide title';
+
+  @override
+  String get aiGenerateBullets => 'Bullets (one per line)';
+
+  @override
+  String aiGenerateSlideCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count slides',
+      one: '1 slide',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get aiGenerateRole => 'Role';
+
+  @override
+  String get aiGenerateBuilding => 'Creating slides…';
+
+  @override
+  String get aiGenerateUndo => 'Generate slides';
+
+  @override
+  String get aiGenerateNewSlide => 'New slide';
+
+  @override
+  String get aiGenerateEmpty => 'Describe the presentation first.';
+
+  @override
+  String aiGenerateDone(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Added $count slides',
+      one: 'Added 1 slide',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get aiGenerateCreated => 'Presentation created';
+
+  @override
+  String get aiRoleTitle => 'Title';
+
+  @override
+  String get aiRoleSection => 'Section';
+
+  @override
+  String get aiRoleAgenda => 'Agenda';
+
+  @override
+  String get aiRoleBullets => 'Bullets';
+
+  @override
+  String get aiRoleTwoColumn => 'Two columns';
+
+  @override
+  String get aiRoleQuote => 'Quote';
+
+  @override
+  String get aiRoleBigNumber => 'Big number';
+
+  @override
+  String get aiRoleImageText => 'Image and text';
+
+  @override
+  String get aiRoleCode => 'Code';
+
+  @override
+  String get aiRoleChartPlaceholder => 'Chart';
+
+  @override
+  String get aiRoleClosing => 'Closing';
+
+  @override
+  String get aiAudienceGeneral => 'General';
+
+  @override
+  String get aiAudienceBoard => 'Board';
+
+  @override
+  String get aiAudienceTeam => 'Team';
+
+  @override
+  String get aiAudienceCustomers => 'Customers';
+
+  @override
+  String get aiAudienceStudents => 'Students';
+
+  @override
+  String get aiAudienceDevelopers => 'Developers';
+
+  @override
+  String get aiToneProfessional => 'Professional';
+
+  @override
+  String get aiToneFriendly => 'Friendly';
+
+  @override
+  String get aiToneInspiring => 'Inspiring';
+
+  @override
+  String get aiToneTechnical => 'Technical';
+
+  @override
+  String get aiToneConcise => 'Concise';
+
+  @override
+  String get aiRewriteTitle => 'Rewrite text';
+
+  @override
+  String get aiRewriteWorking => 'Writing…';
+
+  @override
+  String get aiRewriteReplace => 'Replace';
+
+  @override
+  String get aiRewriteTryAgain => 'Try again';
+
+  @override
+  String get aiRewriteDiscard => 'Discard';
+
+  @override
+  String get aiRewriteRefineHint => 'Refine, e.g. even shorter';
+
+  @override
+  String get aiRewriteRefine => 'Refine';
+
+  @override
+  String get aiRewriteOriginal => 'Original';
+
+  @override
+  String get aiRewriteResult => 'Suggestion';
+
+  @override
+  String get aiRewriteChanged =>
+      'The text changed meanwhile. Copy the suggestion or try again.';
+
+  @override
+  String get aiRewriteCopy => 'Copy';
+
+  @override
+  String get aiRewriteCopied => 'Copied';
+
+  @override
+  String get aiRewriteCustomLabel => 'How should the text change?';
+
+  @override
+  String get aiRewriteCustomHint => 'Make it sound more confident';
+
+  @override
+  String get aiRewriteUndo => 'Rewrite text';
+
+  @override
+  String get aiRewriteNoText => 'Select a text box with text';
+
+  @override
+  String get rewritePunchier => 'Punchier';
+
+  @override
+  String get rewriteBullets => 'Make bullets';
+
+  @override
+  String get rewriteParagraph => 'Make a paragraph';
+
+  @override
+  String get aiNotesTitle => 'Write speaker notes';
+
+  @override
+  String get aiNotesScope => 'Slides';
+
+  @override
+  String get aiNotesScopeCurrent => 'Current slide';
+
+  @override
+  String get aiNotesScopeSelected => 'Selected slides';
+
+  @override
+  String get aiNotesScopeAll => 'All slides';
+
+  @override
+  String get aiNotesLength => 'Length';
+
+  @override
+  String get aiNotesLengthBrief => 'Brief';
+
+  @override
+  String get aiNotesLengthStandard => 'Standard';
+
+  @override
+  String get aiNotesLengthDetailed => 'Detailed';
+
+  @override
+  String get aiNotesStyle => 'Style';
+
+  @override
+  String get aiNotesStyleScript => 'Script';
+
+  @override
+  String get aiNotesStyleBullets => 'Bullet points';
+
+  @override
+  String get aiNotesMode => 'Existing notes';
+
+  @override
+  String get aiNotesModeFillEmpty => 'Only write empty notes';
+
+  @override
+  String get aiNotesModeAppend => 'Add to them';
+
+  @override
+  String get aiNotesModeReplace => 'Replace them';
+
+  @override
+  String get aiNotesGenerate => 'Write notes';
+
+  @override
+  String get aiNotesWorking => 'Writing notes…';
+
+  @override
+  String get aiNotesReviewTitle => 'Review speaker notes';
+
+  @override
+  String get aiNotesApply => 'Apply';
+
+  @override
+  String get aiNotesNone => 'No slide needs notes.';
+
+  @override
+  String get aiNotesExisting => 'Current notes';
+
+  @override
+  String get aiNotesUndo => 'Write speaker notes';
+
+  @override
+  String get aiAltTitle => 'Generate alt text';
+
+  @override
+  String get aiAltWorking => 'Describing objects…';
+
+  @override
+  String get aiAltApply => 'Apply';
+
+  @override
+  String get aiAltNone => 'Nothing needs alt text.';
+
+  @override
+  String get aiAltSkippedUnsupported =>
+      'This kind of object can\'t be described.';
+
+  @override
+  String get aiAltSkippedEmpty => 'No description was proposed.';
+
+  @override
+  String get aiAltUndo => 'Generate alt text';
+
+  @override
+  String aiAltObject(String kind, int position) {
+    return '$kind on slide $position';
+  }
+
+  @override
+  String get a11yGenerateAlt => 'Generate with AI';
+
+  @override
+  String get a11yGenerateMissingAlt => 'Generate missing alt text';
+
+  @override
+  String get aiDesignTitle => 'Design ideas';
+
+  @override
+  String get aiDesignEmpty => 'No ideas for this slide — add some content';
+
+  @override
+  String get aiDesignNoSlide => 'Select a slide to see design ideas';
+
+  @override
+  String get aiDesignRefresh => 'Refresh';
+
+  @override
+  String get aiDesignMore => 'More ideas';
+
+  @override
+  String get aiDesignRanking => 'Ranking with AI…';
+
+  @override
+  String get aiDesignLayoutIdeas => 'Layout ideas for this slide';
+
+  @override
+  String get aiDesignAiRanked => 'Ranked by AI for this slide';
+
+  @override
+  String get aiDesignUndo => 'Apply design idea';
+
+  @override
+  String aiDesignApply(String name) {
+    return 'Apply $name';
+  }
+
+  @override
+  String get cmdAiApplyDesignIdea => 'Apply design idea';
+
+  @override
+  String get cmdPanelDesignIdeas => 'Design ideas';
+
+  @override
+  String get cmdAiApplyPreview => 'Apply suggested changes';
+
+  @override
+  String get cmdAiDiscardPreview => 'Discard suggested changes';
+
+  @override
+  String get cmdAiSetApplyMode => 'Assistant: edit or suggest';
+
+  @override
+  String get reasonAiUnavailable => 'AI isn\'t available';
+
+  @override
+  String get reasonNoTextToRewrite => 'Select a text box with text';
+
+  @override
+  String get reasonNoPreview => 'No suggested changes to review';
 }
 
 /// The translations for English (`en_XA`).
@@ -5131,18 +8718,6 @@ class SlidesLocalizationsEnXa extends SlidesLocalizationsEn {
   String get animateTabOrder => '[Öŕðéŕ on]';
 
   @override
-  String get animateTransitionEmpty =>
-      '[Šļîðé ţŕåñšîţîöñš åŕŕîṽé ĥéŕé šööñ: éƒƒéçţš, ðûŕåţîöñ åñð ĥöŵ ţĥé šļîðé åðṽåñçéš. one two three four five s]';
-
-  @override
-  String get animateBuildEmpty =>
-      '[Ɓûîļðš åŕŕîṽé ĥéŕé šööñ: šéļéçţ åñ öƀĵéçţ ţö åñîɱåţé îţ îñ, öûţ öŕ îñ þļåçé. one two three four fiv]';
-
-  @override
-  String get animateOrderEmpty =>
-      '[Ţĥé ƀûîļð öŕðéŕ öƒ ţĥîš šļîðé ŵîļļ ƀé ļîšţéð ĥéŕé. one two three f]';
-
-  @override
   String get appearanceLight => '[Ļîĝĥţ on]';
 
   @override
@@ -5180,15 +8755,6 @@ class SlidesLocalizationsEnXa extends SlidesLocalizationsEn {
 
   @override
   String get badgeViewing => '[Ṽîéŵîñĝ one]';
-
-  @override
-  String get buildAppear => '[Åþþéåŕ one]';
-
-  @override
-  String get buildFlyIn => '[Ƒļý îñ on]';
-
-  @override
-  String get buildZoom => '[Žööɱ on]';
 
   @override
   String get canvasChooseLayout => '[Çĥööšé å ļåýöûţ one t]';
@@ -5300,10 +8866,10 @@ class SlidesLocalizationsEnXa extends SlidesLocalizationsEn {
   String get downloadPdf => '[ÞÐƑ ðöçûɱéñţ (.þðƒ) one tw]';
 
   @override
-  String get downloadPng => '[ÞÑĜ îɱåĝé (çûŕŕéñţ šļîðé) one two]';
+  String get downloadPng => '[ÞÑĜ îɱåĝé (çûŕŕéñţ šļîðé)… one two t]';
 
   @override
-  String get downloadPngZip => '[ÞÑĜ îɱåĝéš (åļļ šļîðéš, .žîþ) one two t]';
+  String get downloadPngZip => '[ÞÑĜ îɱåĝéš (åļļ šļîðéš, .žîþ)… one two th]';
 
   @override
   String get downloadMarkdown => '[Öûţļîñé åš Ṁåŕķðöŵñ (.ɱð) one two]';
@@ -5430,14 +8996,6 @@ class SlidesLocalizationsEnXa extends SlidesLocalizationsEn {
 
   @override
   String get listOptions => '[Ļîšţ öþţîöñš… one t]';
-
-  @override
-  String get mastersSoonTitle =>
-      '[Éðîţîñĝ ɱåšţéŕš åñð ļåýöûţš îš çöɱîñĝ šööñ one two three]';
-
-  @override
-  String get mastersSoonBody =>
-      '[Ýöû’ļļ éðîţ ţĥé ţĥéɱé’š ɱåšţéŕš åñð ļåýöûţš ĥéŕé. Ýöûŕ šļîðéš åŕé ûñçĥåñĝéð. one two three four five]';
 
   @override
   String get menuAddToGroup => '[Åðð ţö ĝŕöûþ one]';
@@ -5708,10 +9266,6 @@ class SlidesLocalizationsEnXa extends SlidesLocalizationsEn {
   String get outlineNoTitle => '[(ñö ţîţļé) one]';
 
   @override
-  String get outlineReadOnlyNote =>
-      '[Öûţļîñé ṽîéŵ šĥöŵš éåçĥ šļîðé’š ţîţļé åñð ɱåîñ ţéẋţ. Éðîţîñĝ ĥéŕé çöɱéš šööñ. one two three four five]';
-
-  @override
   String get pasteKeepSource => '[Ķééþ šöûŕçé ƒöŕɱåţţîñĝ one two]';
 
   @override
@@ -5963,7 +9517,7 @@ class SlidesLocalizationsEnXa extends SlidesLocalizationsEn {
   String get settingsCode => '[Çöðé on]';
 
   @override
-  String get settingsCodeFontSize => '[Çöðé ƒöñţ šîžé one t]';
+  String get settingsCodeFontSize => '[Ļåŕĝéšţ çöðé ƒöñţ šîžé one two]';
 
   @override
   String get settingsCodeLanguage => '[Ðéƒåûļţ çöðé ļåñĝûåĝé one two]';
@@ -6171,21 +9725,6 @@ class SlidesLocalizationsEnXa extends SlidesLocalizationsEn {
 
   @override
   String get toolbarTransition => '[Ţŕåñšîţîöñ one]';
-
-  @override
-  String get transitionNone => '[Ñöñé on]';
-
-  @override
-  String get transitionFade => '[Ƒåðé on]';
-
-  @override
-  String get transitionPush => '[Þûšĥ on]';
-
-  @override
-  String get transitionWipe => '[Ŵîþé on]';
-
-  @override
-  String get transitionDissolve => '[Ðîššöļṽé one]';
 
   @override
   String get unitsSu => '[Šļîðé ûñîţš one]';
@@ -6536,6 +10075,68 @@ class SlidesLocalizationsEnXa extends SlidesLocalizationsEn {
 
   @override
   String get printBuilds => '[Þŕîñţ éåçĥ ƀûîļð šţåĝé one two]';
+
+  @override
+  String get printFinalState => '[Šĥöŵ ƒîñåļ åñîɱåţîöñ šţåţé one two t]';
+
+  @override
+  String get pngDialogTitle => '[Ðöŵñļöåð ÞÑĜ one]';
+
+  @override
+  String get pngDialogHint =>
+      '[Šéṽéŕåļ îɱåĝéš ðöŵñļöåð åš öñé .žîþ ƒîļé. one two three]';
+
+  @override
+  String get pngSlides => '[Šļîðéš one]';
+
+  @override
+  String get pngSlidesCurrent => '[Çûŕŕéñţ šļîðé one t]';
+
+  @override
+  String get pngSlidesSelection => '[Šéļéçţéð šļîðéš one t]';
+
+  @override
+  String get pngSlidesAll => '[Åļļ šļîðéš one]';
+
+  @override
+  String get pngSize => '[Šîžé on]';
+
+  @override
+  String pngSizeOption(int scale, int width, int height) {
+    return '[$scale× · $width × $height þẋ on]';
+  }
+
+  @override
+  String get pngFrames => '[Ɓûîļðš one]';
+
+  @override
+  String get pngFramesPrint => '[Åļļ çöñţéñţ (åš þŕîñţéð) one two]';
+
+  @override
+  String get pngFramesFinal => '[Åƒţéŕ ţĥé ļåšţ ƀûîļð one tw]';
+
+  @override
+  String get pngFramesBuilds =>
+      '[Éåçĥ ƀûîļð šţåĝé (öñé îɱåĝé þéŕ šţéþ) one two thr]';
+
+  @override
+  String get pngTransparent => '[Ţŕåñšþåŕéñţ ƀåçķĝŕöûñð one two]';
+
+  @override
+  String get pngDownload => '[Ðöŵñļöåð one]';
+
+  @override
+  String pngEntrySlide(String number) {
+    return '[Šļîðé $number on]';
+  }
+
+  @override
+  String pngEntryStep(String number, int step) {
+    return '[Šļîðé $number, šţéþ $step one]';
+  }
+
+  @override
+  String get pngNothingToExport => '[Ţĥéŕé åŕé ñö šļîðéš ţö éẋþöŕţ one two t]';
 
   @override
   String get printSkipped => '[Îñçļûðé šķîþþéð šļîðéš one two]';
@@ -8068,6 +11669,12 @@ class SlidesLocalizationsEnXa extends SlidesLocalizationsEn {
       '[Éñð öƒ þŕéšéñţåţîöñ — çļîçķ ţö éẋîţ one two thr]';
 
   @override
+  String get presentKioskExitHold => '[Ķééþ ĥöļðîñĝ Éšç ţö éẋîţ one two]';
+
+  @override
+  String get presenterReducedEffects => '[Ŕéðûçéð éƒƒéçţš one t]';
+
+  @override
   String get presentCatchingUp => '[Çåţçĥîñĝ ûþ… one]';
 
   @override
@@ -8542,4 +12149,3615 @@ class SlidesLocalizationsEnXa extends SlidesLocalizationsEn {
   String toastFindBodyLocked(String name) {
     return '[$name îš éðîţîñĝ ţĥîš ţéẋţ one tw]';
   }
+
+  @override
+  String get cmdLayoutAdd => '[Ñéŵ ļåýöûţ one]';
+
+  @override
+  String get cmdLayoutDuplicate => '[Ðûþļîçåţé ļåýöûţ one tw]';
+
+  @override
+  String get cmdLayoutRename => '[Ŕéñåɱé ļåýöûţ… one t]';
+
+  @override
+  String get cmdLayoutMove => '[Ṁöṽé ļåýöûţ one]';
+
+  @override
+  String get cmdLayoutDelete => '[Ðéļéţé ļåýöûţ one t]';
+
+  @override
+  String get cmdLayoutSetBackground => '[Ļåýöûţ ƀåçķĝŕöûñð one tw]';
+
+  @override
+  String get cmdLayoutSetHideMasterElements => '[Ĥîðé ɱåšţéŕ öƀĵéçţš one tw]';
+
+  @override
+  String get cmdLayoutToggleHidden => '[Ĥîðé îñ ļåýöûţ þîçķéŕ one two]';
+
+  @override
+  String get cmdMasterAdd => '[Ñéŵ ɱåšţéŕ one]';
+
+  @override
+  String get cmdMasterDuplicate => '[Ðûþļîçåţé ɱåšţéŕ one tw]';
+
+  @override
+  String get cmdMasterRename => '[Ŕéñåɱé ɱåšţéŕ… one t]';
+
+  @override
+  String get cmdMasterDelete => '[Ðéļéţé ɱåšţéŕ one t]';
+
+  @override
+  String get cmdMasterSetBackground => '[Ṁåšţéŕ ƀåçķĝŕöûñð one tw]';
+
+  @override
+  String get cmdMastersExit => '[Çļöšé ɱåšţéŕš ṽîéŵ one tw]';
+
+  @override
+  String get cmdThemeUpdate => '[Éðîţ ţĥéɱé one]';
+
+  @override
+  String get cmdThemeDeriveDarkColors => '[Ðéŕîṽé ðåŕķ çöļöŕš one tw]';
+
+  @override
+  String get cmdThemeResetToBuiltIn => '[Ŕéšéţ ţö ƀûîļţ-îñ ţĥéɱé one two]';
+
+  @override
+  String get reasonNoLayout => '[Šéļéçţ å ļåýöûţ one t]';
+
+  @override
+  String get reasonNoMaster => '[Šéļéçţ å ɱåšţéŕ one t]';
+
+  @override
+  String get reasonLastLayout =>
+      '[Å ɱåšţéŕ ñééðš åţ ļéåšţ öñé ļåýöûţ one two th]';
+
+  @override
+  String get reasonLastMaster =>
+      '[Å ţĥéɱé ñééðš åţ ļéåšţ öñé ɱåšţéŕ one two th]';
+
+  @override
+  String reasonLayoutUsed(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Ûšéð ƀý $count šļîðéš — åþþļý åñöţĥéŕ ļåýöûţ ƒîŕšţ',
+      one: 'Ûšéð ƀý 1 šļîðé — åþþļý åñöţĥéŕ ļåýöûţ ƒîŕšţ',
+    );
+    return '[$_temp0 one two three four five si]';
+  }
+
+  @override
+  String reasonMasterUsed(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Ûšéð ƀý $count šļîðéš — åþþļý åñöţĥéŕ ļåýöûţ ƒîŕšţ',
+      one: 'Ûšéð ƀý 1 šļîðé — åþþļý åñöţĥéŕ ļåýöûţ ƒîŕšţ',
+    );
+    return '[$_temp0 one two three four five si]';
+  }
+
+  @override
+  String get reasonMastersOnly =>
+      '[Öþéñ Éðîţ ɱåšţéŕš åñð ļåýöûţš ƒîŕšţ one two thr]';
+
+  @override
+  String get reasonNotBuiltInTheme =>
+      '[Ţĥîš ţĥéɱé îšñ’ţ ƀåšéð öñ å ƀûîļţ-îñ ţĥéɱé one two three]';
+
+  @override
+  String layoutDefaultName(int n) {
+    return '[Ļåýöûţ $n one]';
+  }
+
+  @override
+  String masterDefaultName(int n) {
+    return '[Ṁåšţéŕ $n one]';
+  }
+
+  @override
+  String get layoutRenameTitle => '[Ŕéñåɱé ļåýöûţ one t]';
+
+  @override
+  String get masterRenameTitle => '[Ŕéñåɱé ɱåšţéŕ one t]';
+
+  @override
+  String get layoutDeleteTitle => '[Ðéļéţé ļåýöûţ? one t]';
+
+  @override
+  String layoutDeleteUsedBody(int count, String name, String replacement) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other:
+          '$count šļîðéš ûšé “$name”. Åþþļý “$replacement” ţö ţĥéɱ åñð ðéļéţé ţĥé ļåýöûţ?',
+      one:
+          '1 šļîðé ûšéš “$name”. Åþþļý “$replacement” ţö îţ åñð ðéļéţé ţĥé ļåýöûţ?',
+    );
+    return '[$_temp0 one two three four five six sev]';
+  }
+
+  @override
+  String get layoutDeleteApplyAndDelete => '[Åþþļý åñð ðéļéţé one t]';
+
+  @override
+  String placeholderPrompt(String type) {
+    String _temp0 = intl.Intl.selectLogic(type, {
+      'title': 'Çļîçķ ţö åðð ţîţļé',
+      'subtitle': 'Çļîçķ ţö åðð šûƀţîţļé',
+      'body': 'Çļîçķ ţö åðð ţéẋţ',
+      'picture': 'Çļîçķ ţö åðð å þîçţûŕé',
+      'chart': 'Çļîçķ ţö åðð å çĥåŕţ',
+      'table': 'Çļîçķ ţö åðð å ţåƀļé',
+      'code': 'Çļîçķ ţö åðð çöðé',
+      'caption': 'Çļîçķ ţö åðð å çåþţîöñ',
+      'bigNumber': '100%',
+      'quote': 'Çļîçķ ţö åðð å ǫûöţé',
+      'attribution': 'Ñåɱé, ŕöļé',
+      'object': 'Çļîçķ ţö åðð åñ öƀĵéçţ',
+      'other': 'Çļîçķ ţö åðð ţéẋţ',
+    });
+    return '[$_temp0 one two three four five six seven eight nine ten one two three four]';
+  }
+
+  @override
+  String get inspectorLayout => '[Ļåýöûţ one]';
+
+  @override
+  String get inspectorMaster => '[Ṁåšţéŕ one]';
+
+  @override
+  String get inspectorTheme => '[Ţĥéɱé on]';
+
+  @override
+  String get mastersNavigatorLabel => '[Ṁåšţéŕš åñð ļåýöûţš one tw]';
+
+  @override
+  String mastersMasterName(String name) {
+    return '[Ṁåšţéŕ · $name one]';
+  }
+
+  @override
+  String get mastersHiddenInPicker => '[Ĥîððéñ îñ ļåýöûţ þîçķéŕ one two]';
+
+  @override
+  String get mastersMoveUp => '[Ṁöṽé ûþ one]';
+
+  @override
+  String get mastersMoveDown => '[Ṁöṽé ðöŵñ one]';
+
+  @override
+  String mastersBannerLayout(String name, String theme, int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other:
+          'Éðîţîñĝ ļåýöûţ “$name” öƒ ţĥéɱé $theme — çĥåñĝéš åþþļý ţö $count šļîðéš',
+      one: 'Éðîţîñĝ ļåýöûţ “$name” öƒ ţĥéɱé $theme — çĥåñĝéš åþþļý ţö 1 šļîðé',
+      zero: 'Éðîţîñĝ ļåýöûţ “$name” öƒ ţĥéɱé $theme — ñö šļîðéš ûšé îţ ýéţ',
+    );
+    return '[$_temp0 one two three four five six seven eight nine]';
+  }
+
+  @override
+  String mastersBannerMaster(String name, String theme, int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other:
+          'Éðîţîñĝ ɱåšţéŕ “$name” öƒ ţĥéɱé $theme — çĥåñĝéš åþþļý ţö $count šļîðéš',
+      one: 'Éðîţîñĝ ɱåšţéŕ “$name” öƒ ţĥéɱé $theme — çĥåñĝéš åþþļý ţö 1 šļîðé',
+      zero: 'Éðîţîñĝ ɱåšţéŕ “$name” öƒ ţĥéɱé $theme — ñö šļîðéš ûšé îţ ýéţ',
+    );
+    return '[$_temp0 one two three four five six seven eight nine]';
+  }
+
+  @override
+  String get mastersBannerNone =>
+      '[Ţĥîš þŕéšéñţåţîöñ ĥåš ñö ļåýöûţš ţö éðîţ one two thre]';
+
+  @override
+  String get mastersDone => '[Ðöñé on]';
+
+  @override
+  String mastersLayoutSemantics(String name) {
+    return '[Ļåýöûţ $name one]';
+  }
+
+  @override
+  String mastersMasterSemantics(String name) {
+    return '[Ṁåšţéŕ $name one]';
+  }
+
+  @override
+  String get mastersSectionProperties => '[Þŕöþéŕţîéš one]';
+
+  @override
+  String get mastersSectionPlaceholders => '[Þļåçéĥöļðéŕš one t]';
+
+  @override
+  String get mastersNoPlaceholders => '[Ñö þļåçéĥöļðéŕš ýéţ one tw]';
+
+  @override
+  String get mastersChoosePlaceholder => '[Åðð… on]';
+
+  @override
+  String mastersOfTheme(String name) {
+    return '[Ţĥéɱé $name on]';
+  }
+
+  @override
+  String get mastersBackgroundUseMaster => '[Ûšé ɱåšţéŕ ƀåçķĝŕöûñð one two]';
+
+  @override
+  String get mastersBackgroundUseTheme => '[Ûšé ţĥéɱé ƀåçķĝŕöûñð one two]';
+
+  @override
+  String get themeSectionColors => '[Çöļöŕš one]';
+
+  @override
+  String get themeSectionFonts => '[Ƒöñţš on]';
+
+  @override
+  String get themeSectionTextStyles => '[Ţéẋţ šţýļéš one]';
+
+  @override
+  String get themeSectionObjects => '[Öƀĵéçţš one]';
+
+  @override
+  String get themeSectionTables => '[Ţåƀļéš one]';
+
+  @override
+  String get themeSectionCharts => '[Çĥåŕţš one]';
+
+  @override
+  String get themeEditorNoTheme =>
+      '[Ţĥîš þŕéšéñţåţîöñ ĥåš ñö ţĥéɱé one two th]';
+
+  @override
+  String themeEditorBasedOn(String name) {
+    return '[Ɓåšéð öñ $name one]';
+  }
+
+  @override
+  String themeContrastPair(String foreground, String background) {
+    return '[$foreground öñ $background o]';
+  }
+
+  @override
+  String themeContrastPasses(String pair, String ratio, String required) {
+    return '[$pair: çöñţŕåšţ $ratio (ñééðš $required:1) one two]';
+  }
+
+  @override
+  String themeContrastFails(String pair, String ratio, String required) {
+    return '[$pair: çöñţŕåšţ $ratio îš ţöö ļöŵ (ñééðš $required:1) one two th]';
+  }
+
+  @override
+  String get themeEditorCustomColors => '[Çûšţöɱ çöļöŕš one t]';
+
+  @override
+  String get themeEditorCustomColorName => '[Çûšţöɱ çöļöŕ ñåɱé one tw]';
+
+  @override
+  String themeEditorCustomColorDefault(int n) {
+    return '[Çûšţöɱ $n one]';
+  }
+
+  @override
+  String get themeEditorAddCustomColor => '[Åðð çûšţöɱ çöļöŕ one t]';
+
+  @override
+  String themeEditorRemoveCustomColor(String name) {
+    return '[Ŕéɱöṽé $name one]';
+  }
+
+  @override
+  String themeEditorWeight(String weight) {
+    String _temp0 = intl.Intl.selectLogic(weight, {
+      '300': 'Ļîĝĥţ',
+      '400': 'Ŕéĝûļåŕ',
+      '500': 'Ṁéðîûɱ',
+      '600': 'Šéɱîƀöļð',
+      '700': 'Ɓöļð',
+      '800': 'Éẋţŕå ƀöļð',
+      'other': '$weight',
+    });
+    return '[$_temp0 one two three]';
+  }
+
+  @override
+  String themeEditorFontFallback(String family, String fallback) {
+    return '[$family îšñ’ţ åṽåîļåƀļé; $fallback îš ûšéð one two]';
+  }
+
+  @override
+  String get themeEditorItalic => '[Îţåļîç one]';
+
+  @override
+  String get themeEditorLetterSpacing => '[Ļéţţéŕ šþåçîñĝ one t]';
+
+  @override
+  String get themeEditorCaps => '[Çåþîţåļš one]';
+
+  @override
+  String get themeEditorLists => '[Ļîšţš on]';
+
+  @override
+  String themeEditorListLevel(int n) {
+    return '[Ļéṽéļ $n on]';
+  }
+
+  @override
+  String get themeEditorBulletColor => '[Ɓûļļéţ çöļöŕ one]';
+
+  @override
+  String get themeEditorIndent => '[Îñðéñţ þéŕ ļéṽéļ one t]';
+
+  @override
+  String get themeEditorBackgroundNotSolid =>
+      '[Ţĥé ƀåçķĝŕöûñð îš å ĝŕåðîéñţ öŕ åñ îɱåĝé; þîçķîñĝ å çöļöŕ ŕéþļåçéš îţ. one two three four fi]';
+
+  @override
+  String get themeEditorDarkBackground =>
+      '[Ðîƒƒéŕéñţ îñ ðåŕķ åþþéåŕåñçé one two t]';
+
+  @override
+  String get themeEditorTextBoxes => '[Ţéẋţ ƀöẋéš one]';
+
+  @override
+  String get themeEditorShapes => '[Šĥåþéš one]';
+
+  @override
+  String get themeEditorLines => '[Ļîñéš on]';
+
+  @override
+  String get themeEditorIcons => '[Îçöñš on]';
+
+  @override
+  String get themeEditorTextColor => '[Ţéẋţ çöļöŕ one]';
+
+  @override
+  String get themeEditorShadowBlur => '[Ɓļûŕ on]';
+
+  @override
+  String get themeEditorShadowOffset => '[Öƒƒšéţ one]';
+
+  @override
+  String get themeEditorQuickStyles => '[Ǫûîçķ šţýļéš one]';
+
+  @override
+  String themeEditorQuickStyle(int n) {
+    return '[Šţýļé $n on]';
+  }
+
+  @override
+  String get themeEditorHeaderFill => '[Ĥéåðéŕ ƒîļļ one]';
+
+  @override
+  String get themeEditorHeaderText => '[Ĥéåðéŕ ţéẋţ one]';
+
+  @override
+  String get themeEditorBodyFill => '[Ɓöðý ƒîļļ one]';
+
+  @override
+  String get themeEditorBandFill => '[Ɓåñðéð ŕöŵš one]';
+
+  @override
+  String get themeEditorCornerRadius => '[Çöŕñéŕ ŕåðîûš one t]';
+
+  @override
+  String get themeEditorLightPalette => '[Ļîĝĥţ þåļéţţé one t]';
+
+  @override
+  String get themeEditorDarkPalette => '[Ðåŕķ þåļéţţé one]';
+
+  @override
+  String get themeEditorWindowChrome => '[Çĥŕöɱé one]';
+
+  @override
+  String get themeEditorChromeTab => '[Ţåƀ on]';
+
+  @override
+  String get themeEditorChromeWindow => '[Ŵîñðöŵ one]';
+
+  @override
+  String get themeEditorChromeCaption => '[Çåþţîöñ one]';
+
+  @override
+  String get themeEditorShadowSoft => '[Šöƒţ on]';
+
+  @override
+  String get themeEditorShadowStrong => '[Šţŕöñĝ one]';
+
+  @override
+  String themeEditorSeries(int n) {
+    return '[Šéŕîéš $n one]';
+  }
+
+  @override
+  String get themeEditorGridlines => '[Ĝŕîðļîñéš one]';
+
+  @override
+  String get themeEditorAxis => '[Åẋîš on]';
+
+  @override
+  String get themeEditorLighting => '[3Ð ļîĝĥţîñĝ one]';
+
+  @override
+  String get themeEditorLightingSoft => '[Šöƒţ on]';
+
+  @override
+  String get themeEditorLightingStudio => '[Šţûðîö one]';
+
+  @override
+  String get themeEditorLightingFlat => '[Ƒļåţ on]';
+
+  @override
+  String get cmdInsertCodeDescription =>
+      '[Îñšéŕţ å çöðé ƀļöçķ ŵîţĥ šýñţåẋ ĥîĝĥļîĝĥţîñĝ, ļîñé šţéþš åñð ţýþé-îñ šţåţéš one two three four five]';
+
+  @override
+  String get cmdCodeSetPalette => '[Çöðé çöļöŕ ţĥéɱé one t]';
+
+  @override
+  String get cmdCodeSetText => '[Šéţ çöðé one]';
+
+  @override
+  String get cmdCodeAddStateDescription =>
+      '[Åððš å çöþý öƒ ţĥé šéļéçţéð šţåţé åƒţéŕ îţ: çĥåñĝé ţĥé çöðé ţĥéŕé ţö åñîɱåţé ţĥé çĥåñĝé one two three four five s]';
+
+  @override
+  String get cmdCodeDuplicateState => '[Ðûþļîçåţé šţåţé one t]';
+
+  @override
+  String get cmdCodeDeleteState => '[Ðéļéţé šţåţé one]';
+
+  @override
+  String get cmdCodeMoveState => '[Ṁöṽé šţåţé one]';
+
+  @override
+  String get cmdCodeSelectState => '[Šĥöŵ çöðé šţåţé one t]';
+
+  @override
+  String get cmdCodeSetStateLabel => '[Ŕéñåɱé šţåţé one]';
+
+  @override
+  String get cmdCodeSetStateTransition => '[Šţåţé åŕŕîṽåļ one t]';
+
+  @override
+  String get cmdCodeSetCallout => '[Šţéþ çåļļöûţ one]';
+
+  @override
+  String get cmdCodeAddStepFromLines => '[Åðð ļîñé šţéþ one]';
+
+  @override
+  String get cmdCodePreviewStep => '[Þŕéṽîéŵ ļîñé šţéþ one tw]';
+
+  @override
+  String get cmdCodePreview => '[Þŕéṽîéŵ çöðé åñîɱåţîöñ one two]';
+
+  @override
+  String get cmdCodeToggleDiffGutter => '[Šĥöŵ çöðé çĥåñĝéš one tw]';
+
+  @override
+  String get cmdCodeCopy => '[Çöþý çöðé one]';
+
+  @override
+  String get cmdCodeConvertFromText => '[Çöñṽéŕţ ţö çöðé ƀļöçķ one two]';
+
+  @override
+  String get reasonSelectCode => '[Šéļéçţ å çöðé ƀļöçķ one tw]';
+
+  @override
+  String get reasonLastCodeState =>
+      '[Å çöðé ƀļöçķ ķééþš åţ ļéåšţ öñé šţåţé one two thr]';
+
+  @override
+  String get reasonSelectTextBox => '[Šéļéçţ å ţéẋţ ƀöẋ ŵîţĥ ţéẋţ one two]';
+
+  @override
+  String get toastCodeCopied => '[Çöðé çöþîéð one]';
+
+  @override
+  String get undoEditCodeBlock => '[Éðîţ çöðé ƀļöçķ one t]';
+
+  @override
+  String get undoEditCodeState => '[Éðîţ çöðé šţåţé one t]';
+
+  @override
+  String get undoEditLineSteps => '[Éðîţ ļîñé šţéþš one t]';
+
+  @override
+  String get undoEditCallout => '[Éðîţ çåļļöûţ one]';
+
+  @override
+  String get codeLanguageLabel => '[Ļåñĝûåĝé one]';
+
+  @override
+  String get codeLanguageDialogTitle => '[Çöðé ļåñĝûåĝé one t]';
+
+  @override
+  String get codeInsertDialogTitle => '[Îñšéŕţ çöðé ƀļöçķ one tw]';
+
+  @override
+  String get codePaletteLabel => '[Çöļöŕš one]';
+
+  @override
+  String get codePaletteAuto => '[Åûţö on]';
+
+  @override
+  String codePaletteAutoNamed(String name) {
+    return '[Åûţö ($name) one]';
+  }
+
+  @override
+  String get codePaletteLight => '[Ţĥéɱé ļîĝĥţ one]';
+
+  @override
+  String get codePaletteDark => '[Ţĥéɱé ðåŕķ one]';
+
+  @override
+  String get codeFontSize => '[Ƒöñţ šîžé one]';
+
+  @override
+  String get codeFontSizeAuto => '[Åûţö on]';
+
+  @override
+  String get codeFontSizeRange => '[Ṁîñ – ɱåẋ one]';
+
+  @override
+  String get codeStartLine => '[Šţåŕţ åţ one]';
+
+  @override
+  String get codeWrap => '[Ŵŕåþ ļîñéš one]';
+
+  @override
+  String get codeLigatures => '[Ļîĝåţûŕéš one]';
+
+  @override
+  String get codeChrome => '[Ƒŕåɱé on]';
+
+  @override
+  String get codeChromeTheme => '[Ţĥéɱé ðéƒåûļţ one t]';
+
+  @override
+  String get codeChromeNone => '[Ñöñé on]';
+
+  @override
+  String get codeChromeTab => '[Ƒîļé ţåƀ one]';
+
+  @override
+  String get codeChromeWindow => '[Ŵîñðöŵ one]';
+
+  @override
+  String get codeChromeCaption => '[Çåþţîöñ one]';
+
+  @override
+  String get codeTitle => '[Ţîţļé on]';
+
+  @override
+  String get codeShowLanguage => '[Ļåñĝûåĝé ƀåðĝé one t]';
+
+  @override
+  String get codeCopyButton => '[Çöþý ƀûţţöñ one]';
+
+  @override
+  String get codeCopyNever => '[Ñéṽéŕ on]';
+
+  @override
+  String get codeCopyPresent => '[Îñ þŕéšéñţåţîöñš one tw]';
+
+  @override
+  String get codeCopyAlways => '[Åļŵåýš one]';
+
+  @override
+  String get codeStatesHeader => '[Šţåţéš one]';
+
+  @override
+  String codeStateChip(int index) {
+    return '[Šţåţé $index on]';
+  }
+
+  @override
+  String codeStateChipNamed(int index, String label) {
+    return '[Šţåţé $index: $label one]';
+  }
+
+  @override
+  String codeStateInfoFirst(int index, int lines) {
+    String _temp0 = intl.Intl.pluralLogic(
+      lines,
+      locale: localeName,
+      other: '$lines ļîñéš',
+      one: '1 ļîñé',
+    );
+    return '[Šţåţé $index · $_temp0 one tw]';
+  }
+
+  @override
+  String codeStateInfo(
+    int index,
+    int lines,
+    int added,
+    int changed,
+    int removed,
+    int previous,
+  ) {
+    String _temp0 = intl.Intl.pluralLogic(
+      lines,
+      locale: localeName,
+      other: '$lines ļîñéš',
+      one: '1 ļîñé',
+    );
+    return '[Šţåţé $index · $_temp0 · +$added ~$changed −$removed ṽš. šţåţé $previous one two th]';
+  }
+
+  @override
+  String get codeMoveStateLeft => '[Ṁöṽé šţåţé éåŕļîéŕ one tw]';
+
+  @override
+  String get codeMoveStateRight => '[Ṁöṽé šţåţé ļåţéŕ one t]';
+
+  @override
+  String get codePreviewTypeIn => '[Þŕéṽîéŵ ţĥé ţýþé-îñ one tw]';
+
+  @override
+  String get codePreviewChange =>
+      '[Þŕéṽîéŵ ţĥé çĥåñĝé îñţö ţĥîš šţåţé one two thr]';
+
+  @override
+  String get codeStateLabel => '[Ñåɱé on]';
+
+  @override
+  String get codeStateLabelHint => '[é.ĝ. Åðð çåçĥîñĝ one t]';
+
+  @override
+  String get codeShowChanges => '[Šĥöŵ çĥåñĝéš one]';
+
+  @override
+  String get codeTypeInHeader => '[Ţýþé-îñ one]';
+
+  @override
+  String get codeArrivalHeader => '[Åŕŕîṽåļ one]';
+
+  @override
+  String get codeArrivesBy => '[Åŕŕîṽéš ƀý one]';
+
+  @override
+  String get codeModeType => '[Ţýþîñĝ one]';
+
+  @override
+  String get codeModeMorph => '[Ṁöŕþĥ on]';
+
+  @override
+  String get codeModeInstant => '[Îñšţåñţ one]';
+
+  @override
+  String codeDurationTyped(String seconds) {
+    return '[≈ $seconds š (ţýþéð) one]';
+  }
+
+  @override
+  String codeDurationMorph(String seconds) {
+    return '[≈ $seconds š (ɱöŕþĥ) one]';
+  }
+
+  @override
+  String codeDurationInstant(String seconds) {
+    return '[≈ $seconds š (çŕöššƒåðé) one t]';
+  }
+
+  @override
+  String get codeMore => '[Ṁöŕé… on]';
+
+  @override
+  String codeLineStepsHeader(int index) {
+    return '[Ļîñé šţéþš (šţåţé $index) one tw]';
+  }
+
+  @override
+  String get codeStepsEmpty =>
+      '[Ñö šţéþš: éṽéŕý ļîñé šĥöŵš ñöŕɱåļļý. one two thr]';
+
+  @override
+  String get codeStepAll => '[Åļļ ļîñéš one]';
+
+  @override
+  String codeStepRow(int index, String lines) {
+    return '[Šţéþ $index: $lines on]';
+  }
+
+  @override
+  String get codeEditCallout => '[Çåļļöûţ one]';
+
+  @override
+  String get codeRemoveStep => '[Ŕéɱöṽé šţéþ one]';
+
+  @override
+  String get codeHighlightStyle => '[Ĥîĝĥļîĝĥţ one]';
+
+  @override
+  String get codeStyleDim => '[Ðîɱ öţĥéŕš one]';
+
+  @override
+  String get codeStyleBlur => '[Ɓļûŕ öţĥéŕš one]';
+
+  @override
+  String get codeStyleDimBlur => '[Ðîɱ åñð ƀļûŕ one]';
+
+  @override
+  String get codeStyleBar => '[Ɓåŕ on]';
+
+  @override
+  String get codeStyleBox => '[Ɓöẋ on]';
+
+  @override
+  String get codeStyleNone => '[Ñöñé on]';
+
+  @override
+  String get codeFocus => '[Ƒöçûš on]';
+
+  @override
+  String get codeFocusScroll => '[Šçŕöļļ one]';
+
+  @override
+  String get codeFocusZoom => '[Žööɱ on]';
+
+  @override
+  String get codeFocusNone => '[Ñöñé on]';
+
+  @override
+  String get codeFitAcrossStates => '[Šåɱé šîžé îñ åļļ šţåţéš one two]';
+
+  @override
+  String get codeStepsDialogTitle => '[Ļîñé šţéþš one]';
+
+  @override
+  String get codeStepsHint =>
+      '[Öñé šţéþ þéŕ çļîçķ, šéþåŕåţéð ƀý |: ļîñéš (5), ŕåñĝéš (1-3, 7-), ļîšţš (2,4); * šĥöŵš åļļ ļîñéš. one two three four five six]';
+
+  @override
+  String get codeStepsLabel => '[Šţéþš on]';
+
+  @override
+  String codeStepIssueSyntax(int index) {
+    return '[Šţéþ $index: ûšé å ļîñé, å ŕåñĝé ļîķé 3-5 öŕ 7-, öŕ 4:2-9 one two three]';
+  }
+
+  @override
+  String codeStepIssuePastEnd(int index) {
+    return '[Šţéþ $index þöîñţš þåšţ ţĥé éñð öƒ ţĥé çöðé one two thr]';
+  }
+
+  @override
+  String codeStepIssueReversed(int index) {
+    return '[Šţéþ $index: å ŕåñĝé ŵåš ŕéṽéŕšéð one two]';
+  }
+
+  @override
+  String codeStepIssueColumns(int index) {
+    return '[Šţéþ $index: çöļûɱñš šţåŕţ åţ 1 one two]';
+  }
+
+  @override
+  String codeCalloutDialogTitle(int index) {
+    return '[Çåļļöûţ öƒ šţéþ $index one t]';
+  }
+
+  @override
+  String get codeCalloutHint =>
+      '[Šĥöŵñ ñéẋţ ţö ţĥé šţéþ\'š ļîñéš. **Ɓöļð**, *îţåļîç* åñð `çöðé` ŵöŕķ. one two three four f]';
+
+  @override
+  String get codeCalloutText => '[Ţéẋţ on]';
+
+  @override
+  String get codeCalloutSide => '[Šîðé on]';
+
+  @override
+  String get codeSideAuto => '[Åûţöɱåţîç one]';
+
+  @override
+  String get codeSideRight => '[Ŕîĝĥţ on]';
+
+  @override
+  String get codeSideLeft => '[Ļéƒţ on]';
+
+  @override
+  String get codeSideAbove => '[Åƀöṽé on]';
+
+  @override
+  String get codeSideBelow => '[Ɓéļöŵ on]';
+
+  @override
+  String get codeCalloutStyle => '[Šţýļé on]';
+
+  @override
+  String get codeCalloutStyleDefault => '[Ðéƒåûļţ one]';
+
+  @override
+  String get codeCalloutBubble => '[Ɓûƀƀļé one]';
+
+  @override
+  String get codeCalloutLabel => '[Ļåƀéļ on]';
+
+  @override
+  String get codeCalloutPill => '[Þîļļ on]';
+
+  @override
+  String get codeCalloutRemove => '[Ŕéɱöṽé çåļļöûţ one t]';
+
+  @override
+  String get codeTypingDialogTitle => '[Ţýþîñĝ šéţţîñĝš one t]';
+
+  @override
+  String get codeTypingCps => '[Šþééð (çĥåŕš/š) one t]';
+
+  @override
+  String get codeTypingRhythm => '[Ŕĥýţĥɱ one]';
+
+  @override
+  String get codeTypingDeletions => '[Ðéļéţîöñš one]';
+
+  @override
+  String get codeDeleteAuto => '[Åûţöɱåţîç one]';
+
+  @override
+  String get codeDeleteBackspace => '[Ɓåçķšþåçé one]';
+
+  @override
+  String get codeDeleteSelect => '[Šéļéçţ åñð ðéļéţé one tw]';
+
+  @override
+  String get codeTypingBackspaceMax => '[Ɓåçķšþåçé ûþ ţö (çĥåŕš) one two]';
+
+  @override
+  String get codeTypingDeleteCps => '[Ɓåçķšþåçé šþééð (çĥåŕš/š) one two t]';
+
+  @override
+  String get codeTypingCaretGlide => '[Çåŕéţ ĝļîðé (ɱš) one t]';
+
+  @override
+  String get codeTypingOrder => '[Öŕðéŕ on]';
+
+  @override
+  String get codeOrderDocument => '[Ţöþ ţö ƀöţţöɱ one]';
+
+  @override
+  String get codeOrderReverse => '[Ɓöţţöɱ ţö ţöþ one]';
+
+  @override
+  String get codeTypingPasteLines => '[Þåšţé ƒŕöɱ (ļîñéš) one tw]';
+
+  @override
+  String get codeTypingMaxDuration => '[Ļöñĝéšţ (ɱš) one]';
+
+  @override
+  String get codeTypingCaret => '[Çåŕéţ on]';
+
+  @override
+  String get codeCaretBar => '[Ɓåŕ on]';
+
+  @override
+  String get codeCaretBlock => '[Ɓļöçķ on]';
+
+  @override
+  String get codeCaretUnderline => '[Ûñðéŕļîñé one]';
+
+  @override
+  String get codeTypingAutoIndent => '[Åûţö-îñðéñţ ñéŵ ļîñéš one two]';
+
+  @override
+  String get codeTypingScrollFollow => '[Šçŕöļļ ţö ţĥé çåŕéţ one tw]';
+
+  @override
+  String get codeTypingHighlightOnArrive => '[Šĥöŵ šţéþ 1 ŵĥéñ ţýþéð one two]';
+
+  @override
+  String get codeMorphDuration => '[Ṁöŕþĥ ðûŕåţîöñ (ɱš) one tw]';
+
+  @override
+  String get codeMorphStagger => '[Ṁöŕþĥ šţåĝĝéŕ þéŕ ļîñé (ɱš) one two t]';
+
+  @override
+  String codeNumberRange(String min, String max) {
+    return '[Éñţéŕ å ñûɱƀéŕ ƒŕöɱ $min ţö $max one two]';
+  }
+
+  @override
+  String codeEditorSemantics(String language) {
+    return '[Çöðé éðîţöŕ, $language one]';
+  }
+
+  @override
+  String codeLinesHidden(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count ļîñéš ĥîððéñ',
+      one: '1 ļîñé ĥîððéñ',
+    );
+    return '[$_temp0 one two]';
+  }
+
+  @override
+  String get codeOverflowHint =>
+      '[Éñļåŕĝé ţĥé ƀöẋ, ļöŵéŕ ţĥé ɱîñîɱûɱ šîžé öŕ ţûŕñ öñ ŵŕåþ one two three fo]';
+
+  @override
+  String get cmdChartUpdateMany => '[Ûþðåţé çĥåŕţš one t]';
+
+  @override
+  String get cmdChartRelink => '[Çĥåñĝé ļîñķéð çĥåŕţ… one two]';
+
+  @override
+  String get cmdChartSetUseDeckTheme => '[Ṁåţçĥ þŕéšéñţåţîöñ ţĥéɱé one two]';
+
+  @override
+  String get cmdChartUpdateStyle => '[Éðîţ çĥåŕţ šţýļé one t]';
+
+  @override
+  String get cmdChartResetOverrides => '[Ŕéšéţ šţýļé öṽéŕŕîðéš one two]';
+
+  @override
+  String get cmdChartSetCamera => '[Ŕöţåţé 3Ð çĥåŕţ one t]';
+
+  @override
+  String get cmdChartAddCameraStep => '[Åðð çåɱéŕå šţéþ one t]';
+
+  @override
+  String get cmdChartViewDataTable => '[Ṽîéŵ ðåţå åš ţåƀļé one tw]';
+
+  @override
+  String get cmdChartCheckUpdates =>
+      '[Çĥéçķ ļîñķéð çĥåŕţš ƒöŕ ûþðåţéš one two th]';
+
+  @override
+  String get cmdInsertChartFromSheetsDescription =>
+      '[Îñšéŕţ å çĥåŕţ ƒŕöɱ å Ŵöñķý Šĥééţš šþŕéåðšĥééţ, ļîñķéð šö îţ çåñ ƀé ûþðåţéð. one two three four five]';
+
+  @override
+  String get reasonSelectChart => '[Šéļéçţ å çĥåŕţ one t]';
+
+  @override
+  String get reasonSelectLinkedChart =>
+      '[Šéļéçţ å çĥåŕţ ļîñķéð ţö å šþŕéåðšĥééţ one two thre]';
+
+  @override
+  String get reasonSelect3DChart => '[Šéļéçţ å 3Ð çĥåŕţ one t]';
+
+  @override
+  String get reasonChartNoOverrides =>
+      '[Ţĥé çĥåŕţ ĥåš ñö šţýļé öṽéŕŕîðéš one two th]';
+
+  @override
+  String get undoInsertChart => '[Îñšéŕţ çĥåŕţ one]';
+
+  @override
+  String get undoUpdateChart => '[Ûþðåţé çĥåŕţ one]';
+
+  @override
+  String get undoUnlinkChart => '[Ûñļîñķ çĥåŕţ one]';
+
+  @override
+  String get undoRelinkChart => '[Çĥåñĝé ļîñķéð çĥåŕţ one tw]';
+
+  @override
+  String get undoEditChartStyle => '[Éðîţ çĥåŕţ šţýļé one t]';
+
+  @override
+  String get undoRotateChart => '[Ŕöţåţé çĥåŕţ one]';
+
+  @override
+  String get chartErrOffline =>
+      '[Ýöû\'ŕé öƒƒļîñé. Çöññéçţ ţö îñšéŕţ öŕ ûþðåţé çĥåŕţš ƒŕöɱ Šĥééţš. one two three four]';
+
+  @override
+  String get chartErrNoAccess =>
+      '[Ýöû ðöñ\'ţ ĥåṽé åççéšš ţö ţĥîš šþŕéåðšĥééţ åñýɱöŕé. one two three fo]';
+
+  @override
+  String get chartErrTrashed =>
+      '[Ţĥîš šþŕéåðšĥééţ îš îñ ţĥé ţŕåšĥ. one two th]';
+
+  @override
+  String get chartErrExportDisabled =>
+      '[Ţĥé öŵñéŕ ðöéšñ\'ţ åļļöŵ ṽîéŵéŕš ţö çöþý çĥåŕţš ƒŕöɱ ţĥîš šþŕéåðšĥééţ. one two three four fi]';
+
+  @override
+  String get chartErrNotFound =>
+      '[Ţĥîš çĥåŕţ ŵåš ðéļéţéð. Þîçķ åñöţĥéŕ öñé. one two three]';
+
+  @override
+  String get chartErrTooLarge =>
+      '[Ţĥîš çĥåŕţ ĥåš ţöö ɱûçĥ ðåţå ţö þļåçé îñ å þŕéšéñţåţîöñ. Ŕéðûçé îţš ŕåñĝé îñ Šĥééţš. one two three four five s]';
+
+  @override
+  String get chartErrUnsupported =>
+      '[Ţĥîš çĥåŕţ ŵåš ɱåðé ŵîţĥ å ñéŵéŕ ṽéŕšîöñ öƒ Ŵöñķý Šĥééţš. Ŕéļöåð ţö îñšéŕţ îţ. one two three four five]';
+
+  @override
+  String get chartErrQuota =>
+      '[Ţĥéŕé îšñ\'ţ éñöûĝĥ šţöŕåĝé ƒöŕ ţĥîš çĥåŕţ. one two three]';
+
+  @override
+  String get chartErrRateLimited =>
+      '[Ţöö ɱåñý çĥåŕţ ŕéǫûéšţš. Ţŕý åĝåîñ îñ å ɱîñûţé. one two three]';
+
+  @override
+  String get chartErrFailed =>
+      '[Çöûļðñ\'ţ ĝéţ ţĥé çĥåŕţ. Ţŕý åĝåîñ. one two thr]';
+
+  @override
+  String get chartInsertDialogTitle =>
+      '[Îñšéŕţ çĥåŕţ ƒŕöɱ Ŵöñķý Šĥééţš one two th]';
+
+  @override
+  String chartInsertFromTitle(String title) {
+    return '[Îñšéŕţ çĥåŕţ ƒŕöɱ \"$title\" one tw]';
+  }
+
+  @override
+  String get chartRelinkTitle => '[Çĥåñĝé ļîñķéð çĥåŕţ one tw]';
+
+  @override
+  String get chartSearchSpreadsheets => '[Šéåŕçĥ šþŕéåðšĥééţš one two]';
+
+  @override
+  String get chartSpreadsheetsLabel => '[Šþŕéåðšĥééţ one]';
+
+  @override
+  String get chartTabRecent => '[Ŕéçéñţ one]';
+
+  @override
+  String get chartTabMine => '[Ṁý ƒîļéš one]';
+
+  @override
+  String get chartTabShared => '[Šĥåŕéð ŵîţĥ ɱé one t]';
+
+  @override
+  String get chartTabStarred => '[Šţåŕŕéð one]';
+
+  @override
+  String get chartNoSpreadsheets => '[Ñö šþŕéåðšĥééţš ƒöûñð one two]';
+
+  @override
+  String get chartListFailed =>
+      '[Çöûļðñ\'ţ ļöåð ţĥé ļîšţ. Ţŕý åĝåîñ. one two thr]';
+
+  @override
+  String get chartBack => '[Ɓåçķ on]';
+
+  @override
+  String get chartSearchCharts => '[Šéåŕçĥ çĥåŕţš one t]';
+
+  @override
+  String get chartPickChart => '[Çĥåŕţ on]';
+
+  @override
+  String get chartNoCharts =>
+      '[Ţĥîš šþŕéåðšĥééţ ĥåš ñö çĥåŕţš. Çŕéåţé öñé îñ Ŵöñķý Šĥééţš. one two three four]';
+
+  @override
+  String get chartOpenInSheets => '[Öþéñ îñ Šĥééţš one t]';
+
+  @override
+  String get chartLinkToSpreadsheet => '[Ļîñķ ţö šþŕéåðšĥééţ one tw]';
+
+  @override
+  String get chartMatchTheme => '[Ṁåţçĥ þŕéšéñţåţîöñ ţĥéɱé one two]';
+
+  @override
+  String get chartDataNotice =>
+      '[Åñýöñé ŵîţĥ åççéšš ţö ţĥîš þŕéšéñţåţîöñ ŵîļļ šéé ţĥîš çĥåŕţ\'š ðåţå. one two three four f]';
+
+  @override
+  String get chartNewerVersion => '[Ñééðš å ñéŵéŕ ṽéŕšîöñ one two]';
+
+  @override
+  String get chartSheetBadge => '[Çĥåŕţ šĥééţ one]';
+
+  @override
+  String get chart3DBadge => '[3Ð o]';
+
+  @override
+  String get chartUntitled => '[Ûñţîţļéð çĥåŕţ one t]';
+
+  @override
+  String get chartUpdateAction => '[Ûþðåţé one]';
+
+  @override
+  String chartUpdateTooltip(String source, String summary) {
+    return '[$source çĥåñĝéð$summary. Ûþðåţé ţö šĥöŵ ţĥé ļåţéšţ ṽéŕšîöñ. one two three]';
+  }
+
+  @override
+  String get chartStatusLinked => '[Ļîñķéð one]';
+
+  @override
+  String get chartStatusChanged => '[Ļîñķéð · Šöûŕçé çĥåñĝéð one two]';
+
+  @override
+  String get chartStatusNoAccess => '[Ļîñķéð · Ñö åççéšš one tw]';
+
+  @override
+  String get chartStatusChartDeleted => '[Šöûŕçé çĥåŕţ ðéļéţéð one two]';
+
+  @override
+  String get chartStatusTrashed => '[Šöûŕçé îñ ţŕåšĥ one t]';
+
+  @override
+  String get chartStatusDeleted => '[Šöûŕçé ðéļéţéð one t]';
+
+  @override
+  String get chartStatusUnsupported =>
+      '[Ļîñķéð · Ñééðš å ñéŵéŕ ṽéŕšîöñ one two t]';
+
+  @override
+  String chartStatusOffline(String status) {
+    return '[$status (öƒƒļîñé) one]';
+  }
+
+  @override
+  String chartStatusUpToDate(String when) {
+    return '[Ļîñķéð · Ûþ ţö ðåţé ($when) one tw]';
+  }
+
+  @override
+  String chartNewerDataToast(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count çĥåŕţš ĥåṽé ñéŵéŕ ðåţå',
+      one: '1 çĥåŕţ ĥåš ñéŵéŕ ðåţå',
+    );
+    return '[$_temp0 one two three]';
+  }
+
+  @override
+  String chartAutoUpdatedToast(String sources) {
+    return '[Çĥåŕţš ûþðåţéð ƒŕöɱ $sources one tw]';
+  }
+
+  @override
+  String get chartPasteNoData =>
+      '[Ţĥé çĥåŕţ\'š ðåţå çöûļðñ\'ţ ƀé çöþîéð. Þåšţé îţ åĝåîñ ŵĥéñ ýöû\'ŕé öñļîñé. one two three four fi]';
+
+  @override
+  String get chartCopied => '[Çĥåŕţ çöþîéð one]';
+
+  @override
+  String get chartCopyFailed => '[Çöûļðñ\'ţ çöþý ţĥé çĥåŕţ. one two]';
+
+  @override
+  String chartDataTableTitle(String title) {
+    return '[Ðåţå öƒ $title one]';
+  }
+
+  @override
+  String get chartNoData => '[Ñö ðåţå one]';
+
+  @override
+  String get chartNoDataYet => '[Ţĥîš çĥåŕţ ĥåš ñö ðåţå ýéţ. one two]';
+
+  @override
+  String get chartNotLinked =>
+      '[Ñöţ ļîñķéð: šĥöŵš å çöþý öƒ ţĥé ðåţå. one two thr]';
+
+  @override
+  String get chartAutoShort => '[Åûţö-ûþðåţé one]';
+
+  @override
+  String get chartUnlinkShort => '[Ûñļîñķ one]';
+
+  @override
+  String get chartStyleMode => '[Šţýļé on]';
+
+  @override
+  String get chartMatchThemeShort => '[Ṁåţçĥ ţĥéɱé one]';
+
+  @override
+  String get chartKeepSource => '[Ķééþ šöûŕçé šţýļé one tw]';
+
+  @override
+  String get chartBackground => '[Ɓåçķĝŕöûñð one]';
+
+  @override
+  String get chartBackgroundDefault => '[Ðéƒåûļţ one]';
+
+  @override
+  String get chartBackgroundTransparent => '[Ţŕåñšþåŕéñţ one]';
+
+  @override
+  String get chartBackgroundTheme => '[Šļîðé ƀåçķĝŕöûñð çöļöŕ one two]';
+
+  @override
+  String get chartBackgroundWhite => '[Ŵĥîţé on]';
+
+  @override
+  String get chartCamera => '[3Ð ṽîéŵ one]';
+
+  @override
+  String get chartCameraPreset => '[Ṽîéŵ on]';
+
+  @override
+  String get chartCameraCustom => '[Çûšţöɱ one]';
+
+  @override
+  String get chartCameraRotation => '[Ŕöţåţîöñ one]';
+
+  @override
+  String get chartCameraTilt => '[Ţîļţ on]';
+
+  @override
+  String get chartCameraPerspective => '[Þéŕšþéçţîṽé one]';
+
+  @override
+  String get chartCameraReset => '[Ŕéšéţ ṽîéŵ one]';
+
+  @override
+  String get chartCameraHint =>
+      '[Ðŕåĝ ţĥé šéļéçţéð çĥåŕţ ţö öŕƀîţ îţ. Åļţ+Šĥîƒţ+åŕŕöŵš ŕöţåţé 5°. one two three four f]';
+
+  @override
+  String get chartPresetDefault => '[Ðéƒåûļţ one]';
+
+  @override
+  String get chartPresetFront => '[Ƒŕöñţ on]';
+
+  @override
+  String get chartPresetIsometric => '[Îšöɱéţŕîç one]';
+
+  @override
+  String get chartPresetTopDown => '[Ţöþ-ðöŵñ one]';
+
+  @override
+  String get chartPresetLowAngle => '[Ļöŵ åñĝļé one]';
+
+  @override
+  String get chartPresetSide => '[Šîðé on]';
+
+  @override
+  String get chartPresetDramatic => '[Ðŕåɱåţîç one]';
+
+  @override
+  String get chartPresetFlat => '[Ƒļåţ on]';
+
+  @override
+  String get chartPresetTilted => '[Ţîļţéð one]';
+
+  @override
+  String get chartPresetSteep => '[Šţééþ on]';
+
+  @override
+  String get chartPresenting => '[Þŕéšéñţîñĝ one]';
+
+  @override
+  String get chartHoverTooltips => '[Ĥöṽéŕ ṽåļûéš one]';
+
+  @override
+  String get chartOrbitInPresent => '[Ðŕåĝ ţö öŕƀîţ one]';
+
+  @override
+  String get chartCustomize => '[Çûšţöɱîžé one]';
+
+  @override
+  String chartUnusedOverrides(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Öṽéŕŕîðéš öƒ $count šéŕîéš ţĥåţ ñö ļöñĝéŕ éẋîšţ',
+      one: 'Öṽéŕŕîðéš öƒ 1 šéŕîéš ţĥåţ ñö ļöñĝéŕ éẋîšţš',
+    );
+    return '[$_temp0 one two three four five s]';
+  }
+
+  @override
+  String get chartCleanUp => '[Çļéåñ ûþ one]';
+
+  @override
+  String get chartInvalidOverrides =>
+      '[Šöɱé šţýļé öṽéŕŕîðéš åŕé îñṽåļîð åñð ŵéŕé îĝñöŕéð. one two three fo]';
+
+  @override
+  String chartUpdateAll(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Ûþðåţé åļļ ($count)',
+      zero: 'Ûþðåţé åļļ',
+    );
+    return '[$_temp0 one two]';
+  }
+
+  @override
+  String get chartChecking => '[Çĥéçķîñĝ… one]';
+
+  @override
+  String get chartNoLinkedCharts =>
+      '[Ţĥîš þŕéšéñţåţîöñ ĥåš ñö ļîñķéð çĥåŕţš. one two thre]';
+
+  @override
+  String chartOnSlide(int number) {
+    return '[Šļîðé $number on]';
+  }
+
+  @override
+  String get chartStyleTitles => '[Çĥåŕţ & åẋîš ţîţļéš one tw]';
+
+  @override
+  String get chartStyleLegend => '[Ļéĝéñð one]';
+
+  @override
+  String get chartStyleSeries => '[Šéŕîéš one]';
+
+  @override
+  String get chartStyleAxes => '[Åẋéš on]';
+
+  @override
+  String get chartStyleGridlines => '[Ĝŕîðļîñéš one]';
+
+  @override
+  String get chartStylePie => '[Þîé çĥåŕţ one]';
+
+  @override
+  String get chartStyle3D => '[3Ð o]';
+
+  @override
+  String get chartStyleLayout => '[Ļåýöûţ one]';
+
+  @override
+  String get chartStyleChartTitle => '[Çĥåŕţ ţîţļé one]';
+
+  @override
+  String get chartStyleSubtitle => '[Šûƀţîţļé one]';
+
+  @override
+  String get chartStyleHAxisTitle => '[Ĥöŕîžöñţåļ åẋîš ţîţļé one two]';
+
+  @override
+  String get chartStyleVAxisTitle => '[Ṽéŕţîçåļ åẋîš ţîţļé one tw]';
+
+  @override
+  String get chartStyleLegendPosition => '[Þöšîţîöñ one]';
+
+  @override
+  String get chartStyleColor => '[Çöļöŕ on]';
+
+  @override
+  String get chartStyleLineWidth => '[Ļîñé ŵîðţĥ one]';
+
+  @override
+  String get chartStylePointSize => '[Þöîñţ šîžé one]';
+
+  @override
+  String get chartStyleDataLabels => '[Ðåţå ļåƀéļš one]';
+
+  @override
+  String get chartStyleHAxisLine => '[Ĥöŕîžöñţåļ åẋîš ļîñé one two]';
+
+  @override
+  String get chartStyleVAxisLine => '[Ṽéŕţîçåļ åẋîš ļîñé one tw]';
+
+  @override
+  String get chartStyleNumberFormat => '[Ñûɱƀéŕ ƒöŕɱåţ one t]';
+
+  @override
+  String get chartStyleHGridlines => '[Ĥöŕîžöñţåļ åẋîš ĝŕîðļîñéš one two t]';
+
+  @override
+  String get chartStyleVGridlines => '[Ṽéŕţîçåļ åẋîš ĝŕîðļîñéš one two]';
+
+  @override
+  String get chartStyleMaximize => '[Ṁåẋîɱîžé one]';
+
+  @override
+  String get chartStyleDonutHole => '[Ðöñûţ ĥöļé one]';
+
+  @override
+  String get chartStyleSliceLabels => '[Šļîçé ļåƀéļš one]';
+
+  @override
+  String get chartStyleStartAngle => '[Šţåŕţ åñĝļé one]';
+
+  @override
+  String get chartStyleLighting => '[Ļîĝĥţîñĝ one]';
+
+  @override
+  String get chartStyleWalls => '[Ŵåļļš åñð ƒļööŕ one t]';
+
+  @override
+  String get chartStyleDepth => '[Ðéþţĥ on]';
+
+  @override
+  String get chartStyleGapDepth => '[Ĝåþ ðéþţĥ one]';
+
+  @override
+  String get chartStyleShape => '[Šĥåþé on]';
+
+  @override
+  String get chartStyleExplode => '[Éẋþļöðé one]';
+
+  @override
+  String get chartStyleAutomatic => '[Åûţöɱåţîç one]';
+
+  @override
+  String get chartStyleNone => '[Ñöñé on]';
+
+  @override
+  String get chartStyleResetField =>
+      '[Ŕéšéţ ţö ţĥé šþŕéåðšĥééţ\'š ṽåļûé one two th]';
+
+  @override
+  String get chartStyleChangedHere =>
+      '[Çĥåñĝéð îñ ţĥîš þŕéšéñţåţîöñ one two t]';
+
+  @override
+  String get chartStyleLegendTop => '[Ţöþ on]';
+
+  @override
+  String get chartStyleLegendBottom => '[Ɓöţţöɱ one]';
+
+  @override
+  String get chartStyleLegendLeft => '[Ļéƒţ on]';
+
+  @override
+  String get chartStyleLegendRight => '[Ŕîĝĥţ on]';
+
+  @override
+  String get chartStyleLegendInside => '[Îñšîðé one]';
+
+  @override
+  String get chartStyleSliceLabel => '[Ļåƀéļ on]';
+
+  @override
+  String get chartStyleSliceValue => '[Ṽåļûé on]';
+
+  @override
+  String get chartStyleSlicePercent => '[Þéŕçéñţåĝé one]';
+
+  @override
+  String get chartStyleSliceValuePercent => '[Ṽåļûé åñð þéŕçéñţåĝé one two]';
+
+  @override
+  String get chartStyleLightingSoft => '[Šöƒţ on]';
+
+  @override
+  String get chartStyleLightingBright => '[Ɓŕîĝĥţ one]';
+
+  @override
+  String get chartStyleLightingFlat => '[Ƒļåţ on]';
+
+  @override
+  String get chartStyleShapeBox => '[Ɓöẋ on]';
+
+  @override
+  String get chartStyleShapeCylinder => '[Çýļîñðéŕ one]';
+
+  @override
+  String get chartStyleShapeCone => '[Çöñé on]';
+
+  @override
+  String get chartStyleShapePyramid => '[Þýŕåɱîð one]';
+
+  @override
+  String animateEffectName(String id) {
+    String _temp0 = intl.Intl.selectLogic(id, {
+      'appear': 'Åþþéåŕ',
+      'fade': 'Ƒåðé',
+      'rise': 'Ŕîšé',
+      'moveIn': 'Ṁöṽé îñ',
+      'scale': 'Šçåļé',
+      'pop': 'Þöþ',
+      'zoom': 'Žööɱ',
+      'blur': 'Ɓļûŕ',
+      'wipe': 'Ŵîþé',
+      'iris': 'Îŕîš',
+      'dissolve': 'Ðîššöļṽé',
+      'drop': 'Ðŕöþ',
+      'flip': 'Ƒļîþ',
+      'rotate': 'Ŕöţåţé',
+      'typewriter': 'Ţýþéŵŕîţéŕ',
+      'lineDraw': 'Ðŕåŵ ļîñé',
+      'chartGrow': 'Ĝŕöŵ',
+      'codeType': 'Ţýþé çöðé',
+      'shimmer': 'Šĥîɱɱéŕ',
+      'disappear': 'Ðîšåþþéåŕ',
+      'fadeOut': 'Ƒåðé öûţ',
+      'sink': 'Šîñķ',
+      'moveOut': 'Ṁöṽé öûţ',
+      'scaleOut': 'Šçåļé öûţ',
+      'popOut': 'Þöþ öûţ',
+      'zoomOut': 'Žööɱ öûţ',
+      'blurOut': 'Ɓļûŕ öûţ',
+      'wipeOut': 'Ŵîþé öûţ',
+      'irisOut': 'Îŕîš öûţ',
+      'dissolveOut': 'Ðîššöļṽé öûţ',
+      'fall': 'Ƒåļļ',
+      'flipOut': 'Ƒļîþ öûţ',
+      'rotateOut': 'Ŕöţåţé öûţ',
+      'eraseText': 'Éŕåšé ţéẋţ',
+      'lineErase': 'Éŕåšé ļîñé',
+      'chartShrink': 'Šĥŕîñķ',
+      'pulse': 'Þûļšé',
+      'bounce': 'Ɓöûñçé',
+      'shake': 'Šĥåķé',
+      'blink': 'Ɓļîñķ',
+      'spin': 'Šþîñ',
+      'grow': 'Ĝŕöŵ / šĥŕîñķ',
+      'opacityTo': 'Ţŕåñšþåŕéñçý',
+      'colorChange': 'Çöļöŕ çĥåñĝé',
+      'highlight': 'Ĥîĝĥļîĝĥţ',
+      'chartHighlight': 'Ĥîĝĥļîĝĥţ šéŕîéš',
+      'chartHighlightClear': 'Çļéåŕ ĥîĝĥļîĝĥţ',
+      'chartOrbit': 'Öŕƀîţ',
+      'chartCamera': 'Ŕöţåţé ţö åñĝļé',
+      'codeHighlight': 'Ĥîĝĥļîĝĥţ ļîñéš',
+      'codeState': 'Ñéẋţ çöðé šţåţé',
+      'path': 'Ṁöţîöñ þåţĥ',
+      'moveTo': 'Ţŕåñšƒöŕɱ',
+      'other': '',
+    });
+    return '[$_temp0 one two three four five six seven eight nine ten one two three four five six seven eight nine ten one two three four five six seven eigh]';
+  }
+
+  @override
+  String animateEffectDescription(String id) {
+    String _temp0 = intl.Intl.selectLogic(id, {
+      'appear': 'Ţĥé öƀĵéçţ åþþéåŕš åţ öñçé.',
+      'fade': 'Ţĥé öƀĵéçţ ƒåðéš îñ.',
+      'rise': 'Ţĥé öƀĵéçţ ɱöṽéš ûþ å šĥöŕţ ðîšţåñçé ŵĥîļé ƒåðîñĝ îñ.',
+      'moveIn': 'Ţĥé öƀĵéçţ ɱöṽéš îñ ƒŕöɱ å šîðé öŕ ƒŕöɱ öƒƒ ţĥé šļîðé.',
+      'scale': 'Ţĥé öƀĵéçţ ĝŕöŵš ţö îţš šîžé ŵĥîļé ƒåðîñĝ îñ.',
+      'pop': 'Ţĥé öƀĵéçţ þöþš îñ ŵîţĥ å ļîţţļé ƀöûñçé.',
+      'zoom': 'Ţĥé öƀĵéçţ çöɱéš ţöŵåŕð îţš þļåçé ƒŕöɱ îñ ƒŕöñţ öƒ ţĥé ṽîéŵéŕ.',
+      'blur': 'Ţĥé öƀĵéçţ çöɱéš îñţö ƒöçûš.',
+      'wipe': 'Å šöƒţ éðĝé šŵééþš åçŕöšš åñð ŕéṽéåļš ţĥé öƀĵéçţ.',
+      'iris': 'Å ĝŕöŵîñĝ çîŕçļé, šǫûåŕé öŕ ðîåɱöñð ŕéṽéåļš ţĥé öƀĵéçţ.',
+      'dissolve': 'Ţĥé öƀĵéçţ åþþéåŕš ţĥŕöûĝĥ å ĝŕåîñ öƒ ŕåñðöɱ çéļļš.',
+      'drop': 'Ţĥé öƀĵéçţ ƒåļļš îñţö þļåçé åñð ƀöûñçéš.',
+      'flip': 'Ţĥé öƀĵéçţ ƒļîþš îñţö ṽîéŵ ļîķé å çåŕð.',
+      'rotate': 'Ţĥé öƀĵéçţ ţûŕñš îñţö þļåçé.',
+      'typewriter': 'Ţĥé ţéẋţ îš ţýþéð çĥåŕåçţéŕ ƀý çĥåŕåçţéŕ.',
+      'lineDraw': 'Ţĥé öûţļîñé ðŕåŵš îţšéļƒ, ţĥéñ ţĥé ƒîļļ ƒåðéš îñ.',
+      'chartGrow': 'Ɓåŕš ĝŕöŵ, ļîñéš ðŕåŵ öñ åñð ŵéðĝéš šŵééþ îñ.',
+      'codeType': 'Ţĥé çöðé îš ţýþéð îñţö ţĥé ƀļöçķ.',
+      'shimmer': 'Þåŕţîçļéš çöñðéñšé îñţö ţĥé ţéẋţ.',
+      'disappear': 'Ţĥé öƀĵéçţ ðîšåþþéåŕš åţ öñçé.',
+      'fadeOut': 'Ţĥé öƀĵéçţ ƒåðéš öûţ.',
+      'sink': 'Ţĥé öƀĵéçţ ɱöṽéš ðöŵñ å šĥöŕţ ðîšţåñçé ŵĥîļé ƒåðîñĝ öûţ.',
+      'moveOut': 'Ţĥé öƀĵéçţ ɱöṽéš öûţ ţö å šîðé öŕ öƒƒ ţĥé šļîðé.',
+      'scaleOut': 'Ţĥé öƀĵéçţ šĥŕîñķš ŵĥîļé ƒåðîñĝ öûţ.',
+      'popOut': 'Ţĥé öƀĵéçţ ĝŕöŵš å ļîţţļé, ţĥéñ çöļļåþšéš.',
+      'zoomOut': 'Ţĥé öƀĵéçţ ɱöṽéš ţöŵåŕð ţĥé ṽîéŵéŕ åñð ƒåðéš åŵåý.',
+      'blurOut': 'Ţĥé öƀĵéçţ ĝöéš öûţ öƒ ƒöçûš.',
+      'wipeOut': 'Å šöƒţ éðĝé šŵééþš åçŕöšš åñð ĥîðéš ţĥé öƀĵéçţ.',
+      'irisOut': 'Å šĥŕîñķîñĝ çîŕçļé, šǫûåŕé öŕ ðîåɱöñð ĥîðéš ţĥé öƀĵéçţ.',
+      'dissolveOut': 'Ţĥé öƀĵéçţ ðîšåþþéåŕš îñţö å ĝŕåîñ öƒ ŕåñðöɱ çéļļš.',
+      'fall': 'Ţĥé öƀĵéçţ ƒåļļš öƒƒ ţĥé šļîðé.',
+      'flipOut': 'Ţĥé öƀĵéçţ ƒļîþš åŵåý ļîķé å çåŕð.',
+      'rotateOut': 'Ţĥé öƀĵéçţ ţûŕñš åŵåý.',
+      'eraseText': 'Ţĥé ţéẋţ îš éŕåšéð ƒŕöɱ ţĥé éñð, ļîķé ƀåçķšþåçîñĝ.',
+      'lineErase': 'Ţĥé öûţļîñé éŕåšéš îţšéļƒ.',
+      'chartShrink': 'Ɓåŕš šĥŕîñķ, ļîñéš éŕåšé åñð ŵéðĝéš šŵééþ öûţ.',
+      'pulse': 'Ţĥé öƀĵéçţ ƀŕîéƒļý ĝŕöŵš åñð ŕéţûŕñš.',
+      'bounce': 'Ţĥé öƀĵéçţ ĵûɱþš ûþ åñð ļåñðš.',
+      'shake': 'Ţĥé öƀĵéçţ šĥåķéš ƒŕöɱ šîðé ţö šîðé.',
+      'blink': 'Ţĥé öƀĵéçţ ƀļîñķš.',
+      'spin': 'Ţĥé öƀĵéçţ šþîñš åñð ķééþš îţš ñéŵ åñĝļé.',
+      'grow': 'Ţĥé öƀĵéçţ çĥåñĝéš îţš šîžé åñð ķééþš îţ.',
+      'opacityTo': 'Ţĥé öƀĵéçţ ƀéçöɱéš ɱöŕé öŕ ļéšš ţŕåñšþåŕéñţ.',
+      'colorChange': 'Ţĥé ƒîļļ, ƀöŕðéŕ öŕ ţéẋţ çĥåñĝéš çöļöŕ.',
+      'highlight': 'Å ɱåŕķéŕ šŵééþš ƀéĥîñð ţĥé ţéẋţ.',
+      'chartHighlight': 'Öñé šéŕîéš šţåñðš öûţ; ţĥé ŕéšţ ðîɱš.',
+      'chartHighlightClear': 'Éṽéŕý šéŕîéš îš šĥöŵñ ñöŕɱåļļý åĝåîñ.',
+      'chartOrbit': 'Ţĥé 3Ð çĥåŕţ ţûŕñš åŕöûñð.',
+      'chartCamera': 'Ţĥé 3Ð çĥåŕţ ţûŕñš ţö å ñéŵ ṽîéŵ.',
+      'codeHighlight': 'Ţĥé ñéẋţ ĥîĝĥļîĝĥţ šţéþ öƒ ţĥé çöðé îš šĥöŵñ.',
+      'codeState': 'Ţĥé çöðé çĥåñĝéš ţö îţš ñéẋţ šţåţé.',
+      'path': 'Ţĥé öƀĵéçţ ɱöṽéš åļöñĝ å þåţĥ.',
+      'moveTo': 'Ţĥé öƀĵéçţ ɱöṽéš, ŕéšîžéš, ţûŕñš öŕ ƒåðéš ţö åñ éñð šţåţé.',
+      'other': 'Åñ åñîɱåţîöñ ƒŕöɱ å ñéŵéŕ ṽéŕšîöñ.',
+    });
+    return '[$_temp0 one two three four five six seven eight nine ten one two three four five six seven eight nine ten one two three four five six seven eight nine ten one two three four five six seven eight nine ten one two three four five six seven eight nine ten one two three four five six seven eight nine ten one two three four five six seven eight nine ten one two three four five six seven eight nine ten one two three four five six seven eight nine ten one two three four five six seven eight nine ten one two three four five six seven eight nine ten one two three four five six seven eight nine ten one two three four five six seven e]';
+  }
+
+  @override
+  String animateTransitionName(String id) {
+    String _temp0 = intl.Intl.selectLogic(id, {
+      'none': 'Ñöñé',
+      'fade': 'Ƒåðé',
+      'dissolve': 'Ðîššöļṽé',
+      'push': 'Þûšĥ',
+      'slide': 'Šļîðé îñ',
+      'cover': 'Çöṽéŕ',
+      'uncover': 'Ûñçöṽéŕ',
+      'wipe': 'Ŵîþé',
+      'iris': 'Îŕîš',
+      'zoom': 'Žööɱ',
+      'flip': 'Ƒļîþ',
+      'cube': 'Çûƀé',
+      'doorway': 'Ðööŕŵåý',
+      'swap': 'Šŵåþ',
+      'revolve': 'Ŕéṽöļṽé',
+      'magicMove': 'Ṁåĝîç Ṁöṽé',
+      'other': 'Ţŕåñšîţîöñ',
+    });
+    return '[$_temp0 one two three four five six seven]';
+  }
+
+  @override
+  String animateTransitionDescription(String id) {
+    String _temp0 = intl.Intl.selectLogic(id, {
+      'none': 'Ţĥé ñéŵ šļîðé ŕéþļåçéš ţĥé öļð öñé åţ öñçé.',
+      'fade':
+          'Ţĥé ñéŵ šļîðé ƒåðéš îñ öṽéŕ ţĥé öļð öñé, öŕ ƀöţĥ ƒåðé ţĥŕöûĝĥ å çöļöŕ.',
+      'dissolve': 'Ţĥé ñéŵ šļîðé åþþéåŕš ţĥŕöûĝĥ å ĝŕåîñ öƒ ŕåñðöɱ çéļļš.',
+      'push': 'Ţĥé ñéŵ šļîðé þûšĥéš ţĥé öļð öñé öƒƒ ţĥé šçŕééñ.',
+      'slide': 'Ţĥé ñéŵ šļîðé šļîðéš îñ öṽéŕ ţĥé öļð öñé.',
+      'cover': 'Ţĥé ñéŵ šļîðé šļîðéš öṽéŕ ţĥé öļð öñé, ŵĥîçĥ ðîɱš.',
+      'uncover': 'Ţĥé öļð šļîðé šļîðéš åŵåý åñð ŕéṽéåļš ţĥé ñéŵ öñé.',
+      'wipe': 'Å šöƒţ éðĝé šŵééþš åçŕöšš åñð ŕéṽéåļš ţĥé ñéŵ šļîðé.',
+      'iris': 'Å ĝŕöŵîñĝ çîŕçļé, šǫûåŕé öŕ ðîåɱöñð ŕéṽéåļš ţĥé ñéŵ šļîðé.',
+      'zoom': 'Ţĥé ñéŵ šļîðé ĝŕöŵš îñ, öŕ ţĥé öļð öñé šĥŕîñķš åŵåý.',
+      'flip': 'Ţĥé šļîðé ƒļîþš öṽéŕ ļîķé å çåŕð; ţĥé ñéŵ šļîðé îš öñ îţš ƀåçķ.',
+      'cube': 'Ɓöţĥ šļîðéš åŕé ƒåçéš öƒ å çûƀé ţĥåţ ţûŕñš å ǫûåŕţéŕ ţûŕñ.',
+      'doorway':
+          'Ţĥé öļð šļîðé öþéñš ļîķé ðöûƀļé ðööŕš; ţĥé ñéŵ öñé çöɱéš ƒöŕŵåŕð.',
+      'swap': 'Ţĥé šļîðéš šŵåþ þļåçéš, ƒŕöñţ åñð ƀåçķ, öñ åñ åŕç.',
+      'revolve': 'Ţĥé öļð šļîðé šŵîñĝš åŵåý öñ îţš éðĝé ļîķé å ðööŕ.',
+      'magicMove':
+          'Öƀĵéçţš öñ ƀöţĥ šļîðéš ɱöŕþĥ îñţö éåçĥ öţĥéŕ; ţĥé ŕéšţ ƒåðéš.',
+      'other': '',
+    });
+    return '[$_temp0 one two three four five six seven eight nine ten one two three four five six seven eight nine ten one two three four five six seven eight nine ten one two three four five six seven eight nine ten one two three four five six seven eight nine ten one]';
+  }
+
+  @override
+  String animateParamName(String key) {
+    String _temp0 = intl.Intl.selectLogic(key, {
+      'distance': 'Ðîšţåñçé',
+      'fade': 'Ƒåðé',
+      'direction': 'Ðîŕéçţîöñ',
+      'from': 'Ƒŕöɱ',
+      'to': 'Ţö',
+      'origin': 'Öŕîĝîñ',
+      'bounce': 'Ɓöûñçé',
+      'softness': 'Šöƒţñéšš',
+      'shape': 'Šĥåþé',
+      'cell': 'Ĝŕåîñ',
+      'height': 'Ĥéîĝĥţ',
+      'bounces': 'Ɓöûñçéš',
+      'axis': 'Åẋîš',
+      'perspective': 'Þéŕšþéçţîṽé',
+      'angle': 'Åñĝļé',
+      'scale': 'Šçåļé',
+      'cps': 'Çĥåŕåçţéŕš/š',
+      'caret': 'Çåŕéţ',
+      'jitter': 'Ĵîţţéŕ',
+      'fillDelay': 'Ƒîļļ ðéļåý',
+      'count': 'Ţîɱéš',
+      'amplitude': 'Åɱþļîţûðé',
+      'opacity': 'Öþåçîţý',
+      'property': 'Þŕöþéŕţý',
+      'color': 'Çöļöŕ',
+      'style': 'Šţýļé',
+      'target': 'Šéŕîéš',
+      'dimOthers': 'Ðîɱ öţĥéŕš',
+      'azimuth': 'Åžîɱûţĥ',
+      'elevation': 'Éļéṽåţîöñ',
+      'step': 'Šţéþ',
+      'state': 'Šţåţé',
+      'mode': 'Ṁöðé',
+      'path': 'Þåţĥ',
+      'preset': 'Þŕéšéţ',
+      'orientToPath': 'Öŕîéñţ ţö þåţĥ',
+      'relativeEnd': 'Ŕéļåţîṽé éñð',
+      'anticipation': 'Åñţîçîþåţîöñ',
+      'rotation': 'Ŕöţåţîöñ',
+      'through': 'Ţĥŕöûĝĥ çöļöŕ',
+      'persist': 'Ķééþ éñð šţåţé',
+      'other': 'Öþţîöñ',
+    });
+    return '[$_temp0 one two three four five six seven eight nine ten one two three four five six seven eight nine ten one t]';
+  }
+
+  @override
+  String animateChoiceName(String value) {
+    String _temp0 = intl.Intl.selectLogic(value, {
+      'left': 'Ļéƒţ',
+      'right': 'Ŕîĝĥţ',
+      'top': 'Ţöþ',
+      'bottom': 'Ɓöţţöɱ',
+      'up': 'Ûþ',
+      'down': 'Ðöŵñ',
+      'topLeft': 'Ţöþ ļéƒţ',
+      'topRight': 'Ţöþ ŕîĝĥţ',
+      'bottomLeft': 'Ɓöţţöɱ ļéƒţ',
+      'bottomRight': 'Ɓöţţöɱ ŕîĝĥţ',
+      'center': 'Çéñţéŕ',
+      'circle': 'Çîŕçļé',
+      'rect': 'Šǫûåŕé',
+      'diamond': 'Ðîåɱöñð',
+      'x': 'Ĥöŕîžöñţåļ',
+      'y': 'Ṽéŕţîçåļ',
+      'forward': 'Ƒöŕŵåŕð',
+      'backward': 'Ɓåçķŵåŕð',
+      'in': 'Îñ',
+      'out': 'Öûţ',
+      'baseline': 'Ɓåšéļîñé',
+      'fill': 'Ƒîļļ',
+      'stroke': 'Ɓöŕðéŕ',
+      'text': 'Ţéẋţ',
+      'marker': 'Ṁåŕķéŕ',
+      'underline': 'Ûñðéŕļîñé',
+      'box': 'Ɓöẋ',
+      'type': 'Ţýþé',
+      'morph': 'Ṁöŕþĥ',
+      'instant': 'Îñšţåñţ',
+      'line': 'Ļîñé',
+      'arc': 'Åŕç',
+      'curve': 'Çûŕṽé',
+      'zigzag': 'Žîĝžåĝ',
+      'custom': 'Çûšţöɱ',
+      'object': 'Öƀĵéçţ',
+      'word': 'Ŵöŕð',
+      'character': 'Çĥåŕåçţéŕ',
+      'shortest': 'Šĥöŕţéšţ',
+      'literal': 'Åš šéţ',
+      'other': '—',
+    });
+    return '[$_temp0 one two three four five six seven eight nine ten one two three four five six seven]';
+  }
+
+  @override
+  String animateTargetReason(String effect, String target) {
+    String _temp0 = intl.Intl.selectLogic(target, {
+      'text': '$effect ŵöŕķš öñ ţéẋţ öñļý',
+      'stroke': '$effect ŵöŕķš öñ šĥåþéš, ļîñéš åñð îçöñš',
+      'colorable': '$effect ŵöŕķš öñ šĥåþéš, ţéẋţ, ļîñéš åñð îçöñš',
+      'chart': '$effect ŵöŕķš öñ çĥåŕţš öñļý',
+      'chart3d': '$effect ŵöŕķš öñ 3Ð çĥåŕţš öñļý',
+      'code': '$effect ŵöŕķš öñ çöðé ƀļöçķš öñļý',
+      'other': '$effect ðöéšñ\'ţ ŵöŕķ öñ ţĥîš öƀĵéçţ',
+    });
+    return '[$_temp0 one two three four five six seven eight nine ten one t]';
+  }
+
+  @override
+  String animateTriggerName(String trigger) {
+    String _temp0 = intl.Intl.selectLogic(trigger, {
+      'onClick': 'Öñ çļîçķ',
+      'withPrevious': 'Ŵîţĥ þŕéṽîöûš',
+      'afterPrevious': 'Åƒţéŕ þŕéṽîöûš',
+      'other': 'Öñ çļîçķ öƒ åñ öƀĵéçţ',
+    });
+    return '[$_temp0 one two three four]';
+  }
+
+  @override
+  String animateDeliveryName(String by) {
+    String _temp0 = intl.Intl.selectLogic(by, {
+      'all': 'Åļļ åţ öñçé',
+      'paragraph': 'Ɓý þåŕåĝŕåþĥ',
+      'paragraphGroup': 'Ɓý þåŕåĝŕåþĥ ĝŕöûþ',
+      'line': 'Ɓý ļîñé',
+      'word': 'Ɓý ŵöŕð',
+      'character': 'Ɓý çĥåŕåçţéŕ',
+      'series': 'Ɓý šéŕîéš',
+      'category': 'Ɓý çåţéĝöŕý',
+      'point': 'Ɓý þöîñţ',
+      'chartElement': 'Ɓý çĥåŕţ éļéɱéñţ',
+      'other': 'Åļļ åţ öñçé',
+    });
+    return '[$_temp0 one two three four five six seven eigh]';
+  }
+
+  @override
+  String animateOrderName(String order) {
+    String _temp0 = intl.Intl.selectLogic(order, {
+      'forward': 'Ƒöŕŵåŕð',
+      'backward': 'Ɓåçķŵåŕð',
+      'center': 'Ƒŕöɱ ţĥé çéñţéŕ',
+      'edges': 'Ƒŕöɱ ţĥé éðĝéš',
+      'random': 'Ŕåñðöɱ',
+      'other': 'Ƒöŕŵåŕð',
+    });
+    return '[$_temp0 one two three four]';
+  }
+
+  @override
+  String animateAfterBuildName(String mode) {
+    String _temp0 = intl.Intl.selectLogic(mode, {
+      'none': 'Ķééþ',
+      'dim': 'Ðîɱ',
+      'hide': 'Ĥîðé',
+      'other': 'Ķééþ',
+    });
+    return '[$_temp0 one tw]';
+  }
+
+  @override
+  String animateEasingName(String preset) {
+    String _temp0 = intl.Intl.selectLogic(preset, {
+      'smooth': 'Šɱööţĥ',
+      'snappy': 'Šñåþþý',
+      'bouncy': 'Ɓöûñçý',
+      'gentle': 'Ĝéñţļé',
+      'linear': 'Ļîñéåŕ',
+      'easeIn': 'Éåšé îñ',
+      'easeOut': 'Éåšé öûţ',
+      'custom': 'Çûšţöɱ',
+      'other': 'Çûšţöɱ',
+    });
+    return '[$_temp0 one two three four f]';
+  }
+
+  @override
+  String animateGroupName(String group) {
+    String _temp0 = intl.Intl.selectLogic(group, {
+      'basic': 'Ɓåšîç',
+      'exciting': 'Éẋçîţîñĝ',
+      'emphasis': 'Éɱþĥåšîš',
+      'text': 'Ţéẋţ',
+      'shape': 'Šĥåþé',
+      'motion': 'Ṁöţîöñ',
+      'chart': 'Çĥåŕţ',
+      'code': 'Çöðé',
+      'threeD': '3Ð',
+      'magic': 'Ṁåĝîç Ṁöṽé',
+      'other': 'Ṁöŕé',
+    });
+    return '[$_temp0 one two three four fi]';
+  }
+
+  @override
+  String animateKindTab(String tab) {
+    String _temp0 = intl.Intl.selectLogic(tab, {
+      'buildIn': 'Îñ',
+      'action': 'Åçţîöñ',
+      'buildOut': 'Öûţ',
+      'other': 'Îñ',
+    });
+    return '[$_temp0 one t]';
+  }
+
+  @override
+  String animateUnmatchedName(String mode) {
+    String _temp0 = intl.Intl.selectLogic(mode, {
+      'together': 'Ƒåðé ŵîţĥ ţĥé ɱöṽé',
+      'before': 'Ƒåðé öûţ ƒîŕšţ',
+      'after': 'Ƒåðé îñ åƒţéŕ',
+      'other': 'Ƒåðé ŵîţĥ ţĥé ɱöṽé',
+    });
+    return '[$_temp0 one two three four]';
+  }
+
+  @override
+  String animatePreviewOption(String option) {
+    String _temp0 = intl.Intl.selectLogic(option, {
+      'autoPreview': 'Åûţö-þŕéṽîéŵ çĥåñĝéš',
+      'includeTransition': 'Îñçļûðé ţŕåñšîţîöñ îñ þŕéṽîéŵ',
+      'fullMotion': 'Þŕéṽîéŵ ƒûļļ ɱöţîöñ',
+      'other': 'Öþţîöñ',
+    });
+    return '[$_temp0 one two three four five]';
+  }
+
+  @override
+  String animateWarning(String code) {
+    String _temp0 = intl.Intl.selectLogic(code, {
+      'elementMissing': 'Ţĥé öƀĵéçţ ñö ļöñĝéŕ éẋîšţš.',
+      'alreadyVisible': 'Ţĥé öƀĵéçţ îš åļŕéåðý ṽîšîƀļé: ţĥîš ƀûîļð îš šķîþþéð.',
+      'alreadyHidden': 'Ţĥé öƀĵéçţ îš åļŕéåðý ĥîððéñ: ţĥîš ƀûîļð îš šķîþþéð.',
+      'hiddenTarget':
+          'Ţĥé öƀĵéçţ îš ĥîððéñ åţ ţĥîš þöîñţ: ţĥîš ƀûîļð îš šķîþþéð.',
+      'unsupportedEffect':
+          'Éƒƒéçţ ñöţ šûþþöŕţéð ƀý ţĥîš ṽéŕšîöñ: þļåýš åš å ƒåðé.',
+      'wrongElementKind':
+          'Ţĥîš éƒƒéçţ ðöéšñ\'ţ ŵöŕķ öñ ţĥîš öƀĵéçţ: îţ îš šķîþþéð.',
+      'unsupportedTrigger':
+          'Ţĥîš ţŕîĝĝéŕ îšñ\'ţ šûþþöŕţéð ýéţ: ţĥé ƀûîļð îš šķîþþéð.',
+      'invalidOptions': 'Šöɱé öþţîöñš åŕé îñṽåļîð åñð ûšé ţĥéîŕ ðéƒåûļţš.',
+      'invalidEasing': 'Ţĥé éåšîñĝ îš îñṽåļîð åñð þļåýš åš éåšé öûţ.',
+      'deliveryFallback':
+          'Ţĥîš öƀĵéçţ çåñ\'ţ ƀé ƀûîļţ îñ ţĥéšé þåŕţš: îţ ƀûîļðš åš å ŵĥöļé.',
+      'codeStepMissing': 'Ţĥé çöðé ĥåš ñö šûçĥ ĥîĝĥļîĝĥţ šţéþ.',
+      'codeStateMissing': 'Ţĥé çöðé ĥåš ñö šûçĥ šţåţé.',
+      'flashLimit': 'Ɓļîñķîñĝ îš šļöŵéð ţö åţ ɱöšţ 3 ƒļåšĥéš þéŕ šéçöñð.',
+      'other': 'Ţĥîš ƀûîļð þļåýš ðîƒƒéŕéñţļý ţĥåñ šéţ.',
+    });
+    return '[$_temp0 one two three four five six seven eight nine ten one two three four five six seven eight nine ten one two three four five six seven eight nine ten one two three four five six seven eight nine ten]';
+  }
+
+  @override
+  String get animateAddAnother => '[Åðð åñöţĥéŕ ƀûîļð one tw]';
+
+  @override
+  String get animateAdvance => '[Åðṽåñçé one]';
+
+  @override
+  String get animateAdvanceAfter => '[Åƒţéŕ on]';
+
+  @override
+  String get animateAdvanceAuto => '[Åûţöɱåţîçåļļý one t]';
+
+  @override
+  String get animateAdvanceClick => '[Öñ çļîçķ one]';
+
+  @override
+  String get animateAfterBuild => '[Åƒţéŕ ƀûîļð one]';
+
+  @override
+  String get animateAnimatedObjects => '[Åñîɱåţéð öƀĵéçţš one tw]';
+
+  @override
+  String get animateAutoBuilds => '[Þļåý ƀûîļðš åûţöɱåţîçåļļý one two t]';
+
+  @override
+  String get animateAutoReverse => '[Þļåý ƀåçķ åñð ƒöŕţĥ one tw]';
+
+  @override
+  String get animateBuildDelay => '[Ɓéţŵééñ ƀûîļðš one t]';
+
+  @override
+  String get animateDelay => '[Ðéļåý on]';
+
+  @override
+  String get animateDelivery => '[Þåŕţš on]';
+
+  @override
+  String get animateDeliveryLabel => '[Ɓûîļð on]';
+
+  @override
+  String get animateDimTo => '[Ðîɱ ţö on]';
+
+  @override
+  String get animateDuration => '[Ðûŕåţîöñ one]';
+
+  @override
+  String get animateDurationAutomatic => '[Åûţöɱåţîç one]';
+
+  @override
+  String get animateEasing => '[Éåšîñĝ one]';
+
+  @override
+  String get animateEffectUnsupported =>
+      '[Éƒƒéçţ ñöţ šûþþöŕţéð ƀý ţĥîš ṽéŕšîöñ one two thr]';
+
+  @override
+  String get animateEndState => '[Éñð šţåţé one]';
+
+  @override
+  String get animateHeight => '[Ĥéîĝĥţ one]';
+
+  @override
+  String get animateHideMatches => '[Ĥîðé ɱåţçĥéš one]';
+
+  @override
+  String get animateMagicMoveFirstSlide =>
+      '[Ţĥé ƒîŕšţ šļîðé ĥåš ñöţĥîñĝ ţö ɱöŕþĥ ƒŕöɱ. one two three]';
+
+  @override
+  String get animateMagicMoveNoMatches =>
+      '[Ñö öƀĵéçţš ɱåţçĥ ţĥé þŕéṽîöûš šļîðé: þļåýš åš å çŕöššƒåðé. one two three four]';
+
+  @override
+  String get animateMatchByContent => '[Ṁåţçĥ îðéñţîçåļ çöñţéñţ one two]';
+
+  @override
+  String get animateMatchTextBy => '[Ṁåţçĥ ţéẋţ ƀý one]';
+
+  @override
+  String get animateMissingObject => '[Ðéļéţéð öƀĵéçţ one t]';
+
+  @override
+  String get animateMoveDown => '[Ṁöṽé ðöŵñ one]';
+
+  @override
+  String get animateMoveUp => '[Ṁöṽé ûþ one]';
+
+  @override
+  String get animateNewClick => '[Ñéŵ çļîçķ one]';
+
+  @override
+  String get animateNoSlide => '[Åñîɱåţîöñš åþþļý ţö šļîðéš. one two t]';
+
+  @override
+  String get animateOffSlide => '[Ƒŕöɱ öƒƒ ţĥé šļîðé one tw]';
+
+  @override
+  String get animateOrderListLabel => '[Ɓûîļð öŕðéŕ one]';
+
+  @override
+  String get animateOrderNone =>
+      '[Ñö åñîɱåţîöñš öñ ţĥîš šļîðé ýéţ. Šéļéçţ åñ öƀĵéçţ åñð þîçķ åñ éƒƒéçţ öñ ţĥé Ɓûîļð ţåƀ. one two three four five s]';
+
+  @override
+  String get animatePartOrder => '[Öŕðéŕ on]';
+
+  @override
+  String get animatePartStart => '[Éåçĥ þåŕţ one]';
+
+  @override
+  String get animatePartsFrom => '[Þåŕţš on]';
+
+  @override
+  String get animatePartsTo => '[ţö o]';
+
+  @override
+  String get animatePathPreset => '[Þåţĥ on]';
+
+  @override
+  String get animatePlayFromSelected => '[Þļåý ƒŕöɱ šéļéçţéð one tw]';
+
+  @override
+  String get animatePreview => '[Þŕéṽîéŵ one]';
+
+  @override
+  String get animatePreviewFromHere => '[Þŕéṽîéŵ ƒŕöɱ ĥéŕé one tw]';
+
+  @override
+  String get animatePreviewFullMotion => '[Þŕéṽîéŵ ƒûļļ ɱöţîöñ one tw]';
+
+  @override
+  String get animatePreviewOptions => '[Þŕéṽîéŵ öþţîöñš one t]';
+
+  @override
+  String get animatePreviewPlaying => '[Þŕéṽîéŵîñĝ åñîɱåţîöñš one two]';
+
+  @override
+  String get animatePreviewReduced => '[Þŕéṽîéŵ ŕéðûçéð ɱöţîöñ one two]';
+
+  @override
+  String get animatePreviewStop => '[Šţöþ on]';
+
+  @override
+  String get animateReducedMotionOn =>
+      '[Ŕéðûçé ɱöţîöñ îš öñ — åñîɱåţîöñš þļåý åš ƒåðéš. one two three]';
+
+  @override
+  String get animateReducedMotionSettings => '[Šéţţîñĝš one]';
+
+  @override
+  String get animateRemoveTransition => '[Ŕéɱöṽé one]';
+
+  @override
+  String get animateRepeat => '[Ŕéþéåţ one]';
+
+  @override
+  String get animateRepeatCount => '[Ţîɱéš on]';
+
+  @override
+  String get animateReturnToStart => '[Ŕéţûŕñ ţö ţĥé šţåŕţ one tw]';
+
+  @override
+  String get animateReverseOnBack =>
+      '[Þļåý ƀåçķŵåŕðš ŵĥéñ ĝöîñĝ ƀåçķ one two th]';
+
+  @override
+  String get animateRotation => '[Ŕöţåţîöñ one]';
+
+  @override
+  String get animateSearchEffects => '[Šéåŕçĥ éƒƒéçţš one t]';
+
+  @override
+  String get animateSelectObject =>
+      '[Šéļéçţ åñ öƀĵéçţ ţö åñîɱåţé îţ. one two th]';
+
+  @override
+  String get animateSelectObjectItem => '[Šéļéçţ öƀĵéçţ one t]';
+
+  @override
+  String get animateSetTrigger => '[Šţåŕţ on]';
+
+  @override
+  String get animateShowMatches => '[Šĥöŵ ɱåţçĥéš one]';
+
+  @override
+  String get animateShowParts => '[Šĥöŵ þåŕţš one]';
+
+  @override
+  String get animateStagger => '[Šţåĝĝéŕ one]';
+
+  @override
+  String get animateStaggerParts => '[Šţåĝĝéŕ one]';
+
+  @override
+  String get animateStart => '[Šţåŕţ on]';
+
+  @override
+  String get animateStepAutomatic => '[Åûţöɱåţîç one]';
+
+  @override
+  String get animateTiming => '[Ţîɱîñĝ one]';
+
+  @override
+  String get animateTransitionInherited =>
+      '[Ûšéš ţĥé þŕéšéñţåţîöñ\'š ðéƒåûļţ ţŕåñšîţîöñ. one two three]';
+
+  @override
+  String get animateUnmatched => '[Ûñɱåţçĥéð one]';
+
+  @override
+  String get animateUntilNextClick => '[Ûñţîļ ţĥé ñéẋţ çļîçķ one tw]';
+
+  @override
+  String get animateWidth => '[Ŵîðţĥ on]';
+
+  @override
+  String get cmdAnimateBuildAllSteps => '[Ɓûîļð åļļ šţéþš one t]';
+
+  @override
+  String get cmdAnimateMoveBuilds => '[Ŕéöŕðéŕ åñîɱåţîöñš one tw]';
+
+  @override
+  String get cmdAnimateSelectBuilds => '[Šéļéçţ åñîɱåţîöñš one tw]';
+
+  @override
+  String get cmdAnimateSetMotionPath => '[Éðîţ ɱöţîöñ þåţĥ one t]';
+
+  @override
+  String get cmdAnimateSetTransformTarget => '[Šéţ éñð šţåţé one]';
+
+  @override
+  String get cmdAnimateSetTrigger => '[Šéţ åñîɱåţîöñ šţåŕţ one tw]';
+
+  @override
+  String get cmdAnimateStopPreview => '[Šţöþ þŕéṽîéŵ one]';
+
+  @override
+  String get cmdAnimateTogglePreviewOption => '[Þŕéṽîéŵ öþţîöñ one t]';
+
+  @override
+  String get cmdAnimateUpdateBuild => '[Éðîţ åñîɱåţîöñ one t]';
+
+  @override
+  String get cmdElementSetMatchKey => '[Šéţ Ṁåĝîç Ṁöṽé ÎÐ one t]';
+
+  @override
+  String get cmdTransitionApplyToAll =>
+      '[Åþþļý ţŕåñšîţîöñ ţö åļļ šļîðéš one two th]';
+
+  @override
+  String get cmdTransitionPreview => '[Þŕéṽîéŵ ţŕåñšîţîöñ one tw]';
+
+  @override
+  String get cmdTransitionRemove => '[Ŕéɱöṽé ţŕåñšîţîöñ one tw]';
+
+  @override
+  String get cmdTransitionSet => '[Šéţ ţŕåñšîţîöñ one t]';
+
+  @override
+  String get cmdTransitionSetAdvance => '[Šéţ šļîðé åðṽåñçé one tw]';
+
+  @override
+  String get reasonNoBuilds => '[Ţĥîš šļîðé ĥåš ñö åñîɱåţîöñš one two t]';
+
+  @override
+  String get reasonNoBuildsCopied => '[Çöþý åñ åñîɱåţîöñ ƒîŕšţ one two]';
+
+  @override
+  String get reasonNotPreviewing => '[Ñö þŕéṽîéŵ îš þļåýîñĝ one two]';
+
+  @override
+  String get reasonObjectNoBuilds => '[Šéļéçţ öñé åñîɱåţéð öƀĵéçţ one two t]';
+
+  @override
+  String get reasonSelectBuild => '[Šéļéçţ åñ åñîɱåţîöñ one tw]';
+
+  @override
+  String get reasonSelectCodeOrChart =>
+      '[Šéļéçţ å çöðé ƀļöçķ ŵîţĥ šţéþš öŕ å çĥåŕţ one two thre]';
+
+  @override
+  String get undoAddMagicMoveSlide => '[Åðð Ṁåĝîç Ṁöṽé šļîðé one tw]';
+
+  @override
+  String get undoRemoveAnimation => '[Ŕéɱöṽé åñîɱåţîöñ one tw]';
+
+  @override
+  String animateBadgeTooltip(String name, String steps) {
+    return '[$name: šţéþ $steps on]';
+  }
+
+  @override
+  String animateBuildsSelected(int count) {
+    return '[$count åñîɱåţîöñš one]';
+  }
+
+  @override
+  String animateObjectsSelected(int count) {
+    return '[$count öƀĵéçţš one]';
+  }
+
+  @override
+  String animateMagicMoveMatches(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count öƀĵéçţš ɱåţçĥ ţĥé þŕéṽîöûš šļîðé',
+      one: '1 öƀĵéçţ ɱåţçĥéš ţĥé þŕéṽîöûš šļîðé',
+    );
+    return '[$_temp0 one two three four fi]';
+  }
+
+  @override
+  String animateMatchTooltip(String name, int number) {
+    return '[Ṁåţçĥéš “$name” öñ šļîðé $number one tw]';
+  }
+
+  @override
+  String animateOrderSummary(int clicks, String seconds) {
+    String _temp0 = intl.Intl.pluralLogic(
+      clicks,
+      locale: localeName,
+      other: '$clicks çļîçķš',
+      one: '1 çļîçķ',
+      zero: 'Ñö çļîçķš',
+    );
+    return '[$_temp0 · $seconds š one two]';
+  }
+
+  @override
+  String animatePartLabel(int index, String text) {
+    return '[Þåŕţ $index: $text on]';
+  }
+
+  @override
+  String animatePartsCount(int count) {
+    return '[$count þåŕţš on]';
+  }
+
+  @override
+  String animateSettles(String seconds) {
+    return '[≈ $seconds š o]';
+  }
+
+  @override
+  String animateStepClick(int index) {
+    return '[Çļîçķ $index on]';
+  }
+
+  @override
+  String animateTransitionForSlide(int number) {
+    return '[Ţŕåñšîţîöñ îñţö šļîðé $number one two]';
+  }
+
+  @override
+  String animateTransitionForSlides(int count) {
+    return '[Ţŕåñšîţîöñ îñţö $count šļîðéš one two]';
+  }
+
+  @override
+  String get arrangeLabelMatchKey => '[Ṁåĝîç Ṁöṽé ÎÐ one]';
+
+  @override
+  String get cmdOutlineSetTitle => '[Éðîţ šļîðé ţîţļé one t]';
+
+  @override
+  String get cmdOutlineSetBody => '[Éðîţ šļîðé ţéẋţ one t]';
+
+  @override
+  String get cmdOutlineNewSlideAfter => '[Ñéŵ šļîðé åƒţéŕ ţĥîš öñé one two]';
+
+  @override
+  String get cmdOutlineNewLine => '[Ñéŵ ƀûļļéţ one]';
+
+  @override
+  String get cmdOutlineFocusBody => '[Ĝö ţö ţĥé šļîðé’š ƀûļļéţš one two]';
+
+  @override
+  String get cmdOutlineIndent => '[Îñðéñţ (ðéɱöţé) one t]';
+
+  @override
+  String get cmdOutlineOutdent => '[Öûţðéñţ (þŕöɱöţé) one tw]';
+
+  @override
+  String get cmdOutlineMoveUp => '[Ṁöṽé ûþ one]';
+
+  @override
+  String get cmdOutlineMoveDown => '[Ṁöṽé ðöŵñ one]';
+
+  @override
+  String get cmdOutlineJoinLine => '[Ĵöîñ ŵîţĥ ţĥé ļîñé åƀöṽé one two]';
+
+  @override
+  String get cmdOutlineCopyMarkdown => '[Çöþý öûţļîñé åš Ṁåŕķðöŵñ one two]';
+
+  @override
+  String get cmdArrangeSetZ => '[Ŕéöŕðéŕ one]';
+
+  @override
+  String get cmdA11ySetReadingOrder => '[Ŕéåðîñĝ öŕðéŕ one t]';
+
+  @override
+  String get cmdA11yResetReadingOrder => '[Ŕéšéţ ţö åûţöɱåţîç one tw]';
+
+  @override
+  String get cmdA11yGoTo => '[Ĝö ţö îššûé one]';
+
+  @override
+  String get cmdA11yFix => '[Ƒîẋ åççéššîƀîļîţý îššûé one two]';
+
+  @override
+  String get reasonOutlineLine =>
+      '[Þļåçé ţĥé çûŕšöŕ îñ åñ öûţļîñé ļîñé one two thr]';
+
+  @override
+  String get reasonOutlineNoTitle =>
+      '[Ţĥîš šļîðé’š ļåýöûţ ĥåš ñö ţîţļé one two th]';
+
+  @override
+  String get reasonOutlineNoBody =>
+      '[Ţĥîš šļîðé ĥåš ñö ţéẋţ þļåçéĥöļðéŕ one two thr]';
+
+  @override
+  String get reasonReadingOrderAutomatic =>
+      '[Ţĥé ŕéåðîñĝ öŕðéŕ îš åļŕéåðý åûţöɱåţîç one two thre]';
+
+  @override
+  String get reasonA11yNoFix => '[Ţĥîš îššûé ĥåš ñö åûţöɱåţîç ƒîẋ one two th]';
+
+  @override
+  String get outlineHint =>
+      '[Éñţéŕ: ñéŵ šļîðé öŕ ƀûļļéţ · Ţåƀ: îñðéñţ · Šĥîƒţ+Ţåƀ: öûţðéñţ one two three four]';
+
+  @override
+  String get outlineReadOnlyHint => '[Ṽîéŵ öñļý one]';
+
+  @override
+  String outlineSlideNumber(int number) {
+    return '[Šļîðé $number on]';
+  }
+
+  @override
+  String outlineTitleLabel(int number) {
+    return '[Ţîţļé öƒ šļîðé $number one t]';
+  }
+
+  @override
+  String outlineBulletLabel(int slide, int bullet, int level) {
+    return '[Šļîðé $slide, ƀûļļéţ $bullet, ļéṽéļ $level one two]';
+  }
+
+  @override
+  String outlineOthers(String objects) {
+    return '[+ $objects o]';
+  }
+
+  @override
+  String outlineEditing(String name) {
+    return '[$name îš éðîţîñĝ one]';
+  }
+
+  @override
+  String get outlineCopied => '[Öûţļîñé çöþîéð åš Ṁåŕķðöŵñ one two t]';
+
+  @override
+  String get outlineTypingUndo => '[Éðîţ öûţļîñé one]';
+
+  @override
+  String get layersPanelTitle => '[Ļåýéŕš one]';
+
+  @override
+  String get layersTabLayers => '[Ļåýéŕš one]';
+
+  @override
+  String get layersTabReadingOrder => '[Ŕéåðîñĝ öŕðéŕ one t]';
+
+  @override
+  String get layersEmpty => '[Ñö öƀĵéçţš öñ ţĥîš šļîðé one two]';
+
+  @override
+  String get layersHidden => '[ĥîððéñ one]';
+
+  @override
+  String get layersLocked => '[ļöçķéð one]';
+
+  @override
+  String get layersRenameHint => '[Ñåɱé on]';
+
+  @override
+  String layersDragMany(int count) {
+    return '[$count öƀĵéçţš one]';
+  }
+
+  @override
+  String layersFromLayout(int count) {
+    return '[Ƒŕöɱ ļåýöûţ ($count) one t]';
+  }
+
+  @override
+  String get layersEditLayout => '[Éðîţ ļåýöûţ one]';
+
+  @override
+  String get layersOrderAutomatic =>
+      '[Åûţöɱåţîç: ţîţļé ƒîŕšţ, ţĥéñ ţöþ ţö ƀöţţöɱ, ļéƒţ ţö ŕîĝĥţ. one two three four]';
+
+  @override
+  String get layersOrderCustom =>
+      '[Çûšţöɱ öŕðéŕ. Šçŕééñ ŕéåðéŕš åñð Ţåƀ ƒöļļöŵ ţĥîš ļîšţ. one two three fou]';
+
+  @override
+  String get layersOrderEarlier => '[Ŕéåð éåŕļîéŕ one]';
+
+  @override
+  String get layersOrderLater => '[Ŕéåð ļåţéŕ one]';
+
+  @override
+  String get a11yPanelTitle => '[Åççéššîƀîļîţý one t]';
+
+  @override
+  String get a11yCheckDescription =>
+      '[Çĥéçķš åļţ ţéẋţ, çöñţŕåšţ, ţîţļéš, ţéẋţ šîžé, ŕéåðîñĝ öŕðéŕ åñð ţåƀļéš one two three four fi]';
+
+  @override
+  String get a11yCheckAgain => '[Çĥéçķ åĝåîñ one]';
+
+  @override
+  String a11ySummary(int errors, int warnings, int info) {
+    String _temp0 = intl.Intl.pluralLogic(
+      errors,
+      locale: localeName,
+      other: '$errors éŕŕöŕš',
+      one: '1 éŕŕöŕ',
+    );
+    String _temp1 = intl.Intl.pluralLogic(
+      warnings,
+      locale: localeName,
+      other: '$warnings ŵåŕñîñĝš',
+      one: '1 ŵåŕñîñĝ',
+    );
+    String _temp2 = intl.Intl.pluralLogic(
+      info,
+      locale: localeName,
+      other: '$info ţîþš',
+      one: '1 ţîþ',
+    );
+    return '[$_temp0 · $_temp1 · $_temp2 one two three]';
+  }
+
+  @override
+  String get a11yNoIssues => '[Ñö åççéššîƀîļîţý îššûéš ƒöûñð one two th]';
+
+  @override
+  String get a11yNoIssuesBody =>
+      '[Åļţ ţéẋţ, çöñţŕåšţ, ţîţļéš, ţéẋţ šîžé, ŕéåðîñĝ öŕðéŕ åñð ţåƀļéš ļööķ ĝööð. one two three four five]';
+
+  @override
+  String a11ySlideHeading(String label) {
+    return '[Šļîðé $label on]';
+  }
+
+  @override
+  String get a11ySeverityError => '[Éŕŕöŕ on]';
+
+  @override
+  String get a11ySeverityWarning => '[Ŵåŕñîñĝ one]';
+
+  @override
+  String get a11ySeverityInfo => '[Ţîþ on]';
+
+  @override
+  String get a11yMissingAltText => '[Ṁîššîñĝ åļţ ţéẋţ one t]';
+
+  @override
+  String a11yLowContrast(String ratio, String required) {
+    return '[Ļöŵ ţéẋţ çöñţŕåšţ ($ratio:1, ñééðš $required:1) one two th]';
+  }
+
+  @override
+  String get a11yContrastOverImage =>
+      '[Ţéẋţ öṽéŕ åñ îɱåĝé: çĥéçķ ţĥåţ îţ îš ŕéåðåƀļé one two three]';
+
+  @override
+  String get a11yMissingTitle => '[Šļîðé ĥåš ñö ţîţļé one tw]';
+
+  @override
+  String a11yDuplicateTitle(String title) {
+    return '[Åñöţĥéŕ šļîðé ĥåš ţĥé šåɱé ţîţļé “$title” one two thr]';
+  }
+
+  @override
+  String a11ySmallText(int size, int min) {
+    return '[Ţéẋţ šɱåļļéŕ ţĥåñ $min ($size) one tw]';
+  }
+
+  @override
+  String get a11yReadingOrder =>
+      '[Ţĥé çûšţöɱ ŕéåðîñĝ öŕðéŕ ðîƒƒéŕš ƒŕöɱ ţĥé ļåýöûţ one two three f]';
+
+  @override
+  String get a11yTableHeader => '[Ţåƀļé ĥåš ñö ĥéåðéŕ ŕöŵ one two]';
+
+  @override
+  String get a11yEmptyPlaceholder => '[Éɱþţý þļåçéĥöļðéŕ one tw]';
+
+  @override
+  String get a11yGoTo => '[Ĝö ţö on]';
+
+  @override
+  String get a11yFixAltText => '[Åðð åļţ ţéẋţ… one]';
+
+  @override
+  String get a11yFixDecorative => '[Ṁåŕķ ðéçöŕåţîṽé one t]';
+
+  @override
+  String get a11yFixContrast => '[Ûšé å çöñţŕåšţîñĝ çöļöŕ one two]';
+
+  @override
+  String a11yFixTextSize(int size) {
+    return '[Éñļåŕĝé ţö $size one]';
+  }
+
+  @override
+  String get a11yFixReadingOrder => '[Ŕéšéţ ţö åûţöɱåţîç one tw]';
+
+  @override
+  String get a11yFixTableHeader => '[Ţûŕñ öñ ĥéåðéŕ ŕöŵ one tw]';
+
+  @override
+  String get a11yFixRemovePlaceholder => '[Ŕéɱöṽé þļåçéĥöļðéŕ one tw]';
+
+  @override
+  String get a11yEditReadingOrder => '[Éðîţ ŕéåðîñĝ öŕðéŕ one tw]';
+
+  @override
+  String get animatePreviewChanged =>
+      '[Ţĥé åñîɱåţîöñš çĥåñĝéð — Þŕéṽîéŵ åĝåîñ one two thre]';
+
+  @override
+  String get chartCheckNow => '[Çĥéçķ ñöŵ one]';
+
+  @override
+  String get cmdCommentsNext => '[Ñéẋţ çöɱɱéñţ one]';
+
+  @override
+  String get cmdCommentsPrevious => '[Þŕéṽîöûš çöɱɱéñţ one tw]';
+
+  @override
+  String get cmdCommentsOpenPanel => '[Öþéñ çöɱɱéñţš one t]';
+
+  @override
+  String get commentsScopeSlide => '[Ţĥîš šļîðé one]';
+
+  @override
+  String get commentsScopeAll => '[Åļļ šļîðéš one]';
+
+  @override
+  String get commentsOrphanedGroup => '[Öŕþĥåñéð one]';
+
+  @override
+  String commentsSlideHeader(int number, String title) {
+    return '[$number · $title o]';
+  }
+
+  @override
+  String commentSlideQuote(int number, String title) {
+    return '[Šļîðé $number: $title one]';
+  }
+
+  @override
+  String get commentAnchorDeleted =>
+      '[Ţĥé öƀĵéçţ ţĥîš çöɱɱéñţ ŵåš öñ ŵåš ðéļéţéð one two three]';
+
+  @override
+  String commentAnchorDeletedQuote(String quote) {
+    return '[$quote — ţĥé öƀĵéçţ ţĥîš çöɱɱéñţ ŵåš öñ ŵåš ðéļéţéð one two three]';
+  }
+
+  @override
+  String commentPinLabel(int count, String name) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count çöɱɱéñţš, ƒîŕšţ ƀý $name',
+      one: 'Çöɱɱéñţ ƀý $name',
+    );
+    return '[$_temp0 one two t]';
+  }
+
+  @override
+  String commentReplies(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count ŕéþļîéš',
+      one: '1 ŕéþļý',
+    );
+    return '[$_temp0 one t]';
+  }
+
+  @override
+  String commentsBadge(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count çöɱɱéñţš',
+      one: '1 çöɱɱéñţ',
+    );
+    return '[$_temp0 one tw]';
+  }
+
+  @override
+  String get reasonNoComments => '[Ñö çöɱɱéñţš one]';
+
+  @override
+  String get commentsDockedClose => '[Çļöšé on]';
+
+  @override
+  String get cmdSpellingCheckDescription =>
+      '[Ŵåļķ ţĥŕöûĝĥ ţĥé ɱîššþéļļéð ŵöŕðš öƒ ţĥé ŵĥöļé þŕéšéñţåţîöñ one two three four]';
+
+  @override
+  String get cmdSpellingReplace => '[Çöŕŕéçţ šþéļļîñĝ one tw]';
+
+  @override
+  String get cmdSpellingReplaceAll => '[Çöŕŕéçţ šþéļļîñĝ éṽéŕýŵĥéŕé one two t]';
+
+  @override
+  String get cmdSpellingIgnore => '[Îĝñöŕé one]';
+
+  @override
+  String get cmdSpellingAddToDictionary => '[Åðð ţö ðîçţîöñåŕý one tw]';
+
+  @override
+  String get cmdSpellingPersonalDictionary => '[Þéŕšöñåļ ðîçţîöñåŕý… one two]';
+
+  @override
+  String get undoCorrectSpelling => '[Çöŕŕéçţ šþéļļîñĝ one tw]';
+
+  @override
+  String get undoSetLanguage => '[Šéţ ļåñĝûåĝé one]';
+
+  @override
+  String get spellingNoSuggestions => '[Ñö šûĝĝéšţîöñš one t]';
+
+  @override
+  String spellingAddWordToDictionary(String word) {
+    return '[Åðð “$word” ţö ðîçţîöñåŕý one tw]';
+  }
+
+  @override
+  String toastPersonalDictionaryFull(int max) {
+    return '[Ýöûŕ þéŕšöñåļ ðîçţîöñåŕý îš ƒûļļ ($max ŵöŕðš). one two three]';
+  }
+
+  @override
+  String get reasonSpellingTextGone =>
+      '[Ţĥîš ţéẋţ îš ñö ļöñĝéŕ ţĥéŕé one two t]';
+
+  @override
+  String get cmdHistoryRestoreVersion => '[Ŕéšţöŕé ţĥîš ṽéŕšîöñ one two]';
+
+  @override
+  String get cmdHistoryMakeCopy => '[Ṁåķé å çöþý one]';
+
+  @override
+  String get cmdHistoryDownload => '[Ðöŵñļöåð åš ÞÐƑ one t]';
+
+  @override
+  String get cmdHistoryToggleShowChanges => '[Šĥöŵ çĥåñĝéš one]';
+
+  @override
+  String get cmdHistoryToggleShowRemoved => '[Šĥöŵ ŕéɱöṽéð öƀĵéçţš one two]';
+
+  @override
+  String get cmdHistoryNextChange => '[Ñéẋţ çĥåñĝé one]';
+
+  @override
+  String get cmdHistoryPreviousChange => '[Þŕéṽîöûš çĥåñĝé one t]';
+
+  @override
+  String get cmdConflictsReview => '[Ŕéṽîéŵ öṽéŕŵŕîţţéñ ţéẋţ one two]';
+
+  @override
+  String get cmdConflictsRestoreMine => '[Ŕéšţöŕé ɱý ţéẋţ one t]';
+
+  @override
+  String get reasonNoVersionShown => '[Öþéñ å ṽéŕšîöñ ƒîŕšţ one tw]';
+
+  @override
+  String get reasonNoChanges => '[Ţĥîš ṽéŕšîöñ ĥåš ñö çĥåñĝéš one two t]';
+
+  @override
+  String get reasonNoConflicts =>
+      '[Ñöñé öƒ ýöûŕ ţéẋţ ŵåš öṽéŕŵŕîţţéñ one two th]';
+
+  @override
+  String get versionLoading => '[Ļöåðîñĝ ţĥîš ṽéŕšîöñ… one two]';
+
+  @override
+  String get versionLoadFailed => '[Çöûļðñ’ţ ļöåð ţĥîš ṽéŕšîöñ one two t]';
+
+  @override
+  String get versionComputingChanges => '[Ƒîñðîñĝ çĥåñĝéš… one tw]';
+
+  @override
+  String get versionChangesHidden => '[Çĥåñĝéš åŕé ĥîððéñ one tw]';
+
+  @override
+  String get versionNoChanges =>
+      '[Ñö çĥåñĝéš šîñçé ţĥé þŕéṽîöûš ṽéŕšîöñ one two thre]';
+
+  @override
+  String versionSlidesAdded(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count šļîðéš åððéð',
+      one: '1 šļîðé åððéð',
+    );
+    return '[$_temp0 one two]';
+  }
+
+  @override
+  String versionSlidesChanged(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count šļîðéš çĥåñĝéð',
+      one: '1 šļîðé çĥåñĝéð',
+    );
+    return '[$_temp0 one two th]';
+  }
+
+  @override
+  String versionSlidesMoved(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count šļîðéš ɱöṽéð',
+      one: '1 šļîðé ɱöṽéð',
+    );
+    return '[$_temp0 one two]';
+  }
+
+  @override
+  String versionSlidesDeleted(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count šļîðéš ðéļéţéð',
+      one: '1 šļîðé ðéļéţéð',
+    );
+    return '[$_temp0 one two th]';
+  }
+
+  @override
+  String get versionThemeChanged => '[Ţĥéɱé çĥåñĝéð one t]';
+
+  @override
+  String get versionDeckChanged => '[Þŕéšéñţåţîöñ šéţţîñĝš çĥåñĝéð one two th]';
+
+  @override
+  String get versionTagNew => '[Ñéŵ on]';
+
+  @override
+  String get versionTagMoved => '[Ṁöṽéð on]';
+
+  @override
+  String get versionTagRenamed => '[Ŕéñåɱéð one]';
+
+  @override
+  String get versionTagDeleted => '[Ðéļéţéð one]';
+
+  @override
+  String versionDeletedSlide(String title) {
+    return '[Ðéļéţéð šļîðé: $title one t]';
+  }
+
+  @override
+  String get versionChangesOnSlide => '[Çĥåñĝéš öñ ţĥîš šļîðé one two]';
+
+  @override
+  String get versionNoChangesOnSlide =>
+      '[Ñöţĥîñĝ çĥåñĝéð öñ ţĥîš šļîðé one two t]';
+
+  @override
+  String versionChangeBy(String what, String who) {
+    return '[$what — $who o]';
+  }
+
+  @override
+  String versionAgentMcp(String name) {
+    return '[Çļåûðé ṽîå ṀÇÞ ($name) one t]';
+  }
+
+  @override
+  String versionAgentAi(String name) {
+    return '[Çļåûðé ($name) one]';
+  }
+
+  @override
+  String versionElementChange(String element, String what) {
+    return '[$element: $what o]';
+  }
+
+  @override
+  String versionElementAdded(String element) {
+    return '[$element åððéð on]';
+  }
+
+  @override
+  String versionElementRemoved(String element) {
+    return '[$element ðéļéţéð one]';
+  }
+
+  @override
+  String get versionKindText => '[ţéẋţ éðîţéð one]';
+
+  @override
+  String get versionKindFrame => '[ɱöṽéð öŕ ŕéšîžéð one t]';
+
+  @override
+  String get versionKindStyle => '[ŕéšţýļéð one]';
+
+  @override
+  String get versionKindData => '[çöñţéñţ çĥåñĝéð one t]';
+
+  @override
+  String get versionKindOrder => '[öŕðéŕ çĥåñĝéð one t]';
+
+  @override
+  String get versionKindVisibility => '[šĥöŵñ, ĥîððéñ öŕ ļöçķéð one two]';
+
+  @override
+  String get versionKindAnimation => '[åñîɱåţîöñ çĥåñĝéð one tw]';
+
+  @override
+  String get versionSlideAdded => '[Šļîðé åððéð one]';
+
+  @override
+  String get versionSlideMoved => '[Šļîðé ɱöṽéð one]';
+
+  @override
+  String get versionSlideSkipToggled =>
+      '[Šļîðé šķîþþéð öŕ ûñšķîþþéð one two t]';
+
+  @override
+  String get versionSlideDeleted => '[Šļîðé ðéļéţéð one t]';
+
+  @override
+  String get versionSlideBackground => '[Ɓåçķĝŕöûñð çĥåñĝéð one tw]';
+
+  @override
+  String get versionSlideLayout => '[Ļåýöûţ çĥåñĝéð one t]';
+
+  @override
+  String get versionSlideTransition => '[Ţŕåñšîţîöñ çĥåñĝéð one tw]';
+
+  @override
+  String get versionSlideNotes => '[Šþéåķéŕ ñöţéš éðîţéð one two]';
+
+  @override
+  String get versionSlideTimings => '[Ţîɱîñĝš çĥåñĝéð one t]';
+
+  @override
+  String get versionSlideMasters =>
+      '[Ṁåšţéŕ öƀĵéçţš šĥöŵñ öŕ ĥîððéñ one two th]';
+
+  @override
+  String versionAnimations(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count åñîɱåţîöñš çĥåñĝéð',
+      one: '1 åñîɱåţîöñ çĥåñĝéð',
+    );
+    return '[$_temp0 one two thre]';
+  }
+
+  @override
+  String versionGroupAdded(String title) {
+    return '[Šéçţîöñ “$title” åððéð one t]';
+  }
+
+  @override
+  String versionGroupRemoved(String title) {
+    return '[Šéçţîöñ “$title” ðéļéţéð one tw]';
+  }
+
+  @override
+  String versionGroupChanged(String title) {
+    return '[Šéçţîöñ “$title” çĥåñĝéð one tw]';
+  }
+
+  @override
+  String versionChangeCounter(int index, int count) {
+    return '[$index öƒ $count o]';
+  }
+
+  @override
+  String get versionCopyTitle => '[Çöþý ţĥîš ṽéŕšîöñ one tw]';
+
+  @override
+  String get versionCopyNameLabel => '[Ñåɱé on]';
+
+  @override
+  String versionCopyName(String title) {
+    return '[Çöþý öƒ $title one]';
+  }
+
+  @override
+  String get versionCopyNameRequired => '[Éñţéŕ å ñåɱé one]';
+
+  @override
+  String get versionCopyComments => '[Çöþý çöɱɱéñţš one t]';
+
+  @override
+  String get versionCopySharing => '[Šĥåŕé ŵîţĥ ţĥé šåɱé þéöþļé one two]';
+
+  @override
+  String get versionOpenCopy => '[Öþéñ on]';
+
+  @override
+  String toastVersionCopied(String name) {
+    return '[Çŕéåţéð “$name” one]';
+  }
+
+  @override
+  String get toastVersionCopyFailed => '[Çöûļðñ’ţ çöþý ţĥîš ṽéŕšîöñ one two t]';
+
+  @override
+  String get toastVersionDownloadFailed =>
+      '[Çöûļðñ’ţ ðöŵñļöåð ţĥîš ṽéŕšîöñ one two th]';
+
+  @override
+  String get conflictsTitle => '[Ýöûŕ ţéẋţ ŵåš ŕéþļåçéð one two]';
+
+  @override
+  String get conflictsDescription =>
+      '[Ñéŵéŕ éðîţš ƒŕöɱ çöļļåƀöŕåţöŕš ŕéþļåçéð ţéẋţ ýöû éðîţéð ŵĥîļé öƒƒļîñé. Çĥööšé ţĥé ţéẋţš ţö þûţ ƀåçķ. one two three four five six se]';
+
+  @override
+  String conflictsRow(String where, String mine, String theirs, String who) {
+    return '[$where — ýöûŕš: $mine · ñöŵ: $theirs ($who) one t]';
+  }
+
+  @override
+  String conflictsDeletedBy(String where, String who, String mine) {
+    return '[$where ŵåš ðéļéţéð ƀý $who · ýöûŕš: $mine one two]';
+  }
+
+  @override
+  String conflictsSlideTarget(int number, String element) {
+    return '[Šļîðé $number, $element one]';
+  }
+
+  @override
+  String conflictsNotesTarget(int number) {
+    return '[Šļîðé $number, šþéåķéŕ ñöţéš one two]';
+  }
+
+  @override
+  String conflictsCellTarget(int number) {
+    return '[Šļîðé $number, ţåƀļé çéļļ one tw]';
+  }
+
+  @override
+  String get conflictsGoneTarget => '[Å ðéļéţéð šļîðé one t]';
+
+  @override
+  String get conflictsEmptyValue => '[(éɱþţý) one]';
+
+  @override
+  String get conflictsRestoreMine => '[Ŕéšţöŕé one]';
+
+  @override
+  String get conflictsCopyMine => '[Çöþý on]';
+
+  @override
+  String get conflictsDismissAll => '[Ðîšɱîšš åļļ one]';
+
+  @override
+  String get conflictsReview => '[Ŕéṽîéŵ one]';
+
+  @override
+  String get conflictsSeveralPeople => '[šéṽéŕåļ þéöþļé one t]';
+
+  @override
+  String toastConflicts(int count, String who) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count öƒ ýöûŕ ţéẋţ éðîţš ŵéŕé',
+      one: '1 öƒ ýöûŕ ţéẋţ éðîţš ŵåš',
+    );
+    return '[$_temp0 ŕéþļåçéð ƀý ñéŵéŕ éðîţš ƒŕöɱ $who one two three four fiv]';
+  }
+
+  @override
+  String get toastConflictsCopied => '[Çöþîéð ýöûŕ ţéẋţ one t]';
+
+  @override
+  String toastVersionRestoredBy(String name) {
+    return '[$name ŕéšţöŕéð å þŕéṽîöûš ṽéŕšîöñ one two t]';
+  }
+
+  @override
+  String get cmdLineSetWaypoints => '[Éðîţ çöññéçţöŕ ŕöûţé one two]';
+
+  @override
+  String get aiPanelTitle => '[Åššîšţåñţ one]';
+
+  @override
+  String get aiAssistantEmptyTitle =>
+      '[Åšķ åƀöûţ ţĥîš þŕéšéñţåţîöñ, öŕ åšķ ƒöŕ çĥåñĝéš one two three]';
+
+  @override
+  String get aiAssistantPrivacyNotice =>
+      '[Ýöûŕ ɱéššåĝéš åñð ţĥîš þŕéšéñţåţîöñ\'š çöñţéñţ åŕé šéñţ ţö åñ ÅÎ þŕöṽîðéŕ. one two three four fiv]';
+
+  @override
+  String aiAssistantPrivacyNoticeProvider(String provider) {
+    return '[Ýöûŕ ɱéššåĝéš åñð ţĥîš þŕéšéñţåţîöñ\'š çöñţéñţ åŕé šéñţ ţö $provider. one two three four]';
+  }
+
+  @override
+  String get aiAssistantModeEditHint =>
+      '[Çĥåñĝéš ĝö šţŕåîĝĥţ îñţö ţĥé þŕéšéñţåţîöñ one two three]';
+
+  @override
+  String get aiAssistantModeEditUnavailable =>
+      '[Ýöû çåñ öñļý šûĝĝéšţ çĥåñĝéš îñ ţĥîš þŕéšéñţåţîöñ one two three f]';
+
+  @override
+  String get aiAssistantModeSuggestHint =>
+      '[Çĥåñĝéš åŕé þŕéṽîéŵéð ƀéƒöŕé åñýţĥîñĝ îš åþþļîéð one two three f]';
+
+  @override
+  String get aiUnavailable => '[ÅÎ îšñ\'ţ åṽåîļåƀļé one tw]';
+
+  @override
+  String get aiTurnedOff => '[ÅÎ îš ţûŕñéð öƒƒ one t]';
+
+  @override
+  String get aiTurnOnHint => '[Ţûŕñ îţ öñ îñ Šéţţîñĝš › ÅÎ. one two]';
+
+  @override
+  String aiChipSlide(int position) {
+    return '[Šļîðé $position on]';
+  }
+
+  @override
+  String aiChipObjects(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count šéļéçţéð öƀĵéçţš',
+      one: '1 šéļéçţéð öƀĵéçţ',
+    );
+    return '[$_temp0 one two thr]';
+  }
+
+  @override
+  String get aiQuickImproveSlide => '[Îɱþŕöṽé ţĥîš šļîðé one tw]';
+
+  @override
+  String get aiQuickNotes => '[Ŵŕîţé šþéåķéŕ ñöţéš one tw]';
+
+  @override
+  String get aiQuickSummarize => '[Šûɱɱåŕîžé ţĥé þŕéšéñţåţîöñ one two t]';
+
+  @override
+  String get aiQuickAgenda => '[Åðð åñ åĝéñðå šļîðé one tw]';
+
+  @override
+  String get aiQuickConsistency => '[Çĥéçķ ţîţļéš åñð ŵöŕðîñĝ one two]';
+
+  @override
+  String get aiQuickNewDeck => '[Ĝéñéŕåţé å þŕéšéñţåţîöñ… one two]';
+
+  @override
+  String aiUndoLabel(String summary) {
+    return '[ÅÎ: $summary on]';
+  }
+
+  @override
+  String get aiUndoDefault => '[Åššîšţåñţ çĥåñĝéš one tw]';
+
+  @override
+  String get aiFailed => '[Ţĥé ÅÎ ŕéǫûéšţ ƒåîļéð one two]';
+
+  @override
+  String get aiPreviewReview => '[Ŕéṽîéŵ çĥåñĝéš one t]';
+
+  @override
+  String get aiPreviewAppliedNote => '[Šûĝĝéšţéð çĥåñĝéš åþþļîéð one two t]';
+
+  @override
+  String get aiPreviewDiscardedNote =>
+      '[Šûĝĝéšţéð çĥåñĝéš ðîšçåŕðéð one two t]';
+
+  @override
+  String get aiPreviewTitle => '[Šûĝĝéšţéð çĥåñĝéš one tw]';
+
+  @override
+  String get aiPreviewDescription =>
+      '[Çĥööšé ţĥé çĥåñĝéš ţö åþþļý. Ñöţĥîñĝ çĥåñĝéš ûñţîļ ýöû åþþļý ţĥéɱ. one two three four f]';
+
+  @override
+  String get aiPreviewApply => '[Åþþļý šéļéçţéð one t]';
+
+  @override
+  String get aiPreviewDiscard => '[Ðîšçåŕð one]';
+
+  @override
+  String get aiPreviewBefore => '[Ɓéƒöŕé one]';
+
+  @override
+  String get aiPreviewAfter => '[Åƒţéŕ on]';
+
+  @override
+  String get aiPreviewNewSlide => '[Ñéŵ šļîðé one]';
+
+  @override
+  String get aiPreviewDeletedSlide => '[Ðéļéţéð one]';
+
+  @override
+  String aiPreviewSlide(int position) {
+    return '[Šļîðé $position on]';
+  }
+
+  @override
+  String get aiPreviewNoSlides =>
+      '[Ţĥéšé çĥåñĝéš ðöñ\'ţ çĥåñĝé å šļîðé\'š ļööķ. one two three]';
+
+  @override
+  String aiPreviewSkipped(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count ṽåļûéš šöɱéöñé çĥåñĝéð ɱéåñŵĥîļé ŵéŕé ķéþţ',
+      one: '1 ṽåļûé šöɱéöñé çĥåñĝéð ɱéåñŵĥîļé ŵåš ķéþţ',
+    );
+    return '[$_temp0 one two three four five si]';
+  }
+
+  @override
+  String get aiPreviewApplyAll => '[Åþþļý šûĝĝéšţéð çĥåñĝéš one two]';
+
+  @override
+  String get aiGenerateTitle => '[Ĝéñéŕåţé þŕéšéñţåţîöñ one two]';
+
+  @override
+  String get aiGenerateSource => '[Šöûŕçé one]';
+
+  @override
+  String get aiGenerateSourcePrompt => '[Þŕöɱþţ one]';
+
+  @override
+  String get aiGenerateSourceOutline => '[Öûţļîñé one]';
+
+  @override
+  String get aiGeneratePromptLabel =>
+      '[Ŵĥåţ îš ţĥé þŕéšéñţåţîöñ åƀöûţ? one two th]';
+
+  @override
+  String get aiGeneratePromptHint =>
+      '[Ǫûåŕţéŕļý ŕéṽîéŵ öƒ ţĥé Šéŕṽéŕþöð Çļöûð ļåûñçĥ ƒöŕ ţĥé ƀöåŕð… one two three four]';
+
+  @override
+  String get aiGenerateOutlineLabel => '[Ýöûŕ öûţļîñé one]';
+
+  @override
+  String get aiGenerateOutlineHint =>
+      '[Þåšţé ƀûļļéţš öŕ Ṁåŕķðöŵñ ŵîţĥ öñé ĥéåðîñĝ þéŕ šļîðé one two three fo]';
+
+  @override
+  String get aiGenerateSlides => '[Šļîðéš one]';
+
+  @override
+  String get aiGenerateSlidesAuto => '[Åûţö on]';
+
+  @override
+  String get aiGenerateAudience => '[Åûðîéñçé one]';
+
+  @override
+  String get aiGenerateTone => '[Ţöñé on]';
+
+  @override
+  String get aiGenerateLanguage => '[Ļåñĝûåĝé one]';
+
+  @override
+  String get aiGenerateLanguageAuto => '[Šåɱé åš ţĥé ţéẋţ one t]';
+
+  @override
+  String get aiGenerateNotes => '[Šþéåķéŕ ñöţéš one t]';
+
+  @override
+  String get aiGenerateGroups => '[Ĝŕöûþ îñţö šéçţîöñš one tw]';
+
+  @override
+  String get aiGenerateKeepWording => '[Ķééþ ɱý ŵöŕðîñĝ one t]';
+
+  @override
+  String get aiGenerateInsert => '[Îñšéŕţ one]';
+
+  @override
+  String get aiGenerateInsertNew => '[Ñéŵ þŕéšéñţåţîöñ one tw]';
+
+  @override
+  String aiGenerateInsertAfter(int position) {
+    return '[Åƒţéŕ šļîðé $position one]';
+  }
+
+  @override
+  String get aiGenerateInsertEnd => '[Åţ ţĥé éñð one]';
+
+  @override
+  String get aiGenerateCreateOutline => '[Çŕéåţé öûţļîñé one t]';
+
+  @override
+  String get aiGeneratePlanning => '[Þļåññîñĝ ţĥé öûţļîñé… one two]';
+
+  @override
+  String get aiGenerateOutlineTitle => '[Ŕéṽîéŵ ţĥé öûţļîñé one tw]';
+
+  @override
+  String get aiGenerateOutlineDescription =>
+      '[Éðîţ ţîţļéš åñð ŕöļéš, ŕéöŕðéŕ öŕ ðéļéţé šļîðéš, ţĥéñ çŕéåţé ţĥéɱ. one two three four f]';
+
+  @override
+  String get aiGenerateBuild => '[Çŕéåţé šļîðéš one t]';
+
+  @override
+  String get aiGenerateBack => '[Ɓåçķ on]';
+
+  @override
+  String get aiGenerateRegenerate => '[Ŕéĝéñéŕåţé one]';
+
+  @override
+  String get aiGenerateRegenerateSlide => '[Ŕéĝéñéŕåţé ţĥîš šļîðé one two]';
+
+  @override
+  String get aiGenerateRegenerateHint =>
+      '[Ŵĥåţ šĥöûļð çĥåñĝé? (öþţîöñåļ) one two th]';
+
+  @override
+  String get aiGenerateAddSlide => '[Åðð šļîðé one]';
+
+  @override
+  String get aiGenerateDeleteSlide => '[Ðéļéţé šļîðé one]';
+
+  @override
+  String get aiGenerateMoveUp => '[Ṁöṽé ûþ one]';
+
+  @override
+  String get aiGenerateMoveDown => '[Ṁöṽé ðöŵñ one]';
+
+  @override
+  String get aiGenerateSlideTitle => '[Šļîðé ţîţļé one]';
+
+  @override
+  String get aiGenerateBullets => '[Ɓûļļéţš (öñé þéŕ ļîñé) one two]';
+
+  @override
+  String aiGenerateSlideCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count šļîðéš',
+      one: '1 šļîðé',
+    );
+    return '[$_temp0 one t]';
+  }
+
+  @override
+  String get aiGenerateRole => '[Ŕöļé on]';
+
+  @override
+  String get aiGenerateBuilding => '[Çŕéåţîñĝ šļîðéš… one tw]';
+
+  @override
+  String get aiGenerateUndo => '[Ĝéñéŕåţé šļîðéš one t]';
+
+  @override
+  String get aiGenerateNewSlide => '[Ñéŵ šļîðé one]';
+
+  @override
+  String get aiGenerateEmpty =>
+      '[Ðéšçŕîƀé ţĥé þŕéšéñţåţîöñ ƒîŕšţ. one two thr]';
+
+  @override
+  String aiGenerateDone(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Åððéð $count šļîðéš',
+      one: 'Åððéð 1 šļîðé',
+    );
+    return '[$_temp0 one two]';
+  }
+
+  @override
+  String get aiGenerateCreated => '[Þŕéšéñţåţîöñ çŕéåţéð one two]';
+
+  @override
+  String get aiRoleTitle => '[Ţîţļé on]';
+
+  @override
+  String get aiRoleSection => '[Šéçţîöñ one]';
+
+  @override
+  String get aiRoleAgenda => '[Åĝéñðå one]';
+
+  @override
+  String get aiRoleBullets => '[Ɓûļļéţš one]';
+
+  @override
+  String get aiRoleTwoColumn => '[Ţŵö çöļûɱñš one]';
+
+  @override
+  String get aiRoleQuote => '[Ǫûöţé on]';
+
+  @override
+  String get aiRoleBigNumber => '[Ɓîĝ ñûɱƀéŕ one]';
+
+  @override
+  String get aiRoleImageText => '[Îɱåĝé åñð ţéẋţ one t]';
+
+  @override
+  String get aiRoleCode => '[Çöðé on]';
+
+  @override
+  String get aiRoleChartPlaceholder => '[Çĥåŕţ on]';
+
+  @override
+  String get aiRoleClosing => '[Çļöšîñĝ one]';
+
+  @override
+  String get aiAudienceGeneral => '[Ĝéñéŕåļ one]';
+
+  @override
+  String get aiAudienceBoard => '[Ɓöåŕð on]';
+
+  @override
+  String get aiAudienceTeam => '[Ţéåɱ on]';
+
+  @override
+  String get aiAudienceCustomers => '[Çûšţöɱéŕš one]';
+
+  @override
+  String get aiAudienceStudents => '[Šţûðéñţš one]';
+
+  @override
+  String get aiAudienceDevelopers => '[Ðéṽéļöþéŕš one]';
+
+  @override
+  String get aiToneProfessional => '[Þŕöƒéššîöñåļ one t]';
+
+  @override
+  String get aiToneFriendly => '[Ƒŕîéñðļý one]';
+
+  @override
+  String get aiToneInspiring => '[Îñšþîŕîñĝ one]';
+
+  @override
+  String get aiToneTechnical => '[Ţéçĥñîçåļ one]';
+
+  @override
+  String get aiToneConcise => '[Çöñçîšé one]';
+
+  @override
+  String get aiRewriteTitle => '[Ŕéŵŕîţé ţéẋţ one]';
+
+  @override
+  String get aiRewriteWorking => '[Ŵŕîţîñĝ… one]';
+
+  @override
+  String get aiRewriteReplace => '[Ŕéþļåçé one]';
+
+  @override
+  String get aiRewriteTryAgain => '[Ţŕý åĝåîñ one]';
+
+  @override
+  String get aiRewriteDiscard => '[Ðîšçåŕð one]';
+
+  @override
+  String get aiRewriteRefineHint => '[Ŕéƒîñé, é.ĝ. éṽéñ šĥöŕţéŕ one two]';
+
+  @override
+  String get aiRewriteRefine => '[Ŕéƒîñé one]';
+
+  @override
+  String get aiRewriteOriginal => '[Öŕîĝîñåļ one]';
+
+  @override
+  String get aiRewriteResult => '[Šûĝĝéšţîöñ one]';
+
+  @override
+  String get aiRewriteChanged =>
+      '[Ţĥé ţéẋţ çĥåñĝéð ɱéåñŵĥîļé. Çöþý ţĥé šûĝĝéšţîöñ öŕ ţŕý åĝåîñ. one two three four]';
+
+  @override
+  String get aiRewriteCopy => '[Çöþý on]';
+
+  @override
+  String get aiRewriteCopied => '[Çöþîéð one]';
+
+  @override
+  String get aiRewriteCustomLabel => '[Ĥöŵ šĥöûļð ţĥé ţéẋţ çĥåñĝé? one two t]';
+
+  @override
+  String get aiRewriteCustomHint => '[Ṁåķé îţ šöûñð ɱöŕé çöñƒîðéñţ one two t]';
+
+  @override
+  String get aiRewriteUndo => '[Ŕéŵŕîţé ţéẋţ one]';
+
+  @override
+  String get aiRewriteNoText => '[Šéļéçţ å ţéẋţ ƀöẋ ŵîţĥ ţéẋţ one two]';
+
+  @override
+  String get rewritePunchier => '[Þûñçĥîéŕ one]';
+
+  @override
+  String get rewriteBullets => '[Ṁåķé ƀûļļéţš one]';
+
+  @override
+  String get rewriteParagraph => '[Ṁåķé å þåŕåĝŕåþĥ one t]';
+
+  @override
+  String get aiNotesTitle => '[Ŵŕîţé šþéåķéŕ ñöţéš one tw]';
+
+  @override
+  String get aiNotesScope => '[Šļîðéš one]';
+
+  @override
+  String get aiNotesScopeCurrent => '[Çûŕŕéñţ šļîðé one t]';
+
+  @override
+  String get aiNotesScopeSelected => '[Šéļéçţéð šļîðéš one t]';
+
+  @override
+  String get aiNotesScopeAll => '[Åļļ šļîðéš one]';
+
+  @override
+  String get aiNotesLength => '[Ļéñĝţĥ one]';
+
+  @override
+  String get aiNotesLengthBrief => '[Ɓŕîéƒ on]';
+
+  @override
+  String get aiNotesLengthStandard => '[Šţåñðåŕð one]';
+
+  @override
+  String get aiNotesLengthDetailed => '[Ðéţåîļéð one]';
+
+  @override
+  String get aiNotesStyle => '[Šţýļé on]';
+
+  @override
+  String get aiNotesStyleScript => '[Šçŕîþţ one]';
+
+  @override
+  String get aiNotesStyleBullets => '[Ɓûļļéţ þöîñţš one t]';
+
+  @override
+  String get aiNotesMode => '[Éẋîšţîñĝ ñöţéš one t]';
+
+  @override
+  String get aiNotesModeFillEmpty => '[Öñļý ŵŕîţé éɱþţý ñöţéš one two]';
+
+  @override
+  String get aiNotesModeAppend => '[Åðð ţö ţĥéɱ one]';
+
+  @override
+  String get aiNotesModeReplace => '[Ŕéþļåçé ţĥéɱ one]';
+
+  @override
+  String get aiNotesGenerate => '[Ŵŕîţé ñöţéš one]';
+
+  @override
+  String get aiNotesWorking => '[Ŵŕîţîñĝ ñöţéš… one t]';
+
+  @override
+  String get aiNotesReviewTitle => '[Ŕéṽîéŵ šþéåķéŕ ñöţéš one two]';
+
+  @override
+  String get aiNotesApply => '[Åþþļý on]';
+
+  @override
+  String get aiNotesNone => '[Ñö šļîðé ñééðš ñöţéš. one two]';
+
+  @override
+  String get aiNotesExisting => '[Çûŕŕéñţ ñöţéš one t]';
+
+  @override
+  String get aiNotesUndo => '[Ŵŕîţé šþéåķéŕ ñöţéš one tw]';
+
+  @override
+  String get aiAltTitle => '[Ĝéñéŕåţé åļţ ţéẋţ one tw]';
+
+  @override
+  String get aiAltWorking => '[Ðéšçŕîƀîñĝ öƀĵéçţš… one two]';
+
+  @override
+  String get aiAltApply => '[Åþþļý on]';
+
+  @override
+  String get aiAltNone => '[Ñöţĥîñĝ ñééðš åļţ ţéẋţ. one two]';
+
+  @override
+  String get aiAltSkippedUnsupported =>
+      '[Ţĥîš ķîñð öƒ öƀĵéçţ çåñ\'ţ ƀé ðéšçŕîƀéð. one two thre]';
+
+  @override
+  String get aiAltSkippedEmpty => '[Ñö ðéšçŕîþţîöñ ŵåš þŕöþöšéð. one two t]';
+
+  @override
+  String get aiAltUndo => '[Ĝéñéŕåţé åļţ ţéẋţ one tw]';
+
+  @override
+  String aiAltObject(String kind, int position) {
+    return '[$kind öñ šļîðé $position one]';
+  }
+
+  @override
+  String get a11yGenerateAlt => '[Ĝéñéŕåţé ŵîţĥ ÅÎ one t]';
+
+  @override
+  String get a11yGenerateMissingAlt => '[Ĝéñéŕåţé ɱîššîñĝ åļţ ţéẋţ one two]';
+
+  @override
+  String get aiDesignTitle => '[Ðéšîĝñ îðéåš one]';
+
+  @override
+  String get aiDesignEmpty =>
+      '[Ñö îðéåš ƒöŕ ţĥîš šļîðé — åðð šöɱé çöñţéñţ one two thre]';
+
+  @override
+  String get aiDesignNoSlide =>
+      '[Šéļéçţ å šļîðé ţö šéé ðéšîĝñ îðéåš one two th]';
+
+  @override
+  String get aiDesignRefresh => '[Ŕéƒŕéšĥ one]';
+
+  @override
+  String get aiDesignMore => '[Ṁöŕé îðéåš one]';
+
+  @override
+  String get aiDesignRanking => '[Ŕåñķîñĝ ŵîţĥ ÅÎ… one t]';
+
+  @override
+  String get aiDesignLayoutIdeas => '[Ļåýöûţ îðéåš ƒöŕ ţĥîš šļîðé one two t]';
+
+  @override
+  String get aiDesignAiRanked => '[Ŕåñķéð ƀý ÅÎ ƒöŕ ţĥîš šļîðé one two]';
+
+  @override
+  String get aiDesignUndo => '[Åþþļý ðéšîĝñ îðéå one tw]';
+
+  @override
+  String aiDesignApply(String name) {
+    return '[Åþþļý $name on]';
+  }
+
+  @override
+  String get cmdAiApplyDesignIdea => '[Åþþļý ðéšîĝñ îðéå one tw]';
+
+  @override
+  String get cmdPanelDesignIdeas => '[Ðéšîĝñ îðéåš one]';
+
+  @override
+  String get cmdAiApplyPreview => '[Åþþļý šûĝĝéšţéð çĥåñĝéš one two]';
+
+  @override
+  String get cmdAiDiscardPreview => '[Ðîšçåŕð šûĝĝéšţéð çĥåñĝéš one two t]';
+
+  @override
+  String get cmdAiSetApplyMode => '[Åššîšţåñţ: éðîţ öŕ šûĝĝéšţ one two t]';
+
+  @override
+  String get reasonAiUnavailable => '[ÅÎ îšñ\'ţ åṽåîļåƀļé one tw]';
+
+  @override
+  String get reasonNoTextToRewrite => '[Šéļéçţ å ţéẋţ ƀöẋ ŵîţĥ ţéẋţ one two]';
+
+  @override
+  String get reasonNoPreview => '[Ñö šûĝĝéšţéð çĥåñĝéš ţö ŕéṽîéŵ one two th]';
 }

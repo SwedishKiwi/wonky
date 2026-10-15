@@ -36,10 +36,7 @@ void main() {
       expect(icons.map((i) => i.codePoint).toSet().length, icons.length);
       final alert = LucideCatalog.of('alert-circle')!;
       expect(LucideCatalog.of('circle-alert'), same(alert));
-      expect({alert.name, ...alert.aliases}, {
-        'alert-circle',
-        'circle-alert',
-      });
+      expect({alert.name, ...alert.aliases}, {'alert-circle', 'circle-alert'});
       expect(alert.label, startsWith(alert.name[0].toUpperCase()));
     });
 

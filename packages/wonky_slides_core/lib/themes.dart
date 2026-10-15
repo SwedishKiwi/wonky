@@ -10,6 +10,7 @@ export 'src/theme/builtins/builtin_theme_def.dart';
 export 'src/theme/builtins/builtin_themes.dart';
 export 'src/theme/builtins/theme_package.dart';
 export 'src/theme/color/color_ref.dart';
+export 'src/theme/color/dark_deriver.dart';
 export 'src/theme/color/oklch.dart';
 export 'src/theme/fonts/slides_fonts.dart';
 export 'src/theme/json/json_util.dart'

@@ -2,6 +2,7 @@ import 'package:flutter/widgets.dart';
 import 'package:shad/shad.dart';
 import 'package:wonky_app/wonky_app.dart';
 import 'package:wonky_core/wonky_core.dart';
+import 'package:wonky_slides_core/model.dart' show ElementOwnerKind;
 import 'package:wonky_slides_core/themes.dart' show SlideAppearance;
 import 'package:wonky_ui/wonky_ui.dart';
 
@@ -10,6 +11,9 @@ import '../../config/slides_features.dart';
 import '../../l10n/slides_l10n.dart';
 import '../editor_screen/deck_editor_controller.dart';
 import '../toolbar/command_ui.dart';
+import '../masters/surface_inspector.dart';
+import '../themes/editor/theme_editor_sections.dart';
+import 'animate/animate_tab.dart';
 import 'inspector_sections.dart';
 
 /// The docked inspector (Slides 04 §7): tabs **Format** · **Animate** ·
@@ -85,7 +89,17 @@ class _DeckInspectorState extends State<DeckInspector> {
                     children: switch (ed.inspectorTab) {
                       InspectorTab.format => _format(context, l, ui),
                       InspectorTab.animate => _animate(context, l, ui),
+                      // Masters mode (SL-28): the Slide tab edits the
+                      // layout or master, the Theme tab the theme.
+                      InspectorTab.slide when ed.editsMasters => [
+                        for (final s in mastersSurfaceSections)
+                          _section(context, s, l, null),
+                      ],
                       InspectorTab.slide => _slide(context, l, ui),
+                      InspectorTab.theme => [
+                        for (final s in themeEditorSections)
+                          _section(context, s, l, null),
+                      ],
                     },
                   ),
                 ),
@@ -141,10 +155,18 @@ class _DeckInspectorState extends State<DeckInspector> {
       child: Row(
         children: [
           tab(InspectorTab.format, l.inspectorFormat),
-          // The Animate tab is SL-30's (hidden until built, SL-23).
+          // The Animate tab (SL-30) while `animations` is on.
           if (SlidesFeatures.isOn(SlidesFeature.animations))
             tab(InspectorTab.animate, l.inspectorAnimate),
-          tab(InspectorTab.slide, l.inspectorSlide),
+          tab(
+            InspectorTab.slide,
+            !ed.editsMasters
+                ? l.inspectorSlide
+                : ed.surfaceKind == ElementOwnerKind.layout
+                ? l.inspectorLayout
+                : l.inspectorMaster,
+          ),
+          if (ed.editsMasters) tab(InspectorTab.theme, l.inspectorTheme),
           ShadTooltip(
             builder: (_) => Text(l.inspectorClose),
             child: ShadIconButton.ghost(
@@ -307,56 +329,12 @@ class _DeckInspectorState extends State<DeckInspector> {
 
   // --------------------------------------------------------------- Animate
 
+  /// 06 §5: SL-30's Animate tab (`features/inspector/animate/`).
   List<Widget> _animate(
     BuildContext context,
     SlidesLocalizations l,
     SlidesCommandUi ui,
-  ) {
-    final theme = ShadTheme.of(context);
-    Widget sub(String tab, String label) {
-      final selected = ed.animateTab == tab;
-      return Expanded(
-        child: ShadButton.ghost(
-          key: ValueKey<String>('slides.inspector.animate.$tab'),
-          height: 28,
-          backgroundColor: selected ? theme.colorScheme.muted : null,
-          onPressed: () =>
-              ui.run('slides.panel.animate', {'tab': tab}, InvocationSource.ui),
-          child: Flexible(
-            child: Text(
-              label,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: theme.textTheme.small,
-            ),
-          ),
-        ),
-      );
-    }
-
-    return [
-      Row(
-        children: [
-          sub('transition', l.animateTabTransition),
-          sub('build', l.animateTabBuild),
-          sub('order', l.animateTabOrder),
-        ],
-      ),
-      const SizedBox(height: 16),
-      Text(
-        switch (ed.animateTab) {
-          'build' => l.animateBuildEmpty,
-          'order' => l.animateOrderEmpty,
-          _ => l.animateTransitionEmpty,
-        },
-        key: const ValueKey<String>('slides.inspector.animateBody'),
-        textAlign: TextAlign.center,
-        style: theme.textTheme.muted,
-      ),
-      const SizedBox(height: 12),
-      Center(child: _commandButton(ui, 'slides.animate.preview')),
-    ];
-  }
+  ) => [AnimateTab(services: widget.services, editor: ed)];
 
   // ----------------------------------------------------------------- Slide
 

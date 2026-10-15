@@ -26,8 +26,10 @@ class NotificationEmails {
       (_, DriveItemKind.file) => '/drive/file/$uuid',
       _ => '/write/d/$uuid',
     };
-    // Spreadsheet comments link to their cell (Sheets 10 §3.6).
-    if (n.itemKind == DriveItemKind.spreadsheet) {
+    // Spreadsheet comments link to their cell (Sheets 10 §3.6), deck
+    // comments to their slide and element (Slides 09 §3.4).
+    if (n.itemKind == DriveItemKind.spreadsheet ||
+        n.itemKind == DriveItemKind.presentation) {
       final thread = _threadUuidOf(n.payload);
       if (thread != null) {
         return webOrigin.replace(

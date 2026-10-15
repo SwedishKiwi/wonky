@@ -14,6 +14,7 @@ import 'package:wonky_slides/features/present/active_presentation.dart';
 import 'package:wonky_slides/features/present/present_controller.dart';
 import 'package:wonky_slides/features/present/present_screen.dart';
 import 'package:wonky_slides/features/present/presentation_link.dart';
+import 'package:wonky_slides_core/model.dart' show DeckModel;
 import 'package:wonky_slides_core/planner.dart' show SlidesPlanner;
 import 'package:wonky_slides_core/testing.dart';
 import 'package:wonky_sync_models/ids.dart' show SequentialIdGenerator;
@@ -95,6 +96,8 @@ Future<PresentRig> pumpPresent(
   WidgetTester tester, {
   PresentView view = PresentView.present,
   DeckBuilder? fixture,
+  DeckModel? model,
+  bool kiosk = false,
   String? startSlideId,
   String? sessionId,
   PresentationTransport? transport,
@@ -113,7 +116,7 @@ Future<PresentRig> pumpPresent(
   final session = MemoryDeckSession(
     itemUuid: uuid,
     userId: b.userId,
-    model: b.build(),
+    model: model ?? b.build(),
     planner: const SlidesPlanner(),
     role: Role.owner,
     ids: SequentialIdGenerator(10000),
@@ -153,6 +156,7 @@ Future<PresentRig> pumpPresent(
                   view: view,
                   startSlideId: startSlideId,
                   sessionId: sessionId,
+                  kiosk: kiosk,
                   nowMs: () => clock[0],
                 ),
               ),

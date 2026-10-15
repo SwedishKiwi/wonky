@@ -145,14 +145,14 @@ Every element key below is optional; missing properties **inherit** (§3). Prope
 "punctuation", "builtin", "literal", "meta", "tag", "attribute", "regexp", "addition",
 "deletion" }` → `{ "color": ColorRef, "fontStyle"?: "italic", "fontWeight"?: int }`.
 Unlisted tokens render in `codeText`. Dark syntax: derived (§4) unless `dark.syntax` is given.
-Exporters tokenize with highlight.js (`HighlightJsTokenizer` in the shared `wonky_code`
-package, re-exported by `wonky_write_core` as `SyntaxHighlighter`; wraps `highlight` 0.7.x —
-`re_highlight` was rejected because it depends on Flutter; languages: the 40 most common
-highlight.js grammars). The editor uses `wonky_code`'s `TextMateTokenizer` (the TextMate engine
-copied from `syntax_highlight`, 15 languages, [04](04-editor.md) §15.4/§15.5), mapping scopes to
-the same token kinds, so colors match while token boundaries may differ slightly (both switch to
-`DefaultCodeTokenizer` in M10). `SyntaxToken` is defined in `wonky_code`. Unknown language → no
-highlighting.
+The editor and the exporters tokenize with `wonky_code`'s `DefaultCodeTokenizer` (since M10,
+Slides SL-35): the TextMate engine copied from `syntax_highlight` for its 15 languages
+([04](04-editor.md) §15.4/§15.5), highlight.js (`HighlightJsTokenizer`, wrapping `highlight`
+0.7.x — `re_highlight` was rejected because it depends on Flutter; the ~45 most common grammars)
+for the others, both mapped to the same token kinds, so screen, exports and Slides color code
+identically. The exporters call it through `wonky_write_core`'s `SyntaxHighlighter` (cached).
+Before M10 the exporters used highlight.js for every language. `SyntaxToken` is defined in
+`wonky_code`. Unknown language → no highlighting.
 
 ### 2.6 `overlays` (optional overrides of app tokens)
 

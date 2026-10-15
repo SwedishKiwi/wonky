@@ -1,6 +1,6 @@
 /// highlight.js tokenization (Slides 07 §2.2): the fallback tokenizer for
-/// languages without a TextMate grammar, and Write's export tokenizer until
-/// M10 (Write 04 §15.5). Moved from `wonky_write_core` (its
+/// languages without a TextMate grammar (Write's export tokenizer for every
+/// language until M10, Write 04 §15.5). Moved from `wonky_write_core` (its
 /// `SyntaxHighlighter`).
 ///
 /// Wraps the pure-Dart highlight.js port (`package:highlight`).

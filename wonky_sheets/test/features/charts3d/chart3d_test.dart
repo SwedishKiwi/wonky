@@ -265,11 +265,7 @@ void main() {
           child: Wrap(
             children: [
               for (final v in chartVariantGroups['3d']!)
-                SizedBox(
-                  width: 48,
-                  height: 36,
-                  child: ChartTypeIcon(variant: v),
-                ),
+                SizedBox(width: 48, height: 36, child: chartVariantIcon(v)),
             ],
           ),
         );

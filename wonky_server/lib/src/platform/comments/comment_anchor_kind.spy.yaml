@@ -9,3 +9,7 @@ values:
   - range
   ### The whole item.
   - document
+  ### (v2) Slides: a slide (`{v, slideId, point?}`, Slides 09 §3.1).
+  - slide
+  ### (v2) Slides: an element on a slide (`{v, slideId, elementId, point?}`).
+  - element

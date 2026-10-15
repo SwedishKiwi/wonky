@@ -701,9 +701,9 @@ List<Command<CommandArgs>> _textCommands(ShellServices s) => [
         'text': JsonSchema.string(description: 'Plain text to put in it.'),
       },
     ),
-    enabled: (ed, a) => ed.currentSlideId != null && !ed.textEditing,
+    enabled: (ed, a) => ed.surfaceId != null && !ed.textEditing,
     reason: (l, ed) =>
-        ed.currentSlideId == null ? l.reasonNoSlides : l.reasonNotOnCanvas,
+        ed.surfaceId == null ? l.reasonNoSlides : l.reasonNotOnCanvas,
     checked: (ed, a) => ed.armedTool == 'text',
     run: _insertTextBox,
   ),
@@ -985,7 +985,7 @@ Future<CommandResult> _insertTextBox(
   DeckEditorController ed,
   JsonArgs a,
 ) async {
-  final slideId = ed.currentSlideId;
+  final slideId = ed.surfaceId;
   if (slideId == null) return const CommandResult.failed('No slide');
   final x = (a.values['x'] as num?)?.toDouble();
   final y = (a.values['y'] as num?)?.toDouble();
@@ -1023,7 +1023,7 @@ Future<CommandResult> _insertTextBox(
   ed.armTool(null);
   final plan = ed.apply(
     ctx,
-    InsertElements(slideId, [
+    InsertElements(ownerKind: ed.surfaceKind, slideId, [
       ElementSpec(
         kind: ElementKind.text,
         x: left,

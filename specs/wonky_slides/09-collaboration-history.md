@@ -297,6 +297,51 @@ email links use `?comment=`. Commenters can comment, viewers only see comments i
 it. Offline: `CommentsController.queueOffline = true` (create, reply, resolve/reopen, anchor
 moves queued and posted in order, pending marker) as Sheets 10 §3.7.
 
+### 3.7 As built (SL-38)
+
+- **Anchors**: `SlidesCommentAnchor` (`features/comments/slides_comment_anchor.dart`) encodes
+  the JSON of §3.1. The anchor comes from the selection: the element being edited (text box,
+  shape or table — the selected text is quoted, else the element's text or kind label), else
+  the first selected element, else the current slide; with the speaker notes focused, the
+  slide. There are no text-range anchors inside bodies, cells or notes (not specced: element
+  anchors cover them). Masters view offers no comments. A right-click on the canvas is
+  remembered for one minute: the next comment pins at that point (slide su, or normalized in
+  the element); otherwise element pins sit at the top-right corner and slide pins stack down
+  from the slide's top-right corner. *Comment on presentation* (`document`, P1) has no UI;
+  `shell.comments.create {anchorKind: document, anchorJson: '{"v":1}'}` works.
+- **Survival**: server plugin `comments` of the deck change log (`DeckCommentOrphans`)
+  orphans open threads when `deleted.elements` holds the element (reason `slide` when its
+  slide went too) or `deleted.slides` holds a slide anchor's slide, and revives them from
+  `revived`. Resolved threads stay resolved. An element anchor whose slide hint is deleted
+  while the element lives on elsewhere stays open. On the client, unresolvable anchors are
+  hidden at once and listed under "Orphaned". The slide hint of a moved element is fixed
+  lazily (once per thread, by its author or an editor).
+- **Cut & paste**: the paste plans return `elementIdMap` / `slideIdMap` (old → new ids);
+  `CommentAnchorMoves` (a `DeckEditorController.applyListeners` hook) re-anchors every
+  thread whose original element or slide is gone from the deck after a `PasteElements` /
+  `PasteSlides` — i.e. it was cut — and records `CommentUndoEntry(updateAnchor)` in the
+  paste's step. This also covers cutting and pasting **slides** in the navigator (slide and
+  element threads follow). Copies (originals still present) never move or copy comments.
+- **Indicators**: `CommentPinsLayer` (a canvas interaction) draws 28 px speech-bubble pins
+  (34 px when active, count badge when threads share an element), the active element's
+  outline in `commentHighlightActive`, the 300 ms hover card, the docked thread card (Esc or ×
+  closes it until another thread is shown) and the inline composer while the comments panel
+  is closed. Pin clicks run `slides.comments.show {threadUuid}` (new, palette-hidden: show a
+  thread in place). `SlideCommentBadge` shows the open count at the bottom left of navigator
+  thumbnails, after collapsed group headers and next to grid cell numbers; clicking it opens
+  the panel scoped to that slide.
+- **Panel**: scopes *This slide / All slides*; slide headers "4 · Our mission"; slide-group
+  sections with the group's color dot through the shell's new optional
+  `CommentPanelSections` interface; "Orphaned" last. Slide-anchor labels follow the slide's
+  live number and title (the stored quote is "Slide 4: Our mission").
+- **Notifications**: payloads gain `slideNumber` and `slideTitle` (`CommentService.payloadExtras`
+  for presentations, from the server's deck cache); emails and the bell open
+  `/slides/p/<uuid>?comment=<thread>`, which selects the element and docks the card (orphaned
+  threads open in the panel).
+- **MCP**: `ui.get_state` adds `openComments`, `activeComment`, `commentPins`; every action is a
+  command (`shell.comments.*` with `anchorKind` `slide`/`element`, `slides.comments.*`). The
+  headless `comments.*` tools with Slides anchors (§8) are SL-40's.
+
 ---
 
 ## 4. Version history
@@ -515,6 +560,7 @@ case in the multi-client sync harness ([12 §7.3](12-implementation-plan.md)).
 | `shell.comments.create` (Slides anchors) | `{anchor?: {slideId, elementId?, point?}, body, mentions, assigneeId?}` | ✓ (`comments`) | Commenter+ |
 | `slides.comments.next` / `previous` | — | — | Viewer+ (if visible) |
 | `slides.comments.openPanel` | `{scope?: slide\|all}` | — | Viewer+ |
+| `slides.comments.show` (SL-38) | `{threadUuid}` | — | Viewer+ (if visible) |
 | `slides.history.open` | `{versionId?}` | — | Editor+ |
 | `slides.history.nameCurrentVersion` | `{name}` | — | Editor |
 | `slides.history.restoreVersion` | `{versionId}` | ✓ (`slides.serverChange`) | Editor |

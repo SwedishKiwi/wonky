@@ -21,7 +21,8 @@ class PrintSettingsPanel extends StatefulWidget {
 
   final SlidesPrintController controller;
 
-  /// Builds as pages arrive with the timeline (SL-33, M10).
+  /// *Print each build stage* and *Show final animation state* are
+  /// offered (feature `printBuilds`, SL-33).
   final bool canPrintBuilds;
 
   /// More than one slide is selected in the navigator.
@@ -208,7 +209,8 @@ class _PrintSettingsPanelState extends State<PrintSettingsPanel> {
           onChanged: (v) => c.setOptions(o.copyWith(margins: v)),
         ),
         const SizedBox(height: 6),
-        // Builds as pages come with SL-33; until then the option is hidden.
+        // Builds as pages (06 §9.6); notes pages and handouts print each
+        // slide's final step instead.
         if (widget.canPrintBuilds)
           check(
             'builds',
@@ -216,6 +218,14 @@ class _PrintSettingsPanelState extends State<PrintSettingsPanel> {
             o.includeBuilds,
             (v) => o.copyWith(includeBuilds: v),
             enabled: o.layout == SlidesPdfLayout.slides,
+          ),
+        // The final frame instead of the print frame (Q24, P1).
+        if (widget.canPrintBuilds && !o.includeBuilds)
+          check(
+            'finalState',
+            l.printFinalState,
+            o.finalAnimationState,
+            (v) => o.copyWith(finalAnimationState: v),
           ),
         check(
           'skipped',

@@ -5,11 +5,16 @@ import 'package:wonky_sync_kit/rows.dart';
 import 'package:wonky_sync_models/ids.dart';
 
 import '../model/api/deck_model.dart';
+import '../motion/builds/transition_spec.dart';
 import '../ops/plan_context.dart';
 import '../theme/model/common.dart';
 import 'decks/lesson.dart';
 import 'decks/pitch_deck.dart';
+import 'decks/portfolio.dart';
+import 'decks/product_launch.dart';
 import 'decks/project_kickoff.dart';
+import 'decks/quarterly_review.dart';
+import 'decks/tech_talk.dart';
 import 'decks/weekly_update.dart';
 import 'decks/workshop.dart';
 import 'template_builder.dart';
@@ -53,6 +58,7 @@ final class SlidesTemplate {
     required this.themeKey,
     required this.script,
     this.subtitle = '',
+    this.defaultTransition,
   });
 
   /// Stable key (`slides.pitch-deck`); the gallery uuid derives from it.
@@ -77,6 +83,13 @@ final class SlidesTemplate {
   /// Adds the slides (the deck, theme and appearance exist already).
   final void Function(TemplateDeckBuilder b) script;
 
+  /// The deck's default transition (`Deck.defaultsJson.transition`, 06
+  /// A-06-7), part of the template's design: decks made from a template
+  /// play it between slides without an own transition. (The user's
+  /// Settings › *Default transition* applies to blank decks only, 06 §5.7.)
+  /// Null = cuts.
+  final TransitionSpec? defaultTransition;
+
   /// The gallery uuid: `UUIDv5(URL namespace, "wonky-template:<key>")`
   /// (same as the server's `BuiltinTemplate.uuid`).
   String get uuid => SlidesTemplates.uuidOf(key);
@@ -96,6 +109,7 @@ final class SlidesTemplate {
       title: title ?? name,
       themeKey: themeKey,
       appearance: appearance,
+      defaultTransition: defaultTransition,
       ctx: SlidesPlanContext(userId: userId, now: now, ids: ids, isOwner: true),
     );
     script(b);
@@ -108,14 +122,19 @@ final class SlidesTemplate {
   }
 }
 
-/// The built-in presentation templates (Slides 04 §15; 5 of 10 in M9).
+/// The built-in presentation templates (Slides 04 §15): nine decks; with
+/// *Blank* the gallery's ten (5 in M9 by SL-22, 4 in M10 by SL-36).
 abstract final class SlidesTemplates {
   /// Every template, in gallery order.
   static final List<SlidesTemplate> all = List.unmodifiable([
     pitchDeckTemplate,
     projectKickoffTemplate,
-    weeklyUpdateTemplate,
+    quarterlyReviewTemplate,
+    techTalkTemplate,
     lessonTemplate,
+    productLaunchTemplate,
+    weeklyUpdateTemplate,
+    portfolioTemplate,
     workshopTemplate,
   ]);
 

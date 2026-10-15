@@ -1,5 +1,7 @@
 import 'dart:typed_data';
 
+import '../snapshot/chart_data_codec.dart';
+
 /// Kind of the domain (X) values (08 §4.1 step 5).
 enum DomainKind { categorical, numeric, dateTime }
 
@@ -228,6 +230,9 @@ final class ChartData {
     this.table,
   });
 
+  /// Parses the snapshot JSON of [toJson] (Slides 08 §3.4; [ChartDataCodec]).
+  factory ChartData.fromJson(Object? json) => ChartDataCodec.decode(json);
+
   /// Empty data ("No data").
   factory ChartData.empty({List<ChartWarning> warnings = const []}) =>
       ChartData(
@@ -266,6 +271,9 @@ final class ChartData {
     }
     return true;
   }
+
+  /// Snapshot JSON (exact round trip, [ChartDataCodec]).
+  Map<String, Object?> toJson() => ChartDataCodec.encode(this);
 
   /// Series by key.
   ChartSeries? seriesByKey(String key) {

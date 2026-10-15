@@ -581,6 +581,56 @@ In master mode, Inspector › **Theme** edits the theme of the selected master:
 Each committed control is one undo step writing only that JSON column (whole-value LWW, 02 §14).
 `slides.theme.edit` opens master mode on the deck's default theme with the Theme tab.
 
+> **As built (SL-28).** *Surfaces:* `SlideResolver.resolve(id)` also resolves a layout or master
+> id as its editing surface (`ResolvedSlide.surface` = `layout` | `master`: the owner's own
+> elements incl. placeholder definitions are the editable `elements`, a layout draws its
+> master's decorations and the master's slide number/footer it doesn't redefine as inherited
+> `masterElements`; slide number / footer fields read `‹#›` / the deck footer). The editor's
+> `surfaceId` / `surfaceKind` (`DeckEditorController`) is the current slide in Normal view and
+> the edited layout/master in masters mode, so the canvas, selection, text editing, crop/table
+> modes, inserts (`InsertElements.ownerKind`) and pastes (`PasteElements.ownerKind`, additive)
+> work on layouts and masters unchanged; picture placeholders of layouts are never *filled*.
+> *Mode:* `slides.view.setMode {mode: masters, layoutId? | masterId?}` (default: the current
+> slide's layout); editors in Editing mode only (Viewing mode or losing edit access leaves it);
+> Esc on the canvas with nothing selected = `slides.masters.exit`. *Navigator:*
+> `features/masters/MastersNavigator` — a list, not `WonkyTreeView` (rows carry live
+> thumbnails): theme section headers (default badge, unused themes dimmed), master rows, layout
+> rows with usage count and a hidden badge, *New layout* per master; click / Up / Down edit,
+> Enter focuses the canvas, F2 renames, Delete deletes, right-click / ⋮ / Shift+F10 open
+> `context.mastersLayout` / `context.mastersMaster`. A banner names the layout/master, its theme
+> and the slides it affects, with **Done**. The canvas outlines every placeholder (dashed, with
+> a type label above it, `MastersCanvasLayer`). *Inspector:* Slide tab → **Layout** / **Master**
+> (Properties: name, usage, *Hide master objects*, *Hidden in layout picker*, duplicate/delete
+> / new layout; Background: solid color + *Use master/theme background*; Placeholders: list,
+> click selects, *Add…*); **Theme** tab = the theme editor (`features/themes/editor/`).
+> *Commands:* all of §8.2 incl. `slides.master.add` (P1) and `slides.layout.move {to |
+> direction}` (writes `sortKey` through `UpdateMasterOrLayout`, which accepts `sortKey` now);
+> `slides.layout.delete` of a used layout offers *Apply “Title and content” to those slides and
+> delete* (P1; `replaceWith` for MCP; agents without it get "Used by n slides — apply another
+> layout first"), the last layout of a master can't be deleted. *Insert placeholder* refines the
+> master's placeholder of the type on layouts (its frame, styles inherited) or gets the §4
+> geometry and the type's text style; prompts come from the ARB (`placeholderPrompt`); `date`
+> is not offered (P2); placeholders added to a layout reach existing slides on *Reset slide to
+> layout* or when the layout is applied (as Google Slides). *Theme editor:* `slides.theme.update
+> {themeId?, name?, columns}` (whole JSON columns, validated by the planner), `slides.theme.
+> deriveDarkColors` (`ThemeDarkDeriver` in core: Write 06 §4 on the 11 keys, repaired to the
+> §11 pairs), `slides.theme.resetToBuiltIn` (JSON columns only, name, masters and layouts kept).
+> Sections: Theme (name, based-on, usage, *Duplicate*, *Reset to built-in*, *Set as default*),
+> Colors (Light/Dark switch, 11 hex swatches with contrast badges for text1/text2/accent1/link
+> on bg1, *Derive dark colors*, custom colors add/rename/remove), Fonts (family + weight per
+> role, fallback note), Text styles (10 rows with live samples in the theme's face and color;
+> expand → font, size, weight, italic, line height, letter spacing, color, capitals, space
+> before/after; Lists: bullet and numbering for levels 1–3, bullet color, indent), Background
+> (solid fill, dark override), Objects (text box fill; shape fill/border/text color; line color
+> and weight; icon color; default shadow color/blur/offset; the 8 quick styles' fill and text
+> color), Tables (header fill/text, body fill, banded rows, radius; light/dark preview), Code
+> (light/dark palette with swatches, chrome, radius, shadow), Charts (6 series colors, text,
+> gridlines, axis, 3D lighting; light/dark preview). `slides.theme.edit {themeId?}` edits the
+> current slide's theme (else the default) — keeping the edited layout when it already belongs
+> to it, else showing the theme's master. Not built (TODO.md): gradient/image backgrounds,
+> levels 4–9 of the list markers, link/inline-code styles, per-type text box defaults beyond
+> the fill, code previews with real code, the *Preview in dark appearance* toggle (P2).
+
 ---
 
 ## 9. Themes panel (apply, import, manage)

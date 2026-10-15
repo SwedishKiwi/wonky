@@ -439,6 +439,30 @@ content (only positions and ink). Rate limit: 20 commands/s per remote.
 
 ---
 
+### 8.1 As built (SL-29): builds and transitions while presenting
+
+- `PresentController` owns a `SlidePlayer` (06 §12.4) and routes every navigation through it:
+  the next step on the slide plays; other steps on it are jumps; another slide plays its
+  transition and then step 0 (forward), or — *Previous*, *Previous slide* — the left slide's
+  transition reversed when its `reverseOnBack` (else the target's transition forward) and the
+  target settled. Jumps (picker, *Go to*, first/last, loop restart) play the target's transition
+  forward. `stepRunning` is the player's: *Next* during a transition or build finishes it
+  (`advanceDuringBuild: skip` also starts the next step); the 120 ms burst filter is unchanged.
+- `PresentController.playerView` / `frame` / `animating`; the stage (`PresentStage`) draws the
+  view through `PlayerStage` and ticks (`MotionTicker`) only while something runs; it calls
+  `animationFrame()` per tick for the frame budget (06 §14). The presenter view's current slide
+  is the same live view; *Next* stays the settled `endOfStep`.
+- Timelines compile with the stage's scenes (`scenesOf`: exact text part boxes) and chart shapes
+  (`SlideChartMotion.shapes`). Plans are cached per (slides, steps, direction, revisions,
+  reduced motion) and prefetched for the next slide (`upcomingTransition`, `prefetch()` after
+  every navigation); once the slide settles, the stage rasterizes the next transition's
+  snapshots (and uploads them as GPU textures for 3D types).
+- Audience devices follow with the same animation from the presenter's elapsed time
+  (`applyState` plays from `stepElapsedMs`).
+- Auto-advance (06 §4.4): after the last step settles + `advance.afterMs` when `advance.mode` is
+  `auto`; with `useRehearsedTimings` each step after its rehearsed time (`Slide.timingsJson
+  .stepsMs`). It waits while the screen is blanked or the picker is open.
+
 ## 9. Loop and kiosk (self-running) modes
 
 | Mode | Behavior |
@@ -451,6 +475,16 @@ Kiosk can be started from the *This presentation* settings or with `?kiosk=1` on
 info screens; still requires sign-in and access).
 
 ---
+
+**As built (SL-29).** `?kiosk=1` (route parameter → `PresentScreen.kiosk`) or `presentJson.mode:
+kiosk` runs the deck self-running: each click step starts `advance.buildDelayMs` (default 1 s)
+after the previous step settles (rehearsed step times when the slide has them), a slide's last
+step stays `advance.afterMs` (when `auto`) or 5 s, then the next slide's transition plays; the
+deck loops. Keys, clicks, the wheel, the toolbar and the context menu are off; `Esc` held for
+2 s (progress ring, *Keep holding Esc to exit*; `present/tools/kiosk_exit.dart`) or pressed once
+(`exitGesture: esc`) ends it; the cursor stays hidden. Not built: `kiosk.allowNavigation` and
+the idle restart (P1, they need navigation). A 50 ms timer checks the auto-advance time
+(`PresentController.autoTick`).
 
 ## 10. Rehearse timings
 
@@ -502,6 +536,10 @@ the navigator's optional duration badges (View › *Show timings*, P1), and MCP 
 Comments are not exported (P2: comments as end notes). There is no dark variant: slides print
 as authored.
 
+**As built (SL-33).** `includeBuilds` (*Print each build stage*) and `finalAnimationState`
+(*Show final animation state*) are in the print preview's settings column (feature
+`printBuilds`); the final-state box is hidden while build stages are printed.
+
 ### 11.2 Page layouts
 
 - **Slides**: one slide (or one step) per page. Page size `slide`: `Deck.width / 2 ×
@@ -517,6 +555,10 @@ as authored.
   vertical; slide numbers below each slide; header/footer.
 - With `includeBuilds`, notes pages and handouts use the final step of each slide (builds as
   pages only applies to `slides`).
+- Builds as pages (SL-33): a slide prints one page per step whose settled frame
+  (`endOfStep(i)`) differs from the previous step's — the empty automatic step 0 prints the
+  slide before any click; a click whose effects leave nothing changed (a transient pulse) adds
+  no page. *Page count = step count* means the number of distinct steps.
 - Groups: with `range: {groupIds}` only those groups' slides; with `bookmarks` the PDF outline
   has one top-level entry per group (group title) with its slides as children (slide title, else
   "Slide 7"); ungrouped slides are top-level entries. With builds as pages, a slide's bookmark
@@ -588,6 +630,24 @@ group opacity is multiplied into each primitive, icons need an embeddable icon f
 time, header date label, revision for the deterministic id). Warning codes: `font_fallback`,
 `glyph_missing`, `icon_unavailable`, `image_missing`, `image_invalid`, `image_limit`,
 `link_dropped`, `page_limit`, `range_unresolved`, `empty_selection`.
+
+**As built (SL-33).** Frames: the print frame without builds (scenes built with
+`ScenePurpose.print`: code at its last state, undimmed), and with builds as pages, the final
+frame (`finalAnimationState`) and notes/handouts with builds the timeline's settled frames
+(scenes built with `ScenePurpose.present`, code as presented). `SlideFrameScenes.apply`
+(`lib/src/export/pdf/frame_scenes.dart`) composes what a frame says about content — code state
+and highlight step through the element's `CodeSceneComposer` (callouts included), chart reveal
+and 3D camera through `SlideChartLayout.build(reveal:, view:, fitViews:)` — and the painter
+applies the rest like the stage's `SlideScenePainter`: element visibility, opacity and transform
+(the element's own group; anonymous children inherit the state), fill/stroke/text color changes
+(OKLab), fill opacity, text parts (hidden, dimmed, `dimColor`, recolored, moved, `revealEnd`),
+persistent highlights and the box opacity of text built in parts. Settled frames have no
+blur, clip or caret; those running states are not drawn. Code elements draw every `CodeScene`
+field the stage draws (callouts with inline Markdown wrapped to ≤ 8 lines, pills on one line with
+an ellipsis, no drop shadow; caret; selections; morph glyphs; gutter labels; underlay). Charts:
+without a caller-supplied `ChartSceneSource` the exporter lays charts out with `SlideChartLayout`
+measuring with the embedded chart font (`TtfChartTextMeasurer` over Open Sans), so server PDFs
+draw real charts; timelines get `chartShapeOf` (`SlideChartMotion.shapes`) for chart deliveries.
 
 ### 11.4 Where exports run
 
@@ -687,6 +747,25 @@ readable from the frame).
   images via `image`; quality sufficient for agents and thumbnails, not for print.
 - Copy slide as image (`slides.slide.copyAsImage`, P1): PNG 2× to the clipboard.
 
+**As built (SL-33).** Feature `imageExports`. *File › Download ▸ PNG image (current slide)…* /
+*PNG images (all slides, .zip)…* (`slides.file.download {format: png|pngZip}`) open the PNG
+dialog (`dialog.slides.downloadPng`, a `WonkyDialogSpec`): *Slides* (current, selected — with a
+multi-selection —, all), *Size* (1×, 2×, 4×, capped at 7,680 px wide), *Builds* (*All content (as
+printed)* = the print frame, *After the last build* = `finalFrame`, *Each build stage* = one
+image per printed step as in the PDF) and *Transparent background*. `immediate: true` and MCP
+calls skip the dialog; `options` keys: `range` (`current|selection|all|"1-3,7"`), `scale`,
+`frames` (`print|final|builds`), `transparent`, `includeSkipped`, `fileName`. **Deviation:** the
+default is the print frame (Q24: prints and thumbnails show the authored slide), not the final
+frame. Rendering is the stage's software path (`MotionScenes` + `recordScene` → `toImage`, as
+snapshot transitions; images preloaded; 3D charts on the software backend), independent of the
+canvas zoom — not a `RepaintBoundary`. One image downloads as `<title>.png`; several as
+`<title>.zip` with stored entries "Slide 03.png" / "Slide 03, step 2.png" (`StoredZip`: no
+deflate — PNGs don't shrink —, CRC-32, fixed dates; written in the app instead of the `archive`
+dependency of A-10-8). Downloads use the same-tab browser download of PDFs. Last-used size,
+frames and transparency: `slidesDefaults.imageExportOptions`. Not built: the server's
+`SlideRasterRenderer` and `slidesExport` `png`/`pngZip` (still `unavailable`), *Copy slide as
+image*.
+
 ---
 
 ## 14. Commands
@@ -722,7 +801,7 @@ viewer unless noted; none are undoable except where marked.
 | `slides.present.saveTimings` | `{timings}` | Editor; ✓ "Record timings" |
 | `slides.slide.clearTimings` | `{slideIds?}` | Editor; ✓ |
 | `slides.deck.setPresentSettings` | `{patch}` | Editor; ✓ "Presentation settings" |
-| `slides.file.download` | `{format: pdf\|png\|pngZip\|markdown, options?, immediate?: bool}` | Id from 04 §4.1. `pdf` opens the print/PDF preview (§12) unless `immediate` (Shift-click, MCP) exports with `options` or the last used; `png`/`pngZip` P1 (§13); `markdown` = outline (04 §10, P2). Viewer+ subject to `nonEditorsCanExport` |
+| `slides.file.download` | `{format: pdf\|png\|pngZip\|markdown, options?, immediate?: bool}` | Id from 04 §4.1. `pdf` opens the print/PDF preview (§12) unless `immediate` (Shift-click, MCP) exports with `options` or the last used; `png`/`pngZip` open the PNG dialog unless `immediate`/MCP (§13, SL-33); `markdown` = outline (04 §10, P2, hidden). Viewer+ subject to `nonEditorsCanExport` |
 | `slides.print.open` | `{layout?}` | `Mod+P` |
 | `slides.print.print` | — | `Mod+P` in the route |
 | `slides.slide.copyAsImage` (P1) | `{slideId?}` | |

@@ -385,7 +385,7 @@ abstract final class CommentService {
         kind: NotificationKind.reply,
         item: item,
         actor: actor,
-        payload: _payload(item, thread, clean),
+        payload: await _payload(session, item, thread, clean),
       );
     }
     await _notifyMentions(
@@ -401,16 +401,45 @@ abstract final class CommentService {
     return getThread(session, actor, threadUuid);
   }
 
-  static Map<String, Object?> _payload(
+  /// (v2) Extra notification payload fields per item kind, added by the
+  /// apps' server parts (Slides: `slideNumber`, `slideTitle`, Slides 09
+  /// §3.6). A failing hook only drops its fields.
+  static final Map<
+    DriveItemKind,
+    Future<Map<String, Object?>> Function(
+      Session session,
+      DriveItem item,
+      CommentThread thread,
+    )
+  >
+  payloadExtras = {};
+
+  static Future<Map<String, Object?>> _payload(
+    Session session,
     DriveItem item,
     CommentThread thread,
     String body,
-  ) => {
-    'threadUuid': thread.uuid.uuid,
-    'quotedText': thread.quotedText,
-    'excerpt': body.length > 200 ? '${body.substring(0, 200)}…' : body,
-    'anchorJson': thread.anchorJson,
-  };
+  ) async {
+    var extras = const <String, Object?>{};
+    final hook = payloadExtras[item.kind];
+    if (hook != null) {
+      try {
+        extras = await hook(session, item, thread);
+      } on Exception catch (e) {
+        session.log(
+          'Comment payload extras failed: $e',
+          level: LogLevel.warning,
+        );
+      }
+    }
+    return {
+      'threadUuid': thread.uuid.uuid,
+      'quotedText': thread.quotedText,
+      'excerpt': body.length > 200 ? '${body.substring(0, 200)}…' : body,
+      'anchorJson': thread.anchorJson,
+      ...extras,
+    };
+  }
 
   static Future<void> _notifyMentions(
     Session session,
@@ -434,7 +463,7 @@ abstract final class CommentService {
             : NotificationKind.mention,
         item: item,
         actor: actor,
-        payload: _payload(item, thread, body),
+        payload: await _payload(session, item, thread, body),
       );
     }
   }

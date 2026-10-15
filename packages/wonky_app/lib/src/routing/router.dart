@@ -190,6 +190,9 @@ GoRouter buildShellRouter(ShellServices s) {
                 VersionHistoryScreen(
                   services: s,
                   itemUuid: st.pathParameters['uuid']!,
+                  initialVersionId: int.tryParse(
+                    st.uri.queryParameters['version'] ?? '',
+                  ),
                 ),
               ),
             ),

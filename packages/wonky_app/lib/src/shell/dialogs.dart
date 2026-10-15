@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
@@ -265,6 +267,39 @@ String activityText(WonkyAppLocalizations l, ActivityEventView e) {
     ActivityType.exported => l.activityExported(who),
     ActivityType.uploaded => l.activityUploaded(who),
   };
+}
+
+/// The detail line of an edit event (Slides 09 §5): "3 slides · 1 slide
+/// deleted · theme changed · with Claude", from the counters and sets of
+/// its summary; null when there is nothing to add (documents,
+/// spreadsheets).
+String? activityDetail(WonkyAppLocalizations l, ActivityEventView e) {
+  if (e.type != ActivityType.edited) return null;
+  Map<String, Object?> m;
+  try {
+    final v = jsonDecode(e.summary);
+    if (v is! Map) return null;
+    m = v.cast<String, Object?>();
+  } on FormatException {
+    return null;
+  }
+  int count(String key) {
+    final v = m[key];
+    return v is num ? v.toInt() : 0;
+  }
+
+  final slides = m['slideIds'];
+  final kinds = m['actorKinds'];
+  final parts = [
+    if (slides is List && slides.isNotEmpty)
+      l.activityDetailSlides(slides.length),
+    if (count('slidesDeleted') > 0)
+      l.activityDetailSlidesDeleted(count('slidesDeleted')),
+    if (count('themes') > 0) l.activityDetailTheme,
+    if (kinds is List && (kinds.contains('mcp') || kinds.contains('ai')))
+      l.activityDetailAgent,
+  ];
+  return parts.isEmpty ? null : parts.join(' · ');
 }
 
 /// "Request access" for a file the user cannot open (No-access page).

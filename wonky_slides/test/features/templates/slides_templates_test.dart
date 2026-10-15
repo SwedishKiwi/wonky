@@ -15,6 +15,7 @@ import 'package:wonky_client/wonky_client.dart'
         TemplateView,
         UuidValue;
 import 'package:wonky_slides/config/slides_app_config.dart';
+import 'package:wonky_slides/features/accessibility/accessibility_checker.dart';
 import 'package:wonky_slides/features/model/synced_deck_session.dart';
 import 'package:wonky_slides/features/stage/slide_renderer.dart';
 import 'package:wonky_slides/features/sync/slides_data.dart';
@@ -162,6 +163,24 @@ void main() {
         );
         await settleTooltips(tester);
       });
+    });
+  }
+
+  // The accessibility checker (03 §17.4) on every template: no errors
+  // (missing alt text, low contrast); warnings are allowed (the Magic Move
+  // pairs repeat their slide's title on purpose, big numbers and quotes
+  // have no title).
+  for (final t in SlidesTemplates.all) {
+    test('Given template ${t.key} when the accessibility checker runs then '
+        'it reports no error', () {
+      final report = AccessibilityChecker.check(
+        SlidesTemplateDecksForTest.of(t).model,
+      );
+
+      expect([
+        for (final i in report.issues)
+          if (i.severity == A11ySeverity.error) i.toJson(),
+      ], isEmpty);
     });
   }
 

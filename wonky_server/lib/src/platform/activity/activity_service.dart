@@ -40,12 +40,15 @@ abstract final class ActivityService {
 
   /// Records an edit, merged with the user's previous edit event on the item
   /// when it is less than [editWindow] old. Numeric [counters] are summed;
-  /// actor kinds are collected in `actorKinds`.
+  /// [sets] (ids, e.g. the slides a deck edit touched) are merged as sorted
+  /// lists of at most [maxSetSize]; actor kinds are collected in
+  /// `actorKinds`.
   static Future<void> logEdit(
     Session session,
     int itemId,
     Actor actor, {
     Map<String, num> counters = const {},
+    Map<String, Iterable<String>> sets = const {},
     Transaction? transaction,
   }) async {
     final now = nowUtc();
@@ -69,6 +72,7 @@ abstract final class ActivityService {
           type: ActivityType.edited,
           summary: jsonEncode({
             ...counters,
+            for (final e in sets.entries) e.key: _set(const [], e.value),
             'actorKinds': [actor.kind.name],
           }),
           at: now,
@@ -81,6 +85,10 @@ abstract final class ActivityService {
     counters.forEach((key, value) {
       final prev = summary[key];
       summary[key] = (prev is num ? prev : 0) + value;
+    });
+    sets.forEach((key, value) {
+      final prev = summary[key];
+      summary[key] = _set(prev is List ? prev : const [], value);
     });
     final kinds = {
       ...((summary['actorKinds'] as List<Object?>?) ?? const []).map(
@@ -95,6 +103,14 @@ abstract final class ActivityService {
       columns: (t) => [t.summary],
       transaction: transaction,
     );
+  }
+
+  /// Max ids kept per set of an edit event ([logEdit]).
+  static const maxSetSize = 200;
+
+  static List<String> _set(List<Object?> prev, Iterable<String> add) {
+    final all = {for (final p in prev) '$p', ...add}.toList()..sort();
+    return all.length > maxSetSize ? all.sublist(0, maxSetSize) : all;
   }
 
   static Future<List<ActivityEventView>> list(

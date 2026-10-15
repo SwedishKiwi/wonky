@@ -1497,6 +1497,25 @@ abstract final class DriveService {
     return DriveViews.one(session, actor.userId, item, role: Role.owner);
   }
 
+  /// Where a copy of [source] goes by default (its folder when [actor] can
+  /// edit it, else My Drive) and the end of a copy (sharing, activity,
+  /// view): used by copies made outside [copy] (Slides version copies,
+  /// SL-39).
+  static Future<UuidValue?> defaultCopyParent(
+    Session session,
+    Actor actor,
+    DriveItem source,
+  ) => _defaultCopyParent(session, actor, source);
+
+  /// See [defaultCopyParent].
+  static Future<DriveItemView> finishCopy(
+    Session session,
+    Actor actor,
+    DriveItem source,
+    DriveItem copy,
+    bool copySharing,
+  ) => _finishCopy(session, actor, source, copy, copySharing);
+
   static Future<UuidValue?> _defaultCopyParent(
     Session session,
     Actor actor,

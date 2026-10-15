@@ -644,7 +644,14 @@ List<Command<CommandArgs>> commentCommands(ShellServices s) {
           'mentions': JsonSchema.array(JsonSchema.integer()),
           'assigneeId': JsonSchema.integer(),
           'anchorKind': JsonSchema.string(
-            enumValues: ['textRange', 'cell', 'range', 'document'],
+            enumValues: [
+              'textRange',
+              'cell',
+              'range',
+              'document',
+              'slide',
+              'element',
+            ],
           ),
           'anchorJson': JsonSchema.string(),
           'quotedText': JsonSchema.string(),

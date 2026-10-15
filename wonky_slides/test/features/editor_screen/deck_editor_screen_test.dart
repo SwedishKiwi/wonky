@@ -111,12 +111,12 @@ void main() {
   });
 
   testWidgets('Given the editor when the inspector tabs are used then the '
-      'Format empty state and the Slide sections show, and there is no '
-      'Animate tab before SL-30', (tester) async {
+      'Format empty state and the Slide sections show, and the Animate tab '
+      'is offered (SL-30)', (tester) async {
     final r = await pumpDeckScreen(tester);
     expect(key('slides.inspector.formatEmpty'), findsOneWidget);
     expect(key('slides.inspector.tab.format'), findsOneWidget);
-    expect(key('slides.inspector.tab.animate'), findsNothing);
+    expect(key('slides.inspector.tab.animate'), findsOneWidget);
     expect(find.text(l.inspectorSectionSoon), findsNothing);
 
     await tester.tap(key('slides.inspector.tab.slide'));
@@ -141,13 +141,12 @@ void main() {
     await r.close(tester);
   });
 
-  testWidgets('Given the editor when Grid is chosen then it replaces '
-      'navigator and canvas, and Outline and Masters are not offered '
-      '(SL-34, SL-28)', (tester) async {
+  testWidgets('Given the editor when Grid and Outline are chosen then each '
+      'replaces navigator and canvas (SL-34)', (tester) async {
     final r = await pumpDeckScreen(tester);
     expect(key('slides.status.mode.normal'), findsOneWidget);
     expect(key('slides.status.mode.grid'), findsOneWidget);
-    expect(key('slides.status.mode.outline'), findsNothing);
+    expect(key('slides.status.mode.outline'), findsOneWidget);
 
     await r.run('slides.view.setMode', {'mode': 'grid'});
     await tester.pump();
@@ -155,13 +154,14 @@ void main() {
     expect(key('slides.navigator'), findsNothing);
     expect(key('slides.canvas'), findsNothing);
 
+    await r.run('slides.view.setMode', {'mode': 'outline'});
+    await tester.pump();
+    expect(key('slides.view.outline'), findsOneWidget);
+    expect(key('slides.canvas'), findsNothing);
+
     await r.run('slides.view.setMode', {'mode': 'normal'});
     await tester.pump();
-    for (final mode in [DeckViewMode.outline, DeckViewMode.masters]) {
-      r.editor.setMode(mode);
-      await tester.pump();
-      expect(r.editor.mode, DeckViewMode.normal);
-    }
+    expect(r.editor.mode, DeckViewMode.normal);
     expect(key('slides.canvas'), findsOneWidget);
     await settleTooltips(tester);
     await r.close(tester);
@@ -180,8 +180,8 @@ void main() {
       await tester.pump(const Duration(milliseconds: 100));
     }
     expect(key('menu.context.slide.new'), findsOneWidget);
-    // Transitions (SL-30) are hidden until built.
-    expect(key('menu.context.slide.transition'), findsNothing);
+    // Transitions ship with SL-29 + SL-30.
+    expect(key('menu.context.slide.transition'), findsOneWidget);
     await tester.sendKeyEvent(LogicalKeyboardKey.escape);
     await tester.pump(const Duration(milliseconds: 200));
     await settleTooltips(tester);
@@ -349,35 +349,39 @@ void main() {
   });
 
   testWidgets('Given a deck with code and chart elements (from a template or '
-      'MCP) when they are selected then they render, and no control of an '
-      'unbuilt feature is offered (SL-23)', (tester) async {
+      'MCP) when they are selected then they render, the code (SL-31) and '
+      'chart (SL-32) controls are offered and no control of an unbuilt '
+      'feature is (SL-23)', (tester) async {
     final b = DeckBuilder(title: 'Hidden features');
     final slide = b.slide(layoutKey: 'blank');
     final code = b.element(slide, ElementKind.code);
     final chart = b.element(slide, ElementKind.chart, x: 600);
     final r = await pumpDeckScreen(tester, fixture: b, initialSlideId: slide);
 
-    // Toolbar and title row: no insert code/chart, Animate, Transition or
-    // comments; no Animate inspector tab.
-    for (final k in [
-      'slides.toolbar.insert.code',
-      'slides.toolbar.chart',
-      'slides.toolbar.animate',
-      'slides.toolbar.transition',
-      'slides.toolbar.comment',
-      'editor.comments',
-      'slides.inspector.tab.animate',
-    ]) {
-      expect(key(k), findsNothing, reason: k);
+    // Toolbar and title row: insert code (SL-31), chart (SL-32) and
+    // comments (SL-38).
+    expect(key('slides.toolbar.insert.code'), findsOneWidget);
+    expect(key('slides.toolbar.chart'), findsOneWidget);
+    for (final k in ['slides.toolbar.comment', 'editor.comments']) {
+      expect(key(k), findsOneWidget, reason: k);
     }
     for (final id in [code, chart]) {
       r.editor.selectElements([id]);
       await tester.pump();
       expect(tester.takeException(), isNull);
       expect(find.text(l.inspectorSectionSoon), findsNothing);
-      expect(key('slides.inspector.section.code'), findsNothing);
-      expect(key('slides.inspector.section.chart'), findsNothing);
-      expect(key('slides.inspector.section.arrange'), findsOneWidget);
+      expect(
+        key('slides.inspector.section.code'),
+        id == code ? findsOneWidget : findsNothing,
+      );
+      expect(
+        key('slides.inspector.section.chart'),
+        id == chart ? findsOneWidget : findsNothing,
+      );
+      // (The long Code section pushes Arrange below the fold.)
+      if (id == chart) {
+        expect(key('slides.inspector.section.arrange'), findsOneWidget);
+      }
     }
     await settleTooltips(tester);
     await r.close(tester);

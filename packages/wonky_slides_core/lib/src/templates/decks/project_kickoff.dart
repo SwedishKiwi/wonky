@@ -1,3 +1,4 @@
+import '../../motion/builds/transition_spec.dart';
 import '../../theme/model/common.dart';
 import '../slides_template.dart';
 import '../template_text.dart';
@@ -12,6 +13,7 @@ final SlidesTemplate projectKickoffTemplate = SlidesTemplate(
   description: 'Align the team on goals, scope, milestones and roles.',
   category: 'projectManagement',
   themeKey: 'swiss',
+  defaultTransition: TransitionSpec.of('fade'),
   subtitle: 'Team meeting · Week 1',
   script: (b) {
     b.slide(

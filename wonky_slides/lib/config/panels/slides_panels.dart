@@ -2,8 +2,12 @@ import 'package:flutter/widgets.dart';
 import 'package:wonky_app/wonky_app.dart';
 import 'package:wonky_ui/wonky_ui.dart';
 
+import '../../features/accessibility/accessibility_panel.dart';
 import '../../features/editor_screen/deck_editor_controller.dart';
+import '../../features/elements/chart/linked_charts_panel.dart';
+import '../../features/layers/layers_panel.dart';
 import '../../features/themes/themes_panel.dart';
+import '../slides_features.dart';
 
 /// Panel ids of the Slides side panels (04 §12), hosted by the shell's
 /// panel host next to the docked inspector. `slides.panel.animate` is not
@@ -19,9 +23,17 @@ abstract final class SlidesPanels {
 /// panel adds its `SidePanelSpec` here (one line, Slides 12 §2) and makes
 /// its `slides.panel.*` command open it with `shell.panels.open`. The shell
 /// adds Comments, Details and History; the Assistant comes with SL-43.
-/// SL-17: Themes.
+/// SL-17: Themes. SL-32: Linked charts. SL-34: Layers, Accessibility.
 List<SidePanelSpec> slidesPanelSpecs(
   BuildContext context,
   ShellServices services,
   DeckEditorController editor,
-) => [themesPanelSpec(context, services, editor)];
+) => [
+  if (SlidesFeatures.isOn(SlidesFeature.layers))
+    layersPanelSpec(context, services, editor),
+  themesPanelSpec(context, services, editor),
+  if (SlidesFeatures.isOn(SlidesFeature.accessibilityChecker))
+    accessibilityPanelSpec(context, services, editor),
+  if (SlidesFeatures.isOn(SlidesFeature.charts))
+    linkedChartsPanelSpec(context, services, editor),
+];

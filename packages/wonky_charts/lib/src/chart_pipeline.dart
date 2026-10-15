@@ -9,6 +9,7 @@ import 'render/pdf/pdf_chart_renderer.dart';
 import 'render/raster/raster_chart_renderer.dart';
 import 'render/raster/raster_text_measurer.dart';
 import 'render/svg/svg_chart_renderer.dart';
+import 'reveal/chart_reveal.dart';
 import 'scene/geometry.dart';
 import 'scene/scene.dart';
 import 'spec/chart_spec.dart';
@@ -53,6 +54,10 @@ abstract final class ChartPipeline {
   /// Lays out [spec] with already resolved [data] at [size] (logical px; multiply by the zoom
   /// for crisp text, 08 §9.1). [options] carry editor-only state (legend highlight, table page,
   /// accessibility patterns).
+  ///
+  /// [reveal] (chart builds, Slides 08 §9) is applied to the 3D model of 3D charts while
+  /// laying out and to the finished 2D scene ([ChartReveal.applyTo]); for per-frame animation
+  /// of 2D charts lay out once and apply the reveal to the scene each frame instead.
   static ChartLayout layout(
     ChartSpec spec,
     ChartData data, {
@@ -62,15 +67,39 @@ abstract final class ChartPipeline {
     String locale = 'en_US',
     ChartValueFormatter? formatter,
     ChartLayoutOptions options = const ChartLayoutOptions(),
-  }) => ChartLayoutEngine.layoutDetailed(
-    spec,
-    data,
-    size,
-    theme,
-    measurer,
-    fmt: formatter ?? DefaultChartValueFormatter(locale: locale),
-    options: options,
-  );
+    ChartReveal? reveal,
+  }) {
+    final active = reveal != null && !reveal.isFull;
+    final opts = active && spec.threeD.appliesTo(spec.type)
+        ? ChartLayoutOptions(
+            highlightSeriesKey: options.highlightSeriesKey,
+            tablePage: options.tablePage,
+            distinguishByPattern: options.distinguishByPattern,
+            azimuth3D: options.azimuth3D,
+            elevation3D: options.elevation3D,
+            transitionFrom3D: options.transitionFrom3D,
+            transition3D: options.transition3D,
+            hover3D: options.hover3D,
+            perspective3D: options.perspective3D,
+            transform3D: (m) {
+              final t = options.transform3D;
+              return reveal.applyTo3D(t == null ? m : t(m));
+            },
+            fitViews3D: options.fitViews3D,
+          )
+        : options;
+    final l = ChartLayoutEngine.layoutDetailed(
+      spec,
+      data,
+      size,
+      theme,
+      measurer,
+      fmt: formatter ?? DefaultChartValueFormatter(locale: locale),
+      options: opts,
+    );
+    if (!active) return l;
+    return ChartLayout(reveal.applyTo(l.scene, spec), l.warnings);
+  }
 
   /// [layout] as a [ChartBuild] (data, scene and warnings).
   static ChartBuild build(

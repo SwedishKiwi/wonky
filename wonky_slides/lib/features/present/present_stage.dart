@@ -1,17 +1,23 @@
+import 'dart:async';
 import 'dart:math' as math;
 
 import 'package:flutter/gestures.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
-import 'package:wonky_slides_core/scene.dart' show ScenePurpose;
 import 'package:wonky_slides_core/themes.dart' show SlideAppearance;
 
 import '../../l10n/slides_l10n.dart';
+import '../motion/motion_ticker.dart';
+import '../motion/player/slide_player.dart';
+import '../motion/render/motion_masks.dart';
+import '../motion/player_stage.dart';
 import '../stage/slide_renderer.dart';
-import '../stage/slide_stage.dart';
+import '../transitions/gpu/gpu_transitions.dart';
+import '../transitions/slide_snapshots.dart';
 import 'present_controller.dart';
 import 'present_ink.dart';
 import 'present_sequence.dart';
+import 'tools/code_copy_overlay.dart';
 
 /// The audience rendering of a presentation (Slides 10 §8): the current
 /// slide's frame, scaled to fit and centered on the letterbox color, with
@@ -57,9 +63,13 @@ class PresentStage extends StatelessWidget {
   final bool reduceMotion;
 
   @override
-  Widget build(BuildContext context) => ListenableBuilder(
+  Widget build(BuildContext context) => MotionTicker(
     listenable: Listenable.merge([controller, renderer]),
-    builder: (context, _) {
+    // Previews of a fixed position are settled; the live stage ticks while
+    // a transition or build runs (06 §6).
+    active: () => position == null && controller.animating,
+    onTick: position == null ? controller.animationFrame : null,
+    builder: (context) {
       final c = controller;
       final p = position ?? c.position;
       final bg = letterbox ?? Color(c.settings.letterboxColor);
@@ -78,29 +88,32 @@ class PresentStage extends StatelessWidget {
               (box.maxHeight - h) / 2,
             );
             Offset toSu(Offset local) => (local - origin) / scale;
-            final scene = p == null
-                ? null
-                : renderer.scene(p.slideId, purpose: ScenePurpose.present);
-            final frame = p == null
+            final PlayerView? view = p == null
                 ? null
                 : position == null
-                ? c.frame
-                : c.timelineOf(p.slideId).endOfStep(p.step);
+                ? c.playerView
+                : SlidePlayerView(
+                    p.slideId,
+                    p.step,
+                    c.timelineOf(p.slideId).endOfStep(p.step),
+                  );
             final dark = c.model.deck?.appearance == SlideAppearance.dark;
+            final snapshots = SlideSnapshots.of(renderer);
+            if (position == null && view is SlidePlayerView) {
+              _prepareNext(context, snapshots, scale);
+            }
             Widget stack = Stack(
               children: [
-                if (scene != null && frame != null)
-                  Positioned(
-                    left: origin.dx,
-                    top: origin.dy,
-                    width: w,
-                    height: h,
-                    child: SlideStage(
-                      scene: scene,
-                      frame: frame,
-                      images: renderer.images,
+                if (view != null)
+                  Positioned.fill(
+                    child: PlayerStage(
+                      view: view,
+                      renderer: renderer,
+                      snapshots: snapshots,
+                      origin: origin,
                       scale: scale,
                       semanticLabel: _slideLabel(context, p!),
+                      reducedMotion: reduceMotion,
                     ),
                   ),
                 if (showOverlays && p != null)
@@ -156,18 +169,92 @@ class PresentStage extends StatelessWidget {
               ],
             );
             if (!interactive) return stack;
-            return _PointerInput(
+            final input = _PointerInput(
               controller: c,
               toSu: toSu,
               width: box.maxWidth,
               onSecondaryTap: onSecondaryTap,
               child: stack,
             );
+            // Code copy buttons (07 §3.7) above the pointer input.
+            final slide =
+                view is SlidePlayerView &&
+                    showOverlays &&
+                    c.tool == PresentTool.arrow &&
+                    !c.endScreen &&
+                    c.blank == PresentBlank.none
+                ? renderer.resolver.resolve(view.slideId)
+                : null;
+            if (slide == null || CodeCopyOverlay.targets(slide).isEmpty) {
+              return input;
+            }
+            return Stack(
+              children: [
+                Positioned.fill(child: input),
+                Positioned.fill(
+                  child: CodeCopyOverlay(
+                    model: c.model,
+                    slide: slide,
+                    frame: (view! as SlidePlayerView).frame,
+                    origin: origin,
+                    scale: scale,
+                  ),
+                ),
+              ],
+            );
           },
         ),
       );
     },
   );
+
+  /// Rasterizes the snapshots of the next slide's transition once the
+  /// current slide has settled (06 §14: ready within 200 ms).
+  void _prepareNext(
+    BuildContext context,
+    SlideSnapshots snapshots,
+    double scale,
+  ) {
+    if (controller.animating) return;
+    final r = controller.upcomingTransition;
+    if (r == null) return;
+    final dpr = MediaQuery.maybeDevicePixelRatioOf(context) ?? 1;
+    final key =
+        '${r.key}|${renderer.revision(r.fromSlideId)}|'
+        '${renderer.revision(r.toSlideId)}|$scale|$dpr';
+    if (_prepared[snapshots] == key) return;
+    _prepared[snapshots] = key;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (_prepared[snapshots] != key) return;
+      final plan = controller.planOf(r);
+      if (plan.isCut || plan.magicMove != null) return;
+      final a = snapshots.prepare(
+        r.fromSlideId,
+        r.fromFrame,
+        pxPerSu: scale * dpr,
+      );
+      final b = snapshots.prepare(r.toSlideId, r.toFrame, pxPerSu: scale * dpr);
+      // Dissolve noise of the transition (06 §14: no first-frame work).
+      for (final q in plan.frameAt(plan.durationMs ~/ 2).quads) {
+        final d = q.dissolve;
+        if (d != null) {
+          DissolveNoise.prepare(Offset.zero & renderer.slideSize, d);
+        }
+      }
+      if (GpuTransitions.types.contains(plan.type)) {
+        // Upload both snapshots as textures for the 3D renderer.
+        final gpu = GpuTransitions.instance;
+        unawaited(
+          gpu.ensureStarted().then((_) {
+            if (a != null) gpu.prepare(a);
+            if (b != null) gpu.prepare(b);
+          }),
+        );
+      }
+    });
+  }
+
+  static final Expando<String> _prepared = Expando('preparedTransition');
 
   String _slideLabel(BuildContext context, PresentPosition p) {
     final l = slidesL10n(context);
@@ -214,6 +301,11 @@ class _PointerInputState extends State<_PointerInput> {
   }
 
   void _onDown(PointerDownEvent e) {
+    if (CodeCopyOverlay.claims(e.pointer)) {
+      _down = null;
+      _downButtons = null;
+      return;
+    }
     _down = e.localPosition;
     _downButtons = e.buttons;
     _kind = e.kind;
@@ -245,6 +337,7 @@ class _PointerInputState extends State<_PointerInput> {
   }
 
   void _onUp(PointerUpEvent e) {
+    if (CodeCopyOverlay.claims(e.pointer)) return;
     final d = _down;
     final buttons = _downButtons;
     _down = null;

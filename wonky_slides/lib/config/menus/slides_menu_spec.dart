@@ -34,6 +34,10 @@ abstract final class SlidesMenuIds {
 
   /// Slide › Group ▸ Add to group ▸ — the deck's groups.
   static const addToGroup = 'slide.group.addTo.list';
+
+  /// The text context menu's spelling section (suggestions, *Ignore*,
+  /// *Add to dictionary* for the misspelled word at the caret, SL-44).
+  static const spellingSuggestions = 'context.text.spelling';
 }
 
 /// The group colors of 04 §5.4 (token names, `groupColor.<name>`).
@@ -218,6 +222,7 @@ MenuRoot _slidesMenus(ShellMenus shell, {required SlidesLocalizations l}) {
         _c('slides.panel.layers'),
         _c('slides.panel.themes'),
         _c('slides.panel.accessibility'),
+        _c('slides.panel.linkedObjects'),
         _c('shell.ai.togglePanel', menuId: 'view.panels.assistant'),
         _c('slides.panel.animate', menuId: 'view.panels.animate'),
       ]),
@@ -243,13 +248,17 @@ MenuRoot _slidesMenus(ShellMenus shell, {required SlidesLocalizations l}) {
       _c('slides.spelling.check'),
       _c('slides.spelling.toggleUnderline'),
       _c(
-        'shell.settings.open',
+        'slides.spelling.personalDictionary',
         label: l.menuPersonalDictionary,
-        args: const {'section': 'dictionary'},
         menuId: 'tools.spelling.dictionary',
       ),
     ]),
     _c('slides.tools.accessibilityCheck'),
+    _c(
+      'slides.panel.linkedObjects',
+      label: l.cmdPanelLinkedObjects,
+      menuId: 'tools.linkedObjects',
+    ),
     _c(
       'slides.present.rehearse',
       label: l.menuRehearsePresentation,
@@ -326,6 +335,7 @@ MenuSubmenu insertMenu(SlidesLocalizations l) =>
         _c(
           'slides.insert.code',
           label: l.codeAllLanguages,
+          args: const {'pick': true},
           menuId: 'insert.code.all',
         ),
       ]),
@@ -362,13 +372,15 @@ MenuSubmenu insertMenu(SlidesLocalizations l) =>
       MenuSpec.separator(),
       _c('slides.deck.openNumbering'),
       MenuSpec.submenu('insert.placeholder', l.menuPlaceholder, [
+        // Date placeholders are P2 (not drawn on slides yet, 05 §4).
         for (final t in SlidePlaceholderType.values)
-          _c(
-            'slides.layout.insertPlaceholder',
-            label: placeholderTypeLabel(l, t),
-            args: {'type': t.name},
-            menuId: 'insert.placeholder.${t.name}',
-          ),
+          if (t != SlidePlaceholderType.date)
+            _c(
+              'slides.layout.insertPlaceholder',
+              label: placeholderTypeLabel(l, t),
+              args: {'type': t.name},
+              menuId: 'insert.placeholder.${t.name}',
+            ),
       ]),
     ]);
 
@@ -587,26 +599,77 @@ MenuSubmenu formatMenu(SlidesLocalizations l) =>
         ),
       ]),
       MenuSpec.submenu('format.code', l.menuCode, [
+        _c('slides.code.edit'),
         _c('slides.code.setLanguage'),
+        MenuSpec.submenu('format.code.palette', l.cmdCodeSetPalette, [
+          for (final (id, label) in [
+            ('auto', l.codePaletteAuto),
+            ('light', l.codePaletteLight),
+            ('dark', l.codePaletteDark),
+          ])
+            _c(
+              'slides.code.setPalette',
+              label: label,
+              args: {'palette': id},
+              menuId: 'format.code.palette.$id',
+            ),
+        ]),
         _c(
           'slides.code.updateOptions',
           label: l.codeLineNumbers,
           args: const {'toggle': 'lineNumbers'},
           menuId: 'format.code.lineNumbers',
         ),
+        _c(
+          'slides.code.updateOptions',
+          label: l.codeWrap,
+          args: const {'toggle': 'wrap'},
+          menuId: 'format.code.wrap',
+        ),
+        MenuSpec.separator(),
         _c('slides.code.setHighlightSteps'),
+        _c('slides.code.addState'),
+        _c('slides.code.toggleDiffGutter'),
         _c(
           'slides.inspector.open',
           label: l.codeStates,
           args: const {'tab': 'format', 'section': 'code'},
           menuId: 'format.code.states',
         ),
+        MenuSpec.separator(),
+        _c('slides.code.copy'),
       ]),
       MenuSpec.submenu('format.chart', l.menuChart, [
         _c('slides.chart.update'),
         _c('slides.chart.setAutoUpdate'),
         _c('slides.chart.openSource'),
         _c('slides.chart.unlink'),
+        _c('slides.chart.relink'),
+        MenuSpec.separator(),
+        _c(
+          'slides.chart.setUseDeckTheme',
+          label: l.chartMatchThemeShort,
+          args: const {'useDeckTheme': true},
+          menuId: 'format.chart.matchTheme',
+          radio: true,
+        ),
+        _c(
+          'slides.chart.setUseDeckTheme',
+          label: l.chartKeepSource,
+          args: const {'useDeckTheme': false},
+          menuId: 'format.chart.keepSource',
+          radio: true,
+        ),
+        _c('slides.chart.resetOverrides'),
+        MenuSpec.separator(),
+        _c('slides.chart.viewDataTable'),
+        _c('slides.chart.copyAsImage'),
+        _c(
+          'slides.inspector.open',
+          label: l.chartCustomize,
+          args: const {'tab': 'format', 'section': 'chart'},
+          menuId: 'format.chart.options',
+        ),
       ]),
       MenuSpec.separator(),
       _c('slides.element.editAltText'),

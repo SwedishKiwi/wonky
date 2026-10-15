@@ -293,7 +293,8 @@ abstract final class DriveTools {
         'Exports a document (md, txt, html, pdf, docx, odt, rtf, epub) or '
         'spreadsheet (xlsx, ods, csv, tsv, json, html (zipped), pdf; '
         'csv/tsv/pdf take an optional sheet name and A1 range; pdf takes '
-        'dark_theme). Text formats (md, txt, csv, tsv, json) are returned '
+        'dark_theme) or presentation (pdf as slides.export_pdf; md = the '
+        'outline Markdown). Text formats (md, txt, csv, tsv, json) are returned '
         'inline; others as a signed download_url valid for 15 min. For '
         'uploaded files use drive.download_file.',
     inputSchema: ObjectSchema(

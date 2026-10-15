@@ -1,6 +1,8 @@
 import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:wonky_app/src/activity/activity_feed.dart';
+import 'package:wonky_app/src/l10n/wonky_app_localizations.dart';
+import 'package:wonky_app/src/shell/dialogs.dart' show activityDetail;
 import 'package:wonky_app/testing.dart';
 import 'package:wonky_client/wonky_client.dart';
 
@@ -67,5 +69,43 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('Bob Stone renamed this'), findsOneWidget);
+  });
+
+  testWidgets('Given a presentation edit event with slides, a deleted slide '
+      'and an agent when the feed shows then its detail line lists them', (
+    tester,
+  ) async {
+    h.drive.activityByItem[doc.uuid.uuid] = [
+      ActivityEventView(
+        id: 7,
+        type: ActivityType.edited,
+        actor: TestUsers.bob,
+        actorKind: ActorKind.mcp,
+        summary:
+            '{"changes": 4, "slideIds": ["a", "b", "c"], "slidesDeleted": 1, '
+            '"themes": 1, "actorKinds": ["mcp", "user"]}',
+        at: DateTime.now(),
+      ),
+    ];
+
+    await pumpScreen(tester, h, feed());
+
+    expect(
+      find.text('3 slides · 1 slide deleted · theme changed · with Claude'),
+      findsOneWidget,
+    );
+  });
+
+  test('Given edit events of documents and spreadsheets then there is no '
+      'detail line', () {
+    final l = lookupWonkyAppLocalizations(const Locale('en'));
+    final e = ActivityEventView(
+      id: 1,
+      type: ActivityType.edited,
+      actorKind: ActorKind.user,
+      summary: '{"changes": 2, "cells": 5, "actorKinds": ["user"]}',
+      at: DateTime.now(),
+    );
+    expect(activityDetail(l, e), isNull);
   });
 }

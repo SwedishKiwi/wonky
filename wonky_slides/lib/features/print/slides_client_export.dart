@@ -102,9 +102,9 @@ abstract final class SlidesClientExport {
         SlidesPdfOptionsCodec.toPreferences(o),
       );
 
-  /// Saves [bytes] as [fileName]: a browser download in this tab on the
-  /// web (no new tab or window), the save dialog on desktop. False when
-  /// the dialog was cancelled.
+  /// Saves [bytes] as [fileName] (PDF, PNG or ZIP by extension): a
+  /// browser download in this tab on the web (no new tab or window), the
+  /// save dialog on desktop. False when the dialog was cancelled.
   static Future<bool> save(Uint8List bytes, {required String fileName}) =>
       saver(bytes, fileName);
 
@@ -116,10 +116,18 @@ abstract final class SlidesClientExport {
     final uri = await FilePicker.saveFile(
       fileName: fileName,
       bytes: bytes,
-      mimeType: 'application/pdf',
+      mimeType: mimeTypeOf(fileName),
       dialogTitle: fileName,
     );
     return kIsWeb || uri != null;
+  }
+
+  /// The media type of an export file by its extension (PDF, PNG, ZIP).
+  static String mimeTypeOf(String fileName) {
+    final lower = fileName.toLowerCase();
+    if (lower.endsWith('.png')) return 'image/png';
+    if (lower.endsWith('.zip')) return 'application/zip';
+    return 'application/pdf';
   }
 
   /// The user-facing text of an export warning code.

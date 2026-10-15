@@ -1,0 +1,23 @@
+### *Generate presentation* step 1 (Slides 11 §6.4): what the outline is
+### about and how it should look.
+class: SlidesAiOutlineRequest
+fields:
+  ### prompt | outline (pasted bullets or deck-outline Markdown).
+  source: String
+  ### The prompt, or the pasted outline.
+  text: String
+  ### Wanted slide count (null = the model decides).
+  slideCount: int?
+  audience: String?
+  tone: String?
+  ### Language name ("English"); null = the language of the text.
+  language: String?
+  speakerNotes: bool, default=true
+  groups: bool, default=true
+  ### Outline source: only structure and complete the user's text.
+  keepWording: bool, default=false
+  ### Regenerate one slide: its index in the outline (0-based) and the
+  ### current outline JSON plus an instruction.
+  outlineJson: String?
+  slideIndex: int?
+  instruction: String?

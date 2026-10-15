@@ -192,9 +192,11 @@ final class _Build {
     identityHashCode(ctx.code),
     identityHashCode(ctx.deck),
     ctx.codeStates[e.id] ?? '',
+    ctx.codeSteps[e.id] ?? '',
     ctx.generation,
     if (e.record.kind == ElementKind.line) _glueKey(e),
-    if (e.record.kind == ElementKind.code) background ?? '',
+    if (e.record.kind == ElementKind.code || e.record.kind == ElementKind.chart)
+      background ?? '',
   ].join('|');
 
   String _glueKey(ResolvedElement line) {
@@ -784,6 +786,7 @@ final class _Build {
       stateIndex: ctx.purpose == ScenePurpose.edit
           ? ctx.codeStates[e.id]
           : null,
+      step: ctx.purpose == ScenePurpose.edit ? ctx.codeSteps[e.id] : null,
       background: background,
     );
     if (scene == null) return const [];
@@ -798,6 +801,7 @@ final class _Build {
       theme,
       width: w,
       height: h,
+      background: background,
     );
     if (scene != null) {
       return [

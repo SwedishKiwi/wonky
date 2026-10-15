@@ -382,7 +382,15 @@ class _PresenterViewState extends State<PresenterView> {
           context,
           label,
           trailing: c.blank == PresentBlank.none
-              ? null
+              ? (c.degraded
+                    ? Text(
+                        key: const ValueKey<String>(
+                          'slides.presenter.reducedEffects',
+                        ),
+                        l.presenterReducedEffects,
+                        style: theme.textTheme.muted,
+                      )
+                    : null)
               : Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [

@@ -33,7 +33,7 @@ Consequences worth knowing before building:
   `wonky_spellcheck` (Q23) — all extracted in M8 without behavior change (suite 01 §2.1).
 - The vendored offline-sync patch **OS-8** (space filter per sync endpoint, Q19) lands in M8,
   before the first deck space exists.
-- Write's exports switch to the shared TextMate tokenizer in M10 (Q17, Q25).
+- Write's exports switch to the shared TextMate tokenizer in M10 (Q17, Q25). Done in SL-35.
 
 ## Suite and Drive
 

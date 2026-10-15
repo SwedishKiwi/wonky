@@ -18,8 +18,13 @@ import 'package:wonky_client/wonky_client.dart'
         PresentationStateEvent,
         PresentationStateUpdate,
         PresentationWelcome;
+import 'package:wonky_slides_core/charts.dart' show SlideChartMotion;
 import 'package:wonky_slides_core/model.dart';
 import 'package:wonky_slides_core/motion.dart';
+import 'package:wonky_slides_core/scene.dart' show SlideScene;
+
+import '../motion/player/motion_budget.dart';
+import '../motion/player/slide_player.dart';
 
 import 'present_ink.dart';
 import 'present_sequence.dart';
@@ -121,6 +126,8 @@ class PresentController extends ChangeNotifier {
     this.burstMs = 120,
     String? inkPrefix,
     this._reducedMotion = false,
+    this.scenesOf,
+    this._kiosk = false,
   }) : _now = nowMs ?? (() => DateTime.now().millisecondsSinceEpoch),
        _inkPrefix = inkPrefix ?? _randomPrefix() {
     timer = PresentTimer(_now);
@@ -129,6 +136,7 @@ class PresentController extends ChangeNotifier {
       timelineOf: timelineOf ?? _compile,
       showSkipped: showSkipped,
     );
+    player = SlidePlayer(timelineOf: sequence.timelineOf, planOf: _planOf);
     if (view != PresentView.audience) {
       final start = sequence.startAt(startSlideId);
       _position = start == null
@@ -142,6 +150,12 @@ class PresentController extends ChangeNotifier {
           ? 0
           : model.indexes.order.indexOf(_position!.slideId);
       _stepStartedMs = _now();
+      final p = _position;
+      if (p != null) {
+        // The first slide shows without a transition; its step 0 plays.
+        player.enter(p.slideId, now: _stepStartedMs, toStep: p.step);
+        _afterNavigation();
+      }
     }
     model.addListener(_onBatch);
     final l = link;
@@ -159,6 +173,13 @@ class PresentController extends ChangeNotifier {
 
   final DeckModel model;
   final PresentView view;
+
+  /// The stage's scenes (Flutter text layout: exact part boxes and Magic
+  /// Move glyph runs), or null (the core text layout is used).
+  final SlideScene? Function(String slideId)? scenesOf;
+
+  /// Plays builds and transitions (06 §6): the frames of [view].
+  late final SlidePlayer player;
 
   /// The session (presenter view and audience views; null when presenting
   /// alone or offline without a session).
@@ -216,6 +237,7 @@ class PresentController extends ChangeNotifier {
     if (value == _reducedMotion) return;
     _reducedMotion = value;
     _timelines.clear();
+    _plans.clear();
   }
 
   /// Compiles [slideId] from the deck (Slides 12 §5.5, SL-24): builds,
@@ -232,11 +254,50 @@ class PresentController extends ChangeNotifier {
             SlideMotionInput.fromDeck(
               model,
               slideId,
+              scene: scenesOf?.call(slideId),
               options: CompileOptions(reducedMotion: reduced),
+              chartShapeOf: _chartShapes,
             ),
           );
     _timelines[slideId] = (rev, t);
     return t;
+  }
+
+  late final _chartShapes = SlideChartMotion.shapes(model);
+
+  final Map<String, (String, TransitionPlan)> _plans = {};
+
+  /// Compiles (or reuses) the transition of [r] (06 §9.9; plans are cached
+  /// per slides' revisions, steps and direction, 06 §14 prefetch).
+  TransitionPlan planOf(TransitionRequest r) => _planOf(r);
+
+  TransitionPlan _planOf(TransitionRequest r) {
+    final reduced = _reducedMotion || settings.reduceMotion;
+    final rev =
+        '${model.indexes.revision(r.fromSlideId)}|'
+        '${model.indexes.revision(r.toSlideId)}|$reduced|'
+        '${model.deck?.defaultsJson.hashCode}';
+    final key = r.key;
+    final hit = _plans[key];
+    if (hit != null && hit.$1 == rev) return hit.$2;
+    TransitionPlan plan;
+    try {
+      plan = TransitionCompiler.between(
+        model,
+        fromSlideId: r.fromSlideId,
+        toSlideId: r.toSlideId,
+        fromFrame: r.fromFrame,
+        toFrame: r.toFrame,
+        options: TransitionOptions(reducedMotion: reduced, reverse: r.reverse),
+        fromScene: scenesOf?.call(r.fromSlideId),
+        toScene: scenesOf?.call(r.toSlideId),
+      );
+    } on Object {
+      plan = TransitionPlan.cut;
+    }
+    _plans[key] = (rev, plan);
+    if (_plans.length > 32) _plans.remove(_plans.keys.first);
+    return plan;
   }
 
   /// The timeline of [slideId].
@@ -247,18 +308,57 @@ class PresentController extends ChangeNotifier {
   PresentPosition? _position;
   int _lastIndex = 0;
   int _stepStartedMs = 0;
-  bool _stepFinished = false;
 
   /// The shown slide and step (null in an empty deck, or while an audience
   /// waits for the presenter).
   PresentPosition? get position => _position;
 
-  /// The shown frame: the settled end of the current step (06 §9). Running
-  /// builds are drawn by SL-29's player.
+  /// What the audience sees now (06 §6): the current slide in a frame of
+  /// its timeline, a transition, or the degraded crossfade; null without a
+  /// slide. Blur stays within the budget of 06 §14.
+  PlayerView? get playerView {
+    if (_position == null) return null;
+    final v = player.viewAt(_now());
+    if (v is SlidePlayerView) {
+      final f = MotionBudget.limitBlur(v.frame);
+      if (!identical(f, v.frame)) return SlidePlayerView(v.slideId, v.step, f);
+    }
+    return v;
+  }
+
+  /// The current slide's frame now (the settled frame during a transition).
   SlideFrame get frame {
     final p = _position;
     if (p == null) return SlideFrame.edit;
+    final v = playerView;
+    if (v is SlidePlayerView && v.slideId == p.slideId) return v.frame;
     return timelineOf(p.slideId).endOfStep(p.step);
+  }
+
+  /// Whether the stage animates (a transition, build or looping emphasis
+  /// runs): it ticks every frame while true.
+  bool get animating => _position != null && player.needsTicks(_now());
+
+  /// Whether the running animation was degraded to a crossfade (the
+  /// presenter view shows "Reduced effects", 06 §14).
+  bool get degraded => player.degraded;
+
+  final FrameBudget _budget = FrameBudget();
+
+  /// Called by the stage on every animation frame: counts frames that
+  /// missed the budget and degrades the running animation after 10 in a
+  /// row (06 §14).
+  void animationFrame() {
+    if (!player.isRunning(_now())) {
+      _budget.reset();
+      return;
+    }
+    if (_budget.frame(_now()) && !player.degraded) {
+      player.degrade(_now());
+      _budget.reset();
+      debugPrint('slides.motion.degraded');
+      notifyListeners();
+    }
   }
 
   /// Milliseconds since the current step started.
@@ -266,13 +366,7 @@ class PresentController extends ChangeNotifier {
 
   /// Whether the current step's builds are still running (a *Next*
   /// finishes them first, 10 §2.1).
-  bool get stepRunning {
-    final p = _position;
-    if (p == null || _stepFinished) return false;
-    final t = timelineOf(p.slideId);
-    if (p.step >= t.steps.length) return false;
-    return stepElapsedMs < t.steps[p.step].durationMs;
-  }
+  bool get stepRunning => _position != null && player.isRunning(_now());
 
   /// The end screen (10 §1.5).
   bool get endScreen => _endScreen;
@@ -308,22 +402,219 @@ class PresentController extends ChangeNotifier {
 
   bool _accept(bool user) {
     if (!user) return true;
+    // Kiosk: navigation is the timers' (10 §9).
+    if (kiosk) return false;
     final now = _now();
     if (now - _lastInput < burstMs) return false;
     _lastInput = now;
     return true;
   }
 
-  void _goto(PresentPosition p) {
+  void _goto(PresentPosition p, {bool back = false}) {
+    final prev = _position;
+    final now = _now();
+    _play(prev, p, back: back, now: now);
     _position = p;
     _lastIndex = sequence.order.indexOf(p.slideId);
-    _stepStartedMs = _now();
-    _stepFinished = false;
+    _stepStartedMs = now;
     _endScreen = false;
     _blank = PresentBlank.none;
     _laser = null;
     if (!timer.started) timer.start();
+    _afterNavigation();
     _changed();
+  }
+
+  /// Plays the way from [prev] to [p] (06 §6): the next step on the same
+  /// slide plays; other steps on it are jumps; another slide plays its
+  /// transition (backward: the left slide's transition reversed when its
+  /// `reverseOnBack`, then the target settled; forward: then step 0).
+  void _play(
+    PresentPosition? prev,
+    PresentPosition p, {
+    required bool back,
+    required int now,
+    int elapsed = 0,
+  }) {
+    _budget.reset();
+    if (prev == null || player.slideId == null) {
+      player.enter(p.slideId, now: now, toStep: p.step, elapsed: elapsed);
+      return;
+    }
+    if (prev.slideId == p.slideId && !(p.step == 0 && prev.step == 0)) {
+      if (!back && p.step == prev.step + 1) {
+        player.playStep(p.step, now: now, elapsed: elapsed);
+      } else {
+        player.show(p.slideId, p.step, now: now);
+      }
+      return;
+    }
+    var reverse = false;
+    if (back) {
+      reverse = TransitionSpec.effective(
+        model.slide(prev.slideId)?.transitionJson,
+        model.deck?.defaultsJson,
+      ).reverseOnBack;
+    }
+    player.enter(
+      p.slideId,
+      now: now,
+      fromSlideId: prev.slideId,
+      fromStep: prev.step,
+      fromFrame: player.slideId == prev.slideId ? player.settledFrame : null,
+      toStep: p.step,
+      reverse: reverse,
+      playStep0: !back,
+      elapsed: elapsed,
+    );
+  }
+
+  // ------------------------------------------------- kiosk, auto-advance
+
+  final bool _kiosk;
+
+  /// Self-running kiosk mode (`?kiosk=1` or `presentJson.mode`, 10 §9):
+  /// every step and slide advances on its own, loops, and user navigation
+  /// is off (exit with the Esc gesture).
+  bool get kiosk =>
+      view != PresentView.audience && (_kiosk || settings.mode == 'kiosk');
+
+  /// Whether the deck continues with its first slide after the last.
+  bool get loops => kiosk || settings.loops;
+
+  int? _autoAt;
+  Timer? _autoTimer;
+
+  /// When the presentation advances by itself (the controller's clock),
+  /// or null: kiosk timers, `advance: auto`, rehearsed timings (06 §4.4,
+  /// 10 §9–§10).
+  int? get autoAdvanceAt => _autoAt;
+
+  void _afterNavigation() {
+    _scheduleAuto();
+    _schedulePrefetch();
+  }
+
+  /// The rehearsed step times of [slideId] (`Slide.timingsJson`), or null.
+  List<int>? rehearsedSteps(String slideId) {
+    final json = model.slide(slideId)?.timingsJson;
+    if (json == null || json.isEmpty) return null;
+    try {
+      final v = jsonDecode(json);
+      final steps = v is Map ? v['stepsMs'] : null;
+      if (steps is! List || steps.isEmpty) return null;
+      return [for (final x in steps) x is num ? x.toInt() : 0];
+    } on FormatException {
+      return null;
+    }
+  }
+
+  void _scheduleAuto() {
+    _autoAt = null;
+    final p = _position;
+    if (p != null && !mirrors && !_ended && !_endScreen) {
+      final steps = timelineOf(p.slideId).stepCount;
+      final last = p.step >= steps;
+      final spec = TransitionSpec.effective(
+        model.slide(p.slideId)?.transitionJson,
+        model.deck?.defaultsJson,
+      );
+      final settle = player.endMs;
+      final rehearsed = settings.useRehearsedTimings || kiosk
+          ? rehearsedSteps(p.slideId)
+          : null;
+      if (rehearsed != null && p.step < rehearsed.length) {
+        _autoAt = math.max(settle, _stepStartedMs + rehearsed[p.step]);
+      } else if (kiosk) {
+        _autoAt =
+            settle +
+            (last
+                ? (spec.advance.auto ? spec.advance.afterMs : kioskSlideMs)
+                : spec.advance.buildDelayMs);
+      } else if (last && spec.advance.auto) {
+        _autoAt = settle + spec.advance.afterMs;
+      }
+    }
+    if (_autoAt == null) {
+      _autoTimer?.cancel();
+      _autoTimer = null;
+    } else {
+      _autoTimer ??= Timer.periodic(
+        const Duration(milliseconds: 50),
+        (_) => autoTick(),
+      );
+    }
+  }
+
+  /// Kiosk: how long a slide without timing stays after its builds.
+  static const int kioskSlideMs = 5000;
+
+  /// Advances when the auto-advance time has come (a 50 ms timer calls it;
+  /// tests call it after moving the clock). Waits while the screen is
+  /// blanked or the picker is open.
+  void autoTick() {
+    final at = _autoAt;
+    if (at == null || _disposed || _ended) return;
+    if (_now() < at || _blank != PresentBlank.none || _picker) return;
+    _autoAt = null;
+    if (!next(user: false)) _scheduleAuto();
+  }
+
+  // ------------------------------------------------------------ prefetch
+
+  Timer? _prefetchTimer;
+
+  void _schedulePrefetch() {
+    if (_disposed) return;
+    _prefetchTimer?.cancel();
+    _prefetchTimer = Timer(const Duration(milliseconds: 1), prefetch);
+  }
+
+  /// The transition the next *Next* plays from the end of this slide
+  /// (prefetched; the stage prepares its snapshots), or null.
+  TransitionRequest? get upcomingTransition {
+    final p = _position;
+    if (p == null) return null;
+    final n = sequence.nextSlide(p) ?? (loops ? sequence.first() : null);
+    if (n == null || n.slideId == p.slideId) return null;
+    final from = timelineOf(p.slideId);
+    final to = timelineOf(n.slideId);
+    return TransitionRequest(
+      fromSlideId: p.slideId,
+      fromStep: from.stepCount,
+      fromFrame: from.finalFrame,
+      toSlideId: n.slideId,
+      toStep: -1,
+      toFrame: to.initial,
+      reverse: false,
+    );
+  }
+
+  /// Compiles the timelines of the neighbors and the plan into the next
+  /// slide ahead of time (06 §14: prefetch).
+  void prefetch() {
+    final p = _position;
+    if (p == null || _disposed) return;
+    final prev = sequence.previousSlide(p);
+    if (prev != null) timelineOf(prev.slideId);
+    final r = upcomingTransition;
+    if (r != null) {
+      _planOf(r);
+      if (_has3dChart(r.toSlideId)) onPrefetch3dChart?.call();
+    }
+  }
+
+  /// Starts the 3D chart GPU backend when the next slide has a 3D chart
+  /// (06 §14 prefetch); set by the present stage.
+  VoidCallback? onPrefetch3dChart;
+
+  bool _has3dChart(String slideId) {
+    for (final e in model.elementsOf(slideId)) {
+      if (e.kind == ElementKind.chart && (_chartShapes(e)?.is3d ?? false)) {
+        return true;
+      }
+    }
+    return false;
   }
 
   /// Returns to the slide from a black/white screen (any navigation does
@@ -351,15 +642,18 @@ class PresentController extends ChangeNotifier {
     if (mirrors) return _command('next');
     if (_unblank()) return true;
     if (_endScreen) {
-      if (settings.loops) return _restart();
+      if (loops) return _restart();
       end();
       return true;
     }
     final p = _position;
     if (p == null) return false;
     if (stepRunning) {
-      _stepFinished = true;
+      // A click during a build finishes it (06 §6); `skip` also starts the
+      // next step at once (10 §3).
+      player.finish();
       if (settings.advanceDuringBuild != 'skip') {
+        _scheduleAuto();
         _changed();
         return true;
       }
@@ -373,7 +667,7 @@ class PresentController extends ChangeNotifier {
   }
 
   bool _atEnd() {
-    if (settings.loops) return _restart();
+    if (loops) return _restart();
     if (settings.endBehavior == 'exit') {
       end();
       return true;
@@ -405,7 +699,7 @@ class PresentController extends ChangeNotifier {
     if (p == null) return false;
     final n = sequence.previous(p);
     if (n == null) return false;
-    _goto(n);
+    _goto(n, back: true);
     return true;
   }
 
@@ -435,7 +729,7 @@ class PresentController extends ChangeNotifier {
     if (p == null) return false;
     final n = sequence.previousSlide(p);
     if (n == null) return false;
-    _goto(n);
+    _goto(n, back: true);
     return true;
   }
 
@@ -790,6 +1084,8 @@ class PresentController extends ChangeNotifier {
   void end() {
     if (_ended) return;
     _ended = true;
+    _autoTimer?.cancel();
+    _autoTimer = null;
     ink.clearAll();
     if (view == PresentView.presenter) unawaited(link?.end());
     notifyListeners();
@@ -952,13 +1248,30 @@ class PresentController extends ChangeNotifier {
         _pendingRemote = target;
       } else {
         _pendingRemote = null;
-        if (target != _position) _laser = null;
+        if (target != _position) {
+          _laser = null;
+          // Follow with the same animation, as far into it as the
+          // presenter is (06 §6, 10 §6.2).
+          final prev = _position;
+          final back =
+              prev != null &&
+              (prev.slideId == id
+                  ? s.step < prev.step
+                  : sequence.order.indexOf(id) <
+                        sequence.order.indexOf(prev.slideId));
+          _play(
+            prev,
+            target,
+            back: back,
+            now: _now(),
+            elapsed: s.stepElapsedMs + since,
+          );
+        }
         _position = target;
         _lastIndex = sequence.order.indexOf(id);
       }
     }
     _stepStartedMs = _now() - s.stepElapsedMs - since;
-    _stepFinished = false;
     notifyListeners();
   }
 
@@ -970,6 +1283,7 @@ class PresentController extends ChangeNotifier {
     final pending = _pendingRemote;
     if (pending != null && model.slide(pending.slideId) != null) {
       _pendingRemote = null;
+      _play(_position, pending, back: false, now: _now());
       _position = pending;
     }
     final p = _position;
@@ -984,7 +1298,10 @@ class PresentController extends ChangeNotifier {
       }
     } else if (p != null) {
       final steps = timelineOf(p.slideId).stepCount;
-      if (p.step > steps) _position = PresentPosition(p.slideId, steps);
+      if (p.step > steps) {
+        _position = PresentPosition(p.slideId, steps);
+        player.show(p.slideId, steps, now: _now());
+      }
       _lastIndex = sequence.order.indexOf(p.slideId);
     }
     notifyListeners();
@@ -1001,6 +1318,8 @@ class PresentController extends ChangeNotifier {
     _disposed = true;
     model.removeListener(_onBatch);
     _heartbeat?.cancel();
+    _autoTimer?.cancel();
+    _prefetchTimer?.cancel();
     unawaited(_linkSub?.cancel());
     link?.removeListener(notifyListeners);
     super.dispose();

@@ -240,6 +240,8 @@ void main() {
         SetElementProps() ||
         DeleteElements() ||
         ReorderZ() ||
+        MoveElementsZ() ||
+        SetReadingOrder() ||
         AlignDistribute() ||
         GroupElements() ||
         UngroupElements() ||
@@ -298,6 +300,8 @@ void main() {
         const PasteSlides({}),
         const PasteElements({}, 's'),
         const ReorderZ(['e'], ZOrderOp.toFront),
+        const MoveElementsZ(['e'], aboveId: 'f'),
+        const SetReadingOrder('s', ['e']),
         const AlignDistribute(['e'], AlignMode.left),
         const GroupElements(['e']),
         const UngroupElements(['g']),

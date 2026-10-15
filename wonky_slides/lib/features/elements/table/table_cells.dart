@@ -235,7 +235,7 @@ abstract final class TableGeometry {
 
   /// The grid of table [id] on [c]'s current slide, or null.
   static TableGrid? gridOf(SlideCanvasController c, String id) {
-    final slideId = c.editor.currentSlideId;
+    final slideId = c.editor.surfaceId;
     final e = c.elements?[id];
     final slide = c.slide;
     if (slideId == null ||

@@ -95,6 +95,38 @@ later (M10/M11)"; evidence in [Slides STATUS](wonky_slides/STATUS.md)):
   row seen in the release build; Slides settings tested in widget tests (settings of hidden
   features are hidden).
 
+**M10 exit checklist** (checked by SL-36 on 2026-10-15; M10 ends like M9: everything built is
+on, the rest is hidden and listed in `TODO.md` "Wonky Slides — later (M10/M11)"; evidence in
+[Slides STATUS](wonky_slides/STATUS.md) and the SL-36 "As built" note):
+
+- ◐ Journey 14 complete and J-S5…J-S7 — walked through by hand in the web release build
+  (`/slides/`, desktop 1280 px and 800 px, ~480 px, light and dark): decks from the four new
+  templates (gallery cards and `/new?template=`); present mode with step-0 builds, click builds
+  (cards pop, paragraph builds), a 3D cube transition forward and reversed on back (landing on
+  the previous slide's final step), Magic Move (device moving aside — end state only, the pane
+  was hidden then; code token morph mid-frames in the Transition tab preview, "2 objects match"), code type-in and highlight steps with callouts while
+  presenting and in the Animate preview; Animate tab (Transition tiles with the deck default,
+  Build tab adding *Rise* with auto-preview, Order tab with steps and durations) also at 480 px;
+  a linked chart inserted from a Sheets spreadsheet, the source edited in Sheets in the same tab,
+  the stale *Update* badge and the update; 3D chart orbit by drag, undo, the *3D view* menu;
+  masters and layouts mode, the theme editor, outline view, Layers panel, accessibility checker
+  (0 errors on the templates); print preview with *Print each build stage* (13 → 26 pages; the
+  PDF checked by its bytes — the embedded browser pane has no PDF viewer) and the PNG dialog.
+  Not walked: reduced motion (the pane can't emulate `prefers-reduced-motion`; covered by the
+  player/compiler tests), laser/pen/kiosk, PNG and PDF downloads (no downloads from the agent),
+  auto-update of linked charts while presenting. ☐ Not automated: `integration_test` journeys
+  (no chromedriver).
+- ☑ Timeline determinism (client ≡ server): one pure-Dart compiler/evaluator in
+  `wonky_slides_core` for the app, the server PDF and MCP; `frames_test` (same input → identical
+  frame JSON, recorded frames), the templates' builds compile without warnings.
+- ☐ 60 fps budgets in Chrome on the reference machine — not measured (the motion benchmark
+  `wonky_slides/benchmark/motion_bench.dart` runs by hand; the transitions and type-in looked
+  smooth in the walkthrough, no frame timings recorded).
+- ◐ Multi-client scenarios #18–20, 23–25: replica-level sync and collab tests only (as M9).
+- ☑ Templates 10 of 10 (nine built-ins + Blank) with tests (planner, maintenance, copy,
+  contrast/fit in both appearances, timeline warnings, Magic Move matches, accessibility
+  checker), on the server (`slides_templates_test`) and in the gallery.
+
 M8 must land the shell changes (scope-aware homes, settings split, `WonkyAppKind` with four
 apps) before Slides UI work starts in M9, and every shared-package extraction plus OS-8 before
 the first Slides package that needs it (SL-2 needs D-6; SL-5 needs D-4; SL-26/SL-27 need D-2/D-3).

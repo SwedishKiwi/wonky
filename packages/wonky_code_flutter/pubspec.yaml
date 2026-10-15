@@ -13,6 +13,8 @@ dependencies:
     sdk: flutter
   wonky_code:
     path: ../wonky_code
+  # In-place code editing (CodeEditorField, Slides 07 §3.5).
+  re_editor: ^0.10.0
 
 dev_dependencies:
   flutter_lints: '>=3.0.0 <7.0.0'

@@ -162,6 +162,53 @@ abstract final class GroupSpace {
     );
   }
 
+  /// The inverse of [toParent] (SL-34, moving an element into a group from
+  /// the Layers panel): maps [frame] (in the space [group]'s frame lives
+  /// in) into the group's child space described by [childBounds].
+  static ElementFrame toChild(
+    ElementFrame frame,
+    ElementFrame group,
+    SuRect childBounds,
+  ) {
+    final sx = childBounds.width == 0 ? 1.0 : group.width / childBounds.width;
+    final sy = childBounds.height == 0
+        ? 1.0
+        : group.height / childBounds.height;
+    var px = frame.cx, py = frame.cy;
+    var rot = frame.rotation;
+    var fh = frame.flipH, fv = frame.flipV;
+    final gr = normalizeRotation(group.rotation);
+    if (gr != 0) {
+      final a = -gr * math.pi / 180;
+      final dx = px - group.cx, dy = py - group.cy;
+      px = group.cx + dx * math.cos(a) - dy * math.sin(a);
+      py = group.cy + dx * math.sin(a) + dy * math.cos(a);
+      rot -= gr;
+    }
+    if (group.flipV) {
+      py = group.cy - (py - group.cy);
+      rot = -rot;
+      fv = !fv;
+    }
+    if (group.flipH) {
+      px = group.cx - (px - group.cx);
+      rot = -rot;
+      fh = !fh;
+    }
+    final cx = childBounds.x + (px - group.x) / sx;
+    final cy = childBounds.y + (py - group.y) / sy;
+    final w = frame.width / sx, h = frame.height / sy;
+    return ElementFrame(
+      _clean(cx - w / 2),
+      _clean(cy - h / 2),
+      _clean(w),
+      _clean(h),
+      rotation: normalizeRotation(rot),
+      flipH: fh,
+      flipV: fv,
+    );
+  }
+
   /// Rounds float noise (1e-6 su) so baked frames are stable.
   static double _clean(double v) => (v * 1e6).roundToDouble() / 1e6;
 }

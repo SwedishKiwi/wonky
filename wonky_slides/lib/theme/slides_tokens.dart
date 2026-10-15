@@ -40,6 +40,24 @@ class SlidesTokens {
     return Color(dark ? c.$2 : c.$1);
   }
 
+  /// Build kind colors of the Animate tab and the build order badges
+  /// (Slides 06 §5.4, A-06-9: in green, action amber, out red, motion blue;
+  /// ≥ 3:1 against the card in both themes). Kept here rather than in
+  /// `WonkyColors` because only Slides uses them.
+  Color get buildIn => Color(dark ? 0xFF4ADE80 : 0xFF16A34A);
+  Color get buildEmphasis => Color(dark ? 0xFFFBBF24 : 0xFFB45309);
+  Color get buildOut => Color(dark ? 0xFFF87171 : 0xFFDC2626);
+  Color get buildMotion => Color(dark ? 0xFF60A5FA : 0xFF2563EB);
+
+  /// The color of builds of kind [kind] (`buildIn`, `buildOut`,
+  /// `emphasis`, `motion`).
+  Color buildKind(String kind) => switch (kind) {
+    'buildIn' => buildIn,
+    'buildOut' => buildOut,
+    'motion' => buildMotion,
+    _ => buildEmphasis,
+  };
+
   /// Background of the slide navigator.
   Color get navigatorBackground => _scheme.card;
 

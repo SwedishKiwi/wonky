@@ -1,10 +1,13 @@
 import 'dart:ui' as ui;
 
 import 'package:flutter/widgets.dart';
+import 'package:wonky_charts_flutter/wonky_charts_flutter.dart'
+    show Chart3DBackends;
 import 'package:wonky_slides_core/motion.dart';
 import 'package:wonky_slides_core/scene.dart';
 import 'package:wonky_slides_core/themes.dart';
 
+import '../motion/render/frame_diff.dart';
 import 'scene_painter.dart';
 import 'slide_image_cache.dart';
 
@@ -89,6 +92,8 @@ class SlideStage extends StatelessWidget {
       drawPrompts: drawPrompts,
       placeholderBorder: placeholderBorder,
       devicePixelRatio: dpr,
+      gpuCharts: true,
+      chartGpu: Chart3DBackends.active,
     );
     final size = Size(scene.width * s, scene.height * s);
     final stack = Stack(
@@ -110,9 +115,6 @@ class SlideStage extends StatelessWidget {
                   node,
                   s,
                   options,
-                  node.elementId == null
-                      ? null
-                      : frame.elements[node.elementId],
                   slide: Rect.fromLTWH(0, 0, scene.width, scene.height),
                   offSlideOpacity: clipToSlide ? null : offSlideOpacity,
                 ),
@@ -162,8 +164,7 @@ class _NodePainter extends CustomPainter {
   _NodePainter(
     this.node,
     this.scale,
-    this.options,
-    this.state, {
+    this.options, {
     required this.slide,
     this.offSlideOpacity,
   }) : super(repaint: options.images);
@@ -171,7 +172,6 @@ class _NodePainter extends CustomPainter {
   final SceneNode node;
   final double scale;
   final ScenePaintOptions options;
-  final ElementVisualState? state;
   final Rect slide;
   final double? offSlideOpacity;
 
@@ -206,8 +206,10 @@ class _NodePainter extends CustomPainter {
   bool shouldRepaint(_NodePainter old) =>
       !identical(old.node, node) ||
       old.scale != scale ||
-      !identical(old.state, state) ||
+      // Only elements whose frame state changed repaint (06 §12.1).
+      !FrameDiff.sameFor(node, old.options.frame, options.frame) ||
       old.options.drawPrompts != options.drawPrompts ||
+      !identical(old.options.chartGpu, options.chartGpu) ||
       old.options.placeholderBorder != options.placeholderBorder ||
       !identical(old.options.images, options.images) ||
       old.offSlideOpacity != offSlideOpacity;

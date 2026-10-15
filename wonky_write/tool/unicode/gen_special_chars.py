@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
-"""Generates wonky_write/assets/unicode/special_chars.json (Write 04 §20.2).
+"""Generates packages/wonky_app/assets/unicode/special_chars.json (Write 04 §20.2,
+the shared special characters dialog of `package:wonky_app/special_chars.dart`).
 
 Source: the Unicode Character Database as shipped in Python's `unicodedata`
 module (offline; the UCD version is recorded in the output). Unicode data is
@@ -117,8 +118,8 @@ def main():
     ap.add_argument(
         '--out',
         default=os.path.join(
-            os.path.dirname(__file__), '..', '..', 'assets', 'unicode',
-            'special_chars.json'),
+            os.path.dirname(__file__), '..', '..', '..', 'packages',
+            'wonky_app', 'assets', 'unicode', 'special_chars.json'),
     )
     args = ap.parse_args()
 

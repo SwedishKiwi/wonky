@@ -7,6 +7,7 @@ import 'package:wonky_core/wonky_core.dart';
 import '../commands/commands.dart';
 import '../features/editor_screen/deck_editor_screen.dart';
 import '../features/editor_screen/route_placeholders.dart';
+import '../features/history/slides_version_renderer.dart';
 import '../features/present/present_controller.dart' show PresentView;
 import '../features/present/present_screen.dart';
 import '../features/print/print_preview_screen.dart';
@@ -14,6 +15,7 @@ import 'package:wonky_slides_core/interfaces.dart' show SlidesPdfLayout;
 import 'package:wonky_slides_core/templates.dart' show SlidesTemplates;
 import '../features/settings/slides_settings.dart';
 import '../features/templates/template_preview.dart';
+import '../features/undo/server_change_undo.dart';
 import '../features/sync/slides_data.dart'
     show NoReservedSpaceException, SlidesData;
 import '../l10n/slides_l10n.dart';
@@ -23,6 +25,8 @@ import 'slides_features.dart';
 /// Brand color of Wonky Slides (the amber of its product icon and of the
 /// presentation kind, `kindColor`).
 const slidesBrandColor = Color(0xffd97706);
+
+final _versionRenderer = SlidesVersionRenderer();
 
 /// Wonky Slides' description for the shared shell (suite 03, Slides 01 §7,
 /// Slides 12 SL-1).
@@ -57,10 +61,20 @@ class SlidesAppConfig extends WonkyAppConfig {
   @override
   String itemPath(String uuid) => '/p/$uuid';
 
+  /// Version history (Slides 09 §4; SL-39): the shell's `/p/:uuid/history`
+  /// route renders versions with [SlidesVersionRenderer] (none while the
+  /// feature is off).
+  @override
+  VersionRenderer? get versionRenderer =>
+      SlidesFeatures.isOn(SlidesFeature.versionHistory)
+      ? _versionRenderer
+      : null;
+
   @override
   HomeScope? get homeScope => const HomeScope.kind(DriveItemKind.presentation);
 
-  /// The deck editor (Slides 04 §2); `?slide=<slideId>` opens that slide.
+  /// The deck editor (Slides 04 §2); `?slide=<slideId>` opens that slide,
+  /// `?comment=<threadUuid>` that comment (09 §3.4).
   @override
   Widget buildEditor(BuildContext context, GoRouterState state, String uuid) =>
       DeckEditorScreen(
@@ -68,18 +82,17 @@ class SlidesAppConfig extends WonkyAppConfig {
         services: ShellScope.of(context),
         itemUuid: uuid,
         initialSlideId: state.uri.queryParameters['slide'],
+        initialCommentId: state.uri.queryParameters['comment'],
       );
 
-  /// `/p/:uuid/present`, `/p/:uuid/print` and `/p/:uuid/history` (04 §1)
-  /// under the editor route, so the deck session stays open underneath.
-  /// SL-19 built present, SL-20 print; SL-39 replaces the history
-  /// placeholder (left out while version history is off).
+  /// `/p/:uuid/present` and `/p/:uuid/print` (04 §1) under the editor
+  /// route, so the deck session stays open underneath (SL-19, SL-20).
+  /// `/p/:uuid/history` is the shell's version history route with
+  /// [versionRenderer] (SL-39).
   @override
   List<RouteBase> editorRoutes(ShellServices services) => [
     for (final route in DeckChildRoute.values)
-      // No history route before version history exists (SL-39, SL-23).
-      if (route != DeckChildRoute.history ||
-          SlidesFeatures.isOn(SlidesFeature.versionHistory))
+      if (route != DeckChildRoute.history)
         GoRoute(
           path: route.name,
           pageBuilder: (c, st) => NoTransitionPage<void>(
@@ -112,7 +125,7 @@ class SlidesAppConfig extends WonkyAppConfig {
   ];
 
   /// The present route (Slides 10 §1.1; SL-19): `?view=presenter|audience`,
-  /// `slide`, `step`, `session`, `share=1`.
+  /// `slide`, `step`, `session`, `share=1`, `kiosk=1` (10 §9, SL-29).
   static Widget _presentScreen(ShellServices services, GoRouterState st) {
     final q = st.uri.queryParameters;
     final uuid = st.pathParameters['uuid']!;
@@ -128,6 +141,7 @@ class SlidesAppConfig extends WonkyAppConfig {
       startStep: int.tryParse(q['step'] ?? '') ?? 0,
       sessionId: q['session'],
       share: q['share'] == '1',
+      kiosk: q['kiosk'] == '1',
     );
   }
 
@@ -136,9 +150,9 @@ class SlidesAppConfig extends WonkyAppConfig {
   List<Command<CommandArgs>> commands(ShellServices services) =>
       slidesCommands(services);
 
-  /// Comments, version history and the assistant are M11's (SL-38, SL-39,
-  /// SL-43): their shell commands stay out of Slides until then
-  /// ([SlidesFeatures], SL-23).
+  /// Shell commands of features Slides doesn't ship yet stay out
+  /// ([SlidesFeatures], SL-23; comments ship since SL-38, version history
+  /// since SL-39).
   @override
   bool hidesShellCommand(String id) => SlidesFeatures.hidesShellCommand(id);
 
@@ -164,6 +178,9 @@ class SlidesAppConfig extends WonkyAppConfig {
   Future<void> onSignedIn(ShellServices services) async {
     await super.onSignedIn(services);
     SlidesData.install(services);
+    // Server-side changes (AI runs, restores from the history route on
+    // the shell stack) undo through the server (02 §12.2).
+    services.undo.registerHandler(SlidesServerChangeHandler(services));
   }
 
   @override

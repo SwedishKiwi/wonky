@@ -112,6 +112,22 @@ void main() {
       });
     }
 
+    test('when linking a comment on a presentation then the link opens the '
+        'thread (?comment=)', () {
+      final link = emails.linkFor(
+        _n(
+          NotificationKind.mention,
+          itemKind: DriveItemKind.presentation,
+          payload: {'threadUuid': '0190a8a0-0000-7000-8000-0000000000cc'},
+        ),
+      );
+      expect(link.path, '/slides/p/0190a8a0-0000-7000-8000-00000000000a');
+      expect(
+        link.queryParameters['comment'],
+        '0190a8a0-0000-7000-8000-0000000000cc',
+      );
+    });
+
     test('when rendering a mention email then the HTML escapes names and '
         'quotes the comment', () {
       final email = emails.single(

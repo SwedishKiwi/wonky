@@ -8,8 +8,11 @@ import 'package:wonky_slides_core/pdf.dart';
 
 import '../config/slides_features.dart';
 import '../features/editor_screen/deck_editor_controller.dart';
+import '../features/navigator/deck_renderer.dart';
+import '../features/print/png_export_dialog.dart';
 import '../features/print/print_preview_screen.dart';
 import '../features/print/slides_client_export.dart';
+import '../features/print/slides_png_export.dart';
 import '../l10n/slides_l10n.dart';
 import 'slides_command.dart';
 
@@ -18,8 +21,12 @@ import 'slides_command.dart';
 /// `slides.file.download {format: pdf}` opens it too unless `immediate`
 /// (Shift-click, MCP) exports right away with `options` (10 §11.1 keys) or
 /// the last-used options, and `slides.print.print` prints the previewed PDF.
-/// None of them changes the deck. Viewers and commenters may export only
-/// when the owner allows it (`nonEditorsCanExport`).
+/// `slides.file.download {format: png|pngZip}` (10 §13, SL-33) opens the
+/// PNG dialog (current slide / all slides) unless `immediate` (MCP) renders
+/// right away with `options` over the last-used PNG options; one image
+/// downloads as `.png`, several as a `.zip`. None of them changes the
+/// deck. Viewers and commenters may export only when the owner allows it
+/// (`nonEditorsCanExport`).
 List<Command<CommandArgs>> printCommands(ShellServices s) => [
   SlidesCommand(
     'slides.print.open',
@@ -55,18 +62,30 @@ List<Command<CommandArgs>> printCommands(ShellServices s) => [
         ),
         'options': const JsonSchema.object(
           additionalProperties: true,
-          description: 'PDF options (Slides 10 §11.1)',
+          description:
+              'PDF options (Slides 10 §11.1); PNG: range '
+              '(current|selection|all|"1-3,7"), scale (1|2|4), frames '
+              '(print|final|builds), transparent, includeSkipped, fileName',
         ),
         'immediate': const JsonSchema.boolean(),
       },
       required: const ['format'],
     ),
-    // PNG (P1) and Markdown (P2) come later (10 §13, 04 §10).
-    enabled: (ed, a) => (a.string('format') ?? 'pdf') == 'pdf',
+    // Markdown (P2) comes later (04 §10).
+    enabled: (ed, a) => switch (a.string('format') ?? 'pdf') {
+      'pdf' => true,
+      'png' || 'pngZip' => SlidesFeatures.isOn(SlidesFeature.imageExports),
+      _ => false,
+    },
     reason: (l, ed) => l.reasonNotAvailableYet,
     run: (ctx, ed, a) async {
       final l = slidesL10nOf(s);
-      if (a.string('format') != 'pdf') {
+      final format = a.string('format');
+      if ((format == 'png' || format == 'pngZip') &&
+          SlidesFeatures.isOn(SlidesFeature.imageExports)) {
+        return _exportPng(ctx, s, ed, a, zip: format == 'pngZip');
+      }
+      if (format != 'pdf') {
         return CommandResult.failed(l.exportFormatUnavailable);
       }
       final raw = a.values['options'];
@@ -167,6 +186,101 @@ Future<CommandResult> _exportNow(
       destructive: true,
     );
     return CommandResult.failed(l.exportFailed);
+  }
+}
+
+/// The user's last-used PNG options (`slidesDefaults.imageExportOptions`,
+/// A-10-4).
+SlidesPngOptions _lastPng(ShellServices s) {
+  final raw = s.prefs.slidesDefaults['imageExportOptions'];
+  return SlidesPngOptions.fromJson(
+    raw is Map ? raw.cast<String, Object?>() : const {},
+  );
+}
+
+Future<CommandResult> _exportPng(
+  CommandContext ctx,
+  ShellServices s,
+  DeckEditorController ed,
+  JsonArgs a, {
+  required bool zip,
+}) async {
+  final l = slidesL10nOf(s);
+  try {
+    final item = await s.drive.get(ed.session.itemUuid);
+    if (!item.canDownload) {
+      return CommandResult.failed(l.printDownloadsDisabledTitle);
+    }
+  } on Object {
+    // Offline: the deck is local, exporting needs no server.
+  }
+  final raw = a.values['options'];
+  final given = raw is Map ? raw.cast<String, Object?>() : const {};
+  var o = SlidesPngOptions.fromJson({
+    ..._lastPng(s).toPreferences(),
+    'range': zip ? 'all' : 'current',
+    'zip': zip,
+    ...given,
+  });
+  final immediate = a.boolean('immediate') ?? false;
+  final dc = ctx.dialogContext;
+  if (!immediate && !ctx.source.isAgent && dc != null && dc.mounted) {
+    final chosen = await showPngExportDialog(dc, ed, o);
+    if (chosen == null) return const CommandResult.cancelled();
+    o = chosen;
+  }
+  final ids = switch (o.range) {
+    'current' => [?ed.currentSlideId],
+    'selection' =>
+      ed.selectedSlideIds.isEmpty
+          ? [?ed.currentSlideId]
+          : ed.selectedSlideIds.toList(),
+    _ => null,
+  };
+  final renderer = DeckThumbnails.acquire(ed);
+  try {
+    final r = await SlidesPngExport.render(renderer, o, slideIds: ids);
+    if (r.images.isEmpty) {
+      if (!ctx.source.isAgent) s.toasts.show(l.pngNothingToExport);
+      return CommandResult.failed(l.pngNothingToExport);
+    }
+    final title = ed.model.deck?.title ?? '';
+    final (name, bytes, mimeType) = SlidesPngExport.package(
+      r,
+      baseName:
+          o.fileName ??
+          SlidesPdfOptionsCodec.sanitizeFileName(
+            title.isEmpty ? l.pdfUntitledPresentation : title,
+          ),
+      zip: o.zip,
+      entryName: (i, digits) {
+        final n = '${i.number}'.padLeft(digits, '0');
+        return i.step == null
+            ? l.pngEntrySlide(n)
+            : l.pngEntryStep(n, i.step! + 1);
+      },
+    );
+    final saved = await SlidesClientExport.save(bytes, fileName: name);
+    if (!saved) return const CommandResult.cancelled();
+    await s.prefs.setSlidesDefault('imageExportOptions', o.toPreferences());
+    if (!ctx.source.isAgent) s.toasts.show(l.exportedToast(name));
+    return CommandResult.ok({
+      'fileName': name,
+      'mimeType': mimeType,
+      'images': r.images.length,
+      'width': r.width,
+      'height': r.height,
+      'warnings': r.warnings,
+    });
+  } on Object catch (e) {
+    s.toasts.show(
+      l.exportFailed,
+      description: errorMessage(e),
+      destructive: true,
+    );
+    return CommandResult.failed(l.exportFailed);
+  } finally {
+    DeckThumbnails.release(ed, renderer);
   }
 }
 

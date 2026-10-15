@@ -61,7 +61,7 @@ List<Command<CommandArgs>> tableCommands(ShellServices s) {
           'width': JsonSchema.number(),
         },
       ),
-      enabled: (ed, a) => ed.currentSlideId != null,
+      enabled: (ed, a) => ed.surfaceId != null,
       reason: (l, ed) => l.reasonNoSlides,
       run: (ctx, ed, a) async {
         var rows = a.integer('rows'), cols = a.integer('cols');
@@ -586,7 +586,7 @@ ResolvedElement? _find(List<ResolvedElement> list, String id) {
 }
 
 _Target? _target(DeckEditorController ed, JsonArgs a) {
-  final slide = ed.currentSlideId;
+  final slide = ed.surfaceId;
   final resolved = slide == null ? null : ed.resolver.resolve(slide);
   if (resolved == null) return null;
   final text = textEditingOf(ed);
@@ -893,7 +893,7 @@ CommandResult _insertTable(
   int rows,
   int cols,
 ) {
-  final slide = ed.currentSlideId;
+  final slide = ed.surfaceId;
   if (slide == null) return const CommandResult.failed('No slide');
   if (rows < 1 || cols < 1 || rows > 50 || cols > 20) {
     return const CommandResult.failed(
@@ -914,7 +914,7 @@ CommandResult _insertTable(
   final y = _num(a, 'y') ?? _round(math.max(0, (sh - h) / 2));
   final plan = ed.apply(
     ctx,
-    InsertElements(slide, [
+    InsertElements(ownerKind: ed.surfaceKind, slide, [
       ElementSpec(
         kind: ElementKind.table,
         x: x,

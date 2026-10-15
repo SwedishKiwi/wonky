@@ -26,6 +26,7 @@ part 'parts/code_ops.dart';
 part 'parts/chart_ops.dart';
 part 'parts/theme_ops.dart';
 part 'parts/maintenance_ops.dart';
+part 'parts/layer_ops.dart';
 
 /// A user operation the `SlidesMutationPlanner` turns into a plan.
 sealed class SlidesOperation {

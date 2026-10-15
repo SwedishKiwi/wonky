@@ -1,0 +1,11 @@
+### One linked chart to check (Slides 08 §5.2).
+class: ChartLinkProbe
+fields:
+  ### The chart element (echoed back).
+  elementId: String
+  ### Drive item uuid of the spreadsheet (`ChartLink.spreadsheetItemUuid`).
+  spreadsheetUuid: UuidValue
+  ### Sheets `EmbeddedObject` id of the chart.
+  chartObjectId: String
+  ### The snapshot's `sourceVersion` token.
+  sourceVersion: String

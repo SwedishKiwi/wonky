@@ -3,6 +3,8 @@ import 'package:wonky_app/wonky_app.dart';
 
 import '../../l10n/slides_l10n.dart';
 import '../editor_screen/deck_editor_controller.dart';
+import '../elements/chart/chart_section.dart';
+import '../elements/code/code_section.dart';
 import '../elements/common/arrange_section.dart';
 import '../elements/icon/icon_section.dart';
 import '../elements/image/image_section.dart';
@@ -102,12 +104,14 @@ final List<InspectorSectionSpec> inspectorSections = [
     title: _sectionCode,
     tab: InspectorTab.format,
     kinds: {DeckSelectionKind.code},
+    builder: codeSection,
   ),
   const InspectorSectionSpec(
     id: 'chart',
     title: _sectionChart,
     tab: InspectorTab.format,
     kinds: {DeckSelectionKind.chart},
+    builder: chartSection,
   ),
   const InspectorSectionSpec(
     id: 'fill',

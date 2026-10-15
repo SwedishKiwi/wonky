@@ -7,13 +7,14 @@ import '../inspector/deck_inspector.dart';
 import 'canvas_region.dart';
 import 'deck_editor_controller.dart';
 import '../grid_view/slide_grid_view.dart';
+import '../masters/masters_view.dart';
 import '../navigator/slide_navigator.dart';
 import '../notes/notes_pane.dart';
-import 'view_mode_shells.dart';
+import '../outline_view/outline_view.dart';
 
 /// The editor body (Slides 04 §2, §16): navigator │ canvas over the notes
 /// pane │ inspector, with the view modes replacing navigator + canvas +
-/// notes (Grid, Outline, Masters). Responsive: ≥ 1,200 px everything is
+/// notes (Grid, Outline, Masters — SL-28's `MastersView`). Responsive: ≥ 1,200 px everything is
 /// docked; 768–1,200 px the inspector overlays the canvas from the right
 /// (navigator 140 px below 1,024); < 768 px the navigator is a drawer and
 /// the inspector overlays over a scrim. Panes resize by dragging their
@@ -58,8 +59,12 @@ class DeckBody extends StatelessWidget {
         editor: ed,
         onContextMenu: onContextMenu,
       ),
-      DeckViewMode.outline => OutlineViewShell(services: services, editor: ed),
-      DeckViewMode.masters => MastersModeShell(services: services),
+      DeckViewMode.outline => OutlineView(services: services, editor: ed),
+      DeckViewMode.masters => MastersView(
+        services: services,
+        editor: ed,
+        onContextMenu: onContextMenu,
+      ),
     };
 
     // Canvas over the notes pane (Normal view only).

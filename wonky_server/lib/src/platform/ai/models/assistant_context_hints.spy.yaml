@@ -22,6 +22,11 @@ fields:
   sheetsSelection: List<String>?
   sheetsActiveCell: String?
   sheetsVisibleRange: String?
+  ### Slides (11 §6.2): the current slide, the selected slides and the
+  ### selected elements of the requesting window.
+  slidesCurrentSlide: String?
+  slidesSelectedSlides: List<String>?
+  slidesSelectedElements: List<String>?
   ### `ui.*` tools the requesting window runs for the assistant (Sheets
   ### 12 §6.2: get_selection, select_range, highlight_range); null = none.
   uiTools: List<String>?

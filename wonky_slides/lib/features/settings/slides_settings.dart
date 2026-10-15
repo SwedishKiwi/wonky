@@ -8,6 +8,7 @@ import 'package:wonky_slides_core/themes.dart' show BuiltInThemes;
 
 import '../../config/slides_features.dart';
 import '../../l10n/slides_l10n.dart';
+import '../builds/build_labels.dart';
 import 'slides_user_defaults.dart';
 
 /// Slides settings (Slides 04 §13.16, suite 04 §4.2, D4): the app settings
@@ -116,6 +117,8 @@ List<Command<CommandArgs>> slidesSettingsCommands(ShellServices s) => [
 /// Whether the `slidesDefaults` [key] belongs to a feature that is on
 /// (hidden settings are neither shown nor advertised to MCP, SL-23).
 bool offersDefaultsKey(String key) {
+  // Key clicks while typing code (07 §5.3 `sound`) are P2 and not built.
+  if (key == SlidesUserDefaults.keyTypeInSound) return false;
   final feature = switch (key) {
     SlidesUserDefaults.keyDefaultLanguage ||
     SlidesUserDefaults.keyUnderlineSpelling => SlidesFeature.spelling,
@@ -131,7 +134,6 @@ bool offersDefaultsKey(String key) {
     SlidesUserDefaults.keyReduceEditorMotion => SlidesFeature.animations,
     SlidesUserDefaults.keyCodeFontSize ||
     SlidesUserDefaults.keyCodeLanguage ||
-    SlidesUserDefaults.keyTypeInSound ||
     SlidesUserDefaults.keyTypingSpeed => SlidesFeature.codeBlocks,
     _ => null,
   };
@@ -330,11 +332,8 @@ class SlidesSettingsSection extends StatelessWidget {
             SlidesUserDefaults.keyDefaultTransition,
             l.settingsDefaultTransition,
             {
-              'none': l.transitionNone,
-              'fade': l.transitionFade,
-              'push': l.transitionPush,
-              'wipe': l.transitionWipe,
-              'dissolve': l.transitionDissolve,
+              for (final id in SlidesUserDefaults.transitions)
+                id: BuildLabels.transition(l, id),
             },
           ),
           _select<int>(
@@ -352,10 +351,8 @@ class SlidesSettingsSection extends StatelessWidget {
             SlidesUserDefaults.keyDefaultBuild,
             l.settingsDefaultBuild,
             {
-              'appear': l.buildAppear,
-              'fade': l.transitionFade,
-              'flyIn': l.buildFlyIn,
-              'zoom': l.buildZoom,
+              for (final id in SlidesUserDefaults.builds)
+                id: BuildLabels.effect(l, id),
             },
           ),
           _switch(
@@ -394,7 +391,6 @@ class SlidesSettingsSection extends StatelessWidget {
             l.settingsTypingSpeed,
             {'slow': l.speedSlow, 'normal': l.speedNormal, 'fast': l.speedFast},
           ),
-          _switch(SlidesUserDefaults.keyTypeInSound, l.settingsTypeInSound),
         ],
       ),
   ];

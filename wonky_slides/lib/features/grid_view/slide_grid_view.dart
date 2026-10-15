@@ -10,6 +10,7 @@ import 'package:wonky_core/wonky_core.dart';
 import 'package:wonky_ui/wonky_ui.dart';
 
 import '../collab/presence_widgets.dart' show SlidePresenceDots;
+import '../comments/comment_badge.dart';
 import '../../commands/navigator_commands.dart' show navMoveTo;
 import '../../commands/slides_command.dart' show SlidesKeyScopes;
 import '../../config/menus/context_menu_specs.dart';
@@ -378,6 +379,11 @@ class _SlideGridViewState extends State<SlideGridView> {
                 ),
                 // Collaborators on this slide (SL-21, 09 §1.2).
                 SlidePresenceDots(editor: ed, slideId: e.id),
+                // Open comments on this slide (SL-38, 04 §9).
+                Padding(
+                  padding: const EdgeInsets.only(left: 4),
+                  child: SlideCommentBadge(editor: ed, slideId: e.id),
+                ),
               ],
             ),
           ],

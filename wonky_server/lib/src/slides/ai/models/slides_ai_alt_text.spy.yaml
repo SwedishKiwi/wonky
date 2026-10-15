@@ -1,0 +1,9 @@
+### A proposed alt text of one element (Slides 11 §6.8), or why there is
+### none (`skipped`: noImageSupport, unsupported, empty).
+class: SlidesAiAltText
+fields:
+  elementId: String
+  slideId: String?
+  kind: String
+  altText: String?
+  skipped: String?

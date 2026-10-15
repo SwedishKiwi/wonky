@@ -1,0 +1,18 @@
+### Per Slides version (Slides 09 §4.1, A-09-4): the slide list of the
+### snapshot and who changed what since the previous capture, built from the
+### DeckChangeLog rows consumed in the window (survives change-log pruning).
+class: SlidesSnapshotIndex
+table: slides_snapshot_index
+serverOnly: true
+fields:
+  itemVersionId: int, relation(parent=item_version, onDelete=Cascade)
+  ### `[{id, title, group, groupTitle, skipped}]` in presentation order.
+  slidesJson: String
+  ### `SlidesVersionChanges` JSON: `{v, slides: {id: [userIds]}, elements,
+  ### groups, theme, deck, agents, approx}` (latest author last).
+  changesJson: String
+  authorIds: List<int>
+indexes:
+  slides_snapshot_index_version_idx:
+    fields: itemVersionId
+    unique: true

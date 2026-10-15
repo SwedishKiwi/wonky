@@ -17,6 +17,7 @@ import '../spec/type_options.dart';
 import '../stats/regression.dart';
 import '../three_d/chart3d_model.dart';
 import '../three_d/chart3d_scene.dart';
+import '../three_d/chart3d_view.dart';
 import '../three_d/vec3.dart';
 import 'chart_theme.dart';
 import 'scales.dart';
@@ -40,7 +41,23 @@ final class ChartLayoutOptions {
     this.transitionFrom3D,
     this.transition3D = 1,
     this.hover3D,
+    this.perspective3D,
+    this.transform3D,
+    this.fitViews3D,
   });
+
+  /// 3D field of view in degrees while a camera animates (null = the spec's; Slides 08
+  /// §10.3).
+  final double? perspective3D;
+
+  /// Applied to the laid-out 3D model before it is fitted and meshed (chart builds:
+  /// `ChartReveal.applyTo3D`, Slides 08 §9.1).
+  final Chart3DModel Function(Chart3DModel model)? transform3D;
+
+  /// Views the 3D camera fit must also hold (Slides 08 §10.3): the scale is the smallest of
+  /// the current view's and these views' fits, so a camera animation between them doesn't
+  /// zoom in and out. Null = fit the current view only.
+  final List<Chart3DView>? fitViews3D;
 
   /// The 3D data item under the pointer (lighter in both backends).
   final SceneTag? hover3D;

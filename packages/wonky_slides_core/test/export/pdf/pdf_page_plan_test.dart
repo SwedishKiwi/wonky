@@ -101,6 +101,46 @@ void main() {
       },
     );
 
+    test('when the exporter names the steps to print then only those '
+        'steps are pages (identical frames dropped, SL-33)', () {
+      final s = SlidesPdfPlanner.select(
+        deck,
+        const SlidesPdfOptions(includeBuilds: true),
+        stepCounts: (id) => id == s2 ? 3 : 0,
+        buildSteps: (id) => id == s2 ? [0, 2, 3] : [0],
+      );
+
+      expect(
+        [for (final x in s.slides) x.steps],
+        [
+          [0],
+          [0, 2, 3],
+          [0],
+        ],
+      );
+    });
+
+    test('when builds are printed as notes pages then each slide is one '
+        'page (its final step)', () {
+      final s = SlidesPdfPlanner.select(
+        deck,
+        const SlidesPdfOptions(
+          includeBuilds: true,
+          layout: SlidesPdfLayout.notes,
+        ),
+        stepCounts: (id) => 2,
+      );
+
+      expect(
+        [for (final x in s.slides) x.steps],
+        [
+          [null],
+          [null],
+          [null],
+        ],
+      );
+    });
+
     test('when nothing matches then the selection is empty with a warning', () {
       final s = SlidesPdfPlanner.select(
         deck,

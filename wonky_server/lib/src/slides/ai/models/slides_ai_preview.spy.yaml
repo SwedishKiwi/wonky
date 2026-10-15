@@ -1,0 +1,8 @@
+### The AI changes preview of a Suggest-mode assistant run (Slides 11
+### §6.3): the recorded tool calls the user applies or discards.
+class: SlidesAiPreview
+fields:
+  previewId: String
+  itemUuid: UuidValue
+  calls: List<SlidesAiPreviewCall>
+  expiresAt: DateTime

@@ -468,8 +468,13 @@ extension _ThemePart on _Planner {
             SlidesCols.hideMasterElements,
             SlidesCols.hidden,
             SlideLayoutCols.key,
+            SlidesCols.sortKey,
           }
-        : const {SlidesCols.name, SlidesCols.backgroundJson};
+        : const {
+            SlidesCols.name,
+            SlidesCols.backgroundJson,
+            SlidesCols.sortKey,
+          };
     final after = <String, Object?>{};
     for (final MapEntry(:key, :value) in op.columns.entries) {
       if (!allowed.contains(key)) {
@@ -479,6 +484,11 @@ extension _ThemePart on _Planner {
         SlidesCols.name => _partName(value as String?, null, ''),
         SlidesCols.backgroundJson => _background(value as String?),
         SlidesCols.hideMasterElements || SlidesCols.hidden => value == true,
+        // SL-28: *Move layout* / *Move master* (a key between siblings).
+        SlidesCols.sortKey =>
+          value is String && value.isNotEmpty
+              ? value
+              : invalid('A sort key is a non-empty string'),
         _ => value,
       };
     }
@@ -488,6 +498,9 @@ extension _ThemePart on _Planner {
     }
     if (after.containsKey(SlidesCols.backgroundJson)) {
       return 'Change background';
+    }
+    if (after.containsKey(SlidesCols.sortKey)) {
+      return layout != null ? 'Move layout' : 'Move master';
     }
     return layout != null ? 'Layout settings' : 'Master settings';
   }

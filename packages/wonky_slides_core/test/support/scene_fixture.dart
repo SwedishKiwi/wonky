@@ -79,6 +79,7 @@ final class SceneFixture {
     (String, String)? startGlue,
     (String, String)? endGlue,
     Map<String, Object?>? stroke,
+    List<(double, double)> waypoints = const [],
   }) {
     final x = x1 < x2 ? x1 : x2, y = y1 < y2 ? y1 : y2;
     final w = (x2 - x1).abs(), h = (y2 - y1).abs();
@@ -98,6 +99,10 @@ final class SceneFixture {
           'routing': routing,
           'start': {'x': nx(x1), 'y': ny(y1), 'connect': glue(startGlue)},
           'end': {'x': nx(x2), 'y': ny(y2), 'connect': glue(endGlue)},
+          if (waypoints.isNotEmpty)
+            'waypoints': [
+              for (final (px, py) in waypoints) [nx(px), ny(py)],
+            ],
         }),
         if (stroke != null) ElementCols.strokeJson: jsonEncode(stroke),
       },

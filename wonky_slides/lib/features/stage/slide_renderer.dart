@@ -2,11 +2,13 @@ import 'dart:ui' show Size;
 
 import 'package:flutter/foundation.dart';
 import 'package:wonky_app/fonts.dart';
+import 'package:wonky_slides_core/charts.dart' show SlideChartLayout;
 import 'package:wonky_slides_core/interfaces.dart';
 import 'package:wonky_slides_core/model.dart';
 import 'package:wonky_slides_core/scene.dart';
 import 'package:wonky_slides_core/themes.dart';
 
+import '../elements/chart/chart_text.dart';
 import '../elements/icon/lucide_icon_source.dart';
 import '../thumbnails/slide_thumbnail_cache.dart';
 import 'flutter_text_layout_engine.dart';
@@ -29,13 +31,14 @@ class SlideRenderer extends ChangeNotifier {
     AssetFontRegistry? fonts,
     FlutterTextLayoutEngine? textLayout,
     SlideIconSource? icons,
-    this.charts,
+    ChartSceneSource? charts,
     this.code,
     SlideThumbnailCache? thumbnails,
   }) : fonts = fonts ?? AssetFontRegistry.instance,
        images = SlideImageCache(images ?? MemorySlideImageResolver()),
        thumbnails = thumbnails ?? SlideThumbnailCache(),
-       icons = icons ?? LucideIconSource.instance {
+       icons = icons ?? LucideIconSource.instance,
+       charts = charts ?? SlidesChartText.layout() {
     this.textLayout =
         textLayout ??
         FlutterTextLayoutEngine(fontGeneration: this.fonts.generation);
@@ -59,8 +62,9 @@ class SlideRenderer extends ChangeNotifier {
   /// Icon glyphs (default: the Lucide icon fonts, SL-14).
   final SlideIconSource icons;
 
-  /// Chart scenes (SL-27/SL-32).
-  final ChartSceneSource? charts;
+  /// Chart scenes (SL-27/SL-32; default: a `SlideChartLayout` over the
+  /// shared chart text measurer, `SlidesChartText`).
+  final ChartSceneSource charts;
 
   /// Code scenes (SL-26; null = the core's basic layout).
   final CodeSceneSource? code;
@@ -89,10 +93,12 @@ class SlideRenderer extends ChangeNotifier {
     bool editing = false,
     SlideAppearance? appearance,
     Map<String, int> codeStates = const {},
+    Map<String, int> codeSteps = const {},
   }) {
     final key =
         '$slideId|${purpose.name}|$editing|${appearance?.name}|'
-        '${codeStates.entries.map((e) => '${e.key}=${e.value}').join(',')}';
+        '${codeStates.entries.map((e) => '${e.key}=${e.value}').join(',')}|'
+        '${codeSteps.entries.map((e) => '${e.key}=${e.value}').join(',')}';
     final rev = revision(slideId);
     final hit = _memo[key];
     if (hit != null && hit.$1 == rev) return hit.$2;
@@ -110,6 +116,7 @@ class SlideRenderer extends ChangeNotifier {
         charts: charts,
         code: code,
         codeStates: codeStates,
+        codeSteps: codeSteps,
         generation: fonts.generation.value,
       ),
     );
@@ -160,6 +167,10 @@ class SlideRenderer extends ChangeNotifier {
   void _onFonts() {
     if (_disposed) return;
     textLayout.clear();
+    // Charts measured with a fallback font are laid out again.
+    SlidesChartText.measurer.clear();
+    final c = charts;
+    if (c is SlideChartLayout) c.clear();
     notifyListeners();
   }
 

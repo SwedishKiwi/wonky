@@ -394,6 +394,33 @@ void main() {
     );
   });
 
+  group('Given a code element with a window frame and line steps (SL-31)', () {
+    Future<String> export(Map<String, Object?> data) async {
+      final d = _Deck();
+      d.b.codeBlock(
+        d.first,
+        states: ['void main() {\n  print("hi");\n}'],
+        highlights: ['2'],
+        data: {'v': 1, 'language': 'dart', ...data},
+      );
+      final (_, pdf) = await PdfFixture.render(
+        d.build(),
+        const SlidesPdfOptions(range: '1'),
+      );
+      return pdf;
+    }
+
+    int fills(String pdf) => ' rg'.allMatches(pdf).length;
+
+    test('when exporting then the window bar and its traffic lights are '
+        'drawn as vector fills', () async {
+      final plain = await export({'chrome': 'none'});
+      final window = await export({'chrome': 'window'});
+
+      expect(fills(window), greaterThanOrEqualTo(fills(plain) + 4));
+    });
+  });
+
   group('Given an image element', () {
     late _Deck d;
     setUp(() {

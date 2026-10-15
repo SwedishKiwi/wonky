@@ -19,6 +19,8 @@ import '../../config/panels/slides_panels.dart';
 import '../../l10n/slides_l10n.dart';
 import '../canvas/slide_canvas_controller.dart';
 import '../collab/slides_collab.dart';
+import '../comments/slides_comments.dart';
+import '../history/local_conflicts.dart';
 import '../model/deck_session.dart';
 import '../sync/slides_data.dart' show openDeckSession;
 import '../layouts/layout_gallery.dart' show galleryLayouts;
@@ -26,6 +28,7 @@ import '../themes/theme_previews.dart';
 import '../toolbar/slides_toolbar.dart';
 import 'chrome_prefs.dart';
 import 'deck_body.dart';
+import '../spellcheck/spelling_actions.dart' show canvasSpellingMenu;
 import '../text_editing/text_editing_host.dart' show textEditingOf;
 import 'deck_document_controller.dart';
 import 'deck_editor_controller.dart';
@@ -53,6 +56,7 @@ class DeckEditorScreen extends StatefulWidget {
     required this.itemUuid,
     this.sessionFactory,
     this.initialSlideId,
+    this.initialCommentId,
   });
 
   final ShellServices services;
@@ -61,6 +65,9 @@ class DeckEditorScreen extends StatefulWidget {
 
   /// `?slide=<slideId>` deep link.
   final String? initialSlideId;
+
+  /// `?comment=<threadUuid>` deep link (09 §3.4).
+  final String? initialCommentId;
 
   @override
   State<DeckEditorScreen> createState() => _DeckEditorScreenState();
@@ -124,6 +131,28 @@ class _DeckEditorScreenState extends State<DeckEditorScreen> {
       _canvas = SlideCanvasController.attach(editor);
       // Presence, soft locks and hints (SL-21, 09 §1–§2).
       SlidesCollab.attach(editor, presence: doc.presence);
+      // Comment anchors, pins and badges (SL-38, 09 §3).
+      final comments = SlidesComments.attach(editor);
+      // Overwritten-text review and restore notices (SL-39, 09 §6.3).
+      if (SlidesFeatures.isOn(SlidesFeature.versionHistory)) {
+        SlidesConflicts.attach(editor, presence: doc.presence).forced = (body) {
+          final claim = SlidesCollab.of(editor)?.locks.published;
+          return claim != null &&
+              claim.forced &&
+              switch (body.kind) {
+                'notes' =>
+                  claim.kind == 'notes' && claim.slideId == body.slideId,
+                'cell' =>
+                  claim.kind == 'tableCell' &&
+                      claim.elementId == body.elementId &&
+                      claim.rowId == body.rowId &&
+                      claim.columnId == body.columnId,
+                _ => claim.kind == 'text' && claim.elementId == body.elementId,
+              };
+        };
+      }
+      final thread = widget.initialCommentId;
+      if (thread != null) comments.openDeepLink(thread);
     }
     setState(() {});
   }
@@ -139,6 +168,8 @@ class _DeckEditorScreenState extends State<DeckEditorScreen> {
     // Pending typing is written while the session is still open (SL-13).
     if (editor != null) textEditingOf(editor).dispose();
     if (editor != null) SlidesCollab.of(editor)?.dispose();
+    if (editor != null) SlidesComments.of(editor)?.dispose();
+    if (editor != null) SlidesConflicts.of(editor)?.dispose();
     // The shell deactivates the document after this frame; dispose after.
     WidgetsBinding.instance.addPostFrameCallback((_) {
       canvas?.dispose();
@@ -194,6 +225,9 @@ class _DeckEditorScreenState extends State<DeckEditorScreen> {
 
     return MenuCustomItems(
       entries: {
+        // The spelling section of the text context menu (SL-44).
+        SlidesMenuIds.spellingSuggestions: (context) =>
+            canvasSpellingMenu(editor),
         SlidesMenuIds.newSlideLayouts: (context) =>
             layouts(context, 'slides.slide.new', 'insert.newSlideLayout'),
         SlidesMenuIds.applyLayouts: (context) =>
@@ -265,7 +299,7 @@ class _DeckEditorScreenState extends State<DeckEditorScreen> {
       syncStatus: _session?.syncStatus,
       customMenuItems: _menuItems(editor),
       titleActions: (context) => [PresentButton(services: s)],
-      // Comments (SL-38) and version history (SL-39) come with M11.
+      // Comments (SL-38), version history (SL-39).
       commentsButton: SlidesFeatures.isOn(SlidesFeature.comments),
       commentsInPanel: SlidesFeatures.isOn(SlidesFeature.comments),
       historyPanel: SlidesFeatures.isOn(SlidesFeature.versionHistory),

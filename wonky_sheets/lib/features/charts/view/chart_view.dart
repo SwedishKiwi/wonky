@@ -1,5 +1,3 @@
-import 'dart:math' as math;
-
 import 'package:flutter/gestures.dart';
 import 'package:flutter/widgets.dart';
 import 'package:shad/shad.dart';
@@ -206,11 +204,7 @@ class _ChartObjectViewState extends State<ChartObjectView>
     final hit = s3 != null
         ? (picked == null ? null : SceneHit(picked.tag, const SGroup([]), 0))
         : scene.hitTest(p.dx, p.dy);
-    final show =
-        hit != null &&
-        (hit.tag.role == SceneRole.point || hit.tag.role == SceneRole.series) &&
-        hit.tag.pointIndex != null;
-    final next = show ? hit : null;
+    final next = chartTooltipApplies(hit?.tag) ? hit : null;
     if (next?.tag != _hover?.tag ||
         (next != null && _hoverAt != e.localPosition)) {
       setState(() {
@@ -312,85 +306,16 @@ class _ChartObjectViewState extends State<ChartObjectView>
             children: [
               paint,
               if (hover != null && _hoverAt != null)
-                _Tooltip(
+                ChartTooltip(
+                  cardKey: const ValueKey<String>('sheets.chart.tooltip'),
                   at: _hoverAt!,
                   bounds: Size(w, h),
-                  lines: _tooltipLines(hover),
-                ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  List<String> _tooltipLines(SceneHit hit) {
-    final data = c.data;
-    final i = hit.tag.pointIndex!;
-    final lines = <String>[];
-    if (i >= 0 && i < data.domain.length && !data.domain.isSynthetic) {
-      lines.add(data.domain.labels[i]);
-    }
-    final fmt = DefaultChartValueFormatter(locale: c.editor.locale);
-    final compare = c.spec.style.compareMode == CompareMode.category;
-    for (final s in data.series) {
-      if (!compare && s.key != hit.tag.seriesKey) continue;
-      if (i < 0 || i >= s.values.length) continue;
-      final v = s.values[i];
-      final text = v.isNaN ? '–' : fmt.format(v, s.numberFormat);
-      lines.add('${s.name}: $text');
-    }
-    return lines;
-  }
-}
-
-class _Tooltip extends StatelessWidget {
-  const _Tooltip({required this.at, required this.bounds, required this.lines});
-
-  final Offset at;
-  final Size bounds;
-  final List<String> lines;
-
-  @override
-  Widget build(BuildContext context) {
-    if (lines.isEmpty) return const SizedBox.shrink();
-    final theme = ShadTheme.of(context);
-    const maxW = 220.0;
-    final left = math.max(0.0, math.min(at.dx + 12, bounds.width - maxW));
-    final top = math.max(0.0, at.dy + 16);
-    return Positioned(
-      left: left,
-      top: top,
-      child: IgnorePointer(
-        child: Container(
-          key: const ValueKey<String>('sheets.chart.tooltip'),
-          constraints: const BoxConstraints(maxWidth: maxW),
-          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
-          decoration: BoxDecoration(
-            color: theme.colorScheme.popover,
-            borderRadius: BorderRadius.circular(6),
-            border: Border.all(color: theme.colorScheme.border),
-            boxShadow: const [
-              BoxShadow(color: Color(0x22000000), blurRadius: 6),
-            ],
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              for (var i = 0; i < lines.length; i++)
-                Text(
-                  lines[i],
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: i == 0
-                      ? theme.textTheme.small.copyWith(
-                          fontWeight: FontWeight.w600,
-                          color: theme.colorScheme.popoverForeground,
-                        )
-                      : theme.textTheme.small.copyWith(
-                          color: theme.colorScheme.popoverForeground,
-                        ),
+                  lines: chartTooltipLines(
+                    c.data,
+                    c.spec,
+                    hover.tag,
+                    locale: c.editor.locale,
+                  ),
                 ),
             ],
           ),

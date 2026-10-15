@@ -85,7 +85,8 @@ void main() {
     'slides.view.zoom', 'slides.view.zoomIn', 'slides.view.zoomOut',
     'slides.view.zoomToSelection', 'shell.comments.togglePanel',
     'slides.panel.layers', 'slides.panel.themes',
-    'slides.panel.accessibility', 'shell.ai.togglePanel',
+    'slides.panel.accessibility', 'slides.panel.linkedObjects',
+    'shell.ai.togglePanel',
     'slides.panel.animate', 'shell.appearance.setTheme',
     'slides.mode.editing', 'slides.mode.viewing',
     // Insert
@@ -188,6 +189,16 @@ void main() {
           id,
     };
     expect(offered.difference(ids), isEmpty);
+    // SL-28 shipped masters mode, layout editing and the theme editor.
+    expect(SlidesFeatures.isOn(SlidesFeature.masters), isTrue);
+    expect(
+      ids,
+      containsAll(['slides.theme.edit', 'slides.layout.insertPlaceholder']),
+    );
+    expect([
+      for (final c in items)
+        if (c.commandId == 'slides.view.setMode') c.args['mode'],
+    ], contains('masters'));
     expect({
       for (final c in items)
         if (!SlidesFeatures.offers(c.commandId, c.args) ||
@@ -239,7 +250,7 @@ void main() {
     );
     expect(navigator['checked'], isTrue);
     // No placeholder is offered: unbuilt features are hidden (SL-23).
-    expect(d.services.registry.byId('slides.chart.copyAsImage'), isNull);
+    expect(d.services.registry.byId('slides.insert.chart'), isNull);
     expect([
       for (final c in d.services.registry.all)
         if (c is SlidesCommand && c.placeholder) c.id.value,
@@ -300,7 +311,7 @@ void main() {
     late DeckHarness on;
 
     setUp(() {
-      SlidesFeatures.enabled = {SlidesFeature.charts};
+      SlidesFeatures.enabled = {SlidesFeature.nativeCharts};
       on = DeckHarness.open();
     });
     tearDown(() {
@@ -312,10 +323,10 @@ void main() {
         'disabled with the reason, and still name their work package', (
       tester,
     ) async {
-      final st = on.services.dispatcher.stateOf('slides.chart.copyAsImage');
+      final st = on.services.dispatcher.stateOf('slides.insert.chart');
       expect(st.enabled, isFalse);
       expect(st.disabledReason, slidesL10nEnglish.reasonNotAvailableYet);
-      final c = on.services.registry.byId('slides.chart.copyAsImage');
+      final c = on.services.registry.byId('slides.insert.chart');
       expect((c! as SlidesCommand).owner, contains('SL-32'));
       // Other hidden features stay out.
       expect(on.services.registry.byId('slides.code.edit'), isNull);

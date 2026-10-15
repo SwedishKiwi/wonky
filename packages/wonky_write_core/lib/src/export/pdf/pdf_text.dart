@@ -304,15 +304,28 @@ final class PdfLineBreaker {
     double firstLineIndent = 0,
   }) {
     final width = maxWidth <= 1 ? 1.0 : maxWidth;
-    // Tokens: (text, style, isSpace, isBreak).
-    final tokens = <(String, PdfRunStyle, bool, bool)>[];
+    // Tokens: (segments, isSpace, isBreak); a word is one segment per run
+    // it spans. In code, a word continues across runs (syntax tokens), so
+    // long lines wrap at the same places whatever the highlighting (SL-35);
+    // elsewhere every run starts a new word, as before.
+    final tokens = <(List<(String, PdfRunStyle)>, bool, bool)>[];
+    var joinable = false;
     for (final (text, style) in runs) {
       final parts = text.split(softBreak);
       for (var p = 0; p < parts.length; p++) {
-        if (p > 0) tokens.add(('', style, false, true));
+        if (p > 0) {
+          tokens.add((const [], false, true));
+          joinable = false;
+        }
         for (final m in RegExp(r'\s+|[^\s]+').allMatches(parts[p])) {
           final t = m.group(0)!;
-          tokens.add((t, style, t.trim().isEmpty, false));
+          final isSpace = t.trim().isEmpty;
+          if (code && !isSpace && joinable && m.start == 0) {
+            tokens.last.$1.add((t, style));
+          } else {
+            tokens.add(([(t, style)], isSpace, false));
+          }
+          joinable = !isSpace && m.end == parts[p].length;
         }
       }
     }
@@ -369,12 +382,13 @@ final class PdfLineBreaker {
       }
     }
 
-    for (final (text, style, isSpace, isBreak) in tokens) {
+    for (final (segments, isSpace, isBreak) in tokens) {
       if (isBreak) {
         finish(last: true);
         continue;
       }
       if (isSpace) {
+        final (text, style) = segments.single;
         if (current.isEmpty && !code && lines.isNotEmpty) continue;
         final w = measure(text, style);
         if (x + w > width && code) {
@@ -391,11 +405,17 @@ final class PdfLineBreaker {
         addPieces(text, style, true);
         continue;
       }
-      final w = measure(text, style);
+      final style = segments.first.$2;
+      var w = 0.0;
+      for (final (text, s) in segments) {
+        w += measure(text, s);
+      }
       final indent = lines.isEmpty ? firstLineIndent : 0.0;
       if (x + w <= width - indent || current.isEmpty && w <= width - indent) {
         if (x + w > width - indent) finish(last: false);
-        addPieces(text, style, false);
+        for (final (text, s) in segments) {
+          addPieces(text, s, false);
+        }
         continue;
       }
       if (current.isNotEmpty && w <= width) {
@@ -403,26 +423,30 @@ final class PdfLineBreaker {
         if (code && continuationMarker != null) {
           addPieces('$continuationMarker ', style, false);
         }
-        addPieces(text, style, false);
+        for (final (text, s) in segments) {
+          addPieces(text, s, false);
+        }
         continue;
       }
       // Break the word by characters.
-      var chunk = StringBuffer();
-      for (final rune in text.runes) {
-        final ch = String.fromCharCode(rune);
-        final cw = measure('$chunk$ch', style);
-        if (x + cw > width && (chunk.isNotEmpty || current.isNotEmpty)) {
-          if (chunk.isNotEmpty) addPieces(chunk.toString(), style, false);
-          finish(last: false);
-          if (code && continuationMarker != null) {
-            addPieces('$continuationMarker ', style, false);
+      for (final (text, style) in segments) {
+        var chunk = StringBuffer();
+        for (final rune in text.runes) {
+          final ch = String.fromCharCode(rune);
+          final cw = measure('$chunk$ch', style);
+          if (x + cw > width && (chunk.isNotEmpty || current.isNotEmpty)) {
+            if (chunk.isNotEmpty) addPieces(chunk.toString(), style, false);
+            finish(last: false);
+            if (code && continuationMarker != null) {
+              addPieces('$continuationMarker ', style, false);
+            }
+            chunk = StringBuffer(ch);
+          } else {
+            chunk.write(ch);
           }
-          chunk = StringBuffer(ch);
-        } else {
-          chunk.write(ch);
         }
+        if (chunk.isNotEmpty) addPieces(chunk.toString(), style, false);
       }
-      if (chunk.isNotEmpty) addPieces(chunk.toString(), style, false);
     }
     finish(last: true);
     return lines;

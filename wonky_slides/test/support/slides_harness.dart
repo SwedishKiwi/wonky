@@ -17,12 +17,15 @@ CommandTestHarness slidesHarness({
   String initialLocation = '/',
   StorageController? storage,
   PresenceRepository? presence,
+  CommentRepository? comments,
+  VersionRepository? versions,
 }) {
   const config = SlidesAppConfig();
   final h = CommandTestHarness(
     config: config,
     storage: storage,
-    comments: QuietCommentRepository(),
+    versions: versions,
+    comments: comments ?? QuietCommentRepository(),
     presence: presence ?? QuietPresenceRepository(),
   );
   h.services.router = GoRouter(

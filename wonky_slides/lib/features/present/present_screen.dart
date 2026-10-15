@@ -7,6 +7,9 @@ import 'package:shad/shad.dart';
 import 'package:wonky_app/wonky_app.dart';
 import 'package:wonky_client/wonky_client.dart'
     show PresentationRole, UuidValue;
+import 'package:wonky_charts_flutter/wonky_charts_flutter.dart'
+    show Chart3DBackends;
+import 'package:wonky_slides_core/scene.dart' show ScenePurpose;
 import 'package:wonky_ui/wonky_ui.dart';
 
 import '../../commands/slides_command.dart'
@@ -26,6 +29,7 @@ import 'present_stage.dart';
 import 'presentation_link.dart';
 import 'presenter_view.dart';
 import 'slide_picker.dart';
+import 'tools/kiosk_exit.dart';
 
 /// The present route `/slides/p/:uuid/present` (Slides 10 §1.1) over the
 /// deck editor, which stays mounted underneath (its session, selection and
@@ -56,6 +60,7 @@ class PresentScreen extends StatefulWidget {
     this.startStep = 0,
     this.sessionId,
     this.share = false,
+    this.kiosk = false,
     this.nowMs,
   });
 
@@ -73,6 +78,9 @@ class PresentScreen extends StatefulWidget {
   /// `?share=1`: the presenter view opens *Open on another device…* once
   /// the session is ready.
   final bool share;
+
+  /// `?kiosk=1`: self-running kiosk mode (10 §9).
+  final bool kiosk;
 
   /// Clock (tests).
   final int Function()? nowMs;
@@ -103,6 +111,10 @@ class _PresentScreenState extends State<PresentScreen>
   bool _shared = false;
   bool _askingTakeover = false;
   bool _pickerWasOpen = false;
+  late final KioskExitGesture _kioskExit = KioskExitGesture(
+    onExit: () => _controller?.end(),
+    nowMs: widget.nowMs,
+  );
 
   ShellServices get s => widget.services;
 
@@ -159,6 +171,7 @@ class _PresentScreenState extends State<PresentScreen>
     }
     c?.dispose();
     link?.dispose();
+    _kioskExit.dispose();
     final ed = _editor;
     final r = _renderer;
     if (ed != null && r != null) DeckThumbnails.release(ed, r);
@@ -216,8 +229,11 @@ class _PresentScreenState extends State<PresentScreen>
           .presenterInt(SlidesUserDefaults.keyNotesSize)
           .clamp(12, 48),
       reducedMotion: WonkyThemeScope.of(context).reduceMotion,
+      scenesOf: (id) => _renderer?.scene(id, purpose: ScenePurpose.present),
+      kiosk: widget.kiosk,
     );
     c.onEnd = _leave;
+    c.onPrefetch3dChart = Chart3DBackends.ensureStarted;
     c.addListener(_onController);
     _controller = c;
     _link = link;
@@ -439,6 +455,17 @@ class _PresentScreenState extends State<PresentScreen>
     final c = _controller;
     if (c == null) return KeyEventResult.ignored;
     final k = event.logicalKey;
+    if (c.kiosk) {
+      // Kiosk: only the exit gesture (10 §9).
+      if (k == LogicalKeyboardKey.escape) {
+        if (event is KeyDownEvent) {
+          _kioskExit.down(hold: c.settings.kioskExitGesture == 'holdEsc');
+        } else if (event is KeyUpEvent) {
+          _kioskExit.cancel();
+        }
+      }
+      return KeyEventResult.handled;
+    }
     final kb = HardwareKeyboard.instance;
     final mod = kb.isMetaPressed || kb.isControlPressed;
     if (k == LogicalKeyboardKey.metaLeft ||
@@ -608,7 +635,7 @@ class _PresentScreenState extends State<PresentScreen>
                 !link.presenterConnected);
         return LayoutBuilder(
           builder: (context, box) => MouseRegion(
-            cursor: _idle && c.tool == PresentTool.arrow
+            cursor: (_idle || c.kiosk) && c.tool == PresentTool.arrow
                 ? SystemMouseCursors.none
                 : MouseCursor.defer,
             onHover: (e) => _onHover(e, box.biggest),
@@ -622,10 +649,23 @@ class _PresentScreenState extends State<PresentScreen>
                       key: const ValueKey<String>('slides.present.stage'),
                       controller: c,
                       renderer: r,
-                      onSecondaryTap: _openContextMenu,
+                      onSecondaryTap: c.kiosk ? null : _openContextMenu,
+                      interactive: !c.kiosk,
                       reduceMotion: reduceMotion || c.settings.reduceMotion,
                     ),
                   ),
+                  if (c.kiosk)
+                    Positioned(
+                      left: 0,
+                      right: 0,
+                      bottom: 48,
+                      child: Center(
+                        child: KioskExitRing(
+                          gesture: _kioskExit,
+                          label: l.presentKioskExitHold,
+                        ),
+                      ),
+                    ),
                   if (c.position == null && !c.catchingUp && !c.endScreen)
                     Positioned.fill(
                       child: Center(
@@ -671,9 +711,9 @@ class _PresentScreenState extends State<PresentScreen>
                     child: Align(
                       alignment: Alignment.bottomLeft,
                       child: IgnorePointer(
-                        ignoring: !_toolbar,
+                        ignoring: !_toolbar || c.kiosk,
                         child: AnimatedOpacity(
-                          opacity: _toolbar ? 1 : 0,
+                          opacity: _toolbar && !c.kiosk ? 1 : 0,
                           duration: reduceMotion
                               ? Duration.zero
                               : const Duration(milliseconds: 150),

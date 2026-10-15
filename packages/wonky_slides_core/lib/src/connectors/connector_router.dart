@@ -115,7 +115,9 @@ final class LineData {
   final LineEndpoint start;
   final LineEndpoint end;
 
-  /// Elbow/curved adjustments (normalized in the frame).
+  /// Elbow/curved adjustments (normalized in the frame): elbow routes run
+  /// orthogonally through them; a curved route bends through the first
+  /// (its midpoint, SL-44).
   final List<(double, double)> waypoints;
 }
 
@@ -227,6 +229,7 @@ abstract final class ConnectorRouter {
         eDir,
         sBox != null,
         eBox != null,
+        bend: wps.isEmpty ? null : wps.first,
       ),
       LineRouting.elbow => _elbow(s, e, sDir, eDir, sBox, eBox, wps),
     };
@@ -331,14 +334,22 @@ abstract final class ConnectorRouter {
     );
   }
 
+  /// The middle of curve [points] (start, c1, c2, end) at t = 0.5 — where
+  /// a curved connector's bend handle sits (03 §6.4).
+  static SuPoint curveMidpoint(List<SuPoint> points) => (
+    x: (points[0].x + 3 * points[1].x + 3 * points[2].x + points[3].x) / 8,
+    y: (points[0].y + 3 * points[1].y + 3 * points[2].y + points[3].y) / 8,
+  );
+
   static ConnectorRoute _curved(
     SuPoint s,
     SuPoint e,
     SuPoint? sDir,
     SuPoint? eDir,
     bool sg,
-    bool eg,
-  ) {
+    bool eg, {
+    SuPoint? bend,
+  }) {
     final dist = math.sqrt(math.pow(e.x - s.x, 2) + math.pow(e.y - s.y, 2));
     final k = math.max(dist * 0.4, clearance);
     final dx = e.x - s.x, dy = e.y - s.y;
@@ -353,8 +364,16 @@ abstract final class ConnectorRouter {
         (horizontal
             ? (x: dx.sign == 0 ? -1.0 : -dx.sign, y: 0.0)
             : (x: 0.0, y: dy.sign == 0 ? -1.0 : -dy.sign));
-    final c1 = (x: s.x + sd.x * k, y: s.y + sd.y * k);
-    final c2 = (x: e.x + ed.x * k, y: e.y + ed.y * k);
+    var c1 = (x: s.x + sd.x * k, y: s.y + sd.y * k);
+    var c2 = (x: e.x + ed.x * k, y: e.y + ed.y * k);
+    if (bend != null) {
+      // A user bend (the first waypoint): both control points shift so the
+      // curve passes through it at t = 0.5 (B(½) moves by ¾ of the shift).
+      final m = curveMidpoint([s, c1, c2, e]);
+      final dx = (bend.x - m.x) * 4 / 3, dy = (bend.y - m.y) * 4 / 3;
+      c1 = (x: c1.x + dx, y: c1.y + dy);
+      c2 = (x: c2.x + dx, y: c2.y + dy);
+    }
     return ConnectorRoute(
       points: [s, c1, c2, e],
       path: ScenePath(

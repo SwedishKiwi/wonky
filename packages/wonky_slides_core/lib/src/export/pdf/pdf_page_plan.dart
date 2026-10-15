@@ -57,7 +57,8 @@ final class SlidesPdfSlide {
   final SlideOrderEntry entry;
 
   /// The timeline steps printed: `[null]` = one page (print or final
-  /// frame); `[0, 1, …]` = one page per build step (06 §9.6).
+  /// frame); `[0, 1, …]` = one page per build step (06 §9.6) — the steps
+  /// whose settled frame differs from the previous step's (SL-33).
   final List<int?> steps;
 
   String get slideId => entry.id;
@@ -278,11 +279,15 @@ final class SlidesPdfGeometry {
 abstract final class SlidesPdfPlanner {
   /// The slides of [deck] that [options] export, with their steps.
   /// [stepCounts] gives the number of build steps of a slide (the
-  /// timeline's `stepCount`; null = no builds).
+  /// timeline's `stepCount`; null = no builds); [buildSteps], when given,
+  /// the steps to print of a slide with builds as pages instead of every
+  /// step `0…stepCount` (the exporter drops steps that look like the one
+  /// before, 06 §9.6).
   static SlidesPdfSelection select(
     DeckModel deck,
     SlidesPdfOptions options, {
     int Function(String slideId)? stepCounts,
+    List<int> Function(String slideId)? buildSteps,
   }) {
     final order = deck.indexes.order;
     final warnings = <String>[];
@@ -314,9 +319,11 @@ abstract final class SlidesPdfPlanner {
         if (explicit || options.includeSkipped || !e.skipped)
           SlidesPdfSlide(
             entry: e,
-            steps: builds
-                ? [for (var i = 0; i <= (stepCounts?.call(e.id) ?? 0); i++) i]
-                : const [null],
+            steps: !builds
+                ? const [null]
+                : buildSteps != null
+                ? buildSteps(e.id)
+                : [for (var i = 0; i <= (stepCounts?.call(e.id) ?? 0); i++) i],
           ),
     ];
     if (slides.isEmpty) warnings.add('empty_selection');

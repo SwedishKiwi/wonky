@@ -194,6 +194,20 @@ sheetsVersion:
   - changes:
   - diff:
   - copyExtras:
+slidesAi:
+  - proposeOutline:
+  - buildDeck:
+  - rewrite:
+  - writeNotes:
+  - describeElements:
+  - rankDesigns:
+  - getPreview:
+  - applyPreview:
+  - discardPreview:
+slidesCharts:
+  - listCharts:
+  - resolveSnapshot:
+  - checkLinks:
 slides:
   - reserveSpaces:
   - subscribe:
@@ -212,6 +226,9 @@ presentation:
   - findSession:
 slidesThemes:
   - list:
+slidesVersion:
+  - changes:
+  - makeCopy:
 document:
   - connect:
   - getInfo:

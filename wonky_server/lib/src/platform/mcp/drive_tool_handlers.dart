@@ -9,6 +9,7 @@ import 'package:wonky_write_core/wonky_write_core.dart' as core;
 import '../config/wonky_config.dart';
 import '../../sheets/exports/sheets_export_service.dart';
 import '../../sheets/imports/sheets_import_service.dart';
+import '../../slides/mcp/slides_media_handlers.dart';
 import '../../write/export/write_export_service.dart';
 import '../../write/export/write_import_service.dart';
 import '../../write/mcp/headless_editor.dart';
@@ -500,10 +501,8 @@ abstract final class DriveToolHandlers {
           'Folders cannot be exported.',
         );
       case DriveItemKind.presentation:
-        throw McpToolException(
-          McpErrorCode.unsupported,
-          'Exporting presentations is not available yet.',
-        );
+        // (SL-40) pdf as slides.export_pdf, md = the outline Markdown.
+        return SlidesMediaHandlers.driveExport(ctx, uuid, format);
       case DriveItemKind.document:
       case DriveItemKind.spreadsheet:
         break;

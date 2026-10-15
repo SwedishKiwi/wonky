@@ -27,6 +27,9 @@ final class CodeRenderStyle {
     this.boxBorder,
     this.borderWidth = 1,
     this.barColorOverride,
+    this.calloutColor,
+    this.calloutTextColor,
+    this.calloutFontFamily,
   });
 
   final SyntaxPalette palette;
@@ -53,6 +56,30 @@ final class CodeRenderStyle {
 
   /// The element's `highlightStyle.barColor` (ARGB), or null = palette.
   final int? barColorOverride;
+
+  /// Callout bubble color (the deck theme's accent, 07 §4.4; ARGB), or
+  /// null = the palette's caret color (SL-31).
+  final int? calloutColor;
+
+  /// Callout text color on [calloutColor] (ARGB), or null = contrasting
+  /// black or white (SL-31).
+  final int? calloutTextColor;
+
+  /// Callout font family (the deck's body font), or null = the code font
+  /// (SL-31).
+  final String? calloutFontFamily;
+
+  /// The callout bubble color (ARGB).
+  int get calloutFill => calloutColor ?? palette.caret;
+
+  /// The callout text color (ARGB): [calloutTextColor] or black/white,
+  /// whichever contrasts more with [calloutFill].
+  int get calloutInk =>
+      calloutTextColor ??
+      (SyntaxPalette.contrastRatio(calloutFill, 0xff000000) >=
+              SyntaxPalette.contrastRatio(calloutFill, 0xffffffff)
+          ? 0xff000000
+          : 0xffffffff);
 
   /// Box background (ARGB).
   int get background => boxBackground ?? palette.background;
@@ -880,6 +907,9 @@ final class CodeSceneComposer {
       dy: c.dy,
       opacity: opacity,
       rise: rise,
+      color: style.calloutFill,
+      textColor: style.calloutInk,
+      fontFamily: style.calloutFontFamily ?? style.fontFamily,
     );
   }
 

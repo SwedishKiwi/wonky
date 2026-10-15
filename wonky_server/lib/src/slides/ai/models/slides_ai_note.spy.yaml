@@ -1,0 +1,7 @@
+### Proposed speaker notes of one slide (Slides 11 §6.7).
+class: SlidesAiNote
+fields:
+  slideId: String
+  markdown: String
+  ### The slide's notes when the proposal was made (Markdown).
+  existing: String?

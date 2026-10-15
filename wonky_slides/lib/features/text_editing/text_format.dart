@@ -68,14 +68,16 @@ List<BodyParagraph> paragraphsOf(String? json) {
 
 /// The list of a paragraph with [block] attributes in a box whose text
 /// defaults are [defaults] (`TextParagraphs`: an explicit `list`, else the
-/// box default unless the paragraph names a style or `listStyle: none`).
+/// box default unless the paragraph names a style or `listStyle: none` —
+/// on the paragraph or as a box default).
 String? effectiveList(
   Map<String, Object?> block,
   Map<String, Object?> defaults,
 ) {
   final explicit = block['list'] as String?;
   if (explicit != null) return explicit;
-  if (block['style'] != null || block['listStyle'] == 'none') return null;
+  if (block['style'] != null) return null;
+  if ((block['listStyle'] ?? defaults['listStyle']) == 'none') return null;
   return defaults['list'] as String?;
 }
 
@@ -181,7 +183,7 @@ class TextFormatScope {
   /// locked elements and bodies someone else edits.
   static TextFormatScope of(DeckEditorController ed) {
     final host = textEditingOf(ed);
-    final slideId = ed.currentSlideId;
+    final slideId = ed.surfaceId;
     final slide = slideId == null ? null : ed.resolver.resolve(slideId);
     if (slide == null) return const TextFormatScope([]);
     final els = SlideElements.of(slide);

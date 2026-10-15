@@ -1,10 +1,12 @@
 import 'package:flutter/foundation.dart' show defaultTargetPlatform;
+import 'package:flutter/gestures.dart' show kSecondaryMouseButton;
 import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
 import 'package:shad/shad.dart';
 import 'package:super_editor/super_editor.dart';
 import 'package:wonky_app/wonky_app.dart';
 import 'package:wonky_core/wonky_core.dart';
+import 'package:wonky_ui/wonky_ui.dart' show WonkyMenuEntry, WonkyPopupMenuHost;
 import 'package:wonky_slides_core/model.dart' show SlidesText;
 
 import '../collab/presence_widgets.dart' show NotesLockBanner;
@@ -14,6 +16,7 @@ import '../../commands/navigator_commands.dart' show notesZoomOf;
 import '../../commands/slides_command.dart' show SlidesKeyScopes;
 import '../../l10n/slides_l10n.dart';
 import '../editor_screen/deck_editor_controller.dart';
+import '../text_editing/slide_text_editor.dart' show SlideTextEditAddon;
 import 'notes_edit_controller.dart';
 import 'notes_view.dart';
 
@@ -29,6 +32,26 @@ import 'notes_view.dart';
 /// one undo step per burst. Esc returns to the canvas. Viewers and
 /// commenters see the notes read-only.
 class NotesPane extends StatefulWidget {
+  /// The entries of a right-click at notes position [position] (SL-44:
+  /// spelling suggestions of the word under the pointer); no menu when
+  /// empty. Set by the spelling feature.
+  static List<WonkyMenuEntry> Function(
+    DeckEditorController editor,
+    NotesEditController edit,
+    DocumentPosition position,
+  )?
+  contextMenuEntries;
+
+  /// Additions to every notes editing session (SL-44: spelling
+  /// squiggles), registered by other features; each may return null.
+  static final List<
+    SlideTextEditAddon? Function(
+      DeckEditorController editor,
+      NotesEditController edit,
+    )
+  >
+  addonFactories = [];
+
   const NotesPane({
     super.key,
     required this.services,
@@ -49,6 +72,7 @@ class NotesPane extends StatefulWidget {
 class _NotesPaneState extends State<NotesPane> {
   NotesEditController? _edit;
   final _editorFocus = FocusNode(debugLabel: 'slides.notes.editor');
+  final _layoutKey = GlobalKey(debugLabel: 'slides.notes.layout');
   final _scroll = ScrollController();
 
   DeckEditorController get ed => widget.editor;
@@ -115,6 +139,10 @@ class _NotesPaneState extends State<NotesPane> {
       undo: widget.services.undo,
       undoLabel: l.cmdEditNotes,
     );
+    for (final f in NotesPane.addonFactories) {
+      final a = f(ed, edit);
+      if (a != null) edit.addons.add(a);
+    }
     setState(() => _edit = edit);
     locks.claimTarget(
       target,
@@ -317,9 +345,43 @@ class _NotesPaneState extends State<NotesPane> {
     );
     return KeyedSubtree(
       key: const ValueKey<String>('slides.notes.text'),
+      child: Listener(
+        onPointerDown: (e) {
+          if (e.buttons & kSecondaryMouseButton != 0) _contextMenu(edit, e);
+        },
+        child: _superEditor(edit, stylesheet, theme),
+      ),
+    );
+  }
+
+  /// A right-click on the notes being edited: the spelling menu of the
+  /// word under the pointer (SL-44), if any.
+  void _contextMenu(NotesEditController edit, PointerDownEvent e) {
+    final entries = NotesPane.contextMenuEntries;
+    final layout = _layoutKey.currentState;
+    if (entries == null || layout is! DocumentLayout) return;
+    final doc = layout as DocumentLayout;
+    final pos = doc.getDocumentPositionNearestToOffset(
+      doc.getDocumentOffsetFromAncestorOffset(e.position),
+    );
+    if (pos == null) return;
+    final list = entries(ed, edit, pos);
+    if (list.isEmpty) return;
+    WonkyPopupMenuHost.maybeOf(context)?.show(e.position, () => list);
+  }
+
+  Widget _superEditor(
+    NotesEditController edit,
+    Stylesheet stylesheet,
+    ShadThemeData theme,
+  ) {
+    return KeyedSubtree(
+      key: const ValueKey<String>('slides.notes.superEditor'),
       child: SuperEditor(
         key: ValueKey<String>('slides.notes.editor.${edit.slideId}'),
         editor: edit.editor,
+        documentLayoutKey: _layoutKey,
+        customStylePhases: [for (final a in edit.addons) ?a.stylePhase],
         focusNode: _editorFocus,
         inputSource: TextInputSource.ime,
         gestureMode: DocumentGestureMode.mouse,

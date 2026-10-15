@@ -47,8 +47,14 @@ final class TextMateTokenizer implements CodeTokenizer {
       for (final span in SpanParser.parse(grammar, code)) {
         final token = ScopeClassifier.tokenFor(span.scopes);
         if (token == null) continue;
-        final start = span.start.clamp(0, code.length);
+        var start = span.start.clamp(0, code.length);
         final end = span.end.clamp(0, code.length);
+        // The contract (sorted, disjoint) holds even if a capture is still
+        // misplaced (SH-7 locates captures by search): exporters write each
+        // token's text, so an overlap would duplicate code.
+        if (tokens.isNotEmpty && start < tokens.last.end) {
+          start = tokens.last.end;
+        }
         if (end <= start) continue;
         if (tokens.isNotEmpty) {
           final last = tokens.last;

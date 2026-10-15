@@ -62,7 +62,48 @@ void main() {
     }
   });
 
+  // SH-7: the name's text also occurs in the keyword before it; it was
+  // scoped at that first occurrence (overlapping tokens, `functionfunction`
+  // in HTML exports).
+  group('Given a name whose text also occurs earlier in its match', () {
+    for (final (language, code, keyword, name, expected) in _captureCases) {
+      test('when tokenizing $language "$code" then "$keyword" is a keyword '
+          'and "$name" is ${expected.name}', () {
+        final tokens = tokenizer.tokenize(code, language);
+
+        final at = code.lastIndexOf(name);
+        expect(tokens, contains(CodeToken(at, at + name.length, expected)));
+        expect(
+          tokens,
+          contains(
+            CodeToken(
+              code.indexOf(keyword),
+              code.indexOf(keyword) + keyword.length,
+              SyntaxToken.keyword,
+            ),
+          ),
+        );
+      });
+    }
+  });
+
   test('when the code is empty then there are no tokens', () {
     expect(tokenizer.tokenize('', 'dart'), isEmpty);
   });
 }
+
+/// `(language, code, keyword, name, expected)` for SH-7.
+const _captureCases = <(String, String, String, String, SyntaxToken)>[
+  ('javascript', 'function f() {}', 'function', 'f', SyntaxToken.function),
+  (
+    'typescript',
+    'function f(): void {}',
+    'function',
+    'f',
+    SyntaxToken.function,
+  ),
+  ('python', 'def f(): pass', 'def', 'f', SyntaxToken.function),
+  ('python', 'def e(): pass', 'def', 'e', SyntaxToken.function),
+  ('swift', 'func f() {}', 'func', 'f', SyntaxToken.function),
+  ('rust', 'fn f() {}', 'fn', 'f', SyntaxToken.function),
+];

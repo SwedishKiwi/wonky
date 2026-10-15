@@ -152,8 +152,8 @@ The Present button needs an app slot in the shell title row
 | — | | | | | |
 | Share ▸ Share with others / Copy link | `shell.sharing.open` / `shell.sharing.copyLink` | — | — | view | shell |
 | Download ▸ PDF document (.pdf) | `slides.file.download {format: pdf}` → print/PDF preview | — | — | canDownload | 10 |
-| Download ▸ PNG image (current slide) | `slides.file.download {format: png}` | — | — | canDownload | 10 (P1) |
-| Download ▸ PNG images (all slides, .zip) | `slides.file.download {format: pngZip}` | — | — | canDownload | 10 (P2) |
+| Download ▸ PNG image (current slide)… | `slides.file.download {format: png}` | — | — | canDownload | 10 §13 (P1; built, SL-33: opens the PNG dialog) |
+| Download ▸ PNG images (all slides, .zip)… | `slides.file.download {format: pngZip}` | — | — | canDownload | 10 §13 (P2; built, SL-33: the PNG dialog with all slides) |
 | Download ▸ Outline as Markdown (.md) | `slides.file.download {format: markdown}` | — | — | canDownload | §10 (P2) |
 | — | | | | | |
 | Rename | `shell.drive.rename` | — | — | edit | shell |
@@ -725,6 +725,13 @@ order position ("3 of 7", *Edit order…* → Layers › Reading order).
 Hosts the Animate UI of [06 §5](06-animations-and-transitions.md) (Transition / Build / Order
 sub-tabs, effect grid, timing, Order list, Preview). Viewers see it read-only.
 
+**As built (SL-30).** `features/inspector/animate/` (06 §5.7): the sub-tabs are ghost buttons under
+the inspector tabs (`slides.panel.animate {tab}`), with the *Reduce motion* banner above the body;
+every control runs a command. Inspector › Arrange gains the *Magic Move ID* field
+(`slides.element.setMatchKey`). Settings › *Animations & code* › *Animations* lists every
+transition but Magic Move and the build-in effects for any object; the default transition applies
+to blank presentations. Shown only while `SlidesFeature.animations` is on.
+
 ### 7.4 Slide tab
 
 | Section | Controls | Commands |
@@ -792,6 +799,37 @@ Multi-selected slides in the navigator: Slide tab edits apply to all (one step).
   if the layout has one).
 - Copy from the outline gives Markdown (`#` titles, bullets); *Download ▸ Outline as Markdown*
   (P2) exports the same.
+
+**As built (SL-34).** `features/outline_view/` (`OutlineView`), feature `outlineView`:
+- Lines: one field per title and per body paragraph (`ShadInput`); the "first body placeholder"
+  falls back to the **subtitle** on title slides. Inline bold/italic/underline/strike are drawn
+  and kept: an edit diffs the line's text (common prefix/suffix), so untouched runs keep all their
+  attributes and typed text takes the attributes before it. Typed line breaks become soft breaks.
+- Writes: typing goes through `slides.outline.setTitle {slideId, text}` /
+  `slides.outline.setBody {slideId, delta}` 500 ms after the last key with `typing: true`,
+  coalesced per slide (one undo step per burst); pending typing is flushed into the next
+  structural command's step and before undo/redo. A slide without a title instance gets one from
+  its layout on the first edit (`InsertElements` + `ResetPlaceholders`, frame inherited).
+- Keys (scope `slidesOutline`; each a command that also takes `slideId`/`index`/`offset`, index
+  -1 = title): Enter `slides.outline.newSlideAfter` (title; the text after the caret moves to the
+  new slide's title) / `slides.outline.newLine` (bullet split); ⌘Enter
+  `slides.outline.focusBody`; Tab / Shift+Tab `slides.outline.indent` / `outdent` — Shift+Tab on
+  a level-0 bullet **promotes** it (built, was P2: the bullets after it move along, its
+  sub-bullets one level up), Tab on a title **demotes** the slide into the previous slide's
+  bullets (only when it holds nothing but title and bullets and has no notes); Alt+Shift+↑/↓
+  `slides.outline.moveUp`/`moveDown` (bullets in their body; slides via `slides.slide.move`);
+  Backspace at a line start `slides.outline.joinLine` (joins a bullet onto the one above, deletes
+  an empty slide); ⌘G `slides.outline.groupSlides` (`slides.group.create` on the selected slides);
+  ↑/↓ cross lines at the first/last visual line; ⌘Z/⇧⌘Z run the deck's undo.
+- Copy: `slides.outline.copyMarkdown` (top-bar button) copies the whole outline (`#` titles, `-`
+  bullets indented two spaces per level, groups as `<!-- Group -->` comments) and returns it to
+  MCP; a selection spanning several lines can't be copied as one (each line is a field).
+  *Download ▸ Outline as Markdown* (P2) is not built.
+- Groups: chevron = the navigator's collapse state (`slides.group.toggleCollapsed`), title renamed
+  by double-click (`slides.group.rename`); empty groups are not listed. The focused slide is the
+  current slide; slide numbers select (Shift/Mod extend the navigator selection). Collaborators
+  editing a title or body (their soft-lock claim) show a 3 px caret bar in their color; outline
+  typing itself doesn't claim a soft lock yet. Viewers see read-only lines.
 
 ---
 
@@ -1046,6 +1084,22 @@ Built as the Slides app's settings sections (`WonkyAppConfig.settingsSections`),
   management*, *Education*). Template cards of presentations are slide-shaped (16:9); Slides
   renders the first slide of each built-in (`WonkyAppConfig.templatePreview`), other apps and
   published templates show a title-slide miniature in the theme's colors.
+  *As built (SL-36, 9 of 9 + Blank = 10):* Quarterly review (Classic: key figures that build
+  in, two chart-layout slides with **sample chart snapshots** in the chart placeholders — one
+  growing by series, one 3D with a *Rotate to angle* camera build — KPI table, priorities that
+  dim; *Relink…* turns a sample into a linked spreadsheet chart, which is how the template's
+  "linked-chart placeholders" work: a template can't link to a spreadsheet the user doesn't
+  have), Tech talk (Midnight: a callback pyramid **typed** into async/await with highlight steps
+  and callouts, an error-handling walkthrough, a stream pipeline that **Magic Moves** (token
+  morph) between two slides, cube transitions between parts), Product launch (Studio: title and
+  statement that build in, a device that Magic Moves aside to reveal features, cards that pop
+  in, a pricing table that wipes in, a launch timeline drawn on, flip and doorway transitions)
+  and Portfolio (Paper: project covers — colored shapes standing in for screenshots — that
+  Magic Move into project pages, revolve into the closing slide; no images, so no upload or
+  quota on creation). Gallery order follows the strip above. Every template carries its own
+  deck default transition (fade, push for Product launch), the user's *Default transition*
+  setting applies to blank decks only (06 §5.7). Categories: Quarterly review and Product
+  launch *Work*, Tech talk *Education* (Engineering, as SL-22), Portfolio *Personal*.
 - **Thumbnails**: client-generated after an editing session (route exit or every 10 min of
   editing, editors only): the first non-skipped slide rendered by `SlideStage` at 320 × 180
   (aspect-fitted), light app theme irrelevant (deck appearance), uploaded via the files endpoint
@@ -1278,7 +1332,8 @@ built (Slides 12 SL-16).
 - **Grid view.** Sections laid out by `GridLayout` (pure), virtualized by the scroll offset;
   the size slider (120–480 px) is clamped to the view's width; ↑/↓ move to the nearest item of
   the previous/next line, ←/→ along the order; double-click/Enter opens Normal view.
-- **Deviations.** No comment/presence/build badges yet (SL-38/SL-21/SL-30), no notes soft lock
+- **Deviations.** No build badges yet (SL-30; comment badges: SL-38, at the bottom left of the
+  thumbnail — 09 §3.7; presence dots: SL-21), no notes soft lock
   (SL-21) — `TODO.md`. (File re-homing on cross-deck paste, the system clipboard and the
   paste options chip: SL-18, 03 §12 "As built (SL-18)".)
 - **Text (SL-13).** The Format › Text, Text style, Align & indent, Line & paragraph spacing,

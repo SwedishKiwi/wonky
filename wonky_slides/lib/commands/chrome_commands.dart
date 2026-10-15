@@ -29,6 +29,12 @@ List<Command<CommandArgs>> chromeCommands(ShellServices s) => [
               if (DeckEditorController.offersMode(m)) m.name,
           ],
         ),
+        'layoutId': const JsonSchema.string(
+          description: 'masters: the layout to edit (05 §8.1)',
+        ),
+        'masterId': const JsonSchema.string(
+          description: 'masters: the master to edit',
+        ),
       },
       required: const ['mode'],
     ),
@@ -43,7 +49,10 @@ List<Command<CommandArgs>> chromeCommands(ShellServices s) => [
     run: (ctx, ed, a) {
       final mode = DeckViewMode.fromName(a.string('mode'));
       if (mode == null) return const CommandResult.failed('Unknown mode');
-      ed.setMode(mode);
+      ed.setMode(
+        mode,
+        masterTarget: a.string('layoutId') ?? a.string('masterId'),
+      );
       return ok();
     },
   ),
@@ -193,8 +202,10 @@ List<Command<CommandArgs>> chromeCommands(ShellServices s) => [
         'tab': JsonSchema.string(
           enumValues: [
             for (final t in InspectorTab.values)
-              if (t != InspectorTab.animate ||
-                  SlidesFeatures.isOn(SlidesFeature.animations))
+              if ((t != InspectorTab.animate ||
+                      SlidesFeatures.isOn(SlidesFeature.animations)) &&
+                  (t != InspectorTab.theme ||
+                      SlidesFeatures.isOn(SlidesFeature.masters)))
                 t.name,
           ],
         ),

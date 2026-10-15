@@ -1,10 +1,12 @@
 import 'package:wonky_slides_core/interfaces.dart' show DeckChangeLogEntry;
 import 'package:wonky_sync_models/tables.dart' show SlidesSyncedTables;
 
+import '../platform/comments/comment_service.dart';
 import '../platform/common/models.dart';
 import '../platform/storage/content_sizes.dart';
 import 'changelog/deck_activity.dart';
 import 'changelog/deck_change_log_processor.dart';
+import 'changelog/deck_comment_orphans.dart';
 import 'changelog/deck_drive_mirror.dart';
 
 /// The Slides runtime pieces of the server (Slides 12 §4 SL-5): the deck
@@ -22,6 +24,10 @@ abstract final class SlidesServer {
     DeckChangeLogProcessor.register(DeckDriveMirror());
     DeckChangeLogProcessor.register(DeckActivity());
     DeckChangeLogProcessor.register(DeckStorageSize());
+    // Comment orphaning and notification extras (SL-38, 09 §3.2, §3.6).
+    DeckChangeLogProcessor.register(DeckCommentOrphans());
+    CommentService.payloadExtras[DriveItemKind.presentation] =
+        DeckCommentPayload.extras;
   }
 }
 

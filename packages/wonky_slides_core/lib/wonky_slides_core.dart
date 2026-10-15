@@ -8,6 +8,7 @@ library;
 export 'clipboard.dart';
 export 'code.dart';
 export 'copy.dart';
+export 'history.dart';
 export 'icons.dart';
 export 'interfaces.dart';
 export 'maintenance.dart';

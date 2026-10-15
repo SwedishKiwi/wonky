@@ -187,7 +187,7 @@ wonky_sheets          → wonky_app, wonky_ui, wonky_sheets_core, wonky_sheets_s
                         wonky_sync_models, serverpod_offline_sync_client, serverpod_database (the local replica
                         and sync client of 12 §2), wonky_charts_flutter (v2), wonky_sync_kit + wonky_sync_kit_flutter (v2)
                         (charts: the shared engine in wonky_charts + Sheets data resolution in wonky_sheets_core — Sheets 08 §24)
-wonky_slides          → (v2) wonky_app, wonky_ui, wonky_slides_core, wonky_sync_kit, wonky_sync_kit_flutter, wonky_charts_flutter,
+wonky_slides          → (v2) wonky_app, wonky_ui, wonky_slides_core, wonky_sync_kit, wonky_sync_kit_flutter, wonky_charts + wonky_charts_flutter,
                         wonky_code_flutter, wonky_rich_text, wonky_fonts, super_editor (vendored; text boxes, Slides 03 §6.1),
                         super_clipboard, printing, file_saver, file_picker, flutter_scene, vector_math, wonky_sync_models,
                         serverpod_offline_sync_client, serverpod_database (Slides 01 §7)
@@ -229,9 +229,13 @@ this keeps the 12 MB of dictionaries out of the server upload); its former
 TTFs and dictionaries are Flutter assets declared by the pure-Dart packages (`flutter: assets:`
 in their pubspec; Flutter bundles assets of every dependency, keys
 `packages/wonky_fonts/fonts/…`, `packages/wonky_spellcheck/dictionaries/…`). The shell exposes the
-glue as separate libraries, `package:wonky_app/spellcheck.dart` and `package:wonky_app/emoji.dart`
-(emoji data in `packages/wonky_app/assets/emoji/`), plus `showAnchoredPopoverAt` in the main
-library.
+glue as separate libraries, `package:wonky_app/spellcheck.dart` (with the shared
+`PersonalDictionary`), `package:wonky_app/emoji.dart` (emoji data in
+`packages/wonky_app/assets/emoji/`) and `package:wonky_app/special_chars.dart` (the special
+characters dialog, moved from Write by Slides SL-44; Unicode names in
+`packages/wonky_app/assets/unicode/`), plus `showAnchoredPopoverAt` in the main library. Their
+strings are in the shell's ARB files; each app passes its own widget-key prefix (`SpellingKeys`,
+`EmojiPickerKeys`, `SpecialCharsKeys`: `write` by default, `slides`).
 
 **What the script checks** (only `dependencies:`, not `dev_dependencies:`; imports in `lib/` and
 `bin/`; `third_party/*` are external packages and are not checked):
@@ -295,6 +299,8 @@ library.
 | `wonky_sheets` | `http` | Fetching XLSX images and URL imports (Sheets 11 §2) |
 | `wonky_sheets` | `pdf` | Client PDF export and print preview (Sheets 11 §7) |
 | `wonky_sheets` | `archive` | Recovery export of a replica that can't be opened: its unsynced spreadsheets (read by `wonky_sync_kit_flutter`) zipped as XLSX + JSON (suite 12 §2.5) |
+| `wonky_charts` | `archive` | (v2) gzip of large chart snapshot columns (`gz:`, Slides 08 §3.3, SL-27); already resolved through `image` |
+| `wonky_slides_core` | `archive` | (v2) gzip NDJSON deck version snapshots, one codec for server and client (`SlidesSnapshotCodec`, Slides 09 §4.1, SL-39); already resolved through `image` |
 | `wonky_charts_flutter` | `flutter_scene`, `vector_math` | (v2) GPU backend of 3D charts (Sheets 08 §23.7); moved out of `wonky_sheets` by the extraction (Drive 05 D-3) |
 | `wonky_sync_kit_flutter` | `wonky_app`, `wonky_ui`, `wonky_client` | (v2) Connectivity/`LocalStore`, `SyncStatus` and the generated sync client: a Flutter leaf below the app families, extracted from `wonky_sheets/lib/features/sync` |
 | `wonky_sync_kit_flutter` | `wonky_core`, `path_provider`, `sqlite3` | (v2) Roles and id generators; the desktop location of replica files; the read-only recovery read of a replica that can't be opened (suite 12 §2.5) — moved out of `wonky_sheets` with the replica (Drive 05 D-6) |

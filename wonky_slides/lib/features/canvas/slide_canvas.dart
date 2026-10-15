@@ -224,6 +224,8 @@ class _SlideCanvasState extends State<SlideCanvas> {
     if (text.isEditing && e.buttons & kMiddleMouseButton == 0) {
       if (text.hits(su)) {
         if (e.buttons & kSecondaryMouseButton != 0) {
+          // The word under the pointer gets the caret (spelling, SL-44).
+          text.prepareContextMenu(su);
           widget.onContextMenu?.call('context.text', e.position);
         } else if (!text.hitsText(su)) {
           text.placeCaretAt(su);
@@ -1056,7 +1058,9 @@ class _SlideCanvasState extends State<SlideCanvas> {
                   offSlideOpacity: 0.4,
                   drawPrompts: !ed.viewMode,
                   placeholderBorder: tokens.placeholderBorder,
-                  semanticLabel: entry == null
+                  semanticLabel: ed.editsMasters
+                      ? _surfaceLabel(l)
+                      : entry == null
                       ? null
                       : l.canvasSlideSemantics(
                           entry.index + 1,
@@ -1120,6 +1124,16 @@ class _SlideCanvasState extends State<SlideCanvas> {
       out = i.sceneFor(out);
     }
     return out;
+  }
+
+  /// "Layout Title and content" / "Master Wonky" (masters mode, SL-28).
+  String? _surfaceLabel(SlidesLocalizations l) {
+    final s = c.slide;
+    if (s == null) return null;
+    final layout = s.layout;
+    return layout != null
+        ? l.mastersLayoutSemantics(layout.name)
+        : l.mastersMasterSemantics(s.master?.name ?? '');
   }
 
   String _slideTitle(SlideScene scene) {

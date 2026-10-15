@@ -9,7 +9,7 @@ import 'package:wonky_ui/wonky_ui.dart';
 import '../data/api.dart';
 import '../drive/drive_format.dart';
 import '../l10n/wonky_app_localizations.dart';
-import '../shell/dialogs.dart' show activityText;
+import '../shell/dialogs.dart' show activityDetail, activityText;
 import '../shell/shell_services.dart';
 
 /// Stable keys of the activity feed (specs/15 §7).
@@ -164,6 +164,13 @@ class _ActivityFeedState extends State<ActivityFeed> {
                             fontWeight: FontWeight.normal,
                           ),
                         ),
+                        if (activityDetail(l, e) case final detail?)
+                          Text(
+                            detail,
+                            style: theme.textTheme.muted.copyWith(
+                              fontSize: 12,
+                            ),
+                          ),
                         ShadTooltip(
                           builder: (_) => Text(full.format(e.at.toLocal())),
                           child: Text(

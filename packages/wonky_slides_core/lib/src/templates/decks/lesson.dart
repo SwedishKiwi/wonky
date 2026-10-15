@@ -1,3 +1,4 @@
+import '../../motion/builds/transition_spec.dart';
 import '../../theme/model/common.dart';
 import '../slides_template.dart';
 import '../template_builder.dart';
@@ -13,6 +14,7 @@ final SlidesTemplate lessonTemplate = SlidesTemplate(
   description: 'Teach one topic in parts, with goals, questions and homework.',
   category: 'education',
   themeKey: 'botanical',
+  defaultTransition: TransitionSpec.of('fade'),
   subtitle: 'How plants turn light into food',
   script: (b) {
     b.slide(

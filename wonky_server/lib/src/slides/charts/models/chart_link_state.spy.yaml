@@ -1,0 +1,20 @@
+### The status of a linked chart's source (Slides 08 §5.2, §13 `checkLinks`).
+enum: ChartLinkState
+serialized: byName
+values:
+  ### The snapshot shows the current chart.
+  - upToDate
+  ### The chart's data or style changed since the snapshot.
+  - changed
+  ### The caller can't open the spreadsheet (no data or title is returned).
+  - noAccess
+  ### The caller is a viewer and the owner doesn't allow copying data.
+  - exportDisabled
+  ### The chart was deleted in Sheets.
+  - chartDeleted
+  ### The spreadsheet is in the trash.
+  - spreadsheetTrashed
+  ### The spreadsheet was deleted forever.
+  - spreadsheetDeleted
+  ### The chart was made with a newer version of Wonky Sheets.
+  - unsupportedSpec

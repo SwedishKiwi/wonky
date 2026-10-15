@@ -714,7 +714,7 @@ Shapes may hold text (`text`, `textStyleJson`, default `anchor: "middle"`, `alig
   "routing":"straight",            // straight | elbow | curved
   "start": { "x":0, "y":0, "connect": { "elementId":"<b62>", "site":"right" } },   // site: top|right|bottom|left|center|<n> (geometry site index)
   "end":   { "x":1, "y":1, "connect": null },
-  "waypoints": [],                 // elbow/curved user adjustments, normalized 0..1 in the frame
+  "waypoints": [],                 // elbow: corners the route runs through; curved: [bend point] (SL-44); normalized in the frame
   "label": null }                  // P2: text on the line
 ```
 
@@ -1059,7 +1059,7 @@ headless and UI edits are identical.
 | Slides | `AddSlides(layoutId, after, count, inGroup?)`, `DuplicateSlides`, `DeleteSlides`, `MoveSlides(ids, target: TopLevel(before/after) \| InGroup(groupId, before/after))`, `SetSlideProps` (skip, background, layout + placeholder remap, transition, notes, hideMasterElements), `ResetSlideToLayout` |
 | Groups | `CreateGroup(slideIds, title, color, target?)` (target: top-level position; required for an empty group — SL-16), `Ungroup(groupId)`, `MoveGroups(ids, before/after)`, `SetGroupProps` (title, color, skipped), `DeleteGroups(ids, withSlides)`, `DuplicateGroups` |
 | Clipboard | `PasteSlides(payload, target, themeMode: keepSource \| useDestination)`, `PasteElements(payload, slideId, at?)` |
-| Elements | `InsertElements`, `UpdateFrames` (move/resize/rotate/flip; names exactly the frame columns it changes), `SetElementProps` (fill, stroke, effects, opacity, locked, hidden, name, alt text, link, matchKey, readingKey), `DeleteElements`, `ReorderZ(op)`, `AlignDistribute`, `GroupElements`, `UngroupElements`, `ReplaceImage`, `SetElementData` (kind payload) |
+| Elements | `InsertElements`, `UpdateFrames` (move/resize/rotate/flip; names exactly the frame columns it changes), `SetElementProps` (fill, stroke, effects, opacity, locked, hidden, name, alt text, link, matchKey, readingKey), `DeleteElements`, `ReorderZ(op)`, `MoveElementsZ` (Layers drag: in front of / behind a sibling or into a group, re-parenting; SL-34), `SetReadingOrder(owner, ids)` (custom reading order, SL-34), `AlignDistribute`, `GroupElements`, `UngroupElements`, `ReplaceImage`, `SetElementData` (kind payload) |
 | Text | `SetText(target, delta)` (whole body), `FormatText(targets, attrs, range?)`, `SetTextBoxStyle` |
 | Tables | `InsertTableAxes`, `DeleteTableAxes`, `MoveTableAxes`, `ResizeTableAxes`, `SetCells(text/format)`, `MergeCells`, `UnmergeCells`, `SetTableOptions` |
 | Builds | `AddBuilds`, `UpdateBuilds`, `MoveBuilds`, `DeleteBuilds` (details 06) |

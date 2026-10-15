@@ -1,0 +1,10 @@
+### The outcome of applying an AI result on the server (preview calls):
+### the change of the one undo step and what the skip rule kept.
+class: SlidesAiApplyResult
+fields:
+  changeId: String?
+  ### The undo label ("AI: Apply 3 suggestions").
+  label: String
+  appliedCalls: int
+  ### Values others changed since the preview, kept as they are.
+  skipped: int

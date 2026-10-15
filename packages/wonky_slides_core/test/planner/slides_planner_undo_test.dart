@@ -130,6 +130,14 @@ List<(String, SlidesOperation)> _cases(PlannerFixture f, DeckModel m) {
       ),
     ),
     (
+      'paste elements on a master (SL-28)',
+      PasteElements(
+        clipboardOf(m, kind: 'elements', elementIds: [f.shape, f.grp]),
+        f.masterId,
+        ownerKind: ElementOwnerKind.master,
+      ),
+    ),
+    (
       'paste elements at a point',
       PasteElements(
         clipboardOf(
@@ -429,7 +437,22 @@ List<(String, SlidesOperation)> _cases(PlannerFixture f, DeckModel m) {
         'hidden': true,
       }),
     ),
+    (
+      'move a layout (SL-28)',
+      UpdateMasterOrLayout(f.layout('quote'), const {'sortKey': 'a0V'}),
+    ),
     ('delete an unused layout', DeleteMastersOrLayouts([f.layout('quote')])),
+    // Layers and reading order (SL-34).
+    (
+      'move an object into an element group',
+      MoveElementsZ([f.shape2], intoGroupId: f.grp),
+    ),
+    (
+      'move an object out of its group in front of a shape',
+      MoveElementsZ([f.child1], aboveId: f.shape),
+    ),
+    ('reorder objects', MoveElementsZ([f.text], belowId: f.shape)),
+    ('set a reading order', SetReadingOrder(f.s3, [f.text, f.shape])),
     // Cells by id.
     (
       'clear a cell by write',
@@ -501,6 +524,8 @@ void main() {
           'SetElementProps',
           'DeleteElements',
           'ReorderZ',
+          'MoveElementsZ',
+          'SetReadingOrder',
           'AlignDistribute',
           'GroupElements',
           'UngroupElements',

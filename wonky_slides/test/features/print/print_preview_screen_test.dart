@@ -7,6 +7,7 @@ import 'package:wonky_slides/l10n/slides_l10n.dart';
 import 'package:wonky_slides_core/interfaces.dart';
 import 'package:wonky_ui/testing.dart';
 
+import '../../support/deck_screen.dart' show sampleDeck;
 import 'print_rig.dart';
 
 /// The print / PDF preview route (Slides 10 §12; SL-20).
@@ -81,6 +82,46 @@ void main() {
     await r.settle(tester, () => r.controller.pageCount == 4);
 
     expect(find.text(l.printPageCount(4)), findsOneWidget);
+    await settleTooltips(tester);
+    await r.close(tester);
+  });
+
+  testWidgets('Given a slide with two click builds when Print each build '
+      'stage is checked then the slide prints one page per step and the '
+      'final-state option hides', (tester) async {
+    final f = sampleDeck();
+    final slide = f.slide(layoutKey: 'blank');
+    for (final x in [100.0, 700.0]) {
+      f.build_(slide, f.shape(slide, x: x));
+    }
+    final r = await pumpPrintPreview(tester, fixture: f);
+    expect(find.text(l.printPageCount(4)), findsOneWidget);
+    expect(key('slides.print.finalState'), findsOneWidget);
+
+    await tester.tap(key('slides.print.builds'));
+    await tester.pump();
+    await r.settle(tester, () => r.controller.pageCount == 6);
+
+    expect(r.controller.options.includeBuilds, isTrue);
+    expect(find.text(l.printPageCount(6)), findsOneWidget);
+    expect(key('slides.print.finalState'), findsNothing);
+    await settleTooltips(tester);
+    await r.close(tester);
+  });
+
+  testWidgets('Given the preview when Show final animation state is checked '
+      'then the option is set and the PDF regenerates', (tester) async {
+    final r = await pumpPrintPreview(tester);
+
+    await tester.tap(key('slides.print.finalState'));
+    await tester.pump();
+    await r.settle(
+      tester,
+      () => !r.controller.busy && r.controller.options.finalAnimationState,
+    );
+
+    expect(r.controller.options.finalAnimationState, isTrue);
+    expect(find.text(l.printPageCount(3)), findsOneWidget);
     await settleTooltips(tester);
     await r.close(tester);
   });

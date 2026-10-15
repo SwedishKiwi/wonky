@@ -24,12 +24,12 @@ void main() {
   tearDown(() => h.dispose());
 
   test('Given the Slides app config when its settings are listed then the '
-      'sections are presentations, editing and presenting (Animations & code '
-      'is hidden until SL-30/SL-31)', () {
+      'sections are presentations, editing, animations & code (the Code '
+      'group since SL-31) and presenting', () {
     final sections = const SlidesAppConfig().appSettingsSections(h.services);
     expect(
       [for (final s in sections) s.id],
-      ['presentations', 'editing', 'presenting'],
+      ['presentations', 'editing', 'animations', 'presenting'],
     );
   });
 
@@ -89,10 +89,16 @@ void main() {
       l.settingsAutoformatLists,
       l.settingsUnits,
       l.settingsScrollChangesSlides,
-      l.settingsSpelling,
     ]) {
       expect(find.text(hidden), findsNothing, reason: hidden);
     }
+    // Spelling ships with SL-44: *Underline spelling errors*.
+    expect(find.text(l.settingsSpelling), findsOneWidget);
+    await tester.tap(
+      find.byKey(const ValueKey<String>('settings.slides.underlineSpelling')),
+    );
+    await tester.pumpAndSettle();
+    expect(d.flag(SlidesUserDefaults.keyUnderlineSpelling), isFalse);
     await settleTooltips(tester);
   });
 
@@ -126,12 +132,18 @@ void main() {
         '${h.services.registry.byId('slides.prefs.set')!.argsSchema.toJson()}';
     expect(schema, contains(SlidesUserDefaults.keySmartGuides));
     expect(schema, contains(SlidesUserDefaults.keyDefaultThemeKey));
+    // Code blocks ship with SL-31; key clicks while typing (P2) don't.
+    expect(schema, contains(SlidesUserDefaults.keyCodeFontSize));
+    // Linked charts ship with SL-32.
+    expect(schema, contains(SlidesUserDefaults.keyChartsAutoUpdate));
+    // Animations ship with SL-29 + SL-30.
+    expect(schema, contains(SlidesUserDefaults.keyDefaultTransition));
+    // Spelling and the presentation language ship with SL-44.
+    expect(schema, contains(SlidesUserDefaults.keyUnderlineSpelling));
+    expect(schema, contains(SlidesUserDefaults.keyDefaultLanguage));
     for (final hidden in [
       SlidesUserDefaults.keySmartQuotes,
-      SlidesUserDefaults.keyCodeFontSize,
-      SlidesUserDefaults.keyDefaultTransition,
-      SlidesUserDefaults.keyChartsAutoUpdate,
-      SlidesUserDefaults.keyUnderlineSpelling,
+      SlidesUserDefaults.keyTypeInSound,
     ]) {
       expect(schema, isNot(contains(hidden)), reason: hidden);
       expect(offersDefaultsKey(hidden), isFalse, reason: hidden);

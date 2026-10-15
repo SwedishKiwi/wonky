@@ -82,6 +82,9 @@ class _NotificationsButtonState extends State<NotificationsButton> {
       // Spreadsheets open the comment's cell (Sheets 10 §3.4).
       DriveItemKind.spreadsheet =>
         '/s/${uuid.uuid}${thread == null ? '' : '?comment=$thread'}',
+      // (v2) Decks open the comment's slide and element (Slides 09 §3.4).
+      DriveItemKind.presentation =>
+        '/p/${uuid.uuid}${thread == null ? '' : '?comment=$thread'}',
       DriveItemKind.folder => '/f/${uuid.uuid}',
       _ => '/d/${uuid.uuid}',
     };

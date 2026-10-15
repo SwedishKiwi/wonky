@@ -128,8 +128,13 @@ final class PlaceholderDef {
   /// Paragraph alignment.
   final String? align;
 
-  /// Default list kind (`bullet`, `ordered`).
+  /// Default list kind (`bullet`, `ordered`; [noList] turns the master
+  /// placeholder's list off; null = inherited).
   final String? list;
+
+  /// [list] value of a body placeholder without a list (written as the box
+  /// default `listStyle: none`, 02 §4.2).
+  static const noList = 'none';
 
   /// Paragraph space after (su).
   final double? spaceAfter;
@@ -361,7 +366,8 @@ abstract final class BuiltInLayouts {
       _body(
         'body',
         const SuRect(240, 280, 1440, 520),
-        list: null,
+        // A sentence, not a list: turns the master body's bullets off.
+        list: PlaceholderDef.noList,
         style: 'heading',
       ).copyWith(
         align: 'center',

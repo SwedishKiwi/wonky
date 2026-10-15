@@ -81,6 +81,7 @@ extension _ClonePart on _Planner {
   Map<String, String> copyContent(
     _CopySet set, {
     required String targetSlideId,
+    ElementOwnerKind targetKind = ElementOwnerKind.slide,
     required String? sourceSlideId,
     required bool keepMatchKeys,
     Map<String, String> topZ = const {},
@@ -123,9 +124,10 @@ extension _ClonePart on _Planner {
       insertElement({
         ..._known(SlidesTables.slideElement, e),
         SlidesCols.id: ids[old],
-        SlidesCols.slideId: targetSlideId,
+        SlidesCols.slideId: null,
         ElementCols.layoutId: null,
         ElementCols.masterId: null,
+        _Planner.ownerColumn(targetKind): targetSlideId,
         SlidesCols.parentId: top ? null : ids[parent],
         if (top && topZ.containsKey(old)) ElementCols.zKey: topZ[old],
         if (top && (dx != 0 || dy != 0)) ...{
@@ -190,6 +192,8 @@ extension _ClonePart on _Planner {
         SlidesCols.createdAt: ctx.now,
       });
     }
+    // Layouts and masters have no builds (SL-28).
+    if (targetKind != ElementOwnerKind.slide) return ids;
     // Builds whose element isn't copied are dropped (03 §12.3).
     final existing = OrderKeys.sorted([
       for (final bd in deck.buildsOf(targetSlideId)) (bd.sortKey, bd.id),
@@ -319,6 +323,8 @@ extension _ClonePart on _Planner {
     final (groupId, keys) = keysAt(pasteTarget, slots.length);
     final out = <String>[];
     final newGroups = <String>[];
+    final slideMap = <String, String>{};
+    final elementMap = <String, String>{};
     for (final (i, slot) in slots.indexed) {
       final isGroup = groups.any((g) => identical(g, slot));
       if (isGroup) {
@@ -343,7 +349,18 @@ extension _ClonePart on _Planner {
         ];
         final inner = OrderKeys.between(null, null, members.length);
         for (final (k, s) in members.indexed) {
-          out.add(_pasteSlide(s, set, gid, inner[k], sameDeck, layoutMap));
+          out.add(
+            _pasteSlide(
+              s,
+              set,
+              gid,
+              inner[k],
+              sameDeck,
+              layoutMap,
+              slideMap,
+              elementMap,
+            ),
+          );
         }
       } else {
         out.add(
@@ -354,12 +371,18 @@ extension _ClonePart on _Planner {
             keys[i],
             sameDeck,
             layoutMap,
+            slideMap,
+            elementMap,
           ),
         );
       }
     }
     result['slideIds'] = out;
     if (newGroups.isNotEmpty) result['groupIds'] = newGroups;
+    // Old → new ids of the pasted slides and their elements (comments
+    // re-anchor to them after a cut, Slides 09 §3.2).
+    result['slideIdMap'] = slideMap;
+    result['elementIdMap'] = elementMap;
     return plural(out.length, 'Paste slide', 'Paste slides');
   }
 
@@ -377,6 +400,8 @@ extension _ClonePart on _Planner {
     String sortKey,
     bool sameDeck,
     Map<String, String?> layoutMap,
+    Map<String, String> slideMap,
+    Map<String, String> elementMap,
   ) {
     final old = s[SlidesCols.id]! as String;
     final oldLayout = s[SlideCols.layoutId] as String?;
@@ -422,6 +447,8 @@ extension _ClonePart on _Planner {
       sourceSlideId: old,
       keepMatchKeys: true,
     );
+    slideMap[old] = id;
+    elementMap.addAll(ids);
     // Instances must point at placeholders of the new layout.
     if (layoutId != null) {
       final targets = ix.placeholders.placeholdersOf(layoutId);
@@ -503,10 +530,14 @@ extension _ClonePart on _Planner {
   String pasteElements(PasteElements op) {
     final p = op.payload;
     _checkPayload(p, const {'elements'});
-    final slide = slideOf(op.slideId);
+    final ownerId = switch (op.ownerKind) {
+      ElementOwnerKind.slide => slideOf(op.slideId).id,
+      ElementOwnerKind.layout => layoutOf(op.slideId).id,
+      ElementOwnerKind.master => masterOf(op.slideId).id,
+    };
     final set = _payloadSet(p);
     if (set.elements.isEmpty) invalid('The clipboard holds no objects');
-    checkElementLimit(slide.id, set.elements.length);
+    checkElementLimit(ownerId, set.elements.length);
     final oldIds = {for (final e in set.elements) e[SlidesCols.id]};
     final tops =
         [
@@ -521,7 +552,7 @@ extension _ClonePart on _Planner {
           ),
         );
     final sameSlide =
-        p['sourceSlideId'] == slide.id && p['sourceDeckId'] == deck.deckId;
+        p['sourceSlideId'] == ownerId && p['sourceDeckId'] == deck.deckId;
     // Position: [at] = top-left of the pasted bounds; else same position,
     // +32 su on the source slide (03 §12.3).
     final rects = [
@@ -545,7 +576,7 @@ extension _ClonePart on _Planner {
     } else if (sameSlide) {
       dx = dy = 32;
     }
-    final z = zItems(slide.id, null);
+    final z = zItems(ownerId, null);
     final keys = OrderKeys.at(z, z.length, tops.length);
     final topZ = {
       for (final (i, e) in tops.indexed) '${e[SlidesCols.id]}': keys[i],
@@ -567,7 +598,8 @@ extension _ClonePart on _Planner {
         codeStates: set.codeStates,
         chartLinks: set.chartLinks,
       ),
-      targetSlideId: slide.id,
+      targetSlideId: ownerId,
+      targetKind: op.ownerKind,
       sourceSlideId: null,
       keepMatchKeys: !sameSlide,
       topZ: topZ,
@@ -576,6 +608,9 @@ extension _ClonePart on _Planner {
       keepPlaceholders: false,
     );
     result['elementIds'] = [for (final e in tops) ids['${e[SlidesCols.id]}']];
+    // Old → new ids of every pasted element (comments re-anchor to them
+    // after a cut, Slides 09 §3.2).
+    result['elementIdMap'] = ids;
     return 'Paste';
   }
 

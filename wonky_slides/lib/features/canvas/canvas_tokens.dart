@@ -96,4 +96,9 @@ class CanvasTokens {
   /// `slidesTableSelection`: the fill of a selected table cell range
   /// (03 §6.6, SL-15).
   final Color tableSelection;
+
+  /// `spellingError`: the squiggles under misspelled words on the canvas
+  /// (03 §14, SL-44) — a red that reads on light and dark slides.
+  Color get spellingError =>
+      dark ? const Color(0xFFF87171) : const Color(0xFFDC2626);
 }

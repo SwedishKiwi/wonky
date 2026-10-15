@@ -7,11 +7,15 @@ import 'package:wonky_core/wonky_core.dart';
 import 'package:wonky_slides_core/session.dart' show SlidesRowsUndoHandler;
 import 'package:wonky_ui/wonky_ui.dart' show SyncStatus;
 
+import '../elements/code/code_blocks.dart';
 import '../../l10n/slides_l10n.dart';
 import '../canvas/slide_canvas_controller.dart' show selectionOf;
 import '../collab/slides_collab.dart';
+import '../comments/slides_comments.dart';
 import '../navigator/navigator_controller.dart' show navigatorOf;
+import '../outline_view/outline_controller.dart' show outlineOf;
 import '../text_editing/text_editing_host.dart' show textEditingOf;
+import '../undo/server_change_undo.dart';
 import 'deck_editor_controller.dart';
 
 /// The shell's view of an open presentation (suite 03 §5, Slides 04 §2):
@@ -68,8 +72,12 @@ class DeckDocumentController extends DocumentController {
   @override
   bool get isLoaded => _editor != null;
 
+  /// The `slides.serverChange` handler (AI runs, restores; SL-43).
+  late final SlidesServerChangeHandler serverChanges =
+      SlidesServerChangeHandler(services);
+
   @override
-  List<UndoHandler<UndoEntry>> get undoHandlers => [undo];
+  List<UndoHandler<UndoEntry>> get undoHandlers => [undo, serverChanges];
 
   /// Attaches the editor of the opened deck.
   void attach(DeckEditorController editor) {
@@ -81,6 +89,13 @@ class DeckDocumentController extends DocumentController {
   }
 
   // ---- Collaboration (09 §1–§2; SL-21) ----
+
+  /// The Slides comment anchors (09 §3; SL-38).
+  @override
+  CommentAnchorProvider? get commentAnchors {
+    final ed = _editor;
+    return ed == null ? null : SlidesComments.of(ed);
+  }
 
   PresenceSession? _presence;
 
@@ -188,13 +203,21 @@ class DeckDocumentController extends DocumentController {
   @override
   Future<void> beforeUndo() async {
     final ed = _editor;
-    if (ed != null) textEditingOf(ed).commit();
+    if (ed != null) {
+      textEditingOf(ed).commit();
+      CodeBlockView.maybeOf(ed)?.commitEdit();
+      await outlineOf(ed).commitTyping();
+    }
   }
 
   @override
   Future<void> beforeRedo() async {
     final ed = _editor;
-    if (ed != null) textEditingOf(ed).commit();
+    if (ed != null) {
+      textEditingOf(ed).commit();
+      CodeBlockView.maybeOf(ed)?.commitEdit();
+      await outlineOf(ed).commitTyping();
+    }
   }
 
   // ---- View ----
@@ -222,7 +245,11 @@ class DeckDocumentController extends DocumentController {
   Map<String, Object?> describeState() {
     final ed = _editor;
     if (ed == null) return const {'loading': true};
-    return {...ed.describeState(), ...?SlidesCollab.of(ed)?.describeState()};
+    return {
+      ...ed.describeState(),
+      ...?SlidesCollab.of(ed)?.describeState(),
+      ...?SlidesComments.of(ed)?.describeState(),
+    };
   }
 
   @override

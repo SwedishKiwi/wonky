@@ -76,6 +76,8 @@ final class _Planner {
     UpdateMasterOrLayout() => updateMasterOrLayout(op),
     DeleteMastersOrLayouts() => deleteMastersOrLayouts(op),
     RepairDeck() => repairDeck(op),
+    MoveElementsZ() => moveElementsZ(op),
+    SetReadingOrder() => setReadingOrder(op),
   };
 
   // ---------------------------------------------------------------------------

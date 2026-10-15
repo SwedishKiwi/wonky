@@ -8,7 +8,8 @@ import 'package:wonky_slides_core/ops.dart';
 import 'package:wonky_slides_core/scene.dart' show TextBody;
 
 import '../model/deck_session.dart';
-import '../text_editing/slide_text_editor.dart' show recordTypingStep;
+import '../text_editing/slide_text_editor.dart'
+    show SlideTextEditAddon, recordTypingStep;
 import '../text_editing/slides_delta_mapper.dart';
 import '../text_editing/slides_text_reactions.dart';
 
@@ -61,6 +62,11 @@ class NotesEditController extends ChangeNotifier {
   late final MutableDocument document;
   late final MutableDocumentComposer composer;
   late final Editor editor;
+
+  /// Additions of other features (SL-44: spelling squiggles), added by the
+  /// notes pane when editing starts (`NotesPane.addonFactories`) and
+  /// disposed with the controller.
+  final List<SlideTextEditAddon> addons = [];
 
   /// The undo coalescing key of this slide's notes typing.
   String get coalesceKey => 'slides.notes:$slideId';
@@ -333,6 +339,10 @@ class NotesEditController extends ChangeNotifier {
   void dispose() {
     close();
     _timer?.cancel();
+    for (final a in addons) {
+      a.dispose();
+    }
+    addons.clear();
     editor.dispose();
     super.dispose();
   }

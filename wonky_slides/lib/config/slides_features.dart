@@ -20,9 +20,13 @@ enum SlidesFeature {
   /// code core (SL-26) is built and existing code elements render.
   codeBlocks('SL-31'),
 
-  /// Linked Sheets charts and native charts (08; SL-27, SL-32). Existing
-  /// chart elements render as a static placeholder.
+  /// Linked Sheets charts (08; SL-27, SL-32): insert from Sheets, chart
+  /// pastes, updates, the Chart section, 3D camera, Linked charts panel.
   charts('SL-27, SL-32'),
+
+  /// Native charts from a small data table (08 §11, P1): *Insert › Chart ›
+  /// Column / Bar / …* and the chart data panel.
+  nativeCharts('08 §11 (P1)'),
 
   /// Masters and layout editing, the theme editor, placeholder insertion
   /// (05 §8; SL-28).
@@ -37,11 +41,15 @@ enum SlidesFeature {
   /// The accessibility checker (03 §17.4; SL-34).
   accessibilityChecker('SL-34'),
 
-  /// PNG / PNG ZIP export (10 §13; SL-33) and Markdown export (P2).
+  /// PNG / PNG ZIP export (10 §13; SL-33).
   imageExports('SL-33'),
 
-  /// *Print each build stage* (10 §11; SL-33).
+  /// *Print each build stage* and *Show final animation state* (10 §11;
+  /// SL-33).
   printBuilds('SL-33'),
+
+  /// *Download ▸ Outline as Markdown* (04 §10, P2).
+  markdownExport('04 §10 (P2)'),
 
   /// Comments on slides and elements, comment pins (09 §3; SL-38).
   comments('SL-38'),
@@ -79,10 +87,31 @@ enum SlidesFeature {
 
 /// The feature switches of Wonky Slides ([SlidesFeature]).
 abstract final class SlidesFeatures {
-  /// The features that are on. Empty for M9: every [SlidesFeature] is
-  /// hidden. Work packages add their feature here when they ship it;
-  /// tests may switch one on (and restore the set in `tearDown`).
-  static Set<SlidesFeature> enabled = const {};
+  /// The features that ship (on by default): work packages add their
+  /// feature here when they ship it (M10: masters, SL-28; code blocks,
+  /// SL-31; linked charts, SL-32; outline view, Layers panel and
+  /// accessibility checker, SL-34; PNG export and build stages in print,
+  /// SL-33; builds, transitions and Magic Move, SL-29 + SL-30; M11:
+  /// comments, SL-38; version history, SL-39; spelling, presentation
+  /// language and special characters, SL-44).
+  static const Set<SlidesFeature> shipped = {
+    SlidesFeature.animations,
+    SlidesFeature.masters,
+    SlidesFeature.codeBlocks,
+    SlidesFeature.charts,
+    SlidesFeature.outlineView,
+    SlidesFeature.layers,
+    SlidesFeature.accessibilityChecker,
+    SlidesFeature.imageExports,
+    SlidesFeature.printBuilds,
+    SlidesFeature.comments,
+    SlidesFeature.versionHistory,
+    SlidesFeature.spelling,
+  };
+
+  /// The features that are on ([shipped]); tests may switch one on (and
+  /// restore the set with [reset] in `tearDown`).
+  static Set<SlidesFeature> enabled = shipped;
 
   /// Whether [feature] is on.
   static bool isOn(SlidesFeature feature) => enabled.contains(feature);
@@ -114,7 +143,8 @@ abstract final class SlidesFeatures {
         _ => null,
       },
       'slides.file.download' => switch (args['format']) {
-        'png' || 'pngZip' || 'markdown' => SlidesFeature.imageExports,
+        'png' || 'pngZip' => SlidesFeature.imageExports,
+        'markdown' => SlidesFeature.markdownExport,
         _ => null,
       },
       'slides.inspector.open' =>
@@ -180,28 +210,41 @@ abstract final class SlidesFeatures {
   static bool hidesShellCommand(String id) =>
       id.startsWith('shell.') && !registers(id);
 
-  /// Restores the M9 defaults (tests).
+  /// Restores the shipped defaults (tests).
   @visibleForTesting
-  static void reset() => enabled = const {};
+  static void reset() => enabled = shipped;
 
   static const _commandPrefixes = <(String, SlidesFeature)>[
     ('slides.animate.', SlidesFeature.animations),
     ('slides.magicMove.', SlidesFeature.animations),
     ('slides.panel.animate', SlidesFeature.animations),
     ('slides.slide.duplicateForMagicMove', SlidesFeature.animations),
+    ('slides.transition.', SlidesFeature.animations),
+    ('slides.element.setMatchKey', SlidesFeature.animations),
     ('slides.code.', SlidesFeature.codeBlocks),
     ('slides.insert.code', SlidesFeature.codeBlocks),
+    // Native charts (P1) before the `slides.chart.` prefix.
+    ('slides.insert.chart', SlidesFeature.nativeCharts),
+    ('slides.chart.editData', SlidesFeature.nativeCharts),
+    ('slides.chart.setData', SlidesFeature.nativeCharts),
+    ('slides.chart.convertToNative', SlidesFeature.nativeCharts),
     ('slides.chart.', SlidesFeature.charts),
-    ('slides.insert.chart', SlidesFeature.charts),
     ('slides.insert.chartFromSheets', SlidesFeature.charts),
     ('slides.panel.linkedObjects', SlidesFeature.charts),
     ('slides.theme.edit', SlidesFeature.masters),
+    ('slides.theme.update', SlidesFeature.masters),
+    ('slides.theme.deriveDarkColors', SlidesFeature.masters),
+    ('slides.theme.resetToBuiltIn', SlidesFeature.masters),
     ('slides.layout.', SlidesFeature.masters),
+    ('slides.master.', SlidesFeature.masters),
+    ('slides.masters.', SlidesFeature.masters),
     ('slides.panel.layers', SlidesFeature.layers),
     ('slides.panel.accessibility', SlidesFeature.accessibilityChecker),
     ('slides.tools.accessibilityCheck', SlidesFeature.accessibilityChecker),
     ('slides.view.toggleCommentPins', SlidesFeature.comments),
+    ('slides.comments.', SlidesFeature.comments),
     ('slides.history.', SlidesFeature.versionHistory),
+    ('slides.conflicts.', SlidesFeature.versionHistory),
     ('slides.ai.', SlidesFeature.assistant),
     ('slides.present.rehearse', SlidesFeature.remoteAndRehearse),
     ('slides.present.remote', SlidesFeature.remoteAndRehearse),

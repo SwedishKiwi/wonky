@@ -4,11 +4,15 @@ import 'dart:ui' as ui;
 
 import 'package:flutter/painting.dart';
 import 'package:wonky_charts_flutter/wonky_charts_flutter.dart'
-    show paintChartScene;
+    show Chart3DBackends, Chart3DGpuRenderer, paintChartScene;
 import 'package:wonky_slides_core/motion.dart';
 import 'package:wonky_slides_core/scene.dart';
 import 'package:wonky_slides_core/themes.dart';
 
+import '../elements/chart/chart_text.dart';
+import '../elements/code/code_scene_painter.dart';
+import '../motion/render/motion_node_paint.dart';
+import '../motion/render/motion_text_painter.dart';
 import 'flutter_text_layout_engine.dart';
 import 'slide_image_cache.dart';
 
@@ -22,6 +26,8 @@ class ScenePaintOptions {
     this.placeholderBorder = const Color(0x8094a3b8),
     this.promptOpacity = 0.45,
     this.devicePixelRatio = 1,
+    this.gpuCharts = false,
+    this.chartGpu,
   });
 
   /// Element visual states (the edit frame by default).
@@ -41,6 +47,14 @@ class ScenePaintOptions {
 
   /// Device pixels per logical pixel (chart GPU resolution).
   final double devicePixelRatio;
+
+  /// Whether 3D charts may use the GPU backend (live stages; never
+  /// pictures: thumbnails, exports). The first 3D chart starts it (08 §10.1).
+  final bool gpuCharts;
+
+  /// The ready GPU backend of 3D charts (`Chart3DBackends.active` when the
+  /// stage was built), or null: software rendering.
+  final Chart3DGpuRenderer? chartGpu;
 }
 
 /// Paints [SlideScene]s and their nodes on a canvas in slide units (the
@@ -84,23 +98,44 @@ abstract final class SlideScenePainter {
   }
 
   /// Paints one node (and its children) in its parent's coordinates.
+  /// [owner] is the animated state of the element the node belongs to
+  /// (nodes without an element id inherit it: an element's paths and text
+  /// get its parts, colors and line drawing, 06 §12.1).
   static void paintNode(
     Canvas canvas,
     SceneNode node,
-    ScenePaintOptions options,
-  ) {
+    ScenePaintOptions options, {
+    ElementVisualState? owner,
+  }) {
     final id = node.elementId;
-    final state = id == null ? null : options.frame.elements[id];
+    final state = id == null ? owner : options.frame.elements[id];
     if (state != null && !state.visible) return;
     switch (node) {
       case GroupNode():
-        _group(canvas, node, state, options);
+        _group(canvas, node, state, options, own: id != null);
       case PathNode():
-        _pathNode(canvas, node, options);
+        if (state != null && MotionNodePaint.handlesPath(state)) {
+          MotionNodePaint.paintPath(
+            canvas,
+            node,
+            state,
+            fillPath: (c, path, fill, bounds) =>
+                _fillPath(c, path, fill, bounds, options),
+            strokePath: (n) => n.stroke!.dash.isEmpty
+                ? pathOf(n.path)
+                : (_dashed[n] ??= _dash(pathOf(n.path), n.stroke!.dash)),
+          );
+        } else {
+          _pathNode(canvas, node, options);
+        }
       case ImageNode():
         _image(canvas, node, options);
       case TextNode():
-        paintText(canvas, node.layout, node.originX, node.originY);
+        if (state != null && MotionTextPainter.handles(node, state)) {
+          MotionTextPainter.paint(canvas, node, state, paintPlain: paintText);
+        } else {
+          paintText(canvas, node.layout, node.originX, node.originY);
+        }
       case ChartNode():
         _chart(canvas, node, options);
       case CodeNode():
@@ -116,9 +151,13 @@ abstract final class SlideScenePainter {
   static void _group(
     Canvas canvas,
     GroupNode g,
-    ElementVisualState? state,
-    ScenePaintOptions options,
-  ) {
+    ElementVisualState? inherited,
+    ScenePaintOptions options, {
+    required bool own,
+  }) {
+    // Only the element's own group applies its transform, opacity, blur
+    // and mask; nested anonymous groups pass the state on.
+    final state = own ? inherited : null;
     canvas.save();
     if (state != null && !_isIdentity(state.transform.storage)) {
       canvas.transform(state.transform.storage);
@@ -134,9 +173,19 @@ abstract final class SlideScenePainter {
         canvas.clipPath(pathOf(p));
       }
     }
+    // Wipe/iris clips and dissolves of the element (06 §12.1).
+    final mask = state == null ? null : MotionNodePaint.groupMask(g, state);
+    if (mask != null) {
+      if (mask.hidesAll) {
+        canvas.restore();
+        return;
+      }
+      mask.clip(canvas);
+      if (mask.needsLayer) canvas.saveLayer(mask.layerBounds, Paint());
+    }
     void children() {
       for (final c in g.children) {
-        paintNode(canvas, c, options);
+        paintNode(canvas, c, options, owner: inherited);
       }
     }
 
@@ -164,8 +213,12 @@ abstract final class SlideScenePainter {
     final opacity = (g.opacity * (state?.opacity ?? 1))
         .clamp(0.0, 1.0)
         .toDouble();
-    final blur = math.max(g.effects.blurSigma, state?.blurSigma ?? 0);
+    final blur = math.max(
+      g.effects.blurSigma,
+      math.min(state?.blurSigma ?? 0, 40.0),
+    );
     if (opacity <= 0) {
+      if (mask != null && mask.needsLayer) canvas.restore();
       canvas.restore();
       return;
     }
@@ -182,6 +235,10 @@ abstract final class SlideScenePainter {
       canvas.restore();
     } else {
       children();
+    }
+    if (mask != null && mask.needsLayer) {
+      mask.paintMask(canvas);
+      canvas.restore();
     }
     canvas.restore();
   }
@@ -499,82 +556,26 @@ abstract final class SlideScenePainter {
     canvas.translate(n.dst.x, n.dst.y);
     canvas.clipRect(Rect.fromLTWH(0, 0, n.dst.width, n.dst.height));
     canvas.scale(n.dst.width / s.width, n.dst.height / s.height);
-    paintChartScene(canvas, s, pixelRatio: o.devicePixelRatio);
+    final threeD = s.threeD != null;
+    if (threeD && o.gpuCharts) Chart3DBackends.ensureStarted();
+    final gpu = threeD && o.gpuCharts ? o.chartGpu : null;
+    // Physical px per chart px: the GPU target matches the screen.
+    final m = canvas.getTransform();
+    final scale = math.sqrt(m[0] * m[0] + m[1] * m[1]);
+    paintChartScene(
+      canvas,
+      s,
+      text: SlidesChartText.measurer,
+      gpu: gpu,
+      gpuKey: gpu == null ? null : 'slides.chart:${n.elementId}',
+      pixelRatio: o.devicePixelRatio * (scale > 0 ? scale : 1),
+    );
     canvas.restore();
   }
 
-  static final Expando<List<(ui.Paragraph, double, double)>> _codeLines =
-      Expando('codeLines');
-
-  static void _code(Canvas canvas, CodeNode n) {
-    final s = n.scene;
-    canvas.save();
-    canvas.translate(n.dst.x, n.dst.y);
-    final box = Rect.fromLTWH(0, 0, n.dst.width, n.dst.height);
-    final rrect = RRect.fromRectAndRadius(box, Radius.circular(s.cornerRadius));
-    if ((s.background >>> 24) != 0) {
-      canvas.drawRRect(rrect, Paint()..color = Color(s.background));
-    }
-    canvas.clipRRect(rrect);
-    final lines = _codeLines[s] ??= _layoutCode(s);
-    for (final (p, x, y) in lines) {
-      canvas.drawParagraph(p, Offset(x, y));
-    }
-    canvas.restore();
-  }
-
-  static List<(ui.Paragraph, double, double)> _layoutCode(CodeScene s) {
-    ui.Paragraph line(
-      List<CodeRun> runs, {
-      TextAlign align = TextAlign.left,
-      double? width,
-    }) {
-      final b = ui.ParagraphBuilder(
-        ui.ParagraphStyle(textAlign: align, maxLines: 1),
-      );
-      for (final r in runs) {
-        b
-          ..pushStyle(
-            ui.TextStyle(
-              color: Color(r.color),
-              fontFamily: s.fontFamily,
-              fontSize: s.fontSize,
-              fontWeight: r.bold ? FontWeight.w700 : FontWeight.w400,
-              fontStyle: r.italic ? FontStyle.italic : FontStyle.normal,
-              fontFeatures: const [
-                FontFeature.disable('calt'),
-                FontFeature.disable('liga'),
-              ],
-            ),
-          )
-          ..addText(r.text)
-          ..pop();
-      }
-      return b.build()..layout(ui.ParagraphConstraints(width: width ?? 1e6));
-    }
-
-    final out = <(ui.Paragraph, double, double)>[];
-    final top = s.chromeHeight;
-    if (s.title != null && top > 0) {
-      final t = line([CodeRun(s.title!, color: s.titleColor)]);
-      out.add((t, s.codeLeft, (top - t.height) / 2));
-    }
-    for (final l in s.lines) {
-      final p = line(l.runs);
-      final baseline = top + l.y;
-      out.add((p, s.codeLeft, baseline - p.alphabeticBaseline));
-      if (s.numbersRight case final right?) {
-        final w = right;
-        final n = line(
-          [CodeRun('${l.number}', color: s.lineNumberColor)],
-          align: TextAlign.right,
-          width: w,
-        );
-        out.add((n, 0, baseline - n.alphabeticBaseline));
-      }
-    }
-    return out;
-  }
+  /// Code elements (07): the full `CodeScene` painter of SL-31.
+  static void _code(Canvas canvas, CodeNode n) =>
+      CodeScenePainter.paint(canvas, n.scene, n.dst);
 
   /// The font families a scene draws text with (font preloading, 05
   /// §3.3).
@@ -596,8 +597,13 @@ abstract final class SlideScenePainter {
             add(layout);
           case PromptNode(:final layout):
             add(layout);
+          case ChartNode(:final scene):
+            out.addAll(SlidesChartText.familiesOf(scene));
           case CodeNode(:final scene):
             out.add(scene.fontFamily);
+            for (final c in scene.callouts) {
+              if (c.fontFamily.isNotEmpty) out.add(c.fontFamily);
+            }
           case GroupNode(:final children):
             walk(children);
           default:

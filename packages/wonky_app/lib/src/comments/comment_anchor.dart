@@ -1,3 +1,4 @@
+import 'package:flutter/widgets.dart' show BuildContext, Widget;
 import 'package:wonky_client/wonky_client.dart'
     show CommentAnchorKind, CommentThreadView;
 
@@ -70,6 +71,32 @@ abstract class CommentPanelOptions {
   /// The group header of [thread] in the panel's position sort (Sheets:
   /// the sheet name); null = no headers.
   String? groupOf(CommentThreadView thread) => null;
+}
+
+/// (v2) Optional section headers of the comments panel (checked with `is`
+/// on the anchor provider, so existing [CommentPanelOptions] stay valid).
+abstract class CommentPanelSections {
+  /// A section header above the group headers in the position sort
+  /// (Slides: the slide group with its color dot, Slides 09 §3.5); null =
+  /// none.
+  CommentPanelSection? sectionOf(CommentThreadView thread);
+}
+
+/// A section header of the comments panel ([CommentPanelOptions.sectionOf]).
+class CommentPanelSection {
+  const CommentPanelSection({
+    required this.id,
+    required this.title,
+    this.leading,
+  });
+
+  /// Identifies the section (consecutive threads with the same id share
+  /// one header).
+  final String id;
+  final String title;
+
+  /// A small widget before the title (Slides: the group's color dot).
+  final Widget Function(BuildContext context)? leading;
 }
 
 /// The [CommentPanelOptions] of [anchors], if it has any.

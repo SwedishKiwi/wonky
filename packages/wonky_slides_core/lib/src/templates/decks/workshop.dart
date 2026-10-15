@@ -1,3 +1,4 @@
+import '../../motion/builds/transition_spec.dart';
 import '../../theme/model/common.dart';
 import '../slides_template.dart';
 import '../template_text.dart';
@@ -29,10 +30,10 @@ monthly.plot(kind="bar")
 final SlidesTemplate workshopTemplate = SlidesTemplate(
   key: 'slides.workshop',
   name: 'Workshop agenda',
-  description:
-      'TemplateRun a hands-on workshop with setup, code and exercises.',
+  description: 'Run a hands-on workshop with setup, code and exercises.',
   category: 'education',
   themeKey: 'terminal',
+  defaultTransition: TransitionSpec.of('fade'),
   subtitle: 'Hands-on workshop · 3 hours',
   script: (b) {
     b.slide(

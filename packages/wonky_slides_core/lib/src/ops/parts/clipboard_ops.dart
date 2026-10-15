@@ -32,12 +32,25 @@ final class PasteSlides extends SlidesOperation {
 }
 
 /// Pastes elements onto [slideId]; [at] = top-left of the pasted bounds
-/// (null = same position, offset when it would cover the source).
+/// (null = same position, offset when it would cover the source). SL-28:
+/// with [ownerKind] `layout` or `master`, [slideId] names a layout or
+/// master (pasting decorations in master mode; builds are dropped).
 final class PasteElements extends SlidesOperation {
-  const PasteElements(this.payload, this.slideId, {this.atX, this.atY});
+  const PasteElements(
+    this.payload,
+    this.slideId, {
+    this.atX,
+    this.atY,
+    this.ownerKind = ElementOwnerKind.slide,
+  });
 
   final Map<String, Object?> payload;
+
+  /// The owner (a slide unless [ownerKind] says otherwise).
   final String slideId;
+
+  /// The kind of the owner [slideId] names (SL-28).
+  final ElementOwnerKind ownerKind;
   final double? atX;
   final double? atY;
 

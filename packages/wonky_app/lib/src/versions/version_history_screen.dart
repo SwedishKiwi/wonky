@@ -19,10 +19,14 @@ class VersionHistoryScreen extends StatefulWidget {
     super.key,
     required this.services,
     required this.itemUuid,
+    this.initialVersionId,
   });
 
   final ShellServices services;
   final String itemUuid;
+
+  /// The version selected first (`?version=<id>`; default: the newest).
+  final int? initialVersionId;
 
   /// *Show changes* of the history route (on by default); apps' commands
   /// toggle it (Sheets: `sheets.history.toggleShowChanges`).
@@ -36,7 +40,7 @@ class _VersionHistoryScreenState extends State<VersionHistoryScreen> {
   late final VersionsController c = VersionsController(
     widget.services,
     UuidValue.fromString(widget.itemUuid),
-  );
+  )..selectedId = widget.initialVersionId;
   DriveItemView? _item;
   Object? _error;
 

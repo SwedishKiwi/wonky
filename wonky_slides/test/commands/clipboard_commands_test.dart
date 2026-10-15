@@ -9,11 +9,14 @@ import 'package:wonky_slides/l10n/slides_l10n.dart';
 import 'package:wonky_slides/commands/clipboard_commands.dart';
 import 'package:wonky_slides/config/slides_features.dart';
 import 'package:wonky_slides/features/clipboard/paste_options.dart';
+import 'package:wonky_slides/features/elements/chart/chart_api.dart';
 import 'package:wonky_slides/features/clipboard/rehome_queue.dart';
 import 'package:wonky_slides/features/clipboard/system_clipboard.dart';
 import 'package:wonky_slides/features/navigator/navigator_clipboard.dart';
 import 'package:wonky_slides/features/uploads/slides_image_service.dart';
 import 'package:wonky_slides/features/uploads/slides_pending_uploads.dart';
+import 'package:wonky_charts/wonky_charts.dart' show ChartSourceSnapshot;
+import 'package:wonky_slides_core/charts.dart';
 import 'package:wonky_slides_core/clipboard.dart';
 import 'package:wonky_slides_core/model.dart';
 import 'package:wonky_slides_core/ops.dart';
@@ -25,6 +28,8 @@ import 'package:wonky_sync_models/ids.dart';
 import 'package:wonky_slides/features/editor_screen/deck_editor_controller.dart'
     show DeckViewMode;
 
+import '../features/elements/chart/chart_fixture.dart'
+    show FakeChartApi, resolved;
 import '../harness/deck_harness.dart';
 import 'image_commands_test.dart' show FakeFiles, png;
 
@@ -358,6 +363,9 @@ void main() {
 
     test('when a Sheets chart was copied while charts are hidden (M9) then '
         'the paste is refused with a reason and nothing arrives', () async {
+      SlidesFeatures.enabled = {...SlidesFeatures.shipped}
+        ..remove(SlidesFeature.charts);
+      addTearDown(SlidesFeatures.reset);
       await d.services.userStore.write('clipboard.sheetsObjects', {
         'id': 'c1',
         'items': [
@@ -422,6 +430,46 @@ void main() {
       expect(d.model.chartLinkOf(charts.single.id), isNull);
       expect(_data(d.model, charts.single.id)['source'], 'static');
       expect(d.undoLabels, ['slides.edit.pasteSpecial']);
+    });
+
+    test('when a Sheets chart is pasted online then its snapshot comes with '
+        'it, linked or unlinked (SL-32)', () async {
+      final api = FakeChartApi();
+      api.snapshots[_chart] = resolved(chartObjectId: _chart);
+      SlidesChartApi.install(d.services, api);
+      await d.services.userStore.write('clipboard.sheetsObjects', {
+        'id': 'c1',
+        'items': [
+          {
+            'kind': 'chart',
+            'spec': {'type': 'column'},
+            'spreadsheetItemUuid': _sheet,
+            'objectId': _chart,
+          },
+        ],
+      });
+      sys.data = const SlidesClipboardData(
+        plainText: 'wonky-sheets-objects:c1',
+      );
+      final r = await d.run('slides.edit.paste');
+      final id = ((r.data! as Map)['elementIds'] as List).single as String;
+      final link = d.model.chartLinkOf(id)!;
+      expect(link.sourceVersion, 'log1.1:aaaa:42');
+      expect(
+        ChartSourceSnapshot.fromColumns(
+          link.sourceSpecJson,
+          link.dataSnapshotJson,
+        ).data.series,
+        hasLength(2),
+      );
+      final u = await d.run('slides.edit.pasteSpecial', {'mode': 'unlinked'});
+      expect(u.isOk, isTrue, reason: '${u.message}');
+      final chart = d.model
+          .elementsOf(slide)
+          .singleWhere((e) => e.kind == ElementKind.chart);
+      final data = ChartElementData.fromJson(chart.dataJson);
+      expect(data.source, SlideChartSource.static);
+      expect(data.snapshot?.data.series, hasLength(2));
     });
 
     test('when the navigator has focus and objects are pasted then it is '

@@ -279,14 +279,16 @@ abstract final class TextParagraphs {
     // Paragraph list attributes fall back to the box defaults (placeholder
     // chain, e.g. a body placeholder's bulleted list) when the paragraph
     // names no style of its own — the rule of every box default (02 §4.2).
-    // `listStyle: none` on a paragraph turns a default list off.
+    // `listStyle: none` on a paragraph — or as a box default (the
+    // statement layout over the master body's bullets) — turns a default
+    // list off.
     final defaults = block['style'] == null
         ? (styles.box?.defaults ?? const <String, Object?>{})
         : const <String, Object?>{};
     final explicitList = block['list'] as String?;
-    final list =
-        explicitList ??
-        (block['listStyle'] == 'none' ? null : defaults['list'] as String?);
+    final listOff =
+        (block['listStyle'] ?? defaults['listStyle'] as String?) == 'none';
+    final list = explicitList ?? (listOff ? null : defaults['list'] as String?);
     final fromDefaults = explicitList == null && list != null;
     final level =
         ((block['indent'] ?? (fromDefaults ? defaults['indent'] : null))

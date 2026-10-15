@@ -16,6 +16,7 @@ import '../api/resolved.dart';
 import '../geometry/frame_math.dart';
 import '../index/deck_indexes.dart';
 import '../index/element_tree.dart';
+import '../../schema/slides_schema.dart';
 import '../text/slides_text.dart';
 import 'text_style_resolver.dart';
 
@@ -38,7 +39,20 @@ final class ResolvedSlide {
     this.master,
     this.themeRecord,
     this.number,
+    this.surface = ElementOwnerKind.slide,
   });
+
+  /// What this resolves (SL-28): a slide, or a layout or master drawn as
+  /// its editing surface in master mode (05 §8.1). For a surface, [slide]
+  /// is a synthetic row with the layout's/master's id (`layoutId` set for
+  /// layouts), [elements] are the owner's own elements including its
+  /// placeholder definitions, [masterElements] the master's decorations
+  /// (and the master's field placeholders the layout doesn't redefine) for
+  /// a layout, and [layoutElements] is empty.
+  final ElementOwnerKind surface;
+
+  /// Whether this is a layout or master surface (not a slide).
+  bool get isSurface => surface != ElementOwnerKind.slide;
 
   /// The slide row.
   final SlideRec slide;
@@ -171,17 +185,130 @@ final class SlideResolver {
   }
 
   /// Resolves [slideId] for [appearance] (null = the deck's), or null when
-  /// the slide doesn't exist.
+  /// the slide doesn't exist. A layout or master id resolves as its
+  /// editing surface (SL-28, [ResolvedSlide.surface]; 05 §8.1), so the
+  /// canvas, thumbnails and text editing work on layouts and masters too.
   ResolvedSlide? resolve(String slideId, {SlideAppearance? appearance}) {
     final slide = model.slide(slideId);
-    if (slide == null) return null;
+    final layout = slide == null ? model.layout(slideId) : null;
+    final master = slide == null && layout == null
+        ? model.master(slideId)
+        : null;
+    if (slide == null && layout == null && master == null) return null;
     final app = appearance ?? model.deck?.appearance ?? SlideAppearance.light;
     final rev = '${_ix.revision(slideId)}/${app.name}';
     final hit = _memo[slideId];
     if (hit != null && hit.$1 == rev) return hit.$2;
-    final r = _resolve(slide, app);
+    final r = slide != null
+        ? _resolve(slide, app)
+        : _resolveSurface(layout, master ?? _ix.themes.masterOf(layout!), app);
+    if (r == null) return null;
     _memo[slideId] = (rev, r);
     return r;
+  }
+
+  /// A layout ([layout] non-null) or master surface (05 §8.1).
+  ResolvedSlide? _resolveSurface(
+    SlideLayoutRec? layout,
+    SlideMasterRec? master,
+    SlideAppearance app,
+  ) {
+    final ownerId = layout?.id ?? master?.id;
+    if (ownerId == null) return null;
+    final ix = _ix;
+    final themeRec =
+        (master == null ? null : ix.themes.themeOf(master)) ??
+        model.defaultTheme;
+    final theme = resolveTheme(themeRec, app);
+    SlideBackground? bg(String? json) {
+      final m = _decode(json);
+      return m == null ? null : SlideBackground.fromJson(m, IssueSink());
+    }
+
+    final background =
+        bg(layout?.backgroundJson) ??
+        bg(master?.backgroundJson) ??
+        themeDataOf(themeRec).background;
+    final hideMaster = layout?.hideMasterElements ?? false;
+    final deck = model.deck;
+    String? fieldOf(SlidePlaceholderType? t) => switch (t) {
+      SlidePlaceholderType.slideNumber => '‹#›',
+      SlidePlaceholderType.footer => deck?.footerText ?? '',
+      _ => null,
+    };
+    ResolvedElement withField(ResolvedElement e) {
+      final field = e.parentId == null ? fieldOf(e.placeholderType) : null;
+      if (field == null) return e;
+      return ResolvedElement(
+        record: e.record,
+        frame: e.frame,
+        rotation: e.rotation,
+        flipH: e.flipH,
+        flipV: e.flipV,
+        opacity: e.opacity,
+        inherited: e.inherited,
+        children: e.children,
+        placeholderType: e.placeholderType,
+        dangling: e.dangling,
+        fill: e.fill,
+        stroke: e.stroke,
+        effects: e.effects,
+        data: e.data,
+        textStyle: e.textStyle,
+        styleKey: e.styleKey,
+        textStyles: e.textStyles,
+        prompt: e.prompt,
+        fieldText: field,
+        parentId: e.parentId,
+      );
+    }
+
+    final masterElements = <ResolvedElement>[];
+    if (layout != null && master != null && !hideMaster) {
+      final own = {
+        for (final p in ix.placeholders.placeholdersOf(layout.id))
+          p.placeholderType,
+      };
+      masterElements.addAll(
+        _resolveTree(
+          ix.tree(master.id),
+          theme,
+          null,
+          inherited: true,
+          include: (e) {
+            final t = e.placeholderType;
+            return t == null || (fieldOf(t) != null && !own.contains(t));
+          },
+        ).map(withField),
+      );
+    }
+    final elements = _resolveTree(
+      ix.tree(ownerId),
+      theme,
+      null,
+      inherited: false,
+      include: (_) => true,
+    ).map(withField).toList();
+    return ResolvedSlide(
+      slide: SlideRec({
+        SlidesCols.id: ownerId,
+        if (layout != null) SlideCols.layoutId: layout.id,
+      }),
+      bounds: bounds,
+      layout: layout,
+      master: master,
+      themeRecord: themeRec,
+      theme: theme,
+      background: theme.background(background),
+      masterElements: masterElements,
+      layoutElements: const [],
+      elements: elements,
+      hideMasterElements: hideMaster,
+      skipped: false,
+      surface: layout != null
+          ? ElementOwnerKind.layout
+          : ElementOwnerKind.master,
+    );
   }
 
   /// Resolves a layout or master [ownerId] as drawn in master mode (05 §8):

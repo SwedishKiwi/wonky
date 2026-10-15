@@ -35,6 +35,9 @@ sealed class Chart3DItem {
   /// The state an appearing item grows from.
   Chart3DItem get collapsed;
 
+  /// A copy in [color] (chart builds fade items toward the background, Slides 08 §9.1).
+  Chart3DItem withColor(int color);
+
   /// Stable JSON for tests.
   Map<String, Object?> toJson();
 }
@@ -116,6 +119,20 @@ final class Chart3DBox extends Chart3DItem {
   }
 
   @override
+  Chart3DItem withColor(int color) => Chart3DBox(
+    key,
+    color,
+    tag,
+    part: part,
+    min: min,
+    max: max,
+    shape: shape,
+    axis: axis,
+    tipAtMax: tipAtMax,
+    edges: edges,
+  );
+
+  @override
   Map<String, Object?> toJson() => {
     'box': key,
     'min': [sceneNum(min.x), sceneNum(min.y), sceneNum(min.z)],
@@ -192,6 +209,20 @@ final class Chart3DWedge extends Chart3DItem {
     center: center,
     start: start + sweep,
     sweep: 0,
+    radius: radius,
+    innerRadius: innerRadius,
+    height: height,
+    offset: offset,
+  );
+
+  @override
+  Chart3DItem withColor(int color) => Chart3DWedge(
+    key,
+    color,
+    tag,
+    center: center,
+    start: start,
+    sweep: sweep,
     radius: radius,
     innerRadius: innerRadius,
     height: height,
@@ -278,6 +309,19 @@ final class Chart3DSlab extends Chart3DItem {
   );
 
   @override
+  Chart3DItem withColor(int color) => Chart3DSlab(
+    key,
+    color,
+    tag,
+    xs: xs,
+    tops: tops,
+    bottoms: bottoms,
+    z0: z0,
+    z1: z1,
+    pointIndexes: pointIndexes,
+  );
+
+  @override
   Map<String, Object?> toJson() => {
     'slab': key,
     'xs': [for (final x in xs) sceneNum(x)],
@@ -331,6 +375,10 @@ final class Chart3DPatch extends Chart3DItem {
   );
 
   @override
+  Chart3DItem withColor(int color) =>
+      Chart3DPatch(key, color, tag, corners: corners, floorY: floorY);
+
+  @override
   Map<String, Object?> toJson() => {
     'patch': key,
     'corners': [
@@ -374,6 +422,10 @@ final class Chart3DLine extends Chart3DItem {
 
   @override
   Chart3DItem get collapsed => this;
+
+  @override
+  Chart3DItem withColor(int color) =>
+      Chart3DLine(key, color, a: a, b: b, normal: normal, width: width);
 
   @override
   Map<String, Object?> toJson() => {

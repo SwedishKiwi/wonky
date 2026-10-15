@@ -115,3 +115,35 @@ patch (VM JIT and AOT, on a loaded 12-core laptop).
   the change); `test/perf/budgets_test.dart` (`dart test -P slow`) measures the budget.
 - `string_scanner` is no longer imported by the engine and was removed from the dependencies (SL-23).
 - **Upstream**: generally useful; to be proposed with the pure-Dart split (Q26).
+
+
+## SH-7 — Capture offsets (correctness; Slides SL-35)
+
+Made in `wonky_code` while switching Write's exports to the shared tokenizer (SL-35).
+
+- **Reason**: Dart's `Match` has no group offsets, and the engine placed every capture at the
+  first occurrence of its text in the whole match (`match.indexOf(captureText)`). A capture
+  whose text also occurs earlier was scoped in the wrong place: in `function f`, `def f`,
+  `func f`, `fn f` (JavaScript, TypeScript, Python, Swift, Rust; also `class A: B`-style type
+  names) the name scope landed on the keyword's first letter. The tokens then overlapped
+  (breaking the `CodeTokenizer` contract), the real name stayed plain in the editor and Slides,
+  and Write's HTML export would have written `functionfunction f`.
+- **Changes** (`lib/src/textmate/span_parser.dart`, `_CaptureOffsets`, marked
+  `WONKY PATCH SH-7`): the regex source is read once per `RegExp` into its group tree (escapes,
+  character classes, non-capturing groups and lookarounds skipped; `(?<name>` captures). Groups
+  are numbered by their opening parenthesis, so a group starts at or after its parent and
+  after the end of its previous matched sibling, and ends inside its parent; each capture is
+  searched from there. When the tree doesn't match `groupCount`, or a capture lies outside its
+  parent (lookarounds), the old search is used. It is still a search: a capture whose text
+  also occurs in an uncaptured gap before it, or a quantified group (which holds its last
+  iteration), can still be misplaced. `TextMateTokenizer` therefore also clips a token that
+  would overlap the previous one, so the contract holds in every case.
+- **Verification**: spans compared with the SH-6 engine over every grammar sample, every
+  prefix of it, 200 random mutations of it, a 10× repetition and extra snippets (6,094 texts):
+  13 texts changed (JavaScript 2, Python 3, Rust 1, Swift 4, TypeScript 3) — exactly the 13
+  that had overlapping spans before, none after; every change moves an `entity.name.function`
+  / `entity.name.type` span from the keyword to the name. Tests:
+  `test/textmate/textmate_tokenizer_test.dart` ("Given a name whose text also occurs earlier
+  in its match"). Budget (`dart test -P slow`): 1,000 lines of Dart ≈ 19 ms, unchanged within
+  noise.
+- **Upstream**: a bug fix; to be proposed with the pure-Dart split (Q26).

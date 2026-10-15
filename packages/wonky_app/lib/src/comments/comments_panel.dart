@@ -107,6 +107,33 @@ class CommentsPanel extends StatelessWidget {
                             size: 80,
                           ),
                         for (final (i, t) in threads.indexed) ...[
+                          if (_section(c, threads, i) case final sec?)
+                            Padding(
+                              key: ValueKey<String>(
+                                'comments.section.${sec.id}',
+                              ),
+                              padding: EdgeInsets.only(
+                                top: i == 0 ? 0 : 10,
+                                bottom: 4,
+                              ),
+                              child: Row(
+                                children: [
+                                  if (sec.leading case final leading?) ...[
+                                    leading(context),
+                                    const SizedBox(width: 6),
+                                  ],
+                                  Expanded(
+                                    child: Text(
+                                      sec.title,
+                                      overflow: TextOverflow.ellipsis,
+                                      style: theme.textTheme.small.copyWith(
+                                        fontWeight: FontWeight.w700,
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
                           if (_header(c, threads, i) case final h?)
                             Padding(
                               key: ValueKey<String>('comments.group.$h'),
@@ -159,6 +186,24 @@ String? _header(CommentsController c, List<CommentThreadView> threads, int i) {
   final g = a.groupOf(threads[i]);
   if (g == null) return null;
   return i > 0 && a.groupOf(threads[i - 1]) == g ? null : g;
+}
+
+/// The section header before `threads[i]` in the position sort
+/// ([CommentPanelOptions.sectionOf], Slides: the slide group), when it
+/// starts a new section.
+CommentPanelSection? _section(
+  CommentsController c,
+  List<CommentThreadView> threads,
+  int i,
+) {
+  final a = c.anchors;
+  if (a is! CommentPanelSections || c.sort != CommentsSort.position) {
+    return null;
+  }
+  final sections = a as CommentPanelSections;
+  final s = sections.sectionOf(threads[i]);
+  if (s == null) return null;
+  return i > 0 && sections.sectionOf(threads[i - 1])?.id == s.id ? null : s;
 }
 
 /// The app's scope filter of the comments panel (Sheets: This sheet / All

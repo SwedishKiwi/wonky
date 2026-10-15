@@ -171,6 +171,30 @@ import 'package:wonky_client/src/protocol/sheets/scripts/models/script_fetch_res
     as _iyfk9f1k;
 import 'package:wonky_client/src/protocol/sheets/scripts/models/script_run_response.dart'
     as _iaw9fhnx;
+import 'package:wonky_client/src/protocol/slides/ai/models/slides_ai_alt_text.dart'
+    as _iqd8jbjp;
+import 'package:wonky_client/src/protocol/slides/ai/models/slides_ai_apply_result.dart'
+    as _ilgy0ds2;
+import 'package:wonky_client/src/protocol/slides/ai/models/slides_ai_build_result.dart'
+    as _i6mf4awd;
+import 'package:wonky_client/src/protocol/slides/ai/models/slides_ai_design_rank.dart'
+    as _ifavqmyp;
+import 'package:wonky_client/src/protocol/slides/ai/models/slides_ai_note.dart'
+    as _iascr37x;
+import 'package:wonky_client/src/protocol/slides/ai/models/slides_ai_outline_request.dart'
+    as _itf4l8jm;
+import 'package:wonky_client/src/protocol/slides/ai/models/slides_ai_preview.dart'
+    as _iqp3429j;
+import 'package:wonky_client/src/protocol/slides/ai/models/slides_ai_rewrite_request.dart'
+    as _ixhdkbka;
+import 'package:wonky_client/src/protocol/slides/charts/models/chart_link_probe.dart'
+    as _ipgr9tcd;
+import 'package:wonky_client/src/protocol/slides/charts/models/chart_link_status.dart'
+    as _idvbn12y;
+import 'package:wonky_client/src/protocol/slides/charts/models/chart_snapshot_view.dart'
+    as _iwoaz8tz;
+import 'package:wonky_client/src/protocol/slides/charts/models/chart_source_list.dart'
+    as _izwvek44;
 import 'package:wonky_client/src/protocol/slides/present/models/presentation_event.dart'
     as _i693xhmf;
 import 'package:wonky_client/src/protocol/slides/present/models/presentation_join.dart'
@@ -2636,6 +2660,205 @@ class EndpointSheetsVersion extends _isc.EndpointRef {
   );
 }
 
+/// The AI features of Wonky Slides (Slides 11 §6–§9): *Generate
+/// presentation* (outline, then build), *Rewrite text*, speaker notes, alt
+/// text, the design-ideas ranking and the AI changes preview of
+/// Suggest-mode assistant runs. The assistant panel itself uses
+/// `assistant.chat` with the presentation's item uuid and the `slides*`
+/// fields of [AssistantContextHints].
+/// {@category Endpoint}
+class EndpointSlidesAi extends _isc.EndpointRef {
+  EndpointSlidesAi(_isc.EndpointCaller caller) : super(caller);
+
+  @override
+  String get name => 'slidesAi';
+
+  /// Step 1 of *Generate presentation*: streams progress; `done.markdown`
+  /// is the outline JSON. [itemUuid] = the open deck (insert) or null (a
+  /// new presentation).
+  _ida.Stream<_ivbb4qsj.InlineAiEvent> proposeOutline(
+    _isc.UuidValue? itemUuid,
+    _itf4l8jm.SlidesAiOutlineRequest request,
+  ) =>
+      caller.callStreamingServerEndpoint<
+        _ida.Stream<_ivbb4qsj.InlineAiEvent>,
+        _ivbb4qsj.InlineAiEvent
+      >(
+        'slidesAi',
+        'proposeOutline',
+        {
+          'itemUuid': itemUuid,
+          'request': request,
+        },
+        {},
+      );
+
+  /// Step 2: builds [outlineJson] into a new presentation ([itemUuid]
+  /// null) or into the deck after [afterSlideId] (one undo step).
+  _ida.Future<_i6mf4awd.SlidesAiBuildResult> buildDeck(
+    _isc.UuidValue? itemUuid,
+    String outlineJson,
+    String? afterSlideId,
+    bool notes,
+    bool groups,
+    _isc.UuidValue? parentUuid,
+  ) => caller.callServerEndpoint<_i6mf4awd.SlidesAiBuildResult>(
+    'slidesAi',
+    'buildDeck',
+    {
+      'itemUuid': itemUuid,
+      'outlineJson': outlineJson,
+      'afterSlideId': afterSlideId,
+      'notes': notes,
+      'groups': groups,
+      'parentUuid': parentUuid,
+    },
+  );
+
+  /// *Rewrite text*: streams the rewritten Markdown (nothing is written).
+  _ida.Stream<_ivbb4qsj.InlineAiEvent> rewrite(
+    _isc.UuidValue itemUuid,
+    _ixhdkbka.SlidesAiRewriteRequest request,
+  ) =>
+      caller.callStreamingServerEndpoint<
+        _ida.Stream<_ivbb4qsj.InlineAiEvent>,
+        _ivbb4qsj.InlineAiEvent
+      >(
+        'slidesAi',
+        'rewrite',
+        {
+          'itemUuid': itemUuid,
+          'request': request,
+        },
+        {},
+      );
+
+  /// Speaker-notes proposals for [slideIds] (empty = all slides).
+  _ida.Future<List<_iascr37x.SlidesAiNote>> writeNotes(
+    _isc.UuidValue itemUuid,
+    List<String> slideIds,
+    String length,
+    String style,
+    String mode,
+  ) => caller.callServerEndpoint<List<_iascr37x.SlidesAiNote>>(
+    'slidesAi',
+    'writeNotes',
+    {
+      'itemUuid': itemUuid,
+      'slideIds': slideIds,
+      'length': length,
+      'style': style,
+      'mode': mode,
+    },
+  );
+
+  /// Alt-text proposals for [elementIds] (empty = every element missing
+  /// alt text).
+  _ida.Future<List<_iqd8jbjp.SlidesAiAltText>> describeElements(
+    _isc.UuidValue itemUuid,
+    List<String> elementIds,
+  ) => caller.callServerEndpoint<List<_iqd8jbjp.SlidesAiAltText>>(
+    'slidesAi',
+    'describeElements',
+    {
+      'itemUuid': itemUuid,
+      'elementIds': elementIds,
+    },
+  );
+
+  /// Scores of the design-idea [candidates] (`id: description`) of
+  /// [slideId].
+  _ida.Future<List<_ifavqmyp.SlidesAiDesignRank>> rankDesigns(
+    _isc.UuidValue itemUuid,
+    String slideId,
+    List<String> candidates,
+  ) => caller.callServerEndpoint<List<_ifavqmyp.SlidesAiDesignRank>>(
+    'slidesAi',
+    'rankDesigns',
+    {
+      'itemUuid': itemUuid,
+      'slideId': slideId,
+      'candidates': candidates,
+    },
+  );
+
+  /// The AI changes preview of a Suggest-mode run.
+  _ida.Future<_iqp3429j.SlidesAiPreview> getPreview(String previewId) =>
+      caller.callServerEndpoint<_iqp3429j.SlidesAiPreview>(
+        'slidesAi',
+        'getPreview',
+        {'previewId': previewId},
+      );
+
+  /// Applies the checked calls (null = all) as one undo step.
+  _ida.Future<_ilgy0ds2.SlidesAiApplyResult> applyPreview(
+    String previewId,
+    List<String>? callIds,
+  ) => caller.callServerEndpoint<_ilgy0ds2.SlidesAiApplyResult>(
+    'slidesAi',
+    'applyPreview',
+    {
+      'previewId': previewId,
+      'callIds': callIds,
+    },
+  );
+
+  /// Discards a preview.
+  _ida.Future<void> discardPreview(String previewId) =>
+      caller.callServerEndpoint<void>(
+        'slidesAi',
+        'discardPreview',
+        {'previewId': previewId},
+      );
+}
+
+/// Linked charts from Wonky Sheets in Wonky Slides (Slides 08 §13, `slidesCharts`):
+/// the insert dialog's chart list, snapshot resolution for insert/*Update*, and link status
+/// checks. Access and errors: [SlidesChartService].
+/// {@category Endpoint}
+class EndpointSlidesCharts extends _isc.EndpointRef {
+  EndpointSlidesCharts(_isc.EndpointCaller caller) : super(caller);
+
+  @override
+  String get name => 'slidesCharts';
+
+  /// The charts of spreadsheet [spreadsheetUuid] (drive item uuid) with ≤ 200-point
+  /// previews. Viewer+. Errors: notFound (`no_access`, `spreadsheet_trashed`),
+  /// limitExceeded.
+  _ida.Future<_izwvek44.ChartSourceList> listCharts(
+    _isc.UuidValue spreadsheetUuid,
+  ) => caller.callServerEndpoint<_izwvek44.ChartSourceList>(
+    'slidesCharts',
+    'listCharts',
+    {'spreadsheetUuid': spreadsheetUuid},
+  );
+
+  /// The snapshot of chart [chartObjectId] of [spreadsheetUuid]. Viewer+ with the right to
+  /// copy data. Errors: notFound (`no_access`, `spreadsheet_trashed`, `chart_not_found`),
+  /// forbidden (`export_disabled`), invalidArgument (`unsupported_spec`), tooLarge
+  /// (`chart_too_large`), limitExceeded.
+  _ida.Future<_iwoaz8tz.ChartSnapshotView> resolveSnapshot(
+    _isc.UuidValue spreadsheetUuid,
+    String chartObjectId,
+  ) => caller.callServerEndpoint<_iwoaz8tz.ChartSnapshotView>(
+    'slidesCharts',
+    'resolveSnapshot',
+    {
+      'spreadsheetUuid': spreadsheetUuid,
+      'chartObjectId': chartObjectId,
+    },
+  );
+
+  /// The status of each of ≤ 50 linked charts, in order (08 §5.2).
+  _ida.Future<List<_idvbn12y.ChartLinkStatus>> checkLinks(
+    List<_ipgr9tcd.ChartLinkProbe> probes,
+  ) => caller.callServerEndpoint<List<_idvbn12y.ChartLinkStatus>>(
+    'slidesCharts',
+    'checkLinks',
+    {'probes': probes},
+  );
+}
+
 /// Online-only Slides operations on deck spaces (Slides 02 §9, suite 12
 /// §2.6): reservations for offline creation, subscriptions (membership
 /// mirrored from the ACL), the pending-change guard and download progress.
@@ -2850,6 +3073,58 @@ class EndpointSlidesThemes extends _isc.EndpointRef {
         'list',
         {'itemUuid': itemUuid},
       );
+}
+
+/// Slides extensions of version history (Slides 09 §4.2, §4.5): who changed
+/// what in a version (author attribution of the diff) and *Make a copy*
+/// of a version. Editors+ (suite 07 §5).
+/// {@category Endpoint}
+class EndpointSlidesVersion extends _isc.EndpointRef {
+  EndpointSlidesVersion(_isc.EndpointCaller caller) : super(caller);
+
+  @override
+  String get name => 'slidesVersion';
+
+  /// The `SlidesVersionChanges` JSON of a version (`{v, slides: {id:
+  /// [userIds]}, elements, groups, theme, deck, agents, approx}`; latest
+  /// author last). Versions captured before the index existed are computed
+  /// from the change log on the fly.
+  _ida.Future<String> changes(
+    _isc.UuidValue itemUuid,
+    int versionId,
+  ) => caller.callServerEndpoint<String>(
+    'slidesVersion',
+    'changes',
+    {
+      'itemUuid': itemUuid,
+      'versionId': versionId,
+    },
+  );
+
+  /// *Make a copy* of a version (09 §4.5): a new presentation with the
+  /// version's content (new ids, uploaded images re-homed, the caller
+  /// pays), in [folderUuid] (default: the deck's folder when the caller
+  /// can edit it, else My Drive); optionally with the deck's comment
+  /// threads (anchors remapped) and its sharing.
+  _ida.Future<_iatsgjjq.DriveItemView> makeCopy(
+    _isc.UuidValue itemUuid,
+    int versionId,
+    String name,
+    _isc.UuidValue? folderUuid,
+    bool copyComments,
+    bool copySharing,
+  ) => caller.callServerEndpoint<_iatsgjjq.DriveItemView>(
+    'slidesVersion',
+    'makeCopy',
+    {
+      'itemUuid': itemUuid,
+      'versionId': versionId,
+      'name': name,
+      'folderUuid': folderUuid,
+      'copyComments': copyComments,
+      'copySharing': copySharing,
+    },
+  );
 }
 
 /// Write documents: the OT editing stream and helpers (Write 03 §1).
@@ -3289,11 +3564,14 @@ class Client extends _isc.ServerpodClientShared {
     sheetsImport = EndpointSheetsImport(this);
     script = EndpointScript(this);
     sheetsVersion = EndpointSheetsVersion(this);
+    slidesAi = EndpointSlidesAi(this);
+    slidesCharts = EndpointSlidesCharts(this);
     slides = EndpointSlides(this);
     slidesSync = EndpointSlidesSync(this);
     slidesExport = EndpointSlidesExport(this);
     presentation = EndpointPresentation(this);
     slidesThemes = EndpointSlidesThemes(this);
+    slidesVersion = EndpointSlidesVersion(this);
     document = EndpointDocument(this);
     writeExport = EndpointWriteExport(this);
     writeHistory = EndpointWriteHistory(this);
@@ -3349,6 +3627,10 @@ class Client extends _isc.ServerpodClientShared {
 
   late final EndpointSheetsVersion sheetsVersion;
 
+  late final EndpointSlidesAi slidesAi;
+
+  late final EndpointSlidesCharts slidesCharts;
+
   late final EndpointSlides slides;
 
   late final EndpointSlidesSync slidesSync;
@@ -3358,6 +3640,8 @@ class Client extends _isc.ServerpodClientShared {
   late final EndpointPresentation presentation;
 
   late final EndpointSlidesThemes slidesThemes;
+
+  late final EndpointSlidesVersion slidesVersion;
 
   late final EndpointDocument document;
 
@@ -3395,11 +3679,14 @@ class Client extends _isc.ServerpodClientShared {
     'sheetsImport': sheetsImport,
     'script': script,
     'sheetsVersion': sheetsVersion,
+    'slidesAi': slidesAi,
+    'slidesCharts': slidesCharts,
     'slides': slides,
     'slidesSync': slidesSync,
     'slidesExport': slidesExport,
     'presentation': presentation,
     'slidesThemes': slidesThemes,
+    'slidesVersion': slidesVersion,
     'document': document,
     'writeExport': writeExport,
     'writeHistory': writeHistory,

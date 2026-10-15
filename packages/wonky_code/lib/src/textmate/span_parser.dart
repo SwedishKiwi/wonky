@@ -269,6 +269,10 @@ abstract class GrammarMatcher {
     final matchStartLocation = location;
     if (captures != null) {
       final match = scanner.substring(start, end);
+      // WONKY PATCH SH-7: capture offsets from the group structure (they were
+      // `match.indexOf(captureText)`, so `function f` scoped the `f` of
+      // `function` as the function name).
+      final offsets = _CaptureOffsets.of(lastMatch, match);
       for (int i = 0; i <= lastMatch.groupCount; ++i) {
         // Skip if we don't have a scope or nested patterns for this capture.
         if (!captures.containsKey(i.toString())) continue;
@@ -276,7 +280,8 @@ abstract class GrammarMatcher {
         final captureText = lastMatch.group(i);
         if (captureText == null || captureText.isEmpty) continue;
 
-        final startOffset = match.indexOf(captureText);
+        final located = offsets == null ? -1 : offsets[i];
+        final startOffset = located >= 0 ? located : match.indexOf(captureText);
         final capture = captures[i.toString()] as Map<String, Object?>;
         final captureStartLocation = matchStartLocation.offset(startOffset);
         final captureEndLocation = captureStartLocation.offset(
@@ -860,6 +865,92 @@ class _ScannerLocation extends ScopeStackLocation {
 
   @override
   int get column => _scanner._columnOf(position);
+}
+
+// WONKY PATCH SH-7: Dart's `Match` has no group offsets, and the engine
+// placed each capture at the first occurrence of its text in the match, so
+// a capture whose text also occurs earlier (`function f`, `def f`, `func f`)
+// was scoped at the wrong place — overlapping tokens, wrong colors. Groups are
+// numbered by their opening parenthesis, so a group starts at or after its
+// parent group and after the end of its previous matched sibling, and ends
+// within its parent: each capture is searched from there. Still a search
+// (the text could repeat inside an uncaptured gap, or a quantified group
+// holds its last iteration), and groups outside the match (lookarounds) keep
+// the old fallback.
+final class _CaptureOffsets {
+  /// The parent group of every group of a pattern (`[0]` is the match,
+  /// `-1`); empty when the source could not be read reliably.
+  static final _parents = Expando<List<int>>();
+
+  /// Start offsets of every group of [match] within [text] (the matched
+  /// substring), `-1` when unknown; `null` when the pattern can't be read.
+  static List<int>? of(Match match, String text) {
+    final pattern = match.pattern;
+    if (pattern is! RegExp) return null;
+    final parents = _parents[pattern] ??= _parse(pattern.pattern) ?? const [];
+    final count = match.groupCount;
+    if (parents.length != count + 1) return null;
+    final starts = List<int>.filled(count + 1, -1);
+    final ends = List<int>.filled(count + 1, -1);
+    final childEnd = List<int>.filled(count + 1, -1);
+    starts[0] = 0;
+    ends[0] = text.length;
+    for (var i = 1; i <= count; i++) {
+      final group = match.group(i);
+      final parent = parents[i];
+      if (group == null || starts[parent] < 0) continue;
+      final from = childEnd[parent] > starts[parent]
+          ? childEnd[parent]
+          : starts[parent];
+      var at = text.indexOf(group, from);
+      if (at < 0 || at + group.length > ends[parent]) {
+        at = text.indexOf(group, starts[parent]);
+        if (at < 0 || at + group.length > ends[parent]) continue;
+      }
+      starts[i] = at;
+      ends[i] = at + group.length;
+      childEnd[parent] = ends[i];
+    }
+    return starts;
+  }
+
+  /// Parent groups of a JavaScript-syntax regex [source] (Dart `RegExp`,
+  /// non-unicode): escapes, character classes, non-capturing groups and
+  /// lookarounds are skipped; `(?<name>` captures.
+  static List<int>? _parse(String source) {
+    final parents = <int>[-1];
+    final open = <int>[0]; // enclosing groups; -1 = not capturing
+    var inClass = false;
+    for (var i = 0; i < source.length; i++) {
+      final c = source.codeUnitAt(i);
+      if (c == 0x5C) {
+        i++; // escaped character
+      } else if (inClass) {
+        if (c == 0x5D) inClass = false;
+      } else if (c == 0x5B) {
+        inClass = true;
+      } else if (c == 0x28) {
+        var capturing = true;
+        if (i + 1 < source.length && source.codeUnitAt(i + 1) == 0x3F) {
+          capturing =
+              i + 3 < source.length &&
+              source.codeUnitAt(i + 2) == 0x3C &&
+              source.codeUnitAt(i + 3) != 0x3D &&
+              source.codeUnitAt(i + 3) != 0x21;
+        }
+        if (capturing) {
+          parents.add(open.lastWhere((g) => g >= 0));
+          open.add(parents.length - 1);
+        } else {
+          open.add(-1);
+        }
+      } else if (c == 0x29) {
+        if (open.length == 1) return null; // unbalanced
+        open.removeLast();
+      }
+    }
+    return open.length == 1 ? parents : null;
+  }
 }
 
 // WONKY PATCH SH-6: the engine's own scanner instead of `string_scanner`'s

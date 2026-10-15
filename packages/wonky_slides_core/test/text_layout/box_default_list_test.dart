@@ -47,6 +47,29 @@ void main() {
       },
     );
 
+    test('when the box defaults also set listStyle none (the statement '
+        'layout over the master body, SL-36) then the default list is off', () {
+      final statement = TextStyleResolver().resolve(
+        theme,
+        box: const BoxTextStyle(
+          defaults: {'list': 'bullet', 'listStyle': 'none'},
+        ),
+        defaultStyle: 'body',
+      );
+
+      final paras = TextParagraphs.build(
+        body([
+          {},
+          {'list': 'ordered'},
+        ]),
+        statement,
+      );
+
+      expect(paras[0].list, isNull);
+      expect(paras[0].marker, isNull);
+      expect(paras[1].list, 'ordered');
+    });
+
     test('when a paragraph names a style or its own list then the default '
         'does not apply', () {
       final paras = TextParagraphs.build(

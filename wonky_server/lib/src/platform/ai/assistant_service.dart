@@ -7,6 +7,7 @@ import 'package:wonky_write_core/wonky_write_core.dart'
     show BlockType, Delta, DeltaUtils, WonkyDocument;
 
 import '../../sheets/mcp/sheets_changes.dart';
+import '../../slides/mcp/slides_changes.dart';
 import '../../write/mcp/headless_editor.dart';
 import '../cluster/cluster.dart';
 import '../cluster/cluster_bus.dart';
@@ -425,9 +426,16 @@ abstract final class AssistantService {
     final ctx = ToolContext(
       session: session,
       actor: actor.copyWith(kind: ActorKind.ai),
-      scopes: {McpScope.writeRead, McpScope.writeEdit, McpScope.sheetsEdit},
+      scopes: {
+        McpScope.writeRead,
+        McpScope.writeEdit,
+        McpScope.sheetsEdit,
+        McpScope.slidesEdit,
+      },
     );
-    return await SheetsChanges.tryRevert(ctx, changeId) ??
+    // Deck records share the change table: Slides first (11 §1.4).
+    return await SlidesChanges.tryRevert(ctx, changeId) ??
+        await SheetsChanges.tryRevert(ctx, changeId) ??
         await HeadlessDocumentEditor.revert(ctx, changeId);
   }
 

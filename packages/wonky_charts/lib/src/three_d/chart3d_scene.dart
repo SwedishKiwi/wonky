@@ -8,6 +8,7 @@ import 'chart3d_camera.dart';
 import 'chart3d_mesh.dart';
 import 'chart3d_model.dart';
 import 'chart3d_shading.dart';
+import 'chart3d_view.dart';
 import 'vec3.dart';
 
 /// Result of [Chart3DScene.pick].
@@ -31,15 +32,49 @@ final class Chart3DHit {
 /// GPU backends mesh [chunks] themselves, and [pick] ray-casts for both.
 final class Chart3DScene {
   /// Fits [model] into [viewport] (scene px).
-  Chart3DScene(this.model, this.viewport, {this.hover})
-    : camera = Chart3DCamera.fit(
-        bounds: model.bounds,
-        azimuthDeg: model.azimuth,
-        elevationDeg: model.elevation,
-        fovDeg: model.fov,
-        viewport: viewport,
-      ),
-      shading = Chart3DShading.of(model.lighting);
+  ///
+  /// With [fitViews] the zoom is the smallest of the fits of the model's view and those views
+  /// (Slides 08 §10.3: camera animations fit once for the union of their start and end views).
+  Chart3DScene(
+    this.model,
+    this.viewport, {
+    this.hover,
+    List<Chart3DView>? fitViews,
+  }) : camera = Chart3DCamera.fit(
+         bounds: model.bounds,
+         azimuthDeg: model.azimuth,
+         elevationDeg: model.elevation,
+         fovDeg: model.fov,
+         viewport: viewport,
+         maxScale: _scaleLimit(model, viewport, fitViews),
+       ),
+       shading = Chart3DShading.of(model.lighting);
+
+  static double? _scaleLimit(
+    Chart3DModel model,
+    ChartRect viewport,
+    List<Chart3DView>? views,
+  ) {
+    if (views == null || views.isEmpty) return null;
+    Chart3DCamera fit(double az, double el, double fov) => Chart3DCamera.fit(
+      bounds: model.bounds,
+      azimuthDeg: az,
+      elevationDeg: el,
+      fovDeg: fov,
+      viewport: viewport,
+    );
+    // Compare fits in px per world unit at the target (tangent units depend on the field
+    // of view's eye distance).
+    double density(Chart3DCamera c) =>
+        c.scale / math.max((c.eye - c.target).length, 1e-9);
+    final current = fit(model.azimuth, model.elevation, model.fov);
+    var limit = density(current);
+    for (final v in views) {
+      final d = density(fit(v.normalizedAzimuth, v.elevation, v.perspective));
+      if (d < limit) limit = d;
+    }
+    return limit * (current.eye - current.target).length;
+  }
 
   final Chart3DModel model;
 

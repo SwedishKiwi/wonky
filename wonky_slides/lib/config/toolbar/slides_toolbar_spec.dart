@@ -8,6 +8,8 @@ import '../../features/editor_screen/deck_editor_controller.dart';
 import '../../features/elements/style/style_toolbar.dart';
 import '../../features/layouts/layout_gallery.dart';
 import '../../features/elements/text/text_toolbar.dart';
+import '../../features/elements/code/code_toolbar.dart';
+import '../../features/elements/chart/chart_toolbar.dart';
 import '../../features/toolbar/command_ui.dart';
 import '../menus/slides_menu_spec.dart';
 import '../slides_features.dart';
@@ -110,16 +112,18 @@ List<ToolbarGroup> contextualToolbarGroups(
       ),
       ...textControls(),
     ],
-    // Code (SL-31) and chart (SL-32) controls stay hidden until built.
+    // Chart controls (SL-32) are hidden while the feature is off.
     DeckSelectionKind.code
         when !SlidesFeatures.isOn(SlidesFeature.codeBlocks) =>
       const <ToolbarItem>[],
     DeckSelectionKind.chart when !SlidesFeatures.isOn(SlidesFeature.charts) =>
       const <ToolbarItem>[],
     DeckSelectionKind.code => [
+      ui.button('slides.code.edit', icon: LucideIcons.squarePen, priority: 2),
       ui.button(
         'slides.code.setLanguage',
         icon: LucideIcons.codeXml,
+        label: codeLanguageLabelOf(ed),
         priority: 2,
       ),
       ui.toggle(
@@ -134,11 +138,11 @@ List<ToolbarGroup> contextualToolbarGroups(
         icon: LucideIcons.highlighter,
         priority: 3,
       ),
+      ui.button('slides.code.addState', priority: 3),
+      ui.button('slides.code.preview', priority: 4),
+      ui.button('slides.code.copy', priority: 5),
     ],
-    DeckSelectionKind.chart => [
-      ui.button('slides.chart.update', priority: 2),
-      ui.button('slides.chart.openSource', priority: 3),
-    ],
+    DeckSelectionKind.chart => chartToolbarItems(ui, l, ed),
     DeckSelectionKind.icon => style.icon(),
     DeckSelectionKind.group || DeckSelectionKind.multiple => [
       ...fillBorder(),

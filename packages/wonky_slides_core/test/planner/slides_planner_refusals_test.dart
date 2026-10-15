@@ -306,6 +306,11 @@ void main() {
         PlanException.invalidArgument,
       ),
       (
+        'an empty layout sort key (SL-28)',
+        UpdateMasterOrLayout(f.layout('quote'), const {'sortKey': ''}),
+        PlanException.invalidArgument,
+      ),
+      (
         'deleting the only master',
         DeleteMastersOrLayouts([f.masterId]),
         PlanException.invalidArgument,

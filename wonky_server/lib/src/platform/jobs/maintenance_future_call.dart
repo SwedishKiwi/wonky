@@ -3,6 +3,7 @@ import 'package:serverpod/serverpod.dart';
 import '../../sheets/changelog/change_log_consumer.dart';
 import '../spaces/space_service.dart';
 import '../../sheets/sync/server_sheets_writer.dart';
+import '../../slides/versions/deck_change_log_pruning.dart';
 import '../../write/ot/document_service.dart';
 import '../../write/themes/theme_service.dart';
 import '../../write/versions/write_history_service.dart';
@@ -81,6 +82,11 @@ class MaintenanceFutureCall extends FutureCall {
       session,
       'sheets.pruneChangeLog',
       () => ChangeLogConsumer.pruneOld(session),
+    );
+    await _run(
+      session,
+      'slides.pruneChangeLog',
+      () => DeckChangeLogPruning.pruneOld(session),
     );
     await _run(
       session,

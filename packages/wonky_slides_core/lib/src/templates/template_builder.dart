@@ -3,8 +3,11 @@ import 'dart:convert';
 import 'package:wonky_sync_kit/rows.dart';
 import 'package:wonky_sync_models/ids.dart';
 
+import 'package:wonky_charts/wonky_charts.dart' show ChartSourceSnapshot;
+
 import '../model/api/deck_model.dart';
 import '../model/api/kinds.dart';
+import '../motion/builds/transition_spec.dart';
 import '../ops/change_summary.dart';
 import '../ops/operations.dart';
 import '../ops/plan_context.dart';
@@ -34,6 +37,7 @@ final class TemplateDeckBuilder {
     required String themeKey,
     required this.ctx,
     SlideAppearance? appearance,
+    TransitionSpec? defaultTransition,
     this.planner = const SlidesPlanner(),
   }) : model = DeckModel(deckId: deckId) {
     final r = run(
@@ -43,6 +47,9 @@ final class TemplateDeckBuilder {
         themeKey: themeKey,
         appearance: appearance,
         firstLayoutKey: null,
+        defaultsJson: defaultTransition == null
+            ? null
+            : DeckMotionDefaults.withTransition(null, defaultTransition),
       ),
     );
     themeId = r['themeId']! as String;
@@ -147,17 +154,119 @@ final class TemplateDeckBuilder {
         ),
       );
     }
-    if (elements.isNotEmpty) run(InsertElements(id, elements));
+    lastElements = elements.isEmpty ? const [] : insert(id, elements);
     return id;
   }
 
-  /// Fills the code placeholder of [slideId] with one state.
-  void code(String slideId, String source, {required String language}) {
+  /// The ids of the `elements` of the last [slide] (in spec order).
+  List<String> lastElements = const [];
+
+  /// Inserts [elements] on [slideId] (on top); their ids in spec order.
+  List<String> insert(String slideId, List<ElementSpec> elements) {
+    final r = run(InsertElements(slideId, elements));
+    return [for (final id in r['elementIds']! as List) id as String];
+  }
+
+  /// Appends [builds] to the build sequence of [slideId] (06 §2; specs from
+  /// `BuildEdits.spec`, catalog defaults).
+  void builds(String slideId, List<BuildSpec> builds) =>
+      run(AddBuilds(slideId, builds));
+
+  /// Sets the own transition of [slideIds] (06 §7.1).
+  void transition(List<String> slideIds, TransitionSpec transition) =>
+      run(SetSlideProps(slideIds, transitionJson: Patch(transition.encode())));
+
+  /// Sets the Magic Move key of [elementId] (06 §8.2): elements with equal
+  /// keys on consecutive slides morph into each other.
+  void matchKey(String elementId, String key) =>
+      run(SetElementProps([elementId], matchKey: key));
+
+  /// Fills the code placeholder of [slideId] with one state; [highlight]
+  /// is its line-highlight step syntax (07 §4.1, `1-3 | 5`). Returns the
+  /// code element.
+  String code(
+    String slideId,
+    String source, {
+    required String language,
+    String? highlight,
+  }) => codeStates(slideId, [
+    TemplateCodeState(source, highlight: highlight),
+  ], language: language);
+
+  /// Fills the code placeholder of [slideId] with [states] (07 §3.2: the
+  /// first is shown first; later ones arrive by type-in or morph per
+  /// their `mode`), with [options] merged into the element's `dataJson`
+  /// (07 §3.1: title, chrome, …). Returns the code element.
+  String codeStates(
+    String slideId,
+    List<TemplateCodeState> states, {
+    required String language,
+    Map<String, Object?> options = const {},
+  }) {
+    final el = placeholder(slideId, 'code');
+    if (options.isNotEmpty) {
+      final current = model.element(el)?.dataJson;
+      final data = current == null
+          ? <String, Object?>{'v': 1}
+          : {...jsonDecode(current) as Map<String, Object?>};
+      run(SetElementData(el, jsonEncode({...data, ...options})));
+    }
     run(
-      AddCodeStates(placeholder(slideId, 'code'), [
-        {CodeStateCols.code: source, CodeStateCols.language: language},
+      AddCodeStates(el, [
+        for (final s in states)
+          {
+            CodeStateCols.code: s.code,
+            CodeStateCols.language: language,
+            CodeStateCols.highlight: ?s.highlight,
+            SlidesCols.label: ?s.label,
+            SlidesCols.title: ?s.title,
+            if (s.mode != null || s.typing.isNotEmpty)
+              SlidesCols.transitionJson: jsonEncode({
+                'v': 1,
+                'mode': ?s.mode,
+                ...s.typing,
+              }),
+            if (s.callouts.isNotEmpty)
+              CodeStateCols.annotationsJson: jsonEncode({
+                'v': 1,
+                'steps': {
+                  for (final MapEntry(:key, :value) in s.callouts.entries)
+                    '$key': {'text': value},
+                },
+              }),
+          },
       ]),
     );
+    return el;
+  }
+
+  /// Fills the chart placeholder of [slideId] with a static chart of
+  /// [snapshot] in the deck theme's colors (08 §3.1 `static`: sample data a
+  /// user replaces with *Relink…* to a spreadsheet chart, keeping the
+  /// frame, builds and camera), with an optional 3D [camera]
+  /// (`{azimuth, elevation, perspective}`) and [altText] (03 §17). Returns
+  /// the chart element.
+  String staticChart(
+    String slideId,
+    ChartSourceSnapshot snapshot, {
+    required String altText,
+    Map<String, Object?>? camera,
+  }) {
+    final el = placeholder(slideId, 'chart');
+    run(
+      SetElementData(
+        el,
+        jsonEncode({
+          'v': 1,
+          'source': 'static',
+          'style': {'useDeckTheme': true},
+          'camera': ?camera,
+          'snapshot': snapshot.toJson(),
+        }),
+      ),
+    );
+    run(SetElementProps([el], altText: Patch(altText)));
+    return el;
   }
 
   /// Adds a [rows] × columns table on [slideId] at [rect]: the first row is
@@ -214,6 +323,43 @@ final class TemplateDeckBuilder {
   ];
 }
 
+/// A state of a template code block (07 §3.2).
+final class TemplateCodeState {
+  /// Creates a state.
+  const TemplateCodeState(
+    this.code, {
+    this.highlight,
+    this.label,
+    this.title,
+    this.mode,
+    this.typing = const {},
+    this.callouts = const {},
+  });
+
+  /// The source.
+  final String code;
+
+  /// Line-highlight steps (07 §4.1), or null.
+  final String? highlight;
+
+  /// Name in the state strip.
+  final String? label;
+
+  /// Title override (file name), or null.
+  final String? title;
+
+  /// How this state arrives (`type`, `morph`, `instant`; null = the
+  /// element default, `type`).
+  final String? mode;
+
+  /// Typing settings of this state's arrival (07 §5.3: `cps`,
+  /// `maxDurationMs`, …).
+  final Map<String, Object?> typing;
+
+  /// Callout text (inline Markdown) per 1-based highlight step (07 §4.4).
+  final Map<int, String> callouts;
+}
+
 /// Element specs for template slides (frames in su on the 1920 × 1080
 /// grid). Colors are `ColorRef` strings (`theme:accent1`,
 /// `theme:bg2/alpha:0.5`).
@@ -240,6 +386,7 @@ abstract final class TemplateShapes {
     double? opacity,
     String? name,
     bool decorative = false,
+    String? matchKey,
   }) => ElementSpec(
     kind: ElementKind.shape,
     x: rect.x,
@@ -285,6 +432,7 @@ abstract final class TemplateShapes {
       ElementCols.opacity: ?opacity,
       SlidesCols.name: ?name,
       if (decorative) ElementCols.decorative: true,
+      ElementCols.matchKey: ?matchKey,
     },
   );
 
@@ -298,6 +446,7 @@ abstract final class TemplateShapes {
     String align = 'left',
     String anchor = 'top',
     String? name,
+    String? matchKey,
   }) => ElementSpec(
     kind: ElementKind.text,
     x: rect.x,
@@ -321,6 +470,7 @@ abstract final class TemplateShapes {
         ).toJson(),
       ),
       SlidesCols.name: ?name,
+      ElementCols.matchKey: ?matchKey,
     },
   );
 

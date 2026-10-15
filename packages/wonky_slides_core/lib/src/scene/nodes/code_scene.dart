@@ -173,6 +173,9 @@ final class CodeCalloutPlacement {
     this.dy = 0,
     this.opacity = 1,
     this.rise = 0,
+    this.color = 0xff2563eb,
+    this.textColor = 0xffffffff,
+    this.fontFamily = '',
   });
 
   /// 0-based step index.
@@ -211,6 +214,16 @@ final class CodeCalloutPlacement {
 
   /// Remaining rise of the entrance animation (su, 12 → 0).
   final double rise;
+
+  /// Bubble / pill fill and label leader color (ARGB; the deck theme's
+  /// accent, SL-31).
+  final int color;
+
+  /// Text color on [color] (ARGB; labels use [color] for their text).
+  final int textColor;
+
+  /// Font family of the text (the deck's body font; '' = the code font).
+  final String fontFamily;
 }
 
 /// A freely placed run of a morph frame (07 §5.6; SL-26).

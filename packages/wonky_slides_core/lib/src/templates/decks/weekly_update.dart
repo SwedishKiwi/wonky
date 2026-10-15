@@ -1,3 +1,4 @@
+import '../../motion/builds/transition_spec.dart';
 import '../../theme/model/common.dart';
 import '../slides_template.dart';
 import '../template_text.dart';
@@ -12,6 +13,7 @@ final SlidesTemplate weeklyUpdateTemplate = SlidesTemplate(
   description: 'Share progress, numbers, risks and next steps in ten minutes.',
   category: 'work',
   themeKey: 'wonky',
+  defaultTransition: TransitionSpec.of('fade'),
   subtitle: 'Team Phoenix · Week 14',
   script: (b) {
     b.slide(
@@ -99,6 +101,7 @@ final SlidesTemplate weeklyUpdateTemplate = SlidesTemplate(
           TemplatePara('Questions or blockers?'),
           TemplatePara('Post them in #phoenix before Friday.', const {
             'style': 'subtitle',
+            'align': 'center',
             'spaceBefore': 32,
           }),
         ],

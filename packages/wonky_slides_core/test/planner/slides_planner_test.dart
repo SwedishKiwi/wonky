@@ -745,6 +745,28 @@ void main() {
       expect(deck.model.elementsOf(f.s3).last.id, copy.id);
     });
 
+    test('when pasting a shape onto a layout (master mode, SL-28) then the '
+        'copy is owned by the layout and builds are dropped', () {
+      final layout = f.layout('titleBody');
+      final payload = clipboardOf(
+        deck.model,
+        kind: 'elements',
+        elementIds: [f.shape],
+        sourceSlideId: f.s3,
+      );
+
+      final plan = deck.execute(
+        PasteElements(payload, layout, ownerKind: ElementOwnerKind.layout),
+      );
+
+      final copy = deck.model.element(
+        (plan.result['elementIds']! as List).single as String,
+      )!;
+      expect(copy.layoutId, layout);
+      expect(copy.slideId, isNull);
+      expect(deck.model.buildsOf(layout), isEmpty);
+    });
+
     test('when pasting slides from another deck then layouts map to the '
         'destination theme by key', () {
       final payload = clipboardOf(

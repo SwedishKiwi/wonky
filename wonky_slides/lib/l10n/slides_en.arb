@@ -1196,18 +1196,6 @@
   "@animateTabOrder": {
     "description": "Inspector › Animate sub-tab."
   },
-  "animateTransitionEmpty": "Slide transitions arrive here soon: effects, duration and how the slide advances.",
-  "@animateTransitionEmpty": {
-    "description": "Inspector › Animate › Transition placeholder text."
-  },
-  "animateBuildEmpty": "Builds arrive here soon: select an object to animate it in, out or in place.",
-  "@animateBuildEmpty": {
-    "description": "Inspector › Animate › Build placeholder text."
-  },
-  "animateOrderEmpty": "The build order of this slide will be listed here.",
-  "@animateOrderEmpty": {
-    "description": "Inspector › Animate › Order placeholder text."
-  },
   "appearanceLight": "Light",
   "@appearanceLight": {
     "description": "Deck appearance option."
@@ -1259,18 +1247,6 @@
   "badgeViewing": "Viewing",
   "@badgeViewing": {
     "description": "Toolbar badge for editors in Viewing mode."
-  },
-  "buildAppear": "Appear",
-  "@buildAppear": {
-    "description": "Build effect."
-  },
-  "buildFlyIn": "Fly in",
-  "@buildFlyIn": {
-    "description": "Build effect."
-  },
-  "buildZoom": "Zoom",
-  "@buildZoom": {
-    "description": "Build effect."
   },
   "canvasChooseLayout": "Choose a layout",
   "@canvasChooseLayout": {
@@ -1424,11 +1400,11 @@
   "@downloadPdf": {
     "description": "File › Download format."
   },
-  "downloadPng": "PNG image (current slide)",
+  "downloadPng": "PNG image (current slide)…",
   "@downloadPng": {
     "description": "File › Download format."
   },
-  "downloadPngZip": "PNG images (all slides, .zip)",
+  "downloadPngZip": "PNG images (all slides, .zip)…",
   "@downloadPngZip": {
     "description": "File › Download format."
   },
@@ -1601,14 +1577,6 @@
   "listOptions": "List options…",
   "@listOptions": {
     "description": "Format › Bullets & numbering item."
-  },
-  "mastersSoonTitle": "Editing masters and layouts is coming soon",
-  "@mastersSoonTitle": {
-    "description": "Masters mode placeholder title."
-  },
-  "mastersSoonBody": "You’ll edit the theme’s masters and layouts here. Your slides are unchanged.",
-  "@mastersSoonBody": {
-    "description": "Masters mode placeholder description."
   },
   "menuAddToGroup": "Add to group",
   "@menuAddToGroup": {
@@ -1973,10 +1941,6 @@
   "@outlineNoTitle": {
     "description": "Outline view: slide without a title."
   },
-  "outlineReadOnlyNote": "Outline view shows each slide’s title and main text. Editing here comes soon.",
-  "@outlineReadOnlyNote": {
-    "description": "Outline view note."
-  },
   "pasteKeepSource": "Keep source formatting",
   "@pasteKeepSource": {
     "description": "Paste special option."
@@ -2297,7 +2261,7 @@
   "@settingsCode": {
     "description": "Slides settings (Slides 04 §13.16)."
   },
-  "settingsCodeFontSize": "Code font size",
+  "settingsCodeFontSize": "Largest code font size",
   "@settingsCodeFontSize": {
     "description": "Slides settings (Slides 04 §13.16)."
   },
@@ -2583,26 +2547,6 @@
   "toolbarTransition": "Transition",
   "@toolbarTransition": {
     "description": "Toolbar transition button (nothing selected)."
-  },
-  "transitionNone": "None",
-  "@transitionNone": {
-    "description": "Transition effect."
-  },
-  "transitionFade": "Fade",
-  "@transitionFade": {
-    "description": "Transition effect."
-  },
-  "transitionPush": "Push",
-  "@transitionPush": {
-    "description": "Transition effect."
-  },
-  "transitionWipe": "Wipe",
-  "@transitionWipe": {
-    "description": "Transition effect."
-  },
-  "transitionDissolve": "Dissolve",
-  "@transitionDissolve": {
-    "description": "Transition effect."
   },
   "unitsSu": "Slide units",
   "@unitsSu": {
@@ -3084,6 +3028,102 @@
   "printBuilds": "Print each build stage",
   "@printBuilds": {
     "description": "Print setting (builds as pages, M10)"
+  },
+  "printFinalState": "Show final animation state",
+  "@printFinalState": {
+    "description": "Print setting (P1): print each slide as it looks after its last build instead of the authored layout"
+  },
+  "pngDialogTitle": "Download PNG",
+  "@pngDialogTitle": {
+    "description": "Title of the PNG export dialog (File › Download ▸ PNG)"
+  },
+  "pngDialogHint": "Several images download as one .zip file.",
+  "@pngDialogHint": {
+    "description": "Description of the PNG export dialog"
+  },
+  "pngSlides": "Slides",
+  "@pngSlides": {
+    "description": "PNG export: which slides"
+  },
+  "pngSlidesCurrent": "Current slide",
+  "@pngSlidesCurrent": {
+    "description": "PNG export range"
+  },
+  "pngSlidesSelection": "Selected slides",
+  "@pngSlidesSelection": {
+    "description": "PNG export range"
+  },
+  "pngSlidesAll": "All slides",
+  "@pngSlidesAll": {
+    "description": "PNG export range"
+  },
+  "pngSize": "Size",
+  "@pngSize": {
+    "description": "PNG export: image size"
+  },
+  "pngSizeOption": "{scale}× · {width} × {height} px",
+  "@pngSizeOption": {
+    "description": "PNG export size choice",
+    "placeholders": {
+      "scale": {
+        "type": "int"
+      },
+      "width": {
+        "type": "int"
+      },
+      "height": {
+        "type": "int"
+      }
+    }
+  },
+  "pngFrames": "Builds",
+  "@pngFrames": {
+    "description": "PNG export: which build state the images show"
+  },
+  "pngFramesPrint": "All content (as printed)",
+  "@pngFramesPrint": {
+    "description": "PNG export: the print frame"
+  },
+  "pngFramesFinal": "After the last build",
+  "@pngFramesFinal": {
+    "description": "PNG export: the final frame"
+  },
+  "pngFramesBuilds": "Each build stage (one image per step)",
+  "@pngFramesBuilds": {
+    "description": "PNG export: one image per build step"
+  },
+  "pngTransparent": "Transparent background",
+  "@pngTransparent": {
+    "description": "PNG export option"
+  },
+  "pngDownload": "Download",
+  "@pngDownload": {
+    "description": "PNG export dialog button"
+  },
+  "pngEntrySlide": "Slide {number}",
+  "@pngEntrySlide": {
+    "description": "File name of one slide's image in a PNG ZIP (number is zero-padded)",
+    "placeholders": {
+      "number": {
+        "type": "String"
+      }
+    }
+  },
+  "pngEntryStep": "Slide {number}, step {step}",
+  "@pngEntryStep": {
+    "description": "File name of one build step's image in a PNG ZIP",
+    "placeholders": {
+      "number": {
+        "type": "String"
+      },
+      "step": {
+        "type": "int"
+      }
+    }
+  },
+  "pngNothingToExport": "There are no slides to export",
+  "@pngNothingToExport": {
+    "description": "PNG export with an empty range"
   },
   "printSkipped": "Include skipped slides",
   "@printSkipped": {
@@ -4866,6 +4906,14 @@
   "@presentEndScreen": {
     "description": "End screen after the last slide."
   },
+  "presentKioskExitHold": "Keep holding Esc to exit",
+  "@presentKioskExitHold": {
+    "description": "Kiosk mode: shown with a progress ring while Esc is held to end the presentation (Slides 10 §9)."
+  },
+  "presenterReducedEffects": "Reduced effects",
+  "@presenterReducedEffects": {
+    "description": "Presenter view indicator: the running animation was too slow for this device and plays as a crossfade (Slides 06 §14)."
+  },
   "presentCatchingUp": "Catching up…",
   "@presentCatchingUp": {
     "description": "Audience view while the presenter's slide is still syncing."
@@ -5504,5 +5552,4386 @@
         "type": "String"
       }
     }
+  },
+  "cmdLayoutAdd": "New layout",
+  "@cmdLayoutAdd": {
+    "description": "Title of the command `slides.layout.add` (menus, palette, tooltips, undo)."
+  },
+  "cmdLayoutDuplicate": "Duplicate layout",
+  "@cmdLayoutDuplicate": {
+    "description": "Title of the command `slides.layout.duplicate` (menus, palette, tooltips, undo)."
+  },
+  "cmdLayoutRename": "Rename layout…",
+  "@cmdLayoutRename": {
+    "description": "Title of the command `slides.layout.rename` (menus, palette, tooltips, undo)."
+  },
+  "cmdLayoutMove": "Move layout",
+  "@cmdLayoutMove": {
+    "description": "Title of the command `slides.layout.move` (menus, palette, tooltips, undo)."
+  },
+  "cmdLayoutDelete": "Delete layout",
+  "@cmdLayoutDelete": {
+    "description": "Title of the command `slides.layout.delete` (menus, palette, tooltips, undo)."
+  },
+  "cmdLayoutSetBackground": "Layout background",
+  "@cmdLayoutSetBackground": {
+    "description": "Title of the command `slides.layout.setBackground` (menus, palette, tooltips, undo)."
+  },
+  "cmdLayoutSetHideMasterElements": "Hide master objects",
+  "@cmdLayoutSetHideMasterElements": {
+    "description": "Title of the command `slides.layout.setHideMasterElements` (menus, palette, tooltips, undo)."
+  },
+  "cmdLayoutToggleHidden": "Hide in layout picker",
+  "@cmdLayoutToggleHidden": {
+    "description": "Title of the command `slides.layout.toggleHidden` (menus, palette, tooltips, undo)."
+  },
+  "cmdMasterAdd": "New master",
+  "@cmdMasterAdd": {
+    "description": "Title of the command `slides.master.add` (menus, palette, tooltips, undo)."
+  },
+  "cmdMasterDuplicate": "Duplicate master",
+  "@cmdMasterDuplicate": {
+    "description": "Title of the command `slides.master.duplicate` (menus, palette, tooltips, undo)."
+  },
+  "cmdMasterRename": "Rename master…",
+  "@cmdMasterRename": {
+    "description": "Title of the command `slides.master.rename` (menus, palette, tooltips, undo)."
+  },
+  "cmdMasterDelete": "Delete master",
+  "@cmdMasterDelete": {
+    "description": "Title of the command `slides.master.delete` (menus, palette, tooltips, undo)."
+  },
+  "cmdMasterSetBackground": "Master background",
+  "@cmdMasterSetBackground": {
+    "description": "Title of the command `slides.master.setBackground` (menus, palette, tooltips, undo)."
+  },
+  "cmdMastersExit": "Close masters view",
+  "@cmdMastersExit": {
+    "description": "Title of the command `slides.masters.exit` (menus, palette, tooltips, undo)."
+  },
+  "cmdThemeUpdate": "Edit theme",
+  "@cmdThemeUpdate": {
+    "description": "Title of the command `slides.theme.update` (menus, palette, tooltips, undo)."
+  },
+  "cmdThemeDeriveDarkColors": "Derive dark colors",
+  "@cmdThemeDeriveDarkColors": {
+    "description": "Title of the command `slides.theme.deriveDarkColors` (menus, palette, tooltips, undo)."
+  },
+  "cmdThemeResetToBuiltIn": "Reset to built-in theme",
+  "@cmdThemeResetToBuiltIn": {
+    "description": "Title of the command `slides.theme.resetToBuiltIn` (menus, palette, tooltips, undo)."
+  },
+  "reasonNoLayout": "Select a layout",
+  "@reasonNoLayout": {
+    "description": "Disabled reason: no layout to act on."
+  },
+  "reasonNoMaster": "Select a master",
+  "@reasonNoMaster": {
+    "description": "Disabled reason: no master to act on."
+  },
+  "reasonLastLayout": "A master needs at least one layout",
+  "@reasonLastLayout": {
+    "description": "Disabled reason of Delete layout for the last layout of a master."
+  },
+  "reasonLastMaster": "A theme needs at least one master",
+  "@reasonLastMaster": {
+    "description": "Disabled reason of Delete master for the last master of a theme."
+  },
+  "reasonLayoutUsed": "{count, plural, =1{Used by 1 slide — apply another layout first} other{Used by {count} slides — apply another layout first}}",
+  "@reasonLayoutUsed": {
+    "description": "A layout used by slides can't be deleted.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "reasonMasterUsed": "{count, plural, =1{Used by 1 slide — apply another layout first} other{Used by {count} slides — apply another layout first}}",
+  "@reasonMasterUsed": {
+    "description": "A master whose layouts slides use can't be deleted.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "reasonMastersOnly": "Open Edit masters and layouts first",
+  "@reasonMastersOnly": {
+    "description": "Disabled reason of Insert › Placeholder outside masters mode."
+  },
+  "reasonNotBuiltInTheme": "This theme isn’t based on a built-in theme",
+  "@reasonNotBuiltInTheme": {
+    "description": "Disabled reason of Reset to built-in theme."
+  },
+  "layoutDefaultName": "Layout {n}",
+  "@layoutDefaultName": {
+    "description": "Name of a new layout.",
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
+  "masterDefaultName": "Master {n}",
+  "@masterDefaultName": {
+    "description": "Name of a new master.",
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
+  "layoutRenameTitle": "Rename layout",
+  "@layoutRenameTitle": {
+    "description": "Title of the rename layout dialog."
+  },
+  "masterRenameTitle": "Rename master",
+  "@masterRenameTitle": {
+    "description": "Title of the rename master dialog."
+  },
+  "layoutDeleteTitle": "Delete layout?",
+  "@layoutDeleteTitle": {
+    "description": "Title of the delete layout dialog for a used layout."
+  },
+  "layoutDeleteUsedBody": "{count, plural, =1{1 slide uses “{name}”. Apply “{replacement}” to it and delete the layout?} other{{count} slides use “{name}”. Apply “{replacement}” to them and delete the layout?}}",
+  "@layoutDeleteUsedBody": {
+    "description": "Body of the delete layout dialog.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      },
+      "name": {
+        "type": "String"
+      },
+      "replacement": {
+        "type": "String"
+      }
+    }
+  },
+  "layoutDeleteApplyAndDelete": "Apply and delete",
+  "@layoutDeleteApplyAndDelete": {
+    "description": "Confirm button of the delete layout dialog."
+  },
+  "placeholderPrompt": "{type, select, title{Click to add title} subtitle{Click to add subtitle} body{Click to add text} picture{Click to add a picture} chart{Click to add a chart} table{Click to add a table} code{Click to add code} caption{Click to add a caption} bigNumber{100%} quote{Click to add a quote} attribution{Name, role} object{Click to add an object} other{Click to add text}}",
+  "@placeholderPrompt": {
+    "description": "Prompt text of a new placeholder of a type (shown on empty slide instances).",
+    "placeholders": {
+      "type": {
+        "type": "String"
+      }
+    }
+  },
+  "inspectorLayout": "Layout",
+  "@inspectorLayout": {
+    "description": "Inspector tab in masters mode while a layout is edited."
+  },
+  "inspectorMaster": "Master",
+  "@inspectorMaster": {
+    "description": "Inspector tab in masters mode while a master is edited."
+  },
+  "inspectorTheme": "Theme",
+  "@inspectorTheme": {
+    "description": "Inspector tab of the theme editor (masters mode)."
+  },
+  "mastersNavigatorLabel": "Masters and layouts",
+  "@mastersNavigatorLabel": {
+    "description": "Title and accessibility label of the masters navigator."
+  },
+  "mastersMasterName": "Master · {name}",
+  "@mastersMasterName": {
+    "description": "A master row in the masters navigator.",
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "mastersHiddenInPicker": "Hidden in layout picker",
+  "@mastersHiddenInPicker": {
+    "description": "A layout hidden from the layout gallery."
+  },
+  "mastersMoveUp": "Move up",
+  "@mastersMoveUp": {
+    "description": "Context menu: move the layout up."
+  },
+  "mastersMoveDown": "Move down",
+  "@mastersMoveDown": {
+    "description": "Context menu: move the layout down."
+  },
+  "mastersBannerLayout": "{count, plural, =0{Editing layout “{name}” of theme {theme} — no slides use it yet} =1{Editing layout “{name}” of theme {theme} — changes apply to 1 slide} other{Editing layout “{name}” of theme {theme} — changes apply to {count} slides}}",
+  "@mastersBannerLayout": {
+    "description": "Banner of masters mode while a layout is edited.",
+    "placeholders": {
+      "name": {
+        "type": "String"
+      },
+      "theme": {
+        "type": "String"
+      },
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "mastersBannerMaster": "{count, plural, =0{Editing master “{name}” of theme {theme} — no slides use it yet} =1{Editing master “{name}” of theme {theme} — changes apply to 1 slide} other{Editing master “{name}” of theme {theme} — changes apply to {count} slides}}",
+  "@mastersBannerMaster": {
+    "description": "Banner of masters mode while a master is edited.",
+    "placeholders": {
+      "name": {
+        "type": "String"
+      },
+      "theme": {
+        "type": "String"
+      },
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "mastersBannerNone": "This presentation has no layouts to edit",
+  "@mastersBannerNone": {
+    "description": "Banner of masters mode without a layout or master."
+  },
+  "mastersDone": "Done",
+  "@mastersDone": {
+    "description": "Button leaving masters mode."
+  },
+  "mastersLayoutSemantics": "Layout {name}",
+  "@mastersLayoutSemantics": {
+    "description": "Accessibility label of the canvas editing a layout.",
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "mastersMasterSemantics": "Master {name}",
+  "@mastersMasterSemantics": {
+    "description": "Accessibility label of the canvas editing a master.",
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "mastersSectionProperties": "Properties",
+  "@mastersSectionProperties": {
+    "description": "Inspector section of the edited layout or master."
+  },
+  "mastersSectionPlaceholders": "Placeholders",
+  "@mastersSectionPlaceholders": {
+    "description": "Inspector section listing the placeholders of the edited layout or master."
+  },
+  "mastersNoPlaceholders": "No placeholders yet",
+  "@mastersNoPlaceholders": {
+    "description": "Placeholders section without placeholders."
+  },
+  "mastersChoosePlaceholder": "Add…",
+  "@mastersChoosePlaceholder": {
+    "description": "Placeholder of the insert placeholder select."
+  },
+  "mastersOfTheme": "Theme {name}",
+  "@mastersOfTheme": {
+    "description": "The theme of the edited layout or master.",
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "mastersBackgroundUseMaster": "Use master background",
+  "@mastersBackgroundUseMaster": {
+    "description": "Resets a layout background."
+  },
+  "mastersBackgroundUseTheme": "Use theme background",
+  "@mastersBackgroundUseTheme": {
+    "description": "Resets a master background."
+  },
+  "themeSectionColors": "Colors",
+  "@themeSectionColors": {
+    "description": "Theme editor section."
+  },
+  "themeSectionFonts": "Fonts",
+  "@themeSectionFonts": {
+    "description": "Theme editor section."
+  },
+  "themeSectionTextStyles": "Text styles",
+  "@themeSectionTextStyles": {
+    "description": "Theme editor section."
+  },
+  "themeSectionObjects": "Objects",
+  "@themeSectionObjects": {
+    "description": "Theme editor section (default object styles)."
+  },
+  "themeSectionTables": "Tables",
+  "@themeSectionTables": {
+    "description": "Theme editor section."
+  },
+  "themeSectionCharts": "Charts",
+  "@themeSectionCharts": {
+    "description": "Theme editor section."
+  },
+  "themeEditorNoTheme": "This presentation has no theme",
+  "@themeEditorNoTheme": {
+    "description": "Theme editor without a theme."
+  },
+  "themeEditorBasedOn": "Based on {name}",
+  "@themeEditorBasedOn": {
+    "description": "The built-in a theme was copied from.",
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "themeContrastPair": "{foreground} on {background}",
+  "@themeContrastPair": {
+    "description": "A contrast pair of theme colors.",
+    "placeholders": {
+      "foreground": {
+        "type": "String"
+      },
+      "background": {
+        "type": "String"
+      }
+    }
+  },
+  "themeContrastPasses": "{pair}: contrast {ratio} (needs {required}:1)",
+  "@themeContrastPasses": {
+    "description": "Tooltip of a passing contrast badge.",
+    "placeholders": {
+      "pair": {
+        "type": "String"
+      },
+      "ratio": {
+        "type": "String"
+      },
+      "required": {
+        "type": "String"
+      }
+    }
+  },
+  "themeContrastFails": "{pair}: contrast {ratio} is too low (needs {required}:1)",
+  "@themeContrastFails": {
+    "description": "Tooltip of a failing contrast badge.",
+    "placeholders": {
+      "pair": {
+        "type": "String"
+      },
+      "ratio": {
+        "type": "String"
+      },
+      "required": {
+        "type": "String"
+      }
+    }
+  },
+  "themeEditorCustomColors": "Custom colors",
+  "@themeEditorCustomColors": {
+    "description": "Theme editor: custom colors list."
+  },
+  "themeEditorCustomColorName": "Custom color name",
+  "@themeEditorCustomColorName": {
+    "description": "Accessibility label of a custom color name field."
+  },
+  "themeEditorCustomColorDefault": "Custom {n}",
+  "@themeEditorCustomColorDefault": {
+    "description": "Name of a new custom color.",
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
+  "themeEditorAddCustomColor": "Add custom color",
+  "@themeEditorAddCustomColor": {
+    "description": "Theme editor button."
+  },
+  "themeEditorRemoveCustomColor": "Remove {name}",
+  "@themeEditorRemoveCustomColor": {
+    "description": "Accessibility label of the remove button of a custom color.",
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "themeEditorWeight": "{weight, select, 300{Light} 400{Regular} 500{Medium} 600{Semibold} 700{Bold} 800{Extra bold} other{{weight}}}",
+  "@themeEditorWeight": {
+    "description": "A font weight.",
+    "placeholders": {
+      "weight": {
+        "type": "String"
+      }
+    }
+  },
+  "themeEditorFontFallback": "{family} isn’t available; {fallback} is used",
+  "@themeEditorFontFallback": {
+    "description": "Theme font that is not bundled.",
+    "placeholders": {
+      "family": {
+        "type": "String"
+      },
+      "fallback": {
+        "type": "String"
+      }
+    }
+  },
+  "themeEditorItalic": "Italic",
+  "@themeEditorItalic": {
+    "description": "Theme editor: italic switch."
+  },
+  "themeEditorLetterSpacing": "Letter spacing",
+  "@themeEditorLetterSpacing": {
+    "description": "Theme editor: letter spacing (em)."
+  },
+  "themeEditorCaps": "Capitals",
+  "@themeEditorCaps": {
+    "description": "Theme editor: caps transform."
+  },
+  "themeEditorLists": "Lists",
+  "@themeEditorLists": {
+    "description": "Theme editor: list markers."
+  },
+  "themeEditorListLevel": "Level {n}",
+  "@themeEditorListLevel": {
+    "description": "Theme editor: list level row.",
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
+  "themeEditorBulletColor": "Bullet color",
+  "@themeEditorBulletColor": {
+    "description": "Theme editor: list bullet color."
+  },
+  "themeEditorIndent": "Indent per level",
+  "@themeEditorIndent": {
+    "description": "Theme editor: list indentation."
+  },
+  "themeEditorBackgroundNotSolid": "The background is a gradient or an image; picking a color replaces it.",
+  "@themeEditorBackgroundNotSolid": {
+    "description": "Theme editor: non-solid background note."
+  },
+  "themeEditorDarkBackground": "Different in dark appearance",
+  "@themeEditorDarkBackground": {
+    "description": "Theme editor: dark background override switch."
+  },
+  "themeEditorTextBoxes": "Text boxes",
+  "@themeEditorTextBoxes": {
+    "description": "Theme editor: default text box style."
+  },
+  "themeEditorShapes": "Shapes",
+  "@themeEditorShapes": {
+    "description": "Theme editor: default shape style."
+  },
+  "themeEditorLines": "Lines",
+  "@themeEditorLines": {
+    "description": "Theme editor: default line style."
+  },
+  "themeEditorIcons": "Icons",
+  "@themeEditorIcons": {
+    "description": "Theme editor: default icon style."
+  },
+  "themeEditorTextColor": "Text color",
+  "@themeEditorTextColor": {
+    "description": "Theme editor: text color."
+  },
+  "themeEditorShadowBlur": "Blur",
+  "@themeEditorShadowBlur": {
+    "description": "Theme editor: default shadow blur."
+  },
+  "themeEditorShadowOffset": "Offset",
+  "@themeEditorShadowOffset": {
+    "description": "Theme editor: default shadow vertical offset."
+  },
+  "themeEditorQuickStyles": "Quick styles",
+  "@themeEditorQuickStyles": {
+    "description": "Theme editor: the 8 shape quick styles."
+  },
+  "themeEditorQuickStyle": "Style {n}",
+  "@themeEditorQuickStyle": {
+    "description": "Theme editor: one quick style.",
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
+  "themeEditorHeaderFill": "Header fill",
+  "@themeEditorHeaderFill": {
+    "description": "Theme editor: table header fill."
+  },
+  "themeEditorHeaderText": "Header text",
+  "@themeEditorHeaderText": {
+    "description": "Theme editor: table header text color."
+  },
+  "themeEditorBodyFill": "Body fill",
+  "@themeEditorBodyFill": {
+    "description": "Theme editor: table body fill."
+  },
+  "themeEditorBandFill": "Banded rows",
+  "@themeEditorBandFill": {
+    "description": "Theme editor: table band fill."
+  },
+  "themeEditorCornerRadius": "Corner radius",
+  "@themeEditorCornerRadius": {
+    "description": "Theme editor: corner radius."
+  },
+  "themeEditorLightPalette": "Light palette",
+  "@themeEditorLightPalette": {
+    "description": "Theme editor: code palette on light backgrounds."
+  },
+  "themeEditorDarkPalette": "Dark palette",
+  "@themeEditorDarkPalette": {
+    "description": "Theme editor: code palette on dark backgrounds."
+  },
+  "themeEditorWindowChrome": "Chrome",
+  "@themeEditorWindowChrome": {
+    "description": "Theme editor: default code block chrome."
+  },
+  "themeEditorChromeTab": "Tab",
+  "@themeEditorChromeTab": {
+    "description": "Code chrome: a title tab."
+  },
+  "themeEditorChromeWindow": "Window",
+  "@themeEditorChromeWindow": {
+    "description": "Code chrome: a window bar."
+  },
+  "themeEditorChromeCaption": "Caption",
+  "@themeEditorChromeCaption": {
+    "description": "Code chrome: a caption."
+  },
+  "themeEditorShadowSoft": "Soft",
+  "@themeEditorShadowSoft": {
+    "description": "Shadow strength."
+  },
+  "themeEditorShadowStrong": "Strong",
+  "@themeEditorShadowStrong": {
+    "description": "Shadow strength."
+  },
+  "themeEditorSeries": "Series {n}",
+  "@themeEditorSeries": {
+    "description": "Theme editor: chart series color.",
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
+  "themeEditorGridlines": "Gridlines",
+  "@themeEditorGridlines": {
+    "description": "Theme editor: chart gridline color."
+  },
+  "themeEditorAxis": "Axis",
+  "@themeEditorAxis": {
+    "description": "Theme editor: chart axis color."
+  },
+  "themeEditorLighting": "3D lighting",
+  "@themeEditorLighting": {
+    "description": "Theme editor: chart 3D lighting."
+  },
+  "themeEditorLightingSoft": "Soft",
+  "@themeEditorLightingSoft": {
+    "description": "3D lighting preset."
+  },
+  "themeEditorLightingStudio": "Studio",
+  "@themeEditorLightingStudio": {
+    "description": "3D lighting preset."
+  },
+  "themeEditorLightingFlat": "Flat",
+  "@themeEditorLightingFlat": {
+    "description": "3D lighting preset."
+  },
+  "cmdInsertCodeDescription": "Insert a code block with syntax highlighting, line steps and type-in states",
+  "@cmdInsertCodeDescription": {
+    "description": "Description of `slides.insert.code` (palette)."
+  },
+  "cmdCodeSetPalette": "Code color theme",
+  "@cmdCodeSetPalette": {
+    "description": "Title of the command `slides.code.setPalette`."
+  },
+  "cmdCodeSetText": "Set code",
+  "@cmdCodeSetText": {
+    "description": "Title of the command `slides.code.setText` (MCP, undo)."
+  },
+  "cmdCodeAddStateDescription": "Adds a copy of the selected state after it: change the code there to animate the change",
+  "@cmdCodeAddStateDescription": {
+    "description": "Description of `slides.code.addState`."
+  },
+  "cmdCodeDuplicateState": "Duplicate state",
+  "@cmdCodeDuplicateState": {
+    "description": "Title of the command `slides.code.duplicateState`."
+  },
+  "cmdCodeDeleteState": "Delete state",
+  "@cmdCodeDeleteState": {
+    "description": "Title of the command `slides.code.deleteState`."
+  },
+  "cmdCodeMoveState": "Move state",
+  "@cmdCodeMoveState": {
+    "description": "Title of the command `slides.code.moveState`."
+  },
+  "cmdCodeSelectState": "Show code state",
+  "@cmdCodeSelectState": {
+    "description": "Title of the command `slides.code.selectState` (Alt+Shift+←/→)."
+  },
+  "cmdCodeSetStateLabel": "Rename state",
+  "@cmdCodeSetStateLabel": {
+    "description": "Title of the command `slides.code.setStateLabel`."
+  },
+  "cmdCodeSetStateTransition": "State arrival",
+  "@cmdCodeSetStateTransition": {
+    "description": "Title of the command `slides.code.setStateTransition` (how the code arrives at a state)."
+  },
+  "cmdCodeSetCallout": "Step callout",
+  "@cmdCodeSetCallout": {
+    "description": "Title of the command `slides.code.setCallout`."
+  },
+  "cmdCodeAddStepFromLines": "Add line step",
+  "@cmdCodeAddStepFromLines": {
+    "description": "Title of the command `slides.code.addStepFromLines`."
+  },
+  "cmdCodePreviewStep": "Preview line step",
+  "@cmdCodePreviewStep": {
+    "description": "Title of the command `slides.code.previewStep`."
+  },
+  "cmdCodePreview": "Preview code animation",
+  "@cmdCodePreview": {
+    "description": "Title of the command `slides.code.preview` (plays the type-in or change into the selected state on the canvas)."
+  },
+  "cmdCodeToggleDiffGutter": "Show code changes",
+  "@cmdCodeToggleDiffGutter": {
+    "description": "Title of the command `slides.code.toggleDiffGutter`."
+  },
+  "cmdCodeCopy": "Copy code",
+  "@cmdCodeCopy": {
+    "description": "Title of the command `slides.code.copy`."
+  },
+  "cmdCodeConvertFromText": "Convert to code block",
+  "@cmdCodeConvertFromText": {
+    "description": "Title of the command `slides.code.convertFromText`."
+  },
+  "reasonSelectCode": "Select a code block",
+  "@reasonSelectCode": {
+    "description": "Why a code command is disabled."
+  },
+  "reasonLastCodeState": "A code block keeps at least one state",
+  "@reasonLastCodeState": {
+    "description": "Why *Delete state* is disabled."
+  },
+  "reasonSelectTextBox": "Select a text box with text",
+  "@reasonSelectTextBox": {
+    "description": "Why *Convert to code block* is disabled."
+  },
+  "toastCodeCopied": "Code copied",
+  "@toastCodeCopied": {
+    "description": "Toast after *Copy code*."
+  },
+  "undoEditCodeBlock": "Edit code block",
+  "@undoEditCodeBlock": {
+    "description": "Undo label of code block options."
+  },
+  "undoEditCodeState": "Edit code state",
+  "@undoEditCodeState": {
+    "description": "Undo label of a state's label or arrival."
+  },
+  "undoEditLineSteps": "Edit line steps",
+  "@undoEditLineSteps": {
+    "description": "Undo label of highlight steps."
+  },
+  "undoEditCallout": "Edit callout",
+  "@undoEditCallout": {
+    "description": "Undo label of a step callout."
+  },
+  "codeLanguageLabel": "Language",
+  "@codeLanguageLabel": {
+    "description": "Code section / dialog label."
+  },
+  "codeLanguageDialogTitle": "Code language",
+  "@codeLanguageDialogTitle": {
+    "description": "Title of the language dialog."
+  },
+  "codeInsertDialogTitle": "Insert code block",
+  "@codeInsertDialogTitle": {
+    "description": "Title of the language dialog when inserting."
+  },
+  "codePaletteLabel": "Colors",
+  "@codePaletteLabel": {
+    "description": "Code section label of the syntax palette."
+  },
+  "codePaletteAuto": "Auto",
+  "@codePaletteAuto": {
+    "description": "Palette option: light or dark by the background."
+  },
+  "codePaletteAutoNamed": "Auto ({name})",
+  "@codePaletteAutoNamed": {
+    "description": "Palette option with the palette in use.",
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "codePaletteLight": "Theme light",
+  "@codePaletteLight": {
+    "description": "Palette option: the deck theme's light code palette."
+  },
+  "codePaletteDark": "Theme dark",
+  "@codePaletteDark": {
+    "description": "Palette option: the deck theme's dark code palette."
+  },
+  "codeFontSize": "Font size",
+  "@codeFontSize": {
+    "description": "Code section label."
+  },
+  "codeFontSizeAuto": "Auto",
+  "@codeFontSizeAuto": {
+    "description": "Font size option: fit the box."
+  },
+  "codeFontSizeRange": "Min – max",
+  "@codeFontSizeRange": {
+    "description": "Code section label of the auto-size bounds."
+  },
+  "codeStartLine": "Start at",
+  "@codeStartLine": {
+    "description": "Code section label of the first line number."
+  },
+  "codeWrap": "Wrap lines",
+  "@codeWrap": {
+    "description": "Code section toggle."
+  },
+  "codeLigatures": "Ligatures",
+  "@codeLigatures": {
+    "description": "Code section toggle."
+  },
+  "codeChrome": "Frame",
+  "@codeChrome": {
+    "description": "Code section label of the chrome (tab, window bar, caption)."
+  },
+  "codeChromeTheme": "Theme default",
+  "@codeChromeTheme": {
+    "description": "Chrome option."
+  },
+  "codeChromeNone": "None",
+  "@codeChromeNone": {
+    "description": "Chrome option."
+  },
+  "codeChromeTab": "File tab",
+  "@codeChromeTab": {
+    "description": "Chrome option."
+  },
+  "codeChromeWindow": "Window",
+  "@codeChromeWindow": {
+    "description": "Chrome option (title bar with three dots)."
+  },
+  "codeChromeCaption": "Caption",
+  "@codeChromeCaption": {
+    "description": "Chrome option (label above the box)."
+  },
+  "codeTitle": "Title",
+  "@codeTitle": {
+    "description": "Code section label (file name)."
+  },
+  "codeShowLanguage": "Language badge",
+  "@codeShowLanguage": {
+    "description": "Code section toggle."
+  },
+  "codeCopyButton": "Copy button",
+  "@codeCopyButton": {
+    "description": "Code section label."
+  },
+  "codeCopyNever": "Never",
+  "@codeCopyNever": {
+    "description": "Copy button option."
+  },
+  "codeCopyPresent": "In presentations",
+  "@codeCopyPresent": {
+    "description": "Copy button option."
+  },
+  "codeCopyAlways": "Always",
+  "@codeCopyAlways": {
+    "description": "Copy button option."
+  },
+  "codeStatesHeader": "States",
+  "@codeStatesHeader": {
+    "description": "Code section header of the state strip."
+  },
+  "codeStateChip": "State {index}",
+  "@codeStateChip": {
+    "description": "Semantics/tooltip of a state chip.",
+    "placeholders": {
+      "index": {
+        "type": "int"
+      }
+    }
+  },
+  "codeStateChipNamed": "State {index}: {label}",
+  "@codeStateChipNamed": {
+    "description": "Semantics/tooltip of a named state chip.",
+    "placeholders": {
+      "index": {
+        "type": "int"
+      },
+      "label": {
+        "type": "String"
+      }
+    }
+  },
+  "codeStateInfoFirst": "State {index} · {lines, plural, =1{1 line} other{{lines} lines}}",
+  "@codeStateInfoFirst": {
+    "description": "Info line of the first state.",
+    "placeholders": {
+      "index": {
+        "type": "int"
+      },
+      "lines": {
+        "type": "int"
+      }
+    }
+  },
+  "codeStateInfo": "State {index} · {lines, plural, =1{1 line} other{{lines} lines}} · +{added} ~{changed} −{removed} vs. state {previous}",
+  "@codeStateInfo": {
+    "description": "Info line of a state (lines added, changed, removed).",
+    "placeholders": {
+      "index": {
+        "type": "int"
+      },
+      "lines": {
+        "type": "int"
+      },
+      "added": {
+        "type": "int"
+      },
+      "changed": {
+        "type": "int"
+      },
+      "removed": {
+        "type": "int"
+      },
+      "previous": {
+        "type": "int"
+      }
+    }
+  },
+  "codeMoveStateLeft": "Move state earlier",
+  "@codeMoveStateLeft": {
+    "description": "Tooltip."
+  },
+  "codeMoveStateRight": "Move state later",
+  "@codeMoveStateRight": {
+    "description": "Tooltip."
+  },
+  "codePreviewTypeIn": "Preview the type-in",
+  "@codePreviewTypeIn": {
+    "description": "Tooltip of ▶ on the first state."
+  },
+  "codePreviewChange": "Preview the change into this state",
+  "@codePreviewChange": {
+    "description": "Tooltip of ▶."
+  },
+  "codeStateLabel": "Name",
+  "@codeStateLabel": {
+    "description": "Code section label of a state's name."
+  },
+  "codeStateLabelHint": "e.g. Add caching",
+  "@codeStateLabelHint": {
+    "description": "Placeholder of a state's name."
+  },
+  "codeShowChanges": "Show changes",
+  "@codeShowChanges": {
+    "description": "Code section toggle of the diff gutter."
+  },
+  "codeTypeInHeader": "Type-in",
+  "@codeTypeInHeader": {
+    "description": "Header of the first state's typing settings."
+  },
+  "codeArrivalHeader": "Arrival",
+  "@codeArrivalHeader": {
+    "description": "Header of how the code arrives at the selected state."
+  },
+  "codeArrivesBy": "Arrives by",
+  "@codeArrivesBy": {
+    "description": "Code section label."
+  },
+  "codeModeType": "Typing",
+  "@codeModeType": {
+    "description": "Arrival mode."
+  },
+  "codeModeMorph": "Morph",
+  "@codeModeMorph": {
+    "description": "Arrival mode."
+  },
+  "codeModeInstant": "Instant",
+  "@codeModeInstant": {
+    "description": "Arrival mode."
+  },
+  "codeDurationTyped": "≈ {seconds} s (typed)",
+  "@codeDurationTyped": {
+    "description": "Estimated duration of a typed change.",
+    "placeholders": {
+      "seconds": {
+        "type": "String"
+      }
+    }
+  },
+  "codeDurationMorph": "≈ {seconds} s (morph)",
+  "@codeDurationMorph": {
+    "description": "Duration of a morph.",
+    "placeholders": {
+      "seconds": {
+        "type": "String"
+      }
+    }
+  },
+  "codeDurationInstant": "≈ {seconds} s (crossfade)",
+  "@codeDurationInstant": {
+    "description": "Duration of an instant change.",
+    "placeholders": {
+      "seconds": {
+        "type": "String"
+      }
+    }
+  },
+  "codeMore": "More…",
+  "@codeMore": {
+    "description": "Opens all typing settings."
+  },
+  "codeLineStepsHeader": "Line steps (state {index})",
+  "@codeLineStepsHeader": {
+    "description": "Header of the line steps.",
+    "placeholders": {
+      "index": {
+        "type": "int"
+      }
+    }
+  },
+  "codeStepsEmpty": "No steps: every line shows normally.",
+  "@codeStepsEmpty": {
+    "description": "Hint when a state has no line steps."
+  },
+  "codeStepAll": "All lines",
+  "@codeStepAll": {
+    "description": "A step that highlights nothing (\"*\")."
+  },
+  "codeStepRow": "Step {index}: {lines}",
+  "@codeStepRow": {
+    "description": "Semantics of a step row.",
+    "placeholders": {
+      "index": {
+        "type": "int"
+      },
+      "lines": {
+        "type": "String"
+      }
+    }
+  },
+  "codeEditCallout": "Callout",
+  "@codeEditCallout": {
+    "description": "Tooltip of the callout button of a step."
+  },
+  "codeRemoveStep": "Remove step",
+  "@codeRemoveStep": {
+    "description": "Tooltip."
+  },
+  "codeHighlightStyle": "Highlight",
+  "@codeHighlightStyle": {
+    "description": "Code section label of the highlight style."
+  },
+  "codeStyleDim": "Dim others",
+  "@codeStyleDim": {
+    "description": "Highlight style."
+  },
+  "codeStyleBlur": "Blur others",
+  "@codeStyleBlur": {
+    "description": "Highlight style."
+  },
+  "codeStyleDimBlur": "Dim and blur",
+  "@codeStyleDimBlur": {
+    "description": "Highlight style."
+  },
+  "codeStyleBar": "Bar",
+  "@codeStyleBar": {
+    "description": "Highlight style."
+  },
+  "codeStyleBox": "Box",
+  "@codeStyleBox": {
+    "description": "Highlight style."
+  },
+  "codeStyleNone": "None",
+  "@codeStyleNone": {
+    "description": "Highlight style."
+  },
+  "codeFocus": "Focus",
+  "@codeFocus": {
+    "description": "Code section label (keep highlighted lines in view)."
+  },
+  "codeFocusScroll": "Scroll",
+  "@codeFocusScroll": {
+    "description": "Focus option."
+  },
+  "codeFocusZoom": "Zoom",
+  "@codeFocusZoom": {
+    "description": "Focus option."
+  },
+  "codeFocusNone": "None",
+  "@codeFocusNone": {
+    "description": "Focus option."
+  },
+  "codeFitAcrossStates": "Same size in all states",
+  "@codeFitAcrossStates": {
+    "description": "Code section toggle (auto size fits the largest state)."
+  },
+  "codeStepsDialogTitle": "Line steps",
+  "@codeStepsDialogTitle": {
+    "description": "Title of the line steps dialog."
+  },
+  "codeStepsHint": "One step per click, separated by |: lines (5), ranges (1-3, 7-), lists (2,4); * shows all lines.",
+  "@codeStepsHint": {
+    "description": "Help of the line steps dialog."
+  },
+  "codeStepsLabel": "Steps",
+  "@codeStepsLabel": {
+    "description": "Field label."
+  },
+  "codeStepIssueSyntax": "Step {index}: use a line, a range like 3-5 or 7-, or 4:2-9",
+  "@codeStepIssueSyntax": {
+    "description": "A syntax issue of a step.",
+    "placeholders": {
+      "index": {
+        "type": "int"
+      }
+    }
+  },
+  "codeStepIssuePastEnd": "Step {index} points past the end of the code",
+  "@codeStepIssuePastEnd": {
+    "description": "A step with lines that don't exist.",
+    "placeholders": {
+      "index": {
+        "type": "int"
+      }
+    }
+  },
+  "codeStepIssueReversed": "Step {index}: a range was reversed",
+  "@codeStepIssueReversed": {
+    "description": "Issue.",
+    "placeholders": {
+      "index": {
+        "type": "int"
+      }
+    }
+  },
+  "codeStepIssueColumns": "Step {index}: columns start at 1",
+  "@codeStepIssueColumns": {
+    "description": "Issue.",
+    "placeholders": {
+      "index": {
+        "type": "int"
+      }
+    }
+  },
+  "codeCalloutDialogTitle": "Callout of step {index}",
+  "@codeCalloutDialogTitle": {
+    "description": "Title of the callout dialog.",
+    "placeholders": {
+      "index": {
+        "type": "int"
+      }
+    }
+  },
+  "codeCalloutHint": "Shown next to the step's lines. **Bold**, *italic* and `code` work.",
+  "@codeCalloutHint": {
+    "description": "Help of the callout dialog."
+  },
+  "codeCalloutText": "Text",
+  "@codeCalloutText": {
+    "description": "Field label."
+  },
+  "codeCalloutSide": "Side",
+  "@codeCalloutSide": {
+    "description": "Field label."
+  },
+  "codeSideAuto": "Automatic",
+  "@codeSideAuto": {
+    "description": "Callout side."
+  },
+  "codeSideRight": "Right",
+  "@codeSideRight": {
+    "description": "Callout side."
+  },
+  "codeSideLeft": "Left",
+  "@codeSideLeft": {
+    "description": "Callout side."
+  },
+  "codeSideAbove": "Above",
+  "@codeSideAbove": {
+    "description": "Callout side."
+  },
+  "codeSideBelow": "Below",
+  "@codeSideBelow": {
+    "description": "Callout side."
+  },
+  "codeCalloutStyle": "Style",
+  "@codeCalloutStyle": {
+    "description": "Field label."
+  },
+  "codeCalloutStyleDefault": "Default",
+  "@codeCalloutStyleDefault": {
+    "description": "Callout style option."
+  },
+  "codeCalloutBubble": "Bubble",
+  "@codeCalloutBubble": {
+    "description": "Callout style."
+  },
+  "codeCalloutLabel": "Label",
+  "@codeCalloutLabel": {
+    "description": "Callout style."
+  },
+  "codeCalloutPill": "Pill",
+  "@codeCalloutPill": {
+    "description": "Callout style."
+  },
+  "codeCalloutRemove": "Remove callout",
+  "@codeCalloutRemove": {
+    "description": "Dialog button."
+  },
+  "codeTypingDialogTitle": "Typing settings",
+  "@codeTypingDialogTitle": {
+    "description": "Title of the typing settings dialog."
+  },
+  "codeTypingCps": "Speed (chars/s)",
+  "@codeTypingCps": {
+    "description": "Typing speed."
+  },
+  "codeTypingRhythm": "Rhythm",
+  "@codeTypingRhythm": {
+    "description": "Typing jitter (0 = even, 1 = very uneven)."
+  },
+  "codeTypingDeletions": "Deletions",
+  "@codeTypingDeletions": {
+    "description": "How deletions are animated."
+  },
+  "codeDeleteAuto": "Automatic",
+  "@codeDeleteAuto": {
+    "description": "Deletion mode."
+  },
+  "codeDeleteBackspace": "Backspace",
+  "@codeDeleteBackspace": {
+    "description": "Deletion mode."
+  },
+  "codeDeleteSelect": "Select and delete",
+  "@codeDeleteSelect": {
+    "description": "Deletion mode."
+  },
+  "codeTypingBackspaceMax": "Backspace up to (chars)",
+  "@codeTypingBackspaceMax": {
+    "description": "Automatic deletions up to this length are backspaced."
+  },
+  "codeTypingDeleteCps": "Backspace speed (chars/s)",
+  "@codeTypingDeleteCps": {
+    "description": "Field label."
+  },
+  "codeTypingCaretGlide": "Caret glide (ms)",
+  "@codeTypingCaretGlide": {
+    "description": "Field label."
+  },
+  "codeTypingOrder": "Order",
+  "@codeTypingOrder": {
+    "description": "Field label."
+  },
+  "codeOrderDocument": "Top to bottom",
+  "@codeOrderDocument": {
+    "description": "Typing order."
+  },
+  "codeOrderReverse": "Bottom to top",
+  "@codeOrderReverse": {
+    "description": "Typing order."
+  },
+  "codeTypingPasteLines": "Paste from (lines)",
+  "@codeTypingPasteLines": {
+    "description": "Insertions with this many lines appear as a paste."
+  },
+  "codeTypingMaxDuration": "Longest (ms)",
+  "@codeTypingMaxDuration": {
+    "description": "Longer typing speeds up to fit."
+  },
+  "codeTypingCaret": "Caret",
+  "@codeTypingCaret": {
+    "description": "Field label."
+  },
+  "codeCaretBar": "Bar",
+  "@codeCaretBar": {
+    "description": "Caret style."
+  },
+  "codeCaretBlock": "Block",
+  "@codeCaretBlock": {
+    "description": "Caret style."
+  },
+  "codeCaretUnderline": "Underline",
+  "@codeCaretUnderline": {
+    "description": "Caret style."
+  },
+  "codeTypingAutoIndent": "Auto-indent new lines",
+  "@codeTypingAutoIndent": {
+    "description": "Checkbox."
+  },
+  "codeTypingScrollFollow": "Scroll to the caret",
+  "@codeTypingScrollFollow": {
+    "description": "Checkbox."
+  },
+  "codeTypingHighlightOnArrive": "Show step 1 when typed",
+  "@codeTypingHighlightOnArrive": {
+    "description": "Checkbox."
+  },
+  "codeMorphDuration": "Morph duration (ms)",
+  "@codeMorphDuration": {
+    "description": "Field label."
+  },
+  "codeMorphStagger": "Morph stagger per line (ms)",
+  "@codeMorphStagger": {
+    "description": "Field label."
+  },
+  "codeNumberRange": "Enter a number from {min} to {max}",
+  "@codeNumberRange": {
+    "description": "Validation message.",
+    "placeholders": {
+      "min": {
+        "type": "String"
+      },
+      "max": {
+        "type": "String"
+      }
+    }
+  },
+  "codeEditorSemantics": "Code editor, {language}",
+  "@codeEditorSemantics": {
+    "description": "Semantics label of the in-place code editor.",
+    "placeholders": {
+      "language": {
+        "type": "String"
+      }
+    }
+  },
+  "codeLinesHidden": "{count, plural, =1{1 line hidden} other{{count} lines hidden}}",
+  "@codeLinesHidden": {
+    "description": "Overflow badge of a code block.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "codeOverflowHint": "Enlarge the box, lower the minimum size or turn on wrap",
+  "@codeOverflowHint": {
+    "description": "Tooltip of the overflow badge."
+  },
+  "cmdChartUpdateMany": "Update charts",
+  "@cmdChartUpdateMany": {
+    "description": "Title of `slides.chart.update` with several charts selected."
+  },
+  "cmdChartRelink": "Change linked chart…",
+  "@cmdChartRelink": {
+    "description": "Title of the command `slides.chart.relink`."
+  },
+  "cmdChartSetUseDeckTheme": "Match presentation theme",
+  "@cmdChartSetUseDeckTheme": {
+    "description": "Title of the command `slides.chart.setUseDeckTheme`."
+  },
+  "cmdChartUpdateStyle": "Edit chart style",
+  "@cmdChartUpdateStyle": {
+    "description": "Title of the command `slides.chart.updateStyle`."
+  },
+  "cmdChartResetOverrides": "Reset style overrides",
+  "@cmdChartResetOverrides": {
+    "description": "Title of the command `slides.chart.resetOverrides`."
+  },
+  "cmdChartSetCamera": "Rotate 3D chart",
+  "@cmdChartSetCamera": {
+    "description": "Title of the command `slides.chart.setCamera`."
+  },
+  "cmdChartAddCameraStep": "Add camera step",
+  "@cmdChartAddCameraStep": {
+    "description": "Title of `slides.chart.addCameraStep`: a build that rotates the 3D chart to its current view."
+  },
+  "cmdChartViewDataTable": "View data as table",
+  "@cmdChartViewDataTable": {
+    "description": "Title of the command `slides.chart.viewDataTable`."
+  },
+  "cmdChartCheckUpdates": "Check linked charts for updates",
+  "@cmdChartCheckUpdates": {
+    "description": "Title of the command `slides.chart.checkUpdates`."
+  },
+  "cmdInsertChartFromSheetsDescription": "Insert a chart from a Wonky Sheets spreadsheet, linked so it can be updated.",
+  "@cmdInsertChartFromSheetsDescription": {
+    "description": "Palette description of `slides.insert.chartFromSheets`."
+  },
+  "reasonSelectChart": "Select a chart",
+  "@reasonSelectChart": {
+    "description": "Disabled reason of chart commands."
+  },
+  "reasonSelectLinkedChart": "Select a chart linked to a spreadsheet",
+  "@reasonSelectLinkedChart": {
+    "description": "Disabled reason of link commands."
+  },
+  "reasonSelect3DChart": "Select a 3D chart",
+  "@reasonSelect3DChart": {
+    "description": "Disabled reason of camera commands."
+  },
+  "reasonChartNoOverrides": "The chart has no style overrides",
+  "@reasonChartNoOverrides": {
+    "description": "Disabled reason of Reset style overrides."
+  },
+  "undoInsertChart": "Insert chart",
+  "@undoInsertChart": {
+    "description": "Undo label."
+  },
+  "undoUpdateChart": "Update chart",
+  "@undoUpdateChart": {
+    "description": "Undo label."
+  },
+  "undoUnlinkChart": "Unlink chart",
+  "@undoUnlinkChart": {
+    "description": "Undo label."
+  },
+  "undoRelinkChart": "Change linked chart",
+  "@undoRelinkChart": {
+    "description": "Undo label."
+  },
+  "undoEditChartStyle": "Edit chart style",
+  "@undoEditChartStyle": {
+    "description": "Undo label."
+  },
+  "undoRotateChart": "Rotate chart",
+  "@undoRotateChart": {
+    "description": "Undo label."
+  },
+  "chartErrOffline": "You're offline. Connect to insert or update charts from Sheets.",
+  "@chartErrOffline": {
+    "description": "Chart error offline (08 §4.3)."
+  },
+  "chartErrNoAccess": "You don't have access to this spreadsheet anymore.",
+  "@chartErrNoAccess": {
+    "description": "Chart error no_access."
+  },
+  "chartErrTrashed": "This spreadsheet is in the trash.",
+  "@chartErrTrashed": {
+    "description": "Chart error spreadsheet_trashed."
+  },
+  "chartErrExportDisabled": "The owner doesn't allow viewers to copy charts from this spreadsheet.",
+  "@chartErrExportDisabled": {
+    "description": "Chart error export_disabled; also the tooltip of disabled spreadsheets."
+  },
+  "chartErrNotFound": "This chart was deleted. Pick another one.",
+  "@chartErrNotFound": {
+    "description": "Chart error chart_not_found."
+  },
+  "chartErrTooLarge": "This chart has too much data to place in a presentation. Reduce its range in Sheets.",
+  "@chartErrTooLarge": {
+    "description": "Chart error chart_too_large."
+  },
+  "chartErrUnsupported": "This chart was made with a newer version of Wonky Sheets. Reload to insert it.",
+  "@chartErrUnsupported": {
+    "description": "Chart error unsupported_spec."
+  },
+  "chartErrQuota": "There isn't enough storage for this chart.",
+  "@chartErrQuota": {
+    "description": "Chart error quota_exceeded."
+  },
+  "chartErrRateLimited": "Too many chart requests. Try again in a minute.",
+  "@chartErrRateLimited": {
+    "description": "Chart error limitExceeded."
+  },
+  "chartErrFailed": "Couldn't get the chart. Try again.",
+  "@chartErrFailed": {
+    "description": "Chart error, other failures."
+  },
+  "chartInsertDialogTitle": "Insert chart from Wonky Sheets",
+  "@chartInsertDialogTitle": {
+    "description": "Title of the insert dialog, step 1."
+  },
+  "chartInsertFromTitle": "Insert chart from \"{title}\"",
+  "@chartInsertFromTitle": {
+    "description": "Title of the insert dialog, step 2.",
+    "placeholders": {
+      "title": {
+        "type": "String"
+      }
+    }
+  },
+  "chartRelinkTitle": "Change linked chart",
+  "@chartRelinkTitle": {
+    "description": "Title of the insert dialog when relinking."
+  },
+  "chartSearchSpreadsheets": "Search spreadsheets",
+  "@chartSearchSpreadsheets": {
+    "description": "Search field of the insert dialog."
+  },
+  "chartSpreadsheetsLabel": "Spreadsheet",
+  "@chartSpreadsheetsLabel": {
+    "description": "MCP field label of the spreadsheet list."
+  },
+  "chartTabRecent": "Recent",
+  "@chartTabRecent": {
+    "description": "Tab of the spreadsheet list."
+  },
+  "chartTabMine": "My files",
+  "@chartTabMine": {
+    "description": "Tab of the spreadsheet list."
+  },
+  "chartTabShared": "Shared with me",
+  "@chartTabShared": {
+    "description": "Tab of the spreadsheet list."
+  },
+  "chartTabStarred": "Starred",
+  "@chartTabStarred": {
+    "description": "Tab of the spreadsheet list."
+  },
+  "chartNoSpreadsheets": "No spreadsheets found",
+  "@chartNoSpreadsheets": {
+    "description": "Empty spreadsheet list."
+  },
+  "chartListFailed": "Couldn't load the list. Try again.",
+  "@chartListFailed": {
+    "description": "Loading the list failed."
+  },
+  "chartBack": "Back",
+  "@chartBack": {
+    "description": "Back to step 1."
+  },
+  "chartSearchCharts": "Search charts",
+  "@chartSearchCharts": {
+    "description": "Search field of step 2."
+  },
+  "chartPickChart": "Chart",
+  "@chartPickChart": {
+    "description": "MCP field label of the chart tiles."
+  },
+  "chartNoCharts": "This spreadsheet has no charts. Create one in Wonky Sheets.",
+  "@chartNoCharts": {
+    "description": "Empty chart list."
+  },
+  "chartOpenInSheets": "Open in Sheets",
+  "@chartOpenInSheets": {
+    "description": "Button of the empty chart list."
+  },
+  "chartLinkToSpreadsheet": "Link to spreadsheet",
+  "@chartLinkToSpreadsheet": {
+    "description": "Checkbox of the insert dialog."
+  },
+  "chartMatchTheme": "Match presentation theme",
+  "@chartMatchTheme": {
+    "description": "Checkbox of the insert dialog."
+  },
+  "chartDataNotice": "Anyone with access to this presentation will see this chart's data.",
+  "@chartDataNotice": {
+    "description": "Notice in the insert dialog (08 §6)."
+  },
+  "chartNewerVersion": "Needs a newer version",
+  "@chartNewerVersion": {
+    "description": "Badge of a chart made with a newer Sheets."
+  },
+  "chartSheetBadge": "Chart sheet",
+  "@chartSheetBadge": {
+    "description": "Badge of a chart on its own chart sheet."
+  },
+  "chart3DBadge": "3D",
+  "@chart3DBadge": {
+    "description": "Badge of a 3D chart."
+  },
+  "chartUntitled": "Untitled chart",
+  "@chartUntitled": {
+    "description": "Chart without a title."
+  },
+  "chartUpdateAction": "Update",
+  "@chartUpdateAction": {
+    "description": "Update button of linked charts."
+  },
+  "chartUpdateTooltip": "{source} changed{summary}. Update to show the latest version.",
+  "@chartUpdateTooltip": {
+    "description": "Tooltip of the Update badge; summary is \" (Data changed)\" etc. or empty.",
+    "placeholders": {
+      "source": {
+        "type": "String"
+      },
+      "summary": {
+        "type": "String"
+      }
+    }
+  },
+  "chartStatusLinked": "Linked",
+  "@chartStatusLinked": {
+    "description": "Badge of a linked chart."
+  },
+  "chartStatusChanged": "Linked · Source changed",
+  "@chartStatusChanged": {
+    "description": "Status of a changed link."
+  },
+  "chartStatusNoAccess": "Linked · No access",
+  "@chartStatusNoAccess": {
+    "description": "Status when the user cannot open the spreadsheet."
+  },
+  "chartStatusChartDeleted": "Source chart deleted",
+  "@chartStatusChartDeleted": {
+    "description": "Status when the chart was deleted in Sheets."
+  },
+  "chartStatusTrashed": "Source in trash",
+  "@chartStatusTrashed": {
+    "description": "Status when the spreadsheet is in the trash."
+  },
+  "chartStatusDeleted": "Source deleted",
+  "@chartStatusDeleted": {
+    "description": "Status when the spreadsheet was deleted forever."
+  },
+  "chartStatusUnsupported": "Linked · Needs a newer version",
+  "@chartStatusUnsupported": {
+    "description": "Status of a newer chart spec."
+  },
+  "chartStatusOffline": "{status} (offline)",
+  "@chartStatusOffline": {
+    "description": "Status shown offline (last known).",
+    "placeholders": {
+      "status": {
+        "type": "String"
+      }
+    }
+  },
+  "chartStatusUpToDate": "Linked · Up to date ({when})",
+  "@chartStatusUpToDate": {
+    "description": "Status after a check.",
+    "placeholders": {
+      "when": {
+        "type": "String"
+      }
+    }
+  },
+  "chartNewerDataToast": "{count, plural, =1{1 chart has newer data} other{{count} charts have newer data}}",
+  "@chartNewerDataToast": {
+    "description": "Toast after presenting.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "chartAutoUpdatedToast": "Charts updated from {sources}",
+  "@chartAutoUpdatedToast": {
+    "description": "Toast after automatic updates.",
+    "placeholders": {
+      "sources": {
+        "type": "String"
+      }
+    }
+  },
+  "chartPasteNoData": "The chart's data couldn't be copied. Paste it again when you're online.",
+  "@chartPasteNoData": {
+    "description": "Toast after an unlinked chart paste without data."
+  },
+  "chartCopied": "Chart copied",
+  "@chartCopied": {
+    "description": "Toast after Copy chart as image."
+  },
+  "chartCopyFailed": "Couldn't copy the chart.",
+  "@chartCopyFailed": {
+    "description": "Copy chart as image failed."
+  },
+  "chartDataTableTitle": "Data of {title}",
+  "@chartDataTableTitle": {
+    "description": "Title of the data table dialog.",
+    "placeholders": {
+      "title": {
+        "type": "String"
+      }
+    }
+  },
+  "chartNoData": "No data",
+  "@chartNoData": {
+    "description": "Data table without data."
+  },
+  "chartNoDataYet": "This chart has no data yet.",
+  "@chartNoDataYet": {
+    "description": "Chart section of an empty chart."
+  },
+  "chartNotLinked": "Not linked: shows a copy of the data.",
+  "@chartNotLinked": {
+    "description": "Chart section of a static chart."
+  },
+  "chartAutoShort": "Auto-update",
+  "@chartAutoShort": {
+    "description": "Checkbox Update automatically in the chart section."
+  },
+  "chartUnlinkShort": "Unlink",
+  "@chartUnlinkShort": {
+    "description": "Unlink button in the chart section."
+  },
+  "chartStyleMode": "Style",
+  "@chartStyleMode": {
+    "description": "Header of the style mode."
+  },
+  "chartMatchThemeShort": "Match theme",
+  "@chartMatchThemeShort": {
+    "description": "Style mode option."
+  },
+  "chartKeepSource": "Keep source style",
+  "@chartKeepSource": {
+    "description": "Style mode option."
+  },
+  "chartBackground": "Background",
+  "@chartBackground": {
+    "description": "Chart background row."
+  },
+  "chartBackgroundDefault": "Default",
+  "@chartBackgroundDefault": {
+    "description": "Background option."
+  },
+  "chartBackgroundTransparent": "Transparent",
+  "@chartBackgroundTransparent": {
+    "description": "Background option."
+  },
+  "chartBackgroundTheme": "Slide background color",
+  "@chartBackgroundTheme": {
+    "description": "Background option."
+  },
+  "chartBackgroundWhite": "White",
+  "@chartBackgroundWhite": {
+    "description": "Background option."
+  },
+  "chartCamera": "3D view",
+  "@chartCamera": {
+    "description": "Header of the camera controls."
+  },
+  "chartCameraPreset": "View",
+  "@chartCameraPreset": {
+    "description": "Camera preset row."
+  },
+  "chartCameraCustom": "Custom",
+  "@chartCameraCustom": {
+    "description": "Placeholder when no preset matches."
+  },
+  "chartCameraRotation": "Rotation",
+  "@chartCameraRotation": {
+    "description": "Camera azimuth slider."
+  },
+  "chartCameraTilt": "Tilt",
+  "@chartCameraTilt": {
+    "description": "Camera elevation slider."
+  },
+  "chartCameraPerspective": "Perspective",
+  "@chartCameraPerspective": {
+    "description": "Camera field-of-view slider."
+  },
+  "chartCameraReset": "Reset view",
+  "@chartCameraReset": {
+    "description": "Reset the camera to the source view."
+  },
+  "chartCameraHint": "Drag the selected chart to orbit it. Alt+Shift+arrows rotate 5°.",
+  "@chartCameraHint": {
+    "description": "Hint below the camera controls."
+  },
+  "chartPresetDefault": "Default",
+  "@chartPresetDefault": {
+    "description": "Camera preset."
+  },
+  "chartPresetFront": "Front",
+  "@chartPresetFront": {
+    "description": "Camera preset."
+  },
+  "chartPresetIsometric": "Isometric",
+  "@chartPresetIsometric": {
+    "description": "Camera preset."
+  },
+  "chartPresetTopDown": "Top-down",
+  "@chartPresetTopDown": {
+    "description": "Camera preset."
+  },
+  "chartPresetLowAngle": "Low angle",
+  "@chartPresetLowAngle": {
+    "description": "Camera preset."
+  },
+  "chartPresetSide": "Side",
+  "@chartPresetSide": {
+    "description": "Camera preset."
+  },
+  "chartPresetDramatic": "Dramatic",
+  "@chartPresetDramatic": {
+    "description": "Camera preset."
+  },
+  "chartPresetFlat": "Flat",
+  "@chartPresetFlat": {
+    "description": "Pie camera preset."
+  },
+  "chartPresetTilted": "Tilted",
+  "@chartPresetTilted": {
+    "description": "Pie camera preset."
+  },
+  "chartPresetSteep": "Steep",
+  "@chartPresetSteep": {
+    "description": "Pie camera preset."
+  },
+  "chartPresenting": "Presenting",
+  "@chartPresenting": {
+    "description": "Header of the presenting options."
+  },
+  "chartHoverTooltips": "Hover values",
+  "@chartHoverTooltips": {
+    "description": "Show values on hover when presenting."
+  },
+  "chartOrbitInPresent": "Drag to orbit",
+  "@chartOrbitInPresent": {
+    "description": "Let the presenter orbit a 3D chart."
+  },
+  "chartCustomize": "Customize",
+  "@chartCustomize": {
+    "description": "Header of the style editor."
+  },
+  "chartUnusedOverrides": "{count, plural, =1{Overrides of 1 series that no longer exists} other{Overrides of {count} series that no longer exist}}",
+  "@chartUnusedOverrides": {
+    "description": "Unused overrides notice.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "chartCleanUp": "Clean up",
+  "@chartCleanUp": {
+    "description": "Remove unused overrides."
+  },
+  "chartInvalidOverrides": "Some style overrides are invalid and were ignored.",
+  "@chartInvalidOverrides": {
+    "description": "Warning of invalid overrides."
+  },
+  "chartUpdateAll": "{count, plural, =0{Update all} other{Update all ({count})}}",
+  "@chartUpdateAll": {
+    "description": "Update all button of the Linked charts panel.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "chartChecking": "Checking…",
+  "@chartChecking": {
+    "description": "While checking links."
+  },
+  "chartNoLinkedCharts": "This presentation has no linked charts.",
+  "@chartNoLinkedCharts": {
+    "description": "Empty Linked charts panel."
+  },
+  "chartOnSlide": "Slide {number}",
+  "@chartOnSlide": {
+    "description": "Slide number of a linked chart.",
+    "placeholders": {
+      "number": {
+        "type": "int"
+      }
+    }
+  },
+  "chartStyleTitles": "Chart & axis titles",
+  "@chartStyleTitles": {
+    "description": "Chart style editor (shared ChartStyleEditor)."
+  },
+  "chartStyleLegend": "Legend",
+  "@chartStyleLegend": {
+    "description": "Chart style editor (shared ChartStyleEditor)."
+  },
+  "chartStyleSeries": "Series",
+  "@chartStyleSeries": {
+    "description": "Chart style editor (shared ChartStyleEditor)."
+  },
+  "chartStyleAxes": "Axes",
+  "@chartStyleAxes": {
+    "description": "Chart style editor (shared ChartStyleEditor)."
+  },
+  "chartStyleGridlines": "Gridlines",
+  "@chartStyleGridlines": {
+    "description": "Chart style editor (shared ChartStyleEditor)."
+  },
+  "chartStylePie": "Pie chart",
+  "@chartStylePie": {
+    "description": "Chart style editor (shared ChartStyleEditor)."
+  },
+  "chartStyle3D": "3D",
+  "@chartStyle3D": {
+    "description": "Chart style editor (shared ChartStyleEditor)."
+  },
+  "chartStyleLayout": "Layout",
+  "@chartStyleLayout": {
+    "description": "Chart style editor (shared ChartStyleEditor)."
+  },
+  "chartStyleChartTitle": "Chart title",
+  "@chartStyleChartTitle": {
+    "description": "Chart style editor (shared ChartStyleEditor)."
+  },
+  "chartStyleSubtitle": "Subtitle",
+  "@chartStyleSubtitle": {
+    "description": "Chart style editor (shared ChartStyleEditor)."
+  },
+  "chartStyleHAxisTitle": "Horizontal axis title",
+  "@chartStyleHAxisTitle": {
+    "description": "Chart style editor (shared ChartStyleEditor)."
+  },
+  "chartStyleVAxisTitle": "Vertical axis title",
+  "@chartStyleVAxisTitle": {
+    "description": "Chart style editor (shared ChartStyleEditor)."
+  },
+  "chartStyleLegendPosition": "Position",
+  "@chartStyleLegendPosition": {
+    "description": "Chart style editor (shared ChartStyleEditor)."
+  },
+  "chartStyleColor": "Color",
+  "@chartStyleColor": {
+    "description": "Chart style editor (shared ChartStyleEditor)."
+  },
+  "chartStyleLineWidth": "Line width",
+  "@chartStyleLineWidth": {
+    "description": "Chart style editor (shared ChartStyleEditor)."
+  },
+  "chartStylePointSize": "Point size",
+  "@chartStylePointSize": {
+    "description": "Chart style editor (shared ChartStyleEditor)."
+  },
+  "chartStyleDataLabels": "Data labels",
+  "@chartStyleDataLabels": {
+    "description": "Chart style editor (shared ChartStyleEditor)."
+  },
+  "chartStyleHAxisLine": "Horizontal axis line",
+  "@chartStyleHAxisLine": {
+    "description": "Chart style editor (shared ChartStyleEditor)."
+  },
+  "chartStyleVAxisLine": "Vertical axis line",
+  "@chartStyleVAxisLine": {
+    "description": "Chart style editor (shared ChartStyleEditor)."
+  },
+  "chartStyleNumberFormat": "Number format",
+  "@chartStyleNumberFormat": {
+    "description": "Chart style editor (shared ChartStyleEditor)."
+  },
+  "chartStyleHGridlines": "Horizontal axis gridlines",
+  "@chartStyleHGridlines": {
+    "description": "Chart style editor (shared ChartStyleEditor)."
+  },
+  "chartStyleVGridlines": "Vertical axis gridlines",
+  "@chartStyleVGridlines": {
+    "description": "Chart style editor (shared ChartStyleEditor)."
+  },
+  "chartStyleMaximize": "Maximize",
+  "@chartStyleMaximize": {
+    "description": "Chart style editor (shared ChartStyleEditor)."
+  },
+  "chartStyleDonutHole": "Donut hole",
+  "@chartStyleDonutHole": {
+    "description": "Chart style editor (shared ChartStyleEditor)."
+  },
+  "chartStyleSliceLabels": "Slice labels",
+  "@chartStyleSliceLabels": {
+    "description": "Chart style editor (shared ChartStyleEditor)."
+  },
+  "chartStyleStartAngle": "Start angle",
+  "@chartStyleStartAngle": {
+    "description": "Chart style editor (shared ChartStyleEditor)."
+  },
+  "chartStyleLighting": "Lighting",
+  "@chartStyleLighting": {
+    "description": "Chart style editor (shared ChartStyleEditor)."
+  },
+  "chartStyleWalls": "Walls and floor",
+  "@chartStyleWalls": {
+    "description": "Chart style editor (shared ChartStyleEditor)."
+  },
+  "chartStyleDepth": "Depth",
+  "@chartStyleDepth": {
+    "description": "Chart style editor (shared ChartStyleEditor)."
+  },
+  "chartStyleGapDepth": "Gap depth",
+  "@chartStyleGapDepth": {
+    "description": "Chart style editor (shared ChartStyleEditor)."
+  },
+  "chartStyleShape": "Shape",
+  "@chartStyleShape": {
+    "description": "Chart style editor (shared ChartStyleEditor)."
+  },
+  "chartStyleExplode": "Explode",
+  "@chartStyleExplode": {
+    "description": "Chart style editor (shared ChartStyleEditor)."
+  },
+  "chartStyleAutomatic": "Automatic",
+  "@chartStyleAutomatic": {
+    "description": "Chart style editor (shared ChartStyleEditor)."
+  },
+  "chartStyleNone": "None",
+  "@chartStyleNone": {
+    "description": "Chart style editor (shared ChartStyleEditor)."
+  },
+  "chartStyleResetField": "Reset to the spreadsheet's value",
+  "@chartStyleResetField": {
+    "description": "Chart style editor (shared ChartStyleEditor)."
+  },
+  "chartStyleChangedHere": "Changed in this presentation",
+  "@chartStyleChangedHere": {
+    "description": "Chart style editor (shared ChartStyleEditor)."
+  },
+  "chartStyleLegendTop": "Top",
+  "@chartStyleLegendTop": {
+    "description": "Chart style editor (shared ChartStyleEditor)."
+  },
+  "chartStyleLegendBottom": "Bottom",
+  "@chartStyleLegendBottom": {
+    "description": "Chart style editor (shared ChartStyleEditor)."
+  },
+  "chartStyleLegendLeft": "Left",
+  "@chartStyleLegendLeft": {
+    "description": "Chart style editor (shared ChartStyleEditor)."
+  },
+  "chartStyleLegendRight": "Right",
+  "@chartStyleLegendRight": {
+    "description": "Chart style editor (shared ChartStyleEditor)."
+  },
+  "chartStyleLegendInside": "Inside",
+  "@chartStyleLegendInside": {
+    "description": "Chart style editor (shared ChartStyleEditor)."
+  },
+  "chartStyleSliceLabel": "Label",
+  "@chartStyleSliceLabel": {
+    "description": "Chart style editor (shared ChartStyleEditor)."
+  },
+  "chartStyleSliceValue": "Value",
+  "@chartStyleSliceValue": {
+    "description": "Chart style editor (shared ChartStyleEditor)."
+  },
+  "chartStyleSlicePercent": "Percentage",
+  "@chartStyleSlicePercent": {
+    "description": "Chart style editor (shared ChartStyleEditor)."
+  },
+  "chartStyleSliceValuePercent": "Value and percentage",
+  "@chartStyleSliceValuePercent": {
+    "description": "Chart style editor (shared ChartStyleEditor)."
+  },
+  "chartStyleLightingSoft": "Soft",
+  "@chartStyleLightingSoft": {
+    "description": "Chart style editor (shared ChartStyleEditor)."
+  },
+  "chartStyleLightingBright": "Bright",
+  "@chartStyleLightingBright": {
+    "description": "Chart style editor (shared ChartStyleEditor)."
+  },
+  "chartStyleLightingFlat": "Flat",
+  "@chartStyleLightingFlat": {
+    "description": "Chart style editor (shared ChartStyleEditor)."
+  },
+  "chartStyleShapeBox": "Box",
+  "@chartStyleShapeBox": {
+    "description": "Chart style editor (shared ChartStyleEditor)."
+  },
+  "chartStyleShapeCylinder": "Cylinder",
+  "@chartStyleShapeCylinder": {
+    "description": "Chart style editor (shared ChartStyleEditor)."
+  },
+  "chartStyleShapeCone": "Cone",
+  "@chartStyleShapeCone": {
+    "description": "Chart style editor (shared ChartStyleEditor)."
+  },
+  "chartStyleShapePyramid": "Pyramid",
+  "@chartStyleShapePyramid": {
+    "description": "Chart style editor (shared ChartStyleEditor)."
+  },
+  "animateEffectName": "{id, select, appear{Appear} fade{Fade} rise{Rise} moveIn{Move in} scale{Scale} pop{Pop} zoom{Zoom} blur{Blur} wipe{Wipe} iris{Iris} dissolve{Dissolve} drop{Drop} flip{Flip} rotate{Rotate} typewriter{Typewriter} lineDraw{Draw line} chartGrow{Grow} codeType{Type code} shimmer{Shimmer} disappear{Disappear} fadeOut{Fade out} sink{Sink} moveOut{Move out} scaleOut{Scale out} popOut{Pop out} zoomOut{Zoom out} blurOut{Blur out} wipeOut{Wipe out} irisOut{Iris out} dissolveOut{Dissolve out} fall{Fall} flipOut{Flip out} rotateOut{Rotate out} eraseText{Erase text} lineErase{Erase line} chartShrink{Shrink} pulse{Pulse} bounce{Bounce} shake{Shake} blink{Blink} spin{Spin} grow{Grow / shrink} opacityTo{Transparency} colorChange{Color change} highlight{Highlight} chartHighlight{Highlight series} chartHighlightClear{Clear highlight} chartOrbit{Orbit} chartCamera{Rotate to angle} codeHighlight{Highlight lines} codeState{Next code state} path{Motion path} moveTo{Transform} other{}}",
+  "@animateEffectName": {
+    "description": "Name of a build effect (06 §3), by effect id.",
+    "placeholders": {
+      "id": {
+        "type": "String"
+      }
+    }
+  },
+  "animateEffectDescription": "{id, select, appear{The object appears at once.} fade{The object fades in.} rise{The object moves up a short distance while fading in.} moveIn{The object moves in from a side or from off the slide.} scale{The object grows to its size while fading in.} pop{The object pops in with a little bounce.} zoom{The object comes toward its place from in front of the viewer.} blur{The object comes into focus.} wipe{A soft edge sweeps across and reveals the object.} iris{A growing circle, square or diamond reveals the object.} dissolve{The object appears through a grain of random cells.} drop{The object falls into place and bounces.} flip{The object flips into view like a card.} rotate{The object turns into place.} typewriter{The text is typed character by character.} lineDraw{The outline draws itself, then the fill fades in.} chartGrow{Bars grow, lines draw on and wedges sweep in.} codeType{The code is typed into the block.} shimmer{Particles condense into the text.} disappear{The object disappears at once.} fadeOut{The object fades out.} sink{The object moves down a short distance while fading out.} moveOut{The object moves out to a side or off the slide.} scaleOut{The object shrinks while fading out.} popOut{The object grows a little, then collapses.} zoomOut{The object moves toward the viewer and fades away.} blurOut{The object goes out of focus.} wipeOut{A soft edge sweeps across and hides the object.} irisOut{A shrinking circle, square or diamond hides the object.} dissolveOut{The object disappears into a grain of random cells.} fall{The object falls off the slide.} flipOut{The object flips away like a card.} rotateOut{The object turns away.} eraseText{The text is erased from the end, like backspacing.} lineErase{The outline erases itself.} chartShrink{Bars shrink, lines erase and wedges sweep out.} pulse{The object briefly grows and returns.} bounce{The object jumps up and lands.} shake{The object shakes from side to side.} blink{The object blinks.} spin{The object spins and keeps its new angle.} grow{The object changes its size and keeps it.} opacityTo{The object becomes more or less transparent.} colorChange{The fill, border or text changes color.} highlight{A marker sweeps behind the text.} chartHighlight{One series stands out; the rest dims.} chartHighlightClear{Every series is shown normally again.} chartOrbit{The 3D chart turns around.} chartCamera{The 3D chart turns to a new view.} codeHighlight{The next highlight step of the code is shown.} codeState{The code changes to its next state.} path{The object moves along a path.} moveTo{The object moves, resizes, turns or fades to an end state.} other{An animation from a newer version.}}",
+  "@animateEffectDescription": {
+    "description": "One-line description of a build effect (tile tooltip, accessible description).",
+    "placeholders": {
+      "id": {
+        "type": "String"
+      }
+    }
+  },
+  "animateTransitionName": "{id, select, none{None} fade{Fade} dissolve{Dissolve} push{Push} slide{Slide in} cover{Cover} uncover{Uncover} wipe{Wipe} iris{Iris} zoom{Zoom} flip{Flip} cube{Cube} doorway{Doorway} swap{Swap} revolve{Revolve} magicMove{Magic Move} other{Transition}}",
+  "@animateTransitionName": {
+    "description": "Name of a slide transition (06 §7.2), by id.",
+    "placeholders": {
+      "id": {
+        "type": "String"
+      }
+    }
+  },
+  "animateTransitionDescription": "{id, select, none{The new slide replaces the old one at once.} fade{The new slide fades in over the old one, or both fade through a color.} dissolve{The new slide appears through a grain of random cells.} push{The new slide pushes the old one off the screen.} slide{The new slide slides in over the old one.} cover{The new slide slides over the old one, which dims.} uncover{The old slide slides away and reveals the new one.} wipe{A soft edge sweeps across and reveals the new slide.} iris{A growing circle, square or diamond reveals the new slide.} zoom{The new slide grows in, or the old one shrinks away.} flip{The slide flips over like a card; the new slide is on its back.} cube{Both slides are faces of a cube that turns a quarter turn.} doorway{The old slide opens like double doors; the new one comes forward.} swap{The slides swap places, front and back, on an arc.} revolve{The old slide swings away on its edge like a door.} magicMove{Objects on both slides morph into each other; the rest fades.} other{}}",
+  "@animateTransitionDescription": {
+    "description": "One-line description of a slide transition.",
+    "placeholders": {
+      "id": {
+        "type": "String"
+      }
+    }
+  },
+  "animateParamName": "{key, select, distance{Distance} fade{Fade} direction{Direction} from{From} to{To} origin{Origin} bounce{Bounce} softness{Softness} shape{Shape} cell{Grain} height{Height} bounces{Bounces} axis{Axis} perspective{Perspective} angle{Angle} scale{Scale} cps{Characters/s} caret{Caret} jitter{Jitter} fillDelay{Fill delay} count{Times} amplitude{Amplitude} opacity{Opacity} property{Property} color{Color} style{Style} target{Series} dimOthers{Dim others} azimuth{Azimuth} elevation{Elevation} step{Step} state{State} mode{Mode} path{Path} preset{Preset} orientToPath{Orient to path} relativeEnd{Relative end} anticipation{Anticipation} rotation{Rotation} through{Through color} persist{Keep end state} other{Option}}",
+  "@animateParamName": {
+    "description": "Label of an effect or transition parameter.",
+    "placeholders": {
+      "key": {
+        "type": "String"
+      }
+    }
+  },
+  "animateChoiceName": "{value, select, left{Left} right{Right} top{Top} bottom{Bottom} up{Up} down{Down} topLeft{Top left} topRight{Top right} bottomLeft{Bottom left} bottomRight{Bottom right} center{Center} circle{Circle} rect{Square} diamond{Diamond} x{Horizontal} y{Vertical} forward{Forward} backward{Backward} in{In} out{Out} baseline{Baseline} fill{Fill} stroke{Border} text{Text} marker{Marker} underline{Underline} box{Box} type{Type} morph{Morph} instant{Instant} line{Line} arc{Arc} curve{Curve} zigzag{Zigzag} custom{Custom} object{Object} word{Word} character{Character} shortest{Shortest} literal{As set} other{—}}",
+  "@animateChoiceName": {
+    "description": "Label of a parameter value (directions, anchors, shapes, modes).",
+    "placeholders": {
+      "value": {
+        "type": "String"
+      }
+    }
+  },
+  "animateTargetReason": "{target, select, text{{effect} works on text only} stroke{{effect} works on shapes, lines and icons} colorable{{effect} works on shapes, text, lines and icons} chart{{effect} works on charts only} chart3d{{effect} works on 3D charts only} code{{effect} works on code blocks only} other{{effect} doesn't work on this object}}",
+  "@animateTargetReason": {
+    "description": "Why an effect tile is disabled for the selected object.",
+    "placeholders": {
+      "effect": {
+        "type": "String"
+      },
+      "target": {
+        "type": "String"
+      }
+    }
+  },
+  "animateTriggerName": "{trigger, select, onClick{On click} withPrevious{With previous} afterPrevious{After previous} other{On click of an object}}",
+  "@animateTriggerName": {
+    "description": "Build trigger (06 §4.1).",
+    "placeholders": {
+      "trigger": {
+        "type": "String"
+      }
+    }
+  },
+  "animateDeliveryName": "{by, select, all{All at once} paragraph{By paragraph} paragraphGroup{By paragraph group} line{By line} word{By word} character{By character} series{By series} category{By category} point{By point} chartElement{By chart element} other{All at once}}",
+  "@animateDeliveryName": {
+    "description": "Delivery of a build (06 §2.3).",
+    "placeholders": {
+      "by": {
+        "type": "String"
+      }
+    }
+  },
+  "animateOrderName": "{order, select, forward{Forward} backward{Backward} center{From the center} edges{From the edges} random{Random} other{Forward}}",
+  "@animateOrderName": {
+    "description": "Order of a build's parts.",
+    "placeholders": {
+      "order": {
+        "type": "String"
+      }
+    }
+  },
+  "animateAfterBuildName": "{mode, select, none{Keep} dim{Dim} hide{Hide} other{Keep}}",
+  "@animateAfterBuildName": {
+    "description": "What happens to earlier parts after the next part builds.",
+    "placeholders": {
+      "mode": {
+        "type": "String"
+      }
+    }
+  },
+  "animateEasingName": "{preset, select, smooth{Smooth} snappy{Snappy} bouncy{Bouncy} gentle{Gentle} linear{Linear} easeIn{Ease in} easeOut{Ease out} custom{Custom} other{Custom}}",
+  "@animateEasingName": {
+    "description": "Easing preset (06 §4.3).",
+    "placeholders": {
+      "preset": {
+        "type": "String"
+      }
+    }
+  },
+  "animateGroupName": "{group, select, basic{Basic} exciting{Exciting} emphasis{Emphasis} text{Text} shape{Shape} motion{Motion} chart{Chart} code{Code} threeD{3D} magic{Magic Move} other{More}}",
+  "@animateGroupName": {
+    "description": "Heading of a group of effect or transition tiles.",
+    "placeholders": {
+      "group": {
+        "type": "String"
+      }
+    }
+  },
+  "animateKindTab": "{tab, select, buildIn{In} action{Action} buildOut{Out} other{In}}",
+  "@animateKindTab": {
+    "description": "Build tab sub-tab (In / Action / Out).",
+    "placeholders": {
+      "tab": {
+        "type": "String"
+      }
+    }
+  },
+  "animateUnmatchedName": "{mode, select, together{Fade with the move} before{Fade out first} after{Fade in after} other{Fade with the move}}",
+  "@animateUnmatchedName": {
+    "description": "Magic Move: when unmatched objects fade.",
+    "placeholders": {
+      "mode": {
+        "type": "String"
+      }
+    }
+  },
+  "animatePreviewOption": "{option, select, autoPreview{Auto-preview changes} includeTransition{Include transition in preview} fullMotion{Preview full motion} other{Option}}",
+  "@animatePreviewOption": {
+    "description": "Order tab ⚙ menu item.",
+    "placeholders": {
+      "option": {
+        "type": "String"
+      }
+    }
+  },
+  "animateWarning": "{code, select, elementMissing{The object no longer exists.} alreadyVisible{The object is already visible: this build is skipped.} alreadyHidden{The object is already hidden: this build is skipped.} hiddenTarget{The object is hidden at this point: this build is skipped.} unsupportedEffect{Effect not supported by this version: plays as a fade.} wrongElementKind{This effect doesn't work on this object: it is skipped.} unsupportedTrigger{This trigger isn't supported yet: the build is skipped.} invalidOptions{Some options are invalid and use their defaults.} invalidEasing{The easing is invalid and plays as ease out.} deliveryFallback{This object can't be built in these parts: it builds as a whole.} codeStepMissing{The code has no such highlight step.} codeStateMissing{The code has no such state.} flashLimit{Blinking is slowed to at most 3 flashes per second.} other{This build plays differently than set.}}",
+  "@animateWarning": {
+    "description": "Warning of a build in the Order list and Build tab (06 §2.4).",
+    "placeholders": {
+      "code": {
+        "type": "String"
+      }
+    }
+  },
+  "animateAddAnother": "Add another build",
+  "@animateAddAnother": {
+    "description": "Build tab: adds a second build of the same kind."
+  },
+  "animateAdvance": "Advance",
+  "@animateAdvance": {
+    "description": "Transition tab: how the slide advances."
+  },
+  "animateAdvanceAfter": "After",
+  "@animateAdvanceAfter": {
+    "description": "Transition tab: delay before advancing automatically."
+  },
+  "animateAdvanceAuto": "Automatically",
+  "@animateAdvanceAuto": {
+    "description": "Transition tab: advance automatically."
+  },
+  "animateAdvanceClick": "On click",
+  "@animateAdvanceClick": {
+    "description": "Transition tab: advance on click."
+  },
+  "animateAfterBuild": "After build",
+  "@animateAfterBuild": {
+    "description": "Build tab: what happens to earlier parts."
+  },
+  "animateAnimatedObjects": "Animated objects",
+  "@animateAnimatedObjects": {
+    "description": "Build tab with nothing selected: list heading."
+  },
+  "animateAutoBuilds": "Play builds automatically",
+  "@animateAutoBuilds": {
+    "description": "Transition tab: auto-advance also plays click builds."
+  },
+  "animateAutoReverse": "Play back and forth",
+  "@animateAutoReverse": {
+    "description": "Build tab: repeat option."
+  },
+  "animateBuildDelay": "Between builds",
+  "@animateBuildDelay": {
+    "description": "Transition tab: delay before each automatic build."
+  },
+  "animateDelay": "Delay",
+  "@animateDelay": {
+    "description": "Build tab: timing field."
+  },
+  "animateDelivery": "Parts",
+  "@animateDelivery": {
+    "description": "Build tab: delivery heading."
+  },
+  "animateDeliveryLabel": "Build",
+  "@animateDeliveryLabel": {
+    "description": "Build tab: delivery select label."
+  },
+  "animateDimTo": "Dim to",
+  "@animateDimTo": {
+    "description": "Build tab: dim opacity."
+  },
+  "animateDuration": "Duration",
+  "@animateDuration": {
+    "description": "Timing field."
+  },
+  "animateDurationAutomatic": "Automatic",
+  "@animateDurationAutomatic": {
+    "description": "Duration of effects that compute their own length."
+  },
+  "animateEasing": "Easing",
+  "@animateEasing": {
+    "description": "Timing field."
+  },
+  "animateEffectUnsupported": "Effect not supported by this version",
+  "@animateEffectUnsupported": {
+    "description": "An effect id from a newer version."
+  },
+  "animateEndState": "End state",
+  "@animateEndState": {
+    "description": "Transform effect: the end frame."
+  },
+  "animateHeight": "Height",
+  "@animateHeight": {
+    "description": "Transform effect: end height."
+  },
+  "animateHideMatches": "Hide matches",
+  "@animateHideMatches": {
+    "description": "Magic Move: hides the match outlines on the canvas."
+  },
+  "animateMagicMoveFirstSlide": "The first slide has nothing to morph from.",
+  "@animateMagicMoveFirstSlide": {
+    "description": "Magic Move on the first slide."
+  },
+  "animateMagicMoveNoMatches": "No objects match the previous slide: plays as a crossfade.",
+  "@animateMagicMoveNoMatches": {
+    "description": "Magic Move without matches."
+  },
+  "animateMatchByContent": "Match identical content",
+  "@animateMatchByContent": {
+    "description": "Magic Move option."
+  },
+  "animateMatchTextBy": "Match text by",
+  "@animateMatchTextBy": {
+    "description": "Magic Move option."
+  },
+  "animateMissingObject": "Deleted object",
+  "@animateMissingObject": {
+    "description": "Order list: a build whose object is gone."
+  },
+  "animateMoveDown": "Move down",
+  "@animateMoveDown": {
+    "description": "Order list context menu."
+  },
+  "animateMoveUp": "Move up",
+  "@animateMoveUp": {
+    "description": "Order list context menu."
+  },
+  "animateNewClick": "New click",
+  "@animateNewClick": {
+    "description": "Order list: drop indicator on a step header."
+  },
+  "animateNoSlide": "Animations apply to slides.",
+  "@animateNoSlide": {
+    "description": "Animate tab without a slide (or in masters mode)."
+  },
+  "animateOffSlide": "From off the slide",
+  "@animateOffSlide": {
+    "description": "Distance parameter: off slide."
+  },
+  "animateOrderListLabel": "Build order",
+  "@animateOrderListLabel": {
+    "description": "Accessible label of the Order list."
+  },
+  "animateOrderNone": "No animations on this slide yet. Select an object and pick an effect on the Build tab.",
+  "@animateOrderNone": {
+    "description": "Order tab empty state."
+  },
+  "animatePartOrder": "Order",
+  "@animatePartOrder": {
+    "description": "Build tab: part order."
+  },
+  "animatePartStart": "Each part",
+  "@animatePartStart": {
+    "description": "Build tab: how parts after the first start."
+  },
+  "animatePartsFrom": "Parts",
+  "@animatePartsFrom": {
+    "description": "Build tab: first part to build."
+  },
+  "animatePartsTo": "to",
+  "@animatePartsTo": {
+    "description": "Build tab: last part to build."
+  },
+  "animatePathPreset": "Path",
+  "@animatePathPreset": {
+    "description": "Motion path preset."
+  },
+  "animatePlayFromSelected": "Play from selected",
+  "@animatePlayFromSelected": {
+    "description": "Order tab footer."
+  },
+  "animatePreview": "Preview",
+  "@animatePreview": {
+    "description": "Plays the animation on the canvas."
+  },
+  "animatePreviewFromHere": "Preview from here",
+  "@animatePreviewFromHere": {
+    "description": "Order list context menu."
+  },
+  "animatePreviewFullMotion": "Preview full motion",
+  "@animatePreviewFullMotion": {
+    "description": "Reduce motion banner: preview without reduced motion."
+  },
+  "animatePreviewOptions": "Preview options",
+  "@animatePreviewOptions": {
+    "description": "Accessible label of the Order tab ⚙ menu."
+  },
+  "animatePreviewPlaying": "Previewing animations",
+  "@animatePreviewPlaying": {
+    "description": "Floating bar while a preview plays."
+  },
+  "animatePreviewReduced": "Preview reduced motion",
+  "@animatePreviewReduced": {
+    "description": "Reduce motion banner: back to reduced previews."
+  },
+  "animatePreviewStop": "Stop",
+  "@animatePreviewStop": {
+    "description": "Stops the preview (Esc)."
+  },
+  "animateReducedMotionOn": "Reduce motion is on — animations play as fades.",
+  "@animateReducedMotionOn": {
+    "description": "Animate tab banner (06 §13)."
+  },
+  "animateReducedMotionSettings": "Settings",
+  "@animateReducedMotionSettings": {
+    "description": "Opens the reduce motion setting."
+  },
+  "animateRemoveTransition": "Remove",
+  "@animateRemoveTransition": {
+    "description": "Transition tab: removes the transition (cut)."
+  },
+  "animateRepeat": "Repeat",
+  "@animateRepeat": {
+    "description": "Build tab heading."
+  },
+  "animateRepeatCount": "Times",
+  "@animateRepeatCount": {
+    "description": "Build tab: repeat count."
+  },
+  "animateReturnToStart": "Return to the start",
+  "@animateReturnToStart": {
+    "description": "Build tab: a persistent emphasis returns at its end."
+  },
+  "animateReverseOnBack": "Play backwards when going back",
+  "@animateReverseOnBack": {
+    "description": "Transition tab option."
+  },
+  "animateRotation": "Rotation",
+  "@animateRotation": {
+    "description": "Magic Move option."
+  },
+  "animateSearchEffects": "Search effects",
+  "@animateSearchEffects": {
+    "description": "Build tab search field placeholder."
+  },
+  "animateSelectObject": "Select an object to animate it.",
+  "@animateSelectObject": {
+    "description": "Build tab empty state."
+  },
+  "animateSelectObjectItem": "Select object",
+  "@animateSelectObjectItem": {
+    "description": "Order list context menu."
+  },
+  "animateSetTrigger": "Start",
+  "@animateSetTrigger": {
+    "description": "Order list context menu: submenu of triggers."
+  },
+  "animateShowMatches": "Show matches",
+  "@animateShowMatches": {
+    "description": "Magic Move: shows the match outlines on the canvas."
+  },
+  "animateShowParts": "Show parts",
+  "@animateShowParts": {
+    "description": "Order list: expands a build's parts."
+  },
+  "animateStagger": "Stagger",
+  "@animateStagger": {
+    "description": "Magic Move option: delay between pairs."
+  },
+  "animateStaggerParts": "Stagger",
+  "@animateStaggerParts": {
+    "description": "Build tab: gap between part starts."
+  },
+  "animateStart": "Start",
+  "@animateStart": {
+    "description": "Build tab: trigger."
+  },
+  "animateStepAutomatic": "Automatic",
+  "@animateStepAutomatic": {
+    "description": "Order list: step 0 header."
+  },
+  "animateTiming": "Timing",
+  "@animateTiming": {
+    "description": "Build tab heading."
+  },
+  "animateTransitionInherited": "Uses the presentation's default transition.",
+  "@animateTransitionInherited": {
+    "description": "Transition tab: the slide has no own transition."
+  },
+  "animateUnmatched": "Unmatched",
+  "@animateUnmatched": {
+    "description": "Magic Move option: unmatched objects."
+  },
+  "animateUntilNextClick": "Until the next click",
+  "@animateUntilNextClick": {
+    "description": "Build tab: repeat option."
+  },
+  "animateWidth": "Width",
+  "@animateWidth": {
+    "description": "Transform effect: end width."
+  },
+  "cmdAnimateBuildAllSteps": "Build all steps",
+  "@cmdAnimateBuildAllSteps": {
+    "description": "Title of the command `slides.animate.buildAllSteps`."
+  },
+  "cmdAnimateMoveBuilds": "Reorder animations",
+  "@cmdAnimateMoveBuilds": {
+    "description": "Title of the command `slides.animate.moveBuilds`."
+  },
+  "cmdAnimateSelectBuilds": "Select animations",
+  "@cmdAnimateSelectBuilds": {
+    "description": "Title of the command `slides.animate.selectBuilds`."
+  },
+  "cmdAnimateSetMotionPath": "Edit motion path",
+  "@cmdAnimateSetMotionPath": {
+    "description": "Title of the command `slides.animate.setMotionPath`."
+  },
+  "cmdAnimateSetTransformTarget": "Set end state",
+  "@cmdAnimateSetTransformTarget": {
+    "description": "Title of the command `slides.animate.setTransformTarget`."
+  },
+  "cmdAnimateSetTrigger": "Set animation start",
+  "@cmdAnimateSetTrigger": {
+    "description": "Title of the command `slides.animate.setTrigger`."
+  },
+  "cmdAnimateStopPreview": "Stop preview",
+  "@cmdAnimateStopPreview": {
+    "description": "Title of the command `slides.animate.stopPreview`."
+  },
+  "cmdAnimateTogglePreviewOption": "Preview option",
+  "@cmdAnimateTogglePreviewOption": {
+    "description": "Title of the command `slides.animate.togglePreviewOption`."
+  },
+  "cmdAnimateUpdateBuild": "Edit animation",
+  "@cmdAnimateUpdateBuild": {
+    "description": "Title of the command `slides.animate.updateBuild`."
+  },
+  "cmdElementSetMatchKey": "Set Magic Move ID",
+  "@cmdElementSetMatchKey": {
+    "description": "Title of the command `slides.element.setMatchKey`."
+  },
+  "cmdTransitionApplyToAll": "Apply transition to all slides",
+  "@cmdTransitionApplyToAll": {
+    "description": "Title of the command `slides.transition.applyToAll`."
+  },
+  "cmdTransitionPreview": "Preview transition",
+  "@cmdTransitionPreview": {
+    "description": "Title of the command `slides.transition.preview`."
+  },
+  "cmdTransitionRemove": "Remove transition",
+  "@cmdTransitionRemove": {
+    "description": "Title of the command `slides.transition.remove`."
+  },
+  "cmdTransitionSet": "Set transition",
+  "@cmdTransitionSet": {
+    "description": "Title of the command `slides.transition.set`."
+  },
+  "cmdTransitionSetAdvance": "Set slide advance",
+  "@cmdTransitionSetAdvance": {
+    "description": "Title of the command `slides.transition.setAdvance`."
+  },
+  "reasonNoBuilds": "This slide has no animations",
+  "@reasonNoBuilds": {
+    "description": "Disabled reason."
+  },
+  "reasonNoBuildsCopied": "Copy an animation first",
+  "@reasonNoBuildsCopied": {
+    "description": "Disabled reason of Paste animation."
+  },
+  "reasonNotPreviewing": "No preview is playing",
+  "@reasonNotPreviewing": {
+    "description": "Disabled reason."
+  },
+  "reasonObjectNoBuilds": "Select one animated object",
+  "@reasonObjectNoBuilds": {
+    "description": "Disabled reason of Copy animation."
+  },
+  "reasonSelectBuild": "Select an animation",
+  "@reasonSelectBuild": {
+    "description": "Disabled reason."
+  },
+  "reasonSelectCodeOrChart": "Select a code block with steps or a chart",
+  "@reasonSelectCodeOrChart": {
+    "description": "Disabled reason of Build all steps."
+  },
+  "undoAddMagicMoveSlide": "Add Magic Move slide",
+  "@undoAddMagicMoveSlide": {
+    "description": "Undo label."
+  },
+  "undoRemoveAnimation": "Remove animation",
+  "@undoRemoveAnimation": {
+    "description": "Undo label."
+  },
+  "animateBadgeTooltip": "{name}: step {steps}",
+  "@animateBadgeTooltip": {
+    "description": "Build order badge tooltip.",
+    "placeholders": {
+      "name": {
+        "type": "String"
+      },
+      "steps": {
+        "type": "String"
+      }
+    }
+  },
+  "animateBuildsSelected": "{count} animations",
+  "@animateBuildsSelected": {
+    "description": "Several selected builds.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "animateObjectsSelected": "{count} objects",
+  "@animateObjectsSelected": {
+    "description": "Several selected objects.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "animateMagicMoveMatches": "{count, plural, =1{1 object matches the previous slide} other{{count} objects match the previous slide}}",
+  "@animateMagicMoveMatches": {
+    "description": "Magic Move match count.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "animateMatchTooltip": "Matches “{name}” on slide {number}",
+  "@animateMatchTooltip": {
+    "description": "Magic Move match badge tooltip.",
+    "placeholders": {
+      "name": {
+        "type": "String"
+      },
+      "number": {
+        "type": "int"
+      }
+    }
+  },
+  "animateOrderSummary": "{clicks, plural, =0{No clicks} =1{1 click} other{{clicks} clicks}} · {seconds} s",
+  "@animateOrderSummary": {
+    "description": "Order tab summary.",
+    "placeholders": {
+      "clicks": {
+        "type": "int"
+      },
+      "seconds": {
+        "type": "String"
+      }
+    }
+  },
+  "animatePartLabel": "Part {index}: {text}",
+  "@animatePartLabel": {
+    "description": "Order list: a part of a build.",
+    "placeholders": {
+      "index": {
+        "type": "int"
+      },
+      "text": {
+        "type": "String"
+      }
+    }
+  },
+  "animatePartsCount": "{count} parts",
+  "@animatePartsCount": {
+    "description": "Order list: number of parts.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "animateSettles": "≈ {seconds} s",
+  "@animateSettles": {
+    "description": "Settle time of a spring easing.",
+    "placeholders": {
+      "seconds": {
+        "type": "String"
+      }
+    }
+  },
+  "animateStepClick": "Click {index}",
+  "@animateStepClick": {
+    "description": "Order list: step header.",
+    "placeholders": {
+      "index": {
+        "type": "int"
+      }
+    }
+  },
+  "animateTransitionForSlide": "Transition into slide {number}",
+  "@animateTransitionForSlide": {
+    "description": "Transition tab header.",
+    "placeholders": {
+      "number": {
+        "type": "int"
+      }
+    }
+  },
+  "animateTransitionForSlides": "Transition into {count} slides",
+  "@animateTransitionForSlides": {
+    "description": "Transition tab header with several slides selected.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "arrangeLabelMatchKey": "Magic Move ID",
+  "@arrangeLabelMatchKey": {
+    "description": "Inspector › Arrange: the Magic Move ID field (06 §8.2)."
+  },
+  "cmdOutlineSetTitle": "Edit slide title",
+  "@cmdOutlineSetTitle": {
+    "description": "Title of the command `slides.outline.setTitle` (menus, palette, tooltips, undo)."
+  },
+  "cmdOutlineSetBody": "Edit slide text",
+  "@cmdOutlineSetBody": {
+    "description": "Title of the command `slides.outline.setBody` (menus, palette, tooltips, undo)."
+  },
+  "cmdOutlineNewSlideAfter": "New slide after this one",
+  "@cmdOutlineNewSlideAfter": {
+    "description": "Title of the command `slides.outline.newSlideAfter` (menus, palette, tooltips, undo)."
+  },
+  "cmdOutlineNewLine": "New bullet",
+  "@cmdOutlineNewLine": {
+    "description": "Title of the command `slides.outline.newLine` (menus, palette, tooltips, undo)."
+  },
+  "cmdOutlineFocusBody": "Go to the slide’s bullets",
+  "@cmdOutlineFocusBody": {
+    "description": "Title of the command `slides.outline.focusBody` (menus, palette, tooltips, undo)."
+  },
+  "cmdOutlineIndent": "Indent (demote)",
+  "@cmdOutlineIndent": {
+    "description": "Title of the command `slides.outline.indent` (menus, palette, tooltips, undo)."
+  },
+  "cmdOutlineOutdent": "Outdent (promote)",
+  "@cmdOutlineOutdent": {
+    "description": "Title of the command `slides.outline.outdent` (menus, palette, tooltips, undo)."
+  },
+  "cmdOutlineMoveUp": "Move up",
+  "@cmdOutlineMoveUp": {
+    "description": "Title of the command `slides.outline.moveUp` (menus, palette, tooltips, undo)."
+  },
+  "cmdOutlineMoveDown": "Move down",
+  "@cmdOutlineMoveDown": {
+    "description": "Title of the command `slides.outline.moveDown` (menus, palette, tooltips, undo)."
+  },
+  "cmdOutlineJoinLine": "Join with the line above",
+  "@cmdOutlineJoinLine": {
+    "description": "Title of the command `slides.outline.joinLine` (menus, palette, tooltips, undo)."
+  },
+  "cmdOutlineCopyMarkdown": "Copy outline as Markdown",
+  "@cmdOutlineCopyMarkdown": {
+    "description": "Title of the command `slides.outline.copyMarkdown` (menus, palette, tooltips, undo)."
+  },
+  "cmdArrangeSetZ": "Reorder",
+  "@cmdArrangeSetZ": {
+    "description": "Title of the command `slides.arrange.setZ` (menus, palette, tooltips, undo)."
+  },
+  "cmdA11ySetReadingOrder": "Reading order",
+  "@cmdA11ySetReadingOrder": {
+    "description": "Title of the command `slides.a11y.setReadingOrder` (menus, palette, tooltips, undo)."
+  },
+  "cmdA11yResetReadingOrder": "Reset to automatic",
+  "@cmdA11yResetReadingOrder": {
+    "description": "Title of the command `slides.a11y.resetReadingOrder` (menus, palette, tooltips, undo)."
+  },
+  "cmdA11yGoTo": "Go to issue",
+  "@cmdA11yGoTo": {
+    "description": "Title of the command `slides.a11y.goTo` (menus, palette, tooltips, undo)."
+  },
+  "cmdA11yFix": "Fix accessibility issue",
+  "@cmdA11yFix": {
+    "description": "Title of the command `slides.a11y.fix` (menus, palette, tooltips, undo)."
+  },
+  "reasonOutlineLine": "Place the cursor in an outline line",
+  "@reasonOutlineLine": {
+    "description": "Disabled reason of outline commands."
+  },
+  "reasonOutlineNoTitle": "This slide’s layout has no title",
+  "@reasonOutlineNoTitle": {
+    "description": "Disabled reason: the slide can't get a title."
+  },
+  "reasonOutlineNoBody": "This slide has no text placeholder",
+  "@reasonOutlineNoBody": {
+    "description": "Disabled reason: the slide has no body placeholder."
+  },
+  "reasonReadingOrderAutomatic": "The reading order is already automatic",
+  "@reasonReadingOrderAutomatic": {
+    "description": "Disabled reason of Reset to automatic."
+  },
+  "reasonA11yNoFix": "This issue has no automatic fix",
+  "@reasonA11yNoFix": {
+    "description": "Disabled reason of the accessibility quick fix."
+  },
+  "outlineHint": "Enter: new slide or bullet · Tab: indent · Shift+Tab: outdent",
+  "@outlineHint": {
+    "description": "Outline view: keyboard hint in the top bar."
+  },
+  "outlineReadOnlyHint": "View only",
+  "@outlineReadOnlyHint": {
+    "description": "Outline view: hint for viewers."
+  },
+  "outlineSlideNumber": "Slide {number}",
+  "@outlineSlideNumber": {
+    "description": "Outline view: semantics label of a slide number.",
+    "placeholders": {
+      "number": {
+        "type": "int"
+      }
+    }
+  },
+  "outlineTitleLabel": "Title of slide {number}",
+  "@outlineTitleLabel": {
+    "description": "Outline view: semantics label of a title line.",
+    "placeholders": {
+      "number": {
+        "type": "int"
+      }
+    }
+  },
+  "outlineBulletLabel": "Slide {slide}, bullet {bullet}, level {level}",
+  "@outlineBulletLabel": {
+    "description": "Outline view: semantics label of a bullet line.",
+    "placeholders": {
+      "slide": {
+        "type": "int"
+      },
+      "bullet": {
+        "type": "int"
+      },
+      "level": {
+        "type": "int"
+      }
+    }
+  },
+  "outlineOthers": "+ {objects}",
+  "@outlineOthers": {
+    "description": "Outline view: summary of a slide's other objects (\"+ image, 2 × shape\").",
+    "placeholders": {
+      "objects": {
+        "type": "String"
+      }
+    }
+  },
+  "outlineEditing": "{name} is editing",
+  "@outlineEditing": {
+    "description": "Outline view: tooltip of a collaborator's caret bar.",
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "outlineCopied": "Outline copied as Markdown",
+  "@outlineCopied": {
+    "description": "Toast after Copy outline as Markdown."
+  },
+  "outlineTypingUndo": "Edit outline",
+  "@outlineTypingUndo": {
+    "description": "Undo label of typing in the outline view."
+  },
+  "layersPanelTitle": "Layers",
+  "@layersPanelTitle": {
+    "description": "Title of the Layers side panel."
+  },
+  "layersTabLayers": "Layers",
+  "@layersTabLayers": {
+    "description": "Layers panel tab."
+  },
+  "layersTabReadingOrder": "Reading order",
+  "@layersTabReadingOrder": {
+    "description": "Layers panel tab."
+  },
+  "layersEmpty": "No objects on this slide",
+  "@layersEmpty": {
+    "description": "Layers panel: empty slide."
+  },
+  "layersHidden": "hidden",
+  "@layersHidden": {
+    "description": "Layers panel: semantics state of a hidden object."
+  },
+  "layersLocked": "locked",
+  "@layersLocked": {
+    "description": "Layers panel: semantics state of a locked object."
+  },
+  "layersRenameHint": "Name",
+  "@layersRenameHint": {
+    "description": "Layers panel: placeholder of the rename field."
+  },
+  "layersDragMany": "{count} objects",
+  "@layersDragMany": {
+    "description": "Layers panel: drag feedback of several objects.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "layersFromLayout": "From layout ({count})",
+  "@layersFromLayout": {
+    "description": "Layers panel: the section of layout and master objects.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "layersEditLayout": "Edit layout",
+  "@layersEditLayout": {
+    "description": "Layers panel: link to masters mode."
+  },
+  "layersOrderAutomatic": "Automatic: title first, then top to bottom, left to right.",
+  "@layersOrderAutomatic": {
+    "description": "Layers panel › Reading order: explanation."
+  },
+  "layersOrderCustom": "Custom order. Screen readers and Tab follow this list.",
+  "@layersOrderCustom": {
+    "description": "Layers panel › Reading order: explanation."
+  },
+  "layersOrderEarlier": "Read earlier",
+  "@layersOrderEarlier": {
+    "description": "Layers panel › Reading order: move up button."
+  },
+  "layersOrderLater": "Read later",
+  "@layersOrderLater": {
+    "description": "Layers panel › Reading order: move down button."
+  },
+  "a11yPanelTitle": "Accessibility",
+  "@a11yPanelTitle": {
+    "description": "Title of the Accessibility side panel."
+  },
+  "a11yCheckDescription": "Checks alt text, contrast, titles, text size, reading order and tables",
+  "@a11yCheckDescription": {
+    "description": "Description of the accessibility check command."
+  },
+  "a11yCheckAgain": "Check again",
+  "@a11yCheckAgain": {
+    "description": "Accessibility panel: refresh button."
+  },
+  "a11ySummary": "{errors, plural, =1{1 error} other{{errors} errors}} · {warnings, plural, =1{1 warning} other{{warnings} warnings}} · {info, plural, =1{1 tip} other{{info} tips}}",
+  "@a11ySummary": {
+    "description": "Accessibility panel: summary.",
+    "placeholders": {
+      "errors": {
+        "type": "int"
+      },
+      "warnings": {
+        "type": "int"
+      },
+      "info": {
+        "type": "int"
+      }
+    }
+  },
+  "a11yNoIssues": "No accessibility issues found",
+  "@a11yNoIssues": {
+    "description": "Accessibility panel: empty state title."
+  },
+  "a11yNoIssuesBody": "Alt text, contrast, titles, text size, reading order and tables look good.",
+  "@a11yNoIssuesBody": {
+    "description": "Accessibility panel: empty state body."
+  },
+  "a11ySlideHeading": "Slide {label}",
+  "@a11ySlideHeading": {
+    "description": "Accessibility panel: heading of a slide's issues (\"Slide 4 · Our mission\").",
+    "placeholders": {
+      "label": {
+        "type": "String"
+      }
+    }
+  },
+  "a11ySeverityError": "Error",
+  "@a11ySeverityError": {
+    "description": "Accessibility issue severity."
+  },
+  "a11ySeverityWarning": "Warning",
+  "@a11ySeverityWarning": {
+    "description": "Accessibility issue severity."
+  },
+  "a11ySeverityInfo": "Tip",
+  "@a11ySeverityInfo": {
+    "description": "Accessibility issue severity."
+  },
+  "a11yMissingAltText": "Missing alt text",
+  "@a11yMissingAltText": {
+    "description": "Accessibility issue."
+  },
+  "a11yLowContrast": "Low text contrast ({ratio}:1, needs {required}:1)",
+  "@a11yLowContrast": {
+    "description": "Accessibility issue.",
+    "placeholders": {
+      "ratio": {
+        "type": "String"
+      },
+      "required": {
+        "type": "String"
+      }
+    }
+  },
+  "a11yContrastOverImage": "Text over an image: check that it is readable",
+  "@a11yContrastOverImage": {
+    "description": "Accessibility issue."
+  },
+  "a11yMissingTitle": "Slide has no title",
+  "@a11yMissingTitle": {
+    "description": "Accessibility issue."
+  },
+  "a11yDuplicateTitle": "Another slide has the same title “{title}”",
+  "@a11yDuplicateTitle": {
+    "description": "Accessibility issue.",
+    "placeholders": {
+      "title": {
+        "type": "String"
+      }
+    }
+  },
+  "a11ySmallText": "Text smaller than {min} ({size})",
+  "@a11ySmallText": {
+    "description": "Accessibility issue.",
+    "placeholders": {
+      "size": {
+        "type": "int"
+      },
+      "min": {
+        "type": "int"
+      }
+    }
+  },
+  "a11yReadingOrder": "The custom reading order differs from the layout",
+  "@a11yReadingOrder": {
+    "description": "Accessibility issue."
+  },
+  "a11yTableHeader": "Table has no header row",
+  "@a11yTableHeader": {
+    "description": "Accessibility issue."
+  },
+  "a11yEmptyPlaceholder": "Empty placeholder",
+  "@a11yEmptyPlaceholder": {
+    "description": "Accessibility issue."
+  },
+  "a11yGoTo": "Go to",
+  "@a11yGoTo": {
+    "description": "Accessibility panel: button showing the issue."
+  },
+  "a11yFixAltText": "Add alt text…",
+  "@a11yFixAltText": {
+    "description": "Accessibility quick fix."
+  },
+  "a11yFixDecorative": "Mark decorative",
+  "@a11yFixDecorative": {
+    "description": "Accessibility quick fix."
+  },
+  "a11yFixContrast": "Use a contrasting color",
+  "@a11yFixContrast": {
+    "description": "Accessibility quick fix."
+  },
+  "a11yFixTextSize": "Enlarge to {size}",
+  "@a11yFixTextSize": {
+    "description": "Accessibility quick fix.",
+    "placeholders": {
+      "size": {
+        "type": "int"
+      }
+    }
+  },
+  "a11yFixReadingOrder": "Reset to automatic",
+  "@a11yFixReadingOrder": {
+    "description": "Accessibility quick fix."
+  },
+  "a11yFixTableHeader": "Turn on header row",
+  "@a11yFixTableHeader": {
+    "description": "Accessibility quick fix."
+  },
+  "a11yFixRemovePlaceholder": "Remove placeholder",
+  "@a11yFixRemovePlaceholder": {
+    "description": "Accessibility quick fix."
+  },
+  "a11yEditReadingOrder": "Edit reading order",
+  "@a11yEditReadingOrder": {
+    "description": "Accessibility panel: opens Layers › Reading order."
+  },
+  "animatePreviewChanged": "The animations changed — Preview again",
+  "@animatePreviewChanged": {
+    "description": "Toast when a collaborator changes the previewed slide (06 §11)."
+  },
+  "chartCheckNow": "Check now",
+  "@chartCheckNow": {
+    "description": "Button of the Linked charts panel: check the links now."
+  },
+  "cmdCommentsNext": "Next comment",
+  "@cmdCommentsNext": {
+    "description": "Title of the command `slides.comments.next` (09 §3.4)."
+  },
+  "cmdCommentsPrevious": "Previous comment",
+  "@cmdCommentsPrevious": {
+    "description": "Title of the command `slides.comments.previous` (09 §3.4)."
+  },
+  "cmdCommentsOpenPanel": "Open comments",
+  "@cmdCommentsOpenPanel": {
+    "description": "Title of the command `slides.comments.openPanel` (09 §3.5)."
+  },
+  "commentsScopeSlide": "This slide",
+  "@commentsScopeSlide": {
+    "description": "Comments panel scope: threads of the current slide."
+  },
+  "commentsScopeAll": "All slides",
+  "@commentsScopeAll": {
+    "description": "Comments panel scope: every thread."
+  },
+  "commentsOrphanedGroup": "Orphaned",
+  "@commentsOrphanedGroup": {
+    "description": "Comments panel header of threads whose slide or object was deleted."
+  },
+  "commentsSlideHeader": "{number} · {title}",
+  "@commentsSlideHeader": {
+    "description": "Comments panel header of a slide's threads.",
+    "placeholders": {
+      "number": {
+        "type": "int"
+      },
+      "title": {
+        "type": "String"
+      }
+    }
+  },
+  "commentSlideQuote": "Slide {number}: {title}",
+  "@commentSlideQuote": {
+    "description": "Quoted text of a comment on a slide (stored with the thread).",
+    "placeholders": {
+      "number": {
+        "type": "int"
+      },
+      "title": {
+        "type": "String"
+      }
+    }
+  },
+  "commentAnchorDeleted": "The object this comment was on was deleted",
+  "@commentAnchorDeleted": {
+    "description": "Label of a comment whose slide or object was deleted."
+  },
+  "commentAnchorDeletedQuote": "{quote} — the object this comment was on was deleted",
+  "@commentAnchorDeletedQuote": {
+    "description": "Label of a comment whose slide or object was deleted, with its quoted text.",
+    "placeholders": {
+      "quote": {
+        "type": "String"
+      }
+    }
+  },
+  "commentPinLabel": "{count, plural, =1{Comment by {name}} other{{count} comments, first by {name}}}",
+  "@commentPinLabel": {
+    "description": "Semantics label of a comment pin on the canvas.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      },
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "commentReplies": "{count, plural, =1{1 reply} other{{count} replies}}",
+  "@commentReplies": {
+    "description": "Reply count in a comment hover card.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "commentsBadge": "{count, plural, =1{1 comment} other{{count} comments}}",
+  "@commentsBadge": {
+    "description": "Semantics and tooltip of the open-comment badge of a slide.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "reasonNoComments": "No comments",
+  "@reasonNoComments": {
+    "description": "Disabled reason of next/previous comment."
+  },
+  "commentsDockedClose": "Close",
+  "@commentsDockedClose": {
+    "description": "Close button of the comment card docked at a pin."
+  },
+  "cmdSpellingCheckDescription": "Walk through the misspelled words of the whole presentation",
+  "cmdSpellingReplace": "Correct spelling",
+  "cmdSpellingReplaceAll": "Correct spelling everywhere",
+  "cmdSpellingIgnore": "Ignore",
+  "cmdSpellingAddToDictionary": "Add to dictionary",
+  "cmdSpellingPersonalDictionary": "Personal dictionary…",
+  "undoCorrectSpelling": "Correct spelling",
+  "undoSetLanguage": "Set language",
+  "spellingNoSuggestions": "No suggestions",
+  "@spellingNoSuggestions": {
+    "description": "Disabled row of the context menu on a misspelled word without suggestions."
+  },
+  "spellingAddWordToDictionary": "Add “{word}” to dictionary",
+  "@spellingAddWordToDictionary": {
+    "placeholders": {
+      "word": {
+        "type": "String"
+      }
+    }
+  },
+  "toastPersonalDictionaryFull": "Your personal dictionary is full ({max} words).",
+  "@toastPersonalDictionaryFull": {
+    "placeholders": {
+      "max": {
+        "type": "int"
+      }
+    }
+  },
+  "reasonSpellingTextGone": "This text is no longer there",
+  "cmdHistoryRestoreVersion": "Restore this version",
+  "@cmdHistoryRestoreVersion": {
+    "description": "Title of `slides.history.restoreVersion`."
+  },
+  "cmdHistoryMakeCopy": "Make a copy",
+  "@cmdHistoryMakeCopy": {
+    "description": "Title of `slides.history.makeCopy` (a copy of the shown version)."
+  },
+  "cmdHistoryDownload": "Download as PDF",
+  "@cmdHistoryDownload": {
+    "description": "Title of `slides.history.download` (the shown version as PDF)."
+  },
+  "cmdHistoryToggleShowChanges": "Show changes",
+  "@cmdHistoryToggleShowChanges": {
+    "description": "Title of the toggle `slides.history.toggleShowChanges`."
+  },
+  "cmdHistoryToggleShowRemoved": "Show removed objects",
+  "@cmdHistoryToggleShowRemoved": {
+    "description": "Title of the toggle `slides.history.toggleShowRemoved` (dashed outlines of deleted objects)."
+  },
+  "cmdHistoryNextChange": "Next change",
+  "@cmdHistoryNextChange": {
+    "description": "Title of `slides.history.nextChange`."
+  },
+  "cmdHistoryPreviousChange": "Previous change",
+  "@cmdHistoryPreviousChange": {
+    "description": "Title of `slides.history.previousChange`."
+  },
+  "cmdConflictsReview": "Review overwritten text",
+  "@cmdConflictsReview": {
+    "description": "Title of `slides.conflicts.review`."
+  },
+  "cmdConflictsRestoreMine": "Restore my text",
+  "@cmdConflictsRestoreMine": {
+    "description": "Title of `slides.conflicts.restoreMine` (also the undo label)."
+  },
+  "reasonNoVersionShown": "Open a version first",
+  "@reasonNoVersionShown": {
+    "description": "Disabled reason of version commands outside the history route."
+  },
+  "reasonNoChanges": "This version has no changes",
+  "@reasonNoChanges": {
+    "description": "Disabled reason of next/previous change."
+  },
+  "reasonNoConflicts": "None of your text was overwritten",
+  "@reasonNoConflicts": {
+    "description": "Disabled reason of the overwritten-text review."
+  },
+  "versionLoading": "Loading this version…",
+  "@versionLoading": {
+    "description": "Spinner text of the version view."
+  },
+  "versionLoadFailed": "Couldn’t load this version",
+  "@versionLoadFailed": {
+    "description": "Error title of the version view."
+  },
+  "versionComputingChanges": "Finding changes…",
+  "@versionComputingChanges": {
+    "description": "Summary while the diff is computed."
+  },
+  "versionChangesHidden": "Changes are hidden",
+  "@versionChangesHidden": {
+    "description": "Summary when Show changes is off."
+  },
+  "versionNoChanges": "No changes since the previous version",
+  "@versionNoChanges": {
+    "description": "Summary of a version without changes."
+  },
+  "versionSlidesAdded": "{count, plural, =1{1 slide added} other{{count} slides added}}",
+  "@versionSlidesAdded": {
+    "description": "Part of the version summary.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "versionSlidesChanged": "{count, plural, =1{1 slide changed} other{{count} slides changed}}",
+  "@versionSlidesChanged": {
+    "description": "Part of the version summary.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "versionSlidesMoved": "{count, plural, =1{1 slide moved} other{{count} slides moved}}",
+  "@versionSlidesMoved": {
+    "description": "Part of the version summary.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "versionSlidesDeleted": "{count, plural, =1{1 slide deleted} other{{count} slides deleted}}",
+  "@versionSlidesDeleted": {
+    "description": "Part of the version summary.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "versionThemeChanged": "Theme changed",
+  "@versionThemeChanged": {
+    "description": "Version summary and the change list row of theme, master or layout changes."
+  },
+  "versionDeckChanged": "Presentation settings changed",
+  "@versionDeckChanged": {
+    "description": "Change list row when the deck row (title, size, numbering) changed."
+  },
+  "versionTagNew": "New",
+  "@versionTagNew": {
+    "description": "Navigator tag of a slide or group added in this version."
+  },
+  "versionTagMoved": "Moved",
+  "@versionTagMoved": {
+    "description": "Navigator tag of a slide reordered or regrouped in this version."
+  },
+  "versionTagRenamed": "Renamed",
+  "@versionTagRenamed": {
+    "description": "Navigator tag of a renamed group."
+  },
+  "versionTagDeleted": "Deleted",
+  "@versionTagDeleted": {
+    "description": "Navigator tag of a slide deleted in this version (ghost row)."
+  },
+  "versionDeletedSlide": "Deleted slide: {title}",
+  "@versionDeletedSlide": {
+    "description": "Semantics label and tooltip of a ghost row.",
+    "placeholders": {
+      "title": {
+        "type": "String"
+      }
+    }
+  },
+  "versionChangesOnSlide": "Changes on this slide",
+  "@versionChangesOnSlide": {
+    "description": "Header of the change list."
+  },
+  "versionNoChangesOnSlide": "Nothing changed on this slide",
+  "@versionNoChangesOnSlide": {
+    "description": "Empty change list."
+  },
+  "versionChangeBy": "{what} — {who}",
+  "@versionChangeBy": {
+    "description": "A change list row: what changed and who did it.",
+    "placeholders": {
+      "what": {
+        "type": "String"
+      },
+      "who": {
+        "type": "String"
+      }
+    }
+  },
+  "versionAgentMcp": "Claude via MCP ({name})",
+  "@versionAgentMcp": {
+    "description": "Author of changes an agent made through MCP for a user.",
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "versionAgentAi": "Claude ({name})",
+  "@versionAgentAi": {
+    "description": "Author of changes the assistant made for a user.",
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "versionElementChange": "{element}: {what}",
+  "@versionElementChange": {
+    "description": "A changed object: its label and the kinds of change.",
+    "placeholders": {
+      "element": {
+        "type": "String"
+      },
+      "what": {
+        "type": "String"
+      }
+    }
+  },
+  "versionElementAdded": "{element} added",
+  "@versionElementAdded": {
+    "description": "A changed object that is new.",
+    "placeholders": {
+      "element": {
+        "type": "String"
+      }
+    }
+  },
+  "versionElementRemoved": "{element} deleted",
+  "@versionElementRemoved": {
+    "description": "An object deleted in this version.",
+    "placeholders": {
+      "element": {
+        "type": "String"
+      }
+    }
+  },
+  "versionKindText": "text edited",
+  "@versionKindText": {
+    "description": "Kind of change of an object."
+  },
+  "versionKindFrame": "moved or resized",
+  "@versionKindFrame": {
+    "description": "Kind of change of an object."
+  },
+  "versionKindStyle": "restyled",
+  "@versionKindStyle": {
+    "description": "Kind of change of an object."
+  },
+  "versionKindData": "content changed",
+  "@versionKindData": {
+    "description": "Kind of change of an object."
+  },
+  "versionKindOrder": "order changed",
+  "@versionKindOrder": {
+    "description": "Kind of change of an object."
+  },
+  "versionKindVisibility": "shown, hidden or locked",
+  "@versionKindVisibility": {
+    "description": "Kind of change of an object."
+  },
+  "versionKindAnimation": "animation changed",
+  "@versionKindAnimation": {
+    "description": "Kind of change of an object."
+  },
+  "versionSlideAdded": "Slide added",
+  "@versionSlideAdded": {
+    "description": "Change list row."
+  },
+  "versionSlideMoved": "Slide moved",
+  "@versionSlideMoved": {
+    "description": "Change list row."
+  },
+  "versionSlideSkipToggled": "Slide skipped or unskipped",
+  "@versionSlideSkipToggled": {
+    "description": "Change list row."
+  },
+  "versionSlideDeleted": "Slide deleted",
+  "@versionSlideDeleted": {
+    "description": "Change list row of a ghost slide."
+  },
+  "versionSlideBackground": "Background changed",
+  "@versionSlideBackground": {
+    "description": "Change list row."
+  },
+  "versionSlideLayout": "Layout changed",
+  "@versionSlideLayout": {
+    "description": "Change list row."
+  },
+  "versionSlideTransition": "Transition changed",
+  "@versionSlideTransition": {
+    "description": "Change list row."
+  },
+  "versionSlideNotes": "Speaker notes edited",
+  "@versionSlideNotes": {
+    "description": "Change list row."
+  },
+  "versionSlideTimings": "Timings changed",
+  "@versionSlideTimings": {
+    "description": "Change list row."
+  },
+  "versionSlideMasters": "Master objects shown or hidden",
+  "@versionSlideMasters": {
+    "description": "Change list row."
+  },
+  "versionAnimations": "{count, plural, =1{1 animation changed} other{{count} animations changed}}",
+  "@versionAnimations": {
+    "description": "Change list row of build changes.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "versionGroupAdded": "Section “{title}” added",
+  "@versionGroupAdded": {
+    "description": "Change list row (top) of a new group.",
+    "placeholders": {
+      "title": {
+        "type": "String"
+      }
+    }
+  },
+  "versionGroupRemoved": "Section “{title}” deleted",
+  "@versionGroupRemoved": {
+    "description": "Change list row (top) of a deleted group.",
+    "placeholders": {
+      "title": {
+        "type": "String"
+      }
+    }
+  },
+  "versionGroupChanged": "Section “{title}” changed",
+  "@versionGroupChanged": {
+    "description": "Change list row (top) of a renamed, recolored or moved group.",
+    "placeholders": {
+      "title": {
+        "type": "String"
+      }
+    }
+  },
+  "versionChangeCounter": "{index} of {count}",
+  "@versionChangeCounter": {
+    "description": "Position in the changes (next/previous).",
+    "placeholders": {
+      "index": {
+        "type": "int"
+      },
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "versionCopyTitle": "Copy this version",
+  "@versionCopyTitle": {
+    "description": "Title of the Make a copy dialog."
+  },
+  "versionCopyNameLabel": "Name",
+  "@versionCopyNameLabel": {
+    "description": "Name field of the Make a copy dialog."
+  },
+  "versionCopyName": "Copy of {title}",
+  "@versionCopyName": {
+    "description": "Default name of a copy.",
+    "placeholders": {
+      "title": {
+        "type": "String"
+      }
+    }
+  },
+  "versionCopyNameRequired": "Enter a name",
+  "@versionCopyNameRequired": {
+    "description": "Validation of the copy name."
+  },
+  "versionCopyComments": "Copy comments",
+  "@versionCopyComments": {
+    "description": "Checkbox of the Make a copy dialog."
+  },
+  "versionCopySharing": "Share with the same people",
+  "@versionCopySharing": {
+    "description": "Checkbox of the Make a copy dialog."
+  },
+  "versionOpenCopy": "Open",
+  "@versionOpenCopy": {
+    "description": "Toast action that opens the copy."
+  },
+  "toastVersionCopied": "Created “{name}”",
+  "@toastVersionCopied": {
+    "description": "Toast after a version copy.",
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "toastVersionCopyFailed": "Couldn’t copy this version",
+  "@toastVersionCopyFailed": {
+    "description": "Error toast."
+  },
+  "toastVersionDownloadFailed": "Couldn’t download this version",
+  "@toastVersionDownloadFailed": {
+    "description": "Error toast."
+  },
+  "conflictsTitle": "Your text was replaced",
+  "@conflictsTitle": {
+    "description": "Title of the overwritten-text review."
+  },
+  "conflictsDescription": "Newer edits from collaborators replaced text you edited while offline. Choose the texts to put back.",
+  "@conflictsDescription": {
+    "description": "Description of the overwritten-text review."
+  },
+  "conflictsRow": "{where} — yours: {mine} · now: {theirs} ({who})",
+  "@conflictsRow": {
+    "description": "A checkbox of the review.",
+    "placeholders": {
+      "where": {
+        "type": "String"
+      },
+      "mine": {
+        "type": "String"
+      },
+      "theirs": {
+        "type": "String"
+      },
+      "who": {
+        "type": "String"
+      }
+    }
+  },
+  "conflictsDeletedBy": "{where} was deleted by {who} · yours: {mine}",
+  "@conflictsDeletedBy": {
+    "description": "A line of the review for deleted targets.",
+    "placeholders": {
+      "where": {
+        "type": "String"
+      },
+      "who": {
+        "type": "String"
+      },
+      "mine": {
+        "type": "String"
+      }
+    }
+  },
+  "conflictsSlideTarget": "Slide {number}, {element}",
+  "@conflictsSlideTarget": {
+    "description": "Where an overwritten text is.",
+    "placeholders": {
+      "number": {
+        "type": "int"
+      },
+      "element": {
+        "type": "String"
+      }
+    }
+  },
+  "conflictsNotesTarget": "Slide {number}, speaker notes",
+  "@conflictsNotesTarget": {
+    "description": "Where overwritten notes are.",
+    "placeholders": {
+      "number": {
+        "type": "int"
+      }
+    }
+  },
+  "conflictsCellTarget": "Slide {number}, table cell",
+  "@conflictsCellTarget": {
+    "description": "Where an overwritten table cell is.",
+    "placeholders": {
+      "number": {
+        "type": "int"
+      }
+    }
+  },
+  "conflictsGoneTarget": "A deleted slide",
+  "@conflictsGoneTarget": {
+    "description": "Where an overwritten text was (target gone)."
+  },
+  "conflictsEmptyValue": "(empty)",
+  "@conflictsEmptyValue": {
+    "description": "An empty text in the review."
+  },
+  "conflictsRestoreMine": "Restore",
+  "@conflictsRestoreMine": {
+    "description": "Primary button of the overwritten-text review: puts the checked texts of yours back."
+  },
+  "conflictsCopyMine": "Copy",
+  "@conflictsCopyMine": {
+    "description": "Button of the overwritten-text review: copies your texts to the clipboard."
+  },
+  "conflictsDismissAll": "Dismiss all",
+  "@conflictsDismissAll": {
+    "description": "Button of the review."
+  },
+  "conflictsReview": "Review",
+  "@conflictsReview": {
+    "description": "Toast action that opens the review."
+  },
+  "conflictsSeveralPeople": "several people",
+  "@conflictsSeveralPeople": {
+    "description": "Who replaced the texts when several did."
+  },
+  "toastConflicts": "{count, plural, =1{1 of your text edits was} other{{count} of your text edits were}} replaced by newer edits from {who}",
+  "@toastConflicts": {
+    "description": "Toast after a sync replaced offline text edits.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      },
+      "who": {
+        "type": "String"
+      }
+    }
+  },
+  "toastConflictsCopied": "Copied your text",
+  "@toastConflictsCopied": {
+    "description": "Toast after Copy mine."
+  },
+  "toastVersionRestoredBy": "{name} restored a previous version",
+  "@toastVersionRestoredBy": {
+    "description": "Toast when a collaborator restored a version.",
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "cmdLineSetWaypoints": "Edit connector route",
+  "@cmdLineSetWaypoints": {
+    "description": "Undo label of dragging an elbow segment or the bend of a curved connector."
+  },
+  "aiPanelTitle": "Assistant",
+  "@aiPanelTitle": {
+    "description": "Title of the assistant side panel (suite 10 §3)."
+  },
+  "aiAssistantEmptyTitle": "Ask about this presentation, or ask for changes",
+  "@aiAssistantEmptyTitle": {
+    "description": "Wonky Slides AI (Slides 11 §6; SL-43)."
+  },
+  "aiAssistantPrivacyNotice": "Your messages and this presentation's content are sent to an AI provider.",
+  "@aiAssistantPrivacyNotice": {
+    "description": "Wonky Slides AI (Slides 11 §6; SL-43)."
+  },
+  "aiAssistantPrivacyNoticeProvider": "Your messages and this presentation's content are sent to {provider}.",
+  "@aiAssistantPrivacyNoticeProvider": {
+    "description": "Wonky Slides AI (Slides 11 §6; SL-43).",
+    "placeholders": {
+      "provider": {
+        "type": "String"
+      }
+    }
+  },
+  "aiAssistantModeEditHint": "Changes go straight into the presentation",
+  "@aiAssistantModeEditHint": {
+    "description": "Wonky Slides AI (Slides 11 §6; SL-43)."
+  },
+  "aiAssistantModeEditUnavailable": "You can only suggest changes in this presentation",
+  "@aiAssistantModeEditUnavailable": {
+    "description": "Wonky Slides AI (Slides 11 §6; SL-43)."
+  },
+  "aiAssistantModeSuggestHint": "Changes are previewed before anything is applied",
+  "@aiAssistantModeSuggestHint": {
+    "description": "Wonky Slides AI (Slides 11 §6; SL-43)."
+  },
+  "aiUnavailable": "AI isn't available",
+  "@aiUnavailable": {
+    "description": "Wonky Slides AI (Slides 11 §6; SL-43)."
+  },
+  "aiTurnedOff": "AI is turned off",
+  "@aiTurnedOff": {
+    "description": "Wonky Slides AI (Slides 11 §6; SL-43)."
+  },
+  "aiTurnOnHint": "Turn it on in Settings › AI.",
+  "@aiTurnOnHint": {
+    "description": "Wonky Slides AI (Slides 11 §6; SL-43)."
+  },
+  "aiChipSlide": "Slide {position}",
+  "@aiChipSlide": {
+    "description": "Context chip of the assistant: the current slide.",
+    "placeholders": {
+      "position": {
+        "type": "int"
+      }
+    }
+  },
+  "aiChipObjects": "{count, plural, =1{1 selected object} other{{count} selected objects}}",
+  "@aiChipObjects": {
+    "description": "Wonky Slides AI (Slides 11 §6; SL-43).",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "aiQuickImproveSlide": "Improve this slide",
+  "@aiQuickImproveSlide": {
+    "description": "Wonky Slides AI (Slides 11 §6; SL-43)."
+  },
+  "aiQuickNotes": "Write speaker notes",
+  "@aiQuickNotes": {
+    "description": "Wonky Slides AI (Slides 11 §6; SL-43)."
+  },
+  "aiQuickSummarize": "Summarize the presentation",
+  "@aiQuickSummarize": {
+    "description": "Wonky Slides AI (Slides 11 §6; SL-43)."
+  },
+  "aiQuickAgenda": "Add an agenda slide",
+  "@aiQuickAgenda": {
+    "description": "Wonky Slides AI (Slides 11 §6; SL-43)."
+  },
+  "aiQuickConsistency": "Check titles and wording",
+  "@aiQuickConsistency": {
+    "description": "Wonky Slides AI (Slides 11 §6; SL-43)."
+  },
+  "aiQuickNewDeck": "Generate a presentation…",
+  "@aiQuickNewDeck": {
+    "description": "Wonky Slides AI (Slides 11 §6; SL-43)."
+  },
+  "aiUndoLabel": "AI: {summary}",
+  "@aiUndoLabel": {
+    "description": "Undo label of AI changes (\"AI: Shorten text\").",
+    "placeholders": {
+      "summary": {
+        "type": "String"
+      }
+    }
+  },
+  "aiUndoDefault": "Assistant changes",
+  "@aiUndoDefault": {
+    "description": "Wonky Slides AI (Slides 11 §6; SL-43)."
+  },
+  "aiFailed": "The AI request failed",
+  "@aiFailed": {
+    "description": "Wonky Slides AI (Slides 11 §6; SL-43)."
+  },
+  "aiPreviewReview": "Review changes",
+  "@aiPreviewReview": {
+    "description": "Wonky Slides AI (Slides 11 §6; SL-43)."
+  },
+  "aiPreviewAppliedNote": "Suggested changes applied",
+  "@aiPreviewAppliedNote": {
+    "description": "Wonky Slides AI (Slides 11 §6; SL-43)."
+  },
+  "aiPreviewDiscardedNote": "Suggested changes discarded",
+  "@aiPreviewDiscardedNote": {
+    "description": "Wonky Slides AI (Slides 11 §6; SL-43)."
+  },
+  "aiPreviewTitle": "Suggested changes",
+  "@aiPreviewTitle": {
+    "description": "Wonky Slides AI (Slides 11 §6; SL-43)."
+  },
+  "aiPreviewDescription": "Choose the changes to apply. Nothing changes until you apply them.",
+  "@aiPreviewDescription": {
+    "description": "Wonky Slides AI (Slides 11 §6; SL-43)."
+  },
+  "aiPreviewApply": "Apply selected",
+  "@aiPreviewApply": {
+    "description": "Wonky Slides AI (Slides 11 §6; SL-43)."
+  },
+  "aiPreviewDiscard": "Discard",
+  "@aiPreviewDiscard": {
+    "description": "Wonky Slides AI (Slides 11 §6; SL-43)."
+  },
+  "aiPreviewBefore": "Before",
+  "@aiPreviewBefore": {
+    "description": "Wonky Slides AI (Slides 11 §6; SL-43)."
+  },
+  "aiPreviewAfter": "After",
+  "@aiPreviewAfter": {
+    "description": "Wonky Slides AI (Slides 11 §6; SL-43)."
+  },
+  "aiPreviewNewSlide": "New slide",
+  "@aiPreviewNewSlide": {
+    "description": "Wonky Slides AI (Slides 11 §6; SL-43)."
+  },
+  "aiPreviewDeletedSlide": "Deleted",
+  "@aiPreviewDeletedSlide": {
+    "description": "Wonky Slides AI (Slides 11 §6; SL-43)."
+  },
+  "aiPreviewSlide": "Slide {position}",
+  "@aiPreviewSlide": {
+    "description": "Wonky Slides AI (Slides 11 §6; SL-43).",
+    "placeholders": {
+      "position": {
+        "type": "int"
+      }
+    }
+  },
+  "aiPreviewNoSlides": "These changes don't change a slide's look.",
+  "@aiPreviewNoSlides": {
+    "description": "Wonky Slides AI (Slides 11 §6; SL-43)."
+  },
+  "aiPreviewSkipped": "{count, plural, =1{1 value someone changed meanwhile was kept} other{{count} values someone changed meanwhile were kept}}",
+  "@aiPreviewSkipped": {
+    "description": "Wonky Slides AI (Slides 11 §6; SL-43).",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "aiPreviewApplyAll": "Apply suggested changes",
+  "@aiPreviewApplyAll": {
+    "description": "Wonky Slides AI (Slides 11 §6; SL-43)."
+  },
+  "aiGenerateTitle": "Generate presentation",
+  "@aiGenerateTitle": {
+    "description": "Wonky Slides AI (Slides 11 §6; SL-43)."
+  },
+  "aiGenerateSource": "Source",
+  "@aiGenerateSource": {
+    "description": "Wonky Slides AI (Slides 11 §6; SL-43)."
+  },
+  "aiGenerateSourcePrompt": "Prompt",
+  "@aiGenerateSourcePrompt": {
+    "description": "Wonky Slides AI (Slides 11 §6; SL-43)."
+  },
+  "aiGenerateSourceOutline": "Outline",
+  "@aiGenerateSourceOutline": {
+    "description": "Wonky Slides AI (Slides 11 §6; SL-43)."
+  },
+  "aiGeneratePromptLabel": "What is the presentation about?",
+  "@aiGeneratePromptLabel": {
+    "description": "Wonky Slides AI (Slides 11 §6; SL-43)."
+  },
+  "aiGeneratePromptHint": "Quarterly review of the Serverpod Cloud launch for the board…",
+  "@aiGeneratePromptHint": {
+    "description": "Wonky Slides AI (Slides 11 §6; SL-43)."
+  },
+  "aiGenerateOutlineLabel": "Your outline",
+  "@aiGenerateOutlineLabel": {
+    "description": "Wonky Slides AI (Slides 11 §6; SL-43)."
+  },
+  "aiGenerateOutlineHint": "Paste bullets or Markdown with one heading per slide",
+  "@aiGenerateOutlineHint": {
+    "description": "Wonky Slides AI (Slides 11 §6; SL-43)."
+  },
+  "aiGenerateSlides": "Slides",
+  "@aiGenerateSlides": {
+    "description": "Wonky Slides AI (Slides 11 §6; SL-43)."
+  },
+  "aiGenerateSlidesAuto": "Auto",
+  "@aiGenerateSlidesAuto": {
+    "description": "Wonky Slides AI (Slides 11 §6; SL-43)."
+  },
+  "aiGenerateAudience": "Audience",
+  "@aiGenerateAudience": {
+    "description": "Wonky Slides AI (Slides 11 §6; SL-43)."
+  },
+  "aiGenerateTone": "Tone",
+  "@aiGenerateTone": {
+    "description": "Wonky Slides AI (Slides 11 §6; SL-43)."
+  },
+  "aiGenerateLanguage": "Language",
+  "@aiGenerateLanguage": {
+    "description": "Wonky Slides AI (Slides 11 §6; SL-43)."
+  },
+  "aiGenerateLanguageAuto": "Same as the text",
+  "@aiGenerateLanguageAuto": {
+    "description": "Wonky Slides AI (Slides 11 §6; SL-43)."
+  },
+  "aiGenerateNotes": "Speaker notes",
+  "@aiGenerateNotes": {
+    "description": "Wonky Slides AI (Slides 11 §6; SL-43)."
+  },
+  "aiGenerateGroups": "Group into sections",
+  "@aiGenerateGroups": {
+    "description": "Wonky Slides AI (Slides 11 §6; SL-43)."
+  },
+  "aiGenerateKeepWording": "Keep my wording",
+  "@aiGenerateKeepWording": {
+    "description": "Wonky Slides AI (Slides 11 §6; SL-43)."
+  },
+  "aiGenerateInsert": "Insert",
+  "@aiGenerateInsert": {
+    "description": "Wonky Slides AI (Slides 11 §6; SL-43)."
+  },
+  "aiGenerateInsertNew": "New presentation",
+  "@aiGenerateInsertNew": {
+    "description": "Wonky Slides AI (Slides 11 §6; SL-43)."
+  },
+  "aiGenerateInsertAfter": "After slide {position}",
+  "@aiGenerateInsertAfter": {
+    "description": "Wonky Slides AI (Slides 11 §6; SL-43).",
+    "placeholders": {
+      "position": {
+        "type": "int"
+      }
+    }
+  },
+  "aiGenerateInsertEnd": "At the end",
+  "@aiGenerateInsertEnd": {
+    "description": "Wonky Slides AI (Slides 11 §6; SL-43)."
+  },
+  "aiGenerateCreateOutline": "Create outline",
+  "@aiGenerateCreateOutline": {
+    "description": "Wonky Slides AI (Slides 11 §6; SL-43)."
+  },
+  "aiGeneratePlanning": "Planning the outline…",
+  "@aiGeneratePlanning": {
+    "description": "Wonky Slides AI (Slides 11 §6; SL-43)."
+  },
+  "aiGenerateOutlineTitle": "Review the outline",
+  "@aiGenerateOutlineTitle": {
+    "description": "Wonky Slides AI (Slides 11 §6; SL-43)."
+  },
+  "aiGenerateOutlineDescription": "Edit titles and roles, reorder or delete slides, then create them.",
+  "@aiGenerateOutlineDescription": {
+    "description": "Wonky Slides AI (Slides 11 §6; SL-43)."
+  },
+  "aiGenerateBuild": "Create slides",
+  "@aiGenerateBuild": {
+    "description": "Wonky Slides AI (Slides 11 §6; SL-43)."
+  },
+  "aiGenerateBack": "Back",
+  "@aiGenerateBack": {
+    "description": "Wonky Slides AI (Slides 11 §6; SL-43)."
+  },
+  "aiGenerateRegenerate": "Regenerate",
+  "@aiGenerateRegenerate": {
+    "description": "Wonky Slides AI (Slides 11 §6; SL-43)."
+  },
+  "aiGenerateRegenerateSlide": "Regenerate this slide",
+  "@aiGenerateRegenerateSlide": {
+    "description": "Wonky Slides AI (Slides 11 §6; SL-43)."
+  },
+  "aiGenerateRegenerateHint": "What should change? (optional)",
+  "@aiGenerateRegenerateHint": {
+    "description": "Wonky Slides AI (Slides 11 §6; SL-43)."
+  },
+  "aiGenerateAddSlide": "Add slide",
+  "@aiGenerateAddSlide": {
+    "description": "Wonky Slides AI (Slides 11 §6; SL-43)."
+  },
+  "aiGenerateDeleteSlide": "Delete slide",
+  "@aiGenerateDeleteSlide": {
+    "description": "Wonky Slides AI (Slides 11 §6; SL-43)."
+  },
+  "aiGenerateMoveUp": "Move up",
+  "@aiGenerateMoveUp": {
+    "description": "Wonky Slides AI (Slides 11 §6; SL-43)."
+  },
+  "aiGenerateMoveDown": "Move down",
+  "@aiGenerateMoveDown": {
+    "description": "Wonky Slides AI (Slides 11 §6; SL-43)."
+  },
+  "aiGenerateSlideTitle": "Slide title",
+  "@aiGenerateSlideTitle": {
+    "description": "Wonky Slides AI (Slides 11 §6; SL-43)."
+  },
+  "aiGenerateBullets": "Bullets (one per line)",
+  "@aiGenerateBullets": {
+    "description": "Wonky Slides AI (Slides 11 §6; SL-43)."
+  },
+  "aiGenerateSlideCount": "{count, plural, =1{1 slide} other{{count} slides}}",
+  "@aiGenerateSlideCount": {
+    "description": "Wonky Slides AI (Slides 11 §6; SL-43).",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "aiGenerateRole": "Role",
+  "@aiGenerateRole": {
+    "description": "Wonky Slides AI (Slides 11 §6; SL-43)."
+  },
+  "aiGenerateBuilding": "Creating slides…",
+  "@aiGenerateBuilding": {
+    "description": "Wonky Slides AI (Slides 11 §6; SL-43)."
+  },
+  "aiGenerateUndo": "Generate slides",
+  "@aiGenerateUndo": {
+    "description": "Wonky Slides AI (Slides 11 §6; SL-43)."
+  },
+  "aiGenerateNewSlide": "New slide",
+  "@aiGenerateNewSlide": {
+    "description": "Wonky Slides AI (Slides 11 §6; SL-43)."
+  },
+  "aiGenerateEmpty": "Describe the presentation first.",
+  "@aiGenerateEmpty": {
+    "description": "Wonky Slides AI (Slides 11 §6; SL-43)."
+  },
+  "aiGenerateDone": "{count, plural, =1{Added 1 slide} other{Added {count} slides}}",
+  "@aiGenerateDone": {
+    "description": "Wonky Slides AI (Slides 11 §6; SL-43).",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "aiGenerateCreated": "Presentation created",
+  "@aiGenerateCreated": {
+    "description": "Wonky Slides AI (Slides 11 §6; SL-43)."
+  },
+  "aiRoleTitle": "Title",
+  "@aiRoleTitle": {
+    "description": "Wonky Slides AI (Slides 11 §6; SL-43)."
+  },
+  "aiRoleSection": "Section",
+  "@aiRoleSection": {
+    "description": "Wonky Slides AI (Slides 11 §6; SL-43)."
+  },
+  "aiRoleAgenda": "Agenda",
+  "@aiRoleAgenda": {
+    "description": "Wonky Slides AI (Slides 11 §6; SL-43)."
+  },
+  "aiRoleBullets": "Bullets",
+  "@aiRoleBullets": {
+    "description": "Wonky Slides AI (Slides 11 §6; SL-43)."
+  },
+  "aiRoleTwoColumn": "Two columns",
+  "@aiRoleTwoColumn": {
+    "description": "Wonky Slides AI (Slides 11 §6; SL-43)."
+  },
+  "aiRoleQuote": "Quote",
+  "@aiRoleQuote": {
+    "description": "Wonky Slides AI (Slides 11 §6; SL-43)."
+  },
+  "aiRoleBigNumber": "Big number",
+  "@aiRoleBigNumber": {
+    "description": "Wonky Slides AI (Slides 11 §6; SL-43)."
+  },
+  "aiRoleImageText": "Image and text",
+  "@aiRoleImageText": {
+    "description": "Wonky Slides AI (Slides 11 §6; SL-43)."
+  },
+  "aiRoleCode": "Code",
+  "@aiRoleCode": {
+    "description": "Wonky Slides AI (Slides 11 §6; SL-43)."
+  },
+  "aiRoleChartPlaceholder": "Chart",
+  "@aiRoleChartPlaceholder": {
+    "description": "Wonky Slides AI (Slides 11 §6; SL-43)."
+  },
+  "aiRoleClosing": "Closing",
+  "@aiRoleClosing": {
+    "description": "Wonky Slides AI (Slides 11 §6; SL-43)."
+  },
+  "aiAudienceGeneral": "General",
+  "@aiAudienceGeneral": {
+    "description": "Wonky Slides AI (Slides 11 §6; SL-43)."
+  },
+  "aiAudienceBoard": "Board",
+  "@aiAudienceBoard": {
+    "description": "Wonky Slides AI (Slides 11 §6; SL-43)."
+  },
+  "aiAudienceTeam": "Team",
+  "@aiAudienceTeam": {
+    "description": "Wonky Slides AI (Slides 11 §6; SL-43)."
+  },
+  "aiAudienceCustomers": "Customers",
+  "@aiAudienceCustomers": {
+    "description": "Wonky Slides AI (Slides 11 §6; SL-43)."
+  },
+  "aiAudienceStudents": "Students",
+  "@aiAudienceStudents": {
+    "description": "Wonky Slides AI (Slides 11 §6; SL-43)."
+  },
+  "aiAudienceDevelopers": "Developers",
+  "@aiAudienceDevelopers": {
+    "description": "Wonky Slides AI (Slides 11 §6; SL-43)."
+  },
+  "aiToneProfessional": "Professional",
+  "@aiToneProfessional": {
+    "description": "Wonky Slides AI (Slides 11 §6; SL-43)."
+  },
+  "aiToneFriendly": "Friendly",
+  "@aiToneFriendly": {
+    "description": "Wonky Slides AI (Slides 11 §6; SL-43)."
+  },
+  "aiToneInspiring": "Inspiring",
+  "@aiToneInspiring": {
+    "description": "Wonky Slides AI (Slides 11 §6; SL-43)."
+  },
+  "aiToneTechnical": "Technical",
+  "@aiToneTechnical": {
+    "description": "Wonky Slides AI (Slides 11 §6; SL-43)."
+  },
+  "aiToneConcise": "Concise",
+  "@aiToneConcise": {
+    "description": "Wonky Slides AI (Slides 11 §6; SL-43)."
+  },
+  "aiRewriteTitle": "Rewrite text",
+  "@aiRewriteTitle": {
+    "description": "Wonky Slides AI (Slides 11 §6; SL-43)."
+  },
+  "aiRewriteWorking": "Writing…",
+  "@aiRewriteWorking": {
+    "description": "Wonky Slides AI (Slides 11 §6; SL-43)."
+  },
+  "aiRewriteReplace": "Replace",
+  "@aiRewriteReplace": {
+    "description": "Wonky Slides AI (Slides 11 §6; SL-43)."
+  },
+  "aiRewriteTryAgain": "Try again",
+  "@aiRewriteTryAgain": {
+    "description": "Wonky Slides AI (Slides 11 §6; SL-43)."
+  },
+  "aiRewriteDiscard": "Discard",
+  "@aiRewriteDiscard": {
+    "description": "Wonky Slides AI (Slides 11 §6; SL-43)."
+  },
+  "aiRewriteRefineHint": "Refine, e.g. even shorter",
+  "@aiRewriteRefineHint": {
+    "description": "Wonky Slides AI (Slides 11 §6; SL-43)."
+  },
+  "aiRewriteRefine": "Refine",
+  "@aiRewriteRefine": {
+    "description": "Wonky Slides AI (Slides 11 §6; SL-43)."
+  },
+  "aiRewriteOriginal": "Original",
+  "@aiRewriteOriginal": {
+    "description": "Wonky Slides AI (Slides 11 §6; SL-43)."
+  },
+  "aiRewriteResult": "Suggestion",
+  "@aiRewriteResult": {
+    "description": "Wonky Slides AI (Slides 11 §6; SL-43)."
+  },
+  "aiRewriteChanged": "The text changed meanwhile. Copy the suggestion or try again.",
+  "@aiRewriteChanged": {
+    "description": "Wonky Slides AI (Slides 11 §6; SL-43)."
+  },
+  "aiRewriteCopy": "Copy",
+  "@aiRewriteCopy": {
+    "description": "Wonky Slides AI (Slides 11 §6; SL-43)."
+  },
+  "aiRewriteCopied": "Copied",
+  "@aiRewriteCopied": {
+    "description": "Wonky Slides AI (Slides 11 §6; SL-43)."
+  },
+  "aiRewriteCustomLabel": "How should the text change?",
+  "@aiRewriteCustomLabel": {
+    "description": "Wonky Slides AI (Slides 11 §6; SL-43)."
+  },
+  "aiRewriteCustomHint": "Make it sound more confident",
+  "@aiRewriteCustomHint": {
+    "description": "Wonky Slides AI (Slides 11 §6; SL-43)."
+  },
+  "aiRewriteUndo": "Rewrite text",
+  "@aiRewriteUndo": {
+    "description": "Wonky Slides AI (Slides 11 §6; SL-43)."
+  },
+  "aiRewriteNoText": "Select a text box with text",
+  "@aiRewriteNoText": {
+    "description": "Wonky Slides AI (Slides 11 §6; SL-43)."
+  },
+  "rewritePunchier": "Punchier",
+  "@rewritePunchier": {
+    "description": "Wonky Slides AI (Slides 11 §6; SL-43)."
+  },
+  "rewriteBullets": "Make bullets",
+  "@rewriteBullets": {
+    "description": "Wonky Slides AI (Slides 11 §6; SL-43)."
+  },
+  "rewriteParagraph": "Make a paragraph",
+  "@rewriteParagraph": {
+    "description": "Wonky Slides AI (Slides 11 §6; SL-43)."
+  },
+  "aiNotesTitle": "Write speaker notes",
+  "@aiNotesTitle": {
+    "description": "Wonky Slides AI (Slides 11 §6; SL-43)."
+  },
+  "aiNotesScope": "Slides",
+  "@aiNotesScope": {
+    "description": "Wonky Slides AI (Slides 11 §6; SL-43)."
+  },
+  "aiNotesScopeCurrent": "Current slide",
+  "@aiNotesScopeCurrent": {
+    "description": "Wonky Slides AI (Slides 11 §6; SL-43)."
+  },
+  "aiNotesScopeSelected": "Selected slides",
+  "@aiNotesScopeSelected": {
+    "description": "Wonky Slides AI (Slides 11 §6; SL-43)."
+  },
+  "aiNotesScopeAll": "All slides",
+  "@aiNotesScopeAll": {
+    "description": "Wonky Slides AI (Slides 11 §6; SL-43)."
+  },
+  "aiNotesLength": "Length",
+  "@aiNotesLength": {
+    "description": "Wonky Slides AI (Slides 11 §6; SL-43)."
+  },
+  "aiNotesLengthBrief": "Brief",
+  "@aiNotesLengthBrief": {
+    "description": "Wonky Slides AI (Slides 11 §6; SL-43)."
+  },
+  "aiNotesLengthStandard": "Standard",
+  "@aiNotesLengthStandard": {
+    "description": "Wonky Slides AI (Slides 11 §6; SL-43)."
+  },
+  "aiNotesLengthDetailed": "Detailed",
+  "@aiNotesLengthDetailed": {
+    "description": "Wonky Slides AI (Slides 11 §6; SL-43)."
+  },
+  "aiNotesStyle": "Style",
+  "@aiNotesStyle": {
+    "description": "Wonky Slides AI (Slides 11 §6; SL-43)."
+  },
+  "aiNotesStyleScript": "Script",
+  "@aiNotesStyleScript": {
+    "description": "Wonky Slides AI (Slides 11 §6; SL-43)."
+  },
+  "aiNotesStyleBullets": "Bullet points",
+  "@aiNotesStyleBullets": {
+    "description": "Wonky Slides AI (Slides 11 §6; SL-43)."
+  },
+  "aiNotesMode": "Existing notes",
+  "@aiNotesMode": {
+    "description": "Wonky Slides AI (Slides 11 §6; SL-43)."
+  },
+  "aiNotesModeFillEmpty": "Only write empty notes",
+  "@aiNotesModeFillEmpty": {
+    "description": "Wonky Slides AI (Slides 11 §6; SL-43)."
+  },
+  "aiNotesModeAppend": "Add to them",
+  "@aiNotesModeAppend": {
+    "description": "Wonky Slides AI (Slides 11 §6; SL-43)."
+  },
+  "aiNotesModeReplace": "Replace them",
+  "@aiNotesModeReplace": {
+    "description": "Wonky Slides AI (Slides 11 §6; SL-43)."
+  },
+  "aiNotesGenerate": "Write notes",
+  "@aiNotesGenerate": {
+    "description": "Wonky Slides AI (Slides 11 §6; SL-43)."
+  },
+  "aiNotesWorking": "Writing notes…",
+  "@aiNotesWorking": {
+    "description": "Wonky Slides AI (Slides 11 §6; SL-43)."
+  },
+  "aiNotesReviewTitle": "Review speaker notes",
+  "@aiNotesReviewTitle": {
+    "description": "Wonky Slides AI (Slides 11 §6; SL-43)."
+  },
+  "aiNotesApply": "Apply",
+  "@aiNotesApply": {
+    "description": "Wonky Slides AI (Slides 11 §6; SL-43)."
+  },
+  "aiNotesNone": "No slide needs notes.",
+  "@aiNotesNone": {
+    "description": "Wonky Slides AI (Slides 11 §6; SL-43)."
+  },
+  "aiNotesExisting": "Current notes",
+  "@aiNotesExisting": {
+    "description": "Wonky Slides AI (Slides 11 §6; SL-43)."
+  },
+  "aiNotesUndo": "Write speaker notes",
+  "@aiNotesUndo": {
+    "description": "Wonky Slides AI (Slides 11 §6; SL-43)."
+  },
+  "aiAltTitle": "Generate alt text",
+  "@aiAltTitle": {
+    "description": "Wonky Slides AI (Slides 11 §6; SL-43)."
+  },
+  "aiAltWorking": "Describing objects…",
+  "@aiAltWorking": {
+    "description": "Wonky Slides AI (Slides 11 §6; SL-43)."
+  },
+  "aiAltApply": "Apply",
+  "@aiAltApply": {
+    "description": "Wonky Slides AI (Slides 11 §6; SL-43)."
+  },
+  "aiAltNone": "Nothing needs alt text.",
+  "@aiAltNone": {
+    "description": "Wonky Slides AI (Slides 11 §6; SL-43)."
+  },
+  "aiAltSkippedUnsupported": "This kind of object can't be described.",
+  "@aiAltSkippedUnsupported": {
+    "description": "Wonky Slides AI (Slides 11 §6; SL-43)."
+  },
+  "aiAltSkippedEmpty": "No description was proposed.",
+  "@aiAltSkippedEmpty": {
+    "description": "Wonky Slides AI (Slides 11 §6; SL-43)."
+  },
+  "aiAltUndo": "Generate alt text",
+  "@aiAltUndo": {
+    "description": "Wonky Slides AI (Slides 11 §6; SL-43)."
+  },
+  "aiAltObject": "{kind} on slide {position}",
+  "@aiAltObject": {
+    "description": "Wonky Slides AI (Slides 11 §6; SL-43).",
+    "placeholders": {
+      "kind": {
+        "type": "String"
+      },
+      "position": {
+        "type": "int"
+      }
+    }
+  },
+  "a11yGenerateAlt": "Generate with AI",
+  "@a11yGenerateAlt": {
+    "description": "Wonky Slides AI (Slides 11 §6; SL-43)."
+  },
+  "a11yGenerateMissingAlt": "Generate missing alt text",
+  "@a11yGenerateMissingAlt": {
+    "description": "Wonky Slides AI (Slides 11 §6; SL-43)."
+  },
+  "aiDesignTitle": "Design ideas",
+  "@aiDesignTitle": {
+    "description": "Wonky Slides AI (Slides 11 §6; SL-43)."
+  },
+  "aiDesignEmpty": "No ideas for this slide — add some content",
+  "@aiDesignEmpty": {
+    "description": "Wonky Slides AI (Slides 11 §6; SL-43)."
+  },
+  "aiDesignNoSlide": "Select a slide to see design ideas",
+  "@aiDesignNoSlide": {
+    "description": "Wonky Slides AI (Slides 11 §6; SL-43)."
+  },
+  "aiDesignRefresh": "Refresh",
+  "@aiDesignRefresh": {
+    "description": "Wonky Slides AI (Slides 11 §6; SL-43)."
+  },
+  "aiDesignMore": "More ideas",
+  "@aiDesignMore": {
+    "description": "Wonky Slides AI (Slides 11 §6; SL-43)."
+  },
+  "aiDesignRanking": "Ranking with AI…",
+  "@aiDesignRanking": {
+    "description": "Wonky Slides AI (Slides 11 §6; SL-43)."
+  },
+  "aiDesignLayoutIdeas": "Layout ideas for this slide",
+  "@aiDesignLayoutIdeas": {
+    "description": "Wonky Slides AI (Slides 11 §6; SL-43)."
+  },
+  "aiDesignAiRanked": "Ranked by AI for this slide",
+  "@aiDesignAiRanked": {
+    "description": "Wonky Slides AI (Slides 11 §6; SL-43)."
+  },
+  "aiDesignUndo": "Apply design idea",
+  "@aiDesignUndo": {
+    "description": "Wonky Slides AI (Slides 11 §6; SL-43)."
+  },
+  "aiDesignApply": "Apply {name}",
+  "@aiDesignApply": {
+    "description": "Wonky Slides AI (Slides 11 §6; SL-43).",
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "cmdAiApplyDesignIdea": "Apply design idea",
+  "@cmdAiApplyDesignIdea": {
+    "description": "Wonky Slides AI (Slides 11 §6; SL-43)."
+  },
+  "cmdPanelDesignIdeas": "Design ideas",
+  "@cmdPanelDesignIdeas": {
+    "description": "Wonky Slides AI (Slides 11 §6; SL-43)."
+  },
+  "cmdAiApplyPreview": "Apply suggested changes",
+  "@cmdAiApplyPreview": {
+    "description": "Wonky Slides AI (Slides 11 §6; SL-43)."
+  },
+  "cmdAiDiscardPreview": "Discard suggested changes",
+  "@cmdAiDiscardPreview": {
+    "description": "Wonky Slides AI (Slides 11 §6; SL-43)."
+  },
+  "cmdAiSetApplyMode": "Assistant: edit or suggest",
+  "@cmdAiSetApplyMode": {
+    "description": "Wonky Slides AI (Slides 11 §6; SL-43)."
+  },
+  "reasonAiUnavailable": "AI isn't available",
+  "@reasonAiUnavailable": {
+    "description": "Wonky Slides AI (Slides 11 §6; SL-43)."
+  },
+  "reasonNoTextToRewrite": "Select a text box with text",
+  "@reasonNoTextToRewrite": {
+    "description": "Wonky Slides AI (Slides 11 §6; SL-43)."
+  },
+  "reasonNoPreview": "No suggested changes to review",
+  "@reasonNoPreview": {
+    "description": "Wonky Slides AI (Slides 11 §6; SL-43)."
   }
 }

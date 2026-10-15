@@ -98,6 +98,15 @@ classes to the same `SyntaxToken`s. Unknown languages render plain.
 corpus; the change is limited to token colors. Until then they keep highlight.js (Write 04
 §15.5).
 
+**Done (SL-35).** Write's exporters and its editor use `DefaultCodeTokenizer` (the exporters
+through `SyntaxHighlighter.instance`, cached, languages normalized). The diff review is the test
+`wonky_write_core/test/export/code_tokenizer_switch_test.dart`: highlight.js vs the shared
+tokenizer over a code corpus in every exporter, equal once token styling is removed. It found
+an engine bug fixed as patch **SH-7** (captures were located by the first occurrence of their
+text, e.g. `function f`), and PDF code wrapping that depended on token boundaries (now at
+spaces). Since TextMate tokenizes more finely than highlight.js, exports now also color
+operators, punctuation, function names and calls (as the editor already did).
+
 **Decided (v2 review, Q26) — copy vs. upstream split.** The TextMate engine is **copied** into
 `wonky_code` now (small, already patched, we own the patches) during the M8 extraction; an
 upstream split of `syntax_highlight` into a pure-Dart core + Flutter wrapper is proposed later,
@@ -215,6 +224,54 @@ Plus `HighlightSteps.parse` (§4.1), `CodeEditScript.compute` (§5.2), `TypingSc
   instant frames) and `CodeElementLayout` (the scene builder's `CodeSceneSource`; `auto` picks
   the palette by the element's box background, else the slide's effective background color).
 
+**Status (M10, SL-31 — code element UI built, feature `codeBlocks` on).** Differences from
+§3–§11:
+- **Rendering**: the stage's `CodeScenePainter` (`wonky_slides/lib/features/elements/code/`)
+  draws every `CodeScene` field (the `CodeView`-driven painter of §2.3 lives in the app because
+  `CodeScene` is a Slides core type). Callouts use the deck theme's `accent1` and body font
+  (`CodeCalloutPlacement.color/textColor/fontFamily`, from `CodeRenderStyle`); glyphs of wide
+  graphemes (CJK) are not yet centered in their cells. The PDF painter draws static code (box,
+  border, chrome, numbers, grid runs, bars, line opacity; blur as opacity); callouts, the caret
+  and animation frames in PDF are SL-33's.
+- **Editing** (§3.5): `CodeEditorField` (`wonky_code_flutter`, re_editor) over the code area;
+  the stage keeps drawing box and chrome, the field draws text and numbers; a baseline
+  correction (`baselineInRow`) aligns re_editor's proportional leading with the grid. Tokens
+  come from the shared cached tokenizer (whole text per edit; no `tokenizeLine`). The field
+  writes after 300 ms idle and on exit (`CodeEditSession`, coalesced "Typing" steps per state);
+  undo/redo flush pending typing first. Auto size re-fits on each write, not per keystroke.
+  Inside the field `Mod+Z` is re_editor's own undo (its result is written like typing). The soft
+  lock uses the element's text-lock target (presence "editing"). The language and palette
+  chips inside the box are not built: the toolbar's language button shows the current language,
+  palettes are in the inspector and Format › Code › Colors. *Show changes* marks added /
+  changed lines and removals in the field's gutter.
+- **Insert** (§3.6): *Insert › Code block › Dart/JavaScript/Python/Plain text* or *All
+  languages…* (`{pick: true}` opens the language dialog); the toolbar button inserts with the
+  last used (else the default) language and starts editing. New blocks take the Code settings:
+  *Default code language*, *Largest code font size* (`fontSizeMax`) and *Typing speed*
+  (`typing.cps` 16 / 28 / 50). Recently used languages are per session (not shared with
+  Write). *Type-in sound* (P2) is not offered. The paste chip and ```` ``` ```` in an empty
+  text box are not built; *Convert to code block* (`slides.code.convertFromText`) is in the
+  text box context menu. File drop (P1) is not built.
+- **Inspector** (§7): language, colors (*Auto (Wonky Dark)*), font size (*Auto* shows the fitted
+  size, min–max), line numbers + start, wrap, ligatures, frame + title, language badge, copy
+  button; the state strip with live mini previews (the arrival mode icon between chips), `+`,
+  duplicate, delete, move earlier/later, ▶ (type-in of state 1 / the change into the selected
+  state, played on the canvas with the composer's frames), *Edit code*, the state name and *Show
+  changes*; the arrival (mode, speed, rhythm, deletions, *More…* = all §5.3 settings, the
+  derived duration "≈ 4.2 s (typed)"); line steps (the §4.1 field, normalized on commit, issues
+  inline, the parsed steps with their callouts; clicking a step previews it on the canvas,
+  `SceneContext.codeSteps`); highlight style, focus, *Same size in all states*. *Build all
+  steps* comes with the Animate UI (SL-30); *Pick lines…* mode is not built
+  (`slides.code.addStepFromLines` is).
+- **Commands** (§11): all but `pickLines` and `walkthroughFromDiff`; added
+  `slides.code.setStateLabel`, `slides.code.previewStep {step}` and `slides.code.preview
+  {index}`; `updateOptions` takes `{patch}` or `{toggle}` (no arguments = *Line numbers*);
+  `setStateTransition {more: true}` opens the typing settings; `setHighlightSteps
+  {normalize}` stores the normalized form.
+- **Presenting** (§8): build durations come from the model (12 §5.5); drawing builds while
+  presenting and the copy button in present/view mode are the motion player's (SL-29), which
+  recomposes code nodes per frame with `CodeFrames.applyFrame`.
+
 ### 2.4 Languages
 
 Picker order: *Plain text*, recently used (max 5, per user, shared with Write), then:
@@ -303,8 +360,9 @@ dependency for the script editor; P2: Sheets' script editor uses `CodeEditorFiel
    embedded, so the "grammar not yet loaded" state disappears) and styles via `CodeTextStyler`.
 2. `CodeLanguages`, `SyntaxToken` and palettes come from `wonky_code`; Write keeps thin
    re-exports for its public APIs.
-3. Write exporters call the same tokenizer (M10, decided in §2.2; M8 keeps highlight.js for
-   exports).
+3. Write exporters call the same tokenizer (M10, decided in §2.2; M8 kept highlight.js for
+   exports). Done in SL-35, together with step 1 (the editor on `DefaultCodeTokenizer`; it keeps
+   its class-keyed `EditorTheme.syntax` styling instead of `CodeTextStyler`).
 4. Tests: Write 04 AC-15.1/15.2 unchanged; the vendored package's patch tests
    (`wonky_patches_test.dart`) move to `wonky_code/test/textmate/` (every grammar highlights a
    realistic sample and every prefix of it).

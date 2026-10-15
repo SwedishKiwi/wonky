@@ -141,7 +141,7 @@ void main() {
           'noopener noreferrer',
         );
         expect(
-          dom.querySelector('pre code.language-dart span.tok-keyword'),
+          dom.querySelector('pre code.language-dart span.tok-string'),
           isNotNull,
         );
         expect(

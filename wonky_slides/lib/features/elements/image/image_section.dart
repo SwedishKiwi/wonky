@@ -6,12 +6,14 @@ import 'package:wonky_slides_core/model.dart' hide SlidesText;
 import '../../editor_screen/deck_editor_controller.dart';
 import '../../uploads/slides_image_service.dart';
 import '../style/style_sections.dart';
+import 'image_adjust_preview.dart';
 
 /// Inspector › Format › **Image** (04 §7.2, 03 §6.5): *Replace image*,
 /// *Crop*, *Mask with shape*, *Reset image*, *Download original*, the
 /// adjustments (brightness, contrast, saturation, temperature −100…100,
-/// blur 0…40; grayscale, sepia, invert; *Reset adjustments* — each written
-/// on release, one undo step), and the upload state of an image the
+/// blur 0…40; grayscale, sepia, invert; *Reset adjustments* — previewed
+/// live on the canvas while a slider is dragged, written on release, one
+/// undo step, SL-44), and the upload state of an image the
 /// server refused for storage (*Retry* / *Remove*).
 Widget imageSection(
   BuildContext context,
@@ -63,7 +65,12 @@ Widget imageSection(
         min: min,
         max: max,
         enabled: s.enabled('slides.image.adjust', {key: 0}),
-        onCommit: (x) => s.run('slides.image.adjust', {key: x.roundToDouble()}),
+        onLive: (x) =>
+            ImageAdjustPreview.of(ed)?.show(e.id, key, x.roundToDouble()),
+        onCommit: (x) {
+          ImageAdjustPreview.of(ed)?.clear();
+          s.run('slides.image.adjust', {key: x.roundToDouble()});
+        },
       ),
     );
   }
@@ -146,7 +153,8 @@ Widget imageSection(
   );
 }
 
-/// A slider that commits once on release (one undo step per drag).
+/// A slider that commits once on release (one undo step per drag);
+/// [onLive] follows the drag (the canvas preview, SL-44).
 class AdjustSlider extends StatefulWidget {
   const AdjustSlider({
     super.key,
@@ -155,6 +163,7 @@ class AdjustSlider extends StatefulWidget {
     required this.min,
     required this.max,
     required this.onCommit,
+    this.onLive,
     this.enabled = true,
   });
 
@@ -163,6 +172,7 @@ class AdjustSlider extends StatefulWidget {
   final double min;
   final double max;
   final ValueChanged<double> onCommit;
+  final ValueChanged<double>? onLive;
   final bool enabled;
 
   @override
@@ -187,7 +197,10 @@ class _AdjustSliderState extends State<AdjustSlider> {
             min: widget.min,
             max: widget.max,
             enabled: widget.enabled,
-            onChanged: (x) => setState(() => _live = x),
+            onChanged: (x) {
+              setState(() => _live = x);
+              widget.onLive?.call(x);
+            },
             onChangeEnd: (x) {
               setState(() => _live = null);
               widget.onCommit(x);

@@ -400,15 +400,20 @@ abstract interface class SlideIconSource {
 
 /// Lays out chart elements (08): the chart engine's scene for a chart
 /// element at [width] × [height] su, or null to draw a placeholder.
-/// Supplied by the chart link core (SL-27) and the app's text measurer.
+/// Supplied by the chart link core (SL-27: `SlideChartLayout`) and the
+/// app's text measurer.
 abstract interface class ChartSceneSource {
-  /// The chart scene of [element].
+  /// The chart scene of [element]. [background] is the effective slide
+  /// background behind the element (ARGB; automatic chart text and line
+  /// colors resolve against it, 08 §3.5), null when unknown. The scene may
+  /// be in its own units (chart px): `ChartNode` scales it into its `dst`.
   ChartScene? chartScene(
     ResolvedElement element,
     DeckReader? deck,
     ResolvedTheme theme, {
     required double width,
     required double height,
+    int? background,
   });
 }
 
@@ -451,6 +456,7 @@ final class SceneContext {
     this.charts,
     this.code,
     this.codeStates = const {},
+    this.codeSteps = const {},
     this.generation = 0,
   });
 
@@ -481,6 +487,10 @@ final class SceneContext {
   /// Code state shown per element in the edit frame (inspector choice).
   final Map<String, int> codeStates;
 
+  /// Highlight step (0-based) previewed per code element in the edit frame
+  /// (the inspector's selected line step, SL-31).
+  final Map<String, int> codeSteps;
+
   /// An opaque counter that invalidates cached element nodes when
   /// something outside the deck changes their layout (bundled fonts
   /// finished loading, 05 §3.3).
@@ -499,6 +509,7 @@ final class SceneContext {
           charts: charts,
           code: code,
           codeStates: codeStates,
+          codeSteps: codeSteps,
           generation: generation,
         );
 }

@@ -4,6 +4,7 @@ import 'package:wonky_app/wonky_app.dart';
 import 'package:wonky_slides_core/model.dart' hide SlidesText;
 import 'package:wonky_ui/wonky_ui.dart';
 
+import '../../../config/slides_features.dart';
 import '../../canvas/slide_canvas_controller.dart';
 import '../../editor_screen/deck_editor_controller.dart';
 import '../../selection/reading_order.dart';
@@ -223,6 +224,28 @@ Widget arrangeSection(
             value: rec?.name ?? '',
             enabled: s.enabled('slides.element.rename', const {'name': ''}),
             onCommit: (v) => s.run('slides.element.rename', {'name': v}),
+          ),
+        ),
+      // Magic Move ID (06 §8.2, SL-30): elements with equal keys on two
+      // slides morph into each other.
+      if (single != null &&
+          rec != null &&
+          SlidesFeatures.isOn(SlidesFeature.animations))
+        InspectorRow(
+          label: l.arrangeLabelMatchKey,
+          child: _CommitField(
+            key: ValueKey<String>('slides.arrange.matchKey.${single.id}'),
+            fieldKey: 'slides.arrange.matchKey',
+            value: rec.matchKey,
+            placeholder: rec.name,
+            enabled: s.enabled('slides.element.setMatchKey', const {
+              'matchKey': 'x',
+            }),
+            onCommit: (v) {
+              if (v.isNotEmpty) {
+                s.run('slides.element.setMatchKey', {'matchKey': v});
+              }
+            },
           ),
         ),
       if (single != null && rec?.kind == ElementKind.group)

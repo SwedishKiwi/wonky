@@ -136,7 +136,7 @@ files to make room without the user asking.
   (every `as`, like `drive.export`); text is decoded with the encoding recorded at upload
   (`utf-8`, `utf-16le/be`, `latin1`); documents/spreadsheets → `invalid_args` pointing to
   `drive.export`; uploads in progress → `conflict`. `drive.export` refuses files
-  (`invalid_args` → `download_file`), folders and (until SL-40) presentations (`unsupported`).
+  (`invalid_args` → `download_file`) and folders (presentations: `pdf`, `md` since SL-40).
 - `drive.convert_file {uuid, target, name?, parent_uuid?, format?, options?}` →
   `{item, warnings, storage}` (Drive 02 §7.2: the file's folder or My Drive).
 - `drive.get_storage` → the fields above plus `max_file_upload_bytes`, `calculating` and
@@ -147,9 +147,12 @@ files to make room without the user asking.
   `create_document`, `create_spreadsheet` and `write.insert_image` (when it stores an image).
   `quota_exceeded` details: `{needed_bytes, available_bytes, quota_bytes, charged_user: {id,
   name}, is_caller, reason}` (`McpToolException.quotaDetails`).
-- `drive.create_presentation` is **not registered yet**: it needs the headless deck (Slides
-  SL-8/SL-40). The `slides:read` / `slides:edit` scopes are accepted for tokens and offered in
-  Settings › Developer (off by default) ahead of the `slides.*` tools.
+- (SL-40) `drive.create_presentation {name, parent_uuid?, template_uuid?, theme?, size?, appearance?,
+  outline_markdown?}` → `{item, deck_uuid, url, slide_ids, change_id, sync_version, warnings, storage?}`
+  (defined in `wonky_core/lib/mcp/slides_tools.dart`, handled in `wonky_server/lib/src/slides/mcp/`);
+  `drive.export` of presentations: `pdf` (as `slides.export_pdf`) and `md` (the deck outline, inline). The
+  `slides:read` / `slides:edit` scopes gate the `slides.*` tools ([Slides 11](wonky_slides/11-mcp-and-ai.md)
+  §3 as built); `changes.revert` covers deck changes.
 
 ### comments.*
 `comments.list(uuid, status?)`, `comments.create(uuid, anchor, body)` (anchor formats per app:

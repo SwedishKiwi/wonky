@@ -392,9 +392,9 @@ void main() {
     });
   });
 
-  group('Given hand-made timelines and the transition stub (12 §5.5)', () {
+  group('Given hand-made timelines (12 §5.5)', () {
     test('when a fake timeline has steps then its frames are edit frames and '
-        'every transition is a cut until SL-25', () {
+        'a slide without a transition enters with a cut', () {
       const t = SlideTimeline(
         slideId: 's',
         steps: [
@@ -406,10 +406,12 @@ void main() {
       expect(t.stepCount, 1);
       expect(t.frameAt(const TimelinePosition(1, 100)), same(SlideFrame.edit));
       expect(t.describe(), {'clicks': 1, 'durationMs': 400});
-      expect(
-        TransitionCompiler.compile(from: t.finalFrame, to: t.initial),
-        same(TransitionPlan.cut),
+      final plan = TransitionCompiler.compile(
+        from: t.finalFrame,
+        to: t.initial,
       );
+      expect(plan.isCut, isTrue);
+      expect(plan.durationMs, 0);
     });
 
     test('when compiling builds then the build steps and tracks are '

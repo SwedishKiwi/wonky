@@ -45,6 +45,9 @@ abstract final class SlidesKeyScopes {
 
   /// Presenting (SL-19).
   static const present = KeyScope('present');
+
+  /// A line of the outline view (SL-34).
+  static const outline = KeyScope('slidesOutline');
 }
 
 /// Categories of the keyboard shortcuts help (04 §13.15).

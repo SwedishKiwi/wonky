@@ -68,6 +68,12 @@ import 'package:wonky_server/src/generated/sheets/scripts/models/script_executio
     as _isf59hoo;
 import 'package:wonky_server/src/generated/sheets/scripts/models/script_execution_status.dart'
     as _icum4fx3;
+import 'package:wonky_server/src/generated/slides/ai/models/slides_ai_outline_request.dart'
+    as _isfebja2;
+import 'package:wonky_server/src/generated/slides/ai/models/slides_ai_rewrite_request.dart'
+    as _ionqjjsu;
+import 'package:wonky_server/src/generated/slides/charts/models/chart_link_probe.dart'
+    as _izmhos0v;
 import 'package:wonky_server/src/generated/slides/present/models/presentation_join.dart'
     as _ieucpeca;
 import 'package:wonky_server/src/generated/slides/present/models/presentation_update.dart'
@@ -100,11 +106,14 @@ import '../sheets/endpoints/sheets_sync_endpoint.dart' as _iijmdr93;
 import '../sheets/imports/sheets_import_endpoint.dart' as _ixh3mo4r;
 import '../sheets/scripts/script_endpoint.dart' as _in9oll5w;
 import '../sheets/versions/sheets_version_endpoint.dart' as _izzz2y3b;
+import '../slides/ai/slides_ai_endpoint.dart' as _iwzuobfk;
+import '../slides/charts/slides_charts_endpoint.dart' as _iusodta9;
 import '../slides/endpoints/slides_endpoint.dart' as _i90mpuoj;
 import '../slides/endpoints/slides_sync_endpoint.dart' as _i7tlujv0;
 import '../slides/exports/slides_export_endpoint.dart' as _ipawej08;
 import '../slides/present/presentation_endpoint.dart' as _irtlljai;
 import '../slides/themes/slides_themes_endpoint.dart' as _ivwqk6th;
+import '../slides/versions/slides_version_endpoint.dart' as _iuslkdly;
 import '../write/endpoints/document_endpoint.dart' as _iiabxp2u;
 import '../write/endpoints/write_export_endpoint.dart' as _ia4kadx2;
 import '../write/endpoints/write_history_endpoint.dart' as _izdjh3zj;
@@ -259,6 +268,18 @@ class Endpoints extends _is.EndpointDispatch {
           'sheetsVersion',
           null,
         ),
+      'slidesAi': _iwzuobfk.SlidesAiEndpoint()
+        ..initialize(
+          server,
+          'slidesAi',
+          null,
+        ),
+      'slidesCharts': _iusodta9.SlidesChartsEndpoint()
+        ..initialize(
+          server,
+          'slidesCharts',
+          null,
+        ),
       'slides': _i90mpuoj.SlidesEndpoint()
         ..initialize(
           server,
@@ -287,6 +308,12 @@ class Endpoints extends _is.EndpointDispatch {
         ..initialize(
           server,
           'slidesThemes',
+          null,
+        ),
+      'slidesVersion': _iuslkdly.SlidesVersionEndpoint()
+        ..initialize(
+          server,
+          'slidesVersion',
           null,
         ),
       'document': _iiabxp2u.DocumentEndpoint()
@@ -4639,6 +4666,351 @@ class Endpoints extends _is.EndpointDispatch {
         ),
       },
     );
+    connectors['slidesAi'] = _is.EndpointConnector(
+      name: 'slidesAi',
+      endpoint: endpoints['slidesAi']!,
+      methodConnectors: {
+        'buildDeck': _is.MethodConnector(
+          name: 'buildDeck',
+          params: {
+            'itemUuid': _is.ParameterDescription(
+              name: 'itemUuid',
+              type: _is.getType<_is.UuidValue?>(),
+              nullable: true,
+            ),
+            'outlineJson': _is.ParameterDescription(
+              name: 'outlineJson',
+              type: _is.getType<String>(),
+              nullable: false,
+            ),
+            'afterSlideId': _is.ParameterDescription(
+              name: 'afterSlideId',
+              type: _is.getType<String?>(),
+              nullable: true,
+            ),
+            'notes': _is.ParameterDescription(
+              name: 'notes',
+              type: _is.getType<bool>(),
+              nullable: false,
+            ),
+            'groups': _is.ParameterDescription(
+              name: 'groups',
+              type: _is.getType<bool>(),
+              nullable: false,
+            ),
+            'parentUuid': _is.ParameterDescription(
+              name: 'parentUuid',
+              type: _is.getType<_is.UuidValue?>(),
+              nullable: true,
+            ),
+          },
+          call:
+              (
+                _is.Session session,
+                Map<String, dynamic> params,
+              ) async => (endpoints['slidesAi'] as _iwzuobfk.SlidesAiEndpoint)
+                  .buildDeck(
+                    session,
+                    params['itemUuid'],
+                    params['outlineJson'],
+                    params['afterSlideId'],
+                    params['notes'],
+                    params['groups'],
+                    params['parentUuid'],
+                  ),
+        ),
+        'writeNotes': _is.MethodConnector(
+          name: 'writeNotes',
+          params: {
+            'itemUuid': _is.ParameterDescription(
+              name: 'itemUuid',
+              type: _is.getType<_is.UuidValue>(),
+              nullable: false,
+            ),
+            'slideIds': _is.ParameterDescription(
+              name: 'slideIds',
+              type: _is.getType<List<String>>(),
+              nullable: false,
+            ),
+            'length': _is.ParameterDescription(
+              name: 'length',
+              type: _is.getType<String>(),
+              nullable: false,
+            ),
+            'style': _is.ParameterDescription(
+              name: 'style',
+              type: _is.getType<String>(),
+              nullable: false,
+            ),
+            'mode': _is.ParameterDescription(
+              name: 'mode',
+              type: _is.getType<String>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _is.Session session,
+                Map<String, dynamic> params,
+              ) async => (endpoints['slidesAi'] as _iwzuobfk.SlidesAiEndpoint)
+                  .writeNotes(
+                    session,
+                    params['itemUuid'],
+                    params['slideIds'],
+                    params['length'],
+                    params['style'],
+                    params['mode'],
+                  ),
+        ),
+        'describeElements': _is.MethodConnector(
+          name: 'describeElements',
+          params: {
+            'itemUuid': _is.ParameterDescription(
+              name: 'itemUuid',
+              type: _is.getType<_is.UuidValue>(),
+              nullable: false,
+            ),
+            'elementIds': _is.ParameterDescription(
+              name: 'elementIds',
+              type: _is.getType<List<String>>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _is.Session session,
+                Map<String, dynamic> params,
+              ) async => (endpoints['slidesAi'] as _iwzuobfk.SlidesAiEndpoint)
+                  .describeElements(
+                    session,
+                    params['itemUuid'],
+                    params['elementIds'],
+                  ),
+        ),
+        'rankDesigns': _is.MethodConnector(
+          name: 'rankDesigns',
+          params: {
+            'itemUuid': _is.ParameterDescription(
+              name: 'itemUuid',
+              type: _is.getType<_is.UuidValue>(),
+              nullable: false,
+            ),
+            'slideId': _is.ParameterDescription(
+              name: 'slideId',
+              type: _is.getType<String>(),
+              nullable: false,
+            ),
+            'candidates': _is.ParameterDescription(
+              name: 'candidates',
+              type: _is.getType<List<String>>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _is.Session session,
+                Map<String, dynamic> params,
+              ) async => (endpoints['slidesAi'] as _iwzuobfk.SlidesAiEndpoint)
+                  .rankDesigns(
+                    session,
+                    params['itemUuid'],
+                    params['slideId'],
+                    params['candidates'],
+                  ),
+        ),
+        'getPreview': _is.MethodConnector(
+          name: 'getPreview',
+          params: {
+            'previewId': _is.ParameterDescription(
+              name: 'previewId',
+              type: _is.getType<String>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _is.Session session,
+                Map<String, dynamic> params,
+              ) async => (endpoints['slidesAi'] as _iwzuobfk.SlidesAiEndpoint)
+                  .getPreview(
+                    session,
+                    params['previewId'],
+                  ),
+        ),
+        'applyPreview': _is.MethodConnector(
+          name: 'applyPreview',
+          params: {
+            'previewId': _is.ParameterDescription(
+              name: 'previewId',
+              type: _is.getType<String>(),
+              nullable: false,
+            ),
+            'callIds': _is.ParameterDescription(
+              name: 'callIds',
+              type: _is.getType<List<String>?>(),
+              nullable: true,
+            ),
+          },
+          call:
+              (
+                _is.Session session,
+                Map<String, dynamic> params,
+              ) async => (endpoints['slidesAi'] as _iwzuobfk.SlidesAiEndpoint)
+                  .applyPreview(
+                    session,
+                    params['previewId'],
+                    params['callIds'],
+                  ),
+        ),
+        'discardPreview': _is.MethodConnector(
+          name: 'discardPreview',
+          params: {
+            'previewId': _is.ParameterDescription(
+              name: 'previewId',
+              type: _is.getType<String>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _is.Session session,
+                Map<String, dynamic> params,
+              ) async => (endpoints['slidesAi'] as _iwzuobfk.SlidesAiEndpoint)
+                  .discardPreview(
+                    session,
+                    params['previewId'],
+                  ),
+        ),
+        'proposeOutline': _is.MethodStreamConnector(
+          name: 'proposeOutline',
+          params: {
+            'itemUuid': _is.ParameterDescription(
+              name: 'itemUuid',
+              type: _is.getType<_is.UuidValue?>(),
+              nullable: true,
+            ),
+            'request': _is.ParameterDescription(
+              name: 'request',
+              type: _is.getType<_isfebja2.SlidesAiOutlineRequest>(),
+              nullable: false,
+            ),
+          },
+          streamParams: {},
+          returnType: _is.MethodStreamReturnType.streamType,
+          call:
+              (
+                _is.Session session,
+                Map<String, dynamic> params,
+                Map<String, Stream> streamParams,
+              ) => (endpoints['slidesAi'] as _iwzuobfk.SlidesAiEndpoint)
+                  .proposeOutline(
+                    session,
+                    params['itemUuid'],
+                    params['request'],
+                  ),
+        ),
+        'rewrite': _is.MethodStreamConnector(
+          name: 'rewrite',
+          params: {
+            'itemUuid': _is.ParameterDescription(
+              name: 'itemUuid',
+              type: _is.getType<_is.UuidValue>(),
+              nullable: false,
+            ),
+            'request': _is.ParameterDescription(
+              name: 'request',
+              type: _is.getType<_ionqjjsu.SlidesAiRewriteRequest>(),
+              nullable: false,
+            ),
+          },
+          streamParams: {},
+          returnType: _is.MethodStreamReturnType.streamType,
+          call:
+              (
+                _is.Session session,
+                Map<String, dynamic> params,
+                Map<String, Stream> streamParams,
+              ) =>
+                  (endpoints['slidesAi'] as _iwzuobfk.SlidesAiEndpoint).rewrite(
+                    session,
+                    params['itemUuid'],
+                    params['request'],
+                  ),
+        ),
+      },
+    );
+    connectors['slidesCharts'] = _is.EndpointConnector(
+      name: 'slidesCharts',
+      endpoint: endpoints['slidesCharts']!,
+      methodConnectors: {
+        'listCharts': _is.MethodConnector(
+          name: 'listCharts',
+          params: {
+            'spreadsheetUuid': _is.ParameterDescription(
+              name: 'spreadsheetUuid',
+              type: _is.getType<_is.UuidValue>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _is.Session session,
+                Map<String, dynamic> params,
+              ) async =>
+                  (endpoints['slidesCharts'] as _iusodta9.SlidesChartsEndpoint)
+                      .listCharts(
+                        session,
+                        params['spreadsheetUuid'],
+                      ),
+        ),
+        'resolveSnapshot': _is.MethodConnector(
+          name: 'resolveSnapshot',
+          params: {
+            'spreadsheetUuid': _is.ParameterDescription(
+              name: 'spreadsheetUuid',
+              type: _is.getType<_is.UuidValue>(),
+              nullable: false,
+            ),
+            'chartObjectId': _is.ParameterDescription(
+              name: 'chartObjectId',
+              type: _is.getType<String>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _is.Session session,
+                Map<String, dynamic> params,
+              ) async =>
+                  (endpoints['slidesCharts'] as _iusodta9.SlidesChartsEndpoint)
+                      .resolveSnapshot(
+                        session,
+                        params['spreadsheetUuid'],
+                        params['chartObjectId'],
+                      ),
+        ),
+        'checkLinks': _is.MethodConnector(
+          name: 'checkLinks',
+          params: {
+            'probes': _is.ParameterDescription(
+              name: 'probes',
+              type: _is.getType<List<_izmhos0v.ChartLinkProbe>>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _is.Session session,
+                Map<String, dynamic> params,
+              ) async =>
+                  (endpoints['slidesCharts'] as _iusodta9.SlidesChartsEndpoint)
+                      .checkLinks(
+                        session,
+                        params['probes'],
+                      ),
+        ),
+      },
+    );
     connectors['slides'] = _is.EndpointConnector(
       name: 'slides',
       endpoint: endpoints['slides']!,
@@ -4984,6 +5356,90 @@ class Endpoints extends _is.EndpointDispatch {
                       .list(
                         session,
                         params['itemUuid'],
+                      ),
+        ),
+      },
+    );
+    connectors['slidesVersion'] = _is.EndpointConnector(
+      name: 'slidesVersion',
+      endpoint: endpoints['slidesVersion']!,
+      methodConnectors: {
+        'changes': _is.MethodConnector(
+          name: 'changes',
+          params: {
+            'itemUuid': _is.ParameterDescription(
+              name: 'itemUuid',
+              type: _is.getType<_is.UuidValue>(),
+              nullable: false,
+            ),
+            'versionId': _is.ParameterDescription(
+              name: 'versionId',
+              type: _is.getType<int>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _is.Session session,
+                Map<String, dynamic> params,
+              ) async =>
+                  (endpoints['slidesVersion']
+                          as _iuslkdly.SlidesVersionEndpoint)
+                      .changes(
+                        session,
+                        params['itemUuid'],
+                        params['versionId'],
+                      ),
+        ),
+        'makeCopy': _is.MethodConnector(
+          name: 'makeCopy',
+          params: {
+            'itemUuid': _is.ParameterDescription(
+              name: 'itemUuid',
+              type: _is.getType<_is.UuidValue>(),
+              nullable: false,
+            ),
+            'versionId': _is.ParameterDescription(
+              name: 'versionId',
+              type: _is.getType<int>(),
+              nullable: false,
+            ),
+            'name': _is.ParameterDescription(
+              name: 'name',
+              type: _is.getType<String>(),
+              nullable: false,
+            ),
+            'folderUuid': _is.ParameterDescription(
+              name: 'folderUuid',
+              type: _is.getType<_is.UuidValue?>(),
+              nullable: true,
+            ),
+            'copyComments': _is.ParameterDescription(
+              name: 'copyComments',
+              type: _is.getType<bool>(),
+              nullable: false,
+            ),
+            'copySharing': _is.ParameterDescription(
+              name: 'copySharing',
+              type: _is.getType<bool>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _is.Session session,
+                Map<String, dynamic> params,
+              ) async =>
+                  (endpoints['slidesVersion']
+                          as _iuslkdly.SlidesVersionEndpoint)
+                      .makeCopy(
+                        session,
+                        params['itemUuid'],
+                        params['versionId'],
+                        params['name'],
+                        params['folderUuid'],
+                        params['copyComments'],
+                        params['copySharing'],
                       ),
         ),
       },

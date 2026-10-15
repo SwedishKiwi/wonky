@@ -6,6 +6,7 @@ import 'package:wonky_slides_core/motion.dart';
 import 'package:wonky_slides_core/scene.dart';
 import 'package:wonky_slides_core/snapping.dart';
 
+import '../elements/code/code_blocks.dart';
 import '../editor_screen/deck_editor_controller.dart';
 import '../selection/selection_controller.dart';
 import '../selection/slide_elements.dart';
@@ -260,16 +261,24 @@ class SlideCanvasController extends ChangeNotifier {
 
   // --------------------------------------------------------------- scene
 
-  /// The edit-frame scene of the current slide (prompts while editing).
+  /// The edit-frame scene of the current slide — or of the layout/master
+  /// edited in masters mode (SL-28, `DeckEditorController.surfaceId`) —
+  /// with prompts while editing.
   SlideScene? get scene {
-    final id = editor.currentSlideId;
+    final id = editor.surfaceId;
     if (id == null) return null;
-    return renderer.scene(id, editing: !editor.viewMode);
+    final code = CodeBlockView.maybeOf(editor);
+    return renderer.scene(
+      id,
+      editing: !editor.viewMode,
+      codeStates: code?.stateMap ?? const {},
+      codeSteps: code?.stepMap ?? const {},
+    );
   }
 
   /// The resolved current slide (the renderer's resolver).
   ResolvedSlide? get slide {
-    final id = editor.currentSlideId;
+    final id = editor.surfaceId;
     return id == null ? null : renderer.resolver.resolve(id);
   }
 

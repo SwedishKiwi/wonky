@@ -6,8 +6,9 @@ import 'deck_change_log_processor.dart';
 
 /// Change-log plugin `activity` (Slides 09 §5): one edit event per author
 /// and 10-minute window (`ActivityService.logEdit` aggregates), with the
-/// counters `changes` (change-log rows), `slides` (distinct slides
-/// touched), `slidesDeleted` and `themes` (theme changes).
+/// counters `changes` (change-log rows), `slides` (slides touched per
+/// batch), `slidesDeleted` and `themes` (theme changes), and the set
+/// `slideIds` (distinct slides of the event, SL-39).
 class DeckActivity implements DeckChangeLogPlugin {
   static const pluginId = 'activity';
 
@@ -48,6 +49,8 @@ class DeckActivity implements DeckChangeLogPlugin {
         context.item.id!,
         actor,
         counters: counters,
+        // Distinct slides of the 10-minute event (09 §5; SL-39).
+        sets: {if (slides.isNotEmpty) 'slideIds': slides},
       );
     }
   }

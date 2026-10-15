@@ -123,7 +123,7 @@ time, agents never start the server. Slides-specific additions:
 | SL-41 | Phone remote, rehearse timings, same-browser fast path | M11 · 1 | SL-19, SL-29 | ✓ |
 | SL-42 | UI bridge `ui.slides.*` | M11 · 2 | SL-11, SL-40 | |
 | SL-43 | AI in Slides (+ Drive assistant, P1) | M11 · 2 | SL-40 | |
-| SL-44 | Remaining P1: spelling, emoji, image adjustments, curved connectors | M11 · 2 | D-7, SL-13…SL-15 | |
+| SL-44 | Remaining P1: spelling, emoji, image adjustments, curved connectors | M11 · 2 | D-7, SL-13…SL-15 | ✓ |
 | SL-45 | M11 integration and exit | M11 · 2 | all M11 | ✓ |
 
 Waves hold ≤ 5 packages; a later wave's package starts as soon as its dependencies are merged
@@ -765,6 +765,28 @@ Paths below: `app/` = `wonky_slides/lib/`, `core/` = `packages/wonky_slides_core
 - Owns: `core/motion/{transitions,magic_move}/**`.
 - Acceptance: `MagicMoveMatcher` tests (shapes, text glyphs via `SequenceDiff`, code tokens,
   chart camera); plan budget ≤ 15 ms for the 06 §9.7 fixture.
+- As built: `package:wonky_slides_core/motion.dart` → `lib/src/motion/transitions/`
+  (`TransitionCompiler.compile`/`between`/`preview` → `TransitionPlan` with `frameAt(ms)`,
+  `at(t)`, `sample(n)`, `describe()`; `TransitionFrame` of `TransitionQuad`s — every 06 §7.2 type
+  as slide-space 2D/3D transforms with perspective, clips, dissolve, shading, regions, back-face
+  culling, `backdrop` for *fade through* —; fallbacks and reduced motion (300 ms fade); reverse
+  playback; `TransitionInfo` tile metadata) and `lib/src/motion/magic_move/` (`MagicMoveSlide
+  .fromDeck`, `MagicMoveMatcher` (keys, content signatures, names, groups), `MagicMovePlan` with
+  `MorphPair`s in modes replace/path/glyphs/crossfade/group, `PathMorph` (128-point outlines),
+  `TextMorph` (glyph runs via `SequenceDiff`), code `TokenMorphPlan`s (SL-26), chart cameras
+  through the `ChartCameraLerp` seam → `Chart3DView.lerp` (SL-27); `frameAt(ms)` → both slides'
+  `SlideFrame`s + paint layers + pair descriptors). Additive frame fields: `TextPartState.color`,
+  `BackgroundState.toJson`. Plan ≈ 1.4 ms for the §9.7 fixture. **For SL-29**: compile with
+  `TransitionCompiler.between(model, fromSlideId:, toSlideId:, fromFrame: A.finalFrame, toFrame:
+  B.initial, options: TransitionOptions(reducedMotion:, reverse:), fromScene:, toScene:)`;
+  snapshot types draw `frame.quads` (projective divide for 3D), Magic Move draws both scenes with
+  `frame.magicMove.outgoing/incoming` in `layers` order (nested element states for group
+  children; clamp opacity products) and may refine with `pairs` (morphed outlines, code token
+  glyphs, chart scene morph, image crop). **For SL-30**: `TransitionCatalog` + `TransitionInfo`
+  (group, description, icon, direction param, reduced-motion behavior), `TransitionCompiler
+  .preview(spec)` / `plan.sample(n)` for tiles, `MagicMoveMatcher.match` /
+  `MagicMovePlan.matches` for the match badges and View › *Show Magic Move matches*. The
+  `animations` feature is on since SL-29/SL-30. Details and deviations: 06 §9.9, [STATUS.md](STATUS.md).
 
 **SL-26 · Code core** (07 §3–§6)
 - Scope: `CodeLayout`, `MonoFontMetrics`, `CodeEditScript`, `TypingScript`, `TokenMorphPlan`,
@@ -799,10 +821,57 @@ Paths below: `app/` = `wonky_slides/lib/`, `core/` = `packages/wonky_slides_core
 - Owns: `packages/wonky_charts/lib/src/{reveal,morph,snapshot}/**`, `core/charts/**`,
   `server/charts/**`.
 - Acceptance: 08 §20 core and server tests; snapshots contain only resolved series (08 §6).
+- As built: **`wonky_charts`** — `snapshot/` (`ChartData.toJson/fromJson` via `ChartDataCodec`,
+  `ChartDataSnapshot`, `ChartSourceTheme`, `ChartSourceInfo`, `ChartSourceSnapshot` = the spec's
+  in-memory `ChartSnapshot` pair, renamed because the core ops already have `ChartSnapshot`;
+  `ChartSnapshotColumns` (`gz:`; `archive` is a justified dependency), `ChartSourceVersion`,
+  `ChartSnapshotLimits`), `reveal/` (`ChartReveal` = the spec's `ChartRevealState`, renamed
+  because the timeline's per-element state has that name: a scene transform every renderer
+  honors, plus `applyTo3D`), `morph/` (`ChartSceneMorph`, `OkLab`), `three_d/chart3d_view.dart`
+  (`Chart3DView.lerp`, presets, `Chart3DTurn`), `render/pdf/ttf_chart_text_measurer.dart`
+  (`TtfChartTextMeasurer` — the core's text layout already has a `TtfTextMeasurer`); additive
+  hooks `ChartPipeline.layout(reveal:)`, `ChartLayoutOptions.perspective3D/transform3D/fitViews3D`
+  (union camera fit), `Chart3DItem.withColor`. **Core** — `package:wonky_slides_core/charts.dart`
+  (`lib/src/charts/`, not `core/charts/`): `ChartElementData`, `ChartOverrides`,
+  `SlideChartSpec.effective` → `SlideChartLook`, `SlideChartLayout` (the `ChartSceneSource`;
+  the interface gained `background`), `SlideChartMotion`, `ChartLinkService`/`ChartLinkOps`;
+  planner: `gz:` columns, unlink writes `dataJson.snapshot`, `SetChartStyle` enforces the
+  allowlist; `DeckBuilder.chartLink`. **Server** — `wonky_server/lib/src/slides/charts/`:
+  `SlidesChartsEndpoint` (`slidesCharts`: `listCharts`, `resolveSnapshot`, `checkLinks`; the
+  P1 `watch` stream is not built), `SlidesChartService`, non-table models (no migration).
+  **For SL-32**: render with `SlideChartLayout(measurer: FlutterTextMeasurer())` as the stage's
+  `charts`; insert/update with `ChartLinkOps.link/update` from a `ResolvedChartSnapshot` of
+  `slidesCharts.resolveSnapshot`, token refresh with `ChartLinkOps.refreshToken`
+  (maintenance write), probes with `ChartLinkOps.probesOf`; style edits are
+  `SetChartStyle` patches (`overrides` checked by `ChartOverrides.rejectedPaths`); update
+  animations with `ChartSceneMorph`. **For SL-25/SL-29**: `SlideMotionInput.fromDeck(...,
+  chartShapeOf: SlideChartMotion.shapes(deck))`; per frame `SlideChartMotion.reveal(state)`,
+  `.view(state, base)` and `.fitViews(state, base)` into `SlideChartLayout.build(reveal:,
+  view:, fitViews:)`; Magic Move of cameras with `Chart3DView.lerp`, of 3D models with
+  `transitionFrom3D`. **For SL-40**: `SlidesChartService` directly. Paste from Sheets
+  (03 A-03-5) needed nothing more: the objects clipboard already carries
+  `spreadsheetItemUuid`/`objectId`/`sheetId` (SL-8/SL-18). Details: 08 §2.10–§2.11,
+  [STATUS.md](STATUS.md).
 
 **SL-28 · Masters, layout editing, theme editor** (05 §8)
 - Owns: `app/features/masters/**`, `app/features/themes/editor/**`.
 - Acceptance: 05 AC for master and theme editing; undo of every edit.
+- As built: feature `masters` on (`SlidesFeatures.shipped`). App `features/masters/`
+  (`MastersView` + `MastersBanner`, `MastersNavigator` — themes, masters, layouts with live
+  thumbnails and usage; `MastersCanvasLayer` — placeholder outlines and type labels;
+  `surface_inspector.dart` — Inspector › Layout/Master; `MastersTargets` — command targets,
+  placeholder specs, replacement layouts), `features/themes/editor/` (`themeEditorSections`,
+  `ThemeEditScope`/`ThemeEditorState`, controls) and `commands/master_commands.dart`
+  (`slides.layout.add|duplicate|rename|move|delete|setBackground|setHideMasterElements|
+  toggleHidden|insertPlaceholder`, `slides.master.add|duplicate|rename|delete|setBackground`,
+  `slides.theme.edit|update|deriveDarkColors|resetToBuiltIn`, `slides.masters.exit`; the two
+  SL-28 placeholders are gone). Masters mode reuses the whole canvas: the editor's `surfaceId`
+  / `surfaceKind` replace `currentSlideId` where the canvas, selection, text editing, crop and
+  table modes, inserts and pastes address the edited surface. Core (additive):
+  `SlideResolver.resolve` resolves layout/master ids as surfaces (`ResolvedSlide.surface`),
+  `PasteElements.ownerKind`, `UpdateMasterOrLayout` accepts `sortKey`, `ThemeDarkDeriver`, the
+  clipboard's `sourceSlideId` is the owner for layout elements. Deviations and leftovers: 05
+  §8.4 "As built (SL-28)", `TODO.md`, [STATUS.md](STATUS.md).
 
 ### 4.9 M10 wave 2 — motion and content UI
 
@@ -811,39 +880,169 @@ Paths below: `app/` = `wonky_slides/lib/`, `core/` = `packages/wonky_slides_core
   motion, presenting with builds and transitions, laser/pen/highlighter, loop and kiosk.
 - Owns: `app/features/{motion,transitions}/**`, `app/features/present/tools/**`.
 - Acceptance: 06 AC; 10 AC 6, 8; 60 fps budget of 06 §14 in Chrome on the reference machine.
+- As built: `app/features/motion/` (`SlidePlayer` + `PlayerView`s and `TransitionRequest`,
+  `MotionBudget`/`FrameBudget`, `MotionStage`, `SlidePlayback`/`SlidePlaybackStage` for SL-30's
+  previews, `MotionTicker`, `PlayerStage`, `render/`: `MotionScenes` (code via SL-31's
+  `CodeFrames`, charts via `SlideChartLayout.build(reveal:, view:, fitViews:)`), `MotionMask`,
+  `MotionNodePaint`, `MotionTextPainter`, `TextRangeGeometry`, `FrameDiff`),
+  `app/features/transitions/` (`SlideSnapshots`, `TransitionPainter`/`CrossfadePainter`,
+  `MagicMovePainter` + `MagicMoveScenes`/`MagicMoveCharts`, `MagicMoveCodeMorphs`,
+  `gpu/GpuTransitions` — flip/cube/doorway/swap/revolve on `flutter_scene` on the web with the 2D
+  projective fallback), `app/features/present/tools/kiosk_exit.dart`; the stage painter applies
+  every frame field (nodes inherit their element's state); `PresentController` plays builds and
+  transitions through the player (reverse on back, finish/skip, audience mid-animation sync, plan
+  cache and prefetch, blur and frame budgets, auto-advance, rehearsed timings, kiosk with
+  `?kiosk=1`). Laser/pen/highlighter stayed where SL-19 built them (nothing to move). The
+  `animations` feature is on (with SL-30). Benchmark: `wonky_slides/benchmark/motion_bench.dart`.
+  Details: 06 §12.4, 10 §8.1 and §9, [STATUS.md](STATUS.md).
 
 **SL-30 · Animate tab and animation pane** (06 §5, §7 UI)
 - Owns: `app/features/builds/**`, the inspector's Animate section (`app/features/inspector/animate/`).
 - Acceptance: 06 §18 UI criteria; `slides.panel.animate` opens the inspector tab (Q21).
+- As built: `wonky_slides/lib/features/inspector/animate/` (`AnimateTab`, `TransitionTab`,
+  `BuildTab`, `OrderTab`, `EffectTileGrid`, controls), `lib/features/builds/` (`AnimateView`,
+  `AnimatePreview` on SL-29's `SlidePlayer`/`SlidePlaybackStage`, `AnimateCanvasLayer` — preview,
+  build order and Magic Move badges, match ghosts, motion path —, `BuildOrder`, `BuildLabels`,
+  `EasingPresets`, `BuildRecipes`, `MotionPaths`) and `lib/commands/animate_commands.dart` (06 §15
+  but `drawMotionPath`/`editMotionPath`, plus `selectBuilds`, `togglePreviewOption`,
+  `moveBuilds {by}`; the SL-30 placeholders are gone). Transition tiles preview the real previous →
+  current slide inside the tile; build tiles preview on the canvas. Core (additive):
+  `CreateDeck.defaultsJson` (Settings › *Default transition* for blank decks). The feature
+  `animations` is on (added to `SlidesFeatures.shipped` once SL-29 verified present-mode
+  playback). Details and deviations: 06 §5.7,
+  [STATUS.md](STATUS.md), `TODO.md`.
 
 **SL-31 · Code element UI** (07 §3, §7–§8)
 - Owns: `app/features/elements/code/**`.
 - Acceptance: 07 §15 criteria incl. type-in while presenting (J-S6 parts).
+- As built: `wonky_slides/lib/features/elements/code/` — `CodeScenePainter` draws every
+  `CodeScene` field on the stage (box, border, tab/window/caption chrome with traffic lights
+  and language badge, bars/boxes/selections/gutter markers, numbers with the active color and
+  `↪`, grid-placed runs with line opacity and blur, morph glyphs and gutter labels, caret,
+  bubble/label/pill callouts with inline Markdown, crossfade underlay); `CodeFrames`
+  (`sceneOf(composer, CodeViewState)`, `applyFrame(scene, frame, composerOf)`, `replace`) is
+  **the hook for SL-29** — the player recomposes code nodes per frame with it;
+  `CodeBlockView` (edit state per element, previewed step, diff gutter, in-place edit,
+  transition preview, recent languages) and `CodeEditSession` (300 ms writes, coalesced
+  "Typing" steps); `CodeCanvasMode` (edit field overlay, ▶ preview with the composer's
+  type-in/morph/instant frames, overflow badge); the Code inspector section, dialogs and the
+  toolbar language label; `lib/commands/code_commands.dart` (all 07 §11 commands but
+  `pickLines` and `walkthroughFromDiff`, plus `setStateLabel`, `previewStep`, `preview`).
+  `wonky_code_flutter` gained `CodeEditorField` (re_editor) and `CodeEditorGutter`. Core:
+  build durations come from `CodeElementModel` (`MotionElement.codeTimings`,
+  `ModelCodeMotionTimings`), `MotionCodeState.stepsOf` = `HighlightSteps.count` (empty
+  steps kept), `SceneContext.codeSteps`, callout accent/body font in `CodeRenderStyle`, the
+  PDF painter draws static code (box, chrome, numbers, runs, bars, line opacity). Feature
+  `codeBlocks` is on. Details and leftovers: 07 §2.3 "Status (M10, SL-31)",
+  [STATUS.md](STATUS.md), `TODO.md`.
 
 **SL-32 · Chart element UI** (08 §4–§10)
 - Scope: insert linked chart, *Update*, client-side auto-update (Q28), unlink/relink, Linked
   objects panel, stale badge, chart builds, 3D camera; native charts (P1).
 - Owns: `app/features/elements/chart/**`.
 - Acceptance: 08 §19 criteria (J-S7 parts).
+- As built: feature `charts` ships (native charts stay hidden as `nativeCharts`, P1).
+  `features/elements/chart/` — `SlidesChartApi` (client of `slidesCharts`, installable fake),
+  `ChartLinks` (checks on open/resume/5 min/present, derived statuses, maintenance writes for
+  tokens, auto-update and first snapshots), `ChartCanvasMode` (link badge / *Update*, orbit drag,
+  update morph), `chartSection` (Inspector › Chart), `showChartInsertDialog` (two steps, previews,
+  MCP), `LinkedChartsPanel`, `ChartPaste` (snapshots on paste), `SlidesChartText` (shared
+  measurer with deck fonts), chart toolbar; `commands/chart_commands.dart` (every 08 §14 command
+  but the P1 native ones, plus `addCameraStep`, `copyAsImage`). `wonky_charts_flutter` gained
+  `ChartView`, the data table dialog, `ChartTypeIcon` (moved), `ChartTooltip` and
+  `ChartStyleEditor` (override mode); the stage draws 3D charts on the GPU backend. Details and
+  leftovers: 08 §2.12, [STATUS.md](STATUS.md).
 
 **SL-33 · PDF builds as pages, print frame option, PNG** (10 §11, §13)
 - Owns: additions in `core/export/pdf/**`, `app/features/print/**`.
 - Acceptance: page count = step count; *Show final animation state* (P1) option; PNG export P1.
+- As built: features `printBuilds` and `imageExports` ship (the Markdown download is the hidden
+  `markdownExport`, P2). Core (`lib/src/export/pdf/`): builds as pages print one page per step
+  whose settled frame differs from the step before (`SlidesPdfExporter.printedSteps`,
+  `SlidesPdfPlanner.select(buildSteps:)`), so page count = distinct steps; *Show final animation
+  state* prints `finalFrame`; notes and handouts with builds print the final step; the painter
+  applies settled frames like the stage (visibility, opacity, transforms, color changes, fill
+  opacity, text parts with dimming/recolor/reveal, highlights); new `SlideFrameScenes` composes
+  code states/steps and chart reveals/cameras per frame; code callouts, caret, selections, glyphs
+  and gutter labels are drawn; charts default to `SlideChartLayout` with TTF metrics of the
+  embedded chart font (server PDFs had placeholders). App (`features/print/`): the print
+  preview's *Print each build stage* and *Show final animation state*; PNG export
+  (`slides.file.download {format: png|pngZip}` → `showPngExportDialog`, `SlidesPngExport` on the
+  stage's software renderer, `StoredZip`). Server PNG and *Copy slide as image* stay open.
+  Details: 10 §11.3/§13 "As built (SL-33)", [STATUS.md](STATUS.md), `TODO.md`.
 
 ### 4.10 M10 wave 3 — views, Write switch, exit
 
 **SL-34 · Outline view, Layers panel, accessibility checker** (04 §10, 03 §8, §17)
 - Owns: `app/features/{outline_view,layers,accessibility}/**`.
 - Acceptance: 04 AC-8 (outline part); checker rules unit-tested.
+- As built: `app/features/outline_view/` (`OutlineView`, `OutlineBody` paragraph model with
+  formatting-preserving text diffs, `OutlineController` focus/typing state,
+  `OutlineSlideParts`), `app/features/layers/` (`LayersPanel` with the *Reading order* tab,
+  `ElementNames`), `app/features/accessibility/` (pure-Dart `AccessibilityChecker` +
+  `A11yFixes`, `AccessibilityPanel`), `commands/{outline,layers,accessibility}_commands.dart`;
+  core additions `MoveElementsZ` (Layers drag in/out of element groups) and `SetReadingOrder`
+  (`ops/parts/layer_ops.dart`, `planner/parts/layer_part.dart`) and `GroupSpace.toChild`.
+  Features `outlineView`, `layers`, `accessibilityChecker` ship. Details: 04 §10, 03 §8.1 and
+  §17.4 "As built (SL-34)", [STATUS.md](STATUS.md); leftovers in `TODO.md`.
 
 **SL-35 · Write exports on the shared tokenizer** (07 §2.2, v2 review Q25)
 - Owns: the code-highlighting call sites in `wonky_write_core/lib/src/export/**`.
 - Acceptance: golden diff review of the Write export corpus (only token colors change); Write
   suites green.
+- As built: every Write exporter (PDF and print, HTML, HTML zip, EPUB, DOCX, ODT, RTF)
+  tokenizes through `SyntaxHighlighter.instance` (`wonky_write_core/lib/src/highlight/`):
+  `DefaultCodeTokenizer` behind a 32-entry `CachedCodeTokenizer`, fence languages normalized
+  (`CodeLanguages.normalize`); `SyntaxHighlighter.withTokenizer` (a zone value) lets tests
+  compare tokenizers. The Write editor's style phase uses the same facade (07 §2.7 step 1), so
+  highlight.js languages are highlighted on screen too. Two fixes the review needed: TextMate
+  patch **SH-7** in `wonky_code` (captures located from the regex group tree instead of the
+  first occurrence of their text — `function f` scoped the `f` of `function`; overlapping
+  tokens would have duplicated code in HTML; `TextMateTokenizer` also clips overlaps) and PDF
+  code wrapping independent of the token runs (`PdfLineBreaker`: a code word spans runs). The
+  diff review is a test (`wonky_write_core/test/export/code_tokenizer_switch_test.dart`): a
+  33-block corpus through all 9 exporters × 12 theme/appearance cases, highlight.js vs the
+  shared tokenizer, equal after removing token styling. Not done: the 15 ms tokenizer budget
+  and Write's language picker (`pickerLanguages`) — `TODO.md`. Details: [STATUS.md](STATUS.md).
 
 **SL-36 · Templates 10 of 10, M10 integration and exit** — web-build token
 - Owns: `server/templates/**`, integration tests and benchmarks for M10.
 - Acceptance: the M10 exit gate of §1.
+- As built (2026-10-15): **templates** — four more core decks in
+  `packages/wonky_slides_core/lib/src/templates/decks/` (the server picks them up through
+  `SlidesTemplates.all`; nothing template-specific changed on the server): *Quarterly review*
+  (Classic), *Tech talk* (Midnight), *Product launch* (Studio), *Portfolio* (Paper) — nine decks,
+  with *Blank* the gallery strip's ten (04 §15 "As built (SL-36)"); gallery order follows the
+  strip. They showcase M10: builds (step-0 builds after the transition, one click per card/stat/
+  milestone, paragraph builds with *dim*, `lineDraw`, `chartGrow` by series, `chartCamera`,
+  `codeState` type-in, `codeHighlight` steps with callouts), transitions (cube, flip, doorway,
+  revolve, push) and three Magic Move pairs (a code token morph, a device that moves aside, a
+  project cover that opens into its page). Charts are **sample snapshots** (`source: static`)
+  in the chart layout's placeholder — a template can't link to a spreadsheet the user doesn't
+  have; *Relink…* links them, keeping frame, builds and camera. `TemplateDeckBuilder` gained
+  `insert`/`lastElements`, `builds`, `transition`, `matchKey`, `codeStates`
+  (`TemplateCodeState`: highlight, label, title, arrival mode and typing, callouts),
+  `staticChart` (+ alt text), `TemplateShapes.shape/text(matchKey:)`; `decks/sample_charts.dart`
+  (`sampleChart`), build helpers in `decks/parts.dart`. **Default transition of templates**
+  (SL-30 leftover): `SlidesTemplate.defaultTransition` → `CreateDeck.defaultsJson` — every
+  built-in carries one (fade; push for Product launch); the user's *Default transition* stays
+  for blank decks (06 §5.7). Fixed while building them: the M9 Workshop description typo
+  ("TemplateRun a…"), the Weekly update's statement subtitle alignment. **Bugs found and fixed
+  (with regression tests):** (1) the *Statement* layout inherited the master body's bullets — a
+  stray marker before every statement in the stage/thumbnails/editor (core `TextParagraphs` and
+  the app's `effectiveList` now honor `listStyle: none` as a box default, the layout writes it
+  via `PlaceholderDef.noList`; built-in theme hashes change, existing decks keep their copies);
+  (2) the accessibility checker treated an ellipse's whole frame as its area, so the Pitch deck's
+  orb gave a false contrast error (ellipse hit test); (3) on the web, code blocks were laid out
+  with the fallback font when their mono family loaded after the first paint
+  (`CodeScenePainter`'s paragraph cache now clears on `PaintingBinding.systemFonts`) —
+  proportional code with gaps between the grid-placed runs in the editor and present mode.
+  **Integration:** the full Slides suite and the shared packages were run (counts in
+  [STATUS.md](STATUS.md)); the browser walkthrough of the release build and what wasn't verified
+  are in the M10 exit checklist ([suite 14 §2.1](../14-roadmap.md)). Not built: the M10
+  `integration_test` journeys J-S5…J-S7 (no chromedriver, as M9), the motion benchmark as a
+  `-t slow` test with p95 frame timings in Chrome, scripted multi-client scenarios #18–20,
+  23–25 — `TODO.md`.
 
 ### 4.11 M11 wave 1 — collaboration, history, MCP, remote
 
@@ -856,6 +1055,20 @@ Paths below: `app/` = `wonky_slides/lib/`, `core/` = `packages/wonky_slides_core
 **SL-38 · Comments on slides and elements** (09 §3)
 - Owns: `app/features/comments/**`; `CommentAnchorKind` additions in `platform/comments`.
 - Acceptance: J-S8; anchors survive cut/paste re-anchoring.
+- As built: `CommentAnchorKind.slide` / `.element` (enum stored by name — no migration);
+  server change-log plugin `comments` (`slides/changelog/deck_comment_orphans.dart`:
+  orphaning from `summaryJson.deleted`, revival from `revived`, reason `slide|element`) and
+  notification extras `slideNumber`/`slideTitle` (`CommentService.payloadExtras`, deck cache);
+  deck comment emails and the bell open `/slides/p/<uuid>?comment=`. App
+  `features/comments/`: `SlidesCommentAnchor` (JSON of 09 §3.1), `SlidesComments`
+  (`CommentAnchorProvider` + `CommentPanelOptions` + the new optional shell interface
+  `CommentPanelSections` for group sections; open threads per slide, lazy slide-hint fix,
+  next/previous, deep links), `CommentAnchorMoves` (cut & paste of elements and of slides
+  re-anchors through `DeckEditorController.applyListeners` and the paste plans' new
+  `elementIdMap`/`slideIdMap`), `CommentPinsLayer` (pins, hover cards, docked card, inline
+  composer, active outline), `SlideCommentBadge` (navigator rows, collapsed groups, grid);
+  `commands/comment_commands.dart` (`slides.comments.next/previous/openPanel/show`). Feature
+  `comments` ships. Details: 09 §3.7 "As built (SL-38)", [STATUS.md](STATUS.md).
 
 **SL-39 · Version history, overwritten-text review, activity** (09 §4–§6)
 - Owns: `app/features/history/**`, `core/{snapshot,diff}/**`, `server/versions/**`.
@@ -867,6 +1080,21 @@ Paths below: `app/` = `wonky_slides/lib/`, `core/` = `packages/wonky_slides_core
   M10 telemetry shows stale decks.
 - Owns: `wonky_core/lib/mcp/slides_tools.dart`, `server/mcp/**`, `core/markdown/**`.
 - Acceptance: 11 §10 headless criteria; J-S10 headless part.
+- As built: definitions `SlidesTools` (`wonky_core/lib/mcp/slides_tools.dart`, 47 tools incl.
+  `drive.create_presentation`; `McpToolCatalog.slides`), core `package:wonky_slides_core/markdown.dart`
+  (`lib/src/markdown/`: `SlidesMarkdownCodec` — Markdown ↔ body Delta, rich reads, `keepFormatting`,
+  `concat`; `DeckOutlineCodec` — outline parse/write, layout inference), server
+  `wonky_server/lib/src/slides/mcp/` (`SlidesMcp` addressing and errors, `SlidesWrites` +
+  `DeckAgentPresence`, `SlidesInput`, `SlidesContent`, handlers `slides_{read,deck,element,media}_handlers.dart`,
+  `SlidesToolHandlers.all`, `SlidesMcpContent` resources/prompts, `SlidesChanges` for `changes.revert`). One
+  call = one change through the new additive `ServerHeadlessDeck.writeSteps` + `DeckSteps` (each operation
+  planned against a scratch copy, row changes composed with `composeRowChanges`). `drive.export` of decks
+  (pdf, md) and the per-deck write limit (`ToolExecutor` target key `deck`). Deviations: the handlers are
+  five files, not `tools/*.dart`; overflow warnings use the core's approximate text metrics; P1 tools
+  (`update_theme`, `copy_slides_to_deck`, native charts) and `code_walkthrough_from_diff` (needs
+  `UnifiedDiff`/`WalkthroughBuilder`) are not built; `render_slide` answers `unsupported`; no tool/command
+  row-parity tests (the tools use the same operations as the commands). Tests: core 28 (markdown), `wonky_core`
+  5, server 29 ([STATUS.md](STATUS.md)).
 
 **SL-41 · Phone remote, rehearse, same-browser fast path** (10 §5.2, §6.4, §10) — web-build token
 - Owns: `app/features/present/{remote,rehearse,broadcast}/**`, `server/present/**` (pairing).
@@ -885,6 +1113,23 @@ Paths below: `app/` = `wonky_slides/lib/`, `core/` = `packages/wonky_slides_core
 **SL-44 · Remaining P1** (03 §14, emoji, image adjustments, curved connectors)
 - Owns: `app/features/spellcheck/**`, additions in `app/features/elements/{image,line}/**`.
 - Acceptance: spelling uses `wonky_spellcheck` + `wonky_app` glue; each item's spec criteria.
+- As built: `app/features/spellcheck/` (`SlidesSpelling`, `EditorSpelling`,
+  `SpellingCanvasLayer`, `SlidesSpellingSession`, `spelling_actions.dart`,
+  `text_inserts.dart`), `commands/spelling_commands.dart` (check, toggle underline, replace,
+  replace all, ignore, add to dictionary, personal dictionary, `slides.file.setLanguage`,
+  `slides.insert.specialCharacter`; their placeholders are gone; feature `spelling` ships),
+  `app/features/elements/image/image_adjust_preview.dart` (live slider preview),
+  `app/features/elements/line/connector_handles.dart` + `commands/connector_commands.dart`
+  (`slides.line.setWaypoints`; elbow segment and curved bend handles), core
+  `ConnectorRouter.curveMidpoint` and curved routes bending through their first waypoint.
+  Shared: the spelling dialogs, emoji picker and (moved from Write) special characters dialog of
+  `wonky_app` read their strings from the shell ARB files and take an app key prefix (Write keeps
+  `write.*`); `PersonalDictionary` (the synced list Write already used) in
+  `package:wonky_app/spellcheck.dart`. Small hooks: `SlideTextEditAddon` (text overlay and
+  notes), `SlideTextEditing.prepareContextMenu`, `NotesPane.contextMenuEntries`, outline line
+  squiggles, `context.text.spelling` menu slot, `CanvasTokens.spellingError`; `slides.insert.emoji`
+  types into text being edited; moving a line end clears edited waypoints. Details and
+  deviations: 03 §14.1, [STATUS.md](STATUS.md).
 
 **SL-45 · M11 integration and exit** — web-build token
 - Acceptance: the M11 exit gate of §1.
@@ -1172,9 +1417,23 @@ transforms are about the elements' centers and part boxes come from the text lay
 exporter does; present mode, SL-19, still uses the plain constructor). Player rules for SL-29:
 `frameAt(step, ms)` for `ms ≥ step.durationMs` is the settled `endOfStep(step)` unless
 `step.hasLoops` (an `untilNextClick` emphasis keeps cycling until the next step);
-`endOfStep(-1)` = `initial`. SL-25 replaces `TransitionCompiler`/`TransitionPlan` in
-`stub/transition_stub.dart`; `TransitionSpec` (codec, catalog, `advance`) is already in
+`endOfStep(-1)` = `initial`. `TransitionSpec` (codec, catalog, `advance`) is in
 `builds/transition_spec.dart`.
+
+**As built (SL-25).** The stub is gone: `TransitionCompiler.compile(from:, to:, {transitionJson |
+spec, options, fromSlide, toSlide})` / `TransitionCompiler.between(deck, fromSlideId:,
+toSlideId:, …)` → `TransitionPlan` (`frameAt(ms)` → `TransitionFrame`: snapshot quads or a
+`MagicMoveFrame` with both slides' `SlideFrame`s), `MagicMoveMatcher`, `MagicMovePlan`
+(06 §9.9). The old public `TransitionPlan` constructor and the `const TransitionPlan.cut` became
+a private constructor and a `final` cut plan (no consumers outside the core).
+
+**SL-31 additions.** `SlideMotionInput.fromDeck` gives code elements `codeTimings`
+(`ModelCodeMotionTimings` over a lazily built `CodeElementModel`): `codeType` lasts
+`typeInDurationMs()`, `codeState` the change's `transitionDurationMs(from, to, mode)` (typed
+changes derived, morph = the state's morph settings, instant = the 200 ms crossfade); inputs
+built without it keep the estimates. `MotionCodeState.stepsOf` counts with
+`HighlightSteps.count` (empty "show all" steps kept, 07 §4.1). Frames map to code scenes with
+the app's `CodeFrames.sceneOf`/`applyFrame` (`features/elements/code/code_frames.dart`).
 
 ### 5.6 Code and charts
 

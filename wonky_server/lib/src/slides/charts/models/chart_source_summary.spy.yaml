@@ -1,0 +1,16 @@
+### One chart of a spreadsheet in the insert dialog (Slides 08 §4.2, §13).
+class: ChartSourceSummary
+fields:
+  chartObjectId: String
+  title: String
+  ### Chart type id (`column`, `pie`, …).
+  type: String
+  is3D: bool
+  sheetName: String
+  ### The chart has its own chart sheet.
+  onChartSheet: bool
+  ### Made with a newer version of Wonky Sheets (tile disabled).
+  unsupported: bool
+  ### `{"sourceSpec", "dataSnapshot"}` downsampled to ≤ 200 points; null
+  ### when the caller may not copy data.
+  previewSnapshotJson: String?

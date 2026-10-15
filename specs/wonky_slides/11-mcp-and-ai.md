@@ -88,6 +88,18 @@ error. Box-level writes to a claimed element pass. Change records are Sheets'
 `ServerChangeRecord` rows (02 §8); `slides.revertChange`/`reapplyChange` apply them with the
 per-column skip rule, skipping a coupled column group (02 P4) as a whole.
 
+*As built (SL-40):* the tools live in `wonky_server/lib/src/slides/mcp/` and write through the SL-8
+headless deck. A call is **one change** via `ServerHeadlessDeck.writeSteps` (additive): `DeckSteps.run(op)`
+plans each operation against a scratch copy of the model holding the previous steps, the row changes are
+composed (`composeRowChanges`) into one plan, checked for soft locks and written with one `DeckChangeLog` row
+labeled `"MCP: <tool> (n)"` (`"AI: …"` for assistant actors) and one `ServerChangeRecord`; `changes.revert`
+recognizes deck records by their item (`SlidesChanges`) before the Sheets path. After a write the agent shows
+for 5 s as a presence participant whose Slides cursor names the touched slide and elements
+(`DeckAgentPresence`; the client-side flash is SL-37/SL-42's). The `being_edited` conflict becomes the tool error
+`being_edited {targets}`; planner refusals map to `limit_exceeded`, `not_found`, `conflict` (locked),
+`unsupported`, `forbidden` or `invalid_args`. The 60 writes/min per deck and token use `ToolExecutor`'s target
+key `deck`.
+
 ### 2.2 Results
 
 Mutating tools return (`structuredContent`):
@@ -384,6 +396,36 @@ the allowed ids for the element kind; out-of-range params → clamped + warning.
 | `versions.*` | `versions.get` for decks returns the outline Markdown (§3.3) of that version; `versions.restore` per 09. |
 | `changes.revert` | Works for every mutating `slides.*` tool (24 h); result lists `skipped` columns changed by others. |
 
+*As built (SL-40):* 47 tools (`SlidesTools.all`, incl. `drive.create_presentation`). Read tools need
+`slides:read`, mutating ones `slides:edit` (as Sheets: an edit-only token can't read), chart tools also
+`sheets:read`. Differences from the tables above:
+- **Markdown** (`SlidesMarkdownCodec`, core `lib/src/markdown/`): every line is a paragraph (no lazy
+  continuation; a line ending in `\` or two spaces continues after a soft break), `==highlight==` is not
+  supported (P1), slide links are written back as positions (`[x](slide:3)`). `text_format: rich` returns
+  `{markdown, delta, runs, paragraphs}`. `keep_formatting` keeps the first run's non-Markdown attributes and
+  each paragraph's alignment/spacing by position.
+- **Outline** (`DeckOutlineCodec`): layout keys are the 05 library's (`twoColumns`, `code`; the aliases
+  `twoColumn`/`titleCode` are accepted); tables go to an empty table/body placeholder's area, images to the
+  picture placeholder's (empty placeholders whose area is taken are deleted); a blank deck's empty title slide
+  gives way to `outline_markdown`. `bigNumber`/`quote` layouts take the first body line, the rest goes to the
+  caption/attribution.
+- **Results**: `created` lists every inserted row by kind (placeholder instances included in `element_ids`);
+  slide tools add `slide_ids`/`positions`, element tools `element_ids`. `text_overflow` uses the core's
+  approximate text metrics (the PDF export uses TTF metrics).
+- **Addressing**: `at.position` n puts the first new slide at n; `move_slides.to.position` counts the slides
+  that don't move; `ElementRef.name` also matches the layout placeholder's name.
+- **Images**: `file_uuid` is a stored image or a Drive file item uuid the caller can read; it is copied into
+  the deck (`file.copyToItem`, quota checked) and the result carries `storage`. `https` URLs are not accepted
+  yet. `fit: fill` crops to cover the frame.
+- `apply_theme {deck, theme_id}` copies the other deck's theme with its files (`rehomeFiles`).
+- `insert_linked_chart` fills an empty chart placeholder when no frame is given; `broader_audience` = a deck
+  link without a spreadsheet link, or a deck owner/member without access to the spreadsheet.
+- `slides.export_pdf` calls the shared `SlidesExportService` (cached results); `refresh_linked_charts` is a
+  separate recorded change. `drive.export` of decks: `pdf` and `md` (the outline, inline).
+- Not built: `update_theme`, `copy_slides_to_deck`, `insert_native_chart`, `set_chart_data` (P1),
+  `code_walkthrough_from_diff` (needs `UnifiedDiff`/`WalkthroughBuilder`), `render_slide` answers
+  `unsupported`; tool/command row-parity tests (AC 2) — the tools build the same operations as the commands.
+
 ### 3.13 Limits
 
 | Limit | Value |
@@ -416,6 +458,10 @@ Prompts: `create_presentation(topic, audience?, slide_count?, theme?)` (plan the
 `drive.create_presentation` with `outline_markdown`, then refine), `review_presentation(deck)`
 (read with `get_deck`/`get_slide`, check consistency, text density, overflow warnings, alt texts,
 build order; report — no writes), `code_walkthrough(deck, diff)`, `presentation_from_document(document)`.
+
+*As built (SL-40):* `SlidesMcpContent` registers the resources above except the P1 PNG template, and the four
+prompts. The effects resource is `{effects: EffectCatalog, transitions: TransitionCatalog}`; the outline
+resource is capped at 50,000 characters. Subscriptions follow the suite (not built).
 
 ---
 

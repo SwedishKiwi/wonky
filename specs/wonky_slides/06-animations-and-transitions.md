@@ -435,6 +435,100 @@ size) on loop. Tiles are grouped: *Basic* (appear, fade, rise, move in, scale, p
 - Copying an element (03 clipboard) includes its builds; pasting onto another slide appends them
   at the end of that slide's sequence.
 
+### 5.7 As built (SL-30)
+
+The Animate tab, the animation pane and the transitions UI are in `wonky_slides/lib/features/inspector/animate/`
+(`AnimateTab`, `TransitionTab`, `BuildTab`, `OrderTab`, `EffectTileGrid`, `animate_controls.dart`),
+their view state and canvas side in `wonky_slides/lib/features/builds/` (`AnimateView` — selected
+builds, the Build tab's kind sub-tab, the canvas toggles, the ⚙ options, copied builds, timelines
+compiled per slide revision; `AnimatePreview`; `AnimateCanvasLayer`; `BuildOrder`; `BuildLabels`
+and `EasingPresets`; `BuildRecipes` and `MotionPaths`) and the commands in
+`wonky_slides/lib/commands/animate_commands.dart`. Every edit goes through SL-24's `BuildEdits`
+(one `slides.rows` undo step each).
+
+- **Commands.** Every command of §15 except `drawMotionPath` and `editMotionPath` (no canvas path
+  editing yet). Additions: `slides.animate.selectBuilds {buildIds, selectElements?}` (Order list
+  selection, MCP-operable), `slides.animate.togglePreviewOption {option: autoPreview |
+  includeTransition | fullMotion}` (the ⚙ menu), `slides.animate.moveBuilds {by: ±1}` (the
+  `Mod+Alt+↑/↓` bindings of the `slidesAnimatePane` scope; Delete/Backspace remove there too),
+  `slides.animate.addBuild` also takes the context menu's `kind: in | action | out` and, without an
+  `effect`, adds the quick-add effect (the deck's `defaultsJson.build` of that kind, else Slides
+  settings › *Default build* for in, Pulse for action, Fade out for out) and opens the Build tab.
+  `slides.animate.preview` also takes `buildIds` (only those builds). The feature switch covers the
+  prefixes `slides.transition.` and `slides.element.setMatchKey` too.
+- **`coalesceKey`.** The dispatcher has no coalescing, so `updateBuild` with a `coalesceKey` applies
+  its plan in a transaction of its own with that key (`UndoService` merges steps with the same key
+  within the undo window); the dispatcher's transaction stays empty. Steppers send one key per
+  field; sliders commit on release.
+- **Previews** use SL-29's `SlidePlayer` and `SlidePlaybackStage`: `AnimatePreview` plays the slide
+  (optionally entered from the previous slide), *from here* (the build's step, from the end state
+  of the step before), only some builds (▶ of the edited build; *Auto-preview changes* after an
+  effect change), the transition (into the slide, then step 0) or a hovered effect (looping); steps
+  follow each other with a 450 ms pause standing in for the clicks. The canvas shows the player
+  over the slide (`AnimateCanvasLayer`: read-only, selection chrome hidden, a floating bar with
+  *Stop*); a press, any key (Esc consumed) or a change of the slide stops it; a collaborator's
+  change shows "The animations changed — Preview again". Previews compile with *Reduce motion*
+  (OS/app setting or Slides › *Reduce motion in the editor*) unless *Preview full motion*; the tab
+  shows the banner of §13.
+- **Build tab.** Kind sub-tabs with counts and the kind color, chips for several builds of one kind
+  on an element, a search field, the effect grid (groups Basic, Exciting, Emphasis, Text, Shape,
+  Motion, Chart, Code — chart and code groups only when such an object is selected; tiles of
+  other kinds disabled with the reason), parameters rendered from the `ParamSpec`s (direction pad,
+  segmented choices or selects, switches, steppers, colors with theme colors, distance with *Off
+  slide*), motion path presets (`MotionPaths`: line, arc, curve, circle, zigzag; the canvas draws
+  the path dashed from a green to a red dot), the `moveTo` end state as numeric fields, the series
+  of `chartHighlight`, delivery (text: paragraph, paragraph group, word, character; charts: series,
+  category, point, element) with order, parts from/to, part start and stagger, after-build
+  keep/dim/hide with the dim level, timing (start, delay, duration — *Automatic* for derived
+  durations —, easing presets with the spring's settle time), repeat for transient emphasis and
+  *Return to the start* for persistent emphasis, *Add another build*, *Build all steps* (code:
+  `codeHighlight` per step of the first state, then `codeState` + its steps per further state;
+  charts: `chartGrow` by series, each part on click), *Copy/Paste animation*. Several selected
+  builds share the timing fields (mixed values show "—").
+- **Order tab.** Steps "Automatic" / "Click n" with their length, rows with the kind bar, trigger
+  glyph, element glyph and name, effect summary ("Rise · by paragraph · 3 parts"), timing bar on the
+  step's scale, warnings (`TimelineWarning` codes localized), parts that expand to "Part 2: Two";
+  click / Shift / Mod selection, ↑/↓ moves the selection, Enter opens the Build tab, drag and drop
+  (vertical slop first so clicks select; above/below the row's middle; a drop on a step header moves
+  the builds before that step's first build as a **new click** — `onClick`; step 0: `withPrevious` —
+  instead of "first in that step"), the row context menu of §5.4 and the footer *Preview* / *Play
+  from selected* / ⚙ (*Auto-preview changes*, *Include transition in preview*, *Preview full
+  motion*, *Show build order*).
+- **Transition tab.** Header (slide or "n slides" for a navigator multi-selection; "Uses the
+  presentation's default transition" when the slide has none of its own), the tile grid by
+  `TransitionGroup` with **live previews inside the tile** (hover/focus 400 ms: the actual previous
+  slide → this slide with that transition, looping, `TransitionTilePreview`), duration, easing,
+  the type's parameters, the Magic Move options of §8.6 with the match count ("3 objects match the
+  previous slide", or the crossfade fallback) and *Show matches*, *Play backwards when going back*,
+  advance (On click / Automatically after n s, *Play builds automatically*, the delay between
+  builds), *Preview*, *Apply transition to all slides*, *Remove*.
+- **Canvas.** Build order badges (Animate tab open or View › *Show build order*; "1", "2–4",
+  "0" automatic, "1, 3" for several builds; selected builds outlined; a click selects the build in
+  the Order list), Magic Move `link` badges on matched objects (Transition tab open or the toggle;
+  tooltip "Matches “Pricing” on slide 1") and with *Show Magic Move matches* the previous slide's
+  dashed ghost outlines joined to their counterparts.
+- **Magic Move.** *Insert › Magic Move slide* duplicates the slide (keys kept) and sets Magic Move in
+  one undo step; Inspector › Arrange › *Magic Move ID* (`slides.element.setMatchKey`, the name as
+  placeholder).
+- **Settings › Animations.** *Default transition* (every type but Magic Move) with its duration is
+  written as `Deck.defaultsJson.transition` of **blank** presentations (core: `CreateDeck
+  .defaultsJson`, validated like `SetDeckProps`); decks made from a built-in template take the
+  template's own default transition instead (`SlidesTemplate.defaultTransition`, part of its
+  design — every built-in has one since SL-36; 04 §15); *Default build* lists the build-in effects for
+  every kind of object; *Preview animations on hover* gates the hover previews; *Reduce motion in
+  the editor* reduces previews.
+- **Tokens.** The build kind colors are `SlidesTokens.buildIn/buildEmphasis/buildOut/buildMotion`
+  (Slides only), not `WonkyColors` (A-06-9).
+
+Deviations and not built (see `TODO.md`): build tiles preview **on the canvas** on the selected
+objects (Keynote-style), not in a miniature inside the tile (transition tiles do play inside);
+no curve editor (*Custom…*: Bézier handles, spring sliders) — custom expressions show as *Custom*
+and are kept; no canvas motion path editing (end dot drag, vertex mode, *Draw path*) and no
+*Set end state* ghost for `moveTo`; no timing-bar dragging, preview scrubber, presence in the tab
+header (P1); the animation painter has no "double-click keeps it active"; F2 doesn't rename from the
+Order list; badges only for top-level elements; `Deck.defaultsJson.build` is read but not written;
+the navigator's builds/transition glyphs (04 P1) are not built.
+
 ---
 
 ## 6. Previewing and playing (shared player)
@@ -735,6 +829,7 @@ diff (`wonky_core` `SequenceDiff.diff<T>`, generalized from `LineDiff` — [07](
 | Presenter view "current"/"next" | `frameAt` / `endOfStep(current + 1)`. |
 | PDF without builds ([10](10-presenting-and-pdf.md) §11) | **Print frame**: edit frame + content-progressive elements at their final content (code: last state, no highlight dimming; charts fully built; typewriter text complete); elements with out-builds are kept; motion paths and persistent emphasis are **not** applied (objects stay where the author placed them). |
 | PDF with builds as pages | One page per step: `initial` if step 0 is empty and step 1 exists, then `endOfStep(i)` for every step (deduplicated when two steps produce identical frames). |
+| PNG export ([10](10-presenting-and-pdf.md) §13, SL-33) | The print frame by default; *After the last build* = `finalFrame`; *Each build stage* = the PDF's build pages, one image each. |
 
 **Decided (v2 review, Q24) — print frame.** Prints and thumbnails use the print frame above
 (authored layout + completed content), with a P1 PDF option *Show final animation state* (uses
@@ -752,7 +847,7 @@ starting positions, which hides out-built content.
 ### 9.8 As built (SL-24)
 
 `package:wonky_slides_core/motion.dart` (`lib/src/motion/{easing,effects,builds,timeline,util}/`;
-the transition stub `stub/transition_stub.dart` stays for SL-25):
+the transition stub was replaced by SL-25, §9.9):
 
 - **API.** `SlideTimelineCompiler.compile(SlideMotionInput)` → `SlideTimeline` (`steps`,
   `stepCount`, `initial`, `endOfStep(i)` (−1 = initial, clamped), `frameAt(TimelinePosition)`,
@@ -827,6 +922,127 @@ Deviations and decisions:
   degradation, `line` delivery with layout (compiles as `paragraph`).
 - `onElementClick` builds are skipped with the warning `unsupportedTrigger`.
 
+### 9.9 As built (SL-25): transitions and Magic Move
+
+`package:wonky_slides_core/motion.dart` → `lib/src/motion/transitions/` and
+`lib/src/motion/magic_move/` (the stub `stub/transition_stub.dart` is gone; the type names
+`TransitionCompiler`/`TransitionPlan` stayed). Pure Dart, no UI — the player/renderer is SL-29,
+the Transition tab SL-30 (the `animations` feature is on since SL-29 + SL-30).
+
+- **Compiling.** `TransitionCompiler.compile(from: SlideFrame, to: SlideFrame, {transitionJson
+  | spec, options: TransitionOptions, fromSlide, toSlide})` → `TransitionPlan`; `from` is always
+  the slide being **left** (its `finalFrame`), `to` the slide **entered** (its `initial`).
+  `TransitionCompiler.between(deck, fromSlideId:, toSlideId:, {fromFrame, toFrame, options,
+  fromScene, toScene, textLayout})` does the rest from a deck (effective transition of the entered
+  slide — or, with `options.reverse`, of the left slide —, slide size, dissolve seed = the entered
+  slide id, theme colors for `fade.through`, `MagicMoveSlide.fromDeck` for both slides when the
+  type is Magic Move). `TransitionCompiler.preview(spec)` = tile previews without slides.
+  `TransitionOptions {slideWidth, slideHeight, reducedMotion, reverse, seedKey, resolveColor,
+  cameraLerp}`.
+- **Plans.** `TransitionPlan {requestedType, type (played), spec, durationMs, curve, reverse, is3d,
+  isCut, from, to, magicMove, throughColor, seed, warnings, outgoing, incoming}` with
+  `frameAt(ms)`, `at(t)` (linear 0..1, previews/scrubbing), `sample(n)`, `describe()`, canonical
+  `toJson()`. Fallbacks (warnings): `unknownTransition` and `unavailableTransition` (P2:
+  `pageCurl`, `objectZoom`) → `fade`; `reducedMotion` → `fade` 300 ms `easeInOut` (a cut stays a
+  cut; `fade.through` is kept); Magic Move without slides (`magicMoveNoSlides`) or without any
+  match (`magicMoveNoMatches`, §8.5) → `fade` with the Magic Move duration. Springs last their
+  settle time (as builds).
+- **Snapshot frames** (`TransitionFrame {progress, quads, backdrop, magicMove}`): each slide is
+  drawn as one or more `TransitionQuad {layer (outgoing|incoming), transform (slide space, 3D
+  types with the perspective entry `(3, 2) = −1 / (2.2 × width)` — the timeline's sign, +z toward
+  the viewer — so renderers need the projective divide), opacity, clip (`ClipSpec` wipe/iris),
+  dissolve (`DissolveState`), shade (0..1 toward black), region (a part of the slide: doorway
+  halves), visible (back-face culled / transparent)}` in paint order; `backdrop` = the *fade
+  through* color (null = letterbox/canvas). `frontFacing(m, rect)` and `faceShade` (12 %) are
+  exported. Geometry per type: `direction` is where the slides **move** (`left`: the new slide comes
+  from the right); push/slide/cover (old dims 20 %)/uncover translate by the slide size; wipe/iris
+  clip the incoming slide with the build `ClipSpec` semantics; zoom `in` grows the new slide 0.25 →
+  1 (fading in over the first 40 %), `out` shrinks the old 1 → 0.25 (fading over the last 40 %);
+  flip = one card turning 180° (old face until halfway, then the new back face) pushed back by
+  `sin(πp) × span / 2` so the near edge never grows; cube = faces at ±90° about the cube center
+  (depth = half the width/height), pushed back by `0.25 w sin(πp)`; doorway = the old slide's halves
+  turning ±75° about their outer edges toward the viewer (fading over the last 40 %) while the new
+  one scales 0.6 → 1 out of 40 % shade; swap = the slides arc sideways (±0.55 w) and back (0.7 w)
+  with ±25° yaw, trading the front at the middle; revolve = the old slide swinging 90° away about
+  its leading edge (fading over the last 30 %) over the new one. Shade of turned faces =
+  `12 % × (1 − cos θ)`.
+- **Reverse** (`reverseOnBack`, §6): pass the *left* slide's transition with `reverse: true`;
+  snapshot types play the forward frames backwards with the easing applied forwards and the layers
+  swapped (push left looks like push right); Magic Move compiles from the left slide to the entered
+  one, with `fadeUnmatched: before`/`after` swapped.
+- **Magic Move input.** `MagicMoveSlide {slideId, width, height, elements, frame, chrome,
+  chromeKey, backgroundKey}` via `MagicMoveSlide.fromDeck(deck, slideId, {frame, resolved, scene,
+  textLayout})`: top-level elements visible in `frame` (in-built and `hidden` elements left out),
+  each a `MagicMoveElement {id, kind, matchKey, name, frame, rotation, literalRotation, opacity, z,
+  signature (pass 2), contentKey (equal = same drawing), geometryKey (shape type + adjust),
+  fillColor, strokeColor, outline (shape body path), text (`MagicMoveText {plain, layout, origin,
+  rangeBox?}`), code (`MagicMoveCode {code, language, stateIndex, layout, origin}` of the displayed
+  state, laid out by `CodeElementLayout`'s composer), chart (`MagicMoveChart {source (link or data
+  hash), dataHash, camera}`), image (`{src, crop}`), children, state}`; `geometry` is what the
+  audience sees (the frame state's transform decomposed: persistent grow/spin/motion of A's final
+  frame is where the morph starts). Without a scene the core `SlideTextLayout` builds one (≈ 6 ms
+  for 60 elements; pass the stage's scenes when at hand).
+- **Matching** (`MagicMoveMatcher.match(from, to, {options})` → `MagicMoveMatches {pairs,
+  outgoing, incoming, allPairs, pairOf}`, `MagicMoveMatch {from, to, pass (key|content|name),
+  children}`) is §8.3 as written: keys with duplicate keys paired by z rank; content signatures
+  per kind (text: normalized plain text; shape: geometry + text; image: `src`; chart: link
+  `spreadsheet/chart` or data hash; code: displayed code; icon: set + name) greedily by nearest
+  center (ties: outgoing then incoming order); pass 3 (kind + non-empty name) is built; groups
+  match their children recursively.
+- **Plan** (`MagicMovePlan.compile(from, to, {spec, reverse, cameraLerp})`; `TransitionPlan
+  .magicMove`): `pairs` (`MorphPair {match, mode, index (reading order), logSize, rotationDelta,
+  fromAuthored, toAuthored, path, text, code, fromCamera, toCamera, chartMorph}`), `durationMs`
+  (= morph + stagger × (pairs − 1)), `layers`, `outgoingIds`/`incomingIds`. Modes: `replace`
+  (same `contentKey`: only B is drawn, stretched from its box onto the interpolated geometry;
+  fill/stroke colors blend as `colors` overrides), `path` (shapes whose outline changed:
+  `PathMorph` — 128 points by arc length in box-relative coordinates, orientation matched, start
+  aligned by minimal squared distance; multi-subpath outlines and open/closed mixes crossfade),
+  `glyphs` (text boxes with `word`/`character` matching, **and object-level text whose plain text is
+  identical** — it moves glyph by glyph so size and color interpolate: `TextMorph` aligns words or
+  graphemes with `SequenceDiff`; matched characters form **runs** — consecutive in both texts, on
+  one line and one style run in both layouts, spaces between matched tokens joining —; > 2,000
+  characters fall back to words), `crossfade` (different content; text boxes object-level over the
+  middle 60 %, rigidly placed — text is never stretched), `group` (both group nodes drawn; children
+  morph as pairs of their own; unmatched children ride with their group's interpolated box).
+  Geometry: center linear, size linear or in log space when both boxes have the same aspect ratio
+  (there is no `lockAspect` column), rotation shortest or literal (stored values), opacity linear.
+  Code pairs get a `TokenMorphPlan` (SL-26, tokenized with `CachedCodeTokenizer.shared`); chart
+  pairs interpolate the camera through the `ChartCameraLerp` seam (default `ChartCameraView.lerp`
+  → `wonky_charts` `Chart3DView.lerp`, SL-27) and mark `chartMorph` when the source is the same
+  but the data differs (`ChartSceneMorph`, 08 §9.4, is the renderer's); image pairs with the same
+  file interpolate the crop. Timing (`fadeUnmatched`): `together` = everything over the whole
+  duration; `before` = unmatched fade out over the first 35 %, the morph over the rest; `after` =
+  the morph over the first 65 %, unmatched fade in after; each pair starts `stagger × index` later.
+- **Frames** (`MagicMovePlan.frameAt(ms)` → `MagicMoveFrame {progress, outgoing, incoming,
+  layers, pairs}`): two ordinary `SlideFrame`s — `outgoing` for A's scene (starts from A's final
+  frame), `incoming` for B's (starts from B's initial frame; its `background.opacity` is the
+  background crossfade) — so the stage draws both scenes with the usual `ElementVisualState`s, plus
+  `layers` (paint order: A's background when the backgrounds differ, B's, layout/master decorations
+  (A's hidden when both slides share them, else crossfading), then B's order with each outgoing
+  element at its A rank next to its nearest matched neighbor and A's half of non-replacing pairs
+  right below B's) and `pairs` (`MorphPairState {mode, progress, contentMix, geometry, path (in B's
+  local space), camera, codeProgress (linear), crop}` for what frames can't express). Glyph runs are
+  `TextPartState`s of A's element (element-local transforms moving each run from its old to its new
+  box, scaled by the font-size ratio, with the new `TextPartState.color` blend); B hides its matched
+  ranges and fades in its new ones over the second half, A fades its removed ones over the first
+  half. `SlideFrame.toJson` writes a changed background under `@background`.
+- **Measured** (VM, the §9.7 fixture: 60 elements per slide incl. a 1,000-character text matched by
+  character, 40 shapes moving/recoloring/changing outline, 4 charts at new angles): plan ≈ 1.4 ms
+  (budget 15 ms), `frameAt` ≈ 0.35 ms.
+
+Deviations and decisions:
+- Magic Move **only uses glyph runs for text boxes**; shapes with text morph as shapes (stretch)
+  with their text crossfading when it differs.
+- Same-type shapes don't interpolate their adjust parameters; different adjustments morph the
+  outline (`path`). Gradients, shadows, corner radius and stroke width are not interpolated
+  (stretch, or crossfade when the fill kind differs) — P1.
+- `ElementVisualState.opacity` may exceed 1 in Magic Move frames (the product with the element's
+  own opacity interpolates); renderers clamp the product.
+- Group children carry states of their own (renderers apply nested element states, SL-29); a
+  persistent transform on an outgoing *group* is not composed into its children's geometry.
+- Not in the core (SL-29): plan caching per (A hash, B hash, transition JSON) and prefetch,
+  snapshotting, the frame-budget degradation to crossfades, live text relayout during morphs.
+
 ---
 
 ## 10. Interaction with other features
@@ -895,10 +1111,8 @@ no custom render objects yet; `SlideScenePainter` applies each element's `Elemen
 (visibility, opacity via `saveLayer` only below 1, the state transform pre-multiplied in slide
 space, blur) and draws paths, images (`SlideImageCache`), text (the Flutter engine's
 paragraphs), charts (`paintChartScene`) and code. Thumbnails, snapshots and PNG export record
-the same painter into a `ui.Picture` (`recordScene`). Still to come with SL-29: part runs,
-typewriter clips, `drawProgress`, shader masks and dissolve, per-element compositing while
-animating (`RenderSlideElement`), and the `TextPartGeometryProvider` (9.4) on top of
-`FlutterTextLayoutEngine`'s positioned runs.
+the same painter into a `ui.Picture` (`recordScene`). SL-29 added every remaining frame field
+(§12.4).
 
 ### 12.2 Transitions
 
@@ -921,6 +1135,10 @@ animating (`RenderSlideElement`), and the `TextPartGeometryProvider` (9.4) on to
 
 ### 12.3 When to use `flutter_scene`
 
+**As built (SL-29): the five 3D transition types render with `flutter_scene` where Flutter GPU
+runs (the web build), with this section's 2D projective path as the fallback (§12.4).** The
+original decision:
+
 **Decision**: v1 transitions and builds use Flutter's 2D compositor with `Matrix4` perspective
 (true 3D projection of flat quads is all that cube, flip, doorway, swap and revolve need). The
 `flutter_scene` GPU backend is used **only** for 3D charts (shared backend from
@@ -931,6 +1149,88 @@ reflections) may use `flutter_scene` behind the same lazy starter, with a 2D fal
 when the GPU backend is unavailable.
 
 ---
+
+### 12.4 As built (SL-29): player, stage frames, transitions
+
+`wonky_slides/lib/features/{motion,transitions}/` (the player is not under `motion/player/`
+only: the shared widgets sit next to it).
+
+- **Player** (`motion/player/slide_player.dart`). `SlidePlayer({timelineOf, planOf})` is pure
+  state over a caller clock: `show(slide, step)` (settled), `playStep(i)`, `enter(slide, {from,
+  fromStep, fromFrame, toStep, reverse, playStep0, elapsed})` (transition, then step 0 — or the
+  settled `toStep` when going back or jumping to a step), `finish()`, `degrade(now)`,
+  `isRunning(now)` (a looping emphasis past its first cycle doesn't count), `needsTicks(now)`,
+  `viewAt(now)` → `PlayerView`: `SlidePlayerView(slideId, step, frame)`,
+  `TransitionPlayerView(plan, ms, frame, fromSlideId, fromFrame, toFrame)` or
+  `CrossfadePlayerView` (degraded). `TransitionRequest {fromSlideId, fromStep, fromFrame,
+  toSlideId, toStep (−1 = initial), toFrame, reverse}` is what callers compile with
+  `TransitionCompiler.between` and cache (`key`). Every view is a function of the time, so tests
+  seek exact frames. `seek(step, ms)` of §6 is `playStep(step, elapsed: ms)` / `show`.
+- **Widgets.** `MotionStage({view, renderer, scale?, letterbox?, reducedMotion})` draws any
+  `PlayerView` fitted and centered (present mode, the presenter view, the Animate tab's previews);
+  `SlidePlayback` + `SlidePlaybackStage` (a player on a clock with its own `Ticker`) drive
+  previews; `MotionTicker` ticks only while something runs; `PlayerStage` is the drawing core.
+- **Frame content** (`motion/render/`). `MotionScenes.apply(scene, frame)` recomposes what
+  painting can't express: code elements through SL-31's `CodeFrames.applyFrame` (states, steps,
+  type-in, morphs) and charts through `SlideChartLayout.build(reveal:, view:, fitViews:)` with
+  `SlideChartMotion.reveal/view/fitViews/baseView` when the renderer's chart source is a
+  `SlideChartLayout` (SL-32). The stage painter (`stage/scene_painter.dart`) applies the rest:
+  nodes inherit their element's state (`paintNode(owner:)`), the element group applies
+  transform (perspective included), opacity (product clamped), blur (σ ≤ 40 su) and the
+  **mask** (`MotionMask`: hard wipe/iris clips; feathered wipes as a layer × gradient
+  `dstIn`; dissolve as a seeded noise image — one gray pixel per cell, drawn once per seed
+  and grid with `toImageSync` — scaled over the box with a steep alpha color matrix:
+  deterministic, no shader asset); `MotionNodePaint` does fill/stroke color changes (OKLab),
+  `drawProgress`/`drawReverse` (`PathMetrics.extractPath`; outline-less shapes draw with their
+  fill color; glyph elements wipe), `fillOpacity` and the text box's `backgroundOpacity`;
+  `MotionTextPainter` draws **part runs** on the laid-out paragraphs (no relayout): characters
+  outside animated parts in one pass clipped to their glyph boxes, each non-resting part on its
+  own as glyph runs (one-line paragraphs per style run at the laid-out positions, cached per
+  range; element-local transform, opacity × dim, clip, blur, `dimColor`/Magic Move color tint),
+  typewriter reveals with a caret, highlight sweeps (marker/box behind, underline above), text
+  color changes. Glyph boxes come from `TextRangeGeometry` (Flutter `getBoxesForRange` through
+  `PlacedParagraph.start/length/marker`, added to `FlutterTextLayoutEngine`; cached per layout).
+  `FrameDiff` compares states structurally, so a stage node repaints only when its elements'
+  states changed (frames create new state objects every tick).
+- **Transitions** (`transitions/`). Snapshot types: `SlideSnapshots` rasterizes both slides in
+  their frames at device resolution (`recordScene` → `toImageSync`, LRU of 6, ≤ 4096 px,
+  `SlideSnapshots.of(renderer)` shared) and `TransitionPainter` draws `frame.quads` back to front
+  (canvas transform incl. the perspective entry — Skia does the projective divide —, region,
+  wipe/iris/dissolve masks, shade as a `srcATop` black filter, opacity, `backdrop`); content may
+  leave the slide rect (the letterbox shows behind). Magic Move renders live
+  (`MagicMovePainter`): both scenes in `layers` order with their frames (decorations without an
+  id follow their background), refined by `MagicMoveScenes.refine` (morphed outline replaces
+  the incoming body path, interpolated image crop), `MagicMoveCharts` (same-source charts with
+  different data morph with `ChartSceneMorph` at full opacity) and `MagicMoveCodeMorphs` (two
+  code elements matched across slides draw the pair's `TokenMorphPlan` glyphs inside the
+  incoming box; the outgoing one hides).
+- **3D on the GPU** (decision revisited, §12.3). `transitions/gpu/gpu_transitions.dart`:
+  `GpuTransitions` renders flip, cube, doorway, swap and revolve with `flutter_scene` (Flutter
+  GPU; WebGL2 on the web) — the snapshots as unlit display-referred textured quads (shade via
+  the base color factor, depth buffer, MSAA) seen by a camera at 2.2 × the width in front of
+  the slide center, the same projection as the core frames (`body = view⁻¹ · quad.transform`,
+  z mirrored). It starts lazily when a 3D transition is prefetched, uploads both snapshots as
+  textures ahead (`Texture2D.fromImage`), and is enabled on the web only
+  (`GpuTransitions.enabled`); without Impeller/WebGL2, before the textures are uploaded, or on
+  any error the 2D projective painter draws the frame (identical geometry).
+- **Presenting.** See [10](10-presenting-and-pdf.md) §8.1.
+- **Budgets** (`motion/player/motion_budget.dart`). `MotionBudget.limitBlur` keeps blur on the
+  first 4 elements/text parts (element id order) and caps σ at 40 su; the rest play as their
+  fade. `FrameBudget` counts animation frames whose interval exceeds 24 ms (pauses > 250 ms
+  don't count); 10 in a row → `SlidePlayer.degrade`: the rest of the running step or transition
+  (≤ 1.5 s) is a crossfade of snapshots, the presenter view shows *Reduced effects*, and
+  `slides.motion.degraded` is logged (no telemetry pipeline yet).
+- **Reduced motion** is the compiler's (§13): timelines with `CompileOptions.reducedMotion`,
+  transitions with `TransitionOptions.reducedMotion` (300 ms fades, Magic Move → crossfade); the
+  deck's *Reduce motion while presenting* applies too. The persistent-emphasis "instant + 200 ms
+  crossfade" stays the core's jump (the frame model has no crossfade).
+- **Measured** (06 §14 budgets): Chrome (the Claude browser pane), release `--wasm`, 2048×1536 device px on a 120 Hz display, `benchmark/motion_bench.dart` (50 animating elements with every build effect, a 2,000-character by-character build, a typewriter, all 14 snapshot/3D transitions, a 61-pair Magic Move), warm second pass: engine build p95 1.5 ms and raster p95 2.0 ms over 3,961 frames (per segment: 50 elements raster p95 3.9 ms; 3D transitions on the GPU build p95 ≤ 3.6 ms, raster ≤ 1 ms); vsync interval p50 8.3 ms, p95 ≤ 10.3 ms in most segments (single missed 120 Hz vsyncs in flip/swap). Offscreen paint + raster + GPU round trip at 1920×1080: 2,000-character build p50 3.3 / p95 8.5 ms (15.4 ms before animating parts drew their own glyph runs), 50 elements p50 6.9 / p95 14.4 ms, transitions p95 ≤ 2.4 ms. Cold first pass: one-off spikes (font loading, the GPU renderer's first frame ≈ 0.5 s, the first dissolve noise) — now warmed/prefetched (GPU warm-up frame, noise as one vertex list, prefetch). The benchmark runs by hand (`flutter build web --wasm --target benchmark/motion_bench.dart …`; `?gpu=0` the 2D path, `?offscreen=1` without a visible page, `?freeze=<slide>&at=<ms>` one frame for visual checks); the GPU and 2D frames of the 3D types were compared visually (identical geometry).
+
+Deviations: dissolve uses a noise image instead of a `FragmentProgram` shader (no shader asset,
+identical on every backend; cells fade over 1/24 of the amount); after-build `dimColor` recolors
+at full opacity once settled (the core sets `dimColor` only on settled parts, so it pops at the
+end of the 300 ms dim); `RenderSlideElement` was not needed — per-element `RepaintBoundary`s
+with structural frame diffs give the same per-element compositing.
 
 ## 13. Reduced motion
 

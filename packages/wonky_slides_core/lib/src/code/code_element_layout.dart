@@ -119,6 +119,8 @@ final class CodeElementLayout implements CodeSceneSource {
       barColorOverride: data.highlightStyle.barColor == null
           ? null
           : theme.colorString(data.highlightStyle.barColor),
+      calloutColor: theme.colorOf('accent1'),
+      calloutFontFamily: theme.font(const FontRef('@body')).family,
     );
   }
 

@@ -108,7 +108,9 @@ class _CanvasRegionState extends State<CanvasRegion> {
 
   Widget _content(BuildContext context, BoxConstraints c) {
     final entry = ed.currentEntry;
-    if (entry == null) return _empty(context);
+    // Masters mode (SL-28) edits a layout or master: no empty-deck state.
+    if (ed.editsMasters && ed.surfaceId == null) return const SizedBox();
+    if (entry == null && !ed.editsMasters) return _empty(context);
     // The real canvas (SL-12) once the screen attached its controller.
     final canvas = SlideCanvasController.of(ed);
     if (canvas != null) {
@@ -118,6 +120,7 @@ class _CanvasRegionState extends State<CanvasRegion> {
         onContextMenu: widget.onContextMenu,
       );
     }
+    if (entry == null) return const SizedBox();
     final slide = ed.resolver.resolve(entry.id);
     if (slide == null) return const SizedBox.shrink();
     final l = slidesL10n(context);

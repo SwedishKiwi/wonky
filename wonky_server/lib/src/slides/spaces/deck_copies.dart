@@ -1,6 +1,7 @@
 import 'package:clock/clock.dart';
 import 'package:serverpod/serverpod.dart';
 import 'package:wonky_slides_core/copy.dart';
+import 'package:wonky_slides_core/model.dart' show DeckModel;
 
 import '../../platform/common/actor.dart';
 import '../../platform/common/errors.dart';
@@ -36,7 +37,8 @@ class CopiedDeck {
 
 /// Server-side deck copies (Slides 02 §9.3): *Make a copy*
 /// (`drive.copy`), presentations created from a template item
-/// (`drive.createPresentation(templateUuid)`) and, later, version copies.
+/// (`drive.createPresentation(templateUuid)`) and version copies
+/// (`slidesVersion.makeCopy`, [sourceModel]).
 /// Rows are rewritten by the core `DeckCopier` (new ids, deterministic
 /// ids for the new deck, references remapped) and written through
 /// [ServerSlidesWriter] into a server-created deck space; uploaded images
@@ -60,6 +62,7 @@ abstract final class DeckCopies {
     UuidValue? parentUuid,
     String? description,
     String quotaReason = QuotaReason.copy,
+    DeckModel? sourceModel,
   }) async {
     if (source.kind != DriveItemKind.presentation ||
         source.contentRef == null) {
@@ -74,17 +77,17 @@ abstract final class DeckCopies {
     );
     // Checks the folder before anything is created.
     await DriveService.parentFor(session, actor, parentUuid);
-    final sourceDeck = await HeadlessDeckCache.open(
-      session,
-      source.contentRef!,
-    );
+    // A version copy (Slides 09 §4.5) passes the version's model.
+    final sourceDeck =
+        sourceModel ??
+        (await HeadlessDeckCache.open(session, source.contentRef!)).model;
     final space = await SpaceService.createSpace(
       session,
       actor,
       kind: SpaceKind.deck,
     );
     final copy = DeckCopier.copy(
-      sourceDeck.model,
+      sourceDeck,
       deckId: space.uuid,
       userId: actor.authUserId.uuid,
       now: clock.now().toUtc(),

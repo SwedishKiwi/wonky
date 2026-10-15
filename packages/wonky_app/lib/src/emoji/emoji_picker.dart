@@ -5,11 +5,66 @@ import 'package:flutter/widgets.dart';
 import 'package:shad/shad.dart';
 
 import '../shell/anchored_popover.dart';
+import '../core/l10n_or_english.dart';
 import 'emoji_catalog.dart';
 import 'emoji_prefs.dart';
 
-/// Stable widget keys of the emoji picker (suite 15 §7).
+/// The stable widget keys of the emoji picker of one app (suite 15 §7):
+/// `<app>.emoji.*` and `<app>.dialog.emoji`.
+@immutable
+final class EmojiPickerKeySet {
+  const EmojiPickerKeySet(this.app);
+
+  /// The key prefix (`write`, `slides`).
+  final String app;
+
+  ValueKey<String> get picker => ValueKey<String>('$app.emoji.picker');
+  ValueKey<String> get dialog => ValueKey<String>('$app.dialog.emoji');
+  ValueKey<String> get search => ValueKey<String>('$app.emoji.search');
+  ValueKey<String> get grid => ValueKey<String>('$app.emoji.grid');
+  ValueKey<String> get preview => ValueKey<String>('$app.emoji.preview');
+  ValueKey<String> get skinTone => ValueKey<String>('$app.emoji.skinTone');
+  ValueKey<String> get tabRecent => ValueKey<String>('$app.emoji.tab.recent');
+  ValueKey<String> get empty => ValueKey<String>('$app.emoji.empty');
+  ValueKey<String> get suggestions =>
+      ValueKey<String>('$app.emoji.suggestions');
+
+  /// Category tab (`EmojiCategory.id`).
+  ValueKey<String> tab(String id) => ValueKey<String>('$app.emoji.tab.$id');
+
+  /// Grid cell of the emoji whose base (untoned) char is [char].
+  ValueKey<String> cell(String char) =>
+      ValueKey<String>('$app.emoji.cell.$char');
+
+  /// Cell in the "Recently used" section (the stored string).
+  ValueKey<String> recent(String char) =>
+      ValueKey<String>('$app.emoji.recent.$char');
+
+  /// Skin tone option 0..5.
+  ValueKey<String> skinToneOption(int tone) =>
+      ValueKey<String>('$app.emoji.skinTone.$tone');
+
+  /// Row [index] of [EmojiSuggestionList].
+  ValueKey<String> suggestion(int index) =>
+      ValueKey<String>('$app.emoji.suggestion.$index');
+
+  @override
+  bool operator ==(Object other) =>
+      other is EmojiPickerKeySet && other.app == app;
+
+  @override
+  int get hashCode => app.hashCode;
+}
+
+/// Stable widget keys of the emoji picker (suite 15 §7): Write's
+/// (`write.emoji.*`, the widgets' default) and Slides' ([slides]).
 abstract final class EmojiPickerKeys {
+  /// Write's keys (the default).
+  static const write = EmojiPickerKeySet('write');
+
+  /// Slides' keys (`slides.emoji.*`).
+  static const slides = EmojiPickerKeySet('slides');
+
   static const picker = ValueKey<String>('write.emoji.picker');
   static const dialog = ValueKey<String>('write.dialog.emoji');
   static const search = ValueKey<String>('write.emoji.search');
@@ -21,24 +76,20 @@ abstract final class EmojiPickerKeys {
   static const suggestions = ValueKey<String>('write.emoji.suggestions');
 
   /// Category tab (`EmojiCategory.id`).
-  static ValueKey<String> tab(String id) =>
-      ValueKey<String>('write.emoji.tab.$id');
+  static ValueKey<String> tab(String id) => write.tab(id);
 
   /// Grid cell of the emoji whose base (untoned) char is [char].
-  static ValueKey<String> cell(String char) =>
-      ValueKey<String>('write.emoji.cell.$char');
+  static ValueKey<String> cell(String char) => write.cell(char);
 
   /// Cell in the "Recently used" section (the stored string).
-  static ValueKey<String> recent(String char) =>
-      ValueKey<String>('write.emoji.recent.$char');
+  static ValueKey<String> recent(String char) => write.recent(char);
 
   /// Skin tone option 0..5.
   static ValueKey<String> skinToneOption(int tone) =>
-      ValueKey<String>('write.emoji.skinTone.$tone');
+      write.skinToneOption(tone);
 
   /// Row [index] of [EmojiSuggestionList].
-  static ValueKey<String> suggestion(int index) =>
-      ValueKey<String>('write.emoji.suggestion.$index');
+  static ValueKey<String> suggestion(int index) => write.suggestion(index);
 }
 
 /// Shows [WonkyEmojiPicker] in a dialog (or, with [anchor] in global
@@ -49,10 +100,13 @@ Future<void> showEmojiPickerDialog(
   EmojiPrefs? prefs,
   Rect? anchor,
   EmojiCatalog? catalog,
+  EmojiPickerKeySet keys = EmojiPickerKeys.write,
 }) {
+  final l = wonkyAppL10nOrEnglish(context);
   Widget picker(BuildContext ctx) => WonkyEmojiPicker(
     prefs: prefs,
     catalog: catalog,
+    keys: keys,
     onSelected: (e) {
       Navigator.of(ctx).pop();
       onSelected(e);
@@ -64,7 +118,7 @@ Future<void> showEmojiPickerDialog(
       context,
       anchor: anchor,
       width: _pickerWidth,
-      barrierLabel: 'Close emoji picker',
+      barrierLabel: l.emojiPickerClose,
       builder: (ctx) => SizedBox(
         height: math.min(_pickerHeight, MediaQuery.sizeOf(ctx).height - 32),
         child: picker(ctx),
@@ -74,8 +128,8 @@ Future<void> showEmojiPickerDialog(
   return showShadDialog<void>(
     context: context,
     builder: (ctx) => ShadDialog(
-      key: EmojiPickerKeys.dialog,
-      semanticLabel: 'Emoji',
+      key: keys.dialog,
+      semanticLabel: l.emojiDialogLabel,
       closeIcon: const SizedBox.shrink(),
       padding: EdgeInsets.zero,
       scrollable: false,
@@ -110,7 +164,11 @@ class WonkyEmojiPicker extends StatefulWidget {
     this.initialQuery = '',
     this.catalog,
     this.bundle,
+    this.keys = EmojiPickerKeys.write,
   });
+
+  /// The app's widget keys.
+  final EmojiPickerKeySet keys;
 
   /// Called with the chosen emoji (skin tone applied). The pick has already
   /// been recorded in [prefs].
@@ -186,6 +244,7 @@ class _WonkyEmojiPickerState extends State<WonkyEmojiPicker> {
   int? _hover;
   int _columns = 9;
   int _section = -1;
+  String _recentLabel = 'Recently used';
 
   @override
   void initState() {
@@ -283,7 +342,7 @@ class _WonkyEmojiPickerState extends State<WonkyEmojiPicker> {
           _Cell(e.withSkinTone(tone), e, false),
       ]);
     } else {
-      addSection('Recently used', -1, [
+      addSection(_recentLabel, -1, [
         for (final r in _prefs.recent) _Cell(r, catalog.byChar(r), true),
       ]);
       for (var c = 0; c < catalog.categories.length; c++) {
@@ -488,15 +547,18 @@ class _WonkyEmojiPickerState extends State<WonkyEmojiPicker> {
   Widget build(BuildContext context) {
     final theme = ShadTheme.of(context);
     final cs = theme.colorScheme;
+    final l = wonkyAppL10nOrEnglish(context);
+    _recentLabel = l.emojiRecentlyUsed;
+    final k = widget.keys;
     _layout(_columns);
     return Focus(
       canRequestFocus: false,
       skipTraversal: true,
       onKeyEvent: _onRootKey,
       child: Semantics(
-        key: EmojiPickerKeys.picker,
+        key: k.picker,
         container: true,
-        label: 'Emoji picker',
+        label: l.emojiPickerLabel,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
@@ -510,11 +572,11 @@ class _WonkyEmojiPickerState extends State<WonkyEmojiPicker> {
                       skipTraversal: true,
                       onKeyEvent: _onSearchKey,
                       child: ShadInput(
-                        key: EmojiPickerKeys.search,
+                        key: k.search,
                         controller: _query,
                         focusNode: _searchFocus,
                         autofocus: true,
-                        placeholder: const Text('Search emoji'),
+                        placeholder: Text(l.emojiSearch),
                         leading: Icon(
                           LucideIcons.search,
                           size: 16,
@@ -547,8 +609,10 @@ class _WonkyEmojiPickerState extends State<WonkyEmojiPicker> {
   Widget _body(BuildContext context) {
     final theme = ShadTheme.of(context);
     final muted = theme.textTheme.muted;
+    final l = wonkyAppL10nOrEnglish(context);
+    final k = widget.keys;
     if (_loadError != null) {
-      return Center(child: Text('Emoji could not be loaded', style: muted));
+      return Center(child: Text(l.emojiLoadFailed, style: muted));
     }
     if (_catalog == null) {
       return const Center(child: ShadSpinner(size: 20));
@@ -569,9 +633,9 @@ class _WonkyEmojiPickerState extends State<WonkyEmojiPicker> {
         }
         if (_rows.isEmpty) {
           return Center(
-            key: EmojiPickerKeys.empty,
+            key: k.empty,
             child: Text(
-              _searching ? 'No emoji found' : 'No emoji',
+              _searching ? l.emojiNoneFound : l.emojiNone,
               style: muted,
             ),
           );
@@ -580,9 +644,9 @@ class _WonkyEmojiPickerState extends State<WonkyEmojiPicker> {
           focusNode: _gridFocus,
           onKeyEvent: _onGridKey,
           child: Semantics(
-            label: _searching ? 'Search results' : 'Emoji',
+            label: _searching ? l.emojiSearchResults : l.emojiDialogLabel,
             child: ListView.builder(
-              key: EmojiPickerKeys.grid,
+              key: k.grid,
               controller: _scroll,
               padding: const EdgeInsets.symmetric(horizontal: 4),
               itemCount: _rows.length,
@@ -616,8 +680,8 @@ class _WonkyEmojiPickerState extends State<WonkyEmojiPicker> {
         for (var j = 0; j < row.cells.length; j++)
           _EmojiCell(
             key: row.cells[j].recent
-                ? EmojiPickerKeys.recent(row.cells[j].text)
-                : EmojiPickerKeys.cell(row.cells[j].emoji!.char),
+                ? widget.keys.recent(row.cells[j].text)
+                : widget.keys.cell(row.cells[j].emoji!.char),
             cell: row.cells[j],
             active: row.start + j == _active,
             highlighted:
@@ -644,6 +708,7 @@ class _WonkyEmojiPickerState extends State<WonkyEmojiPicker> {
   Widget _tabs(BuildContext context) {
     final catalog = _catalog!;
     final cs = ShadTheme.of(context).colorScheme;
+    final l = wonkyAppL10nOrEnglish(context);
     Widget tab({
       required Key key,
       required String label,
@@ -673,14 +738,14 @@ class _WonkyEmojiPickerState extends State<WonkyEmojiPicker> {
       child: Row(
         children: [
           tab(
-            key: EmojiPickerKeys.tabRecent,
-            label: 'Recently used',
+            key: widget.keys.tabRecent,
+            label: l.emojiRecentlyUsed,
             icon: Icon(LucideIcons.clock, size: 16, color: cs.foreground),
             section: -1,
           ),
           for (var c = 0; c < catalog.categories.length; c++)
             tab(
-              key: EmojiPickerKeys.tab(catalog.categories[c].id),
+              key: widget.keys.tab(catalog.categories[c].id),
               label: catalog.categories[c].name,
               icon: _EmojiGlyph(catalog.categories[c].icon, size: 16),
               section: c,
@@ -692,6 +757,15 @@ class _WonkyEmojiPickerState extends State<WonkyEmojiPicker> {
 
   Widget _skinToneButton(BuildContext context) {
     final tone = _prefs.skinTone;
+    final l = wonkyAppL10nOrEnglish(context);
+    final names = [
+      l.emojiSkinToneDefault,
+      l.emojiSkinToneLight,
+      l.emojiSkinToneMediumLight,
+      l.emojiSkinToneMedium,
+      l.emojiSkinToneMediumDark,
+      l.emojiSkinToneDark,
+    ];
     final hand = Emoji(
       char: '✋',
       name: 'raised hand',
@@ -706,8 +780,8 @@ class _WonkyEmojiPickerState extends State<WonkyEmojiPicker> {
         children: [
           for (var t = 0; t <= 5; t++)
             ShadIconButton.ghost(
-              key: EmojiPickerKeys.skinToneOption(t),
-              semanticLabel: '${skinToneNames[t]} skin tone',
+              key: widget.keys.skinToneOption(t),
+              semanticLabel: l.emojiSkinToneOption(names[t]),
               width: 32,
               height: 32,
               padding: EdgeInsets.zero,
@@ -724,10 +798,10 @@ class _WonkyEmojiPickerState extends State<WonkyEmojiPicker> {
         ],
       ),
       child: ShadTooltip(
-        builder: (_) => Text('Skin tone: ${skinToneNames[tone]}'),
+        builder: (_) => Text(l.emojiSkinToneCurrent(names[tone])),
         child: ShadIconButton.ghost(
-          key: EmojiPickerKeys.skinTone,
-          semanticLabel: 'Skin tone: ${skinToneNames[tone]}',
+          key: widget.keys.skinTone,
+          semanticLabel: l.emojiSkinToneCurrent(names[tone]),
           width: 36,
           height: 36,
           padding: EdgeInsets.zero,
@@ -746,14 +820,17 @@ class _WonkyEmojiPickerState extends State<WonkyEmojiPicker> {
     final cell = index != null && index < _cells.length ? _cells[index] : null;
     final shortcode = cell?.emoji?.shortcodes.firstOrNull;
     return SizedBox(
-      key: EmojiPickerKeys.preview,
+      key: widget.keys.preview,
       height: 48,
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 12),
         child: cell == null
             ? Align(
                 alignment: Alignment.centerLeft,
-                child: Text('Pick an emoji', style: theme.textTheme.muted),
+                child: Text(
+                  wonkyAppL10nOrEnglish(context).emojiPickAnEmoji,
+                  style: theme.textTheme.muted,
+                ),
               )
             : Row(
                 children: [
@@ -889,7 +966,11 @@ class EmojiSuggestionList extends StatelessWidget {
     this.skinTone = 0,
     this.maxRows = 8,
     this.width = 280,
+    this.keys = EmojiPickerKeys.write,
   });
+
+  /// The app's widget keys.
+  final EmojiPickerKeySet keys;
 
   final List<Emoji> matches;
   final int highlighted;
@@ -908,7 +989,7 @@ class EmojiSuggestionList extends StatelessWidget {
     final shown = matches.take(maxRows).toList();
     return ExcludeFocus(
       child: Container(
-        key: EmojiPickerKeys.suggestions,
+        key: keys.suggestions,
         width: width,
         padding: const EdgeInsets.all(4),
         decoration: BoxDecoration(
@@ -935,7 +1016,7 @@ class EmojiSuggestionList extends StatelessWidget {
     final text = e.withSkinTone(skinTone);
     final code = e.shortcodes.firstOrNull;
     return Semantics(
-      key: EmojiPickerKeys.suggestion(i),
+      key: keys.suggestion(i),
       button: true,
       selected: selected,
       label: e.name,

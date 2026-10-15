@@ -9,6 +9,7 @@ import 'mcp/drive_tools.dart';
 import 'mcp/mcp_tool.dart';
 import 'mcp/sheets_script_tools.dart';
 import 'mcp/sheets_tools.dart';
+import 'mcp/slides_tools.dart';
 import 'mcp/ui_drive_tools.dart';
 import 'mcp/ui_sheets_tools.dart';
 import 'mcp/ui_tools.dart';
@@ -19,6 +20,7 @@ export 'mcp/drive_tools.dart';
 export 'mcp/mcp_tool.dart';
 export 'mcp/sheets_script_tools.dart';
 export 'mcp/sheets_tools.dart';
+export 'mcp/slides_tools.dart';
 export 'mcp/ui_drive_tools.dart';
 export 'mcp/ui_sheets_tools.dart';
 export 'mcp/ui_tools.dart';
@@ -55,9 +57,13 @@ abstract final class McpToolCatalog {
   /// Drive's headless tools are the shared `drive.*` ones.
   static final List<McpToolDefinition> drive = [...UiDriveTools.all];
 
+  /// (v2) The headless `slides.*` tools and `drive.create_presentation`
+  /// (Slides 11 §3).
+  static final List<McpToolDefinition> slides = [...SlidesTools.all];
+
   /// Looks up a shared tool by name.
   static McpToolDefinition? byName(String name) {
-    for (final t in [...write, ...sheets, ...drive]) {
+    for (final t in [...write, ...sheets, ...drive, ...slides]) {
       if (t.name == name) return t;
     }
     return null;

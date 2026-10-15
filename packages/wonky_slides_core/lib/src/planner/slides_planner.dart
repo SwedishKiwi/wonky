@@ -14,10 +14,12 @@ library;
 import 'dart:convert';
 import 'dart:math' as math;
 
+import 'package:wonky_charts/wonky_charts.dart' show ChartSnapshotColumns;
 import 'package:wonky_rich_text/wonky_rich_text.dart' show Delta;
 import 'package:wonky_sync_kit/rows.dart';
 import 'package:wonky_sync_models/ids.dart';
 
+import '../charts/chart_overrides.dart';
 import '../maintenance/deck_maintenance.dart';
 import '../model/api/deck_model.dart';
 import '../model/api/kinds.dart';
@@ -63,6 +65,7 @@ part 'parts/table_part.dart';
 part 'parts/motion_part.dart';
 part 'parts/theme_part.dart';
 part 'parts/repair_part.dart';
+part 'parts/layer_part.dart';
 
 /// The planner of every `SlidesOperation` (02 §12.1).
 final class SlidesPlanner implements SlidesMutationPlanner {

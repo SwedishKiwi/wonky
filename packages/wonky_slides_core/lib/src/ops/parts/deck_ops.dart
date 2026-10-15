@@ -16,10 +16,15 @@ final class CreateDeck extends SlidesOperation {
     this.size,
     this.appearance,
     this.firstLayoutKey = 'title',
+    this.defaultsJson,
   });
 
   final String deckId;
   final String title;
+
+  /// `Deck.defaultsJson` of the new deck (06 A-06-7: the user's *Default
+  /// transition* for new presentations, SL-30), or null.
+  final String? defaultsJson;
 
   /// Built-in theme key (`BuiltInThemes`).
   final String themeKey;

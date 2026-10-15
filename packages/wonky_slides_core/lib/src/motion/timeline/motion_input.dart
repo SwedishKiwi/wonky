@@ -3,8 +3,13 @@
 /// geometry (frames, text, part boxes, chart shape, code states).
 library;
 
+import 'dart:convert';
 import 'dart:math' as math;
 
+import 'package:wonky_code/wonky_code.dart'
+    show CodeTransitionMode, HighlightSteps;
+
+import '../../code/code_element_model.dart';
 import '../../model/api/deck_model.dart';
 import '../../model/api/deck_reader.dart';
 import '../../model/api/kinds.dart';
@@ -39,11 +44,41 @@ final class MotionCodeState {
   /// Number of highlight steps (`CodeState.highlight`, 07 §4.1).
   final int highlightSteps;
 
-  /// Counts the `|`-separated steps of a highlight expression.
-  static int stepsOf(String? highlight) {
-    if (highlight == null) return 0;
-    return highlight.split('|').where((s) => s.trim().isNotEmpty).length;
-  }
+  /// Counts the `|`-separated steps of a highlight expression (07 §4.1:
+  /// empty steps are kept — they are "show all" steps; SL-31).
+  static int stepsOf(String? highlight) => HighlightSteps.count(highlight);
+}
+
+/// Derived durations of a code element's builds (07 §5.3: a `type` change
+/// lasts as long as its typing script, the build's own duration is
+/// ignored; SL-31). [SlideMotionInput.fromDeck] supplies them from the
+/// element's `CodeElementModel`; without them the compiler estimates.
+abstract interface class CodeMotionTimings {
+  /// Duration of the `codeType` in-build (state 1 typed from empty).
+  int typeInMs();
+
+  /// Duration of the change from state [from] to [to] in [mode] (`type`,
+  /// `morph` or `instant`).
+  int transitionMs(int from, int to, String mode);
+}
+
+/// [CodeMotionTimings] of a `CodeElementModel` (built on first use).
+final class ModelCodeMotionTimings implements CodeMotionTimings {
+  /// Timings of [model] (called once, lazily).
+  ModelCodeMotionTimings(this._model);
+
+  final CodeElementModel Function() _model;
+  late final CodeElementModel model = _model();
+
+  @override
+  int typeInMs() => model.typeInDurationMs();
+
+  @override
+  int transitionMs(int from, int to, String mode) => model.transitionDurationMs(
+    from,
+    to,
+    override: CodeTransitionMode.fromName(mode),
+  );
 }
 
 /// An element as the timeline sees it.
@@ -59,6 +94,7 @@ final class MotionElement {
     this.partBoxes,
     this.chart,
     this.codeStates = const [],
+    this.codeTimings,
     this.hidden = false,
   });
 
@@ -87,6 +123,9 @@ final class MotionElement {
 
   /// Code states in order (code elements).
   final List<MotionCodeState> codeStates;
+
+  /// Derived code build durations (code elements; null = estimates).
+  final CodeMotionTimings? codeTimings;
 
   /// Not drawn (`SlideElement.hidden`).
   final bool hidden;
@@ -194,6 +233,15 @@ final class SlideMotionInput {
                   ),
               ]
             : const [],
+        codeTimings: rec.kind == ElementKind.code
+            ? ModelCodeMotionTimings(
+                () => CodeElementModel.fromDeck(
+                  deck,
+                  rec.id,
+                  _decodeMap(rec.dataJson),
+                ),
+              )
+            : null,
       );
     }
 
@@ -271,4 +319,14 @@ SuRect? _partBox(TextNode n, int start, int end) {
   }
   if (!minX.isFinite) return null;
   return SuRect(minX, minY, maxX - minX, maxY - minY);
+}
+
+Map<String, Object?>? _decodeMap(String? json) {
+  if (json == null || json.isEmpty) return null;
+  try {
+    final v = jsonDecode(json);
+    return v is Map<String, Object?> ? v : null;
+  } on FormatException {
+    return null;
+  }
 }

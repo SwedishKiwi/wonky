@@ -209,7 +209,7 @@ class SlidesSoftLocks extends TextEditLocks
       target,
       EditingClaim.of(
         target,
-        slideId: target.slideId ?? editor.currentSlideId,
+        slideId: target.slideId ?? editor.surfaceId,
         cellId: target.kind == 'tableCell'
             ? SlidesIds.tableCellId(
                 target.elementId!,

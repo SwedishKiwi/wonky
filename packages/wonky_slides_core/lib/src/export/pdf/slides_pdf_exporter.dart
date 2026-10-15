@@ -9,6 +9,15 @@
 /// textLayout]) → images are fetched and prepared once → pages are drawn
 /// (slides, notes pages, handouts) with headers/footers, bookmarks (groups →
 /// slides), link annotations and deterministic metadata.
+///
+/// Frames (06 §9.6, SL-33): without builds every slide prints its print
+/// frame (authored layout, content complete; [SlidesPdfOptions.
+/// finalAnimationState] = the final frame); *Print each build stage* prints
+/// one page per step whose settled frame differs from the step before,
+/// with code states/steps and chart reveals composed per frame
+/// (`SlideFrameScenes`); notes pages and handouts then show each slide's
+/// final step. Charts are laid out with TTF metrics of the font they are
+/// drawn with unless the caller passes its own chart source.
 library;
 
 import 'dart:async';
@@ -21,21 +30,28 @@ import 'package:image/image.dart' as img;
 import 'package:pdf/pdf.dart';
 // ignore: implementation_imports
 import 'package:pdf/src/pdf/format/string.dart' show PdfString;
+import 'package:wonky_charts/wonky_charts.dart'
+    show TtfChartFace, TtfChartFamily, TtfChartTextMeasurer;
 import 'package:wonky_fonts/wonky_fonts.dart';
 
+import '../../charts/chart_motion.dart';
+import '../../charts/slide_chart_layout.dart';
 import '../../interfaces/images.dart';
 import '../../interfaces/pdf.dart';
 import '../../model/api/deck_model.dart';
 import '../../model/resolve/slide_resolver.dart';
 import '../../model/text/slides_text.dart';
 import '../../motion/timeline/motion_input.dart';
+import '../../motion/timeline/slide_frame.dart';
 import '../../motion/timeline/slide_timeline.dart';
 import '../../scene/builder/slide_scene_builder.dart';
+import '../../scene/nodes/code_scene.dart';
 import '../../scene/nodes/scene_nodes.dart';
 import '../../scene/nodes/text_layout.dart';
 import '../../text_layout/slide_text_layout.dart';
 import '../../theme/layout/placeholder_type.dart';
 import '../../theme/resolve/resolved_theme.dart';
+import 'frame_scenes.dart';
 import 'pdf_options_codec.dart';
 import 'pdf_page_plan.dart';
 import 'pdf_strings.dart';
@@ -115,7 +131,8 @@ final class SlidesPdfExporter implements SlidesPdfRenderer {
   /// Icon glyphs (the app's Lucide map; null = neutral frames).
   final SlideIconSource? icons;
 
-  /// Chart scenes (SL-27; null = placeholders).
+  /// Chart scenes (null = a `SlideChartLayout` measuring with the
+  /// embedded chart font, SL-33).
   final ChartSceneSource? charts;
 
   /// Code scenes (SL-26; null = the core's basic layout).
@@ -167,6 +184,11 @@ final class SlidesPdfExporter implements SlidesPdfRenderer {
     final sh = deckRec?.height ?? 1080;
     final geo = SlidesPdfGeometry(options, slideWidth: sw, slideHeight: sh);
     onProgress?.call(SlidesPdfPhase.layout, 0);
+    // Builds as pages and the final frame show what the audience sees
+    // (code at its presented state); the print frame shows code complete.
+    final animated = options.includeBuilds || options.finalAnimationState;
+    final purpose = animated ? ScenePurpose.present : ScenePurpose.print;
+    final chartShapes = SlideChartMotion.shapes(deck);
 
     // 1. Slides and frames: timelines from the resolved slides, compiled
     // again with the final scenes (text part boxes) once they exist.
@@ -180,22 +202,53 @@ final class SlidesPdfExporter implements SlidesPdfRenderer {
             id,
             resolved: resolver.resolve(id),
             scene: sceneMap?[id],
+            chartShapeOf: chartShapes,
           ),
         );
     final selection = SlidesPdfPlanner.select(
       deck,
       options,
       stepCounts: (id) => timeline(id).stepCount,
+      buildSteps: (id) => printedSteps(timeline(id)),
     );
     warnings.addAll(selection.warnings);
+
+    SlideFrame frameOf(SlidesPdfSlide s, int? step) {
+      final tl = timeline(s.slideId);
+      if (step != null) return tl.endOfStep(step);
+      return animated ? tl.finalFrame : tl.printFrame;
+    }
 
     // 2. Font discovery pass (approximate metrics, recorded faces).
     final recorder = RecordingTextMeasurer();
     final recordingLayout = SlideTextLayout(measurer: recorder, cacheSize: 64);
-    final firstPass = _scenes(deck, resolver, selection, recordingLayout);
+    final firstCharts = charts ?? SlideChartLayout();
+    final firstPass = _scenes(
+      deck,
+      resolver,
+      selection,
+      recordingLayout,
+      purpose,
+      firstCharts,
+    );
     final keys = <FontFaceKey>{...recorder.keys};
-    for (final s in firstPass.values) {
-      _collectFaces(s.nodes, keys);
+    for (final s in selection.slides) {
+      final scene = firstPass[s.slideId];
+      final slide = resolver.resolve(s.slideId);
+      if (scene == null || slide == null) continue;
+      _collectFaces(scene.nodes, keys);
+      // Code states and highlight steps of the printed frames (callouts).
+      for (final step in s.steps) {
+        final framed = SlideFrameScenes.apply(
+          scene,
+          frameOf(s, step),
+          slide: slide,
+          deck: deck,
+          charts: firstCharts,
+          code: code,
+        );
+        if (!identical(framed, scene)) _collectFaces(framed.nodes, keys);
+      }
     }
     if (options.layout == SlidesPdfLayout.notes) {
       for (final s in selection.slides) {
@@ -237,7 +290,15 @@ final class SlidesPdfExporter implements SlidesPdfRenderer {
     final coreLayout = appLayout == null
         ? layout as SlideTextLayout
         : SlideTextLayout(measurer: TtfTextMeasurer(faces));
-    final scenes = _scenes(deck, resolver, selection, layout);
+    final chartSource = charts ?? _chartLayout(faces);
+    final scenes = _scenes(
+      deck,
+      resolver,
+      selection,
+      layout,
+      purpose,
+      chartSource,
+    );
     sceneMap = scenes;
     timelines.clear();
     onProgress?.call(SlidesPdfPhase.layout, 0.35);
@@ -370,14 +431,18 @@ final class SlidesPdfExporter implements SlidesPdfRenderer {
         chartFont: chartFont,
       );
       void drawSlide(SlidesPdfSlide s, SlidesPdfRect box, {int? step}) {
-        final scene = scenes[s.slideId];
-        if (scene == null) return;
-        final tl = timeline(s.slideId);
-        final frame = step != null
-            ? tl.endOfStep(step)
-            : options.finalAnimationState
-            ? tl.finalFrame
-            : tl.printFrame;
+        final base = scenes[s.slideId];
+        final slide = resolver.resolve(s.slideId);
+        if (base == null || slide == null) return;
+        final frame = frameOf(s, step);
+        final scene = SlideFrameScenes.apply(
+          base,
+          frame,
+          slide: slide,
+          deck: deck,
+          charts: chartSource,
+          code: code,
+        );
         painter.paintScene(
           scene,
           box,
@@ -532,11 +597,50 @@ final class SlidesPdfExporter implements SlidesPdfRenderer {
   // -----------------------------------------------------------------------
   // Scenes and text
 
+  /// The steps of [tl] printed with builds as pages (06 §9.6): every
+  /// step whose settled frame differs from the previous step's (an empty
+  /// automatic step 0 prints the initial frame; a step that changes
+  /// nothing visible is not a page of its own).
+  static List<int> printedSteps(SlideTimeline tl) {
+    final out = <int>[];
+    String? previous;
+    for (var i = 0; i <= tl.stepCount; i++) {
+      final key = jsonEncode(tl.endOfStep(i).toJson());
+      if (key != previous) out.add(i);
+      previous = key;
+    }
+    return out;
+  }
+
+  /// A chart layout measuring with the chart font the PDF draws with
+  /// (Open Sans; 08 §12): chart text fits exactly as printed.
+  static ChartSceneSource _chartLayout(TtfFaceSet faces) {
+    TtfChartFace? face(int weight, bool italic) {
+      final f = faces.faceOf(BundledFonts.openSans, weight, italic);
+      return f == null ? null : TtfChartFace(f.face.bytes);
+    }
+
+    final regular = face(400, false);
+    if (regular == null) return SlideChartLayout();
+    return SlideChartLayout(
+      measurer: TtfChartTextMeasurer(
+        TtfChartFamily(
+          regular,
+          bold: face(700, false),
+          italic: face(400, true),
+          boldItalic: face(700, true),
+        ),
+      ),
+    );
+  }
+
   Map<String, SlideScene> _scenes(
     DeckModel deck,
     SlideResolver resolver,
     SlidesPdfSelection selection,
     TextLayoutEngine layout,
+    ScenePurpose purpose,
+    ChartSceneSource charts,
   ) {
     final builder = SlideSceneBuilder();
     final out = <String, SlideScene>{};
@@ -550,7 +654,7 @@ final class SlidesPdfExporter implements SlidesPdfRenderer {
           theme: slide.theme,
           textLayout: layout,
           deck: deck,
-          purpose: ScenePurpose.print,
+          purpose: purpose,
           icons: icons,
           charts: charts,
           code: code,
@@ -570,24 +674,34 @@ final class SlidesPdfExporter implements SlidesPdfRenderer {
             }
           }
         case CodeNode(:final scene):
-          keys.add(TtfFaceSet.keyOf(scene.fontFamily, 400, false));
-          for (final l in scene.lines) {
-            for (final r in l.runs) {
-              keys.add(
-                TtfFaceSet.keyOf(
-                  scene.fontFamily,
-                  r.bold ? 700 : 400,
-                  r.italic,
-                ),
-              );
-            }
-          }
+          _codeFaces(scene, keys);
         case GroupNode(:final children):
           _collectFaces(children, keys);
         default:
           break;
       }
     }
+  }
+
+  static void _codeFaces(CodeScene scene, Set<FontFaceKey> keys) {
+    final family = scene.fontFamily;
+    keys.add(TtfFaceSet.keyOf(family, 400, false));
+    for (final l in scene.lines) {
+      for (final r in l.runs) {
+        keys.add(TtfFaceSet.keyOf(family, r.bold ? 700 : 400, r.italic));
+      }
+    }
+    for (final g in scene.glyphs) {
+      keys.add(TtfFaceSet.keyOf(family, g.bold ? 700 : 400, g.italic));
+    }
+    // Callouts: inline Markdown in the body font, `code` in the mono font.
+    for (final c in scene.callouts) {
+      final f = c.fontFamily.isEmpty ? family : c.fontFamily;
+      for (final (w, i) in [(400, false), (700, false), (400, true)]) {
+        keys.add(TtfFaceSet.keyOf(f, w, i));
+      }
+    }
+    if (scene.underlay case final u?) _codeFaces(u, keys);
   }
 
   /// The speaker notes of [s] laid out [width] pt wide (deck theme body

@@ -103,7 +103,7 @@ class ImageCropMode extends CanvasInteraction {
     final e = c.elements![id]!;
     if (f == null) return false;
     _id = id;
-    _slideId = c.editor.currentSlideId;
+    _slideId = c.editor.surfaceId;
     _start = f;
     _state = CropState.of(
       ImageCrop.fromJson(e.data?['crop']),
@@ -230,7 +230,7 @@ class ImageCropMode extends CanvasInteraction {
     final id = _id;
     if (id == null) return;
     final ed = c.editor;
-    if (ed.currentSlideId != _slideId ||
+    if (ed.surfaceId != _slideId ||
         !ed.selectedElementIds.contains(id) ||
         ed.model.element(id) == null ||
         !ed.canEdit) {
