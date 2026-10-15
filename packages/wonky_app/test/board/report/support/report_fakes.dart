@@ -93,6 +93,15 @@ class FakeReportBoard extends UnfakedBoardRepository {
   }
 
   @override
+  Future<void> deletePost(int number) async => log.add('deletePost $number');
+
+  @override
+  Future<BoardPostView> restorePost(int number) async {
+    log.add('restorePost $number');
+    return postView(number: number);
+  }
+
+  @override
   Future<BoardPostView> getPost(int number) async =>
       postView(number: number).copyWith(myVote: 0);
 

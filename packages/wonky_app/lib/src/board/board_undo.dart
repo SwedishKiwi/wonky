@@ -17,6 +17,9 @@ enum BoardUndoOp {
   /// `{post}`: undo restores, redo deletes.
   deletePost,
 
+  /// `{post}` (a report was posted): undo deletes, redo restores.
+  createPost,
+
   /// `{uuid, post?, task?, body}`: undo deletes, redo restores.
   addComment,
 
@@ -72,6 +75,10 @@ enum BoardUndoOp {
 
   /// `{task, before, after}`: prompt bodies.
   setPrompt,
+
+  /// `{task, before}`: undo sets the prompt body [before] (which also
+  /// drops a pending AI pass), redo asks the AI again.
+  regeneratePrompt,
 
   /// `{task, before, after}`: task statuses (publish, done, shipped,
   /// cancel).
@@ -149,10 +156,11 @@ class BoardUndoHandler extends UndoHandler<BoardUndoEntry> {
             v['body']! as String,
           );
           _hub.changed(post: n('post'));
-        case BoardUndoOp.deletePost:
-          undo
-              ? await _repo.restorePost(n('post'))
-              : await _repo.deletePost(n('post'));
+        case BoardUndoOp.deletePost || BoardUndoOp.createPost:
+          final remove = (e.op == BoardUndoOp.createPost) == undo;
+          remove
+              ? await _repo.deletePost(n('post'))
+              : await _repo.restorePost(n('post'));
           _hub.changed(post: n('post'));
         case BoardUndoOp.addComment || BoardUndoOp.deleteComment:
           final remove = (e.op == BoardUndoOp.addComment) == undo;
@@ -266,6 +274,11 @@ class BoardUndoHandler extends UndoHandler<BoardUndoEntry> {
         case BoardUndoOp.setPrompt:
           await _repo.setPrompt(n('task'), d[side]! as String);
           _hub.changed(task: n('task'));
+        case BoardUndoOp.regeneratePrompt:
+          undo
+              ? await _repo.setPrompt(n('task'), d['before']! as String)
+              : await _repo.regeneratePrompt(n('task'));
+          _hub.changed(task: n('task'), lists: false);
         case BoardUndoOp.setTaskStatus:
           final status = BoardTaskStatus.values.byName(d[side]! as String);
           if (!undo && status == BoardTaskStatus.published) {

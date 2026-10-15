@@ -74,6 +74,44 @@ void main() {
     expect(t().location, '/signin?next=%2Fimprovements%2Fbugs');
   });
 
+  testWidgets('Given sign-in from the board when the visitor creates an '
+      'account instead then sign-up and verification keep the target and '
+      'land on the board', (tester) async {
+    await signedOut(tester, '/signin?next=%2Fimprovements');
+    final auth = t().h.services.auth.repository as FakeAuthRepository;
+
+    await tester.tap(byKey('auth.signIn.createAccount'));
+    await tester.pumpAndSettle();
+    expect(t().location, '/signup?next=%2Fimprovements');
+
+    await tester.enterText(byKey('auth.signUp.name'), 'Cleo');
+    await tester.enterText(byKey('auth.signUp.email'), 'cleo@example.test');
+    await tester.enterText(byKey('auth.signUp.password'), 'Correct-Horse-42!');
+    await tester.tap(byKey('auth.signUp.terms'));
+    await tester.pumpAndSettle();
+    await tester.ensureVisible(byKey('auth.signUp.submit'));
+    await tester.tap(byKey('auth.signUp.submit'));
+    await tester.pumpAndSettle();
+    expect(t().location, '/signup/verify?next=%2Fimprovements');
+
+    await t().h.services.auth.verifySignUp(auth.lastCode!);
+    await tester.pumpAndSettle();
+
+    expect(t().location, '/improvements');
+    await settleTooltips(tester);
+  });
+
+  testWidgets('Given a next target that leaves the app when signing up then '
+      'it is dropped', (tester) async {
+    await signedOut(tester, '/signin?next=%2F%2Fevil.example');
+
+    await tester.tap(byKey('auth.signIn.createAccount'));
+    await tester.pumpAndSettle();
+
+    expect(t().location, '/signup');
+    await settleTooltips(tester);
+  });
+
   testWidgets('Given a page visited before the board when Back is pressed '
       'on a post then the last non-board route opens', (tester) async {
     final board = FakeBoardRepository()..seedPost();

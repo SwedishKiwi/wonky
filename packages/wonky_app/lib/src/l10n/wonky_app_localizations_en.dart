@@ -3975,6 +3975,15 @@ class WonkyAppLocalizationsEn extends WonkyAppLocalizations {
       'Draft: only admins see this task. Review the prompt, then publish it.';
 
   @override
+  String get boardPromptWriting =>
+      'Writing the prompt with AI… this takes about a minute';
+
+  @override
+  String boardPromptNote(String note) {
+    return 'The AI did not write the prompt: $note';
+  }
+
+  @override
   String get boardTaskCancelledNotice =>
       'This task was cancelled. Its posts are open again.';
 
@@ -4049,27 +4058,29 @@ class WonkyAppLocalizationsEn extends WonkyAppLocalizations {
   String get boardContribStep2Title => 'Install the Serverpod CLI';
 
   @override
-  String get boardContribStep2 => 'It runs the server and the apps.';
+  String get boardContribStep2 =>
+      'It runs the server and the apps. Add Dart\'s install directory to your PATH if serverpod is not found.';
 
   @override
-  String get boardContribStep3Title => 'Clone the repository';
+  String get boardContribStep3Title => 'Fork and clone the repository';
 
   @override
-  String get boardContribStep3 => 'Then start the development database.';
+  String get boardContribStep3 =>
+      'Fork the repository on GitHub, then clone your fork and get the packages.';
 
   @override
-  String get boardContribStep4Title => 'Create your passwords file';
+  String get boardContribStep4Title => 'Configure the server';
 
   @override
   String get boardContribStep4 =>
-      'The example has development defaults. AI keys are optional.';
+      'Create your passwords file and start the development database and Redis. The example passwords match docker-compose.yaml; replace the CHANGE_ME values. AI keys are optional.';
 
   @override
   String get boardContribStep5Title => 'Start the server';
 
   @override
   String get boardContribStep5 =>
-      'Run it in wonky_server and start an app from its UI. Point your agent at the serverpod MCP server (.mcp.json is in the repository).';
+      'Run it in wonky_server: it applies the migrations and hot reloads. Start an app from its UI or let your agent do it through the serverpod MCP server (.mcp.json is in the repository). Sign up with any email; in development the code is in the server log.';
 
   @override
   String get boardContribStep6Title => 'Pick a task';
@@ -4242,6 +4253,9 @@ class WonkyAppLocalizationsEn extends WonkyAppLocalizations {
 
   @override
   String get cmdBoardVote => 'Vote';
+
+  @override
+  String get cmdBoardCreatePost => 'Post report';
 
   @override
   String get cmdBoardEditPost => 'Edit post';
@@ -8446,6 +8460,15 @@ class WonkyAppLocalizationsEnXa extends WonkyAppLocalizationsEn {
       '[Ðŕåƒţ: öñļý åðɱîñš šéé ţĥîš ţåšķ. Ŕéṽîéŵ ţĥé þŕöɱþţ, ţĥéñ þûƀļîšĥ îţ. one two three four fi]';
 
   @override
+  String get boardPromptWriting =>
+      '[Ŵŕîţîñĝ ţĥé þŕöɱþţ ŵîţĥ ÅÎ… ţĥîš ţåķéš åƀöûţ å ɱîñûţé one two three fo]';
+
+  @override
+  String boardPromptNote(String note) {
+    return '[Ţĥé ÅÎ ðîð ñöţ ŵŕîţé ţĥé þŕöɱþţ: $note one two th]';
+  }
+
+  @override
   String get boardTaskCancelledNotice =>
       '[Ţĥîš ţåšķ ŵåš çåñçéļļéð. Îţš þöšţš åŕé öþéñ åĝåîñ. one two three f]';
 
@@ -8523,28 +8546,29 @@ class WonkyAppLocalizationsEnXa extends WonkyAppLocalizationsEn {
 
   @override
   String get boardContribStep2 =>
-      '[Îţ ŕûñš ţĥé šéŕṽéŕ åñð ţĥé åþþš. one two th]';
+      '[Îţ ŕûñš ţĥé šéŕṽéŕ åñð ţĥé åþþš. Åðð Ðåŕţ\'š îñšţåļļ ðîŕéçţöŕý ţö ýöûŕ ÞÅŢĤ îƒ šéŕṽéŕþöð îš ñöţ ƒöûñð. one two three four five six se]';
 
   @override
-  String get boardContribStep3Title => '[Çļöñé ţĥé ŕéþöšîţöŕý one two]';
+  String get boardContribStep3Title =>
+      '[Ƒöŕķ åñð çļöñé ţĥé ŕéþöšîţöŕý one two t]';
 
   @override
   String get boardContribStep3 =>
-      '[Ţĥéñ šţåŕţ ţĥé ðéṽéļöþɱéñţ ðåţåƀåšé. one two thre]';
+      '[Ƒöŕķ ţĥé ŕéþöšîţöŕý öñ ĜîţĤûƀ, ţĥéñ çļöñé ýöûŕ ƒöŕķ åñð ĝéţ ţĥé þåçķåĝéš. one two three four fiv]';
 
   @override
-  String get boardContribStep4Title => '[Çŕéåţé ýöûŕ þåššŵöŕðš ƒîļé one two t]';
+  String get boardContribStep4Title => '[Çöñƒîĝûŕé ţĥé šéŕṽéŕ one two]';
 
   @override
   String get boardContribStep4 =>
-      '[Ţĥé éẋåɱþļé ĥåš ðéṽéļöþɱéñţ ðéƒåûļţš. ÅÎ ķéýš åŕé öþţîöñåļ. one two three four]';
+      '[Çŕéåţé ýöûŕ þåššŵöŕðš ƒîļé åñð šţåŕţ ţĥé ðéṽéļöþɱéñţ ðåţåƀåšé åñð Ŕéðîš. Ţĥé éẋåɱþļé þåššŵöŕðš ɱåţçĥ ðöçķéŕ-çöɱþöšé.ýåɱļ; ŕéþļåçé ţĥé ÇĤÅÑĜÉ_ṀÉ ṽåļûéš. ÅÎ ķéýš åŕé öþţîöñåļ. one two three four five six seven eight nine ten one]';
 
   @override
   String get boardContribStep5Title => '[Šţåŕţ ţĥé šéŕṽéŕ one t]';
 
   @override
   String get boardContribStep5 =>
-      '[Ŕûñ îţ îñ ŵöñķý_šéŕṽéŕ åñð šţåŕţ åñ åþþ ƒŕöɱ îţš ÛÎ. Þöîñţ ýöûŕ åĝéñţ åţ ţĥé šéŕṽéŕþöð ṀÇÞ šéŕṽéŕ (.ɱçþ.ĵšöñ îš îñ ţĥé ŕéþöšîţöŕý). one two three four five six seven eigh]';
+      '[Ŕûñ îţ îñ ŵöñķý_šéŕṽéŕ: îţ åþþļîéš ţĥé ɱîĝŕåţîöñš åñð ĥöţ ŕéļöåðš. Šţåŕţ åñ åþþ ƒŕöɱ îţš ÛÎ öŕ ļéţ ýöûŕ åĝéñţ ðö îţ ţĥŕöûĝĥ ţĥé šéŕṽéŕþöð ṀÇÞ šéŕṽéŕ (.ɱçþ.ĵšöñ îš îñ ţĥé ŕéþöšîţöŕý). Šîĝñ ûþ ŵîţĥ åñý éɱåîļ; îñ ðéṽéļöþɱéñţ ţĥé çöðé îš îñ ţĥé šéŕṽéŕ ļöĝ. one two three four five six seven eight nine ten one two three four five]';
 
   @override
   String get boardContribStep6Title => '[Þîçķ å ţåšķ one]';
@@ -8722,6 +8746,9 @@ class WonkyAppLocalizationsEnXa extends WonkyAppLocalizationsEn {
 
   @override
   String get cmdBoardVote => '[Ṽöţé on]';
+
+  @override
+  String get cmdBoardCreatePost => '[Þöšţ ŕéþöŕţ one]';
 
   @override
   String get cmdBoardEditPost => '[Éðîţ þöšţ one]';

@@ -3,11 +3,15 @@ import 'dart:convert';
 import 'package:clock/clock.dart';
 import 'package:test/test.dart';
 import 'package:wonky_server/src/platform/board/ai/board_ai.dart';
+import 'package:wonky_server/src/platform/board/ai/jev_gemini_board_ai.dart';
 import 'package:wonky_server/src/platform/board/ai/task_prompt_template.dart';
+import 'package:wonky_server/src/platform/board/board_common.dart';
 import 'package:wonky_server/src/platform/board/board_config.dart';
 import 'package:wonky_server/src/platform/board/board_sweep.dart';
+import 'package:wonky_server/src/platform/board/board_tasks.dart';
 import 'package:wonky_server/src/platform/common/models.dart';
 
+import '../../support/streams.dart';
 import '../../support/test_users.dart';
 import '../../support/wonky_serverpod.dart';
 import 'support/board_harness.dart';
@@ -65,8 +69,25 @@ void main() {
         });
       });
 
-      test('with Gemini then the prompt body is AI-written', () async {
-        h.ai.gemini = true;
+      test('without Gemini then nothing is scheduled and the prompt is '
+          'not pending', () async {
+        final task = await endpoints.board.createTask(
+          admin.endpointSession,
+          [p1.number],
+          'Fix the grid',
+          BoardArea.sheets,
+          BoardSize.small,
+        );
+
+        expect(task.promptPending, isFalse);
+        expect(task.promptNote, isNull);
+        expect(h.scheduled, isEmpty);
+      });
+
+      test('with Gemini over its budget then the draft keeps the blank '
+          'template with a note', () async {
+        h.ai.gemini = false;
+        h.ai.geminiOverBudget = true;
 
         final task = await endpoints.board.createTask(
           admin.endpointSession,
@@ -76,10 +97,10 @@ void main() {
           BoardSize.small,
         );
 
-        expect(task.promptBody, h.ai.prompt);
-        expect(task.promptGeneratedAt, isNotNull);
+        expect(task.promptBody, TaskPromptTemplate.blankBody);
+        expect(task.promptPending, isFalse);
+        expect(task.promptNote, BoardTasks.promptBudgetNote);
       });
-
       test('then a draft is invisible to others', () async {
         final task = await endpoints.board.createTask(
           admin.endpointSession,
@@ -114,6 +135,118 @@ void main() {
           ),
           _code(WonkyErrorCode.conflict),
         );
+      });
+    });
+
+    group('with Gemini when creating a task', () {
+      late BoardTaskView task;
+      setUp(() async {
+        h.ai.gemini = true;
+        task = await endpoints.board.createTask(
+          admin.endpointSession,
+          [p1.number],
+          'Fix the grid',
+          BoardArea.sheets,
+          BoardSize.small,
+        );
+      });
+
+      test('then it returns at once with the blank template, the prompt '
+          'pending and a prompt job scheduled', () async {
+        expect(task.promptBody, TaskPromptTemplate.blankBody);
+        expect(task.promptPending, isTrue);
+        expect(task.promptGeneratedAt, isNull);
+        expect(h.ai.calls, isNot(contains('prompt')));
+        expect(h.scheduled.single.job, BoardJob.prompt);
+        expect(h.scheduled.single.id, task.number);
+      });
+
+      test('when the prompt job runs then the body is AI-written and open '
+          'task pages are told', () async {
+        final session = sessionBuilder.build();
+        final events = await subscribed(
+          endpoints.board.watchTasks(admin.endpointSession),
+          () => BoardLive.task(session, task.number),
+        );
+
+        await BoardTasks.writePrompt(session, task.number);
+        final event = await nextWhere(events, (e) => e.number == task.number);
+        final after = await endpoints.board.getTask(
+          admin.endpointSession,
+          task.number,
+        );
+        await events.cancel(immediate: true);
+
+        expect(event.kind, BoardEventKind.taskChanged);
+        expect(after.promptBody, h.ai.prompt);
+        expect(after.promptGeneratedAt, isNotNull);
+        expect(after.promptPending, isFalse);
+        expect(after.promptNote, isNull);
+      });
+
+      test('when the budget runs out before the job then the blank '
+          'template stays with a note', () async {
+        h.ai.promptError = BoardAiBudgetException('gemini');
+
+        await BoardTasks.writePrompt(sessionBuilder.build(), task.number);
+        final after = await endpoints.board.getTask(
+          admin.endpointSession,
+          task.number,
+        );
+
+        expect(after.promptBody, TaskPromptTemplate.blankBody);
+        expect(after.promptPending, isFalse);
+        expect(after.promptNote, BoardTasks.promptBudgetNote);
+      });
+
+      test('when publishing while the prompt is pending then it is a '
+          'conflict', () async {
+        await expectLater(
+          endpoints.board.publishTask(admin.endpointSession, task.number),
+          _code(WonkyErrorCode.conflict),
+        );
+      });
+
+      test('when the admin sets the prompt before the job finishes then '
+          'their text is kept', () async {
+        await endpoints.board.setPrompt(
+          admin.endpointSession,
+          task.number,
+          '## Goal\nMine',
+        );
+
+        await BoardTasks.writePrompt(sessionBuilder.build(), task.number);
+        final after = await endpoints.board.getTask(
+          admin.endpointSession,
+          task.number,
+        );
+
+        expect(after.promptBody, '## Goal\nMine');
+        expect(after.promptPending, isFalse);
+      });
+
+      test('when regenerating then the prompt is pending again and the job '
+          'writes it', () async {
+        await BoardTasks.writePrompt(sessionBuilder.build(), task.number);
+        h.ai.prompt = '## Goal\nSecond pass.';
+
+        final pending = await endpoints.board.regeneratePrompt(
+          admin.endpointSession,
+          task.number,
+        );
+        await BoardTasks.writePrompt(sessionBuilder.build(), task.number);
+        final after = await endpoints.board.getTask(
+          admin.endpointSession,
+          task.number,
+        );
+
+        expect(pending.promptPending, isTrue);
+        expect(
+          h.scheduled.where((j) => j.job == BoardJob.prompt),
+          hasLength(2),
+        );
+        expect(after.promptBody, '## Goal\nSecond pass.');
+        expect(after.promptPending, isFalse);
       });
     });
 

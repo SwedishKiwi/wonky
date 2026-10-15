@@ -2665,6 +2665,15 @@
   "boardClaimCodeHint": "Put it in the pull request description. Only you can see it.",
   "boardClaimCodePlaceholder": "<your claim code>",
   "boardDraftNotice": "Draft: only admins see this task. Review the prompt, then publish it.",
+  "boardPromptWriting": "Writing the prompt with AI… this takes about a minute",
+  "boardPromptNote": "The AI did not write the prompt: {note}",
+  "@boardPromptNote": {
+    "placeholders": {
+      "note": {
+        "type": "String"
+      }
+    }
+  },
   "boardTaskCancelledNotice": "This task was cancelled. Its posts are open again.",
   "boardLinkedPosts": "Linked posts",
   "boardNoLinkedPosts": "No posts are linked to this task.",
@@ -2701,13 +2710,13 @@
   "boardContribStep1Title": "Get the tools",
   "boardContribStep1": "Install Flutter (stable), Docker for the development database, and an AI coding agent that reads AGENTS.md, such as Claude Code.",
   "boardContribStep2Title": "Install the Serverpod CLI",
-  "boardContribStep2": "It runs the server and the apps.",
-  "boardContribStep3Title": "Clone the repository",
-  "boardContribStep3": "Then start the development database.",
-  "boardContribStep4Title": "Create your passwords file",
-  "boardContribStep4": "The example has development defaults. AI keys are optional.",
+  "boardContribStep2": "It runs the server and the apps. Add Dart's install directory to your PATH if serverpod is not found.",
+  "boardContribStep3Title": "Fork and clone the repository",
+  "boardContribStep3": "Fork the repository on GitHub, then clone your fork and get the packages.",
+  "boardContribStep4Title": "Configure the server",
+  "boardContribStep4": "Create your passwords file and start the development database and Redis. The example passwords match docker-compose.yaml; replace the CHANGE_ME values. AI keys are optional.",
   "boardContribStep5Title": "Start the server",
-  "boardContribStep5": "Run it in wonky_server and start an app from its UI. Point your agent at the serverpod MCP server (.mcp.json is in the repository).",
+  "boardContribStep5": "Run it in wonky_server: it applies the migrations and hot reloads. Start an app from its UI or let your agent do it through the serverpod MCP server (.mcp.json is in the repository). Sign up with any email; in development the code is in the server log.",
   "boardContribStep6Title": "Pick a task",
   "boardContribStep6": "Claim a task under Up for grabs, paste its prompt into your agent and review the result.",
   "boardContribStep7Title": "Open a pull request",
@@ -2821,6 +2830,7 @@
   "boardReviewDrafts": "Draft tasks",
   "boardReviewEmpty": "Nothing to review.",
   "cmdBoardVote": "Vote",
+  "cmdBoardCreatePost": "Post report",
   "cmdBoardEditPost": "Edit post",
   "cmdBoardDeletePost": "Delete post",
   "cmdBoardRemoveScreenshot": "Remove screenshot",

@@ -114,7 +114,8 @@ class _SignInScreenState extends State<SignInScreen> {
                 ShadButton.link(
                   key: const ValueKey<String>('auth.signIn.forgot'),
                   padding: EdgeInsets.zero,
-                  onPressed: () => context.go('/reset'),
+                  onPressed: () =>
+                      context.go(authPathWithNext(widget.services, '/reset')),
                   child: Text(l.authForgotPassword),
                 ),
               ],
@@ -146,7 +147,8 @@ class _SignInScreenState extends State<SignInScreen> {
           Text(l.authNoAccount),
           ShadButton.link(
             key: const ValueKey<String>('auth.signIn.createAccount'),
-            onPressed: () => context.go('/signup'),
+            onPressed: () =>
+                context.go(authPathWithNext(widget.services, '/signup')),
             child: Text(l.authCreateAccount),
           ),
         ],

@@ -81,4 +81,12 @@ List<String> recordClipboard(WidgetTester tester) {
   return copied;
 }
 
+/// Pumps a few frames without settling: a page showing a spinner (the AI
+/// writing a prompt) never settles.
+Future<void> pumpFrames(WidgetTester tester, {int frames = 10}) async {
+  for (var i = 0; i < frames; i++) {
+    await tester.pump(const Duration(milliseconds: 50));
+  }
+}
+
 Finder byKey(String key) => find.byKey(ValueKey<String>(key));

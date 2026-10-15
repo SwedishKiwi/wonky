@@ -26,6 +26,7 @@ class FakeBoardPost {
     this.moderationReason,
     this.triageState = BoardTriageState.done,
     this.triageJson,
+    this.reviewScores,
     this.needsCheck = false,
     this.suggestedTitle,
     this.summary,
@@ -52,6 +53,10 @@ class FakeBoardPost {
   bool editedByModerator = false;
   BoardTriageState triageState;
   String? triageJson;
+
+  /// Moderation scores in their review band (the server derives them from
+  /// the triage; seeded directly here).
+  Map<String, double>? reviewScores;
   bool needsCheck;
   String? suggestedTitle;
   String? summary;
@@ -127,6 +132,11 @@ class FakeBoardTask {
   String? reviewJson;
   DateTime? publishedAt;
   DateTime? promptEditedAt;
+
+  /// The "AI" is writing the prompt (see
+  /// [FakeBoardRepository.writesPromptLater]).
+  bool promptPending = false;
+  String? promptNote;
   final DateTime createdAt;
 }
 
@@ -148,6 +158,11 @@ class FakeBoardRepository implements BoardRepository {
 
   /// When set, every call throws it (offline, server errors).
   Object? failWith;
+
+  /// Like the server with Gemini (specs/16 §10.1): `createTask` and
+  /// `regeneratePrompt` leave the prompt pending until [finishPrompt].
+  /// Otherwise the prompt is written at once.
+  bool writesPromptLater = false;
 
   final List<String> calls = [];
 
@@ -200,6 +215,17 @@ class FakeBoardRepository implements BoardRepository {
     BoardEventKind kind = BoardEventKind.postChanged,
   ]) => _postEvents.add(BoardPostEvent(kind: kind, number: number));
 
+  /// Finishes the pending prompt of task [number] with [body] (or leaves
+  /// the body with [note]) and emits the task event, like the server's
+  /// `BoardFutureCall.writePrompt`.
+  void finishPrompt(int number, {String? body, String? note}) {
+    final t = tasks[number]!
+      ..promptPending = false
+      ..promptNote = note;
+    if (body != null) t.promptBody = body;
+    emitTask(number);
+  }
+
   /// Emits a live event on `watchTasks`.
   void emitTask(int number) => _taskEvents.add(
     BoardPostEvent(kind: BoardEventKind.taskChanged, number: number),
@@ -233,6 +259,7 @@ class FakeBoardRepository implements BoardRepository {
     int? possibleDuplicateOf,
     String? suggestedTitle,
     String? triageJson,
+    Map<String, double>? reviewScores,
   }) {
     final n = _nextPost++;
     final p = FakeBoardPost(
@@ -255,6 +282,7 @@ class FakeBoardRepository implements BoardRepository {
       possibleDuplicateOf: possibleDuplicateOf,
       suggestedTitle: suggestedTitle,
       triageJson: triageJson,
+      reviewScores: reviewScores,
     );
     // Score from distinct fake voters (ids 100+).
     for (var i = 0; i < score.abs(); i++) {
@@ -495,6 +523,7 @@ class FakeBoardRepository implements BoardRepository {
       suggestedTitle: isAdmin ? p.suggestedTitle : null,
       possibleDuplicateOfNumber: isAdmin ? p.possibleDuplicateOf : null,
       triageJson: isAdmin ? p.triageJson : null,
+      reviewScores: isAdmin ? p.reviewScores : null,
       flags: _flagsOf('post:${p.number}'),
     );
   }
@@ -542,6 +571,8 @@ class FakeBoardRepository implements BoardRepository {
       promptBody: t.promptBody,
       prompt: '# Wonky task T-${t.number}: ${t.title}\n\n${t.promptBody}',
       promptEditedAt: t.promptEditedAt,
+      promptPending: t.promptPending,
+      promptNote: isAdmin ? t.promptNote : null,
       posts: [
         for (final n in t.posts)
           if (posts[n] case final p? when _canSee(p)) _listItem(p),
@@ -1277,9 +1308,10 @@ class FakeBoardRepository implements BoardRepository {
       area: area,
       size: size,
       status: BoardTaskStatus.draft,
-      promptBody: '## Goal\n$title',
+      promptBody: writesPromptLater ? '## Goal\n' : '## Goal\n$title',
       posts: postNumbers,
     );
+    t.promptPending = writesPromptLater;
     return _taskView(t);
   }
 
@@ -1325,7 +1357,14 @@ class FakeBoardRepository implements BoardRepository {
   Future<BoardTaskView> regeneratePrompt(int number) async {
     _log('regeneratePrompt $number');
     _admin();
-    final t = _task(number)..promptBody = '## Goal\nRegenerated.';
+    final t = _task(number);
+    if (writesPromptLater) {
+      t
+        ..promptPending = true
+        ..promptNote = null;
+    } else {
+      t.promptBody = '## Goal\nRegenerated.';
+    }
     return _taskView(t);
   }
 
@@ -1335,7 +1374,9 @@ class FakeBoardRepository implements BoardRepository {
     _admin();
     final t = _task(number)
       ..promptBody = body
-      ..promptEditedAt = clock.now();
+      ..promptEditedAt = clock.now()
+      ..promptPending = false
+      ..promptNote = null;
     return _taskView(t);
   }
 
@@ -1346,6 +1387,9 @@ class FakeBoardRepository implements BoardRepository {
     final t = _task(number);
     if (t.status != BoardTaskStatus.draft) {
       throw _err(WonkyErrorCode.conflict, 'Only draft tasks.');
+    }
+    if (t.promptPending) {
+      throw _err(WonkyErrorCode.conflict, 'The prompt is still being written.');
     }
     t
       ..status = BoardTaskStatus.published

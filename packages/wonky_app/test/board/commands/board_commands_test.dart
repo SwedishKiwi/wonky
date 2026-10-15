@@ -24,6 +24,36 @@ void main() {
     await board.dispose();
   });
 
+  test('when posting a report then the post exists, open board pages are '
+      'told, undo deletes it and redo restores it', () async {
+    final changes = <BoardChange>[];
+    final sub = BoardHub.of(h.services).changes.listen(changes.add);
+    addTearDown(sub.cancel);
+
+    final r = await h.invoke('shell.board.createPost', {
+      'kind': 'bug',
+      'title': 'Paste drops bold in merged cells',
+      'body': 'Steps: paste.',
+      'contextJson': '{"app":"sheets"}',
+    });
+    final n = (r.data! as Map)['postNumber'] as int;
+    final post = board.posts[n]!;
+
+    expect((r.data! as Map)['moderation'], 'visible');
+    expect(post.title, 'Paste drops bold in merged cells');
+    expect(post.kind, BoardPostKind.bug);
+    expect(post.contextJson, '{"app":"sheets"}');
+    expect(changes.single.post, n);
+    expect(changes.single.lists, isTrue);
+    expect(h.undoLabels, hasLength(1));
+
+    await h.undo();
+    expect(post.deletedAt, isNotNull);
+
+    await h.redo();
+    expect(post.deletedAt, isNull);
+  });
+
   group('Given an idea and a bug', () {
     late FakeBoardPost idea;
     late FakeBoardPost bug;
@@ -559,6 +589,30 @@ void main() {
           expect(task.promptBody, 'v1');
         },
       );
+
+      test('when regenerating while the AI writes in the background then the '
+          'prompt is pending, undo keeps the previous body and drops the '
+          'pending pass, and redo asks again', () async {
+        board.writesPromptLater = true;
+
+        final r = await h.invoke('shell.board.admin.regeneratePrompt', {
+          'taskNumber': task.number,
+        });
+        expect((r.data! as Map)['promptPending'], isTrue);
+        expect(task.promptPending, isTrue);
+        expect(task.promptBody, 'v1');
+
+        await h.undo();
+        expect(task.promptPending, isFalse);
+        expect(task.promptBody, 'v1');
+
+        await h.redo();
+        expect(task.promptPending, isTrue);
+        expect(board.calls.where((c) => c.startsWith('regeneratePrompt')), [
+          'regeneratePrompt ${task.number}',
+          'regeneratePrompt ${task.number}',
+        ]);
+      });
 
       test('when publishing then posts are planned, undo returns it to draft '
           'and redo publishes again', () async {

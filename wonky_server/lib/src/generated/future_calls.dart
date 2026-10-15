@@ -26,6 +26,8 @@ import 'future_calls_generated_models/board_future_call_summarize_model.dart'
     as _icgheary;
 import 'future_calls_generated_models/board_future_call_triage_model.dart'
     as _if8h900w;
+import 'future_calls_generated_models/board_future_call_write_prompt_model.dart'
+    as _ixkvo7h1;
 import 'future_calls_generated_models/board_github_future_call_handle_model.dart'
     as _ip0bwzb4;
 import 'future_calls_generated_models/board_github_future_call_review_model.dart'
@@ -81,6 +83,7 @@ class FutureCalls extends _is.FutureCallDispatch<_FutureCallRef> {
     var registeredFutureCalls = <String, _is.InvokableFutureCall>{
       'BoardTriageFutureCall': BoardTriageFutureCall(),
       'BoardSummarizeFutureCall': BoardSummarizeFutureCall(),
+      'BoardWritePromptFutureCall': BoardWritePromptFutureCall(),
       'BoardSweepFutureCall': BoardSweepFutureCall(),
       'BoardGithubHandleFutureCall': BoardGithubHandleFutureCall(),
       'BoardGithubReviewFutureCall': BoardGithubReviewFutureCall(),
@@ -252,6 +255,14 @@ class _BoardFutureCallDispatcher {
     var object = _icgheary.BoardFutureCallSummarizeModel(postId: postId);
     return _invokeFutureCall(
       'BoardSummarizeFutureCall',
+      object,
+    );
+  }
+
+  Future<void> writePrompt(int taskId) {
+    var object = _ixkvo7h1.BoardFutureCallWritePromptModel(taskId: taskId);
+    return _invokeFutureCall(
+      'BoardWritePromptFutureCall',
       object,
     );
   }
@@ -438,6 +449,24 @@ class BoardSummarizeFutureCall
       await _i7g7f7wg.BoardFutureCall().summarize(
         session,
         object.postId,
+      );
+    }
+  }
+}
+
+class BoardWritePromptFutureCall
+    extends _is.FutureCall<_ixkvo7h1.BoardFutureCallWritePromptModel>
+    implements
+        _is.InvokableFutureCall<_ixkvo7h1.BoardFutureCallWritePromptModel> {
+  @override
+  _ida.Future<void> invoke(
+    _is.Session session,
+    _ixkvo7h1.BoardFutureCallWritePromptModel? object,
+  ) async {
+    if (object != null) {
+      await _i7g7f7wg.BoardFutureCall().writePrompt(
+        session,
+        object.taskId,
       );
     }
   }

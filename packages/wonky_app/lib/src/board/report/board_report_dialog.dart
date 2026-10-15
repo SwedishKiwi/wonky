@@ -56,7 +56,7 @@ abstract final class BoardReportKeys {
 
 /// How the report dialog closed.
 enum BoardReportOutcome {
-  /// Posted ([BoardReportResult.post]); the draft is cleared.
+  /// Posted ([BoardReportResult.postNumber]); the draft is cleared.
   posted,
 
   /// *Vote instead* on a similar post; the draft is kept.
@@ -74,10 +74,13 @@ enum BoardReportOutcome {
 
 /// The result of [showBoardReportDialog].
 class BoardReportResult {
-  const BoardReportResult(this.outcome, {this.post});
+  const BoardReportResult(this.outcome, {this.postNumber, this.moderation});
 
   final BoardReportOutcome outcome;
-  final BoardPostView? post;
+
+  /// The new post ([BoardReportOutcome.posted]).
+  final int? postNumber;
+  final BoardModeration? moderation;
 }
 
 /// The board security contact when `board.me` hasn't answered (B14).
@@ -424,29 +427,45 @@ class BoardReportDialogState extends State<BoardReportDialog>
           _uploaded = (shot.encoded, shotUuid);
         }
       }
-      final view = await s.repositories.board.createPost(
-        BoardPostDraft(
-          kind: d.kind,
-          title: d[BoardReportField.title].trim(),
-          body: d.body,
-          contextJson: contextJson,
-          appHint: s.config.app.name,
-          screenshotFileUuid: shotUuid,
-        ),
+      if (!mounted) return;
+      // `shell.board.createPost`: undoable, and open board pages refresh.
+      final r = await s.dispatcher.invoke(
+        'shell.board.createPost',
+        args: {
+          'kind': d.kind.name,
+          'title': d[BoardReportField.title].trim(),
+          'body': d.body,
+          'contextJson': ?contextJson,
+          'appHint': s.config.app.name,
+          'screenshotFileUuid': ?shotUuid?.uuid,
+        },
+        context: context,
+      );
+      final data = r.data;
+      if (!r.isOk || data is! Map) {
+        throw StateError(r.message ?? r.status.name);
+      }
+      final number = data['postNumber'] as int;
+      final moderation = BoardModeration.values.byName(
+        data['moderation'] as String,
       );
       await widget.store.clear();
       if (!mounted) return;
-      Navigator.of(
-        context,
-      ).pop(BoardReportResult(BoardReportOutcome.posted, post: view));
+      Navigator.of(context).pop(
+        BoardReportResult(
+          BoardReportOutcome.posted,
+          postNumber: number,
+          moderation: moderation,
+        ),
+      );
       s.toasts.show(
-        switch (view.moderation) {
+        switch (moderation) {
           BoardModeration.visible => l.boardReportPosted,
           BoardModeration.held => l.boardReportPostedHeld,
           _ => l.boardReportPostedChecking,
         },
         actionLabel: l.boardReportView,
-        onAction: () => s.router.go('/improvements/p/${view.number}'),
+        onAction: () => s.router.go('/improvements/p/$number'),
       );
     } catch (e) {
       if (!mounted) return;

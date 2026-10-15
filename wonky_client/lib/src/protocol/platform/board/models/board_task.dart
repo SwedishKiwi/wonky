@@ -27,6 +27,8 @@ abstract class BoardTask
     required this.status,
     required this.promptBody,
     this.promptGeneratedAt,
+    this.promptRequestedAt,
+    this.promptNote,
     this.promptEditedById,
     this.promptEditedAt,
     required this.createdById,
@@ -54,6 +56,8 @@ abstract class BoardTask
     required _isr33h3v.BoardTaskStatus status,
     required String promptBody,
     DateTime? promptGeneratedAt,
+    DateTime? promptRequestedAt,
+    String? promptNote,
     int? promptEditedById,
     DateTime? promptEditedAt,
     required int createdById,
@@ -88,6 +92,12 @@ abstract class BoardTask
           : _isc.DateTimeJsonExtension.fromJson(
               jsonSerialization['promptGeneratedAt'],
             ),
+      promptRequestedAt: jsonSerialization['promptRequestedAt'] == null
+          ? null
+          : _isc.DateTimeJsonExtension.fromJson(
+              jsonSerialization['promptRequestedAt'],
+            ),
+      promptNote: jsonSerialization['promptNote'] as String?,
       promptEditedById: jsonSerialization['promptEditedById'] as int?,
       promptEditedAt: jsonSerialization['promptEditedAt'] == null
           ? null
@@ -150,6 +160,14 @@ abstract class BoardTask
 
   DateTime? promptGeneratedAt;
 
+  /// Set while the AI writes the prompt body (a `BoardFutureCall.writePrompt`
+  /// is scheduled); cleared when it is done or the admin sets the prompt.
+  DateTime? promptRequestedAt;
+
+  /// Why the last AI writing pass left the prompt as it was (budget used
+  /// up, provider error); shown to admins.
+  String? promptNote;
+
   int? promptEditedById;
 
   DateTime? promptEditedAt;
@@ -196,6 +214,8 @@ abstract class BoardTask
     _isr33h3v.BoardTaskStatus? status,
     String? promptBody,
     DateTime? promptGeneratedAt = const _isc.$UndefinedDateTime(),
+    DateTime? promptRequestedAt = const _isc.$UndefinedDateTime(),
+    String? promptNote,
     int? promptEditedById,
     DateTime? promptEditedAt = const _isc.$UndefinedDateTime(),
     int? createdById,
@@ -226,6 +246,9 @@ abstract class BoardTask
       'promptBody': promptBody,
       if (promptGeneratedAt != null)
         'promptGeneratedAt': promptGeneratedAt?.toJson(),
+      if (promptRequestedAt != null)
+        'promptRequestedAt': promptRequestedAt?.toJson(),
+      if (promptNote != null) 'promptNote': promptNote,
       if (promptEditedById != null) 'promptEditedById': promptEditedById,
       if (promptEditedAt != null) 'promptEditedAt': promptEditedAt?.toJson(),
       'createdById': createdById,
@@ -258,6 +281,9 @@ abstract class BoardTask
       'promptBody': promptBody,
       if (promptGeneratedAt != null)
         'promptGeneratedAt': promptGeneratedAt?.toJson(),
+      if (promptRequestedAt != null)
+        'promptRequestedAt': promptRequestedAt?.toJson(),
+      if (promptNote != null) 'promptNote': promptNote,
       if (promptEditedById != null) 'promptEditedById': promptEditedById,
       if (promptEditedAt != null) 'promptEditedAt': promptEditedAt?.toJson(),
       'createdById': createdById,
@@ -295,6 +321,8 @@ class _BoardTaskImpl extends BoardTask {
     required _isr33h3v.BoardTaskStatus status,
     required String promptBody,
     DateTime? promptGeneratedAt,
+    DateTime? promptRequestedAt,
+    String? promptNote,
     int? promptEditedById,
     DateTime? promptEditedAt,
     required int createdById,
@@ -320,6 +348,8 @@ class _BoardTaskImpl extends BoardTask {
          status: status,
          promptBody: promptBody,
          promptGeneratedAt: promptGeneratedAt,
+         promptRequestedAt: promptRequestedAt,
+         promptNote: promptNote,
          promptEditedById: promptEditedById,
          promptEditedAt: promptEditedAt,
          createdById: createdById,
@@ -351,6 +381,8 @@ class _BoardTaskImpl extends BoardTask {
     _isr33h3v.BoardTaskStatus? status,
     String? promptBody,
     DateTime? promptGeneratedAt = const _isc.$UndefinedDateTime(),
+    DateTime? promptRequestedAt = const _isc.$UndefinedDateTime(),
+    Object? promptNote = _Undefined,
     Object? promptEditedById = _Undefined,
     DateTime? promptEditedAt = const _isc.$UndefinedDateTime(),
     int? createdById,
@@ -379,6 +411,10 @@ class _BoardTaskImpl extends BoardTask {
       promptGeneratedAt: promptGeneratedAt is _isc.UndefinedSentinel
           ? this.promptGeneratedAt
           : promptGeneratedAt,
+      promptRequestedAt: promptRequestedAt is _isc.UndefinedSentinel
+          ? this.promptRequestedAt
+          : promptRequestedAt,
+      promptNote: promptNote is String? ? promptNote : this.promptNote,
       promptEditedById: promptEditedById is int?
           ? promptEditedById
           : this.promptEditedById,

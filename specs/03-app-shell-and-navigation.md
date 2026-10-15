@@ -77,7 +77,10 @@ exception and must reuse the presentation-session state model.
 | `/invite/:token` | Share-link landing (request access / open) |
 
 Auth guard redirects to `/signin?next=…`, except for the auth routes and the `/improvements`
-routes, which signed-out visitors can read (M12). Unknown/forbidden items show an in-app
+routes, which signed-out visitors can read (M12). The auth screens carry `next` between each other
+(*Create account*, *Sign in*, *Forgot password*, `/signup/verify`), and signing in or finishing
+sign-up lands on it; only a relative path (`/…`, not `//…`) is followed, anything else goes to
+`/`. Unknown/forbidden items show an in-app
 **No access** page with *Request access* (sends a request to the owner) and *Switch account*.
 
 Deployment: `wonky_server`'s web server serves the Flutter web builds from one origin:

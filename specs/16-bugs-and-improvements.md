@@ -248,9 +248,10 @@ the finisher and the upload transport as per-shell seams), `board/screenshot/` (
 {tab?}`, the aliases `shell.help.reportBug` / `shell.help.feedback`, hidden from the palette).
 *Discard draft?* offers *Keep draft* and *Discard*; `Esc` returns to the dialog. The toast says
 *Posted* when the post is visible at once and *Posted. Waiting for review…* when it is held.
-*Vote instead* goes through `shell.board.vote` (undoable) when it is registered. Posting calls
-`board.createPost` directly (no `shell.board.createPost` command yet). `config.json` `board`
-defaults to true when absent.
+*Vote instead* goes through `shell.board.vote` (undoable) when it is registered. Posting uploads
+the screenshot first, then runs `shell.board.createPost` (`report_commands.dart`; undo deletes the
+post, redo restores it) and tells open board pages through `BoardHub.changed`, so the lists,
+counts and the Review tab refresh. `config.json` `board` defaults to true when absent.
 
 ### 4.3 Board routes
 
@@ -783,10 +784,15 @@ wonky:
 **Review tab** (`/improvements/review`), with these sections:
 
 1. **Held**: flagged posts and comments, oldest first. Each shows the AI flags and reason, the
-   community flags, and the author (with their other posts). Actions:
+   community flags, and the author (with their other posts). The AI flags are the moderation
+   scores at or above their *Review* band, best first (*AI scores: spam 0.91 · not_actionable
+   0.62*), from `BoardPostView.reviewScores` (admins only; the server applies the current
+   thresholds to the stored triage). Actions:
    - *Approve* (visible);
    - *Remove* (with a reason: offensive, spam, personal data, security, other, plus optional
-     text shown to the author);
+     text shown to the author). The reason starts at the one the post was held for: the highest
+     review score (`spam`, `offensive`, `personal_data`, `security`), else the hold reason, else
+     the most common community flag, else *Other*;
    - *Edit and approve*: the admin edits out personal data, for example. The post shows
      *Edited by a moderator*.
 2. **Check**: visible posts and comments with a moderation score in the *Review* band (§6.2),
@@ -855,7 +861,20 @@ endpoint call:
 
 When a draft task is created (and on *Regenerate*), Gemini (`board.ai.geminiModel`) writes the
 prompt with the tool `write_task_prompt`. Without Gemini, the editor starts from the template with
-empty sections. The input:
+empty sections.
+
+Writing takes about a minute, so it never blocks the request: `createTask` stores the draft at once
+with the blank template, sets `promptRequestedAt` and schedules `BoardFutureCall.writePrompt`
+(`regeneratePrompt` does the same and returns at once). The future call writes the body, sets
+`promptGeneratedAt`, clears `promptRequestedAt` and posts `taskChanged` on `board:tasks`, so open
+task pages and the prompt editor refresh live. `BoardTaskView.promptPending` is true while a pass
+is scheduled (at most 10 minutes, so a lost call never blocks publishing); the task page and the
+editor show *Writing the prompt with AI… this takes about a minute* with a spinner, and *Publish*
+(and the editor's *Save*, *Regenerate*) stay disabled; `publishTask` answers `conflict` meanwhile.
+When the daily budget is used up (`BoardAiBudgetException`) or Gemini fails, the body stays and
+`promptNote` (admins only) says why; the task page shows it. *Set prompt* (the admin's own text,
+or undoing *Regenerate*) cancels a pending pass: its result is dropped when `promptRequestedAt`
+changed. The input:
 
 - the task title, area and size;
 - for each post: kind, title, body, included details, the screenshot URL (a stable redirect,
@@ -913,10 +932,11 @@ light and dark, the checklist after changes).
      development database (P1: switch `config/development.yaml` to an embedded database through
      `database.dataPath`, as `config/test.yaml` already does, so contributors need no Docker), and
      an AI coding agent (Claude Code recommended, any agent that reads `AGENTS.md` works).
-  2. Install the Serverpod CLI: `dart pub global activate serverpod_cli`.
-  3. Clone the repository, then `docker compose up -d` in `wonky_server`.
-  4. Create `config/passwords.yaml` from a new `passwords.example.yaml`. Development defaults
-     only; AI keys are optional.
+  2. Install the Serverpod CLI: `dart install serverpod_cli@<VERSION>` (the version of the CI
+     workflow).
+  3. Fork the repository, clone the fork and run `flutter pub get`.
+  4. In `wonky_server`, create `config/passwords.yaml` from `passwords.example.yaml` (development
+     defaults only; AI keys are optional) and run `docker compose up -d`.
   5. Run `serverpod start` in `wonky_server` and start an app from its UI. Point the agent at the
      `serverpod` MCP server (`.mcp.json` is already in the repo).
   6. Pick a task, paste its prompt into the agent, and review the result.
@@ -1060,6 +1080,8 @@ fields:
   status: BoardTaskStatus
   promptBody: String                   # AI-written, admin-edited (§10)
   promptGeneratedAt: DateTime?
+  promptRequestedAt: DateTime?         # an AI pass is scheduled (§10.1)
+  promptNote: String?                  # why the last AI pass left the body (admins)
   promptEditedById: int?
   promptEditedAt: DateTime?
   createdById: int
@@ -1174,7 +1196,9 @@ Views sent to clients: `BoardPostView`, `BoardPostListItem`, `BoardCommentView`,
 include the author display name, avatar and an `isAdmin` flag, and never emails.
 `BoardTaskView` carries two prompt fields: `promptBody` (the editable AI-written body, §10.2) and
 `prompt` (the full prompt: the fixed template around the body, §10.1, which the task page copies
-and `board.get_task` returns), plus `reviewJson` (§13.5) and, for the claimant only, `claimCode`.
+and `board.get_task` returns), plus `promptPending` and, for admins, `promptNote` (§10.1),
+`reviewJson` (§13.5) and, for the claimant only, `claimCode`. `BoardPostView.reviewScores` (admins
+only) lists the moderation scores at or above their review band (§9.2).
 
 **Feedback fold-in (B9).**
 
@@ -1466,7 +1490,7 @@ The tools are read and write in one scope and are not offered to the in-app assi
 |----|----------|
 | `report {kind?}` | – (opens the dialog) |
 | `open {tab?}` | – |
-| `createPost` | ✓ (undo: delete own post, within the session) |
+| `createPost {kind, title, body, contextJson?, appHint?, screenshotFileUuid?}` | ✓ (undo: delete own post, redo restores it) |
 | `editPost` | ✓ |
 | `deletePost` | ✓ |
 | `vote {postNumber, value}` | ✓ |
@@ -1480,15 +1504,16 @@ The tools are read and write in one scope and are not offered to the in-app assi
 | `admin.suggestBundles` / `admin.dismissSuggestion` / `admin.dismissDuplicate` (*Not a duplicate*) | – (no server inverse) |
 
 **As built (BI-2…BI-6):** all ids above are registered in `board_commands.dart`
-(`boardCommands`) and `report_commands.dart`, except `createPost`: the report dialog calls
-`board.createPost` directly, so posting is not an undoable command yet (§17).
+(`boardCommands`) and `report_commands.dart` (`report`, `open`, `createPost`; the report dialog
+posts through `createPost`).
 
 All have `requiredRole: viewer`, because the board is not a document. Admin commands are
 registered for everyone but disabled (`enabled: false`) unless `board.me().isAdmin`.
 Admin command ids are `shell.board.admin.<name>`. The undo entries (`BoardUndoEntry`, domain
 `board`, shell stack) record what the inverse needs: the previous vote, title and body, labels,
 moderation state (approve ↔ hold, remove ↔ restore), prompt body or task status. Undoing
-`createTask` cancels the draft; redo creates a new one. Undoing `release` re-claims only the
+`createTask` cancels the draft; redo creates a new one. Undoing `regeneratePrompt` sets the body
+from before (dropping a pending AI pass); redo asks the AI again. Undoing `release` re-claims only the
 caller's own claim, and undoing `cancelTask` of a claimed task publishes it (the claim is gone).
 A `notFound`/`conflict` answer makes the step partial (`UndoConflict`).
 
@@ -1610,8 +1635,6 @@ Built but not complete, found in the code:
 - **Flagging a comment** (§7.5): the endpoint (`flag`, `unflag`) and `shell.board.flag` (`commentUuid`) accept a
   comment target, but the comment thread UI has no *Flag* action yet. Posts can be flagged from
   the post page.
-- **`createPost` is not an undoable command**: the report dialog calls the endpoint directly
-  (§14).
 - **`reviewQueue(section)` has no paging**: it returns a whole section.
 - **`similar()` is not rate-limited for signed-out callers** (§11 limit applies to signed-in
   users only).

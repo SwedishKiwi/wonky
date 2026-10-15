@@ -11,6 +11,11 @@ fields:
   ### (specs/16 §10.1).
   prompt: String
   promptGeneratedAt: DateTime?
+  ### The AI is writing the prompt body (specs/16 §10.1); it arrives
+  ### through `watchTasks`.
+  promptPending: bool
+  ### Why the last AI pass left the prompt as it was (admins only).
+  promptNote: String?
   promptEditedAt: DateTime?
   promptEditedBy: BoardAuthor?
   posts: List<BoardPostListItem>

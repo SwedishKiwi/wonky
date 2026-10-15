@@ -185,6 +185,7 @@ Future<String?> _reasonDialog(
   required String key,
   required Map<String, String> presets,
   required String confirm,
+  String? initial,
   String? description,
   bool destructive = false,
 }) async {
@@ -200,7 +201,7 @@ Future<String?> _reasonDialog(
           id: 'reason',
           label: l.boardFieldReason,
           options: presets,
-          initial: presets.keys.first,
+          initial: presets.containsKey(initial) ? initial! : presets.keys.first,
         ),
         TextFieldSpec(
           id: 'note',
@@ -227,9 +228,51 @@ Future<String?> _reasonDialog(
   return note.isEmpty ? preset : '$preset: $note';
 }
 
+/// The reason post [p] was held for, as a *Remove* preset: the highest
+/// moderation score of the triage ([BoardPostView.reviewScores]), else the
+/// author-facing hold reason, else the most common community flag; *Other*
+/// when none of them names one (`not_actionable`, `off_topic`, unknown).
+BoardFlagReason boardRemoveReasonFor(BoardPostView? p) {
+  if (p == null) return BoardFlagReason.other;
+  BoardFlagReason? fromDecision(String id) => switch (id) {
+    'security' => BoardFlagReason.security,
+    'offensive' => BoardFlagReason.offensive,
+    'personal_data' => BoardFlagReason.personalData,
+    'spam' => BoardFlagReason.spam,
+    _ => null,
+  };
+  final scores = p.reviewScores;
+  if (scores != null && scores.isNotEmpty) {
+    final top = scores.entries.reduce((a, b) => b.value > a.value ? b : a);
+    return fromDecision(top.key) ?? BoardFlagReason.other;
+  }
+  final reason = p.moderationReason?.toLowerCase() ?? '';
+  for (final (text, r) in const [
+    ('security', BoardFlagReason.security),
+    ('offensive', BoardFlagReason.offensive),
+    ('personal data', BoardFlagReason.personalData),
+    ('spam', BoardFlagReason.spam),
+  ]) {
+    if (reason.contains(text)) return r;
+  }
+  final flags = p.flags ?? const <BoardFlagView>[];
+  if (flags.isNotEmpty) {
+    final counts = <BoardFlagReason, int>{};
+    for (final f in flags) {
+      counts[f.reason] = (counts[f.reason] ?? 0) + 1;
+    }
+    return counts.entries.reduce((a, b) => b.value > a.value ? b : a).key;
+  }
+  return BoardFlagReason.other;
+}
+
 /// *Remove* (specs/16 §9.2): offensive, spam, personal data, security,
-/// other, plus text shown to the author.
-Future<String?> showBoardRemoveDialog(BuildContext context) {
+/// other, plus text shown to the author. The reason starts at [initial]
+/// (the reason the post was held for, [boardRemoveReasonFor]).
+Future<String?> showBoardRemoveDialog(
+  BuildContext context, {
+  BoardFlagReason initial = BoardFlagReason.other,
+}) {
   final l = WonkyAppLocalizations.of(context);
   return _reasonDialog(
     context,
@@ -238,6 +281,7 @@ Future<String?> showBoardRemoveDialog(BuildContext context) {
     presets: {
       for (final x in BoardFlagReason.values) x.name: l.boardFlagReasonName(x),
     },
+    initial: initial.name,
     confirm: l.boardActionRemove,
     destructive: true,
   );

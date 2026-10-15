@@ -1,5 +1,9 @@
+import 'dart:io';
+
 import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:shad/shad.dart';
+import 'package:wonky_app/src/board/pages/contribute_page.dart';
 import 'package:wonky_app/testing.dart';
 import 'package:wonky_app/wonky_app.dart';
 import 'package:wonky_client/wonky_client.dart';
@@ -114,6 +118,134 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(t().location, '/improvements/p/1');
+    await settleTooltips(tester);
+  });
+
+  testWidgets('Given the task page then the setup steps are the commands of '
+      'CONTRIBUTING.md, each with a copy button', (tester) async {
+    final copied = recordClipboard(tester);
+    current = await pumpBoard(tester, '/improvements/t/1', board: withTask());
+
+    for (final line in const [
+      'dart install serverpod_cli@4.1.0-beta.3',
+      'git clone https://github.com/<you>/wonky.git',
+      'cd wonky && flutter pub get',
+      'cd wonky_server',
+      'cp config/passwords.example.yaml config/passwords.yaml',
+      'docker compose up -d',
+      'serverpod start',
+    ]) {
+      expect(find.text(line), findsOneWidget, reason: line);
+    }
+    expect(find.textContaining('dart pub global'), findsNothing);
+    await tester.ensureVisible(byKey('board.task.setup.0'));
+    await tester.tap(byKey('board.task.setup.0'));
+    await tester.pumpAndSettle();
+    expect(copied.single, 'dart install serverpod_cli@4.1.0-beta.3');
+    await settleTooltips(tester);
+  });
+
+  test('Given CONTRIBUTING.md then every setup command is in it', () {
+    final guide = File('../../CONTRIBUTING.md').readAsStringSync();
+
+    for (final command in boardSetupCommands('serverpod/wonky')) {
+      for (final part in command.split(' && ')) {
+        expect(guide, contains(part), reason: command);
+      }
+    }
+  });
+
+  testWidgets('Given an admin when Create task is confirmed while the AI '
+      'writes the prompt then the task opens at once with the pending notice '
+      'and Publish disabled, and the prompt arrives live', (tester) async {
+    final b = FakeBoardRepository(isAdmin: true)
+      ..writesPromptLater = true
+      ..seedPost(title: 'Paste drops styles');
+    current = await pumpBoard(tester, '/improvements', board: b);
+    await tester.tap(byKey('board.select'));
+    await tester.pumpAndSettle();
+    await tester.tap(byKey('board.row.1.select'));
+    await tester.pumpAndSettle();
+    await tester.tap(byKey('board.selection.createTask'));
+    await tester.pumpAndSettle();
+
+    await tester.tap(byKey('dialog.board.task.ok'));
+    await pumpFrames(tester);
+
+    expect(byKey('dialog.board.task'), findsNothing);
+    expect(t().location, '/improvements/t/1');
+    expect(byKey('board.task.notice.promptPending'), findsOneWidget);
+    expect(
+      find.text('Writing the prompt with AI… this takes about a minute'),
+      findsOneWidget,
+    );
+    expect(
+      tester.widget<ShadButton>(byKey('board.task.publish')).enabled,
+      isFalse,
+    );
+
+    b.finishPrompt(1, body: '## Goal\nWritten by the AI.');
+    await pumpFrames(tester);
+
+    expect(byKey('board.task.notice.promptPending'), findsNothing);
+    expect(find.textContaining('Written by the AI.'), findsOneWidget);
+    expect(
+      tester.widget<ShadButton>(byKey('board.task.publish')).enabled,
+      isTrue,
+    );
+    await settleTooltips(tester);
+  });
+
+  testWidgets('Given a draft whose AI pass ran out of budget then admins see '
+      'the note', (tester) async {
+    final b = withTask(admin: true, status: BoardTaskStatus.draft);
+    b.tasks[1]!.promptNote = "Today's AI budget is used up.";
+    current = await pumpBoard(tester, '/improvements/t/1', board: b);
+
+    expect(byKey('board.task.notice.promptNote'), findsOneWidget);
+    expect(
+      find.text(
+        "The AI did not write the prompt: Today's AI budget is used up.",
+      ),
+      findsOneWidget,
+    );
+    await settleTooltips(tester);
+  });
+
+  testWidgets('Given the prompt editor when Regenerate runs in the background '
+      'then the editor waits with Save and Publish disabled and shows the '
+      'new prompt with its diff when it arrives', (tester) async {
+    final b = withTask(
+      admin: true,
+      status: BoardTaskStatus.draft,
+      prompt: '## Goal\nOld text.',
+    )..writesPromptLater = true;
+    current = await pumpBoard(tester, '/improvements/t/1', board: b);
+    await tester.tap(byKey('board.task.editPrompt'));
+    await tester.pumpAndSettle();
+
+    await tester.tap(byKey('dialog.board.prompt.regenerate'));
+    await pumpFrames(tester);
+
+    expect(byKey('dialog.board.prompt.pending'), findsOneWidget);
+    for (final k in const ['save', 'publish', 'regenerate']) {
+      expect(
+        tester.widget<ShadButton>(byKey('dialog.board.prompt.$k')).enabled,
+        isFalse,
+        reason: k,
+      );
+    }
+
+    b.finishPrompt(1, body: '## Goal\nNew from the AI.');
+    await pumpFrames(tester);
+
+    expect(byKey('dialog.board.prompt.pending'), findsNothing);
+    expect(byKey('dialog.board.prompt.diff'), findsOneWidget);
+    expect(find.text('+ New from the AI.'), findsOneWidget);
+    expect(
+      tester.widget<ShadButton>(byKey('dialog.board.prompt.publish')).enabled,
+      isTrue,
+    );
     await settleTooltips(tester);
   });
 

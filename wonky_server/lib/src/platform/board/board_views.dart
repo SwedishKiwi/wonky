@@ -1,13 +1,18 @@
+import 'dart:convert';
+
 import 'package:serverpod/serverpod.dart';
 
 import '../common/models.dart';
 import '../common/time.dart';
 import '../notifications/notification_service.dart';
 import '../users/user_service.dart';
+import 'ai/board_ai.dart';
 import 'ai/task_prompt_template.dart';
 import 'board_access.dart';
 import 'board_admins.dart';
 import 'board_config.dart';
+import 'board_tasks.dart';
+import 'board_triage.dart';
 
 /// Builds the client views of the board. Views never contain emails;
 /// admin-only fields are null (or false) for everyone else (specs/16 §11).
@@ -203,8 +208,41 @@ abstract final class BoardViews {
           ? p.possibleDuplicateOfId
           : null,
       triageJson: c.isAdmin ? p.triageJson : null,
+      reviewScores: c.isAdmin ? reviewScores(p.triageJson) : null,
       flags: c.isAdmin ? _flagViews(flags, authors) : null,
     );
+  }
+
+  /// The moderation scores of [triageJson] at or above their review band
+  /// under the current thresholds (specs/16 §6.2), best first.
+  static Map<String, double>? reviewScores(String? triageJson) {
+    if (triageJson == null) return null;
+    Map<dynamic, dynamic> raw;
+    try {
+      raw = (jsonDecode(triageJson) as Map)['scores'] as Map;
+    } on Object {
+      return null;
+    }
+    double v(String k) => switch (raw[k]) {
+      final num x => x.toDouble(),
+      _ => 0,
+    };
+    final scores = BoardModerationScores(
+      offensive: v('offensive'),
+      spam: v('spam'),
+      notActionable: v('not_actionable'),
+      offTopic: v('off_topic'),
+      personalData: v('personal_data'),
+      security: v('security'),
+    );
+    final bands = moderationBands(
+      scores,
+      BoardConfig.current.ai.thresholds,
+    );
+    final all = scores.toJson();
+    final ids = [...bands.hold, ...bands.review]
+      ..sort((a, b) => all[b]!.compareTo(all[a]!));
+    return {for (final id in ids) id: all[id]!};
   }
 
   static List<BoardFlagView> _flagViews(
@@ -332,6 +370,8 @@ abstract final class BoardViews {
               repository: config.repository,
             ),
             promptGeneratedAt: t.promptGeneratedAt,
+            promptPending: BoardTasks.promptPending(t, now),
+            promptNote: c.isAdmin ? t.promptNote : null,
             promptEditedAt: t.promptEditedAt,
             promptEditedBy: authors[t.promptEditedById],
             posts: itemsByTask[t.id] ?? const [],

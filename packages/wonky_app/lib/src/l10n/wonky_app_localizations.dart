@@ -6910,6 +6910,18 @@ abstract class WonkyAppLocalizations {
   /// **'Draft: only admins see this task. Review the prompt, then publish it.'**
   String get boardDraftNotice;
 
+  /// No description provided for @boardPromptWriting.
+  ///
+  /// In en, this message translates to:
+  /// **'Writing the prompt with AI… this takes about a minute'**
+  String get boardPromptWriting;
+
+  /// No description provided for @boardPromptNote.
+  ///
+  /// In en, this message translates to:
+  /// **'The AI did not write the prompt: {note}'**
+  String boardPromptNote(String note);
+
   /// No description provided for @boardTaskCancelledNotice.
   ///
   /// In en, this message translates to:
@@ -7045,31 +7057,31 @@ abstract class WonkyAppLocalizations {
   /// No description provided for @boardContribStep2.
   ///
   /// In en, this message translates to:
-  /// **'It runs the server and the apps.'**
+  /// **'It runs the server and the apps. Add Dart\'s install directory to your PATH if serverpod is not found.'**
   String get boardContribStep2;
 
   /// No description provided for @boardContribStep3Title.
   ///
   /// In en, this message translates to:
-  /// **'Clone the repository'**
+  /// **'Fork and clone the repository'**
   String get boardContribStep3Title;
 
   /// No description provided for @boardContribStep3.
   ///
   /// In en, this message translates to:
-  /// **'Then start the development database.'**
+  /// **'Fork the repository on GitHub, then clone your fork and get the packages.'**
   String get boardContribStep3;
 
   /// No description provided for @boardContribStep4Title.
   ///
   /// In en, this message translates to:
-  /// **'Create your passwords file'**
+  /// **'Configure the server'**
   String get boardContribStep4Title;
 
   /// No description provided for @boardContribStep4.
   ///
   /// In en, this message translates to:
-  /// **'The example has development defaults. AI keys are optional.'**
+  /// **'Create your passwords file and start the development database and Redis. The example passwords match docker-compose.yaml; replace the CHANGE_ME values. AI keys are optional.'**
   String get boardContribStep4;
 
   /// No description provided for @boardContribStep5Title.
@@ -7081,7 +7093,7 @@ abstract class WonkyAppLocalizations {
   /// No description provided for @boardContribStep5.
   ///
   /// In en, this message translates to:
-  /// **'Run it in wonky_server and start an app from its UI. Point your agent at the serverpod MCP server (.mcp.json is in the repository).'**
+  /// **'Run it in wonky_server: it applies the migrations and hot reloads. Start an app from its UI or let your agent do it through the serverpod MCP server (.mcp.json is in the repository). Sign up with any email; in development the code is in the server log.'**
   String get boardContribStep5;
 
   /// No description provided for @boardContribStep6Title.
@@ -7371,6 +7383,12 @@ abstract class WonkyAppLocalizations {
   /// In en, this message translates to:
   /// **'Vote'**
   String get cmdBoardVote;
+
+  /// No description provided for @cmdBoardCreatePost.
+  ///
+  /// In en, this message translates to:
+  /// **'Post report'**
+  String get cmdBoardCreatePost;
 
   /// No description provided for @cmdBoardEditPost.
   ///

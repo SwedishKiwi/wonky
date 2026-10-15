@@ -10,6 +10,12 @@ fields:
   ### The contributor prompt body (AI-written, admin-edited).
   promptBody: String
   promptGeneratedAt: DateTime?
+  ### Set while the AI writes the prompt body (a `BoardFutureCall.writePrompt`
+  ### is scheduled); cleared when it is done or the admin sets the prompt.
+  promptRequestedAt: DateTime?
+  ### Why the last AI writing pass left the prompt as it was (budget used
+  ### up, provider error); shown to admins.
+  promptNote: String?
   promptEditedById: int?
   promptEditedAt: DateTime?
   createdById: int

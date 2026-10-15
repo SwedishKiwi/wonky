@@ -30,6 +30,8 @@ abstract class BoardTaskView
     required this.promptBody,
     required this.prompt,
     this.promptGeneratedAt,
+    required this.promptPending,
+    this.promptNote,
     this.promptEditedAt,
     this.promptEditedBy,
     required this.posts,
@@ -57,6 +59,8 @@ abstract class BoardTaskView
     required String promptBody,
     required String prompt,
     DateTime? promptGeneratedAt,
+    required bool promptPending,
+    String? promptNote,
     DateTime? promptEditedAt,
     _imhv5g8m.BoardAuthor? promptEditedBy,
     required List<_i20hkddq.BoardPostListItem> posts,
@@ -91,6 +95,10 @@ abstract class BoardTaskView
           : _isc.DateTimeJsonExtension.fromJson(
               jsonSerialization['promptGeneratedAt'],
             ),
+      promptPending: _isc.BoolJsonExtension.fromJson(
+        jsonSerialization['promptPending'],
+      ),
+      promptNote: jsonSerialization['promptNote'] as String?,
       promptEditedAt: jsonSerialization['promptEditedAt'] == null
           ? null
           : _isc.DateTimeJsonExtension.fromJson(
@@ -159,6 +167,13 @@ abstract class BoardTaskView
 
   DateTime? promptGeneratedAt;
 
+  /// The AI is writing the prompt body (specs/16 §10.1); it arrives
+  /// through `watchTasks`.
+  bool promptPending;
+
+  /// Why the last AI pass left the prompt as it was (admins only).
+  String? promptNote;
+
   DateTime? promptEditedAt;
 
   _imhv5g8m.BoardAuthor? promptEditedBy;
@@ -205,6 +220,8 @@ abstract class BoardTaskView
     String? promptBody,
     String? prompt,
     DateTime? promptGeneratedAt = const _isc.$UndefinedDateTime(),
+    bool? promptPending,
+    String? promptNote,
     DateTime? promptEditedAt = const _isc.$UndefinedDateTime(),
     _imhv5g8m.BoardAuthor? promptEditedBy =
         const _UndefinedBoardTaskView$promptEditedBy(),
@@ -237,6 +254,8 @@ abstract class BoardTaskView
       'prompt': prompt,
       if (promptGeneratedAt != null)
         'promptGeneratedAt': promptGeneratedAt?.toJson(),
+      'promptPending': promptPending,
+      if (promptNote != null) 'promptNote': promptNote,
       if (promptEditedAt != null) 'promptEditedAt': promptEditedAt?.toJson(),
       if (promptEditedBy != null) 'promptEditedBy': promptEditedBy?.toJson(),
       'posts': posts.toJson(valueToJson: (v) => v.toJson()),
@@ -269,6 +288,8 @@ abstract class BoardTaskView
       'prompt': prompt,
       if (promptGeneratedAt != null)
         'promptGeneratedAt': promptGeneratedAt?.toJson(),
+      'promptPending': promptPending,
+      if (promptNote != null) 'promptNote': promptNote,
       if (promptEditedAt != null) 'promptEditedAt': promptEditedAt?.toJson(),
       if (promptEditedBy != null)
         'promptEditedBy': promptEditedBy?.toJsonForProtocol(),
@@ -312,6 +333,8 @@ class _BoardTaskViewImpl extends BoardTaskView {
     required String promptBody,
     required String prompt,
     DateTime? promptGeneratedAt,
+    required bool promptPending,
+    String? promptNote,
     DateTime? promptEditedAt,
     _imhv5g8m.BoardAuthor? promptEditedBy,
     required List<_i20hkddq.BoardPostListItem> posts,
@@ -337,6 +360,8 @@ class _BoardTaskViewImpl extends BoardTaskView {
          promptBody: promptBody,
          prompt: prompt,
          promptGeneratedAt: promptGeneratedAt,
+         promptPending: promptPending,
+         promptNote: promptNote,
          promptEditedAt: promptEditedAt,
          promptEditedBy: promptEditedBy,
          posts: posts,
@@ -368,6 +393,8 @@ class _BoardTaskViewImpl extends BoardTaskView {
     String? promptBody,
     String? prompt,
     DateTime? promptGeneratedAt = const _isc.$UndefinedDateTime(),
+    bool? promptPending,
+    Object? promptNote = _Undefined,
     DateTime? promptEditedAt = const _isc.$UndefinedDateTime(),
     _imhv5g8m.BoardAuthor? promptEditedBy =
         const _UndefinedBoardTaskView$promptEditedBy(),
@@ -398,6 +425,8 @@ class _BoardTaskViewImpl extends BoardTaskView {
       promptGeneratedAt: promptGeneratedAt is _isc.UndefinedSentinel
           ? this.promptGeneratedAt
           : promptGeneratedAt,
+      promptPending: promptPending ?? this.promptPending,
+      promptNote: promptNote is String? ? promptNote : this.promptNote,
       promptEditedAt: promptEditedAt is _isc.UndefinedSentinel
           ? this.promptEditedAt
           : promptEditedAt,

@@ -9,6 +9,9 @@ class FakeBoardAi implements BoardAi {
   bool jev = true;
   bool gemini = false;
 
+  /// Gemini has a key but today's budget is spent ([gemini] false).
+  bool geminiOverBudget = false;
+
   /// Answers of [triagePost]; the default is a clean post of the author's
   /// kind.
   BoardTriage Function(BoardPost post, List<BoardPost> candidates)? onTriage;
@@ -29,6 +32,10 @@ class FakeBoardAi implements BoardAi {
   );
 
   String prompt = '## Goal\nFix it.\n\n## Acceptance criteria\n- [ ] Done';
+
+  /// Thrown by [writeTaskPrompt] instead of answering (budget, provider
+  /// errors).
+  Object? promptError;
 
   List<BoardBundleProposal> Function(List<BoardPost> posts)? onBundles;
 
@@ -57,7 +64,7 @@ class FakeBoardAi implements BoardAi {
   bool get jevConfigured => jev;
 
   @override
-  bool get geminiConfigured => gemini;
+  bool get geminiConfigured => gemini || geminiOverBudget;
 
   @override
   Future<bool> jevAvailable(Session session) async => jev;
@@ -132,6 +139,8 @@ class FakeBoardAi implements BoardAi {
     required Uri webOrigin,
   }) async {
     calls.add('prompt');
+    final error = promptError;
+    if (error != null) throw error;
     return prompt;
   }
 }

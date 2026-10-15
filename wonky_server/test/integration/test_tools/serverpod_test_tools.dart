@@ -26,6 +26,8 @@ import 'package:wonky_server/src/generated/future_calls_generated_models/board_f
     as _ied218dm;
 import 'package:wonky_server/src/generated/future_calls_generated_models/board_future_call_triage_model.dart'
     as _ic65ofts;
+import 'package:wonky_server/src/generated/future_calls_generated_models/board_future_call_write_prompt_model.dart'
+    as _if4770sx;
 import 'package:wonky_server/src/generated/future_calls_generated_models/board_github_future_call_handle_model.dart'
     as _it2ybdc3;
 import 'package:wonky_server/src/generated/future_calls_generated_models/board_github_future_call_review_model.dart'
@@ -10580,6 +10582,23 @@ class _BoardFutureCall {
         (sessionBuilder as _ist.InternalTestSessionBuilder).internalBuild();
     try {
       await _iwslocjr.BoardSummarizeFutureCall().invoke(
+        _localUniqueSession,
+        object,
+      );
+    } finally {
+      await _localUniqueSession.close();
+    }
+  }
+
+  Future<void> writePrompt(
+    _ist.TestSessionBuilder sessionBuilder,
+    int taskId,
+  ) async {
+    var object = _if4770sx.BoardFutureCallWritePromptModel(taskId: taskId);
+    var _localUniqueSession =
+        (sessionBuilder as _ist.InternalTestSessionBuilder).internalBuild();
+    try {
+      await _iwslocjr.BoardWritePromptFutureCall().invoke(
         _localUniqueSession,
         object,
       );

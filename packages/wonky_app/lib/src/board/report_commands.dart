@@ -9,6 +9,8 @@ import '../commands/shell_commands/general_commands.dart' show bugReportUrl;
 import '../commands/shell_commands/shell_command_base.dart';
 import '../shell/dialogs.dart';
 import '../shell/shell_services.dart';
+import 'board_hub.dart';
+import 'board_undo.dart';
 import 'report/board_report_dialog.dart';
 import 'report/board_report_services.dart';
 
@@ -81,6 +83,37 @@ List<Command<CommandArgs>> boardReportCommands(ShellServices s) => [
       return CommandResult.ok({'route': path});
     },
   ),
+  shellCommand(
+    'shell.board.createPost',
+    title: (l) => l.cmdBoardCreatePost,
+    icon: LucideIcons.send,
+    category: (l) => l.boardTitle,
+    palette: false,
+    undoable: true,
+    undoTarget: UndoTarget.shell,
+    args: JsonSchema.object(
+      properties: {
+        'kind': JsonSchema.string(
+          enumValues: [for (final x in BoardPostKind.values) x.name],
+        ),
+        'title': const JsonSchema.string(minLength: 1, maxLength: 120),
+        'body': const JsonSchema.string(maxLength: 10000),
+        'contextJson': const JsonSchema.string(
+          description: 'Included details (bugs), JSON.',
+        ),
+        'appHint': const JsonSchema.string(
+          description: 'The app it is about; default: this app.',
+        ),
+        'screenshotFileUuid': const JsonSchema.string(
+          format: 'uuid',
+          description: 'An uploaded screenshot (createScreenshotUpload).',
+        ),
+      },
+      required: const ['kind', 'title', 'body'],
+    ),
+    enabled: (ctx, a) => s.auth.isSignedIn,
+    run: (ctx, a) => createBoardPost(s, ctx, a),
+  ),
   // Aliases of `shell.board.report` (specs/16 §4.1).
   shellCommand(
     'shell.help.reportBug',
@@ -142,7 +175,35 @@ Future<CommandResult> openBoardReport(
   if (r == null) return const CommandResult.cancelled();
   return CommandResult.ok({
     'outcome': r.outcome.name,
-    if (r.post != null) 'postNumber': r.post!.number,
+    'postNumber': ?r.postNumber,
+  });
+}
+
+/// Runs `shell.board.createPost` (specs/16 §4.2, §14): posts the draft,
+/// records an undo entry (undo deletes the post, redo restores it) and
+/// tells open board pages (lists, counts, the Review tab).
+Future<CommandResult> createBoardPost(
+  ShellServices s,
+  CommandContext ctx,
+  JsonArgs a,
+) async {
+  final shot = a.string('screenshotFileUuid');
+  final view = await s.repositories.board.createPost(
+    BoardPostDraft(
+      kind: BoardPostKind.values.byName(a.string('kind')!),
+      title: a.string('title')!.trim(),
+      body: a.string('body')!,
+      contextJson: a.string('contextJson'),
+      appHint: a.string('appHint') ?? s.config.app.name,
+      screenshotFileUuid: shot == null ? null : UuidValue.fromString(shot),
+    ),
+  );
+  ctx.record(BoardUndoEntry(BoardUndoOp.createPost, {'post': view.number}));
+  final hub = BoardHub.of(s)..notePost(view);
+  hub.changed(post: view.number);
+  return CommandResult.ok({
+    'postNumber': view.number,
+    'moderation': view.moderation.name,
   });
 }
 

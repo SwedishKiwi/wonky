@@ -1,14 +1,19 @@
+import 'dart:async';
+
 import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
 import 'package:shad/shad.dart';
 import 'package:wonky_client/wonky_client.dart';
 import 'package:wonky_ui/wonky_ui.dart';
 
+import '../../core/stream_supervisor.dart';
 import '../../data/api.dart';
 import '../../l10n/wonky_app_localizations.dart';
 import '../../markdown/markdown_composer.dart';
 import '../../markdown/wonky_markdown.dart';
 import '../../shell/shell_services.dart';
+import '../board_hub.dart';
+import 'board_widgets.dart';
 
 /// What [lintTaskPrompt] found unusual in a line.
 enum PromptLintKind {
@@ -158,41 +163,84 @@ class PromptEditorDialog extends StatefulWidget {
 }
 
 class _PromptEditorDialogState extends State<PromptEditorDialog> {
+  ShellServices get s => widget.services;
+  int get n => widget.task.number;
+
   late final _body = TextEditingController(text: widget.task.promptBody);
+  late BoardTaskView _task = widget.task;
   bool _regenerating = false;
+  SupervisedStream? _watch;
+  StreamSubscription<BoardChange>? _changes;
 
   /// The text before the last *Regenerate* (shown as a diff).
   String? _beforeRegenerate;
+
+  /// The AI is writing the prompt (specs/16 §10.1): the body is replaced
+  /// when it is done, so editing, saving and publishing wait.
+  bool get _pending => _task.promptPending;
 
   @override
   void initState() {
     super.initState();
     _body.addListener(_changed);
+    // The AI's prompt arrives live (`watchTasks`); commands, undo and
+    // redo go through the hub.
+    _watch = s.supervisor.supervise<BoardPostEvent>(
+      'board.promptEditor.$n',
+      () => s.repositories.board.watchTasks(),
+      (e) {
+        if (e.number == n) unawaited(_reload());
+      },
+    );
+    _changes = BoardHub.of(s).changes.listen((c) {
+      if (c.task == n) unawaited(_reload());
+    });
   }
 
   void _changed() => setState(() {});
 
   @override
   void dispose() {
+    _changes?.cancel();
+    unawaited(_watch?.cancel());
     _body
       ..removeListener(_changed)
       ..dispose();
     super.dispose();
   }
 
+  /// Reads the task again; a prompt the AI finished (or a synchronous
+  /// *Regenerate*) replaces the text, with the text before as the diff.
+  Future<void> _reload() async {
+    final BoardTaskView t;
+    try {
+      t = await s.repositories.board.getTask(n);
+    } catch (_) {
+      return;
+    }
+    if (!mounted) return;
+    final before = _task;
+    setState(() {
+      _task = t;
+      final written =
+          !t.promptPending &&
+          t.promptBody != before.promptBody &&
+          (before.promptPending || _regenerating);
+      if (written) {
+        _beforeRegenerate = _body.text;
+        _body.text = t.promptBody;
+      }
+    });
+  }
+
   Future<void> _regenerate() async {
-    final s = widget.services;
     setState(() => _regenerating = true);
     try {
       final r = await s.dispatcher.invoke(
         'shell.board.admin.regeneratePrompt',
-        args: {'taskNumber': widget.task.number},
+        args: {'taskNumber': n},
       );
-      final body = (r.data as Map?)?['promptBody'] as String?;
-      if (r.isOk && body != null && mounted) {
-        _beforeRegenerate = _body.text;
-        _body.text = body;
-      }
+      if (r.isOk) await _reload();
     } catch (e) {
       final l = s.l10n;
       if (l != null) {
@@ -204,6 +252,7 @@ class _PromptEditorDialogState extends State<PromptEditorDialog> {
   }
 
   void _close({bool publish = false}) {
+    if (_pending) return;
     final body = _body.text.trim();
     if (body.isEmpty) return;
     Navigator.of(context).pop(PromptEditorResult(body, publish: publish));
@@ -227,9 +276,11 @@ class _PromptEditorDialogState extends State<PromptEditorDialog> {
       fontFamily: 'monospace',
       fontWeight: FontWeight.normal,
     );
+    final pending = _pending;
     final editor = MarkdownComposer(
       fieldKey: 'dialog.board.prompt.body',
       controller: _body,
+      enabled: !pending,
       profile: MarkdownProfile.post,
       minLines: 14,
       maxLines: 24,
@@ -263,7 +314,7 @@ class _PromptEditorDialogState extends State<PromptEditorDialog> {
         actions: [
           ShadButton.outline(
             key: const ValueKey<String>('dialog.board.prompt.regenerate'),
-            enabled: !_regenerating,
+            enabled: !_regenerating && !pending,
             onPressed: _regenerate,
             leading: const Icon(LucideIcons.refreshCw, size: 16),
             child: Text(l.cmdBoardRegeneratePrompt),
@@ -275,12 +326,14 @@ class _PromptEditorDialogState extends State<PromptEditorDialog> {
           ),
           ShadButton.outline(
             key: const ValueKey<String>('dialog.board.prompt.save'),
+            enabled: !pending,
             onPressed: _close,
             child: Text(l.actionSave),
           ),
           if (draft)
             ShadButton(
               key: const ValueKey<String>('dialog.board.prompt.publish'),
+              enabled: !pending,
               onPressed: () => _close(publish: true),
               child: Text(l.boardActionSavePublish),
             ),
@@ -292,6 +345,10 @@ class _PromptEditorDialogState extends State<PromptEditorDialog> {
             crossAxisAlignment: CrossAxisAlignment.stretch,
             spacing: 12,
             children: [
+              if (pending)
+                const BoardPromptPendingNotice(
+                  key: ValueKey<String>('dialog.board.prompt.pending'),
+                ),
               Expanded(
                 child: wide
                     ? Row(

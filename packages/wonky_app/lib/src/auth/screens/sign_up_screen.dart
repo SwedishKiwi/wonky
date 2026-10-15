@@ -89,7 +89,9 @@ class _SignUpScreenState extends State<SignUpScreen> {
         email: _email.text,
         password: _password.text,
       );
-      if (mounted) context.go('/signup/verify');
+      if (mounted) {
+        context.go(authPathWithNext(widget.services, '/signup/verify'));
+      }
     } on AuthFailure catch (e) {
       if (mounted) setState(() => _formError = authErrorText(l, e.error));
     } finally {
@@ -111,7 +113,9 @@ class _SignUpScreenState extends State<SignUpScreen> {
         children: [
           Text(l.authHaveAccount),
           ShadButton.link(
-            onPressed: () => context.go('/signin'),
+            key: const ValueKey<String>('auth.signUp.signIn'),
+            onPressed: () =>
+                context.go(authPathWithNext(widget.services, '/signin')),
             child: Text(l.authSignIn),
           ),
         ],

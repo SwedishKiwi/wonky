@@ -157,7 +157,7 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
       footer: ShadButton.link(
         onPressed: () {
           auth.cancelReset();
-          context.go('/signin');
+          context.go(authPathWithNext(widget.services, '/signin'));
         },
         child: Text(l.authBackToSignIn),
       ),

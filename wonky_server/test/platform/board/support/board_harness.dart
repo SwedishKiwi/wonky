@@ -9,8 +9,9 @@ import '../../../support/test_users.dart';
 import '../../../support/wonky_serverpod.dart';
 import 'fake_board_ai.dart';
 
-/// A scheduled background job (recorded instead of a future call).
-typedef ScheduledBoardJob = ({BoardJob job, int postId, Duration delay});
+/// A scheduled background job (recorded instead of a future call); [id] is
+/// a post id, or a task id for [BoardJob.prompt].
+typedef ScheduledBoardJob = ({BoardJob job, int id, Duration delay});
 
 /// Test setup of the board: a [FakeBoardAi], default config, recorded jobs.
 class BoardHarness {
@@ -27,8 +28,8 @@ class BoardHarness {
     BoardAi.override = h.ai;
     BoardConfig.current = config ?? BoardConfig();
     BoardRateLimits.reset();
-    BoardJobs.scheduler = (session, job, postId, delay) async =>
-        h.scheduled.add((job: job, postId: postId, delay: delay));
+    BoardJobs.scheduler = (session, job, id, delay) async =>
+        h.scheduled.add((job: job, id: id, delay: delay));
     return h;
   }
 

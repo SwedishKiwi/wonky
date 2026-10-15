@@ -2,6 +2,7 @@ import 'package:flutter/widgets.dart';
 import 'package:go_router/go_router.dart';
 
 import '../auth/auth_controller.dart';
+import '../auth/screens/auth_layout.dart' show safeAuthNext;
 import '../board/pages/board_routes.dart';
 import '../board/pages/board_widgets.dart' show isBoardLocation;
 import '../config/home_scope.dart';
@@ -50,10 +51,7 @@ GoRouter buildShellRouter(ShellServices s) {
             : '/signin?next=${Uri.encodeQueryComponent(next)}';
       }
       if (isAuth) {
-        final next = state.uri.queryParameters['next'];
-        return next != null && next.startsWith('/') && !next.startsWith('//')
-            ? next
-            : '/';
+        return safeAuthNext(state.uri.queryParameters['next']) ?? '/';
       }
       if (path == '/settings') return '/settings/account';
       return null;

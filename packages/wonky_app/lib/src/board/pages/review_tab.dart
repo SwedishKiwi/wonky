@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:convert';
 
 import 'package:flutter/widgets.dart';
 import 'package:shad/shad.dart';
@@ -25,6 +24,18 @@ class BoardReviewTab extends StatefulWidget {
 
   @override
   State<BoardReviewTab> createState() => _BoardReviewTabState();
+}
+
+/// The moderation scores that put a post in the review queue (the server's
+/// [BoardPostView.reviewScores]: at or above their review band), best
+/// first: `spam 0.91 · not_actionable 0.62`. Null when there are none.
+String? boardReviewScoresText(Map<String, double>? scores) {
+  if (scores == null || scores.isEmpty) return null;
+  final sorted = scores.entries.toList()
+    ..sort((a, b) => b.value.compareTo(a.value));
+  return [
+    for (final e in sorted) '${e.key} ${e.value.toStringAsFixed(2)}',
+  ].join(' · ');
 }
 
 class _BoardReviewTabState extends State<BoardReviewTab> {
@@ -80,6 +91,16 @@ class _BoardReviewTabState extends State<BoardReviewTab> {
 
   Future<CommandResult?> _invoke(String id, Map<String, Object?> args) =>
       boardInvoke(s, id, args, context: context);
+
+  /// Creates a task and opens it (the AI writes its prompt in the
+  /// background, specs/16 §10.1).
+  Future<void> _createTask(Map<String, Object?> args) async {
+    final r = await _invoke('shell.board.admin.createTask', args);
+    final t = (r?.data as Map?)?['taskNumber'];
+    if (r?.isOk == true && t is int && mounted) {
+      s.router.go('/improvements/t/$t');
+    }
+  }
 
   Future<void> _suggest() async {
     setState(() => _suggesting = true);
@@ -206,19 +227,7 @@ class _BoardReviewTabState extends State<BoardReviewTab> {
       ],
       BoardReviewSection.drafts => const <Widget>[],
     };
-    String? scores;
-    if (p.triageJson case final tj?) {
-      try {
-        final m = jsonDecode(tj);
-        if (m is Map) {
-          scores = [
-            for (final e in m.entries)
-              if (e.value is num && (e.value as num) >= 0.2)
-                '${e.key} ${(e.value as num).toStringAsFixed(2)}',
-          ].join(' · ');
-        }
-      } catch (_) {}
-    }
+    final scores = boardReviewScoresText(p.reviewScores);
     final flags = p.flags ?? const [];
     return Container(
       key: ValueKey<String>('board.review.${section.name}.$n'),
@@ -254,8 +263,12 @@ class _BoardReviewTabState extends State<BoardReviewTab> {
           if (p.moderationReason case final r?
               when section == BoardReviewSection.held)
             Text(r, style: muted),
-          if (scores != null && scores.isNotEmpty)
-            Text('${l.boardAiScores}: $scores', style: muted),
+          if (scores != null)
+            Text(
+              '${l.boardAiScores}: $scores',
+              key: ValueKey<String>('board.review.${section.name}.$n.scores'),
+              style: muted,
+            ),
           if (flags.isNotEmpty)
             Text(
               l.boardFlags(
@@ -360,7 +373,7 @@ class _BoardReviewTabState extends State<BoardReviewTab> {
                 size: ShadButtonSize.sm,
                 onPressed: numbers.isEmpty
                     ? null
-                    : () => _invoke('shell.board.admin.createTask', {
+                    : () => _createTask({
                         'postNumbers': numbers,
                         'title': b.title,
                         'area': (b.area ?? first?.area ?? BoardArea.suite).name,
@@ -373,9 +386,7 @@ class _BoardReviewTabState extends State<BoardReviewTab> {
                 size: ShadButtonSize.sm,
                 onPressed: numbers.isEmpty
                     ? null
-                    : () => _invoke('shell.board.admin.createTask', {
-                        'postNumbers': numbers,
-                      }),
+                    : () => _createTask({'postNumbers': numbers}),
                 child: Text(l.boardEditEllipsis),
               ),
               ShadButton.ghost(

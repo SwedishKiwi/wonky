@@ -88,14 +88,15 @@ abstract final class BoardRateLimits {
 }
 
 /// Background work of the board, scheduled through [scheduler]: by default
-/// a `BoardFutureCall` (tests replace it to record or run inline).
-enum BoardJob { triage, summarize }
+/// a `BoardFutureCall` (tests replace it to record or run inline). The id is
+/// a post id, except for [prompt] (a task id).
+enum BoardJob { triage, summarize, prompt }
 
 abstract final class BoardJobs {
   static Future<void> Function(
     Session session,
     BoardJob job,
-    int postId,
+    int id,
     Duration delay,
   )
   scheduler = _viaFutureCall;
@@ -103,31 +104,37 @@ abstract final class BoardJobs {
   static Future<void> _viaFutureCall(
     Session session,
     BoardJob job,
-    int postId,
+    int id,
     Duration delay,
   ) async {
     final dispatch = session.serverpod.futureCalls.callWithDelay(delay).board;
     switch (job) {
       case BoardJob.triage:
-        await dispatch.triage(postId);
+        await dispatch.triage(id);
       case BoardJob.summarize:
-        await dispatch.summarize(postId);
+        await dispatch.summarize(id);
+      case BoardJob.prompt:
+        await dispatch.writePrompt(id);
     }
   }
 
-  static Future<void> schedule(
+  /// Schedules [job] for [id]; false (logged) when it could not be
+  /// scheduled.
+  static Future<bool> schedule(
     Session session,
     BoardJob job,
-    int postId, {
+    int id, {
     Duration delay = Duration.zero,
   }) async {
     try {
-      await scheduler(session, job, postId, delay);
+      await scheduler(session, job, id, delay);
+      return true;
     } on Object catch (e) {
       session.log(
-        'board: could not schedule ${job.name} of #$postId: $e',
+        'board: could not schedule ${job.name} of #$id: $e',
         level: LogLevel.warning,
       );
+      return false;
     }
   }
 }

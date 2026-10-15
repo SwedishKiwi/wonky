@@ -524,18 +524,21 @@ List<Command<CommandArgs>> boardCommands(ShellServices s) {
         }
         final action = BoardModerationAction.values.byName(a.string('action')!);
         var reason = a.string('reason');
+        final before = p == null ? null : await repo().getPost(p);
         if (action == BoardModerationAction.remove && reason == null) {
           final bc = ctx.dialogContext;
           if (bc != null && bc.mounted) {
-            final r = await showBoardRemoveDialog(bc);
+            final r = await showBoardRemoveDialog(
+              bc,
+              initial: boardRemoveReasonFor(before),
+            );
             if (r == null) return const CommandResult.cancelled();
             reason = r;
           }
         }
         String? inverse;
         String? inverseReason;
-        if (p != null) {
-          final before = await repo().getPost(p);
+        if (p != null && before != null) {
           await repo().moderatePost(p, action, reason: reason);
           // Undo writes the previous moderation state back.
           if (action != BoardModerationAction.removeScreenshot &&
@@ -1097,16 +1100,20 @@ List<Command<CommandArgs>> boardCommands(ShellServices s) {
       run: (ctx, a) async {
         final n = a.integer('taskNumber')!;
         final before = await repo().getTask(n);
+        // The server writes the prompt in the background (specs/16 §10.1):
+        // the view comes back pending, and the body arrives live.
         final v = await repo().regeneratePrompt(n);
         ctx.record(
-          entry(BoardUndoOp.setPrompt, {
+          entry(BoardUndoOp.regeneratePrompt, {
             'task': n,
             'before': before.promptBody,
-            'after': v.promptBody,
           }),
         );
         hub.changed(task: n, lists: false);
-        return CommandResult.ok({'promptBody': v.promptBody});
+        return CommandResult.ok({
+          'promptBody': v.promptBody,
+          'promptPending': v.promptPending,
+        });
       },
     ),
     cmd(

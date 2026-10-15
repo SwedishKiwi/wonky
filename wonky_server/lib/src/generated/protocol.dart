@@ -76,6 +76,8 @@ import 'future_calls_generated_models/board_future_call_summarize_model.dart'
     as _icgheary;
 import 'future_calls_generated_models/board_future_call_triage_model.dart'
     as _if8h900w;
+import 'future_calls_generated_models/board_future_call_write_prompt_model.dart'
+    as _ixkvo7h1;
 import 'future_calls_generated_models/board_github_future_call_handle_model.dart'
     as _ip0bwzb4;
 import 'future_calls_generated_models/board_github_future_call_review_model.dart'
@@ -649,6 +651,7 @@ class Protocol extends _is.DatabaseSerializationManager
         types: const [
           _is.getType<_icgheary.BoardFutureCallSummarizeModel>,
           _is.getType<_if8h900w.BoardFutureCallTriageModel>,
+          _is.getType<_ixkvo7h1.BoardFutureCallWritePromptModel>,
           _is.getType<_ip0bwzb4.BoardGithubFutureCallHandleModel>,
           _is.getType<_i5z3lvv6.BoardGithubFutureCallReviewModel>,
           _is.getType<_ilpvgw0t.FilePreviewFutureCallGenerateModel>,
@@ -968,6 +971,7 @@ class Protocol extends _is.DatabaseSerializationManager
           _is.getType<_is9bkd9t.WriteVersionDocument>,
           _is.getType<_icgheary.BoardFutureCallSummarizeModel?>,
           _is.getType<_if8h900w.BoardFutureCallTriageModel?>,
+          _is.getType<_ixkvo7h1.BoardFutureCallWritePromptModel?>,
           _is.getType<_ip0bwzb4.BoardGithubFutureCallHandleModel?>,
           _is.getType<_i5z3lvv6.BoardGithubFutureCallReviewModel?>,
           _is.getType<_ilpvgw0t.FilePreviewFutureCallGenerateModel?>,
@@ -1299,6 +1303,8 @@ class Protocol extends _is.DatabaseSerializationManager
           _is.getType<List<_il200dga.BoardPostStatus>>,
           _is.getType<List<_i0ag0upm.BoardArea>>,
           _is.getType<List<_ivbgicm7.BoardSize>>,
+          _is.getType<Map<String, double>>,
+          _is.getType<Map<String, double>?>,
           _is.getType<List<_ifz7dmuf.BoardTaskView>>,
           _is.getType<List<_i4xrxro7.CommentView>>,
           _is.getType<List<_i6y7tspy.UserSummary>>,
@@ -3204,6 +3210,18 @@ class Protocol extends _is.DatabaseSerializationManager
           columnType: _isp.ColumnType.timestampWithoutTimeZone,
           isNullable: true,
           dartType: 'DateTime?',
+        ),
+        _isp.ColumnDefinition(
+          name: 'promptRequestedAt',
+          columnType: _isp.ColumnType.timestampWithoutTimeZone,
+          isNullable: true,
+          dartType: 'DateTime?',
+        ),
+        _isp.ColumnDefinition(
+          name: 'promptNote',
+          columnType: _isp.ColumnType.text,
+          isNullable: true,
+          dartType: 'String?',
         ),
         _isp.ColumnDefinition(
           name: 'promptEditedById',
@@ -8542,6 +8560,9 @@ class Protocol extends _is.DatabaseSerializationManager
     if (t == _if8h900w.BoardFutureCallTriageModel) {
       return _if8h900w.BoardFutureCallTriageModel.fromJson(data) as T;
     }
+    if (t == _ixkvo7h1.BoardFutureCallWritePromptModel) {
+      return _ixkvo7h1.BoardFutureCallWritePromptModel.fromJson(data) as T;
+    }
     if (t == _ip0bwzb4.BoardGithubFutureCallHandleModel) {
       return _ip0bwzb4.BoardGithubFutureCallHandleModel.fromJson(data) as T;
     }
@@ -9503,6 +9524,12 @@ class Protocol extends _is.DatabaseSerializationManager
     if (t == _is.getType<_if8h900w.BoardFutureCallTriageModel?>()) {
       return (data != null
               ? _if8h900w.BoardFutureCallTriageModel.fromJson(data)
+              : null)
+          as T;
+    }
+    if (t == _is.getType<_ixkvo7h1.BoardFutureCallWritePromptModel?>()) {
+      return (data != null
+              ? _ixkvo7h1.BoardFutureCallWritePromptModel.fromJson(data)
               : null)
           as T;
     }
@@ -10941,6 +10968,21 @@ class Protocol extends _is.DatabaseSerializationManager
               .toList()
           as T;
     }
+    if (t == Map<String, double>) {
+      return (data as Map).map(
+            (k, v) => MapEntry(deserialize<String>(k), deserialize<double>(v)),
+          )
+          as T;
+    }
+    if (t == _is.getType<Map<String, double>?>()) {
+      return (data != null
+              ? (data as Map).map(
+                  (k, v) =>
+                      MapEntry(deserialize<String>(k), deserialize<double>(v)),
+                )
+              : null)
+          as T;
+    }
     if (t == List<_ifz7dmuf.BoardTaskView>) {
       return (data as List)
               .map((e) => deserialize<_ifz7dmuf.BoardTaskView>(e))
@@ -11329,6 +11371,8 @@ class Protocol extends _is.DatabaseSerializationManager
       _icgheary.BoardFutureCallSummarizeModel =>
         'BoardFutureCallSummarizeModel',
       _if8h900w.BoardFutureCallTriageModel => 'BoardFutureCallTriageModel',
+      _ixkvo7h1.BoardFutureCallWritePromptModel =>
+        'BoardFutureCallWritePromptModel',
       _ip0bwzb4.BoardGithubFutureCallHandleModel =>
         'BoardGithubFutureCallHandleModel',
       _i5z3lvv6.BoardGithubFutureCallReviewModel =>
@@ -11669,6 +11713,8 @@ class Protocol extends _is.DatabaseSerializationManager
         return 'BoardFutureCallSummarizeModel';
       case _if8h900w.BoardFutureCallTriageModel():
         return 'BoardFutureCallTriageModel';
+      case _ixkvo7h1.BoardFutureCallWritePromptModel():
+        return 'BoardFutureCallWritePromptModel';
       case _ip0bwzb4.BoardGithubFutureCallHandleModel():
         return 'BoardGithubFutureCallHandleModel';
       case _i5z3lvv6.BoardGithubFutureCallReviewModel():
@@ -12346,6 +12392,11 @@ class Protocol extends _is.DatabaseSerializationManager
     }
     if (dataClassName == 'BoardFutureCallTriageModel') {
       return deserialize<_if8h900w.BoardFutureCallTriageModel>(data['data']);
+    }
+    if (dataClassName == 'BoardFutureCallWritePromptModel') {
+      return deserialize<_ixkvo7h1.BoardFutureCallWritePromptModel>(
+        data['data'],
+      );
     }
     if (dataClassName == 'BoardGithubFutureCallHandleModel') {
       return deserialize<_ip0bwzb4.BoardGithubFutureCallHandleModel>(

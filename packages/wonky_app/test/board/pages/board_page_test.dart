@@ -233,6 +233,26 @@ void main() {
     expect(t().board.calls.where((c) => c.startsWith('vote')), isEmpty);
   });
 
+  testWidgets('Given the board open when a report is posted then the list '
+      'refreshes and shows it', (tester) async {
+    final b = seeded();
+    current = await pumpBoard(tester, '/improvements', board: b);
+    expect(find.text('Charts in dark mode'), findsNothing);
+
+    await t().h.invoke('shell.board.createPost', {
+      'kind': 'idea',
+      'title': 'Charts in dark mode',
+      'body': '## Idea\n\nA dark palette',
+    });
+    await tester.pumpAndSettle();
+
+    expect(find.text('Charts in dark mode'), findsOneWidget);
+    await t().h.undo();
+    await tester.pumpAndSettle();
+    expect(find.text('Charts in dark mode'), findsNothing);
+    await settleTooltips(tester);
+  });
+
   testWidgets('Given no posts then the tab shows its empty state', (
     tester,
   ) async {

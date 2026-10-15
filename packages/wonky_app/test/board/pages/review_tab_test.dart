@@ -115,8 +115,64 @@ void main() {
     final task = b.tasks.values.last;
     expect(task.title, 'Merged-cell paste bugs');
     expect(task.posts, [2, 3]);
+    expect(t().location, '/improvements/t/${task.number}');
     await settleTooltips(tester);
   });
+
+  testWidgets('Given a post held for spam then its row shows the moderation '
+      'scores in the review band, best first, not the kind confidence', (
+    tester,
+  ) async {
+    final b = FakeBoardRepository(isAdmin: true)
+      ..seedPost(
+        title: 'Buy cheap pens',
+        moderation: BoardModeration.held,
+        triageJson: '{"kindConfidence":0.94,"scores":{"spam":0.91}}',
+        reviewScores: {'not_actionable': 0.62, 'spam': 0.91},
+      );
+    current = await pumpBoard(tester, '/improvements/review', board: b);
+
+    expect(
+      find.text('AI scores: spam 0.91 · not_actionable 0.62'),
+      findsOneWidget,
+    );
+    expect(find.textContaining('kindConfidence'), findsNothing);
+    await settleTooltips(tester);
+  });
+
+  for (final (name, scores, reason, expected) in [
+    ('spam', {'spam': 0.91, 'offensive': 0.55}, null, 'Spam'),
+    ('personal data', {'personal_data': 0.8}, null, 'Personal data'),
+    (
+      'security (hold reason only)',
+      null,
+      'Waiting for review: it may '
+          'describe a security issue.',
+      'Security issue',
+    ),
+    ('nothing known', null, null, 'Other'),
+  ]) {
+    testWidgets('Given a post held for $name when Remove is pressed then the '
+        'reason starts at $expected', (tester) async {
+      final b = FakeBoardRepository(isAdmin: true)
+        ..seedPost(
+          title: 'Held post',
+          moderation: BoardModeration.held,
+          moderationReason: reason,
+          reviewScores: scores,
+        );
+      current = await pumpBoard(tester, '/improvements/review', board: b);
+
+      await tester.tap(byKey('board.review.held.1.remove'));
+      await tester.pumpAndSettle();
+      await tester.tap(byKey('dialog.board.remove.ok'));
+      await tester.pumpAndSettle();
+
+      expect(b.posts[1]!.moderation, BoardModeration.removed);
+      expect(b.posts[1]!.moderationReason, expected);
+      await settleTooltips(tester);
+    });
+  }
 
   testWidgets('Given Suggest bundles then the admin command runs', (
     tester,

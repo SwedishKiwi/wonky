@@ -54,6 +54,32 @@ void main() {
       );
     });
 
+    test('when triage holds the post then admins see the moderation scores '
+        'at or above their review band, best first, and the author does '
+        'not', () async {
+      h.ai.onTriage = (p, _) => FakeBoardAi.clean(
+        p,
+        scores: const BoardModerationScores(
+          spam: 0.91,
+          notActionable: 0.62,
+          offensive: 0.3,
+        ),
+        kindConfidence: 0.94,
+      );
+      final post = await BoardHarness.post(endpoints, anna);
+      final admin = await BoardHarness.admin(sessionBuilder);
+
+      final view = await endpoints.board.getPost(
+        admin.endpointSession,
+        post.number,
+      );
+
+      expect(view.moderation, BoardModeration.held);
+      expect(view.reviewScores, {'spam': 0.91, 'not_actionable': 0.62});
+      expect(view.reviewScores!.keys, ['spam', 'not_actionable']);
+      expect(post.reviewScores, isNull);
+    });
+
     test('when Jev corrects the kind then the reported kind is kept', () async {
       h.ai.onTriage = (p, _) => FakeBoardAi.clean(
         p,

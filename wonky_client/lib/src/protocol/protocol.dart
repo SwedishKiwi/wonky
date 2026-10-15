@@ -1116,6 +1116,8 @@ class Protocol extends _isd.DatabaseSerializationManager
           _isc.getType<List<_il200dga.BoardPostStatus>>,
           _isc.getType<List<_i0ag0upm.BoardArea>>,
           _isc.getType<List<_ivbgicm7.BoardSize>>,
+          _isc.getType<Map<String, double>>,
+          _isc.getType<Map<String, double>?>,
           _isc.getType<List<_ifz7dmuf.BoardTaskView>>,
           _isc.getType<List<_i4xrxro7.CommentView>>,
           _isc.getType<List<_i6y7tspy.UserSummary>>,
@@ -3460,6 +3462,21 @@ class Protocol extends _isd.DatabaseSerializationManager
       return (data as List)
               .map((e) => deserialize<_ivbgicm7.BoardSize>(e))
               .toList()
+          as T;
+    }
+    if (t == Map<String, double>) {
+      return (data as Map).map(
+            (k, v) => MapEntry(deserialize<String>(k), deserialize<double>(v)),
+          )
+          as T;
+    }
+    if (t == _isc.getType<Map<String, double>?>()) {
+      return (data != null
+              ? (data as Map).map(
+                  (k, v) =>
+                      MapEntry(deserialize<String>(k), deserialize<double>(v)),
+                )
+              : null)
           as T;
     }
     if (t == List<_ifz7dmuf.BoardTaskView>) {

@@ -13,15 +13,25 @@ import 'board_widgets.dart';
 String boardRepository(ShellServices s) =>
     BoardHub.of(s).me.value?.repository ?? 'serverpod/wonky';
 
+/// The Serverpod CLI version of `CONTRIBUTING.md` step 2 (the `VERSION` in
+/// `.github/workflows/tests.yml`).
+const boardServerpodCliVersion = '4.1.0-beta.3';
+
 /// The setup commands of `CONTRIBUTING.md` steps 2–5 (specs/16 §10.3), one
-/// per copy button.
-List<String> boardSetupCommands(String repository) => [
-  'dart pub global activate serverpod_cli',
-  'git clone https://github.com/$repository.git',
-  'cd ${repository.split('/').last}/wonky_server && docker compose up -d',
-  'cp config/passwords.example.yaml config/passwords.yaml',
-  'serverpod start',
-];
+/// per copy button: install the CLI, clone your fork of [repository] and get
+/// the packages, configure the server, run it.
+List<String> boardSetupCommands(String repository) {
+  final name = repository.split('/').last;
+  return [
+    'dart install serverpod_cli@$boardServerpodCliVersion',
+    'git clone https://github.com/<you>/$name.git',
+    'cd $name && flutter pub get',
+    'cd wonky_server',
+    'cp config/passwords.example.yaml config/passwords.yaml',
+    'docker compose up -d',
+    'serverpod start',
+  ];
+}
 
 /// `/improvements/contribute` (specs/16 §10.3): the short version of
 /// `CONTRIBUTING.md` (steps 1–7) as app strings, so it works without
@@ -134,25 +144,23 @@ class _BoardContributePageState extends State<BoardContributePage> {
                   ),
                 ]),
                 step(3, l.boardContribStep3Title, l.boardContribStep3, [
-                  BoardCopyLine(
-                    text: cmds[1],
-                    copyKey: 'board.contribute.copy.1',
-                  ),
-                  BoardCopyLine(
-                    text: cmds[2],
-                    copyKey: 'board.contribute.copy.2',
-                  ),
+                  for (final i in const [1, 2])
+                    BoardCopyLine(
+                      text: cmds[i],
+                      copyKey: 'board.contribute.copy.$i',
+                    ),
                 ]),
                 step(4, l.boardContribStep4Title, l.boardContribStep4, [
-                  BoardCopyLine(
-                    text: cmds[3],
-                    copyKey: 'board.contribute.copy.3',
-                  ),
+                  for (final i in const [3, 4, 5])
+                    BoardCopyLine(
+                      text: cmds[i],
+                      copyKey: 'board.contribute.copy.$i',
+                    ),
                 ]),
                 step(5, l.boardContribStep5Title, l.boardContribStep5, [
                   BoardCopyLine(
-                    text: cmds[4],
-                    copyKey: 'board.contribute.copy.4',
+                    text: cmds[6],
+                    copyKey: 'board.contribute.copy.6',
                   ),
                 ]),
                 step(6, l.boardContribStep6Title, l.boardContribStep6, [

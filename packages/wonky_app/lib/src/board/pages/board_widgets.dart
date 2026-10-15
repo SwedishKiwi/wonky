@@ -462,6 +462,40 @@ class BoardNotice extends StatelessWidget {
   }
 }
 
+/// *Writing the prompt with AI… this takes about a minute* with a spinner:
+/// the AI writes a task prompt in the background (specs/16 §10.1); the
+/// page refreshes live when it is done.
+class BoardPromptPendingNotice extends StatelessWidget {
+  const BoardPromptPendingNotice({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    final l = WonkyAppLocalizations.of(context);
+    final theme = ShadTheme.of(context);
+    final c = theme.colorScheme.primary;
+    return Semantics(
+      liveRegion: true,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+        decoration: BoxDecoration(
+          color: c.withValues(alpha: 0.08),
+          border: Border.all(color: c.withValues(alpha: 0.6)),
+          borderRadius: BorderRadius.circular(8),
+        ),
+        child: Row(
+          spacing: 10,
+          children: [
+            ExcludeSemantics(child: ShadSpinner(size: 16, color: c)),
+            Expanded(
+              child: Text(l.boardPromptWriting, style: theme.textTheme.small),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
 /// A command line with a copy button (setup steps, PR lines).
 class BoardCopyLine extends StatelessWidget {
   const BoardCopyLine({

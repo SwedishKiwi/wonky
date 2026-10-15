@@ -137,7 +137,7 @@ class _VerifyEmailScreenState extends State<VerifyEmailScreen> {
       if (!mounted) return;
       if (e.error == AuthError.passwordPolicy) {
         widget.services.toasts.error(l.authErrorPasswordPolicy);
-        context.go('/signup');
+        context.go(authPathWithNext(widget.services, '/signup'));
         return;
       }
       setState(() => _error = authErrorText(l, e.error));
@@ -160,7 +160,8 @@ class _VerifyEmailScreenState extends State<VerifyEmailScreen> {
             Text(l.authVerifyNoDraft),
             const SizedBox(height: 12),
             ShadButton(
-              onPressed: () => context.go('/signup'),
+              onPressed: () =>
+                  context.go(authPathWithNext(widget.services, '/signup')),
               child: Text(l.authBackToSignUp),
             ),
           ],
@@ -207,7 +208,8 @@ class _VerifyEmailScreenState extends State<VerifyEmailScreen> {
           const SizedBox(height: 6),
           ShadButton.ghost(
             key: const ValueKey<String>('auth.verify.changeEmail'),
-            onPressed: () => context.go('/signup'),
+            onPressed: () =>
+                context.go(authPathWithNext(widget.services, '/signup')),
             child: Text(l.authChangeEmail),
           ),
         ],

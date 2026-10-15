@@ -276,6 +276,36 @@ void main() {
       await settle(tester);
     });
 
+    testWidgets('when posting then it runs shell.board.createPost: one undo '
+        'step whose undo deletes the post and redo restores it', (
+      tester,
+    ) async {
+      final invoked = <String>[];
+      final sub = h.services.dispatcher.events.listen(
+        (e) => invoked.add(e.id.value),
+      );
+      addTearDown(sub.cancel);
+      await openReport(tester, args: const {'kind': 'idea'});
+      await enterField(
+        tester,
+        field(BoardReportField.title),
+        'Dark mode for charts please',
+      );
+      await enterField(tester, field(BoardReportField.idea), 'A dark palette');
+
+      await tester.tap(key(BoardReportKeys.post));
+      await tester.pumpAndSettle();
+
+      expect(invoked, contains('shell.board.createPost'));
+      expect(board.posted.single.title, 'Dark mode for charts please');
+      expect(h.undoLabels, hasLength(1));
+      await h.undo();
+      expect(board.log, contains('deletePost 412'));
+      await h.redo();
+      expect(board.log, contains('restorePost 412'));
+      await settle(tester);
+    });
+
     testWidgets('when posting an improvement then the body has Idea and Why '
         'and no details', (tester) async {
       await openReport(tester, args: const {'kind': 'idea'});

@@ -7,6 +7,7 @@ import '../common/models.dart';
 import '../common/time.dart';
 import '../notifications/notification_service.dart';
 import 'ai/board_ai.dart';
+import 'ai/jev_gemini_board_ai.dart' show BoardAiBudgetException;
 import 'ai/task_prompt_template.dart';
 import 'board_access.dart';
 import 'board_comments.dart';
@@ -236,31 +237,88 @@ abstract final class BoardTasks {
     return result;
   }
 
-  /// The AI-written prompt body, or null when Gemini is unavailable or
-  /// failed.
-  static Future<String?> _writePrompt(
+  /// How long a scheduled prompt may take before the task stops showing
+  /// it as pending (a lost future call must not block publishing).
+  static const promptTimeout = Duration(minutes: 10);
+
+  static const promptBudgetNote = "Today's AI budget is used up.";
+  static const promptFailedNote =
+      'The AI could not write the prompt. Try Regenerate.';
+
+  /// Whether the AI is writing the prompt of [t] at [now].
+  static bool promptPending(BoardTask t, DateTime now) {
+    final at = t.promptRequestedAt;
+    return at != null && now.difference(at) < promptTimeout;
+  }
+
+  /// Marks [task] as waiting for its AI prompt and schedules
+  /// `BoardFutureCall.writePrompt` (specs/16 §10.1); the request is
+  /// dropped again when it cannot be scheduled.
+  static Future<BoardTask> _requestPrompt(
     Session session,
     BoardTask task,
-    List<BoardPost> posts,
   ) async {
-    final ai = BoardAi.instance;
-    if (!await ai.geminiAvailable(session)) return null;
-    try {
-      final body = await ai.writeTaskPrompt(
+    var updated = await BoardTask.db.updateRow(
+      session,
+      task.copyWith(promptRequestedAt: nowUtc(), promptNote: null),
+    );
+    if (!await BoardJobs.schedule(session, BoardJob.prompt, task.id!)) {
+      updated = await BoardTask.db.updateRow(
         session,
-        task: task,
-        posts: posts,
-        comments: await _commentsFor(session, posts),
-        webOrigin: NotificationService.webOrigin(),
+        updated.copyWith(promptRequestedAt: null, promptNote: promptFailedNote),
       );
-      return body.trim().isEmpty ? null : body.trim();
-    } on Object catch (e) {
-      session.log(
-        'board: prompt of T-${task.id} failed: $e',
-        level: LogLevel.warning,
-      );
-      return null;
     }
+    return updated;
+  }
+
+  /// The background pass of a requested prompt (`BoardFutureCall.writePrompt`):
+  /// Gemini writes the body; a budget or provider failure leaves the body
+  /// and records [BoardTask.promptNote]. The result is dropped when the
+  /// request was replaced or cancelled meanwhile (a newer *Regenerate*, the
+  /// admin's own text). Open task pages refresh through `watchTasks`.
+  static Future<void> writePrompt(Session session, int taskId) async {
+    final task = await BoardTask.db.findById(session, taskId);
+    final requested = task?.promptRequestedAt;
+    if (task == null || requested == null) return;
+    final ai = BoardAi.instance;
+    String? body;
+    String? note;
+    if (!await ai.geminiAvailable(session)) {
+      note = ai.geminiConfigured ? promptBudgetNote : promptFailedNote;
+    } else {
+      try {
+        final posts = await _postsOf(session, taskId);
+        final text = await ai.writeTaskPrompt(
+          session,
+          task: task,
+          posts: posts,
+          comments: await _commentsFor(session, posts),
+          webOrigin: NotificationService.webOrigin(),
+        );
+        body = text.trim().isEmpty ? null : text.trim();
+        if (body == null) note = promptFailedNote;
+      } on BoardAiBudgetException {
+        note = promptBudgetNote;
+      } on Object catch (e) {
+        session.log(
+          'board: prompt of T-$taskId failed: $e',
+          level: LogLevel.warning,
+        );
+        note = promptFailedNote;
+      }
+    }
+    final current = await BoardTask.db.findById(session, taskId);
+    if (current == null || current.promptRequestedAt != requested) return;
+    await BoardTask.db.updateRow(
+      session,
+      current.copyWith(
+        promptBody: body ?? current.promptBody,
+        promptGeneratedAt: body == null ? current.promptGeneratedAt : nowUtc(),
+        promptRequestedAt: null,
+        promptNote: note,
+      ),
+    );
+    await BoardLive.task(session, taskId);
   }
 
   static Map<String, Object?> _snap(BoardTask t) => {
@@ -316,11 +374,15 @@ abstract final class BoardTasks {
       );
       return task;
     });
-    final body = await _writePrompt(session, task, posts);
-    if (body != null) {
+    // The AI writes the prompt in the background (about a minute); the
+    // draft is there at once with the blank template.
+    final ai = BoardAi.instance;
+    if (await ai.geminiAvailable(session)) {
+      task = await _requestPrompt(session, task);
+    } else if (ai.geminiConfigured) {
       task = await BoardTask.db.updateRow(
         session,
-        task.copyWith(promptBody: body, promptGeneratedAt: nowUtc()),
+        task.copyWith(promptNote: promptBudgetNote),
       );
     }
     // A pending suggestion with exactly these posts is now accepted.
@@ -444,18 +506,7 @@ abstract final class BoardTasks {
     if (!await ai.geminiAvailable(session)) {
       throw Errors.unavailable("Today's AI budget is used up.");
     }
-    final body = await _writePrompt(
-      session,
-      task,
-      await _postsOf(session, task.id!),
-    );
-    if (body == null) {
-      throw Errors.unavailable('The AI could not write the prompt. Try again.');
-    }
-    final updated = await BoardTask.db.updateRow(
-      session,
-      task.copyWith(promptBody: body, promptGeneratedAt: nowUtc()),
-    );
+    final updated = await _requestPrompt(session, task);
     await BoardLog.write(
       session,
       adminId: c.id,
@@ -485,6 +536,9 @@ abstract final class BoardTasks {
         promptBody: clean,
         promptEditedById: c.id,
         promptEditedAt: nowUtc(),
+        // The admin's text wins over a prompt the AI is still writing.
+        promptRequestedAt: null,
+        promptNote: null,
       ),
     );
     await BoardLog.write(
@@ -504,6 +558,9 @@ abstract final class BoardTasks {
     final task = await _adminTask(session, c, number);
     if (task.status != BoardTaskStatus.draft) {
       throw Errors.conflict('Only draft tasks can be published.');
+    }
+    if (promptPending(task, nowUtc())) {
+      throw Errors.conflict('The AI is still writing the prompt.');
     }
     if ((await _postsOf(session, task.id!)).isEmpty) {
       throw Errors.conflict('The task has no posts.');

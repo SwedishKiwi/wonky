@@ -9,6 +9,21 @@ import '../../shell/shell_services.dart';
 import '../auth_controller.dart';
 import '../password_strength.dart';
 
+/// The `next` target of an auth route (where to land after signing in or
+/// up) when it is a safe relative path such as `/improvements`; null for
+/// anything else (`//host`, `https://…`), so it never leaves the app.
+String? safeAuthNext(String? next) =>
+    next != null && next.startsWith('/') && !next.startsWith('//')
+    ? next
+    : null;
+
+/// [path] (an auth route) with the current route's safe `next` carried
+/// over: sign-in → sign-up → verification keep the target.
+String authPathWithNext(ShellServices services, String path) {
+  final next = safeAuthNext(services.router.state.uri.queryParameters['next']);
+  return next == null ? path : '$path?next=${Uri.encodeQueryComponent(next)}';
+}
+
 /// Centered card (max 400 px) on a branded background with the current app's
 /// logo and the "Wonky Work" wordmark (suite 04 §2).
 class AuthLayout extends StatelessWidget {

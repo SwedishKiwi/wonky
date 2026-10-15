@@ -62,6 +62,7 @@ abstract class BoardPostView
     this.suggestedTitle,
     this.possibleDuplicateOfNumber,
     this.triageJson,
+    this.reviewScores,
     this.flags,
   });
 
@@ -101,6 +102,7 @@ abstract class BoardPostView
     String? suggestedTitle,
     int? possibleDuplicateOfNumber,
     String? triageJson,
+    Map<String, double>? reviewScores,
     List<_ipngornu.BoardFlagView>? flags,
   }) = _BoardPostViewImpl;
 
@@ -176,6 +178,11 @@ abstract class BoardPostView
       possibleDuplicateOfNumber:
           jsonSerialization['possibleDuplicateOfNumber'] as int?,
       triageJson: jsonSerialization['triageJson'] as String?,
+      reviewScores: jsonSerialization['reviewScores'] == null
+          ? null
+          : _il4umwa0.Protocol().deserialize<Map<String, double>>(
+              jsonSerialization['reviewScores'],
+            ),
       flags: jsonSerialization['flags'] == null
           ? null
           : _il4umwa0.Protocol().deserialize<List<_ipngornu.BoardFlagView>>(
@@ -257,6 +264,11 @@ abstract class BoardPostView
 
   String? triageJson;
 
+  /// The moderation scores at or above their review band (specs/16 §6.2),
+  /// by decision id (`spam`, `personal_data`, …): why the post is held
+  /// or listed under Check.
+  Map<String, double>? reviewScores;
+
   List<_ipngornu.BoardFlagView>? flags;
 
   /// Returns a shallow copy of this [BoardPostView]
@@ -298,6 +310,8 @@ abstract class BoardPostView
     String? suggestedTitle,
     int? possibleDuplicateOfNumber,
     String? triageJson,
+    Map<String, double>? reviewScores =
+        const _is.$UndefinedMap<String, double>(),
     List<_ipngornu.BoardFlagView>? flags =
         const _is.$UndefinedList<_ipngornu.BoardFlagView>(),
   });
@@ -341,6 +355,7 @@ abstract class BoardPostView
       if (possibleDuplicateOfNumber != null)
         'possibleDuplicateOfNumber': possibleDuplicateOfNumber,
       if (triageJson != null) 'triageJson': triageJson,
+      if (reviewScores != null) 'reviewScores': reviewScores?.toJson(),
       if (flags != null) 'flags': flags?.toJson(valueToJson: (v) => v.toJson()),
     };
   }
@@ -385,6 +400,7 @@ abstract class BoardPostView
       if (possibleDuplicateOfNumber != null)
         'possibleDuplicateOfNumber': possibleDuplicateOfNumber,
       if (triageJson != null) 'triageJson': triageJson,
+      if (reviewScores != null) 'reviewScores': reviewScores?.toJson(),
       if (flags != null)
         'flags': flags?.toJson(valueToJson: (v) => v.toJsonForProtocol()),
     };
@@ -445,6 +461,7 @@ class _BoardPostViewImpl extends BoardPostView {
     String? suggestedTitle,
     int? possibleDuplicateOfNumber,
     String? triageJson,
+    Map<String, double>? reviewScores,
     List<_ipngornu.BoardFlagView>? flags,
   }) : super._(
          number: number,
@@ -482,6 +499,7 @@ class _BoardPostViewImpl extends BoardPostView {
          suggestedTitle: suggestedTitle,
          possibleDuplicateOfNumber: possibleDuplicateOfNumber,
          triageJson: triageJson,
+         reviewScores: reviewScores,
          flags: flags,
        );
 
@@ -525,6 +543,8 @@ class _BoardPostViewImpl extends BoardPostView {
     Object? suggestedTitle = _Undefined,
     Object? possibleDuplicateOfNumber = _Undefined,
     Object? triageJson = _Undefined,
+    Map<String, double>? reviewScores =
+        const _is.$UndefinedMap<String, double>(),
     List<_ipngornu.BoardFlagView>? flags =
         const _is.$UndefinedList<_ipngornu.BoardFlagView>(),
   }) {
@@ -576,6 +596,17 @@ class _BoardPostViewImpl extends BoardPostView {
           ? possibleDuplicateOfNumber
           : this.possibleDuplicateOfNumber,
       triageJson: triageJson is String? ? triageJson : this.triageJson,
+      reviewScores: reviewScores is _is.UndefinedSentinel
+          ? this.reviewScores?.map(
+              (
+                key0,
+                value0,
+              ) => MapEntry(
+                key0,
+                value0,
+              ),
+            )
+          : reviewScores,
       flags: flags is _is.UndefinedSentinel
           ? this.flags?.map((e0) => e0.copyWith()).toList()
           : flags,

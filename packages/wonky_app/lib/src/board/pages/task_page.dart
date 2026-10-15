@@ -332,6 +332,8 @@ class _BoardTaskPageState extends State<BoardTaskPage> {
               ShadButton.outline(
                 key: const ValueKey<String>('board.task.publish'),
                 leading: const Icon(LucideIcons.send, size: 16),
+                // The prompt needs a review after the AI wrote it.
+                enabled: !t.promptPending,
                 onPressed: () => _invoke('shell.board.admin.publishTask'),
                 child: Text(l.cmdBoardPublishTask),
               ),
@@ -617,6 +619,7 @@ class _BoardTaskPageState extends State<BoardTaskPage> {
     } else {
       final cs = theme.colorScheme;
       final pr = t.pullRequestUrl;
+      final admin = hub.isAdmin;
       body = ListView(
         key: const ValueKey<String>('board.task'),
         padding: EdgeInsets.fromLTRB(
@@ -637,6 +640,17 @@ class _BoardTaskPageState extends State<BoardTaskPage> {
                     key: const ValueKey<String>('board.task.notice.draft'),
                     icon: LucideIcons.eyeOff,
                     text: l.boardDraftNotice,
+                    tone: cs.warning,
+                  ),
+                if (t.promptPending && admin)
+                  const BoardPromptPendingNotice(
+                    key: ValueKey<String>('board.task.notice.promptPending'),
+                  )
+                else if (t.promptNote case final note? when admin)
+                  BoardNotice(
+                    key: const ValueKey<String>('board.task.notice.promptNote'),
+                    icon: LucideIcons.triangleAlert,
+                    text: l.boardPromptNote(note),
                     tone: cs.warning,
                   ),
                 if (t.status == BoardTaskStatus.cancelled)

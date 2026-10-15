@@ -40,4 +40,8 @@ fields:
   suggestedTitle: String?
   possibleDuplicateOfNumber: int?
   triageJson: String?
+  ### The moderation scores at or above their review band (specs/16 §6.2),
+  ### by decision id (`spam`, `personal_data`, …): why the post is held
+  ### or listed under Check.
+  reviewScores: Map<String, double>?
   flags: List<BoardFlagView>?
